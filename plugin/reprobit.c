@@ -23,6 +23,7 @@
 #include "gretl_bfgs.h"
 #include "gretl_normal.h"
 #include "libset.h"
+#include "gretl_mt.h"
 
 #ifdef _OPENMP
 # include <omp.h>

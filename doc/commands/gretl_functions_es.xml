@@ -606,8 +606,12 @@
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
-	  Devuelve un número entero con la cantidad de variables incluidas en el
-	  conjunto vigente de datos (contando con la constante).
+	  Devuelve un número entero con la cantidad de series incluidas en el
+	  conjunto vigente de datos (contando con la constante). Dado que
+	  <lit>const</lit> está siempre presente en cualquier conjunto de datos,
+	  la obtención del valor 0 indica que no hay conjunto de datos. Observa
+	  que al usar este accesorio dentro de una función, el número vigente de
+	  series accesibles puede caer por debajo de lo indicado por <lit>$nvars</lit>.
 	</para>
       </description>
     </function>
@@ -797,9 +801,9 @@
 	  en cuestión incluyen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
 	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
-	  <cmdref targ="vif"/> y <cmdref targ="bkw"/> (en cuyos casos, el
-	  resultado es una matriz), además de <cmdref targ="pkg"/> (en cuyo caso,
-	  se guarda opcionalmente un 'bundle').
+	  <cmdref targ="vif"/>, <cmdref targ="bds"/> y <cmdref targ="bkw"/> (en
+	  cuyos casos, el resultado es una matriz), además de <cmdref targ="pkg"/>
+	  (en cuyo caso, se guarda opcionalmente un 'bundle').
 	</para>
       </description>
     </function>
@@ -925,6 +929,13 @@
 	  la instrucción <lit>set stopwatch</lit>. Con cada acceso, se reinicia el
 	  reloj, por lo que las sucesivas utilizaciones de <lit>$stopwatch</lit>
 	  generan cada vez un escalar indicativo de los segundos de CPU desde el acceso previo.
+	</para>
+	<para>
+	  Cuando una función definida por el usuario está en ejecución, al usar la
+	  instrucción <lit>set stopwatch</lit> y el accesor <lit>$stopwatch</lit>,
+	  estos resultan específicos para esa función &mdash;es decir, la medición
+	  del tiempo dentro de una función no interrumpe cualquier medición
+	  <quote>global</quote> que pueda estar haciéndose en un guion principal.
 	</para>
       </description>
     </function>
@@ -1447,12 +1458,12 @@
 	<para>
 	  En la forma más simple de uso de esta función, <argname>x</argname>
 	  se establece igual a <lit>null</lit>, <argname>segunvar</argname> es
-	  una serie individual y el tercer argumento se omite. En ese caso,
-	  se devuelve una matriz con dos columnas que contiene: los distintos
-	  valores de <argname>segunvar</argname> ordenados de forma creciente
-	  en la primera columna, y el número de observaciones en las que
-	  <argname>segunvar</argname> toma cada uno de esos valores.
-	  Por ejemplo...
+	  una serie individual y el tercer argumento se omite (o se establece
+	  igual a cero). En este caso, se devuelve una matriz con dos columnas
+	  que contiene: los distintos valores de <argname>segunvar</argname>
+	  ordenados de forma creciente en la primera columna, y el número de
+	  observaciones en las que <argname>segunvar</argname> toma cada uno
+	  de esos valores. Por ejemplo...
 	</para>
 	<code>
 	  open data4-1
@@ -1463,9 +1474,33 @@
 	  3 (en total 5 veces) y 4 (en total 9 veces).
 	</para>
 	<para>
-	  Si <argname>x</argname> y <argname>segunvar</argname> son ambas
-	  series individuales, e indicas el tercer argumento de esta
-	  función, el valor que se devuelve es una matriz con tres columnas
+	  De modo más general, si <argname>segunvar</argname> es una lista con
+	  <math>n</math> elementos, entonces las <math>n</math> columnas a la
+	  izquierda contienen las combinaciones de los distintos valores de cada
+	  una de las <math>n</math> series, y la columna de recuento contiene
+	  el número de observaciones en las que se produce cada combinación.
+	  Observa que siempre puedes encontrar la columna de recuento en la
+	  posición <lit>nelem(segunvar) + 1</lit>.
+	</para>
+	<subhead>Especificar una función de agregación</subhead>
+	<para>
+	  Cuando indicas el tercer argumento, entonces <argname>x</argname>
+	  no debe ser <lit>null</lit>, y las <math>m</math> columnas más a
+	  la derecha van a contener los valores del estadístico especificado
+	  por <argname>nombrefunc</argname> para cada una de las variables
+	  en <argname>x</argname>. (De este modo, <math>m</math> se iguala
+	  a 1 cuando <argname>x</argname> es una única serie, y se iguala a
+	  <lit>nelem(x)</lit> cuando <argname>x</argname> es una lista.)
+	  El estadístico indicado se calcula en las submuestras respectivas
+	  que estén definidas por medio de las combinaciones indicadas en
+	  <argname>segunvar</argname> (en orden ascendente); estas
+	  combinaciones se muestran en la(s) primera(s) <math>n</math>
+	  columna(s) de la matriz que se devuelve.
+	</para>
+	<para>
+	  Entonces, en el caso especial en el que <argname>x</argname> y
+	  <argname>segunvar</argname> son ambas series individuales, el
+	  valor que se devuelve es una matriz con tres columnas
 	  que va a contener respectivamente: los distintos valores de
 	  <argname>segunvar</argname> ordenados de forma creciente, el número
 	  de observaciones en las que <argname>segunvar</argname> toma cada
@@ -1474,18 +1509,6 @@
 	  <argname>x</argname>, pero usando tan solo aquellas observaciones
 	  en las que <argname>segunvar</argname> toma el mismo valor que se
 	  especifica en la primera columna de la matriz.
-	</para>
-	<para>
-	  De modo más general, si <argname>segunvar</argname> es una lista con
-	  <math>n</math> elementos, entonces las <math>n</math> columnas a la
-	  izquierda contienen las combinaciones de los distintos valores de cada
-	  una de las <math>n</math> series, y la columna de recuento contiene
-	  el número de observaciones en las que se produce cada combinación.
-	  Si <argname>x</argname> es una lista con <math>m</math>
-	  elementos, entonces las <math>m</math> columnas más a la derecha
-	  contienen los valores del estadístico especificado, para cada una
-	  de las variables de <argname>x</argname>, nuevamente calculadas en la
-	  submuestra indicada en la(s) primera(s) columna(s).
 	</para>
 	<para>
 	  Las siguientes opciones de <argname>nombrefunc</argname> se mantienen
@@ -2842,6 +2865,62 @@
       </description>
     </function>
 
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Proporciona un medio de determinar si un objeto numérico
+	  <argname>x</argname> está contenido en alguno de los elementos
+	  de una matriz <argname>S</argname> (que cumple el papel de
+	  un conjunto).
+	</para>
+	<para>
+	  El valor que se devuelve es un objeto del mismo tamaño que
+	  <argname>x</argname> que contiene valores de 1 en las posiciones
+	  donde el valor <argname>x</argname> coincide con algún elemento
+	  de <argname>S</argname>, y ceros en las demás.
+	  Por ejemplo, el código
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1
+	</code>
+	<para>
+	  Esta función puede ser particularmente útil cuando <argname>x</argname>
+	  es una serie que contiene una codificación muy refinada para una
+	  característica cualitativa, y quieres reducir esto a un número de
+	  categorías menor. Puedes meter en <argname>S</argname> un conjunto
+	  de valores a consolidar, y obtener una variable ficticia con el valor 1
+	  para las observaciones que coinciden con este conjunto, y el valor 0
+	  para las demás.
+	</para>
+	<para>
+	  Puesto que <argname>S</argname> funciona como un conjunto, debiera
+	  ser un vector sin valores repetidos para tener una mayor eficiencia;
+	  sin embargo, se acepta una matriz cualquiera.
+	</para>
+      </description>
+    </function>
+
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -3245,7 +3324,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line)
+	      loop while getline(s, &amp;line)
 	          printf "%s\n", line
 	      endloop
 	  endif
@@ -3540,7 +3619,13 @@
 	</para>
 	<para context="tex">
 	  Devuelve un resultado con el valor de la función digamma (o Psi) de $x$, es
-	  decir $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
+	  decir $\frac {\mathrm{d}} {\mathrm{d} x}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="trigamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -3737,10 +3822,12 @@
       </fnargs>
       <description>
 	<para>
-	  Calcula los autovalores (y opcionalmente los autovectores
-	  derechos y/o izquierdos) de la matriz <argname>A</argname> de
-	  dimensión <by r="n" c="n"/>, que puede ser real o compleja.
-	  Los autovalores se devuelven en un vector columna complejo.
+	  Calcula los autovalores (y opcionalmente los autovectores derechos
+	  y/o izquierdos) de la matriz <argname>A</argname> de dimensión
+	  <by r="n" c="n"/>, que puede ser real o compleja. Los autovalores
+	  se devuelven en un vector columna complejo. Para obtener la norma
+	  de los autovalores puedes utilizar la función <fncref targ="abs"/>,
+	  que admite argumentos complejos.
 	</para>
 	<para>
 	  Si quieres recuperar los autovectores derechos (como en el caso de
@@ -3996,6 +4083,7 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="series-list-or-mat">f</fnarg>
+	<fnarg optional="true" type="bool">U2</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4026,11 +4114,18 @@
 	  3  Error absoluto medio
 	  4  Porcentaje de error medio
 	  5  Porcentaje de error absoluto medio
-	  6  U de Theil
+	  6  U de Theil (U1 o U2)
 	  7  Proporción de sesgo, UM
 	  8  Proporción de regresión, UR
 	  9  Proporción de perturbación, UD
 	</code>
+	<para>
+	  La variante del U de Theil que se presenta por defecto depende de la
+	  naturaleza de los datos: cuando se sabe que son series de tiempo, se
+	  muestra el U2; en caso contrario, se produce el U1. Pero puedes forzar
+	  esta elección por medio del último argumento opcional: indica un valor
+	  no nulo para forzar el U2, o un valor de cero para forzar el U1.
+	</para>
 	<para>
 	  Para obtener más detalles sobre el cálculo de esos estadísticos y de la
 	  interpretación de los valores de <math>U</math>, consulta
@@ -4620,7 +4715,7 @@
       </description>
     </function>
 
-    <function name="genseries" section="data-utils" output="scalar">
+    <function name="genseries" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="string">nombrevar</fnarg>
 	<fnarg type="series">rhs</fnarg>
@@ -4785,17 +4880,18 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">origen</fnarg>
-	<fnarg type="string">destino</fnarg>
+	<fnarg type="stringref">&amp;destino</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Esta función lee filas consecutivas de <argname>origen</argname>,
 	  que debe ser una cadena de texto ya definida. Con cada llamada a la
 	  función se escribe una línea de texto en <argname>destino</argname>
-	  (que también debe ser una cadena de texto) sin el carácter de línea
-    nueva. El valor que se devuelve es un escalar igual a 1, cuando existe
-	  algo por leer (incluidas filas en blanco), o igual a 0 si todas las
-	  filas de <argname>origen</argname> ya se leyeron.
+	  (que también debe ser una cadena de texto indicada en formato de
+	  puntero) sin el carácter de línea nueva. El valor que se devuelve
+	  es un escalar igual a 1, cuando existe algo por leer (incluidas
+	  filas en blanco), o igual a 0 si todas las filas de
+	  <argname>origen</argname> ya se leyeron.
 	</para>
 	<para>
 	  A continuación se presenta un ejemplo en el que el contenido de un archivo de
@@ -4805,7 +4901,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
 	      printf "line %d = '%s'\n", i++, line
 	  endloop
 	</code>
@@ -4818,7 +4914,7 @@
 	  con lo que se reinicia la lectura de <argname>origen</argname>, como en
 	</para>
 	<code>
-	  getline(s, line) # Obtiene una única fila
+	  getline(s, &amp;line) # Obtiene una única fila
 	  getline(s, null) # Reinicia la lectura
 	</code>
 	<para>
@@ -5042,33 +5138,38 @@
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve la matriz que resulta del producto directo horizontal de dos
-	  matrices. Los dos argumentos deben tener el mismo número de filas,
-	  <math>r</math>. El valor que se devuelve es una matriz que tiene
-	  <math>r</math> filas, y en la que la <math>i</math>-ésima fila es el
-	  producto de Kronecker de las respectivas filas de las matrices
-	  <argname>X</argname> e <argname>Y</argname>.
+	  matrices. Los dos argumentos deben tener el mismo número <math>r</math>
+	  de filas. El valor que se devuelve es una matriz que tiene <math>r</math>
+	  filas, y en la que la <math>i</math>-ésima fila es el producto de
+	  Kronecker de las respectivas filas de las matrices <argname>X</argname>
+	  e <argname>Y</argname>. Si omites <argname>Y</argname>, se aplica
+	  la sintaxis <quote>breve</quote> (mira abajo).
 	</para>
 	<para context="tex">
-	  En otras palabras, si $X$ es una matriz $r \times k$, $Y$ es
-	  una matriz $r \times m$ y $Z$ es la matriz resultante del
-	  producto directo horizontal de $X$ times $Y$, entonces $Z$ va a
-	  tener $r$ filas y $k\cdot m$ columnas; más aún,
-	  \[
-	  Z_{in} = X_{ij} Y_{il}
-	  \]
+	  Si $X$ es una matriz $r \times k$, $Y$ es una matriz $r \times m$
+	  y $Z$ es la matriz resultante del producto directo horizontal de
+	  $X$ times $Y$, entonces $Z$ va a tener $r$ filas y $k\cdot m$ columnas;
+	  más aún, \[ Z_{in} = X_{ij} Y_{il} \]
 	  donde $n = (j-1) m + l$.
+	</para>
+	<para context="notex">
+	  Si <argname>X</argname> es una matriz <math>r x k</math> e
+	  <argname>Y</argname> es una matriz <math>r x m</math>, el resultado
+	  será una matriz con <math>r</math> filas y con <math>k x m</math>
+	  columnas.
 	</para>
 	<para>
 	  Esta operación se llama <quote>producto directo horizontal</quote>
 	  de acuerdo con la forma en la que se pone en funcionamiento, y se aplica
 	  en el lenguaje de programación GAUSS. Su equivalente en el álgebra
 	  matricial estándar podría denominarse producto horizontal (row-wise)
-	  de Khatri-Rao.
+	  de Khatri-Rao, o producto <quote>de división de caras</quote>
+	  (face-splitting) en la literatura sobre el procesado de señales.
 	</para>
 	<para>
 	  Ejemplo: el código...
@@ -5085,6 +5186,43 @@
           0    1    0    2    0    3
          -4    4   -5    5   -6    6
 	</code>
+	<subhead>Sintaxis breve</subhead>
+	<para>
+	  Si <argname>X</argname> e <argname>Y</argname> son la misma
+	  matriz, entonces cada fila del resultado representa la vectorización
+	  de una matriz simétrica. En estos casos, puedes omitir el segundo
+	  argumento; sin embargo, la matriz que se va a devolver contendrá
+	  solo las columnas no redundantes y, consecuentemente, tendrá
+	  <math>k(k+1)/2</math> columnas. Por ejemplo,
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  C = hdprod(A)
+	</code>
+	<para>
+	  genera
+	</para>
+	<code>
+	  1    2    3    4    6    9 
+	  16   20   24   25   30   36 
+	</code>
+	<para context="tex">
+	  Ten en cuenta que la $i$-ésima fila de $C$ es $\mathrm{vech}(a_i a_i')$,
+	  donde $a_i$ es la $i$-ésima fila de $A$.
+	</para>
+	<para context="notex">
+	  Ten en cuenta que la <math>i</math>-ésima fila de <math>C</math> es
+	  <math>vech(a</math><sub>i</sub> <math>a</math><sub>i</sub><math>')</math>,
+	  donde
+	  <math>a</math><sub>i</sub> es la <math>i</math>-ésima fila de
+	  <math>A</math>.
+	</para>
+	<para>
+	  Cuando utilices la sintaxis breve con matrices complejas, el segundo
+	  argumento que se va a suponer implícito será el <i>conjugado</i> del
+	  primero, de tal forma que hará que cada fila del resultado sea la
+	  vectorización simétrica de una matriz Hermítica.
+	</para>
       </description>
     </function>
 
@@ -5512,6 +5650,7 @@
 	  con argumentos negativos: <lit>int(-3.5)</lit> genera &minus;3,
 	  mientras que <lit>floor(-3.5)</lit> genera &minus;4.
 	  <seelist>
+            <fncref targ="round"/>
             <fncref targ="ceil"/>
 	  </seelist>
 	</para>
@@ -7383,6 +7522,63 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="midasmult"/>
+	    <fncref targ="mlincomb"/>
+	    <fncref targ="mweights"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="midasmult" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="bundle">mod</fnarg>
+	<fnarg type="bool">acumular</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve el cálculo de los multiplicadores MIDAS. El argumento
+	  <argname>mod</argname> debe ser un 'bundle' que incluya un
+	  modelo MIDAS, del tipo que se genera mediante la instrucción
+	  <cmdref targ="midasreg"/> y que es accesible por medio de la clave
+	  <fncref targ="$model"/>. La función devuelve una matriz con los
+	  multiplicadores implícitos MIDAS para la variable <argname>v</argname>
+	  en la primera columna, y las desviaciones típicas correspondientes en la
+	  segunda columna. Si el argumento <argname>acumular</argname> no
+	  es cero, los multiplicadores se acumulan.
+	</para>
+	<para>
+	  Observa que automáticamente se proporciona la matriz que se devuelve con
+	  etiquetas adecuadas para las filas, de forma que resultan indicadas para
+	  usar como primer argumento de la instrucción <cmdref targ="modprint"/>.
+	  Por ejemplo, el código
+	</para>
+	<code>
+	  open gdp_midas.gdt
+	  list dIP = ld_indpro*
+	  smpl 1985:1 ;
+	  midasreg ld_qgdp 0 ; mds(dIP, 0, 6, 2)
+	  matrix ip_m = midasmult($model, 0, 1)
+	  modprint ip_m
+	</code>
+	<para>
+	  genera el siguiente resultado:
+	</para>
+	<code>
+             Coeficiente   Desv. tipica     z       Valor p
+  ---------------------------------------------------------
+  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
+  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
+  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
+  dIP_3      0.0601876     0.0621927     0.9678    0.3332
+  dIP_4      0.0131263     0.0259137     0.5065    0.6125
+  dIP_5      0.000965260   0.00346703    0.2784    0.7807
+  dIP_6      0.00000       0.00000      NA        NA
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
             <fncref targ="mweights"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
@@ -8398,7 +8594,8 @@
 	</code>
 	<para>
 	  <seelist>
-            <fncref targ="mgradient"/>
+	    <fncref targ="mgradient"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>
@@ -10504,21 +10701,16 @@
       </fnargs>
       <description>
 	<para>
-	  Elimina el archivo del argumento <argname>nombrearchivo</argname> en caso
-	  de que este exista, y que el usuario lo pueda modificar. Esta función
-	  devuelve un entero igual a 0 en caso de que la operación tenga éxito,
-	  y un valor no nulo si el archivo no existe o no se puede eliminar.
+	  Si el archivo del argumento <argname>nombrearchivo</argname>
+	  existe y si el usuario puede modificarlo, esta función lo elimina
+	  y devuelve un 0. Si no existe el archivo, o no puede eliminarse
+	  por alguna razón, la función devuelve un código no nulo indicando
+	  un fallo.
 	</para>
 	<para>
-	  Cuando <argname>fname</argname> contiene la ruta completa hasta el
-	  archivo, GRETL tratará de eliminarlo, y devolverá un fallo si ese
-	  archivo no existe o no puede ser eliminado por algún motivo (por
-	  ejemplo, por no tener suficientes privilegios para poder hacerlo).
-	  Cuando <argname>fname</argname> no contiene la ruta completa,
-	  entonces se asume que el archivo al que se refiere, está en el directorio
-	  vigente de trabajo (<cmdref targ="workdir"/>). Si el archivo
-	  no existe o no puede guardarse, no se va a buscar en ningún
-	  otro directorio.
+	  Cuando <argname>nombrearchivo</argname> no especifica la ruta
+	  completa, entonces se asume que el archivo al que se refiere, está
+	  en el directorio vigente de trabajo (<cmdref targ="workdir"/>).
 	</para>
       </description>
     </function>
@@ -12169,6 +12361,28 @@
 	  Devuelve una matriz que es la traspuesta de <argname>X</argname>. Aviso:
 	  Esta función se utiliza raramente. Para trasponer una matriz, en general
 	  puedes usar simplemente el operador para trasposición: <lit>X'</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="trigamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Devuelve un resultado del mismo tipo que el argumento con la función trigamma de
+	  <argname>x</argname>; es decir, la segunda derivada del logaritmo de la función Gamma.
+	</para>
+	<para context="tex">
+	  Devuelve un resultado del mismo tipo que el argumento con la función trigamma
+	  de $x$; es decir, $\frac {\mathrm{d}^2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="digamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>

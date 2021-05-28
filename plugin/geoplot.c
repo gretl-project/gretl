@@ -19,15 +19,11 @@
 
 /* Handling of ESRI shapfiles and GeoJSON files for gretl */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
-#include "shapefile.h"
 #include "libgretl.h"
 #include "gretl_typemap.h"
 #include "libset.h"
+#include "version.h"
+#include "shapefile.h"
 
 #define GEODEBUG 0
 
@@ -156,7 +152,7 @@ static void record_extrema (double x, double y,
     }
 }
 
-static gretl_matrix *ring2matrix (gretl_array *ring)
+static gretl_matrix *ring2matrix (gretl_array *ring, int *err)
 {
     int i, n = gretl_array_get_length(ring);
     gretl_matrix *ret = gretl_matrix_alloc(n, 2);
@@ -177,8 +173,9 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 	    gretl_matrix_set(ret, i, 0, atof(sx));
 	    gretl_matrix_set(ret, i, 1, atof(sy));
 	} else {
-	    fprintf(stderr, "ring2matrix: i=%d of %d, rtype=%d!\n",
-		    i, n, rtype);
+	    fprintf(stderr, "ring2matrix: invalid array type %s\n",
+		    gretl_type_get_name(rtype));
+	    *err = E_DATA;
 	}
     }
 
@@ -375,6 +372,57 @@ static inline void print_xyz (double x, double y, double z,
     }
 }
 
+static int output_ring_matrix (gretl_array *A, int j, double *pz,
+			       double *gmin, double *gmax,
+			       FILE *fp)
+{
+    gretl_matrix *X = NULL;
+    GretlType etype;
+    gretl_array *Aj;
+    int freeX = 0;
+    int err = 0;
+
+    Aj = gretl_array_get_element(A, j, &etype, &err);
+
+    if (etype == GRETL_TYPE_MATRIX) {
+	/* OK, no conversion needed */
+	X = gretl_array_get_data(A, j);
+    } else if (etype == GRETL_TYPE_ARRAY) {
+	/* convert array to matrix */
+	X = ring2matrix(Aj, &err);
+	freeX = 1;
+    } else {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	double x, y;
+	int i;
+
+	for (i=0; i<X->rows; i++) {
+	    x = gretl_matrix_get(X, i, 0);
+	    y = gretl_matrix_get(X, i, 1);
+	    if (proj == EPSG3857) {
+		mercator(&x, &y);
+	    } else if (proj >= EPSG2163) {
+		lambert_azimuthal(&x, &y);
+	    }
+	    if (pz != NULL) {
+		print_xyz(x, y, *pz, fp);
+	    } else {
+		fprintf(fp, "%#.8g %#.8g\n", x, y);
+	    }
+	    record_extrema(x, y, gmin, gmax);
+	}
+    }
+
+    if (freeX) {
+	gretl_matrix_free(X);
+    }
+
+    return err;
+}
+
 /* Writes the coordinates content of the GeoJSON file
    identified by @geoname to the gnuplot-compatible
    plain text data file @datname. Returns the bounding
@@ -387,15 +435,15 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			      const gretl_matrix *mask,
 			      int *non_standard)
 {
-    gretl_array *AC, *ACj, *ACjk;
-    gretl_matrix *X, *bbox = NULL;
+    gretl_array *AC, *ACj;
+    gretl_matrix *bbox = NULL;
     gretl_bundle *fi, *geom;
     double gmin[2] = {GEOHUGE, GEOHUGE};
     double gmax[2] = {-GEOHUGE, -GEOHUGE};
     FILE *fp = NULL;
     const char *gtype;
     int nf, mp, nac, ncj;
-    int i, j, k, p;
+    int i, j, k;
     int err = 0;
 
     nf = gretl_array_get_length(features);
@@ -416,13 +464,14 @@ static gretl_matrix *geo2dat (gretl_array *features,
 	return NULL;
     }
 
-    for (i=0; i<nf; i++) {
-	double x, y, z = 0;
+    for (i=0; i<nf && !err; i++) {
+	double z = 0, *pz = NULL;
 
 	if (skip_object(i, zvec, mask, &z)) {
 	    continue;
 	}
 
+	pz = (zvec == NULL)? NULL : &z;
 	fi = gretl_array_get_data(features, i);
 	geom = gretl_bundle_get_bundle(fi, "geometry", NULL);
 	gtype = gretl_bundle_get_string(geom, "type", NULL);
@@ -435,57 +484,25 @@ static gretl_matrix *geo2dat (gretl_array *features,
 	    err = E_DATA;
 	    break;
 	}
+
 	AC = gretl_bundle_get_array(geom, "coordinates", NULL);
 	nac = gretl_array_get_length(AC);
+
 	if (mp == 0) {
 	    /* got Polygon */
-	    for (j=0; j<nac; j++) {
-		ACj = gretl_array_get_data(AC, j);
-		X = ring2matrix(ACj);
-		for (k=0; k<X->rows; k++) {
-		    x = gretl_matrix_get(X, k, 0);
-		    y = gretl_matrix_get(X, k, 1);
-		    if (proj == EPSG3857) {
-			mercator(&x, &y);
-		    } else if (proj >= EPSG2163) {
-			lambert_azimuthal(&x, &y);
-		    }
-		    if (zvec != NULL) {
-			print_xyz(x, y, z, fp);
-		    } else {
-			fprintf(fp, "%#.8g %#.8g\n", x, y);
-		    }
-		    record_extrema(x, y, gmin, gmax);
-		}
-		gretl_matrix_free(X);
+	    for (j=0; j<nac && !err; j++) {
+		err = output_ring_matrix(AC, j, pz, gmin, gmax, fp);
 		if (j < nac-1) {
 		    fputc('\n', fp);
 		}
 	    }
 	} else {
 	    /* got MultiPolygon */
-	    for (j=0; j<nac; j++) {
+	    for (j=0; j<nac && !err; j++) {
 		ACj = gretl_array_get_data(AC, j);
 		ncj = gretl_array_get_length(ACj);
-		for (k=0; k<ncj; k++) {
-		    ACjk = gretl_array_get_data(ACj, k);
-		    X = ring2matrix(ACjk);
-		    for (p=0; p<X->rows; p++) {
-			x = gretl_matrix_get(X, p, 0);
-			y = gretl_matrix_get(X, p, 1);
-			if (proj == EPSG3857) {
-			    mercator(&x, &y);
-			} else if (proj >= EPSG2163) {
-			    lambert_azimuthal(&x, &y);
-			}
-			if (zvec != NULL) {
-			    print_xyz(x, y, z, fp);
-			} else {
-			    fprintf(fp, "%#.8g %#.8g\n", x, y);
-			}
-			record_extrema(x, y, gmin, gmax);
-		    }
-		    gretl_matrix_free(X);
+		for (k=0; k<ncj && !err; k++) {
+		    err = output_ring_matrix(ACj, k, pz, gmin, gmax, fp);
 		    if (k < ncj-1) {
 			fputc('\n', fp);
 		    }
@@ -503,149 +520,6 @@ static gretl_matrix *geo2dat (gretl_array *features,
 
     fputc('\n', fp);
     fclose(fp);
-
-    if (!err) {
-	bbox = make_bbox(gmin, gmax);
-    }
-
-    return bbox;
-}
-
-static int json_get_char (gchar **ps, int targ)
-{
-    gchar *s = *ps;
-    int ret = 0;
-
-    while (isspace(*s)) s++;
-    if (*s == targ) {
-	ret = 1;
-	s++;
-	while (isspace(*s)) s++;
-    }
-
-    *ps = s;
-
-    return ret;
-}
-
-/* fast version of geo2dat() -- see above -- which does
-   not rely on full JSON parsing.
-*/
-
-static gretl_matrix *fast_geo2dat (const char *geoname,
-				   const char *datname,
-				   const gretl_matrix *zvec,
-				   const gretl_matrix *mask)
-{
-    GError *gerr = NULL;
-    gsize len = 0;
-    const char *targ = "\"coordinates\"";
-    double gmin[2] = {GEOHUGE, GEOHUGE};
-    double gmax[2] = {-GEOHUGE, -GEOHUGE};
-    gretl_matrix *bbox = NULL;
-    FILE *fp;
-    char *test;
-    int i, nlbr, nrbr;
-    gchar *JSON, *p, *s;
-    gboolean ok;
-    int err = 0;
-
-    ok = g_file_get_contents(geoname, &JSON, &len, &gerr);
-    if (!ok) {
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	}
-	return NULL;
-    }
-
-    fp = gretl_fopen(datname, "wb");
-    if (fp == NULL) {
-	g_free(JSON);
-	return NULL;
-    }
-
-    s = JSON;
-
-    for (i=0; !err; i++) {
-	double x, y, z = 0;
-
-	p = strstr(s, targ);
-	if (p == NULL) break;
-
-	if (skip_object(i, zvec, mask, &z)) {
-	    s = p + 14;
-	    continue;
-	}
-
-	if (i > 0) {
-	    fputc('\n', fp);
-	}
-	p += 13;
-	if (!json_get_char(&p, ':')) {
-	    gretl_errmsg_set("geo2dat: expected ':'");
-	    err = E_DATA;
-	    break;
-	}
-	nlbr = 0;
-	while (json_get_char(&p, '[')) {
-	    nlbr++;
-	}
-	if (nlbr < 3 || nlbr > 4) {
-	    gretl_errmsg_sprintf("geo2dat: unexpected count of '[': %d", nlbr);
-	    err = E_DATA;
-	}
-	while (!err) {
-	    x = strtod(p, &test);
-	    if (json_get_char(&test, ',')) {
-		p = test;
-		y = strtod(p, &test);
-		if (!json_get_char(&test, ']')) {
-		    gretl_errmsg_sprintf("geo2dat: found '%c', expected ']'", *test);
-		    err = E_DATA;
-		    break;
-		}
-		nrbr = 1;
-		if (proj == EPSG3857) {
-		    mercator(&x, &y);
-		} else if (proj >= EPSG2163) {
-		    lambert_azimuthal(&x, &y);
-		}
-		if (zvec != NULL) {
-		    print_xyz(x, y, z, fp);
-		} else {
-		    fprintf(fp, "%#.8g %#.8g\n", x, y);
-		}
-		record_extrema(x, y, gmin, gmax);
-		p = test;
-		while (json_get_char(&p, ']')) {
-		    nrbr++;
-		}
-		if (nrbr == nlbr) {
-		    /* reached the end of a feature */
-		    fputc('\n', fp);
-		    break;
-		} else if (nrbr > 1) {
-		    /* reached the end of a sub-feature */
-		    fputc('\n', fp);
-		}
-		json_get_char(&p, ',');
-		while (json_get_char(&p, '[')) {
-		    ;
-		}
-	    } else if (json_get_char(&test, '}')) {
-		break;
-	    } else {
-		gretl_errmsg_sprintf("geo2dat: unexpected char '%c'", *test);
-		err = E_DATA;
-		break;
-	    }
-	}
-	s = p;
-    }
-
-    fclose(fp);
-    g_free(JSON);
 
     if (!err) {
 	bbox = make_bbox(gmin, gmax);
@@ -1223,10 +1097,12 @@ static int geojson_to_csv (const char *fname,
 	if (!err) {
 	    nk = gretl_array_get_length(keys);
 	}
+	/* output header */
 	for (j=0; j<nk && !err; j++) {
 	    key = gretl_array_get_data(keys, j);
 	    fprintf(fp, "%s%c", key, j < nk-1 ? ',' : '\n');
 	}
+	/* output actual data */
 	for (i=0; i<nf && !err; i++) {
 	    fi = gretl_array_get_element(features, i, NULL, &err);
 	    pp = gretl_bundle_get_bundle(fi, "properties", &err);
@@ -1234,16 +1110,10 @@ static int geojson_to_csv (const char *fname,
 		key = gretl_array_get_data(keys, j);
 		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
 		if (err) {
-#if 0
-		    /* 2020-09-23: this is too stringent? */
-		    fprintf(stderr, "error at feature %d, propkey %d\n", i, j);
-		    break;
-#else
 		    /* ignore the missing data */
 		    err = 0;
 		    fputc(j < nk-1 ? ',' : '\n', fp);
 		    continue;
-#endif
 		}
 		if (type == GRETL_TYPE_STRING) {
 		    fprintf(fp, "\"%s\"", (char *) ptr);
@@ -1360,9 +1230,6 @@ static gretl_matrix *map2dat (const char *mapname,
 
     if (has_suffix(infile, ".shp")) {
 	ret = shp2dat(infile, datname, zvec, mask);
-    } else if (*infile && libset_get_bool(GEOJSON_FAST)) {
-	/* FIXME revisit this */
-	ret = fast_geo2dat(infile, datname, zvec, mask);
     } else {
 	/* Regular GeoJSON procedure, either reading from
 	   @infile or working from pre-loaded @map bundle.
@@ -1701,6 +1568,10 @@ int geoplot (const char *mapfile,
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
+	    /* The payload can be specified as a property, via
+	       the options bundle. TODO: support this when we
+	       get a filename rather than a map bundle?
+	    */
 	    sval = gretl_bundle_get_string(opts, "payload", &err);
 	    if (sval != NULL) {
 		payload = payload_from_prop(map, sval, &err);
@@ -1724,7 +1595,9 @@ int geoplot (const char *mapfile,
 	zrange = get_zrange(payload, opts, &err);
     }
 
-    /* do we have a sub-sampling mask? */
+    /* do we have a sub-sampling mask? (note, 2021-03-18: this
+       is not documented, but might be useful in some cases?)
+    */
     if (!err && gretl_bundle_has_key(opts, "mask")) {
 	mask = gretl_bundle_get_matrix(opts, "mask", &err);
     }

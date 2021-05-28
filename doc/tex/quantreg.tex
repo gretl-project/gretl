@@ -31,17 +31,17 @@ quantile regression reveals that the conditional quantiles behave in a
 manner quite distinct from the conditional mean, this suggests that
 OLS estimation is problematic.
 
-As of version 1.7.5, gretl offers quantile regression
-functionality (in addition to basic LAD regression, which has been
-available since early in gretl's history via the \texttt{lad}
+Gretl has offered quantile regression functionality since version
+1.7.5 (in addition to basic LAD regression, which has been available
+since early in gretl's history via the \texttt{lad}
 command).\footnote{We gratefully acknowledge our borrowing from the
   \texttt{quantreg} package for GNU \textsf{R} (version 4.17).  The
-  core of the \texttt{quantreg} package is composed of Fortran code
-  written by Roger Koenker; this is accompanied by various driver and
-  auxiliary functions written in the \textsf{R} language by Koenker
-  and Martin M\"achler.  The latter functions have been re-worked in C
-  for gretl.  We have added some guards against potential
-  numerical problems in small samples.}
+  core of the package is composed of Fortran code written by Roger
+  Koenker; this is accompanied by various driver and auxiliary
+  functions written in the \textsf{R} language by Koenker and Martin
+  M\"achler.  The latter functions have been re-worked in C for gretl.
+  We have added some guards against potential numerical problems in
+  small samples.}
 
 \section{Basic syntax}
 
@@ -196,6 +196,31 @@ estimates overlap at all the quantiles considered.
   \label{fig:tau2}
 \end{figure}
 
+A script to produce the results discussed above is presented in
+listing~\ref{script:engel}.
+
+\begin{script}[htbp]
+  \scriptcaption{Food expenditure and income, Engel data}
+  \label{script:engel}
+\begin{scodebit}
+# this data file is supplied with gretl
+open engel.gdt
+
+# specify some quantiles
+matrix tau = {.05, .25, .5, .75, .95}
+
+# use levels of variables
+QM1 <- quantreg tau foodexp 0 income --intervals
+
+# use log-log specification, with two outliers removed
+logs foodexp income
+smpl obs!=105 && obs!=138 --restrict
+QM2 <- quantreg tau l_foodexp 0 l_income --intervals
+\end{scodebit}
+  The script saves the two models ``as icons''. Double-clicking on a
+  model's icon opens a window to display the results, and the Graph
+  menu in this window gives access to a tau-sequence plot.
+\end{script}
 
 \section{Large datasets}
 \label{sec:bigdata}

@@ -1096,18 +1096,16 @@ static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 	ndx = 0;
 	for (j=0; j<p; j++) {
 	    aij = gretl_cmatrix_get(A, i, j);
-	    if (aij != 0.0) {
-		if (do_symmetric) {
-		    for (k=j; k<q; k++) {
-			bik = gretl_cmatrix_get(A, i, k);
-			gretl_cmatrix_set(C, i, ndx++, aij*conj(bik));
-		    }
-		} else {
-		    ndx = j * q;
-		    for (k=0; k<q; k++) {
-			bik = gretl_cmatrix_get(B, i, k);
-			gretl_cmatrix_set(C, i, ndx + k, aij*bik);
-		    }
+	    if (do_symmetric) {
+		for (k=j; k<q; k++) {
+		    bik = gretl_cmatrix_get(A, i, k);
+		    gretl_cmatrix_set(C, i, ndx++, aij*conj(bik));
+		}
+	    } else if (aij != 0.0) {
+		ndx = j * q;
+		for (k=0; k<q; k++) {
+		    bik = gretl_cmatrix_get(B, i, k);
+		    gretl_cmatrix_set(C, i, ndx + k, aij*bik);
 		}
 	    }
 	}
@@ -1429,10 +1427,11 @@ int gretl_cmatrix_printf (const gretl_matrix *A,
 }
 
 /* Compose a complex matrix from its real and imaginary
-   components. If @Im is NULL the matrix will have a
-   constant imaginary part given by @ival; otherwise
-   the matrices @Re and @Im must be of the same
-   dimensions.
+   components. If @Re is NULL the result will have a
+   constant real part given by @x; and if @Im is NULL it
+   will have a constant imaginary part given by @y. If
+   both matrix arguments are non-NULL they must be of
+   the same dimensions.
 */
 
 gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
@@ -2068,7 +2067,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	int jmin = vs == V_PROD ? 1 : 0;
 
 	for (i=0; i<m->rows; i++) {
-	    z = vs == V_PROD ? m->z[0] : 0;
+	    z = vs == V_PROD ? m->z[i] : 0;
 	    for (j=jmin; j<m->cols; j++) {
 		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(m, i, j);
@@ -2086,7 +2085,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	int imin = vs == V_PROD ? 1 : 0;
 
 	for (j=0; j<m->cols; j++) {
-	    z = vs == V_PROD ? m->z[0] : 0;
+	    z = vs == V_PROD ? gretl_cmatrix_get(m, 0, j) : 0;
 	    for (i=imin; i<m->rows; i++) {
 		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(m, i, j);

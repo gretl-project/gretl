@@ -2089,7 +2089,8 @@ static int csv_missval (const char *str, int i, int t,
 {
     int miss = 0;
 
-    if (*str == '\0') {
+    if (*str == '\0' || !strcmp(str, "\"\"")) {
+	/* 2021-03-03: let '""' indicate missing */
 	if (miss_shown != NULL) {
 	    if (t < 80 || *miss_shown < i) {
 		pprintf(prn, _("   the cell for variable %d, obs %d "
@@ -3963,7 +3964,11 @@ gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
 	*err = real_import_csv(csvname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, prn);
     } else if (!*err) {
-	*err = real_import_csv(fname, NULL, NULL, NULL,
+	char fullname[FILENAME_MAX];
+
+	strcpy(fullname, fname);
+	gretl_maybe_prepend_dir(fullname);
+	*err = real_import_csv(fullname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, prn);
     }
 

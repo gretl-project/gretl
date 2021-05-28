@@ -1,3 +1,33 @@
+function void doIRF_new(bundle *SVARobj)
+    
+    # constructs the structural VMA representation via the native vma()
+    # function and stores it into the bundle
+    scalar type = SVARobj.type
+
+    if (type == 1) || (type == 2) || (type == 4)
+        matrix C = SVARobj.C	# was: SVARobj.S1
+    elif type == 3
+        if inbundle(SVARobj, "C")	# maybe not yet computed
+            matrix C = SVARobj.C
+        else
+            matrix C = SVARobj.S1 \ SVARobj.S2
+        endif
+    endif
+
+    ret = vma(SVARobj.VARpar, C, SVARobj.horizon + 1)
+    
+    # switch the indices (necessary for compatibility)
+    n = SVARobj.n
+    s = vec(mshape(seq(1, n*n), n, n)')
+    ret = ret[,s]
+    
+    if SVARobj.ncumul > 0
+        ret[, SVARobj.cumsel] = cum(ret[, SVARobj.cumsel]) # .cumsel was sel
+    endif
+
+    matrix SVARobj.IRFs = ret
+end function
+
 function void doIRF(bundle *SVARobj)
 /*
    constructs the structural VMA representation. Note
@@ -29,12 +59,12 @@ function void doIRF(bundle *SVARobj)
     loop i=1..H --quiet
         ret[i,] = vec(tmp[1:n,1:n] * C)'
         if (np>n)
-            prd[n+1:np, ] = tmp[1:np-n, ]
+	    prd[n+1:np, ] = tmp[1:np-n, ]
         endif
         prd[1:n,] = varA * tmp
         tmp = prd
     endloop
-
+    
     if SVARobj.ncumul > 0
         # The following code is now done in SVAR_cumulate
         # once and for all:

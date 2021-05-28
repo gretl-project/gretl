@@ -1071,12 +1071,7 @@ gtk_fontsel_hack_update_preview (GtkFontselHack *fontsel)
 #endif
 
     gtk_widget_size_request(preview_entry, NULL);
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20)
-    req = preview_entry->requisition;
-#else
     gtk_widget_get_requisition(preview_entry, &req);
-#endif
   
     /* We don't ever want to be over MAX_PREVIEW_HEIGHT pixels high. */
     new_height = CLAMP(req.height, 

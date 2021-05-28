@@ -498,6 +498,21 @@ static int model_missval_count (const MODEL *pmod)
     return mc;
 }
 
+static int wls_usable_obs (MODEL *pmod, const DATASET *dset)
+{
+    int t, n = pmod->nobs;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (pmod->missmask[t] == '1') {
+	    n--;
+	} else if (dset->Z[pmod->nwt][t] == 0) {
+	    n--;
+	}
+    }
+
+    return n;
+}
+
 #define SMPL_DEBUG 0
 
 static int
@@ -561,6 +576,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 		pmod->t1, t1s, pmod->t2, t2s);
 	fprintf(stderr, "Valid observations in range = %d\n",
 		pmod->t2 - pmod->t1 + 1 - misscount);
+	fprintf(stderr, "Returning missv = %d\n", missv);
     }
 #endif
 
@@ -1194,11 +1210,13 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     mdl.ncoeff = mdl.list[0] - 1;
-    if (effobs) {
-	mdl.nobs = effobs; /* FIXME? */
+    if (effobs > 0 && mdl.missmask == NULL) {
+	mdl.nobs = effobs;
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (mdl.missmask != NULL) {
+	if (mdl.nwt) {
+	    mdl.nobs = wls_usable_obs(&mdl, dset);
+	} else if (mdl.missmask != NULL) {
 	    mdl.nobs -= model_missval_count(&mdl);
 	}
     }
@@ -1231,6 +1249,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (rho != 0.0) {
+	gretl_model_set_int(&mdl, "maxlag", 1);
 	gretl_model_set_double(&mdl, "rho_gls", rho);
     }
 
@@ -3461,6 +3480,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
     clear_model(&rhomod);
 
+    gretl_model_set_int(&ar, "maxlag", maxlag);
     set_model_id(&ar, opt);
 
  bailout:
@@ -3565,6 +3585,11 @@ static int not_equal (double y, double x)
 
    FIXME: use inside a function, when the name of the dependent
    variable may be changed if it was a function argument?
+
+   TODO: for some purposes it could be useful to know not just
+   if there's a lagged dependent variable in the specification,
+   but also what the maximum such lag is. At present only lag 1
+   is handled.
 */
 
 static int lagdepvar (const int *list, const DATASET *dset)
@@ -3580,6 +3605,14 @@ static int lagdepvar (const int *list, const DATASET *dset)
 	    break;
 	}
 	xno = list[i];
+#if 0 /* not yet? */
+	/* check via varinfo */
+	if (series_get_parent_id(dset, xno) == yno &&
+	    series_get_lag(dset, xno) > 0) {
+	    ret = i;
+	    break;
+	}
+#endif
 	xname = dset->varname[xno];
 	p = strrchr(xname, '_');
 	if (p != NULL && isdigit(*(p + 1))) {

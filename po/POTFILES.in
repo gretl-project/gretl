@@ -1,5 +1,6 @@
 lib/src/addons_utils.c
 lib/src/adf_kpss.c
+lib/src/almosteq.c
 lib/src/bhhh_max.c
 lib/src/bootstrap.c
 lib/src/boxplots.c
@@ -85,6 +86,7 @@ lib/src/system.c
 lib/src/texprint.c
 lib/src/tokenize.c
 lib/src/transforms.c
+lib/src/tsjoin.c
 lib/src/tsls.c
 lib/src/usermat.c
 lib/src/uservar.c
@@ -93,8 +95,8 @@ lib/src/varprint.c
 lib/src/vartest.c
 cli/cli_object.c
 cli/complete.c
-cli/gretlcli-mpi.c
 cli/gretlcli.c
+cli/gretlcli-mpi.c
 gui/about.c
 gui/calculator.c
 gui/callbacks.c
@@ -115,15 +117,15 @@ gui/fontfilter.c
 gui/gfn_arglists.c
 gui/gpt_control.c
 gui/gpt_dialog.c
-gui/graph_page.c
 gui/graphics.c
+gui/graph_page.c
 gui/gretl.c
 gui/gretl_ipc.c
 gui/gretlwin32.c
 gui/gtkfontselhack.c
+gui/guiprint.c
 gui/gui_recode.c
 gui/gui_utils.c
-gui/guiprint.c
 gui/helpfiles.c
 gui/join-gui.c
 gui/lagpref.c
@@ -140,7 +142,6 @@ gui/series_view.c
 gui/session.c
 gui/session_xml.c
 gui/settings.c
-gui/spinner.c
 gui/ssheet.c
 gui/tabwin.c
 gui/textbuf.c
@@ -161,6 +162,7 @@ plugin/arma_x12.c
 plugin/as154.c
 plugin/as197.c
 plugin/as_driver.c
+plugin/bdstest.c
 plugin/biprobit.c
 plugin/dpanel.c
 plugin/duration.c
@@ -195,6 +197,8 @@ plugin/panurc.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
+plugin/purebin.c
+plugin/purebin-swap.c
 plugin/quantreg.c
 plugin/range-mean.c
 plugin/regls.c
@@ -206,8 +210,8 @@ plugin/stata_import.c
 plugin/stats_tables.c
 plugin/svm.c
 plugin/sysest.c
-plugin/tramo-x12a.c
 plugin/tramo_options.c
+plugin/tramo-x12a.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c

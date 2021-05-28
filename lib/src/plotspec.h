@@ -160,6 +160,7 @@ struct GPT_SPEC_ {
     char border_lc[8];         /* border line color */
     int bmargin;               /* bottom margin */
     float boxwidth;            /* when using box style for frequency plots */
+    float fillfrac;            /* fraction for "set style fill solid" */
     GPT_LINE *lines;           /* details on individual lines */
     char **literal;            /* additional commands */
     int n_literal;             /* number of the above */

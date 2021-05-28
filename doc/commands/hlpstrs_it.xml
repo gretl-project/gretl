@@ -50,6 +50,7 @@
  <gentext key="bundleref"     text="riferimento a bundle"/>
  <gentext key="scalarref"     text="riferimento a scalare"/>
  <gentext key="objectref"     text="riferimento all'oggetto"/>
+ <gentext key="stringref"     text="riferimento alla stringa"/>
  <gentext key="cvec"          text="vettore colonna"/>
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>

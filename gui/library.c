@@ -84,10 +84,6 @@
 #include "fnsave.h"
 #include "dbread.h"
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
-# include "spinner.h"
-#endif
-
 #define CMD_DEBUG 0
 
 /* file scope state variables */
@@ -821,23 +817,6 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
     }
 }
 
-static void do_qq_xyplot (const char *buf, gretlopt opt)
-{
-    int err;
-
-    lib_command_sprintf("qqplot%s", buf);
-    err = parse_lib_command();
-
-    if (!err) {
-        err = qq_plot(libcmd.list, dataset, opt);
-        gui_graph_handler(err);
-    }
-
-    if (!err) {
-        record_command_verbatim();
-    }
-}
-
 int menu_op_wrapper (selector *sr)
 {
     const char *buf = selector_list(sr);
@@ -847,8 +826,6 @@ int menu_op_wrapper (selector *sr)
 
     if (buf == NULL) {
         err = 1;
-    } else if (ci == QQPLOT) {
-        do_qq_xyplot(buf, opt);
     } else {
         do_menu_op(ci, buf, opt, NULL);
     }
@@ -861,12 +838,8 @@ static int menu_op_ci (GtkAction *action)
     const char *s = gtk_action_get_name(action);
     int ci = gretl_command_number(s);
 
-    if (ci == 0) {
-        if (!strcmp(s, "VarSummary")) {
-            ci = VAR_SUMMARY;
-        } else if (!strcmp(s, "GR_QQ")) {
-            ci = QQPLOT;
-        }
+    if (ci == 0 && !strcmp(s, "VarSummary")) {
+	ci = VAR_SUMMARY;
     }
 
     return ci;
@@ -892,8 +865,6 @@ void menu_op_action (GtkAction *action, gpointer p)
             str = N_("summary statistics");
         } else if (ci == CORR) {
             str = N_("correlation matrix");
-        } else if (ci == QQPLOT) {
-            str = N_("Q-Q plot");
         } else if (ci == XTAB) {
             str = N_("cross tabulation");
         }
@@ -2751,7 +2722,7 @@ void add_leverage_data (windata_t *vwin)
 {
     unsigned char (*leverage_data_dialog) (void);
     gretl_matrix *m = (gretl_matrix *) vwin->data;
-    unsigned char opt;
+    unsigned char flags;
     int err;
 
     if (m == NULL) return;
@@ -2759,10 +2730,10 @@ void add_leverage_data (windata_t *vwin)
     leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog");
     if (leverage_data_dialog == NULL) return;
 
-    opt = leverage_data_dialog();
-    if (opt == 0) return;
+    flags = leverage_data_dialog();
+    if (flags == 0) return;
 
-    err = add_leverage_values_to_dataset(dataset, m, opt);
+    err = add_leverage_values_to_dataset(dataset, m, OPT_O, flags);
 
     if (err) {
         gui_errmsg(err);
@@ -3948,10 +3919,10 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     char bufline[MAXLINE];
     char **lines = NULL;
     int n_lines = 0;
-    int started = 0, ended = 0;
+    int started = 0;
     MODEL *pmod = NULL;
     const char *cstr;
-    char endstr[8];
+    gchar *endstr = NULL;
     PRN *prn = NULL;
     int err = 0;
 
@@ -3959,8 +3930,21 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
         return;
     }
 
+    if (ci == MLE && (opt & OPT_N)) {
+	/* GUI-special way of passing --robust=hac */
+	set_optval_string(MLE, OPT_R, "hac");
+	opt |= OPT_R;
+	opt &= ~OPT_N;
+    }
+
     cstr = gretl_command_word(ci);
-    sprintf(endstr, "end %s", cstr);
+    if (opt != OPT_NONE) {
+	const char *ostr = print_flags(opt, ci);
+
+	endstr = g_strdup_printf("end %s%s", cstr, ostr);
+    } else {
+	endstr = g_strdup_printf("end %s", cstr);
+    }
 
     bufgets_init(buf);
     *realline = '\0';
@@ -3995,8 +3979,6 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
         if (started && !strncmp(realline, endstr, 7)) {
             /* we got, e.g., "end nls" */
-            strings_array_add(&lines, &n_lines, realline);
-            ended = 1;
             break;
         }
 
@@ -4037,10 +4019,11 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     bufgets_finalize(buf);
     g_free(buf);
 
-    if (!err && !ended) {
-        /* if the user didn't give "end XXX", add it for the record */
+    if (!err && endstr != NULL) {
+        /* add "end XXX", including any option flags */
         strings_array_add(&lines, &n_lines, endstr);
     }
+    g_free(endstr);
 
     if (!err && bufopen(&prn)) {
         err = 1;
@@ -5339,8 +5322,13 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
     }
 }
 
+/* we'll roll the BDS nonlinearity test in with the following,
+   since it requires the same basic setup
+*/
+
 void do_resid_freq (GtkAction *action, gpointer p)
 {
+    const gchar *aname = gtk_action_get_name(action);
     FreqDist *freq = NULL;
     PRN *prn;
     windata_t *vwin = (windata_t *) p;
@@ -5349,6 +5337,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
     int origv = dataset->v;
+    int uv, bds = 0;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -5357,7 +5346,10 @@ void do_resid_freq (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    if (LIMDEP(pmod->ci)) {
+    if (!strcmp(aname, "bds")) {
+	/* BDS test */
+	bds = 1;
+    } else if (LIMDEP(pmod->ci)) {
         err = gretl_model_get_normality_test(pmod, prn);
         if (err) {
             gui_errmsg(err);
@@ -5395,9 +5387,17 @@ void do_resid_freq (GtkAction *action, gpointer p)
         return;
     }
 
-    /* OPT_Z: compare with normal dist */
-    freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0,
-                    pmod->ncoeff, OPT_Z, &err);
+    uv = dset->v - 1;
+    strcpy(dset->varname[uv], "residual");
+
+    if (bds) {
+	bdstest_dialog(uv, vwin_toplevel(vwin));
+	goto finish;
+    } else {
+	/* OPT_Z: compare with normal dist */
+	freq = get_freq(uv, dset, NADBL, NADBL, 0,
+			pmod->ncoeff, OPT_Z, &err);
+    }
 
     if (err) {
         gui_errmsg(err);
@@ -5420,6 +5420,8 @@ void do_resid_freq (GtkAction *action, gpointer p)
             }
         }
     }
+
+ finish:
 
     trim_dataset(pmod, origv);
     dataset->t1 = save_t1;
@@ -5451,8 +5453,7 @@ void do_freq_dist (void)
 
     if (gretl_isdummy(dataset->t1, dataset->t2, y)) {
         nbins = 3;
-    } else if (series_is_discrete(dataset, v) ||
-               gretl_isdiscrete(dataset->t1, dataset->t2, y) > 1) {
+    } else if (accept_as_discrete(dataset, v, 1)) {
         discrete = 1;
     }
 
@@ -7168,54 +7169,14 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
-static PRN *data_prn_via_file (const int *list)
-{
-    PRN *prn = NULL;
-    char fname[MAXLEN];
-    gchar *buf = NULL;
-    gsize sz = 0;
-    int err = 0;
-
-    if (user_fopen("data_display_tmp", fname, &prn)) {
-        return NULL;
-    }
-
-    err = printdata(list, NULL, dataset, OPT_O, prn);
-    gretl_print_destroy(prn);
-    prn = NULL;
-
-    if (!err) {
-        err = gretl_file_get_contents(fname, &buf, &sz);
-    }
-
-    if (err) {
-        gui_errmsg(err);
-    } else {
-        prn = gretl_print_new_with_gchar_buffer(buf);
-    }
-
-    remove(fname);
-
-    return prn;
-}
-
-/* Max number of observations for which we use the buffer approach for
-   displaying data, as opposed to disk file. (Note, 2015-12-05: the
-   number is now increased substantially; however, this limit may
-   now be pretty much redundant. It was introduced because printing
-   to memory via pprintf was much slower than printing to file, on
-   account of the need to track the size of the in-memory buffer.
-   However, pprintf() is now more efficient and computers are
-   faster.
-*/
-
-#define MAXDISPLAY 65536 /* was 8192 */
+#define MAXDISPLAY 1000000
 
 void display_selected (void)
 {
     int n = sample_size(dataset);
     PRN *prn = NULL;
     int *list = NULL;
+    int nvals;
     int err = 0;
 
     list = main_window_selection_as_list();
@@ -7223,28 +7184,29 @@ void display_selected (void)
         return;
     }
 
+    nvals = list[0] * n;
+    if (nvals > MAXDISPLAY) {
+	warnbox_printf(_("Too many data values (%d) for display.\n"
+			 "You might try limiting the sample range."),
+		       nvals);
+	free(list);
+	return;
+    }
+
     /* special case: showing only one series */
     if (list[0] == 1) {
         display_var();
-        goto display_exit;
+	free(list);
+        return;
     }
 
-    if (list[0] * n > MAXDISPLAY) {
-        /* use disk file */
-        prn = data_prn_via_file(list);
-        if (prn == NULL) {
-            err = 1;
-        }
-    } else {
-        /* use buffer */
-        if (bufopen(&prn)) {
-            goto display_exit;
-        }
-        err = printdata(list, NULL, dataset, OPT_O, prn);
-        if (err) {
-            gui_errmsg(err);
-            gretl_print_destroy(prn);
-        }
+    err = bufopen(&prn);
+    if (!err) {
+	err = printdata(list, NULL, dataset, OPT_O, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	}
     }
 
     if (!err) {
@@ -7254,8 +7216,6 @@ void display_selected (void)
         view_buffer(prn, 78, 400, _("gretl: display data"),
                     PRINT, sview);
     }
-
- display_exit:
 
     free(list);
 }
@@ -7687,7 +7647,7 @@ int do_regular_boxplot (selector *sr)
 int do_factorized_boxplot (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int err;
+    int err = 0;
 
     if (buf == NULL) {
         return 1;
@@ -7699,13 +7659,15 @@ int do_factorized_boxplot (selector *sr)
         return 1;
     }
 
-    if (libcmd.list[0] != 2 ||
-        (!series_is_discrete(dataset, libcmd.list[2]) &&
-         !gretl_isdiscrete(dataset->t1, dataset->t2,
-                           dataset->Z[libcmd.list[2]]))) {
+    if (libcmd.list[0] != 2) {
+	err = 1;
+    } else if (!accept_as_discrete(dataset, libcmd.list[2], 0)) {
+	err = 1;
+    }
+    if (err) {
         errbox(_("You must supply two variables, the second of "
                  "which is discrete"));
-        return 1;
+        return err;
     }
 
     err = boxplots(libcmd.list, NULL, dataset, OPT_Z);
@@ -7723,7 +7685,7 @@ int do_factorized_boxplot (selector *sr)
 int do_dummy_graph (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int err;
+    int err = 0;
 
     if (buf == NULL) return 1;
 
@@ -7732,13 +7694,15 @@ int do_dummy_graph (selector *sr)
         return 1;
     }
 
-    if (libcmd.list[0] != 3 ||
-        (!series_is_discrete(dataset, libcmd.list[3]) &&
-         !gretl_isdiscrete(dataset->t1, dataset->t2,
-                           dataset->Z[libcmd.list[3]]))) {
-        errbox(_("You must supply three variables, the last of "
+    if (libcmd.list[0] != 3) {
+	err = 1;
+    } else if (!accept_as_discrete(dataset,libcmd.list[3], 0)) {
+	err = 1;
+    }
+    if (err) {
+	errbox(_("You must supply three variables, the last of "
                  "which is discrete"));
-        return 1;
+        return err;
     }
 
     err = gnuplot(libcmd.list, NULL, dataset, OPT_G | OPT_Z);
@@ -7772,6 +7736,26 @@ int do_xyz_graph (selector *sr)
     err = xy_plot_with_control(libcmd.list, NULL,
                                dataset, OPT_NONE);
     gui_graph_handler(err);
+    if (!err) {
+        record_lib_command();
+    }
+
+    return 0;
+}
+
+int do_qq_from_selector (selector *sr)
+{
+    const char *buf = selector_list(sr);
+    int err;
+
+    lib_command_sprintf("qqplot%s", buf);
+    if (parse_lib_command()) {
+	return 1;
+    }
+
+    err = qq_plot(libcmd.list, dataset, OPT_NONE);
+    gui_graph_handler(err);
+
     if (!err) {
         record_lib_command();
     }
@@ -8027,17 +8011,15 @@ void display_var (void)
     n = sample_size(dataset);
 
     if (n > MAXDISPLAY) {
-        /* use disk file */
-        prn = data_prn_via_file(list);
-        if (prn == NULL) {
-            err = 1;
-        }
-    } else {
-        /* use buffer */
-        if (bufopen(&prn)) {
-            return;
-        }
-        err = printdata(list, NULL, dataset, OPT_O, prn);
+	warnbox_printf(_("Too many data values (%d) for display.\n"
+			 "You might try limiting the sample range."),
+		       n);
+	return;
+    }
+
+    err = bufopen(&prn);
+    if (!err) {
+         err = printdata(list, NULL, dataset, OPT_O, prn);
         if (err) {
             gui_errmsg(err);
             gretl_print_destroy(prn);
@@ -8922,7 +8904,8 @@ static int shrink_dataset_to_sample (void)
     return err;
 }
 
-static void maybe_shrink_dataset (const char *newname)
+static int maybe_shrink_dataset (const char *newname,
+				 int action)
 {
     int shrink = 0;
     int resp;
@@ -8940,11 +8923,16 @@ static void maybe_shrink_dataset (const char *newname)
     if (shrink) {
         if (dataset_is_subsampled(dataset)) {
             shrink_dataset_to_sample();
+	    if (action == SAVE_MAP) {
+		dataset_set_mapfile(dataset, newname);
+	    }
         }
         if (datafile != newname) {
             strcpy(datafile, newname);
         }
     }
+
+    return shrink;
 }
 
 static int maybe_back_up_datafile (const char *fname)
@@ -9099,6 +9087,18 @@ int do_store (char *filename, int action, gpointer data)
     int cancel = 0;
     int err = 0;
 
+    if (action == WRITE_MAP) {
+	/* quick, simple writing of map to geojson */
+	err = gui_write_data(filename, NULL, dataset, OPT_NONE);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    lib_command_sprintf("store \"%s\"", filename);
+	    record_command_verbatim();
+	}
+	return err;
+    }
+
     /* If the dataset is sub-sampled, give the user a chance to
        rebuild the full data range before saving.
     */
@@ -9106,9 +9106,11 @@ int do_store (char *filename, int action, gpointer data)
         return 0; /* canceled */
     }
 
-    opt = store_action_to_opt(filename, action, &exporting, &cancel);
-    if (cancel) {
-        return 0;
+    if (action != SAVE_MAP) {
+	opt = store_action_to_opt(filename, action, &exporting, &cancel);
+	if (cancel) {
+	    return 0;
+	}
     }
 
     if (action == AUTO_SAVE_DATA) {
@@ -9118,7 +9120,7 @@ int do_store (char *filename, int action, gpointer data)
 
     lib_command_sprintf("store \"%s\"", filename);
 
-    if (exporting) {
+    if (exporting || action == SAVE_MAP) {
         /* @mylist will be NULL unless there's a current selection
            of series from the apparatus in selector.c. That's OK:
            implicitly all series will be saved.
@@ -9145,7 +9147,7 @@ int do_store (char *filename, int action, gpointer data)
 
     err = parse_lib_command();
 
-    if (!err && !WRITING_DB(opt)) {
+    if (!err && !WRITING_DB(opt) && action != SAVE_MAP) {
         /* back up the existing datafile if need be */
         err = maybe_back_up_datafile(filename);
         if (err) {
@@ -9169,20 +9171,27 @@ int do_store (char *filename, int action, gpointer data)
 
     if (!err && !exporting) {
         /* record the fact that data have been saved, etc. */
+	int modified = data_status & MODIFIED_DATA;
+	int shrunk = 0;
+
         mkfilelist(FILE_LIST_DATA, filename, 0);
         if (dataset_is_subsampled(dataset)) {
-            maybe_shrink_dataset(filename);
+            shrunk = maybe_shrink_dataset(filename, action);
         } else if (datafile != filename) {
             strcpy(datafile, filename);
         }
         data_status = (HAVE_DATA | USER_DATA);
+	if (action == SAVE_MAP && !shrunk && modified) {
+	    /* reinstate the "modified" flag */
+	    data_status |= MODIFIED_DATA;
+	}
         if (is_gzipped(datafile)) {
             data_status |= GZIPPED_DATA;
         }
         set_sample_label(dataset);
     }
 
-    if (!err) {
+    if (!err && action != SAVE_MAP) {
         if (WRITING_DB(opt)) {
             database_description_dialog(filename);
         } else {
@@ -9196,9 +9205,11 @@ int do_store (char *filename, int action, gpointer data)
 
 #ifdef OS_OSX
 
-#include <Carbon/Carbon.h>
+# ifdef HAVE_CARBON
 
-#if 1 /* deprecated in OS X >= 10.10 */
+# include <Carbon/Carbon.h>
+
+/* deprecated in macOS >= 10.10, removed in macOS 11 */
 
 int osx_open_file (const char *path)
 {
@@ -9212,29 +9223,6 @@ int osx_open_file (const char *path)
 
     return err;
 }
-
-#else /* OK? */
-
-int osx_open_file (const char *path)
-{
-    CFURLRef u;
-    int err = 0;
-
-    u = CFURLCreateFromFileSystemRepresentation(NULL,
-                                                (const UInt8 *) path,
-                                                strlen(path),
-                                                false);
-    if (u != NULL) {
-        err = LSOpenCFURLRef(u, NULL);
-        CFRelease(u);
-    } else {
-        err = 1;
-    }
-
-    return err;
-}
-
-#endif
 
 int osx_open_pdf (const char *path, const char *dest)
 {
@@ -9311,6 +9299,132 @@ int osx_open_pdf (const char *path, const char *dest)
 
     return err;
 }
+
+# else /* macOS >= 10.10, no Carbon */
+
+# include <CoreFoundation/CoreFoundation.h>
+# include <CoreServices/CoreServices.h>
+
+int osx_open_file (const char *path)
+{
+    CFURLRef u;
+    int err = 0;
+
+    u = CFURLCreateFromFileSystemRepresentation(NULL,
+                                                (const UInt8 *) path,
+                                                strlen(path),
+                                                false);
+    if (u != NULL) {
+        err = LSOpenCFURLRef(u, NULL);
+        CFRelease(u);
+    } else {
+        err = 1;
+    }
+
+    return err;
+}
+
+int osx_open_pdf (const char *path, const char *dest)
+{
+    CFURLRef ref;
+    int done = 0;
+    int err;
+
+    ref = CFURLCreateFromFileSystemRepresentation(NULL,
+						  (const UInt8 *) path,
+						  strlen(path),
+						  false);
+
+    if (!err) {
+        CFURLRef appref;
+	int viewer = 0;
+
+	appref = LSCopyDefaultApplicationURLForURL(ref, kLSRolesAll, NULL);
+
+	if (appref == NULL) {
+	    err = 1;
+	} else {
+	    CFStringRef exe = CFURLGetString(appref);
+	    const char *s[] = {"Adobe", "Preview"};
+	    CFStringRef v[2];
+	    CFRange cfr;
+	    int i;
+
+	    v[0] = CFStringCreateWithCString(NULL, s[0], kCFStringEncodingASCII);
+	    v[1] = CFStringCreateWithCString(NULL, s[1], kCFStringEncodingASCII);
+
+	    for (i=0; i<2; i++) {
+		cfr = CFStringFind(exe, v[i], 0);
+		if (cfr.length > 0) {
+		    viewer = i+1;
+		}
+	    }
+
+	    CFRelease(v[0]);
+	    CFRelease(v[1]);
+        }
+
+        if (!err && viewer == 1) {
+            /* Adobe Acrobat or Acrobat Reader: try passing an
+               option to open at the specified chapter.
+            */
+	    const void *vals = {ref};
+	    CFArrayRef refs;
+            LSLaunchURLSpec uspec;
+            AEDesc desc;
+            gchar *opt;
+            int lserr;
+
+            opt = g_strdup_printf("nameddest=%s", dest);
+            AECreateDesc(typeChar, opt, strlen(opt), &desc);
+	    refs = CFArrayCreate(NULL, &vals, 1, &kCFTypeArrayCallBacks);
+
+            uspec.appURL = appref;
+            uspec.itemURLs = refs;
+            uspec.passThruParams = &desc;
+            uspec.launchFlags = kLSLaunchAsync;
+            uspec.asyncRefCon = NULL;
+
+            lserr = LSOpenFromURLSpec(&uspec, NULL);
+            if (lserr) {
+                fprintf(stderr, "LSOpenFromURLSpec, err = %d\n", lserr);
+            } else {
+                done = 1;
+            }
+            AEDisposeDesc(&desc);
+            g_free(opt);
+        } else if (!err && viewer == 2) {
+            /* The default Apple Preview.app: there's no option
+               as per Adobe, but we can at least try to open the
+               Table-of-Contents pane (Option-Control-3).
+            */
+            err = LSOpenCFURLRef(ref, NULL);
+            if (!err) {
+                FILE *fp = popen("/usr/bin/osascript", "w");
+
+                if (fp != NULL) {
+                    /* try to get the table of contents shown */
+                    fputs("activate application \"Preview\"\n", fp);
+                    fputs("tell application \"System Events\"\n", fp);
+                    fputs(" keystroke \"3\" using {option down, command down}\n", fp);
+                    fputs("end tell\n", fp);
+                    pclose(fp);
+                }
+                done = 1;
+            }
+        }
+    }
+
+    if (!err && !done) {
+        err = LSOpenCFURLRef(ref, NULL);
+    }
+
+    CFRelease(ref);
+
+    return err;
+}
+
+# endif /* Carbon-free varitn */
 
 int osx_open_url (const char *url)
 {
@@ -9449,7 +9563,11 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
 {
     int coding, n;
 
-    if (!strcmp(line, "set echo off") || !strcmp(line, "flush")) {
+    /* a few things that we don't want to echo at all */
+    if (!strcmp(line, "set echo off") ||
+	!strcmp(line, "flush") ||
+	!strncmp(line, "printf", 6) ||
+	(!strncmp(line, "print ", 6) && strchr(line, '"'))) {
         return;
     }
 
@@ -9465,11 +9583,7 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
         pprintf(prn, "%s\n", line);
     } else if (*line == '#') {
         pprintf(prn, "%s\n", line);
-    } else if (string_is_blank(line)) {
-        if (gretl_echo_space()) {
-            pputc(prn, '\n');
-        }
-    } else {
+    } else if (!string_is_blank(line)) {
         if (!coding) {
             pputs(prn, "? ");
         }
@@ -9610,9 +9724,7 @@ int execute_script (char *runfile, const char *buf,
             }
 
             if (!exec_err) {
-                if (!strncmp(line, "(* saved objects:", 17)) {
-                    strcpy(line, "quit");
-                } else if (!including) {
+		if (!including) {
                     if (gretl_echo_on()) {
                         gui_output_line(line, &state, prn);
                     } else if (*line == '#' && gretl_comments_on()) {
@@ -9836,16 +9948,25 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == FCAST) {
         register_graph();
     } else if (ci == CLEAR) {
-        if (s->cmd->opt & OPT_D) {
-            /* --dataset only */
+	if (s->cmd->opt & OPT_F) {
+	    /* clear functions only */
+	    gretl_functions_cleanup();
+        } else if (s->cmd->opt & OPT_D) {
+            /* clear dataset only */
             close_session(OPT_P);
         } else {
+	    /* clear all except functions */
             close_session(OPT_NONE);
         }
     } else if (ci == GP_ASYNC) {
         const char *pf = gretl_plotfile();
 
         gnuplot_view_3d(pf);
+    } else if (ci == SET) {
+	/* 2021-05-16: at present this is used only for
+	   setting of plot_collection
+	*/
+	adjust_plot_collection(s->cmd->parm2);
     }
 
     if (err) {
@@ -10391,6 +10512,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case QUIT:
         pprintf(prn, _("Script done\n"));
+	gretl_if_state_clear();
         break;
 
     case RUN:
@@ -10429,12 +10551,19 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         break;
 
     case CLEAR:
-        if (cmd->opt & OPT_D) {
-            /* --dataset only */
-            close_session(OPT_P);
-        } else {
-            close_session(OPT_NONE);
-        }
+	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
+	if (!err) {
+	    if (cmd->opt & OPT_F) {
+		/* clear functions only */
+		gretl_functions_cleanup();
+	    } else if (cmd->opt & OPT_D) {
+		/* clear dataset only */
+		close_session(OPT_P);
+	    } else {
+		/* clear everything but functions */
+		close_session(OPT_NONE);
+	    }
+	}
         break;
 
     case PKG:

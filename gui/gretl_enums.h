@@ -122,6 +122,7 @@ enum extra_cmds {
     BFGS_CONFIG,
     COUNTMOD,
     REGLS,
+    REGLS_ADV,
     BWFILTER,
     POLYWEIGHTS,
     EMAFILTER,
@@ -207,6 +208,8 @@ enum file_ops {
     SAVE_LABELS,
     SAVE_GFN_SPEC,
     SAVE_GFN_ZIP,
+    SAVE_MAP,
+    WRITE_MAP,
     END_SAVE_OTHER, /* marker for end of other user-file saving */
     EDIT_FUNCTIONS,
     SET_PROG,

@@ -2273,6 +2273,18 @@ const char *dataset_get_mapfile (const DATASET *dset)
     return dset == NULL ? NULL : dset->mapfile;
 }
 
+void dataset_set_mapfile (DATASET *dset, const char *fname)
+{
+    if (dset != NULL) {
+	free(dset->mapfile);
+	if (fname != NULL) {
+	    dset->mapfile = gretl_strdup(fname);
+	} else {
+	    dset->mapfile = NULL;
+	}
+    }
+}
+
 const char *dataset_period_label (const DATASET *dset)
 {
     if (dset == NULL) {
@@ -2296,7 +2308,7 @@ const char *dataset_period_label (const DATASET *dset)
    series that contain nothing but NAs
 */
 
-int maybe_prune_dataset (DATASET **pdset, void *p)
+int maybe_prune_dataset (DATASET **pdset, gretl_string_table *st)
 {
     DATASET *dset = *pdset;
     int allmiss, prune = 0, err = 0;
@@ -2349,7 +2361,6 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 	}
 
 	if (!err) {
-	    gretl_string_table *st = (gretl_string_table *) p;
 	    size_t ssize = dset->n * sizeof **newset->Z;
 	    int k = 1;
 
@@ -4125,11 +4136,12 @@ void series_ensure_level_zero (DATASET *dset)
     }
 }
 
-void series_attach_string_table (DATASET *dset, int i, void *ptr)
+void series_attach_string_table (DATASET *dset, int i,
+				 series_table *st)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	series_set_discrete(dset, i, 1);
-	dset->varinfo[i]->st = ptr;
+	dset->varinfo[i]->st = st;
     }
 }
 
@@ -4575,9 +4587,8 @@ static int alt_strvals_case (DATASET *dset, int v, gretl_array *a)
 /* here we're trying to set strings values on a series from
    scratch */
 
-int series_set_string_vals (DATASET *dset, int i, void *ptr)
+int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 {
-    gretl_array *a = ptr;
     gretl_matrix *vals = NULL;
     char **S = NULL;
     int ns = 0;
@@ -5192,8 +5203,8 @@ void series_unset_orig_pd (const DATASET *dset, int i)
     }
 }
 
-void *series_info_bundle (const DATASET *dset, int i,
-			  int *err)
+gretl_bundle *series_info_bundle (const DATASET *dset,
+				  int i, int *err)
 {
     gretl_bundle *b = NULL;
 
@@ -5684,12 +5695,157 @@ linfo_matrix_via_data (const int *list,
    the list positions of the two source series.
 */
 
-void *list_info_matrix (const int *list, const DATASET *dset,
-			gretlopt opt, int *err)
+gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
+				gretlopt opt, int *err)
 {
     if (opt & OPT_B) {
 	return linfo_matrix_via_data(list, dset, opt, err);
     } else {
 	return linfo_matrix_via_labels(list, dset, opt, err);
     }
+}
+
+#define MAP_DEBUG 0
+
+#define excluded(l,i) (l != NULL && !in_gretl_list(l,i))
+
+/* Given the current dataset and the $mapfile name recorded
+   on it: get the content of $mapfile as a bundle then
+   revise the bundle (a) to include only the features in the
+   current sample and (b) to reflect any changes in the dataset
+   (series added, deleted or modified). Return the modified
+   bundle.
+*/
+
+gretl_bundle *get_current_map (const DATASET *dset,
+			       const int *list,
+			       int *err)
+{
+    const char *sj, *id, *fname;
+    gretl_bundle *fi, *pp, *jb = NULL;
+    gretl_array *features = NULL;
+    int ntarg, fmax = 0;
+    int i, j, dsi, fidx;
+    double xj;
+
+    fname = dataset_get_mapfile(dset);
+
+    if (fname == NULL) {
+	gretl_errmsg_set("no mapfile is present");
+	*err = E_DATA;
+    } else if (dataset_is_resampled(dset)) {
+	/* most unlikely */
+	gretl_errmsg_set("dataset is resampled!");
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	jb = gretl_bundle_read_from_file(fname, 0, err);
+	if (!*err) {
+	    features = gretl_bundle_get_array(jb, "features", err);
+	}
+    }
+
+    if (!*err) {
+	int nobs;
+
+	fmax = gretl_array_get_length(features);
+	if (dset->submask != NULL) {
+	    nobs = get_full_length_n();
+	} else {
+	    nobs = dset->n;
+	}
+	if (fmax != nobs) {
+	    /* Although it may be sub-sampled, the full dataset must
+	       have a number of observations equal to the number of
+	       features in the existing map.
+	    */
+	    gretl_errmsg_set("map and dataset are out of sync!");
+	    *err = E_DATA;
+	}
+	/* the number of features we're seeking */
+	ntarg = sample_size(dset);
+    }
+
+    if (*err) {
+	gretl_bundle_destroy(jb);
+	return NULL;
+    }
+
+#if MAP_DEBUG
+    fprintf(stderr, "get_current_map: fmax %d, ntarg %d\n", fmax, ntarg);
+    printf(stderr, "checking for features to include/drop\n");
+#endif
+
+    /* index into dataset rows */
+    dsi = -1;
+
+    for (i=0, fidx=0; i<fmax; i++) {
+	int skip = 0;
+
+	if (dset->submask != NULL) {
+	    if (dset->submask[i] == 0) {
+		skip = 1;
+	    } else {
+		dsi++;
+	    }
+	} else {
+	    dsi = i;
+	}
+	if (dsi < dset->t1) {
+	    skip = 1;
+	} else if (dsi > dset->t2) {
+	    /* we've got everything we need */
+	    break;
+	}
+	if (skip) {
+#if MAP_DEBUG
+	    fprintf(stderr, "  drop sampled-out feature %d\n", i);
+#endif
+	    gretl_array_delete_element(features, fidx);
+	} else {
+	    fi = gretl_array_get_element(features, fidx, NULL, err);
+	    pp = gretl_bundle_get_bundle(fi, "properties", err);
+	    /* clear the existing properties bundle */
+	    gretl_bundle_void_content(pp);
+	    /* and refill it from the dataset */
+	    for (j=1; j<dset->v; j++) {
+		if (excluded(list, j)) {
+		    continue;
+		}
+		id = dset->varname[j];
+		if (is_string_valued(dset, j)) {
+		    sj = series_get_string_for_obs(dset, j, dsi);
+		    gretl_bundle_set_string(pp, id, sj);
+		} else {
+		    xj = dset->Z[j][dsi];
+		    gretl_bundle_set_scalar(pp, id, xj);
+		}
+	    }
+	    fidx++;
+#if MAP_DEBUG
+	    fprintf(stderr, "  included feature %d, now got %d\n", i, fidx);
+#endif
+	    if (fidx == ntarg) {
+#if MAP_DEBUG
+		fprintf(stderr, "  reached target of %d features, break\n", ntarg);
+#endif
+		break;
+	    }
+	}
+    }
+
+    fmax = gretl_array_get_length(features);
+
+#if MAP_DEBUG
+    fprintf(stderr, "after loop, features array has %d elements, fidx=%d\n",
+	    fmax, fidx);
+#endif
+
+    /* delete any unwanted trailing features */
+    for (j=fidx; j<fmax; j++) {
+	gretl_array_delete_element(features, fidx);
+    }
+
+    return jb;
 }

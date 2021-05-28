@@ -20,6 +20,9 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include "gretl_matrix.h"
+#include "gretl_bundle.h"
+
 typedef enum {
     DATA_NONE,
     DATA_XSECT,
@@ -94,7 +97,7 @@ typedef enum {
     COMPACT_MAX
 } CompactMethod;
 
-typedef struct _series_table series_table;
+typedef struct series_table_ series_table;
 
 /**
  * dataset_is_cross_section:
@@ -410,7 +413,7 @@ int renumber_series_with_checks (const int *list,
 				 DATASET *dset,
 				 PRN *prn);
 
-int maybe_prune_dataset (DATASET **pdset, void *p);
+int maybe_prune_dataset (DATASET **pdset, gretl_string_table *st);
 
 int build_stacked_series (double **pstack, int *list,
 			  int length, int offset,
@@ -425,6 +428,8 @@ const char *dataset_get_matrix_name (const DATASET *dset);
 const char *dataset_period_label (const DATASET *dset);
 
 const char *dataset_get_mapfile (const DATASET *dset);
+
+void dataset_set_mapfile (DATASET *dset, const char *fname);
 
 int series_is_log (const DATASET *dset, int i, char *parent);
 
@@ -533,7 +538,8 @@ void series_decrement_stack_level (DATASET *dset, int i);
 
 void series_ensure_level_zero (DATASET *dset);
 
-void series_attach_string_table (DATASET *dset, int i, void *ptr);
+void series_attach_string_table (DATASET *dset, int i,
+				 series_table *st);
 
 void series_destroy_string_table (DATASET *dset, int i);
 
@@ -552,7 +558,7 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s);
 int string_series_assign_value (DATASET *dset, int i,
 				int t, double x);
 
-int series_set_string_vals (DATASET *dset, int i, void *ptr);
+int series_set_string_vals (DATASET *dset, int i, gretl_array *a);
 
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns);
@@ -608,12 +614,16 @@ void series_set_orig_pd (const DATASET *dset, int i, int pd);
 
 void series_unset_orig_pd (const DATASET *dset, int i);
 
-void *series_info_bundle (const DATASET *dset, int i,
-			  int *err);
+gretl_bundle *series_info_bundle (const DATASET *dset, int i,
+				  int *err);
 
-void *list_info_matrix (const int *list,
-			const DATASET *dset,
-			gretlopt opt,
-			int *err);
+gretl_matrix *list_info_matrix (const int *list,
+				const DATASET *dset,
+				gretlopt opt,
+				int *err);
+
+gretl_bundle *get_current_map (const DATASET *dset,
+			       const int *list,
+			       int *err);
 
 #endif /* DATASET_H */

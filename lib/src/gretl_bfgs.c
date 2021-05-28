@@ -796,7 +796,7 @@ static int broken_gradient (double *g, int n)
 
 static void optim_get_user_values (double *b, int n, int *maxit,
 				   double *reltol, double *gradmax,
-				   int *quad, gretlopt opt, PRN *prn)
+				   gretlopt opt, PRN *prn)
 {
     int umaxit;
     double utol;
@@ -863,13 +863,6 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 
     /* maximum acceptable gradient norm */
     *gradmax = libset_get_double(BFGS_MAXGRAD);
-
-    /* step-length algorithm (BFGS only at present) */
-    if (quad != NULL) {
-	if (libset_get_int(OPTIM_STEPLEN) == STEPLEN_QUAD) {
-	    *quad = 1;
-	}
-    }
 }
 
 #define bfgs_print_iter(v,s,i) (v && (s == 1 || i % s == 0))
@@ -947,127 +940,6 @@ static int optim_gradcall (BFGS_GRAD_FUNC gradfunc,
     return ret;
 }
 
-/* returns number of coefficient that have actually changed */
-
-static int coeff_at_end (double *b, const double *X, const double *t,
-			 int n, double length)
-{
-    int i, ndelta = n;
-
-    for (i=0; i<n; i++) {
-	b[i] = X[i] + length * t[i];
-	if (coeff_unchanged(b[i], X[i])) {
-	    ndelta--;
-	}
-    }
-
-    return ndelta;
-}
-
-static double quad_slen (int n, int *pndelta, double *b,
-			 const double *X, const double *t,
-			 double *pf, BFGS_CRIT_FUNC cfunc, void *data,
-			 double g0, double f0, int *pfcount,
-			 int minimize)
-{
-    double d, f1 = *pf;
-    double steplen = 1.0, endpoint = 1.0;
-    int ndelta, crit_ok = 0, fcount = 0, f1_done = 0;
-    double safelen = 1.0e-12;
-    double incredible = -1.0e12;
-
-    /* Below: iterate so long as (a) we haven't achieved an acceptable
-       value of the criterion and (b) there is still some prospect
-       of doing so.
-    */
-
-    do {
-	crit_ok = 0;
-	ndelta = coeff_at_end(b, X, t, n, endpoint);
-
-	if (ndelta > 0) {
-	    if (!f1_done) {
-		f1 = optim_fncall(cfunc, b, data, minimize);
-		fcount++;
-	    }
-	    d = g0 * endpoint * acctol;
-
-	    /* find the optimal steplength by quadratic interpolation;
-	       inspired by Kelley (1999), "Iterative Methods for Optimization",
-	       especially section 3.2.1.
-	    */
-	    if (na(f1)) {
-		/* function goes into NA zone, presumably outside the
-		   admissible parameter space; hence, try a much smaller
-		   step. FIXME execution can come back here indefinitely.
-		*/
-		endpoint *= STEPFRAC;
-#if BFGS_DEBUG
-		fprintf(stderr, "quad_slen: f1 is NA; trimming\n");
-#endif
-	    } else if ((f1 - f0) < incredible) {
-		/* Same as above, with the exception that the objective
-		   function technically computes, but returns a fishy value.
-		*/
-		endpoint *= STEPFRAC;
-#if BFGS_DEBUG
-		fprintf(stderr, "opt_slen: %g is incredible; trimming\n",
-			f1 - f0);
-#endif
-	    } else if (f1 < f0 + d) {
-		/* function computes, but goes down: try quadratic approx */
-		steplen = 0.5 * endpoint * g0 / (f0 - f1 + g0);
-#if BFGS_DEBUG
-		fprintf(stderr, "quad_slen, interpolate: f0 = %g, f1 = %g, g0 = %g\n",
-			f0, f1, g0);
-		fprintf(stderr, "quad_slen, interpolate: endpoint = %g, "
-			"steplen = %g\n", endpoint, steplen);
-#endif
-
-		if (steplen < safelen) {
-		    /* We have a ludicrously small steplength here,
-		       most likely because the endpoint is too far out.
-		       Let's trim it down and retry.
-		    */
-		    endpoint *= STEPFRAC;
-		} else {
-		    ndelta = coeff_at_end(b, X, t, n, steplen);
-		    f1 = optim_fncall(cfunc, b, data, minimize);
-		    fcount++;
-#if BFGS_DEBUG
-		    fprintf(stderr, "quad_slen, interpolate: %g is safe\n", steplen);
-#endif
-		    crit_ok = !na(f1) && (f1 >= f0 + d);
-		    /* if the function still goes down (or berserk), let's
-		       trim the endpoint one more time and retry */
-#if BFGS_DEBUG
-		    fprintf(stderr, "quad_slen, interpolate: crit_ok = %d"
-			    " (f1 = %g)\n", crit_ok, f1);
-#endif
-		    if (!crit_ok) {
-			endpoint = steplen;
-			f1_done = 1;
-		    } else {
-			f1_done = 0;
-		    }
-		}
-	    } else {
-		crit_ok = 1;
-		steplen = endpoint;
-	    }
-	}
-    } while (ndelta > 0 && !crit_ok);
-
-#if BFGS_DEBUG
-    fprintf(stderr, "opt_slen: steplen = %g\n", steplen);
-#endif
-    *pndelta = ndelta;
-    *pfcount += fcount;
-    *pf = f1;
-
-    return steplen;
-}
-
 static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 			   double *pf, BFGS_CRIT_FUNC cfunc, void *data,
 			   double g0, double f0, int *pfcount, int minimize)
@@ -1121,14 +993,14 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     double **H = NULL;
     double *g, *t, *X, *c;
     int fcount, gcount, ndelta = 0;
-    int quad = 0, show_activity = 0;
+    int show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
     double fmax, f, f0, s, steplen = 0.0;
     double fdiff, D1, D2;
     int i, j, ilast, iter, done = 0;
     int err = 0;
 
-    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, &quad, opt, prn);
+    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     wspace = malloc(4 * n * sizeof *wspace);
     H = triangular_array_new(n);
@@ -1186,7 +1058,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	goto skipcalc;
     }
 
-    verbskip = libset_get_int("bfgs_verbskip");
+    verbskip = libset_get_int(BFGS_VERBSKIP);
     show_activity = show_activity_func_installed();
 
     do {
@@ -1247,16 +1119,9 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 	if (sumgrad > 0.0) {
 	    /* heading in the right direction (uphill) */
-	    if (quad) {
-		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data,
-				    sumgrad, fmax, &fcount, minimize);
-	    } else {
-		steplen = simple_slen(n, &ndelta, b, X, t, &f, cfunc, data,
-				      sumgrad, fmax, &fcount, minimize);
-	    }
-
+	    steplen = simple_slen(n, &ndelta, b, X, t, &f, cfunc, data,
+				  sumgrad, fmax, &fcount, minimize);
 	    fdiff = fabs(fmax - f);
-
 	    if (iter > 1 || fdiff > 0) {
 		done = fdiff <= reltol * (fabs(fmax) + reltol);
 #if BFGS_DEBUG
@@ -1510,7 +1375,7 @@ int LBFGS_max (double *b, int n,
 
     *fncount = *grcount = 0;
 
-    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, NULL, opt, prn);
+    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     /*
       m: the number of corrections used in the limited memory matrix.
@@ -1541,7 +1406,7 @@ int LBFGS_max (double *b, int n,
     nbd = ispace;
     iwa = nbd + n;
 
-    verbskip = libset_get_int("bfgs_verbskip");
+    verbskip = libset_get_int(BFGS_VERBSKIP);
     show_activity = show_activity_func_installed();
 
     if (gradfunc == NULL && combfunc == NULL) {
@@ -2462,9 +2327,6 @@ gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
     } else {
 	int quality = libset_get_int(FDJAC_QUAL);
 
-	if (eps == 0.0) {
-	    eps = libset_get_double(FDJAC_EPS);
-	}
 	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val,
 		m, &iflag, eps, wa, u);
     }
@@ -2781,7 +2643,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     /* needs some work */
-    optim_get_user_values(b, n, NULL, NULL, NULL, NULL, opt, prn);
+    optim_get_user_values(b, n, NULL, NULL, NULL, opt, prn);
 
     b1 = b0 + n;
     copy_to(b1, b, n);
@@ -3505,8 +3367,8 @@ static double find_x1 (double x0, double y0, double *py1,
     int warnsave, negbad = 0;
     int i;
 
-    warnsave = libset_get_bool("warnings");
-    libset_set_bool("warnings", 0);
+    warnsave = libset_get_bool(WARNINGS);
+    libset_set_bool(WARNINGS, 0);
 
     if (fabs(x0) < 0.001) {
 	a = (x0 == 0)? 0.1 : sgn(x0) * 0.1;
@@ -3533,7 +3395,7 @@ static double find_x1 (double x0, double y0, double *py1,
 	}
     }
 
-    libset_set_bool("warnings", warnsave);
+    libset_set_bool(WARNINGS, warnsave);
 
     return na(*py1) ? NADBL : x1;
 }

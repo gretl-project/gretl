@@ -27,10 +27,7 @@
 #include "toolbar.h"
 #include "cmdstack.h"
 #include "winstack.h"
-
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
-# include "spinner.h"
-#endif
+#include "gretl_ipc.h"
 
 #include "uservar.h"
 
@@ -139,7 +136,7 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_TABLE;
     } else if (role == SAVE_FUNCTIONS) {
 	id = GRETL_STOCK_TOOLS;
-    } else if (role == VIEW_DBNOMICS) {
+    } else if (role == VIEW_DBNOMICS || role == VIEW_BUNDLE) {
 	id = GRETL_STOCK_BUNDLE;
     }
 
@@ -172,10 +169,35 @@ static const gchar *get_window_title (GtkWidget *w)
 static const char *window_label (GtkWidget *w, int role)
 {
     if (role == MAINWIN) {
+#ifdef GRETL_PID_FILE
+	static char label[32];
+	int seqno = gretl_sequence_number();
+	gchar *tmp;
+
+	if (seqno > 1) {
+	    strcpy(label, _("Main window"));
+	    tmp = g_strdup_printf(" (%d)", seqno);
+	    strcat(label, tmp);
+	    g_free(tmp);
+	    return label;
+	}
+#endif
 	return _("Main window");
     } else {
 	return get_window_title(w);
     }
+}
+
+void plot_window_set_label (GtkWidget *w)
+{
+    gchar *aname = g_strdup_printf("%p", (void *) w);
+    GtkAction *action;
+
+    action = gtk_action_group_get_action(window_group, aname);
+    if (action != NULL) {
+	gtk_action_set_label(action, window_label(w, GNUPLOT));
+    }
+    g_free(aname);
 }
 
 /* callback to be invoked just before destroying a window that's
@@ -364,32 +386,6 @@ static void make_bullet (char *bullet)
 	strcpy(bullet, " *");
     }
 }
-
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
-
-static const gchar *gtk_action_get_label (GtkAction *action)
-{
-    static char aname[32];
-    gchar *tmp = NULL;
-
-    g_object_get(action, "label", &tmp, NULL);
-
-    *aname = '\0';
-    if (tmp != NULL) {
-	strncat(aname, tmp, 31);
-	g_free(tmp);
-    }
-
-    return aname;
-}
-
-static void gtk_action_set_label (GtkAction *action,
-				  const gchar *label)
-{
-    g_object_set(action, "label", label, NULL);
-}
-
-#endif /* remedial functions for older GTK */
 
 /* show a bullet or asterisk next to the entry for
    the current window */

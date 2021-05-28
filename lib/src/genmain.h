@@ -40,6 +40,7 @@ typedef enum {
     R_STOPWATCH,  /* stopwatch */
     R_TEST_BRK,   /* obs at which break occurs (QLR test) */
     R_LOGLEVEL,   /* current loglevel for errors/warnings/etc */
+    R_LOGSTAMP,   /* logger shows timestamp? (0/1) */
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_PUNIT,      /* 1-based panel unit index */
@@ -54,6 +55,7 @@ typedef enum {
     R_RESULT,     /* result of a "result-compatible" command */
     R_PNGFONT,    /* name of font selected for plots */
     R_MAPFILE,    /* name of current map file, if any */
+    R_MAP,        /* current map (if any) as bundle */
     R_MAX
 } RetrievalIndex;
 

@@ -80,7 +80,11 @@ union W128_T {
     uint64_t u64[2];
 };
 #elif defined(HAVE_SSE2)
+  #if defined(__aarch64__)
+  #include "sse2neon.h"
+  #else
   #include <emmintrin.h>
+  #endif
 
 /** 128-bit data structure */
 union W128_T {

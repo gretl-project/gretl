@@ -53,8 +53,8 @@ check: $(PKG).gfn
 install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
-	for f in examples/* ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+	for f in `cat $(PKGSRC)/examples/MANIFEST` ; do \
+	$(INSTALL_DATA) $(PKGSRC)/examples/$$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)

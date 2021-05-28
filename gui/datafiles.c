@@ -1722,7 +1722,7 @@ static GretlToolItem pager_items[] = {
     { N_("First"),    GTK_STOCK_GOTO_FIRST, G_CALLBACK(dbnomics_pager_call), 1 },
     { N_("Previous"), GTK_STOCK_GO_BACK,    G_CALLBACK(dbnomics_pager_call), 2 },
     { N_("Next"),     GTK_STOCK_GO_FORWARD, G_CALLBACK(dbnomics_pager_call), 3 },
-    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 },
+    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
@@ -2954,7 +2954,8 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
-	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
+	G_TYPE_BOOLEAN,  /* hidden boolean: zipfile? */
+	G_TYPE_STRING    /* hidden string: dependencies */
     };
     GType addons_types[] = {
 	G_TYPE_STRING,
@@ -3021,7 +3022,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = remote_func_titles;
 	types = remote_func_types;
 	cols = G_N_ELEMENTS(remote_func_types);
-	hidden_cols = 1;
+	hidden_cols = 2;
 	full_width = 760;
 	file_height = 340;
 	break;

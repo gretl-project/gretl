@@ -17,8 +17,6 @@
  *
  */
 
-#include "libset.h"
-
 #define DPDEBUG 0
 #define IVDEBUG 0
 
@@ -1491,10 +1489,6 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     int err = 0;
 
     gretl_model_init(&mod, dset);
-
-    if (libset_get_bool(DPDSTYLE)) {
-	opt |= OPT_X;
-    }
 
     if (opt & OPT_V) {
 	verbose = 1;

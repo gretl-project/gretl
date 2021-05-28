@@ -27,7 +27,7 @@
 {\noindent\hrulefill\\[-10pt]}
 {\medskip}
 
-\title{geoplot: cartography in gretl}
+\title{geoplot: cartography in gretl\\ version 0.2}
 \author{Allin Cottrell and Jack Lucchetti}
 
 \begin{document}
@@ -35,7 +35,7 @@
 \maketitle
 
 This document describes the \textsf{geoplot} addon package for gretl,
-which is new in version 2020c. We have found it preferable, for reason
+introduced in version 2020c. We have found it preferable, for reasons
 of efficiency, to implement its core mapping functionality via
 built-in functions, coded in C. For basic usage, therefore, it's not
 necessary to load the package explicitly via ``\texttt{include
@@ -107,18 +107,18 @@ offers a nice collection for European NUTS regions (NUTS =
 Nomenclature of Territorial Units for Statistics).}
 Gretl supports what are probably the two most common formats:
 \begin{itemize}
-\item GeoJSON files: plain JSON files with a pre-specified internal
-  structure, regulated by RFC 7946. Basically, an array of regions (or
-  ``features'') with each element containing the metadata and the
-  polygons, under the \texttt{properties} and \texttt{geometry} keys,
-  respectively.  This is our preferred format.
-\item ESRI shapefiles: more of a ``legacy'' format, but still very
-  common in the wild. These maps come as collections of several files,
+\item GeoJSON files: these are plain JSON files with a specified
+  internal structure regulated by RFC 7946. Basically, an array of
+  regions (or ``features'') with each element containing the metadata
+  and the polygons, under the \texttt{properties} and
+  \texttt{geometry} keys, respectively.
+\item ESRI shapefiles: these come as collections of several files,
   usually zipped together. The essential components are an
   \textsf{xBase} file, with \texttt{dbf} extension, holding the
   metadata; the shapefile proper with extension \texttt{shp}, holding
-  the polygons; and an index file with extension \texttt{shx}, used
-  to speed up operations when reading the data.
+  the polygons; and an index file with extension \texttt{shx}, used to
+  speed up operations when reading the data. The website
+  \url{https://gadm.org/} offers a huge collection of such files.
 \end{itemize}
 
 \subsection{The payload data}
@@ -481,7 +481,7 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 
 \begin{description}
 \item[\texttt{border}:] boolean, show a rectangular border around the
-  map. Default: true. (FIXME maybe reverse the default?)
+  map. Default: true.
 \item[\texttt{height}:] scalar, giving the height of the plot in
   pixels. Default: 600. Even if the desired output is a vector graphic
   (PDF or EPS) rather than a bitmap (see \texttt{plotfile} below),
@@ -534,6 +534,12 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   unless \texttt{geoplot} is invoked without any payload.
 \item[\texttt{title}:] string specifying a title for the
   plot. Default: no title.
+\item[\texttt{xrange}:] 2-element vector, containing the longitude
+  range used on the plot (see \ref{sec:xyranges}). Default:
+  automatically determined.
+\item[\texttt{yrange}:] 2-element vector, containing the latitude
+  range used on the plot (see \ref{sec:xyranges}). Default:
+  automatically determined.
 \end{description}
 
 It may be helpful to run through various \texttt{geoplot} scenarios
@@ -612,16 +618,14 @@ be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
 select one, in which case you'll get a choice of color palette to
 represent it. Otherwise you just get to view the map outlines.
 
-Further, the window shown by \textsf{Display map} offers a right-click
-menu that allows saving the map (as PDF, EPS, PNG or EMF), copying
-it to the clipboard, or saving it ``as an icon''.
+Further, the plot window shown by \textsf{Display map} offers a
+right-click menu that allows saving the map (as PDF, EPS, PNG or EMF),
+copying it to the clipboard, or saving it ``as an icon''.
 
 So far, that's it. We may at some point expand the \textsf{Display
   map} dialog to offer more of the choices available via the
 \texttt{options} argument to the \texttt{geoplot}
-function. (\textbf{TODO}: even if we don't load up this dialog with
-lots of options we should at least add a \textsf{Help} button which
-gives a brief account of how to exploit more options via scripting.)
+function.
 
 \section{``Expert'' refinements}
 \label{sec:expert}
@@ -803,7 +807,7 @@ we collect various ideas.
   \url{https://github.com/topojson/topojson}.
 \end{itemize}
 
-\section*{Coda}
+\section{Coda}
 
 In the foregoing we have mostly kept things simple with toy
 examples. In concluding, we'll show off with a ``real'' example:
@@ -840,6 +844,12 @@ examining a plot with no payload, showing the values on the axes.
   \label{fig:ita-covid}
 \end{figure}
 
+\section{Change log}
+
+Version 0.2 (2021-02-12): Fix some incorrect type specifiers in
+\verb|geoplot_utils.inp|, revealed by improved type-checking following
+the gretl 2021a release. \\[6pt]
+Version 0.1 (2020-05-27): Initial release
 
 \clearpage
 \startappendices
@@ -983,6 +993,7 @@ options.projection = "EPSG4326"
 \end{code}
 
 \subsection*{Limiting the area shown}
+\label{sec:xyranges}
 
 Section~\ref{sec:sub-sample} explains how to exclude certain features
 from a map using the \texttt{smpl} command. In some cases, however,

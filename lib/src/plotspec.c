@@ -114,6 +114,7 @@ GPT_SPEC *plotspec_new (void)
     spec->pd = 0;
     spec->nbars = 0;
     spec->boxwidth = 0;
+    spec->fillfrac = 0;
     spec->samples = 0;
     spec->border = GP_BORDER_DEFAULT;
     spec->border_lc[0] = '\0';
@@ -1475,6 +1476,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputs("set style fill solid 0.6\n", fp);
 	}
+    } else if (spec->fillfrac > 0) {
+	gretl_push_c_numeric_locale();
+	fprintf(fp, "set style fill solid %g\n", (double) spec->fillfrac);
+	gretl_pop_c_numeric_locale();
     }
 
     if (spec->flags & GPT_PRINT_MARKERS) {
@@ -1604,10 +1609,12 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
 	maybe_print_point_info(line, fp);
 
-	if (line->width == 1.0 && spec->scale > 1.0) {
-	    fprintf(fp, " lw 2");
-	} else if (line->width != 1) {
-	    fprintf(fp, " lw %g", (double) line->width);
+	if (line->style != GP_STYLE_FILLEDCURVE) {
+	    if (line->width == 1.0 && spec->scale > 1.0) {
+		fprintf(fp, " lw 2");
+	    } else if (line->width != 1) {
+		fprintf(fp, " lw %g", (double) line->width);
+	    }
 	}
 
 	if (line->whiskwidth > 0) {
@@ -1696,30 +1703,30 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
 
     if (!na(x0)) {
 	if (pd > 1) {
-	    sprintf(x, "(%.1f*(x-%.10g)+1)", pd, x0);
+	    sprintf(x, "(%.1f*(x-%.8g)+1)", pd, x0);
 	} else {
-	    sprintf(x, "(x-%.10g+1)", x0);
+	    sprintf(x, "(x-%.8g+1)", x0);
 	}
     } else {
 	strcpy(x, "x");
     }
 
     if (f == PLOT_FIT_OLS) {
-	sprintf(formula, "%.10g + %.10g*%s", b[0], b[1], x);
+	sprintf(formula, "%.8g + %.8g*%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_QUADRATIC) {
-	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2", b[0], b[1], x, b[2], x);
+	sprintf(formula, "%.8g + %.8g*%s + %.8g*%s**2", b[0], b[1], x, b[2], x);
     } else if (f == PLOT_FIT_CUBIC) {
-	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2 + %.10g*%s**3",
+	sprintf(formula, "%.8g + %.8g*%s + %.8g*%s**2 + %.8g*%s**3",
 		b[0], b[1], x, b[2], x, b[3], x);
     } else if (f == PLOT_FIT_INVERSE) {
-	sprintf(formula, "%.10g + %.10g/%s", b[0], b[1], x);
+	sprintf(formula, "%.8g + %.8g/%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_LOGLIN) {
-	sprintf(formula, "exp(%.10g + %.10g*%s)", b[0], b[1], x);
+	sprintf(formula, "exp(%.8g + %.8g*%s)", b[0], b[1], x);
     } else if (f == PLOT_FIT_LINLOG) {
 	if (!na(x0)) {
-	    sprintf(formula, "%.10g + %.10g*log%s", b[0], b[1], x);
+	    sprintf(formula, "%.8g + %.8g*log%s", b[0], b[1], x);
 	} else {
-	    sprintf(formula, "%.10g + %.10g*log(x)", b[0], b[1]);
+	    sprintf(formula, "%.8g + %.8g*log(x)", b[0], b[1]);
 	}
     }
 
@@ -1966,6 +1973,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     if (!err) {
 	if (f == PLOT_FIT_LOESS) {
 	    set_loess_fit(spec, d, q, X, y, yh);
+	    spec->lines[1].formula[0] = '\0';
 	} else {
 	    plotspec_set_fitted_line(spec, f, x0);
 	}

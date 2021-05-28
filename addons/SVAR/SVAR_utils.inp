@@ -84,7 +84,12 @@ function matrix N2_ify(const matrix A)
 end function
 
 function scalar has_unit_diag(const matrix Rd)
-    ret = 0
+    # this function analyses a matrix of constraints to check
+    # whether it implies that the diagonal of the corresponding
+    # parameter matrix is constrained to be 1; this is accomplished
+    # by looking for a suitable tranformation of the row space of
+    # Rd that returns a canonical constraint matrix 
+    
     n2 = cols(Rd) - 1
     n = sqrt(n2)
     matrix test = transp(seq(0,n2-1)) .= seq(0,n2-1,n+1)
@@ -93,15 +98,20 @@ function scalar has_unit_diag(const matrix Rd)
     matrix e
     mols(test, Rd', &e)
 
-    return maxr(sumc(e.*e)) < 1.0e-12 # ret
+    return max(abs(e)) < 1.0e-12 
 end function
 
 function scalar has_free_diag(const matrix Rd)
+    # this function analyses a matrix of constraints to check
+    # whether it implies that the diagonal of the corresponding
+    # parameter matrix is unconstrained; this is accomplished
+    # by checking that the relevant columns of the Rd matrix
+    # contain nothing but zeros
+    
     n2 = cols(Rd) - 1
     n = sqrt(n2)
     matrix e = 1 + seq(0,n2-1,n+1)
-    matrix test = Rd[,e]
-    return ( sumc(abs(test)) < 1.0e-12 ) # ret
+    return min(abs(Rd[,e])) == 0
 end function
 
 function matrix mat_exp(const matrix theta, const matrix Ss)
@@ -109,21 +119,21 @@ function matrix mat_exp(const matrix theta, const matrix Ss)
     # cols(Ss) should be equal to rows(theta)+1
 
     n2 = rows(Ss)
-    n = int(sqrt(n2))
+    n = round(sqrt(n2))
     k = cols(Ss) - 1
     matrix C = (k>0) ? ( Ss[,1:k]*theta + Ss[,k+1] ) : Ss
 
     return mshape(C,n,n)
 end function
 
-function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
-    n2 = rows(dat)
-    n = int(sqrt(n2))
-    k = cols(dat)
+# function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
+#     n2 = rows(dat)
+#     n = round(sqrt(n2))
+#     k = cols(dat)
 
-    Sigma = mshape(dat[,1],n,n)
-    Ss = dat[,2:k]
-end function
+#     Sigma = mshape(dat[,1],n,n)
+#     Ss = dat[,2:k]
+# end function
 
 
 function void maybe_flip_columns(const matrix C, matrix *X)

@@ -34,7 +34,6 @@ typedef enum {
     BUNDLE_KALMAN
 } BundleType;
 
-typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
 gretl_bundle *gretl_bundle_new (void);
@@ -102,9 +101,9 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 				     const char *key,
 				     int *err);
 
-void *gretl_bundle_get_array (gretl_bundle *bundle,
-			      const char *key,
-			      int *err);
+gretl_array *gretl_bundle_get_array (gretl_bundle *bundle,
+				     const char *key,
+				     int *err);
 
 gretl_bundle *gretl_bundle_get_bundle (gretl_bundle *bundle,
 				       const char *key,
@@ -113,6 +112,8 @@ gretl_bundle *gretl_bundle_get_bundle (gretl_bundle *bundle,
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
 const char *gretl_bundle_get_creator (gretl_bundle *bundle);
+
+const char *bundled_item_get_key (bundled_item *item);
 
 void *bundled_item_get_data (bundled_item *item, GretlType *type,
 			     int *size);
@@ -164,6 +165,8 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
 
 int gretl_bundle_print_tree (gretl_bundle *bundle, PRN *prn);
 
+void gretl_bundle_debug_print (gretl_bundle *bundle, const char *msg);
+
 int gretl_bundle_is_stacked (gretl_bundle *b);
 
 int gretl_bundle_get_n_keys (gretl_bundle *b);
@@ -211,7 +214,7 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 					     int len,
 					     int *err);
 
-void *gretl_bundle_get_keys (gretl_bundle *b, int *err);
+gretl_array *gretl_bundle_get_keys (gretl_bundle *b, int *err);
 
 char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns);
 
@@ -233,6 +236,13 @@ gretl_bundle *bundle_from_system (void *ptr,
 gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 				 int copy[], int nmat,
 				 int *err);
+
+int gretl_bundle_extract_args (gretl_bundle *defaults,
+			       gretl_bundle *input,
+			       gretl_array *reqd,
+			       PRN *prn, int *err);
+
+GList *gretl_bundle_get_sorted_items (gretl_bundle *b);
 
 void gretl_bundle_cleanup (void);
 

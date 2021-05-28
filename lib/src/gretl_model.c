@@ -27,6 +27,7 @@
 #include "gretl_cmatrix.h"
 #include "gretl_panel.h"
 #include "gretl_array.h"
+#include "qr_estimate.h"
 
 /**
  * SECTION:gretl_model
@@ -1010,9 +1011,9 @@ char *gretl_model_get_param_name (const MODEL *pmod,
     return targ;
 }
 
-void *gretl_model_get_param_names (const MODEL *pmod,
-				   const DATASET *dset,
-				   int *err)
+gretl_array *gretl_model_get_param_names (const MODEL *pmod,
+					  const DATASET *dset,
+					  int *err)
 {
     gretl_array *names = NULL;
 
@@ -2774,6 +2775,9 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 		err = model_make_clustered_GG(pmod, ci, G, GG,
 					      dset, &cvar, &n_c);
 	    }
+	} else if (opt & OPT_N) {
+	    /* Newey-West */
+	    GG = newey_west_OPG(G, &err);
 	} else {
 	    /* regular QML using OPG */
 	    GG = gretl_matrix_XTX_new(G);
@@ -2808,7 +2812,9 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	    gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
 	    pmod->opt |= OPT_C;
 	} else {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+	    MLVCVType vt = (opt & OPT_N)? ML_HAC : ML_QML;
+
+	    gretl_model_set_vcv_info(pmod, VCV_ML, vt);
 	}
 	pmod->opt |= OPT_R;
     }
@@ -5005,9 +5011,8 @@ static gretl_matrix *matrix_from_cmplx (model_data_item *item)
     return m;
 }
 
-int bundlize_model_data_items (const MODEL *pmod, void *ptr)
+int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b)
 {
-    gretl_bundle *b = (gretl_bundle *) ptr;
     model_data_item *item;
     char bkey[VNAMELEN];
     gretl_matrix *m;
@@ -6191,7 +6196,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	/* can't do these with embedded missing obs? */
 	if (gretl_is_regular_panel_model(pmod)) {
 	    ; /* OK? */
-	} else if (ci == CUSUM ||
+	} else if (ci == CUSUM || ci == BDS ||
 	    (ci == MODTEST && (opt & (OPT_A | OPT_H)))) {
 	    ok = 0;
 	}
@@ -6215,7 +6220,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_time_series(dset)) {
 	/* time-series-only tests */
-	if (ci == CUSUM || ci == QLRTEST ||
+	if (ci == CUSUM || ci == QLRTEST || ci == BDS ||
 	    (ci == MODTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
 	}
@@ -6422,7 +6427,7 @@ int model_use_zscore (const MODEL *pmod)
 	return 1;
     } else if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
 	return 1;
-    } else if ((pmod->opt & OPT_R) && libset_get_bool("robust_z")) {
+    } else if ((pmod->opt & OPT_R) && libset_get_bool(ROBUST_Z)) {
 	return 1;
     } else {
 	return 0;

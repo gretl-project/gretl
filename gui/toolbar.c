@@ -64,6 +64,8 @@
 #include "../pixmaps/mini.heatmap.xpm"
 #include "../pixmaps/mini.dbnomics.xpm"
 #include "../pixmaps/mail_16.xpm"
+#include "../pixmaps/fcast_16.xpm"
+#include "../pixmaps/close_16.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -115,14 +117,15 @@ enum {
     EDITOR_ITEM,
     NOTES_ITEM,
     NEW_ITEM,
-    CLOSE_ITEM,
     BUNDLE_ITEM,
     FIND_ITEM,
     COPY_SCRIPT_ITEM,
     BUILD_ITEM,
     HMAP_ITEM,
     DIGITS_ITEM,
-    DBN_ITEM
+    DBN_ITEM,
+    FCAST_ITEM,
+    CLOSE_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -164,6 +167,8 @@ void gretl_stock_icons_init (void)
 	{ open_menu_xpm, GRETL_STOCK_MENU},
 	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
 	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
+	{ fcast_16_xpm, GRETL_STOCK_FCAST},
+	{ close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);
@@ -706,13 +711,22 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     if (vwin->role == VIEW_SERIES) {
 	series_view_graph(w, vwin);
     } else if (vwin->role == VIEW_BUNDLE) {
-	exec_bundle_plot_function(vwin->data, NULL);
+	exec_bundle_special_function(vwin->data, BUNDLE_PLOT,
+				     NULL, vwin->main);
     } else if (vwin->role == CORR) {
 	do_corr_plot(vwin);
     } else if (vwin->role == VIEW_DBNOMICS) {
 	show_dbnomics_data(vwin, 1);
     } else {
 	do_nonparam_plot(vwin);
+    }
+}
+
+static void toolbar_fcast_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->role == VIEW_BUNDLE) {
+	exec_bundle_special_function(vwin->data, BUNDLE_FCAST,
+				     NULL, vwin->main);
     }
 }
 
@@ -747,12 +761,26 @@ static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
 static int bundle_plot_ok (windata_t *vwin)
 {
     gretl_bundle *b = vwin->data;
-    gchar *pf = get_bundle_plot_function(b);
+    gchar *pf = get_bundle_special_function(b, BUNDLE_PLOT);
     int ret = 0;
 
     if (pf != NULL) {
 	ret = 1;
 	g_free(pf);
+    }
+
+    return ret;
+}
+
+static int bundle_fcast_ok (windata_t *vwin)
+{
+    gretl_bundle *b = vwin->data;
+    gchar *ff = get_bundle_special_function(b, BUNDLE_FCAST);
+    int ret = 0;
+
+    if (ff != NULL) {
+	ret = 1;
+	g_free(ff);
     }
 
     return ret;
@@ -824,6 +852,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(toolbar_plot_callback), PLOT_ITEM },
+    { N_("Forecast"), GRETL_STOCK_FCAST, G_CALLBACK(toolbar_fcast_callback), FCAST_ITEM },
     { N_("Heatmap"), GRETL_STOCK_HMAP, G_CALLBACK(toolbar_plot_callback), HMAP_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
     { N_("Edit values..."), GTK_STOCK_EDIT, G_CALLBACK(series_view_edit), EDITOR_ITEM },
@@ -993,6 +1022,12 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	} else {
 	    return NULL;
 	}
+    } else if (f == FCAST_ITEM) {
+	if (r == VIEW_BUNDLE && bundle_fcast_ok(vwin)) {
+	    ; /* alright then */
+	} else {
+	    return NULL;
+	}	    
     } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
 	return NULL;
     } else if (!split_v_ok(r) && f == SPLIT_V_ITEM) {
@@ -1180,6 +1215,8 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
 	accel = "Ctrl+S";
     } else if (tool->flag == FIND_ITEM) {
 	accel = "Ctrl+F";
+    } else if (!strcmp(tool->icon, GTK_STOCK_FIND_AND_REPLACE)) {
+	accel = "Ctrl+H";
     }
 
     if (accel != NULL) {

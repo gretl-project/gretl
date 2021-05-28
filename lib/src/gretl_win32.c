@@ -1840,29 +1840,6 @@ void win32_pprint_nonfinite (PRN *prn, double x, char c)
     }
 }
 
-static LARGE_INTEGER timer_freq;
-static LARGE_INTEGER wt0;
-
-void win32_stopwatch_init (void)
-{
-    QueryPerformanceFrequency(&timer_freq);
-    QueryPerformanceCounter(&wt0);
-}
-
-double win32_stopwatch (void)
-{
-    LARGE_INTEGER wt1;
-    gint64 dt;
-
-    QueryPerformanceCounter(&wt1);
-    dt = wt1.QuadPart - wt0.QuadPart;
-    dt *= 1000000;
-    dt /= timer_freq.QuadPart;
-    wt0 = wt1;
-
-    return (double) dt / 1.0e6;
-}
-
 static int vista_or_higher (void)
 {
     OSVERSIONINFO osv = {0};

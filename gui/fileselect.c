@@ -77,6 +77,8 @@ static struct extmap action_map[] = {
     { SAVE_LABELS,       ".txt" },
     { SAVE_GFN_SPEC,     ".spec" },
     { SAVE_GFN_ZIP,      ".zip" },
+    { SAVE_MAP,          ".geojson" },
+    { WRITE_MAP,         ".geojson" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".txt" },
     { EXPORT_OCTAVE,     ".m" },
@@ -528,7 +530,7 @@ static char *suggested_savename (const char *fname)
     return s;
 }
 
-static char *suggested_exportname (const char *fname, int action)
+static gchar *suggested_exportname (const char *fname, int action)
 {
     const char *ss = path_last_slash_const(fname);
     char *s, *sfx;
@@ -572,6 +574,18 @@ static char *suggested_exportname (const char *fname, int action)
     }
 
     return s;
+}
+
+static gchar *suggested_mapname (const char *fname)
+{
+    if (has_suffix(fname, ".shp")) {
+	gchar *targ = g_malloc0(strlen(fname) + 5);
+
+	switch_ext(targ, fname, "geojson");
+	return targ;
+    } else {
+	return NULL;
+    }
 }
 
 static void bootstrap_save_callback (const char *fname)
@@ -714,6 +728,8 @@ file_selector_process_result (const char *in_fname, int action,
 	err = save_function_package_spec(fname, data);
     } else if (action == SAVE_GFN_ZIP) {
 	err = save_function_package_zipfile(fname, data);
+    } else if (action == SAVE_MAP || action == WRITE_MAP) {
+	err = do_store(fname, action, data);
     } else if (action == SELECT_PDF) {
 	err = set_package_pdfname(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
@@ -831,6 +847,12 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
+    } else if (action == SAVE_DATA && *datafile != '\0') {
+	currname = suggested_mapname(datafile);
+	if (currname != NULL) {
+	    gtk_file_chooser_set_current_name(filesel, currname);
+	    g_free(currname);
+	}
     } else if (action == SAVE_CMD_LOG) {
 	gtk_file_chooser_set_current_name(filesel, "session.inp");
     } else if (action == SET_PROG || action == SET_DIR || action == SET_OTHER) {
@@ -1199,6 +1221,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	title = g_strdup_printf("gretl: %s", _("open file"));
 	plain_open = 1;
     } else {
+	/* it's a save action of some sort */
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
 	if (action == SAVE_FUNCTIONS ||
@@ -1207,7 +1230,13 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    action == SAVE_GFN_ZIP) {
 	    remember = 0;
 	}
-	title = g_strdup_printf("gretl: %s", _("save file"));
+	if (action == SAVE_MAP) {
+	    title = g_strdup_printf("gretl: %s", _("save map as geojson"));
+	} else if (action == WRITE_MAP) {
+	    title = g_strdup_printf("gretl: %s", _("write map as geojson"));
+	} else {
+	    title = g_strdup_printf("gretl: %s", _("save file"));
+	}
     }
 
     if (dirname != NULL) {

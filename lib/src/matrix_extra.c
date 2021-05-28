@@ -97,14 +97,14 @@ gretl_vector *gretl_vector_from_series (const double *x,
 					int t1, int t2)
 {
     gretl_matrix *v = NULL;
-    int i, n = t2 - t1 + 1;
+    int n = t2 - t1 + 1;
 
     if (n > 0) {
+	size_t sz = n * sizeof *x;
+
 	v = gretl_column_vector_alloc(n);
 	if (v != NULL) {
-	    for (i=0; i<n; i++) {
-		v->val[i] = x[i + t1];
-	    }
+	    memcpy(v->val, x + t1, sz);
 	    gretl_matrix_set_t1(v, t1);
 	    gretl_matrix_set_t2(v, t2);
 	}
@@ -888,7 +888,9 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	    memcpy(dset->Z[i], src, T * sizeof *src);
 	}
 	if (cnames != NULL) {
-	    gretl_normalize_varname(dset->varname[i], cnames[col], 0, i);
+	    if (gretl_normalize_varname(dset->varname[i], cnames[col], 0, i)) {
+		series_record_display_name(dset, i, cnames[col]);
+	    }
 	} else if (opt & OPT_N) {
 	    sprintf(dset->varname[i], "%d", col + 1);
 	} else if (opt & OPT_R) {
@@ -1212,7 +1214,7 @@ static double unix_scan_NA (FILE *fp, int *err)
  * a text file the column separator must be space or tab. It is
  * assumed that the dimensions of the matrix (number of rows and
  * columns) are found on the first line of the file, so no
- * heuristics are necessary. In case of error,  @err is filled
+ * heuristics are necessary. In case of error @err is filled
  * appropriately.
  *
  * Returns: The matrix as read from file, or NULL.

@@ -29,7 +29,7 @@
 #include "calculator.h"
 #include "gpt_dialog.h"
 
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+#if GTK_MAJOR_VERSION > 2
 # define USE_GTK_FONT_CHOOSER 1
 #else
 # define USE_GTK_FONT_CHOOSER 0
@@ -1751,8 +1751,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_widget_show(label);
 
 	ed->fitcombo = gtk_combo_box_text_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl),
-				  ed->fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->fitcombo,
+				  1, TAB_MAIN_COLS, rows-1, rows);
 
 	if (spec->flags & GPT_TS) {
 	    char *p, tmp[128];
@@ -1964,15 +1964,14 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
     gtk_table_resize(GTK_TABLE(tbl), ++nrows, 3);
     sprintf(label_text, _("line %d: "), ed->gui_nlines + 1);
     label = gtk_label_new(label_text);
-    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl),
-			      label, 0, 1, nrows-1, nrows);
+    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, nrows-1, nrows,
+		     0, 0, 0, 0);
     gtk_widget_show(label);
 
     label = gtk_label_new(_("formula"));
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl),
-			      label, 1, 2, nrows-1, nrows);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label,
+			      1, 2, nrows-1, nrows);
     gtk_widget_show(label);
 
     nlinfo->formula_entry = gtk_entry_new();
@@ -2457,7 +2456,9 @@ static int line_get_point_type (GPT_LINE *line, int i)
 }
 
 #define has_point(s) (s == GP_STYLE_POINTS || s == GP_STYLE_LINESPOINTS)
-#define has_line(s)  (s == GP_STYLE_LINES || s == GP_STYLE_LINESPOINTS)
+#define has_line(s)  (s == GP_STYLE_LINES || \
+		      s == GP_STYLE_LINESPOINTS || \
+		      s == GP_STYLE_IMPULSES)
 
 static void adjust_line_controls (GtkWidget *src, gpointer p)
 {
@@ -2562,6 +2563,18 @@ static void line_controls_init (plot_editor *ed, int i)
     ed->yaxiscombo[i] = NULL;
 }
 
+/* For the "lines" tab: we don't want this to take up
+   too much vertical space, so we need to provide for
+   vertical scrolling if the number of lines to be
+   handled exceeds some maximum. This max used to be
+   4, but it seems a smaller value is called for.
+*/
+
+static int want_vertical_scroller (plot_editor *ed)
+{
+    return ed->gui_nlines > 2;
+}
+
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
@@ -2602,7 +2615,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     label = gtk_label_new(_("Lines"));
     gtk_widget_show(label);
 
-    if (ed->gui_nlines > 4) {
+    if (want_vertical_scroller(ed)) {
 	page = scroller_page(vbox);
     } else {
 	page = vbox;
@@ -2763,6 +2776,21 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    color_sel_ok = 0;
 	}
 
+	if (axis_chooser) {
+	    GtkWidget *ycombo;
+
+	    label = gtk_label_new(_("y axis"));
+	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+	    ycombo = gtk_combo_box_text_new();
+	    combo_box_append_text(ycombo, _("left"));
+	    combo_box_append_text(ycombo, _("right"));
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ycombo),
+				     (line->yaxis == 1)? 0 : 1);
+	    gtk_box_pack_start(GTK_BOX(hbox), ycombo, FALSE, FALSE, 5);
+	    gtk_widget_set_sensitive(ycombo, !is_hidden);
+	    ed->yaxiscombo[i] = ycombo;
+	}
+
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
 				  nrows-1, nrows);
 	gtk_widget_show_all(hbox);
@@ -2860,8 +2888,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_widget_set_sensitive(hbox, hp);
 	}
 
-	if (axis_chooser) {
-	    /* use left or right y axis? */
+	if (axis_chooser && ed->yaxiscombo[i] == NULL) {
+	    /* fallback, probably not needed */
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	    print_field_label(tbl, nrows, _("y axis"));
 	    ed->yaxiscombo[i] = gtk_combo_box_text_new();

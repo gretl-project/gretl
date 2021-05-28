@@ -25,17 +25,18 @@
 <a href="#revert">Reverting local changes</a><br>
 <a href="#diffs">Looking at diffs</a><br>
 <a href="#branch">Branching</a><br>
+<a href="#branch-clean">Cleaning up old branches</a><br>
 <a href="#windows">Using git on MS Windows</a>
 </p>  
 
-<h2><a name="finding">Finding the repository on sourceforge</h2>
+<h2><a name="finding">Finding the repository on sourceforge</a></h2>
 
 <p>Go to the gretl <q>project page</q> at
 <a
 href="http://sourceforge.net/projects/gretl/">http://sourceforge.net/projects/gretl/</a>
 and select the <kbd>Code</kbd> item on the taskbar.</p>
 
-<h2><a name="getting">Getting a copy</h2>
+<h2><a name="getting">Getting a copy</a></h2>
 
 <p>Following on from the above: if you are not logged in you will see
 an instruction by means of which you can grab a <i>read-only</i> copy of the
@@ -56,7 +57,7 @@ for getting a <i>read-write</i> copy, on the pattern</p>
 <p>These are shell commands. Obviously, if you need access to update
   translations you must use the second command.</p>
 
-<h2><a name="personal">Your personal git info</h2>
+<h2><a name="personal">Your personal git info</a></h2>
 
 <p>Before doing anything substantive with <kbd>git</kbd> you should
   ensure that your basic personal information (name and email address)
@@ -75,7 +76,7 @@ for getting a <i>read-write</i> copy, on the pattern</p>
   the pattern above but omitting the <kbd>--global</kbd> option.
   </p>
 
-<h2><a name="update">Updating your copy</h2>
+<h2><a name="update">Updating your copy</a></h2>
 
 <p>The <kbd>git</kbd> command to update your copy of the source is</p>
 
@@ -85,7 +86,7 @@ for getting a <i>read-write</i> copy, on the pattern</p>
 
 <p>So, very straightforward.</p>
 
-<h2><a name="commit">Committing a change</h2>
+<h2><a name="commit">Committing a change</a></h2>
 
 <p>Having made a change that you wish to commit, you can do</p>
 
@@ -108,20 +109,15 @@ for getting a <i>read-write</i> copy, on the pattern</p>
   git push
 </pre>
   
-<h2><a name="revert">Reverting local changes</h2>
+<h2><a name="revert">Reverting local changes</a></h2>
 
 <p>This information is relevant only for gretl developers, who are in the
 business of making changes in the gretl code-base. It may happen from
 time to time (I speak from experience!) that you make some changes in
 your local copy of the gretl git sources and then decide (before committing)
-that some of these changes are ill advised, and you want to roll them back.
+that some of these changes are ill advised, and you want to roll them
+back. One way of doing this is:
 </p>
-
-<p>In the old days of CVS you could simply delete a local file, then do a 
-<kbd>cvs update</kbd> to restore the previous version from the repository. 
-But -- watch out! -- git assumes that if you delete a file locally you mean
-to delete it from version control altogether. So you DO NOT want to do that.
-The (not very intuitive) git equivalent is</p>
 
 <pre>
   git checkout .
@@ -148,7 +144,7 @@ reverts your local files (or in other words, <q>nukes</q> your changes altogethe
   <a href="https://github.com/blog/2019-how-to-undo-almost-anything-with-git">this
   GitHub blog entry</a>.</p>
   
-<h2><a name="diffs">Looking at diffs</h2>  
+<h2><a name="diffs">Looking at diffs</a></h2>
 
 <p>To see any updates in your working copy relative to the
 sourceforge repository, it's simple:</p>
@@ -182,7 +178,7 @@ modify the files in your working copy, it just grabs information about
 git diff origin/master
 </pre>
 
-<h2><a name="branch">Branching</h2>
+<h2><a name="branch">Branching</a></h2>
 
 <p>To create a new branch, and then switch onto it:</p>
 
@@ -224,7 +220,19 @@ git branch -d somebranch
 git push origin --delete somebranch
 </pre>
 
-<h2><a name="windows">Using git on MS Windows</h2>
+<h2><a name="branch-clean">Cleaning up unused branches</a></h2>
+
+<p>When branching has been going on for some time, you may end up
+with references to defunct branches in your local copy: branches
+that were at one time active at &ldquo;origin&rdquo; but have since been
+merged and/or deleted. How to get rid of these dangling references?
+Fairly simple, though not totally easy to remember:</p>
+
+<pre>
+git remote prune origin
+</pre>
+
+<h2><a name="windows">Using git on MS Windows</a></h2>
 
 <p>The following from beanstalk looks like a good guide:
   <a href="http://guides.beanstalkapp.com/version-control/git-on-windows.html">Working
@@ -239,6 +247,6 @@ some nice refinements here!</p>
   
 <hr>
 
-<p>Allin Cottrell, last revised 2021-01-11</p>  
+<p>Allin Cottrell, last revised 2021-04-25</p>
 
 </body>

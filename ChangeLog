@@ -1,7 +1,24 @@
-version 2021b, in progress
+version 2021c, in progress
+- New function contains(): indicates whether a numerical
+  object contains members of a specified set
+- Introduce experimental "plot collection"
+- MS Windows, 64-bit: update to gnuplot 5.4.1
+- gretl GUI: add --new command-line option to start a new
+  instance unconditionally
+- fcstats() matrix row labels: distinguish U1 vs U2 variant
+  of Theil's U statistic
+- printing of bundles: sort members by type and key
+- gretl_bundle.h: rename argument named "template" to avoid
+  trouble with C++
+
+2021-05-04 version 2021b
+- New function trigamma(): second derivative of lngamma
+- New function midasmult(): gives MIDAS multipliers
+- New command "bds": BDS nonlinearity test
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
+- array definition: enforce the specific choice of type
 - "wls" command, with 0/1 weights: compute $yhat and $uhat
   for the excluded observations
 - "dpanel" estimation via the GUI: make the --dpdstyle flag
@@ -11,19 +28,46 @@ version 2021b, in progress
 - "adf" command: support more accurate inference with
   improved p-values or critical values, for the GLS case
   in particular
+- "xtab" command: clarify that the $result (matrix) accessor
+  is just for the bivariate case
+- "clear" command: add --functions option to remove all hansl
+  functions from memory
+- "restrict" command: add "inject" keyword to support use of
+  an array of strings to specify restrictions
+- "param_names" keyword for nls, mle, gmm: accept an array of
+  strings as argument
+- binary probit and logit: offer Estrella's pseudo R-squared
+  as an alternative to McFadden, via --estrella option
 - The functions mean, sum, sd, var, wmean, wsd and wvar now
   accept an optional boolean argument; specific to the
   cross-sectional statistics produced when list arguments
   are given, this allows skipping of missing values.
-- hdprod(): introduce the "shorthand" syntax (one argument only)
+- hdprod(): introduce "shorthand" syntax (one argument only)
+- dbnomics addon: speed up retrieval of data
+- user-defined functions: allow overloading of numeric
+  arguments and return value (scalar, series or matrix)
+- user-defined function parameters: enforce the "const" flag
+  more consistently
+- gretl timer ("stopwatch"): provide a separate timer for each
+  level of function execution
+- GUI usage of geoplot addon: make it easier to save an edited
+  map as GeoJSON
 - GUI model specification dialog: enable interactive search in
   lists of series
+- GUI, saving contents of bundles: enable saving of integer
+  members
+- GUI, handle dependencies when installing function packages
+- GUI script editor: improve implementation of "smart tab"
+- Fix bug: breakage in computing out-of-sample forecasts from
+  VECMs
 - Fix bug: possible crash when displaying a matrix with very
   long column names in the GUI program
 - Fix bug: broken covariance matrix from mols() with a large
   number of regressors
+- Fix bug: crash on applying postfix "++" to a submatrix
+- macOS: first release for arm64
 
-2021-01-18, version 2021a
+2021-01-18 version 2021a
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)

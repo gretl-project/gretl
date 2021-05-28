@@ -53,7 +53,7 @@ end function
 
 function matrix bias_correction(const bundle b, 
                                 const matrix Y0, matrix *BC,
-								const bundle bparams[null])
+				const bundle bparams[null])
 
     /* This function implements a bias correction for
        the estimate of the VAR parameters as per Kilian,
@@ -454,6 +454,11 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
     # need more cols if saving either A,B (for type 3) or C and the long-run matrix
     numcols = (type > 2) || (rows(obj.Rd1l) || obj.calc_lr) ? 2*n2 : n2 
     matrix Spar_mat = zeros(obj.nboot, numcols)
+
+    if type == 3 && inbundle(bobj, "C")
+	# clean up object from pre-computed C matrix
+	delete bobj.C
+    endif
     
     i = 1
     failed = 0
@@ -509,16 +514,18 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
 
         elif type == 2 || type == 4 # consolidate the SVEC case here
 
-            /* Watch out for the possibility of constraints that were 
-             partly redundant originally.
-             In the AB-model the cleaned restrictions are inherited 
-             from the original model, apart from the fact that they 
-             should already be caught at specification time (in SVAR_restrict).
-             But with long-run constraints (C, and especially SVEC with 
-              weakly exog.)
-             the restrictions depend on the simulated bootstrap data. 
-             So the cleaning of the restrictions must be re-done here.
-             */
+	    # Watch out for the possibility of constraints that were
+            # partly redundant originally.
+	    #
+            # In the AB-model the cleaned restrictions are inherited
+            # from the original model, apart from the fact that they
+            # should already be caught at specification time (in
+            # SVAR_restrict).
+	    #
+            # But with long-run constraints (C, and especially SVEC
+	    # with weakly exog.) the restrictions depend on the
+	    # bootstrap data, so the cleaning of the restrictions must
+	    # be re-done here.
              
             if type != 3 && inbundle(obj, "cleanfullRd")  
                 bobj.fullRd = {}	 # reset
@@ -543,14 +550,13 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
               &errcode, obj.optmeth, 0)
 
         elif type == 3 # "AB"
-            matrices transferAB = array(2)
+            matrices transferAB = array(0)
             # matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
             
             # new: get A,B instead of re-calc'ing it below
             # (obj.Rd0 was Rd2 before, but redundant...)
             matrix K = estAB(&theta, bSigma, obj.Rd0, obj.Rd1, null, \
               &errcode, obj.optmeth, 0, &transferAB)
-
         endif
 
         ## Process and store the simulated C results
@@ -596,9 +602,9 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
             i++
         else
             failed++
-            outfile stderr --write
-            printf "Iter %4d failed (error code = %d)\n", i, errcode
-            outfile --close	# TODO: should be replaced with 'end outfile' once we can require 2018b or so
+            outfile stderr 
+                printf "Iter %4d failed (error code = %d)\n", i, errcode
+            end outfile
         endif
     endloop
 

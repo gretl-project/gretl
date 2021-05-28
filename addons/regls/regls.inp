@@ -104,28 +104,27 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
    if targ.xvalidate
       matrix deflts = {10, 0, 0, 0, 0, 0, 0}
       ndef = nelem(deflts)
-      loop foreach i nfolds randfolds no_mpi np hpc use_1se single_b seed
+      loop foreach i nfolds randfolds no_mpi mpi_np mpi_local use_1se single_b seed
          if inbundle(src, "$i")
-            targ.$i = src.$i
+            scalar targ.$i = src.$i
          elif i <= ndef
-            targ.$i = deflts[i]
+            scalar targ.$i = deflts[i]
          endif
       endloop
    endif
 end function
 
 function void print_regls_header (const bundle b, int nlam,
-                                  int elnet, string est,
-                                  string yname)
+                                  int elnet, string yname)
 
    string algo = b.ccd ? "CCD" : b.ridge ? "SVD" : "ADMM"
    string t1str = obslabel($t1)
    string t2str = obslabel($t2)
 
    if elnet
-      printf "\n%s, alpha = %g, ", est, b.alpha
+      printf "\n%s, alpha = %g, ", b.estimator, b.alpha
    else
-      printf "\n%s (%s) ", est, algo
+      printf "\n%s (%s) ", b.estimator, algo
    endif
    printf "using observations %s to %s (n = %d)\n", t1str, t2str, b.nobs
    printf "Dependent variable: %s\n", yname
@@ -140,14 +139,39 @@ function void print_regls_header (const bundle b, int nlam,
    endif
 end function
 
-function void gui_adjust_ret (bundle *b, const bundle parms,
-                              const string yname, const list X)
-   strings S = defarray("xvalidate", "ridge", "ccd")
-   loop i=1..nelem(S)
-      if inbundle(b, S[i]) == 1 && b[S[i]] == 0
-         delete b[S[i]] --force
+function void gui_add_commands (bundle *b, const bundle parms,
+                                const string yname, const string xname)
+   string cmdstr
+   set force_decpoint on
+   outfile --buffer=cmdstr --quiet
+      printf "include regls.gfn\n"
+      printf "bundle rb = regls(%s, %s, _(", yname, xname
+      if inbundle(parms, "nlambda")
+         printf "nlambda=%d", parms.nlambda
+      else
+         printf "lfrac=%g", parms.lfrac
       endif
-   endloop
+      if inbundle(b, "ridge") && b.ridge
+         printf ", ridge=1"
+      endif
+      if inbundle(b, "alpha")
+         printf ", alpha=%g", b.alpha
+      endif
+      printf ", verbosity=3"
+      if inbundle(b, "xvalidate") && b.xvalidate
+         printf ",\n xvalidate=1"
+         printf ", randfolds=%d", b.randfolds
+         printf ", nfolds=%d", b.nfolds
+      endif
+      printf "))\n"
+   end outfile
+   set force_decpoint off
+   printf "Command line equivalent:\n"
+   printf "%s\n", cmdstr
+   b.commands = cmdstr
+end function
+
+function void regls_set_notes (bundle *b)
    if inbundle(b, "nzb")
       setnote(b, "nzb", "non-zero coefficients")
    endif
@@ -157,37 +181,27 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
    if inbundle(b, "B")
       setnote(b, "B", "all coefficients")
    endif
-   string cmdstr
-   set force_decpoint on
-   outfile --buffer=cmdstr --quiet
-      printf "include regls.gfn\n"
-      printf "# any required lags must be generated first\n"
-      printf "list RX = \\\n"
-      list X print
-      printf "bundle rb = regls(%s, RX, _(", yname
-      if inbundle(parms, "nlambda")
-         printf "nlambda=%d", parms.nlambda
-      else
-         printf "lfrac=%g", parms.lfrac
-      endif
-      if inbundle(b, "ridge")
-         printf ", ridge=1"
-      endif
-      if inbundle(b, "alpha")
-         printf ", alpha=%g", ret.alpha
-      endif
-      printf ", verbosity=3))\n"
-   end outfile
-   printf "Command line equivalent:\n\n"
-   printf "%s\n", cmdstr
-   b.commands = cmdstr
+   if inbundle(b, "XVC")
+      setnote(b, "XVC", "cross-validation info")
+   endif
 end function
 
-function void nz_print (const bundle b, const string est, int nlam)
-   if nlam > 1
-      printf "\n%s minimum-BIC coefficients\n\n", est
+function void nz_print (const bundle b, int nlam)
+   if b.xvalidate
+      scalar lf = b.use_1se ? b.lf1se : b.lfmin
+      printf "\n%s coefficients (s = %g)\n\n", b.estimator, lf
+   elif nlam > 1
+      printf "\n%s minimum-BIC coefficients\n\n", b.estimator
    else
-      printf "\n%s coefficients\n\n", est
+      printf "\n%s coefficients\n\n", b.estimator
+   endif
+   if !inbundle(b, "nzX")
+      if inbundle(b, "b")
+         eval b.b
+      else
+         eval b.B
+      endif
+      return
    endif
    strings S = varnames(b.nzX)
    len = max(strlen(S))
@@ -212,7 +226,6 @@ function bundle regls (series depvar, list indeps,
    scalar alpha_set = 0
    scalar elnet = 0
    scalar gui = 0
-   string est
    string yname
 
    if !exists(parms)
@@ -222,6 +235,9 @@ function bundle regls (series depvar, list indeps,
 
    if inlist(indeps, 0)
       indeps -= const
+   endif
+   if nelem(indeps) == 0
+      funcerr "no regressors were supplied"
    endif
 
    err = check_params(parms, &lfrac, &nlam, &ret)
@@ -234,6 +250,8 @@ function bundle regls (series depvar, list indeps,
    ret.ridge = 0
    ret.ccd = 0
    ret.xvalidate = 0
+   ret.sample_t1 = $t1
+   ret.sample_t2 = $t2
 
    # read optional parameters
    if inbundle(parms, "stdize") == 1
@@ -306,17 +324,19 @@ function bundle regls (series depvar, list indeps,
    if inbundle(parms, "admmctrl") == 3
       matrix ret.admmctrl = parms.admmctrl
    endif
-   if inbundle(parms, "xvcrit")
-      string ret.xvcrit = parms.xvcrit
-   endif
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, &parms)
    endif
+   if inbundle(parms, "crit_plot") == 1
+      ret.crit_plot = parms.crit_plot
+   endif
+
+   string ret.estimator = elnet ? "Elastic net" : \
+     ret.ridge ? "Ridge" : "LASSO"
 
    if ret.verbosity > 0 && rank <= 0
       yname = argname(depvar, "unnamed")
-      est = elnet ? "Elastic net" : ret.ridge ? "Ridge" : "LASSO"
-      print_regls_header(ret, nlam, elnet, est, yname)
+      print_regls_header(ret, nlam, elnet, yname)
    endif
 
    # call plugin C code
@@ -395,18 +415,81 @@ function bundle regls (series depvar, list indeps,
       strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
       modprint bse pnames addstats
    elif nlam == 1 && ret.verbosity > 1
-      nz_print(ret, est, 1)
+      nz_print(ret, 1)
    elif nlam > 1 && ret.verbosity > 2
-      nz_print(ret, est, nlam)
+      nz_print(ret, nlam)
+   endif
+   if ret.xvalidate && ret.verbosity > 2
+      training_R2(&ret, depvar, indeps)
    endif
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
+   string ret.depvar = argname(depvar, "y")
+   list ret.ylist = outer_series_id(ret.depvar)
+   list ret.xlist = indeps
+   string xname = argname(indeps, "X")
+   regls_set_notes(&ret)
    if gui
-      gui_adjust_ret(&ret, parms, yname, indeps)
+      gui_add_commands(&ret, parms, yname, xname)
+   endif
+
+   if inbundle(ret, "crit_plot") && ret.crit_plot
+      if inbundle(ret, "XVC") == 3
+         regls_mse_plot(ret)
+      elif inbundle(ret, "BIC") == 3
+         regls_bic_plot(ret)
+      else
+         delete ret.crit_plot
+      endif
    endif
 
    return ret
 end function
 
+function bundle regls_fcast (bundle *b, int t1, int t2)
+   strings S = defarray("R-squared", "Mean Error",
+     "Root Mean Squared Error", "Mean Absolute Error",
+     "Mean Percentage Error", "Mean Absolute Percentage Error",
+     "Theil's U", "Bias proportion", "Regression proportion",
+     "Disturbance proportion")
+   bundle ret
+   if t1 > b.sample_t2
+      string os = "Out-of-sample "
+   elif t1 == b.sample_t2 && t2 == b.sample_t2
+      string os = "Within-sample "
+   else
+      # mixed?
+      string os = ""
+   endif
+   smpl t1 t2
+   smpl # to get the info printed
+   series y = b.ylist[1]
+   series yhat = regls_yhat(b, b.xlist)
+   scalar ret.R2 = 1 - sst(y-yhat) / sst(y)
+   matrix stats = fcstats(y, yhat)
+   printf "%sforecast evaluation statistics for %s\n\n", os, b.depvar
+   if !ok(stats[4])
+      sel = {1,2,3,4,7,8,9,10}
+      len = maxc(strlen(S[sel]))
+   else
+      len = maxc(strlen(S))
+   endif
+   n = rows(stats) + 1
+   loop i=1..n
+      scalar x = i==1 ? ret.R2 : stats[i-1]
+      if ok(x)
+         fill = x < 0 ? " " : "  "
+         printf "%-*s %s%g\n", len, S[i], fill, x
+      endif
+   endloop
+   printf "\n"
+   # plot: should be conditional?
+   regls_fcast_plot(y, yhat, b)
+   series ret.yhat = yhat
+   matrix ret.stats = stats
+   return ret
+end function
+
 include regls_helpers.inp
+include regls_plots.inp

@@ -119,6 +119,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_FREQ_SIMPLE,    "frequency plot (simple)" },
     { PLOT_FREQ_NORMAL,    "frequency plot (against normal)" },
     { PLOT_FREQ_GAMMA,     "frequency plot (against gamma)" },
+    { PLOT_FREQ_DISCRETE,  "frequency plot (discrete)" },
     { PLOT_GARCH,          "GARCH residual plot" },
     { PLOT_HURST,          "rescaled range plot" },
     { PLOT_IRFBOOT,        "impulse response plot with quantiles" },
@@ -750,8 +751,7 @@ static int factor_check (gnuplot_info *gi, const DATASET *dset)
 	err = E_DATA;
     } else {
 	v3 = gi->list[3];
-	if (!series_is_discrete(dset, v3) &&
-	    !gretl_isdiscrete(gi->t1, gi->t2, dset->Z[v3])) {
+	if (!accept_as_discrete(dset, v3, 0)) {
 	    err = E_DATA;
 	}
     }
@@ -1171,6 +1171,20 @@ int set_plotstyle (const char *style)
     }
 }
 
+const char *get_plotstyle (void)
+{
+    static char pstyle[32];
+    char *p;
+
+    strcpy(pstyle, gp_style);
+    p = strrchr(pstyle, '.');
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    return pstyle;
+}
+
 /* Write the content of either the default, or an alternative,
    gnuplot style into @fp. The @offset argument allows for
    skipping one or more leading linetype definitions.
@@ -1212,7 +1226,13 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
     } else if (ptype == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	inject_gp_style(1, fp);
+	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+	fputs("set linetype 3 lc rgb \"#0000FF\"\n", fp);
+	fputs("set linetype 4 lc rgb \"#0000FF\"\n", fp);
+	fputs("set linetype 5 lc rgb \"#0000FF\"\n", fp);
+	fputs("set linetype 6 lc rgb \"#FFA500\"\n", fp);
+	fputs("set linetype 7 lc rgb \"#E51E10\"\n", fp);
+	fputs("set linetype 8 lc rgb \"#000000\"\n", fp);
     } else if (ptype == PLOT_HEATMAP || ptype == PLOT_GEOMAP) {
 	; /* these are handled specially */
     } else {
@@ -2067,7 +2087,8 @@ static const char *plot_output_option (PlotType p, int *pci)
 	ci = LEVERAGE;
     } else if (p == PLOT_FREQ_SIMPLE ||
 	       p == PLOT_FREQ_NORMAL ||
-	       p == PLOT_FREQ_GAMMA) {
+	       p == PLOT_FREQ_GAMMA ||
+	       p == PLOT_FREQ_DISCRETE) {
 	ci = FREQ;
     } else if (p == PLOT_HEATMAP) {
 	ci = CORR;
@@ -2444,7 +2465,8 @@ static int literal_line_out (const char *s, int len,
 	q = p + strspn(p, " \t");
 	n = strlen(q);
 	if (n > 0) {
-	    if (!strncmp(q, "set term", 8)) {
+	    /* note: allow "set termoption ..." */
+	    if (!strncmp(q, "set term ", 9)) {
 		warn = 1;
 	    } else {
 		fputs(q, fp);
@@ -2463,6 +2485,7 @@ static int gnuplot_literal_from_string (const char *s,
 					FILE *fp)
 {
     const char *p;
+    int braces = 1;
     int wi, warn = 0;
 
     s += strspn(s, " \t{");
@@ -2470,7 +2493,15 @@ static int gnuplot_literal_from_string (const char *s,
 
     fputs("# start literal lines\n", fp);
 
-    while (*s && *s != '}') {
+    while (*s) {
+	if (*s == '{') {
+	    braces++;
+	} else if (*s == '}') {
+	    braces--;
+	}
+	if (braces == 0) {
+	    break;
+	}
 	if (*s == ';') {
 	    wi = literal_line_out(p, s - p, fp);
 	    if (wi && !warn) {
@@ -5204,6 +5235,8 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	plottype = PLOT_FREQ_NORMAL;
     } else if (dist == D_GAMMA) {
 	plottype = PLOT_FREQ_GAMMA;
+    } else if (freq->discrete) {
+	plottype = PLOT_FREQ_DISCRETE;
     } else {
 	plottype = PLOT_FREQ_SIMPLE;
     }
@@ -5366,7 +5399,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	fputs("set style fill solid 0.6\n", fp);
 	strcpy(withstr, "w boxes");
     } else {
-	strcpy(withstr, "w impulses linewidth 3");
+	strcpy(withstr, "w impulses lw 3");
     }
 
     if (!dist) {
@@ -6857,7 +6890,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
     fprintf(fp, "set title \"%s\"\n", tmp);
     g_free(tmp);
 
-    fputs("set style fill solid 0.4\n", fp);
+    fputs("set style fill solid 0.5\n", fp);
 
     if (ymax[0] < .88 * ymax[1]) {
 	fputs("set key left top\n", fp);
@@ -6877,7 +6910,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* rq estimates */
     tmp = g_strdup_printf(_("Quantile estimates with %g%% band"), cval);
-    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1, \\\n", tmp);
+    fprintf(fp, "'-' using 1:2 title '%s' w lp, \\\n", tmp);
     g_free(tmp);
 
     /* numeric output coming up! */
@@ -6885,10 +6918,10 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* ols estimate plus (1 - alpha) band */
     tmp = g_strdup_printf(_("OLS estimate with %g%% band"), cval);
-    fprintf(fp, "%g title '%s' w lines lt 2, \\\n", pmod->coeff[k], tmp);
+    fprintf(fp, "%g title '%s' w l, \\\n", pmod->coeff[k], tmp);
     g_free(tmp);
-    fprintf(fp, "%g notitle w dots lt 2, \\\n", pmod->coeff[k] + olsband);
-    fprintf(fp, "%g notitle w dots lt 2\n", pmod->coeff[k] - olsband);
+    fprintf(fp, "%g notitle w l dt 2, \\\n", pmod->coeff[k] + olsband);
+    fprintf(fp, "%g notitle w l dt 2\n", pmod->coeff[k] - olsband);
 
     /* write out the interval values */
 
@@ -9579,17 +9612,19 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 
 /* stretch_limits(): allow a little extra space in the X and Y
    dimensions so that the map doesn't entirely fill the plot
-   area.
+   area; the range is scaled by the factor (1 + 2*@margin).
 */
 
 static void stretch_limits (double *targ, const gretl_matrix *minmax,
-			    int col, double by)
+			    int col, double margin)
 {
-    double mmv0 = gretl_matrix_get(minmax, 0, col);
-    double mmv1 = gretl_matrix_get(minmax, 1, col);
+    double lo = gretl_matrix_get(minmax, 0, col);
+    double hi = gretl_matrix_get(minmax, 1, col);
+    double mid = 0.5 * (lo + hi);
+    double hlf = 0.5 * (hi - lo) * (1 + 2*margin);
 
-    targ[0] = mmv0 * (mmv0 < 0 ? 1+by : 1-by);
-    targ[1] = mmv1 * (mmv1 > 0 ? 1+by : 1-by);
+    targ[0] = mid - hlf;
+    targ[1] = mid + hlf;
 }
 
 static int inline_map_data (const char *datfile, FILE *fp)
@@ -9766,7 +9801,8 @@ static void handle_palette (gretl_bundle *opts,
 
 static void set_plot_limits (gretl_bundle *opts,
 			     const gretl_matrix *bbox,
-			     double *xlim, double *ylim)
+			     double *xlim, double *ylim,
+			     double margin)
 {
     const gretl_matrix *mxy, *mx, *my;
 
@@ -9785,7 +9821,7 @@ static void set_plot_limits (gretl_bundle *opts,
 	xlim[0] = mx->val[0];
 	xlim[1] = mx->val[1];
     } else {
-	stretch_limits(xlim, bbox, 0, 0.02);
+	stretch_limits(xlim, bbox, 0, margin);
     }
 
     my = gretl_bundle_get_matrix(opts, "yrange", NULL);
@@ -9793,7 +9829,7 @@ static void set_plot_limits (gretl_bundle *opts,
 	ylim[0] = my->val[0];
 	ylim[1] = my->val[1];
     } else {
-	stretch_limits(ylim, bbox, 1, 0.02);
+	stretch_limits(ylim, bbox, 1, margin);
     }
 }
 
@@ -9831,6 +9867,7 @@ int write_map_gp_file (const char *plotfile,
     FILE *fp = NULL;
     gchar *datasrc = NULL;
     double linewidth = 1.0;
+    double margin = 0.02;
     int have_payload = 0;
     int use_arg0 = 0;
     int height = 600;
@@ -9847,10 +9884,10 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (opts != NULL) {
-	set_plot_limits(opts, bbox, xlim, ylim);
+	set_plot_limits(opts, bbox, xlim, ylim, margin);
     } else {
-	stretch_limits(xlim, bbox, 0, 0.02);
-	stretch_limits(ylim, bbox, 1, 0.02);
+	stretch_limits(xlim, bbox, 0, margin);
+	stretch_limits(ylim, bbox, 1, margin);
     }
 
     if (gretl_bundle_has_key(opts, "height")) {
@@ -9929,7 +9966,7 @@ int write_map_gp_file (const char *plotfile,
 	if (!err && lw >= 0) {
 	    if (have_payload) {
 		linewidth = lw;
-	    } else if (lw >= 0.5) {
+	    } else if (lw >= 0.1) {
 		linewidth = lw;
 	    }
 	}

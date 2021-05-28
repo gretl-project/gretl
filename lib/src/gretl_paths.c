@@ -1055,6 +1055,11 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     }
 #endif
 
+    if (stype == FUNCS_SEARCH) {
+	/* we don't really want the additional paths below? */
+	return dirs;
+    }
+
     if (!err) {
         /* the user's working dir */
         gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
@@ -1123,7 +1128,6 @@ char *gretl_function_package_get_path (const char *name,
     }
 
     *path = '\0';
-
     dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
     for (i=0; i<n_dirs && !found; i++) {
@@ -3342,7 +3346,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
             handle_use_cwd(rc_bool(val), cpaths);
 #endif
         } else if (!strcmp(key, "lcnumeric")) {
-            libset_set_bool(FORCE_DECP, !rc_bool(val));
+	    set_lcnumeric(LANG_AUTO, rc_bool(val));
         } else if (!strcmp(key, "dbhost")) {
             strncat(cpaths->dbhost, val, 32 - 1);
         } else if (!strcmp(key, "dbproxy")) {
@@ -3388,7 +3392,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         } else if (!strcmp(key, "HC_panel")) {
             set_panel_hccme(val);
         } else if (!strcmp(key, "HC_garch")) {
-            set_garch_robust_vcv(val);
+            set_garch_alt_vcv(val);
         } else if (!strcmp(key, "graph_theme")) {
             *gptheme = g_strdup(val);
         } else if (!strcmp(key, "build_date")) {
@@ -3823,4 +3827,46 @@ char *gretl_build_path (char *targ, const gchar *first_element, ...)
     va_end(args);
 
     return targ;
+}
+
+struct foreign_paths {
+    const char *id;
+    const char *path;
+};
+
+static struct foreign_paths fpaths[] = {
+    { "Rbin",   paths.rbinpath },
+    { "Rlib",   paths.rlibpath },
+    { "ox",     paths.oxlpath },
+    { "octave", paths.octpath },
+    { "stata",  paths.statapath },
+    { "python", paths.pypath },
+    { "julia",  paths.jlpath },
+    { NULL, NULL}
+};
+
+gretl_bundle *foreign_info (void)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    gchar *fullpath;
+    int found, i;
+
+    for (i=0; fpaths[i].id != NULL; i++) {
+	if (fpaths[i].path[0] == '\0') {
+	    gretl_bundle_set_int(b, fpaths[i].id, 0);
+	} else if (g_path_is_absolute(fpaths[i].path)) {
+	    found = gretl_stat(fpaths[i].path, NULL) == 0;
+	    gretl_bundle_set_int(b, fpaths[i].id, found);
+	} else {
+	    fullpath = g_find_program_in_path(fpaths[i].path);
+	    if (fullpath == NULL) {
+		gretl_bundle_set_int(b, fpaths[i].id, 0);
+	    } else {
+		gretl_bundle_set_int(b, fpaths[i].id, 1);
+		g_free(fullpath);
+	    }
+	}
+    }
+
+    return b;
 }

@@ -3,7 +3,7 @@ topsrc = @top_srcdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
-VPATH = $(topsrc)/extra
+VPATH = $(topsrc)/apidemo
 
 PREFIX = $(shell pkg-config --variable=prefix gretl)
 GRETL_CFLAGS = $(shell pkg-config --cflags gretl)

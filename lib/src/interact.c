@@ -2199,15 +2199,19 @@ static int lib_open_append (ExecState *s,
     return err;
 }
 
-static int check_clear_data (void)
+static int check_clear (gretlopt opt)
 {
+    int err = 0;
+
     if (gretl_function_depth() > 0) {
         gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
                              gretl_command_word(CLEAR));
-        return E_DATA;
+        err = E_DATA;
+    } else {
+	err = incompatible_options(opt, OPT_D | OPT_F);
     }
 
-    return 0;
+    return err;
 }
 
 static EXEC_CALLBACK gui_callback;
@@ -2216,6 +2220,15 @@ static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
         s->flags |= CALLBACK_EXEC;
+    }
+}
+
+static void maybe_schedule_set_callback (ExecState *s)
+{
+    if (s->callback != NULL && s->cmd->param != NULL) {
+	if (!strcmp(s->cmd->param, "plot_collection")) {
+	    s->flags |= CALLBACK_EXEC;
+	}
     }
 }
 
@@ -2364,15 +2377,12 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     byvar = current_series_index(dset, byname);
     if (byvar < 0) {
         return E_UNKVAR;
-    }
-
-    x = (const double *) dset->Z[byvar];
-
-    if (!series_is_discrete(dset, byvar) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, x)) {
+    } else if (!accept_as_discrete(dset, byvar, 0)) {
         gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byname);
         return E_DATA;
     }
+
+    x = (const double *) dset->Z[byvar];
 
     if (list == NULL) {
         /* compose full series list, but exclude the "by" variable */
@@ -3214,9 +3224,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case CLEAR:
-        err = check_clear_data();
+        err = check_clear(cmd->opt);
         if (!err) {
-            if (gretl_in_gui_mode()) {
+	    if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else if (gretl_in_gui_mode()) {
                 schedule_callback(s);
             } else {
                 lib_clear_data(s, dset);
@@ -3452,6 +3464,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case SET:
         err = execute_set(cmd->param, cmd->parm2, dset, cmd->opt, prn);
+	if (!err && cmd->parm2 != NULL) {
+	    maybe_schedule_set_callback(s);
+	}
         break;
 
     case SETINFO:
@@ -3837,6 +3852,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->ci == BKW) {
             err = bkw_test(model, dset, cmd->opt, prn);
         }
+        break;
+
+    case BDS:
+        err = bds_test_driver(cmd->order, cmd->list, dset,
+			      cmd->opt, prn);
         break;
 
     case NORMTEST:

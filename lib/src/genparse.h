@@ -159,6 +159,7 @@ enum {
     F_GAMMA,
     F_LNGAMMA,
     F_DIGAMMA,
+    F_TRIGAMMA,
     F_INVMILLS,
     F_ROUND,
     F_CNORM,
@@ -331,7 +332,6 @@ enum {
     F_IMHOF,
     F_XMIN,
     F_XMAX,
-    F_FCSTATS,
     F_FRACLAG,
     F_MREV,
     F_DESEAS,
@@ -400,6 +400,7 @@ enum {
     F_ERRORIF,
     F_BINCOEFF,
     F_ASSERT,
+    F_CONTAINS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -466,6 +467,8 @@ enum {
     F_STACK,
     F_GEOPLOT,
     F_VMA,
+    F_FCSTATS,
+    F_BCHECK,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -491,7 +494,6 @@ enum {
     F_DEFBUNDLE,
     F_DEFLIST,
     F_DEFARGS,
-    F_BPACK,
     F_KSETUP,
     F_BFGSCMAX,
     F_SVM,
@@ -501,7 +503,7 @@ enum {
     F_CHOWLIN,
     F_TDISAGG,
     F_HYP2F1,
-    F_MMULT,
+    F_MIDASMULT,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

@@ -1,0 +1,16 @@
+set verbose off
+include regls.gfn
+
+open winequality-red.gdt --frompkg=regls
+list X = fixed_acidity .. alcohol
+# add squares and cross products
+list X += square(X, 1)
+
+smpl 1 1500
+
+# Illustrates SVD ridge with standard errors
+
+bundle parms = defbundle("lfrac", 0.000655, "ridge", 1, "verbosity", 2)
+bundle rb1 = regls(quality, X, parms)
+
+

@@ -47,7 +47,8 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 
 int VAR_wald_omit_tests (GRETL_VAR *var);
 
-gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var);
+gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var,
+					  int Atrans);
 
 gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err);
 

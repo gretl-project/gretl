@@ -226,7 +226,7 @@ static char *bundle_items[] = {
 
 /* file-scope globals */
 
-SESSION session;            /* hold models, graphs */
+SESSION session; /* holds named models, graphs, etc. */
 
 static char sessionfile[MAXLEN];
 
@@ -802,6 +802,9 @@ static int real_add_graph_to_session (const char *fname,
 	mark_session_changed();
 	if (iconlist != NULL) {
 	    session_add_icon(graph, type, ICON_ADD_SINGLE);
+	    if (autoicon_on()) {
+		gtk_window_present(GTK_WINDOW(iconview));
+	    }
 	} else if (autoicon_on()) {
 	    auto_view_session();
 	}
@@ -1812,6 +1815,7 @@ void close_session (gretlopt opt)
     session_graph_count = 0;
     session_bundle_count = 0;
     reset_plot_count();
+    reset_collection_count();
 
     set_session_log(NULL, logcode);
 
@@ -2951,7 +2955,7 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
     static int done;
 
     gtk_widget_override_background_color(widget,
-					 GTK_STATE_NORMAL,
+					 GTK_STATE_FLAG_NORMAL,
 					 &rgbw);
     if (!done) {
 	gdk_rgba_parse(&rgbb, "#4a90d9");
@@ -3613,7 +3617,7 @@ static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,
 			      gui_obj *obj)
 {
 #if GTK_MAJOR_VERSION == 3
-    gtk_widget_set_state(icon, GTK_STATE_FLAG_PRELIGHT);
+    gtk_widget_set_state_flags(icon, GTK_STATE_FLAG_PRELIGHT, FALSE);
 #else
     gtk_widget_set_state(icon, GTK_STATE_SELECTED);
 #endif

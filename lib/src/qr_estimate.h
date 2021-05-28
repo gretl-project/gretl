@@ -53,6 +53,9 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
 		       VCVInfo *vi, int use_prior,
 		       int *err);
 
+gretl_matrix *newey_west_OPG (const gretl_matrix *G,
+			      int *err);
+
 gretl_matrix *long_run_covariance (const gretl_matrix *X,
 				   int demean, int *err);
 

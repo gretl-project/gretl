@@ -50,6 +50,7 @@
  <gentext key="bundleref"     text="referência a lote"/>
  <gentext key="scalarref"     text="referência a escalar"/>
  <gentext key="objectref"     text="referência ao objeto"/>
+ <gentext key="stringref"     text="referência a texto"/>
  <gentext key="cvec"          text="vetor coluna"/>
  <gentext key="rvec"          text="vetor linha"/>
  <gentext key="list"          text="lista"/>

@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "gretl_func.h"
 #include "gretl_foreign.h"
 #include "matrix_extra.h"
@@ -956,11 +957,11 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-# if MPI_PIPES
+#if MPI_PIPES
 	err = run_mpi_with_pipes(argv, opt, prn);
-# else
+#else
 	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
-# endif
+#endif
 	g_free(mpiprog);
     }
 
@@ -1574,7 +1575,7 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
 	}
     }
 
-#if defined(_OPENMP)
+#ifdef _OPENMP
     if (!err) {
 	if (opt & OPT_T) {
 	    /* respect the --omp-threads option */

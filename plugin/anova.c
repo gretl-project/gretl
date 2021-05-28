@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -108,7 +108,7 @@ static int print_anova (struct anova *v, PRN *prn)
     n = g_utf8_strlen(_("Treatment"), -1);
     bufspace(2, prn);
     pputs(prn, _("Treatment"));
-    bufspace(16 - n, prn);	
+    bufspace(16 - n, prn);
     pprintf(prn, " %*g %*d %*g\n", c1, v->SSTr, c2, dftreat, c3, msr);
 
     if (dfblock > 0) {
@@ -119,9 +119,9 @@ static int print_anova (struct anova *v, PRN *prn)
 	n = g_utf8_strlen(_("Block"), -1);
 	bufspace(2, prn);
 	pputs(prn, _("Block"));
-	bufspace(16 - n, prn);	
+	bufspace(16 - n, prn);
 	pprintf(prn, " %*g %*d %*g\n", c1, v->SSB, c2, dfblock, c3, msb);
-    }    
+    }
 
     /* Mean Square, errors */
     mse = v->SSE / dferr;
@@ -144,15 +144,15 @@ static int print_anova (struct anova *v, PRN *prn)
     pputc(prn, '\n');
 
     if (na(v->F)) {
-	pprintf(prn, "  F(%d, %d) = %g / %g (%s)\n\n", dftreat, dferr, 
+	pprintf(prn, "  F(%d, %d) = %g / %g (%s)\n\n", dftreat, dferr,
 		msr, mse, _("undefined"));
     } else {
-	pprintf(prn, "  F(%d, %d) = %g / %g = %g ", 
+	pprintf(prn, "  F(%d, %d) = %g / %g = %g ",
 		dftreat, dferr, msr, mse, v->F);
 	if (v->pval < .0001) {
 	    pprintf(prn, "[%s %.3g]\n\n", _("p-value"), v->pval);
 	} else if (!na(v->pval)) {
-	    pprintf(prn, "[%s %.4f]\n\n", _("p-value"), v->pval); 
+	    pprintf(prn, "[%s %.4f]\n\n", _("p-value"), v->pval);
 	}
     }
 
@@ -200,20 +200,20 @@ static int anova_print_means (struct anova *v, const double *xt,
     c3 = (c3 > 10)? c3 + 1 : (c3 < 10)? 10 : c3;
     c4 = (c4 > 12)? c4 + 1 : (c4 < 12)? 12 : c4;
 
-    pprintf(prn, "  %-*s %*s %*s %*s\n\n", c1, _("Level"), c2, _("n"), 
+    pprintf(prn, "  %-*s %*s %*s %*s\n\n", c1, _("Level"), c2, _("n"),
 	    c3, _("mean"), c4, _("std. dev"));
 
     for (i=0; i<v->nt; i++) {
 	if (v->ccount[i] > 1) {
 	    csd[i] /= v->ccount[i] - 1;
 	    csd[i] = sqrt(csd[i]);
-	    pprintf(prn, "  %-*g %*d %*g %#*.5g\n", c1, v->tvals->val[i], 
+	    pprintf(prn, "  %-*g %*d %*g %#*.5g\n", c1, v->tvals->val[i],
 		    c2, v->ccount[i], c3, v->cmeans[i], c4, csd[i]);
 	} else {
-	    pprintf(prn, "  %-*g %*d %*g %*s\n", c1, v->tvals->val[i], 
+	    pprintf(prn, "  %-*g %*d %*g %*s\n", c1, v->tvals->val[i],
 		    c2, v->ccount[i], c3, v->cmeans[i], c4, "NA");
 	}
-    } 
+    }
 
     pprintf(prn, "\n  %s = %g\n\n", _("Grand mean"), ybar);
 
@@ -240,12 +240,12 @@ static int anova_make_arrays (const double *xb, struct anova *v)
 	    v->tvec = NULL;
 	    err = E_ALLOC;
 	}
-    }	
+    }
 
     return err;
 }
 
-/* construct vectors holding the distinct values of the 
+/* construct vectors holding the distinct values of the
    treatment and block variables */
 
 static int anova_make_value_vecs (struct anova *v)
@@ -266,7 +266,7 @@ static int anova_make_value_vecs (struct anova *v)
 	    err = E_DATA;
 	}
     }
-    
+
     if (!err) {
 	v->nt = v->tvals->rows;
 	if (v->bvals != NULL) {
@@ -308,7 +308,7 @@ static int anova_accounting_arrays (struct anova *v)
 	    v->rmeans[i] = 0.0;
 	    v->rcount[i] = 0;
 	}
-    }	
+    }
 
     return 0;
 }
@@ -341,7 +341,7 @@ static void anova_add_F_stat (struct anova *v)
    @opt can contain OPT_Q to suppress printing.
 */
 
-int gretl_anova (const int *list, const DATASET *dset, 
+int gretl_anova (const int *list, const DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     struct anova v;
@@ -359,7 +359,6 @@ int gretl_anova (const int *list, const DATASET *dset,
 
     t1 = dset->t1;
     t2 = dset->t2;
-
     list_adjust_sample(list, &t1, &t2, dset, &missvals);
 
     v.n = t2 - t1 + 1 - missvals;
@@ -373,16 +372,16 @@ int gretl_anova (const int *list, const DATASET *dset,
 
     /* check that treatment (and block, if present) are discrete */
 
-    if (!series_is_discrete(dset, list[2]) && 
-	!gretl_isdiscrete(t1, t2, xt)) {
+    if (!accept_as_discrete(dset, list[2], 0)) {
 	gretl_errmsg_set(_("anova: the treatment variable must be discrete"));
-	return E_DATA;
+	err = E_DATA;
+    } else if (xb != NULL && !accept_as_discrete(dset, list[3], 0)) {
+	gretl_errmsg_set(_("anova: the block variable must be discrete"));
+	err = E_DATA;
     }
 
-    if (xb != NULL && !series_is_discrete(dset, list[3]) && 
-	!gretl_isdiscrete(t1, t2, xb)) {
-	gretl_errmsg_set(_("anova: the block variable must be discrete"));
-	return E_DATA;
+    if (err) {
+	return err;
     }
 
     v.n = 0;
@@ -391,7 +390,7 @@ int gretl_anova (const int *list, const DATASET *dset,
 	    v.n += 1;
 	}
     }
-    
+
     if (v.n < 2) {
 	return E_TOOFEW;
     }
@@ -426,7 +425,7 @@ int gretl_anova (const int *list, const DATASET *dset,
     err = anova_accounting_arrays(&v);
     if (err) {
 	goto bailout;
-    }    
+    }
 
     /* find column (treatment) means */
 
@@ -493,13 +492,13 @@ int gretl_anova (const int *list, const DATASET *dset,
     }
 
     anova_add_F_stat(&v);
-	
+
     if (!(opt & OPT_Q)) {
 	const char *yname = dset->varname[list[1]];
 	const char *tname = dset->varname[list[2]];
 
 	pputc(prn, '\n');
-	pprintf(prn, _("%s, response = %s, treatment = %s:"), 
+	pprintf(prn, _("%s, response = %s, treatment = %s:"),
 		_("Analysis of Variance"), yname, tname);
 
 	err = print_anova(&v, prn);
@@ -507,7 +506,7 @@ int gretl_anova (const int *list, const DATASET *dset,
 	if (!err && v.nb == 0) {
 	    anova_print_means(&v, xt, y, ybar, t1, t2, prn);
 	}
-    } 
+    }
 
  bailout:
 

@@ -265,28 +265,34 @@ These are defined as follows.
    {\rm MAPE} = \frac{1}{T} \sum_{t=1}^T 100\, \left|\frac{e_t}{y_t}\right| 
 \]
 %
-A further relevant statistic is Theil's $U$ \citep{theil66}, defined as
-the positive square root of
+A further relevant statistic is Theil's $U$, of which there are two
+variants: $U_1$ \cite{theil61} and $U_2$ \citep{theil66}. The first is
+defined thus
 %
-\[ 
-U^2 = \frac{1}{T}
+\[
+  U_1 = \left[\frac{1}{T}\sum_{t=1}^T(y_t-f_t)^2\right]^{0.5} \cdot
+  \left[\left(\frac{1}{T}\sum_{t=1}^Ty_t^2\right)^{0.5} +
+    \left(\frac{1}{T}\sum_{t=1}^Tf_t^2\right)^{0.5}\right]^{-1}
+\]
+and is bounded by 0 and 1. Value close to zero indicate high
+forecast accuracy; $U_1$ approaches 1 as the forecast errors grow
+arbitrarily large.  The second is defined as the positive square root
+of
+%
+\begin{equation*}
+U_2^2 = \frac{1}{T}
      \sum_{t=1}^{T-1} \left(\frac{f_{t+1} - y_{t+1}}{y_t}\right)^2
      \cdot \left[
      \frac{1}{T} \sum_{t=1}^{T-1} 
         \left(\frac{y_{t+1} - y_t}{y_t}\right)^2 \right]^{-1}
-\]
+\end{equation*}
 
-The more accurate the forecasts, the lower the value of Theil's $U$,
-which has a minimum of 0.\footnote{This statistic is sometimes called
-  $U_2$, to distinguish it from a related but different $U$ defined in
-  an earlier work by \cite{theil61}.  It seems to be generally accepted
-  that the later version of Theil's $U$ is a superior statistic, so we
-  ignore the earlier version here.} This measure can be interpreted as
-the ratio of the RMSE of the proposed forecasting model to the RMSE of
-a na\"ive model which simply predicts $y_{t+1} = y_t$ for all $t$.
-The na\"ive model yields $U = 1$; values less than 1 indicate an
-improvement relative to this benchmark and values greater than 1 a
-deterioration.
+$U_2$ depends on the data having a natural ordering and is applicable
+only for time series data. It can be interpreted as the ratio of the
+RMSE of the proposed forecasting model to the RMSE of a na\"ive model
+which simply predicts $y_{t+1} = y_t$ for all $t$.  The na\"ive model
+yields $U_2 = 1$; values less than 1 indicate an improvement relative
+to this benchmark and values greater than 1 a deterioration.
 
 In addition, Theil (\citeyear{theil66}, pp.\ 33--36) proposed a
 decomposition of the MSE which can be useful in evaluating a set of
@@ -320,12 +326,10 @@ components, $U^M$ and $U^R$, will be zero (apart from rounding error),
 and the entire MSE will be accounted for by the unsystematic part,
 $U^D$.  In the case of out-of-sample prediction, however (or
 ``prediction'' over a sub-sample of the data used in the regression),
-$U^M$ and $U^R$ are not necessarily close to zero, although this is a
-desirable property for a forecast to have. $U^M$ differs from zero if
-and only if the mean of the forecasts differs from the mean of the
-realizations, and $U^R$ is non-zero if and only if the slope of a
-simple regression of the realizations on the forecasts differs from
-1.
+$U^M$ and $U^R$ are not necessarily close to zero.  $U^M$ differs from
+zero if and only if the mean of the forecasts differs from the mean of
+the realizations, and $U^R$ is non-zero if and only if the slope of a
+simple regression of the realizations on the forecasts differs from 1.
 
 The above-mentioned statistics are printed as part of the output of
 the \texttt{fcast} command.  They can also be retrieved in the form of
@@ -341,17 +345,18 @@ U & U^M & U^R & U^D
 \right)'
 \]
 %
-(Note that the MSE is not included since it can easily be obtained
-given the RMSE.)  The series given as arguments to \texttt{fcstats}
-must not contain any missing values in the currently defined sample
-range; use the \texttt{smpl} command to adjust the range if needed.
+where $U$ is $U_2$ for time series data, $U_1$ otherwise.  (Note that
+the MSE is not included since it can easily be obtained given the
+RMSE.)  The series given as arguments to \texttt{fcstats} must not
+contain any missing values in the current sample range; use the
+\texttt{smpl} command to adjust the range if needed. See the \GCR\ for
+more detail on \texttt{fcstats}.
 
 \section{Forecasts based on VAR models}
 \label{sec:fcast-VAR}
 
-The interface to perform forecasts from a VAR model is quite similar to 
-the one for single equations. Let us start with a concrete and commented
-script example in the command line context; the code:
+The interface for forecasting from a VAR is similar to that for a
+single equation. Here's an example via scripting. The code:
 
 \begin{code}
 # open sample data file
@@ -369,7 +374,6 @@ fcast LHUR --static --out-of-sample
 # note that omission of the variable specification means "all" 
 fcast --dynamic --out-of-sample
 \end{code}
-%$
 yields
 \begin{code}
  For 95% confidence intervals, t(140, 0.025) = 1.977
@@ -388,7 +392,7 @@ yields
   Mean Absolute Error               0.05686
   Mean Percentage Error            -0.68977
   Mean Absolute Percentage Error    1.3497
-  Theil's U                         0.75027
+  Theil's U2                        0.75027
   Bias proportion, UM               0.23414
   Regression proportion, UR         0.0081804
   Disturbance proportion, UD        0.75768
@@ -410,7 +414,7 @@ yields
   Mean Absolute Error               0.052593
   Mean Percentage Error            -1.2616
   Mean Absolute Percentage Error    1.2616
-  Theil's U                         0.87334
+  Theil's U2                        0.87334
   Bias proportion, UM               0.61049
   Regression proportion, UR         0.29203
   Disturbance proportion, UD        0.097478
@@ -429,7 +433,7 @@ yields
   Mean Absolute Error               0.059588
   Mean Percentage Error            -2.6178
   Mean Absolute Percentage Error    3.3248
-  Theil's U                         0.095932
+  Theil's U2                        0.095932
   Bias proportion, UM               0.26285
   Regression proportion, UR         0.45311
   Disturbance proportion, UD        0.28404

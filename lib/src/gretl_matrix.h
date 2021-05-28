@@ -328,12 +328,15 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
 				     int draws, int *err);
 
+int gretl_matrix_resample2 (gretl_matrix *targ,
+			    const gretl_matrix *src);
+
 gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
 					   int blocklen, int draws,
 					   int *err);
 
-int gretl_matrix_block_resample2 (const gretl_matrix *src,
-				  gretl_matrix *targ,
+int gretl_matrix_block_resample2 (gretl_matrix *targ,
+				  const gretl_matrix *src,
 				  int blocklen, int *z);
 
 double gretl_vector_mean (const gretl_vector *v);

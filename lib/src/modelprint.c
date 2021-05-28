@@ -1538,6 +1538,9 @@ static void ml_vcv_line (const VCVInfo *vi, PRN *prn)
     case ML_QML:
 	s = N_("QML standard errors");
 	break;
+    case ML_HAC:
+	s = N_("HAC standard errors");
+	break;
     case ML_BW:
 	if (tex) {
 	    s = N_("Bollerslev--Wooldridge standard errors");
@@ -3178,9 +3181,17 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[K_R22] = (tex)? N_("Centered $R^2$") :
 	    N_("Centered R-squared");  /* 22: */
 	val[K_R22] = gretl_model_get_double(pmod, "centered-R2");
-    } else if (COUNT_MODEL(pmod->ci) || binary_model(pmod)) {
+    } else if (COUNT_MODEL(pmod->ci)) {
 	key[K_RSQ] = (tex)? N_("McFadden $R^2$") :
-	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
+	    N_("McFadden R-squared");  /* 22: McFadden pseudo-R^2 */
+    } else if (binary_model(pmod)) {
+	if (pmod->opt & OPT_S) {
+	    key[K_RSQ] = (tex)? N_("Estrella $R^2$") :
+		N_("Estrella R-squared");  /* 22: Estrella pseudo-R^2 */
+	} else {
+	    key[K_RSQ] = (tex)? N_("McFadden $R^2$") :
+		N_("McFadden R-squared");  /* 22: McFadden pseudo-R^2 */
+	}
     } else if ((pmod->ci == PANEL || pmod->ci == LOGISTIC) &&
 	       (pmod->opt & OPT_F)) {
 	/* 22: panel, fixed effects */

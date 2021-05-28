@@ -36,14 +36,14 @@ enum {
     ST_ALLDBLS = 1 << 2
 };
 
-struct _series_table {
+struct series_table_ {
     int n_strs;       /* number of strings in table */
     char **strs;      /* saved strings */
     GHashTable *ht;   /* hash table for quick lookup */
     int flags;        /* status flags (above) */
 };
 
-struct _gretl_string_table {
+struct gretl_string_table_ {
     int *cols_list;       /* list of included columns */
     series_table **cols;  /* per-column tables (see above) */
     char *extra;          /* extra information, if any */
@@ -1114,9 +1114,9 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
 
 /* returns a gretl_array of strings on success */
 
-void *retrieve_date_strings (const gretl_vector *v,
-			     const DATASET *dset,
-			     int *err)
+gretl_array *retrieve_date_strings (const gretl_vector *v,
+				    const DATASET *dset,
+				    int *err)
 {
     gretl_array *ret = NULL;
     char *s = NULL;

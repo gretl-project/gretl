@@ -57,7 +57,7 @@ enum {
     SR_LVARS2
 };
 
-#define N_EXTRA  8
+#define N_EXTRA 8
 
 struct _selector {
     GtkWidget *parent;
@@ -127,7 +127,10 @@ enum {
     REGLS_EST,
     REGLS_ALPHA,
     REGLS_LAMVAL,
-    REGLS_NLAM
+    REGLS_NLAM,
+    REGLS_NFOLDS,
+    REGLS_FTYPE,
+    REGLS_PLOT
 };
 
 #define EXTRA_LAGS (N_EXTRA - 1)
@@ -313,6 +316,8 @@ static gretlopt model_opt;
 
 static GtkWidget *multiplot_label;
 static GtkWidget *multiplot_menu;
+
+static gretl_bundle *regls_adv;
 
 static selector *open_selector;
 
@@ -1301,7 +1306,7 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
     GtkTreeSelection *select;
     gboolean flagcol = FALSE;
     gboolean midascol = FALSE;
-    int width = 140;
+    int width = 160;
     int height = -1;
 
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
@@ -1760,11 +1765,11 @@ static void set_dependent_var_callback (GtkWidget *w, selector *sr)
 
     if (sr->depvar == NULL) return;
 
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(sr->lvars));
-    gtk_tree_selection_selected_foreach (selection,
-					 (GtkTreeSelectionForeachFunc)
-					 real_set_dependent_var,
-					 sr);
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
+    gtk_tree_selection_selected_foreach(selection,
+					(GtkTreeSelectionForeachFunc)
+					real_set_dependent_var,
+					sr);
 }
 
 static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
@@ -3456,12 +3461,55 @@ void *selector_get_regls_bundle (void)
     return regls_bundle;
 }
 
+/* add "advanced" options from @src, if present */
+
+static void regls_transcribe_advanced (gretl_bundle *rb,
+				       gretl_bundle *src,
+				       int xvalidate,
+				       int eid)
+{
+    int ccd = 0;
+
+    if (gretl_bundle_get_int(src, "timer", NULL)) {
+	gretl_bundle_set_int(rb, "timer", 1);
+    }
+
+    if ((eid == 0 && gretl_bundle_get_int(src, "lccd", NULL)) ||
+	(eid == 1 && gretl_bundle_get_int(src, "rccd", NULL))) {
+	ccd = 1;
+    }
+    gretl_bundle_set_int(rb, "ccd", ccd);
+
+    if (xvalidate) {
+	int use_1se = gretl_bundle_get_int(src, "use_1se", NULL);
+	double s = gretl_bundle_get_scalar(src, "seed", NULL);
+
+	gretl_bundle_set_int(rb, "use_1se", use_1se);
+	if (gretl_bundle_get_int(src, "set_seed", NULL)) {
+	    gretl_bundle_set_scalar(rb, "seed", s);
+	} else {
+	    gretl_bundle_delete_data(rb, "seed");
+	}
+    }
+
+#ifdef HAVE_MPI
+    if (xvalidate) {
+	int no_mpi = gretl_bundle_get_int(src, "no_mpi", NULL);
+
+	gretl_bundle_set_int(rb, "no_mpi", no_mpi);
+    }
+#endif
+}
+
 static void read_regls_extras (selector *sr)
 {
-    GtkWidget *est = sr->extra[REGLS_EST];
-    gchar *estr = combo_box_get_active_text(est);
-    gretl_bundle *rb = gretl_bundle_new();
+    GtkWidget *w = sr->extra[REGLS_EST];
+    gchar *estr = combo_box_get_active_text(w);
+    gretl_bundle *rb = regls_bundle;
+    int xvalidate = 0;
+    int eid = 0;
 
+    gretl_bundle_void_content(rb);
     gretl_bundle_set_int(rb, "gui", 1);
 
     if (!strcmp(estr, _("Elastic net"))) {
@@ -3472,11 +3520,14 @@ static void read_regls_extras (selector *sr)
 	    ; /* LASSO */
 	} else if (a == 0) {
 	    gretl_bundle_set_int(rb, "ridge", 1);
+	    eid = 1;
 	} else {
 	    gretl_bundle_set_scalar(rb, "alpha", a);
+	    eid = 2;
 	}
     } else if (!strcmp(estr, _("Ridge"))) {
 	gretl_bundle_set_int(rb, "ridge", 1);
+	eid = 1;
     }
 
     if (gtk_widget_is_sensitive(sr->extra[REGLS_LAMVAL])) {
@@ -3490,8 +3541,26 @@ static void read_regls_extras (selector *sr)
 	gretl_bundle_set_int(rb, "nlambda", nlam);
     }
 
-    gretl_bundle_destroy(regls_bundle);
-    regls_bundle = rb;
+    if (gtk_widget_is_sensitive(sr->extra[REGLS_NFOLDS])) {
+	int nfolds = spinner_get_int(sr->extra[REGLS_NFOLDS]);
+	gchar *ft = combo_box_get_active_text(sr->extra[REGLS_FTYPE]);
+
+	gretl_bundle_set_int(rb, "xvalidate", 1);
+	gretl_bundle_set_int(rb, "nfolds", nfolds);
+	if (!strcmp(ft, _("random"))) {
+	    gretl_bundle_set_int(rb, "randfolds", 1);
+	}
+	xvalidate = 1;
+    }
+
+    if (gtk_widget_is_sensitive(sr->extra[REGLS_PLOT]) &&
+	button_is_active(sr->extra[REGLS_PLOT])) {
+	fprintf(stderr, "setting crit_plot on rb\n");
+    }
+
+    if (regls_adv != NULL) {
+	regls_transcribe_advanced(rb, regls_adv, xvalidate, eid);
+    }
 
     g_free(estr);
 }
@@ -4223,9 +4292,9 @@ static void destroy_selector (GtkWidget *w, selector *sr)
     open_selector = NULL;
 }
 
-static char *est_str (int cmdnum)
+static char *estimator_label (int ci)
 {
-    switch (cmdnum) {
+    switch (ci) {
     case OLS:
 	return N_("OLS");
     case HSK:
@@ -5382,7 +5451,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 140;
+	    dlgy += 240;
 	} else {
 	    dlgy += 60;
 	}
@@ -5948,7 +6017,7 @@ static void gui_set_mp_bits (GtkComboBox *cb, gpointer p)
 	b *= 2;
     }
 
-    set_mp_bits(b);
+    libset_set_int(GMP_BITS, b);
 }
 
 static GtkWidget *mpols_bits_selector (void)
@@ -6332,35 +6401,31 @@ static GtkWidget *ymax_spinner (void)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(1.0, 0, 1e+10,
-					       0.01, 0.1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(1.0, 0, 1e+10, 0.01, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 1);
 }
 
-static GtkWidget *single_lambda_spinner (void)
+static GtkWidget *single_lambda_spinner (double lam)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(0.5, 0, 1,
-					       0.001, 0.1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(lam, 0, 1, 0.001, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 3);
 }
 
-static GtkWidget *multi_lambda_spinner (void)
+static GtkWidget *multi_lambda_spinner (int nlam)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(25, 4, 100,
-					       1, 10, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(nlam, 4, 100, 1, 10, 0);
     return gtk_spin_button_new(adj, 1, 0);
 }
 
-static GtkWidget *regls_alpha_spinner (void)
+static GtkWidget *regls_alpha_spinner (double alpha)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 1,
-					       0.1, 0.1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(alpha, 0, 1, 0.1, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 1);
 }
 
@@ -6407,13 +6472,92 @@ static void regls_estim_switch (GtkComboBox *cb, selector *sr)
     g_free(estr);
 }
 
+static void xvalidation_ok (GtkToggleButton *b, GtkWidget *targ)
+{
+    gtk_widget_set_sensitive(targ, button_is_active(b));
+}
+
+static void call_regls_advanced (GtkWidget *w, selector *sr)
+{
+    if (regls_adv == NULL) {
+	double seed = (double) gretl_rand_get_seed();
+
+	regls_adv = gretl_bundle_new();
+	gretl_bundle_set_int(regls_adv, "lccd", 0);
+	gretl_bundle_set_int(regls_adv, "rccd", 0);
+	gretl_bundle_set_int(regls_adv, "use_1se", 0);
+	gretl_bundle_set_int(regls_adv, "timer", 0);
+	gretl_bundle_set_int(regls_adv, "set_seed", 0);
+	gretl_bundle_set_scalar(regls_adv, "seed", seed);
+#ifdef HAVE_MPI
+	gretl_bundle_set_int(regls_adv, "no_mpi", 0);
+#endif
+    }
+
+    regls_advanced_dialog(regls_adv, sr->dlg);
+}
+
+static int regls_int_default (const char *key)
+{
+    if (gretl_bundle_has_key(regls_bundle, key)) {
+	return gretl_bundle_get_int(regls_bundle, key, NULL);
+    } else if (!strcmp(key, "nlambda")) {
+	return 25;
+    } else if (!strcmp(key, "nfolds")) {
+	return 10;
+    } else if (!strcmp(key, "randfolds")) {
+	return 1;
+    } else if (!strcmp(key, "crit_plot")) {
+	return 1;
+    } else if (!strcmp(key, "eid")) {
+	if (gretl_bundle_get_int(regls_bundle, "ridge", NULL)) {
+	    return 1;
+	} else if (gretl_bundle_has_key(regls_bundle, "alpha")) {
+	    return 2;
+	}
+    }
+
+    return 0;
+}
+
+static double regls_scalar_default (const char *key)
+{
+    if (gretl_bundle_has_key(regls_bundle, key)) {
+	return gretl_bundle_get_scalar(regls_bundle, key, NULL);
+    } else if (!strcmp(key, "lfrac")) {
+	return 0.5;
+    } else if (!strcmp(key, "alpha")) {
+	return 1.0;
+    } else {
+	return 0.0;
+    }
+}
+
 static void build_regls_controls (selector *sr)
 {
-    GtkWidget *w, *hbox, *b1, *b2;
+    GtkWidget *w, *hbox, *b1, *b2, *b3;
+    int nlambda, xvalidate, nfolds, randfolds;
+    int eid, crit_plot;
+    double lfrac, alpha;
     GSList *group;
+
+    if (regls_bundle == NULL) {
+	regls_bundle = gretl_bundle_new();
+    }
+
+    eid       = regls_int_default("eid");
+    nlambda   = regls_int_default("nlambda");
+    xvalidate = regls_int_default("xvalidate");
+    nfolds    = regls_int_default("nfolds");
+    randfolds = regls_int_default("randfolds");
+    crit_plot = regls_int_default("crit_plot");
+
+    lfrac = regls_scalar_default("lfrac");
+    alpha = regls_scalar_default("alpha");
 
     vbox_add_vwedge(sr->vbox);
 
+    /* choice of estimator */
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new("Estimator");
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -6421,12 +6565,12 @@ static void build_regls_controls (selector *sr)
     combo_box_append_text(w, _("LASSO"));
     combo_box_append_text(w, _("Ridge"));
     combo_box_append_text(w, _("Elastic net"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), eid);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_label_new("α =");
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    sr->extra[REGLS_ALPHA] = w = regls_alpha_spinner();
-    gtk_widget_set_sensitive(w, FALSE);
+    sr->extra[REGLS_ALPHA] = w = regls_alpha_spinner(alpha);
+    gtk_widget_set_sensitive(w, (eid == 2));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(sr->extra[REGLS_EST]), "changed",
@@ -6434,23 +6578,73 @@ static void build_regls_controls (selector *sr)
 
     vbox_add_vwedge(sr->vbox);
 
+    /* single lambda value */
     hbox = gtk_hbox_new(FALSE, 5);
     b1 = gtk_radio_button_new_with_label(NULL, _("Single λ-fraction"));
     gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 5);
-    w = sr->extra[REGLS_LAMVAL] = single_lambda_spinner();
+    w = sr->extra[REGLS_LAMVAL] = single_lambda_spinner(lfrac);
     sensitize_conditional_on(w, b1);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
+    /* multiple lambda values */
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Multiple λ values"));
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
-    w = sr->extra[REGLS_NLAM] = multi_lambda_spinner();
-    gtk_widget_set_sensitive(w, FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), xvalidate);
+    w = sr->extra[REGLS_NLAM] = multi_lambda_spinner(nlambda);
+    gtk_widget_set_sensitive(w, xvalidate);
     sensitize_conditional_on(w, b2);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+
+    /* cross validation */
+    hbox = gtk_hbox_new(FALSE, 5);
+    b3 = gtk_check_button_new_with_label(_("Optimize via cross-validation"));
+    gtk_widget_set_sensitive(b3, xvalidate);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), xvalidate);
+    gtk_box_pack_start(GTK_BOX(hbox), b3, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("Folds:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    sr->extra[REGLS_NFOLDS] = w = gtk_spin_button_new_with_range(4, 20, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), nfolds);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    w = gtk_label_new(_("type:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    sr->extra[REGLS_FTYPE] = w = gtk_combo_box_text_new();
+    combo_box_append_text(w, _("random"));
+    combo_box_append_text(w, _("contiguous"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), randfolds? 0 : 1);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_set_sensitive(hbox, xvalidate);
+    sensitize_conditional_on(hbox, b3);
+
+    /* optional plot */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_check_button_new_with_label(_("Show criterion plot"));
+    sr->extra[REGLS_PLOT] = w;
+    gtk_widget_set_sensitive(w, xvalidate);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), xvalidate && crit_plot);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    sensitize_conditional_on(hbox, b3);
+
+    g_signal_connect(G_OBJECT(b2), "toggled",
+		     G_CALLBACK(xvalidation_ok), b3);
+    g_signal_connect(G_OBJECT(b2), "toggled",
+		     G_CALLBACK(xvalidation_ok), w);
+
+    /* "advanced" controls */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_button_new_with_label("Advanced...");
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(call_regls_advanced), sr);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 
 static void build_ellipse_spinner (selector *sr)
@@ -6885,6 +7079,7 @@ static void build_data_export_combo (selector *sr)
     GtkWidget *hbox, *label, *combo;
     static const char *opt_strs[] = {
 	N_("CSV"),
+	N_("GeoJSON"),
 	N_("gretl datafile (.gdt)"),
 	N_("gretl binary datafile (.gdtb)"),
 	N_("gretl database (.bin)"),
@@ -6897,6 +7092,7 @@ static void build_data_export_combo (selector *sr)
     };
     static gretlopt opts[] = {
 	OPT_C,
+	OPT_P,
 	OPT_Z,
 	OPT_B,
 	OPT_D,
@@ -6918,10 +7114,17 @@ static void build_data_export_combo (selector *sr)
     label = gtk_label_new(_("Select format"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
-    if (DSET_DB_OK(dataset)) {
-	combo = gretl_opts_combo(&export_opts, deflt);
+    if (dataset->mapfile != NULL) {
+	int masked[4] = {3, 4, 8, 9};
+
+	deflt = 1;
+	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
+    } else if (DSET_DB_OK(dataset)) {
+	int masked[2] = {1, 1};
+
+	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
     } else {
-	int masked[2] = {1, 3};
+	int masked[3] = {2, 1, 4};
 
 	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
     }
@@ -7101,11 +7304,7 @@ static int list_show_var (int v, int ci, int show_lags)
 	lags_hidden = 1;
 	ret = 0;
     } else if (ci == XTAB) {
-	ret = 0;
-	if (series_is_discrete(dataset, v) ||
-	    gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
-	    ret = 1;
-	}
+	ret = accept_as_discrete(dataset, v, 0);
     } else if (ci == MIDASREG && series_get_midas_period(dataset, v)) {
 	ret = 0;
     }
@@ -7168,7 +7367,7 @@ static void selection_dialog_add_top_label (selector *sr)
 	hbox = gtk_hbox_new(FALSE, 0);
 	button = add_var_button(sr);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-	s = est_str(ci);
+	s = estimator_label(ci);
 	if (s != NULL) {
 	    label = gtk_label_new(_(s));
 	    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
@@ -7567,9 +7766,9 @@ selector *selection_dialog (int ci, const char *title,
     return sr;
 }
 
-static char *get_topstr (int cmdnum)
+static char *simple_sel_label (int ci)
 {
-    switch (cmdnum) {
+    switch (ci) {
     case LOGS:
 	return N_("Select variables for logging");
     case LAGS:
@@ -7588,13 +7787,14 @@ static char *get_topstr (int cmdnum)
     case COEFFSUM:
 	return N_("Select coefficients to sum");
     case QQPLOT:
-	return N_("Select one or two variables");
+	return N_("Q-Q plot: select one or two variables");
     case ELLIPSE:
 	return N_("Confidence region: select two variables");
     case PRINT:
 	return N_("Select variables to display");
-    case GR_PLOT:
     case GR_BOX:
+	return N_("Select variables for boxplot");
+    case GR_PLOT:
     case TSPLOTS:
 	return N_("Select variables to plot");
     case SAVE_DATA:
@@ -7737,7 +7937,7 @@ static void available_functions_list (selector *sr)
 
 static GtkWidget *simple_selection_top_label (int ci, const char *title)
 {
-    const char *s = get_topstr(ci);
+    const char *s = simple_sel_label(ci);
     GtkWidget *label = NULL;
     GtkWidget *hbox = NULL;
 
@@ -8324,6 +8524,8 @@ static int data_export_selection_callback (selector *sr)
 	    ci = EXPORT_DTA;
 	} else if (sr->opts & OPT_D) {
 	    ci = EXPORT_DB;
+	} else if (sr->opts & OPT_P) {
+	    ci = SAVE_MAP;
 	} else if (sr->opts & OPT_B) {
 	    ci = EXPORT_GDTB;
 	} else {

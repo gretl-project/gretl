@@ -1,9 +1,10 @@
 \documentclass{article}
-\usepackage{pifont}
+\usepackage{wasysym,ifthen}
 \usepackage{gretl-lite}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 
-\newcommand{\quatre}{\Pisymbol{pwd}{122}}
+\newcommand{\maccmd}{%
+\ifthenelse{\isundefined{\wasycmd}}{\texttt{Cmd}}{\wasycmd}}
 
 \begin{document}
 
@@ -17,7 +18,7 @@
 
 Gretl provides keyboard shortcuts for various commands. Some of these
 are standard and are indicated in the menus; for example
-\texttt{Ctrl-s} (on the Mac, \quatre\texttt{-s}) in the
+\texttt{Ctrl-s} (on the Mac, \maccmd\texttt{-s}) in the
 main window saves the current dataset, as indicated under the
 \textsf{File} menu. Others are specific to gretl and do not appear in
 the menus; these are documented below.
@@ -28,8 +29,8 @@ the menus; these are documented below.
 
 Most windows & \texttt{Alt-w} & 
   popup menu listing open \textsf{gretl} windows \\
- & \texttt{Alt-PgUp} & previous gretl window (Mac: \quatre\texttt{-\textasciitilde})  \\
- & \texttt{Alt-PgDn} & next gretl window (Mac: \quatre\texttt{-\`{}}) \\[6pt]
+ & \texttt{Alt-PgUp} & previous gretl window (Mac: \maccmd\texttt{-\textasciitilde})  \\
+ & \texttt{Alt-PgDn} & next gretl window (Mac: \maccmd\texttt{-\`{}}) \\[6pt]
 
 Main window & \texttt{g} & 
   open dialog for defining a new variable \\
@@ -43,13 +44,10 @@ Main window & \texttt{g} &
 
 Graph window & \texttt{q} & close \\
  & \texttt{s} & save to session \\
- & \texttt{z} & start zooming \\
- & \texttt{a} & render audio graph (if supported) \\[6pt]
+ & \texttt{z} & start zooming \\[6pt]
 
 Model window & \texttt{q} & close \\
- & \texttt{s} & save to session \\
- & \texttt{a} & do audio (if supported) \\
- & \texttt{x} & stop audio \\[6pt]
+ & \texttt{s} & save to session \\[6pt]
 
 Script output & \texttt{Alt-c} & cascade windows \\[6pt]
 

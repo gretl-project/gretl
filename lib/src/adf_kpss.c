@@ -1046,7 +1046,7 @@ double get_urc_pvalue (double tau, int n, int niv, int itv)
     pval = (*pvfunc)(tau, n, niv, itv);
 
 #if ADF_DEBUG
-    fprintf(stderr, "getting pval: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
+    fprintf(stderr, "get_urc_pvalue: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
 	    tau, n, niv, itv, pval);
 #endif
 
@@ -1056,18 +1056,19 @@ double get_urc_pvalue (double tau, int n, int niv, int itv)
 static double get_mackinnon_pvalue (adf_info *ainfo)
 {
     int asy = (ainfo->kmax > 0 || ainfo->order > 0);
-    int T = asy ? 0 : ainfo->T;
+    int niv, T = asy ? 0 : ainfo->T;
     double pval;
 
-    pval = get_urc_pvalue(ainfo->tau, T, 1, ainfo->det);
+    if (ainfo->flags & ADF_EG_RESIDS) {
+	niv = ainfo->niv;
+    } else {
+	niv = 1;
+    }
+
+    pval = get_urc_pvalue(ainfo->tau, T, niv, ainfo->det);
     if (!na(pval)) {
 	ainfo->pvtype = asy ? PV_ASY : PV_FINITE;
     }
-
-#if ADF_DEBUG
-    fprintf(stderr, "get_mackinnon_pval: tau=%g, T=%d, itv=%d: pval=%g\n",
-	    ainfo->tau, T, ainfo->det, pval);
-#endif
 
     return pval;
 }
@@ -1097,7 +1098,7 @@ static double get_dfgls_pvalue (adf_info *ainfo)
     }
 
 #if ADF_DEBUG
-    fprintf(stderr, "dfgls_pval: tau=%g, T=%d, trend=%d kmax=%d, PQ=%d: pval=%g\n",
+    fprintf(stderr, "dfgls_pval: tau=%g, T=%d, trend=%d, kmax=%d, PQ=%d: pval=%g\n",
 	    ainfo->tau, T, trend, ainfo->kmax, PQ, pval);
 #endif
 

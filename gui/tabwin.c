@@ -26,22 +26,6 @@
 # include "gretlwin32.h"
 #endif
 
-#if GTK_MAJOR_VERSION == 3
-# if GTK_MINOR_VERSION >= 16
-#  define GTK_DETACH_NEW
-# elif GTK_MINOR_VERSION == 14
-#  define GTK_DETACH_BROKEN
-# endif
-#endif
-
-/* Note 2015-07-06: gtk 3.14 and 3.16 crash on dragging a
-   script or model tab out of a tabbed viewer, unless the
-   special function gtk_notebook_detach_tab() is used in
-   place of gtk_container_remove(). Since this function is
-   new in 3.16, we have to disable "drag to root window"
-   for gtk 3.14
-*/
-
 #define TDEBUG 0
 
 struct tabwin_t_ {
@@ -231,9 +215,7 @@ static void page_added_callback (GtkNotebook *notebook,
     if (np > 1) {
 	for (i=0; i<np; i++) {
 	    tab = gtk_notebook_get_nth_page(notebook, i);
-#ifndef GTK_DETACH_BROKEN
 	    gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
-#endif
 	    viewer_tab_show_closer(notebook, tab, TRUE);
 	}
     } else {
@@ -353,8 +335,6 @@ static gboolean switch_page_callback (GtkNotebook *tabs,
 
 /* callback for the "create-window" signal */
 
-#ifndef GTK_DETACH_BROKEN
-
 static GtkNotebook *detach_tab_callback (GtkNotebook *book,
 					 GtkWidget *page,
 					 gint x, gint y,
@@ -371,8 +351,6 @@ static GtkNotebook *detach_tab_callback (GtkNotebook *book,
 
     return NULL;
 }
-
-#endif
 
 /* avoid excessive padding in a tab's close button */
 
@@ -605,10 +583,8 @@ static tabwin_t *make_tabbed_viewer (int role)
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabwin->tabs), TRUE);
     g_signal_connect(G_OBJECT(tabwin->tabs), "switch-page",
 		     G_CALLBACK(switch_page_callback), tabwin);
-#ifndef GTK_DETACH_BROKEN
     g_signal_connect(G_OBJECT(tabwin->tabs), "create-window",
 		     G_CALLBACK(detach_tab_callback), tabwin);
-#endif
     g_signal_connect(G_OBJECT(tabwin->tabs), "page-added",
 		     G_CALLBACK(page_added_callback), tabwin);
     g_signal_connect(G_OBJECT(tabwin->tabs), "page-removed",
@@ -952,13 +928,10 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
     /* extract vwin->vbox from its tabbed holder */
     g_object_ref(vwin->vbox);
     gtk_container_remove(GTK_CONTAINER(page), vwin->vbox);
-#ifdef GTK_DETACH_NEW
+#if GTK_MAJOR_VERSION >= 3
     gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), page);
-#else
+#else /* GTK2 */
     gtk_container_remove(GTK_CONTAINER(notebook), page);
-#endif
-
-#if GTK_MAJOR_VERSION == 2
     /* tweak vbox params */
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
@@ -1279,15 +1252,12 @@ static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
 
 	if (tab != NULL) {
 	    windata_t *vwin = g_object_get_data(G_OBJECT(tab), "vwin");
-
-	    gtk_widget_set_sensitive(GTK_WIDGET(vwin->mbar), TRUE);
-#ifndef GTK_DETACH_BROKEN
 	    GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
 
+	    gtk_widget_set_sensitive(GTK_WIDGET(vwin->mbar), TRUE);
 	    if (gtk_notebook_get_n_pages(notebook) > 1) {
 		gtk_notebook_set_tab_detachable(notebook, tab, TRUE);
 	    }
-#endif
 	    tabwin->dlg_owner = NULL;
 	}
 	tabwin->dialog = NULL;

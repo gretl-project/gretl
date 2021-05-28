@@ -723,7 +723,7 @@ static void special_print_fc_stats (gretl_matrix *fc,
     fcs = forecast_stats(y, f, 0, fc->rows - 1, &n_used,
 			 OPT_O, &err);
     if (fcs != NULL) {
-	print_fcast_stats_matrix(fcs, n_used, prn);
+	print_fcast_stats_matrix(fcs, n_used, OPT_NONE, prn);
 	gretl_matrix_free(fcs);
     }
 }

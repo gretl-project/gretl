@@ -1227,6 +1227,8 @@ static void get_args (NODE *t, parser *p, int f, int np,
 	    if (p->sym == G_LBR) {
 		*next = '[';
 	    }
+	} else {
+	    expected_symbol_error(')', p, 0);
 	}
     }
 
@@ -1250,7 +1252,10 @@ static void get_assertion (NODE *t, parser *p)
     }
 }
 
-/* get 1 or more comma-separated pairs of the form key=value */
+/* For defining a bundle via _(): get one or more comma-separated
+   terms: each must take the form key=value, or just key if the
+   key and the name of a pre-defined object are one and the same.
+*/
 
 static void get_bundle_pairs (NODE *t, parser *p, int *next)
 {
@@ -1259,14 +1264,14 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
     int n, j, i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args_args: ch='%c', point='%s'\n",
+    fprintf(stderr, "get_bundle_pairs: ch='%c', point='%s'\n",
 	    p->ch, p->point);
 #endif
 
     while (p->ch && !p->err) {
 	/* first get an unquoted key */
 	while (p->ch == ' ') parser_getc(p);
-	src = p->point -1;
+	src = p->point - 1;
 	n = gretl_namechar_spn(src);
 	if (n == 0) {
 	    p->err = E_PARSE;
@@ -1276,19 +1281,21 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    parser_getc(p);
 	}
 	p->idstr = gretl_strndup(src, n);
-	while (p->ch == ' ') parser_getc(p);
-	if (p->ch != '=') {
-	    if (p->ch == 0) lex(p);
-	    expected_symbol_error('=', p, p->ch);
-	    break;
-	}
 	child = newstr(p->idstr);
 	attach_child(t, child, 0, -1, i++, p);
-	/* then get some parseable value */
-	parser_getc(p);
 	while (p->ch == ' ') parser_getc(p);
-	lex(p);
-	child = expr(p);
+	if (p->ch == '=') {
+	    /* parse the folowing expresssion */
+	    parser_getc(p);
+	    while (p->ch == ' ') parser_getc(p);
+	    lex(p);
+	    child = expr(p);
+	} else {
+	    /* backtrack to get named object */
+	    parser_advance(p, -(p->point - src));
+	    lex(p);
+	    child = base(p, NULL);
+	}
 	if (!p->err) {
 	    attach_child(t, child, 0, -1, i++, p);
 	}
@@ -1302,22 +1309,6 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    p->err = E_PARSE;
 	}
     }
-}
-
-/* Distinguish between the variants _(id1=val1, id2=val2,...),
-   F_DEFARGS, and _(val1, val2,...), F_BPACK. The marker for
-   the latter is that after the first identifier we find ',',
-   or ')' if there's a singleton term.
-*/
-
-static int peek_bpack (parser *p)
-{
-    const char *s = p->point;
-
-    s += strspn(s, " ");    /* skip any spaces */
-    s += strcspn(s, ",=)"); /* skip identifier or key */
-    s += strspn(s, " ");    /* skip any spaces */
-    return (*s == ',' || *s == ')');
 }
 
 static NODE *powterm (parser *p, NODE *l)
@@ -1556,16 +1547,11 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	}
     } else if (sym == F_DEFARGS) {
-	if (peek_bpack(p)) {
-	    sym = p->sym = F_BPACK;
-	}
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL && sym == F_BPACK) {
-		get_args(t->L, p, sym, -1, opt, &next);
-	    } else if (t != NULL) {
+	    if (t != NULL) {
 		get_bundle_pairs(t->L, p, &next);
 	    }
 	}

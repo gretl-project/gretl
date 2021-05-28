@@ -673,19 +673,14 @@ build_po
 have_mpi
 have_odbc
 have_gnu_regex
-fake_gtkspinner
 have_sourceview
 win32pkg
 win32_build
 mac_native
 gtk_version
 build_gui
-GSVWORDS_LIBS
-GSVWORDS_CFLAGS
 GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
-GTKSPINNER_LIBS
-GTKSPINNER_CFLAGS
 GTKMAC_LIBS
 GTKMAC_CFLAGS
 GTK3_LIBS
@@ -694,10 +689,6 @@ GTK2_LIBS
 GTK2_CFLAGS
 JSON_GLIB_LIBS
 JSON_GLIB_CFLAGS
-GLIB228_LIBS
-GLIB228_CFLAGS
-GLIB226_LIBS
-GLIB226_CFLAGS
 GLIB_LIBS
 GLIB_CFLAGS
 CURL_LIBS
@@ -712,7 +703,7 @@ GNUPLOT
 ODBC_LIBS
 ODBC_CFLAGS
 DARWIN_RPATH
-CARBONLIB
+MACLIB
 LAPACK_LIBS
 MPFR_LIBS
 MPFR_CFLAGS
@@ -868,6 +859,7 @@ enable_json
 enable_gmp
 enable_xdg_utils
 enable_pkgbuild
+enable_carbon
 enable_gnuplot_checks
 enable_gnuplot_3d
 enable_www
@@ -926,10 +918,6 @@ CURL_CFLAGS
 CURL_LIBS
 GLIB_CFLAGS
 GLIB_LIBS
-GLIB226_CFLAGS
-GLIB226_LIBS
-GLIB228_CFLAGS
-GLIB228_LIBS
 JSON_GLIB_CFLAGS
 JSON_GLIB_LIBS
 GTK2_CFLAGS
@@ -938,12 +926,8 @@ GTK3_CFLAGS
 GTK3_LIBS
 GTKMAC_CFLAGS
 GTKMAC_LIBS
-GTKSPINNER_CFLAGS
-GTKSPINNER_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKSOURCEVIEW_LIBS
-GSVWORDS_CFLAGS
-GSVWORDS_LIBS
 GDK_PIXBUF_CFLAGS
 GDK_PIXBUF_LIBS
 XML_CFLAGS
@@ -1578,6 +1562,7 @@ Optional Features:
   --disable-gmp           Don't try to include GMP support
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
+  --disable-carbon        Don't try to use Carbon on macOS
   --disable-gnuplot-checks do not run checks for gnuplot
   --disable-gnuplot-3d     assume gnuplot can't do interactive 3D plots
   --disable-www           do not link to libcurl for http
@@ -1653,14 +1638,6 @@ Some influential environment variables:
   CURL_LIBS   linker flags for CURL, overriding pkg-config
   GLIB_CFLAGS C compiler flags for GLIB, overriding pkg-config
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
-  GLIB226_CFLAGS
-              C compiler flags for GLIB226, overriding pkg-config
-  GLIB226_LIBS
-              linker flags for GLIB226, overriding pkg-config
-  GLIB228_CFLAGS
-              C compiler flags for GLIB228, overriding pkg-config
-  GLIB228_LIBS
-              linker flags for GLIB228, overriding pkg-config
   JSON_GLIB_CFLAGS
               C compiler flags for JSON_GLIB, overriding pkg-config
   JSON_GLIB_LIBS
@@ -1672,18 +1649,10 @@ Some influential environment variables:
   GTKMAC_CFLAGS
               C compiler flags for GTKMAC, overriding pkg-config
   GTKMAC_LIBS linker flags for GTKMAC, overriding pkg-config
-  GTKSPINNER_CFLAGS
-              C compiler flags for GTKSPINNER, overriding pkg-config
-  GTKSPINNER_LIBS
-              linker flags for GTKSPINNER, overriding pkg-config
   GTKSOURCEVIEW_CFLAGS
               C compiler flags for GTKSOURCEVIEW, overriding pkg-config
   GTKSOURCEVIEW_LIBS
               linker flags for GTKSOURCEVIEW, overriding pkg-config
-  GSVWORDS_CFLAGS
-              C compiler flags for GSVWORDS, overriding pkg-config
-  GSVWORDS_LIBS
-              linker flags for GSVWORDS, overriding pkg-config
   GDK_PIXBUF_CFLAGS
               C compiler flags for GDK_PIXBUF, overriding pkg-config
   GDK_PIXBUF_LIBS
@@ -2888,6 +2857,7 @@ _ACEOF
 
 
 
+
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 build_gui="yes"
@@ -2915,8 +2885,6 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
-fake_gtkspinner="yes"
-fake_mono_time="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -2940,6 +2908,7 @@ pkg_build="no"
 mac_native="no"
 mac_integration="no"
 gui_disabled="no"
+have_carbon="yes"
 gp_3d="yes"
 MAKE="make"
 XML_LIBS=
@@ -4996,13 +4965,41 @@ else
        case "$gl_cv_host_cpu_c_abi" in
          i386 | x86_64-x32 | arm | armhf | arm64-ilp32 | hppa | ia64-ilp32 | mips | mipsn32 | powerpc | riscv*-ilp32* | s390 | sparc)
            gl_cv_host_cpu_c_abi_32bit=yes ;;
-         *)
+         x86_64 | alpha | arm64 | hppa64 | ia64 | mips64 | powerpc64 | powerpc64-elfv2 | riscv*-lp64* | s390x | sparc64 )
            gl_cv_host_cpu_c_abi_32bit=no ;;
+         *)
+           gl_cv_host_cpu_c_abi_32bit=unknown ;;
        esac
      else
        case "$host_cpu" in
 
-         i[4567]86 )
+         # CPUs that only support a 32-bit ABI.
+         arc \
+         | bfin \
+         | cris* \
+         | csky \
+         | epiphany \
+         | ft32 \
+         | h8300 \
+         | m68k \
+         | microblaze | microblazeel \
+         | nds32 | nds32le | nds32be \
+         | nios2 | nios2eb | nios2el \
+         | or1k* \
+         | or32 \
+         | sh | sh1234 | sh1234elb \
+         | tic6x \
+         | xtensa* )
+           gl_cv_host_cpu_c_abi_32bit=yes
+           ;;
+
+         # CPUs that only support a 64-bit ABI.
+         alpha | alphaev[4-8] | alphaev56 | alphapca5[67] | alphaev6[78] \
+         | mmix )
+           gl_cv_host_cpu_c_abi_32bit=no
+           ;;
+
+         i[34567]86 )
            gl_cv_host_cpu_c_abi_32bit=yes
            ;;
 
@@ -5206,7 +5203,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
            ;;
 
          *)
-           gl_cv_host_cpu_c_abi_32bit=no
+           gl_cv_host_cpu_c_abi_32bit=unknown
            ;;
        esac
      fi
@@ -5221,90 +5218,150 @@ $as_echo "$gl_cv_host_cpu_c_abi_32bit" >&6; }
 
 
 
-  case "$host_os" in
-    solaris*)
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for 64-bit host" >&5
-$as_echo_n "checking for 64-bit host... " >&6; }
-if ${gl_cv_solaris_64bit+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ELF binary format" >&5
+$as_echo_n "checking for ELF binary format... " >&6; }
+if ${gl_cv_elf+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifdef _LP64
-                 int ok;
-                #else
-                 error fail
-                #endif
+#ifdef __ELF__
+        Extensible Linking Format
+        #endif
 
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  gl_cv_solaris_64bit=yes
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "Extensible Linking Format" >/dev/null 2>&1; then :
+  gl_cv_elf=yes
 else
-  gl_cv_solaris_64bit=no
+  gl_cv_elf=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -f conftest*
+
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_solaris_64bit" >&5
-$as_echo "$gl_cv_solaris_64bit" >&6; };;
-  esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_elf" >&5
+$as_echo "$gl_cv_elf" >&6; }
+  if test $gl_cv_elf; then
+    # Extract the ELF class of a file (5th byte) in decimal.
+    # Cf. https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header
+    if od -A x < /dev/null >/dev/null 2>/dev/null; then
+      # Use POSIX od.
+      func_elfclass ()
+      {
+        od -A n -t d1 -j 4 -N 1
+      }
+    else
+      # Use BSD hexdump.
+      func_elfclass ()
+      {
+        dd bs=1 count=1 skip=4 2>/dev/null | hexdump -e '1/1 "%3d "'
+        echo
+      }
+    fi
+    case $HOST_CPU_C_ABI_32BIT in
+      yes)
+        # 32-bit ABI.
+        acl_is_expected_elfclass ()
+        {
+          test "`func_elfclass | sed -e 's/[ 	]//g'`" = 1
+        }
+        ;;
+      no)
+        # 64-bit ABI.
+        acl_is_expected_elfclass ()
+        {
+          test "`func_elfclass | sed -e 's/[ 	]//g'`" = 2
+        }
+        ;;
+      *)
+        # Unknown.
+        acl_is_expected_elfclass ()
+        {
+          :
+        }
+        ;;
+    esac
+  else
+    acl_is_expected_elfclass ()
+    {
+      :
+    }
+  fi
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the common suffixes of directories in the library search path" >&5
 $as_echo_n "checking for the common suffixes of directories in the library search path... " >&6; }
 if ${acl_cv_libdirstems+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  acl_libdirstem=lib
+            acl_libdirstem=lib
      acl_libdirstem2=
+     acl_libdirstem3=
      case "$host_os" in
        solaris*)
-                                                      if test $gl_cv_solaris_64bit = yes; then
-           acl_libdirstem=lib/64
+                                                      if test $HOST_CPU_C_ABI_32BIT = no; then
+           acl_libdirstem2=lib/64
            case "$host_cpu" in
-             sparc*)        acl_libdirstem2=lib/sparcv9 ;;
-             i*86 | x86_64) acl_libdirstem2=lib/amd64 ;;
+             sparc*)        acl_libdirstem3=lib/sparcv9 ;;
+             i*86 | x86_64) acl_libdirstem3=lib/amd64 ;;
            esac
          fi
          ;;
        *)
-                           if test "$HOST_CPU_C_ABI_32BIT" != yes; then
-                                            searchpath=`(if test -f /usr/bin/gcc \
-                           && LC_ALL=C /usr/bin/gcc -print-search-dirs >/dev/null 2>/dev/null; then \
-                          LC_ALL=C /usr/bin/gcc -print-search-dirs; \
-                        else \
-                          LC_ALL=C $CC -print-search-dirs; \
-                        fi) 2>/dev/null \
-                       | sed -n -e 's,^libraries: ,,p' | sed -e 's,^=,,'`
-           if test -n "$searchpath"; then
-             acl_save_IFS="${IFS= 	}"; IFS=":"
-             for searchdir in $searchpath; do
-               if test -d "$searchdir"; then
-                 case "$searchdir" in
-                   */lib64/ | */lib64 ) acl_libdirstem=lib64 ;;
-                   */../ | */.. )
-                     # Better ignore directories of this form. They are misleading.
-                     ;;
-                   *) searchdir=`cd "$searchdir" && pwd`
-                      case "$searchdir" in
-                        */lib64 ) acl_libdirstem=lib64 ;;
-                      esac ;;
-                 esac
-               fi
-             done
-             IFS="$acl_save_IFS"
+                                                                                 searchpath=`(LC_ALL=C $CC $CPPFLAGS $CFLAGS -print-search-dirs) 2>/dev/null \
+                     | sed -n -e 's,^libraries: ,,p' | sed -e 's,^=,,'`
+         if test $HOST_CPU_C_ABI_32BIT != no; then
+           # 32-bit or unknown ABI.
+           if test -d /usr/lib32; then
+             acl_libdirstem2=lib32
+           fi
+         fi
+         if test $HOST_CPU_C_ABI_32BIT != yes; then
+           # 64-bit or unknown ABI.
+           if test -d /usr/lib64; then
+             acl_libdirstem3=lib64
+           fi
+         fi
+         if test -n "$searchpath"; then
+           acl_save_IFS="${IFS= 	}"; IFS=":"
+           for searchdir in $searchpath; do
+             if test -d "$searchdir"; then
+               case "$searchdir" in
+                 */lib32/ | */lib32 ) acl_libdirstem2=lib32 ;;
+                 */lib64/ | */lib64 ) acl_libdirstem3=lib64 ;;
+                 */../ | */.. )
+                   # Better ignore directories of this form. They are misleading.
+                   ;;
+                 *) searchdir=`cd "$searchdir" && pwd`
+                    case "$searchdir" in
+                      */lib32 ) acl_libdirstem2=lib32 ;;
+                      */lib64 ) acl_libdirstem3=lib64 ;;
+                    esac ;;
+               esac
+             fi
+           done
+           IFS="$acl_save_IFS"
+           if test $HOST_CPU_C_ABI_32BIT = yes; then
+             # 32-bit ABI.
+             acl_libdirstem3=
+           fi
+           if test $HOST_CPU_C_ABI_32BIT = no; then
+             # 64-bit ABI.
+             acl_libdirstem2=
            fi
          fi
          ;;
      esac
      test -n "$acl_libdirstem2" || acl_libdirstem2="$acl_libdirstem"
-     acl_cv_libdirstems="$acl_libdirstem,$acl_libdirstem2"
+     test -n "$acl_libdirstem3" || acl_libdirstem3="$acl_libdirstem"
+     acl_cv_libdirstems="$acl_libdirstem,$acl_libdirstem2,$acl_libdirstem3"
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acl_cv_libdirstems" >&5
 $as_echo "$acl_cv_libdirstems" >&6; }
-  # Decompose acl_cv_libdirstems into acl_libdirstem and acl_libdirstem2.
-  acl_libdirstem=`echo "$acl_cv_libdirstems" | sed -e 's/,.*//'`
-  acl_libdirstem2=`echo "$acl_cv_libdirstems" | sed -e '/,/s/.*,//'`
+      acl_libdirstem=`echo "$acl_cv_libdirstems" | sed -e 's/,.*//'`
+  acl_libdirstem2=`echo "$acl_cv_libdirstems" | sed -e 's/^[^,]*,//' -e 's/,.*//'`
+  acl_libdirstem3=`echo "$acl_cv_libdirstems" | sed -e 's/^[^,]*,[^,]*,//' -e 's/,.*//'`
 
 
 
@@ -5325,6 +5382,8 @@ $as_echo "$acl_cv_libdirstems" >&6; }
 
     eval additional_includedir=\"$includedir\"
     eval additional_libdir=\"$libdir\"
+    eval additional_libdir2=\"$exec_prefix/$acl_libdirstem2\"
+    eval additional_libdir3=\"$exec_prefix/$acl_libdirstem3\"
 
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
@@ -5345,6 +5404,8 @@ if test "${with_libiconv_prefix+set}" = set; then :
 
           eval additional_includedir=\"$includedir\"
           eval additional_libdir=\"$libdir\"
+          eval additional_libdir2=\"$exec_prefix/$acl_libdirstem2\"
+          eval additional_libdir3=\"$exec_prefix/$acl_libdirstem3\"
 
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
@@ -5352,15 +5413,19 @@ if test "${with_libiconv_prefix+set}" = set; then :
       else
         additional_includedir="$withval/include"
         additional_libdir="$withval/$acl_libdirstem"
-        if test "$acl_libdirstem2" != "$acl_libdirstem" \
-           && test ! -d "$withval/$acl_libdirstem"; then
-          additional_libdir="$withval/$acl_libdirstem2"
-        fi
+        additional_libdir2="$withval/$acl_libdirstem2"
+        additional_libdir3="$withval/$acl_libdirstem3"
       fi
     fi
 
 fi
 
+  if test "X$additional_libdir2" = "X$additional_libdir"; then
+    additional_libdir2=
+  fi
+  if test "X$additional_libdir3" = "X$additional_libdir"; then
+    additional_libdir3=
+  fi
       LIBICONV=
   LTLIBICONV=
   INCICONV=
@@ -5406,45 +5471,51 @@ fi
             shrext=
           fi
           if test $use_additional = yes; then
-            dir="$additional_libdir"
-                                    if test -n "$acl_shlibext"; then
-              if test -f "$dir/$libname$shrext"; then
-                found_dir="$dir"
-                found_so="$dir/$libname$shrext"
-              else
-                if test "$acl_library_names_spec" = '$libname$shrext$versuffix'; then
-                  ver=`(cd "$dir" && \
-                        for f in "$libname$shrext".*; do echo "$f"; done \
-                        | sed -e "s,^$libname$shrext\\\\.,," \
-                        | sort -t '.' -n -r -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 \
-                        | sed 1q ) 2>/dev/null`
-                  if test -n "$ver" && test -f "$dir/$libname$shrext.$ver"; then
-                    found_dir="$dir"
-                    found_so="$dir/$libname$shrext.$ver"
-                  fi
-                else
-                  eval library_names=\"$acl_library_names_spec\"
-                  for f in $library_names; do
-                    if test -f "$dir/$f"; then
+            for additional_libdir_variable in additional_libdir additional_libdir2 additional_libdir3; do
+              if test "X$found_dir" = "X"; then
+                eval dir=\$$additional_libdir_variable
+                if test -n "$dir"; then
+                                                      if test -n "$acl_shlibext"; then
+                    if test -f "$dir/$libname$shrext" && acl_is_expected_elfclass < "$dir/$libname$shrext"; then
                       found_dir="$dir"
-                      found_so="$dir/$f"
-                      break
+                      found_so="$dir/$libname$shrext"
+                    else
+                      if test "$acl_library_names_spec" = '$libname$shrext$versuffix'; then
+                        ver=`(cd "$dir" && \
+                              for f in "$libname$shrext".*; do echo "$f"; done \
+                              | sed -e "s,^$libname$shrext\\\\.,," \
+                              | sort -t '.' -n -r -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 \
+                              | sed 1q ) 2>/dev/null`
+                        if test -n "$ver" && test -f "$dir/$libname$shrext.$ver" && acl_is_expected_elfclass < "$dir/$libname$shrext.$ver"; then
+                          found_dir="$dir"
+                          found_so="$dir/$libname$shrext.$ver"
+                        fi
+                      else
+                        eval library_names=\"$acl_library_names_spec\"
+                        for f in $library_names; do
+                          if test -f "$dir/$f" && acl_is_expected_elfclass < "$dir/$f"; then
+                            found_dir="$dir"
+                            found_so="$dir/$f"
+                            break
+                          fi
+                        done
+                      fi
                     fi
-                  done
+                  fi
+                                    if test "X$found_dir" = "X"; then
+                    if test -f "$dir/$libname.$acl_libext" && ${AR-ar} -p "$dir/$libname.$acl_libext" | acl_is_expected_elfclass; then
+                      found_dir="$dir"
+                      found_a="$dir/$libname.$acl_libext"
+                    fi
+                  fi
+                  if test "X$found_dir" != "X"; then
+                    if test -f "$dir/$libname.la"; then
+                      found_la="$dir/$libname.la"
+                    fi
+                  fi
                 fi
               fi
-            fi
-                        if test "X$found_dir" = "X"; then
-              if test -f "$dir/$libname.$acl_libext"; then
-                found_dir="$dir"
-                found_a="$dir/$libname.$acl_libext"
-              fi
-            fi
-            if test "X$found_dir" != "X"; then
-              if test -f "$dir/$libname.la"; then
-                found_la="$dir/$libname.la"
-              fi
-            fi
+            done
           fi
           if test "X$found_dir" = "X"; then
             for x in $LDFLAGS $LTLIBICONV; do
@@ -5461,7 +5532,7 @@ fi
                 -L*)
                   dir=`echo "X$x" | sed -e 's/^X-L//'`
                                     if test -n "$acl_shlibext"; then
-                    if test -f "$dir/$libname$shrext"; then
+                    if test -f "$dir/$libname$shrext" && acl_is_expected_elfclass < "$dir/$libname$shrext"; then
                       found_dir="$dir"
                       found_so="$dir/$libname$shrext"
                     else
@@ -5471,14 +5542,14 @@ fi
                               | sed -e "s,^$libname$shrext\\\\.,," \
                               | sort -t '.' -n -r -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 \
                               | sed 1q ) 2>/dev/null`
-                        if test -n "$ver" && test -f "$dir/$libname$shrext.$ver"; then
+                        if test -n "$ver" && test -f "$dir/$libname$shrext.$ver" && acl_is_expected_elfclass < "$dir/$libname$shrext.$ver"; then
                           found_dir="$dir"
                           found_so="$dir/$libname$shrext.$ver"
                         fi
                       else
                         eval library_names=\"$acl_library_names_spec\"
                         for f in $library_names; do
-                          if test -f "$dir/$f"; then
+                          if test -f "$dir/$f" && acl_is_expected_elfclass < "$dir/$f"; then
                             found_dir="$dir"
                             found_so="$dir/$f"
                             break
@@ -5488,7 +5559,7 @@ fi
                     fi
                   fi
                                     if test "X$found_dir" = "X"; then
-                    if test -f "$dir/$libname.$acl_libext"; then
+                    if test -f "$dir/$libname.$acl_libext" && ${AR-ar} -p "$dir/$libname.$acl_libext" | acl_is_expected_elfclass; then
                       found_dir="$dir"
                       found_a="$dir/$libname.$acl_libext"
                     fi
@@ -5510,7 +5581,8 @@ fi
             if test "X$found_so" != "X"; then
                                                         if test "$enable_rpath" = no \
                  || test "X$found_dir" = "X/usr/$acl_libdirstem" \
-                 || test "X$found_dir" = "X/usr/$acl_libdirstem2"; then
+                 || test "X$found_dir" = "X/usr/$acl_libdirstem2" \
+                 || test "X$found_dir" = "X/usr/$acl_libdirstem3"; then
                                 LIBICONV="${LIBICONV}${LIBICONV:+ }$found_so"
               else
                                                                                 haveit=
@@ -5589,6 +5661,13 @@ fi
                 fi
                 additional_includedir="$basedir/include"
                 ;;
+              */$acl_libdirstem3 | */$acl_libdirstem3/)
+                basedir=`echo "X$found_dir" | sed -e 's,^X,,' -e "s,/$acl_libdirstem3/"'*$,,'`
+                if test "$name" = 'iconv'; then
+                  LIBICONV_PREFIX="$basedir"
+                fi
+                additional_includedir="$basedir/include"
+                ;;
             esac
             if test "X$additional_includedir" != "X"; then
                                                                                                                 if test "X$additional_includedir" != "X/usr/include"; then
@@ -5634,12 +5713,14 @@ fi
                             for dep in $dependency_libs; do
                 case "$dep" in
                   -L*)
-                    additional_libdir=`echo "X$dep" | sed -e 's/^X-L//'`
-                                                                                                                                                                if test "X$additional_libdir" != "X/usr/$acl_libdirstem" \
-                       && test "X$additional_libdir" != "X/usr/$acl_libdirstem2"; then
+                    dependency_libdir=`echo "X$dep" | sed -e 's/^X-L//'`
+                                                                                                                                                                if test "X$dependency_libdir" != "X/usr/$acl_libdirstem" \
+                       && test "X$dependency_libdir" != "X/usr/$acl_libdirstem2" \
+                       && test "X$dependency_libdir" != "X/usr/$acl_libdirstem3"; then
                       haveit=
-                      if test "X$additional_libdir" = "X/usr/local/$acl_libdirstem" \
-                         || test "X$additional_libdir" = "X/usr/local/$acl_libdirstem2"; then
+                      if test "X$dependency_libdir" = "X/usr/local/$acl_libdirstem" \
+                         || test "X$dependency_libdir" = "X/usr/local/$acl_libdirstem2" \
+                         || test "X$dependency_libdir" = "X/usr/local/$acl_libdirstem3"; then
                         if test -n "$GCC"; then
                           case $host_os in
                             linux* | gnu* | k*bsd*-gnu) haveit=yes;;
@@ -5658,14 +5739,14 @@ fi
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
 
-                          if test "X$x" = "X-L$additional_libdir"; then
+                          if test "X$x" = "X-L$dependency_libdir"; then
                             haveit=yes
                             break
                           fi
                         done
                         if test -z "$haveit"; then
-                          if test -d "$additional_libdir"; then
-                                                        LIBICONV="${LIBICONV}${LIBICONV:+ }-L$additional_libdir"
+                          if test -d "$dependency_libdir"; then
+                                                        LIBICONV="${LIBICONV}${LIBICONV:+ }-L$dependency_libdir"
                           fi
                         fi
                         haveit=
@@ -5679,14 +5760,14 @@ fi
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
 
-                          if test "X$x" = "X-L$additional_libdir"; then
+                          if test "X$x" = "X-L$dependency_libdir"; then
                             haveit=yes
                             break
                           fi
                         done
                         if test -z "$haveit"; then
-                          if test -d "$additional_libdir"; then
-                                                        LTLIBICONV="${LTLIBICONV}${LTLIBICONV:+ }-L$additional_libdir"
+                          if test -d "$dependency_libdir"; then
+                                                        LTLIBICONV="${LTLIBICONV}${LTLIBICONV:+ }-L$dependency_libdir"
                           fi
                         fi
                       fi
@@ -5827,41 +5908,7 @@ $as_echo "$gt_cv_func_CFPreferencesCopyAppValue" >&6; }
 $as_echo "#define HAVE_CFPREFERENCESCOPYAPPVALUE 1" >>confdefs.h
 
   fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLocaleCopyCurrent" >&5
-$as_echo_n "checking for CFLocaleCopyCurrent... " >&6; }
-if ${gt_cv_func_CFLocaleCopyCurrent+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  gt_save_LIBS="$LIBS"
-     LIBS="$LIBS -Wl,-framework -Wl,CoreFoundation"
-     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <CoreFoundation/CFLocale.h>
-int
-main ()
-{
-CFLocaleCopyCurrent();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  gt_cv_func_CFLocaleCopyCurrent=yes
-else
-  gt_cv_func_CFLocaleCopyCurrent=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-     LIBS="$gt_save_LIBS"
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gt_cv_func_CFLocaleCopyCurrent" >&5
-$as_echo "$gt_cv_func_CFLocaleCopyCurrent" >&6; }
-  if test $gt_cv_func_CFLocaleCopyCurrent = yes; then
-
-$as_echo "#define HAVE_CFLOCALECOPYCURRENT 1" >>confdefs.h
-
-  fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLocaleCopyPreferredLanguages" >&5
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLocaleCopyPreferredLanguages" >&5
 $as_echo_n "checking for CFLocaleCopyPreferredLanguages... " >&6; }
 if ${gt_cv_func_CFLocaleCopyPreferredLanguages+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5897,7 +5944,6 @@ $as_echo "#define HAVE_CFLOCALECOPYPREFERREDLANGUAGES 1" >>confdefs.h
   fi
   INTL_MACOSX_LIBS=
   if test $gt_cv_func_CFPreferencesCopyAppValue = yes \
-     || test $gt_cv_func_CFLocaleCopyCurrent = yes \
      || test $gt_cv_func_CFLocaleCopyPreferredLanguages = yes; then
     INTL_MACOSX_LIBS="-Wl,-framework -Wl,CoreFoundation"
   fi
@@ -6268,6 +6314,8 @@ $as_echo "$LIBICONV" >&6; }
 
     eval additional_includedir=\"$includedir\"
     eval additional_libdir=\"$libdir\"
+    eval additional_libdir2=\"$exec_prefix/$acl_libdirstem2\"
+    eval additional_libdir3=\"$exec_prefix/$acl_libdirstem3\"
 
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
@@ -6288,6 +6336,8 @@ if test "${with_libintl_prefix+set}" = set; then :
 
           eval additional_includedir=\"$includedir\"
           eval additional_libdir=\"$libdir\"
+          eval additional_libdir2=\"$exec_prefix/$acl_libdirstem2\"
+          eval additional_libdir3=\"$exec_prefix/$acl_libdirstem3\"
 
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
@@ -6295,15 +6345,19 @@ if test "${with_libintl_prefix+set}" = set; then :
       else
         additional_includedir="$withval/include"
         additional_libdir="$withval/$acl_libdirstem"
-        if test "$acl_libdirstem2" != "$acl_libdirstem" \
-           && test ! -d "$withval/$acl_libdirstem"; then
-          additional_libdir="$withval/$acl_libdirstem2"
-        fi
+        additional_libdir2="$withval/$acl_libdirstem2"
+        additional_libdir3="$withval/$acl_libdirstem3"
       fi
     fi
 
 fi
 
+  if test "X$additional_libdir2" = "X$additional_libdir"; then
+    additional_libdir2=
+  fi
+  if test "X$additional_libdir3" = "X$additional_libdir"; then
+    additional_libdir3=
+  fi
       LIBINTL=
   LTLIBINTL=
   INCINTL=
@@ -6349,45 +6403,51 @@ fi
             shrext=
           fi
           if test $use_additional = yes; then
-            dir="$additional_libdir"
-                                    if test -n "$acl_shlibext"; then
-              if test -f "$dir/$libname$shrext"; then
-                found_dir="$dir"
-                found_so="$dir/$libname$shrext"
-              else
-                if test "$acl_library_names_spec" = '$libname$shrext$versuffix'; then
-                  ver=`(cd "$dir" && \
-                        for f in "$libname$shrext".*; do echo "$f"; done \
-                        | sed -e "s,^$libname$shrext\\\\.,," \
-                        | sort -t '.' -n -r -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 \
-                        | sed 1q ) 2>/dev/null`
-                  if test -n "$ver" && test -f "$dir/$libname$shrext.$ver"; then
-                    found_dir="$dir"
-                    found_so="$dir/$libname$shrext.$ver"
-                  fi
-                else
-                  eval library_names=\"$acl_library_names_spec\"
-                  for f in $library_names; do
-                    if test -f "$dir/$f"; then
+            for additional_libdir_variable in additional_libdir additional_libdir2 additional_libdir3; do
+              if test "X$found_dir" = "X"; then
+                eval dir=\$$additional_libdir_variable
+                if test -n "$dir"; then
+                                                      if test -n "$acl_shlibext"; then
+                    if test -f "$dir/$libname$shrext" && acl_is_expected_elfclass < "$dir/$libname$shrext"; then
                       found_dir="$dir"
-                      found_so="$dir/$f"
-                      break
+                      found_so="$dir/$libname$shrext"
+                    else
+                      if test "$acl_library_names_spec" = '$libname$shrext$versuffix'; then
+                        ver=`(cd "$dir" && \
+                              for f in "$libname$shrext".*; do echo "$f"; done \
+                              | sed -e "s,^$libname$shrext\\\\.,," \
+                              | sort -t '.' -n -r -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 \
+                              | sed 1q ) 2>/dev/null`
+                        if test -n "$ver" && test -f "$dir/$libname$shrext.$ver" && acl_is_expected_elfclass < "$dir/$libname$shrext.$ver"; then
+                          found_dir="$dir"
+                          found_so="$dir/$libname$shrext.$ver"
+                        fi
+                      else
+                        eval library_names=\"$acl_library_names_spec\"
+                        for f in $library_names; do
+                          if test -f "$dir/$f" && acl_is_expected_elfclass < "$dir/$f"; then
+                            found_dir="$dir"
+                            found_so="$dir/$f"
+                            break
+                          fi
+                        done
+                      fi
                     fi
-                  done
+                  fi
+                                    if test "X$found_dir" = "X"; then
+                    if test -f "$dir/$libname.$acl_libext" && ${AR-ar} -p "$dir/$libname.$acl_libext" | acl_is_expected_elfclass; then
+                      found_dir="$dir"
+                      found_a="$dir/$libname.$acl_libext"
+                    fi
+                  fi
+                  if test "X$found_dir" != "X"; then
+                    if test -f "$dir/$libname.la"; then
+                      found_la="$dir/$libname.la"
+                    fi
+                  fi
                 fi
               fi
-            fi
-                        if test "X$found_dir" = "X"; then
-              if test -f "$dir/$libname.$acl_libext"; then
-                found_dir="$dir"
-                found_a="$dir/$libname.$acl_libext"
-              fi
-            fi
-            if test "X$found_dir" != "X"; then
-              if test -f "$dir/$libname.la"; then
-                found_la="$dir/$libname.la"
-              fi
-            fi
+            done
           fi
           if test "X$found_dir" = "X"; then
             for x in $LDFLAGS $LTLIBINTL; do
@@ -6404,7 +6464,7 @@ fi
                 -L*)
                   dir=`echo "X$x" | sed -e 's/^X-L//'`
                                     if test -n "$acl_shlibext"; then
-                    if test -f "$dir/$libname$shrext"; then
+                    if test -f "$dir/$libname$shrext" && acl_is_expected_elfclass < "$dir/$libname$shrext"; then
                       found_dir="$dir"
                       found_so="$dir/$libname$shrext"
                     else
@@ -6414,14 +6474,14 @@ fi
                               | sed -e "s,^$libname$shrext\\\\.,," \
                               | sort -t '.' -n -r -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 \
                               | sed 1q ) 2>/dev/null`
-                        if test -n "$ver" && test -f "$dir/$libname$shrext.$ver"; then
+                        if test -n "$ver" && test -f "$dir/$libname$shrext.$ver" && acl_is_expected_elfclass < "$dir/$libname$shrext.$ver"; then
                           found_dir="$dir"
                           found_so="$dir/$libname$shrext.$ver"
                         fi
                       else
                         eval library_names=\"$acl_library_names_spec\"
                         for f in $library_names; do
-                          if test -f "$dir/$f"; then
+                          if test -f "$dir/$f" && acl_is_expected_elfclass < "$dir/$f"; then
                             found_dir="$dir"
                             found_so="$dir/$f"
                             break
@@ -6431,7 +6491,7 @@ fi
                     fi
                   fi
                                     if test "X$found_dir" = "X"; then
-                    if test -f "$dir/$libname.$acl_libext"; then
+                    if test -f "$dir/$libname.$acl_libext" && ${AR-ar} -p "$dir/$libname.$acl_libext" | acl_is_expected_elfclass; then
                       found_dir="$dir"
                       found_a="$dir/$libname.$acl_libext"
                     fi
@@ -6453,7 +6513,8 @@ fi
             if test "X$found_so" != "X"; then
                                                         if test "$enable_rpath" = no \
                  || test "X$found_dir" = "X/usr/$acl_libdirstem" \
-                 || test "X$found_dir" = "X/usr/$acl_libdirstem2"; then
+                 || test "X$found_dir" = "X/usr/$acl_libdirstem2" \
+                 || test "X$found_dir" = "X/usr/$acl_libdirstem3"; then
                                 LIBINTL="${LIBINTL}${LIBINTL:+ }$found_so"
               else
                                                                                 haveit=
@@ -6532,6 +6593,13 @@ fi
                 fi
                 additional_includedir="$basedir/include"
                 ;;
+              */$acl_libdirstem3 | */$acl_libdirstem3/)
+                basedir=`echo "X$found_dir" | sed -e 's,^X,,' -e "s,/$acl_libdirstem3/"'*$,,'`
+                if test "$name" = 'intl'; then
+                  LIBINTL_PREFIX="$basedir"
+                fi
+                additional_includedir="$basedir/include"
+                ;;
             esac
             if test "X$additional_includedir" != "X"; then
                                                                                                                 if test "X$additional_includedir" != "X/usr/include"; then
@@ -6577,12 +6645,14 @@ fi
                             for dep in $dependency_libs; do
                 case "$dep" in
                   -L*)
-                    additional_libdir=`echo "X$dep" | sed -e 's/^X-L//'`
-                                                                                                                                                                if test "X$additional_libdir" != "X/usr/$acl_libdirstem" \
-                       && test "X$additional_libdir" != "X/usr/$acl_libdirstem2"; then
+                    dependency_libdir=`echo "X$dep" | sed -e 's/^X-L//'`
+                                                                                                                                                                if test "X$dependency_libdir" != "X/usr/$acl_libdirstem" \
+                       && test "X$dependency_libdir" != "X/usr/$acl_libdirstem2" \
+                       && test "X$dependency_libdir" != "X/usr/$acl_libdirstem3"; then
                       haveit=
-                      if test "X$additional_libdir" = "X/usr/local/$acl_libdirstem" \
-                         || test "X$additional_libdir" = "X/usr/local/$acl_libdirstem2"; then
+                      if test "X$dependency_libdir" = "X/usr/local/$acl_libdirstem" \
+                         || test "X$dependency_libdir" = "X/usr/local/$acl_libdirstem2" \
+                         || test "X$dependency_libdir" = "X/usr/local/$acl_libdirstem3"; then
                         if test -n "$GCC"; then
                           case $host_os in
                             linux* | gnu* | k*bsd*-gnu) haveit=yes;;
@@ -6601,14 +6671,14 @@ fi
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
 
-                          if test "X$x" = "X-L$additional_libdir"; then
+                          if test "X$x" = "X-L$dependency_libdir"; then
                             haveit=yes
                             break
                           fi
                         done
                         if test -z "$haveit"; then
-                          if test -d "$additional_libdir"; then
-                                                        LIBINTL="${LIBINTL}${LIBINTL:+ }-L$additional_libdir"
+                          if test -d "$dependency_libdir"; then
+                                                        LIBINTL="${LIBINTL}${LIBINTL:+ }-L$dependency_libdir"
                           fi
                         fi
                         haveit=
@@ -6622,14 +6692,14 @@ fi
   exec_prefix="$acl_save_exec_prefix"
   prefix="$acl_save_prefix"
 
-                          if test "X$x" = "X-L$additional_libdir"; then
+                          if test "X$x" = "X-L$dependency_libdir"; then
                             haveit=yes
                             break
                           fi
                         done
                         if test -z "$haveit"; then
-                          if test -d "$additional_libdir"; then
-                                                        LTLIBINTL="${LTLIBINTL}${LTLIBINTL:+ }-L$additional_libdir"
+                          if test -d "$dependency_libdir"; then
+                                                        LTLIBINTL="${LTLIBINTL}${LTLIBINTL:+ }-L$dependency_libdir"
                           fi
                         fi
                       fi
@@ -7021,6 +7091,15 @@ then
   $as_echo "#define PKGBUILD 1" >>confdefs.h
 
   pkg_build="yes"
+fi
+fi
+
+
+# Check whether --enable-carbon was given.
+if test "${enable_carbon+set}" = set; then :
+  enableval=$enable_carbon; if test "$enableval" = "no"
+then
+  have_carbon="no"
 fi
 fi
 
@@ -7799,8 +7878,8 @@ esac
 
 
 
-macro_version='2.4.6.42-b88ce'
-macro_revision='2.4.6.42'
+macro_version='2.4.6'
+macro_revision='2.4.6'
 
 
 
@@ -15569,118 +15648,6 @@ _ACEOF
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
-$as_echo_n "checking for ANSI C header files... " >&6; }
-if ${ac_cv_header_stdc+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <float.h>
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_header_stdc=yes
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test $ac_cv_header_stdc = yes; then
-  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "memchr" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "free" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
-  if test "$cross_compiling" = yes; then :
-  :
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ctype.h>
-#include <stdlib.h>
-#if ((' ' & 0x0FF) == 0x020)
-# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
-# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
-#else
-# define ISLOWER(c) \
-		   (('a' <= (c) && (c) <= 'i') \
-		     || ('j' <= (c) && (c) <= 'r') \
-		     || ('s' <= (c) && (c) <= 'z'))
-# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
-#endif
-
-#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
-int
-main ()
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (XOR (islower (i), ISLOWER (i))
-	|| toupper (i) != TOUPPER (i))
-      return 2;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
-$as_echo "$ac_cv_header_stdc" >&6; }
-if test $ac_cv_header_stdc = yes; then
-
-$as_echo "#define STDC_HEADERS 1" >>confdefs.h
-
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sys/wait.h that is POSIX.1 compatible" >&5
 $as_echo_n "checking for sys/wait.h that is POSIX.1 compatible... " >&6; }
 if ${ac_cv_header_sys_wait_h+:} false; then :
@@ -15829,66 +15796,6 @@ $as_echo "#define const /**/" >>confdefs.h
 
 fi
 
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for long double with more range or precision than double" >&5
-$as_echo_n "checking for long double with more range or precision than double... " >&6; }
-if ${ac_cv_type_long_double_wider+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <float.h>
-	    long double const a[] =
-	      {
-		 0.0L, DBL_MIN, DBL_MAX, DBL_EPSILON,
-		 LDBL_MIN, LDBL_MAX, LDBL_EPSILON
-	      };
-	    long double
-	    f (long double x)
-	    {
-	       return ((x + (unsigned long int) 10) * (-1 / x) + a[0]
-			+ (x ? f (x) : 'c'));
-	    }
-
-int
-main ()
-{
-static int test_array [1 - 2 * !((0 < ((DBL_MAX_EXP < LDBL_MAX_EXP)
-		   + (DBL_MANT_DIG < LDBL_MANT_DIG)
-		   - (LDBL_MAX_EXP < DBL_MAX_EXP)
-		   - (LDBL_MANT_DIG < DBL_MANT_DIG)))
-	    && (int) LDBL_EPSILON == 0
-	  )];
-test_array [0] = 0;
-return test_array [0];
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_type_long_double_wider=yes
-else
-  ac_cv_type_long_double_wider=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_long_double_wider" >&5
-$as_echo "$ac_cv_type_long_double_wider" >&6; }
-  if test $ac_cv_type_long_double_wider = yes; then
-
-$as_echo "#define HAVE_LONG_DOUBLE_WIDER 1" >>confdefs.h
-
-  fi
-
-    ac_cv_c_long_double=$ac_cv_type_long_double_wider
-    if test $ac_cv_c_long_double = yes; then
-
-$as_echo "#define HAVE_LONG_DOUBLE 1" >>confdefs.h
-
-    fi
-
 for ac_func in vasprintf
 do :
   ac_fn_c_check_func "$LINENO" "vasprintf" "ac_cv_func_vasprintf"
@@ -15941,39 +15848,6 @@ $as_echo "$ac_cv_sizeof_int" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_INT $ac_cv_sizeof_int
-_ACEOF
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking return type of signal handlers" >&5
-$as_echo_n "checking return type of signal handlers... " >&6; }
-if ${ac_cv_type_signal+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <signal.h>
-
-int
-main ()
-{
-return *(signal (0, 0)) (0) == 1;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_type_signal=int
-else
-  ac_cv_type_signal=void
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_signal" >&5
-$as_echo "$ac_cv_type_signal" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define RETSIGTYPE $ac_cv_type_signal
 _ACEOF
 
 
@@ -21514,8 +21388,18 @@ rm -f conf.lapacktest
 esac
 
 if test "$darwin_build" = "yes" ; then
-  CARBONLIB="-Wl,-framework -Wl,Carbon"
+  if test "$have_carbon" = "yes" ; then
+    MACLIB="-Wl,-framework -Wl,Carbon"
 
+    $as_echo "#define HAVE_CARBON 1" >>confdefs.h
+
+  else
+    MACLIB="-Wl,-framework -Wl,CoreServices"
+
+    $as_echo "#define USE_SSE2 1" >>confdefs.h
+
+    sse2_result="yes"
+  fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
 
@@ -22149,12 +22033,12 @@ if test -n "$GLIB_CFLAGS"; then
     pkg_cv_GLIB_CFLAGS="$GLIB_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GLIB_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GLIB_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.28.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22166,12 +22050,12 @@ if test -n "$GLIB_LIBS"; then
     pkg_cv_GLIB_LIBS="$GLIB_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GLIB_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GLIB_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.28.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22192,9 +22076,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.14.0" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
         else
-	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.14.0" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GLIB_PKG_ERRORS" >&5
@@ -22213,250 +22097,10 @@ $as_echo "yes" >&6; }
 fi
 if test "${have_glib2}" = "no" ; then
    echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
    exit 1
-fi
-
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB226" >&5
-$as_echo_n "checking for GLIB226... " >&6; }
-
-if test -n "$GLIB226_CFLAGS"; then
-    pkg_cv_GLIB226_CFLAGS="$GLIB226_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.26.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.26.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB226_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.26.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GLIB226_LIBS"; then
-    pkg_cv_GLIB226_LIBS="$GLIB226_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.26.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.26.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB226_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.26.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GLIB226_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.26.0" 2>&1`
-        else
-	        GLIB226_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.26.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GLIB226_PKG_ERRORS" >&5
-
-	$as_echo "#define GLIB_LT_2_26 1" >>confdefs.h
-
-
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	$as_echo "#define GLIB_LT_2_26 1" >>confdefs.h
-
-
-else
-	GLIB226_CFLAGS=$pkg_cv_GLIB226_CFLAGS
-	GLIB226_LIBS=$pkg_cv_GLIB226_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-fi
-
-if test "$darwin_build" = "no" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB228" >&5
-$as_echo_n "checking for GLIB228... " >&6; }
-
-if test -n "$GLIB228_CFLAGS"; then
-    pkg_cv_GLIB228_CFLAGS="$GLIB228_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB228_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.28.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GLIB228_LIBS"; then
-    pkg_cv_GLIB228_LIBS="$GLIB228_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB228_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.28.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GLIB228_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
-        else
-	        GLIB228_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GLIB228_PKG_ERRORS" >&5
-
-	fake_mono_time="yes"
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	fake_mono_time="yes"
-else
-	GLIB228_CFLAGS=$pkg_cv_GLIB228_CFLAGS
-	GLIB228_LIBS=$pkg_cv_GLIB228_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	fake_mono_time="no"
-fi
-fi
-if test "$fake_mono_time" = "yes" ; then
-   have_clock_gettime="no"
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lc" >&5
-$as_echo_n "checking for clock_gettime in -lc... " >&6; }
-if ${ac_cv_lib_c_clock_gettime+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lc  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clock_gettime ();
-int
-main ()
-{
-return clock_gettime ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_c_clock_gettime=yes
-else
-  ac_cv_lib_c_clock_gettime=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_clock_gettime" >&5
-$as_echo "$ac_cv_lib_c_clock_gettime" >&6; }
-if test "x$ac_cv_lib_c_clock_gettime" = xyes; then :
-  have_clock_gettime="yes"
-fi
-
-   if test "$have_clock_gettime" = "no" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lrt" >&5
-$as_echo_n "checking for clock_gettime in -lrt... " >&6; }
-if ${ac_cv_lib_rt_clock_gettime+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lrt  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clock_gettime ();
-int
-main ()
-{
-return clock_gettime ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_rt_clock_gettime=yes
-else
-  ac_cv_lib_rt_clock_gettime=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rt_clock_gettime" >&5
-$as_echo "$ac_cv_lib_rt_clock_gettime" >&6; }
-if test "x$ac_cv_lib_rt_clock_gettime" = xyes; then :
-  have_clock_gettime="yes"; \
-       RT_LIB="-lrt"
-fi
-
-   fi
-   if test "$have_clock_gettime" = "yes" ; then
-      $as_echo "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
-
-   fi
 fi
 
 if test "$try_json_glib" = "yes" ; then
@@ -22552,12 +22196,12 @@ if test -n "$GTK2_CFLAGS"; then
     pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22569,12 +22213,12 @@ if test -n "$GTK2_LIBS"; then
     pkg_cv_GTK2_LIBS="$GTK2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22595,19 +22239,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         else
-	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK2_PKG_ERRORS" >&5
 
-	echo "GTK 2 >= 2.14.0 not found"
+	echo "GTK 2 >= 2.20.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "GTK 2 >= 2.14.0 not found"
+	echo "GTK 2 >= 2.20.0 not found"
 
 else
 	GTK2_CFLAGS=$pkg_cv_GTK2_CFLAGS
@@ -22630,12 +22274,12 @@ if test -n "$GTK3_CFLAGS"; then
     pkg_cv_GTK3_CFLAGS="$GTK3_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.16.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.16.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK3_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.2.0" 2>/dev/null`
+  pkg_cv_GTK3_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.16.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22647,12 +22291,12 @@ if test -n "$GTK3_LIBS"; then
     pkg_cv_GTK3_LIBS="$GTK3_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.16.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.16.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK3_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.2.0" 2>/dev/null`
+  pkg_cv_GTK3_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.16.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22673,19 +22317,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.2.0" 2>&1`
+	        GTK3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.16.0" 2>&1`
         else
-	        GTK3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.2.0" 2>&1`
+	        GTK3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.16.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK3_PKG_ERRORS" >&5
 
-	echo "GTK 3 >= 3.0.1 not found"
+	echo "GTK 3 >= 3.16.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "GTK 3 >= 3.0.1 not found"
+	echo "GTK 3 >= 3.16.0 not found"
 
 else
 	GTK3_CFLAGS=$pkg_cv_GTK3_CFLAGS
@@ -22699,7 +22343,6 @@ $as_echo "yes" >&6; }
       $as_echo "#define USE_GTK3 1" >>confdefs.h
 
       gtk_version="3.0"
-      fake_gtkspinner="no"
 fi
 fi
 
@@ -22714,12 +22357,12 @@ if test -n "$GTK2_CFLAGS"; then
     pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22731,12 +22374,12 @@ if test -n "$GTK2_LIBS"; then
     pkg_cv_GTK2_LIBS="$GTK2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22757,21 +22400,21 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         else
-	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK2_PKG_ERRORS" >&5
 
 	build_gui="no"
-        echo "GTK 2 >= 2.14.0 not found"
+        echo "GTK 2 >= 2.20.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	build_gui="no"
-        echo "GTK 2 >= 2.14.0 not found"
+        echo "GTK 2 >= 2.20.0 not found"
 
 else
 	GTK2_CFLAGS=$pkg_cv_GTK2_CFLAGS
@@ -22838,12 +22481,12 @@ if test -n "$GTKMAC_CFLAGS"; then
     pkg_cv_GTKMAC_CFLAGS="$GTKMAC_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.1") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKMAC_CFLAGS=`$PKG_CONFIG --cflags "gtk-mac-integration >= 2.0.1" 2>/dev/null`
+  pkg_cv_GTKMAC_CFLAGS=`$PKG_CONFIG --cflags "gtk-mac-integration >= 2.0.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22855,12 +22498,12 @@ if test -n "$GTKMAC_LIBS"; then
     pkg_cv_GTKMAC_LIBS="$GTKMAC_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.1") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKMAC_LIBS=`$PKG_CONFIG --libs "gtk-mac-integration >= 2.0.1" 2>/dev/null`
+  pkg_cv_GTKMAC_LIBS=`$PKG_CONFIG --libs "gtk-mac-integration >= 2.0.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22881,9 +22524,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk-mac-integration >= 2.0.1" 2>&1`
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk-mac-integration >= 2.0.5" 2>&1`
         else
-	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk-mac-integration >= 2.0.1" 2>&1`
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk-mac-integration >= 2.0.5" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKMAC_PKG_ERRORS" >&5
@@ -22903,77 +22546,6 @@ fi
 fi
 
 if test "$gtk_version" = "2.0" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSPINNER" >&5
-$as_echo_n "checking for GTKSPINNER... " >&6; }
-
-if test -n "$GTKSPINNER_CFLAGS"; then
-    pkg_cv_GTKSPINNER_CFLAGS="$GTKSPINNER_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GTKSPINNER_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GTKSPINNER_LIBS"; then
-    pkg_cv_GTKSPINNER_LIBS="$GTKSPINNER_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GTKSPINNER_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
-        else
-	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GTKSPINNER_PKG_ERRORS" >&5
-
-	fake_gtkspinner="yes"
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	fake_gtkspinner="yes"
-else
-	GTKSPINNER_CFLAGS=$pkg_cv_GTKSPINNER_CFLAGS
-	GTKSPINNER_LIBS=$pkg_cv_GTKSPINNER_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	fake_gtkspinner="no"
-fi
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 else
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
@@ -22989,12 +22561,12 @@ if test -n "$GTKSOURCEVIEW_CFLAGS"; then
     pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.2.2\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.2.2") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -23006,12 +22578,12 @@ if test -n "$GTKSOURCEVIEW_LIBS"; then
     pkg_cv_GTKSOURCEVIEW_LIBS="$GTKSOURCEVIEW_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.2.2\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.2.2") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -23032,19 +22604,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.2.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
         else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.2.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
 
-	echo "version 2.0 >= 2.2.2 not found"
+	echo "version 2.0 >= 2.10.5 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "version 2.0 >= 2.2.2 not found"
+	echo "version 2.0 >= 2.10.5 not found"
 
 else
 	GTKSOURCEVIEW_CFLAGS=$pkg_cv_GTKSOURCEVIEW_CFLAGS
@@ -23056,82 +22628,6 @@ $as_echo "yes" >&6; }
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0"
 fi
-    if test "$have_sourceview" = "2.0" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSVWORDS" >&5
-$as_echo_n "checking for GSVWORDS... " >&6; }
-
-if test -n "$GSVWORDS_CFLAGS"; then
-    pkg_cv_GSVWORDS_CFLAGS="$GSVWORDS_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GSVWORDS_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GSVWORDS_LIBS"; then
-    pkg_cv_GSVWORDS_LIBS="$GSVWORDS_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GSVWORDS_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GSVWORDS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
-        else
-	        GSVWORDS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GSVWORDS_PKG_ERRORS" >&5
-
-	echo "gtksourceview: word completion not supported"
-
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	echo "gtksourceview: word completion not supported"
-
-else
-	GSVWORDS_CFLAGS=$pkg_cv_GSVWORDS_CFLAGS
-	GSVWORDS_LIBS=$pkg_cv_GSVWORDS_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	$as_echo "#define HAVE_GTKSOURCEVIEW_210 1" >>confdefs.h
-
-fi
-    fi
 fi
 
 if test "$gtk_version" = "3.0" ; then
@@ -23223,7 +22719,6 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
-
 
 
 
@@ -23761,7 +23256,7 @@ ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/de
 
 
 if test "${darwin_build}" = "yes" ; then
-  ac_config_files="$ac_config_files osx/Makefile osx/gretl.sh osx/fixlinks.sh osx/Info.plist"
+  ac_config_files="$ac_config_files osx/Info.plist"
 
 fi
 
@@ -25024,9 +24519,6 @@ do
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
-    "osx/Makefile") CONFIG_FILES="$CONFIG_FILES osx/Makefile" ;;
-    "osx/gretl.sh") CONFIG_FILES="$CONFIG_FILES osx/gretl.sh" ;;
-    "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "osx/Info.plist") CONFIG_FILES="$CONFIG_FILES osx/Info.plist" ;;
     "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "win32/windist/post-install.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/post-install.sh" ;;
@@ -26535,7 +26027,7 @@ libcurl is available from http://curl.haxx.se/libcurl/
 
 elif test "${have_glib2}" = "no" ; then
 echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
@@ -26575,7 +26067,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  sse2 support for RNG:                   ${sse2_result}
+  SIMD support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}

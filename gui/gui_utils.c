@@ -70,7 +70,7 @@
 #endif
 
 static void set_up_model_view_menu (windata_t *vwin);
-static void add_system_menu_items (windata_t *vwin, int vecm);
+static void add_system_menu_items (windata_t *vwin, int role);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data);
@@ -262,6 +262,7 @@ static GtkActionEntry model_test_items[] = {
     { "modtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
     { "dwpval", NULL, N_("_Durbin-Watson p-value"), NULL, NULL, G_CALLBACK(do_dwpval) },
     { "modtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
+    { "bds", NULL, N_("Non-linearity (_BDS)"), NULL, NULL, G_CALLBACK(do_resid_freq) },
     { "qlrtest", NULL, N_("_QLR test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "cusum", NULL, N_("_CUSUM test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "cusum:r", NULL, N_("CUSUM_SQ test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
@@ -591,10 +592,6 @@ static void vwin_select_all (windata_t *vwin)
     }
 }
 
-#define HANDLE_GREEKS 1
-
-#if HANDLE_GREEKS
-
 /* GDK_KEY_A 0x041 .. GDK_KEY_Z 0x05a
    GDK_KEY_a 0x061 .. GDK_KEY_z 0x07a
 */
@@ -675,8 +672,6 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     return 0;
 }
 
-#endif
-
 /* Signal attached to editor/viewer windows. Note that @w is
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -695,7 +690,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     }
 
-#if HANDLE_GREEKS
     if (editing && Alt) {
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
@@ -704,7 +698,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	}
     }
-#endif
 
     if (is_control_key(event->keyval)) {
 	return FALSE;
@@ -727,6 +720,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	} else if (upkey == GDK_G) {
 	    text_find_again(NULL, vwin);
+	    return TRUE;
+	} else if (upkey == GDK_H) {
+	    text_replace(NULL, vwin);
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
@@ -1839,7 +1835,20 @@ static gchar *script_output_title (void)
     }
 }
 
-static gchar *make_viewer_title (int role, const char *fname)
+static gchar *title_from_data (gpointer data)
+{
+    gretl_bundle *b = data;
+    const char *s = gretl_bundle_get_creator(b);
+
+    if (s != NULL) {
+	return g_strdup_printf("gretl: %s bundle", s);
+    } else {
+	return NULL;
+    }
+}
+
+static gchar *make_viewer_title (int role, const char *fname,
+				 gpointer data)
 {
     gchar *title = NULL;
 
@@ -1882,6 +1891,9 @@ static gchar *make_viewer_title (int role, const char *fname)
 	break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
+    case VIEW_BUNDLE:
+	title = title_from_data(data);
+	break;
     default:
 	break;
     }
@@ -2027,7 +2039,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin = gretl_viewer_new_with_parent(parent, role, title,
 					    data);
     } else {
-	gchar *tmp = make_viewer_title(role, NULL);
+	gchar *tmp = make_viewer_title(role, NULL, data);
 
 	vwin = gretl_viewer_new_with_parent(parent, role, tmp,
 					    data);
@@ -2163,7 +2175,7 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 	vwin = gretl_viewer_new_with_parent(NULL, role,
 					    title, NULL);
     } else {
-	gchar *tmp = make_viewer_title(role, NULL);
+	gchar *tmp = make_viewer_title(role, NULL, NULL);
 
 	vwin = gretl_viewer_new_with_parent(NULL, role,
 					    tmp, NULL);
@@ -2222,7 +2234,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     } else if (given_title != NULL) {
 	vwin = gretl_viewer_new(role, given_title, NULL);
     } else {
-	gchar *title = make_viewer_title(role, filename);
+	gchar *title = make_viewer_title(role, filename, NULL);
 
 	vwin = gretl_viewer_new(role, (title != NULL)? title : filename,
 				NULL);
@@ -2269,6 +2281,8 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
+	/* note: added 2021-05-18 */
+	vwin->flags |= VWIN_USE_FOOTER;
     }
 
     /* clean up when dialog is destroyed */
@@ -2380,7 +2394,7 @@ windata_t *view_help_file (const char *filename, int role)
 	return NULL;
     }
 
-    title = make_viewer_title(role, NULL);
+    title = make_viewer_title(role, NULL, NULL);
     vwin = gretl_viewer_new(role, title, NULL);
     g_free(title);
 
@@ -2454,7 +2468,7 @@ static gboolean leave_close_button (GtkWidget *button,
 
 static GtkWidget *small_close_button (GtkWidget *targ)
 {
-    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_CLOSE,
+    GtkWidget *img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE,
 					      GTK_ICON_SIZE_MENU);
     GtkWidget *button = gtk_button_new();
 
@@ -2515,8 +2529,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 {
     windata_t *vwin;
 
-    vwin = gretl_viewer_new_with_parent(NULL, role, title,
-					NULL);
+    vwin = gretl_viewer_new_with_parent(NULL, role, title, NULL);
     if (vwin == NULL) return NULL;
 
     /* non-editable text */
@@ -3450,6 +3463,10 @@ static void add_tau_plot_menu (windata_t *vwin)
 	item.label = tmp;
 	vwin_menu_add_item(vwin, "/menubar/Graphs/TauMenu", &item);
     }
+
+    /* and disable what we can't (yet) show */
+    flip(vwin->ui, "/menubar/Graphs/ResidPlot", FALSE);
+    flip(vwin->ui, "/menubar/Graphs/FittedActualPlot", FALSE);
 }
 
 static void x12_output_callback (GtkAction *action, gpointer p)
@@ -4918,6 +4935,8 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	}
     }
 
+    maybe_add_packages_to_model_menus(vwin);
+
     if (latex_is_ok()) {
 	int n = G_N_ELEMENTS(sys_tex_items);
 
@@ -4991,10 +5010,16 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    return;
 	}
 
-	if (type == GRETL_TYPE_DOUBLE) {
+	if (gretl_is_scalar_type(type)) {
 	    double *xp = malloc(sizeof *xp);
 
-	    *xp = *(double *) val;
+	    if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
+		*xp = *(int *) val;
+	    } else if (type == GRETL_TYPE_UNSIGNED) {
+		*xp = *(unsigned *) val;
+	    } else {
+		*xp = *(double *) val;
+	    }
 	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, xp);
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *orig = (gretl_matrix *) val;
@@ -5032,7 +5057,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	}
 
 	if (show && !err) {
-	    if (type == GRETL_TYPE_DOUBLE) {
+	    if (gretl_is_scalar_type(type)) {
 		edit_scalars();
 	    } else {
 		view_session();
@@ -5049,41 +5074,38 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     gretl_bundle *bundle = vwin->data;
+    const gchar *aname = gtk_action_get_name(action);
 
-    exec_bundle_plot_function(bundle, gtk_action_get_name(action));
+    exec_bundle_special_function(bundle, BUNDLE_PLOT,
+				 aname, vwin->main);
 }
 
-struct bitem {
-    gchar *key;
-    gpointer value;
-};
-
 static void add_blist_item_to_menu (gpointer listitem,
-				    gpointer data)
+				    gpointer p)
 {
-    struct bitem *bi = listitem;
-    gchar *key = bi->key;
-    gpointer value = bi->value;
-    GtkWidget *menu = data;
+    bundled_item *bi = listitem;
+    gpointer data;
+    const char *key;
     GtkAction *action;
     GtkWidget *item;
-    gchar *label, *keystr;
+    GtkWidget *menu = p;
+    gchar *keystr, *label = NULL;
     const char *typestr = "?";
     const char *note;
     GretlType type;
-    void *val;
+    int scalar = 0;
     int r = 0, c = 0;
     int size = 0;
 
-    val = bundled_item_get_data((bundled_item *) value, &type, &size);
+    key = bundled_item_get_key(bi);
+    data = bundled_item_get_data(bi, &type, &size);
 
-    if (val == NULL || type == GRETL_TYPE_STRING) {
-	free(bi);
+    if (data == NULL || type == GRETL_TYPE_STRING) {
 	return;
     }
 
     if (type == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = val;
+	gretl_matrix *m = data;
 
 	if (gretl_is_null_matrix(m)) {
 	    return;
@@ -5097,10 +5119,12 @@ static void add_blist_item_to_menu (gpointer listitem,
 	type = GRETL_TYPE_MATRIX;
 	r = size;
 	c = 1;
+    } else if (gretl_is_scalar_type(type)) {
+	scalar = 1;
     }
 
     typestr = gretl_type_get_name(type);
-    note = bundled_item_get_note((bundled_item *) value);
+    note = bundled_item_get_note(bi);
     keystr = double_underscores_new((gchar *) key);
 
     if (r > 0 && c > 0) {
@@ -5111,12 +5135,23 @@ static void add_blist_item_to_menu (gpointer listitem,
 	    label = g_strdup_printf("%s (%s, %d x %d)", keystr,
 				    typestr, r, c);
 	}
+    } else if (scalar) {
+	if (type == GRETL_TYPE_DOUBLE) {
+	    label = g_strdup_printf("%s (scalar: %g)", keystr,
+				    *(double *) data);
+	} else if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
+	    label = g_strdup_printf("%s (scalar: %d)", keystr,
+				    *(int *) data);
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    label = g_strdup_printf("%s (scalar: %d)", keystr,
+				    *(unsigned int *) data);
+	}
     } else if (note != NULL) {
-	label = g_strdup_printf("%s (%s: %s)", keystr,
-				typestr, note);
+	label = g_strdup_printf("%s (%s: %s)", keystr, typestr, note);
     } else {
 	label = g_strdup_printf("%s (%s)", keystr, typestr);
     }
+
     g_free(keystr);
 
     action = gtk_action_new(key, label, NULL, NULL);
@@ -5128,21 +5163,6 @@ static void add_blist_item_to_menu (gpointer listitem,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     g_free(label);
-    free(bi);
-}
-
-static void add_bundled_item_to_list (gpointer key,
-				      gpointer value,
-				      gpointer data)
-{
-    GList **plist = (GList **) data;
-    struct bitem *bi;
-
-    bi = malloc(sizeof *bi);
-    bi->key = key;
-    bi->value = value;
-
-    *plist = g_list_prepend(*plist, bi);
 }
 
 static void add_kalman_items_to_menu (GtkWidget *menu,
@@ -5199,12 +5219,10 @@ static void check_for_saveable (gpointer key,
 	/* "can't happen" */
 	return;
     }
-
     if (type == GRETL_TYPE_STRING) {
 	/* not useful in GUI? */
 	return;
     }
-
     if (type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = val;
 
@@ -5231,15 +5249,6 @@ static int any_saveable_content (gretl_bundle *b)
     return n;
 }
 
-static gint blist_sort_by_key (gconstpointer a,
-			       gconstpointer b)
-{
-    const struct bitem *bia = a;
-    const struct bitem *bib = b;
-
-    return g_ascii_strcasecmp(bia->key, bib->key);
-}
-
 GtkWidget *make_bundle_content_menu (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
@@ -5256,15 +5265,12 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
     }
 
     if (any_saveable_content(bundle)) {
-	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
-	GList *blist = NULL;
+	GList *blist = gretl_bundle_get_sorted_items(bundle);
 
 	if (menu == NULL) {
 	    menu = gtk_menu_new();
 	    g_object_set_data(G_OBJECT(menu), "vwin", vwin);
 	}
-	g_hash_table_foreach(ht, add_bundled_item_to_list, &blist);
-	blist = g_list_sort(blist, blist_sort_by_key);
 	g_list_foreach(blist, add_blist_item_to_menu, menu);
 	g_list_free(blist);
     }
@@ -5278,7 +5284,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin)
     gchar *plotfunc;
     GtkWidget *menu = NULL;
 
-    plotfunc = get_bundle_plot_function(bundle);
+    plotfunc = get_bundle_special_function(bundle, BUNDLE_PLOT);
 
     if (plotfunc != NULL) {
 	ufunc *fun = NULL;
@@ -5878,40 +5884,13 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 
 #else /* some non-Windows functions follow */
 
-#ifndef OS_OSX
-
-static int alt_show (const char *uri)
-{
-    GError *err = NULL;
-    int ret;
-
-    ret = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    }
-
-    return ret == FALSE;
-}
-
-#endif /* not used on Mac */
-
 int browser_open (const char *url)
 {
 # if defined(OS_OSX)
     return osx_open_url(url);
 # else
-    int err;
-
-    if (getenv("ALTSHOW") != NULL) {
-	err = alt_show(url);
-    } else {
-	err = gretl_fork("Browser", url, NULL);
-    }
-
-    return err;
-# endif /* !OSX */
+    return gretl_fork("Browser", url, NULL);
+# endif
 }
 
 /* Start an R session in asynchronous (interactive) mode.

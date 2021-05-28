@@ -220,6 +220,7 @@
       <placeholder action="X12A"/>
       <placeholder action="Tramo"/>
       <menuitem action="Hurst"/>
+      <menuitem action="BDS"/>
       <menuitem action="tdisagg"/>
     </menu>
     <menu action="Model">
@@ -302,6 +303,7 @@
       <menuitem action="gretlMPI"/>
       <menuitem action="gretlSVM"/>
       <menuitem action="gretlDBN"/>
+      <menuitem action="GeoplotDoc"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>

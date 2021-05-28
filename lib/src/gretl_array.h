@@ -20,8 +20,6 @@
 #ifndef GRETL_ARRAY_H_
 #define GRETL_ARRAY_H_
 
-typedef struct gretl_array_ gretl_array;
-
 void gretl_array_destroy (gretl_array *A);
 
 void gretl_array_void_content (gretl_array *A);
@@ -45,6 +43,8 @@ void *gretl_array_get_element (gretl_array *A, int i,
 int gretl_array_set_element (gretl_array *A, int i,
 			     void *ptr, GretlType type,
 			     int copy);
+
+int gretl_array_delete_element (gretl_array *A, int i);
 
 void *gretl_array_get_data (gretl_array *A, int i);
 

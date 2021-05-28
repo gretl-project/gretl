@@ -242,9 +242,9 @@ int submask_cmp (const char *m1, const char *m2)
     return 0;
 }
 
-/* all values apart from the sentinel are initialized to zero; once
+/* All values apart from the sentinel are initialized to zero; once
    the mask is used, 1s will indicate included observations and
-   0s will indicate excluded observations
+   0s excluded observations.
 */
 
 static char *make_submask (int n)

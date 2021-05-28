@@ -309,6 +309,8 @@ int do_dummy_graph (selector *sr);
 
 int do_xyz_graph (selector *sr);
 
+int do_qq_from_selector (selector *sr);
+
 int do_xcorrgm (selector *sr);
 
 void delete_selected_vars (void);

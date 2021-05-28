@@ -24,10 +24,19 @@
 typedef struct parm_ parm;
 typedef struct ocset_ ocset;
 
+typedef enum {
+    NL_ANALYTICAL  = 1 << 0,
+    NL_AUTOREG     = 1 << 1,
+    NL_AHESS       = 1 << 2,
+    NL_NEWTON      = 1 << 3,
+    NL_SMALLSTEP   = 1 << 4,
+    NL_NAMES_ARRAY = 1 << 5
+} nl_flags;
+
 struct nlspec_ {
     int ci;             /* NLS, MLE or GMM */
     int generr;         /* error from genr */
-    int flags;          /* numeric or analytic derivatives, etc. */
+    nl_flags flags;     /* numeric or analytic derivatives, etc. */
     gretlopt opt;       /* can include OPT_V for verbose output; if ci = MLE
 			   can also include OPT_H (Hessian) or OPT_R (QML)
 			   to control the estimator of the variance matrix;

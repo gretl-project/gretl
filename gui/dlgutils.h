@@ -62,9 +62,7 @@ void combo_box_prepend_text (gpointer p, const gchar *s);
 void combo_box_remove (gpointer p, int pos);
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24
-
-#define gtk_combo_box_text_new gtk_combo_box_new_text
-
+# define gtk_combo_box_text_new gtk_combo_box_new_text
 #endif
 
 GtkWidget *get_active_edit_id (void);

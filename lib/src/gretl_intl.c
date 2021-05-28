@@ -135,10 +135,9 @@ int reset_local_decpoint (void)
 
     set_atof_point(decpoint);
 
-# if 0
-    fprintf(stderr, "reset_local_decpoint: returning '%c'\n",
-	    decpoint);
-# endif
+#ifdef OS_OSX
+    fprintf(stderr, "via localeconv, decimal = '%c'\n", decpoint);
+#endif
 
     return decpoint;
 }
@@ -888,11 +887,12 @@ int force_language (int langid)
 	    gretl_setenv("LANG", lcode);
 	}
     }
-# elif defined(OS_OSX)
+# else /* elif defined(OS_OSX) */
     if (langid != LANG_C) {
 	lcode = lang_code_from_id(langid);
 	if (lcode != NULL) {
 	    gretl_setenv("LANGUAGE", lcode);
+	    gretl_setenv("LANG", lcode);
 	}
     }
 # endif

@@ -22,12 +22,24 @@ end function
 
 function void print_series_dimensions (const bundle dims)
     strings keys = getkeys(dims)
-    printf "Dimensions, showing JSON mask form:\n"
-    loop i=1..nelem(keys) -q
-        b = dims[keys[i]]
-        printf "  %s: %s, {\"%s\":[\"%s\"]}\n", b.dimension_label, b.value_label,
-          keys[i], b.value
-    endloop
+    if nelem(keys) == 0
+        return
+    endif
+    di = dims[keys[1]]
+    if typeof(di) == 5 # bundle
+        printf "Dimensions, showing JSON mask form:\n"
+        loop i=1..nelem(keys) -q
+            di = dims[keys[i]]
+            printf "  %s: %s, {\"%s\":[\"%s\"]}\n", di.dimension_label, di.value_label,
+              keys[i], di.value
+        endloop
+    elif typeof(di) == 4 # string
+        printf "Dimensions in JSON mask form:\n"
+        loop i=1..nelem(keys) -q
+            di = dims[keys[i]]
+            printf "  {\"%s\":[\"%s\"]}\n", keys[i], di
+        endloop
+    endif
 end function
 
 ### ------------------------------------------------------------------------
@@ -159,16 +171,17 @@ function void process_series_bundle (string json, bundle *b)
         endloop
         b.value = vals
     endif
-    if inbundle(b, "dimensions")
-        fix_dimensions_bundle(json, &b)
-    endif
+    # if inbundle(b, "dimensions")
+    #    fix_dimensions_bundle(json, &b)
+    # endif
 end function
 
 ### ------------------------------------------------------------------------
 
 function string sanitize_url(const string s)
+    string dqu = sprintf("\"")
     ret = strsub(s, " ", "%20")
-    ret = strsub(ret, sprintf("\""), "%22")
+    ret = strsub(ret, dqu, "%22")
     ret = strsub(ret, ",", "%2C")
     ret = strsub(ret, ":", "%3A")
     ret = strsub(ret, "{", "%7B")
@@ -179,8 +192,9 @@ function string sanitize_url(const string s)
 end function
 
 function string desanitize_url(const string s)
+    string dqu = sprintf("\"")
     ret = strsub(s, "%20", " ")
-    ret = strsub(ret, "%22", sprintf("\""))
+    ret = strsub(ret, "%22", dqu)
     ret = strsub(ret, "%2C", ",")
     ret = strsub(ret, "%3A", ":")
     ret = strsub(ret, "%7B", "{")
@@ -287,7 +301,7 @@ function string build_parms(const string pcode, const string dcode,
         string mid = build_URL_mid(spec)
         head ~= sanitize_url(mid)
     endif
-    string tail = sprintf("limit=%d&offset=%d&format=json&observations=1&align_periods=1", limit, offset)
+    string tail = sprintf("limit=%d&offset=%d&format=json&observations=1&metadata=0", limit, offset)
     return head ~ tail
 end function
 

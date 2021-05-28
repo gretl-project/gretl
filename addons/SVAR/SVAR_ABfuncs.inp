@@ -3,17 +3,20 @@ function scalar is_standard_AB(matrix aRd, matrix bRd)
     return test
 end function
 
-function void scoreAB(matrix *ret, matrix *theta, matrix *dat, int p1)
+function void scoreAB(matrix *ret, const matrix theta,
+                      matrices dat, int p1)
     # FIXME: This func might benefit from getting the pre-computed C matrix
 
-    matrix Sigma Ss A B
-    unscramble_dat(&dat, &Sigma, &Ss)
+    matrix Sigma = dat[1]
+    matrix Ss = dat[2]
+    # unscramble_dat(&dat, &Sigma, &Ss)
 
     p2 = rows(theta)
     matrix aSs = Ss[,1:p1+1]
     matrix bSs = Ss[,p1+2:p2+2]
 
     n = rows(Sigma)
+    matrix A B
     ABmat_exp(theta, aSs, bSs, &A, &B)
     matrix iA = inv(A)
     matrix C = iA*B
@@ -149,9 +152,12 @@ function void ABmat_exp(matrix theta, matrix aSs, matrix bSs,
     matrix B = mat_exp(theta_b, bSs) # was: , 1)
 end function
 
-function void PseudoHessAB(matrix *H, matrix *theta, matrix *dat, int p1)
-    matrix Sigma Ss A B
-    unscramble_dat(&dat, &Sigma, &Ss)
+function void PseudoHessAB(matrix *H, const matrix theta,
+                           matrices dat, int p1)
+
+    matrix Sigma = dat[1]
+    matrix Ss = dat[2]
+    # unscramble_dat(&dat, &Sigma, &Ss)
 
     scalar p2 = rows(theta)
     matrix aSs = Ss[,1:p1+1]
@@ -159,6 +165,7 @@ function void PseudoHessAB(matrix *H, matrix *theta, matrix *dat, int p1)
 
     scalar n = rows(Sigma)
     scalar n2 = n*n
+    matrix A B
     ABmat_exp(theta, aSs, bSs, &A, &B)
 
     scalar ka = cols(aSs) - 1
@@ -189,7 +196,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
 
     scalar p1 = cols(aSs) - 1
     scalar p2 = p1 + cols(bSs) - 1
-    matrix dat = vec(Sigma) ~ aSs ~ bSs
+    matrices dat = defarray(Sigma, aSs ~ bSs)
 
     matrix g H
     if verbose > 1
@@ -200,25 +207,25 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
     scalar err = 0
 
     if method == 0
-        catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, p1)")
+        catch scalar ll = BFGSmax(theta, "loglik(theta, dat, p1)")
         err = $error
-        scoreAB(&g, &theta, &dat, p1)
+        scoreAB(&g, theta, dat, p1)
     elif method == 1
-        catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, p1)", \
-          "scoreAB(&g, &theta, &dat, p1)")
+        catch scalar ll = BFGSmax(theta, "loglik(theta, dat, p1)", \
+          "scoreAB(&g, theta, dat, p1)")
         err = $error
     elif method == 2
-        catch scalar ll = NRmax(theta, "loglik(&theta, &dat, p1)")
+        catch scalar ll = NRmax(theta, "loglik(theta, dat, p1)")
         err = $error
-        scoreAB(&g, &theta, &dat, p1)
+        scoreAB(&g, theta, dat, p1)
     elif method == 3
-        catch scalar ll = NRmax(theta, "loglik(&theta, &dat, p1)", \
-          "scoreAB(&g, &theta, &dat, p1)")
+        catch scalar ll = NRmax(theta, "loglik(theta, dat, p1)", \
+          "scoreAB(&g, theta, dat, p1)")
         err = $error
     elif method == 4
-        catch scalar ll = NRmax(theta, "loglik(&theta, &dat, p1)", \
-          "scoreAB(&g, &theta, &dat, p1)",
-          "PseudoHessAB(&H, &theta, &dat, p1)" )
+        catch scalar ll = NRmax(theta, "loglik(theta, dat, p1)", \
+          "scoreAB(&g, theta, dat, p1)",
+          "PseudoHessAB(&H, theta, dat, p1)" )
         err = $error
     endif
 
@@ -228,9 +235,9 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
     if err || warn
         matrix C = {}
         errcode = err + 10*warn
-        outfile stderr --write
-        printf "err = %d; warn = %d; Gradient: %10.6f", err, warn, g
-        outfile --close
+        outfile stderr
+            printf "err = %d; warn = %d; Gradient: %10.6f", err, warn, g
+        end outfile 
         return C
     endif
 

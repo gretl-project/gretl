@@ -23,7 +23,6 @@ pkg_build = @pkg_build@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
 gtk_version = @gtk_version@
-fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
 
 ifeq ($(AVX_CFLAGS),)
@@ -44,7 +43,7 @@ GTK_PREFIX = @GTK_PREFIX@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
-CARBONLIB = @CARBONLIB@
+MACLIB = @MACLIB@
 GTKMAC_CFLAGS = @GTKMAC_CFLAGS@
 GTKMAC_LIBS = @GTKMAC_LIBS@
 MKLANG = @MKLANG@
@@ -211,11 +210,6 @@ SRCS = about.c \
 	varinfo.c \
 	winstack.c
 
-# use back-ported gtkspinner code?
-ifeq ($(fake_gtkspinner),yes)
-  SRCS += spinner.c
-endif
-
 ifeq ($(win32_build),yes)
   # using native font selector
 else ifeq ($(gtk_version),3.0)
@@ -253,7 +247,7 @@ all: $(PROG) gretl.lang NEWS
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(WINOBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(WINGUI) $(LDFLAGS) -o $@ $(OBJS) \
-	$(HACK_OBJ) $(WINOBJ) $(LIBS) $(CARBONLIB) $(WINLIBS)
+	$(HACK_OBJ) $(WINOBJ) $(LIBS) $(MACLIB) $(WINLIBS)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 

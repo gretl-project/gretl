@@ -38,24 +38,16 @@
 #ifdef USE_GTKSOURCEVIEW_3
 # define SVVER 3
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
-# define COMPLETION_OK 1
 #else /* using GtkSourceView 2 */
 # define SVVER 2
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
-# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
-#  define COMPLETION_OK 0
-# elif !defined(HAVE_GTKSOURCEVIEW_210)
-#  define COMPLETION_OK 0
-# else
-#  define COMPLETION_OK 1
-# endif
 #endif
 
-#if COMPLETION_OK
-# include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
-#endif
+#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
+
+#define TABDEBUG 0
 
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
@@ -541,8 +533,6 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 }
 
-#if COMPLETION_OK
-
 #include "genparse.h"
 
 /* Create a GtkTextBuffer holing the names of built-in
@@ -643,8 +633,6 @@ static void set_sv_auto_complete (windata_t *vwin)
 	    script_auto_complete, (void *) comp, (void *) words, (void *) funcs);
 #endif
 }
-
-#endif /* COMPLETION_OK */
 
 #define SV_PRINT_DEBUG 0
 
@@ -811,7 +799,8 @@ static void set_source_tabs (GtkWidget *w, int cw)
 
 /* Special keystrokes in native script window: Ctrl-Return sends the
    current line for execution; Ctrl-R sends the whole script for
-   execution (i.e. is the keyboard equivalent of the "execute" icon).
+   execution (keyboard equivalent of the "execute" button);
+   Ctrl-I does auto-indentation.
 */
 
 static gint
@@ -845,6 +834,9 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 	    if (keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
 	    } else if (tabkey(keyval)) {
+#if TABDEBUG
+		fprintf(stderr, "*** calling script_tab_handler ***\n");
+#endif
 		ret = script_tab_handler(vwin, event->state);
 	    } else if (script_auto_bracket && lbracket(keyval)) {
 		ret = script_bracket_handler(vwin, keyval);
@@ -1050,6 +1042,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	if (window_is_tab(vwin)) {
 	    vsize += 15;
 	}
+	if (vsize < 0.62 * hsize) {
+	    /* approx golden ratio */
+	    vsize = 0.62 * hsize;
+	}
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 
@@ -1063,9 +1059,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	set_style_for_buffer(sbuf, get_sourceview_style());
     }
 
-#if COMPLETION_OK
     set_sv_auto_complete(vwin);
-#endif
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -1142,11 +1136,9 @@ void update_script_editor_options (windata_t *vwin)
 
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					  script_line_numbers);
-#if COMPLETION_OK
     if (vwin_is_editing(vwin)) {
 	set_sv_auto_complete(vwin);
     }
-#endif
 
     set_style_for_buffer(vwin->sbuf, get_sourceview_style());
 }
@@ -1677,6 +1669,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("_Seed for random numbers");
     } else if (!strcmp(key, "gretlDBN")) {
 	s = _("dbnomics for gretl");
+    } else if (!strcmp(key, "GeoplotDoc")) {
+	s = _("Creating maps");
     } else {
 	s = key;
     }
@@ -2701,7 +2695,7 @@ void textview_format_paragraph (GtkWidget *view)
     }
 }
 
-gchar *textview_get_current_line (GtkWidget *view)
+static gchar *textview_get_current_line (GtkWidget *view, int allow_blank)
 {
     GtkTextBuffer *buf;
     GtkTextIter start, end;
@@ -2720,7 +2714,7 @@ gchar *textview_get_current_line (GtkWidget *view)
 
     ret = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 
-    if (string_is_blank(ret)) {
+    if (!allow_blank && string_is_blank(ret)) {
 	g_free(ret);
 	ret = NULL;
     }
@@ -2730,7 +2724,7 @@ gchar *textview_get_current_line (GtkWidget *view)
 
 static gchar *textview_get_current_line_with_newline (GtkWidget *view)
 {
-    gchar *s = textview_get_current_line(view);
+    gchar *s = textview_get_current_line(view, 0);
 
     if (s != NULL && *s != '\0' && s[strlen(s)-1] != '\n') {
 	gchar *tmp = g_strdup_printf("%s\n", s);
@@ -3131,16 +3125,41 @@ static int in_foreign_land (GtkWidget *text_widget)
 
 static void auto_indent_script (GtkWidget *w, windata_t *vwin)
 {
+    GtkAdjustment *adj;
     GtkTextBuffer *tbuf;
-    GtkTextIter start, end;
+    GtkTextMark *mark;
+    GtkTextIter here, start, end;
     gchar *buf;
+    gint line, offset;
+    gdouble pos;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+    /* record scrolling position */
+    adj = gtk_text_view_get_vadjustment(GTK_TEXT_VIEW(vwin->text));
+    pos = gtk_adjustment_get_value(adj);
+
+    /* record cursor position (line, offset) */
+    mark = gtk_text_buffer_get_insert(tbuf);
+    gtk_text_buffer_get_iter_at_mark(tbuf, &here, mark);
+    line = gtk_text_iter_get_line(&here);
+    offset = gtk_text_iter_get_line_offset(&here);
+
+    /* grab and revise the text */
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
     buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     normalize_indent(tbuf, buf, &start, &end);
     g_free(buf);
+
+    /* restore cursor position */
+    gtk_text_buffer_get_iter_at_line(tbuf, &here, line);
+    gtk_text_iter_set_line_offset(&here, offset);
+    gtk_text_buffer_place_cursor(tbuf, &here);
+
+    /* restore scrolling position */
+    gtk_adjustment_set_value(adj, pos);
+    gtk_adjustment_value_changed(adj);
 }
 
 static void indent_region (GtkWidget *w, gpointer p)
@@ -3310,8 +3329,6 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf,
     return n;
 }
 
-#define TABDEBUG 0
-
 static int incremental_leading_spaces (const char *prevword,
 				       const char *thisword)
 {
@@ -3342,6 +3359,11 @@ static int incremental_leading_spaces (const char *prevword,
 	}
     }
 
+#if TABDEBUG > 1
+    fprintf(stderr, "incremental_leading_spaces: returning %d*%d = %d\n",
+	    this_indent, tabwidth, this_indent * tabwidth);
+#endif
+
     return this_indent * tabwidth;
 }
 
@@ -3362,12 +3384,12 @@ static int get_word_and_cont (const char *s, char *word, int *contd)
 {
     /* don't move onto next line */
     if (*s != '\n' && *s != '\r') {
-	if (contd != NULL) {
-	    *contd = line_continues(s);
-	}
 	s += strspn(s, " \t");
 	if (sscanf(s, "%*s <- %8s", word) != 1) {
 	    sscanf(s, "%8s", word);
+	}
+	if (*word != '#' && contd != NULL) {
+	    *contd = line_continues(s);
 	}
     }
 
@@ -3505,7 +3527,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 
 	*thisword = '\0';
 
-	s = textview_get_current_line(vwin->text);
+	s = textview_get_current_line(vwin->text, 1);
 	if (s != NULL) {
 #if TABDEBUG > 1
 	    fprintf(stderr, "*** maybe_insert_smart_tab: "
@@ -3523,7 +3545,8 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	} else {
 	    nsp += incremental_leading_spaces(prevword, thisword);
 #if TABDEBUG > 1
-	    fprintf(stderr, "    leading spaces: nsp + incr = %d\n", nsp);
+	    fprintf(stderr, "    leading spaces: nsp + incr = %d, curr_nsp %d\n",
+		    nsp, curr_nsp);
 #endif
 	}
 
@@ -3623,7 +3646,7 @@ static gboolean script_electric_enter (windata_t *vwin)
     fprintf(stderr, "*** script_electric_enter\n");
 #endif
 
-    s = textview_get_current_line(vwin->text);
+    s = textview_get_current_line(vwin->text, 0); /* second arg? */
 
     if (s != NULL && *s != '\0') {
 	/* work on the line that starts with @thisword, and
@@ -4545,6 +4568,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
 #if HDEBUG
+    /* the incoming @hsize is expressed in characters */
     fprintf(stderr, "create_text: initial hsize = %d\n", hsize);
 #endif
 
@@ -4557,16 +4581,19 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    hsize += 48;
 	}
 #if HDEBUG
-	fprintf(stderr, " px = %d, hsize now = %d\n", px, hsize);
+	fprintf(stderr, " px = %d, hsize now = %d, nlines = %d\n",
+		px, hsize, nlines);
 #endif
 	if (nlines > 0) {
 	    /* Perhaps adjust how tall the window is? */
 	    double v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
 
-	    if (v1 > 0.8 * vsize && v1 < 1.2 * vsize && v1 <= .9 * sv) {
+	    if (v1 > 0.8 * vsize && v1 < 1.35 * vsize && v1 <= 0.9 * sv) {
 		vsize = v1;
 	    }
+	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
+	    vsize = 0.62 * hsize;
 	}
     }
 
@@ -4654,6 +4681,9 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     if (hsize > 0) {
 	hsize *= cw;
 	hsize += 48; /* ?? */
+    }
+    if (vsize < 0.62 * hsize) {
+	vsize = 0.62 * hsize;
     }
 
     if (hsize > 0 && vsize > 0) {

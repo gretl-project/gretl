@@ -32,8 +32,7 @@ typedef enum {
     ARMA_LEV    = 1 << 7, /* doing ARIMA via levels formulation */
     ARMA_YDIFF  = 1 << 8, /* ainfo->y contains differenced y */
     ARMA_AVGLL  = 1 << 9, /* passing average likelihood option to Kalman */
-    ARMA_CML0   = 1 << 10, /* initialize exact ML via CML? */
-    ARMA_STDX   = 1 << 11  /* exogenous regressors standardized */
+    ARMA_STDX   = 1 << 10 /* exogenous regressors standardized */
 } PrivFlags;
 
 typedef enum {
@@ -108,7 +107,6 @@ struct arma_info_ {
 #define arima_levels(a)        ((a)->pflags & ARMA_LEV)
 #define arima_ydiff(a)         ((a)->pflags & ARMA_YDIFF)
 #define arma_avg_ll(a)         ((a)->pflags & ARMA_AVGLL)
-#define arma_cml_init(a)       ((a)->pflags & ARMA_CML0)
 #define arma_stdx(a)           ((a)->pflags & ARMA_STDX)    
 
 #define set_arma_has_seasonal(a)  ((a)->pflags |= ARMA_SEAS)
@@ -121,7 +119,6 @@ struct arma_info_ {
 #define set_arma_avg_ll(a)        ((a)->pflags |= ARMA_AVGLL)
 #define set_arima_ydiff(a)        ((a)->pflags |= ARMA_YDIFF)
 #define unset_arima_ydiff(a)      ((a)->pflags &= ~ARMA_YDIFF)
-#define set_arma_cml_init(a)      ((a)->pflags |= ARMA_CML0)
 #define set_arma_stdx(a)          ((a)->pflags |= ARMA_STDX)
 
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
@@ -149,9 +146,6 @@ int arma_by_ls (const double *coeff, const DATASET *dset,
 int bhhh_arma (double *theta, const DATASET *dset,
 	       arma_info *ainfo, MODEL *pmod,
 	       gretlopt opt);
-
-int cml_arma_init (double *theta, const DATASET *dset,
-		   arma_info *ainfo, gretlopt opt);
 
 void transform_arma_const (double *b, arma_info *ainfo);
 

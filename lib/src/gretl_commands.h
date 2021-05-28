@@ -30,6 +30,7 @@ typedef enum {
     ARBOND,
     ARCH,
     ARMA,
+    BDS,
     BIPROBIT,
     BKW,
     BREAK,
@@ -171,6 +172,7 @@ typedef enum {
 } GretlCmdIndex;
 
 #define TEXTSAVE_OK(c) (c == ADF || \
+			c == BDS || \
 	                c == BKW || \
                         c == CHOW || \
                         c == COEFFSUM || \

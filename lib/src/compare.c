@@ -172,7 +172,11 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 #endif
 
     if (!err) {
-	wF = wX / gretl_vector_get_length(b);
+	if (wX < 0) {
+	    wF = wX = NADBL;
+	} else {
+	    wF = wX / gretl_vector_get_length(b);
+	}
     }
 
     if (!err) {
@@ -3728,6 +3732,7 @@ int panel_hausman_test (MODEL *pmod, DATASET *dset,
  * add_leverage_values_to_dataset:
  * @dset: dataset struct.
  * @m: matrix containing leverage values.
+ * @opt: OPT_O = overwrite series on save.
  * @flags: may include SAVE_LEVERAGE, SAVE_INFLUENCE,
  * and/or SAVE_DFFITS.
  *
@@ -3738,8 +3743,9 @@ int panel_hausman_test (MODEL *pmod, DATASET *dset,
  */
 
 int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
-				    int flags)
+				    gretlopt opt, int flags)
 {
+    int overwrite = (opt & OPT_O);
     int t1, t2;
     int addvars = 0;
 
@@ -3771,7 +3777,9 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    }
 	}
 	strcpy(dset->varname[v], "lever");
-	make_varname_unique(dset->varname[v], v, dset);
+	if (!overwrite) {
+	    make_varname_unique(dset->varname[v], v, dset);
+	}
 	series_set_label(dset, v, "leverage values");
     }
 
@@ -3788,7 +3796,9 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    }
 	}
 	strcpy(dset->varname[v], "influ");
-	make_varname_unique(dset->varname[v], v, dset);
+	if (!overwrite) {
+	    make_varname_unique(dset->varname[v], v, dset);
+	}
 	series_set_label(dset, v, "influence values");
     }
 
@@ -3815,7 +3825,9 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    }
 	}
 	strcpy(dset->varname[v], "dffits");
-	make_varname_unique(dset->varname[v], v, dset);
+	if (!overwrite) {
+	    make_varname_unique(dset->varname[v], v, dset);
+	}
 	series_set_label(dset, v, "DFFITS values");
     }
 
@@ -3829,7 +3841,8 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
  * @opt: if OPT_S, add calculated series to data set; operate
- * silently if OPT_Q.
+ * silently if OPT_Q. If includes OPT_O, do not adjust save
+ * names (overwrite any existing series of the same names).
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
@@ -3859,7 +3872,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 
     if (!err && (opt & OPT_S)) {
 	/* we got the --save option */
-	err = add_leverage_values_to_dataset(dset, m,
+	err = add_leverage_values_to_dataset(dset, m, opt,
 					     SAVE_LEVERAGE |
 					     SAVE_INFLUENCE|
 					     SAVE_DFFITS);

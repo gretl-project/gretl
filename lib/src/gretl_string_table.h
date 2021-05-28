@@ -20,8 +20,6 @@
 #ifndef GRETL_STRING_TABLE_H
 #define GRETL_STRING_TABLE_H
 
-typedef struct _gretl_string_table gretl_string_table;
-
 gretl_string_table *gretl_string_table_new (const int *list);
 
 int gretl_string_table_index (gretl_string_table *gst, const char *s, 
@@ -86,9 +84,9 @@ char *gretl_getenv (const char *key, int *defined, int *err);
 
 char *retrieve_date_string (int t, const DATASET *dset, int *err);
 
-void *retrieve_date_strings (const gretl_vector *v,
-			     const DATASET *dset,
-			     int *err);
+gretl_array *retrieve_date_strings (const gretl_vector *v,
+				    const DATASET *dset,
+				    int *err);
 
 char *retrieve_file_content (const char *fname, const char *codset,
 			     int *err);

@@ -1,46 +1,46 @@
 function void ivp_print (bundle *b)
-  matrix result = b["coeff"] ~ b["stderr"]
-  scalar case = b["case"]
-  scalar N = 0
-  if case == 1
-    printf "\nFixed-effects TSLS, using %d observations\n", b["nobs"]
-  elif case == 2
-    printf "\nBetween TSLS, N = %d\n", b["nobs"]
-  else 
-    printf "\nG2SLS random effects, using %d observations\n", b["nobs"]
-  endif
-  printf "Dependent variable: %s\n", b["ystr"]
-  printf "Endogenous: %s\n", b["Estr"]
-  printf "Instruments: %s\n", b["Istr"]
+   matrix result = b["coeff"] ~ b["stderr"]
+   scalar case = b["case"]
+   scalar N = 0
+   if case == 1
+      printf "\nFixed-effects TSLS, using %d observations\n", b["nobs"]
+   elif case == 2
+      printf "\nBetween TSLS, N = %d\n", b["nobs"]
+   else
+      printf "\nG2SLS random effects, using %d observations\n", b["nobs"]
+   endif
+   printf "Dependent variable: %s\n", b["ystr"]
+   printf "Endogenous: %s\n", b["Estr"]
+   printf "Instruments: %s\n", b["Istr"]
 
-  string S = b["modstr"]
-  modprint result S
+   string S = b["modstr"]
+   modprint result S
 
-  printf "  SSR = %g\n", b["SSR"]
-  printf "  sigma-hat = %g (df = %d)\n", b["sigma"], b["df"]
-  printf "  R-squared = corr(y, yhat)^2 = %f\n", b["rsq"]  
-  if (case == 1 || case == 3) 
-    matrix dims = b["dims"] 
-    N = dims[1]
-    printf "  Included units = %d\n", N
-    printf "  Time-series length: min = %d, max = %d\n", dims[2], dims[3]
-  endif
-  scalar X2 = b["wald"]
-  scalar df = rows(b["coeff"]) - 1
-  scalar pv = pvalue(X, df, X2)
-  printf "  Wald chi-square(%d) = %g [%.4f]\n", df, X2, pv 
+   printf "  SSR = %g\n", b["SSR"]
+   printf "  sigma-hat = %g (df = %d)\n", b["sigma"], b["df"]
+   printf "  R-squared = corr(y, yhat)^2 = %f\n", b["rsq"]
+   if (case == 1 || case == 3)
+      matrix dims = b["dims"]
+      N = dims[1]
+      printf "  Included units = %d\n", N
+      printf "  Time-series length: min = %d, max = %d\n", dims[2], dims[3]
+   endif
+   scalar X2 = b["wald"]
+   scalar df = rows(b["coeff"]) - 1
+   scalar pv = pvalue(X, df, X2)
+   printf "  Wald chi-square(%d) = %g [%.4f]\n", df, X2, pv
 
-  if inbundle(b, "Fpool")
-    # poolability F-test for fixed effects
-    scalar Fp = b["Fpool"] 
-    scalar dfn = N-1
-    scalar dfd = b["df"]
-    pv = pvalue(F, dfn, dfd, Fp)
-    printf "  Null hypothesis: The groups have a common intercept\n"
-    printf "  Test statistic: F(%d, %d) = %g [%.4f]\n", dfn, dfd, Fp, pv 
-  endif
+   if inbundle(b, "Fpool")
+      # poolability F-test for fixed effects
+      scalar Fp = b["Fpool"]
+      scalar dfn = N-1
+      scalar dfd = b["df"]
+      pv = pvalue(F, dfn, dfd, Fp)
+      printf "  Null hypothesis: The groups have a common intercept\n"
+      printf "  Test statistic: F(%d, %d) = %g [%.4f]\n", dfn, dfd, Fp, pv
+   endif
 
-  printf "\n"
+   printf "\n"
 end function
 
 /* computes R-squared as the squared correlation between
@@ -48,32 +48,32 @@ end function
 */
 
 function scalar tsls_rsq (const matrix y, const matrix yh)
-  scalar r = corr(y, yh)
-  return r^2
-end function 
+   scalar r = corr(y, yh)
+   return r^2
+end function
 
 /*
-  panel_means_matrix: given the NT x k data matrix X and the 
-  NT x 1 matrix u, which records the panel unit ID associated 
-  with each row of X, returns an N x k matrix holding the
-  unit/group means of the columns of X. We want this for the
-  between model.
+   panel_means_matrix: given the NT x k data matrix X and the
+   NT x 1 matrix u, which records the panel unit ID associated
+   with each row of X, returns an N x k matrix holding the
+   unit/group means of the columns of X. We want this for the
+   between model.
 */
 
 function matrix panel_means_matrix (const matrix X, const matrix u)
-  scalar NT = rows(X)
-  matrix e = seq(1, NT)'
+   scalar NT = rows(X)
+   matrix e = seq(1, NT)'
 
-  matrix vU = values(u)
-  scalar N = rows(vU)
-  matrix umean = zeros(N, cols(X))
-    
-  loop i=1..N -q
+   matrix vU = values(u)
+   scalar N = rows(vU)
+   matrix umean = zeros(N, cols(X))
+
+   loop i=1..N -q
       matrix sel = selifr(e, u .= vU[i])
       umean[i,] = meanc(X[sel,])
-  endloop	
+   endloop
 
-  return umean
+   return umean
 end function
 
 /* Replace the columns of X with group mean minus grand mean:
@@ -81,351 +81,362 @@ end function
 */
 
 function void get_panel_means (matrix *X, const matrix u)
-  matrix grand = meanc(X)
-  matrix e = seq(1, rows(X))'
-  matrix vU = values(u)
-  scalar N = rows(vU)
-  scalar k = cols(X)
-  scalar Ti
-   
-  loop i=1..N -q
+   matrix grand = meanc(X)
+   matrix e = seq(1, rows(X))'
+   matrix vU = values(u)
+   scalar N = rows(vU)
+   scalar k = cols(X)
+   scalar Ti
+
+   loop i=1..N -q
       matrix sel = selifr(e, u .= vU[i])
       Ti = rows(sel)
       matrix tmp = X[sel,]
       X[sel,] = zeros(Ti, k) .+ (meanc(tmp) - grand)
-  endloop	
+   endloop
 end function
 
 /*
-  real_panel_demean: removes the group means and adds back
-  the grand mean for all columns of the NT x k matrix X. The 
-  input matrix u (NT x 1) must record the panel unit ID associated 
-  with each row of X.
+   real_panel_demean: removes the group means and adds back
+   the grand mean for all columns of the NT x k matrix X. The
+   input matrix u (NT x 1) must record the panel unit ID associated
+   with each row of X.
 
-  Fills out dims with the number of included groups and the
-  minimum and maximum group time-series lengths.
+   Fills out dims with the number of included groups and the
+   minimum and maximum group time-series lengths.
 */
 
 function void real_panel_demean (matrix *X, const matrix u,
                                  matrix *dims)
-  matrix grand = meanc(X)
-  scalar NT = rows(X)
-  matrix e = seq(1, NT)'
+   matrix grand = meanc(X)
+   scalar NT = rows(X)
+   matrix e = seq(1, NT)'
 
-  matrix vU = values(u)
-  scalar N = rows(vU)
-  scalar minT = NT
-  scalar maxT = 0
-    
-  loop i=1..N -q
+   matrix vU = values(u)
+   scalar N = rows(vU)
+   scalar minT = NT
+   scalar maxT = 0
+
+   loop i=1..N -q
       matrix sel = selifr(e, u .= vU[i])
       scalar Ti = rows(sel)
       minT = (Ti < minT) ? Ti : minT
       maxT = (Ti > maxT) ? Ti : maxT
       matrix tmp = X[sel,]
       X[sel,] = tmp .+ (grand - meanc(tmp))
-  endloop	
+   endloop
 
-  dims = {N, minT, maxT}  
+   dims = {N, minT, maxT}
 end function
 
 /* panel-demean X "in place" and return dims vector */
 
 function matrix panel_demean_1 (matrix *X, const matrix *u)
-  matrix dims
-  real_panel_demean(&X, u, &dims)
-  return dims
+   matrix dims
+   real_panel_demean(&X, u, &dims)
+   return dims
 end function
 
 /* panel-demean X into ret, preserving X; return ret
-   and fill out dims argument. 
+   and fill out dims argument.
 */
 
 function matrix panel_demean_2 (const matrix X, const matrix u,
                                 matrix *dims)
-  matrix ret = X
-  real_panel_demean(&ret, u, &dims)
-  return ret
+   matrix ret = X
+   real_panel_demean(&ret, u, &dims)
+   return ret
 end function
 
 /*
-  Note: Z may be rank-deficient; this is not a problem  _per se_, 
-  as long as \hat{X} is full rank. In order to accommodate 
-  potentially rank-deficient instrument matrices, we use the QR 
-  decomposition so redundant columns can be softly killed (à la
-  Burt Bacharach). 
+   Note: Z may be rank-deficient; this is not a problem  _per se_,
+   as long as \hat{X} is full rank. In order to accommodate
+   potentially rank-deficient instrument matrices, we use the QR
+   decomposition so redundant columns can be softly killed (à la
+   Burt Bacharach).
 
-  We then guard against the possibility of \hat{X} not having 
-  full column rank by using the generalised inverse. This, of 
-  course, is not particularly useful if we want an estimator 
-  (it's under-identified) but comes in handy if all we need is 
-  the residuals vector.
+   We then guard against the possibility of \hat{X} not having
+   full column rank by using the generalised inverse. This, of
+   course, is not particularly useful if we want an estimator
+   (it's under-identified) but comes in handy if all we need is
+   the residuals vector.
 */
 
-function matrix matrix_tsls (const matrix y, matrix *X, matrix *Z, 
+function matrix matrix_tsls (const matrix y, matrix *X, matrix *Z,
                              matrix *V[null], matrix *S1[null])
-    matrix R 
-    matrix Q = qrdecomp(Z, &R)
-    if exists(S1)
+   matrix R
+   matrix Q = qrdecomp(Z, &R)
+   if exists(S1)
       # write first-stage fitted values into S1
       S1 = Q*Q'S1
-    endif
-    matrix XQ = X'Q
-    matrix Qy = Q'y
-    matrix nonzero = (abs(R[diag]) .> 1.0e-12)'
-    if minr(nonzero) == 1
-        V = invpd(XQ * XQ')
-        ret = V * (XQ * Qy)
-    else        
-        R = selifc(R, nonzero)
-	P = qform(R, invpd(R'R))
-        V = ginv(qform(XQ, P))
-        ret = V * (XQ * (P * Qy))
-    endif
+   endif
+   matrix XQ = X'Q
+   matrix Qy = Q'y
+   matrix nonzero = (abs(R[diag]) .> 1.0e-12)'
+   if minr(nonzero) == 1
+      V = invpd(XQ * XQ')
+      ret = V * (XQ * Qy)
+   else
+      R = selifc(R, nonzero)
+      P = qform(R, invpd(R'R))
+      V = ginv(qform(XQ, P))
+      ret = V * (XQ * (P * Qy))
+   endif
 
-    return ret
+   return ret
 end function
 
 /* Compute restricted SSR for poolability test */
 
 function scalar get_SSRr (const matrix y, const matrix X)
-  matrix u
-  matrix b = mols(y, X, &u)
-  return u'u
+   matrix u
+   matrix b = mols(y, X, &u)
+   return u'u
 end function
 
 function scalar panel_sigma (const matrix All, int k,
                              const matrix endocols,
                              const matrix exocols,
-			     int ng, int code)
-  # break out the various required sub-matrices
-  matrix my = All[,1]
-  matrix mX = All[,2:k+1]
-  matrix Endo = mX[,endocols]
-  matrix mZ = mX[,exocols] ~ All[,k+2:]
+                             int ng, int code)
+   # break out the various required sub-matrices
+   matrix my = All[,1]
+   matrix mX = All[,2:k+1]
+   matrix Endo = mX[,endocols]
+   matrix mZ = mX[,exocols] ~ All[,k+2:]
 
-  # compute IV estimator
-  matrix beta = matrix_tsls(my, &mX, &mZ)
+   # compute IV estimator
+   matrix beta = matrix_tsls(my, &mX, &mZ)
 
-  n = rows(mX)  
-  dfk = cols(mX)
-  loop i=1..k -q
-    dfk -= isconst(mX[,i])
-  endloop 
+   n = rows(mX)
+   dfk = cols(mX)
+   loop i=1..k -q
+      dfk -= isconst(mX[,i])
+   endloop
 
-  # compute residuals etc
-  matrix U = my - mX * beta
-  if code == 1   # fixed effects
-    scalar df = n - dfk - ng
-  elif code == 2 # between
-    scalar df = ng - dfk - 1
-  else           # straight TSLS
-    scalar df = n - dfk - 1
-  endif
-  
-  return sqrt(U'U / df)
+   # compute residuals etc
+   matrix U = my - mX * beta
+   if code == 1   # fixed effects
+      scalar df = n - dfk - ng
+   elif code == 2 # between
+      scalar df = ng - dfk - 1
+   else           # straight TSLS
+      scalar df = n - dfk - 1
+   endif
+
+   return sqrt(U'U / df)
 end function
 
 function scalar all_varying (list X, list Z)
-  scalar ret = 1
-  X -= 0
-  loop foreach i X -q
-    if isconst(X.$i, 0)
-      printf "$i is not time-varying\n"
-      ret = 0
-    endif
-  endloop
-  Z -= 0
-  loop foreach i Z -q
-    if isconst(Z.$i, 0)
-      printf "$i is not time-varying\n"
-      ret = 0
-    endif
-  endloop  
-  return ret
+   scalar ret = 1
+   X -= 0
+   loop foreach i X -q
+      if isconst(X.$i, 0)
+         printf "$i is not time-varying\n"
+         ret = 0
+      endif
+   endloop
+   Z -= 0
+   loop foreach i Z -q
+      if isconst(Z.$i, 0)
+         printf "$i is not time-varying\n"
+         ret = 0
+      endif
+   endloop
+   return ret
 end function
 
-function bundle ivpanel (series y "dependent variable", 
+function bundle ivpanel (series y "dependent variable",
                          list X "regressors",
-                         list Z "instruments", 
-                         int case[1:3:1] {"Fixed effects", "Between model", "G2SLS"}, 
+                         list Z "instruments",
+                         int case[1:3:1] {"Fixed effects", "Between model", "G2SLS"},
                          bool quiet[0])
-  bundle b
-  scalar Fpnum = NA
+   bundle b
+   scalar Fpnum = NA
 
-  # ensure we have a constant in first place in both lists
-  X = 0 || X
-  Z = 0 || Z
+   # ensure we have a constant in first place in both lists
+   X = 0 || X
+   Z = 0 || Z
 
-  scalar nendo = nelem(X - Z)
-  scalar ninst = nelem(Z - X)
-  if nendo > ninst 
-     funcerr "Order condition for identification is not satisfied"
-  endif
+   list D = dropcoll(X)
+   if nelem(X - D) > 0
+      printf "Regressor(s) %s dropped for collinearity\n", varname(X-D)
+      X = D
+   endif
+   list D = dropcoll(Z)
+   if nelem(Z - D) > 0
+      printf "Instrument(s) %s dropped for collinearity\n", varname(Z-D)
+      Z = D
+   endif
 
-  # fixed effects: test for time variation  
-  if case == 1 && !all_varying(X, Z)
-     funcerr "Fixed effects: all regressors and instruments must be time-varying"
-  endif
+   scalar nendo = nelem(X - Z)
+   scalar ninst = nelem(Z - X)
+   if nendo > ninst
+      funcerr "Order condition for identification is not satisfied"
+   endif
 
-  # construct string for printing coeffs
-  string Xstr = varname(X)
+   # fixed effects: test for time variation
+   if case == 1 && !all_varying(X, Z)
+      funcerr "Fixed effects: all regressors and instruments must be time-varying"
+   endif
 
-  # and the name of the dependent variable
-  string ystr = argname(y)
-  if strlen(ystr) == 0
-    ystr = "anonymous"
-  endif
+   # construct string for printing coeffs
+   string Xstr = varname(X)
 
-  # record cols for endogenous and exogenous regressors
-  scalar k = nelem(X)
-  matrix endocols = zeros(1, nendo)
-  matrix exocols = zeros(1, k - nendo)
-  scalar ce = 1
-  scalar cx = 1
-  loop foreach i X -q
-    if (inlist(Z, X.$i))
-      exocols[cx] = i
-      cx++
-    else 
-      endocols[ce] = i
-      ce++
-    endif
-  endloop
+   # and the name of the dependent variable
+   string ystr = argname(y)
+   if strlen(ystr) == 0
+      ystr = "anonymous"
+   endif
 
-  # list of all vars
-  list Lbig = y X || Z
+   # record cols for endogenous and exogenous regressors
+   scalar k = nelem(X)
+   matrix endocols = zeros(1, nendo)
+   matrix exocols = zeros(1, k - nendo)
+   scalar ce = 1
+   scalar cx = 1
+   loop foreach i X -q
+      if (inlist(Z, X.$i))
+         exocols[cx] = i
+         cx++
+      else
+         endocols[ce] = i
+         ce++
+      endif
+   endloop
 
-  # create big data matrix and transform it
-  series msk = ok(Lbig)
-  set matrix_mask msk
-  matrix All = {Lbig}
-  matrix u = {$unit}
-  if (u[1] > 1) 
-    # handle sample offset
-    u -= u[1] - 1
-  endif
-  if case == 1 # within, fixed-effects
-    matrix dims = panel_demean_1(&All, &u)
-    scalar N = dims[1]
-    scalar NT = rows(All)
-  elif case == 2 # between
-    All = panel_means_matrix(All, u)
-    scalar N = rows(values(u))
-    NT = N
-  elif case == 3 # G2SLS
-    matrix dims
-    matrix X1 = panel_demean_2(All, u, &dims)
-    scalar N = dims[1]
-    scalar NT = rows(X1)
-    sw = panel_sigma(X1, k, endocols, exocols, N, 1)
-    matrix X2 = panel_means_matrix(All, u)
-    sb = panel_sigma(X2, k, endocols, exocols, N, 2)
-    if !quiet
-      printf "sigma-hat(within)  = %.8g\n", sw
-      printf "sigma-hat(between) = %.8g\n", sb
-    endif    
-    # total s^2 for comparison
-    # stot = panel_sigma(All, k, endocols, exocols, N, 3)
-    # printf "stot = %.8g\n", stot
-    All = (X1/sw) | (X2/sb)
-  endif    
+   # list of all vars
+   list Lbig = y X || Z
 
-  # break out the various required sub-matrices
-  matrix my = All[,1]
-  matrix mX = All[,2:k+1]
-  matrix Endo = mX[,endocols]
-  matrix mZ = mX[,exocols] ~ All[,k+2:]
-  k = cols(mX)
-  delete All
+   # create big data matrix and transform it
+   series msk = ok(Lbig)
+   set matrix_mask msk
+   matrix All = {Lbig}
+   matrix u = {$unit}
+   if (u[1] > 1)
+      # handle sample offset
+      u -= u[1] - 1
+   endif
+   if case == 1 # within, fixed-effects
+      matrix dims = panel_demean_1(&All, &u)
+      scalar N = dims[1]
+      scalar NT = rows(All)
+   elif case == 2 # between
+      All = panel_means_matrix(All, u)
+      scalar N = rows(values(u))
+      NT = N
+   elif case == 3 # G2SLS
+      matrix dims
+      matrix X1 = panel_demean_2(All, u, &dims)
+      scalar N = dims[1]
+      scalar NT = rows(X1)
+      sw = panel_sigma(X1, k, endocols, exocols, N, 1)
+      matrix X2 = panel_means_matrix(All, u)
+      sb = panel_sigma(X2, k, endocols, exocols, N, 2)
+      if !quiet
+         printf "sigma-hat(within)  = %.8g\n", sw
+         printf "sigma-hat(between) = %.8g\n", sb
+      endif
+      # total s^2 for comparison
+      # stot = panel_sigma(All, k, endocols, exocols, N, 3)
+      # printf "stot = %.8g\n", stot
+      All = (X1/sw) | (X2/sb)
+   endif
 
-  # compute IV estimator plus residuals etc
-  matrix V 
-  if case == 1
-    matrix S1 = mX[,endocols]
-    matrix beta = matrix_tsls(my, &mX, &mZ, &V, &S1)
-  else
-    matrix beta = matrix_tsls(my, &mX, &mZ, &V)
-  endif
-  matrix U = my - mX * beta
+   # break out the various required sub-matrices
+   matrix my = All[,1]
+   matrix mX = All[,2:k+1]
+   matrix Endo = mX[,endocols]
+   matrix mZ = mX[,exocols] ~ All[,k+2:]
+   k = cols(mX)
+   delete All
 
-  if case == 1
-    # FE: components for poolability F-test
-    mX[,endocols] = S1
-    matrix u1 = my - mX * beta
-    scalar SSRu = u1'u1
-    matrix y0 = {y}
-    matrix X0 = {X}
-    matrix S0 = X0[,endocols]
-    get_panel_means(&S0, u)   
-    X0[,endocols] = S1 + S0
-    scalar SSRr = get_SSRr(y0, X0)
-    Fpnum = SSRr - SSRu
-    # end F-test stuff
-    scalar df = NT - k - N + 1
-  elif case == 2
-    scalar df = N - k
-  else
-    scalar df = NT - k
-  endif
+   # compute IV estimator plus residuals etc
+   matrix V
+   if case == 1
+      matrix S1 = mX[,endocols]
+      matrix beta = matrix_tsls(my, &mX, &mZ, &V, &S1)
+   else
+      matrix beta = matrix_tsls(my, &mX, &mZ, &V)
+   endif
+   matrix U = my - mX * beta
 
-  scalar SSR = U'U
-  scalar s2 = SSR / df
-  matrix V *= s2
-  matrix se = sqrt(diag(V)) 
-  scalar wald = qform(beta[2:,]', invpd(V[2:,2:]))
-  
-  if case == 3
-    my = my[1:NT]
-    U = U[1:NT]
-  endif
-    
-  matrix yhat = my - U
-  scalar rsq = tsls_rsq(my, yhat)
+   if case == 1
+      # FE: components for poolability F-test
+      mX[,endocols] = S1
+      matrix u1 = my - mX * beta
+      scalar SSRu = u1'u1
+      matrix y0 = {y}
+      matrix X0 = {X}
+      matrix S0 = X0[,endocols]
+      get_panel_means(&S0, u)
+      X0[,endocols] = S1 + S0
+      scalar SSRr = get_SSRr(y0, X0)
+      Fpnum = SSRr - SSRu
+      # end F-test stuff
+      scalar df = NT - k - N + 1
+   elif case == 2
+      scalar df = N - k
+   else
+      scalar df = NT - k
+   endif
 
-  # lists of endog vars and additional instruments
-  list tmp = X - Z
-  string Estr = strsub(varname(tmp), ",", " ")
-  tmp = Z - X   
-  string Istr = strsub(varname(tmp), ",", " ")
+   scalar SSR = U'U
+   scalar s2 = SSR / df
+   matrix V *= s2
+   matrix se = sqrt(diag(V))
+   scalar wald = qform(beta[2:,]', invpd(V[2:,2:]))
 
-  # assemble bundle for return
-  b["nobs"] = NT
-  b["coeff"] = beta
-  b["stderr"] = se
-  b["vcv"] = V
-  b["SSR"] = SSR
-  b["sigma"] = sqrt(s2)
-  b["df"] = df
-  b["rsq"] = rsq
-  b["wald"] = wald 
-  b["modstr"] = Xstr
-  b["ystr"] = ystr
-  b["Estr"] = Estr
-  b["Istr"] = Istr
-  b["uhat"] = U
-  b["yhat"] = yhat
-  b["case"] = case
-  if (case == 1 || case == 3) 
-    b["dims"] = dims
-  endif
-  if ok(Fpnum) 
-     b["Fpool"] = (Fpnum/SSR) * df/(N-1)
-  endif
+   if case == 3
+      my = my[1:NT]
+      U = U[1:NT]
+   endif
 
-  if quiet
-    print "ivpanel: OK"
-  else
-    ivp_print(&b)
-  endif  
+   matrix yhat = my - U
+   scalar rsq = tsls_rsq(my, yhat)
 
-  return b
+   # lists of endog vars and additional instruments
+   list tmp = X - Z
+   string Estr = strsub(varname(tmp), ",", " ")
+   tmp = Z - X
+   string Istr = strsub(varname(tmp), ",", " ")
+
+   # assemble bundle for return
+   b["nobs"] = NT
+   b["coeff"] = beta
+   b["stderr"] = se
+   b["vcv"] = V
+   b["SSR"] = SSR
+   b["sigma"] = sqrt(s2)
+   b["df"] = df
+   b["rsq"] = rsq
+   b["wald"] = wald
+   b["modstr"] = Xstr
+   b["ystr"] = ystr
+   b["Estr"] = Estr
+   b["Istr"] = Istr
+   b["uhat"] = U
+   b["yhat"] = yhat
+   b["case"] = case
+   if (case == 1 || case == 3)
+      b["dims"] = dims
+   endif
+   if ok(Fpnum)
+      b["Fpool"] = (Fpnum/SSR) * df/(N-1)
+   endif
+
+   if quiet
+      print "ivpanel: OK"
+   else
+      ivp_print(&b)
+   endif
+
+   return b
 end function
 
-function bundle GUI_ivpanel (series y "dependent variable", 
+function bundle GUI_ivpanel (series y "dependent variable",
                              list X "regressors",
-                             list Z "instruments", 
-                             int case[1:3:1] {"Fixed effects", "Between model", "G2SLS"}) 
-  bundle b = ivpanel(y, X, Z, case)
-  return b
+                             list Z "instruments",
+                             int case[1:3:1] {"Fixed effects", "Between model", "G2SLS"})
+   bundle b = ivpanel(y, X, Z, case)
+   return b
 end function

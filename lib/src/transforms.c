@@ -1223,15 +1223,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 		ok = 0;
 	    }
 	} else if (f == DUMMIFY) {
-	    ok = 0; /* reverse burden of proof */
-	    if (v > 0) {
-		if (series_is_discrete(dset, v)) {
-		    /* pre-approved */
-		    ok = 1;
-		} else if (gretl_isdiscrete(0, dset->n - 1, dset->Z[v])) {
-		    ok = 1;
-		}
-	    }
+	    ok = v > 0 && accept_as_discrete(dset, v, 0);
 	}
 
 	if (!ok) {
@@ -1469,7 +1461,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 	    return E_INVARG;
 	}
 	if (!gretl_is_midas_list(list, dset)) {
-	    gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	    gretl_warnmsg_set(_("The argument does not seem to be a MIDAS list"));
 	}
     }
 
@@ -1701,7 +1693,7 @@ static int check_hf_difflist (const int *list,
 	if (v > 0) {
 	    *n_add -= 1;
 	} else if (gretl_is_user_var(vname)) {
-	    gretl_errmsg_sprintf("%s: collides with existing object name",
+	    gretl_errmsg_sprintf(_("%s: collides with existing object name"),
 				 vname);
 	    err = E_TYPES;
 	}
@@ -1758,7 +1750,7 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
     }
 
     if (!gretl_is_midas_list(list, dset)) {
-	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	gretl_warnmsg_set(_("The argument does not seem to be a MIDAS list"));
 	set_midas = 0;
     }
 

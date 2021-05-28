@@ -1170,6 +1170,148 @@
     </description>
   </command>
 
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>Utilizar una entrada matricial</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Eliminar la presentación de resultados</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
+    <description>
+      <para context="cli">
+	Lleva a cabo el contraste BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman y LeBaron, 1996</cite>)
+	de no linealidad para la serie <repl>x</repl>. En el contexto econométrico, esto
+	se aplica habitualmente para comprobar si los residuos de una regresión incumplen
+	la condición IID (distribución idéntica e independiente). El contraste se basa
+	en un conjunto de integrales de correlación, preparadas para detectar la no
+	linealidad de dimensión progresivamente mayor; y se establece el número de esas
+	integrales con el argumento <argname>orden</argname>. Estas deben ser por lo
+	menos 2; con la primera integral se establece una referencia de partida, pero sin
+	que permita un contraste. El contraste BDS es de tipo <quote>portmanteau</quote>:
+	adecuado para detectar toda clase de desviaciones respecto a la linealidad,
+	pero no esclarecedor del modo exacto en el que se incumple la condición.
+      </para>
+      <para context="gui">
+	El contraste BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman y LeBaron, 1996</cite>)
+	comprueba la no linealidad de una serie temporal. En el contexto econométrico, esto
+	se aplica habitualmente para comprobar si los residuos de una regresión incumplen
+	la condición IID (distribución idéntica e independiente). El contraste se basa
+	en un conjunto de integrales de correlación, preparadas para detectar la no
+	linealidad de dimensión progresivamente mayor; el número de esas integrales
+	se elige mediante el control <quote>Dimensión máxima</quote>. Estas deben ser por lo
+	menos 2; con la primera integral se establece una referencia de partida, pero sin
+	que permita un contraste. El contraste BDS es de tipo <quote>portmanteau</quote>:
+	adecuado para detectar toda clase de desviaciones respecto a la linealidad,
+	pero no esclarecedor del modo exacto en el que se incumple la condición.
+      </para>
+      <para context="cli">
+	En lugar de indicar <repl>x</repl> como serie, puedes utilizar la
+	opción <opt>matrix</opt> para especificar una matriz como entrada,
+	la cual debe tener forma de vector (columna o fila).
+      </para>
+      <subhead>Criterio de proximidad</subhead>
+      <para context="cli">
+	Las integrales de correlación están basadas en una medida de
+	<quote>proximidad</quote> entre los puntos de datos, de forma
+	que se consideran próximos a dos de esos puntos si están situados
+	uno del otro a menos de &egr;. Dado que el contraste necesita que se
+	especifique &egr;, por defecto, GRETL sigue la recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; se escoge de modo que
+	la integral de correlación de primer orden esté en torno a 0.7. Una
+	alternativa habitual (que necesita menos cálculos) consiste en especificar
+	&egr; como un múltiplo de la desviación típica de la serie de interés.
+	La opción <opt>sdcrit</opt> permite este último método;
+	así, en el tercer ejemplo indicado más arriba, &egr; se determina que
+	sea igual a dos veces la desviación típica de <repl>x</repl>.
+	La opción <opt>corr1</opt> implica la utilización del método de Kanzler
+	pero permite otra correlación objetivo diferente de 0.7. Deberías
+	tener claro que estas dos opciones se excluyen mutuamente.
+      </para>
+      <para context="gui">
+	Las integrales de correlación están basadas en una medida de
+	<quote>proximidad</quote> entre los puntos de datos, de forma
+	que se consideran próximos a dos de esos puntos si están situados
+	uno del otro a menos de &egr;. Dado que el contraste necesita que se
+	especifique &egr;, por defecto, GRETL sigue la recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; se escoge de modo que
+	la integral de correlación de primer orden esté en torno a 0.7. Una
+	alternativa habitual (que necesita menos cálculos) consiste en especificar
+	&egr; como un múltiplo de la desviación típica de la serie de interés.
+      </para>
+      <subhead context="cli">Muestreo repetido</subhead>
+      <para context="cli">
+	Los estadísticos del contraste BDS tienen distribución asintótica de
+	tipo <math>N</math>(0,1), pero el contraste rechaza demasiado la hipótesis
+	nula de modo muy notable con muestras de tamaño entre pequeño y moderado.
+	Por ese motivo, los valores <math>P</math> se obtienen por defecto
+	mediante muestreo repetido (bootstrapping) cuando <argname>x</argname>
+	tiene una longitud menor que 600 (y con referencia a la distribución
+	Normal, en caso contrario). Si quieres utilizar el muestreo repetido
+	con muestras más largas, puedes forzar esta cuestión indicando un
+	valor no nulo para la opción <opt>boot</opt>. Por el contrario, si no
+	quieres que se haga el muestreo repetido con las muestras más
+	pequeñas, indica un valor de cero para <opt>boot</opt>.
+      </para>
+      <subhead context="gui">Valores p</subhead>
+      <para context="gui">
+	Los estadísticos del contraste BDS tienen distribución asintótica de
+	tipo <math>N</math>(0,1), pero el contraste rechaza demasiado la hipótesis
+	nula de modo muy notable con muestras de tamaño entre pequeño y moderado.
+	Por ese motivo, los valores <math>P</math> se obtienen por defecto
+	mediante muestreo repetido (bootstrapping) cuando <argname>x</argname>
+	tiene una longitud menor que 600 (y con referencia a la distribución
+	Normal, en caso contrario).
+      </para>
+      <para context="cli">
+	Cuando se hace el muestreo repetido, el número de iteraciones por
+	defecto es de 1999; pero puedes especificar un número diferente
+	indicando un valor mayor que 1 con la opción <opt>boot</opt>.
+      </para>
+      <subhead context="cli">Matriz accesoria matrix</subhead>
+      <para context="cli">
+	Cuando se completa con éxito la ejecución de esta instrucción,
+	<fncref targ="$result"/> proporciona los resultados del contraste en
+	forma de una matriz con dos filas y <argname>orden</argname> &minus; 1
+	columnas. La primera fila contiene los estadísticos de contraste y la
+	segunda los valores <math>P</math>, de cada uno de los contrastes por
+	dimensión, bajo la hipótesis nula de que <argname>x</argname> es lineal/IID.
+      </para>
+    </description>
+  </command>
+
   <command name="bfgs-config" section="Estimation" label="Opciones de BFGS"
     context="gui">
     <description>
@@ -1670,22 +1812,33 @@
 	  <flag>--dataset</flag>
 	  <effect>Vacía solo el conjunto de datos</effect>
 	</option>
+	<option>
+	  <flag>--functions</flag>
+	  <effect>Elimina las funciones (unicamente)</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Sin ninguna opción, quita de la memoria todos los objetos guardados,
-	incluyendo el conjunto de datos (si hay alguno). Ten en cuenta que también
-	tienes este efecto al abrir un nuevo conjunto de datos, o al utilizar la
-	instrucción <cmd>nulldata</cmd> para crear un conjunto de datos vacío;
-	por eso normalmente no necesitas utilizar <cmd>clear</cmd>.
+	Por defecto, esta instrucción quita de la memoria el conjunto de datos
+	vigente (si hay alguno), además de todas las variables guardadas
+	(escalares, matrices, etc.). Ten en cuenta que también tienes este
+	efecto al abrir un nuevo conjunto de datos, o al utilizar la instrucción
+	<cmd>nulldata</cmd> para crear un conjunto de datos vacío; por eso
+	normalmente no necesitas hace uso explícito de <cmd>clear</cmd>.
       </para>
       <para>
 	Cuando indicas la opción <opt>dataset</opt>, entonces solo se vacía
 	el conjunto de datos (más cualquier lista de series definida); otros
-	objetos guardados como matrices y escalares ya definidos, se van a
+	objetos guardados como matrices, escalares o 'bundles', se van a
 	conservar.
+      </para>
+      <para>
+	Cuando indicas la opción <opt>functions</opt>, entonces se elimina de
+	la memoria cualquier función definida por el usuario y cualquier función
+	definida en los paquetes que tengas cargados. El conjunto de datos y
+	otras variables no se ven afectados.
       </para>
     </description>
   </command>
@@ -4434,8 +4587,11 @@
     <description>
       <para>
 	Abre un bloque de expresiones en las que se define una función. Este
-	bloque debe estar terminado con <lit>end function</lit>. Consulta
-	<guideref targ="chap:functions"/> para obtener más detalles.
+	bloque debe estar terminado con <lit>end function</lit>. (Como excepción
+	está el caso en el que desees eliminar una función definida por el
+	usuario, pues lo puedes conseguir mediante la sencilla linea de instrucción
+	<lit>function foo delete</lit> para a función chamada <quote>foo</quote>.)
+	Consulta <guideref targ="chap:functions"/> para obtener más detalles.
       </para>
     </description>
 
@@ -5098,9 +5254,10 @@
 	lograr esto mediante la palabra clave adicional <lit>param_names</lit>
 	dentro del bloque de instrucción. Para un modelo con <math>k</math>
 	parámetros, el argumento que sigue a esta palabra clave debe ser,
-	bien una cadena de texto literal entre comillas que contenga <math>k</math>
-	nombres separados por espacios, o bien el nombre de una variable de cadena que
-	contenga <math>k</math> de esos nombres.
+	una cadena de texto literal entre comillas que contenga <math>k</math>
+	nombres separados por espacios, el nombre de una variable de cadena
+	que contenga <math>k</math> de esos nombres, o el nombre de un array
+	con <math>k</math> cadenas de texto.
       </para>
     </description>
 
@@ -7280,19 +7437,23 @@
 
     <usage>
       <options>
-        <option>
+	<option>
 	  <flag>--save</flag>
 	  <effect>Guarda las series resultantes</effect>
 	</option>
-        <option>
+	<option>
+	  <flag>--overwrite</flag>
+	  <effect>Conformidad para sobrescribir series ya existentes</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>No presenta los resultados</effect>
 	</option>
 	<option>
 	  <flag>--plot</flag>
-	  <optparm>modo-o-nombrearchivo</optparm>
+	  <optparm>Modo-o-nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
-        </option>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7346,10 +7507,13 @@
 	conjunto vigente de datos; en este contexto, puedes utilizar la opción
 	<opt>quiet</opt> para eliminar la presentación de los resultados. Los
 	nombres por defecto de las series guardadas son <lit>lever</lit>,
-	<lit>influ</lit> y <lit>dffits</lit>, respectivamente. Sin embargo, si ya
-	existen series con esos nombres, los de las nuevas series guardadas
-	se ajustan para garantizar la unicidad; en cualquier caso, estas serán
-	las 3 series con números ID más grandes del conjunto de datos.
+	<lit>influ</lit> y <lit>dffits</lit>, respectivamente. Si ya
+	existen series con esos nombres, lo que suceda dependerá de si
+	indicas la opción <opt>overwrite</opt>, pues en ese caso se van
+	a sobrescribir las series ya existentes. En caso contrario, los
+	nombres se van a ajustar para poder garantizar la unicidad, y las
+	nuevas series generadas serán las 3 series con números ID más
+	grandes del conjunto de datos.
       </para>
       <para context="gui">
 	Con el icono '+' de la parte de arriba de la ventana del contraste de apalancamiento,
@@ -7360,7 +7524,7 @@
 	Después de la ejecución, el accesor <fncref targ="$test"/> devuelve el criterio
 	de validación cruzada, que se define como
         \[
-        \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2
         \]
 	donde $\hat{y}_{-i}$ es el error de predicción para la observación
 	$i$-ésima, después de que esta sea excluida de la muestra. Por eso, el
@@ -7646,6 +7810,10 @@
 	  <flag>--p-values</flag>
 	  <effect>Muestra los valores p en vez de las pendientes</effect>
 	</option>
+	<option>
+	  <flag>--estrella</flag>
+	  <effect>Elige la variante pseudo-R-cuadrado</effect>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7659,15 +7827,16 @@
       <para>
 	Si la variable dependiente es una variable binaria (todos sus
 	valores son 0 o 1), se obtienen estimaciones máximo verosímiles
-	de los coeficientes de las variables de <repl>indepvars</repl> mediante
-	el método de Newton&ndash;Raphson. Como el modelo es no lineal,
-	las pendientes están condicionadas por los valores de las variables
-	independientes. Por defecto, se calculan las pendientes con respecto a
-	cada una de las variables independientes (en las medias de esas variables),
-	y estas pendientes substituyen los valores p habituales en el resultado
-	de la regresión. Puedes prescindir de este proceder indicando la opción
-	<opt>p-values</opt>. El estadístico chi-cuadrado contrasta la hipótesis
-	nula de que todos los coeficientes son cero, excepto el de la constante.
+	de los coeficientes de las variables de <repl>indepvars</repl>
+	mediante el método de Newton&ndash;Raphson. Como el modelo es no
+	lineal, las pendientes están condicionadas por los valores de las
+	variables independientes. Por defecto, se calculan las pendientes
+	con respecto a cada una de las variables independientes (en las
+	medias de esas variables), y estas pendientes substituyen los valores
+	p habituales en el resultado de la regresión. Puedes prescindir de
+	este proceder indicando la opción <opt>p-values</opt>. El estadístico
+	chi-cuadrado contrasta la hipótesis nula de que todos los coeficientes
+	son cero, excepto el de la constante.
       </para>
       <para context="cli">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa
@@ -7681,6 +7850,16 @@
 	desviaciones típicas <quote>robustas por agrupación</quote>;
 	consulta <guideref targ="chap:robust_vcv"/> para obtener más
 	detalles.
+      </para>
+      <para context="cli">
+	Por defecto, se va a presentar el estadístico pseudo-R-cuadrado que
+	fue sugerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	pero en el caso binario, si indicas la opción <opt>estrella</opt>
+	se va a presentar en su lugar la variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	presumiblemente imita de forma más parecida las propiedades del
+	<math>R</math><sup>2</sup> habitual en el contexto de la estimación
+	de mínimos cuadrados.
       </para>
       <para context="gui">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa
@@ -8105,6 +8284,16 @@
 	  <para>
 	    border: Se debería dibujar un borde rectangular alrededor del mapa?
 	    Por defecto, si; pero puedes eliminar esto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    feature border width: Te proporciona el control sobre la anchura
+	    del borde o del contorno que se dibuja alrededor de las distintas
+	    <quote>características</quote> del mapa (por ejemplo: países,
+	    estados, regiones, provincias,...). Si tu gráfico ya incluye una
+	    carga, puedes reducir la anchura hasta cero para eliminar esos
+	    bordes.
 	  </para>
 	</li>
 	<li>
@@ -8569,7 +8758,8 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Matriz de covarianzas CMV (QML)</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>Matriz de covarianzas CMV (QML) o HAC</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8606,10 +8796,16 @@
     <description context="gui">
       <para>
 	Realiza la estimación de Máxima Verosimilitud (MV o ML) usando
-	el algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno). Debes
-	especificar la función logaritmo de verosimilitud; y se te recomienda
-	que también proporciones las expresiones de las derivadas de esta función
-	con respecto a cada uno de los parámetros, si es posible.
+	el algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno) o el método
+	de Newton. Debes especificar la función logaritmo de verosimilitud;
+	y se te recomienda que también proporciones las expresiones de las
+	derivadas de esta función con respecto a cada uno de los parámetros,
+	si es posible.
+      </para>
+      <para>
+	Este texto de ayuda asume que se utiliza el maximizador por defecto
+	BFGS. Para obtener información relativa al uso del método de Newton,
+	consulta <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Ejemplo sencillo: Supón que tenemos una serie <lit>X</lit> con
@@ -8721,8 +8917,13 @@
       </para>
       <para>
 	Ten en cuenta que cualquier indicador de opción debe añadirse a la
-	línea final del bloque EMV (MLE).
+	línea final del bloque EMV (MLE). Por ejemplo:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Matriz de covarianzas y desviaciones típicas</subhead>
       <para>
 	Cuando la función del logaritmo de la verosimilitud devuelve una serie o
@@ -8732,11 +8933,15 @@
 	por el contario se basan en la inversa negativa de la matriz Hessiana, que se
 	aproxima numéricamente. Cuando indicas la opción <opt>robust</opt>,
 	se utiliza un estimador CMV (QML, un <quote>emparedado</quote> entre
-	la inversa negativa de la matriz Hessiana y el PEG). Ahora bien, cuando la
-	función del logaritmo de la verosimilitud únicamente devuelve un valor
-	escalar, el PEG no está disponible (por lo tanto tampoco el estimador
-	CMV), y las desviaciones típicas tienen que calcularse necesariamente
-	utilizando la matriz Hessiana numérica.
+	la inversa negativa de la matriz Hessiana y el PEG). Si además añades
+	el parámetro <lit>hac</lit> a esta opción, el PEG se incrementa del
+	modo de <cite key="newey-west87">Newey y West</cite> para permitir
+	autocorrelación del gradiente. (Esto únicamente tiene sentido con
+	datos de series de tiempo.) Ahora bien, cuando la función del logaritmo
+	de la verosimilitud únicamente devuelve un valor escalar, el PEG no
+	está disponible (por lo tanto tampoco el estimador CMV), y las
+	desviaciones típicas tienen que calcularse necesariamente utilizando
+	la matriz Hessiana numérica.
       </para>
       <para>
 	En caso de que únicamente quieras las estimaciones del parámetro
@@ -8763,9 +8968,10 @@
 	conseguir mediante la palabra clave adicional <lit>param_names</lit>
 	dentro del bloque de instrucciones. Para un modelo con <math>k</math>
 	parámetros, el argumento que sigue a esta palabra clave debe ser
-	bien una cadena de texto literal puesta entre comillas, que contenga
-	<math>k</math> nombres separados por espacios, o bien el nombre de una
-	variable de cadena que contenga <math>k</math> de esos nombres.
+	una cadena de texto literal entre comillas que contenga <math>k</math>
+	nombres separados por espacios, el nombre de una variable de cadena
+	que contenga <math>k</math> de esos nombres, o el nombre de un array
+	con <math>k</math> cadenas de texto.
       </para>
       <para>
 	Para una descripción más en profundidad de la estimación
@@ -9487,10 +9693,11 @@
 	puede que desees utilizar etiquetas más informativas. Esto lo puedes
 	lograr mediante la palabra clave adicional <lit>param_names</lit>
 	dentro del bloque de instrucciones. Para un modelo con <math>k</math>
-	parámetros, el argumento que sigue a esta palabra clave debe ser,
-	bien una cadena de texto literal puesta entre comillas que contenga
-	<math>k</math> nombres separados por espacios, o bien el nombre de una
-	variable de cadena que contenga <math>k</math> de esos nombres.
+	parámetros, el argumento que sigue a esta palabra clave debe ser
+	una cadena de texto literal entre comillas que contenga <math>k</math>
+	nombres separados por espacios, el nombre de una variable de cadena
+	que contenga <math>k</math> de esos nombres, o el nombre de un array
+	con <math>k</math> cadenas de texto.
       </para>
       <para>
 	Para obtener otros detalles sobre la estimación MCNL (NLS), consulta
@@ -11566,6 +11773,10 @@
 	  <effect>Muestra los valores p en lugar de las pendientes</effect>
 	</option>
 	<option>
+	  <flag>--estrella</flag>
+	  <effect>Elige la variante pseudo-R-cuadrado</effect>
+	</option>
+	<option>
 	  <flag>--random-effects</flag>
 	  <effect>Estima un modelo Probit de panel con efectos aleatorios, EA</effect>
 	</option>
@@ -11596,7 +11807,8 @@
 	y estas pendientes substituyen a los valores p habituales en el resultado
 	de la regresión. Puedes prescindir de este proceder indicando la opción
 	<opt>p-values</opt>. El estadístico chi-cuadrado contrasta la hipótesis
-	nula de que todos los coeficientes son cero, excepto el de la constante.
+	nula de que todos los coeficientes son cero, excepto el de la
+	constante.
       </para>
       <para context="cli">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa negativa
@@ -11607,13 +11819,24 @@
 	gradiente. Para obtener más detalles, consulta el capítulo 10 del libro de
 	<cite key="davidson-mackinnon04">Davidson y MacKinnon (2004)</cite>.
       </para>
+      <para context="cli">
+	Por defecto, se va a presentar el estadístico pseudo-R-cuadrado que
+	fue sugerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	pero en el caso binario, si indicas la opción <opt>estrella</opt>
+	se va a presentar en su lugar la variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	presumiblemente imita de forma más parecida las propiedades del
+	<math>R</math><sup>2</sup> habitual en el contexto de la estimación
+	de mínimos cuadrados.
+      </para>
       <para context="gui">
-	Por defecto, las desviaciones típicas se calculan utilizando la inversa
-	negativa de la matriz Hessiana. Si marcas el cuadradito de 'Desviaciones
-	típicas robustas', entonces se calculan en su lugar las desviaciones típicas
-	CMV (QML) o de Huber&ndash;White. En este caso, la matriz de covarianzas
-	estimadas es un <quote>emparedado</quote> entre la inversa de la matriz
-	Hessiana estimada y el producto externo del vector gradiente. Consulta el
+	Por defecto, las desviaciones típicas se calculan utilizando la
+	inversa negativa de la matriz Hessiana. Si marcas el cuadradito de
+	<quote>Desviaciones típicas robustas</quote>quote>, entonces se
+	calculan en su lugar las desviaciones típicas CMV (QML) o de
+	Huber&ndash;White. En este caso, la matriz de covarianzas estimadas es
+	un <quote>emparedado</quote> entre la inversa de la matriz Hessiana
+	estimada y el producto externo del vector gradiente. Consulta el
 	capítulo 10 del libro de Davidson y MacKinnon para obtener más detalles.
       </para>
       <para>
@@ -11868,7 +12091,7 @@
 	<quote>en bruto</quote> frente a los cuantiles de la distribución Normal
 	estándar.
       </para>
-      <para>
+      <para context="cli">
 	La opción <opt>output</opt> tiene como efecto el envío del resultado al
 	archivo especificado; utiliza <quote>display</quote> para forzar
 	que el resultado se presente en la pantalla. Consulta la instrucción
@@ -12018,28 +12241,56 @@
 
     <description>
       <para>
-	Sale del programa, ofreciéndote la opción de guardar los resultados de la
-	sesión al salir.
+	Sale de la modalidad vigente de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Cuando esta instrucción se invoca desde un guion, finaliza la
+	    ejecución de ese guion. En el contexto de gretlcli en modo de
+	    procesamiento por lotes, el propio gretlcli finaliza; en caso
+	    contrario, el programa retrocede a modo interactivo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cuando se invoca desde la consola del programa de Interface Gráfica
+	    de Usuario (GUI), se cierra la ventana de la consola.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cuando se invoca desde gretlcli en modo interactivo, este programa
+	    finaliza.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Ten en cuenta que esta instrucción no puede invocarse desde dentro
+	de funciones ni de bucles.
+      </para>
+      <para>
+	La instrucción <lit>quit</lit> en ningún caso provoca que finalice el
+	programa de Interface Gráfica de Usuario (GUI) de GRETL. Esto se
+	hace mediante la opción <lit>Salir</lit> del apartado <lit>Archivo</lit>
+	del menú, o mediante <lit>Ctrl+Q</lit>, o pulsando con el ratón el
+	control de cierre en la barra de título de la ventana principal de GRETL.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/Archivo/Salir</menu-path>
-    </gui-access>
   </command>
 
   <command name="regls" section="Estimation"
-	   label="Mínimos cuadrados regularizados" context="gui">
+	   label="Mínimos Cuadrados Regularizados" context="gui">
     <description>
       <para>
-	Este diálogo te permite un grado limitado de acceso a la función
-	<lit>regls</lit> para mínimos cuadrados regularizados.
+	Este diálogo te permite el acceso a la función <lit>regls</lit> para
+	Mínimos Cuadrados Regularizados.
       </para>
       <para>
-	Se toleran tres variantes: LASSO, que limita la suma de los valores
+	Se toleran tres estimadores: LASSO, que limita la suma de los valores
 	absolutos de los coeficientes; Ridge (cresta), que limita la suma de
 	los coeficientes cuadrados; y Elastic net (malla elástica), que es una
-	combinación de las dos primeras, regida por el 'hiperparámetro' &alpha;
+	combinación de las dos primeras regida por el 'hiperparámetro' &alpha;
 	de forma que &alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona
 	Ridge, y valores intermedios proporcionan una combinación ponderada.
       </para>
@@ -12047,15 +12298,81 @@
 	El término &lgr; especifica el grado hasta el que se penaliza la suma
 	de coeficientes absolutos o cuadrados. Puedes indicar una única
 	fracción &lgr; desde 0 (sin penalización) hasta 1 (máxima penalización),
-	o bien un número de valores &lgr;. En el segundo caso, los valores de
+	o bien un grupo de valores &lgr;. En el segundo caso, los valores de
 	penalización se escalan automáticamente.
       </para>
       <para>
-	Puedes ejercer un control mucho mayor sobre la funcionalidad de Mínimos
-	Cuadrados Regularizados de GRETL recurriendo a la función <lit>regls</lit>
-	con el uso de guiones. En particular, tienes la potestad de especificar la
-	validación cruzada; consulta <doc>regls.pdf</doc> para tener más detalles.
+	Si eliges varios valores para &lgr;, se va a habilitar la opción de
+	validación cruzada. En ese caso, vas a poder escoger tanto el número
+	de <quote>pliegues</quote> para los datos de ensayo (por defecto es 10),
+	como si estos pliegues deben ser subconjuntos aleatorios o contiguos
+	de observaciones. Asimismo, podrás escoger si quieres que presente
+	un gráfico con las medias del Erro Cuadrático Medio (MSE) frente a las
+	fracciones &lgr;.
       </para>
+      <para>
+	El botón <quote>Avanzado</quote> abre un nuevo diálogo que proporciona
+	de cierta forma un mayor grado de control sobre el procedimiento de
+	regularización. Pero ten en cuenta que puedes ejercer un control más
+	detallado invocando a la función <lit>regls</lit> mediante la redacción
+	de guiones; para más detalles consulta <doc>regls.pdf</doc>.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Otras opciones para regls" context="gui">
+    <description>
+      <para>
+	Las elecciones hechas mediante este diálogo se aplican solo cuando son
+	relevantes, en función de las elecciones hechas en el diálogo principal
+	<quote>reglsbest</quote>. Se recuerdan mientras dure la sesión de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Elección de algoritmo: Puedes elegir el método Descenso de Coordenada
+	    Cíclico (CCD) tanto para el LASSO como para la regresión Ridge (cresta),
+	    en contraste con el método por defecto; es decir, el Método de
+	    Multiplicadores de Dirección Alterna (ADMM) para el LASSO y la
+	    Descomposición del Valor Singular (SVD) para el Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    El criterio por defecto para que rinda <quote>mejor</quote>
+	    la validación cruzada es minimizar el Error Cuadrático Medio
+	    (MSE), pero puedes seleccionar la regla alternativa
+	    <quote>una desviación típica</quote>. Esta alternativa, que
+	    favorece la sobriedad, escoge el mayor factor de penalización
+	    cuyo MSE está a menos de una desviación típica del mínimo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Semilla para los pliegues aleatorios: Si quieres obtener resultados
+	    replicables en la validación cruzada con pliegues aleatorios, es
+	    necesario especificar una semilla para el generador de números
+	    aleatorios.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Por defecto, regls utilizará MPI (si está disponible) en un esfuerzo por
+	    acelerar la validación cruzada. El recuadro para MPI (que se muestra solo
+	    cuando se compila GRETL con soporte MPI) te permite desactivar esto,
+	    lo que puede producir una aceleración para bases pequeñas de datos.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    La opción de mostrar el tiempo de ejecución te puede ser útil si
+	    quieres comparar el comportamiento de diferentes algoritmos, o
+	    comprobar si vale la pena usar el MPI. El tiempo que se muestra en
+	    el resultado corresponde a la ejecución del código C subyacente.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -12269,27 +12586,30 @@
 	sistema, pero aún no lo has estimado.
       </para>
       <para>
-	Dependiendo del contexto, puedes expresar de varios modos las restricciones que
-	quieras contrastar. El más simple es como se indica a continuación: cada restricción
-	se expresa como una ecuación, con una combinación lineal de parámetros a la
-	izquierda del signo de igualdad y un valor escalar a la derecha (bien
-	una constante numérica, o bien el nombre de una variable escalar).
+	Dependiendo del contexto, puedes expresar de varios modos las
+	restricciones que quieras contrastar. El más simple es como se
+	indica a continuación: cada restricción se expresa como una ecuación,
+	con una combinación lineal de parámetros a la izquierda del signo
+	de igualdad y un valor escalar a la derecha (bien una constante
+	numérica, o bien el nombre de una variable escalar).
       </para>
       <para>
-	En caso de una única ecuación, puedes referirte a sus parámetros con el
-	formato <lit>b[</lit><repl>i</repl><lit>]</lit>, donde <repl>i</repl>
-	representa la posición en la lista de regresores (comenzando en el 1), o
-	con el formato <lit>b[</lit><repl>nombrevar</repl><lit>]</lit>, donde
-	<repl>nombrevar</repl> es el nombre del regresor en cuestión. En caso
-	de un sistema, la referencia a los parámetros se hace utilizando la letra
-	<lit>b</lit> junto con dos números colocados entre corchetes.
-	El primer número representa la posición de la ecuación dentro del
-	sistema, y el segundo número indica la posición del regresor dentro
-	de la lista de ellos. Por ejemplo, <lit>b[2,1]</lit> denota el primer
-	parámetro de la segunda ecuación, mientras que <lit>b[3,2]</lit>
-	denota el segundo parámetro de la tercera ecuación. Puedes anteponer
-	multiplicadores numéricos a los elementos <lit>b</lit> de la ecuación
-	que representa una restricción, por ejemplo <lit>3.5*b[4]</lit>.
+	En caso de una única ecuación, puedes referirte a sus parámetros
+	con el formato <lit>b[</lit><repl>i</repl><lit>]</lit>, donde
+	<repl>i</repl> representa la posición en la lista de regresores
+	(comenzando en el 1), o con el formato
+	<lit>b[</lit><repl>nombrevar</repl><lit>]</lit>, donde
+	<repl>nombrevar</repl> es el nombre del regresor en cuestión.
+	En caso de un sistema, la referencia a los parámetros se hace
+	utilizando la letra <lit>b</lit> junto con dos números colocados
+	entre corchetes. El primer número representa la posición de la
+	ecuación dentro del sistema, y el segundo número indica la
+	posición del regresor dentro de la lista de ellos. Por ejemplo,
+	<lit>b[2,1]</lit> denota el primer parámetro de la segunda
+	ecuación, mientras que <lit>b[3,2]</lit> denota el segundo
+	parámetro de la tercera ecuación. Puedes anteponer multiplicadores
+	numéricos a los elementos <lit>b</lit> de la ecuación que representa
+	una restricción, por ejemplo <lit>3.5*b[4]</lit>.
       </para>
       <para>
 	Aquí tienes un ejemplo de un conjunto de restricciones para un modelo
@@ -12331,7 +12651,7 @@
 	<math>F</math> asintótico, en otro caso.
       </para>
       <para>
-	Tienes 2 alternativas al método para expresar las restricciones que se discutió
+	Tienes tres alternativas al método para expresar las restricciones descrito
 	más arriba. Primero, puedes escribir de forma compacta un conjunto de
 	<math>g</math> restricciones lineales sobre el vector con los <math>k</math>
 	parámetros (&bgr;), como <math>R</math>&bgr; &minus; <math>q</math> = 0,
@@ -12347,7 +12667,27 @@
 	end restrict
       </code>
       <para>
-	En segundo lugar, si quieres contrastar una restricción no lineal (lo que
+	En segundo lugar, como variante que puede serte útil cando uses la
+	función <lit>restrict</lit> dentro de otra función, puedes elaborar
+	un conjunto de enunciados de restricción con el formato de un 'array'
+	de cadenas de texto. Después utiliza la palabra clave <lit>inject</lit>
+	con el nombre del 'array'. Este es un ejemplo simple:
+      </para>
+      <code>
+	strings SR = array(2)
+	RS[1] = "b[1,2] = 0"
+	RS[2] = "b[2,1] = 0"
+	restrict
+	  inject RS
+	end restrict	
+      </code>
+      <para>
+	Con el uso actual de este método, posiblemente preferirás utilizar la
+	función <fncref targ="sprintf"/> para elaborar las cadenas de texto,
+	en base a la entrada para una función.
+      </para>
+      <para>
+	Finalmente, si quieres contrastar una restricción no lineal (lo que
 	actualmente solo está disponible para modelos de una única ecuación),
 	debes indicar la restricción con el nombre de una función, precedida por
 	<quote><lit>rfunc = </lit></quote>, como en
@@ -15701,34 +16041,29 @@
 	íntimamente relacionada con el contraste de cointegración de Johansen
 	(consulta <cmdref targ="johansen"/>).
       </para>
-
       <para context="cli">
 	El parámetro <repl>orden</repl> de esta instrucción representa el orden de
 	retardos del sistema VAR. El número de retardos en el propio VECM (donde la
 	variable dependiente se indica como una primera diferencia) es de uno
 	menos que <repl>orden</repl>.
       </para>
-
       <para context="gui">
 	El orden de retardos escogido en la caja de diálogo del VECM es el del sistema
 	VAR. El número de retardos en el propio VECM (donde la variable dependiente
 	se indica como una primera diferencia) es de uno menos que ese número.
       </para>
-
       <para context="cli">
 	El parámetro <repl>rango</repl> representa el rango de cointegración
 	o, en otras palabras, el número de vectores cointegrantes. Este debe
 	ser mayor que cero, y menor o igual (generalmente menor) que el número
 	de variables endógenas indicadas en <repl>ylista</repl>.
       </para>
-
       <para context="gui">
 	El <quote>rango</quote> representa el número de vectores
 	cointegrantes. Este debe ser mayor que cero, y menor o
 	igual (generalmente menor) que el número de variables endógenas
 	escogidas.
       </para>
-
       <para context="cli">
 	El argumento <repl>ylista</repl> proporciona la lista de variables
 	endógenas, expresadas en niveles. La inclusión de términos de tipo
@@ -15744,7 +16079,6 @@
 	Los significados de estos casos y los criterios que se usan para escoger
 	un caso, se explican en <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	Las listas (opcionales) <repl>xlista</repl> y <repl>rxlista</repl> te
 	permiten especificar conjuntos de variables exógenas que forman
@@ -15753,7 +16087,6 @@
 	listas se separan de <repl>ylista</repl> y unas de las otras, mediante
 	punto y coma.
       </para>
-
       <para context="gui">
 	En el cuadradito <quote>Variables endógenas </quote> puedes escoger
 	el vector de variables endógenas, expresadas en niveles. La inclusión
@@ -15768,7 +16101,6 @@
 	significados de estos casos y los criterios que se usan para escoger
 	un caso, se explican en <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	En el cuadradito <quote>Variables exógenas</quote> puedes añadir determinadas
 	variables exógenas. Por defecto, estas entran en el modelo de forma no
@@ -15778,14 +16110,12 @@
 	ella y selecciona <quote>Restringida</quote> en el menú emergente. Entonces
 	el símbolo al lado de la variable va a cambiarse a R.
       </para>
-
       <para context="cli">
 	La opción <opt>seasonals</opt>, que puedes combinar con cualquiera de las
 	otras opciones, especifica la inclusión de un conjunto de variables
 	ficticias estacionales centradas. Esta opción únicamente está disponible
 	para datos trimestrales o mensuales.
       </para>
-
       <para context="gui">
 	Si los datos son trimestrales o mensuales, se muestra un cuadro de verificación que
 	te permite incluir un conjunto de variables ficticias estacionales centradas. En
@@ -15793,7 +16123,6 @@
 	permite presentar las regresiones auxiliares que forman el punto de
 	inicio del procedimiento de estimación Máximo Verosímil de Johansen.
       </para>
-
       <para context="cli">
 	El primer ejemplo de arriba especifica un VECM, con un orden de retardos de 4 y
 	un único vector de cointegración. Las variables endógenas son <lit>Y1</lit>,
@@ -15803,7 +16132,6 @@
 	los vectores de cointegración pueden tener ordenada en el origen no nula pero las
 	variables <lit>Y</lit> no tienen tendencia.
       </para>
-
       <para context="cli">
 	A continuación de la estimación de un VECM, tienes disponibles algunos accesores
 	especiales: <lit>$jalpha</lit>, <lit>$jbeta</lit> y <lit>$jvbeta</lit>
@@ -15891,12 +16219,16 @@
 	  <flag>--quiet</flag>
 	  <effect>No presenta los resultados</effect>
         </option>
+	<option>
+	  <flag>--allow-zeros</flag>
+	  <effect>Mira abajo</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula las estimaciones de mínimos cuadrados ponderados (MCP o WLS)
+	Calcula las estimaciones de mínimos cuadrados ponderados (MCP, WLS)
 	utilizando <repl>varponder</repl> como ponderación, <repl>depvar</repl>
 	como variable dependiente e <repl>indepvars</repl> como lista de
 	variables independientes. Sea <repl>w</repl> la raíz cuadrada positiva
@@ -15914,20 +16246,21 @@
 	igual a la suma de errores cuadrados de la regresión de la variable dependiente
 	ponderada sobre únicamente la constante ponderada.
       </para>
-
       <para context="cli">
-	Si <repl>varponder</repl> es una variable ficticia, la estimación MCP
-	es equivalente a la que resulta al eliminar todas las observaciones que
-	tienen un valor de cero para <repl>varponder</repl>.
+	Como caso especial, si <repl>varponder</repl> es una variable ficticia
+	0/1, la estimación MCP (WLS) es equivalente a MCO (OLS) en una muestra
+	en la que se excluyen todas las observaciones que tienen un valor de
+	cero para <repl>varponder</repl>. Por otro lado, la inclusión de
+	ponderaciones iguales a cero se considera un error, pero si realmente
+	quieres mezclar ponderaciones iguales a cero con ponderaciones positivas,
+	puedes añadir la opción <opt>allow-zeros</opt>.
       </para>
-
-	  <para context="cli">
+      <para context="cli">
 	Para aplicar la estimación de Mínimos Cuadrados Ponderados a datos
 	de panel, basada en las varianzas del error específico de cada unidad,
 	consulta la instrucción <cmdref targ="panel"/> junto con la opción
-	<lit>--unit-weights</lit>.
-	  </para>
-
+	<opt>unit-weights</opt>.
+	    </para>
       <para context="gui">
 	Sea 'varponder' la variable escogida en el cuadradito 'Variable de ponderaciones'.
 	Se ejecuta una regresión MCO, donde la variable dependiente es el producto
@@ -16113,8 +16446,8 @@
 
     <usage>
       <arguments>
-        <argument>ylista</argument>
-	      <argument optional="true" separated="true">xlista</argument>
+        <argument>listay</argument>
+	      <argument optional="true" separated="true">listax</argument>
       </arguments>
       <options>
         <option>
@@ -16140,7 +16473,7 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>Consulta el caso bivariante de abajo</effect>
+	  <effect>Elimina la presentación de resultados</effect>
         </option>
 	      <option>
 	  <flag>--tex</flag>
@@ -16165,37 +16498,40 @@
 
     <description context="cli">
       <para>
-	Muestra una tabla de contingencia o una tabulación cruzada para
-	cada combinación de las variables incluidas en <repl>ylista</repl>; y cuando
-	indicas una segunda lista (<repl>xlista</repl>), cada variable de
-	<repl>ylista</repl> se cruza en una tabla por fila frente a cada variable
-	de <repl>xlista</repl> (por columna). Puedes referirte a las variables
-	de estas listas mediante sus nombres o sus números. Ten en cuenta
-	que todas las variables tienen que estar marcadas como discretas. Como
-	alternativa, cuando indicas la opción <opt>matrix</opt>, se trata la matriz
-	indicada como un conjunto calculado previamente de frecuencias a
-	presentar como tabulación cruzada (consulta también la función
-	<fncref targ="mxtab"/>). En este caso deberás omitir el argumento
-	<repl>list</repl>.
+	Indicando unicamente el argumento <repl>listay</repl>, calcula (y
+	presenta por defecto) una tabla de contingencia o una tabulación
+	cruzada para cada combinación de las variables incluidas en esa lista.
+	Cuando indicas una segunda lista (<repl>listax</repl>), cada variable
+	de <repl>listay</repl> se cruza en una tabla por fila frente a cada
+	variable de <repl>lista</repl> (por columna). Puedes referirte a las
+	variables de estas listas mediante sus nombres o sus números. Ten
+	en cuenta que todas las variables tienen que estar marcadas como
+	discretas. Como alternativa, cuando indicas la opción <opt>matrix</opt>,
+	se trata la matriz indicada como un conjunto calculado previamente
+	de frecuencias a presentar como tabulación cruzada (consulta también
+	la función <fncref targ="mxtab"/>). En este caso deberás omitir el
+	argumento <repl>list</repl>.
       </para>
       <para>
-	Por defecto, la anotación de cada celda indica el recuento de la frecuencia de
-	casos. Las opciones <opt>row</opt> y <opt>column</opt> (que se excluyen
-	mutuamente), substituyen los recuentos con los porcentajes para cada fila o
-	columna, respectivamente. Por defecto, las celdas con un recuento de cero casos
-	se dejan en blanco; pero la opción <opt>zeros</opt>, que tiene como efecto
-	la presentación explícita de los ceros, puede serte útil para importar la tabla
-	con otro programa tal como una hoja de cálculo.
+	Por defecto, la anotación de cada celda indica el recuento de la
+	frecuencia de casos. Las opciones <opt>row</opt> y <opt>column</opt>
+	(que se excluyen mutuamente) substituyen los recuentos con los
+	porcentajes para cada fila o columna, respectivamente. Por defecto,
+	las celdas con un recuento de cero casos se dejan en blanco, pero
+	la opción <opt>zeros</opt> tiene como efecto la presentación
+	explícita de los ceros, lo que te puede ser útil para importar la
+	tabla con un programa tal como una hoja de cálculo.
       </para>
       <para>
-	El contraste de independencia chi-cuadrado de Pearson se muestra si la frecuencia
-	esperada bajo independencia es cuando menos de 1.0e-7 para todas las celdas.
-	Una regla general habitual de la validez de este estadístico es que, al menos
-	el 80 por ciento de las celdas, deben tener frecuencias esperadas iguales a 5
-	o más; y si este criterio no se cumple, se presenta una advertencia.
+	El contraste de independencia chi-cuadrado de Pearson se muestra si
+	la frecuencia esperada bajo independencia es cuando menos de 1.0e-7
+	para todas las celdas. Una regla general habitual de la validez de
+	este estadístico es que, al menos el 80 por ciento de las celdas
+	deben tener frecuencias esperadas iguales a 5 o más; y si este
+	criterio no se cumple, se presenta una advertencia.
       </para>
       <para>
-	Si una tabla de contingencia es 2 por 2, se calcula el Contraste Exacto de
+	Si una tabla de contingencia es 2 por 2, se presenta el Contraste Exacto de
 	independencia de Fisher. Ten en cuenta que este contraste se basa en el
 	supuesto de que los totales por fila y por columna son fijos, lo que puede
 	ser o no ser adecuado dependiendo de cómo se generaron los datos. Debes
@@ -16207,17 +16543,20 @@
 	método (b) de la sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
 	esto es la suma de las probabilidades de todas las tablas posibles que tengan
 	los totales de filas y columnas indicados, y que tengan una probabilidad
-	menor o igual a la de la tabla observada.
+	no mayor a la de la tabla observada.
       </para>
 
       <subhead>El caso bivariante</subhead>
       <para>
-	En el sencillo caso de una tabulación cruzada bivariante, puedes utilizar
-	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/> para
-	recuperar el estadístico del contraste chi-cuadrado de Pearson y su
-	probabilidad asociada (con tal de que se cumpla la condición del
-	mínimo valor esperado). En ese contexto, puedes utilizar la opción
-	<opt>quiet</opt> para eliminar la presentación de la tabla.
+	En el caso de una tabulación cruzada bivariante (cuando se indica tan
+	solo una lista que tiene dos elementos) se guardan algunos resultados.
+	Puedes recuperar la tabla de contingencia en forma de matriz mediante
+	el accesor <fncref targ="$result"/>. Además, si se cumple la condición
+	del valor esperado, puedes recuperar el estadístico del contraste
+	chi-cuadrado de Pearson y su probabilidad asociada (valor p) mediante
+	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>. Si
+	son estos los resultados que te interesan, puedes utilizar la opción
+	<opt>quiet</opt> para eliminar la presentación habitual de resultados.
       </para>
 
       <subhead>Salida &latex;</subhead>
@@ -16236,14 +16575,6 @@
 	indiques la opción <opt>tex</opt>; y también cuando una o las dos
 	variables de la tabulación cruzada tenga valores de cadena de texto.
       </para>
-
-      <subhead>La tabla como matriz</subhead>
-      <para>
-	Cuando indicas un argumento con una única lista, vas a poder
-	obtener la tabla de contingencia en forma de matriz, por medio
-	del accesor <fncref targ="$result"/>.
-      </para>
-
     </description>
 
     <description context="gui">
@@ -16262,26 +16593,28 @@
 	pero puedes escoger que se muestre explícitamente el valor cero.
       </para>
       <para>
-	El contraste de independencia chi-cuadrado de Pearson se muestra si la frecuencia
-	esperada bajo independencia es al menos de 1.0e-7 para todas las celdas.
-	Una regla general habitual de la validez de este estadístico es que, al menos
-	el 80 por ciento de las celdas, deben tener frecuencias esperadas iguales a 5
-	o más; y si este criterio no se cumple, se presenta una advertencia.
+	El contraste de independencia chi-cuadrado de Pearson se muestra si
+	la frecuencia esperada bajo independencia es al menos de 1.0e-7
+	para todas las celdas. Una regla general habitual de la validez de
+	este estadístico es que, al menos el 80 por ciento de las celdas,
+	deben tener frecuencias esperadas iguales a 5 o más; y si este
+	criterio no se cumple, se presenta una advertencia.
       </para>
       <para>
-	Si una tabla de contingencia es 2 por 2, se calcula el Contraste Exacto de
-	independencia de Fisher. Ten en cuenta que este contraste se basa en el
-	supuesto de que los totales por fila y por columna son fijos, lo que puede
-	ser o no ser adecuado dependiendo de cómo se generaron los datos. Debes
-	utilizar la probabilidad asociada (valor p) de la izquierda cuando la hipótesis
-	alternativa a la de independencia es la asociación negativa (los valores tienden
-	a agruparse en las celdas de abajo a la izquierda y de arriba a la derecha); y
-	debes utilizar el valor p de la derecha si la alternativa es la asociación
-	positiva. El valor p de dos colas para este contraste se calcula mediante el
-	método (b) de la sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
-	esto es la suma de las probabilidades de todas las tablas posibles que tengan
-	los totales de filas y columnas indicados, y que tengan una probabilidad
-	menor o igual a la de la tabla observada.
+	Si una tabla de contingencia es 2 por 2, se presenta el Contraste
+	Exacto de independencia de Fisher. Ten en cuenta que este contraste
+	se basa en el supuesto de que los totales por fila y por columna
+	son fijos, lo que puede ser o no ser adecuado dependiendo de cómo
+	se generaron los datos. Debes utilizar el valor p de la izquierda
+	cuando la hipótesis alternativa a la de independencia es la de
+	asociación negativa (los valores tienden a agruparse en las celdas
+	de abajo a la izquierda y de arriba a la derecha); y debes utilizar
+	el valor p de la derecha si la alternativa es la de asociación positiva.
+	El valor p de dos colas para este contraste se calcula mediante el método
+	(b) de la sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
+	esto es la suma de las probabilidades de todas las tablas posibles
+	que tengan los totales de filas y columnas indicados, y que tengan
+	una probabilidad menor o igual a la de la tabla observada.
       </para>
     </description>
 

@@ -34,9 +34,13 @@ void gui_define_list (void);
 
 void fncall_register_genr (int addv, gpointer p);
 
-gchar *get_bundle_plot_function (gretl_bundle *b);
+gchar *get_bundle_special_function (gretl_bundle *b,
+				    const char *id);
 
-int exec_bundle_plot_function (gretl_bundle *b, const char *funname);
+int exec_bundle_special_function (gretl_bundle *b,
+				  const char *id,
+				  const char *aname,
+				  GtkWidget *parent);
 
 int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn);
 

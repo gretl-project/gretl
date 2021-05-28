@@ -29,6 +29,7 @@
       <menuitem action="modtest:a"/>
       <menuitem action="dwpval"/>
       <menuitem action="modtest:h"/>
+      <menuitem action="bds"/>
       <menuitem action="qlrtest"/>
       <menuitem action="cusum"/>
       <menuitem action="cusum:r"/>

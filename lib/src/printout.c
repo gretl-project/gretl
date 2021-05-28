@@ -900,7 +900,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
  * to print column percentages, %OPT_Z to display zero entries,
  * %OPT_T to print as TeX (LaTeX), %OPT_N to omit marginal
  * totals, %OPT_B to bold-face counts where the row and
- * column values are equal (TeX only).
+ * column values are equal (TeX only), %OPT_S to record
+ * Pearson test result.
  * @prn: gretl printing struct.
  *
  * Print crosstab to @prn.
@@ -2397,14 +2398,35 @@ static int *column_widths_from_list (const int *list,
     return ret;
 }
 
-#define BMAX 5
+static void print_plain_numbers (int *list, const DATASET *dset,
+				 PRN *prn)
+{
+    int i, vi, t;
 
-/* print the series referenced in 'list' by observation */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (na(dset->Z[vi][t])) {
+		pputs(prn, "NA");
+	    } else {
+		pprintf(prn, "%.8g", dset->Z[vi][t]);
+	    }
+	    if (i < list[0]) {
+		pputc(prn, ' ');
+	    } else {
+		pputc(prn, '\n');
+	    }
+	}
+    }
+}
+
+/* print the series referenced in @list by observation */
 
 static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, k, t, nrem;
     int *colwidths = NULL;
     int obslen = 0;
@@ -2548,7 +2570,8 @@ static int midas_print_list (const int *list,
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
  * list in original time-series order; if OPT_R print specified range
- * of object.
+ * of object; if OPT_X (relevant only for series), print the data
+ * by observation without any header or observation info.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
@@ -2635,7 +2658,9 @@ int printdata (const int *list, const char *mstr,
 	}
 	dset->t1 = save_t1 + start;
 	dset->t2 = save_t1 + stop;
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2643,7 +2668,9 @@ int printdata (const int *list, const char *mstr,
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
     } else {
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2666,6 +2693,7 @@ int print_series_with_format (const int *list,
 			      char fmt, int digits,
 			      PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, v, t, k, nrem = 0;
     int *colwidths, blist[BMAX+1];
     char obslabel[OBSLEN];
@@ -2990,7 +3018,8 @@ int print_data_in_columns (const int *list, const int *obsvec,
 }
 
 int print_fcast_stats_matrix (const gretl_matrix *m,
-			      int T, PRN *prn)
+			      int T, gretlopt opt,
+			      PRN *prn)
 {
     const char *strs[] = {
 	N_("Mean Error"),
@@ -2998,11 +3027,12 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
 	N_("Mean Absolute Percentage Error"),
-	N_("Theil's U"),
+	N_("Theil's U1"),
 	N_("Bias proportion, UM"),
 	N_("Regression proportion, UR"),
 	N_("Disturbance proportion, UD")
     };
+    const char *U2_str = N_("Theil's U2");
     double x;
     int i, n, nmax = 0;
     int len, err = 0;
@@ -3028,9 +3058,12 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
     pputs(prn, "\n\n");
 
     for (i=0; i<len; i++) {
+	const char *si;
+
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[i]), nmax), _(strs[i]), x);
+	    si = (i == 5 && (opt & OPT_T))? U2_str : strs[i];
+	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(si), nmax), _(si), x);
 	}
     }
     pputc(prn, '\n');
@@ -3055,7 +3088,7 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 		       opt, &err);
 
     if (!err) {
-	err = print_fcast_stats_matrix(m, n_used, prn);
+	err = print_fcast_stats_matrix(m, n_used, opt, prn);
     }
 
     gretl_matrix_free(m);
@@ -3069,6 +3102,7 @@ int text_print_fit_resid (const FITRESID *fr,
 			  const DATASET *dset,
 			  PRN *prn)
 {
+    gretlopt fc_opt = OPT_NONE;
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
@@ -3130,7 +3164,10 @@ int text_print_fit_resid (const FITRESID *fr,
 		     "2.5 standard errors\n"));
     }
 
-    fr_print_fc_stats(fr, OPT_NONE, prn);
+    if (dataset_is_time_series(dset)) {
+	fc_opt |= OPT_T;
+    }
+    fr_print_fc_stats(fr, fc_opt, prn);
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	err = plot_fcast_errs(fr, NULL, dset, OPT_NONE);
@@ -3267,7 +3304,12 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     pputc(prn, '\n');
 
     if (!(opt & OPT_N)) {
-	fr_print_fc_stats(fr, OPT_D, prn);
+	gretlopt fc_opt = OPT_D;
+
+	if (dataset_is_time_series(dset)) {
+	    fc_opt |= OPT_T;
+	}
+	fr_print_fc_stats(fr, fc_opt, prn);
     }
 
     /* do we really want a plot for non-time series? */

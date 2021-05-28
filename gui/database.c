@@ -2669,9 +2669,9 @@ enum {
     TMP_INSTALL
 };
 
-/* try to find a suitable path, for which the user has write
-   permission, for installing a database, collection of
-   data files, or function package
+/* Try to find a suitable path, for which the user has write
+   permission, for installing a database or collection of
+   data files.
 */
 
 static char *get_writable_target (int code, char *objname)
@@ -2694,8 +2694,6 @@ static char *get_writable_target (int code, char *objname)
 
     if (code == REMOTE_DB) {
 	ext = ".ggz";
-    } else if (code == REMOTE_FUNC_FILES) {
-	ext = ".gfn";
     } else {
 	ext = ".tar.gz";
     }
@@ -2755,18 +2753,119 @@ static int unpack_book_data (const char *fname)
     return err;
 }
 
-static gchar *make_gfn_path (const char *pkgname)
+static gchar *make_gfn_path (const char *pkgname,
+			     const char *fpath)
 {
-    const char *fpath = gretl_function_package_path();
-
+    if (fpath == NULL) {
+	fpath = gretl_function_package_path();
+    }
     return g_strdup_printf("%s%s%c%s.gfn", fpath,
 			   pkgname, SLASH, pkgname);
 }
 
 #define STATUS_COLUMN  5
 #define ZIPFILE_COLUMN 6
+#define DEPENDS_COLUMN 7
 
-/* note : @vwin here is the source viewer window displaying the
+static int try_install_dependency (const char *pkgname,
+				   const char *instpath)
+{
+    char *fname = NULL;
+    int filetype = 0;
+    int err = 0;
+
+    /* let the server tell us the correct suffix */
+    fname = retrieve_remote_pkg_filename(pkgname, &err);
+    if (!err) {
+	filetype = strstr(fname, ".zip") ? 2 : 1;
+     }
+
+    if (filetype) {
+        gchar *fullname = g_strdup_printf("%s%s", instpath, fname);
+
+	/* get file from gretl server */
+	err = retrieve_remote_function_package(fname, fullname);
+        if (!err && filetype == 2) {
+            err = gretl_unzip_into(fullname, instpath);
+            if (!err) {
+                /* delete the zipfile */
+                gretl_remove(fullname);
+            }
+        }
+        g_free(fullname);
+    }
+
+    free(fname);
+
+    return err;
+}
+
+static void gfn_install_notify (const gchar *objname,
+				const gchar *gfnpath,
+				windata_t *vwin)
+{
+    windata_t *local = get_local_viewer(vwin->role);
+
+    if (!gui_function_pkg_query_register(gfnpath, vwin->main)) {
+	infobox_printf(_("Installed %s"), objname);
+    }
+    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+			  vwin->active_var, STATUS_COLUMN,
+			  _("Up to date"));
+    if (local != NULL) {
+	populate_filelist(local, NULL);
+    }
+}
+
+static int gui_install_gfn (const gchar *objname,
+			    int zipfile,
+			    gchar *depends,
+			    windata_t *vwin)
+{
+    const char *instpath = gretl_function_package_path();
+    int err = 0;
+
+    if (depends != NULL) {
+	/* try to handle dependencies first */
+	char *pkgpath, **Deps;
+	int i, n_deps;
+
+	Deps = gretl_string_split(depends, &n_deps, NULL);
+	for (i=0; i<n_deps && !err; i++) {
+	    pkgpath = gretl_function_package_get_path(Deps[i], PKG_ALL);
+	    if (pkgpath == NULL) {
+		fprintf(stderr, "dependency %s not satisfied: try download\n", Deps[i]);
+		err = try_install_dependency(Deps[i], instpath);
+		free(pkgpath);
+	    } else {
+		free(pkgpath);
+	    }
+	}
+	strings_array_free(Deps, n_deps);
+    }
+
+    if (!err) {
+	const char *ext = zipfile ? ".zip" : ".gfn";
+	gchar *basename = g_strdup_printf("%s%s", objname, ext);
+	gchar *fullname;
+
+	fullname = g_strdup_printf("%s%s", instpath, basename);
+	err = retrieve_remote_function_package(basename, fullname);
+	if (!err && zipfile) {
+	    err = gretl_unzip_into(fullname, instpath);
+	    gretl_remove(fullname);
+	}
+	if (!err) {
+	    gfn_install_notify(objname, fullname, vwin);
+	}
+	g_free(fullname);
+	g_free(basename);
+    }
+
+    return err;
+}
+
+/* note: @vwin here is the source viewer window displaying the
    remote file (database, or datafiles package, or function package)
    that is to be installed onto the local machine.
 */
@@ -2774,6 +2873,7 @@ static gchar *make_gfn_path (const char *pkgname)
 void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
+    gchar *depends = NULL;
     gchar *tarname = NULL;
     char *targ = NULL;
     gboolean zipfile = FALSE;
@@ -2800,6 +2900,9 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	if (vwin->role == REMOTE_FUNC_FILES) {
 	    tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox),
 			       vwin->active_var, ZIPFILE_COLUMN, &zipfile);
+	    /* FIXME is this kosher? */
+	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
+				 vwin->active_var, DEPENDS_COLUMN, &depends);
 	}
     }
 
@@ -2808,7 +2911,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    if (!zipfile) {
+    if (!zipfile && vwin->role != REMOTE_FUNC_FILES) {
 	targ = get_writable_target(vwin->role, objname);
 	if (targ == NULL) {
 	    g_free(objname);
@@ -2817,22 +2920,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
-	if (zipfile) {
-	    const char *path = gretl_function_package_path();
-	    gchar *basename = g_strdup_printf("%s.zip", objname);
-	    gchar *fullname;
-
-	    fullname = g_strdup_printf("%s%s", path, basename);
-	    err = retrieve_remote_function_package(basename, fullname);
-	    if (!err) {
-		err = gretl_unzip_into(fullname, path);
-		gretl_remove(fullname);
-	    }
-	    g_free(fullname);
-	    g_free(basename);
-	} else {
-	    err = retrieve_remote_function_package(objname, targ);
-	}
+	err = gui_install_gfn(objname, zipfile, depends, vwin);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
 	tarname = g_strdup_printf("%s.tar.gz", objname);
 	err = retrieve_remote_datafiles_package(tarname, targ);
@@ -2846,60 +2934,39 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
     if (err) {
 	show_network_error(NULL);
-    } else {
-	windata_t *local = get_local_viewer(vwin->role);
-
-	if (vwin->role == REMOTE_FUNC_FILES) {
-	    int notified = 0;
-
-	    if (zipfile) {
-		gchar *gfnpath = make_gfn_path(objname);
-
-		notified = gui_function_pkg_query_register(gfnpath, vwin->main);
-		g_free(gfnpath);
-	    } else {
-		notified = gui_function_pkg_query_register(targ, vwin->main);
+    } else if (vwin->role == REMOTE_DATA_PKGS) {
+	fprintf(stderr, "downloaded '%s'\n", targ);
+	err = unpack_book_data(targ);
+	gretl_remove(targ);
+	if (err) {
+	    errbox(_("Error unzipping compressed data"));
+	} else {
+	    infobox("Restart gretl to access this database");
+	}
+    } else if (vwin->role == REMOTE_DB) {
+	/* gretl-zipped database package */
+	fprintf(stderr, "downloaded '%s'\n", targ);
+	err = ggz_extract(targ);
+	if (err) {
+	    if (err != E_FOPEN) {
+		errbox(_("Error unzipping compressed data"));
 	    }
-	    if (!notified) {
-		infobox(_("Installed"));
-	    }
-	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
-				  vwin->active_var, STATUS_COLUMN,
+	} else {
+	    windata_t *local = get_local_viewer(vwin->role);
+
+	    tree_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+				  vwin->active_var, 2,
 				  _("Up to date"));
 	    if (local != NULL) {
 		populate_filelist(local, NULL);
-	    }
-	} else if (vwin->role == REMOTE_DATA_PKGS) {
-	    fprintf(stderr, "downloaded '%s'\n", targ);
-	    err = unpack_book_data(targ);
-	    gretl_remove(targ);
-	    if (err) {
-		errbox(_("Error unzipping compressed data"));
 	    } else {
-		infobox("Restart gretl to access this database");
-	    }
-	} else {
-	    /* gretl-zipped database package */
-	    fprintf(stderr, "downloaded '%s'\n", targ);
-	    err = ggz_extract(targ);
-	    if (err) {
-		if (err != E_FOPEN) {
-		    errbox(_("Error unzipping compressed data"));
-		}
-	    } else {
-		tree_store_set_string(GTK_TREE_VIEW(vwin->listbox),
-				      vwin->active_var, 2,
-				      _("Up to date"));
-		if (local != NULL) {
-		    populate_filelist(local, NULL);
-		} else {
-		    offer_db_open(targ, vwin);
-		}
+		offer_db_open(targ, vwin);
 	    }
 	}
     }
 
     g_free(objname);
+    g_free(depends);
     g_free(tarname);
     free(targ);
 }
@@ -2954,7 +3021,7 @@ void maybe_update_pkgview (const char *filename,
     if (parent != NULL) {
 	/* offer menu attachment if applicable */
 	if (zipfile) {
-	    gchar *gfnpath = make_gfn_path(pkgname);
+	    gchar *gfnpath = make_gfn_path(pkgname, NULL);
 
 	    gui_function_pkg_query_register(gfnpath, parent);
 	    g_free(gfnpath);
@@ -3907,6 +3974,23 @@ static void check_gfn_drag_connection (windata_t *vwin)
     }
 }
 
+static int is_depends_line (const char *fname,
+			    const char *line,
+			    GtkListStore *store,
+			    GtkTreeIter *iter)
+{
+    if (!strncmp(line, "# depends(", 10)) {
+	gchar *s = g_strdup(strchr(line, ')') + 1);
+
+	g_strchomp(g_strchug(s));
+	gtk_list_store_set(store, iter, 7, s, -1);
+	g_free(s);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* Fill a list box with name, version number, author,
    and short description of function packages, retrieved
    from server.
@@ -3949,6 +4033,10 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	char *author = NULL;
 	char datestr[12];
 	gboolean zipfile;
+
+	if (is_depends_line(fname, line, store, &iter)) {
+	    continue;
+	}
 
 	if (read_remote_filetime(line, fname, &remtime, datestr)) {
 	    continue;

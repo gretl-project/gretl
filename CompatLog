@@ -1,10 +1,16 @@
-version 2021b, in progress
+2021-05-04 version 2021b
+
+The "arbond" command is now offifically deprecated in favor of
+"dpanel".
 
 The default format for data saved as ".gdtb" is now a straight
 binary file, much faster than the old version.
 
 The --csv option to the "store" command is removed. Giving a
 suitable filename is sufficient.
+
+The getline() function now calls for its second argument to be
+given in pointer form, but the prior form is still accepted. 
 
 2021-01-18, version 2021a
 

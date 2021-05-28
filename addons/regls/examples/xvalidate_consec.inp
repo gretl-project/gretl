@@ -53,6 +53,9 @@ series pred = lincomb(lb.nzX, lb.nzb)
 m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
 
+# STOP here if R + glmnet is not available
+# quit
+
 # supply glmnet with a fixed set of folds
 matrix foldvec = regls_foldvec(1000, 10)
 mwrite(foldvec, "folds.mat", 1)

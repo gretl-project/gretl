@@ -39,6 +39,9 @@ l1 = sum(abs(b.nzb))
 crit = 0.5*SSR + 0.35*l1
 printf "SSR = %g, l1 = %g, crit = %g\n\n", SSR, l1, crit
 
+# STOP here if R + glmnet is not available
+# quit
+
 Rlam = 0.35 * b.lmax / b.nobs
 mwrite({Rlam}, "Rlam.mat", 1)
 

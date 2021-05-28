@@ -1573,7 +1573,7 @@ static void solve_nu_svc(const svm_problem *prob, const svm_parameter *param,
 
     Solver_NU s;
     s.Solve(l, SVC_Q(*prob, *param, y), zeros, y,
-	    alpha, 1.0, 1.0, param->eps, si,  param->shrinking);
+	    alpha, 1.0, 1.0, param->eps, si, param->shrinking);
     double r = si->r;
 
     info("C = %f\n", 1/r);
@@ -1752,6 +1752,8 @@ static decision_function svm_train_one(const svm_problem *prob,
     double *alpha = Malloc(double, prob->l);
     Solver::SolutionInfo si;
     decision_function f;
+
+    si.obj = si.rho = 0;
 
     switch(param->svm_type) {
     case C_SVC:

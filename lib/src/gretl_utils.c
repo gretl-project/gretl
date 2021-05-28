@@ -23,6 +23,7 @@
 #include "objstack.h"
 #include "cmd_private.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "uservar.h"
 #include "gretl_panel.h"
 #include "gretl_string_table.h"
@@ -55,6 +56,13 @@
 #endif
 
 #include <errno.h>
+
+#if defined(_OPENMP) || defined(HAVE_MPI)
+# define WANT_XTIMER
+#endif
+#if !defined(_OPENMP)
+# define NEED_ITIMER
+#endif
 
 static void gretl_tests_cleanup (void);
 
@@ -383,11 +391,12 @@ int gretl_iscount (int t1, int t2, const double *x)
     return ret;
 }
 
-#define FEWVALS 32
+#define FEW_VALS 32
+#define FEWER_VALS 8
 
 static int few_vals (int t1, int t2, const double *x, double *ratio)
 {
-    double test[FEWVALS];
+    double test[FEW_VALS];
     int match;
     int i, t, n = 0, nv = 0;
 
@@ -396,12 +405,15 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 	    match = 0;
 	    for (i=0; i<nv; i++) {
 		if (x[t] == test[i]) {
+		    /* we've already seen this value */
 		    match = 1;
 		    break;
 		}
 	    }
 	    if (!match) {
-		if (nv == FEWVALS) {
+		/* x[t] is a "new" value */
+		if (nv == FEW_VALS) {
+		    /* hit the limit */
 		    nv++;
 		    break;
 		}
@@ -411,7 +423,8 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 	}
     }
 
-    *ratio = (double) nv / n;
+    /* ratio of distinct values to observations */
+    *ratio = nv / (double) n;
 
     return nv;
 }
@@ -430,7 +443,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
  *
  * Returns: 0 if test (a) is not passed or the number of distinct values
  * is > 32; else 1 if the number of distinct values is <= 32; else 2 if
- * the number of distinct values is <= 4.  A return of 1 is supposed
+ * the number of distinct values is <= 8.  A return of 1 is supposed
  * to indicate that it's "reasonable" to treat @x as discrete, while
  * a return of 2 indicates that it's probably unreasonable _not_ to
  * treat @x as discrete for the purpose of drawing up a frequency
@@ -469,8 +482,12 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     if (disc) {
 	n = few_vals(t1, t2, x, &r);
 	if (allints) {
-	    disc = (n < 7)? 2 : 1;
-	} else if (n > FEWVALS) {
+	    if (n <= FEW_VALS && r < 0.2) {
+		disc = 2;
+	    } else {
+		disc = (n <= FEWER_VALS)? 2 : 1;
+	    }
+	} else if (n > FEW_VALS) {
 	    disc = 0;
 	} else if (r > 0.9 && n > 30) {
 	    /* somewhat arbitrary: but if r (= ratio of distinct
@@ -479,12 +496,25 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 	       not automatically take the var as discrete
 	    */
 	    disc = 0;
-	} else if (n < 7) {
+	} else if (n <= FEWER_VALS) {
 	    disc = 2;
 	}
     }
 
     return disc;
+}
+
+int accept_as_discrete (const DATASET *dset, int v, int strict)
+{
+    if (series_is_discrete(dset, v)) {
+	/* the series has been explicitly marked as discrete */
+	return 1;
+    } else {
+	/* check for plausibility of discreteness */
+	int d = gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]);
+
+	return strict ? d > 1 : d > 0;
+    }
 }
 
  /**
@@ -1915,6 +1945,7 @@ static int gp_fatal (const char *cmd, const char *s)
        "Warning: empty y2 range..."
        pango warning for, e.g., FreeSans font w/o GPOS table
        pango error on quartz
+       missing Icon theme
     */
 
     if (strstr(s, "using default") ||
@@ -1924,7 +1955,9 @@ static int gp_fatal (const char *cmd, const char *s)
 	strstr(s, "warning: ") ||
 	strstr(s, "Pango-WARNING") ||
 	strstr(s, "rid drawn") ||
-	strstr(s, "CGContextSetFont")) {
+	strstr(s, "Icon theme") ||
+	strstr(s, "CGContextSetFont") ||
+	strstr(s, "qt5ct: using qt5ct plugin")) {
 	return 0;
     } else {
 	return 1;
@@ -1938,7 +1971,8 @@ int gretl_spawn (char *cmdline)
     gchar *sout = NULL;
     int ok, status;
     int ret = 0;
-
+    int catch_gnuplot_errs = (getenv("CATCH_GNUPLOT") != NULL); 
+    
     gretl_error_clear();
 
     ok = g_spawn_command_line_sync(cmdline,
@@ -1952,7 +1986,7 @@ int gretl_spawn (char *cmdline)
 	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
-    } else if (errout != NULL && *errout) {
+    } else if (catch_gnuplot_errs && errout != NULL && *errout) {
 	if (gp_fatal(cmdline, errout)) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gnuplot stderr: '%s'\n", errout);
@@ -2077,121 +2111,204 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     return err;
 }
 
-/* internal execution timer (we do Windows separately) */
+/* apparatus to support gretl's stopwatch */
 
-#ifdef WIN32
+#ifdef WANT_XTIMER
 
-static void gretl_stopwatch_init (void)
+/* Both OpenMP and MPI offer timers that return the
+   time as a double (seconds and fractions thereof).
+   If we may be using either of these we'll define
+   the "xtimers".
+*/
+
+struct xtimer {
+    int level;
+    double t0;
+};
+
+static GPtrArray *xtimers;
+
+static double get_xtime (void)
 {
-    win32_stopwatch_init();
+#if defined(HAVE_MPI)
+    if (gretl_mpi_initialized()) {
+	return gretl_mpi_time();
+    }
+#endif
+#if defined(_OPENMP)
+    return omp_get_wtime();
+#endif
+    return 0; /* not reached */
+}
+
+static struct xtimer *new_xtimer (int level)
+{
+    struct xtimer *xt = g_malloc(sizeof *xt);
+
+    xt->level = level;
+    xt->t0 = get_xtime();
+    g_ptr_array_insert(xtimers, xtimers->len, xt);
+    return xt;
+}
+
+static void xtimer_init (void)
+{
+    if (xtimers == NULL) {
+	xtimers = g_ptr_array_sized_new(1);
+	new_xtimer(gretl_function_depth());
+    }
+}
+
+static struct xtimer *get_xtimer (void)
+{
+    struct xtimer *xt;
+    int i, lev = gretl_function_depth();
+
+    if (xtimers == NULL) {
+	xtimers = g_ptr_array_sized_new(1);
+	return new_xtimer(lev);
+    }
+
+    for (i=0; i<xtimers->len; i++) {
+	xt = g_ptr_array_index(xtimers, i);
+	if (xt->level == lev) {
+	    return xt;
+	}
+    }
+
+    return new_xtimer(lev);
+}
+
+static double xtimer_stopwatch (void)
+{
+    struct xtimer *xt = get_xtimer();
+    double t1 = get_xtime();
+    double ret = t1 - xt->t0;
+
+    xt->t0 = t1;
+
+    return ret;
+}
+
+#endif /* WANT_XTIMER */
+
+#ifdef NEED_ITIMER
+
+/* Alternative timer, giving time in microseconds as a 64-bit int.
+   If we don't have OpenMP we'll need this when not under MPI.
+*/
+
+struct itimer {
+    int level;
+    gint64 t0;
+};
+
+static GPtrArray *itimers;
+
+static struct itimer *new_itimer (int level)
+{
+    struct itimer *it = g_malloc(sizeof *it);
+
+    it->level = level;
+    it->t0 = g_get_monotonic_time();
+    g_ptr_array_insert(itimers, itimers->len, it);
+    return it;
+}
+
+static void itimer_init (void)
+{
+    if (itimers == NULL) {
+	itimers = g_ptr_array_sized_new(1);
+	new_itimer(gretl_function_depth());
+    }
+}
+
+static struct itimer *get_itimer (void)
+{
+    struct itimer *it;
+    int i, lev = gretl_function_depth();
+
+    if (itimers == NULL) {
+	itimers = g_ptr_array_sized_new(1);
+	return new_itimer(lev);
+    }
+
+    for (i=0; i<itimers->len; i++) {
+	it = g_ptr_array_index(itimers, i);
+	if (it->level == lev) {
+	    return it;
+	}
+    }
+
+    return new_itimer(lev);
+}
+
+static double itimer_stopwatch (void)
+{
+    struct itimer *it = get_itimer();
+    gint64 t1 = g_get_monotonic_time();
+    double ret = (t1 - it->t0) * 1.0e-6;
+
+    it->t0 = t1;
+
+    return ret;
+}
+
+#endif /* NEED_ITIMER */
+
+static void gretl_stopwatch_cleanup (void)
+{
+    int i;
+
+#ifdef WANT_XTIMER
+    if (xtimers != NULL) {
+	for (i=0; i<xtimers->len; i++) {
+	    g_free(xtimers->pdata[i]);
+	}
+	g_ptr_array_free(xtimers, TRUE);
+	xtimers = NULL;
+    }
+#endif
+
+#ifdef NEED_ITIMER
+    if (itimers != NULL) {
+	for (i=0; i<itimers->len; i++) {
+	    g_free(itimers->pdata[i]);
+	}
+	g_ptr_array_free(itimers, TRUE);
+	itimers = NULL;
+    }
+#endif
 }
 
 double gretl_stopwatch (void)
 {
-    return win32_stopwatch();
-}
-
-#elif defined(_OPENMP)
-
-/* note: on Windows omp_get_wtime() has only
-   millisecond resolution; fancy footwork is
-   required to get anything better */
-
-static double omp_dt0;
-
-static void gretl_omp_stopwatch_init (void)
-{
-    omp_dt0 = omp_get_wtime();
-}
-
-static double gretl_omp_stopwatch (void)
-{
-    double dt1 = omp_get_wtime();
-    double x = dt1 - omp_dt0;
-
-    omp_dt0 = dt1;
-
-    return x;
-}
-
-#else /* non-Windows, without OMP */
-
-static clock_t ut0;
-
-#ifdef HAVE_SYS_TIMES_H
-# include <sys/times.h>
-# include <unistd.h>
-static unsigned ticks_per_sec;
-#else
-# include <time.h>
+#if defined(HAVE_MPI)
+    if (gretl_mpi_initialized()) {
+	return xtimer_stopwatch();
+    }
 #endif
-
-static void gretl_unix_stopwatch_init (void)
-{
-#ifdef HAVE_SYS_TIMES_H
-    struct tms timebuf;
-
-    ticks_per_sec = sysconf(_SC_CLK_TCK);
-    ut0 = times(&timebuf);
+#if defined(_OPENMP)
+    return xtimer_stopwatch();
 #else
-    ut0 = clock();
+    return itimer_stopwatch();
 #endif
 }
-
-static double gretl_unix_stopwatch (void)
-{
-    clock_t ut1;
-    double x;
-
-#ifdef HAVE_SYS_TIMES_H
-    struct tms timebuf;
-
-    ut1 = times(&timebuf);
-    x = (ut1 - ut0) / (double) ticks_per_sec;
-#else
-    ut1 = clock();
-    x = (ut1 - ut0) / (double) CLOCKS_PER_SEC;
-#endif
-
-    ut0 = ut1;
-
-    return x;
-}
-
-#endif /* stopwatch variants */
-
-#ifndef WIN32
 
 static void gretl_stopwatch_init (void)
 {
 #if defined(HAVE_MPI)
     if (gretl_mpi_initialized()) {
-	gretl_mpi_stopwatch_init();
+	xtimer_init();
 	return;
     }
 #endif
 #if defined(_OPENMP)
-    gretl_omp_stopwatch_init();
+    xtimer_init();
 #else
-    gretl_unix_stopwatch_init();
+    itimer_init();
 #endif
 }
-
-double gretl_stopwatch (void)
-{
-#if defined(HAVE_MPI)
-    if (gretl_mpi_initialized()) {
-	return gretl_mpi_stopwatch();
-    }
-#endif
-#if defined(_OPENMP)
-    return gretl_omp_stopwatch();
-#else
-    return gretl_unix_stopwatch();
-#endif
-}
-
-#endif /* !Windows */
 
 /* BLAS detection and analysis */
 
@@ -2577,6 +2694,7 @@ static void dotdir_cleanup (void)
 
 void libgretl_session_cleanup (int mode)
 {
+    /* "last model" for accessors */
     gretl_saved_objects_cleanup();
 
     /* trash dataset-related items */
@@ -2622,6 +2740,7 @@ void libgretl_cleanup (void)
     plugins_cleanup();
     gretl_bundle_cleanup();
     gretl_typemap_cleanup();
+    gretl_stopwatch_cleanup();
 #ifdef USE_CURL
     gretl_www_cleanup();
 #endif
@@ -3025,45 +3144,9 @@ int check_for_program (const char *prog)
 
 #endif /* WIN32 or not */
 
-#ifdef __MACH__
-# include <mach/mach_time.h>
-#elif GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
-
-#include <time.h>
-#include <unistd.h>
-
-static gint64 posix_monotonic_time (void)
-{
-    static int clockid = CLOCK_REALTIME;
-    static gboolean checked;
-    struct timespec ts;
-
-    if (!checked) {
-	if (sysconf(_SC_MONOTONIC_CLOCK) >= 0) {
-	    clockid = CLOCK_MONOTONIC;
-	}
-	checked = TRUE;
-    }
-
-    clock_gettime(clockid, &ts);
-
-    g_assert(G_GINT64_CONSTANT(-315569520000000000) < ts.tv_sec &&
-	     ts.tv_sec < G_GINT64_CONSTANT(315569520000000000));
-
-    return (((gint64) ts.tv_sec) * 1000000) + (ts.tv_nsec / 1000);
-}
-
-#endif  /* OS X || GLib <= 2.28 */
-
 gint64 gretl_monotonic_time (void)
 {
-#ifdef __MACH__
-    return (gint64) mach_absolute_time();
-#elif GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
-    return posix_monotonic_time();
-#else
     return g_get_monotonic_time();
-#endif
 }
 
 /* implementations of gzip and gunzip for unitary files */

@@ -27,8 +27,10 @@
 
 #define JDEBUG 0
 
-#define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
-#if !HAVE_PLACEHOLDER
+#if GTK_MAJOR_VERSION > 2
+# define HAVE_PLACEHOLDER 1
+#else
+# define HAVE_PLACEHOLDER 0
 # define PLACEHOLDER "place-holder"
 #endif
 

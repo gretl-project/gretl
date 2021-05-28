@@ -4949,10 +4949,9 @@ static int process_midas_bundle (gretl_bundle *mb, int idx,
     return err;
 }
 
-gretl_matrix *midas_multipliers (void *data, int cumulate,
+gretl_matrix *midas_multipliers (gretl_bundle *mb, int cumulate,
 				 int idx, int *err)
 {
-    gretl_bundle *mb = (gretl_bundle *) data;
     gretl_matrix *ret = NULL;
     gretl_matrix *theta = NULL;
     gretl_matrix *mult = NULL;
@@ -5712,7 +5711,7 @@ static int theil_decomp (double *m, double MSE,
 }
 
 /* OPT_O allows embedded missing values (which will be skipped);
-   OPT_D requests Theil decomposition
+   OPT_D requests Theil decomposition; OPT_T means time series.
 */
 
 static int fill_fcstats_column (gretl_matrix *m,
@@ -5723,12 +5722,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 				int col)
 {
     double ME, MSE, MAE, MPE, MAPE, U;
+    double Unum, Uden1, Uden2;
     double fe, u[2];
     int do_theil = 0;
+    int do_U2 = (opt & OPT_T);
     int ok_T = T;
     int t, err = 0;
 
     ME = MSE = MAE = MPE = MAPE = U = 0.0;
+    Unum = Uden1 = Uden2 = 0.0;
     u[0] = u[1] = 0.0;
 
     for (t=0; t<T; t++) {
@@ -5754,29 +5756,37 @@ static int fill_fcstats_column (gretl_matrix *m,
 	    MPE += 100 * fe / y[t];
 	    MAPE += 100 * fabs(fe / y[t]);
 	}
-	if (t < T-1 && !na(U)) {
-	    if (na(f[t+1]) || na(y[t+1])) {
-		U = NADBL;
-	    } else {
-		fe = f[t+1] - y[t+1];
-		if (floatneq(fe, 0)) {
-		    if (y[t] == 0.0) {
-			U = NADBL;
-		    } else {
-			fe /= y[t];
-			u[0] += fe * fe;
+	if (do_U2) {
+	    /* let U = U2 */
+	    if (t < T-1 && !na(U)) {
+		if (na(f[t+1]) || na(y[t+1])) {
+		    U = NADBL;
+		} else {
+		    fe = f[t+1] - y[t+1];
+		    if (floatneq(fe, 0)) {
+			if (y[t] == 0.0) {
+			    U = NADBL;
+			} else {
+			    fe /= y[t];
+			    u[0] += fe * fe;
+			}
 		    }
-		}
-		fe = y[t+1] - y[t];
-		if (floatneq(fe, 0)) {
-		    if (y[t] == 0.0) {
-			U = NADBL;
-		    } else {
-			fe /= y[t];
-			u[1] += fe * fe;
+		    fe = y[t+1] - y[t];
+		    if (floatneq(fe, 0)) {
+			if (y[t] == 0.0) {
+			    U = NADBL;
+			} else {
+			    fe /= y[t];
+			    u[1] += fe * fe;
+			}
 		    }
 		}
 	    }
+	} else {
+	    /* let U = U1 */
+	    Unum += fe * fe;
+	    Uden1 += y[t] * y[t];
+	    Uden2 += f[t] * f[t];
 	}
     }
 
@@ -5812,8 +5822,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 	if (!isnan(MAPE)) {
 	    MAPE /= T;
 	}
-	if (!isnan(U) && u[1] > 0.0) {
-	    U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	if (do_U2) {
+	    if (!isnan(U) && u[1] > 0.0) {
+		U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	    }
+	} else {
+	    Unum = sqrt(Unum/T);
+	    Uden1 = sqrt(Uden1/T);
+	    Uden2 = sqrt(Uden2/T);
+	    U = Unum / (Uden1+ Uden2);
 	}
 	gretl_matrix_set(m, 0, col, ME);
 	if (show_MSE) {
@@ -5836,24 +5853,23 @@ static int fill_fcstats_column (gretl_matrix *m,
     return err;
 }
 
-static void add_fcstats_rownames (gretl_matrix *m)
+static void add_fcstats_rownames (gretl_matrix *m,
+				  gretlopt opt)
 {
-    int ns = m->rows;
-    char **rownames;
-
-    rownames = strings_array_new(ns);
+    const char *S[] = {
+	"ME", "RMSE", "MAE", "MPE", "MAPE",
+	"U1", "UM", "UR", "UD"
+    };
+    int i, ns = m->rows;
+    char **rownames = strings_array_new(ns);
 
     if (rownames != NULL) {
-	rownames[0] = gretl_strdup("ME");
-	rownames[1] = gretl_strdup("RMSE");
-	rownames[2] = gretl_strdup("MAE");
-	rownames[3] = gretl_strdup("MPE");
-	rownames[4] = gretl_strdup("MAPE");
-	rownames[5] = gretl_strdup("U");
-	if (ns == 9) {
-	    rownames[6] = gretl_strdup("UM");
-	    rownames[7] = gretl_strdup("UR");
-	    rownames[8] = gretl_strdup("UD");
+	for (i=0; i<ns; i++) {
+	    if (i == 5 && (opt & OPT_T)) {
+		rownames[5] = gretl_strdup("U2");
+	    } else {
+		rownames[i] = gretl_strdup(S[i]);
+	    }
 	}
 	gretl_matrix_set_rownames(m, rownames);
     }
@@ -5919,6 +5935,7 @@ static int fcstats_sample_check (const double *y,
 
    OPT_D indicates that we should include the Theil decomposition.
    OPT_O allows missing values (which will be skipped).
+   OPT_T indicates that the data are time series.
 */
 
 gretl_matrix *forecast_stats (const double *y, const double *f,
@@ -5965,7 +5982,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	if (n_used != NULL) {
 	    *n_used = t2 - t1 + 1 - nmiss;
 	}
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -5999,7 +6016,7 @@ gretl_matrix *matrix_fc_stats (const double *y,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -6514,7 +6531,8 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, void *b, void *r,
+			      int s, gretl_bundle *b,
+			      gretl_bundle *res,
 			      DATASET *dset,
 			      PRN *prn, int *err)
 {
@@ -6548,7 +6566,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, r, dset, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, res, dset, prn, err);
     }
 
     return ret;
@@ -7998,158 +8016,80 @@ int fill_permutation_vector (gretl_vector *v, int n)
     return 0;
 }
 
-/* Given a gretl series @src under sub-sampling, construct a version
-   that is of the full length of the unrestricted dataset, with DBL_MAX
-   inserted in out-of-sample positions (we use DBL_MAX to avoid
-   collision with missing values). But if @src is NULL (no payload)
-   we can simply use 1s to mark out-of-sample observations.
+#define GEODEBUG 0
+
+/* Driver function for calling the geoplot plugin to produce
+   a map. To obtain the map polygons we need EITHER the name
+   of the source file (GeoJSON or Shapefile), via @fname,
+   OR the map info in the form of a gretl_bundle, via @mapptr.
+
+   The "payload" (if any) is given as a series, via @plx.
+
+   Options (if any) are provided via @optptr, a pointer to
+   gretl_bundle.
 */
 
-static gretl_matrix *full_length_vector (const double *src,
-					 const DATASET *dset,
-					 int *err)
-{
-    gretl_matrix *vf = NULL;
-    int len;
-
-    if (dset->submask == RESAMPLED ||
-	(complex_subsampled() && dset->submask == NULL)) {
-	/* can't do this! */
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (complex_subsampled()) {
-	len = get_full_length_n();
-	vf = gretl_zero_matrix_new(len, 1);
-    } else if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
-	len = dset->n;
-	vf = gretl_zero_matrix_new(len, 1);
-    } else {
-	/* nothing needed */
-	return NULL;
-    }
-
-    if (vf == NULL) {
-	*err = E_ALLOC;
-    } else if (complex_subsampled()) {
-	int exclude, t, rt = 0;
-	int i = 0;
-
-	for (t=0; t<len; t++) {
-	    if (dset->submask[t] == 0) {
-		exclude = 1;
-	    } else {
-		exclude = (rt < dset->t1 || rt > dset->t2);
-		rt++;
-	    }
-	    if (src != NULL) {
-		vf->val[t] = exclude ? DBL_MAX : src[i++];
-	    } else {
-		vf->val[t] = exclude ? 1 : 0;
-	    }
-	}
-    } else {
-	int t, i = 0;
-
-	for (t=0; t<dset->n; t++) {
-	    if (t < dset->t1 || t > dset->t2) {
-		vf->val[t] = src == NULL ? 1 : DBL_MAX;
-	    } else if (src != NULL) {
-		vf->val[t] = src == NULL? 0 : src[i++];
-	    }
-	}
-    }
-
-    return vf;
-}
-
-static int dset_subsampled (const DATASET *dset)
-{
-    return dset != NULL && (dset->t1 > 0 ||
-			    dset->t2 < dset->n-1 ||
-			    complex_subsampled());
-}
-
-#define GEO_DEBUG 0
-
 int geoplot_driver (const char *fname,
-		    void *mapptr,
-		    const gretl_matrix *plm,
+		    gretl_bundle *map,
 		    const double *plx,
 		    const DATASET *dset,
-		    void *optptr)
+		    gretl_bundle *opts)
 {
-    gretl_bundle *opts = optptr;
-    gretl_bundle *map = mapptr;
+    int (*mapfunc) (const char *, gretl_bundle *,
+		    gretl_matrix *, gretl_bundle *);
     gretl_matrix *payload = NULL;
-    int free_payload = 0;
-    int free_opts = 0;
-    int delmask = 0;
-    int subsampled;
+    const char *mapfile = NULL;
+    int free_map = 0;
     int err = 0;
 
-    if ((fname != NULL && mapptr != NULL) ||
-	(fname == NULL && mapptr == NULL)) {
-	fprintf(stderr, "geoplot_driver: must have filename or map bundle "
-		"but not both\n");
+    if (fname != NULL && map != NULL) {
+	gretl_errmsg_set("geoplot: cannot give both filename and map bundle");
 	return E_DATA;
     }
 
-    subsampled = dset_subsampled(dset);
+    if (map == NULL) {
+	mapfile = dataset_get_mapfile(dset);
+    }
+
+    if (fname == NULL && map == NULL) {
+	fname = mapfile;
+	if (fname == NULL) {
+	    gretl_errmsg_set("geoplot: no map was specified");
+	    return E_DATA;
+	}
+    }
 
     if (plx != NULL) {
-	/* payload is a series at source */
-	if (subsampled) {
-	    payload = full_length_vector(plx + dset->t1, dset, &err);
-	} else {
-	    payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
-	}
-	if (payload == NULL && !err) {
+	/* convert payload series to vector for convenience in plugin */
+	payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
+	if (payload == NULL) {
 	    err = E_ALLOC;
 	}
-	free_payload = 1;
-    } else if (plm == NULL && subsampled) {
-	if (gretl_bundle_has_key(opts, "mask")) {
-	    ; /* let's not mess with it */
-	} else {
-	    gretl_matrix *mask = full_length_vector(NULL, dset, &err);
+    }
 
-	    if (!err) {
-		if (opts == NULL) {
-		    opts = gretl_bundle_new();
-		    if (opts == NULL) {
-			err = E_ALLOC;
-		    }
-		    free_opts = 1;
-		} else {
-		    delmask = 1;
-		}
-		if (opts != NULL) {
-		    gretl_bundle_donate_data(opts, "mask", mask,
-					     GRETL_TYPE_MATRIX, 0);
-		}
-	    }
-#if GEO_DEBUG
-	    if (mask != NULL) {
-		gretl_matrix_print(mask, "geoplot_driver: mask");
-	    }
+#if GEODEBUG
+    fprintf(stderr, "geoplot_driver: map=%p, mapfile=%p, fname=%p\n",
+	    (void *) map, (void *) mapfile, (void *) fname);
 #endif
+
+    /* In the case where we got @fname, do we want to produce a
+       map bundle in which the actual map data are synced with
+       the dataset? Probably so if @fname is just $mapfile
+       (metadata loaded as dataset), and presumably not if @fname
+       is an "external" reference.
+    */
+    if (map == NULL && mapfile != NULL) {
+	if (fname == mapfile || !strcmp(fname, mapfile)) {
+#if GEODEBUG
+	    fprintf(stderr, "geoplot_driver: calling get_current_map()\n");
+#endif
+	    map = get_current_map(dset, NULL, &err);
+	    free_map = 1;
+	    fname = NULL;
 	}
-    } else {
-	payload = (gretl_matrix *) plm;
     }
-
-#if GEO_DEBUG
-    if (payload != NULL) {
-	gretl_matrix_print(payload, "geoplot_driver: payload");
-    }
-#endif
 
     if (!err) {
-	int (*mapfunc) (const char *, gretl_bundle *,
-			gretl_matrix *, gretl_bundle *);
-
 	mapfunc = get_plugin_function("geoplot");
 	if (mapfunc == NULL) {
 	    err = E_FOPEN;
@@ -8158,13 +8098,9 @@ int geoplot_driver (const char *fname,
 	}
     }
 
-    if (free_payload) {
-	gretl_matrix_free(payload);
-    }
-    if (free_opts) {
-	gretl_bundle_destroy(opts);
-    } else if (delmask) {
-	gretl_bundle_delete_data(opts, "mask");
+    gretl_matrix_free(payload);
+    if (free_map) {
+	gretl_bundle_destroy(map);
     }
 
     return err;

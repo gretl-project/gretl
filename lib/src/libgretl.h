@@ -40,10 +40,8 @@
 
 #include <zlib.h>
 
-#ifndef GLIB_LT_2_26
-# define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_26
-# define GLIB_VERSION_MAX_ALLOWED (GLIB_VERSION_CUR_STABLE)
-#endif
+#define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_28
+#define GLIB_VERSION_MAX_ALLOWED (GLIB_VERSION_CUR_STABLE)
 #include <glib.h>
 
 #ifdef G_OS_WIN32
@@ -156,6 +154,7 @@ typedef enum {
     GRETL_TYPE_LISTS_REF,
     GRETL_TYPE_ARRAYS_REF,
     GRETL_TYPE_VOID,
+    GRETL_TYPE_NUMERIC,
     GRETL_TYPE_ANY
 } GretlType;
 
@@ -292,6 +291,10 @@ typedef struct _FITRESID FITRESID;
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
 typedef struct equation_system_ equation_system;
+
+typedef struct gretl_bundle_ gretl_bundle;
+typedef struct gretl_array_ gretl_array;
+typedef struct gretl_string_table_ gretl_string_table;
 
 /**
  * VARINFO:

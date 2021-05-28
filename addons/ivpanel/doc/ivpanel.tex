@@ -16,9 +16,9 @@
 
 \newcommand{\argname}[1]{\textsl{#1}}
 
-\title{ivpanel version 1.0}
+\title{ivpanel version 1.1}
 \author{Allin Cottrell}
-\date{September 22, 2020}
+\date{February 15, 2021}
 \maketitle
 
 \section{Introduction}
@@ -166,6 +166,14 @@ The auxiliary public function \texttt{ivp\_print()} is provided to
 ``pretty-print'' the results contained in the bundle provided by
 \texttt{ivpanel()}; \texttt{ivp\_print()} takes a pointer to the
 bundle as its sole argument.
+
+\section{Change log}
+
+2021-02-15: version 1.1: add guard against excessive collinearity and
+raise the minimum gretl version to 2016c.\\
+2020-09-22: version 1.0: avoid use of deprecated \texttt{isnull}
+function.\\
+2015-10-17: version 0.5: first release as addon. \\
 
 \bibliographystyle{gretl}
 \bibliography{gretl}
