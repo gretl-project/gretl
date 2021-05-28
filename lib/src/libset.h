@@ -80,7 +80,6 @@ typedef enum {
     RQ_MAXITER,
     GMM_MAXITER,
     STATE_INT_MAX, /* separator: end state int vars */
-    SEED, /* unsigned */
     CONV_HUGE,
     NLS_TOLER,
     BFGS_TOLER,
@@ -113,6 +112,7 @@ typedef enum {
     SIMD_MN_MIN,
     USE_DCMT,
     NS_INT_MAX, /* separator */
+    SEED,
     CSV_DELIM,
     STOPWATCH,
     VERBOSE,

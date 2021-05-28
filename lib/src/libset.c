@@ -95,8 +95,6 @@ struct set_state_ {
     int bhhh_maxiter;           /* max iterations, BHHH */
     int rq_maxiter;             /* max iterations for quantreg, simplex */
     int gmm_maxiter;            /* max iterations for iterated GMM */
-    /* unsigned int */
-    unsigned int seed;          /* for PRNG */
     /* floating-point values */
     double conv_huge;           /* conventional value for $huge */
     double nls_toler;           /* NLS convergence criterion */
@@ -189,8 +187,6 @@ setvar setvars[] = {
     { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC, offsetof(set_state,rq_maxiter) },
     { GMM_MAXITER,   "gmm_maxiter",   CAT_NUMERIC, offsetof(set_state,gmm_maxiter) },
     { STATE_INT_MAX, NULL },
-    /* unsigned int */
-    { SEED,          "seed", CAT_RNG },
     /* doubles */
     { CONV_HUGE,     "huge",         CAT_BEHAVE,  offsetof(set_state,conv_huge) },
     { NLS_TOLER,     "nls_toler",    CAT_NUMERIC, offsetof(set_state,nls_toler) },
@@ -225,8 +221,9 @@ setvar setvars[] = {
     { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
     { SIMD_K_MAX,    "simd_k_max",  CAT_BEHAVE },
     { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
-    { USE_DCMT,      "use_dcmt", CAT_RNG },
+    { USE_DCMT,      "use_dcmt",    CAT_RNG },
     /* specials */
+    { SEED,          "seed",      CAT_RNG },
     { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
     { STOPWATCH,     "stopwatch", CAT_SPECIAL },
     { VERBOSE,       "verbose",   CAT_SPECIAL },
@@ -236,7 +233,7 @@ setvar setvars[] = {
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || k==R_LIB)
-#define libset_double(k) (k > SEED && k < STATE_FLOAT_MAX)
+#define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
 
@@ -554,7 +551,6 @@ static set_state default_state = {
     500,     /* .bhhh_maxiter */
     1000,    /* .rq_maxiter */
     250,     /* .gmm_maxiter */
-    0,       /* .seed */
     1.0e100, /* .conv_huge */
     NADBL,   /* .nls_toler */
     NADBL,   /* .bfgs_toler */
@@ -1438,7 +1434,7 @@ static int libset_query_settings (setvar *sv, PRN *prn)
 	}
     } else if (sv->key == SEED) {
 	pprintf(prn, "%s: unsigned int, currently %u (%s)\n",
-		sv->name, state->seed ? state->seed : gretl_rand_get_seed(),
+		sv->name, gretl_rand_get_seed(),
 		seed_is_set ? "set by user" : "automatic");
     } else if (sv->key == CSV_DELIM) {
 	pprintf(prn, "%s: named character, currently \"%s\"\n", sv->name,
@@ -1652,7 +1648,6 @@ int execute_set (const char *setobj, const char *setarg,
 		    pprintf(prn,
 			    _("Pseudo-random number generator seeded with %u\n"), u);
 		}
-		state->seed = u;
 		seed_is_set = 1;
 	    }
 	} else if (sv->key == HORIZON) {
