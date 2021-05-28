@@ -39,7 +39,7 @@ typedef enum {
     USE_CWD         = 1 << 0,  /* store: use current dir as default */
     ECHO_ON         = 1 << 1,  /* echoing commands or not */
     MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
-    FORCE_DECPOINT  = 1 << 3,  /* override locale decimal separator */
+    FORCE_DECPOINT  = 1 << 3,  /* override locale decimal character */
     USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
     USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
     USE_QR          = 1 << 6,  /* QR decomp is least-squares command default */
@@ -66,6 +66,7 @@ typedef enum {
     HC_VERSION,
     HAC_KERNEL,
     HAC_LAG,
+    USER_HAC_LAG,
     LBFGS_MEM,
     QUANTILE_TYPE,
     STATE_SMALL_INT_MAX, /* separator: start state int vars */
@@ -78,8 +79,8 @@ typedef enum {
     BHHH_MAXITER,
     RQ_MAXITER,
     GMM_MAXITER,
+    STATE_INT_MAX, /* separator: end state int vars */
     SEED, /* unsigned */
-    STATE_INT_MAX, /* separator: start state doubles */
     CONV_HUGE,
     NLS_TOLER,
     BFGS_TOLER,
@@ -90,7 +91,6 @@ typedef enum {
     STATE_FLOAT_MAX, /* separator: end state floats */
     CSV_WRITE_NA,
     CSV_READ_NA,
-    STATE_STRING_MAX, /* separator */
     INITVALS,
     INITCURV,
     MATMASK,
@@ -102,9 +102,9 @@ typedef enum {
     PLOT_COLLECT,
     R_FUNCTIONS,
     R_LIB,
-    CSV_DIGITS,
     LOGLEVEL,
     LOGSTAMP,
+    CSV_DIGITS,
     NS_SMALL_INT_MAX, /* separator */
     GMP_BITS,
     NS_MAX, /* separator */
