@@ -821,12 +821,12 @@ static int perfect_collinearity_check (MODEL *pmod,
 
     if (d1 != NULL) {
 	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
-			     "The regressor %s had to be dropped. Please "
+			     "The regressor %s cannot be included. Please "
 			     "respecify the system.", i, dset->varname[d1[1]]);
 	return E_SINGULAR;
     } else if (d2 != NULL) {
 	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
-			     "The instrument %s had to be dropped. Please "
+			     "The instrument %s cannot be included. Please "
 			     "respecify the system.", i, dset->varname[d2[1]]);
 	return E_SINGULAR;
     } else {
@@ -1143,6 +1143,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
 #if REJECT_COLLINEAR
 	err = perfect_collinearity_check(pmod, dset, i+1);
+	if (err) break;
 #else
 	droplist = gretl_model_get_list(pmod, "droplist");
 	if (droplist != NULL) {
