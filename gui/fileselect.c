@@ -1039,19 +1039,15 @@ static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
     return filt;
 }
 
-static GtkFileFilter *filesel_add_filters (GtkWidget *filesel,
-					   const char *desc,
-					   const char *pat1,
-					   const char *pat2)
+static void filesel_set_filter_patterns (GtkWidget *filesel,
+					 const char *pat1,
+					 const char *pat2)
 {
     GtkFileFilter *filt = gtk_file_filter_new();
 
-    gtk_file_filter_set_name(filt, _(desc));
     gtk_file_filter_add_pattern(filt, pat1);
     gtk_file_filter_add_pattern(filt, pat2);
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
-
-    return filt;
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
 /* return non-zero if we add more than one selectable filter */
@@ -1090,13 +1086,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_SHP);
 	filesel_add_data_filter(filesel, GRETL_GEOJSON);
     } else if (action == UPLOAD_PKG) {
-#if 1 /* try this out */
-	filesel_add_filters(filesel, N_("gretl function packages (*.gfn, *.zip)"),
-	    "*.gfn", "*.zip");
-#else
-	filesel_add_filter(filesel, N_("gretl function packages (*.gfn)"), "*.gfn");
-	filesel_add_filter(filesel, N_("zipped function packages (*.zip)"), "*.zip");
-#endif
+	filesel_set_filter_patterns(filesel, "*.gfn", "*.zip");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 
