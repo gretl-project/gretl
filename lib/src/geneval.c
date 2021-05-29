@@ -147,7 +147,7 @@ enum {
 #define exestart(p) ((p->flags & DCHECK) == DCHECK)
 
 static void parser_init (parser *p, const char *str, DATASET *dset,
-			 PRN *prn, int flags, int targtype);
+			 PRN *prn, int flags, int targtype, int *done);
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
@@ -18482,9 +18482,14 @@ static void do_declaration (parser *p)
    of an existing variable?
 */
 
-static void parser_try_print (parser *p, const char *s)
+static void parser_try_print (parser *p, const char *s, int *done)
 {
     if (p->lh.t != 0 && p->lh.expr == NULL) {
+	if (p->lh.name[0] != '\0') {
+	    print_user_var_by_name(p->lh.name, p->dset,
+				   OPT_NONE, p->prn);
+	    *done = 1;
+	}
         p->flags |= P_DISCARD;
         p->point = s;
     } else {
@@ -18867,7 +18872,7 @@ static int check_existing_lhs_type (parser *p, int *newvar)
 
 /* pre-process a "genr" statement */
 
-static void gen_preprocess (parser *p, int flags)
+static void gen_preprocess (parser *p, int flags, int *done)
 {
     const char *s = p->input;
     char opstr[3] = {0};
@@ -18992,7 +18997,7 @@ static void gen_preprocess (parser *p, int flags)
 
     /* expression ends here with no operator: a call to print? */
     if (*s == '\0' && p->op == 0) {
-        parser_try_print(p, p->lh.name);
+        parser_try_print(p, p->lh.name, done);
         return;
     }
 
@@ -20401,7 +20406,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 
 static void parser_init (parser *p, const char *str,
 			 DATASET *dset, PRN *prn,
-			 int flags, int targtype)
+			 int flags, int targtype,
+			 int *done)
 {
     p->point = p->rhs = p->input = str;
     p->dset = dset;
@@ -20448,7 +20454,7 @@ static void parser_init (parser *p, const char *str,
     if (p->flags & P_VOID) {
         p->flags |= P_DISCARD;
     } else if (p->targ == UNK || !(p->flags & P_ANON)) {
-	gen_preprocess(p, flags);
+	gen_preprocess(p, flags, done);
     } else if (p->targ == LIST) {
 	p->flags |= P_LISTDEF;
     }
@@ -20682,11 +20688,15 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    goto starteval;
 	}
     } else {
-	parser_init(p, s, dset, prn, flags, targtype);
+	int done = 0;
+
+	parser_init(p, s, dset, prn, flags, targtype, &done);
 	if (p->err) {
 	    if (gretl_function_depth() == 0) {
 		errmsg(p->err, prn);
 	    }
+	    goto gen_finish;
+	} else if (done) {
 	    goto gen_finish;
 	}
     }
