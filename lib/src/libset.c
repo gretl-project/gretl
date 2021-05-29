@@ -127,7 +127,7 @@ static struct global_vars_ {
     gint8 logstamp;
     gint8 csv_digits;
     int gmp_bits;
-} globals = {0, 0, 5, 0, 0, 1, 0, 0, UNSET_INT, 256};
+} globals = {0, 0, 5, 0, 0, 1, 1, 0, UNSET_INT, 256};
 
 /* globals for internal use */
 static int seed_is_set;
