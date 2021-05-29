@@ -63,7 +63,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn);
 
 void maybe_list_series (const DATASET *dset, PRN *prn);
 
-int printdata (const int *list, const char *mstr,
+int printdata (const int *list, const char *ostr,
 	       DATASET *dset, gretlopt opt,
 	       PRN *prn);
 

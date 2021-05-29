@@ -2167,8 +2167,8 @@ static int print_listed_objects (const char *s,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    user_var *uv;
-    char *name;
+    const char *syms = "=+-/*<>?|~^!%&.,:;\\'[({";
+    char *name = NULL;
     int err = 0;
 
     if (!strcmp(s, "$sysinfo")) {
@@ -2180,8 +2180,14 @@ static int print_listed_objects (const char *s,
 	return err;
     }
 
+    if (strcspn(s, syms) < strlen(s)) {
+	/* try treating as expression to be evaluated */
+	return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
+    }
+
     while ((name = gretl_word_strdup(s, &s, OPT_S | OPT_U, &err)) != NULL) {
-	uv = get_user_var_by_name(name);
+	user_var *uv = get_user_var_by_name(name);
+
 	if (uv == NULL) {
 	    err = E_UNKVAR;
 	    break;
@@ -2565,7 +2571,7 @@ static int midas_print_list (const int *list,
 /**
  * printdata:
  * @list: list of variables to print.
- * @mstr: optional string holding names of non-series objects to print.
+ * @ostr: optional string holding names of non-series objects to print.
  * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
@@ -2575,12 +2581,12 @@ static int midas_print_list (const int *list,
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
- * defined sample range.
+ * defined sample range, or the objects named in @ostr.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int printdata (const int *list, const char *mstr,
+int printdata (const int *list, const char *ostr,
 	       DATASET *dset, gretlopt opt,
 	       PRN *prn)
 {
@@ -2590,14 +2596,14 @@ int printdata (const int *list, const char *mstr,
 
     if (list != NULL && list[0] == 0) {
 	/* explicitly empty list given */
-	if (mstr == NULL) {
+	if (ostr == NULL) {
 	    return 0; /* no-op */
 	} else {
 	    goto endprint;
 	}
     } else if (list == NULL) {
 	/* no list given */
-	if (mstr == NULL && dset != NULL) {
+	if (ostr == NULL && dset != NULL) {
 	    int nvars = 0;
 
 	    plist = full_var_list(dset, &nvars);
@@ -2679,8 +2685,8 @@ int printdata (const int *list, const char *mstr,
 
  endprint:
 
-    if (!err && mstr != NULL) {
-	err = print_listed_objects(mstr, dset, opt, prn);
+    if (!err && ostr != NULL) {
+	err = print_listed_objects(ostr, dset, opt, prn);
     }
 
     free(plist);
