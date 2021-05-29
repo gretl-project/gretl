@@ -3447,6 +3447,13 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     gretl_push_c_numeric_locale();
     state->more = NULL;
 
+    if (strspn(s, "+-.0123456789") > 0) {
+	/* has to be a bare expression */
+	cmd->ci = EVAL;
+	cmd->vstart = s;
+	goto skipit;
+    }
+
     while (!err && *s) {
 	int skipped = 0;
 
@@ -3632,6 +3639,8 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	s += n;
 	pos += n;
     }
+
+ skipit:
 
     gretl_pop_c_numeric_locale();
 
