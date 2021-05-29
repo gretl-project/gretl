@@ -140,6 +140,8 @@ end function
 # ----------------------------------
 function matrix rand_rotation(scalar n, const matrix sel)
 
+    # we assume here that sel is a row vector containing
+    # unique numbers in the range from 1 to n
     scalar nk = cols(sel)
     if nk == 0
 	matrix ret = qrdecomp(mnormal(n, n))
