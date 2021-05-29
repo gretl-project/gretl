@@ -18606,9 +18606,14 @@ static int extract_lhs_and_op (const char **ps, parser *p,
  done:
 
 #if LHDEBUG
-    fprintf(stderr, "extract: name='%s', expr='%s', op='%s', err=%d,\n s='%s'\n",
-            p->lh.name, p->lh.expr ? p->lh.expr : "nil", opstr, err, *ps);
+    fprintf(stderr, "extract: lh.name='%s', lh.expr='%s', op='%s', err=%d, s='%s'\n",
+            p->lh.name, p->lh.expr ? p->lh.expr : "NULL", opstr, err, *ps);
 #endif
+
+    if (p->lh.name[0] == '\0' && p->op == 0) {
+	/* added 2021-05-29 */
+	p->flags |= P_DISCARD;
+    }
 
     return err;
 }
@@ -18907,7 +18912,7 @@ static void gen_preprocess (parser *p, int flags)
 
     /* extract LHS expression and operator, and test for a declaration */
     p->err = extract_lhs_and_op(&s, p, opstr);
-    if (p->err || (p->flags & P_DECL)) {
+    if (p->err || (p->flags & (P_DECL | P_DISCARD))) {
         return;
     }
 
@@ -20720,8 +20725,10 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }
 
 #if EDEBUG
-    fprintf(stderr, "realgen: p->tree at %p, type %d (%s)\n", (void *) p->tree,
-	    p->tree->t, getsymb(p->tree->t));
+    if (p->tree != NULL) {
+	fprintf(stderr, "realgen: p->tree at %p, type %d (%s)\n", (void *) p->tree,
+		p->tree->t, getsymb(p->tree->t));
+    }
     if (p->ch == '\0') {
 	fprintf(stderr, " p->ch = NUL, p->sym = %d\n", p->sym);
     } else {
