@@ -1792,7 +1792,7 @@ static int get_int_limits (SetKey key, int *min, int *max)
 	{ PLOT_COLLECT, 0, 2 },
 	{ CSV_DIGITS, 1, 25 },
 	{ BOOT_ITERS, 499, 999999 },
-	{ BFGS_VERBSKIP, 1, 1000 },
+	{ BFGS_VERBSKIP, 0, 1000 },
 	{ BOOTREP, 1, 99999 },
 	{ HORIZON, 1, 1000 },
 	{ LOOP_MAXITER, 1, INT_MAX - 1 },
