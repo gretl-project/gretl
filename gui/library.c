@@ -3852,7 +3852,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg,
     if (err) {
         errmsg_plus(err, gbuf);
     } else {
-        int gentype = genr_get_last_output_type();
+        GretlType gentype = genr_get_last_output_type();
 
         if (dlg != NULL) {
             edit_dialog_close(dlg);

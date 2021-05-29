@@ -571,9 +571,9 @@ int genr_special_word (const char *s)
     }
 }
 
-static int genr_last_type;
+static GretlType genr_last_type;
 
-int genr_get_last_output_type (void)
+GretlType genr_get_last_output_type (void)
 {
     return genr_last_type;
 }
@@ -1251,7 +1251,7 @@ void destroy_genr (parser *p)
     }
 }
 
-int genr_get_output_type (const parser *p)
+GretlType genr_get_output_type (const parser *p)
 {
     int t = GRETL_TYPE_NONE;
 

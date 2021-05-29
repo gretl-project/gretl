@@ -159,13 +159,13 @@ int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
 
-int genr_get_output_type (const GENERATOR *genr);
+GretlType genr_get_output_type (const GENERATOR *genr);
 
 int genr_get_output_varnum (const GENERATOR *genr);
 
 double genr_get_output_scalar (const GENERATOR *genr);
 
-int genr_get_last_output_type (void);
+GretlType genr_get_last_output_type (void);
 
 gretl_matrix *genr_get_output_matrix (GENERATOR *genr);
 
