@@ -18543,11 +18543,6 @@ static void do_declaration (parser *p)
 static void parser_try_print (parser *p, const char *s, int *done)
 {
     if (p->lh.t != 0 && p->lh.expr == NULL) {
-	if (p->lh.name[0] != '\0') {
-	    print_user_var_by_name(p->lh.name, p->dset,
-				   OPT_NONE, p->prn);
-	    *done = 1;
-	}
         p->flags |= P_DISCARD;
         p->point = s;
     } else {
