@@ -5127,6 +5127,42 @@ static int is_pdf_reference (const char *s)
     return 0;
 }
 
+#define EDIT_ZIPS 0 /* not yet */
+
+#if EDIT_ZIPS
+
+static fnpkg *load_gfn_from_zip (const char *fname, int *err)
+{
+    fnpkg *pkg = NULL;
+    char tmpgfn[MAXLEN];
+    gchar *tmpname, *tmp2;
+    char *p;
+
+    tmpname = g_path_get_basename(fname);
+    p = strrchr(tmpname, '.');
+    *p = '\0';
+    tmp2 = g_strdup(tmpname);
+    strcat(p, ".gfn");
+
+    gretl_build_path(tmpgfn, gretl_dotdir(), tmp2, tmpname, NULL);
+
+#if 0
+    fprintf(stderr, "from zip: gfn is '%s'\n", tmpgfn);
+#endif
+
+    *err = gretl_unzip_into(fname, gretl_dotdir());
+    if (!*err) {
+	pkg = get_function_package_by_filename(tmpgfn, err);
+    }
+
+    g_free(tmpname);
+    g_free(tmp2);
+
+    return pkg;
+}
+
+#endif
+
 void edit_function_package (const char *fname)
 {
     GtkWidget *editor;
@@ -5136,7 +5172,15 @@ void edit_function_package (const char *fname)
     fnpkg *pkg;
     int err = 0;
 
+#if EDIT_ZIPS
+    if (has_suffix(fname, ".zip")) {
+	pkg = load_gfn_from_zip(fname, &err);
+    } else {
+	pkg = get_function_package_by_filename(fname, &err);
+    }
+#else
     pkg = get_function_package_by_filename(fname, &err);
+#endif
     if (err) {
 	gui_errmsg(err);
 	goto bailout;

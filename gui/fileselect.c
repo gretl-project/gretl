@@ -1086,6 +1086,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_SHP);
 	filesel_add_data_filter(filesel, GRETL_GEOJSON);
     } else if (action == UPLOAD_PKG) {
+	/* could add OPEN_GFN here?? */
 	filesel_set_filter_patterns(filesel, "*.gfn", "*.zip");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
