@@ -3072,6 +3072,40 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+static NODE *array_str_calc (NODE *l, NODE *r, int op, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+        gretl_array *a = l->v.a;
+
+	if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS) {
+	    p->err = E_TYPES;
+	} else {
+	    int i, n = gretl_array_get_length(a);
+	    const char *si;
+
+	    ret->v.m = gretl_zero_matrix_new(1, n);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    si = gretl_array_get_data(a, i);
+		    if (op == B_DOTEQ) {
+			if (si != NULL && !strcmp(si, r->v.str)) {
+			    ret->v.m->val[i] = 1;
+			}
+		    } else if (si == NULL || strcmp(si, r->v.str)) {
+			ret->v.m->val[i] = 1;
+		    }
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 #define comparison_op(o) (o == B_EQ  || o == B_NEQ || \
                           o == B_LT  || o == B_GT ||  \
                           o == B_LTE || o == B_GTE)
@@ -6572,6 +6606,25 @@ static NODE *augment_array_node (NODE *l, NODE *r, parser *p)
         } else {
             p->err = E_TYPES;
         }
+    }
+
+    return ret;
+}
+
+static NODE *subtract_from_array_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL && starting(p)) {
+	if (gretl_array_get_type(l->v.a) == GRETL_TYPE_STRINGS &&
+	    r->t == STR) {
+	    ret->v.a = gretl_array_copy(l->v.a, &p->err);
+	    if (!p->err) {
+		p->err = gretl_array_drop_string(ret->v.a, r->v.str);
+	    }
+	}
+    } else {
+	p->err = E_TYPES;
     }
 
     return ret;
@@ -16596,6 +16649,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = series_list_calc(l, r, t->t, p);
         } else if (t->t == B_ADD && l->t == ARRAY) {
             ret = augment_array_node(l, r, p);
+	} else if (t->t == B_SUB && l->t == ARRAY) {
+	    ret = subtract_from_array_node(l, r, p);
         } else {
             p->err = E_TYPES;
         }
@@ -16636,6 +16691,9 @@ static NODE *eval (NODE *t, parser *p)
         } else if ((ok_matrix_node(l) && r->t == SERIES) ||
                    (l->t == SERIES && ok_matrix_node(r))) {
             ret = matrix_series_calc(l, r, t->t, p);
+	} else if ((t->t == B_DOTEQ || t->t == B_DOTNEQ) &&
+		   l->t == ARRAY && r->t == STR) {
+	    ret = array_str_calc(l, r, t->t, p);
         } else {
             node_type_error(t->t, (l->t == MAT)? 2 : 1,
                             MAT, (l->t == MAT)? r : l, p);
@@ -18350,7 +18408,7 @@ static void printnode (NODE *t, parser *p, int value)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD || \
                          o == B_HCAT || o == INC)
-#define ok_array_op(o) (o == B_ASN || o == B_ADD)
+#define ok_array_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_bundle_op(o) (o == B_ASN || o == B_ADD)
 
 struct mod_assign {
@@ -19352,7 +19410,6 @@ static void do_array_append (parser *p)
     void *ptr = NULL;
 
     A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
-
     if (A == NULL) {
         p->err = E_DATA;
         return;
@@ -19386,6 +19443,21 @@ static void do_array_append (parser *p)
         if (!copy && !p->err) {
             rhs->v.ptr = NULL;
         }
+    }
+}
+
+static void do_array_subtract (parser *p)
+{
+    gretl_array *A;
+    NODE *rhs = p->ret;
+
+    A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
+    if (A == NULL) {
+        p->err = E_DATA;
+    } else if (gretl_array_get_type(A) == GRETL_TYPE_STRINGS && rhs->t == STR) {
+	p->err = gretl_array_drop_string(A, rhs->v.str);
+    } else {
+        p->err = E_TYPES;
     }
 }
 
@@ -20237,8 +20309,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	}
     } else if (p->targ == ARRAY) {
-	if (p->op != B_ASN) {
+	if (p->op == B_ADD) {
 	    do_array_append(p);
+	} else if (p->op == B_SUB) {
+	    do_array_subtract(p);
 	} else if (null_node(r)) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);

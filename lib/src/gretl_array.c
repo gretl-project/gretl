@@ -1365,6 +1365,47 @@ int gretl_array_delete_element (gretl_array *A, int i)
     }
 }
 
+/* Drop any/all occurrences of string @s from array @A */
+
+int gretl_array_drop_string (gretl_array *A, const char *s)
+{
+    if (A->type != GRETL_TYPE_STRINGS) {
+	return E_TYPES;
+    } else {
+	int i, j, rem = A->n;
+	int n_orig = A->n;
+	size_t sz;
+
+	for (i=0; ; ) {
+	    if (A->data[i] != NULL && !strcmp(A->data[i], s)) {
+		free(A->data[i]);
+		j = i + 1;
+		while (A->data[j] != NULL && !strcmp(A->data[j], s)) {
+		    free(A->data[j++]);
+		}
+		rem = A->n - j;
+		sz = rem * sizeof *A->data;
+		memmove(A->data + i, A->data + j, sz);
+		A->n -= j - i;
+		i = j;
+	    } else {
+		i++;
+	    }
+	    if (i == A->n || rem == 0) {
+		break;
+	    }
+	}
+	if (A->n == 0) {
+	    free(A->data);
+	    A->data = NULL;
+	} else if (A->n < n_orig) {
+	    A->data = realloc(A->data, A->n * sizeof(void *));
+	}
+    }
+
+    return 0;
+}
+
 /* @ptr must be pre-checked as matching the array type */
 
 int gretl_array_append_object (gretl_array *A,
