@@ -18615,7 +18615,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
             p->lh.name, p->lh.expr ? p->lh.expr : "NULL", opstr, err, *ps);
 #endif
 
-    if (p->lh.name[0] == '\0' && p->op == 0) {
+    if (!(p->flags & P_DECL) && p->lh.name[0] == '\0' && p->op == 0) {
 	/* added 2021-05-29 */
 	p->flags |= P_DISCARD;
     }
