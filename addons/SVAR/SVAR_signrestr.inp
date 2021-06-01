@@ -302,7 +302,8 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     scalar nSetIdShocks = rows(shocks)
 
     # Now extract the corresponding shock names
-    strings mod.SRid_snames = mod.snames[allshocks] # was getstrings_byindex pre 2020b
+    strings temp = mod.snames[allshocks] # was getstrings_byindex pre 2020b
+    strings mod.SRid_snames = temp 	# workaround gretl bug to ensure strings type even if 1 elem
 
     # this array contains as many elements as set-identified shocks
     # basically, it's a per-shock split of the SRest bundle element

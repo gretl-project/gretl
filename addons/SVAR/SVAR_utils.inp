@@ -37,11 +37,16 @@ end function
 # ---------------------------
 
 function scalar max_eval(const matrix A)
+    # attention: 
+    # up to v1.94 this actually seemed to calculate the max _squared_ modulus (?)
+    # from v1.95 we use abs() after eigen() to directly get the modulus. 
+     
     n = rows(A)
     p = cols(A) / n
     matrix compan = (p==1) ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))
-    matrix lambda = eigen(compan) # was eigengen(compan), deprecated 
-    scalar maxmod = maxc(sumr(lambda.^2))
+    matrix lambda = eigen(compan) # was eigengen(compan), deprecated
+    # (lambda will be complex now) 
+    scalar maxmod = maxc(abs(lambda)) # was: maxc(sumr(lambda.^2))
     return maxmod
 end function
 
