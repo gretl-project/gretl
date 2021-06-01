@@ -4588,8 +4588,10 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    int v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
 
-	    if (v1 > 0.85 * vsize && v1 <= 0.9 * sv) {
+	    if (v1 > 0.85 * vsize && v1 <= 0.7 * sv) {
 		vsize = v1;
+	    } else if (v1 > 0.7 * sv) {
+		vsize = 0.7 * sv;
 	    }
 	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
 	    vsize = 0.62 * hsize;
