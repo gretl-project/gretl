@@ -124,6 +124,7 @@ static int optdebug;
 #endif
 #ifdef GRETL_OPEN_HANDLER
 static int optnew;
+static int optsingle;
 #endif
 
 static gchar *param_msg =
@@ -153,6 +154,8 @@ static GOptionEntry options[] = {
 #ifdef GRETL_OPEN_HANDLER
     { "new", 'n', 0, G_OPTION_ARG_NONE, &optnew,
       N_("start a new gretl instance unconditionally"), NULL },
+    { "single", 's', 0, G_OPTION_ARG_NONE, &optsingle,
+      N_("reuse an existing gretl instance unconditionally"), NULL },
 #endif
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
@@ -616,11 +619,18 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
     long gpid = gretl_prior_instance();
     gboolean ret = FALSE;
 
-    if (gpid > 0) {
-	/* found pid of already-running gretl instance */
-	gint resp;
+    /* Is there an already-running gretl instance? If so
+       we'll ask whether or not to start a new instance,
+       unless we got @optsingle, which says to reuse the
+       existing one.
+    */
 
-	resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
+    if (gpid > 0) {
+	gint resp = GRETL_NO;
+
+	if (!optsingle) {
+	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
+	}
 
 	if (resp != GRETL_YES) {
 	    /* try hand-off to prior gretl instance */
