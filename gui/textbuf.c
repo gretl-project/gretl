@@ -182,7 +182,6 @@ static void get_char_width_and_height (GtkWidget *widget,
     if (width != NULL) {
 	*width = w;
     }
-
     if (height != NULL) {
 	*height = h;
     }
@@ -4581,15 +4580,15 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    hsize += 48;
 	}
 #if HDEBUG
-	fprintf(stderr, " px = %d, hsize now = %d, nlines = %d\n",
-		px, hsize, nlines);
+	fprintf(stderr, " px = %d, py = %d; hsize now = %d, nlines = %d\n",
+		px, py, hsize, nlines);
 #endif
 	if (nlines > 0) {
 	    /* Perhaps adjust how tall the window is? */
-	    double v1 = (nlines + 2) * py;
+	    int v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
 
-	    if (v1 > 0.8 * vsize && v1 < 1.35 * vsize && v1 <= 0.9 * sv) {
+	    if (v1 > 0.85 * vsize && v1 <= 0.9 * sv) {
 		vsize = v1;
 	    }
 	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
