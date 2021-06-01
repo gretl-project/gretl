@@ -114,11 +114,11 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "'Bstrap %d%% CI', \\\n", floor(100 * boot.alpha)
             printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
             printf "'-' w l lw 2 lc -1 t 'IRF'\n"
-            loop i=1..h -q
+            loop i = 1..h 
                 printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
             endloop
             printf "e\n"
-            loop i=1..h -q
+            loop i = 1..h 
                 printf "%d\t%g\n", i-1, mdn[i,]
             endloop
             printf "e\n"
@@ -126,7 +126,7 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "plot '-' w l lw 2\n"
         endif
 
-        loop i=1..h -q
+        loop i = 1..h 
             printf "%d\t%g\n", i-1, x[i]
         endloop
         printf "e\n"
@@ -173,7 +173,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     is_vrange = range(vnum, n, &vfrom, &vto)
 
     # cycle through all (selected) shocks and variables
-    loop snum = sfrom..sto -q
+    loop snum = sfrom..sto 
         # do checks
         err = check_bounds(snum, 1, n)
         if err == 1
@@ -188,7 +188,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             scale = tmp[abs(snum), abs(snum)]
         endif
 
-        loop vnum = vfrom..vto -q
+        loop vnum = vfrom..vto 
             # do checks
             err = check_bounds(1, vnum, n)
             if err == 2
@@ -299,7 +299,7 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
         printf "set style histogram rowstacked\n"
         printf "set style data histogram\n"
 
-        loop i=1..n --quiet
+        loop i = 1..n 
             string sname = snames[i]
 
             if i == 1
@@ -341,7 +341,7 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
         titletail = sprintf(" (draw %d)", whichdraw)
     endif
 
-    loop vnum = vfrom..vto -q
+    loop vnum = vfrom..vto 
         err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum
@@ -378,7 +378,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
 
-    loop vnum = vfrom..vto -q
+    loop vnum = vfrom..vto 
         err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum
@@ -392,7 +392,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
 
         tmp -= tmp[1] # take away deterministic component
-        loop i=1..nelem(tmp) --quiet
+        loop i = 1..nelem(tmp) 
             string sn = obj.snames[i]
             setinfo tmp[i] --graph-name="@sn"
         endloop

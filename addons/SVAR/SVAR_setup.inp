@@ -542,18 +542,18 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
         if r == 1
             sn[2] = "Transitory"
         else
-            loop i=2..n --quiet
+            loop i = 2..n 
                 sn[i] = sprintf("Transitory_%d", i-1)
             endloop
         endif
     else
-        loop i=1..n --quiet
+        loop i = 1..n 
             sn[i] = sprintf("Permanent_%d", i)
         endloop
         if r == 1
             sn[n] = "Transitory"
         else
-            loop i=1..r --quiet
+            loop i = 1..r 
                 sn[n-r+i] = sprintf("Transitory_%d", i)
             endloop
         endif

@@ -42,7 +42,7 @@ function matrix Dtn(int n)
     matrix B = zeros(n^2,p)
     matrix C
 
-    loop i=1..p --quiet
+    loop i = 1..p 
         C = A.=i
         B[,i] = vec(C .- C')
     endloop
@@ -59,7 +59,7 @@ function matrix Umat(int n, matrix R, matrix d, matrix S)
 
     p = cols(S)
     matrix ret = {}
-    loop i=1..p --quiet
+    loop i = 1..p 
         ret |= R * (mshape(S[,i],n,n)' ** I(n))
     endloop
     return ret
@@ -72,7 +72,7 @@ function matrix Tmat(int n, matrix R, matrix d, matrix S)
 
     p = cols(S)
     matrix ret = {}
-    loop i=1..p --quiet
+    loop i = 1..p 
         ret |= R * (I(n) ** mshape(S[,i],n,n))
     endloop
     return ret
@@ -129,7 +129,7 @@ function scalar strucond(int n, matrix Ra, matrix da,
         matrix nspace = nullspace(CC)
         u_rank = cols(nspace)
         if verbose
-            loop i=1..u_rank --quiet
+            loop i = 1..u_rank 
                 printf "Q_%d = \n", i
                 printf "%6.1f", mshape(nspace[1:n*n,i],n,n)
                 printf "H_%d = \n", i
@@ -194,7 +194,7 @@ function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db,
     scalar r = rank(Q)
 
     if verbose > 1
-        loop foreach m Q11 Q21 Q22 Q --quiet
+        loop foreach m Q11 Q21 Q22 Q 
             printf "\n$m:\n%7.2f", $m
         endloop
     endif

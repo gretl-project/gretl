@@ -25,7 +25,7 @@ function scalar transshockcheck(const bundle b)
         endif
 
         if !weakexo
-            loop i = (b.n - b.crank)..(b.n - 1) -q
+            loop i = (b.n - b.crank)..(b.n - 1)
                 matrix part = b.Rd1[, i * b.n + 1: (i+1) * b.n]
                 # check for exclusion restrictions (RHS zero)
                 matrix mc = (sumr(part) .= 1) && (b.Rd1[,cols(b.Rd1)] .= 0)
@@ -117,8 +117,8 @@ function matrix cholRd(int n)
     n2 = n*n
     k = 1
     matrix ret = {}
-    loop i=1..n -q
-        loop j=1..n -q
+    loop i = 1..n 
+        loop j = 1..n 
             matrix tmp = zeros(1,n2+1)
             if i > j
                 tmp[k] = 1
