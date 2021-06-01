@@ -3555,7 +3555,7 @@ static void read_regls_extras (selector *sr)
 
     if (gtk_widget_is_sensitive(sr->extra[REGLS_PLOT]) &&
 	button_is_active(sr->extra[REGLS_PLOT])) {
-	fprintf(stderr, "setting crit_plot on rb\n");
+	gretl_bundle_set_int(rb, "crit_plot", 1);
     }
 
     if (regls_adv != NULL) {
@@ -6631,8 +6631,9 @@ static void build_regls_controls (selector *sr)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), xvalidate && crit_plot);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    sensitize_conditional_on(hbox, b3);
+    sensitize_conditional_on(hbox, b2);
 
+    /* note: b2 = multiple lambdas, b3 = xvalidate, w = plot */
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(xvalidation_ok), b3);
     g_signal_connect(G_OBJECT(b2), "toggled",
