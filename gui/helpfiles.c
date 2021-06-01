@@ -1096,12 +1096,17 @@ static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
     }
 }
 
+static void vwin_nullify_finder (GtkWidget *w, windata_t *vwin)
+{
+    vwin->finder = NULL;
+}
+
 static void vwin_add_footer_finder (windata_t *vwin)
 {
     GtkWidget *hbox, *entry;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    entry = gtk_entry_new();
+    vwin->finder = entry = gtk_entry_new();
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
     add_finder_icon(vwin, entry);
 
@@ -1115,6 +1120,9 @@ static void vwin_add_footer_finder (windata_t *vwin)
 		     G_CALLBACK(finder_key_handler), vwin);
     g_signal_connect(G_OBJECT(entry), "activate",
 		     G_CALLBACK(vwin_finder_callback),
+		     vwin);
+    g_signal_connect(G_OBJECT(entry), "destroy",
+		     G_CALLBACK(vwin_nullify_finder),
 		     vwin);
 
     gtk_widget_show_all(hbox);
@@ -1569,6 +1577,8 @@ int gui_console_help (const char *param)
 void text_find (gpointer unused, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
+
+    fprintf(stderr, "vwin->finder = %p\n", (void *) vwin->finder);
 
     if (vwin->finder != NULL) {
 	gtk_widget_grab_focus(vwin->finder);
