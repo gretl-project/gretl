@@ -31,6 +31,7 @@
 #include "tabwin.h"
 #include "lagpref.h"
 #include "fncall.h"
+#include "textbuf.h"
 
 #include "var.h"
 #include "gretl_func.h"
@@ -1306,8 +1307,13 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
     GtkTreeSelection *select;
     gboolean flagcol = FALSE;
     gboolean midascol = FALSE;
-    int width = 160;
+    int cw, width = 160;
     int height = -1;
+
+    cw = get_char_width(sr->dlg);
+    if (cw > 0) {
+	width = 18 * cw;
+    }
 
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
 	/* VECM special, with restricted/unrestricted flag column */
