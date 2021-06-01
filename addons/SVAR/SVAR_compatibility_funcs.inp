@@ -1,3 +1,5 @@
+# [This file should not need to be include-d anymore, in v1.95.]
+
 # Backward compatibility functions which eventually should become
 # obsolete
 # (either because they are in extra.zip, or other reasons)

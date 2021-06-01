@@ -1,3 +1,7 @@
+# (function splitfname comes from the extra addon) 
+
+#### 
+
 function scalar check_bounds(int s, int v, int n)
     # negative s is allowed and means to flip the shock
 
@@ -218,7 +222,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
                 # (single plot, no indices)
                 tmpout = outfilename
             else
-                strings be = basename(outfilename)	# gives 2-elem array
+                strings be = splitfname(outfilename)[2:3]	# gives 2-elem array, was basename
                 if is_vrange	 # several v indices
                     if is_srange # several s indices
                         tmpout = sprintf("%s_%d%d.%s", be[1], snum, vnum, be[2])

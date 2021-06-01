@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 1.94}
+\date{Version 1.95}
 \begin{document}
 
 \maketitle
@@ -2143,13 +2143,6 @@ For example, calling some of the traditional functions when working with a set
 identified model may lead to breakage. This will be fixed and improved as time
 goes by.
 
-An important versioning note: These new parts of the SVAR code use some recent 
-syntactic features of the \textsl{hansl} language, such that \textsl{gretl} version 
-2020b or newer is required to use this model type.
-But the whole SVAR addon does not yet impose this requirement to keep the traditional
-model types available for those users who cannot or do not want to install a recent
-gretl version.
-
 Some artificial as well as real-life example scripts are included with SVAR to demonstrate
 the usage of sign restrictions and set identification in general. These are: 
 \texttt{ChoMoreno.inp}, \texttt{exotic1.inp, exotic2.inp}, \texttt{KilianMurphy\_relaxed.inp}, 
@@ -3419,6 +3412,12 @@ typically be called before \texttt{SVAR\_SRirf}.
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 1.95, June 2021}
+\begin{itemize}
+\item Start cleaning up and modernizing the internals, and big jump making 2021a the required
+      gretl version because of that. 
+\end{itemize}
 
 \subsection*{Version 1.94, April 2021}
 \begin{itemize}
