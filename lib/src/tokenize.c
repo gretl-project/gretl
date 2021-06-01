@@ -3447,7 +3447,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     gretl_push_c_numeric_locale();
     state->more = NULL;
 
-    if (strspn(s, "+-.0123456789$(=") > 0) {
+    if (!gretl_in_batch_mode() && strspn(s, "+-.0123456789$(=") > 0) {
 	/* has to be a bare expression */
 	cmd->ci = EVAL;
 	cmd->vstart = (*s == '=')? s+1 : s;
