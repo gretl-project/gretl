@@ -5410,11 +5410,7 @@ static int maybe_increase_vsize (selector *sr, int vsize)
     int ret = vsize;
 
     if (try > vsize) {
-	if (try <= 0.7 * sh) {
-	    ret = (int) try;
-	} else {
-	    ret = (int) (0.7 * sh);
-	}
+	ret = (try <= 0.7 * sh)? (int) try : (int) (0.7 * sh);
     }
 
     return ret;
