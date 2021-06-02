@@ -28,8 +28,14 @@ end function
 function void regls_mse_plot (const bundle b)
    matrix M = b.XVC[,1] ~ b.lfrac
    matrix B = b.XVC
-   ymin = 0.95 * minc(b.XVC[,1] - b.XVC[,2])
-   ymin = ymin < 0 ? 0 : ymin
+   scalar ymin = 0.95 * minc(b.XVC[,1] - b.XVC[,2])
+   scalar ymin = ymin < 0 ? 0 : ymin
+   scalar x0 = b.lfrac[b.idxmin]
+   scalar y0 = M[b.idxmin,1]
+   string lspec0 = "front center point pt 8 ps 2"
+   scalar x1 = b.lfrac[b.idx1se]
+   scalar y1 = M[b.idx1se,1]
+   string lspec1 "front center point pt 6 ps 2"
    plot M
       literal set termoption enhanced
       options with-lp band=B band-style=dash
@@ -37,20 +43,32 @@ function void regls_mse_plot (const bundle b)
       literal set xlabel 's = λ/λ_{max}'
       literal set ylabel 'MSE'
       literal set logscale x
+      printf "set label \"\" at %g,%g %s", x0, y0, lspec0
+      printf "set label \"\" at %g,%g %s", x1, y1, lspec1
       literal set title 'Mean cross-validation MSE with one-s.e. band'
    end plot --output=display
 end function
 
 function void regls_bic_plot (const bundle b)
    matrix M = b.BIC ~ b.lfrac
-   xmin = minc(b.lfrac)
+   scalar xmin = minc(b.lfrac)
+   scalar ymin = minc(b.BIC)
+   scalar ymax = maxc(b.BIC)
+   scalar ymargin = 0.05 * (ymax - ymin)
+   ymin -= ymargin
+   ymax += ymargin
+   scalar x0 = b.lfrac[b.idxmin]
+   scalar y0 = b.BIC[b.idxmin]
+   string lspec = "front center point pt 8 ps 2"
    plot M
       literal set termoption enhanced
       options with-lp
       printf "set xrange [%g:1]", xmin
+      printf "set yrange [%g:%g]", ymin, ymax
       literal set xlabel 's = λ/λ_{max}'
       literal set ylabel 'BIC'
       literal set logscale x
+      printf "set label \"\" at %g,%g %s", x0, y0, lspec
       literal set title 'BIC as a function of s'
    end plot --output=display
 end function
