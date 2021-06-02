@@ -1271,7 +1271,7 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
-/* right-clck action for exec button */
+/* right-click action for exec button */
 
 static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
 {
