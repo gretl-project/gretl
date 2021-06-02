@@ -35,7 +35,7 @@ function void regls_mse_plot (const bundle b)
    string lspec0 = "front center point pt 8 ps 2"
    scalar x1 = b.lfrac[b.idx1se]
    scalar y1 = M[b.idx1se,1]
-   string lspec1 "front center point pt 6 ps 2"
+   string lspec1 = "front center point pt 6 ps 2"
    plot M
       literal set termoption enhanced
       options with-lp band=B band-style=dash
