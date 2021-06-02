@@ -8339,12 +8339,13 @@ static int already_running_script (void)
 
 /* Execute a script from the buffer in viewer window @vwin */
 
-static void run_native_script (windata_t *vwin, gchar *buf)
+static void run_native_script (windata_t *vwin, gchar *buf,
+			       int silent)
 {
     int policy = get_script_output_policy();
     GtkWidget *parent;
     windata_t *targ = NULL;
-    PRN *prn;
+    PRN *prn = NULL;
     int save_batch;
     int untmp = 0;
     int err;
@@ -8353,21 +8354,25 @@ static void run_native_script (windata_t *vwin, gchar *buf)
         return;
     }
 
+    if (silent) {
+	goto do_exec;
+    }
+
     if (policy != OUTPUT_POLICY_NEW_WINDOW) {
-        /* check for an existing output window */
-        targ = get_unique_output_viewer();
+	/* check for an existing output window */
+	targ = get_unique_output_viewer();
     }
 
     if (targ != NULL && policy == OUTPUT_POLICY_UNSET) {
-        /* ask the user to choose a policy */
-        policy = output_policy_dialog(vwin, targ, 0);
-        if (policy == OUTPUT_POLICY_NEW_WINDOW) {
-            targ = NULL;
-        }
+	/* ask the user to choose a policy */
+	policy = output_policy_dialog(vwin, targ, 0);
+	if (policy == OUTPUT_POLICY_NEW_WINDOW) {
+	    targ = NULL;
+	}
     }
 
     if (bufopen(&prn)) {
-        return;
+	return;
     }
 
 #if 0
@@ -8390,6 +8395,8 @@ static void run_native_script (windata_t *vwin, gchar *buf)
         untmp = 1;
     }
 
+ do_exec:
+
     parent = vwin_toplevel(vwin);
     save_batch = gretl_in_batch_mode();
     gui_main_exec = 1;
@@ -8398,6 +8405,12 @@ static void run_native_script (windata_t *vwin, gchar *buf)
     gretl_set_batch_mode(save_batch);
 
     refresh_data();
+
+    if (silent) {
+	set_gretl_echo(1);
+	gtk_widget_destroy(vwin_toplevel(vwin));
+	return;
+    }
 
     if (oh.vwin != NULL) {
         if (untmp) {
@@ -8527,7 +8540,8 @@ static void ensure_newline_termination (gchar **ps)
     }
 }
 
-void do_run_script (GtkWidget *w, windata_t *vwin)
+static void real_run_script (GtkWidget *w, windata_t *vwin,
+			     int silent)
 {
     gretlopt opt = OPT_NONE;
     gboolean selection = FALSE;
@@ -8611,7 +8625,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     } else if (selection) {
         run_script_fragment(vwin, buf);
     } else {
-        run_native_script(vwin, buf);
+        run_native_script(vwin, buf, silent);
     }
 
     g_free(buf);
@@ -8624,6 +8638,16 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
         gretl_chdir(currdir);
         g_free(currdir);
     }
+}
+
+void do_run_script (GtkWidget *w, windata_t *vwin)
+{
+    real_run_script(w, vwin, 0);
+}
+
+void run_script_silent (GtkWidget *w, windata_t *vwin)
+{
+    real_run_script(w, vwin, 1);
 }
 
 gboolean do_open_script (int action)

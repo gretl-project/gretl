@@ -79,6 +79,8 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
 
 void do_run_script (GtkWidget *w, windata_t *vwin);
 
+void run_script_silent (GtkWidget *w, windata_t *vwin);
+
 void run_script_fragment (windata_t *vwin, gchar *buf);
 
 void gui_errmsg (int errcode);

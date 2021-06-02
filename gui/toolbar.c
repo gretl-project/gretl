@@ -1027,7 +1027,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	    ; /* alright then */
 	} else {
 	    return NULL;
-	}	    
+	}
     } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
 	return NULL;
     } else if (!split_v_ok(r) && f == SPLIT_V_ITEM) {
@@ -1271,6 +1271,18 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
+/* right-clck action for exec button */
+
+static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
+{
+    if (eb->button == 3) {
+	run_script_silent(NULL, vwin);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
 GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 				GCallback func,
 				GtkWidget *menu,
@@ -1294,6 +1306,10 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
 	} else {
 	    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
+	    if (tool->flag == EXEC_ITEM) {
+		g_signal_connect(G_OBJECT(item), "button-press-event",
+				 G_CALLBACK(exec_press), vwin);
+	    }
 	}
     }
 

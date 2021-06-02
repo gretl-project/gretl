@@ -809,7 +809,10 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
     gboolean ret = FALSE;
 
     if (event->state & GDK_CONTROL_MASK) {
-	if (keyval == GDK_r)  {
+	if (keyval == GDK_R) {
+	    run_script_silent(w, vwin);
+	    ret = TRUE;
+	} else if (keyval == GDK_r) {
 	    do_run_script(w, vwin);
 	    ret = TRUE;
 	} else if (keyval == GDK_Return) {
