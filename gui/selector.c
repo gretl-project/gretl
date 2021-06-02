@@ -5405,14 +5405,16 @@ static GtkWidget *selector_dialog_new (selector *sr)
 static int maybe_increase_vsize (selector *sr, int vsize)
 {
     int ch = get_char_height(sr->dlg);
-    float try = (ch / 17.0) * vsize;
+    float try = (ch / 18.0) * vsize;
     int sh = get_screen_height();
     int ret = vsize;
 
-    if (try <= 0.75 * sh) {
-	ret = (int) try;
-    } else if (try > 0.75 * sh) {
-	ret = (int) (0.75 * sh);
+    if (try > vsize) {
+	if (try <= 0.7 * sh) {
+	    ret = (int) try;
+	} else {
+	    ret = (int) (0.7 * sh);
+	}
     }
 
     return ret;
