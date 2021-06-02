@@ -5402,6 +5402,22 @@ static GtkWidget *selector_dialog_new (selector *sr)
     return d;
 }
 
+static int maybe_increase_vsize (selector *sr, int vsize)
+{
+    int ch = get_char_height(sr->dlg);
+    float try = (ch / 17.0) * vsize;
+    int sh = get_screen_height();
+    int ret = vsize;
+
+    if (try <= 0.75 * sh) {
+	ret = (int) try;
+    } else if (try > 0.75 * sh) {
+	ret = (int) (0.75 * sh);
+    }
+
+    return ret;
+}
+
 static void selector_init (selector *sr, guint ci, const char *title,
 			   int (*callback)(), GtkWidget *parent,
 			   gpointer data, int selcode)
@@ -5546,6 +5562,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 
     x = (double) dlgy * gui_scale;
     dlgy = x;
+    dlgy = maybe_increase_vsize(sr, dlgy);
 
     if (FNPKG_CODE(ci)) {
 	x = (double) 460 * gui_scale;

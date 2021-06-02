@@ -47,6 +47,10 @@ void scroll_to_foot (windata_t *vwin);
 
 gint get_char_width (GtkWidget *widget);
 
+gint get_char_height (GtkWidget *widget);
+
+int get_screen_height (void);
+
 GtkTextBuffer *gretl_text_buf_new (void);
 
 void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf);

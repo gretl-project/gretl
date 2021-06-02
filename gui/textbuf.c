@@ -195,6 +195,14 @@ gint get_char_width (GtkWidget *widget)
     return width;
 }
 
+gint get_char_height (GtkWidget *widget)
+{
+    int height;
+
+    get_char_width_and_height(widget, NULL, &height);
+    return height;
+}
+
 gchar *textview_get_text (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;
@@ -4503,7 +4511,7 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
     }
 }
 
-static int get_screen_height (void)
+int get_screen_height (void)
 {
     static int screen_height;
 
