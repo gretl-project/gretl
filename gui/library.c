@@ -3328,13 +3328,25 @@ void do_dwpval (GtkAction *action, gpointer p)
         gretl_print_destroy(prn);
     } else {
         gchar *title = gretl_window_title(_("Durbin-Watson"));
+	int warn = gretl_model_get_int(pmod, "ldepvar") > 0;
 
-        pprintf(prn, "%s = %g\n", _("Durbin-Watson statistic"), pmod->dw);
+	pprintf(prn, "%s = %g\n", _("Durbin-Watson statistic"), pmod->dw);
+
+	if (warn) {
+	    pputs(prn, _("Warning: the model contains a lagged "
+			 "dependent variable so DW is biased"));
+	    pputs(prn, "\n\n");
+	} else {
+	    pputc(prn, '\n');
+	}
         if (na(pv)) {
             pputs(prn, _("p-value is \"very small\" (the Imhof integral could not\n"
                          "be evaluated so a definite value is not available)"));
         } else {
-            pprintf(prn, "%s = %g\n", _("p-value"), pv);
+	    pprintf(prn, "H1: positive autocorrelation\n");
+            pprintf(prn, "   %s = %g\n", _("p-value"), pv);
+	    pprintf(prn, "H1: negative autocorrelation\n");
+            pprintf(prn, "   %s = %g\n", _("p-value"), 1.0 - pv);
         }
         view_buffer_with_parent(vwin, prn, 78, 200,
                                 title, PRINT, NULL);
