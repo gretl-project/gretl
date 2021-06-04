@@ -56,7 +56,7 @@ function void doIRF(bundle *SVARobj)
     matrix tmp = I(np)
     matrix prd = zeros(np,np)
 
-    loop i=1..H --quiet
+    loop i = 1..H 
         ret[i,] = vec(tmp[1:n,1:n] * C)'
         if (np>n)
 	    prd[n+1:np, ] = tmp[1:np-n, ]
@@ -105,15 +105,6 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
 
         if !inbundle(pickdraw, "IRFs") # maybe have already been added there
             putIrf_to_accdraw(&SVARobj, whichdraw) 
-            
-            # matrix IRFs = zeros(h, n*n)
-            # loop ix = 1..h -q
-            #     IRFs[ix, ] = vec(pickdraw.irfs[ix])'
-            # endloop
-            ## copy to origin
-            # matrix SVARobj.acc_draws[whichdraw].IRFs = IRFs
-        # else 
-        #     matrix IRFs = pickdraw.IRFs
         endif
         matrix IRFs = SVARobj.acc_draws[whichdraw].IRFs
 
@@ -127,7 +118,7 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
     matrix ret = zeros(h, n*n)
     ctmp = cum(IRFs .* IRFs)
 
-    loop i = 1..h --quiet
+    loop i = 1..h 
         tmp = mshape(ctmp[i,],n,n)'
         ret[i,] = vec(tmp ./ sumc(tmp))'
     endloop
@@ -146,7 +137,7 @@ function series SVAR_getshock(bundle *mod, string sname[null],
     # name of the shock instead of the number.
     # Default (as in GetShock) is to use the first shock.
 
-    s_ix = !exists(sname) ? 1 : strpos_allin(mod.snames, sname)
+    s_ix = !exists(sname) ? 1 : instrings(mod.snames, sname)	# was strpos_allin
 
     return GetShock(&mod, s_ix, drawix)
 end function 
@@ -234,7 +225,7 @@ function list SVAR_HD(bundle *mod, string vname[null],
                       int drawix[0::0])
     # wrapper around SVAR_hd to use a string interface for the 
     # variable 
-    v_ix = !exists(vname) ? 1 : strpos_allin(mod.Ynames, vname)
+    v_ix = !exists(vname) ? 1 : instrings(mod.Ynames, vname)	# was strpos_allin
     return SVAR_hd(&mod, v_ix, drawix)	
 end function
 
@@ -244,7 +235,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     # (drawix only meant for the set id case (type 10))
 
     list ret = null
-    loop foreach i n p t1 t2 type T k --quiet
+    loop foreach i n p t1 t2 type T k 
         scalar $i = Mod.$i
     endloop
     matrix B10 = {} # to be filled for type 10
@@ -323,7 +314,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     matrix U = muVARparE[3] * iC' # was E
     rotVARpar = iC * muVARparE[2] * (I(p) ** C)
 
-    loop i = 1..n --quiet
+    loop i = 1..n 
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
         ret += genseries(sprintf("hd_%s_%s", yn,

@@ -120,7 +120,7 @@ function matrices avg_VARpar_boot(const bundle b, const bundle stuff)
         funcerr "wrong assumption about length of Y initvals here!"
     endif
                               
-    loop i=1 .. b.BCiter --quiet
+    loop i = 1..b.BCiter 
         matrix U = Uinit | drawbootres(stuff.innov, b.boottype, bparams) 
         if cols(b.bmu) > 0	# was mu
             U += b.bmu 
@@ -285,7 +285,7 @@ function matrix drawbootres(const matrix E,
     	## recentring
     	matrix m = mshape(NA, bl, cols(E))
 		# calculate respective averages (bl different ones)
-    	loop i = 1..bl -q
+    	loop i = 1..bl 
         	m[i,] = meanc(E[i: T-bl+i,])
     	endloop
 
@@ -343,7 +343,7 @@ function scalar SVAR_boot(bundle *obj,
     # Do not override the previous setting.
 
     ## Copy some params and choices
-    loop foreach i n k T p type --quiet
+    loop foreach i n k T p type 
         scalar $i = obj.$i
     endloop
     obj.nboot = rep         # record bootstrap details
@@ -463,7 +463,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
     i = 1
     failed = 0
     set loop_maxiter 16384
-    loop while i <= obj.nboot --quiet
+    loop while i <= obj.nboot 
         # clear previous bootstrap indicator
         bobj.step = 0	
         

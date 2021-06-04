@@ -135,7 +135,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
     matrix theta0 = theta
     scalar errcode = 0
 
-    loop while (err==1 && iters<100) --quiet
+    loop while (err==1 && iters<100) 
         if method == 0
             catch scalar ll = BFGSmax(theta, "loglik(theta, dat, -1)")
             errcode = $error
