@@ -56,8 +56,8 @@ SVAR_SRdraw(&mod, 100, 0)
 
 # look at the IRFs as a check
 
-loop i = 1..10 --quiet
-    loop t = 1..5 --quiet
+loop i = 1..10
+    loop t = 1..5
         printf "M[%d] =\n%6.3f\n", t, mod.acc_draws[i].irfs[t]
     endloop
     print ""

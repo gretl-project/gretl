@@ -648,8 +648,8 @@ before calling \cmd{IRFplot}. Setting it back to its default value of
 \begin{scode}
   bfail = SVAR_boot(&Mod, 1024, 0.90)
 
-  loop i=1..2 --quiet
-      loop j=1..2 --quiet
+  loop i = 1..2
+      loop j = 1..2 
           sprintf fnam "simpleC_%d%d.pdf", i, j
           IRFsave(fnam, &Mod, i, j)
       end loop
@@ -1999,12 +1999,12 @@ provide an extended and annotated example.
     36	SVAR_restrict(&x, "C", 1, 2, 0)	 
     37					 
     38	SVAR_estimate(&x)		 
-    39	loop j=1..3 --quiet		 
+    39	loop j = 1..3 		 
     40	    FEVDplot(&x, j)		 
     41	endloop				 
     42					 
     43	SVAR_boot(&x, 1024, 0.90) 
-    44	loop j=1..3 --quiet				 
+    44	loop j = 1..3 			 
     45	    IRFplot(&x, 1, j, 2)
     46	endloop		     		 
   \end{scode}
