@@ -62,6 +62,7 @@ static gretlopt foreign_opt;
 
 /* dotdir filenames for R */
 static gchar *gretl_Rprofile;
+static gchar *gretl_Rsetup;
 static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
 static gchar *gretl_Rmsg;
@@ -476,6 +477,7 @@ static void make_gretl_R_names (void)
 	const char *ddir = get_export_dotdir();
 
 	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", ddir);
+	gretl_Rsetup = g_strdup_printf("%sgretl.Rsetup", ddir);
 	gretl_Rsrc = g_strdup_printf("%sRsrc", ddir);
 	gretl_Rout = g_strdup_printf("%sR.out", ddir);
 	gretl_Rmsg = g_strdup_printf("%sR.msg", ddir);
@@ -1971,10 +1973,10 @@ static void write_R_io_file (FILE *fp, const char *ddir)
     fputs("}\n", fp);
 }
 
-/* basic content which can either go into gretl.Rprofile or into
+/* basic content which can either go into gretl.Rsetup or into
    Rsrc for sourcing */
 
-static void put_R_startup_content (FILE *fp)
+static void put_R_setup_content (FILE *fp)
 {
     fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n",
 	  fp);
@@ -1989,7 +1991,7 @@ static void put_R_startup_content (FILE *fp)
 
 static int write_gretl_R_profile (gretlopt opt)
 {
-    FILE *fp;
+    FILE *f1, *f2;
     int err = 0;
 
 #if FDEBUG
@@ -2015,15 +2017,18 @@ static int write_gretl_R_profile (gretlopt opt)
     }
 #endif
 
-    fp = gretl_fopen(gretl_Rprofile, "w");
+    f1 = gretl_fopen(gretl_Rprofile, "w");
+    f2 = gretl_fopen(gretl_Rsetup, "w");
 
-    if (fp == NULL) {
+    if (f1 == NULL || f2 == NULL) {
 	err = E_FOPEN;
     } else {
-	put_R_startup_content(fp);
-	fprintf(fp, "source(\"%s\", %s = TRUE)\n",
+	fprintf(f1, "source(\"%s\")\n", gretl_Rsetup);
+	fprintf(f1, "source(\"%s\", %s = TRUE)\n",
 		gretl_Rsrc, (opt & OPT_V)? "echo" : "print.eval");
-	fclose(fp);
+	fclose(f1);
+	put_R_setup_content(f2);
+	fclose(f2);
     }
 
 #if FDEBUG
@@ -2082,14 +2087,14 @@ static int write_R_source_file (const char *buf,
 
 	if (opt & OPT_L) {
 	    /* we're using the R shared library */
-	    static int startup_done;
+	    static int setup_done;
 
-	    if (!startup_done) {
+	    if (!setup_done) {
 #if FDEBUG
-		fprintf(stderr, "Rlib: writing 'startup' material\n");
+		fprintf(stderr, "Rlib: writing 'setup' material\n");
 #endif
-		put_R_startup_content(fp);
-		startup_done = 1;
+		put_R_setup_content(fp);
+		setup_done = 1;
 	    }
 	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
 	    if (!(opt & OPT_I)) {
