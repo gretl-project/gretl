@@ -384,8 +384,6 @@ struct codevar_info {
     const char **strvals;
 };
 
-/* offsetof(set_state,conv_huge) */
-
 struct codevar_info coded[] = {
     { GARCH_VCV,     gvc_strs },
     { GARCH_ALT_VCV, gvr_strs },
