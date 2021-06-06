@@ -2,12 +2,19 @@ version 2021c, in progress
 - New function contains(): indicates whether a numerical
   object contains members of a specified set
 - Introduce experimental "plot collection"
-- MS Windows, 64-bit: update to gnuplot 5.4.1
-- gretl GUI: add --new command-line option to start a new
-  instance unconditionally
+- MS Windows, 64-bit: update to gnuplot 5.4.1, patched to
+  avoid too-big fonts on Windows with Ultra HD display
+- gretl GUI: add command-line options: --new to start a new
+  instance unconditionally and --single to use a single
+  program instance unconditionally
 - fcstats() matrix row labels: distinguish U1 vs U2 variant
   of Theil's U statistic
 - printing of bundles: sort members by type and key
+- GUI script editor: make the Find box appear at the foot of
+  the window, not in a separate dialog
+- Fix bug: spurius results from "system" command in case of
+  exact collinearity
+- Internals: make "libset" code more compact and efficient
 - gretl_bundle.h: rename argument named "template" to avoid
   trouble with C++
 
