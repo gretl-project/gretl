@@ -17,6 +17,10 @@
  *
  */
 
+/* dpanel.c: implementation of dunamic panel data models of the sort
+   developed by Arellano, Bond and Blundell
+*/
+
 #include "libgretl.h"
 #include "version.h"
 #include "matrix_extra.h"
@@ -26,7 +30,6 @@
 #define WRITE_MATRICES 0
 #define DPDEBUG 0
 #define IVDEBUG 0
-#define ZDEBUG 0
 
 enum {
     DPD_TWOSTEP  = 1 << 0,
@@ -51,7 +54,7 @@ struct unit_info_ {
     int t2;      /* last usable obs */
     int nobs;    /* number of usable observations (in the system case
 		    this is the sum of the differenced and level
-		    observations */
+		    observations) */
     int nlev;    /* number of obs in levels (0 in non-system case) */
 };
 
@@ -1584,7 +1587,7 @@ static int dpd_finalize_model (MODEL *pmod,
 
 static void dpd_shrink_matrices (ddset *dpd, const char *mask)
 {
-#if ZDEBUG
+#if IVDEBUG
     fprintf(stderr, "dpanel: dpd_shrink_matrices: cut nz from %d to %d\n",
 	    dpd->nz, dpd->A->rows);
 #endif
@@ -1719,7 +1722,7 @@ static int dpd_step_2 (ddset *dpd)
     return err;
 }
 
-/* This function is used on the first step (only) */
+/* This function is used on the first step only */
 
 static int dpd_invert_A_N (ddset *dpd)
 {
@@ -2882,7 +2885,7 @@ static void build_Z (ddset *dpd, int *goodobs,
 
     gretl_matrix_zero(Zi);
 
-#if ZDEBUG
+#if IVDEBUG
     if (unit == 0) {
 	fprintf(stderr, "Z0: %d x %d\n", Zi->rows, Zi->cols);
 	fprintf(stderr, "  nzb (levels for diffs)  = %d\n", dpd->nzb);
