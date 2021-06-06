@@ -3390,26 +3390,20 @@ static void print_instrument_specs (ddset *dpd, const char *ispec,
 #endif
 
     pputc(prn, '\n');
-    pprintf(prn, "Regular instruments: %d\n", dpd->nzr);
 
-    pprintf(prn, "GMM-style instruments, differences: %d\n", dpd->nzb);
+    pputs(prn, "GMM-style instruments, differences equation:\n");
     for (i=0; i<dpd->nzb; i++) {
 	pprintf(prn, "  %s: lags %d to %s\n", dset->varname[dpd->d[i].v],
 		dpd->d[i].minlag, maxlag_string(lmax, &dpd->d[i]));
     }
 
     if (dpd->nzb2 > 0) {
-	pprintf(prn, "GMM-style instruments, levels: %d\n", dpd->nzb2);
+	pputs(prn, "GMM-style instruments, levels equation:\n");
 	for (i=0; i<dpd->nzb2; i++) {
-	    pprintf(prn, "  %s: lags %d to %s\n", dset->varname[dpd->d[i].v],
+	    pprintf(prn, "  %s: lags %d to %s\n", dset->varname[dpd->d2[i].v],
 		    dpd->d2[i].minlag, maxlag_string(lmax, &dpd->d2[i]));
 	}
     }
-#if 0 /* figure out what to add here */
-    if (gmm_system(dpd) && dpd->nzr > 0) {
-	;
-    }
-#endif
 }
 
 /* we're doing two-step, but print the one-step results for
