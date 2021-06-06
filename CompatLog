@@ -1,6 +1,6 @@
 2021-05-04 version 2021b
 
-The "arbond" command is now offifically deprecated in favor of
+The "arbond" command is now officially deprecated in favor of
 "dpanel".
 
 The default format for data saved as ".gdtb" is now a straight
