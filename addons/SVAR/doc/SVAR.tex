@@ -71,8 +71,8 @@
 \bibliographystyle{apalike}
 % ---------- End rip ------------------------------------------------------
 
-\newcommand{\PrE}[1]{\ensuremath \varepsilon_{#1}}
-\newcommand{\StS}[1]{\ensuremath u_{#1}}
+\newcommand{\PrE}[1]{\ensuremath u_{#1}} % was \varepsilon_{#1} pre v1.95
+\newcommand{\StS}[1]{\ensuremath \varepsilon_{#1}} % was u_{#1} pre v1.95
 \newcommand{\InfSet}[1]{\ensuremath \mathcal{F}_{#1}}
 \newcommand{\VarSym}{\ensuremath \Phi}
 \newcommand{\IRF}[1]{\ensuremath \mathcal{I}_{#1}}
@@ -88,15 +88,10 @@
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
 \date{Version 1.95}
+
 \begin{document}
 
 \maketitle
-
-% \begin{abstract}
-%   Here we discuss how to estimate Structural VARs (SVARs) in
-%   \texttt{gretl} via the \texttt{SVAR} package. 
-% \end{abstract}
-
 
 \tableofcontents
 
@@ -118,7 +113,11 @@ and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
 in the Appendix.
 
-In order to establish notation and define a few concepts, allow us to
+In order to establish notation\footnote{Attention: As part of the preparations for an upcoming version
+2.0, starting in v1.95 we have changed the notation in an important way, by swapping the
+symbols for the structural shocks and the reduced-form residuals (forecast errors). The reason is that most of the recent literature uses $u$ for the reduced-form errors, and
+now we do so, too, which hopefully makes everything a bit easier for users.}
+ and define a few concepts, allow us to
 inflict on you a 2-page crash course on SVARs.  In this
 context,\footnote{The adjective ``structural'' is possibly one of the
   most widely used and abused in econometrics. In other contexts, it
@@ -386,13 +385,11 @@ SVAR_estimate(&Mod)
 
 Table \ref{tab:simpleC-base} shows a sample script to estimate the
 example Cholesky model: the basic idea is that the model is contained
-in a \app{gretl} bundle.\footnote{Bundles are a \app{gretl} data type:
-  they may be briefly described as containers in which a certain
+in a \app{gretl} bundle.\footnote{Bundles are containers in which a certain
   object (a scalar, a matrix and so on) is associated to a ``key'' (a
-  string). Technically speaking, a bundle is an associative array:
-  these data structures are called ``hashes'' in Perl or
-  ``dictionaries'' in Python. Fore more info, you'll want to take a
-  look at the Gretl User's Guide, section 10.7.} In this example,
+  string). Technically speaking, a bundle is an associative array like ``hashes''
+   in Perl or ``dictionaries'' in Python. Fore more info, you'll want to take a
+  look at the Gretl User's Guide, section 11.7.} In this example,
 the bundle is called \texttt{Mod}, but it can of course take any valid
 \texttt{gretl} identifier.
 
@@ -1230,7 +1227,7 @@ it should be clear that the impact of demand shocks on $\Delta Y_t$
 after $h$ periods is given by the north-west element of $M_h$. Since
 $x_t$ is assumed to be stationary, $\lim_{h \to \infty} \Theta_h = 0$
 and the same holds for $M_k$, so obviously the impact of either shock
-on $\Delta Y_t$ goes to 0. However, the impact of $u_t$ on the
+on $\Delta Y_t$ goes to 0. However, the impact of $\StS{t}$ on the  % was $u_t$ pre-v1.95
 \emph{level} of $Y_t$ is given by the \emph{sum} of the corresponding
 elements of $M_h$, since
 \[
@@ -3309,7 +3306,9 @@ typically be called before \texttt{SVAR\_SRirf}.
     \hline
     \texttt{VARpar} & autoregressive parameters \\
     \texttt{mu}	    & coefficients for the deterministic (/exogenous) terms \\
-    \texttt{E}	    & residuals from base VAR (as matrix) \\
+    \texttt{U}	    & residuals from base VAR (As matrix; this used to be
+     \texttt{E} before the notation change in version 1.95.
+      Please adapt your scripts.) \\
     \texttt{Sigma}  & unrestricted residual covariance matrix \\
     \texttt{jalpha} & (SVEC only) cointegration loadings \\
     \texttt{jbeta}  & (SVEC only) cointegration coefficients \\
@@ -3415,8 +3414,10 @@ typically be called before \texttt{SVAR\_SRirf}.
 
 \subsection*{Version 1.95, June 2021}
 \begin{itemize}
-\item Start cleaning up and modernizing the internals, and big jump making 2021a the required
-      gretl version because of that. 
+\item Start cleaning up and modernizing the internals, and big jump making 2021a the
+ required gretl version because of that.
+\item Swap notation to stay in line with most of the literature, $\varepsilon$ are now the structural shocks and $u$ become the prediction errors (reduced form). For SVAR scripting
+this means that the residual matrix \texttt{E} in the bundle is now called \texttt{U}.  
 \end{itemize}
 
 \subsection*{Version 1.94, April 2021}

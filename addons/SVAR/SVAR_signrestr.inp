@@ -1,7 +1,7 @@
 # drill() and multi_instrings come from extra
 #
 # And the following functions come from include SVAR_signrestr_utils.inp:
-#  correspondence, normalize, check_one_irf, check_irfs, check_id;
+#  correspondence, check_one_irf, check_irfs, check_id;
 #  safetycheck1, get_n_exotic, rot_redraw, prepAis, get_id_mat
 
 ###
@@ -36,9 +36,7 @@ function void SVAR_SRfull(bundle *mod,
 
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
-    if mod.type != 10
-        funcerr "Wrong model type for set identification restrictions"
-    endif
+    errorif( mod.type != 10, "Wrong model type for set identification restrictions")
     if !inbundle(mod, "SRest")
         matrix mod.SRest = {}
     endif
@@ -53,9 +51,7 @@ function void SVAR_SRfull(bundle *mod,
         funcerr "Specify correct and unique variable names"
     endif
 
-    if missing(lo) && missing(hi)
-        funcerr "No bounds specified!\n"
-    endif
+    errorif( missing(lo) && missing(hi), "No bounds specified!")
 
     lo = ok(lo) ? lo : -$huge
     hi = ok(hi) ? hi :  $huge
@@ -129,17 +125,11 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
 
     */
 
-    if mod.type != 10
-        funcerr "Wrong model type for set identification restrictions"
-    elif $version < 20201
-        # (because of feval and errorif() etc., and maybe nested arrays)
-        funcerr "Sorry, need at least gretl 2020b for exotic restrictions"
-    endif
+    errorif( mod.type != 10, "Wrong model type for set identification restrictions")
 
     if !inbundle(mod, "exoticSR")
         strings checks = null
-        bundle mod.exoticSR = defbundle("checks", checks, "spans", {},
-          "super", {}, "eshocks", {})
+        bundle mod.exoticSR = _(checks=checks, spans={}, super={}, eshocks={})
     endif
 
     # store the relevant shock numbers
@@ -258,9 +248,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # are resampled too; otherwise, they are kept fixed at the ols
     # estimates.
 
-    if !inbundle(mod, "SRest") && !inbundle(mod, "exoticSR")
-        funcerr "No set id restrictions found"
-    endif
+    errorif( !inbundle(mod, "SRest") && !inbundle(mod, "exoticSR"), "No set id restrictions found")
 
     #
     # Recover VAR parameters from the model bundle
@@ -316,9 +304,8 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # the main loop
     #
 
-    bundle b = defbundle("B",B, "Sigma",mod.Sigma, "exoterms",rows(mod.mu), \
-      "df", mod.T - rows(B), \
-      "T", mod.T) # df was: mod.T - nelem(B)
+    bundle b = _(B=B, Sigma=mod.Sigma, exoterms=rows(mod.mu), df= mod.T - rows(B), T=mod.T)
+    # df was: mod.T - nelem(B)
 
     # for the future: set a matrix for keeping some shocks from being rotated
     # eventually, this could probably be inferred from the model bundle
@@ -424,9 +411,7 @@ function void SVAR_spagplot(const bundle mod,
                             
     string out = exists(fname) ? fname : "display"
 
-    if !inbundle(mod, "acc_draws")
-        funcerr "Need collection acc_draws as model bundle member"
-    endif
+    errorif( !inbundle(mod, "acc_draws"), "Need collection acc_draws as model bundle member")
 
     # check whether it's one of the SR-id'ed shocks
     s_inSR = nelem(instrings(mod.SRid_snames, sname)) ? 1 : 0 # was strpos_allin
@@ -500,7 +485,7 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
 
     # output bundle (H: num of [accepted] replications)
     # (leave out ret.raw = A)
-    bundle ret = defbundle("rep",H, "coveralpha",coveralpha, "biascorr",0)
+    bundle ret = _(rep=H, coveralpha=coveralpha, biascorr=0)
     matrix ret.irfSRmeans  = mshape(m, h, nvXns)
     matrix ret.irfSRserrs  = mshape(s, h, nvXns)
 
@@ -530,11 +515,8 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
 
     # Omitting the strings array inputs means: do all.
 
-    if !inbundle(mod, "SRid_snames")
-        funcerr "No SR (sign restriction) specs found"
-    elif !inbundle(mod, "SRirfmeans")
-        funcerr "No SR IRF results found - did you run SVAR_SRdraw?"
-    endif
+    errorif( !inbundle(mod, "SRid_snames"), "No SR (sign restriction) specs found")
+    errorif( !inbundle(mod, "SRirfmeans"),  "No SR IRF results found - did you run SVAR_SRdraw?")
 
     # Which variables:
     # default induces "all"
@@ -609,14 +591,9 @@ function scalar SRgetbest(bundle *mod,
         loss = tolower(loss)
     endif
 
-    if ini + length > mod.horizon
-        funcerr "ini + length too large (increase horizon)"
-    endif
-    if !inbundle(mod, "SRacc")
-        funcerr "No info on accepted draws found"
-    elif !inbundle(mod, "acc_draws")
-        funcerr "Model must be set up to store accepted draws in its bundle"
-    endif
+    errorif( ini + length > mod.horizon, "ini + length too large (increase horizon)")
+    errorif( !inbundle(mod, "SRacc"), "No info on accepted draws found")
+    errorif( !inbundle(mod, "acc_draws"), "Model must be set up to store accepted draws in its bundle")
 
     startix = ini + 1	# offset for 1-based
     finix = startix + length
@@ -649,9 +626,7 @@ function scalar SRgetbest(bundle *mod,
         endif
     endloop
 
-    if !bestdraw
-        funcerr "shouldn't happen"
-    endif
+    errorif( !bestdraw, "shouldn't happen")
 
     # store for further use
     mod.bestdraw = bestdraw

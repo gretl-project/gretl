@@ -6,24 +6,24 @@
 
 function void SVAR_SRresetalpha(bundle *Smod, scalar alpha[0:1:])
     # Public convenience function to implement the hack described
-    # previously in fn 33 of the SVAR doc; allows to redefine 
+    # previously in fn 33 of the SVAR doc; allows to redefine
     # the confidence band coverage level after getting the draws.
-    
+
     errorif( !inbundle(Smod, "acc_draws"), "no accepted draws found")
-    
+
     if Smod.SRcoveralpha == alpha
         print "Warning: desired coverage level already active"
     else
         Smod.SRcoveralpha = alpha
     endif
-    
-    bundle newIrfdata = IRF_plotdata(Smod.acc_draws, Smod.SRcoveralpha)    
+
+    bundle newIrfdata = IRF_plotdata(Smod.acc_draws, Smod.SRcoveralpha)
     matrix Smod.SRlo_cb    = newIrfdata.lo_cb
     matrix Smod.SRhi_cb    = newIrfdata.hi_cb
-    
-    # are the following two actually necessary or shouldn't 
+
+    # are the following two actually necessary or shouldn't
     # their contents really be the same before and after?
-    matrix Smod.SRirfmeans = newIrfdata.irfSRmeans 
+    matrix Smod.SRirfmeans = newIrfdata.irfSRmeans
     matrix Smod.SRirfmeds  = newIrfdata.irfSRmeds
 end function
 
@@ -32,87 +32,84 @@ end function
 function void putIrf_to_accdraw(bundle *SVARobj, int whichdraw[0::0] )
     # Only for SR (type 10)
     # to transfer the IRFs to the old format
-    
-    if SVARobj.type != 10
-        funcerr "this function only for SR type"
-    elif !inbundle(SVARobj, "acc_draws")
-        funcerr "need accepted draws (acc_draws)"
-    endif
-    
+
+    errorif( SVARobj.type != 10, "this function only for SR type")
+    errorif( !inbundle(SVARobj, "acc_draws"), "need accepted draws (acc_draws)")
+
     n = SVARobj.n
     h = SVARobj.horizon + 1
     bundle pickdraw = SVARobj.acc_draws[whichdraw]
-    
+
     matrix IRFs = zeros(h, n*n)
-    loop ix = 1..h 
+    loop ix = 1..h
         IRFs[ix, ] = vec(pickdraw.irfs[ix])'
     endloop
-    
+
     # copy to origin
     matrix SVARobj.acc_draws[whichdraw].IRFs = IRFs
-    
-end function 
+
+end function
 
 # ------------------------------
 
 function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null])
-    # Retrieves all the quantities that perhaps are redrawn 
+    # Retrieves all the quantities that perhaps are redrawn
     # in the Bayesian set id case:
     # - mu: exog. coeffs, B[1:k , ]
     # - VARpar: autoregr. coeffs, B[k+1: ,]
     # - E: residuals
 
-	redrawn = 0
+    redrawn = 0
 
-    if Smod.type == 10 
+    if Smod.type == 10
         if Smod.DO_BAYES && !exists(Bofonedraw)
             funcerr "Need redrawn matrix input for Bayesian set id case"
         elif Smod.DO_BAYES
             redrawn = 1
         endif
-    endif  
+    endif
 
     if !redrawn
         # old standard cases
         matrix mu = Smod.mu
         matrix VARpar = Smod.VARpar
-        matrix resids = Smod.E    # original residuals 
+        matrix resids = Smod.U    # original residuals
 
     else
         # need to use the resids associated with re-drawn coefficients
         matrix mu = Bofonedraw[1 : Smod.k ,]
-        matrix VARpar = Bofonedraw[Smod.k + 1 : ,] 
+        matrix VARpar = Bofonedraw[Smod.k + 1 : ,]
         matrix resids = Smod.Y[Smod.p + 1 : ,] - Smod.mreg * Bofonedraw
     endif
 
-    return defarray(mu, VARpar, resids) 
-end function     
+    return defarray(mu, VARpar, resids)
+end function
 
 # ------------------------------
 
 function void errchkSRhisto(bundle *Smod, int drawix)
     if !inbundle(Smod, "bestdraw")
-        funcerr "Model not properly initialized for SR type" 
+        funcerr "Model not properly initialized for SR type"
     elif !Smod.bestdraw && !drawix
-        funcerr "Need to pick one particular draw (run SRgetbest?)"    
-    
+        funcerr "Need to pick one particular draw (run SRgetbest?)"
+
     elif !Smod.storeSRirfs
         funcerr "Need accepted draws content (acc_draws) in set-id case"
-    
+
     elif drawix > nelem(Smod.acc_draws)
-        printf "Only %d accepted draws exist\n", nelem(Smod.acc_draws) 
+        printf "Only %d accepted draws exist\n", nelem(Smod.acc_draws)
         funcerr "Draw index out of range"
     endif
 
 end function
 
 function void errmsgshockmatch(const matrix pos, string sname)
-    if nelem(pos) != 1 
+    if nelem(pos) != 1
         printf "You don't have a shock named %s in your model.\n", sname
         print " (or several ones)"
-        funcerr "Specify correct and unique shock names" 
+        funcerr "Specify correct and unique shock names"
     endif
-end function 
+end function
 
 # ------------------------------
 
@@ -121,17 +118,17 @@ function void safetycheck1(const matrix Sigma, const matrix iXX, const matrix B)
     matrix V = Sigma ** iXX
     chk = B[1:hhh,1] ~ sqrt(diag(V[1:hhh, 1:hhh]))
     strings pnames = array(hhh)
-    loop i = 1..hhh 
+    loop i = 1..hhh
         pnames[i] = sprintf("chk%d", i)
     endloop
     modprint chk pnames
-end function 
+end function
 
 # -------------------------------
 
 function scalar get_n_exotic(const bundle mod)
     n_exotic = 0
-    if inbundle(mod, "exoticSR") 
+    if inbundle(mod, "exoticSR")
         n_exotic = nelem(mod.exoticSR.checks)
     endif
     return n_exotic
@@ -144,10 +141,10 @@ function matrix rand_rotation(scalar n, const matrix sel)
     # unique numbers in the range from 1 to n
     scalar nk = cols(sel)
     if nk == 0
-	matrix ret = qrdecomp(mnormal(n, n))
+        matrix ret = qrdecomp(mnormal(n, n))
     else
-	matrix ret = I(n)
-	ret[sel, sel] = qrdecomp(mnormal(nk, nk))
+        matrix ret = I(n)
+        ret[sel, sel] = qrdecomp(mnormal(nk, nk))
     endif
 
     return ret
@@ -155,20 +152,20 @@ end function
 
 # ----------------------------------
 
-function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES, 
+function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
                          const matrix B,
                          const matrix iXX,
-			 const matrix rotate_only)
+                         const matrix rotate_only)
 
     if DO_BAYES
         matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
         matrix b.B = Mats[1]
         matrix b.Sigma = Mats[2]
     endif
-    
+
     matrix b.rot = rand_rotation(mod.n, rotate_only)
 
-end function 
+end function
 
 # -----------------------------------
 
@@ -176,11 +173,11 @@ function matrices prepAis(const bundle mod, const matrix shocks)
 
     nshocks = rows(shocks)
     matrices Ais = array(nshocks)
-    loop i = 1..nshocks 
+    loop i = 1..nshocks
         matrix Ais[i] = selifr(mod.SRest, mod.SRest[,6] .= shocks[i])
     endloop
-    return Ais 
-end function 
+    return Ais
+end function
 
 # -----------------------------------
 
@@ -191,14 +188,12 @@ function matrix get_id_mat (const bundle mod, const matrix shocks,
 
     nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
-    loop i = 1..nshocks 
+    loop i = 1..nshocks
         id_matrix[i,] = check_irfs(irfs, Ais[i])
     endloop
 
-	if DO_NORM
-        # printf "Before normalization:\n%6.0f\n", id_matrix
-        id_matrix = normalize(id_matrix)
-        # printf "After normalization:\n%6.0f\n", id_matrix
+    if DO_NORM
+        id_matrix = normlizA(id_matrix)
     endif
 
     return id_matrix
@@ -216,28 +211,28 @@ function matrix correspondence(const matrix A)
 
     # this function checks for a possible way to couple
     # shocks with observables, given the "candidate" matrix A
-    
+
     nr = rows(A)
     nc = cols(A)
     if nr == 0
         return {}
     endif
-    
+
     r = 1
     c = 0
     x = 0
-    loop while r <= nr 
+    loop while r <= nr
         matrix candidate = A[r,]
         matrix z = !(candidate .= 0)
         if sumr(z) == 1
             # candidate is ok
-            scalar x = selifc(candidate, z) 
-            scalar c = selifc(seq(1,nc), z) 
+            scalar x = selifc(candidate, z)
+            scalar c = selifc(seq(1,nc), z)
             break
         endif
         r++
     endloop
-    
+
     if c>0
         matrix rest = correspondence(A[-r, -c])
         if rows(rest) > 0
@@ -247,19 +242,18 @@ function matrix correspondence(const matrix A)
     else
         matrix rest = {}
     endif
-    
+
     return {r, c, x} | rest
 end function
 
-function matrix normalize(const matrix A)
+function matrix normlizA(const matrix A)
     # Tag: sign restriction apparatus
     # this function is for normalizing the "candidate" matrix A
-    # (-- TODO: maybe rename this function, to avoid confusion
-    # with the normalize option in the SVAR model bundle!?)
-    
-    matrix U = correspondence(A)
+    # (was normalize, but could be confused with the user option) 
+
+    matrix U = correspondence(A) # not to confuse U with the residuals...
     matrix ret = zeros(rows(A), cols(A))
-    loop i = 1..rows(U) 
+    loop i = 1..rows(U)
         r = U[i,1]
         c = U[i,2]
         if c != 0
@@ -301,10 +295,10 @@ function matrix check_one_irf(matrices M, matrix spec,
 
     if verbose
         print tmp
-	if verbose > 1
+        if verbose > 1
             print lo hi
             print Min Max
-	endif
+        endif
         print noflip flip ret
     endif
 
@@ -314,7 +308,7 @@ end function
 function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # Tag: sign restriction apparatus
 
-    # Here we examine the constraints on the IRFs 
+    # Here we examine the constraints on the IRFs
     # We return a vector
     # indicating if all the constraints contained in the matrix A are
     # satisfied; each row of A contains
@@ -331,14 +325,14 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # check consistency
 
     matrix chks = zeros(rA, n)
-    loop i = 1..rA 
+    loop i = 1..rA
         chks[i,] = check_one_irf(M, A[i,], verbose)
     endloop
 
     if verbose
         print chks
     endif
-    
+
     matrix positives = minc(chks) .= 1
     matrix negatives = maxc(chks) .= -1
 
@@ -375,19 +369,19 @@ function scalar check_id(matrix id)
     endif
 
     return ret
-end function 
+end function
 
 
 ### drawnormwis() was called BayesianDraw earlier
 ## (It was thought it would go into extra 0.7 in some incarnation,
-##  but in the end it didn't, because it was postponed until Bayesian 
-##  VARs would be implemented, and perhaps this function would then 
+##  but in the end it didn't, because it was postponed until Bayesian
+##  VARs would be implemented, and perhaps this function would then
 ##  be offered at the C-level.)
 
 function matrices drawnormwis(const matrix iXX, const matrix B,
-                               const matrix Sigma, int T[1::])
+                              const matrix Sigma, int T[1::])
 
-    # Draw from a standard Normal-(inverse)-Wishart prior 
+    # Draw from a standard Normal-(inverse)-Wishart prior
     # for a multi-equation regression model.
     #
     # iXX:  K x K matrix (X'X)^{-1} (same for all equations!)
@@ -396,15 +390,12 @@ function matrices drawnormwis(const matrix iXX, const matrix B,
     # Sigma: cross-equation covariance matrix of innovations
     # T:    number of observations
 
-    K = rows(B) 
-    N = cols(B) # how many equations 
+    K = rows(B)
+    N = cols(B) # how many equations
 
-    # some checks 
-    if K != rows(iXX)
-        funcerr "Coeff and data matrix dims don't match"
-    elif N != rows(Sigma)
-        funcerr "Coeff and Cov matrix dims don't match"
-    endif
+    # some checks
+    errorif( K != rows(iXX),  "Coeff and data matrix dims don't match")
+    errorif( N != rows(Sigma), "Coeff and Cov matrix dims don't match")
 
     matrix Sigma_draw = iwishart(Sigma*T, T)
     matrix V = Sigma_draw ** iXX
