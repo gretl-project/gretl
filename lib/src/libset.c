@@ -134,10 +134,11 @@ static char export_decpoint = '.';
 typedef struct setvar_ setvar;
 
 struct setvar_ {
-    SetKey key;
-    const char *name;
-    gint8 category;
-    size_t offset;
+    SetKey key;       /* internal integer key */
+    const char *name; /* userspace name */
+    gint8 category;   /* for printing purposes */
+    size_t offset;    /* byte offset into state or globals struct,
+			 where applicable */
 };
 
 setvar setvars[] = {
@@ -384,7 +385,7 @@ struct codevar_info {
     const char **strvals;
 };
 
-/* offsetof(set_state,conv_huge) */
+/* look-up table for sets of value strings */
 
 struct codevar_info coded[] = {
     { GARCH_VCV,     gvc_strs },
