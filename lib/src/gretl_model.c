@@ -980,8 +980,8 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 	    strcpy(targ, dset->varname[pmod->list[j]]);
 	} else if (NONLIST_MODEL(pmod->ci) ||
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
-		   pmod->ci == ARBOND || pmod->ci == DPANEL ||
-		   pmod->ci == GARCH || pmod->ci == BIPROBIT) {
+		   pmod->ci == DPANEL || pmod->ci == GARCH ||
+		   pmod->ci == BIPROBIT) {
 	    k = i;
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	    k = i;
@@ -2141,7 +2141,7 @@ int gretl_model_get_depvar (const MODEL *pmod)
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
 	    dv = pmod->list[arma_depvar_pos(pmod)];
-	} else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+	} else if (pmod->ci == DPANEL) {
 	    dv = arbond_get_depvar(pmod);
 	} else {
 	    dv = pmod->list[1];
@@ -2176,7 +2176,7 @@ const char *gretl_model_get_depvar_name (const MODEL *pmod,
 		dv = pmod->list[4];
 	    } else if (pmod->ci == ARMA) {
 		dv = pmod->list[arma_depvar_pos(pmod)];
-	    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+	    } else if (pmod->ci == DPANEL) {
 		dv = arbond_get_depvar(pmod);
 	    } else {
 		dv = pmod->list[1];
@@ -2259,7 +2259,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
-    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+    } else if (pmod->ci == DPANEL) {
 	int ifc = gretl_model_get_int(pmod, "ifc");
 	int vi, sep = 0;
 
@@ -6100,13 +6100,13 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 
     case VIF:
 	if (mci == IVREG || mci == ARMA || mci == GARCH ||
-	    mci == PANEL || mci == ARBOND || mci == DPANEL) {
+	    mci == PANEL || mci == DPANEL) {
 	    ok = 0;
 	}
 	break;
 
     case EQNPRINT:
-	if (mci == ARMA || mci == ARBOND || mci == DPANEL ||
+	if (mci == ARMA || mci == DPANEL ||
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
 	}
@@ -6297,8 +6297,8 @@ void set_model_id (MODEL *pmod, gretlopt opt)
 	/* An auxiliary model? Likely, but OPT_A has
 	   special meaning for a few estimators
 	*/
-	if (pmod->ci != ARBOND && pmod->ci != DPANEL &&
-	    pmod->ci != GARCH && pmod->ci != ARMA) {
+	if (pmod->ci != DPANEL && pmod->ci != GARCH &&
+	    pmod->ci != ARMA) {
 	    return;
 	}
     }

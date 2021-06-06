@@ -99,7 +99,6 @@ struct VCVInfo_ {
 
 #define MODEL_COMMAND(c) (c == AR || \
                           c == AR1 || \
-                          c == ARBOND || \
                           c == ARCH || \
                           c == ARMA || \
 			  c == DPANEL ||   \
@@ -158,8 +157,7 @@ struct VCVInfo_ {
                       c == OLS || \
                       c == WLS)
 
-#define ASYMPTOTIC_MODEL(c) (c == ARBOND || \
-                             c == ARMA || \
+#define ASYMPTOTIC_MODEL(c) (c == ARMA || \
 			     c == DPANEL ||   \
 			     c == DURATION || \
                              c == GARCH || \

@@ -80,7 +80,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { APPEND,   "append",   CI_PARM1 | CI_FNAME },
     { AR,       "ar",       CI_LIST | CI_L1INT },
     { AR1,      "ar1",      CI_LIST },
-    { ARBOND,   "arbond",   CI_LIST | CI_L1INT | CI_OBSOL },
     { ARCH,     "arch",     CI_ORD1 | CI_LIST },
     { ARMA,     "arima",    CI_LIST | CI_L1INT },
     { BDS,      "bds",      CI_ORD1 | CI_LIST | CI_LLEN1 },
@@ -290,7 +289,6 @@ static int get_sep_max (int ci, int *pmin)
     case MIDASREG:
 	minsep = maxsep = 1;
 	break;
-    case ARBOND:
     case DPANEL:
     case ARMA:
 	minsep = 1;
@@ -2582,11 +2580,6 @@ static int try_for_command_index (CMD *cmd, int i,
 	    cmd->ciflags = CI_EXPR;
 	} else {
 	    cmd->ciflags = command_get_flags(cmd->ci);
-	    if (cmd->ciflags & CI_OBSOL) {
-		if (cmd->ci == ARBOND) {
-		    set_deprecation("arbond", "dpanel", 1);
-		}
-	    }
 	    if (cmd->ci == EQUATION && (cmd->opt & OPT_M)) {
 		/* the system "equations" keyword */
 		cmd->ciflags ^= CI_LIST;
@@ -2721,7 +2714,7 @@ static int check_arma_ilist (const int *ilist,
 
 static int panel_gmm_special (CMD *cmd, const char *s)
 {
-    if (cmd->ci == ARBOND || cmd->ci == DPANEL) {
+    if (cmd->ci == DPANEL) {
 	if (!strcmp(s, "GMM") || !strcmp(s, "GMMlevel")) {
 	    return 1;
 	}
@@ -2929,7 +2922,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && *lstr != '\0') {
 	tailstrip(lstr);
-	if (c->ci == ARBOND || c->ci == DPANEL || c->ci == MIDASREG) {
+	if (c->ci == DPANEL || c->ci == MIDASREG) {
 	    /* We may have a ';' separator that's not followed
 	       by any regular second list, just special terms; so
 	       don't error out on a trailing ';' in defining a

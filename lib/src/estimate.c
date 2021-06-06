@@ -4447,48 +4447,6 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
 }
 
 /**
- * arbond_model:
- * @list: regression list.
- * @ispec: may contain additional instrument specification.
- * @dset: dataset struct.
- * @opt: may include OPT_D to include time dummies,
- * OPT_H to transform the dependent variable via orthogonal
- * deviations rather than first differences, OPT_T for two-step
- * estimation, OPT_A to force production of asymptotic standard
- * errors rather than finite-sample corrected ones.
- * @prn: printing struct.
- *
- * Produces estimates of a dynamic panel-data model in
- * the manner of Arellano and Bond. See the documentation for
- * the "arbond" command in gretl for the construction of the
- * @list argument and also the syntax of @ispec.
- *
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL arbond_model (const int *list, const char *ispec,
-		    const DATASET *dset, gretlopt opt,
-		    PRN *prn)
-{
-    MODEL (*arbond_estimate) (const int *, const char *,
-			      const DATASET *, gretlopt, PRN *);
-    MODEL mod;
-
-    gretl_model_init(&mod, dset);
-
-    arbond_estimate = get_plugin_function("arbond_estimate");
-    if (arbond_estimate == NULL) {
-	mod.errcode = 1;
-	return mod;
-    }
-
-    mod = (*arbond_estimate)(list, ispec, dset, opt, prn);
-    set_model_id(&mod, opt);
-
-    return mod;
-}
-
-/**
  * dpd_model:
  * @list: regression list.
  * @laglist: list of specific lags of the dependent variable, or

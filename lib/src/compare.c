@@ -80,7 +80,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	return NULL;
     }
 
-    if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+    if (pmod->ci == DPANEL) {
 	/* find correct offset into independent vars in list */
 	for (i=2; i<=pmod->list[0]; i++) {
 	    if (pmod->list[i] == LISTSEP) {
@@ -510,7 +510,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	cmp.robust = 1;
     }
 
-    if (pmodA->ci == ARBOND || pmodA->ci == DPANEL) {
+    if (pmodA->ci == DPANEL) {
 	/* FIXME: plus some other cases? */
 	opt |= OPT_X;
     }
@@ -737,9 +737,6 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	if (gretl_model_get_int(orig, "no-squares")) {
 	    myopt |= OPT_N;
 	}
-    } else if (orig->ci == ARBOND) {
-	param = gretl_model_get_data(orig, "istr");
-	myopt |= retrieve_dpanel_opts(orig);
     } else if (orig->ci == DPANEL) {
 	param = gretl_model_get_data(orig, "istr");
 	laglist = gretl_model_get_list(orig, "ylags");
@@ -818,9 +815,6 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	break;
     case AR1:
 	rep = ar1_model(list, dset, myopt, NULL);
-	break;
-    case ARBOND:
-	rep = arbond_model(list, param, dset, myopt, prn);
 	break;
     case DPANEL:
 	rep = dpd_model(list, laglist, param, dset, myopt, prn);
@@ -1216,7 +1210,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     /* create augmented regression list */
     if (orig->ci == IVREG) {
 	biglist = ivreg_list_add(orig->list, addvars, opt, &err);
-    } else if (orig->ci == ARBOND || orig->ci == DPANEL) {
+    } else if (orig->ci == DPANEL) {
 	biglist = panel_list_add(orig, addvars, &err);
     } else {
 	biglist = gretl_list_add(orig->list, addvars, &err);
@@ -1323,8 +1317,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
     if (pmod->ci == IVREG) {
 	test = ivreg_list_omit(pmod->list, list, opt, &err);
-    } else if (pmod->ci == PANEL || pmod->ci == ARBOND ||
-	       pmod->ci == DPANEL) {
+    } else if (pmod->ci == PANEL || pmod->ci == DPANEL) {
 	test = panel_list_omit(pmod, list, &err);
     } else {
 	test = gretl_list_omit(pmod->list, list, 2, &err);
@@ -1549,8 +1542,7 @@ static int make_short_list (MODEL *orig, const int *omitvars,
 
     if (orig->ci == IVREG) {
 	list = ivreg_list_omit(orig->list, omitvars, opt, &err);
-    } else if (orig->ci == PANEL || orig->ci == ARBOND ||
-	       orig->ci == DPANEL) {
+    } else if (orig->ci == PANEL || orig->ci == DPANEL) {
 	list = panel_list_omit(orig, omitvars, &err);
     } else {
 	list = gretl_list_omit(orig->list, omitvars, 2, &err);
@@ -1682,7 +1674,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	int minpos = 2;
 	int *omitlist = NULL;
 
-	if (orig->ci == ARBOND || orig->ci == DPANEL) {
+	if (orig->ci == DPANEL) {
 	    /* skip AR spec, separator, and dep var */
 	    minpos = 4;
 	}

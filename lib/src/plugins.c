@@ -78,7 +78,7 @@ enum {
     P_SAS_IMPORT,
     P_JMULTI_IMPORT,
     P_ZIPFILE,
-    P_ARBOND,
+    P_DPANEL,
     P_HECKIT,
     P_ODBC,
     P_QUANTREG,
@@ -142,7 +142,7 @@ struct plugin_info plugins[] = {
     { P_SAS_IMPORT,      "sas_import",      NULL },
     { P_JMULTI_IMPORT,   "jmulti_import",   NULL },
     { P_ZIPFILE,         "gretlzip",        NULL },
-    { P_ARBOND,          "arbond",          NULL },
+    { P_DPANEL,          "dpanel",          NULL },
     { P_HECKIT,          "heckit",          NULL },
     { P_ODBC,            "odbc_import",     NULL },
     { P_QUANTREG,        "quantreg",        NULL },
@@ -267,8 +267,7 @@ struct plugin_function_info plugin_functions[] = {
     { "gretl_native_zip_datafile", P_ZIPFILE},
 
     /* Dynamic panel data estimation */
-    { "arbond_estimate", P_ARBOND},
-    { "dpd_estimate",    P_ARBOND},
+    { "dpd_estimate", P_DPANEL},
 
     /* ODBC */
     { "gretl_odbc_check_dsn", P_ODBC},

@@ -6232,7 +6232,7 @@ int plausible_panel_time_var (const DATASET *dset)
 
 /* FIXME: this does not yet handle the dropping of instruments */
 
-static int *arbond_list_omit (const MODEL *orig, const int *drop, int *err)
+static int *dpanel_list_omit (const MODEL *orig, const int *drop, int *err)
 {
     const int *old = orig->list;
     int *new = gretl_list_copy(old);
@@ -6284,8 +6284,8 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
     int *newlist = NULL;
     int i;
 
-    if (orig->ci == ARBOND || orig->ci == DPANEL) {
-	return arbond_list_omit(orig, drop, err);
+    if (orig->ci == DPANEL) {
+	return dpanel_list_omit(orig, drop, err);
     }
 
     /* sorry, can't drop the constant */
@@ -6330,7 +6330,7 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
 
 /* FIXME doesn't handle adding instruments */
 
-static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
+static int *dpanel_list_add (const MODEL *orig, const int *add, int *err)
 {
     const int *old = orig->list;
     int *new = gretl_list_copy(old);
@@ -6381,8 +6381,8 @@ static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
 
 int *panel_list_add (const MODEL *orig, const int *add, int *err)
 {
-    if (orig->ci == ARBOND || orig->ci == DPANEL) {
-	return arbond_list_add(orig, add, err);
+    if (orig->ci == DPANEL) {
+	return dpanel_list_add(orig, add, err);
     } else {
 	return gretl_list_add(orig->list, add, err);
     }

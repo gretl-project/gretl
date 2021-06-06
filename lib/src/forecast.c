@@ -3606,7 +3606,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     int os_case = 0;
     int err;
 
-    if (pmod->ci == ARBOND ||
+    if (pmod->ci == DPANEL ||
 	pmod->ci == HECKIT ||
 	pmod->ci == DURATION) {
 	/* FIXME */
