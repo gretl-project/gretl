@@ -34,7 +34,7 @@ err = SVAR_estimate(&mod,0)
 # replicate page 395 (sort of)
 if 0
     bfail = SVAR_boot(&mod, 1024, 0.63)
-    loop i=1..6 --quiet
+    loop i = 1..6
         IRFplot(&mod, 4, i)
     endloop
 endif

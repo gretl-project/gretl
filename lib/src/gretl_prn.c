@@ -1374,7 +1374,7 @@ int printing_to_standard_stream (PRN *prn)
 static void prn_push_stream (PRN *prn, FILE *fp, const char *fname,
 			     const char *strvar)
 {
-    fpinfo fi = {prn->fp, 0, NULL};
+    fpinfo fi = {prn->fp, 0, NULL, NULL};
 
     if (prn->fplist == NULL) {
 	prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
@@ -1450,6 +1450,10 @@ static int prn_pop_stream (PRN *prn)
 		strvar = fi->strvar;
 		err = handle_outbuf_content(prn->fp, fi);
 	    }
+	    if (fi->fname != NULL) {
+		g_free(fi->fname);
+		fi->fname = NULL;
+	    }
 	    g_array_remove_index(prn->fplist, n-1);
 	}
     }
@@ -1464,7 +1468,7 @@ static int prn_pop_stream (PRN *prn)
 				       strvar);
 	gretl_remove(fname);
 	g_free(fname);
-	free(strvar);
+	g_free(strvar);
     }
 
     prn->fp = prev;

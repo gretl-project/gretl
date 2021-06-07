@@ -26,6 +26,15 @@ AC_SUBST(LIBGRETL_CURRENT)
 AC_SUBST(LIBGRETL_REVISION)
 AC_SUBST(LIBGRETL_AGE)
 
+dnl PWD=`pwd`
+dnl ABS_SRCDIR=`(cd $srcdir && pwd)`
+dnl if test $PWD = $ABS_SRCDIR ; then
+dnl  echo "Building of gretl in the main source tree is not supported. Please"
+dnl  echo "create a build directory either parallel to the gretl source or"
+dnl  echo "under it, then configure and make from there."
+dnl  exit 1
+dnl fi
+
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 dnl
@@ -687,31 +696,31 @@ if test "$prefer_gtk2" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       gtk_version="2.0",
-      echo "GTK 2 >= 2.14.0 not found"
+      echo "GTK 2 >= 2.20.0 not found"
     )
 elif test "$build_gui" = "yes" ; then
-    PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.2.0,
+    PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.16.0,
       GTK_CFLAGS=$GTK3_CFLAGS
       GTK_LIBS=$GTK3_LIBS
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       AC_DEFINE(USE_GTK3)
       gtk_version="3.0",
-      echo "GTK 3 >= 3.2.0 not found"
+      echo "GTK 3 >= 3.16.0 not found"
     )
 fi
 
 dnl GTK 2.0 fallback in case preference not given
 if test "$prefer_gtk2" = "no" && test "$gtk_version" = "none" ; then
    if test "$build_gui" = "yes" ; then
-      PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.14.0,
+      PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.20.0,
         GTK_CFLAGS=$GTK2_CFLAGS
         GTK_LIBS=$GTK2_LIBS
         CFLAGS="$CFLAGS $GTK_CFLAGS"
         LIBS="$LIBS $GTK_LIBS"
         gtk_version="2.0",
         build_gui="no"
-        echo "GTK 2 >= 2.14.0 not found"
+        echo "GTK 2 >= 2.20.0 not found"
     )
    fi
 fi
@@ -969,9 +978,6 @@ doc/gretl-lite.sty
 
 if test "${darwin_build}" = "yes" ; then
   AC_CONFIG_FILES([
-    osx/Makefile
-    osx/gretl.sh
-    osx/fixlinks.sh
     osx/Info.plist
   ])
 fi

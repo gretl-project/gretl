@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-14 12:33-0400\n"
+"POT-Creation-Date: 2021-04-18 18:56-0400\n"
 "PO-Revision-Date: 2019-01-21 19:16-0500\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -1407,7 +1407,7 @@ msgstr ""
 msgid "auto-generated constant"
 msgstr "automaticky generovaná konstanta"
 
-#: lib/src/dataset.c:1540 gui/gui_utils.c:6129 gui/toolbar.c:1440
+#: lib/src/dataset.c:1540 gui/gui_utils.c:6131 gui/toolbar.c:1440
 #: gui/toolbar.c:1449
 msgid "Please open a data file first"
 msgstr "Prosím, otevřete napřed datový soubor"
@@ -1441,7 +1441,7 @@ msgstr "nějaká data byla používána"
 msgid "variable %d duplicated in the command list."
 msgstr "proměnná  %d je v seznamu příkazů duplicitní"
 
-#: lib/src/dataset.c:2142 gui/gui_utils.c:5547
+#: lib/src/dataset.c:2142 gui/gui_utils.c:5549
 msgid "dataset is subsampled"
 msgstr "datový soubor je podvýběrem"
 
@@ -1521,7 +1521,7 @@ msgstr "Nyní pracujete s podmožinou výběru"
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "obnovení datového souboru: datový soubor je stále podmožinou výběru\n"
 
-#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4258
+#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, fuzzy, c-format
 msgid "%s: no data found"
 msgstr "Nebyla nalezena data.\n"
@@ -2737,7 +2737,7 @@ msgstr "související s modelem"
 #: lib/src/genfuncs.c:6652 lib/src/gretl_func.c:5231 lib/src/plotspec.c:328
 #: lib/src/plotspec.c:347 lib/src/uservar.c:1533 lib/src/uservar.c:2456
 #: gui/dialogs.c:6975 gui/dialogs.c:7216 gui/dialogs.c:7222 gui/fnsave.c:2360
-#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
+#: gui/fnsave.c:2891 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
 #: gui/join-gui.c:231 gui/join-gui.c:234 gui/join-gui.c:407 gui/join-gui.c:462
 #: gui/join-gui.c:797
 msgid "none"
@@ -3010,13 +3010,13 @@ msgstr "časové řady po skupinách"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1585 gui/gpt_dialog.c:969 gui/gpt_dialog.c:1389
-#: gui/gpt_dialog.c:2871
+#: gui/gpt_dialog.c:2883
 msgid "right"
 msgstr "pravé"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:731
 #: lib/src/plotspec.c:737 lib/src/plotspec.c:1583 gui/gpt_dialog.c:1384
-#: gui/gpt_dialog.c:2870
+#: gui/gpt_dialog.c:2882
 msgid "left"
 msgstr "levé"
 
@@ -3258,8 +3258,8 @@ msgid "with least squares fit"
 msgstr "pomocí nejmenších čtverců"
 
 #: lib/src/graphing.c:9614 lib/src/gretl_func.c:2797 lib/src/gretl_utils.c:2030
-#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5291
-#: gui/textbuf.c:2005 plugin/tramo-x12a.c:833
+#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5292
+#: gui/textbuf.c:2006 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Nebylo možné oteřít %s"
@@ -3347,7 +3347,7 @@ msgid "Initial value of objective function is not finite"
 msgstr "Počáteční hodnota objektivní funkce není omezená"
 
 #: lib/src/gretl_bundle.c:520 lib/src/gretl_bundle.c:592
-#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1506
+#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1515
 msgid "no such item"
 msgstr "neexistuje taková položka"
 
@@ -3634,7 +3634,7 @@ msgstr "Neplatný argument pro funkci"
 msgid "PDF doc should be called %s.pdf"
 msgstr ""
 
-#: lib/src/gretl_func.c:3999 gui/fnsave.c:4116
+#: lib/src/gretl_func.c:3999 gui/fnsave.c:4117
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: porovnání proti DTD OK"
@@ -4059,7 +4059,7 @@ msgstr "autokorelace prvního řádu"
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "max F(%d, %d) = %g pro pozorování %s"
 
-#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1405
+#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1406
 msgid "failed"
 msgstr "nezdařilo se"
 
@@ -5550,7 +5550,7 @@ msgstr ""
 msgid "bias"
 msgstr "vychýlení"
 
-#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2846
+#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2858
 msgid "size"
 msgstr "velikost"
 
@@ -6828,11 +6828,11 @@ msgstr "Systém"
 msgid "%s saved\n"
 msgstr "%s uloženo\n"
 
-#: lib/src/objstack.c:1659
+#: lib/src/objstack.c:1668
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Toto nelze provést: pro žádný model ještě nebyl proveden odhad\n"
 
-#: lib/src/objstack.c:1673
+#: lib/src/objstack.c:1682
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -8683,11 +8683,11 @@ msgstr "Weibullovo"
 msgid " DW "
 msgstr " DW "
 
-#: gui/calculator.c:2027 gui/gpt_dialog.c:3275
+#: gui/calculator.c:2027 gui/gpt_dialog.c:3287
 msgid "minimum"
 msgstr "minimum"
 
-#: gui/calculator.c:2029 gui/gpt_dialog.c:3292
+#: gui/calculator.c:2029 gui/gpt_dialog.c:3304
 msgid "maximum"
 msgstr "maximum"
 
@@ -8937,7 +8937,7 @@ msgstr "Žádná vhodná data nejsou k dispozici"
 msgid "gretl: plot a curve"
 msgstr "gretl: vykreslit křivku"
 
-#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2660
+#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2672
 msgid "formula"
 msgstr "vzorec"
 
@@ -9346,7 +9346,7 @@ msgstr "Nainstalováno"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
-#: gui/fncall.c:4191
+#: gui/fncall.c:4199
 msgid "Up to date"
 msgstr "Aktualizované"
 
@@ -9358,7 +9358,7 @@ msgstr "Chyba při otevírání kompresovaných dat"
 msgid "Unknown: access error"
 msgstr "Neznámá: přístupová chyba"
 
-#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4193
+#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4201
 msgid "Not up to date"
 msgstr "Není aktualizované"
 
@@ -9542,7 +9542,7 @@ msgstr "Vybrat adresář"
 msgid "Details"
 msgstr "Ukázat detaily"
 
-#: gui/datafiles.c:1713 gui/textbuf.c:1662
+#: gui/datafiles.c:1713 gui/textbuf.c:1663
 #, fuzzy
 msgid "Package registry"
 msgstr "Popis balíčku"
@@ -9706,15 +9706,15 @@ msgid "Package"
 msgstr "Balíček"
 
 #: gui/datafiles.c:2907 gui/datafiles.c:2914 gui/datafiles.c:2922
-#: gui/fnsave.c:3785
+#: gui/fnsave.c:3786
 msgid "Version"
 msgstr "Verze"
 
-#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3783
+#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3784
 msgid "Author"
 msgstr "Autor"
 
-#: gui/datafiles.c:2928 gui/fnsave.c:2887
+#: gui/datafiles.c:2928 gui/fnsave.c:2888
 #, fuzzy
 msgid "Window"
 msgstr "Windows"
@@ -11505,17 +11505,17 @@ msgstr ""
 "Balík %s nebyl nalezen nebo není aktuální.\n"
 "Přejete si ho nyní stáhnout?"
 
-#: gui/fncall.c:3908 gui/fnsave.c:2891
+#: gui/fncall.c:3916 gui/fnsave.c:2892
 #, fuzzy
 msgid "main window"
 msgstr "Hlavní okno"
 
-#: gui/fncall.c:3909 gui/fnsave.c:2892
+#: gui/fncall.c:3917 gui/fnsave.c:2893
 #, fuzzy
 msgid "model window"
 msgstr "Zavřít okno"
 
-#: gui/fncall.c:3914
+#: gui/fncall.c:3922
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -11523,17 +11523,17 @@ msgid ""
 "Do you want to do this?"
 msgstr ""
 
-#: gui/fncall.c:4195
+#: gui/fncall.c:4203
 #, c-format
 msgid "Requires gretl %s"
 msgstr ""
 
-#: gui/fncall.c:4201
+#: gui/fncall.c:4209
 #, fuzzy
 msgid "Error reading package"
 msgstr "Chyba při čtení %s\n"
 
-#: gui/fncall.c:4629
+#: gui/fncall.c:4637
 #, fuzzy
 msgid "No mapfile is present"
 msgstr "není zde žádný efekt ARCH"
@@ -11581,7 +11581,7 @@ msgstr "Uložit do souboru"
 msgid "A file of this name already exists."
 msgstr "Seznam pojmenovaný %s už existuje"
 
-#: gui/fnsave.c:701 gui/gui_utils.c:5580
+#: gui/fnsave.c:701 gui/gui_utils.c:5582
 msgid "OK to overwrite it?"
 msgstr "Opravdu přepsat?"
 
@@ -11665,7 +11665,7 @@ msgstr "Uložit jako"
 msgid "Saving %s.spec: also save ancillary file(s)?"
 msgstr ""
 
-#: gui/fnsave.c:1591 gui/fnsave.c:3543
+#: gui/fnsave.c:1591 gui/fnsave.c:3544
 #, fuzzy
 msgid "Please save your package first"
 msgstr "Prosím, otevřete napřed datový soubor"
@@ -11745,19 +11745,28 @@ msgstr "Vložit dnešní datum"
 msgid "Save changes?"
 msgstr "Uložit změny?"
 
-#: gui/fnsave.c:2625
+#: gui/fnsave.c:2621
+#, fuzzy
+msgid "Model requirement"
+msgstr "Žádné zvláštní požadavky"
+
+#: gui/fnsave.c:2626
 #, fuzzy
 msgid "Any model"
 msgstr "model"
 
-#: gui/fnsave.c:2706
+#: gui/fnsave.c:2655
+msgid "request access to out-of-sample data"
+msgstr ""
+
+#: gui/fnsave.c:2707
 #, fuzzy
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
 "\n"
 "Můžete zadat jméno datového souboru na příkazovou řádku"
 
-#: gui/fnsave.c:2759
+#: gui/fnsave.c:2760
 #, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
@@ -11766,11 +11775,11 @@ msgstr ""
 "\n"
 "Můžete zadat jméno datového souboru na příkazovou řádku"
 
-#: gui/fnsave.c:2780
+#: gui/fnsave.c:2781
 msgid "provider?"
 msgstr ""
 
-#: gui/fnsave.c:2803
+#: gui/fnsave.c:2804
 #, fuzzy
 msgid ""
 "This package has no GUI-specific help text at present.\n"
@@ -11779,87 +11788,92 @@ msgstr ""
 "Datový soubor neobsahuje žádné informativní komentáře.\n"
 "Přejete si nyní nějaké přidat?"
 
-#: gui/fnsave.c:2873
+#: gui/fnsave.c:2874
 #, fuzzy
 msgid "Label"
 msgstr "Popisky"
 
-#: gui/fnsave.c:3038
+#: gui/fnsave.c:2900
+#, fuzzy
+msgid "GUI help text"
+msgstr "Text nápovědy:"
+
+#: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
 msgstr ""
 
-#: gui/fnsave.c:3206 gui/textbuf.c:1811
+#: gui/fnsave.c:3207 gui/textbuf.c:1812
 #, fuzzy, c-format
 msgid "Couldn't find %s"
 msgstr "Nebylo možné oteřít %s"
 
-#: gui/fnsave.c:3405 gui/fnsave.c:3424
+#: gui/fnsave.c:3406 gui/fnsave.c:3425
 #, fuzzy
 msgid "Apply changes?"
 msgstr "Uložit změny?"
 
-#: gui/fnsave.c:3553
+#: gui/fnsave.c:3554
 #, fuzzy
 msgid "gretl: extra properties"
 msgstr "gretl: chyba"
 
-#: gui/fnsave.c:3570
+#: gui/fnsave.c:3571
 #, fuzzy
 msgid "Special functions"
 msgstr "Uložit funkce"
 
-#: gui/fnsave.c:3658
+#: gui/fnsave.c:3659
 msgid "Menu attachment"
 msgstr ""
 
-#: gui/fnsave.c:3674
+#: gui/fnsave.c:3675
 #, fuzzy
 msgid "Data files"
 msgstr "Nástroje dat"
 
-#: gui/fnsave.c:3682
+#: gui/fnsave.c:3683
 #, fuzzy
 msgid "Dependencies"
 msgstr "Závisle proměnná"
 
-#: gui/fnsave.c:3784
+#: gui/fnsave.c:3785
 msgid "Email"
 msgstr ""
 
-#: gui/fnsave.c:3786
+#: gui/fnsave.c:3787
 msgid "Date (YYYY-MM-DD)"
 msgstr "Datum (RRRR-MM-DD)"
 
-#: gui/fnsave.c:3787
+#: gui/fnsave.c:3788
 msgid "Package description"
 msgstr "Popis balíčku"
 
-#: gui/fnsave.c:3910
+#: gui/fnsave.c:3911
 msgid "Edit function code"
 msgstr "Editovat kód funkce"
 
-#: gui/fnsave.c:3924
+#: gui/fnsave.c:3925
 #, fuzzy
 msgid "Extra properties"
 msgstr "Vlastnosti"
 
-#: gui/fnsave.c:3930 gui/toolbar.c:1086 gui/toolbar.c:1095
+#: gui/fnsave.c:3931 gui/toolbar.c:1086 gui/toolbar.c:1095
 msgid "Save..."
 msgstr "Uložit..."
 
-#: gui/fnsave.c:3940
+#: gui/fnsave.c:3941
 msgid "Edit sample script"
 msgstr "Editovat vzorový skript"
 
-#: gui/fnsave.c:3946
+#: gui/fnsave.c:3947
 msgid "Add/remove functions"
 msgstr "Přidat/odebrat funkce"
 
-#: gui/fnsave.c:3952
+#: gui/fnsave.c:3953
 msgid "Validate"
 msgstr "Validovat"
 
-#: gui/fnsave.c:3978
+#: gui/fnsave.c:3979
 msgid ""
 "Upload package: This means that the package will\n"
 "be uploaded to the gretl server for approval.\n"
@@ -11869,19 +11883,19 @@ msgid ""
 "last upload."
 msgstr ""
 
-#: gui/fnsave.c:3990
+#: gui/fnsave.c:3991
 msgid "gretl: upload"
 msgstr "gretl: upload"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Login"
 msgstr "Přihlašovací jméno"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Password"
 msgstr "Heslo"
 
-#: gui/fnsave.c:4026
+#: gui/fnsave.c:4027
 #, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
@@ -11894,17 +11908,17 @@ msgstr ""
 "Tlačítko 'Website' by mělo otevřít tuto stránku\n"
 "ve vašem prohlížeči."
 
-#: gui/fnsave.c:4170 gui/fnsave.c:4282
+#: gui/fnsave.c:4171 gui/fnsave.c:4283
 msgid "build zip file"
 msgstr ""
 
-#: gui/fnsave.c:4267
+#: gui/fnsave.c:4268
 msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
 msgstr ""
 
-#: gui/fnsave.c:4417
+#: gui/fnsave.c:4418
 #, fuzzy
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
@@ -11915,7 +11929,7 @@ msgstr ""
 "musí být kratší než 32 znaků, musí obsahovat pouze\n"
 "ASCII písmena, číslovky a '_', a musí končit \".gfn\""
 
-#: gui/fnsave.c:4422 gui/selector.c:8261
+#: gui/fnsave.c:4423 gui/selector.c:8261
 #, fuzzy
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
@@ -11926,7 +11940,7 @@ msgstr ""
 "musí být kratší než 32 znaků, musí obsahovat pouze\n"
 "ASCII písmena, číslovky a '_', a musí končit \".gfn\""
 
-#: gui/fnsave.c:5264
+#: gui/fnsave.c:5265
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -11934,11 +11948,11 @@ msgstr ""
 "Žádné funkce pro vytvoření balíčku nejsou aktuálně dostupné.\n"
 "Přejete si nyní napsat funkci?"
 
-#: gui/fnsave.c:5269
+#: gui/fnsave.c:5270
 msgid "gretl: function packages"
 msgstr "gretl: balíčky funkcí"
 
-#: gui/fnsave.c:5324
+#: gui/fnsave.c:5325
 msgid "build gfn file"
 msgstr ""
 
@@ -12258,121 +12272,121 @@ msgstr "Outliery"
 msgid "label %d: "
 msgstr "popisek %d"
 
-#: gui/gpt_dialog.c:2604
+#: gui/gpt_dialog.c:2616
 msgid "Lines"
 msgstr "Čáry"
 
-#: gui/gpt_dialog.c:2689
+#: gui/gpt_dialog.c:2701
 msgid "legend"
 msgstr "legenda"
 
-#: gui/gpt_dialog.c:2722
+#: gui/gpt_dialog.c:2734
 msgid "type"
 msgstr "typ"
 
-#: gui/gpt_dialog.c:2782
+#: gui/gpt_dialog.c:2794
 #, fuzzy
 msgid "line"
 msgstr "čáry"
 
-#: gui/gpt_dialog.c:2783
+#: gui/gpt_dialog.c:2795
 msgid "line width"
 msgstr "tloušťka čáry"
 
-#: gui/gpt_dialog.c:2793 gui/graphics.c:195
+#: gui/gpt_dialog.c:2805 gui/graphics.c:195
 msgid "width"
 msgstr "šířka"
 
-#: gui/gpt_dialog.c:2840
+#: gui/gpt_dialog.c:2852
 msgid "point"
 msgstr "bod"
 
-#: gui/gpt_dialog.c:2868
+#: gui/gpt_dialog.c:2880
 msgid "y axis"
 msgstr "osa y"
 
-#: gui/gpt_dialog.c:2895
+#: gui/gpt_dialog.c:2907
 msgid "Add line..."
 msgstr "Přidat čáru..."
 
-#: gui/gpt_dialog.c:2931
+#: gui/gpt_dialog.c:2943
 msgid "Labels"
 msgstr "Popisky"
 
-#: gui/gpt_dialog.c:2959
+#: gui/gpt_dialog.c:2971
 msgid "text"
 msgstr "text"
 
-#: gui/gpt_dialog.c:2975
+#: gui/gpt_dialog.c:2987
 msgid "position (X Y)"
 msgstr "pozice (X Y)"
 
-#: gui/gpt_dialog.c:3012
+#: gui/gpt_dialog.c:3024
 msgid "justification"
 msgstr "odůvodnění"
 
-#: gui/gpt_dialog.c:3040 gui/gpt_dialog.c:3175 gui/ssheet.c:139
+#: gui/gpt_dialog.c:3052 gui/gpt_dialog.c:3187 gui/ssheet.c:139
 #: gui/ssheet.c:146
 msgid "Add..."
 msgstr "Přidat..."
 
-#: gui/gpt_dialog.c:3079
+#: gui/gpt_dialog.c:3091
 msgid "Arrows"
 msgstr "Šipky"
 
-#: gui/gpt_dialog.c:3110
+#: gui/gpt_dialog.c:3122
 msgid "from (X Y)"
 msgstr "z (X Y)"
 
-#: gui/gpt_dialog.c:3112
+#: gui/gpt_dialog.c:3124
 msgid "to (X Y)"
 msgstr "k (X Y)"
 
-#: gui/gpt_dialog.c:3148
+#: gui/gpt_dialog.c:3160
 msgid "arrow has head"
 msgstr "šipka má špičku"
 
-#: gui/gpt_dialog.c:3157
+#: gui/gpt_dialog.c:3169
 msgid "line is dotted"
 msgstr "čáry je tečkovaná"
 
-#: gui/gpt_dialog.c:3195
+#: gui/gpt_dialog.c:3207
 msgid "X-axis"
 msgstr "osa X"
 
-#: gui/gpt_dialog.c:3197
+#: gui/gpt_dialog.c:3209
 msgid "Y-axis"
 msgstr "osa Y"
 
-#: gui/gpt_dialog.c:3199
+#: gui/gpt_dialog.c:3211
 msgid "Y2-axis"
 msgstr "osa Y2"
 
-#: gui/gpt_dialog.c:3252
+#: gui/gpt_dialog.c:3264
 msgid "auto axis range"
 msgstr "automatický rozsah osy"
 
-#: gui/gpt_dialog.c:3265
+#: gui/gpt_dialog.c:3277
 msgid "manual range:"
 msgstr "ručně zadaný rozsah:"
 
-#: gui/gpt_dialog.c:3340
+#: gui/gpt_dialog.c:3352
 msgid "linear scale"
 msgstr "lineární měřítko"
 
-#: gui/gpt_dialog.c:3348
+#: gui/gpt_dialog.c:3360
 msgid "logarithmic scale, base:"
 msgstr "logaritmické měřítko, základ:"
 
-#: gui/gpt_dialog.c:3635
+#: gui/gpt_dialog.c:3647
 msgid "Title of plot"
 msgstr "Název obrázku"
 
-#: gui/gpt_dialog.c:3636
+#: gui/gpt_dialog.c:3648
 msgid "Title for axis"
 msgstr "Název osy"
 
-#: gui/gpt_dialog.c:3662
+#: gui/gpt_dialog.c:3674
 msgid "gretl plot controls"
 msgstr "ovladače obrázků gretlu"
 
@@ -12627,11 +12641,11 @@ msgstr "Na databázovém _serveru..."
 msgid "_Function packages"
 msgstr "Balíčky _funkcí"
 
-#: gui/gretl.c:1720 gui/textbuf.c:1654
+#: gui/gretl.c:1720 gui/textbuf.c:1655
 msgid "On _local machine..."
 msgstr "Na _místním počítači..."
 
-#: gui/gretl.c:1721 gui/textbuf.c:1656
+#: gui/gretl.c:1721 gui/textbuf.c:1657
 msgid "On _server..."
 msgstr "Na _serveru..."
 
@@ -12708,7 +12722,7 @@ msgstr "_Výpočet testovacích statistik"
 msgid "_Nonparametric tests"
 msgstr "_Neparametrické testy"
 
-#: gui/gretl.c:1747 gui/textbuf.c:1668
+#: gui/gretl.c:1747 gui/textbuf.c:1669
 msgid "_Seed for random numbers"
 msgstr "_Nastavení pro generátor náhodných čísel"
 
@@ -13446,7 +13460,7 @@ msgstr "_Klávesnicové zkratky"
 msgid "_Hansl primer"
 msgstr ""
 
-#: gui/gretl.c:1955 gui/textbuf.c:1658
+#: gui/gretl.c:1955 gui/textbuf.c:1659
 #, fuzzy
 msgid "_Function package guide"
 msgstr "Balíčky _funkcí"
@@ -13466,7 +13480,7 @@ msgstr "gretl: GMM"
 msgid "_gretl + DB.NOMICS"
 msgstr "gretl: GMM"
 
-#: gui/gretl.c:1959 gui/textbuf.c:1672
+#: gui/gretl.c:1959 gui/textbuf.c:1673
 #, fuzzy
 msgid "Creating maps"
 msgstr "Vytvoření a I/O"
@@ -13475,7 +13489,7 @@ msgstr "Vytvoření a I/O"
 msgid "Check for _updates"
 msgstr "Zkontrolujte _aktualizace"
 
-#: gui/gretl.c:1961 gui/textbuf.c:1660
+#: gui/gretl.c:1961 gui/textbuf.c:1661
 msgid "Check for _addons"
 msgstr "Zkontrolovat _aktualizace"
 
@@ -14114,8 +14128,8 @@ msgstr "gretl: bez jména"
 msgid "gretl: script output %d"
 msgstr "gretl: výstup skriptu"
 
-#: gui/gui_utils.c:1839 gui/gui_utils.c:5813 gui/gui_utils.c:5877
-#: gui/gui_utils.c:6050
+#: gui/gui_utils.c:1839 gui/gui_utils.c:5815 gui/gui_utils.c:5879
+#: gui/gui_utils.c:6052
 msgid "gretl: script output"
 msgstr "gretl: výstup skriptu"
 
@@ -14438,17 +14452,17 @@ msgstr "Reakce %s"
 msgid "to %s"
 msgstr "na %s"
 
-#: gui/gui_utils.c:5336
+#: gui/gui_utils.c:5338
 #, fuzzy
 msgid "_Save text..."
 msgstr "_Uložit text jako..."
 
-#: gui/gui_utils.c:5343
+#: gui/gui_utils.c:5345
 #, fuzzy
 msgid "Save bundle to session as _icon"
 msgstr "Uložit do relace jako _ikonu"
 
-#: gui/gui_utils.c:5425
+#: gui/gui_utils.c:5427
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -14462,7 +14476,7 @@ msgstr ""
 "Přejete si obnovit podvýběr, na kterém\n"
 "byl proveden odhad modelu?"
 
-#: gui/gui_utils.c:5488
+#: gui/gui_utils.c:5490
 #, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
@@ -14474,42 +14488,42 @@ msgstr ""
 "Přejete si obnovit podvýběr, na kterém\n"
 "byl proveden odhad modelu?"
 
-#: gui/gui_utils.c:5558 gui/library.c:5279
+#: gui/gui_utils.c:5560 gui/library.c:5279
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Řada jménem %s už existuje"
 
-#: gui/gui_utils.c:5560
+#: gui/gui_utils.c:5562
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "Matice pojmenovaná %s už existuje"
 
-#: gui/gui_utils.c:5562
+#: gui/gui_utils.c:5564
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "Skalární veličina pojmenovaná %s už existuje"
 
-#: gui/gui_utils.c:5564
+#: gui/gui_utils.c:5566
 #, c-format
 msgid "A list named %s already exists"
 msgstr "Seznam pojmenovaný %s už existuje"
 
-#: gui/gui_utils.c:5566
+#: gui/gui_utils.c:5568
 #, c-format
 msgid "A string named %s already exists"
 msgstr "Řetězec pojmenovaný %s už existuje"
 
-#: gui/gui_utils.c:5568
+#: gui/gui_utils.c:5570
 #, fuzzy, c-format
 msgid "A bundle named %s already exists"
 msgstr "Seznam pojmenovaný %s už existuje"
 
-#: gui/gui_utils.c:5570
+#: gui/gui_utils.c:5572
 #, fuzzy, c-format
 msgid "An array named %s already exists"
 msgstr "Matice pojmenovaná %s už existuje"
 
-#: gui/gui_utils.c:5606
+#: gui/gui_utils.c:5608
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -14518,7 +14532,7 @@ msgstr ""
 "Jméno proměnné %s... je příliš dlouhé\n"
 "(maximum je %d znaků)"
 
-#: gui/gui_utils.c:5611
+#: gui/gui_utils.c:5613
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -14527,7 +14541,7 @@ msgstr ""
 "První znak jména ('%c') není správný\n"
 "(první musí být alfabetický)"
 
-#: gui/gui_utils.c:5619
+#: gui/gui_utils.c:5621
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -14536,25 +14550,25 @@ msgstr ""
 "Jméno obsahuje nepovolený znak (na místě %d)\n"
 "Používejte pouze písmena bez diakritiky, číslice a podtržítko"
 
-#: gui/gui_utils.c:5779 gui/gui_utils.c:5784
+#: gui/gui_utils.c:5781 gui/gui_utils.c:5786
 msgid "No output was produced"
 msgstr ""
 
-#: gui/gui_utils.c:5945
+#: gui/gui_utils.c:5947
 msgid "No command was supplied to start R"
 msgstr "Pro spuštění R nebyl poskytnut žádný příkaz"
 
-#: gui/gui_utils.c:6141
+#: gui/gui_utils.c:6143
 #, fuzzy
 msgid "multiple time series object"
 msgstr "Napojené časové řady"
 
-#: gui/gui_utils.c:6142
+#: gui/gui_utils.c:6144
 #, fuzzy
 msgid "data frame"
 msgstr "měřítko"
 
-#: gui/gui_utils.c:6146
+#: gui/gui_utils.c:6148
 #, fuzzy
 msgid "Send data as"
 msgstr "Uložit data _jako..."
@@ -14607,11 +14621,11 @@ msgstr "Transformace"
 msgid "Utilities"
 msgstr "Nástroje"
 
-#: gui/helpfiles.c:325 gui/textbuf.c:2326
+#: gui/helpfiles.c:325 gui/textbuf.c:2327
 msgid "Accessors"
 msgstr "Doplňky"
 
-#: gui/helpfiles.c:327 gui/textbuf.c:2327
+#: gui/helpfiles.c:327 gui/textbuf.c:2328
 #, fuzzy
 msgid "Built-in strings"
 msgstr "Smazán řetězec %s"
@@ -14673,7 +14687,7 @@ msgstr "Řetězce"
 msgid "MPI"
 msgstr ""
 
-#: gui/helpfiles.c:405 gui/textbuf.c:2425
+#: gui/helpfiles.c:405 gui/textbuf.c:2426
 msgid "Index"
 msgstr "Rejstřík"
 
@@ -17795,99 +17809,99 @@ msgstr "Žádné informace o zpětné akci nejsou k dispozici"
 msgid "No undo information available"
 msgstr "Žádné informace o zpětné akci nejsou k dispozici"
 
-#: gui/textbuf.c:1401
+#: gui/textbuf.c:1402
 msgid "OK"
 msgstr ""
 
-#: gui/textbuf.c:1458
+#: gui/textbuf.c:1459
 #, fuzzy
 msgid "Next results"
 msgstr "Následující řady"
 
-#: gui/textbuf.c:1507
+#: gui/textbuf.c:1508
 #, fuzzy
 msgid "processing...\n"
 msgstr "_Otevřít relaci..."
 
-#: gui/textbuf.c:1664
+#: gui/textbuf.c:1665
 #, fuzzy
 msgid "gretl + MPI"
 msgstr "gretl: GMM"
 
-#: gui/textbuf.c:1666
+#: gui/textbuf.c:1667
 #, fuzzy
 msgid "gretl + SVM"
 msgstr "gretl: GMM"
 
-#: gui/textbuf.c:1670
+#: gui/textbuf.c:1671
 #, fuzzy
 msgid "dbnomics for gretl"
 msgstr "dynamická předpověď"
 
-#: gui/textbuf.c:1815
+#: gui/textbuf.c:1816
 #, fuzzy, c-format
 msgid "Couldn't read %s"
 msgstr "Nebylo možné otevřít '%s'"
 
-#: gui/textbuf.c:2280
+#: gui/textbuf.c:2281
 msgid "Gretl Command Reference"
 msgstr "Gretl Popis Příkazu"
 
-#: gui/textbuf.c:2324
+#: gui/textbuf.c:2325
 msgid "Gretl Function Reference"
 msgstr "Gretl Popis Funkce"
 
-#: gui/textbuf.c:2328
+#: gui/textbuf.c:2329
 #, fuzzy
 msgid "Functions proper"
 msgstr "_Popis funkce"
 
-#: gui/textbuf.c:2426
+#: gui/textbuf.c:2427
 msgid "Back"
 msgstr "Zpět"
 
-#: gui/textbuf.c:3871
+#: gui/textbuf.c:3872
 msgid "Comment line"
 msgstr "Komentovat řádek"
 
-#: gui/textbuf.c:3872
+#: gui/textbuf.c:3873
 msgid "Uncomment line"
 msgstr "Odebrat komentář řádku"
 
-#: gui/textbuf.c:3873
+#: gui/textbuf.c:3874
 msgid "Comment region"
 msgstr "Komentovat oblast"
 
-#: gui/textbuf.c:3874
+#: gui/textbuf.c:3875
 msgid "Uncomment region"
 msgstr "Odebrat komentář oblasti"
 
-#: gui/textbuf.c:3910
+#: gui/textbuf.c:3911
 msgid "Execute region"
 msgstr "Vykonat příkazy oblasti"
 
-#: gui/textbuf.c:3912
+#: gui/textbuf.c:3913
 msgid "Execute line"
 msgstr "Vykonat příkaz řádku"
 
-#: gui/textbuf.c:3940
+#: gui/textbuf.c:3941
 msgid "Auto-indent region"
 msgstr "Automaticky odražená oblast"
 
-#: gui/textbuf.c:3941
+#: gui/textbuf.c:3942
 msgid "Indent region"
 msgstr "Odražená oblast"
 
-#: gui/textbuf.c:3950
+#: gui/textbuf.c:3951
 msgid "Unindent region"
 msgstr "Odstranit odražení oblasti"
 
-#: gui/textbuf.c:3958
+#: gui/textbuf.c:3959
 #, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
 msgstr "Automaticky odražený skript"
 
-#: gui/textbuf.c:3969 gui/toolbar.c:820
+#: gui/textbuf.c:3970 gui/toolbar.c:820
 #, fuzzy
 msgid "Preferences..."
 msgstr "_Preference"

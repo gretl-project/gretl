@@ -227,6 +227,8 @@ char *gretl_build_path (char *targ,
 			const gchar *first_element,
 			...);
 
+gretl_bundle *foreign_info (void);
+
 #ifdef WIN32
 
 void win32_set_gretldir (void);

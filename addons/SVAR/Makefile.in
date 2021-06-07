@@ -37,8 +37,7 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_main.inp \
 	SVAR_estim_backend.inp \
 	SVAR_signrestr.inp \
-	SVAR_signrestr_utils.inp \
-	SVAR_compatibility_funcs.inp
+	SVAR_signrestr_utils.inp 
 
 SPEC = SVAR.spec
 

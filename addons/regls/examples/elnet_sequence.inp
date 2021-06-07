@@ -1,0 +1,45 @@
+set verbose off
+include regls.gfn
+open murder.gdt --quiet --frompkg=regls
+
+/* elastic net with alpha = 0.5 */
+
+list X = population..LemasPctOfficDrugUn
+list LL = murdPerPop X
+
+smpl 1 1000
+
+parms = defbundle("nlambda", 25, "verbosity", 1, "alpha", 0.5)
+bundle eb = regls(murdPerPop, X, parms)
+
+# STOP here if you don't have R + glmnet
+# quit
+
+/*
+  Note: glmnet defines Lambda and Df differently from regls, but
+  glmnet's "%Dev" values are the same as regls's "R^2" to four
+  significant digits, and the optimized coefficent vectors are
+  essentially the same for each lambda in the sequence of 25.
+*/
+
+foreign language=R --send-data=LL
+     library(glmnet)
+     x <- as.matrix(gretldata[,2:ncol(gretldata)])
+     y <- as.matrix(gretldata[,1])
+     m <- glmnet(x, y, family = "gaussian", alpha = 0.5,
+      nlambda = 25, standardize = T, intercept = T)
+     print(m)
+     RB <- as.matrix(coef(m))
+     gretl.export(RB, quiet=1)
+end foreign
+
+# verify that the difference across estimates is minimal
+RB = mread("RB.mat", 1)
+d = max(abs(eb.B - RB))
+printf "\nMax. absolute difference of estimates, regls/glmnet: %g\n", d
+mad = sum(abs(eb.B - RB)) / (25 * nelem(X))
+printf "Mean absolute difference: %g\n", mad
+
+
+
+

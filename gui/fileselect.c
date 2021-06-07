@@ -1039,6 +1039,17 @@ static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
     return filt;
 }
 
+static void filesel_set_filter_patterns (GtkWidget *filesel,
+					 const char *pat1,
+					 const char *pat2)
+{
+    GtkFileFilter *filt = gtk_file_filter_new();
+
+    gtk_file_filter_add_pattern(filt, pat1);
+    gtk_file_filter_add_pattern(filt, pat2);
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filt);
+}
+
 /* return non-zero if we add more than one selectable filter */
 
 static int filesel_set_filters (GtkWidget *filesel, int action,
@@ -1075,8 +1086,8 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_SHP);
 	filesel_add_data_filter(filesel, GRETL_GEOJSON);
     } else if (action == UPLOAD_PKG) {
-	filesel_add_filter(filesel, N_("plain function packages (*.gfn)"), "*.gfn");
-	filesel_add_filter(filesel, N_("zipped function packages (*.zip)"), "*.zip");
+	/* could add OPEN_GFN here?? */
+	filesel_set_filter_patterns(filesel, "*.gfn", "*.zip");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 

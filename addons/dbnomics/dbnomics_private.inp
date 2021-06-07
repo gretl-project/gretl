@@ -179,8 +179,9 @@ end function
 ### ------------------------------------------------------------------------
 
 function string sanitize_url(const string s)
+    string dqu = sprintf("\"")
     ret = strsub(s, " ", "%20")
-    ret = strsub(ret, sprintf("\""), "%22")
+    ret = strsub(ret, dqu, "%22")
     ret = strsub(ret, ",", "%2C")
     ret = strsub(ret, ":", "%3A")
     ret = strsub(ret, "{", "%7B")
@@ -191,8 +192,9 @@ function string sanitize_url(const string s)
 end function
 
 function string desanitize_url(const string s)
+    string dqu = sprintf("\"")
     ret = strsub(s, "%20", " ")
-    ret = strsub(ret, "%22", sprintf("\""))
+    ret = strsub(ret, "%22", dqu)
     ret = strsub(ret, "%2C", ",")
     ret = strsub(ret, "%3A", ":")
     ret = strsub(ret, "%7B", "{")

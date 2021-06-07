@@ -1,11 +1,15 @@
+# (function splitfname comes from the extra addon) 
+
+#### 
+
 function scalar check_bounds(int s, int v, int n)
     # negative s is allowed and means to flip the shock
 
     ret = 0
-    if abs(s) > n || (s == 0)
+    if abs(s)>n || s==0
         ret = 1
 
-    elif (v > n) || (v < 1)
+    elif v>n || v<1
         ret = 2
     endif
 
@@ -22,28 +26,22 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
                         int bc[0:2:0], int whichdraw[0::0])
 
     # bc: bias correction choice
-    # FIXME: We should get rid of sname/vname args and get them automatically
-    # via snum/vnum
+    # FIXME: We should link the sname/vname args and snum/vnum args,
+    # also to avoid accidental input mismatch.
     # (the number of args here is horrible...)
 
-    if whichdraw && (exists(boot) || bc)
-        funcerr "cannot have SR/whichdraw and bootstrap options together"
-    endif
+    errorif( whichdraw && (exists(boot) || bc), \
+        "cannot have SR/whichdraw and bootstrap options together")
 
-    flip = (snum < 0)
+    flip = snum < 0
     snum = abs(snum)
     n = round(sqrt(cols(IRFmat)))
-
-    # bootrep = exists(boot) ? boot.rep : 0 # doesn't work due to gretl bug+
-    bootrep = 0
-    if exists(boot)
-        bootrep = boot.rep
-    endif
+    bootrep = exists(boot) ? boot.rep : 0 # didn't work due to gretl bug+
 
     # anything to cumulate?
-    cumulate = exists(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
+    cumulate = exists(cumul) ? sum(cumul .= vnum) > 0 : 0
 
-    tmpfname = int(1000 * muniform(1,1))
+    tmpfname = int(1000 * muniform(1))
     string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
       sprintf("@dotdir/irf%d.gp", tmpfname)
 
@@ -65,8 +63,8 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
         scalar maxy = maxc(x)
     endif
 
-    miny = (miny>0) ? 0 : miny
-    maxy = (maxy<0) ? 0 : maxy
+    miny = miny>0 ? 0 : miny
+    maxy = maxy<0 ? 0 : maxy
 
     set force_decpoint on
 
@@ -110,11 +108,11 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "'Bstrap %d%% CI', \\\n", floor(100 * boot.alpha)
             printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
             printf "'-' w l lw 2 lc -1 t 'IRF'\n"
-            loop i=1..h -q
+            loop i = 1..h 
                 printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
             endloop
             printf "e\n"
-            loop i=1..h -q
+            loop i = 1..h 
                 printf "%d\t%g\n", i-1, mdn[i,]
             endloop
             printf "e\n"
@@ -122,12 +120,12 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "plot '-' w l lw 2\n"
         endif
 
-        loop i=1..h -q
+        loop i = 1..h 
             printf "%d\t%g\n", i-1, x[i]
         endloop
         printf "e\n"
     end outfile
-    set force_decpoint off
+    set force_decpoint off # in gretl >=2021b this is redundant
 
     return tmpfile
 end function
@@ -169,7 +167,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     is_vrange = range(vnum, n, &vfrom, &vto)
 
     # cycle through all (selected) shocks and variables
-    loop snum = sfrom..sto -q
+    loop snum = sfrom..sto 
         # do checks
         err = check_bounds(snum, 1, n)
         if err == 1
@@ -184,7 +182,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             scale = tmp[abs(snum), abs(snum)]
         endif
 
-        loop vnum = vfrom..vto -q
+        loop vnum = vfrom..vto 
             # do checks
             err = check_bounds(1, vnum, n)
             if err == 2
@@ -214,11 +212,11 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
                 endif
             endif
 
-            if (outfilename == "display") || (sfrom == sto && vfrom == vto)
+            if outfilename=="display" || (sfrom == sto && vfrom == vto)
                 # (single plot, no indices)
                 tmpout = outfilename
             else
-                strings be = basename(outfilename)	# gives 2-elem array
+                strings be = splitfname(outfilename)[2:3]	# gives 2-elem array, was basename
                 if is_vrange	 # several v indices
                     if is_srange # several s indices
                         tmpout = sprintf("%s_%d%d.%s", be[1], snum, vnum, be[2])
@@ -262,7 +260,7 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
     n = round(sqrt(cols(FEVDmat)))
     h = rows(FEVDmat) - 1
 
-    scalar tmpfname = int(10000*muniform(1,1))
+    scalar tmpfname = int(10000 * muniform(1))
     if $windows
         string datfile = sprintf("@dotdir\\fevd%d.txt", tmpfname)
         # sprintf datfile "@dotdir\\fevd%d.txt", tmpfname
@@ -295,7 +293,7 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
         printf "set style histogram rowstacked\n"
         printf "set style data histogram\n"
 
-        loop i=1..n --quiet
+        loop i = 1..n 
             string sname = snames[i]
 
             if i == 1
@@ -312,7 +310,7 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
         printf "%12.4f\n", seq(0, h)' ~ 100*FEVDmat[,sel]
     end outfile
 
-    set force_decpoint off
+    set force_decpoint off # not needed in gretl >= 2021b
 
     return tmpfile
 end function
@@ -337,14 +335,14 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
         titletail = sprintf(" (draw %d)", whichdraw)
     endif
 
-    loop vnum = vfrom..vto -q
+    loop vnum = vfrom..vto 
         err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum
             return
         endif
 
-        string tmpout = (outfilename == "display") ? "display" : \
+        string tmpout = outfilename=="display" ? "display" : \
           sprintf("%s_%d", outfilename, vnum)
         string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, \
           keypos, titletail)
@@ -374,7 +372,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
 
-    loop vnum = vfrom..vto -q
+    loop vnum = vfrom..vto 
         err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum
@@ -388,7 +386,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
 
         tmp -= tmp[1] # take away deterministic component
-        loop i=1..nelem(tmp) --quiet
+        loop i = 1..nelem(tmp) 
             string sn = obj.snames[i]
             setinfo tmp[i] --graph-name="@sn"
         endloop

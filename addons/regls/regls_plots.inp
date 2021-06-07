@@ -1,0 +1,74 @@
+# regls plotting functions
+
+function void regls_fcast_plot (const series y, const series yhat,
+                                const bundle b)
+   string tmpname
+   scalar x0 = min(yhat)
+   scalar x1 = max(yhat)
+   scalar xd = 0.025 * (x1 - x0)
+   x0 = (x0 >= 0 && x0 - xd < 0)? 0 : x0 - xd
+   x1 += xd
+   set force_decpoint on
+   outfile --tempfile=tmpname --quiet
+      printf "set title 'actual vs predicted %s (%s)'\n", b.depvar, b.estimator
+      printf "set xlabel 'predicted'\n"
+      printf "set ylabel 'actual'\n"
+      printf "set key left top\n"
+      printf "set xrange [%g:%g]\n", x0, x1
+      printf "plot '-' using 1:2 title '' w p, \\\n"
+      printf " x title 'actual = predicted' w l\n"
+      print yhat y --data-only
+      printf "e\n"
+   end outfile
+   set force_decpoint off
+   gnuplot --input="@tmpname" --output=display
+   remove(tmpname)
+end function
+
+function void regls_mse_plot (const bundle b)
+   matrix M = b.XVC[,1] ~ b.lfrac
+   matrix B = b.XVC
+   scalar ymin = 0.95 * minc(b.XVC[,1] - b.XVC[,2])
+   scalar ymin = ymin < 0 ? 0 : ymin
+   scalar x0 = b.lfrac[b.idxmin]
+   scalar y0 = M[b.idxmin,1]
+   string lspec0 = "front center point pt 8 ps 2"
+   scalar x1 = b.lfrac[b.idx1se]
+   scalar y1 = M[b.idx1se,1]
+   string lspec1 = "front center point pt 6 ps 2"
+   plot M
+      literal set termoption enhanced
+      options with-lp band=B band-style=dash
+      printf "set yrange [%g:1]", ymin
+      literal set xlabel 's = λ/λ_{max}'
+      literal set ylabel 'MSE'
+      literal set logscale x
+      printf "set label \"\" at %g,%g %s", x0, y0, lspec0
+      printf "set label \"\" at %g,%g %s", x1, y1, lspec1
+      literal set title 'Mean cross-validation MSE with one-s.e. band'
+   end plot --output=display
+end function
+
+function void regls_bic_plot (const bundle b)
+   matrix M = b.BIC ~ b.lfrac
+   scalar xmin = minc(b.lfrac)
+   scalar ymin = minc(b.BIC)
+   scalar ymax = maxc(b.BIC)
+   scalar ymargin = 0.05 * (ymax - ymin)
+   ymin -= ymargin
+   ymax += ymargin
+   scalar x0 = b.lfrac[b.idxmin]
+   scalar y0 = b.BIC[b.idxmin]
+   string lspec = "front center point pt 8 ps 2"
+   plot M
+      literal set termoption enhanced
+      options with-lp
+      printf "set xrange [%g:1]", xmin
+      printf "set yrange [%g:%g]", ymin, ymax
+      literal set xlabel 's = λ/λ_{max}'
+      literal set ylabel 'BIC'
+      literal set logscale x
+      printf "set label \"\" at %g,%g %s", x0, y0, lspec
+      literal set title 'BIC as a function of s'
+   end plot --output=display
+end function

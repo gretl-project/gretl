@@ -336,7 +336,8 @@ enum {
     TOK_NOGAP  = 1 << 1, /* as TOK_JOINED but including joined comma */
     TOK_DONE   = 1 << 2, /* token has been handled */
     TOK_QUOTED = 1 << 3, /* token was found in double quotes */
-    TOK_IGNORE = 1 << 4  /* token not actually wanted, ignored */
+    TOK_IGNORE = 1 << 4, /* token not actually wanted, ignored */
+    TOK_LSTR   = 1 << 5  /* token provisionally added to list string */
 } TokenFlags;
 
 enum {
@@ -373,8 +374,8 @@ enum {
 struct cmd_token_ {
     char *s;         /* allocated token string */
     const char *lp;  /* pointer to line position */
-    char type;       /* one of TokenTypes */
-    char flag;       /* zero or more of TokenFlags */
+    guint8 type;     /* one of TokenTypes */
+    guint8 flag;     /* zero or more of TokenFlags */
 };
 
 #define token_joined(t)  (t->flag & TOK_JOINED)
@@ -382,6 +383,7 @@ struct cmd_token_ {
 #define token_ignored(t) (t->flag & TOK_IGNORE)
 
 #define mark_token_done(t) (t.flag |= TOK_DONE)
+#define mark_list_token_done(t) (t.flag |= (TOK_DONE|TOK_LSTR))
 #define mark_token_ignored(t) (t.flag |= (TOK_DONE|TOK_IGNORE))
 
 #define option_type(t) (t == TOK_OPT || t == TOK_SOPT || \
@@ -771,7 +773,7 @@ static int push_quoted_token (CMD *c, const char *s,
 
 static int symbol_spn (const char *s)
 {
-    const char *ok = "=+-/*<>?|~^!%&.,:;\\";
+    const char *ok = "=+-/*<>?|~^!%&.,:;\\'";
 
     if (*s == '=' && *(s+1) != '=') {
 	return 1;
@@ -1154,7 +1156,8 @@ static int handle_option_value (CMD *c, int i, gretlopt opt,
 	}
 
 #if CDEBUG > 1
-	fprintf(stderr, "option '--%s': param='%s'\n", tok->s, val);
+	fprintf(stderr, "option '--%s': param='%s'\n", tok->s,
+		(val == NULL)? "NULL" : val);
 #endif
 
 	if (val != NULL) {
@@ -2042,7 +2045,7 @@ static int handle_command_preamble (CMD *c)
 
     if (c->toks[0].type == TOK_CATCH) {
 	if (not_catchable(c->ci)) {
-	    gretl_errmsg_set("catch: cannot be applied to this command");
+	    gretl_errmsg_set(_("catch: cannot be applied to this command"));
 	    c->err = E_DATA;
 	    return c->err;
 	} else {
@@ -2059,7 +2062,7 @@ static int handle_command_preamble (CMD *c)
 	int n = strlen(s);
 
 	if (n >= MAXSAVENAME) {
-	    gretl_errmsg_set("savename is too long");
+	    gretl_errmsg_set(_("savename is too long"));
 	    c->err = E_DATA;
 	} else {
 	    strcpy(c->savename, s);
@@ -2413,10 +2416,10 @@ static void set_deprecation (const char *bad, const char *good,
     const char *tag = command ? "command" : "construction";
 
     if (strstr(good, "()")) {
-	gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use the function %s",
+	gretl_warnmsg_sprintf(_("\"%s\": obsolete %s; please use the function %s"),
 			      bad, tag, good);
     } else {
-	gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
+	gretl_warnmsg_sprintf(_("\"%s\": obsolete %s; please use \"%s\""),
 			      bad, tag, good);
     }
 }
@@ -2621,7 +2624,7 @@ static int try_for_command_index (CMD *cmd, int i,
 		if (compmode == FUNC && endci == FUNC) {
 		    cmd->flags |= CMD_ENDFUN;
 		} else if (endci == LOOP) {
-		    gretl_errmsg_set("'end loop': did you mean 'endloop'");
+		    gretl_errmsg_set(_("'end loop': did you mean 'endloop'"));
 		    gretl_abort_compiling_loop();
 		    *err = E_PARSE;
 		}
@@ -2771,7 +2774,7 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 	    tmp = gretl_strdup_printf("%s(%s)", tok->s, next->s);
 	    c->param = gretl_str_expand(&c->param, tmp, " ");
 	    free(tmp);
-	    mark_token_done(c->toks[i]);
+	    mark_list_token_done(c->toks[i]);
 	    *k2 = ++i;
 	} else if (i < c->ntoks - 1 && midas_term_special(c, tok->s)) {
 	    cmd_token *next = &c->toks[i+1];
@@ -2780,12 +2783,12 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 	    tmp = gretl_strdup_printf("%s(%s)", tok->s, next->s);
 	    c->param = gretl_str_expand(&c->param, tmp, " ");
 	    free(tmp);
-	    mark_token_done(c->toks[i]);
+	    mark_list_token_done(c->toks[i]);
 	    *k2 = ++i;
 	} else {
 	    strcat(lstr, tok->s);
 	}
-	mark_token_done(c->toks[i]);
+	mark_list_token_done(c->toks[i]);
     }
 }
 
@@ -2809,40 +2812,27 @@ static int validate_list_token (cmd_token *tok)
 
 /* In case we got something that looks like a list but
    turned out not to be valid as such, remove the TOK_DONE
-   flag from the tokens that composed the putative list;
-   their @s (string) members are collected in @lstr.
+   flag from the tokens that composed the putative list,
+   which will be marked with TOK_LSTR status.
 */
 
-static int rescind_tok_done_status (CMD *c, const char *lstr)
+static void rescind_tok_done_status (CMD *c)
 {
-    int i, j, ns = 0;
     cmd_token *tok;
-    char **S;
-
-    S = gretl_string_split(lstr, &ns, NULL);
-    if (S == NULL) {
-	return E_ALLOC;
-    }
+    int i;
 
     for (i=c->cstart+1; i<c->ntoks; i++) {
 	tok = &c->toks[i];
-	if (token_done(tok)) {
-	    for (j=0; j<ns; j++) {
-		if (!strcmp(S[j], tok->s)) {
-		    tok->flag ^= TOK_DONE;
-		    break;
-		}
-	    }
+	if (tok->flag & TOK_LSTR) {
+	    tok->flag ^= TOK_DONE;
+	    tok->flag ^= TOK_LSTR;
 	}
     }
-
-    strings_array_free(S, ns);
-
-    return 0;
 }
 
 static int process_command_list (CMD *c, DATASET *dset)
 {
+    guint8 TOK_PROV = (TOK_DONE | TOK_LSTR);
     char vectest[3] = {0}; /* for arima */
     char lstr[MAXLINE];
     cmd_token *tok;
@@ -2896,13 +2886,13 @@ static int process_command_list (CMD *c, DATASET *dset)
 		    c->err = process_auxlist_term(c, tok, &ilist);
 		    if (!c->err) {
 			vectest[ilist[0] - 1] = 1;
-			tok->flag |= TOK_DONE;
+			tok->flag |= TOK_PROV;
 		    }
 		} else {
 		    k = gretl_int_from_string(tok->s, &c->err);
 		    if (!c->err) {
 			gretl_list_append_term(&ilist, k);
-			tok->flag |= TOK_DONE;
+			tok->flag |= TOK_PROV;
 		    }
 		}
 		if (c->err) {
@@ -2917,7 +2907,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 			strcat(lstr, " ");
 		    }
 		    strcat(lstr, tok->s);
-		    tok->flag |= TOK_DONE;
+		    tok->flag |= TOK_PROV;
 		    j++;
 		}
 	    }
@@ -2955,7 +2945,7 @@ static int process_command_list (CMD *c, DATASET *dset)
     fprintf(stderr, "process_command_list: lstr='%s' (err=%d)\n", lstr, c->err);
 #endif
 
-    if ((c->ci == PRINT || c->ci == DELEET) && *lstr == '\0') {
+    if ((c->ci == DELEET || c->ci == PRINT) && *lstr == '\0') {
 	/* we didn't get a "list string": maybe the terms are
 	   names of non-series variables
 	*/
@@ -2967,17 +2957,17 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && dset != NULL && *lstr != '\0') {
 	vlist = generate_list(lstr, dset, &c->err);
-	if (c->err && c->ci == DELEET) {
+	if (c->err && (c->ci == DELEET || c->ci == PRINT)) {
 	    /* we got something that looked like a list string,
 	       but list generation failed: again, maybe the
 	       the terms are names of non-series variables
 	    */
-	    c->err = rescind_tok_done_status(c, lstr);
-	    if (!c->err) {
-		c->ciflags &= ~CI_LIST;
-		c->ciflags &= ~CI_DOALL;
-		c->ciflags |= CI_ADHOC;
-	    }
+	    rescind_tok_done_status(c);
+	    c->ciflags &= ~CI_LIST;
+	    c->ciflags &= ~CI_DOALL;
+	    c->ciflags |= CI_ADHOC;
+	    c->err = 0;
+	    goto finish;
 	}
     }
 
@@ -3004,6 +2994,8 @@ static int process_command_list (CMD *c, DATASET *dset)
 	    ilist = NULL;
 	}
     }
+
+ finish:
 
     free(ilist);
     free(vlist);
@@ -3328,7 +3320,7 @@ static int check_end_command (CMD *cmd)
     }
 
     if (endci != cmd->context) {
-	gretl_errmsg_sprintf("end: invalid parameter '%s'", cmd->param);
+	gretl_errmsg_sprintf(_("end: invalid parameter '%s'"), cmd->param);
 	cmd->err = E_DATA;
     }
 
@@ -3454,6 +3446,13 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 
     gretl_push_c_numeric_locale();
     state->more = NULL;
+
+    if (!gretl_in_batch_mode() && strspn(s, "+-.0123456789$(=") > 0) {
+	/* has to be a bare expression */
+	cmd->ci = EVAL;
+	cmd->vstart = (*s == '=')? s+1 : s;
+	goto skipit;
+    }
 
     while (!err && *s) {
 	int skipped = 0;
@@ -3640,6 +3639,8 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	s += n;
 	pos += n;
     }
+
+ skipit:
 
     gretl_pop_c_numeric_locale();
 

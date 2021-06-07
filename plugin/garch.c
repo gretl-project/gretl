@@ -245,7 +245,7 @@ static int make_garch_dataset (const int *list, const DATASET *dset,
 static int get_vopt (int robust)
 {
     int vopt = libset_get_int(GARCH_VCV);
-    int ropt = libset_get_int(GARCH_ROBUST_VCV);
+    int ropt = libset_get_int(GARCH_ALT_VCV);
 
     /* The defaults: QML if "robust" option is in force,
        otherwise negative Hessian */

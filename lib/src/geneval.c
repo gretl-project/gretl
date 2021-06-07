@@ -40,6 +40,7 @@
 #include "gretl_foreign.h"
 #include "gretl_midas.h"
 #include "gretl_xml.h"
+#include "gretl_mt.h"
 #include "var.h"
 #include "vartest.h"
 
@@ -146,7 +147,7 @@ enum {
 #define exestart(p) ((p->flags & DCHECK) == DCHECK)
 
 static void parser_init (parser *p, const char *str, DATASET *dset,
-			 PRN *prn, int flags, int targtype);
+			 PRN *prn, int flags, int targtype, int *done);
 static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
@@ -3071,6 +3072,40 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+static NODE *array_str_calc (NODE *l, NODE *r, int op, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+        gretl_array *a = l->v.a;
+
+	if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS) {
+	    p->err = E_TYPES;
+	} else {
+	    int i, n = gretl_array_get_length(a);
+	    const char *si;
+
+	    ret->v.m = gretl_zero_matrix_new(1, n);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    si = gretl_array_get_data(a, i);
+		    if (op == B_DOTEQ) {
+			if (si != NULL && !strcmp(si, r->v.str)) {
+			    ret->v.m->val[i] = 1;
+			}
+		    } else if (si == NULL || strcmp(si, r->v.str)) {
+			ret->v.m->val[i] = 1;
+		    }
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 #define comparison_op(o) (o == B_EQ  || o == B_NEQ || \
                           o == B_LT  || o == B_GT ||  \
                           o == B_LTE || o == B_GTE)
@@ -4802,6 +4837,8 @@ static int set_sel_vector (matrix_subspec *spec, int r,
 static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 {
     matrix_subspec *spec = targ->v.mspec;
+    int lscalar = 0;
+    int rscalar = 0;
     int i = 0, j = 0;
 
     if (spec == NULL) {
@@ -4833,7 +4870,10 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         goto finished;
     }
 
-    if (l->t == NUM) {
+    lscalar = scalar_node(l);
+    rscalar = (r != NULL && scalar_node(r));
+
+    if (lscalar) {
         i = node_get_int(l, p);
         if (!p->err && i == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
@@ -4847,7 +4887,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
             goto finished;
         }
     }
-    if (!p->err && r != NULL && r->t == NUM) {
+    if (!p->err && rscalar) {
         j = node_get_int(r, p);
         if (!p->err && j == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
@@ -4880,7 +4920,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         mspec_set_row_index(spec, i);
         mspec_set_col_index(spec, j);
         goto finished;
-    } else if (l->t == NUM) {
+    } else if (lscalar) {
         spec->ltype = i > 0 ? SEL_RANGE : SEL_EXCL;
         mspec_set_row_index(spec, i);
     } else if (l->t == IVEC) {
@@ -4888,12 +4928,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         spec->lsel.range[0] = l->v.ivec[0];
         spec->lsel.range[1] = l->v.ivec[1];
     } else if (l->t == MAT) {
-        if (gretl_matrix_is_scalar(l->v.m)) {
-            spec->ltype = SEL_RANGE;
-            mspec_set_row_index(spec, l->v.m->val[0]);
-        } else {
-            p->err = set_sel_vector(spec, 0, l->v.m);
-        }
+	p->err = set_sel_vector(spec, 0, l->v.m);
     } else if (null_node(l)) {
         spec->ltype = SEL_ALL;
     } else {
@@ -4903,7 +4938,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 
     if (r == NULL) {
         spec->rtype = SEL_NULL;
-    } else if (r->t == NUM) {
+    } else if (rscalar) {
         spec->rtype = j > 0 ? SEL_RANGE : SEL_EXCL;
         mspec_set_col_index(spec, j);
     } else if (r->t == IVEC) {
@@ -4911,12 +4946,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         spec->rsel.range[0] = r->v.ivec[0];
         spec->rsel.range[1] = r->v.ivec[1];
     } else if (r->t == MAT) {
-        if (gretl_matrix_is_scalar(r->v.m)) {
-            spec->rtype = SEL_RANGE;
-            mspec_set_col_index(spec, r->v.m->val[0]);
-        } else {
-            p->err = set_sel_vector(spec, 1, r->v.m);
-        }
+	p->err = set_sel_vector(spec, 1, r->v.m);
     } else if (null_node(r)) {
         spec->rtype = SEL_ALL;
     } else {
@@ -6581,6 +6611,25 @@ static NODE *augment_array_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *subtract_from_array_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL && starting(p)) {
+	if (gretl_array_get_type(l->v.a) == GRETL_TYPE_STRINGS &&
+	    r->t == STR) {
+	    ret->v.a = gretl_array_copy(l->v.a, &p->err);
+	    if (!p->err) {
+		p->err = gretl_array_drop_string(ret->v.a, r->v.str);
+	    }
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+
+    return ret;
+}
+
 /* in case we switched the LHS and RHS in a boolean comparison */
 
 static int reversed_comp (int f)
@@ -7199,27 +7248,6 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static int type_translate_to_int (GretlType type)
-{
-    if (gretl_scalar_type(type)) {
-        return 1;
-    } else if (type == GRETL_TYPE_SERIES) {
-        return 2;
-    } else if (type == GRETL_TYPE_MATRIX) {
-        return 3;
-    } else if (type == GRETL_TYPE_STRING) {
-        return 4;
-    } else if (type == GRETL_TYPE_BUNDLE) {
-        return 5;
-    } else if (type == GRETL_TYPE_ARRAY) {
-        return 6;
-    } else if (type == GRETL_TYPE_LIST) {
-        return 7;
-    } else {
-        return 0;
-    }
-}
-
 static NODE *object_status (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -7246,7 +7274,7 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
                 /* handle the "isnull" alias */
                 ret->v.xval = (type == 0);
             } else {
-                ret->v.xval = type_translate_to_int(type);
+                ret->v.xval = gretl_type_get_order(type);
             }
         } else if (f == F_ISDISCR) {
             int v = current_series_index(p->dset, s);
@@ -7360,7 +7388,7 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
         /* handle the "isnull" alias */
         ret->v.xval = (t == 0);
     } else {
-        ret->v.xval = type_translate_to_int(t);
+        ret->v.xval = gretl_type_get_order(t);
     }
 
     return ret;
@@ -7750,6 +7778,86 @@ static NODE *do_assert (NODE *l, NODE *r, parser *p)
 	p->err = 1;
 	gretl_errmsg_sprintf(_("Assertion '%s' failed"), r->v.str);
 	ret->v.xval = l->v.xval;
+    }
+
+    return ret;
+}
+
+static NODE *contains_node (NODE *val, NODE *set, parser *p)
+{
+    gretl_matrix *m = set->v.m;
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	if (val->t == NUM) {
+	    ret = aux_scalar_node(p);
+	} else if (val->t == SERIES) {
+	    ret = aux_series_node(p);
+	} else if (val->t == MAT) {
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		int r = val->v.m->rows;
+		int c = val->v.m->cols;
+
+		ret->v.m = gretl_zero_matrix_new(r, c);
+	    }
+	}
+	if (!p->err) {
+	    int i, n = m->rows * m->cols;
+	    double x;
+
+	    if (val->t == NUM) {
+		x = val->v.xval;
+		if (na(x)) {
+		    ret->v.xval = NADBL;
+		} else {
+		    ret->v.xval = 0;
+		    for (i=0; i<n; i++) {
+			if (m->val[i] == x) {
+			    ret->v.xval = 1;
+			    break;
+			}
+		    }
+		}
+	    } else if (val->t == SERIES) {
+		int t;
+
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    x = val->v.xvec[t];
+		    if (na(x)) {
+			ret->v.xvec[t] = NADBL;
+		    } else {
+			ret->v.xvec[t] = 0;
+			for (i=0; i<n; i++) {
+			    if (m->val[i] == x) {
+				ret->v.xvec[t] = 1;
+				break;
+			    }
+			}
+		    }
+		}
+	    } else if (val->t == MAT) {
+		gretl_matrix *v = val->v.m;
+		int k, nv = v->rows * v->cols;
+
+		for (k=0; k<nv; k++) {
+		    x = v->val[k];
+		    if (na(x)) {
+			ret->v.m->val[k] = NADBL;
+		    } else {
+			ret->v.m->val[k] = 0;
+			for (i=0; i<n; i++) {
+			    if (m->val[i] == x) {
+				ret->v.m->val[k] = 1;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -10252,7 +10360,7 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
         int err = 0;
 
         gretl_bundle_get_data(bundle, key, &type, NULL, &err);
-        ret->v.xval = type_translate_to_int(type);
+        ret->v.xval = gretl_type_get_order(type);
         if (err) {
             gretl_error_clear();
         }
@@ -15297,6 +15405,32 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
     return ret;
 }
 
+/* The following allows for @n to hold a scalar, real matrix
+   or complex matrix, and also allows for the case where
+   @n's payload is real-valued but a complex result is required,
+   signalled by @need_z.
+*/
+
+static void query_term_get_value (NODE *n, int i, int j,
+				  double *py, double complex *pz,
+				  int need_z)
+{
+    if (n->t == MAT && n->v.m->is_complex) {
+	*pz = gretl_cmatrix_get(n->v.m, i, j);
+    } else {
+	if (n->t == NUM) {
+	    *py = n->v.xval;
+	} else {
+	    *py = gretl_matrix_get(n->v.m, i, j);
+	}
+	if (need_z) {
+	    double complex z = *py + 0 * I;
+
+	    *pz = z;
+	}
+    }
+}
+
 /* the condition in the ternary query operator is a matrix */
 
 static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
@@ -15304,6 +15438,8 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     NODE *save_aux = p->aux;
     NODE *ret, *l, *r;
     gretl_matrix *mret;
+    int lcomplex = 0;
+    int rcomplex = 0;
 
     if (gretl_is_null_matrix(m)) {
         p->err = E_TYPES;
@@ -15326,26 +15462,40 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
         return NULL;
     }
 
-    if (l->t == MAT && (l->v.m->cols != m->cols ||
-                        l->v.m->rows != m->rows)) {
-        p->err = E_NONCONF;
-        return NULL;
-    } else if (r->t == MAT && (r->v.m->cols != m->cols ||
-                               r->v.m->rows != m->rows)) {
-        p->err = E_NONCONF;
-        return NULL;
+    if (l->t == MAT) {
+	if (l->v.m->cols != m->cols || l->v.m->rows != m->rows) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	} else if (l->v.m->is_complex) {
+	    lcomplex = 1;
+	}
+    } else if (r->t == MAT) {
+	if (r->v.m->cols != m->cols || r->v.m->rows != m->rows) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	} else if (r->v.m->is_complex) {
+	    rcomplex = 1;
+	}
     }
 
-    mret = gretl_matrix_copy(m);
-    if (mret == NULL) {
-        p->err = E_ALLOC;
-        return NULL;
+    if (lcomplex || rcomplex) {
+	mret = gretl_cmatrix_build(m, NULL, 0, 0, &p->err);
+    } else {
+	mret = gretl_matrix_copy(m);
+	if (mret == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+    if (p->err) {
+	return NULL;
     }
 
     reset_p_aux(p, save_aux);
     ret = aux_matrix_node(p);
 
     if (!p->err) {
+	int need_z = mret->is_complex;
+	double complex z;
         double x, y;
         int j, i;
 
@@ -15353,15 +15503,25 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
             for (i=0; i<m->rows; i++) {
                 x = gretl_matrix_get(m, i, j);
                 if (isnan(x)) {
-                    gretl_matrix_set(mret, i, j, x);
+		    if (mret->is_complex) {
+			gretl_cmatrix_set(mret, i, j, x + x * I);
+		    } else {
+			gretl_matrix_set(mret, i, j, x);
+		    }
                 } else if (x != 0.0) {
-                    y = l->t == NUM ? l->v.xval :
-                        gretl_matrix_get(l->v.m, i, j);
-                    gretl_matrix_set(mret, i, j, y);
+		    query_term_get_value(l, i, j, &y, &z, need_z);
+		    if (mret->is_complex) {
+			gretl_cmatrix_set(mret, i, j, z);
+		    } else {
+			gretl_matrix_set(mret, i, j, y);
+		    }
                 } else {
-                    y = r->t == NUM ? r->v.xval :
-                        gretl_matrix_get(r->v.m, i, j);
-                    gretl_matrix_set(mret, i, j, y);
+		    query_term_get_value(r, i, j, &y, &z, need_z);
+		    if (mret->is_complex) {
+			gretl_cmatrix_set(mret, i, j, z);
+		    } else {
+			gretl_matrix_set(mret, i, j, y);
+		    }
                 }
             }
         }
@@ -16489,6 +16649,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = series_list_calc(l, r, t->t, p);
         } else if (t->t == B_ADD && l->t == ARRAY) {
             ret = augment_array_node(l, r, p);
+	} else if (t->t == B_SUB && l->t == ARRAY) {
+	    ret = subtract_from_array_node(l, r, p);
         } else {
             p->err = E_TYPES;
         }
@@ -16529,6 +16691,9 @@ static NODE *eval (NODE *t, parser *p)
         } else if ((ok_matrix_node(l) && r->t == SERIES) ||
                    (l->t == SERIES && ok_matrix_node(r))) {
             ret = matrix_series_calc(l, r, t->t, p);
+	} else if ((t->t == B_DOTEQ || t->t == B_DOTNEQ) &&
+		   l->t == ARRAY && r->t == STR) {
+	    ret = array_str_calc(l, r, t->t, p);
         } else {
             node_type_error(t->t, (l->t == MAT)? 2 : 1,
                             MAT, (l->t == MAT)? r : l, p);
@@ -17749,6 +17914,13 @@ static NODE *eval (NODE *t, parser *p)
             p->err = E_TYPES;
         }
         break;
+    case F_CONTAINS:
+        if (r->t == MAT && (l->t == NUM || l->t == SERIES || l->t == MAT)) {
+            ret = contains_node(l, r, p);
+        } else {
+            p->err = E_TYPES;
+        }
+        break;
     case F_OBSLABEL:
         if (l->t == NUM || l->t == MAT) {
             ret = int_to_string_func(l, t->t, p);
@@ -18236,7 +18408,7 @@ static void printnode (NODE *t, parser *p, int value)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD || \
                          o == B_HCAT || o == INC)
-#define ok_array_op(o) (o == B_ASN || o == B_ADD)
+#define ok_array_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_bundle_op(o) (o == B_ASN || o == B_ADD)
 
 struct mod_assign {
@@ -18368,7 +18540,7 @@ static void do_declaration (parser *p)
    of an existing variable?
 */
 
-static void parser_try_print (parser *p, const char *s)
+static void parser_try_print (parser *p, const char *s, int *done)
 {
     if (p->lh.t != 0 && p->lh.expr == NULL) {
         p->flags |= P_DISCARD;
@@ -18492,9 +18664,14 @@ static int extract_lhs_and_op (const char **ps, parser *p,
  done:
 
 #if LHDEBUG
-    fprintf(stderr, "extract: name='%s', expr='%s', op='%s', err=%d,\n s='%s'\n",
-            p->lh.name, p->lh.expr ? p->lh.expr : "nil", opstr, err, *ps);
+    fprintf(stderr, "extract: lh.name='%s', lh.expr='%s', op='%s', err=%d, s='%s'\n",
+            p->lh.name, p->lh.expr ? p->lh.expr : "NULL", opstr, err, *ps);
 #endif
+
+    if (!(p->flags & P_DECL) && p->lh.name[0] == '\0' && p->op == 0) {
+	/* added 2021-05-29 */
+	p->flags |= P_DISCARD;
+    }
 
     return err;
 }
@@ -18748,7 +18925,7 @@ static int check_existing_lhs_type (parser *p, int *newvar)
 
 /* pre-process a "genr" statement */
 
-static void gen_preprocess (parser *p, int flags)
+static void gen_preprocess (parser *p, int flags, int *done)
 {
     const char *s = p->input;
     char opstr[3] = {0};
@@ -18793,7 +18970,7 @@ static void gen_preprocess (parser *p, int flags)
 
     /* extract LHS expression and operator, and test for a declaration */
     p->err = extract_lhs_and_op(&s, p, opstr);
-    if (p->err || (p->flags & P_DECL)) {
+    if (p->err || (p->flags & (P_DECL | P_DISCARD))) {
         return;
     }
 
@@ -18873,7 +19050,7 @@ static void gen_preprocess (parser *p, int flags)
 
     /* expression ends here with no operator: a call to print? */
     if (*s == '\0' && p->op == 0) {
-        parser_try_print(p, p->lh.name);
+        parser_try_print(p, p->lh.name, done);
         return;
     }
 
@@ -19228,7 +19405,6 @@ static void do_array_append (parser *p)
     void *ptr = NULL;
 
     A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
-
     if (A == NULL) {
         p->err = E_DATA;
         return;
@@ -19262,6 +19438,21 @@ static void do_array_append (parser *p)
         if (!copy && !p->err) {
             rhs->v.ptr = NULL;
         }
+    }
+}
+
+static void do_array_subtract (parser *p)
+{
+    gretl_array *A;
+    NODE *rhs = p->ret;
+
+    A = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
+    if (A == NULL) {
+        p->err = E_DATA;
+    } else if (gretl_array_get_type(A) == GRETL_TYPE_STRINGS && rhs->t == STR) {
+	p->err = gretl_array_drop_string(A, rhs->v.str);
+    } else {
+        p->err = E_TYPES;
     }
 }
 
@@ -20113,8 +20304,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	}
     } else if (p->targ == ARRAY) {
-	if (p->op != B_ASN) {
+	if (p->op == B_ADD) {
 	    do_array_append(p);
+	} else if (p->op == B_SUB) {
+	    do_array_subtract(p);
 	} else if (null_node(r)) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);
@@ -20282,7 +20475,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 
 static void parser_init (parser *p, const char *str,
 			 DATASET *dset, PRN *prn,
-			 int flags, int targtype)
+			 int flags, int targtype,
+			 int *done)
 {
     p->point = p->rhs = p->input = str;
     p->dset = dset;
@@ -20329,7 +20523,7 @@ static void parser_init (parser *p, const char *str,
     if (p->flags & P_VOID) {
         p->flags |= P_DISCARD;
     } else if (p->targ == UNK || !(p->flags & P_ANON)) {
-	gen_preprocess(p, flags);
+	gen_preprocess(p, flags, done);
     } else if (p->targ == LIST) {
 	p->flags |= P_LISTDEF;
     }
@@ -20563,11 +20757,15 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    goto starteval;
 	}
     } else {
-	parser_init(p, s, dset, prn, flags, targtype);
+	int done = 0;
+
+	parser_init(p, s, dset, prn, flags, targtype, &done);
 	if (p->err) {
 	    if (gretl_function_depth() == 0) {
 		errmsg(p->err, prn);
 	    }
+	    goto gen_finish;
+	} else if (done) {
 	    goto gen_finish;
 	}
     }
@@ -20606,8 +20804,10 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }
 
 #if EDEBUG
-    fprintf(stderr, "realgen: p->tree at %p, type %d (%s)\n", (void *) p->tree,
-	    p->tree->t, getsymb(p->tree->t));
+    if (p->tree != NULL) {
+	fprintf(stderr, "realgen: p->tree at %p, type %d (%s)\n", (void *) p->tree,
+		p->tree->t, getsymb(p->tree->t));
+    }
     if (p->ch == '\0') {
 	fprintf(stderr, " p->ch = NUL, p->sym = %d\n", p->sym);
     } else {

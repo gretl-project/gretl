@@ -361,8 +361,8 @@ static NODE *base (parser *p, NODE *up)
 
 #if SDEBUG
     notify("base", t, p);
-    fprintf(stderr, "on exit from base, p->sym = %d (p->err = %d)\n",
-	    p->sym, p->err);
+    fprintf(stderr, "on exit from base, p->sym = %s (p->err = %d)\n",
+	    getsymb(p->sym), p->err);
 #endif
 
     return t;
@@ -848,7 +848,6 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
 	    /* otherwise should be standard valid identifier */
 	    n = gretl_namechar_spn(p->point);
 	}
-
 	if (n == 0 || n >= VNAMELEN) {
 	    p->err = E_PARSE;
 	} else {
@@ -863,6 +862,9 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
 		ret = newstr(p->idstr);
 	    }
 	}
+    } else {
+	fprintf(stderr, "HERE, get_bundle_member_name, p->ch = '%c'\n", p->ch);
+	p->err = E_PARSE;
     }
 
     return ret;

@@ -32,6 +32,8 @@ static const char *addon_names[] = {
     "regls", NULL
 };
 
+static int n_addons = G_N_ELEMENTS(addon_names) - 1;
+
 /* Determine if @pkgname is the name of an addon:
    @pkgname may be given with or without the ".gfn"
    suffix.
@@ -44,13 +46,13 @@ int is_gretl_addon (const char *pkgname)
     if (has_suffix(pkgname, ".gfn")) {
 	int n = strlen(pkgname) - 4;
 
-	for (i=0; addon_names[i] != NULL; i++) {
+	for (i=0; i<n_addons; i++) {
 	    if (!strncmp(pkgname, addon_names[i], n)) {
 		return 1;
 	    }
 	}
     } else {
-	for (i=0; addon_names[i] != NULL; i++) {
+	for (i=0; i<n_addons; i++) {
 	    if (!strcmp(pkgname, addon_names[i])) {
 		return 1;
 	    }
@@ -68,12 +70,7 @@ int is_gretl_addon (const char *pkgname)
 const char **get_addon_names (int *n)
 {
     if (n != NULL) {
-	int i;
-
-	*n = 0;
-	for (i=0; addon_names[i] != NULL; i++) {
-	    *n = *n + 1;
-	}
+	*n = n_addons;
     }
     return addon_names;
 }
@@ -177,7 +174,7 @@ int update_addons_index (PRN *prn)
 	return E_FOPEN;
     }
 
-    for (i=0; addon_names[i] != NULL; i++) {
+    for (i=0; i<n_addons; i++) {
 	if (verbose) {
 	    pprintf(prn, "check for %s\n", addon_names[i]);
 	}
@@ -291,6 +288,8 @@ char *gretl_addon_get_path (const char *addon)
 	    }
 	}
 	fclose(fp);
+    } else {
+	fprintf(stderr, "failed to read addons.idx\n");
     }
 
     g_free(idxname);

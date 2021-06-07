@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "gretl_matrix.h"
 #include "gretl_cmatrix.h"
 
@@ -2858,7 +2859,7 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     n = src->rows * src->cols;
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(n)) {
+    if (!gretl_use_openmp(n)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i)
@@ -2997,7 +2998,7 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     n = src->rows * src->cols;
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(n)) {
+    if (!gretl_use_openmp(n)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i)
@@ -3089,7 +3090,7 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
     n = a->rows * b->cols;
 
 #if defined(_OPENMP)
-    if (!libset_use_openmp(n)) {
+    if (!gretl_use_openmp(n)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i)
@@ -5178,7 +5179,7 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 
 #if defined(_OPENMP)
     fpm = (guint64) n * n;
-    if (!libset_use_openmp(fpm)) {
+    if (!gretl_use_openmp(fpm)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i, j, x)
@@ -5251,7 +5252,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 
 #if defined(_OPENMP)
     fpm = (guint64) nc * nc * nr;
-    if (!libset_use_openmp(fpm)) {
+    if (!gretl_use_openmp(fpm)) {
 	goto st_mode;
     }
 
@@ -5444,7 +5445,7 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
 
 #if defined(_OPENMP)
     fpm = (guint64) n * nr;
-    if (!libset_use_openmp(fpm)) {
+    if (!gretl_use_openmp(fpm)) {
 	goto st_mode;
     }
 #pragma omp parallel for private(i, j, k, ii, x)
@@ -5535,7 +5536,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 
 #if defined(_OPENMP)
     fpm = (guint64) m * n * k;
-    if (!libset_use_openmp(fpm)) {
+    if (!gretl_use_openmp(fpm)) {
 	goto st_mode;
     }
 
@@ -10574,7 +10575,7 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     if (!full && x->rows > x->cols && getenv("GRETL_REAL_SVD") == NULL) {
 	/* The "tall" variant is very fast, but not at all
 	   accurate for near-singular matrices. If @x is
-	   too close to singular this wll be flagged by an
+	   too close to singular this will be flagged by an
 	   error code of E_SINGULAR from tall_SVD(), in which
 	   case we'll proceed to try "real" SVD; any other
 	   error will be treated as fatal.

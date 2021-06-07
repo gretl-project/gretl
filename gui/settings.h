@@ -59,10 +59,6 @@ int session_prompt_on (void);
 
 void set_session_prompt (int val);
 
-int display_workdir (void);
-
-int show_workdir_tooltip (void);
-
 int get_keep_folder (void);
 
 void set_script_output_policy (int p, windata_t *vwin);

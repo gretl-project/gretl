@@ -1038,6 +1038,26 @@
               cannot be determined).
             </para>
 	  </li>
+	  <li>
+            <para>
+              <lit>mem</lit>: a 2-vector holding total physical memory
+	      and free or available memory, expressed in MB. This
+	      information may not be available on all systems but
+	      should be on Windows, macOS and Linux.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>foreign</lit>: a sub-bundle containing 0/1
+              indicators for the presence on the host system of each
+              of the <quote>foreign</quote> programs supported by
+              gretl, under the keys <lit>julia</lit>,
+              <lit>octave</lit>, <lit>ox</lit>, <lit>python</lit>,
+              <lit>Rbin</lit>, <lit>Rlib</lit> and <lit>stata</lit>.
+              The two keys pertaining to R represent the R executable
+              and shared library, respectively.
+            </para>
+	  </li>
 	</ilist>
 	<para>
 	  Note that individual elements in the bundle can be accessed
@@ -2864,6 +2884,62 @@
 	</para>
       </description>
     </function>
+
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Provides a means of determining whether the numerical
+	  object <argname>x</argname> contains any of the elements of
+	  <argname>S</argname>, a matrix which plays the role of a
+	  set.
+	</para>
+	<para>
+	  The return value is an object of the same size as
+	  <argname>x</argname> containing 1s in positions where
+	  a value of <argname>x</argname> matches any element of
+	  <argname>S</argname> and zeros elsewhere.
+	  For example, the code
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  gives
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1	  
+	</code>
+	<para>
+	  This function may be particularly useful when
+	  <argname>x</argname> is a series that contains a
+	  fine-grained encoding for a qualitative characteristic, and
+	  you wish to reduce this to a smaller number of
+	  categories. You can pack into <argname>S</argname> a set of
+	  values to be consolidated, and obtain a dummy variable with
+	  value 1 for observations matching this set, 0 otherwise.
+	</para>
+	<para>
+	  Since <argname>S</argname> serves as a set, for greatest
+	  efficiency it should be a vector with no repeated values,
+	  however an arbitrary matrix is accepted.
+	</para>
+      </description>
+    </function>    
 
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>

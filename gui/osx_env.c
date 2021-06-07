@@ -1,9 +1,9 @@
 #include <sys/param.h>
 #include <mach-o/dyld.h>
 
-/* Hopefully this function will provide an alternative to
-   starting gretl (quartz package) on macOS via a shell
-   script: get the environment set up via C code instead.
+/* This function provides an replacement for the old method
+   of starting gretl on macOS via a shell script: instead, we
+   get the environment set up correctly via C code.
 */
 
 void osx_setup_paths (void)

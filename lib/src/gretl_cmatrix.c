@@ -1427,10 +1427,11 @@ int gretl_cmatrix_printf (const gretl_matrix *A,
 }
 
 /* Compose a complex matrix from its real and imaginary
-   components. If @Im is NULL the matrix will have a
-   constant imaginary part given by @ival; otherwise
-   the matrices @Re and @Im must be of the same
-   dimensions.
+   components. If @Re is NULL the result will have a
+   constant real part given by @x; and if @Im is NULL it
+   will have a constant imaginary part given by @y. If
+   both matrix arguments are non-NULL they must be of
+   the same dimensions.
 */
 
 gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,

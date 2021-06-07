@@ -2223,6 +2223,15 @@ static void schedule_callback (ExecState *s)
     }
 }
 
+static void maybe_schedule_set_callback (ExecState *s)
+{
+    if (s->callback != NULL && s->cmd->param != NULL) {
+	if (!strcmp(s->cmd->param, "plot_collection")) {
+	    s->flags |= CALLBACK_EXEC;
+	}
+    }
+}
+
 static int callback_scheduled (ExecState *s)
 {
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
@@ -3455,6 +3464,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case SET:
         err = execute_set(cmd->param, cmd->parm2, dset, cmd->opt, prn);
+	if (!err && cmd->parm2 != NULL) {
+	    maybe_schedule_set_callback(s);
+	}
         break;
 
     case SETINFO:

@@ -320,7 +320,7 @@ DATASET *midas_aux_dataset (const int *list,
     }
 
     if (!gretl_is_midas_list(list, dset)) {
-	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	gretl_warnmsg_set(_("The argument does not seem to be a MIDAS list"));
     }
 
     T = sample_size(dset) * m;

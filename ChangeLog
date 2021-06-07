@@ -1,4 +1,24 @@
-version 2021b, in progress
+version 2021c, in progress
+- New function contains(): indicates whether a numerical
+  object contains members of a specified set
+- Introduce experimental "plot collection"
+- MS Windows, 64-bit: update to gnuplot 5.4.1, patched to
+  avoid too-big fonts on Windows with Ultra HD display
+- gretl GUI: add command-line options: --new to start a new
+  instance unconditionally and --single to use a single
+  program instance unconditionally
+- fcstats() matrix row labels: distinguish U1 vs U2 variant
+  of Theil's U statistic
+- printing of bundles: sort members by type and key
+- GUI script editor: make the Find box appear at the foot of
+  the window, not in a separate dialog
+- Fix bug: spurius results from "system" command in case of
+  exact collinearity
+- Internals: make "libset" code more compact and efficient
+- gretl_bundle.h: rename argument named "template" to avoid
+  trouble with C++
+
+2021-05-04 version 2021b
 - New function trigamma(): second derivative of lngamma
 - New function midasmult(): gives MIDAS multipliers
 - New command "bds": BDS nonlinearity test
@@ -52,8 +72,9 @@ version 2021b, in progress
 - Fix bug: broken covariance matrix from mols() with a large
   number of regressors
 - Fix bug: crash on applying postfix "++" to a submatrix
+- macOS: first release for arm64
 
-2021-01-18 Version 2021a
+2021-01-18 version 2021a
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)

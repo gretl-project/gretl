@@ -182,7 +182,6 @@ static void get_char_width_and_height (GtkWidget *widget,
     if (width != NULL) {
 	*width = w;
     }
-
     if (height != NULL) {
 	*height = h;
     }
@@ -194,6 +193,14 @@ gint get_char_width (GtkWidget *widget)
 
     get_char_width_and_height(widget, &width, NULL);
     return width;
+}
+
+gint get_char_height (GtkWidget *widget)
+{
+    int height;
+
+    get_char_width_and_height(widget, NULL, &height);
+    return height;
 }
 
 gchar *textview_get_text (GtkWidget *view)
@@ -810,7 +817,10 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
     gboolean ret = FALSE;
 
     if (event->state & GDK_CONTROL_MASK) {
-	if (keyval == GDK_r)  {
+	if (keyval == GDK_R) {
+	    run_script_silent(w, vwin);
+	    ret = TRUE;
+	} else if (keyval == GDK_r) {
 	    do_run_script(w, vwin);
 	    ret = TRUE;
 	} else if (keyval == GDK_Return) {
@@ -3384,12 +3394,12 @@ static int get_word_and_cont (const char *s, char *word, int *contd)
 {
     /* don't move onto next line */
     if (*s != '\n' && *s != '\r') {
-	if (contd != NULL) {
-	    *contd = line_continues(s);
-	}
 	s += strspn(s, " \t");
 	if (sscanf(s, "%*s <- %8s", word) != 1) {
 	    sscanf(s, "%8s", word);
+	}
+	if (*word != '#' && contd != NULL) {
+	    *contd = line_continues(s);
 	}
     }
 
@@ -4501,7 +4511,7 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
     }
 }
 
-static int get_screen_height (void)
+int get_screen_height (void)
 {
     static int screen_height;
 
@@ -4581,18 +4591,20 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    hsize += 48;
 	}
 #if HDEBUG
-	fprintf(stderr, " px = %d, hsize now = %d, nlines = %d\n",
-		px, hsize, nlines);
+	fprintf(stderr, " px = %d, py = %d; hsize now = %d, nlines = %d\n",
+		px, py, hsize, nlines);
 #endif
 	if (nlines > 0) {
 	    /* Perhaps adjust how tall the window is? */
-	    double v1 = (nlines + 2) * py;
+	    int v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
 
-	    if (v1 > 0.8 * vsize && v1 < 1.35 * vsize && v1 <= 0.9 * sv) {
+	    if (v1 > 0.85 * vsize && v1 <= 0.7 * sv) {
 		vsize = v1;
+	    } else if (v1 > 0.7 * sv) {
+		vsize = 0.7 * sv;
 	    }
-	} else if (vsize < 0.62 * hsize) {
+	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
 	    vsize = 0.62 * hsize;
 	}
     }

@@ -2163,7 +2163,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     g_signal_connect(G_OBJECT(spin), "output",
 		     G_CALLBACK(version_output), NULL);
     gtk_entry_set_width_chars(GTK_ENTRY(spin), 5);
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
+#if GTK_MAJOR_VERSION == 3
     /* remedy required for gtk3 */
     gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 5);
 #endif
@@ -2483,6 +2483,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	"1 PanelModels\n"
 	"1 RobustModels\n";
     const char *model_items =
+	"0 Edit\n"
 	"0 Tests\n"
 	"0 Save\n"
 	"0 Graphs\n"
@@ -2617,7 +2618,7 @@ model_requirement_selector (GtkWidget *holder,
     int j = 0;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new("Model requirement");
+    label = gtk_label_new(_("Model requirement"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
     combo = gtk_combo_box_text_new();
@@ -2625,7 +2626,7 @@ model_requirement_selector (GtkWidget *holder,
     combo_box_append_text(combo, _("Any model"));
 
     for (ci=1; ci<NC; ci++) {
-	if (MODEL_COMMAND(ci)) {
+	if (MODEL_COMMAND(ci) || EQN_SYSTEM_COMMAND(ci)) {
 	    j++;
 	    combo_box_append_text(combo, gretl_command_word(ci));
 	    if (finfo->mreq == ci) {
@@ -2651,7 +2652,7 @@ access_request_button (GtkWidget *holder,
     GtkWidget *hbox, *button;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    button = gtk_check_button_new_with_label("request access to out-of-sample data");
+    button = gtk_check_button_new_with_label(_("request access to out-of-sample data"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), finfo->data_access);
     // g_signal_connect(button, "toggled", access_button_callback, finfo);
@@ -2896,7 +2897,7 @@ static void add_menu_attach_top (GtkWidget *holder,
 		     G_CALLBACK(switch_menu_view), finfo);
 
     /* gui-help button */
-    w = gtk_button_new_with_label("GUI help text");
+    w = gtk_button_new_with_label(_("GUI help text"));
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(gui_help_text_callback), finfo);
     gtk_box_pack_end(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -5126,6 +5127,42 @@ static int is_pdf_reference (const char *s)
     return 0;
 }
 
+#define EDIT_ZIPS 0 /* not yet */
+
+#if EDIT_ZIPS
+
+static fnpkg *load_gfn_from_zip (const char *fname, int *err)
+{
+    fnpkg *pkg = NULL;
+    char tmpgfn[MAXLEN];
+    gchar *tmpname, *tmp2;
+    char *p;
+
+    tmpname = g_path_get_basename(fname);
+    p = strrchr(tmpname, '.');
+    *p = '\0';
+    tmp2 = g_strdup(tmpname);
+    strcat(p, ".gfn");
+
+    gretl_build_path(tmpgfn, gretl_dotdir(), tmp2, tmpname, NULL);
+
+#if 0
+    fprintf(stderr, "from zip: gfn is '%s'\n", tmpgfn);
+#endif
+
+    *err = gretl_unzip_into(fname, gretl_dotdir());
+    if (!*err) {
+	pkg = get_function_package_by_filename(tmpgfn, err);
+    }
+
+    g_free(tmpname);
+    g_free(tmp2);
+
+    return pkg;
+}
+
+#endif
+
 void edit_function_package (const char *fname)
 {
     GtkWidget *editor;
@@ -5135,7 +5172,15 @@ void edit_function_package (const char *fname)
     fnpkg *pkg;
     int err = 0;
 
+#if EDIT_ZIPS
+    if (has_suffix(fname, ".zip")) {
+	pkg = load_gfn_from_zip(fname, &err);
+    } else {
+	pkg = get_function_package_by_filename(fname, &err);
+    }
+#else
     pkg = get_function_package_by_filename(fname, &err);
+#endif
     if (err) {
 	gui_errmsg(err);
 	goto bailout;

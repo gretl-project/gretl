@@ -1249,6 +1249,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (rho != 0.0) {
+	gretl_model_set_int(&mdl, "maxlag", 1);
 	gretl_model_set_double(&mdl, "rho_gls", rho);
     }
 
@@ -3479,6 +3480,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
     clear_model(&rhomod);
 
+    gretl_model_set_int(&ar, "maxlag", maxlag);
     set_model_id(&ar, opt);
 
  bailout:
@@ -3583,6 +3585,11 @@ static int not_equal (double y, double x)
 
    FIXME: use inside a function, when the name of the dependent
    variable may be changed if it was a function argument?
+
+   TODO: for some purposes it could be useful to know not just
+   if there's a lagged dependent variable in the specification,
+   but also what the maximum such lag is. At present only lag 1
+   is handled.
 */
 
 static int lagdepvar (const int *list, const DATASET *dset)
@@ -3598,6 +3605,14 @@ static int lagdepvar (const int *list, const DATASET *dset)
 	    break;
 	}
 	xno = list[i];
+#if 0 /* not yet? */
+	/* check via varinfo */
+	if (series_get_parent_id(dset, xno) == yno &&
+	    series_get_lag(dset, xno) > 0) {
+	    ret = i;
+	    break;
+	}
+#endif
 	xname = dset->varname[xno];
 	p = strrchr(xname, '_');
 	if (p != NULL && isdigit(*(p + 1))) {

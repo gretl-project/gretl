@@ -23,6 +23,7 @@
 #include "objstack.h"
 #include "cmd_private.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "uservar.h"
 #include "gretl_panel.h"
 #include "gretl_string_table.h"
@@ -1970,7 +1971,8 @@ int gretl_spawn (char *cmdline)
     gchar *sout = NULL;
     int ok, status;
     int ret = 0;
-
+    int catch_gnuplot_errs = (getenv("CATCH_GNUPLOT") != NULL); 
+    
     gretl_error_clear();
 
     ok = g_spawn_command_line_sync(cmdline,
@@ -1984,7 +1986,7 @@ int gretl_spawn (char *cmdline)
 	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
-    } else if (errout != NULL && *errout) {
+    } else if (catch_gnuplot_errs && errout != NULL && *errout) {
 	if (gp_fatal(cmdline, errout)) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gnuplot stderr: '%s'\n", errout);

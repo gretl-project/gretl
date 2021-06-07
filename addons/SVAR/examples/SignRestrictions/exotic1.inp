@@ -56,6 +56,6 @@ SVAR_SRdraw(&mod, 100)
 
 # check: these matrices should be the same if try_exotic is
 # 0 or 1
-loop i = 1..10 --quiet
+loop i = 1..10
     printf "%6.3f\n", mod.acc_draws[i].irfs[1]
 endloop

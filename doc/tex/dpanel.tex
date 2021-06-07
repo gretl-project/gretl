@@ -826,12 +826,12 @@ the estimator.
 \label{sec:dpanel-aux}
 
 We have concentrated above on the parameter estimates and standard
-errors. It may be worth adding a few words on the additional test
-statistics that typically accompany both GMM-DIF and GMM-SYS
-estimation. These include the Sargan test for overidentification, one
-or more Wald tests for the joint significance of the regressors (and time
-dummies, if applicable) and tests for first- and second-order
-autocorrelation of the residuals from the equations in differences.
+errors. Here we add a few words on the additional test statistics that
+typically accompany both GMM-DIF and GMM-SYS estimation. These include
+the Sargan test for overidentification, one or more Wald tests for the
+joint significance of the regressors (and time dummies, if applicable)
+and tests for first- and second-order autocorrelation of the residuals
+from the equations in differences.
 
 As in Ox/DPD, the Sargan test statistic reported by gretl is
 \[
@@ -858,6 +858,15 @@ this occurs when the $\bA_N$ matrix is singular
 instruments minus the number of parameters estimated; for the first of
 these terms gretl uses the rank of $\bA_N$, while DPD appears to use
 the full dimension of this matrix.
+
+Negative first-order autocorrelation of the residuals is expected by
+construction of the estimator, so a significant value for the AR(1)
+test does not indicate a problem. If the AR(2) test is significant,
+however, this indicates violation of the maintained assumptions. Note
+that the AR tests cannot always be produced when the
+\verb|--asymptotic| option is specified in conjunction with one-step
+estimation; if you need the tests, either drop the asymptotic flag
+or add the \verb|two-step| option.
 
 \section{Post-estimation available statistics}
 \label{sec:dpanel-post}
@@ -949,7 +958,8 @@ print coef
   \verb|--dpdstyle| & Compute the $H$ matrix as in DPD; also suppresses
                       differencing of automatic time dummies and omission of intercept
                       in the GMM-DIF case\\
-  \verb|--verbose| & When \verb|--two-step| is selected, prints 
+  \verb|--verbose| & Prints confirmation of the GMM-style instruments
+                     used; and when \verb|--two-step| is selected, prints 
                      the 1-step estimates first \\
   \verb|--vcv| & Calls for printing of the covariance matrix \\
   \verb|--quiet| & Suppresses the printing of results \\

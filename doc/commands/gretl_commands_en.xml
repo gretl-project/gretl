@@ -8288,6 +8288,16 @@
 	</li>
 	<li>
 	  <para>
+	    feature border width: gives you control over the width of
+	    the border or outline drawn around the distinct
+	    <quote>features</quote> in the map (for example,
+	    countries, states or counties). If your plot includes a
+	    payload the width can be run down to zero to eliminate
+	    such borders.
+	  </para>
+	</li>
+	<li>
+	  <para>
 	    height: this controls the size of the map image. Given the
 	    height, the width is calculated based on the longitude
 	    range of the map.
@@ -12273,14 +12283,14 @@
 	   label="Regularized least squares" context="gui">
     <description>
       <para>
-	This dialog gives you a limited degree of access to the
-	<lit>regls</lit> function for regularized least squares.
+	This dialog gives you access to the <lit>regls</lit> function
+	for regularized least squares.
       </para>
       <para>
-	Three variants are supported: LASSO, which limits the sum of
+	Three estimators are supported: LASSO, which limits the sum of
 	absolute values of the coefficients; Ridge, which limits the
 	sum of squared coefficients; and Elastic net, which is a
-	combination of the first two, governed by the hyperparameter
+	combination of the first two governed by the hyperparameter
 	&alpha;. (&alpha; = 1 gives LASSO, &alpha; = 0 gives Ridge,
 	intermediate values give a weighted combination.)
       </para>
@@ -12292,11 +12302,77 @@
 	the second case the penalty values are scaled automatically.
       </para>
       <para>
-	You can exercise much greater control over gretl's regularized
-	least squares facility by calling the <lit>regls</lit>
-	function via scripting. In particular you are able to specify
-	cross validation; see <doc>regls.pdf</doc> for details.
+	If you select multiple &lgr; values the option of cross
+	validation becomes available. In that case you can select the
+	number of <quote>folds</quote> for the training data (default
+	10) and whether these folds should be random or contiguous
+	subsets of the observations. You may also choose to show
+	a plot of average Mean Squared Error (MSE) against the
+	&lgr;-fraction.
       </para>
+      <para>
+	The <quote>Advanced</quote> button opens a further dialog that
+	provides somewhat greater control over the regularization
+	procedure. But note that you can exercise finer control by
+	calling the <lit>regls</lit> function via scripting; see
+	<doc>regls.pdf</doc> for details.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Further regls options" context="gui">
+    <description>
+      <para>
+	Selections made via this dialog are applied only where
+	relevant, based on the choices made in the main regls dialog.
+	They are remembered for the duration of the gretl session.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Choice of algorithm: You may select the Cyclical
+	    Coordinate Descent (CCD) method for either LASSO or Ridge
+	    regression, as opposed to the default methods, namely the
+	    Alternating Direction Method of Multipliers (ADMM) for
+	    LASSO and Singular Value Decomposition (SVD) for Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The default criterion for <quote>best</quote> performance
+	    on cross validation is minimization of MSE, but you can
+	    select the alternative <quote>one standard error</quote>
+	    rule. This alternative, which favors parsimony, selects
+	    the largest penalty factor whose MSE is within one
+	    standard error of the minimum.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Seed for random folds: If you wish to obtain replicable
+	    results when cross validating with random folds, it is
+	    necessary to specify a seed for the random number
+	    generator.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    By default regls will use MPI (if available) in an effort
+	    to speed up cross validation. The MPI checkbox (shown only
+	    if gretl is compiled with MPI support) lets you turn this
+	    off, which may yield a speed-up for smaller datasets.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The option of showing execution time may be helpful if you
+	    wish to compare the performance of different algorithms,
+	    or to check whether MPI is worthwhile. The timing shown in
+	    the output is for execution of the underlying C code.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -13497,6 +13573,12 @@
 	  <lit>warn</lit> or <lit>stop</lit>. Controls the
 	  consequences of failure (return value of 0) from the
 	  <fncref targ="assert"/> function.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>datacols</lit>: an integer from 1 to 15, with
+	  default value 5. Sets the maximum number of series shown
+	  side-by-side when data are displayed by observation.
 	  </para>
 	</li>
       </ilist>
@@ -15965,34 +16047,29 @@
 	related to the Johansen test for cointegration (see <cmdref
 	  targ="johansen"/>).
       </para>
-
       <para context="cli">
 	The <repl>order</repl> parameter to this command represents the lag
 	order of the VAR system.  The number of lags in the VECM itself (where
 	the dependent variable is given as a first difference) is one less than
 	<repl>order</repl>.
       </para>
-
       <para context="gui">
 	The lag order selected in the VECM dialog box is that of the VAR system.
 	The number of lags in the VECM itself (where the dependent variable is
 	given as a first difference) is one less than this number.
       </para>
-
       <para context="cli">
 	The <repl>rank</repl> parameter represents the cointegration rank, or in
 	other words the number of cointegrating vectors.  This must be greater
 	than zero and less than or equal to (generally, less than) the number of
 	endogenous variables given in <repl>ylist</repl>.
       </para>
-
       <para context="gui">
 	The <quote>rank</quote> represents the number of cointegrating
 	vectors.  This must be greater than zero and less than or
 	equal to (generally, less than) the number of endogenous
 	variables selected.
       </para>
-
       <para context="cli">
 	<repl>ylist</repl> supplies the list of endogenous variables,
 	in levels. The inclusion of deterministic terms in the model
@@ -16008,7 +16085,6 @@
 	these cases and the criteria for selecting a case are
 	explained in <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
 	allow you to specify sets of exogenous variables which enter the
@@ -16017,7 +16093,6 @@
 	separated from <repl>ylist</repl> and from each other by
 	semicolons.
       </para>
-
       <para context="gui">
 	In the <quote>Endogenous variables</quote> box you select the
 	vector of endogenous variables, in levels. The inclusion of
@@ -16032,7 +16107,6 @@
 	The meaning of these cases and the criteria for selecting a
 	case are explained in <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	In the <quote>Exogenous variables</quote> box you may add specific
 	exogenous variables.  By default these enter the model in
@@ -16042,14 +16116,12 @@
 	select <quote>Restricted</quote> from the pop-up menu.  The symbol
 	next to the variable will change to R.
       </para>
-
       <para context="cli">
 	The <opt>seasonals</opt> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
       </para>
-
       <para context="gui">
 	If the data are quarterly or monthly, a check box is shown that allows
 	you to include a set of centered seasonal dummy variables.  In all
@@ -16057,7 +16129,6 @@
 	for the printing of the auxiliary regressions that form the starting
 	point of the Johansen maximum likelihood estimation procedure.
       </para>
-
       <para context="cli">
 	The first example above specifies a VECM with lag order 4 and a single
 	cointegrating vector.  The endogenous variables are <lit>Y1</lit>,
@@ -16067,7 +16138,6 @@
 	appropriate if the cointegrating vectors may have a non-zero intercept
 	but the <lit>Y</lit> variables have no trend.
       </para>
-
       <para context="cli">
 	Following estimation of a VECM some special accessors are
 	available: <lit>$jalpha</lit>, <lit>$jbeta</lit> and

@@ -801,7 +801,7 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     }
 }
 
-static double durbins_h (const MODEL *pmod, int *err)
+static double durbins_h (MODEL *pmod, int *err)
 {
     int ldv = gretl_model_get_int(pmod, "ldepvar");
     double se = pmod->sderr[ldv - 2];
@@ -816,6 +816,7 @@ static double durbins_h (const MODEL *pmod, int *err)
 	*err = E_SQRT;
     } else {
 	h = pmod->rho * sqrt(T / (1 - T * se * se));
+	gretl_model_set_double(pmod, "durbin_h", h);
     }
 
     return h;
@@ -3058,7 +3059,7 @@ enum {
    table of coefficients, standard errors, etc.
 */
 
-static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
+static void print_middle_table (MODEL *pmod, PRN *prn, int code)
 {
     const char *note =
 	/* TRANSLATORS: please do not translate literally: this is for

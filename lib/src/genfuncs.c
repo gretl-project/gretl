@@ -5853,24 +5853,23 @@ static int fill_fcstats_column (gretl_matrix *m,
     return err;
 }
 
-static void add_fcstats_rownames (gretl_matrix *m)
+static void add_fcstats_rownames (gretl_matrix *m,
+				  gretlopt opt)
 {
-    int ns = m->rows;
-    char **rownames;
-
-    rownames = strings_array_new(ns);
+    const char *S[] = {
+	"ME", "RMSE", "MAE", "MPE", "MAPE",
+	"U1", "UM", "UR", "UD"
+    };
+    int i, ns = m->rows;
+    char **rownames = strings_array_new(ns);
 
     if (rownames != NULL) {
-	rownames[0] = gretl_strdup("ME");
-	rownames[1] = gretl_strdup("RMSE");
-	rownames[2] = gretl_strdup("MAE");
-	rownames[3] = gretl_strdup("MPE");
-	rownames[4] = gretl_strdup("MAPE");
-	rownames[5] = gretl_strdup("U");
-	if (ns == 9) {
-	    rownames[6] = gretl_strdup("UM");
-	    rownames[7] = gretl_strdup("UR");
-	    rownames[8] = gretl_strdup("UD");
+	for (i=0; i<ns; i++) {
+	    if (i == 5 && (opt & OPT_T)) {
+		rownames[5] = gretl_strdup("U2");
+	    } else {
+		rownames[i] = gretl_strdup(S[i]);
+	    }
 	}
 	gretl_matrix_set_rownames(m, rownames);
     }
@@ -5983,7 +5982,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	if (n_used != NULL) {
 	    *n_used = t2 - t1 + 1 - nmiss;
 	}
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -6017,7 +6016,7 @@ gretl_matrix *matrix_fc_stats (const double *y,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -8017,6 +8016,8 @@ int fill_permutation_vector (gretl_vector *v, int n)
     return 0;
 }
 
+#define GEODEBUG 0
+
 /* Driver function for calling the geoplot plugin to produce
    a map. To obtain the map polygons we need EITHER the name
    of the source file (GeoJSON or Shapefile), via @fname,
@@ -8054,6 +8055,7 @@ int geoplot_driver (const char *fname,
 	fname = mapfile;
 	if (fname == NULL) {
 	    gretl_errmsg_set("geoplot: no map was specified");
+	    return E_DATA;
 	}
     }
 
@@ -8065,6 +8067,11 @@ int geoplot_driver (const char *fname,
 	}
     }
 
+#if GEODEBUG
+    fprintf(stderr, "geoplot_driver: map=%p, mapfile=%p, fname=%p\n",
+	    (void *) map, (void *) mapfile, (void *) fname);
+#endif
+
     /* In the case where we got @fname, do we want to produce a
        map bundle in which the actual map data are synced with
        the dataset? Probably so if @fname is just $mapfile
@@ -8073,7 +8080,9 @@ int geoplot_driver (const char *fname,
     */
     if (map == NULL && mapfile != NULL) {
 	if (fname == mapfile || !strcmp(fname, mapfile)) {
-	    fprintf(stderr, "*** geoplot_driver: calling get_current_map()\n");
+#if GEODEBUG
+	    fprintf(stderr, "geoplot_driver: calling get_current_map()\n");
+#endif
 	    map = get_current_map(dset, NULL, &err);
 	    free_map = 1;
 	    fname = NULL;
@@ -8217,4 +8226,3 @@ int substitute_values (double *dest, const double *src, int n,
 
     return 0;
 }
-

@@ -1609,10 +1609,12 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
 	maybe_print_point_info(line, fp);
 
-	if (line->width == 1.0 && spec->scale > 1.0) {
-	    fprintf(fp, " lw 2");
-	} else if (line->width != 1) {
-	    fprintf(fp, " lw %g", (double) line->width);
+	if (line->style != GP_STYLE_FILLEDCURVE) {
+	    if (line->width == 1.0 && spec->scale > 1.0) {
+		fprintf(fp, " lw 2");
+	    } else if (line->width != 1) {
+		fprintf(fp, " lw %g", (double) line->width);
+	    }
 	}
 
 	if (line->whiskwidth > 0) {

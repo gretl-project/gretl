@@ -5722,12 +5722,9 @@ gretl_bundle *get_current_map (const DATASET *dset,
 			       int *err)
 {
     const char *sj, *id, *fname;
-#if MAP_DEBUG
-    const char *id;
-#endif
     gretl_bundle *fi, *pp, *jb = NULL;
     gretl_array *features = NULL;
-    int n, fmax = 0;
+    int ntarg, fmax = 0;
     int i, j, dsi, fidx;
     double xj;
 
@@ -5750,13 +5747,15 @@ gretl_bundle *get_current_map (const DATASET *dset,
     }
 
     if (!*err) {
+	int nobs;
+
 	fmax = gretl_array_get_length(features);
 	if (dset->submask != NULL) {
-	    n = get_full_length_n();
+	    nobs = get_full_length_n();
 	} else {
-	    n = dset->n;
+	    nobs = dset->n;
 	}
-	if (fmax != n) {
+	if (fmax != nobs) {
 	    /* Although it may be sub-sampled, the full dataset must
 	       have a number of observations equal to the number of
 	       features in the existing map.
@@ -5764,7 +5763,8 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	    gretl_errmsg_set("map and dataset are out of sync!");
 	    *err = E_DATA;
 	}
-	n = fmax;
+	/* the number of features we're seeking */
+	ntarg = sample_size(dset);
     }
 
     if (*err) {
@@ -5772,19 +5772,19 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	return NULL;
     }
 
+#if MAP_DEBUG
+    fprintf(stderr, "get_current_map: fmax %d, ntarg %d\n", fmax, ntarg);
+    printf(stderr, "checking for features to include/drop\n");
+#endif
+
+    /* index into dataset rows */
     dsi = -1;
 
     for (i=0, fidx=0; i<fmax; i++) {
 	int skip = 0;
 
-#if MAP_DEBUG
-	fprintf(stderr, "get_current_map: i=%d\n", i);
-#endif
 	if (dset->submask != NULL) {
 	    if (dset->submask[i] == 0) {
-#if MAP_DEBUG
-		fprintf(stderr, "  skip masked feature %d\n", i);
-#endif
 		skip = 1;
 	    } else {
 		dsi++;
@@ -5800,20 +5800,11 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	}
 	if (skip) {
 #if MAP_DEBUG
-	    fprintf(stderr, "  skip: delete feature %d\n", i);
+	    fprintf(stderr, "  drop sampled-out feature %d\n", i);
 #endif
 	    gretl_array_delete_element(features, fidx);
-	    fmax--;
 	} else {
 	    fi = gretl_array_get_element(features, fidx, NULL, err);
-#if MAP_DEBUG
-	    id = gretl_bundle_get_string(fi, "id", NULL);
-	    if (id != NULL) {
-		fprintf(stderr, "  include feature %d (%s)\n", i, id);
-	    } else {
-		fprintf(stderr, "  include feature %d\n", i);
-	    }
-#endif
 	    pp = gretl_bundle_get_bundle(fi, "properties", err);
 	    /* clear the existing properties bundle */
 	    gretl_bundle_void_content(pp);
@@ -5832,11 +5823,27 @@ gretl_bundle *get_current_map (const DATASET *dset,
 		}
 	    }
 	    fidx++;
+#if MAP_DEBUG
+	    fprintf(stderr, "  included feature %d, now got %d\n", i, fidx);
+#endif
+	    if (fidx == ntarg) {
+#if MAP_DEBUG
+		fprintf(stderr, "  reached target of %d features, break\n", ntarg);
+#endif
+		break;
+	    }
 	}
     }
 
+    fmax = gretl_array_get_length(features);
+
+#if MAP_DEBUG
+    fprintf(stderr, "after loop, features array has %d elements, fidx=%d\n",
+	    fmax, fidx);
+#endif
+
     /* delete any unwanted trailing features */
-    for (j=fidx; j<n; j++) {
+    for (j=fidx; j<fmax; j++) {
 	gretl_array_delete_element(features, fidx);
     }
 

@@ -2865,6 +2865,62 @@
       </description>
     </function>
 
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Proporciona un medio de determinar si un objeto numérico
+	  <argname>x</argname> está contenido en alguno de los elementos
+	  de una matriz <argname>S</argname> (que cumple el papel de
+	  un conjunto).
+	</para>
+	<para>
+	  El valor que se devuelve es un objeto del mismo tamaño que
+	  <argname>x</argname> que contiene valores de 1 en las posiciones
+	  donde el valor <argname>x</argname> coincide con algún elemento
+	  de <argname>S</argname>, y ceros en las demás.
+	  Por ejemplo, el código
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1
+	</code>
+	<para>
+	  Esta función puede ser particularmente útil cuando <argname>x</argname>
+	  es una serie que contiene una codificación muy refinada para una
+	  característica cualitativa, y quieres reducir esto a un número de
+	  categorías menor. Puedes meter en <argname>S</argname> un conjunto
+	  de valores a consolidar, y obtener una variable ficticia con el valor 1
+	  para las observaciones que coinciden con este conjunto, y el valor 0
+	  para las demás.
+	</para>
+	<para>
+	  Puesto que <argname>S</argname> funciona como un conjunto, debiera
+	  ser un vector sin valores repetidos para tener una mayor eficiencia;
+	  sin embargo, se acepta una matriz cualquiera.
+	</para>
+      </description>
+    </function>
+
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>

@@ -1,26 +1,26 @@
 function void doIRF_new(bundle *SVARobj)
-    
+
     # constructs the structural VMA representation via the native vma()
     # function and stores it into the bundle
-    scalar type = SVARobj.type
+    # (apparently this isn't used yet? - June 2021)
 
-    if (type == 1) || (type == 2) || (type == 4)
-        matrix C = SVARobj.C	# was: SVARobj.S1
+    scalar type = SVARobj.type
+    matrix C
+
+    if type==1 || type==2 || type==4
+        C = SVARobj.C
     elif type == 3
-        if inbundle(SVARobj, "C")	# maybe not yet computed
-            matrix C = SVARobj.C
-        else
-            matrix C = SVARobj.S1 \ SVARobj.S2
-        endif
+        # (maybe not yet computed)
+        C = inbundle(SVARobj, "C") ? SVARobj.C : SVARobj.S1 \ SVARobj.S2
     endif
 
     ret = vma(SVARobj.VARpar, C, SVARobj.horizon + 1)
-    
+
     # switch the indices (necessary for compatibility)
     n = SVARobj.n
     s = vec(mshape(seq(1, n*n), n, n)')
     ret = ret[,s]
-    
+
     if SVARobj.ncumul > 0
         ret[, SVARobj.cumsel] = cum(ret[, SVARobj.cumsel]) # .cumsel was sel
     endif
@@ -40,15 +40,14 @@ function void doIRF(bundle *SVARobj)
     matrix varA = SVARobj.VARpar
     scalar H = SVARobj.horizon + 1
     scalar n = SVARobj.n
+    matrix C
 
-    if (type == 1) || (type == 2) || (type == 4)
-        matrix C = SVARobj.C	# was: SVARobj.S1
+    if type==1 || type==2 || type==4
+        C = SVARobj.C	# was: SVARobj.S1
+
     elif type == 3
-        if inbundle(SVARobj, "C")	# maybe not yet computed
-            matrix C = SVARobj.C
-        else
-            matrix C = SVARobj.S1 \ SVARobj.S2
-        endif
+        # (maybe not yet computed)
+        C = inbundle(SVARobj, "C") ? SVARobj.C : SVARobj.S1 \ SVARobj.S2
     endif
 
     matrix ret = zeros(H,n*n)
@@ -56,15 +55,15 @@ function void doIRF(bundle *SVARobj)
     matrix tmp = I(np)
     matrix prd = zeros(np,np)
 
-    loop i=1..H --quiet
+    loop i = 1..H
         ret[i,] = vec(tmp[1:n,1:n] * C)'
         if (np>n)
-	    prd[n+1:np, ] = tmp[1:np-n, ]
+            prd[n+1:np, ] = tmp[1:np-n, ]
         endif
         prd[1:n,] = varA * tmp
         tmp = prd
     endloop
-    
+
     if SVARobj.ncumul > 0
         # The following code is now done in SVAR_cumulate
         # once and for all:
@@ -86,38 +85,26 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
     n = SVARobj.n
     h = SVARobj.horizon + 1
 
-    if SVARobj.type == 10 
+    if SVARobj.type == 10
         # In the set id case in each accepted draw the impulse
-        # responses are already stored as "irfs"; however, the format 
-        # there is an array of matrices. 
+        # responses are already stored as "irfs"; however, the format
+        # there is an array of matrices.
 
         errchkSRhisto(&SVARobj, drawix)
-        
+
         # allow drawix to override the setting in the bundle
         whichdraw = drawix ? drawix : SVARobj.bestdraw
         bundle pickdraw = SVARobj.acc_draws[whichdraw]
 
-        if cols(pickdraw.irfs[1]) != n
-            funcerr "partial id not supported for FEVD"
-        elif h != nelem(pickdraw.irfs)
-            funcerr "horizon mismatch"
-        endif
+        errorif( cols(pickdraw.irfs[1]) != n, "partial id not supported for FEVD")
+        errorif( h != nelem(pickdraw.irfs), "horizon mismatch")
 
         if !inbundle(pickdraw, "IRFs") # maybe have already been added there
-            putIrf_to_accdraw(&SVARobj, whichdraw) 
-            
-            # matrix IRFs = zeros(h, n*n)
-            # loop ix = 1..h -q
-            #     IRFs[ix, ] = vec(pickdraw.irfs[ix])'
-            # endloop
-            ## copy to origin
-            # matrix SVARobj.acc_draws[whichdraw].IRFs = IRFs
-        # else 
-        #     matrix IRFs = pickdraw.IRFs
+            putIrf_to_accdraw(&SVARobj, whichdraw)
         endif
         matrix IRFs = SVARobj.acc_draws[whichdraw].IRFs
 
-    else # standard non-SR model 
+    else # standard non-SR model
         if drawix > 0
             print "Warning: 'drawix' arg meaningless for standard SVAR, ignoring"
         endif
@@ -127,7 +114,7 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
     matrix ret = zeros(h, n*n)
     ctmp = cum(IRFs .* IRFs)
 
-    loop i = 1..h --quiet
+    loop i = 1..h
         tmp = mshape(ctmp[i,],n,n)'
         ret[i,] = vec(tmp ./ sumc(tmp))'
     endloop
@@ -136,31 +123,33 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
 end function
 
 
-### The functions GetShock() and SVAR_getshock aren't called anywhere, 
+### The functions GetShock() and SVAR_getshock aren't called anywhere,
 #### but they're public and meant to be used by the user.
 ## GetShock may be deprecated in the future in favor of SVAR_getshock.
 
-function series SVAR_getshock(bundle *mod, string sname[null], 
+function series SVAR_getshock(bundle *mod, string sname[null],
                               int drawix[0::0])
-    # This is a wrapper to provide a nicer interface, using the 
+    # This is a wrapper to provide a nicer interface, using the
     # name of the shock instead of the number.
     # Default (as in GetShock) is to use the first shock.
 
-    s_ix = !exists(sname) ? 1 : strpos_allin(mod.snames, sname)
+    s_ix = !exists(sname) ? 1 : instrings(mod.snames, sname)
 
     return GetShock(&mod, s_ix, drawix)
-end function 
+end function
+
+####
 
 function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
-    /*
-    Produces the series corresponding to the historical shock 
-    realizations associated with the point estimates of the model
-    (and IRFs).
-    For set identification (sign restrictions) there is no point
-    estimate; however, we support that 
-    the user picks one of the accepted draws and then the shock series 
-    is based on that particular model draw.
-    # (drawix only meant for the set id case (type 10))
+/*
+   Produces the series corresponding to the historical shock
+   realizations associated with the point estimates of the model
+   (and IRFs).
+   For set identification (sign restrictions) there is no point
+   estimate; however, we support that
+   the user picks one of the accepted draws and then the shock series
+   is based on that particular model draw.
+   # (drawix only meant for the set id case (type 10))
     */
 
     series ret = NA
@@ -168,45 +157,36 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
     matrix B10 = {}	# to be filled in type 10
 
     ## some error checks ##
-	if type > 4 && type != 10
-        printf "Given type %d\n", type
-        funcerr "Unknown model type"
-    
-    elif i > SVARobj.n
-        printf "Chosen shock index: %d\n", i
-        funcerr "Shock index out of range"
-        
-    elif type != 10 && drawix > 0
+    errorif( type>4 && type!=10, sprintf("Given type %d\nUnknown model type", type))
+    errorif( i > SVARobj.n, sprintf("Chosen shock index: %d\nShock index out of range", i))
+       
+    if type != 10 && drawix > 0
         print "Warning: 'drawix' arg meaningless for standard SVAR"
-    elif type == 10 
+    elif type == 10
         errchkSRhisto(&SVARobj, drawix)
     endif
 
     ## get the C matrix (and then the inv) ##
-    if (type == 1) || (type == 2) || (type == 4)
-        matrix C = SVARobj.C 
+    matrix C
+    if type==1 || type==2 || type==4
+        C = SVARobj.C
 
     elif type == 3
-        if inbundle(SVARobj, "C")	# maybe not yet computed
-            matrix C = SVARobj.C
-        else
-            matrix C = SVARobj.S1 \ SVARobj.S2
-        endif
+        # (maybe not yet computed)
+        C = inbundle(SVARobj, "C") ? SVARobj.C : SVARobj.S1 \ SVARobj.S2
 
-    elif type == 10 # set id 
+    elif type == 10 # set id
         # allow drawix to override the setting in the bundle
         whichdraw = drawix ? drawix : SVARobj.bestdraw
         bundle pickdraw = SVARobj.acc_draws[whichdraw]
         matrix C = pickdraw.irfs[1] # impact effect is C
         B10 = pickdraw.B
 
-        if cols(C) < SVARobj.n
-            funcerr "partial id not supported for shock retrieval"
-        endif
+        errorif( cols(C) < SVARobj.n, "partial id not supported for shock retrieval")
     endif
 
     matrix iC = inv(C')
-	
+
     matrix resids = muVARparE_mayberedr(SVARobj, B10)[3]
 
     ## construct the wanted series ##
@@ -230,12 +210,12 @@ end function
 
 #######################
 
-function list SVAR_HD(bundle *mod, string vname[null], 
+function list SVAR_HD(bundle *mod, string vname[null],
                       int drawix[0::0])
-    # wrapper around SVAR_hd to use a string interface for the 
-    # variable 
-    v_ix = !exists(vname) ? 1 : strpos_allin(mod.Ynames, vname)
-    return SVAR_hd(&mod, v_ix, drawix)	
+    # wrapper around SVAR_hd to use a string interface for the
+    # variable
+    v_ix = !exists(vname) ? 1 : instrings(mod.Ynames, vname)
+    return SVAR_hd(&mod, v_ix, drawix)
 end function
 
 
@@ -244,25 +224,25 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     # (drawix only meant for the set id case (type 10))
 
     list ret = null
-    loop foreach i n p t1 t2 type T k --quiet
+    loop foreach i n p t1 t2 type T k
         scalar $i = Mod.$i
     endloop
     matrix B10 = {} # to be filled for type 10
 
     if nv > n
-        printf "Hm. There are %d variables in the model. ", n 
+        printf "Hm. There are %d variables in the model. ", n
         printf "Chosen shock index: %d\n", nv
         funcerr "Shock index out of range"
         ## (further range check for SR partial id below) ##
     endif
-    
+
     # Prepare the set id case
-    if type == 10 
+    if type == 10
         errchkSRhisto(&Mod, drawix)
         # allow drawix to override the setting in the bundle
         whichdraw = drawix ? drawix : Mod.bestdraw
-        bundle pickdraw = Mod.acc_draws[whichdraw] 
-        matrix B10 = pickdraw.B  
+        bundle pickdraw = Mod.acc_draws[whichdraw]
+        matrix B10 = pickdraw.B
     endif
 
     # The following might be redrawn in type10/Bayesian
@@ -285,24 +265,19 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     elif type == 10
         matrix m = Mod.X * muVARparE[1]
-    endif 
+    endif
 
     # grab the C matrix
-    if (type == 1) || (type == 2) || (type == 4)
-        matrix C = Mod.C
+    matrix C
+    if type==1 || type==2 || type==4
+        C = Mod.C
 
     elif type == 3
-        if inbundle(Mod, "C")
-            matrix C = Mod.C
-        else
-            matrix C = Mod.S1 \ Mod.S2
-        endif
+        C = inbundle(Mod, "C") ? Mod.C : Mod.S1 \ Mod.S2
 
     elif type == 10
-        matrix C = pickdraw.irfs[1] # impact effect is C
-        if cols(C) < Mod.n
-            funcerr "partial id not supported for historical decomp"
-        endif
+        C = pickdraw.irfs[1] # impact effect is C
+        errorif( cols(C) < Mod.n, "partial id not supported for historical decomp")
     endif
 
     matrix iC = inv(C)
@@ -323,11 +298,11 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     matrix U = muVARparE[3] * iC' # was E
     rotVARpar = iC * muVARparE[2] * (I(p) ** C)
 
-    loop i = 1..n --quiet
+    loop i = 1..n
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
         ret += genseries(sprintf("hd_%s_%s", yn,
-				 fixname(snames[i])), W[,nv])
+          fixname(snames[i])), W[,nv])
     endloop
 
     return ret

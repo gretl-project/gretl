@@ -1,6 +1,15 @@
-include SVAR_compatibility_funcs.inp # for basename()
-
-###########################
+# Index:
+# range 
+# max_eval
+# determ 
+# vecm_det
+# N2_ify
+# has_unit_diag
+# has_free_diag
+# mat_exp
+# maybe_flip_columns
+# printStrMat
+# add_and_smash
 
 function scalar range(int a, int n, scalar *n0, scalar *n1)
     # this is used in the plotting function to have
@@ -28,12 +37,16 @@ end function
 # ---------------------------
 
 function scalar max_eval(const matrix A)
+    # attention: 
+    # up to v1.94 this actually seemed to calculate the max _squared_ modulus (?)
+    # from v1.95 we use abs() after eigen() to directly get the modulus. 
+     
     n = rows(A)
     p = cols(A) / n
-    matrix compan = (p==1) ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))
-    # TODO: eventually replace this with "eigen" (but needs 2020b or so):
-    matrix lambda = eigengen(compan) # deprecated 
-    scalar maxmod = maxc(sumr(lambda.^2))
+    matrix compan = p==1 ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))
+    matrix lambda = eigen(compan) # was eigengen(compan), deprecated
+    # (lambda will be complex now) 
+    scalar maxmod = maxc(abs(lambda)) # was: maxc(sumr(lambda.^2))
     return maxmod
 end function
 
@@ -65,7 +78,7 @@ function matrix vecm_det(int T, int dcase)
     # the restricted term is _not_ included in x, since its
     # parameter will be recovered later via alpha*beta
 
-    matrix mreg = (dcase < 3) ? {} : ones(T,1)
+    matrix mreg = dcase<3 ? {} : ones(T)
     if dcase == 5
         matrix mreg ~= seq(1,T)'
     endif
@@ -80,7 +93,7 @@ function matrix N2_ify(const matrix A)
     n = int(sqrt(n2))
     k = cols(A)
     matrix e = vec(transp(mshape(seq(1,n2),n,n)))
-    return A + A[e,1:k]
+    return A + A[e, 1:k]
 end function
 
 function scalar has_unit_diag(const matrix Rd)
@@ -121,19 +134,10 @@ function matrix mat_exp(const matrix theta, const matrix Ss)
     n2 = rows(Ss)
     n = round(sqrt(n2))
     k = cols(Ss) - 1
-    matrix C = (k>0) ? ( Ss[,1:k]*theta + Ss[,k+1] ) : Ss
+    matrix C = k>0 ? ( Ss[,1:k]*theta + Ss[,k+1] ) : Ss
 
     return mshape(C,n,n)
 end function
-
-# function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
-#     n2 = rows(dat)
-#     n = round(sqrt(n2))
-#     k = cols(dat)
-
-#     Sigma = mshape(dat[,1],n,n)
-#     Ss = dat[,2:k]
-# end function
 
 
 function void maybe_flip_columns(const matrix C, matrix *X)
@@ -169,12 +173,10 @@ function void printStrMat(const matrix X, matrix V, string name)
     cfse ~= se
     string parnames = ""
 
-    loop j=1..n --quiet
-        loop i=1..n --quiet
-            # sprintf tmpstr "%s[%2d;%2d]", name, i, j
-            # parnames += tmpstr
+    loop j = 1..n 
+        loop i = 1..n 
             parnames += sprintf("%s[%2d;%2d]", name, i, j)
-            if (j<n) || (i<n)
+            if j<n || i<n
                 parnames += ","
             endif
         endloop
@@ -202,7 +204,7 @@ function scalar add_and_smash(matrix *A, const matrix Psi)
     H = 1
     maxiter = 1000
     iter = 0
-    loop while (maxmod > 0.9999) && (iter < maxiter) --quiet
+    loop while (maxmod > 0.9999) && (iter < maxiter) 
         iter++
         H *= h
         Ab = A + H .* Psi

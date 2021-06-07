@@ -1722,7 +1722,7 @@ static GretlToolItem pager_items[] = {
     { N_("First"),    GTK_STOCK_GOTO_FIRST, G_CALLBACK(dbnomics_pager_call), 1 },
     { N_("Previous"), GTK_STOCK_GO_BACK,    G_CALLBACK(dbnomics_pager_call), 2 },
     { N_("Next"),     GTK_STOCK_GO_FORWARD, G_CALLBACK(dbnomics_pager_call), 3 },
-    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 },
+    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);

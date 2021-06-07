@@ -24,7 +24,7 @@
 \newcommand{\startappendices}{%
 \newcounter{appcount}
 \setcounter{appcount}{0}
-\renewcommand{\thesection}{\Alph{appcount}}}
+\renewcommand{\thesection}{Appendix \Alph{appcount}}}
 
 \newcommand{\myappendix}[1]{%
 \addtocounter{appcount}{1}
@@ -34,7 +34,7 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls: regularized least squares in gretl}
+\title{regls 0.3: regularized least squares for gretl}
 \author{Allin Cottrell}
 
 \begin{document}
@@ -85,7 +85,7 @@ spectrum there exists a data-dependent value of $\lambda$, namely
   \lambda_{\max} = \|X'y\|_{\infty}
 \end{equation}
 which drives all elements of $\hat{\beta}$ to zero.  A key control
-variable for our \texttt{lasso()} function is the scaled term
+variable for our \texttt{regls} function is the scaled term
 $s = \lambda/\lambda_{\max}$, such that $0 \leq s \leq 1$.
 
 The \texttt{regls} function takes three arguments: a series (the
@@ -230,7 +230,7 @@ infallible one) to the likely out-of-sample performance of a model:
 smaller values of BIC are better. Note that the LASSO criterion itself
 does not offer such a guide (it is likely to decrease monotonically
 along with $\lambda$), but it can be useful in comparing the
-effectiveness of minimization algorithms (see Appendix~\ref{app:ccd}).
+effectiveness of minimization algorithms (see \ref{app:ccd}).
 
 When multiple $\lambda$ values are specified, the vector \texttt{nzb}
 and list \texttt{nzX} refer to the non-zero coefficients and
@@ -530,7 +530,7 @@ governed by two additional keys in the \texttt{parms} bundle:
 Using CCD will give results that are more directly comparable with
 \textsf{glmnet}. Beyond that, practitioners are likely to ask, how do
 the algorithms compare in terms of speed and accuracy? This question
-is addressed in detail in Appendix~\ref{app:ccd}. The short answer
+is addressed in detail in \ref{app:ccd}. The short answer
 is that CCD at its default tolerance is faster but somewhat less
 accurate than ADMM and SVD. By tightening the CCD tolerance one can
 generally close the accuracy gap; this may or may not reverse the
@@ -700,9 +700,12 @@ series glmnet_pred (matrix *Rb, list X)
 \section{Change log}
 \label{sec:changes}
 
-Version 0.1, 2020-10-09: initial release. \\
+Version 0.3, 2021-04-17: fix bug with Ridge verbose printout, and
+replace some tables with figures in the doc for ease of comprehension
+of comparative experiments.\\
 Version 0.2, 2021-01-29: support a higher verbosity level for GUI use;
-improve printout for LASS0 coefficients, when applicable.
+improve printout for LASS0 coefficients, when applicable.\\
+Version 0.1, 2020-10-09: initial release.
 
 \begin{script}
   \caption{Usage of \texttt{regls\_multiprint}}
@@ -750,11 +753,11 @@ results. Therefore, if the difference diminishes as tolerance is
 tightened for B we can infer that A was more accurate at the initial
 tolerance level.
 
-We employ two measures of distance between sets of results: Euclidean
-distance (labeled ``distance'' in the tables below) and Mean Absolute
-Deviation (MAD). To gauge the trade-off between accuracy and speed we
-also record the execution time for method B divided by that for A
-(labeled ``reltime'').
+We measure the difference between sets of results via Euclidean
+distance.\footnote{We also tried Mean Absolute Deviation but this did
+  not seem to contribute additional information.}  To gauge the
+trade-off between accuracy and speed we also record the execution time
+for method B divided by that for A.
 
 In the experiments reported below we used the murder rates dataset
 (\texttt{murder.gdt}) supplied with the \texttt{regls} package, with
@@ -837,15 +840,15 @@ comparison?
 
 Figure~\ref{fig:admm-seq} shows the results of a relevant
 experiment. The integers, $i$, on the $x$-axis represent progressively
-slacker tolerances, $(i\times 10^{-2}$, $i\times 10^{-4})$, for ADMM.
-(Note that the $i=1$ already gives values 100 times greater than the
-ADMM default.) As expected, greater tolerances correspond to shorter
-execution times (blue line, right-hand scale) and increasing distance
-from the baseline high-accuracy ADMM results (red line, left-hand
-scale).  CCD (at its default tolerance of $10^{-7}$) enters the
-picture in two ways: its execution speed is by construction 1 on the
-right-hand scale, while its deviation from the baseline esimates is
-shown by the dotted red line.
+slacker tolerance pairs, $(i\times 10^{-2}$, $i\times 10^{-4})$, for
+ADMM.  (Note that the $i=1$ already gives values 100 times greater
+than the ADMM default.) As expected, greater tolerances correspond to
+shorter execution times (blue line, right-hand scale) and increasing
+distance from the baseline high-accuracy ADMM results (red line,
+left-hand scale).  CCD, at its default tolerance of $10^{-7}$, enters
+the picture in two ways: its execution speed is by construction 1 on
+the right-hand scale, while its deviation from the baseline estimates
+is shown by the dotted red line.
 
 In this example there is a range of the ADMM tolerances, comprising
 $i=2$ and $i=3$, over which ADMM is both faster and more accurate than
@@ -865,9 +868,9 @@ CCD.
 
 As noted above, such figures are likely to be data- and
 model-dependent, but we conjecture that ADMM tolerances of
-$(10^{-2}, 10^{-4})$, corresponding to the ADMM(1) row, are
-conservative relative to CCD at tolerance $10^{-7}$, in the sense that
-they are likely to deliver results of equal accuracy to CCD or better.
+$(10^{-2}, 10^{-4})$ are conservative relative to CCD at tolerance
+$10^{-7}$ in the sense that they are likely to deliver results of
+equal accuracy to CCD or better.
 
 \subsection*{Conclusion}
 
@@ -917,7 +920,7 @@ To go any further we would have to assess what's ``good enough''
 accuracy (for example, with out-of-sample prediction in view). Does
 the extra accuracy of ADMM and SVD actually help, or is it surplus to
 requirements? We have something to say about that in
-Appendix~\ref{app:glmnet-comp}.
+\ref{app:glmnet-comp}.
 
 \myappendix{Comparison with glmnet}
 \label{app:glmnet-comp}
@@ -980,9 +983,13 @@ processing a sequence of $\lambda$ values.
 In \textsf{regls} cross validation, the entire training dataset is
 standardized at the outset, then each fold gets its share of the
 standardized data. The maximum $\lambda$ is also determined using the
-full training set, so the same $\lambda$ sequence is used for each
+full training set and the same $\lambda$ sequence is used for each
 fold. In \textsf{glmnet}, by contrast, both standardization and
-calculation of the $\lambda$ sequence are done per fold.
+calculation of the $\lambda$ sequence are done per fold. For example,
+suppose the training data are divided into 10 folds, each comprising
+10 percent of the observations. Then \textsf{glmnet} both standardizes
+and computes a $\lambda$ sequence using the complementary 90 percent
+of the data.
 
 \subsection*{Extended test of cross validation}
 
@@ -997,7 +1004,7 @@ prediction. We are particularly interested in
   \textsf{glmnet} noted in the previous section, and
 \item the ``extra accuracy'' of the ADMM algorithm, at its default
   tolerance, over CCD at its default tolerance, noted in
-  Appendix~\ref{app:ccd}.
+  \ref{app:ccd}.
 \end{itemize}
 
 As regards the methodological difference, not a great deal can be said
@@ -1054,7 +1061,7 @@ difference lies in the details of the cross validation methodology. In
 comparing \textsf{regls} CCD and ADMM the cross validation method is
 exactly the same and the relevant difference lies in the ``excess
 precision'' afforded by ADMM over CCD, at their respective default
-tolerances, as discussed in Appendix~\ref{app:ccd}.
+tolerances, as discussed in \ref{app:ccd}.
 
 %% \subsection*{Dataset 1}
 

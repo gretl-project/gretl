@@ -141,6 +141,7 @@ static struct gui_help_item gui_help_items[] = {
     { OPEN_LABELS,    "add-labels" },  /* FIXME */
     { COUNTMOD,       "count-model" },
     { REGLS,          "regls" },
+    { REGLS_ADV,      "regls-advanced" },
     { BWFILTER,       "bwfilter" },
     { POLYWEIGHTS,    "polyweights" },
     { EMAFILTER,      "ema-filter" },
@@ -1007,12 +1008,6 @@ static void finder_add_dbn_options (windata_t *vwin,
 		     entry);
 }
 
-#if (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
-# define USE_ENTRY_ICON
-#endif
-
-#ifdef USE_ENTRY_ICON
-
 static void finder_icon_press (GtkEntry *entry,
 			       GtkEntryIconPosition pos,
 			       GdkEvent *event,
@@ -1021,15 +1016,23 @@ static void finder_icon_press (GtkEntry *entry,
     vwin_finder_callback(entry, vwin);
 }
 
-#endif
+static void add_finder_icon (windata_t *vwin, GtkWidget *entry)
+{
+    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
+				  GTK_ENTRY_ICON_SECONDARY,
+				  GTK_STOCK_FIND);
+    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
+				   GTK_ENTRY_ICON_SECONDARY,
+				   TRUE);
+    g_signal_connect(G_OBJECT(entry), "icon-press",
+		     G_CALLBACK(finder_icon_press),
+		     vwin);
+}
 
 /* add a "search box" to the right of a viewer window's toolbar */
 
 void vwin_add_finder (windata_t *vwin)
 {
-#ifndef USE_ENTRY_ICON
-    GtkWidget *label;
-#endif
     GtkWidget *entry;
     GtkWidget *hbox;
     int fwidth = 16;
@@ -1051,21 +1054,7 @@ void vwin_add_finder (windata_t *vwin)
 
     gtk_entry_set_width_chars(GTK_ENTRY(entry), fwidth);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-
-#ifdef USE_ENTRY_ICON
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
-				  GTK_ENTRY_ICON_SECONDARY,
-				  GTK_STOCK_FIND);
-    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
-				   GTK_ENTRY_ICON_SECONDARY,
-				   TRUE);
-    g_signal_connect(G_OBJECT(entry), "icon-press",
-		     G_CALLBACK(finder_icon_press),
-		     vwin);
-#else
-    label = gtk_label_new(_("Find:"));
-    gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-#endif
+    add_finder_icon(vwin, entry);
 
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
@@ -1079,6 +1068,65 @@ void vwin_add_finder (windata_t *vwin)
     g_signal_connect(G_OBJECT(entry), "activate",
 		     G_CALLBACK(vwin_finder_callback),
 		     vwin);
+}
+
+static void add_footer_close_button (GtkWidget *hbox)
+{
+    GtkWidget *img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE,
+					      GTK_ICON_SIZE_MENU);
+    GtkWidget *button = gtk_button_new();
+
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect_swapped(button, "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     hbox);
+    gtk_widget_show_all(button);
+}
+
+static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
+			      GtkWidget *targ)
+{
+    if (event->keyval == GDK_Escape) {
+	gtk_widget_destroy(targ);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+static void vwin_nullify_finder (GtkWidget *w, windata_t *vwin)
+{
+    vwin->finder = NULL;
+}
+
+static void vwin_add_footer_finder (windata_t *vwin)
+{
+    GtkWidget *hbox, *entry;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    vwin->finder = entry = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
+    add_finder_icon(vwin, entry);
+
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 10);
+    add_footer_close_button(hbox);
+    gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
+
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(catch_footer_key), hbox);
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(finder_key_handler), vwin);
+    g_signal_connect(G_OBJECT(entry), "activate",
+		     G_CALLBACK(vwin_finder_callback),
+		     vwin);
+    g_signal_connect(G_OBJECT(entry), "destroy",
+		     G_CALLBACK(vwin_nullify_finder),
+		     vwin);
+
+    gtk_widget_show_all(hbox);
+    gtk_widget_grab_focus(entry);
 }
 
 #define SHOW_FINDER(r)    (r != GUI_HELP && r != GUI_HELP_EN)
@@ -1530,10 +1578,14 @@ void text_find (gpointer unused, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
+    fprintf(stderr, "vwin->finder = %p\n", (void *) vwin->finder);
+
     if (vwin->finder != NULL) {
 	gtk_widget_grab_focus(vwin->finder);
 	gtk_editable_select_region(GTK_EDITABLE(vwin->finder),
 				   0, -1);
+    } else if (vwin->flags & VWIN_USE_FOOTER) {
+	vwin_add_footer_finder(vwin);
     } else {
 	find_string_dialog(find_in_text, vwin);
     }
@@ -1544,7 +1596,9 @@ void text_find_again (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
-	g_signal_emit_by_name(G_OBJECT(vwin->finder), "activate", NULL);
+	if (gtk_widget_get_visible(vwin->finder)) {
+	    g_signal_emit_by_name(G_OBJECT(vwin->finder), "activate", NULL);
+	}
     } else if (find_dialog != NULL) {
 	if (vwin == g_object_get_data(G_OBJECT(find_dialog), "windat")) {
 	    find_in_text(NULL, find_dialog);

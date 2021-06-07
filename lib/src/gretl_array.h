@@ -66,6 +66,8 @@ gretl_matrix *gretl_strings_array_pos (gretl_array *A,
 				       const char *s,
 				       int *err);
 
+int gretl_array_drop_string (gretl_array *A, const char *s);
+
 GretlType gretl_array_get_type (gretl_array *A);
 
 GretlType gretl_array_get_content_type (gretl_array *A);

@@ -25,25 +25,21 @@
 #include "uservar.h"
 #include "matrix_extra.h"
 #include "gretl_func.h"
-
-#ifdef _OPENMP
-# include <omp.h>
-#endif
+#include "gretl_string_table.h"
+#include "gretl_mt.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
 #endif
 
-#ifdef WIN32
-# include "gretl_win32.h"
-#endif
-
+#include <stddef.h>
 #include <unistd.h>
 #include <errno.h>
 
 #include <glib.h>
 
 #define PDEBUG 0
+#define SVDEBUG 0
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -52,312 +48,377 @@ enum {
 };
 
 enum {
-    INIT_VALS,
-    INIT_CURV
+    CAT_BEHAVE = 1,
+    CAT_NUMERIC,
+    CAT_RNG,
+    CAT_ROBUST,
+    CAT_TS,
+    CAT_SPECIAL
 };
 
-/* state flags */
-
-enum {
-    STATE_USE_CWD         = 1 << 0,  /* store: use current dir as default */
-    STATE_ECHO_ON         = 1 << 1,  /* echoing commands or not */
-    STATE_MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
-    STATE_FORCE_DECPOINT  = 1 << 3,  /* override locale decimal separator */
-    STATE_USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
-    STATE_USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
-    STATE_USE_QR          = 1 << 6,  /* QR decomp is least-squares command default */
-    STATE_PREWHITEN       = 1 << 7,  /* HAC pre-whitening? */
-    STATE_FORCE_HC        = 1 << 8,  /* don't use HAC for time series */
-    STATE_USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
-    STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
-    STATE_WARN_ON         = 1 << 11, /* print numerical warning messages */
-    STATE_SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
-    STATE_BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
-    STATE_DPDSTYLE_ON     = 1 << 14, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 15, /* using openmp */
-    STATE_ROBUST_Z        = 1 << 16, /* use z- not t-score with HCCM/HAC */
-    STATE_MWRITE_G        = 1 << 17, /* use %g format with mwrite() */
-    STATE_ECHO_SPACE      = 1 << 18, /* preserve vertical space in output */
-    STATE_MPI_SMT         = 1 << 19  /* MPI: use hyperthreads by default */
-};
+typedef enum {
+    SV_ALL,
+    SV_INT,
+    SV_DOUBLE
+} SVType;
 
 /* for values that really want a non-negative integer */
 #define UNSET_INT -9
 #define is_unset(i) (i == UNSET_INT)
 
-typedef struct set_vars_ set_vars;
+typedef struct set_state_ set_state;
 
-struct robust_opts {
-    int auto_lag;
-    int user_lag;
-    int hc_version;
-    int hkern;
-    double qsband;
-};
-
-struct set_vars_ {
+struct set_state_ {
     int flags;
-    unsigned int seed;          /* for PRNG */
-    double conv_huge;           /* conventional value for $huge */
+    /* small integer values */
+    gint8 optim;                /* code for preferred optimizer */
+    gint8 vecm_norm;            /* VECM beta normalization */
+    gint8 garch_vcv;            /* GARCH vcv variant */
+    gint8 garch_alt_vcv;        /* GARCH vcv variant, robust estimation */
+    gint8 arma_vcv;             /* ARMA vcv variant */
+    gint8 wildboot_d;           /* distribution for wild bootstrap */
+    gint8 fdjac_qual;           /* quality of "fdjac" function */
+    gint8 max_verbose;          /* optimizer verbosity level */
+    gint8 hc_version;           /* HCCME version */
+    gint8 hac_kernel;           /* HAC kernel type */
+    gint8 auto_hac_lag;         /* HAC automatic lag-length formula */
+    gint8 user_hac_lag;         /* fixed user-set HAC lag length */
+    gint8 lbfgs_mem;            /* memory span for L-BFGS-B */
+    gint8 quantile_type;        /* Formula for computing quantiles */
+    /* potentially larger integers */
     int horizon;                /* for VAR impulse responses */
     int bootrep;                /* bootstrap replications */
-    double nls_toler;           /* NLS convergence criterion */
     int loop_maxiter;           /* max no. of iterations in non-for loops */
-    int vecm_norm;              /* VECM beta normalization */
-    int optim;                  /* code for preferred optimizer */
     int bfgs_maxiter;           /* max iterations, BFGS */
-    int max_verbose;            /* optimizer verbosity level */
-    int boot_iters;             /* max iterations, IRF bootstrap */
-    double bfgs_toler;          /* convergence tolerance, BFGS */
-    double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
     int bfgs_verbskip;          /* BFGS: show one in n iterations  */
-    int optim_steplen;          /* step length algorithm (only BFGS for now) */
+    int boot_iters;             /* max iterations, IRF bootstrap */
     int bhhh_maxiter;           /* max iterations, BHHH */
-    double bhhh_toler;          /* convergence tolerance, BHHH */
-    int lbfgs_mem;              /* memory span for L-BFGS-B */
-    int garch_vcv;              /* GARCH vcv variant */
-    int garch_robust_vcv;       /* GARCH vcv variant, robust estimation */
-    int arma_vcv;               /* ARMA vcv variant */
     int rq_maxiter;             /* max iterations for quantreg, simplex */
     int gmm_maxiter;            /* max iterations for iterated GMM */
+    /* floating-point values */
+    double conv_huge;           /* conventional value for $huge */
+    double nls_toler;           /* NLS convergence criterion */
+    double bfgs_toler;          /* convergence tolerance, BFGS */
+    double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
+    double bhhh_toler;          /* convergence tolerance, BHHH */
+    double qs_bandwidth;        /* bandwidth for QS HAC kernel */
+    double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
+    /* strings */
+    char csv_write_na[8];       /* representation of NA in CSV output */
+    char csv_read_na[8];        /* representation of NA in CSV input */
+    /* matrices */
     gretl_matrix *initvals;     /* parameter initializer */
     gretl_matrix *initcurv;     /* initial curvature matrix for BFGS */
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
-    struct robust_opts ropts;   /* robust standard error options */
-    char csv_write_na[8];       /* representation of NA in CSV output */
-    char csv_read_na[8];        /* representation of NA in CSV input */
-    double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
-    int fdjac_qual;             /* quality of "fdjac" function */
-    double fdjac_eps;           /* finite increment for "fdjac" function */
-    int wildboot_dist;          /* distribution for wild bootstrap */
 };
 
-#define MESSAGES "messages"
-#define WARNINGS "warnings"
-#define GRETL_DEBUG "debug"
-#define USE_DCMT "use_dcmt"
+typedef struct global_vars_ global_vars;
 
-#define BLAS_MNK_MIN "blas_mnk_min"
-#define SIMD_K_MAX "simd_k_max"
-#define SIMD_MN_MIN "simd_mn_min"
-#define MP_MNK_MIN "mp_mnk_min"
-/* but now preferred */
-#define OMP_MNK_MIN "omp_mnk_min"
-#define OMP_N_THREADS "omp_num_threads"
+static struct global_vars_ {
+    gint8 gretl_debug;
+    gint8 gretl_assert;
+    gint8 datacols;
+    gint8 plot_collect;
+    gint8 R_functions;
+    gint8 R_lib;
+    gint8 csv_digits;
+    int gmp_bits;
+} globals = {0, 0, 5, 0, 0, 1, UNSET_INT, 256};
 
-#define libset_boolvar(s) (!strcmp(s, MESSAGES) || \
-                           !strcmp(s, WARNINGS) || \
-                           !strcmp(s, FORCE_DECP) || \
-			   !strcmp(s, FORCE_HC) || \
-			   !strcmp(s, USE_LBFGS) || \
-			   !strcmp(s, PCSE) || \
-			   !strcmp(s, PREWHITEN) || \
-			   !strcmp(s, USE_SVD) || \
-			   !strcmp(s, USE_QR) || \
-			   !strcmp(s, SHELL_OK) || \
-			   !strcmp(s, USE_CWD) || \
-                           !strcmp(s, SKIP_MISSING) || \
-			   !strcmp(s, R_FUNCTIONS) || \
-			   !strcmp(s, R_LIB) || \
-			   !strcmp(s, BFGS_RSTEP) || \
-			   !strcmp(s, DPDSTYLE) || \
-			   !strcmp(s, USE_DCMT) || \
-			   !strcmp(s, ROBUST_Z) || \
-			   !strcmp(s, MWRITE_G) || \
-			   !strcmp(s, MPI_USE_SMT) || \
-			   !strcmp(s, USE_OPENMP))
-
-#define libset_double(s) (!strcmp(s, CONV_HUGE) || \
-			  !strcmp(s, BFGS_TOLER) || \
-			  !strcmp(s, BFGS_MAXGRAD) || \
-			  !strcmp(s, BHHH_TOLER) || \
-			  !strcmp(s, NLS_TOLER) || \
-			  !strcmp(s, QS_BANDWIDTH) || \
-			  !strcmp(s, NADARWAT_TRIM) || \
-			  !strcmp(s, FDJAC_EPS))
-
-#define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
-		       !strcmp(s, MAX_VERBOSE) || \
-		       !strcmp(s, BOOT_ITERS) || \
-		       !strcmp(s, BFGS_VERBSKIP) || \
-		       !strcmp(s, OPTIM_STEPLEN) || \
-		       !strcmp(s, BHHH_MAXITER) || \
-		       !strcmp(s, GMM_MAXITER) || \
-		       !strcmp(s, LBFGS_MEM) || \
-		       !strcmp(s, BOOTREP) || \
-		       !strcmp(s, HAC_KERNEL) || \
-                       !strcmp(s, HC_VERSION) || \
-		       !strcmp(s, HORIZON) || \
-		       !strcmp(s, LOOP_MAXITER) || \
-                       !strcmp(s, RQ_MAXITER) || \
-		       !strcmp(s, VECM_NORM) || \
-		       !strcmp(s, GRETL_OPTIM) || \
-		       !strcmp(s, GRETL_DEBUG) || \
-		       !strcmp(s, GRETL_ASSERT) || \
-		       !strcmp(s, BLAS_MNK_MIN) || \
-		       !strcmp(s, OMP_MNK_MIN) || \
-		       !strcmp(s, MP_MNK_MIN) || \
-		       !strcmp(s, OMP_N_THREADS) || \
-		       !strcmp(s, SIMD_K_MAX) || \
-		       !strcmp(s, SIMD_MN_MIN) || \
-		       !strcmp(s, FDJAC_QUAL) || \
-		       !strcmp(s, WILDBOOT_DIST) || \
-		       !strcmp(s, QUANTILE_TYPE))
-
-/* global state */
-set_vars *state;
+/* globals for internal use */
 static int seed_is_set;
-static int gretl_debug;
-static int user_mp_bits;
-static int R_functions;
-static int R_lib = 1;
-static int csv_digits = UNSET_INT;
-static int comments_on = 0;
-static int gretl_assert = 0;
-static int Qtype = 0;
+static int comments_on;
 static char data_delim = ',';
-static char data_export_decpoint = '.';
-#ifdef OS_OSX
-static int omp_mnk_min = -1;
-#else
-static int omp_mnk_min = 80000; /* was 65535 */
-#endif
-static int omp_n_threads;
+static char export_decpoint = '.';
 
-static int boolvar_get_flag (const char *s);
+typedef struct setvar_ setvar;
+
+struct setvar_ {
+    SetKey key;       /* internal integer key */
+    const char *name; /* userspace name */
+    gint8 category;   /* for printing purposes */
+    size_t offset;    /* byte offset into state or globals struct,
+			 where applicable */
+};
+
+setvar setvars[] = {
+    /* booleans (bitflags) */
+    { USE_CWD,      "use_cwd",   CAT_BEHAVE },
+    { ECHO_ON,      "echo",      CAT_BEHAVE },
+    { MSGS_ON,      "messages",  CAT_BEHAVE },
+    { FORCE_DECPOINT, "force_decpoint", CAT_BEHAVE },
+    { USE_PCSE,     "pcse",      CAT_ROBUST },
+    { USE_SVD,      "svd",       CAT_NUMERIC },
+    { USE_QR,       "force_qr",  CAT_NUMERIC },
+    { PREWHITEN,    "hac_prewhiten", CAT_ROBUST },
+    { FORCE_HC,     "force_hc",      CAT_ROBUST },
+    { USE_LBFGS,    "lbfgs",        CAT_NUMERIC },
+    { SHELL_OK,     "shell_ok",     CAT_SPECIAL },
+    { WARNINGS,     "warnings",     CAT_BEHAVE },
+    { SKIP_MISSING, "skip_missing", CAT_BEHAVE },
+    { BFGS_RSTEP,   "bfgs_richardson", CAT_NUMERIC },
+    { ROBUST_Z,     "robust_z", CAT_ROBUST },
+    { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
+    { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
+    { STATE_FLAG_MAX, NULL },
+    /* small integers */
+    { GRETL_OPTIM,  "optimizer", CAT_NUMERIC, offsetof(set_state,optim) },
+    { VECM_NORM,    "vecm_norm", CAT_TS,      offsetof(set_state,vecm_norm) },
+    { GARCH_VCV,    "garch_vcv", CAT_ROBUST,  offsetof(set_state,garch_vcv) },
+    { GARCH_ALT_VCV, "garch_alt_vcv", CAT_ROBUST, offsetof(set_state,garch_alt_vcv) },
+    { ARMA_VCV,      "arma_vcv", CAT_ROBUST, offsetof(set_state,arma_vcv) },
+    { WILDBOOT_DIST, "wildboot", CAT_BEHAVE, offsetof(set_state,wildboot_d) },
+    { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC, offsetof(set_state,fdjac_qual) },
+    { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE, offsetof(set_state,max_verbose) },
+    { HC_VERSION,    "hc_version",  CAT_ROBUST, offsetof(set_state,hc_version) },
+    { HAC_KERNEL,    "hac_kernel",  CAT_ROBUST, offsetof(set_state,hac_kernel) },
+    { HAC_LAG,       "hac_lag",     CAT_ROBUST },
+    { USER_HAC_LAG,  NULL },
+    { LBFGS_MEM,     "lbfgs_mem",     CAT_NUMERIC, offsetof(set_state,lbfgs_mem) },
+    { QUANTILE_TYPE, "quantile_type", CAT_BEHAVE, offsetof(set_state,quantile_type) },
+    { STATE_SMALL_INT_MAX, NULL },
+    /* larger integers */
+    { HORIZON,       "horizon", CAT_TS,     offsetof(set_state,horizon) },
+    { BOOTREP,       "bootrep", CAT_BEHAVE, offsetof(set_state,bootrep) },
+    { LOOP_MAXITER,  "loop_maxiter",  CAT_BEHAVE,  offsetof(set_state,loop_maxiter) },
+    { BFGS_MAXITER,  "bfgs_maxiter",  CAT_NUMERIC, offsetof(set_state,bfgs_maxiter) },
+    { BFGS_VERBSKIP, "bfgs_verbskip", CAT_BEHAVE,  offsetof(set_state,bfgs_verbskip) },
+    { BOOT_ITERS,    "boot_iters",    CAT_TS,      offsetof(set_state,boot_iters) },
+    { BHHH_MAXITER,  "bhhh_maxiter",  CAT_NUMERIC, offsetof(set_state,bhhh_maxiter) },
+    { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC, offsetof(set_state,rq_maxiter) },
+    { GMM_MAXITER,   "gmm_maxiter",   CAT_NUMERIC, offsetof(set_state,gmm_maxiter) },
+    { STATE_INT_MAX, NULL },
+    /* doubles */
+    { CONV_HUGE,     "huge",         CAT_BEHAVE,  offsetof(set_state,conv_huge) },
+    { NLS_TOLER,     "nls_toler",    CAT_NUMERIC, offsetof(set_state,nls_toler) },
+    { BFGS_TOLER,    "bfgs_toler",   CAT_NUMERIC, offsetof(set_state,bfgs_toler) },
+    { BFGS_MAXGRAD,  "bfgs_maxgrad", CAT_NUMERIC, offsetof(set_state,bfgs_maxgrad) },
+    { BHHH_TOLER,    "bhhh_toler",   CAT_NUMERIC, offsetof(set_state,bhhh_toler) },
+    { QS_BANDWIDTH,  "qs_bandwidth", CAT_ROBUST,  offsetof(set_state,qs_bandwidth) },
+    { NADARWAT_TRIM, "nadarwat_trim", CAT_NUMERIC, offsetof(set_state,nadarwat_trim) },
+    { STATE_FLOAT_MAX, NULL },
+    /* strings */
+    { CSV_WRITE_NA,  "csv_write_na", CAT_SPECIAL },
+    { CSV_READ_NA,   "csv_read_na",  CAT_SPECIAL },
+    /* matrices */
+    { INITVALS,      "initvals",    CAT_NUMERIC },
+    { INITCURV,      "initcurv",    CAT_NUMERIC },
+    { MATMASK,       "matrix_mask", CAT_BEHAVE },
+    { STATE_VARS_MAX, NULL },
+    /* global ints */
+    { GRETL_DEBUG,   "debug",     CAT_BEHAVE, offsetof(global_vars,gretl_debug) },
+    { GRETL_ASSERT,  "assert",    CAT_BEHAVE, offsetof(global_vars,gretl_assert) },
+    { DATACOLS,      "datacols",  CAT_BEHAVE, offsetof(global_vars,datacols) },
+    { PLOT_COLLECT,  "plot_collection", CAT_BEHAVE, offsetof(global_vars,plot_collect) },
+    { R_FUNCTIONS,   "R_functions", CAT_BEHAVE, offsetof(global_vars,R_functions) },
+    { R_LIB,         "R_lib",       CAT_BEHAVE, offsetof(global_vars,R_lib) },
+    { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE, offsetof(global_vars,csv_digits) },
+    { NS_SMALL_INT_MAX, NULL },
+    { GMP_BITS,      "gmp_bits",    CAT_BEHAVE, offsetof(global_vars,gmp_bits) },
+    { NS_MAX, NULL },
+    /* delegated ints */
+    { BLAS_MNK_MIN,  "blas_mnk_min", CAT_BEHAVE },
+    { OMP_MNK_MIN,   "omp_mnk_min",  CAT_BEHAVE },
+    { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
+    { SIMD_K_MAX,    "simd_k_max",  CAT_BEHAVE },
+    { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
+    { USE_DCMT,      "use_dcmt",    CAT_RNG },
+    /* specials */
+    { SEED,          "seed",      CAT_RNG },
+    { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
+    { STOPWATCH,     "stopwatch", CAT_SPECIAL },
+    { VERBOSE,       "verbose",   CAT_SPECIAL },
+    { SV_WORKDIR,    "workdir",   CAT_SPECIAL },
+    { GRAPH_THEME,   "graph_theme", CAT_SPECIAL },
+    { DISP_DIGITS,   "display_digits", CAT_SPECIAL }
+};
+
+#define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || k==R_LIB)
+#define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
+#define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
+		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
+
+#define libset_small_int(k) (k < STATE_SMALL_INT_MAX || \
+			     (k > STATE_VARS_MAX && k < NS_SMALL_INT_MAX))
+
+#define coded_intvar(k) (k == GARCH_VCV || \
+			 k == GARCH_ALT_VCV || \
+			 k == ARMA_VCV || \
+			 k == HAC_LAG || \
+			 k == HAC_KERNEL || \
+                         k == HC_VERSION || \
+			 k == VECM_NORM || \
+			 k == GRETL_OPTIM || \
+			 k == MAX_VERBOSE || \
+			 k == WILDBOOT_DIST || \
+			 k == QUANTILE_TYPE || \
+			 k == GRETL_ASSERT || \
+			 k == PLOT_COLLECT)
+
+/* the current set of state variables */
+set_state *state;
+
 static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
 				    PRN *prn);
-static int set_csv_digits (const char *s);
-static int libset_get_scalar (const char *var, const char *arg,
+static int libset_get_scalar (SetKey key, const char *arg,
 			      int *pi, double *px);
+static int libset_int_min (SetKey key);
 
-static void robust_opts_init (struct robust_opts *r)
+/* In case we have a SetKey and want to print the
+   associated userspace keyword. */
+
+static const char *setkey_get_name (SetKey key)
 {
-    r->auto_lag = AUTO_LAG_STOCK_WATSON;
-    r->user_lag = UNSET_INT;
-    r->hc_version = 0;
-    r->hkern = KERNEL_BARTLETT;
-    r->qsband = NADBL;
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(setvars); i++) {
+	if (setvars[i].key == key) {
+	    return setvars[i].name;
+	}
+    }
+    return NULL;
 }
 
-static const char *csv_delim_args[] = {
-    "comma",
-    "space",
-    "tab",
-    "semicolon",
-    NULL
-};
+/* Set up a hash table to map from userspace keywords
+   to setvar structs.
+*/
 
-static const char *garch_vcv_strs[] = {
-    "unset",
-    "hessian",
-    "im",
-    "op",
-    "qml",
-    "bw",
-    NULL
-};
-
-static const char *arma_vcv_strs[] = {
-    "hessian",
-    "op",
-    NULL
-};
-
-static const char *hac_kernel_strs[] = {
-    "bartlett",
-    "parzen",
-    "qs",
-    NULL
-};
-
-static const char *hc_version_strs[] = {
-    "0", "1", "2", "3", "3a", NULL
-};
-
-static const char *vecm_norm_strs[] = {
-    "phillips",
-    "diag",
-    "first",
-    "none",
-    NULL
-};
-
-static const char *optim_strs[] = {
-    "auto",
-    "BFGS",
-    "newton",
-    NULL
-};
-
-static const char *maxverb_strs[] = {
-    "off",
-    "on",
-    "full",
-    NULL
-};
-
-static const char *steplen_strs[] = {
-    "power",
-    "quadratic",
-    NULL
-};
-
-static const char *wildboot_strs[] = {
-    "rademacher",
-    "mammen",
-    NULL
-};
-
-static const char *qtype_strs[] = {
-    "Q6",
-    "Q7",
-    "Q8",
-    NULL
-};
-
-static const char *assert_strs[] = {
-    "off",
-    "warn",
-    "stop",
-    NULL
-};
-
-static const char **libset_option_strings (const char *s)
+static GHashTable *libset_hash_init (void)
 {
-    if (!strcmp(s, GARCH_VCV)) {
-	return garch_vcv_strs;
-    } else if (!strcmp(s, ARMA_VCV)) {
-	return arma_vcv_strs;
-    } else if (!strcmp(s, HAC_KERNEL)) {
-	return hac_kernel_strs;
-    } else if (!strcmp(s, HC_VERSION)) {
-	return hc_version_strs;
-    } else if (!strcmp(s, VECM_NORM)) {
-	return vecm_norm_strs;
-    } else if (!strcmp(s, GRETL_OPTIM)) {
-	return optim_strs;
-    } else if (!strcmp(s, MAX_VERBOSE)) {
-	return maxverb_strs;
-    } else if (!strcmp(s, "csv_delim")) {
-	return csv_delim_args;
-    } else if (!strcmp(s, OPTIM_STEPLEN)) {
-	return steplen_strs;
-    } else if (!strcmp(s, WILDBOOT_DIST)) {
-	return wildboot_strs;
-    } else if (!strcmp(s, QUANTILE_TYPE)) {
-	return qtype_strs;
-    } else if (!strcmp(s, GRETL_ASSERT)) {
-	return assert_strs;
-    } else {
+    GHashTable *ht = g_hash_table_new(g_str_hash, g_str_equal);
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(setvars); i++) {
+	if (setvars[i].name != NULL) {
+	    g_hash_table_insert(ht, (gpointer) setvars[i].name, &setvars[i]);
+	}
+    }
+
+    return ht;
+}
+
+static GHashTable *svht;
+
+static setvar *get_setvar_by_name (const char *name)
+{
+    setvar *ret = NULL;
+
+    if (svht == NULL) {
+	svht = libset_hash_init();
+    }
+
+    ret = g_hash_table_lookup(svht, name);
+
+    if (ret == NULL) {
+	/* backward compatibility */
+	if (!strcmp(name, "csv_na")) {
+	    ret = g_hash_table_lookup(svht, "csv_write_na");
+	} else if (!strcmp(name, "mp_mnk_min")) {
+	    ret = g_hash_table_lookup(svht, "omp_mnk_min");
+	}
+    }
+
+    return ret;
+}
+
+static void *setvar_get_target (setvar *sv)
+{
+    void *p;
+
+    if (sv->offset == 0 || sv->key > GMP_BITS) {
+	/* FIXME criterion? (0 offset is legit for "debug") */
+	if (sv->key != GRETL_DEBUG) {
+	    return NULL;
+	}
+    }
+
+    p = (sv->key < STATE_VARS_MAX)? (void *) state : (void *) &globals;
+#if SVDEBUG
+    fprintf(stderr, "setvar_get_target: '%s': %s=%p, offset=%lu, ret=%p\n",
+	    sv->name, sv->key < STATE_VARS_MAX ? "state" : "globals",
+	    (void *) p, sv->offset, p + sv->offset);
+#endif
+    return p + sv->offset;
+}
+
+#define INTS_OFFSET (1 + log2(STATE_FLAG_MAX))
+
+static void *setkey_get_target (SetKey key, SVType t)
+{
+    int i = INTS_OFFSET + key - GRETL_OPTIM;
+    setvar *sv = &setvars[i];
+
+    if (sv->key != key) {
+	fprintf(stderr, "*** internal error, looking for %s, found %s ***\n",
+		setkey_get_name(key), sv->name);
 	return NULL;
+    } else if ((t == SV_INT && !libset_int(key)) ||
+	       (t == SV_DOUBLE && !libset_double(key))) {
+	fprintf(stderr, "*** type mismatch in setkey_get_target for %s ***\n",
+		sv->name);
+	return NULL;
+    } else {
+	return setvar_get_target(sv);
     }
 }
 
-static void coded_var_show_opts (const char *s, PRN *prn)
+/* value strings for integer-coded variables */
+
+static const char *gvc_strs[] = {"unset", "hessian", "im", "op", "qml", "bw", NULL};
+static const char *gvr_strs[] = {"qml", "bw", NULL};
+static const char *avc_strs[] = {"hessian", "op", NULL};
+static const char *hkn_strs[] = {"bartlett", "parzen", "qs", NULL};
+static const char *hcv_strs[] = {"0", "1", "2", "3", "3a", NULL};
+static const char *vnm_strs[] = {"phillips", "diag", "first", "none", NULL};
+static const char *opt_strs[] = {"auto", "BFGS", "newton", NULL};
+static const char *mxv_strs[] = {"off", "on", "full", NULL};
+static const char *wbt_strs[] = {"rademacher", "mammen", NULL};
+static const char *qnt_strs[] = {"Q6", "Q7", "Q8", NULL};
+static const char *ast_strs[] = {"off", "warn", "stop", NULL};
+static const char *plc_strs[] = {"off", "auto", "on", NULL};
+static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
+static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
+
+struct codevar_info {
+    SetKey key;
+    const char **strvals;
+};
+
+/* look-up table for sets of value strings */
+
+struct codevar_info coded[] = {
+    { GARCH_VCV,     gvc_strs },
+    { GARCH_ALT_VCV, gvr_strs },
+    { ARMA_VCV,      avc_strs },
+    { HAC_KERNEL,    hkn_strs },
+    { HC_VERSION,    hcv_strs },
+    { VECM_NORM,     vnm_strs },
+    { GRETL_OPTIM,   opt_strs },
+    { MAX_VERBOSE,   mxv_strs },
+    { WILDBOOT_DIST, wbt_strs },
+    { CSV_DELIM,     csv_strs },
+    { QUANTILE_TYPE, qnt_strs },
+    { GRETL_ASSERT,  ast_strs },
+    { PLOT_COLLECT,  plc_strs },
+    { HAC_LAG,       ahl_strs }
+};
+
+static const char **libset_option_strings (SetKey key)
 {
-    const char **S = libset_option_strings(s);
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(coded); i++) {
+	if (coded[i].key == key) {
+	    return coded[i].strvals;
+	}
+    }
+    return NULL;
+}
+
+static void coded_var_show_opts (SetKey key, PRN *prn)
+{
+    const char **S = libset_option_strings(key);
 
     if (S != NULL) {
 	pputs(prn, "valid settings:");
@@ -365,72 +426,66 @@ static void coded_var_show_opts (const char *s, PRN *prn)
 	    pprintf(prn, " %s", *S);
 	    S++;
 	}
-	if (!strcmp(s, "csv_delim")) {
-	    pputs(prn, " or quoted punctuation character");
-	}
 	pputc(prn, '\n');
     }
 }
 
-static const char *get_arma_vcv_str (int v)
+static const char *garch_alt_vcv_string (void)
 {
-    if (v == ML_HESSIAN) {
-	return arma_vcv_strs[0];
-    } else if (v == ML_OP) {
-	return arma_vcv_strs[1];
+    if (state->garch_alt_vcv == ML_QML) {
+	return gvr_strs[0];
+    } else if (state->garch_alt_vcv == ML_BW) {
+	return gvr_strs[1];
     } else {
-	return "unknown";
+	return "unset";
     }
 }
 
-static const char *libset_option_string (const char *s)
+static const char *arma_vcv_string (void)
 {
-    if (!strcmp(s, HAC_LAG)) {
-	return hac_lag_string(); /* special */
-    } else if (!strcmp(s, GARCH_VCV)) {
-	return garch_vcv_strs[state->garch_vcv];
-    } else if (!strcmp(s, ARMA_VCV)) {
-	return get_arma_vcv_str(state->arma_vcv);
-    } else if (!strcmp(s, HAC_KERNEL)) {
-	return hac_kernel_strs[state->ropts.hkern];
-    } else if (!strcmp(s, HC_VERSION)) {
-	return hc_version_strs[state->ropts.hc_version];
-    } else if (!strcmp(s, VECM_NORM)) {
-	return vecm_norm_strs[state->vecm_norm];
-    } else if (!strcmp(s, GRETL_OPTIM)) {
-	return optim_strs[state->optim];
-    } else if (!strcmp(s, OPTIM_STEPLEN)) {
-	return steplen_strs[state->optim_steplen];
-    } else if (!strcmp(s, MAX_VERBOSE)) {
-	return maxverb_strs[state->max_verbose];
-    } else if (!strcmp(s, WILDBOOT_DIST)) {
-	return wildboot_strs[state->wildboot_dist];
-    } else if (!strcmp(s, QUANTILE_TYPE)) {
-	return qtype_strs[Qtype];
-    } else if (!strcmp(s, GRETL_ASSERT)) {
-	return assert_strs[gretl_assert];
+    if (state->arma_vcv == ML_HESSIAN) {
+	return avc_strs[0];
+    } else if (state->arma_vcv == ML_OP) {
+	return avc_strs[1];
     } else {
-	return "?";
+	return "unset";
     }
 }
 
-static void print_initmat (const gretl_matrix *imat,
-			   int type, PRN *prn,
-			   gretlopt opt)
+static const char *libset_option_string (SetKey key)
 {
+    if (key == HAC_LAG) {
+	return hac_lag_string();          /* special */
+    } else if (key == GARCH_ALT_VCV) {
+	return garch_alt_vcv_string();    /* special */
+    } else if (key == ARMA_VCV) {
+	return arma_vcv_string();         /* special */
+    } else {
+	const char **strs = libset_option_strings(key);
+	void *valp = setkey_get_target(key, SV_INT);
+
+	return strs[*(gint8 *) valp];
+    }
+}
+
+static void print_state_matrix (SetKey key, PRN *prn, gretlopt opt)
+{
+    gretl_matrix *m;
     char *name;
 
-    if (type == INIT_VALS) {
+    if (key == INITVALS) {
 	name = "initvals";
-    } else if (type == INIT_CURV) {
+	m = state->initvals;
+    } else {
 	name = "initcurv";
+	m = state->initcurv;
     }
 
     if (opt & OPT_D) {
-	if (imat == NULL) {
+	if (m == NULL) {
 	    pprintf(prn, " %s = auto\n", name);
 	} else {
-	    gretl_matrix_print_to_prn(imat, name, prn);
+	    gretl_matrix_print_to_prn(m, name, prn);
 	}
     }
 }
@@ -450,16 +505,16 @@ static int check_for_state (void)
     }
 }
 
-static int flag_to_bool (set_vars *sv, int flag)
+static int flag_to_bool (set_state *sv, SetKey key)
 {
-    if (!sv) {
+    if (sv == NULL) {
 	return 0;
     } else {
-	return (sv->flags & flag)? 1 : 0;
+	return (sv->flags & key)? 1 : 0;
     }
 }
 
-static void state_vars_copy (set_vars *sv)
+static void state_vars_copy (set_state *sv)
 {
 #if PDEBUG
     fprintf(stderr, "state_vars_copy() called\n");
@@ -472,247 +527,48 @@ static void state_vars_copy (set_vars *sv)
     sv->matmask = NULL;
 }
 
-/* for processors count */
-#if defined(WIN32)
-# include <windows.h>
-#elif defined(OS_OSX)
-# include <sys/param.h>
-# include <sys/sysctl.h>
-#endif
+static set_state default_state = {
+    ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING, /* .flags */
+    OPTIM_AUTO,     /* .optim */
+    NORM_PHILLIPS,  /* .vecm_norm */
+    ML_UNSET,       /* .garch_vcv */
+    ML_UNSET,       /* .garch_alt_vcv */
+    ML_HESSIAN,     /* .arma_vcv */
+    0,              /* .wildboot_dist */
+    0,              /* .fdjac_qual */
+    0,              /* .max_verbose */
+    0,              /* .hc_version */
+    KERNEL_BARTLETT,       /* .hac_kernel */
+    AUTO_LAG_STOCK_WATSON, /* .auto_hac_lag */
+    UNSET_INT,             /* .user_hac_lag */
+    8,             /* .lbfgs_mem */
+    0,             /* .quantile_type */
+    UNSET_INT,     /* .horizon */
+    1000,          /* .bootrep */
+    100000,        /* .loop_maxiter */
+    UNSET_INT,     /* .bfgs_maxiter */
+    1,       /* .bfgs_verbskip */
+    1999,    /* .boot_iters */
+    500,     /* .bhhh_maxiter */
+    1000,    /* .rq_maxiter */
+    250,     /* .gmm_maxiter */
+    1.0e100, /* .conv_huge */
+    NADBL,   /* .nls_toler */
+    NADBL,   /* .bfgs_toler */
+    5.0,     /* .bfgs_maxgrad */
+    1.0e-6,  /* .bhhh_toler */
+    2.0,     /* .qs_bandwidth */
+    4.0,     /* .nadarwat_trim */
+    "NA",      /* .csv_write_na */
+    "default", /* .csv_read_na */
+    NULL,  /* .initvals */
+    NULL,  /* .initcurv */
+    NULL   /* .matmask */
+};
 
-int gretl_n_processors (void)
+static void state_vars_init (set_state *sv)
 {
-    static int n_proc = -1;
-
-    if (n_proc >= 1) {
-	return n_proc;
-    }
-
-    n_proc = 1;
-
-#if defined(WIN32)
-    SYSTEM_INFO sysinfo;
-
-    GetSystemInfo(&sysinfo);
-    n_proc = sysinfo.dwNumberOfProcessors;
-#elif defined(OS_OSX)
-    int mib[2] = {CTL_HW, HW_NCPU};
-    size_t len = sizeof n_proc;
-
-    if (sysctl(mib, 2, &n_proc, &len, NULL, 0) == -1) {
-	perror("could not determine number of CPUs available");
-	n_proc = 1;
-    }
-#else
-    n_proc = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
-
-    return n_proc;
-}
-
-int gretl_n_physical_cores (void)
-{
-    static int n_cores = -1;
-
-    if (n_cores >= 1) {
-	return n_cores;
-    }
-
-    /* this may well not be what we want, but it's a
-       starting point and fallback
-    */
-    n_cores = gretl_n_processors();
-
-#if defined(WIN32)
-    int nc = win32_get_core_count();
-
-    if (nc > 0) {
-	n_cores = nc;
-    }
-#elif defined(OS_OSX)
-    if (n_cores > 1) {
-	int nc = 0;
-	size_t len = sizeof nc;
-
-	if (sysctlbyname("hw.physicalcpu", &nc, &len, NULL, 0) == -1) {
-	    perror("could not determine number of physical cores available");
-	} else {
-	    n_cores = nc;
-	}
-    }
-#else
-    if (n_cores > 1) {
-	/* check SMT status */
-	FILE *fp = fopen("/sys/devices/system/cpu/smt/active", "r");
-	char line[2];
-	int smt = 0;
-
-	if (fp != NULL) {
-	    if (fgets(line, sizeof line, fp)) {
-		smt = atoi(line);
-	    }
-	    fclose(fp);
-	}
-	if (smt) {
-	    n_cores /= 2;
-	}
-    }
-#endif
-
-    return n_cores;
-}
-
-#define OMP_SHOW 0
-
-int libset_use_openmp (guint64 n)
-{
-#if defined(_OPENMP)
-    if (state == NULL || !(state->flags & STATE_OPENMP_ON) || omp_n_threads < 2) {
-	return 0;
-    } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
-# if OMP_SHOW > 1
-	fprintf(stderr, "libset_use_openmp: yes\n");
-# endif
-	return 1;
-    }
-#endif
-
-    return 0;
-}
-
-static int set_omp_n_threads (int n)
-{
-#if defined(_OPENMP)
-    if (n < 1 || n > gretl_n_processors()) {
-	gretl_errmsg_sprintf("omp_num_threads: must be >= 1 and <= %d",
-			     gretl_n_processors());
-	return E_DATA;
-    } else {
-	omp_n_threads = n;
-	omp_set_num_threads(n);
-	if (blas_is_openblas()) {
-	    blas_set_num_threads(n);
-	}
-    }
-#else
-    gretl_warnmsg_set("set_omp_n_threads: OpenMP is not enabled");
-#endif
-
-    return 0;
-}
-
-void num_threads_init (int blas_type)
-{
-    int nc = gretl_n_physical_cores();
-
-#if defined(_OPENMP)
-    omp_n_threads = nc;
-    omp_set_num_threads(nc);
-#endif
-    if (blas_type == BLAS_OPENBLAS) {
-	blas_set_num_threads(nc);
-    }
-    if (blas_type > BLAS_NETLIB) {
-	set_blas_mnk_min(90000);
-    }
-}
-
-int get_omp_n_threads (void)
-{
-    return omp_n_threads;
-}
-
-#if defined(_OPENMP)
-
-static int openmp_by_default (void)
-{
-    static int called = 0;
-    int num_cores = gretl_n_processors();
-    int ret = num_cores > 1;
-
-    if (ret) {
-	/* one can use the environment to turn this off */
-	char *envstr = getenv("GRETL_USE_OPENMP");
-
-	if (envstr != NULL && !strcmp(envstr, "0")) {
-	    ret = 0;
-	}
-    }
-
-    if (!called && ret) {
-	char *s = getenv("OMP_NUM_THREADS");
-
-	if (s != NULL && *s != '\0') {
-	    omp_n_threads = atoi(s);
-	} else {
-	    omp_n_threads = num_cores;
-	}
-	called = 1;
-    }
-
-# if OMP_SHOW
-    if (1) {
-	fprintf(stderr, "number of cores detected = %d\n", num_cores);
-	fprintf(stderr, "use OpenMP by default? %s\n", ret ? "yes" : "no");
-	fprintf(stderr, "omp_num_threads = %d\n", omp_n_threads);
-    }
-# endif
-
-    return ret;
-}
-
-#endif /* _OPENMP defined */
-
-#define LOOP_MAXITER_DEFAULT 100000
-
-static void state_vars_init (set_vars *sv)
-{
-#if PDEBUG
-    fprintf(stderr, "state_vars_init called\n");
-#endif
-    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON |
-	STATE_SKIP_MISSING;
-#if defined(_OPENMP)
-    if (openmp_by_default()) {
-	sv->flags |= STATE_OPENMP_ON;
-    }
-#endif
-    sv->seed = 0;
-    sv->conv_huge = 1.0e100;
-    sv->horizon = UNSET_INT;
-    sv->bootrep = 1000;
-    sv->nls_toler = NADBL;
-    sv->loop_maxiter = LOOP_MAXITER_DEFAULT;
-    sv->rq_maxiter = 1000;
-    sv->gmm_maxiter = 250;
-    sv->vecm_norm = NORM_PHILLIPS;
-    sv->optim = OPTIM_AUTO;
-    sv->max_verbose = 0;
-    sv->initvals = NULL;
-    sv->initcurv = NULL;
-    sv->matmask = NULL;
-
-    sv->bfgs_maxiter = UNSET_INT;
-    sv->bfgs_toler = NADBL;
-    sv->bfgs_maxgrad = 5.0;
-    sv->bfgs_verbskip = 1;
-    sv->optim_steplen = STEPLEN_POWER;
-    sv->bhhh_maxiter = 500;
-    sv->bhhh_toler = NADBL;
-    sv->boot_iters = 1999;
-    sv->lbfgs_mem = 8;
-    sv->garch_vcv = ML_UNSET;
-    sv->arma_vcv = ML_HESSIAN;
-    sv->garch_robust_vcv = ML_UNSET;
-    sv->nadarwat_trim = 4.0;
-    sv->fdjac_qual = 0;
-    sv->fdjac_eps = 0.0;
-    sv->wildboot_dist = 0;
-
-    strcpy(sv->csv_write_na, "NA");
-    strcpy(sv->csv_read_na, "default");
-
-    robust_opts_init(&sv->ropts);
+    *sv = default_state;
 }
 
 int get_bkbp_k (const DATASET *dset)
@@ -742,16 +598,19 @@ void set_gretl_echo (int e)
     if (check_for_state()) return;
 
     if (e) {
-	state->flags |= STATE_ECHO_ON;
+	state->flags |= ECHO_ON;
     } else {
-	state->flags &= ~STATE_ECHO_ON;
+	state->flags &= ~ECHO_ON;
     }
 }
 
 int gretl_echo_on (void)
 {
-    if (check_for_state()) return 1;
-    return flag_to_bool(state, STATE_ECHO_ON);
+    if (check_for_state()) {
+	return 1;
+    } else {
+	return flag_to_bool(state, ECHO_ON);
+    }
 }
 
 int gretl_comments_on (void)
@@ -763,20 +622,14 @@ int gretl_comments_on (void)
     }
 }
 
-int gretl_echo_space (void)
-{
-    if (check_for_state()) return 0;
-    return flag_to_bool(state, STATE_ECHO_SPACE);
-}
-
 void set_gretl_messages (int e)
 {
     if (check_for_state()) return;
 
     if (e) {
-	state->flags |= STATE_MSGS_ON;
+	state->flags |= MSGS_ON;
     } else {
-	state->flags &= ~STATE_MSGS_ON;
+	state->flags &= ~MSGS_ON;
     }
 }
 
@@ -785,35 +638,32 @@ int gretl_messages_on (void)
     if (check_for_state()) {
 	return 1;
     } else {
-	return flag_to_bool(state, STATE_MSGS_ON);
+	return flag_to_bool(state, MSGS_ON);
     }
 }
 
 int gretl_warnings_on (void)
 {
     if (check_for_state()) return 1;
-    return flag_to_bool(state, STATE_WARN_ON);
+    return flag_to_bool(state, WARNINGS);
 }
 
 int gretl_debugging_on (void)
 {
-    return gretl_debug;
+    return globals.gretl_debug;
 }
 
 #define DEFAULT_MP_BITS 256
 #define mp_bits_ok(b) (b >= 256 && b <= 8192)
 
-void set_mp_bits (int b)
-{
-    if (mp_bits_ok(b)) {
-	user_mp_bits = b;
-    }
-}
+/* Called from the mp_ols plugin, also gretl_utils.c and
+   the GUI model specification dialog.
+*/
 
 int get_mp_bits (void)
 {
-    if (user_mp_bits > DEFAULT_MP_BITS) {
-	return user_mp_bits;
+    if (globals.gmp_bits > DEFAULT_MP_BITS) {
+	return globals.gmp_bits;
     } else {
 	char *s = getenv("GRETL_MP_BITS");
 	int b;
@@ -828,6 +678,8 @@ int get_mp_bits (void)
 
     return DEFAULT_MP_BITS;
 }
+
+/* start accessors for libset matrices */
 
 gretl_matrix *get_initvals (void)
 {
@@ -865,7 +717,7 @@ int n_initcurv (void)
 {
     check_for_state();
     if (state->initcurv != NULL) {
-	return state->initcurv->rows;
+	return gretl_vector_get_length(state->initcurv);
     } else {
 	return 0;
     }
@@ -896,6 +748,8 @@ int get_matrix_mask_nobs (void)
     return n;
 }
 
+/* end accessors for libset matrices */
+
 int get_hac_lag (int T)
 {
     int h = 0;
@@ -904,10 +758,10 @@ int get_hac_lag (int T)
 
     /* Variants of Newey-West */
 
-    if (state->ropts.user_lag >= 0 && state->ropts.user_lag < T - 2) {
+    if (state->user_hac_lag >= 0 && state->user_hac_lag < T - 2) {
 	/* FIXME upper limit? */
-	h = state->ropts.user_lag;
-    } else if (state->ropts.auto_lag == AUTO_LAG_WOOLDRIDGE) {
+	h = state->user_hac_lag;
+    } else if (state->auto_hac_lag == AUTO_LAG_WOOLDRIDGE) {
 	h = 4.0 * pow(T / 100.0, 2.0 / 9.0);
     } else {
 	/* Stock-Watson default */
@@ -921,9 +775,9 @@ int get_hac_lag (int T)
 
 int data_based_hac_bandwidth (void)
 {
-    if (is_unset(state->ropts.user_lag)) {
-	if (state->ropts.auto_lag == AUTO_LAG_NEWEYWEST ||
-	    (state->flags & STATE_PREWHITEN)) {
+    if (is_unset(state->user_hac_lag)) {
+	if (state->auto_hac_lag == AUTO_LAG_NEWEYWEST ||
+	    (state->flags & PREWHITEN)) {
 	    return 1;
 	}
     }
@@ -935,15 +789,13 @@ static const char *hac_lag_string (void)
 {
     check_for_state();
 
-    if (state->ropts.user_lag >= 0 && state->ropts.user_lag < 1000) {
+    if (state->user_hac_lag >= 0 && state->user_hac_lag < 127) {
 	static char lagstr[6];
 
-	sprintf(lagstr, "%d", state->ropts.user_lag);
+	sprintf(lagstr, "%d", state->user_hac_lag);
 	return lagstr;
-    } else if (state->ropts.auto_lag == AUTO_LAG_STOCK_WATSON) {
-	return "nw1";
     } else {
-	return "nw2";
+	return ahl_strs[state->auto_hac_lag];
     }
 }
 
@@ -951,28 +803,19 @@ static const char *hac_lag_string (void)
 
 static int parse_hac_lag_variant (const char *s)
 {
-    int err = E_DATA;
+    int i, err = 0;
 
-    if (!strcmp(s, "nw1")) {
-	state->ropts.auto_lag = AUTO_LAG_STOCK_WATSON;
-	state->ropts.user_lag = UNSET_INT;
-	err = 0;
-    } else if (!strcmp(s, "nw2")) {
-	state->ropts.auto_lag = AUTO_LAG_WOOLDRIDGE;
-	state->ropts.user_lag = UNSET_INT;
-	err = 0;
-    } else if (!strcmp(s, "nw3") ||
-	       !strcmp(s, "auto")) {
-	state->ropts.auto_lag = AUTO_LAG_NEWEYWEST;
-	state->ropts.user_lag = UNSET_INT;
-	err = 0;
-    } else {
-	int k = 0;
-
-	err = libset_get_scalar(HAC_LAG, s, &k, NULL);
-	if (!err) {
-	    state->ropts.user_lag = k;
+    for (i=0; ahl_strs[i] != NULL; i++) {
+	if (!strcmp(s, ahl_strs[i])) {
+	    state->auto_hac_lag = i;
+	    state->user_hac_lag = UNSET_INT;
+	    return 0;
 	}
+    }
+
+    err = libset_get_scalar(HAC_LAG, s, &i, NULL);
+    if (!err) {
+	state->user_hac_lag = i;
     }
 
     return err;
@@ -1066,16 +909,13 @@ libset_numeric_test (const char *s, int *pi, double *px)
     return ret;
 }
 
-static int negval_invalid (const char *var)
+static int negval_invalid (SetKey key)
 {
     int ret = 1; /* presume invalid */
 
-    if (var != NULL) {
-	if (!strcmp(var, BLAS_MNK_MIN) ||
-	    !strcmp(var, OMP_MNK_MIN) ||
-	    !strcmp(var, MP_MNK_MIN) ||
-	    !strcmp(var, SIMD_K_MAX) ||
-	    !strcmp(var, SIMD_MN_MIN)) {
+    if (key > 0) {
+	if (key == BLAS_MNK_MIN || key == OMP_MNK_MIN ||
+	    key == SIMD_K_MAX || key == SIMD_MN_MIN) {
 	    /* these can all be set to -1 */
 	    ret = 0;
 	}
@@ -1084,7 +924,7 @@ static int negval_invalid (const char *var)
     return ret;
 }
 
-static int libset_get_scalar (const char *var, const char *arg,
+static int libset_get_scalar (SetKey key, const char *arg,
 			      int *pi, double *px)
 {
     double x = NADBL;
@@ -1099,7 +939,7 @@ static int libset_get_scalar (const char *var, const char *arg,
     if (nstatus == NUMERIC_BAD) {
 	return E_INVARG; /* handled */
     } else if (nstatus == NUMERIC_OK) {
-	if (pi != NULL && negval_invalid(var) && *pi < 0) {
+	if (pi != NULL && negval_invalid(key) && *pi < 0) {
 	    err = E_INVARG;
 	} else if (px != NULL && *px < 0.0) {
 	    err = E_INVARG;
@@ -1111,7 +951,7 @@ static int libset_get_scalar (const char *var, const char *arg,
     x = get_scalar_value_by_name(arg, &err);
 
     if (!err) {
-	if (negval_invalid(var) && x < 0.0) {
+	if (negval_invalid(key) && x < 0.0) {
 	    err = E_INVARG;
 	} else if (px != NULL) {
 	    *px = x;
@@ -1160,164 +1000,80 @@ static int libset_get_unsigned (const char *arg, unsigned int *pu)
     return err;
 }
 
-static int parse_hc_variant (const char *s)
-{
-    int i;
-
-    check_for_state();
-
-    if (!strncmp(s, "hc", 2)) {
-	s += 2;
-    }
-
-    for (i=0; hc_version_strs[i] != NULL; i++) {
-	if (!strcmp(s, hc_version_strs[i])) {
-	    state->ropts.hc_version = i;
-	    return 0;
-	}
-    }
-
-    if (!strcmp(s, "4")) {
-	state->ropts.hc_version = 4;
-	return 0;
-    }
-
-    return 1;
-}
-
-static int parse_libset_int_code (const char *key,
-				  const char *val)
+static int parse_libset_int_code (SetKey key, const char *val)
 {
     int i, err = E_DATA;
 
-    if (!g_ascii_strcasecmp(key, HC_VERSION)) {
-	err = parse_hc_variant(val);
-    } else if (!g_ascii_strcasecmp(key, HAC_LAG)) {
+    if (key == HAC_LAG) {
 	err = parse_hac_lag_variant(val);
-    } else if (!g_ascii_strcasecmp(key, GARCH_VCV)) {
-	for (i=0; i<ML_VCVMAX; i++) {
-	    if (!g_ascii_strcasecmp(val, garch_vcv_strs[i])) {
-		state->garch_vcv = i;
-		err = 0;
+    } else if (coded_intvar(key)) {
+	const char **strs = libset_option_strings(key);
+	int ival = -1;
+
+	for (i=0; strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, strs[i])) {
+		ival = i;
 		break;
 	    }
 	}
-    } else if (!g_ascii_strcasecmp(key, ARMA_VCV)) {
-	if (!g_ascii_strcasecmp(val, "op")) {
-	    state->arma_vcv = ML_OP;
+	if (ival >= 0) {
+	    void *valp = setkey_get_target(key, SV_INT);
+
 	    err = 0;
-	} else if (!g_ascii_strcasecmp(val, "hessian")) {
-	    state->arma_vcv = ML_HESSIAN;
-	    err = 0;
-	}
-    } else if (!g_ascii_strcasecmp(key, HAC_KERNEL)) {
-	for (i=0; i<KERNEL_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, hac_kernel_strs[i])) {
-		state->ropts.hkern = i;
-		err = 0;
-		break;
+	    if (key == GARCH_ALT_VCV) {
+		ival = (ival == 1)? ML_BW : ML_QML;
+	    } else if (key == ARMA_VCV) {
+		ival = (ival == 1)? ML_OP : ML_HESSIAN;
 	    }
-	}
-    } else if (!g_ascii_strcasecmp(key, VECM_NORM)) {
-	for (i=0; i<NORM_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, vecm_norm_strs[i])) {
-		state->vecm_norm = i;
+	    *(gint8 *) valp = ival;
+	} else if (key == MAX_VERBOSE) {
+	    /* special: bare integers allowed? */
+	    if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0) {
+		state->max_verbose = atoi(val);
 		err = 0;
-		break;
-	    }
-	}
-    } else if (!g_ascii_strcasecmp(key, GRETL_OPTIM)) {
-	for (i=0; i<OPTIM_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, optim_strs[i])) {
-		state->optim = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (!g_ascii_strcasecmp(key, MAX_VERBOSE)) {
-	for (i=0; maxverb_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, maxverb_strs[i])) {
-		state->max_verbose = i;
-		err = 0;
-		break;
-	    }
-	}
-	if (err && (strcmp(val, "0") == 0 || strcmp(val, "1") == 0)) {
-	    state->max_verbose = atoi(val);
-	    err = 0;
-	}
-    } else if (!g_ascii_strcasecmp(key, WILDBOOT_DIST)) {
-	for (i=0; wildboot_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, wildboot_strs[i])) {
-		state->wildboot_dist = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (!g_ascii_strcasecmp(key, QUANTILE_TYPE)) {
-	for (i=0; qtype_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, qtype_strs[i])) {
-		Qtype = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (!g_ascii_strcasecmp(key, OPTIM_STEPLEN)) {
-	for (i=0; i<STEPLEN_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, steplen_strs[i])) {
-		state->optim_steplen = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (!g_ascii_strcasecmp(key, GRETL_ASSERT)) {
-	for (i=0; assert_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, assert_strs[i])) {
-		gretl_assert = i;
-		err = 0;
-		break;
 	    }
 	}
     }
 
+#if 0
+    fprintf(stderr, "parse_libset_int_code: %s, %s, err = %d\n",
+	    setkey_get_name(key), val, err);
+#endif
+
     if (err) {
-	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), key, val);
+	gretl_errmsg_sprintf(_("%s: invalid value '%s'"),
+			     setkey_get_name(key), val);
     }
 
     return err;
 }
 
+/* start public functions called from gui/settings.c */
+
 void set_xsect_hccme (const char *s)
 {
-    char *scpy;
-
     if (check_for_state()) return;
 
-    scpy = gretl_strdup(s);
-
-    if (scpy != NULL) {
-	gretl_lower(scpy);
-	parse_hc_variant(scpy);
-	free(scpy);
+    if (!strncmp(s, "HC", 2)) {
+	s += 2;
     }
+    parse_libset_int_code(HC_VERSION, s);
 }
 
 void set_tseries_hccme (const char *s)
 {
-    char *scpy;
-
     if (check_for_state()) return;
 
-    scpy = gretl_strdup(s);
-
-    if (scpy != NULL) {
-	gretl_lower(scpy);
-	if (parse_hc_variant(scpy) == 0) {
-	    libset_set_bool(FORCE_HC, 1);
-	} else {
-	    libset_set_bool(FORCE_HC, 0);
+    if (!strcmp(s, "HAC")) {
+	libset_set_bool(FORCE_HC, 0);
+    } else {
+	if (!strncmp(s, "HC", 2)) {
+	    s += 2;
 	}
-	free(scpy);
+	if (parse_libset_int_code(HC_VERSION, s) == 0) {
+	    /* non-HAC variant chosen */
+	    libset_set_bool(FORCE_HC, 1);
+	}
     }
 }
 
@@ -1326,139 +1082,69 @@ void set_panel_hccme (const char *s)
     if (check_for_state()) return;
 
     if (!strcmp(s, "Arellano")) {
-	state->flags &= ~STATE_USE_PCSE;
+	state->flags &= ~USE_PCSE;
     } else if (!strcmp(s, "PCSE")) {
-	state->flags |= STATE_USE_PCSE;
+	state->flags |= USE_PCSE;
     }
 }
 
-void set_garch_robust_vcv (const char *s)
+void set_garch_alt_vcv (const char *s)
 {
-    char *scpy;
-
     if (check_for_state()) return;
 
-    scpy = gretl_strdup(s);
-
-    if (scpy != NULL) {
-	gretl_lower(scpy);
-	if (!strcmp(scpy, "qml")) {
-	    state->garch_robust_vcv = ML_QML;
-	} else if (!strcmp(scpy, "bw")) {
-	    state->garch_robust_vcv = ML_BW;
-	}
-	free(scpy);
-    }
+    parse_libset_int_code(GARCH_ALT_VCV, s);
 }
 
-static int set_initmat (const char *mname, int type,
-			PRN *prn)
-{
-    gretl_matrix *m;
-    int err = 0;
+/* end public functions called from gui/settings.c */
 
-    if (!strcmp(mname, "auto")) {
-	if (type == INIT_VALS) {
-	    gretl_matrix_free(state->initvals);
-	    state->initvals = NULL;
-	} else if (type == INIT_CURV) {
-	    gretl_matrix_free(state->initcurv);
-	    state->initcurv = NULL;
-	}
-    } else {
-	m = get_matrix_by_name(mname);
+static int set_init_matrix (SetKey key, const char *name,
+			    PRN *prn)
+{
+    gretl_matrix **targ;
+
+    targ = (key == INITVALS)? &state->initvals : &state->initcurv;
+
+    gretl_matrix_free(*targ);
+    *targ = NULL;
+
+    if (strcmp(name, "auto")) {
+	gretl_matrix *m = get_matrix_by_name(name);
+
 	if (m == NULL) {
-	    pprintf(prn, _("'%s': no such matrix"), mname);
+	    pprintf(prn, _("'%s': no such matrix"), name);
 	    pputc(prn, '\n');
-	    err = E_DATA;
-	} else {
-	    if (type == INIT_VALS) {
-		state->initvals = gretl_matrix_copy(m);
-		if (state->initvals == NULL) {
-		    err = E_ALLOC;
-		}
-	    } else if (type == INIT_CURV) {
-		state->initcurv = gretl_matrix_copy(m);
-		if (state->initcurv == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
+	    return E_DATA;
+	}
+	*targ = gretl_matrix_copy(m);
+	if (*targ == NULL) {
+	    return E_ALLOC;
 	}
     }
 
-    return err;
+    return 0;
 }
 
-static int set_echo_status (const char *arg)
+static int set_matrix_mask (const char *name, DATASET *dset)
 {
-    int err = 0;
+    gretl_matrix_free(state->matmask);
+    state->matmask = NULL;
 
-    if (check_for_state()) {
-	return 1;
-    }
-
-    if (!strcmp(arg, "on")) {
-	state->flags |= STATE_ECHO_ON;
-    } else if (!strcmp(arg, "off")) {
-	state->flags &= ~STATE_ECHO_ON;
-	state->flags &= ~STATE_ECHO_SPACE;
-    } else if (!strcmp(arg, "space")) {
-	state->flags |= STATE_ECHO_SPACE;
-    } else if (!strcmp(arg, "full")) {
-	state->flags |= STATE_ECHO_ON;
-	state->flags |= STATE_ECHO_SPACE;
-    } else {
-	err = E_INVARG;
-    }
-
-    return err;
-}
-
-static const char *get_echo_status (void)
-{
-    if (check_for_state()) {
-	return "on";
-    } else if ((state->flags & STATE_ECHO_ON) &&
-	       (state->flags & STATE_ECHO_SPACE)) {
-	return "full";
-    } else if (state->flags & STATE_ECHO_ON) {
-	return "on";
-    } else if (state->flags & STATE_ECHO_SPACE) {
-	return "space";
-    } else {
-	return "off";
-    }
-}
-
-static int set_matmask (const char *vname, const DATASET *dset,
-			PRN *prn)
-{
-    int err = 0;
-
-    if (!strcmp(vname, "null")) {
-	gretl_matrix_free(state->matmask);
-	state->matmask = NULL;
-    } else {
-	int t, v = current_series_index(dset, vname);
+    if (strcmp(name, "null")) {
+	int t, v = current_series_index(dset, name);
 
 	if (v < 0) {
-	    err = E_UNKVAR;
-	} else {
-	    if (state->matmask != NULL) {
-		gretl_matrix_free(state->matmask);
-	    }
-	    state->matmask = gretl_column_vector_alloc(dset->n);
-	    if (state->matmask == NULL) {
-		err = E_ALLOC;
-	    } else {
-		for (t=0; t<dset->n; t++) {
-		    state->matmask->val[t] = dset->Z[v][t];
-		}
-	    }
+	    return E_UNKVAR;
+	}
+	state->matmask = gretl_column_vector_alloc(dset->n);
+	if (state->matmask == NULL) {
+	    return E_ALLOC;
+	}
+	for (t=0; t<dset->n; t++) {
+	    state->matmask->val[t] = dset->Z[v][t];
 	}
     }
 
-    return err;
+    return 0;
 }
 
 void destroy_matrix_mask (void)
@@ -1505,14 +1191,10 @@ static char delim_from_arg (const char *s)
 {
     int i;
 
-    for (i=0; csv_delim_args[i] != NULL; i++) {
-	if (!strcmp(s, csv_delim_args[i])) {
+    for (i=0; csv_strs[i] != NULL; i++) {
+	if (!strcmp(s, csv_strs[i])) {
 	    return csv_delims[i];
 	}
-    }
-
-    if (strlen(s) == 1 && ispunct(*s)) {
-	return s[0];
     }
 
     return 0;
@@ -1520,27 +1202,25 @@ static char delim_from_arg (const char *s)
 
 static const char *arg_from_delim (char c)
 {
-    static char d[2];
     int i;
 
     for (i=0; csv_delims[i] != '\0'; i++) {
 	if (c == csv_delims[i]) {
-	    return csv_delim_args[i];
+	    return csv_strs[i];
 	}
-    }
-
-    if (ispunct(c)) {
-	sprintf(d, "%c", c);
-	return d;
     }
 
     return "unset";
 }
 
-static void libset_print_bool (const char *s, PRN *prn,
-			       gretlopt opt)
+static void libset_print_bool (SetKey key, const char *s,
+			       PRN *prn, gretlopt opt)
 {
-    int v = libset_get_bool(s);
+    int v = libset_get_bool(key);
+
+    if (s == NULL) {
+	s = setkey_get_name(key);
+    }
 
     if (opt & OPT_D) {
 	pprintf(prn, " %s = %d\n", s, v);
@@ -1549,39 +1229,21 @@ static void libset_print_bool (const char *s, PRN *prn,
     }
 }
 
-#define coded_intvar(s) (!strcmp(s, GARCH_VCV) || \
-			 !strcmp(s, ARMA_VCV) || \
-			 !strcmp(s, HAC_LAG) || \
-			 !strcmp(s, HAC_KERNEL) || \
-                         !strcmp(s, HC_VERSION) || \
-			 !strcmp(s, VECM_NORM) || \
-			 !strcmp(s, GRETL_OPTIM) || \
-			 !strcmp(s, OPTIM_STEPLEN) || \
-			 !strcmp(s, MAX_VERBOSE) || \
-			 !strcmp(s, WILDBOOT_DIST) || \
-			 !strcmp(s, QUANTILE_TYPE) || \
-			 !strcmp(s, GRETL_ASSERT))
-
-const char *intvar_code_string (const char *s)
+static void libset_print_int (SetKey key, const char *s,
+			      PRN *prn, gretlopt opt)
 {
-    if (!strcmp(s, HAC_LAG)) {
-	return hac_lag_string(); /* special */
-    } else {
-	return libset_option_string(s);
+    if (s == NULL) {
+	s = setkey_get_name(key);
     }
-}
 
-static void libset_print_int (const char *s, PRN *prn,
-			      gretlopt opt)
-{
-    if (coded_intvar(s)) {
+    if (coded_intvar(key)) {
 	if (opt & OPT_D) {
-	    pprintf(prn, " %s = %s\n", s, intvar_code_string(s));
+	    pprintf(prn, " %s = %s\n", s, libset_option_string(key));
 	} else {
-	    pprintf(prn, "set %s %s\n", s, intvar_code_string(s));
+	    pprintf(prn, "set %s %s\n", s, libset_option_string(key));
 	}
     } else {
-	int k = libset_get_int(s);
+	int k = libset_get_int(key);
 
 	if (opt & OPT_D) {
 	    if (is_unset(k)) {
@@ -1595,13 +1257,17 @@ static void libset_print_int (const char *s, PRN *prn,
     }
 }
 
-static void libset_print_double (const char *s, PRN *prn,
-				 gretlopt opt)
+static void libset_print_double (SetKey key, const char *s,
+				 PRN *prn, gretlopt opt)
 {
-    double x = libset_get_double(s);
+    double x = libset_get_double(key);
+
+    if (s == NULL) {
+	s = setkey_get_name(key);
+    }
 
     if (opt & OPT_D) {
-	if (na(x) || (x == 0.0 && !strcmp(s, FDJAC_EPS))) {
+	if (na(x)) {
 	    pprintf(prn, " %s = auto\n", s);
 	} else {
 	    pprintf(prn, " %s = %.15g\n", s, x);
@@ -1619,6 +1285,27 @@ static void libset_header (char *s, PRN *prn, gretlopt opt)
 	pputs(prn, " ---\n");
     } else {
 	pprintf(prn, "# %s\n", s);
+    }
+}
+
+static void print_vars_for_category (int category, PRN *prn,
+				     gretlopt opt)
+{
+    setvar *v;
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(setvars); i++) {
+	if (setvars[i].category != category) {
+	    continue;
+	}
+	v = &setvars[i];
+	if (libset_boolvar(v->key)) {
+	    libset_print_bool(v->key, v->name, prn, opt);
+	} else if (libset_int(setvars[i].key)) {
+	    libset_print_int(v->key, v->name, prn, opt);
+	} else if (libset_double(v->key)) {
+	    libset_print_double(v->key, v->name, prn, opt);
+	}
     }
 }
 
@@ -1654,6 +1341,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, " csv_write_na = %s\n", get_csv_na_write_string());
 	pprintf(prn, " csv_read_na = %s\n", get_csv_na_read_string());
 	pprintf(prn, " display_digits = %d\n", get_gretl_digits());
+	pprintf(prn, " graph_theme = %s\n", get_plotstyle());
     } else {
 	const char *dl = arg_from_delim(data_delim);
 
@@ -1662,67 +1350,24 @@ static int print_settings (PRN *prn, gretlopt opt)
 	}
 	pprintf(prn, "set csv_write_na %s\n", get_csv_na_write_string());
 	pprintf(prn, "set csv_read_na %s\n", get_csv_na_read_string());
+	pprintf(prn, "set graph_theme %s\n", get_plotstyle());
     }
 
-    libset_print_int(CSV_DIGITS, prn, opt);
-
-    if (opt & OPT_D) {
-	pprintf(prn, " echo = %s\n", get_echo_status());
-    } else {
-	pprintf(prn, "set echo %s\n", get_echo_status());
-    }
-
-    libset_print_bool(FORCE_DECP, prn, opt);
-    libset_print_int(LOOP_MAXITER, prn, opt);
-    libset_print_int(BFGS_VERBSKIP, prn, opt);
-    libset_print_double(CONV_HUGE, prn, opt);
-    libset_print_bool(MESSAGES, prn, opt);
-    libset_print_bool(WARNINGS, prn, opt);
-    libset_print_int(GRETL_DEBUG, prn, opt);
-    libset_print_int(BLAS_MNK_MIN, prn, opt);
-    libset_print_int(OMP_MNK_MIN, prn, opt);
-    libset_print_int(OMP_N_THREADS, prn, opt);
-    libset_print_int(SIMD_K_MAX, prn, opt);
-    libset_print_int(SIMD_MN_MIN, prn, opt);
-
+    print_vars_for_category(CAT_BEHAVE, prn, opt);
     if (opt & OPT_D) {
 	/* display only */
-	libset_print_bool(SHELL_OK, prn, opt);
+	libset_print_bool(SHELL_OK, NULL, prn, opt);
     }
 
-    libset_print_bool(USE_CWD, prn, opt);
-    libset_print_bool(SKIP_MISSING, prn, opt);
-
-    libset_print_bool(R_LIB, prn, opt);
-    libset_print_bool(R_FUNCTIONS, prn, opt);
-
     libset_header(N_("Numerical methods"), prn, opt);
-
-    libset_print_int(GRETL_OPTIM, prn, opt);
-    libset_print_int(MAX_VERBOSE, prn, opt);
-    libset_print_int(BFGS_MAXITER, prn, opt);
-    libset_print_double(BFGS_TOLER, prn, opt);
-    libset_print_double(BFGS_MAXGRAD, prn, opt);
-    libset_print_int(OPTIM_STEPLEN, prn, opt);
-    libset_print_int(BHHH_MAXITER, prn, opt);
-    libset_print_double(BHHH_TOLER, prn, opt);
-    libset_print_int(RQ_MAXITER, prn, opt);
-    libset_print_int(GMM_MAXITER, prn, opt);
-    print_initmat(state->initvals, INIT_VALS, prn, opt);
-    print_initmat(state->initcurv, INIT_CURV, prn, opt);
-    libset_print_bool(BFGS_RSTEP, prn, opt);
-    libset_print_bool(USE_LBFGS, prn, opt);
-    libset_print_int(LBFGS_MEM, prn, opt);
-    libset_print_double(NLS_TOLER, prn, opt);
-    libset_print_bool(USE_SVD, prn, opt);
-    libset_print_bool(USE_QR, prn, opt);
-    libset_print_bool(DPDSTYLE, prn, opt);
-    libset_print_double(NADARWAT_TRIM, prn, opt);
-    libset_print_int(FDJAC_QUAL, prn, opt);
-    libset_print_double(FDJAC_EPS, prn, opt);
+    print_vars_for_category(CAT_NUMERIC, prn, opt);
+    if (opt & OPT_D) {
+	/* script version of this? */
+	print_state_matrix(INITVALS, prn, opt);
+	print_state_matrix(INITCURV, prn, opt);
+    }
 
     libset_header(N_("Random number generation"), prn, opt);
-
     if (opt & OPT_D) {
 	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
     } else {
@@ -1731,107 +1376,90 @@ static int print_settings (PRN *prn, gretlopt opt)
 	}
     }
     if (gretl_mpi_initialized()) {
-	libset_print_bool(USE_DCMT, prn, opt);
+	libset_print_bool(USE_DCMT, NULL, prn, opt);
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
-
-    libset_print_int(BOOTREP, prn, opt);
-    libset_print_int(GARCH_VCV, prn, opt);
-    libset_print_int(ARMA_VCV, prn, opt);
-    libset_print_bool(FORCE_HC, prn, opt);
-    libset_print_int(HAC_LAG, prn, opt);
-    libset_print_int(HAC_KERNEL, prn, opt);
-    libset_print_bool(PREWHITEN, prn, opt);
-    libset_print_int(HC_VERSION, prn, opt);
-    libset_print_bool(PCSE, prn, opt);
-    libset_print_double(QS_BANDWIDTH, prn, opt);
+    print_vars_for_category(CAT_ROBUST, prn, opt);
 
     libset_header(N_("Time series"), prn, opt);
-
-    libset_print_int(HORIZON, prn, opt);
-    libset_print_int(VECM_NORM, prn, opt);
-    libset_print_int(BOOT_ITERS, prn, opt);
+    print_vars_for_category(CAT_TS, prn, opt);
 
     pputc(prn, '\n');
 
     return 0;
 }
 
-static int libset_query_settings (const char *s, PRN *prn)
+static int libset_query_settings (setvar *sv, PRN *prn)
 {
     int err = 0;
 
-    if (!strcmp(s, "echo")) {
-	pprintf(prn, "%s: code, currently '%s'\n", s, get_echo_status());
-    } else if (libset_boolvar(s)) {
+    if (libset_boolvar(sv->key)) {
 	pprintf(prn, "%s: boolean (on/off), currently %s\n",
-		s, libset_get_bool(s)? "on" : "off");
-    } else if (coded_intvar(s)) {
-	pprintf(prn, "%s: code, currently \"%s\"\n", s, intvar_code_string(s));
-	coded_var_show_opts(s, prn);
-    } else if (libset_int(s)) {
-	int k = libset_get_int(s);
+		sv->name, libset_get_bool(sv->key)? "on" : "off");
+    } else if (coded_intvar(sv->key)) {
+	pprintf(prn, "%s: code, currently \"%s\"\n", sv->name,
+		libset_option_string(sv->key));
+	coded_var_show_opts(sv->key, prn);
+    } else if (libset_int(sv->key)) {
+	int k = libset_get_int(sv->key);
 
 	if (is_unset(k)) {
-	    pprintf(prn, "%s: positive integer, currently unset\n", s);
+	    pprintf(prn, "%s: positive integer, currently unset\n", sv->name);
+	} else if (libset_int_min(sv->key) == 0) {
+	    pprintf(prn, "%s: non-negative integer, currently %d\n", sv->name, k);
 	} else {
-	    pprintf(prn, "%s: positive integer, currently %d\n", s, k);
+	    pprintf(prn, "%s: positive integer, currently %d\n", sv->name, k);
 	}
-    } else if (libset_double(s)) {
-	double x = libset_get_double(s);
+    } else if (libset_double(sv->key)) {
+	double x = libset_get_double(sv->key);
 
 	if (na(x)) {
 	    pprintf(prn, "%s: positive floating-point value, "
-		    "currently automatic\n", s);
+		    "currently automatic\n", sv->name);
 	} else {
 	    pprintf(prn, "%s: positive floating-point value, "
-		    "currently %g\n", s, x);
+		    "currently %g\n", sv->name, x);
 	}
-    } else if (!strcmp(s, "initvals")) {
-	if (state->initvals != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", s);
-	    gretl_matrix_print_to_prn(state->initvals, NULL, prn);
+    } else if (sv->key == INITVALS || sv->key == INITCURV ||
+	       sv->key == MATMASK) {
+	gretl_matrix *m =
+	    (sv->key == INITVALS)? state->initvals :
+	    (sv->key == INITCURV)? state->initcurv : state->matmask;
+
+	if (m != NULL) {
+	    pprintf(prn, "%s: matrix, currently\n", sv->name);
+	    gretl_matrix_print_to_prn(m, NULL, prn);
 	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", s);
+	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
 	}
-    } else if (!strcmp(s, "initcurv")) {
-	if (state->initcurv != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", s);
-	    gretl_matrix_print_to_prn(state->initcurv, NULL, prn);
-	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", s);
-	}
-    } else if (!strcmp(s, "matrix_mask")) {
-	if (state->matmask != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", s);
-	    gretl_matrix_print_to_prn(state->matmask, NULL, prn);
-	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", s);
-	}
-    } else if (!strcmp(s, "seed")) {
+    } else if (sv->key == SEED) {
 	pprintf(prn, "%s: unsigned int, currently %u (%s)\n",
-		s, state->seed ? state->seed : gretl_rand_get_seed(),
+		sv->name, gretl_rand_get_seed(),
 		seed_is_set ? "set by user" : "automatic");
-    } else if (!strcmp(s, "csv_delim")) {
-	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
+    } else if (sv->key == CSV_DELIM) {
+	pprintf(prn, "%s: named character, currently \"%s\"\n", sv->name,
 		arg_from_delim(data_delim));
-	coded_var_show_opts(s, prn);
-    } else if (!strcmp(s, "workdir")) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+	coded_var_show_opts(sv->key, prn);
+    } else if (sv->key == SV_WORKDIR) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
 		gretl_workdir());
-    } else if (!strcmp(s, "csv_write_na")) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+    } else if (sv->key == CSV_WRITE_NA) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
 		state->csv_write_na);
-    } else if (!strcmp(s, "csv_read_na")) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+    } else if (sv->key == CSV_READ_NA) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
 		state->csv_read_na);
-    } else if (!strcmp(s, "display_digits")) {
-	pprintf(prn, "%s: integer, currently %d\n", s,
+    } else if (sv->key == DISP_DIGITS) {
+	pprintf(prn, "%s: integer, currently %d\n", sv->name,
 		get_gretl_digits());
-    } else if (!strcmp(s, "stopwatch")) {
-	err = 0;
-    } else if (!strcmp(s, "verbose")) {
+    } else if (sv->key == GRAPH_THEME) {
+	pprintf(prn, "%s: keyword, currently \"%s\"\n", sv->name,
+		get_plotstyle());
+    } else if (sv->key == VERBOSE) {
+	pprintf(prn, "%s: boolean (on/off), currently %s\n", sv->name,
+		(libset_get_bool(ECHO_ON) || libset_get_bool(MSGS_ON)) ?
+		"on" : "off");
 	err = 0;
     } else {
 	err = 1;
@@ -1842,14 +1470,17 @@ static int libset_query_settings (const char *s, PRN *prn)
 
 int is_libset_var (const char *s)
 {
-    int err = libset_query_settings(s, NULL);
+    setvar *sv = get_setvar_by_name(s);
+    int err = (sv == NULL);
+
+    if (!err) {
+	err = libset_query_settings(sv, NULL);
+    }
 
     return (err == 0);
 }
 
-#define default_ok(s) (!strcmp(s, BFGS_TOLER) || \
-                       !strcmp(s, BHHH_TOLER) || \
-		       !strcmp(s, NLS_TOLER))
+#define default_ok(k) (k == BFGS_TOLER || k == BHHH_TOLER || k == NLS_TOLER)
 
 #define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
 
@@ -1878,21 +1509,56 @@ static int write_or_read_settings (gretlopt opt, PRN *prn)
     return err;
 }
 
-static int check_set_bool (const char *setobj, const char *setarg)
+static int check_set_bool (SetKey key, const char *name,
+			   const char *arg)
 {
-    if (boolean_on(setarg)) {
-	return libset_set_bool(setobj, 1);
-    } else if (boolean_off(setarg)) {
-	return libset_set_bool(setobj, 0);
+    if (boolean_on(arg)) {
+	return libset_set_bool(key, 1);
+    } else if (boolean_off(arg)) {
+	return libset_set_bool(key, 0);
     } else {
-	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), setobj, setarg);
+	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), name, arg);
 	return E_PARSE;
     }
+}
+
+static int set_display_digits (const char *arg)
+{
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_sprintf("'%s': cannot be set inside a function",
+			     "display_digits");
+	return E_INVARG;
+    } else {
+	return set_gretl_digits(atoi(arg));
+    }
+}
+
+static int set_verbosity (const char *arg)
+{
+    int err = 0;
+
+    if (!strcmp(arg, "on")) {
+	set_gretl_messages(1);
+	set_gretl_echo(1);
+    } else if (!strcmp(arg, "off")) {
+	set_gretl_messages(0);
+	set_gretl_echo(0);
+	comments_on = 0;
+    } else if (!strcmp(arg, "comments")) {
+	set_gretl_messages(0);
+	set_gretl_echo(0);
+	comments_on = 1;
+    } else {
+	err = E_INVARG;
+    }
+
+    return err;
 }
 
 int execute_set (const char *setobj, const char *setarg,
 		 DATASET *dset, gretlopt opt, PRN *prn)
 {
+    setvar *sv = NULL;
     int k, argc, err;
     unsigned int u;
 
@@ -1903,102 +1569,79 @@ int execute_set (const char *setobj, const char *setarg,
     }
 
     argc = (setobj != NULL) + (setarg != NULL);
-
     if (argc == 0) {
 	return print_settings(prn, OPT_D);
+    }
+
+    sv = get_setvar_by_name(setobj);
+    if (sv == NULL) {
+	gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
+	return E_DATA;
     }
 
     /* set error default */
     err = E_PARSE;
 
     if (argc == 1) {
-	if (!strcmp(setobj, "stopwatch")) {
+	if (sv->key == STOPWATCH) {
 	    gretl_stopwatch();
 	    return 0;
 	} else {
-	    return libset_query_settings(setobj, prn);
+	    return libset_query_settings(sv, prn);
 	}
     } else if (argc == 2) {
-	if (!strcmp(setobj, "shelldir")) {
-	    pputs(prn, "'shelldir' is obsolete, please use 'workdir'\n");
-	    return 0;
-	} else if (!strcmp(setobj, "workdir")) {
-	    return set_workdir(setarg);
-	} else if (!strcmp(setobj, "csv_write_na") || !strcmp(setobj, "csv_na")) {
+	/* specials first */
+	if (sv->key == CSV_WRITE_NA) {
 	    return set_csv_na_write_string(setarg);
-	} else if (!strcmp(setobj, "csv_read_na")) {
+	} else if (sv->key == CSV_READ_NA) {
 	    return set_csv_na_read_string(setarg);
-	} else if (!strcmp(setobj, CSV_DIGITS)) {
-	    return set_csv_digits(setarg);
-	} else if (!strcmp(setobj, "initvals")) {
-	    return set_initmat(setarg, INIT_VALS, prn);
-	} else if (!strcmp(setobj, "initcurv")) {
-	    return set_initmat(setarg, INIT_CURV, prn);
-	} else if (!strcmp(setobj, "matrix_mask")) {
-	    return set_matmask(setarg, dset, prn);
-	} else if (!strcmp(setobj, "graph_theme")) {
+	} else if (sv->key == INITVALS || sv->key == INITCURV) {
+	    return set_init_matrix(sv->key, setarg, prn);
+	} else if (sv->key == MATMASK) {
+	    return set_matrix_mask(setarg, dset);
+	} else if (sv->key == SV_WORKDIR) {
+	    return set_workdir(setarg);
+	} else if (sv->key == GRAPH_THEME) {
 	    return set_plotstyle(setarg);
-	} else if (!strcmp(setobj, "display_digits")) {
-	    if (gretl_function_depth() > 0) {
-		pprintf(prn, "'%s': cannot be set inside a function\n");
-		return E_INVARG;
-	    } else {
-		return set_gretl_digits(atoi(setarg));
-	    }
-	} else if (!strcmp(setobj, "echo")) {
-	    return set_echo_status(setarg);
-	} else if (!strcmp(setobj, "verbose")) {
-	    err = 0;
-	    if (!strcmp(setarg, "on")) {
-		set_gretl_messages(1);
-		set_echo_status(setarg);
-	    } else if (!strcmp(setarg, "off")) {
-		set_gretl_messages(0);
-		set_echo_status(setarg);
-		comments_on = 0;
-	    } else if (!strcmp(setarg, "comments")) {
-		set_gretl_messages(0);
-		set_echo_status("off");
-		comments_on = 1;
-	    } else {
-		err = E_INVARG;
-	    }
-	    return err;
+	} else if (sv->key == DISP_DIGITS) {
+	    return set_display_digits(setarg);
+	} else if (sv->key == VERBOSE) {
+	    return set_verbosity(setarg);
+	} else if (sv->key == OMP_MNK_MIN) {
+#if defined(_OPENMP)
+	    return set_omp_mnk_min(atoi(setarg));
+#else
+	    pprintf(prn, "Warning: openmp not supported\n");
+#endif
 	}
 
-	if (libset_boolvar(setobj)) {
-	    if (!strcmp(setobj, SHELL_OK)) {
+	if (libset_boolvar(sv->key)) {
+	    if (sv->key == SHELL_OK) {
 		pprintf(prn, "'%s': this must be set via the gretl GUI\n", setobj);
 		err = E_DATA;
-	    } else if (!strcmp(setobj, USE_OPENMP)) {
-#if defined(_OPENMP)
-		err = check_set_bool(setobj, setarg);
-#else
-		pprintf(prn, "Warning: openmp not supported\n");
-#endif
 	    } else {
-		err = check_set_bool(setobj, setarg);
+		err = check_set_bool(sv->key, setobj, setarg);
 	    }
-	} else if (libset_double(setobj)) {
-	    if (default_ok(setobj) && default_str(setarg)) {
-		libset_set_double(setobj, NADBL);
+	} else if (libset_double(sv->key)) {
+	    if (default_ok(sv->key) && default_str(setarg)) {
+		libset_set_double(sv->key, NADBL);
 		err = 0;
 	    } else {
 		double x;
 
-		err = libset_get_scalar(NULL, setarg, NULL, &x);
+		err = libset_get_scalar(sv->key, setarg, NULL, &x);
 		if (!err) {
-		    err = libset_set_double(setobj, x);
+		    err = libset_set_double(sv->key, x);
 		}
 	    }
-	} else if (!strcmp(setobj, "csv_delim")) {
+	} else if (sv->key == CSV_DELIM) {
 	    char c = delim_from_arg(setarg);
 
 	    if (c > 0) {
 		data_delim = c;
 		err = 0;
 	    }
-	} else if (!strcmp(setobj, "seed")) {
+	} else if (sv->key == SEED) {
 	    err = libset_get_unsigned(setarg, &u);
 	    if (!err) {
 		gretl_rand_set_seed(u);
@@ -2006,28 +1649,27 @@ int execute_set (const char *setobj, const char *setarg,
 		    pprintf(prn,
 			    _("Pseudo-random number generator seeded with %u\n"), u);
 		}
-		state->seed = u;
 		seed_is_set = 1;
 	    }
-	} else if (!strcmp(setobj, HORIZON)) {
+	} else if (sv->key == HORIZON) {
 	    /* horizon for VAR impulse responses */
 	    if (!strcmp(setarg, "auto")) {
 		state->horizon = UNSET_INT;
 		err = 0;
 	    } else {
-		err = libset_get_scalar(NULL, setarg, &k, NULL);
+		err = libset_get_scalar(sv->key, setarg, &k, NULL);
 		if (!err) {
 		    state->horizon = k;
 		} else {
 		    state->horizon = UNSET_INT;
 		}
 	    }
-	} else if (coded_intvar(setobj)) {
-	    err = parse_libset_int_code(setobj, setarg);
-	} else if (libset_int(setobj)) {
-	    err = libset_get_scalar(setobj, setarg, &k, NULL);
+	} else if (coded_intvar(sv->key)) {
+	    err = parse_libset_int_code(sv->key, setarg);
+	} else if (libset_int(sv->key)) {
+	    err = libset_get_scalar(sv->key, setarg, &k, NULL);
 	    if (!err) {
-		err = libset_set_int(setobj, k);
+		err = libset_set_int(sv->key, k);
 	    }
 	} else {
 	    gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
@@ -2038,80 +1680,155 @@ int execute_set (const char *setobj, const char *setarg,
     return err;
 }
 
-double libset_get_double (const char *key)
+double libset_get_double (SetKey key)
 {
+    void *valp;
+
     if (check_for_state()) {
 	return NADBL;
     }
 
-    if (!strcmp(key, QS_BANDWIDTH)) {
-	if (!na(state->ropts.qsband) && state->ropts.qsband > 0) {
-	    return state->ropts.qsband;
-	} else {
-	    /* what's a sensible default here? */
-	    return 2.0;
+    valp = setkey_get_target(key, SV_DOUBLE);
+    if (valp != NULL) {
+	double x = *(double *) valp;
+
+	if (na(x) && (key == NLS_TOLER || key == BFGS_TOLER)) {
+	    x = get_default_nls_toler();
 	}
-    } else if (!strcmp(key, NLS_TOLER)) {
-	if (na(state->nls_toler)) {
-	    return get_default_nls_toler();
-	} else {
-	    return state->nls_toler;
-	}
-    } else if (!strcmp(key, BHHH_TOLER)) {
-	if (na(state->bhhh_toler)) {
-	    return 1.0e-6;
-	} else {
-	    return state->bhhh_toler;
-	}
-    } else if (!strcmp(key, BFGS_TOLER)) {
-	if (na(state->bfgs_toler)) {
-	    return get_default_nls_toler();
-	} else {
-	    return state->bfgs_toler;
-	}
-    } else if (!strcmp(key, BFGS_MAXGRAD)) {
-	return state->bfgs_maxgrad;
-    } else if (!strcmp(key, NADARWAT_TRIM)) {
-	if (na(state->nadarwat_trim)) {
-	    return 4.0;
-	} else {
-	    return state->nadarwat_trim;
-	}
-    } else if (!strcmp(key, CONV_HUGE)) {
-	if (na(state->conv_huge)) {
-	    return 1.0e100;
-	} else {
-	    return state->conv_huge;
-	}
-    } else if (!strcmp(key, FDJAC_EPS)) {
-	if (na(state->fdjac_eps)) {
-	    return 0.0;
-	} else {
-	    return state->fdjac_eps;
-	}
+	return x;
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
-		"variable '%s'\n", key);
+		"key %d\n", key);
 	return 0;
     }
 }
 
-double libset_get_user_tolerance (const char *key)
+double libset_get_user_tolerance (SetKey key)
 {
-    if (!strcmp(key, NLS_TOLER)) {
-	return state->nls_toler;
-    } else if (!strcmp(key, BHHH_TOLER)) {
-	return state->bhhh_toler;
-    } else if (!strcmp(key, BFGS_TOLER)) {
-	return state->bfgs_toler;
-    } else if (!strcmp(key, BFGS_MAXGRAD)) {
-	return state->bfgs_maxgrad;
+    if (key >= NLS_TOLER && key <= BHHH_TOLER) {
+	void *valp = setkey_get_target(key, SV_ALL);
+
+	return *(double *) valp;
     } else {
 	return NADBL;
     }
 }
 
-int libset_set_double (const char *key, double val)
+int libset_set_double (SetKey key, double val)
+{
+    void *valp;
+    int err = 0;
+
+    if (check_for_state()) {
+	return 1;
+    }
+
+    /* all the libset double vals must be positive */
+    if (val <= 0.0 || na(val)) {
+	return E_DATA;
+    }
+
+    valp = setkey_get_target(key, SV_DOUBLE);
+    if (valp != NULL) {
+	*(double *) valp = val;
+    } else {
+	fprintf(stderr, "libset_set_double: unrecognized key %d (%s)\n",
+		key, setkey_get_name(key));
+	err = E_UNKVAR;
+    }
+
+    return err;
+}
+
+int libset_get_int (SetKey key)
+{
+    void *valp;
+
+    if (check_for_state()) {
+	return 0;
+    }
+
+    valp = setkey_get_target(key, SV_INT);
+
+    if (valp != NULL) {
+#if SVDEBUG
+	fprintf(stderr, "libset_get_int: valp %p\n", valp);
+#endif
+	if (libset_small_int(key)) {
+	    return *(gint8 *) valp;
+	} else {
+	    return *(int *) valp;
+	}
+    } else if (key == BLAS_MNK_MIN) {
+	return get_blas_mnk_min();
+    } else if (key == OMP_N_THREADS) {
+	return get_omp_n_threads();
+    } else if (key == OMP_MNK_MIN) {
+	return get_omp_mnk_min();
+    } else if (key == SIMD_K_MAX) {
+	return get_simd_k_max();
+    } else if (key == SIMD_MN_MIN) {
+	return get_simd_mn_min();
+    } else {
+	fprintf(stderr, "libset_get_int: unrecognized "
+		"key %d\n", key);
+	return 0;
+    }
+}
+
+struct int_limits {
+    SetKey key;
+    int min;
+    int max;
+};
+
+static int get_int_limits (SetKey key, int *min, int *max)
+{
+    static struct int_limits ilims[] = {
+	{ HC_VERSION, 0, 4 },
+	{ FDJAC_QUAL, 0, 2 },
+	{ LBFGS_MEM,  3, 20 },
+	{ GRETL_DEBUG, 0, 10 },
+	{ DATACOLS,    1, 15 },
+	{ PLOT_COLLECT, 0, 2 },
+	{ CSV_DIGITS, 1, 25 },
+	{ BOOT_ITERS, 499, 999999 },
+	{ BFGS_VERBSKIP, 0, 1000 },
+	{ BOOTREP, 1, 99999 },
+	{ HORIZON, 1, 1000 },
+	{ LOOP_MAXITER, 1, INT_MAX - 1 },
+	{ GMP_BITS, 256, 8192 }
+    };
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(ilims); i++) {
+	if (ilims[i].key == key) {
+	    *min = ilims[i].min;
+	    *max = ilims[i].max;
+	    return 1;
+	    break;
+	}
+    }
+
+    return 0;
+}
+
+static int libset_int_min (SetKey key)
+{
+    int m1, m0 = 1;
+
+    get_int_limits(key, &m0, &m1);
+    return m0;
+}
+
+/* Called from within libset.c and also from various places in
+   libgretl. It's primarily designed for "real" integer variables
+   (not int-coded categories), but for now we make an exception
+   for HC_VERSION and PLOT_COLLECT, to support existing calls
+   from lib/src/estimate.c and gui/settings.c.
+*/
+
+int libset_set_int (SetKey key, int val)
 {
     int err = 0;
 
@@ -2119,277 +1836,37 @@ int libset_set_double (const char *key, double val)
 	return 1;
     }
 
-    /* all the libset double vals must be positive, except for
-       FDJAC_EPS, where 0.0 means "auto"
-    */
-    if (val < 0.0) {
-	return E_DATA;
-    } else if (val == 0.0 && strcmp(key, FDJAC_EPS)) {
-	return E_DATA;
-    }
-
-    if (!strcmp(key, QS_BANDWIDTH)) {
-	state->ropts.qsband = val;
-    } else if (!strcmp(key, NLS_TOLER)) {
-	state->nls_toler = val;
-    } else if (!strcmp(key, BHHH_TOLER)) {
-	state->bhhh_toler = val;
-    } else if (!strcmp(key, BFGS_TOLER)) {
-	state->bfgs_toler = val;
-    } else if (!strcmp(key, BFGS_MAXGRAD)) {
-	state->bfgs_maxgrad = val;
-    } else if (!strcmp(key, NADARWAT_TRIM)) {
-	state->nadarwat_trim = val;
-    } else if (!strcmp(key, CONV_HUGE)) {
-	state->conv_huge = val;
-    } else if (!strcmp(key, FDJAC_EPS)) {
-	state->fdjac_eps = val;
+    if (key == BLAS_MNK_MIN) {
+	set_blas_mnk_min(val);
+    } else if (key == SIMD_K_MAX) {
+	set_simd_k_max(val);
+    } else if (key == SIMD_MN_MIN) {
+	set_simd_mn_min(val);
+    } else if (key == OMP_N_THREADS) {
+	err = set_omp_n_threads(val);
     } else {
-	fprintf(stderr, "libset_set_double: unrecognized "
-		"variable '%s'\n", key);
-	err = E_UNKVAR;
+	int min = 1, max = 100000;
+	void *valp;
+
+	get_int_limits(key, &min, &max);
+	if (val < min || val > max) {
+	    err = E_DATA;
+	} else {
+	    valp = setkey_get_target(key, SV_INT);
+	    if (valp == NULL) {
+		err = E_DATA;
+	    } else if (libset_small_int(key)) {
+		*(gint8 *) valp = val;
+	    } else {
+		*(int *) valp = val;
+	    }
+	}
     }
 
     return err;
 }
 
-int libset_get_int (const char *key)
-{
-    if (check_for_state()) {
-	return 0;
-    }
-
-    if (!strcmp(key, BFGS_MAXITER)) {
-	return state->bfgs_maxiter;
-    } else if (!strcmp(key, MAX_VERBOSE)) {
-	return state->max_verbose;
-    } else if (!strcmp(key, BOOT_ITERS)) {
-	return state->boot_iters;
-    } else if (!strcmp(key, OPTIM_STEPLEN)) {
-	return state->optim_steplen;
-    } else if (!strcmp(key, BHHH_MAXITER)) {
-	return state->bhhh_maxiter;
-    } else if (!strcmp(key, RQ_MAXITER)) {
-	return state->rq_maxiter;
-    } else if (!strcmp(key, GMM_MAXITER)) {
-	return state->gmm_maxiter;
-    } else if (!strcmp(key, LBFGS_MEM)) {
-	return state->lbfgs_mem;
-    } else if (!strcmp(key, BOOTREP)) {
-	return state->bootrep;
-    } else if (!strcmp(key, GARCH_VCV)) {
-	return state->garch_vcv;
-    } else if (!strcmp(key, GARCH_ROBUST_VCV)) {
-	return state->garch_robust_vcv;
-    } else if (!strcmp(key, ARMA_VCV)) {
-	return state->arma_vcv;
-    } else if (!strcmp(key, HAC_KERNEL)) {
-	return state->ropts.hkern;
-    } else if (!strcmp(key, HC_VERSION)) {
-	return state->ropts.hc_version;
-    } else if (!strcmp(key, HORIZON)) {
-	return state->horizon;
-    } else if (!strcmp(key, LOOP_MAXITER)) {
-	return state->loop_maxiter;
-    } else if (!strcmp(key, VECM_NORM)) {
-	return state->vecm_norm;
-    } else if (!strcmp(key, GRETL_OPTIM)) {
-	return state->optim;
-    } else if (!strcmp(key, GRETL_DEBUG)) {
-	return gretl_debug;
-    } else if (!strcmp(key, GRETL_ASSERT)) {
-	return gretl_assert;
-    } else if (!strcmp(key, BLAS_MNK_MIN)) {
-	return get_blas_mnk_min();
-    } else if (!strcmp(key, OMP_MNK_MIN) || !strcmp(key, MP_MNK_MIN)) {
-	return omp_mnk_min;
-    } else if (!strcmp(key, OMP_N_THREADS)) {
-	return omp_n_threads;
-    } else if (!strcmp(key, SIMD_K_MAX)) {
-	return get_simd_k_max();
-    } else if (!strcmp(key, SIMD_MN_MIN)) {
-	return get_simd_mn_min();
-    } else if (!strcmp(key, BFGS_VERBSKIP)) {
-	return state->bfgs_verbskip;
-    } else if (!strcmp(key, CSV_DIGITS)) {
-	return csv_digits;
-    } else if (!strcmp(key, FDJAC_QUAL)) {
-	return state->fdjac_qual;
-    } else if (!strcmp(key, WILDBOOT_DIST)) {
-	return state->wildboot_dist;
-    } else if (!strcmp(key, QUANTILE_TYPE)) {
-	return Qtype;
-    } else if (!strcmp(key, "loop_maxiter_default")) {
-	return LOOP_MAXITER_DEFAULT; /* for internal use */
-    } else {
-	fprintf(stderr, "libset_get_int: unrecognized "
-		"variable '%s'\n", key);
-	return 0;
-    }
-}
-
-static int intvar_min_max (const char *s, int *min, int *max,
-			   int **var)
-{
-    *max = 100000;
-
-    if (!strcmp(s, BFGS_MAXITER)) {
-	*min = 0;
-	*var = &state->bfgs_maxiter;
-    } else if (!strcmp(s, BOOT_ITERS)) {
-	*max = 999999;
-	*min = 499;
-	*var = &state->boot_iters;
-    } else if (!strcmp(s, BFGS_VERBSKIP)) {
-	*min = 1;
-	*var = &state->bfgs_verbskip;
-    } else if (!strcmp(s, OPTIM_STEPLEN)) {
-	*min = 0;
-	*max = STEPLEN_MAX;
-	*var = &state->optim_steplen;
-    } else if (!strcmp(s, BHHH_MAXITER)) {
-	*min = 1;
-	*var = &state->bhhh_maxiter;
-    } else if (!strcmp(s, RQ_MAXITER)) {
-	*min = 1;
-	*var = &state->rq_maxiter;
-    } else if (!strcmp(s, GMM_MAXITER)) {
-	*min = 1;
-	*var = &state->gmm_maxiter;
-    } else if (!strcmp(s, LBFGS_MEM)) {
-	*min = 3;
-	*max = 20;
-	*var = &state->lbfgs_mem;
-    } else if (!strcmp(s, BOOTREP)) {
-	*min = 1;
-	*var = &state->bootrep;
-    } else if (!strcmp(s, HAC_KERNEL)) {
-	*min = 0;
-	*max = KERNEL_MAX;
-    } else if (!strcmp(s, HC_VERSION)) {
-	*min = 0;
-	*max = 4 + 1;
-	*var = &state->ropts.hc_version;
-    } else if (!strcmp(s, HORIZON)) {
-	*min = 1;
-	*var = &state->horizon;
-    } else if (!strcmp(s, LOOP_MAXITER)) {
-	*min = 0;
-	*max = INT_MAX - 1;
-	*var = &state->loop_maxiter;
-    } else if (!strcmp(s, VECM_NORM)) {
-	*min = 0;
-	*max = NORM_MAX;
-	*var = &state->vecm_norm;
-    } else if (!strcmp(s, GRETL_OPTIM)) {
-	*min = 0;
-	*max = OPTIM_MAX;
-	*var = &state->optim;
-    } else if (!strcmp(s, GRETL_DEBUG)) {
-	*min = 0;
-	*var = &gretl_debug;
-    } else if (!strcmp(s, FDJAC_QUAL)) {
-	*min = 0;
-	*max = 4;
-	*var = &state->fdjac_qual;
-    } else if (!strcmp(s, WILDBOOT_DIST)) {
-	*min = 0;
-	*max = 1;
-	*var = &state->wildboot_dist;
-    } else {
-	fprintf(stderr, "libset_set_int: unrecognized "
-		"variable '%s'\n", s);
-	return E_UNKVAR;
-    }
-
-    return 0;
-}
-
-int libset_set_int (const char *key, int val)
-{
-    if (check_for_state()) {
-	return 1;
-    }
-
-    if (!strcmp(key, BLAS_MNK_MIN)) {
-	set_blas_mnk_min(val);
-	return 0;
-    } else if (!strcmp(key, SIMD_K_MAX)) {
-	set_simd_k_max(val);
-	return 0;
-    } else if (!strcmp(key, SIMD_MN_MIN)) {
-	set_simd_mn_min(val);
-	return 0;
-    } else if (!strcmp(key, OMP_MNK_MIN) || !strcmp(key, MP_MNK_MIN)) {
-	omp_mnk_min = val;
-	return 0;
-    } else if (!strcmp(key, OMP_N_THREADS)) {
-	return set_omp_n_threads(val);
-    } else {
-	int min = 0, max = 0;
-	int *ivar = NULL;
-	int err = 0;
-
-	err = intvar_min_max(key, &min, &max, &ivar);
-
-	if (!err) {
-	    if (val < min || val >= max || ivar == NULL) {
-		err = E_DATA;
-	    } else {
-		*ivar = val;
-	    }
-	}
-
-	return err;
-    }
-}
-
-static int boolvar_get_flag (const char *s)
-{
-    if (!strcmp(s, MESSAGES)) {
-	return STATE_MSGS_ON;
-    } else if (!strcmp(s, WARNINGS)) {
-	return STATE_WARN_ON;
-    } else if (!strcmp(s, USE_SVD)) {
-	return STATE_USE_SVD;
-    } else if (!strcmp(s, USE_QR)) {
-        return STATE_USE_QR;
-    } else if (!strcmp(s, USE_LBFGS)) {
-	return STATE_USE_LBFGS;
-    } else if (!strcmp(s, FORCE_DECP)) {
-	return STATE_FORCE_DECPOINT;
-    } else if (!strcmp(s, USE_CWD)) {
-	return STATE_USE_CWD;
-    } else if (!strcmp(s, SHELL_OK)) {
-	return STATE_SHELL_OK;
-    } else if (!strcmp(s, FORCE_HC)) {
-	return STATE_FORCE_HC;
-    } else if (!strcmp(s, PREWHITEN)) {
-	return STATE_PREWHITEN;
-    } else if (!strcmp(s, PCSE)) {
-	return STATE_USE_PCSE;
-    } else if (!strcmp(s, SKIP_MISSING)) {
-	return STATE_SKIP_MISSING;
-    } else if (!strcmp(s, BFGS_RSTEP)) {
-	return STATE_BFGS_RSTEP;
-    } else if (!strcmp(s, DPDSTYLE)) {
-	return STATE_DPDSTYLE_ON;
-    } else if (!strcmp(s, USE_OPENMP)) {
-	return STATE_OPENMP_ON;
-    } else if (!strcmp(s, ROBUST_Z)) {
-	return STATE_ROBUST_Z;
-    } else if (!strcmp(s, MWRITE_G)) {
-	return STATE_MWRITE_G;
-    } else if (!strcmp(s, MPI_USE_SMT)) {
-	return STATE_MPI_SMT;
-    } else {
-	fprintf(stderr, "libset_get_bool: unrecognized "
-		"variable '%s'\n", s);
-	return 0;
-    }
-}
-
-static void set_flag_from_env (int flag, const char *s, int neg)
+static void set_flag_from_env (SetKey flag, const char *s, int neg)
 {
     char *e = getenv(s);
     int action = 0;
@@ -2409,47 +1886,34 @@ static void set_flag_from_env (int flag, const char *s, int neg)
     }
 }
 
-static void maybe_check_env (const char *s)
+static void maybe_check_env (SetKey key)
 {
-    if (!strcmp(s, USE_SVD)) {
-	set_flag_from_env(STATE_USE_SVD, "GRETL_USE_SVD", 0);
-    } else if (!strcmp(s, USE_QR)) {
-        set_flag_from_env(STATE_USE_QR, "GRETL_USE_QR", 0);
-    } else if (!strcmp(s, USE_LBFGS)) {
-	set_flag_from_env(STATE_USE_LBFGS, "GRETL_USE_LBFGS", 0);
+    if (key == USE_SVD) {
+	set_flag_from_env(USE_SVD, "GRETL_USE_SVD", 0);
+    } else if (key == USE_QR) {
+        set_flag_from_env(USE_QR, "GRETL_USE_QR", 0);
+    } else if (key == USE_LBFGS) {
+	set_flag_from_env(USE_LBFGS, "GRETL_USE_LBFGS", 0);
     }
 }
 
-int libset_get_bool (const char *key)
+int libset_get_bool (SetKey key)
 {
-    int flag, ret = 0;
-
     /* global specials */
-
-    if (!strcmp(key, R_FUNCTIONS)) {
-	return R_functions;
-    } else if (!strcmp(key, R_LIB)) {
-	return R_lib;
-    } else if (!strcmp(key, USE_DCMT)) {
+    if (key == R_FUNCTIONS) {
+	return globals.R_functions;
+    } else if (key == R_LIB) {
+	return globals.R_lib;
+    } else if (key == USE_DCMT) {
         return gretl_rand_get_dcmt();
     }
 
     if (check_for_state()) {
 	return 0;
-    }
-
-    maybe_check_env(key);
-
-    flag = boolvar_get_flag(key);
-    if (flag == 0) {
-	fprintf(stderr, "libset_get_bool: unrecognized "
-		"variable '%s'\n", key);
-	ret = 0;
     } else {
-	ret = flag_to_bool(state, flag);
+	maybe_check_env(key);
+	return flag_to_bool(state, key);
     }
-
-    return ret;
 }
 
 static void libset_set_decpoint (int on)
@@ -2460,7 +1924,13 @@ static void libset_set_decpoint (int on)
 	setlocale(LC_NUMERIC, "C");
     } else {
 	/* revert to whatever is the local default */
-	setlocale(LC_NUMERIC, "");
+	char *current = get_built_in_string_by_name("lang");
+
+	if (current != NULL && strcmp(current, "unknown")) {
+	    setlocale(LC_NUMERIC, current);
+	} else {
+	    setlocale(LC_NUMERIC, "");
+	}
     }
 
     reset_local_decpoint();
@@ -2470,18 +1940,18 @@ static void libset_set_decpoint (int on)
 void set_data_export_decimal_comma (int s)
 {
     if (s) {
-	data_export_decpoint = ',';
+	export_decpoint = ',';
     } else {
-	data_export_decpoint = '.';
+	export_decpoint = '.';
     }
 }
 
 char get_data_export_decpoint (void)
 {
-    char c = data_export_decpoint;
+    char c = export_decpoint;
 
     /* revert to '.' on access */
-    data_export_decpoint = '.';
+    export_decpoint = '.';
     return c;
 }
 
@@ -2495,21 +1965,23 @@ char get_data_export_delimiter (void)
     return data_delim;
 }
 
-static int check_R_setting (int *var, int val, const char *key)
+static int check_R_setting (gint8 *var, SetKey key, int val)
 {
     int err = 0;
 
 #ifdef USE_RLIB
-    if (!strcmp(key, R_FUNCTIONS) && val != 0) {
-	/* this depends on having R_lib on, so in
-	   case it's off we should turn it on too
+    if (key == R_FUNCTIONS && val != 0) {
+	/* This depends on having R_lib on, so in case
+	   it's off we should turn it on too.
 	*/
 	libset_set_bool(R_LIB, val);
     }
     *var = val;
 #else
     if (val) {
-	gretl_errmsg_sprintf("%s: not supported.", key);
+	const char *s = (key == R_FUNCTIONS)? "R_functions" : "R_lib";
+
+	gretl_errmsg_sprintf("%s: not supported", s);
 	err = E_EXTERNAL;
     }
 #endif
@@ -2517,41 +1989,32 @@ static int check_R_setting (int *var, int val, const char *key)
     return err;
 }
 
-int libset_set_bool (const char *key, int val)
+int libset_set_bool (SetKey key, int val)
 {
-    int flag, err = 0;
-
     if (check_for_state()) {
 	return E_ALLOC;
     }
 
     /* global specials */
-
-    if (!strcmp(key, R_FUNCTIONS)) {
-	return check_R_setting(&R_functions, val, key);
-    } else if (!strcmp(key, R_LIB)) {
-	return check_R_setting(&R_lib, val, key);
-    } else if (!strcmp(key, USE_DCMT)) {
+    if (key == R_FUNCTIONS) {
+	return check_R_setting(&globals.R_functions, key, val);
+    } else if (key == R_LIB) {
+	return check_R_setting(&globals.R_lib, key, val);
+    } else if (key == USE_DCMT) {
 	return gretl_rand_set_dcmt(val);
     }
 
-    flag = boolvar_get_flag(key);
-
-    if (flag == 0) {
-	fprintf(stderr, "libset_set_bool: unrecognized "
-		"variable '%s'\n", key);
-	err = E_UNKVAR;
-    } else if (val) {
-	state->flags |= flag;
+    if (val) {
+	state->flags |= key;
     } else {
-	state->flags &= ~flag;
+	state->flags &= ~key;
     }
 
-    if (flag == STATE_FORCE_DECPOINT) {
+    if (key == FORCE_DECPOINT) {
 	libset_set_decpoint(val);
     }
 
-    return err;
+    return 0;
 }
 
 /* Mechanism for pushing and popping program state for user-defined
@@ -2570,7 +2033,7 @@ static int state_idx = -1;
 #if PPDEBUG
 static void print_state_stack (int pop)
 {
-    set_vars *sv;
+    set_state *sv;
     int i;
 
     fputs(pop ? "\nafter pop:\n" : "\nafter push:\n", stderr);
@@ -2584,8 +2047,12 @@ static void print_state_stack (int pop)
 
 int push_program_state (void)
 {
-    set_vars *newstate;
+    set_state *newstate;
     int err = 0;
+
+#if SVDEBUG
+    fprintf(stderr, "push_program_state: n_states = %d\n", n_states);
+#endif
 
     if (n_states == 0) {
 	state_stack = g_ptr_array_new();
@@ -2614,6 +2081,13 @@ int push_program_state (void)
 	state = newstate;
     }
 
+#if SVDEBUG
+    fprintf(stderr, " newstate = %p, state = %p\n",
+	    (void *) newstate, (void *) state);
+    fprintf(stderr, " gmm_maxiter at %p, value %d\n",
+	    (void *) &(state->gmm_maxiter), state->gmm_maxiter);
+#endif
+
 #if PPDEBUG
     print_state_stack(0);
 #endif
@@ -2621,7 +2095,7 @@ int push_program_state (void)
     return err;
 }
 
-static void free_state (set_vars *sv)
+static void free_state (set_state *sv)
 {
     if (sv != NULL) {
 	gretl_matrix_free(sv->initvals);
@@ -2642,12 +2116,12 @@ int pop_program_state (void)
     if (n_states < 2) {
 	err = 1;
     } else {
-	int fdp = state->flags & STATE_FORCE_DECPOINT;
+	int fdp = state->flags & FORCE_DECPOINT;
 
 	state_idx--;
 	state = g_ptr_array_index(state_stack, state_idx);
 
-	if (fdp && !(state->flags & STATE_FORCE_DECPOINT)) {
+	if (fdp && !(state->flags & FORCE_DECPOINT)) {
 	    libset_set_decpoint(0);
 	}
     }
@@ -2992,18 +2466,6 @@ int set_csv_na_read_string (const char *s)
 	return E_DATA;
     } else {
 	return set_string_setvar(state->csv_read_na, s, 7);
-    }
-}
-
-static int set_csv_digits (const char *s)
-{
-    int k = atoi(s);
-
-    if (k > 0 && k < 26) {
-	csv_digits = k;
-	return 0;
-    } else {
-	return E_DATA;
     }
 }
 

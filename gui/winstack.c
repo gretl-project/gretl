@@ -27,6 +27,7 @@
 #include "toolbar.h"
 #include "cmdstack.h"
 #include "winstack.h"
+#include "gretl_ipc.h"
 
 #include "uservar.h"
 
@@ -135,7 +136,7 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_TABLE;
     } else if (role == SAVE_FUNCTIONS) {
 	id = GRETL_STOCK_TOOLS;
-    } else if (role == VIEW_DBNOMICS) {
+    } else if (role == VIEW_DBNOMICS || role == VIEW_BUNDLE) {
 	id = GRETL_STOCK_BUNDLE;
     }
 
@@ -168,10 +169,35 @@ static const gchar *get_window_title (GtkWidget *w)
 static const char *window_label (GtkWidget *w, int role)
 {
     if (role == MAINWIN) {
+#ifdef GRETL_PID_FILE
+	static char label[32];
+	int seqno = gretl_sequence_number();
+	gchar *tmp;
+
+	if (seqno > 1) {
+	    strcpy(label, _("Main window"));
+	    tmp = g_strdup_printf(" (%d)", seqno);
+	    strcat(label, tmp);
+	    g_free(tmp);
+	    return label;
+	}
+#endif
 	return _("Main window");
     } else {
 	return get_window_title(w);
     }
+}
+
+void plot_window_set_label (GtkWidget *w)
+{
+    gchar *aname = g_strdup_printf("%p", (void *) w);
+    GtkAction *action;
+
+    action = gtk_action_group_get_action(window_group, aname);
+    if (action != NULL) {
+	gtk_action_set_label(action, window_label(w, GNUPLOT));
+    }
+    g_free(aname);
 }
 
 /* callback to be invoked just before destroying a window that's

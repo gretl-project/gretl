@@ -2378,6 +2378,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 {
     call_info *cinfo;
     int data_access = 0;
+    int gid = -1;
     fnpkg *pkg;
 
     pkg = get_function_package_by_name(pkgname);
@@ -2403,6 +2404,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   "name", &cinfo->pkgname,
 					   "version", &cinfo->pkgver,
 					   "gui-publist", &cinfo->publist,
+					   "gui-main-id", &gid,
 					   "data-requirement", &cinfo->dreq,
 					   "model-requirement", &cinfo->modelreq,
 					   "min-version", &cinfo->minver,
@@ -2412,6 +2414,13 @@ static call_info *start_cinfo_for_package (const char *pkgname,
     if (*err) {
 	gui_errmsg(*err);
     } else if (cinfo->publist == NULL) {
+	if (gid >= 0) {
+	    cinfo->publist = gretl_list_new(1);
+	    cinfo->publist[1] = gid;
+	}
+    }
+
+    if (!*err && cinfo->publist == NULL) {
 	/* no available interfaces */
 	errbox(_("Function package is broken"));
 	*err = E_DATA;
@@ -2601,20 +2610,45 @@ void function_call_cleanup (void)
     arglist_cleanup();
 }
 
-/* Execute the plotting function made available by the function
+static gchar *compose_pkg_title (ufunc *func,
+					const char *id)
+{
+    fnpkg *pkg = gretl_function_get_package(func);
+    const char *pname = function_package_get_name(pkg);
+    gchar *title;
+
+    if (!strcmp(id, BUNDLE_FCAST)) {
+	title = g_strdup_printf("gretl: %s %s", pname, _("forecast"));
+    } else {
+	title = g_strdup_printf("gretl: %s bundle", pname);
+    }
+
+    return title;
+}
+
+/* Execute a special-purpose function made available by the
    package that produced bundle @b, possibly inflected by an
-   integer option -- if an option is present it's packed into
-   @aname, after a colon.
+   integer option. If an option is present it's packed into
+   @aname, following a colon.
 */
 
-int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
+int exec_bundle_special_function (gretl_bundle *b,
+				  const char *id,
+				  const char *aname,
+				  GtkWidget *parent)
 {
     ufunc *func = NULL;
     fncall *fc = NULL;
-    char *bname = NULL;
     char funname[32];
+    PRN *prn = NULL;
+    int plotting = 0;
+    int forecast = 0;
+    int t1 = 0, t2 = 0;
     int iopt = -1;
     int err = 0;
+
+    plotting = strcmp(id, BUNDLE_PLOT) == 0;
+    forecast = strcmp(id, BUNDLE_FCAST) == 0;
 
     if (aname != NULL) {
 	if (strchr(aname, ':') != NULL) {
@@ -2625,33 +2659,51 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	    strcpy(funname, aname);
 	}
     } else {
-	gchar *pf = get_bundle_plot_function(b);
+	gchar *sf = get_bundle_special_function(b, id);
 
-	if (pf == NULL) {
+	if (sf == NULL) {
 	    return E_DATA;
 	} else {
-	    strcpy(funname, pf);
-	    g_free(pf);
+	    strcpy(funname, sf);
+	    g_free(sf);
 	}
     }
 
     func = get_user_function_by_name(funname);
 
     if (func == NULL) {
-	fprintf(stderr, "Couldn't find function %s\n", funname);
-	err = E_DATA;
-    } else {
+	errbox_printf(_("Couldn't find function %s"), funname);
+	return E_DATA;
+    }
+
+    if (forecast) {
+	/* check for feasibility */
+	int resp = simple_forecast_dialog(&t1, &t2, parent);
+
+	if (canceled(resp)) {
+	    return 0;
+	}
+	allow_full_data_access(1);
+    }
+
+    if (!err) {
 	user_var *uv = get_user_var_by_data(b);
+	char *bname = NULL;
 
-	bname = gretl_strdup(user_var_get_name(uv));
-#if 1
-	fprintf(stderr, "bundle plot: using bundle %p (uvar %p, name '%s')\n",
-		(void *) b, (void *) uv, bname);
-#endif
+	if (uv != NULL) {
+	    bname = gretl_strdup(user_var_get_name(uv));
+	}
 	fc = fncall_new(func, 0);
-	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
-
-	if (!err && iopt >= 0) {
+	if (bname != NULL) {
+	    err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
+	} else {
+	    err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
+	}
+	if (!err && forecast) {
+	    t1++; t2++; /* convert to 1-based */
+	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t1);
+	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t2);
+	} else if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
 	    double minv = fn_param_minval(func, 1);
 
@@ -2660,22 +2712,53 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 		err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	    }
 	}
+	free(bname);
     }
 
     if (!err) {
-	/* Note that the function may need a non-NULL prn for
-	   use with printing redirection (outfile).
-	*/
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	if (plotting) {
+	    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	} else {
+	    err = bufopen(&prn);
+	}
+    }
 
+    if (!err && plotting) {
+	/* A plotting function may need a non-NULL PRN for
+	   use with printing redirection (outfile). But we
+	   don't expect any printed output.
+	*/
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL, prn);
-	gretl_print_destroy(prn);
+    } else if (!err) {
+	/* For other bundle-specials we expect printed output */
+	GretlType rtype = user_func_get_return_type(func);
+	gretl_bundle *retb = NULL;
+
+	if (rtype == GRETL_TYPE_BUNDLE) {
+	    /* if a bundle is offered, let's grab it */
+	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				      &retb, NULL, prn);
+	} else {
+	    /* otherwise ignore any return value */
+	    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				      NULL, NULL, prn);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    int role = retb != NULL ? VIEW_BUNDLE : PRINT;
+	    gchar *title = compose_pkg_title(func, id);
+
+	    view_buffer(prn, 78, 450, title, role, retb);
+	    g_free(title);
+	    prn = NULL; /* ownership taken by viewer */
+	}
     } else {
 	fncall_destroy(fc);
     }
 
-    free(bname);
+    gretl_print_destroy(prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -2690,8 +2773,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
    default function for @task (e.g. BUNDLE_PRINT).
 */
 
-static gchar *get_bundle_special_function (gretl_bundle *b,
-					   const char *task)
+gchar *get_bundle_special_function (gretl_bundle *b,
+				    const char *id)
 {
     const char *pkgname = gretl_bundle_get_creator(b);
     gchar *ret = NULL;
@@ -2709,18 +2792,12 @@ static gchar *get_bundle_special_function (gretl_bundle *b,
 		free(fname);
 	    }
 	}
-
 	if (pkg != NULL) {
-	    function_package_get_properties(pkg, task, &ret, NULL);
+	    function_package_get_properties(pkg, id, &ret, NULL);
 	}
     }
 
     return ret;
-}
-
-gchar *get_bundle_plot_function (gretl_bundle *b)
-{
-    return get_bundle_special_function(b, BUNDLE_PLOT);
 }
 
 /* See if we can find a "native" printing function for a
@@ -3720,13 +3797,21 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 static int maybe_add_model_pkg (gui_package_info *gpi,
 				windata_t *vwin)
 {
-    MODEL *pmod = vwin->data;
-    int dreq, modelreq, minver = 0;
+    int ci, dreq, modelreq, minver = 0;
     gchar *precheck = NULL;
     fnpkg *pkg;
     int err = 0;
 
-    if (gpi->modelreq > 0 && pmod->ci != gpi->modelreq) {
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = vwin->data;
+
+	ci = pmod->ci;
+    } else {
+	/* system: VAR, VECM or SYSTEM */
+	ci = vwin->role;
+    }
+
+    if (gpi->modelreq > 0 && ci != gpi->modelreq) {
 	return 0;
     }
 
@@ -3757,7 +3842,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	int skip = 0;
 
 	if (modelreq > 0) {
-	    skip = pmod->ci != modelreq;
+	    skip = ci != modelreq;
 	}
 	if (!skip) {
 	    skip = check_function_needs(dataset, dreq, minver);

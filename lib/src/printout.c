@@ -2167,8 +2167,8 @@ static int print_listed_objects (const char *s,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    user_var *uv;
-    char *name;
+    const char *syms = "=+-/*<>?|~^!%&.,:;\\'[({";
+    char *name = NULL;
     int err = 0;
 
     if (!strcmp(s, "$sysinfo")) {
@@ -2180,8 +2180,14 @@ static int print_listed_objects (const char *s,
 	return err;
     }
 
+    if (strcspn(s, syms) < strlen(s)) {
+	/* try treating as expression to be evaluated */
+	return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
+    }
+
     while ((name = gretl_word_strdup(s, &s, OPT_S | OPT_U, &err)) != NULL) {
-	uv = get_user_var_by_name(name);
+	user_var *uv = get_user_var_by_name(name);
+
 	if (uv == NULL) {
 	    err = E_UNKVAR;
 	    break;
@@ -2398,14 +2404,35 @@ static int *column_widths_from_list (const int *list,
     return ret;
 }
 
-#define BMAX 5
+static void print_plain_numbers (int *list, const DATASET *dset,
+				 PRN *prn)
+{
+    int i, vi, t;
 
-/* print the series referenced in 'list' by observation */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (na(dset->Z[vi][t])) {
+		pputs(prn, "NA");
+	    } else {
+		pprintf(prn, "%.8g", dset->Z[vi][t]);
+	    }
+	    if (i < list[0]) {
+		pputc(prn, ' ');
+	    } else {
+		pputc(prn, '\n');
+	    }
+	}
+    }
+}
+
+/* print the series referenced in @list by observation */
 
 static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, k, t, nrem;
     int *colwidths = NULL;
     int obslen = 0;
@@ -2544,21 +2571,22 @@ static int midas_print_list (const int *list,
 /**
  * printdata:
  * @list: list of variables to print.
- * @mstr: optional string holding names of non-series objects to print.
+ * @ostr: optional string holding names of non-series objects to print.
  * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
  * list in original time-series order; if OPT_R print specified range
- * of object.
+ * of object; if OPT_X (relevant only for series), print the data
+ * by observation without any header or observation info.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
- * defined sample range.
+ * defined sample range, or the objects named in @ostr.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int printdata (const int *list, const char *mstr,
+int printdata (const int *list, const char *ostr,
 	       DATASET *dset, gretlopt opt,
 	       PRN *prn)
 {
@@ -2568,14 +2596,14 @@ int printdata (const int *list, const char *mstr,
 
     if (list != NULL && list[0] == 0) {
 	/* explicitly empty list given */
-	if (mstr == NULL) {
+	if (ostr == NULL) {
 	    return 0; /* no-op */
 	} else {
 	    goto endprint;
 	}
     } else if (list == NULL) {
 	/* no list given */
-	if (mstr == NULL && dset != NULL) {
+	if (ostr == NULL && dset != NULL) {
 	    int nvars = 0;
 
 	    plist = full_var_list(dset, &nvars);
@@ -2636,7 +2664,9 @@ int printdata (const int *list, const char *mstr,
 	}
 	dset->t1 = save_t1 + start;
 	dset->t2 = save_t1 + stop;
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2644,7 +2674,9 @@ int printdata (const int *list, const char *mstr,
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
     } else {
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2653,8 +2685,8 @@ int printdata (const int *list, const char *mstr,
 
  endprint:
 
-    if (!err && mstr != NULL) {
-	err = print_listed_objects(mstr, dset, opt, prn);
+    if (!err && ostr != NULL) {
+	err = print_listed_objects(ostr, dset, opt, prn);
     }
 
     free(plist);
@@ -2667,6 +2699,7 @@ int print_series_with_format (const int *list,
 			      char fmt, int digits,
 			      PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, v, t, k, nrem = 0;
     int *colwidths, blist[BMAX+1];
     char obslabel[OBSLEN];

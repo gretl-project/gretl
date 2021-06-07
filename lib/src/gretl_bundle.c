@@ -21,8 +21,8 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
-#include "libset.h"
 #include "uservar.h"
+#include "gretl_mt.h"
 #include "gretl_xml.h"
 #include "gretl_foreign.h"
 #include "gretl_typemap.h"
@@ -1206,10 +1206,23 @@ void *bundled_item_get_data (bundled_item *item, GretlType *type,
 }
 
 /**
+ * bundled_item_get_key:
+ * @item: bundled item.
+ *
+ * Returns: the key associated with @item.
+ */
+
+const char *bundled_item_get_key (bundled_item *item)
+{
+    return item->name;
+}
+
+/**
  * bundled_item_get_note:
  * @item: bundled item.
  *
- * Returns: the note associated with @item (may be NULL).
+ * Returns: the note string associated with @item, if any,
+ * otherwise NULL.
  */
 
 const char *bundled_item_get_note (bundled_item *item)
@@ -1725,15 +1738,14 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *targ, *src = (bundled_item *) value;
     struct bchecker *bchk = (struct bchecker *) p;
-    gretl_bundle *template = bchk->b;
 
     if (*bchk->ret || *bchk->err) {
 	/* don't waste time if we already hit an error */
 	return;
     }
 
-    /* look up @key (from input) in the @template bundle */
-    targ = g_hash_table_lookup(template->ht, (const char *) key);
+    /* look up @key (from input) in the template bundle */
+    targ = g_hash_table_lookup(bchk->b->ht, (const char *) key);
 
     if (targ == NULL) {
 	/* extraneous key in input */
@@ -1773,7 +1785,7 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 
 /**
  * gretl_bundle_extract_args:
- * @template: bundle containing keys for all supported
+ * @defaults: bundle containing keys for all supported
  * inputs, both optional and required (if any).
  * @input: bundle supplied by caller.
  * @reqd: array of strings identifying required keys, if any
@@ -1782,23 +1794,23 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
  * messages.
  * @err:location to receive error code.
  *
- * This function checks @input against @template. It flags an
+ * This function checks @input against @defaults. It flags an
  * error (a) if a required element is missing, (b) if @input
  * contains an unrecognized key, or (c) if the type of any element
  * in @input fails to match the type of the corresponding element
- * in @template. If there's no error the content of @template
- * is updated from @input; that is, defaults are replaced by
+ * in @defaults. If there's no error the content of @defaults
+ * is updated from @input; that is, default values are replaced by
  * values selected by the caller.
  *
  * Note the the @err pointer receives a non-zero value only
  * if this function fails, which is distinct from the case
  * where it successfully diagnoses an error in @input.
  *
- * Returns: 0 if @input is validated successfully, non-zero
- * otherwise.
+ * Returns: 0 if @input is deemed valid in light of @defualts,
+ * non-zero otherwise.
  */
 
-int gretl_bundle_extract_args (gretl_bundle *template,
+int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
 			       PRN *prn, int *err)
@@ -1825,7 +1837,7 @@ int gretl_bundle_extract_args (gretl_bundle *template,
     }
 
     if (ret == 0) {
-	struct bchecker bchk = {template, &ret, err, prn};
+	struct bchecker bchk = {defaults, &ret, err, prn};
 
 	g_hash_table_foreach(input->ht, check_bundled_item, &bchk);
     }
@@ -1939,11 +1951,11 @@ struct b_item_printer {
     int tree;
 };
 
-static void print_bundled_item (gpointer key, gpointer value, gpointer p)
+static void print_bundled_item (gpointer value, gpointer p)
 {
     bundled_item *item = value;
     GretlType t = item->type;
-    const gchar *kstr = key;
+    const gchar *kstr = item->name;
     struct b_item_printer *bip = p;
     PRN *prn = bip->prn;
     int indent;
@@ -2045,10 +2057,15 @@ static int real_bundle_print (gretl_bundle *bundle, int indent,
 			      int tree, PRN *prn)
 {
     struct b_item_printer bip = {prn, indent, tree};
+    GList *L;
 
     if (bundle == NULL) {
 	return E_DATA;
-    } else if (indent > 0) {
+    }
+
+    L = gretl_bundle_get_sorted_items(bundle);
+
+    if (indent > 0) {
 	/* child, when printing tree */
 	int n_items = g_hash_table_size(bundle->ht);
 
@@ -2058,10 +2075,10 @@ static int real_bundle_print (gretl_bundle *bundle, int indent,
 	    print_kalman_bundle_info(bundle->data, prn);
 	    if (n_items > 0) {
 		pputs(prn, "\nOther content\n");
-		g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
+		g_list_foreach(L, print_bundled_item, &bip);
 	    }
 	} else if (n_items > 0) {
-	    g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
+	    g_list_foreach(L, print_bundled_item, &bip);
 	}
     } else {
 	int n_items = g_hash_table_size(bundle->ht);
@@ -2080,13 +2097,15 @@ static int real_bundle_print (gretl_bundle *bundle, int indent,
 		print_kalman_bundle_info(bundle->data, prn);
 		if (n_items > 0) {
 		    pputs(prn, "\nOther content\n");
-		    g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
+		    g_list_foreach(L, print_bundled_item, &bip);
 		}
 	    } else if (n_items > 0) {
-		g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
+		g_list_foreach(L, print_bundled_item, &bip);
 	    }
 	}
     }
+
+    g_list_free(L);
 
     return 0;
 }
@@ -2165,6 +2184,29 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
     }
 
     return err;
+}
+
+/**
+ * gretl_bundle_debug_print:
+ * @bundle: gretl bundle.
+ * @msg: extra string to print, or NULL.
+ *
+ * Prints to stderr a list of the keys defined in @bundle, along
+ * with descriptive notes, if any. If @msg is non-NULL it is
+ * printed first.
+ */
+
+void gretl_bundle_debug_print (gretl_bundle *bundle, const char *msg)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+    if (msg != NULL) {
+	pputs(prn, msg);
+	pputc(prn, '\n');
+    }
+    real_bundle_print(bundle, 0, 0, prn);
+    pputc(prn, '\n');
+    gretl_print_destroy(prn);
 }
 
 int gretl_bundle_print_tree (gretl_bundle *bundle, PRN *prn)
@@ -2764,12 +2806,15 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
 
 gretl_bundle *get_sysinfo_bundle (int *err)
 {
+    gretl_matrix *memvals = NULL;
+
     if (sysinfo_bundle == NULL) {
 	gretl_bundle *b = gretl_bundle_new();
 
 	if (b == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    gretl_bundle *fb;
 	    char *s1, *s2;
 	    int ival = 0;
 
@@ -2790,7 +2835,6 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    gretl_bundle_set_scalar(b, "omp", (double) ival);
 	    ival = sizeof(void*) == 8 ? 64 : 32;
 	    gretl_bundle_set_scalar(b, "wordlen", (double) ival);
-	    gretl_bundle_set_scalar(b, "omp_num_threads", get_omp_n_threads());
 #if defined(G_OS_WIN32)
 	    gretl_bundle_set_string(b, "os", "windows");
 #elif defined(OS_OSX)
@@ -2806,8 +2850,25 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 		gretl_bundle_set_string(b, "blascore", s1);
 		gretl_bundle_set_string(b, "blas_parallel", s2);
 	    }
+	    fb = foreign_info();
+	    if (fb != NULL) {
+		gretl_bundle_donate_data(b, "foreign", fb,
+					 GRETL_TYPE_BUNDLE, 0);
+	    }
 	}
 	sysinfo_bundle = b;
+    }
+
+    memvals = gretl_matrix_alloc(1, 2);
+    if (memvals != NULL) {
+	char **S = malloc(2 * sizeof *S);
+
+	memory_stats(memvals->val);
+	S[0] = gretl_strdup("MBtotal");
+	S[1] = gretl_strdup("MBfree");
+	gretl_matrix_set_colnames(memvals, S);
+	gretl_bundle_donate_data(sysinfo_bundle, "mem", memvals,
+				 GRETL_TYPE_MATRIX, 0);
     }
 
     return sysinfo_bundle;
@@ -3046,6 +3107,31 @@ gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
     }
 
     return b;
+}
+
+static gint sort_bundled_items (const void *a, const void *b)
+{
+    const bundled_item *ia = a;
+    const bundled_item *ib = b;
+    int ta = gretl_type_get_order(ia->type);
+    int tb = gretl_type_get_order(ib->type);
+    int ret = ta - tb;
+
+    if (ret == 0) {
+	ret = g_ascii_strcasecmp(ia->name, ib->name);
+    }
+
+    return ret;
+}
+
+GList *gretl_bundle_get_sorted_items (gretl_bundle *b)
+{
+    GList *blist;
+
+    blist = g_hash_table_get_values(b->ht);
+    blist = g_list_sort(blist, sort_bundled_items);
+
+    return blist;
 }
 
 void gretl_bundle_cleanup (void)
