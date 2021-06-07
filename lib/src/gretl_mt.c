@@ -275,7 +275,7 @@ int memory_stats (double vals[])
 	err = E_DATA;
 	vals[0] = vals[1] = NADBL;
     } else {
-	vals[0] = tatex.ullTotalPhys / meg;
+	vals[0] = statex.ullTotalPhys / meg;
 	vals[1] = statex.ullAvailPhys / meg;
     }
 
