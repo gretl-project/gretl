@@ -8,8 +8,8 @@ function list GenerateExampleData(scalar phi, scalar T)
     */
     K = cholesky({1, 0.3; 0.3, 1})
     A = {phi, 0; 0.5, 0.8}
-    E = mnormal(T, 2) * K'
-    Y = varsimul(A, E, zeros(1,2))
+    U = mnormal(T, 2) * K'
+    Y = varsimul(A, U, zeros(1,2))
     list ret = null
     loop i = 1..2 
         series y$i = Y[2:,i]
