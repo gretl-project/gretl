@@ -863,10 +863,10 @@ Negative first-order autocorrelation of the residuals is expected by
 construction of the estimator, so a significant value for the AR(1)
 test does not indicate a problem. If the AR(2) test is significant,
 however, this indicates violation of the maintained assumptions. Note
-that the AR tests cannot always be produced when the
-\verb|--asymptotic| option is specified in conjunction with one-step
-estimation; if you need the tests, either drop the asymptotic flag
-or add the \verb|two-step| option.
+that valid AR tests cannot be produced when the \verb|--asymptotic|
+option is specified in conjunction with one-step GMM-SYS estimation;
+if you need the tests, either add the \verb|two-step| option or drop
+the asymptotic flag (which is recommended in any case).
 
 \section{Post-estimation available statistics}
 \label{sec:dpanel-post}
