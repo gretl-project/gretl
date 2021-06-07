@@ -41,6 +41,7 @@
 #include "gretl_foreign.h"
 #include "gretl_midas.h"
 #include "gretl_xml.h"
+#include "gretl_mt.h"
 #include "var.h"
 #include "vartest.h"
 
@@ -15583,7 +15584,7 @@ static NODE *eval_query (NODE *t, parser *p)
 
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
-#define dvar_matrix(i) (i == R_NOW)
+#define dvar_matrix(i) (i == R_NOW || i == R_MEM)
 #define dvar_variant1(i) (i == R_TEST_STAT || i == R_TEST_PVAL)
 #define dvar_variant2(i) (i == R_RESULT)
 
@@ -15775,6 +15776,14 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
             m->val[1] = y * 10000 + mon * 100 + d;
         }
         break;
+    case R_MEM:
+	m = gretl_matrix_alloc(1, 2);
+        if (m == NULL) {
+            *err = E_ALLOC;
+	} else {
+	    memory_stats(m->val);
+	}
+	break;
     default:
         *err = E_DATA;
         break;

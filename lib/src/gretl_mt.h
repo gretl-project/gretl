@@ -42,4 +42,6 @@ int get_omp_mnk_min (void);
 
 #endif
 
+int memory_stats (double vals[]);
+
 #endif /* GRETL_MT_H */

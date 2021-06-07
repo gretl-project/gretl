@@ -50,6 +50,7 @@ typedef enum {
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
     R_NOW,        /* current date/time (matrix) */
+    R_MEM,        /* total and available memory (matrix) */
     R_RESULT,     /* result of a "result-compatible" command */
     R_PNGFONT,    /* name of font selected for plots */
     R_MAPFILE,    /* name of current map file, if any */

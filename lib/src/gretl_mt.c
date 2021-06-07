@@ -257,3 +257,114 @@ int openmp_by_default (void)
 }
 
 #endif /* _OPENMP defined */
+
+/* memory statistics */
+
+#if defined(WIN32)
+
+int memory_stats (double vals[])
+{
+    MEMORYSTATUSEX statex;
+    double meg = 1024 * 1024;
+    int err = 0;
+
+    statex.dwLength = sizeof statex;
+
+    if (GlobalMemoryStatusEx(&statex) == 0) {
+	/* failed */
+	err = E_DATA;
+	vals[0] = vals[1] = NADBL;
+    } else {
+	vals[0] = tatex.ullTotalPhys / meg;
+	vals[1] = statex.ullAvailPhys / meg;
+    }
+
+    return err;
+}
+
+#elif defined(OS_OSX)
+
+#include <mach/host_info.h>
+#include <mach/mach_host.h>
+
+int memory_stats (double vals[])
+{
+    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+    vm_statistics_data_t vmstat;
+    int mib[6] = {CTL_HW, HW_PAGESIZE};
+    int pagesize;
+    size_t len = sizeof pagesize;
+    double meg = 1024 * 1024;
+    int err = 0;
+
+    if (sysctl(mib, 2, &pagesize, &length, NULL, 0) < 0) {
+	fprintf(stderr, "error getting page size");
+	err = E_DATA;
+    } else if (host_statistics(mach_host_self(), HOST_VM_INFO,
+			       (host_info_t) &vmstat, &count) != KERN_SUCCESS) {
+	fprintf(stderr, "failed to get VM statistics");
+	err = E_DATA;
+    }
+
+    if (err) {
+	vals[0] = vals[1] = NADBL;
+    } else {
+	double pfree = vmstat.free_count;
+	double ptot = vmstat.wire_count + vmstat.active_count +
+	    vmstat.inactive_count + pfree;
+
+	vals[0] = total * pagesize / meg;
+	vals[1] = pfree * pagesize / meg;
+    }
+
+    return err;
+}
+
+#elif defined(__linux) || defined(linux)
+
+int memory_stats (double vals[])
+{
+    FILE *fp;
+    char line[128];
+    int err = 0;
+
+    fp = fopen("/proc/meminfo", "r");
+
+    if (fp == NULL) {
+	err = E_DATA;
+    } else {
+	int got = 0;
+
+	while (fgets(line, sizeof line, fp) && got < 2) {
+	    if (!strncmp(line, "MemTotal", 8)) {
+		vals[0] = atof(line + 9) / 1024;
+		got++;
+	    } else if (!strncmp(line, "MemAvailable", 12)) {
+		vals[1] = atof(line + 13) / 1024;
+		got++;
+	    }
+	}
+	fclose(fp);
+	if (got != 2) {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	vals[0] = vals[1] = NADBL;
+    }
+
+    return err;
+}
+
+#else /* not Windows, macOS or Linux */
+
+/* don't know how to do this! */
+
+int memory_stats (double vals[])
+{
+    vals[0] = vals[1] = NADBL;
+    return E_DATA;
+}
+
+#endif
