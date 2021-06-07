@@ -16,30 +16,22 @@ end function
 
 function matrix C1mat( const matrix A, bool VECM[0],
                       const matrix jalpha[null], const matrix jbeta[null])
-    # (Jan 2018: used to be pointer args, coming from a time where it was necessary
-    # for optional args; now changed to non-pointers)
-
     /*
        computes C(1) out of the autoregressive matrices; jalpha and jbeta
        are alpha and beta, which are used only if VECM is nonzero, that
        is under cointegration
 
-       (Remark Sven: here jbeta was assumed to be (n,r)
-       without coeffs for restr. terms
-       Different from jbeta (n+1,r) in other contexts (?).
-    We now (Jan 2018) make sure only rows 1:n are used. */
+       (Remark Sven: jbeta / We now (Jan 2018) make sure only rows 1:n are used.) */
 
-    scalar n = rows(A)
-    scalar p = cols(A) / n
+    n = rows(A)
+    p = cols(A) / n
     matrix tmp = mshape(vec(A), n*n, p)
 
     if VECM == 0
         tmp = mshape(sumr(tmp), n, n)
         matrix ret = inv(I(n) - tmp)
     else # cointegrated
-        if !exists(jalpha) || !exists(jbeta)
-            funcerr "Need cointegration params for C1 in VECM!"
-        endif
+        errorif( !exists(jalpha) || !exists(jbeta), "Need cointegration params for C1 in VECM!")
 
         matrix aperp = nullspace(jalpha')
         matrix bperp = nullspace(jbeta[1:n, ]')
@@ -50,16 +42,17 @@ function matrix C1mat( const matrix A, bool VECM[0],
     return ret
 end function
 
-function matrix init_C(matrix Sigma, matrix Rd)
+function matrix init_C(const matrix Sigma, const matrix Rd)
+    
     matrix Ss = imp2exp(Rd)
-    scalar k = cols(Ss)
+    k = cols(Ss)
     if k == 1
         # nothing to estimate
         ret = {}
     else
-        scalar n = rows(Sigma)
+        n = rows(Sigma)
 
-        matrix S = (k>1) ? Ss[,1:k-1] : {}
+        matrix S = k>1 ? Ss[,1:k-1] : {}
         matrix s = Ss[,k]
         matrix K = cholesky(Sigma)
         matrix bigmat = (K ** I(n))
@@ -71,12 +64,12 @@ function matrix init_C(matrix Sigma, matrix Rd)
 end function
 
 function void PseudoHessC(matrix *H, const matrix theta,
-				  matrices dat)
+        				  const matrices dat)
+                          
     matrix Sigma = dat[1]
     matrix Ss = dat[2]
-    # unscramble_dat(&dat, &Sigma, &Ss)
-    scalar n = rows(Sigma)
-    scalar npar = cols(Ss) - 1
+    n = rows(Sigma)
+    npar = cols(Ss) - 1
     matrix S = Ss[,1:npar]
 
     # printf "PseudoHessC\n%10.4f\n%4.1f\n", theta, Ss
@@ -85,11 +78,12 @@ function void PseudoHessC(matrix *H, const matrix theta,
     H = InfoMat(C, S) # was InfoMatC
 end function
 
-function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
+function matrix estC(matrix *theta, const matrix Sigma, const matrix Rd, 
+                     matrix *vcv[null],\
                      scalar *errcode, int method, scalar verbose[1])
 
     matrix Ss = imp2exp(Rd)
-    scalar n = rows(Sigma)
+    n = rows(Sigma)
     if cols(Ss) == 1
         # nothing to estimate
         matrix C = mshape(Ss, n, n)
@@ -101,7 +95,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
     endif
 
     scalar SCALE = 0 # EXPERIMENTAL
-    scalar npar = rows(theta)
+    npar = rows(theta)
 
     if SCALE == 1
         printf "Scale!\n"
@@ -111,9 +105,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
         matrix sSig = Sigma
     endif
 
-    # printf "estC\n%10.4f\n%4.1f\n", theta, Ss
-
-    matrix tmp = mat_exp(theta, Ss) # was: , 1)
+    matrix tmp = mat_exp(theta, Ss) 
 
     if verbose > 2
         /* obsolete ? */
@@ -133,7 +125,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
     #set bfgs_toler 1.0e-03
 
     matrix theta0 = theta
-    scalar errcode = 0
+    errcode = 0
 
     loop while (err==1 && iters<100) 
         if method == 0
@@ -184,9 +176,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
         if (iters > 0) && (verbose > 1)
             printf "Converged after %d restarts\n", iters
         endif
-
-        # printf "estC(2)\n%10.4f\n%4.1f\n", theta, Ss
-        matrix C = mat_exp(theta, Ss) # was: , 1)
+        matrix C = mat_exp(theta, Ss) 
 
         if SCALE == 1
             C = C .* s'

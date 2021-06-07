@@ -1,15 +1,14 @@
 function scalar is_standard_AB(matrix aRd, matrix bRd)
-    test = has_unit_diag(aRd) && has_free_diag(bRd)
-    return test
+    return has_unit_diag(aRd) && has_free_diag(bRd)
 end function
 
-function void scoreAB(matrix *ret, const matrix theta,
-                      matrices dat, int p1)
-    # FIXME: This func might benefit from getting the pre-computed C matrix
+function void scoreAB(matrix *ret, const matrix theta, 
+                      const matrices dat, int p1)
+                      
+    # TODO: This func might benefit from getting the pre-computed C matrix
 
     matrix Sigma = dat[1]
     matrix Ss = dat[2]
-    # unscramble_dat(&dat, &Sigma, &Ss)
 
     p2 = rows(theta)
     matrix aSs = Ss[,1:p1+1]
@@ -33,13 +32,16 @@ function void scoreAB(matrix *ret, const matrix theta,
     endif
 
     matrix iC = inv(C)
-    matrix ret = iC' (qform(iC,Sigma) - I(n))
-
+    
+    # fill the pointer arg
+    ret = iC' (qform(iC,Sigma) - I(n))
     ret = vec(ret)'S
 end function
 
-function matrix stdAB_init(matrix mX, matrix aRd, matrix bRd)
-    # mX should contain the VAR residuals
+function matrix stdAB_init(const matrix mX, const matrix aRd,
+                           const matrix bRd)
+                           # mX should contain the VAR residuals
+                             
     matrix aSs = imp2exp(aRd)
     matrix bSs = imp2exp(bRd)
     n = cols(mX)
@@ -51,14 +53,14 @@ function matrix stdAB_init(matrix mX, matrix aRd, matrix bRd)
 
         matrix sel = vec(transp(mshape(seq(1,n*n),n,n)))
         matrix dep = vec(mX)
-        matrix reg = (I(n) ** mX)*S[sel,]
+        matrix reg = (I(n) ** mX) * S[sel,]
         matrix e
         matrix b = -mols(dep, reg, &e)
         e = mshape(e, rows(mX), n)
         e = sqrt(meanc(e.^2))'
-        S = bSs[,1:cols(bSs)-1]
+        S = bSs[, 1 : cols(bSs)-1]
         sel = 1 + seq(0,n-1)*(n+1)
-        matrix a = zeros(n*n,1)
+        matrix a = zeros(n*n)
         a[sel] = e
         e = S'a
         matrix ret = b | e
@@ -70,17 +72,17 @@ function matrix stdAB_init(matrix mX, matrix aRd, matrix bRd)
     return ret
 end function
 
-function matrix nonstdAB_init(matrix E, matrix aRd, matrix bRd)
+function matrix nonstdAB_init(const matrix U, const matrix aRd,
+                              const matrix bRd)
 
     matrix aSs = imp2exp(aRd)
     matrix bSs = imp2exp(bRd)
-    T = rows(E)
-    n = cols(E)
-    matrix Sigma = (E'E)./T
+    T = rows(U)
+    n = cols(U)
+    matrix Sigma = (U'U) ./ T
     matrix C = cholesky(Sigma)
 
     startA = (rows(aRd) > rows(bRd))
-    #startA = 1 # provisional
 
     ka = cols(aSs) - 1
     if ka>0
@@ -95,13 +97,13 @@ function matrix nonstdAB_init(matrix E, matrix aRd, matrix bRd)
     matrix sb = bSs[,kb+1]
 
     if startA == 1
-        matrix giSb = invpd(Sb'Sb)*Sb'
-        matrix tmp = giSb*(C' ** I(n))
+        matrix giSb = invpd(Sb'Sb) * Sb'
+        matrix tmp = giSb * (C' ** I(n))
         if ka>0
-            matrix giSa = invpd(Sa'Sa)*Sa'
-            matrix gama = 0.1*ones(ka,1)
+            matrix giSa = invpd(Sa'Sa) * Sa'
+            matrix gama = 0.1 * ones(ka)
             matrix gamb = tmp * (Sa*gama + sa) - giSb*sb
-            tmp = giSa*(inv(C)' ** I(n))
+            tmp = giSa * (inv(C)' ** I(n))
             gama = tmp * (Sb*gamb + sb) - giSa*sa
         else
             matrix gama = {}
@@ -135,47 +137,45 @@ function matrix nonstdAB_init(matrix E, matrix aRd, matrix bRd)
         */
     endif
 
-    matrix ret = gama | gamb
-
-    return ret
+    return gama | gamb
 end function
 
-function void ABmat_exp(matrix theta, matrix aSs, matrix bSs,
-                        matrix *A, matrix *B)
-    scalar p1 = cols(aSs) - 1
-    scalar p2 = rows(theta)
+function void ABmat_exp(const matrix theta, const matrix aSs, 
+                        const matrix bSs, matrix *A, matrix *B)
+                        
+    p1 = cols(aSs) - 1
+    p2 = rows(theta)
 
-    matrix theta_a = (p1>0) ? theta[1:p1]: {}
-    matrix A = mat_exp(theta_a, aSs)
+    matrix theta_a = p1>0 ? theta[1:p1] : {}
+    A = mat_exp(theta_a, aSs)
 
-    matrix theta_b = (p2>p1) ? theta[p1+1:p2] : {}
-    matrix B = mat_exp(theta_b, bSs) # was: , 1)
+    matrix theta_b = p2>p1 ? theta[p1+1:p2] : {}
+    B = mat_exp(theta_b, bSs) # was: , 1)
 end function
 
 function void PseudoHessAB(matrix *H, const matrix theta,
-                           matrices dat, int p1)
+                           const matrices dat, int p1)
 
     matrix Sigma = dat[1]
     matrix Ss = dat[2]
-    # unscramble_dat(&dat, &Sigma, &Ss)
 
-    scalar p2 = rows(theta)
-    matrix aSs = Ss[,1:p1+1]
-    matrix bSs = Ss[,p1+2:p2+2]
+    p2 = rows(theta)
+    matrix aSs = Ss[, 1 : p1+1]
+    matrix bSs = Ss[, p1+2 : p2+2]
 
-    scalar n = rows(Sigma)
-    scalar n2 = n*n
+    n = rows(Sigma)
+    n2 = n*n
     matrix A B
     ABmat_exp(theta, aSs, bSs, &A, &B)
 
-    scalar ka = cols(aSs) - 1
-    scalar kb = cols(bSs) - 1
+    ka = cols(aSs) - 1
+    kb = cols(bSs) - 1
     matrix S = zeros(2*n2, ka+kb)
     if ka>0
         S[1:n2,1:ka] = aSs[,1:ka]
     endif
     if kb>0
-        S[n2+1:,ka+1:ka+kb] = bSs[,1:kb]
+        S[n2+1:, ka+1 : ka+kb] = bSs[,1:kb]
     endif
 
     H = InfoMat(B, S, &A)
@@ -191,11 +191,11 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
 
     matrix aSs  = imp2exp(aRd)
     matrix bSs  = imp2exp(bRd)
-    scalar npar = rows(theta)
-    scalar n    = rows(Sigma)
+    npar = rows(theta)
+    n    = rows(Sigma)
 
-    scalar p1 = cols(aSs) - 1
-    scalar p2 = p1 + cols(bSs) - 1
+    p1 = cols(aSs) - 1
+    p2 = p1 + cols(bSs) - 1
     matrices dat = defarray(Sigma, aSs ~ bSs)
 
     matrix g H
@@ -204,7 +204,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
     else
         set max_verbose 0
     endif
-    scalar err = 0
+    err = 0
 
     if method == 0
         catch scalar ll = BFGSmax(theta, "loglik(theta, dat, p1)")
@@ -230,7 +230,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
     endif
 
     scalar crit = maxr(abs(g))
-    scalar warn = (crit > 1.0e-1)
+    warn = (crit > 1.0e-1)
 
     if err || warn
         matrix C = {}
@@ -264,7 +264,7 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
         S[1:n2,1:ka] = aSs[,1:ka]
     endif
     if kb > 0
-        S[n2+1:2*n2,ka+1:ka+kb] = bSs[,1:kb]
+        S[n2+1 : 2*n2, ka+1 : ka+kb] = bSs[,1:kb]
     endif
 
     if exists(vcv)

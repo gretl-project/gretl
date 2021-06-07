@@ -80,10 +80,9 @@ function scalar CheckNormalizeRd(matrix *R, matrix *d)
     return ret
 end function
 
-function scalar add_constraint(matrix *Rd, int n, int i, int j,
-                               scalar d)
+function scalar add_constraint(matrix *Rd, int n, int i, int j, scalar d)
 
-    err = (i>n) || (j>n) || (i<1) || (j<1)
+    err = i>n || j>n || i<1 || j<1
     if !err
         n2 = n*n
         matrix tmp = zeros(1,n2 + 1)
@@ -102,7 +101,7 @@ function scalar add_constraint(matrix *Rd, int n, int i, int j,
 
         err2 = CheckNormalizeRd(&newR, &newd)
         if err2 == 0
-            Rd = Rd | tmp
+            Rd |= tmp
         elif err2 == 1
             printf "The restriction conflicts with previous ones and was ignored\n"
         elif err2 == 2
@@ -122,7 +121,7 @@ function matrix cholRd(int n)
             matrix tmp = zeros(1,n2+1)
             if i > j
                 tmp[k] = 1
-                ret = ret | tmp
+                ret |= tmp
             endif
             k++
         endloop
@@ -132,24 +131,22 @@ end function
 
 # ---------------------------------
 function matrix diag_Rd(int n, scalar x)
-    return selifr(I(n*n), vec(I(n))) ~ (x*ones(n,1))
+    return selifr(I(n*n), vec(I(n))) ~ (x * ones(n))
 end function
 # ---------------------------------
 
 function matrix free_diag_Rd(int n)
     n2 = n*n
-    return selifr(I(n2)~zeros(n2,1), !vec(I(n)))
+    return selifr( I(n2) ~ zeros(n2), !vec(I(n)) )
 end function
 # ----------------------------------
 
 function matrix imp2exp(matrix Rd)
-/*
+    /*
    Given the constraints in implicit form, returns the matrix [ S | s ]
    of the constraints in explicit form
     */
-    if !nelem(Rd)
-        funcerr "No restrictions given."
-    endif
+    errorif( !nelem(Rd), "No restrictions given.")
 
     p = cols(Rd)
     matrix R = Rd[, 1:(p-1)]
@@ -163,26 +160,26 @@ function matrix imp2exp(matrix Rd)
         funcerr "aborting"
     endif
 
-    matrix s = R'RRi*d
+    matrix s = R'RRi * d
     matrix S = nullspace(R | s')
     return S ~ s
 end function
 
-function void check_const(matrix K, matrix fullRd)
+function void check_const(const matrix K, const matrix fullRd)
     k = cols(fullRd) - 1
     matrix R = fullRd[,1:k]
     matrix d = fullRd[,k+1]
 
     printf "Constraint matrix:\n"
     print R
-    matrix tmp = R*vec(K)
+    matrix tmp = R * vec(K)
     print tmp
     printf "Should be:\n"
     print d
 end function
 
-function matrix lrConstr(matrix C1, matrix lrRd)
-    if rows(lrRd) == 0
+function matrix lrConstr(const matrix C1, const matrix lrRd)
+    if !rows(lrRd)
         return {} # nothing to do
     else
         n = rows(C1)
@@ -202,13 +199,13 @@ function matrix get_full_Rd(bundle *obj, int verbosity[0])
     scalar n = obj.n
     matrix fullRd = obj.Rd1 # grab sr-restrictions first
     # (for type 1 or type 2 with short-run only: nothing else to do)
-    lr_constr = rows(obj.Rd1l) ? 1 : 0	# further long-run constraints?
+    lr_constr = rows(obj.Rd1l) ? TRUE : FALSE	# further long-run constraints?
 
     if type == 3
         funcerr "This func not usable for AB models (yet)"
         # because long-run restrictions aren't implemented for them
 
-    elif (type == 4) || lr_constr || obj.calc_lr
+    elif type==4 || lr_constr || obj.calc_lr
         # generic C-model (includes SVEC) with some kind of long-run restr
 
         # before ML estimation, we need to take into account the
@@ -221,8 +218,8 @@ function matrix get_full_Rd(bundle *obj, int verbosity[0])
             matrix C1 = C1mat(obj.VARpar, 1, locjalpha, beta)
 
             matrix J = zeros(n-r, r) | I(r)
-            matrix permatransRd = (J ** nullspace(locjalpha'))' ~ zeros(r*(n-r), 1)
-            fullRd = fullRd | permatransRd  # put the constraints together
+            matrix permatransRd = (J ** nullspace(locjalpha'))' ~ zeros(r * (n-r))
+            fullRd |= permatransRd  # put the constraints together
 
         else # can be type 2 (or 1 if obj.calc_lr)
             matrix C1 = C1mat(obj.VARpar, 0) # compute the lr matrix
@@ -235,7 +232,7 @@ function matrix get_full_Rd(bundle *obj, int verbosity[0])
             # (Otherwise they will probably be either redundant or 
             # impossible. Or should we do that in the ident check?)
   
-            fullRd = fullRd | lrConstr(C1, obj.Rd1l) # put the constraints together
+            fullRd |= lrConstr(C1, obj.Rd1l) # put the constraints together
         endif
 
         if verbosity > 1

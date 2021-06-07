@@ -189,22 +189,12 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         # any other exogenous regressors are under the user's responsibility
         # (eg centred dummies)
 
-        # the following currently doesn't work in gretl w.r.t. the time trend,
-        # but fails silently (but const works -- still current in Jan 2019)
         list lX -= const time
-
-        # therefore check for remaining collinearity
-        genr time
-        list lcheck = lX const time
-        matrix mcheck = { lcheck }
-        if rank(mcheck'mcheck) < nelem(lcheck)
-            funcerr "Remove constant and trend terms from X list!"
-        endif
     endif
 
-    scalar n = nelem(lY)
-    scalar k = nelem(lX)
-    scalar n2 = n*n
+    n = nelem(lY)
+    k = nelem(lX)
+    n2 = n*n
 
     bundle ret = null
 
@@ -222,11 +212,11 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
 
     /* the actual data */
     matrix ret.Y = mreg[,1:n]
-    matrix ret.X = (k>0) ? mreg[, n+1 : n+k] : {}
+    matrix ret.X = k>0 ? mreg[, n+1 : n+k] : {}
 
     # variable names
-    strings ret.Ynames = strsplit(strsub(varname(lY), "," , " ")) # note: string array
-    strings ret.Xnames = strsplit(strsub(varname(lX), "," , " ")) # needed?
+    strings ret.Ynames = varnames(lY)
+    strings ret.Xnames = varnames(lX) # needed?
 
     /* Names for shocks */
     # per default, we borrow variable names, following tradition
@@ -240,13 +230,13 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     ret.optmeth = 4 # default = scoring
 
     /* Information for cumulating/normalizing IRFs */
-    ret.ncumul = 0
+    ret.ncumul    = 0
     matrix ret.cumul = {}
     ret.normalize = 0
 
     /* Other initializations */
-    ret.nboot = 0   # Bootstrap doesn't make sense for SR, but nboot must exist
-    ret.bestdraw = 0	# only for SR, but must exist, initialize as undefined
+    ret.nboot      = 0  # Bootstrap doesn't make sense for SR, but nboot must exist
+    ret.bestdraw   = 0	# only for SR, but must exist, initialize as undefined
     ret.checkident = 0  # needs to exist, override below
 
     /* ----------------------------------------------------------------
@@ -267,7 +257,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         the user to fill them up later, via SVAR_restrict() or by hand
         */
 
-        matrix ret.Rd1 = (type==1) ? cholRd(n) : {}
+        matrix ret.Rd1 = type==1 ? cholRd(n) : {}
         matrix ret.Rd1l = {}
 
         if type == 3
@@ -278,7 +268,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
             if type == 4
                 /* SVEC model: cointegration stuff */
                 matrix ret.jalpha = {}
-                matrix ret.jbeta = {}
+                matrix ret.jbeta  = {}
                 ret.jcase = 0
             endif
         endif
@@ -310,8 +300,7 @@ end function
 
 #####################################
 
-function scalar SVAR_restrict(bundle *b, string code, int r,
-                              int c[0], scalar d[0])
+function scalar SVAR_restrict(bundle *b, string code, int r, int c[0], scalar d[0])
 
     # c gets a default so that it can be omitted with Adiag, Bdiag (?)
     # the d default is also natural
@@ -320,7 +309,7 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
     n = b.n
 
     # check input for implemented restriction code
-    if strstr("C lrC A B Adiag Bdiag", code) == "" # code unknown
+    if !instring("C lrC A B Adiag Bdiag", code) # code unknown
         print "Unknown code in SVAR_restrict."
         return 2
 
@@ -329,13 +318,13 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
         print "C type restriction but not a C model."
         return 1
 
-    elif (strstr("A B Adiag Bdiag", code) != "") && (type!=3)
+    elif instring("A B Adiag Bdiag", code) && type!=3
         print "AB type restriction but not an AB model."
         return 1
 
         # check for unsupported case
     elif code == "lrC" && type == 3
-        print "Long-run restrictions only supported in C model."
+        print "Long-run restrictions only supported in C models."
         return 3	# (Which code to return here? <Sven>)
 
         # check for bogus long-run constraint
@@ -462,25 +451,19 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 
     # syntax check
     err = (dcase<1) || (dcase>5)
-    if err
-        errmsg = sprintf("Invalid dcase value %d", dcase)
-        funcerr errmsg
-    endif
+    errorif( err, sprintf("Invalid dcase value %d", dcase))
 
     # dimensions check
     if dcase%2 # nice, huh?
-        err = err || (rows(jbeta) != n)
+        err = rows(jbeta) != n
     else
-        err = err || (rows(jbeta) != n+1)
+        err = rows(jbeta) != n+1
     endif
-    if err
-        errmsg = sprintf("jbeta: has %d rows, should have %d", rows(jbeta),
-          dcase%2 ? n : n+1)
-        funcerr errmsg
-    endif
+    errorif( err, sprintf("jbeta: has %d rows, should have %d", rows(jbeta), \
+          dcase%2 ? n : n+1))
 
     r = cols(jbeta)
-    err = err || (n < r) # should this be <=? hmm.
+    err = n < r # should this be <=? hmm.
 
     # rank check
     err = err || (rank(jbeta) < r)
@@ -489,9 +472,9 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     d = rows(jalpha)
 
     # d==0 is ok, we'll estimate alpha later
-    free_a = (d==0)
+    free_a = d==0
     if !free_a
-        err = err || (d != n) || (cols(jalpha) != r)
+        err = err || d!=n || cols(jalpha)!=r
     endif
 
     # if anything goes wrong, return
@@ -570,12 +553,12 @@ end function
 ####
 
 function scalar SVAR_cumulate(bundle *b, int nv)
-    err = (nv>b.n || nv<1) # was nv<0, but 0 makes no sense (?)
+    err = nv>b.n || nv<1 # was nv<0, but 0 makes no sense (?)
     if !err
         vn = b.Ynames
         printf "Variable %s cumulated\n",  vn[nv]
-        b.cumul = b.cumul | {nv}
-        b.ncumul = b.ncumul + 1
+        b.cumul  |= {nv}
+        b.ncumul += 1
 
         # The following code was in doIRF but doesn't depend
         # on the data, so slightly inefficient for the bootstrap.

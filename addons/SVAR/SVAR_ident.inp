@@ -1,5 +1,6 @@
-function matrices SampleMatrices(matrix Ra, matrix da, matrix Rb, matrix db)
-/*
+function matrices SampleMatrices(const matrix Ra, const matrix da, 
+                                 const matrix Rb, const matrix db)                                 
+   /*                           
    Returns an array with A and B evaluated at a random point
    in the parameter space (useful for checking the constraint
    matrices).
@@ -12,13 +13,13 @@ function matrices SampleMatrices(matrix Ra, matrix da, matrix Rb, matrix db)
 
     matrix tmp = imp2exp(Ra ~ da)
     if cols(tmp) > 1
-        tmp *= muniform(cols(tmp)-1,1) | 1
+        tmp *= muniform(cols(tmp)-1) | 1
     endif
     ret += mshape(tmp,n,n)
 
     matrix tmp = imp2exp(Rb ~ db)
     if cols(tmp) > 1
-        tmp *= muniform(cols(tmp)-1,1) | 1
+        tmp *= muniform(cols(tmp)-1) | 1
     endif
     ret += mshape(tmp,n,n)
 
@@ -38,7 +39,7 @@ function matrix Dtn(int n)
 
     p = round(n*(n-1)/2)
 
-    matrix A = zeros(1,n) | (lower(unvech(seq(1,p)')) ~ zeros(n-1,1))
+    matrix A = zeros(1,n) | (lower(unvech(seq(1,p)')) ~ zeros(n-1))
     matrix B = zeros(n^2,p)
     matrix C
 
@@ -52,10 +53,11 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function matrix Umat(int n, matrix R, matrix d, matrix S)
+function matrix Umat(int n, const matrix R, matrix d, const matrix S)
 
     # See Lucchetti(2006) -- left-hand side of matrix T;
     # see eq. 26 on page 248
+    # FIXME: d isn't really used?!
 
     p = cols(S)
     matrix ret = {}
@@ -65,10 +67,11 @@ function matrix Umat(int n, matrix R, matrix d, matrix S)
     return ret
 end function
 
-function matrix Tmat(int n, matrix R, matrix d, matrix S)
+function matrix Tmat(int n, const matrix R, matrix d, const matrix S)
 
     # See Lucchetti(2006) -- right-hand side of matrix T;
     # see eq. 26 on page 248
+    # FIXME: d isn't really used?!
 
     p = cols(S)
     matrix ret = {}
@@ -81,8 +84,8 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar strucond(int n, matrix Ra, matrix da,
-                         matrix Rb, matrix db, int verbose[0])
+function scalar strucond(int n, const matrix Ra, const matrix da,
+                         const matrix Rb, const matrix db, int verbose[0])
     /*
        Checks the structure condition and optionally
        prints out some of the relevant matrices:
@@ -91,8 +94,8 @@ function scalar strucond(int n, matrix Ra, matrix da,
        iprint = output mode:
     */
 
-    matrix Sa = imp2exp(Ra~da)
-    matrix Sb = imp2exp(Rb~db)
+    matrix Sa = imp2exp(Ra ~ da)
+    matrix Sb = imp2exp(Rb ~ db)
 
     if verbose > 1
         print Ra da Rb db Sa Sb
@@ -106,7 +109,7 @@ function scalar strucond(int n, matrix Ra, matrix da,
         print Ua Ub Tb
     endif
 
-    matrix C = Ua ~ zeros(rows(Ua),(n*(n-1)/2))
+    matrix C = Ua ~ zeros(rows(Ua), n*(n-1)/2)
     C |= Ub ~ Tb * Dtn(n)
     if verbose > 1
         print C
@@ -143,7 +146,7 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar ordercond(int n, matrix Ra, matrix Rb,
+function scalar ordercond(int n, const matrix Ra, const matrix Rb,
                           int verbose[0])
     /*
        Checks the order condition and optionally
@@ -168,8 +171,8 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db,
-                         int verbose[0])
+function scalar rankcond(int n, const matrix Ra, const matrix da, 
+                         const matrix Rb, const matrix db, int verbose[0])
     /*
        Checks the rank condition as per Amisano-Giannini and optionally
        prints out some of the relevant matrices:
@@ -256,9 +259,7 @@ function scalar ident(bundle *mod, int verbose[0])
     else             # plain, C-model or SVEC
         if !nelem(mod.fullRd)
             matrix mod.fullRd = get_full_Rd(&mod, 0) 
-            if !nelem(mod.fullRd) 	# possible only for C model?
-                funcerr "No restrictions specified!"
-            endif
+            errorif( !nelem(mod.fullRd), "No restrictions specified!") 	# possible only for C model?
         endif               
 
         matrix Rb = mod.fullRd[, 1:n2]
