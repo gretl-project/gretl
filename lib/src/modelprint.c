@@ -571,7 +571,7 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
 
 static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 {
-    double x;
+    double x, y;
     int k;
 
     /* 2021-01-28: mask stats not calculated when showing
@@ -595,10 +595,11 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     }
 
     x = gretl_model_get_double(pmod, "AR1");
-    print_panel_AR_test(x, 1, prn);
-
-    x = gretl_model_get_double(pmod, "AR2");
-    print_panel_AR_test(x, 2, prn);
+    y = gretl_model_get_double(pmod, "AR2");
+    if (!na(x) && !na(y)) {
+	print_panel_AR_test(x, 1, prn);
+	print_panel_AR_test(y, 2, prn);
+    }
 
     x = gretl_model_get_double(pmod, "sargan");
     print_model_chi2_test(pmod, x, AB_SARGAN, prn);

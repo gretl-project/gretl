@@ -1806,7 +1806,14 @@ static int dpd_step_1 (ddset *dpd, gretlopt opt)
 	int onestep = !(dpd->flags & DPD_TWOSTEP);
 
 	if (onestep) {
-	    dpd_ar_test(dpd);
+	    if (dpd->nzb2 > 0 && (opt & OPT_A)) {
+		/* GMMlev + asymptotic + 1step: as per Ox/DPD,
+		   skip the AR tests (which won't work)
+		*/
+		;
+	    } else {
+		dpd_ar_test(dpd);
+	    }
 	    dpd_sargan_test(dpd);
 	    dpd_wald_test(dpd);
 	} else if (opt & OPT_V) {
