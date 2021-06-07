@@ -297,7 +297,7 @@ int memory_stats (double vals[])
     double meg = 1024 * 1024;
     int err = 0;
 
-    if (sysctl(mib, 2, &pagesize, &length, NULL, 0) < 0) {
+    if (sysctl(mib, 2, &pagesize, &len, NULL, 0) < 0) {
 	fprintf(stderr, "error getting page size");
 	err = E_DATA;
     } else if (host_statistics(mach_host_self(), HOST_VM_INFO,
