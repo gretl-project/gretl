@@ -2806,6 +2806,8 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
 
 gretl_bundle *get_sysinfo_bundle (int *err)
 {
+    gretl_matrix *memvals = NULL;
+
     if (sysinfo_bundle == NULL) {
 	gretl_bundle *b = gretl_bundle_new();
 
@@ -2855,6 +2857,18 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    }
 	}
 	sysinfo_bundle = b;
+    }
+
+    memvals = gretl_matrix_alloc(1, 2);
+    if (memvals != NULL) {
+	char **S = malloc(2 * sizeof *S);
+
+	memory_stats(memvals->val);
+	S[0] = gretl_strdup("MBtotal");
+	S[1] = gretl_strdup("MBfree");
+	gretl_matrix_set_colnames(memvals, S);
+	gretl_bundle_donate_data(sysinfo_bundle, "mem", memvals,
+				 GRETL_TYPE_MATRIX, 0);
     }
 
     return sysinfo_bundle;
