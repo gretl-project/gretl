@@ -313,7 +313,7 @@ int memory_stats (double vals[])
 	double ptot = vmstat.wire_count + vmstat.active_count +
 	    vmstat.inactive_count + pfree;
 
-	vals[0] = total * pagesize / meg;
+	vals[0] = ptot * pagesize / meg;
 	vals[1] = pfree * pagesize / meg;
     }
 
