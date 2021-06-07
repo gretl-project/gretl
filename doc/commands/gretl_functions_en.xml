@@ -1038,6 +1038,26 @@
               cannot be determined).
             </para>
 	  </li>
+	  <li>
+            <para>
+              <lit>mem</lit>: a 2-vector holding total physical memory
+	      and free or available memory, expressed in MB. This
+	      information may not be available on all systems but
+	      should be on Windows, macOS and Linux.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>foreign</lit>: a sub-bundle containing 0/1
+              indicators for the presence on the host system of each
+              of the <quote>foreign</quote> programs supported by
+              gretl, under the keys <lit>julia</lit>,
+              <lit>octave</lit>, <lit>ox</lit>, <lit>python</lit>,
+              <lit>Rbin</lit>, <lit>Rlib</lit> and <lit>stata</lit>.
+              The two keys pertaining to R represent the R executable
+              and shared library, respectively.
+            </para>
+	  </li>
 	</ilist>
 	<para>
 	  Note that individual elements in the bundle can be accessed

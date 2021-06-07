@@ -13575,6 +13575,12 @@
 	  <fncref targ="assert"/> function.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>datacols</lit>: an integer from 1 to 15, with
+	  default value 5. Sets the maximum number of series shown
+	  side-by-side when data are displayed by observation.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Numerical methods</subhead>
