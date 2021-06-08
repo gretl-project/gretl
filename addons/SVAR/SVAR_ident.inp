@@ -53,12 +53,11 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function matrix Umat(int n, const matrix R, matrix d, const matrix S)
+function matrix Umat(int n, const matrix R, const matrix S)
 
     # See Lucchetti(2006) -- left-hand side of matrix T;
     # see eq. 26 on page 248
-    # FIXME: d isn't really used?!
-
+  
     p = cols(S)
     matrix ret = {}
     loop i = 1..p 
@@ -67,11 +66,10 @@ function matrix Umat(int n, const matrix R, matrix d, const matrix S)
     return ret
 end function
 
-function matrix Tmat(int n, const matrix R, matrix d, const matrix S)
+function matrix Tmat(int n, const matrix R, const matrix S)
 
     # See Lucchetti(2006) -- right-hand side of matrix T;
     # see eq. 26 on page 248
-    # FIXME: d isn't really used?!
 
     p = cols(S)
     matrix ret = {}
@@ -101,9 +99,9 @@ function scalar strucond(int n, const matrix Ra, const matrix da,
         print Ra da Rb db Sa Sb
     endif
 
-    matrix Ua = Umat(n,Ra,da,Sa)
-    matrix Ub = Umat(n,Rb,db,Sb)
-    matrix Tb = Tmat(n,Rb,db,Sb)
+    matrix Ua = Umat(n,Ra,Sa) # removed redundant da arg
+    matrix Ub = Umat(n,Rb,Sb) # removed redundant db arg
+    matrix Tb = Tmat(n,Rb,Sb) # removed redundant db arg
 
     if verbose > 1
         print Ua Ub Tb
@@ -213,7 +211,6 @@ end function
 # ----------------------------------------------------------------------------
 
 function scalar ident(bundle *mod, int verbose[0])
-    # signature was: matrix *Ra, matrix *da, matrix *Rb, matrix *db, int verbose[0]
     /*
        Main function for checking identification.
        
