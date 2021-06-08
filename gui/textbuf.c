@@ -542,7 +542,7 @@ static void sourceview_apply_language (windata_t *vwin)
 
 #include "genparse.h"
 
-/* Create a GtkTextBuffer holing the names of built-in
+/* Create a GtkTextBuffer holding the names of built-in
    gretl functions, to serve as a completion provider.
 */
 
@@ -587,7 +587,7 @@ static void set_sv_auto_complete (windata_t *vwin)
     if (script_auto_complete && words == NULL) {
 	/* set up and activate */
 #if AC_DEBUG
-	fprintf(stderr, "auto_complete set-up\n");
+	fprintf(stderr, "doing auto_complete set-up\n");
 #endif
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
 	/* provider: all previously typed words */
@@ -610,7 +610,7 @@ static void set_sv_auto_complete (windata_t *vwin)
     } else if (!script_auto_complete && words != NULL) {
 	/* de-activate and clean up */
 #if AC_DEBUG
-	fprintf(stderr, "auto_complete tear-down\n");
+	fprintf(stderr, "doing auto_complete tear-down\n");
 #endif
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
 	/* destroy the "words" provider */
