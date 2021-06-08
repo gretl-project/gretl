@@ -2343,6 +2343,7 @@ windata_t *console_window (int hsize, int vsize)
 	return NULL;
     }
 
+    vwin->flags |= VWIN_USE_FOOTER;
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
     create_console(vwin, hsize, vsize);
     text_table_setup(vwin->vbox, vwin->text);

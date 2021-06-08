@@ -1098,6 +1098,11 @@ static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
 
 static void vwin_nullify_finder (GtkWidget *w, windata_t *vwin)
 {
+    if (vwin_is_editing(vwin)) {
+	/* let the text area regain focus */
+	gtk_widget_grab_focus(vwin->text);
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
+    }
     vwin->finder = NULL;
 }
 
@@ -1482,7 +1487,6 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	if (gtk_text_iter_inside_word(&iter)) {
 	    GtkTextIter w_start, w_end;
-	    int got_dollar = 0;
 
 	    w_start = iter;
 	    w_end = iter;
@@ -1510,26 +1514,8 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 			g_free(text);
 			text = s;
-			got_dollar = 1;
 		    }
 		    g_free(dtest);
-		}
-	    }
-
-	    /* special: "coint2" command alias (remove?) */
-	    if (!got_dollar && text != NULL && !strcmp(text, "coint")) {
-		if (gtk_text_iter_forward_char(&w_end)) {
-		    gchar *s = gtk_text_buffer_get_text(buf, &w_start,
-							&w_end, FALSE);
-
-		    if (s != NULL) {
-			if (!strcmp(s, "coint2")) {
-			    g_free(text);
-			    text = s;
-			} else {
-			    g_free(s);
-			}
-		    }
 		}
 	    }
 	}
@@ -1577,8 +1563,6 @@ int gui_console_help (const char *param)
 void text_find (gpointer unused, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-
-    fprintf(stderr, "vwin->finder = %p\n", (void *) vwin->finder);
 
     if (vwin->finder != NULL) {
 	gtk_widget_grab_focus(vwin->finder);
@@ -1721,11 +1705,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	gtk_text_buffer_place_cursor(buf, &start);
 	gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &end);
 	vis = gtk_text_buffer_create_mark(buf, "vis", &end, FALSE);
-	if (gtk_text_iter_forward_line(&end)) {
-	    /* go one line further on, if possible */
-	    gtk_text_buffer_move_mark(buf, vis, &end);
-	}
-	gtk_text_view_scroll_mark_onscreen(view, vis);
+	gtk_text_view_scroll_to_mark(view, vis, 0.05, FALSE, 0, 0);
     } else if (from_cursor && !wrapped && !search_all) {
 	/* try wrapping */
 	from_cursor = FALSE;

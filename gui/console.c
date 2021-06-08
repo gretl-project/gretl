@@ -183,6 +183,7 @@ static gint on_last_line (GtkWidget *cview)
 static gint console_mouse_handler (GtkWidget *cview, GdkEventButton *event,
 				   gpointer p)
 {
+    interactive_script_help(cview, event, p);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(cview),
 				     on_last_line(cview));
     return FALSE;
@@ -449,7 +450,7 @@ void gretl_console (void)
 	return;
     }
 
-    vwin = console_window(78, 400);
+    vwin = console_window(78, 450);
     console_main = vwin->main;
 
     g_signal_connect(G_OBJECT(vwin->text), "paste-clipboard",
@@ -457,7 +458,7 @@ void gretl_console (void)
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(console_click_handler), NULL);
     g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
-		     G_CALLBACK(console_mouse_handler), NULL);
+		     G_CALLBACK(console_mouse_handler), vwin);
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(console_key_handler), vwin);
     g_signal_connect(G_OBJECT(vwin->main), "delete-event",
@@ -710,7 +711,7 @@ static gint console_key_handler (GtkWidget *cview,
     }
 
     if (keyval == GDK_Tab) {
-	/* tab completion for gretl commands, variable names */
+	/* tab completion for gretl commands, series names */
 	return console_complete_word(buf, &ins);
     }
 

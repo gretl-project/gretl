@@ -907,7 +907,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_PKG_SAMPLE || \
 			r == VIEW_PKG_CODE || \
 			r == VIEW_SCRIPT || \
-			r == VIEW_LOG)
+			r == VIEW_LOG || \
+			r == CONSOLE)
 
 /* for a non-editable script: can offer option to copy
    content into an editor window */
