@@ -12,7 +12,7 @@ version 2021c, in progress
 - printing of bundles: sort members by type and key
 - GUI script editor: make the Find box appear at the foot of
   the window, not in a separate dialog
-- Fix bug: spurius results from "system" command in case of
+- Fix bug: spurious results from "system" command in case of
   exact collinearity
 - Internals: make "libset" code more compact and efficient
 - gretl_bundle.h: rename argument named "template" to avoid
