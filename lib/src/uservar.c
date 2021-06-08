@@ -661,6 +661,27 @@ void *user_var_get_value_and_type (const char *name,
     return ret;
 }
 
+const char *uservar_name_complete (const char *s)
+{
+    const char *ret = NULL;
+
+    if (uvars_hash != NULL) {
+	GList *hk = g_hash_table_get_keys(uvars_hash);
+	int n = strlen(s);
+
+	while (hk != NULL) {
+	    if (!strncmp((const char *) hk->data, s, n)) {
+		ret = (const char *) hk->data;
+		break;
+	    }
+	    hk = hk->next;
+	}
+	g_list_free(hk);
+    }
+
+    return ret;
+}
+
 int gretl_is_user_var (const char *name)
 {
     return get_user_var_by_name(name) != NULL;

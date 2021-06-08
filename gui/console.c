@@ -32,6 +32,7 @@
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_func.h"
+#include "uservar.h"
 #include "cmd_private.h"
 
 #define CDEBUG 0
@@ -552,6 +553,12 @@ static gint console_complete_word (GtkTextBuffer *buf,
 	    targ = gretl_command_complete(src);
 	} else {
 	    targ = console_varname_complete(src);
+	    if (targ == NULL) {
+		targ = gretl_function_complete(src);
+	    }
+	    if (targ == NULL) {
+		targ = uservar_name_complete(src);
+	    }
 	}
 	if (targ != NULL) {
 	    gtk_text_buffer_delete(buf, &start, &end);
