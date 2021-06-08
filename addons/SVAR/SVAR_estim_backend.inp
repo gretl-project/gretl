@@ -137,11 +137,6 @@ function scalar vecm_est(bundle *SVARobj)
         U = dep
     endif
 
-    /* this wasn't really used:
-    df = T - (n*p + k - (n-r)) # FIXME: aren't the unrestr. determ. terms missing?
-    # (but apparently df is never used again...)
-    */
-
     matrix Sigma = (U'U) ./ T
 
     # --- construct the various matrices required later
