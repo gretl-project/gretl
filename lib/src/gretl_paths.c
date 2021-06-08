@@ -2756,7 +2756,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.rlibpath) {
         R_path_from_registry(targ, RLIB);
     } else if (targ == paths.oxlpath) {
-        sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
+        sprintf(targ, "%s\\OxMetrics8\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
         strcpy(targ, "C:\\Octave-3.6.4\\bin\\octave.exe");
     } else if (targ == paths.statapath) {
@@ -2822,7 +2822,7 @@ static void load_default_path (char *targ)
 {
 #ifdef OS_OSX
     const char *app_paths[] = {
-        "/Applications/OxMetrics6/ox/bin/oxl",
+        "/Applications/OxMetrics8/ox/bin/oxl",
         "/Applications/Octave.app/Contents/Resources/bin/octave",
         "/Applications/Stata/Stata.app/Contents/MacOS/Stata"
     };
