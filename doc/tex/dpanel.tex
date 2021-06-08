@@ -1,13 +1,14 @@
 \chapter{Dynamic panel models}
 \label{chap:dpanel}
 
-\newcommand{\by}{\boldsymbol{y}}
-\newcommand{\bx}{\boldsymbol{x}}
-\newcommand{\bv}{\boldsymbol{v}}
-\newcommand{\bX}{\boldsymbol{X}}
-\newcommand{\bW}{\boldsymbol{W}}
-\newcommand{\bZ}{\boldsymbol{Z}}
-\newcommand{\bA}{\boldsymbol{A}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bM}{\mathbf{M}}
 \newcommand{\biota}{\bm{\iota}}
 
 \newenvironment%
@@ -32,6 +33,8 @@ A dynamic linear panel data model can be represented as follows
   \label{eq:dpd-def}
   y_{it} = \alpha y_{i,t-1} + \beta'x_{it} + \eta_{i} + v_{it}
 \end{equation}
+where $i=1,2\ldots,N$ indexes the cross-section units and $t$ indexes
+time.
 
 The main idea behind the difference estimator is to sweep out the
 individual effect via differencing.  First-differencing eq.\
@@ -63,10 +66,10 @@ GMM estimation of equation (\ref{eq:dpd-dif}) amounts to computing
 \begin{equation}
 \label{eq:dif-gmm}
   \hat{\gamma} = \left[ 
-    \left( \sum_{i=1}^N \bW_i'\bZ_i \right) \bA_N
-    \left( \sum_{i=1}^N \bZ_i'\bW_i \right) \right]^{-1} 
-    \left( \sum_{i=1}^N \bW_i'\bZ_i \right) \bA_N
-    \left( \sum_{i=1}^N \bZ_i'\Delta \by_i \right)
+    \left( \sum_i \bW_i'\bZ_i \right) \bA_N
+    \left( \sum_i \bZ_i'\bW_i \right) \right]^{-1} 
+    \left( \sum_i \bW_i'\bZ_i \right) \bA_N
+    \left( \sum_i \bZ_i'\Delta \by_i \right)
 \end{equation}
 where
 \begin{align*}
@@ -87,7 +90,7 @@ where
          0 & 0 & 0 & \cdots & y_{i, T-2} & \Delta x_{iT} \\
        \end{array} \right]' \\
   \intertext{and}
-  \bA_N & = \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
+  \bA_N & = \left( \sum_i \bZ_i' H \bZ_i \right)^{-1}
 \end{align*}
 
 Once the 1-step estimator is computed, the sample covariance matrix of
@@ -122,10 +125,10 @@ The key equations of the system estimator can be written as
 \begin{equation}
 \label{eq:sys-gmm}
   \tilde{\gamma} = \left[ 
-    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right) \bA_N
-    \left( \sum_{i=1}^N \tilde{\bZ}'\tilde{\bW} \right) \right]^{-1} 
-    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right) \bA_N
-    \left( \sum_{i=1}^N \tilde{\bZ}'\Delta \tilde{\by}_i \right)
+    \left( \sum_i \tilde{\bW}_i'\tilde{\bZ}_i \right) \bA_N
+    \left( \sum_i \tilde{\bZ}_i'\tilde{\bW}_i \right) \right]^{-1} 
+    \left( \sum_i \tilde{\bW}_i'\tilde{\bZ}_i \right) \bA_N
+    \left( \sum_i \tilde{\bZ}_i'\Delta \tilde{\by}_i \right)
 \end{equation}
 where
 \begin{align*}
@@ -150,7 +153,7 @@ where
          0 & 0 & 0 & \cdots & 0 & 0 & \cdots & \Delta y_{i,T-1}  & x_{iT}\\
        \end{array} \right]' \\
   \intertext{and}
-  \bA_N & = \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
+  \bA_N & = \left( \sum_i \tilde{\bZ}_i' H^* \tilde{\bZ}_i \right)^{-1}
 \end{align*}
 
 In this case choosing a precise form for the matrix $H^*$ for the
@@ -204,6 +207,34 @@ substitute the pseudo-inverse of $\bA_N$ (Moore--Penrose) for its regular
 inverse. Again, our choice is shared by some software packages, but
 not all, so replication may be hard.
 
+\subsection{Covariance matrix and standard errors}
+
+By default the standard errors shown by \texttt{dpanel} for 1-step
+estimation are robust, based on the heteroskedasticity-consistent
+variance estimator
+\[
+  \widehat{\rm Var}(\hat{\gamma}) =
+    \bM^{-1} \left(\sum_i\bW_i'\bZ_i\right)
+    \bA_N\hat{\mathbf{V}}_N\bA_N
+    \left(\sum_i\bZ_i'\bW_i\right) \bM^{-1}
+  \]
+  where $\bM = (\sum_i\bW_i'\bZ_i) \bA_N (\sum_i\bZ_i'\bW_i)$ and
+  $\hat{\mathbf{V}}_N = N^{-1} \sum_i
+  \bZ_i'\hat{\mathbf{u}}_i\hat{\mathbf{u}}_i'\bZ_i$, with
+  $\hat{\mathbf{u}}_i$ the vector of residuals in differences for
+  individual $i$.  In addition, as noted above, the variance estimator
+  for 2-step estimation employs the finite-sample correction of
+  \cite{Windmeijer05}.
+
+  When the \verb|--asymptotic| option is passed to \texttt{dpanel},
+  however, the 1-step variance estimator is simply
+  $\hat{\sigma}_u^2 M^{-1}$, which is not
+  heteroskedasticity-consistent, and the Windmeijer correction is not
+  applied for 2-step estimation. Use of the asymptotic option is not
+  recommended unless you wish to replicate prior results that did not
+  report robust standard errors. In particular, tests based on the
+  asymptotic 2-step variance estimator are known to over-reject quite
+  substantially (standard errors too small).
 
 \subsection{Treatment of missing values}
 
