@@ -39,6 +39,8 @@ typedef enum {
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_STOPWATCH,  /* stopwatch */
     R_TEST_BRK,   /* obs at which break occurs (QLR test) */
+    R_LOGLEVEL,   /* current loglevel for errors/warnings/etc */
+    R_LOGSTAMP,   /* logger shows timestamp? (0/1) */
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_PUNIT,      /* 1-based panel unit index */

@@ -122,6 +122,8 @@ struct str_table dvars[] = {
     { R_MAPFILE,   "$mapfile" },
     { R_MAP,       "$map" },
     { R_INDEX,     "obs" },
+    { R_LOGLEVEL,  "$loglevel" },
+    { R_LOGSTAMP,  "$logstamp" },
     { 0,           NULL },
 };
 

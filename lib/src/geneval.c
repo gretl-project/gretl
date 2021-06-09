@@ -15638,6 +15638,10 @@ double dvar_get_scalar (int i, const DATASET *dset)
         return gretl_rand_get_seed();
     case R_HUGE:
         return libset_get_double(CONV_HUGE);
+    case R_LOGLEVEL:
+        return libset_get_int(LOGLEVEL);
+    case R_LOGSTAMP:
+	return libset_get_bool(LOGSTAMP);
     default:
         return NADBL;
     }

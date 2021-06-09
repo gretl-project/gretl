@@ -121,9 +121,11 @@ static struct global_vars_ {
     gint8 plot_collect;
     gint8 R_functions;
     gint8 R_lib;
+    gint8 loglevel;
+    gint8 logstamp;
     gint8 csv_digits;
     int gmp_bits;
-} globals = {0, 0, 5, 0, 0, 1, UNSET_INT, 256};
+} globals = {0, 0, 5, 0, 0, 1, 1, 0, UNSET_INT, 256};
 
 /* globals for internal use */
 static int seed_is_set;
@@ -212,6 +214,8 @@ setvar setvars[] = {
     { PLOT_COLLECT,  "plot_collection", CAT_BEHAVE, offsetof(global_vars,plot_collect) },
     { R_FUNCTIONS,   "R_functions", CAT_BEHAVE, offsetof(global_vars,R_functions) },
     { R_LIB,         "R_lib",       CAT_BEHAVE, offsetof(global_vars,R_lib) },
+    { LOGLEVEL,      "loglevel",    CAT_BEHAVE, offsetof(global_vars,loglevel) },
+    { LOGSTAMP,      "logstamp",    CAT_BEHAVE, offsetof(global_vars,logstamp) },
     { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE, offsetof(global_vars,csv_digits) },
     { NS_SMALL_INT_MAX, NULL },
     { GMP_BITS,      "gmp_bits",    CAT_BEHAVE, offsetof(global_vars,gmp_bits) },
@@ -233,8 +237,9 @@ setvar setvars[] = {
     { DISP_DIGITS,   "display_digits", CAT_SPECIAL }
 };
 
-#define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || k==R_LIB)
-#define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
+#define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || \
+			   k==R_LIB || k==LOGSTAMP)
+#define libset_double(k) (k > SEED && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
 
@@ -253,7 +258,8 @@ setvar setvars[] = {
 			 k == WILDBOOT_DIST || \
 			 k == QUANTILE_TYPE || \
 			 k == GRETL_ASSERT || \
-			 k == PLOT_COLLECT)
+			 k == PLOT_COLLECT || \
+			 k == LOGLEVEL)
 
 /* the current set of state variables */
 set_state *state;
@@ -379,6 +385,7 @@ static const char *ast_strs[] = {"off", "warn", "stop", NULL};
 static const char *plc_strs[] = {"off", "auto", "on", NULL};
 static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
 static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
+static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
 
 struct codevar_info {
     SetKey key;
@@ -401,7 +408,8 @@ struct codevar_info coded[] = {
     { QUANTILE_TYPE, qnt_strs },
     { GRETL_ASSERT,  ast_strs },
     { PLOT_COLLECT,  plc_strs },
-    { HAC_LAG,       ahl_strs }
+    { HAC_LAG,       ahl_strs },
+    { LOGLEVEL,      llv_strs }
 };
 
 static const char **libset_option_strings (SetKey key)
@@ -1000,6 +1008,16 @@ static int libset_get_unsigned (const char *arg, unsigned int *pu)
     return err;
 }
 
+static int n_strvals (const char **s)
+{
+    int n = 0;
+
+    while (*s != NULL) {
+	n++; s++;
+    }
+    return n;
+}
+
 static int parse_libset_int_code (SetKey key, const char *val)
 {
     int i, err = E_DATA;
@@ -1008,6 +1026,7 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	err = parse_hac_lag_variant(val);
     } else if (coded_intvar(key)) {
 	const char **strs = libset_option_strings(key);
+	void *valp = setkey_get_target(key, SV_INT);
 	int ival = -1;
 
 	for (i=0; strs[i] != NULL; i++) {
@@ -1026,11 +1045,16 @@ static int parse_libset_int_code (SetKey key, const char *val)
 		ival = (ival == 1)? ML_OP : ML_HESSIAN;
 	    }
 	    *(gint8 *) valp = ival;
-	} else if (key == MAX_VERBOSE) {
+	} else if (key == MAX_VERBOSE || key == LOGLEVEL) {
 	    /* special: bare integers allowed? */
-	    if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0) {
-		state->max_verbose = atoi(val);
-		err = 0;
+	    int n = n_strvals(strs);
+
+	    for (i=0; i<n; i++) {
+		if (val[0] == i + 48 && val[1] == '\0') {
+		    *(gint8 *) valp = i;
+		    err = 0;
+		    break;
+		}
 	    }
 	}
     }
@@ -1788,7 +1812,7 @@ static int get_int_limits (SetKey key, int *min, int *max)
 	{ HC_VERSION, 0, 4 },
 	{ FDJAC_QUAL, 0, 2 },
 	{ LBFGS_MEM,  3, 20 },
-	{ GRETL_DEBUG, 0, 10 },
+	{ GRETL_DEBUG, 0, 4 },
 	{ DATACOLS,    1, 15 },
 	{ PLOT_COLLECT, 0, 2 },
 	{ CSV_DIGITS, 1, 25 },
@@ -1906,6 +1930,8 @@ int libset_get_bool (SetKey key)
 	return globals.R_lib;
     } else if (key == USE_DCMT) {
         return gretl_rand_get_dcmt();
+    } else if (key == LOGSTAMP) {
+	return globals.logstamp;
     }
 
     if (check_for_state()) {
@@ -2002,6 +2028,9 @@ int libset_set_bool (SetKey key, int val)
 	return check_R_setting(&globals.R_lib, key, val);
     } else if (key == USE_DCMT) {
 	return gretl_rand_set_dcmt(val);
+    } else if (key == LOGSTAMP) {
+	globals.logstamp = val;
+	return 0;
     }
 
     if (val) {

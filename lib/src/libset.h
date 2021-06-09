@@ -101,6 +101,8 @@ typedef enum {
     PLOT_COLLECT,
     R_FUNCTIONS,
     R_LIB,
+    LOGLEVEL,
+    LOGSTAMP,
     CSV_DIGITS,
     NS_SMALL_INT_MAX, /* separator */
     GMP_BITS,
