@@ -574,6 +574,7 @@ static GtkTextBuffer *function_names_buffer (void)
 }
 
 #define AC_DEBUG 0
+#define ALT_COMPLETE 0 /* not yet */
 
 static void set_sv_auto_complete (windata_t *vwin)
 {
@@ -592,7 +593,12 @@ static void set_sv_auto_complete (windata_t *vwin)
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
 	/* provider: all previously typed words */
 	words = gtk_source_completion_words_new("words", NULL);
+#if ALT_COMPLETE
+	g_object_set(words, "priority", 1, "activation",
+		     GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED, NULL);
+#else
 	g_object_set(words, "priority", 1, NULL);
+#endif
 	gtk_source_completion_words_register(words,
 					     gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
 	gtk_source_completion_add_provider(comp,
@@ -601,6 +607,10 @@ static void set_sv_auto_complete (windata_t *vwin)
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", words);
 	/* provider: names of built-in functions */
 	funcs = gtk_source_completion_words_new("functions", NULL);
+#if ALT_COMPLETE
+	g_object_set(funcs, "activation",
+		     GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED, NULL);
+#endif
 	funcs_buf = function_names_buffer();
 	gtk_source_completion_words_register(funcs, funcs_buf);
 	gtk_source_completion_add_provider(comp,
