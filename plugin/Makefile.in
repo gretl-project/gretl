@@ -150,9 +150,9 @@ ZIPSRC = zfileio.c \
 
 SHPSRC = dbfopen.c shpopen.c
 
-PLUGINS = arbond.la \
-	arma.la \
+PLUGINS = arma.la \
 	arma_x12.la \
+	dpanel.la \
 	eviews_import.la \
 	stata_import.la \
 	spss_import.la \
@@ -316,7 +316,7 @@ sysest.la: sysest.lo fiml.lo liml.lo
 nistcheck.la: nistcheck.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
-arbond.la: arbond.lo
+dpanel.la: dpanel.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 arma.la: arma.lo arma_cml.lo arma_init.lo

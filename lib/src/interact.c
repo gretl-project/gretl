@@ -3688,7 +3688,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         err = print_save_model(model, dset, cmd->opt, 0, prn, s);
         break;
 
-    case ARBOND:
     case PANEL:
     case DPANEL:
         if (!dataset_is_panel(dset)) {
@@ -3739,9 +3738,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             *model = garch(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == PANEL) {
             *model = panel_model(cmd->list, dset, cmd->opt, prn);
-        } else if (cmd->ci == ARBOND) {
-            *model = arbond_model(cmd->list, cmd->param, dset,
-                                  cmd->opt, prn);
         } else if (cmd->ci == DPANEL) {
             *model = dpd_model(cmd->list, cmd->auxlist, cmd->param,
                                dset, cmd->opt, prn);

@@ -2867,8 +2867,7 @@ static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(ui, "/menubar/Analysis/ConfEllipse", FALSE);
     }
 
-    if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
-	(pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
+    if (pmod->ci == DPANEL || (pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
 	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
     }
 
@@ -3597,8 +3596,8 @@ static void set_up_model_view_menu (windata_t *vwin)
 
     if (pmod->ci != ARMA && pmod->ci != GARCH &&
 	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
-	pmod->ci != PANEL && pmod->ci != ARBOND &&
-	pmod->ci != DPANEL && pmod->ci != BIPROBIT) {
+	pmod->ci != PANEL && pmod->ci != DPANEL &&
+	pmod->ci != BIPROBIT) {
 	add_dummies_to_plot_menu(vwin);
     }
 

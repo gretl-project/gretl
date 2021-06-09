@@ -2407,7 +2407,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	    /* just one list to examine */
 	    ret = real_list_dup(list, 1, list[0]);
 	}
-    } else if (ci == ARBOND || ci == DPANEL) {
+    } else if (ci == DPANEL) {
 	int stop = 0;
 
 	multi = 1;

@@ -765,11 +765,6 @@ void selector_from_model (windata_t *vwin)
 
     model_opt = OPT_NONE;
 
-    if (ci == ARBOND) {
-	/* handle old session models */
-	ci = DPANEL;
-    }
-
     if (ci == VIEW_MODEL) {
 	/* single-equation model (mostly) */
 	MODEL *pmod = (MODEL *) ptr;

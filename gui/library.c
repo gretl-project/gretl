@@ -4145,11 +4145,6 @@ static int real_do_model (int action)
     case PANEL:
         *pmod = panel_model(libcmd.list, dataset, libcmd.opt, prn);
         break;
-    case ARBOND:
-        /* FIXME instrument spec */
-        *pmod = arbond_model(libcmd.list, NULL, dataset,
-                             libcmd.opt, prn);
-        break;
     case DPANEL:
         /* FIXME ylags, instrument spec */
         *pmod = dpd_model(libcmd.list, NULL, NULL, dataset,
@@ -9460,7 +9455,7 @@ int osx_open_pdf (const char *path, const char *dest)
     return err;
 }
 
-# endif /* Carbon-free varitn */
+# endif /* Carbon-free variant */
 
 int osx_open_url (const char *url)
 {

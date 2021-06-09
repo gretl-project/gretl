@@ -1384,7 +1384,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	tex_escape(tmp, dset->varname[i]);
     }
 
-    if (pmod->ci == ARBOND) {
+    if (0 /* FIXME should this apply for DPANEL? (was ARBOND-specific) */) {
 	pprintf(prn, "\\widehat{\\Delta \\rm %s} %s= \n", tmp, (split? "&" : ""));
     } else {
 	pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));

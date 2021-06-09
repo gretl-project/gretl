@@ -210,8 +210,7 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
 
     /* various sorts of models that will not work */
     if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
-	pmod->ci == ARBOND || pmod->ci == DPANEL ||
-	pmod->ci == INTREG || pmod->ci == BIPROBIT) {
+	pmod->ci == DPANEL || pmod->ci == INTREG || pmod->ci == BIPROBIT) {
 	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;

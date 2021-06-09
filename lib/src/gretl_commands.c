@@ -38,7 +38,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { APPEND,   "append" },
     { AR,       "ar" },
     { AR1,      "ar1" },
-    { ARBOND,   "arbond" },
     { ARCH,     "arch" },
     { ARMA,     "arima" },
     { BDS,      "bds" },

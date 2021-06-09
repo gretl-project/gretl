@@ -571,7 +571,7 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
 
 static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 {
-    double x;
+    double x, y;
     int k;
 
     /* 2021-01-28: mask stats not calculated when showing
@@ -595,10 +595,11 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     }
 
     x = gretl_model_get_double(pmod, "AR1");
-    print_panel_AR_test(x, 1, prn);
-
-    x = gretl_model_get_double(pmod, "AR2");
-    print_panel_AR_test(x, 2, prn);
+    y = gretl_model_get_double(pmod, "AR2");
+    if (!na(x) && !na(y)) {
+	print_panel_AR_test(x, 1, prn);
+	print_panel_AR_test(y, 2, prn);
+    }
 
     x = gretl_model_get_double(pmod, "sargan");
     print_model_chi2_test(pmod, x, AB_SARGAN, prn);
@@ -978,12 +979,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == DPANEL) return N_("Dynamic panel");
     else if (ci == BIPROBIT) return N_("Bivariate probit");
     else if (ci == MIDASREG) return N_("MIDAS");
-    else if (ci == ARBOND) {
-	if (tex_format(prn)) return N_("Arellano--Bond");
-	else return N_("Arellano-Bond");
-    } else {
-	return "";
-    }
+    else return "";
 }
 
 const char *estimator_string (const MODEL *pmod, PRN *prn)
@@ -1023,12 +1019,6 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    }
 	} else {
 	    return N_("Between-groups");
-	}
-    } else if (pmod->ci == ARBOND) {
-	if (gretl_model_get_int(pmod, "step") == 2) {
-	    return N_("2-step Arellano-Bond");
-	} else {
-	    return N_("1-step Arellano-Bond");
 	}
     } else if (pmod->ci == DPANEL) {
 	if (gretl_model_get_int(pmod, "step") == 2) {
@@ -1635,8 +1625,7 @@ void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
 	rq_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "panel_bk_failed")) {
 	beck_katz_failed_line(prn);
-    } else if ((pmod->ci == ARBOND || pmod->ci == DPANEL) &&
-	       gretl_model_get_int(pmod, "asy")) {
+    } else if (pmod->ci == DPANEL && gretl_model_get_int(pmod, "asy")) {
 	dpd_asy_vcv_line(prn);
     } else if ((pmod->ci == NLS || pmod->ci == MIDASREG) &&
 	       gretl_model_get_int(pmod, "non-robust")) {
@@ -2211,7 +2200,7 @@ static void print_model_heading (const MODEL *pmod,
 	if (tex) {
 	    if (pmod->aux == AUX_VECM) {
 		tex_vecm_depvar_name(vname, dvname);
-	    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+	    } else if (pmod->ci == DPANEL) {
 		tex_dpd_depvar_name(vname, dvname);
 	    } else {
 		tex_escape(vname, dvname);
@@ -3200,7 +3189,7 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
 	key[K_R22] = (tex)? N_("Within $R^2$") : N_("Within R-squared");
     }
 
-    if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+    if (pmod->ci == DPANEL) {
 	for (i=0; i<MID_STATS; i++) {
 	    if (i < K_SSR || i > K_SER) {
 		val[i] = NADBL;
@@ -3564,7 +3553,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	panel_variance_lines(pmod, prn);
     } else if (gmm_model(pmod)) {
 	print_GMM_stats(pmod, prn);
-    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+    } else if (pmod->ci == DPANEL) {
 	print_DPD_stats(pmod, prn);
     } else if (logit_probit_model(pmod)) {
 	if (!pmod->aux) {
@@ -3597,8 +3586,8 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
 	pmod->ci != LAD && pmod->ci != HECKIT && pmod->ci != MIDASREG &&
-	pmod->ci != ARBOND && pmod->ci != DPANEL && pmod->ci != GARCH &&
-	pmod->ci != DURATION && !ordered_model(pmod) && !multinomial_model(pmod) &&
+	pmod->ci != DPANEL && pmod->ci != GARCH && pmod->ci != DURATION &&
+	!ordered_model(pmod) && !multinomial_model(pmod) &&
 	!COUNT_MODEL(pmod->ci) && !intreg_model(pmod) &&
 	pmod->ci != BIPROBIT && !pmod->aux) {
 	pval_max_line(pmod, dset, prn);

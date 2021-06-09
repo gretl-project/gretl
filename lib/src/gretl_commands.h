@@ -27,7 +27,6 @@ typedef enum {
     APPEND,
     AR,  
     AR1,
-    ARBOND,
     ARCH,
     ARMA,
     BDS,

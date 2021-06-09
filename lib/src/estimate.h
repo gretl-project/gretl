@@ -51,9 +51,6 @@ MODEL panel_model (const int *list, DATASET *dset,
 
 MODEL ivreg (const int *list, DATASET *dset, gretlopt opt);
 
-MODEL arbond_model (const int *list, const char *ispec, 
-		    const DATASET *dset, gretlopt opt, PRN *prn);
-
 MODEL dpd_model (const int *list, const int *laglist,
 		 const char *ispec, const DATASET *dset, 
 		 gretlopt opt, PRN *prn);
