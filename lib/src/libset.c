@@ -1509,10 +1509,10 @@ int is_libset_var (const char *s)
 #define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
 
 #define boolean_on(s) (!strcmp(s, "on") || !strcmp(s, "1") || \
-                       !strcmp(s, "true"))
+                       !strcmp(s, "true") || !strcmp(s, "TRUE"))
 
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
-                        !strcmp(s, "false"))
+                        !strcmp(s, "false") || !strcmp(s, "FALSE"))
 
 static int write_or_read_settings (gretlopt opt, PRN *prn)
 {
