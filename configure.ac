@@ -781,11 +781,11 @@ dnl
 dnl Check for installed gtksourceview (GTK 3 variant)
 dnl
 if test "$gtk_version" = "3.0" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0,
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.10.2,
       AC_DEFINE(USE_GTKSOURCEVIEW_3)
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
       have_sourceview="3.0",
-      echo "version 3.0 not found"
+      echo "version 3.0 >= 3.10.2 not found"
     )
 fi
 
