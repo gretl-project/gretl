@@ -3550,7 +3550,10 @@ MODEL logistic_model (const int *list, double lmax,
     }
     if (!lmod.errcode) {
 	rewrite_logistic_stats(dset, &lmod, dv, real_lmax);
-	set_model_id(&lmod, OPT_NONE);
+	if (!(opt & OPT_F)) {
+	    /* already done, for the fixed-effects case */
+	    set_model_id(&lmod, OPT_NONE);
+	}
     }
 
     if (opt & OPT_C) {
