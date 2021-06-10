@@ -2,20 +2,20 @@
 # Copyright (C) 2001--2020 Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>,
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>, 2020.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-02-11 18:03+0100\n"
+"PO-Revision-Date: 2021-06-10 15:11+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Lokalize 19.12.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:592
@@ -133,9 +133,8 @@ msgid "asymptotic p-value"
 msgstr "valor p asintótico"
 
 #: lib/src/adf_kpss.c:726
-#, fuzzy
 msgid "approximate p-value"
-msgstr "Valor p interpolado"
+msgstr "Valor p aproximado"
 
 #: lib/src/adf_kpss.c:734
 #, c-format
@@ -2200,9 +2199,8 @@ msgid "Weight variable contains negative values"
 msgstr "La variable de ponderaciones contiene valores negativos"
 
 #: lib/src/estimate.c:629
-#, fuzzy
 msgid "Weight variable is not a dummy but contains zeros"
-msgstr "Variable de ponderaciones es toda ceros, abortando regresión"
+msgstr "La variable de ponderaciones no es una ficticia pero contiene ceros"
 
 #: lib/src/estimate.c:1167 plugin/arma.c:1761
 #, c-format
@@ -3690,9 +3688,9 @@ msgid "Identifier exceeds the maximum of 31 characters"
 msgstr "El nombre del identificador excede el máximo de 31 caracteres"
 
 #: lib/src/gretl_func.c:7281
-#, fuzzy, c-format
+#, c-format
 msgid "%s: \"quit\" cannot be used in a function"
-msgstr "La instrucción 'catch' no puede usarse en este contexto"
+msgstr "La instrucción 'quit' no puede usarse dentro de una función"
 
 #: lib/src/gretl_func.c:7549
 #, c-format
@@ -4855,43 +4853,40 @@ msgid "kalman: required matrix %s is missing"
 msgstr "kalman: Falta la matriz %s, que es necesaria"
 
 #: lib/src/libglue.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "BDS test for %s, maximum order %d"
-msgstr "Sistema VAR, máximo orden de retardos %d"
+msgstr "Contraste BDS para %s, máximo orden %d"
 
 #: lib/src/libglue.c:317
 msgid "H0: the series is linear/IID"
-msgstr ""
+msgstr "H0: la serie es lineal/IID"
 
 #: lib/src/libglue.c:320
-#, fuzzy
 msgid "Bootstrapped p-values in []"
-msgstr "con valor p de bootstrap"
+msgstr "con valores p  obtenidos mediante bootstrap entre []"
 
 #: lib/src/libglue.c:322
-#, fuzzy
 msgid "Asymptotic p-values in []"
-msgstr "valor p asintótico"
+msgstr "Valores p asintóticos entre []"
 
 #: lib/src/libglue.c:331
 #, c-format
 msgid "test order %d: z = %.3f [%.3f]"
-msgstr ""
+msgstr "contraste orden %d: z = %.3f [%.3f]"
 
 #: lib/src/libglue.c:338
-#, fuzzy
 msgid "Distance criterion based on first-order correlation"
-msgstr "Contraste Breusch-Godfrey de autocorrelación de primer orden"
+msgstr "Criterio de distancia basado en la correlación de orden uno"
 
 #: lib/src/libglue.c:340
 #, c-format
 msgid "Distance criterion based on sd(%s)"
-msgstr ""
+msgstr "Criterio de distancia basado en dt(%s)"
 
 #: lib/src/libglue.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "eps = %g, first-order correlation %.3f"
-msgstr "autocorrelación de primer orden"
+msgstr "eps = %g, correlación de primer orden %.3f"
 
 #: lib/src/libglue.c:624
 #, c-format
@@ -4899,9 +4894,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: Se esperaban %d nombres"
 
 #: lib/src/libglue.c:691
-#, fuzzy
 msgid "modprint: expected the name of a matrix"
-msgstr "modprint: Se esperaban %d nombres"
+msgstr "modprint: Se esperaba el nombre de una matriz"
 
 #: lib/src/libglue.c:694
 msgid "modprint: the first matrix argument must have 2 columns"
@@ -5643,9 +5637,8 @@ msgid "QML standard errors"
 msgstr "Desviaciones típicas QML"
 
 #: lib/src/modelprint.c:1542
-#, fuzzy
 msgid "HAC standard errors"
-msgstr "Desviaciones típicas QML"
+msgstr "Desviaciones típicas HAC"
 
 #: lib/src/modelprint.c:1546
 msgid "Bollerslev--Wooldridge standard errors"
@@ -6165,14 +6158,12 @@ msgid "McFadden R-squared"
 msgstr "R-cuadrado de McFadden"
 
 #: lib/src/modelprint.c:3189
-#, fuzzy
 msgid "Estrella $R^2$"
-msgstr "$R^2$ corregido"
+msgstr "$R^2$ estrella"
 
 #: lib/src/modelprint.c:3190
-#, fuzzy
 msgid "Estrella R-squared"
-msgstr "R-cuadrado corregido"
+msgstr "R-cuadrado estrella"
 
 #: lib/src/modelprint.c:3198
 msgid "LSDV $R^2$"
@@ -6482,7 +6473,7 @@ msgstr "%s: Se esperaba un escalar o un vector"
 
 #: lib/src/nls.c:854
 msgid "Only one 'params' specification is allowed"
-msgstr ""
+msgstr "Solo se permite una especificación de 'params'"
 
 #: lib/src/nls.c:2095
 msgid "In Gauss-Newton Regression:\n"
@@ -7141,9 +7132,8 @@ msgid "Mean Absolute Percentage Error"
 msgstr "Porcentaje de error absoluto medio"
 
 #: lib/src/printout.c:3003
-#, fuzzy
 msgid "Theil's U1"
-msgstr "U de Theil"
+msgstr "U1 de Theil"
 
 #: lib/src/printout.c:3004
 msgid "Bias proportion, UM"
@@ -7158,9 +7148,8 @@ msgid "Disturbance proportion, UD"
 msgstr "Proporción de perturbación, UD"
 
 #: lib/src/printout.c:3008
-#, fuzzy
 msgid "Theil's U2"
-msgstr "U de Theil"
+msgstr "U2 de Theil"
 
 #: lib/src/printout.c:3028 gui/guiprint.c:1482
 msgid "Forecast evaluation statistics"
@@ -7904,13 +7893,13 @@ msgid "The variable %s is currently read-only"
 msgstr "La variable %s ahora es de sólo lectura"
 
 #: lib/src/uservar.c:2436
-#, fuzzy, c-format
+#, c-format
 msgid "variables of type %s:"
-msgstr "Variables a contrastar"
+msgstr "variables de tipo %s:"
 
 #: lib/src/uservar.c:2443
 msgid "  (unnamed)\n"
-msgstr ""
+msgstr "(sin nombre)\n"
 
 #: lib/src/uservar.c:2672
 #, c-format
@@ -9324,9 +9313,9 @@ msgstr ""
 "¿Desea abrirla ahora?"
 
 #: gui/database.c:2810
-#, fuzzy, c-format
+#, c-format
 msgid "Installed %s"
-msgstr "Instalado"
+msgstr "Se ha instalado %s"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
@@ -9582,9 +9571,8 @@ msgid "The gui package registry is empty"
 msgstr "El registro de paquetes GUI está vacío"
 
 #: gui/datafiles.c:2081
-#, fuzzy
 msgid "gretl: example scripts"
-msgstr "gretl: editar un guion de Octave"
+msgstr "gretl: guiones de ejemplo"
 
 #: gui/datafiles.c:2083
 msgid "gretl: data files"
@@ -10702,11 +10690,10 @@ msgid "constant"
 msgstr "constante"
 
 #: gui/dialogs.c:7126
-#, fuzzy, c-format
+#, c-format
 msgid "The series %s seems to be of the same frequency as the current dataset"
 msgstr ""
-"Los datos que se van a importar son de una frecuencia inferior\n"
-"a la del conjunto de datos actual. ¿Está de acuerdo en seguir adelante?"
+"La serie %s parece ser de la misma frecuencia que el conjunto de datos actual"
 
 #: gui/dialogs.c:7171
 msgid "Output name:"
@@ -10749,33 +10736,28 @@ msgid "show regression results"
 msgstr "Mostrar los resultados de la regresión"
 
 #: gui/dialogs.c:7397
-#, fuzzy
 msgid "Maximum dimension:"
-msgstr "Máximo número de iteraciones:"
+msgstr "Dimensión máxima:"
 
 #: gui/dialogs.c:7407
 msgid "Criterion for closeness:"
-msgstr ""
+msgstr "Criterio para la cercanía:"
 
 #: gui/dialogs.c:7412
-#, fuzzy
 msgid "First-order correlation"
-msgstr "autocorrelación de primer orden"
+msgstr "Autocorrelación de primer orden"
 
 #: gui/dialogs.c:7419
-#, fuzzy
 msgid "Multiple of std. dev."
-msgstr "Gráficos múltiples"
+msgstr "Múltiplo de la desv. típ."
 
 #: gui/dialogs.c:7433
-#, fuzzy
 msgid "Asymptotic p-values"
-msgstr "valor p asintótico"
+msgstr "Valores p asintóticos"
 
 #: gui/dialogs.c:7438
-#, fuzzy
 msgid "Bootstrap p-values"
-msgstr "con valor p de bootstrap"
+msgstr "Valores p obtenidos mediante bootstrap"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -10827,21 +10809,19 @@ msgstr "Estimación en dos etapas"
 
 #: gui/dlgutils.c:1098
 msgid "Outer product of gradient"
-msgstr ""
+msgstr "producto externo del gradiente"
 
 #: gui/dlgutils.c:1099 plugin/addons-i18n.c:18 plugin/addons-i18n.c:103
 msgid "Hessian"
 msgstr "Hessiano"
 
 #: gui/dlgutils.c:1100
-#, fuzzy
 msgid "Robust (QML)"
-msgstr "F robusto"
+msgstr "Robusto (QML)"
 
 #: gui/dlgutils.c:1101
-#, fuzzy
 msgid "Robust (HAC)"
-msgstr "F robusto"
+msgstr "Robusto (HAC)"
 
 #: gui/dlgutils.c:1287 gui/dlgutils.c:1290
 msgid "(Please refer to Help for guidance)"
@@ -11008,13 +10988,12 @@ msgid "open file"
 msgstr "abrir un fichero"
 
 #: gui/fileselect.c:1234
-#, fuzzy
 msgid "save map as geojson"
-msgstr "Guardar sesión"
+msgstr "guardar el mapa como geojson"
 
 #: gui/fileselect.c:1236
 msgid "write map as geojson"
-msgstr ""
+msgstr "escribir el mapa como geojson"
 
 #: gui/fileselect.c:1238
 msgid "save file"
@@ -11647,18 +11626,16 @@ msgid "Save changes?"
 msgstr "¿Guardar los cambios?"
 
 #: gui/fnsave.c:2621
-#, fuzzy
 msgid "Model requirement"
-msgstr "Ningún requisito especial"
+msgstr "Requisito del modelo"
 
 #: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Cualquier modelo"
 
 #: gui/fnsave.c:2655
-#, fuzzy
 msgid "request access to out-of-sample data"
-msgstr "Permitir el acceso a datos fuera de la muestra"
+msgstr "requiere el acceso a datos fuera de la muestra"
 
 #: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -11692,9 +11669,8 @@ msgid "Label"
 msgstr "Etiqueta"
 
 #: gui/fnsave.c:2900
-#, fuzzy
 msgid "GUI help text"
-msgstr "Texto de ayuda"
+msgstr "Texto de ayuda GUI"
 
 #: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
@@ -12449,9 +12425,8 @@ msgid "_Script files"
 msgstr "Archivos de gu_ion"
 
 #: gui/gretl.c:1692
-#, fuzzy
 msgid "_Example scripts..."
-msgstr "Guión de ejemplo"
+msgstr "Guiones de _ejemplo..."
 
 #: gui/gretl.c:1693
 msgid "_New script"
@@ -13038,9 +13013,8 @@ msgid "_Hurst exponent"
 msgstr "Exponente de _Hurst"
 
 #: gui/gretl.c:1882
-#, fuzzy
 msgid "_BDS nonlinearity test"
-msgstr "no linealidad"
+msgstr "Contraste de no linealidad _BDS"
 
 #: gui/gretl.c:1883 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -13307,9 +13281,8 @@ msgid "_gretl + DB.NOMICS"
 msgstr "_Gretl + DB.NOMICS"
 
 #: gui/gretl.c:1959 gui/textbuf.c:1673
-#, fuzzy
 msgid "Creating maps"
-msgstr "Creación e I/O"
+msgstr "Creando mapas"
 
 #: gui/gretl.c:1960
 msgid "Check for _updates"
@@ -13486,9 +13459,8 @@ msgid "Mean Squared Error"
 msgstr "Error cuadrático medio"
 
 #: gui/guiprint.c:1456
-#, fuzzy
 msgid "Theil's $U_1$"
-msgstr "$U$ de Theil"
+msgstr "$U_1$ de Theil"
 
 #: gui/guiprint.c:1457
 msgid "Bias proportion, $U^M$"
@@ -13503,9 +13475,8 @@ msgid "Disturbance proportion, $U^D$"
 msgstr "Proporción de la perturbación, $U^D$"
 
 #: gui/guiprint.c:1461
-#, fuzzy
 msgid "Theil's $U_2$"
-msgstr "$U$ de Theil"
+msgstr "$U_2$ de Theil"
 
 #: gui/guiprint.c:1523 gui/guiprint.c:1541
 msgid "Model estimation range:"
@@ -13743,9 +13714,8 @@ msgid "A_RCH"
 msgstr "A_RCH"
 
 #: gui/gui_utils.c:265
-#, fuzzy
 msgid "Non-linearity (_BDS)"
-msgstr "No linealidad (_logs)"
+msgstr "No linealidad (_BDS)"
 
 #: gui/gui_utils.c:266
 msgid "_QLR test"
@@ -15426,23 +15396,20 @@ msgstr ""
 "¿Desea cambiar ahora a la versión reducida?"
 
 #: gui/library.c:9005
-#, fuzzy
 msgid "gretl binary data format:"
-msgstr "gretl: formato de los datos"
+msgstr "formato de datos binario de gretl"
 
 #: gui/library.c:9007
 msgid "current (gretl >= 2020b, fastest)"
-msgstr ""
+msgstr "actual (gretl >= 2020b, el más rápido)"
 
 #: gui/library.c:9008
-#, fuzzy
 msgid "compatible with gretl >= 2018c"
-msgstr "Estilo anticuado (compatible con Gretl < 2018c)"
+msgstr "compatible con gretl >= 2018c"
 
 #: gui/library.c:9009
-#, fuzzy
 msgid "compatible with gretl < 2018c"
-msgstr "Estilo anticuado (compatible con Gretl < 2018c)"
+msgstr "compatible with gretl < 2018c"
 
 #: gui/library.c:9571 gui/library.c:9714
 msgid "No commands to execute"
@@ -15481,13 +15448,12 @@ msgid "Ensure uniform sample size"
 msgstr "Asegurar un tamaño muestral uniforme"
 
 #: gui/menustate.c:576
-#, fuzzy
 msgid "Display map..."
-msgstr "Mostrar mapa"
+msgstr "Mostrar el mapa..."
 
 #: gui/menustate.c:577
 msgid "Write map as GeoJSON..."
-msgstr ""
+msgstr "Escribir el mapa como GeoJSON..."
 
 #: gui/menustate.c:580
 msgid "Edit values"
@@ -16260,9 +16226,8 @@ msgid "Include levels equations (GMM-SYS)"
 msgstr "Incluir las ecuaciones en niveles (GMM-SYS)"
 
 #: gui/selector.c:6162
-#, fuzzy
 msgid "DPD-style initial covariance matrix"
-msgstr "Determinante de la matriz de covarianzas"
+msgstr "Matriz de covarianzas inicial de estilo DPD"
 
 #: gui/selector.c:6165
 msgid "Show zeros explicitly"
@@ -16470,7 +16435,7 @@ msgstr "CSV"
 
 #: gui/selector.c:6888
 msgid "GeoJSON"
-msgstr ""
+msgstr "GeoJSON"
 
 #: gui/selector.c:6889
 msgid "gretl datafile (.gdt)"
@@ -16589,9 +16554,8 @@ msgid "Select coefficients to sum"
 msgstr "Elija los coeficientes a sumar"
 
 #: gui/selector.c:7596
-#, fuzzy
 msgid "Q-Q plot: select one or two variables"
-msgstr "Elija una o dos variables"
+msgstr "Q-Q plot: seleccione una o dos variables"
 
 #: gui/selector.c:7598
 msgid "Confidence region: select two variables"
@@ -16602,9 +16566,8 @@ msgid "Select variables to display"
 msgstr "Indique las variables a mostrar"
 
 #: gui/selector.c:7602
-#, fuzzy
 msgid "Select variables for boxplot"
-msgstr "Indique las variables a representar gráficamente"
+msgstr "Seleccione las variables para el gráfico de caja (boxplot)"
 
 #: gui/selector.c:7605
 msgid "Select variables to plot"
@@ -18349,14 +18312,15 @@ msgid "Failed to execute x12arima"
 msgstr "Fallo al ejecutar x12arima"
 
 #: plugin/dpanel.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "Step 1 parameter estimates, using %d observations"
-msgstr "Estimaciones de %s utilizando las %d observaciones %s-%s\n"
+msgstr ""
+"Estimaciones de los parámetros de la etapa 1, utilizando %d observaciones"
 
 #: plugin/dpanel.c:1458
-#, fuzzy, c-format
+#, c-format
 msgid "Sargan test: Chi-square(%d) = %g [%.4f]\n"
-msgstr "Estadístico de contraste: chi-cuadrado(%d) = %d * %g/%g = %g\n"
+msgstr "Contraste de Sargan: Chi-cuadrado (%d) = %g [%.4f]\n"
 
 #: plugin/eviews_import.c:349
 msgid "No variables were read\n"
