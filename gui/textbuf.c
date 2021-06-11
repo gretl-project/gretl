@@ -30,6 +30,7 @@
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
+#include "completions.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h" /* for browser_open() */
@@ -44,8 +45,6 @@
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
 #endif
-
-#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 #define TABDEBUG 0
 
@@ -86,11 +85,10 @@ enum {
 int tabwidth = 4;
 int smarttab = 1;
 int script_line_numbers = 0;
-int script_auto_complete = 0;
 int script_auto_bracket = 0;
 
 static gboolean script_electric_enter (windata_t *vwin);
-static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
+static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
 static gboolean script_bracket_handler (windata_t *vwin, guint keyval);
 static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
@@ -540,117 +538,6 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 }
 
-#include "genparse.h"
-
-/* Create a GtkTextBuffer holding the names of built-in
-   gretl functions, to serve as a completion provider.
-*/
-
-static GtkTextBuffer *function_names_buffer (void)
-{
-    GtkTextBuffer *tbuf;
-    GString *str;
-    gchar *fnames;
-    const char *s;
-    int i, nf;
-
-    nf = gen_func_count();
-    tbuf = gtk_text_buffer_new(NULL);
-    str = g_string_new(NULL);
-
-    for (i=0; i<nf; i++) {
-	s = gen_func_name(i);
-	if (*s != '_') {
-	    g_string_append(str, s);
-	    g_string_append_c(str, ' ');
-	}
-    }
-
-    fnames = g_string_free(str, FALSE);
-    gtk_text_buffer_set_text(tbuf, fnames, -1);
-    g_free(fnames);
-
-    return tbuf;
-}
-
-#define AC_DEBUG 0
-#define ALT_COMPLETE 0 /* not yet */
-
-static void set_sv_auto_complete (windata_t *vwin)
-{
-    static GtkTextBuffer *funcs_buf;
-    GtkSourceCompletionWords *words;
-    GtkSourceCompletionWords *funcs;
-    GtkSourceCompletion *comp;
-
-    words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
-
-    if (script_auto_complete && words == NULL) {
-	/* set up and activate */
-#if AC_DEBUG
-	fprintf(stderr, "doing auto_complete set-up\n");
-#endif
-	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-	/* provider: all previously typed words */
-	words = gtk_source_completion_words_new("words", NULL);
-#if ALT_COMPLETE
-	g_object_set(words, "priority", 1, "activation",
-		     GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED, NULL);
-#else
-	g_object_set(words, "priority", 1, NULL);
-#endif
-	gtk_source_completion_words_register(words,
-					     gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
-	gtk_source_completion_add_provider(comp,
-					   GTK_SOURCE_COMPLETION_PROVIDER(words),
-					   NULL);
-	g_object_set_data(G_OBJECT(vwin->text), "prov_words", words);
-	/* provider: names of built-in functions */
-	funcs = gtk_source_completion_words_new("functions", NULL);
-#if ALT_COMPLETE
-	g_object_set(funcs, "activation",
-		     GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED, NULL);
-#endif
-	funcs_buf = function_names_buffer();
-	gtk_source_completion_words_register(funcs, funcs_buf);
-	gtk_source_completion_add_provider(comp,
-					   GTK_SOURCE_COMPLETION_PROVIDER(funcs),
-					   NULL);
-	g_object_set_data(G_OBJECT(vwin->text), "prov_funcs", funcs);
-    } else if (!script_auto_complete && words != NULL) {
-	/* de-activate and clean up */
-#if AC_DEBUG
-	fprintf(stderr, "doing auto_complete tear-down\n");
-#endif
-	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-	/* destroy the "words" provider */
-	gtk_source_completion_words_unregister(words,
-					       gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
-	gtk_source_completion_remove_provider(comp,
-					      GTK_SOURCE_COMPLETION_PROVIDER(words),
-					      NULL);
-	g_object_unref(G_OBJECT(words));
-	g_object_set_data(G_OBJECT(vwin->text), "prov_words", NULL);
-	/* destroy the "funcs" provider, if present */
-	funcs = g_object_get_data(G_OBJECT(vwin->text), "prov_funcs");
-	if (funcs != NULL) {
-	    gtk_source_completion_words_unregister(funcs, funcs_buf);
-	    gtk_source_completion_remove_provider(comp,
-						  GTK_SOURCE_COMPLETION_PROVIDER(funcs),
-						  NULL);
-	    g_object_unref(G_OBJECT(funcs));
-	    g_object_set_data(G_OBJECT(vwin->text), "prov_funcs", NULL);
-	    g_object_unref(G_OBJECT(funcs_buf));
-	    funcs_buf = NULL;
-	}
-    }
-
-#if AC_DEBUG
-    fprintf(stderr, "set_sv_auto_complete: auto_complete=%d, comp=%p, prov=%p,%p\n",
-	    script_auto_complete, (void *) comp, (void *) words, (void *) funcs);
-#endif
-}
-
 #define SV_PRINT_DEBUG 0
 
 #if SV_PRINT_DEBUG
@@ -821,12 +708,12 @@ static void set_source_tabs (GtkWidget *w, int cw)
 */
 
 static gint
-script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
+script_key_handler (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
-    guint keyval = event->keyval;
+    guint keyval = ((GdkEventKey *) event)->keyval;
     gboolean ret = FALSE;
 
-    if (event->state & GDK_CONTROL_MASK) {
+    if (((GdkEventKey *) event)->state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
 	    run_script_silent(w, vwin);
 	    ret = TRUE;
@@ -857,7 +744,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 #if TABDEBUG
 		fprintf(stderr, "*** calling script_tab_handler ***\n");
 #endif
-		ret = script_tab_handler(vwin, event->state);
+		ret = script_tab_handler(vwin, event);
 	    } else if (script_auto_bracket && lbracket(keyval)) {
 		ret = script_bracket_handler(vwin, keyval);
 	    }
@@ -868,12 +755,12 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 }
 
 static gint
-foreign_script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
+foreign_script_key_handler (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
-    guint keyval = event->keyval;
+    guint keyval = ((GdkEventKey *) event)->keyval;
     gboolean ret = FALSE;
 
-    if (event->state & GDK_CONTROL_MASK) {
+    if (((GdkEventKey *) event)->state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_r)  {
 	    do_run_script(w, vwin);
 	    ret = TRUE;
@@ -1079,7 +966,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	set_style_for_buffer(sbuf, get_sourceview_style());
     }
 
-    set_sv_auto_complete(vwin);
+    set_sv_auto_completion(vwin);
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -1157,7 +1044,7 @@ void update_script_editor_options (windata_t *vwin)
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					  script_line_numbers);
     if (vwin_is_editing(vwin)) {
-	set_sv_auto_complete(vwin);
+	set_sv_auto_completion(vwin);
     }
 
     set_style_for_buffer(vwin->sbuf, get_sourceview_style());
@@ -3757,11 +3644,54 @@ static gboolean script_electric_enter (windata_t *vwin)
     return ret;
 }
 
+/* Ctrl + space is the signal for gtksourceview to offer
+   completions. We want to invoke this signal via the Tab
+   key, so we have to manufacture an event.
+*/
+
+static void emit_control_space (GdkEvent *orig)
+{
+    GdkKeymap *keymap = NULL;
+    GdkKeymapKey *keys;
+    gint n_keys;
+
+#if GTK_MAJOR_VERSION >= 3 || defined(G_OS_WIN32)
+    /* with GDK 3, we can't pass NULL for keymap below -- and neither
+       (it appears) for GDK 2 on MS Windows
+    */
+    keymap = gdk_keymap_get_for_display(gdk_display_get_default());
+#endif
+
+    if (gdk_keymap_get_entries_for_keyval(keymap, GDK_space, &keys, &n_keys)) {
+	guint16 hardware_keycode;
+	GdkEvent *event;
+
+	hardware_keycode = keys[0].keycode;
+	g_free(keys);
+
+	event = gdk_event_new(GDK_KEY_PRESS);
+	event->key.window = g_object_ref(((GdkEventKey *) orig)->window);
+	event->key.hardware_keycode = hardware_keycode;
+	event->key.keyval = gdk_unicode_to_keyval(GDK_space);
+	event->key.state = GDK_CONTROL_MASK;
+	event->key.length = 1;
+	event->key.send_event = FALSE;
+	event->key.time = GDK_CURRENT_TIME;
+
+#if GTK_MAJOR_VERSION >= 3
+	/* we now get warning spew if no device is attached */
+	gdk_event_set_device(event, gdk_event_get_device(orig));
+#endif
+
+	gtk_main_do_event(event);
+	gdk_event_free(event);
+    }
+}
+
 /* handler for the user pressing the Tab key when editing a gretl script */
 
-static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
+static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
-    struct textbit *tb;
     gboolean ret = FALSE;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
@@ -3770,30 +3700,14 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 	return FALSE;
     }
 
-    if (smarttab && !(mods & GDK_SHIFT_MASK)) {
+    if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
 	if (maybe_insert_smart_tab(vwin)) {
+	    return TRUE;
+	} else if (script_auto_complete) {
+	    emit_control_space(event);
 	    return TRUE;
 	}
     }
-
-    /* do we really want the rest of this? */
-
-    tb = vwin_get_textbit(vwin, AUTO_SELECT_NONE);
-    if (tb == NULL) {
-	return FALSE;
-    }
-
-    if (tb->selected) {
-	if (mods & GDK_SHIFT_MASK) {
-	    unindent_region(NULL, tb);
-	} else {
-	    indent_region(NULL, tb);
-	}
-	ret = TRUE;
-    }
-
-    g_free(tb->chunk);
-    free(tb);
 
     return ret;
 }

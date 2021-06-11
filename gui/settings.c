@@ -32,6 +32,7 @@
 #include "tabwin.h"
 #include "build.h"
 #include "addons_utils.h"
+#include "completions.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -314,8 +315,13 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor,
       BOOLSET, 0, TAB_EDITOR, NULL },
+#ifdef USE_GTKSOURCEVIEW_3
+    { "script_auto_complete", N_("Auto-completion"), NULL, &script_auto_complete,
+      LISTSET | INTSET, 0, TAB_EDITOR, NULL },
+#else
     { "script_auto_complete", N_("Enable auto-completion"), NULL, &script_auto_complete,
       BOOLSET, 0, TAB_EDITOR, NULL },
+#endif
     { "script_auto_bracket", N_("Enable auto-brackets"), NULL, &script_auto_bracket,
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "sview_style", N_("Highlighting style"), NULL, &sview_style,
@@ -1214,6 +1220,11 @@ static const char **get_list_setting_strings (void *var, int *n)
         N_("Italian"),
 	N_("Portuguese")
     };
+    static const char *auto_complete_strs[] = {
+	N_("none"),
+	N_("automatic, as you type"),
+	N_("on demand, via Tab")
+    };
     const char **strs = NULL;
 
     *n = 0;
@@ -1231,6 +1242,9 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == &manpref) {
 	strs = manpref_strs;
 	*n = sizeof manpref_strs / sizeof manpref_strs[0];
+    } else if (var == &script_auto_complete) {
+	strs = auto_complete_strs;
+	*n = sizeof auto_complete_strs / sizeof auto_complete_strs[0];
     } else if (var == sview_style) {
 	strs = get_sourceview_style_ids(n);
     } else if (var == graph_theme) {
@@ -2102,7 +2116,12 @@ static void str_to_int (const char *s, void *b)
     if (s == NULL) return;
 
     if (sscanf(s, "%d", ivar) != 1) {
-	*ivar = 0;
+	if (!strcmp(s, "true")) {
+	    /* remedy for ex-boolean */
+	    *ivar = 1;
+	} else {
+	    *ivar = 0;
+	}
     }
 }
 

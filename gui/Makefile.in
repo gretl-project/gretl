@@ -167,6 +167,7 @@ SRCS = about.c \
 	calculator.c \
 	callbacks.c \
 	cmdstack.c \
+	completions.c \
 	console.c \
 	database.c \
 	datafiles.c \

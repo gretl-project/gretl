@@ -32,7 +32,6 @@
 extern int tabwidth;
 extern int smarttab;
 extern int script_line_numbers;
-extern int script_auto_complete;
 extern int script_auto_bracket;
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
