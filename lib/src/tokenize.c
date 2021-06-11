@@ -393,6 +393,8 @@ struct cmd_token_ {
 			   t == TOK_CBSTR ||  \
 			   t == TOK_BRSTR)
 
+#define bracketed_type(t) (t == TOK_PRSTR || t == TOK_BRSTR)
+
 #define wildsym(t) (t->type == TOK_AST || \
 		    (t->type == TOK_SYMB && t->s[0] == '?'))
 
@@ -2869,7 +2871,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 	    }
 	}
 	if (!token_done(tok)) {
-	    if (tok->type == TOK_PRSTR || tok->type == TOK_BRSTR) {
+	    if (bracketed_type(tok->type) && c->ci != PRINT) {
 		gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
 				     tok->type == TOK_PRSTR ? "(" : "[");
 		c->err = E_PARSE;
