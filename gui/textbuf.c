@@ -4570,8 +4570,13 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     cw = get_char_width(vwin->text);
     set_source_tabs(vwin->text, cw);
 
-    /* 2021-06-11: add auto completion */
-    set_sv_auto_completion(vwin);
+    if (script_auto_completion) {
+	/* 2021-06-11: add completion via gtksourceview */
+	gint8 comp_order[] = {0, 1, 2, 3};
+
+	set_sv_auto_completion(vwin);
+	set_auto_completion_priority(vwin->text, comp_order);
+    }
 
     if (hsize > 0) {
 	hsize *= cw;

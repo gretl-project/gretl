@@ -183,8 +183,11 @@ static void delete_words_provider (GtkSourceCompletion *comp,
     prov_info *pi;
 
     pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
-    name = pi->name[id];
+    if (pi == NULL) {
+	return;
+    }
 
+    name = pi->name[id];
     cw = g_object_get_data(G_OBJECT(vwin->text), name);
     if (cw == NULL) {
 	return;
@@ -472,6 +475,10 @@ static void delete_snippets_provider (GtkSourceCompletion *comp,
     SnippetProvider *sp = g_object_get_data(G_OBJECT(vwin->text),
 					    "snippets");
 
+    if (sp == NULL) {
+	return;
+    }
+
     gtk_source_completion_remove_provider(comp,
 					  GTK_SOURCE_COMPLETION_PROVIDER(sp),
 					  NULL);
@@ -497,8 +504,10 @@ void set_sv_auto_completion (windata_t *vwin)
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
     L = gtk_source_completion_get_providers(comp);
 
+#if 0
     fprintf(stderr, "set_sv_auto_completion: comp %p, L %p\n",
 	    (void *) comp, (void *) L);
+#endif
 
     if (script_auto_complete && L == NULL) {
 	/* set up and activate */
@@ -507,22 +516,47 @@ void set_sv_auto_completion (windata_t *vwin)
 	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
 	add_words_provider(comp, PROV_WORDS, vwin, pi);
 	add_words_provider(comp, PROV_FUNCS, vwin, pi);
-	add_snippets_provider(comp, vwin);
+	if (vwin->role == CONSOLE) {
+	    add_words_provider(comp, PROV_CMDS, vwin, pi);
+	} else {
+	    add_snippets_provider(comp, vwin);
+	}
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",
 			 G_CALLBACK(destroy_providers), NULL);
-	// add_provider(comp, PROV_CMDS, vwin, pi);
     } else if (!script_auto_complete && L != NULL) {
 	/* de-activate and clean up */
 	delete_words_provider(comp, PROV_WORDS, vwin);
 	delete_words_provider(comp, PROV_FUNCS, vwin);
+	delete_words_provider(comp, PROV_CMDS, vwin);
 	delete_snippets_provider(comp, vwin);
-	// delete_provider(comp, PROV_CMDS, vwin, pi);
+    }
+}
+
+/* Note: @w must be a vwin->text instance, and @priorities
+   must contain 4 small integers, high values representing
+   high priority. The order of the values is PROV_WORDS,
+   PROV_FUNCS, PROV_CMDS, PROV_SNIPPETS.
+*/
+
+void set_auto_completion_priority (GtkWidget *w, gint8 *order)
+{
+    GtkSourceCompletion *comp;
+    GtkSourceCompletionProvider *prov;
+    GList *L;
+
+    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(w));
+    L = gtk_source_completion_get_providers(comp);
+
+    while (L != NULL) {
+	prov = L->data;
+	g_object_set(G_OBJECT(L->data), "priority", order[i++]);
+	L = L->next;
     }
 }
 
 /* Ctrl + space is the signal for gtksourceview to offer
    completions. We want to invoke this signal via the Tab
-   key, so we have to manufacture an event.
+   key, so we have to manufacture a suitable event.
 */
 
 void tab_auto_complete (GdkEvent *orig)
