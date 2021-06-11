@@ -24,6 +24,6 @@ extern int script_auto_complete;
 
 void set_sv_auto_completion (windata_t *vwin);
 
-
+void tab_auto_complete (GdkEvent *orig);
 
 #endif /* GUI_COMPLETIONS_H */

@@ -2060,6 +2060,9 @@ int write_rc (gretlopt opt)
 	    boolvar_to_str(rcvar->var, val);
 	    fprintf(fp, "%s = %s\n", rcvar->key, val);
 	} else if (rcvar->flags & INTSET) {
+	    if (rcvar->var == &script_auto_complete) {
+		fprintf(stderr, "HERE autocomp, writing %d\n", *(int *) rcvar->var);
+	    }
 	    fprintf(fp, "%s = %d\n", rcvar->key, *(int *) rcvar->var);
 	} else if (rcvar->flags & FLOATSET) {
 	    gretl_push_c_numeric_locale();
@@ -2112,6 +2115,10 @@ static void str_to_boolvar (const char *s, void *b)
 static void str_to_int (const char *s, void *b)
 {
     int *ivar = (int *) b;
+
+    if (ivar == &script_auto_complete) {
+	fprintf(stderr, "HERE str_to_int: '%s'\n", s);
+    }
 
     if (s == NULL) return;
 

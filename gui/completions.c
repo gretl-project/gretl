@@ -40,21 +40,45 @@ enum {
 enum {
     PROV_WORDS,
     PROV_FUNCS,
-    PROV_CMDS
+    PROV_CMDS,
+    NPROV
 };
 
-struct prov_info {
-    gint8 id;
-    gint8 priority;
-    const char *name;
-    GtkTextBuffer *buf;
+typedef struct prov_info_ prov_info;
+
+struct prov_info_ {
+    gint8 id[NPROV];
+    gint8 priority[NPROV];
+    const char *name[NPROV];
+    GtkTextBuffer *buf[NPROV];
 };
 
-static struct prov_info providers[] = {
-    { PROV_WORDS, 1, "words", NULL },
-    { PROV_FUNCS, 2, "functions", NULL },
-    { PROV_CMDS,  3, "commands", NULL }
+static prov_info pi_defaults = {
+    { PROV_WORDS, PROV_FUNCS, PROV_CMDS},
+    { 1, 2, 3 },
+    { "words", "functions", "commands" },
+    { NULL, NULL, NULL }
 };
+
+static prov_info *prov_info_new (void)
+{
+    prov_info *pi = malloc(sizeof *pi);
+
+    *pi = pi_defaults;
+    return pi;
+}
+
+static void prov_info_destroy (prov_info *pi)
+{
+    int i;
+
+    for (i=0; i<NPROV; i++) {
+	if (pi->buf[i] != NULL) {
+	    g_object_unref(pi->buf[i]);
+	}
+    }
+    free(pi);
+}
 
 /* Create a GtkTextBuffer holding the names of built-in
    gretl functions, to serve as a completion provider.
@@ -122,15 +146,16 @@ static void maybe_set_user_activation (GObject *obj)
 #endif
 
 static void add_words_provider (GtkSourceCompletion *comp,
-				gint8 id, windata_t *vwin)
+				gint8 id, windata_t *vwin,
+				prov_info *pi)
 {
-    const char *name = providers[id].name;
+    const char *name = pi->name[id];
     GtkSourceCompletionWords *cw;
     GtkTextBuffer *buf;
 
     cw = gtk_source_completion_words_new(name, NULL);
 
-    g_object_set(cw, "priority", providers[id].priority, NULL);
+    g_object_set(cw, "priority", pi->priority[id], NULL);
 #ifdef ALT_COMPLETE
     maybe_set_user_activation(G_OBJECT(cw));
 #endif
@@ -138,9 +163,9 @@ static void add_words_provider (GtkSourceCompletion *comp,
     if (id == PROV_WORDS) {
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     } else if (id == PROV_FUNCS) {
-	buf = providers[id].buf = function_names_buffer();
+	buf = pi->buf[id] = function_names_buffer();
     } else {
-	buf = providers[id].buf = command_names_buffer();
+	buf = pi->buf[id] = command_names_buffer();
     }
     gtk_source_completion_words_register(cw, buf);
     gtk_source_completion_add_provider(comp,
@@ -152,9 +177,13 @@ static void add_words_provider (GtkSourceCompletion *comp,
 static void delete_words_provider (GtkSourceCompletion *comp,
 				   gint8 id, windata_t *vwin)
 {
-    const char *name = providers[id].name;
+    const char *name;
     GtkSourceCompletionWords *cw;
     GtkTextBuffer *buf;
+    prov_info *pi;
+
+    pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
+    name = pi->name[id];
 
     cw = g_object_get_data(G_OBJECT(vwin->text), name);
     if (cw == NULL) {
@@ -164,7 +193,7 @@ static void delete_words_provider (GtkSourceCompletion *comp,
     if (id == PROV_WORDS) {
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     } else {
-	buf = providers[id].buf;
+	buf = pi->buf[id];
     }
     gtk_source_completion_words_unregister(cw, buf);
     gtk_source_completion_remove_provider(comp,
@@ -174,8 +203,8 @@ static void delete_words_provider (GtkSourceCompletion *comp,
     g_object_set_data(G_OBJECT(vwin->text), name, NULL);
 
     if (id != PROV_WORDS) {
-	g_object_unref(G_OBJECT(providers[id].buf));
-	providers[id].buf = NULL;
+	g_object_unref(G_OBJECT(pi->buf[id]));
+	pi->buf[id] = NULL;
     }
 }
 
@@ -451,6 +480,15 @@ static void delete_snippets_provider (GtkSourceCompletion *comp,
 
 /* end snippets apparatus */
 
+static void destroy_providers (GtkWidget *w, gpointer p)
+{
+    prov_info *pi = g_object_get_data(G_OBJECT(w), "prov_info");
+
+    if (pi != NULL) {
+	prov_info_destroy(pi);
+    }
+}
+
 void set_sv_auto_completion (windata_t *vwin)
 {
     GtkSourceCompletion *comp;
@@ -459,17 +497,69 @@ void set_sv_auto_completion (windata_t *vwin)
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
     L = gtk_source_completion_get_providers(comp);
 
+    fprintf(stderr, "set_sv_auto_completion: comp %p, L %p\n",
+	    (void *) comp, (void *) L);
+
     if (script_auto_complete && L == NULL) {
 	/* set up and activate */
-	add_words_provider(comp, PROV_WORDS, vwin);
-	add_words_provider(comp, PROV_FUNCS, vwin);
+	prov_info *pi = prov_info_new();
+
+	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
+	add_words_provider(comp, PROV_WORDS, vwin, pi);
+	add_words_provider(comp, PROV_FUNCS, vwin, pi);
 	add_snippets_provider(comp, vwin);
-	// add_provider(comp, PROV_CMDS, vwin);
+	g_signal_connect(G_OBJECT(vwin->text), "destroy",
+			 G_CALLBACK(destroy_providers), NULL);
+	// add_provider(comp, PROV_CMDS, vwin, pi);
     } else if (!script_auto_complete && L != NULL) {
 	/* de-activate and clean up */
 	delete_words_provider(comp, PROV_WORDS, vwin);
 	delete_words_provider(comp, PROV_FUNCS, vwin);
 	delete_snippets_provider(comp, vwin);
-	// delete_provider(comp, PROV_CMDS, vwin);
+	// delete_provider(comp, PROV_CMDS, vwin, pi);
+    }
+}
+
+/* Ctrl + space is the signal for gtksourceview to offer
+   completions. We want to invoke this signal via the Tab
+   key, so we have to manufacture an event.
+*/
+
+void tab_auto_complete (GdkEvent *orig)
+{
+    GdkKeymap *keymap = NULL;
+    GdkKeymapKey *keys;
+    gint n_keys;
+
+#if GTK_MAJOR_VERSION >= 3 || defined(G_OS_WIN32)
+    /* with GDK 3, we can't pass NULL for keymap below -- and neither
+       (it appears) for GDK 2 on MS Windows
+    */
+    keymap = gdk_keymap_get_for_display(gdk_display_get_default());
+#endif
+
+    if (gdk_keymap_get_entries_for_keyval(keymap, GDK_space, &keys, &n_keys)) {
+	guint16 hardware_keycode;
+	GdkEvent *event;
+
+	hardware_keycode = keys[0].keycode;
+	g_free(keys);
+
+	event = gdk_event_new(GDK_KEY_PRESS);
+	event->key.window = g_object_ref(((GdkEventKey *) orig)->window);
+	event->key.hardware_keycode = hardware_keycode;
+	event->key.keyval = gdk_unicode_to_keyval(GDK_space);
+	event->key.state = GDK_CONTROL_MASK;
+	event->key.length = 1;
+	event->key.send_event = FALSE;
+	event->key.time = GDK_CURRENT_TIME;
+
+#if GTK_MAJOR_VERSION >= 3
+	/* we now get warning spew if no device is attached */
+	gdk_event_set_device(event, gdk_event_get_device(orig));
+#endif
+
+	gtk_main_do_event(event);
+	gdk_event_free(event);
     }
 }

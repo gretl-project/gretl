@@ -24,6 +24,7 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "gui_recode.h"
+#include "completions.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -44,7 +45,7 @@ static gchar *hist0;
 static GtkWidget *console_main;
 static int console_protected;
 
-static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
+static gint console_key_handler (GtkWidget *cview, GdkEvent *key,
 				 gpointer p);
 
 static void protect_console (void)
@@ -514,6 +515,8 @@ command_continues (char *targ, const gchar *src, int *err)
     return contd;
 }
 
+#if 0
+
 const char *console_varname_complete (const char *s)
 {
     size_t n = strlen(s);
@@ -573,6 +576,8 @@ static gint console_complete_word (GtkTextBuffer *buf,
     return TRUE;
 }
 
+#endif
+
 static gchar *console_get_current_line (GtkTextBuffer *buf,
 					GtkTextIter *iter)
 {
@@ -588,10 +593,11 @@ static gchar *console_get_current_line (GtkTextBuffer *buf,
 #define IS_BACKKEY(k) (k == GDK_BackSpace || k == GDK_Left)
 
 static gint console_key_handler (GtkWidget *cview,
-				 GdkEventKey *event,
+				 GdkEvent *event,
 				 gpointer p)
 {
-    guint keyval = event->keyval;
+    GdkEventKey *kevent = (GdkEventKey *) event;
+    guint keyval = kevent->keyval;
     guint upkey = gdk_keyval_to_upper(keyval);
     GtkTextIter ins, end;
     GtkTextBuffer *buf;
@@ -599,7 +605,7 @@ static gint console_key_handler (GtkWidget *cview,
     gint ctrl = 0;
 
 #ifdef OS_OSX
-    if (cmd_key(event)) {
+    if (cmd_key(kevent)) {
 	if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
@@ -607,7 +613,7 @@ static gint console_key_handler (GtkWidget *cview,
     }
 #endif
 
-    if (event->state & GDK_CONTROL_MASK) {
+    if (kevent->state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_Control_L || keyval == GDK_Control_R) {
 	    return FALSE;
 	} else if (upkey == GDK_C || upkey == GDK_X) {
@@ -632,7 +638,7 @@ static gint console_key_handler (GtkWidget *cview,
 	gtk_text_buffer_get_end_iter(buf, &ins);
     }
 
-    if (keyval == GDK_Home && (event->state & GDK_SHIFT_MASK)) {
+    if (keyval == GDK_Home && (kevent->state & GDK_SHIFT_MASK)) {
 	/* "select to start of line" */
 	GtkTextIter start = ins;
 
@@ -660,7 +666,8 @@ static gint console_key_handler (GtkWidget *cview,
 
     if (keyval == GDK_Return) {
 	/* execute the command, unless backslash-continuation
-	   is happening */
+	   is happening
+	*/
 	ExecState *state;
 	gchar *thisline;
 	int contd = 0, err = 0;
@@ -717,9 +724,10 @@ static gint console_key_handler (GtkWidget *cview,
 	return TRUE;
     }
 
-    if (keyval == GDK_Tab) {
-	/* tab completion for gretl commands, series names */
-	return console_complete_word(buf, &ins);
+    if (keyval == GDK_Tab && script_auto_complete) {
+	/* FIXME conditionality! */
+	tab_auto_complete(event);
+	return TRUE;
     }
 
     return FALSE;

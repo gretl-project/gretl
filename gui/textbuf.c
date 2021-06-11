@@ -3644,50 +3644,6 @@ static gboolean script_electric_enter (windata_t *vwin)
     return ret;
 }
 
-/* Ctrl + space is the signal for gtksourceview to offer
-   completions. We want to invoke this signal via the Tab
-   key, so we have to manufacture an event.
-*/
-
-static void emit_control_space (GdkEvent *orig)
-{
-    GdkKeymap *keymap = NULL;
-    GdkKeymapKey *keys;
-    gint n_keys;
-
-#if GTK_MAJOR_VERSION >= 3 || defined(G_OS_WIN32)
-    /* with GDK 3, we can't pass NULL for keymap below -- and neither
-       (it appears) for GDK 2 on MS Windows
-    */
-    keymap = gdk_keymap_get_for_display(gdk_display_get_default());
-#endif
-
-    if (gdk_keymap_get_entries_for_keyval(keymap, GDK_space, &keys, &n_keys)) {
-	guint16 hardware_keycode;
-	GdkEvent *event;
-
-	hardware_keycode = keys[0].keycode;
-	g_free(keys);
-
-	event = gdk_event_new(GDK_KEY_PRESS);
-	event->key.window = g_object_ref(((GdkEventKey *) orig)->window);
-	event->key.hardware_keycode = hardware_keycode;
-	event->key.keyval = gdk_unicode_to_keyval(GDK_space);
-	event->key.state = GDK_CONTROL_MASK;
-	event->key.length = 1;
-	event->key.send_event = FALSE;
-	event->key.time = GDK_CURRENT_TIME;
-
-#if GTK_MAJOR_VERSION >= 3
-	/* we now get warning spew if no device is attached */
-	gdk_event_set_device(event, gdk_event_get_device(orig));
-#endif
-
-	gtk_main_do_event(event);
-	gdk_event_free(event);
-    }
-}
-
 /* handler for the user pressing the Tab key when editing a gretl script */
 
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
@@ -3704,7 +3660,7 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 	if (maybe_insert_smart_tab(vwin)) {
 	    return TRUE;
 	} else if (script_auto_complete) {
-	    emit_control_space(event);
+	    tab_auto_complete(event);
 	    return TRUE;
 	}
     }
@@ -4613,6 +4569,9 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 
     cw = get_char_width(vwin->text);
     set_source_tabs(vwin->text, cw);
+
+    /* 2021-06-11: add auto completion */
+    set_sv_auto_completion(vwin);
 
     if (hsize > 0) {
 	hsize *= cw;
