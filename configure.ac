@@ -789,6 +789,10 @@ if test "$gtk_version" = "3.0" ; then
     )
 fi
 
+if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
+   AC_DEFINE(HAVE_ALT_COMPLETE)
+fi
+
 if test x"${MSGFMT}" != x ; then
    build_po="yes"
 else

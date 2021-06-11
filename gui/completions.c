@@ -20,8 +20,7 @@
 #include "gretl.h"
 #include "genparse.h"
 
-#ifdef USE_GTKSOURCEVIEW_3 /* fixme conditionality */
-# define ALT_COMPLETE
+#ifdef USE_GTKSOURCEVIEW_3
 # define GTK_TYPE_SOURCE_COMPLETION_PROVIDER GTK_SOURCE_TYPE_COMPLETION_PROVIDER
 #endif
 
@@ -133,7 +132,7 @@ static GtkTextBuffer *command_names_buffer (void)
     return tbuf;
 }
 
-#ifdef ALT_COMPLETE
+#ifdef HAVE_ALT_COMPLETE
 
 static void maybe_set_user_activation (GObject *obj)
 {
@@ -156,7 +155,7 @@ static void add_words_provider (GtkSourceCompletion *comp,
     cw = gtk_source_completion_words_new(name, NULL);
 
     g_object_set(cw, "priority", pi->priority[id], NULL);
-#ifdef ALT_COMPLETE
+#ifdef HAVE_ALT_COMPLETE
     maybe_set_user_activation(G_OBJECT(cw));
 #endif
 
@@ -454,7 +453,7 @@ static void add_snippets_provider (GtkSourceCompletion *comp,
 
     sp = g_object_new(snippet_provider_get_type(), NULL);
     sp->priority = 1;
-#ifdef ALT_COMPLETE
+#ifdef HAVE_ALT_COMPLETE
     if (script_auto_complete == COMPLETE_TAB) {
 	sp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
     } else {

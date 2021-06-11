@@ -315,7 +315,7 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor,
       BOOLSET, 0, TAB_EDITOR, NULL },
-#ifdef USE_GTKSOURCEVIEW_3
+#ifdef HAVE_ALT_COMPLETE
     { "script_auto_complete", N_("Auto-completion"), NULL, &script_auto_complete,
       LISTSET | INTSET, 0, TAB_EDITOR, NULL },
 #else

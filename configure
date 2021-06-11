@@ -22709,6 +22709,11 @@ $as_echo "yes" >&6; }
 fi
 fi
 
+if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
+   $as_echo "#define HAVE_ALT_COMPLETE 1" >>confdefs.h
+
+fi
+
 if test x"${MSGFMT}" != x ; then
    build_po="yes"
 else
