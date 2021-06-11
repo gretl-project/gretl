@@ -398,8 +398,9 @@ snippet_provider_populate (GtkSourceCompletionProvider *provider,
     if (ret != NULL) {
 	ret = g_list_reverse(ret);
     }
+
     gtk_source_completion_context_add_proposals(context, provider, ret, TRUE);
-    /* g_list_free(ret) ?? */
+    g_list_free(ret);
 }
 
 static void
@@ -541,15 +542,14 @@ void set_sv_auto_completion (windata_t *vwin)
 void set_auto_completion_priority (GtkWidget *w, gint8 *order)
 {
     GtkSourceCompletion *comp;
-    GtkSourceCompletionProvider *prov;
     GList *L;
+    int i = 0;
 
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(w));
     L = gtk_source_completion_get_providers(comp);
 
     while (L != NULL) {
-	prov = L->data;
-	g_object_set(G_OBJECT(L->data), "priority", order[i++]);
+	g_object_set(G_OBJECT(L->data), "priority", order[i++], NULL);
 	L = L->next;
     }
 }

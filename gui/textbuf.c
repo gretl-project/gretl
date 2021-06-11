@@ -4570,7 +4570,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     cw = get_char_width(vwin->text);
     set_source_tabs(vwin->text, cw);
 
-    if (script_auto_completion) {
+    if (script_auto_complete) {
 	/* 2021-06-11: add completion via gtksourceview */
 	gint8 comp_order[] = {0, 1, 2, 3};
 
