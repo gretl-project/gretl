@@ -7594,6 +7594,8 @@
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
+	In the case of panel data the specification may include
+	individual fixed effects.
       </para>
       <para>
 	The dependent variable must be strictly positive.  If all its
@@ -7642,6 +7644,7 @@
 
     <gui-access>
       <menu-path>/Model/Limited dependent variable/Logistic</menu-path>
+      <menu-path>/Model/Panel/FE logistic</menu-path>
     </gui-access>
 
   </command>

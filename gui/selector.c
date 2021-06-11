@@ -7265,6 +7265,8 @@ static void build_selector_buttons (selector *sr)
 	    ci = LOGIT;
 	} else if (sr->ci == OPROBIT) {
 	    ci = PROBIT;
+	} else if (sr->ci == FE_LOGISTIC) {
+	    ci = LOGISTIC;
 	} else if (IV_MODEL(sr->ci)) {
 	    ci = IVREG;
 	}
