@@ -52,8 +52,8 @@ struct prov_info {
 
 static struct prov_info providers[] = {
     { PROV_WORDS, 1, "words", NULL },
-    { PROV_WORDS, 2, "functions", NULL },
-    { PROV_WORDS, 3, "commands", NULL }
+    { PROV_FUNCS, 2, "functions", NULL },
+    { PROV_CMDS,  3, "commands", NULL }
 };
 
 /* Create a GtkTextBuffer holding the names of built-in
