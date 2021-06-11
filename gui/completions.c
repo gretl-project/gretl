@@ -27,6 +27,7 @@
 #define AC_DEBUG 0
 
 #include <gtksourceview/gtksourcecompletionprovider.h>
+#include <gtksourceview/gtksourcecompletionitem.h>
 #include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 int script_auto_complete;
