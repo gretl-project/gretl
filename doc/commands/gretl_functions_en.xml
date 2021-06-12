@@ -2012,8 +2012,8 @@
 	</para>
 	<para>
 	  When <argname>k</argname> &gt; <argname>n</argname> or
-	  <argname>k</argname> &lt; 0 no valid answer exists and NA is
-	  returned.
+	  <argname>k</argname> &lt; 0 no valid answer exists and an
+	  error is flagged.
 	</para>
 	<para>
 	  If the two arguments differ in type, the type of the result

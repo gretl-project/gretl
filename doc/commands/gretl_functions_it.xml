@@ -2003,7 +2003,7 @@
 	</para>
 	<para>
 	  Quando <argname>k</argname> &gt; <argname>n</argname> oppure
-	  <argname>k</argname> &lt; 0, la funzione restituisce NA.
+	  <argname>k</argname> &lt; 0, la funzione produce un errore.
 	</para>
 	<para>
 	  Se i due argomenti sono di tipo diverso, il risultato è del
