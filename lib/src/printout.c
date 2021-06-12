@@ -2167,7 +2167,7 @@ static int print_listed_objects (const char *s,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    const char *syms = "=+-/*<>?|~^!%&.,:;\\'[({";
+    const char *syms = "=+-/*<>?|~^!%&.,:;\\'[({$";
     char *name = NULL;
     int err = 0;
 
