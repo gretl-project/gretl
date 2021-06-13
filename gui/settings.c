@@ -289,8 +289,6 @@ RCVAR rc_vars[] = {
     { "mpi_pref", N_("Installed MPI variant"), NULL, mpi_pref,
       LISTSET, 8, TAB_MPI, NULL},
 #endif
-    { "dbhost", N_("Database server name"), NULL, paths.dbhost,
-      USERSET, sizeof paths.dbhost, TAB_NET, NULL },
     { "dbproxy", N_("HTTP proxy"), NULL, http_proxy,
       USERSET, sizeof http_proxy, TAB_NET, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy,
@@ -2008,7 +2006,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 	}
     }
 
-    gretl_www_init(paths.dbhost, http_proxy, use_proxy);
+    gretl_www_init(http_proxy, use_proxy);
 }
 
 static void boolvar_to_str (void *b, char *s)
@@ -2210,7 +2208,7 @@ static int common_read_rc_setup (int updated)
 	set_gretl_alarm(0);
     }
 
-    gretl_www_init(paths.dbhost, http_proxy, use_proxy);
+    gretl_www_init(http_proxy, use_proxy);
     set_tex_use_pdf(latex);
     set_gp_theme();
 

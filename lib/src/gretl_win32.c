@@ -241,7 +241,7 @@ void win32_cli_read_rc (void)
     }
 
     gretl_set_paths(&cpaths);
-    gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+    gretl_www_init(dbproxy, use_proxy);
 
     if (gptheme != NULL) {
 	set_plotstyle(gptheme);

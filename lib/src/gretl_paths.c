@@ -75,7 +75,6 @@ struct INTERNAL_PATHS {
     char jlpath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
-    char dbhost[32];
     char pngfont[128];
     unsigned char status;
 };
@@ -2640,7 +2639,7 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
    gretldir
    gnuplot (but not for MS Windows package)
    tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, statapath,
-     pypath, jlpath, dbhost
+     pypath, jlpath
 
    * paths.workdir is updated via the separate working directory
      dialog
@@ -2662,10 +2661,6 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
         set_gretl_plugpath(paths.gretldir);
         ndelta++;
     }
-
-    /* native databases */
-    maybe_transcribe_path(paths.dbhost, cpaths->dbhost,
-                          PATH_BLANK_OK);
 
 #if !defined(WIN32) || !defined(PKGBUILD)
     /* gnuplot path: this is set immutably at start-up in the
@@ -2745,8 +2740,6 @@ static void load_default_path (char *targ)
 
     if (targ == paths.workdir) {
         load_default_workdir(targ);
-    } else if (targ == paths.dbhost) {
-        strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.x12a) {
         sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
     } else if (targ == paths.tramo) {
@@ -2836,8 +2829,6 @@ static void load_default_path (char *targ)
 
     if (targ == paths.workdir) {
         load_default_workdir(targ);
-    } else if (targ == paths.dbhost) {
-        strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.gnuplot) {
 #if defined(OS_OSX) && defined(PKGBUILD)
         sprintf(targ, "%sgnuplot", gretl_bindir());
@@ -2930,9 +2921,6 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
 {
     /* working directory */
     path_init(paths.workdir, cpaths->workdir, 1);
-
-    /* database server */
-    path_init(paths.dbhost, cpaths->dbhost, 0);
 
     /* gnuplot */
 #if defined(WIN32) && defined(PKGBUILD)
@@ -3347,8 +3335,6 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 #endif
         } else if (!strcmp(key, "lcnumeric")) {
 	    set_lcnumeric(LANG_AUTO, rc_bool(val));
-        } else if (!strcmp(key, "dbhost")) {
-            strncat(cpaths->dbhost, val, 32 - 1);
         } else if (!strcmp(key, "dbproxy")) {
             strncat(dbproxy, val, PROXLEN - 1);
         } else if (!strcmp(key, "useproxy")) {
@@ -3472,7 +3458,7 @@ int cli_read_rc (void)
     }
 
 #ifdef USE_CURL
-    gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+    gretl_www_init(dbproxy, use_proxy);
 #endif
 
 #if 0

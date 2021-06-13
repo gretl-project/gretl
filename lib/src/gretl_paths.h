@@ -66,7 +66,6 @@ struct ConfigPaths_ {
     char jlpath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
-    char dbhost[64];
     char pngfont[128];
     int no_dotdir;
 };

@@ -43,7 +43,7 @@ typedef enum {
     ALL_CATS
 } CGIOpt;
 
-int gretl_www_init (const char *host, const char *proxy, int use_proxy);
+int gretl_www_init (const char *proxy, int use_proxy);
 
 void gretl_www_cleanup (void);
 

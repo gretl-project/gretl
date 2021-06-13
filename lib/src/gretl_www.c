@@ -47,30 +47,31 @@ enum {
     SAVE_TO_BUFFER
 } save_opt;
 
-#define DBHLEN 64
+#define HLEN 64
 
 #define SF_CGI 0
 
-static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
-static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
-static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
-static char updatecgi[DBHLEN]    = "/cgi-bin/gretl_update.cgi";
-static char manual_path[DBHLEN]  = "/project/gretl/manual/";
-static char dataset_path[DBHLEN] = "/project/gretl/datafiles/";
-static char datapkg_list[DBHLEN] = "/addons-data/datapkgs.txt";
+static char gretlhost[HLEN]    = "ricardo.ecn.wfu.edu";
+static char datacgi[HLEN]      = "/gretl/cgi-bin/gretldata.cgi";
+static char updatecgi[HLEN]    = "/cgi-bin/gretl_update.cgi";
+
+/* paths on sourceforge */
+static char manual_path[HLEN]  = "/project/gretl/manual/";
+static char dataset_path[HLEN] = "/project/gretl/datafiles/";
+static char datapkg_list[HLEN] = "/addons-data/datapkgs.txt";
 
 #if SF_CGI
-static char dbserver[DBHLEN]     = "gretl.sourceforge.net";
-static char dbcgi[DBHLEN]        = "/cgi-bin/gretldata.cgi";
+static char dbserver[HLEN]     = "gretl.sourceforge.net";
+static char dbcgi[HLEN]        = "/cgi-bin/gretldata.cgi";
 #else
-static char dbserver[DBHLEN]     = "ricardo.ecn.wfu.edu";
+static char dbserver[HLEN]     = "ricardo.ecn.wfu.edu";
 #endif
 
 static int wproxy;
 static char proxyhost[128];
 
-static char sffiles[DBHLEN] = "downloads.sourceforge.net";
-static char sfweb[DBHLEN]   = "gretl.sourceforge.net";
+static char sffiles[HLEN] = "downloads.sourceforge.net";
+static char sfweb[HLEN]   = "gretl.sourceforge.net";
 
 #ifdef WIN32
 static char certs_path[MAXLEN];
@@ -654,21 +655,13 @@ static int retrieve_url (const char *hostname,
 
 /* public interfaces follow */
 
-int gretl_www_init (const char *host, const char *proxy, int use_proxy)
+int gretl_www_init (const char *proxy, int use_proxy)
 {
-    if (host != NULL && *host != '\0') {
-	*dbhost = '\0';
-	strncat(dbhost, host, DBHLEN - 1);
-    }
-
-    wproxy = use_proxy;
-
     if (use_proxy && proxy != NULL && *proxy != '\0') {
 	*proxyhost = '\0';
 	strncat(proxyhost, proxy, sizeof proxyhost - 1);
-    }
-
-    if (wproxy && *proxyhost == '\0') {
+	wproxy = 1;
+    } else {
 	wproxy = 0;
     }
 
