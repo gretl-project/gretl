@@ -4,7 +4,7 @@ clear
 set assert stop
 include assertion.gfn
 
-include "../src/logging.inp" --force
+include "../logging.inp" --force
 
 
 set logstamp off          # Timestamp is deactivated as we cannot mock it

@@ -121,7 +121,7 @@ using gretl's 'outfile' command, as in the example below:
   end outfile
 
 In this case the message goes to mylog.txt, and is not mixed in with regular
-progam output.
+program output.
 
 Changelog:
 ----------
