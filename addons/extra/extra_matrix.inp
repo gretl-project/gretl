@@ -206,9 +206,9 @@ function matrix combinations (matrix from "Set of all choices",
                               int h[1::] "Number of selected choices")
     /* If "from" is a vector with n elements, this function returns a
         matrix whose rows are all the possible subsets with h elements;
-        a recursive algorithm is used.
+        for h>2, a recursive algorithm is used.
 
-       For example: choose({1,2,3}, 2) returns
+       For example: combinations({1,2,3}, 2) returns
 
          1   2
          1   3
@@ -224,19 +224,23 @@ function matrix combinations (matrix from "Set of all choices",
         return {NA}
     endif
 
+    # special cases
     if h == 1
         return vec(from)
+    elif h == 2
+        scalar n = nelem(from)
+        a = mshape(from, n, n)
+        return (a')[lower] ~ a[lower]
     endif
 
     matrix ret = {}
     scalar n = nelem(from)
-    scalar h_rec = h-1
 
     loop i=1..(n-h+1)
         scalar x = from[i]
         matrix c = from[i+1:]
         if rows(c)
-            matrix ret |= x ~ combinations(c, h_rec)
+            matrix ret |= x ~ combinations(c, h-1)
         endif
     endloop
 
