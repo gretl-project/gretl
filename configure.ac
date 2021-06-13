@@ -1069,6 +1069,8 @@ if test "${build_addons}" = "yes" ; then
     addons/regls/pkg.inp
     addons/regls/Makefile
     addons/regls/doc/Makefile
+    addons/logging/pkg.inp
+    addons/logging/Makefile
   ])
 fi
 
