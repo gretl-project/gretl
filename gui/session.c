@@ -2830,7 +2830,7 @@ static void rename_object_callback (GtkWidget *widget, dialog_t *dlg)
     if (newname != NULL && *newname != '\0' &&
 	strcmp(newname, obj->name)) {
 	GtkWidget *parent = edit_dialog_get_window(dlg);
-	gchar str[SHOWNAMELEN + 1];
+	gchar str[2*SHOWNAMELEN];
 
 	err = rename_session_object(obj, newname, parent);
 	if (!err) {
@@ -3797,7 +3797,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     obj = gui_object_new(name, sort, data);
 
     /* full-length object name as tooltip */
-    if (strlen(name) > SHOWNAMELEN) {
+    if (g_utf8_strlen(name, -1) > SHOWNAMELEN) {
 	gretl_tooltips_add(GTK_WIDGET(obj->icon), name);
 	icon_named = 1;
     }
@@ -4013,7 +4013,7 @@ void view_session (void)
     title = g_strdup_printf("gretl: %s", _("icon view"));
     gtk_window_set_title(GTK_WINDOW(iconview), title);
     g_free(title);
-    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 420, 320);
 
     gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
     g_signal_connect(G_OBJECT(iconview), "destroy",
@@ -4092,7 +4092,7 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
     pbuf = gdk_pixbuf_new_from_xpm_data(xpm);
 
     obj->icon = gtk_event_box_new();
-    gtk_widget_set_size_request(obj->icon, 36, 36);
+    gtk_widget_set_size_request(obj->icon, 44, 36);
 
     image = gtk_image_new_from_pixbuf(pbuf);
     g_object_unref(G_OBJECT(pbuf));
@@ -4104,8 +4104,15 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 	session_drag_setup(obj);
     }
 
+#if 0
+    obj->label = gtk_label_new(obj->name);
+    gtk_label_set_max_width_chars(GTK_LABEL(obj->label), SHOWNAMELEN);
+    gtk_label_set_line_wrap(GTK_LABEL(obj->label), TRUE);
+    gtk_label_set_lines(GTK_LABEL(obj->label), 2);
+#else
     make_short_label_string(str, obj->name);
     obj->label = gtk_label_new(str);
+#endif
 
     g_object_ref(obj->icon);
     g_object_ref(obj->label);
