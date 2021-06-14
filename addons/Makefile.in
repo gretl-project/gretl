@@ -20,9 +20,9 @@ else
   funcsdir = $(datarootdir)/gretl/functions
 endif
 
-SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls
+SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging
 XMLSUBDIRS = gig ivpanel SVAR HIP
-ALLSUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls
+ALLSUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 

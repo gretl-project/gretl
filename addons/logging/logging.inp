@@ -1,0 +1,55 @@
+function void print_log_msg (const string msg, const string level)
+    /* Print the log meesage with or without timestamp. */
+
+    if $logstamp
+        string fmt = "%Y-%m-%d %H:%M:%S %Z"
+        printf "\n%s %s: %s\n", level, strftime($now[1], fmt), msg
+    else
+        printf "\n%s: %s\n", level, msg
+    endif
+end function
+
+
+function void Debug (const string msg)
+    /* Debug level.*/
+
+    if $loglevel <= 0
+        print_log_msg(msg, "DEBUG")
+    endif
+end function
+
+
+function void Info (const string msg)
+    /* Info level.*/
+
+    if $loglevel <= 1
+        print_log_msg(msg, "INFO")
+    endif
+end function
+
+
+function void Warn (const string msg)
+    /* Warning level.*/
+
+    if $loglevel <= 2
+        print_log_msg(msg, "WARNING")
+    endif
+end function
+
+
+function void Error (const string msg)
+    /* Error level.*/
+
+    if $loglevel <= 3
+        print_log_msg(msg, "ERROR")
+    endif
+end function
+
+
+function void Critical (const string msg)
+    /* Critical level.*/
+
+    if $loglevel <= 4
+        print_log_msg(msg, "CRITICAL")
+    endif
+end function

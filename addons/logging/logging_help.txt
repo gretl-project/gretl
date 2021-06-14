@@ -1,0 +1,130 @@
+This package provides a way to record the history and progress of a computation as
+a log of events.
+
+The user adds logging calls to her code to indicate that certain events have
+occurred. Events are created by inserting a logging statement into the source
+code, for example, the code
+
+  Warn("Task XY failed.")
+
+prints
+
+  WARNING: Task XY failed.
+
+Using logging provides some advantages over using print or printf statements:
+
+First, it allows you to control the visibility and presentation of messages
+without editing the source code. For example, in contrast to the Warn() above
+
+  Debug("This is a debugging message")
+
+will produce no output by default; Debug messages are printed only if the user
+selects a verbose level of logging.
+
+Second, it's cheap to leave debug statements like this in the source code: the
+system evaluates the message only if it is currently called for.
+
+In this case, the associated string processing of "This is a debugging message"
+will never be executed unless debug logging is enabled.
+
+Note that the message passed to a logging function does not have to a fixed
+piece of text. You can incorporate current state information by means of the
+sprintf function, as in this example
+
+  Warn(sprintf("The vector x looks funny:\n%g\n", x))
+
+which prints the elements of x following the message.
+
+Public functions
+----------------
+
+"logging" provides a set of convenience functions for simple logging usage.
+These are:
+
+- Debug()
+- Info()
+- Warn()
+- Error()
+- Critical()
+
+All functions share the same simple signature, e.g.
+
+Info(const string msg)
+
+where 'msg' is some string which gets printed to the console. Nothing is
+returned by this function.
+
+Loglevel
+--------
+
+The importance of an event can also be called the "level". Gretl currently
+supports five log-levels which can be set through the "set loglevel <LEVEL>"
+command where <LEVEL> can be either be an integer or string value. The
+currently set "loglevel" can be accessed by gretl's built-in $loglevel
+accessor.
+
+The following levels are built into gretl since version 2020c:
+
+integer    string
+-----------------
+  0	    debug
+  1	    info
+  2	    warn
+  3	    error
+  4	    critical
+
+The table below may be helpful in determining which level of logging to use for
+which purpose. (It is borrowed from https://docs.python.org/3/howto/logging.html).
+
+Debug: Detailed information, typically of interest only when diagnosing
+problems.
+
+Info: Confirmation that things are working as expected.
+
+Warn: An indication that something unexpected happened, or indicative of some
+problem in the near future (e.g. ‘disk space low’). The software is still working
+as expected.
+
+Error: Due to a more serious problem, the software has not been able to perform
+some function.
+
+Critical: A serious error, indicating that the program itself may be unable to
+continue running.
+
+Logging with timestamp
+----------------------
+
+Gretl includes the "set logstamp <VALUE>" command where <VALUE> is a boolean:
+set off/0/false/FALSE for no timestamp, on/1/true/TRUE for timestamps. The
+currently set "logstamp" can be accessed by gretl's built-in $logstamp
+accessor. A simple example follows:
+
+  include logging.gfn
+  Warn("Watch out!")      # will print a message to the console
+  Debug("I told you so")  # will not print anything
+
+and you will see
+
+  WARNING: Watch out!
+
+printed out on the console.
+
+Logging to a file
+-----------------
+
+A common use of a logging apparatus involves writing logged events to file.
+This is not supported by gretl at present. However, you can wrap logging calls
+using gretl's 'outfile' command, as in the example below:
+
+  outfile mylog.txt --quiet --append
+  Warn("Watch out!")
+  end outfile
+
+In this case the message goes to mylog.txt, and is not mixed in with regular
+program output.
+
+Changelog:
+----------
+
+v0.1 (June 2021)
+- Initial version.
