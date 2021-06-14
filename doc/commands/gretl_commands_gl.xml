@@ -7594,6 +7594,8 @@
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
+	No caso de usar datos de panel, a especificación pode incluír os
+	efectos fixos individuais.
       </para>
       <para>
 	A variable dependente debe de ser estritamente positiva. Se
@@ -7642,6 +7644,7 @@
 
     <gui-access>
       <menu-path>/Modelar/Variable Dependente Limitada/Loxística</menu-path>
+      <menu-path>/Modelar/Panel/Loxística EF</menu-path>
     </gui-access>
 
   </command>
@@ -13447,6 +13450,12 @@
 	  ou <lit>stop</lit>. Controla as consecuencias dun fallo
 	  (que o valor que se devolva sexa igual a 0) da función
 	  <fncref targ="assert"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>datacols</lit>: Un número enteiro entre 1 e 15, cuxo valor
+	  por defecto é 5. Establece o número máximo de series que se presentan
+	  conxuntamente cando os datos se representan por observación.
 	  </para>
 	</li>
       </ilist>

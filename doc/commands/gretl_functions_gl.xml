@@ -1038,6 +1038,26 @@
               unha volta atrás do <lit>localhost</lit>.
             </para>
 	  </li>
+	  <li>
+            <para>
+              <lit>mem</lit>: un vector bidimensional que contén a memoria
+              física total, e a memoria libre ou dispoñible, expresadas en
+              MB. Esta información pode que non estea dispoñible en todos
+              os sistemas, pero debera estalo en Windows, macOS e Linux.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>foreign</lit>: un sub-feixe que contén indicadores 0/1
+              para amosar a presencia no sistema, de cada un dos
+              programas <quote>externos</quote> que admite GRETL
+              baixo as claves <lit>julia</lit>, <lit>octave</lit>,
+              <lit>ox</lit>, <lit>python</lit>, <lit>Rbin</lit>,
+              <lit>Rlib</lit> e <lit>stata</lit>. As dúas claves que
+              corresponden a R representan respectivamente, o
+              executable de R e a biblioteca compartida.
+            </para>
+	  </li>
 	</ilist>
 	<para>
 	  Fíxate en que podes acceder a elementos individuais do feixe
@@ -1993,7 +2013,7 @@
 	<para>
 	  Cando <argname>k</argname> &gt; <argname>n</argname> ou
 	  <argname>k</argname> &lt; 0, non hai unha resposta válida
-	  polo que se devolve NA.
+	  polo que se amosa un fallo.
 	</para>
 	<para>
 	  Se os dous argumentos son de diferente tipo, o resultado será
