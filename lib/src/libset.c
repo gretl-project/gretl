@@ -233,6 +233,7 @@ setvar setvars[] = {
     { STOPWATCH,     "stopwatch", CAT_SPECIAL },
     { VERBOSE,       "verbose",   CAT_SPECIAL },
     { SV_WORKDIR,    "workdir",   CAT_SPECIAL },
+    { SV_LOGFILE,    "logfile",   CAT_SPECIAL },
     { GRAPH_THEME,   "graph_theme", CAT_SPECIAL },
     { DISP_DIGITS,   "display_digits", CAT_SPECIAL }
 };
@@ -1209,6 +1210,22 @@ static int set_workdir (const char *s)
     return err;
 }
 
+static int set_logfile (const char *s)
+{
+    int err = 0;
+
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_set("set logfile: cannot be done inside a function");
+	return 1;
+    } else if (*s == '\0') {
+	return E_DATA;
+    } else {
+	gretl_insert_builtin_string("logfile", s);
+    }
+
+    return err;
+}
+
 const char *csv_delims = ", \t;";
 
 static char delim_from_arg (const char *s)
@@ -1625,6 +1642,8 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_matrix_mask(setarg, dset);
 	} else if (sv->key == SV_WORKDIR) {
 	    return set_workdir(setarg);
+	} else if (sv->key == SV_LOGFILE) {
+	    return set_logfile(setarg);
 	} else if (sv->key == GRAPH_THEME) {
 	    return set_plotstyle(setarg);
 	} else if (sv->key == DISP_DIGITS) {

@@ -119,6 +119,7 @@ typedef enum {
     STOPWATCH,
     VERBOSE,
     SV_WORKDIR,
+    SV_LOGFILE,
     GRAPH_THEME,
     DISP_DIGITS,
     SETVAR_MAX /* sentinel */
