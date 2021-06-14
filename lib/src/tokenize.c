@@ -3442,10 +3442,10 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     gretl_push_c_numeric_locale();
     state->more = NULL;
 
-    if (!gretl_in_batch_mode() && strspn(s, "+-.0123456789$(=") > 0) {
-	/* has to be a bare expression */
+    if (!gretl_in_batch_mode() && *s == '=') {
+	/* treat as a bare expression to be evaluated */
 	cmd->ci = EVAL;
-	cmd->vstart = (*s == '=')? s+1 : s;
+	cmd->vstart = s + 1;
 	goto skipit;
     }
 

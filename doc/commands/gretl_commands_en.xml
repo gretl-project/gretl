@@ -3774,25 +3774,22 @@
 	assignment statement.
       </para>
       <para>
-	Note that a command such as
+	In interactive use (for instance in the gretl console) an
+	equals sign works as shorthand for <lit>eval</lit>, as in
       </para>
       <code>
-	print x^2
+	=sqrt(x)
       </code>
       <para>
-	will not work in gretl, since <lit>x^2</lit> is not (cannot
-	be) the name of a variable, but (given a scalar variable named
-	<lit>x</lit>)
-      </para>
-      <code>
-	eval x^2
-      </code>
-      <para>
-	will work fine, displaying the square of <lit>x</lit>.
+	(with or without a space following <quote>=</quote>). But this
+	variant is not accepted in scripting mode since it could
+	easily mask coding errors.
       </para>
       <para>
-	See also <cmdref targ="printf"/>, for the case where you
-	wish to combine textual and numerical output.
+	In most contexts <cmdref targ="print"/> can be used in
+	place of <lit>eval</lit> to much the same effect.  See also
+	<cmdref targ="printf"/> for the case where you wish to
+	combine textual and numerical output.
       </para>
     </description>
   </command>
