@@ -35,7 +35,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{November 2020, release 1.0}
+\date{June 2021, release 1.1}
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -129,6 +129,25 @@ select all rows or columns respectively.  (Of course at least one of
 rowspec, colspec must be specified.)
 
 \emph{Nota bene}: all matrices in the array must be of the same dimensions.
+
+\subsection{combinations}
+
+\ArgRet{\texttt{matrix x}, \texttt{scalar h}}{matrix} This function
+returns a matrix whose rows are all the possible subsets of $x$
+containing $h$ elements; for $h>2$, a recursive algorithm is used.
+
+For example: \texttt{combinations(\{1,2,3\}, 2)} returns
+\begin{code}
+         1   2
+         1   3
+         2   3
+\end{code}
+
+The argument \texttt{x} must be a (row or column) vector. The returned
+matrix will have $n \choose k$ rows if successful.
+
+\emph{Nota bene}: The recursive algorithm used may be a little slow if
+the number of elements of $x$ is large.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -464,7 +483,8 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
-\item November 2020: 1.0 (in progress), add mat2list
+\item June 2021: 1.1 (in progress), add combinations
+\item November 2020: 1.0, add mat2list
 \item September 2020: 0.8, add fracorder, remove bwritejson
 \item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to
 bwritejson, efficiency improvement for zeroifclose
