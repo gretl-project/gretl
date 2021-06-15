@@ -238,15 +238,16 @@ function matrix combinations (matrix from "Set of all choices",
     elif h == 2
         matrix a = mshape(from, n, n)
         return (a')[lower] ~ a[lower]
+    elif h == n
+        return vec(from)'
+    elif h == n-1
+        return mshape(mshape(from, n, n-1)', n, n-1)
     endif
 
     matrix ret = {}
-    loop i=1..(n-h+1)
-        scalar x = from[i]
-        matrix c = from[i+1:]
-        if rows(c)
-            matrix ret |= x ~ combinations(c, h-1)
-        endif
+    scalar hh = h-1
+    loop i = 1 .. (n-hh) --quiet
+        matrix ret |= from[i] ~ combinations(from[i+1:], hh)
     endloop
 
     return ret

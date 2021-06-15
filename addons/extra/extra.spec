@@ -1,7 +1,7 @@
 author = The gretl team
 email = <use the mailing list or trackers>
 version = 1.1
-date = 2021-06-14
+date = 2021-06-15
 description = extra functions for hansl scripting
 tags = C88
 min-version = 2016a
