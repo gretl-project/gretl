@@ -47,6 +47,8 @@ int gretl_www_init (const char *proxy, int use_proxy);
 
 void gretl_www_cleanup (void);
 
+void gretl_set_sf_cgi (int s);
+
 int curl_does_smtp (void);
 
 int list_remote_dbs (char **getbuf);

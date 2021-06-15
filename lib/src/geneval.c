@@ -5748,15 +5748,20 @@ static NODE *apply_scalar_func (NODE *n, NODE *f, parser *p)
     return ret;
 }
 
-static NODE *sleep_node (NODE *n, parser *p)
+static NODE *misc_scalar_node (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
         int s = node_get_int(n, p);
 
-        g_usleep(G_USEC_PER_SEC * s);
-        ret->v.xval = 0;
+	if (f == F_SLEEP) {
+	    g_usleep(G_USEC_PER_SEC * s);
+	    ret->v.xval = 0;
+	} else {
+	    gretl_set_sf_cgi(s);
+	    ret->v.xval = 0;
+	}
     }
 
     return ret;
@@ -16960,8 +16965,9 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_SLEEP:
+    case HF_SFCGI:
         if (scalar_node(l)) {
-            ret = sleep_node(l, p);
+            ret = misc_scalar_node(l, t->t, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }

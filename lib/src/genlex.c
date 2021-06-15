@@ -609,6 +609,7 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
+    { HF_SFCGI,    "_sfcgi" },
     { 0,           NULL }
 };
 

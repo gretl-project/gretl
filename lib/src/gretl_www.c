@@ -47,37 +47,16 @@ enum {
     SAVE_TO_BUFFER
 } save_opt;
 
-#define HLEN 64
-
-#define SF_CGI 0
-
-#if SF_CGI > 1
-static char gretlhost[HLEN]    = "gretl.sourceforge.net";
-static char datacgi[HLEN]      = "/cgi-bin/gretldata.cgi";
-#else
-static char gretlhost[HLEN]    = "ricardo.ecn.wfu.edu";
-static char datacgi[HLEN]      = "/gretl/cgi-bin/gretldata.cgi";
-#endif
-
-static char updatecgi[HLEN]    = "/cgi-bin/gretl_update.cgi";
-
-/* paths on sourceforge */
-static char manual_path[HLEN]  = "/project/gretl/manual/";
-static char dataset_path[HLEN] = "/project/gretl/datafiles/";
-static char datapkg_list[HLEN] = "/addons-data/datapkgs.txt";
-
-#if SF_CGI
-static char dbserver[HLEN]     = "gretl.sourceforge.net";
-static char dbcgi[HLEN]        = "/cgi-bin/gretldata.cgi";
-#else
-static char dbserver[HLEN]     = "ricardo.ecn.wfu.edu";
-#endif
+/* paths specific to sourceforge */
+static const char *updatecgi    = "/cgi-bin/gretl_update.cgi";
+static const char *manual_path  = "/project/gretl/manual/";
+static const char *dataset_path = "/project/gretl/datafiles/";
+static const char *datapkg_list = "/addons-data/datapkgs.txt";
+static const char *sffiles      = "downloads.sourceforge.net";
+static const char *sfweb        = "gretl.sourceforge.net";
 
 static int wproxy;
 static char proxyhost[128];
-
-static char sffiles[HLEN] = "downloads.sourceforge.net";
-static char sfweb[HLEN]   = "gretl.sourceforge.net";
 
 #ifdef WIN32
 static char certs_path[MAXLEN];
@@ -102,6 +81,53 @@ struct urlinfo_ {
     int pstarted;            /* progress bar status flag */
     int timeout;             /* seconds till timing out */
 };
+
+static const char *sf_dbserver = "gretl.sourceforge.net";
+static const char *sf_dbcgi    = "/cgi-bin/gretldata.cgi";
+static const char *wf_dbserver = "ricardo.ecn.wfu.edu";
+static const char *wf_dbcgi    = "/gretl/cgi-bin/gretldata.cgi";
+
+static const char *sf_gretlhost = "gretl.sourceforge.net";
+static const char *sf_datacgi   = "/cgi-bin/gretldata.cgi";
+static const char *wf_gretlhost = "ricardo.ecn.wfu.edu";
+static const char *wf_datacgi   = "/gretl/cgi-bin/gretldata.cgi";
+
+static const char *dbserver;
+static const char *dbcgi;
+static const char *gretlhost;
+static const char *datacgi;
+
+static int SF_CGI;
+
+static void set_server_paths (void)
+{
+    if (SF_CGI > 0) {
+	dbserver = sf_dbserver;
+	dbcgi = sf_dbcgi;
+    } else {
+	dbserver = wf_dbserver;
+	dbcgi = wf_dbcgi;
+    }
+    if (SF_CGI > 1) {
+	gretlhost = sf_gretlhost;
+	datacgi = sf_datacgi;
+    } else {
+	gretlhost = wf_gretlhost;
+	datacgi = wf_datacgi;
+    }
+}
+
+void gretl_set_sf_cgi (int s)
+{
+    if (s > 1) {
+	SF_CGI = 2;
+    } else if (s != 0) {
+	SF_CGI = 1;
+    } else {
+	SF_CGI = 0;
+    }
+    set_server_paths();
+}
 
 static void urlinfo_init (urlinfo *u,
 			  const char *hostname,
@@ -288,8 +314,6 @@ static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
     return ret;
 }
 
-#if SF_CGI
-
 static int is_db_transaction (int opt)
 {
     return (opt == LIST_DBS ||
@@ -298,8 +322,6 @@ static int is_db_transaction (int opt)
 	    opt == GRAB_DATA ||
 	    opt == GRAB_NBO_DATA);
 }
-
-#endif
 
 static int progress_bar_wanted (int opt)
 {
@@ -604,20 +626,11 @@ static int retrieve_url (const char *hostname,
 	saveopt = SAVE_TO_FILE;
     }
 
-#if 0
-    fprintf(stderr, "retrieve_url: host='%s'\n", hostname);
-#endif
-
     urlinfo_init(&u, hostname, saveopt, localfile);
 
-#if SF_CGI
     if (is_db_transaction(opt)) {
 	strcat(u.url, dbcgi);
-	goto url_next;
-    }
-#endif
-
-    if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
+    } else if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
 	strcat(u.url, fname);
     } else if (opt == GRAB_PDF) {
 	strcat(u.url, manual_path);
@@ -633,10 +646,6 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, datacgi);
     }
 
-#if SF_CGI
- url_next:
-#endif
-
     if (strstr(gretlhost, "ricardo") == NULL) {
 	fprintf(stderr, "using gretlhost = '%s'\n", gretlhost);
     }
@@ -647,6 +656,10 @@ static int retrieve_url (const char *hostname,
 	/* a gretl-server download */
 	urlinfo_set_params(&u, opt, fname, dbseries, filter);
     }
+
+#if 1 // WDEBUG
+    fprintf(stderr, "retrieve_url: '%s'\n", u.url);
+#endif
 
     if (progress_bar_wanted(opt)) {
 	urlinfo_set_show_progress(&u);
@@ -663,6 +676,8 @@ static int retrieve_url (const char *hostname,
 
 int gretl_www_init (const char *proxy, int use_proxy)
 {
+    set_server_paths();
+
     if (use_proxy && proxy != NULL && *proxy != '\0') {
 	*proxyhost = '\0';
 	strncat(proxyhost, proxy, sizeof proxyhost - 1);
