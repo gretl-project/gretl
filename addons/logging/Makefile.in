@@ -54,6 +54,3 @@ installdirs:
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml
 	@rm -f test.out
-	@$(MAKE) -C clean
-	@$(MAKE) -C src clean
-
