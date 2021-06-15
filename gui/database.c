@@ -2854,6 +2854,11 @@ static int gui_install_gfn (const gchar *objname,
 	if (!err && zipfile) {
 	    err = gretl_unzip_into(fullname, instpath);
 	    gretl_remove(fullname);
+	    if (!err) {
+		g_free(fullname);
+		fullname = g_strdup_printf("%s%s%c%s.gfn", instpath,
+					   objname, SLASH, objname);
+	    }
 	}
 	if (!err) {
 	    gfn_install_notify(objname, fullname, vwin);
