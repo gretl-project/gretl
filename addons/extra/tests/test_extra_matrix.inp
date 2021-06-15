@@ -10,7 +10,7 @@ bundles Params = null
 Params = Params + _(from = {1}, h = 0,\
                     expected = {NA}, error_expected = 2)
 Params = Params + _(from = {1}, h = 2,\
-                    expected = {NA}, error_expected = 0)
+                    expected = {NA}, error_expected = 2)
 Params = Params + _(from = {1}, h = 1,\
                     expected = {1}, error_expected = 0)
 Params = Params + _(from = {1,2,3}, h = 1,\

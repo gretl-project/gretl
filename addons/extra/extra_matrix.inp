@@ -224,18 +224,23 @@ function matrix combinations (matrix from "Set of all choices",
         return {NA}
     endif
 
+    scalar n = nelem(from)
+    if h>n
+        string s = argname(from)
+        printf "\nError: number of elements of %s less than argument 2\n", strlen(s) ? s : "argument 1"
+
+        return {NA}
+    endif
+	
     # special cases
     if h == 1
         return vec(from)
     elif h == 2
-        scalar n = nelem(from)
-        a = mshape(from, n, n)
+        matrix a = mshape(from, n, n)
         return (a')[lower] ~ a[lower]
     endif
 
     matrix ret = {}
-    scalar n = nelem(from)
-
     loop i=1..(n-h+1)
         scalar x = from[i]
         matrix c = from[i+1:]
