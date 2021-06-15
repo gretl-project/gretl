@@ -55,8 +55,8 @@ static const char *datapkg_list = "/addons-data/datapkgs.txt";
 static const char *sffiles      = "downloads.sourceforge.net";
 static const char *sfweb        = "gretl.sourceforge.net";
 
-static int wproxy;
-static char proxyhost[128];
+static int wproxy = 0;
+static char proxyhost[128] = {0};
 
 #ifdef WIN32
 static char certs_path[MAXLEN];
@@ -657,7 +657,7 @@ static int retrieve_url (const char *hostname,
 	urlinfo_set_params(&u, opt, fname, dbseries, filter);
     }
 
-#if 1 // WDEBUG
+#if WDEBUG
     fprintf(stderr, "retrieve_url: '%s'\n", u.url);
 #endif
 
