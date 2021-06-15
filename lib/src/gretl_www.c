@@ -51,8 +51,14 @@ enum {
 
 #define SF_CGI 0
 
+#if SF_CGI > 1
+static char gretlhost[HLEN]    = "gretl.sourceforge.net";
+static char datacgi[HLEN]      = "/cgi-bin/gretldata.cgi";
+#else
 static char gretlhost[HLEN]    = "ricardo.ecn.wfu.edu";
 static char datacgi[HLEN]      = "/gretl/cgi-bin/gretldata.cgi";
+#endif
+
 static char updatecgi[HLEN]    = "/cgi-bin/gretl_update.cgi";
 
 /* paths on sourceforge */
