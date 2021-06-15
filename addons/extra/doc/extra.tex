@@ -132,7 +132,7 @@ rowspec, colspec must be specified.)
 
 \subsection{combinations}
 
-\ArgRet{\texttt{matrix x}, \texttt{scalar h}}{matrix} This function
+\ArgRet{\texttt{matrix x}, \texttt{int h}}{matrix} This function
 returns a matrix whose rows are all the possible subsets of $x$
 containing $h$ elements; for $h>2$, a recursive algorithm is used.
 
@@ -144,7 +144,7 @@ For example: \texttt{combinations(\{1,2,3\}, 2)} returns
 \end{code}
 
 The argument \texttt{x} must be a (row or column) vector. The returned
-matrix will have $n \choose k$ rows if successful.
+matrix will have $n \choose k$ rows if successful, otherwise it will be a 1x1 matrix with an NA value.
 
 \emph{Nota bene}: The recursive algorithm used may be a little slow if
 the number of elements of $x$ is large.
