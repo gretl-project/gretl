@@ -13130,38 +13130,54 @@ static NODE *isoconv_node (NODE *t, parser *p)
     return ret;
 }
 
-static int check_array_element_type (NODE *n, GretlType *pt, int i)
+/* The arguments here are:
+
+   @A: array to which an element is to be added
+   @n: node holding candidate array element
+*/
+
+static int check_array_element_type (gretl_array *A, NODE *n)
 {
-    GretlType t = *pt;
+    GretlType t = gretl_array_get_type(A);
     int ok = 0;
 
-    if (t == GRETL_TYPE_MATRICES) {
-        ok = (n->t == MAT || n->t == NUM);
-    } else if (t == GRETL_TYPE_STRINGS) {
-        ok = n->t == STR;
-    } else if (t == GRETL_TYPE_BUNDLES) {
-        ok = n->t == BUNDLE;
-    } else if (t == GRETL_TYPE_LISTS) {
-        ok = n->t == LIST;
-    } else if (i == 0 && t == GRETL_TYPE_ANY) {
-        /* The array type is not yet determinate: this is OK
-           only when we're looking at the first element: if
-           this element is of an acceptable type we use it
-           to determine the array type.
+    if (t == GRETL_TYPE_ANY) {
+	/* The array type is not yet determinate; this will be
+	   the case when when we're looking at the first element.
+	   If the type n->t is acceptable we use it to set the
+	   type of @A.
         */
-        *pt = 0;
+	t = 0;
         if (n->t == MAT || n->t == NUM) {
-            *pt = GRETL_TYPE_MATRICES;
+            t = GRETL_TYPE_MATRICES;
         } else if (n->t == STR) {
-            *pt = GRETL_TYPE_STRINGS;
+            t = GRETL_TYPE_STRINGS;
         } else if (n->t == BUNDLE) {
-            *pt = GRETL_TYPE_BUNDLES;
+            t = GRETL_TYPE_BUNDLES;
         } else if (n->t == LIST) {
-            *pt = GRETL_TYPE_LISTS;
-        }
-        if (*pt != 0) {
-            ok = 1;
-        }
+            t = GRETL_TYPE_LISTS;
+        } else if (n->t == ARRAY) {
+	    t = GRETL_TYPE_ARRAYS;
+	}
+	if (t > 0) {
+	    gretl_array_set_type(A, t);
+	    ok = 1;
+	}
+    } else {
+	/* We're looking for a match between the array type
+	   and the type of the candidate element.
+	*/
+	if (t == GRETL_TYPE_MATRICES) {
+	    ok = (n->t == MAT || n->t == NUM);
+	} else if (t == GRETL_TYPE_STRINGS) {
+	    ok = n->t == STR;
+	} else if (t == GRETL_TYPE_BUNDLES) {
+	    ok = n->t == BUNDLE;
+	} else if (t == GRETL_TYPE_LISTS) {
+	    ok = n->t == LIST;
+	} else if (t == GRETL_TYPE_ARRAYS) {
+	    ok = n->t == ARRAY;
+	}
     }
 
     return ok ? 0 : E_TYPES;
@@ -13177,7 +13193,7 @@ static void node_nullify_ptr (NODE *n)
     else if (n->t == SERIES) n->v.xvec = NULL;
 }
 
-/* serves retrieval of data for candidate array elements
+/* supports retrieval of data for candidate array elements
    or bundle members
 */
 
@@ -13213,7 +13229,9 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
             ptr = n->v.b;
         } else if (t == LIST) {
             ptr = n->v.ivec;
-        }
+        } else if (t == ARRAY) {
+	    ptr = n->v.a;
+	}
     }
 
     if (t == NUM) {
@@ -14051,11 +14069,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             ret->v.xval = clogit_fi(T, K, z, df, &p->err);
         }
     } else if (t->t == F_DEFARRAY) {
-        GretlType gtype = GRETL_TYPE_ANY;
         gretl_array *A;
         void *ptr;
 
-	A = gretl_array_new(gtype, 0, &p->err);
+	A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
 
         if (!p->err) {
             for (i=0; i<k && !p->err; i++) {
@@ -14063,13 +14080,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
                 e = eval(n->v.bn.n[i], p);
                 if (!p->err) {
-                    p->err = check_array_element_type(e, &gtype, i);
+                    p->err = check_array_element_type(A, e);
                 }
                 if (!p->err) {
-                    if (i == 0) {
-                        gretl_array_set_type(A, gtype);
-		    }
-                    if (e->t == NUM) {
+		    if (e->t == NUM) {
                         ptr = gretl_matrix_from_scalar(e->v.xval);
                         donate = 1;
                     } else {
