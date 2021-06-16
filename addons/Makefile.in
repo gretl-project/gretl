@@ -59,6 +59,9 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/extra
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/geoplot
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/geoplot/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/regls
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/regls/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/logging
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
