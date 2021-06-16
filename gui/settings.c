@@ -1742,7 +1742,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
 				 G_CALLBACK(try_switch_locale),
 				 NULL);
-	    } else if (tab == TAB_EDITOR) {
+	    } else if (rc->var == &sview_style) {
 		GtkWidget *sampler;
 
 		sampler = embed_style_sampler(vbox);
