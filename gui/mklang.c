@@ -50,6 +50,7 @@ const char *gretl_data_types[] = {
     "matrices",
     "bundles",
     "lists",
+    "arrays",
     "null",
     "void",
     "const",
