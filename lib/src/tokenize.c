@@ -3445,6 +3445,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     if (!gretl_in_batch_mode() && *s == '=') {
 	/* treat as a bare expression to be evaluated */
 	cmd->ci = EVAL;
+	cmd->gtype = GRETL_TYPE_NONE;
 	cmd->vstart = s + 1;
 	goto skipit;
     }
