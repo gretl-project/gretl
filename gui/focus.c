@@ -20,14 +20,29 @@
 #include <gtk/gtk.h>
 #include "focus.h"
 
+/* This module added 2021-06-17. The point of wrapping gtk_dialog_new()
+   and gtk_window_new() is to inject common code that supports a
+   record of the currently focused window. Then when functions such
+   as errbox, infobox and warnbox (or variants thereof) are called
+   we can arrange for the resulting message dialogs to be parented
+   by the window from which they were spawned. Hopefully this will
+   improve the placement of the transient windows.
+
+   The code that utilizes get_focus_window() is to be found in
+   dialogs.c, in the msgbox() function.
+*/
+
 #define FOCUS_DEBUG 0
 
+/* the window that currently has focus */
 static GtkWidget *focus_window;
 
 GtkWidget *get_focus_window (void)
 {
     return focus_window;
 }
+
+/* callback for when a window receives focus */
 
 static gboolean focus_in_cb (GtkWidget *w, GdkEvent *event,
 			     gpointer p)
@@ -39,6 +54,8 @@ static gboolean focus_in_cb (GtkWidget *w, GdkEvent *event,
     return FALSE;
 }
 
+/* callback for when a window loses focus */
+
 static gboolean focus_out_cb (GtkWidget *w, GdkEvent *event,
 			      gpointer p)
 {
@@ -48,6 +65,8 @@ static gboolean focus_out_cb (GtkWidget *w, GdkEvent *event,
     focus_window = NULL;
     return FALSE;
 }
+
+/* callback for window destroyed */
 
 static void destroy_cb (GtkWidget *w, gpointer p)
 {
@@ -69,6 +88,7 @@ static GtkWidget *real_gretl_gtk_object (int window)
 	ret = gtk_dialog_new();
     }
 
+    /* attach our focus-related callbacks */
     gtk_widget_set_events(ret, GDK_FOCUS_CHANGE_MASK);
     g_signal_connect(G_OBJECT(ret), "focus-in-event",
 		     G_CALLBACK(focus_in_cb), NULL);
@@ -80,10 +100,14 @@ static GtkWidget *real_gretl_gtk_object (int window)
     return ret;
 }
 
+/* wrapper for gtk_dialog_new() */
+
 GtkWidget *gretl_gtk_dialog (void)
 {
     return real_gretl_gtk_object(0);
 }
+
+/* wrapper for gtk_window_new (toplevel) */
 
 GtkWidget *gretl_gtk_window (void)
 {
