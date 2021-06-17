@@ -3036,7 +3036,9 @@ static void pack_single_icon (gui_obj *obj)
     real_pack_icon(obj, row, col);
 }
 
-static void batch_pack_icons (void)
+/* returns the number of rows used, counting 1 per icon + label */
+
+static int batch_pack_icons (void)
 {
     GList *mylist = g_list_first(iconlist);
     gui_obj *obj;
@@ -3057,6 +3059,8 @@ static void batch_pack_icons (void)
 	    mylist = mylist->next;
 	}
     }
+
+    return row / 2;
 }
 
 static int gui_user_var_callback (const char *name, GretlType type,
@@ -3129,7 +3133,9 @@ static void add_user_var_icon (gpointer data, gpointer intp)
     session_add_icon(data, GPOINTER_TO_INT(intp), ICON_ADD_BATCH);
 }
 
-static void add_all_icons (void)
+/* returns the number of rows of (icon + label) */
+
+static int add_all_icons (void)
 {
     int show_graph_page = check_for_program(latex);
     GList *list = NULL;
@@ -3185,7 +3191,7 @@ static void add_all_icons (void)
     g_list_foreach(list, add_user_var_icon, GINT_TO_POINTER(GRETL_OBJ_BUNDLE));
     g_list_free(list);
 
-    batch_pack_icons();
+    return batch_pack_icons();
 }
 
 static void undisplay_icon (gui_obj *obj, gpointer p)
@@ -4001,6 +4007,9 @@ void view_session (void)
 {
     GtkWidget *ebox, *scroller;
     gchar *title;
+    int hmax = get_screen_height() / 2;
+    int hmin = 280;
+    int height;
 
     if (iconview != NULL) {
 	gtk_window_present(GTK_WINDOW(iconview));
@@ -4013,7 +4022,6 @@ void view_session (void)
     title = g_strdup_printf("gretl: %s", _("icon view"));
     gtk_window_set_title(GTK_WINDOW(iconview), title);
     g_free(title);
-    gtk_window_set_default_size(GTK_WINDOW(iconview), 420, 320);
 
     gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
     g_signal_connect(G_OBJECT(iconview), "destroy",
@@ -4037,7 +4045,14 @@ void view_session (void)
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller),
 					  icon_table);
 
-    add_all_icons();
+    height = 90 * add_all_icons();
+    if (height < hmin) {
+	height = hmin;
+    } else if (height > hmax) {
+	height = hmax;
+    }
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 440, height);
+
     window_list_add(iconview, OPEN_SESSION);
     g_signal_connect(G_OBJECT(iconview), "key-press-event",
 		     G_CALLBACK(catch_iconview_key), NULL);
@@ -4083,9 +4098,13 @@ static void make_short_label_string (char *targ, const char *src)
     }
 }
 
+#define TRIM_LABELS 0
+
 static void create_gobj_icon (gui_obj *obj, const char **xpm)
 {
+#if TRIM_LABELS
     gchar str[2*SHOWNAMELEN];
+#endif
     GdkPixbuf *pbuf;
     GtkWidget *image;
 
@@ -4104,14 +4123,15 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 	session_drag_setup(obj);
     }
 
-#if 0
-    obj->label = gtk_label_new(obj->name);
-    gtk_label_set_max_width_chars(GTK_LABEL(obj->label), SHOWNAMELEN);
-    gtk_label_set_line_wrap(GTK_LABEL(obj->label), TRUE);
-    gtk_label_set_lines(GTK_LABEL(obj->label), 2);
-#else
+#if TRIM_LABELS
     make_short_label_string(str, obj->name);
     obj->label = gtk_label_new(str);
+#else
+    obj->label = gtk_label_new(obj->name);
+    gtk_label_set_width_chars(GTK_LABEL(obj->label), 12);
+    gtk_label_set_max_width_chars(GTK_LABEL(obj->label), SHOWNAMELEN);
+    gtk_label_set_line_wrap(GTK_LABEL(obj->label), TRUE);
+    gtk_label_set_justify(GTK_LABEL(obj->label), GTK_JUSTIFY_CENTER);
 #endif
 
     g_object_ref(obj->icon);
