@@ -111,7 +111,7 @@ void about_dialog (void)
     GtkWidget *ebox, *abox;
     gchar *buf;
 
-    dialog = gtk_dialog_new();
+    dialog = gretl_gtk_dialog();
     gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl"));
     gtk_window_set_transient_for(GTK_WINDOW(dialog),
 				 GTK_WINDOW(mdata->main));

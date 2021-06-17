@@ -5371,7 +5371,7 @@ enum {
 
 static GtkWidget *selector_dialog_new (selector *sr)
 {
-    GtkWidget *d = gtk_dialog_new();
+    GtkWidget *d = gretl_gtk_dialog();
     GtkWidget *base, *ca, *aa;
 
     g_signal_connect(G_OBJECT(d), "key-press-event",
@@ -5544,7 +5544,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 					 GTK_WINDOW(mdata->main));
 	}
     } else {
-	sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	sr->dlg = gretl_gtk_window();
 	gretl_emulated_dialog_add_structure(sr->dlg,
 					    &sr->vbox,
 					    &sr->action_area);

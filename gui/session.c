@@ -4009,7 +4009,7 @@ void view_session (void)
 
     session_view_init();
 
-    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    iconview = gretl_gtk_window();
     title = g_strdup_printf("gretl: %s", _("icon view"));
     gtk_window_set_title(GTK_WINDOW(iconview), title);
     g_free(title);

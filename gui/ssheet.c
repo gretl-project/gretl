@@ -3217,7 +3217,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     int hscroll = 1;
     int err = 0;
 
-    sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    sheet->win = gretl_gtk_window();
 
     if (sheet->matrix != NULL) {
 	if (sheet->mname[0] != '\0') {

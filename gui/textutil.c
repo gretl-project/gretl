@@ -274,7 +274,7 @@ static void replace_string_dialog (windata_t *vwin)
     s->mark = gtk_text_buffer_create_mark(s->buf, "srmark",
 					  &s->iter, FALSE);
 
-    s->w = gtk_dialog_new();
+    s->w = gretl_gtk_dialog();
     gretl_dialog_set_destruction(s->w, vwin_toplevel(vwin));
     g_signal_connect(G_OBJECT(s->w), "destroy",
 		     G_CALLBACK(destroy_replacer), s);

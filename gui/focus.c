@@ -17,6 +17,11 @@
  *
  */
 
+#include <gtk/gtk.h>
+#include "focus.h"
+
+#define FOCUS_DEBUG 0
+
 static GtkWidget *focus_window;
 
 GtkWidget *get_focus_window (void)
@@ -27,15 +32,31 @@ GtkWidget *get_focus_window (void)
 static gboolean focus_in_cb (GtkWidget *w, GdkEvent *event,
 			     gpointer p)
 {
+#if FOCUS_DEBUG
     fprintf(stderr, "focus_in: %p\n", (void *) w);
+#endif
+    focus_window = w;
     return FALSE;
 }
 
 static gboolean focus_out_cb (GtkWidget *w, GdkEvent *event,
 			      gpointer p)
 {
+#if FOCUS_DEBUG
     fprintf(stderr, "focus_out: %p\n", (void *) w);
+#endif
+    focus_window = NULL;
     return FALSE;
+}
+
+static void destroy_cb (GtkWidget *w, gpointer p)
+{
+#if FOCUS_DEBUG
+    fprintf(stderr, "focus destroy: %p\n", (void *) w);
+#endif
+    if (focus_window == w) {
+	focus_window = NULL;
+    }
 }
 
 static GtkWidget *real_gretl_gtk_object (int window)
@@ -53,6 +74,8 @@ static GtkWidget *real_gretl_gtk_object (int window)
 		     G_CALLBACK(focus_in_cb), NULL);
     g_signal_connect(G_OBJECT(ret), "focus-out-event",
 		     G_CALLBACK(focus_out_cb), NULL);
+    g_signal_connect(G_OBJECT(ret), "destroy",
+		     G_CALLBACK(destroy_cb), NULL);
 
     return ret;
 }

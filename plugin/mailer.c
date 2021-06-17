@@ -977,11 +977,11 @@ static int mail_to_dialog (const char *fname,
     return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
 
-static void mail_infobox (const char *msg)
+static void mail_infobox (const char *msg, GtkWindow *parent)
 {
     GtkWidget *dialog;
 
-    dialog = gtk_message_dialog_new(NULL,
+    dialog = gtk_message_dialog_new(parent,
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_INFO,
 				    GTK_BUTTONS_CLOSE,
@@ -1069,7 +1069,7 @@ int email_file (const char *fname, GtkWindow *parent, void (*help_func))
     if (doit) {
 	err = pack_and_mail(fname, msg, minfo);
 	if (!err) {
-	    mail_infobox(_("Mail sent"));
+	    mail_infobox(_("Mail sent"), parent);
 	}
     }
 

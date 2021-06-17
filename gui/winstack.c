@@ -1272,7 +1272,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	return NULL;
     }
 
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    vwin->main = gretl_gtk_window();
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     }
@@ -1489,7 +1489,7 @@ windata_t *gretl_browser_new (int role, const gchar *title)
 	return NULL;
     }
 
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    vwin->main = gretl_gtk_window();
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
