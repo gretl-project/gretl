@@ -1216,11 +1216,24 @@ static int set_logfile (const char *s)
 
     if (gretl_function_depth() > 0) {
 	gretl_errmsg_set("set logfile: cannot be done inside a function");
-	return 1;
-    } else if (*s == '\0') {
 	return E_DATA;
-    } else {
+    } else if (*s == '\0' || !strcmp(s, "null")) {
+	gretl_insert_builtin_string("logfile", "");
+    } else if (!strcmp(s, "stdout") || !strcmp(s, "stderr")) {
 	gretl_insert_builtin_string("logfile", s);
+    } else {
+        char outname[FILENAME_MAX];
+
+        /* switch to workdir if needed */
+        strcpy(outname, s);
+        gretl_maybe_prepend_dir(outname);
+	err = gretl_test_fopen(outname, "w");
+	if (!err) {
+	    gretl_insert_builtin_string("logfile", outname);
+	} else {
+	    gretl_errmsg_sprintf("Couldn't write to %s", outname);
+	    err = E_FOPEN;
+	}
     }
 
     return err;
