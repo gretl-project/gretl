@@ -726,7 +726,7 @@ static gint console_key_handler (GtkWidget *cview,
 
     if (keyval == GDK_Tab && script_auto_complete) {
 	/* FIXME conditionality! */
-	tab_auto_complete(event);
+	tab_auto_complete(cview);
 	return TRUE;
     }
 

@@ -3660,7 +3660,7 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 	if (maybe_insert_smart_tab(vwin)) {
 	    return TRUE;
 	} else if (script_auto_complete) {
-	    tab_auto_complete(event);
+	    tab_auto_complete(vwin->text);
 	    return TRUE;
 	}
     }
