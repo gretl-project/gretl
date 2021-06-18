@@ -128,9 +128,9 @@ static const char *get_extension_for_action (int action, gpointer data)
 	else if (ttype == GP_TERM_SVG) s = ".svg";
 	else if (ttype == GP_TERM_PLT) s = ".plt";
     } else {
-	size_t i;
+	int i;
 
-	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
+	for (i=0; i < G_N_ELEMENTS(action_map); i++) {
 	    if (action == action_map[i].action) {
 		s = action_map[i].ext;
 		break;
