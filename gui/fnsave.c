@@ -3799,7 +3799,7 @@ static void finfo_dialog (function_info *finfo)
     int rows = N_ENTRIES + 2;
     int i;
 
-    finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    finfo->dlg = gretl_gtk_window();
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 600, -1);
 
     title = g_strdup_printf("gretl: %s", finfo_pkgname(finfo));

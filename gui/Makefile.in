@@ -179,6 +179,7 @@ SRCS = about.c \
 	filters.c \
 	fncall.c \
 	fnsave.c \
+	focus.c \
 	gfn_arglists.c \
 	graphics.c \
 	graph_page.c \

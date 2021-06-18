@@ -5701,7 +5701,7 @@ static int plot_add_shell (png_plot *plot, const char *name)
     GtkWidget *status_area;
     gchar *title;
 
-    plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    plot->shell = gretl_gtk_window();
     g_object_ref(plot->shell);
     g_object_set_data(G_OBJECT(plot->shell), "plot", plot);
 

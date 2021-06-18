@@ -1458,7 +1458,7 @@ static int function_call_dialog (call_info *cinfo)
 	return err;
     }
 
-    cinfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    cinfo->dlg = gretl_gtk_window();
     txt = cinfo_pkg_title(cinfo);
     gtk_window_set_title(GTK_WINDOW(cinfo->dlg), txt);
     g_free(txt);

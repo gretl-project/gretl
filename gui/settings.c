@@ -1909,10 +1909,9 @@ static void rcvar_set_double (RCVAR *rcvar, const char *sval, int *changed)
     }
 }
 
-static void restart_message (GtkWidget *parent)
+static void restart_message (void)
 {
-    msgbox(_("This change will take effect when you restart gretl"),
-	   GTK_MESSAGE_INFO, parent);
+    infobox(_("This change will take effect when you restart gretl"));
 }
 
 /* register and react to changes from Preferences dialog */
@@ -1963,7 +1962,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     }
 
     if (changed > 1) {
-	restart_message(parent);
+	restart_message();
     }
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
@@ -2089,11 +2088,11 @@ void sync_path_from_lib (const char *path_id)
     if (!strcmp(path_id, "tramo")) {
 	strcpy(paths.tramo, gretl_tramo());
 	write_rc(OPT_N);
-	restart_message(mdata->main);
+	restart_message();
     } else if (!strcmp(path_id, "x12a")) {
 	strcpy(paths.x12a, gretl_x12_arima());
 	write_rc(OPT_N);
-	restart_message(mdata->main);
+	restart_message();
     } else {
 	fprintf(stderr, "sync_path_from_lib: '%s' ??\n", path_id);
     }

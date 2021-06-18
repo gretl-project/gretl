@@ -244,7 +244,7 @@ gint gretl_dialog_set_destruction (GtkWidget *w, gpointer p)
 GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags)
 {
-    GtkWidget *d = gtk_dialog_new();
+    GtkWidget *d = gretl_gtk_dialog();
     GtkWidget *ca, *aa;
 
     if (flags & GRETL_DLG_UNDECORATED) {
@@ -487,7 +487,7 @@ static dialog_t *edit_dialog_new (int ci, const char *title,
     d->blocking = 0;
     d->cancel = canceled;
 
-    d->dialog = gtk_dialog_new();
+    d->dialog = gretl_gtk_dialog();
     d->vbox = gtk_dialog_get_content_area(GTK_DIALOG(d->dialog));
     d->bbox = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
 

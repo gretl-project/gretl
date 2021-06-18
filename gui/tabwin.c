@@ -548,7 +548,7 @@ static tabwin_t *make_tabbed_viewer (int role)
     tabwin->dlg_owner = NULL;
 
     /* top-level window */
-    tabwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    tabwin->main = gretl_gtk_window();
     if (role == EDIT_HANSL) {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main),
 			     _("gretl: script editor"));
@@ -938,7 +938,7 @@ static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
 #endif
 
     /* build new shell for @vwin */
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    vwin->main = gretl_gtk_window();
     title = title_from_vwin(vwin);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);

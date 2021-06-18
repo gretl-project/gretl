@@ -2951,7 +2951,7 @@ static CalcChild *gretl_child_new (int code, gpointer p)
 	return NULL;
     }
 
-    child->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    child->dlg = gretl_gtk_window();
 
     g_object_set_data(G_OBJECT(child->dlg), "gchild", child);
 

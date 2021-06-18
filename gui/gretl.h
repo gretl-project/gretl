@@ -68,6 +68,7 @@
 #include "library.h"
 #include "settings.h"
 #include "helpfiles.h"
+#include "focus.h"
 
 #ifdef ENABLE_NLS
 # include "locale.h"
