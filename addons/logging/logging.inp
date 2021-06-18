@@ -3,9 +3,9 @@ function void print_log_msg (const string msg, const string level)
 
     if $logstamp
         string fmt = "%Y-%m-%d %H:%M:%S %Z"
-        printf "\n%s %s: %s\n", level, strftime($now[1], fmt), msg
+        printf "%s %s: %s\n", level, strftime($now[1], fmt), msg
     else
-        printf "\n%s: %s\n", level, msg
+        printf "%s: %s\n", level, msg
     endif
 end function
 
