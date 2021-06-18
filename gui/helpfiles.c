@@ -1526,7 +1526,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	g_free(text);
 	unset_window_help_active(vwin);
-	text_set_cursor(vwin->text, 0);
+	text_set_cursor(vwin->text, NULL);
 
 	if (pos <= 0) {
 	    warnbox(_("Sorry, help not found"));

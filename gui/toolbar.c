@@ -793,7 +793,7 @@ static int suppress_hmap (VMatrix *corr)
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
-    text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
+    text_set_cursor(vwin->text, "help");
     set_window_help_active(vwin);
 }
 

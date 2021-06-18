@@ -99,15 +99,16 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 
-void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
+void text_set_cursor (GtkWidget *w, const char *name)
 {
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
                                               GTK_TEXT_WINDOW_TEXT);
 
-    if (cspec == 0) {
+    if (name == NULL) {
 	gdk_window_set_cursor(win, NULL);
     } else {
-	GdkCursor *cursor = gdk_cursor_new(cspec);
+	GdkDisplay *disp = gdk_display_get_default();
+	GdkCursor *cursor = gdk_cursor_new_from_name(disp, name);
 
 	gdk_window_set_cursor(win, cursor);
 	gdk_cursor_unref(cursor);
@@ -2045,8 +2046,22 @@ static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
     return FALSE;
 }
 
-static GdkCursor *hand_cursor = NULL;
-static GdkCursor *regular_cursor = NULL;
+static GdkCursor *get_text_cursor (const char *name)
+{
+    static GdkCursor *hc;
+    static GdkCursor *tc;
+    GdkCursor **pc;
+
+    pc = strcmp(name, "text") == 0 ? &tc : &hc;
+
+    if (*pc == NULL) {
+	GdkDisplay *d = gdk_display_get_default();
+
+	*pc = gdk_cursor_new_from_name(d, name);
+    }
+
+    return *pc;
+}
 
 static void
 set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
@@ -2074,10 +2089,10 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 	hovering_over_link = hovering;
 	if (hovering_over_link) {
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
-				  hand_cursor);
+				  get_text_cursor("pointer"));
 	} else {
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
-				  regular_cursor);
+				  get_text_cursor("text"));
 	}
     }
 
@@ -2115,14 +2130,6 @@ cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
 
 static void connect_link_signals (windata_t *vwin)
 {
-    if (hand_cursor == NULL) {
-	hand_cursor = gdk_cursor_new(GDK_HAND2);
-    }
-
-    if (regular_cursor == NULL) {
-	regular_cursor = gdk_cursor_new(GDK_XTERM);
-    }
-
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(cmdref_key_press), NULL);
     g_signal_connect(G_OBJECT(vwin->text), "event-after",
@@ -2137,14 +2144,6 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
 {
     int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text),
 						 "sigs_connected"));
-
-    if (hand_cursor == NULL) {
-	hand_cursor = gdk_cursor_new(GDK_HAND2);
-    }
-
-    if (regular_cursor == NULL) {
-	regular_cursor = gdk_cursor_new(GDK_XTERM);
-    }
 
     if (!done) {
 	gpointer en_ptr = GINT_TO_POINTER(en);
