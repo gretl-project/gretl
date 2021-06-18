@@ -79,6 +79,10 @@
 #define SHOWNAMELEN 15
 #define ICONVIEW_MIN_COLS 4
 
+#if GTK_MAJOR_VERSION < 3
+# define REMEDY_LABELS
+#endif
+
 typedef struct SESSION_ SESSION;
 typedef struct SESSION_TEXT_ SESSION_TEXT;
 typedef struct SESSION_MODEL_ SESSION_MODEL;
@@ -4098,13 +4102,38 @@ static void make_short_label_string (char *targ, const char *src)
     }
 }
 
-#define TRIM_LABELS 0
+#ifdef REMEDY_LABELS
+
+static gchar *rewrite_icon_label (const char *s)
+{
+    gchar *ret = NULL;
+    int i, l1, l2, ld, ldmin = 100;
+    int pos = 0;
+
+    for (i=0; s[i] != '\0'; i++) {
+	if (s[i] == ' ') {
+	    l1 = g_utf8_strlen(s, i);
+	    l2 = g_utf8_strlen(s + i + 1, -1);
+	    ld = abs(l1 - l2);
+	    if (ld < ldmin) {
+		ldmin = ld;
+		pos = i;
+	    }
+	}
+    }
+
+    if (pos > 0) {
+	ret = g_strdup(s);
+	ret[pos] = '\n';
+    }
+
+    return ret;
+}
+
+#endif
 
 static void create_gobj_icon (gui_obj *obj, const char **xpm)
 {
-#if TRIM_LABELS
-    gchar str[2*SHOWNAMELEN];
-#endif
     GdkPixbuf *pbuf;
     GtkWidget *image;
 
@@ -4112,6 +4141,7 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 
     obj->icon = gtk_event_box_new();
     gtk_widget_set_size_request(obj->icon, 44, 36);
+    obj->label = NULL;
 
     image = gtk_image_new_from_pixbuf(pbuf);
     g_object_unref(G_OBJECT(pbuf));
@@ -4123,16 +4153,23 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 	session_drag_setup(obj);
     }
 
-#if TRIM_LABELS
-    make_short_label_string(str, obj->name);
-    obj->label = gtk_label_new(str);
-#else
-    obj->label = gtk_label_new(obj->name);
+#ifdef REMEDY_LABELS
+    if (g_utf8_strlen(obj->name, -1) > 12 && strchr(obj->name, ' ')) {
+	gchar *tmp = rewrite_icon_label(obj->name);
+
+	if (tmp != NULL) {
+	    obj->label = gtk_label_new(tmp);
+	    g_free(tmp);
+	}
+    }
+#endif
+    if (obj->label == NULL) {
+	obj->label = gtk_label_new(obj->name);
+    }
     gtk_label_set_width_chars(GTK_LABEL(obj->label), 12);
     gtk_label_set_max_width_chars(GTK_LABEL(obj->label), SHOWNAMELEN);
     gtk_label_set_line_wrap(GTK_LABEL(obj->label), TRUE);
     gtk_label_set_justify(GTK_LABEL(obj->label), GTK_JUSTIFY_CENTER);
-#endif
 
     g_object_ref(obj->icon);
     g_object_ref(obj->label);
