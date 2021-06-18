@@ -272,7 +272,6 @@ function void test_warn_logfile (const bundle Expected,
 
     print_logs()
     string actual = readfile($logfile)
-    actual
 
     loop foreach i Expected
         assert(instring(actual, Expected["$i"]) == TRUE)
