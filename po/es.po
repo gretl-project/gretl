@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-06-10 15:30-0400\n"
+"PO-Revision-Date: 2021-06-18 13:27+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 19.12.3\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:592
@@ -134,7 +134,7 @@ msgstr "valor p asintótico"
 
 #: lib/src/adf_kpss.c:726
 msgid "approximate p-value"
-msgstr "Valor p aproximado"
+msgstr "valor p aproximado"
 
 #: lib/src/adf_kpss.c:734
 #, c-format
@@ -1305,7 +1305,7 @@ msgstr "escribió %s\n"
 
 #: lib/src/dataio.c:1525 lib/src/dataio.c:2638 lib/src/gretl_xml.c:3814
 msgid "index variable"
-msgstr "Variable índice"
+msgstr "variable índice"
 
 #: lib/src/dataio.c:1533 lib/src/gretl_xml.c:3789 plugin/purebin.c:87
 #: plugin/purebin-swap.c:113
@@ -1314,7 +1314,7 @@ msgid ""
 "periodicity: %d, maxobs: %d\n"
 "observations range: %s to %s\n"
 msgstr ""
-"Periodicidad: %d, máx. obs: %d\n"
+"periodicidad: %d, máx. obs: %d\n"
 "rango de observaciones: %s a %s\n"
 
 #: lib/src/dataio.c:1716
@@ -2313,7 +2313,7 @@ msgstr ""
 
 #: lib/src/flow_control.c:127
 msgid "error evaluating 'if'"
-msgstr "Error al evaluar 'if'"
+msgstr "error al evaluar 'if'"
 
 #: lib/src/flow_control.c:130
 msgid "indeterminate condition for 'if'"
@@ -2434,7 +2434,7 @@ msgstr ""
 #: lib/src/geneval.c:7745
 #, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "atención: la aserción '%s' ha fallado"
+msgstr "Atención: la aserción '%s' ha fallado"
 
 #: lib/src/geneval.c:7751
 #, c-format
@@ -3178,15 +3178,15 @@ msgstr "FACP de"
 
 #: lib/src/graphing.c:8774
 msgid "radians"
-msgstr "Radianes"
+msgstr "radianes"
 
 #: lib/src/graphing.c:8776
 msgid "degrees"
-msgstr "Grados"
+msgstr "grados"
 
 #: lib/src/graphing.c:8778
 msgid "scaled frequency"
-msgstr "Frecuencia escalada"
+msgstr "frecuencia escalada"
 
 #: lib/src/graphing.c:8788
 msgid "Residual spectrum"
@@ -3204,7 +3204,7 @@ msgstr "Ventana de Bartlett, anchura %d"
 
 #: lib/src/graphing.c:8802 lib/src/graphing.c:8908 gui/dialogs.c:4862
 msgid "log scale"
-msgstr "Escala logarítmica"
+msgstr "escala logarítmica"
 
 #: lib/src/graphing.c:8907
 msgid "Sample periodogram vs ARMA Spectrum"
@@ -3212,11 +3212,11 @@ msgstr "Periodograma muestral con respecto al espectro del ARMA"
 
 #: lib/src/graphing.c:8909
 msgid "spectrum"
-msgstr "Espectro"
+msgstr "espectro"
 
 #: lib/src/graphing.c:8910 gui/library.c:6023
 msgid "periodogram"
-msgstr "Periodograma"
+msgstr "periodograma"
 
 #: lib/src/graphing.c:9013 gui/library.c:2893
 msgid "Q-Q plot"
@@ -3291,7 +3291,7 @@ msgstr "La norma del gradiente %g es superior al máximo %g"
 #: lib/src/gretl_bfgs.c:1388
 #, c-format
 msgid "norm of gradient = %g"
-msgstr "Norma del gradiente = %g"
+msgstr "norma del gradiente = %g"
 
 #: lib/src/gretl_bfgs.c:2175 lib/src/modelprint.c:3372
 #, c-format
@@ -3329,7 +3329,7 @@ msgstr "El valor inicial de la función objetivo no es finito"
 #: lib/src/gretl_bundle.c:520 lib/src/gretl_bundle.c:592
 #: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1515
 msgid "no such item"
-msgstr "No existe ese elemento"
+msgstr "no existe ese elemento"
 
 #: lib/src/gretl_bundle.c:2665
 msgid "xmlParseMemory failed"
@@ -3549,19 +3549,19 @@ msgstr "La instrucción 'catch' no puede usarse en este contexto"
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
-msgstr "los argumentos mezcla de reales y complejos no están soportados "
+msgstr "los argumentos mezcla de reales y complejos no están soportados"
 
 #: lib/src/gretl_errors.c:97
 msgid "gradient is not close to zero"
-msgstr "El gradiente no es cercano a cero"
+msgstr "el gradiente no es cercano a cero"
 
 #: lib/src/gretl_errors.c:98
 msgid "generated missing values"
-msgstr "Se han generado valores ausentes"
+msgstr "se han generado valores ausentes"
 
 #: lib/src/gretl_errors.c:99
 msgid "generated non-finite values"
-msgstr "Se han generado valores no finitos"
+msgstr "se han generado valores no finitos"
 
 #: lib/src/gretl_errors.c:234 lib/src/gretl_errors.c:237
 msgid "In regard to function"
@@ -3569,7 +3569,7 @@ msgstr "Con respecto a la función"
 
 #: lib/src/gretl_errors.c:235
 msgid "package"
-msgstr "Paquete"
+msgstr "paquete"
 
 #: lib/src/gretl_errors.c:264 lib/src/gretl_errors.c:270
 msgid "Warning"
@@ -3639,7 +3639,7 @@ msgstr "Datos de panel"
 
 #: lib/src/gretl_func.c:5233
 msgid "some sort of dataset"
-msgstr "Algún tipo de conjunto de datos"
+msgstr "algún tipo de conjunto de datos"
 
 #: lib/src/gretl_func.c:6256
 msgid "No description available"
@@ -3676,7 +3676,7 @@ msgstr "%s: Tipo de parámetro no válido"
 #: lib/src/gretl_func.c:6881
 #, c-format
 msgid "parameter %d: name is missing"
-msgstr "Parámetro %d: falta el nombre"
+msgstr "parámetro %d: falta el nombre"
 
 #: lib/src/gretl_func.c:7064
 #, c-format
@@ -3865,7 +3865,7 @@ msgstr "Contraste LM de autocorrelación hasta el orden %s"
 
 #: lib/src/gretl_model.c:4118
 msgid "no autocorrelation"
-msgstr "No hay autocorrelación"
+msgstr "no hay autocorrelación"
 
 #: lib/src/gretl_model.c:4121 lib/src/gretl_model.c:4130
 msgid "no structural break"
@@ -3901,7 +3901,7 @@ msgstr "Contraste de no linealidad (logaritmos)"
 
 #: lib/src/gretl_model.c:4136 lib/src/gretl_model.c:4148
 msgid "relationship is linear"
-msgstr "La relación es lineal"
+msgstr "la relación es lineal"
 
 #: lib/src/gretl_model.c:4138 gui/gui_utils.c:4499
 msgid "Test for normality of residual"
@@ -4035,7 +4035,7 @@ msgstr "falló"
 
 #: lib/src/gretl_model.c:4565
 msgid "parameter"
-msgstr "Parámetro"
+msgstr "parámetro"
 
 #: lib/src/gretl_model.c:4569 gui/calculator.c:2045
 msgid "dfn"
@@ -4387,7 +4387,7 @@ msgstr "La ecuación número (%d) está fuera de los límites"
 #: lib/src/nls.c:3161
 #, c-format
 msgid "parse error in '%s'\n"
-msgstr "Error de paso en '%s'\n"
+msgstr "error de paso en '%s'\n"
 
 #: lib/src/gretl_restrict.c:1299
 msgid "Restriction set"
@@ -4509,12 +4509,12 @@ msgstr ""
 #: lib/src/gretl_utils.c:951
 msgid "no ':' allowed in starting obs with frequency 1"
 msgstr ""
-"No se permite el carácter ':' en la observación inicial cuando la frecuencia "
+"no se permite el carácter ':' en la observación inicial cuando la frecuencia "
 "es 1"
 
 #: lib/src/gretl_utils.c:955
 msgid "panel data must have frequency > 1"
-msgstr "Los datos de panel deben tener frecuencia > 1"
+msgstr "los datos de panel deben tener frecuencia > 1"
 
 #: lib/src/gretl_utils.c:960
 msgid "starting obs must contain a ':' with frequency > 1"
@@ -4528,12 +4528,12 @@ msgstr "la observación inicial '%s' es incompatible con la frecuencia"
 
 #: lib/src/gretl_utils.c:968
 msgid "cross-sectional data: frequency must be 1"
-msgstr "Datos de sección cruzada: la frecuencia debe ser 1"
+msgstr "datos de sección cruzada: la frecuencia debe ser 1"
 
 #: lib/src/gretl_utils.c:978
 #, c-format
 msgid "starting obs '%s' is invalid"
-msgstr "Observación inicial '%s' no es válida"
+msgstr "la observación inicial '%s' no es válida"
 
 #: lib/src/gretl_utils.c:1235 lib/src/gretl_utils.c:1324
 #, c-format
@@ -4713,7 +4713,7 @@ msgstr "No se pudo leer '%s'"
 
 #: lib/src/gretl_zip.c:495 lib/src/gretl_zip.c:503
 msgid "not found"
-msgstr "No se encontró"
+msgstr "no se encontró"
 
 #: lib/src/interact.c:794
 msgid "is a 0/1 variable"
@@ -4863,7 +4863,7 @@ msgstr "H0: la serie es lineal/IID"
 
 #: lib/src/libglue.c:320
 msgid "Bootstrapped p-values in []"
-msgstr "con valores p  obtenidos mediante bootstrap entre []"
+msgstr "los valores p  obtenidos mediante bootstrap entre []"
 
 #: lib/src/libglue.c:322
 msgid "Asymptotic p-values in []"
@@ -5494,15 +5494,15 @@ msgstr ""
 
 #: lib/src/modelprint.c:1173
 msgid "bias"
-msgstr "Sesgo"
+msgstr "sesgo"
 
 #: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2858
 msgid "size"
-msgstr "Tamaño"
+msgstr "tamaño"
 
 #: lib/src/modelprint.c:1177 gui/calculator.c:2074
 msgid "value"
-msgstr "Valor"
+msgstr "valor"
 
 #: lib/src/modelprint.c:1190
 #, c-format
@@ -5672,7 +5672,7 @@ msgstr "Desviaciones típicas asintóticas suponiendo errores IID"
 
 #: lib/src/modelprint.c:1698
 msgid "Omitted because all values were zero:"
-msgstr "Omitido porque todos los valores fueron cero."
+msgstr "Omitido porque todos los valores fueron cero:"
 
 #: lib/src/modelprint.c:1712
 msgid "Omitted due to exact collinearity:"
@@ -5681,7 +5681,7 @@ msgstr "Omitidas debido a colinealidad exacta:"
 #: lib/src/modelprint.c:1721
 #, c-format
 msgid " %d series"
-msgstr "Serie %d"
+msgstr "serie %d"
 
 #: lib/src/modelprint.c:1736
 msgid "Redundant instruments:"
@@ -6767,7 +6767,7 @@ msgstr "Prob"
 
 #: lib/src/objstack.c:692 lib/src/objstack.c:727 gui/selector.c:4286
 msgid "VAR"
-msgstr "VAR "
+msgstr "VAR"
 
 #: lib/src/objstack.c:694 lib/src/objstack.c:738 gui/selector.c:4290
 msgid "VECM"
@@ -6986,7 +6986,7 @@ msgstr ""
 #: lib/src/printout.c:442
 #, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
-msgstr "Número de cajas = %d, Media = %g, Desv.típ.=%g\n"
+msgstr "número de cajas = %d, Media = %g, Desv.típ.=%g\n"
 
 #: lib/src/printout.c:445
 msgid ""
@@ -7104,7 +7104,7 @@ msgstr "Rango de estimación del modelo: %s - %s"
 
 #: lib/src/printout.c:1564
 msgid "error"
-msgstr "Error"
+msgstr "error"
 
 #: lib/src/printout.c:2088
 #, c-format
@@ -7219,7 +7219,7 @@ msgstr "Gradientes:  "
 
 #: lib/src/printout.c:3432 lib/src/printout.c:3434 lib/src/printout.c:3436
 msgid "norm"
-msgstr "Norma"
+msgstr "norma"
 
 #: lib/src/printscan.c:784 lib/src/printscan.c:874
 #, c-format
@@ -12293,19 +12293,19 @@ msgstr "Vista previa"
 
 #: gui/graph_page.c:288
 msgid "The graph page is full"
-msgstr "La página del gráfico está llena"
+msgstr "La página de gráficos está llena"
 
 #: gui/graph_page.c:504 gui/guiprint.c:2431 gui/guiprint.c:2545
 msgid "Failed to process TeX file"
-msgstr "Fallo al procesar fichero TeX"
+msgstr "Fallo al procesar un fichero TeX"
 
 #: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3310
 msgid "The graph page is empty"
-msgstr "La página del gráfico está vacía"
+msgstr "La página de gráficos está vacía"
 
 #: gui/graph_page.c:709
 msgid "graph page options"
-msgstr "Opciones de la página de gráfico"
+msgstr "Opciones de la página de gráficos"
 
 #: gui/gretl.c:127
 msgid ""
@@ -12318,11 +12318,11 @@ msgstr ""
 
 #: gui/gretl.c:131
 msgid "open a script file on startup"
-msgstr "abrir fichero de guion al iniciar"
+msgstr "abrir un fichero de guion al iniciar"
 
 #: gui/gretl.c:133
 msgid "open a database on startup"
-msgstr "abrir base de datos al inicio"
+msgstr "abrir una base de datos al inicio"
 
 #: gui/gretl.c:135
 msgid "open a remote (web) database on startup"
@@ -12342,7 +12342,7 @@ msgstr "Forzar el uso del Euskera"
 
 #: gui/gretl.c:143
 msgid "dump gretl configuration to file"
-msgstr "Guardar la configuración de gretl en un fichero"
+msgstr "Volcar la configuración de gretl a un archivo"
 
 #: gui/gretl.c:146
 msgid "send debugging info to console"
@@ -16806,7 +16806,7 @@ msgstr "Tabla de modelos"
 
 #: gui/session.c:3780
 msgid "Graph page"
-msgstr "Página de gráfico"
+msgstr "Página de gráficos"
 
 #: gui/session.c:4012 gui/winstack.c:479
 msgid "icon view"
@@ -19297,7 +19297,6 @@ msgstr "Decoración"
 #~ msgid "gretl: practice files"
 #~ msgstr "gretl: ficheros de ejemplo"
 
-#, c-format
 #~ msgid "The series %s does not seem suitable for disaggregation"
 #~ msgstr "La serie %s no parece adecuada para la desagregación"
 
