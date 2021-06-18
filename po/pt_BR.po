@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-05-28 13:02-0300\n"
+"PO-Revision-Date: 2021-06-18 15:31-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -14347,7 +14347,7 @@ msgstr "Funções de acesso"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2328
 msgid "Built-in strings"
-msgstr "Strin de texto integradas"
+msgstr "Strings integradas"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
