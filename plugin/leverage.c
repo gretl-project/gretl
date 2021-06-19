@@ -26,10 +26,6 @@
 
 #include <gtk/gtk.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
 struct flag_info {
     GtkWidget *dialog;
     GtkWidget *levcheck;

@@ -19,10 +19,6 @@
 
 #include <errno.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
 #if GTK_MAJOR_VERSION >= 3
 # include <gdk/gdkkeysyms-compat.h>
 #else

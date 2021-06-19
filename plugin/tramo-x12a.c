@@ -30,10 +30,6 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
 #define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
 #ifdef WIN32
