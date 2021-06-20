@@ -38,6 +38,7 @@ struct VARINFO_ {
     char midas_freq;
     short orig_pd;
     series_table *st;
+    const char *list_parent;
 };
 
 #endif /* VARINFO_PRIV_H */

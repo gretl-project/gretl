@@ -434,7 +434,7 @@ int series_index (const DATASET *dset, const char *varname)
 	    */
 	    for (i=1; i<dset->v; i++) {
 		if (fd == series_get_stack_level(dset, i) &&
-		    !series_is_listarg(dset, i) &&
+		    !series_is_listarg(dset, i, NULL) &&
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -507,7 +507,7 @@ int series_greatest_index (const DATASET *dset, const char *varname)
 	    */
 	    for (i=dset->v-1; i>0; i--) {
 		if (fd == series_get_stack_level(dset, i) &&
-		    !series_is_listarg(dset, i) &&
+		    !series_is_listarg(dset, i, NULL) &&
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;

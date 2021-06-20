@@ -475,7 +475,8 @@ int series_is_hidden (const DATASET *dset, int i);
 
 int series_is_generated (const DATASET *dset, int i);
 
-int series_is_listarg (const DATASET *dset, int i);
+int series_is_listarg (const DATASET *dset, int i,
+		       const char **lname);
 
 int series_is_coded (const DATASET *dset, int i);
 
@@ -535,6 +536,9 @@ void series_set_stack_level (DATASET *dset, int i, int level);
 void series_increment_stack_level (DATASET *dset, int i);
 
 void series_decrement_stack_level (DATASET *dset, int i);
+
+void series_set_list_parent (DATASET *dset, int i,
+			     const char *lname);
 
 void series_ensure_level_zero (DATASET *dset);
 

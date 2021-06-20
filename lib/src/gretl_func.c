@@ -7391,6 +7391,7 @@ static int add_empty_list (fncall *call, fn_param *fp,
 }
 
 static void localize_list_members (fncall *call, int *list,
+				   const char *lname,
 				   DATASET *dset)
 {
     int i, vi, level = fn_executing + 1;
@@ -7402,6 +7403,7 @@ static void localize_list_members (fncall *call, int *list,
 		gretl_list_append_term(&call->listvars, vi);
 	    }
 	    series_set_stack_level(dset, vi, level);
+	    series_set_list_parent(dset, vi, lname);
 	}
     }
 }
@@ -7432,7 +7434,7 @@ static int localize_list (fncall *call, fn_arg *arg,
     }
 
     if (!err) {
-	localize_list_members(call, list, dset);
+	localize_list_members(call, list, fp->name, dset);
     }
 
 #if UDEBUG
@@ -7454,7 +7456,7 @@ static int localize_bundled_lists (fncall *call, fn_arg *arg,
 	GList *lli = g_list_first(ll);
 
 	while (lli != NULL) {
-	    localize_list_members(call, lli->data, dset);
+	    localize_list_members(call, lli->data, NULL, dset);
 	    lli = g_list_next(lli);
 	}
 	g_list_free(ll);
@@ -7656,22 +7658,22 @@ static void fncall_finalize_listvars (fncall *call)
     }
 }
 
-static int duplicated_pointer_arg_check (fn_arg *args, int argc)
+static int duplicated_pointer_arg_check (fncall *call)
 {
     fn_arg *ai, *aj;
     int i, j, err = 0;
 
-    /* note: a caller cannot be allowed to supply a given
+    /* Note: a caller cannot be allowed to supply a given
        variable in pointer form for more than one argument
        slot in a function call (although ordinary arguments
-       may be repeated)
+       may be repeated).
     */
 
-    for (i=0; i<argc && !err; i++) {
-	ai = &args[i];
+    for (i=0; i<call->argc && !err; i++) {
+	ai = &call->args[i];
 	if (gretl_ref_type(ai->type)) {
-	    for (j=i+1; j<argc && !err; j++) {
-		aj = &args[j];
+	    for (j=i+1; j<call->argc && !err; j++) {
+		aj = &call->args[j];
 		if (gretl_ref_type(aj->type) &&
 		    ai->upname != NULL && /* FIXME? */
 		    !strcmp(ai->upname, aj->upname)) {
@@ -7745,7 +7747,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
     fn_param *fp;
     int i, err;
 
-    err = duplicated_pointer_arg_check(call->args, call->argc);
+    err = duplicated_pointer_arg_check(call);
 
     for (i=0; i<call->argc && !err; i++) {
 	arg = &call->args[i];
@@ -8181,7 +8183,7 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
 			overwrite = 1;
 			break;
 		    }
-		    if (lev == d && j < vi && series_is_listarg(dset, j) &&
+		    if (lev == d && j < vi && series_is_listarg(dset, j, NULL) &&
 			!strcmp(dset->varname[j], vname)) {
 			overwrite = 1;
 			break;
@@ -8211,8 +8213,9 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
 	    if (vi == LISTSEP) {
 		continue;
 	    }
-	    if (series_is_listarg(dset, vi)) {
+	    if (series_is_listarg(dset, vi, NULL)) {
 		series_unset_flag(dset, vi, VAR_LISTARG);
+		series_set_list_parent(dset, vi, NULL);
 		series_set_stack_level(dset, vi, upd);
 	    }
 	}

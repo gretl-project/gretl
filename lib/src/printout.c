@@ -1569,12 +1569,39 @@ static int fit_resid_head (const FITRESID *fr,
     return ywidth;
 }
 
+static const char *get_series_name (const DATASET *dset, int i,
+				    gchar **altname, int debug)
+{
+    gchar *showname = NULL;
+    const char *sname = dset->varname[i];
+    const char *lname;
+    const char *ret;
+
+    if (debug) {
+	ret = sname;
+    } else if (series_is_listarg(dset, i, &lname)) {
+	if (lname != NULL) {
+	    showname = g_strdup_printf("%s.%s", lname, sname);
+	    *altname = showname;
+	    ret = showname;
+	} else {
+	    ret = "[masked]";
+	}
+    } else {
+	ret = sname;
+    }
+
+    return ret;
+}
+
 /* prints a heading with the names of the variables in @list */
 
 static void varheading (const int *list, int leader,
 			const int *wid, const DATASET *dset,
 			char delim, PRN *prn)
 {
+    const char *name;
+    gchar *tmp;
     int i, vi;
 
     if (delim) {
@@ -1601,7 +1628,10 @@ static void varheading (const int *list, int leader,
 	bufspace(leader, prn);
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    pprintf(prn, "%*s", wid[i], dset->varname[vi]);
+	    tmp = NULL;
+	    name = get_series_name(dset, vi, &tmp, 0);
+	    pprintf(prn, "%*s", wid[i], name);
+	    g_free(tmp);
 	}
 	pputs(prn, "\n\n");
     }
@@ -2051,9 +2081,10 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
     int fd = gretl_function_depth();
     int debug = (opt & OPT_D);
     const char *name;
+    gchar *tmp;
     int len, maxlen = 0;
-    int nv = 4;
-    int i, j, n = 0;
+    int nv = 4, n = 0;
+    int i, j;
 
     if (dset->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
@@ -2062,17 +2093,13 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 
     for (i=0; i<dset->v; i++) {
 	if (show_series(i, fd, dset, debug)) {
-	    if (debug) {
-		name = dset->varname[i];
-	    } else if (series_is_listarg(dset, i)) {
-		name = "[masked]";
-	    } else {
-		name = dset->varname[i];
-	    }
+	    tmp = NULL;
+	    name = get_series_name(dset, i, &tmp, debug);
 	    len = strlen(name);
 	    if (len > maxlen) {
 		maxlen = len;
 	    }
+	    g_free(tmp);
 	    n++;
 	}
     }
@@ -2090,13 +2117,8 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
     j = 1;
     for (i=0; i<dset->v; i++) {
 	if (show_series(i, fd, dset, debug)) {
-	    if (debug) {
-		name = dset->varname[i];
-	    } else if (series_is_listarg(dset, i)) {
-		name = "[masked]";
-	    } else {
-		name = dset->varname[i];
-	    }
+	    tmp = NULL;
+	    name = get_series_name(dset, i, &tmp, debug);
 	    if (debug) {
 		pprintf(prn, "%3d) %-*s level %d\n", i, maxlen + 2,
 			name, series_get_stack_level(dset, i));
@@ -2106,6 +2128,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 		    pputc(prn, '\n');
 		}
 	    }
+	    g_free(tmp);
 	    j++;
 	}
     }
@@ -2524,6 +2547,8 @@ static int print_by_obs (int *list, const DATASET *dset,
 static int print_by_var (const int *list, const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
+    const char *name;
+    gchar *tmp;
     int i, vi;
 
     pputc(prn, '\n');
@@ -2534,7 +2559,10 @@ static int print_by_var (const int *list, const DATASET *dset,
 	    continue;
 	}
 	if (list[0] > 1) {
-	    pprintf(prn, "%s:\n", dset->varname[vi]);
+	    tmp = NULL;
+	    name = get_series_name(dset, vi, &tmp, 0);
+	    pprintf(prn, "%s:\n", name);
+	    g_free(tmp);
 	}
 	print_var_smpl(vi, dset, prn);
 	pputc(prn, '\n');

@@ -290,6 +290,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     memset(vinfo, 0, sizeof *vinfo);
     vinfo->label = NULL;
     vinfo->st = NULL;
+    vinfo->list_parent = NULL;
     vinfo->stack_level = gretl_function_depth();
 }
 
@@ -3763,14 +3764,22 @@ int series_is_generated (const DATASET *dset, int i)
  * series_is_listarg:
  * @dset: pointer to dataset.
  * @i: index number of series.
+ * @lname: location to receive list name, or NULL.
  *
  * Returns: non-zero iff series @i has been marked as
  * belonging to a list argument to a function.
  */
 
-int series_is_listarg (const DATASET *dset, int i)
+int series_is_listarg (const DATASET *dset, int i,
+		       const char **lname)
 {
-    return dset->varinfo[i]->flags & VAR_LISTARG;
+    int ret = dset->varinfo[i]->flags & VAR_LISTARG ? 1 : 0;
+
+    if (ret && lname != NULL) {
+	*lname = dset->varinfo[i]->list_parent;
+    }
+
+    return ret;
 }
 
 /**
@@ -4106,6 +4115,13 @@ void series_decrement_stack_level (DATASET *dset, int i)
     }
 }
 
+void series_set_list_parent (DATASET *dset, int i, const char *lname)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->list_parent = lname;
+    }
+}
+
 void series_delete_metadata (DATASET *dset, int i)
 {
     if (i > 0 && i < dset->v &&
@@ -4411,7 +4427,12 @@ int series_get_string_width (const DATASET *dset, int i)
     int n = 0;
 
     if (i > 0 && i < dset->v) {
-	n = strlen(dset->varname[i]);
+	if (dset->varinfo[i]->list_parent != NULL) {
+	    n = strlen(dset->varinfo[i]->list_parent);
+	    n += strlen(dset->varname[i]) + 1;
+	} else {
+	    n = strlen(dset->varname[i]);
+	}
 	if (dset->varinfo[i]->st != NULL) {
 	    char **S;
 	    int j, ns, m;
