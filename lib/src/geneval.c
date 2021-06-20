@@ -6258,7 +6258,14 @@ static NODE *hf_list_node (NODE *l, NODE *m, NODE *r, parser *p)
 
 static NODE *dataset_list_node (parser *p)
 {
-    NODE *ret = aux_list_node(p);
+    NODE *ret = NULL;
+
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_set("'dataset' is not recognized as a list within functions");
+	p->err = E_DATA;
+    } else {
+	ret = aux_list_node(p);
+    }
 
     if (ret != NULL && starting(p)) {
         int *list = full_var_list(p->dset, NULL);
@@ -15061,7 +15068,12 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
         } else if (dum) {
             n = g_ptr_array_index(a, 0);
             if (n->v.idnum == DUM_DATASET) {
-                M = matrix_from_list(NULL, p);
+		if (gretl_function_depth() > 0) {
+		    gretl_errmsg_set("'dataset' is not recognized as a list within functions");
+		    p->err = E_DATA;
+		} else {
+		    M = matrix_from_list(NULL, p);
+		}
             } else {
                 pprintf(p->prn, "Wrong sort of dummy var\n");
                 p->err = E_TYPES;
