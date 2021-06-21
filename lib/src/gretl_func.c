@@ -7448,6 +7448,13 @@ static int localize_list (fncall *call, fn_arg *arg,
     return err;
 }
 
+/* For the series with index number @ID, find the name of
+   the list parameter of the current function call under
+   which this series was made accessible to the function.
+   We call this only if we know already that series @ID
+   was in fact passed to the function via a list.
+*/
+
 const char *series_get_list_parent (int ID)
 {
     fncall *call = current_function_call();
