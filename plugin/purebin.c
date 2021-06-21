@@ -120,6 +120,11 @@ static void get_string_counts (const DATASET *dset,
     gh->labels = nl;
     gh->has_descrip = dset->descrip != NULL ? 1 : 0;
     gh->has_pangrps = dset->pangrps != NULL ? 1 : 0;
+
+#if PBDEBUG
+    fprintf(stderr, "purebin: nsv %d, labels %d, descrip%d, pangrps %d\n",
+	    gh->nsv, gh->labels, gh->has_descrip, gh->has_pangrps);
+#endif
 }
 
 static void read_string (char *targ, int len, FILE *fp)
@@ -419,6 +424,11 @@ int purebin_read_data (const char *fname, DATASET *dset,
 	return err;
     }
 
+#if PBDEBUG
+    fprintf(stderr, "purebin read: gh.nvars=%d, gh.nobs=%d\n",
+	    gh.nvars, gh.nobs);
+#endif
+
     /* allocate dataset */
     bset = create_new_dataset(gh.nvars, gh.nobs, gh.markers);
     if (bset == NULL) {
@@ -426,10 +436,6 @@ int purebin_read_data (const char *fname, DATASET *dset,
 	err = E_ALLOC;
 	goto bailout;
     }
-
-#if PBDEBUG
-    fprintf(stderr, "purebin read: v=%d, n=%d\n", bset->v, bset->n);
-#endif
 
     gh_to_bset_transcribe(&gh, bset);
 
@@ -652,11 +658,15 @@ int purebin_write_data (const char *fname,
     gh.structure = dset->structure;
     gh.pd = dset->pd;
     get_string_counts(dset, list, &gh);
+#if 0
+    gh.sd0 = dset->sd0;
+#else
     if (dataset_is_time_series(dset)) {
 	gh.sd0 = date_as_double(dset->t1, dset->pd, dset->sd0);
     } else {
 	gh.sd0 = 1;
     }
+#endif
     gh.panel_pd = dset->panel_pd;
     gh.panel_sd0 = (float) dset->panel_sd0;
 

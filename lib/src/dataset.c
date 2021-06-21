@@ -290,7 +290,6 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     memset(vinfo, 0, sizeof *vinfo);
     vinfo->label = NULL;
     vinfo->st = NULL;
-    vinfo->list_parent = NULL;
     vinfo->stack_level = gretl_function_depth();
 }
 
@@ -411,7 +410,7 @@ int dataset_allocate_varnames (DATASET *dset)
 	return E_ALLOC;
     }
 
-    dset->varinfo = malloc(v * sizeof *dset->varinfo);
+    dset->varinfo = calloc(v, sizeof *dset->varinfo);
     if (dset->varinfo == NULL) {
 	free(dset->varname);
 	return E_ALLOC;
@@ -3776,7 +3775,7 @@ int series_is_listarg (const DATASET *dset, int i,
     int ret = dset->varinfo[i]->flags & VAR_LISTARG ? 1 : 0;
 
     if (ret && lname != NULL) {
-	*lname = dset->varinfo[i]->list_parent;
+	*lname = NULL; // dset->varinfo[i]->list_parent;
     }
 
     return ret;
@@ -4118,7 +4117,7 @@ void series_decrement_stack_level (DATASET *dset, int i)
 void series_set_list_parent (DATASET *dset, int i, const char *lname)
 {
     if (i > 0 && i < dset->v) {
-	dset->varinfo[i]->list_parent = lname;
+	; // dset->varinfo[i]->list_parent = lname;
     }
 }
 
@@ -4427,12 +4426,15 @@ int series_get_string_width (const DATASET *dset, int i)
     int n = 0;
 
     if (i > 0 && i < dset->v) {
+	n = strlen(dset->varname[i]);
+#if 0
 	if (dset->varinfo[i]->list_parent != NULL) {
 	    n = strlen(dset->varinfo[i]->list_parent);
 	    n += strlen(dset->varname[i]) + 1;
 	} else {
 	    n = strlen(dset->varname[i]);
 	}
+#endif
 	if (dset->varinfo[i]->st != NULL) {
 	    char **S;
 	    int j, ns, m;
