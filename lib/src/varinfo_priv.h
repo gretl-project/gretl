@@ -29,8 +29,10 @@
    saving gretl data in binary form -- for which see purebin.c
    in the plugin directory of the source tree. The "purebin"
    reader works on the assumption that the size and membership
-   of this struct is known; that will be subverted if the struct
-   has been changed since the data were saved.
+   of this struct are known; that will be subverted if the struct
+   has been changed since data were saved as gdtb, and opening
+   a file containing an out-of-date VARINFO will almost surely
+   result in a segfault.
 */
 
 struct VARINFO_ {
