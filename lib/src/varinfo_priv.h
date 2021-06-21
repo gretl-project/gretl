@@ -24,6 +24,15 @@
 #ifndef VARINFO_PRIV_H
 #define VARINFO_PRIV_H
 
+/* Warning: as things stand (2021-06-21) this struct must not be
+   modified, on pain of breaking the currently favoured means of
+   saving gretl data in binary form -- for which see purebin.c
+   in the plugin directory of the source tree. The "purebin"
+   reader works on the assumption that the size and membership
+   of this struct is known; that will be subverted if the struct
+   has been changed since the data were saved.
+*/
+
 struct VARINFO_ {
     char *label;
     char display_name[MAXDISP];
