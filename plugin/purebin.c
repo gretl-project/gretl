@@ -439,14 +439,6 @@ int purebin_read_data (const char *fname, DATASET *dset,
 
     gh_to_bset_transcribe(&gh, bset);
 
-    /* added 2021-06-21 */
-    if (dated_daily_data(bset) || dated_weekly_data(bset)) {
-	/* for the benefit of ntolabel() */
-	strcpy(bset->stobs, "0000-00-00");
-    }
-    ntolabel(bset->stobs, 0, bset);
-    ntolabel(bset->endobs, bset->n - 1, bset);
-
     /* variable names */
     for (i=1; i<bset->v; i++) {
 	j = 0;
@@ -472,6 +464,14 @@ int purebin_read_data (const char *fname, DATASET *dset,
 
     /* read remaining metadata */
     err = read_purebin_tail(bset, &gh, NULL, fp);
+
+    /* added 2021-06-21 */
+    if (dated_daily_data(bset) || dated_weekly_data(bset)) {
+	/* for the benefit of ntolabel() */
+	strcpy(bset->stobs, "0000-00-00");
+    }
+    ntolabel(bset->stobs, 0, bset);
+    ntolabel(bset->endobs, bset->n - 1, bset);
 
  bailout:
 
