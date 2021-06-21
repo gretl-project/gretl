@@ -27,6 +27,9 @@ system evaluates the message only if it is currently called for.
 In this case, the associated string processing of "This is a debugging message"
 will never be executed unless debug logging is enabled.
 
+Third, since gretl 2021c it also possible to write logging statements to a
+separate file which can be analysed afterwards. More on this below.
+
 Note that the message passed to a logging function does not have to a fixed
 piece of text. You can incorporate current state information by means of the
 sprintf function, as in this example
@@ -113,18 +116,24 @@ Logging to a file
 -----------------
 
 A common use of a logging apparatus involves writing logged events to file.
-This is not supported by gretl at present. However, you can wrap logging calls
-using gretl's 'outfile' command, as in the example below:
+Since gretl version 2021c this is supported.
 
-  outfile mylog.txt --quiet --append
-  Warn("Watch out!")
-  end outfile
+  set loglevel info
+  string path_logfile = "mylog.txt" # target file where to append
+  set logfile "@path_logfile"
 
-In this case the message goes to mylog.txt, and is not mixed in with regular
-program output.
+  Info("This message will not be printed but appended to a file.")
+  print "File content"
+  eval readfile(path_logfile)
+
+In this case the message goes to 'mylog.txt', and is not mixed in with
+regular program output.
 
 Changelog:
 ----------
+
+v0.2 (June 2021)
+- Add support logging to a separate file.
 
 v0.1 (June 2021)
 - Initial version.

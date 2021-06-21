@@ -9,6 +9,13 @@ include "../logging.inp" --force
 
 set logstamp off          # Timestamp is deactivated as we cannot mock it
 
+
+string LOGFILE_DEBUG = sprintf("%s/logging_debug.txt", $dotdir)
+string LOGFILE_INFO = sprintf("%s/logging_info.txt", $dotdir)
+string LOGFILE_WARN = sprintf("%s/logging_warn.txt", $dotdir)
+string LOGFILE_ERROR = sprintf("%s/logging_error.txt", $dotdir)
+string LOGFILE_CRITICAL = sprintf("%s/logging_critical.txt", $dotdir)
+
 # helper function
 function void print_logs (void)
     Debug("This is a Debug message.")
@@ -51,6 +58,7 @@ test_debug(Expected, NotExpected)
 
 
 
+
 bundle Expected = _(\
                     Info="INFO: This is a Info message.",\
                     Warn="WARNING: This is a Warning message.",\
@@ -80,7 +88,6 @@ function void test_info (const bundle Expected, const bundle NotExpected)
     endloop
 end function
 test_info(Expected, NotExpected)
-
 
 
 bundle Expected = _(\
@@ -177,6 +184,187 @@ function void test_critical (const bundle Expected, const bundle NotExpected)
 end function
 test_critical(Expected, NotExpected)
 
+
+
+
+bundle Expected = _(\
+                    Debug="DEBUG: This is a Debug message.",\
+                    Info="INFO: This is a Info message.",\
+                    Warn="WARNING: This is a Warning message.",\
+                    Error="ERROR: This is a Error message.",\
+                    Critical="CRITICAL: This is a Critical message."\
+                    )
+bundle NotExpected = null
+
+set logfile "@LOGFILE_DEBUG"
+
+function void test_debug_logfile (const bundle Expected,
+                                  const bundle NotExpected)
+    print "Start testing loglevel 'debug': Write to external logfile."
+
+    set loglevel debug
+
+    print_logs()
+    string actual = readfile($logfile)
+
+    loop foreach i Expected
+        assert(instring(actual, Expected["$i"]) == TRUE)
+    endloop
+
+    loop foreach i NotExpected
+        assert(instring(actual, NotExpected["$i"]) == FALSE)
+    endloop
+end function
+test_debug_logfile(Expected, NotExpected)
+
+
+
+bundle Expected = _(\
+                    Info="INFO: This is a Info message.",\
+                    Warn="WARNING: This is a Warning message.",\
+                    Error="ERROR: This is a Error message.",\
+                    Critical="CRITICAL: This is a Critical message."\
+                    )
+bundle NotExpected = _(\
+                       Debug="DEBUG: This is a Debug message."\
+                       )
+
+set logfile "@LOGFILE_INFO"
+
+function void test_info_logfile (const bundle Expected,
+                                  const bundle NotExpected)
+    print "Start testing loglevel 'info': Write to external logfile."
+
+    set loglevel info
+
+    print_logs()
+    string actual = readfile($logfile)
+
+    loop foreach i Expected
+        assert(instring(actual, Expected["$i"]) == TRUE)
+    endloop
+
+    loop foreach i NotExpected
+        assert(instring(actual, NotExpected["$i"]) == FALSE)
+    endloop
+end function
+test_info_logfile(Expected, NotExpected)
+
+
+
+bundle Expected = _(\
+                    Warn="WARNING: This is a Warning message.",\
+                    Error="ERROR: This is a Error message.",\
+                    Critical="CRITICAL: This is a Critical message."\
+                    )
+bundle NotExpected = _(\
+                       Debug="DEBUG: This is a Debug message.",\
+                       Info="INFO: This is a Info message."\
+                       )
+
+set logfile "@LOGFILE_WARN"
+
+function void test_warn_logfile (const bundle Expected,
+                                  const bundle NotExpected)
+    print "Start testing loglevel 'warn': Write to external logfile."
+
+    set loglevel warn
+
+    print_logs()
+    string actual = readfile($logfile)
+
+    loop foreach i Expected
+        assert(instring(actual, Expected["$i"]) == TRUE)
+    endloop
+
+    loop foreach i NotExpected
+        assert(instring(actual, NotExpected["$i"]) == FALSE)
+    endloop
+end function
+test_warn_logfile(Expected, NotExpected)
+
+
+
+bundle Expected = _(\
+                    Error="ERROR: This is a Error message.",\
+                    Critical="CRITICAL: This is a Critical message."\
+                    )
+bundle NotExpected = _(\
+                       Debug="DEBUG: This is a Debug message.",\
+                       Info="INFO: This is a Info message.",\
+                       Warn="WARNING: This is a Warning message."\
+                       )
+
+set logfile "@LOGFILE_ERROR"
+
+function void test_error_logfile (const bundle Expected,
+                                 const bundle NotExpected)
+    print "Start testing loglevel 'error': Write to external logfile."
+
+    set loglevel error
+
+    print_logs()
+    string actual = readfile($logfile)
+
+    loop foreach i Expected
+        assert(instring(actual, Expected["$i"]) == TRUE)
+    endloop
+
+    loop foreach i NotExpected
+        assert(instring(actual, NotExpected["$i"]) == FALSE)
+    endloop
+end function
+test_error_logfile(Expected, NotExpected)
+
+
+
+bundle Expected = _(\
+                    Critical="CRITICAL: This is a Critical message."\
+                    )
+bundle NotExpected = _(\
+                       Debug="DEBUG: This is a Debug message.",\
+                       Info="INFO: This is a Info message.",\
+                       Warn="WARNING: This is a Warning message.",\
+                       Error="ERROR: This is a Error message."\
+                       )
+
+set logfile "@LOGFILE_CRITICAL"
+
+function void test_critical_logfile (const bundle Expected,
+                                 const bundle NotExpected)
+    print "Start testing loglevel 'critical': Write to external logfile."
+
+    set loglevel critical
+
+    print_logs()
+    string actual = readfile($logfile)
+
+    loop foreach i Expected
+        assert(instring(actual, Expected["$i"]) == TRUE)
+    endloop
+
+    loop foreach i NotExpected
+        assert(instring(actual, NotExpected["$i"]) == FALSE)
+    endloop
+end function
+test_critical_logfile(Expected, NotExpected)
+
+
+
+
+function void test_get_date_string (void)
+    print "Start testing function get_date_string()"
+
+    # Given
+    string fmt = "%Y-%m-%d %H:%M:%S %Z"
+
+    # When
+    string date = get_date_string(fmt)
+
+    # TODO: One could test a regexp
+    # assert()
+end function
+test_get_date_string()
 
 
 

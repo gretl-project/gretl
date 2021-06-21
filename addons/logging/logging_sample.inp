@@ -1,5 +1,9 @@
 set verbose off
-include logging.gfn
+set workdir "/home/at/git/gretl-git/addons/logging"
+include logging.inp --force
+#include logging.gfn
+
+
 set logstamp off   # on/off: print timstamp or not
 
 set loglevel debug
@@ -60,3 +64,14 @@ loop i=0..4
    foo()
 endloop
 printf "\n"
+
+
+# Log events in a separate file
+set loglevel info
+string path_logfile = "mylog.txt" # target file where to append
+set logfile "@path_logfile"
+
+Info("This message will not be printed but appended to a file.")
+print "File content"
+eval readfile(path_logfile)
+
