@@ -3775,7 +3775,7 @@ int series_is_listarg (const DATASET *dset, int i,
     int ret = dset->varinfo[i]->flags & VAR_LISTARG ? 1 : 0;
 
     if (ret && lname != NULL) {
-	*lname = NULL; // dset->varinfo[i]->list_parent;
+	*lname = series_get_list_parent(i);
     }
 
     return ret;
@@ -4114,13 +4114,6 @@ void series_decrement_stack_level (DATASET *dset, int i)
     }
 }
 
-void series_set_list_parent (DATASET *dset, int i, const char *lname)
-{
-    if (i > 0 && i < dset->v) {
-	; // dset->varinfo[i]->list_parent = lname;
-    }
-}
-
 void series_delete_metadata (DATASET *dset, int i)
 {
     if (i > 0 && i < dset->v &&
@@ -4423,18 +4416,17 @@ char **series_get_string_vals (const DATASET *dset, int i,
 
 int series_get_string_width (const DATASET *dset, int i)
 {
+    const char *lname;
     int n = 0;
 
     if (i > 0 && i < dset->v) {
 	n = strlen(dset->varname[i]);
-#if 0
-	if (dset->varinfo[i]->list_parent != NULL) {
-	    n = strlen(dset->varinfo[i]->list_parent);
-	    n += strlen(dset->varname[i]) + 1;
-	} else {
-	    n = strlen(dset->varname[i]);
+	if (dset->varinfo[i]->flags & VAR_LISTARG) {
+	    lname = series_get_list_parent(i);
+	    if (lname != NULL) {
+		n += strlen(lname) + 1;
+	    }
 	}
-#endif
 	if (dset->varinfo[i]->st != NULL) {
 	    char **S;
 	    int j, ns, m;

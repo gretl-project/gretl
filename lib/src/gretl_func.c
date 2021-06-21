@@ -141,6 +141,7 @@ struct fncall_ {
     fn_arg *args;    /* argument array */
     int *ptrvars;    /* list of pointer arguments */
     int *listvars;   /* list of series included in a list argument */
+    GList *lists;    /* list of names of list arguments */
     char *retname;   /* name of return value (or dummy string) */
     GretlType rtype; /* return type (when not fixed in advance) */
     obsinfo obs;     /* sample info */
@@ -587,6 +588,7 @@ fncall *fncall_new (ufunc *fun, int preserve)
 	call->fun = fun;
 	call->ptrvars = NULL;
 	call->listvars = NULL;
+	call->lists = NULL;
 	call->retname = NULL;
 	call->rtype = fun->rettype;
 	call->argc = 0;
@@ -604,6 +606,7 @@ void fncall_destroy (fncall *call)
 	free(call->ptrvars);
 	free(call->listvars);
 	free(call->retname);
+	g_list_free(call->lists);
 	free(call);
     }
 }
@@ -7403,7 +7406,6 @@ static void localize_list_members (fncall *call, int *list,
 		gretl_list_append_term(&call->listvars, vi);
 	    }
 	    series_set_stack_level(dset, vi, level);
-	    series_set_list_parent(dset, vi, lname);
 	}
     }
 }
@@ -7418,6 +7420,7 @@ static int localize_list (fncall *call, fn_arg *arg,
 	/* actual list arg -> copy to function level */
 	list = arg->val.list;
 	err = copy_as_arg(fp->name, GRETL_TYPE_LIST, list);
+	call->lists = g_list_prepend(call->lists, fp->name);
     } else if (arg->type == GRETL_TYPE_USERIES) {
 	/* series arg -> becomes a singleton list */
 	int tmp[] = {1, arg->val.idnum};
@@ -7443,6 +7446,28 @@ static int localize_list (fncall *call, fn_arg *arg,
 #endif
 
     return err;
+}
+
+const char *series_get_list_parent (int ID)
+{
+    fncall *call = current_function_call();
+    const char *ret = NULL;
+
+    if (call != NULL && call->lists != NULL) {
+	GList *L = call->lists;
+	int *list;
+
+	while (L != NULL) {
+	    list = get_list_by_name(L->data);
+	    if (list != NULL && in_gretl_list(list, ID)) {
+		ret = L->data;
+		break;
+	    }
+	    L = L->next;
+	}
+    }
+
+    return ret;
 }
 
 static int localize_bundled_lists (fncall *call, fn_arg *arg,
@@ -8215,7 +8240,6 @@ static int unlocalize_list (const char *lname, fn_arg *arg,
 	    }
 	    if (series_is_listarg(dset, vi, NULL)) {
 		series_unset_flag(dset, vi, VAR_LISTARG);
-		series_set_list_parent(dset, vi, NULL);
 		series_set_stack_level(dset, vi, upd);
 	    }
 	}

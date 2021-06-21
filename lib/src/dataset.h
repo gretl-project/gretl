@@ -537,9 +537,6 @@ void series_increment_stack_level (DATASET *dset, int i);
 
 void series_decrement_stack_level (DATASET *dset, int i);
 
-void series_set_list_parent (DATASET *dset, int i,
-			     const char *lname);
-
 void series_ensure_level_zero (DATASET *dset);
 
 void series_attach_string_table (DATASET *dset, int i,

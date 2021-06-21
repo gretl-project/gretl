@@ -183,6 +183,8 @@ void allow_full_data_access (int s);
 
 int series_is_accessible_in_function (int ID, const DATASET *dset);
 
+const char *series_get_list_parent (int ID);
+
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 
 void extend_function_sample_range (int addobs);
