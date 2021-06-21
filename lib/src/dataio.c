@@ -518,6 +518,7 @@ char *ntolabel (char *datestr, int t, const DATASET *dset)
 #if 0
     fprintf(stderr, "ntolabel: t=%d, pd=%d, sd0=%g, incoming stobs='%s'\n",
 	    t, dset->pd, dset->sd0, dset->stobs);
+    fprintf(stderr, " calendar_data(dset) %d\n", calendar_data(dset));
 #endif
 
     if (calendar_data(dset)) {

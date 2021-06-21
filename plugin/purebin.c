@@ -439,6 +439,14 @@ int purebin_read_data (const char *fname, DATASET *dset,
 
     gh_to_bset_transcribe(&gh, bset);
 
+    /* added 2021-06-21 */
+    if (dated_daily_data(bset) || dated_weekly_data(bset)) {
+	/* for the benefit of ntolabel() */
+	strcpy(bset->stobs, "0000-00-00");
+    }
+    ntolabel(bset->stobs, 0, bset);
+    ntolabel(bset->endobs, bset->n - 1, bset);
+
     /* variable names */
     for (i=1; i<bset->v; i++) {
 	j = 0;
@@ -662,6 +670,7 @@ int purebin_write_data (const char *fname,
     gh.sd0 = dset->sd0;
 #else
     if (dataset_is_time_series(dset)) {
+	/* allow for saving a sub-sample of @dset */
 	gh.sd0 = date_as_double(dset->t1, dset->pd, dset->sd0);
     } else {
 	gh.sd0 = 1;
