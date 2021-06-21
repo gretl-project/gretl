@@ -1425,6 +1425,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	} else {
 	    hbox = gtk_hbox_new(FALSE, 0);
+	    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 0);
 	    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
 	    if (vwin->role == VIEW_MODEL || vwin->role == VAR ||
