@@ -5369,11 +5369,11 @@ void msgbox (const char *msg, int msgtype, GtkWidget *parent)
         trmsg = g_locale_to_utf8(msg, -1, NULL, &bytes, NULL);
     }
 
-    fprintf(stderr, "HERE msgbox, parent = %p\n", (void *) parent);
-
     if (parent == NULL) {
 	parent = get_focus_window();
-	fprintf(stderr, "Revised parent = %p\n", (void *) parent);
+#if 0
+	fprintf(stderr, "Revised msgbox parent = %p\n", (void *) parent);
+#endif
     }
     pwin = parent != NULL ? GTK_WINDOW(parent) : NULL;
 
