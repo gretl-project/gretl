@@ -854,6 +854,8 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 
     /* includes getting path to cmd.exe */
     cmdline = compose_command_line(cmd);
+    fprintf(stderr, "run_shell_cmd_wait: cmd='%s'\n", cmd);
+    fprintf(stderr, "  cmdline='%s'\n", cmdline);
 
     ok = CreateProcess(NULL,
 		       cmdline,
