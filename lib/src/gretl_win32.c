@@ -625,7 +625,7 @@ static gchar *compose_command_line (const char *arg)
     if (getenv("SHELLDEBUG")) {
 	cmdline = g_strdup_printf("%s\\cmd.exe /k %s", cmddir, arg);
     } else {
-	cmdline = g_strdup_printf("%s\\cmd.exe /c %s", cmddir, arg);
+	cmdline = g_strdup_printf("%s\\cmd.exe /s /c \"%s\"", cmddir, arg);
     }
 
     return cmdline;
