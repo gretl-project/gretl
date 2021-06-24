@@ -38,9 +38,11 @@ int get_x12a_ok (void);
 void set_up_mac_look (void);
 #endif
 
-#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
-void set_wimp_preferred (int s);
+#if defined(G_OS_WIN32)
 void set_up_windows_look (void);
+# if GTK_MAJOR_VERSION < 3
+void set_wimp_preferred (int s);
+# endif
 #endif
 
 void set_gretl_startdir (void);

@@ -52,10 +52,9 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
-# ifndef USE_WIN32_FONTSEL
-#  include "gtkfontselhack.h"
-# endif
-#else /* not Windows */
+#endif
+
+#ifndef USE_WIN32_FONTSEL
 # if HAVE_GTK_FONT_CHOOSER
 #  include "fontfilter.h"
 # else
