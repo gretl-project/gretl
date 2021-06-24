@@ -2172,8 +2172,8 @@ void lex (parser *p)
 		parser_getc(p);
 		p->sym = B_EQ;
 	    } else {
-		gretl_errmsg_set("If you meant to test for "
-				 "equality, please use '=='");
+		gretl_errmsg_set(_("If you meant to test for "
+				   "equality, please use '=='"));
 		p->err = E_PARSE;
 	    }
 	    return;
