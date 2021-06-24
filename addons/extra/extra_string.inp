@@ -18,11 +18,7 @@ function matrix multi_instrings (strings lookinhere, strings tofind)
     # If there are duplicates in 'tofind' then the output may also
     # contain duplicate indices. Use uniq() or values() afterwards
     # if needed.
-
-    if $version < 20200
-        funcerr "Sorry, this function needs at least gretl 2020a."
-        # (because of instrings)
-    endif
+    # This function requires version 2020a.
 
     matrix which = {}
 
@@ -32,10 +28,9 @@ function matrix multi_instrings (strings lookinhere, strings tofind)
     # which = seq(1, nelem(lookinhere))
 
     if nelem(tofind)
-        loop n = 1..nelem(tofind) -q
+        loop n = 1..nelem(tofind)
             which |= instrings(lookinhere, tofind[n])
         endloop
-        # which = values(which) # this was done in the old names2indices
     endif
 
     return which # may still be empty
@@ -55,15 +50,15 @@ function strings powerset (strings S)
     matrix s = seq(0, N-1)'
     strings PS = array(N)
 
-    loop i=1..l --quiet
+    loop i = 1..l 
         matrix a = s % 2
         P[,i] = a
         s = (s - a) / 2
     endloop
 
-    loop i = 1..N --quiet
+    loop i = 1..N
         string c = ""
-        loop j = 1..l --quiet
+        loop j = 1..l
             if P[i, j]
                 c = c ~ " " ~ S[j]
             endif

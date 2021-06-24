@@ -60,7 +60,7 @@ function series lin_int (const series y)
     matrix A = {y, y0, y1, splen}
     scalar t = lastobs(y)
 
-    loop while t > firstobs(y) --quiet
+    loop while t > firstobs(y)
         if ok(End[t]) && (End[t] == 1)
             scalar l = A[t, 4]
             dy = (A[t,3] - A[t,2]) / (l + 1)
@@ -142,10 +142,7 @@ function matrix fracorder (const series x, int order[0::0], bool verbosity[0])
     # - Geweke Porter-Hudak
     # - Hurst (exponent minus 0.5)
     # (also note the generalized Hurst contributed function package)
-
-    if $version < 20202 # 2020c
-        funcerr "The fracorder function from 'extra' requires at least gretl 2020c."
-    endif
+    # This function requires gretl 2020c.
 
     # translate the wanted order and whether to have printouts
     string sorder = !order    ? "" : sprintf("%d", order)
@@ -163,22 +160,22 @@ function matrix fracorder (const series x, int order[0::0], bool verbosity[0])
     if $nobs < 128 && verbosity
         print "Warning: not enough obs for Hurst, leaving result row as NA."
     elif $nobs >= 128
-                if verbosity
-                        hurst x --plot=none
-                else
-                outfile null    # workaround for the missing quiet option of hurst
+        if verbosity
+            hurst x --plot=none
+        else
+            outfile null    # workaround for the missing quiet option of hurst
                 hurst x --plot=none
-                end outfile     # This is in >=2018b, so OK here.
-                endif
+            end outfile     # This is in >=2018b, so OK here.
+        endif
         # shifted to be comparable to d
-                Hurst[1:2] = ($result[1] - 0.5) ~ $result[2]
+        Hurst[1:2] = ($result[1] - 0.5) ~ $result[2]
     endif
 
-        matrix ret = LocWhit | GewPorthud | Hurst
-        cnameset(ret, "estim SE teststat pval") # is in >= 2018a
-        rnameset(ret, "LocalWh GPH Hurst")
+    matrix ret = LocWhit | GewPorthud | Hurst
+    cnameset(ret, "estim SE teststat pval") # is in >= 2018a
+    rnameset(ret, "LocalWh GPH Hurst")
 
-        return ret
+    return ret
 end function
 
 ######################
