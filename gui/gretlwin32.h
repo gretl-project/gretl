@@ -30,7 +30,9 @@ enum {
     WIN32_TO_PRINTER
 };
 
-#define USE_WIN32_FONTSEL
+#if GTK_MAJOR_VERSION < 3
+# define USE_WIN32_FONTSEL
+#endif
 
 int win32_run_async (const char *prog, const char *arg);
 

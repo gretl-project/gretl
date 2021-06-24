@@ -3293,9 +3293,6 @@ void set_up_mac_look (void)
 
 void set_up_windows_look (void)
 {
-    fprintf(stderr, "set_up_windows_look: themepref = '%s'\n",
-	    themepref);
-
     if (!strcmp(themepref, "Windows-10") ||
 	!strcmp(themepref, "MS-Windows") ||
 	!strcmp(themepref, "Clearlooks")) {
@@ -3335,7 +3332,7 @@ void set_wimp_preferred (int s)
     }
 }
 
-#elif defined (G_OS_WIN32) /* Windows + GTK 3 */
+#elif defined (G_OS_WIN32) && GTK_MAJOR_VERSION == 3
 
 void set_up_windows_look (void)
 {

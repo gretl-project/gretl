@@ -868,7 +868,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "about to build GUI...\n");
 #endif
 
-#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
+#if defined(G_OS_WIN32)
     set_up_windows_look();
 #elif defined(OS_OSX) && defined(HAVE_MAC_THEMES)
     set_up_mac_look();
