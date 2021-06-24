@@ -1167,6 +1167,16 @@ GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
 {
     GtkWidget *tb = gtk_toolbar_new();
 
+    /* Icon size spec: on gtk3, GTK_ICON_SIZE_MENU and
+       GTK_ICON_SIZE_SMALL_TOOLBAR are equivalent, but not
+       on gtk2; and in the latter case it's the smaller
+       "MENU" size we want in most cases. To support larger
+       icons where applicable we'd want:
+
+       gtk2: GTK_ICON_SIZE_SMALL_TOOLBAR
+       gtk3: GTK_ICON_SIZE_LARGE_TOOLBAR
+    */
+
     gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), GTK_ICON_SIZE_MENU);
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
