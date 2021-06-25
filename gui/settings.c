@@ -2580,7 +2580,7 @@ static int fontsel_code (GtkAction *action)
 
 #ifdef USE_WIN32_FONTSEL
 
-/* font selection: Windows version first */
+/* font selection: native Windows version first */
 
 static int choose_fontsel_action (void)
 {
@@ -2872,7 +2872,7 @@ static void gtk2_font_selector (GtkAction *action)
     gtk_widget_show(fontsel);
 }
 
-#endif /* end font selection dialog switch */
+#endif /* end font-selection dialog alternatives */
 
 void font_selector (GtkAction *action)
 {

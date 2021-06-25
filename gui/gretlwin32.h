@@ -30,7 +30,7 @@ enum {
     WIN32_TO_PRINTER
 };
 
-#if GTK_MAJOR_VERSION < 3
+#if 0 // GTK_MAJOR_VERSION < 3
 # define USE_WIN32_FONTSEL
 #endif
 
