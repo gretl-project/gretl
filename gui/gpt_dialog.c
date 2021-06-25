@@ -1143,45 +1143,7 @@ static void plot_editor_set_fontname (plot_editor *ed, const char *name)
     ed->spec->fontstr = gretl_strdup(name);
 }
 
-#ifdef USE_WIN32_FONTSEL
-
-static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
-				      const char *default_font)
-{
-    char fontname[128];
-
-    if (default_font == NULL || *default_font == '\0') {
-	if (type == 1) {
-	    default_font = pdf_ps_saver_current_font(p);
-	} else {
-	    default_font = gretl_png_font();
-	}
-    }
-
-    adjust_fontspec_string(fontname, default_font, DROP_COMMA);
-    win32_font_selector(fontname, APP_FONT_SELECTION);
-
-    if (*fontname != '\0') {
-	if (type < 2 && button != NULL) {
-	    gchar *title = g_strdup_printf(_("font: %s"), fontname);
-
-	    /* if we were passed a @button, update its string
-	       to reflect the current font choice
-	    */
-	    gtk_button_set_label(button, title);
-	    g_free(title);
-	}
-	if (type == 0) {
-	    plot_editor_set_fontname(p, fontname);
-	} else if (type == 1) {
-	    pdf_ps_saver_set_fontname(p, fontname);
-	} else if (type == 2) {
-	    activate_plot_font_choice(p, fontname);
-	}
-    }
-}
-
-#elif USE_GTK_FONT_CHOOSER
+#if USE_GTK_FONT_CHOOSER
 
 static void graph_font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 {

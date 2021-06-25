@@ -54,12 +54,10 @@
 # include "gretlwin32.h"
 #endif
 
-#ifndef USE_WIN32_FONTSEL
-# if HAVE_GTK_FONT_CHOOSER
-#  include "fontfilter.h"
-# else
-#  include "gtkfontselhack.h"
-# endif
+#if HAVE_GTK_FONT_CHOOSER
+# include "fontfilter.h"
+#else
+# include "gtkfontselhack.h"
 #endif
 
 #if defined(OS_OSX) && defined(HAVE_MAC_THEMES)
@@ -2578,60 +2576,9 @@ static int fontsel_code (GtkAction *action)
     }
 }
 
-#ifdef USE_WIN32_FONTSEL
-
-/* font selection: native Windows version first */
-
-static int choose_fontsel_action (void)
-{
-    const char *opts[] = {
-	N_("Select a specific font"),
-	N_("Reset to default")
-    };
-
-    return radio_dialog(NULL, NULL, opts, 2, 0, 0,
-			mdata->main);
-}
-
-static void windows_font_selector (GtkAction *action)
-{
-    int resp, which = fontsel_code(action);
-    char fontname[128];
-
-    *fontname = '\0';
-    resp = choose_fontsel_action();
-
-    if (resp == 0) {
-	/* actually choose a font */
-	if (which == FIXED_FONT_SELECTION) {
-	    strcpy(fontname, fixedfontname);
-	} else {
-	    strcpy(fontname, appfontname);
-	}
-	win32_font_selector(fontname, which);
-    } else if (resp == 1) {
-	/* reset the default font */
-	if (which == FIXED_FONT_SELECTION) {
-	    strcpy(fontname, default_fixedfont);
-	} else {
-	    strcpy(fontname, system_appfont);
-	}
-    }
-
-    if (*fontname != '\0') {
-	if (which == FIXED_FONT_SELECTION) {
-	    set_fixed_font(fontname, 1);
-	    write_rc(OPT_NONE);
-	} else {
-	    set_app_font(fontname, 1);
-	    write_rc(OPT_NONE);
-	}
-    }
-}
-
 /* font selection via GtkFontChooser */
 
-#elif HAVE_GTK_FONT_CHOOSER
+#if HAVE_GTK_FONT_CHOOSER
 
 gboolean latin_font_filter (PangoFontFamily *family,
 			    PangoFontFace *face,
@@ -2872,13 +2819,11 @@ static void gtk2_font_selector (GtkAction *action)
     gtk_widget_show(fontsel);
 }
 
-#endif /* end font-selection dialog alternatives */
+#endif /* end font-selection dialog variants */
 
 void font_selector (GtkAction *action)
 {
-#ifdef USE_WIN32_FONTSEL
-    windows_font_selector(action);
-#elif HAVE_GTK_FONT_CHOOSER
+#if HAVE_GTK_FONT_CHOOSER
     chooser_font_selector(action);
 #else
     gtk2_font_selector(action);

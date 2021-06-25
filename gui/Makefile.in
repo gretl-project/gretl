@@ -180,6 +180,7 @@ SRCS = about.c \
 	fncall.c \
 	fnsave.c \
 	focus.c \
+	fontfilter.c \
 	gfn_arglists.c \
 	graphics.c \
 	graph_page.c \
@@ -212,16 +213,10 @@ SRCS = about.c \
 	varinfo.c \
 	winstack.c
 
-ifeq ($(gtk_version),3.0)
-  HACK_SRC = fontfilter.c
-  HACK_HDR = fontfilter.h
-  HACK_OBJ = fontfilter.o
-else ifeq ($(win32_build),yes)
-  # use native win32 font selector
-else
-  HACK_SRC = gtkfontselhack.c fontfilter.c
-  HACK_HDR = gtkfontselhack.h fontfilter.h
-  HACK_OBJ = gtkfontselhack.o fontfilter.o
+ifeq ($(gtk_version),2.0)
+  HACK_SRC = gtkfontselhack.c
+  HACK_HDR = gtkfontselhack.h
+  HACK_OBJ = gtkfontselhack.o
 endif
 
 ifeq ($(win32_build),yes)

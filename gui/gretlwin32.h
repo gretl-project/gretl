@@ -30,10 +30,6 @@ enum {
     WIN32_TO_PRINTER
 };
 
-#if 0 // GTK_MAJOR_VERSION < 3
-# define USE_WIN32_FONTSEL
-#endif
-
 int win32_run_async (const char *prog, const char *arg);
 
 void win32_start_R_async (void);
@@ -61,12 +57,5 @@ void win32_font_selector (char *fontname, int flag);
 int win32_rename_dir (const char *oldname, const char *newname);
 
 void get_default_windows_app_font (char *target);
-
-#ifdef USE_WIN32_FONTSEL
-
-void win32_font_selector (char *fontname, int flag);
-
-#endif
-
 
 #endif /* GRETLWIN32_H */
