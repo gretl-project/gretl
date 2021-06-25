@@ -31,19 +31,27 @@ const gchar *copyright = "Copyright (C) 2000-2020 Allin Cottrell and "
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
 const gchar *website = "http://gretl.sourceforge.net/";
 
+#if GTK_MAJOR_VERSION == 3
+# define GTKV "gtk3"
+#else
+# define GTKV "gtk2"
+#endif
+
 #ifdef PKGBUILD
 # if defined(_WIN64)
-#  define SYSINFO "MS Windows (x86_64)"
+#  define SYSINFO "MS Windows (x86_64, "
 # elif defined(G_OS_WIN32)
-#  define SYSINFO "MS Windows (i686)"
+#  define SYSINFO "MS Windows (i686, "
+# elif defined(OS_OSX) && defined(__aarch64__)
+#  define SYSINFO "MacOS (quartz, arm64, "
 # elif defined(OS_OSX)
-#  define SYSINFO "MacOS (quartz, x86_64)"
+#  define SYSINFO "MacOS (quartz, x86_64, "
 # endif
 #elif defined(__GNUC__)
 # if defined(linux) && defined(__x86_64__)
-#  define SYSINFO "Linux x86_64"
+#  define SYSINFO "Linux x86_64 ("
 # elif defined(__x86_64__)
-#  define SYSINFO "Intel x86_64"
+#  define SYSINFO "Intel x86_64 ("
 # endif
 #endif
 
@@ -141,8 +149,8 @@ void about_dialog (void)
 #ifdef SYSINFO
     buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
 				  "gretl %s</span>\n"
-				  "%s\n%s %s\n\n%s", GRETL_VERSION,
-				  SYSINFO, _("build date"), BUILD_DATE,
+				  "%s%s)\n%s %s\n\n%s", GRETL_VERSION,
+				  SYSINFO, GTKV, _("build date"), BUILD_DATE,
 				  _(bonmot));
 #else
     buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
