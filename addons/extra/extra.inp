@@ -37,10 +37,10 @@ end function
 
 
 function matrix truncnorm (int n[1::] "Number of random variables",
-                           const scalar m[0] "Mean value",
-                           const scalar sigma[0::1] "Std. deviation",
-                           const scalar below "left truncation value",
-                           const scalar above "right truncation value")
+                           scalar m[0] "Mean value",
+                           scalar sigma[0::1] "Std. deviation",
+                           scalar below "left truncation value",
+                           scalar above "right truncation value")
     /* Generates truncated normal random values. Set 'below' and/or 'above'
     to NA to skip. Returns a column vector. */
 
@@ -128,7 +128,7 @@ function matrix scores2x2 (matrix in,
     PRC = h / h_f
     FSC = 2 * h / (1 + h_m)
     matrix out = {POD; POFD; HR; FAR; CSI; OR; BIAS; TSS; HSS; ETS; PRC; FSC}
-    rownames(out, "POD POFD HR FAR CSI OR BIAS TSS HSS ETS PRC FSC")
+    rnameset(out, "POD POFD HR FAR CSI OR BIAS TSS HSS ETS PRC FSC")
     return out
 end function
 

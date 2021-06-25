@@ -148,7 +148,7 @@ function matrix drill (const matrices x,
     nr = rows(x[1])
     nc = cols(x[1])
 
-    loop i = 2..n --quiet
+    loop i = 2..n
         same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc)
         if !same_dim
 			printf "Matrix number %d with different dimensions\n", i
@@ -246,7 +246,7 @@ function matrix combinations (matrix from "Set of all choices",
 
     matrix ret = {}
     scalar hh = h-1
-    loop i = 1 .. (n-hh) --quiet
+    loop i = 1 .. (n-hh)
         matrix ret |= from[i] ~ combinations(from[i+1:], hh)
     endloop
 

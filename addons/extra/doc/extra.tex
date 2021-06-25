@@ -281,12 +281,12 @@ influence which of the modes is actually found. Returns a 2-element column vecto
 matrix (comprises only nan values) a 1x1 matrix with nan is returned.
 
 
-\subsection{bwritejson (removed)}
+% \subsection{bwritejson (removed)}
 
-This function was removed from extra version 0.8 (September 2020)
- because gretl's native \texttt{bwrite} function supports writing a
- bundle in JSON format since gretl 2020c. Please switch to that
- function.
+% This function was removed from extra version 0.8 (September 2020)
+%  because gretl's native \texttt{bwrite} function supports writing a
+%  bundle in JSON format since gretl 2020c. Please switch to that
+%  function.
 
 % \ArgRet{\texttt{bundle b, string fname, bool export} (optional),
 %     \texttt{string *jsonresult} (pointer form, optional),
@@ -420,7 +420,7 @@ Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$. The first two
 are executed through gretl's command \texttt{fractint}, the latter via \texttt{hurst}.%
 \footnote{Another estimation approach for the Hurst exponent is provided in the
 user-contributed function package 'gen\_hurst'.}
-This function only works with gretl 2020c or higher.
+% This function only works with gretl 2020c or higher.
 
 Returns a matrix with three rows corresponding to the methods above; the four columns
 contain (1) the point estimate, (2) its standard error, (3) the test statistic for the null
@@ -468,7 +468,7 @@ the returned list will contain the series \texttt{blah1},
 \section{Authors}
 \begin{itemize}
 \item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset,
-  drill, correspondence: Jack Lucchetti
+  drill, correspondence, combinations: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
 splitfname, multi\_instrings, fracorder:
@@ -483,7 +483,7 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
-\item June 2021: 1.1, add combinations
+\item June 2021: 1.1, add combinations, and increase gretl version requirement to 2020c
 \item November 2020: 1.0, add mat2list
 \item September 2020: 0.8, add fracorder, remove bwritejson
 \item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to
