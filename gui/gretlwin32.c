@@ -324,14 +324,10 @@ void gretl_win32_init (int debug)
     char tmp[4] = {0};
 
 #if GTK_MAJOR_VERSION < 3
-    /* Are we using the XP theme (as opposed to "classic")?
-       In that case we'll make use of libwimp the default,
-       prior to reading the user's config file.
-    */
     read_reg_val(HKEY_CURRENT_USER,
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager",
 		 "ThemeActive", tmp);
-    set_wimp_preferred(!strcmp(tmp, "1"));
+    set_wimp_preferred(strcmp(tmp, "1") == 0);
 #endif
 
     read_win32_config(debug);
