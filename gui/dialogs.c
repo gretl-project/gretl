@@ -5371,6 +5371,9 @@ void msgbox (const char *msg, int msgtype, GtkWidget *parent)
 
     if (parent == NULL) {
 	parent = get_focus_window();
+	if (parent == NULL && mdata != NULL) {
+	    parent = mdata->main;
+	}
 #if 0
 	fprintf(stderr, "Revised msgbox parent = %p\n", (void *) parent);
 #endif
