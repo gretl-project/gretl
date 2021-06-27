@@ -7786,9 +7786,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	fp = &fun->params[i];
 
 #if UDEBUG
-	fprintf(stderr, "arg[%d], param type %s, arg type %s\n",
-		i, gretl_type_get_name(fp->type),
-		gretl_type_get_name(arg->type));
+	fprintf(stderr, "arg[%d], param type %s (%s), arg type %s (%s)\n",
+		i, gretl_type_get_name(fp->type), fp->name,
+		gretl_type_get_name(arg->type), arg->upname);
 #endif
 #if STRICT_CONST
 	/* extra conditions needed to avoid "const poisoning" */
@@ -8341,7 +8341,7 @@ static int is_pointer_arg (fncall *call, int rtype)
     return 0;
 }
 
-static void push_series_to_caller (fn_arg *arg, DATASET *dset)
+static void push_series_to_caller (ufunc *u, fn_arg *arg, DATASET *dset)
 {
     int v = arg->val.idnum;
 
@@ -8351,6 +8351,11 @@ static void push_series_to_caller (fn_arg *arg, DATASET *dset)
     }
 
     series_decrement_stack_level(dset, v);
+    if (series_get_stack_level(dset, v) < 0) {
+	fprintf(stderr, "@@@ After decrement in %s, stack level=%d for %s @@@\n",
+		u->name, series_get_stack_level(dset, v), arg->upname);
+	/*_set_stack_level(dset, v, 0); */
+    }
     strcpy(dset->varname[v], arg->upname);
 }
 
@@ -8443,7 +8448,7 @@ function_assign_returns (fncall *call, int rtype,
 	    ierr = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
-		push_series_to_caller(arg, dset);
+		push_series_to_caller(u, arg, dset);
 	    } else if (arg->upname != NULL) {
 		push_object_to_caller(arg);
 	    } else if (arg->uvar != NULL) {
@@ -8453,7 +8458,7 @@ function_assign_returns (fncall *call, int rtype,
 	    }
 	} else if (arg->type == GRETL_TYPE_USERIES &&
 		   fp->type == GRETL_TYPE_SERIES && fp->immut) {
-	    push_series_to_caller(arg, dset);
+	    push_series_to_caller(u, arg, dset);
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
 		    fp->type == GRETL_TYPE_STRING ||
