@@ -25,6 +25,8 @@ win32pkg = @win32pkg@
 gtk_version = @gtk_version@
 mac_native = @mac_native@
 
+sharesrc = $(topsrc)/share
+
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
 else
@@ -290,6 +292,12 @@ install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmain.xml $(DESTDIR)$(uidir)
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmodel.xml $(DESTDIR)$(uidir)
 
+install-icons: installdirs
+	for f in $(sharesrc)/icons/16x16/*.png ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/icons/16x16 ; done
+	for f in $(sharesrc)/icons/24x24/*.png ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/icons/24x24 ; done
+
 install-script: installdirs
 	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
 
@@ -329,6 +337,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(svdir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/icons/16x16
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/icons/24x24
 
 clean:
 	rm -f *.o $(PROG) mklang mknews gretl.lang NEWS
