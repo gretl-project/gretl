@@ -110,8 +110,10 @@ void text_set_cursor (GtkWidget *w, const char *name)
 	GdkDisplay *disp = gdk_display_get_default();
 	GdkCursor *cursor = gdk_cursor_new_from_name(disp, name);
 
-	gdk_window_set_cursor(win, cursor);
-	gdk_cursor_unref(cursor);
+	if (cursor != NULL) {
+	    gdk_window_set_cursor(win, cursor);
+	    gdk_cursor_unref(cursor);
+	}
     }
 }
 

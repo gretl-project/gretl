@@ -1506,8 +1506,10 @@ void show_link_cursor (GtkWidget *w, gpointer p)
     GdkCursor *c;
 
     c = gdk_cursor_new_from_name(disp, "pointer");
-    gdk_window_set_cursor(window, c);
-    gdk_cursor_unref(c);
+    if (c != NULL) {
+	gdk_window_set_cursor(window, c);
+	gdk_cursor_unref(c);
+    }
 }
 
 static void make_main_window (void)

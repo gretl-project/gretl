@@ -444,8 +444,10 @@ void plot_position_click (GtkWidget *w, png_plot *plot)
 	GdkCursor *cursor;
 
 	cursor = gdk_cursor_new_from_name(disp, "crosshair");
-	gdk_window_set_cursor(plot->window, cursor);
-	gdk_cursor_unref(cursor);
+	if (cursor != NULL) {
+	    gdk_window_set_cursor(plot->window, cursor);
+	    gdk_cursor_unref(cursor);
+	}
 	entry = g_object_get_data(G_OBJECT(w), "pos_entry");
 	plot->pos_entry = entry;
 	plot->status |= PLOT_POSITIONING;
@@ -4572,8 +4574,10 @@ static void prepare_for_zoom (png_plot *plot)
     GdkDisplay *disp = gdk_display_get_default();
     GdkCursor* cursor = gdk_cursor_new_from_name(disp, "crosshair");
 
-    gdk_window_set_cursor(plot->window, cursor);
-    gdk_cursor_unref(cursor);
+    if (cursor != NULL) {
+	gdk_window_set_cursor(plot->window, cursor);
+	gdk_cursor_unref(cursor);
+    }
     plot->status |= PLOT_ZOOMING;
     gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid,
 		       _(" Drag to define zoom rectangle"));

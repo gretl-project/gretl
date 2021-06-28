@@ -474,9 +474,11 @@ void set_wait_cursor (GdkWindow **pcwin)
     if (w != NULL) {
 	GdkCursor *c = gdk_cursor_new_from_name(disp, "wait");
 
-	gdk_window_set_cursor(w, c);
-	gdk_display_sync(disp);
-	gdk_cursor_unref(c);
+	if (c != NULL) {
+	    gdk_window_set_cursor(w, c);
+	    gdk_display_sync(disp);
+	    gdk_cursor_unref(c);
+	}
     }
 }
 
@@ -2477,9 +2479,11 @@ static gboolean leave_close_button (GtkWidget *button,
     GdkDisplay *disp = gdk_display_get_default();
     GdkCursor *cursor = gdk_cursor_new_from_name(disp, "text");
 
-    /* replace text cursor */
-    gdk_window_set_cursor(gtk_widget_get_window(button), cursor);
-    gdk_cursor_unref(cursor);
+    if (cursor != NULL) {
+	/* revert to text cursor */
+	gdk_window_set_cursor(gtk_widget_get_window(button), cursor);
+	gdk_cursor_unref(cursor);
+    }
     return FALSE;
 }
 

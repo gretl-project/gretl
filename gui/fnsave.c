@@ -4339,9 +4339,11 @@ void upload_specified_package (const char *fname)
     w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
     if (w1 != NULL) {
 	cursor = gdk_cursor_new_from_name(disp, "wait");
-	gdk_window_set_cursor(w1, cursor);
-	gdk_display_sync(disp);
-	gdk_cursor_unref(cursor);
+	if (cursor != NULL) {
+	    gdk_window_set_cursor(w1, cursor);
+	    gdk_display_sync(disp);
+	    gdk_cursor_unref(cursor);
+	}
     }
 
     err = gretl_file_get_contents(realname, &buf, &buflen);
