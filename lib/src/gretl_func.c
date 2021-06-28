@@ -8170,7 +8170,7 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
 
    If the list was a temporary construction (a list parameter was
    required, but a single series was given as argument), we just
-   destroy the list.
+   destroy it.
 */
 
 static int unlocalize_list (fncall *call, const char *lname,
