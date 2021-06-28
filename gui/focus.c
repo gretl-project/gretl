@@ -86,9 +86,10 @@ static GtkWidget *real_gretl_gtk_object (int window)
 	ret = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     } else {
 	ret = gtk_dialog_new();
-	/* redundant? */
-	gtk_widget_add_events(ret, GDK_FOCUS_CHANGE_MASK);
     }
+
+    /* redundant? */
+    gtk_widget_add_events(ret, GDK_FOCUS_CHANGE_MASK);
 
     /* attach our focus-related callbacks */
     g_signal_connect(G_OBJECT(ret), "focus-in-event",

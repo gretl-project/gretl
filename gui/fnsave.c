@@ -3770,8 +3770,8 @@ static void delete_dlg_callback (GtkWidget *button, function_info *finfo)
     }
 }
 
-/* Dialog for editing function package.  The user can get here in
-   either of two ways: after selecting functions to put into a
+/* Dialog for editing a function package.  The user can get here
+   in either of two ways: after selecting functions to put into a
    newly created package, or upon selecting an existing package
    for editing.
 */
