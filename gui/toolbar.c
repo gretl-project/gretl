@@ -59,7 +59,6 @@
 #include "../pixmaps/mini.split_v.xpm"
 #include "../pixmaps/mini.join_h.xpm"
 #include "../pixmaps/mini.join_v.xpm"
-#include "../pixmaps/mini.bundle.xpm"
 #include "../pixmaps/mini.heatmap.xpm"
 #include "../pixmaps/mini.dbnomics.xpm"
 #include "../pixmaps/mail_16.xpm"
@@ -133,7 +132,8 @@ struct png_stock_maker alt_stocks[] = {
     { "iconview.png",   GRETL_STOCK_ICONS },
     { "console.png",    GRETL_STOCK_CONSOLE },
     { "plot.png",       GRETL_STOCK_SCATTER },
-    { "winlist.png",    GRETL_STOCK_WINLIST }
+    { "winlist.png",    GRETL_STOCK_WINLIST },
+    { "bundle.png",     GRETL_STOCK_BUNDLE }
 };
 
 struct xpm_stock_maker {
@@ -157,7 +157,6 @@ void gretl_stock_icons_init (void)
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
 	{ mini_join_h_xpm, GRETL_STOCK_JOIN_H },
 	{ mini_join_v_xpm, GRETL_STOCK_JOIN_V },
-	{ mini_bundle_xpm, GRETL_STOCK_BUNDLE },
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
