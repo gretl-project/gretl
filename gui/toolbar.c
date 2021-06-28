@@ -59,7 +59,6 @@
 #include "../pixmaps/mini.split_v.xpm"
 #include "../pixmaps/mini.join_h.xpm"
 #include "../pixmaps/mini.join_v.xpm"
-#include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.bundle.xpm"
 #include "../pixmaps/mini.heatmap.xpm"
 #include "../pixmaps/mini.dbnomics.xpm"
@@ -119,7 +118,7 @@ enum {
     CLOSE_ITEM
 } viewbar_flags;
 
-static int toolbar_bigger_icons;
+int toolbar_icon_size = GTK_ICON_SIZE_MENU;
 
 struct png_stock_maker {
     char *fname;
@@ -133,7 +132,8 @@ struct png_stock_maker alt_stocks[] = {
     { "betahat.png",    GRETL_STOCK_MODEL },
     { "iconview.png",   GRETL_STOCK_ICONS },
     { "console.png",    GRETL_STOCK_CONSOLE },
-    { "plot.png",       GRETL_STOCK_SCATTER }
+    { "plot.png",       GRETL_STOCK_SCATTER },
+    { "winlist.png",    GRETL_STOCK_WINLIST }
 };
 
 struct xpm_stock_maker {
@@ -157,7 +157,6 @@ void gretl_stock_icons_init (void)
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
 	{ mini_join_h_xpm, GRETL_STOCK_JOIN_H },
 	{ mini_join_v_xpm, GRETL_STOCK_JOIN_V },
-	{ mini_winlist_xpm, GRETL_STOCK_WINLIST },
 	{ mini_bundle_xpm, GRETL_STOCK_BUNDLE },
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
@@ -182,13 +181,19 @@ void gretl_stock_icons_init (void)
 	GdkPixbuf *pbuf;
 	int i;
 
-	toolbar_bigger_icons = getenv("GRETL_ICONS_BIGGER") != NULL;
+	if (getenv("GRETL_ICONS_BIGGER") != NULL) {
+#if GTK_MAJOR_VERSION == 3
+	    toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
+#else
+	    toolbar_icon_size = GTK_ICON_SIZE_SMALL_TOOLBAR;
+#endif
+	}
 
 	icon_path = malloc(strlen(gretldir) + 48);
-	if (toolbar_bigger_icons) {
-	    sprintf(icon_path, "%sicons%c24x24%c", gretldir, SLASH, SLASH);
-	} else {
+	if (toolbar_icon_size == GTK_ICON_SIZE_MENU) {
 	    sprintf(icon_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
+	} else {
+	    sprintf(icon_path, "%sicons%c24x24%c", gretldir, SLASH, SLASH);
 	}
 	p = strrchr(icon_path, SLASH) + 1;
 
@@ -197,7 +202,6 @@ void gretl_stock_icons_init (void)
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, alt_stocks[i].fname);
 	    pbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
-	    fprintf(stderr, "path '%s', pbuf %p\n", icon_path, (void *) pbuf);
 	    *p = '\0';
 	    iset = gtk_icon_set_new_from_pixbuf(pbuf);
 	    g_object_unref(pbuf);
@@ -1193,26 +1197,8 @@ static void gretl_toolbar_flat (GtkWidget *w)
 GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
 {
     GtkWidget *tb = gtk_toolbar_new();
-    int icon_size = GTK_ICON_SIZE_MENU;
 
-    /* Icon size spec: on gtk3, GTK_ICON_SIZE_MENU and
-       GTK_ICON_SIZE_SMALL_TOOLBAR are equivalent, but not
-       on gtk2; and in the latter case it's the smaller
-       "MENU" size we want in most cases. To support larger
-       icons where applicable we want:
-
-       gtk2: GTK_ICON_SIZE_SMALL_TOOLBAR
-       gtk3: GTK_ICON_SIZE_LARGE_TOOLBAR
-    */
-    if (toolbar_bigger_icons) {
-#if GTK_MAJOR_VERSION == 3
-	icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
-#else
-	icon_size = GTK_ICON_SIZE_SMALL_TOOLBAR;
-#endif
-    }
-
-    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), icon_size);
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), toolbar_icon_size);
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
 

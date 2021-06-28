@@ -279,7 +279,7 @@ NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 .PHONY:
 
 install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles \
-	install-news $(INSTALL_GTKRC) $(INSTALL_CMDFILE)
+	install-icons install-news $(INSTALL_GTKRC) $(INSTALL_CMDFILE)
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)

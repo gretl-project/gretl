@@ -34,6 +34,7 @@ typedef enum {
 				   r == SCRIPT_OUT || \
 				   r == VIEW_DBSEARCH || \
 				   r == VIEW_LOG)
+extern int toolbar_icon_size;
 
 void gretl_stock_icons_init (void);
 

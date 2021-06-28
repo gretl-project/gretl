@@ -1347,7 +1347,7 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, toolbar_icon_size);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
 
