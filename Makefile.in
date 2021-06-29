@@ -83,11 +83,9 @@ installdirs:
 
 install: $(SUBDIRS) installdirs install-man
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install || exit 1; done
-	$(MAKE) -C share install
 
 install-strip: $(SUBDIRS) installdirs install-man	
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip || exit 1; done
-	$(MAKE) -C share install-strip
 
 install-doc: pdfdocs
 	$(MAKE) -C $(DOCDIR) install
