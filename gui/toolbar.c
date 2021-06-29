@@ -49,7 +49,6 @@
 /* for viewer window toolbars */
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
-#include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.en.xpm"
 #include "../pixmaps/mini.split_h.xpm"
@@ -133,7 +132,8 @@ struct png_stock_maker alt_stocks[] = {
     { "fcast.png",      GRETL_STOCK_FCAST },
     { "heatmap.png",    GRETL_STOCK_HMAP },
     { "pushpin.png",    GRETL_STOCK_PIN },
-    { "mail.png",       GRETL_STOCK_MAIL }
+    { "mail.png",       GRETL_STOCK_MAIL },
+    { "pdf.png",        GRETL_STOCK_PDF },
 };
 
 struct xpm_stock_maker {
@@ -146,7 +146,6 @@ void gretl_stock_icons_init (void)
     struct xpm_stock_maker stocks[] = {
 	{ mini_tsplot_xpm, GRETL_STOCK_TS },
 	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
-	{ mini_pdf_xpm, GRETL_STOCK_PDF },
 	{ mini_manual_xpm, GRETL_STOCK_BOOK },
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
