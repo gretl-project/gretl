@@ -47,13 +47,11 @@
 #endif
 
 /* for viewer window toolbars */
-#include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.pin.xpm"
-#include "../pixmaps/mini.alpha.xpm"
 #include "../pixmaps/mini.en.xpm"
 #include "../pixmaps/mini.split_h.xpm"
 #include "../pixmaps/mini.split_v.xpm"
@@ -70,11 +68,6 @@
 #include "../pixmaps/mini.table.xpm"
 #include "../pixmaps/mini.page.xpm"
 #include "../pixmaps/mini.tools.xpm"
-
-/* for plot bar */
-#include "../pixmaps/upsize.xpm"
-#include "../pixmaps/downsize.xpm"
-#include "../pixmaps/open_menu.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -133,7 +126,12 @@ struct png_stock_maker alt_stocks[] = {
     { "console.png",    GRETL_STOCK_CONSOLE },
     { "plot.png",       GRETL_STOCK_SCATTER },
     { "winlist.png",    GRETL_STOCK_WINLIST },
-    { "bundle.png",     GRETL_STOCK_BUNDLE }
+    { "bundle.png",     GRETL_STOCK_BUNDLE },
+    { "alpha.png",      GRETL_STOCK_ALPHA },
+    { "tex.png",        GRETL_STOCK_TEX },
+    { "bigger.png",     GRETL_STOCK_BIGGER },
+    { "smaller.png",    GRETL_STOCK_SMALLER },
+    { "menu.png",       GRETL_STOCK_MENU },
 };
 
 struct xpm_stock_maker {
@@ -144,14 +142,12 @@ struct xpm_stock_maker {
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker stocks[] = {
-	{ mini_tex_xpm, GRETL_STOCK_TEX },
 	{ mail_16_xpm, GRETL_STOCK_MAIL },
 	{ mini_tsplot_xpm, GRETL_STOCK_TS },
 	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
 	{ mini_pdf_xpm, GRETL_STOCK_PDF },
 	{ mini_manual_xpm, GRETL_STOCK_BOOK },
 	{ mini_pin_xpm, GRETL_STOCK_PIN },
-	{ mini_alpha_xpm, GRETL_STOCK_ALPHA },
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
@@ -161,9 +157,6 @@ void gretl_stock_icons_init (void)
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
 	{ mini_tools_xpm, GRETL_STOCK_TOOLS},
-	{ upsize_xpm, GRETL_STOCK_BIGGER},
-	{ downsize_xpm, GRETL_STOCK_SMALLER},
-	{ open_menu_xpm, GRETL_STOCK_MENU},
 	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
 	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
 	{ fcast_16_xpm, GRETL_STOCK_FCAST},

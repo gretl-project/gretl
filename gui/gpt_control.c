@@ -341,11 +341,6 @@ static void graph_rescale_callback (GtkWidget *w, png_plot *plot)
     plot_do_rescale(plot, mod);
 }
 
-static void graph_edit_callback (GtkWidget *w, png_plot *plot)
-{
-    start_editing_png_plot(plot);
-}
-
 static void graph_popup_callback (GtkWidget *w, png_plot *plot)
 {
     build_plot_menu(plot);
@@ -360,8 +355,8 @@ static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
 
 static GretlToolItem plotbar_items[] = {
     { N_("Menu"),        GRETL_STOCK_MENU,    G_CALLBACK(graph_popup_callback), 0 },
-    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_rescale_callback), 1 },
-    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_rescale_callback), -1 },
+    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_rescale_callback), 32 },
+    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_rescale_callback), 0 },
     { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
 };
 
@@ -376,15 +371,11 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
     for (i=0; i<n; i++) {
 	pb = NULL;
 	item = &plotbar_items[i];
-	if (item->func == G_CALLBACK(graph_edit_callback) &&
-	    plot_not_editable(plot)) {
-	    continue;
-	}
 	if (item->func == G_CALLBACK(graph_rescale_callback)) {
 	    if (plot_not_editable(plot)) {
 		continue;
 	    } else {
-		pb = (item->flag == 1)? &plot->up_icon :
+		pb = (item->flag == 32)? &plot->up_icon :
 		    &plot->down_icon;
 	    }
 	}
