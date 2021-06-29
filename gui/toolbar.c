@@ -51,14 +51,13 @@
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#include "../pixmaps/mini.pin.xpm"
 #include "../pixmaps/mini.en.xpm"
 #include "../pixmaps/mini.split_h.xpm"
 #include "../pixmaps/mini.split_v.xpm"
 #include "../pixmaps/mini.join_h.xpm"
 #include "../pixmaps/mini.join_v.xpm"
-#include "../pixmaps/mini.heatmap.xpm"
-#include "../pixmaps/mail_16.xpm"
+
+/* for pop-up search entry */
 #include "../pixmaps/close_16.xpm"
 
 /* for window-finder menu */
@@ -131,7 +130,10 @@ struct png_stock_maker alt_stocks[] = {
     { "menu.png",       GRETL_STOCK_MENU },
     { "tools.png",      GRETL_STOCK_TOOLS },
     { "dbnomics.png",   GRETL_STOCK_DBN },
-    { "fcast.png",      GRETL_STOCK_FCAST }
+    { "fcast.png",      GRETL_STOCK_FCAST },
+    { "heatmap.png",    GRETL_STOCK_HMAP },
+    { "pushpin.png",    GRETL_STOCK_PIN },
+    { "mail.png",       GRETL_STOCK_MAIL }
 };
 
 struct xpm_stock_maker {
@@ -142,12 +144,10 @@ struct xpm_stock_maker {
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker stocks[] = {
-	{ mail_16_xpm, GRETL_STOCK_MAIL },
 	{ mini_tsplot_xpm, GRETL_STOCK_TS },
 	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
 	{ mini_pdf_xpm, GRETL_STOCK_PDF },
 	{ mini_manual_xpm, GRETL_STOCK_BOOK },
-	{ mini_pin_xpm, GRETL_STOCK_PIN },
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
 	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
@@ -156,7 +156,6 @@ void gretl_stock_icons_init (void)
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
-	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
 	{ close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
