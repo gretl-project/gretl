@@ -168,7 +168,7 @@ void gretl_stock_icons_init (void)
 	GdkPixbuf *pbuf;
 	int i;
 
-	if (getenv("GRETL_ICONS_BIGGER") != NULL) {
+	if (use_bigger_icons()) {
 #if GTK_MAJOR_VERSION == 3
 	    toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
 #else
@@ -189,11 +189,15 @@ void gretl_stock_icons_init (void)
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, alt_stocks[i].fname);
 	    pbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
+	    if (pbuf == NULL) {
+		fprintf(stderr, "Failed to load %s\n", icon_path);
+	    } else {
+		iset = gtk_icon_set_new_from_pixbuf(pbuf);
+		g_object_unref(pbuf);
+		gtk_icon_factory_add(gretl_factory, alt_stocks[i].id, iset);
+		gtk_icon_set_unref(iset);
+	    }
 	    *p = '\0';
-	    iset = gtk_icon_set_new_from_pixbuf(pbuf);
-	    g_object_unref(pbuf);
-	    gtk_icon_factory_add(gretl_factory, alt_stocks[i].id, iset);
-	    gtk_icon_set_unref(iset);
 	}
 
 	free(icon_path);

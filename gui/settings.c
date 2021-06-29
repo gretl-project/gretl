@@ -142,6 +142,7 @@ static char mpi_pref[8] = "OpenMPI";
 #endif
 
 static int lcnumeric = 1;
+static int bigger_icons = 0;
 static double graph_scale = 1.0;
 
 #if defined(MAC_THEMING)
@@ -223,6 +224,8 @@ RCVAR rc_vars[] = {
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "bigger_icons", N_("Larger toolbar icons"), NULL, &bigger_icons,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
@@ -424,6 +427,11 @@ int autoicon_on (void)
     } else {
 	return 0;
     }
+}
+
+int use_bigger_icons (void)
+{
+    return bigger_icons;
 }
 
 int use_tabbed_editor (void)

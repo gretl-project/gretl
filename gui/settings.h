@@ -53,6 +53,8 @@ int get_manpref (void);
 
 int autoicon_on (void);
 
+int use_bigger_icons (void);
+
 int use_tabbed_editor (void);
 
 int use_tabbed_model_viewer (void);

@@ -1254,7 +1254,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     }
 }
 
-/* Called (via ui_utils.c) from toolbar.c, to implement
+/* Called (via gui_utils.c) from toolbar.c, to implement
    saving displayed bundle as icon; handles VIEW_BUNDLE
    and also VIEW_DBNOMICS
 */
