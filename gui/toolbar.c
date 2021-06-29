@@ -58,16 +58,13 @@
 #include "../pixmaps/mini.join_h.xpm"
 #include "../pixmaps/mini.join_v.xpm"
 #include "../pixmaps/mini.heatmap.xpm"
-#include "../pixmaps/mini.dbnomics.xpm"
 #include "../pixmaps/mail_16.xpm"
-#include "../pixmaps/fcast_16.xpm"
 #include "../pixmaps/close_16.xpm"
 
-/* for window-finder */
+/* for window-finder menu */
 #include "../pixmaps/mini.gretl.xpm"
 #include "../pixmaps/mini.table.xpm"
 #include "../pixmaps/mini.page.xpm"
-#include "../pixmaps/mini.tools.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -132,6 +129,9 @@ struct png_stock_maker alt_stocks[] = {
     { "bigger.png",     GRETL_STOCK_BIGGER },
     { "smaller.png",    GRETL_STOCK_SMALLER },
     { "menu.png",       GRETL_STOCK_MENU },
+    { "tools.png",      GRETL_STOCK_TOOLS },
+    { "dbnomics.png",   GRETL_STOCK_DBN },
+    { "fcast.png",      GRETL_STOCK_FCAST }
 };
 
 struct xpm_stock_maker {
@@ -156,10 +156,7 @@ void gretl_stock_icons_init (void)
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
-	{ mini_tools_xpm, GRETL_STOCK_TOOLS},
 	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
-	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
-	{ fcast_16_xpm, GRETL_STOCK_FCAST},
 	{ close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
