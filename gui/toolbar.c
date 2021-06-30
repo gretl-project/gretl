@@ -47,7 +47,6 @@
 #endif
 
 /* for viewer window toolbars */
-#include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.en.xpm"
 
@@ -133,7 +132,8 @@ struct png_stock_maker alt_stocks[] = {
     { "join_h.png",     GRETL_STOCK_JOIN_H },
     { "split_v.png",    GRETL_STOCK_SPLIT_V },
     { "join_v.png",     GRETL_STOCK_JOIN_V },
-    { "boxplot.png",    GRETL_STOCK_BOX }
+    { "boxplot.png",    GRETL_STOCK_BOX },
+    { "tsplot.png",     GRETL_STOCK_TS }
 };
 
 struct xpm_stock_maker {
@@ -144,7 +144,6 @@ struct xpm_stock_maker {
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker stocks[] = {
-	{ mini_tsplot_xpm, GRETL_STOCK_TS },
 	{ mini_manual_xpm, GRETL_STOCK_BOOK },
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
