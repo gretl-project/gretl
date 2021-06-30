@@ -4295,7 +4295,8 @@ char *installed_addon_status_string (const char *path,
    the dbnomics function package is not found on the local
    machine we try to download and install it.
 
-   We also invoke it for regls.
+   We also invoke it for regls, which requires a distinct
+   saved path.
 */
 
 static fncall *get_addon_function_call (const char *addon,
@@ -4311,9 +4312,11 @@ static fncall *get_addon_function_call (const char *addon,
 	ppkgpath = &dbnpath;
     } else if (!strcmp(addon, "regls")) {
 	ppkgpath = &rlspath;
+    } else {
+	err = E_DATA;
     }
 
-    if (*ppkgpath == NULL) {
+    if (!err && *ppkgpath == NULL) {
 	*ppkgpath = gretl_addon_get_path(addon);
 	if (*ppkgpath == NULL) {
 	    /* not found locally */
