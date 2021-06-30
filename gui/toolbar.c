@@ -51,10 +51,6 @@
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.en.xpm"
-#include "../pixmaps/mini.split_h.xpm"
-#include "../pixmaps/mini.split_v.xpm"
-#include "../pixmaps/mini.join_h.xpm"
-#include "../pixmaps/mini.join_v.xpm"
 
 /* for pop-up search entry */
 #include "../pixmaps/close_16.xpm"
@@ -134,6 +130,10 @@ struct png_stock_maker alt_stocks[] = {
     { "pushpin.png",    GRETL_STOCK_PIN },
     { "mail.png",       GRETL_STOCK_MAIL },
     { "pdf.png",        GRETL_STOCK_PDF },
+    { "split_h.png",    GRETL_STOCK_SPLIT_H },
+    { "join_h.png",     GRETL_STOCK_JOIN_H },
+    { "split_v.png",    GRETL_STOCK_SPLIT_V },
+    { "join_v.png",     GRETL_STOCK_JOIN_V }
 };
 
 struct xpm_stock_maker {
@@ -148,10 +148,6 @@ void gretl_stock_icons_init (void)
 	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
 	{ mini_manual_xpm, GRETL_STOCK_BOOK },
 	{ mini_en_xpm, GRETL_STOCK_EN },
-	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
-	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
-	{ mini_join_h_xpm, GRETL_STOCK_JOIN_H },
-	{ mini_join_v_xpm, GRETL_STOCK_JOIN_V },
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
