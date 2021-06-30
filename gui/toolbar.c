@@ -104,36 +104,37 @@ int toolbar_icon_size = GTK_ICON_SIZE_MENU;
 struct png_stock_maker {
     char *fname;
     const char *id;
+    gint8 in_menu;
 };
 
-struct png_stock_maker alt_stocks[] = {
-    { "calculator.png", GRETL_STOCK_CALC },
-    { "database.png",   GRETL_STOCK_DB },
-    { "fx.png",         GRETL_STOCK_FUNC },
-    { "betahat.png",    GRETL_STOCK_MODEL },
-    { "iconview.png",   GRETL_STOCK_ICONS },
-    { "console.png",    GRETL_STOCK_CONSOLE },
-    { "plot.png",       GRETL_STOCK_SCATTER },
+struct png_stock_maker png_stocks[] = {
+    { "calculator.png", GRETL_STOCK_CALC, 0 },
+    { "database.png",   GRETL_STOCK_DB, 0 },
+    { "fx.png",         GRETL_STOCK_FUNC, 0 },
+    { "betahat.png",    GRETL_STOCK_MODEL, 0 },
+    { "iconview.png",   GRETL_STOCK_ICONS, 0 },
+    { "console.png",    GRETL_STOCK_CONSOLE, 0 },
+    { "plot.png",       GRETL_STOCK_SCATTER, 0 },
     { "winlist.png",    GRETL_STOCK_WINLIST },
-    { "bundle.png",     GRETL_STOCK_BUNDLE },
-    { "alpha.png",      GRETL_STOCK_ALPHA },
-    { "tex.png",        GRETL_STOCK_TEX },
-    { "bigger.png",     GRETL_STOCK_BIGGER },
-    { "smaller.png",    GRETL_STOCK_SMALLER },
-    { "menu.png",       GRETL_STOCK_MENU },
-    { "tools.png",      GRETL_STOCK_TOOLS },
-    { "dbnomics.png",   GRETL_STOCK_DBN },
-    { "fcast.png",      GRETL_STOCK_FCAST },
-    { "heatmap.png",    GRETL_STOCK_HMAP },
-    { "pushpin.png",    GRETL_STOCK_PIN },
-    { "mail.png",       GRETL_STOCK_MAIL },
-    { "pdf.png",        GRETL_STOCK_PDF },
-    { "split_h.png",    GRETL_STOCK_SPLIT_H },
-    { "join_h.png",     GRETL_STOCK_JOIN_H },
-    { "split_v.png",    GRETL_STOCK_SPLIT_V },
-    { "join_v.png",     GRETL_STOCK_JOIN_V },
-    { "boxplot.png",    GRETL_STOCK_BOX },
-    { "tsplot.png",     GRETL_STOCK_TS }
+    { "bundle.png",     GRETL_STOCK_BUNDLE, 1 },
+    { "alpha.png",      GRETL_STOCK_ALPHA, 0 },
+    { "tex.png",        GRETL_STOCK_TEX, 0 },
+    { "bigger.png",     GRETL_STOCK_BIGGER, 0 },
+    { "smaller.png",    GRETL_STOCK_SMALLER, 0 },
+    { "menu.png",       GRETL_STOCK_MENU, 0 },
+    { "tools.png",      GRETL_STOCK_TOOLS, 0 },
+    { "dbnomics.png",   GRETL_STOCK_DBN, 1 },
+    { "fcast.png",      GRETL_STOCK_FCAST, 0 },
+    { "heatmap.png",    GRETL_STOCK_HMAP, 0 },
+    { "pushpin.png",    GRETL_STOCK_PIN, 0 },
+    { "mail.png",       GRETL_STOCK_MAIL, 1 },
+    { "pdf.png",        GRETL_STOCK_PDF, 1 },
+    { "split_h.png",    GRETL_STOCK_SPLIT_H, 0 },
+    { "join_h.png",     GRETL_STOCK_JOIN_H, 0 },
+    { "split_v.png",    GRETL_STOCK_SPLIT_V, 0 },
+    { "join_v.png",     GRETL_STOCK_JOIN_V, 0 },
+    { "boxplot.png",    GRETL_STOCK_BOX, 0 },
+    { "tsplot.png",     GRETL_STOCK_TS, 0 }
 };
 
 struct xpm_stock_maker {
@@ -143,7 +144,7 @@ struct xpm_stock_maker {
 
 void gretl_stock_icons_init (void)
 {
-    struct xpm_stock_maker stocks[] = {
+    struct xpm_stock_maker xpm_stocks[] = {
 	{ mini_manual_xpm, GRETL_STOCK_BOOK },
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
@@ -152,17 +153,19 @@ void gretl_stock_icons_init (void)
 	{ close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
-    int n1 = G_N_ELEMENTS(alt_stocks);
-    int n2 = G_N_ELEMENTS(stocks);
+    int n1 = G_N_ELEMENTS(png_stocks);
+    int n2 = G_N_ELEMENTS(xpm_stocks);
 
     if (gretl_factory == NULL) {
+	int bigger = use_bigger_icons();
 	const char *gretldir = gretl_home();
-	gchar *p, *icon_path;
+	gchar *p, *icon_path, *pm, *menu_path = NULL;
+	GtkIconSource *isrc;
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
 	int i;
 
-	if (use_bigger_icons()) {
+	if (bigger) {
 #if GTK_MAJOR_VERSION == 3
 	    toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
 #else
@@ -170,37 +173,64 @@ void gretl_stock_icons_init (void)
 #endif
 	}
 
-	icon_path = malloc(strlen(gretldir) + 48);
-	if (toolbar_icon_size == GTK_ICON_SIZE_MENU) {
-	    sprintf(icon_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
-	} else {
+	icon_path = malloc(strlen(gretldir) + 32);
+
+	if (bigger) {
 	    sprintf(icon_path, "%sicons%c24x24%c", gretldir, SLASH, SLASH);
+	    menu_path = malloc(strlen(gretldir) + 32);
+	    sprintf(menu_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
+	    pm = strrchr(menu_path, SLASH) + 1;
+	} else {
+	    sprintf(icon_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
 	}
 	p = strrchr(icon_path, SLASH) + 1;
 
 	gretl_factory = gtk_icon_factory_new();
 
 	for (i=0; i<n1; i++) {
-	    strcat(icon_path, alt_stocks[i].fname);
+	    strcat(icon_path, png_stocks[i].fname);
 	    pbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
 	    if (pbuf == NULL) {
 		fprintf(stderr, "Failed to load %s\n", icon_path);
-	    } else {
-		iset = gtk_icon_set_new_from_pixbuf(pbuf);
-		g_object_unref(pbuf);
-		gtk_icon_factory_add(gretl_factory, alt_stocks[i].id, iset);
-		gtk_icon_set_unref(iset);
+		*p = '\0';
+		continue;
 	    }
+	    if (bigger && png_stocks[i].in_menu) {
+		iset = gtk_icon_set_new();
+		/* for toolbar use */
+		isrc = gtk_icon_source_new();
+		gtk_icon_source_set_pixbuf(isrc, pbuf);
+		gtk_icon_source_set_size(isrc, toolbar_icon_size);
+		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
+		gtk_icon_set_add_source(iset, isrc);
+		g_object_unref(pbuf);
+		/* for menu use */
+		strcat(menu_path, png_stocks[i].fname);
+		pbuf = gdk_pixbuf_new_from_file(menu_path, NULL);
+		isrc = gtk_icon_source_new();
+		gtk_icon_source_set_pixbuf(isrc, pbuf);
+		gtk_icon_source_set_size(isrc, GTK_ICON_SIZE_MENU);
+		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
+		gtk_icon_set_add_source(iset, isrc);
+		g_object_unref(pbuf);
+		*pm = '\0';
+	    } else {
+		/* we just need a single icon */
+		iset = gtk_icon_set_new_from_pixbuf(pbuf);
+	    }
+	    gtk_icon_factory_add(gretl_factory, png_stocks[i].id, iset);
+	    gtk_icon_set_unref(iset);
 	    *p = '\0';
 	}
 
 	free(icon_path);
+	free(menu_path);
 
 	for (i=0; i<n2; i++) {
-	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) stocks[i].xpm);
+	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpm_stocks[i].xpm);
 	    iset = gtk_icon_set_new_from_pixbuf(pbuf);
 	    g_object_unref(pbuf);
-	    gtk_icon_factory_add(gretl_factory, stocks[i].id, iset);
+	    gtk_icon_factory_add(gretl_factory, xpm_stocks[i].id, iset);
 	    gtk_icon_set_unref(iset);
 	}
 
@@ -1211,7 +1241,7 @@ static GtkToolItem *gretl_menu_button (const char *icon,
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tip));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(icon, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(icon, toolbar_icon_size /* GTK_ICON_SIZE_MENU */);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
     *pw = button;
