@@ -4301,20 +4301,28 @@ char *installed_addon_status_string (const char *path,
 static fncall *get_addon_function_call (const char *addon,
 					const char *funcname)
 {
-    static char *pkgpath;
+    static char *dbnpath;
+    static char *rlspath;
+    char **ppkgpath = NULL;
     fncall *fc = NULL;
     int err = 0;
 
-    if (pkgpath == NULL) {
-	pkgpath = gretl_addon_get_path(addon);
-	if (pkgpath == NULL) {
+    if (!strcmp(addon, "dbnomics")) {
+	ppkgpath = &dbnpath;
+    } else if (!strcmp(addon, "regls")) {
+	ppkgpath = &rlspath;
+    }
+
+    if (*ppkgpath == NULL) {
+	*ppkgpath = gretl_addon_get_path(addon);
+	if (*ppkgpath == NULL) {
 	    /* not found locally */
-	    err = download_addon(addon, &pkgpath);
+	    err = download_addon(addon, ppkgpath);
 	}
     }
 
-    if (!err) {
-	fc = get_pkg_function_call(funcname, addon, pkgpath);
+    if (!err && *ppkgpath != NULL) {
+	fc = get_pkg_function_call(funcname, addon, *ppkgpath);
     }
 
     return fc;
