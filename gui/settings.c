@@ -226,7 +226,7 @@ RCVAR rc_vars[] = {
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "bigger_icons", N_("Larger toolbar icons"), NULL, &bigger_icons,
-      BOOLSET, 0, TAB_MAIN, NULL },
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
