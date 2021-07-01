@@ -53,7 +53,7 @@ int get_manpref (void);
 
 int autoicon_on (void);
 
-int use_bigger_icons (void);
+int get_icon_sizing (void);
 
 int use_tabbed_editor (void);
 

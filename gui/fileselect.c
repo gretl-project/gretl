@@ -465,11 +465,9 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	script_open_choice(fname, vwin, role, foreign);
     } else if (foreign) {
 	view_script(fname, 1, role);
-    } else {
-	if (view_script(fname, 1, EDIT_HANSL) != NULL) {
-	    strcpy(scriptfile, fname);
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
-	}
+    } else if (view_script(fname, 1, EDIT_HANSL) != NULL) {
+	strcpy(scriptfile, fname);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
     }
 }
 

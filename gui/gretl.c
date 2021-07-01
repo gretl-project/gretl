@@ -840,8 +840,9 @@ int main (int argc, char **argv)
     init_fileptrs();
 
     if (argc > 1 && *filearg == '\0') {
-	/* residual unhandled arg should be the name
-	   of a file to be opened */
+	/* If we have a residual unhandled command-line argument,
+	   it should be the name of a file to be opened.
+	*/
 	strncat(filearg, argv[1], MAXLEN - 1);
     }
 
@@ -880,6 +881,7 @@ int main (int argc, char **argv)
 #endif
 
     /* create the GUI */
+    set_fixed_font(NULL, 1);
     gretl_stock_icons_init();
 #if GUI_DEBUG
     fprintf(stderr, " done gretl_stock_icons_init\n");
@@ -1634,14 +1636,7 @@ static void make_main_window (void)
     fprintf(stderr, "  step 1 done\n");
 #endif
 
-    /* get a monospaced font for various windows */
-    set_fixed_font(NULL, 1);
-
-#if GUI_DEBUG
-    fprintf(stderr, "  set_fixed_font done\n");
-#endif
-
-    /* and a proportional font for menus, etc. */
+    /* set a proportional font for menus, etc. */
     set_app_font(NULL, 1);
 
 #if GUI_DEBUG

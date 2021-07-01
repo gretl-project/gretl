@@ -142,8 +142,8 @@ static char mpi_pref[8] = "OpenMPI";
 #endif
 
 static int lcnumeric = 1;
-static int bigger_icons = 0;
 static double graph_scale = 1.0;
+static int icon_sizing = ICON_SIZE_AUTO;
 
 #if defined(MAC_THEMING)
 static char themepref[12] = "Adwaita";
@@ -225,8 +225,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "bigger_icons", N_("Larger toolbar icons"), NULL, &bigger_icons,
-      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
+    { "icon_sizing", N_("Toolbar icon size"), NULL, &icon_sizing,
+      LISTSET | INTSET | RESTART, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
@@ -429,9 +429,9 @@ int autoicon_on (void)
     }
 }
 
-int use_bigger_icons (void)
+int get_icon_sizing (void)
 {
-    return bigger_icons;
+    return icon_sizing;
 }
 
 int use_tabbed_editor (void)
@@ -1228,6 +1228,11 @@ static const char **get_list_setting_strings (void *var, int *n)
 	N_("automatic, as you type"),
 	N_("on demand, via Tab")
     };
+    static const char *icon_sizing_strs[] = {
+	N_("Automatic"),
+	N_("small"),
+	N_("medium")
+    };
     const char **strs = NULL;
 
     *n = 0;
@@ -1248,6 +1253,9 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == &script_auto_complete) {
 	strs = auto_complete_strs;
 	*n = sizeof auto_complete_strs / sizeof auto_complete_strs[0];
+    } else if (var == &icon_sizing) {
+	strs = icon_sizing_strs;
+	*n = sizeof icon_sizing_strs / sizeof icon_sizing_strs[0];
     } else if (var == sview_style) {
 	strs = get_sourceview_style_ids(n);
     } else if (var == graph_theme) {

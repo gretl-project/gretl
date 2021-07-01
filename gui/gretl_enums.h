@@ -342,4 +342,10 @@ enum script_output_policies {
     OUTPUT_POLICY_NEW_WINDOW
 };
 
+enum icon_size {
+    ICON_SIZE_AUTO,
+    ICON_SIZE_SMALL,
+    ICON_SIZE_MEDIUM
+};
+
 #endif /* GRETL_ENUMS_H */

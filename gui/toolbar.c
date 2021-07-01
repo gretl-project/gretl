@@ -142,6 +142,28 @@ struct xpm_stock_maker {
     const char *id;
 };
 
+#if 0
+static int explore_sizing (void)
+{
+    GtkWidget *w = gtk_label_new("X");
+    int cw = get_char_width(w);
+    int num, den;
+
+    fprintf(stderr, "HERE icons init, cw = %d\n", cw);
+    gtk_widget_destroy(w);
+    num = 18 * 16;
+    den = SCRIPT_WIDTH * cw + 48;
+    fprintf(stderr, "icon ratio = %g\n", num / (double) den);
+
+    GdkScreen *screen = gdk_screen_get_default();
+    int pxw = gdk_screen_get_width(screen);
+    int mmw = gdk_screen_get_width_mm(screen);
+    fprintf(stderr, "mm per pixel = %g\n", mmw / (double) pxw);
+
+    return 0;
+}
+#endif
+
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker xpm_stocks[] = {
@@ -156,13 +178,17 @@ void gretl_stock_icons_init (void)
     int n2 = G_N_ELEMENTS(xpm_stocks);
 
     if (gretl_factory == NULL) {
-	int bigger = use_bigger_icons();
+	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM); /* FIXME */
 	const char *gretldir = gretl_home();
 	gchar *p, *icon_path, *pm, *menu_path = NULL;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
 	int i;
+
+#if 0
+	explore_sizing();
+#endif
 
 	if (bigger) {
 #if GTK_MAJOR_VERSION == 3
