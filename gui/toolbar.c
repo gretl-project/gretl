@@ -142,23 +142,22 @@ struct xpm_stock_maker {
     const char *id;
 };
 
-#if 0
+#if 1
 static int explore_sizing (void)
 {
     GtkWidget *w = gtk_label_new("X");
     int cw = get_char_width(w);
     int num, den;
 
-    fprintf(stderr, "HERE icons init, cw = %d\n", cw);
     gtk_widget_destroy(w);
     num = 18 * 16;
     den = SCRIPT_WIDTH * cw + 48;
-    fprintf(stderr, "icon ratio = %g\n", num / (double) den);
+    fprintf(stderr, "icon/width ratio = %.3f\n", num / (double) den);
 
     GdkScreen *screen = gdk_screen_get_default();
     int pxw = gdk_screen_get_width(screen);
     int mmw = gdk_screen_get_width_mm(screen);
-    fprintf(stderr, "mm per pixel = %g\n", mmw / (double) pxw);
+    fprintf(stderr, "16 pixels = %.2f mm\n", 16 * mmw / (double) pxw);
 
     return 0;
 }
@@ -186,7 +185,7 @@ void gretl_stock_icons_init (void)
 	GdkPixbuf *pbuf;
 	int i;
 
-#if 0
+#if 1
 	explore_sizing();
 #endif
 
