@@ -157,7 +157,28 @@ static int explore_sizing (void)
     GdkScreen *screen = gdk_screen_get_default();
     int pxw = gdk_screen_get_width(screen);
     int mmw = gdk_screen_get_width_mm(screen);
+    int pxh = gdk_screen_get_height(screen);
+    int mmh = gdk_screen_get_height_mm(screen);
+    double diag;
+
+    fprintf(stderr, "screen width: %d pixels, %d mm\n", pxw, mmw);
+    fprintf(stderr, "screen height: %d pixels, %d mm\n", pxh, mmh);
     fprintf(stderr, "16 pixels = %.2f mm\n", 16 * mmw / (double) pxw);
+    diag = sqrt(mmw*mmw + mmh*mmh);
+    fprintf(stderr, "diagonal = %g mm (%.1f in)\n", diag, diag / 25.4);
+
+#if GTK_MAJOR_VERSION > 2
+    GdkDisplay *display = gdk_display_get_default();
+    GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
+
+    if (monitor != NULL) {
+	mmw = gdk_monitor_get_width_mm(monitor);
+	mmh = gdk_monitor_get_height_mm(monitor);
+	fprintf(stderr, "via GdkMonitor: size = %d x %d mm\n", mmw, mmh);
+	diag = sqrt(mmw*mmw + mmh*mmh);
+	fprintf(stderr, "diagonal = %g mm (%.1f in)\n", diag, diag / 25.4);
+    }
+#endif
 
     return 0;
 }
