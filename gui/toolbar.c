@@ -47,7 +47,6 @@
 #endif
 
 /* for viewer window toolbars */
-#include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.en.xpm"
 
 /* for pop-up search entry */
@@ -134,7 +133,8 @@ struct png_stock_maker png_stocks[] = {
     { "split_v.png",   GRETL_STOCK_SPLIT_V, 0 },
     { "join_v.png",    GRETL_STOCK_JOIN_V, 0 },
     { "boxplot.png",   GRETL_STOCK_BOX, 0 },
-    { "tsplot.png",    GRETL_STOCK_TS, 0 }
+    { "tsplot.png",    GRETL_STOCK_TS, 0 },
+    { "book.png",      GRETL_STOCK_BOOK, 0 }
 };
 
 struct xpm_stock_maker {
@@ -145,7 +145,6 @@ struct xpm_stock_maker {
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker xpm_stocks[] = {
-	{ mini_manual_xpm, GRETL_STOCK_BOOK },
 	{ mini_en_xpm, GRETL_STOCK_EN },
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
