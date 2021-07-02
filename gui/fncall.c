@@ -3382,7 +3382,8 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		/* update menu path (legacy SVAR) */
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
-	    } else if (strstr(path, "TSModels/TSMulti")) {
+	    } else if (strstr(path, "TSModels/TSMulti") ||
+		       strstr(path, "TSModels/CointMenu")) {
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
 	    }
@@ -4148,6 +4149,11 @@ static int gui_function_pkg_register (const char *fname,
 	pkg = get_function_package_by_filename(fname, &err);
     }
 
+    if (pkg == NULL) {
+	errbox_printf(_("Couldn't read '%s'"), fname);
+	return E_FOPEN;
+    }
+
 #if PKG_DEBUG
     fprintf(stderr, "gui_function_pkg_register: %s: err = %d\n", fname, err);
 #endif
@@ -4233,6 +4239,8 @@ int gui_function_pkg_query_register (const char *fname,
 	}
 	notified = 1;
 	g_free(relpath);
+    } else {
+	fprintf(stderr, "'%s': didn't find a menu_attachment\n", fname);
     }
 
     free(pkgname);
