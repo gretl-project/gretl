@@ -143,7 +143,7 @@ struct xpm_stock_maker {
 };
 
 #if 1
-static int explore_sizing (void)
+static int try_auto_sizing (int *bigger)
 {
     GdkScreen *screen = gdk_screen_get_default();
     GtkWidget *w = gtk_label_new("X");
@@ -167,12 +167,18 @@ static int explore_sizing (void)
     if (monitor != NULL) {
 	int mmw = gdk_monitor_get_width_mm(monitor);
 	int mmh = gdk_monitor_get_height_mm(monitor);
-	double diag;
+	double diag, mm16;
 
 	fprintf(stderr, "via GdkMonitor: size = %d x %d mm\n", mmw, mmh);
+	/* diagonal size of monitor */
 	diag = sqrt(mmw*mmw + mmh*mmh);
 	fprintf(stderr, " diagonal = %.2f mm (%.2f in)\n", diag, diag / 25.4);
-	fprintf(stderr, " 16 pixels = %.2f mm\n", 16 * mmw / (double) pxw);
+	/* size of 16 pixels in millimeters */
+	mm16 = 16 * mmw / (double) pxw;
+	fprintf(stderr, " 16 pixels = %.2f mm\n", mm16);
+	if (mm16 < 2.8) {
+	    *bigger = 1;
+	}
     }
 #endif
 
@@ -203,7 +209,7 @@ void gretl_stock_icons_init (void)
 	int i;
 
 #if 1
-	explore_sizing();
+	try_auto_sizing(&bigger);
 #endif
 
 	if (bigger) {

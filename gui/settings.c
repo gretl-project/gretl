@@ -85,12 +85,9 @@ static char system_appfont[64];
 #if defined(G_OS_WIN32)
 static char fixedfontname[MAXLEN] = "Courier New 10";
 static char default_fixedfont[64] = "Courier New 10";
-#elif defined(OS_OSX) /* FIXME ? */
+#elif defined(OS_OSX)
 static char fixedfontname[MAXLEN] = "Menlo 13";
 static char default_fixedfont[64] = "Menlo 13";
-#elif defined(MAC_THEMING)
-static char fixedfontname[MAXLEN] = "Menlo 10";
-static char default_fixedfont[64] = "Menlo 10";
 #else
 static char fixedfontname[MAXLEN] = "monospace 10";
 static char default_fixedfont[64] = "monospace 10";
