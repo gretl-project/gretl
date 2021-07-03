@@ -5397,7 +5397,7 @@ static GtkWidget *selector_dialog_new (selector *sr)
     return d;
 }
 
-static int maybe_increase_vsize (selector *sr, int vsize)
+static int maybe_increase_vsize (selector *sr, float vsize)
 {
     int ch = get_char_height(sr->dlg);
     float try = (ch / 18.0) * vsize;
@@ -5405,7 +5405,7 @@ static int maybe_increase_vsize (selector *sr, int vsize)
     int ret = vsize;
 
     if (try > vsize) {
-	ret = (try <= 0.7 * sh)? (int) try : (int) (0.7 * sh);
+	ret = (try <= 0.6 * sh)? (int) try : (int) (0.6 * sh);
     }
 
     return ret;
@@ -5415,9 +5415,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
 			   int (*callback)(), GtkWidget *parent,
 			   gpointer data, int selcode)
 {
-    double x;
-    int dlgx = -1, dlgy = 340;
-    int i;
+    int i, dlgx = -1, dlgy = 340;
+    float x;
 
     sr->row = 0;
     sr->n_rows = 1;
@@ -5553,12 +5552,11 @@ static void selector_init (selector *sr, guint ci, const char *title,
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
     open_selector = sr;
 
-    x = (double) dlgy * gui_scale;
-    dlgy = x;
-    dlgy = maybe_increase_vsize(sr, dlgy);
+    x = dlgy * gui_scale;
+    dlgy = maybe_increase_vsize(sr, x);
 
     if (FNPKG_CODE(ci)) {
-	x = (double) 460 * gui_scale;
+	x = 460 * gui_scale;
 	dlgx = x;
     }
 
@@ -5566,6 +5564,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 #ifndef G_OS_WIN32
     set_wm_icon(sr->dlg);
 #endif
+    gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(sr->dlg), "destroy",
 		     G_CALLBACK(destroy_selector),
