@@ -1973,6 +1973,19 @@ GtkActionEntry main_entries[] = {
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };
 
+static int count_substrings (gchar **S)
+{
+    int i, n = 0;
+
+    for (i=0; S[i] != NULL; i++) {
+	if (S[i][0] != '\0') {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
 /* Given an "internal" menu path, as in gretlmain.xml (with up
    to three slash-separated components), return its user-visible
    counterpart, translated and with mnemonics stripped.
@@ -1998,25 +2011,25 @@ static gchar *main_menu_user_string (const gchar *mpath)
 	return NULL;
     }
 
-#if 0
-    fprintf(stderr, "get_user_menu_string: mpath='%s'\n", mpath);
-#endif
-
     S = g_strsplit(mpath, "/", 0);
 
     if (S != NULL && S[0] != NULL) {
-	int i, j, nmain = G_N_ELEMENTS(main_entries);
 	const gchar *p[3] = {NULL, NULL, NULL};
+	int nmain = G_N_ELEMENTS(main_entries);
+	int i, j, ns = count_substrings(S);
+	int matched = 0;
 
 	for (i=0; i<nmain && !p[0]; i++) {
 	    if (main_entries[i].callback == NULL &&
 		!strcmp(S[0], main_entries[i].name)) {
 		p[0] = main_entries[i].label;
+		matched++;
 		if (S[1] != NULL) {
 		    for (j=i+1; j<nmain && !p[1]; j++) {
 			if (main_entries[j].callback == NULL &&
 			    !strcmp(S[1], main_entries[j].name)) {
 			    p[1] = main_entries[j].label;
+			    matched++;
 			}
 		    }
 		    if (S[2] != NULL) {
@@ -2024,13 +2037,16 @@ static gchar *main_menu_user_string (const gchar *mpath)
 			    if (main_entries[j].callback == NULL &&
 				!strcmp(S[2], main_entries[j].name)) {
 				p[2] = main_entries[j].label;
+				matched++;
 			    }
 			}
 		    }
 		}
 	    }
 	}
-	if (p[2] != NULL) {
+	if (matched < ns) {
+	    fprintf(stderr, "Invalid menu path '%s' (matched = %d)\n", mpath, matched);
+	} else if (p[2] != NULL) {
 	    ret = g_strdup_printf("%s/%s/%s", _(p[0]), _(p[1]), _(p[2]));
 	} else if (p[1] != NULL) {
 	    ret = g_strdup_printf("%s/%s", _(p[0]), _(p[1]));

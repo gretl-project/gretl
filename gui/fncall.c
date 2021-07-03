@@ -49,6 +49,7 @@
 
 #define FCDEBUG 0
 #define PKG_DEBUG 0
+#define MPKG_DEBUG 0
 
 enum {
     SHOW_GUI_MAIN = 1 << 0,
@@ -3779,12 +3780,14 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 {
     PRN *prn;
     double check_err = 0;
+    void *ptr = NULL;
     int err = 0;
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
     err = gretl_function_exec(fncall_new(func, 0), GRETL_TYPE_DOUBLE,
-			      dataset, &check_err, NULL, prn);
+			      dataset, &ptr, NULL, prn);
+    check_err = *(double *) ptr;
     unset_genr_model();
     gretl_print_destroy(prn);
 
@@ -3812,6 +3815,11 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	ci = vwin->role;
     }
 
+#if MPKG_DEBUG
+    fprintf(stderr, "maybe_add_model_pkg: %s, ci=%s\n",
+	    gpi->pkgname, gretl_command_word(ci));
+#endif
+
     if (gpi->modelreq > 0 && ci != gpi->modelreq) {
 	return 0;
     }
@@ -3838,7 +3846,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
     }
 
     if (!err) {
-	/* "skip" = skip this package, since it won't work
+	/* "skip" means skip this package, since it won't work
 	   with the current model */
 	int skip = 0;
 
@@ -3909,9 +3917,17 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
     gui_package_info *gpi;
     int i, err;
 
+#if MPKG_DEBUG
+    fprintf(stderr, "starting maybe_add_packages_to_model_menus\n");
+#endif
+
     if (gpkgs == NULL) {
 	gui_package_info_init();
     }
+
+#if MPKG_DEBUG
+    fprintf(stderr, "  n_gpkgs = %d\n", n_gpkgs);
+#endif
 
     for (i=0; i<n_gpkgs; i++) {
 	gpi = &gpkgs[i];
@@ -3997,16 +4013,20 @@ static int pkg_attach_query (const gchar *name,
 	gchar *msg, *ustr = NULL;
 
 	ustr = user_friendly_menu_path(relpath, modelwin);
-	msg = g_strdup_printf(_("The package %s can be attached to the "
-				"gretl menus\n"
-				"as \"%s/%s\" in the %s.\n"
-				"Do you want to do this?"),
-			      name, ustr ? ustr : relpath, _(label),
-			      modelwin ? _(window_names[1]) :
-			      _(window_names[0]));
-	resp = yes_no_dialog(NULL, msg, parent);
-	g_free(msg);
-	g_free(ustr);
+	if (ustr == NULL) {
+	    errbox_printf("Invalid menu path '%s'", relpath);
+	} else {
+	    msg = g_strdup_printf(_("The package %s can be attached to the "
+				    "gretl menus\n"
+				    "as \"%s/%s\" in the %s.\n"
+				    "Do you want to do this?"),
+				  name, ustr ? ustr : relpath, _(label),
+				  modelwin ? _(window_names[1]) :
+				  _(window_names[0]));
+	    resp = yes_no_dialog(NULL, msg, parent);
+	    g_free(msg);
+	    g_free(ustr);
+	}
     }
 
     return resp;
