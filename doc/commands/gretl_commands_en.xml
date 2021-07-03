@@ -11340,6 +11340,7 @@
 	<example>poisson y 0 x1 x2 ; S</example>
 	<demos>
 	  <demo>camtriv.inp</demo>
+	  <demo>greene19_3.inp</demo>
 	</demos>
       </examples>
     </usage>
