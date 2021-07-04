@@ -1844,6 +1844,22 @@ void win32_pprint_nonfinite (PRN *prn, double x, char c)
     }
 }
 
+double win32_get_time (void)
+{
+    static LARGE_INTEGER timer_freq;
+    LARGE_INTEGER wt;
+    double xt;
+
+    if (timer_freq == 0) {
+	QueryPerformanceFrequency(&timer_freq);
+    }
+
+    QueryPerformanceCounter(&wt);
+    xt = wt.QuadPart / (double) timer_freq.QuadPart;
+
+    return xt;
+}
+
 static int vista_or_higher (void)
 {
     OSVERSIONINFO osv = {0};

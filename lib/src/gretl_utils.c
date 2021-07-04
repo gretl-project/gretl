@@ -57,10 +57,10 @@
 
 #include <errno.h>
 
-#if defined(_OPENMP) || defined(HAVE_MPI)
+#if defined(_OPENMP) || defined(HAVE_MPI) || defined(WIN32)
 # define WANT_XTIMER
 #endif
-#if !defined(_OPENMP)
+#if !defined(_OPENMP) && !defined(WIN32)
 # define NEED_ITIMER
 #endif
 
@@ -2135,7 +2135,9 @@ static double get_xtime (void)
 	return gretl_mpi_time();
     }
 #endif
-#if defined(_OPENMP)
+#if defined(WIN32)
+    return win32_get_time();
+#elif defined(_OPENMP)
     return omp_get_wtime();
 #endif
     return 0; /* not reached */
