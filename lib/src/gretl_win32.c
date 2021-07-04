@@ -1850,7 +1850,7 @@ double win32_get_time (void)
     LARGE_INTEGER wt;
     double xt;
 
-    if (timer_freq == 0) {
+    if (timer_freq == (LARGE_INTEGER) 0) {
 	QueryPerformanceFrequency(&timer_freq);
     }
 
