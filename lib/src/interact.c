@@ -1293,11 +1293,10 @@ static void query_package (const char *pkgname,
         /* --quiet */
         gretl_bundle *b = gretl_bundle_new();
 
-        if (b != NULL && err) {
-            gretl_bundle_set_int(b, "not_found", 1);
-            set_last_result_data(b, GRETL_TYPE_BUNDLE);
-        } else if (b != NULL) {
-            bundle_function_package_info(path, b);
+	if (b != NULL) {
+	    if (!err) {
+		bundle_function_package_info(path, b);
+	    }
             set_last_result_data(b, GRETL_TYPE_BUNDLE);
         }
     } else {
