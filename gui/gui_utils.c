@@ -2370,7 +2370,9 @@ windata_t *console_window (int hsize, int vsize)
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->main);
+    if (vwin->main != vwin->vbox) {
+	gtk_widget_show(vwin->main);
+    }
 
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);

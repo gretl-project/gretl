@@ -4587,7 +4587,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 	vsize = 0.62 * hsize;
     }
 
-    if (hsize > 0 && vsize > 0) {
+    if (vwin->main != vwin->vbox && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
 
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);

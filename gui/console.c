@@ -403,7 +403,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
 int console_is_busy (void)
 {
-    if (console_main != NULL) {
+    if (console_main != NULL && GTK_IS_WINDOW(console_main)) {
 	gtk_window_present(GTK_WINDOW(console_main));
 	return 1;
     } else {
@@ -420,8 +420,10 @@ static void console_destroyed (GtkWidget *w, ExecState *state)
     gretl_print_destroy(state->prn);
     gretl_exec_state_destroy(state);
     console_main = NULL;
-    /* exit the command loop */
-    gtk_main_quit();
+    if (!swallow_console) {
+	/* exit the command loop */
+	gtk_main_quit();
+    }
 }
 
 static gboolean console_destroy_check (void)
@@ -432,7 +434,7 @@ static gboolean console_destroy_check (void)
 /* callback from menu/button: launches the console and remains
    in a command loop until done */
 
-void gretl_console (void)
+windata_t *gretl_console (void)
 {
     char cbuf[MAXLINE];
     windata_t *vwin;
@@ -444,12 +446,12 @@ void gretl_console (void)
 
     if (console_main != NULL) {
 	gtk_window_present(GTK_WINDOW(console_main));
-	return;
+	return NULL;
     }
 
     state = gretl_console_init(cbuf);
     if (state == NULL) {
-	return;
+	return NULL;
     }
 
     vwin = console_window(78, 450);
@@ -480,12 +482,16 @@ void gretl_console (void)
 
     gtk_widget_grab_focus(vwin->text);
 
-    /* enter command loop */
-    gtk_main();
+    if (!swallow_console) {
+	/* enter command loop */
+	gtk_main();
+    }
 
 #if CDEBUG
     fprintf(stderr, "gretl_console: returning\n");
 #endif
+
+    return vwin;
 }
 
 /* handle backslash continuation of console command line */

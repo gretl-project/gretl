@@ -1267,20 +1267,39 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      gpointer data)
 {
     windata_t *vwin = vwin_new(role, data);
+    GtkWidget *hbox = NULL;
 
     if (vwin == NULL) {
 	return NULL;
     }
 
-    vwin->main = gretl_gtk_window();
-    if (title != NULL) {
-	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    if (swallow_console && role == CONSOLE) {
+	; /* defer */
+    } else {
+	vwin->main = gretl_gtk_window();
+	if (title != NULL) {
+	    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+	}
+	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     }
-    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+
+    if (swallow_console && role == MAINWIN) {
+	hbox = gtk_hpaned_new();
+	gtk_container_add(GTK_CONTAINER(vwin->main), hbox);
+    }
 
     vwin->vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
-    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+
+    if (swallow_console && role == MAINWIN) {
+	gtk_paned_add1(GTK_PANED(hbox), vwin->vbox);
+	g_object_set_data(G_OBJECT(vwin->main), "BigH", hbox);
+    } else if (swallow_console && role == CONSOLE) {
+	vwin->main = vwin->vbox;
+	return vwin;
+    } else {
+	gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+    }
 
     if (parent != NULL) {
 	vwin_add_child(parent, vwin);

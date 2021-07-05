@@ -1548,6 +1548,9 @@ static void make_main_window (void)
 	/* set default window size */
 	mainwin_width = 650 * gui_scale;
 	mainwin_height = 460 * gui_scale;
+	if (swallow_console) {
+	    mainwin_width *= 1.6;
+	}
 	set_main_window_scale();
     }
 
@@ -1649,6 +1652,15 @@ static void make_main_window (void)
 #if GUI_DEBUG
     fprintf(stderr, "  add_mainwin_toolbar done\n");
 #endif
+
+    if (swallow_console) {
+	GtkWidget *BigH = g_object_get_data(G_OBJECT(mdata->main), "BigH");
+	windata_t *console = gretl_console();
+
+	if (console != NULL) {
+	    gtk_paned_add2(GTK_PANED(BigH), console->vbox);
+	}
+    }
 
     gtk_widget_show_all(mdata->main);
 

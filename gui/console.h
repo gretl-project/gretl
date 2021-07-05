@@ -20,7 +20,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-void gretl_console (void);
+windata_t *gretl_console (void);
 
 void console_record_sample (const DATASET *pdinfo);
 

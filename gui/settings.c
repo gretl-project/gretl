@@ -105,6 +105,8 @@ PangoFontDescription *fixed_font;
 
 /* end font handling */
 
+int swallow_console = 0;
+
 static int usecwd;
 static int shellok;
 static int manpref;
@@ -115,6 +117,7 @@ static int keep_folder = 1;
 static int tabbed_editor = 1;
 static int tabbed_models = 0;
 static int auto_collect = 0;
+
 static int script_output_policy;
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -222,6 +225,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
+    { "swallow_console", N_("Main window includes console"), NULL, &swallow_console,
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "icon_sizing", N_("Toolbar icon size"), NULL, &icon_sizing,
       LISTSET | INTSET | RESTART, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
