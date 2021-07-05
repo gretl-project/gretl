@@ -209,7 +209,9 @@ void gretl_stock_icons_init (void)
 	int i;
 
 #if 1
-	try_auto_sizing(&bigger);
+	if (get_icon_sizing() == ICON_SIZE_AUTO) {
+	    try_auto_sizing(&bigger);
+	}
 #endif
 
 	if (bigger) {
