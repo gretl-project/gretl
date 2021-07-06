@@ -1261,13 +1261,39 @@ windata_t *vwin_new (int role, gpointer data)
     return vwin;
 }
 
+/* special setup for the case where the gretl main window
+   will contain a console window alongside the dataset
+*/
+
+static void mainwin_swallow_setup (windata_t *vwin)
+{
+    GtkWidget *BigV = gtk_vbox_new(FALSE, 0);
+    GtkWidget *topbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *BigH = gtk_hpaned_new();
+
+    /* BigV contains a top slot to hold the "global" menubar,
+       and under this a paned horizontal box to hold the
+       two major components. At this stage we add the original
+       main vbox to the left-hand pane; the console will be
+       added later.
+    */
+    gtk_box_pack_start(GTK_BOX(BigV), topbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(BigV), BigH, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(vwin->main), BigV);
+    g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
+    g_object_set_data(G_OBJECT(vwin->main), "BigH", BigH);
+    gtk_paned_add1(GTK_PANED(BigH), vwin->vbox);
+#if GTK_MAJOR_VERSION == 3
+    gtk_paned_set_wide_handle(GTK_PANED(BigH), TRUE);
+#endif
+}
+
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      const gchar *title,
 			      gpointer data)
 {
     windata_t *vwin = vwin_new(role, data);
-    GtkWidget *hbox = NULL;
 
     if (vwin == NULL) {
 	return NULL;
@@ -1283,18 +1309,13 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     }
 
-    if (swallow_console && role == MAINWIN) {
-	hbox = gtk_hpaned_new();
-	gtk_container_add(GTK_CONTAINER(vwin->main), hbox);
-    }
-
     vwin->vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
 
     if (swallow_console && role == MAINWIN) {
-	gtk_paned_add1(GTK_PANED(hbox), vwin->vbox);
-	g_object_set_data(G_OBJECT(vwin->main), "BigH", hbox);
+	mainwin_swallow_setup(vwin);
     } else if (swallow_console && role == CONSOLE) {
+	g_object_set_data(G_OBJECT(vwin->vbox), "vwin", vwin);
 	vwin->main = vwin->vbox;
 	return vwin;
     } else {
@@ -1407,6 +1428,35 @@ void window_add_winlist (GtkWidget *window, GtkWidget *hbox)
     }
 }
 
+static void menubar_add_closer (windata_t *vwin)
+{
+    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
+    GtkWidget *button, *img, *tbar;
+    GtkWidget *sibling = NULL;
+    GtkToolItem *item;
+
+    button = gtk_button_new();
+    item = gtk_tool_item_new();
+
+    if (vwin != NULL && vwin->mbar != NULL &&
+	GTK_IS_MENU_BAR(vwin->mbar)) {
+	sibling = vwin->mbar;
+    }
+
+    tbar = gretl_toolbar_new(sibling);
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE, GTK_ICON_SIZE_MENU);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_container_add(GTK_CONTAINER(item), button);
+
+    g_signal_connect_swapped(G_OBJECT(button), "button-press-event",
+			     G_CALLBACK(gtk_widget_destroy), vwin->main);
+
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
+    gtk_widget_show_all(tbar);
+    gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+}
+
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
 {
     if (GTK_IS_SPINNER(w)) {
@@ -1417,9 +1467,13 @@ static void destroy_hbox_child (GtkWidget *w, gpointer p)
 
 static int want_winlist (windata_t *vwin)
 {
-    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
+    if (swallow_console && vwin->role == CONSOLE) {
+	return 0;
+    } else {
+	GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
 
-    return g_object_get_data(G_OBJECT(hbox), "winlist") == NULL;
+	return g_object_get_data(G_OBJECT(hbox), "winlist") == NULL;
+    }
 }
 
 void vwin_pack_toolbar (windata_t *vwin)
@@ -1468,6 +1522,9 @@ void vwin_pack_toolbar (windata_t *vwin)
 	}
 	if (use_toolbar_search_box(vwin->role)) {
 	    vwin_add_finder(vwin);
+	}
+	if (swallow_console && vwin->role == CONSOLE) {
+	    menubar_add_closer(vwin);
 	}
 	gtk_widget_show_all(hbox);
     }

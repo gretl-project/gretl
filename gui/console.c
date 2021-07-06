@@ -431,9 +431,6 @@ static gboolean console_destroy_check (void)
     return console_protected ? TRUE : FALSE;
 }
 
-/* callback from menu/button: launches the console and remains
-   in a command loop until done */
-
 windata_t *gretl_console (void)
 {
     char cbuf[MAXLINE];
@@ -445,7 +442,12 @@ windata_t *gretl_console (void)
 	N_("gretl console: type 'help' for a list of commands");
 
     if (console_main != NULL) {
-	gtk_window_present(GTK_WINDOW(console_main));
+	if (GTK_IS_WINDOW(console_main)) {
+	    gtk_window_present(GTK_WINDOW(console_main));
+	} else {
+	    vwin = g_object_get_data(G_OBJECT(console_main), "vwin");
+	    gtk_widget_grab_focus(vwin->text);
+	}
 	return NULL;
     }
 
@@ -625,6 +627,9 @@ static gint console_key_handler (GtkWidget *cview,
 	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
+	} else if (swallow_console && upkey == GDK_Page_Up) {
+	    gtk_widget_grab_focus(mdata->listbox);
+	    return TRUE;
 	} else {
 	    ctrl = 1;
 	}
