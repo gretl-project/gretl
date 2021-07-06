@@ -84,7 +84,7 @@ static ExecState *gretl_console_init (char *cbuf)
     ExecState *s;
     PRN *prn;
 
-    s = mymalloc(sizeof *s);
+    s = calloc(1, sizeof *s);
     if (s == NULL) {
 	return NULL;
     }
@@ -433,7 +433,7 @@ static gboolean console_destroy_check (void)
 
 windata_t *gretl_console (void)
 {
-    char cbuf[MAXLINE];
+    static char cbuf[MAXLINE];
     windata_t *vwin;
     GtkTextBuffer *buf;
     GtkTextIter iter;
