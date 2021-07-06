@@ -96,7 +96,6 @@
     </menu>
     <menu action="Data">
       <menuitem action="DataSelectAll"/>
-      <menuitem action="VarFind"/>
       <separator/>
       <menuitem action="DefineList"/>
       <menuitem action="SelectList"/>

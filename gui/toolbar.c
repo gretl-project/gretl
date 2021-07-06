@@ -1618,6 +1618,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(view_session), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
+    { N_("find series"),        GTK_STOCK_FIND,      G_CALLBACK(listbox_find), 0 },
     { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },
     { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
     { N_("databases"),          GRETL_STOCK_DB,      G_CALLBACK(show_native_dbs), 0 },
