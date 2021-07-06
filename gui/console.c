@@ -627,6 +627,9 @@ static gint console_key_handler (GtkWidget *cview,
 	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
+	} else if (swallow_console && upkey == GDK_Page_Up) {
+	    gtk_widget_grab_focus(mdata->listbox);
+	    return TRUE;
 	} else {
 	    ctrl = 1;
 	}

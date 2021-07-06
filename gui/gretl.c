@@ -1024,6 +1024,9 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* Ctrl-V for paste */
 	mdata_handle_paste();
 	return TRUE;
+    } else if (swallow_console && Ctrl && k == GDK_Page_Down) {
+	gretl_console();
+	return TRUE;
     }
 
 #ifdef OS_OSX

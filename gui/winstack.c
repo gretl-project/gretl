@@ -1283,6 +1283,9 @@ static void mainwin_swallow_setup (windata_t *vwin)
     g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
     g_object_set_data(G_OBJECT(vwin->main), "BigH", BigH);
     gtk_paned_add1(GTK_PANED(BigH), vwin->vbox);
+#if GTK_MAJOR_VERSION == 3
+    gtk_paned_set_wide_handle(GTK_PANED(BigH), TRUE);
+#endif
 }
 
 windata_t *
