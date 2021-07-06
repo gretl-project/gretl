@@ -1362,8 +1362,11 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
 {
     if (vwin == NULL) {
 	return NULL;
+    } else if (vwin->topmain != NULL) {
+	/* the tabbed case */
+	return vwin->topmain;
     } else {
-	return vwin->topmain != NULL ? vwin->topmain : vwin->main;
+	return gtk_widget_get_toplevel(vwin->main);
     }
 }
 

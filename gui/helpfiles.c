@@ -1528,10 +1528,12 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	unset_window_help_active(vwin);
 	text_set_cursor(vwin->text, NULL);
 
-	if (pos <= 0) {
-	    warnbox(_("Sorry, help not found"));
-	} else {
-	    real_do_help(idx, pos, role);
+	if (text != NULL && *text != '\0') {
+	    if (pos <= 0) {
+		warnbox(_("Sorry, help not found"));
+	    } else {
+		real_do_help(idx, pos, role);
+	    }
 	}
     }
 
