@@ -526,69 +526,6 @@ command_continues (char *targ, const gchar *src, int *err)
     return contd;
 }
 
-#if 0
-
-const char *console_varname_complete (const char *s)
-{
-    size_t n = strlen(s);
-    int i;
-
-    for (i=0; i<dataset->v; i++) {
-	if (!strncmp(s, dataset->varname[i], n)) {
-	    return dataset->varname[i];
-	}
-    }
-
-    return NULL;
-}
-
-static gint console_complete_word (GtkTextBuffer *buf,
-				   GtkTextIter *iter)
-{
-    GtkTextIter start, end;
-    const char *targ = NULL;
-    gchar *src;
-
-    start = end = *iter;
-
-    if (!gtk_text_iter_starts_word(&start)) {
-	gtk_text_iter_backward_word_start(&start);
-    }
-
-    if (!gtk_text_iter_ends_word(&end)) {
-	gtk_text_iter_forward_word_end(&end);
-    }
-
-    src = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
-
-    if (src != NULL && *src != '\0') {
-	if (gtk_text_iter_get_line_offset(&start) == 2) {
-	    /* first word on line */
-	    targ = gretl_command_complete(src);
-	} else {
-	    targ = console_varname_complete(src);
-	    if (targ == NULL) {
-		targ = gretl_function_complete(src);
-	    }
-	    if (targ == NULL) {
-		targ = uservar_name_complete(src);
-	    }
-	}
-	if (targ != NULL) {
-	    gtk_text_buffer_delete(buf, &start, &end);
-	    gtk_text_buffer_insert(buf, &start, targ, -1);
-	} else {
-	    console_beep();
-	}
-    }
-
-    g_free(src);
-
-    return TRUE;
-}
-
-#endif
-
 static gchar *console_get_current_line (GtkTextBuffer *buf,
 					GtkTextIter *iter)
 {
