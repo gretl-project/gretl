@@ -134,7 +134,8 @@ struct png_stock_maker png_stocks[] = {
     { "join_v.png",    GRETL_STOCK_JOIN_V, 0 },
     { "boxplot.png",   GRETL_STOCK_BOX, 0 },
     { "tsplot.png",    GRETL_STOCK_TS, 0 },
-    { "book.png",      GRETL_STOCK_BOOK, 0 }
+    { "book.png",      GRETL_STOCK_BOOK, 0 },
+    { "query.png",     GRETL_STOCK_QUERY, 0 },
 };
 
 struct xpm_stock_maker {
@@ -957,7 +958,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(stickiness_callback), STICKIFY_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
-    { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
+    { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },

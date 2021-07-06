@@ -2340,22 +2340,26 @@ windata_t *view_script (const char *filename, int editable,
 windata_t *console_window (int hsize, int vsize)
 {
     windata_t *vwin;
-    gchar *title = NULL;
 
-#ifdef GRETL_PID_FILE
-    int seqno = gretl_sequence_number();
-
-    if (seqno > 1) {
-	title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
-    }
-#endif
-
-    if (title != NULL) {
-	vwin = gretl_viewer_new(CONSOLE, title, NULL);
-	g_free(title);
+    if (swallow_console) {
+	vwin = gretl_viewer_new(CONSOLE, NULL, NULL);
     } else {
-	vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
+	gchar *title = NULL;
+#ifdef GRETL_PID_FILE
+	int seqno = gretl_sequence_number();
+
+	if (seqno > 1) {
+	    title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
+	}
+#endif
+	if (title != NULL) {
+	    vwin = gretl_viewer_new(CONSOLE, title, NULL);
+	    g_free(title);
+	} else {
+	    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
+	}
     }
+
     if (vwin == NULL) {
 	return NULL;
     }

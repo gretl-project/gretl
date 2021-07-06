@@ -477,10 +477,13 @@ windata_t *gretl_console (void)
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(buf, &iter);
 
-    /* insert intro string and first prompt */
-    gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
-					     "plain", NULL);
-    console_insert_prompt(buf, &iter, "\n? ");
+    if (swallow_console) {
+	console_insert_prompt(buf, &iter, "? ");
+    } else {
+	gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
+						 "plain", NULL);
+	console_insert_prompt(buf, &iter, "\n? ");
+    }
 
     gtk_widget_grab_focus(vwin->text);
 

@@ -1524,6 +1524,10 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    vwin_add_finder(vwin);
 	}
 	if (swallow_console && vwin->role == CONSOLE) {
+	    GtkWidget *lbl = gtk_label_new(_("gretl console"));
+
+	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+	    gtk_box_reorder_child(GTK_BOX(hbox), lbl, 0);
 	    menubar_add_closer(vwin);
 	}
 	gtk_widget_show_all(hbox);
