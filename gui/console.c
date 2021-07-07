@@ -25,6 +25,7 @@
 #include "dlgutils.h"
 #include "gui_recode.h"
 #include "completions.h"
+#include "winstack.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -79,7 +80,7 @@ static void command_history_destroy (void)
     hlines = hpos = 0;
 }
 
-static ExecState *gretl_console_init (char *cbuf)
+static ExecState *console_init (char *cbuf)
 {
     ExecState *s;
     PRN *prn;
@@ -451,11 +452,14 @@ windata_t *gretl_console (void)
 	return NULL;
     }
 
-    state = gretl_console_init(cbuf);
+    state = console_init(cbuf);
     if (state == NULL) {
 	return NULL;
     }
 
+    if (swallow) {
+	preset_viewer_flag(VWIN_SWALLOW);
+    }
     vwin = console_window(78, 450);
     console_main = vwin->main;
 

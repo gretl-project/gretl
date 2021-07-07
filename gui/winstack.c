@@ -1514,7 +1514,7 @@ static void destroy_hbox_child (GtkWidget *w, gpointer p)
 
 static int want_winlist (windata_t *vwin)
 {
-    if (should_swallow_vwin(vwin->role)) {
+    if (vwin->flags & VWIN_SWALLOW) {
 	return 0;
     } else {
 	GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
@@ -1570,12 +1570,14 @@ void vwin_pack_toolbar (windata_t *vwin)
 	if (use_toolbar_search_box(vwin->role)) {
 	    vwin_add_finder(vwin);
 	}
-	if (swallow && vwin->role == CONSOLE) {
-	    GtkWidget *lbl = gtk_label_new(_("gretl console"));
-
-	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
-	    gtk_box_reorder_child(GTK_BOX(hbox), lbl, 0);
+	if (vwin->flags & VWIN_SWALLOW) {
 	    menubar_add_closer(vwin);
+	    if (vwin->role == CONSOLE) {
+		GtkWidget *lbl = gtk_label_new(_("gretl console"));
+
+		gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+		gtk_box_reorder_child(GTK_BOX(hbox), lbl, 0);
+	    }
 	}
 	gtk_widget_show_all(hbox);
     }
