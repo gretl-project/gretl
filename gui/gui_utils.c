@@ -2341,7 +2341,7 @@ windata_t *console_window (int hsize, int vsize)
 {
     windata_t *vwin;
 
-    if (swallow_console) {
+    if (swallow) {
 	vwin = gretl_viewer_new(CONSOLE, NULL, NULL);
     } else {
 	gchar *title = NULL;

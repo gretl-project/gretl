@@ -1024,7 +1024,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* Ctrl-V for paste */
 	mdata_handle_paste();
 	return TRUE;
-    } else if (swallow_console && Ctrl && k == GDK_Page_Down) {
+    } else if (swallow && Ctrl && k == GDK_Page_Down) {
 	gretl_console();
 	return TRUE;
     }
@@ -1519,13 +1519,12 @@ void show_link_cursor (GtkWidget *w, gpointer p)
 
 static void gretl_show_console (void)
 {
-    if (swallow_console) {
-	GtkWidget *BigH = g_object_get_data(G_OBJECT(mdata->main), "BigH");
+    if (swallow) {
 	windata_t *console = gretl_console();
 
 	if (console != NULL) {
-	    gtk_paned_add2(GTK_PANED(BigH), console->vbox);
-	    gtk_paned_set_position(GTK_PANED(BigH), mainwin_width/2);
+	    gtk_paned_add2(GTK_PANED(mdata->hpanes1), console->vbox);
+	    gtk_paned_set_position(GTK_PANED(mdata->hpanes1), mainwin_width/2);
 	}
     } else {
 	gretl_console();
@@ -1565,7 +1564,7 @@ static void make_main_window (void)
 	/* set default window size */
 	mainwin_width = 650 * gui_scale;
 	mainwin_height = 460 * gui_scale;
-	if (swallow_console) {
+	if (swallow) {
 	    mainwin_width *= 1.6;
 	}
 	set_main_window_scale();
@@ -1591,7 +1590,7 @@ static void make_main_window (void)
 #endif
 
     /* put the main menu bar in place */
-    if (swallow_console) {
+    if (swallow) {
 	box = g_object_get_data(G_OBJECT(mdata->main), "topbox");
 	gtk_box_pack_start(GTK_BOX(box), mdata->mbar, TRUE, TRUE, 0);
     } else {
@@ -1675,7 +1674,7 @@ static void make_main_window (void)
     fprintf(stderr, "  add_mainwin_toolbar done\n");
 #endif
 
-    if (swallow_console) {
+    if (swallow) {
 	gretl_show_console();
     }
 

@@ -420,7 +420,7 @@ static void console_destroyed (GtkWidget *w, ExecState *state)
     gretl_print_destroy(state->prn);
     gretl_exec_state_destroy(state);
     console_main = NULL;
-    if (!swallow_console) {
+    if (!swallow) {
 	/* exit the command loop */
 	gtk_main_quit();
     }
@@ -477,7 +477,7 @@ windata_t *gretl_console (void)
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(buf, &iter);
 
-    if (swallow_console) {
+    if (swallow) {
 	console_insert_prompt(buf, &iter, "? ");
     } else {
 	gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
@@ -487,7 +487,7 @@ windata_t *gretl_console (void)
 
     gtk_widget_grab_focus(vwin->text);
 
-    if (!swallow_console) {
+    if (!swallow) {
 	/* enter command loop */
 	gtk_main();
     }
@@ -567,7 +567,7 @@ static gint console_key_handler (GtkWidget *cview,
 	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
-	} else if (swallow_console && upkey == GDK_Page_Up) {
+	} else if (swallow && upkey == GDK_Page_Up) {
 	    gtk_widget_grab_focus(mdata->listbox);
 	    return TRUE;
 	} else {

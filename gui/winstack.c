@@ -1261,15 +1261,26 @@ windata_t *vwin_new (int role, gpointer data)
     return vwin;
 }
 
+static int should_swallow_vwin (int role)
+{
+    if (swallow) {
+	/* can add others here */
+	return role == CONSOLE;
+    } else {
+	return 0;
+    }
+}
+
 /* special setup for the case where the gretl main window
-   will contain a console window alongside the dataset
+   will/may contain additional panes besides the dataset
 */
 
 static void mainwin_swallow_setup (windata_t *vwin)
 {
     GtkWidget *BigV = gtk_vbox_new(FALSE, 0);
     GtkWidget *topbox = gtk_hbox_new(FALSE, 5);
-    GtkWidget *BigH = gtk_hpaned_new();
+    
+    vwin->hpanes1 = gtk_hpaned_new();
 
     /* BigV contains a top slot to hold the "global" menubar,
        and under this a paned horizontal box to hold the
@@ -1278,13 +1289,12 @@ static void mainwin_swallow_setup (windata_t *vwin)
        added later.
     */
     gtk_box_pack_start(GTK_BOX(BigV), topbox, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(BigV), BigH, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(BigV), vwin->hpanes1, TRUE, TRUE, 0);
     gtk_container_add(GTK_CONTAINER(vwin->main), BigV);
     g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
-    g_object_set_data(G_OBJECT(vwin->main), "BigH", BigH);
-    gtk_paned_add1(GTK_PANED(BigH), vwin->vbox);
+    gtk_paned_add1(GTK_PANED(vwin->hpanes1), vwin->vbox);
 #if GTK_MAJOR_VERSION == 3
-    gtk_paned_set_wide_handle(GTK_PANED(BigH), TRUE);
+    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes1), TRUE);
 #endif
 }
 
@@ -1299,7 +1309,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	return NULL;
     }
 
-    if (swallow_console && role == CONSOLE) {
+    if (should_swallow_vwin(role)) {
 	; /* defer */
     } else {
 	vwin->main = gretl_gtk_window();
@@ -1312,9 +1322,9 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     vwin->vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
 
-    if (swallow_console && role == MAINWIN) {
+    if (swallow && role == MAINWIN) {
 	mainwin_swallow_setup(vwin);
-    } else if (swallow_console && role == CONSOLE) {
+    } else if (should_swallow_vwin(role)) {
 	g_object_set_data(G_OBJECT(vwin->vbox), "vwin", vwin);
 	vwin->main = vwin->vbox;
 	return vwin;
@@ -1470,7 +1480,7 @@ static void destroy_hbox_child (GtkWidget *w, gpointer p)
 
 static int want_winlist (windata_t *vwin)
 {
-    if (swallow_console && vwin->role == CONSOLE) {
+    if (should_swallow_vwin(vwin->role)) {
 	return 0;
     } else {
 	GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
@@ -1526,7 +1536,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	if (use_toolbar_search_box(vwin->role)) {
 	    vwin_add_finder(vwin);
 	}
-	if (swallow_console && vwin->role == CONSOLE) {
+	if (swallow && vwin->role == CONSOLE) {
 	    GtkWidget *lbl = gtk_label_new(_("gretl console"));
 
 	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
