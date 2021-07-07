@@ -1517,15 +1517,62 @@ void show_link_cursor (GtkWidget *w, gpointer p)
     }
 }
 
+int mainwin_get_vwin_insertion (void)
+{
+    int ins = -1;
+
+    if (mdata->hpanes1 != NULL) {
+	if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
+	    ins = 1;
+	} else if (mdata->hpanes2 != NULL) {
+	    if (gtk_paned_get_child1(GTK_PANED(mdata->hpanes2)) == NULL) {
+		ins = 2;
+	    } else if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes2)) == NULL) {
+		ins = 3;
+	    }
+	}
+    }
+
+    return ins;
+}
+
+int mainwin_insert_vwin (windata_t *vwin)
+{
+    int ret = 0;
+
+    if (vwin == NULL) {
+	return ret;
+    }
+    if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
+	gtk_paned_add2(GTK_PANED(mdata->hpanes1), vwin->vbox);
+	gtk_paned_set_position(GTK_PANED(mdata->hpanes1), mainwin_width/2);
+	ret = 1;
+    } else if (mdata->hpanes2 != NULL) {
+	GtkWidget *vp = gtk_widget_get_parent(mdata->hpanes2);
+
+	fprintf(stderr, "HERE hpanes2\n");
+	if (gtk_paned_get_child1(GTK_PANED(mdata->hpanes2)) == NULL) {
+	    gtk_paned_add1(GTK_PANED(mdata->hpanes2), vwin->vbox);
+	    fprintf(stderr, " add child 1\n");
+	    ret = 2;
+	} else if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes2)) == NULL) {
+	    gtk_paned_add2(GTK_PANED(mdata->hpanes2), vwin->vbox);
+	    fprintf(stderr, " add child 2\n");
+	    gtk_paned_set_position(GTK_PANED(mdata->hpanes2), mainwin_width/2);
+	    ret = 3;
+	}
+	if (ret) {
+	    gtk_paned_set_position(GTK_PANED(vp), mainwin_height/2);
+	}
+    }
+
+    return ret;
+}
+
 static void gretl_show_console (void)
 {
     if (swallow) {
-	windata_t *console = gretl_console();
-
-	if (console != NULL) {
-	    gtk_paned_add2(GTK_PANED(mdata->hpanes1), console->vbox);
-	    gtk_paned_set_position(GTK_PANED(mdata->hpanes1), mainwin_width/2);
-	}
+	mainwin_insert_vwin(gretl_console());
     } else {
 	gretl_console();
     }

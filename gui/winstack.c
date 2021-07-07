@@ -1234,7 +1234,7 @@ GList *windowed_model_list (void)
 static windata_flags vwin_presets;
 
 /* This is used in a couple of special cases to apply a flag
-   before the vwin GUI get built. It's a bit of a hack, but
+   before the vwin GUI gets built. It's a bit of a hack, but
    avoids the alternatives of either (a) proliferating vwin
    "roles" or (b) adding another argument to all vwin-creating
    functions.
@@ -1275,11 +1275,41 @@ static int should_swallow_vwin (int role)
    will/may contain additional panes besides the dataset
 */
 
+#define TWO_ROWS 1
+
+#if TWO_ROWS
+
+static void mainwin_swallow_setup (windata_t *vwin)
+{
+    GtkWidget *BigV = gtk_vbox_new(FALSE, 0);
+    GtkWidget *vp = gtk_vpaned_new();
+    GtkWidget *topbox = gtk_hbox_new(FALSE, 5);
+
+    g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
+    vwin->hpanes1 = gtk_hpaned_new();
+    vwin->hpanes2 = gtk_hpaned_new();
+
+    gtk_box_pack_start(GTK_BOX(BigV), topbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(BigV), vp, TRUE, TRUE, 0);
+    gtk_paned_add1(GTK_PANED(vp), vwin->hpanes1);
+    gtk_paned_add2(GTK_PANED(vp), vwin->hpanes2);
+    gtk_paned_set_position(GTK_PANED(vp), mainwin_height);
+    gtk_container_add(GTK_CONTAINER(vwin->main), BigV);
+    gtk_paned_add1(GTK_PANED(vwin->hpanes1), vwin->vbox);
+#if GTK_MAJOR_VERSION == 3
+    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes1), TRUE);
+    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes2), TRUE);
+#endif
+}
+
+#else /* single row, just two panes total */
+
 static void mainwin_swallow_setup (windata_t *vwin)
 {
     GtkWidget *BigV = gtk_vbox_new(FALSE, 0);
     GtkWidget *topbox = gtk_hbox_new(FALSE, 5);
-    
+
+    g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
     vwin->hpanes1 = gtk_hpaned_new();
 
     /* BigV contains a top slot to hold the "global" menubar,
@@ -1291,12 +1321,13 @@ static void mainwin_swallow_setup (windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(BigV), topbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(BigV), vwin->hpanes1, TRUE, TRUE, 0);
     gtk_container_add(GTK_CONTAINER(vwin->main), BigV);
-    g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
     gtk_paned_add1(GTK_PANED(vwin->hpanes1), vwin->vbox);
 #if GTK_MAJOR_VERSION == 3
     gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes1), TRUE);
 #endif
 }
+
+#endif
 
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role,
@@ -1304,14 +1335,17 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      gpointer data)
 {
     windata_t *vwin = vwin_new(role, data);
+    int toplevel = 1;
 
     if (vwin == NULL) {
 	return NULL;
     }
 
-    if (should_swallow_vwin(role)) {
-	; /* defer */
-    } else {
+    if (should_swallow_vwin(role) || (vwin->flags & VWIN_SWALLOW)) {
+	toplevel = 0;
+    }
+
+    if (toplevel) {
 	vwin->main = gretl_gtk_window();
 	if (title != NULL) {
 	    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
@@ -1324,12 +1358,12 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 
     if (swallow && role == MAINWIN) {
 	mainwin_swallow_setup(vwin);
-    } else if (should_swallow_vwin(role)) {
+    } else if (toplevel) {
+	gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+    } else {
 	g_object_set_data(G_OBJECT(vwin->vbox), "vwin", vwin);
 	vwin->main = vwin->vbox;
-	return vwin;
-    } else {
-	gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+	return vwin; /* we're done here */
     }
 
     if (parent != NULL) {

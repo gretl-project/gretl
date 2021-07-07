@@ -946,7 +946,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	hsize += 48; /* ?? */
     }
 
-    if (hsize > 0 && vsize > 0) {
+    if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
 
 	if (window_is_tab(vwin)) {

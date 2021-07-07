@@ -151,6 +151,9 @@ void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
 
+int mainwin_get_vwin_insertion (void);
+int mainwin_insert_vwin (windata_t *vwin);
+
 /* functions defined in files other than gretl.c */
 void about_dialog (void);
 

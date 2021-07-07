@@ -143,27 +143,18 @@ struct xpm_stock_maker {
     const char *id;
 };
 
-#if 1
-static int try_auto_sizing (int *bigger)
-{
-    GdkScreen *screen = gdk_screen_get_default();
-    GtkWidget *w = gtk_label_new("X");
-    int cw = get_char_width(w);
-    int num, den;
-    int pxw, pxh;
+#if GTK_MAJOR_VERSION == 3
 
-    gtk_widget_destroy(w);
-    num = 18 * 16;
-    den = SCRIPT_WIDTH * cw + 48;
-    fprintf(stderr, "icons/window ratio = %.3f\n", num / (double) den);
+static void try_auto_icon_sizing (int *bigger)
+{
+    GdkDisplay *display = gdk_display_get_default();
+    GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
+    GdkScreen *screen = gdk_screen_get_default();
+    int pxw, pxh;
 
     pxw = gdk_screen_get_width(screen);
     pxh = gdk_screen_get_height(screen);
     fprintf(stderr, "screen size: %d x %d pixels\n", pxw, pxh);
-
-#if GTK_MAJOR_VERSION > 2
-    GdkDisplay *display = gdk_display_get_default();
-    GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
 
     if (monitor != NULL) {
 	int mmw = gdk_monitor_get_width_mm(monitor);
@@ -178,14 +169,13 @@ static int try_auto_sizing (int *bigger)
 	mm16 = 16 * mmw / (double) pxw;
 	fprintf(stderr, " 16 pixels = %.2f mm\n", mm16);
 	if (mm16 < 2.8) {
+	    fprintf(stderr, " auto-setting larger icons\n");
 	    *bigger = 1;
 	}
     }
-#endif
-
-    return 0;
 }
-#endif
+
+#endif /* GTK3 */
 
 void gretl_stock_icons_init (void)
 {
@@ -209,9 +199,9 @@ void gretl_stock_icons_init (void)
 	GdkPixbuf *pbuf;
 	int i;
 
-#if 1
+#if GTK_MAJOR_VERSION == 3
 	if (get_icon_sizing() == ICON_SIZE_AUTO) {
-	    try_auto_sizing(&bigger);
+	    try_auto_icon_sizing(&bigger);
 	}
 #endif
 
