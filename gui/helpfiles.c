@@ -1102,7 +1102,10 @@ static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
     }
 }
 
-/* callback from "hide" signal on the footer finder */
+/* Callback from "hide" signal on the footer finder: we
+   want to turn the focus back onto the associated
+   text widget
+*/
 
 static void vwin_refocus_text (GtkWidget *w, windata_t *vwin)
 {
@@ -1581,9 +1584,9 @@ void text_find (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
-	if (!gtk_widget_is_visible(vwin->finder)) {
-	    GtkWidget *p = gtk_widget_get_parent(vwin->finder);
+	GtkWidget *p = gtk_widget_get_parent(vwin->finder);
 
+	if (!gtk_widget_get_visible(p)) {
 	    gtk_widget_show_all(p);
 	}
 	gtk_widget_grab_focus(vwin->finder);
