@@ -10990,7 +10990,8 @@
 	etc.). But if the <opt>quiet</opt> option is appended nothing
 	is printed; the package information is instead stored in the
 	form of a gretl bundle, which can be accessed via <fncref
-	targ="$result"/>.
+	targ="$result"/>. If no information can be found this bundle
+	will be empty.
       </para>
       <para>
 	<lit>unload</lit>: <repl>pkgname</repl> should be given in

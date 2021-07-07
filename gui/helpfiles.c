@@ -720,8 +720,14 @@ void notify_string_not_found (GtkWidget *entry)
 
 static void normalize_style (GtkWidget *w, gpointer p)
 {
-    gtk_style_context_remove_class(GTK_STYLE_CONTEXT(p),
-				   GTK_STYLE_CLASS_ERROR);
+    GtkStyleContext *context;
+
+    if (p == NULL) {
+	context = gtk_widget_get_style_context(w);
+    } else {
+	context = GTK_STYLE_CONTEXT(p);
+    }
+    gtk_style_context_remove_class(context, GTK_STYLE_CLASS_ERROR);
 }
 
 void notify_string_not_found (GtkWidget *entry)
@@ -1080,7 +1086,7 @@ static void add_footer_close_button (GtkWidget *hbox)
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect_swapped(button, "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
+			     G_CALLBACK(gtk_widget_hide),
 			     hbox);
     gtk_widget_show_all(button);
 }
@@ -1089,21 +1095,34 @@ static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
 			      GtkWidget *targ)
 {
     if (event->keyval == GDK_Escape) {
-	gtk_widget_destroy(targ);
+	gtk_widget_hide(targ);
 	return TRUE;
     } else {
 	return FALSE;
     }
 }
 
-static void vwin_nullify_finder (GtkWidget *w, windata_t *vwin)
+/* Callback from "hide" signal on the footer finder: we
+   want to turn the focus back onto the associated
+   text widget
+*/
+
+static void vwin_refocus_text (GtkWidget *w, windata_t *vwin)
 {
+    /* in case the prior string was not found, cancel the
+       error indicator
+    */
+#if GTK_MAJOR_VERSION == 2
+    normalize_base(vwin->finder, NULL);
+#else
+    normalize_style(vwin->finder, NULL);
+#endif
+
     if (vwin_is_editing(vwin)) {
 	/* let the text area regain focus */
 	gtk_widget_grab_focus(vwin->text);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
     }
-    vwin->finder = NULL;
 }
 
 static void vwin_add_footer_finder (windata_t *vwin)
@@ -1126,8 +1145,8 @@ static void vwin_add_footer_finder (windata_t *vwin)
     g_signal_connect(G_OBJECT(entry), "activate",
 		     G_CALLBACK(vwin_finder_callback),
 		     vwin);
-    g_signal_connect(G_OBJECT(entry), "destroy",
-		     G_CALLBACK(vwin_nullify_finder),
+    g_signal_connect(G_OBJECT(hbox), "hide",
+		     G_CALLBACK(vwin_refocus_text),
 		     vwin);
 
     gtk_widget_show_all(hbox);
@@ -1567,6 +1586,11 @@ void text_find (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
+	GtkWidget *p = gtk_widget_get_parent(vwin->finder);
+
+	if (!gtk_widget_get_visible(p)) {
+	    gtk_widget_show_all(p);
+	}
 	gtk_widget_grab_focus(vwin->finder);
 	gtk_editable_select_region(GTK_EDITABLE(vwin->finder),
 				   0, -1);
