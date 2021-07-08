@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-06-29 22:43+0200\n"
+"PO-Revision-Date: 2021-07-07 16:25+0200\n"
 "Last-Translator: Vitalie Ciubotaru <vitalie@ciubotaru.tk>\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -6041,12 +6041,12 @@ msgstr "обратите внимание на сокращенные обозн
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3076
 msgid "Mean dependent var"
-msgstr "Среднее зав. перемен"
+msgstr "Среднее завис. перемен"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3078
 msgid "S.D. dependent var"
-msgstr "Ст. откл. зав. перемен"
+msgstr "Ст. откл. завис. перем"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3080 lib/src/modelprint.c:3244
@@ -6067,7 +6067,7 @@ msgstr "R-квадрат"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3086
 msgid "Adjusted R-squared"
-msgstr "Испр. R-квадрат"
+msgstr "Исправ. R-квадрат"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3089
@@ -6104,7 +6104,7 @@ msgstr "параметр rho"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3101 gui/library.c:3330
 msgid "Durbin-Watson"
-msgstr "Стат. Дарбина-Вотсона"
+msgstr "Стат. Дарбина-Уотсона"
 
 #: lib/src/modelprint.c:3140
 msgid "Adjusted $R^2$"
@@ -6177,7 +6177,7 @@ msgstr "Ст. откл. инноваций"
 
 #: lib/src/modelprint.c:3240
 msgid "Median depend. var"
-msgstr "Медиана зав. перемен"
+msgstr "Медиана завис. перемен"
 
 #: lib/src/modelprint.c:3242
 msgid "Sum absolute resid"
@@ -8317,11 +8317,11 @@ msgstr "О программе gretl"
 
 #: gui/about.c:145 gui/about.c:151 plugin/excel_import.c:108
 msgid "build date"
-msgstr "дата сборки"
+msgstr "дата выпуска"
 
 #: gui/about.c:190 gui/about.c:192
 msgid "translator_credits"
-msgstr "перевод на русский язык: Александр Гедранович, Иван Сопов"
+msgstr "перевод: Александр Гедранович, Иван Сопов, Олеся Петренко"
 
 #: gui/about.c:201
 msgid "News"
@@ -8400,7 +8400,7 @@ msgstr "Неверное значение"
 #: gui/calculator.c:1071
 #, no-c-format
 msgid "5% critical values for Durbin-Watson statistic"
-msgstr "5% критические значения для статистики Дарбина-Вотсона"
+msgstr "5% критические значения для статистики Дарбина-Уотсона"
 
 #: gui/calculator.c:1077 gui/calculator.c:1271 gui/calculator.c:3068
 msgid "gretl: critical values"
@@ -8601,7 +8601,7 @@ msgstr "равномерное"
 
 #: gui/calculator.c:1999
 msgid "normal"
-msgstr "нормальное"
+msgstr "Нормальное"
 
 #: gui/calculator.c:2000
 msgid " t "
@@ -8657,7 +8657,7 @@ msgstr "масштаб"
 
 #: gui/calculator.c:2055
 msgid "trials"
-msgstr "испытаний"
+msgstr "Кол-во испытаний"
 
 #: gui/calculator.c:2061
 msgid "sample size, n"
@@ -11216,7 +11216,7 @@ msgstr "Сохранить фильтрованный ряд как"
 
 #: gui/filters.c:846
 msgid "Graph differenced series"
-msgstr "График дифференцированного рядя"
+msgstr "График дифференцированного ряда"
 
 #: gui/filters.c:852
 msgid "Graph original and smoothed series"
@@ -12408,7 +12408,7 @@ msgstr "_Закрыть набор данных"
 
 #: gui/gretl.c:1689
 msgid "_Working directory..."
-msgstr "_Рабочая папка..."
+msgstr "_Рабочий каталог..."
 
 #: gui/gretl.c:1690
 msgid "_Script files"
@@ -12536,7 +12536,7 @@ msgstr "_Общие..."
 
 #: gui/gretl.c:1735
 msgid "Font _scale..."
-msgstr "Размер_шрифта..."
+msgstr "Размер шрифта..."
 
 #: gui/gretl.c:1737
 msgid "Monospaced _font..."
@@ -12604,7 +12604,7 @@ msgstr "_Подробные"
 
 #: gui/gretl.c:1755
 msgid "V_ery verbose"
-msgstr "_Очень подробные"
+msgstr "_Расширенные"
 
 #: gui/gretl.c:1758
 msgid "_Data"
@@ -12872,7 +12872,7 @@ msgstr "_Случайная подвыборка..."
 
 #: gui/gretl.c:1838
 msgid "_Resample with replacement..."
-msgstr "_Повторная выборка (ремэмплирование)..."
+msgstr "_Повторная выборка (ресэмплирование)..."
 
 #: gui/gretl.c:1840
 msgid "Drop observations with _missing values..."
@@ -13056,7 +13056,7 @@ msgstr "С поправкой на гетероскедастичность"
 
 #: gui/gretl.c:1898
 msgid "_Regularized least squares"
-msgstr "_Взвешенный МНК"
+msgstr "_Регуляризованный МНК"
 
 #: gui/gretl.c:1899
 msgid "High _precision OLS"
@@ -13209,7 +13209,7 @@ msgstr "_Квантильная регрессия"
 
 #: gui/gretl.c:1939
 msgid "_Loess"
-msgstr "_loess (взвешенная локальная регрессия)"
+msgstr "Взвешенная локальная регрессия (loess)"
 
 #: gui/gretl.c:1940
 msgid "_Nadaraya-Watson"
@@ -13233,7 +13233,7 @@ msgstr "_Справка"
 
 #: gui/gretl.c:1948 gui/gretl.c:1952
 msgid "_Command reference"
-msgstr "_Справка по _командам"
+msgstr "_Справочник по _командам"
 
 #: gui/gretl.c:1949
 msgid "_Function reference"
@@ -16074,7 +16074,7 @@ msgstr "Управляемая переменная"
 
 #: gui/selector.c:4899
 msgid "Block variable (optional)"
-msgstr "Блочная переменная (опционально)"
+msgstr "Блочная переменная (по выбору)"
 
 #: gui/selector.c:5008
 msgid "Add"
@@ -17169,9 +17169,7 @@ msgstr "Сеть"
 
 #: gui/settings.c:1424
 msgid "HCCME"
-msgstr ""
-"Состоятельная оценка матрицы ковариаций при наличии гетероскедастичности "
-"(HCCME: Heteroskedasticity-Consistent Covariance Matrix Estimator)"
+msgstr "HCCME"
 
 #: gui/settings.c:1896
 msgid "This change will take effect when you restart gretl"
@@ -17195,7 +17193,7 @@ msgstr "Запомнить данные настройки"
 
 #: gui/settings.c:2881
 msgid "gretl: font scale"
-msgstr "gretl: масштаб шрифта"
+msgstr "gretl: размер шрифта"
 
 #: gui/settings.c:2886
 msgid "Scale for monospaced and menu fonts"
