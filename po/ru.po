@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-07-07 16:25+0200\n"
+"PO-Revision-Date: 2021-07-08 11:52+0200\n"
 "Last-Translator: Vitalie Ciubotaru <vitalie@ciubotaru.tk>\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -6036,7 +6036,7 @@ msgstr "Информационный критерий Хеннана-Куинн�
 #.
 #: lib/src/modelprint.c:3069
 msgid "note on model statistics abbreviations here"
-msgstr "обратите внимание на сокращенные обозначения статистики"
+msgstr "note on model statistics abbreviations here"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3076
