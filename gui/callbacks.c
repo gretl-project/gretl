@@ -381,7 +381,7 @@ static int have_midas_data (void)
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_MESSAGE_WARNING,
 					GTK_BUTTONS_CLOSE,
-					"%s", msg);
+					"%s", _(msg));
 	g_signal_connect_swapped(dialog, "response",
 				 G_CALLBACK(gtk_widget_destroy),
 				 dialog);
