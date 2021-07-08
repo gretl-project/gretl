@@ -1,0 +1,184 @@
+\documentclass{article}
+\usepackage{doc,url,verbatim,fancyvrb}
+\usepackage{pifont}
+\usepackage{gretl}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+
+%\usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+\newcommand{\argname}[1]{\textsl{#1}}
+
+\title{logging version 1.0}
+\author{Artur Tarassow}
+\date{July 8, 2021}
+\maketitle
+
+\section{Introduction}
+
+This addon provides structured logging; that is, a means of recording
+the history and progress of a computation as a log of events. There
+are in principle two roles involved in logging---the \textit{coder}
+(the writer of a hansl script or function package) and the
+\textit{user} (the person running the script or package)---although
+one person may play both roles.
+
+The \textit{coder} gets to decide which events will be logged, and the
+importance or ``level'' to be assigned to each event. This is done by
+means of the five logging functions provided, namely \texttt{Debug},
+\texttt{Info}, \texttt{Warn}, \texttt{Error} and \texttt{Critical} (in
+increasing order of importance).  Each of these functions requires a
+single string argument and offers no return value. For example, the
+signature of \texttt{Info} is
+\begin{code}
+void Info (const string msg)
+\end{code}
+
+The \textit{user} chooses which log messages to have printed, by
+selecting a threshold: print only messages of level $n$ or above.
+This is done via the command
+\begin{code}
+set loglevel <level>
+\end{code}
+where \verb|<level>| can be given by number or name, as shown below.
+
+\begin{center}
+  \begin{tabular}{cl}
+    number & name \\[4pt]
+    0 & debug \\
+    1 & info \\
+    2 & warn \\
+    3 & error \\
+    4 & critical
+  \end{tabular}
+\end{center}
+
+The default level is 2 or \texttt{warn}, so messages set via
+the \texttt{Debug} and \texttt{Info} functions will not be printed
+unless the user specifies a lower threshold.
+
+\section{Remarks}
+
+Using logging provides some advantages over using \texttt{print} or
+\texttt{printf} statements:
+\begin{enumerate}
+\item It allows you to control the visibility and presentation of
+  messages without editing the source code. For example, the code
+\begin{code}
+  Debug("This is a debugging message")
+\end{code}
+  will produce no output by default; such messages are printed only
+  if the user selects a verbose level of logging.
+\item It's cheap to leave debugging statements like this in the source
+  code: the program evaluates the message only if it is currently
+  called for.
+\item Log messages can be written to a separate file which can be
+  analysed afterwards. More on this below.
+\end{enumerate}
+
+Note that the message passed to a logging function does not have to a
+fixed piece of text. You can incorporate current state information by
+means of the \texttt{sprintf} function, as in this example
+\begin{code}
+  Warn(sprintf("The matrix X looks funny:\n%g\n", X))
+\end{code}
+which prints the elements of \texttt{X} following the message.
+
+\section{Public functions}
+
+This package provides five logging functions, namely \texttt{Debug},
+\texttt{Info}, \texttt{Warn}, \texttt{Error} and \texttt{Critical}.
+They all require a single string argument and offer no return
+value. For example, the signature of Info is
+\begin{code}
+void Info (const string msg)
+\end{code}
+
+\section{Loglevel}
+
+The importance of an event can be called its ``level''. Gretl
+supports five log-levels, identified by either number or name, as follows:
+
+\begin{center}
+  \begin{tabular}{cl}
+    number & name \\[4pt]
+    0 & debug \\
+    1 & info \\
+    2 & warn \\
+    3 & error \\
+    4 & critical
+  \end{tabular}
+\end{center}
+
+The user can select a log level via the command
+\begin{code}
+set loglevel <level>
+\end{code}
+And the current setting can be obtained via the accessor
+\dollar{loglevel}.
+
+The table below may be helpful in determining which level of logging
+to use for which purpose.\footnote{It is borrowed from
+  \url{https://docs.python.org/3/howto/logging.html}.}
+
+\begin{center}
+  \begin{tabular}{lp{0.7\textwidth}}
+    Debug & Detailed information, typically of interest only when diagnosing
+            problems.\\
+    Info & Confirmation that things are working as expected.\\
+    Warn & An indication that something unexpected happened, or indicative of some
+           problem in the near future (e.g.\ ``disk space low''). The software is still working
+           as expected.\\
+    Error & Due to a more serious problem, the software has not been able to perform
+            some function.\\
+    Critical & A serious error, indicating that the program itself may be unable to
+               continue running.
+  \end{tabular}
+\end{center}
+
+Mumble, mumble
+\begin{code}
+include logging.gfn
+Warn("Watch out!")      # will print a message to the console
+Debug("I told you so")  # will not print anything
+\end{code}
+prints
+\begin{code}
+WARNING: Watch out!
+\end{code}
+
+\section{Timestamps}
+
+Optionally, the user can arrange for each logging message to show a
+timestamp. This is achieved via the command
+\begin{code}
+set logstamp on
+\end{code}
+where boolval should be on/1/true/TRUE. You can use off/0/false/FALSE
+to turn off timestamps. (Mention \dollar{logstamp}?)
+
+\section{Logging to file}
+
+A common use of logging apparatus involves writing logged events to file.
+\begin{code}
+  set loglevel info
+  string path_logfile = "mylog.txt" # target file where to append
+  set logfile "@path_logfile"
+
+  Info("This message will not be printed but appended to a file.")
+  print "File content"
+  eval readfile(path_logfile)
+\end{code}
+In this case the message goes to 'mylog.txt', and is not mixed in with
+regular program output.
+
+\section{Changelog}
+
+v1.0 (July 2021)
+- Initial version.
+
+\end{document}

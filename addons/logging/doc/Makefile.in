@@ -1,0 +1,23 @@
+topsrc = @top_srcdir@
+TEXDIR = $(topsrc)/doc/tex
+
+PKG = logging
+DOCDIR = $(topsrc)/addons/$(PKG)/doc
+
+SRCS = $(PKG).tex $(FIG) gretl.sty gretl.bst gretl.bib
+
+$(PKG).pdf: $(SRCS)
+	@pdflatex $(PKG)
+	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
+
+.PHONY : symlinks clean
+
+symlinks:
+	@if [ ! -f gretl.sty ] || [ ../../../doc/gretl.sty -nt gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
+	@if [ ! -f $(PKG).tex ] || [ $(DOCDIR)/$(PKG).tex -nt $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
+
+clean:
+	@rm -f *.log *.aux *.toc $(PKG).pdf
+
