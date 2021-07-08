@@ -6290,7 +6290,7 @@ void add_discrete_dummies (int target)
         int *dlist = get_dummifiable_list();
 
         if (dlist == NULL) {
-            infobox("No discrete series are available");
+            infobox(_("No discrete series are available"));
         } else {
             target = dummify_target_dialog(dlist, &opt);
             free(dlist);
