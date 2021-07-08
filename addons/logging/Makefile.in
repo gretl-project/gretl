@@ -42,7 +42,6 @@ $(PKG).zip: $(PKG).gfn pdfdoc
 symlinks:
 	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
-	@if [ ! -f $(HELP) ] || [ $(PKGSRC)/$(HELP) -nt $(HELP) ] ; then ln -sf $(PKGSRC)/$(HELP) . ; fi
 
 pdfdoc: 
 	$(MAKE) -C doc

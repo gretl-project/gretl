@@ -4,7 +4,7 @@ TEXDIR = $(topsrc)/doc/tex
 PKG = logging
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
-SRCS = $(PKG).tex $(FIG) gretl.sty gretl.bst gretl.bib
+SRCS = $(PKG).tex gretl.sty
 
 $(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG)
@@ -19,5 +19,5 @@ symlinks:
 	@if [ ! -f $(PKG).tex ] || [ $(DOCDIR)/$(PKG).tex -nt $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
 
 clean:
-	@rm -f *.log *.aux *.toc $(PKG).pdf
+	@rm -f *.log *.aux *.out $(PKG).pdf
 
