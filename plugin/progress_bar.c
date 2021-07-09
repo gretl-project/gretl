@@ -54,6 +54,7 @@ static ProgressData *build_progress_window (int flag, int *cancel)
     pdata->cancel = cancel;
 
     pdata->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_position(GTK_WINDOW(pdata->window), GTK_WIN_POS_CENTER);
     gtk_window_set_resizable(GTK_WINDOW(pdata->window), FALSE);
 
     if (flag == SP_LOAD_INIT) {
