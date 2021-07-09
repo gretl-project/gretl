@@ -46,6 +46,8 @@
 # include "gretlwin32.h"
 #endif
 
+#include <gio/gio.h>
+
 /* for viewer window toolbars */
 #include "../pixmaps/mini.en.xpm"
 
@@ -142,27 +144,18 @@ struct xpm_stock_maker {
     const char *id;
 };
 
-#if 1
-static int try_auto_sizing (int *bigger)
-{
-    GdkScreen *screen = gdk_screen_get_default();
-    GtkWidget *w = gtk_label_new("X");
-    int cw = get_char_width(w);
-    int num, den;
-    int pxw, pxh;
+#if GTK_MAJOR_VERSION == 3
 
-    gtk_widget_destroy(w);
-    num = 18 * 16;
-    den = SCRIPT_WIDTH * cw + 48;
-    fprintf(stderr, "icons/window ratio = %.3f\n", num / (double) den);
+static void try_auto_icon_sizing (int *bigger)
+{
+    GdkDisplay *display = gdk_display_get_default();
+    GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
+    GdkScreen *screen = gdk_screen_get_default();
+    int pxw, pxh;
 
     pxw = gdk_screen_get_width(screen);
     pxh = gdk_screen_get_height(screen);
     fprintf(stderr, "screen size: %d x %d pixels\n", pxw, pxh);
-
-#if GTK_MAJOR_VERSION > 2
-    GdkDisplay *display = gdk_display_get_default();
-    GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
 
     if (monitor != NULL) {
 	int mmw = gdk_monitor_get_width_mm(monitor);
@@ -177,14 +170,13 @@ static int try_auto_sizing (int *bigger)
 	mm16 = 16 * mmw / (double) pxw;
 	fprintf(stderr, " 16 pixels = %.2f mm\n", mm16);
 	if (mm16 < 2.8) {
+	    fprintf(stderr, " auto-setting larger icons\n");
 	    *bigger = 1;
 	}
     }
-#endif
-
-    return 0;
 }
-#endif
+
+#endif /* GTK3 */
 
 void gretl_stock_icons_init (void)
 {
@@ -200,17 +192,18 @@ void gretl_stock_icons_init (void)
     int n2 = G_N_ELEMENTS(xpm_stocks);
 
     if (gretl_factory == NULL) {
-	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM); /* FIXME */
-	const char *gretldir = gretl_home();
+	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
 	gchar *p, *icon_path, *pm, *menu_path = NULL;
+	gchar *respath;
+	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
 	int i;
 
-#if 1
+#if GTK_MAJOR_VERSION == 3
 	if (get_icon_sizing() == ICON_SIZE_AUTO) {
-	    try_auto_sizing(&bigger);
+	    try_auto_icon_sizing(&bigger);
 	}
 #endif
 
@@ -222,23 +215,32 @@ void gretl_stock_icons_init (void)
 #endif
 	}
 
-	icon_path = malloc(strlen(gretldir) + 32);
+	gretl_factory = gtk_icon_factory_new();
+
+	respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
+	icons = g_resource_load(respath, NULL);
+	if (icons == NULL) {
+	    fprintf(stderr, "g_resource_load: failed to load icons\n");
+	    g_free(respath);
+	    goto do_pixmaps;
+	}
+
+	g_resources_register(icons);
+	icon_path = malloc(48);
 
 	if (bigger) {
-	    sprintf(icon_path, "%sicons%c24x24%c", gretldir, SLASH, SLASH);
-	    menu_path = malloc(strlen(gretldir) + 32);
-	    sprintf(menu_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
+	    menu_path = malloc(48);
+	    strcpy(icon_path, "/gretl/icons/24x24/");
+	    strcpy(menu_path, "/gretl/icons/16x16/");
 	    pm = strrchr(menu_path, SLASH) + 1;
 	} else {
-	    sprintf(icon_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
+	    strcpy(icon_path, "/gretl/icons/16x16/");
 	}
 	p = strrchr(icon_path, SLASH) + 1;
 
-	gretl_factory = gtk_icon_factory_new();
-
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, png_stocks[i].fname);
-	    pbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
+	    pbuf = gdk_pixbuf_new_from_resource(icon_path, NULL);
 	    if (pbuf == NULL) {
 		fprintf(stderr, "Failed to load %s\n", icon_path);
 		*p = '\0';
@@ -274,6 +276,11 @@ void gretl_stock_icons_init (void)
 
 	free(icon_path);
 	free(menu_path);
+	g_free(respath);
+	g_resources_unregister(icons);
+	g_resource_unref(icons);
+
+    do_pixmaps:
 
 	for (i=0; i<n2; i++) {
 	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpm_stocks[i].xpm);

@@ -726,6 +726,8 @@ AVX_CFLAGS
 SSE2_CFLAGS
 MPILINK
 MPICC
+COMPRES
+MKPNGLIST
 MKNEWS
 MKLANG
 HOSTCC
@@ -902,6 +904,8 @@ LT_SYS_LIBRARY_PATH
 HOSTCC
 MKLANG
 MKNEWS
+MKPNGLIST
+COMPRES
 MPICC
 MPILINK
 CXX
@@ -1621,6 +1625,8 @@ Some influential environment variables:
   HOSTCC      host compiler (for cross-build)
   MKLANG      builder for gtksourceview files (cross-build)
   MKNEWS      builder for NEWS file (cross-build)
+  MKPNGLIST   builder for icons index (cross-build)
+  COMPRES     GLib resource compiler (cross-build)
   MPICC       path to MPI compiler wrapper
   MPILINK     linker commands for MPI (cross-build)
   CXX         C++ compiler command
@@ -16074,6 +16080,8 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
      as_fn_error $? "unknown endianness
  presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
  esac
+
+
 
 
 
