@@ -530,6 +530,55 @@ series is given as a function of the sample size, but only up to a
 scalar multiple---for example, it is given as $O(T^{2/9})$ for the
 Bartlett kernel. Gretl uses an implied multiple of 1.
 
+\subsection{Long-run variance}
+\label{sec:lrvar}
+% moved here from the "special functions" chapter in part I,
+% where it really didn't belong
+
+Let us expand a little more on the subject of the long-run variance 
+that was mentioned in the previous subsection and the associated tools
+offered by gretl for scripting. (You may also want to check out the 
+reference for the \texttt{lrcovar} function for the multivariate case.)
+As is well known, the variance of the average of $T$ random variables
+$x_1, x_2, \ldots, x_T$ with equal variance $\sigma^2$ equals
+$\sigma^2/T$ if the data are uncorrelated. In this case, the sample
+variance of $x_t$ over the sample size provides a consistent estimator.
+
+If, however, there is serial correlation among the $x_t$s, the
+variance of $\bar{X} = T^{-1} \sum_{t=1}^T x_t$ must be estimated
+differently. One of the most widely used statistics for this purpose
+is a nonparametric kernel estimator with the Bartlett kernel defined
+as
+\begin{equation}
+  \label{eq:scalar-lrvar}
+  \hat{\omega}^2(k) = T^{-1} \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i (x_t -
+  \bar{X}) (x_{t-i} - \bar{X}) \right] ,
+\end{equation}
+where the integer $k$ is known as the window size and the $w_i$ terms
+are the so-called \emph{Bartlett weights}, defined as $w_i = 1 -
+\frac{|i|}{k + 1}$. It can be shown that, for $k$ large enough,
+$\hat{\omega}^2(k)/T$ yields a consistent estimator of the variance of
+$\bar{X}$.
+
+gretl implements this estimator by means of the function
+\texttt{lrvar()}. This function takes one required argument, namely
+the series whose long-run variance is to be estimated, followed by two
+optional arguments. The first of these can be used to supply a value
+for $k$; if it is omitted or negative, the popular choice $T^{1/3}$ is
+used. The second allows specification of an assumed value for the
+population mean of $X$, which then replaces $\bar{X}$ in the variance
+calculation. Usage is illustrated below.
+\begin{code}
+# automatic window size; use xbar for mean
+lrs2 = lrvar(x)
+# set a window size of 12
+lrs2 = lrvar(x, 12)
+# set window size and impose assumed mean of zero
+lrs2 = lrvar(x, 12, 0)
+# impose mean zero, automatic window size
+lrs2 = lrvar(x, -1, 0)
+\end{code}
+
 \subsection{VARs: a special case}
 \label{sec:hac-VARs}
 
