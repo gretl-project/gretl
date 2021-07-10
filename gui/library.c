@@ -674,13 +674,11 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
                  GtkWidget *parent)
 {
     PRN *prn;
-    char title[128];
+    gchar *title = NULL;
     gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
     const char *flagstr = NULL;
     int err = 0;
-
-    strcpy(title, "gretl: ");
 
     if (ci == CORR || ci == PCA || ci == XTAB) {
         flagstr = print_flags(opt, ci);
@@ -696,7 +694,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
     if (ci == ALL_CORR) {
         /* correlation matrix, all series */
         lib_command_strcpy("corr");
-        strcat(title, _("correlation matrix"));
+        title = g_strdup_printf("gretl: %s", _("correlation matrix"));
         ci = CORR;
     } else if (ci == ALL_SUMMARY) {
         /* summary stats, all series or list */
@@ -705,19 +703,19 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         } else {
             lib_command_strcpy("summary");
         }
-        strcat(title, _("summary statistics"));
+        title = g_strdup_printf("gretl: %s", _("summary statistics"));
         ci = SUMMARY;
     } else if (ci == VAR_SUMMARY) {
         /* summary stats, single series */
         lib_command_sprintf("summary %s", selected_varname());
-        strcat(title, _("summary stats: "));
-        strcat(title, selected_varname());
+        title = g_strdup_printf("gretl: %s%s", _("summary stats: "),
+				selected_varname());
         ci = SUMMARY;
         vsize = 300;
     } else if (ci == NORMTEST) {
         /* normality test, single series */
         lib_command_sprintf("normtest %s --all", selected_varname());
-        strcat(title, _("normality test"));
+        title = g_strdup_printf("gretl: %s", _("normality test"));
         vsize = 300;
     } else if (liststr == NULL) {
         /* beyond here we need a list */
@@ -726,20 +724,20 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         switch (ci) {
         case CORR:
             lib_command_sprintf("corr%s%s", liststr, flagstr);
-            strcat(title, _("correlation matrix"));
+            title = g_strdup_printf("gretl: %s", _("correlation matrix"));
             break;
         case PCA:
             lib_command_sprintf("pca%s%s", liststr, flagstr);
-            strcat(title, _("principal components"));
+            title = g_strdup_printf("gretl: %s", _("principal components"));
             break;
         case MAHAL:
             lib_command_sprintf("mahal%s", liststr);
             hsize = 60;
-            strcat(title, _("Mahalanobis distances"));
+            title = g_strdup_printf("gretl: %s", _("Mahalanobis distances"));
             break;
         case XTAB:
             lib_command_sprintf("xtab %s%s", liststr, flagstr);
-            strcat(title, _("cross tabulation"));
+            title = g_strdup_printf("gretl: %s", _("cross tabulation"));
             vsize = 340;
             break;
         case SUMMARY:
@@ -748,7 +746,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
             } else {
                 lib_command_sprintf("summary%s", liststr);
             }
-            strcat(title, _("summary statistics"));
+            title = g_strdup_printf("gretl: %s", _("summary statistics"));
             break;
         default:
             break;
@@ -756,12 +754,14 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
     }
 
     if (err || parse_lib_command() || bufopen(&prn)) {
+	g_free(title);
         return;
     }
 
     if (libcmd.list == NULL) {
         libcmd.list = full_var_list(dataset, NULL);
         if (libcmd.list == NULL) {
+	    g_free(title);
             return;
         }
     }
@@ -815,6 +815,8 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         record_lib_command();
         view_buffer(prn, hsize, vsize, title, ci, obj);
     }
+
+    g_free(title);
 }
 
 int menu_op_wrapper (selector *sr)
@@ -2568,7 +2570,7 @@ void do_modtest (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     DATASET *dset = dataset;
     PRN *prn;
-    char title[128];
+    gchar *title = NULL;
     gretlopt opt = OPT_NONE;
     int err = 0;
 
@@ -2586,18 +2588,18 @@ void do_modtest (GtkAction *action, gpointer p)
 
     opt = modtest_get_opt(action);
 
-    strcpy(title, _("gretl: LM test "));
+    if (opt & (OPT_W | OPT_X | OPT_B)) {
+	title = g_strdup_printf("%s%s", _("gretl: LM test "),
+				_("(heteroskedasticity)"));
+    }
 
     if (opt == OPT_W) {
-        strcat(title, _("(heteroskedasticity)"));
         lib_command_strcpy("modtest --white");
         err = whites_test(pmod, dset, OPT_S, prn);
     } else if (opt == OPT_X) {
-        strcat(title, _("(heteroskedasticity)"));
         lib_command_strcpy("modtest --white-nocross");
         err = whites_test(pmod, dset, OPT_S | OPT_X, prn);
     } else if (opt & OPT_B) {
-        strcat(title, _("(heteroskedasticity)"));
         if (opt & OPT_R) {
             lib_command_strcpy("modtest --breusch-pagan --robust");
         } else {
@@ -2605,13 +2607,14 @@ void do_modtest (GtkAction *action, gpointer p)
         }
         err = whites_test(pmod, dset, opt | OPT_S, prn);
     } else if (opt == OPT_P) {
-        strcpy(title, _("gretl: groupwise heteroskedasticity"));
+        title = g_strdup(_("gretl: groupwise heteroskedasticity"));
         lib_command_strcpy("modtest --panel");
         err = groupwise_hetero_test(pmod, dset, opt | OPT_S, prn);
     } else if (opt & (OPT_S | OPT_L)) {
         int aux = (opt == OPT_S)? AUX_SQ : AUX_LOG;
 
-        strcat(title, _("(non-linearity)"));
+	title = g_strdup_printf("%s%s", _("gretl: LM test "),
+				_("(non-linearity)"));
         if (aux == AUX_SQ) {
             lib_command_strcpy("modtest --squares");
         } else {
@@ -2619,11 +2622,11 @@ void do_modtest (GtkAction *action, gpointer p)
         }
         err = nonlinearity_test(pmod, dset, aux, OPT_S, prn);
     } else if (opt == OPT_C) {
-        strcpy(title, _("gretl: common factor test"));
+        title = g_strdup(_("gretl: common factor test"));
         lib_command_strcpy("modtest --comfac");
         err = comfac_test(pmod, dset, OPT_S, prn);
     } else if (opt == OPT_D) {
-        strcpy(title, _("gretl: cross-sectional dependence"));
+        title = g_strdup(_("gretl: cross-sectional dependence"));
         lib_command_strcpy("modtest --xdepend");
         err = panel_xdepend_test(pmod, dset, OPT_S, prn);
     }
@@ -2638,6 +2641,7 @@ void do_modtest (GtkAction *action, gpointer p)
                                 title, MODTEST, NULL);
     }
 
+    g_free(title);
     trim_dataset(pmod, 0);
 }
 

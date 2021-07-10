@@ -569,45 +569,50 @@ static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
     *opts->setvar = val;
 }
 
-static void make_confirmation_text (char *ctxt, DATASET *dwinfo, gretlopt *flags)
+static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
 {
+    gchar *ret = NULL;
+
     if (dwinfo->structure == CROSS_SECTION) {
-	sprintf(ctxt, _("%s, observations 1 to %d"), _("Cross-sectional data"),
-		dataset->n);
+	ret = g_strdup_printf(_("%s, observations 1 to %d"), _("Cross-sectional data"),
+			      dataset->n);
     } else if (time_series(dwinfo)) {
+	const char *tslabel = ts_frequency_string(dwinfo);
 	int lastobs = dwinfo->t1 + dataset->n - 1;
 	char stobs[OBSLEN];
 	char endobs[OBSLEN];
 	const char *tslabel;
 
-	tslabel = _(ts_frequency_string(dwinfo));
-
 	if (lastobs > dwinfo->n - 1) {
 	    dwinfo->n = lastobs + 1;
 	}
-
 	ntolabel(stobs, dwinfo->t1, dwinfo);
 	ntolabel(endobs, lastobs, dwinfo);
-	sprintf(ctxt, _("%s, %s to %s"), tslabel, stobs, endobs);
+	ret = g_strdup_printf(_("%s, %s to %s"), _(tslabel), stobs, endobs);
     } else if (dwinfo->structure == PANEL_UNKNOWN) {
-	sprintf(ctxt, _("Panel data (%s)\n"
-			"%d cross-sectional units observed over %d periods"),
-		_("stacked time series"), dwinfo->n, dwinfo->pd);
+	ret = g_strdup_printf(_("Panel data (%s)\n"
+				"%d cross-sectional units observed over %d periods"),
+			      _("stacked time series"), dwinfo->n, dwinfo->pd);
     } else if (known_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
 	int nperiods = dataset->n / nunits;
 
-	sprintf(ctxt, _("Panel data (%s)\n"
-			"%d cross-sectional units observed over %d periods"),
-		(dwinfo->structure == STACKED_TIME_SERIES)?
-		_("stacked time series") : _("stacked cross sections"),
-		nunits, nperiods);
+	ret = g_strdup_printf(_("Panel data (%s)\n"
+				"%d cross-sectional units observed over %d periods"),
+			      (dwinfo->structure == STACKED_TIME_SERIES)?
+			      _("stacked time series") : _("stacked cross sections"),
+			      nunits, nperiods);
     }
 
-    if (*flags & DW_DROPMISS) {
-	strcat(ctxt, "\n");
-	strcat(ctxt, _("(dropping missing observations)"));
+    if (flags & DW_DROPMISS) {
+	gchar *s;
+
+	s = g_strdup_printf("%s\n%s", ret, _("(dropping missing observations)"));
+	g_free(ret);
+	ret = s;
     }
+
+    return ret;
 }
 
 static void make_weekly_stobs (DATASET *dwinfo)
@@ -1679,10 +1684,11 @@ static void dwiz_prepare_page (GtkNotebook *nb,
     if (step == DW_CONFIRM) {
 	/* the final page */
 	GtkWidget *w = g_object_get_data(G_OBJECT(page), "label");
-	char ctxt[512];
+	gchar *ctxt;
 
-	make_confirmation_text(ctxt, dwinfo, &opts->flags);
+	ctxt = make_confirmation_text(dwinfo, opts->flags);
 	gtk_label_set_text(GTK_LABEL(w), ctxt);
+	g_free(ctxt);
 	if ((opts->flags & DW_CREATE) && dataset->n < 1001) {
 	    add_editing_option(page, &opts->flags);
 	}

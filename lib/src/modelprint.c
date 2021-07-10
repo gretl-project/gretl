@@ -4678,8 +4678,7 @@ static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
     sprintf(sep, "%s = %d", vname, val);
 }
 
-static int separator_wanted (int i, int seppos,
-			     const char **sepstr,
+static int separator_wanted (int i, int seppos, char **sepstr,
 			     const MODEL *pmod)
 {
     int ret = 0;
@@ -4687,7 +4686,7 @@ static int separator_wanted (int i, int seppos,
     if (i == seppos) {
 	/* the straightforward criterion */
 	ret = 1;
-    } else if (pmod->ci == MIDASREG) {
+    } else if (pmod->ci == MIDASREG && sepstr != NULL) {
 	const int *seplist = gretl_model_get_list(pmod, "seplist");
 	int j = 0;
 
@@ -4721,7 +4720,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     double *slopes = NULL;
     char **names = NULL;
     const char *head;
-    const char *sepstr = NULL;
+    char *sepstr = NULL;
     double *xb = NULL;
     double *xse = NULL;
     int seppos = -1, cblock = 0;
@@ -4794,7 +4793,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	adfnum = gretl_model_get_int(pmod, "dfnum");
     }
 
-    gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
+    gretl_model_get_coeff_separator(pmod, NULL, &seppos);
     if (seppos == -1) {
 	if (pmod->ci == GARCH && pmod->list[0] > 4) {
 	    seppos = pmod->list[0] - 4;
@@ -4922,6 +4921,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    } else {
 		print_coeff_separator(sepstr, dotlen, prn);
 	    }
+	    free(sepstr);
+	    sepstr = NULL;
 	} else if (cblock > 0 && i % cblock == 0) {
 	    char mnlsep[32];
 
@@ -5039,7 +5040,7 @@ static int
 alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     gretl_matrix *intervals = NULL;
-    const char *sepstr = NULL;
+    char *sepstr = NULL;
     int seppos = -1;
     model_coeff mc;
     int adfnum = -1;
@@ -5058,7 +5059,7 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	nc = pmod->list[0] - 1;
     }
 
-    gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
+    gretl_model_get_coeff_separator(pmod, NULL, &seppos);
     if (seppos == -1 && pmod->ci == GARCH && pmod->list[0] > 4) {
 	seppos = pmod->list[0] - 4;
     }
@@ -5085,6 +5086,8 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	    } else {
 		print_coeff_separator(sepstr, cols, prn);
 	    }
+	    free(septr);
+	    sepstr = NULL;
 	}
 	if (intervals != NULL) {
 	    mc.lo = gretl_matrix_get(intervals, i, 0);

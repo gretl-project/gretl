@@ -882,8 +882,8 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
 /**
  * gretl_model_get_coeff_separator:
  * @pmod: pointer to model.
- * @ps: location to receive string, if any.
- * @ppos: location to receive position, if any.
+ * @ps: location to receive string, if any, or NULL.
+ * @ppos: location to receive position, if any, or NULL.
  *
  * Retrieves information that has been set on @pmod regarding the
  * insertion of an extra line when printing the coefficients, if any.
@@ -891,7 +891,7 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
  * Returns: 1 if such information is present, 0 otherwise.
  */
 
-int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos)
+int gretl_model_get_coeff_separator (const MODEL *pmod, char **ps, int *ppos)
 {
     CoeffSep *cs = gretl_model_get_data(pmod, "coeffsep");
 
@@ -899,8 +899,12 @@ int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *pp
 	return 0;
     }
 
-    *ps = cs->str;
-    *ppos = cs->pos;
+    if (ps != NULL) {
+	*ps = gretl_strdup(cs->str);
+    }
+    if (ppos != NULL) {
+	*ppos = cs->pos;
+    }
 
     return 1;
 }

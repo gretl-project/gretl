@@ -847,11 +847,10 @@ void xcorrgm_callback (void)
     if (mdata_selection_count() == 2) {
 	do_xcorrgm(NULL);
     } else {
-	char title[64];
+	gchar *title = g_strdup_printf("gretl: %s", _("cross-correlogram"));
 
-	strcpy(title, "gretl: ");
-	strcat(title, _("cross-correlogram"));
 	simple_selection(XCORRGM, title, do_xcorrgm, NULL);
+	g_free(title);
     }
 }
 
