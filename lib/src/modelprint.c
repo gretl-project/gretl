@@ -5086,7 +5086,7 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	    } else {
 		print_coeff_separator(sepstr, cols, prn);
 	    }
-	    free(septr);
+	    free(sepstr);
 	    sepstr = NULL;
 	}
 	if (intervals != NULL) {
