@@ -581,7 +581,6 @@ static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
 	int lastobs = dwinfo->t1 + dataset->n - 1;
 	char stobs[OBSLEN];
 	char endobs[OBSLEN];
-	const char *tslabel;
 
 	if (lastobs > dwinfo->n - 1) {
 	    dwinfo->n = lastobs + 1;
