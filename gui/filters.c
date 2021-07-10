@@ -202,72 +202,84 @@ static void filter_make_savename (filter_info *finfo, int i)
 
 static void filter_make_varlabel (filter_info *finfo, int v, int i)
 {
-    char *s = (i == FILTER_SAVE_TREND)? finfo->label_t :
-	finfo->label_c;
+    gchar *s = NULL;
 
     if (finfo->ftype == FILTER_SMA) {
 	if (i == FILTER_SAVE_TREND) {
 	    if (finfo->center) {
-		sprintf(s, _("Centered %d-period moving average of %s"),
-			finfo->k, finfo->vname);
+		s = g_strdup_printf(_("Centered %d-period moving average of %s"),
+				    finfo->k, finfo->vname);
 	    } else {
-		sprintf(s, _("%d-period moving average of %s"),
-			finfo->k, finfo->vname);
+		s = g_strdup_printf(_("%d-period moving average of %s"),
+				    finfo->k, finfo->vname);
 	    }
 	} else {
-	    sprintf(s, _("Residual from %d-period MA of %s"),
-		    finfo->k, finfo->vname);
+	    s = g_strdup_printf(_("Residual from %d-period MA of %s"),
+				finfo->k, finfo->vname);
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(s, _("Exponential moving average of %s (current weight %g)"),
-		    finfo->vname, finfo->lambda);
+	    s = g_strdup_printf(_("Exponential moving average of %s (current weight %g)"),
+				finfo->vname, finfo->lambda);
 	} else {
-	    sprintf(s, _("Residual from EMA of %s (current weight %g)"),
-		    finfo->vname, finfo->lambda);
+	    s = g_strdup_printf(_("Residual from EMA of %s (current weight %g)"),
+				finfo->vname, finfo->lambda);
 	}
     } else if (finfo->ftype == FILTER_HP) {
 	if (finfo->oneside) {
 	    if (i == FILTER_SAVE_TREND) {
-		sprintf(s, _("Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"),
-			finfo->vname, finfo->lambda);
+		s = g_strdup_printf(_("Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"),
+				    finfo->vname, finfo->lambda);
 	    } else {
-		sprintf(s, _("Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"),
-			finfo->vname, finfo->lambda);
+		s = g_strdup_printf(_("Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"),
+				    finfo->vname, finfo->lambda);
 	    }
 	} else {
 	    if (i == FILTER_SAVE_TREND) {
-		sprintf(s, _("Filtered %s: Hodrick-Prescott trend (lambda = %g)"),
-			finfo->vname, finfo->lambda);
+		s = g_strdup_printf(_("Filtered %s: Hodrick-Prescott trend (lambda = %g)"),
+				    finfo->vname, finfo->lambda);
 	    } else {
-		sprintf(s, _("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"),
-			finfo->vname, finfo->lambda);
+		s = g_strdup_printf(_("Filtered %s: Hodrick-Prescott cycle (lambda = %g)"),
+				    finfo->vname, finfo->lambda);
 	    }
 	}
     } else if (finfo->ftype == FILTER_BK) {
-	sprintf(s, _("Filtered %s: Baxter-King, frequency %d to %d"),
-		finfo->vname, finfo->bkl, finfo->bku);
+	s = g_strdup_printf(_("Filtered %s: Baxter-King, frequency %d to %d"),
+			    finfo->vname, finfo->bkl, finfo->bku);
     } else if (finfo->ftype == FILTER_BW) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(s, _("Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"),
-		    finfo->vname, finfo->order, finfo->cutoff);
+	    s = g_strdup_printf(_("Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"),
+				finfo->vname, finfo->order, finfo->cutoff);
 	} else {
-	    sprintf(s, _("Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"),
-		    finfo->vname, finfo->order, finfo->cutoff);
+	    s = g_strdup_printf(_("Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"),
+				finfo->vname, finfo->order, finfo->cutoff);
 	}
     } else if (finfo->ftype == FILTER_POLY) {
 	if (i == FILTER_SAVE_TREND) {
-	    sprintf(s, _("Filtered %s: polynomial of order %d"),
-		    finfo->vname, finfo->order);
+	    s = g_strdup_printf(_("Filtered %s: polynomial of order %d"),
+				finfo->vname, finfo->order);
 	} else {
-	    sprintf(s, _("Filtered %s: residual from polynomial of order %d"),
-		    finfo->vname, finfo->order);
+	    s = g_strdup_printf(_("Filtered %s: residual from polynomial of order %d"),
+				finfo->vname, finfo->order);
 	}
     } else if (finfo->ftype == FILTER_FD) {
-	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
+	s = g_strdup_printf("fracdiff(%s, %g)", finfo->vname, finfo->lambda);
+    }
+
+    if (s != NULL) {
+	gretl_utf8_truncate(s, MAXLABEL-1);
+    } else {
+	s = g_strdup("");
+    }
+
+    if (i == FILTER_SAVE_TREND) {
+	strcpy(finfo->label_t, s);
+    } else {
+	strcpy(finfo->label_c, s);
     }
 
     series_set_label(dataset, v, s);
+    g_free(s);
 }
 
 static void check_bk_limits1 (GtkWidget *s1, GtkWidget *s2)
@@ -1135,7 +1147,7 @@ static int do_filter_response_graph (filter_info *finfo)
 {
     gretl_matrix *G;
     FILE *fp = NULL;
-    char title[128];
+    gchar *title = NULL;
     double omega_star = 0.0;
     int i, nlit, err = 0;
 
@@ -1164,13 +1176,14 @@ static int do_filter_response_graph (filter_info *finfo)
     fputs("set yrange [0:1.1]\n", fp);
 
     if (finfo->ftype == FILTER_BW) {
-	sprintf(title, "%s (n = %d, %s %.2fπ)", _("Gain for Butterworth filter"),
-		finfo->order, _("nominal cutoff"),
-		(double) finfo->cutoff / 180);
+	title = g_strdup_printf("%s (n = %d, %s %.2fπ)", _("Gain for Butterworth filter"),
+				finfo->order, _("nominal cutoff"),
+				(double) finfo->cutoff / 180);
     } else {
-	sprintf(title, _("Gain for H-P filter (lambda = %g)"), finfo->lambda);
+	title = g_strdup_printf(_("Gain for H-P filter (lambda = %g)"), finfo->lambda);
     }
     fprintf(fp, "set title \"%s\"\n", title);
+    g_free(title);
 
     fprintf(fp, "# literal lines = %d\n", nlit);
     fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, \"3π/4\" 3*pi/4, "
