@@ -2950,6 +2950,8 @@ static gchar *seas_name_and_label (int k, const DATASET *dset,
 	sprintf(vname, "%s%d", dumstr, k);
 	ret = g_strdup_printf(_("%s = 1 if period is %d, 0 otherwise"), vname, k);
     }
+
+    return ret;
 }
 
 static int get_first_panel_period (DATASET *dset)
@@ -3884,11 +3886,12 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 		    ModelDataIndex idx)
 {
-    char vname[VNAMELEN], vlabel[MAXLABEL];
+    char vname[VNAMELEN];
+    gchar *vlabel = NULL;
     double *x;
     int err = 0;
 
-    x = get_fit_or_resid(pmod, dset, idx, vname, vlabel, &err);
+    x = get_fit_or_resid(pmod, dset, idx, vname, &vlabel, &err);
 
     if (!err) {
 	err = dataset_add_allocated_series(dset, x);
@@ -3902,6 +3905,8 @@ int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 	strcpy(dset->varname[v], vname);
 	series_set_label(dset, v, vlabel);
     }
+
+    g_free(vlabel);
 
     return err;
 }
