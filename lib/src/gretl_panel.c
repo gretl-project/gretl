@@ -1557,14 +1557,19 @@ static void print_re_results (panelmod_t *pan,
 			      DATASET *dset,
 			      PRN *prn)
 {
-    pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->s2v);
-    pprintf(prn, " within = %g\n", pan->s2e);
+    pputs(prn, _("Variance estimators:"));
+    pputc(prn, '\n');
+    pprintf(prn, _(" between = %g"), pan->s2v);
+    pputc(prn, '\n');
+    pprintf(prn, _(" within = %g"), pan->s2e);
+    pputc(prn, '\n');
 
     if (pan->balanced || pan->s2v == 0) {
-	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
+	pprintf(prn, _("theta used for quasi-demeaning = %g"), pan->theta);
+	pputc(prn, '\n');
     } else {
-	pputs(prn, "Panel is unbalanced: theta varies across units\n");
+	pputs(prn, _("Panel is unbalanced: theta varies across units"));
+	pputc(prn, '\n');
     }
     pputc(prn, '\n');
 
