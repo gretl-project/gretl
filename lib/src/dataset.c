@@ -4057,8 +4057,14 @@ void series_set_display_name (DATASET *dset, int i,
     if (i > 0 && i < dset->v) {
 	char *targ = dset->varinfo[i]->display_name;
 
-	*targ = '\0';
-	strncat(targ, s, MAXDISP-1);
+	if (strlen(s) >= MAXDISP) {
+	    gchar *tmp = g_strdup(s);
+
+	    strcpy(targ, gretl_utf8_truncate(tmp, MAXDISP-1));
+	    g_free(tmp);
+	} else {
+	    strcpy(targ, s);
+	}
     }
 }
 

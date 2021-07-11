@@ -7044,7 +7044,7 @@ void resid_plot (GtkAction *action, gpointer p)
 
 static void theil_plot (MODEL *pmod, DATASET *dset)
 {
-    char dname[MAXDISP];
+    gchar *dname;
     int plotlist[3];
     int dv, fv, err;
 
@@ -7056,8 +7056,9 @@ static void theil_plot (MODEL *pmod, DATASET *dset)
     plotlist[1] = dv = gretl_model_get_depvar(pmod);
     plotlist[2] = fv = dset->v - 1; /* fitted values */
 
-    sprintf(dname, _("predicted %s"), dset->varname[dv]);
+    dname = g_strdup_printf(_("predicted %s"), dset->varname[dv]);
     series_set_display_name(dset, fv, dname);
+    g_free(dname);
 
     err = theil_forecast_plot(plotlist, dset, OPT_G);
     gui_graph_handler(err);
