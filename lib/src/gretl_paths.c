@@ -154,8 +154,11 @@ const char *helpfile_path (int id, int cli, int en)
     }
 
     if (i >= 0) {
-        sprintf(hpath, "%s%s", paths.gretldir, en ? helpfiles[i] :
-                _(helpfiles[i]));
+	if (en || (strlen(_(helpfiles[i])) != strlen(helpfiles[i]))) {
+	    sprintf(hpath, "%s%s", paths.gretldir, helpfiles[i]);
+	} else {
+	    sprintf(hpath, "%s%s", paths.gretldir, _(helpfiles[i]));
+	}
     }
 
     return hpath;
@@ -182,10 +185,10 @@ int using_translated_helpfile (int id)
     */
 
     if (strcmp(helpfiles[i], _(helpfiles[i]))) {
-        char test[MAXLEN];
+        gchar *test;
         int err;
 
-        sprintf(test, "%s%s", paths.gretldir, _(helpfiles[i]));
+        test = g_strdup_printf("%s%s", paths.gretldir, _(helpfiles[i]));
         err = gretl_test_fopen(test, "r");
         if (err) {
             if (id == GRETL_CMDREF) {
@@ -196,6 +199,7 @@ int using_translated_helpfile (int id)
         } else {
             ret = 1;
         }
+	g_free(test);
     }
 
     return ret;

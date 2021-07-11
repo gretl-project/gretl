@@ -2497,25 +2497,18 @@ double *system_get_resid_series (equation_system *sys, int eqnum,
     return u;
 }
 
-static const char *system_get_full_string (const equation_system *sys,
-                                           int tex)
+static gchar *system_get_full_string (const equation_system *sys)
 {
-    static char sysstr[128];
     const char *lstr = gretl_system_long_strings[sys->method];
+    gchar *ret;
 
     if (sys->flags & SYSTEM_ITERATE) {
-        if (tex) {
-            sprintf(sysstr, A_("iterated %s"), A_(lstr));
-        } else {
-            sprintf(sysstr, _("iterated %s"), _(lstr));
-        }
-    } else if (tex) {
-        strcpy(sysstr, A_(lstr));
+	ret = g_strdup_printf(_("iterated %s"), _(lstr));
     } else {
-        strcpy(sysstr, _(lstr));
+	ret = g_strdup(_(lstr));
     }
 
-    return sysstr;
+    return ret;
 }
 
 /* simple accessor functions */
@@ -3588,17 +3581,17 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
         pv = chisq_cdf_comp(df, X2);
 
         if (tex) {
-            pprintf(prn, "%s:\\\\\n", A_("LR over-identification test"));
+            pprintf(prn, "%s:\\\\\n", _("LR over-identification test"));
             if (sys->ll < 0) {
-                pprintf(prn, "  %s = $-$%g", A_("Restricted log-likelihood"), -sys->ll);
+                pprintf(prn, "  %s = $-$%g", _("Restricted log-likelihood"), -sys->ll);
             } else {
-                pprintf(prn, "  %s = %g", A_("Restricted log-likelihood"), sys->ll);
+                pprintf(prn, "  %s = %g", _("Restricted log-likelihood"), sys->ll);
             }
             gretl_prn_newline(prn);
             if (sys->llu < 0) {
-                pprintf(prn, "  %s = $-$%g", A_("Unrestricted log-likelihood"), -sys->llu);
+                pprintf(prn, "  %s = $-$%g", _("Unrestricted log-likelihood"), -sys->llu);
             } else {
-                pprintf(prn, "  %s = %g", A_("Unrestricted log-likelihood"), sys->llu);
+                pprintf(prn, "  %s = %g", _("Unrestricted log-likelihood"), sys->llu);
             }
             gretl_prn_newline(prn);
             pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]\n", df, X2, pv);
@@ -3624,7 +3617,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 
         if (tex) {
             pprintf(prn, "\\noindent %s:\\\\\n",
-                    A_("Hansen--Sargan over-identification test"));
+                    _("Hansen--Sargan over-identification test"));
             pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]\\\\\n", df, sys->X2, pv);
         } else {
             pprintf(prn, "%s:\n", _("Hansen-Sargan over-identification test"));
@@ -3695,7 +3688,7 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
             test = sys->T * (sys->diag_test - sys->ldet);
             pval = chisq_cdf_comp(df, test);
             if (tex) {
-                pprintf(prn, "%s:\\\\\n", A_("LR test for diagonal covariance matrix"));
+                pprintf(prn, "%s:\\\\\n", _("LR test for diagonal covariance matrix"));
                 pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, test, pval);
                 gretl_prn_newline(prn);
             } else {
@@ -4739,6 +4732,7 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
                         gretlopt opt, PRN *prn)
 {
     const char *name = sys->name;
+    gchar *sysstr = NULL;
     int tex = tex_format(prn);
     int nr = system_n_restrictions(sys);
     int i;
@@ -4756,38 +4750,31 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 
     if (tex) {
         pputs(prn, "\\begin{center}\n");
-        if (name != NULL) {
-            pprintf(prn, "%s, %s\\\\\n", A_("Equation system"), name);
-            pprintf(prn, "%s: %s", A_("Estimator"),
-                    system_get_full_string(sys, 1));
-        } else {
-            pprintf(prn, "%s, %s", A_("Equation system"),
-                    system_get_full_string(sys, 1));
-        }
     } else {
-        pputc(prn, '\n');
-        if (name != NULL) {
-            pprintf(prn, "%s, %s\n", _("Equation system"), name);
-            pprintf(prn, "%s: %s\n", _("Estimator"),
-                    system_get_full_string(sys, 0));
-        } else {
-            pprintf(prn, "%s, %s\n", _("Equation system"),
-                    system_get_full_string(sys, 0));
-        }
+	pputc(prn, '\n');
     }
+
+    sysstr = system_get_full_string(sys);
+    if (name != NULL) {
+	if (tex) {
+	    pprintf(prn, "%s, %s\\\\\n", _("Equation system"), name);
+	} else {
+	    pprintf(prn, "%s, %s\n", _("Equation system"), name);
+	}
+	pprintf(prn, "%s: %s", _("Estimator"), sysstr);
+    } else {
+	pprintf(prn, "%s, %s", _("Equation system"), sysstr);
+    }
+    g_free(sysstr);
 
     if (sys->iters > 0) {
         gretl_prn_newline(prn);
-        if (tex) {
-            pprintf(prn, A_("Convergence achieved after %d iterations\n"), sys->iters);
-        } else {
-            pprintf(prn, _("Convergence achieved after %d iterations\n"), sys->iters);
-        }
+	pprintf(prn, _("Convergence achieved after %d iterations\n"), sys->iters);
         if (sys->method == SYS_METHOD_SUR ||
             sys->method == SYS_METHOD_FIML) {
             if (tex) {
                 gretl_prn_newline(prn);
-                pprintf(prn, "%s = ", A_("Log-likelihood"));
+                pprintf(prn, "%s = ", _("Log-likelihood"));
                 if (sys->ll < 0) {
                     pprintf(prn, "$-$%g", -sys->ll);
                 } else {

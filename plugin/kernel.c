@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -97,10 +97,10 @@ static double kernel (kernel_info *kinfo, double x0, int j)
 static int density_plot (kernel_info *kinfo, const char *vname)
 {
     FILE *fp;
-    char tmp[128];
+    gchar *tmp = NULL;
     double xt, xdt;
     int t, err = 0;
-    
+
     fp = open_plot_input_file(PLOT_KERNEL, 0, &err);
     if (err) {
 	return err;
@@ -108,18 +108,20 @@ static int density_plot (kernel_info *kinfo, const char *vname)
 
     gretl_push_c_numeric_locale();
 
-    fputs("set nokey\n", fp); 
+    fputs("set nokey\n", fp);
     fprintf(fp, "set xrange [%g:%g]\n", kinfo->xmin, kinfo->xmax);
 
     fputs("# literal lines = 2\n", fp);
     fprintf(fp, "set label \"%s\" at graph .65, graph .97\n",
 	    (kinfo->type == GAUSSIAN_KERNEL)? _("Gaussian kernel") :
 	    _("Epanechnikov kernel"));
-    sprintf(tmp, _("bandwidth = %g"), kinfo->h);
+    tmp = g_strdup_printf(_("bandwidth = %g"), kinfo->h);
     fprintf(fp, "set label \"%s\" at graph .65, graph .93\n", tmp);
+    g_free(tmp);
 
-    sprintf(tmp, _("Estimated density of %s"), vname);
+    tmp = g_strdup_printf(_("Estimated density of %s"), vname);
     fprintf(fp, "set title \"%s\"\n", tmp);
+    g_free(tmp);
 
     fputs("plot \\\n'-' using 1:2 w lines\n", fp);
 
@@ -136,7 +138,7 @@ static int density_plot (kernel_info *kinfo, const char *vname)
     return finalize_plot_input_file(fp);
 }
 
-static gretl_matrix *density_matrix (kernel_info *kinfo, 
+static gretl_matrix *density_matrix (kernel_info *kinfo,
 				     int *err)
 {
     gretl_matrix *m;
@@ -148,7 +150,7 @@ static gretl_matrix *density_matrix (kernel_info *kinfo,
 	*err = E_ALLOC;
 	return NULL;
     }
-    
+
     xt = kinfo->xmin;
     for (t=0; t<=kinfo->kn; t++) {
 	xdt = kernel(kinfo, xt, 0);
@@ -160,7 +162,7 @@ static gretl_matrix *density_matrix (kernel_info *kinfo,
     return m;
 }
 
-static gretl_matrix *multi_density_matrix (kernel_info *kinfo, 
+static gretl_matrix *multi_density_matrix (kernel_info *kinfo,
 					   int *err)
 {
     gretl_matrix *m;
@@ -173,7 +175,7 @@ static gretl_matrix *multi_density_matrix (kernel_info *kinfo,
 	*err = E_ALLOC;
 	return NULL;
     }
-    
+
     xt = kinfo->xmin;
     for (t=0; t<=kinfo->kn; t++) {
 	gretl_matrix_set(m, t, 0, xt);
@@ -208,7 +210,7 @@ static int kernel_xmin_xmax (kernel_info *kinfo)
     } else {
 	kinfo->xmax = x[n-1];
     }
-    
+
     if (xm4 < x[0]) {
 	kinfo->xmin = xm4;
     } else {
@@ -238,7 +240,7 @@ static int kernel_kn (int nobs)
     }
 }
 
-static int set_kernel_params (kernel_info *kinfo, 
+static int set_kernel_params (kernel_info *kinfo,
 			      double bwscale,
 			      gretlopt opt)
 {
@@ -289,12 +291,12 @@ static double *get_sorted_x (const double *y, int *pn, int *err)
 	qsort(x, n, sizeof *x, gretl_compare_doubles);
 	*pn = n;
     }
-    
+
     return x;
 }
 
-int 
-kernel_density (const double *y, int n, double bwscale, 
+int
+kernel_density (const double *y, int n, double bwscale,
 		const char *label, gretlopt opt)
 {
     kernel_info kinfo = {0};
@@ -307,7 +309,7 @@ kernel_density (const double *y, int n, double bwscale,
     }
 
     err = set_kernel_params(&kinfo, bwscale, opt);
-    
+
     if (!err) {
 	err = density_plot(&kinfo, label);
     }
@@ -317,8 +319,8 @@ kernel_density (const double *y, int n, double bwscale,
     return err;
 }
 
-gretl_matrix * 
-multiple_kd_matrix (const gretl_matrix *X, double bwscale, 
+gretl_matrix *
+multiple_kd_matrix (const gretl_matrix *X, double bwscale,
 		    gretlopt opt, int *err)
 {
     double Xmin = 0, Xmax = 0;
@@ -332,7 +334,7 @@ multiple_kd_matrix (const gretl_matrix *X, double bwscale,
 	*err = E_TOOFEW;
 	return NULL;
     }
-    
+
     kinfo.X = gretl_matrix_copy(X);
     if (kinfo.X == NULL) {
 	*err = E_ALLOC;
@@ -344,7 +346,7 @@ multiple_kd_matrix (const gretl_matrix *X, double bwscale,
 	*err = E_ALLOC;
 	gretl_matrix_free(kinfo.X);
 	return NULL;
-    }    
+    }
 
     /* sort Xs per column, get bandwidths and extrema */
     for (j=0; j<X->cols; j++) {
@@ -370,7 +372,7 @@ multiple_kd_matrix (const gretl_matrix *X, double bwscale,
     kinfo.xmax = Xmax;
     kinfo.xstep = (kinfo.xmax - kinfo.xmin) / kinfo.kn;
     kinfo.type = (opt & OPT_O)? EPANECHNIKOV_KERNEL :
-	GAUSSIAN_KERNEL;    
+	GAUSSIAN_KERNEL;
 
     if (!*err) {
 	m = multi_density_matrix(&kinfo, err);
@@ -382,8 +384,8 @@ multiple_kd_matrix (const gretl_matrix *X, double bwscale,
     return m;
 }
 
-gretl_matrix * 
-kernel_density_matrix (const double *y, int n, double bwscale, 
+gretl_matrix *
+kernel_density_matrix (const double *y, int n, double bwscale,
 		       gretlopt opt, int *err)
 {
     gretl_matrix *m = NULL;
@@ -406,7 +408,7 @@ kernel_density_matrix (const double *y, int n, double bwscale,
     return m;
 }
 
-int 
+int
 array_kernel_density (const double *x, int n, const char *label)
 {
     kernel_info kinfo = {0};
@@ -415,7 +417,7 @@ array_kernel_density (const double *x, int n, const char *label)
     if (n < MINOBS) {
 	return E_TOOFEW;
     }
-    
+
     kinfo.x = (double *) x;
     kinfo.n = n;
 

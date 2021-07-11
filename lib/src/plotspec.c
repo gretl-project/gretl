@@ -1762,10 +1762,11 @@ void set_plotfit_line (char *title, char *formula,
 	if (xc == 't' && (pd == 1 || pd == 4 || pd == 12)) {
 	    /* display annual growth rate in title */
 	    double g = 100 * (pow(exp(b[1]), pd) - 1);
-	    char gstr[32];
+	    gchar *gstr;
 
-	    sprintf(gstr, "\\n(%s %.2f%%)", _("annual growth"), g);
+	    gstr = g_strdup_printf("\\n(%s %.2f%%)", _("annual growth"), g);
 	    strcat(title, gstr);
+	    g_free(gstr);
 	}
     } else if (f == PLOT_FIT_LINLOG) {
 	sprintf(title, "Y = %#.3g %c %#.3glog(%c)", b[0],

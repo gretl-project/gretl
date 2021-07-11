@@ -2678,11 +2678,12 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
     double jll = gretl_model_get_double(pmod, "jll");
 
     if (!na(jll)) {
-	char jllstr[64];
+	const char *lp;
+	gchar *jllstr;
 	char xstr[32];
 
-	sprintf(jllstr, _("Log-likelihood for %s"),
-		(const char *) gretl_model_get_data(pmod, "log-parent"));
+	lp = gretl_model_get_data(pmod, "log-parent");
+	jllstr = g_strdup_printf(_("Log-likelihood for %s"), lp);
 	if (lldig > 0) {
 	    plain_print_double(xstr, lldig, jll, prn);
 	    pprintf(prn, "  (%s = %s)\n", jllstr, xstr);
@@ -2690,6 +2691,7 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 	    plain_print_double(xstr, XDIGITS(pmod), jll, prn);
 	    pprintf(prn, "%s = %s\n\n", jllstr, xstr);
 	}
+	g_free(jllstr);
     }
 }
 
@@ -3060,7 +3062,7 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
     int rtf = rtf_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
-    char teststr[32];
+    gchar *teststr = NULL;
     const char *key[] = {
 	/* TRANSLATORS: maximum length of string is 22 characters */
 	N_("Mean dependent var"),  /* Mean of dependent variable */
@@ -3146,18 +3148,18 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
 	int dfd = nc > 1 ? nc - 1 : pmod->dfd;
 
 	if (tex) {
-	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, dfd);
+	    teststr = g_strdup_printf("$F(%d, %d)$", pmod->dfn, dfd);
 	} else if ((pmod->ci == PANEL || pmod->ci == LOGISTIC) &&
 		   (pmod->opt & OPT_F)) {
-	    sprintf(teststr, A_("LSDV F(%d, %d)"), pmod->dfn, dfd);
+	    teststr = g_strdup_printf(A_("LSDV F(%d, %d)"), pmod->dfn, dfd);
 	} else {
-	    sprintf(teststr, "F(%d, %d)", pmod->dfn, dfd);
+	    teststr = g_strdup_printf("F(%d, %d)", pmod->dfn, dfd);
 	}
 	key[K_FST] = teststr;
 	val[K_PVF] = snedecor_cdf_comp(pmod->dfn, dfd, pmod->fstt);
     } else if (!na(pmod->chisq)) {
 	/* alternative: chi-square and its p-value */
-	sprintf(teststr, "%s(%d)", A_("Chi-square"), pmod->dfn);
+	teststr = g_strdup_printf("%s(%d)", A_("Chi-square"), pmod->dfn);
 	key[K_FST] = teststr;
 	val[K_FST] = pmod->chisq;
 	key[K_PVF] = N_("p-value");
@@ -3344,6 +3346,8 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
     if (!tex && !rtf) {
 	pputc(prn, '\n');
     }
+
+    g_free(teststr);
 }
 
 static void print_model_iter_info (const MODEL *pmod, PRN *prn)
