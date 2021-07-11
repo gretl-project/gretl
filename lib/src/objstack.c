@@ -677,7 +677,7 @@ equation_system *get_equation_system_by_name (const char *sname)
 
 int gretl_object_compose_name (void *p, GretlObjType type)
 {
-    char name[32];
+    char name[48];
     int err = 0;
 
     if (type == GRETL_OBJ_EQN) {
@@ -708,7 +708,7 @@ int gretl_object_compose_name (void *p, GretlObjType type)
 
 int gretl_object_compose_unique_name (void *p, GretlObjType type)
 {
-    char name[32];
+    char name[48];
     int id, err = 0;
 
     if (type == GRETL_OBJ_EQN) {
