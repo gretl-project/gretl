@@ -6948,7 +6948,14 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
 
     if (pmod->name != NULL) {
 	*pmod->name = '\0';
-	strcpy(pmod->name, gretl_utf8_truncate(name, MAXSAVENAME-1));
+	if (strlen(name) >= MAXSAVENAME) {
+	    char *tmp = g_strdup(name);
+
+	    strcpy(pmod->name, gretl_utf8_truncate(tmp, MAXSAVENAME-1));
+	    g_free(tmp);
+	} else {
+	    strcpy(pmod->name, name);
+	}
     }
 }
 

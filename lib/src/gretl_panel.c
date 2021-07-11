@@ -2292,6 +2292,11 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     int i, j, s, t;
     int err = 0;
 
+    if (yhat == NULL) {
+	fprintf(stderr, "fix_panel_hatvars: pan->pooled->yhat is NULL\n");
+	return E_DATA;
+    }
+
     y = Z[pan->pooled->list[1]];
 
     uhat = malloc(n * sizeof *uhat);
