@@ -79,25 +79,34 @@ knowledge that values very close to zero can be represented as doubles
 while values very close to 1 cannot.
 
 
-\section{Retrieving internal variables}
+\section{Retrieving internal variables (dollar accessors)}
 \label{sec:genr-internal}
 
-The \cmd{genr} command provides a means of retrieving various values
-calculated by the program in the course of estimating models or
-testing hypotheses.  The variables that can be retrieved in this way
-are listed in the \GCR; here we say a bit more about the special
-variables \dollar{test} and \dollar{pvalue}.
+A very useful feature is to retrieve in a script various values
+calculated by gretl in the course of estimating models or testing
+hypotheses. Since they all start with a literal \$ character, they
+are called ``dollar accessors''. The variables that can be retrieved
+in this way are listed in the \GCR or in the built-in function help
+under the Help menu. The dollar accessors can be used like other
+gretl objects in script assignments or statements. Some of those
+accessors are actually independent of any estimation or test and
+describe, for example, the context of the running gretl program. 
+But here we say a bit more about the special variables
+\dollar{test} and \dollar{pvalue}.
 
 These variables hold, respectively, the value of the last test
 statistic calculated using an explicit testing command and the p-value
 for that test statistic.  If no such test has been performed at the
 time when these variables are referenced, they will produce the
-missing value code.  The ``explicit testing commands'' that work in
-this way are as follows: \cmd{add} (joint test for the significance of
+missing value code.  Some ``explicit testing commands'' that work in
+this way are as follows (among others): \cmd{add} (joint test for the 
+significance of
 variables added to a model); \cmd{adf} (Augmented Dickey--Fuller test,
 see below); \cmd{arch} (test for ARCH); \cmd{chow} (Chow test for a
 structural break); \cmd{coeffsum} (test for the sum of specified
-coefficients); \cmd{cusum} (the Harvey--Collier $t$-statistic);
+coefficients); \cmd{coint} (Engle-Granger cointegration test);
+\cmd{cusum} (the Harvey--Collier $t$-statistic); \cmd{difftest}
+(test for a difference of two groups);
 \cmd{kpss} (KPSS stationarity test, no p-value available);
 \cmd{modtest} (see below); \cmd{meantest} (test for difference of
 means); \cmd{omit} (joint test for the significance of variables
@@ -107,26 +116,17 @@ and \cmd{vartest} (test for difference of variances). In most cases
 both a \dollar{test} and a \dollar{pvalue} are stored; the exception
 is the KPSS test, for which a p-value is not currently available.
 
+The \cmd{modtest} command (which must follow an estimation
+command) offers several diagnostic tests; the particular test
+performed depends on the option flag provided. Please see the \GCR\
+and for example chapters~\ref{chap:var} and \ref{chap:timeseries} of
+this \textit{Guide} for details.
+
 An important point to notice about this mechanism is that the internal
 variables \dollar{test} and \dollar{pvalue} are over-written each time
 one of the tests listed above is performed.  If you want to reference
 these values, you must do so at the correct point in the sequence of
 gretl commands.
-
-\begin{itemize}
-\item By default, the \cmd{adf} command generates three variants of
-  the Dickey--Fuller test: one based on a regression including a
-  constant, one using a constant and linear trend, and one using a
-  constant and a quadratic trend.  When you wish to reference
-  \dollar{test} or \dollar{pvalue} in connection with this command, you
-  can control the variant that is recorded by using one of the flags
-  \option{nc}, \option{c}, \option{ct} or \option{ctt} with
-  \verb+adf+.
-\item The \cmd{modtest} command (which must follow an estimation
-  command) offers several diagnostic tests; the particular test
-  performed depends on the option flag provided. Please see the \GCR\
-  and chapter~\ref{chap:var} of this \textit{Guide} for details.
-\end{itemize}
 
 
 %%% Local Variables:
