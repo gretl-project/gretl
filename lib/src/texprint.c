@@ -127,6 +127,48 @@ char *tex_escape (char *targ, const char *src)
     return p;
 }
 
+/**
+ * tex_escape_new:
+ * @src: source string.
+ *
+ * Returns: a copy of @src in which any characters that require
+ * escaping are preceded by a backslash.
+ */
+
+char *tex_escape_new (const char *src)
+{
+    const char *s = src;
+    char *ret = NULL;
+    int i, len = 0;
+
+    if (src == NULL) {
+	fprintf(stderr, "tex_escape: src is NULL\n");
+	return gretl_strdup("");
+    }
+
+    while (*s) {
+	if (*s == '$' || *s == '&' || *s == '_' ||
+	    *s == '%' || *s == '#') {
+	    len++;
+	}
+	len++;
+    }
+
+    ret = calloc(1, len + 1);
+    s = src;
+    i = 0;
+
+    while (*s) {
+	if (*s == '$' || *s == '&' || *s == '_' ||
+	    *s == '%' || *s == '#') {
+	    ret[i++] = '\\';
+	}
+	ret[i++] = *s;
+    }    
+
+    return ret;
+}
+
 static int tex_math_pname (char *targ, const char *s)
 {
     char base[16], op[2], mod[8];

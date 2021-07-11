@@ -487,7 +487,7 @@ void add_mahalanobis_data (windata_t *vwin)
     const int *mlist;
     char *liststr;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
 
@@ -504,16 +504,18 @@ void add_mahalanobis_data (windata_t *vwin)
     }
 
     strcpy(vname, "mdist");
-    strcpy(descrip, _("Mahalanobis distances"));
+    descrip = g_strdup(_("Mahalanobis distances"));
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
+	g_free(descrip);
         return;
     }
 
     err = add_or_replace_series((double *) dx, vname, descrip,
                                 DS_COPY_VALUES);
+    g_free(descrip);
 
     if (!err) {
         liststr = gretl_list_to_string(mlist, dataset, &err);
@@ -562,7 +564,7 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     double *x = NULL;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int id = gretl_VECM_id(var);
     int j, cancel = 0;
     int err = 0;
@@ -576,15 +578,16 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
 
     j++;
     sprintf(vname, "EC%d", j);
-    sprintf(descrip, "error correction term %d from VECM %d", j, id);
-
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    descrip = g_strdup_printf(_("error correction term %d from VECM %d"), j, id);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
     if (cancel) {
         free(x);
+	g_free(descrip);
         return;
     }
 
     err = add_or_replace_series(x, vname, descrip, DS_GRAB_VALUES);
+    g_free(descrip);
 
     if (err) {
         free(x);
@@ -600,7 +603,7 @@ void add_fcast_data (windata_t *vwin, ModelDataIndex idx)
 {
     FITRESID *fr = (FITRESID *) vwin->data;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
 
@@ -609,19 +612,21 @@ void add_fcast_data (windata_t *vwin, ModelDataIndex idx)
 
     if (idx == M_FCSE) {
         strcat(vname, "_se");
-        sprintf(descrip, _("forecast std errors of %s"), fr->depvar);
+        descrip = g_strdup_printf(_("forecast std errors of %s"), fr->depvar);
     } else {
         strcat(vname, "_hat");
-        sprintf(descrip, _("forecast of %s"), fr->depvar);
+        descrip = g_strdup_printf(_("forecast of %s"), fr->depvar);
     }
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
     if (cancel) {
+	g_free(descrip);
         return;
     }
 
     err = add_or_replace_series(idx == M_FCSE ? fr->sderr : fr->fitted,
                                 vname, descrip, DS_COPY_VALUES);
+    g_free(descrip);
 
     if (!err) {
         char stobs[OBSLEN], endobs[OBSLEN];
@@ -4618,7 +4623,7 @@ void add_nonparam_data (windata_t *vwin)
         const char *yname = gretl_bundle_get_string(bundle, "yname", &err);
         const char *xname = gretl_bundle_get_string(bundle, "xname", &err);
         char vname[VNAMELEN];
-        char descrip[MAXLABEL];
+        gchar *descrip = NULL;
         double q = 0, h = 0, trim = 0;
         int d = 0, robust = 0, LOO = 0;
         int cancel = 0;
@@ -4628,22 +4633,23 @@ void add_nonparam_data (windata_t *vwin)
             q = gretl_bundle_get_scalar(bundle, "q", &err);
             robust = gretl_bundle_get_int(bundle, "robust", &err);
             strcpy(vname, "loess_fit");
-            sprintf(descrip, "loess(%s, %s, %d, %g, %d)",
-                    yname, xname, d, q, robust);
+            descrip = g_strdup_printf("loess(%s, %s, %d, %g, %d)",
+				      yname, xname, d, q, robust);
         } else {
             h = gretl_bundle_get_scalar(bundle, "h", &err);
             LOO = gretl_bundle_get_int(bundle, "LOO", &err);
             trim = gretl_bundle_get_scalar(bundle, "trim", &err);
             strcpy(vname, "nw_fit");
-            sprintf(descrip, "nadarwat(%s, %s, %g, %d, %g)",
-                    yname, xname, h, LOO, trim);
+            descrip = g_strdup_printf("nadarwat(%s, %s, %g, %d, %g)",
+				      yname, xname, h, LOO, trim);
         }
 
-        name_new_series_dialog(vname, descrip, vwin, &cancel);
+        name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
         if (!cancel) {
             err = add_or_replace_series(m, vname, descrip, DS_COPY_VALUES);
         }
+	g_free(descrip);
 
         if (!cancel && !err) {
             gretl_push_c_numeric_locale();
@@ -6637,7 +6643,7 @@ int save_fit_resid (windata_t *vwin, int code)
 {
     MODEL *pmod = vwin->data;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     double *x = NULL;
     int cancel = 0;
     int err = 0;
@@ -6646,7 +6652,7 @@ int save_fit_resid (windata_t *vwin, int code)
         fprintf(stderr, "FIXME saving fit/resid from subsampled model\n");
         err = E_DATA;
     } else {
-        x = get_fit_or_resid(pmod, dataset, code, vname, descrip, &err);
+        x = get_fit_or_resid(pmod, dataset, code, vname, &descrip, &err);
     }
 
     if (err) {
@@ -6654,14 +6660,16 @@ int save_fit_resid (windata_t *vwin, int code)
         return err;
     }
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
         free(x);
+	g_free(descrip);
         return 0;
     }
 
     err = add_or_replace_series(x, vname, descrip, DS_GRAB_VALUES);
+    g_free(descrip);
 
     if (err) {
         free(x);
@@ -6677,7 +6685,6 @@ int save_fit_resid (windata_t *vwin, int code)
         } else if (code == M_AHAT) {
             lib_command_sprintf("series %s = $ahat", vname);
         }
-
         record_model_command_verbatim(pmod->ID);
         populate_varlist();
         mark_dataset_as_modified();
@@ -6693,19 +6700,16 @@ int save_bundled_series (const double *x,
                          windata_t *vwin)
 {
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
 
     strcpy(vname, key);
-    *descrip = '\0';
-    if (note != NULL) {
-        strncat(descrip, note, MAXLABEL - 1);
-    }
-
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    descrip = (note != NULL) ? g_strdup(note) : g_strdup("");
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
+	g_free(descrip);
         return 0;
     }
 
@@ -6716,6 +6720,7 @@ int save_bundled_series (const double *x,
         err = add_or_replace_series_data(x, t1, t2, vname,
                                          descrip);
     }
+    g_free(descrip);
 
     if (!err) {
         populate_varlist();
@@ -6730,7 +6735,7 @@ void add_system_resid (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     double *uhat;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int j, ci = vwin->role;
     int cancel = 0;
     int err = 0;
@@ -6756,23 +6761,25 @@ void add_system_resid (GtkAction *action, gpointer p)
 
     if (ci == VAR || ci == VECM) {
         sprintf(vname, "uhat%d", j);
-        sprintf(descrip, _("residual from VAR system, equation %d"), j);
+        descrip = g_strdup_printf(_("residual from VAR system, equation %d"), j);
     } else if (ci == VECM) {
         sprintf(vname, "uhat%d", j);
-        sprintf(descrip, _("residual from VECM system, equation %d"), j);
+        descrip = g_strdup_printf(_("residual from VECM system, equation %d"), j);
     } else {
         sprintf(vname, "uhat_s%02d", j);
-        sprintf(descrip, _("system residual, equation %d"), j);
+        descrip = g_strdup_printf(_("system residual, equation %d"), j);
     }
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
+	g_free(descrip);
         free(uhat);
         return;
     }
 
     err = add_or_replace_series(uhat, vname, descrip, DS_GRAB_VALUES);
+    g_free(descrip);
 
     if (err) {
         free(uhat);
