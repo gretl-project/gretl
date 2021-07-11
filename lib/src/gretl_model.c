@@ -6943,12 +6943,12 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
     }
 
     if (pmod->name == NULL) {
-	pmod->name = malloc(MAXSAVENAME);
+	pmod->name = calloc(1, MAXSAVENAME);
     }
 
     if (pmod->name != NULL) {
 	*pmod->name = '\0';
-	strncat(pmod->name, name, MAXSAVENAME - 1);
+	strcpy(pmod->name, gretl_utf8_truncate(name, MAXSAVENAME-1));
     }
 }
 
