@@ -3333,7 +3333,21 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 
     if (pan->opt & OPT_V) {
 	if (!err || (mdiff && err == E_NOTPD)) {
+	    gretl_matrix *tests = gretl_column_vector_alloc(3);
+	    gretl_matrix *pvals = gretl_column_vector_alloc(3);
+
+	    /* fixed-effects poolability F-test */
+	    tests->val[0] = pan->Ffe;
+	    pvals->val[0] = snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe);
+	    /* random-effects poolability test */
+	    tests->val[1] = pan->BP;
+	    pvals->val[1] = chisq_cdf_comp(1, pan->BP);
+	    /* Hausman test */
+	    tests->val[2] = pan->H;
+	    pvals->val[2] = chisq_cdf_comp(pan->dfH, pan->H);
+
 	    print_hausman_result(pan, prn);
+	    record_matrix_test_result(tests, pvals);
 	}
     } else {
 	if (mdiff && err == E_NOTPD) {
