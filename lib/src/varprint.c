@@ -83,21 +83,21 @@ static void VAR_info_header_block (int code, int v, int block,
 {
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    char vname[32];
+    char vname[48];
 
     if (tex) {
 	pputs(prn, "\\vspace{1em}\n\n");
 	if (code == IRF) {
-	    pprintf(prn, A_("Responses to a one-standard error shock in %s"),
+	    pprintf(prn, _("Responses to a one-standard error shock in %s"),
 		    tex_escape(vname, dset->varname[v]));
 	} else {
-	    pprintf(prn, A_("Decomposition of variance for %s"),
+	    pprintf(prn, _("Decomposition of variance for %s"),
 		    tex_escape(vname, dset->varname[v]));
 	}
 	if (block == 0) {
 	    pputs(prn, "\n\n");
 	} else {
-	    pprintf(prn, " (%s)\n\n", A_("continued"));
+	    pprintf(prn, " (%s)\n\n", _("continued"));
 	}
 	pprintf(prn, "\\vspace{1em}\n\n\\begin{longtable}{%s}\n",
 		(code == IRF)? "rrrrr" : "rrrrrr");
@@ -134,7 +134,7 @@ static void VAR_info_header_block (int code, int v, int block,
 
     /* first column: period number header */
     if (tex) {
-	pprintf(prn, "%s & ", A_("period"));
+	pprintf(prn, "%s & ", _("period"));
     } else if (rtf) {
 	pprintf(prn, "\\intbl \\qc %s\\cell ", A_("period"));
     } else {
@@ -447,7 +447,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	    k = VDC_ROW_MAX * block + i - 1;
 	    if (k < 0) {
 		if (tex) {
-		    pprintf(prn, " %s & ", A_("std. error"));
+		    pprintf(prn, " %s & ", _("std. error"));
 		} else if (rtf) {
 		    pprintf(prn, " \\qc %s\\cell ", A_("std. error"));
 		} else {
@@ -552,7 +552,7 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
     set_alt_gettext_mode(prn);
 
     if (jcode <= J_UNREST_TREND) {
-	if (plain_format(prn)) {
+	if (plain_format(prn) || tex_format(prn)) {
 	    pputs(prn, _(jcase[jcode]));
 	} else {
 	    pputs(prn, A_(jcase[jcode]));
@@ -959,9 +959,11 @@ static int Ivals_ok (const GRETL_VAR *var)
 	&& !na(var->Ivals[1]) && !na(var->Ivals[2]);
 }
 
-static int max_Ftest_label_len (GRETL_VAR *var, const DATASET *dset,
-				char *s, int maxlag)
+static int max_Ftest_label_len (GRETL_VAR *var,
+				const DATASET *dset,
+				int maxlag)
 {
+    gchar *tmp = NULL;
     int len, len1, len2;
     int maxnamelen = 0;
     int i, v;
@@ -978,11 +980,13 @@ static int max_Ftest_label_len (GRETL_VAR *var, const DATASET *dset,
 	maxnamelen = NAMETRUNC - 1;
     }
 
-    sprintf(s, _("All lags of %s"), "x");
-    len1 = g_utf8_strlen(s, -1) + maxnamelen - 1;
+    tmp = g_strdup_printf(_("All lags of %s"), "x");
+    len1 = g_utf8_strlen(tmp, -1) + maxnamelen - 1;
+    g_free(tmp);
 
-    sprintf(s, _("All vars, lag %d"), maxlag);
-    len2 = g_utf8_strlen(s, -1);
+    tmp = g_strdup_printf(_("All vars, lag %d"), maxlag);
+    len2 = g_utf8_strlen(tmp, -1);
+    g_free(tmp);
 
     len = (len1 > len2)? len1 : len2;
 
@@ -1008,7 +1012,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		     PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
-    char label[72];
+    gchar *label = NULL;
     int vecm = (var->ci == VECM);
     int dfd = var->models[0]->dfd;
     int tex = tex_format(prn);
@@ -1043,9 +1047,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
     }
 
     if (vecm) {
-	sprintf(label, A_("VECM system, lag order %d"), var->order + 1);
+	label = g_strdup_printf(A_("VECM system, lag order %d"), var->order + 1);
     } else {
-	sprintf(label, A_("VAR system, lag order %d"), var->order);
+	label = g_strdup_printf(A_("VAR system, lag order %d"), var->order);
     }
 
     if (tex) {
@@ -1075,6 +1079,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	}
 	pputc(prn, '\n');
     }
+
+    g_free(label);
+    label = NULL;
 
     if (vecm) {
 	if (tex_format(prn)) {
@@ -1126,7 +1133,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	        v = var->models[i]->list[1];
 		if (tex) {
 		    pputs(prn, "\n\\begin{center}\n");
-		    pprintf(prn, "%s\\\\[1em]\n", A_("Equation for "));
+		    pprintf(prn, "%s\\\\[1em]\n", _("Equation for "));
 		    pprintf(prn, "%s\\\n", dset->varname[v]);
 		    pputs(prn, "\n\\end{center}\n");
 		} else if (rtf) {
@@ -1145,7 +1152,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 
 	if (tex) {
 	    pputs(prn, "\n\\begin{center}\n");
-	    pprintf(prn, "%s\\\\[1em]\n", A_("F-tests of zero restrictions"));
+	    pprintf(prn, "%s\\\\[1em]\n", _("F-tests of zero restrictions"));
 	    pputs(prn, "\\begin{tabular}{lll}\n");
 	} else if (rtf) {
 	    pprintf(prn, "%s:\\par\n\n", A_("F-tests of zero restrictions"));
@@ -1154,12 +1161,13 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	}
 
 	if (!tex) {
-	    fwidth = max_Ftest_label_len(var, dset, label, maxlag);
+	    fwidth = max_Ftest_label_len(var, dset, maxlag);
 	}
 
 	for (j=0; j<var->neqns; j++) {
 	    Fval = var->Fvals[k];
 	    if (!na(Fval)) {
+		gchar *lagstr = NULL;
 		const char *vname;
 
 		pv = snedecor_cdf_comp(nlags, dfd, Fval);
@@ -1173,9 +1181,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		    pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\\\\n", pv);
 		} else if (rtf) {
-		    sprintf(label, A_("All lags of %s"), vname);
-		    llen = strlen(label);
-		    pputs(prn, label);
+		    lagstr = g_strdup_printf(A_("All lags of %s"), vname);
+		    llen = strlen(lagstr);
+		    pputs(prn, lagstr);
 		    bufspace(fwidth - llen, prn);
 		    pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\par\n", pv);
@@ -1183,13 +1191,14 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		    char tmp[NAMETRUNC];
 
 		    maybe_trim_varname(tmp, vname);
-		    sprintf(label, _("All lags of %s"), tmp);
-		    llen = g_utf8_strlen(label, -1);
-		    pputs(prn, label);
+		    lagstr = g_strdup_printf(_("All lags of %s"), tmp);
+		    llen = g_utf8_strlen(lagstr, -1);
+		    pputs(prn, lagstr);
 		    bufspace(fwidth - llen, prn);
 		    sprintf(Fstr, "F(%d, %d)", nlags, dfd);
 		    pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, Fval, pv);
 		}
+		g_free(lagstr);
 	    }
 	    k++;
 	}
@@ -1197,6 +1206,8 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	if (var->order > 1) {
 	    Fval = var->Fvals[k];
 	    if (!na(Fval)) {
+		gchar *lagstr = NULL;
+
 		pv = snedecor_cdf_comp(var->neqns, dfd, Fval);
 		if (tex) {
 		    pprintf(prn, A_("All vars, lag %d"), maxlag);
@@ -1204,20 +1215,21 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		    pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\\\\n", pv);
 		} else if (rtf) {
-		    sprintf(label, A_("All vars, lag %d"), maxlag);
-		    llen = strlen(label);
-		    pputs(prn, label);
+		    lagstr = g_strdup_printf(A_("All vars, lag %d"), maxlag);
+		    llen = strlen(lagstr);
+		    pputs(prn, lagstr);
 		    bufspace(fwidth - llen, prn);
 		    pprintf(prn, "F(%d, %d) = %8.5g ", var->neqns, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\par\n", pv);
 		} else {
-		    sprintf(label, _("All vars, lag %d"), maxlag);
-		    llen = g_utf8_strlen(label, -1);
-		    pputs(prn, label);
+		    lagstr = g_strdup_printf(_("All vars, lag %d"), maxlag);
+		    llen = g_utf8_strlen(lagstr, -1);
+		    pputs(prn, lagstr);
 		    bufspace(fwidth - llen, prn);
 		    sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
 		    pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, Fval, pv);
 		}
+		g_free(lagstr);
 	    }
 	    k++;
 	}
@@ -1233,14 +1245,13 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 
     /* global LR test on max lag */
     if (!na(var->LR)) {
-	char h0str[64];
-	char h1str[64];
+	gchar *h0str, *h1str;
 	int df = var->neqns * var->neqns;
 
 	pputc(prn, '\n');
 
-	sprintf(h0str, A_("the longest lag is %d"), nextlag);
-	sprintf(h1str, A_("the longest lag is %d"), maxlag);
+	h0str = g_strdup_printf(A_("the longest lag is %d"), nextlag);
+	h1str = g_strdup_printf(A_("the longest lag is %d"), maxlag);
 
 	pv = chisq_cdf_comp(df, var->LR);
 
@@ -1277,6 +1288,8 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 			var->Ivals[0], var->Ivals[1], var->Ivals[2]);
 	    }
 	}
+	g_free(h0str);
+	g_free(h1str);
     }
 
     if (vecm) {

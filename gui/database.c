@@ -4355,7 +4355,7 @@ int add_dbnomics_data (windata_t *vwin)
 	    char vname[VNAMELEN];
 	    const char *S[4];
 	    gchar *full_id = NULL;
-	    char *descrip = NULL;
+	    gchar *descrip = NULL;
 	    int cancel = 0;
 
 	    /* construct a default name for the series */
@@ -4372,7 +4372,7 @@ int add_dbnomics_data (windata_t *vwin)
 		full_id = g_strdup_printf("%s/%s/%s", S[1], S[2], S[0]);
 		descrip = g_strdup_printf("%s: %s", full_id, S[3]);
 	    }
-	    name_new_series_dialog(vname, descrip, vwin, &cancel);
+	    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 	    if (!cancel) {
 		set_dbnomics_id(full_id);
 		strcpy(dbset->varname[1], vname);

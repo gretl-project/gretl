@@ -2920,25 +2920,25 @@ static int n_new_dummies (const DATASET *dset,
     return nnew;
 }
 
-static void
-seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
-		     char *vname, char *vlabel)
+static gchar *seas_name_and_label (int k, const DATASET *dset,
+				   gretlopt opt, char *vname)
 {
     int pd = dataset_is_panel(dset) ? dset->panel_pd : dset->pd;
     int ts = dset->structure == TIME_SERIES || dset->panel_pd > 1;
+    gchar *ret = NULL;
 
     if (opt & OPT_C) {
 	sprintf(vname, "S%d", k);
-	strcpy(vlabel, "centered periodic dummy");
+	ret = g_strdup(_("centered periodic dummy"));
     } else if (opt & OPT_S) {
 	sprintf(vname, "S%d", k);
-	strcpy(vlabel, "uncentered periodic dummy");
+	ret = g_strdup(_("uncentered periodic dummy"));
     } else if (pd == 4 && ts) {
 	sprintf(vname, "dq%d", k);
-	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), k);
+	ret = g_strdup_printf(_("= 1 if quarter = %d, 0 otherwise"), k);
     } else if (pd == 12 && ts) {
 	sprintf(vname, "dm%d", k);
-	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), k);
+	ret = g_strdup_printf(_("= 1 if month = %d, 0 otherwise"), k);
     } else {
 	char dumstr[8] = "dummy_";
 	char numstr[12];
@@ -2948,7 +2948,7 @@ seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
 	len = strlen(numstr);
 	dumstr[8 - len] = '\0';
 	sprintf(vname, "%s%d", dumstr, k);
-	sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, k);
+	ret = g_strdup_printf(_("%s = 1 if period is %d, 0 otherwise"), vname, k);
     }
 }
 
@@ -2973,7 +2973,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 			   int snames, int **plist)
 {
     char vname[VNAMELEN];
-    char vlabel[MAXLABEL];
+    gchar *vlabel = NULL;
     gretlopt opt = 0;
     int *list = NULL;
     int i, vi, k, t, pp;
@@ -3028,7 +3028,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	    /* dummy not wanted */
 	    continue;
 	}
-	seas_name_and_label(i, dset, opt, vname, vlabel);
+	vlabel = seas_name_and_label(i, dset, opt, vname);
 	vi = series_index(dset, vname);
 	if (vi < dset->v) {
 	    const char *orig = series_get_label(dset, vi);
@@ -3041,6 +3041,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	} else {
 	    nnew++;
 	}
+	g_free(vlabel);
 	k++;
     }
 
@@ -3061,9 +3062,10 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	}
 	if (list[k] == 0) {
 	    /* no pre-existing series */
-	    seas_name_and_label(i, dset, opt, vname, vlabel);
+	    vlabel = seas_name_and_label(i, dset, opt, vname);
 	    strcpy(dset->varname[vi], vname);
 	    series_set_label(dset, vi, vlabel);
+	    g_free(vlabel);
 	    list[k] = vi++;
 	}
 	k++;
@@ -3774,8 +3776,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
  * @dset: information on the data set.
  * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
  * @vname: location to write series name (length %VNAMELEN)
- * @vlabel: location to write series description (length should
- * be %MAXLABEL).
+ * @pdesc: location to receive copy of series description.
  * @err: location to receive error code.
  *
  * Creates a full-length array holding the specified model
@@ -3787,7 +3788,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 
 double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 			  ModelDataIndex idx, char *vname,
-			  char *vlabel, int *err)
+			  gchar **pdesc, int *err)
 {
     const double *src = NULL;
     double *ret = NULL;
@@ -3837,31 +3838,31 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
     if (idx == M_UHAT) {
 	sprintf(vname, "uhat%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	    sprintf(vlabel, _("standardized residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("standardized residual from model %d"), pmod->ID);
 	} else {
-	    sprintf(vlabel, _("residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("residual from model %d"), pmod->ID);
 	}
     } else if (idx == M_YHAT) {
 	sprintf(vname, "yhat%d", pmod->ID);
-	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
+	*pdesc = g_strdup_printf(_("fitted value from model %d"), pmod->ID);
     } else if (idx == M_UHAT2) {
 	/* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	    sprintf(vlabel, _("squared standardized residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("squared standardized residual from model %d"), pmod->ID);
 	} else {
-	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("squared residual from model %d"), pmod->ID);
 	}
     } else if (idx == M_H) {
 	/* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
-	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
+	*pdesc = g_strdup_printf(_("fitted variance from model %d"), pmod->ID);
     } else if (idx == M_AHAT) {
 	sprintf(vname, "ahat%d", pmod->ID);
 	if (pmod->opt & OPT_U) {
-	    sprintf(vlabel, _("individual effects from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("individual effects from model %d"), pmod->ID);
 	} else {
-	    sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("per-unit constants from model %d"), pmod->ID);
 	}
     }
 
