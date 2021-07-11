@@ -167,9 +167,15 @@ the transform is $O(n \log n)$ for any $n$. This is why the array of
 numerical techniques employed in \texttt{fftw3} is commonly known as
 the \emph{Fast} Fourier Transform.
 
-gretl provides two matrix functions\footnote{See chapter
-  \ref{chap:matrices}.} for performing the Fourier transform and its
-inverse: \texttt{fft} and \texttt{ffti}. In fact, gretl's
+gretl provides two matrix functions for performing the Fourier transform
+and its inverse: \texttt{fft} and \texttt{ffti}.\footnote{The function 
+\texttt{fft} predates gretl's native support of complex matrices and 
+returns the real and imaginary parts of the result in separate columns,
+as described below. For new scripts it is recommended to use the newer
+function \texttt{fft2} instead, which will return a complex matrix of 
+the same dimension as the input. But the meaning and semantics are the 
+same. The inverse function \texttt{ffti} supports both representations.}
+In fact, gretl's
 implementation of the Fourier transform is somewhat more specialized:
 the input to the \texttt{fft} function is understood to be real.
 Conversely, \texttt{ffti} takes a complex argument and delivers a real
