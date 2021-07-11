@@ -1016,43 +1016,38 @@ static void print_estimator_strings (int colwidth, PRN *prn)
 static void print_model_head (const MODEL *pmod, int j, int colwidth,
 			      PRN *prn)
 {
-    char targ[48];
+    gchar *targ = NULL;
 
     if (colheads == COLHEAD_ARABIC) {
-	sprintf(targ, "(%d)", j + 1);
+	targ = g_strdup_printf("(%d)", j + 1);
     } else if (colheads == COLHEAD_ROMAN) {
 	const char *R[] = {
 	    "I", "II", "III", "IV", "V", "VI",
 	    "VII", "VIII", "IX", "X", "XI", "XII"
 	};
 
-	sprintf(targ, "%s", R[j]);
+	targ = g_strdup_printf("%s", R[j]);
     } else if (colheads == COLHEAD_ALPHA) {
-	sprintf(targ, "%c", 'A' + j);
+	targ = g_strdup_printf("%c", 'A' + j);
     } else if (tex_format(prn)) {
 	if (pmod->name != NULL) {
-	    char tmp[32];
-
-	    *targ = '\0';
-	    strncat(targ, pmod->name, 16);
-	    tex_escape(tmp, targ);
-	    strcpy(targ, tmp);
+	    targ = tex_escape_new(pmod->name);
 	} else {
-	    sprintf(targ, A_("Model %d"), pmod->ID);
+	    targ = g_strdup_printf(_("Model %d"), pmod->ID);
 	}
     } else if (rtf_format(prn)) {
 	if (pmod->name != NULL) {
-	    *targ = '\0';
-	    strncat(targ, pmod->name, 31);
+	    targ = g_strdup(pmod->name);
+	    gretl_utf8_truncate(targ, 31);
 	} else {
-	    sprintf(targ, A_("Model %d"), pmod->ID);
+	    targ = g_strdup_printf(A_("Model %d"), pmod->ID);
 	}
     } else {
 	if (pmod->name != NULL) {
-	    *targ = '\0';
-	    strncat(targ, pmod->name, 31);
+	    targ = g_strdup(pmod->name);
+	    gretl_utf8_truncate(targ, 31);
 	} else {
-	    sprintf(targ, _("Model %d"), pmod->ID);
+	    targ = g_strdup_printf(_("Model %d"), pmod->ID);
 	}
     }
 
@@ -1063,6 +1058,8 @@ static void print_model_head (const MODEL *pmod, int j, int colwidth,
     } else {
 	print_centered(targ, colwidth, prn);
     }
+
+    g_free(targ);
 }
 
 static void print_column_heads (int colwidth, PRN *prn)

@@ -52,6 +52,8 @@ int csvprint (MODEL *pmod, const DATASET *dset,
 
 char *tex_escape (char *targ, const char *src);
 
+char *tex_escape_new (const char *src);
+
 char *tex_escape_special (char *targ, const char *src);
 
 char *tex_rl_float (double x, char *s, int dig);
