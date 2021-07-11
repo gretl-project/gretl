@@ -1,14 +1,82 @@
-\chapter{Special functions in genr}
+\chapter{Special functions in \cmd{genr}}
 \label{chap:genr}
 
 \section{Introduction}
 \label{genr-intro}
 
 The \cmd{genr} command provides a flexible means of defining new
-variables.  It is documented in the \GCR.  This chapter offers a more
-expansive discussion of some of the special functions available via
-\verb+genr+ and some of the finer points of the command.
+variables. At the same time, the somewhat paradoxical situation is
+that the ``genr'' keyword is almost never visible in gretl scripts. 
+For example, it is not really recommended to write a line such as 
+\texttt{genr b = 2.5}, because there are the following alternatives:
 
+\begin{itemize}
+\item \texttt{scalar b = 2.5}, which also invokes the genr apparatus 
+  in gretl, but provides explicit typing information about the 
+  variable b, which is usually preferable. (gretl's language hansl
+  is statically typed, so b cannot switch from scalar to string or
+  matrix, for example.)
+  
+\item \texttt{b = 2.5}, leaving it to gretl to infer the admissible 
+or most ``natural'' type for the new object, which would again be a
+scalar in this case. 
+
+\item \texttt{matrix b = 2.5}: This formulation may sometimes be
+necessary if b is going to be expanded with additional rows or 
+columns later on. Otherwise, gretl's static typing would not allow
+b to be promoted from scalar to matrix, so it must be a matrix right
+from the start, even if it is only of dimension 1-by-1 initially. 
+(This definition could also be written with an explicit matrix 
+literal as \texttt{matrix b = \{2.5\}}.) 
+\end{itemize}
+
+Therefore, there are only a handful of special cases where it is 
+really necessary to use the ``genr'' keyword:
+
+\begin{itemize}
+\item \texttt{genr time} --- Creates a time trend variable
+ (1,2,3,\ldots) under the name ``time''. Note that within an 
+ appropriately defined panel dataset this variable honors the 
+ panel structure and is a true time index. (In a cross-sectional
+ dataset, the command will still work and produces the same result
+ as \texttt{genr index} below, but of course no temporal meaning 
+ exists.)
+
+\item \texttt{genr index} --- Creates an observation variable named
+``index'', running from 1 to the sample size.
+
+\item \texttt{genr unitdum} --- In the context of panel data, creates
+a set of dummies for the panel groups (= units). These are called
+du\_1, du\_2, and so forth. Actually, this particular genr usage is
+not strictly necessary, because a list of group dummies can also be
+obtained as:
+
+\begin{code}
+series gr = $unit
+list groupdums = dummify(gr, NA)
+\end{code} 
+
+(The ``NA'' argument to the dummify function has the effect of not skipping any unit as the 
+reference group, thus producing the full set of dummies.)
+
+\item \texttt{genr timedum} --- Again for panel data, creates a set
+of dummies for the time periods, called dt\_1, dt\_2, \ldots. And 
+again, a list-producing variant without genr exists, using the special
+accessor \dollar{obsminor} which indexes time in the panel context and
+can be used as a substitute for ``time'' from above:
+
+\begin{code}
+series tindex = $obsminor
+list timedums = dummify(tindex, NA)
+\end{code} 
+
+\end{itemize}
+
+Finally, there also exists \texttt{genr dummy}, which produces a set of 
+seasonal dummies. However, it is recommended to use the \texttt{seasonals()}
+function instead, which can also return centered dummies.
+
+The rest of this chapter discusses other special function aspects.
 
 \section{Cumulative densities and p-values}
 \label{sec:genr-cdf}
