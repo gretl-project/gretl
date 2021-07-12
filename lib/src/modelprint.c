@@ -4797,7 +4797,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	adfnum = gretl_model_get_int(pmod, "dfnum");
     }
 
-    gretl_model_get_coeff_separator(pmod, NULL, &seppos);
+    gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
     if (seppos == -1) {
 	if (pmod->ci == GARCH && pmod->list[0] > 4) {
 	    seppos = pmod->list[0] - 4;
@@ -5063,7 +5063,7 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	nc = pmod->list[0] - 1;
     }
 
-    gretl_model_get_coeff_separator(pmod, NULL, &seppos);
+    gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
     if (seppos == -1 && pmod->ci == GARCH && pmod->list[0] > 4) {
 	seppos = pmod->list[0] - 4;
     }
