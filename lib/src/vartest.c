@@ -1051,7 +1051,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	gretl_matrix_reuse(b, p, 1);
 
 	/* exclusion of each var, all lags */
-	if (var->order > 0) {
+	if (p > 0) {
 	    for (j=0; j<var->neqns; j++) {
 		double w = NADBL;
 
