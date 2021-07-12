@@ -30,6 +30,14 @@ For example, it is not really recommended to write a line such as
     b = 2.5}, but the more explicit form is recommended.)
 \end{itemize}
 
+In addition to \cmd{scalar} or \cmd{matrix}, other type keywords that
+can be used to substitute the generic genr term are those enumerated
+in the following chapter \ref{chap:datatypes}. In the case of an array
+the concrete specification should be used, so one of \cmd{matrices}, 
+\cmd{strings}, \cmd{lists}, \cmd{bundles}.\footnote{A recently added 
+advanced datatype is an array of arrays, with the associated type 
+specifier \cmd{arrays}.}
+
 Therefore, there's only a handful of special cases where it is really
 necessary to use the ``genr'' keyword:
 
