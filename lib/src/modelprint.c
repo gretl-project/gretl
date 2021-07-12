@@ -4695,7 +4695,13 @@ static int separator_wanted (int i, int seppos, char **sepstr,
 	int j = 0;
 
 	if (seplist != NULL && (j = in_gretl_list(seplist, i)) > 0) {
-	    *sepstr = get_midas_term_line(pmod, j-1);
+	    char *mtl = get_midas_term_line(pmod, j-1);
+
+	    if (*sepstr != NULL) {
+		/* avoid memory leak */
+		free(*sepstr);
+	    }
+	    *sepstr = mtl;
 	    if (*sepstr != NULL) {
 		ret = 1;
 	    }
