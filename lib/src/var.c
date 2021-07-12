@@ -493,7 +493,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
     }
 
     if (!err && (v->ylist == NULL || v->ylist[0] < 1)) {
-        /* first test for at least 2 endog vars */
+        /* first test for at least 1 endog var */
         err = E_ARGS;
     }
 
@@ -769,7 +769,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 
     ci = (code >= VECM_ESTIMATE)? VECM : VAR;
 
-    if ((ci == VAR && order < 1) || (ci == VECM && order < 0)) {
+    if (order < 0) {
         gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
         *errp = E_INVARG;
         return NULL;
