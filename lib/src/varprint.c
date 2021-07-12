@@ -1150,6 +1150,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	    continue;
 	}
 
+	if (var->order == 0) {
+	    goto skip_lag_tests;
+	}
+
 	if (tex) {
 	    pputs(prn, "\n\\begin{center}\n");
 	    pprintf(prn, "%s\\\\[1em]\n", _("F-tests of zero restrictions"));
@@ -1203,7 +1207,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	    k++;
 	}
 
-	if (var->order > 1) {
+    skip_lag_tests:
+
+	if (var->order > 0) {
 	    Fval = var->Fvals[k];
 	    if (!na(Fval)) {
 		gchar *lagstr = NULL;
@@ -1299,7 +1305,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	    print_VECM_omega(var, dset, prn);
 	    pputc(prn, '\n');
 	}
-    } else {
+    } else if (var->order > 0) {
 	pputc(prn, '\n');
     }
 

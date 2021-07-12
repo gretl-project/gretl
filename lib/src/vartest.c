@@ -1051,29 +1051,30 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	gretl_matrix_reuse(b, p, 1);
 
 	/* exclusion of each var, all lags */
-	for (j=0; j<var->neqns; j++) {
-	    double w = NADBL;
+	if (var->order > 0) {
+	    for (j=0; j<var->neqns; j++) {
+		double w = NADBL;
 
-	    gretl_matrix_extract_matrix(C, V, ipos, ipos, GRETL_MOD_NONE);
-	    for (k=0; k<p; k++) {
-		b->val[k] = pmod->coeff[k + ipos];
+		gretl_matrix_extract_matrix(C, V, ipos, ipos, GRETL_MOD_NONE);
+		for (k=0; k<p; k++) {
+		    b->val[k] = pmod->coeff[k + ipos];
+		}
+		F_err = gretl_invert_symmetric_matrix(C);
+		if (!F_err) {
+		    w = gretl_scalar_qform(b, C, &F_err);
+		}
+		if (F_err) {
+		    any_F_err = 1;
+		    var->Fvals[m++] = NADBL;
+		} else {
+		    var->Fvals[m++] = w / p;
+		}
+		ipos += p;
 	    }
-	    F_err = gretl_invert_symmetric_matrix(C);
-	    if (!F_err) {
-		w = gretl_scalar_qform(b, C, &F_err);
-	    }
-	    if (F_err) {
-		any_F_err = 1;
-		var->Fvals[m++] = NADBL;
-	    } else {
-		var->Fvals[m++] = w / p;
-	    }
-	    ipos += p;
 	}
 
 	/* exclusion of last lag, all vars? */
-
-	if (p > 1) {
+	if (p > 0) {
 	    gretl_matrix_reuse(C, n, n);
 	    gretl_matrix_reuse(b, n, 1);
 
@@ -1102,7 +1103,6 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	}
 
 	/* exclusion of all but const? */
-
 	if (var->ifc && var->robust) {
 	    gretl_matrix_reuse(C, g-1, g-1);
 	    gretl_matrix_reuse(b, g-1, 1);
