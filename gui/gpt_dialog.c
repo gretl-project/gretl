@@ -1340,16 +1340,18 @@ void plot_show_font_selector (png_plot *plot, const char *currfont)
 
 static void strip_lr (gchar *txt)
 {
-    gchar test[16];
+    gchar *test;
     gchar *p;
 
-    sprintf(test, "(%s)", _("left"));
+    test = g_strdup_printf("(%s)", _("left"));
     p = strstr(txt, test);
+    g_free(test);
     if (p != NULL) {
 	*p = '\0';
     } else {
-	sprintf(test, "(%s)", _("right"));
+	test = g_strdup_printf("(%s)", _("right"));
 	p = strstr(txt, test);
+	g_free(test);
 	if (p != NULL) {
 	   *p = '\0';
 	}
@@ -1908,8 +1910,8 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
 {
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox;
+    gchar *text;
     int nrows = 1;
-    char label_text[32];
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(nlinfo->dlg));
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1924,8 +1926,9 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
 
     /* identifier and formula text */
     gtk_table_resize(GTK_TABLE(tbl), ++nrows, 3);
-    sprintf(label_text, _("line %d: "), ed->gui_nlines + 1);
-    label = gtk_label_new(label_text);
+    text = g_strdup_printf(_("line %d: "), ed->gui_nlines + 1);
+    label = gtk_label_new(text);
+    g_free(text);
     gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, nrows-1, nrows,
 		     0, 0, 0, 0);
     gtk_widget_show(label);
@@ -2286,34 +2289,38 @@ static int boxplot_has_ci (GPT_SPEC *spec)
 static void print_line_label (GtkWidget *tbl, int row,
 			      GPT_SPEC *spec, int i)
 {
-    char label_text[32];
+    gchar *text = NULL;
     GtkWidget *label;
-
-    *label_text = '\0';
 
     if (spec->code == PLOT_BOXPLOTS) {
 	if (i == 0) {
-	    sprintf(label_text, "%s: ", _("box"));
+	    text = g_strdup_printf("%s: ", _("box"));
 	} else if (i == 1) {
-	    sprintf(label_text, "%s: ", _("median"));
+	    text = g_strdup_printf("%s: ", _("median"));
 	} else if (boxplot_has_ci(spec)) {
 	    if (i == 2 || i == 3) {
-		sprintf(label_text, "%s: ", _("c.i. bound"));
+		text = g_strdup_printf("%s: ", _("c.i. bound"));
 	    } else {
-		sprintf(label_text, "%s: ", _("outliers"));
+		text = g_strdup_printf("%s: ", _("outliers"));
 	    }
 	} else {
 	    if (i == 2) {
-		sprintf(label_text, "%s: ", _("mean"));
+		text = g_strdup_printf("%s: ", _("mean"));
 	    } else {
-		sprintf(label_text, "%s: ", _("outliers"));
+		text = g_strdup_printf("%s: ", _("outliers"));
 	    }
 	}
     } else {
-	sprintf(label_text, _("line %d: "), i+1);
+	text = g_strdup_printf(_("line %d: "), i+1);
     }
 
-    label = gtk_label_new(label_text);
+    if (text == NULL) {
+	label = gtk_label_new("");
+    } else {
+	label = gtk_label_new(text);
+	g_free(text);
+    }
+
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      label, 0, 1, row - 1, row);
@@ -2323,11 +2330,12 @@ static void print_line_label (GtkWidget *tbl, int row,
 static void print_label_label (GtkWidget *tbl, int row, GPT_SPEC *spec,
 			       int i)
 {
-    char label_text[32];
+    gchar *label_text;
     GtkWidget *label;
 
-    sprintf(label_text, _("label %d: "), i + 1);
+    label_text = g_strdup_printf(_("label %d: "), i + 1);
     label = gtk_label_new(label_text);
+    g_free(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      label, 0, 1, row - 1, row);
