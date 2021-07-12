@@ -23,11 +23,7 @@
 
 This addon provides structured logging for gretl; that is, a means of
 recording the history and progress of a computation as a log of
-events. To make use of it you should insert the following statement
-into your hansl code
-\begin{code}
-include logging.gfn
-\end{code}
+events.
 
 There are in principle two roles involved in logging---the
 \textit{coder} (the writer of a hansl script or function package) and
@@ -43,6 +39,11 @@ string argument and offers no return value. For example, the signature
 of \texttt{Info} is
 \begin{code}
 void Info (const string msg)
+\end{code}
+The coder must include the following statement prior to calling these
+functions:
+\begin{code}
+include logging.gfn
 \end{code}
 
 The \textit{user} determines which log messages will be shown, by
@@ -93,7 +94,7 @@ Note that the message passed to a logging function does not have to a
 fixed piece of text. You can incorporate current state information by
 means of the \texttt{sprintf} function, as in this example
 \begin{code}
-  Warn(sprintf("The matrix X looks funny:\n%g\n", X))
+  Warn(sprintf("The matrix X looks funny:\n%12g\n", X))
 \end{code}
 which prints the elements of \texttt{X} following the message.
 
@@ -102,7 +103,7 @@ to use for which purpose.\footnote{It is borrowed from
   \url{https://docs.python.org/3/howto/logging.html}.}
 
 \begin{center}
-  \begin{tabular}{lp{0.7\textwidth}}
+  \begin{tabular}{lp{0.8\textwidth}}
     Debug & Detailed information, typically of interest only when diagnosing
             problems.\\
     Info & Confirmation that things are working as expected.\\
