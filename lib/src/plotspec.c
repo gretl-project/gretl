@@ -1118,12 +1118,12 @@ static void maybe_print_point_info (const GPT_LINE *line, FILE *fp)
     }
 }
 
-#define show_fit(s) (s->fit == PLOT_FIT_OLS || \
-                     s->fit == PLOT_FIT_QUADRATIC || \
-		     s->fit == PLOT_FIT_CUBIC ||     \
-                     s->fit == PLOT_FIT_INVERSE || \
-                     s->fit == PLOT_FIT_LOESS || \
-		     s->fit == PLOT_FIT_LOGLIN || \
+#define show_fit(s) (s->fit == PLOT_FIT_OLS ||		\
+                     s->fit == PLOT_FIT_QUADRATIC ||	\
+		     s->fit == PLOT_FIT_CUBIC ||	\
+                     s->fit == PLOT_FIT_INVERSE ||	\
+                     s->fit == PLOT_FIT_LOESS ||	\
+		     s->fit == PLOT_FIT_LOGLIN ||	\
 		     s->fit == PLOT_FIT_LINLOG)
 
 int gp_line_data_columns (GPT_SPEC *spec, int i)

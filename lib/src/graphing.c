@@ -2399,48 +2399,48 @@ static void make_gtitle (gnuplot_info *gi, int code,
 			 FILE *fp)
 {
     char depvar[VNAMELEN];
-    char title[128];
+    gchar *title = NULL;
 
     switch (code) {
     case GTITLE_VLS:
 	if (gi->fit == PLOT_FIT_OLS) {
-	    sprintf(title, _("%s versus %s (with least squares fit)"),
-		    s1, s2);
+	    title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
+				    s1, s2);
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
-	    sprintf(title, _("%s versus %s (with inverse fit)"),
-		    s1, s2);
+	    title = g_strdup_printf(_("%s versus %s (with inverse fit)"),
+				    s1, s2);
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
-	    sprintf(title, _("%s versus %s (with quadratic fit)"),
-		    s1, s2);
+	    title = g_strdup_printf(_("%s versus %s (with quadratic fit)"),
+				    s1, s2);
 	} else if (gi->fit == PLOT_FIT_CUBIC) {
-	    sprintf(title, _("%s versus %s (with cubic fit)"),
-		    s1, s2);
+	    title = g_strdup_printf(_("%s versus %s (with cubic fit)"),
+				    s1, s2);
 	}
 	break;
     case GTITLE_RESID:
 	if (strncmp(s1, "residual for ", 13) == 0 &&
 	    gretl_scan_varname(s1 + 13, depvar) == 1) {
-	    sprintf(title, _("Regression residuals (= observed - fitted %s)"),
-		    depvar);
+	    title = g_strdup_printf(_("Regression residuals (= observed - fitted %s)"),
+				    depvar);
 	}
 	break;
     case GTITLE_AF:
-	sprintf(title, _("Actual and fitted %s"), s1);
+	title = g_strdup_printf(_("Actual and fitted %s"), s1);
 	break;
     case GTITLE_AFV:
 	if (s2 == NULL || (gi->flags & GPT_TS)) {
-	    sprintf(title, _("Actual and fitted %s"), s1);
+	    title = g_strdup_printf(_("Actual and fitted %s"), s1);
 	} else {
-	    sprintf(title, _("Actual and fitted %s versus %s"), s1, s2);
+	    title = g_strdup_printf(_("Actual and fitted %s versus %s"), s1, s2);
 	}
 	break;
     default:
-	*title = '\0';
 	break;
     }
 
-    if (*title != '\0') {
+    if (title != NULL) {
 	fprintf(fp, "set title \"%s\"\n", title);
+	g_free(title);
     }
 }
 
@@ -2636,7 +2636,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
     const double *yvar = dset->Z[yno];
     const double *xvar;
     FILE *fp = NULL;
-    char title[96];
+    gchar *title = NULL;
     int t, T, d = 1;
     double q = 0.5;
     int err = 0;
@@ -2682,9 +2682,10 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 	const char *s1 = series_get_graph_name(dset, yno);
 	const char *s2 = series_get_graph_name(dset, xno);
 
-	sprintf(title, _("%s versus %s (with loess fit)"), s1, s2);
+	title = g_strdup_printf(_("%s versus %s (with loess fit)"), s1, s2);
 	print_keypos_string(GP_KEY_LEFT_TOP, fp);
 	fprintf(fp, "set title \"%s\"\n", title);
+	g_free(title);
 	print_axis_label('y', s1, fp);
 	print_axis_label('x', s2, fp);
     } else {
@@ -2698,8 +2699,9 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 notitle w points, \\\n", fp);
-    sprintf(title, _("loess fit, d = %d, q = %g"), d, q);
+    title = g_strdup_printf(_("loess fit, d = %d, q = %g"), d, q);
     fprintf(fp, " '-' using 1:2 title \"%s\" w lines\n", title);
+    g_free(title);
 
     T = gretl_vector_get_length(yh);
 
@@ -3267,7 +3269,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		na(dset->Z[datlist[ynum]][t])) {
 		continue;
 	    } else if (gi->x == NULL &&
-		all_graph_data_missing(gi->list, t, (const double **) dset->Z)) {
+		       all_graph_data_missing(gi->list, t, (const double **) dset->Z)) {
 		continue;
 	    }
 	    if (!(gi->flags & GPT_TS) && i == 1) {
@@ -7811,7 +7813,7 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 				 FILE *fp)
 {
     int periods = gretl_matrix_rows(resp);
-    char title[128];
+    gchar *title = NULL;
     int t;
 
     if (!confint) {
@@ -7820,19 +7822,20 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 
     if (confint) {
 	fputs("set key left top\n", fp);
-	sprintf(title, _("response of %s to a shock in %s, "
-			 "with bootstrap confidence interval"),
-		targname, shockname);
+	title = g_strdup_printf(_("response of %s to a shock in %s, "
+				  "with bootstrap confidence interval"),
+				targname, shockname);
     } else {
 	fputs("set nokey\n", fp);
-	sprintf(title, _("response of %s to a shock in %s"),
-		targname, shockname);
+	title = g_strdup_printf(_("response of %s to a shock in %s"),
+				targname, shockname);
     }
 
     fprintf(fp, "set xlabel '%s'\n", perlabel);
     fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set xrange [-1:%d]\n", periods);
     fprintf(fp, "set title '%s'\n", title);
+    g_free(title);
 
     if (confint) {
 	double ql = alpha / 2;
@@ -7840,8 +7843,9 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 
 	fputs("plot \\\n", fp);
 	if (use_fill) {
-	    sprintf(title, _("%g percent confidence band"), 100 * (1 - alpha));
+	    title = g_strdup_printf(_("%g percent confidence band"), 100 * (1 - alpha));
 	    print_filledcurve_line(title, NULL, fp);
+	    g_free(title);
 	    if (data_straddle_zero(resp)) {
 		fputs("0 notitle w lines lt 0, \\\n", fp);
 	    }
@@ -7849,8 +7853,9 @@ static void real_irf_print_plot (const gretl_matrix *resp,
 	} else {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n",
 		    _("point estimate"));
-	    sprintf(title, _("%g and %g quantiles"), ql, qh);
+	    title = g_strdup_printf(_("%g and %g quantiles"), ql, qh);
 	    fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n", title);
+	    g_free(title);
 	}
     } else {
 	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
@@ -8012,7 +8017,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     GptFlags flags = 0;
     int confint = 0;
     int use_fill = !(opt & OPT_E);
-    char title[128];
+    gchar *title = NULL;
     int n = var->neqns;
     int nplots = n * n;
     int vtarg, vshock;
@@ -8075,9 +8080,10 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 		    fputs("set nokey\n", fp);
 		}
 	    }
-	    sprintf(title, "%s -> %s", dset->varname[vshock],
-		    dset->varname[vtarg]);
+	    title = g_strdup_printf("%s -> %s", dset->varname[vshock],
+				    dset->varname[vtarg]);
 	    fprintf(fp, "set title '%s'\n", title);
+	    g_free(title);
 
 	    fputs("plot \\\n", fp);
 	    if (confint && use_fill) {
@@ -8141,9 +8147,8 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	    }
 
 	    vshock = gretl_VAR_get_variable_number(var, j);
-	    sprintf(title, "%s -> %s", dset->varname[vshock],
+	    fprintf(fp, "set title '%s -> %s'\n", dset->varname[vshock],
 		    dset->varname[vtarg]);
-	    fprintf(fp, "set title '%s'\n", title);
 
 	    fputs("plot \\\n", fp);
 
@@ -8275,7 +8280,8 @@ int gretl_system_residual_plot (void *p, int ci, int eqn, const DATASET *dset)
 	} else {
 	    v = system_get_depvar(sys, i);
 	}
-	fprintf(fp, "'-' using 1:2 title '%s' w lines%s", dset->varname[v], lwstr);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines%s",
+		dset->varname[v], lwstr);
 	if (i == imax - 1) {
 	    fputc('\n', fp);
 	} else {
@@ -8767,8 +8773,8 @@ static int roundup_mod (int i, double x)
 }
 
 /* options: OPT_R use radians as unit
-            OPT_D use degrees as unit
-            OPT_L use log scale
+   OPT_D use degrees as unit
+   OPT_L use log scale
 */
 
 static int real_pergm_plot (const char *vname,
@@ -9079,7 +9085,7 @@ static int normal_qq_plot (const int *list,
 			   gretlopt opt)
 {
     GptFlags flags = 0;
-    char title[48];
+    gchar *title = NULL;
     int zscores = 0;
     double ym = 0, ys = 1;
     double p, qx, qy;
@@ -9127,8 +9133,9 @@ static int normal_qq_plot (const int *list,
 	return err;
     }
 
-    sprintf(title, _("Q-Q plot for %s"), series_get_graph_name(dset, v));
+    title = g_strdup_printf(_("Q-Q plot for %s"), series_get_graph_name(dset, v));
     fprintf(fp, "set title \"%s\"\n", title);
+    g_free(title);
     gnuplot_missval_string(fp);
     fprintf(fp, "set xlabel \"%s\"\n", _("Normal quantiles"));
 
