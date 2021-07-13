@@ -1355,6 +1355,12 @@ char *asciify_utf8_varname (char *s)
     return s;
 }
 
+/* Convert from UTF-8 text in @s to a form suitable for
+   inclusion in RTF, where non-ASCII characters are
+   recoded to escaped Unicode numbering. Return the
+   converted text in a newly allocated string.
+*/
+
 char *utf8_to_rtf (const char *s)
 {
     const char *nextp, *p = s;
@@ -1364,7 +1370,6 @@ char *utf8_to_rtf (const char *s)
     int err = 0;
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-
     if (prn == NULL) {
 	return NULL;
     }
