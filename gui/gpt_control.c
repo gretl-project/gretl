@@ -2571,7 +2571,7 @@ static void grab_line_title (GPT_LINE *line, const char *src)
     char tmp[128];
 
     *tmp = '\0';
-    
+
     if (*src == '\'') {
 	sscanf(src + 1, "%127[^']'", tmp);
     } else {
@@ -2761,7 +2761,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	    p = strstr(s, " notitle");
 	}
 	if (p != NULL) {
-	    strncat(line->formula, s, p - s);
+	    line->formula = g_strndup(s, p - s);
 	    if (i == 1 && spec->flags & GPT_AUTO_FIT) {
 		grab_fit_coeffs(spec, line->formula);
 	    }
@@ -2808,7 +2808,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	line->whiskwidth = (float) ww;
     }
 
-    if (line->ncols == 0 && line->formula[0] == '\0') {
+    if (line->ncols == 0 && line->formula == NULL) {
 	/* got neither data column spec nor formula */
 	err = 1;
     }

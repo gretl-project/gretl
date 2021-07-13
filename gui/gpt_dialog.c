@@ -1105,7 +1105,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	if ((spec->fit == PLOT_FIT_NONE || spec->fit == PLOT_FIT_LOESS) &&
 	    ed->fitformula != NULL && spec->n_lines > 1) {
 	    /* scrub irrelevant formula, if any */
-	    spec->lines[1].formula[0] = '\0';
+	    if (spec->lines[1].formula != NULL) {
+		g_free(spec->lines[1].formula);
+		spec->lines[1].formula = NULL;
+	    }
 	}
     }
 
@@ -2103,26 +2106,49 @@ static void add_arrow_callback (GtkWidget *w, plot_editor *ed)
     }
 }
 
-static void set_gp_formula (char *targ, const char *s)
+/* Set formula for a given line, taking input from a
+   text entry box.  We'll convert from decimal comma
+   to decimal dot, if necessary, and from '^' to '**'
+   for exponentiation, to create a formula which is
+   acceptable by gnuplot.
+*/
+
+static void set_gp_formula (GPT_LINE *line, const char *src)
 {
     int decom = (get_local_decpoint() == ',');
-    int rem = GP_MAXFORMULA - strlen(s);
-    int i = 0;
+    const char *p;
+    gchar *s;
+    int i, n = 0;
 
-    while (*s) {
-	if (decom && *s == ',') {
-	    targ[i++] = '.';
-	} else if (*s == '^' && rem > 1) {
-	    targ[i++] = '*';
-	    targ[i++] = '*';
-	    rem--;
-	} else {
-	    targ[i++] = *s;
-	}
-	s++;
+    p = src;
+    while (*p) {
+	if (*p == '^') n++;
+	n++;
+	p++;
     }
 
-    targ[i] = '\0';
+    if (n == 0) {
+	return;
+    }
+
+    s = g_malloc0(n+1);
+    p = src;
+    i = 0;
+
+    while (*p) {
+	if (decom && *p == ',') {
+	    s[i++] = '.';
+	} else if (*p == '^') {
+	    s[i++] = '*';
+	    s[i++] = '*';
+	} else {
+	    s[i++] = *p;
+	}
+	p++;
+    }
+
+    g_free(line->formula);
+    line->formula = g_strstrip(s);
 }
 
 static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
@@ -2130,7 +2156,6 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     plot_editor *ed = nlinfo->editor;
     GPT_SPEC *spec = ed->spec;
     GPT_LINE *line;
-    char tmp[GP_MAXFORMULA];
     const gchar *s;
     gint pgnum;
     int err = 0;
@@ -2141,9 +2166,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 	return;
     }
 
-    *tmp = '\0';
-    strncat(tmp, s, GP_MAXFORMULA - 1);
-
+    /* add GUI apparatus for new line */
     err = allocate_line(ed);
     if (err) {
 	gtk_widget_destroy(nlinfo->dlg);
@@ -2151,7 +2174,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     }
 
     line = &spec->lines[spec->n_lines - 1];
-    set_gp_formula(line->formula, tmp);
+    set_gp_formula(line, s);
 
     line->style = GP_STYLE_LINES;
     line->type = spec->n_lines; /* assign next line style */
@@ -2642,9 +2665,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (line->type <= 0 && line->type != LT_AUTO) {
 	    color_sel_ok = 0;
 	}
-	if (plotspec_line_is_formula(spec, i)) {
-	    is_formula = 1;
-	}
+	is_formula = plotspec_line_is_formula(spec, i);
 
 	if (is_formula) {
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
