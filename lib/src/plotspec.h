@@ -20,8 +20,6 @@
 #ifndef PLOTSPEC_H
 #define PLOTSPEC_H
 
-#define GP_MAXFORMULA 128
-
 #define GP_BORDER_DEFAULT (-1)
 #define LT_AUTO (-2)
 
