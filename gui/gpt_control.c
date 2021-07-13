@@ -2274,19 +2274,19 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	    return unhandled_gp_line_error(s);
 	}
     } else if (!strcmp(key, "title")) {
-	strcpy(spec->titles[0], val);
+	spec->titles[0] = g_strdup(val);
     } else if (!strcmp(key, "xlabel")) {
-	strcpy(spec->titles[1], val);
+	spec->titles[1] = g_strdup(val);
 	*spec->xvarname = '\0';
 	strncat(spec->xvarname, val, MAXDISP-1);
     } else if (!strcmp(key, "ylabel")) {
-	strcpy(spec->titles[2], val);
+	spec->titles[2] = g_strdup(val);
 	*spec->yvarname = '\0';
 	strncat(spec->yvarname, val, MAXDISP-1);
     } else if (!strcmp(key, "y2label")) {
-	strcpy(spec->titles[3], val);
+	spec->titles[3] = g_strdup(val);
     } else if (!strcmp(key, "x2label")) {
-	strcpy(spec->titles[4], val);
+	spec->titles[4] = g_strdup(val);
     } else if (!strcmp(key, "key")) {
 	spec->keyspec = gp_keypos_from_name(val);
     } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) {
@@ -2566,17 +2566,21 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 
 /* scan the stuff after "title '" or 'title "' */
 
-static void grab_line_title (char *targ, const char *src)
+static void grab_line_title (GPT_LINE *line, const char *src)
 {
-    char *fmt;
+    char tmp[128];
 
+    *tmp = '\0';
+    
     if (*src == '\'') {
-	fmt = "%79[^']'";
+	sscanf(src + 1, "%127[^']'", tmp);
     } else {
-	fmt = "%79[^\"]\"";
+	sscanf(src + 1, "%127[^\"]\"", tmp);
     }
 
-    sscanf(src + 1, fmt, targ);
+    if (*tmp != '\0') {
+	line->title = g_strdup(tmp);
+    }
 }
 
 static void grab_line_rgb (char *targ, const char *src)
@@ -2763,12 +2767,10 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	    }
 	} else {
 	    /* title must be implicit? */
-	    char fmt[8];
+	    gchar *tmp = g_strstrip(g_strdup(s));
 
-	    sprintf(fmt, "%%%ds", GP_MAXFORMULA - 1);
-	    sscanf(s, fmt, line->formula);
-	    strcpy(fmt, "%79s");
-	    sscanf(s, fmt, line->title);
+	    line->formula = tmp;
+	    line->title = g_strdup(tmp);
 	}
     }
 
@@ -2776,7 +2778,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
 	line->yaxis = 2;
     }
     if ((p = strstr(s, " title "))) {
-	grab_line_title(line->title, p + 7);
+	grab_line_title(line, p + 7);
     }
     if ((p = strstr(s, " w "))) {
 	sscanf(p + 3, "%15[^, ]", tmp);
@@ -3374,7 +3376,7 @@ static int read_plotspec_from_file (png_plot *plot)
     }
 
     for (i=0; i<4; i++) {
-	if (spec->titles[i][0] != '\0') {
+	if (!string_is_blank(spec->titles[i])) {
 	    gretl_delchar('"', spec->titles[i]);
 	}
     }

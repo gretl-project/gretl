@@ -2809,16 +2809,17 @@ static int get_fitted_line (gnuplot_info *gi,
     }
 
     if (!err && gi->fit != PLOT_FIT_NONE) {
-	char title[MAXTITLE], formula[GP_MAXFORMULA];
+	GPT_LINE line = {0};
 	double pd = dset->pd;
 
 	if (gi->fit == PLOT_FIT_LOGLIN) {
 	    b->val[0] += s2 / 2;
 	}
-
-	set_plotfit_line(title, formula, gi->fit, b->val, x0, pd);
+	set_plotfit_line(&line, gi->fit, b->val, x0, pd);
 	*targ = g_strdup_printf("%s title \"%s\" w lines\n",
-				formula, title);
+				line.formula, line.title);
+	g_free(line.formula);
+	g_free(line.title);
 	gi->flags |= GPT_AUTO_FIT;
     }
 

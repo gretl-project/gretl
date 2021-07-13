@@ -459,14 +459,30 @@ static void flip_manual_range (GtkWidget *widget, plot_editor *ed)
 
 /* Take text from a gtkentry and write to gnuplot spec string */
 
-static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
+static void entry_to_gp_string (GtkWidget *w, char **ptarg)
 {
     const gchar *s;
 
-    *targ = '\0';
+    g_return_if_fail(GTK_IS_ENTRY(w));
+
+    if (*ptarg != NULL) {
+	g_free(*ptarg);
+	*ptarg = NULL;
+    }
+
+    s = gtk_entry_get_text(GTK_ENTRY(w));
+    if (s != NULL && *s != '\0') {
+	*ptarg = g_strdup(s);
+    }
+}
+
+static void entry_to_gp_label (GtkWidget *w, char *targ, size_t n)
+{
+    const gchar *s;
 
     g_return_if_fail(GTK_IS_ENTRY(w));
 
+    *targ = '\0';
     s = gtk_entry_get_text(GTK_ENTRY(w));
     if (s != NULL && *s != '\0') {
 	strncat(targ, s, n - 1);
@@ -611,12 +627,12 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	set_fit_type_from_combo(GTK_WIDGET(box), spec);
 	if (f == PLOT_FIT_LOESS || f == PLOT_FIT_NONE) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), "");
-	} else {
+	} else if (spec->lines[1].formula != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
 	}
 	if (f == PLOT_FIT_NONE) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), "");
-	} else {
+	} else if (spec->lines[1].title != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
 	}
 	gtk_widget_set_sensitive(ed->fitlegend, (f != PLOT_FIT_NONE));
@@ -684,8 +700,12 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
     }
 }
 
-#define gp_string_to_entry(w,s) do { \
-	gtk_entry_set_text(GTK_ENTRY(w),s); } while (0)
+static void gp_string_to_entry (GtkWidget *w, const char *s)
+{
+    if (s != NULL && *s != '\0') {
+	gtk_entry_set_text(GTK_ENTRY(w), s);
+    }
+}
 
 static int get_label_pos_from_entry (GtkWidget *w, double *pos)
 {
@@ -944,8 +964,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     for (i=0; i<NTITLES; i++) {
 	if (ed->gpt_titles[i].widget != NULL) {
-	    entry_to_gp_string(ed->gpt_titles[i].widget, spec->titles[i],
-			       sizeof spec->titles[0]);
+	    entry_to_gp_string(ed->gpt_titles[i].widget, &spec->titles[i]);
 	}
     }
 
@@ -1010,12 +1029,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    maybe_set_point_type(line, combo, i);
 	}
 	if (should_apply_changes(ed->linetitle[i])) {
-	    entry_to_gp_string(ed->linetitle[i], line->title,
-			       sizeof spec->lines[0].title);
+	    entry_to_gp_string(ed->linetitle[i], &line->title);
 	}
 	if (should_apply_changes(ed->lineformula[i])) {
-	    entry_to_gp_string(ed->lineformula[i], line->formula,
-			       sizeof spec->lines[0].formula);
+	    entry_to_gp_string(ed->lineformula[i], &line->formula);
 	}
 	if (should_apply_changes(ed->linewidth[i])) {
 	    line->width = spinner_get_float(ed->linewidth[i]);
@@ -1033,8 +1050,8 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     for (i=0; i<ed->gui_nlabels && !err; i++) {
-	entry_to_gp_string(ed->labeltext[i], spec->labels[i].text,
-			   sizeof spec->labels[0].text);
+	entry_to_gp_label(ed->labeltext[i], spec->labels[i].text,
+			  sizeof spec->labels[0].text);
 	if (string_is_blank(spec->labels[i].text)) {
 	    continue;
 	}
@@ -1664,15 +1681,10 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl),
 				      entry, 1, TAB_MAIN_COLS,
 				      rows-1, rows);
-
-            if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {
-		gp_string_to_entry(entry, spec->titles[i]);
-            }
-
+	    gp_string_to_entry(entry, spec->titles[i]);
 	    g_signal_connect(G_OBJECT(entry), "activate",
 			     G_CALLBACK(apply_gpt_changes),
 			     ed);
-
 	    gtk_widget_show(entry);
 	    ed->gpt_titles[i].widget = entry;
 	}
@@ -2642,7 +2654,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->lineformula[i] = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->lineformula[i],
 				      2, ncols, nrows-1, nrows);
-	    strip_lr(line->formula);
+	    if (line->formula != NULL) {
+		strip_lr(line->formula);
+	    }
 	    gp_string_to_entry(ed->lineformula[i], line->formula);
 	    if (is_autofit) {
 		/* fitted formula: not GUI-editable */
@@ -2674,7 +2688,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    if (is_hidden) {
 		gtk_entry_set_text(GTK_ENTRY(ed->linetitle[i]), "");
 	    } else {
-		strip_lr(line->title);
+		if (line->title != NULL) {
+		    strip_lr(line->title);
+		}
 		gp_string_to_entry(ed->linetitle[i], line->title);
 		g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed",
 				 G_CALLBACK(linetitle_callback), ed);

@@ -62,7 +62,7 @@ GPT_SPEC *plotspec_new (void)
     spec->n_literal = 0;
 
     for (i=0; i<5; i++) {
-	spec->titles[i][0] = 0;
+	spec->titles[i] = NULL;
     }
 
     *spec->xvarname = '\0';
@@ -413,8 +413,6 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].varnum = 0;
     lines[n].style = 0;
     lines[n].pscale = 1.0;
-    lines[n].title[0] = '\0';
-    lines[n].formula[0] = '\0';
     lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
     lines[n].type = LT_AUTO;
@@ -425,6 +423,8 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].whiskwidth = 0;
     lines[n].flags = 0;
 
+    lines[n].title = NULL;
+    lines[n].formula = NULL;
     lines[n].ustr = NULL;
     lines[n].mcols = NULL;
 
@@ -436,8 +436,6 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->varnum = src->varnum;
     targ->style = src->style;
     targ->pscale = src->pscale;
-    strcpy(targ->title, src->title);
-    strcpy(targ->formula, src->formula);
     strcpy(targ->rgb, src->rgb);
     targ->yaxis = src->yaxis;
     targ->type = src->type;
@@ -448,6 +446,14 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->whiskwidth = src->whiskwidth;
     targ->flags = src->flags;
 
+    if (src->title != NULL) {
+	g_free(targ->title);
+	targ->title = g_strdup(src->title);
+    }
+    if (src->formula != NULL) {
+	g_free(targ->formula);
+	targ->formula = g_strdup(src->formula);
+    }
     if (src->ustr != NULL) {
 	free(targ->ustr);
 	targ->ustr = gretl_strdup(src->ustr);
@@ -467,6 +473,8 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
 	return E_DATA;
     }
 
+    g_free(lines[i].title);
+    g_free(lines[i].formula);
     free(lines[i].ustr);
     free(lines[i].mcols);
 
@@ -814,15 +822,21 @@ static int usable_obs (const double *x, const double *y0,
 
 int plotspec_line_is_formula (const GPT_SPEC *spec, int i)
 {
-    if (i < 0 || i >= spec->n_lines) {
-	return 0;
-    } else {
-	GPT_LINE *ln = &spec->lines[i];
+    int ret = 0;
+    
+    if (i >= 0 && i < spec->n_lines) {
+	GPT_LINE *line = &spec->lines[i];
 
-	return ln->formula[0] != '\0' ||
-	    (ln->flags & GP_LINE_USER) ||
-	    (i == 1 && (spec->flags & GPT_AUTO_FIT));
+	if (!string_is_blank(line->formula)) {
+	    ret = 1;
+	} else if (line->flags & GP_LINE_USER) {
+	    ret = 1;
+	} else if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
+	    ret = 1;
+	}
     }
+
+    return ret;
 }
 
 static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
@@ -992,10 +1006,10 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 }
 
-static int blank_user_line (const GPT_SPEC *spec, int i)
+static int blank_user_line (GPT_LINE *line)
 {
-    return ((spec->lines[i].flags & GP_LINE_USER) &&
-	    spec->lines[i].formula[0] == '\0');
+    return ((line->flags & GP_LINE_USER) &&
+	    string_is_blank(line->formula));
 }
 
 static void print_user_lines_info (const GPT_SPEC *spec, FILE *fp)
@@ -1028,7 +1042,7 @@ static int more_lines (const GPT_SPEC *spec, int i, int skipline)
 	int j;
 
 	for (j=i+1; j<spec->n_lines; j++) {
-	    if (j != skipline && !blank_user_line(spec, j)) {
+	    if (j != skipline && !blank_user_line(&spec->lines[j])) {
 		return 1;
 	    }
 	}
@@ -1491,7 +1505,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     }
 
     for (i=0; i<spec->n_lines; i++) {
-	if (i == skipline || blank_user_line(spec, i)) {
+	if (i == skipline || blank_user_line(&spec->lines[i])) {
 	    continue;
 	}
 	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
@@ -1530,7 +1544,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     for (i=0; i<spec->n_lines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 
-	if (i == skipline || blank_user_line(spec, i)) {
+	if (i == skipline || blank_user_line(line)) {
 	    if (i < spec->n_lines - 1) {
 		continue;
 	    } else {
@@ -1538,7 +1552,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (*line->formula != '\0') {
+	if (!string_is_blank(line->formula)) {
 	    fprintf(fp, "%s ", line->formula);
 	} else if (line->ustr != NULL) {
 	    fprintf(fp, "%s using %s ", src, line->ustr);
@@ -1574,7 +1588,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "axes x1y%d ", line->yaxis);
 	}
 
-	if (*line->title == '\0') {
+	if (string_is_blank(line->title)) {
 	    fputs("notitle ", fp);
 	} else {
 	    fprintf(fp, "title \"%s", line->title);
@@ -1678,7 +1692,8 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     spec->datacols = 3;
     spec->nobs = spec->okobs = T;
 
-    sprintf(spec->lines[1].title, _("loess fit, d = %d, q = %g"), d, q);
+    g_free(spec->lines[1].title);
+    spec->lines[1].title = g_strdup_printf(_("loess fit, d = %d, q = %g"), d, q);
     spec->lines[1].pscale = 1.0;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 2;
@@ -1688,11 +1703,14 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     return 0;
 }
 
-static void set_plotfit_formula (char *formula, FitType f, const double *b,
+static void set_plotfit_formula (GPT_LINE *line, FitType f, const double *b,
 				 double x0, double pd)
 {
+    gchar *s = NULL;
     char x[32];
 
+    g_free(line->formula);
+    line->formula = NULL;
     gretl_push_c_numeric_locale();
 
     /* If x0 is not NA that indicates that we've calculated a fit
@@ -1700,7 +1718,6 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
        equation so that it produces correct fitted values given
        x-data in the form year[.fraction].
     */
-
     if (!na(x0)) {
 	if (pd > 1) {
 	    sprintf(x, "(%.1f*(x-%.8g)+1)", pd, x0);
@@ -1712,77 +1729,81 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
     }
 
     if (f == PLOT_FIT_OLS) {
-	sprintf(formula, "%.8g + %.8g*%s", b[0], b[1], x);
+	s = g_strdup_printf("%.8g + %.8g*%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_QUADRATIC) {
-	sprintf(formula, "%.8g + %.8g*%s + %.8g*%s**2", b[0], b[1], x, b[2], x);
+	s = g_strdup_printf("%.8g + %.8g*%s + %.8g*%s**2", b[0], b[1], x, b[2], x);
     } else if (f == PLOT_FIT_CUBIC) {
-	sprintf(formula, "%.8g + %.8g*%s + %.8g*%s**2 + %.8g*%s**3",
-		b[0], b[1], x, b[2], x, b[3], x);
+	s = g_strdup_printf("%.8g + %.8g*%s + %.8g*%s**2 + %.8g*%s**3",
+			    b[0], b[1], x, b[2], x, b[3], x);
     } else if (f == PLOT_FIT_INVERSE) {
-	sprintf(formula, "%.8g + %.8g/%s", b[0], b[1], x);
+	s = g_strdup_printf("%.8g + %.8g/%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_LOGLIN) {
-	sprintf(formula, "exp(%.8g + %.8g*%s)", b[0], b[1], x);
+	s = g_strdup_printf("exp(%.8g + %.8g*%s)", b[0], b[1], x);
     } else if (f == PLOT_FIT_LINLOG) {
 	if (!na(x0)) {
-	    sprintf(formula, "%.8g + %.8g*log%s", b[0], b[1], x);
+	    s = g_strdup_printf("%.8g + %.8g*log%s", b[0], b[1], x);
 	} else {
-	    sprintf(formula, "%.8g + %.8g*log(x)", b[0], b[1]);
+	    s = g_strdup_printf("%.8g + %.8g*log(x)", b[0], b[1]);
 	}
     }
 
     gretl_pop_c_numeric_locale();
+    line->formula = s;
 }
 
-void set_plotfit_line (char *title, char *formula,
-		       FitType f, const double *b,
+void set_plotfit_line (GPT_LINE *line, FitType f, const double *b,
 		       double x0, double pd)
 {
     char xc = (na(x0)) ? 'X' : 't';
+    gchar *s = NULL;
+
+    g_free(line->title);
+    line->title = NULL;
 
     /* first compose the key string for the fitted line */
-
     if (f == PLOT_FIT_OLS) {
-	sprintf(title, "Y = %#.3g %c %#.3g%c", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
+	s = g_strdup_printf("Y = %#.3g %c %#.3g%c", b[0],
+			    (b[1] > 0)? '+' : '-', fabs(b[1]), xc);
     } else if (f == PLOT_FIT_QUADRATIC) {
-	sprintf(title, "Y = %#.3g %c %#.3g%c %c %#.3g%c^2", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]), xc,
-		(b[2] > 0)? '+' : '-', fabs(b[2]), xc);
+	s = g_strdup_printf("Y = %#.3g %c %#.3g%c %c %#.3g%c^2", b[0],
+			    (b[1] > 0)? '+' : '-', fabs(b[1]), xc,
+			    (b[2] > 0)? '+' : '-', fabs(b[2]), xc);
     } else if (f == PLOT_FIT_CUBIC) {
-	sprintf(title, "Y = %#.3g %c %#.3g%c %c %#.3g%c^2 %c %#.3g%c^3",
-		b[0], (b[1] > 0)? '+' : '-', fabs(b[1]), xc,
-		(b[2] > 0)? '+' : '-', fabs(b[2]), xc,
-		(b[3] > 0)? '+' : '-', fabs(b[3]), xc);
+	s = g_strdup_printf("Y = %#.3g %c %#.3g%c %c %#.3g%c^2 %c %#.3g%c^3",
+			    b[0], (b[1] > 0)? '+' : '-', fabs(b[1]), xc,
+			    (b[2] > 0)? '+' : '-', fabs(b[2]), xc,
+			    (b[3] > 0)? '+' : '-', fabs(b[3]), xc);
     } else if (f == PLOT_FIT_INVERSE) {
-	sprintf(title, "Y = %#.3g %c %#.3g(1/%c)", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
+	s = g_strdup_printf("Y = %#.3g %c %#.3g(1/%c)", b[0],
+			    (b[1] > 0)? '+' : '-', fabs(b[1]), xc);
     } else if (f == PLOT_FIT_LOGLIN) {
-	sprintf(title, "logY = %#.3g %c %#.3g%c", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
+	s = g_strdup_printf("logY = %#.3g %c %#.3g%c", b[0],
+			    (b[1] > 0)? '+' : '-', fabs(b[1]), xc);
 	if (xc == 't' && (pd == 1 || pd == 4 || pd == 12)) {
 	    /* display annual growth rate in title */
 	    double g = 100 * (pow(exp(b[1]), pd) - 1);
-	    gchar *gstr;
+	    gchar *gstr, *tmp;
 
 	    gstr = g_strdup_printf("\\n(%s %.2f%%)", _("annual growth"), g);
-	    strcat(title, gstr);
+	    tmp = g_strdup_printf("%s%s", s, gstr);
+	    g_free(s);
+	    s = tmp;
 	    g_free(gstr);
 	}
     } else if (f == PLOT_FIT_LINLOG) {
-	sprintf(title, "Y = %#.3g %c %#.3glog(%c)", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]), xc);
+	s = g_strdup_printf("Y = %#.3g %c %#.3glog(%c)", b[0],
+			    (b[1] > 0)? '+' : '-', fabs(b[1]), xc);
     }
 
-    /* then set the formula itself */
+    line->title = s;
 
-    set_plotfit_formula(formula, f, b, x0, pd);
+    /* then set the formula itself */
+    set_plotfit_formula(line, f, b, x0, pd);
 }
 
 static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
 				      double x0)
 {
-    char *formula = spec->lines[1].formula;
-    char *title = spec->lines[1].title;
     double pd = spec->pd;
     const double *b;
 
@@ -1802,7 +1823,7 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f,
 	return;
     }
 
-    set_plotfit_line(title, formula, f, b, x0, pd);
+    set_plotfit_line(&spec->lines[1], f, b, x0, pd);
 
     spec->fit = f;
     spec->lines[1].pscale = 1.0;
@@ -1974,7 +1995,8 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     if (!err) {
 	if (f == PLOT_FIT_LOESS) {
 	    set_loess_fit(spec, d, q, X, y, yh);
-	    spec->lines[1].formula[0] = '\0';
+	    g_free(spec->lines[1].formula);
+	    spec->lines[1].formula = NULL;
 	} else {
 	    plotspec_set_fitted_line(spec, f, x0);
 	}
