@@ -3774,25 +3774,22 @@
 	el lado derecho de un enunciado de asignación (igualdad).
       </para>
       <para>
-	Ten en cuenta que una instrucción tal como
+	En el uso interactivo (por ejemplo con la consola de GRETL), un signo
+	igual funciona como una abreviatura de <lit>eval</lit>, como en
       </para>
       <code>
-	print x^2
+	=sqrt(x)
       </code>
       <para>
-	no funcionará en GRETL puesto que <lit>x^2</lit> no es (no puede ser)
-	el nombre de una variable, pero (dada una variable escalar denominada
-	<lit>x</lit>)
-      </para>
-      <code>
-	eval x^2
-      </code>
-      <para>
-	funcionará correctamente, mostrando el cuadrado de <lit>x</lit>.
+	(con o sin espacio después de <quote>=</quote>). Pero esta variante
+	no se admite en el modo de edición de guiones puesto que podría
+	esconder fácilmente fallos de codificación.
       </para>
       <para>
-	Consulta también <cmdref targ="printf"/>, en caso de que quieras
-	combinar resultados numéricos y de texto.
+	En la mayoría de los contextos, puedes usar la instrucción <cmdref targ="print"/>
+	en lugar de <lit>eval</lit> para obtener el mismo efecto. Consulta también
+	<cmdref targ="printf"/> para aquellos casos en los que quieras combinar
+	resultados de texto y numéricos.
       </para>
     </description>
   </command>
@@ -5941,17 +5938,18 @@
 	el modelo de efectos fijos y el de efectos aleatorios.
       </para>
       <para>
-	El modelo de efectos fijos permite que la ordenada en el origen de la regresión
-	varíe de una unidad de sección cruzada a otra. Se presenta un contraste
-	<math>F</math> para la hipótesis nula de que las ordenadas en el origen
-	no difieren. El modelo de efectos aleatorios descompone la varianza de
-	cada perturbación en dos partes, una parte específica de la unidad
-	de sección cruzada y otra parte específica de cada observación
-	concreta. (Se puede calcular este estimador solo cuando el número de
-	unidades de sección cruzada en el conjunto de datos supera al número
-	de parámetros a estimar.) El estadístico de Multiplicadores de Lagrange
-	de Breusch&ndash;Pagan contrasta la hipótesis nula de que el estimador
-	combinado de MCO es adecuado frente a la alternativa de efectos aleatorios.
+	El modelo de efectos fijos permite que la ordenada en el origen de
+	la regresión varíe de una unidad de sección cruzada a otra. Se
+	presenta un contraste <math>F</math> para la hipótesis nula de que
+	las ordenadas en el origen no difieren. El modelo de efectos aleatorios
+	descompone la varianza de cada perturbación en dos partes, una parte
+	específica de la unidad de sección cruzada y otra parte específica de
+	cada observación concreta. (Se puede calcular este estimador solo
+	cuando el número de unidades de sección cruzada en el conjunto de
+	datos supera al número de parámetros a estimar.) El estadístico de
+	Multiplicadores de Lagrange de Breusch&ndash;Pagan contrasta la
+	hipótesis nula de que el estimador combinado de MCO es adecuado
+	frente a la alternativa de efectos aleatorios.
       </para>
       <para>
 	El modelo combinado de MCO puede rechazarse frente a ambas
@@ -5973,6 +5971,12 @@
 	de regresión. Las opciones permiten utilizar el estimador alternativo
 	de la varianza de Nerlove, y /o la aproximación de la matriz-diferencia
 	al estadístico de Hausman.
+      </para>
+      <para>
+	Ten en cuenta que luego de estimar el modelo de efectos aleatorios con
+	la instrucción <cmd>panel</cmd> en lugar de usar MCO combinados, el
+	test de Hausman se ejecuta automáticamente y puedes recuperar los
+	resultados mediante el accesor <fncref targ="$hausman"/>.
       </para>
     </description>
 
@@ -10993,7 +10997,8 @@
 	(autor, versión, etc.). Pero si añades la opción <opt>quiet</opt>, no
 	se presenta nada; en su lugar, se guarda la información del paquete
 	en forma de un 'bundle' de GRETL, al que se puede acceder mediante
-	<fncref targ="$result"/>.
+	<fncref targ="$result"/>. Si no se puede encontrar ninguna información,
+	este 'bundle' estará vacío.
       </para>
       <para>
 	<lit>unload</lit>: Debes indicar el argumento <repl>pkgname</repl> en
@@ -11343,6 +11348,7 @@
 	<example>poisson y 0 x1 x2 ; S</example>
 	<demos>
 	  <demo>camtriv.inp</demo>
+	  <demo>greene19_3.inp</demo>
 	</demos>
       </examples>
     </usage>

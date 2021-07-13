@@ -3774,25 +3774,22 @@
 	o lado dereito dun enunciado de asignación (igualdade).
       </para>
       <para>
-	Cae na conta de que unha instrución tal como
+	No uso interactivo (por exemplo coa consola de GRETL), un signo
+	igual funciona como unha abreviatura de <lit>eval</lit>, como en
       </para>
       <code>
-	print x^2
+	=sqrt(x)
       </code>
       <para>
-	non funcionará en GRETL posto que <lit>x^2</lit> non é (non pode ser)
-	o nome dunha variable, pero (dada unha variable escalar denominada
-	<lit>x</lit>)
-      </para>
-      <code>
-	eval x^2
-      </code>
-      <para>
-	funcionará correctamente, amosando o cadrado de <lit>x</lit>.
+	(con ou sen espazo despois de <quote>=</quote>). Pero esta variante
+	non se admite no modo de edición de guións xa que podería agochar
+	doadamente fallos de codificación.
       </para>
       <para>
-	Consulta tamén <cmdref targ="printf"/>, no caso de que queiras
-	combinar resultados numéricos e de texto.
+	Na maioría dos contextos, podes usar a instrución <cmdref targ="print"/>
+	no canto de <lit>eval</lit> para obter o mesmo efecto. Consulta tamén
+	<cmdref targ="printf"/> para aqueles casos nos que queiras combinar
+	resultados de texto e numéricos.
       </para>
     </description>
   </command>
@@ -5941,17 +5938,18 @@
 	o modelo de efectos fixos e o de efectos aleatorios.
       </para>
       <para>
-	O modelo de efectos fixos permite que a ordenada na orixe da regresión
-	varíe dunha unidade de sección cruzada a outra. Preséntase unha proba
-	<math>F</math> para a hipótese nula de que as ordenadas na orixe
-	non difiren. O modelo de efectos aleatorios descompón a varianza de
-	cada perturbación en dúas partes, unha parte específica da unidade
-	de sección cruzada e outra parte específica de cada observación
-	concreta. (Pódese calcular este estimador só cando o número de
-	unidades de sección cruzada no conxunto de datos supera ao número
-	de parámetros a estimar.) O estatístico de Multiplicadores de Lagrange
-	de Breusch&ndash;Pagan comproba a hipótese nula de que o estimador
-	combinado de MCO é axeitado fronte á alternativa de efectos aleatorios.
+	O modelo de efectos fixos permite que a ordenada na orixe da
+	regresión varíe dunha unidade de sección cruzada a outra. Preséntase
+	unha proba <math>F</math> para a hipótese nula de que as ordenadas
+	na orixe non difiren. O modelo de efectos aleatorios descompón a
+	varianza de cada perturbación en dúas partes, unha parte específica
+	da unidade de sección cruzada e outra parte específica de cada
+	observación concreta. (Pódese calcular este estimador só cando o
+	número de unidades de sección cruzada no conxunto de datos supera
+	ao número de parámetros a estimar.) O estatístico de Multiplicadores
+	de Lagrange de Breusch&ndash;Pagan comproba a hipótese nula de que
+	o estimador combinado de MCO é axeitado fronte á alternativa de
+	efectos aleatorios.
       </para>
       <para>
 	O modelo combinado de MCO pode rexeitarse fronte a ambas as dúas
@@ -5973,6 +5971,12 @@
 	de regresión. As opcións permiten utilizar o estimador alternativo
 	da varianza de Nerlove, e /ou a aproximación da matriz-diferenza
 	ao estatístico de Hausman.
+      </para>
+      <para>
+	Cae na conta de que despois de estimar o modelo de efectos aleatorios
+	coa instrución <cmd>panel</cmd> en troques de usar MCO combinados,
+	a proba de Hausman execútase automaticamente e podes recuperar os
+	resultados mediante o accesorio <fncref targ="$hausman"/>.
       </para>
     </description>
 
@@ -10993,7 +10997,8 @@
 	(autor, versión, etc.). Pero se engades a opción <opt>quiet</opt>,
 	non se presenta nada; en troques, gárdase a información do paquete
 	en forma dun feixe de GRETL, ao que se pode acceder mediante
-	<fncref targ="$result"/>.
+	<fncref targ="$result"/>. Se non pode atoparse ningunha información,
+	este feixe estará baleiro.
       </para>
       <para>
 	<lit>unload</lit>: Debes de indicar o argumento <repl>pkgname</repl>
@@ -11343,6 +11348,7 @@
 	<example>poisson y 0 x1 x2 ; S</example>
 	<demos>
 	  <demo>camtriv.inp</demo>
+	  <demo>greene19_3.inp</demo>
 	</demos>
       </examples>
     </usage>
