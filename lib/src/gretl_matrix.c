@@ -13753,7 +13753,8 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
     }
 
     if (k == 0) {
-	*err = E_DATA;
+	v = gretl_null_matrix_new();
+	*err = v == NULL ? E_ALLOC : 0;
 	goto bailout;
     }
 
