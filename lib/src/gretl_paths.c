@@ -125,7 +125,7 @@ static const char *helpfiles[] = {
 
 const char *helpfile_path (int id, int cli, int en)
 {
-    static char hpath[MAXLEN+18];
+    static char hpath[MAXLEN+19];
     int i = -1;
 
     *hpath = '\0';
