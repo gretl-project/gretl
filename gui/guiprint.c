@@ -37,7 +37,6 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
-# define USE_WINDOWS_SPOOLER
 #else
 # include "clipboard.h"
 #endif
@@ -57,213 +56,27 @@ static const gchar *user_string (void)
 
 static char *header_string (const char *fname)
 {
+    char tmstr[48];
     gchar *hdr;
-#ifndef G_OS_WIN32
-    gchar *trans;
-#endif
-    char tstr[48];
 
-    print_time(tstr);
+    print_time(tmstr);
 
     if (fname != NULL && *fname != '\0' && !strstr(fname, "tmp")) {
-	hdr = g_strdup_printf("%s %s", fname, tstr);
+	hdr = g_strdup_printf("%s %s", fname, tmstr);
     } else {
 	const gchar *ustr = user_string();
 
 	if (ustr != NULL && *ustr != '\0') {
-	    hdr = g_strdup_printf("%s %s %s %s", _("gretl output"), _("for"), ustr, tstr);
+	    hdr = g_strdup_printf("%s %s %s %s", _("gretl output"), _("for"), ustr, tmstr);
 	} else {
-	    hdr = g_strdup_printf("%s %s", _("gretl output"), tstr);
+	    hdr = g_strdup_printf("%s %s", _("gretl output"), tmstr);
 	}
     }
-
-#ifndef G_OS_WIN32
-    trans = my_locale_to_utf8(hdr);
-    if (trans != NULL) {
-	g_free(hdr);
-	hdr = trans;
-    }
-#endif
 
     return hdr;
 }
 
 #ifdef G_OS_WIN32
-
-# ifdef USE_WINDOWS_SPOOLER
-
-/* win32: print using Windows spooler */
-
-static char *win32_fixed_font_name (void)
-{
-    const char *s = get_fixed_fontname();
-    int i, n;
-
-    /* trim off trailing point-size */
-    n = strlen(s);
-    for (i=n-1; i>0; i--) {
-	if (isdigit(s[i]) || s[i] == ' ') {
-	    n--;
-	} else {
-	    break;
-	}
-    }
-
-    return gretl_strndup(s, n);
-}
-
-static gchar *my_locale_from_utf8 (const gchar *src)
-{
-    GError *gerr = NULL;
-    gchar *ret = NULL;
-    gsize bytes;
-
-    ret = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
-
-    if (gerr) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    }
-
-    return ret;
-}
-
-void print_window_content (gchar *fullbuf, gchar *selbuf,
-			   const char *fname,
-			   windata_t *vwin)
-{
-    HDC dc;
-    PRINTDLG pdlg;
-    int printok, line, page;
-    LOGFONT lfont;
-    HFONT fixed_font;
-    DOCINFO di;
-    TEXTMETRIC lptm;
-    int px, x, y, incr;
-    gchar *text, *rawbuf, *printbuf = NULL;
-    gchar *hdrstart, *hdr;
-    char *winfont;
-    size_t len;
-
-    memset(&pdlg, 0, sizeof pdlg);
-    pdlg.lStructSize = sizeof pdlg;
-    pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
-
-    printok = PrintDlg(&pdlg);
-    if (!printok) {
-	/* canceled */
-	return;
-    }
-
-    dc = pdlg.hDC;
-
-    /* use Textmappingmode, that's easiest to map the fontsize */
-    SetMapMode(dc, MM_TEXT);
-
-    /* logical pixels per inch */
-    px = GetDeviceCaps(dc, LOGPIXELSY);
-
-    winfont = win32_fixed_font_name();
-
-    /* setup font specifics */
-    /* first param to MulDiv is supposed to be point size */
-    lfont.lfHeight = -MulDiv(10, px, 72); /* this is broken! */
-    lfont.lfWidth = 0;
-    lfont.lfEscapement = 0;
-    lfont.lfOrientation = 0;
-    lfont.lfWeight = FW_NORMAL;
-    lfont.lfItalic = 0;
-    lfont.lfUnderline = 0;
-    lfont.lfStrikeOut = 0;
-    lfont.lfCharSet = DEFAULT_CHARSET;
-    lfont.lfOutPrecision = OUT_DEVICE_PRECIS;
-    lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    lfont.lfQuality = DEFAULT_QUALITY;
-    lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN;
-    lstrcpy(lfont.lfFaceName, winfont);
-    fixed_font = CreateFontIndirect(&lfont);
-    SelectObject(dc, fixed_font);
-
-    free(winfont);
-
-    incr = 120;
-    if (GetTextMetrics(dc, &lptm)) {
-	incr = lptm.tmHeight * 1.2;
-    }
-
-    /* Initialize print document details */
-    memset(&di, 0, sizeof di);
-    di.cbSize = sizeof di;
-    di.lpszDocName = "gretl";
-
-    printok = StartDoc(dc, &di);
-
-    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
-	rawbuf = selbuf;
-    } else {
-	rawbuf = fullbuf;
-    }
-
-    /* strip any utf-8 minus signs, then recode */
-    strip_unicode_minus(rawbuf);
-    text = printbuf = my_locale_from_utf8(rawbuf);
-
-    if (printbuf == NULL) {
-	printok = 0;
-	goto bailout;
-    }
-
-    page = 1;
-    x = px / 2; /* attempt at left margin */
-    hdrstart = header_string(fname);
-
-    while (*text && printok) {
-	/* pages loop */
-	StartPage(dc);
-	SelectObject(dc, fixed_font);
-	SetMapMode(dc, MM_TEXT);
-	/* make simple header */
-	if (hdrstart != NULL) {
-	    hdr = g_strdup_printf("%s, page %d", hdrstart, page++);
-	} else {
-	    hdr = g_strdup_printf("%d", page++);
-	}
-	TextOut(dc, x, px / 8, hdr, strlen(hdr));
-	g_free(hdr);
-	line = 0;
-	y = px/2;
-	while (*text && line < PAGE_LINES) {
-	    /* lines loop */
-	    len = strcspn(text, "\n");
-	    TextOut(dc, x, y, text, len);
-	    text += len + 1;
-	    y += incr; /* line spacing */
-	    line++;
-	}
-	printok = (EndPage(dc) > 0);
-    }
-
-    if (hdrstart != NULL) {
-	g_free(hdrstart);
-    }
-
- bailout:
-
-    if (printok) {
-        EndDoc(dc);
-    } else {
-        AbortDoc(dc);
-    }
-
-    DeleteObject(fixed_font);
-    DeleteDC(dc);
-    GlobalFree(pdlg.hDevMode);
-    GlobalFree(pdlg.hDevNames);
-
-    g_free(printbuf);
-}
-
-# endif /* USE_WINDOWS_SPOOLER */
 
 #undef WGRDEBUG
 
@@ -359,10 +172,6 @@ int win32_print_graph (char *emfname)
 }
 
 #endif /* G_OS_WIN32 */
-
-#ifndef USE_WINDOWS_SPOOLER
-
-/* native GTK printing instead */
 
 #define GRETL_PNG_TMP "gretltmp.png"
 
@@ -530,8 +339,6 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     }
     g_object_unref(G_OBJECT(op));
 }
-
-#endif /* GTK printing */
 
 void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 {
