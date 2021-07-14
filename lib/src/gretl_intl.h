@@ -106,8 +106,6 @@ void set_alt_gettext_mode (PRN *prn);
 
 int get_gretl_cpage (void);
 
-char *locale_gettext (const char *msgid);
-
 char *alt_gettext (const char *msgid);
 
 #endif

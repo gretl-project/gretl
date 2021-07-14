@@ -378,50 +378,6 @@ void set_alt_gettext_mode (PRN *prn)
 
 #else /* WIN32-specific block */
 
-/* Provides a means of forcing gretl.exe on Windows to
-   emit non-ASCII text in the locale encoding rather than
-   in UTF-8, possibly required under certain conditions.
-*/
-
-char *locale_gettext (const char *msgid)
-{
-    static int locale_switch = -1;
-    static const char *cset;
-    static int cli;
-    char *ret;
-
-    if (msgid == NULL) {
-	/* initialization */
-	cli = 1;
-	return NULL;
-    }
-
-    if (cli) {
-	return gettext(msgid);
-    }
-
-    if (locale_switch < 0) {
-	/* not yet determined */
-	cset = get_gretl_charset();
-	if (cset == NULL) {
-	    fprintf(stderr, "get_gretl_charset: using UTF-8\n");
-	} else {
-	    fprintf(stderr, "get_gretl_charset gave %s\n", cset);
-	}
-	locale_switch = (cset != NULL);
-    }
-
-    if (locale_switch) {
-	bind_textdomain_codeset(PACKAGE, cset);
-	ret = gettext(msgid);
-	bind_textdomain_codeset(PACKAGE, "UTF-8");
-    } else {
-	ret = gettext(msgid);
-    }
-
-    return ret;
-}
-
 /* Return translated @msgid in UTF-8, when this is not
    the default operation for plain gettext(). This is
    wanted only when writing TeX or RTF via gretlcli.exe.

@@ -221,7 +221,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
 	if (hdrstart != NULL) {
-	    hdr = g_strdup_printf(I_("%s, page %d"), hdrstart, page++);
+	    hdr = g_strdup_printf("%s, page %d", hdrstart, page++);
 	} else {
 	    hdr = g_strdup_printf("%d", page++);
 	}

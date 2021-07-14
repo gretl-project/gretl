@@ -285,7 +285,6 @@ static void nls_init (void)
     if (getenv("CLI_DEBUG")) {
         set_windebug(2);
     }
-    locale_gettext(NULL);
     win32_set_console_charset(PACKAGE);
 # endif
 }
