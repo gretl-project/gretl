@@ -499,8 +499,8 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
     for (i=0; i<k; i++) {
 	if (p[i] <= 0.0 || p[i] >= 1.0) {
 	    p[i] = NADBL;
-	    err = 1;
-	    continue;
+	    err = E_INVARG;
+	    break;
 	}
 
 	h = quantile_index(n, p[i]);
