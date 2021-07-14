@@ -104,16 +104,16 @@ static void VAR_info_header_block (int code, int v, int block,
     } else if (rtf) {
 	pputs(prn, "\\par\n\n");
 	if (code == IRF) {
-	    pprintf(prn, A_("Responses to a one-standard error shock in %s"),
+	    pprintf(prn, _("Responses to a one-standard error shock in %s"),
 		    dset->varname[v]);
 	} else {
-	    pprintf(prn, A_("Decomposition of variance for %s"),
+	    pprintf(prn, _("Decomposition of variance for %s"),
 		    dset->varname[v]);
 	}
 	if (block == 0) {
 	    pputs(prn, "\\par\n\n");
 	} else {
-	    pprintf(prn, " (%s)\\par\n\n", A_("continued"));
+	    pprintf(prn, " (%s)\\par\n\n", _("continued"));
 	}
 	/* FIXME */
 	VAR_RTF_row_spec((code == IRF)? IRF_ROW_MAX : VDC_ROW_MAX, prn);
@@ -136,7 +136,7 @@ static void VAR_info_header_block (int code, int v, int block,
     if (tex) {
 	pprintf(prn, "%s & ", _("period"));
     } else if (rtf) {
-	pprintf(prn, "\\intbl \\qc %s\\cell ", A_("period"));
+	pprintf(prn, "\\intbl \\qc %s\\cell ", _("period"));
     } else {
 	pputs(prn, _("period"));
     }
@@ -152,7 +152,7 @@ static void VAR_info_print_vname (int i, int v, int endrow, int width,
     if (tex) {
 	pprintf(prn, " %s ", tex_escape(vname, dset->varname[v]));
 	if (endrow) {
-	   pputs(prn, "\\\\");
+	    pputs(prn, "\\\\");
 	} else {
 	    pputs(prn, "& ");
 	}
@@ -449,7 +449,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 		if (tex) {
 		    pprintf(prn, " %s & ", _("std. error"));
 		} else if (rtf) {
-		    pprintf(prn, " \\qc %s\\cell ", A_("std. error"));
+		    pprintf(prn, " \\qc %s\\cell ", _("std. error"));
 		} else {
 		    pprintf(prn, " %14s", _("std. error"));
 		}
@@ -549,13 +549,11 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 	N_("Case 5: Unrestricted trend and constant")
     };
 
-    set_alt_gettext_mode(prn);
-
     if (jcode <= J_UNREST_TREND) {
 	if (plain_format(prn) || tex_format(prn)) {
 	    pputs(prn, _(jcase[jcode]));
 	} else {
-	    pputs(prn, A_(jcase[jcode]));
+	    pputs(prn, _(jcase[jcode]));
 	}
     }
 }
@@ -614,9 +612,9 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     int i, j;
     double x;
 
-    pprintf(prn, "beta (%s", A_("cointegrating vectors"));
+    pprintf(prn, "beta (%s", _("cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, ", %s)", A_("standard errors in parentheses"));
+	pprintf(prn, ", %s)", _("standard errors in parentheses"));
     } else {
 	pputc(prn, ')');
     }
@@ -670,9 +668,9 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 
     rows = gretl_matrix_rows(jv->Alpha);
 
-    pprintf(prn, "alpha (%s", A_("adjustment vectors"));
+    pprintf(prn, "alpha (%s", _("adjustment vectors"));
     if (jv->Ase != NULL) {
-	pprintf(prn, ", %s)", A_("standard errors in parentheses"));
+	pprintf(prn, ", %s)", _("standard errors in parentheses"));
     } else {
 	pputc(prn, ')');
     }
@@ -732,7 +730,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
     int w0, wi = 12;
     int i, j;
 
-    pprintf(prn, "%s:\n", A_("Cross-equation covariance matrix"));
+    pprintf(prn, "%s:\n", _("Cross-equation covariance matrix"));
     gretl_prn_newline(prn);
 
     w0 = max_namelen_in_list(list, dset) + 1;
@@ -801,7 +799,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 
     gretl_prn_newline(prn);
 
-    pprintf(prn, "%s = %g", A_("determinant"), exp(jvar->ldet));
+    pprintf(prn, "%s = %g", _("determinant"), exp(jvar->ldet));
 
     gretl_prn_newline(prn);
 }
@@ -848,7 +846,7 @@ static void print_LR_stat (double x, int df, PRN *prn)
     } else if (rtf_format(prn)) {
 	pprintf(prn, "2 * (lu - lr) = %g", x);
 	gretl_prn_newline(prn);
-	pprintf(prn, "P(%s(%d) > %g) = %g", A_("Chi-square"), df, x, pv);
+	pprintf(prn, "P(%s(%d) > %g) = %g", _("Chi-square"), df, x, pv);
     } else {
 	pprintf(prn, "2 * (lu - lr) = %g", x);
 	gretl_prn_newline(prn);
@@ -871,7 +869,7 @@ vecm_print_LR_test (GRETL_VAR *vecm, PRN *prn, int code)
 	ll0 = vecm->jinfo->prior_ll;
 	df = vecm->jinfo->lrdf - vecm->jinfo->prior_df;
 	gretl_prn_newline(prn);
-	pputs(prn, A_("Relative to prior restriction"));
+	pputs(prn, _("Relative to prior restriction"));
 	pputc(prn, ':');
 	gretl_prn_newline(prn);
     } else {
@@ -882,13 +880,13 @@ vecm_print_LR_test (GRETL_VAR *vecm, PRN *prn, int code)
     x = 2.0 * (ll0 - vecm->ll);
 
     if (tex_format(prn)) {
-	pprintf(prn, A_("Unrestricted loglikelihood $(l_u) = %.8g$"), ll0);
+	pprintf(prn, _("Unrestricted loglikelihood $(l_u) = %.8g$"), ll0);
 	gretl_prn_newline(prn);
-	pprintf(prn, A_("Restricted loglikelihood $(l_r) = %.8g$"), vecm->ll);
+	pprintf(prn, _("Restricted loglikelihood $(l_r) = %.8g$"), vecm->ll);
     } else {
-	pprintf(prn, A_("Unrestricted loglikelihood (lu) = %.8g"), ll0);
+	pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g"), ll0);
 	gretl_prn_newline(prn);
-	pprintf(prn, A_("Restricted loglikelihood (lr) = %.8g"), vecm->ll);
+	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g"), vecm->ll);
     }
 
     gretl_prn_newline(prn);
@@ -906,7 +904,7 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 	return;
     }
 
-    pprintf(prn, "%s = %d", A_("Cointegration rank"), jrank(vecm));
+    pprintf(prn, "%s = %d", _("Cointegration rank"), jrank(vecm));
     gretl_prn_newline(prn);
     print_Johansen_test_case(jcode(vecm), prn);
 
@@ -940,12 +938,12 @@ static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
 
     if (tex_format(prn)) {
 	pprintf(prn, "\\noindent\n%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
-		A_("Portmanteau test"), var->LBs, var->LB,
-		A_("df"), df, pv);
+		_("Portmanteau test"), var->LBs, var->LB,
+		_("df"), df, pv);
     } else if (rtf_format(prn)) {
 	pprintf(prn, "%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
-		A_("Portmanteau test"), var->LBs, var->LB,
-		A_("df"), df, pv);
+		_("Portmanteau test"), var->LBs, var->LB,
+		_("df"), df, pv);
     } else {
 	pprintf(prn, "%s: LB(%d) = %g, %s = %d [%.4f]\n",
 		_("Portmanteau test"), var->LBs, var->LB,
@@ -1028,8 +1026,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	return 0;
     }
 
-    set_alt_gettext_mode(prn);
-
     nlags = var_n_lags(var);
     maxlag = var_max_lag(var);
 
@@ -1047,16 +1043,16 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
     }
 
     if (vecm) {
-	label = g_strdup_printf(A_("VECM system, lag order %d"), var->order + 1);
+	label = g_strdup_printf(_("VECM system, lag order %d"), var->order + 1);
     } else {
-	label = g_strdup_printf(A_("VAR system, lag order %d"), var->order);
+	label = g_strdup_printf(_("VAR system, lag order %d"), var->order);
     }
 
     if (tex) {
 	pputs(prn, "\\begin{center}");
 	pprintf(prn, "\n%s\\\\\n", label);
-	pprintf(prn, A_("%s estimates, observations %s--%s ($T=%d$)"),
-		(vecm)? A_("Maximum likelihood") : A_("OLS"), startdate, enddate, var->T);
+	pprintf(prn, _("%s estimates, observations %s--%s ($T=%d$)"),
+		(vecm)? _("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
 	if (vecm) {
 	    print_vecm_header_info(var, &lldone, prn);
 	}
@@ -1064,8 +1060,8 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
     } else if (rtf) {
 	gretl_print_toggle_doc_flag(prn);
 	pprintf(prn, "\n%s\\par\n", label);
-	pprintf(prn, A_("%s estimates, observations %s-%s (T = %d)"),
-		(vecm)? A_("Maximum likelihood") : A_("OLS"), startdate, enddate, var->T);
+	pprintf(prn, _("%s estimates, observations %s-%s (T = %d)"),
+		(vecm)? _("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
 	if (vecm) {
 	    print_vecm_header_info(var, &lldone, prn);
 	}
@@ -1095,13 +1091,13 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	tex_print_VAR_ll_stats(var, prn);
     } else if (rtf) {
 	if (!lldone) {
-	    pprintf(prn, "%s = %.8g\\par\n", A_("Log-likelihood"), var->ll);
+	    pprintf(prn, "%s = %.8g\\par\n", _("Log-likelihood"), var->ll);
 	}
-	pprintf(prn, "%s = %.8g\\par\n", A_("Determinant of covariance matrix"),
+	pprintf(prn, "%s = %.8g\\par\n", _("Determinant of covariance matrix"),
 		exp(var->ldet));
-	pprintf(prn, "%s = %.4f\\par\n", A_("AIC"), var->AIC);
-	pprintf(prn, "%s = %.4f\\par\n", A_("BIC"), var->BIC);
-	pprintf(prn, "%s = %.4f\\par\n", A_("HQC"), var->HQC);
+	pprintf(prn, "%s = %.4f\\par\n", _("AIC"), var->AIC);
+	pprintf(prn, "%s = %.4f\\par\n", _("BIC"), var->BIC);
+	pprintf(prn, "%s = %.4f\\par\n", _("HQC"), var->HQC);
     } else {
 	if (!lldone) {
 	    pprintf(prn, "%s = %.8g\n", _("Log-likelihood"), var->ll);
@@ -1137,7 +1133,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		    pprintf(prn, "%s\\\n", dset->varname[v]);
 		    pputs(prn, "\n\\end{center}\n");
 		} else if (rtf) {
-		    pprintf(prn, "\\par\n%s", A_("Equation for "));
+		    pprintf(prn, "\\par\n%s", _("Equation for "));
 		    pprintf(prn, "%s:\\par\n\n", dset->varname[v]);
 		} else {
 		    pprintf(prn, "\n%s", _("Equation for "));
@@ -1159,7 +1155,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	    pprintf(prn, "%s\\\\[1em]\n", _("F-tests of zero restrictions"));
 	    pputs(prn, "\\begin{tabular}{lll}\n");
 	} else if (rtf) {
-	    pprintf(prn, "%s:\\par\n\n", A_("F-tests of zero restrictions"));
+	    pprintf(prn, "%s:\\par\n\n", _("F-tests of zero restrictions"));
 	} else {
 	    pprintf(prn, "%s:\n\n", _("F-tests of zero restrictions"));
 	}
@@ -1180,12 +1176,12 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		if (tex) {
 		    char tname[32];
 
-		    pprintf(prn, A_("All lags of %s"), tex_escape(tname, vname));
+		    pprintf(prn, _("All lags of %s"), tex_escape(tname, vname));
 		    pputs(prn, " & ");
 		    pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\\\\n", pv);
 		} else if (rtf) {
-		    lagstr = g_strdup_printf(A_("All lags of %s"), vname);
+		    lagstr = g_strdup_printf(_("All lags of %s"), vname);
 		    llen = strlen(lagstr);
 		    pputs(prn, lagstr);
 		    bufspace(fwidth - llen, prn);
@@ -1216,12 +1212,12 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 
 		pv = snedecor_cdf_comp(var->neqns, dfd, Fval);
 		if (tex) {
-		    pprintf(prn, A_("All vars, lag %d"), maxlag);
+		    pprintf(prn, _("All vars, lag %d"), maxlag);
 		    pputs(prn, " & ");
 		    pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\\\\n", pv);
 		} else if (rtf) {
-		    lagstr = g_strdup_printf(A_("All vars, lag %d"), maxlag);
+		    lagstr = g_strdup_printf(_("All vars, lag %d"), maxlag);
 		    llen = strlen(lagstr);
 		    pputs(prn, lagstr);
 		    bufspace(fwidth - llen, prn);
@@ -1256,23 +1252,23 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 
 	pputc(prn, '\n');
 
-	h0str = g_strdup_printf(A_("the longest lag is %d"), nextlag);
-	h1str = g_strdup_printf(A_("the longest lag is %d"), maxlag);
+	h0str = g_strdup_printf(_("the longest lag is %d"), nextlag);
+	h1str = g_strdup_printf(_("the longest lag is %d"), maxlag);
 
 	pv = chisq_cdf_comp(df, var->LR);
 
 	if (tex) {
-	    pprintf(prn, "\\noindent %s ---\\par\n", A_("For the system as a whole"));
-	    pprintf(prn, "%s: %s\\par\n", A_("Null hypothesis"), h0str);
-	    pprintf(prn, "%s: %s\\par\n", A_("Alternative hypothesis"), h1str);
+	    pprintf(prn, "\\noindent %s ---\\par\n", _("For the system as a whole"));
+	    pprintf(prn, "%s: %s\\par\n", _("Null hypothesis"), h0str);
+	    pprintf(prn, "%s: %s\\par\n", _("Alternative hypothesis"), h1str);
 	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f [%.4f]\\par\n",
-		    A_("Likelihood ratio test"), df, var->LR, pv);
+		    _("Likelihood ratio test"), df, var->LR, pv);
 	} else if (rtf) {
-	    pprintf(prn, "\\par %s\n", A_("For the system as a whole"));
-	    pprintf(prn, "\\par %s: %s\n", A_("Null hypothesis"), h0str);
-	    pprintf(prn, "\\par %s: %s\n", A_("Alternative hypothesis"), h1str);
-	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n", A_("Likelihood ratio test"),
-		    A_("Chi-square"), df, var->LR, pv);
+	    pprintf(prn, "\\par %s\n", _("For the system as a whole"));
+	    pprintf(prn, "\\par %s: %s\n", _("Null hypothesis"), h0str);
+	    pprintf(prn, "\\par %s: %s\n", _("Alternative hypothesis"), h1str);
+	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n", _("Likelihood ratio test"),
+		    _("Chi-square"), df, var->LR, pv);
 	} else {
 	    int ordlen = (var->order > 10)? 2 : 1;
 

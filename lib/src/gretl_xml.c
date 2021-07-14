@@ -3785,9 +3785,9 @@ static void record_transform_info (DATASET *dset, double version)
 
 static void data_read_message (const char *fname, DATASET *dset, PRN *prn)
 {
-    pprintf(prn, A_("\nRead datafile %s\n"), fname);
-    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-		    "observations range: %s to %s\n"),
+    pprintf(prn, _("\nRead datafile %s\n"), fname);
+    pprintf(prn, _("periodicity: %d, maxobs: %d\n"
+		   "observations range: %s to %s\n"),
 	    (custom_time_series(dset))? 1 : dset->pd,
 	    dset->n, dset->stobs, dset->endobs);
     pputc(prn, '\n');
@@ -3899,8 +3899,6 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		gz ? "Uncompressing" : "Reading",
 		(double) fsz / 1024.0, "of data");
     }
-
-    set_alt_gettext_mode(prn);
 
     tmpset = datainfo_new();
     if (tmpset == NULL) {

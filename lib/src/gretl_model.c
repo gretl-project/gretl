@@ -4277,13 +4277,13 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 	if (plain_format(prn)) {
 	    pprintf(prn, _(descrip), param);
 	} else {
-	    pprintf(prn, A_(descrip), param);
+	    pprintf(prn, _(descrip), param);
 	}
     } else {
 	if (plain_format(prn)) {
 	    pputs(prn, _(descrip));
 	} else {
-	    pputs(prn, A_(descrip));
+	    pputs(prn, _(descrip));
 	}
     }
 
@@ -4368,15 +4368,15 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	pprintf(prn, "\n  %s: ", _("Null hypothesis"));
 	pputs(prn, _(H0));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: ", A_("Null hypothesis"));
+	pprintf(prn, "\\\\\n\\quad %s: ", _("Null hypothesis"));
 	if (!strcmp(H0, "rho = 0")) {
 	    pputs(prn, "$\\rho = 0$");
 	} else {
-	    pputs(prn, A_(H0));
+	    pputs(prn, _(H0));
 	}
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: ", A_("Null hypothesis"));
-	pputs(prn, A_(H0));
+	pprintf(prn, "\\par\n %s: ", _("Null hypothesis"));
+	pputs(prn, _(H0));
     }
 
     if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
@@ -4439,7 +4439,7 @@ static gchar *get_test_stat_string (const ModelTest *test, PRN *prn)
     case GRETL_STAT_LB_CHISQ:
 	if (tex) {
 	    if (na(test->value)) {
-		ret = g_strdup_printf("$\\chi^2(%d)$ = NA (%s)", test->dfn, A_("failed"));
+		ret = g_strdup_printf("$\\chi^2(%d)$ = NA (%s)", test->dfn, _("failed"));
 	    } else {
 		ret = g_strdup_printf("$\\chi^2(%d)$ = %g", test->dfn, test->value);
 	    }
@@ -4559,7 +4559,6 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
     const char *descrip = NULL;
     char c = prn_delim(prn);
 
-    set_alt_gettext_mode(prn);
     descrip = test_get_descrip(src);
 
     if (descrip != NULL) {
@@ -4615,8 +4614,6 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
     const char *tstr;
     gchar *buf = NULL;
 
-    set_alt_gettext_mode(prn);
-
     if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
     }
@@ -4635,9 +4632,9 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
     if (plain_format(prn)) {
 	pprintf(prn, "\n  %s: %s\n", _(tstr), buf);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", A_(tstr), buf);
+	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", _(tstr), buf);
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: %s\\par\n", A_(tstr), buf);
+	pprintf(prn, "\\par\n %s: %s\\par\n", _(tstr), buf);
     }
 
     g_free(buf);
@@ -4652,9 +4649,9 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 	if (plain_format(prn)) {
 	    pprintf(prn, "  %s = %s\n\n", _(pvstr), buf);
 	} else if (tex_format(prn)) {
-	    pprintf(prn, "\\quad %s = %s\\\\\n", A_(pvstr), buf);
+	    pprintf(prn, "\\quad %s = %s\\\\\n", _(pvstr), buf);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, " %s = %s\\par\n\n", A_(pvstr), buf);
+	    pprintf(prn, " %s = %s\\par\n\n", _(pvstr), buf);
 	}
     } else if (!na(test->crit) && !na(test->alpha)) {
 	double a = test->alpha * 100.0;
@@ -4663,10 +4660,10 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 	    buf = g_strdup_printf(_("%g percent critical value"), a);
 	    pprintf(prn, "  (%s = %.2f)\n\n", buf, test->crit);
 	} else if (tex_format(prn)) {
-	    buf = g_strdup_printf(A_("%g percent critical value"), a);
+	    buf = g_strdup_printf(_("%g percent critical value"), a);
 	    pprintf(prn, "\\quad (%s = %.2f)\\\\\n", buf, test->crit);
 	} else if (rtf_format(prn)) {
-	    buf = g_strdup_printf(A_("%g percent critical value"), a);
+	    buf = g_strdup_printf(_("%g percent critical value"), a);
 	    pprintf(prn, " (%s = %.2f)\\par\n\n", buf, test->crit);
 	}
     } else {

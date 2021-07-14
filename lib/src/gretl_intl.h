@@ -72,8 +72,6 @@ const char *lang_string_from_id (int langid);
 
 char *utf8_to_rtf (const char *s);
 
-int iso_latin_version (void);
-
 int lang_id_from_name (const char *s);
 
 int lang_id_from_code (const char *s);
@@ -100,15 +98,7 @@ int east_asian_locale (void);
 
 int get_utf_width (const char *str, int width);
 
-#ifdef WIN32
-
-int get_gretl_cpage (void);
-
-#endif
-
 #ifdef ENABLE_NLS
-
-void set_gretl_charset (void);
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 

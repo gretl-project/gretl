@@ -171,79 +171,7 @@ static int gretl_cset_min;
 
 static int gretl_cpage;
 
-int get_gretl_cpage (void)
-{
-    return gretl_cpage;
-}
-
 #endif
-
-/* Use g_get_charset() to determine the current local character set,
-   and record this information.  If we get an "ISO-XXXX-Y" locale,
-   record the numerical elements as gretl_cset_maj and gretl_cset_min
-   respectively.  If we get a Windows "CPXXXX" reading, record the
-   codepage as gretl_cpage.
-*/
-
-void set_gretl_charset (void)
-{
-    const char *charset = NULL;
-    char gretl_charset[32];
-
-#ifdef OS_OSX
-    /* FIXME - why is this necessary? */
-    native_utf8 = 1;
-#else
-    native_utf8 = g_get_charset(&charset);
-#endif
-
-    *gretl_charset = '\0';
-
-    if (!native_utf8 && charset != NULL && *charset != '\0') {
-	char *p;
-
-	strncat(gretl_charset, charset, 31);
-	gretl_lower(gretl_charset);
-	p = strstr(gretl_charset, "iso");
-	if (p != NULL) {
-	    char numstr[6] = {0};
-
-	    while (*p && !isdigit((unsigned char) *p)) p++;
-	    strncat(numstr, p, 4);
-	    gretl_cset_maj = atoi(numstr);
-	    if (strlen(p) > 4) {
-		p += 4;
-		while (*p && !isdigit((unsigned char) *p)) p++;
-		gretl_cset_min = atoi(p);
-	    }
-
-	    if (gretl_cset_maj < 0 || gretl_cset_maj > 9000) {
-		gretl_cset_maj = gretl_cset_min = 0;
-	    } else if (gretl_cset_min < 0 || gretl_cset_min > 30) {
-		gretl_cset_maj = gretl_cset_min = 0;
-	    }
-	}
-#ifdef WIN32
-	if (p == NULL) {
-	    if (sscanf(gretl_charset, "cp%d", &gretl_cpage) == 0) {
-		sscanf(gretl_charset, "CP%d", &gretl_cpage);
-	    }
-	}
-#endif
-    }
-
-#ifdef WIN32
-    fprintf(stderr, "codepage = %d\n", gretl_cpage);
-    if (gretl_cpage != 1250) {
-	char *e = getenv("GRETL_CPAGE");
-
-	if (e != NULL && !strcmp(e, "1250")) {
-	    gretl_cpage = 1250;
-	    fprintf(stderr, "revised codepage to 1250\n");
-	}
-    }
-#endif
-}
 
 #ifdef WIN32
 
@@ -257,71 +185,7 @@ static void set_cp_from_locale (const char *loc)
     }
 }
 
-static const char *get_gretl_charset (void)
-{
-    static char cset[24];
-
-    if (gretl_cpage > 0) {
-	sprintf(cset, "CP%d", gretl_cpage);
-	return cset;
-    }
-
-    return NULL;
-}
-
 #endif /* WIN32 */
-
-int iso_latin_version (void)
-{
-    char *lang = NULL;
-
-    if (gretl_cset_maj == 8859 &&
-	(gretl_cset_min == 1 ||
-	 gretl_cset_min == 2 ||
-	 gretl_cset_min == 5 ||
-	 gretl_cset_min == 7 ||
-	 gretl_cset_min == 9 ||
-	 gretl_cset_min == 15)) {
-	return gretl_cset_min;
-    }
-
-#ifdef WIN32
-    if (gretl_cpage == 1252) {
-	/* Western European */
-	return 1;
-    } else if (gretl_cpage == 1250) {
-	/* Central European */
-	return 2;
-    } else if (gretl_cpage == 1251) {
-	/* Cyrillic */
-	return 5;
-    } else if (gretl_cpage == 1253) {
-	/* Greek */
-	return 7;
-    } else if (gretl_cpage == 1254) {
-	/* Turkish */
-	return 9;
-    }
-#endif
-
-    /* Polish, Russian, Turkish, Ukrainian: UTF-8 locale? */
-    lang = getenv("LANG");
-    if (lang != NULL) {
-	if (!strncmp(lang, "pl", 2)) {
-	    return 2;
-	} else if (!strncmp(lang, "ru", 2)) {
-	    return 5;
-	} else if (!strncmp(lang, "el", 2)) {
-	    return 7;
-	} else if (!strncmp(lang, "tr", 2)) {
-	    return 9;
-	} else if (!strncmp(lang, "uk", 2)) {
-	    return 5;
-	}
-    }
-
-    return 1;
-}
 
 int chinese_locale (void)
 {

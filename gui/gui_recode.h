@@ -24,6 +24,4 @@ gchar *my_locale_to_utf8 (const gchar *src);
 
 gchar *my_locale_to_utf8_next (const gchar *src);
 
-int maybe_rewrite_gp_file (const char *fname);
-
 #endif /* GUI_RECODE_H */

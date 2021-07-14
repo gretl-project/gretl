@@ -780,9 +780,9 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
     }
 
     if (tex) {
-	pprintf(prn, "$%s$ ", A_("n"));
+	pprintf(prn, "$%s$ ", _("n"));
     } else if (rtf) {
-	pprintf(prn, "\\intbl \\qc %s\\cell ", A_("n"));
+	pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
     } else {
 	pprintf(prn, "%*s", width0, _("n"));
     }
@@ -819,7 +819,7 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 	    pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
 	} else if (rtf) {
 	    pprintf(prn, "\\qc %s\\cell ",
-		    (same_df)? "R{\\super 2}" : A_("Adj. R{\\super 2}"));
+		    (same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
 	} else {
 	    pprintf(prn, "%*s", width0, (same_df)? _("R-squared") :
 		    _("Adj. R**2"));
@@ -1000,10 +1000,10 @@ static void print_estimator_strings (int colwidth, PRN *prn)
 	if (table_models[i] != NULL) {
 	    s = short_estimator_string(table_models[i], prn);
 	    if (tex_format(prn)) {
-		strcpy(est, A_(s));
+		strcpy(est, _(s));
 		pprintf(prn, " & %s ", est);
 	    } else if (rtf_format(prn)) {
-		strcpy(est, A_(s));
+		strcpy(est, _(s));
 		pprintf(prn, "\\qc %s\\cell ", est);
 	    } else {
 		strcpy(est, _(s));
@@ -1040,7 +1040,7 @@ static void print_model_head (const MODEL *pmod, int j, int colwidth,
 	    targ = g_strdup(pmod->name);
 	    gretl_utf8_truncate(targ, 31);
 	} else {
-	    targ = g_strdup_printf(A_("Model %d"), pmod->ID);
+	    targ = g_strdup_printf(_("Model %d"), pmod->ID);
 	}
     } else {
 	if (pmod->name != NULL) {
@@ -1197,13 +1197,13 @@ static int tex_print_model_table (PRN *prn)
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
-	pprintf(prn, A_("%s estimates"),
-		A_(estimator_string(table_models[0], prn)));
+	pprintf(prn, _("%s estimates"),
+		_(estimator_string(table_models[0], prn)));
 	pputs(prn, "\\\\\n");
     }
 
     tex_escape(tmp, dataset->varname[depvarnum]);
-    pprintf(prn, "%s: %s \\\\\n", A_("Dependent variable"), tmp);
+    pprintf(prn, "%s: %s \\\\\n", _("Dependent variable"), tmp);
 
     pputs(prn, "\\vspace{1em}\n\n");
     pputs(prn, "\\begin{longtable}{l");
@@ -1232,24 +1232,24 @@ static int tex_print_model_table (PRN *prn)
     pputs(prn, "\\vspace{1em}\n");
 
     if (use_tstats) {
-	pprintf(prn, "%s\\\\\n", A_("$t$-statistics in parentheses"));
+	pprintf(prn, "%s\\\\\n", _("$t$-statistics in parentheses"));
     } else {
-	pprintf(prn, "%s\\\\\n", A_("Standard errors in parentheses"));
+	pprintf(prn, "%s\\\\\n", _("Standard errors in parentheses"));
     }
 
     if (do_pvals) {
-	pprintf(prn, "%s\\\\\n", A_("$p$-values in brackets"));
+	pprintf(prn, "%s\\\\\n", _("$p$-values in brackets"));
     }
 
     if (do_asts) {
-	pprintf(prn, "{}* %s\\\\\n", A_(sigstrs[0]));
-	pprintf(prn, "{}** %s\\\\\n", A_(sigstrs[1]));
-	pprintf(prn, "{}*** %s\\\\\n", A_(sigstrs[2]));
+	pprintf(prn, "{}* %s\\\\\n", _(sigstrs[0]));
+	pprintf(prn, "{}** %s\\\\\n", _(sigstrs[1]));
+	pprintf(prn, "{}*** %s\\\\\n", _(sigstrs[2]));
     }
 
     if (binary) {
-	pprintf(prn, "%s\\\\\n", A_("For logit and probit, $R^2$ is "
-				    "McFadden's pseudo-$R^2$"));
+	pprintf(prn, "%s\\\\\n", _("For logit and probit, $R^2$ is "
+				   "McFadden's pseudo-$R^2$"));
     }
 
     pputs(prn, "\\end{center}\n");
@@ -1294,13 +1294,13 @@ static int rtf_print_model_table (PRN *prn)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pputs(prn, "\\par \\qc ");
-	pprintf(prn, A_("%s estimates"),
-		A_(estimator_string(table_models[0], prn)));
+	pprintf(prn, _("%s estimates"),
+		_(estimator_string(table_models[0], prn)));
 	pputc(prn, '\n');
     }
 
     pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{",
-	    A_("Dependent variable"), dataset->varname[depvarnum]);
+	    _("Dependent variable"), dataset->varname[depvarnum]);
 
     print_rtf_row_spec(prn, 1);
     pputs(prn, "\\intbl \\qc \\cell ");
@@ -1319,25 +1319,25 @@ static int rtf_print_model_table (PRN *prn)
     pputs(prn, "}\n\n");
 
     if (use_tstats) {
-	pprintf(prn, "\\par \\qc %s\n", A_("t-statistics in parentheses"));
+	pprintf(prn, "\\par \\qc %s\n", _("t-statistics in parentheses"));
     } else {
-	pprintf(prn, "\\par \\qc %s\n", A_("Standard errors in parentheses"));
+	pprintf(prn, "\\par \\qc %s\n", _("Standard errors in parentheses"));
     }
 
     if (do_pvals) {
-	pprintf(prn, "\\par \\qc %s\n", A_("p-values in brackets"));
+	pprintf(prn, "\\par \\qc %s\n", _("p-values in brackets"));
     }
 
     if (do_asts) {
-	pprintf(prn, "\\par \\qc * %s\n", A_(sigstrs[0]));
-	pprintf(prn, "\\par \\qc ** %s\n", A_(sigstrs[1]));
-	pprintf(prn, "\\par \\qc *** %s\n", A_(sigstrs[2]));
+	pprintf(prn, "\\par \\qc * %s\n", _(sigstrs[0]));
+	pprintf(prn, "\\par \\qc ** %s\n", _(sigstrs[1]));
+	pprintf(prn, "\\par \\qc *** %s\n", _(sigstrs[2]));
     }
 
     if (binary) {
-	pprintf(prn, "\\par \\qc %s\n", A_("For logit and probit, "
-					   "R{\\super 2} is "
-					   "McFadden's pseudo-R{\\super 2}"));
+	pprintf(prn, "\\par \\qc %s\n", _("For logit and probit, "
+					  "R{\\super 2} is "
+					  "McFadden's pseudo-R{\\super 2}"));
     }
 
     pputs(prn, "\\par\n}\n");
@@ -1347,8 +1347,6 @@ static int rtf_print_model_table (PRN *prn)
 
 int special_print_model_table (PRN *prn)
 {
-    set_alt_gettext_mode(prn);
-
     get_model_table_prefs(&colheads,
 			  &use_tstats,
 			  &do_pvals,
@@ -1439,8 +1437,6 @@ static int print_model_table_direct (const char *fname,
     } else if (has_suffix(fname, ".rtf")) {
 	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
     }
-
-    set_alt_gettext_mode(prn);
 
     if (tex_format(prn)) {
 	err = tex_print_model_table(prn);
