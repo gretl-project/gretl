@@ -100,21 +100,15 @@ int east_asian_locale (void);
 
 int get_utf_width (const char *str, int width);
 
-void set_alt_gettext_mode (PRN *prn);
-
 #ifdef WIN32
 
 int get_gretl_cpage (void);
-
-char *alt_gettext (const char *msgid);
 
 #endif
 
 #ifdef ENABLE_NLS
 
 void set_gretl_charset (void);
-
-void set_native_utf8 (int s);
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 

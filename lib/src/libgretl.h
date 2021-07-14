@@ -79,15 +79,9 @@ extern "C" {
 # define gettext_noop(String) String
 # define _(String) gettext (String)
 # define N_(String) gettext_noop (String)
-# ifdef WIN32
-#  define A_(String) alt_gettext (String)
-# else
-#  define A_(String) gettext (String)
-# endif
 #else /* no NLS */
 # define _(String)  ((char *) String)
 # define N_(String) String
-# define A_(String) ((char *) String)
 #endif /* NLS or not */
 
 #define MAXLINE 65536  /* maximum length of command line */

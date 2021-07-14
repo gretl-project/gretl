@@ -166,7 +166,6 @@ int get_local_decpoint (void)
 
 static int gretl_cset_maj;
 static int gretl_cset_min;
-static int native_utf8;
 
 #ifdef WIN32
 
@@ -178,11 +177,6 @@ int get_gretl_cpage (void)
 }
 
 #endif
-
-void set_native_utf8 (int s)
-{
-    native_utf8 = s;
-}
 
 /* Use g_get_charset() to determine the current local character set,
    and record this information.  If we get an "ISO-XXXX-Y" locale,
@@ -369,62 +363,7 @@ int east_asian_locale (void)
 #endif
 }
 
-#ifndef WIN32
-
-void set_alt_gettext_mode (PRN *prn)
-{
-    return;
-}
-
-#else /* WIN32-specific block */
-
-/* Return translated @msgid in UTF-8, when this is not
-   the default operation for plain gettext(). This is
-   wanted only when writing TeX or RTF via gretlcli.exe.
-*/
-
-static char *u8_gettext (const char *msgid)
-{
-    static const char *cset;
-    char *ret;
-
-    if (cset == NULL) {
-	cset = get_gretl_charset();
-    }
-
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
-    ret = gettext(msgid);
-    bind_textdomain_codeset(PACKAGE, cset);
-
-    return ret;
-}
-
-enum {
-    GETTEXT_DEFAULT,
-    GETTEXT_FORCE_UTF8
-};
-
-static int gettext_mode;
-
-void set_alt_gettext_mode (PRN *prn)
-{
-    gettext_mode = GETTEXT_DEFAULT;
-
-    if (!native_utf8 && !gretl_in_gui_mode()) {
-	if (tex_format(prn) || rtf_format(prn)) {
-	    gettext_mode = GETTEXT_FORCE_UTF8;
-	}
-    }
-}
-
-char *alt_gettext (const char *msgid)
-{
-    if (gettext_mode == GETTEXT_FORCE_UTF8) {
-	return u8_gettext(msgid);
-    } else {
-	return gettext(msgid);
-    }
-}
+#ifdef WIN32 /* WIN32-specific block */
 
 struct localeinfo {
     int id;

@@ -277,6 +277,7 @@ static void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
 
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
@@ -285,7 +286,10 @@ static void nls_init (void)
     if (getenv("CLI_DEBUG")) {
         set_windebug(2);
     }
-    win32_set_console_charset(PACKAGE);
+    if (try_for_CP_65001() != 0) {
+	/* FIXME issue a warning */
+	;
+    }
 # endif
 }
 

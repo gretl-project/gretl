@@ -1876,12 +1876,17 @@ static int vista_or_higher (void)
     return ret;
 }
 
-int win32_set_console_charset (const char *package)
+/* Try to ensure that UTF-8 will be handled correctly in the
+   Windows console. Return 0 if it looks OK, non-zero if not.
+*/
+
+int try_for_CP_65001 (void)
 {
     int ttfont = 0;
     int gotinfo = 0;
     HANDLE h;
     int h_ok;
+    int ret = -1;
 
     h = GetStdHandle(STD_OUTPUT_HANDLE);
     h_ok = (h != NULL && h != INVALID_HANDLE_VALUE);
@@ -1939,23 +1944,13 @@ int win32_set_console_charset (const char *package)
 
     if (ttfont && IsValidCodePage(65001)) {
 	SetConsoleOutputCP(65001);
-	bind_textdomain_codeset(package, "UTF-8");
-	set_native_utf8(1);
+	ret = 0; /* OK signal */
 	if (windebug) {
 	    fprintf(fdb, "set console to UTF-8\n");
 	}
-    } else {
-	UINT CP = GetConsoleOutputCP();
-	char console_charset[16] = {0};
-
-	sprintf(console_charset, "CP%d", (int) CP);
-	bind_textdomain_codeset(package, console_charset);
-	if (windebug) {
-	    fprintf(fdb, "console uses %s\n", console_charset);
-	}
     }
 
-    return 0;
+    return ret;
 }
 
 int windows_is_xp (void)
