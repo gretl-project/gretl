@@ -764,7 +764,7 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     if (call != NULL && call->listvars != NULL) {
 	for (i=1; i<=call->listvars[0]; i++) {
 	    vi = call->listvars[i];
-#if UDEBUG
+#if UDEBUG > 1
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
 		    vi, dset->varname[vi]);
 #endif

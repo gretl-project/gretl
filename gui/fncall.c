@@ -2641,6 +2641,7 @@ int exec_bundle_special_function (gretl_bundle *b,
     ufunc *func = NULL;
     fncall *fc = NULL;
     char funname[32];
+    char *bname = NULL;
     PRN *prn = NULL;
     int plotting = 0;
     int forecast = 0;
@@ -2689,7 +2690,6 @@ int exec_bundle_special_function (gretl_bundle *b,
 
     if (!err) {
 	user_var *uv = get_user_var_by_data(b);
-	char *bname = NULL;
 
 	if (uv != NULL) {
 	    bname = gretl_strdup(user_var_get_name(uv));
@@ -2713,7 +2713,6 @@ int exec_bundle_special_function (gretl_bundle *b,
 		err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	    }
 	}
-	free(bname);
     }
 
     if (!err) {
@@ -2760,6 +2759,7 @@ int exec_bundle_special_function (gretl_bundle *b,
     }
 
     gretl_print_destroy(prn);
+    free(bname);
 
     if (err) {
 	gui_errmsg(err);
