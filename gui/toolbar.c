@@ -218,6 +218,7 @@ void gretl_stock_icons_init (void)
 	gretl_factory = gtk_icon_factory_new();
 
 	respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
+	fprintf(stderr, "respath = '%s'\n", respath);
 	icons = g_resource_load(respath, NULL);
 	if (icons == NULL) {
 	    fprintf(stderr, "g_resource_load: failed to load icons\n");
@@ -232,11 +233,11 @@ void gretl_stock_icons_init (void)
 	    menu_path = malloc(48);
 	    strcpy(icon_path, "/gretl/icons/24x24/");
 	    strcpy(menu_path, "/gretl/icons/16x16/");
-	    pm = strrchr(menu_path, SLASH) + 1;
+	    pm = strrchr(menu_path, '/') + 1;
 	} else {
 	    strcpy(icon_path, "/gretl/icons/16x16/");
 	}
-	p = strrchr(icon_path, SLASH) + 1;
+	p = strrchr(icon_path, '/') + 1;
 
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, png_stocks[i].fname);

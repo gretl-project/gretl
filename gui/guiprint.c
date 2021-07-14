@@ -37,6 +37,7 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
+# define USE_WINDOWS_SPOOLER
 #else
 # include "clipboard.h"
 #endif
@@ -87,9 +88,11 @@ static char *header_string (const char *fname)
     return hdr;
 }
 
-/* win32: print using Windows spooler */
-
 #ifdef G_OS_WIN32
+
+# ifdef USE_WINDOWS_SPOOLER
+
+/* win32: print using Windows spooler */
 
 static char *win32_fixed_font_name (void)
 {
@@ -260,6 +263,8 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     g_free(printbuf);
 }
 
+# endif /* USE_WINDOWS_SPOOLER */
+
 #undef WGRDEBUG
 
 int win32_print_graph (char *emfname)
@@ -335,7 +340,6 @@ int win32_print_graph (char *emfname)
 # endif
 
 	PlayEnhMetaFile(dc, hemf, &rect);
-
 	printok = (EndPage(dc) > 0);
     }
 
@@ -354,9 +358,11 @@ int win32_print_graph (char *emfname)
     return !printok;
 }
 
-#else /* !G_OS_WIN32 */
+#endif /* G_OS_WIN32 */
 
-/* native GTK printing */
+#ifndef USE_WINDOWS_SPOOLER
+
+/* native GTK printing instead */
 
 #define GRETL_PNG_TMP "gretltmp.png"
 
@@ -525,7 +531,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     g_object_unref(G_OBJECT(op));
 }
 
-#endif /* Windows vs GTK printing */
+#endif /* GTK printing */
 
 void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 {
