@@ -3387,7 +3387,8 @@ static char *get_previous_line_start_word (char *word,
    inserting a "smart" soft tab in response to the Tab key.
 */
 
-static int maybe_insert_smart_tab (windata_t *vwin)
+static int maybe_insert_smart_tab (windata_t *vwin,
+				   int *autocomp_ok)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
@@ -3420,8 +3421,13 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	gtk_text_iter_set_line_offset(&start, 0);
 	/* capture the text between line start and insertion point */
 	chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-	/* set @ret only if this text is just white space */
-	ret = strspn(chunk, " \t") == strlen(chunk);
+	if (strspn(chunk, " \t") == strlen(chunk)) {
+	    /* set @ret only if this text is just white space */
+	    ret = 1;
+	} else if (autocomp_ok != NULL) {
+	    /* follow-up: is the context OK for auto-completion? */
+	    *autocomp_ok = !isspace(chunk[strlen(chunk) - 1]);
+	}
 	g_free(chunk);
     }
 
@@ -3658,9 +3664,12 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
     }
 
     if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
-	if (maybe_insert_smart_tab(vwin)) {
+	int autocomp_ok = 0;
+	int *ptr = script_auto_complete ? &autocomp_ok : NULL;
+
+	if (maybe_insert_smart_tab(vwin, ptr)) {
 	    return TRUE;
-	} else if (script_auto_complete) {
+	} else if (autocomp_ok && script_auto_complete) {
 	    tab_auto_complete(vwin->text);
 	    return TRUE;
 	}
