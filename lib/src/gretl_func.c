@@ -764,7 +764,7 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     if (call != NULL && call->listvars != NULL) {
 	for (i=1; i<=call->listvars[0]; i++) {
 	    vi = call->listvars[i];
-#if UDEBUG > 1
+#if UDEBUG
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
 		    vi, dset->varname[vi]);
 #endif
@@ -7400,7 +7400,7 @@ static void localize_list_members (fncall *call, int *list,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi > 0) {
+	if (vi > 0 && vi < dset->v) {
 	    if (!in_gretl_list(call->listvars, vi)) {
 		gretl_list_append_term(&call->listvars, vi);
 	    }
