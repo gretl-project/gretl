@@ -397,10 +397,6 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 	    if (tex_format(prn)) {
 		pprintf(prn, "%s: $\\chi^2(%d)$ = %g [%.4f] \\\\\n",
 			_("LR over-identification test"), idf, X2, pv);
-	    } else if (rtf_format(prn)) {
-		pprintf(prn, "%s: ", _("LR over-identification test"));
-		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", _("Chi-square"),
-			idf, X2, pv);
 	    } else {
 		pprintf(prn, "%s: ", _("LR over-identification test"));
 		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", _("Chi-square"),
