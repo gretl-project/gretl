@@ -1383,6 +1383,9 @@ static int get_menu_add_ok (windata_t *vwin)
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &pkgname);
+    if (!strcmp(pkgname, "ridge")) {
+	return 0;
+    }
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 GFN_DIRNAME_COL, &dirname);
 

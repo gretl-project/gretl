@@ -4258,8 +4258,6 @@ int gui_function_pkg_query_register (const char *fname,
 	}
 	notified = 1;
 	g_free(relpath);
-    } else {
-	fprintf(stderr, "'%s': didn't find a menu_attachment\n", fname);
     }
 
     free(pkgname);
