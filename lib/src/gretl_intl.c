@@ -158,76 +158,63 @@ int get_local_decpoint (void)
 
 #endif /* end of one NLS-only block */
 
-/* fudges for strings that should not be in utf-8 under some
-   conditions: under GTK translations always come out in utf-8 in the
-   GUI, but when we're sending stuff to stderr we may have to put it
-   into ISO-8859-N or some MS Code Page.
-*/
-
-static int gretl_cset_maj;
-static int gretl_cset_min;
-
-#ifdef WIN32
-
-static int gretl_cpage;
-
-#endif
-
-#ifdef WIN32
-
-static void set_cp_from_locale (const char *loc)
-{
-    const char *p = strrchr(loc, '.');
-
-    if (p != NULL && strlen(p) > 3 && isdigit(p[1])) {
-        gretl_cpage = atoi(p + 1);
-        fprintf(stderr, "set_cp_from_locale: CP = %d\n", gretl_cpage);
-    }
-}
-
-#endif /* WIN32 */
-
 int chinese_locale (void)
 {
+    int ret = 0;
+
 #ifdef WIN32
-    return (gretl_cpage == 936 || gretl_cpage == 950);
+    gchar *loc = g_win32_getlocale();
+
+    ret = (loc != NULL && !strncmp(loc, "zh", 2));
+    g_free(loc);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
-    return (loc != NULL && !strncmp(loc, "zh", 2));
-#else
-    return 0;
+    ret = (loc != NULL && !strncmp(loc, "zh", 2));
 #endif
+
+    return ret;
 }
 
 int japanese_locale (void)
 {
+    int ret = 0;
+
 #ifdef WIN32
-    return (gretl_cpage == 932);
+    gchar *loc = g_win32_getlocale();
+
+    ret = (loc != NULL && !strncmp(loc, "ja", 2));
+    g_free(loc);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
-    return (loc != NULL && !strncmp(loc, "ja", 2));
-#else
-    return 0;
+    ret = (loc != NULL && !strncmp(loc, "ja", 2));
 #endif
+
+    return ret;
 }
 
 int east_asian_locale (void)
 {
+    int ret = 0;
+
 #ifdef WIN32
-    return (gretl_cpage == 950 || gretl_cpage == 932 || gretl_cpage == 936);
+    gchar *loc = g_win32_getlocale();
+
+    ret = (loc != NULL && (!strncmp(loc, "zh", 2) ||
+			   !strncmp(loc, "ja", 2)));
+    g_free(loc);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
-    return (loc != NULL && (!strncmp(loc, "zh", 2) ||
-			    !strncmp(loc, "ja", 2)));
-#else
-    return 0;
+    ret = (loc != NULL && (!strncmp(loc, "zh", 2) ||
+			   !strncmp(loc, "ja", 2)));
 #endif
+
+    return ret;
 }
 
-#ifdef WIN32 /* WIN32-specific block */
+#ifdef WIN32
 
 struct localeinfo {
     int id;
@@ -354,48 +341,6 @@ const char *lang_code_from_id (int langid)
 }
 
 #ifdef WIN32
-
-static const char *lang_code_from_windows_name (char *s)
-{
-    const char *ret = NULL;
-    int i, n;
-
-    if (strstr(s, "razil")) {
-	return "pt_BR";
-    } else if (!strncmp(s + 1, "hinese-t", 8) ||
-	       !strncmp(s + 1, "hinese (T", 9)) {
-	/* chinese-traditional */
-	return "zh_TW";
-    } else if (!strncmp(s + 1, "hinese-s", 8) ||
-	       !strncmp(s + 1, "hinese (S", 9)) {
-	/* chinese-simplified */
-	return "zh_CN";
-    }
-
-    for (i=1; i<LANG_MAX; i++) {
-	n = strlen(langs[i].name);
-	if (!strncmp(s, langs[i].name, n)) {
-	    ret = langs[i].code;
-	    break;
-	}
-    }
-
-    if (ret == NULL && strchr(s, '-')) {
-	/* Windows : "en-US" in place of "en_US"? */
-	char *p = strchr(s, '-');
-
-	*p = '_';
-	for (i=1; i<LANG_MAX; i++) {
-	    n = strlen(langs[i].code);
-	    if (!strncmp(s, langs[i].code, n)) {
-		ret = langs[i].code;
-		break;
-	    }
-	}
-    }
-
-    return ret;
-}
 
 static char *win32_set_numeric (const char *lang)
 {
@@ -554,10 +499,11 @@ static void record_locale (char *locale)
 # ifdef WIN32
     /* LANG probably not present, use setlocale output */
     if (locale != NULL) {
-	const char *s = lang_code_from_windows_name(locale);
+	gchar *s = g_win32_getlocale();
 
 	if (s != NULL) {
 	    gretl_insert_builtin_string("lang", s);
+	    g_free(s);
 	    done = 1;
 	}
     }
@@ -624,9 +570,7 @@ int force_language (int langid)
 # ifdef WIN32
 	    locale = gretl_strdup(setlocale(LC_ALL, lcode));
             fprintf(stderr, "lcode='%s' -> locale='%s'\n", lcode, locale);
-	    if (locale != NULL) {
-		set_cp_from_locale(locale);
-	    } else {
+	    if (locale == NULL) {
 		err = 1;
 	    }
 # else

@@ -89,8 +89,7 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 
     if (IsValidCodePage(65001) && SetConsoleOutputCP(65001)) {
-	/* flag successful switch */
-	set_native_utf8(1);
+	; /* OK */
     }
 }
 
