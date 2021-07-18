@@ -7400,7 +7400,7 @@ static void localize_list_members (fncall *call, int *list,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi > 0) {
+	if (vi > 0 && vi < dset->v) {
 	    if (!in_gretl_list(call->listvars, vi)) {
 		gretl_list_append_term(&call->listvars, vi);
 	    }

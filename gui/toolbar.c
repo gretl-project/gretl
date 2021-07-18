@@ -218,7 +218,6 @@ void gretl_stock_icons_init (void)
 	gretl_factory = gtk_icon_factory_new();
 
 	respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
-	fprintf(stderr, "respath = '%s'\n", respath);
 	icons = g_resource_load(respath, NULL);
 	if (icons == NULL) {
 	    fprintf(stderr, "g_resource_load: failed to load icons\n");

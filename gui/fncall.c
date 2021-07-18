@@ -2689,10 +2689,10 @@ int exec_bundle_special_function (gretl_bundle *b,
 
     if (!err) {
 	user_var *uv = get_user_var_by_data(b);
-	char *bname = NULL;
+	const char *bname = NULL;
 
 	if (uv != NULL) {
-	    bname = gretl_strdup(user_var_get_name(uv));
+	    bname = user_var_get_name(uv);
 	}
 	fc = fncall_new(func, 0);
 	if (bname != NULL) {
@@ -2713,7 +2713,6 @@ int exec_bundle_special_function (gretl_bundle *b,
 		err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	    }
 	}
-	free(bname);
     }
 
     if (!err) {
