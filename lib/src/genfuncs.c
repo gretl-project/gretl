@@ -2768,6 +2768,11 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
     int t1 = dset->t1, t2 = dset->t2;
     int T, err;
 
+    if (dataset_is_panel(dset)) {
+	gretl_errmsg_set("polyfit: panel data not supported");
+	return E_PDWRONG;
+    }
+
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
