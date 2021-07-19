@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "genparse.h"
+#include "completions.h"
 
 #ifdef USE_GTKSOURCEVIEW_3
 # define GTK_TYPE_SOURCE_COMPLETION_PROVIDER GTK_SOURCE_TYPE_COMPLETION_PROVIDER

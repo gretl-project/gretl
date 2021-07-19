@@ -502,6 +502,7 @@ static void record_locale (char *locale)
 	gchar *s = g_win32_getlocale();
 
 	if (s != NULL) {
+            fprintf(stderr, "record_locale: got '%s'\n", s);
 	    gretl_insert_builtin_string("lang", s);
 	    g_free(s);
 	    done = 1;
