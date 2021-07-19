@@ -20,6 +20,11 @@
 #ifndef GUI_COMPLETIONS_H
 #define GUI_COMPLETIONS_H
 
+enum completion_modes {
+    COMPLETE_AUTO = 1,
+    COMPLETE_TAB
+};
+
 extern int script_auto_complete;
 
 void set_sv_auto_completion (windata_t *vwin);

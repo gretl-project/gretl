@@ -33,11 +33,6 @@
 int script_auto_complete;
 
 enum {
-    COMPLETE_AUTO = 1,
-    COMPLETE_TAB
-};
-
-enum {
     PROV_WORDS,
     PROV_FUNCS,
     PROV_CMDS,
