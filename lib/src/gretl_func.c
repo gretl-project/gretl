@@ -6303,6 +6303,10 @@ int package_has_menu_attachment (const char *fname,
 	if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
 	    if (pkgname != NULL) {
 		gretl_xml_get_prop_as_string(node, "name", pkgname);
+		if (*pkgname != NULL && !strcmp(*pkgname, "ridge")) {
+		    /* don't put it into menu */
+		    stop = 1;
+		}
 	    }
 	    sub = node->xmlChildrenNode;
 	    while (!stop && sub != NULL) {

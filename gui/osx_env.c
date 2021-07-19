@@ -55,10 +55,10 @@ void osx_setup_paths (void)
     g_free(tmp);
 
     /* gnuplot variables */
-    tmp = g_strdup_printf("%s/share/gnuplot/5.2/gnuplot.gih", respath);
+    tmp = g_strdup_printf("%s/share/gnuplot/5.4/gnuplot.gih", respath);
     setenv("GNUHELP", tmp, 1);
     g_free(tmp);
-    tmp = g_strdup_printf("%s/share/gnuplot/5.2/PostScript", respath);
+    tmp = g_strdup_printf("%s/share/gnuplot/5.4/PostScript", respath);
     setenv("GNUPLOT_PS_DIR", tmp, 1);
     g_free(tmp);
     setenv("GNUTERM", "wxt", 1);
