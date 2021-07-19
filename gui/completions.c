@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "genparse.h"
+#include "completions.h"
 
 #ifdef USE_GTKSOURCEVIEW_3
 # define GTK_TYPE_SOURCE_COMPLETION_PROVIDER GTK_SOURCE_TYPE_COMPLETION_PROVIDER
@@ -31,11 +32,6 @@
 #include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 int script_auto_complete;
-
-enum {
-    COMPLETE_AUTO = 1,
-    COMPLETE_TAB
-};
 
 enum {
     PROV_WORDS,
