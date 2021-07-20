@@ -5871,7 +5871,9 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
             list = gretl_list_new(1);
             list[1] = l->vnum;
         } else {
-            p->err = E_TYPES;
+	    gretl_errmsg_set(_("The first argument must be a named series "
+			       "in the current dataset"));
+            p->err = E_INVARG;
         }
 
         if (p->err) {
@@ -5883,7 +5885,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
             p->err = list_dumgenr(&list, p->dset, OPT_F);
             ret->v.ivec = list;
         } else if (list[0] > 1) {
-            gretl_errmsg_set("dummify(x, y): first argument should be a single variable");
+            gretl_errmsg_set("dummify(x, y): first argument should be a single series");
             free(list);
             p->err = E_DATA;
         } else {
