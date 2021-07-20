@@ -1272,14 +1272,12 @@ static int get_csv_data (char *fname, int ftype, int append)
 	       "Do you want to force gretl to treat the first column as just\n"
 	       "an ordinary data series (regardless of the column heading)?");
 
-	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
-	if (no_yes_dialog(title, _(msg)) == GRETL_YES) {
+	if (no_yes_dialog(NULL, _(msg)) == GRETL_YES) {
 	    opt = OPT_A;
 	}
     }
 
     if (bufopen(&prn)) {
-	g_free(title);
 	return 1;
     }
 
@@ -1288,16 +1286,13 @@ static int get_csv_data (char *fname, int ftype, int append)
 	title = g_strdup_printf(_("gretl: import %s data"), "Octave");
     } else {
 	err = import_csv(fname, dataset, opt, prn);
-	if (title == NULL) {
-	    title = g_strdup_printf(_("gretl: import %s data"), "CSV");
-	}
+	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
     }
 
     /* show details regarding the import */
     vwin = view_buffer(prn, 78, 350, title, IMPORT, NULL);
     gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
 				 GTK_WINDOW(mdata->main));
-
     g_free(title);
 
     if (err) {
