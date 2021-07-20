@@ -155,7 +155,7 @@ int spin_dialog (const char *title, const char *blurb,
 int combo_selector_dialog (GList *list, const char *msg,
 			   int deflt, GtkWidget *parent);
 
-int yes_no_help_dialog (const char *msg, int hcode);
+int yes_no_help_dialog (const char *msg, int hcode, int deflt);
 
 int add_obs_dialog (const char *blurb, int addmin,
 		    gretlopt opt, GtkWidget *parent);

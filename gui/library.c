@@ -1918,8 +1918,8 @@ void labels_callback (void)
         }
     } else {
         if (yes_no_help_dialog(_("The dataset has no variable labels.\n"
-                                 "Add some from file now?"),
-                               OPEN_LABELS) == GRETL_YES) {
+                                 "Add some from file now?"), OPEN_LABELS,
+			       GRETL_YES) == GRETL_YES) {
             file_selector(OPEN_LABELS, FSEL_DATA_NONE, NULL);
         }
     }

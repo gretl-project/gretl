@@ -1256,23 +1256,41 @@ static int get_csv_data (char *fname, int ftype, int append)
 {
     windata_t *vwin;
     PRN *prn;
-    gchar *title;
+    gchar *title = NULL;
+    gretlopt opt = OPT_NONE;
     int err = 0;
 
     if (datafile_missing(fname)) {
 	return E_FOPEN;
     }
 
+    if (ftype == GRETL_CSV) {
+	const char *msg =
+	    N_("Usually gretl tries to interpret the first column of a CSV\n"
+	       "data file as containing observation information (for example,\n"
+	       "dates), if the column heading looks suitable.\n\n"
+	       "Do you want to force gretl to treat the first column as just\n"
+	       "an ordinary data series (regardless of the column heading)?");
+
+	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
+	if (no_yes_dialog(title, _(msg)) == GRETL_YES) {
+	    opt = OPT_A;
+	}
+    }
+
     if (bufopen(&prn)) {
+	g_free(title);
 	return 1;
     }
 
     if (ftype == GRETL_OCTAVE) {
-	err = import_other(fname, ftype, dataset, OPT_NONE, prn);
+	err = import_other(fname, ftype, dataset, opt, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "Octave");
     } else {
-	err = import_csv(fname, dataset, OPT_NONE, prn);
-	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
+	err = import_csv(fname, dataset, opt, prn);
+	if (title == NULL) {
+	    title = g_strdup_printf(_("gretl: import %s data"), "CSV");
+	}
     }
 
     /* show details regarding the import */
