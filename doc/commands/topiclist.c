@@ -467,8 +467,7 @@ void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
-    /* note: for TeX output */
-    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
 int main (int argc, char **argv)

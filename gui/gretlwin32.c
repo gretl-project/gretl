@@ -89,8 +89,7 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 
     if (IsValidCodePage(65001) && SetConsoleOutputCP(65001)) {
-	/* flag successful switch */
-	set_native_utf8(1);
+	; /* OK */
     }
 }
 
@@ -304,7 +303,6 @@ void gretl_win32_debug_init (int debug)
 	set_windebug(1);
 	fprintf(stderr, "Windows locale = %s\n",
 		winlocale == NULL ? "NULL" : winlocale);
-	fprintf(stderr, "codepage = %d\n", get_gretl_cpage());
 	g_get_charset(&charset);
 	fprintf(stderr, "charset = %s\n", charset);
 	pkgdir = g_win32_get_package_installation_directory_of_module(NULL);

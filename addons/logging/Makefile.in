@@ -28,29 +28,35 @@ vpath %.spec $(PKGSRC)
 INP = logging.inp
 SPEC = logging.spec
 SMPL = logging_sample.inp
-HELP = logging_help.txt
 
-all: $(PKG).gfn
+all: $(PKG).gfn pdfdoc
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL) $(HELP)
 	$(GRETLCLI) -t pkg.inp
 
-.PHONY: symlinks check install installdirs clean
+$(PKG).zip: $(PKG).gfn pdfdoc
+	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
+
+.PHONY: symlinks pdfdoc check install installdirs clean
 
 symlinks:
 	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
-	@if [ ! -f $(HELP) ] || [ $(PKGSRC)/$(HELP) -nt $(HELP) ] ; then ln -sf $(PKGSRC)/$(HELP) . ; fi
+
+pdfdoc: 
+	$(MAKE) -C doc
 
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).gfn installdirs
+install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 
 clean: 
-	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
 	@rm -f test.out
+	@$(MAKE) -C doc clean

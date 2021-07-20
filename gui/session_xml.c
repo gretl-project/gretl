@@ -35,7 +35,6 @@ static int check_graph_file (const char *fname, int type)
 	    fclose(fp);
 	} else {
 	    fclose(fp);
-	    err = maybe_rewrite_gp_file(fullname);
 	}
     }
 

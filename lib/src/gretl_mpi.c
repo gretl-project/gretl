@@ -2405,18 +2405,16 @@ int shm_write_matrix (const gretl_matrix *m,
 	memcpy(pos, &m->cols, sizeof m->cols);
 	pos += sizeof m->cols;
 	memcpy(pos, m->val, vsize);
-    }
 
-    if (ptr != NULL) {
 	munmap(ptr, msize);
     }
+
     if (fd != -1) {
 	close(fd);
     }
     if (err) {
 	shm_unlink(memname);
     }
-
     g_free(memname);
 
     return err;

@@ -391,7 +391,6 @@ static void real_nls_init (void)
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
     record_win32_locale(setlocale(LC_ALL, ""));
-    set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -445,7 +444,6 @@ static void real_nls_init (void)
 #if LOCALE_CHECK
     macos_check_locale();
 #endif
-    set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -459,7 +457,6 @@ static void real_nls_init (void)
 static void real_nls_init (void)
 {
     setlocale(LC_ALL, "");
-    set_gretl_charset();
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");

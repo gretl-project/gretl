@@ -726,6 +726,8 @@ AVX_CFLAGS
 SSE2_CFLAGS
 MPILINK
 MPICC
+COMPRES
+MKPNGLIST
 MKNEWS
 MKLANG
 HOSTCC
@@ -902,6 +904,8 @@ LT_SYS_LIBRARY_PATH
 HOSTCC
 MKLANG
 MKNEWS
+MKPNGLIST
+COMPRES
 MPICC
 MPILINK
 CXX
@@ -1621,6 +1625,8 @@ Some influential environment variables:
   HOSTCC      host compiler (for cross-build)
   MKLANG      builder for gtksourceview files (cross-build)
   MKNEWS      builder for NEWS file (cross-build)
+  MKPNGLIST   builder for icons index (cross-build)
+  COMPRES     GLib resource compiler (cross-build)
   MPICC       path to MPI compiler wrapper
   MPILINK     linker commands for MPI (cross-build)
   CXX         C++ compiler command
@@ -16083,6 +16089,8 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 
 
 
+
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use SSE2" >&5
 $as_echo_n "checking whether to use SSE2... " >&6; }
   # Check whether --enable-sse2 was given.
@@ -23409,7 +23417,7 @@ if test "${build_docs}" = "yes" ; then
 fi
 
 if test "${build_addons}" = "yes" ; then
-  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/pkg.inp addons/geoplot/Makefile addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/pkg.inp addons/regls/Makefile addons/regls/doc/Makefile addons/logging/pkg.inp addons/logging/Makefile"
+  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/pkg.inp addons/geoplot/Makefile addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/pkg.inp addons/regls/Makefile addons/regls/doc/Makefile addons/logging/pkg.inp addons/logging/Makefile addons/logging/doc/Makefile"
 
 fi
 
@@ -24569,6 +24577,7 @@ do
     "addons/regls/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/regls/doc/Makefile" ;;
     "addons/logging/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/logging/pkg.inp" ;;
     "addons/logging/Makefile") CONFIG_FILES="$CONFIG_FILES addons/logging/Makefile" ;;
+    "addons/logging/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/logging/doc/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

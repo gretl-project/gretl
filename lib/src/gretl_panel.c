@@ -1557,14 +1557,19 @@ static void print_re_results (panelmod_t *pan,
 			      DATASET *dset,
 			      PRN *prn)
 {
-    pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->s2v);
-    pprintf(prn, " within = %g\n", pan->s2e);
+    pputs(prn, _("Variance estimators:"));
+    pputc(prn, '\n');
+    pprintf(prn, _(" between = %g"), pan->s2v);
+    pputc(prn, '\n');
+    pprintf(prn, _(" within = %g"), pan->s2e);
+    pputc(prn, '\n');
 
     if (pan->balanced || pan->s2v == 0) {
-	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
+	pprintf(prn, _("theta used for quasi-demeaning = %g"), pan->theta);
+	pputc(prn, '\n');
     } else {
-	pputs(prn, "Panel is unbalanced: theta varies across units\n");
+	pputs(prn, _("Panel is unbalanced: theta varies across units"));
+	pputc(prn, '\n');
     }
     pputc(prn, '\n');
 
@@ -2291,6 +2296,11 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     double yht, SSR = 0.0;
     int i, j, s, t;
     int err = 0;
+
+    if (yhat == NULL) {
+	fprintf(stderr, "fix_panel_hatvars: pan->pooled->yhat is NULL\n");
+	return E_DATA;
+    }
 
     y = Z[pan->pooled->list[1]];
 
@@ -3328,7 +3338,21 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 
     if (pan->opt & OPT_V) {
 	if (!err || (mdiff && err == E_NOTPD)) {
+	    gretl_matrix *tests = gretl_column_vector_alloc(3);
+	    gretl_matrix *pvals = gretl_column_vector_alloc(3);
+
+	    /* fixed-effects poolability F-test */
+	    tests->val[0] = pan->Ffe;
+	    pvals->val[0] = snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe);
+	    /* random-effects poolability test */
+	    tests->val[1] = pan->BP;
+	    pvals->val[1] = chisq_cdf_comp(1, pan->BP);
+	    /* Hausman test */
+	    tests->val[2] = pan->H;
+	    pvals->val[2] = chisq_cdf_comp(pan->dfH, pan->H);
+
 	    print_hausman_result(pan, prn);
+	    record_matrix_test_result(tests, pvals);
 	}
     } else {
 	if (mdiff && err == E_NOTPD) {

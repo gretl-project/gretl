@@ -382,6 +382,8 @@ AC_C_BIGENDIAN
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 AC_ARG_VAR(MKNEWS, builder for NEWS file (cross-build))
+AC_ARG_VAR(MKPNGLIST, builder for icons index (cross-build))
+AC_ARG_VAR(COMPRES, GLib resource compiler (cross-build))
 AC_ARG_VAR(MPICC, path to MPI compiler wrapper)
 AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 
@@ -1071,6 +1073,7 @@ if test "${build_addons}" = "yes" ; then
     addons/regls/doc/Makefile
     addons/logging/pkg.inp
     addons/logging/Makefile
+    addons/logging/doc/Makefile
   ])
 fi
 

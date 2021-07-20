@@ -2474,8 +2474,8 @@ void modify_date_for_csv (char *s, int pd)
  * print_time:
  * @s: string into which to print: must be at least 48 bytes.
  *
- * Returns: @s, which will contain a locale-dependent representation
- * of the current time.  In English, this will be in the format Y-m-d H:M.
+ * Returns: @s, which will contain a string representation of the
+ * current date and time, in the format YYYY-mm-dd H:M.
  */
 
 char *print_time (char *s)

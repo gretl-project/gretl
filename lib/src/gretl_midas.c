@@ -2304,14 +2304,11 @@ static midas_term *mterms_from_array (gretl_array *A,
    MIDAS term, or NULL on failure.
 */
 
-const char *get_midas_term_line (const MODEL *pmod, int i)
+char *get_midas_term_line (const MODEL *pmod, int i)
 {
-    static char targ[MAXLEN];
-    const char *ret = NULL;
     gretl_array *A = gretl_model_get_data(pmod, "midas_info");
     gretl_bundle *b = NULL;
-
-    *targ = '\0';
+    char *ret = NULL;
 
     if (A != NULL) {
 	int n = gretl_array_get_length(A);
@@ -2329,11 +2326,8 @@ const char *get_midas_term_line (const MODEL *pmod, int i)
 	l1 = gretl_bundle_get_int(b, "minlag", &err);
 	l2 = gretl_bundle_get_int(b, "maxlag", &err);
 
-	if (!err) {
-	    sprintf(targ, _("MIDAS list %s, high-frequency lags %d to %d"),
-		    lname, l1, l2);
-	    ret = targ;
-	}
+	ret = gretl_strdup_printf(_("MIDAS list %s, high-frequency lags %d to %d"),
+				  lname, l1, l2);
     }
 
     return ret;

@@ -46,6 +46,8 @@
 # include "gretlwin32.h"
 #endif
 
+#include <gio/gio.h>
+
 /* for viewer window toolbars */
 #include "../pixmaps/mini.en.xpm"
 
@@ -191,9 +193,10 @@ void gretl_stock_icons_init (void)
     int n2 = G_N_ELEMENTS(xpm_stocks);
 
     if (gretl_factory == NULL) {
-	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM); /* FIXME */
-	const char *gretldir = gretl_home();
+	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
 	gchar *p, *icon_path, *pm, *menu_path = NULL;
+	gchar *respath;
+	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
@@ -213,23 +216,32 @@ void gretl_stock_icons_init (void)
 #endif
 	}
 
-	icon_path = malloc(strlen(gretldir) + 32);
+	gretl_factory = gtk_icon_factory_new();
+
+	respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
+	icons = g_resource_load(respath, NULL);
+	if (icons == NULL) {
+	    fprintf(stderr, "g_resource_load: failed to load icons\n");
+	    g_free(respath);
+	    goto do_pixmaps;
+	}
+
+	g_resources_register(icons);
+	icon_path = malloc(48);
 
 	if (bigger) {
-	    sprintf(icon_path, "%sicons%c24x24%c", gretldir, SLASH, SLASH);
-	    menu_path = malloc(strlen(gretldir) + 32);
-	    sprintf(menu_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
-	    pm = strrchr(menu_path, SLASH) + 1;
+	    menu_path = malloc(48);
+	    strcpy(icon_path, "/gretl/icons/24x24/");
+	    strcpy(menu_path, "/gretl/icons/16x16/");
+	    pm = strrchr(menu_path, '/') + 1;
 	} else {
-	    sprintf(icon_path, "%sicons%c16x16%c", gretldir, SLASH, SLASH);
+	    strcpy(icon_path, "/gretl/icons/16x16/");
 	}
-	p = strrchr(icon_path, SLASH) + 1;
-
-	gretl_factory = gtk_icon_factory_new();
+	p = strrchr(icon_path, '/') + 1;
 
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, png_stocks[i].fname);
-	    pbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
+	    pbuf = gdk_pixbuf_new_from_resource(icon_path, NULL);
 	    if (pbuf == NULL) {
 		fprintf(stderr, "Failed to load %s\n", icon_path);
 		*p = '\0';
@@ -265,6 +277,11 @@ void gretl_stock_icons_init (void)
 
 	free(icon_path);
 	free(menu_path);
+	g_free(respath);
+	g_resources_unregister(icons);
+	g_resource_unref(icons);
+
+    do_pixmaps:
 
 	for (i=0; i<n2; i++) {
 	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpm_stocks[i].xpm);

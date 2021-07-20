@@ -499,8 +499,8 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
     for (i=0; i<k; i++) {
 	if (p[i] <= 0.0 || p[i] >= 1.0) {
 	    p[i] = NADBL;
-	    err = 1;
-	    continue;
+	    err = E_INVARG;
+	    break;
 	}
 
 	h = quantile_index(n, p[i]);
@@ -3785,7 +3785,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 			  int allpos)
 {
     char crit_string[16];
-    char title[128];
+    gchar *title;
     FILE *fp;
     int k, err = 0;
 
@@ -3807,9 +3807,10 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     } else {
 	fputs("set yrange [-1.1:1.1]\n", fp);
     }
-    sprintf(title, _("Correlations of %s and lagged %s"),
-	    xname, yname);
+    title = g_strdup_printf(_("Correlations of %s and lagged %s"),
+			    xname, yname);
     fprintf(fp, "set title '%s'\n", title);
+    g_free(title);
     fprintf(fp, "set xrange [%d:%d]\n", -(m + 1), m + 1);
     if (allpos) {
 	fprintf(fp, "plot \\\n"
@@ -6366,27 +6367,29 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
     if (corr->dim == 2) {
 	printcorr(corr, prn);
     } else {
-	char date1[OBSLEN], date2[OBSLEN], tmp[96];
+	char date1[OBSLEN], date2[OBSLEN];
+	gchar *tmp = NULL;
 
 	ntolabel(date1, corr->t1, dset);
 	ntolabel(date2, corr->t2, dset);
 
 	pputc(prn, '\n');
 
-	sprintf(tmp, _("%s, using the observations %s - %s"),
-		_("Correlation Coefficients"), date1, date2);
+	tmp = g_strdup_printf(_("%s, using the observations %s - %s"),
+			      _("Correlation Coefficients"), date1, date2);
 	output_line(tmp, prn, 0);
+	g_free(tmp);
 
 	if (corr->missing) {
-	    strcpy(tmp, _("(missing values were skipped)"));
-	    output_line(tmp, prn, 1);
+	    output_line(_("(missing values were skipped)"), prn, 1);
 	}
 
 	if (corr->n > 0) {
-	    sprintf(tmp, _("5%% critical value (two-tailed) = "
-			   "%.4f for n = %d"), rhocrit95(corr->n),
-		    corr->n);
+	    tmp = g_strdup_printf(_("5%% critical value (two-tailed) = "
+				    "%.4f for n = %d"), rhocrit95(corr->n),
+				  corr->n);
 	    output_line(tmp, prn, 1);
+	    g_free(tmp);
 	}
 
 	text_print_vmatrix(corr, prn);

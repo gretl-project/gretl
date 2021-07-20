@@ -20,8 +20,6 @@
 #ifndef PLOTSPEC_H
 #define PLOTSPEC_H
 
-#define GP_MAXFORMULA 128
-
 #define GP_BORDER_DEFAULT (-1)
 #define LT_AUTO (-2)
 
@@ -83,22 +81,22 @@ typedef enum {
 /* information about a line within a gnuplot graph */
 
 typedef struct {
-    int varnum;                    /* ID number of variable to plot */
-    GpLineStyle style;             /* lines, points, etc. */
-    char title[MAXTITLE];          /* key or legend title */
-    char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
-    char *ustr;                    /* custom 'using' string */
-    int *mcols;                    /* data-matrix columns used */
-    float pscale;                  /* scale factor for points */
-    char rgb[8];                   /* rgb color specification */
-    char yaxis;                    /* 1 for left, 2 for right */
-    int type;                      /* 1, 2, ... (style reference) */
-    int ptype;                     /* point type */
-    int dtype;                     /* dash type */
-    float width;                   /* line width, default 1.0 */
-    char ncols;                    /* number of data columns (0 for formula) */
-    float whiskwidth;              /* whiskerbar width (boxplots) */
-    char flags;                    /* additional options */
+    int varnum;          /* ID number of variable to plot */
+    GpLineStyle style;   /* lines, points, etc. */
+    gchar *title;        /* key or legend title */
+    gchar *formula;      /* expression to plot (rather than data) */
+    char *ustr;          /* custom 'using' string */
+    int *mcols;          /* data-matrix columns used */
+    float pscale;        /* scale factor for points */
+    char rgb[8];         /* rgb color specification */
+    char yaxis;          /* 1 for left, 2 for right */
+    int type;            /* 1, 2, ... (style reference) */
+    int ptype;           /* point type */
+    int dtype;           /* dash type */
+    float width;         /* line width, default 1.0 */
+    char ncols;          /* number of data columns (0 for formula) */
+    float whiskwidth;    /* whiskerbar width (boxplots) */
+    char flags;          /* additional options */
 } GPT_LINE;
 
 #define PLOT_LABEL_TEXT_LEN 31
@@ -141,7 +139,7 @@ struct GPT_SPEC_ {
     int nbars;                 /* number of time-series shaded bars */
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
-    char titles[5][MAXTITLE];  /* main, x, y, y2, x2 */
+    gchar *titles[5];          /* main, x, y, y2, x2 */
     double range[5][2];        /* axis range specifiers */
     double logbase[3];         /* axis log-scales base (0 for linear) */
     int keyspec;               /* position of key (or none) */
@@ -236,7 +234,7 @@ gp_key_spec *get_keypos_spec (int t);
 
 void print_keypos_string (int t, FILE *fp);
 
-void set_plotfit_line (char *title, char *formula,
+void set_plotfit_line (GPT_LINE *line,
 		       FitType f, const double *b, 
 		       double x0, double pd);
 

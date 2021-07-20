@@ -64,7 +64,6 @@ typedef guint32 gretlRGB;
 
 typedef struct GPT_SPEC_ GPT_SPEC;
 
-#define MAXTITLE 128
 #define N_GP_LINETYPES 8
 
 #define GP_WIDTH      640

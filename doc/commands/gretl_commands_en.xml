@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE commandref SYSTEM "gretl_commands.dtd">
 
 <commandref language="english">
@@ -5938,17 +5938,18 @@
 	effects and random effects models.
       </para>
       <para>
-	The fixed effects model allows the intercept of the regression to
-	vary across the cross-sectional units.  An
+	The fixed effects model allows the intercept of the regression
+	to vary across the cross-sectional units.  An
 	<math>F</math>-test is reported for the null hypotheses that
-	the intercepts do not differ. The random effects model decomposes
-	the residual variance into two parts, one part specific to the
-	cross-sectional unit and the other specific to the particular
-	observation.  (This estimator can be computed only if the number
-	of cross-sectional units in the data set exceeds the number of
-	parameters to be estimated.) The Breusch&ndash;Pagan LM statistic
-	tests the null hypothesis that the pooled OLS estimator is
-	adequate against the random effects alternative.
+	the intercepts do not differ. The random effects model
+	decomposes the residual variance into two parts, one part
+	specific to the cross-sectional unit and the other specific to
+	the particular observation.  (This estimator can be computed
+	only if the number of cross-sectional units in the data set
+	exceeds the number of parameters to be estimated.) The
+	Breusch&ndash;Pagan LM statistic tests the null hypothesis
+	that the pooled OLS estimator is adequate against the random
+	effects alternative.
       </para>
       <para>
 	The pooled OLS model may be rejected against both of the
@@ -5971,6 +5972,12 @@
 	variance estimator and/or the matrix-difference approach to
 	the Hausman statistic.
       </para>
+      <para>
+	Note that after estimating the random effects model with the
+	<cmd>panel</cmd> command instead of the pooled OLS model, the
+	Hausman test is automatically carried out and the results can
+	be retrieved via the <fncref targ="$hausman"/> accessor.
+      </para>	
     </description>
 
     <gui-access>

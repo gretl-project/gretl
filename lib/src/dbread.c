@@ -830,9 +830,8 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     } else if (dinfo->info == 1) {
 	startfrac = 0;
     } else {
-	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
+	fprintf(stderr, "frequency (%d) does not make seem to make sense\n",
 		(int) dinfo->info);
-	fputc('\n', stderr);
 	gretl_errmsg_sprintf(("frequency (%d) does not make seem to make sense"),
 			     (int) dinfo->info);
 	err = 1;
@@ -876,8 +875,7 @@ static int in7_to_sinfo (const char *varname, const char *comment,
 	sprintf(sinfo->stobs, "%d", y0);
 	sprintf(sinfo->endobs, "%d", y1);
     } else {
-	fprintf(stderr, I_("frequency %d is not supported"), pd);
-	fputc('\n', stderr);
+	fprintf(stderr, "frequency %d is not supported\n", pd);
 	gretl_errmsg_sprintf(_("frequency %d is not supported"), pd);
 	err = 1;
     }

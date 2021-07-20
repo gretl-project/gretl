@@ -7633,7 +7633,6 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     }
 
     n = m->rows;
-
     a = malloc(n * sizeof *a);
     q = malloc(plen * sizeof *q);
 
@@ -7655,10 +7654,16 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
 	    }
 	}
 	memcpy(q, p->val, plen * sizeof *q);
-	*err = gretl_array_quantiles(a, k, q, plen);
-	if (!*err) {
+	if (k == 0) {
 	    for (i=0; i<plen; i++) {
-		gretl_matrix_set(qvals, i, j, q[i]);
+		gretl_matrix_set(qvals, i, j, NADBL);
+	    }
+	} else {
+	    *err = gretl_array_quantiles(a, k, q, plen);
+	    if (!*err) {
+		for (i=0; i<plen; i++) {
+		    gretl_matrix_set(qvals, i, j, q[i]);
+		}
 	    }
 	}
 	mval += n;
@@ -13753,7 +13758,8 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
     }
 
     if (k == 0) {
-	*err = E_DATA;
+	v = gretl_null_matrix_new();
+	*err = v == NULL ? E_ALLOC : 0;
 	goto bailout;
     }
 

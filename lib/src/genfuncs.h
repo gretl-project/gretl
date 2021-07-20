@@ -131,7 +131,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt);
 
 double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 			  ModelDataIndex idx, char *vname,
-			  char *vlabel, int *err);
+			  gchar **pdesc, int *err);
 
 int get_observation_number (const char *s, const DATASET *dset);
 

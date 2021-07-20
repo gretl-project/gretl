@@ -1725,7 +1725,7 @@ int gretl_matrix_write_as_gdt (const char *fname,
     msize = T * k * sizeof(double);
 
     if (msize > 100000) {
-	fprintf(stderr, I_("Writing %.0f Kbytes of data\n"), msize / 1024);
+	fprintf(stderr, "Writing %.0f Kbytes of data\n", msize / 1024);
     } else {
 	msize = 0;
     }
@@ -2299,7 +2299,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     dsize = tsamp * nvars * sizeof(double);
 
     if (dsize > 100000) {
-	fprintf(stderr, I_("Writing %.0f Kbytes of data\n"), dsize / 1024);
+	fprintf(stderr, "Writing %.0f Kbytes of data\n", dsize / 1024);
     } else if (progress) {
 	/* suppress progress bar for smaller data */
 	progress = 0;
@@ -3785,9 +3785,9 @@ static void record_transform_info (DATASET *dset, double version)
 
 static void data_read_message (const char *fname, DATASET *dset, PRN *prn)
 {
-    pprintf(prn, A_("\nRead datafile %s\n"), fname);
-    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-		    "observations range: %s to %s\n"),
+    pprintf(prn, _("\nRead datafile %s\n"), fname);
+    pprintf(prn, _("periodicity: %d, maxobs: %d\n"
+		   "observations range: %s to %s\n"),
 	    (custom_time_series(dset))? 1 : dset->pd,
 	    dset->n, dset->stobs, dset->endobs);
     pputc(prn, '\n');
@@ -3896,11 +3896,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	return E_FOPEN;
     } else if (fsz > 100000) {
 	fprintf(stderr, "%s %.0f Kbytes %s...\n",
-		gz ? I_("Uncompressing") : I_("Reading"),
-		(double) fsz / 1024.0, I_("of data"));
+		gz ? "Uncompressing" : "Reading",
+		(double) fsz / 1024.0, "of data");
     }
-
-    set_alt_gettext_mode(prn);
 
     tmpset = datainfo_new();
     if (tmpset == NULL) {

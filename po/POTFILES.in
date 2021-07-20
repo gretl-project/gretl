@@ -1,6 +1,5 @@
 lib/src/addons_utils.c
 lib/src/adf_kpss.c
-lib/src/almosteq.c
 lib/src/bhhh_max.c
 lib/src/bootstrap.c
 lib/src/boxplots.c
@@ -43,6 +42,7 @@ lib/src/gretl_matrix.c
 lib/src/gretl_midas.c
 lib/src/gretl_model.c
 lib/src/gretl_mpi.c
+lib/src/gretl_mt.c
 lib/src/gretl_normal.c
 lib/src/gretl_panel.c
 lib/src/gretl_paths.c
@@ -102,6 +102,7 @@ gui/calculator.c
 gui/callbacks.c
 gui/clipboard.c
 gui/cmdstack.c
+gui/completions.c
 gui/console.c
 gui/database.c
 gui/datafiles.c
@@ -113,8 +114,10 @@ gui/fileselect.c
 gui/filters.c
 gui/fncall.c
 gui/fnsave.c
+gui/focus.c
 gui/fontfilter.c
 gui/gfn_arglists.c
+gui/gpt_collect.c
 gui/gpt_control.c
 gui/gpt_dialog.c
 gui/graphics.c
@@ -153,7 +156,6 @@ gui/varinfo.c
 gui/winstack.c
 plugin/addons-i18n.c
 plugin/anova.c
-plugin/arbond.c
 plugin/arma.c
 plugin/arma_cml.c
 plugin/arma_common.c
@@ -198,7 +200,6 @@ plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
 plugin/purebin.c
-plugin/purebin-swap.c
 plugin/quantreg.c
 plugin/range-mean.c
 plugin/regls.c

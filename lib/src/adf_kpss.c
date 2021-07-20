@@ -709,7 +709,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
     };
-    char pvstr[64];
+    gchar *pvstr = NULL;
     char taustr[16];
     int i;
 
@@ -719,13 +719,13 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     i = ainfo->det - 1;
 
     if (na(ainfo->pval)) {
-	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
+	pvstr = g_strdup_printf("%s %s", _("p-value"), _("unknown"));
     } else if (ainfo->pvtype == PV_ASY) {
-	sprintf(pvstr, "%s %.4g", _("asymptotic p-value"), ainfo->pval);
+	pvstr = g_strdup_printf("%s %.4g", _("asymptotic p-value"), ainfo->pval);
     } else if (ainfo->pvtype == PV_APPROX) {
-	sprintf(pvstr, "%s %.3f", _("approximate p-value"), ainfo->pval);
+	pvstr = g_strdup_printf("%s %.3f", _("approximate p-value"), ainfo->pval);
     } else {
-	sprintf(pvstr, "%s %.4g", _("p-value"), ainfo->pval);
+	pvstr = g_strdup_printf("%s %.4g", _("p-value"), ainfo->pval);
     }
 
     if (*blurb_done == 0) {
@@ -801,6 +801,8 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     } else {
 	pprintf(prn, "  %s\n", pvstr);
     }
+
+    g_free(pvstr);
 
     if (!na(dfmod->rho)) {
 	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"),

@@ -547,7 +547,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
     double irbar, irmax;
     int sub1 = 0;
     double f1;
-    char title[32];
+    gchar *title;
     int t, err = 0;
 
     obs = gretl_plotx(dset, OPT_NONE);
@@ -597,9 +597,9 @@ static int graph_series (const DATASET *dset, tx_request *req)
 
     /* irregular component */
     if (sub1) {
-	sprintf(title, "%s - 1", _("irregular"));
+	title = g_strdup_printf("%s - 1", _("irregular"));
     } else {
-	sprintf(title, "%s", _("irregular"));
+	title = g_strdup(_("irregular"));
     }
 
     fprintf(fp, "set bars 0\n"
@@ -607,6 +607,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
 	    "set xzeroaxis\n"
 	    "plot '-' using 1:%s title '%s' w impulses\n",
 	    (sub1)? "($2-1.0)" : "2", title);
+    g_free(title);
 
     for (t=dset->t1; t<=dset->t2; t++) {
 	double yt = dset->Z[v_ir][t];
@@ -758,6 +759,17 @@ static int seats_no_seasonal (const char *path)
     return ret;
 }
 
+static const char *addstr (tx_request *request)
+{
+    if (request->prog == X12A) {
+	return "(X-12-ARIMA)";
+    } else if (request->prog == TRAMO_SEATS) {
+	return "(TRAMO/SEATS)";
+    } else {
+	return "(TRAMO)";
+    }
+}
+
 static int add_series_from_file (const char *path, int src,
 				 DATASET *dset, int targv,
 				 tx_request *request)
@@ -765,7 +777,7 @@ static int add_series_from_file (const char *path, int src,
     FILE *fp;
     char line[128], sfname[MAXLEN];
     char varname[VNAMELEN], date[16];
-    char label[MAXLABEL];
+    gchar *label, *tmp;
     double x;
     int d, yr, per, err = 0;
     int t;
@@ -845,15 +857,11 @@ static int add_series_from_file (const char *path, int src,
 
     /* copy varname and label into place */
     strcpy(dset->varname[targv], varname);
-    sprintf(label, _(tx_descrip_formats[src]), dset->varname[0]);
-    if (request->prog == X12A) {
-	strcat(label, " (X-12-ARIMA)");
-    } else if (request->prog == TRAMO_SEATS) {
-	strcat(label, " (TRAMO/SEATS)");
-    } else {
-	strcat(label, " (TRAMO)");
-    }
+    tmp = g_strdup_printf(_(tx_descrip_formats[src]), dset->varname[0]);
+    label = g_strdup_printf("%s %s", tmp, addstr(request));
     series_set_label(dset, targv, label);
+    g_free(label);
+    g_free(tmp);
 
     for (t=0; t<dset->n; t++) {
 	dset->Z[targv][t] = NADBL;

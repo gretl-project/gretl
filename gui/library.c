@@ -487,7 +487,7 @@ void add_mahalanobis_data (windata_t *vwin)
     const int *mlist;
     char *liststr;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
 
@@ -504,16 +504,18 @@ void add_mahalanobis_data (windata_t *vwin)
     }
 
     strcpy(vname, "mdist");
-    strcpy(descrip, _("Mahalanobis distances"));
+    descrip = g_strdup(_("Mahalanobis distances"));
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
+	g_free(descrip);
         return;
     }
 
     err = add_or_replace_series((double *) dx, vname, descrip,
                                 DS_COPY_VALUES);
+    g_free(descrip);
 
     if (!err) {
         liststr = gretl_list_to_string(mlist, dataset, &err);
@@ -562,7 +564,7 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     double *x = NULL;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int id = gretl_VECM_id(var);
     int j, cancel = 0;
     int err = 0;
@@ -576,15 +578,16 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
 
     j++;
     sprintf(vname, "EC%d", j);
-    sprintf(descrip, "error correction term %d from VECM %d", j, id);
-
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    descrip = g_strdup_printf(_("error correction term %d from VECM %d"), j, id);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
     if (cancel) {
         free(x);
+	g_free(descrip);
         return;
     }
 
     err = add_or_replace_series(x, vname, descrip, DS_GRAB_VALUES);
+    g_free(descrip);
 
     if (err) {
         free(x);
@@ -600,7 +603,7 @@ void add_fcast_data (windata_t *vwin, ModelDataIndex idx)
 {
     FITRESID *fr = (FITRESID *) vwin->data;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
 
@@ -609,19 +612,21 @@ void add_fcast_data (windata_t *vwin, ModelDataIndex idx)
 
     if (idx == M_FCSE) {
         strcat(vname, "_se");
-        sprintf(descrip, _("forecast std errors of %s"), fr->depvar);
+        descrip = g_strdup_printf(_("forecast std errors of %s"), fr->depvar);
     } else {
         strcat(vname, "_hat");
-        sprintf(descrip, _("forecast of %s"), fr->depvar);
+        descrip = g_strdup_printf(_("forecast of %s"), fr->depvar);
     }
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
     if (cancel) {
+	g_free(descrip);
         return;
     }
 
     err = add_or_replace_series(idx == M_FCSE ? fr->sderr : fr->fitted,
                                 vname, descrip, DS_COPY_VALUES);
+    g_free(descrip);
 
     if (!err) {
         char stobs[OBSLEN], endobs[OBSLEN];
@@ -674,13 +679,11 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
                  GtkWidget *parent)
 {
     PRN *prn;
-    char title[128];
+    gchar *title = NULL;
     gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
     const char *flagstr = NULL;
     int err = 0;
-
-    strcpy(title, "gretl: ");
 
     if (ci == CORR || ci == PCA || ci == XTAB) {
         flagstr = print_flags(opt, ci);
@@ -696,7 +699,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
     if (ci == ALL_CORR) {
         /* correlation matrix, all series */
         lib_command_strcpy("corr");
-        strcat(title, _("correlation matrix"));
+        title = g_strdup_printf("gretl: %s", _("correlation matrix"));
         ci = CORR;
     } else if (ci == ALL_SUMMARY) {
         /* summary stats, all series or list */
@@ -705,19 +708,19 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         } else {
             lib_command_strcpy("summary");
         }
-        strcat(title, _("summary statistics"));
+        title = g_strdup_printf("gretl: %s", _("summary statistics"));
         ci = SUMMARY;
     } else if (ci == VAR_SUMMARY) {
         /* summary stats, single series */
         lib_command_sprintf("summary %s", selected_varname());
-        strcat(title, _("summary stats: "));
-        strcat(title, selected_varname());
+        title = g_strdup_printf("gretl: %s%s", _("summary stats: "),
+				selected_varname());
         ci = SUMMARY;
         vsize = 300;
     } else if (ci == NORMTEST) {
         /* normality test, single series */
         lib_command_sprintf("normtest %s --all", selected_varname());
-        strcat(title, _("normality test"));
+        title = g_strdup_printf("gretl: %s", _("normality test"));
         vsize = 300;
     } else if (liststr == NULL) {
         /* beyond here we need a list */
@@ -726,20 +729,20 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         switch (ci) {
         case CORR:
             lib_command_sprintf("corr%s%s", liststr, flagstr);
-            strcat(title, _("correlation matrix"));
+            title = g_strdup_printf("gretl: %s", _("correlation matrix"));
             break;
         case PCA:
             lib_command_sprintf("pca%s%s", liststr, flagstr);
-            strcat(title, _("principal components"));
+            title = g_strdup_printf("gretl: %s", _("principal components"));
             break;
         case MAHAL:
             lib_command_sprintf("mahal%s", liststr);
             hsize = 60;
-            strcat(title, _("Mahalanobis distances"));
+            title = g_strdup_printf("gretl: %s", _("Mahalanobis distances"));
             break;
         case XTAB:
             lib_command_sprintf("xtab %s%s", liststr, flagstr);
-            strcat(title, _("cross tabulation"));
+            title = g_strdup_printf("gretl: %s", _("cross tabulation"));
             vsize = 340;
             break;
         case SUMMARY:
@@ -748,7 +751,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
             } else {
                 lib_command_sprintf("summary%s", liststr);
             }
-            strcat(title, _("summary statistics"));
+            title = g_strdup_printf("gretl: %s", _("summary statistics"));
             break;
         default:
             break;
@@ -756,12 +759,14 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
     }
 
     if (err || parse_lib_command() || bufopen(&prn)) {
+	g_free(title);
         return;
     }
 
     if (libcmd.list == NULL) {
         libcmd.list = full_var_list(dataset, NULL);
         if (libcmd.list == NULL) {
+	    g_free(title);
             return;
         }
     }
@@ -815,6 +820,8 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
         record_lib_command();
         view_buffer(prn, hsize, vsize, title, ci, obj);
     }
+
+    g_free(title);
 }
 
 int menu_op_wrapper (selector *sr)
@@ -2568,7 +2575,7 @@ void do_modtest (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     DATASET *dset = dataset;
     PRN *prn;
-    char title[128];
+    gchar *title = NULL;
     gretlopt opt = OPT_NONE;
     int err = 0;
 
@@ -2586,18 +2593,18 @@ void do_modtest (GtkAction *action, gpointer p)
 
     opt = modtest_get_opt(action);
 
-    strcpy(title, _("gretl: LM test "));
+    if (opt & (OPT_W | OPT_X | OPT_B)) {
+	title = g_strdup_printf("%s%s", _("gretl: LM test "),
+				_("(heteroskedasticity)"));
+    }
 
     if (opt == OPT_W) {
-        strcat(title, _("(heteroskedasticity)"));
         lib_command_strcpy("modtest --white");
         err = whites_test(pmod, dset, OPT_S, prn);
     } else if (opt == OPT_X) {
-        strcat(title, _("(heteroskedasticity)"));
         lib_command_strcpy("modtest --white-nocross");
         err = whites_test(pmod, dset, OPT_S | OPT_X, prn);
     } else if (opt & OPT_B) {
-        strcat(title, _("(heteroskedasticity)"));
         if (opt & OPT_R) {
             lib_command_strcpy("modtest --breusch-pagan --robust");
         } else {
@@ -2605,13 +2612,14 @@ void do_modtest (GtkAction *action, gpointer p)
         }
         err = whites_test(pmod, dset, opt | OPT_S, prn);
     } else if (opt == OPT_P) {
-        strcpy(title, _("gretl: groupwise heteroskedasticity"));
+        title = g_strdup(_("gretl: groupwise heteroskedasticity"));
         lib_command_strcpy("modtest --panel");
         err = groupwise_hetero_test(pmod, dset, opt | OPT_S, prn);
     } else if (opt & (OPT_S | OPT_L)) {
         int aux = (opt == OPT_S)? AUX_SQ : AUX_LOG;
 
-        strcat(title, _("(non-linearity)"));
+	title = g_strdup_printf("%s%s", _("gretl: LM test "),
+				_("(non-linearity)"));
         if (aux == AUX_SQ) {
             lib_command_strcpy("modtest --squares");
         } else {
@@ -2619,11 +2627,11 @@ void do_modtest (GtkAction *action, gpointer p)
         }
         err = nonlinearity_test(pmod, dset, aux, OPT_S, prn);
     } else if (opt == OPT_C) {
-        strcpy(title, _("gretl: common factor test"));
+        title = g_strdup(_("gretl: common factor test"));
         lib_command_strcpy("modtest --comfac");
         err = comfac_test(pmod, dset, OPT_S, prn);
     } else if (opt == OPT_D) {
-        strcpy(title, _("gretl: cross-sectional dependence"));
+        title = g_strdup(_("gretl: cross-sectional dependence"));
         lib_command_strcpy("modtest --xdepend");
         err = panel_xdepend_test(pmod, dset, OPT_S, prn);
     }
@@ -2638,6 +2646,7 @@ void do_modtest (GtkAction *action, gpointer p)
                                 title, MODTEST, NULL);
     }
 
+    g_free(title);
     trim_dataset(pmod, 0);
 }
 
@@ -4614,7 +4623,7 @@ void add_nonparam_data (windata_t *vwin)
         const char *yname = gretl_bundle_get_string(bundle, "yname", &err);
         const char *xname = gretl_bundle_get_string(bundle, "xname", &err);
         char vname[VNAMELEN];
-        char descrip[MAXLABEL];
+        gchar *descrip = NULL;
         double q = 0, h = 0, trim = 0;
         int d = 0, robust = 0, LOO = 0;
         int cancel = 0;
@@ -4624,22 +4633,23 @@ void add_nonparam_data (windata_t *vwin)
             q = gretl_bundle_get_scalar(bundle, "q", &err);
             robust = gretl_bundle_get_int(bundle, "robust", &err);
             strcpy(vname, "loess_fit");
-            sprintf(descrip, "loess(%s, %s, %d, %g, %d)",
-                    yname, xname, d, q, robust);
+            descrip = g_strdup_printf("loess(%s, %s, %d, %g, %d)",
+				      yname, xname, d, q, robust);
         } else {
             h = gretl_bundle_get_scalar(bundle, "h", &err);
             LOO = gretl_bundle_get_int(bundle, "LOO", &err);
             trim = gretl_bundle_get_scalar(bundle, "trim", &err);
             strcpy(vname, "nw_fit");
-            sprintf(descrip, "nadarwat(%s, %s, %g, %d, %g)",
-                    yname, xname, h, LOO, trim);
+            descrip = g_strdup_printf("nadarwat(%s, %s, %g, %d, %g)",
+				      yname, xname, h, LOO, trim);
         }
 
-        name_new_series_dialog(vname, descrip, vwin, &cancel);
+        name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
         if (!cancel) {
             err = add_or_replace_series(m, vname, descrip, DS_COPY_VALUES);
         }
+	g_free(descrip);
 
         if (!cancel && !err) {
             gretl_push_c_numeric_locale();
@@ -6290,7 +6300,7 @@ void add_discrete_dummies (int target)
         int *dlist = get_dummifiable_list();
 
         if (dlist == NULL) {
-            infobox("No discrete series are available");
+            infobox(_("No discrete series are available"));
         } else {
             target = dummify_target_dialog(dlist, &opt);
             free(dlist);
@@ -6633,7 +6643,7 @@ int save_fit_resid (windata_t *vwin, int code)
 {
     MODEL *pmod = vwin->data;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     double *x = NULL;
     int cancel = 0;
     int err = 0;
@@ -6642,7 +6652,7 @@ int save_fit_resid (windata_t *vwin, int code)
         fprintf(stderr, "FIXME saving fit/resid from subsampled model\n");
         err = E_DATA;
     } else {
-        x = get_fit_or_resid(pmod, dataset, code, vname, descrip, &err);
+        x = get_fit_or_resid(pmod, dataset, code, vname, &descrip, &err);
     }
 
     if (err) {
@@ -6650,14 +6660,16 @@ int save_fit_resid (windata_t *vwin, int code)
         return err;
     }
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
         free(x);
+	g_free(descrip);
         return 0;
     }
 
     err = add_or_replace_series(x, vname, descrip, DS_GRAB_VALUES);
+    g_free(descrip);
 
     if (err) {
         free(x);
@@ -6673,7 +6685,6 @@ int save_fit_resid (windata_t *vwin, int code)
         } else if (code == M_AHAT) {
             lib_command_sprintf("series %s = $ahat", vname);
         }
-
         record_model_command_verbatim(pmod->ID);
         populate_varlist();
         mark_dataset_as_modified();
@@ -6689,19 +6700,16 @@ int save_bundled_series (const double *x,
                          windata_t *vwin)
 {
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
 
     strcpy(vname, key);
-    *descrip = '\0';
-    if (note != NULL) {
-        strncat(descrip, note, MAXLABEL - 1);
-    }
-
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    descrip = (note != NULL) ? g_strdup(note) : g_strdup("");
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
+	g_free(descrip);
         return 0;
     }
 
@@ -6712,6 +6720,7 @@ int save_bundled_series (const double *x,
         err = add_or_replace_series_data(x, t1, t2, vname,
                                          descrip);
     }
+    g_free(descrip);
 
     if (!err) {
         populate_varlist();
@@ -6726,7 +6735,7 @@ void add_system_resid (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     double *uhat;
     char vname[VNAMELEN];
-    char descrip[MAXLABEL];
+    gchar *descrip = NULL;
     int j, ci = vwin->role;
     int cancel = 0;
     int err = 0;
@@ -6752,23 +6761,25 @@ void add_system_resid (GtkAction *action, gpointer p)
 
     if (ci == VAR || ci == VECM) {
         sprintf(vname, "uhat%d", j);
-        sprintf(descrip, _("residual from VAR system, equation %d"), j);
+        descrip = g_strdup_printf(_("residual from VAR system, equation %d"), j);
     } else if (ci == VECM) {
         sprintf(vname, "uhat%d", j);
-        sprintf(descrip, _("residual from VECM system, equation %d"), j);
+        descrip = g_strdup_printf(_("residual from VECM system, equation %d"), j);
     } else {
         sprintf(vname, "uhat_s%02d", j);
-        sprintf(descrip, _("system residual, equation %d"), j);
+        descrip = g_strdup_printf(_("system residual, equation %d"), j);
     }
 
-    name_new_series_dialog(vname, descrip, vwin, &cancel);
+    name_new_series_dialog(vname, &descrip, vwin, &cancel);
 
     if (cancel) {
+	g_free(descrip);
         free(uhat);
         return;
     }
 
     err = add_or_replace_series(uhat, vname, descrip, DS_GRAB_VALUES);
+    g_free(descrip);
 
     if (err) {
         free(uhat);
@@ -7033,7 +7044,7 @@ void resid_plot (GtkAction *action, gpointer p)
 
 static void theil_plot (MODEL *pmod, DATASET *dset)
 {
-    char dname[MAXDISP];
+    gchar *dname;
     int plotlist[3];
     int dv, fv, err;
 
@@ -7045,8 +7056,9 @@ static void theil_plot (MODEL *pmod, DATASET *dset)
     plotlist[1] = dv = gretl_model_get_depvar(pmod);
     plotlist[2] = fv = dset->v - 1; /* fitted values */
 
-    sprintf(dname, _("predicted %s"), dset->varname[dv]);
+    dname = g_strdup_printf(_("predicted %s"), dset->varname[dv]);
     series_set_display_name(dset, fv, dname);
+    g_free(dname);
 
     err = theil_forecast_plot(plotlist, dset, OPT_G);
     gui_graph_handler(err);

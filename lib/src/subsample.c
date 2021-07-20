@@ -3029,14 +3029,14 @@ int model_sample_problem (const MODEL *pmod, const DATASET *dset)
 	    /* data set is not sub-sampled either, OK */
 	    ret = 0;
 	} else {
-	    fputs(I_("dataset is subsampled, model is not\n"), stderr);
+	    fputs("dataset is subsampled, model is not\n", stderr);
 	    gretl_errmsg_set(_("dataset is subsampled, model is not\n"));
 	    ret = 1;
 	}
     } else {
 	/* the model does have sub-sampling info recorded */
 	if (dset->submask == NULL) {
-	    fputs(I_("model is subsampled, dataset is not\n"), stderr);
+	    fputs("model is subsampled, dataset is not\n", stderr);
 	    gretl_errmsg_set(_("model is subsampled, dataset is not\n"));
 	    ret = 1;
 	} else if (submasks_match(dset, pmod)) {

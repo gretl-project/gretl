@@ -380,7 +380,7 @@ gretl_matrix *gretl_model_ahat_vec (const MODEL *pmod, int *err);
 
 int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos);
 
-int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos);
+int gretl_model_get_coeff_separator (const MODEL *pmod, char **ps, int *ppos);
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 

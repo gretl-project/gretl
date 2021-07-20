@@ -882,8 +882,8 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
 /**
  * gretl_model_get_coeff_separator:
  * @pmod: pointer to model.
- * @ps: location to receive string, if any.
- * @ppos: location to receive position, if any.
+ * @ps: location to receive string, if any, or NULL.
+ * @ppos: location to receive position, if any, or NULL.
  *
  * Retrieves information that has been set on @pmod regarding the
  * insertion of an extra line when printing the coefficients, if any.
@@ -891,7 +891,7 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
  * Returns: 1 if such information is present, 0 otherwise.
  */
 
-int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos)
+int gretl_model_get_coeff_separator (const MODEL *pmod, char **ps, int *ppos)
 {
     CoeffSep *cs = gretl_model_get_data(pmod, "coeffsep");
 
@@ -899,8 +899,12 @@ int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *pp
 	return 0;
     }
 
-    *ps = cs->str;
-    *ppos = cs->pos;
+    if (ps != NULL) {
+	*ps = gretl_strdup(cs->str);
+    }
+    if (ppos != NULL) {
+	*ppos = cs->pos;
+    }
 
     return 1;
 }
@@ -4273,13 +4277,13 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 	if (plain_format(prn)) {
 	    pprintf(prn, _(descrip), param);
 	} else {
-	    pprintf(prn, A_(descrip), param);
+	    pprintf(prn, _(descrip), param);
 	}
     } else {
 	if (plain_format(prn)) {
 	    pputs(prn, _(descrip));
 	} else {
-	    pputs(prn, A_(descrip));
+	    pputs(prn, _(descrip));
 	}
     }
 
@@ -4364,15 +4368,15 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	pprintf(prn, "\n  %s: ", _("Null hypothesis"));
 	pputs(prn, _(H0));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: ", A_("Null hypothesis"));
+	pprintf(prn, "\\\\\n\\quad %s: ", _("Null hypothesis"));
 	if (!strcmp(H0, "rho = 0")) {
 	    pputs(prn, "$\\rho = 0$");
 	} else {
-	    pputs(prn, A_(H0));
+	    pputs(prn, _(H0));
 	}
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: ", A_("Null hypothesis"));
-	pputs(prn, A_(H0));
+	pprintf(prn, "\\par\n %s: ", _("Null hypothesis"));
+	pputs(prn, _(H0));
     }
 
     if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
@@ -4380,54 +4384,54 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
     }
 }
 
-static void
-get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
+static gchar *get_test_stat_string (const ModelTest *test, PRN *prn)
 {
     int tex = tex_format(prn);
+    gchar *ret = NULL;
 
     switch (test->teststat) {
     case GRETL_STAT_LM:
-	sprintf(str, "LM = %g", test->value);
+	ret = g_strdup_printf("LM = %g", test->value);
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
 	if (tex) {
-	    sprintf(str, "$F(%d, %g)$ = %g", test->dfn, test->dfd, test->value);
+	    ret = g_strdup_printf("$F(%d, %g)$ = %g", test->dfn, test->dfd, test->value);
 	} else {
-	    sprintf(str, "F(%d, %g) = %g", test->dfn, test->dfd, test->value);
+	    ret = g_strdup_printf("F(%d, %g) = %g", test->dfn, test->dfd, test->value);
 	}
 	break;
     case GRETL_STAT_SUP_WALD:
 	if (tex) {
-	    sprintf(str, "max $\\chi^2(%d)$ = %g (%s)", test->dfn,
-		    test->value, test->param);
+	    ret = g_strdup_printf("max $\\chi^2(%d)$ = %g (%s)", test->dfn,
+				  test->value, test->param);
 	} else {
-	    sprintf(str, _("chi-square(%d) = %g at observation %s"),
-		    test->dfn, test->value, test->param);
+	    ret = g_strdup_printf(_("chi-square(%d) = %g at observation %s"),
+				  test->dfn, test->value, test->param);
 	}
 	break;
     case GRETL_STAT_LMF:
-	sprintf(str, "LMF = %g", test->value);
+	ret = g_strdup_printf("LMF = %g", test->value);
 	break;
     case GRETL_STAT_WF:
 	if (tex) {
-	    sprintf(str, "Welch $F(%d, %.1f)$ = %g", test->dfn, test->dfd, test->value);
+	    ret = g_strdup_printf("Welch $F(%d, %.1f)$ = %g", test->dfn, test->dfd, test->value);
 	} else {
-	    sprintf(str, "Welch F(%d, %.1f) = %g", test->dfn, test->dfd, test->value);
+	    ret = g_strdup_printf("Welch F(%d, %.1f) = %g", test->dfn, test->dfd, test->value);
 	}
 	break;
     case GRETL_STAT_HARVEY_COLLIER:
 	if (tex) {
-	    sprintf(str, "Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
+	    ret = g_strdup_printf("Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
 	} else {
-	    sprintf(str, "Harvey-Collier t(%d) = %g", test->dfn, test->value);
+	    ret = g_strdup_printf("Harvey-Collier t(%d) = %g", test->dfn, test->value);
 	}
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
 	if (tex) {
-	    sprintf(str, "$\\chi^2(2)$ = %g", test->value);
+	    ret = g_strdup_printf("$\\chi^2(2)$ = %g", test->value);
 	} else {
-	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
+	    ret = g_strdup_printf("%s(2) = %g", _("Chi-square"), test->value);
 	}
 	break;
     case GRETL_STAT_LR:
@@ -4435,94 +4439,99 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LB_CHISQ:
 	if (tex) {
 	    if (na(test->value)) {
-		sprintf(str, "$\\chi^2(%d)$ = NA (%s)", test->dfn, A_("failed"));
+		ret = g_strdup_printf("$\\chi^2(%d)$ = NA (%s)", test->dfn, _("failed"));
 	    } else {
-		sprintf(str, "$\\chi^2(%d)$ = %g", test->dfn, test->value);
+		ret = g_strdup_printf("$\\chi^2(%d)$ = %g", test->dfn, test->value);
 	    }
 	} else {
 	    if (na(test->value)) {
-		sprintf(str, "%s(%d) = NA (%s)", _("Chi-square"), test->dfn,
-			_("failed"));
+		ret = g_strdup_printf("%s(%d) = NA (%s)", _("Chi-square"), test->dfn,
+				      _("failed"));
 	    } else {
-		sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
+		ret = g_strdup_printf("%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
 	    }
 	}
 	break;
     case GRETL_STAT_Z:
 	if (tex) {
-	    sprintf(str, "$z$ = %g", test->value);
+	    ret = g_strdup_printf("$z$ = %g", test->value);
 	} else {
-	    sprintf(str, "z = %g", test->value);
+	    ret = g_strdup_printf("z = %g", test->value);
 	}
 	break;
     case GRETL_STAT_STUDENT:
 	if (tex) {
-	    sprintf(str, "$t$(%d) = %g", test->dfn, test->value);
+	    ret = g_strdup_printf("$t$(%d) = %g", test->dfn, test->value);
 	} else {
-	    sprintf(str, "t(%d) = %g", test->dfn, test->value);
+	    ret = g_strdup_printf("t(%d) = %g", test->dfn, test->value);
 	}
 	break;
     default:
-	*str = 0;
+	break;
     }
+
+    return ret;
 }
 
-static void
-get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
+static gchar *get_test_pval_string (const ModelTest *test, PRN *prn)
 {
     int tex = tex_format(prn);
+    gchar *ret = NULL;
 
     switch (test->teststat) {
     case GRETL_STAT_LM:
-	if (tex) sprintf(str, "$P$($\\chi^2(%d) >$ %g) = %g",
-			 test->dfn, test->value, test->pvalue);
-	else sprintf(str, "P(%s(%d) > %g) = %g", _("Chi-square"),
-		     test->dfn, test->value, test->pvalue);
+	if (tex) {
+	    ret = g_strdup_printf("$P$($\\chi^2(%d) >$ %g) = %g",
+				  test->dfn, test->value, test->pvalue);
+	} else {
+	    ret = g_strdup_printf("P(%s(%d) > %g) = %g", _("Chi-square"),
+				  test->dfn, test->value, test->pvalue);
+	}
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g",
-		    test->dfn, test->dfd, test->value, test->pvalue);
+	    ret = g_strdup_printf("$P$($F(%d, %g) >$ %g) = %g",
+				  test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %g) > %g) = %g",
-		    test->dfn, test->dfd, test->value, test->pvalue);
+	    ret = g_strdup_printf("P(F(%d, %g) > %g) = %g",
+				  test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_WF:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %.1f) >$ %g) = %g",
-		    test->dfn, test->dfd, test->value, test->pvalue);
+	    ret = g_strdup_printf("$P$($F(%d, %.1f) >$ %g) = %g",
+				  test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %.1f) > %g) = %g",
-		    test->dfn, test->dfd, test->value, test->pvalue);
+	    ret = g_strdup_printf("P(F(%d, %.1f) > %g) = %g",
+				  test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_LMF:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g",
-		    test->dfn, test->dfd, test->value, test->pvalue);
+	    ret = g_strdup_printf("$P$($F(%d, %g) >$ %g) = %g",
+				  test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %g) > %g) = %g",
-		    test->dfn, test->dfd, test->value, test->pvalue);
+	    ret = g_strdup_printf("P(F(%d, %g) > %g) = %g",
+				  test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_HARVEY_COLLIER:
 	if (tex) {
-	    sprintf(str, "$P$($t_{%d} >$ %g) = %g",
-		    test->dfn, test->value, test->pvalue);
+	    ret = g_strdup_printf("$P$($t_{%d} >$ %g) = %g",
+				  test->dfn, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(t(%d) > %g) = %g",
-		    test->dfn, test->value, test->pvalue);
+	    ret = g_strdup_printf("P(t(%d) > %g) = %g",
+				  test->dfn, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_STUDENT:
 	if (tex) {
-	    sprintf(str, "$P$($|t| >$ %g) = %g",
-		    fabs(test->value), test->pvalue);
+	    ret = g_strdup_printf("$P$($|t| >$ %g) = %g",
+				  fabs(test->value), test->pvalue);
 	} else {
-	    sprintf(str, "P(|t| > %g) = %g",
-		    fabs(test->value), test->pvalue);
+	    ret = g_strdup_printf("P(|t| > %g) = %g",
+				  fabs(test->value), test->pvalue);
 	}
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
@@ -4531,16 +4540,18 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_SUP_WALD:
     case GRETL_STAT_Z:
 	if (na(test->value)) {
-	    *str = '\0';
+	    ; /* leave @ret NULL */
 	} else if (na(test->pvalue)) {
-	    strcpy(str, "NA");
+	    ret = g_strdup("NA");
 	} else {
-	    sprintf(str, "%g", test->pvalue);
+	    ret = g_strdup_printf("%g", test->pvalue);
 	}
 	break;
     default:
-	*str = '\0';
+	break;
     }
+
+    return ret;
 }
 
 static void csv_print_test (const ModelTest *src, PRN *prn)
@@ -4548,7 +4559,6 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
     const char *descrip = NULL;
     char c = prn_delim(prn);
 
-    set_alt_gettext_mode(prn);
     descrip = test_get_descrip(src);
 
     if (descrip != NULL) {
@@ -4602,9 +4612,7 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
 void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
     const char *tstr;
-    char buf[512];
-
-    set_alt_gettext_mode(prn);
+    gchar *buf = NULL;
 
     if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
@@ -4619,19 +4627,20 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
     tstr = asy_test(test->teststat)? N_("Asymptotic test statistic") :
 	N_("Test statistic");
 
-    get_test_stat_string(test, buf, prn);
+    buf = get_test_stat_string(test, prn);
 
     if (plain_format(prn)) {
 	pprintf(prn, "\n  %s: %s\n", _(tstr), buf);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", A_(tstr), buf);
+	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", _(tstr), buf);
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: %s\\par\n", A_(tstr), buf);
+	pprintf(prn, "\\par\n %s: %s\\par\n", _(tstr), buf);
     }
 
-    get_test_pval_string(test, buf, prn);
+    g_free(buf);
+    buf = get_test_pval_string(test, prn);
 
-    if (*buf != '\0') {
+    if (buf != NULL) {
 	const char *pvstr =
 	    asy_pval(test) ? N_("with asymptotic p-value") :
 	    boot_pval(test) ? N_("with bootstrap p-value") :
@@ -4640,26 +4649,28 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 	if (plain_format(prn)) {
 	    pprintf(prn, "  %s = %s\n\n", _(pvstr), buf);
 	} else if (tex_format(prn)) {
-	    pprintf(prn, "\\quad %s = %s\\\\\n", A_(pvstr), buf);
+	    pprintf(prn, "\\quad %s = %s\\\\\n", _(pvstr), buf);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, " %s = %s\\par\n\n", A_(pvstr), buf);
+	    pprintf(prn, " %s = %s\\par\n\n", _(pvstr), buf);
 	}
     } else if (!na(test->crit) && !na(test->alpha)) {
 	double a = test->alpha * 100.0;
 
 	if (plain_format(prn)) {
-	    sprintf(buf, _("%g percent critical value"), a);
+	    buf = g_strdup_printf(_("%g percent critical value"), a);
 	    pprintf(prn, "  (%s = %.2f)\n\n", buf, test->crit);
 	} else if (tex_format(prn)) {
-	    sprintf(buf, A_("%g percent critical value"), a);
+	    buf = g_strdup_printf(_("%g percent critical value"), a);
 	    pprintf(prn, "\\quad (%s = %.2f)\\\\\n", buf, test->crit);
 	} else if (rtf_format(prn)) {
-	    sprintf(buf, A_("%g percent critical value"), a);
+	    buf = g_strdup_printf(_("%g percent critical value"), a);
 	    pprintf(prn, " (%s = %.2f)\\par\n\n", buf, test->crit);
 	}
     } else {
 	pputc(prn, '\n');
     }
+
+    g_free(buf);
 }
 
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
@@ -6939,12 +6950,19 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
     }
 
     if (pmod->name == NULL) {
-	pmod->name = malloc(MAXSAVENAME);
+	pmod->name = calloc(1, MAXSAVENAME);
     }
 
     if (pmod->name != NULL) {
 	*pmod->name = '\0';
-	strncat(pmod->name, name, MAXSAVENAME - 1);
+	if (strlen(name) >= MAXSAVENAME) {
+	    char *tmp = g_strdup(name);
+
+	    strcpy(pmod->name, gretl_utf8_truncate(tmp, MAXSAVENAME-1));
+	    g_free(tmp);
+	} else {
+	    strcpy(pmod->name, name);
+	}
     }
 }
 

@@ -1050,7 +1050,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 	    if (!err) {
 		err = gretl_string_table_validate(xinfo->st, OPT_S);
 		if (err) {
-		    pputs(prn, A_("Failed to interpret the data as numeric\n"));
+		    pputs(prn, _("Failed to interpret the data as numeric\n"));
 		} else {
 		    gretl_string_table_print(xinfo->st, xinfo->dset, fname, prn);
 		}

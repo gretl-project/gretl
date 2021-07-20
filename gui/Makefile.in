@@ -50,6 +50,8 @@ GTKMAC_CFLAGS = @GTKMAC_CFLAGS@
 GTKMAC_LIBS = @GTKMAC_LIBS@
 MKLANG = @MKLANG@
 MKNEWS = @MKNEWS@
+MKPNGLIST = @MKPNGLIST@
+COMPRES = @COMPRES@
 
 ifeq ($(have_sourceview),2.0)
   JULIA_LANG = julia_sv2.lang
@@ -107,9 +109,14 @@ endif
 ifeq ($(MKLANG),) 
   MKLANG = ./mklang
 endif
-
 ifeq ($(MKNEWS),) 
   MKNEWS = ./mknews
+endif
+ifeq ($(MKPNGLIST),)
+  MKPNGLIST = ./mkpnglist
+endif
+ifeq ($(COMPRES),)
+  COMPRES = glib-compile-resources
 endif
 
 ifeq ($(quiet_build),yes)
@@ -236,7 +243,7 @@ endif
 
 OBJS = $(SRCS:.c=.o)
 
-all: $(PROG) gretl.lang NEWS
+all: $(PROG) gretl.lang NEWS gretl-icons.xml
 
 %.o: %.c
 	$(CCECHO)
@@ -262,6 +269,9 @@ mklang: mklang.o $(GRETLLIB)
 mknews: mknews.c
 	$(AMP)$(CC) -o $@ $<
 
+mkpnglist: mkpnglist.c
+	$(AMP)$(CC) -o $@ $<
+
 gretl.lang: $(MKLANG)
 	$(MKLANG) > $@
 
@@ -270,6 +280,12 @@ gretl-sys.lang: $(MKLANG)
 
 NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
+
+gretl-icons.xml: $(MKPNGLIST)
+	$(MKPNGLIST) $(topsrc)/share
+
+gretl-icons.gresource: gretl-icons.xml
+	$(COMPRES) --sourcedir="$(topsrc)/share" $<
 
 .deps:
 	$(AMP)mkdir $@
@@ -292,11 +308,8 @@ install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmain.xml $(DESTDIR)$(uidir)
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmodel.xml $(DESTDIR)$(uidir)
 
-install-icons: installdirs
-	for f in $(sharesrc)/icons/16x16/*.png ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/icons/16x16 ; done
-	for f in $(sharesrc)/icons/24x24/*.png ; do \
-	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/icons/24x24 ; done
+install-icons: gretl-icons.gresource installdirs
+	$(INSTALL_DATA) gretl-icons.gresource $(DESTDIR)$(gretldir)
 
 install-script: installdirs
 	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
@@ -337,11 +350,10 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(svdir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/icons/16x16
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/icons/24x24
 
 clean:
 	rm -f *.o $(PROG) mklang mknews gretl.lang NEWS
+	rm -f mkpnglist gretl-icons.xml gretl-icons.gresource
 	rm -rf .libs .deps
 
 distclean: clean
