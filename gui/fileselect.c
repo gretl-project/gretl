@@ -244,27 +244,6 @@ static void script_window_update (windata_t *vwin,
     mark_vwin_content_saved(vwin);
 }
 
-gchar *pre_trim_buffer (gchar *s)
-{
-    gchar *ret = s;
-    int n = 0;
-
-    if (*s == '#') {
-	while (*s) {
-	    if (*s == '#') {
-		n++;
-	    }
-	    if (n == 3 && *s == '\n') {
-		ret = s + 1;
-		break;
-	    }
-	    s++;
-	}
-    }
-
-    return ret;
-}
-
 static void handle_geoplot_save (const char *buf,
 				 const char *fname,
 				 windata_t *vwin)
