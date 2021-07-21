@@ -15424,9 +15424,9 @@
       </options>
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
-		<demos>
-		<demo>penngrow.inp</demo>
-		</demos>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -15596,6 +15596,11 @@
 	  <flag>--lagselect</flag>
 	  <effect>show criteria for lag selection</effect>
         </option>
+        <option>
+	  <flag>--minlag</flag>
+	  <optparm>minimum lag</optparm>
+	  <effect>lag selection only, see below</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
@@ -15608,7 +15613,6 @@
     </usage>
 
     <description>
-
       <para context="gui">
 	This command requires specification of:
       </para>
@@ -15636,7 +15640,6 @@
 	lag, along with (optionally) forecast variance decompositions and
 	impulse response functions.
       </para>
-
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression
 	(VAR).  The first argument specifies the lag order &mdash; or
@@ -15654,7 +15657,6 @@
 	seasonal dummy variables may be added using the
 	<opt>seasonals</opt> flag.
       </para>
-
       <para context="cli">
 	While a VAR specification usually includes all lags from 1
 	to a given maximum, it is possible to select a specific
@@ -15669,7 +15671,6 @@
 	matrix p = {1,2,4}
 	var p ylist
       </code>
-
       <para context="cli">
 	A separate regression is reported for each variable in
 	<repl>ylist</repl>.  Output for each equation includes
@@ -15679,7 +15680,6 @@
 	flag is given, forecast variance decompositions and impulse
 	responses.
       </para>
-
       <para>
 	Forecast variance decompositions and impulse responses are
 	based on the Cholesky decomposition of the contemporaneous
@@ -15692,28 +15692,32 @@
 	function in matrix form, see the <fncref targ="irf"/>
 	function.
       </para>
-
       <para context="cli">
-	If the <opt>robust</opt> option is given, standard errors
-	are corrected for heteroskedasticity. Alternatively, the
-	<opt>robust-hac</opt> option can be given to produce
-	standard errors that are robust with respect to both
-	heteroskedasticity and autocorrelation (HAC). In general
-	the latter correction should not be needed if the VAR
-	includes sufficient lags.
+	If the <opt>robust</opt> option is given, standard errors are
+	corrected for heteroskedasticity. Alternatively, the
+	<opt>robust-hac</opt> option can be given to produce standard
+	errors that are robust with respect to both heteroskedasticity
+	and autocorrelation (HAC). In general the latter correction
+	should not be needed if the VAR includes sufficient lags.
       </para>
-
       <para context="cli">
-	If the <opt>lagselect</opt> option is given, the first parameter to
-	the <lit>var</lit> command is taken as the maximum lag order.  Output
-	consists of a table showing the values of the Akaike (AIC), Schwarz
-	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
-	VARs of order 1 to the given maximum.  This is intended to help
-	with the selection of the optimal lag order.  The usual VAR output is
-	not presented. The table of information criteria may be retrieved
-	as a matrix via the <fncref targ="$test"/> accessor.
+	If the <opt>lagselect</opt> option is given, the first
+	parameter to the <lit>var</lit> command is taken as the
+	maximum lag order.  Output consists of a table showing the
+	values of the Akaike (AIC), Schwarz (BIC) and
+	Hannan&ndash;Quinn (HQC) information criteria, by default
+	computed from VARs of order 1 to the given maximum.  This is
+	intended to help with the selection of the optimal lag order.
+	The usual VAR output is not presented. The table of
+	information criteria may be retrieved as a matrix via the
+	<fncref targ="$test"/> accessor. In this context (only) the
+	<opt>minlag</opt> option can be used to adjust the minimum lag
+	order. Set this to 0 to allow for the possibility that the
+	optimal lag order is zero, meaning that a VAR is not really
+	called for at all. Conversely you could set
+	<opt>minlag=4</opt> if you believe you need at least 4 lags,
+	thereby saving a little compute time.
       </para>
-
     </description>
 
     <gui-access>
