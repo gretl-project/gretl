@@ -8999,6 +8999,8 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
+#if 0
+
 static void maybe_add_compat_option (gretlopt *optp,
                                      int *cancel)
 {
@@ -9022,6 +9024,8 @@ static void maybe_add_compat_option (gretlopt *optp,
 	push_option_param(STORE, OPT_C, gretl_strdup("2018b"));
     }
 }
+
+#endif
 
 /* Note that in this context "exporting" means that we're saving
    a file that is not necessarily synced with the current dataset
@@ -9084,10 +9088,12 @@ static gretlopt store_action_to_opt (const char *fname, int action,
         if (level > 0) {
             opt |= OPT_Z; /* compression */
         }
+#if 0
         /* offer binary compatibility option? */
         if (has_suffix(fname, ".gdtb")) {
             maybe_add_compat_option(&opt, cancel);
         }
+#endif
     }
 
     if (action == SAVE_DATA_AS) {
