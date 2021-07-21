@@ -15706,6 +15706,11 @@ qual caso viene usato QML.
 	  <flag>--lagselect</flag>
 	  <effect>mostra i criteri di informazione per la selezione dei ritardi</effect>
 	</option>
+        <option>
+         <flag>--minlag</flag>
+         <optparm>ritardo minimo</optparm>
+         <effect>solo per la selezione dei ritardi, vedi sotto</effect>
+        </option>
       </options>
       <examples>
 	<example>var 4 x1 x2 x3 ; time mydum</example>
@@ -15739,12 +15744,12 @@ qual caso viene usato QML.
 	</li>
       </ilist>
       <para context="gui">
-	Viene calcolata una regressione separata per
-	ogni variabile del sistema; i risultati comprendono i test F per i
-	vincoli di uguaglianza a zero su tutti i ritardi della variabili e
-	un test F per il ritardo massimo, oltre (opzionalmente) alla
-	scomposizione della varianza della previsione e alle funzioni di
-	impulso-risposta.
+	Viene calcolata una regressione separata per ogni variabile
+	del sistema; i risultati comprendono i test F per i vincoli di
+	uguaglianza a zero su tutti i ritardi della variabili e un
+	test F per il ritardo massimo, oltre (opzionalmente) alla
+	scomposizione della varianza della previsione e alle funzioni
+	di impulso-risposta.
       </para>  
 
       <para context="cli">
@@ -15820,16 +15825,20 @@ qual caso viene usato QML.
       <para context="cli">
 	Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
 	del comando <lit>var</lit> viene interpretato come il massimo
-	ordine di ritardo.  In questo caso, il comando non produce il
-	solito risultato della stima del VAR, ma una tabella che
-	mostra i valori dei criteri di informazione di Akaike (AIC),
-	Schwartz (BIC) e Hannan&ndash;Quinn (HQC) calcolati per VAR
-	dall'ordine 1 fino all'ordine massimo indicato, in modo da
-	aiutare nella scelta dell'ordine di ritardo ottimale. Questa
-	opzione viene usata per scegliere l'ordine del VAR più
-	appropriato, e il solito output del VAR non viene mostrato. La
-	tavola coi criteri di informazione è recuperabile sotto forma
-	di matrice tramite l'accessore <fncref targ="$test"/>.
+	ordine di ritardo.  In questo caso, il comando produce una
+	tabella che mostra i valori dei criteri di informazione di
+	Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC)
+	calcolati per VAR dall'ordine 1 fino all'ordine massimo
+	indicato. Questa opzione viene usata per scegliere l'ordine
+	del VAR più appropriato, e l'output consueto del VAR non viene
+	mostrato. La tavola coi criteri di informazione è recuperabile
+	sotto forma di matrice tramite l'accessore <fncref
+	targ="$test"/>. In questo contesto, l'opzione
+	<opt>minlag</opt> serve a stabilire l'ordine minimo. Usando il
+	valore 0 si ammette la possibilità che il ritardo ottimale sia
+	nullo, e che in realtà il modello non sia affatto un VAR. Al
+	contrario, se si dà per scontato che l'ordine minimo sia 4,
+	con <opt>minlag=4</opt> si risparmia qualche millisecondo.
       </para>
       
     </description>
