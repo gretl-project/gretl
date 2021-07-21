@@ -1958,24 +1958,26 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	char *intcols = NULL;
 	int llen = 0, intcast = 0;
 	int cpos = strlen(fmt) - 1;
+	int variant = 0;
 	char c = fmt[cpos];
 	int i, j, k;
 	double x;
 
-	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
-	    intcast = 1;
-	} else if (c == 'v') {
-	    /* "variant" column format */
-	    intcols = get_intcols(m, &intcast);
-	}
-
 	xfmt = gretl_strdup(fmt);
 
+	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
+	    intcast = 1;
+	} else if (fmt[cpos-1] == 'v') {
+	    /* "variant" column format */
+	    intcols = get_intcols(m, &intcast);
+	    gretl_delchar('v', xfmt);
+	    variant = 1;
+	}
+
 	if (intcast || intcols) {
-	    ifmt = gretl_strdup(fmt);
-	    if (c == 'v') {
+	    ifmt = gretl_strdup(xfmt);
+	    if (variant) {
 		revise_integer_format(ifmt);
-		xfmt[cpos] = 'g';
 	    }
 	}
 
