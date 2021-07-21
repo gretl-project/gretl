@@ -1043,7 +1043,7 @@ void find_filter_combo (GtkWidget *w, gpointer p)
 
     if (GTK_IS_COMBO_BOX(w)) {
 	*pw = w;
-    } else if (GTK_IS_CONTAINER(w)) {
+    } else if (*pw == NULL && GTK_IS_CONTAINER(w)) {
 	gtk_container_foreach(GTK_CONTAINER(w), find_filter_combo, pw);
     }
 }

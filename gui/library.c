@@ -8999,33 +8999,14 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
-#if 0
-
-static void maybe_add_compat_option (gretlopt *optp,
-                                     int *cancel)
+static void give_compat_warning (void)
 {
-    const char *label = _("gretl binary data format:");
-    const char *opts[] = {
-	N_("current (gretl >= 2020b, fastest)"),
-	N_("compatible with gretl >= 2018c"),
-	N_("compatible with gretl < 2018c")
-    };
-    int resp;
+    const char *msg =
+	N_("Data files written in the current gdtb binary format\n"
+	   "cannot be read by gretl versions older than 2020b");
 
-    push_option_param(STORE, OPT_C, NULL);
-    resp = radio_dialog(NULL, label, opts, 3, 0, 0, NULL);
-
-    if (resp == GRETL_CANCEL) {
-	*cancel = 1;
-    } else if (resp == 1) {
-	*optp |= OPT_C; /* --compat */
-    } else if (resp == 2) {
-	*optp |= OPT_C; /* --compat=2018b */
-	push_option_param(STORE, OPT_C, gretl_strdup("2018b"));
-    }
+    warnbox(_(msg));
 }
-
-#endif
 
 /* Note that in this context "exporting" means that we're saving
    a file that is not necessarily synced with the current dataset
@@ -9088,12 +9069,9 @@ static gretlopt store_action_to_opt (const char *fname, int action,
         if (level > 0) {
             opt |= OPT_Z; /* compression */
         }
-#if 0
-        /* offer binary compatibility option? */
         if (has_suffix(fname, ".gdtb")) {
-            maybe_add_compat_option(&opt, cancel);
+            give_compat_warning();
         }
-#endif
     }
 
     if (action == SAVE_DATA_AS) {
