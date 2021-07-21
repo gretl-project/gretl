@@ -1027,6 +1027,47 @@ static void filesel_set_filter_patterns (GtkWidget *filesel,
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filt);
 }
 
+static void save_filter_changed (GtkComboBox *cb, GtkWidget *w)
+{
+    GtkFileChooser *fc = GTK_FILE_CHOOSER(w);
+    GtkFileFilter *ff = gtk_file_chooser_get_filter(fc);
+    GtkWidget *ew = gtk_file_chooser_get_extra_widget(fc);
+    const char *s = gtk_file_filter_get_name(ff);
+
+    gtk_widget_set_sensitive(ew, strstr(s, ".gdtb") == NULL);
+}
+
+void find_filter_combo (GtkWidget *w, gpointer p)
+{
+    GtkWidget **pw = p;
+
+    if (GTK_IS_COMBO_BOX(w)) {
+	*pw = w;
+    } else if (GTK_IS_CONTAINER(w)) {
+	gtk_container_foreach(GTK_CONTAINER(w), find_filter_combo, pw);
+    }
+}
+
+static void conditionalize_compression (GtkWidget *filesel)
+{
+    GtkWidget *ca = gtk_dialog_get_content_area(GTK_DIALOG(filesel));
+    GList *L = gtk_container_get_children(GTK_CONTAINER(ca));
+
+    if (GTK_IS_BOX(L->data)) {
+	GtkWidget *combo = NULL;
+
+	gtk_container_foreach(GTK_CONTAINER(L->data),
+			      find_filter_combo, &combo);
+	if (combo != NULL) {
+	    g_signal_connect(G_OBJECT(combo), "changed",
+			     G_CALLBACK(save_filter_changed),
+			     filesel);
+	}
+    }
+
+    g_list_free(L);
+}
+
 /* return non-zero if we add more than one selectable filter */
 
 static int filesel_set_filters (GtkWidget *filesel, int action,
@@ -1265,8 +1306,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (action == SAVE_DATA ||
 	action == SAVE_DATA_AS ||
 	action == SAVE_BOOT_DATA ||
-	action == EXPORT_GDT ||
-	action == EXPORT_GDTB) {
+	action == EXPORT_GDT) {
 	add_compression_level_option(filesel);
     }
 
@@ -1286,6 +1326,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
 				       src, data);
+    }
+
+    if (action == SAVE_DATA || action == SAVE_DATA_AS || action == SAVE_BOOT_DATA) {
+	conditionalize_compression(filesel);
     }
 
     response = gtk_dialog_run(GTK_DIALOG(filesel));
