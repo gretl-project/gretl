@@ -1968,9 +1968,14 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
 	    intcast = 1;
 	} else if (fmt[cpos-1] == 'v') {
-	    /* "variant" column format */
+	    /* new-style "variant" column format */
 	    intcols = get_intcols(m, &intcast);
 	    gretl_delchar('v', xfmt);
+	    variant = 1;
+	} else if (c == 'v') {
+	    /* old-style "variant" column format */
+	    intcols = get_intcols(m, &intcast);
+	    xfmt[cpos] = 'g';
 	    variant = 1;
 	}
 

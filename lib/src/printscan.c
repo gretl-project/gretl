@@ -352,11 +352,16 @@ get_printf_format_chunk (const char *s, char *conv,
 	    conv[0] = *p;
 	    conv[1] = *(p+1);
 	    p++;
-	} else if (*p == 'v' && v_ok(*(p+1))) {
-	    /* allow "vf", "vg" for matrices */
-	    conv[0] = *p;
-	    conv[1] = *(p+1);
-	    p++;
+	} else if (*p == 'v') {
+	    if (v_ok(*(p+1))) {
+		/* allow "vf", "vg" for matrices */
+		conv[0] = *p;
+		conv[1] = *(p+1);
+		p++;
+	    } else {
+		/* allow plain 'v' -> "vg" */
+		conv[0] = *p;
+	    }
 	} else {
 	    fprintf(stderr, "bad conversion '%c'\n", *p);
 	    *err = E_PARSE;
