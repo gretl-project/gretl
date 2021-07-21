@@ -151,25 +151,14 @@ static void try_auto_icon_sizing (int *bigger)
     GdkDisplay *display = gdk_display_get_default();
     GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
     GdkScreen *screen = gdk_screen_get_default();
-    int pxw, pxh;
-
-    pxw = gdk_screen_get_width(screen);
-    pxh = gdk_screen_get_height(screen);
-    fprintf(stderr, "screen size: %d x %d pixels\n", pxw, pxh);
 
     if (monitor != NULL) {
 	int mmw = gdk_monitor_get_width_mm(monitor);
-	int mmh = gdk_monitor_get_height_mm(monitor);
-	double diag, mm16;
+	int pxw = gdk_screen_get_width(screen);
+	double mm16 = 16 * mmw / (double) pxw;
 
-	fprintf(stderr, "via GdkMonitor: size = %d x %d mm\n", mmw, mmh);
-	/* diagonal size of monitor */
-	diag = sqrt(mmw*mmw + mmh*mmh);
-	fprintf(stderr, " diagonal = %.2f mm (%.2f in)\n", diag, diag / 25.4);
-	/* size of 16 pixels in millimeters */
-	mm16 = 16 * mmw / (double) pxw;
-	fprintf(stderr, " 16 pixels = %.2f mm\n", mm16);
 	if (mm16 < 2.8) {
+	    /* size of 16 pixels in millimeters */
 	    fprintf(stderr, " auto-setting larger icons\n");
 	    *bigger = 1;
 	}
