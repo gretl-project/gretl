@@ -90,6 +90,11 @@ int gretl_recode_file (const char *path1,
 		       const char *to_set,
 		       PRN *prn);
 
+char *gretl_recode_string (const char *src,
+			   const char *from_set,
+			   const char *to_set,
+			   int *err);
+
 int chinese_locale (void);
 
 int japanese_locale (void);

@@ -1184,6 +1184,29 @@ static int file_set_content (const char *fname,
     return err;
 }
 
+static gchar *glib_recode_buffer (const char *buf,
+				  const char *from_set,
+				  const char *to_set,
+				  gsize bytes,
+				  gsize *written,
+				  int *err)
+{
+    gchar *trbuf = NULL;
+    GError *gerr = NULL;
+    gsize got = 0;
+
+    trbuf = g_convert(buf, bytes, to_set, from_set,
+		      &got, written, &gerr);
+
+    if (gerr != NULL) {
+	*err = E_DATA;
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return trbuf;
+}
+
 /**
  * gretl_recode_file:
  * @path1: path to original file.
@@ -1207,29 +1230,47 @@ int gretl_recode_file (const char *path1, const char *path2,
     buf = file_get_content(path1, &bytes, prn, &err);
 
     if (!err) {
-	GError *gerr = NULL;
-	gchar *trbuf = NULL;
 	gsize written = 0;
-	gsize got = 0;
+	gchar *trbuf = glib_recode_buffer(buf, from_set, to_set,
+					  bytes, &written, &err);
 
-	/* recode the buffer */
-	trbuf = g_convert(buf, bytes, to_set, from_set,
-			  &got, &written, &gerr);
-
-	if (gerr != NULL) {
-	    err = E_DATA;
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	} else {
+	if (!err) {
 	    /* write recoded text to file */
 	    pprintf(prn, "recoded: %" G_GSIZE_FORMAT " bytes\n", written);
 	    err = file_set_content(path2, trbuf, written);
 	}
-
 	g_free(trbuf);
     }
 
     g_free(buf);
 
     return err;
+}
+
+char *gretl_recode_string (const char *src,
+			   const char *from_set,
+			   const char *to_set,
+			   int *err)
+{
+    char *ret = NULL;
+    gsize written = 0;
+    gchar *gbuf;
+
+    /* FIXME: ban conversion to UTF-16, etc. */
+
+    if (to_set == NULL) {
+	/* default to conversion to UTF-8 */
+	gbuf = glib_recode_buffer(src, from_set, "UTF-8",
+				  -1, &written, err);
+    } else {
+	gbuf = glib_recode_buffer(src, from_set, to_set,
+				  -1, &written, err);
+    }
+
+    if (*err == 0) {
+	ret = gretl_strdup(gbuf);
+    }
+    g_free(gbuf);
+
+    return ret;
 }
