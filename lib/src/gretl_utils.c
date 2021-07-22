@@ -1922,48 +1922,6 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
 
 #ifndef WIN32
 
-static int gp_fatal (const char *cmd, const char *s)
-{
-    if (strstr(cmd, "gnuplot") == NULL) {
-	return 0;
-    }
-
-    /* wx and C++ ABI non-issue */
-    if (strstr(s, "Warning: Mismatch")) {
-	return 0;
-    }
-
-#ifdef OS_OSX
-    /* cairo on later OS X */
-    if (strstr(s, "CGFont")) {
-	return 0;
-    }
-#endif
-
-    /* "Could not find/open font when opening font X, using default"
-       "gnuplot_x11: Some character sets not available"
-       "Warning: empty y2 range..."
-       pango warning for, e.g., FreeSans font w/o GPOS table
-       pango error on quartz
-       missing Icon theme
-    */
-
-    if (strstr(s, "using default") ||
-	strstr(s, "trying default") ||
-	strstr(s, "character sets not available") ||
-	strstr(s, "Warning: ") ||
-	strstr(s, "warning: ") ||
-	strstr(s, "Pango-WARNING") ||
-	strstr(s, "rid drawn") ||
-	strstr(s, "Icon theme") ||
-	strstr(s, "CGContextSetFont") ||
-	strstr(s, "qt5ct: using qt5ct plugin")) {
-	return 0;
-    } else {
-	return 1;
-    }
-}
-
 int gretl_spawn (char *cmdline)
 {
     GError *error = NULL;
@@ -1971,7 +1929,6 @@ int gretl_spawn (char *cmdline)
     gchar *sout = NULL;
     int ok, status;
     int ret = 0;
-    int catch_gnuplot_errs = (getenv("CATCH_GNUPLOT") != NULL); 
     
     gretl_error_clear();
 
@@ -1985,15 +1942,15 @@ int gretl_spawn (char *cmdline)
 	gretl_errmsg_set(error->message);
 	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
-	ret = 1;
-    } else if (catch_gnuplot_errs && errout != NULL && *errout) {
-	if (gp_fatal(cmdline, errout)) {
-	    gretl_errmsg_set(errout);
-	    fprintf(stderr, "gnuplot stderr: '%s'\n", errout);
-	    ret = 1;
+	if (errout != NULL) {
+	    fprintf(stderr, " stderr = '%s'\n", errout);
 	}
+	ret = 1;
     } else if (status != 0) {
-	if (sout != NULL && *sout) {
+	if (errout != NULL && *errout) {
+	    gretl_errmsg_set(errout);
+	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, errout);
+	} else if (sout != NULL && *sout) {
 	    gretl_errmsg_set(sout);
 	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, sout);
 	} else {
