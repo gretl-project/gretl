@@ -2,24 +2,50 @@ version 2021c, in progress
 - New function contains(): indicates whether a numerical
   object contains members of a specified set
 - New function recode(): converts encoding of strings
-- New function bcheck(): adds in handling bundle arguments
+- New function bcheck(): aids in handling bundle arguments
   to user-defined functions
-- Introduce experimental "plot collection"
-- MS Windows, 64-bit: update to gnuplot 5.4.1, patched to
-  avoid too-big fonts on Windows with Ultra HD display
-- gretl GUI: add command-line options: --new to start a new
-  instance unconditionally and --single to use a single
-  program instance unconditionally
 - fcstats() matrix row labels: distinguish U1 vs U2 variant
   of Theil's U statistic
 - printing of bundles: sort members by type and key
+- "print" command: make more flexible, it now includes
+  most of the functionality of "eval"
+- "var" command with --lagselect option: add a --minlag
+  option to allow testing against 0 lags, or imposing the
+  assumption that at least p > 1 lags are needed
+- "set" command: new variable "datacols" to control the max
+  number of series to print side by side
+- "foreign" command mechanism: updates to support version
+  4.1.0 of R and version 8.0 of Ox Console
+- GUI: introduce experimental "plot collection"
+- GUI: add option to use the tab key as the trigger for
+  autocompletion in the script editor and console
+- GUI: add command-line options: --new to start a new gretl
+  instance unconditionally and --single to use a single
+  program instance unconditionally
 - GUI script editor: make the Find box appear at the foot of
   the window, not in a separate dialog
+- GUI: provide larger (24 pixel) toolbar icons for use on
+  small, high-density displays in particular
+- GUI: numerous other small fixes and enhancements
+- MS Windows, 64-bit: update to gnuplot 5.4.1, patched to
+  avoid too-big fonts on Windows with Ultra HD display
 - Fix bug: spurious results from "system" command in case of
   exact collinearity
+- Fix bug: spurious reduction of the sample range in the grid
+  variant of "panplot" with some patterns of missing values
+- Fix bug: wrong results from the polyfit() function when
+  applied to panel data
+- Numerous additional small big fixes
 - Internals: make "libset" code more compact and efficient
+- Internals: clear out old gettext variants that encoded
+  translations in a Windows code page rather than UTF-8
 - gretl_bundle.h: rename argument named "template" to avoid
   trouble with C++
+- Substantial enhancements to the SVAR and regls addons
+- New "logging" addon
+- New, substantially updated Russian translation
+- Cleanup: remove the "arbond" command, in favor of "dpanel",
+  and add some dpanel enhancements
 
 2021-05-04 version 2021b
 - New function trigamma(): second derivative of lngamma
