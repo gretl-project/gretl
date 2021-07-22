@@ -7986,16 +7986,25 @@ static int maybe_check_function_needs (const DATASET *dset,
 
 /* next block: handling function return values */
 
-static int handle_scalar_return (const char *vname, void *ptr)
+static int handle_scalar_return (fncall *call, void *ptr, int rtype)
 {
     static double xret;
+    const char *vname = call->retname;
     int err = 0;
 
     if (gretl_is_scalar(vname)) {
 	xret = gretl_scalar_get_value(vname, NULL);
     } else {
-	xret = NADBL;
-	/* FIXME err? */
+	gretl_matrix *m = get_matrix_by_name(vname);
+
+	if (gretl_matrix_is_scalar(m)) {
+	    xret = m->val[0];
+	} else {
+	    gretl_errmsg_sprintf("Function %s did not provide the specified return value\n"
+				 "(expected %s)", call->fun->name, gretl_type_get_name(rtype));
+	    err = E_TYPES;
+	    xret = NADBL;
+	}
     }
 
     *(double **) ptr = &xret;
@@ -8415,7 +8424,7 @@ function_assign_returns (fncall *call, int rtype,
 	}
 
 	if (rtype == GRETL_TYPE_DOUBLE) {
-	    err = handle_scalar_return(call->retname, ret);
+	    err = handle_scalar_return(call, ret, rtype);
 	} else if (rtype == GRETL_TYPE_SERIES) {
 	    err = handle_series_return(call->retname, ret, dset, copy, label);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
