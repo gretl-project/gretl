@@ -1816,6 +1816,90 @@
       </description>
     </function>
 
+    <function name="bcheck" section="programming" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">target</fnarg>
+	<fnarg type="bundle">input</fnarg>
+	<fnarg type="strings" optional="true">required-keys</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Primarily intended for use by writers of function
+	  packages. Here is the context in which <lit>bcheck</lit> may
+	  be useful: you have a function which accepts a bundle
+	  argument whereby the caller can make various choices.
+	  Some elements of the bundle may have default values&mdash;so
+	  the caller is not obliged to make an explicit
+	  choice&mdash;while other elements may be required. You want
+	  to determine whether the argument you get is valid.
+	</para>
+	<para>
+	  To use <lit>bcheck</lit> you construct a template bundle
+	  containing all the supported keys, with values that
+	  exemplify the type associated with each key, and pass this
+	  in pointer form as <argname>target</argname>. For the second
+	  argument, <argname>input</argname>, pass the bundle you get
+	  from the caller. This function then checks the following:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Does <argname>input</argname> contain any keys not
+	      present in <argname>target</argname>? If so,
+	      <lit>bcheck</lit> returns a non-zero value, indicating
+	      that <argname>input</argname> is erroneous.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Does <argname>input</argname> contain under any given
+	      key an object whose type does not match that in
+	      <argname>target</argname>? If so, a non-zero value is
+	      returned.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      If some elements in <argname>target</argname> require
+	      input from the caller (so the value you supply is not
+	      actually a default, just a placeholder to indicate the
+	      required type), you should supply a third argument to
+	      <lit>bcheck</lit>: an array of strings holding the keys
+	      for which input is not optional. Then the return value
+	      will be non-zero if any required elements are missing
+	      from <argname>input</argname>.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  If no errors are detected on these points, any values
+	  supplied in <argname>input</argname> are copied to
+	  <argname>target</argname> (that is, defaults are replaced by
+	  valid selections on the caller's part). If errors are found
+	  a message will be printed indicating what is wrong with
+	  <argname>input</argname>.
+	</para>
+	<para>
+	  To give a simple example, suppose your function's argument
+	  bundle supports a matrix <lit>X</lit> (required), a scalar
+	  <lit>z</lit> with default value 0, and a string <lit>s</lit>
+	  with default value <quote><lit>display</lit></quote>. Then
+	  the following code fragment would be suitable for checking
+	  a bundle named <lit>uservals</lit> supplied by the caller:
+	</para>
+	<code>
+	  bundle target = _(X={}, z=0, s="display")
+	  strings req = defarray("X")
+	  err = bcheck(&amp;target, uservals, req)
+	  if err
+	     # react appropriately
+	  else
+	     # go ahead using the values in target
+	  endif
+	</code>
+      </description>
+    </function>
+
     <function name="bessel" section="math" output="asinput">
       <fnargs>
 	<fnarg type="char">type</fnarg>
@@ -10690,6 +10774,25 @@
 	<para>
 	  Also see the <fncref targ="sscanf"/> and <fncref
 	  targ="getline"/> functions.
+	</para>
+      </description>
+    </function>
+
+    <function name="recode" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">src</fnarg>
+	<fnarg type="string">from-codeset</fnarg>
+	<fnarg type="string" optional="true">to-codeset</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a version of the <argname>src</argname> string
+	  recoded from <argname>from-codeset</argname> to
+	  <argname>to-codeset</argname>, if possible. If the
+	  <quote>to</quote> argument is omitted it defaults to
+	  <lit>UTF-8</lit>.  A list of common encodings can be found
+	  at
+	  <url>https://en.wikipedia.org/wiki/Character_encoding</url>.
 	</para>
       </description>
     </function>
