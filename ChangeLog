@@ -1,6 +1,9 @@
 version 2021c, in progress
 - New function contains(): indicates whether a numerical
   object contains members of a specified set
+- New function recode(): converts encoding of strings
+- New function bcheck(): adds in handling bundle arguments
+  to user-defined functions
 - Introduce experimental "plot collection"
 - MS Windows, 64-bit: update to gnuplot 5.4.1, patched to
   avoid too-big fonts on Windows with Ultra HD display
