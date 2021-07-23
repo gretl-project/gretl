@@ -89,7 +89,6 @@ int script_auto_bracket = 0;
 
 static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
-static gboolean script_bracket_handler (windata_t *vwin, guint keyval);
 static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
@@ -696,10 +695,6 @@ static void set_source_tabs (GtkWidget *w, int cw)
 		   k == GDK_ISO_Left_Tab || \
 		   k == GDK_KP_Tab)
 
-#define lbracket(k) (k == GDK_parenleft || \
-		     k == GDK_bracketleft || \
-		     k == GDK_braceleft)
-
 #define editing_hansl(r) (r == EDIT_HANSL || \
 			  r == EDIT_PKG_CODE ||	\
 			  r == EDIT_PKG_SAMPLE)
@@ -969,8 +964,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	set_style_for_buffer(sbuf, get_sourceview_style());
     }
 
-    set_sv_auto_completion(vwin);
-
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(script_key_handler), vwin);
@@ -979,6 +972,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
+	if (editable) {
+	    set_sv_auto_completion(vwin);
+	}
     } else if (foreign_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(foreign_script_key_handler), vwin);
@@ -1046,11 +1042,9 @@ void update_script_editor_options (windata_t *vwin)
 
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					  script_line_numbers);
-    if (vwin_is_editing(vwin)) {
-	set_sv_auto_completion(vwin);
+    if (vwin->role != CONSOLE) {
+	set_style_for_buffer(vwin->sbuf, get_sourceview_style());
     }
-
-    set_style_for_buffer(vwin->sbuf, get_sourceview_style());
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -3678,7 +3672,7 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
     return ret;
 }
 
-static gboolean script_bracket_handler (windata_t *vwin, guint keyval)
+gboolean script_bracket_handler (windata_t *vwin, guint keyval)
 {
     if (maybe_insert_auto_bracket(vwin, keyval)) {
 	return TRUE;
@@ -4581,11 +4575,8 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     set_source_tabs(vwin->text, cw);
 
     if (script_auto_complete) {
-	/* 2021-06-11: add completion via gtksourceview */
-	gint8 comp_order[] = {0, 1, 2, 3};
-
+	/* 2021-06-11: add gtksourceview completion for console */
 	set_sv_auto_completion(vwin);
-	set_auto_completion_priority(vwin->text, comp_order);
     }
 
     if (hsize > 0) {

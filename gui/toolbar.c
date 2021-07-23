@@ -828,7 +828,12 @@ static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
 
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 {
-    preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+    if (vwin->role == CONSOLE) {
+	/* FIXME swallow console */
+	console_prefs_dialog(vwin->main);
+    } else {
+	preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+    }
 }
 
 static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
@@ -1128,6 +1133,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SERIES && f == EDITOR_ITEM) {
 	return NULL;
+    } else if (r == CONSOLE && func == G_CALLBACK(editor_prefs_callback)) {
+	; /* alright then */
     } else if (r != EDIT_HANSL && r != EDIT_PKG_CODE &&
 	       r != EDIT_PKG_SAMPLE && f == EDIT_HANSL_ITEM) {
 	return NULL;

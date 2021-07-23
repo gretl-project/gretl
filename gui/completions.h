@@ -29,8 +29,6 @@ extern int script_auto_complete;
 
 void set_sv_auto_completion (windata_t *vwin);
 
-void set_auto_completion_priority (GtkWidget *w, gint8 *order);
-
 void tab_auto_complete (GtkWidget *w);
 
 #endif /* GUI_COMPLETIONS_H */

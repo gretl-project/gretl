@@ -34,24 +34,29 @@
 int script_auto_complete;
 
 enum {
-    PROV_WORDS,
-    PROV_FUNCS,
-    PROV_CMDS,
-    NPROV
+    PROV_SNIPPETS,
+    PROV_SERIES
+};
+
+/* apparatus specific to 'words providers' */
+
+enum {
+    WP_WORDS,
+    WP_FUNCS,
+    WP_CMDS,
+    N_WP
 };
 
 typedef struct prov_info_ prov_info;
 
 struct prov_info_ {
-    gint8 id[NPROV];
-    gint8 priority[NPROV];
-    const char *name[NPROV];
-    GtkTextBuffer *buf[NPROV];
+    gint8 id[N_WP];
+    const char *name[N_WP];
+    GtkTextBuffer *buf[N_WP];
 };
 
 static prov_info pi_defaults = {
-    { PROV_WORDS, PROV_FUNCS, PROV_CMDS},
-    { 1, 2, 3 },
+    { WP_WORDS, WP_FUNCS, WP_CMDS},
     { "words", "functions", "commands" },
     { NULL, NULL, NULL }
 };
@@ -68,13 +73,15 @@ static void prov_info_destroy (prov_info *pi)
 {
     int i;
 
-    for (i=0; i<NPROV; i++) {
+    for (i=0; i<N_WP; i++) {
 	if (pi->buf[i] != NULL) {
 	    g_object_unref(pi->buf[i]);
 	}
     }
     free(pi);
 }
+
+/* end apparatus specific to 'words providers' */
 
 /* Create a GtkTextBuffer holding the names of built-in
    gretl functions, to serve as a completion provider.
@@ -129,20 +136,25 @@ static GtkTextBuffer *command_names_buffer (void)
     return tbuf;
 }
 
-#ifdef HAVE_ALT_COMPLETE
-
-static void maybe_set_user_activation (GObject *obj)
+static void provider_set_activation (GObject *obj)
 {
+#ifdef HAVE_ALT_COMPLETE
     if (script_auto_complete == COMPLETE_TAB) {
 	g_object_set(obj, "activation",
 		     GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED, NULL);
+    } else {
+	g_object_set(obj, "activation",
+		     GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE, NULL);
     }
+#else
+    g_object_set(obj, "activation",
+		 GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE, NULL);
+#endif
 }
 
-#endif
-
 static void add_words_provider (GtkSourceCompletion *comp,
-				gint8 id, windata_t *vwin,
+				gint8 id, gint priority,
+				windata_t *vwin,
 				prov_info *pi)
 {
     const char *name = pi->name[id];
@@ -151,14 +163,12 @@ static void add_words_provider (GtkSourceCompletion *comp,
 
     cw = gtk_source_completion_words_new(name, NULL);
 
-    g_object_set(cw, "priority", pi->priority[id], NULL);
-#ifdef HAVE_ALT_COMPLETE
-    maybe_set_user_activation(G_OBJECT(cw));
-#endif
+    g_object_set(cw, "priority", priority, NULL);
+    provider_set_activation(G_OBJECT(cw));
 
-    if (id == PROV_WORDS) {
+    if (id == WP_WORDS) {
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    } else if (id == PROV_FUNCS) {
+    } else if (id == WP_FUNCS) {
 	buf = pi->buf[id] = function_names_buffer();
     } else {
 	buf = pi->buf[id] = command_names_buffer();
@@ -170,51 +180,14 @@ static void add_words_provider (GtkSourceCompletion *comp,
     g_object_set_data(G_OBJECT(vwin->text), name, cw);
 }
 
-static void delete_words_provider (GtkSourceCompletion *comp,
-				   gint8 id, windata_t *vwin)
-{
-    const char *name;
-    GtkSourceCompletionWords *cw;
-    GtkTextBuffer *buf;
-    prov_info *pi;
-
-    pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
-    if (pi == NULL) {
-	return;
-    }
-
-    name = pi->name[id];
-    cw = g_object_get_data(G_OBJECT(vwin->text), name);
-    if (cw == NULL) {
-	return;
-    }
-
-    if (id == PROV_WORDS) {
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    } else {
-	buf = pi->buf[id];
-    }
-    gtk_source_completion_words_unregister(cw, buf);
-    gtk_source_completion_remove_provider(comp,
-					  GTK_SOURCE_COMPLETION_PROVIDER(cw),
-					  NULL);
-    g_object_unref(G_OBJECT(cw));
-    g_object_set_data(G_OBJECT(vwin->text), name, NULL);
-
-    if (id != PROV_WORDS) {
-	g_object_unref(G_OBJECT(pi->buf[id]));
-	pi->buf[id] = NULL;
-    }
-}
-
 /* apparatus for providing "snippets" which may consist of
-   several "words"
+   several "words", plus other gretl-specific material
 */
 
-typedef struct _SnippetProvider SnippetProvider;
-typedef struct _SnippetProviderClass SnippetProviderClass;
+typedef struct _GretlProvider GretlProvider;
+typedef struct _GretlProviderClass GretlProviderClass;
 
-struct _SnippetProvider
+struct _GretlProvider
 {
     GObject parent;
     GList *proposals;
@@ -222,38 +195,39 @@ struct _SnippetProvider
     gchar *name;
     GdkPixbuf *icon;
     GtkSourceCompletionActivation activation;
+    gint id;
 };
 
-struct _SnippetProviderClass
+struct _GretlProviderClass
 {
     GObjectClass parent_class;
 };
 
-static void snippet_provider_iface_init (GtkSourceCompletionProviderIface *iface);
-GType snippet_provider_get_type (void);
+static void gretl_provider_iface_init (GtkSourceCompletionProviderIface *iface);
+GType gretl_provider_get_type (void);
 
-G_DEFINE_TYPE_WITH_CODE (SnippetProvider,
-			 snippet_provider,
+G_DEFINE_TYPE_WITH_CODE (GretlProvider,
+			 gretl_provider,
 			 G_TYPE_OBJECT,
 			 G_IMPLEMENT_INTERFACE(GTK_TYPE_SOURCE_COMPLETION_PROVIDER,
-					       snippet_provider_iface_init))
+					       gretl_provider_iface_init))
 
 static gchar *
-snippet_provider_get_name (GtkSourceCompletionProvider *provider)
+gretl_provider_get_name (GtkSourceCompletionProvider *provider)
 {
-    return g_strdup(((SnippetProvider *) provider)->name);
+    return g_strdup(((GretlProvider *) provider)->name);
 }
 
 static gint
-snippet_provider_get_priority (GtkSourceCompletionProvider *provider)
+gretl_provider_get_priority (GtkSourceCompletionProvider *provider)
 {
-    return ((SnippetProvider *) provider)->priority;
+    return ((GretlProvider *) provider)->priority;
 }
 
 static GtkSourceCompletionActivation
-snippet_provider_get_activation (GtkSourceCompletionProvider *provider)
+gretl_provider_get_activation (GtkSourceCompletionProvider *provider)
 {
-    return ((SnippetProvider *) provider)->activation;
+    return ((GretlProvider *) provider)->activation;
 }
 
 #define valid(c) (c == '_' || isalnum(c))
@@ -322,6 +296,12 @@ static int proposal_get_cursor_offset (const gchar *s)
 	return 5;
     } else if (!strncmp(s, "function", 8)) {
 	return 9;
+    } else if (!strncmp(s, "outfile", 7)) {
+	return 8;
+    } else if (!strncmp(s, "plot", 4)) {
+	return 5;
+    } else if (!strncmp(s, "mpi", 3)) {
+	return 5;
     } else {
 	return 0;
     }
@@ -356,8 +336,34 @@ snippet_activate_proposal (GtkSourceCompletionProvider *provider,
 }
 
 static gboolean
-snippet_provider_match (GtkSourceCompletionProvider *provider,
-			GtkSourceCompletionContext *context)
+series_activate_proposal (GtkSourceCompletionProvider *provider,
+			  GtkSourceCompletionProposal *proposal,
+			  GtkTextIter *iter)
+{
+    /* just accept the gtksourceview default */
+    return FALSE;
+}
+
+static gboolean
+gretl_activate_proposal (GtkSourceCompletionProvider *provider,
+			 GtkSourceCompletionProposal *proposal,
+			 GtkTextIter *iter)
+{
+    gint id = ((GretlProvider *) provider)->id;
+    gboolean ret = FALSE;
+
+    if (id == PROV_SNIPPETS) {
+	ret = snippet_activate_proposal(provider, proposal, iter);
+    } else if (id == PROV_SERIES) {
+	ret = series_activate_proposal(provider, proposal, iter);
+    }
+
+    return ret;
+}
+
+static gboolean
+gretl_provider_match (GtkSourceCompletionProvider *provider,
+		      GtkSourceCompletionContext *context)
 {
     return TRUE;
 }
@@ -366,7 +372,7 @@ static void
 snippet_provider_populate (GtkSourceCompletionProvider *provider,
 			   GtkSourceCompletionContext *context)
 {
-    GList *L = ((SnippetProvider *) provider)->proposals;
+    GList *L = ((GretlProvider *) provider)->proposals;
     GList *ret = NULL;
     GtkTextIter iter;
     gchar *word;
@@ -400,17 +406,76 @@ snippet_provider_populate (GtkSourceCompletionProvider *provider,
 }
 
 static void
-snippet_provider_iface_init (GtkSourceCompletionProviderIface *iface)
+series_provider_populate (GtkSourceCompletionProvider *provider,
+			  GtkSourceCompletionContext *context)
 {
-    iface->get_name = snippet_provider_get_name;
-    iface->populate = snippet_provider_populate;
-    iface->match = snippet_provider_match;
-    iface->get_priority = snippet_provider_get_priority;
-    iface->get_activation = snippet_provider_get_activation;
-    iface->activate_proposal = snippet_activate_proposal;
+    GList *ret = NULL;
+    GtkTextIter iter;
+    gchar *word;
+    int n;
+
+    GList *L = ((GretlProvider *) provider)->proposals;
+    fprintf(stderr, "series_provider_populate: L=%p\n", (void *) L);
+    while (L != NULL) {
+	GtkSourceCompletionProposal *p = L->data;
+	gchar *s = gtk_source_completion_proposal_get_text(p);
+	fprintf(stderr, "'%s'", s);
+	g_free(s);
+	L = L->next;
+    }
+
+    gtk_source_completion_context_get_iter(context, &iter);
+    word = get_word_at_iter(&iter);
+
+    if (word != NULL && (n = strlen(word)) >= 2) {
+	GtkSourceCompletionItem *item;
+	const char *vname;
+	int i;
+
+	for (i=0; i<dataset->v; i++) {
+	    vname = dataset->varname[i];
+	    if (!strncmp(vname, word, n)) {
+		/* FIXME memory management */
+		item = gtk_source_completion_item_new(vname, vname,
+						      NULL, NULL);
+		ret = g_list_prepend(ret, item);
+	    }
+	}
+    }
+
+    if (ret != NULL) {
+	ret = g_list_reverse(ret);
+    }
+
+    gtk_source_completion_context_add_proposals(context, provider, ret, TRUE);
+    g_list_free(ret);
 }
 
-static void snippet_provider_class_init (SnippetProviderClass *klass)
+static void
+gretl_provider_populate (GtkSourceCompletionProvider *provider,
+			 GtkSourceCompletionContext *context)
+{
+    gint id = ((GretlProvider *) provider)->id;
+
+    if (id == PROV_SNIPPETS) {
+	snippet_provider_populate(provider, context);
+    } else if (id == PROV_SERIES) {
+	series_provider_populate(provider, context);
+    }
+}
+
+static void
+gretl_provider_iface_init (GtkSourceCompletionProviderIface *iface)
+{
+    iface->get_name = gretl_provider_get_name;
+    iface->populate = gretl_provider_populate;
+    iface->match = gretl_provider_match;
+    iface->get_priority = gretl_provider_get_priority;
+    iface->get_activation = gretl_provider_get_activation;
+    iface->activate_proposal = gretl_activate_proposal;
+}
+
+static void gretl_provider_class_init (GretlProviderClass *klass)
 {
     return;
 }
@@ -425,10 +490,13 @@ struct snippet {
 struct snippet snippets[] = {
     { "loop..endloop", "loop \n\t\nendloop\n" },
     { "if..endif", "if \n\t\nendif\n" },
-    { "function...", "function type name ()\n\t\nend function\n\n" }
+    { "function...", "function type name ()\n\t\nend function\n\n" },
+    { "outfile...", "outfile \n\t\nend outfile\n" },
+    { "plot...", "plot \n\t\nend plot\n" },
+    { "mpi...", "mpi\n\t\nend mpi\n" }
 };
 
-static void snippet_provider_init (SnippetProvider *self)
+static void snippet_provider_init (GretlProvider *self)
 {
     GtkSourceCompletionItem *item;
     GList *proposals = NULL;
@@ -443,53 +511,57 @@ static void snippet_provider_init (SnippetProvider *self)
     self->proposals = proposals;
 }
 
-static void add_snippets_provider (GtkSourceCompletion *comp,
-				   windata_t *vwin)
-{
-    SnippetProvider *sp;
+static int gretl_prov_id;
 
-    sp = g_object_new(snippet_provider_get_type(), NULL);
-    sp->priority = 1;
-#ifdef HAVE_ALT_COMPLETE
-    if (script_auto_complete == COMPLETE_TAB) {
-	sp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
+static void gretl_provider_init (GretlProvider *self)
+{
+    if (gretl_prov_id == PROV_SNIPPETS) {
+	snippet_provider_init(self);
     } else {
-	sp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
+	self->proposals = NULL;
     }
-#else
-    sp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
-#endif
-    sp->name = "snippets";
-    gtk_source_completion_add_provider(comp,
-				       GTK_SOURCE_COMPLETION_PROVIDER(sp),
-				       NULL);
-    g_object_set_data(G_OBJECT(vwin->text), sp->name, sp);
 }
 
-static void delete_snippets_provider (GtkSourceCompletion *comp,
-				      windata_t *vwin)
+static void gretl_provider_set_activation (GretlProvider *gp)
 {
-    SnippetProvider *sp = g_object_get_data(G_OBJECT(vwin->text),
-					    "snippets");
-
-    if (sp == NULL) {
-	return;
+#ifdef HAVE_ALT_COMPLETE
+    if (script_auto_complete == COMPLETE_TAB) {
+	gp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
+    } else {
+	gp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
     }
+#else
+    gp->activation = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
+#endif
+}
 
-    gtk_source_completion_remove_provider(comp,
-					  GTK_SOURCE_COMPLETION_PROVIDER(sp),
-					  NULL);
-    g_object_unref(G_OBJECT(sp));
+static void add_gretl_provider (GtkSourceCompletion *comp,
+				gint id, gint priority,
+				windata_t *vwin)
+{
+    GretlProvider *gp;
+
+    gretl_prov_id = id; /* hack! */
+    gp = g_object_new(gretl_provider_get_type(), NULL);
+    gp->id = id;
+    gp->priority = priority;
+    gretl_provider_set_activation(gp);
+    gp->name = (id == PROV_SNIPPETS)? "snippets" : "series";
+    gtk_source_completion_add_provider(comp,
+				       GTK_SOURCE_COMPLETION_PROVIDER(gp),
+				       NULL);
+    g_object_set_data(G_OBJECT(vwin->text), gp->name, gp);
 }
 
 /* end snippets apparatus */
 
-static void destroy_providers (GtkWidget *w, gpointer p)
+static void destroy_words_providers (GtkWidget *w, gpointer p)
 {
     prov_info *pi = g_object_get_data(G_OBJECT(w), "prov_info");
 
     if (pi != NULL) {
 	prov_info_destroy(pi);
+	g_object_set_data(G_OBJECT(w), "prov_info", NULL);
     }
 }
 
@@ -511,42 +583,21 @@ void set_sv_auto_completion (windata_t *vwin)
 	prov_info *pi = prov_info_new();
 
 	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
-	add_words_provider(comp, PROV_WORDS, vwin, pi);
-	add_words_provider(comp, PROV_FUNCS, vwin, pi);
 	if (vwin->role == CONSOLE) {
-	    add_words_provider(comp, PROV_CMDS, vwin, pi);
+	    add_words_provider(comp, WP_WORDS, 1, vwin, pi);
+	    add_words_provider(comp, WP_FUNCS, 2, vwin, pi);
+	    add_gretl_provider(comp, PROV_SERIES, 3, vwin);
+	    add_words_provider(comp, WP_CMDS, 4, vwin, pi);
 	} else {
-	    add_snippets_provider(comp, vwin);
+	    /* context is script editor */
+	    add_words_provider(comp, WP_WORDS, 1, vwin, pi);
+	    add_gretl_provider(comp, PROV_SERIES, 2, vwin);
+	    add_words_provider(comp, WP_CMDS, 3, vwin, pi);
+	    add_words_provider(comp, WP_FUNCS, 4, vwin, pi);
+	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin);
 	}
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",
-			 G_CALLBACK(destroy_providers), NULL);
-    } else if (!script_auto_complete && L != NULL) {
-	/* de-activate and clean up */
-	delete_words_provider(comp, PROV_WORDS, vwin);
-	delete_words_provider(comp, PROV_FUNCS, vwin);
-	delete_words_provider(comp, PROV_CMDS, vwin);
-	delete_snippets_provider(comp, vwin);
-    }
-}
-
-/* Note: @w must be a vwin->text instance, and @priorities
-   must contain 4 small integers, high values representing
-   high priority. The order of the values is PROV_WORDS,
-   PROV_FUNCS, PROV_CMDS, PROV_SNIPPETS.
-*/
-
-void set_auto_completion_priority (GtkWidget *w, gint8 *order)
-{
-    GtkSourceCompletion *comp;
-    GList *L;
-    int i = 0;
-
-    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(w));
-    L = gtk_source_completion_get_providers(comp);
-
-    while (L != NULL) {
-	g_object_set(G_OBJECT(L->data), "priority", order[i++], NULL);
-	L = L->next;
+			 G_CALLBACK(destroy_words_providers), NULL);
     }
 }
 

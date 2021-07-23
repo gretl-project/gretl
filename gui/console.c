@@ -25,6 +25,7 @@
 #include "dlgutils.h"
 #include "gui_recode.h"
 #include "completions.h"
+#include "textbuf.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -725,9 +726,10 @@ static gint console_key_handler (GtkWidget *cview,
     }
 
     if (keyval == GDK_Tab && script_auto_complete) {
-	/* FIXME conditionality! */
 	tab_auto_complete(cview);
 	return TRUE;
+    } else if (script_auto_bracket && lbracket(keyval)) {
+	return script_bracket_handler((windata_t *) p, keyval);
     }
 
     return FALSE;

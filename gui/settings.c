@@ -70,7 +70,7 @@ static int use_proxy;
 
 static ConfigPaths paths;
 
-static void make_prefs_tab (GtkWidget *notebook, int tab);
+static void make_prefs_tab (GtkWidget *notebook, int tab, int console);
 static void apply_changes (GtkWidget *widget, GtkWidget *parent);
 
 #ifndef G_OS_WIN32
@@ -1035,15 +1035,14 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
-    gtk_widget_show(notebook);
 
-    make_prefs_tab(notebook, TAB_MAIN);
-    make_prefs_tab(notebook, TAB_PROGS);
-    make_prefs_tab(notebook, TAB_EDITOR);
-    make_prefs_tab(notebook, TAB_NET);
-    make_prefs_tab(notebook, TAB_VCV);
+    make_prefs_tab(notebook, TAB_MAIN, 0);
+    make_prefs_tab(notebook, TAB_PROGS, 0);
+    make_prefs_tab(notebook, TAB_EDITOR, 0);
+    make_prefs_tab(notebook, TAB_NET, 0);
+    make_prefs_tab(notebook, TAB_VCV, 0);
 #ifdef HAVE_MPI
-    make_prefs_tab(notebook, TAB_MPI);
+    make_prefs_tab(notebook, TAB_MPI, 0);
 #endif
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -1053,7 +1052,6 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(apply_changes), parent);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     /* Cancel button */
     button = cancel_button(hbox);
@@ -1063,7 +1061,6 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget),
 		     dialog);
-    gtk_widget_show(button);
 
     /* OK button */
     button = ok_button(hbox);
@@ -1072,11 +1069,9 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget),
 		     dialog);
-    gtk_widget_show(button);
 
     /* Help button */
     button = context_help_button(hbox, -1);
-    gtk_widget_show(button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(show_prefs_help),
 		     notebook);
@@ -1093,7 +1088,58 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 	highlight_preferences_entry(varname);
     }
 
-    gtk_widget_show(dialog);
+    gtk_widget_show_all(dialog);
+
+    return canceled;
+}
+
+int console_prefs_dialog (GtkWidget *parent)
+{
+    static GtkWidget *dialog;
+    GtkWidget *button;
+    GtkWidget *hbox;
+    GtkWidget *vbox;
+    int canceled = 0;
+
+    if (dialog != NULL) {
+	gtk_window_present(GTK_WINDOW(dialog));
+	return 0;
+    }
+
+    dialog = gretl_dialog_new(_("gretl: console preferences"), parent,
+			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
+#if GTK_MAJOR_VERSION < 3
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
+#endif
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_set_spacing(GTK_BOX(vbox), 2);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed),
+		     &dialog);
+
+    make_prefs_tab(vbox, TAB_EDITOR, 1);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* Cancel button */
+    button = cancel_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(preferences_dialog_canceled),
+		     &canceled);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget),
+		     dialog);
+
+    /* OK button */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(apply_changes), parent);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget),
+		     dialog);
+
+    gtk_widget_show_all(dialog);
 
     return canceled;
 }
@@ -1196,7 +1242,6 @@ static GtkWidget *embed_style_sampler (GtkWidget *vbox)
     hbox = gtk_hbox_new(TRUE, 5);
     text = create_sample_source(sview_style);
     gtk_box_pack_start(GTK_BOX(hbox), text, TRUE, FALSE, 0);
-    gtk_widget_show_all(hbox);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 15);
 
     return text;
@@ -1346,14 +1391,23 @@ const char *get_default_hc_string (int ci)
     }
 }
 
+static int non_console_var (void *ptr)
+{
+    return (ptr == &smarttab || ptr == &script_line_numbers ||
+	    ptr == &tabbed_editor || ptr == &sview_style);
+}
+
 static void
 get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse,
-		 int *n_list)
+		 int *n_list, int console)
 {
     int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].tab == page) {
+	    if (console && non_console_var(rc_vars[i].var)) {
+		continue;
+	    }
 	    if (rc_vars[i].flags & BROWSER) {
 		*n_browse += 1;
 	    } else if (rc_vars[i].flags & LISTSET) {
@@ -1403,7 +1457,6 @@ static void add_themes_examples_button (GtkWidget *hbox)
 
     b = gtk_button_new_with_label(_("Examples"));
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
-    gtk_widget_show(b);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(themes_page), NULL);
 }
@@ -1416,13 +1469,13 @@ static GtkWidget *scroller_page (GtkWidget *vbox)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_NEVER,
 				   GTK_POLICY_AUTOMATIC);
-    gtk_widget_show(scroller);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller),
 					  vbox);
     return scroller;
 }
 
-static void make_prefs_tab (GtkWidget *notebook, int tab)
+static void make_prefs_tab (GtkWidget *notebook, int tab,
+			    int console)
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
     GtkWidget *l_table = NULL;
@@ -1438,36 +1491,37 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     RCVAR *rc;
     int i;
 
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_widget_show(vbox);
-
-    if (tab == TAB_MAIN) {
-	w = gtk_label_new(_("General"));
-    } else if (tab == TAB_PROGS) {
-	w = gtk_label_new(_("Programs"));
-    } else if (tab == TAB_EDITOR) {
-	w = gtk_label_new(_("Editor"));
-    } else if (tab == TAB_NET) {
-	w = gtk_label_new(_("Network"));
-    } else if (tab == TAB_VCV) {
-	w = gtk_label_new(_("HCCME"));
-#ifdef HAVE_MPI
-    } else if (tab == TAB_MPI) {
-	w = gtk_label_new(_("MPI"));
-#endif
-    }
-
-    if (tab == TAB_PROGS) {
-	page = scroller_page(vbox);
+    if (console) {
+	vbox = notebook; /* not really a notebook! */
     } else {
-	page = vbox;
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
+	if (tab == TAB_MAIN) {
+	    w = gtk_label_new(_("General"));
+	} else if (tab == TAB_PROGS) {
+	    w = gtk_label_new(_("Programs"));
+	} else if (tab == TAB_EDITOR) {
+	    w = gtk_label_new(_("Editor"));
+	} else if (tab == TAB_NET) {
+	    w = gtk_label_new(_("Network"));
+	} else if (tab == TAB_VCV) {
+	    w = gtk_label_new(_("HCCME"));
+#ifdef HAVE_MPI
+	} else if (tab == TAB_MPI) {
+	    w = gtk_label_new(_("MPI"));
+#endif
+	}
+	if (tab == TAB_PROGS) {
+	    page = scroller_page(vbox);
+	} else {
+	    page = vbox;
+	}
+
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, w);
     }
 
-    gtk_widget_show(w);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, w);
-
-    get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list);
+    get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list, console);
 
     s_cols = (n_browse > 0)? 3 : 2;
 
@@ -1478,7 +1532,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
 	gtk_box_pack_start(GTK_BOX(vbox), l_table, FALSE, FALSE, 0);
-	gtk_widget_show(l_table);
     }
 
     if (n_str > 0) {
@@ -1486,7 +1539,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
 	gtk_box_pack_start(GTK_BOX(vbox), s_table, FALSE, FALSE, 0);
-	gtk_widget_show(s_table);
     }
 
     if (n_bool > 0) {
@@ -1495,7 +1547,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
 	gtk_box_pack_start(GTK_BOX(vbox), b_table, FALSE, FALSE, 10);
-	gtk_widget_show(b_table);
     }
 
     if (tab != TAB_VCV && n_list > 0) {
@@ -1509,8 +1560,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_col_spacings(GTK_TABLE(l_table), 10);
 	gtk_box_pack_start(GTK_BOX(hbox), l_table, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show(hbox);
-	gtk_widget_show(l_table);
     }
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1518,6 +1567,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	if (rc->tab != tab) {
 	    /* the item is not on this page */
+	    continue;
+	} else if (console && non_console_var(rc->var)) {
 	    continue;
 	}
 
@@ -1544,7 +1595,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				 rc_vars[i-1].widget);
 	    }
 
-	    gtk_widget_show(rc->widget);
 	    b_col++;
 
 	    if (tab == TAB_VCV || b_col == 2) {
@@ -1587,7 +1637,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_table_attach_defaults(GTK_TABLE(b_table), w,
 				      b_col, b_col + 1,
 				      b_len - 3, b_len - 2);
-	    gtk_widget_show(w);
 
 	    /* then a first button */
 	    button = gtk_radio_button_new_with_label(group, _(rc->link));
@@ -1597,7 +1646,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    if (!rcval) {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	    }
-	    gtk_widget_show(button);
 
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
@@ -1610,7 +1658,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    if (rcval) {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
 	    }
-	    gtk_widget_show(rc->widget);
 
 	    if (rc->flags & FIXSET) {
 		gtk_widget_set_sensitive(button, FALSE);
@@ -1631,7 +1678,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		w = gtk_hseparator_new();
 		gtk_table_attach_defaults(GTK_TABLE(b_table), w,
 					  0, rcol, b_len - 1, b_len);
-		gtk_widget_show(w);
 	    } else {
 		rcol = b_col + 1;
 	    }
@@ -1641,7 +1687,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_table_attach_defaults(GTK_TABLE(b_table), b,
 				      b_col, rcol,
 				      b_len - 1, b_len);
-	    gtk_widget_show(b);
 
 	    strs = get_radio_setting_strings(rc->var, &nopt);
 
@@ -1655,7 +1700,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		g_object_set_data(G_OBJECT(b), "action",
 				  GINT_TO_POINTER(j));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), j == rcval);
-		gtk_widget_show(b);
 		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
 		g_signal_connect(G_OBJECT(b), "clicked",
 				 G_CALLBACK(radio_change_value),
@@ -1677,7 +1721,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
-	    gtk_widget_show(w);
 
 	    rc->widget = gtk_combo_box_text_new();
 
@@ -1691,7 +1734,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_attach(GTK_TABLE(l_table), hbox,
 				 1, 2, l_len - 1, l_len,
 				 GTK_EXPAND | GTK_FILL, 0, 0, 0);
-		gtk_widget_show(hbox);
 	    } else {
 		gtk_table_attach(GTK_TABLE(l_table), rc->widget,
 				 1, 2, l_len - 1, l_len,
@@ -1755,7 +1797,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_set_size_request(rc->widget, ww, -1);
 	    }
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
-	    gtk_widget_show(rc->widget);
 	    if (langs) {
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
 				 G_CALLBACK(try_switch_locale),
@@ -1778,14 +1819,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
-	    gtk_widget_show(w);
 
 	    /* for now, this is specific to tab-spaces */
 	    rc->widget = gtk_spin_button_new_with_range(2, 8, 1);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rc->widget), *intvar);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      rc->widget, 1, 2, l_len - 1, l_len);
-	    gtk_widget_show(rc->widget);
 	} else if (!(rc->flags & INVISET)) {
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1797,20 +1836,17 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(s_table), w,
 				      0, 1, s_len - 1, s_len);
-	    gtk_widget_show(w);
 
 	    rc->widget = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(s_table),
 				      rc->widget, 1, 2, s_len - 1, s_len);
 	    gtk_entry_set_text(GTK_ENTRY(rc->widget), strvar);
-	    gtk_widget_show(rc->widget);
 
 	    if (rc->flags & BROWSER) {
 		/* add path browse button */
 		w = make_path_browse_button(rc, notebook);
 		table_attach_fixed(GTK_TABLE(s_table), w,
 				   2, 3, s_len - 1, s_len);
-		gtk_widget_show(w);
 	    }
 
 	    if (rc->flags & FIXSET) {
@@ -1936,6 +1972,7 @@ static void restart_message (void)
 
 static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 {
+    int old_ac = script_auto_complete;
     RCVAR *rcvar;
     GtkWidget *w;
     int changed = 0;
@@ -2014,11 +2051,15 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 
     selector_register_hc_choice();
 
+    if (script_auto_complete != old_ac) {
+	infobox(_("auto-completion changes apply to newly opened windows"));
+    }
+
     if (parent != NULL) {
 	windata_t *vwin = window_get_active_vwin(parent);
 
 	if (vwin != NULL && vwin->sbuf != NULL) {
-	    /* called from sourceview window or tab */
+	    /* called from sourceview window or tab, or console */
 	    update_script_editor_options(vwin);
 	}
     }
