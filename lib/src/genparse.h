@@ -470,7 +470,6 @@ enum {
     F_VMA,
     F_FCSTATS,
     F_BCHECK,
-    F_RECODE,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

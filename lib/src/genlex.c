@@ -580,7 +580,6 @@ struct str_table funcs[] = {
     { F_VMA,       "vma" },
     { F_BCHECK,    "bcheck" },
     { F_CONTAINS,  "contains" },
-    { F_RECODE,    "recode" },
     { 0,           NULL }
 };
 

@@ -10778,25 +10778,6 @@
       </description>
     </function>
 
-    <function name="recode" section="strings" output="string">
-      <fnargs>
-	<fnarg type="string">src</fnarg>
-	<fnarg type="string">from-codeset</fnarg>
-	<fnarg type="string" optional="true">to-codeset</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a version of the <argname>src</argname> string
-	  recoded from <argname>from-codeset</argname> to
-	  <argname>to-codeset</argname>, if possible. If the
-	  <quote>to</quote> argument is omitted it defaults to
-	  <lit>UTF-8</lit>.  A list of common encodings can be found
-	  at
-	  <url>https://en.wikipedia.org/wiki/Character_encoding</url>.
-	</para>
-      </description>
-    </function>
-
     <function name="regsub" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>

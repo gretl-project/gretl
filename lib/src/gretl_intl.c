@@ -1246,31 +1246,3 @@ int gretl_recode_file (const char *path1, const char *path2,
 
     return err;
 }
-
-char *gretl_recode_string (const char *src,
-			   const char *from_set,
-			   const char *to_set,
-			   int *err)
-{
-    char *ret = NULL;
-    gsize written = 0;
-    gchar *gbuf;
-
-    /* FIXME: ban conversion to UTF-16, etc. */
-
-    if (to_set == NULL) {
-	/* default to conversion to UTF-8 */
-	gbuf = glib_recode_buffer(src, from_set, "UTF-8",
-				  -1, &written, err);
-    } else {
-	gbuf = glib_recode_buffer(src, from_set, to_set,
-				  -1, &written, err);
-    }
-
-    if (*err == 0) {
-	ret = gretl_strdup(gbuf);
-    }
-    g_free(gbuf);
-
-    return ret;
-}

@@ -12498,23 +12498,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret->v.xval = gretl_bundle_extract_args(l->L->v.b, m->v.b,
 						    reqd, p->prn, &p->err);
         }
-    } else if (f == F_RECODE) {
-	const char *to_set = NULL;
-
-	post_process = 0;
-	if (l->t != STR) {
-	    node_type_error(f, 1, STR, l, p);
-	} else if (m->t != STR) {
-	    node_type_error(f, 2, STR, m, p);
-	} else if (!null_node(r) && r->t != STR) {
-	    node_type_error(f, 3, STR, r, p);
-	} else {
-	    ret = aux_string_node(p);
-	}
-	if (!p->err) {
-	    to_set = null_node(r) ? NULL : r->v.str;
-	    ret->v.str = gretl_recode_string(l->v.str, m->v.str, to_set, &p->err);
-	}
     }
 
     if (post_process) {
@@ -17688,7 +17671,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case F_VMA:
     case F_BCHECK:
-    case F_RECODE:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
