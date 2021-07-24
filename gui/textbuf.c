@@ -1009,7 +1009,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
 	if (editable) {
-	    set_sv_auto_completion(vwin);
+	    set_sv_completion(vwin);
 	}
     } else if (foreign_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -3419,7 +3419,7 @@ static char *get_previous_line_start_word (char *word,
 */
 
 static int maybe_insert_smart_tab (windata_t *vwin,
-				   int *tabcomp_ok)
+				   int *comp_ok)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
@@ -3455,9 +3455,9 @@ static int maybe_insert_smart_tab (windata_t *vwin,
 	if (strspn(chunk, " \t") == strlen(chunk)) {
 	    /* set @ret only if this text is just white space */
 	    ret = 1;
-	} else if (tabcomp_ok != NULL) {
-	    /* follow-up: is the context OK for auto-completion? */
-	    *tabcomp_ok = !isspace(chunk[strlen(chunk) - 1]);
+	} else if (comp_ok != NULL) {
+	    /* follow-up: is the context OK for completion? */
+	    *comp_ok = !isspace(chunk[strlen(chunk) - 1]);
 	}
 	g_free(chunk);
     }
@@ -3695,13 +3695,13 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
     }
 
     if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
-	int tabcomp_ok = 0;
-	int *ptr = script_auto_complete == COMPLETE_TAB ? &tabcomp_ok : NULL;
+	int comp_ok = 0;
+	int *ptr = hansl_completion == COMPLETE_USER ? &comp_ok : NULL;
 
 	if (maybe_insert_smart_tab(vwin, ptr)) {
 	    return TRUE;
-	} else if (tabcomp_ok) {
-	    tab_auto_complete(vwin->text);
+	} else if (comp_ok) {
+	    call_user_completion(vwin->text);
 	    return TRUE;
 	}
     }
@@ -4608,9 +4608,9 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     cw = get_char_width(vwin->text);
     set_source_tabs(vwin->text, cw);
 
-    if (script_auto_complete) {
+    if (hansl_completion) {
 	/* 2021-06-11: add gtksourceview completion for console */
-	set_sv_auto_completion(vwin);
+	set_sv_completion(vwin);
     }
 
     if (hsize > 0) {

@@ -725,8 +725,8 @@ static gint console_key_handler (GtkWidget *cview,
 	return TRUE;
     }
 
-    if (keyval == GDK_Tab && script_auto_complete) {
-	tab_auto_complete(cview);
+    if (keyval == GDK_Tab && hansl_completion == COMPLETE_USER) {
+	call_user_completion(cview);
 	return TRUE;
     } else if (script_auto_bracket && lbracket(keyval)) {
 	return script_bracket_handler((windata_t *) p, keyval);

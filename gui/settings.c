@@ -311,10 +311,10 @@ RCVAR rc_vars[] = {
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor,
       BOOLSET, 0, TAB_EDITOR, NULL },
 #ifdef HAVE_ALT_COMPLETE
-    { "script_auto_complete", N_("Auto-completion"), NULL, &script_auto_complete,
+    { "hansl_completion", N_("Auto-completion"), NULL, &hansl_completion,
       LISTSET | INTSET, 0, TAB_EDITOR, NULL },
 #else
-    { "script_auto_complete", N_("Enable auto-completion"), NULL, &script_auto_complete,
+    { "hansl_completion", N_("Enable auto-completion"), NULL, &hansl_completion,
       BOOLSET, 0, TAB_EDITOR, NULL },
 #endif
     { "script_auto_bracket", N_("Enable auto-brackets"), NULL, &script_auto_bracket,
@@ -1292,7 +1292,7 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == &manpref) {
 	strs = manpref_strs;
 	*n = sizeof manpref_strs / sizeof manpref_strs[0];
-    } else if (var == &script_auto_complete) {
+    } else if (var == &hansl_completion) {
 	strs = auto_complete_strs;
 	*n = sizeof auto_complete_strs / sizeof auto_complete_strs[0];
     } else if (var == &icon_sizing) {
@@ -1972,7 +1972,6 @@ static void restart_message (void)
 
 static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 {
-    int old_ac = script_auto_complete;
     RCVAR *rcvar;
     GtkWidget *w;
     int changed = 0;
@@ -2051,10 +2050,6 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 
     selector_register_hc_choice();
 
-    if (script_auto_complete != old_ac) {
-	infobox(_("auto-completion changes apply to newly opened windows"));
-    }
-
     if (parent != NULL) {
 	windata_t *vwin = window_get_active_vwin(parent);
 
@@ -2117,7 +2112,7 @@ int write_rc (gretlopt opt)
 	    fprintf(fp, "%s = %s\n", rcvar->key, val);
 	} else if (rcvar->flags & INTSET) {
 #if 0
-	    if (rcvar->var == &script_auto_complete) {
+	    if (rcvar->var == &hansl_completion) {
 		fprintf(stderr, "HERE autocomp, writing %d\n", *(int *) rcvar->var);
 	    }
 #endif
@@ -2175,7 +2170,7 @@ static void str_to_int (const char *s, void *b)
     int *ivar = (int *) b;
 
 #if 0
-    if (ivar == &script_auto_complete) {
+    if (ivar == &hansl_completion) {
 	fprintf(stderr, "HERE str_to_int: '%s'\n", s);
     }
 #endif
