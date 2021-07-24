@@ -241,6 +241,9 @@ else
   SRCS += clipboard.c
 endif
 
+PNG16 := $(wildcard $(topsrc)/share/icons/16x16/*.png)
+PNG24 := $(wildcard $(topsrc)/share/icons/24x24/*.png)
+
 OBJS = $(SRCS:.c=.o)
 
 all: $(PROG) gretl.lang NEWS gretl-icons.xml
@@ -281,7 +284,7 @@ gretl-sys.lang: $(MKLANG)
 NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
-gretl-icons.xml: $(MKPNGLIST)
+gretl-icons.xml: $(MKPNGLIST) $(PNG16) $(PNG24)
 	$(MKPNGLIST) $(topsrc)/share
 
 gretl-icons.gresource: gretl-icons.xml
