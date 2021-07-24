@@ -1394,7 +1394,7 @@ const char *get_default_hc_string (int ci)
 static int non_console_var (void *ptr)
 {
     return (ptr == &smarttab || ptr == &script_line_numbers ||
-	    ptr == &tabbed_editor || ptr == &sview_style);
+	    ptr == &tabbed_editor);
 }
 
 static void

@@ -866,8 +866,41 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 #endif
 
+static void set_console_output_style (GtkSourceBuffer *sbuf,
+				      GtkSourceStyleScheme *scheme)
+{
+    GtkSourceStyle *style = NULL;
+    GtkTextTag *tag = NULL;
+    GtkTextTagTable *tt;
+    int done = 0;
+
+    tt = gtk_text_buffer_get_tag_table(GTK_TEXT_BUFFER(sbuf));
+    if (tt != NULL) {
+	tag = gtk_text_tag_table_lookup(tt, "output");
+    }
+    if (tag != NULL) {
+	style = gtk_source_style_scheme_get_style(scheme, "text");
+    }
+    if (style != NULL) {
+	gchar *fg = NULL, *bg = NULL;
+
+	g_object_get(style, "foreground", &fg, "background", &bg, NULL);
+	if (fg != NULL && bg != NULL) {
+	    g_object_set(tag, "foreground", fg, "background", bg, NULL);
+	    done = 1;
+	}
+	g_free(fg);
+	g_free(bg);
+    }
+    if (tag != NULL && !done) {
+	/* fallback */
+	g_object_set(tag, "foreground", "black", "background", "white", NULL);
+    }
+}
+
 static void set_style_for_buffer (GtkSourceBuffer *sbuf,
-				  const char *id)
+				  const char *id,
+				  int role)
 {
     GtkSourceStyleSchemeManager *mgr;
     GtkSourceStyleScheme *scheme;
@@ -880,6 +913,9 @@ static void set_style_for_buffer (GtkSourceBuffer *sbuf,
     scheme = gtk_source_style_scheme_manager_get_scheme(mgr, id);
     if (scheme != NULL) {
 	gtk_source_buffer_set_style_scheme(sbuf, scheme);
+	if (role == CONSOLE) {
+	    set_console_output_style(sbuf, scheme);
+	}
     }
 }
 
@@ -961,7 +997,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 					  script_line_numbers);
 
     if (lm != NULL) {
-	set_style_for_buffer(sbuf, get_sourceview_style());
+	set_style_for_buffer(sbuf, get_sourceview_style(), vwin->role);
     }
 
     if (gretl_script_role(vwin->role)) {
@@ -1029,7 +1065,7 @@ GtkWidget *create_sample_source (const char *style)
 
     gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), sample, -1);
     gtk_source_buffer_set_highlight_syntax(sbuf, TRUE);
-    set_style_for_buffer(sbuf, style);
+    set_style_for_buffer(sbuf, style, 0);
 
     return text;
 }
@@ -1040,11 +1076,12 @@ void update_script_editor_options (windata_t *vwin)
 {
     ensure_sourceview_path(NULL);
 
-    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
-					  script_line_numbers);
     if (vwin->role != CONSOLE) {
-	set_style_for_buffer(vwin->sbuf, get_sourceview_style());
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
+					      script_line_numbers);
     }
+
+    set_style_for_buffer(vwin->sbuf, get_sourceview_style(), vwin->role);
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -4522,15 +4559,11 @@ static GtkTextTagTable *gretl_console_tags_new (void)
 
     table = gtk_text_tag_table_new();
 
-    tag = gtk_text_tag_new("bluetext");
-    g_object_set(tag, "foreground", "blue", NULL);
-    gtk_text_tag_table_add(table, tag);
-
-    tag = gtk_text_tag_new("redtext");
+    tag = gtk_text_tag_new("prompt");
     g_object_set(tag, "foreground", "red", NULL);
     gtk_text_tag_table_add(table, tag);
 
-    tag = gtk_text_tag_new("plain");
+    tag = gtk_text_tag_new("output");
     g_object_set(tag, "foreground", "black",
 		 "weight", PANGO_WEIGHT_NORMAL, NULL);
     gtk_text_tag_table_add(table, tag);
@@ -4558,6 +4591,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
     if (lm != NULL) {
 	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
+	set_style_for_buffer(sbuf, get_sourceview_style(), CONSOLE);
     }
 
     vwin->text = gtk_source_view_new_with_buffer(sbuf);
