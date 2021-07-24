@@ -219,11 +219,11 @@ void gretl_stock_icons_init (void)
 	if (bigger) {
 	    strcpy(icon_path, "/gretl/icons/24x24/");
 	    strcpy(menu_path, "/gretl/icons/16x16/");
-	    pm = menu_path + 19;
+	    pm = strrchr(menu_path, '/') + 1;
 	} else {
 	    strcpy(icon_path, "/gretl/icons/16x16/");
 	}
-	p = icon_path + 19;
+	p = strrchr(icon_path, '/') + 1;
 
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, png_stocks[i].fname);
@@ -244,7 +244,7 @@ void gretl_stock_icons_init (void)
 		g_object_unref(pbuf);
 		/* for menu use */
 		strcat(menu_path, png_stocks[i].fname);
-		pbuf = gdk_pixbuf_new_from_file(menu_path, NULL);
+		pbuf = gdk_pixbuf_new_from_resource(menu_path, NULL);
 		isrc = gtk_icon_source_new();
 		gtk_icon_source_set_pixbuf(isrc, pbuf);
 		gtk_icon_source_set_size(isrc, GTK_ICON_SIZE_MENU);
