@@ -182,8 +182,8 @@ void gretl_stock_icons_init (void)
 
     if (gretl_factory == NULL) {
 	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
-	gchar *p, *icon_path, *pm, *menu_path = NULL;
-	gchar *respath;
+	char icon_path[48], menu_path[48];
+	gchar *p, *pm, *respath;
 	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
@@ -215,17 +215,15 @@ void gretl_stock_icons_init (void)
 	}
 
 	g_resources_register(icons);
-	icon_path = malloc(48);
 
 	if (bigger) {
-	    menu_path = malloc(48);
 	    strcpy(icon_path, "/gretl/icons/24x24/");
 	    strcpy(menu_path, "/gretl/icons/16x16/");
-	    pm = strrchr(menu_path, '/') + 1;
+	    pm = menu_path + 19;
 	} else {
 	    strcpy(icon_path, "/gretl/icons/16x16/");
 	}
-	p = strrchr(icon_path, '/') + 1;
+	p = icon_path + 19;
 
 	for (i=0; i<n1; i++) {
 	    strcat(icon_path, png_stocks[i].fname);
@@ -263,8 +261,6 @@ void gretl_stock_icons_init (void)
 	    *p = '\0';
 	}
 
-	free(icon_path);
-	free(menu_path);
 	g_free(respath);
 	g_resources_unregister(icons);
 	g_resource_unref(icons);
