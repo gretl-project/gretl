@@ -13135,12 +13135,12 @@
 	script has its own window.
       </para>
       <para>
-	<emphasis>Enable auto-completion</emphasis>: If this is
-	checked, you will be offered possible completions for the word
-	you are typing, based on the words already entered in the
-	editor window or tab. To select a completion, use the up/down
-	arrow keys and the <lit>Enter</lit> key; or just keep on
-	typing to dismiss the suggested completions.
+	<emphasis>Enable auto-completion</emphasis>: If this option is
+	available and the box is checked, you will be offered possible
+	completions for the word you are typing, either as you type or
+	in response to the Tab key. To select a completion, use the
+	up/down arrow keys and the Tab key; or just keep on typing to
+	dismiss the suggested completions.
       </para>
       <para>
 	<emphasis>Enable auto-brackets</emphasis>: If this is checked,
