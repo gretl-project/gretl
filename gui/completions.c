@@ -31,7 +31,7 @@
 #include <gtksourceview/gtksourcecompletionitem.h>
 #include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
-/* global, referenced in settings.c */
+/* global, referenced in settings.c and elsewhere */
 int hansl_completion;
 
 enum {
@@ -90,7 +90,7 @@ static void destroy_words_providers (GtkWidget *w, gpointer p)
 }
 
 /* Create a GtkTextBuffer holding the names of built-in
-   gretl functions, to serve as a completion provider.
+   gretl functions to serve as a completion provider.
 */
 
 static GtkTextBuffer *function_names_buffer (void)
@@ -119,6 +119,10 @@ static GtkTextBuffer *function_names_buffer (void)
 
     return tbuf;
 }
+
+/* Create a GtkTextBuffer holding the names of gretl
+   commands to serve as a completion provider.
+*/
 
 static GtkTextBuffer *command_names_buffer (void)
 {
@@ -313,13 +317,14 @@ gretl_activate_proposal (GtkSourceCompletionProvider *provider,
     gint id = ((GretlProvider *) provider)->id;
     gboolean ret = FALSE;
 
-    fprintf(stderr, "HERE 1 gretl_activate_proposal\n");
+#if AC_DEBUG
+    fprintf(stderr, "HERE gretl_activate_proposal (%s)\n",
+	    prov_names[id]);
+#endif
 
     if (id == PROV_SNIPPETS) {
-	fprintf(stderr, "HERE 2 call snippet_activate_proposal\n");
 	ret = snippet_activate_proposal(provider, proposal, iter);
     } else if (id == PROV_SERIES) {
-	fprintf(stderr, "HERE 3, call series_activate_proposal\n");
 	ret = series_activate_proposal(provider, proposal, iter);
     }
 
@@ -451,12 +456,15 @@ static void providers_set_activation (prov_info *pi)
 
     if (hansl_completion == COMPLETE_USER) {
 	A = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
-    } else if (hansl_completion) {
+    } else if (hansl_completion == COMPLETE_AUTO) {
 	A = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
     }
 
     for (i=0; i<N_PROV; i++) {
 	if (pi[i].ptr != NULL) {
+#if AC_DEBUG
+	    fprintf(stderr, "set activation %d on %s\n", A, prov_names[i]);
+#endif
 	    if (i >= PROV_SNIPPETS) {
 		gretl_provider_set_activation(pi[i].ptr, A);
 	    } else {
@@ -513,6 +521,18 @@ static void gretl_provider_init (GretlProvider *self)
     }
 }
 
+static void notify_activated (GtkSourceCompletion *comp,
+			      gpointer p)
+{
+    fprintf(stderr, "+++ got activate-proposal signal +++\n");
+}
+
+static void notify_hidden (GtkSourceCompletion *comp,
+			   gpointer p)
+{
+    fprintf(stderr, "+++ got hide signal +++\n");
+}
+
 static void add_gretl_provider (GtkSourceCompletion *comp,
 				gint id, gint priority,
 				windata_t *vwin,
@@ -529,6 +549,7 @@ static void add_gretl_provider (GtkSourceCompletion *comp,
     gtk_source_completion_add_provider(comp,
 				       GTK_SOURCE_COMPLETION_PROVIDER(gp),
 				       NULL);
+    g_object_unref(gp);
 }
 
 /* end snippets apparatus */
@@ -558,6 +579,7 @@ static void add_words_provider (GtkSourceCompletion *comp,
 				       GTK_SOURCE_COMPLETION_PROVIDER(cw),
 				       NULL);
     g_object_set_data(G_OBJECT(vwin->text), name, cw);
+    g_object_unref(cw);
 }
 
 void set_sv_completion (windata_t *vwin)
@@ -568,9 +590,10 @@ void set_sv_completion (windata_t *vwin)
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
     pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
 
-#if 0
-    fprintf(stderr, "set_sv_completion: comp %p, pi %p\n",
-	    (void *) comp, (void *) pi);
+#if AC_DEBUG
+    fprintf(stderr, "set_sv_completion: comp %s, prov_info %s, completion %d\n",
+	    comp==NULL ? "null" : "present", pi==NULL? "null" : "present",
+	    hansl_completion);
 #endif
 
     if (hansl_completion && pi == NULL) {
@@ -590,8 +613,15 @@ void set_sv_completion (windata_t *vwin)
 	    add_words_provider(comp, PROV_FUNCS,    4, vwin, pi);
 	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin, pi);
 	}
+#if AC_DEBUG
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",
 			 G_CALLBACK(destroy_words_providers), NULL);
+	g_signal_connect(G_OBJECT(comp), "activate-proposal",
+			 G_CALLBACK(notify_activated), NULL);
+	g_signal_connect(G_OBJECT(comp), "hide",
+			 G_CALLBACK(notify_hidden), NULL);
+	fprintf(stderr, "providers set up\n");
+#endif
     }
 
     if (pi != NULL) {
@@ -601,5 +631,8 @@ void set_sv_completion (windata_t *vwin)
 
 void call_user_completion (GtkWidget *w)
 {
+#if AC_DEBUG
+    fprintf(stderr, "call_user_completion...\n");
+#endif
     g_signal_emit_by_name(GTK_SOURCE_VIEW(w), "show-completion", NULL);
 }
