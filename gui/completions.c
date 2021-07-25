@@ -521,6 +521,8 @@ static void gretl_provider_init (GretlProvider *self)
     }
 }
 
+#if AC_DEBUG
+
 static void notify_activated (GtkSourceCompletion *comp,
 			      gpointer p)
 {
@@ -532,6 +534,8 @@ static void notify_hidden (GtkSourceCompletion *comp,
 {
     fprintf(stderr, "+++ got hide signal +++\n");
 }
+
+#endif
 
 static void add_gretl_provider (GtkSourceCompletion *comp,
 				gint id, gint priority,
@@ -613,9 +617,9 @@ void set_sv_completion (windata_t *vwin)
 	    add_words_provider(comp, PROV_FUNCS,    4, vwin, pi);
 	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin, pi);
 	}
-#if AC_DEBUG
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",
 			 G_CALLBACK(destroy_words_providers), NULL);
+#if AC_DEBUG
 	g_signal_connect(G_OBJECT(comp), "activate-proposal",
 			 G_CALLBACK(notify_activated), NULL);
 	g_signal_connect(G_OBJECT(comp), "hide",
