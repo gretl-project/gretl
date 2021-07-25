@@ -34,6 +34,14 @@
 /* global, referenced in settings.c */
 int hansl_completion;
 
+/* A word on HAVE_ALT_COMPLETE, referenced below: this will be true if
+   we're using gtk3, or the upgraded variant of gtksourceview 2.10
+   that we pack with our Windows and macOS builds. It will be false
+   if we're using gtk2 along with standard gtksourceview 2, in which
+   case all we can really offer is basic "words" complation, buggy as
+   it is.
+*/
+
 enum {
     PROV_WORDS,
     PROV_FUNCS,
@@ -43,21 +51,13 @@ enum {
     N_PROV
 };
 
+#if HAVE_ALT_COMPLETE
+
 static const char *prov_names[] = {
     "words", "functions", "commands", "snippets", "series"
 };
 
-typedef struct _GretlProvider GretlProvider;
-
-struct _GretlProvider {
-    GObject parent;
-    GList *proposals;
-    gint priority;
-    const gchar *name;
-    GdkPixbuf *icon;
-    GtkSourceCompletionActivation activation;
-    gint id;
-};
+#endif
 
 typedef struct prov_info_ prov_info;
 
@@ -91,48 +91,17 @@ static void prov_info_destroy (prov_info *pi)
     free(pi);
 }
 
-static void
-words_provider_set_activation (GObject *obj,
-			       GtkSourceCompletionActivation A)
+static void destroy_words_providers (GtkWidget *w, gpointer p)
 {
-    g_object_set(obj, "activation", A, NULL);
-}
+    prov_info *pi = g_object_get_data(G_OBJECT(w), "prov_info");
 
-static void
-gretl_provider_set_activation (GretlProvider *gp,
-			       GtkSourceCompletionActivation A)
-{
-    gp->activation = A;
+    if (pi != NULL) {
+	prov_info_destroy(pi);
+	g_object_set_data(G_OBJECT(w), "prov_info", NULL);
+    }
 }
-
-static void providers_set_activation_mode (prov_info *pi)
-{
-    GtkSourceCompletionActivation A =
-	GTK_SOURCE_COMPLETION_ACTIVATION_NONE;
-    int i;
 
 #ifdef HAVE_ALT_COMPLETE
-    if (hansl_completion == COMPLETE_USER) {
-	A = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
-    } else if (hansl_completion) {
-	A = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
-    }
-#else
-    if (hansl_completion) {
-	A = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
-    }
-#endif
-
-    for (i=0; i<N_PROV; i++) {
-	if (pi[i].ptr != NULL) {
-	    if (i >= PROV_SNIPPETS) {
-		gretl_provider_set_activation(pi[i].ptr, A);
-	    } else {
-		words_provider_set_activation(pi[i].ptr, A);
-	    }
-	}
-    }
-}
 
 /* Create a GtkTextBuffer holding the names of built-in
    gretl functions, to serve as a completion provider.
@@ -187,39 +156,23 @@ static GtkTextBuffer *command_names_buffer (void)
     return tbuf;
 }
 
-static void add_words_provider (GtkSourceCompletion *comp,
-				gint8 id, gint priority,
-				windata_t *vwin,
-				prov_info *pi)
-{
-    const char *name = prov_names[id];
-    GtkSourceCompletionWords *cw;
-    GtkTextBuffer *buf;
-
-    cw = gtk_source_completion_words_new(name, NULL);
-    pi[id].ptr = cw;
-    g_object_set(cw, "priority", priority, NULL);
-
-    if (id == PROV_WORDS) {
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    } else if (id == PROV_FUNCS) {
-	buf = pi[id].buf = function_names_buffer();
-    } else {
-	buf = pi[id].buf = command_names_buffer();
-    }
-    gtk_source_completion_words_register(cw, buf);
-    gtk_source_completion_add_provider(comp,
-				       GTK_SOURCE_COMPLETION_PROVIDER(cw),
-				       NULL);
-    g_object_set_data(G_OBJECT(vwin->text), name, cw);
-}
-
 /* Apparatus for providing "snippets" which may consist of
    several "words", or other gretl-specific material (at
    present, just names of dataset series).
 */
 
+typedef struct _GretlProvider GretlProvider;
 typedef struct _GretlProviderClass GretlProviderClass;
+
+struct _GretlProvider {
+    GObject parent;
+    GList *proposals;
+    gint priority;
+    const gchar *name;
+    GdkPixbuf *icon;
+    GtkSourceCompletionActivation activation;
+    gint id;
+};
 
 struct _GretlProviderClass {
     GObjectClass parent_class;
@@ -374,9 +327,13 @@ gretl_activate_proposal (GtkSourceCompletionProvider *provider,
     gint id = ((GretlProvider *) provider)->id;
     gboolean ret = FALSE;
 
+    fprintf(stderr, "HERE 1 gretl_activate_proposal\n");
+
     if (id == PROV_SNIPPETS) {
+	fprintf(stderr, "HERE 2 call snippet_activate_proposal\n");
 	ret = snippet_activate_proposal(provider, proposal, iter);
     } else if (id == PROV_SERIES) {
+	fprintf(stderr, "HERE 3, call series_activate_proposal\n");
 	ret = series_activate_proposal(provider, proposal, iter);
     }
 
@@ -486,6 +443,43 @@ gretl_provider_iface_init (GtkSourceCompletionProviderIface *iface)
     iface->activate_proposal = gretl_activate_proposal;
 }
 
+static void
+gretl_provider_set_activation (GretlProvider *gp,
+			       GtkSourceCompletionActivation A)
+{
+    gp->activation = A;
+}
+
+static void
+words_provider_set_activation (GObject *obj,
+			       GtkSourceCompletionActivation A)
+{
+    g_object_set(obj, "activation", A, NULL);
+}
+
+static void providers_set_activation (prov_info *pi)
+{
+    GtkSourceCompletionActivation A =
+	GTK_SOURCE_COMPLETION_ACTIVATION_NONE;
+    int i;
+
+    if (hansl_completion == COMPLETE_USER) {
+	A = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
+    } else if (hansl_completion) {
+	A = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
+    }
+
+    for (i=0; i<N_PROV; i++) {
+	if (pi[i].ptr != NULL) {
+	    if (i >= PROV_SNIPPETS) {
+		gretl_provider_set_activation(pi[i].ptr, A);
+	    } else {
+		words_provider_set_activation(pi[i].ptr, A);
+	    }
+	}
+    }
+}
+
 static void gretl_provider_class_init (GretlProviderClass *klass)
 {
     return;
@@ -549,19 +543,35 @@ static void add_gretl_provider (GtkSourceCompletion *comp,
     gtk_source_completion_add_provider(comp,
 				       GTK_SOURCE_COMPLETION_PROVIDER(gp),
 				       NULL);
-    g_object_set_data(G_OBJECT(vwin->text), gp->name, gp);
 }
 
 /* end snippets apparatus */
 
-static void destroy_words_providers (GtkWidget *w, gpointer p)
+static void add_words_provider (GtkSourceCompletion *comp,
+				gint8 id, gint priority,
+				windata_t *vwin,
+				prov_info *pi)
 {
-    prov_info *pi = g_object_get_data(G_OBJECT(w), "prov_info");
+    const char *name = prov_names[id];
+    GtkSourceCompletionWords *cw;
+    GtkTextBuffer *buf;
 
-    if (pi != NULL) {
-	prov_info_destroy(pi);
-	g_object_set_data(G_OBJECT(w), "prov_info", NULL);
+    cw = gtk_source_completion_words_new(name, NULL);
+    pi[id].ptr = cw;
+    g_object_set(cw, "priority", priority, NULL);
+
+    if (id == PROV_WORDS) {
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    } else if (id == PROV_FUNCS) {
+	buf = pi[id].buf = function_names_buffer();
+    } else {
+	buf = pi[id].buf = command_names_buffer();
     }
+    gtk_source_completion_words_register(cw, buf);
+    gtk_source_completion_add_provider(comp,
+				       GTK_SOURCE_COMPLETION_PROVIDER(cw),
+				       NULL);
+    g_object_set_data(G_OBJECT(vwin->text), name, cw);
 }
 
 void set_sv_completion (windata_t *vwin)
@@ -599,9 +609,68 @@ void set_sv_completion (windata_t *vwin)
     }
 
     if (pi != NULL) {
-	providers_set_activation_mode(pi);
+	providers_set_activation(pi);
     }
 }
+
+#else
+
+static void add_basic_words_provider (GtkSourceCompletion *comp,
+				      windata_t *vwin,
+				      prov_info *pi)
+{
+    GtkSourceCompletionWords *cw;
+    GtkTextBuffer *buf;
+
+    cw = gtk_source_completion_words_new("words", NULL);
+    pi[PROV_WORDS].ptr = cw;
+    g_object_set(cw, "priority", 1, NULL);
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    gtk_source_completion_words_register(cw, buf);
+    gtk_source_completion_add_provider(comp,
+				       GTK_SOURCE_COMPLETION_PROVIDER(cw),
+				       NULL);
+}
+
+static void legacy_revoke_completion (GtkWidget *w,
+				      GtkSourceCompletion *comp,
+				      prov_info *pi)
+{
+    GtkSourceCompletionProvider *prov;
+
+    if (pi[PROV_WORDS].ptr != NULL) {
+	prov = pi[PROV_WORDS].ptr;
+	gtk_source_completion_remove_provider(comp, prov, NULL);
+    }
+    free(pi);
+    g_object_set_data(G_OBJECT(w), "prov_info", NULL);
+}
+
+void set_sv_completion (windata_t *vwin)
+{
+    GtkSourceCompletion *comp;
+    prov_info *pi = NULL;
+
+    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+    pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
+
+    fprintf(stderr, "set_sv_completion: pi = %p\n", (void *) pi);
+
+    if (hansl_completion && pi == NULL) {
+	fprintf(stderr, "add words completion\n");
+	pi = prov_info_new();
+	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
+	add_basic_words_provider(comp, vwin, pi);
+	g_signal_connect(G_OBJECT(vwin->text), "destroy",
+			 G_CALLBACK(destroy_words_providers), NULL);
+    } else if (!hansl_completion && pi != NULL) {
+	fprintf(stderr, "remove words completion\n");
+	legacy_revoke_completion(vwin->text, comp, pi);
+    }
+}
+
+#endif /* HAVE_ALT_COMPLETE or not */
 
 void call_user_completion (GtkWidget *w)
 {

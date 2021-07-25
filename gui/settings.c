@@ -1081,7 +1081,10 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 		     button);
 
     if (page > 1 && page < TAB_MAX) {
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page - 1);
+	page--;
+	/* "show" the target page first (see GtkNoteBook API doc) */
+	gtk_widget_show(gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), page));
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page);
     }
 
     if (varname != NULL) {

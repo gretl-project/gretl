@@ -1080,8 +1080,10 @@ void update_script_editor_options (windata_t *vwin)
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					      script_line_numbers);
     }
-
     set_style_for_buffer(vwin->sbuf, get_sourceview_style(), vwin->role);
+    if (vwin->role == CONSOLE || editing_hansl(vwin->role)) {
+	set_sv_completion(vwin);
+    }
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -3686,9 +3688,16 @@ static gboolean script_electric_enter (windata_t *vwin)
 
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
+    static int pass_tab;
     gboolean ret = FALSE;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
+
+    if (pass_tab) {
+	/* allow Tab to select a completion */
+	pass_tab = 0;
+	return FALSE;
+    }
 
     if (in_foreign_land(vwin->text)) {
 	return FALSE;
@@ -3696,12 +3705,13 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 
     if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
 	int comp_ok = 0;
-	int *ptr = hansl_completion == COMPLETE_USER ? &comp_ok : NULL;
+	int *ptr = (hansl_completion == COMPLETE_USER)? &comp_ok : NULL;
 
 	if (maybe_insert_smart_tab(vwin, ptr)) {
 	    return TRUE;
 	} else if (comp_ok) {
 	    call_user_completion(vwin->text);
+	    pass_tab = 1;
 	    return TRUE;
 	}
     }
