@@ -673,6 +673,7 @@ build_po
 have_mpi
 have_odbc
 have_gnu_regex
+gtksv_completion
 have_sourceview
 win32pkg
 win32_build
@@ -2891,6 +2892,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
+gtksv_completion="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -22718,8 +22720,9 @@ fi
 fi
 
 if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
-   $as_echo "#define HAVE_ALT_COMPLETE 1" >>confdefs.h
+   $as_echo "#define HAVE_GTKSV_COMPLETION 1" >>confdefs.h
 
+   gtksv_completion="yes"
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -22732,6 +22735,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 

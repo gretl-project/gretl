@@ -153,8 +153,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Have clock_getttime in libc or librt */
 #undef HAVE_CLOCK_GETTIME
 
-/* Have setting of activation method in gtksourceview? */
-#undef HAVE_ALT_COMPLETE
+/* Have functional completion in gtksourceview? */
+#undef HAVE_GTKSV_COMPLETION
 
 /* Use the GNU R shared library */
 #undef USE_RLIB

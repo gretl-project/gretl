@@ -32,7 +32,10 @@
 #include "tabwin.h"
 #include "build.h"
 #include "addons_utils.h"
-#include "completions.h"
+
+#ifdef HAVE_GTKSV_COMPLETION
+# include "completions.h"
+#endif
 
 #include "libset.h"
 #include "texprint.h"
@@ -310,12 +313,9 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor,
       BOOLSET, 0, TAB_EDITOR, NULL },
-#ifdef HAVE_ALT_COMPLETE
+#ifdef HAVE_GTKSV_COMPLETION
     { "hansl_completion", N_("Auto-completion"), NULL, &hansl_completion,
       LISTSET | INTSET, 0, TAB_EDITOR, NULL },
-#else
-    { "hansl_completion", N_("Enable auto-completion"), NULL, &hansl_completion,
-      BOOLSET, 0, TAB_EDITOR, NULL },
 #endif
     { "script_auto_bracket", N_("Enable auto-brackets"), NULL, &script_auto_bracket,
       BOOLSET, 0, TAB_EDITOR, NULL },
@@ -1268,11 +1268,13 @@ static const char **get_list_setting_strings (void *var, int *n)
         N_("Italian"),
 	N_("Portuguese")
     };
-    static const char *auto_complete_strs[] = {
+#ifdef HAVE_GTKSV_COMPLETION
+    static const char *completion_strs[] = {
 	N_("none"),
 	N_("automatic, as you type"),
 	N_("on demand, via Tab")
     };
+#endif
     static const char *icon_sizing_strs[] = {
 	N_("Automatic"),
 	N_("small"),
@@ -1295,9 +1297,11 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == &manpref) {
 	strs = manpref_strs;
 	*n = sizeof manpref_strs / sizeof manpref_strs[0];
+#ifdef HAVE_GTKSV_COMPLETION
     } else if (var == &hansl_completion) {
-	strs = auto_complete_strs;
-	*n = sizeof auto_complete_strs / sizeof auto_complete_strs[0];
+	strs = completion_strs;
+	*n = sizeof completion_strs / sizeof completion_strs[0];
+#endif
     } else if (var == &icon_sizing) {
 	strs = icon_sizing_strs;
 	*n = sizeof icon_sizing_strs / sizeof icon_sizing_strs[0];
@@ -2114,11 +2118,6 @@ int write_rc (gretlopt opt)
 	    boolvar_to_str(rcvar->var, val);
 	    fprintf(fp, "%s = %s\n", rcvar->key, val);
 	} else if (rcvar->flags & INTSET) {
-#if 0
-	    if (rcvar->var == &hansl_completion) {
-		fprintf(stderr, "HERE autocomp, writing %d\n", *(int *) rcvar->var);
-	    }
-#endif
 	    fprintf(fp, "%s = %d\n", rcvar->key, *(int *) rcvar->var);
 	} else if (rcvar->flags & FLOATSET) {
 	    gretl_push_c_numeric_locale();
@@ -2171,12 +2170,6 @@ static void str_to_boolvar (const char *s, void *b)
 static void str_to_int (const char *s, void *b)
 {
     int *ivar = (int *) b;
-
-#if 0
-    if (ivar == &hansl_completion) {
-	fprintf(stderr, "HERE str_to_int: '%s'\n", s);
-    }
-#endif
 
     if (s == NULL) return;
 

@@ -34,14 +34,6 @@
 /* global, referenced in settings.c */
 int hansl_completion;
 
-/* A word on HAVE_ALT_COMPLETE, referenced below: this will be true if
-   we're using gtk3, or the upgraded variant of gtksourceview 2.10
-   that we pack with our Windows and macOS builds. It will be false
-   if we're using gtk2 along with standard gtksourceview 2, in which
-   case all we can really offer is basic "words" complation, buggy as
-   it is.
-*/
-
 enum {
     PROV_WORDS,
     PROV_FUNCS,
@@ -51,13 +43,9 @@ enum {
     N_PROV
 };
 
-#if HAVE_ALT_COMPLETE
-
 static const char *prov_names[] = {
     "words", "functions", "commands", "snippets", "series"
 };
-
-#endif
 
 typedef struct prov_info_ prov_info;
 
@@ -100,8 +88,6 @@ static void destroy_words_providers (GtkWidget *w, gpointer p)
 	g_object_set_data(G_OBJECT(w), "prov_info", NULL);
     }
 }
-
-#ifdef HAVE_ALT_COMPLETE
 
 /* Create a GtkTextBuffer holding the names of built-in
    gretl functions, to serve as a completion provider.
@@ -612,65 +598,6 @@ void set_sv_completion (windata_t *vwin)
 	providers_set_activation(pi);
     }
 }
-
-#else
-
-static void add_basic_words_provider (GtkSourceCompletion *comp,
-				      windata_t *vwin,
-				      prov_info *pi)
-{
-    GtkSourceCompletionWords *cw;
-    GtkTextBuffer *buf;
-
-    cw = gtk_source_completion_words_new("words", NULL);
-    pi[PROV_WORDS].ptr = cw;
-    g_object_set(cw, "priority", 1, NULL);
-
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    gtk_source_completion_words_register(cw, buf);
-    gtk_source_completion_add_provider(comp,
-				       GTK_SOURCE_COMPLETION_PROVIDER(cw),
-				       NULL);
-}
-
-static void legacy_revoke_completion (GtkWidget *w,
-				      GtkSourceCompletion *comp,
-				      prov_info *pi)
-{
-    GtkSourceCompletionProvider *prov;
-
-    if (pi[PROV_WORDS].ptr != NULL) {
-	prov = pi[PROV_WORDS].ptr;
-	gtk_source_completion_remove_provider(comp, prov, NULL);
-    }
-    free(pi);
-    g_object_set_data(G_OBJECT(w), "prov_info", NULL);
-}
-
-void set_sv_completion (windata_t *vwin)
-{
-    GtkSourceCompletion *comp;
-    prov_info *pi = NULL;
-
-    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-    pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
-
-    fprintf(stderr, "set_sv_completion: pi = %p\n", (void *) pi);
-
-    if (hansl_completion && pi == NULL) {
-	fprintf(stderr, "add words completion\n");
-	pi = prov_info_new();
-	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
-	add_basic_words_provider(comp, vwin, pi);
-	g_signal_connect(G_OBJECT(vwin->text), "destroy",
-			 G_CALLBACK(destroy_words_providers), NULL);
-    } else if (!hansl_completion && pi != NULL) {
-	fprintf(stderr, "remove words completion\n");
-	legacy_revoke_completion(vwin->text, comp, pi);
-    }
-}
-
-#endif /* HAVE_ALT_COMPLETE or not */
 
 void call_user_completion (GtkWidget *w)
 {

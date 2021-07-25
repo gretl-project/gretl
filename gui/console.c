@@ -24,11 +24,14 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "gui_recode.h"
-#include "completions.h"
 #include "textbuf.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
+#endif
+
+#ifdef HAVE_GTKSV_COMPLETION
+# include "completions.h"
 #endif
 
 #include "libset.h"
@@ -725,12 +728,18 @@ static gint console_key_handler (GtkWidget *cview,
 	return TRUE;
     }
 
+#ifdef HAVE_GTKSV_COMPLETION
     if (keyval == GDK_Tab && hansl_completion == COMPLETE_USER) {
 	call_user_completion(cview);
 	return TRUE;
     } else if (script_auto_bracket && lbracket(keyval)) {
 	return script_bracket_handler((windata_t *) p, keyval);
     }
+#else
+    if (script_auto_bracket && lbracket(keyval)) {
+	return script_bracket_handler((windata_t *) p, keyval);
+    }
+#endif
 
     return FALSE;
 }

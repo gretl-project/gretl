@@ -30,7 +30,6 @@
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
-#include "completions.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h" /* for browser_open() */
@@ -44,6 +43,10 @@
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
+#endif
+
+#ifdef HAVE_GTKSV_COMPLETION
+# include "completions.h"
 #endif
 
 #define TABDEBUG 0
@@ -1008,9 +1011,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
+#ifdef HAVE_GTKSV_COMPLETION
 	if (editable) {
 	    set_sv_completion(vwin);
 	}
+#endif
     } else if (foreign_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(foreign_script_key_handler), vwin);
@@ -1081,9 +1086,12 @@ void update_script_editor_options (windata_t *vwin)
 					      script_line_numbers);
     }
     set_style_for_buffer(vwin->sbuf, get_sourceview_style(), vwin->role);
+
+#ifdef HAVE_GTKSV_COMPLETION
     if (vwin->role == CONSOLE || editing_hansl(vwin->role)) {
 	set_sv_completion(vwin);
     }
+#endif
 }
 
 static int text_change_size (windata_t *vwin, int delta)
@@ -3686,6 +3694,8 @@ static gboolean script_electric_enter (windata_t *vwin)
 
 /* handler for the user pressing the Tab key when editing a gretl script */
 
+#ifdef HAVE_GTKSV_COMPLETION
+
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
     static int pass_tab;
@@ -3718,6 +3728,29 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 
     return ret;
 }
+
+#else
+
+static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
+{
+    gboolean ret = FALSE;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
+
+    if (in_foreign_land(vwin->text)) {
+	return FALSE;
+    }
+
+    if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
+	if (maybe_insert_smart_tab(vwin, NULL)) {
+	    return TRUE;
+	}
+    }
+
+    return ret;
+}
+
+#endif /* HAVE_GTKSV_COMPLETION or not */
 
 gboolean script_bracket_handler (windata_t *vwin, guint keyval)
 {
@@ -4618,10 +4651,12 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     cw = get_char_width(vwin->text);
     set_source_tabs(vwin->text, cw);
 
+#ifdef HAVE_GTKSV_COMPLETION
     if (hansl_completion) {
 	/* 2021-06-11: add gtksourceview completion for console */
 	set_sv_completion(vwin);
     }
+#endif
 
     if (hsize > 0) {
 	hsize *= cw;

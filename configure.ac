@@ -65,6 +65,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
+gtksv_completion="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -792,7 +793,8 @@ if test "$gtk_version" = "3.0" ; then
 fi
 
 if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
-   AC_DEFINE(HAVE_ALT_COMPLETE)
+   AC_DEFINE(HAVE_GTKSV_COMPLETION)
+   gtksv_completion="yes"
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -815,6 +817,7 @@ AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
 AC_SUBST(have_sourceview)
+AC_SUBST(gtksv_completion)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
