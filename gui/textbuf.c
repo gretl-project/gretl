@@ -708,13 +708,19 @@ static void set_source_tabs (GtkWidget *w, int cw)
    Ctrl-I does auto-indentation.
 */
 
-static gint
-script_key_handler (GtkWidget *w, GdkEvent *event, windata_t *vwin)
+static gint script_key_handler (GtkWidget *w,
+				GdkEvent *event,
+				windata_t *vwin)
 {
     guint keyval = ((GdkEventKey *) event)->keyval;
+    guint state = ((GdkEventKey *) event)->state;
     gboolean ret = FALSE;
 
-    if (((GdkEventKey *) event)->state & GDK_CONTROL_MASK) {
+#if 0
+    fprintf(stderr, "HERE script_key_handler\n");
+#endif
+
+    if (state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
 	    run_script_silent(w, vwin);
 	    ret = TRUE;
@@ -733,22 +739,22 @@ script_key_handler (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	    ret = TRUE;
 	} else if (keyval == GDK_i) {
 	    auto_indent_script(w, vwin);
+	    ret = TRUE;
 	}
-    } else {
-	if (keyval == GDK_F1) {
-	    set_window_help_active(vwin);
-	    interactive_script_help(NULL, NULL, vwin);
-	} else if (editing_hansl(vwin->role)) {
-	    if (keyval == GDK_Return) {
-		ret = script_electric_enter(vwin);
-	    } else if (tabkey(keyval)) {
+    } else if (keyval == GDK_F1) {
+	set_window_help_active(vwin);
+	interactive_script_help(NULL, NULL, vwin);
+	ret = TRUE;
+    } else if (editing_hansl(vwin->role)) {
+	if (keyval == GDK_Return) {
+	    ret = script_electric_enter(vwin);
+	} else if (tabkey(keyval)) {
 #if TABDEBUG
-		fprintf(stderr, "*** calling script_tab_handler ***\n");
+	    fprintf(stderr, "*** calling script_tab_handler ***\n");
 #endif
-		ret = script_tab_handler(vwin, event);
-	    } else if (script_auto_bracket && lbracket(keyval)) {
-		ret = script_bracket_handler(vwin, keyval);
-	    }
+	    ret = script_tab_handler(vwin, event);
+	} else if (script_auto_bracket && lbracket(keyval)) {
+	    ret = script_bracket_handler(vwin, keyval);
 	}
     }
 
@@ -965,7 +971,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     vwin->sbuf = sbuf;
 
     view = GTK_TEXT_VIEW(vwin->text);
-
     gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
     gtk_text_view_set_left_margin(view, 4);
     gtk_text_view_set_right_margin(view, 4);
@@ -3698,13 +3703,13 @@ static gboolean script_electric_enter (windata_t *vwin)
 
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
-    static int pass_tab;
     gboolean ret = FALSE;
+    static int pass_tab;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
 
     if (pass_tab) {
-	/* allow Tab to select a completion */
+	/* allow Tab to select a completion, once */
 	pass_tab = 0;
 	return FALSE;
     }
@@ -4626,7 +4631,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 	console_tags = gretl_console_tags_new();
     }
 
-    /* new as of 2018-06-09: add syntax highlighting */
+    /* since 2018-06-09: use syntax highlighting */
     lm = gtk_source_language_manager_get_default();
     ensure_sourceview_path(lm);
 
@@ -4641,7 +4646,6 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     vwin->sbuf = sbuf;
 
     view = GTK_TEXT_VIEW(vwin->text);
-
     gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
     gtk_text_view_set_left_margin(view, 4);
     gtk_text_view_set_right_margin(view, 4);
@@ -4653,7 +4657,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 
 #ifdef HAVE_GTKSV_COMPLETION
     if (hansl_completion) {
-	/* 2021-06-11: add gtksourceview completion for console */
+	/* since 2021-06-11 */
 	set_sv_completion(vwin);
     }
 #endif
