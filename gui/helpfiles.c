@@ -1864,10 +1864,10 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     if (pos >= 0) {
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
-	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
-				     path, NULL, FALSE, 0, 0);
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(vwin->listbox),
 				 path, NULL, FALSE);
+	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
+				     path, NULL, TRUE, 0.5, 0);
 	vwin->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
     }
