@@ -3858,7 +3858,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         err = gretl_normality_test(cmd->list[1], dset, cmd->opt, prn);
         break;
 
-    case HAUSMAN:
+    case PANSPEC:
         err = panel_hausman_test(model, dset, cmd->opt, prn);
         break;
 

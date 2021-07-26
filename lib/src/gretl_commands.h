@@ -72,7 +72,6 @@ typedef enum {
     GMM,
     GNUPLOT, 
     GRAPHPG,
-    HAUSMAN,
     HECKIT,
     HELP,
     HFPLOT,
@@ -116,6 +115,7 @@ typedef enum {
     OUTFILE,
     PANEL,
     PANPLOT,
+    PANSPEC,
     PCA,
     PERGM,
     PLOT,    
@@ -182,7 +182,7 @@ typedef enum {
                         c == CUSUM || \
                         c == FCAST || \
                         c == FREQ || \
-                        c == HAUSMAN || \
+                        c == PANSPEC || \
                         c == KPSS || \
                         c == LEVERAGE || \
                         c == LEVINLIN || \
@@ -214,7 +214,7 @@ typedef enum {
                               c == CUSUM || \
                               c == EQNPRINT || \
                               c == FCAST || \
-                              c == HAUSMAN || \
+                              c == PANSPEC || \
                               c == LEVERAGE || \
                               c == MODTEST || \
                               c == OMIT || \
