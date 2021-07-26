@@ -3638,8 +3638,8 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
 
 /* On "Enter" in script editing, try to compute the correct indent
    level for the current line, and make an adjustment if it's not
-   already right. It would also be nice if we can place the
-   cursor at the appropriate indent on the next, blank line.
+   already right. We also attempt to place the cursor at the
+   appropriate indent on the next, new line.
 */
 
 static gboolean script_electric_enter (windata_t *vwin)
@@ -3656,23 +3656,22 @@ static gboolean script_electric_enter (windata_t *vwin)
     fprintf(stderr, "*** script_electric_enter\n");
 #endif
 
-    s = textview_get_current_line(vwin->text, 0); /* second arg? */
+    s = textview_get_current_line(vwin->text, 0);
 
     if (s != NULL && *s != '\0') {
-	/* work on the line that starts with @thisword, and
-	   is ended by the current Enter
-	*/
+	/* work on the line that starts with @thisword */
 	GtkTextBuffer *tbuf;
 	GtkTextMark *mark;
 	GtkTextIter start, end;
 	char thisword[9];
 	char prevword[9];
 	int i, diff, nsp, incr;
-	int k, contd = 0;
+	int ipos, k, contd = 0;
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	mark = gtk_text_buffer_get_insert(tbuf);
 	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
+	ipos = gtk_text_iter_get_line_offset(&start);
 	gtk_text_iter_set_line_offset(&start, 0);
 
 	*thisword = '\0';
@@ -3715,7 +3714,6 @@ static gboolean script_electric_enter (windata_t *vwin)
 	fprintf(stderr, "incr = %d: after increment targsp = %d, diff = %d\n",
 		incr, targsp, diff);
 #endif
-
 	if (diff > 0) {
 	    end = start;
 	    gtk_text_iter_forward_chars(&end, diff);
@@ -3727,8 +3725,15 @@ static gboolean script_electric_enter (windata_t *vwin)
 	    }
 	}
 
-	/* try to arrange correct indent on the new line */
-	k = targsp + incremental_leading_spaces(thisword, "");
+	/* try to arrange correct indent on the new line? */
+	if (ipos == 0) {
+	    k = targsp + incremental_leading_spaces(prevword, "");
+	} else {
+	    k = targsp + incremental_leading_spaces(thisword, "");
+	}
+#if TABDEBUG
+	fprintf(stderr, "new line indent: k = %d\n", k);
+#endif
 	gtk_text_buffer_begin_user_action(tbuf);
 	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
 	gtk_text_buffer_insert(tbuf, &start, "\n", -1);
