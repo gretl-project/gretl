@@ -5917,75 +5917,6 @@
     </description>
   </command>
 
-  <command name="hausman" section="Tests" label="Panel diagnostics">
-    <usage>
-      <options>
-	<option>
-	  <flag>--nerlove</flag>
-	  <effect>use Nerlove method for random effects</effect>
-	</option>
-	<option>
-	  <flag>--matrix_diff</flag>
-	  <effect>use matrix-difference method for Hausman test</effect>
-	</option>
-      </options>
-    </usage>
-    <description>
-      <para>
-	This test is available only after estimating an OLS model
-	using panel data (see also <cmd>setobs</cmd>).  It tests the
-	simple pooled model against the principal alternatives, the fixed
-	effects and random effects models.
-      </para>
-      <para>
-	The fixed effects model allows the intercept of the regression
-	to vary across the cross-sectional units.  An
-	<math>F</math>-test is reported for the null hypotheses that
-	the intercepts do not differ. The random effects model
-	decomposes the residual variance into two parts, one part
-	specific to the cross-sectional unit and the other specific to
-	the particular observation.  (This estimator can be computed
-	only if the number of cross-sectional units in the data set
-	exceeds the number of parameters to be estimated.) The
-	Breusch&ndash;Pagan LM statistic tests the null hypothesis
-	that the pooled OLS estimator is adequate against the random
-	effects alternative.
-      </para>
-      <para>
-	The pooled OLS model may be rejected against both of the
-	alternatives, fixed effects and random effects. Provided the
-	unit- or group-specific error is uncorrelated with the
-	independent variables, the random effects estimator is more
-	efficient than the fixed effects estimator; otherwise the
-	random effects estimator is inconsistent and the fixed effects
-	estimator is to be preferred. The null hypothesis for the
-	Hausman test is that the group-specific error is not so
-	correlated (and therefore the random effects model is
-	preferable).  A low p-value for this test counts against the
-	random effects model and in favor of fixed effects.
-      </para>
-      <para>
-	The two options for this command pertain to the random effects
-	model. By default the method of Swamy and Arora is used, and
-	the Hausman test statistic is calculated using the regression
-	method. The options enable the use of Nerlove's alternative
-	variance estimator and/or the matrix-difference approach to
-	the Hausman statistic.
-      </para>
-      <para>
-	Note that after estimating the random effects model with the
-	<cmd>panel</cmd> command instead of the pooled OLS model, the
-	Hausman test is automatically carried out and the results can
-	be retrieved via the <fncref targ="$hausman"/> accessor.
-      </para>	
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Panel diagnostics</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="hccme" section="Estimation" context="gui"
     label="Robust standard errors">
 
@@ -10778,6 +10709,74 @@
 
     <gui-access>
       <other-access>Main window pop-up menu (single selection)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="panspec" section="Tests" label="Panel specification">
+    <usage>
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>use Nerlove method for random effects</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>use matrix-difference method for Hausman test</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	This test is available only after estimating a panel-data
+	model via OLS. It tests the simple pooled specification
+	against the most common alternatives, fixed effects and
+	random effects.
+      </para>
+      <para>
+	The fixed effects specification allows the intercept of the
+	regression to vary across the cross-sectional units.  An
+	<math>F</math>-test is reported for the null hypotheses that
+	the intercepts do not differ. The random effects specification
+	decomposes the residual variance into two parts, one part
+	specific to the cross-sectional unit and the other specific to
+	the particular observation.  (This estimator can be computed
+	only if the number of cross-sectional units in the data set
+	exceeds the number of parameters to be estimated.) The
+	Breusch&ndash;Pagan LM statistic tests the null hypothesis
+	that pooled OLS is adequate against the random effects
+	alternative.
+      </para>
+      <para>
+	Pooled OLS may be rejected against both of the alternatives.
+	Provided the unit- or group-specific error is uncorrelated
+	with the independent variables, the random effects estimator
+	is more efficient than fixed effects; otherwise the random
+	effects estimator is inconsistent and fixed effects are to be
+	preferred. The null hypothesis for the Hausman test is that
+	the group-specific error is <emphasis>not</emphasis> so
+	correlated (and therefore the random effects estimator is
+	preferable).  A low p-value for this test counts against
+	random effects and in favor of fixed effects.
+      </para>
+      <para>
+	The two options for this command pertain to random effects
+	estimation.  By default the method of Swamy and Arora is used,
+	and the Hausman test statistic is calculated using the
+	regression method. The options enable the use of Nerlove's
+	alternative variance estimator, and/or the matrix-difference
+	approach to the Hausman statistic.
+      </para>
+      <para>
+	Note that after estimating the random effects specification
+	via the <cmd>panel</cmd> command, the Hausman test is
+	automatically carried out and the results can be retrieved via
+	the <fncref targ="$hausman"/> accessor.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/Panel specification</menu-path>
     </gui-access>
 
   </command>
