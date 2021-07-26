@@ -3432,7 +3432,9 @@ static char *get_previous_line_start_word (char *word,
 
 /* Is the insertion point at the start of a line, or in a white-space
    field to the left of any non-space characters?  If so, we'll trying
-   inserting a "smart" soft tab in response to the Tab key.
+   inserting a "smart" soft tab in response to the Tab key. If not,
+   and @comp_ok is non-NULL, we'll check whether gtksourceview
+   completion seems possible at the current insertion point.
 */
 
 static int maybe_insert_smart_tab (windata_t *vwin,
@@ -3442,7 +3444,7 @@ static int maybe_insert_smart_tab (windata_t *vwin,
     GtkTextMark *mark;
     GtkTextIter start, end;
     int curr_nsp = 0;
-    int pos = 0, ret = 0;
+    int pos, ret = 0;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
@@ -3451,43 +3453,38 @@ static int maybe_insert_smart_tab (windata_t *vwin,
 	return 0;
     }
 
-    /* mark the text insertion point */
+    /* find @pos, the line-index of the insertion point */
     mark = gtk_text_buffer_get_insert(tbuf);
-    /* get a GtkTextIter at that point */
     gtk_text_buffer_get_iter_at_mark(tbuf, &end, mark);
-    /* and determine the offset at that iter */
     pos = gtk_text_iter_get_line_offset(&end);
 
     if (pos == 0) {
-	/* we're at the left margin */
+	/* we're at the left margin, OK */
 	ret = 1;
     } else {
 	gchar *chunk;
 
 	start = end;
-	/* make @start point to the start of the relevant line */
 	gtk_text_iter_set_line_offset(&start, 0);
-	/* capture the text between line start and insertion point */
+	/* grab the text between line start and insertion point */
 	chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-	if (strspn(chunk, " \t") == strlen(chunk)) {
-	    /* set @ret only if this text is just white space */
+	if (strspn(chunk, " \t") == pos) {
+	    /* set @ret if this chunk is just white space */
 	    ret = 1;
-	} else if (comp_ok != NULL) {
+	} else if (comp_ok != NULL && pos > 1) {
 	    /* follow-up: is the context OK for completion? */
-	    *comp_ok = !isspace(chunk[strlen(chunk) - 1]);
+	    *comp_ok = !isspace(chunk[pos-1]) && !isspace(chunk[pos-2]);
 	}
 	g_free(chunk);
     }
 
     if (ret) {
-	/* OK, there's no actual text to the left of @pos */
+	/* OK, let's insert a smart tab */
 	GtkTextIter prev = start;
-	char *s, thisword[9];
+	char *s, thisword[9] = {0};
 	char prevword[9];
 	int contd = 0;
 	int i, nsp = 0;
-
-	*thisword = '\0';
 
 	s = textview_get_current_line(vwin->text, 1);
 	if (s != NULL) {
@@ -3525,6 +3522,57 @@ static int maybe_insert_smart_tab (windata_t *vwin,
 
     return ret;
 }
+
+#ifdef HAVE_GTKSV_COMPLETION
+
+/* Is the insertion point directly preceded by at least two
+   non-space characters? If so we have a possible candidate for
+   completion via gtksourceview. We come here only if "smart
+   tab" is not in force; otherwise this check is rolled into
+   the check for inserting a smart tab.
+
+   This function is public because it's called from console.c
+   as well as internally.
+*/
+
+int maybe_try_completion (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextMark *mark;
+    GtkTextIter start, end;
+    int pos, ret = 0;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
+	/* don't do this if there's a selection in place? */
+	return 0;
+    }
+
+    /* find @pos, the line-index of the insertion point */
+    mark = gtk_text_buffer_get_insert(tbuf);
+    gtk_text_buffer_get_iter_at_mark(tbuf, &end, mark);
+    pos = gtk_text_iter_get_line_offset(&end);
+
+    if (pos > 1) {
+	const char *test;
+	gchar *chunk;
+
+	start = end;
+	gtk_text_iter_set_line_offset(&start, 0);
+	test = chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+	if (vwin->role == CONSOLE && !strncmp(chunk, "? ", 2)) {
+	    test += 2;
+	    pos -= 2;
+	}
+	ret = !isspace(test[pos-1]) && !isspace(test[pos-2]);
+	g_free(chunk);
+    }
+
+    return ret;
+}
+
+#endif /* HAVE_GTKSV_COMPLETION */
 
 static char leftchar (guint k)
 {
@@ -3699,23 +3747,30 @@ static gboolean script_electric_enter (windata_t *vwin)
     return ret;
 }
 
-/* handler for the user pressing the Tab key when editing a gretl script */
+/* Handler for the Tab key when editing a gretl script: we
+   may want to insert a "smart tab", or take Tab as a
+   request for gtksourceview completion.
+*/
 
 #ifdef HAVE_GTKSV_COMPLETION
 
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
-    gboolean ret = FALSE;
+    int ucomp;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
 
     if (in_foreign_land(vwin->text)) {
 	return FALSE;
+    } else if (((GdkEventKey *) event)->state & GDK_SHIFT_MASK) {
+	return FALSE;
     }
 
-    if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
+    ucomp = (hansl_completion == COMPLETE_USER);
+
+    if (smarttab) {
 	int comp_ok = 0;
-	int *ptr = (hansl_completion == COMPLETE_USER)? &comp_ok : NULL;
+	int *ptr = ucomp ? &comp_ok : NULL;
 
 	if (maybe_insert_smart_tab(vwin, ptr)) {
 	    return TRUE;
@@ -3723,30 +3778,31 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 	    call_user_completion(vwin->text);
 	    return TRUE;
 	}
+    } else if (ucomp && maybe_try_completion(vwin)) {
+	call_user_completion(vwin->text);
+	return TRUE;
     }
 
-    return ret;
+    return FALSE;
 }
 
 #else
 
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
-    gboolean ret = FALSE;
-
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
 
     if (in_foreign_land(vwin->text)) {
 	return FALSE;
+    } else if (((GdkEventKey *) event)->state & GDK_SHIFT_MASK) {
+	return FALSE;
     }
 
-    if (smarttab && !(((GdkEventKey *) event)->state & GDK_SHIFT_MASK)) {
-	if (maybe_insert_smart_tab(vwin, NULL)) {
-	    return TRUE;
-	}
+    if (smarttab && maybe_insert_smart_tab(vwin, NULL)) {
+	return TRUE;
     }
 
-    return ret;
+    return FALSE;
 }
 
 #endif /* HAVE_GTKSV_COMPLETION or not */
