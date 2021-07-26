@@ -316,6 +316,8 @@ RCVAR rc_vars[] = {
 #ifdef HAVE_GTKSV_COMPLETION
     { "hansl_completion", N_("Auto-completion"), NULL, &hansl_completion,
       LISTSET | INTSET, 0, TAB_EDITOR, NULL },
+    { "console_completion", N_("Auto-completion"), NULL, &console_completion,
+      LISTSET | INTSET | INVISET, 0, TAB_EDITOR, NULL },
 #endif
     { "script_auto_bracket", N_("Enable auto-brackets"), NULL, &script_auto_bracket,
       BOOLSET, 0, TAB_EDITOR, NULL },
@@ -1109,7 +1111,7 @@ int console_prefs_dialog (GtkWidget *parent)
 	return 0;
     }
 
-    dialog = gretl_dialog_new(_("gretl: preferences"), parent,
+    dialog = gretl_dialog_new(_("gretl: console preferences"), parent,
 			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
@@ -1298,7 +1300,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 	strs = manpref_strs;
 	*n = sizeof manpref_strs / sizeof manpref_strs[0];
 #ifdef HAVE_GTKSV_COMPLETION
-    } else if (var == &hansl_completion) {
+    } else if (var == &hansl_completion || var == &console_completion) {
 	strs = completion_strs;
 	*n = sizeof completion_strs / sizeof completion_strs[0];
 #endif
@@ -1401,7 +1403,13 @@ const char *get_default_hc_string (int ci)
 static int non_console_var (void *ptr)
 {
     return (ptr == &smarttab || ptr == &script_line_numbers ||
-	    ptr == &tabbed_editor);
+	    ptr == &tabbed_editor || ptr == &tabwidth ||
+	    ptr == &hansl_completion);
+}
+
+static int console_only (void *ptr)
+{
+    return (ptr == &console_completion);
 }
 
 static void
@@ -1413,6 +1421,8 @@ get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse,
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].tab == page) {
 	    if (console && non_console_var(rc_vars[i].var)) {
+		continue;
+	    } else if (!console && console_only(rc_vars[i].var)) {
 		continue;
 	    }
 	    if (rc_vars[i].flags & BROWSER) {
@@ -1576,6 +1586,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    /* the item is not on this page */
 	    continue;
 	} else if (console && non_console_var(rc->var)) {
+	    continue;
+	} else if (!console && console_only(rc->var)) {
 	    continue;
 	}
 

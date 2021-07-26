@@ -33,6 +33,7 @@
 
 /* global, referenced in settings.c and elsewhere */
 int hansl_completion;
+int console_completion;
 
 enum {
     PROV_WORDS,
@@ -448,15 +449,16 @@ words_provider_set_activation (GObject *obj,
     g_object_set(obj, "activation", A, NULL);
 }
 
-static void providers_set_activation (prov_info *pi)
+static void providers_set_activation (prov_info *pi,
+				      int userval)
 {
     GtkSourceCompletionActivation A =
 	GTK_SOURCE_COMPLETION_ACTIVATION_NONE;
     int i;
 
-    if (hansl_completion == COMPLETE_USER) {
+    if (userval == COMPLETE_USER) {
 	A = GTK_SOURCE_COMPLETION_ACTIVATION_USER_REQUESTED;
-    } else if (hansl_completion == COMPLETE_AUTO) {
+    } else if (userval == COMPLETE_AUTO) {
 	A = GTK_SOURCE_COMPLETION_ACTIVATION_INTERACTIVE;
     }
 
@@ -597,17 +599,20 @@ void set_sv_completion (windata_t *vwin)
 {
     GtkSourceCompletion *comp;
     prov_info *pi = NULL;
+    int compval;
 
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
     pi = g_object_get_data(G_OBJECT(vwin->text), "prov_info");
+    compval = (vwin->role == CONSOLE)? console_completion :
+	hansl_completion;
 
-#if AC_DEBUG
+#if 1 || AC_DEBUG
     fprintf(stderr, "set_sv_completion: comp %s, prov_info %s, completion %d\n",
 	    comp==NULL ? "null" : "present", pi==NULL? "null" : "present",
-	    hansl_completion);
+	    compval);
 #endif
 
-    if (hansl_completion && pi == NULL) {
+    if (compval && pi == NULL) {
 	/* set up and activate */
 	pi = prov_info_new();
 	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
@@ -638,7 +643,7 @@ void set_sv_completion (windata_t *vwin)
     }
 
     if (pi != NULL) {
-	providers_set_activation(pi);
+	providers_set_activation(pi, compval);
     }
 }
 
