@@ -2712,7 +2712,7 @@ void do_panel_tests (GtkAction *action, gpointer p)
         gretl_print_destroy(prn);
     } else {
         view_buffer_with_parent(vwin, prn, 78, 400,
-                                _("gretl: panel model diagnostics"),
+                                _("gretl: panel model specification"),
                                 PANEL, NULL);
     }
 }
