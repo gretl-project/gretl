@@ -2214,42 +2214,33 @@ static int wordmatch (const char *s, const char *test)
 
 void adjust_indent (const char *s, int *this_indent, int *next_indent)
 {
+    const char *block_starts[] = {
+	"loop", "if", "nls", "mle", "gmm", "mpi", "plot",
+	"function", "restrict", "system", "foreign", NULL
+    };
     int ti = *next_indent;
     int ni = *next_indent;
+    int i, matched = 0;
 
     if (*s == '\0') {
 	*this_indent = *next_indent;
 	return;
     }
 
+    /* skip "catch" if present */
     if (!strncmp(s, "catch ", 6)) {
 	s += 6;
 	s += strspn(s, " ");
     }
 
-    if (wordmatch(s, "loop")) {
-	ni++;
-    } else if (wordmatch(s, "if")) {
-	ni++;
-    } else if (wordmatch(s, "nls")) {
-	ni++;
-    } else if (wordmatch(s, "mle")) {
-	ni++;
-    } else if (wordmatch(s, "gmm")) {
-	ni++;
-    } else if (wordmatch(s, "mpi")) {
-	ni++;
-    } else if (wordmatch(s, "plot")) {
-	ni++;
-    } else if (wordmatch(s, "function")) {
-	ni++;
-    } else if (wordmatch(s, "restrict")) {
-	ni++;
-    } else if (wordmatch(s, "system")) {
-	ni++;
-    } else if (wordmatch(s, "foreign")) {
-	ni++;
-    } else if (wordmatch(s, "outfile")) {
+    for (i=0; block_starts[i] != NULL && !matched; i++) {
+	if (wordmatch(s, block_starts[i])) {
+	    matched = 1;
+	    ni++;
+	}
+    }
+
+    if (!matched && wordmatch(s, "outfile")) {
 	/* Current syntax is "outfile <lines> end outfile", with
 	   options --append, --quiet, --buffer available on
 	   the initial line. Legacy syntax is "outfile --write"
@@ -2263,15 +2254,20 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
 	    /* note: --append is ambiguous wrt indenting! */
 	    ni++;
 	}
-    } else if (wordmatch(s, "end") ||
-	       wordmatch(s, "endif") ||
-	       wordmatch(s, "endloop")) {
-	ti--;
-	ni--;
-    } else if (wordmatch(s, "else") ||
-	       wordmatch(s, "elif")) {
-	ni = ti;
-	ti--;
+	matched = 1;
+    }
+
+    if (!matched) {
+	if (wordmatch(s, "end") ||
+	    wordmatch(s, "endif") ||
+	    wordmatch(s, "endloop")) {
+	    ti--;
+	    ni--;
+	} else if (wordmatch(s, "else") ||
+		   wordmatch(s, "elif")) {
+	    ni = ti;
+	    ti--;
+	}
     }
 
     *this_indent = ti;
