@@ -50,6 +50,7 @@
 #endif
 
 #define TABDEBUG 0
+#define KDEBUG 0
 
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
@@ -716,8 +717,9 @@ static gint script_key_handler (GtkWidget *w,
     guint state = ((GdkEventKey *) event)->state;
     gboolean ret = FALSE;
 
-#if 0
-    fprintf(stderr, "HERE script_key_handler\n");
+#if KDEBUG
+    fprintf(stderr, "HERE script_key_handler (keyval %u, %s)\n",
+	    keyval, gdk_keyval_name(keyval));
 #endif
 
     if (state & GDK_CONTROL_MASK) {
@@ -1009,6 +1011,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     }
 
     if (gretl_script_role(vwin->role)) {
+#ifdef HAVE_GTKSV_COMPLETION
+	if (editable) {
+	    set_sv_completion(vwin);
+	}
+#endif
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
@@ -1016,11 +1023,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
-#ifdef HAVE_GTKSV_COMPLETION
-	if (editable) {
-	    set_sv_completion(vwin);
-	}
-#endif
     } else if (foreign_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(foreign_script_key_handler), vwin);
@@ -3704,15 +3706,8 @@ static gboolean script_electric_enter (windata_t *vwin)
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 {
     gboolean ret = FALSE;
-    static int pass_tab;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
-
-    if (pass_tab) {
-	/* allow Tab to select a completion, once */
-	pass_tab = 0;
-	return FALSE;
-    }
 
     if (in_foreign_land(vwin->text)) {
 	return FALSE;
@@ -3726,7 +3721,6 @@ static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event)
 	    return TRUE;
 	} else if (comp_ok) {
 	    call_user_completion(vwin->text);
-	    pass_tab = 1;
 	    return TRUE;
 	}
     }

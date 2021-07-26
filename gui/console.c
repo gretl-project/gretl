@@ -41,6 +41,7 @@
 #include "cmd_private.h"
 
 #define CDEBUG 0
+#define KDEBUG 0
 
 /* file-scope globals */
 static char **cmd_history;
@@ -545,8 +546,9 @@ static gint console_key_handler (GtkWidget *cview,
     GtkTextMark *mark;
     gint ctrl = 0;
 
-#if 0
-    fprintf(stderr, "HERE console_key_handler\n");
+#if KDEBUG
+    fprintf(stderr, "HERE console_key_handler (keyval %u, %s)\n",
+	    keyval, gdk_keyval_name(keyval));
 #endif
 
 #ifdef OS_OSX

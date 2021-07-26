@@ -535,6 +535,13 @@ static void notify_hidden (GtkSourceCompletion *comp,
     fprintf(stderr, "+++ got hide signal +++\n");
 }
 
+static void notify_populate (GtkSourceCompletion *comp,
+			     GtkSourceCompletionContext *context,
+			     gpointer p)
+{
+    fprintf(stderr, "+++ got populate-context signal +++\n");
+}
+
 #endif
 
 static void add_gretl_provider (GtkSourceCompletion *comp,
@@ -624,6 +631,8 @@ void set_sv_completion (windata_t *vwin)
 			 G_CALLBACK(notify_activated), NULL);
 	g_signal_connect(G_OBJECT(comp), "hide",
 			 G_CALLBACK(notify_hidden), NULL);
+	g_signal_connect(G_OBJECT(comp), "populate-context",
+			 G_CALLBACK(notify_populate), NULL);
 	fprintf(stderr, "providers set up\n");
 #endif
     }
