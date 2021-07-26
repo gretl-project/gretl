@@ -672,7 +672,8 @@ static gint console_key_handler (GtkWidget *cview,
     }
 
 #ifdef HAVE_GTKSV_COMPLETION
-    if (keyval == GDK_Tab && hansl_completion == COMPLETE_USER) {
+    if (keyval == GDK_Tab && hansl_completion == COMPLETE_USER &&
+	maybe_try_completion((windata_t *) p)) {
 	call_user_completion(cview);
 	return TRUE;
     }
