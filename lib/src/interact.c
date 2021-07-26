@@ -3859,7 +3859,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case PANSPEC:
-        err = panel_hausman_test(model, dset, cmd->opt, prn);
+        err = panel_specification_test(model, dset, cmd->opt, prn);
         break;
 
     case MODTEST:
