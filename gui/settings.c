@@ -1109,7 +1109,7 @@ int console_prefs_dialog (GtkWidget *parent)
 	return 0;
     }
 
-    dialog = gretl_dialog_new(_("gretl: console preferences"), parent,
+    dialog = gretl_dialog_new(_("gretl: preferences"), parent,
 			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
