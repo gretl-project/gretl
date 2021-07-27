@@ -3352,9 +3352,9 @@ void do_dwpval (GtkAction *action, gpointer p)
             pputs(prn, _("p-value is \"very small\" (the Imhof integral could not\n"
                          "be evaluated so a definite value is not available)"));
         } else {
-	    pprintf(prn, "H1: positive autocorrelation\n");
+	    pprintf(prn, _("H1: positive autocorrelation\n"));
             pprintf(prn, "   %s = %g\n", _("p-value"), pv);
-	    pprintf(prn, "H1: negative autocorrelation\n");
+	    pprintf(prn, _("H1: negative autocorrelation\n"));
             pprintf(prn, "   %s = %g\n", _("p-value"), 1.0 - pv);
         }
         view_buffer_with_parent(vwin, prn, 78, 200,

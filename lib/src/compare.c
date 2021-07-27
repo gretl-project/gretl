@@ -2673,7 +2673,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines , \\\n"
 		"%g title \"%s\" w lines lt 0\n",
-		_(title), critval, "5% QLR critical value");
+		_(title), critval, _("5% QLR critical value"));
     } else {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines\n", _(title));

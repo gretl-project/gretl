@@ -4835,9 +4835,9 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     w = gtk_label_new(_("frequency axis scale:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_combo_box_text_new();
-    combo_box_append_text(w, "data-based");
-    combo_box_append_text(w, "radians");
-    combo_box_append_text(w, "degrees");
+    combo_box_append_text(w, _("data-based"));
+    combo_box_append_text(w, _("radians"));
+    combo_box_append_text(w, _("degrees"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     g_signal_connect(G_OBJECT(w), "changed",
                      G_CALLBACK(pergm_set_axis), opt);

@@ -1887,7 +1887,7 @@ GtkActionEntry main_entries[] = {
     { "Tramo", NULL, N_("_TRAMO analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
     { "Hurst", NULL, N_("_Hurst exponent"), NULL, NULL, G_CALLBACK(do_hurst) },
-    { "BDS", NULL, N_("_BDS nonlinearity test"), NULL, NULL, G_CALLBACK(bds_callback) },
+    { "BDS", NULL, N_("BDS nonlinearity test"), NULL, NULL, G_CALLBACK(bds_callback) },
     { "tdisagg", NULL, N_("Disaggregate..."), NULL, NULL, G_CALLBACK(tdisagg_callback) },
     { "EditAttrs", NULL, N_("_Edit attributes"), NULL, NULL, G_CALLBACK(varinfo_callback) },
     { "VSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
