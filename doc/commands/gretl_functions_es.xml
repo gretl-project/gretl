@@ -1816,6 +1816,90 @@
       </description>
     </function>
 
+    <function name="bcheck" section="programming" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">objetivo</fnarg>
+	<fnarg type="bundle">entrada</fnarg>
+	<fnarg type="strings" optional="true">claves-requeridas</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Principalmente pensada para que la utilicen los autores de paquetes de
+	  funciones. Este es el contexto en el que <lit>bcheck</lit> puede ser
+	  útil: tienes una función que admite un argumento de tipo 'bundle'
+	  mediante el que el solicitante puede hacer varias elecciones. Algunos
+	  elementos del 'bundle' pueden tener valores predeterminados &mdash;
+	  por lo que el solicitante no está obligado a hacer una elección
+	  explícita &mdash; aunque pueden necesitarse otros elementos. Quieres
+	  determinar si el argumento que obtienes, es correcto.
+	</para>
+	<para>
+	  Para utilizar <lit>bcheck</lit>, construyes un modelo de 'bundle' que
+	  contenga todas las claves admitidas, con valores que ejemplifiquen
+	  el tipo asociado a cada clave, y lo pasas en forma de puntero como
+	  <argname>objetivo</argname>. Para el segundo argumento,
+	  <argname>entrada</argname>, pasas el 'bundle' que obtienes del
+	  solicitante. Entonces, esta función comprueba lo siguiente:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Contiene la <argname>entrada</argname> alguna clave que no
+	      esté presente en el <argname>objetivo</argname>? En tal caso,
+	      <lit>bcheck</lit> devuelve un valor no nulo, indicando que la
+	      <argname>entrada</argname> es incorrecta.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Contiene la <argname>entrada</argname>, bajo alguna de las
+	      claves indicadas, un objeto cuyo tipo no coincida con el del
+	      <argname>objetivo</argname>? En tal caso, se devuelve un valor
+	      no nulo.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Si algunos elementos del <argname>objetivo</argname> necesitan
+	      una entrada del solicitante (por lo que el valor que indicas no es
+	      realmente el predeterminado, si no solo un marcador de posición
+	      para indicar el tipo requerido), debes indicar un tercer
+	      argumento a <lit>bcheck</lit>: un 'array' de cadenas de texto
+	      que contenga las claves para las que no es opcional la entrada.
+	      Entonces, el valor devuelto será no nulo si falta alguno de los
+	      elementos requeridos de <argname>entrada</argname>.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Si no se detectan fallos en esos puntos, cualquier valor indicado en
+	  <argname>entrada</argname> se copia a <argname>objetivo</argname>
+	  (es decir, los predeterminados se substituyen por elecciones correctas
+	  en la parte del solicitante). Cuando se detecten fallos, se va a
+	  presentar un mensaje que indicará que es lo que está mal en la
+	  <argname>entrada</argname>.
+	</para>
+	<para>
+	  Para ofrecer un sencillo ejemplo, supón que tu 'bundle' de argumentos
+	  de la función admite una matriz <lit>X</lit> (requerida), un escalar
+	  <lit>z</lit> con valor 0 por defecto, y una cadena <lit>s</lit>
+	  con el valor <quote><lit>presentar</lit></quote> predeterminado.
+	  Entonces, el siguiente fragmento de código sería adecuado para comprobar
+	  un 'bundle' de nombre <lit>uservals</lit> proporcionado por el solicitante:
+	</para>
+	<code>
+	  bundle target = _(X={}, z=0, s="presentar")
+	  strings req = defarray("X")
+	  err = bcheck(&amp;target, uservals, req)
+	  if err
+	     # reaccionar adecuadamente
+	  else
+	     # continuar utilizando los valores en el objetivo
+	  endif
+	</code>
+      </description>
+    </function>
+
     <function name="bessel" section="math" output="asinput">
       <fnargs>
 	<fnarg type="char">tipo</fnarg>
