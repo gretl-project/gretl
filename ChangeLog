@@ -1,9 +1,11 @@
 version 2021c, in progress
 - New function contains(): indicates whether a numerical
   object contains members of a specified set
-- New function recode(): converts encoding of strings
 - New function bcheck(): aids in handling bundle arguments
   to user-defined functions
+- New command "panspec": substantially, the old "hausman"
+  command under a different name; for the moment, "hausman"
+  is still kept as an alias for backward compatibility
 - fcstats() matrix row labels: distinguish U1 vs U2 variant
   of Theil's U statistic
 - printing of bundles: sort members by type and key

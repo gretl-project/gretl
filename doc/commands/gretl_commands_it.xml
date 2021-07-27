@@ -6049,71 +6049,6 @@
 
 </command>
     
-<command name="hausman" section="Tests" label="Diagnosi panel">
-      <usage>      
-	<options>
-	  <option>
-    <flag>--nerlove</flag>
-    <effect>usa il metodo di Nervole per effetti casuali</effect>
-    </option>
-    <option>
-    <flag>--matrix_diff</flag>
-    <effect>usa il metodo di differenze tra matrici per il test di Hausman</effect>
-    </option>
-    </options>
-    </usage>
-    <description>
-      <para>
-        Questo test è disponibile solo dopo aver stimato un modello OLS su dati
-        panel (si veda anche <cmd>setobs</cmd>). Testa il semplice modello
-        <quote>pooled</quote> (con tutte le osservazioni mescolate
-        indistintamente) contro le principali alternative: il modello a effetti
-        fissi e quello a effetti casuali.
-    </para>
-    <para>
-      Il modello a effetti fissi permette all'intercetta della regressione di
-      variare per ogni unità cross section. Viene eseguito un test
-      <math>F</math> per l'ipotesi nulla che le intercette non
-      differiscano tra loro.  Il modello a effetti casuali scompone la
-      varianza dei residui in due parti: una specifica alle unità cross section
-      e una specifica all'osservazione particolare (la stima può essere
-      eseguita solo se il numero delle unità cross section nel dataset è
-      maggiore del numero dei parametri da stimare). La statistica LM di
-      Breusch&ndash;Pagan testa l'ipotesi nulla che il modello pooled OLS sia
-      adeguato contro l'alternativo modello a effetti casuali.
-    </para>
-    <para>
-      Può accadere che il modello pooled OLS sia rifiutato nei confronti
-      di entrambe le alternative, a effetti fissi o casuali. A patto
-      che gli errori specifici di unità o di gruppo siano non
-      correlati con le variabili indipendenti, lo stimatore a effetti
-      casuali è più efficiente dello stimatore a effetti fissi; nel
-      caso contrario lo stimatore a effetti casuali non è consistente
-      e deve essergli preferito lo stimatore a effetti fissi. L'ipotesi
-      nulla per il test di Hausman è che l'errore specifico di gruppo non
-      sia correlato con le variabili indipendenti (e quindi che il
-      modello a effetti casuali sia preferibile). Un basso p-value per
-      questo test suggerisce di rifiutare il modello a effetti casuali
-      in favore del modello a effetti fissi.
-</para>
-<para>
-  Le due opzioni per questo comando riguardano il modello ad
-  effetti casuali.  Di default viene utilizzato il metodo di
-  Swamy e Arora ed il test di Hausman viene calcolato usando il
-  metodo di regressione. Le opzioni di cui sopra consentono di
-  abilitare, in alternativa, il metodo di Nerlove per effetti
-  casuali e/o l'approccio di differenza tra matrici per il
-  calcolo del test di Hausman.
-</para>
-</description>
-
-<gui-access>
-<menu-path>Finestra del modello, /Test/HAUSMAN - Diagnosi panel</menu-path>
-</gui-access>
-
-</command>
-
-
 <command name="hccme" section="Estimation" context="gui"
 	 label="Errori standard robusti">
 
@@ -10922,6 +10857,70 @@ del comando <cmdref targ="set"/>.
 
   <gui-access>
     <other-access>Main window pop-up menu (single selection)</other-access>
+  </gui-access>
+
+</command>
+
+<command name="panspec" section="Tests" label="Diagnosi panel">
+  <usage>      
+    <options>
+      <option>
+	<flag>--nerlove</flag>
+	<effect>usa il metodo di Nervole per effetti casuali</effect>
+      </option>
+      <option>
+	<flag>--matrix_diff</flag>
+	<effect>usa il metodo di differenze tra matrici per il test di Hausman</effect>
+      </option>
+    </options>
+  </usage>
+  <description>
+    <para>
+      Questo test è disponibile solo dopo aver stimato un modello OLS su dati
+      panel (si veda anche <cmd>setobs</cmd>). Testa il semplice modello
+      <quote>pooled</quote> (con tutte le osservazioni mescolate
+      indistintamente) contro le principali alternative: il modello a effetti
+      fissi e quello a effetti casuali.
+    </para>
+    <para>
+      Il modello a effetti fissi permette all'intercetta della regressione di
+      variare per ogni unità cross section. Viene eseguito un test
+      <math>F</math> per l'ipotesi nulla che le intercette non
+      differiscano tra loro.  Il modello a effetti casuali scompone la
+      varianza dei residui in due parti: una specifica alle unità cross section
+      e una specifica all'osservazione particolare (la stima può essere
+      eseguita solo se il numero delle unità cross section nel dataset è
+      maggiore del numero dei parametri da stimare). La statistica LM di
+      Breusch&ndash;Pagan testa l'ipotesi nulla che il modello pooled OLS sia
+      adeguato contro l'alternativo modello a effetti casuali.
+    </para>
+    <para>
+      Può accadere che il modello pooled OLS sia rifiutato nei confronti
+      di entrambe le alternative, a effetti fissi o casuali. A patto
+      che gli errori specifici di unità o di gruppo siano non
+      correlati con le variabili indipendenti, lo stimatore a effetti
+      casuali è più efficiente dello stimatore a effetti fissi; nel
+      caso contrario lo stimatore a effetti casuali non è consistente
+      e deve essergli preferito lo stimatore a effetti fissi. L'ipotesi
+      nulla per il test di Hausman è che l'errore specifico di gruppo non
+      sia correlato con le variabili indipendenti (e quindi che il
+      modello a effetti casuali sia preferibile). Un basso p-value per
+      questo test suggerisce di rifiutare il modello a effetti casuali
+      in favore del modello a effetti fissi.
+    </para>
+    <para>
+      Le due opzioni per questo comando riguardano il modello ad
+      effetti casuali.  Di default viene utilizzato il metodo di
+      Swamy e Arora ed il test di Hausman viene calcolato usando il
+      metodo di regressione. Le opzioni di cui sopra consentono di
+      abilitare, in alternativa, il metodo di Nerlove per effetti
+      casuali e/o l'approccio di differenza tra matrici per il
+      calcolo del test di Hausman.
+    </para>
+  </description>
+  
+  <gui-access>
+    <menu-path>Finestra del modello, /Test/HAUSMAN - Diagnosi panel</menu-path>
   </gui-access>
 
 </command>
