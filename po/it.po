@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-07-27 18:53-0400\n"
-"PO-Revision-Date: 2021-07-09 11:20+0200\n"
+"PO-Revision-Date: 2021-07-28 15:07+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -669,9 +669,8 @@ msgid "Robust Wald test for break"
 msgstr "Test di Wald robusto per un break strutturale"
 
 #: lib/src/compare.c:2676
-#, fuzzy
 msgid "5% QLR critical value"
-msgstr "Valore critico al %g per cento"
+msgstr "Valore critico QLR al %g per cento"
 
 #: lib/src/compare.c:2773
 msgid ""
@@ -2424,9 +2423,8 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Tipo di operando errato per '&'"
 
 #: lib/src/geneval.c:5874
-#, fuzzy
 msgid "The first argument must be a named series in the current dataset"
-msgstr "Sembra che la serie %s sia della stessa frequenza del dataset"
+msgstr "Il primo argomento dev'essere una serie già presente nel dataset"
 
 #: lib/src/geneval.c:7729 lib/src/geneval.c:7756 lib/src/gretl_func.c:8974
 #, c-format
@@ -2622,13 +2620,12 @@ msgstr ""
 "Selezionare un campione più piccolo."
 
 #: lib/src/genfuncs.c:2937
-#, fuzzy
 msgid "centered periodic dummy"
-msgstr "Dummy _periodiche"
+msgstr "Dummy _periodiche centrate"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
-msgstr ""
+msgstr "dummy periodiche non centrate"
 
 #: lib/src/genfuncs.c:2943
 #, c-format
@@ -4120,28 +4117,27 @@ msgid "set_omp_n_threads: OpenMP is not enabled"
 msgstr "set_omp_n_threads: OpenMP è disabilitato"
 
 #: lib/src/gretl_panel.c:1560
-#, fuzzy
 msgid "Variance estimators:"
-msgstr "Stimatore covarianza"
+msgstr "Stimatori delle varianze:"
 
 #: lib/src/gretl_panel.c:1562
-#, fuzzy, c-format
+#, c-format
 msgid " between = %g"
-msgstr " (lunghezza del passo = %g)"
+msgstr " between = %g"
 
 #: lib/src/gretl_panel.c:1564
-#, fuzzy, c-format
+#, c-format
 msgid " within = %g"
-msgstr "Banda = %g"
+msgstr " within = %g"
 
 #: lib/src/gretl_panel.c:1568
-#, fuzzy, c-format
+#, c-format
 msgid "theta used for quasi-demeaning = %g"
-msgstr "Theta usato per la trasformazione"
+msgstr "Theta usato per la quasi-differenziazione = %g"
 
 #: lib/src/gretl_panel.c:1571
 msgid "Panel is unbalanced: theta varies across units"
-msgstr ""
+msgstr "Panel sbilanciato: theta varia da un'unità all'altra"
 
 #: lib/src/gretl_panel.c:1576
 msgid ""
@@ -10472,9 +10468,8 @@ msgid "frequency axis scale:"
 msgstr "scala dell'asse di frequenza:"
 
 #: gui/dialogs.c:4838
-#, fuzzy
 msgid "data-based"
-msgstr "Database"
+msgstr "Basata sui dati"
 
 #: gui/dialogs.c:5037
 msgid "Number of bins:"
@@ -13120,7 +13115,6 @@ msgstr "Esponente di _Hurst"
 
 # / gui2/library.c:1605
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "BDS nonlinearity test"
 msgstr "Test BDS di non linearità"
 
@@ -13845,9 +13839,8 @@ msgid "_Cross-sectional dependence"
 msgstr "Dipendenza fra unità"
 
 #: gui/gui_utils.c:272
-#, fuzzy
 msgid "_Panel specification"
-msgstr "_Revisione specificazione"
+msgstr "Specificazione panel"
 
 #: gui/gui_utils.c:276 gui/gui_utils.c:283
 msgid "White's test"
@@ -13940,6 +13933,12 @@ msgid ""
 "Do you want to force gretl to treat the first column as just\n"
 "an ordinary data series (regardless of the column heading)?"
 msgstr ""
+"Di solito, gretl tenta di interpretare la prima colonna di un file\n"
+"CSV come un identificativo di osservazione (ad esempio, date), se\n"
+"la stringa sulla prima linea sembra adeguata.\n"
+"\n"
+"Per questo file, bisogna trattare la prima colonna come le altre\n"
+"(qualsiasi sia l'intestazione) e non darne alcuna interpretazione?"
 
 #: gui/gui_utils.c:1286 gui/gui_utils.c:1289
 #, c-format
@@ -14670,7 +14669,7 @@ msgstr "Errore nell'aggiunta delle variabili"
 #: gui/library.c:581
 #, c-format
 msgid "error correction term %d from VECM %d"
-msgstr ""
+msgstr "termine ECM n. %d dal VECM %d"
 
 #: gui/library.c:615
 #, c-format
@@ -15552,6 +15551,8 @@ msgid ""
 "Data files written in the current gdtb binary format\n"
 "cannot be read by gretl versions older than 2020b"
 msgstr ""
+"I file di dati scritti nel formato gtdb attuale non possono\n"
+"essere letti da versioni di gretl antecedenti alla 2020b"
 
 #: gui/library.c:9555 gui/library.c:9694
 msgid "No commands to execute"
