@@ -606,7 +606,7 @@ void set_sv_completion (windata_t *vwin)
     compval = (vwin->role == CONSOLE)? console_completion :
 	hansl_completion;
 
-#if 1 || AC_DEBUG
+#if AC_DEBUG
     fprintf(stderr, "set_sv_completion: comp %s, prov_info %s, completion %d\n",
 	    comp==NULL ? "null" : "present", pi==NULL? "null" : "present",
 	    compval);
@@ -614,6 +614,8 @@ void set_sv_completion (windata_t *vwin)
 
     if (compval && pi == NULL) {
 	/* set up and activate */
+	g_object_set(G_OBJECT(comp), "accelerators", 10,
+		     "remember-info-visibility", TRUE, NULL);
 	pi = prov_info_new();
 	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
 	if (vwin->role == CONSOLE) {
@@ -625,8 +627,8 @@ void set_sv_completion (windata_t *vwin)
 	    /* context is script editor */
 	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
 	    add_gretl_provider(comp, PROV_SERIES,   2, vwin, pi);
-	    add_words_provider(comp, PROV_CMDS,     3, vwin, pi);
-	    add_words_provider(comp, PROV_FUNCS,    4, vwin, pi);
+	    add_words_provider(comp, PROV_FUNCS,    3, vwin, pi);
+	    add_words_provider(comp, PROV_CMDS,     4, vwin, pi);
 	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin, pi);
 	}
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",

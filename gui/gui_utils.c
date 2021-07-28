@@ -694,6 +694,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     }
 
     if (editing && Alt) {
+	/* "Alt" specials for editor */
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
 	} else if (upkey == GDK_minus) {
@@ -744,9 +745,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		/* Ctrl-S: save */
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
-	    } else if (Alt && upkey == GDK_Q) {
-		/* let GTK handle this */
-		return FALSE;
 	    } else if (upkey == GDK_Q || upkey == GDK_W) {
 		if (!window_is_tab(vwin)) {
 		    /* Ctrl-Q or Ctrl-W, quit: but not for tabbed windows */
@@ -761,12 +759,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		    }
 		    return TRUE;
 		}
-	    } else if (upkey == GDK_T) {
-		if (window_is_tab(vwin)) {
-		    /* Ctrl-T: open new tab */
-		    do_new_script(vwin->role, NULL);
-		    return TRUE;
-		}
+	    } else if (upkey == GDK_T && window_is_tab(vwin)) {
+		/* Ctrl-T: open new tab */
+		do_new_script(vwin->role, NULL);
+		return TRUE;
 	    }
 	}
 	if (window_is_tab(vwin)) {
@@ -792,7 +788,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		return TRUE;
 	    }
 	}
-
     }
 
     if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {

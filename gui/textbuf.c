@@ -699,10 +699,6 @@ static void set_source_tabs (GtkWidget *w, int cw)
 		   k == GDK_ISO_Left_Tab || \
 		   k == GDK_KP_Tab)
 
-#define editing_hansl(r) (r == EDIT_HANSL || \
-			  r == EDIT_PKG_CODE ||	\
-			  r == EDIT_PKG_SAMPLE)
-
 /* Special keystrokes in native script window: Ctrl-Return sends the
    current line for execution; Ctrl-R sends the whole script for
    execution (keyboard equivalent of the "execute" button);
@@ -972,6 +968,12 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     vwin->text = gtk_source_view_new_with_buffer(sbuf);
     vwin->sbuf = sbuf;
 
+#ifdef HAVE_GTKSV_COMPLETION
+    if (editing_hansl(vwin->role) || vwin->role == CONSOLE) {
+	set_sv_completion(vwin);
+    }
+#endif
+
     view = GTK_TEXT_VIEW(vwin->text);
     gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
     gtk_text_view_set_left_margin(view, 4);
@@ -1010,12 +1012,12 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	set_style_for_buffer(sbuf, get_sourceview_style(), vwin->role);
     }
 
+    if (!(vwin->flags & WVIN_KEY_SIGNAL_SET)) {
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
+			 G_CALLBACK(catch_viewer_key), vwin);
+    }
+
     if (gretl_script_role(vwin->role)) {
-#ifdef HAVE_GTKSV_COMPLETION
-	if (editable) {
-	    set_sv_completion(vwin);
-	}
-#endif
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",

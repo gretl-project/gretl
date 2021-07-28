@@ -466,6 +466,10 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     return tab;
 }
 
+/* Note: provides a means of connecting catch_viewer_key(),
+   for a viewer that's embedded in a GtkNotebook.
+*/
+
 static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
 			      tabwin_t *tabwin)
 {
@@ -673,8 +677,11 @@ windata_t *viewer_tab_new (int role, const char *info,
 
     if (starting) {
 	window_list_add(tabwin->main, role);
-	g_signal_connect(G_OBJECT(tabwin->main), "key-press-event",
-			 G_CALLBACK(catch_tabwin_key), tabwin);
+	if (!editing_hansl(role)) {
+	    g_signal_connect(G_OBJECT(tabwin->main), "key-press-event",
+			     G_CALLBACK(catch_tabwin_key), tabwin);
+	    vwin->flags |= WVIN_KEY_SIGNAL_SET;
+	}
     }
 
     return vwin;
