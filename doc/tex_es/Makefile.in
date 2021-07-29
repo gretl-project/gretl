@@ -1,55 +1,48 @@
 topsrc = @top_srcdir@
 docsrc = $(topsrc)/doc
 
-GUIDE = gretl-guide-es.pdf
-REF = gretl-ref-es.pdf
+MAKE = @MAKE@
 
-TEXSRC = appendices.tex \
-	biblio.tex \
-	cli.tex \
-	datafiles.tex \
-	genr.tex \
-	graphs.tex \
-	gretl-guide-es.tex \
-	gretl-ref-es.tex \
-	introduction.tex \
-	looping.tex \
-	modes.tex \
-	native.tex \
-	panel.tex \
-	reftables.tex \
-	starting.tex \
-	trouble.tex \
-	vecm.tex \
-	cmdref.tex \
+TEXSRC = cmdref.tex \
+	comments.tex \
+	funcref.tex \
+	gretl-ref-gl.tex \
+	operators.tex \
 	optarg.tex \
-	var.tex
+	optshort.tex \
+	reftables.tex
 
-all: $(GUIDE) $(REF)
+REF = gretl-ref-gl.pdf
 
-$(GUIDE): gretl-guide-es.tex links date.tex
-	pdflatex $<
-	pdflatex $<
-	pdflatex $<
+BIBSRC = gretl.bib gretl.bst biblio.tex
 
-$(REF): gretl-ref-es.tex links cmdtex topiclist date.tex
-	pdflatex $<
-	pdflatex $<
-	pdflatex $<
+STYSRC = $(docsrc)/gretl.sty.in
 
-gretl-guide-es.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
+ALLSRC = $(wildcard $(docsrc)/tex_gl/*.tex) $(STYSRC)
+
+all: $(REF)
+
+$(REF): gretl-ref-es.tex links cmdtex functex textables_es topiclist \
+	date.tex $(STYSRC) $(BIBSRC)
+	pdflatex $<
+	bibtex gretl-ref-es
+	pdflatex $<
+	bibtex gretl-ref-es
+	pdflatex $<
+	pdflatex $<
 
 gretl-ref-es.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
 
-.PHONY : links cmdtex textables onepass refpass topiclist clean
+.PHONY : links cmdtex_es functex_es textables_es refpass topiclist clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
-	rm -f figures && ln -s $(docsrc)/figures_es ./figures
+	for f in $(BIBSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 	for f in $(TEXSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_es/$$f . ; fi ; done
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_gl/$$f . ; fi ; done
+	rm -f figures && ln -s $(docsrc)/figures .
 
 cmdtex:
 	$(MAKE) -C ../commands cmdtex_es
@@ -60,17 +53,20 @@ topiclist:
 textables_es:
 	$(MAKE) -C ../commands textables_es
 
+functex:
+	$(MAKE) -C ../commands functex_gl
+
 date.tex:
 	LANG=es_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
-onepass: gretl-guide-es.tex links
-	pdflatex gretl-guide-es
-
 refpass: gretl-ref-es.tex links cmdtex topiclist
-	pdflatex gretl-ref-es
+	pdflatex $<
+
+bibpass: refpass
+	bibtex gretl-ref-es
 
 clean:
-	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f ../commands/textables_es ../commands/topiclist_es 
-	rm -f ../commands/cmdtex_es 
+	rm -f ../commands/textables_es ../commands/topiclist_es
+	rm -f ../commands/cmdtex_es ../commands/functex_es
