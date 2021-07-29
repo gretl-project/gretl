@@ -2270,6 +2270,10 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	}
     }
 
+#if 0
+    fprintf(stderr, "HERE code=%d, pref=%d\n", code, pref);
+#endif
+
     if (code == GRETL_GUIDE) {
 	fname = guide_files[pref];
     } else if (code == GRETL_REF) {
