@@ -3182,7 +3182,7 @@
 	<para>
 	  Permite calcular valores críticos, y devuelve un resultado del mismo tipo
 	  que el introducido. El valor <math>x</math> que se devuelve va a cumplir
-	  <equation status="inline" ascii="P(X &gt; x) = p" tex="$P(X \gt x) = p$"/>,
+	  <equation status="inline" ascii="P(X &gt; x) = p" tex="$P(X &gt; x) = p$"/>,
 	  donde la distribución de <math>X</math> se determina por la letra
 	  <argname>c</argname>. Entre los argumentos <argname>d</argname> y
 	  <argname>x</argname>, puede necesitarse algún otro adicional (escalar)
