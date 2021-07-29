@@ -6,19 +6,19 @@ MAKE = @MAKE@
 TEXSRC = cmdref.tex \
 	comments.tex \
 	funcref.tex \
-	gretl-ref-gl.tex \
+	gretl-ref-es.tex \
 	operators.tex \
 	optarg.tex \
 	optshort.tex \
 	reftables.tex
 
-REF = gretl-ref-gl.pdf
+REF = gretl-ref-es.pdf
 
 BIBSRC = gretl.bib gretl.bst biblio.tex
 
 STYSRC = $(docsrc)/gretl.sty.in
 
-ALLSRC = $(wildcard $(docsrc)/tex_gl/*.tex) $(STYSRC)
+ALLSRC = $(wildcard $(docsrc)/tex_es/*.tex) $(STYSRC)
 
 all: $(REF)
 
@@ -41,7 +41,7 @@ links:
 	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 	for f in $(TEXSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_gl/$$f . ; fi ; done
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_es/$$f . ; fi ; done
 	rm -f figures && ln -s $(docsrc)/figures .
 
 cmdtex:
@@ -54,7 +54,7 @@ textables_es:
 	$(MAKE) -C ../commands textables_es
 
 functex:
-	$(MAKE) -C ../commands functex_gl
+	$(MAKE) -C ../commands functex_es
 
 date.tex:
 	LANG=es_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
