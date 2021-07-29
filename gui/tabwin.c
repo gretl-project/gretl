@@ -677,7 +677,7 @@ windata_t *viewer_tab_new (int role, const char *info,
 
     if (starting) {
 	window_list_add(tabwin->main, role);
-	if (!editing_hansl(role)) {
+	if (!vwin_editing_script(role)) {
 	    g_signal_connect(G_OBJECT(tabwin->main), "key-press-event",
 			     G_CALLBACK(catch_tabwin_key), tabwin);
 	    vwin->flags |= WVIN_KEY_SIGNAL_SET;

@@ -688,6 +688,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     int Alt = (event->state & GDK_MOD1_MASK);
     guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
+    int console = vwin->role == CONSOLE;
 
     if (vwin_is_busy(vwin)) {
 	return TRUE;
@@ -725,9 +726,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	} else if (upkey == GDK_G) {
 	    text_find_again(NULL, vwin);
 	    return TRUE;
-	} else if (upkey == GDK_H) {
-	    text_replace(NULL, vwin);
-	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    if (editing) {
@@ -736,12 +734,15 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    } else {
 		return vwin_copy_callback(NULL, vwin);
 	    }
-	} else if (editing) {
+	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own
 	       "specials" here
 	    */
-	    if (upkey == GDK_S) {
+	    if (upkey == GDK_H) {
+		text_replace(NULL, vwin);
+		return TRUE;
+	    } else if (upkey == GDK_S) {
 		/* Ctrl-S: save */
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
@@ -776,7 +777,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    gtk_widget_destroy(vwin->main);
 	    return TRUE;
 	}
-    } else if (Alt) {
+    } else if (Alt && !console) {
 	if (upkey == GDK_C && vwin->role == SCRIPT_OUT) {
 	    cascade_session_windows();
 	    return TRUE;
