@@ -90,7 +90,7 @@ links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s $(docsrc)/figures_pt ./figures
 	for f in $(TEXSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
+	if [ ! -f $$f ] && [ -f $(docsrc)/tex_pt/$$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
 	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 
