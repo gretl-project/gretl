@@ -3,21 +3,22 @@
 
 \section{Precedence}
 
-Table~\ref{tab:ops} lists the operators available in \app{gretl} in
+Table~\ref{tab:ops} lists the operators available in gretl in
 order of decreasing precedence: the operators on the first row have
 the highest precedence, those on the second row have the second
-highest precedence and so on. Operators on any given row have equal
+highest, and so on. Operators on any given row have equal
 precedence. Where successive operators have the same precedence the
-order of evaluation is in general left to right. The exception is
-exponentiation; the expression \verb|a^b^c| is equivalent to
-\verb|a^(b^c)|, not \verb|(a^b)^c|.
+order of evaluation is in general left to right. The exceptions are
+exponentiation and matrix transpose-multiply. The expression
+\verb|a^b^c| is equivalent to \verb|a^(b^c)|, not \verb|(a^b)^c|, 
+and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
 
 \begin{table}[htbp]
 \caption{Operator precedence}
 \label{tab:ops}
 \begin{center}
 \begin{tabular}{lllllllll}
-\verb|()| & \verb|[]| & \verb|{}| \\
+\verb|()| & \verb|[]| & \texttt{.} & \verb|{}| \\
 \texttt{!} & \texttt{++} & \verb|--| & \verb|^| & \verb|'| \\
 \texttt{*} & \texttt{/} & \texttt{\%} & \verb+\+ & \texttt{**} \\
 \texttt{+} & \texttt{-} & \verb|~| & \verb+|+ & \\
@@ -52,6 +53,7 @@ noted.
 \begin{longtable}{ll}
 \verb|()| & Function call \\
 \verb|[]|  & Subscripting \\
+\texttt{.} & Bundle membership (see below) \\
 \verb|{}|  & Matrix definition \\
 \texttt{!} & Unary logical NOT \\
 \texttt{++} & Increment (unary) \\
@@ -79,6 +81,11 @@ noted.
 \texttt{?:} & Conditional expression \\
 \end{longtable}
 
+The interpretation of ``\texttt{.}'' as the bundle membership operator
+is confined to the case where it is immediately preceded by the
+identifier for a bundle, and immediately followed by a valid
+identifier (key).
+
 Details on the use of the matrix-related operators (including the dot
 operators) can be found in the chapter on matrices in the
 \textit{Gretl User's Guide}.
@@ -87,7 +94,7 @@ operators) can be found in the chapter on matrices in the
 
 The operators mentioned above are all intended for use on the
 right-hand side of an expression which assigns a value to a variable
-(or which just computes and displays a value --- see the \texttt{eval}
+(or which just computes and displays a value---see the \texttt{eval}
 command). In addition we have the assignment operator itself,
 ``\texttt{=}''. In effect this has the lowest precedence of all: the
 entire right-hand side is evaluated before assignment takes place.
@@ -128,7 +135,7 @@ The unary operators \texttt{++} and \verb|--| follow their
 operand,\footnote{The C programming language also supports prefix
   versions of \texttt{++} and \verb|--|, which increment or decrement
   their operand before yielding its value. Only the postfix form is
-  supported by \app{gretl}.}  which must be a variable of scalar
+  supported by gretl.}  which must be a variable of scalar
 type. Their simplest use is in stand-alone expressions, such as
 %
 \begin{code}
@@ -151,6 +158,20 @@ M[i++] = 1
 After the second line, \texttt{k} has the value 3 and \texttt{i} has
 value 4. The last line assigns the value 1 to element 4 of
 matrix \texttt{M} and sets \texttt{i} = 5.
+
+\textit{Warning}: as in the C programming language, the unary
+increment or decrement operator should be not be applied to a
+variable in conjunction with regular reference to the same variable in
+a single statement. This is because the order of evaluation is not
+guaranteed, giving rise to ambiguity. Consider the following:
+%
+\begin{code}
+M[i++] = i # don't do this!
+\end{code}
+%
+This is supposed to assign the value of \texttt{i} to \texttt{M[i]},
+but is it the original or the incremented value? This is not actually
+defined. 
 
 
 
