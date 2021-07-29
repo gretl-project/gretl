@@ -2183,19 +2183,48 @@ static int get_x12a_doc_path (char *path, const char *fname)
     return ret;
 }
 
-static int find_or_download_pdf (int code, int i, char *fullpath)
+static int show_translation (const char *lang)
+{
+    int in_locale = 0;
+
+#ifdef WIN32
+    gchar *loc = g_win32_getlocale();
+
+    in_locale = (loc != NULL && !strncmp(loc, lang, 2));
+    g_free(loc);
+#elif defined(ENABLE_NLS)
+    char *loc = setlocale(LC_ALL, NULL);
+
+    in_locale = (loc != NULL && !strncmp(loc, lang, 2));
+#endif
+
+    if (in_locale) {
+	const char *msg = (strcmp(lang, "it") == 0)?
+	    "Mostra traduzione in italiano?" :
+	    "Показать перевод на русский язык?";
+
+	return yes_no_dialog(NULL, msg, NULL) == GRETL_YES;
+    } else {
+	return 0;
+    }
+}
+
+/* @pref is the documentation preference registered in settings.c:
+   0 = English, US letter
+   1 = English, A4
+   2 = Translation, if available
+*/
+
+static int find_or_download_pdf (int code, int pref, char *fullpath)
 {
     const char *guide_files[] = {
 	"gretl-guide.pdf",
-	"gretl-guide-a4.pdf",
-	"gretl-guide-it.pdf"
+	"gretl-guide-a4.pdf"
     };
     const char *ref_files[] = {
 	"gretl-ref.pdf",
 	"gretl-ref-a4.pdf",
-	"gretl-ref-it.pdf",
-	"gretl-ref-pt.pdf",
-	"gretl-ref-gl.pdf"
+	"gretl-ref-it.pdf"
     };
     const char *kbd_files[] = {
 	"gretl-keys.pdf",
@@ -2203,7 +2232,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     };
     const char *primer_files[] = {
 	"hansl-primer.pdf",
-	"hansl-primer-a4.pdf"
+	"hansl-primer-a4.pdf",
+	"hansl-primer-ru.pdf"
     };
     const char *pkgbook_files[] = {
 	"pkgbook.pdf",
@@ -2221,33 +2251,39 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     int gotit = 0;
     int err = 0;
 
-    if (i < 0 || i > 4) {
-	i = 0;
+    if (pref < 0 || pref > 2) {
+	/* out of bounds */
+	pref = 0;
     }
 
-    if (code == GRETL_KEYS || code == HANSL_PRIMER ||
-	code == GRETL_MPI || code == GRETL_SVM) {
-	/* no (current) translations */
-	if (i > 1) i = 1;
-    } else if (code == GRETL_GUIDE) {
-	/* the only translation is Italian (and it's old) */
-	if (i > 2) i = 1;
+    if (pref > 0) {
+	/* Try offering a translation where available: currently only
+	   for the Gretl Reference (Italian) and Hansl primer (Russian).
+	*/
+	const char *lang = (code == GRETL_REF)? "it" :
+	    (code == HANSL_PRIMER)? "ru" : NULL;
+
+	if (lang != NULL && show_translation(lang)) {
+	    pref = 2;
+	} else {
+	    pref = 1;
+	}
     }
 
     if (code == GRETL_GUIDE) {
-	fname = guide_files[i];
+	fname = guide_files[pref];
     } else if (code == GRETL_REF) {
-	fname = ref_files[i];
+	fname = ref_files[pref];
     } else if (code == GRETL_KEYS) {
-	fname = kbd_files[i];
+	fname = kbd_files[pref];
     } else if (code == HANSL_PRIMER) {
-	fname = primer_files[i];
+	fname = primer_files[pref];
     } else if (code == PKGBOOK) {
-	fname = pkgbook_files[i];
+	fname = pkgbook_files[pref];
     } else if (code == GRETL_MPI) {
-	fname = gretlMPI_files[i];
+	fname = gretlMPI_files[pref];
     } else if (code == GRETL_SVM) {
-	fname = gretlSVM_files[i];
+	fname = gretlSVM_files[pref];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
