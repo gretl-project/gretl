@@ -3336,7 +3336,7 @@
 	</para>
 	<para context="tex">
 	  Acumula <argname>x</argname>. Cuando <math>x</math> es una serie,
-	  produce una serie y_t = \sum_{s=m}^t x_s$, en la que el punto de partida
+	  produce una serie $y_t = \sum_{s=m}^t x_s$, en la que el punto de partida
 	  <math>m</math> para la acumulación, es la primera observación
 	  no ausente de la muestra provisionalmente seleccionada. Al encontrar valores
 	  ausentes en <math>x</math>, los valores posteriores de <math>y</math>
