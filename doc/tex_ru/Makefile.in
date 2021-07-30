@@ -19,25 +19,24 @@ TEXSRC = hansl-primer-ru.tex \
 	hp-series.tex
 
 PRIMER = hansl-primer-ru.pdf
-STYSRC = $(docsrc)/gretl.sty.in
-ALLSRC = $(wildcard $(docsrc)/tex_ru/*.tex) $(STYSRC)
+ALLSRC = $(wildcard $(docsrc)/tex_ru/*.tex) gretl-cmr.sty
 
 all: $(PRIMER)
 
-$(PRIMER): $(ALLSRC) date.tex links
+$(PRIMER): links $(ALLSRC) date.tex
 	pdflatex hansl-primer-ru.tex
 	pdflatex hansl-primer-ru.tex
+
+date.tex: $(ALLSRC)
+	LANG=ru_RU.UTF-8 date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 .PHONY : links clean
 
 links:
-	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	ln -sf $(docsrc)/tex_ru/gretl-cmr.sty .
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_ru/$$f . ; fi ; done
 	rm -f figures && ln -s $(docsrc)/figures .
-
-date.tex: $(ALLSRC)
-	LANG=ru_RU.UTF-8 date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf
