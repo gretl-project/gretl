@@ -19,7 +19,7 @@ TEXSRC = hansl-primer-ru.tex \
 	hp-series.tex
 
 PRIMER = hansl-primer-ru.pdf
-ALLSRC = $(wildcard $(docsrc)/tex_ru/*.tex) gretl-cmr.sty
+ALLSRC = $(wildcard $(docsrc)/tex_ru/*.tex) gretl-ru.sty
 
 all: $(PRIMER)
 
@@ -33,7 +33,7 @@ date.tex: $(ALLSRC)
 .PHONY : links clean
 
 links:
-	ln -sf $(docsrc)/tex_ru/gretl-cmr.sty .
+	ln -sf $(docsrc)/tex_ru/gretl-ru.sty .
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_ru/$$f . ; fi ; done
 	rm -f figures && ln -s $(docsrc)/figures .
