@@ -1,0 +1,221 @@
+
+\chapter{Going abroad}
+% \section{The \texttt{set} command}
+% \label{chap:settings}
+
+% \section{Function packages}
+
+Gretl is designed to interact as nicely as possible with other
+programs which are likely to be of interest to the applied
+econometrician. Most of the infrastructure that gretl provides for
+this purpose carries over to hansl.
+
+\section{Interaction with the underlying OS}
+
+You can run external commands from a hansl script via the \cmd{launch}
+and \cmd{!} commands.\footnote{Yes, that is an exclamation mark.} They
+both pass the subsequent string to the OS, to be run asynchronously
+or synchronously, respectively.
+
+For example, on Unix-like systems (Linux and OS X), the code
+\begin{code}
+! echo "a(1) * 4" | bc -l && echo "Thats's pi!"
+\end{code}
+
+should yield
+
+\begin{code}
+3.14159265358979323844
+Thats's pi!
+\end{code}
+
+If you feel playful, try \texttt{launch xeyes} on a system with X11
+enabled.
+
+\section{\LaTeX{} and \app{gnuplot}}
+
+\LaTeX{} and \textsf{gnuplot} are both called by gretl in various GUI
+contexts (e.g.\ displaying estimation results in nicely typeset form,
+and displaying plots). It is also possible to exploit their
+functionality via hansl scripting. 
+
+As regards \LaTeX, the relevant commands are \cmd{tabprint} and
+\cmd{modprint}. The first of these is used to generate a tabular
+representation of the results from the last estimation command. As the 
+\GCR\ details, this can be directed to a named file and the 
+particulars of the \TeX\ output can be controlled (to an extent) via
+the option flags \option{complete} and \option{format}. The
+\cmd{modprint} command was mentioned in section~\ref{sec:model-format}.
+
+FIXME: TODO
+
+\begin{itemize}
+\item For \LaTeX: briefly describe the \cmd{tabprint} and
+  \cmd{modprint} commands.
+\item For \app{gnuplot}: give a little example of the \cmd{gnuplot}
+  command with the \option{input} and \option{output} options.
+\end{itemize}
+
+\section{The \cmd{foreign} block}
+
+It is possible to embed ``foreign'' code in a hansl script and have it
+passed to the appropriate program, so as to outsource certain
+operations to other software and collect the results back.
+
+While we have to refer the reader to the \GUG\ for a comprehensive
+description of this feature, in a nutshell hansl recognizes as
+possible counterparts the following external programs: \textsf{R},
+\textsf{Octave}, \textsf{Ox}, \textsf{Python}, \textsf{Julia} and
+\textsf{Stata}.  For example, the following piece of code
+\begin{code}
+foreign language=python
+	import sys
+	print(sys.version)
+end foreign
+\end{code}
+should yield something like
+\begin{code}
+2.7.5+ (default, Sep 17 2013, 15:31:50) 
+[GCC 4.8.1]
+\end{code}
+where the lines between \cmd{foreign} and \cmd{end foreign} were sent
+literally to \textsf{python} and the result was displayed as if it
+were gretl's own output. It goes without saying that, in order for the
+above to work, \textsf{python} must be installed on your system and
+gretl should be configured appropriately to find
+it.\footnote{Configuration is done via the gretl GUI, under the
+\textsf{Preferences} menu.}
+
+Each of the possible targets of the \cmd{foreign} command has its own
+peculiarities and quirks, so in order to make effective use of this
+feature you should read the appropriate chapters of the \GUG. One word
+of caution, however, applies generally: \emph{execution is
+  synchronous}, so if the ``foreign'' programs hangs for some reason,
+your hansl script will, too.
+
+\chapter{Tricks}
+
+\section{String substitution}
+\label{sec:stringsub}
+
+\textsl{This section comes with a health warning. ``String
+  substitution'' affords great flexibility, and is part of the current
+  hansl idiom, but carries a significant cost in terms of efficiency;
+  it is no accident that this mechanism is not supported by
+  ``serious'' programming languages. It is likely that in future we
+  will provide alternative methods for achieving effects that at
+  present can only be achieved by string substitution, and if so we
+  may remove this facility altogether. That said, let's take a look at
+  the current state of affairs\dots{}}
+
+String variables can be used in two ways in hansl scripting: the name
+of the variable can be typed ``as is'', or it may be preceded by the
+``at'' sign, \verb|@|. In the first variant the named string is
+treated as a variable in its own right, while the second calls for
+``string substitution''. Which of these variants is appropriate
+depends on the context.
+
+In the following contexts the names of string variables should always
+be given in plain form (without the ``at'' sign):
+
+\begin{itemize}
+\item When such a variable appears among the arguments to the
+  \texttt{printf} command or \texttt{sprintf} function.
+\item When such a variable is given as the argument to a function.
+\item On the right-hand side of a \texttt{string} assignment.
+\end{itemize}
+
+Here is an illustration of (interactive) use of a named string
+argument with \texttt{printf}:
+%
+\begin{code}
+? string vstr = "variance"
+Generated string vstr
+? printf "vstr: %12s\n", vstr
+vstr:     variance
+\end{code}
+
+String substitution, on the other hand, can be used in contexts where
+a string variable is not acceptable as such. If gretl encounters
+the symbol \verb|@| followed directly by the name of a string
+variable, this notation is in effect treated as a ``macro'': the value
+of the variable is sustituted literally into the command line before
+the regular parsing of the command is carried out.
+
+One common use of string substitution is when you want to construct
+and use the name of a series programatically. For example, suppose you
+want to create 10 random normal series named \texttt{norm1} to
+\texttt{norm10}. This can be accomplished as follows.
+%
+\begin{code}
+string sname = null
+loop i=1..10
+  sname = sprintf("norm%d", i)
+  series @sname = normal()
+endloop
+\end{code}
+%
+Note that plain \texttt{sname} could not be used in the second line
+within the loop: the effect would be to attempt to overwrite the
+string variable named \texttt{sname} with a series of the same name,
+hence generating an error. What we want is for the current
+\textit{value} of \texttt{sname} to be dumped directly into the
+command that defines a series, and the ``\verb|@|'' notation achieves
+that.
+
+Another typical use of string substitution is when you want the
+options used with a particular command to vary depending on
+some condition. For example,
+%
+\begin{code}
+function void use_optstr (series y, list xlist, bool verbose)
+   string optstr = verbose ? "" : "--simple-print"
+   ols y xlist @optstr 
+end function
+
+open data4-1
+list X = const sqft
+use_optstr(price, X, 1)
+use_optstr(price, X, 0)
+\end{code}
+
+In the first call to the function \texttt{use\_optstr} the option
+string \verb|--simple-print| will be appended to the \cmd{ols}
+command; in the second call it will be omitted.
+
+When printing the value of a string variable using the \texttt{print}
+command, the plain variable name should generally be used, as in
+%
+\begin{code}
+string s = "Just testing"
+print s
+\end{code}
+%
+The following variant is equivalent, though clumsy and definitely not
+recommended.
+%
+\begin{code}
+string s = "Just testing"
+print "@s"
+\end{code}
+%
+But note that this next variant does something quite different.
+%
+\begin{code}
+string s = "Just testing"
+print @s
+\end{code}
+%
+After string substitution, the command reads
+%
+\begin{code}
+print Just testing
+\end{code}
+%
+which would be taken as a request to print the values of two
+variables, \texttt{Just} and \texttt{testing}.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "hansl-primer"
+%%% End: 

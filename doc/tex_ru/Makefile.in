@@ -1,0 +1,44 @@
+topsrc = @top_srcdir@
+docsrc = $(topsrc)/doc
+
+MAKE = @MAKE@
+
+TEXSRC = hansl-primer-ru.tex \
+	hp-bundles.tex \
+	hp-ctrlflow.tex \
+	hp-dataset.tex \
+	hp-estimate.tex \
+	hp-functions.tex \
+	hp-further.tex \
+	hp-greeks.tex \
+	hp-hello.tex \
+	hp-matrices.tex \
+	hp-numerical.tex \
+	hp-output.tex \
+	hp-reference.tex \
+	hp-series.tex
+
+PRIMER = hansl-primer-ru.pdf
+STYSRC = $(docsrc)/gretl.sty.in
+ALLSRC = $(wildcard $(docsrc)/tex_ru/*.tex) $(STYSRC)
+
+all: $(PRIMER)
+
+$(PRIMER): $(ALLSRC) date.tex links
+	pdflatex hansl-primer-ru.tex
+	pdflatex hansl-primer-ru.tex
+
+.PHONY : links clean
+
+links:
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_ru/$$f . ; fi ; done
+	rm -f figures && ln -s $(docsrc)/figures .
+
+date.tex: $(ALLSRC)
+	LANG=ru_RU.UTF-8 date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+
+clean:
+	rm -f *.aux *.log *.out *.toc *.pdf
+

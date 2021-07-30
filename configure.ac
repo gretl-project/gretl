@@ -1041,6 +1041,7 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_es/Makefile
     doc/tex_pt/Makefile
     doc/tex_gl/Makefile
+    doc/tex_ru/Makefile
     doc/tex/extract.mk
     doc/reference/Makefile
   ])

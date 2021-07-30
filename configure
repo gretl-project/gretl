@@ -23416,7 +23416,7 @@ fi
 fi
 
 if test "${build_docs}" = "yes" ; then
-  ac_config_files="$ac_config_files doc/Makefile doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile doc/tex_gl/Makefile doc/tex/extract.mk doc/reference/Makefile"
+  ac_config_files="$ac_config_files doc/Makefile doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile doc/tex_pt/Makefile doc/tex_gl/Makefile doc/tex_ru/Makefile doc/tex/extract.mk doc/reference/Makefile"
 
 fi
 
@@ -24551,6 +24551,7 @@ do
     "doc/tex_es/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_es/Makefile" ;;
     "doc/tex_pt/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_pt/Makefile" ;;
     "doc/tex_gl/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_gl/Makefile" ;;
+    "doc/tex_ru/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex_ru/Makefile" ;;
     "doc/tex/extract.mk") CONFIG_FILES="$CONFIG_FILES doc/tex/extract.mk" ;;
     "doc/reference/Makefile") CONFIG_FILES="$CONFIG_FILES doc/reference/Makefile" ;;
     "addons/Makefile") CONFIG_FILES="$CONFIG_FILES addons/Makefile" ;;
