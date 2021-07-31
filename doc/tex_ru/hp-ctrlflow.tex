@@ -166,7 +166,7 @@ matrix B = upper(A.<0) ? -A : A
   значительно более быстрому коду, и его использование неожиданно
   становится естественным процессом, когда к этому привыкаешь.}
 
-\section{Циклы Loops}
+\section{Циклы (loops)}
 \label{sec:hr-loops}
 
 Основная команда Hansl для зацикливания --- это конечно же \cmd{loop},
@@ -274,7 +274,7 @@ endloop
 один из автоматически построенных идентификаторов не был определен,
 выполнение скрипта было бы прервано с ошибкой.
 
-\subsection{Цикл While}
+\subsection{Цикл \texttt{while}}
 
 Здесь у нас есть следующее:
 \begin{code}
@@ -293,7 +293,7 @@ endloop
 \texttt{loop\_maxiter}.
 % (see chapter \ref{chap:settings}).
 
-\subsection{Цикл foreach}
+\subsection{Цикл \texttt{foreach}}
 \label{sec:loop-foreach}
 В этом случае синтаксис выглядит так:
 \begin{code}
@@ -327,7 +327,7 @@ endloop
               y =  0.0000000
 \end{code}
 
-\subsection{Цикл for}
+\subsection{Цикл \texttt{for}}
 
 Заключительная форма управления циклом эмулирует оператор for на языке
 C. Команда loop \cmd{for}, за которой следуют три компонентных
@@ -471,7 +471,7 @@ caller, который возвратит соответствующее «не�
 
 \begin{code}
 function scalar may_fail (matrix *m)
-  catch scalar x = ... # call to built-in procedure
+  catch scalar x = ... # вызвать встроенную функцию
   if $error
     x = NA
   endif
@@ -479,7 +479,7 @@ function scalar may_fail (matrix *m)
 end function
 
 function scalar caller (...)
-  matrix m = ... # whatever
+  matrix m = ... # что-нибудь
   scalar x = may_fail(&m)
   if na(x)
     print "Couldn't calculate x"
@@ -494,8 +494,8 @@ end function
 
 \begin{code}
 function scalar caller (...)
-  matrix m = ... # whatever
-  catch scalar x = may_fail(&m) # No, don't do this!
+  matrix m = ... # что-нибудь
+  catch scalar x = may_fail(&m) # не делай этого!
   ...
 end function
 \end{code}
