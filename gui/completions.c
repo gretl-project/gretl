@@ -593,12 +593,13 @@ static void add_words_provider (GtkSourceCompletion *comp,
     pi[id].ptr = cw;
     g_object_set(cw, "priority", priority, NULL);
 
-    if (id == PROV_WORDS) {
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    if (id == PROV_CMDS) {
+	buf = pi[id].buf = command_names_buffer();
     } else if (id == PROV_FUNCS) {
 	buf = pi[id].buf = function_names_buffer();
     } else {
-	buf = pi[id].buf = command_names_buffer();
+	/* plain PROV_WORDS */
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     }
     gtk_source_completion_words_register(cw, buf);
     gtk_source_completion_add_provider(comp,
@@ -632,17 +633,17 @@ void set_sv_completion (windata_t *vwin)
 	pi = prov_info_new();
 	g_object_set_data(G_OBJECT(vwin->text), "prov_info", pi);
 	if (vwin->role == CONSOLE) {
-	    add_words_provider(comp, PROV_WORDS,  1, vwin, pi);
-	    add_words_provider(comp, PROV_FUNCS,  2, vwin, pi);
-	    add_gretl_provider(comp, PROV_SERIES, 3, vwin, pi);
 	    add_words_provider(comp, PROV_CMDS,   4, vwin, pi);
+	    add_gretl_provider(comp, PROV_SERIES, 3, vwin, pi);
+	    add_words_provider(comp, PROV_FUNCS,  2, vwin, pi);
+	    add_words_provider(comp, PROV_WORDS,  1, vwin, pi);
 	} else {
 	    /* context is script editor */
-	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
-	    add_gretl_provider(comp, PROV_SERIES,   2, vwin, pi);
-	    add_words_provider(comp, PROV_FUNCS,    3, vwin, pi);
-	    add_words_provider(comp, PROV_CMDS,     4, vwin, pi);
 	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin, pi);
+	    add_words_provider(comp, PROV_CMDS,     4, vwin, pi);
+	    add_words_provider(comp, PROV_FUNCS,    3, vwin, pi);
+	    add_gretl_provider(comp, PROV_SERIES,   2, vwin, pi);
+	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
 	}
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",
 			 G_CALLBACK(destroy_words_providers), NULL);
