@@ -21,6 +21,8 @@
 #include "genparse.h"
 #include "completions.h"
 
+#define GTKSV4 0 /* experiment, not for now */
+
 #ifdef USE_GTKSOURCEVIEW_3
 # define GTK_TYPE_SOURCE_COMPLETION_PROVIDER GTK_SOURCE_TYPE_COMPLETION_PROVIDER
 #endif
@@ -376,6 +378,22 @@ snippet_provider_populate (GtkSourceCompletionProvider *provider,
     g_list_free(ret);
 }
 
+static GtkSourceCompletionItem *comp_item_new (const gchar *label,
+					       const gchar *text)
+{
+    GtkSourceCompletionItem *item;
+
+#if GTKSV4
+    item = gtk_source_completion_item_new();
+    gtk_source_completion_item_set_label(item, label);
+    gtk_source_completion_item_set_text(item, text);
+#else
+    item = gtk_source_completion_item_new(label, text, NULL, NULL);
+#endif
+
+    return item;
+}
+
 static void
 series_provider_populate (GtkSourceCompletionProvider *provider,
 			  GtkSourceCompletionContext *context)
@@ -396,8 +414,7 @@ series_provider_populate (GtkSourceCompletionProvider *provider,
 	for (i=0; i<dataset->v; i++) {
 	    vname = dataset->varname[i];
 	    if (!strncmp(vname, word, n)) {
-		item = gtk_source_completion_item_new(vname, vname,
-						      NULL, NULL);
+		item = comp_item_new(vname, vname);
 		ret = g_list_prepend(ret, item);
 	    }
 	}
@@ -504,9 +521,7 @@ static void snippet_provider_init (GretlProvider *self)
     int i, n = G_N_ELEMENTS(snippets);
 
     for (i=0; i<n; i++) {
-	item = gtk_source_completion_item_new(snippets[i].label,
-					      snippets[i].text,
-					      NULL, NULL);
+	item = comp_item_new(snippets[i].label, snippets[i].text);
 	proposals = g_list_prepend(proposals, item);
     }
     self->proposals = proposals;
