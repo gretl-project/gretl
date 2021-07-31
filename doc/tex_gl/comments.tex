@@ -1,105 +1,99 @@
-\chapter{Comments in scripts}
+\chapter{Comentarios nos guións}
 \label{chap:comments}
 
-When a script does anything non-obvious, it's a good idea to add
-comments explaining what's going on.  This is particularly useful if
-you plan to share the script with others, but it's also useful as a
-reminder to yourself --- when you revisit a script some months later
-and wonder what it was supposed to be doing.
+Cando un guión fai algo que non é obvio, é unha boa idea engadir
+comentarios que expliquen o que está a acontecer. Isto é útil sobre
+todo se te propós compartir o guión cos demais, pero tamén o é
+como un recordatorio para un mesmo --- cando volves retomar un guión
+algúns meses máis tarde e te preguntas que se supoñía que facía.
 
-The comment mechanism can also be helpful when you're developing a
-script.  There may come a point where you want to execute a script,
-but bypass execution of some portion of it.  Obviously you could
-delete the portion you wish to bypass, but rather than lose that
-section you can ``comment it out'' so that it is ignored by
-\app{gretl}.
+O mecanismo de facer comentarios tamén pode ser de axuda cando estás
+desenvolvendo un guión. Pois pode chegar un punto no que desexas
+executar un guión, pero saltándote a execución dunha parte do mesmo.
+Obviamente, podes eliminar a parte que desexas saltarte, pero en troques
+de perder esa sección podes ``poñerlle un comentario'' de xeito que
+\app{GRETL} non a teña en conta.
 
-Two sorts of comments are supported by \app{gretl}.  The simpler one
-is this:
-
-\begin{itemize}
-\item If a hash mark, \texttt{\#}, is encountered in a \app{gretl} script, 
-  everything from that point to the end of the current line is treated as a 
-  comment, and ignored.
-\end{itemize}
-
-If you wish to ``comment out'' several lines using this mode, you'll
-have to place a hash mark at the start of each line.
-
-The second sort of comment is patterned after the C programming language:
+Admítense dúas clases de comentarios nos guións de \app{GRETL}.
+O máis simple é este:
 
 \begin{itemize}
-\item If the sequence \texttt{/*} is encountered in a script, all the
-  following input is treated as a comment until the sequence \texttt{*/}
-  is found.
+\item Cando se atopa unha marca de cancelo, \texttt{\#}, nun guión de
+  \app{GRETL}, trátase todo o que está desde ese lugar ata o final da
+  liña considerada como un comentario, e se omite.
 \end{itemize}
 
-Comments of this sort can extend over several lines.  Using this mode
-it is easy to add lengthy explanatory text, or to get \app{gretl} to
-ignore substantial blocks of commands.  As in C, comments of this
-type cannot be nested.
+Se queres ``comentar'' varias liñas utilizando esta modalidade, terás
+que colocar unha marca de cancelo ao principio de cada unha desas liñas.
 
-How do these two comment modes interact?  You can think of
-\app{gretl} as starting at the top of a script and trying to decide at
-each point whether it should or should not be in ``ignore mode''.  In
-doing so it follows these rules:
+A segunda clase de comentarios segue o modelo da linguaxe C de programación:
 
 \begin{itemize}
-\item If we're not in ignore mode, then \texttt{\#} puts us into ignore
-  mode till the end of the current line.
-\item If we're not in ignore mode, then \texttt{/*} puts us into ignore
-  mode until \texttt{*/} is found.
+\item Cando se atopa nun guión a secuencia \texttt{/*}, todo o que a
+  segue trátase como un comentario ata que se atope a secuencia
+  \texttt{*/}.
 \end{itemize}
 
-This means that each sort of comment can be masked by the other.  
+Os comentarios desta clase poden estenderse por varias liñas. Utilizando
+esta modalidade é doado engadir un texto explicativo extenso, ou conseguir
+que \app{GRETL} omita bloques considerables de instrucións. Como en C,
+os comentarios deste tipo non se poden aniñar.
+
+Como interactúan estes dous xeitos de facer comentarios? Podes imaxinar
+que \app{GRETL} comeza no principio dun guión, e que intenta decidir en
+cada punto se debe ou non debe estar na ``modalidade de omisión''. Cando
+se fai isto, séguense as seguintes regras:
 
 \begin{itemize}
-\item If \texttt{/*} follows \texttt{\#} on a given line which does
-  not already start in ignore mode, then there's nothing special about
-  \texttt{/*}, it's just part of a \texttt{\#}-style comment.
-\item If \texttt{\#} occurs when we're already in ignore mode, it is
-  just part of a comment.
+\item Se non estamos na modalidade de omisión, entón \texttt{\#} nos coloca
+  na modalidade de omisión ata o final da liña vixente.
+\item Se non estamos na modalidade de omisión, entón \texttt{/*} nos coloca
+  na modalidade de omisión ata que se atope \texttt{*/}.
 \end{itemize}
 
-A few examples follow.
+Isto quere dicir que cada clase de comentario pode estar enmascarada pola outra.
+
+\begin{itemize}
+\item Se \texttt{/*} segue a \texttt{\#} nunha determinada liña que non
+  comeza na modalidade de omisión, entón non hai nada de especial en canto
+  a \texttt{/*}; é só unha parte dun comentario de estilo \texttt{\#}.
+\item Se aparece \texttt{\#} cando xa estamos na modalidade de omisión,
+  iso é só unha parte máis dun comentario.
+\end{itemize}
+
+A continuación temos algúns exemplos.
 %
 \begin{code}
-/* multi-line comment
-   # hello
-   # hello */
+/* Comentario de varias liñas
+   # Ola
+   # Ola */
 \end{code}
 %
-In the above example the hash marks are not special; in particular
-the hash mark on the third line does not prevent the multi-line
-comment from terminating at \texttt{*/}.
+No exemplo de arriba, as marcas de cancelo non teñen nada de especial; en
+concreto, a marca de cancelo da terceira liña non evita que ese comentario
+de varias liñas remate en \texttt{*/}.
 %
 \begin{code}
-# single-line comment /* hello
+# Comentario dunha única liña /* Ola
 \end{code}
 %
-Assuming we were not in ignore mode before the line shown above, it is
-just a single-line comment: the \texttt{/*} is masked, and does not
-open a multi-line comment.
+Supoñendo que non estamos na modalidade de omisión antes da liña que se amosa
+arriba, esta indica un comentario dunha única liña: o \texttt{/*} está
+enmascarado, e non abre un comentario de varias liñas.
 
-You can append a comment to a command:
+Podes engadir un comentario a unha instrución:
 %
 \begin{code}
-ols 1 0 2 3 # estimate the baseline model
+ols 1 0 2 3 # Estimar o modelo de partida
 \end{code}
 %
-Example of ``commenting out'':
+Exemplo de ``comentario'':
 %
 \begin{code}
 /*
-# let's skip this for now
+# Imos saltarnos isto polo momento
 ols 1 0 2 3 4
 omit 3 4
 */
 \end{code}
 %
-
-
-
-
-
-

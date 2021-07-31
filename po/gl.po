@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-07-27 18:53-0400\n"
-"PO-Revision-Date: 2021-07-13 18:35+0200\n"
+"PO-Revision-Date: 2021-07-28 12:08+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -580,7 +580,7 @@ msgstr "Proba de non linearidade (termos en logaritmos)"
 #: lib/src/modelprint.c:2662 lib/src/modelprint.c:2666 lib/src/printout.c:333
 #: lib/src/printout.c:339 lib/src/vartest.c:253
 msgid "with p-value"
-msgstr "con valor p ="
+msgstr "con valor p"
 
 #: lib/src/compare.c:1417
 #, c-format
@@ -665,9 +665,8 @@ msgid "Robust Wald test for break"
 msgstr "Proba robusta de Wald de cambio estrutural"
 
 #: lib/src/compare.c:2676
-#, fuzzy
 msgid "5% QLR critical value"
-msgstr "Valor crítico ao %g por cento"
+msgstr "Valor crítico do QLR ao 5%"
 
 #: lib/src/compare.c:2773
 msgid ""
@@ -791,7 +790,7 @@ msgid ""
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
-"Esta proba non pode facerse sobre un panel desequilibrado.\n"
+"Mágoa, pero esta proba non pode facerse sobre un panel non equilibrado.\n"
 "Necesitas ter o mesmo número de observacións\n"
 "para cada unidade de sección cruzada"
 
@@ -1670,7 +1669,7 @@ msgstr "Correlograma"
 #: lib/src/describe.c:3392 lib/src/describe.c:3804 lib/src/describe.c:3850
 #: lib/src/graphing.c:8679
 msgid "lag"
-msgstr "retardo"
+msgstr "Retardo"
 
 #: lib/src/describe.c:3558
 msgid "Residual autocorrelation function"
@@ -2419,10 +2418,8 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Tipo de operando incorrecto para o operador dun solo parámetro '&'"
 
 #: lib/src/geneval.c:5874
-#, fuzzy
 msgid "The first argument must be a named series in the current dataset"
-msgstr ""
-"A serie *%s* semella ser da mesma frecuencia que a base de datos vixente"
+msgstr "O primeiro argumento debe ser unha serie indicada na base de datos"
 
 #: lib/src/geneval.c:7729 lib/src/geneval.c:7756 lib/src/gretl_func.c:8974
 #, c-format
@@ -2618,13 +2615,12 @@ msgstr ""
 "Escolle unha mostra máis pequena."
 
 #: lib/src/genfuncs.c:2937
-#, fuzzy
 msgid "centered periodic dummy"
-msgstr "Variables _ficticias estacionais"
+msgstr "Variable ficticia estacional centrada"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
-msgstr ""
+msgstr "Variable ficticia estacional non centrada"
 
 #: lib/src/genfuncs.c:2943
 #, c-format
@@ -4115,28 +4111,27 @@ msgid "set_omp_n_threads: OpenMP is not enabled"
 msgstr "set_omp_n_threads: OpenMP non está dispoñible"
 
 #: lib/src/gretl_panel.c:1560
-#, fuzzy
 msgid "Variance estimators:"
-msgstr "Estimador de covarianza"
+msgstr "Estimadores da varianza:"
 
 #: lib/src/gretl_panel.c:1562
-#, fuzzy, c-format
+#, c-format
 msgid " between = %g"
-msgstr " (lonxitude de paso = %g)"
+msgstr " Entre = %g"
 
 #: lib/src/gretl_panel.c:1564
-#, fuzzy, c-format
+#, c-format
 msgid " within = %g"
-msgstr "Ancho de banda = %g"
+msgstr " Dentro = %g"
 
 #: lib/src/gretl_panel.c:1568
-#, fuzzy, c-format
+#, c-format
 msgid "theta used for quasi-demeaning = %g"
-msgstr "theta usado para quasi-demeaning (case quitar a media)"
+msgstr "Theta usado para quasi-demeaning (case quitar a media) = %g"
 
 #: lib/src/gretl_panel.c:1571
 msgid "Panel is unbalanced: theta varies across units"
-msgstr ""
+msgstr "O panel non está equilibrado: theta varía entre as unidades"
 
 #: lib/src/gretl_panel.c:1576
 msgid ""
@@ -4879,7 +4874,7 @@ msgstr "Kalman: Falta a imprescindible matriz *%s*."
 #: lib/src/libglue.c:315
 #, c-format
 msgid "BDS test for %s, maximum order %d"
-msgstr "Proba BDS para %s, orde máxima %d"
+msgstr "Proba BDS para *%s*, orde máxima %d"
 
 #: lib/src/libglue.c:317
 msgid "H0: the series is linear/IID"
@@ -6040,7 +6035,7 @@ msgstr "Criterio de información de Akaike"
 
 #: lib/src/modelprint.c:3006 gui/library.c:6870
 msgid "Schwarz Bayesian criterion"
-msgstr "Criterio de información bayesiano de Schwarz"
+msgstr "Criterio de información Baiesiano de Schwarz"
 
 #: lib/src/modelprint.c:3007 gui/library.c:6875
 msgid "Hannan-Quinn Information Criterion"
@@ -8119,11 +8114,11 @@ msgstr "Nivel de retardo %*d"
 
 #: lib/src/vartest.c:149
 msgid "Test for autocorrelation of order up to"
-msgstr "Proba de autocorrelación de orde ata %d"
+msgstr "Proba de autocorrelación de orde ata"
 
 #: lib/src/vartest.c:238
 msgid "Test for autocorrelation of order"
-msgstr "Proba de autocorrelación de orde %d"
+msgstr "Proba de autocorrelación de orde"
 
 #: lib/src/vartest.c:422
 msgid "Test for ARCH of order up to"
@@ -8142,7 +8137,7 @@ msgid ""
 msgstr ""
 "Os asteriscos de abaixo indican os mellores (é dicir, mínimos)\n"
 "valores de cada criterio de información, AIC = criterio de Akaike,\n"
-"BIC = criterio bayesiano de Schwarz e HQC = criterio de Hannan-Quinn."
+"BIC = criterio Baiesiano de Schwarz e HQC = criterio de Hannan-Quinn."
 
 #: lib/src/vartest.c:689
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
@@ -10485,9 +10480,8 @@ msgid "frequency axis scale:"
 msgstr "Escala do eixe de frecuencia:"
 
 #: gui/dialogs.c:4838
-#, fuzzy
 msgid "data-based"
-msgstr "Bancos de datos"
+msgstr "Baseado nos datos"
 
 #: gui/dialogs.c:5037
 msgid "Number of bins:"
@@ -10750,7 +10744,7 @@ msgstr "Trazar o bordo arredor do mapa"
 
 #: gui/dialogs.c:6874
 msgid "Feature border width:"
-msgstr "Ancho do borde:"
+msgstr "Amosar ancho do borde:"
 
 #: gui/dialogs.c:6888
 msgid "height in pixels:"
@@ -13130,9 +13124,8 @@ msgid "_Hurst exponent"
 msgstr "Expoñente de _Hurst"
 
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "BDS nonlinearity test"
-msgstr "Proba _BDS de non linearidade"
+msgstr "Proba BDS de non linearidade"
 
 #: gui/gretl.c:1891 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -13851,9 +13844,8 @@ msgid "_Cross-sectional dependence"
 msgstr "_Dependencia de sección cruzada"
 
 #: gui/gui_utils.c:272
-#, fuzzy
 msgid "_Panel specification"
-msgstr "_Revisar a especificación..."
+msgstr "Especificación de _Panel"
 
 #: gui/gui_utils.c:276 gui/gui_utils.c:283
 msgid "White's test"
@@ -13946,6 +13938,12 @@ msgid ""
 "Do you want to force gretl to treat the first column as just\n"
 "an ordinary data series (regardless of the column heading)?"
 msgstr ""
+"Habitualmente GRETL trata de interpretar a primeira columna dun ficheiro de\n"
+"datos CVS, supoñendo que contén información das observacións (por exemplo,\n"
+"as datas), se o encabezamento da columna semella axeitado.\n"
+"\n"
+"Queres forzar que GRETL trate a primeira columna simplemente como unha\n"
+"serie de datos normal (con independemcia do encabezamento da columna)?"
 
 #: gui/gui_utils.c:1286 gui/gui_utils.c:1289
 #, c-format
@@ -14134,7 +14132,7 @@ msgstr "Criterio Inform. _Akaike"
 
 #: gui/gui_utils.c:3047
 msgid "_Bayesian Information Criterion"
-msgstr "Criterio Inform. _bayesiano Schwarz"
+msgstr "Criterio Inform. _Baiesiano Schwarz"
 
 #: gui/gui_utils.c:3049
 msgid "_Hannan-Quinn Information Criterion"
@@ -14675,7 +14673,7 @@ msgstr "Fallo ao engadir variables"
 #: gui/library.c:581
 #, c-format
 msgid "error correction term %d from VECM %d"
-msgstr ""
+msgstr "Termo de corrección do erro %d para VECM %d"
 
 #: gui/library.c:615
 #, c-format
@@ -14992,9 +14990,8 @@ msgid "Lag order for ARCH test:"
 msgstr "Nivel de retardo para a proba ARCH:"
 
 #: gui/library.c:2715
-#, fuzzy
 msgid "gretl: panel model specification"
-msgstr "GRETL: Diagnósticos do modelo de panel"
+msgstr "GRETL: Especificación do modelo de panel"
 
 #: gui/library.c:2789
 msgid "gretl: leverage and influence"
@@ -15083,14 +15080,12 @@ msgstr ""
 "avaliarse polo que non se dispón dun valor definido)"
 
 #: gui/library.c:3355
-#, fuzzy
 msgid "H1: positive autocorrelation\n"
-msgstr "[Non existe autocorrelación]"
+msgstr "H1:[Autocorrelación positiva]\n"
 
 #: gui/library.c:3357
-#, fuzzy
 msgid "H1: negative autocorrelation\n"
-msgstr "[Non existe autocorrelación]"
+msgstr "H1:[Autocorrelación negativa]\n"
 
 #: gui/library.c:3564
 msgid "linear restrictions"
@@ -15552,6 +15547,8 @@ msgid ""
 "Data files written in the current gdtb binary format\n"
 "cannot be read by gretl versions older than 2020b"
 msgstr ""
+"Os ficheiros de datos gardados no formato binario gdtb vixente\n"
+"non se poden ler con versións de GRETL anteriores á 2020b"
 
 #: gui/library.c:9555 gui/library.c:9694
 msgid "No commands to execute"
@@ -17320,11 +17317,11 @@ msgstr "Portugués"
 
 #: gui/settings.c:1276
 msgid "automatic, as you type"
-msgstr "automático, tal como tecleas"
+msgstr "Automático, tal como tecleas"
 
 #: gui/settings.c:1277
 msgid "on demand, via Tab"
-msgstr "baixo demanda, mediante Tabulador"
+msgstr "Baixo pedido, mediante Tabulador"
 
 #: gui/settings.c:1281 plugin/tramo_options.c:547 plugin/tramo_options.c:664
 #: plugin/tramo_options.c:724 plugin/tramo-x12a.c:267
@@ -18871,11 +18868,11 @@ msgstr "Variables a gardar:"
 
 #: plugin/leverage.c:121 plugin/leverage.c:232 plugin/leverage.c:303
 msgid "leverage"
-msgstr "pancamento"
+msgstr "Pancamento"
 
 #: plugin/leverage.c:129 plugin/leverage.c:258 plugin/leverage.c:304
 msgid "influence"
-msgstr "influencia"
+msgstr "Influencia"
 
 #: plugin/leverage.c:137 plugin/leverage.c:305
 msgid "DFFITS"
