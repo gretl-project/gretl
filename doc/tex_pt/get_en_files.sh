@@ -1,8 +1,7 @@
 #!/usr/bin/sh
 
-# Use this script to link untranslated files to original English ones.
-# To start translating delete the linked file and hard copy it.
-# Remove from list any file you started to work on.
+# Use this script to copy untranslated files from original English ones.
+# Remove from the "untranslated" list any file you started to work on.
 
 untranslated="
 calendar.tex
@@ -96,21 +95,9 @@ for i in $untranslated; do
     code=`echo $?`
     if [ $code -eq 2 ];
     then
-       ln -sf ../tex/$i $i
+       cp ../tex/$i $i
     fi
 done
 
-###########
-# Figures #
-###########
-for i in ../figures/*; do
-    a=`basename $i`
-    b=`diff -q $i ./figures/$a 2>/dev/null`
-    code=`echo $?`
-    if [ $code -eq 2 ];
-    then
-       ln -sf ../figures/$a ./figures/$a
-    fi
-done
 
 
