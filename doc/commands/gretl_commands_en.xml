@@ -10724,18 +10724,22 @@
 	  <flag>--matrix_diff</flag>
 	  <effect>use matrix-difference method for Hausman test</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suppress printed output</effect>
+	</option>
       </options>
     </usage>
     <description>
       <para>
-	This test is available only after estimating a panel-data
+	This command is available only after estimating a panel-data
 	model via OLS. It tests the simple pooled specification
-	against the most common alternatives, fixed effects and
-	random effects.
+	against the most common alternatives, fixed effects and random
+	effects.
       </para>
       <para>
 	The fixed effects specification allows the intercept of the
-	regression to vary across the cross-sectional units.  An
+	regression to vary across the cross-sectional units.  A Wald
 	<math>F</math>-test is reported for the null hypotheses that
 	the intercepts do not differ. The random effects specification
 	decomposes the residual variance into two parts, one part
@@ -10760,12 +10764,20 @@
 	random effects and in favor of fixed effects.
       </para>
       <para>
-	The two options for this command pertain to random effects
-	estimation.  By default the method of Swamy and Arora is used,
-	and the Hausman test statistic is calculated using the
-	regression method. The options enable the use of Nerlove's
+	The first two options for this command pertain to random
+	effects estimation.  By default the method of Swamy and Arora
+	is used, and the Hausman test statistic is calculated using
+	the regression method. The options enable the use of Nerlove's
 	alternative variance estimator, and/or the matrix-difference
 	approach to the Hausman statistic.
+      </para>
+      <para>
+	On successful completion the accessors <fncref targ="$test"/>
+	and <fncref targ="$pvalue"/> retrieve 3-vectors holding test
+	statistics and p-values for the three tests noted above:
+	poolability (Wald), poolability (Breusch&ndash;Pagan), and
+	Hausman. If you just want the results in this form you can
+	give the <opt>quiet</opt> option to skip printed output.
       </para>
       <para>
 	Note that after estimating the random effects specification

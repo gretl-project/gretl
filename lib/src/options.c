@@ -66,6 +66,7 @@
                          c == OLS ||            \
                          c == OMIT ||           \
                          c == OPEN ||           \
+			 c == PANSPEC ||	\
                          c == PKG ||            \
                          c == QLRTEST ||        \
                          c == RENAME ||         \

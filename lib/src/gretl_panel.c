@@ -3323,7 +3323,43 @@ static int breusch_pagan_LM (panelmod_t *pan, PRN *prn)
     return 0;
 }
 
-static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
+static void save_panspec_result (panelmod_t *pan, PRN *prn)
+{
+    gretl_matrix *tests = gretl_column_vector_alloc(3);
+    gretl_matrix *pvals = gretl_column_vector_alloc(3);
+    char **S = strings_array_new(3);
+
+    /* fixed-effects poolability F-test */
+    tests->val[0] = pan->Ffe;
+    pvals->val[0] = snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe);
+    /* random-effects poolability test */
+    tests->val[1] = pan->BP;
+    pvals->val[1] = chisq_cdf_comp(1, pan->BP);
+    /* Hausman test */
+    tests->val[2] = pan->H;
+    pvals->val[2] = chisq_cdf_comp(pan->dfH, pan->H);
+
+    if (S != NULL) {
+	/* add row names */
+	char **S2;
+
+	S[0] = gretl_strdup("Poolability (Wald)");
+	S[1] = gretl_strdup("Poolability (B-P)");
+	S[2] = gretl_strdup("Hausman");
+	S2 = strings_array_dup(S, 3);
+	gretl_matrix_set_rownames(tests, S);
+	if (S2 != NULL) {
+	    gretl_matrix_set_rownames(pvals, S2);
+	}
+    }
+
+    if (pan->opt & OPT_V) {
+	print_hausman_result(pan, prn);
+    }
+    record_matrix_test_result(tests, pvals);
+}
+
+static int finalize_hausman_test (panelmod_t *pan, int ci, PRN *prn)
 {
     int mdiff = 0, err = 0;
 
@@ -3336,25 +3372,13 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 	err = E_DATA;
     }
 
-    if (pan->opt & OPT_V) {
+    if (ci == PANSPEC) {
+	/* the context is the "panspec" command */
 	if (!err || (mdiff && err == E_NOTPD)) {
-	    gretl_matrix *tests = gretl_column_vector_alloc(3);
-	    gretl_matrix *pvals = gretl_column_vector_alloc(3);
-
-	    /* fixed-effects poolability F-test */
-	    tests->val[0] = pan->Ffe;
-	    pvals->val[0] = snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe);
-	    /* random-effects poolability test */
-	    tests->val[1] = pan->BP;
-	    pvals->val[1] = chisq_cdf_comp(1, pan->BP);
-	    /* Hausman test */
-	    tests->val[2] = pan->H;
-	    pvals->val[2] = chisq_cdf_comp(pan->dfH, pan->H);
-
-	    print_hausman_result(pan, prn);
-	    record_matrix_test_result(tests, pvals);
+	    save_panspec_result(pan, prn);
 	}
     } else {
+	/* the context is random-effects estimation */
 	if (mdiff && err == E_NOTPD) {
 	    pputs(prn, _("Hausman test matrix is not positive definite"));
 	    pputc(prn, '\n');
@@ -3535,13 +3559,15 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 }
 
 /* Called in relation to a model estimated by pooled OLS: test for
-   both fixed and random effects.
+   both fixed and random effects. Implements the "panspec" command.
 */
 
 int panel_diagnostics (MODEL *pmod, DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
     int nerlove = 0;
+    int quiet = (opt & OPT_Q);
+    gretlopt psopt = opt;
     panelmod_t pan;
     int xdf, err = 0;
 
@@ -3567,9 +3593,14 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	nerlove = 1;
     }
 
-    /* add OPT_V to make the fixed and random effects functions verbose */
+    /* Add OPT_V to make the fixed and random effects functions verbose,
+       unless we've been passed the --quiet option.
+    */
+    if (!quiet) {
+	psopt |= OPT_V;
+    }
     panelmod_init(&pan);
-    err = panelmod_setup(&pan, pmod, dset, 0, opt | OPT_V);
+    err = panelmod_setup(&pan, pmod, dset, 0, psopt);
     if (err) {
 	goto bailout;
     }
@@ -3612,11 +3643,13 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    /* header */
-    pputc(prn, '\n');
-    pprintf(prn, _("Diagnostics: using n = %d cross-sectional units\n"),
-	    pan.effn);
-    pputc(prn, '\n');
+    if (!quiet) {
+	/* header */
+	pputc(prn, '\n');
+	pprintf(prn, _("Diagnostics: using n = %d cross-sectional units\n"),
+		pan.effn);
+	pputc(prn, '\n');
+    }
 
     err = within_variance(&pan, dset, prn);
     if (err) {
@@ -3651,7 +3684,7 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 		/* this test hardly makes sense if GLS = OLS */
 		breusch_pagan_LM(&pan, prn);
 	    }
-	    finalize_hausman_test(&pan, prn);
+	    finalize_hausman_test(&pan, PANSPEC, prn);
 	}
 
 	if (gset != NULL) {
@@ -4006,7 +4039,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    err = random_effects(&pan, dset, gset, prn);
 	    if (!err) {
 		save_breusch_pagan_result(&pan);
-		finalize_hausman_test(&pan, prn);
+		finalize_hausman_test(&pan, PANEL, prn);
 	    }
 	}
 
