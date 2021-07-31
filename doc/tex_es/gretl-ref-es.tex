@@ -1,5 +1,4 @@
 \documentclass[oneside,spanish]{book}
-\usepackage[T1]{fontenc}
 \usepackage{url,verbatim,fancyvrb,color,appendix}
 \usepackage{array,longtable}
 \usepackage[utf8]{inputenc}
@@ -11,9 +10,9 @@
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 %% \pdfimageresolution=120
-\hypersetup{pdftitle={Guía de Instrucciones de Gretl},
+\hypersetup{pdftitle={Relación de Instrucciones de GRETL},
             pdfsubject={GNU Regression, Econometrics and Time Series Library},
-            pdfauthor={Allin Cottrell and Jack Lucchetti},
+            pdfauthor={Allin Cottrell y Jack Lucchetti},
             colorlinks=true,
             linkcolor=blue,
             urlcolor=red,
@@ -28,37 +27,34 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
 
+\hyphenation{he-te-ro-ce-das-ti-ci-dad}
+
 %% titlepage
 
 \thispagestyle{empty}
 
 \begin{center}
-\pdfbookmark[1]{Guía de Instrucciones de Gretl}{titlepage}
+\pdfbookmark[1]{Guía de Instrucciones de GRETL}{titlepage}
 
-\gtitle{Guía de Instrucciones}
+\gtitle{Guía de Instrucciones de GRETL}
 
-\gsubtitle{Gnu Regression, Econometrics and Time-series}
+\gsubtitle{Gnu Regression, Econometrics and Time-series Library}
 
-{\large \sffamily 
+{\large \sffamily
 Allin Cottrell\\
 Department of Economics\\
-Wake Forest university
-}
+Wake Forest University\\
 
 \vspace{20pt}
-{\large \sffamily 
 Riccardo ``Jack'' Lucchetti\\
 Dipartimento di Economia\\
-Università Politecnica delle Marche
+Università Politecnica delle Marche\\
+
+% Translation credit here
+
+\vspace{20pt}
+\input date
 }
-
-%{\large \sffamily 
-%Traducción española \\
-%Parmeeta Bhogal y Ignacio Díaz-Emparanza
-%}
-
-%% \vspace{20pt}
-%% {\large \sffamily Noviembre, 2005}
 
 \end{center}
 \clearpage
@@ -71,28 +67,17 @@ Università Politecnica delle Marche
 
 \vspace*{2in}
 
-Copyright \copyright\ 2001--2005 Allin Cottrell
-
-Copyright de la traducción española: \copyright\ 2006 Ignacio
-Díaz-Emparanza (Basado en la traducción del manual de 2003 de Parmeeta
-Bhogal e Ignacio Díaz-Emparanza)
-
-Este documento puede ser copiado, distribuido y/o modificado bajo los
-términos de la \textit{GNU Free Documentation License}, Versión 1.1 o
-cualquiera de las versiones posteriores publicadas por la Free
-Software Foundation (véase
-\url{http://www.gnu.org/licenses/fdl.html}).  
-
-Se agradece la financiación de la Universidad del País Vasco, a través
-del grupo de investigación 9/UPV-00038.321-13503/2001, para la
-traducción de este manual.
+Se concede permiso para copiar, distribuír y/o modificar este documento bajo
+los términos de la \emph{Licencia de Documentación Libre de GNU}, Versión 1.1
+o cualquiera versión posterior publicada por la Fundación para el Software Libre
+(ver \url{http://www.gnu.org/licenses/fdl.html}).
 
 \clearpage
 
 %% end license page, start table of contents
 \pdfbookmark[1]{Índice general}{contents}
 
-\pagenumbering{Roman}
+\pagenumbering{roman}
 \pagestyle{headings}
 
 \tableofcontents

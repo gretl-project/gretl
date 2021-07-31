@@ -1,20 +1,20 @@
-\chapter{Operators}
+\chapter{Operadores}
 \label{chap:operators}
 
-\section{Precedence}
+\section{Precedencia}
 
-Table~\ref{tab:ops} lists the operators available in gretl in
-order of decreasing precedence: the operators on the first row have
-the highest precedence, those on the second row have the second
-highest, and so on. Operators on any given row have equal
-precedence. Where successive operators have the same precedence the
-order of evaluation is in general left to right. The exceptions are
-exponentiation and matrix transpose-multiply. The expression
-\verb|a^b^c| is equivalent to \verb|a^(b^c)|, not \verb|(a^b)^c|, 
-and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
+La tabla~\ref{tab:ops} enumera los operadores disponibles en \app{GRETL} en
+orden de precedencia decreciente: los operadores de la primera fila son los de
+mayor preferencia, los de la segunda fila son los de segunda mayor preferencia,
+y así sucesivamente. Los operadores que están en una misma fila tienen la misma
+preferencia. Cuando operadores sucesivos tienen la misma preferencia, el orden
+general de evaluación es de izquierda a derecha. Las excepciones son las
+operaciones exponencial y multiplicación de una matriz traspuesta. La expresión
+\verb|a^b^c| equivale a \verb|a^(b^c)|, no a \verb|(a^b)^c|, y de forma similar
+\verb|A'B'C'| equivale a \verb|A'(B'(C'))|.
 
 \begin{table}[htbp]
-\caption{Operator precedence}
+\caption{Precedencia de los operadores}
 \label{tab:ops}
 \begin{center}
 \begin{tabular}{lllllllll}
@@ -31,11 +31,11 @@ and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
 \end{center}
 \end{table}
 
-In addition to the basic forms shown in the Table, several operators
-also have a ``dot form'' (as in ``\texttt{.+}'' which is read as ``dot
-plus''). These are element-wise versions of the basic operators, for
-use with matrices exclusively; they have the same precedence as their
-basic counterparts. The available dot operators are as follows.
+Además de las formas básicas mostradas en la Tabla, diversos operadores tienen
+también una ``forma con punto'' (como en ``\texttt{.+}'' que se lee como
+``punto más''). Estas son versiones al modo de los operadores básicos, pero
+para ser utilizados exclusivamente con matrices; tienen la misma precedencia que
+sus homólogos básicos. Los operadores con punto disponibles son los siguientes:
 
 \begin{center}
 \begin{tabular}{cccccccccc}
@@ -45,75 +45,74 @@ basic counterparts. The available dot operators are as follows.
 \end{tabular}
 \end{center}
 
-Each basic operator is shown once again in the following list along
-with a brief account of its meaning. Apart from the first three sets
-of grouping symbols, all operators are binary except where otherwise
-noted.
+Cada operador básico se muestra una vez más en la siguiente lista junto con
+una breve consideración sobre su significado. Aparte de los tres primeros
+conjuntos de símbolos de agrupación, todos los operadores son binarios
+excepto cuando se advierta de lo contrario.
 
 \begin{longtable}{ll}
-\verb|()| & Function call \\
-\verb|[]|  & Subscripting \\
-\texttt{.} & Bundle membership (see below) \\
-\verb|{}|  & Matrix definition \\
-\texttt{!} & Unary logical NOT \\
-\texttt{++} & Increment (unary) \\
-\verb|--| & Decrement (unary) \\
-\verb|^|  & Exponentiation \\
-\verb|'|  & Matrix transpose (unary) or transpose-multiply (binary) \\
-\texttt{*} & Multiplication \\
-\texttt{/} & Division, matrix ``right division'' \\
-\texttt{\%} & Modulus \\
-\verb+\+    & Matrix ``left division'' \\
-\texttt{**} & Kronecker product \\
-\texttt{+} & Addition \\
-\texttt{-} & Subtraction \\
-\verb|~| & Matrix horizontal concatenation \\
-\verb+|+ & Matrix vertical concatenation \\
-\verb|>| & Boolean greater than \\
-\verb|<| & Boolean less than \\
-\verb|>=| & Greater than or equal \\
-\verb|<=| & Less than or equal \\
-\texttt{..} & Range from--to (in constructing lists) \\
-\texttt{==} & Boolean equality test \\
-\texttt{!=} & Boolean inequality test \\
-\verb|&&| & Logical AND \\
-\verb+||+ & Logical OR \\
-\texttt{?:} & Conditional expression \\
+\verb|()| & Llamada a una función \\
+\verb|[]|  & Indicación de subíndices \\
+\texttt{.} & Pertenencia a un `bundle' (mira abajo) \\
+\verb|{}|  & Definición de una matriz \\
+\texttt{!} & NO lógico unario \\
+\texttt{++} & Aumento (unario) \\
+\verb|--| & Disminución (unaria) \\
+\verb|^|  & Exponente \\
+\verb|'|  & Transposición matricial (unaria) o multiplicación de traspuesta (binaria) \\
+\texttt{*} & Multiplicación \\
+\texttt{/} & División, ``división a la derecha'' matricial \\
+\texttt{\%} & Módulo \\
+\verb+\+    & ``División a la izquierda'' matricial \\
+\texttt{**} & Producto de Kronecker \\
+\texttt{+} & Suma \\
+\texttt{-} & Resta \\
+\verb|~| & Concatenación matricial horizontal \\
+\verb+|+ & Concatenación matricial vertical \\
+\verb|>| & Mayor que (booleano) \\
+\verb|<| & Menor que (booleano) \\
+\verb|>=| & Mayor o igual que \\
+\verb|<=| & Menor o igual que \\
+\texttt{..} & Rango desde--hasta (al elaborar listas) \\
+\texttt{==} & Test de igualdad booleana \\
+\texttt{!=} & Test de desigualdad booleana \\
+\verb|&&| & Y lógico \\
+\verb+||+ & O lógico \\
+\texttt{?:} & Expresión condicional \\
 \end{longtable}
 
-The interpretation of ``\texttt{.}'' as the bundle membership operator
-is confined to the case where it is immediately preceded by the
-identifier for a bundle, and immediately followed by a valid
-identifier (key).
+Interpretar ``\texttt{.}'' como el operador de pertenencia  a un `bundle'
+se limita al caso en que está inmediatamente precedido por el identificador
+de un bundle, y seguido inmediatamente por un identificador válido (clave).
 
-Details on the use of the matrix-related operators (including the dot
-operators) can be found in the chapter on matrices in the
-\textit{Gretl User's Guide}.
+Puedes encontrar los detalles sobre la utilización de los operadores
+relacionados con matrices (incluido el operador punto) en el capítulo sobre
+matrices en la \textit{Guía de Usuario de GRETL}.
 
-\section{Assignment}
+\section{Asignación}
 
-The operators mentioned above are all intended for use on the
-right-hand side of an expression which assigns a value to a variable
-(or which just computes and displays a value---see the \texttt{eval}
-command). In addition we have the assignment operator itself,
-``\texttt{=}''. In effect this has the lowest precedence of all: the
-entire right-hand side is evaluated before assignment takes place.
+Los operadores mencionados más arriba están todos ideados para ser utilizados
+en el lado derecho de una expresión que asigna un valor a una variable (o que
+simplemente calcula y presenta un valor ---consulta la instrucción \texttt{eval}).
+Además, tienes el propio operador de asignación, ``\texttt{=}''. En efecto,
+este tiene la precedencia más baja de todas: se evalúa todo el lado derecho
+de la expresión antes de que tenga lugar la asignación.
 
-Besides plain ``\texttt{=}'' several ``inflected'' versions of
-assignment are available. These may be used only when the left-hand
-side variable is already defined. The inflected assignment yields a
-value that is a function of the prior value on the left and the
-computed value on the right. Such operators are formed by prepending a
-regular operator symbol to the equals sign. For example,
+Además del ``\texttt{=}'' plano, dispones de diversas versiones ``inflexionadas''
+de asignación. Estas se pueden utilizar solo cuando la variable del lado izquierdo
+ya está definida. La asignación inflexionada produce un valor que es una
+función del valor previo en la izquierda y del valor calculado en la derecha.
+Esos operadores se forman anteponiendo un símbolo de operador normal al signo igual.
+Por ejemplo,
 %
 \begin{code}
 y += x
 \end{code}
 %
-The new value assigned to \texttt{y} by the statement above is the
-prior value of \texttt{y} plus \texttt{x}. The other available
-inflected operators, which work in an exactly analogous fashion, are
-as follows.
+El nuevo valor asignado a \texttt{y} por el enunciado de arriba es el valor
+previo de \texttt{y} más \texttt{x}. Los otros operadores inflexionados
+disponibles, que funcionan de un modo exactamente similar, son los
+siguientes:
 
 \begin{center}
 \begin{tabular}{ccccccc}
@@ -122,31 +121,31 @@ as follows.
 \end{tabular}
 \end{center}
 
-In addition, a special form of inflected assignment is provided for
-matrices. Say matrix \texttt{M} is $2 \times 2$. If you execute
-\texttt{M = 5} this has the effect of replacing \texttt{M} with a $1
-\times 1$ matrix with single element 5. But if you do \texttt{M .= 5}
-this assigns the value 5 to all elements of \texttt{M} without
-changing its dimensions.
+Además, para las matrices se proporciona una forma especial de asignación
+inflexionada. Supongamos que la matriz \texttt{M} es $2 \times 2$. Si ejecutas
+\texttt{M = 5}, esto tiene el efecto de sustituir \texttt{M} por una matriz
+$1 \times 1$ con un único elemento 5. Pero si indicas \texttt{M .= 5}, esto
+asigna el valor 5 a todos los elementos de \texttt{M} sin modificar la
+dimensión de esta.
 
-\section{Increment and decrement}
+\section{Aumento y disminución}
 
-The unary operators \texttt{++} and \verb|--| follow their
-operand,\footnote{The C programming language also supports prefix
-  versions of \texttt{++} and \verb|--|, which increment or decrement
-  their operand before yielding its value. Only the postfix form is
-  supported by gretl.}  which must be a variable of scalar
-type. Their simplest use is in stand-alone expressions, such as
+Los operadores unarios \texttt{++} y \verb|--| siguen a su operando,
+\footnote{El lenguaje C de programación también admite versiones de \texttt{++}
+  y \verb|--| como prefijos, que aumentan o disminuyen su operando
+  antes de proporcionar su valor. En \app{GRETL} únicamente se admite
+  la forma como sufijo.}  que debe ser una variable de tipo escalar.
+Su forma de utilización más simple es la de las expresiones aisladas, como
 %
 \begin{code}
-j++  # shorthand for j = j + 1
-k--  # shorthand for k = k - 1
+j++  # abreviatura para j = j + 1
+k--  # abreviatura para k = k - 1
 \end{code}
 %
-However, they can also be embedded in more complex expressions, in
-which case they first yield the original value of the variable in
-question, then have the side-effect of incrementing or decrementing
-the variable's value. For example:
+Sin embargo, también se pueden integrar en expresiones más complejas,
+en cuyo caso primero proporcionan el valor original de la variable en
+cuestión, y después tienen el efecto secundario de aumentar o disminuir
+el valor de la variable. Por ejemplo:
 %
 \begin{code}
 scalar i = 3
@@ -155,30 +154,20 @@ matrix M = zeros(10, 1)
 M[i++] = 1
 \end{code}
 %
-After the second line, \texttt{k} has the value 3 and \texttt{i} has
-value 4. The last line assigns the value 1 to element 4 of
-matrix \texttt{M} and sets \texttt{i} = 5.
+Después de la segunda linea, \texttt{k} tiene el valor 3 y \texttt{i}
+tiene el valor 4. La última linea asigna el valor 1 al elemento 4 de la
+matriz \texttt{M} y establece que \texttt{i} = 5.
 
-\textit{Warning}: as in the C programming language, the unary
-increment or decrement operator should be not be applied to a
-variable in conjunction with regular reference to the same variable in
-a single statement. This is because the order of evaluation is not
-guaranteed, giving rise to ambiguity. Consider the following:
+\textit{Advertencia}: Como en el lenguaje C de programación, el operador
+unario de incremento o disminución no se debe aplicar a una variable
+junto con una referencia normal a la misma variable, en un único enunciado.
+Esto es debido a que la orden de evaluación no está garantizada, dando
+lugar a cierta ambigüedad. Considera lo siguiente:
 %
 \begin{code}
-M[i++] = i # don't do this!
+M[i++] = i # ¡No hagas esto!
 \end{code}
 %
-This is supposed to assign the value of \texttt{i} to \texttt{M[i]},
-but is it the original or the incremented value? This is not actually
-defined. 
-
-
-
-
-
-
-
-
-
-
+Esto se supone que asigna el valor de \texttt{i} a \texttt{M[i]}, ahora
+bien, ¿es el valor original o el aumentado? Actualmente, esto no está
+definido.
