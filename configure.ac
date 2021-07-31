@@ -773,7 +773,6 @@ dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
 if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.10.5,
-      AC_DEFINE(USE_GTKSOURCEVIEW_2)
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0",
       echo "version 2.0 >= 2.10.5 not found"
@@ -781,18 +780,32 @@ if test "$gtk_version" = "2.0" ; then
 fi
 
 dnl
-dnl Check for installed gtksourceview (GTK 3 variant)
+dnl Check for installed gtksourceview (GTK 3 variant, experimental)
+dnl
+dnl if test "$gtk_version" = "3.0" ; then
+dnl     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-4,
+dnl       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-4`
+dnl       have_sourceview="4",
+dnl         PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
+dnl         GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+dnl         have_sourceview="3.0",
+dnl         echo "version 3.0 >= 3.20.0 not found"
+dnl       )
+dnl    )
+dnl fi
+
+dnl
+dnl Check for installed gtksourceview (GTK 3 variant, current)
 dnl
 if test "$gtk_version" = "3.0" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.10.2,
-      AC_DEFINE(USE_GTKSOURCEVIEW_3)
-      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
-      have_sourceview="3.0",
-      echo "version 3.0 >= 3.10.2 not found"
-    )
+   PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
+     GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+     have_sourceview="3.0",
+     echo "version 3.0 >= 3.20.0 not found"
+   )
 fi
 
-if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
+if test $have_sourceview = "3.0" || test $have_sourceview = "4" || test $pkg_build = "yes" ; then
    AC_DEFINE(HAVE_GTKSV_COMPLETION)
    gtksv_completion="yes"
 fi
@@ -1131,16 +1144,16 @@ Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
-elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" != "2.0" ; then
+elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" = "no" ; then
 echo "
 Please install gtksourceview-2.0 and then reconfigure gretl.
 gtksourceview-2.0 is available from http://www.gnome.org/
 "
 
-elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
+elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" = "no" ; then
 echo "
-Please install gtksourceview-3.0 and then reconfigure gretl.
-gtksourceview-3.0 is available from http://www.gnome.org/
+Please install gtksourceview 3.0 or 4 and then reconfigure gretl.
+gtksourceview is available from http://www.gnome.org/
 "
 
 elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
@@ -1172,6 +1185,7 @@ Configuration:
   MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
+  Use gtksourceview version:              ${have_sourceview}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}

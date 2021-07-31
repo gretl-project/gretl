@@ -22633,12 +22633,11 @@ else
 	GTKSOURCEVIEW_LIBS=$pkg_cv_GTKSOURCEVIEW_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	$as_echo "#define USE_GTKSOURCEVIEW_2 1" >>confdefs.h
-
-      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
+	GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0"
 fi
 fi
+
 
 if test "$gtk_version" = "3.0" ; then
 
@@ -22650,12 +22649,12 @@ if test -n "$GTKSOURCEVIEW_CFLAGS"; then
     pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-3.0 >= 3.10.2\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-3.0 >= 3.10.2") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-3.0 >= 3.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-3.0 >= 3.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-3.0 >= 3.10.2" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-3.0 >= 3.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22667,12 +22666,12 @@ if test -n "$GTKSOURCEVIEW_LIBS"; then
     pkg_cv_GTKSOURCEVIEW_LIBS="$GTKSOURCEVIEW_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-3.0 >= 3.10.2\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-3.0 >= 3.10.2") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-3.0 >= 3.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-3.0 >= 3.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-3.0 >= 3.10.2" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-3.0 >= 3.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22693,33 +22692,31 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-3.0 >= 3.10.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-3.0 >= 3.20.0" 2>&1`
         else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-3.0 >= 3.10.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-3.0 >= 3.20.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
 
-	echo "version 3.0 >= 3.10.2 not found"
+	echo "version 3.0 >= 3.20.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "version 3.0 >= 3.10.2 not found"
+	echo "version 3.0 >= 3.20.0 not found"
 
 else
 	GTKSOURCEVIEW_CFLAGS=$pkg_cv_GTKSOURCEVIEW_CFLAGS
 	GTKSOURCEVIEW_LIBS=$pkg_cv_GTKSOURCEVIEW_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	$as_echo "#define USE_GTKSOURCEVIEW_3 1" >>confdefs.h
-
-      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
-      have_sourceview="3.0"
+	GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+     have_sourceview="3.0"
 fi
 fi
 
-if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
+if test $have_sourceview = "3.0" || test $have_sourceview = "4" || test $pkg_build = "yes" ; then
    $as_echo "#define HAVE_GTKSV_COMPLETION 1" >>confdefs.h
 
    gtksv_completion="yes"
@@ -26052,16 +26049,16 @@ Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
-elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" != "2.0" ; then
+elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" = "no" ; then
 echo "
 Please install gtksourceview-2.0 and then reconfigure gretl.
 gtksourceview-2.0 is available from http://www.gnome.org/
 "
 
-elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
+elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" = "no" ; then
 echo "
-Please install gtksourceview-3.0 and then reconfigure gretl.
-gtksourceview-3.0 is available from http://www.gnome.org/
+Please install gtksourceview 3.0 or 4 and then reconfigure gretl.
+gtksourceview is available from http://www.gnome.org/
 "
 
 elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
@@ -26093,6 +26090,7 @@ Configuration:
   MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
+  Use gtksourceview version:              ${have_sourceview}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}

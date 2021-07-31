@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -30,7 +30,7 @@
 #include "system.h"
 #include "winstack.h"
 
-#if USE_GTKSOURCEVIEW_2
+#if GTKSOURCEVIEW_VERSION == 2
 # include <gtksourceview/gtksourceiter.h>
 #endif
 
@@ -41,32 +41,32 @@ struct search_replace {
     GtkWidget *r_button;   /* Replace button */
     gchar *find;           /* the Find string */
     gchar *replace;        /* the Replace string */
-    GtkTextBuffer *buf;    
+    GtkTextBuffer *buf;
     GtkTextView *view;
     GtkTextMark *mark;
     GtkTextIter iter;
 };
 
-static gboolean destroy_replacer (GtkWidget *widget, 
+static gboolean destroy_replacer (GtkWidget *widget,
 				  struct search_replace *s)
 {
     GtkTextMark *mark;
-    
+
     mark = gtk_text_buffer_get_mark(s->buf, "srmark");
     if (mark != NULL) {
 	gtk_text_buffer_delete_mark(s->buf, mark);
     }
-    
+
     g_free(s->find);
     g_free(s->replace);
-    
+
     gtk_main_quit();
     return FALSE;
 }
 
 /* here we simply find (or not) the given string */
 
-static void replace_find_callback (GtkWidget *widget, 
+static void replace_find_callback (GtkWidget *widget,
 				   struct search_replace *s)
 {
     GtkTextIter f_start, f_end;
@@ -81,18 +81,18 @@ static void replace_find_callback (GtkWidget *widget,
 
     gtk_text_buffer_get_iter_at_mark(s->buf, &s->iter, s->mark);
 
-#if USE_GTKSOURCEVIEW_2    
+#if GTKSOURCEVIEW_VERSION == 2
     found = gtk_source_iter_forward_search(&s->iter,
-					   s->find, 
+					   s->find,
 					   0,
-					   &f_start, 
+					   &f_start,
 					   &f_end,
 					   NULL);
 #else /* GTK 3 */
     found = gtk_text_iter_forward_search(&s->iter,
-					 s->find, 
+					 s->find,
 					 0,
-					 &f_start, 
+					 &f_start,
 					 &f_end,
 					 NULL);
 #endif
@@ -124,7 +124,7 @@ static void update_search_strings (struct search_replace *s)
 /* replace an occurrence of the Find string that has just been
    found, and selected */
 
-static void replace_single_callback (GtkWidget *button, 
+static void replace_single_callback (GtkWidget *button,
 				     struct search_replace *s)
 {
     GtkTextIter r_start, r_end;
@@ -158,10 +158,10 @@ static void replace_single_callback (GtkWidget *button,
    buffer, or in the current selection if there is one
 */
 
-static void replace_all_callback (GtkWidget *button, 
+static void replace_all_callback (GtkWidget *button,
 				  struct search_replace *s)
 {
-#if USE_GTKSOURCEVIEW_2
+#if GTKSOURCEVIEW_VERSION == 2
     GtkSourceSearchFlags search_flags;
 #else
     GtkTextSearchFlags search_flags;
@@ -195,9 +195,9 @@ static void replace_all_callback (GtkWidget *button,
     } else {
 	gtk_text_buffer_get_start_iter(s->buf, &start);
 	gtk_text_buffer_get_end_iter(s->buf, &end);
-    } 
+    }
 
-#if USE_GTKSOURCEVIEW_2
+#if GTKSOURCEVIEW_VERSION == 2
     search_flags = GTK_SOURCE_SEARCH_VISIBLE_ONLY | GTK_SOURCE_SEARCH_TEXT_ONLY;
 #else
     search_flags = GTK_TEXT_SEARCH_VISIBLE_ONLY | GTK_TEXT_SEARCH_TEXT_ONLY;
@@ -211,18 +211,18 @@ static void replace_all_callback (GtkWidget *button,
     gtk_text_buffer_begin_user_action(s->buf);
 
     do {
-#if USE_GTKSOURCEVIEW_2
+#if GTKSOURCEVIEW_VERSION == 2
 	found = gtk_source_iter_forward_search(&start,
-					       s->find, 
+					       s->find,
 					       search_flags,
-					       &r_start, 
+					       &r_start,
 					       &r_end,
 					       selected ? &end : NULL);
 #else /* GTK 3 */
 	found = gtk_text_iter_forward_search(&start,
-					     s->find, 
+					     s->find,
 					     search_flags,
-					     &r_start, 
+					     &r_start,
 					     &r_end,
 					     selected ? &end : NULL);
 #endif
@@ -234,11 +234,11 @@ static void replace_all_callback (GtkWidget *button,
 				   replace_len);
 	    start = r_start;
 	    if (selected) {
-		gtk_text_buffer_get_selection_bounds(s->buf, 
-						     &selstart, 
+		gtk_text_buffer_get_selection_bounds(s->buf,
+						     &selstart,
 						     &end);
 	    }
-	}		
+	}
     } while (found);
 
 #if 0
@@ -289,7 +289,7 @@ static void replace_string_dialog (windata_t *vwin)
     s->f_entry = gtk_entry_new();
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1, 0, 0,
 		     5, 5);
-    gtk_table_attach(GTK_TABLE(table), s->f_entry, 1, 2, 0, 1, 
+    gtk_table_attach(GTK_TABLE(table), s->f_entry, 1, 2, 0, 1,
 		     GTK_EXPAND | GTK_FILL, 0, 5, 5);
 
     /* 'Replace' label and entry */
@@ -358,7 +358,7 @@ static int prep_prn_for_file_save (PRN *prn, int fmt)
     const char *orig = gretl_print_get_buffer(prn);
     char *modbuf;
     int err;
-    
+
     err = maybe_post_process_buffer(orig, fmt, W_SAVE, &modbuf);
 
     if (!err && modbuf != NULL) {
@@ -400,10 +400,10 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	CoeffIntervals *cf = (CoeffIntervals *) vwin->data;
 
 	special_print_confints(cf, prn);
-    } else if (cmd == VIEW_MODEL) { 
+    } else if (cmd == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	if (pmod->errcode) { 
+	if (pmod->errcode) {
 	    err = pmod->errcode;
 	} else {
 	    int wdigits = widget_get_int(vwin->text, "digits");
@@ -448,7 +448,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	err = gretl_system_print(sys, dataset, OPT_NONE, prn);
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
-    } 
+    }
 
     if (!err && what == W_SAVE) {
 	err = prep_prn_for_file_save(prn, fmt);
@@ -473,7 +473,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 		action = SAVE_RTF;
 	    }
 
-	    file_selector_with_parent(action, FSEL_DATA_PRN, 
+	    file_selector_with_parent(action, FSEL_DATA_PRN,
 				      prn, vwin_toplevel(vwin));
 	}
     }
@@ -546,7 +546,7 @@ void model_tex_save (GtkAction *action, gpointer data)
     special_text_handler(vwin, fmt, W_SAVE);
 }
 
-void model_tex_copy (GtkAction *action, gpointer data) 
+void model_tex_copy (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     int fmt = tex_format_code(action);
@@ -565,8 +565,8 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 	if (gtk_text_buffer_get_selection_bounds(buf, &start, &end)) {
 	    cpy = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 	}
-    } else {	
-	cpy = textview_get_text(vwin->text); 
+    } else {
+	cpy = textview_get_text(vwin->text);
     }
 
     return cpy;
@@ -576,12 +576,12 @@ int multiple_formats_ok (windata_t *vwin)
 {
     int r = vwin->role;
 
-    if (r == SUMMARY || r == VAR_SUMMARY || 
-	r == ALL_SUMMARY || r == AFR || 
-	r == CORR || r == ALL_CORR || 
-	r == FCAST || r == COEFFINT || 
-	r == COVAR || r == VIEW_MODELTABLE || 
-	r == VAR || r == VECM || 
+    if (r == SUMMARY || r == VAR_SUMMARY ||
+	r == ALL_SUMMARY || r == AFR ||
+	r == CORR || r == ALL_CORR ||
+	r == FCAST || r == COEFFINT ||
+	r == COVAR || r == VIEW_MODELTABLE ||
+	r == VAR || r == VECM ||
 	r == VAR_IRF || r == VAR_DECOMP) {
 	return 1;
     } else if (r == VIEW_MODEL) {
@@ -623,9 +623,9 @@ static PRN *make_prn_for_buf (gchar *buf, int fmt, int action,
 /* copying text from gretl windows */
 
 #define SPECIAL_FORMAT(f) ((f & GRETL_FORMAT_TEX) || \
-                           (f & GRETL_FORMAT_RTF)) 
+                           (f & GRETL_FORMAT_RTF))
 
-static void window_copy_or_save (windata_t *vwin, guint fmt, int action) 
+static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 {
     gchar *buf = NULL;
 
@@ -655,30 +655,30 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 		prn_to_clipboard(prn, fmt);
 	    } else {
 		/* saving to file */
-		int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
+		int fcode = (fmt == GRETL_FORMAT_RTF_TXT)?
 		    SAVE_RTF : SAVE_OUTPUT;
 
-		file_selector_with_parent(fcode, FSEL_DATA_PRN, prn, 
+		file_selector_with_parent(fcode, FSEL_DATA_PRN, prn,
 					  vwin_toplevel(vwin));
 	    }
 	    gretl_print_destroy(prn);
 	}
-    }	
+    }
 }
 
-void window_copy (windata_t *vwin, guint fmt) 
+void window_copy (windata_t *vwin, guint fmt)
 {
     window_copy_or_save(vwin, fmt, W_COPY);
 }
 
-void window_save (windata_t *vwin, guint fmt) 
+void window_save (windata_t *vwin, guint fmt)
 {
     window_copy_or_save(vwin, fmt, W_SAVE);
 }
 
 /* "native" printing from gretl windows */
 
-void window_print (GtkAction *action, windata_t *vwin) 
+void window_print (GtkAction *action, windata_t *vwin)
 {
     gchar *buf, *selbuf = NULL;
     const char *filename = NULL;
@@ -695,7 +695,7 @@ void window_print (GtkAction *action, windata_t *vwin)
     if (vwin->role == EDIT_HANSL ||
 	vwin->role == VIEW_SCRIPT) {
 	const char *p = path_last_slash_const(vwin->fname);
-	
+
 	if (p != NULL) {
 	    filename = p + 1;
 	} else {
@@ -744,7 +744,7 @@ char *strip_unicode_minus (char *s)
 	    }
 	    strcpy(s, tmp);
 	    free(tmp);
-	} 
+	}
     }
 
     return s;
@@ -776,7 +776,7 @@ void system_print_buf (const gchar *buf, FILE *fp)
 	if (*p == '\r') {
 	    if (*(p+1) != '\n') {
 		fputc('\n', fp);
-	    } 
+	    }
 	} else {
 	    fputc(*p, fp);
 	}
@@ -802,11 +802,11 @@ static char *dosify_buffer (const char *buf, int format)
     const char *rtf_preamble = "{\\rtf1\r\n"
 	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Consolas{\\*\\falt Courier New};}}\r\n"
 	"\\f0\\fs18\r\n";
-#else    
+#else
     const char *rtf_preamble = "{\\rtf1\r\n"
 	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\r\n"
 	"\\f0\\fs18\r\n";
-#endif    
+#endif
     int extra = 0, nlines = 0;
     int add_rtf = 0;
     char *targ, *q;
@@ -870,7 +870,7 @@ static char *dosify_buffer (const char *buf, int format)
 
 	p += pplus;
     }
- 
+
     *q = '\0';
 
     if (add_rtf) {
@@ -886,7 +886,7 @@ static char *dosify_buffer (const char *buf, int format)
 
 static int want_bom (int fmt, int action)
 {
-    /* Note sure about this, but for now if we're saving 
+    /* Note sure about this, but for now if we're saving
        "plain text" to file in UTF-8, we'll leave it in
        UTF-8 and prepend the UTF-8 BOM.
     */
@@ -908,13 +908,13 @@ static char *prepend_bom (const char *orig)
 	buf[3] = 0;
 	strcat(buf, orig);
     }
- 
+
     return buf;
 }
 
 #endif
 
-int maybe_post_process_buffer (const char *buf, int fmt, 
+int maybe_post_process_buffer (const char *buf, int fmt,
 			       int action, char **modbuf)
 {
     int rtf_output = 0;
@@ -960,7 +960,7 @@ int maybe_post_process_buffer (const char *buf, int fmt,
 	    trbuf = prepend_bom(buf);
 	    if (trbuf == NULL) {
 		err = E_ALLOC;
-	    }	    
+	    }
 	}
 	if (!err && action == W_COPY) {
 	    if (trbuf != NULL) {
@@ -984,9 +984,6 @@ int maybe_post_process_buffer (const char *buf, int fmt,
     }
 
     *modbuf = final;
-	
+
     return err;
 }
-
-
-

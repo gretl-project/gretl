@@ -21,9 +21,7 @@
 #include "genparse.h"
 #include "completions.h"
 
-#define GTKSV4 0 /* experiment, not for now */
-
-#ifdef USE_GTKSOURCEVIEW_3
+#if GTKSOURCEVIEW_VERSION > 2
 # define GTK_TYPE_SOURCE_COMPLETION_PROVIDER GTK_SOURCE_TYPE_COMPLETION_PROVIDER
 #endif
 
@@ -383,7 +381,7 @@ static GtkSourceCompletionItem *comp_item_new (const gchar *label,
 {
     GtkSourceCompletionItem *item;
 
-#if GTKSV4
+#if GTKSOURCEVIEW_VERSION == 4
     item = gtk_source_completion_item_new();
     gtk_source_completion_item_set_label(item, label);
     gtk_source_completion_item_set_text(item, text);

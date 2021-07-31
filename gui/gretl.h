@@ -44,8 +44,10 @@
 # include <gdk/gdkkeysyms-compat.h>
 # include <gtksourceview/gtksource.h>
 # define gtk_combo_box_entry_new_text gtk_combo_box_text_new_with_entry
+# define GTKSOURCEVIEW_VERSION GTK_SOURCE_MAJOR_VERSION
 #else
 # include <gtksourceview/gtksourceview.h>
+# define GTKSOURCEVIEW_VERSION 2
 #endif
 
 /* remedial macro for Mac */

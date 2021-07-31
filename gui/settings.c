@@ -1585,8 +1585,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    /* the item is not on this page */
 	    continue;
 	} else if (console && non_console_var(rc->var)) {
+	    rc->widget = NULL;
 	    continue;
 	} else if (!console && console_only(rc->var)) {
+	    rc->widget = NULL;
 	    continue;
 	}
 

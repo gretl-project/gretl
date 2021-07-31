@@ -35,11 +35,9 @@
 # include "gretlwin32.h" /* for browser_open() */
 #endif
 
-#ifdef USE_GTKSOURCEVIEW_3
-# define SVVER 3
+#if GTKSOURCEVIEW_VERSION > 2
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
 #else /* using GtkSourceView 2 */
-# define SVVER 2
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
@@ -855,8 +853,13 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 	/* languages: need to set path, can't just append */
 	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
+#if GTKSOURCEVIEW_VERSION > 3
+	dirs[1] = g_strdup_printf("%s/share/gtksourceview-%d/language-specs",
+				  SVPREFIX, GTKSOURCEVIEW_VERSION);
+#else
 	dirs[1] = g_strdup_printf("%s/share/gtksourceview-%d.0/language-specs",
-				  SVPREFIX, SVVER);
+				  SVPREFIX, GTKSOURCEVIEW_VERSION);
+#endif
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
 	/* styles: can just append to default path */
