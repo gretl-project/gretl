@@ -1069,11 +1069,11 @@
 	<option>
 	  <flag>--matrix</flag>
 	  <optparm>m</optparm>
-	  <effect>Usar unha entrada matricial</effect>
+	  <effect>Usa unha entrada matricial</effect>
         </option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Eliminar a presentación de resultados</effect>
+	  <effect>Suprime a presentación de resultados</effect>
         </option>
       </options>
       <examples>
@@ -3056,7 +3056,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Elimina o resultado presentado</effect>
+	  <effect>Suprime a presentación de resultados</effect>
 	</option>
       </options>
 	<examples>
@@ -10724,11 +10724,15 @@
 	  <flag>--matrix_diff</flag>
 	  <effect>Utiliza o método da matriz-diferenza para a proba de Hausman</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suprime a presentación de resultados</effect>
+	</option>
       </options>
     </usage>
     <description>
       <para>
-	Esta proba está dispoñible unicamente despois de estimar un modelo
+	Esta instrución está dispoñible unicamente despois de estimar un modelo
 	con datos de panel utilizando MCO (consulta tamén <cmd>setobs</cmd>).
 	Comproba a especificación combinada simple fronte ás principais alternativas,
 	a de efectos fixos e a de efectos aleatorios.
@@ -10736,7 +10740,7 @@
       <para>
 	A especificación de efectos fixos permite que a ordenada na orixe da
 	regresión varíe dunha unidade de sección cruzada a outra. Preséntase
-	unha proba <math>F</math> para a hipótese nula de que as ordenadas
+	unha proba <math>F</math> de Wald para a hipótese nula de que as ordenadas
 	na orixe non difiren. A especificación de efectos aleatorios descompón a
 	varianza de cada perturbación en dúas partes, unha parte específica
 	da unidade de sección cruzada e outra parte específica de cada
@@ -10760,12 +10764,20 @@
 	contra dos efectos aleatorios e a favor dos efectos fixos.
       </para>
       <para>
-	As dúas opcións desta instrución pertencen á estimación de efectos
+	As dúas primeiras opcións desta instrución corresponden á estimación de efectos
 	aleatorios. Por defecto, utilízase o método de Swamy e Arora, mediante
 	o cálculo do estatístico de proba de Hausman, utilizando o método
 	de regresión. As opcións permiten utilizar o estimador alternativo
 	da varianza de Nerlove, e /ou a aproximación da matriz-diferenza
 	ao estatístico de Hausman.
+      </para>
+      <para>
+	Cando se completa con éxito, os accessorios <fncref targ="$test"/>
+	e <fncref targ="$pvalue"/> proporcionan 3 vectores que conteñen
+	os estatísticos de proba e os valores p para as tres probas indicadas
+	arriba: combinabilidade (Wald), combinabilidade (Breusch&ndash;Pagan),
+	e Hausman. Se só queres os resultados desta forma, podes indicar
+	a opción <opt>quiet</opt> para saltarte a presentación de resultados.
       </para>
       <para>
 	Cae na conta de que despois de estimar a especificación de efectos
@@ -12269,7 +12281,7 @@
       <options>
         <option>
 	      <flag>--quiet</flag>
-	      <effect>Suprime a presentación do resultado</effect>
+	      <effect>Suprime a presentación de resultados</effect>
         </option>
       </options>
     </usage>
@@ -14352,7 +14364,7 @@
         </option>
 	      <option>
 	  <flag>--quiet</flag>
-	  <effect>Non amosar o rango mostral</effect>
+	  <effect>Non amosa o rango mostral</effect>
 	      </option>
       </options>
       <examples>
@@ -16365,7 +16377,7 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>Elimina a presentación de resultados</effect>
+	  <effect>Suprime a presentación de resultados</effect>
         </option>
 	      <option>
 	  <flag>--tex</flag>
