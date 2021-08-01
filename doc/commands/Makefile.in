@@ -217,7 +217,7 @@ $(GRETLLIB):
 	./tables --nonloopcmds > $@
 
 ../tex/matfuncs.tex: $(EN_FNSRC)  matfuncs
-	LANG=en_US ./matfuncs $< > $@
+	LANG=en_US.UTF-8 ./matfuncs $< > $@
 
 ../tex/funcbody.tex: $(EN_FNSRC) xsltrans reflow $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --tex $< --lang=en --refs=$(CHAPREFS) --docdir=$(CMDSDIR) | \
@@ -228,7 +228,7 @@ $(GRETLLIB):
 	./reflow > $@
 
 ../tex/cmdtopics.tex: $(EN_SRC) topiclist
-	LANG=en_US ./topiclist $< > $@
+	LANG=en_US.UTF-8 ./topiclist $< > $@
 
 # FIXME other languages
 
@@ -237,7 +237,7 @@ textables_it: $(IT_FNSRC) tables matfuncs
 	./tables --functions > ../tex_it/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_it/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_it/tabnonloopcmds.tex && \
-	LANG=it_IT ./matfuncs $< > ../tex_it/matfuncs.tex && \
+	LANG=it_IT.UTF-8 ./matfuncs $< > ../tex_it/matfuncs.tex && \
 	touch $@
 
 textables_es: $(ES_FNSRC) tables matfuncs
@@ -245,7 +245,7 @@ textables_es: $(ES_FNSRC) tables matfuncs
 	./tables --functions > ../tex_es/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_es/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_es/tabnonloopcmds.tex && \
-	LANG=es_ES ./matfuncs $< > ../tex_es/matfuncs.tex && \
+	LANG=es_ES.UTF-8 ./matfuncs $< > ../tex_es/matfuncs.tex && \
 	touch $@
 
 textables_pt: $(PT_FNSRC) tables matfuncs
@@ -253,7 +253,7 @@ textables_pt: $(PT_FNSRC) tables matfuncs
 	./tables --functions > ../tex_pt/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_pt/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_pt/tabnonloopcmds.tex && \
-	LANG=pt_PT ./matfuncs $< > ../tex_pt/matfuncs.tex && \
+	LANG=pt_PT.UTF-8 ./matfuncs $< > ../tex_pt/matfuncs.tex && \
 	touch $@
 
 textables_gl: $(GL_FNSRC) tables matfuncs
@@ -261,7 +261,7 @@ textables_gl: $(GL_FNSRC) tables matfuncs
 	./tables --functions > ../tex_gl/tabfunctions.tex && \
 	./tables --loopcmds > ../tex_gl/tabloopcmds.tex && \
 	./tables --nonloopcmds > ../tex_gl/tabnonloopcmds.tex && \
-	LANG=gl_ES ./matfuncs $< > ../tex_gl/matfuncs.tex && \
+	LANG=gl_ES.UTF-8 ./matfuncs $< > ../tex_gl/matfuncs.tex && \
 	touch $@
 
 functex_it: $(IT_FNSRC) xsltrans reflow $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
@@ -297,16 +297,16 @@ cmdtex_gl: $(GL_SRC) xsltrans reflow $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./reflow > ../tex_gl/refbody.tex && touch $@
 
 topiclist_it: $(IT_SRC) topiclist
-	LANG=it_IT ./topiclist $< > ../tex_it/cmdtopics.tex && touch $@
+	LANG=it_IT.UTF-8 ./topiclist $< > ../tex_it/cmdtopics.tex && touch $@
 
 topiclist_es: $(ES_SRC) topiclist
-	LANG=es_ES ./topiclist $< > ../tex_es/cmdtopics.tex && touch $@
+	LANG=es_ES.UTF-8 ./topiclist $< > ../tex_es/cmdtopics.tex && touch $@
 
 topiclist_pt: $(PT_SRC) topiclist
-	LANG=pt_PT ./topiclist $< > ../tex_pt/cmdtopics.tex && touch $@
+	LANG=pt_PT.UTF-8 ./topiclist $< > ../tex_pt/cmdtopics.tex && touch $@
 
 topiclist_gl: $(GL_SRC) topiclist
-	LANG=gl_ES ./topiclist $< > ../tex_gl/cmdtopics.tex && touch $@
+	LANG=gl_ES.UTF-8 ./topiclist $< > ../tex_gl/cmdtopics.tex && touch $@
 
 # test validity of skeleton.xml
 test: skeleton.xml
