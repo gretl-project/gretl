@@ -3,7 +3,7 @@
 
 <funcref language="portuguese">
 
-  <funclist name="Acessores" ref="accessors">
+  <funclist name="Accessors" ref="accessors">
 
     <function name="$ahat" section="access" output="series">
       <description>
