@@ -115,6 +115,9 @@ validate: validate.o $(GRETLLIB)
 topiclist: topiclist.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB) $(GLIB_LIBS)
 
+po2xml: po2xml.o $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+
 tables: tables.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
@@ -129,6 +132,9 @@ validate.o: validate.c $(GRETLHDRS)
 
 topiclist.o: topiclist.c $(GRETLHDRS)
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
+
+po2xml.o: po2xml.c $(GRETLLIB)
+	$(CC) $(CFLAGS) $(TOPICDEFS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 tables.o: tables.c $(GRETLHDRS) $(topsrc)/lib/src/monte_carlo.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<

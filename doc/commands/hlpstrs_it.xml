@@ -75,4 +75,7 @@
  <gentext key="chapter"       text="il capitolo"/>
  <gentext key="applies-to"    text="Si applica a"/>
  <gentext key="none"          text="nessuna"/>
+ <gentext key="Accessors" text="Accessori" />
+ <gentext key="Built-in strings" text="Stringhe predefininte" />
+ <gentext key="Functions proper" text="Funzioni vere e proprie" /> 
 </localization>

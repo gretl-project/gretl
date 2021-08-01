@@ -1357,7 +1357,7 @@
 
   </funclist>
 
-  <funclist name="String constants" ref="string_constants">
+  <funclist name="Built-in strings" ref="string_constants">
 
     <function name="$dotdir" section="straccess" output="string">
       <description>

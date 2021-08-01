@@ -80,7 +80,9 @@
 
 <xsl:template match="funclist">
   <xsl:text>\section{</xsl:text>
-  <xsl:value-of select="@name"/>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="@name"/>
+  </xsl:call-template>
   <xsl:text>}&#10;\label{sec:</xsl:text>
   <xsl:value-of select="@ref"/>
   <xsl:text>}&#10;&#10;</xsl:text>

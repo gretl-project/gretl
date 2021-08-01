@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-07-27 18:53-0400\n"
-"PO-Revision-Date: 2021-06-18 13:27+0200\n"
+"PO-Revision-Date: 2021-08-01 12:13-0400\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -17753,7 +17753,7 @@ msgstr "Guía de Funciones de Gretl"
 
 #: gui/textbuf.c:2285
 msgid "Functions proper"
-msgstr "FFunciones propias"
+msgstr "Funciones propias"
 
 #: gui/textbuf.c:2383
 msgid "Back"

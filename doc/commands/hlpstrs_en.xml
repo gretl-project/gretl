@@ -75,5 +75,8 @@
  <gentext key="chapter"       text="Chapter"/>
  <gentext key="applies-to"    text="Applies to"/>
  <gentext key="none"          text="none"/>
+ <gentext key="Accessors" text="Accessors" />
+ <gentext key="Built-in strings" text="Built-in strings" />
+ <gentext key="Functions proper" text="Functions proper" />
 
 </localization>

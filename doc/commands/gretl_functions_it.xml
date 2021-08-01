@@ -3,7 +3,7 @@
 
 <funcref language="italian">
 
-  <funclist name="Accessori" ref="accessors">
+  <funclist name="Accessors" ref="accessors">
 
     <function name="$ahat" section="access" output="series">
       <description>
@@ -1332,7 +1332,7 @@
 
   </funclist>
 
-  <funclist name="Stringhe predefinite" ref="string_constants">
+  <funclist name="Built-in strings" ref="string_constants">
     
     <function name="$dotdir" section="access" output="string">
       <description>
