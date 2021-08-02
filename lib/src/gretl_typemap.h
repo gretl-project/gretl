@@ -20,6 +20,12 @@
 #ifndef GRETL_TYPEMAP_H_
 #define GRETL_TYPEMAP_H_
 
+#define NUMERIC_TYPE(t) (t == GRETL_TYPE_INT || \
+			 t == GRETL_TYPE_DOUBLE || \
+			 t == GRETL_TYPE_SERIES || \
+			 t == GRETL_TYPE_USERIES || \
+			 t == GRETL_TYPE_MATRIX)
+
 GretlType gretl_type_get_plural (GretlType type);
 
 GretlType gretl_type_get_singular (GretlType type);
@@ -34,11 +40,15 @@ GretlType gretl_type_from_string (const char *s);
 
 GretlType gretl_get_gen_type (const char *s);
 
+int gretl_type_get_order (GretlType type);
+
 int gretl_is_array_type (GretlType type);
 
 int gretl_is_arrayable_type (GretlType type);
 
 int gretl_is_scalar_type (GretlType type);
+
+int gretl_is_series_type (GretlType type);
 
 void gretl_typemap_cleanup (void);
 

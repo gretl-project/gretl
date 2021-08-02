@@ -1,0 +1,61 @@
+# Example script for sign restrictions in gretl's SVAR addon
+
+###
+### example with exotic restrictions
+###
+
+set verbose off
+include SVAR.gfn
+
+### supply & demand (artificial example)
+
+nulldata 240
+setobs 12 1:1
+set seed 123123
+
+b = -0.8 # demand elasticity
+c =  1.1 # supply elasticity
+
+Gamma = {1, -c; -b, 1}
+iG = inv(Gamma)
+U = 3 + filter(mnormal($nobs, 2), 1, 0.8)
+Y = U * iG'
+series p = Y[,1]
+series q = Y[,2]
+list X = p q
+
+# set up the model
+
+list W = const
+scalar order = 1
+
+bundle mod = SVAR_setup("SR", X, W, order)
+
+# set up the sign restictions
+mod.snames[1] = "Supply"
+mod.snames[2] = "Demand"
+
+# instantaneous restrictions
+
+SVAR_SRplain(&mod, "p", "Supply", "-")  # supply shock brings price down
+SVAR_SRplain(&mod, "q", "Supply", "+")  # and quantity up
+SVAR_SRplain(&mod, "p", "Demand", "+")  # demand shock pushes price up
+
+try_exotic = 1
+
+if try_exotic
+    # the effect of the demand shock on quantity is given in the form
+    # of an "exotic" restriction specification (just for illustration)
+    SVAR_SRexotic(&mod, "M[2,2] > 0", defarray("Demand"))
+else
+    SVAR_SRplain(&mod, "q", "Demand", "+") # demand shock effect on quantity is pos.
+endif
+
+# do the rotations (this is the computationally intensive part)
+SVAR_SRdraw(&mod, 100)
+
+# check: these matrices should be the same if try_exotic is
+# 0 or 1
+loop i = 1..10
+    printf "%6.3f\n", mod.acc_draws[i].irfs[1]
+endloop

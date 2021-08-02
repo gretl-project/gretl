@@ -155,7 +155,7 @@ int spin_dialog (const char *title, const char *blurb,
 int combo_selector_dialog (GList *list, const char *msg,
 			   int deflt, GtkWidget *parent);
 
-int yes_no_help_dialog (const char *msg, int hcode);
+int yes_no_help_dialog (const char *msg, int hcode, int deflt);
 
 int add_obs_dialog (const char *blurb, int addmin,
 		    gretlopt opt, GtkWidget *parent);
@@ -166,6 +166,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int dyn, gretlopt *optp,
 		     double *conf, MODEL *pmod,
 		     GtkWidget *parent);
+
+int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent);
 
 void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 				     gretlopt *gopt);
@@ -219,5 +221,9 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 			int *payload_id);
 
 void tdisagg_dialog (int v);
+
+void bdstest_dialog (int v, GtkWidget *parent);
+
+void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent);
 
 #endif /* DIALOGS_H */

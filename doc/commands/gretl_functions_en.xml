@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="english">
@@ -606,8 +606,12 @@
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
-	  Returns the number of variables in the dataset (including the
-	  constant).
+	  Returns the number of series in the dataset (including the
+	  constant). Since <lit>const</lit> is always present in
+	  any dataset a return value of 0 indicates that no
+	  dataset is in place. Note that if this accessor is used
+	  within a function, the number of series currently accessible
+	  may well fall short of that given by <lit>$nvars</lit>.
 	</para>
       </description>
     </function>
@@ -635,12 +639,12 @@
     <function name="$obsmajor" section="access" output="series">
       <description>
 	<para>
-	  Applicable when the observations in the current dataset have
-	  a major:minor structure, as in quarterly time series
-	  (year:quarter), monthly time series (year:month), hourly
-	  data (day:hour) and panel data (individual:period).  Returns
-	  a series holding the major or low-frequency component of
-	  each observation (for example, the year).
+	  Returns a series holding the <quote>major</quote> or
+	  low-frequency component of each observation. This means the
+	  year for annual, quarterly or monthly time series; the day
+	  for hourly data; or the individual in the case of panel
+	  data. If the data are cross-sectional the series returned is
+	  just a 1-based index of the observations.
 	</para>
 	<para>
 	  <seelist>
@@ -797,9 +801,9 @@
 	  include <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref
 	  targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
-	  targ="vif"/> and <cmdref targ="bkw"/> (in which cases the
-	  result is a matrix), plus <cmdref targ="pkg"/> (which
-	  optionally stores a bundle result).
+	  targ="vif"/>, <cmdref targ="bds"/> and <cmdref targ="bkw"/>
+	  (in which cases the result is a matrix), plus <cmdref
+	  targ="pkg"/> (which optionally stores a bundle result).
 	</para>
       </description>
     </function>
@@ -926,6 +930,13 @@
 	  subsequent uses of <lit>$stopwatch</lit> yield the seconds of CPU
 	  time since the previous access.
 	</para>
+	<para>
+	  When a user-defined function is executing, the <lit>set
+	  stopwatch</lit> command and <lit>$stopwatch</lit> accessor are
+	  specific to that function&mdash;that is, timing within a
+	  function does not disrupt any <quote>global</quote> timing
+	  that may be going on in the main script.
+	</para>
       </description>
     </function>
 
@@ -1025,6 +1036,26 @@
               which the current gretl process is running (with a
               fallback of <lit>localhost</lit> in case the name
               cannot be determined).
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>mem</lit>: a 2-vector holding total physical memory
+	      and free or available memory, expressed in MB. This
+	      information may not be available on all systems but
+	      should be on Windows, macOS and Linux.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>foreign</lit>: a sub-bundle containing 0/1
+              indicators for the presence on the host system of each
+              of the <quote>foreign</quote> programs supported by
+              gretl, under the keys <lit>julia</lit>,
+              <lit>octave</lit>, <lit>ox</lit>, <lit>python</lit>,
+              <lit>Rbin</lit>, <lit>Rlib</lit> and <lit>stata</lit>.
+              The two keys pertaining to R represent the R executable
+              and shared library, respectively.
             </para>
 	  </li>
 	</ilist>
@@ -1279,8 +1310,8 @@
 	<para>
 	  If the last model was a single equation, returns the list of
 	  regressors. If the last model was a system of equations,
-	  returns the <quote>global</quote> list of exogenous and
-	  predetermined variables (in the same order in which they
+	  returns the <quote>global</quote> list of exogenous 
+	  variables (in the same order in which they
 	  appear in <fncref targ="$sysB"/>). If the last model was a
 	  VAR, returns the list of exogenous regressors, if any,
 	  except for standard deterministic terms (constant, trend,
@@ -1293,10 +1324,12 @@
       <description>
 	<para>
 	  Following estimation of a VAR or VECM (only), returns
-	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
-	  matrix of regressors used in each of the equations.  This accessor
-	  is not available for a VECM estimated with a restriction imposed on
-	  &agr;, the <quote>loadings</quote> matrix.
+	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the
+	  common matrix of regressors used in each of the equations.
+	  While this accessor is available for a VECM estimated with a
+	  restriction imposed on &agr; (the <quote>loadings</quote>
+	  matrix), it should be borne in mind that in that case not
+	  all coefficients of the regressors are freely varying.
 	</para>
       </description>
     </function>
@@ -1324,7 +1357,7 @@
 
   </funclist>
 
-  <funclist name="String constants" ref="string_constants">
+  <funclist name="Built-in strings" ref="string_constants">
 
     <function name="$dotdir" section="straccess" output="string">
       <description>
@@ -1445,12 +1478,12 @@
 	<para>
 	  In the most minimal usage, <argname>x</argname> is set to
 	  <lit>null</lit>, <argname>byvar</argname> is a single series
-	  and the third argument is omitted. In that case the return
-	  value is a matrix with two columns holding, respectively,
-	  the distinct values of <argname>byvar</argname>, sorted in
-	  ascending order, and the count of observations at which
-	  <argname>byvar</argname> takes on each of these values. For
-	  example,
+	  and the third argument is omitted, or set to
+	  <lit>null</lit>. In this case, the return value is a matrix
+	  with two columns holding, respectively, the distinct values
+	  of <argname>byvar</argname>, sorted in ascending order, and
+	  the count of observations at which <argname>byvar</argname>
+	  takes on each of these values. For example,
 	</para>
 	<code>
 	  open data4-1
@@ -1461,8 +1494,32 @@
 	  3 (with count 5) and 4 (with count 9).
 	</para>
 	<para>
-	  If <argname>x</argname> and <argname>byvar</argname> are
-	  both individual series and the third argument is given, the
+	  More generally, if <argname>byvar</argname> is a list with
+	  <math>n</math> members, then the left-hand <math>n</math>
+	  columns hold the combinations of the distinct values of each
+	  of the <math>n</math> series and the count column holds the
+	  number of observations at which each combination is
+	  realized. Note that the count column can always be found at
+	  the position <lit>nelem(byvar) + 1</lit>. 	
+	</para>
+	<subhead>Specifying an aggregation function</subhead>
+	<para>
+	  If the third argument is given, then <argname>x</argname>
+	  must not be <lit>null</lit>, and the rightmost
+	  <math>m</math> columns hold the values of the statistic
+	  specified by <argname>funcname</argname> for each of the
+	  variables in <argname>x</argname>. (Thus, <math>m</math> is
+	  equal to 1 if <argname>x</argname> is a single series and
+	  equal to <lit>nelem(x)</lit> if <argname>x</argname> is a
+	  list.)  The given statistic is calculated on the respective
+	  sub-samples defined by the combinations in
+	  <argname>byvar</argname> (in ascending order); these
+	  combinations are shown in the first <math>n</math> column(s)
+	  of the returned matrix.
+	</para>
+	<para>
+	  So, in the special case where <argname>x</argname> and
+	  <argname>byvar</argname> are both individual series, the
 	  return value is a matrix with three columns holding,
 	  respectively, the distinct values of
 	  <argname>byvar</argname>, sorted in ascending order; the
@@ -1472,18 +1529,6 @@
 	  calculated on series <argname>x</argname>, using only those
 	  observations at which <argname>byvar</argname> takes on the
 	  value given in the first column.
-	</para>
-	<para>
-	  More generally, if <argname>byvar</argname> is a list with
-	  <math>n</math> members then the left-hand <math>n</math>
-	  columns hold the combinations of the distinct values of each
-	  of the <math>n</math> series and the count column holds the
-	  number of observations at which each combination is
-	  realized.  If <argname>x</argname> is a list with
-	  <math>m</math> members then the rightmost <math>m</math>
-	  columns hold the values of the specified statistic for each
-	  of the <argname>x</argname> variables, again calculated on
-	  the sub-sample indicated in the first column(s).
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are
@@ -1771,6 +1816,90 @@
       </description>
     </function>
 
+    <function name="bcheck" section="programming" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">target</fnarg>
+	<fnarg type="bundle">input</fnarg>
+	<fnarg type="strings" optional="true">required-keys</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Primarily intended for use by writers of function
+	  packages. Here is the context in which <lit>bcheck</lit> may
+	  be useful: you have a function which accepts a bundle
+	  argument whereby the caller can make various choices.
+	  Some elements of the bundle may have default values&mdash;so
+	  the caller is not obliged to make an explicit
+	  choice&mdash;while other elements may be required. You want
+	  to determine whether the argument you get is valid.
+	</para>
+	<para>
+	  To use <lit>bcheck</lit> you construct a template bundle
+	  containing all the supported keys, with values that
+	  exemplify the type associated with each key, and pass this
+	  in pointer form as <argname>target</argname>. For the second
+	  argument, <argname>input</argname>, pass the bundle you get
+	  from the caller. This function then checks the following:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Does <argname>input</argname> contain any keys not
+	      present in <argname>target</argname>? If so,
+	      <lit>bcheck</lit> returns a non-zero value, indicating
+	      that <argname>input</argname> is erroneous.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Does <argname>input</argname> contain under any given
+	      key an object whose type does not match that in
+	      <argname>target</argname>? If so, a non-zero value is
+	      returned.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      If some elements in <argname>target</argname> require
+	      input from the caller (so the value you supply is not
+	      actually a default, just a placeholder to indicate the
+	      required type), you should supply a third argument to
+	      <lit>bcheck</lit>: an array of strings holding the keys
+	      for which input is not optional. Then the return value
+	      will be non-zero if any required elements are missing
+	      from <argname>input</argname>.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  If no errors are detected on these points, any values
+	  supplied in <argname>input</argname> are copied to
+	  <argname>target</argname> (that is, defaults are replaced by
+	  valid selections on the caller's part). If errors are found
+	  a message will be printed indicating what is wrong with
+	  <argname>input</argname>.
+	</para>
+	<para>
+	  To give a simple example, suppose your function's argument
+	  bundle supports a matrix <lit>X</lit> (required), a scalar
+	  <lit>z</lit> with default value 0, and a string <lit>s</lit>
+	  with default value <quote><lit>display</lit></quote>. Then
+	  the following code fragment would be suitable for checking
+	  a bundle named <lit>uservals</lit> supplied by the caller:
+	</para>
+	<code>
+	  bundle target = _(X={}, z=0, s="display")
+	  strings req = defarray("X")
+	  err = bcheck(&amp;target, uservals, req)
+	  if err
+	     # react appropriately
+	  else
+	     # go ahead using the values in target
+	  endif
+	</code>
+      </description>
+    </function>
+
     <function name="bessel" section="math" output="asinput">
       <fnargs>
 	<fnarg type="char">type</fnarg>
@@ -1967,8 +2096,8 @@
 	</para>
 	<para>
 	  When <argname>k</argname> &gt; <argname>n</argname> or
-	  <argname>k</argname> &lt; 0 no valid answer exists and NA is
-	  returned.
+	  <argname>k</argname> &lt; 0 no valid answer exists and an
+	  error is flagged.
 	</para>
 	<para>
 	  If the two arguments differ in type, the type of the result
@@ -2840,6 +2969,62 @@
       </description>
     </function>
 
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Provides a means of determining whether the numerical
+	  object <argname>x</argname> contains any of the elements of
+	  <argname>S</argname>, a matrix which plays the role of a
+	  set.
+	</para>
+	<para>
+	  The return value is an object of the same size as
+	  <argname>x</argname> containing 1s in positions where
+	  a value of <argname>x</argname> matches any element of
+	  <argname>S</argname> and zeros elsewhere.
+	  For example, the code
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  gives
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1	  
+	</code>
+	<para>
+	  This function may be particularly useful when
+	  <argname>x</argname> is a series that contains a
+	  fine-grained encoding for a qualitative characteristic, and
+	  you wish to reduce this to a smaller number of
+	  categories. You can pack into <argname>S</argname> a set of
+	  values to be consolidated, and obtain a dummy variable with
+	  value 1 for observations matching this set, 0 otherwise.
+	</para>
+	<para>
+	  Since <argname>S</argname> serves as a set, for greatest
+	  efficiency it should be a vector with no repeated values,
+	  however an arbitrary matrix is accepted.
+	</para>
+      </description>
+    </function>    
+
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -3243,7 +3428,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line)
+	      loop while getline(s, &amp;line)
 	          printf "%s\n", line
 	      endloop
 	  endif
@@ -3538,7 +3723,13 @@
 	</para>
 	<para context="tex">
 	  Returns the digamma (or Psi) function of $x$, that is
-	  $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
+	  $\frac {\mathrm{d}} {\mathrm{d} x}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="trigamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -3738,7 +3929,9 @@
 	  Computes the eigenvalues, and optionally the right and/or
 	  left eigenvectors, of the <by r="n" c="n"/> matrix
 	  <argname>A</argname>, which may be real or complex. The
-	  eigenvalues are returned in a complex column vector.
+	  eigenvalues are returned in a complex column vector. To
+	  obtain the norm of the eigenvalues, you can use the <fncref
+	  targ="abs"/> function, which accepts complex arguments.
 	</para>
 	<para>
 	  If you wish to retrieve the right eigenvectors (as an <by
@@ -3994,6 +4187,7 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="series-list-or-mat">f</fnarg>
+	<fnarg optional="true" type="bool">U2</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4024,11 +4218,18 @@
 	  3  Mean Absolute Error (MAE)
 	  4  Mean Percentage Error (MPE)
 	  5  Mean Absolute Percentage Error (MAPE)
-	  6  Theil's U
+	  6  Theil's U (U1 or U2)
 	  7  Bias proportion, UM
 	  8  Regression proportion, UR
 	  9  Disturbance proportion, UD
 	</code>
+	<para>
+	  The variant of Theil's U shown by default depends on the
+	  nature of the data: if they are known to be time series then
+	  U2 is shown, otherwise U1 is produced. But this choice can
+	  be forced via the optional trailing argument: give a
+	  non-zero value to force U2, or zero to force U1.
+	</para>
 	<para>
 	  For details on the calculation of these statistics, and the
 	  interpretation of the <math>U</math> values, please see
@@ -4618,7 +4819,7 @@
       </description>
     </function>
 
-    <function name="genseries" section="data-utils" output="scalar">
+    <function name="genseries" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
 	<fnarg type="series">rhs</fnarg>
@@ -4783,7 +4984,7 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
-	<fnarg type="string">target</fnarg>
+	<fnarg type="stringref">&amp;target</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4791,9 +4992,10 @@
 	  <argname>source</argname>, which should be a named string
 	  variable. On each call a line from the source is written to
 	  <argname>target</argname> (which must also be a named string
-	  variable), with the newline character stripped off. The
-	  valued returned is 1 if there was anything to be read
-	  (including blank lines), 0 if the source has been exhausted.
+	  variable, given in pointer form), with the newline character
+	  stripped off. The valued returned is 1 if there was anything
+	  to be read (including blank lines), 0 if the source has been
+	  exhausted.
 	</para>
 	<para>
 	  Here is an example in which the content of a text file is
@@ -4803,7 +5005,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
 	      printf "line %d = '%s'\n", i++, line
 	  endloop
 	</code>
@@ -4816,7 +5018,7 @@
 	  omitted altogether) as in
 	</para>
 	<code>
-	  getline(s, line) # get a single line
+	  getline(s, &amp;line) # get a single line
 	  getline(s, null) # clean up
 	</code>
 	<para>
@@ -5040,7 +5242,7 @@
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5049,24 +5251,29 @@
 	  matrix with <math>r</math> rows, in which the
 	  <math>i</math>-th row is the Kronecker product of the
 	  corresponding rows of <argname>X</argname> and
-	  <argname>Y</argname>.
+	  <argname>Y</argname>. If <argname>Y</argname> is omitted,
+	  the <quote>shorthand</quote> syntax applies (see below). 
 	</para>
 	<para context="tex">
-	  In other words, if $X$ is an $r \times k$ matrix, $Y$ is an
-	  $r \times m$ matrix and $Z$ is the result matrix of the
-	  horizontal direct product of $X$ times $Y$, then $Z$ will
-	  have $r$ rows and $k\cdot m$ columns; moreover,
-	  \[
-	  Z_{in} = X_{ij} Y_{il}
-	  \]
+	  If $X$ is an $r \times k$ matrix, $Y$ is an $r \times m$
+	  matrix and $Z$ is the result matrix of the horizontal direct
+	  product of $X$ times $Y$, then $Z$ will have $r$ rows and
+	  $k\cdot m$ columns; moreover, \[ Z_{in} = X_{ij} Y_{il} \]
 	  where $n = (j-1) m + l$.
+	</para>
+	<para context="notex">
+	  If <argname>X</argname> is an <math>r x k</math> matrix and
+	  <argname>Y</argname> is an <math>r x m</math> matrix, the
+	  result will be a matrix with <math>r</math> rows and
+	  <math>km</math> columns.
 	</para>
 	<para>
 	  This operation is called <quote>horizontal direct
 	  product</quote> in conformity to its implementation in the
 	  GAUSS programming language. Its equivalent in standard
 	  matrix algebra would be called the row-wise Khatri-Rao
-	  product.
+	  product, or <quote>face-splitting</quote> product in the
+	  signal processing literature.
 	</para>
 	<para>
 	  Example: the code
@@ -5083,6 +5290,43 @@
           0    1    0    2    0    3
          -4    4   -5    5   -6    6
 	</code>
+	<subhead>Shorthand syntax</subhead>
+	<para>
+	  If <argname>X</argname> and <argname>Y</argname> are the
+	  same matrix, then each row of the result is the
+	  vectorization of a symmetric matrix. In these cases, the
+	  second argument may be omitted; however, the returned matrix
+	  will only contain the non-redundant columns, and will
+	  therefore have <math>k(k+1)/2</math> columns.  For example,
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  C = hdprod(A)
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+	  1    2    3    4    6    9 
+	  16   20   24   25   30   36 
+	</code>
+	<para context="tex">
+	  Note that the $i$-th row of $C$ is $\mathrm{vech}(a_i
+	  a_i')$, where $a_i$  is the $i$-th row of $A$.
+	</para>
+	<para context="notex">
+	  Note that the <math>i</math>-th row of <math>C</math> is
+	  <math>vech(a</math><sub>i</sub>
+	  <math>a</math><sub>i</sub><math>')</math>, where
+	  <math>a</math><sub>i</sub> is the <math>i</math>-th row of
+	  <math>A</math>.
+	</para>
+	<para>
+	  When using the shorthand syntax with complex matrices, the
+	  implicit second argument will be the <i>conjugate</i> of the
+	  first one, so as to make each row of the result the
+	  symmetric vectorization of a Hermitian matrix.
+	</para>
       </description>
     </function>
 
@@ -5510,6 +5754,7 @@
 	  negative arguments: <lit>int(-3.5)</lit> gives &minus;3, while
 	  <lit>floor(-3.5)</lit> gives &minus;4.
 	  <seelist>
+	    <fncref targ="round"/>
             <fncref targ="ceil"/>
 	  </seelist>
 	</para>
@@ -7179,6 +7424,7 @@
     <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7189,8 +7435,11 @@
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  mean of the values of the variables in the list at
-	  observation <math>t</math>, or <lit>NA</lit> if there are
-	  any missing values at <math>t</math>.
+	  observation <math>t</math>. By default the mean is recorded
+	  as <lit>NA</lit> if there are any missing values at
+	  <math>t</math>, but if you pass a non-zero value for
+	  <argname>partial</argname> any non-missing values will be
+	  used to form the statistic.
 	</para>
 	<para>
 	  The following example illustrates the working of the function
@@ -7377,6 +7626,63 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="midasmult"/>
+	    <fncref targ="mlincomb"/>
+            <fncref targ="mweights"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="midasmult" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="bundle">mod</fnarg>
+	<fnarg type="bool">cumulate</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes MIDAS multipliers.  The <argname>mod</argname>
+	  argument must be a bundle containing a MIDAS model, as the
+	  one produced by the <cmdref targ="midasreg"/> command and
+	  accessible via the <fncref targ="$model"/> keyword. The
+	  function returns a matrix with the implicit MIDAS
+	  multipliers for variable <argname>v</argname> in its first
+	  column and the corresponding standard errors in the second
+	  one. If the <argname>cumulate</argname> argument is nonzero,
+	  the multipliers are cumulated.
+	</para>
+	<para>
+	  Note that the returned matrix is automatically endowed with
+	  appropriate row labels, so it is suitable to be used as the
+	  first argument to the <cmdref targ="modprint"/> command. For
+	  example, the code
+	</para>
+	<code>
+	  open gdp_midas.gdt
+	  list dIP = ld_indpro*
+	  smpl 1985:1 ;
+	  midasreg ld_qgdp 0 ; mds(dIP, 0, 6, 2)
+	  matrix ip_m = midasmult($model, 0, 1)
+	  modprint ip_m
+	</code>
+	<para>
+	  produces the following output:
+	</para>
+	<code>
+             coefficient   std. error      z       p-value
+  ---------------------------------------------------------
+  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
+  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
+  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
+  dIP_3      0.0601876     0.0621927     0.9678    0.3332
+  dIP_4      0.0131263     0.0259137     0.5065    0.6125
+  dIP_5      0.000965260   0.00346703    0.2784    0.7807
+  dIP_6      0.00000       0.00000      NA        NA
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
             <fncref targ="mweights"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
@@ -8393,6 +8699,7 @@
 	<para>
 	  <seelist>
             <fncref targ="mgradient"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>
@@ -10499,20 +10806,15 @@
       <description>
 	<para>
 	  If a file by the name of <argname>fname</argname> exists and
-	  is writable by the user, removes (deletes) the named
-	  file. Returns 0 on successful completion, non-zero if there
-	  is no such file or the file cannot be removed.
+	  is writable by the user, this function removes (deletes) the
+	  file and returns 0. If there is no such file or for some
+	  reason the file cannot be deleted, a non-zero error code is
+	  returned.
 	</para>
 	<para>
-	  If <argname>fname</argname> contains a full path
-	  specification, gretl will attempt to delete that file and
-	  return an error if the file doesn't exist or can't be
-	  deleted for some reason (such as insufficient
-	  privileges). If <argname>fname</argname> does not contain a
-	  full path, then it will be assumed that the given file name
-	  is relative to <cmdref targ="workdir"/>. If the file doesn't
-	  exist or is unwritable, no other directories will be
-	  searched.
+	  If <argname>fname</argname> does not specify a full path, it
+	  is taken to be relative to the current <cmdref
+	  targ="workdir"/>.
 	</para>
       </description>
     </function>
@@ -10764,6 +11066,7 @@
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10774,8 +11077,11 @@
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sample standard deviation of the values of the variables in
-	  the list at observation <math>t</math>, or <lit>NA</lit> if
-	  there are any missing values at <math>t</math>.
+	  the list at observation <math>t</math>.  By default the
+	  standard deviation is recorded as <lit>NA</lit> if there are
+	  any missing values at <math>t</math>, but if you pass a
+	  non-zero value for <argname>partial</argname> any
+	  non-missing values will be used to form the statistic.
 	</para>
 	<para>
 	  <seelist>
@@ -11847,12 +12153,13 @@
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sum of the
-	  non-missing observations in <argname>x</argname>. See also
-	  <fncref targ="sumall"/>.
+	  If <argname>x</argname> is a series, returns the (scalar)
+	  sum of the non-missing observations in
+	  <argname>x</argname>. See also <fncref targ="sumall"/>.
 	</para>
 	<para>
 	  If <argname>x</argname> is a matrix, returns the sum of the
@@ -11862,8 +12169,11 @@
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sum of the values of the variables in the list at
-	  observation <math>t</math>, or <lit>NA</lit> if there are
-	  any missing values at <math>t</math>.
+	  observation <math>t</math>. By default the sum is recorded
+	  as <lit>NA</lit> if there are any missing values at
+	  <math>t</math>, but if you pass a non-zero value for
+	  <argname>partial</argname> any non-missing values will be
+	  used to form the sum.
 	</para>
       </description>
     </function>
@@ -12159,6 +12469,28 @@
       </description>
     </function>
 
+    <function name="trigamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Returns the trigamma function of <argname>x</argname>, that
+	  is the second derivative of the log of the Gamma function.
+	</para>
+	<para context="tex">
+	  Returns the trigamma function of $x$, that is
+	  $\frac {\mathrm{d}^2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="digamma"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="trimr" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -12376,18 +12708,22 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sample
-	  variance, skipping any missing observations.
+	  If <argname>x</argname> is a series, returns the (scalar)
+	  sample variance, skipping any missing observations.
 	</para>
 	<para>
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sample variance of the values of the variables in the list
-	  at observation <math>t</math>, or <lit>NA</lit> if there are
-	  any missing values at <math>t</math>.
+	  at observation <math>t</math>. By default the variance is
+	  recorded as <lit>NA</lit> if there are any missing values at
+	  <math>t</math>, but if you pass a non-zero value for
+	  <argname>partial</argname> any non-missing values will be
+	  used to form the statistic.
 	</para>
 	<para>
 	  In each case the sum of squared deviations from the mean is
@@ -12624,6 +12960,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12638,6 +12975,12 @@
 	  weights must be non-negative.
 	</para>
 	<para>
+	  By default the result is NA if any values are missing at
+	  observation <math>t</math>, but if you pass a non-zero value
+	  for <argname>partial</argname> any non-missing values will
+	  be used.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="wsd"/>
             <fncref targ="wvar"/>
@@ -12650,6 +12993,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12664,6 +13008,12 @@
 	  same length and the weights must be non-negative.
 	</para>
 	<para>
+	  By default the result is NA if any values are missing at
+	  observation <math>t</math>, but if you pass a non-zero value
+	  for <argname>partial</argname> any non-missing values will
+	  be used.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wvar"/>
@@ -12676,6 +13026,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12688,6 +13039,12 @@
 	  time-varying. The lists <argname>Y</argname> and
 	  <argname>W</argname> must be of the same length and the
 	  weights must be non-negative.
+	</para>
+	<para>
+	  By default the result is NA if any values are missing at
+	  observation <math>t</math>, but if you pass a non-zero value
+	  for <argname>partial</argname> any non-missing values will
+	  be used.
 	</para>
 	<para context="tex">
 	  The weighted sample variance is computed as

@@ -2768,6 +2768,11 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
     int t1 = dset->t1, t2 = dset->t2;
     int T, err;
 
+    if (dataset_is_panel(dset)) {
+	gretl_errmsg_set("polyfit: panel data not supported");
+	return E_PDWRONG;
+    }
+
     err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
@@ -2920,25 +2925,25 @@ static int n_new_dummies (const DATASET *dset,
     return nnew;
 }
 
-static void
-seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
-		     char *vname, char *vlabel)
+static gchar *seas_name_and_label (int k, const DATASET *dset,
+				   gretlopt opt, char *vname)
 {
     int pd = dataset_is_panel(dset) ? dset->panel_pd : dset->pd;
     int ts = dset->structure == TIME_SERIES || dset->panel_pd > 1;
+    gchar *ret = NULL;
 
     if (opt & OPT_C) {
 	sprintf(vname, "S%d", k);
-	strcpy(vlabel, "centered periodic dummy");
+	ret = g_strdup(_("centered periodic dummy"));
     } else if (opt & OPT_S) {
 	sprintf(vname, "S%d", k);
-	strcpy(vlabel, "uncentered periodic dummy");
+	ret = g_strdup(_("uncentered periodic dummy"));
     } else if (pd == 4 && ts) {
 	sprintf(vname, "dq%d", k);
-	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), k);
+	ret = g_strdup_printf(_("= 1 if quarter = %d, 0 otherwise"), k);
     } else if (pd == 12 && ts) {
 	sprintf(vname, "dm%d", k);
-	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), k);
+	ret = g_strdup_printf(_("= 1 if month = %d, 0 otherwise"), k);
     } else {
 	char dumstr[8] = "dummy_";
 	char numstr[12];
@@ -2948,8 +2953,10 @@ seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
 	len = strlen(numstr);
 	dumstr[8 - len] = '\0';
 	sprintf(vname, "%s%d", dumstr, k);
-	sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, k);
+	ret = g_strdup_printf(_("%s = 1 if period is %d, 0 otherwise"), vname, k);
     }
+
+    return ret;
 }
 
 static int get_first_panel_period (DATASET *dset)
@@ -2973,7 +2980,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 			   int snames, int **plist)
 {
     char vname[VNAMELEN];
-    char vlabel[MAXLABEL];
+    gchar *vlabel = NULL;
     gretlopt opt = 0;
     int *list = NULL;
     int i, vi, k, t, pp;
@@ -3028,7 +3035,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	    /* dummy not wanted */
 	    continue;
 	}
-	seas_name_and_label(i, dset, opt, vname, vlabel);
+	vlabel = seas_name_and_label(i, dset, opt, vname);
 	vi = series_index(dset, vname);
 	if (vi < dset->v) {
 	    const char *orig = series_get_label(dset, vi);
@@ -3041,6 +3048,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	} else {
 	    nnew++;
 	}
+	g_free(vlabel);
 	k++;
     }
 
@@ -3061,9 +3069,10 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	}
 	if (list[k] == 0) {
 	    /* no pre-existing series */
-	    seas_name_and_label(i, dset, opt, vname, vlabel);
+	    vlabel = seas_name_and_label(i, dset, opt, vname);
 	    strcpy(dset->varname[vi], vname);
 	    series_set_label(dset, vi, vlabel);
+	    g_free(vlabel);
 	    list[k] = vi++;
 	}
 	k++;
@@ -3774,8 +3783,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
  * @dset: information on the data set.
  * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
  * @vname: location to write series name (length %VNAMELEN)
- * @vlabel: location to write series description (length should
- * be %MAXLABEL).
+ * @pdesc: location to receive copy of series description.
  * @err: location to receive error code.
  *
  * Creates a full-length array holding the specified model
@@ -3787,7 +3795,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 
 double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 			  ModelDataIndex idx, char *vname,
-			  char *vlabel, int *err)
+			  gchar **pdesc, int *err)
 {
     const double *src = NULL;
     double *ret = NULL;
@@ -3837,31 +3845,31 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
     if (idx == M_UHAT) {
 	sprintf(vname, "uhat%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	    sprintf(vlabel, _("standardized residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("standardized residual from model %d"), pmod->ID);
 	} else {
-	    sprintf(vlabel, _("residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("residual from model %d"), pmod->ID);
 	}
     } else if (idx == M_YHAT) {
 	sprintf(vname, "yhat%d", pmod->ID);
-	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
+	*pdesc = g_strdup_printf(_("fitted value from model %d"), pmod->ID);
     } else if (idx == M_UHAT2) {
 	/* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	    sprintf(vlabel, _("squared standardized residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("squared standardized residual from model %d"), pmod->ID);
 	} else {
-	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("squared residual from model %d"), pmod->ID);
 	}
     } else if (idx == M_H) {
 	/* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
-	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
+	*pdesc = g_strdup_printf(_("fitted variance from model %d"), pmod->ID);
     } else if (idx == M_AHAT) {
 	sprintf(vname, "ahat%d", pmod->ID);
 	if (pmod->opt & OPT_U) {
-	    sprintf(vlabel, _("individual effects from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("individual effects from model %d"), pmod->ID);
 	} else {
-	    sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
+	    *pdesc = g_strdup_printf(_("per-unit constants from model %d"), pmod->ID);
 	}
     }
 
@@ -3883,11 +3891,12 @@ double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 		    ModelDataIndex idx)
 {
-    char vname[VNAMELEN], vlabel[MAXLABEL];
+    char vname[VNAMELEN];
+    gchar *vlabel = NULL;
     double *x;
     int err = 0;
 
-    x = get_fit_or_resid(pmod, dset, idx, vname, vlabel, &err);
+    x = get_fit_or_resid(pmod, dset, idx, vname, &vlabel, &err);
 
     if (!err) {
 	err = dataset_add_allocated_series(dset, x);
@@ -3901,6 +3910,8 @@ int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 	strcpy(dset->varname[v], vname);
 	series_set_label(dset, v, vlabel);
     }
+
+    g_free(vlabel);
 
     return err;
 }
@@ -4115,309 +4126,218 @@ int check_declarations (char ***pS, parser *p)
     return n;
 }
 
-/* cross-sectional mean of observations on variables in @list
-   at time @t */
+/* cross-sectional (list-based) statistics */
 
-static double mean_at_obs (const int *list, const double **Z, int t)
+static double xsect_minmax (double *x, int n, int f)
 {
-    double xi, xsum = 0.0;
+    double ret = x[0];
     int i;
 
-    for (i=1; i<=list[0]; i++) {
-	xi = Z[list[i]][t];
-	if (na(xi)) {
-	    return NADBL;
-	}
-	xsum += xi;
-    }
-
-    return xsum / list[0];
-}
-
-/* weighted cross-sectional mean of observations on variables in @list
-   at time @t, weights given in @wlist */
-
-static double weighted_mean_at_obs (const int *list, const int *wlist,
-				    const double **Z, int t,
-				    double *pwsum, int *pm)
-{
-    double w, xi, wsum = 0.0, wxbar = 0.0;
-    int i, m = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	w = Z[wlist[i]][t];
-	if (na(w) || w < 0.0) {
-	    return NADBL;
-	}
-	if (w > 0.0) {
-	    wsum += w;
-	    m++;
-	}
-    }
-
-    if (wsum <= 0.0) {
-	return NADBL;
-    }
-
-    if (pwsum != NULL) {
-	*pwsum = wsum;
-    }
-
-    if (pm != NULL) {
-	*pm = m;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	w = Z[wlist[i]][t] / wsum;
-	if (w > 0) {
-	    xi = Z[list[i]][t];
-	    if (na(xi)) {
-		return NADBL;
+    for (i=1; i<n; i++) {
+	if (f == F_MIN) {
+	    if (x[i] < ret) {
+		ret = x[i];
 	    }
-	    wxbar += xi * w;
+	} else if (x[i] > ret) {
+	    ret = x[i];
 	}
     }
 
-    return wxbar;
+    return ret;
 }
 
-/* Computes weighted mean of the variables in @list using the
-   (possibly time-varying) weights given in @wlist, or the
-   unweighted mean if @wlist is NULL.
+/* Fill @targ with data (from @xlist) and associated
+   weights (from @wlist) for the cross-section at obs @t.
+   If @partial_ok is 0 (false) we return E_MISSDATA if
+   any values or weights are missing at @t, otherwise
+   we skip missing terms and return the number of valid
+   terms in @pn.
 */
 
-static int x_sectional_weighted_mean (double *x, const int *list,
-				      const int *wlist,
-				      const DATASET *dset)
-{
-    int n = list[0];
-    int t, v;
-
-    if (n == 0) {
-	return 0; /* all NAs */
-    } else if (n == 1) {
-	v = list[1];
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    x[t] = dset->Z[v][t];
-	}
-	return 0;
-    }
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (wlist != NULL) {
-	    x[t] = weighted_mean_at_obs(list, wlist,
-					(const double **) dset->Z,
-					t, NULL, NULL);
-	} else {
-	    x[t] = mean_at_obs(list, (const double **) dset->Z, t);
-	}
-    }
-
-    return 0;
-}
-
-/* Computes weighted sample variance of the variables in @list using
-   the (possibly time-varying) weights given in @wlist, or the
-   unweighted sample variance if @wlist is NULL
-*/
-
-static int x_sectional_wtd_variance (double *x, const int *list,
-				     const int *wlist,
-				     const DATASET *dset)
-{
-    double xdev, xbar, wsum;
-    int m = 0, n = list[0];
-    int i, t, v;
-
-    if (n == 0) {
-	return 0; /* all NAs */
-    } else if (n == 1) {
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    x[t] = 0.0;
-	}
-	return 0;
-    }
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (wlist != NULL) {
-	    xbar = weighted_mean_at_obs(list, wlist,
-					(const double **) dset->Z,
-					t, &wsum, &m);
-	} else {
-	    xbar = mean_at_obs(list, (const double **) dset->Z, t);
-	}
-	if (na(xbar)) {
-	    x[t] = NADBL;
-	    continue;
-	}
-	if (wlist != NULL && m < 2) {
-	    x[t] = (m == 1)? 0.0 : NADBL;
-	    continue;
-	}
-	x[t] = 0.0;
-	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    xdev = dset->Z[v][t] - xbar;
-	    if (wlist != NULL) {
-		x[t] += xdev * xdev * dset->Z[wlist[i]][t] / wsum;
-	    } else {
-		x[t] += xdev * xdev;
-	    }
-	}
-	if (wlist != NULL) {
-	    x[t] *= m / (m - 1);
-	} else {
-	    x[t] /= (n - 1);
-	}
-    }
-
-    return 0;
-}
-
-static int x_sectional_wtd_stddev (double *x, const int *list,
+static int data_and_weight_at_obs (double **targ, int *pn,
+				   const int *xlist,
 				   const int *wlist,
-				   const DATASET *dset)
+				   const DATASET *dset,
+				   int t, int partial_ok)
 {
-    int t, err;
+    int i, j = 0;
+    double xi, wi;
 
-    err = x_sectional_wtd_variance(x, list, wlist, dset);
-
-    if (!err) {
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (!na(x[t])) {
-		x[t] = sqrt(x[t]);
+    for (i=1; i<=xlist[0]; i++) {
+	xi = dset->Z[xlist[i]][t];
+	wi = dset->Z[wlist[i]][t];
+	if (wi < 0) {
+	    return E_INVARG;
+	} else if (wi == 0) {
+	    continue;
+	} else if (wi > 0 && na(xi)) {
+	    if (!partial_ok) {
+		return E_MISSDATA;
 	    }
+	} else if (!na(xi) && !na(wi)) {
+	    targ[0][j] = xi;
+	    targ[1][j] = wi;
+	    j++;
+	} else if (!partial_ok) {
+	    return E_MISSDATA;
 	}
     }
 
-    return err;
+    *pn = j;
+    return (j == 0)? E_MISSDATA : 0;
 }
 
-static int x_sectional_extremum (int f, double *x, const int *list,
-				 const DATASET *dset)
-{
-    double xit, xx;
-    int i, t, err = 0;
+/* Fill @targ with data (from @xlist) for the cross-
+   section at obs @t. If @partial_ok is 0 (false) we
+   return E_MISSDATA if any values are missing at @t,
+   otherwise we skip missing terms and return the count
+   of valid values in @pn.
+*/
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	xx = (f == F_MIN)? DBL_MAX : -DBL_MAX;
-	for (i=1; i<=list[0]; i++) {
-	    xit = dset->Z[list[i]][t];
-	    if (!na(xit)) {
-		if (f == F_MAX && xit > xx) {
-		    xx = xit;
-		} else if (f == F_MIN && xit < xx) {
-		    xx = xit;
-		}
-	    }
-	}
-	if (xx == DBL_MAX || xx == -DBL_MAX) {
-	    x[t] = NADBL;
-	} else {
-	    x[t] = xx;
+static int data_at_obs (double *targ, int *pn,
+			const int *list,
+			const DATASET *dset,
+			int t, int partial_ok)
+{
+    int i, j = 0;
+    double xi;
+
+    for (i=1; i<=list[0]; i++) {
+	xi = dset->Z[list[i]][t];
+	if (!na(xi)) {
+	    targ[j++] = xi;
+	} else if (!partial_ok) {
+	    return E_MISSDATA;
 	}
     }
 
-    return err;
+    *pn = j;
+    return (j == 0)? E_MISSDATA : 0;
 }
 
-static int x_sectional_sum (double *x, const int *list,
-			    const DATASET *dset)
+int cross_sectional_stat (double *y, const int *list,
+			  const DATASET *dset, int f,
+			  int partial_ok)
 {
-    double xit, xx;
-    int i, t, err = 0;
+    double *x;
+    int missing;
+    int i, t, n;
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	xx = 0.0;
-	for (i=1; i<=list[0]; i++) {
-	    xit = dset->Z[list[i]][t];
-	    if (na(xit)) {
-		xx = NADBL;
-		break;
-	    } else {
-		xx += xit;
-	    }
-	}
-	x[t] = xx;
-    }
-
-    return err;
-}
-
-static int x_sectional_median (double *y, const int *list,
-			       const DATASET *dset)
-{
-    int i, t, n = list[0];
-    double *xt;
-
-    if (n == 0) {
-	return E_DATA;
-    }
-
-    xt = malloc(n * sizeof *xt);
-    if (xt == NULL) {
+    /* to hold the cross section */
+    x = malloc(list[0] * sizeof *x);
+    if (x == NULL) {
 	return E_ALLOC;
     }
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	y[t] = 0.0;
-	for (i=0; i<list[0]; i++) {
-	    xt[i] = dset->Z[list[i+1]][t];
-	    if (na(xt[i])) {
-		y[t] = NADBL;
-		break;
+	missing = data_at_obs(x, &n, list, dset, t, partial_ok);
+	if (missing) {
+	    y[t] = NADBL;
+	} else if ((f == F_VCE || f == F_SD) && n == 1) {
+	    y[t] = NADBL;
+	} else if (f == F_MIN || f == F_MAX) {
+	    y[t] = xsect_minmax(x, n, f);
+	} else if (f == F_MEDIAN) {
+	    y[t] = gretl_median(0, n-1, x);
+	} else {
+	    double xsum = 0;
+
+	    for (i=0; i<n; i++) {
+		xsum += x[i];
 	    }
-	}
-	if (y[t] == 0.0) {
-	    y[t] = gretl_median(0, n-1, xt);
+	    if (f == F_SUM) {
+		y[t] = xsum;
+	    } else if (f == F_MEAN) {
+		y[t] = xsum / n;
+	    } else {
+		/* F_VCE or F_SD */
+		double d, s2 = 0, xbar = xsum / n;
+
+		for (i=0; i<n; i++) {
+		    d = x[i] - xbar;
+		    s2 += d * d;
+		}
+		if (f == F_VCE) {
+		    y[t] = s2 / (n-1);
+		} else {
+		    y[t] = sqrt(s2 / (n-1));
+		}
+	    }
 	}
     }
 
-    free(xt);
+    free(x);
 
     return 0;
 }
 
-int cross_sectional_stat (double *x, const int *list,
-			  const DATASET *dset, int f)
-{
-    if (f == F_MEAN) {
-	return x_sectional_weighted_mean(x, list, NULL, dset);
-    } else if (f == F_VCE) {
-	return x_sectional_wtd_variance(x, list, NULL, dset);
-    } else if (f == F_SD) {
-	return x_sectional_wtd_stddev(x, list, NULL, dset);
-    } else if (f == F_MIN || f == F_MAX) {
-	return x_sectional_extremum(f, x, list, dset);
-    } else if (f == F_SUM) {
-	return x_sectional_sum(x, list, dset);
-    } else if (f == F_MEDIAN) {
-	return x_sectional_median(x, list, dset);
-    } else {
-	return E_TYPES;
-    }
-}
-
-int x_sectional_weighted_stat (double *x, const int *list,
+int x_sectional_weighted_stat (double *y, const int *xlist,
 			       const int *wlist,
 			       const DATASET *dset,
-			       int f)
+			       int f, int partial_ok)
 {
-    if (wlist[0] != list[0]) {
+    double wxbar, wsum, d, ws2, V2, adj;
+    double *x, *w, **X;
+    int i, t, n, missing;
+    int err = 0;
+
+    if (wlist[0] != xlist[0]) {
 	gretl_errmsg_sprintf("Weighted stats: data list has %d members but weight "
-			     "list has %d", list[0], wlist[0]);
+			     "list has %d", xlist[0], wlist[0]);
 	return E_DATA;
     }
 
-    if (f == F_WMEAN) {
-	return x_sectional_weighted_mean(x, list, wlist, dset);
-    } else if (f == F_WVAR) {
-	return x_sectional_wtd_variance(x, list, wlist, dset);
-    } else if (f == F_WSD) {
-	return x_sectional_wtd_stddev(x, list, wlist, dset);
-    } else {
-	return E_DATA;
+    /* storage for values and weights, per obs */
+    X = doubles_array_new(2, xlist[0]);
+    if (X == NULL) {
+	return E_ALLOC;
     }
+
+    x = X[0];
+    w = X[1];
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	missing = data_and_weight_at_obs(X, &n, xlist, wlist,
+					 dset, t, partial_ok);
+	if (missing == E_INVARG) {
+	    err = E_INVARG;
+	    break;
+	} else if (missing) {
+	    y[t] = NADBL;
+	} else if (f != F_WMEAN && n == 1) {
+	    y[t] = NADBL;
+	} else {
+	    wxbar = wsum = 0;
+	    for (i=0; i<n; i++) {
+		wxbar += x[i] * w[i];
+		wsum += w[i];
+	    }
+	    wxbar /= wsum;
+	    if (f == F_WMEAN) {
+		y[t] = wxbar;
+	    } else {
+		ws2 = V2 = 0;
+		for (i=0; i<n; i++) {
+		    d = (x[i] - wxbar);
+		    ws2 += w[i] * d * d;
+		    V2 += w[i] * w[i];
+		}
+		/* "frequency" weights */
+		adj = (n-1) * wsum / n;
+		/* for "reliability" weights? */
+		// adj = wsum - V2 / wsum;
+		if (f == F_WVAR) {
+		    y[t] = ws2 / adj;
+		} else {
+		    y[t] = sqrt(ws2 / adj);
+		}
+	    }
+	}
+    }
+
+    doubles_array_free(X, 2);
+
+    return err;
 }
 
 /* writes to the series @y a linear combination of the variables given
@@ -5040,10 +4960,9 @@ static int process_midas_bundle (gretl_bundle *mb, int idx,
     return err;
 }
 
-gretl_matrix *midas_multipliers (void *data, int cumulate,
+gretl_matrix *midas_multipliers (gretl_bundle *mb, int cumulate,
 				 int idx, int *err)
 {
-    gretl_bundle *mb = (gretl_bundle *) data;
     gretl_matrix *ret = NULL;
     gretl_matrix *theta = NULL;
     gretl_matrix *mult = NULL;
@@ -5803,7 +5722,7 @@ static int theil_decomp (double *m, double MSE,
 }
 
 /* OPT_O allows embedded missing values (which will be skipped);
-   OPT_D requests Theil decomposition
+   OPT_D requests Theil decomposition; OPT_T means time series.
 */
 
 static int fill_fcstats_column (gretl_matrix *m,
@@ -5814,12 +5733,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 				int col)
 {
     double ME, MSE, MAE, MPE, MAPE, U;
+    double Unum, Uden1, Uden2;
     double fe, u[2];
     int do_theil = 0;
+    int do_U2 = (opt & OPT_T);
     int ok_T = T;
     int t, err = 0;
 
     ME = MSE = MAE = MPE = MAPE = U = 0.0;
+    Unum = Uden1 = Uden2 = 0.0;
     u[0] = u[1] = 0.0;
 
     for (t=0; t<T; t++) {
@@ -5845,29 +5767,37 @@ static int fill_fcstats_column (gretl_matrix *m,
 	    MPE += 100 * fe / y[t];
 	    MAPE += 100 * fabs(fe / y[t]);
 	}
-	if (t < T-1 && !na(U)) {
-	    if (na(f[t+1]) || na(y[t+1])) {
-		U = NADBL;
-	    } else {
-		fe = f[t+1] - y[t+1];
-		if (floatneq(fe, 0)) {
-		    if (y[t] == 0.0) {
-			U = NADBL;
-		    } else {
-			fe /= y[t];
-			u[0] += fe * fe;
+	if (do_U2) {
+	    /* let U = U2 */
+	    if (t < T-1 && !na(U)) {
+		if (na(f[t+1]) || na(y[t+1])) {
+		    U = NADBL;
+		} else {
+		    fe = f[t+1] - y[t+1];
+		    if (floatneq(fe, 0)) {
+			if (y[t] == 0.0) {
+			    U = NADBL;
+			} else {
+			    fe /= y[t];
+			    u[0] += fe * fe;
+			}
 		    }
-		}
-		fe = y[t+1] - y[t];
-		if (floatneq(fe, 0)) {
-		    if (y[t] == 0.0) {
-			U = NADBL;
-		    } else {
-			fe /= y[t];
-			u[1] += fe * fe;
+		    fe = y[t+1] - y[t];
+		    if (floatneq(fe, 0)) {
+			if (y[t] == 0.0) {
+			    U = NADBL;
+			} else {
+			    fe /= y[t];
+			    u[1] += fe * fe;
+			}
 		    }
 		}
 	    }
+	} else {
+	    /* let U = U1 */
+	    Unum += fe * fe;
+	    Uden1 += y[t] * y[t];
+	    Uden2 += f[t] * f[t];
 	}
     }
 
@@ -5903,8 +5833,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 	if (!isnan(MAPE)) {
 	    MAPE /= T;
 	}
-	if (!isnan(U) && u[1] > 0.0) {
-	    U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	if (do_U2) {
+	    if (!isnan(U) && u[1] > 0.0) {
+		U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	    }
+	} else {
+	    Unum = sqrt(Unum/T);
+	    Uden1 = sqrt(Uden1/T);
+	    Uden2 = sqrt(Uden2/T);
+	    U = Unum / (Uden1+ Uden2);
 	}
 	gretl_matrix_set(m, 0, col, ME);
 	if (show_MSE) {
@@ -5927,24 +5864,23 @@ static int fill_fcstats_column (gretl_matrix *m,
     return err;
 }
 
-static void add_fcstats_rownames (gretl_matrix *m)
+static void add_fcstats_rownames (gretl_matrix *m,
+				  gretlopt opt)
 {
-    int ns = m->rows;
-    char **rownames;
-
-    rownames = strings_array_new(ns);
+    const char *S[] = {
+	"ME", "RMSE", "MAE", "MPE", "MAPE",
+	"U1", "UM", "UR", "UD"
+    };
+    int i, ns = m->rows;
+    char **rownames = strings_array_new(ns);
 
     if (rownames != NULL) {
-	rownames[0] = gretl_strdup("ME");
-	rownames[1] = gretl_strdup("RMSE");
-	rownames[2] = gretl_strdup("MAE");
-	rownames[3] = gretl_strdup("MPE");
-	rownames[4] = gretl_strdup("MAPE");
-	rownames[5] = gretl_strdup("U");
-	if (ns == 9) {
-	    rownames[6] = gretl_strdup("UM");
-	    rownames[7] = gretl_strdup("UR");
-	    rownames[8] = gretl_strdup("UD");
+	for (i=0; i<ns; i++) {
+	    if (i == 5 && (opt & OPT_T)) {
+		rownames[5] = gretl_strdup("U2");
+	    } else {
+		rownames[i] = gretl_strdup(S[i]);
+	    }
 	}
 	gretl_matrix_set_rownames(m, rownames);
     }
@@ -6010,6 +5946,7 @@ static int fcstats_sample_check (const double *y,
 
    OPT_D indicates that we should include the Theil decomposition.
    OPT_O allows missing values (which will be skipped).
+   OPT_T indicates that the data are time series.
 */
 
 gretl_matrix *forecast_stats (const double *y, const double *f,
@@ -6056,7 +5993,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	if (n_used != NULL) {
 	    *n_used = t2 - t1 + 1 - nmiss;
 	}
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -6090,7 +6027,7 @@ gretl_matrix *matrix_fc_stats (const double *y,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -6605,7 +6542,8 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, void *b, void *r,
+			      int s, gretl_bundle *b,
+			      gretl_bundle *res,
 			      DATASET *dset,
 			      PRN *prn, int *err)
 {
@@ -6639,7 +6577,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, r, dset, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, res, dset, prn, err);
     }
 
     return ret;
@@ -8089,158 +8027,80 @@ int fill_permutation_vector (gretl_vector *v, int n)
     return 0;
 }
 
-/* Given a gretl series @src under sub-sampling, construct a version
-   that is of the full length of the unrestricted dataset, with DBL_MAX
-   inserted in out-of-sample positions (we use DBL_MAX to avoid
-   collision with missing values). But if @src is NULL (no payload)
-   we can simply use 1s to mark out-of-sample observations.
+#define GEODEBUG 0
+
+/* Driver function for calling the geoplot plugin to produce
+   a map. To obtain the map polygons we need EITHER the name
+   of the source file (GeoJSON or Shapefile), via @fname,
+   OR the map info in the form of a gretl_bundle, via @mapptr.
+
+   The "payload" (if any) is given as a series, via @plx.
+
+   Options (if any) are provided via @optptr, a pointer to
+   gretl_bundle.
 */
 
-static gretl_matrix *full_length_vector (const double *src,
-					 const DATASET *dset,
-					 int *err)
-{
-    gretl_matrix *vf = NULL;
-    int len;
-
-    if (dset->submask == RESAMPLED ||
-	(complex_subsampled() && dset->submask == NULL)) {
-	/* can't do this! */
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (complex_subsampled()) {
-	len = get_full_length_n();
-	vf = gretl_zero_matrix_new(len, 1);
-    } else if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
-	len = dset->n;
-	vf = gretl_zero_matrix_new(len, 1);
-    } else {
-	/* nothing needed */
-	return NULL;
-    }
-
-    if (vf == NULL) {
-	*err = E_ALLOC;
-    } else if (complex_subsampled()) {
-	int exclude, t, rt = 0;
-	int i = 0;
-
-	for (t=0; t<len; t++) {
-	    if (dset->submask[t] == 0) {
-		exclude = 1;
-	    } else {
-		exclude = (rt < dset->t1 || rt > dset->t2);
-		rt++;
-	    }
-	    if (src != NULL) {
-		vf->val[t] = exclude ? DBL_MAX : src[i++];
-	    } else {
-		vf->val[t] = exclude ? 1 : 0;
-	    }
-	}
-    } else {
-	int t, i = 0;
-
-	for (t=0; t<dset->n; t++) {
-	    if (t < dset->t1 || t > dset->t2) {
-		vf->val[t] = src == NULL ? 1 : DBL_MAX;
-	    } else if (src != NULL) {
-		vf->val[t] = src == NULL? 0 : src[i++];
-	    }
-	}
-    }
-
-    return vf;
-}
-
-static int dset_subsampled (const DATASET *dset)
-{
-    return dset != NULL && (dset->t1 > 0 ||
-			    dset->t2 < dset->n-1 ||
-			    complex_subsampled());
-}
-
-#define GEO_DEBUG 0
-
 int geoplot_driver (const char *fname,
-		    void *mapptr,
-		    const gretl_matrix *plm,
+		    gretl_bundle *map,
 		    const double *plx,
 		    const DATASET *dset,
-		    void *optptr)
+		    gretl_bundle *opts)
 {
-    gretl_bundle *opts = optptr;
-    gretl_bundle *map = mapptr;
+    int (*mapfunc) (const char *, gretl_bundle *,
+		    gretl_matrix *, gretl_bundle *);
     gretl_matrix *payload = NULL;
-    int free_payload = 0;
-    int free_opts = 0;
-    int delmask = 0;
-    int subsampled;
+    const char *mapfile = NULL;
+    int free_map = 0;
     int err = 0;
 
-    if ((fname != NULL && mapptr != NULL) ||
-	(fname == NULL && mapptr == NULL)) {
-	fprintf(stderr, "geoplot_driver: must have filename or map bundle "
-		"but not both\n");
+    if (fname != NULL && map != NULL) {
+	gretl_errmsg_set("geoplot: cannot give both filename and map bundle");
 	return E_DATA;
     }
 
-    subsampled = dset_subsampled(dset);
+    if (map == NULL) {
+	mapfile = dataset_get_mapfile(dset);
+    }
+
+    if (fname == NULL && map == NULL) {
+	fname = mapfile;
+	if (fname == NULL) {
+	    gretl_errmsg_set("geoplot: no map was specified");
+	    return E_DATA;
+	}
+    }
 
     if (plx != NULL) {
-	/* payload is a series at source */
-	if (subsampled) {
-	    payload = full_length_vector(plx + dset->t1, dset, &err);
-	} else {
-	    payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
-	}
-	if (payload == NULL && !err) {
+	/* convert payload series to vector for convenience in plugin */
+	payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
+	if (payload == NULL) {
 	    err = E_ALLOC;
 	}
-	free_payload = 1;
-    } else if (plm == NULL && subsampled) {
-	if (gretl_bundle_has_key(opts, "mask")) {
-	    ; /* let's not mess with it */
-	} else {
-	    gretl_matrix *mask = full_length_vector(NULL, dset, &err);
+    }
 
-	    if (!err) {
-		if (opts == NULL) {
-		    opts = gretl_bundle_new();
-		    if (opts == NULL) {
-			err = E_ALLOC;
-		    }
-		    free_opts = 1;
-		} else {
-		    delmask = 1;
-		}
-		if (opts != NULL) {
-		    gretl_bundle_donate_data(opts, "mask", mask,
-					     GRETL_TYPE_MATRIX, 0);
-		}
-	    }
-#if GEO_DEBUG
-	    if (mask != NULL) {
-		gretl_matrix_print(mask, "geoplot_driver: mask");
-	    }
+#if GEODEBUG
+    fprintf(stderr, "geoplot_driver: map=%p, mapfile=%p, fname=%p\n",
+	    (void *) map, (void *) mapfile, (void *) fname);
 #endif
+
+    /* In the case where we got @fname, do we want to produce a
+       map bundle in which the actual map data are synced with
+       the dataset? Probably so if @fname is just $mapfile
+       (metadata loaded as dataset), and presumably not if @fname
+       is an "external" reference.
+    */
+    if (map == NULL && mapfile != NULL) {
+	if (fname == mapfile || !strcmp(fname, mapfile)) {
+#if GEODEBUG
+	    fprintf(stderr, "geoplot_driver: calling get_current_map()\n");
+#endif
+	    map = get_current_map(dset, NULL, &err);
+	    free_map = 1;
+	    fname = NULL;
 	}
-    } else {
-	payload = (gretl_matrix *) plm;
     }
-
-#if GEO_DEBUG
-    if (payload != NULL) {
-	gretl_matrix_print(payload, "geoplot_driver: payload");
-    }
-#endif
 
     if (!err) {
-	int (*mapfunc) (const char *, gretl_bundle *,
-			gretl_matrix *, gretl_bundle *);
-
 	mapfunc = get_plugin_function("geoplot");
 	if (mapfunc == NULL) {
 	    err = E_FOPEN;
@@ -8249,13 +8109,9 @@ int geoplot_driver (const char *fname,
 	}
     }
 
-    if (free_payload) {
-	gretl_matrix_free(payload);
-    }
-    if (free_opts) {
-	gretl_bundle_destroy(opts);
-    } else if (delmask) {
-	gretl_bundle_delete_data(opts, "mask");
+    gretl_matrix_free(payload);
+    if (free_map) {
+	gretl_bundle_destroy(map);
     }
 
     return err;

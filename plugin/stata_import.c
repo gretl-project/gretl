@@ -876,6 +876,7 @@ static int set_time_info (DATASET *dset, int tv, int pd)
 	printf("starting obs seems to be %s\n", dset->stobs);
 	dset->structure = TIME_SERIES;
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
+	ntolabel(dset->endobs, dset->n - 1, dset);
     } else {
 	dset->pd = 1;
     }

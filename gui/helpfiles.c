@@ -141,6 +141,7 @@ static struct gui_help_item gui_help_items[] = {
     { OPEN_LABELS,    "add-labels" },  /* FIXME */
     { COUNTMOD,       "count-model" },
     { REGLS,          "regls" },
+    { REGLS_ADV,      "regls-advanced" },
     { BWFILTER,       "bwfilter" },
     { POLYWEIGHTS,    "polyweights" },
     { EMAFILTER,      "ema-filter" },
@@ -719,8 +720,14 @@ void notify_string_not_found (GtkWidget *entry)
 
 static void normalize_style (GtkWidget *w, gpointer p)
 {
-    gtk_style_context_remove_class(GTK_STYLE_CONTEXT(p),
-				   GTK_STYLE_CLASS_ERROR);
+    GtkStyleContext *context;
+
+    if (p == NULL) {
+	context = gtk_widget_get_style_context(w);
+    } else {
+	context = GTK_STYLE_CONTEXT(p);
+    }
+    gtk_style_context_remove_class(context, GTK_STYLE_CLASS_ERROR);
 }
 
 void notify_string_not_found (GtkWidget *entry)
@@ -1007,12 +1014,6 @@ static void finder_add_dbn_options (windata_t *vwin,
 		     entry);
 }
 
-#if (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
-# define USE_ENTRY_ICON
-#endif
-
-#ifdef USE_ENTRY_ICON
-
 static void finder_icon_press (GtkEntry *entry,
 			       GtkEntryIconPosition pos,
 			       GdkEvent *event,
@@ -1021,15 +1022,23 @@ static void finder_icon_press (GtkEntry *entry,
     vwin_finder_callback(entry, vwin);
 }
 
-#endif
+static void add_finder_icon (windata_t *vwin, GtkWidget *entry)
+{
+    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
+				  GTK_ENTRY_ICON_SECONDARY,
+				  GTK_STOCK_FIND);
+    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
+				   GTK_ENTRY_ICON_SECONDARY,
+				   TRUE);
+    g_signal_connect(G_OBJECT(entry), "icon-press",
+		     G_CALLBACK(finder_icon_press),
+		     vwin);
+}
 
 /* add a "search box" to the right of a viewer window's toolbar */
 
 void vwin_add_finder (windata_t *vwin)
 {
-#ifndef USE_ENTRY_ICON
-    GtkWidget *label;
-#endif
     GtkWidget *entry;
     GtkWidget *hbox;
     int fwidth = 16;
@@ -1051,21 +1060,7 @@ void vwin_add_finder (windata_t *vwin)
 
     gtk_entry_set_width_chars(GTK_ENTRY(entry), fwidth);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-
-#ifdef USE_ENTRY_ICON
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
-				  GTK_ENTRY_ICON_SECONDARY,
-				  GTK_STOCK_FIND);
-    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
-				   GTK_ENTRY_ICON_SECONDARY,
-				   TRUE);
-    g_signal_connect(G_OBJECT(entry), "icon-press",
-		     G_CALLBACK(finder_icon_press),
-		     vwin);
-#else
-    label = gtk_label_new(_("Find:"));
-    gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-#endif
+    add_finder_icon(vwin, entry);
 
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
@@ -1079,6 +1074,83 @@ void vwin_add_finder (windata_t *vwin)
     g_signal_connect(G_OBJECT(entry), "activate",
 		     G_CALLBACK(vwin_finder_callback),
 		     vwin);
+}
+
+static void add_footer_close_button (GtkWidget *hbox)
+{
+    GtkWidget *img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE,
+					      GTK_ICON_SIZE_MENU);
+    GtkWidget *button = gtk_button_new();
+
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect_swapped(button, "clicked",
+			     G_CALLBACK(gtk_widget_hide),
+			     hbox);
+    gtk_widget_show_all(button);
+}
+
+static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
+			      GtkWidget *targ)
+{
+    if (event->keyval == GDK_Escape) {
+	gtk_widget_hide(targ);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+/* Callback from "hide" signal on the footer finder: we
+   want to turn the focus back onto the associated
+   text widget
+*/
+
+static void vwin_refocus_text (GtkWidget *w, windata_t *vwin)
+{
+    /* in case the prior string was not found, cancel the
+       error indicator
+    */
+#if GTK_MAJOR_VERSION == 2
+    normalize_base(vwin->finder, NULL);
+#else
+    normalize_style(vwin->finder, NULL);
+#endif
+
+    if (vwin_is_editing(vwin)) {
+	/* let the text area regain focus */
+	gtk_widget_grab_focus(vwin->text);
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
+    }
+}
+
+static void vwin_add_footer_finder (windata_t *vwin)
+{
+    GtkWidget *hbox, *entry;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    vwin->finder = entry = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
+    add_finder_icon(vwin, entry);
+
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 10);
+    add_footer_close_button(hbox);
+    gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
+
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(catch_footer_key), hbox);
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(finder_key_handler), vwin);
+    g_signal_connect(G_OBJECT(entry), "activate",
+		     G_CALLBACK(vwin_finder_callback),
+		     vwin);
+    g_signal_connect(G_OBJECT(hbox), "hide",
+		     G_CALLBACK(vwin_refocus_text),
+		     vwin);
+
+    gtk_widget_show_all(hbox);
+    gtk_widget_grab_focus(entry);
 }
 
 #define SHOW_FINDER(r)    (r != GUI_HELP && r != GUI_HELP_EN)
@@ -1434,7 +1506,6 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	if (gtk_text_iter_inside_word(&iter)) {
 	    GtkTextIter w_start, w_end;
-	    int got_dollar = 0;
 
 	    w_start = iter;
 	    w_end = iter;
@@ -1462,26 +1533,8 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 			g_free(text);
 			text = s;
-			got_dollar = 1;
 		    }
 		    g_free(dtest);
-		}
-	    }
-
-	    /* special: "coint2" command alias (remove?) */
-	    if (!got_dollar && text != NULL && !strcmp(text, "coint")) {
-		if (gtk_text_iter_forward_char(&w_end)) {
-		    gchar *s = gtk_text_buffer_get_text(buf, &w_start,
-							&w_end, FALSE);
-
-		    if (s != NULL) {
-			if (!strcmp(s, "coint2")) {
-			    g_free(text);
-			    text = s;
-			} else {
-			    g_free(s);
-			}
-		    }
 		}
 	    }
 	}
@@ -1492,7 +1545,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	g_free(text);
 	unset_window_help_active(vwin);
-	text_set_cursor(vwin->text, 0);
+	text_set_cursor(vwin->text, NULL);
 
 	if (pos <= 0) {
 	    warnbox(_("Sorry, help not found"));
@@ -1531,9 +1584,16 @@ void text_find (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
+	GtkWidget *p = gtk_widget_get_parent(vwin->finder);
+
+	if (!gtk_widget_get_visible(p)) {
+	    gtk_widget_show_all(p);
+	}
 	gtk_widget_grab_focus(vwin->finder);
 	gtk_editable_select_region(GTK_EDITABLE(vwin->finder),
 				   0, -1);
+    } else if (vwin->flags & VWIN_USE_FOOTER) {
+	vwin_add_footer_finder(vwin);
     } else {
 	find_string_dialog(find_in_text, vwin);
     }
@@ -1544,7 +1604,9 @@ void text_find_again (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
-	g_signal_emit_by_name(G_OBJECT(vwin->finder), "activate", NULL);
+	if (gtk_widget_get_visible(vwin->finder)) {
+	    g_signal_emit_by_name(G_OBJECT(vwin->finder), "activate", NULL);
+	}
     } else if (find_dialog != NULL) {
 	if (vwin == g_object_get_data(G_OBJECT(find_dialog), "windat")) {
 	    find_in_text(NULL, find_dialog);
@@ -1667,11 +1729,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	gtk_text_buffer_place_cursor(buf, &start);
 	gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &end);
 	vis = gtk_text_buffer_create_mark(buf, "vis", &end, FALSE);
-	if (gtk_text_iter_forward_line(&end)) {
-	    /* go one line further on, if possible */
-	    gtk_text_buffer_move_mark(buf, vis, &end);
-	}
-	gtk_text_view_scroll_mark_onscreen(view, vis);
+	gtk_text_view_scroll_to_mark(view, vis, 0.05, FALSE, 0, 0);
     } else if (from_cursor && !wrapped && !search_all) {
 	/* try wrapping */
 	from_cursor = FALSE;
@@ -1806,10 +1864,10 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     if (pos >= 0) {
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
-	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
-				     path, NULL, FALSE, 0, 0);
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(vwin->listbox),
 				 path, NULL, FALSE);
+	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
+				     path, NULL, TRUE, 0.5, 0);
 	vwin->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
     }
@@ -1817,7 +1875,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     return (pos >= 0);
 }
 
-/* Given @targ the name of a function package, try to find
+/* Given @targ, the name of a function package, try to find
    it in @vwin's listbox, and if found focus that row.
    Return TRUE if found, FALSE otherwise.
 */
@@ -2028,7 +2086,8 @@ enum {
     PKGBOOK,
     GRETL_MPI,
     GRETL_SVM,
-    GRETL_DBN
+    GRETL_DBN,
+    GRETL_GEO
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2124,19 +2183,95 @@ static int get_x12a_doc_path (char *path, const char *fname)
     return ret;
 }
 
-static int find_or_download_pdf (int code, int i, char *fullpath)
+static const char *tr_query (const char *lang)
+{
+    if (!strcmp(lang, "es")) {
+	return "¿Mostrar traducción al español?";
+    } else if (!strcmp(lang, "gl")) {
+	return "Mostrar tradución ao galego?";
+    } else if (!strcmp(lang, "it")) {
+	return "Mostra traduzione in italiano?";
+    } else if (!strcmp(lang, "pt")) {
+	return "Mostrar portugues tradução?";
+    } else if (!strcmp(lang, "ru")) {
+	return "Показать перевод на русский язык?";
+    } else {
+	return NULL;
+    }
+}
+
+static const char *have_translation (int code, const char *lang)
+{
+    gchar *ret = NULL;
+
+    if (code == HANSL_PRIMER) {
+	if (!strcmp(lang, "ru")) {
+	    ret = "hansl-primer-ru.pdf";
+	}
+    } else if (code == GRETL_REF) {
+	if (!strcmp(lang, "es")) {
+	    ret = "gretl-ref-es.pdf";
+	} else if (!strcmp(lang, "gl")) {
+	    ret = "gretl-ref-gl.pdf";
+	} else if (!strcmp(lang, "it")) {
+	    ret = "gretl-ref-it.pdf";
+	} else if (!strcmp(lang, "pt")) {
+	    ret = "gretl-ref-pt.pdf";
+	}
+    }
+
+    return ret;
+}
+
+static const char *show_translation (int code)
+{
+    const char *fname = NULL;
+    char lang[3] = {0};
+
+#ifdef WIN32
+    gchar *loc = g_win32_getlocale();
+
+    strncat(lang, loc, 2);
+    if (loc != NULL) {
+	fname = have_translation(code, lang);
+	g_free(loc);
+    }
+#elif defined(ENABLE_NLS)
+    char *loc = setlocale(LC_MESSAGES, NULL);
+
+    if (loc != NULL) {
+	strncat(lang, loc, 2);
+	fname = have_translation(code, lang);
+    }
+#endif
+
+    if (fname != NULL) {
+	const char *msg = tr_query(lang);
+	int resp = yes_no_dialog(NULL, msg, NULL);
+
+	if (resp != GRETL_YES) {
+	    fname = NULL;
+	}
+    }
+
+    return fname;
+}
+
+/* @pref is the documentation preference registered in settings.c:
+   0 = English, US letter
+   1 = English, A4
+   2 = Translation, if available
+*/
+
+static int find_or_download_pdf (int code, int pref, char *fullpath)
 {
     const char *guide_files[] = {
 	"gretl-guide.pdf",
-	"gretl-guide-a4.pdf",
-	"gretl-guide-it.pdf"
+	"gretl-guide-a4.pdf"
     };
     const char *ref_files[] = {
 	"gretl-ref.pdf",
 	"gretl-ref-a4.pdf",
-	"gretl-ref-it.pdf",
-	"gretl-ref-pt.pdf",
-	"gretl-ref-gl.pdf"
     };
     const char *kbd_files[] = {
 	"gretl-keys.pdf",
@@ -2144,7 +2279,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     };
     const char *primer_files[] = {
 	"hansl-primer.pdf",
-	"hansl-primer-a4.pdf"
+	"hansl-primer-a4.pdf",
     };
     const char *pkgbook_files[] = {
 	"pkgbook.pdf",
@@ -2158,37 +2293,49 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-svm.pdf",
 	"gretl-svm-a4.pdf"
     };
-    const char *fname;
+    const char *fname = NULL;
     int gotit = 0;
     int err = 0;
 
-    if (i < 0 || i > 4) {
-	i = 0;
+    if (pref < 0 || pref > 2) {
+	/* out of bounds */
+	pref = 0;
     }
 
-    if (code == GRETL_KEYS || code == HANSL_PRIMER ||
-	code == GRETL_MPI || code == GRETL_SVM) {
-	/* no (current) translations */
-	if (i > 1) i = 1;
-    } else if (code == GRETL_GUIDE) {
-	/* the only translation is Italian (and it's old) */
-	if (i > 2) i = 1;
+    if (pref > 0) {
+	/* Try offering a translation where available: currently only
+	   for the Gretl Reference and Hansl primer (Russian).
+	*/
+	pref = 1;
+	if (code == HANSL_PRIMER || code == GRETL_REF) {
+	    fname = show_translation(code);
+	}
+    }
+
+#if 0
+    fprintf(stderr, "HERE code=%d, pref=%d, fname %s\n",
+	    code, pref, fname != NULL ? fname : "TBD");
+#endif
+
+    if (fname != NULL) {
+	/* got a specific translation */
+	goto next_step;
     }
 
     if (code == GRETL_GUIDE) {
-	fname = guide_files[i];
+	fname = guide_files[pref];
     } else if (code == GRETL_REF) {
-	fname = ref_files[i];
+	fname = ref_files[pref];
     } else if (code == GRETL_KEYS) {
-	fname = kbd_files[i];
+	fname = kbd_files[pref];
     } else if (code == HANSL_PRIMER) {
-	fname = primer_files[i];
+	fname = primer_files[pref];
     } else if (code == PKGBOOK) {
-	fname = pkgbook_files[i];
+	fname = pkgbook_files[pref];
     } else if (code == GRETL_MPI) {
-	fname = gretlMPI_files[i];
+	fname = gretlMPI_files[pref];
     } else if (code == GRETL_SVM) {
-	fname = gretlSVM_files[i];
+	fname = gretlSVM_files[pref];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2197,13 +2344,19 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = "dbnomics.pdf";
 	sprintf(fullpath, "%sfunctions%cdbnomics%c%s",
 		gretl_home(), SLASH, SLASH, fname);
+    } else if (code == GRETL_GEO) {
+	fname = "geoplot.pdf";
+	sprintf(fullpath, "%sfunctions%cgeoplot%c%s",
+		gretl_home(), SLASH, SLASH, fname);
     } else {
 	return E_DATA;
     }
 
+ next_step:
+
     fprintf(stderr, "pdf help: looking for %s\n", fname);
 
-    if (code != GRETL_DBN) {
+    if (code != GRETL_DBN && code != GRETL_GEO) {
 	/* is the file available in public dir? */
 	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
     }
@@ -2227,6 +2380,9 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	/* try in the user's dotdir? */
 	if (code == GRETL_DBN) {
 	    sprintf(fullpath, "%sfunctions%cdbnomics%cdbnomics.pdf",
+		    gretl_dotdir(), SLASH, SLASH);
+	} else if (code == GRETL_GEO) {
+	    sprintf(fullpath, "%sfunctions%cgeojson%cgeoplot.pdf",
 		    gretl_dotdir(), SLASH, SLASH);
 	} else {
 	    sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
@@ -2310,6 +2466,8 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_SVM;
 	} else if (!strcmp(aname, "gretlDBN")) {
 	    code = GRETL_DBN;
+	} else if (!strcmp(aname, "GeoplotDoc")) {
+	    code = GRETL_GEO;
 	}
     }
 

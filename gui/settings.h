@@ -38,9 +38,11 @@ int get_x12a_ok (void);
 void set_up_mac_look (void);
 #endif
 
-#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
-void set_wimp_preferred (int s);
+#if defined(G_OS_WIN32)
 void set_up_windows_look (void);
+# if GTK_MAJOR_VERSION < 3
+void set_wimp_preferred (int s);
+# endif
 #endif
 
 void set_gretl_startdir (void);
@@ -51,6 +53,8 @@ int get_manpref (void);
 
 int autoicon_on (void);
 
+int get_icon_sizing (void);
+
 int use_tabbed_editor (void);
 
 int use_tabbed_model_viewer (void);
@@ -58,10 +62,6 @@ int use_tabbed_model_viewer (void);
 int session_prompt_on (void);
 
 void set_session_prompt (int val);
-
-int display_workdir (void);
-
-int show_workdir_tooltip (void);
 
 int get_keep_folder (void);
 
@@ -78,6 +78,8 @@ void dump_rc (void);
 void force_english_help (void);
 
 int preferences_dialog (int page, const char *varname, GtkWidget *parent);
+
+int console_prefs_dialog (GtkWidget *parent);
 
 void font_selector (GtkAction *action);
 

@@ -97,14 +97,14 @@ gretl_vector *gretl_vector_from_series (const double *x,
 					int t1, int t2)
 {
     gretl_matrix *v = NULL;
-    int i, n = t2 - t1 + 1;
+    int n = t2 - t1 + 1;
 
     if (n > 0) {
+	size_t sz = n * sizeof *x;
+
 	v = gretl_column_vector_alloc(n);
 	if (v != NULL) {
-	    for (i=0; i<n; i++) {
-		v->val[i] = x[i + t1];
-	    }
+	    memcpy(v->val, x + t1, sz);
 	    gretl_matrix_set_t1(v, t1);
 	    gretl_matrix_set_t2(v, t2);
 	}
@@ -502,7 +502,7 @@ real_gretl_matrix_data_subset (const int *list,
 			       const char *mask,
 			       int op, int *err)
 {
-    gretl_matrix *M;
+    gretl_matrix *M = NULL;
     int T, Tmax = t2 - t1 + 1;
     int do_obs_info = 1;
     int k, mt1 = 0, mt2 = 0;
@@ -557,19 +557,22 @@ real_gretl_matrix_data_subset (const int *list,
 	}
     }
 
+    if (T < 0) {
+	/* "can't happen" */
+	*err = E_DATA;
+    } else {
+	M = gretl_matrix_alloc(T, k);
+	if (M == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err || T == 0) {
+	return M;
+    }
+
     if (do_obs_info) {
 	mt1 = t1; mt2 = t2;
-    }
-
-    if (T <= 0) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    M = gretl_matrix_alloc(T, k);
-    if (M == NULL) {
-	*err = E_ALLOC;
-	return NULL;
     }
 
     s = 0;
@@ -777,46 +780,6 @@ gretl_matrix_data_subset_special (const int *list,
     return X;
 }
 
-static void vname_from_colname (char *targ, const char *src,
-				int i)
-{
-    gchar *s, *p, *tmp = g_strdup(src);
-    int n, err = 0;
-
-    s = tmp;
-    /* skip any invalid leading bytes */
-    while (*s && !isalpha(*s)) {
-	s++;
-    }
-
-    n = strlen(s);
-    p = s;
-
-    if (n == 0) {
-	err = 1;
-    } else {
-	/* check for invalid embedded bytes */
-	while (*s) {
-	    if (*s == ' ') {
-		*s = '_';
-	    } else if (!isalnum(*s) && *s != '_') {
-		err = 1;
-		break;
-	    }
-	    s++;
-	}
-    }
-
-    if (err) {
-	sprintf(targ, "v%d", i);
-    } else {
-	*targ = '\0';
-	strncat(targ, p, VNAMELEN-1);
-    }
-
-    g_free(tmp);
-}
-
 static void check_matrix_varnames (DATASET *dset)
 {
     int i, j, err = 0;
@@ -925,7 +888,9 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	    memcpy(dset->Z[i], src, T * sizeof *src);
 	}
 	if (cnames != NULL) {
-	    vname_from_colname(dset->varname[i], cnames[col], i);
+	    if (gretl_normalize_varname(dset->varname[i], cnames[col], 0, i)) {
+		series_record_display_name(dset, i, cnames[col]);
+	    }
 	} else if (opt & OPT_N) {
 	    sprintf(dset->varname[i], "%d", col + 1);
 	} else if (opt & OPT_R) {
@@ -1249,7 +1214,7 @@ static double unix_scan_NA (FILE *fp, int *err)
  * a text file the column separator must be space or tab. It is
  * assumed that the dimensions of the matrix (number of rows and
  * columns) are found on the first line of the file, so no
- * heuristics are necessary. In case of error,  @err is filled
+ * heuristics are necessary. In case of error @err is filled
  * appropriately.
  *
  * Returns: The matrix as read from file, or NULL.
@@ -1993,24 +1958,31 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	char *intcols = NULL;
 	int llen = 0, intcast = 0;
 	int cpos = strlen(fmt) - 1;
+	int variant = 0;
 	char c = fmt[cpos];
 	int i, j, k;
 	double x;
 
-	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
-	    intcast = 1;
-	} else if (c == 'v') {
-	    /* "variant" column format */
-	    intcols = get_intcols(m, &intcast);
-	}
-
 	xfmt = gretl_strdup(fmt);
 
+	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
+	    intcast = 1;
+	} else if (fmt[cpos-1] == 'v') {
+	    /* new-style "variant" column format */
+	    intcols = get_intcols(m, &intcast);
+	    gretl_delchar('v', xfmt);
+	    variant = 1;
+	} else if (c == 'v') {
+	    /* old-style "variant" column format */
+	    intcols = get_intcols(m, &intcast);
+	    xfmt[cpos] = 'g';
+	    variant = 1;
+	}
+
 	if (intcast || intcols) {
-	    ifmt = gretl_strdup(fmt);
-	    if (c == 'v') {
+	    ifmt = gretl_strdup(xfmt);
+	    if (variant) {
 		revise_integer_format(ifmt);
-		xfmt[cpos] = 'g';
 	    }
 	}
 

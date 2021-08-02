@@ -1,7 +1,115 @@
-version 2020f, in progress
+version 2021c, in progress
+- New function contains(): indicates whether a numerical
+  object contains members of a specified set
+- New function bcheck(): aids in handling bundle arguments
+  to user-defined functions
+- New command "panspec": substantially, the old "hausman"
+  command under a different name; for the moment, "hausman"
+  is still kept as an alias for backward compatibility
+- fcstats() matrix row labels: distinguish U1 vs U2 variant
+  of Theil's U statistic
+- printing of bundles: sort members by type and key
+- "print" command: make more flexible, it now includes
+  most of the functionality of "eval"
+- "var" command with --lagselect option: add a --minlag
+  option to allow testing against 0 lags, or imposing the
+  assumption that at least p > 1 lags are needed
+- "set" command: new variable "datacols" to control the max
+  number of series to print side by side
+- "foreign" command mechanism: updates to support version
+  4.1.0 of R and version 8.0 of Ox Console
+- GUI: introduce experimental "plot collection"
+- GUI: add option to use the tab key as the trigger for
+  autocompletion in the script editor and console
+- GUI: add command-line options: --new to start a new gretl
+  instance unconditionally and --single to use a single
+  program instance unconditionally
+- GUI script editor: make the Find box appear at the foot of
+  the window, not in a separate dialog
+- GUI: provide larger (24 pixel) toolbar icons for use on
+  small, high-density displays in particular
+- GUI: numerous other small fixes and enhancements
+- MS Windows, 64-bit: update to gnuplot 5.4.1, patched to
+  avoid too-big fonts on Windows with Ultra HD display
+- Fix bug: spurious results from "system" command in case of
+  exact collinearity
+- Fix bug: spurious reduction of the sample range in the grid
+  variant of "panplot" with some patterns of missing values
+- Fix bug: wrong results from the polyfit() function when
+  applied to panel data
+- Numerous additional small big fixes
+- Internals: make "libset" code more compact and efficient
+- Internals: clear out old gettext variants that encoded
+  translations in a Windows code page rather than UTF-8
+- gretl_bundle.h: rename argument named "template" to avoid
+  trouble with C++
+- Substantial enhancements to the SVAR and regls addons
+- New "logging" addon
+- New, substantially updated Russian translation
+- Cleanup: remove the "arbond" command, in favor of "dpanel",
+  and add some dpanel enhancements
+
+2021-05-04 version 2021b
+- New function trigamma(): second derivative of lngamma
+- New function midasmult(): gives MIDAS multipliers
+- New command "bds": BDS nonlinearity test
+- gdtb data format: make the new variant the default
+- tighten up on defbundle() syntax: no empty arguments
+  allowed
+- array definition: enforce the specific choice of type
+- "wls" command, with 0/1 weights: compute $yhat and $uhat
+  for the excluded observations
+- "dpanel" estimation via the GUI: make the --dpdstyle flag
+  configurable
+- "dpanel" --verbose switch: provide some information on the
+  instruments used
+- "adf" command: support more accurate inference with
+  improved p-values or critical values, for the GLS case
+  in particular
+- "xtab" command: clarify that the $result (matrix) accessor
+  is just for the bivariate case
+- "clear" command: add --functions option to remove all hansl
+  functions from memory
+- "restrict" command: add "inject" keyword to support use of
+  an array of strings to specify restrictions
+- "param_names" keyword for nls, mle, gmm: accept an array of
+  strings as argument
+- binary probit and logit: offer Estrella's pseudo R-squared
+  as an alternative to McFadden, via --estrella option
+- The functions mean, sum, sd, var, wmean, wsd and wvar now
+  accept an optional boolean argument; specific to the
+  cross-sectional statistics produced when list arguments
+  are given, this allows skipping of missing values.
+- hdprod(): introduce "shorthand" syntax (one argument only)
+- dbnomics addon: speed up retrieval of data
+- user-defined functions: allow overloading of numeric
+  arguments and return value (scalar, series or matrix)
+- user-defined function parameters: enforce the "const" flag
+  more consistently
+- gretl timer ("stopwatch"): provide a separate timer for each
+  level of function execution
+- GUI usage of geoplot addon: make it easier to save an edited
+  map as GeoJSON
+- GUI model specification dialog: enable interactive search in
+  lists of series
+- GUI, saving contents of bundles: enable saving of integer
+  members
+- GUI, handle dependencies when installing function packages
+- GUI script editor: improve implementation of "smart tab"
+- Fix bug: breakage in computing out-of-sample forecasts from
+  VECMs
+- Fix bug: possible crash when displaying a matrix with very
+  long column names in the GUI program
+- Fix bug: broken covariance matrix from mols() with a large
+  number of regressors
+- Fix bug: crash on applying postfix "++" to a submatrix
+- macOS: first release for arm64
+
+2021-01-18 version 2021a
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
+- defbundle(): add two shorthand variants of this function
 - irf(): support calculation of multiple impulse responses
   in a single call (with internal speed-up)
 - irf() bug-fix: failing to compute bootstrap confidence band
@@ -13,6 +121,7 @@ version 2020f, in progress
 - mread(): support reading gdt and gdtb files as matrices
 - readfile(): support reading gzipped files transparently
 - obslabel(): support a vector of observations
+- nls/mle/gmm blocks: support use of printf statements
 - "open" command: support reading selected series from
   native gretl datafiles (gdt, gdtb)
 - "join" command: support $obsmajor, $obsminor as outer keys
@@ -20,9 +129,15 @@ version 2020f, in progress
 - "freq" and "xtab" for string-valued series: don't let
   non-ASCII characters break the formatting
 - Gretl User's Guide: add links to download example scripts
-- reorganize the categories for the functions help file
+- Reorganize the categories for the functions help file
 - Fix obscure problem with plots: inability to show markers
   for observations in some cases where this should be OK
+- Fix memory leak on deleting a series with descriptive
+  label attached
+- Fix excessive messaging on renaming series in a loop, a
+  serious issue if the dataset contains very many series
+- Fix breakage in handling of boolean comparisons involving
+  missing values
 - Fix bug: potential crash on "Save as icon and close" for
   a model displayed in tabbed model viewer
 - Fix bug: possible crash on confusion between singleton
@@ -31,6 +146,8 @@ version 2020f, in progress
   the GUI model selection dialog
 - Fix bug: possible crash on frequency plot for series with
   long string values
+- Fix: text encoding for RTF printing of model output broken
+  in some cases under translation
 - Fix: memory leaks associated with GUI window lists
 - Fix: buggy completion proposals in script editor when
   using gtksourceview-2.0
@@ -414,8 +531,6 @@ version 2020f, in progress
   with x12a/x13as
 
 2018-12-21 version 2018d
-- Internal representation of missing values: switch to
-  using NaN
 - Internal speed-ups for matrix reads and writes
 - Add new function, atan2(), as per the C function of the
   same name
@@ -463,7 +578,10 @@ version 2020f, in progress
 - Windows and Mac packages: update to gmp 6.1.2, mpfr 4.0.1
 
 2018-09-03 version 2018c
-- "outfile": new syntax, use "end outfile" instead of "outfile --close"
+- Internal representation of missing values: switch to
+  using NaN
+- "outfile": new syntax, use "end outfile" instead of
+  "outfile --close"
 - Fix bug: the panel-statistic functions pmean() and psd()
   give wrong results when only the first observation of a
   cross-sectional unit differs from the others

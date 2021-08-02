@@ -85,5 +85,9 @@
   <string>grtl</string>
   <key>CFBundleVersion</key>
   <string>@VERSION@</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHighResolutionCapable</key>
+  <string>True</string>
 </dict>
 </plist>

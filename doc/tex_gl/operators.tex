@@ -1,20 +1,20 @@
-\chapter{Operators}
+\chapter{Operadores}
 \label{chap:operators}
 
-\section{Precedence}
+\section{Precedencia}
 
-Table~\ref{tab:ops} lists the operators available in \app{gretl} in
-order of decreasing precedence: the operators on the first row have
-the highest precedence, those on the second row have the second
-highest, and so on. Operators on any given row have equal
-precedence. Where successive operators have the same precedence the
-order of evaluation is in general left to right. The exceptions are
-exponentiation and matrix transpose-multiply. The expression
-\verb|a^b^c| is equivalent to \verb|a^(b^c)|, not \verb|(a^b)^c|, 
-and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
+A táboa~\ref{tab:ops} enumera os operadores dispoñibles en \app{GRETL} en
+orde de precedencia decrecente: os operadores da primeira fila son os de
+maior preferencia, os da segunda fila son os de segunda maior preferencia,
+e así no sucesivo. Os operadores que están nunha mesma fila teñen a mesma
+preferencia. Cando operadores sucesivos teñen a mesma preferencia, a orde
+xeral de avaliación é de esquerda a dereita. As excepcións son as operacións
+exponencial e multiplicación dunha matriz trasposta. A expresión
+\verb|a^b^c| equivale a \verb|a^(b^c)|, non a \verb|(a^b)^c|, e de xeito
+similar \verb|A'B'C'| equivale a \verb|A'(B'(C'))|.
 
 \begin{table}[htbp]
-\caption{Operator precedence}
+\caption{Precedencia dos operadores}
 \label{tab:ops}
 \begin{center}
 \begin{tabular}{lllllllll}
@@ -31,11 +31,11 @@ and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
 \end{center}
 \end{table}
 
-In addition to the basic forms shown in the Table, several operators
-also have a ``dot form'' (as in ``\texttt{.+}'' which is read as ``dot
-plus''). These are element-wise versions of the basic operators, for
-use with matrices exclusively; they have the same precedence as their
-basic counterparts. The available dot operators are as follows.
+Ademais das formas básicas amosadas na Táboa, diversos operadores teñen
+tamén unha ``forma con punto'' (como en ``\texttt{.+}'' que se le como
+``punto máis''). Estas son versións ao xeito dos operadores básicos, pero
+para utilizar exclusivamente con matrices; teñen a mesma precedencia que
+os seus homólogos básicos. Os operadores con punto dispoñibles son os seguintes:
 
 \begin{center}
 \begin{tabular}{cccccccccc}
@@ -45,75 +45,74 @@ basic counterparts. The available dot operators are as follows.
 \end{tabular}
 \end{center}
 
-Each basic operator is shown once again in the following list along
-with a brief account of its meaning. Apart from the first three sets
-of grouping symbols, all operators are binary except where otherwise
-noted.
+Cada operador básico amósase unha vez máis na seguinte listaxe xunto cunha
+breve consideración sobre o seu significado. Aparte dos tres primeiros
+conxuntos de símbolos de agrupamento, tódolos operadores son binarios agás
+cando se advirta do contrario.
 
 \begin{longtable}{ll}
-\verb|()| & Function call \\
-\verb|[]|  & Subscripting \\
-\texttt{.} & Bundle membership (see below) \\
-\verb|{}|  & Matrix definition \\
-\texttt{!} & Unary logical NOT \\
-\texttt{++} & Increment (unary) \\
-\verb|--| & Decrement (unary) \\
-\verb|^|  & Exponentiation \\
-\verb|'|  & Matrix transpose (unary) or transpose-multiply (binary) \\
-\texttt{*} & Multiplication \\
-\texttt{/} & Division, matrix ``right division'' \\
-\texttt{\%} & Modulus \\
-\verb+\+    & Matrix ``left division'' \\
-\texttt{**} & Kronecker product \\
-\texttt{+} & Addition \\
-\texttt{-} & Subtraction \\
-\verb|~| & Matrix horizontal concatenation \\
-\verb+|+ & Matrix vertical concatenation \\
-\verb|>| & Boolean greater than \\
-\verb|<| & Boolean less than \\
-\verb|>=| & Greater than or equal \\
-\verb|<=| & Less than or equal \\
-\texttt{..} & Range from--to (in constructing lists) \\
-\texttt{==} & Boolean equality test \\
-\texttt{!=} & Boolean inequality test \\
-\verb|&&| & Logical AND \\
-\verb+||+ & Logical OR \\
-\texttt{?:} & Conditional expression \\
+\verb|()| & Chamada a unha función \\
+\verb|[]|  & Indicación de subíndices \\
+\texttt{.} & Pertenza a un feixe (mira abaixo) \\
+\verb|{}|  & Definición dunha matriz \\
+\texttt{!} & NON lóxico unario \\
+\texttt{++} & Aumento (unario) \\
+\verb|--| & Diminución (unaria) \\
+\verb|^|  & Expoñente \\
+\verb|'|  & Transposición matricial (unaria) ou multiplicación de trasposta (binaria) \\
+\texttt{*} & Multiplicación \\
+\texttt{/} & División, ``división á dereita'' matricial \\
+\texttt{\%} & Módulo \\
+\verb+\+    & ``División á esquerda'' matricial \\
+\texttt{**} & Producto de Kronecker \\
+\texttt{+} & Suma \\
+\texttt{-} & Resta \\
+\verb|~| & Concatenación matricial horizontal \\
+\verb+|+ & Concatenación matricial vertical \\
+\verb|>| & Maior que (booleano) \\
+\verb|<| & Menor que (booleano) \\
+\verb|>=| & Maior ou igual que \\
+\verb|<=| & Menor ou igual que \\
+\texttt{..} & Rango desde--ata (ao elaborar listaxes) \\
+\texttt{==} & Proba de igualdade booleana \\
+\texttt{!=} & Proba de desigualdade booleana \\
+\verb|&&| & E lóxico \\
+\verb+||+ & OU lóxico \\
+\texttt{?:} & Expresión condicional \\
 \end{longtable}
 
-The interpretation of ``\texttt{.}'' as the bundle membership operator
-is confined to the case where it is immediately preceded by the
-identifier for a bundle, and immediately followed by a valid
-identifier (key).
+Interpretar ``\texttt{.}'' como o operador de pertenza a un feixe (bundle)
+limítase ao caso no que está inmediatamente precedido polo identificador
+dun feixe, e seguido inmediatamente por un identificador válido (chave).
 
-Details on the use of the matrix-related operators (including the dot
-operators) can be found in the chapter on matrices in the
-\textit{Gretl User's Guide}.
+Podes atopar os detalles sobre a utilización dos operadores relacionados con
+matrices (incluído o operador punto) no capítulo sobre matrices no
+\textit{Manual de Usuario de GRETL}.
 
-\section{Assignment}
+\section{Asignación}
 
-The operators mentioned above are all intended for use on the
-right-hand side of an expression which assigns a value to a variable
-(or which just computes and displays a value---see the \texttt{eval}
-command). In addition we have the assignment operator itself,
-``\texttt{=}''. In effect this has the lowest precedence of all: the
-entire right-hand side is evaluated before assignment takes place.
+Os operadores mencionados máis arriba están todos ideados para utilizarse no
+lado dereito dunha expresión que asigna un valor a unha variable (ou que
+simplemente calcula e presenta un valor ---consulta a instrución \texttt{eval}).
+Ademais, tes ao propio operador de asignación, ``\texttt{=}''. Efectivamente,
+este ten a precedencia máis baixa de todas: avalíase todo o lado dereito da
+expresión antes de que teña lugar a asignación.
 
-Besides plain ``\texttt{=}'' several ``inflected'' versions of
-assignment are available. These may be used only when the left-hand
-side variable is already defined. The inflected assignment yields a
-value that is a function of the prior value on the left and the
-computed value on the right. Such operators are formed by prepending a
-regular operator symbol to the equals sign. For example,
+Á parte do ``\texttt{=}'' plano, disponse de diversas versións ``inflexionadas''
+de asignación. Estas poden utilizarse só cando a variable do lado esquerdo
+xa está definida. A asignación inflexionada produce un valor que é unha
+función do valor previo na esquerda e do valor calculado na dereita. Eses
+operadores fórmanse antepoñendo un símbolo de operador normal ao signo igual.
+Por exemplo,
 %
 \begin{code}
 y += x
 \end{code}
 %
-The new value assigned to \texttt{y} by the statement above is the
-prior value of \texttt{y} plus \texttt{x}. The other available
-inflected operators, which work in an exactly analogous fashion, are
-as follows.
+O novo valor asignado a \texttt{y} polo enunciado de arriba é o valor
+previo de \texttt{y} máis \texttt{x}. Os outros operadores inflexionados
+dispoñibles, que funcionan dun xeito exactamente similar, son os
+seguintes:
 
 \begin{center}
 \begin{tabular}{ccccccc}
@@ -122,31 +121,31 @@ as follows.
 \end{tabular}
 \end{center}
 
-In addition, a special form of inflected assignment is provided for
-matrices. Say matrix \texttt{M} is $2 \times 2$. If you execute
-\texttt{M = 5} this has the effect of replacing \texttt{M} with a $1
-\times 1$ matrix with single element 5. But if you do \texttt{M .= 5}
-this assigns the value 5 to all elements of \texttt{M} without
-changing its dimensions.
+Amais, para as matrices se proporciona unha forma especial de asignación
+inflexionada. Supoñamos que a matriz \texttt{M} é $2 \times 2$. Se executas
+\texttt{M = 5}, isto ten o efecto de substituír \texttt{M} por unha matriz
+$1 \times 1$ cun único elemento 5. Pero se indicas \texttt{M .= 5}, isto
+asigna o valor 5 a tódolos elementos de \texttt{M} sen trocar a dimensión
+desta.
 
-\section{Increment and decrement}
+\section{Aumento e diminución}
 
-The unary operators \texttt{++} and \verb|--| follow their
-operand,\footnote{The C programming language also supports prefix
-  versions of \texttt{++} and \verb|--|, which increment or decrement
-  their operand before yielding its value. Only the postfix form is
-  supported by \app{gretl}.}  which must be a variable of scalar
-type. Their simplest use is in stand-alone expressions, such as
+Os operadores unarios \texttt{++} e \verb|--| seguen ao seu operando,
+\footnote{A linguaxe C de programación tamén admite versións de \texttt{++}
+  e \verb|--| como prefixos, que aumentan ou diminúen o seu operando
+  antes de proporcionar o seu valor. En \app{GRETL} unicamente se admite
+  a forma como sufixo.}  que debe ser unha variable de tipo escalar.
+A súa utilización máis simple é a das expresións illadas, como
 %
 \begin{code}
-j++  # shorthand for j = j + 1
-k--  # shorthand for k = k - 1
+j++  # abreviatura para j = j + 1
+k--  # abreviatura para k = k - 1
 \end{code}
 %
-However, they can also be embedded in more complex expressions, in
-which case they first yield the original value of the variable in
-question, then have the side-effect of incrementing or decrementing
-the variable's value. For example:
+Porén, tamén se poden integrar en expresións máis complexas, en cuxo
+caso primeiro proporcionan o valor orixinal da variable en cuestión,
+e despois teñen o efecto secundario de aumentar ou diminuír o valor
+da variable. Por exemplo:
 %
 \begin{code}
 scalar i = 3
@@ -155,30 +154,20 @@ matrix M = zeros(10, 1)
 M[i++] = 1
 \end{code}
 %
-After the second line, \texttt{k} has the value 3 and \texttt{i} has
-value 4. The last line assigns the value 1 to element 4 of
-matrix \texttt{M} and sets \texttt{i} = 5.
+Despois da segunda liña, \texttt{k} ten o valor 3 e \texttt{i} ten o
+valor 4. A última liña asigna o valor 1 ao elemento 4 da matriz
+\texttt{M} e establece que \texttt{i} = 5.
 
-\textit{Warning}: as in the C programming language, the unary
-increment or decrement operator should be not be applied to a
-variable in conjunction with regular reference to the same variable in
-a single statement. This is because the order of evaluation is not
-guaranteed, giving rise to ambiguity. Consider the following:
+\textit{Aviso}: Como na linguaxe C de programación, o operador unario
+de incremento ou diminución non se debe de aplicar a unha variable
+xunto cunha referencia normal á mesma variable, nun único enunciado.
+Isto é debido a que a orde de avaliación non está garantida, dando
+lugar a certa ambigüidade. Observa o seguinte:
 %
 \begin{code}
-M[i++] = i # don't do this!
+M[i++] = i # Non fagas isto!
 \end{code}
 %
-This is supposed to assign the value of \texttt{i} to \texttt{M[i]},
-but is it the original or the incremented value? This is not actually
-defined. 
-
-
-
-
-
-
-
-
-
-
+Isto suponse que asigna o valor de \texttt{i} a \texttt{M[i]}, agora
+ben, é o valor orixinal ou o aumentado? Actualmente, isto non está
+definido.

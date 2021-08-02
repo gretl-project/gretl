@@ -23,10 +23,6 @@
 
 #include <gtk/gtk.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
 #define PCA_DEBUG 0
 
 struct flag_info {
@@ -204,7 +200,7 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
     pprintf(prn, "%s\n", _("Principal Components Analysis"));
     pprintf(prn, "n = %d", cmat->n);
     if (cmat->missing > 0) {
-	pprintf(prn, " (dropped %d incomplete observations)",
+	pprintf(prn, _(" (dropped %d incomplete observations)"),
 		cmat->missing);
     }
     pputs(prn, "\n\n");

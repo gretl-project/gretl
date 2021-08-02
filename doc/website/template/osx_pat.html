@@ -21,35 +21,53 @@
  <a href="mac-legacy.html">gretl for legacy Macs</a> page.
 </p>
 
-<h2>Getting gretl</h2> 
-
-<p>You have a choice of the latest "official" release or the current
+<p>You have a choice of the latest official release or the current
 "snapshot".  The snapshot is more up to date: often it will contain
 bug-fixes but sometimes it will contain newly introduced bugs. To see
 what's new in the snapshot, take a look at the gretl
-<a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
+<a href="../ChangeLog.html">Change log</a> (the "in progress"
+entry).</p>
+
+<p><b>Tip</b>: If you're updating your gretl installation it may
+  be advisable to delete the old version of gretl before
+  installing the new one.</p>
+
+<h2>gretl for macOS 11 (Big Sur) or higher, with "Apple Silicon"</h2>
 
 <table cellpadding="2">
 <tr>
 <td><p>latest release (SHORTDATE)</p></td>
 <td><p>
-<a href="http://sourceforge.net/projects/gretl/files/gretl/VERSION/gretl-VERSION-quartz.pkg/download">gretl-VERSION-quartz.pkg</a>
+<a href="http://sourceforge.net/projects/gretl/files/gretl/VERSION/gretl-VERSION-macos-arm64.pkg/download">gretl-VERSION-macos-arm64.pkg</a>
 </p></td>
 </tr>
-
 <tr>
 <td><p>OR current snapshot</p></td>
 <td><p>
 <a
-href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-quartz.pkg/download">gretl-quartz.pkg</a>
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-macos-arm64.pkg/download">gretl-macos-arm64.pkg</a>
 </p></td>
 </tr>
 </table>
 
-<p><b>Tip</b>: If you're updating your gretl installation it may
-  be advisable to delete the old version of gretl before
-  installing the new one.</p>
-  
+<h2>gretl for Mac with Intel processor</h2>
+
+<table cellpadding="2">
+<tr>
+<td><p>latest release (SHORTDATE)</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/gretl/VERSION/gretl-VERSION-macos-intel.pkg/download">gretl-VERSION-macos-intel.pkg</a>
+</p></td>
+</tr>
+<tr>
+<td><p>OR current snapshot</p></td>
+<td><p>
+<a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-macos-intel.pkg/download">gretl-macos-intel.pkg</a>
+</p></td>
+</tr>
+</table>
+
 <p>You may also be interested in the <a href="#optextra">optional extras</a>
 below.</p>
 
@@ -59,7 +77,7 @@ below.</p>
 
 <ol>
 <li><p>
-Click to download either the latest release or the "snapshot" (above).  The
+Click to download either the latest release or the snapshot (above).  The
 selected gretl package file should appear in your Downloads after a short
 while, or it may be opened by the Mac Installer program right away.
 If the package is not opened automatically, minimize your browser window so
@@ -68,17 +86,14 @@ file in Downloads to open the installer. Either way, you should then be
 walked through the installation process.
 </p></li>
 
-<li><p>
-Navigate to Applications in the Finder and you should now see a gretl
-icon there. Double-clicking should start gretl. On its first run gretl
-may take a while to start, as it scans the fonts available on your
-system. Assuming gretl starts OK, you can drag its icon from Applications
-onto the dock to get a quick-launcher.
+<li><p> Navigate to Applications in the Finder and you should now see
+a gretl icon there. Double-clicking should start gretl. Assuming gretl
+starts OK, you can drag its icon from Applications onto the dock to
+get a quick-launcher.
 </p></li>
 
-<li><p>
-Clean up: the installer (<kbd>pkg</kbd>) file can
-be moved to the Trash once installation is completed.</p></li>
+<li><p> Clean up: the installer (<kbd>pkg</kbd>) file can be moved to
+the Trash once installation is completed.</p></li>
 </ol>
 
 <h2>Apple security issues</h2>
@@ -120,7 +135,7 @@ blog should tell you what you need to know.</p>
 </ol>
 </li>
 
-<li><p>There's a further security issue with Catalina:
+<li><p>There's a further security issue with Catalina and higher:
   after installation of gretl, how do you allow the program to access
   files on your Desktop and other locations? Again, you do this via
   the &quot;Security &amp; privacy&quot; item under System
@@ -130,7 +145,7 @@ blog should tell you what you need to know.</p>
 </li>
 </ul>
 
-<h2>Optional extras</h2>
+<h2><a name="optextra">Optional extras</a></h2>
 
 <p>You may wish to install X-13-ARIMA-SEATS and/or TRAMO/SEATS. These are specialized programs for
 analysis of seasonal time series data, in 64-bit macOS versions compatible with gretl. They

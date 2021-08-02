@@ -39,6 +39,8 @@ typedef enum {
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_STOPWATCH,  /* stopwatch */
     R_TEST_BRK,   /* obs at which break occurs (QLR test) */
+    R_LOGLEVEL,   /* current loglevel for errors/warnings/etc */
+    R_LOGSTAMP,   /* logger shows timestamp? (0/1) */
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_PUNIT,      /* 1-based panel unit index */
@@ -53,6 +55,7 @@ typedef enum {
     R_RESULT,     /* result of a "result-compatible" command */
     R_PNGFONT,    /* name of font selected for plots */
     R_MAPFILE,    /* name of current map file, if any */
+    R_MAP,        /* current map (if any) as bundle */
     R_MAX
 } RetrievalIndex;
 
@@ -158,13 +161,13 @@ int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
 
-int genr_get_output_type (const GENERATOR *genr);
+GretlType genr_get_output_type (const GENERATOR *genr);
 
 int genr_get_output_varnum (const GENERATOR *genr);
 
 double genr_get_output_scalar (const GENERATOR *genr);
 
-int genr_get_last_output_type (void);
+GretlType genr_get_last_output_type (void);
 
 gretl_matrix *genr_get_output_matrix (GENERATOR *genr);
 

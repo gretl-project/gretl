@@ -1,6 +1,6 @@
 function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 
-/*
+    /*
    this function fills the bundle with the estimated structural
    matrices and the covariance matrix of their free elements; it also
    calls do_IRF at the end so that the structural VMA is stored into
@@ -15,16 +15,10 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     scalar errcode = 0
 
     if type == 4 # do VECM
-        if inbundle(obj, "cointsetup")
-            if obj.cointsetup
-                vecm_est(&obj)
-            else
-                # Not sure if this case (obj.cointsetup==0)can currently happen.
-                funcerr "No valid cointegration setup found."
-            endif
-        else
-            funcerr "Need to do cointegration setup first for 'SVEC'."
-        endif
+        errorif(!inbundle(obj, "cointsetup"), "Need to do cointegration setup first for 'SVEC'.")
+        errorif(!obj.cointsetup, "No valid cointegration setup found.")
+        # ( Not sure if this case (obj.cointsetup==0) can currently happen.)
+        vecm_est(&obj)
 
     else # estimate ordinary VAR
         base_est(&obj)
@@ -32,9 +26,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 
     if obj.checkident
         id = SVAR_ident(&obj, (verbosity > 1)) # output for verbosity >= 2  
-        if !id
-            funcerr "Identification check failed."
-        endif
+        errorif( !id, "Identification check failed.")
     endif
 
     # grab the instantaneous covariance matrix
@@ -51,7 +43,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
         matrix Ss = imp2exp(obj.Rd1)
         vcv = coeffVCV(Ss[, 1: cols(Ss)-1], &C)
 
-    elif (type==2) || (type == 4)
+    elif type==2 || type==4
         # C models in a broad sense (including SVEC)
 
         # Maybe redundant restrictions have already been detected
@@ -80,14 +72,14 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     elif type == 3
         # AB-model
 
-        matrix E = obj.E     # grab the VAR residuals (needed for initialisation)
+        matrix U = obj.U     # grab the VAR residuals (needed for initialisation)
         matrix bRd = obj.Rd1 # restrictions on B
         matrix aRd = obj.Rd0 # restrictions on A
 
         # try to set some "sensible" initial values
         # (substitute out call to (former) init_AB)
         matrix param = is_standard_AB(aRd, bRd) ? \
-          stdAB_init(E, aRd, bRd) : nonstdAB_init(E, aRd, bRd)
+          stdAB_init(U, aRd, bRd) : nonstdAB_init(U, aRd, bRd)
 
         # do estimation; note that vcv is estimated inside "estAB"
         # (no it actually wasn't, now it is <Sven>)
@@ -110,10 +102,9 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     /*
        Post-estimation; transfers, long-run matrix, over-id test
     */
-    if errcode
-        funcerr "Estimation failed"
+    errorif( errcode, "Estimation failed")
 
-    elif type != 10	# estimation ran fine, and we don't have a SR model 
+    if type != 10	# estimation ran fine, and we don't have a SR model 
 
         # Copy stuff into the bundle
         if type == 3
@@ -126,7 +117,8 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
         /*
            We now also store C in the bundle because its computation
         was repeated several times elsewhere 
-        (This was obj.S1 for C models instead of obj.C, no idea why.) */
+        (This was obj.S1 for C models instead of obj.C, no idea why.) 
+        */
         matrix obj.C = C
 
         matrix obj.theta = param
@@ -160,7 +152,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
             # this is: (stat| dof| pv)
         endif
 
-        if (verbosity > 0)
+        if verbosity
             SVAR_est_printout(&obj)
         endif
     endif
@@ -223,7 +215,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
             print "Invalid cumulation specification!"
             print "(No responses will be cumulated.)"
         else	# sensible cumulation spec
-            loop i=1..rows(cumix) -q
+            loop i = 1..rows(cumix) 
                 SVAR_cumulate(&m, cumix[i])
             endloop
         endif
@@ -240,25 +232,18 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
         endif
     else # C or AB model
         # input check
-        if !exists(R1) && !exists(R2)
-            funcerr "Must provide some restrictions for C and AB models!"
-        endif
-
-        if type == 3 && ( !exists(R1) || !exists(R2) )
-            funcerr "Must provide restrictions on A and B for AB model!"
-        endif
+        errorif(!exists(R1) && !exists(R2), "Need some restrictions for C and AB models!")
+        errorif(type==3 && (!exists(R1) || !exists(R2)), "Need restrictions on A and B for AB model!")
 
         # transform the R1-matrix to SVAR-style restrictions
         if exists(R1)
             r = rows(R1)
             c = cols(R1)
-            if (r != n || c != n)
-                funcerr "wrong R1 dimensions"
-            endif
+            errorif( r != n || c != n, "wrong R1 dimensions")
 
-            string sBorC = type == 3 ? "B" : "C" # new by Sven 1.0.2
-            loop i=1..n -q
-                loop j=1..n -q
+            string sBorC = type==3 ? "B" : "C"
+            loop i = 1..n 
+                loop j = 1..n 
                     scalar rij = R1[i,j]
                     if ok(rij) # valid number = restricted element
                         SVAR_restrict(&m, sBorC, i, j, rij)
@@ -272,13 +257,11 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
         if exists(R2)
             r2 = rows(R2)
             c2 = cols(R2)
-            if (r2 != n || c2 != n)
-                funcerr "wrong R2 dimension"
-            endif
+            errorif(r2 != n || c2 != n, "wrong R2 dimension")
 
             string sAorlrC = type == 3 ? "A" : "lrC"
-            loop i=1..n -q
-                loop j=1..n -q
+            loop i = 1..n 
+                loop j = 1..n 
                     scalar rij = R2[i,j]
                     if ok(rij) # valid number = restricted element
                         SVAR_restrict(&m, sAorlrC, i, j, rij)
@@ -292,7 +275,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
     scalar id_ok = 1
 
     if checkident
-        if (type == 2  && exists(R2) ) # longrun C
+        if type == 2  && exists(R2)  # longrun C
             print "FIXME: not yet implemented for models with long-run restrictions"
         else
             print "Check identification:"
@@ -320,7 +303,7 @@ function void SVAR_bundle_print(bundle *b)
     # Some specification echoing (sven 1.0.2)
     # (not sure whether this should go into SVAR_est_printout() instead...)
 
-    loop foreach i type n k p --quiet
+    loop foreach i type n k p 
         scalar $i = b.$i
     endloop
 
@@ -328,26 +311,16 @@ function void SVAR_bundle_print(bundle *b)
 
     strings Ynames = b.Ynames
     print "Endogenous variables:"
-    loop i=1..n --quiet
-        printf "%s", Ynames[i]
-        if (i==n)
-            printf "\n"
-        else
-            printf ", "
-        endif
+    loop i = 1..n 
+        printf "%s%s", Ynames[i], (i==n ? sprintf("\n") : ", ")
     endloop
     printf "\n"
 
     if k>0
         print "Exogenous variables:"
         strings Xnames = b.Xnames
-        loop i=1..k --quiet
-            printf "%s", Xnames[i]
-            if (i==k)
-                printf "\n"
-            else
-                printf ", "
-            endif
+        loop i = 1..k 
+            printf "%s%s", Xnames[i], (i==k ? sprintf("\n") : ", ")
         endloop
     else
         print "(No exogenous variables.)"
@@ -359,13 +332,13 @@ function void SVAR_bundle_print(bundle *b)
     if type == 1
         print "Lower-triangular C matrix (Choleski decomposition)\n"
     elif type == 2 # C-model
-        if rows(b.Rd1)>0
+        if rows(b.Rd1)
             printf "Short-run restrictions:\n"
             printf "%3.0f\n", b.Rd1
         else
             print "(No short-run restrictions)"
         endif
-        if rows(b.Rd1l)>0
+        if rows(b.Rd1l)
             print "Long-run restrictions:"
             printf "%3.0f\n", b.Rd1l
         else

@@ -234,7 +234,7 @@ int gretl_matrix_na_check (const gretl_matrix *m);
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 
-int gretl_matrix_is_idempotent (const gretl_matrix *m);
+int gretl_matrix_is_idempotent (const gretl_matrix *m, double tol);
 
 void gretl_matrix_xtr_symmetric (gretl_matrix *m);
 
@@ -328,12 +328,15 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
 				     int draws, int *err);
 
+int gretl_matrix_resample2 (gretl_matrix *targ,
+			    const gretl_matrix *src);
+
 gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
 					   int blocklen, int draws,
 					   int *err);
 
-int gretl_matrix_block_resample2 (const gretl_matrix *src,
-				  gretl_matrix *targ,
+int gretl_matrix_block_resample2 (gretl_matrix *targ,
+				  const gretl_matrix *src,
 				  int blocklen, int *z);
 
 double gretl_vector_mean (const gretl_vector *v);
@@ -799,7 +802,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m);
 
 int gretl_matrices_are_equal (const gretl_matrix *a,
 			      const gretl_matrix *b,
-			      int *err);
+			      double tol, int *err);
 
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
 				       int corr, int dfc,

@@ -17,14 +17,16 @@ EXEEXT = @EXEEXT@
 LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
+gtksv_completion = @gtksv_completion@
 have_zlib = @have_zlib@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
 gtk_version = @gtk_version@
-fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
+
+sharesrc = $(topsrc)/share
 
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
@@ -44,11 +46,13 @@ GTK_PREFIX = @GTK_PREFIX@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
-CARBONLIB = @CARBONLIB@
+MACLIB = @MACLIB@
 GTKMAC_CFLAGS = @GTKMAC_CFLAGS@
 GTKMAC_LIBS = @GTKMAC_LIBS@
 MKLANG = @MKLANG@
 MKNEWS = @MKNEWS@
+MKPNGLIST = @MKPNGLIST@
+COMPRES = @COMPRES@
 
 ifeq ($(have_sourceview),2.0)
   JULIA_LANG = julia_sv2.lang
@@ -106,9 +110,14 @@ endif
 ifeq ($(MKLANG),) 
   MKLANG = ./mklang
 endif
-
 ifeq ($(MKNEWS),) 
   MKNEWS = ./mknews
+endif
+ifeq ($(MKPNGLIST),)
+  MKPNGLIST = ./mkpnglist
+endif
+ifeq ($(COMPRES),)
+  COMPRES = glib-compile-resources
 endif
 
 ifeq ($(quiet_build),yes)
@@ -179,6 +188,8 @@ SRCS = about.c \
 	filters.c \
 	fncall.c \
 	fnsave.c \
+	focus.c \
+	fontfilter.c \
 	gfn_arglists.c \
 	graphics.c \
 	graph_page.c \
@@ -211,21 +222,10 @@ SRCS = about.c \
 	varinfo.c \
 	winstack.c
 
-# use back-ported gtkspinner code?
-ifeq ($(fake_gtkspinner),yes)
-  SRCS += spinner.c
-endif
-
-ifeq ($(win32_build),yes)
-  # using native font selector
-else ifeq ($(gtk_version),3.0)
-  HACK_SRC = fontfilter.c
-  HACK_HDR = fontfilter.h
-  HACK_OBJ = fontfilter.o
-else
-  HACK_SRC = gtkfontselhack.c fontfilter.c
-  HACK_HDR = gtkfontselhack.h fontfilter.h
-  HACK_OBJ = gtkfontselhack.o fontfilter.o
+ifeq ($(gtk_version),2.0)
+  HACK_SRC = gtkfontselhack.c
+  HACK_HDR = gtkfontselhack.h
+  HACK_OBJ = gtkfontselhack.o
 endif
 
 ifeq ($(win32_build),yes)
@@ -241,9 +241,16 @@ else
   SRCS += clipboard.c
 endif
 
+ifeq ($(gtksv_completion),yes)
+  SRCS += completions.c
+endif
+
+PNG16 := $(wildcard $(topsrc)/share/icons/16x16/*.png)
+PNG24 := $(wildcard $(topsrc)/share/icons/24x24/*.png)
+
 OBJS = $(SRCS:.c=.o)
 
-all: $(PROG) gretl.lang NEWS
+all: $(PROG) gretl.lang NEWS gretl-icons.xml
 
 %.o: %.c
 	$(CCECHO)
@@ -253,7 +260,7 @@ all: $(PROG) gretl.lang NEWS
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(WINOBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(WINGUI) $(LDFLAGS) -o $@ $(OBJS) \
-	$(HACK_OBJ) $(WINOBJ) $(LIBS) $(CARBONLIB) $(WINLIBS)
+	$(HACK_OBJ) $(WINOBJ) $(LIBS) $(MACLIB) $(WINLIBS)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
@@ -269,6 +276,9 @@ mklang: mklang.o $(GRETLLIB)
 mknews: mknews.c
 	$(AMP)$(CC) -o $@ $<
 
+mkpnglist: mkpnglist.c
+	$(AMP)$(CC) -o $@ $<
+
 gretl.lang: $(MKLANG)
 	$(MKLANG) > $@
 
@@ -278,6 +288,12 @@ gretl-sys.lang: $(MKLANG)
 NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
+gretl-icons.xml: $(MKPNGLIST) $(PNG16) $(PNG24)
+	$(MKPNGLIST) $(topsrc)/share
+
+gretl-icons.gresource: gretl-icons.xml
+	$(COMPRES) --sourcedir="$(topsrc)/share" $<
+
 .deps:
 	$(AMP)mkdir $@
 
@@ -286,7 +302,7 @@ NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 .PHONY:
 
 install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles \
-	install-news $(INSTALL_GTKRC) $(INSTALL_CMDFILE)
+	install-icons install-news $(INSTALL_GTKRC) $(INSTALL_CMDFILE)
 
 install-strip: $(PROG) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -298,6 +314,9 @@ install-data: installdirs
 install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmain.xml $(DESTDIR)$(uidir)
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmodel.xml $(DESTDIR)$(uidir)
+
+install-icons: gretl-icons.gresource installdirs
+	$(INSTALL_DATA) gretl-icons.gresource $(DESTDIR)$(gretldir)
 
 install-script: installdirs
 	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
@@ -341,6 +360,7 @@ installdirs:
 
 clean:
 	rm -f *.o $(PROG) mklang mknews gretl.lang NEWS
+	rm -f mkpnglist gretl-icons.xml gretl-icons.gresource
 	rm -rf .libs .deps
 
 distclean: clean

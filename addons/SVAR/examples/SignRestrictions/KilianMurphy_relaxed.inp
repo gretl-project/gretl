@@ -1,0 +1,91 @@
+/*
+Example script for sign restrictions in gretl's SVAR addon.
+This here is to demonstrate the use of "exotic" restrictions,
+inspired from Kilian & Murphy.
+
+However, it is not a replication, since imposing all their 
+restrictions leads to very few accepted draws. Hence the 
+restrictions here are somewhat relaxed. 
+*/
+
+set verbose off
+set seed 909090
+
+include SVAR.gfn
+
+open KMdata.gdt --quiet --frompkg=SVAR
+
+# variables
+list X = prod KI rpo inventories
+
+# set up the model
+list Z = const seasonals(1)
+order = 24
+bundle mod = SVAR_setup("SR", X, Z, order) 
+SVAR_cumulate(&mod, 1)
+SVAR_cumulate(&mod, 4)
+mod.horizon = 16
+
+numofaccept = 256 # takes long
+coverage = 0.95
+
+## set up the sign restictions
+mod.snames = defarray("Supply", "Demand", "Speculative Demand")
+
+# these are the "dynamic" and impact sign restrictions.
+SVAR_SRplain(&mod, "prod", "Supply", "-", 12) 
+SVAR_SRplain(&mod, "KI",   "Supply", "-", 12)
+SVAR_SRplain(&mod, "rpo",  "Supply", "+", 12)
+
+SVAR_SRplain(&mod, "prod", "Demand", "+")
+SVAR_SRplain(&mod, "KI",   "Demand", "+")
+SVAR_SRplain(&mod, "rpo",  "Demand", "+")
+# SignRest(&mod, "Demand", "inventories")
+
+SVAR_SRplain(&mod, "prod", "Speculative Demand", "+")
+SVAR_SRplain(&mod, "KI",   "Speculative Demand", "-")
+SVAR_SRplain(&mod, "rpo",  "Speculative Demand", "+")
+SVAR_SRplain(&mod, "inventories", "Speculative Demand","+")
+
+
+## exotic restrictions: 
+/* Attention: 
+ The symbol "M" for the IRF matrix is hardcoded!
+ And if elements from the model bundle are needed, the name of 
+ that bundle must in this context also be "mod".
+ (By coincidence in this script it also happens to be "mod" in 
+  other contexts.) 
+ The horizon range for which these exotic restrictions should 
+ hold is specified explicitly or implicitly in the function 
+ call below.
+*/
+string exot2 = "M[1,2] / M[3,2] >= 0" # shock 2: Demand
+string exot3 = "M[1,3] / M[3,3] >= 0" # shock 3: Specul. Demand 
+
+
+# TODO: These super-exotic restrictions work with hardcoded "mod" 
+# and thus curently do _not_ need need_model = 1.
+# The whole need_model documentation needs fixing.
+
+## Supply elasticity bounds
+# prepare
+string part1 = "mean( (exp((log(54389) + cum(mod.Y[,1]))) * M[1,1] ./ 100 - M[4,1]) "
+part1 ~= "  ./ (exp((log(54389) + cum(mod.Y[,1]))) - mean(mod.Y[,4]))"
+part1 ~= "  ./ (M[3,1]./100) ) "
+string exot1 = part1 ~ " >= -0.8" # shock 1: Supply
+
+# memo: mean(mod.Y[,4]) = 4.4982 - from the summary statistics
+
+string exot11 = part1 ~ " <= 0 "  # shock 1: Supply
+
+# apply exotic and super-exotic restrictions
+SVAR_SRexotic(&mod, exot11, defarray("Supply"))
+SVAR_SRexotic(&mod, exot1,  defarray("Supply"))
+SVAR_SRexotic(&mod, exot2,  defarray("Demand"))
+SVAR_SRexotic(&mod, exot3,  defarray("Speculative Demand"))
+
+# do the rotations (this is the computationally intensive part)
+SVAR_SRdraw(&mod, numofaccept, 0, coverage, 15000)
+
+# draw the irfs
+SVAR_SRirf(mod, mod.Ynames, mod.snames) 

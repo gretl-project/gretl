@@ -52,6 +52,8 @@ double lngamma (double x);
 
 double digamma (double x);
 
+double trigamma (double x);
+
 double hypergeo (double a, double b, double c, double x);
 
 double beta_cdf (double a, double b, double x);

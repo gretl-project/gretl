@@ -2474,8 +2474,8 @@ void modify_date_for_csv (char *s, int pd)
  * print_time:
  * @s: string into which to print: must be at least 48 bytes.
  *
- * Returns: @s, which will contain a locale-dependent representation
- * of the current time.  In English, this will be in the format Y-m-d H:M.
+ * Returns: @s, which will contain a string representation of the
+ * current date and time, in the format YYYY-mm-dd H:M.
  */
 
 char *print_time (char *s)
@@ -3064,6 +3064,68 @@ int gretl_scan_varname (const char *src, char *targ)
 
     sprintf(fmt, "%%%ds", VNAMELEN-1);
     return sscanf(src, fmt, targ);
+}
+
+/**
+ * gretl_normalize_varname:
+ * @targ: target string.
+ * @src: source string.
+ * @underscore: flag to replace all illegal characters
+ * with underscore.
+ * @seq: sequence number in array of names, if applicable.
+ *
+ * Writes a vaid gretl identifier to @targ, which must be
+ * at least #VNAMELEN bytes in length, taking @src as basis
+ * and replacing any illegal characters as described in the
+ * documentation for the userland fixname function.
+ *
+ * Returns: 1 if any changes were required, 0 if not.
+ */
+
+int gretl_normalize_varname (char *targ, const char *src,
+			     int underscore, int seq)
+{
+    const char *letters = "abcdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    int n, ret = 0, i = 0;
+
+    /* skip any leading non-letters */
+    n = strcspn(src, letters);
+    if (n > 0) {
+	src += n;
+	ret = 1;
+    }
+
+    while (*src && i < VNAMELEN - 1) {
+	if (strspn(src, letters) > 0 || isdigit(*src) || *src == '_') {
+	    /* transcribe valid characters */
+	    targ[i++] = *src;
+	} else {
+	    if (*src == ' ' || underscore) {
+		/* convert space to underscore */
+		if (i > 0 && targ[i-1] == '_') {
+		    ; /* skip */
+		} else {
+		    targ[i++] = '_';
+		}
+	    }
+	    ret = 1;
+	}
+	src++;
+    }
+
+    if (i > 0) {
+	targ[i] = '\0';
+    } else {
+	if (seq <= 0) {
+	    strcpy(targ, "col[n]");
+	} else {
+	    sprintf(targ, "col%d", seq);
+	}
+	ret = 1;
+    }
+
+    return ret;
 }
 
 /**

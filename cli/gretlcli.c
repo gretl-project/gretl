@@ -66,6 +66,7 @@ char cmdfile[MAXLEN];
 FILE *fb;
 int batch;
 int runit;
+int indent0;
 int batch_stdin;
 int data_status;
 char linebak[MAXLINE];      /* for storing comments */
@@ -276,6 +277,7 @@ static void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
 
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
@@ -284,8 +286,10 @@ static void nls_init (void)
     if (getenv("CLI_DEBUG")) {
         set_windebug(2);
     }
-    locale_gettext(NULL);
-    win32_set_console_charset(PACKAGE);
+    if (try_for_CP_65001() != 0) {
+	/* FIXME issue a warning */
+	;
+    }
 # endif
 }
 
@@ -1051,6 +1055,7 @@ static void cli_quit (ExecState *s, PRN *cmdprn, int err)
         if (fb == NULL) {
 	    do_quit_message(s, err);
         } else {
+	    gretl_if_state_reset(indent0);
             s->cmd->ci = ENDRUN;
         }
     } else if (batch && fb == NULL) {
@@ -1104,9 +1109,6 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     }
 
     if (string_is_blank(line)) {
-        if (gretl_echo_space()) {
-            pputc(prn, '\n');
-        }
         return 0;
     }
 
@@ -1253,6 +1255,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
         break;
 
     case QUIT:
+	gretl_if_state_clear();
         cli_quit(s, cmdprn, err);
         break;
 
@@ -1302,11 +1305,19 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
                 pprintf(cmdprn, "run \"%s\"\n", runfile);
             }
             runit++;
+	    indent0 = gretl_if_state_record();
         }
         break;
 
     case CLEAR:
-        err = cli_clear_data(s, dset);
+	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
+	if (!err) {
+	    if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else {
+		err = cli_clear_data(s, dset);
+	    }
+	}
         break;
 
     case DATAMOD:

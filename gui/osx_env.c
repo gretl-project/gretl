@@ -1,9 +1,9 @@
 #include <sys/param.h>
 #include <mach-o/dyld.h>
 
-/* Hopefully this function will provide an alternative to
-   starting gretl (quartz package) on macOS via a shell
-   script: get the environment set up via C code instead.
+/* This function provides an replacement for the old method
+   of starting gretl on macOS via a shell script: instead, we
+   get the environment set up correctly via C code.
 */
 
 void osx_setup_paths (void)
@@ -55,10 +55,10 @@ void osx_setup_paths (void)
     g_free(tmp);
 
     /* gnuplot variables */
-    tmp = g_strdup_printf("%s/share/gnuplot/5.2/gnuplot.gih", respath);
+    tmp = g_strdup_printf("%s/share/gnuplot/5.4/gnuplot.gih", respath);
     setenv("GNUHELP", tmp, 1);
     g_free(tmp);
-    tmp = g_strdup_printf("%s/share/gnuplot/5.2/PostScript", respath);
+    tmp = g_strdup_printf("%s/share/gnuplot/5.4/PostScript", respath);
     setenv("GNUPLOT_PS_DIR", tmp, 1);
     g_free(tmp);
     setenv("GNUTERM", "wxt", 1);

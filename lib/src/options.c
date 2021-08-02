@@ -41,6 +41,7 @@
                          c == ADF ||            \
                          c == ANOVA ||          \
                          c == APPEND ||         \
+			 c == BDS ||		\
                          c == BKW ||            \
                          c == COEFFSUM ||       \
                          c == CHOW ||           \
@@ -65,6 +66,7 @@
                          c == OLS ||            \
                          c == OMIT ||           \
                          c == OPEN ||           \
+			 c == PANSPEC ||	\
                          c == PKG ||            \
                          c == QLRTEST ||        \
                          c == RENAME ||         \
@@ -130,10 +132,6 @@ struct gretl_option gretl_opts[] = {
     { APPEND,   OPT_V, "verbose", 0 },
     { APPEND,   OPT_U, "update-overlap", 0 },
     { APPEND,   OPT_X, "fixed-sample", 0 },
-    { ARBOND,   OPT_A, "asymptotic", 0 },
-    { ARBOND,   OPT_D, "time-dummies", 1 },
-    { ARBOND,   OPT_H, "orthdev", 0 },
-    { ARBOND,   OPT_T, "two-step", 0 },
     { ARMA,     OPT_A, "as154", 0 },
     { ARMA,     OPT_K, "kalman", 0 },
     { ARMA,     OPT_C, "conditional", 0 },
@@ -146,8 +144,11 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_X, "x-12-arima", 0 },
     { ARMA,     OPT_Y, "y-diff-only", 0 },
     { ARMA,     OPT_R, "robust", 0 },
-    { ARMA,     OPT_B, "cml-init", 0 },
     { ARMA,     OPT_S, "stdx", 0 },
+    { BDS,      OPT_B, "boot", 2 },
+    { BDS,      OPT_C, "corr1", 2 },
+    { BDS,      OPT_S, "sdcrit", 2 },
+    { BDS,      OPT_X, "matrix", 2 },
     { BIPROBIT, OPT_G, "opg", 0 },
     { BIPROBIT, OPT_R, "robust", 0 },
     { BIPROBIT, OPT_V, "verbose", 0 },
@@ -164,6 +165,7 @@ struct gretl_option gretl_opts[] = {
     { CHOW,     OPT_D, "dummy", 0 },
     { CHOW,     OPT_L, "limit-to", 2 },
     { CLEAR,    OPT_D, "dataset", 0 },
+    { CLEAR,    OPT_F, "functions", 0 },
     { COINT,    OPT_D, "seasonals", 0 },
     { COINT,    OPT_E, "test-down", 1 },
     { COINT,    OPT_N, "nc", 0 },
@@ -301,8 +303,6 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
-    { HAUSMAN,  OPT_M, "matrix-diff", 0 },
-    { HAUSMAN,  OPT_N, "nerlove", 0 },
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_G, "opg", 0 },
     { HECKIT,   OPT_R, "robust", 0 },
@@ -348,6 +348,7 @@ struct gretl_option gretl_opts[] = {
     { LAGS,     OPT_L, "bylag", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
     { LEVERAGE, OPT_U, "plot", 2 },
+    { LEVERAGE, OPT_O, "overwrite", 0 },
     { LEVINLIN, OPT_N, "nc", 0 },
     { LEVINLIN, OPT_T, "ct", 0 },
     { LEVINLIN, OPT_V, "verbose", 0 },
@@ -395,6 +396,7 @@ struct gretl_option gretl_opts[] = {
     { LOGIT,    OPT_R, "robust", 0 },
     { LOGIT,    OPT_C, "cluster", 2 },
     { LOGIT,    OPT_V, "verbose", 0 },
+    { LOGIT,    OPT_S, "estrella", 0 },
     { LOOP,     OPT_P, "progressive", 0 },
     { LOOP,     OPT_V, "verbose", 0 },
     { MAHAL,    OPT_S, "save", 0 },
@@ -412,8 +414,8 @@ struct gretl_option gretl_opts[] = {
     { MLE,      OPT_S, "no-gradient-check", 0 },
     { MLE,      OPT_L, "lbfgs", 0 },
     { MLE,      OPT_N, "numerical", 0 },
-    { MLE,      OPT_R, "robust", 0 },
-    { MLE,      OPT_C, "cluster", 1 },
+    { MLE,      OPT_R, "robust", 1 },
+    { MLE,      OPT_C, "cluster", 2 },
     { MLE,      OPT_V, "verbose", 0 },
     { MODPRINT, OPT_A, "addstats", 2 },
     { MODPRINT, OPT_O, "output", 2 },
@@ -497,6 +499,8 @@ struct gretl_option gretl_opts[] = {
     { PANPLOT,  OPT_B, "boxplots", 0 },
     { PANPLOT,  OPT_C, "boxplot", 0 },
     { PANPLOT,  OPT_U, "output", 2},
+    { PANSPEC,  OPT_M, "matrix-diff", 0 },
+    { PANSPEC,  OPT_N, "nerlove", 0 },
     { POISSON,  OPT_R, "robust", 0 },
     { POISSON,  OPT_C, "cluster", 2 },
     { POISSON,  OPT_V, "verbose", 0 },
@@ -534,6 +538,7 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_C, "complex", 0 },
     { PRINT,    OPT_T, "tree", 0 },
     { PRINT,    OPT_R, "range", 2 },
+    { PRINT,    OPT_X, "data-only", 0 },
     { PROBIT,   OPT_P, "p-values", 0 },
     { PROBIT,   OPT_R, "robust", 0 },
     { PROBIT,   OPT_C, "cluster", 2 },
@@ -541,6 +546,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_E, "random-effects", 0 },
     { PROBIT,   OPT_G, "quadpoints", 2 },
     { PROBIT,   OPT_B, "bootstrap", 1 },
+    { PROBIT,   OPT_S, "estrella", 0 },
     { QLRTEST,  OPT_L, "limit-to", 2 },
     { QLRTEST,  OPT_U, "plot", 2 },
     { QQPLOT,   OPT_R, "raw", 0 },
@@ -604,7 +610,7 @@ struct gretl_option gretl_opts[] = {
     { STDIZE,   OPT_C, "center-only", 0 },
     { STDIZE,   OPT_N, "no-df-corr", 0 },
     { STORE,    OPT_A, "matrix", 2 },
-    { STORE,    OPT_C, "csv", 0 },
+    { STORE,    OPT_C, "compat", 1 },
     { STORE,    OPT_D, "database", 0 },
     { STORE,    OPT_E, "comment", 2 },
     { STORE,    OPT_F, "overwrite", 0 },
@@ -618,7 +624,6 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_R, "gnu-R", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_Z, "gzipped", 1 },
-    { STORE,    OPT_U, "purebin", 0 }, /* temporary thing */
     { SUMMARY,  OPT_B, "by", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },
     { SUMMARY,  OPT_W, "weights", 2 },
@@ -662,6 +667,7 @@ struct gretl_option gretl_opts[] = {
     { VECM,     OPT_S, "silent", 0 },
     { WLS,      OPT_R, "robust", 0 },
     { WLS,      OPT_C, "cluster", 2 },
+    { WLS,      OPT_Z, "allow-zeros", 0 },
     { XCORRGM,  OPT_U, "plot", 2 },
     { XTAB,     OPT_C, "column", 0 },
     { XTAB,     OPT_X, "matrix", 2 },
@@ -1046,10 +1052,10 @@ static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-        if (optinfo[i].ci == ci &&
-            optinfo[i].opt == opt &&
-            optinfo[i].fd == fd) {
-            return &optinfo[i];
+	stored_opt *so = &optinfo[i];
+
+        if (so->ci == ci && so->opt == opt && so->fd == fd) {
+            return so;
         }
     }
 
@@ -1078,6 +1084,7 @@ static int option_parm_status (int ci, gretlopt opt)
     int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
+
         if (gretl_opts[i].ci == ci) {
             if (gretl_opts[i].o == opt) {
                 return gretl_opts[i].parminfo;
@@ -1137,7 +1144,8 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 
 #if OPTDEBUG
     fprintf(stderr, "push_option_param: ci=%d (%s), fd=%d, opt=%d,"
-            " val='%s'\n", ci, gretl_command_word(ci), fd, opt, val);
+            " val='%s', SETOPT %d\n", ci, gretl_command_word(ci),
+	    fd, opt, val, flags & OPT_SETOPT ? 1 : 0);
 #endif
 
     so = matching_stored_opt(ci, opt);
@@ -1352,9 +1360,11 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     }
 
     for (i=0; gretl_opts[i].o != 0; i++) {
-        if (ci == gretl_opts[i].ci) {
-            if (opt & gretl_opts[i].o) {
-                real_push_option(ci, gretl_opts[i].o, NULL, 1, flags);
+	struct gretl_option *gopt = &gretl_opts[i];
+
+        if (ci == gopt->ci) {
+            if (opt & gopt->o) {
+		real_push_option(ci, gopt->o, NULL, 1, flags);
             }
             got_ci = ci;
         } else if (got_ci > 0 && ci != got_ci) {
@@ -1364,7 +1374,8 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
 }
 
 /* Apparatus for pre-selecting options for a specified command,
-   using "setopt" */
+   using the "setopt" command.
+*/
 
 int set_options_for_command (const char *cmdword,
                              const char *param,

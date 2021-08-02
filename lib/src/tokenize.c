@@ -33,7 +33,8 @@ typedef enum {
     CI_LCHK  = 1 << 17, /* needs checking for "list" specials */
     CI_INFL  = 1 << 18, /* command arglist "inflected" by options */
     CI_FCMIN = 1 << 19, /* minimal (single word) flow control */
-    CI_LGEN  = 1 << 20  /* command generates a named list */
+    CI_LGEN  = 1 << 20, /* command generates a named list */
+    CI_OBSOL = 1 << 21  /* command is obsolete and therefore deprecated */
 } CIFlags;
 
 struct gretl_cmd {
@@ -79,9 +80,9 @@ static struct gretl_cmd gretl_cmds[] = {
     { APPEND,   "append",   CI_PARM1 | CI_FNAME },
     { AR,       "ar",       CI_LIST | CI_L1INT },
     { AR1,      "ar1",      CI_LIST },
-    { ARBOND,   "arbond",   CI_LIST | CI_L1INT },
     { ARCH,     "arch",     CI_ORD1 | CI_LIST },
     { ARMA,     "arima",    CI_LIST | CI_L1INT },
+    { BDS,      "bds",      CI_ORD1 | CI_LIST | CI_LLEN1 },
     { BIPROBIT, "biprobit", CI_LIST },
     { BKW,      "bkw",      0 },
     { BREAK,    "break",    CI_NOOPT | CI_FCMIN },
@@ -124,7 +125,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
-    { HAUSMAN,  "hausman",  0 },
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -168,6 +168,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL },
     { PANEL,    "panel",    CI_LIST },
     { PANPLOT,  "panplot",  CI_LIST | CI_LLEN1 | CI_EXTRA },
+    { PANSPEC,  "panspec",  0 },
     { PCA,      "pca",      CI_LIST | CI_DOALL },
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
     { PLOT,     "plot",     CI_BLOCK | CI_PARM1 },
@@ -288,7 +289,6 @@ static int get_sep_max (int ci, int *pmin)
     case MIDASREG:
 	minsep = maxsep = 1;
 	break;
-    case ARBOND:
     case DPANEL:
     case ARMA:
 	minsep = 1;
@@ -334,7 +334,8 @@ enum {
     TOK_NOGAP  = 1 << 1, /* as TOK_JOINED but including joined comma */
     TOK_DONE   = 1 << 2, /* token has been handled */
     TOK_QUOTED = 1 << 3, /* token was found in double quotes */
-    TOK_IGNORE = 1 << 4  /* token not actually wanted, ignored */
+    TOK_IGNORE = 1 << 4, /* token not actually wanted, ignored */
+    TOK_LSTR   = 1 << 5  /* token provisionally added to list string */
 } TokenFlags;
 
 enum {
@@ -371,8 +372,8 @@ enum {
 struct cmd_token_ {
     char *s;         /* allocated token string */
     const char *lp;  /* pointer to line position */
-    char type;       /* one of TokenTypes */
-    char flag;       /* zero or more of TokenFlags */
+    guint8 type;     /* one of TokenTypes */
+    guint8 flag;     /* zero or more of TokenFlags */
 };
 
 #define token_joined(t)  (t->flag & TOK_JOINED)
@@ -380,6 +381,7 @@ struct cmd_token_ {
 #define token_ignored(t) (t->flag & TOK_IGNORE)
 
 #define mark_token_done(t) (t.flag |= TOK_DONE)
+#define mark_list_token_done(t) (t.flag |= (TOK_DONE|TOK_LSTR))
 #define mark_token_ignored(t) (t.flag |= (TOK_DONE|TOK_IGNORE))
 
 #define option_type(t) (t == TOK_OPT || t == TOK_SOPT || \
@@ -390,6 +392,8 @@ struct cmd_token_ {
 			   t == TOK_PRSTR ||  \
 			   t == TOK_CBSTR ||  \
 			   t == TOK_BRSTR)
+
+#define bracketed_type(t) (t == TOK_PRSTR || t == TOK_BRSTR)
 
 #define wildsym(t) (t->type == TOK_AST || \
 		    (t->type == TOK_SYMB && t->s[0] == '?'))
@@ -769,7 +773,7 @@ static int push_quoted_token (CMD *c, const char *s,
 
 static int symbol_spn (const char *s)
 {
-    const char *ok = "=+-/*<>?|~^!%&.,:;\\";
+    const char *ok = "=+-/*<>?|~^!%&.,:;\\'";
 
     if (*s == '=' && *(s+1) != '=') {
 	return 1;
@@ -1152,7 +1156,8 @@ static int handle_option_value (CMD *c, int i, gretlopt opt,
 	}
 
 #if CDEBUG > 1
-	fprintf(stderr, "option '--%s': param='%s'\n", tok->s, val);
+	fprintf(stderr, "option '--%s': param='%s'\n", tok->s,
+		(val == NULL)? "NULL" : val);
 #endif
 
 	if (val != NULL) {
@@ -2040,7 +2045,7 @@ static int handle_command_preamble (CMD *c)
 
     if (c->toks[0].type == TOK_CATCH) {
 	if (not_catchable(c->ci)) {
-	    gretl_errmsg_set("catch: cannot be applied to this command");
+	    gretl_errmsg_set(_("catch: cannot be applied to this command"));
 	    c->err = E_DATA;
 	    return c->err;
 	} else {
@@ -2057,7 +2062,7 @@ static int handle_command_preamble (CMD *c)
 	int n = strlen(s);
 
 	if (n >= MAXSAVENAME) {
-	    gretl_errmsg_set("savename is too long");
+	    gretl_errmsg_set(_("savename is too long"));
 	    c->err = E_DATA;
 	} else {
 	    strcpy(c->savename, s);
@@ -2405,13 +2410,18 @@ static int test_for_genr (CMD *c, int i, char cnext, DATASET *dset)
     return c->ci;
 }
 
-static void deprecate_alias (const char *bad, const char *good,
+static void set_deprecation (const char *bad, const char *good,
 			     int command)
 {
     const char *tag = command ? "command" : "construction";
 
-    gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
-			  bad, tag, good);
+    if (strstr(good, "()")) {
+	gretl_warnmsg_sprintf(_("\"%s\": obsolete %s; please use the function %s"),
+			      bad, tag, good);
+    } else {
+	gretl_warnmsg_sprintf(_("\"%s\": obsolete %s; please use \"%s\""),
+			      bad, tag, good);
+    }
 }
 
 static int try_for_command_alias (const char *s, CMD *cmd)
@@ -2424,7 +2434,7 @@ static int try_for_command_alias (const char *s, CMD *cmd)
     } else if (!strcmp(s, "ls")) {
 	ci = VARLIST;
     } else if (!strcmp(s, "pooled")) {
-	deprecate_alias("pooled", "ols", 1);
+	set_deprecation("pooled", "ols", 1);
 	ci = OLS;
     } else if (!strcmp(s, "equations")) {
 	/* reached only when compiling loop */
@@ -2436,14 +2446,14 @@ static int try_for_command_alias (const char *s, CMD *cmd)
 	ci = SHELL;
 	cmd->opt |= OPT_A;
     } else if (!strcmp(s, "fcasterr")) {
-	deprecate_alias("fcasterr", "fcast", 1);
+	set_deprecation("fcasterr", "fcast", 1);
 	ci = FCAST;
     } else if (!strcmp(s, "install")) {
 	ci = PKG;
 	cmd->opt |= OPT_B; /* back-compat */
 #if ALLOW_ADDOBS
     } else if (!strcmp(s, "addobs")) {
-	deprecate_alias("addobs", "dataset addobs", 0);
+	set_deprecation("addobs", "dataset addobs", 0);
 	ci = DATAMOD;
 #endif
     } else if (!strcmp(s, "continue")) {
@@ -2609,7 +2619,7 @@ static int try_for_command_index (CMD *cmd, int i,
 		if (compmode == FUNC && endci == FUNC) {
 		    cmd->flags |= CMD_ENDFUN;
 		} else if (endci == LOOP) {
-		    gretl_errmsg_set("'end loop': did you mean 'endloop'");
+		    gretl_errmsg_set(_("'end loop': did you mean 'endloop'"));
 		    gretl_abort_compiling_loop();
 		    *err = E_PARSE;
 		}
@@ -2706,7 +2716,7 @@ static int check_arma_ilist (const int *ilist,
 
 static int panel_gmm_special (CMD *cmd, const char *s)
 {
-    if (cmd->ci == ARBOND || cmd->ci == DPANEL) {
+    if (cmd->ci == DPANEL) {
 	if (!strcmp(s, "GMM") || !strcmp(s, "GMMlevel")) {
 	    return 1;
 	}
@@ -2759,7 +2769,7 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 	    tmp = gretl_strdup_printf("%s(%s)", tok->s, next->s);
 	    c->param = gretl_str_expand(&c->param, tmp, " ");
 	    free(tmp);
-	    mark_token_done(c->toks[i]);
+	    mark_list_token_done(c->toks[i]);
 	    *k2 = ++i;
 	} else if (i < c->ntoks - 1 && midas_term_special(c, tok->s)) {
 	    cmd_token *next = &c->toks[i+1];
@@ -2768,12 +2778,12 @@ static void rejoin_list_toks (CMD *c, int k1, int *k2,
 	    tmp = gretl_strdup_printf("%s(%s)", tok->s, next->s);
 	    c->param = gretl_str_expand(&c->param, tmp, " ");
 	    free(tmp);
-	    mark_token_done(c->toks[i]);
+	    mark_list_token_done(c->toks[i]);
 	    *k2 = ++i;
 	} else {
 	    strcat(lstr, tok->s);
 	}
-	mark_token_done(c->toks[i]);
+	mark_list_token_done(c->toks[i]);
     }
 }
 
@@ -2797,40 +2807,27 @@ static int validate_list_token (cmd_token *tok)
 
 /* In case we got something that looks like a list but
    turned out not to be valid as such, remove the TOK_DONE
-   flag from the tokens that composed the putative list;
-   their @s (string) members are collected in @lstr.
+   flag from the tokens that composed the putative list,
+   which will be marked with TOK_LSTR status.
 */
 
-static int rescind_tok_done_status (CMD *c, const char *lstr)
+static void rescind_tok_done_status (CMD *c)
 {
-    int i, j, ns = 0;
     cmd_token *tok;
-    char **S;
-
-    S = gretl_string_split(lstr, &ns, NULL);
-    if (S == NULL) {
-	return E_ALLOC;
-    }
+    int i;
 
     for (i=c->cstart+1; i<c->ntoks; i++) {
 	tok = &c->toks[i];
-	if (token_done(tok)) {
-	    for (j=0; j<ns; j++) {
-		if (!strcmp(S[j], tok->s)) {
-		    tok->flag ^= TOK_DONE;
-		    break;
-		}
-	    }
+	if (tok->flag & TOK_LSTR) {
+	    tok->flag ^= TOK_DONE;
+	    tok->flag ^= TOK_LSTR;
 	}
     }
-
-    strings_array_free(S, ns);
-
-    return 0;
 }
 
 static int process_command_list (CMD *c, DATASET *dset)
 {
+    guint8 TOK_PROV = (TOK_DONE | TOK_LSTR);
     char vectest[3] = {0}; /* for arima */
     char lstr[MAXLINE];
     cmd_token *tok;
@@ -2874,7 +2871,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 	    }
 	}
 	if (!token_done(tok)) {
-	    if (tok->type == TOK_PRSTR || tok->type == TOK_BRSTR) {
+	    if (bracketed_type(tok->type) && c->ci != PRINT) {
 		gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
 				     tok->type == TOK_PRSTR ? "(" : "[");
 		c->err = E_PARSE;
@@ -2884,13 +2881,13 @@ static int process_command_list (CMD *c, DATASET *dset)
 		    c->err = process_auxlist_term(c, tok, &ilist);
 		    if (!c->err) {
 			vectest[ilist[0] - 1] = 1;
-			tok->flag |= TOK_DONE;
+			tok->flag |= TOK_PROV;
 		    }
 		} else {
 		    k = gretl_int_from_string(tok->s, &c->err);
 		    if (!c->err) {
 			gretl_list_append_term(&ilist, k);
-			tok->flag |= TOK_DONE;
+			tok->flag |= TOK_PROV;
 		    }
 		}
 		if (c->err) {
@@ -2905,7 +2902,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 			strcat(lstr, " ");
 		    }
 		    strcat(lstr, tok->s);
-		    tok->flag |= TOK_DONE;
+		    tok->flag |= TOK_PROV;
 		    j++;
 		}
 	    }
@@ -2927,7 +2924,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && *lstr != '\0') {
 	tailstrip(lstr);
-	if (c->ci == ARBOND || c->ci == DPANEL || c->ci == MIDASREG) {
+	if (c->ci == DPANEL || c->ci == MIDASREG) {
 	    /* We may have a ';' separator that's not followed
 	       by any regular second list, just special terms; so
 	       don't error out on a trailing ';' in defining a
@@ -2943,7 +2940,7 @@ static int process_command_list (CMD *c, DATASET *dset)
     fprintf(stderr, "process_command_list: lstr='%s' (err=%d)\n", lstr, c->err);
 #endif
 
-    if ((c->ci == PRINT || c->ci == DELEET) && *lstr == '\0') {
+    if ((c->ci == DELEET || c->ci == PRINT) && *lstr == '\0') {
 	/* we didn't get a "list string": maybe the terms are
 	   names of non-series variables
 	*/
@@ -2955,17 +2952,17 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && dset != NULL && *lstr != '\0') {
 	vlist = generate_list(lstr, dset, &c->err);
-	if (c->err && (c->ci == PRINT || c->ci == DELEET)) {
+	if (c->err && (c->ci == DELEET || c->ci == PRINT)) {
 	    /* we got something that looked like a list string,
 	       but list generation failed: again, maybe the
 	       the terms are names of non-series variables
 	    */
-	    c->err = rescind_tok_done_status(c, lstr);
-	    if (!c->err) {
-		c->ciflags &= ~CI_LIST;
-		c->ciflags &= ~CI_DOALL;
-		c->ciflags |= CI_ADHOC;
-	    }
+	    rescind_tok_done_status(c);
+	    c->ciflags &= ~CI_LIST;
+	    c->ciflags &= ~CI_DOALL;
+	    c->ciflags |= CI_ADHOC;
+	    c->err = 0;
+	    goto finish;
 	}
     }
 
@@ -2992,6 +2989,8 @@ static int process_command_list (CMD *c, DATASET *dset)
 	    ilist = NULL;
 	}
     }
+
+ finish:
 
     free(ilist);
     free(vlist);
@@ -3316,7 +3315,7 @@ static int check_end_command (CMD *cmd)
     }
 
     if (endci != cmd->context) {
-	gretl_errmsg_sprintf("end: invalid parameter '%s'", cmd->param);
+	gretl_errmsg_sprintf(_("end: invalid parameter '%s'"), cmd->param);
 	cmd->err = E_DATA;
     }
 
@@ -3338,7 +3337,7 @@ static int check_for_list (CMD *cmd)
 	    ; /* list defaults to all series, OK */
 	} else if (cmd->ci == OMIT && (cmd->opt & OPT_A)) {
 	    ; /* the auto-omit option, OK */
-	} else if (cmd->ci == FREQ && (cmd->opt & OPT_X)) {
+	} else if ((cmd->ci == FREQ || cmd->ci == BDS) && (cmd->opt & OPT_X)) {
 	    ; /* using a matrix: may be OK */
 	} else {
 	    fprintf(stderr, "check_for_list: cmd->list is NULL\n");
@@ -3442,6 +3441,14 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 
     gretl_push_c_numeric_locale();
     state->more = NULL;
+
+    if (!gretl_in_batch_mode() && *s == '=') {
+	/* treat as a bare expression to be evaluated */
+	cmd->ci = EVAL;
+	cmd->gtype = GRETL_TYPE_NONE;
+	cmd->vstart = s + 1;
+	goto skipit;
+    }
 
     while (!err && *s) {
 	int skipped = 0;
@@ -3629,6 +3636,8 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	pos += n;
     }
 
+ skipit:
+
     gretl_pop_c_numeric_locale();
 
 #if CDEBUG
@@ -3756,6 +3765,8 @@ static int post_process_sprintf_command (CMD *cmd,
 					 char *line)
 {
     int err = 0;
+
+    set_deprecation("sprintf", "sprintf()", 1);
 
     *line = '\0';
 

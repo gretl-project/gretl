@@ -29,13 +29,16 @@
 				       r == VIEW_PKG_SAMPLE ||		\
 				       r == VIEW_LOG))
 
+#define lbracket(k) (k == GDK_parenleft || \
+		     k == GDK_bracketleft || \
+		     k == GDK_braceleft)
+
 extern int tabwidth;
 extern int smarttab;
 extern int script_line_numbers;
-extern int script_auto_complete;
 extern int script_auto_bracket;
 
-void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
+void text_set_cursor (GtkWidget *w, const char *name);
 
 void cursor_to_top (windata_t *vwin);
 
@@ -46,6 +49,10 @@ void cursor_to_mark (windata_t *vwin, GtkTextMark *mark);
 void scroll_to_foot (windata_t *vwin);
 
 gint get_char_width (GtkWidget *widget);
+
+gint get_char_height (GtkWidget *widget);
+
+int get_screen_height (void);
 
 GtkTextBuffer *gretl_text_buf_new (void);
 
@@ -61,8 +68,6 @@ gchar *textview_get_wrapped_text (GtkWidget *view);
 
 gchar *textview_get_selection_or_all (GtkWidget *view,
 				      gboolean *selection);
-
-gchar *textview_get_current_line (GtkWidget *view);
 
 int textview_set_text (GtkWidget *view, const gchar *text);
 
@@ -145,5 +150,13 @@ void textview_delete_processing_message (GtkWidget *view);
 void textview_format_paragraph (GtkWidget *view);
 
 void indent_hansl (GtkWidget *w, windata_t *vwin);
+
+gboolean script_bracket_handler (windata_t *vwin, guint keyval);
+
+#ifdef HAVE_GTKSV_COMPLETION
+
+int maybe_try_completion (windata_t *vwin);
+
+#endif
 
 #endif /* TEXTBUF_H */

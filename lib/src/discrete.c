@@ -2723,7 +2723,8 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
     return err;
 }
 
-static void binary_model_chisq (bin_info *bin, MODEL *pmod)
+static void binary_model_chisq (bin_info *bin, MODEL *pmod,
+				gretlopt opt)
 {
     int t, zeros, ones = 0;
     double Lr, chisq;
@@ -2750,9 +2751,18 @@ static void binary_model_chisq (bin_info *bin, MODEL *pmod)
 	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
     } else {
 	pmod->chisq = chisq;
-	/* McFadden pseudo-R^2 */
-	pmod->rsq = 1.0 - pmod->lnL / Lr;
-	pmod->adjrsq = 1.0 - (pmod->lnL - bin->k) / Lr;
+	if (opt & OPT_S) {
+	    /* Estrella pseudo-R^2 */
+	    double expon = -2.0 * Lr/bin->T;
+
+	    pmod->rsq = 1.0 - pow(pmod->lnL/Lr, expon);
+	    pmod->adjrsq = 1.0 - pow((pmod->lnL - bin->k)/Lr, expon);
+	    pmod->opt |= OPT_S;
+	} else {
+	    /* McFadden pseudo-R^2 */
+	    pmod->rsq = 1.0 - pmod->lnL/Lr;
+	    pmod->adjrsq = 1.0 - (pmod->lnL - bin->k)/Lr;
+	}
     }
 }
 
@@ -3018,7 +3028,7 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 	return 0;
     }
 
-    binary_model_chisq(bin, pmod);
+    binary_model_chisq(bin, pmod, opt);
     pmod->errcode = binary_variance_matrix(pmod, bin, dset, opt);
 
     if (!pmod->errcode) {
@@ -3540,7 +3550,10 @@ MODEL logistic_model (const int *list, double lmax,
     }
     if (!lmod.errcode) {
 	rewrite_logistic_stats(dset, &lmod, dv, real_lmax);
-	set_model_id(&lmod, OPT_NONE);
+	if (!(opt & OPT_F)) {
+	    /* already done, for the fixed-effects case */
+	    set_model_id(&lmod, OPT_NONE);
+	}
     }
 
     if (opt & OPT_C) {

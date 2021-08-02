@@ -661,6 +661,27 @@ void *user_var_get_value_and_type (const char *name,
     return ret;
 }
 
+const char *uservar_name_complete (const char *s)
+{
+    const char *ret = NULL;
+
+    if (uvars_hash != NULL) {
+	GList *hk = g_hash_table_get_keys(uvars_hash);
+	int n = strlen(s);
+
+	while (hk != NULL) {
+	    if (!strncmp((const char *) hk->data, s, n)) {
+		ret = (const char *) hk->data;
+		break;
+	    }
+	    hk = hk->next;
+	}
+	g_list_free(hk);
+    }
+
+    return ret;
+}
+
 int gretl_is_user_var (const char *name)
 {
     return get_user_var_by_name(name) != NULL;
@@ -2388,6 +2409,18 @@ int print_user_var_by_name (const char *name,
     return err;
 }
 
+static int uvar_type_match (user_var *u, GretlType t)
+{
+    if (u->type == t) {
+	return 1;
+    } else if (u->type == GRETL_TYPE_ARRAY &&
+	       gretl_array_type(t)) {
+	return t == gretl_array_get_type(u->ptr);
+    } else {
+	return 0;
+    }
+}
+
 int list_user_vars_of_type (const DATASET *dset,
 			    PRN *prn)
 {
@@ -2416,17 +2449,24 @@ int list_user_vars_of_type (const DATASET *dset,
     } else if (t == GRETL_TYPE_LIST ||
 	       t == GRETL_TYPE_MATRIX ||
 	       t == GRETL_TYPE_BUNDLE ||
-	       t == GRETL_TYPE_STRING) {
+	       t == GRETL_TYPE_ARRAY ||
+	       t == GRETL_TYPE_STRING ||
+	       gretl_array_type(t)) {
 	int i, n = 0;
 
-	pprintf(prn, "variables of type %s:", typename);
+	pprintf(prn, _("variables of type %s:"), typename);
 	for (i=0; i<n_vars; i++) {
-	    if (uvars[i]->type == t) {
+	    if (uvar_type_match(uvars[i], t)) {
 		if (n == 0) {
 		    pputc(prn, '\n');
 		}
 		if (uvars[i]->name[0] == '\0') {
-		    pputs(prn, "  (unnamed)\n");
+		    pputs(prn, _("  (unnamed)\n"));
+		} else if (t == GRETL_TYPE_ARRAY) {
+		    GretlType at = gretl_array_get_type(uvars[i]->ptr);
+
+		    pprintf(prn, "  %s (%s)\n", uvars[i]->name,
+			    gretl_type_get_name(at));
 		} else {
 		    pprintf(prn, "  %s\n", uvars[i]->name);
 		}

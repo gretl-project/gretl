@@ -26,10 +26,6 @@
 
 #include <gtk/gtk.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
 struct flag_info {
     GtkWidget *dialog;
     GtkWidget *levcheck;
@@ -313,7 +309,7 @@ static void leverage_print (const MODEL *pmod,
 
     for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
 	double h, st, d, f;
-	char fstr[32];
+	gchar *fstr = NULL;
 
 	if (na(pmod->uhat[t])) {
 	    print_obs_marker(t, dset, obslen, prn);
@@ -327,10 +323,11 @@ static void leverage_print (const MODEL *pmod,
 	}
 
 	f = gretl_matrix_get(S, j, 1);
-	if (!na(f)) {
-	    sprintf(fstr, "%15.5g", f);
+	if (na(f)) {
+	    fstr = g_strdup(_("undefined"));
+	    gretl_utf8_truncate(fstr, 15);
 	} else {
-	    sprintf(fstr, "%15s", _("undefined"));
+	    fstr = g_strdup_printf("%15.5g", f);
 	}
 
 	print_obs_marker(t, dset, obslen, prn);
@@ -339,6 +336,7 @@ static void leverage_print (const MODEL *pmod,
 	d = st * sqrt(h / (1.0 - h));
 	pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[t], h,
 		(h > lp)? "*" : " ", fstr, d);
+	g_free(fstr);
     }
 
     if (gotlp) {

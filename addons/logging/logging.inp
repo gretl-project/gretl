@@ -1,0 +1,80 @@
+function void logger (const string msg, const string level)
+    /* Check whether to print the log message in stdout or to append it to a file.
+    return: void */
+
+    string logfile = $logfile
+
+    if logfile != ""
+       outfile "@logfile" --quiet --append
+          print_log_msg(msg, level)
+       end outfile
+    else
+       print_log_msg(msg, level)
+    endif
+end function
+
+
+function void print_log_msg (const string msg, const string level)
+    /* Print the log meesage with or without timestamp. */
+
+    string format = "%Y-%m-%d %H:%M:%S %Z"
+
+    if $logstamp
+        printf "%s %s: %s\n", level, get_date_string(format), msg
+    else
+        printf "%s: %s\n", level, msg
+    endif
+end function
+
+
+function void Debug (const string msg)
+    /* Debug level.*/
+
+    if $loglevel <= 0
+        logger(msg, "DEBUG")
+    endif
+end function
+
+
+function void Info (const string msg)
+    /* Info level.*/
+
+    if $loglevel <= 1
+        logger(msg, "INFO")
+    endif
+end function
+
+
+function void Warn (const string msg)
+    /* Warning level.*/
+
+    if $loglevel <= 2
+        logger(msg, "WARNING")
+    endif
+end function
+
+
+function void Error (const string msg)
+    /* Error level.*/
+
+    if $loglevel <= 3
+        logger(msg, "ERROR")
+    endif
+end function
+
+
+function void Critical (const string msg)
+    /* Critical level.*/
+
+    if $loglevel <= 4
+        logger(msg, "CRITICAL")
+    endif
+end function
+
+
+function string get_date_string (const string format)
+    /* Compile formated timestamp
+    return: string, date and time string */
+
+    return strftime($now[1], format)
+end function

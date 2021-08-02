@@ -122,6 +122,10 @@ static int optrun, opteng, optbasque, optdump, optver;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
+#ifdef GRETL_OPEN_HANDLER
+static int optnew;
+static int optsingle;
+#endif
 
 static gchar *param_msg =
     N_("\nYou may supply the name of a data or script file on the command line");
@@ -147,6 +151,12 @@ static GOptionEntry options[] = {
 #endif
     { "version", 'v', 0, G_OPTION_ARG_NONE, &optver,
       N_("print version information"), NULL },
+#ifdef GRETL_OPEN_HANDLER
+    { "new", 'n', 0, G_OPTION_ARG_NONE, &optnew,
+      N_("start a new gretl instance unconditionally"), NULL },
+    { "single", 's', 0, G_OPTION_ARG_NONE, &optsingle,
+      N_("reuse an existing gretl instance unconditionally"), NULL },
+#endif
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -220,6 +230,11 @@ static void varinfo_callback (void)
 static void tdisagg_callback (void)
 {
     tdisagg_dialog(mdata->active_var);
+}
+
+static void bds_callback (void)
+{
+    bdstest_dialog(mdata->active_var, NULL);
 }
 
 static void prefs_dialog_callback (void)
@@ -376,7 +391,6 @@ static void real_nls_init (void)
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
     record_win32_locale(setlocale(LC_ALL, ""));
-    set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -384,27 +398,30 @@ static void real_nls_init (void)
 
 #elif defined(OS_OSX)
 
-#if 0
+#define LOCALE_CHECK 1
+
+#if LOCALE_CHECK
 
 #include <CoreFoundation/CoreFoundation.h>
 
 /* Use this to check what we get from setlocale() ? */
 
-static void osx_check_locale (void)
+static void macos_check_locale (void)
 {
-    CFLocaleRef cflocale = CFLocaleCopyCurrent();
-    CFStringRef locid;
+    CFLocaleRef cfloc = CFLocaleCopyCurrent();
+    CFStringRef cfprop;
     const char *s;
 
-    locid = (CFStringRef) CFLocaleGetValue(cflocale, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(locid, kCFStringEncodingASCII);
+    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
+    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
     if (s != NULL) {
-	fprintf(stderr, "CFLocale gave '%s'\n", s);
+	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
     }
-    CFRelease(cflocale);
+
+    CFRelease(cfloc);
 }
 
-#endif /* not yet */
+#endif /* LOCALE_CHECK */
 
 static void real_nls_init (void)
 {
@@ -424,7 +441,9 @@ static void real_nls_init (void)
 
     p = setlocale(LC_ALL, "");
     fprintf(stderr, "NLS init: setlocale() gave '%s'\n", p);
-    set_gretl_charset();
+#if LOCALE_CHECK
+    macos_check_locale();
+#endif
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -438,7 +457,6 @@ static void real_nls_init (void)
 static void real_nls_init (void)
 {
     setlocale(LC_ALL, "");
-    set_gretl_charset();
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -598,11 +616,18 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
     long gpid = gretl_prior_instance();
     gboolean ret = FALSE;
 
-    if (gpid > 0) {
-	/* found pid of already-running gretl instance */
-	gint resp;
+    /* Is there an already-running gretl instance? If so
+       we'll ask whether or not to start a new instance,
+       unless we got @optsingle, which says to reuse the
+       existing one.
+    */
 
-	resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
+    if (gpid > 0) {
+	gint resp = GRETL_NO;
+
+	if (!optsingle) {
+	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
+	}
 
 	if (resp != GRETL_YES) {
 	    /* try hand-off to prior gretl instance */
@@ -812,13 +837,14 @@ int main (int argc, char **argv)
     init_fileptrs();
 
     if (argc > 1 && *filearg == '\0') {
-	/* residual unhandled arg should be the name
-	   of a file to be opened */
+	/* If we have a residual unhandled command-line argument,
+	   it should be the name of a file to be opened.
+	*/
 	strncat(filearg, argv[1], MAXLEN - 1);
     }
 
 #ifdef GRETL_OPEN_HANDLER
-    if (maybe_hand_off(filearg, auxname)) {
+    if (!optnew && maybe_hand_off(filearg, auxname)) {
 	fflush(stderr);
 	exit(EXIT_SUCCESS);
     }
@@ -840,13 +866,19 @@ int main (int argc, char **argv)
     fprintf(stderr, "about to build GUI...\n");
 #endif
 
-#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
+#if defined(G_OS_WIN32)
     set_up_windows_look();
 #elif defined(OS_OSX) && defined(HAVE_MAC_THEMES)
     set_up_mac_look();
 #endif
 
+#ifdef GRETL_PID_FILE
+    write_pid_to_file();
+    atexit(delete_pid_from_file);
+#endif
+
     /* create the GUI */
+    set_fixed_font(NULL, 1);
     gretl_stock_icons_init();
 #if GUI_DEBUG
     fprintf(stderr, " done gretl_stock_icons_init\n");
@@ -861,11 +893,6 @@ int main (int argc, char **argv)
 
 #if GUI_DEBUG
     fprintf(stderr, " done add_files_to_menus\n");
-#endif
-
-#ifdef GRETL_PID_FILE
-    write_pid_to_file();
-    atexit(delete_pid_from_file);
 #endif
 
     session_menu_state(FALSE);
@@ -1474,11 +1501,14 @@ static void set_main_window_scale (void)
 void show_link_cursor (GtkWidget *w, gpointer p)
 {
     GdkWindow *window = gtk_widget_get_window(w);
+    GdkDisplay *disp = gdk_display_get_default();
     GdkCursor *c;
 
-    c = gdk_cursor_new(GDK_HAND2);
-    gdk_window_set_cursor(window, c);
-    gdk_cursor_unref(c);
+    c = gdk_cursor_new_from_name(disp, "pointer");
+    if (c != NULL) {
+	gdk_window_set_cursor(window, c);
+	gdk_cursor_unref(c);
+    }
 }
 
 static void make_main_window (void)
@@ -1487,8 +1517,8 @@ static void make_main_window (void)
     GtkUIManager *mac_mgr = NULL;
 #endif
     GtkWidget *box, *dlabel;
+    GtkWidget *hbox, *ebox;
     GtkWidget *wlabel = NULL;
-    GtkWidget *align;
     const char *titles[] = {
 	N_("ID #"),
 	N_("Variable name"),
@@ -1499,7 +1529,6 @@ static void make_main_window (void)
 	G_TYPE_STRING,
 	G_TYPE_STRING
     };
-    int show_wdir = display_workdir();
 
     mdata = gretl_viewer_new(MAINWIN, "gretl", NULL);
     if (mdata == NULL) {
@@ -1554,30 +1583,21 @@ static void make_main_window (void)
     dlabel = gtk_label_new(_(" No datafile loaded "));
     g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
-    /* label for working directory? */
-    if (show_wdir) {
-	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-	GtkWidget *ebox = gtk_event_box_new();
-
-	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
-	wlabel = gtk_label_new("");
-	if (show_workdir_tooltip()) {
-	    gtk_widget_set_tooltip_text(wlabel, _("Working directory: "
-						  "click to configure"));
-	}
-	g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
-	gtk_container_add(GTK_CONTAINER(ebox), wlabel);
-	gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
-	g_signal_connect(ebox, "button-press-event",
-			 G_CALLBACK(workdir_dialog1), NULL);
-	g_signal_connect(ebox, "enter-notify-event",
-			 G_CALLBACK(show_link_cursor), NULL);
-    } else {
-	align = gtk_alignment_new(0, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(align), dlabel);
-    }
+    /* label for working directory */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ebox = gtk_event_box_new();
+    gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
+    wlabel = gtk_label_new("");
+    gtk_widget_set_tooltip_text(wlabel, _("Working directory: "
+					  "click to configure"));
+    g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
+    gtk_container_add(GTK_CONTAINER(ebox), wlabel);
+    gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
+    g_signal_connect(ebox, "button-press-event",
+		     G_CALLBACK(workdir_dialog1), NULL);
+    g_signal_connect(ebox, "enter-notify-event",
+		     G_CALLBACK(show_link_cursor), NULL);
 
 #if GUI_DEBUG
     fprintf(stderr, " adding main-window listbox...\n");
@@ -1613,14 +1633,7 @@ static void make_main_window (void)
     fprintf(stderr, "  step 1 done\n");
 #endif
 
-    /* get a monospaced font for various windows */
-    set_fixed_font(NULL, 1);
-
-#if GUI_DEBUG
-    fprintf(stderr, "  set_fixed_font done\n");
-#endif
-
-    /* and a proportional font for menus, etc. */
+    /* set a proportional font for menus, etc. */
     set_app_font(NULL, 1);
 
 #if GUI_DEBUG
@@ -1684,7 +1697,7 @@ GtkActionEntry main_entries[] = {
     { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(workdir_dialog0) },
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
-    { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },
+    { "DisplayScripts", GTK_STOCK_OPEN, N_("_Example scripts..."), "", NULL, G_CALLBACK(show_files) },
     { "NewScript", GTK_STOCK_NEW, N_("_New script"), "", NULL, NULL },
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
@@ -1780,7 +1793,7 @@ GtkActionEntry main_entries[] = {
     { "FrischPlot", NULL, N_("X-Y with _control..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "GR_BOX", NULL, N_("_Boxplots..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "GR_FBOX", NULL, N_("_Factorized boxplot..."), NULL, NULL, G_CALLBACK(selector_callback) },
-    { "GR_QQ", NULL, N_("_Q-Q plot..."), NULL, NULL, G_CALLBACK(menu_op_action) },
+    { "GR_QQ", NULL, N_("_Q-Q plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ThreeDPlot", NULL, N_("_3D plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "MapPlot", NULL, N_("_Display map"), NULL, NULL, G_CALLBACK(map_plot_callback) },
     { "MultiPlots", NULL, N_("_Multiple graphs"), NULL, NULL, NULL },
@@ -1874,6 +1887,7 @@ GtkActionEntry main_entries[] = {
     { "Tramo", NULL, N_("_TRAMO analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
     { "Hurst", NULL, N_("_Hurst exponent"), NULL, NULL, G_CALLBACK(do_hurst) },
+    { "BDS", NULL, N_("BDS nonlinearity test"), NULL, NULL, G_CALLBACK(bds_callback) },
     { "tdisagg", NULL, N_("Disaggregate..."), NULL, NULL, G_CALLBACK(tdisagg_callback) },
     { "EditAttrs", NULL, N_("_Edit attributes"), NULL, NULL, G_CALLBACK(varinfo_callback) },
     { "VSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
@@ -1950,10 +1964,24 @@ GtkActionEntry main_entries[] = {
     { "gretlMPI", GRETL_STOCK_PDF, N_("_gretl + MPI"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlSVM", GRETL_STOCK_PDF, N_("_gretl + SVM"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "GeoplotDoc", GRETL_STOCK_PDF, N_("Creating maps"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };
+
+static int count_substrings (gchar **S)
+{
+    int i, n = 0;
+
+    for (i=0; S[i] != NULL; i++) {
+	if (S[i][0] != '\0') {
+	    n++;
+	}
+    }
+
+    return n;
+}
 
 /* Given an "internal" menu path, as in gretlmain.xml (with up
    to three slash-separated components), return its user-visible
@@ -1980,25 +2008,25 @@ static gchar *main_menu_user_string (const gchar *mpath)
 	return NULL;
     }
 
-#if 0
-    fprintf(stderr, "get_user_menu_string: mpath='%s'\n", mpath);
-#endif
-
     S = g_strsplit(mpath, "/", 0);
 
     if (S != NULL && S[0] != NULL) {
-	int i, j, nmain = G_N_ELEMENTS(main_entries);
 	const gchar *p[3] = {NULL, NULL, NULL};
+	int nmain = G_N_ELEMENTS(main_entries);
+	int i, j, ns = count_substrings(S);
+	int matched = 0;
 
 	for (i=0; i<nmain && !p[0]; i++) {
 	    if (main_entries[i].callback == NULL &&
 		!strcmp(S[0], main_entries[i].name)) {
 		p[0] = main_entries[i].label;
+		matched++;
 		if (S[1] != NULL) {
 		    for (j=i+1; j<nmain && !p[1]; j++) {
 			if (main_entries[j].callback == NULL &&
 			    !strcmp(S[1], main_entries[j].name)) {
 			    p[1] = main_entries[j].label;
+			    matched++;
 			}
 		    }
 		    if (S[2] != NULL) {
@@ -2006,13 +2034,16 @@ static gchar *main_menu_user_string (const gchar *mpath)
 			    if (main_entries[j].callback == NULL &&
 				!strcmp(S[2], main_entries[j].name)) {
 				p[2] = main_entries[j].label;
+				matched++;
 			    }
 			}
 		    }
 		}
 	    }
 	}
-	if (p[2] != NULL) {
+	if (matched < ns) {
+	    fprintf(stderr, "Invalid menu path '%s' (matched = %d)\n", mpath, matched);
+	} else if (p[2] != NULL) {
 	    ret = g_strdup_printf("%s/%s/%s", _(p[0]), _(p[1]), _(p[2]));
 	} else if (p[1] != NULL) {
 	    ret = g_strdup_printf("%s/%s", _(p[0]), _(p[1]));
@@ -2158,21 +2189,23 @@ static GtkUIManager *add_mac_menu (void)
 	g_error_free(error);
     }
 
-    accel_group = gtk_ui_manager_get_accel_group(mgr);
-    gtk_window_add_accel_group(GTK_WINDOW(mdata->main), accel_group);
-
     menu = gtk_ui_manager_get_widget(mgr, "/menubar/");
     g_object_ref_sink(menu);
 
     return mgr;
 }
 
-static void finish_mac_ui (GtkUIManager *mgr)
+/* add minimal top-of-screen gretl menu */
+
+static void finish_mac_ui (GtkUIManager *mac_mgr)
 {
     GtkWidget *menu;
 
-    menu = gtk_ui_manager_get_widget(mgr, "/menubar");
+    menu = gtk_ui_manager_get_widget(mac_mgr, "/menubar");
     if (menu != NULL) {
+	/* @menu needs a gtk window toplevel */
+	gtk_box_pack_end(GTK_BOX(mdata->vbox), menu, FALSE, FALSE, 0);
+	gtk_widget_hide(menu);
 	gtkosx_application_set_menu_bar(MacApp, GTK_MENU_SHELL(menu));
     }
     gtkosx_application_set_use_quartz_accelerators(MacApp, FALSE);

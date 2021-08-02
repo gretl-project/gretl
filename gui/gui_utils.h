@@ -178,6 +178,8 @@ char *gretl_basename (char *dest, const char *src, int addscore);
 
 char *double_underscores (char *targ, const char *src);
 
+gchar *double_underscores_new (const char *src);
+
 char *adjust_fontspec_string (char *targ, const char *src,
 			      int mod);
 

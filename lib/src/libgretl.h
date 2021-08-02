@@ -40,10 +40,8 @@
 
 #include <zlib.h>
 
-#ifndef GLIB_LT_2_26
-# define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_26
-# define GLIB_VERSION_MAX_ALLOWED (GLIB_VERSION_CUR_STABLE)
-#endif
+#define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_28
+#define GLIB_VERSION_MAX_ALLOWED (GLIB_VERSION_CUR_STABLE)
 #include <glib.h>
 
 #ifdef G_OS_WIN32
@@ -81,18 +79,9 @@ extern "C" {
 # define gettext_noop(String) String
 # define _(String) gettext (String)
 # define N_(String) gettext_noop (String)
-# ifdef WIN32
-#  define I_(String) locale_gettext (String)
-#  define A_(String) alt_gettext (String)
-# else
-#  define I_(String) gettext (String)
-#  define A_(String) gettext (String)
-# endif
 #else /* no NLS */
 # define _(String)  ((char *) String)
 # define N_(String) String
-# define I_(String) ((char *) String)
-# define A_(String) ((char *) String)
 #endif /* NLS or not */
 
 #define MAXLINE 65536  /* maximum length of command line */
@@ -156,6 +145,7 @@ typedef enum {
     GRETL_TYPE_LISTS_REF,
     GRETL_TYPE_ARRAYS_REF,
     GRETL_TYPE_VOID,
+    GRETL_TYPE_NUMERIC,
     GRETL_TYPE_ANY
 } GretlType;
 
@@ -292,6 +282,10 @@ typedef struct _FITRESID FITRESID;
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
 typedef struct equation_system_ equation_system;
+
+typedef struct gretl_bundle_ gretl_bundle;
+typedef struct gretl_array_ gretl_array;
+typedef struct gretl_string_table_ gretl_string_table;
 
 /**
  * VARINFO:

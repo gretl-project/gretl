@@ -11,6 +11,7 @@
 <!ENTITY tau "$\tau$">
 <!ENTITY agr "\ensuremath{\alpha}">
 <!ENTITY bgr "\ensuremath{\beta}">
+<!ENTITY egr "\ensuremath{\epsilon}">
 <!ENTITY lgr "$\lambda$">
 <!ENTITY rgr "$\rho$">
 <!ENTITY omega "$\omega$">

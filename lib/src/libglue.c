@@ -301,6 +301,165 @@ int llc_test_driver (const char *param, const int *list,
     return err;
 }
 
+static void bds_print (const gretl_matrix *m,
+		       const char *vname,
+		       int order, double eps,
+		       int c1, int boot,
+		       double *detail, PRN *prn)
+{
+    double z, pv;
+    int i;
+
+    /* header */
+    pputc(prn, '\n');
+    pprintf(prn, _("BDS test for %s, maximum order %d"), vname, order);
+    pputc(prn, '\n');
+    pputs(prn, _("H0: the series is linear/IID"));
+    pputc(prn, '\n');
+    if (boot > 0) {
+	pputs(prn, _("Bootstrapped p-values in []"));
+    } else {
+	pputs(prn, _("Asymptotic p-values in []"));
+    }
+    pputs(prn, "\n\n");
+
+    /* test statistics */
+    for (i=0; i<order-1; i++) {
+	z = gretl_matrix_get(m, 0, i);
+	pv = gretl_matrix_get(m, 1, i);
+	pputs(prn, "  ");
+	pprintf(prn, _("test order %d: z = %.3f [%.3f]"), i+2, z, pv);
+	pputc(prn, '\n');
+    }
+    pputc(prn, '\n');
+
+    /* trailer */
+    if (c1) {
+	pputs(prn, _("Distance criterion based on first-order correlation"));
+    } else {
+	pprintf(prn, _("Distance criterion based on sd(%s)"), vname);
+    }
+    pputc(prn, '\n');
+    pprintf(prn, _("eps = %g, first-order correlation %.3f"),
+	    detail[0], detail[1]);
+    pputs(prn, "\n\n");
+}
+
+static int get_vector_x (const double **px, int *n,
+			 const char **pvname)
+{
+    const char *mname = get_optval_string(BDS, OPT_X);
+    int err = 0;
+
+    if (mname != NULL) {
+	gretl_matrix *m = get_matrix_by_name(mname);
+
+	if (gretl_is_null_matrix(m)) {
+	    err = E_INVARG;
+	} else {
+	    *n = gretl_vector_get_length(m);
+	    if (*n == 0) {
+		err = E_INVARG;
+	    } else {
+		*px = m->val;
+		*pvname = mname;
+	    }
+	}
+    } else {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
+int bds_test_driver (int order, int *list, DATASET *dset,
+		     gretlopt opt, PRN *prn)
+{
+    gretl_matrix *res = NULL;
+    const double *x = NULL;
+    const char *vname = NULL;
+    double detail[2] = {0};
+    double eps = -0.7;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int boot = -1;
+    int c1 = 1;
+    int n, v = 0;
+    int err = 0;
+
+    if (list == NULL) {
+	err = get_vector_x(&x, &n, &vname);
+	if (err) {
+	    return err;
+	}
+    } else {
+	v = list[1];
+	x = dset->Z[v];
+	vname = dset->varname[v];
+    }
+
+    if (order < 2) {
+	err = E_INVARG;
+    } else {
+	err = series_adjust_sample(x, &t1, &t2);
+    }
+
+    if (!err) {
+	err = incompatible_options(opt, OPT_S | OPT_C);
+    }
+
+    if (!err) {
+	if (opt & OPT_S) {
+	    /* eps as multiple of std dev of @x */
+	    eps = get_optval_double(BDS, OPT_S, &err);
+	    if (!err && eps <= 0) {
+		err = E_INVARG;
+	    }
+	    c1 = 0;
+	} else if (opt & OPT_C) {
+	    /* eps as target first-order correlation */
+	    eps = get_optval_double(BDS, OPT_C, &err);
+	    if (!err && (eps < 0.1 || eps > 0.9)) {
+		err = E_INVARG;
+	    }
+	    c1 = 1;
+	}
+    }
+
+    if (!err && (opt & OPT_B)) {
+	boot = get_optval_int(BDS, OPT_B, &err);
+	if (boot < 0) {
+	    err = E_INVARG;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix *(*bdstest) (const double *, int, int, double,
+				  int, int, double *, int *);
+
+	bdstest = get_plugin_function("bdstest");
+	if (bdstest == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    n = t2 - t1 + 1;
+	    if (boot < 0) {
+		/* auto selection */
+		boot = n < 600;
+	    }
+	    res = bdstest(x + t1, n, order, eps, c1, boot, detail, &err);
+	}
+    }
+
+    if (res != NULL) {
+	if (!(opt & OPT_Q)) {
+	    bds_print(res, vname, order, eps, c1, boot, detail, prn);
+	}
+	set_last_result_data(res, GRETL_TYPE_MATRIX);
+    }
+
+    return err;
+}
+
 /* parse the tau vector out of @param before calling the
    "real" quantreg function
 */
@@ -516,6 +675,7 @@ int do_modprint (const char *mname, const char *names,
     gretl_array *parnames = NULL;
     const char *parstr = NULL;
     const char **rnames = NULL;
+    int free_coef_se = 0;
     int free_parnames = 0;
     int nnames = 0;
     int ncoef = 0;
@@ -528,10 +688,11 @@ int do_modprint (const char *mname, const char *names,
     /* k x 2 matrix: coeffs and standard errors */
     coef_se = get_matrix_by_name(mname);
     if (coef_se == NULL) {
-	return E_UNKVAR;
+	gretl_errmsg_set(_("modprint: expected the name of a matrix"));
+	return E_INVARG;
     } else if (gretl_matrix_cols(coef_se) != 2) {
 	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
-	return E_DATA;
+	return E_INVARG;
     }
 
     nnames = ncoef = coef_se->rows;
@@ -639,6 +800,9 @@ int do_modprint (const char *mname, const char *names,
 	}
     }
 
+    if (free_coef_se) {
+	gretl_matrix_free(coef_se);
+    }
     if (free_parnames) {
 	gretl_array_destroy(parnames);
     }

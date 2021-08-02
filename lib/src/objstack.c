@@ -677,7 +677,7 @@ equation_system *get_equation_system_by_name (const char *sname)
 
 int gretl_object_compose_name (void *p, GretlObjType type)
 {
-    char name[32];
+    char name[48];
     int err = 0;
 
     if (type == GRETL_OBJ_EQN) {
@@ -708,7 +708,7 @@ int gretl_object_compose_name (void *p, GretlObjType type)
 
 int gretl_object_compose_unique_name (void *p, GretlObjType type)
 {
-    char name[32];
+    char name[48];
     int id, err = 0;
 
     if (type == GRETL_OBJ_EQN) {
@@ -1160,16 +1160,25 @@ real_get_obj_string (void *p, GretlObjType type, int idx,
 	return str;
     }
 
-    if (type == GRETL_OBJ_EQN && idx == M_COMMAND) {
-	MODEL *pmod = (MODEL *) p;
+    if (idx == M_COMMAND) {
+	if (type == GRETL_OBJ_EQN) {
+	    MODEL *pmod = (MODEL *) p;
 
-	str = gretl_strdup(gretl_command_word(pmod->ci));
-    } else if (type == GRETL_OBJ_EQN && idx == M_DEPVAR) {
+	    str = gretl_strdup(gretl_command_word(pmod->ci));
+	} else if (type == GRETL_OBJ_SYS) {
+	    str = gretl_strdup(gretl_command_word(SYSTEM));
+	} else if (type == GRETL_OBJ_VAR) {
+	    GRETL_VAR *var = (GRETL_VAR *) p;
+
+	    str = gretl_strdup(gretl_command_word(var->ci));
+	}
+    } else if (idx == M_DEPVAR && type == GRETL_OBJ_EQN) {
 	const char *s = gretl_model_get_depvar_name((MODEL *) p,
 						    dset);
-
 	str = gretl_strdup(s);
-    } else {
+    }
+
+    if (str == NULL) {
 	*err = E_BADSTAT;
     }
 

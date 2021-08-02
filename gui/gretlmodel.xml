@@ -29,13 +29,14 @@
       <menuitem action="modtest:a"/>
       <menuitem action="dwpval"/>
       <menuitem action="modtest:h"/>
+      <menuitem action="bds"/>
       <menuitem action="qlrtest"/>
       <menuitem action="cusum"/>
       <menuitem action="cusum:r"/>
       <menuitem action="modtest:c"/>
       <separator/>
       <menuitem action="modtest:d"/>
-      <menuitem action="hausman"/>
+      <menuitem action="panspec"/>
     </menu>      
     <menu action="Save"/>
     <menu action="Graphs">

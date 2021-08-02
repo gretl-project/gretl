@@ -32,7 +32,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Building a relocatable package (Windows, OS X)? */
 #undef PKGBUILD
 
-/* Gnulot can do interactive 3D plots (not aquaterm) */
+/* Gnuplot can do interactive 3D plots? (not aquaterm) */
 #undef GNUPLOT3D
 
 /* Using libcurl for http? */
@@ -73,18 +73,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* using gtk+ 3 */
 #undef USE_GTK3
-
-/* Using gtksourceview-2.0? */
-#undef USE_GTKSOURCEVIEW_2
-
-/* Is gtksourceview-2.0 version >= 2.10? */
-#undef HAVE_GTKSOURCEVIEW_210
-
-/* Using gtksourceview-3.0? */
-#undef USE_GTKSOURCEVIEW_3
-
-/* Using very old GLib? */
-#undef GLIB_LT_2_26
 
 /* Does unistd.h have getdomainname? */
 #undef GETDOMAINNAME
@@ -159,6 +147,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Have clock_getttime in libc or librt */
 #undef HAVE_CLOCK_GETTIME
 
+/* Have functional completion in gtksourceview? */
+#undef HAVE_GTKSV_COMPLETION
+
 /* Use the GNU R shared library */
 #undef USE_RLIB
 
@@ -170,5 +161,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* On Mac, using GTK themes? */
 #undef HAVE_MAC_THEMES
+
+/* On Mac, have Carbon.framework? */
+#undef HAVE_CARBON
 
 #endif /* CONFIG_H */

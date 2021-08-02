@@ -29,7 +29,7 @@
 #include "calculator.h"
 #include "gpt_dialog.h"
 
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+#if GTK_MAJOR_VERSION > 2
 # define USE_GTK_FONT_CHOOSER 1
 #else
 # define USE_GTK_FONT_CHOOSER 0
@@ -459,14 +459,30 @@ static void flip_manual_range (GtkWidget *widget, plot_editor *ed)
 
 /* Take text from a gtkentry and write to gnuplot spec string */
 
-static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
+static void entry_to_gp_string (GtkWidget *w, char **ptarg)
 {
     const gchar *s;
 
-    *targ = '\0';
+    g_return_if_fail(GTK_IS_ENTRY(w));
+
+    if (*ptarg != NULL) {
+	g_free(*ptarg);
+	*ptarg = NULL;
+    }
+
+    s = gtk_entry_get_text(GTK_ENTRY(w));
+    if (s != NULL && *s != '\0') {
+	*ptarg = g_strdup(s);
+    }
+}
+
+static void entry_to_gp_label (GtkWidget *w, char *targ, size_t n)
+{
+    const gchar *s;
 
     g_return_if_fail(GTK_IS_ENTRY(w));
 
+    *targ = '\0';
     s = gtk_entry_get_text(GTK_ENTRY(w));
     if (s != NULL && *s != '\0') {
 	strncat(targ, s, n - 1);
@@ -611,12 +627,12 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	set_fit_type_from_combo(GTK_WIDGET(box), spec);
 	if (f == PLOT_FIT_LOESS || f == PLOT_FIT_NONE) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), "");
-	} else {
+	} else if (spec->lines[1].formula != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
 	}
 	if (f == PLOT_FIT_NONE) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), "");
-	} else {
+	} else if (spec->lines[1].title != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
 	}
 	gtk_widget_set_sensitive(ed->fitlegend, (f != PLOT_FIT_NONE));
@@ -684,8 +700,12 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
     }
 }
 
-#define gp_string_to_entry(w,s) do { \
-	gtk_entry_set_text(GTK_ENTRY(w),s); } while (0)
+static void gp_string_to_entry (GtkWidget *w, const char *s)
+{
+    if (s != NULL && *s != '\0') {
+	gtk_entry_set_text(GTK_ENTRY(w), s);
+    }
+}
 
 static int get_label_pos_from_entry (GtkWidget *w, double *pos)
 {
@@ -944,8 +964,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 
     for (i=0; i<NTITLES; i++) {
 	if (ed->gpt_titles[i].widget != NULL) {
-	    entry_to_gp_string(ed->gpt_titles[i].widget, spec->titles[i],
-			       sizeof spec->titles[0]);
+	    entry_to_gp_string(ed->gpt_titles[i].widget, &spec->titles[i]);
 	}
     }
 
@@ -1010,12 +1029,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    maybe_set_point_type(line, combo, i);
 	}
 	if (should_apply_changes(ed->linetitle[i])) {
-	    entry_to_gp_string(ed->linetitle[i], line->title,
-			       sizeof spec->lines[0].title);
+	    entry_to_gp_string(ed->linetitle[i], &line->title);
 	}
 	if (should_apply_changes(ed->lineformula[i])) {
-	    entry_to_gp_string(ed->lineformula[i], line->formula,
-			       sizeof spec->lines[0].formula);
+	    entry_to_gp_string(ed->lineformula[i], &line->formula);
 	}
 	if (should_apply_changes(ed->linewidth[i])) {
 	    line->width = spinner_get_float(ed->linewidth[i]);
@@ -1033,8 +1050,8 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     for (i=0; i<ed->gui_nlabels && !err; i++) {
-	entry_to_gp_string(ed->labeltext[i], spec->labels[i].text,
-			   sizeof spec->labels[0].text);
+	entry_to_gp_label(ed->labeltext[i], spec->labels[i].text,
+			  sizeof spec->labels[0].text);
 	if (string_is_blank(spec->labels[i].text)) {
 	    continue;
 	}
@@ -1088,7 +1105,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	if ((spec->fit == PLOT_FIT_NONE || spec->fit == PLOT_FIT_LOESS) &&
 	    ed->fitformula != NULL && spec->n_lines > 1) {
 	    /* scrub irrelevant formula, if any */
-	    spec->lines[1].formula[0] = '\0';
+	    if (spec->lines[1].formula != NULL) {
+		g_free(spec->lines[1].formula);
+		spec->lines[1].formula = NULL;
+	    }
 	}
     }
 
@@ -1143,45 +1163,7 @@ static void plot_editor_set_fontname (plot_editor *ed, const char *name)
     ed->spec->fontstr = gretl_strdup(name);
 }
 
-#ifdef USE_WIN32_FONTSEL
-
-static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
-				      const char *default_font)
-{
-    char fontname[128];
-
-    if (default_font == NULL || *default_font == '\0') {
-	if (type == 1) {
-	    default_font = pdf_ps_saver_current_font(p);
-	} else {
-	    default_font = gretl_png_font();
-	}
-    }
-
-    adjust_fontspec_string(fontname, default_font, DROP_COMMA);
-    win32_font_selector(fontname, APP_FONT_SELECTION);
-
-    if (*fontname != '\0') {
-	if (type < 2 && button != NULL) {
-	    gchar *title = g_strdup_printf(_("font: %s"), fontname);
-
-	    /* if we were passed a @button, update its string
-	       to reflect the current font choice
-	    */
-	    gtk_button_set_label(button, title);
-	    g_free(title);
-	}
-	if (type == 0) {
-	    plot_editor_set_fontname(p, fontname);
-	} else if (type == 1) {
-	    pdf_ps_saver_set_fontname(p, fontname);
-	} else if (type == 2) {
-	    activate_plot_font_choice(p, fontname);
-	}
-    }
-}
-
-#elif USE_GTK_FONT_CHOOSER
+#if USE_GTK_FONT_CHOOSER
 
 static void graph_font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 {
@@ -1378,16 +1360,18 @@ void plot_show_font_selector (png_plot *plot, const char *currfont)
 
 static void strip_lr (gchar *txt)
 {
-    gchar test[16];
+    gchar *test;
     gchar *p;
 
-    sprintf(test, "(%s)", _("left"));
+    test = g_strdup_printf("(%s)", _("left"));
     p = strstr(txt, test);
+    g_free(test);
     if (p != NULL) {
 	*p = '\0';
     } else {
-	sprintf(test, "(%s)", _("right"));
+	test = g_strdup_printf("(%s)", _("right"));
 	p = strstr(txt, test);
+	g_free(test);
 	if (p != NULL) {
 	   *p = '\0';
 	}
@@ -1700,15 +1684,10 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl),
 				      entry, 1, TAB_MAIN_COLS,
 				      rows-1, rows);
-
-            if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {
-		gp_string_to_entry(entry, spec->titles[i]);
-            }
-
+	    gp_string_to_entry(entry, spec->titles[i]);
 	    g_signal_connect(G_OBJECT(entry), "activate",
 			     G_CALLBACK(apply_gpt_changes),
 			     ed);
-
 	    gtk_widget_show(entry);
 	    ed->gpt_titles[i].widget = entry;
 	}
@@ -1751,8 +1730,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_widget_show(label);
 
 	ed->fitcombo = gtk_combo_box_text_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl),
-				  ed->fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->fitcombo,
+				  1, TAB_MAIN_COLS, rows-1, rows);
 
 	if (spec->flags & GPT_TS) {
 	    char *p, tmp[128];
@@ -1946,8 +1925,8 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
 {
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox;
+    gchar *text;
     int nrows = 1;
-    char label_text[32];
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(nlinfo->dlg));
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1962,17 +1941,17 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
 
     /* identifier and formula text */
     gtk_table_resize(GTK_TABLE(tbl), ++nrows, 3);
-    sprintf(label_text, _("line %d: "), ed->gui_nlines + 1);
-    label = gtk_label_new(label_text);
-    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl),
-			      label, 0, 1, nrows-1, nrows);
+    text = g_strdup_printf(_("line %d: "), ed->gui_nlines + 1);
+    label = gtk_label_new(text);
+    g_free(text);
+    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, nrows-1, nrows,
+		     0, 0, 0, 0);
     gtk_widget_show(label);
 
     label = gtk_label_new(_("formula"));
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl),
-			      label, 1, 2, nrows-1, nrows);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label,
+			      1, 2, nrows-1, nrows);
     gtk_widget_show(label);
 
     nlinfo->formula_entry = gtk_entry_new();
@@ -2127,26 +2106,49 @@ static void add_arrow_callback (GtkWidget *w, plot_editor *ed)
     }
 }
 
-static void set_gp_formula (char *targ, const char *s)
+/* Set formula for a given line, taking input from a
+   text entry box.  We'll convert from decimal comma
+   to decimal dot, if necessary, and from '^' to '**'
+   for exponentiation, to create a formula which is
+   acceptable by gnuplot.
+*/
+
+static void set_gp_formula (GPT_LINE *line, const char *src)
 {
     int decom = (get_local_decpoint() == ',');
-    int rem = GP_MAXFORMULA - strlen(s);
-    int i = 0;
+    const char *p;
+    gchar *s;
+    int i, n = 0;
 
-    while (*s) {
-	if (decom && *s == ',') {
-	    targ[i++] = '.';
-	} else if (*s == '^' && rem > 1) {
-	    targ[i++] = '*';
-	    targ[i++] = '*';
-	    rem--;
-	} else {
-	    targ[i++] = *s;
-	}
-	s++;
+    p = src;
+    while (*p) {
+	if (*p == '^') n++;
+	n++;
+	p++;
     }
 
-    targ[i] = '\0';
+    if (n == 0) {
+	return;
+    }
+
+    s = g_malloc0(n+1);
+    p = src;
+    i = 0;
+
+    while (*p) {
+	if (decom && *p == ',') {
+	    s[i++] = '.';
+	} else if (*p == '^') {
+	    s[i++] = '*';
+	    s[i++] = '*';
+	} else {
+	    s[i++] = *p;
+	}
+	p++;
+    }
+
+    g_free(line->formula);
+    line->formula = g_strstrip(s);
 }
 
 static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
@@ -2154,7 +2156,6 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     plot_editor *ed = nlinfo->editor;
     GPT_SPEC *spec = ed->spec;
     GPT_LINE *line;
-    char tmp[GP_MAXFORMULA];
     const gchar *s;
     gint pgnum;
     int err = 0;
@@ -2165,9 +2166,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 	return;
     }
 
-    *tmp = '\0';
-    strncat(tmp, s, GP_MAXFORMULA - 1);
-
+    /* add GUI apparatus for new line */
     err = allocate_line(ed);
     if (err) {
 	gtk_widget_destroy(nlinfo->dlg);
@@ -2175,7 +2174,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     }
 
     line = &spec->lines[spec->n_lines - 1];
-    set_gp_formula(line->formula, tmp);
+    set_gp_formula(line, s);
 
     line->style = GP_STYLE_LINES;
     line->type = spec->n_lines; /* assign next line style */
@@ -2325,34 +2324,38 @@ static int boxplot_has_ci (GPT_SPEC *spec)
 static void print_line_label (GtkWidget *tbl, int row,
 			      GPT_SPEC *spec, int i)
 {
-    char label_text[32];
+    gchar *text = NULL;
     GtkWidget *label;
-
-    *label_text = '\0';
 
     if (spec->code == PLOT_BOXPLOTS) {
 	if (i == 0) {
-	    sprintf(label_text, "%s: ", _("box"));
+	    text = g_strdup_printf("%s: ", _("box"));
 	} else if (i == 1) {
-	    sprintf(label_text, "%s: ", _("median"));
+	    text = g_strdup_printf("%s: ", _("median"));
 	} else if (boxplot_has_ci(spec)) {
 	    if (i == 2 || i == 3) {
-		sprintf(label_text, "%s: ", _("c.i. bound"));
+		text = g_strdup_printf("%s: ", _("c.i. bound"));
 	    } else {
-		sprintf(label_text, "%s: ", _("outliers"));
+		text = g_strdup_printf("%s: ", _("outliers"));
 	    }
 	} else {
 	    if (i == 2) {
-		sprintf(label_text, "%s: ", _("mean"));
+		text = g_strdup_printf("%s: ", _("mean"));
 	    } else {
-		sprintf(label_text, "%s: ", _("outliers"));
+		text = g_strdup_printf("%s: ", _("outliers"));
 	    }
 	}
     } else {
-	sprintf(label_text, _("line %d: "), i+1);
+	text = g_strdup_printf(_("line %d: "), i+1);
     }
 
-    label = gtk_label_new(label_text);
+    if (text == NULL) {
+	label = gtk_label_new("");
+    } else {
+	label = gtk_label_new(text);
+	g_free(text);
+    }
+
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      label, 0, 1, row - 1, row);
@@ -2362,11 +2365,12 @@ static void print_line_label (GtkWidget *tbl, int row,
 static void print_label_label (GtkWidget *tbl, int row, GPT_SPEC *spec,
 			       int i)
 {
-    char label_text[32];
+    gchar *label_text;
     GtkWidget *label;
 
-    sprintf(label_text, _("label %d: "), i + 1);
+    label_text = g_strdup_printf(_("label %d: "), i + 1);
     label = gtk_label_new(label_text);
+    g_free(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl),
 			      label, 0, 1, row - 1, row);
@@ -2457,7 +2461,9 @@ static int line_get_point_type (GPT_LINE *line, int i)
 }
 
 #define has_point(s) (s == GP_STYLE_POINTS || s == GP_STYLE_LINESPOINTS)
-#define has_line(s)  (s == GP_STYLE_LINES || s == GP_STYLE_LINESPOINTS)
+#define has_line(s)  (s == GP_STYLE_LINES || \
+		      s == GP_STYLE_LINESPOINTS || \
+		      s == GP_STYLE_IMPULSES)
 
 static void adjust_line_controls (GtkWidget *src, gpointer p)
 {
@@ -2562,6 +2568,18 @@ static void line_controls_init (plot_editor *ed, int i)
     ed->yaxiscombo[i] = NULL;
 }
 
+/* For the "lines" tab: we don't want this to take up
+   too much vertical space, so we need to provide for
+   vertical scrolling if the number of lines to be
+   handled exceeds some maximum. This max used to be
+   4, but it seems a smaller value is called for.
+*/
+
+static int want_vertical_scroller (plot_editor *ed)
+{
+    return ed->gui_nlines > 2;
+}
+
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
@@ -2602,7 +2620,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     label = gtk_label_new(_("Lines"));
     gtk_widget_show(label);
 
-    if (ed->gui_nlines > 4) {
+    if (want_vertical_scroller(ed)) {
 	page = scroller_page(vbox);
     } else {
 	page = vbox;
@@ -2647,9 +2665,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	if (line->type <= 0 && line->type != LT_AUTO) {
 	    color_sel_ok = 0;
 	}
-	if (plotspec_line_is_formula(spec, i)) {
-	    is_formula = 1;
-	}
+	is_formula = plotspec_line_is_formula(spec, i);
 
 	if (is_formula) {
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
@@ -2659,7 +2675,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->lineformula[i] = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->lineformula[i],
 				      2, ncols, nrows-1, nrows);
-	    strip_lr(line->formula);
+	    if (line->formula != NULL) {
+		strip_lr(line->formula);
+	    }
 	    gp_string_to_entry(ed->lineformula[i], line->formula);
 	    if (is_autofit) {
 		/* fitted formula: not GUI-editable */
@@ -2691,7 +2709,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    if (is_hidden) {
 		gtk_entry_set_text(GTK_ENTRY(ed->linetitle[i]), "");
 	    } else {
-		strip_lr(line->title);
+		if (line->title != NULL) {
+		    strip_lr(line->title);
+		}
 		gp_string_to_entry(ed->linetitle[i], line->title);
 		g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed",
 				 G_CALLBACK(linetitle_callback), ed);
@@ -2761,6 +2781,21 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->colorsel[i] = line_color_button(spec, i);
 	    gtk_box_pack_start(GTK_BOX(hbox), ed->colorsel[i], FALSE, FALSE, 20);
 	    color_sel_ok = 0;
+	}
+
+	if (axis_chooser) {
+	    GtkWidget *ycombo;
+
+	    label = gtk_label_new(_("y axis"));
+	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+	    ycombo = gtk_combo_box_text_new();
+	    combo_box_append_text(ycombo, _("left"));
+	    combo_box_append_text(ycombo, _("right"));
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ycombo),
+				     (line->yaxis == 1)? 0 : 1);
+	    gtk_box_pack_start(GTK_BOX(hbox), ycombo, FALSE, FALSE, 5);
+	    gtk_widget_set_sensitive(ycombo, !is_hidden);
+	    ed->yaxiscombo[i] = ycombo;
 	}
 
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
@@ -2860,8 +2895,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_widget_set_sensitive(hbox, hp);
 	}
 
-	if (axis_chooser) {
-	    /* use left or right y axis? */
+	if (axis_chooser && ed->yaxiscombo[i] == NULL) {
+	    /* fallback, probably not needed */
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	    print_field_label(tbl, nrows, _("y axis"));
 	    ed->yaxiscombo[i] = gtk_combo_box_text_new();

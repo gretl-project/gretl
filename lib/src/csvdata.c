@@ -1244,6 +1244,7 @@ static int time_series_label_check (DATASET *dset, int reversed,
 	    strcpy(dset->stobs, year);
 	    dset->sd0 = atof(dset->stobs);
 	    strcpy(dset->endobs, lbl2);
+	    dset->structure = TIME_SERIES;
 	} else {
 	    pputs(prn, _("   but the dates are not complete and consistent\n"));
 	    pd = -1;
@@ -2088,7 +2089,8 @@ static int csv_missval (const char *str, int i, int t,
 {
     int miss = 0;
 
-    if (*str == '\0') {
+    if (*str == '\0' || !strcmp(str, "\"\"")) {
+	/* 2021-03-03: let '""' indicate missing */
 	if (miss_shown != NULL) {
 	    if (t < 80 || *miss_shown < i) {
 		pprintf(prn, _("   the cell for variable %d, obs %d "
@@ -2829,6 +2831,16 @@ static int process_csv_varname (csvdata *c, int j, int *numcount,
 	}
 	iso_to_ascii(vname);
 	strip_illegals(vname);
+	if (gretl_reserved_word(vname)) {
+	    /* try a fix for this */
+	    int n = strlen(vname);
+
+	    if (n < VNAMELEN-1) {
+		strcat(vname, "_");
+	    } else {
+		vname[n-1] = '_';
+	    }
+	}
 	if (check_varname(vname)) {
 	    errmsg(1, prn);
 	    err = E_DATA;
@@ -2857,45 +2869,6 @@ static int skip_data_column (csvdata *c, int k)
 	return 1;
     } else {
 	return 0;
-    }
-}
-
-/* special fix-up for column names in the context of "join":
-   the algorithm here is also used in the userspace fixname()
-   function
-*/
-
-void normalize_join_colname (char *targ, const char *src,
-			     int underscore, int k)
-{
-    const char *letters = "abcdefghijklmnopqrstuvwxyz"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int i = 0;
-
-    /* skip any leading non-letters */
-    src += strcspn(src, letters);
-
-    while (*src && i < VNAMELEN - 1) {
-	if (strspn(src, letters) > 0 || isdigit(*src) || *src == '_') {
-	    /* transcribe valid characters */
-	    targ[i++] = *src;
-	} else if (*src == ' ' || underscore) {
-	    /* convert space to underscore */
-	    if (i > 0 && targ[i-1] == '_') {
-		; /* skip */
-	    } else {
-		targ[i++] = '_';
-	    }
-	}
-	src++;
-    }
-
-    if (i > 0) {
-	targ[i] = '\0';
-    } else if (k <= 0) {
-	strcpy(targ, "col[n]");
-    } else {
-	sprintf(targ, "col%d", k);
     }
 }
 
@@ -2955,7 +2928,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	sprintf(okname, "col%d", k);
     } else {
 	/* convert to valid gretl identifier */
-	normalize_join_colname(okname, c->str, 0, k);
+	gretl_normalize_varname(okname, c->str, 0, k);
     }
 
 #if CDEBUG
@@ -4001,7 +3974,11 @@ gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
 	*err = real_import_csv(csvname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, prn);
     } else if (!*err) {
-	*err = real_import_csv(fname, NULL, NULL, NULL,
+	char fullname[FILENAME_MAX];
+
+	strcpy(fullname, fname);
+	gretl_maybe_prepend_dir(fullname);
+	*err = real_import_csv(fullname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, prn);
     }
 
@@ -4213,13 +4190,10 @@ static joiner *joiner_new (int nrows)
     return jr;
 }
 
-#define TS_WILDCARD -888
-
 static int real_set_outer_auto_keys (joiner *jr, const char *s,
 				     int j, struct tm *tp)
 {
     DATASET *l_dset = jr->l_dset;
-    DATASET *r_dset = jr->r_dset;
     int err = 0;
 
     if (calendar_data(l_dset)) {
@@ -4249,7 +4223,6 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	}
     } else {
 	int lpd = l_dset->pd;
-	int rpd = r_dset->pd;
 	int major = tp->tm_year + 1900;
 	int minor = tp->tm_mon + 1;
 	int micro = 0;
@@ -4261,21 +4234,11 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		err = E_DATA;
 	    }
 	} else if (lpd == 4) {
-	    if (rpd == 1) {
-		/* repeat the lower frequency values */
-		minor = TS_WILDCARD;
-	    } else {
-		/* map from month on right to quarter on left, but
-		   preserve the month info in case we need it
-		*/
-		micro = minor;
-		minor = (int) ceil(minor / 3.0);
-	    }
-	} else if (lpd == 12) {
-	    if (rpd == 1) {
-		/* repeat the lower frequency values */
-		minor = TS_WILDCARD;
-	    }
+	    /* map from month on right to quarter on left, but
+	       preserve the month info in case we need it
+	    */
+	    micro = minor;
+	    minor = (int) ceil(minor / 3.0);
 	}
 	if (!err && micro == 0) {
 	    micro = tp->tm_mday;
@@ -4937,8 +4900,6 @@ static int midas_day_index (int t, DATASET *dset)
     return idx;
 }
 
-#define k2_matches(lk2, rk2) (rk2==lk2 || rk2==TS_WILDCARD)
-
 #define midas_daily(j) (j->midas_m > 20)
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
@@ -5075,7 +5036,7 @@ static double aggr_value (joiner *jr,
     for (i=imin; i<imax; i++) {
 	jr_row *r = &jr->rows[i];
 
-	if (jr->n_keys == 1 || k2_matches(key2, r->keyval2)) {
+	if (jr->n_keys == 1 || key2 == r->keyval2) {
 	    ntotal++;
 	    x = jr->r_dset->Z[v][r->dset_row];
 	    if (jr->auxcol) {
@@ -6487,6 +6448,7 @@ static int join_import_csv (const char *fname,
 	err = real_import_csv(fname, NULL, NULL, NULL, jspec,
 			      NULL, NULL, opt, prn);
 	if (0 && !err) {
+	    /* question, 2021-01-09: this is zeroed out: why? */
 	    DATASET *dset = jspec->c->dset;
 	    int pd, reversed = 0;
 
@@ -6864,6 +6826,11 @@ static int initial_midas_check (int nvars, int any_wild, int pd,
     return err;
 }
 
+static int has_native_suffix (const char *fname)
+{
+    return has_suffix(fname, ".gdt") || has_suffix(fname, ".gdtb");
+}
+
 /**
  * gretl_join_data:
  * @fname: name of data file.
@@ -6882,8 +6849,7 @@ static int initial_midas_check (int nvars, int any_wild, int pd,
  * @tconvfmt: string giving format(s) for "timeconv" columns, or NULL.
  * @midas_pd: hint regarding pd for --aggr=spread (?).
  * @opt: may contain OPT_V for verbose operation, OPT_H to assume
- * no header row, OPT_G for native gretl import file as opposed to
- * CSV.
+ * no header row.
  * @prn: gretl printing struct (or NULL).
  *
  * Opens a delimited text data file or gdt file and carries out a
@@ -7101,7 +7067,7 @@ int gretl_join_data (const char *fname,
     if (!err) {
 	PRN *vprn = verbose ? prn : NULL;
 
-	if (opt & OPT_G) {
+	if (has_native_suffix(fname)) {
 	    gretlopt gdt_opt = OPT_NONE;
 
 	    if (dataset_is_time_series(dset)) {

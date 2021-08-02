@@ -381,7 +381,7 @@ static int have_midas_data (void)
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_MESSAGE_WARNING,
 					GTK_BUTTONS_CLOSE,
-					"%s", msg);
+					"%s", _(msg));
 	g_signal_connect_swapped(dialog, "response",
 				 G_CALLBACK(gtk_widget_destroy),
 				 dialog);
@@ -446,6 +446,8 @@ static int selector_callback_code (const gchar *s)
 	return GR_BOX;
     if (!strcmp(s, "GR_FBOX"))
 	return GR_FBOX;
+    if (!strcmp(s, "GR_QQ"))
+	return QQPLOT;
     if (!strcmp(s, "VLAGSEL"))
 	return VLAGSEL;
     if (!strcmp(s, "ConfEllipse"))
@@ -523,12 +525,15 @@ void selector_callback (GtkAction *action, gpointer data)
 	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
     } else if (ci == GR_BOX) {
 	simple_selection(ci, _("gretl: define graph"), do_regular_boxplot, NULL);
+    } else if (ci == QQPLOT) {
+	simple_selection(ci, _("gretl: define graph"), do_qq_from_selector, NULL);
     } else if (ci == LOESS || ci == NADARWAT) {
-	char title[64];
+	const char *trstr = (ci == LOESS)? N_("Loess") : N_("Nadaraya-Watson");
+	gchar *title;
 
-	strcpy(title, "gretl: ");
-	strcat(title, (ci == LOESS)? _("Loess") : _("Nadaraya-Watson"));
+	title = g_strdup_printf("gretl: %s", _(trstr));
 	selection_dialog(ci, title, NULL, do_nonparam_model);
+	g_free(title);
     } else {
 	errbox("selector_callback: code was not recognized");
     }
@@ -842,11 +847,10 @@ void xcorrgm_callback (void)
     if (mdata_selection_count() == 2) {
 	do_xcorrgm(NULL);
     } else {
-	char title[64];
+	gchar *title = g_strdup_printf("gretl: %s", _("cross-correlogram"));
 
-	strcpy(title, "gretl: ");
-	strcat(title, _("cross-correlogram"));
 	simple_selection(XCORRGM, title, do_xcorrgm, NULL);
+	g_free(title);
     }
 }
 
@@ -929,6 +933,11 @@ void cond_number_callback (void)
     gretl_matrix_free(XX);
     gretl_matrix_free(chk);
     free(list);
+}
+
+void map_save_callback (void)
+{
+    file_selector(WRITE_MAP, FSEL_DATA_NONE, NULL);
 }
 
 static int nist_verbosity (GtkAction *action)

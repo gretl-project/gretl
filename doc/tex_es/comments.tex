@@ -1,0 +1,99 @@
+\chapter{Comentarios en los guiones}
+\label{chap:comments}
+
+Cuando un guion hace algo que no es obvio, es una buena idea añadir
+comentarios que expliquen lo que está sucediendo. En concreto esto es
+útil si planeas compartir el guion con los demás, pero también lo es
+como recordatorio para uno mismo --- cuando vuelves a retomar un guion
+algunos meses más tarde y te preguntas que se suponía que hacía.
+
+El mecanismo de hacer comentarios también puede ser de ayuda cuando estás
+desarrollando un guion. Pues puede llegar un punto en el que quieres
+ejecutar un guion, pero saltándote la ejecución de una parte del mismo.
+Obviamente, puedes eliminar la parte que quieres saltarte, pero en lugar
+de perder esa sección puedes ``ponerle un comentario'' de forma que
+\app{GRETL} no la tenga en cuenta.
+
+Se admiten dos tipos de comentarios en los guiones de \app{GRETL}.
+El más simple es este:
+
+\begin{itemize}
+\item Cuando se encuentra una marca de almohadilla, \texttt{\#}, en un
+  guion de \app{GRETL}, se trata todo lo que está desde ese lugar hasta
+  el final de la línea considerada como un comentario, y se deja de lado.
+\end{itemize}
+
+Si quieres ``comentar'' varias líneas utilizando esta modalidad, tendrás
+que colocar una marca de almohadilla al principio de cada una de esas líneas.
+
+El segundo tipo de comentarios sigue el patrón del lenguaje C de programación:
+
+\begin{itemize}
+\item Cuando se encuentra en un guion la secuencia \texttt{/*}, todo
+  lo que la sigue se trata como un comentario hasta que se encuentre la
+  secuencia \texttt{*/}.
+\end{itemize}
+
+Los comentarios de este tipo pueden extenderse por varias líneas. Utilizando
+esta modalidad es fácil añadir un texto explicativo extenso, o conseguir
+que \app{GRETL} deje de lado a bloques considerables de instrucciones. Como
+en C, los comentarios de este tipo no pueden anidarse.
+
+¿Como interactúan estas dos modalidades de hacer comentarios? Puedes imaginar
+que \app{GRETL} empieza en el principio de un guion, y que intenta decidir en
+cada punto si debe o no debe estar en la ``modalidad de omisión''. Cuando
+se hace esto, se aplican las siguientes reglas:
+
+\begin{itemize}
+\item Si no estamos en la modalidad de omisión, entonces \texttt{\#} nos coloca
+  en la modalidad de omisión hasta el final de la línea vigente.
+\item Si no estamos en la modalidad de omisión, entonces \texttt{/*} nos coloca
+  en la modalidad de omisión hasta que se encuentre \texttt{*/}.
+\end{itemize}
+
+Esto significa que cada tipo de comentario puede estar enmascarado por el otro.
+
+\begin{itemize}
+\item Si \texttt{/*} sigue a \texttt{\#} en una determinada línea que no
+  empieza en la modalidad de omisión, entonces no hay nada de especial en
+  cuanto a \texttt{/*}; es solo una parte de un comentario de estilo \texttt{\#}.
+\item Si aparece \texttt{\#} cuando ya estamos en la modalidad de omisión,
+  ello solo es una parte más de un comentario.
+\end{itemize}
+
+A continuación tenemos algunos ejemplos.
+%
+\begin{code}
+/* Comentario de varias líneas
+   # Hola
+   # Hola */
+\end{code}
+%
+En el ejemplo de arriba, las marcas de almohadilla no tienen nada de especial;
+en concreto, la marca de almohadilla de la tercera línea no evita que ese
+comentario de varias líneas acabe en \texttt{*/}.
+%
+\begin{code}
+# Comentario de una única línea /* Hola
+\end{code}
+%
+Suponiendo que no estamos en la modalidad de omisión antes de la línea que
+se muestra arriba, esta indica un comentario de una única línea: el
+\texttt{/*} está enmascarado, y no abre un comentario de varias líneas.
+
+Puedes añadir un comentario a una instrucción:
+%
+\begin{code}
+ols 1 0 2 3 # Estimar el modelo de partida
+\end{code}
+%
+Ejemplo de ``comentario'':
+%
+\begin{code}
+/*
+# Vamos a saltarnos esto por el momento
+ols 1 0 2 3 4
+omit 3 4
+*/
+\end{code}
+%

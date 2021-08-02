@@ -1,0 +1,24 @@
+set verbose off
+include regls.gfn
+
+open winequality-red.gdt --frompkg=regls
+list X = fixed_acidity .. alcohol
+# add squares and cross products
+list X += square(X, 1)
+
+bundle parms = defbundle("nlambda", 50, "ridge", 1)
+
+smpl 1 1500
+
+# Compares the SVD and CCD algorithms for ridge
+
+set stopwatch
+bundle rb1 = regls(quality, X, parms)
+printf "SVD time %.4fs\n", $stopwatch
+
+parms.ccd = 1
+parms.ccd_toler = 1.0e-10
+set stopwatch
+bundle rb2 = regls(quality, X, parms)
+printf "CCD time %.4fs\n", $stopwatch
+

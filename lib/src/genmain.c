@@ -313,7 +313,7 @@ int gretl_reserved_word (const char *str)
 
     for (i=0; i<n && !ret; i++) {
 	if (!strcmp(str, reswords[i])) {
-	    ret = 1;
+	    ret = E_INVARG;
 	}
     }
 
@@ -434,7 +434,7 @@ int series_index (const DATASET *dset, const char *varname)
 	    */
 	    for (i=1; i<dset->v; i++) {
 		if (fd == series_get_stack_level(dset, i) &&
-		    !series_is_listarg(dset, i) &&
+		    !series_is_listarg(dset, i, NULL) &&
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -507,7 +507,7 @@ int series_greatest_index (const DATASET *dset, const char *varname)
 	    */
 	    for (i=dset->v-1; i>0; i--) {
 		if (fd == series_get_stack_level(dset, i) &&
-		    !series_is_listarg(dset, i) &&
+		    !series_is_listarg(dset, i, NULL) &&
 		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
@@ -571,9 +571,9 @@ int genr_special_word (const char *s)
     }
 }
 
-static int genr_last_type;
+static GretlType genr_last_type;
 
-int genr_get_last_output_type (void)
+GretlType genr_get_last_output_type (void)
 {
     return genr_last_type;
 }
@@ -907,7 +907,7 @@ double generate_boolean (const char *s, DATASET *dset, PRN *prn, int *err)
 {
     double x = generate_scalar_full(s, dset, prn, err);
 
-    return *err ? x : (double) (x != 0.0);
+    return (*err || na(x)) ? NADBL : (double) (x != 0.0);
 }
 
 /* retrieve an integer result directly */
@@ -1251,7 +1251,7 @@ void destroy_genr (parser *p)
     }
 }
 
-int genr_get_output_type (const parser *p)
+GretlType genr_get_output_type (const parser *p)
 {
     int t = GRETL_TYPE_NONE;
 

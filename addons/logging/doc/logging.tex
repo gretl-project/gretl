@@ -1,0 +1,209 @@
+\documentclass{article}
+\usepackage{doc,url,verbatim,fancyvrb}
+\usepackage{pifont}
+\usepackage{gretl}
+\usepackage[pdftex]{hyperref}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+
+%\usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+\newcommand{\argname}[1]{\textsl{#1}}
+
+\title{logging version 1.0}
+\author{Artur Tarassow}
+\date{July 8, 2021}
+\maketitle
+
+\section{Introduction}
+
+This addon provides structured logging for gretl; that is, a means of
+recording the history and progress of a computation as a log of
+events.
+
+There are in principle two roles involved in logging---the
+\textit{coder} (the writer of a hansl script or function package) and
+the \textit{user} (the person running the script or
+package)---although one person may play both roles.
+
+The \textit{coder} gets to decide which events will be logged, and the
+importance or ``level'' to be assigned to each event. This is done by
+means of the logging functions \texttt{Debug}, \texttt{Info},
+\texttt{Warn}, \texttt{Error} and \texttt{Critical} (in increasing
+order of importance).  Each of these functions requires a single
+string argument and offers no return value. For example, the signature
+of \texttt{Info} is
+\begin{code}
+void Info (const string msg)
+\end{code}
+The coder must include the following statement prior to calling these
+functions:
+\begin{code}
+include logging.gfn
+\end{code}
+
+The \textit{user} determines which log messages will be shown, by
+selecting a threshold: print only messages of a specified level or
+above.  This is done via the command
+\begin{code}
+set loglevel <level>
+\end{code}
+where \verb|<level>| can be given by number or name, as shown below.
+
+\begin{center}
+  \begin{tabular}{cll}
+    number & name & associated function \\[4pt]
+    0 & \texttt{debug} & \texttt{Debug}\\
+    1 & \texttt{info} & \texttt{Info}\\
+    2 & \texttt{warn} & \texttt{Warn}\\
+    3 & \texttt{error} & \texttt{Error}\\
+    4 & \texttt{critical} & \texttt{Critical}
+  \end{tabular}
+\end{center}
+
+The default level is 2 or \texttt{warn}, so messages set via the
+\texttt{Debug} and \texttt{Info} functions will not be printed unless
+the user specifies a lower threshold. A user who does not care to see
+warning messages can raise the threshold to 3 or \texttt{error}.
+
+\section{Remarks}
+
+Using structured logging provides some advantages over using
+\texttt{print} or \texttt{printf} statements:
+\begin{enumerate}
+\item It gives control over the visibility and presentation of
+  messages without editing the source code. For example, the code
+\begin{code}
+  Debug("This is a debugging message")
+\end{code}
+  will produce no output by default; such messages are printed only
+  if the user selects a verbose level of logging.
+\item It's cheap to leave debugging statements like this in the source
+  code: the program evaluates the message only if it is currently
+  called for.
+\item Log messages can have timestamps, and can be written to a
+  separate file which can be analysed afterwards. More on these
+  points below.
+\end{enumerate}
+
+Note that the message passed to a logging function does not have to a
+fixed piece of text. You can incorporate current state information by
+means of the \texttt{sprintf} function, as in this example
+\begin{code}
+  Warn(sprintf("The matrix X looks funny:\n%12g\n", X))
+\end{code}
+which prints the elements of \texttt{X} following the message.
+
+The table below may be helpful in determining which level of logging
+to use for which purpose.\footnote{It is borrowed from
+  \url{https://docs.python.org/3/howto/logging.html}.}
+
+\begin{center}
+  \begin{tabular}{lp{0.8\textwidth}}
+    Debug & Detailed information, typically of interest only when diagnosing
+            problems.\\
+    Info & Confirmation that things are working as expected.\\
+    Warn & An indication that something unexpected happened, or indicative of some
+           problem in the near future (e.g.\ ``disk space low''). The software is still working
+           as expected.\\
+    Error & Due to a more serious problem, the software has not been able to perform
+            some function.\\
+    Critical & A serious error, indicating that the program itself may be unable to
+               continue running.
+  \end{tabular}
+\end{center}
+
+\section{Timestamps}
+
+Optionally, the user can arrange for each logging message to show a
+timestamp. This is achieved via the command
+\begin{code}
+set logstamp on
+\end{code}
+And timestamps can be turned off via ``\texttt{set logstamp off}''.
+
+Suppose a function contains the following statement, triggered when an
+argument \texttt{x} is negative:
+\begin{code}
+Warn("x is negative")
+\end{code}
+Without a timestamp the output will be
+\begin{code}
+WARNING: x is negative
+\end{code}
+With a timestamp it will resemble the following, showing date, time
+and time-zone:
+\begin{code}
+WARNING 2021-07-08 10:26:44 EDT: x is negative
+\end{code}
+
+\section{Logging to file}
+
+By default log messages are printed to the same place (window, file,
+or whatever) as regular program output. But the \texttt{set} variable
+\texttt{logfile} can be used to redirect logging output. For example,
+if you specify
+\begin{code}
+set logfile "mylog.txt"
+\end{code}
+logging output will go \texttt{mylog.txt}. Note that when a simple
+filename is given, as above, the file will be written in the user's
+working directory. To take control over its location you can supply a
+full path. You can also specify the ``file'' as \texttt{stdout} or
+\texttt{stderr} (without quotes) to send logging to the standard
+output or standard error streams, respectively.
+
+\section{A simple example}
+
+Listing~\ref{listing:simple-ex} illustrates usage on the part of both
+coder (in the function \texttt{testlog}) and user. You can try
+uncommenting the ``\texttt{set}'' lines in the main script to see
+their effect.
+
+\begin{script}[htbp]
+\begin{scode}
+include logging.gfn
+
+function void testlog (scalar x)
+   Debug("Here in function testlog")
+   Info(sprintf("testlog: x = %g", x))
+   if missing(x)
+       Error("x value is invalid")
+   elif x < 0
+       Warn("x is negative")
+   endif
+end function
+
+/* main script */
+
+# set loglevel info
+# set logstamp on
+# set loglevel debug
+testlog(3)
+testlog(-1)
+testlog(NA)
+\end{scode}
+\caption{Sample usage of logging functionality}
+\label{listing:simple-ex}  
+\end{script}
+
+\section{Accessors}
+
+The settings of \texttt{loglevel}, \texttt{logstamp} and
+\texttt{logfile} can be accessed via \dollar{loglevel},
+\dollar{logstamp} and \dollar{logfile}, respectively. The first two
+acessors return a numerical value (0/1 for \texttt{logstamp});
+\dollar{logfile} returns an empty string if redirection is not
+set. However, these accessors are basically internals of the addon,
+unlikely to be of interest to its users.
+
+\section{Changelog}
+
+v1.0 (July 2021)
+- Initial version.
+
+\end{document}

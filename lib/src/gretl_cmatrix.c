@@ -1044,46 +1044,68 @@ gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
     return cmatrix_SVD_inverse(A, 0, err);
 }
 
-/* Horizontal direct product of complex @A and @B */
+/* Horizontal direct product of complex @A and @B, or of
+   @A with itself if B is NULL.
+*/
 
 static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 				       const gretl_matrix *B,
 				       int *err)
 {
     gretl_matrix *C = NULL;
-    int r, p, q;
+    double complex aij, bik;
+    int do_symmetric = 0;
+    int i, j, k, ndx;
+    int r, p, q, ccols;
 
-    if (!cmatrix_validate(A,0) || !cmatrix_validate(B,0)) {
+    if (!cmatrix_validate(A,0)) {
 	*err = E_INVARG;
-	return NULL;
+    } else if (B != NULL) {
+	if (!cmatrix_validate(B,0)) {
+	    *err = E_INVARG;
+	} else if (B->rows != A->rows) {
+	    *err = E_NONCONF;
+	}
+    } else {
+	do_symmetric = 1;
     }
 
-    if (B->rows != A->rows) {
-	*err = E_NONCONF;
+    if (*err) {
 	return NULL;
     }
 
     r = A->rows;
     p = A->cols;
-    q = B->cols;
 
-    C = gretl_cmatrix_new0(r, p*q);
+    if (do_symmetric) {
+	q = p;
+	ccols = p * (p+1) / 2;
+    } else {
+	q = B->cols;
+	ccols = p * q;
+    }
+
+    C = gretl_cmatrix_new0(r, ccols);
 
     if (C == NULL) {
 	*err = E_ALLOC;
-    } else {
-	double complex aij, bik;
-	int i, j, k, joff;
+	return NULL;
+    }
 
-	for (i=0; i<r; i++) {
-	    for (j=0; j<p; j++) {
-		aij = gretl_cmatrix_get(A, i, j);
-		if (aij != 0.0) {
-		    joff = j * q;
-		    for (k=0; k<q; k++) {
-			bik = gretl_cmatrix_get(B, i, k);
-			gretl_cmatrix_set(C, i, joff + k, aij*bik);
-		    }
+    for (i=0; i<r; i++) {
+	ndx = 0;
+	for (j=0; j<p; j++) {
+	    aij = gretl_cmatrix_get(A, i, j);
+	    if (do_symmetric) {
+		for (k=j; k<q; k++) {
+		    bik = gretl_cmatrix_get(A, i, k);
+		    gretl_cmatrix_set(C, i, ndx++, aij*conj(bik));
+		}
+	    } else if (aij != 0.0) {
+		ndx = j * q;
+		for (k=0; k<q; k++) {
+		    bik = gretl_cmatrix_get(B, i, k);
+		    gretl_cmatrix_set(C, i, ndx + k, aij*bik);
 		}
 	    }
 	}
@@ -1151,7 +1173,9 @@ gretl_matrix *gretl_cmatrix_kronlike (const gretl_matrix *A,
     gretl_matrix *R = (gretl_matrix *) B;
     gretl_matrix *C = NULL;
 
-    if (A->is_complex && B->is_complex) {
+    if (A->is_complex && hdp && B == NULL) {
+	; /* OK */
+    } else if (A->is_complex && B->is_complex) {
 	; /* OK */
     } else if (A->is_complex) {
 	R = complex_from_real(B, err);
@@ -1403,10 +1427,11 @@ int gretl_cmatrix_printf (const gretl_matrix *A,
 }
 
 /* Compose a complex matrix from its real and imaginary
-   components. If @Im is NULL the matrix will have a
-   constant imaginary part given by @ival; otherwise
-   the matrices @Re and @Im must be of the same
-   dimensions.
+   components. If @Re is NULL the result will have a
+   constant real part given by @x; and if @Im is NULL it
+   will have a constant imaginary part given by @y. If
+   both matrix arguments are non-NULL they must be of
+   the same dimensions.
 */
 
 gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
@@ -2042,7 +2067,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	int jmin = vs == V_PROD ? 1 : 0;
 
 	for (i=0; i<m->rows; i++) {
-	    z = vs == V_PROD ? m->z[0] : 0;
+	    z = vs == V_PROD ? m->z[i] : 0;
 	    for (j=jmin; j<m->cols; j++) {
 		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(m, i, j);
@@ -2060,7 +2085,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	int imin = vs == V_PROD ? 1 : 0;
 
 	for (j=0; j<m->cols; j++) {
-	    z = vs == V_PROD ? m->z[0] : 0;
+	    z = vs == V_PROD ? gretl_cmatrix_get(m, 0, j) : 0;
 	    for (i=imin; i<m->rows; i++) {
 		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(m, i, j);

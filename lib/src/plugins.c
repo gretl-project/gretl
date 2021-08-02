@@ -78,7 +78,7 @@ enum {
     P_SAS_IMPORT,
     P_JMULTI_IMPORT,
     P_ZIPFILE,
-    P_ARBOND,
+    P_DPANEL,
     P_HECKIT,
     P_ODBC,
     P_QUANTREG,
@@ -96,7 +96,8 @@ enum {
     P_SVM,
     P_REGLS,
     P_GEOPLOT,
-    P_PUREBIN
+    P_PUREBIN,
+    P_BDSTEST
 } plugin_codes;
 
 struct plugin_info {
@@ -141,7 +142,7 @@ struct plugin_info plugins[] = {
     { P_SAS_IMPORT,      "sas_import",      NULL },
     { P_JMULTI_IMPORT,   "jmulti_import",   NULL },
     { P_ZIPFILE,         "gretlzip",        NULL },
-    { P_ARBOND,          "arbond",          NULL },
+    { P_DPANEL,          "dpanel",          NULL },
     { P_HECKIT,          "heckit",          NULL },
     { P_ODBC,            "odbc_import",     NULL },
     { P_QUANTREG,        "quantreg",        NULL },
@@ -159,7 +160,8 @@ struct plugin_info plugins[] = {
     { P_SVM,             "svm",             NULL },
     { P_REGLS,           "regls",           NULL },
     { P_GEOPLOT,         "geoplot",         NULL },
-    { P_PUREBIN,         "purebin",         NULL }
+    { P_PUREBIN,         "purebin",         NULL },
+    { P_BDSTEST,         "bdstest",         NULL },
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -243,8 +245,9 @@ struct plugin_function_info plugin_functions[] = {
     { "biprobit_estimate", P_BIPROBIT },
     { "reprobit_estimate", P_REPROBIT },
 
-    /* MacKinnon Dickey-Fuller p-values */
+    /* Dickey-Fuller test p-values */
     { "mackinnon_pvalue",  P_URCDIST },
+    { "dfgls_pvalue",      P_URCDIST },
 
     /* kernel density estimation */
     { "kernel_density",        P_KERNEL },
@@ -264,8 +267,7 @@ struct plugin_function_info plugin_functions[] = {
     { "gretl_native_zip_datafile", P_ZIPFILE},
 
     /* Dynamic panel data estimation */
-    { "arbond_estimate", P_ARBOND},
-    { "dpd_estimate",    P_ARBOND},
+    { "dpd_estimate", P_DPANEL},
 
     /* ODBC */
     { "gretl_odbc_check_dsn", P_ODBC},
@@ -321,6 +323,9 @@ struct plugin_function_info plugin_functions[] = {
     { "purebin_write_data", P_PUREBIN},
     { "purebin_read_subset",   P_PUREBIN},
     { "purebin_read_varnames", P_PUREBIN},
+
+    /* BDS nonlinearity test */
+    { "bdstest", P_BDSTEST},
 
     /* sentinel */
     { NULL, 0 }

@@ -26,6 +26,15 @@ AC_SUBST(LIBGRETL_CURRENT)
 AC_SUBST(LIBGRETL_REVISION)
 AC_SUBST(LIBGRETL_AGE)
 
+dnl PWD=`pwd`
+dnl ABS_SRCDIR=`(cd $srcdir && pwd)`
+dnl if test $PWD = $ABS_SRCDIR ; then
+dnl  echo "Building of gretl in the main source tree is not supported. Please"
+dnl  echo "create a build directory either parallel to the gretl source or"
+dnl  echo "under it, then configure and make from there."
+dnl  exit 1
+dnl fi
+
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 dnl
@@ -56,8 +65,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
-fake_gtkspinner="yes"
-fake_mono_time="no"
+gtksv_completion="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -81,6 +89,7 @@ pkg_build="no"
 mac_native="no"
 mac_integration="no"
 gui_disabled="no"
+have_carbon="yes"
 gp_3d="yes"
 MAKE="make"
 XML_LIBS=
@@ -191,6 +200,13 @@ AC_ARG_ENABLE(pkgbuild,
 then
   AC_DEFINE(PKGBUILD)
   pkg_build="yes"
+fi])
+
+AC_ARG_ENABLE(carbon,
+[  --disable-carbon        Don't try to use Carbon on macOS],
+[if test "$enableval" = "no"
+then
+  have_carbon="no"
 fi])
 
 AC_ARG_ENABLE(gnuplot-checks,
@@ -355,21 +371,20 @@ AC_CHECK_LIB(m, sin)
 AC_CHECK_LIB(c, fopen)
 
 dnl Checks for header files, etc.
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(stdint.h unistd.h dirent.h fnmatch.h fenv.h byteswap.h sys/times.h)
 AC_CHECK_HEADERS(libproc.h sys/proc_info.h)
 AC_C_CONST
-AC_C_LONG_DOUBLE
 AC_CHECK_FUNCS(vasprintf)
 AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_SIZEOF(int)
-AC_TYPE_SIGNAL
 AC_C_BIGENDIAN
 
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
 AC_ARG_VAR(MKNEWS, builder for NEWS file (cross-build))
+AC_ARG_VAR(MKPNGLIST, builder for icons index (cross-build))
+AC_ARG_VAR(COMPRES, GLib resource compiler (cross-build))
 AC_ARG_VAR(MPICC, path to MPI compiler wrapper)
 AC_ARG_VAR(MPILINK, linker commands for MPI (cross-build))
 
@@ -489,8 +504,16 @@ esac
 
 dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
-  CARBONLIB="-Wl,-framework -Wl,Carbon"
-  AC_SUBST(CARBONLIB)
+  if test "$have_carbon" = "yes" ; then
+    MACLIB="-Wl,-framework -Wl,Carbon"
+    AC_SUBST(MACLIB)
+    AC_DEFINE(HAVE_CARBON)
+  else
+    MACLIB="-Wl,-framework -Wl,CoreServices"
+    AC_SUBST(MACLIB)
+    AC_DEFINE(USE_SSE2)
+    sse2_result="yes"
+  fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
     AC_SUBST(DARWIN_RPATH)
@@ -637,43 +660,15 @@ if test "$use_curl" = "yes" ; then
 fi
 
 dnl
-dnl glib 2.0 (needed even if not building GUI; we need 2.14 for regexp functions)
+dnl glib 2.0 (needed even if not building GUI)
 dnl
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.14.0, have_glib2="yes", have_glib2="no")
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.28.0, have_glib2="yes", have_glib2="no")
 if test "${have_glib2}" = "no" ; then
    echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
    exit 1
-fi
-
-dnl
-dnl check for glib prior to 2.26 (re. deprecation warnings)
-dnl
-PKG_CHECK_MODULES(GLIB226, glib-2.0 >= 2.26.0,,
-  AC_DEFINE(GLIB_LT_2_26)
-)
-
-dnl
-dnl Do we need to "fake" g_get_monotonic_time() on Linux?
-dnl
-if test "$darwin_build" = "no" ; then
-  PKG_CHECK_MODULES(GLIB228, glib-2.0 >= 2.28.0,
-     fake_mono_time="no",
-     fake_mono_time="yes",
-  )
-fi
-if test "$fake_mono_time" = "yes" ; then
-   have_clock_gettime="no"
-   AC_CHECK_LIB(c, clock_gettime, have_clock_gettime="yes",,)
-   if test "$have_clock_gettime" = "no" ; then
-      AC_CHECK_LIB(rt, clock_gettime, have_clock_gettime="yes"; \
-       RT_LIB="-lrt",,)
-   fi
-   if test "$have_clock_gettime" = "yes" ; then
-      AC_DEFINE(HAVE_CLOCK_GETTIME)
-   fi
 fi
 
 dnl
@@ -698,38 +693,37 @@ dnl
 dnl Initial check for GTK availability
 dnl
 if test "$prefer_gtk2" = "yes" ; then
-    PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.14.0,
+    PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.20.0,
       GTK_CFLAGS=$GTK2_CFLAGS
       GTK_LIBS=$GTK2_LIBS
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       gtk_version="2.0",
-      echo "GTK 2 >= 2.14.0 not found"
+      echo "GTK 2 >= 2.20.0 not found"
     )
 elif test "$build_gui" = "yes" ; then
-    PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.2.0,
+    PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.16.0,
       GTK_CFLAGS=$GTK3_CFLAGS
       GTK_LIBS=$GTK3_LIBS
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       AC_DEFINE(USE_GTK3)
-      gtk_version="3.0"
-      fake_gtkspinner="no",
-      echo "GTK 3 >= 3.0.1 not found"
+      gtk_version="3.0",
+      echo "GTK 3 >= 3.16.0 not found"
     )
 fi
 
 dnl GTK 2.0 fallback in case preference not given
 if test "$prefer_gtk2" = "no" && test "$gtk_version" = "none" ; then
    if test "$build_gui" = "yes" ; then
-      PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.14.0,
+      PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.20.0,
         GTK_CFLAGS=$GTK2_CFLAGS
         GTK_LIBS=$GTK2_LIBS
         CFLAGS="$CFLAGS $GTK_CFLAGS"
         LIBS="$LIBS $GTK_LIBS"
         gtk_version="2.0",
         build_gui="no"
-        echo "GTK 2 >= 2.14.0 not found"
+        echo "GTK 2 >= 2.20.0 not found"
     )
    fi
 fi
@@ -759,21 +753,16 @@ dnl
 dnl Mac: if using Quartz GTK, require mac-integration
 dnl
 if test "$mac_native" = "yes" ; then
-    PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.1,
+    PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.5,
       mac_integration="yes",
       mac_integration="no",
     )
 fi
 
 dnl
-dnl For native gtkspinner: check for GTK 2.20 or higher,
-dnl and while we're at it grab the gtk prefix
+dnl Determine the gtk prefix
 dnl
 if test "$gtk_version" = "2.0" ; then
-    PKG_CHECK_MODULES(GTKSPINNER, gtk+-2.0 >= 2.20.0,
-      fake_gtkspinner="no",
-      fake_gtkspinner="yes",
-    )
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 else
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
@@ -783,30 +772,42 @@ dnl
 dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
 if test "$gtk_version" = "2.0" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.2.2,
-      AC_DEFINE(USE_GTKSOURCEVIEW_2)
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.10.5,
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0",
-      echo "version 2.0 >= 2.2.2 not found"
+      echo "version 2.0 >= 2.10.5 not found"
     )
-    if test "$have_sourceview" = "2.0" ; then
-      PKG_CHECK_MODULES(GSVWORDS, gtksourceview-2.0 >= 2.10.5,
-        AC_DEFINE(HAVE_GTKSOURCEVIEW_210),
-	echo "gtksourceview: word completion not supported"
-      )
-    fi
 fi
 
 dnl
-dnl Check for installed gtksourceview (GTK 3 variant)
+dnl Check for installed gtksourceview (GTK 3 variant, current)
 dnl
 if test "$gtk_version" = "3.0" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0,
-      AC_DEFINE(USE_GTKSOURCEVIEW_3)
-      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
-      have_sourceview="3.0",
-      echo "version 3.0 not found"
-    )
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-4,
+      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-4`
+      have_sourceview="4",
+        PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
+        GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+        have_sourceview="3.0",
+        echo "version 3.0 >= 3.20.0 not found"
+      )
+   )
+fi
+
+dnl
+dnl Check for installed gtksourceview (GTK 3 variant, previous)
+dnl
+dnl if test "$gtk_version" = "3.0" ; then
+dnl    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
+dnl      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+dnl      have_sourceview="3.0",
+dnl      echo "version 3.0 >= 3.20.0 not found"
+dnl    )
+dnl fi
+
+if test $have_sourceview = "3.0" || test $have_sourceview = "4" || test $pkg_build = "yes" ; then
+   AC_DEFINE(HAVE_GTKSV_COMPLETION)
+   gtksv_completion="yes"
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -829,7 +830,7 @@ AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
 AC_SUBST(have_sourceview)
-AC_SUBST(fake_gtkspinner)
+AC_SUBST(gtksv_completion)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
@@ -999,9 +1000,6 @@ doc/gretl-lite.sty
 
 if test "${darwin_build}" = "yes" ; then
   AC_CONFIG_FILES([
-    osx/Makefile
-    osx/gretl.sh
-    osx/fixlinks.sh
     osx/Info.plist
   ])
 fi
@@ -1056,6 +1054,7 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_es/Makefile
     doc/tex_pt/Makefile
     doc/tex_gl/Makefile
+    doc/tex_ru/Makefile
     doc/tex/extract.mk
     doc/reference/Makefile
   ])
@@ -1089,6 +1088,9 @@ if test "${build_addons}" = "yes" ; then
     addons/regls/pkg.inp
     addons/regls/Makefile
     addons/regls/doc/Makefile
+    addons/logging/pkg.inp
+    addons/logging/Makefile
+    addons/logging/doc/Makefile
   ])
 fi
 
@@ -1138,20 +1140,20 @@ libcurl is available from http://curl.haxx.se/libcurl/
 
 elif test "${have_glib2}" = "no" ; then
 echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
-elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" != "2.0" ; then
+elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" = "no" ; then
 echo "
 Please install gtksourceview-2.0 and then reconfigure gretl.
 gtksourceview-2.0 is available from http://www.gnome.org/
 "
 
-elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
+elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" = "no" ; then
 echo "
-Please install gtksourceview-3.0 and then reconfigure gretl.
-gtksourceview-3.0 is available from http://www.gnome.org/
+Please install gtksourceview 3.0 or 4 and then reconfigure gretl.
+gtksourceview is available from http://www.gnome.org/
 "
 
 elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
@@ -1178,11 +1180,12 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  sse2 support for RNG:                   ${sse2_result}
+  SIMD support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
+  Use gtksourceview version:              ${have_sourceview}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}

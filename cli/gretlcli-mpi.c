@@ -218,13 +218,14 @@ static void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
 
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
+
 # ifdef WIN32
-    locale_gettext(NULL);
-    win32_set_console_charset(PACKAGE);
+    try_for_CP_65001();
 # endif
 }
 
@@ -832,7 +833,14 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
         break;
 
     case CLEAR:
-        err = cli_clear_data(s, dset);
+	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
+	if (!err) {
+	    if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else {
+		err = cli_clear_data(s, dset);
+	    }
+	}
         break;
 
     case DATAMOD:

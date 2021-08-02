@@ -1196,8 +1196,10 @@ int gretl_array_set_bundle (gretl_array *A, int i,
     return err;
 }
 
+/* respond to A[i] = a */
+
 int gretl_array_set_array (gretl_array *A, int i,
-			   gretl_array *ai,
+			   gretl_array *a,
 			   int copy)
 {
     int err = 0;
@@ -1209,9 +1211,9 @@ int gretl_array_set_array (gretl_array *A, int i,
     } else if (i < 0 || i >= A->n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	err = E_DATA;
-    } else if (ai != A->data[i]) {
+    } else if (a != A->data[i]) {
 	gretl_array_destroy(A->data[i]);
-	err = set_array(A, i, ai, copy);
+	err = set_array(A, i, a, copy);
     }
 
     return err;
@@ -1238,6 +1240,8 @@ int gretl_array_append_bundle (gretl_array *A,
 
     return err;
 }
+
+/* respond to A += a */
 
 int gretl_array_append_array (gretl_array *A,
 			      gretl_array *a,
@@ -1322,6 +1326,84 @@ int gretl_array_set_element (gretl_array *A, int i,
     }
 
     return err;
+}
+
+static void free_array_element (gretl_array *A, int i)
+{
+    if (A->type == GRETL_TYPE_STRINGS ||
+	A->type == GRETL_TYPE_LISTS) {
+	free(A->data[i]);
+    } else if (A->type == GRETL_TYPE_MATRICES) {
+	gretl_matrix_free(A->data[i]);
+    } else if (A->type == GRETL_TYPE_BUNDLES) {
+	gretl_bundle_destroy(A->data[i]);
+    } else if (A->type == GRETL_TYPE_ARRAYS) {
+	gretl_array_destroy(A->data[i]);
+    }
+}
+
+int gretl_array_delete_element (gretl_array *A, int i)
+{
+    if (A == NULL) {
+	return E_DATA;
+    } else if (i < 0 || i >= A->n) {
+	return E_INVARG;
+    } else {
+	int j;
+
+	if (A->data[i] != NULL) {
+	    free_array_element(A, i);
+	}
+	/* shift the higher-numbered elements down */
+	for (j=i; j<A->n-1; j++) {
+	    A->data[j] = A->data[j+1];
+	}
+	/* decrement the element count */
+	A->n -= 1;
+
+	return 0;
+    }
+}
+
+/* Drop any/all occurrences of string @s from array @A */
+
+int gretl_array_drop_string (gretl_array *A, const char *s)
+{
+    if (A->type != GRETL_TYPE_STRINGS) {
+	return E_TYPES;
+    } else {
+	int i, j, rem = A->n;
+	int n_orig = A->n;
+	size_t sz;
+
+	for (i=0; ; ) {
+	    if (A->data[i] != NULL && !strcmp(A->data[i], s)) {
+		free(A->data[i]);
+		j = i + 1;
+		while (A->data[j] != NULL && !strcmp(A->data[j], s)) {
+		    free(A->data[j++]);
+		}
+		rem = A->n - j;
+		sz = rem * sizeof *A->data;
+		memmove(A->data + i, A->data + j, sz);
+		A->n -= j - i;
+		i = j;
+	    } else {
+		i++;
+	    }
+	    if (i == A->n || rem == 0) {
+		break;
+	    }
+	}
+	if (A->n == 0) {
+	    free(A->data);
+	    A->data = NULL;
+	} else if (A->n < n_orig) {
+	    A->data = realloc(A->data, A->n * sizeof(void *));
+	}
+    }
+
+    return 0;
 }
 
 /* @ptr must be pre-checked as matching the array type */
@@ -1758,11 +1840,11 @@ static void print_array_string (const char *s, PRN *prn)
 
 static void print_array_elements (gretl_array *A,
 				  int imin, int imax,
-				  PRN *prn)
+				  int range, PRN *prn)
 {
-    int i;
+    int i, lim = MIN(A->n, imax);
 
-    for (i=imin; i<imax; i++) {
+    for (i=imin; i<lim; i++) {
 	pprintf(prn, "[%d] ", i+1);
 	if (A->data[i] == NULL) {
 	    pputs(prn, "null\n");
@@ -1781,19 +1863,24 @@ static void print_array_elements (gretl_array *A,
 	}
     }
 
-    pputc(prn, '\n');
+    if (!range && A->n > lim) {
+	pputs(prn, "...\n\n");
+    } else {
+	pputc(prn, '\n');
+    }
 }
 
 int gretl_array_print (gretl_array *A, PRN *prn)
 {
     if (A != NULL) {
 	const char *s = gretl_type_get_name(A->type);
+	int nmax = 10;
 
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
 
-	if (A->n > 0 && A->n < 10 &&
+	if (A->n > 0 &&
 	    A->type != GRETL_TYPE_BUNDLES && A->type != GRETL_TYPE_ARRAYS) {
-	    print_array_elements(A, 0, A->n, prn);
+	    print_array_elements(A, 0, nmax, 0, prn);
 	}
     }
 
@@ -1808,7 +1895,7 @@ int gretl_array_print_range (gretl_array *A, int imin, int imax, PRN *prn)
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
 
 	if (A->type != GRETL_TYPE_BUNDLES && A->type != GRETL_TYPE_ARRAYS) {
-	    print_array_elements(A, imin, imax, prn);
+	    print_array_elements(A, imin, imax, 1, prn);
 	}
     }
 

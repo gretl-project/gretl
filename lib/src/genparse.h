@@ -100,7 +100,7 @@ enum {
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
   /* 70 */    DMSTR,	  /* "dollar" matrix plus string subspec */
-	      MSLRAW,	  /* unevaluated matrix subspec */
+	      SLRAW,	  /* unevaluated "slice" specification */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
@@ -159,6 +159,7 @@ enum {
     F_GAMMA,
     F_LNGAMMA,
     F_DIGAMMA,
+    F_TRIGAMMA,
     F_INVMILLS,
     F_ROUND,
     F_CNORM,
@@ -187,13 +188,9 @@ enum {
     F_ZEROMISS,
     F_MEDIAN,
     F_GINI,
-    F_SUM,
     F_SUMALL,
-    F_MEAN,
     F_MIN,
     F_MAX,
-    F_SD,
-    F_VCE,	  /* variance */
     F_SKEWNESS,
     F_KURTOSIS,
     F_SST,
@@ -291,8 +288,13 @@ enum {
     F_MLOG,
     F_BARRIER,
     HF_JBTERMS,
+    HF_SFCGI,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
+    F_SUM,
+    F_MEAN,
+    F_VCE,
+    F_SD,
     F_ARGNAME,
     F_T1,
     F_T2,
@@ -320,9 +322,6 @@ enum {
     F_MXTAB,
     F_MRSEL,
     F_MCSEL,
-    F_WMEAN,
-    F_WVAR,
-    F_WSD,
     F_STRSTR,
     F_INSTRING,
     F_CNAMESET,
@@ -334,7 +333,6 @@ enum {
     F_IMHOF,
     F_XMIN,
     F_XMAX,
-    F_FCSTATS,
     F_FRACLAG,
     F_MREV,
     F_DESEAS,
@@ -403,7 +401,11 @@ enum {
     F_ERRORIF,
     F_BINCOEFF,
     F_ASSERT,
+    F_CONTAINS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    F_WMEAN,
+    F_WVAR,
+    F_WSD,
     F_LLAG,
     F_HFLAG,
     F_PRINCOMP,
@@ -466,6 +468,8 @@ enum {
     F_STACK,
     F_GEOPLOT,
     F_VMA,
+    F_FCSTATS,
+    F_BCHECK,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -491,7 +495,6 @@ enum {
     F_DEFBUNDLE,
     F_DEFLIST,
     F_DEFARGS,
-    F_BPACK,
     F_KSETUP,
     F_BFGSCMAX,
     F_SVM,
@@ -501,7 +504,7 @@ enum {
     F_CHOWLIN,
     F_TDISAGG,
     F_HYP2F1,
-    F_MMULT,
+    F_MIDASMULT,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
@@ -623,9 +626,8 @@ enum node_flags {
     SVL_NODE = 1 << 2, /* holds string-valued series */
     PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
     LHT_NODE = 1 << 4, /* node holds terminal of LHS */
-    MSL_NODE = 1 << 5, /* (scalar) node is matrix element */
-    MUT_NODE = 1 << 6, /* node is inherently mutable in type */
-    ALS_NODE = 1 << 7  /* function subject to "reversing" alias */
+    MUT_NODE = 1 << 5, /* node is inherently mutable in type */
+    ALS_NODE = 1 << 6  /* function subject to "reversing" alias */
 };
 
 struct node {
@@ -722,6 +724,7 @@ void parser_ungetc (parser *p);
 void parser_advance (parser *p, int n);
 int parser_char_index (parser *p, int c);
 int parser_print_input (parser *p);
+void free_tree (NODE *t, parser *p, int code);
 void lex (parser *s);
 NODE *new_node (int t);
 NODE *expr (parser *s);
@@ -765,11 +768,11 @@ int check_declarations (char ***pS, parser *p);
 /* in genfuncs.c, used only internally */
 int cross_sectional_stat (double *x, const int *list,
 			  const DATASET *dset,
-			  int f);
+			  int f, int partial_ok);
 int x_sectional_weighted_stat (double *x, const int *list,
 			       const int *wlist,
 			       const DATASET *dset,
-			       int f);
+			       int f, int partial_ok);
 
 /* in geneval.c, used only internally */
 double dvar_get_scalar (int i, const DATASET *dset);

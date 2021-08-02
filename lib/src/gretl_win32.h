@@ -97,11 +97,9 @@ double win32_sscan_nonfinite (const char *s, int *err);
 
 void win32_pprint_nonfinite (PRN *prn, double x, char c);
 
-void win32_stopwatch_init (void);
+double win32_get_time (void);
 
-double win32_stopwatch (void);
-
-int win32_set_console_charset (const char *package);
+int try_for_CP_65001 (void);
 
 int windows_is_xp (void);
 

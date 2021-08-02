@@ -1,18 +1,15 @@
 \chapter{Dynamic panel models}
 \label{chap:dpanel}
 
-\newcommand{\by}{\boldsymbol{y}}
-\newcommand{\bx}{\boldsymbol{x}}
-\newcommand{\bv}{\boldsymbol{v}}
-\newcommand{\bX}{\boldsymbol{X}}
-\newcommand{\bW}{\boldsymbol{W}}
-\newcommand{\bZ}{\boldsymbol{Z}}
-\newcommand{\bA}{\boldsymbol{A}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bM}{\mathbf{M}}
 \newcommand{\biota}{\bm{\iota}}
-
-\DefineVerbatimEnvironment%
-{code}{Verbatim}
-{fontsize=\small, xleftmargin=1em}
 
 \newenvironment%
 {altcode}%
@@ -36,6 +33,8 @@ A dynamic linear panel data model can be represented as follows
   \label{eq:dpd-def}
   y_{it} = \alpha y_{i,t-1} + \beta'x_{it} + \eta_{i} + v_{it}
 \end{equation}
+where $i=1,2\ldots,N$ indexes the cross-section units and $t$ indexes
+time.
 
 The main idea behind the difference estimator is to sweep out the
 individual effect via differencing.  First-differencing eq.\
@@ -67,10 +66,10 @@ GMM estimation of equation (\ref{eq:dpd-dif}) amounts to computing
 \begin{equation}
 \label{eq:dif-gmm}
   \hat{\gamma} = \left[ 
-    \left( \sum_{i=1}^N \bW_i'\bZ_i \right) \bA_N
-    \left( \sum_{i=1}^N \bZ_i'\bW_i \right) \right]^{-1} 
-    \left( \sum_{i=1}^N \bW_i'\bZ_i \right) \bA_N
-    \left( \sum_{i=1}^N \bZ_i'\Delta \by_i \right)
+    \left( \sum_i \bW_i'\bZ_i \right) \bA_N
+    \left( \sum_i \bZ_i'\bW_i \right) \right]^{-1} 
+    \left( \sum_i \bW_i'\bZ_i \right) \bA_N
+    \left( \sum_i \bZ_i'\Delta \by_i \right)
 \end{equation}
 where
 \begin{align*}
@@ -91,7 +90,7 @@ where
          0 & 0 & 0 & \cdots & y_{i, T-2} & \Delta x_{iT} \\
        \end{array} \right]' \\
   \intertext{and}
-  \bA_N & = \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
+  \bA_N & = \left( \sum_i \bZ_i' H \bZ_i \right)^{-1}
 \end{align*}
 
 Once the 1-step estimator is computed, the sample covariance matrix of
@@ -126,10 +125,10 @@ The key equations of the system estimator can be written as
 \begin{equation}
 \label{eq:sys-gmm}
   \tilde{\gamma} = \left[ 
-    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right) \bA_N
-    \left( \sum_{i=1}^N \tilde{\bZ}'\tilde{\bW} \right) \right]^{-1} 
-    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right) \bA_N
-    \left( \sum_{i=1}^N \tilde{\bZ}'\Delta \tilde{\by}_i \right)
+    \left( \sum_i \tilde{\bW}_i'\tilde{\bZ}_i \right) \bA_N
+    \left( \sum_i \tilde{\bZ}_i'\tilde{\bW}_i \right) \right]^{-1} 
+    \left( \sum_i \tilde{\bW}_i'\tilde{\bZ}_i \right) \bA_N
+    \left( \sum_i \tilde{\bZ}_i'\Delta \tilde{\by}_i \right)
 \end{equation}
 where
 \begin{align*}
@@ -154,7 +153,7 @@ where
          0 & 0 & 0 & \cdots & 0 & 0 & \cdots & \Delta y_{i,T-1}  & x_{iT}\\
        \end{array} \right]' \\
   \intertext{and}
-  \bA_N & = \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
+  \bA_N & = \left( \sum_i \tilde{\bZ}_i' H^* \tilde{\bZ}_i \right)^{-1}
 \end{align*}
 
 In this case choosing a precise form for the matrix $H^*$ for the
@@ -208,6 +207,34 @@ substitute the pseudo-inverse of $\bA_N$ (Moore--Penrose) for its regular
 inverse. Again, our choice is shared by some software packages, but
 not all, so replication may be hard.
 
+\subsection{Covariance matrix and standard errors}
+
+By default the standard errors shown by \texttt{dpanel} for 1-step
+estimation are robust, based on the heteroskedasticity-consistent
+variance estimator
+\[
+  \widehat{\rm Var}(\hat{\gamma}) =
+    \bM^{-1} \left(\sum_i\bW_i'\bZ_i\right)
+    \bA_N\hat{\mathbf{V}}_N\bA_N
+    \left(\sum_i\bZ_i'\bW_i\right) \bM^{-1}
+  \]
+  where $\bM = (\sum_i\bW_i'\bZ_i) \bA_N (\sum_i\bZ_i'\bW_i)$ and
+  $\hat{\mathbf{V}}_N = N^{-1} \sum_i
+  \bZ_i'\hat{\mathbf{u}}_i\hat{\mathbf{u}}_i'\bZ_i$, with
+  $\hat{\mathbf{u}}_i$ the vector of residuals in differences for
+  individual $i$.  In addition, as noted above, the variance estimator
+  for 2-step estimation employs the finite-sample correction of
+  \cite{Windmeijer05}.
+
+  When the \verb|--asymptotic| option is passed to \texttt{dpanel},
+  however, the 1-step variance estimator is simply
+  $\hat{\sigma}_u^2 M^{-1}$, which is not
+  heteroskedasticity-consistent, and the Windmeijer correction is not
+  applied for 2-step estimation. Use of the asymptotic option is not
+  recommended unless you wish to replicate prior results that did not
+  report robust standard errors. In particular, tests based on the
+  asymptotic 2-step variance estimator are known to over-reject quite
+  substantially (standard errors too small).
 
 \subsection{Treatment of missing values}
 
@@ -747,14 +774,15 @@ to the target program.) For reference, the commands used with
 Stata are reproduced below:
 %
 \begin{code}
+#delimit ;
 insheet using CEL.csv
-tsset unit time
+tsset unit time;
 xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
-  gmm(lngd, lag(2 99)) rob nolev
+  gmm(lngd, lag(2 99)) rob nolev;
 xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
-  gmm(lngd, lag(2 99)) rob nolev twostep
+  gmm(lngd, lag(2 99)) rob nolev twostep;
 xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
-  gmm(lngd, lag(2 99)) rob nocons twostep
+  gmm(lngd, lag(2 99)) rob nocons twostep;
 \end{code}
 
 For the GMM-DIF model all three programs find 382 usable observations
@@ -829,12 +857,12 @@ the estimator.
 \label{sec:dpanel-aux}
 
 We have concentrated above on the parameter estimates and standard
-errors. It may be worth adding a few words on the additional test
-statistics that typically accompany both GMM-DIF and GMM-SYS
-estimation. These include the Sargan test for overidentification, one
-or more Wald tests for the joint significance of the regressors (and time
-dummies, if applicable) and tests for first- and second-order
-autocorrelation of the residuals from the equations in differences.
+errors. Here we add a few words on the additional test statistics that
+typically accompany both GMM-DIF and GMM-SYS estimation. These include
+the Sargan test for overidentification, one or more Wald tests for the
+joint significance of the regressors (and time dummies, if applicable)
+and tests for first- and second-order autocorrelation of the residuals
+from the equations in differences.
 
 As in Ox/DPD, the Sargan test statistic reported by gretl is
 \[
@@ -861,6 +889,15 @@ this occurs when the $\bA_N$ matrix is singular
 instruments minus the number of parameters estimated; for the first of
 these terms gretl uses the rank of $\bA_N$, while DPD appears to use
 the full dimension of this matrix.
+
+Negative first-order autocorrelation of the residuals is expected by
+construction of the estimator, so a significant value for the AR(1)
+test does not indicate a problem. If the AR(2) test is significant,
+however, this indicates violation of the maintained assumptions. Note
+that valid AR tests cannot be produced when the \verb|--asymptotic|
+option is specified in conjunction with one-step GMM-SYS estimation;
+if you need the tests, either add the \verb|two-step| option or drop
+the asymptotic flag (which is recommended in any case).
 
 \section{Post-estimation available statistics}
 \label{sec:dpanel-post}
@@ -952,7 +989,8 @@ print coef
   \verb|--dpdstyle| & Compute the $H$ matrix as in DPD; also suppresses
                       differencing of automatic time dummies and omission of intercept
                       in the GMM-DIF case\\
-  \verb|--verbose| & When \verb|--two-step| is selected, prints 
+  \verb|--verbose| & Prints confirmation of the GMM-style instruments
+                     used; and when \verb|--two-step| is selected, prints 
                      the 1-step estimates first \\
   \verb|--vcv| & Calls for printing of the covariance matrix \\
   \verb|--quiet| & Suppresses the printing of results \\
@@ -963,8 +1001,9 @@ print coef
 
 The time dummies option supports the qualifier \texttt{noprint}, as
 in
-
-\verb|  --time-dummies=noprint|
+\begin{code}
+--time-dummies=noprint
+\end{code}
 
 This means that although the dummies are included in the specification
 their coefficients, standard errors and so on are not printed.

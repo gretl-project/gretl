@@ -1,11 +1,15 @@
+# (function splitfname comes from the extra addon) 
+
+#### 
+
 function scalar check_bounds(int s, int v, int n)
     # negative s is allowed and means to flip the shock
 
-	ret = 0
-    if abs(s) > n || (s == 0)
+    ret = 0
+    if abs(s)>n || s==0
         ret = 1
 
-    elif (v > n) || (v < 1)
+    elif v>n || v<1
         ret = 2
     endif
 
@@ -22,28 +26,22 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
                         int bc[0:2:0], int whichdraw[0::0])
 
     # bc: bias correction choice
-    # FIXME: We should get rid of sname/vname args and get them automatically
-    # via snum/vnum
+    # FIXME: We should link the sname/vname args and snum/vnum args,
+    # also to avoid accidental input mismatch.
     # (the number of args here is horrible...)
-    
-    if whichdraw && (exists(boot) || bc)
-        funcerr "cannot have SR/whichdraw and bootstrap options together"
-    endif
-    
-    flip = (snum < 0)
+
+    errorif( whichdraw && (exists(boot) || bc), \
+        "cannot have SR/whichdraw and bootstrap options together")
+
+    flip = snum < 0
     snum = abs(snum)
     n = round(sqrt(cols(IRFmat)))
-
-    # bootrep = exists(boot) ? boot.rep : 0 # doesn't work due to gretl bug+
-    bootrep = 0
-    if exists(boot)
-        bootrep = boot.rep
-    endif
+    bootrep = exists(boot) ? boot.rep : 0 # didn't work due to gretl bug+
 
     # anything to cumulate?
-    cumulate = exists(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
+    cumulate = exists(cumul) ? sum(cumul .= vnum) > 0 : 0
 
-    tmpfname = int(1000 * muniform(1,1))
+    tmpfname = int(1000 * muniform(1))
     string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
       sprintf("@dotdir/irf%d.gp", tmpfname)
 
@@ -65,70 +63,69 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
         scalar maxy = maxc(x)
     endif
 
-    miny = (miny>0) ? 0 : miny
-    maxy = (maxy<0) ? 0 : maxy
+    miny = miny>0 ? 0 : miny
+    maxy = maxy<0 ? 0 : maxy
 
     set force_decpoint on
 
     ## write the raw gnuplot code
-    # TODO: replace outfile --write ... outfile --close 
-    # with outfile ... end outfile eventually (but needs gretl 2018b)
-    outfile "@tmpfile" --write
-    printf "set yrange [%g:%g]\n", miny*1.05, maxy*1.05
-    printf "set xrange [%g:%g]\n", 0, (h-1)*1.05
-    printf "set xzeroaxis\n"
 
-    string l_sname = sname=="" ? sprintf("%d", snum) : sname
-    string l_vname = vname=="" ? sprintf("%d", vnum) : vname
+    outfile "@tmpfile"
+        printf "set yrange [%g:%g]\n", miny*1.05, maxy*1.05
+        printf "set xrange [%g:%g]\n", 0, (h-1)*1.05
+        printf "set xzeroaxis\n"
 
-    printf "set title \"IRF: %s -> %s", l_sname, l_vname
+        string l_sname = sname=="" ? sprintf("%d", snum) : sname
+        string l_vname = vname=="" ? sprintf("%d", vnum) : vname
 
-    if bc == 1
-        printf "; bias-correction = partial"
-    elif bc == 2
-        printf "; bias-correction = full"
-    elif whichdraw
-        printf " (draw %d)", whichdraw
-    endif
+        printf "set title \"IRF: %s -> %s", l_sname, l_vname
 
-    if cumulate > 0
-        printf " (cumulated)"
-    endif
+        if bc == 1
+            printf "; bias-correction = partial"
+        elif bc == 2
+            printf "; bias-correction = full"
+        elif whichdraw
+            printf " (draw %d)", whichdraw
+        endif
 
-    printf "\"\n"
+        if cumulate > 0
+            printf " (cumulated)"
+        endif
 
-    if keypos == 0
-        printf "set key off\n"
-    elif keypos == 1
-        printf "set key outside\n"
-    elif keypos == 2
-        printf "set key below\n"
-    endif
+        printf "\"\n"
 
-    if bootrep > 0
-        printf "set style fill solid 0.125\n"
-        printf "plot '-' using 1:2:3 w filledcurve t "
-		printf "'Bstrap %d%% CI', \\\n", floor(100 * boot.alpha)
-        printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
-        printf "'-' w l lw 2 lc -1 t 'IRF'\n"
-        loop i=1..h -q
-            printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
+        if keypos == 0
+            printf "set key off\n"
+        elif keypos == 1
+            printf "set key outside\n"
+        elif keypos == 2
+            printf "set key below\n"
+        endif
+
+        if bootrep > 0
+            printf "set style fill solid 0.125\n"
+            printf "plot '-' using 1:2:3 w filledcurve t "
+            printf "'Bstrap %d%% CI', \\\n", floor(100 * boot.alpha)
+            printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
+            printf "'-' w l lw 2 lc -1 t 'IRF'\n"
+            loop i = 1..h 
+                printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
+            endloop
+            printf "e\n"
+            loop i = 1..h 
+                printf "%d\t%g\n", i-1, mdn[i,]
+            endloop
+            printf "e\n"
+        else
+            printf "plot '-' w l lw 2\n"
+        endif
+
+        loop i = 1..h 
+            printf "%d\t%g\n", i-1, x[i]
         endloop
         printf "e\n"
-        loop i=1..h -q
-            printf "%d\t%g\n", i-1, mdn[i,]
-        endloop
-        printf "e\n"
-    else
-        printf "plot '-' w l lw 2\n"
-    endif
-
-    loop i=1..h -q
-        printf "%d\t%g\n", i-1, x[i]
-    endloop
-    printf "e\n"
-    outfile --close
-    set force_decpoint off
+    end outfile
+    set force_decpoint off # in gretl >=2021b this is redundant
 
     return tmpfile
 end function
@@ -148,13 +145,13 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     whichdraw = drawix ? drawix : obj.bestdraw
 
     if obj.type == 10	# SR
-        errchkSRhisto(&obj, drawix)        
-        putIrf_to_accdraw(&obj, whichdraw)     
+        errchkSRhisto(&obj, drawix)
+        putIrf_to_accdraw(&obj, whichdraw)
         matrix IRFmat = obj.acc_draws[whichdraw].IRFs
     else
         matrix IRFmat = obj.IRFs
     endif
-    
+
     scale = 1	# possibly changed later
     if obj.normalize == 1
         matrix tmp = mshape(IRFmat[1,], n, n)
@@ -170,11 +167,11 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     is_vrange = range(vnum, n, &vfrom, &vto)
 
     # cycle through all (selected) shocks and variables
-    loop snum = sfrom..sto -q
+    loop snum = sfrom..sto 
         # do checks
         err = check_bounds(snum, 1, n)
         if err == 1
-            printf "Shock number %d out of bounds\n", abs(snum) 
+            printf "Shock number %d out of bounds\n", abs(snum)
             # (abs because of flipping)
             return
         endif
@@ -185,7 +182,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             scale = tmp[abs(snum), abs(snum)]
         endif
 
-        loop vnum = vfrom..vto -q
+        loop vnum = vfrom..vto 
             # do checks
             err = check_bounds(1, vnum, n)
             if err == 2
@@ -199,27 +196,27 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             if obj.ncumul == 0
                 if obj.nboot == 0
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      null, null, , whichdraw)
+                      null, null, , whichdraw)
                 else
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      null, &boot, bc, whichdraw)
+                      null, &boot, bc, whichdraw)
                 endif
             else
                 matrix cumul = obj.cumul
                 if obj.nboot == 0
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      &cumul, null, , whichdraw)
+                      &cumul, null, , whichdraw)
                 else
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      &cumul, &boot, bc, whichdraw)
+                      &cumul, &boot, bc, whichdraw)
                 endif
             endif
 
-            if (outfilename == "display") || (sfrom == sto && vfrom == vto) 
+            if outfilename=="display" || (sfrom == sto && vfrom == vto)
                 # (single plot, no indices)
                 tmpout = outfilename
             else
-                strings be = basename(outfilename)	# gives 2-elem array
+                strings be = splitfname(outfilename)[2:3]	# gives 2-elem array, was basename
                 if is_vrange	 # several v indices
                     if is_srange # several s indices
                         tmpout = sprintf("%s_%d%d.%s", be[1], snum, vnum, be[2])
@@ -238,7 +235,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
 end function
 
-function void IRFplot(bundle *obj, int snum[1], int vnum[1], 
+function void IRFplot(bundle *obj, int snum[1], int vnum[1],
                       int keypos[0:2:1], int drawix[0::0])
 
     IRFsave("display", &obj, snum, vnum, keypos, drawix)
@@ -252,21 +249,21 @@ end function
 function string FEVDgrph(const matrix FEVDmat, scalar v,
                          string vname, strings snames, int keypos[0:2:1],
                          string titletail[null])
-    
-    # Final arg 'titletail' is a hack originally meant to put the draw number 
-    # in the output in the SR case. (In principle it can be anything.)  
-    
+
+    # Final arg 'titletail' is a hack originally meant to put the draw number
+    # in the output in the SR case. (In principle it can be anything.)
+
     if !exists(titletail)
         string titletail = ""
-    endif                    
+    endif
 
     n = round(sqrt(cols(FEVDmat)))
     h = rows(FEVDmat) - 1
 
-    scalar tmpfname = int(10000*muniform(1,1))
+    scalar tmpfname = int(10000 * muniform(1))
     if $windows
         string datfile = sprintf("@dotdir\\fevd%d.txt", tmpfname)
-        # sprintf datfile "@dotdir\\fevd%d.txt", tmpfname 
+        # sprintf datfile "@dotdir\\fevd%d.txt", tmpfname
         string tmpfile = sprintf("@dotdir\\fevd%d.gp", tmpfname)
         # sprintf tmpfile "@dotdir\\fevd%d.gp", tmpfname
     else
@@ -279,41 +276,41 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
     matrix sel = (v-1)*n + seq(1,n)
     set force_decpoint on
 
-    outfile "@tmpfile" --write
-    if   keypos == 0
-        printf "set key off\n"
-    elif keypos == 1
-        printf "set key outside\n"
-    elif keypos == 2
-        printf "set key below\n"
-    endif
-    printf "set yrange [0:100]\n"
-    printf "set xrange [%g:%g]\n", 0, h
-    printf "set xzeroaxis\n"
-
-    printf "set title \"FEVD for %s%s\"\n", vname, titletail
-    printf "set style fill solid 0.25\n"
-    printf "set style histogram rowstacked\n"
-    printf "set style data histogram\n"
-
-    loop i=1..n --quiet
-        string sname = snames[i]
-
-        if i == 1
-            printf "plot '%s' using 2 t '%s', \\\n", datfile, sname
-        elif i == n
-            printf "\t'' using %d t '%s'\n", i+1, sname
-        else
-            printf "\t'' using %d t '%s', \\\n", i+1, sname
+    outfile "@tmpfile"
+        if keypos == 0
+            printf "set key off\n"
+        elif keypos == 1
+            printf "set key outside\n"
+        elif keypos == 2
+            printf "set key below\n"
         endif
-    endloop
-    outfile --close
+        printf "set yrange [0:100]\n"
+        printf "set xrange [%g:%g]\n", 0, h
+        printf "set xzeroaxis\n"
 
-    outfile "@datfile" --write
-    printf "%12.4f\n", seq(0, h)' ~ 100*FEVDmat[,sel]
-    outfile --close
+        printf "set title \"FEVD for %s%s\"\n", vname, titletail
+        printf "set style fill solid 0.25\n"
+        printf "set style histogram rowstacked\n"
+        printf "set style data histogram\n"
 
-    set force_decpoint off
+        loop i = 1..n 
+            string sname = snames[i]
+
+            if i == 1
+                printf "plot '%s' using 2 t '%s', \\\n", datfile, sname
+            elif i == n
+                printf "\t'' using %d t '%s'\n", i+1, sname
+            else
+                printf "\t'' using %d t '%s', \\\n", i+1, sname
+            endif
+        endloop
+    end outfile
+
+    outfile "@datfile"
+        printf "%12.4f\n", seq(0, h)' ~ 100*FEVDmat[,sel]
+    end outfile
+
+    set force_decpoint off # not needed in gretl >= 2021b
 
     return tmpfile
 end function
@@ -330,31 +327,31 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
     matrix Fmat = FEVD(&obj, drawix)
-    
+
     # prepare title amendment in SR case
-    string titletail = "" 
-    if obj.type == 10 
+    string titletail = ""
+    if obj.type == 10
         whichdraw = drawix ? drawix : obj.bestdraw
         titletail = sprintf(" (draw %d)", whichdraw)
     endif
 
-    loop vnum = vfrom..vto -q
+    loop vnum = vfrom..vto 
         err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum
             return
         endif
 
-        string tmpout = (outfilename == "display") ? "display" : \
-                        sprintf("%s_%d", outfilename, vnum)
+        string tmpout = outfilename=="display" ? "display" : \
+          sprintf("%s_%d", outfilename, vnum)
         string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, \
-                                  keypos, titletail)
+          keypos, titletail)
         gnuplot --input="@tmpfile" --output="@tmpout"
 
     endloop
 end function
 
-function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1], 
+function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1],
                        int drawix[0::0])
 
     FEVDsave("display", &obj, vnum, keypos, drawix)
@@ -365,7 +362,7 @@ end function
 /* --- HD public graphing functions ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void HDsave(string outfilename, bundle *obj, int vnum[0], 
+function void HDsave(string outfilename, bundle *obj, int vnum[0],
                      int drawix[0::0])
 
     # more fashionable (=Dynare-like) style
@@ -375,7 +372,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
 
-    loop vnum = vfrom..vto -q
+    loop vnum = vfrom..vto 
         err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum
@@ -383,13 +380,13 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         endif
 
         list tmp = SVAR_hd(&obj, vnum, drawix)
-        
+
         # prepare extended plot title, only for SR
-        whichdraw = drawix ? drawix : obj.bestdraw	
+        whichdraw = drawix ? drawix : obj.bestdraw
         string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
-        
+
         tmp -= tmp[1] # take away deterministic component
-        loop i=1..nelem(tmp) --quiet
+        loop i = 1..nelem(tmp) 
             string sn = obj.snames[i]
             setinfo tmp[i] --graph-name="@sn"
         endloop
@@ -397,12 +394,12 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         series tmpvar = sum(tmp)
         string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
         setinfo tmpvar --graph-name="@gnam"
-        tmp = tmp tmpvar	
+        tmp = tmp tmpvar
         # (put the line with the target var (stoch.comp) _last_
         # such that the shock colors match those in FEVD
 
         string tmpout = (outfilename == "display") ? "display" : \
-                        sprintf("%s_%d", outfilename, vnum)
+          sprintf("%s_%d", outfilename, vnum)
         plot tmp
             option time-series
             option single-yaxis

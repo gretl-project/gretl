@@ -23,11 +23,15 @@
 #include "gretl_help.h"
 
 /* for PDF opening */
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
 # include <windows.h>
-#endif
-#ifdef OS_OSX
-# include <Carbon/Carbon.h>
+#elif defined(OS_OSX)
+# if defined(HAVE_CARBON)
+#  include <Carbon/Carbon.h>
+# else
+#  include <CoreFoundation/CoreFoundation.h>
+#  include <CoreServices/CoreServices.h>
+# endif
 #endif
 
 static int maybe_need_recode (void)
@@ -305,12 +309,27 @@ static int show_pkg_pdf (const char *fname)
 	err = E_FOPEN;
     }
 #elif defined(OS_OSX)
+# if defined(HAVE_CARBON)
     FSRef ref;
 
     err = FSPathMakeRef((const UInt8 *) fname, &ref, NULL);
     if (!err) {
 	err = LSOpenFSRef(&ref, NULL);
     }
+# else
+    CFURLRef u;
+
+    u = CFURLCreateFromFileSystemRepresentation(NULL,
+                                                (const UInt8 *) fname,
+                                                strlen(fname),
+                                                false);
+    if (u != NULL) {
+        err = LSOpenCFURLRef(u, NULL);
+        CFRelease(u);
+    } else {
+        err = 1;
+    }
+# endif
 #else
     char *syscmd = g_strdup_printf("xdg-open \"%s\"", fname);
 

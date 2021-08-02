@@ -49,6 +49,7 @@
 
 #define FCDEBUG 0
 #define PKG_DEBUG 0
+#define MPKG_DEBUG 0
 
 enum {
     SHOW_GUI_MAIN = 1 << 0,
@@ -198,7 +199,7 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     free(mylist);
     mylist = NULL;
 
-    fcall = fncall_new(func);
+    fcall = fncall_new(func, 0);
     if (fn_n_params(func) == 1) {
 	/* pass full dataset list as argument */
 	biglist = full_var_list(dataset, NULL);
@@ -724,6 +725,12 @@ static int do_make_list (selector *sr)
     if (lname == NULL || *lname == '\0') {
 	errbox(_("No name was given for the list"));
 	return 1;
+    }
+
+    err = gui_validate_varname(lname, GRETL_TYPE_LIST,
+			       selector_get_window(sr));
+    if (err) {
+	return err;
     }
 
     if (data != NULL) {
@@ -1452,7 +1459,7 @@ static int function_call_dialog (call_info *cinfo)
 	return err;
     }
 
-    cinfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    cinfo->dlg = gretl_gtk_window();
     txt = cinfo_pkg_title(cinfo);
     gtk_window_set_title(GTK_WINDOW(cinfo->dlg), txt);
     g_free(txt);
@@ -2372,6 +2379,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 {
     call_info *cinfo;
     int data_access = 0;
+    int gid = -1;
     fnpkg *pkg;
 
     pkg = get_function_package_by_name(pkgname);
@@ -2397,6 +2405,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   "name", &cinfo->pkgname,
 					   "version", &cinfo->pkgver,
 					   "gui-publist", &cinfo->publist,
+					   "gui-main-id", &gid,
 					   "data-requirement", &cinfo->dreq,
 					   "model-requirement", &cinfo->modelreq,
 					   "min-version", &cinfo->minver,
@@ -2406,6 +2415,13 @@ static call_info *start_cinfo_for_package (const char *pkgname,
     if (*err) {
 	gui_errmsg(*err);
     } else if (cinfo->publist == NULL) {
+	if (gid >= 0) {
+	    cinfo->publist = gretl_list_new(1);
+	    cinfo->publist[1] = gid;
+	}
+    }
+
+    if (!*err && cinfo->publist == NULL) {
 	/* no available interfaces */
 	errbox(_("Function package is broken"));
 	*err = E_DATA;
@@ -2595,20 +2611,45 @@ void function_call_cleanup (void)
     arglist_cleanup();
 }
 
-/* Execute the plotting function made available by the function
+static gchar *compose_pkg_title (ufunc *func,
+					const char *id)
+{
+    fnpkg *pkg = gretl_function_get_package(func);
+    const char *pname = function_package_get_name(pkg);
+    gchar *title;
+
+    if (!strcmp(id, BUNDLE_FCAST)) {
+	title = g_strdup_printf("gretl: %s %s", pname, _("forecast"));
+    } else {
+	title = g_strdup_printf("gretl: %s bundle", pname);
+    }
+
+    return title;
+}
+
+/* Execute a special-purpose function made available by the
    package that produced bundle @b, possibly inflected by an
-   integer option -- if an option is present it's packed into
-   @aname, after a colon.
+   integer option. If an option is present it's packed into
+   @aname, following a colon.
 */
 
-int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
+int exec_bundle_special_function (gretl_bundle *b,
+				  const char *id,
+				  const char *aname,
+				  GtkWidget *parent)
 {
     ufunc *func = NULL;
     fncall *fc = NULL;
-    char *bname = NULL;
     char funname[32];
+    PRN *prn = NULL;
+    int plotting = 0;
+    int forecast = 0;
+    int t1 = 0, t2 = 0;
     int iopt = -1;
     int err = 0;
+
+    plotting = strcmp(id, BUNDLE_PLOT) == 0;
+    forecast = strcmp(id, BUNDLE_FCAST) == 0;
 
     if (aname != NULL) {
 	if (strchr(aname, ':') != NULL) {
@@ -2619,33 +2660,51 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	    strcpy(funname, aname);
 	}
     } else {
-	gchar *pf = get_bundle_plot_function(b);
+	gchar *sf = get_bundle_special_function(b, id);
 
-	if (pf == NULL) {
+	if (sf == NULL) {
 	    return E_DATA;
 	} else {
-	    strcpy(funname, pf);
-	    g_free(pf);
+	    strcpy(funname, sf);
+	    g_free(sf);
 	}
     }
 
     func = get_user_function_by_name(funname);
 
     if (func == NULL) {
-	fprintf(stderr, "Couldn't find function %s\n", funname);
-	err = E_DATA;
-    } else {
+	errbox_printf(_("Couldn't find function %s"), funname);
+	return E_DATA;
+    }
+
+    if (forecast) {
+	/* check for feasibility */
+	int resp = simple_forecast_dialog(&t1, &t2, parent);
+
+	if (canceled(resp)) {
+	    return 0;
+	}
+	allow_full_data_access(1);
+    }
+
+    if (!err) {
 	user_var *uv = get_user_var_by_data(b);
+	const char *bname = NULL;
 
-	bname = gretl_strdup(user_var_get_name(uv));
-#if 1
-	fprintf(stderr, "bundle plot: using bundle %p (uvar %p, name '%s')\n",
-		(void *) b, (void *) uv, bname);
-#endif
-	fc = fncall_new(func);
-	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
-
-	if (!err && iopt >= 0) {
+	if (uv != NULL) {
+	    bname = user_var_get_name(uv);
+	}
+	fc = fncall_new(func, 0);
+	if (bname != NULL) {
+	    err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
+	} else {
+	    err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
+	}
+	if (!err && forecast) {
+	    t1++; t2++; /* convert to 1-based */
+	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t1);
+	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t2);
+	} else if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
 	    double minv = fn_param_minval(func, 1);
 
@@ -2657,19 +2716,49 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     }
 
     if (!err) {
-	/* Note that the function may need a non-NULL prn for
-	   use with printing redirection (outfile).
-	*/
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	if (plotting) {
+	    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	} else {
+	    err = bufopen(&prn);
+	}
+    }
 
+    if (!err && plotting) {
+	/* A plotting function may need a non-NULL PRN for
+	   use with printing redirection (outfile). But we
+	   don't expect any printed output.
+	*/
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL, prn);
-	gretl_print_destroy(prn);
+    } else if (!err) {
+	/* For other bundle-specials we expect printed output */
+	GretlType rtype = user_func_get_return_type(func);
+	gretl_bundle *retb = NULL;
+
+	if (rtype == GRETL_TYPE_BUNDLE) {
+	    /* if a bundle is offered, let's grab it */
+	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				      &retb, NULL, prn);
+	} else {
+	    /* otherwise ignore any return value */
+	    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				      NULL, NULL, prn);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    int role = retb != NULL ? VIEW_BUNDLE : PRINT;
+	    gchar *title = compose_pkg_title(func, id);
+
+	    view_buffer(prn, 78, 450, title, role, retb);
+	    g_free(title);
+	    prn = NULL; /* ownership taken by viewer */
+	}
     } else {
 	fncall_destroy(fc);
     }
 
-    free(bname);
+    gretl_print_destroy(prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -2684,8 +2773,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
    default function for @task (e.g. BUNDLE_PRINT).
 */
 
-static gchar *get_bundle_special_function (gretl_bundle *b,
-					   const char *task)
+gchar *get_bundle_special_function (gretl_bundle *b,
+				    const char *id)
 {
     const char *pkgname = gretl_bundle_get_creator(b);
     gchar *ret = NULL;
@@ -2703,18 +2792,12 @@ static gchar *get_bundle_special_function (gretl_bundle *b,
 		free(fname);
 	    }
 	}
-
 	if (pkg != NULL) {
-	    function_package_get_properties(pkg, task, &ret, NULL);
+	    function_package_get_properties(pkg, id, &ret, NULL);
 	}
     }
 
     return ret;
-}
-
-gchar *get_bundle_plot_function (gretl_bundle *b)
-{
-    return get_bundle_special_function(b, BUNDLE_PLOT);
 }
 
 /* See if we can find a "native" printing function for a
@@ -3299,7 +3382,8 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		/* update menu path (legacy SVAR) */
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
-	    } else if (strstr(path, "TSModels/TSMulti")) {
+	    } else if (strstr(path, "TSModels/TSMulti") ||
+		       strstr(path, "TSModels/CointMenu")) {
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
 	    }
@@ -3646,7 +3730,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     static GtkActionEntry item = {
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
-    char *fixed_label = NULL;
+    gchar *fixed_label = NULL;
     guint merge_id;
 
 #if PKG_DEBUG
@@ -3658,15 +3742,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     item.label = gpi->label != NULL ? gpi->label : gpi->pkgname;
 
     if (strchr(item.label, '_')) {
-	const char *s = item.label;
-	int n = 0;
-
-	while (*s && (s = strchr(s, '_')) != NULL) {
-	    n++;
-	    s++;
-	}
-	fixed_label = malloc(strlen(item.label) + n + 1);
-	double_underscores(fixed_label, item.label);
+	fixed_label = double_underscores_new(item.label);
 	item.label = fixed_label;
     }
 
@@ -3688,7 +3764,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     gtk_ui_manager_insert_action_group(vwin->ui, gpi->ag, 0);
     // g_object_unref(gpi->ag);
 
-    free(fixed_label);
+    g_free(fixed_label);
 #if PKG_DEBUG
     fprintf(stderr, " merge_id = %d\n", merge_id);
 #endif
@@ -3703,12 +3779,14 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 {
     PRN *prn;
     double check_err = 0;
+    void *ptr = NULL;
     int err = 0;
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
-    err = gretl_function_exec(fncall_new(func), GRETL_TYPE_DOUBLE,
-			      dataset, &check_err, NULL, prn);
+    err = gretl_function_exec(fncall_new(func, 0), GRETL_TYPE_DOUBLE,
+			      dataset, &ptr, NULL, prn);
+    check_err = *(double *) ptr;
     unset_genr_model();
     gretl_print_destroy(prn);
 
@@ -3722,13 +3800,26 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 static int maybe_add_model_pkg (gui_package_info *gpi,
 				windata_t *vwin)
 {
-    MODEL *pmod = vwin->data;
-    int dreq, modelreq, minver = 0;
+    int ci, dreq, modelreq, minver = 0;
     gchar *precheck = NULL;
     fnpkg *pkg;
     int err = 0;
 
-    if (gpi->modelreq > 0 && pmod->ci != gpi->modelreq) {
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = vwin->data;
+
+	ci = pmod->ci;
+    } else {
+	/* system: VAR, VECM or SYSTEM */
+	ci = vwin->role;
+    }
+
+#if MPKG_DEBUG
+    fprintf(stderr, "maybe_add_model_pkg: %s, ci=%s\n",
+	    gpi->pkgname, gretl_command_word(ci));
+#endif
+
+    if (gpi->modelreq > 0 && ci != gpi->modelreq) {
 	return 0;
     }
 
@@ -3754,12 +3845,12 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
     }
 
     if (!err) {
-	/* "skip" = skip this package, since it won't work
+	/* "skip" means skip this package, since it won't work
 	   with the current model */
 	int skip = 0;
 
 	if (modelreq > 0) {
-	    skip = pmod->ci != modelreq;
+	    skip = ci != modelreq;
 	}
 	if (!skip) {
 	    skip = check_function_needs(dataset, dreq, minver);
@@ -3825,9 +3916,17 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
     gui_package_info *gpi;
     int i, err;
 
+#if MPKG_DEBUG
+    fprintf(stderr, "starting maybe_add_packages_to_model_menus\n");
+#endif
+
     if (gpkgs == NULL) {
 	gui_package_info_init();
     }
+
+#if MPKG_DEBUG
+    fprintf(stderr, "  n_gpkgs = %d\n", n_gpkgs);
+#endif
 
     for (i=0; i<n_gpkgs; i++) {
 	gpi = &gpkgs[i];
@@ -3913,16 +4012,20 @@ static int pkg_attach_query (const gchar *name,
 	gchar *msg, *ustr = NULL;
 
 	ustr = user_friendly_menu_path(relpath, modelwin);
-	msg = g_strdup_printf(_("The package %s can be attached to the "
-				"gretl menus\n"
-				"as \"%s/%s\" in the %s.\n"
-				"Do you want to do this?"),
-			      name, ustr ? ustr : relpath, _(label),
-			      modelwin ? _(window_names[1]) :
-			      _(window_names[0]));
-	resp = yes_no_dialog(NULL, msg, parent);
-	g_free(msg);
-	g_free(ustr);
+	if (ustr == NULL) {
+	    errbox_printf("Invalid menu path '%s'", relpath);
+	} else {
+	    msg = g_strdup_printf(_("The package %s can be attached to the "
+				    "gretl menus\n"
+				    "as \"%s/%s\" in the %s.\n"
+				    "Do you want to do this?"),
+				  name, ustr ? ustr : relpath, _(label),
+				  modelwin ? _(window_names[1]) :
+				  _(window_names[0]));
+	    resp = yes_no_dialog(NULL, msg, parent);
+	    g_free(msg);
+	    g_free(ustr);
+	}
     }
 
     return resp;
@@ -4063,6 +4166,11 @@ static int gui_function_pkg_register (const char *fname,
 
     if (pkg == NULL) {
 	pkg = get_function_package_by_filename(fname, &err);
+    }
+
+    if (pkg == NULL) {
+	errbox_printf(_("Couldn't read '%s'"), fname);
+	return E_FOPEN;
     }
 
 #if PKG_DEBUG
@@ -4212,26 +4320,37 @@ char *installed_addon_status_string (const char *path,
    the dbnomics function package is not found on the local
    machine we try to download and install it.
 
-   We also invoke it for regls.
+   We also invoke it for regls, which requires a distinct
+   saved path.
 */
 
 static fncall *get_addon_function_call (const char *addon,
 					const char *funcname)
 {
-    static char *pkgpath;
+    static char *dbnpath;
+    static char *rlspath;
+    char **ppkgpath = NULL;
     fncall *fc = NULL;
     int err = 0;
 
-    if (pkgpath == NULL) {
-	pkgpath = gretl_addon_get_path(addon);
-	if (pkgpath == NULL) {
+    if (!strcmp(addon, "dbnomics")) {
+	ppkgpath = &dbnpath;
+    } else if (!strcmp(addon, "regls")) {
+	ppkgpath = &rlspath;
+    } else {
+	err = E_DATA;
+    }
+
+    if (!err && *ppkgpath == NULL) {
+	*ppkgpath = gretl_addon_get_path(addon);
+	if (*ppkgpath == NULL) {
 	    /* not found locally */
-	    err = download_addon(addon, &pkgpath);
+	    err = download_addon(addon, ppkgpath);
 	}
     }
 
-    if (!err) {
-	fc = get_pkg_function_call(funcname, addon, pkgpath);
+    if (!err && *ppkgpath != NULL) {
+	fc = get_pkg_function_call(funcname, addon, *ppkgpath);
     }
 
     return fc;
@@ -4537,6 +4656,7 @@ int real_do_regls (const char *buf)
     gretl_bundle *parms = selector_get_regls_bundle();
     gretl_bundle *rb = NULL;
     fncall *fc = NULL;
+    int orig_v;
     int *X = NULL;
     PRN *prn = NULL;
     int err = 0;
@@ -4553,8 +4673,9 @@ int real_do_regls (const char *buf)
     }
 
     bufopen(&prn);
+    orig_v = dataset->v;
 
-    X = gretl_list_from_varnames(buf, dataset, &err);
+    X = generate_list(buf, dataset, &err);
     if (!err) {
 	int yno = X[1];
 
@@ -4577,6 +4698,10 @@ int real_do_regls (const char *buf)
 	if (!err) {
 	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
 	    prn = NULL; /* ownership taken by viewer */
+	}
+	if (dataset->v > orig_v) {
+	    /* in case any lags got added */
+	    populate_varlist();
 	}
     }
 
@@ -4615,6 +4740,8 @@ static GList *plausible_payload_list (int v, int *selpos)
     return list;
 }
 
+/* Called in response to "Display map" */
+
 void map_plot_callback (int v)
 {
     const char *mapfile = dataset_get_mapfile(dataset);
@@ -4624,15 +4751,16 @@ void map_plot_callback (int v)
     } else {
 	gretl_bundle *opts = NULL;
 	GList *payload_list = NULL;
+	double *payload = NULL;
 	int payload_id = 0;
-	double *plx = NULL;
-	int selpos = 0;
-	int resp, err = 0;
+	int resp, selpos = 0;
+	int err = 0;
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
 	payload_list = plausible_payload_list(v, &selpos);
 
+	/* get options from the user */
 	resp = map_options_dialog(payload_list, selpos,
 				  opts, &payload_id);
 	if (resp == GRETL_CANCEL) {
@@ -4642,11 +4770,12 @@ void map_plot_callback (int v)
 	    g_list_free(payload_list);
 	}
 	if (payload_id == 0) {
+	    /* just showing outlines */
 	    gretl_bundle_set_int(opts, "tics", 1);
 	} else {
-	    plx = dataset->Z[payload_id];
+	    payload = dataset->Z[payload_id];
 	}
-	err = geoplot_driver(mapfile, NULL, NULL, plx, dataset, opts);
+	err = geoplot_driver(mapfile, NULL, payload, dataset, opts);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

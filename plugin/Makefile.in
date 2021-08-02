@@ -139,7 +139,8 @@ SRCS = excel_import.c \
 	iso3166.c \
 	regls.c \
 	geoplot.c \
-	purebin.c
+	purebin.c \
+	bdstest.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -149,9 +150,9 @@ ZIPSRC = zfileio.c \
 
 SHPSRC = dbfopen.c shpopen.c
 
-PLUGINS = arbond.la \
-	arma.la \
+PLUGINS = arma.la \
 	arma_x12.la \
+	dpanel.la \
 	eviews_import.la \
 	stata_import.la \
 	spss_import.la \
@@ -183,7 +184,8 @@ PLUGINS = arbond.la \
 	svm.la \
 	regls.la \
 	geoplot.la \
-	purebin.la
+	purebin.la \
+	bdstest.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -242,8 +244,8 @@ vpath %.c $(topsrc)/plugin/libshp
 vpath %.h $(topsrc)/plugin/libshp
 SHP_CFLAGS := -I$(topsrc)/plugin/libshp
 
-URCDATA = $(topsrc)/plugin/data/urcdata.bin
-DWDATA = $(topsrc)/plugin/data/dwdata.gz
+PLUGIN_DATA = urcdata.bin dwdata.gz dfgls-beta-c.bin dfgls-beta-t.bin \
+	npc.bin npt.bin pqc.bin pqt.bin s_alpha.bin
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(ODBC_CFLAGS) \
@@ -314,7 +316,7 @@ sysest.la: sysest.lo fiml.lo liml.lo
 nistcheck.la: nistcheck.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
-arbond.la: arbond.lo
+dpanel.la: dpanel.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 arma.la: arma.lo arma_cml.lo arma_init.lo
@@ -380,6 +382,9 @@ svm.la: svm.lo svmlib.lo
 regls.la: regls.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
+bdstest.la: bdstest.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
 # plugins that require GTK+
 
 arma_x12.la: arma_x12.lo
@@ -420,8 +425,9 @@ $(GRETLLIB):
 install: $(GRETLLIB) $(PLUGINS) $(URCDATA) $(DWDATA) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(DESTDIR)$(plugindir)
-	$(INSTALL_DATA) $(URCDATA) $(DESTDIR)$(plugindir)/data
-	$(INSTALL_DATA) $(DWDATA) $(DESTDIR)$(plugindir)/data
+	for f in $(PLUGIN_DATA) ; do \
+	$(INSTALL_DATA) $(topsrc)/plugin/data/$$f \
+	$(DESTDIR)$(plugindir)/data ; done
 
 install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \

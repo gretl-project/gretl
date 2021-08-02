@@ -1,57 +1,63 @@
-\chapter{Instrucciones de gretl}
+\chapter{Instrucciones de GRETL}
 \label{cmdref}
 
-\section{NotaciÛn}
+\section{Introducci√≥n}
 \label{cmd-intro}
 
-Las instrucciones definidas en esta secciÛn pueden ejecutarse en el
-programa cliente de lÌnea de instrucciones. TambiÈn pueden incluirse
-en un archivo o ``lote de instrucciones'' (script) y asÌ ejecutarse en
-el GUI, o teclearse mediante el modo consola de este ˙ltimo. En la
-mayorÌa de los casos la sintaxis que se menciona es tambiÈn aplicable
-para rellenar una lÌnea en el correspondiente cuadro de di·logo del
-GUI (vÈase tambiÈn la ayuda \emph{en lÌnea} de \app{gretl}), excepto
-que \emph{no} es preciso teclear la palabra inicial de la instrucciÛn
---- est· implÌcita por el contexto. Una diferencia adicional es que no
-se puede insertar la marca \cmd{-o} para las instrucciones de
-regresiÛn en los cuadros de di·logo del GUI: hay una opciÛn de men˙
-para mostrar la matriz formada por las varianzas y covarianzas de los
-coeficientes (que es el efecto de \cmd{-o} en las instrucciones de las
-regresiones).
-
-A lo largo de este capÌtulo se utilizan las siguientes convenciones:
-
-
+Las instrucciones definidas m√°s abajo pueden ejecutarse de forma interactiva en
+el programa cliente de lineas de instrucciones, o en la ventana de la consola del
+programa GUI. Y tambi√©n se pueden colocar en un archivo de ``guion'' o de
+procesamiento por lotes para su ejecuci√≥n interactiva.
+    
+M√°s abajo se utilizan las siguientes convenciones en la notaci√≥n:
+    
 \begin{itemize}
-\item La fuente \texttt{typewriter} se utiliza en lo que tecleamos
-  directamente, y tambiÈn para los nombres internos de las variables.
 
-\item Los tÈrminos en \textsl{cursiva} son marcadores de ubicaciÛn: es
-  posible sustituirlos por algo m·s especÌfico, por ejemplo, se puede
-  escribir \texttt{renta} en lugar del genÈrico \textsl{varx}.
+\item Una \texttt{fuente typewriter} se utiliza para aquellas cosas que escribir√≠as
+  tal cual, y tambi√©n para nombres internos de variables.
 
-\item \texttt{[ -o ]} significa que la marca \cmd{-o} es opcional:
-  puede ser aÒadida o no (pero en todo caso sin los parÈntesis).
+\item Los elementos en una \textsl{fuente cursiva} son marcadores de posici√≥n:
+  deber√≠as cambiarlos por alg√∫n sustituto en concreto. Por ejemplo, podr√≠as poner
+  \texttt{ingreso} en lugar del gen√©rico \textsl{varx}.
 
-\item La frase ``instrucciÛn de estimaciÛn'' puede significar
-  cualquiera de las siguientes \cmd{ols}, \cmd{hilu}, \cmd{corc},
-  \cmd{ar}, \cmd{arch}, \cmd{hsk}, \cmd{tsls}, \cmd{wls}, \cmd{hccm},
-  \cmd{add} y \cmd{omit}.
+\item La estructura \texttt{[} \textsl{arg} \texttt{]} significa que el argumento
+  \textsl{arg} es opcional: podr√≠as indicarlo o no (pero en cualquier caso no
+  pongas los corchetes).
+
+\item La frase ``instrucci√≥n de estimaci√≥n'' significa una instrucci√≥n que genera
+  estimaciones para un modelo dado, por ejemplo \cmd{ols}, \cmd{ar} o
+  \cmd{wls}.
 
 \end{itemize}
 
+En general, cada linea de un guion de instrucciones debiera contener una √∫nica
+instrucci√≥n de \app{GRETL} completa. Sin embargo, hay dos formas de continuar
+una larga instrucci√≥n que va de una linea de entrada a otra. Primera, si el √∫ltimo
+car√°cter de una linea (que no sea un espacio) es una barra diagonal invertida,
+esto se considera un indicador de que la instrucci√≥n contin√∫a en la siguiente
+linea. Adem√°s, si la coma es un car√°cter v√°lido en una instrucci√≥n dada
+(por ejemplo, como separadora entre argumentos de una funci√≥n, o como
+signo de puntuaci√≥n e la instrucci√≥n \texttt{printf}), entonces una coma al final
+tambi√©n indica continuaci√≥n. Para enfatizar este punto: una barra diagonal
+invertida se puede insertar ``arbitrariamente'' para indicar una continuaci√≥n,
+pero una coma funciona con esa capacidad solo si es sint√°cticamente v√°lida
+como parte de la instrucci√≥n.
 
 \section{Instrucciones}
 \label{cmd-cmd}
 
-%% auto-generated from XML base, gretl_commands_es.xml
+%% auto-generated from XML base, gretl_commands.xml
 \input{refbody}
 
-\section{Instrucciones arreglaron por tema}
+\section{Instrucciones seg√∫n la tem√°tica}
 \label{cmd-topics}
+
+Las siguientes secciones muestran las instrucciones disponibles, agrupadas seg√∫n la tem√°tica.
 
 %% auto-generated from gretl sources
 \input{cmdtopics}
 
+\section{Opciones de las instrucciones, en forma abreviada}
+\label{cmd-opt-short}
 
-
+\input{optshort}

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE commandref SYSTEM "gretl_commands.dtd">
 
 <commandref language="english">
@@ -175,82 +175,109 @@
 
     <description>
       <para context="gui">
-	This command needs an integer lag order; if the order is zero a
-	standard (not augmented) Dickey&ndash;Fuller test is run. Computes
-	a set of Dickey&ndash;Fuller tests on the selected variable, the
-	null hypothesis being that the variable has a unit root.  (But if
-	the differencing option is selected, the first difference of the
-	variable is taken prior to testing, and the discussion below must
-	be taken as referring to the transformed variable.)
+	This command needs an integer lag order; if the order is zero
+	a standard (not augmented) Dickey&ndash;Fuller test is run. It
+	computes one or more Dickey&ndash;Fuller tests on the selected
+	variable, the null hypothesis being that the variable has a
+	unit root.  (But if the differencing option is selected, the
+	first difference of the variable is taken prior to testing,
+	and the discussion below must be taken as referring to the
+	transformed variable.)
       </para>
 
       <para context="cli">
-	The options shown above and the discussion which follows pertain
-	to the use of the <lit>adf</lit> command with regular time series
-	data. For use of this command with panel data please see below.
+	The options shown above and the discussion which follows
+	mostly pertain to the use of the <lit>adf</lit> command with
+	regular time series data. For use of this command with panel
+	data please see the section titled <quote>Panel data</quote>
+	below.
       </para>
 
       <para context="cli">
-	Computes a set of Dickey&ndash;Fuller tests on each of the
-	listed variables, the null hypothesis being that the variable in
-	question has a unit root.  (But if the <opt>difference</opt>
-	flag is given, the first difference of the variable is taken prior
-	to testing, and the discussion below must be taken as referring to
-	the transformed variable.)
+	This command computes a set of Dickey&ndash;Fuller tests on
+	each of the listed variables, the null hypothesis being that
+	the variable in question has a unit root.  (But if the
+	<opt>difference</opt> flag is given, the first difference of
+	the variable is taken prior to testing, and the discussion
+	below must be taken as referring to the transformed variable.)
       </para>
 
       <para context="cli">
 	By default, two variants of the test are shown: one based on a
 	regression containing a constant and one using a constant and
 	linear trend.  You can control the variants that are presented by
-	specifying one or more of the option flags.
+	specifying one or more of the option flags <opt>nc</opt>,
+	<opt>c</opt>, <opt>ct</opt>, <opt>ctt</opt>.
       </para>
 
       <para context="cli">
-	The <opt>gls</opt> option can be used in conjunction with
-	one or other of the flags <opt>c</opt> and <opt>ct</opt>
-	(the model with constant, or model with constant and trend).
-	The effect of this option is that the de-meaning or
-	de-trending of the variable to be tested is done using the GLS
-	procedure suggested by <cite key="ERS96">Elliott,
-	Rothenberg and Stock (1996)</cite>, which gives a test of
-	greater power than the standard Dickey&ndash;Fuller approach.
-	This option is not compatible with <opt>nc</opt>,
-	<opt>ctt</opt> or <opt>seasonals</opt>.
+	The <opt>gls</opt> option can be used in conjunction with one
+	or other of the flags <opt>c</opt> and <opt>ct</opt>.  The
+	effect of this option is that the series to be tested is
+	demeaned or detrended using the GLS procedure proposed by
+	<cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>,
+	which gives a test of greater power than the standard
+	Dickey&ndash;Fuller approach.  This option is not compatible
+	with <opt>nc</opt>, <opt>ctt</opt> or <opt>seasonals</opt>.
       </para>
 
       <para>
-	In all cases the dependent variable is the first difference of the
-	specified variable, <math>y</math>, and the key independent variable
-	is the first lag of <math>y</math>.  The model is constructed so that
-	the coefficient on lagged <math>y</math> equals the root in question
-	minus 1. For example, the model with a constant may be written as
-	<equation status="display"
+	In all cases the dependent variable in the test regression is
+	the first difference of the specified series, <math>y</math>,
+	and the key independent variable is the first lag of
+	<math>y</math>.  The regression is constructed such that the
+	coefficient on lagged <math>y</math> equals the root in
+	question, &agr;, minus 1. For example, the model with a
+	constant may be written as <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	  graphic="adf1"/> Under the null hypothesis of a unit root the
-	coefficient on lagged <math>y</math> equals zero; under the
-	alternative that <math>y</math> is stationary this coefficient is
-	negative.
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)" graphic="adf1"/>
+	Under the null hypothesis of a unit root the coefficient on
+	lagged <math>y</math> equals zero. Under the alternative that
+	<math>y</math> is stationary this coefficient is negative.  So
+	the test is inherently one-sided.
       </para>
 
       <subhead context="cli">Selecting the lag order</subhead>
 
       <para context="cli">
-	If the <repl>order</repl> argument (henceforth,
-	<math>k</math>) is greater than 0, then <math>k</math> lags of
-	the dependent variable are included on the right-hand side of
-	the test regressions.  If the order is given as &minus;1,
-	<math>k</math> is set following the recommendation of <cite
-	key="schwert89">Schwert (1989)</cite>, namely the integer part
-	of 12(<math>T</math>/100)<sup>0.25</sup>, where <math>T</math>
-	is the sample size.  In either case, however, if the
-	<opt>test-down</opt> option is given then <math>k</math> is
-	taken as the <emphasis>maximum</emphasis> lag and the actual
-	lag order used is obtained by testing down.  The criterion for
-	testing down can be selected using the option parameter, which
-	should be one of <lit>AIC</lit>, <lit>BIC</lit> or
-	<lit>tstat</lit>; <lit>AIC</lit> is the default.
+	The simplest version of the Dickey&ndash;Fuller test assumes
+	that the error term in the test regression is serially
+	uncorrelated. In practice this is unlikely to be the case and
+	the specification is often extended by including one or more
+	lags of the dependent variable, giving an Augmented
+	Dickey&ndash;Fuller (ADF) test.  The <repl>order</repl>
+	argument governs the number of such lags, <math>k</math>,
+	possibly depending on the sample size, <math>T</math>.
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    For a fixed, user-specified <math>k</math>: give a
+	    non-negative value for <repl>order</repl>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    For <math>T</math>-dependent <math>k</math>: give
+	    <repl>order</repl> as &minus;1. The order is then set
+	    following the recommendation of <cite
+	    key="schwert89">Schwert (1989)</cite>, namely the integer
+	    part of 12(<math>T</math>/100)<sup>0.25</sup>.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	In general, however, we don't know how many lags will be
+	required to <quote>whiten</quote> the Dickey&ndash;Fuller
+	residual. It's therefore common to specify the
+	<emphasis>maximum</emphasis> value of <math>k</math> and let
+	the data decide the actual number of lags to include.  This
+	can be done via the <opt>test-down</opt> option. The criterion
+	for selecting optimal <math>k</math> may be set using the
+	parameter to this option, which should be one of
+	<lit>AIC</lit>, <lit>BIC</lit> or <lit>tstat</lit>,
+	<lit>AIC</lit> being the default.
       </para>
 
       <para context="gui">
@@ -265,18 +292,20 @@
       </para>
 
       <para context="cli">
-	When testing down via AIC or BIC is called for, the final lag
-	order for the ADF equation is that which optimizes the chosen
-	information criterion (Akaike or Schwarz Bayesian).  The
-	exact procedure depends on whether or not the <opt>gls</opt>
-	option is given: when GLS detrending is specified, AIC and BIC
-	are the <quote>modified</quote> versions described in <cite
+	When testing down via AIC or BIC, the final lag order for the
+	ADF equation is that which optimizes the chosen information
+	criterion (Akaike or Schwarz Bayesian).  The exact procedure
+	depends on whether or not the <opt>gls</opt> option is
+	given. When GLS is specified, AIC and BIC are the
+	<quote>modified</quote> versions described in <cite
 	key="ng-perron01">Ng and Perron (2001)</cite>, otherwise they
 	are the standard versions. In the GLS case a refinement is
-	available: if the additional option <opt>perron-qu</opt> is
-	given, the modified information criteria are computed
-	according to the revised method recommended by <cite
-	key="perron-qu07">Perron and Qu (2007)</cite>.
+	available. If the additional option <opt>perron-qu</opt> is
+	given, lag-order selection is performed via the revised method
+	recommended by <cite key="perron-qu07">Perron and Qu
+	(2007)</cite>. In this case the data are first demeaned or
+	detrended via OLS; GLS is applied once the lag order is
+	determined.
       </para>
 
       <para context="gui">
@@ -289,7 +318,6 @@
 	When testing down via the <math>t</math>-statistic method
 	is called for, the procedure is as follows:
       </para>
-
       <nlist>
 	<li><para>Estimate the Dickey&ndash;Fuller regression with
 	    <math>k</math> lags of the dependent variable.
@@ -303,25 +331,37 @@
 	  </para>
 	</li>
       </nlist>
+      <para>
+	In the context of step 2 above, <quote>significant</quote>
+	means that the <math>t</math>-statistic for the last lag has
+	an asymptotic two-sided <emphasis>p</emphasis>-value, against
+	the normal distribution, of 0.10 or less.
+      </para>
 
-      <para>In the context of step 2 above, <quote>significant</quote>
-	means that the <math>t</math>-statistic for the last lag
-	has an asymptotic two-sided <emphasis>p</emphasis>-value,
-	against the normal distribution, of 0.10 or less.
+      <para context="cli">
+	To sum up, if we accept the various arguments of Perron, Ng,
+	Qu and Schwert referenced above, the favored command for
+	testing a series <lit>y</lit> is likely to be:
+      </para>
+      <code context="cli">
+	adf -1 y --c --gls --test-down --perron-qu
+      </code>
+      <para context="cli">
+	(Or substitute <opt>ct</opt> for <opt>c</opt> if the series
+	seems to display a trend.)  The lag order for the test will
+	then be determined by testing down via modified AIC from the
+	Schwert maximum, with the Perron&ndash;Qu refinement.
       </para>
 
       <para>
 	<emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
-	tests are based on <cite key="mackinnon96">MacKinnon
-	(1996)</cite>.  The relevant code is included by kind
-	permission of the author. (Finite-sample values are only given
-	in the case of a non-augmented test. For a positive lag order
-	the asymptotic values are used.)
-	In the case of the test with linear
-	trend using GLS these <emphasis>P</emphasis>-values are not
-	applicable; critical values from Table 1 in <cite
-	key="ERS96">Elliott, Rothenberg and Stock (1996)</cite> are
-	shown instead.
+	tests are based on response-surface estimates. When GLS is not
+	applied these are taken from <cite key="mackinnon96">MacKinnon
+	(1996)</cite>. Otherwise they are taken from <cite
+	key="cottrell15">Cottrell (2015)</cite> or, when testing down
+	is performed, <cite key="sephton21">Sephton (2021)</cite>.
+	The <emphasis>P</emphasis>-values are specific to the sample
+	size unless they are labeled as asymptotic.
       </para>
 
       <subhead context="cli">Panel data</subhead>
@@ -678,132 +718,6 @@
 
   </command>
 
-  <command name="arbond" section="Estimation" label="Arellano-Bond"
-	   context="cli">
-
-    <usage>
-      <arguments>
-	<argblock>
-	  <argument>p</argument>
-	  <argument optional="true">q</argument>
-	</argblock>
-	<argblock separated="true">
-	  <argument>depvar</argument>
-	  <argument>indepvars</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>instruments</argument>
-	</argblock>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>don't show estimated model</effect>
-	</option>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-        <option>
-	  <flag>--two-step</flag>
-	  <effect>perform 2-step GMM estimation</effect>
-        </option>
-        <option>
-	  <flag>--time-dummies</flag>
-	  <effect>add time dummy variables</effect>
-        </option>
-        <option>
-	  <flag>--asymptotic</flag>
-	  <effect>uncorrected asymptotic standard errors</effect>
-        </option>
-      </options>
-      <examples>
-        <example>arbond 2 ; y Dx1 Dx2</example>
-        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1</example>
-	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3)</example>
-	<demos>
-	  <demo>arbond91.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	This command is deprecated in favor of the updated and
-	more flexible <cmdref targ="dpanel"/>. It is likely to be
-	removed, and should not be used in newly written scripts.
-      </para>
-      <para>
-	Carries out estimation of dynamic panel data models (that is,
-	panel models including one or more lags of the dependent
-	variable) using the GMM-DIF method set out by <cite
-	key="arellano-bond91">Arellano and Bond (1991)</cite>.
-      </para>
-      <para>
-	The parameter <repl>p</repl> represents the order of the
-	autoregression for the dependent variable.  The optional parameter
-	<repl>q</repl> indicates the maximum lag of the level of the
-	dependent variable to be used as an instrument.  If this argument
-	is omitted, or given as 0, all available lags are used.
-      </para>
-      <para>
-	The dependent variable should be given in levels form; it will be
-	automatically differenced (since this estimator uses differencing
-	to cancel out the individual effects).  The independent variables
-	are not automatically differenced; if you want to use differences
-	(which will generally be the case for ordinary quantitative
-	variables, though perhaps not for, say, time dummy variables) you
-	should create the differences first then specify these as the
-	regressors.
-      </para>
-      <para>
-	The last (optional) field in the command is for specifying
-	instruments.  If no instruments are given, it is assumed that
-	all the independent variables are strictly exogenous.  If you
-	specify any instruments, you should include in the list any
-	strictly exogenous independent variables.  For predetermined
-	regressors, you can use the <lit>GMM</lit> function to include
-	a specified range of lags in block-diagonal fashion.  This is
-	illustrated in the third example above.  The first argument to
-	<lit>GMM</lit> is the name of the variable in question, the
-	second is the minimum lag to be used as an instrument, and the
-	third is the maximum lag.  If the third argument is given as
-	0, all available lags are used.
-      </para>
-      <para>
-	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as
-	an option.  In both cases tests for autocorrelation of orders
-	1 and 2 are provided, as well as the Sargan overidentification
-	test and a Wald test for the joint significance of the
-	regressors.  Note that in this differenced model first-order
-	autocorrelation is not a threat to the validity of the model,
-	but second-order autocorrelation violates the maintained
-	statistical assumptions.
-      </para>
-      <para>
-	In the case of 2-step estimation, standard errors are by
-	default computed using the finite-sample correction suggested
-	by <cite key="windmeijer05">Windmeijer (2005)</cite>.  The
-	standard asymptotic standard errors associated with the 2-step
-	estimator are generally reckoned to be an unreliable guide to
-	inference, but if for some reason you want to see them you can
-	use the <opt>asymptotic</opt> option to turn off the
-	Windmeijer correction.
-      </para>
-      <para>
-	If the <opt>time-dummies</opt> option is given, a set of
-	time dummy variables is added to the specified regressors.
-	The number of dummies is one less than the maximum number of
-	periods used in estimation, to avoid perfect collinearity with
-	the constant.  The dummies are entered in levels; if you wish
-	to use time dummies in first-differenced form, you will have
-	to define and add these variables manually.
-      </para>
-    </description>
-
-  </command>
-
   <command name="arch" section="Estimation" label="ARCH model">
 
     <usage>
@@ -904,7 +818,7 @@
         </option>
         <option>
 	  <flag>--x-12-arima</flag>
-	  <effect>use X-12-ARIMA for estimation</effect>
+	  <effect>use X-12-ARIMA, or X13, for estimation</effect>
         </option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -1008,7 +922,9 @@
 	functionality, with estimation by exact ML; estimation via
 	conditional ML is available as an option.  (If
 	<program>X-12-ARIMA</program> is installed you have the option
-	of using it instead of native code.)  For details regarding
+	of using it instead of native code. Note that the newer
+	<program>X13</program> works as a drop-in replacement in 
+	exactly the same way.) For details regarding
 	these options, please see <guideref targ="chap:timeseries"/>.
       </para>
 
@@ -1124,6 +1040,148 @@
     <description>
       <para>
 	See <cmdref targ="arima"/>; <lit>arma</lit> is an alias.
+      </para>
+    </description>
+  </command>
+
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>order</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>use matrix input</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
+    <description>
+      <para context="cli">
+	Performs the BDS (<cite key="brock-etal96">Brock, Dechert,
+	Scheinkman and LeBaron, 1996</cite>) test for nonlinearity of
+	the series <repl>x</repl>. In an econometric context this is
+	typically used to test a regression residual for violation of
+	the IID condition. The test is based on a set of correlation
+	integrals, designed to detect nonlinearity of progressively
+	higher dimensionality, and the <argname>order</argname>
+	argument sets the number of such integrals. This must be at
+	least 2; the first integral establishes a baseline but does
+	not support a test.  The BDS test is of the portmanteau type:
+	able to detect all manner of departures from linearity but not
+	informative about how exactly the condition was violated.
+      </para>
+      <para context="gui">
+	The BDS test (<cite key="brock-etal96">Brock, Dechert,
+	Scheinkman and LeBaron, 1996</cite>) checks for nonlinearity
+	of a time series. In an econometric context this is typically
+	used to test a regression residual for violation of the IID
+	condition. The test is based on a set of correlation
+	integrals, designed to detect nonlinearity of progressively
+	higher dimensionality; the number of such integrals is chosen
+	via the <quote>Maximum dimension</quote> control. This must be
+	at least 2; the first integral establishes a baseline but does
+	not support a test.  The BDS test is of the portmanteau type:
+	able to detect all manner of departures from linearity but not
+	informative about how exactly the condition was violated.
+      </para>
+      <para context="cli">
+	Instead of giving <repl>x</repl> as a series, the
+	<opt>matrix</opt> option can be used to specify a matrix as
+	input. The matrix must be a vector (column or row).
+      </para>
+      <subhead>Criterion for closeness</subhead>
+      <para context="cli">
+	The correlation integrals are based on a measure of
+	<quote>closeness</quote> of data points, where two points are
+	considered close if they lie within &egr; of each other.  The
+	test requires a specification of &egr;.  By default gretl
+	follows the recommendation of <cite key="kanzler99">Kanzler
+	(1999)</cite>: &egr; is chosen such that the first-order
+	correlation integral is around 0.7. A common alternative
+	(requiring less computation) is to specify &egr; as a multiple
+	of the standard deviation of the target series. The
+	<opt>sdcrit</opt> option supports the latter method; in the
+	third example above &egr; is set to twice the standard
+	deviation of <repl>x</repl>. The <opt>corr1</opt> option
+	implies use of Kanzler's method but allows for a target
+	correlation other than 0.7. It should be clear that these two
+	options are mutually exclusive.
+      </para>
+      <para context="gui">
+	The correlation integrals are based on a measure of
+	<quote>closeness</quote> of data points, where two points are
+	considered close if they lie within &egr; of each other.  The
+	test requires a specification of &egr;.  By default gretl
+	follows the recommendation of <cite key="kanzler99">Kanzler
+	(1999)</cite>: &egr; is chosen such that the first-order
+	correlation integral is around 0.7. A common alternative
+	(requiring less computation) is to specify &egr; as a multiple
+	of the standard deviation of the target series.
+      </para>
+      <subhead context="cli">Bootstrapping</subhead>
+      <para context="cli">
+	BDS test statistics are asymptotically distributed as
+	<math>N</math>(0,1) but the test over-rejects quite markedly
+	in small to moderate-sized samples. For that reason
+	<math>P</math>-values are by default obtained via
+	bootstrapping when <argname>x</argname> is of length less than
+	600 (but by reference to the normal distribution
+	otherwise). If you want to use the bootstrap for larger
+	samples you can force the issue by giving a non-zero value for
+	the <opt>boot</opt> option, Conversely, if you don't want
+	bootstrapping for smaller samples, give a zero value for
+	<opt>boot</opt>.
+      </para>
+      <subhead context="gui">P-values</subhead>
+      <para context="gui">
+	BDS test statistics are asymptotically distributed as
+	<math>N</math>(0,1) but the test over-rejects quite markedly
+	in small to moderate-sized samples. For that reason
+	<math>P</math>-values are by default obtained via
+	bootstrapping when <argname>x</argname> is of length less than
+	600 (but by reference to the normal distribution
+	otherwise).
+      </para>
+      <para context="cli">
+	When bootstrapping is performed the default number of
+	iterations is 1999, but you can specify a different number by
+	giving a value greater than 1 with <opt>boot</opt>.
+      </para>
+      <subhead context="cli">Accessor matrix</subhead>
+      <para context="cli">
+	On successful completion of this command, <fncref
+	targ="$result"/> retrieves the test results in the form of a
+	matrix with two rows and <argname>order</argname> &minus; 1
+	columns. The first row contains test statistics and the second
+	<math>P</math>-values for each of the per-dimension tests
+	under the null that <argname>x</argname> is linear/IID.
       </para>
     </description>
   </command>
@@ -1546,6 +1604,9 @@
 	addition it should not be used on calls to user-defined
 	functions; it is intended for use only with gretl commands and
 	calls to <quote>built-in</quote> functions or operators.
+	Furthermore, <lit>catch</lit> cannot be used in conjunction
+	with <quote>back-arrow</quote> assignment of models or plots
+	to session icons (see <guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
@@ -1625,22 +1686,33 @@
 	  <flag>--dataset</flag>
 	  <effect>clear dataset only</effect>
 	</option>
+	<option>
+	  <flag>--functions</flag>
+	  <effect>clear functions (only)</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	With no options, clears all saved objects, including the current
-	dataset if any, out of memory. Note that opening a new dataset, or
-	using the <cmd>nulldata</cmd> command to create an empty dataset,
-	also has this effect, so use of <cmd>clear</cmd> is not usually
-	necessary.
+	By default this command clears the current dataset (if any)
+	plus all saved variables (scalars, matrices, etc.) out of
+	memory. Note that opening a new dataset, or using the
+	<cmd>nulldata</cmd> command to create an empty dataset, also
+	has this effect, so explicit use of <cmd>clear</cmd> is not
+	usually necessary.
       </para>
       <para>
 	If the <opt>dataset</opt> option is given, then only the
 	dataset is cleared (plus any named lists of series); other
-	saved objects such as named matrices and scalars are
+	saved objects such as matrices, scalars and bundles are
 	preserved.
+      </para>
+      <para>
+	If the <opt>functions</opt> option is given, then any
+	user-defined functions, and any functions defined by packages
+	that have been loaded, are cleared out of memory. The dataset
+	and other variables are not affected.
       </para>
     </description>
   </command>
@@ -2696,6 +2768,7 @@
     </description>
   </command>
 
+  <!--
   <command name="debug" section="Programming" context="cli"
     label="Debugging">
 
@@ -2707,11 +2780,11 @@
 
     <description>
       <para>
-	Experimental debugger for user-defined functions, available in the
-	command-line program, gretlcli, and in the GUI console.  The
-	<lit>debug</lit> command should be invoked after the function in
-	question is defined but before it is called.  The effect is that
-	execution pauses when the function is called and a special prompt is
+	Experimental debugger for user-defined functions, available in
+	the command-line program, gretlcli.  The <lit>debug</lit>
+	command should be invoked after the function in question is
+	defined but before it is called.  The effect is that execution
+	pauses when the function is called and a special prompt is
 	shown.
       </para>
       <para>
@@ -2725,6 +2798,7 @@
       </para>
     </description>
   </command>
+  -->
 
   <command name="delete" section="Dataset"
     label="Delete variables" context="cli">
@@ -3700,25 +3774,22 @@
 	assignment statement.
       </para>
       <para>
-	Note that a command such as
+	In interactive use (for instance in the gretl console) an
+	equals sign works as shorthand for <lit>eval</lit>, as in
       </para>
       <code>
-	print x^2
+	=sqrt(x)
       </code>
       <para>
-	will not work in gretl, since <lit>x^2</lit> is not (cannot
-	be) the name of a variable, but (given a scalar variable named
-	<lit>x</lit>)
-      </para>
-      <code>
-	eval x^2
-      </code>
-      <para>
-	will work fine, displaying the square of <lit>x</lit>.
+	(with or without a space following <quote>=</quote>). But this
+	variant is not accepted in scripting mode since it could
+	easily mask coding errors.
       </para>
       <para>
-	See also <cmdref targ="printf"/>, for the case where you
-	wish to combine textual and numerical output.
+	In most contexts <cmdref targ="print"/> can be used in
+	place of <lit>eval</lit> to much the same effect.  See also
+	<cmdref targ="printf"/> for the case where you wish to
+	combine textual and numerical output.
       </para>
     </description>
   </command>
@@ -4386,8 +4457,11 @@
 
     <description>
       <para>
-	Opens a block of statements in which a function is defined.  This
-	block must be closed with <lit>end function</lit>.  See
+	Opens a block of statements in which a function is defined. This
+	block must be closed with <lit>end function</lit>. (An exception is
+	the case when a user-defined function shall be deleted, which is 
+	achieved by the single command line <lit>function foo delete</lit> 
+	for a function named <quote>foo</quote>.) See
 	<guideref targ="chap:functions"/> for details.
       </para>
     </description>
@@ -5050,10 +5124,11 @@
 	may be desirable to use more informative labels. This can be
 	achieved via the additional keyword <lit>param_names</lit>
 	within the command block. For a model with <math>k</math>
-	parameters the argument following this keyword should be
-	either a double-quoted string literal holding <math>k</math>
-	space-separated names or the name of a string variable that
-	holds <math>k</math> such names.
+	parameters the argument following this keyword should be a
+	double-quoted string literal holding <math>k</math>
+	space-separated names, the name of a string variable that
+	holds <math>k</math> such names, or the name of an array of
+	<math>k</math> strings.
       </para>
     </description>
 
@@ -5840,68 +5915,6 @@
       </para>
 
     </description>
-  </command>
-
-  <command name="hausman" section="Tests" label="Panel diagnostics">
-    <usage>
-      <options>
-	<option>
-	  <flag>--nerlove</flag>
-	  <effect>use Nerlove method for random effects</effect>
-	</option>
-	<option>
-	  <flag>--matrix_diff</flag>
-	  <effect>use matrix-difference method for Hausman test</effect>
-	</option>
-      </options>
-    </usage>
-    <description>
-      <para>
-	This test is available only after estimating an OLS model
-	using panel data (see also <cmd>setobs</cmd>).  It tests the
-	simple pooled model against the principal alternatives, the fixed
-	effects and random effects models.
-      </para>
-      <para>
-	The fixed effects model allows the intercept of the regression to
-	vary across the cross-sectional units.  An
-	<math>F</math>-test is reported for the null hypotheses that
-	the intercepts do not differ. The random effects model decomposes
-	the residual variance into two parts, one part specific to the
-	cross-sectional unit and the other specific to the particular
-	observation.  (This estimator can be computed only if the number
-	of cross-sectional units in the data set exceeds the number of
-	parameters to be estimated.) The Breusch&ndash;Pagan LM statistic
-	tests the null hypothesis that the pooled OLS estimator is
-	adequate against the random effects alternative.
-      </para>
-      <para>
-	The pooled OLS model may be rejected against both of the
-	alternatives, fixed effects and random effects. Provided the
-	unit- or group-specific error is uncorrelated with the
-	independent variables, the random effects estimator is more
-	efficient than the fixed effects estimator; otherwise the
-	random effects estimator is inconsistent and the fixed effects
-	estimator is to be preferred. The null hypothesis for the
-	Hausman test is that the group-specific error is not so
-	correlated (and therefore the random effects model is
-	preferable).  A low p-value for this test counts against the
-	random effects model and in favor of fixed effects.
-      </para>
-      <para>
-	The two options for this command pertain to the random effects
-	model. By default the method of Swamy and Arora is used, and
-	the Hausman test statistic is calculated using the regression
-	method. The options enable the use of Nerlove's alternative
-	variance estimator and/or the matrix-difference approach to
-	the Hausman statistic.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Panel diagnostics</menu-path>
-    </gui-access>
-
   </command>
 
   <command name="hccme" section="Estimation" context="gui"
@@ -6815,7 +6828,9 @@
       the name of the series to import, and (if required) the names of
       series that correspond to the <quote>inner</quote> keys. (By
       default the inner and outer keys are presumed to have the same
-      name.)
+      name.) Also in this list-box you will see a <quote>dummy</quote>
+      entry, <lit>$obsmajor</lit>. This cannot be imported, but it
+      may be used as a key; see <fncref targ="$obsmajor"/>.
     </para>
     <para>
       In the middle panel of the dialog you can specify additional
@@ -7236,6 +7251,10 @@
 	  <effect>save the resulting series</effect>
 	</option>
         <option>
+	  <flag>--overwrite</flag>
+	  <effect>OK to overwrite existing series</effect>
+	</option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print results</effect>
 	</option>
@@ -7297,10 +7316,13 @@
 	data set; in this context the <opt>quiet</opt> flag may be
 	used to suppress the printing of results.  The default names
 	of the saved series are, respectively, <lit>lever</lit>,
-	<lit>influ</lit> and <lit>dffits</lit>. However, if series of
-	these names already exist, the names of the newly saved series
-	will be adjusted to ensure uniqueness; in any case, they will
-	be the highest-numbered three series in the dataset.
+	<lit>influ</lit> and <lit>dffits</lit>. If series of these
+	names already exist, what happens depends on whether the
+	<opt>overwrite</opt> option is given. If so, the existing
+	series are overwritten; if not, the names will be adjusted to
+	ensure uniqueness. In the latter case the newly generated
+	series will always be the highest-numbered three series in the
+	dataset.
       </para>
       <para context="gui">
 	The "+" icon at the top of the leverage test window brings up
@@ -7507,6 +7529,8 @@
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
+	In the case of panel data the specification may include
+	individual fixed effects.
       </para>
       <para>
 	The dependent variable must be strictly positive.  If all its
@@ -7555,6 +7579,7 @@
 
     <gui-access>
       <menu-path>/Model/Limited dependent variable/Logistic</menu-path>
+      <menu-path>/Model/Panel/FE logistic</menu-path>
     </gui-access>
 
   </command>
@@ -7597,6 +7622,10 @@
 	  <flag>--p-values</flag>
 	  <effect>show p-values instead of slopes</effect>
 	</option>
+	<option>
+	  <flag>--estrella</flag>
+	  <effect>select pseudo-R-squared variant</effect>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7608,17 +7637,18 @@
 
     <description>
       <para>
-	If the dependent variable is a binary variable (all values are 0
-	or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the Newton&ndash;Raphson
-	method. As the model is nonlinear the slopes depend on the
-	values of the independent variables.  By default the slopes with
-	respect to each of the independent variables are calculated (at
-	the means of those variables) and these slopes replace the usual
-	p-values in the regression output.  This behavior can be
-	suppressed by giving the <opt>p-values</opt> option. The
-	chi-square statistic tests the null hypothesis that all
-	coefficients are zero apart from the constant.
+	If the dependent variable is a binary variable (all values are
+	0 or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the
+	Newton&ndash;Raphson method. As the model is nonlinear the
+	slopes depend on the values of the independent variables.  By
+	default the slopes with respect to each of the independent
+	variables are calculated (at the means of those variables) and
+	these slopes replace the usual p-values in the regression
+	output.  This behavior can be suppressed by giving the
+	<opt>p-values</opt> option. The chi-square statistic tests the
+	null hypothesis that all coefficients are zero apart from the
+	constant.
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
@@ -7633,6 +7663,16 @@
 	are produced; see <guideref targ="chap:robust_vcv"/> for
 	details.
       </para>
+      <para context="cli">
+	By default the pseudo-R-squared statistic suggested by <cite
+	key="mcfadden74">McFadden (1974)</cite> is shown, but in the
+	binary case if the <opt>estrella</opt> option is given, the
+	variant recommended by <cite key="estrella98">Estrella
+	(1998)</cite> is shown instead. This variant arguably mimics
+	more closely the properties of the regular
+	<math>R</math><sup>2</sup> in the context of least-squares
+	estimation.
+      </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
 	inverse of the Hessian.  If the "Robust standard errors" box is
@@ -7643,17 +7683,17 @@
 	Davidson and MacKinnon for details.
       </para>
       <para>
-	If the dependent variable is not binary but is discrete, then by
-	default it is interpreted as an ordinal response, and Ordered
-	Logit estimates are obtained.  However, if the
+	If the dependent variable is not binary but is discrete, then
+	by default it is interpreted as an ordinal response, and
+	Ordered Logit estimates are obtained.  However, if the
 	<opt>multinomial</opt> option is given, the dependent variable
 	is interpreted as an unordered response, and Multinomial Logit
-	estimates are produced. (In either case, if the variable selected
-	as dependent is not discrete an error is flagged.) In the
-	multinomial case, the accessor <lit>$mnlprobs</lit> is available
-	after estimation, to get a matrix containing the estimated
-	probabilities of the outcomes at each observation (observations in
-	rows, outcomes in columns).
+	estimates are produced. (In either case, if the variable
+	selected as dependent is not discrete an error is flagged.) In
+	the multinomial case, the accessor <lit>$mnlprobs</lit> is
+	available after estimation, to get a matrix containing the
+	estimated probabilities of the outcomes at each observation
+	(observations in rows, outcomes in columns).
       </para>
       <para>
 	If you want to use logit for analysis of proportions (where
@@ -8056,6 +8096,16 @@
 	  <para>
 	    border: should a rectangular border be drawn around the
 	    map? By default, yes, but you can remove it.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    feature border width: gives you control over the width of
+	    the border or outline drawn around the distinct
+	    <quote>features</quote> in the map (for example,
+	    countries, states or counties). If your plot includes a
+	    payload the width can be run down to zero to eliminate
+	    such borders.
 	  </para>
 	</li>
 	<li>
@@ -8520,7 +8570,8 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>QML covariance matrix</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>QML or HAC covariance matrix</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8557,10 +8608,16 @@
     <description context="gui">
       <para>
 	Performs Maximum Likelihood (ML) estimation using either the
-	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm.  You
-	must specify the log-likelihood function; it is recommended
-	that you also supply expressions for the derivatives of this
-	function with respect to each of the parameters if possible.
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm or
+	Newton's method.  You must specify the log-likelihood
+	function; it is recommended that you also supply expressions
+	for the derivatives of this function with respect to each of
+	the parameters if possible.
+      </para>
+      <para>
+	This help text assumes use of the default BFGS maximizer. For
+	information on using Newton's method please see
+	<guideref targ="chap:mle"/>.
       </para>
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with values 0
@@ -8672,8 +8729,13 @@
       </para>
       <para>
 	Note that any option flags should be appended to the ending line
-	of the MLE block.
+	of the MLE block. For example:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Covariance matrix and standard errors</subhead>
       <para>
 	If the log-likelihood function returns a series or vector
@@ -8683,11 +8745,15 @@
 	are instead based on the negative inverse of the Hessian,
 	which is approximated numerically.  If the <opt>robust</opt>
 	option is given, a QML estimator is used (namely, a sandwich
-	of the negative inverse of the Hessian and the OPG).  However,
-	if the log-likelihood function just returns a scalar value,
-	the OPG is not available (and so neither is the QML
-	estimator), and standard errors are of necessity computed
-	using the numerical Hessian.
+	of the negative inverse of the Hessian and the OPG). If the
+	<lit>hac</lit> parameter is added to this option the OPG is
+	augmented in the manner of <cite key="newey-west87">Newey and
+	West</cite> to allow for serial correlation of the gradient.
+	(This only makes sense with time-series data.)  However, if
+	the log-likelihood function just returns a scalar value, the
+	OPG is not available (and so neither is the QML estimator),
+	and standard errors are of necessity computed using the
+	numerical Hessian.
       </para>
       <para>
 	In the event that you just want the primary parameter
@@ -8714,9 +8780,10 @@
 	achieved via the additional keyword <lit>param_names</lit>
 	within the command block. For a model with <math>k</math>
 	parameters the argument following this keyword should be
-	either a double-quoted string literal holding <math>k</math>
-	space-separated names or the name of a string variable that
-	holds <math>k</math> such names.
+	a double-quoted string literal holding <math>k</math>
+	space-separated names, the name of a string variable that
+	holds <math>k</math> such names, or the name of an array of
+	<math>k</math> strings.
       </para>
       <para>
 	For an in-depth description of <cmd>mle</cmd> please refer to
@@ -9438,10 +9505,11 @@
 	may be desirable to use more informative labels. This can be
 	achieved via the additional keyword <lit>param_names</lit>
 	within the command block. For a model with <math>k</math>
-	parameters the argument following this keyword should be
-	either a double-quoted string literal holding <math>k</math>
-	space-separated names or the name of a string variable that
-	holds <math>k</math> such names.
+	parameters the argument following this keyword should be a
+	double-quoted string literal holding <math>k</math>
+	space-separated names, the name of a string variable that
+	holds <math>k</math> such names, or the name of an array of
+	<math>k</math> strings.
       </para>
       <para>
 	For further details on NLS estimation please see
@@ -10645,6 +10713,86 @@
 
   </command>
 
+  <command name="panspec" section="Tests" label="Panel specification">
+    <usage>
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>use Nerlove method for random effects</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>use matrix-difference method for Hausman test</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suppress printed output</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	This command is available only after estimating a panel-data
+	model via OLS. It tests the simple pooled specification
+	against the most common alternatives, fixed effects and random
+	effects.
+      </para>
+      <para>
+	The fixed effects specification allows the intercept of the
+	regression to vary across the cross-sectional units.  A Wald
+	<math>F</math>-test is reported for the null hypotheses that
+	the intercepts do not differ. The random effects specification
+	decomposes the residual variance into two parts, one part
+	specific to the cross-sectional unit and the other specific to
+	the particular observation.  (This estimator can be computed
+	only if the number of cross-sectional units in the data set
+	exceeds the number of parameters to be estimated.) The
+	Breusch&ndash;Pagan LM statistic tests the null hypothesis
+	that pooled OLS is adequate against the random effects
+	alternative.
+      </para>
+      <para>
+	Pooled OLS may be rejected against both of the alternatives.
+	Provided the unit- or group-specific error is uncorrelated
+	with the independent variables, the random effects estimator
+	is more efficient than fixed effects; otherwise the random
+	effects estimator is inconsistent and fixed effects are to be
+	preferred. The null hypothesis for the Hausman test is that
+	the group-specific error is <emphasis>not</emphasis> so
+	correlated (and therefore the random effects estimator is
+	preferable).  A low p-value for this test counts against
+	random effects and in favor of fixed effects.
+      </para>
+      <para>
+	The first two options for this command pertain to random
+	effects estimation.  By default the method of Swamy and Arora
+	is used, and the Hausman test statistic is calculated using
+	the regression method. The options enable the use of Nerlove's
+	alternative variance estimator, and/or the matrix-difference
+	approach to the Hausman statistic.
+      </para>
+      <para>
+	On successful completion the accessors <fncref targ="$test"/>
+	and <fncref targ="$pvalue"/> retrieve 3-vectors holding test
+	statistics and p-values for the three tests noted above:
+	poolability (Wald), poolability (Breusch&ndash;Pagan), and
+	Hausman. If you just want the results in this form you can
+	give the <opt>quiet</opt> option to skip printed output.
+      </para>
+      <para>
+	Note that after estimating the random effects specification
+	via the <cmd>panel</cmd> command, the Hausman test is
+	automatically carried out and the results can be retrieved via
+	the <fncref targ="$hausman"/> accessor.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/Panel specification</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="pca" section="Statistics"
     label="Principal Components Analysis">
 
@@ -10860,7 +11008,8 @@
 	etc.). But if the <opt>quiet</opt> option is appended nothing
 	is printed; the package information is instead stored in the
 	form of a gretl bundle, which can be accessed via <fncref
-	targ="$result"/>.
+	targ="$result"/>. If no information can be found this bundle
+	will be empty.
       </para>
       <para>
 	<lit>unload</lit>: <repl>pkgname</repl> should be given in
@@ -11210,6 +11359,7 @@
 	<example>poisson y 0 x1 x2 ; S</example>
 	<demos>
 	  <demo>camtriv.inp</demo>
+	  <demo>greene19_3.inp</demo>
 	</demos>
       </examples>
     </usage>
@@ -11517,6 +11667,10 @@
 	  <effect>show p-values instead of slopes</effect>
 	</option>
 	<option>
+	  <flag>--estrella</flag>
+	  <effect>select pseudo-R-squared variant</effect>
+	</option>
+	<option>
 	  <flag>--random-effects</flag>
 	  <effect>estimates a random effects panel probit model</effect>
 	</option>
@@ -11537,40 +11691,52 @@
 
     <description>
       <para>
-	If the dependent variable is a binary variable (all values are 0
-	or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the Newton&ndash;Raphson
-	method. As the model is nonlinear the slopes depend on the
-	values of the independent variables.  By default the slopes with
-	respect to each of the independent variables are calculated (at
-	the means of those variables) and these slopes replace the usual
-	p-values in the regression output.  This behavior can be
-	suppressed by giving the <opt>p-values</opt> option. The
-	chi-square statistic tests the null hypothesis that all
-	coefficients are zero apart from the constant.
+	If the dependent variable is a binary variable (all values are
+	0 or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the
+	Newton&ndash;Raphson method. As the model is nonlinear the
+	slopes depend on the values of the independent variables.  By
+	default the slopes with respect to each of the independent
+	variables are calculated (at the means of those variables) and
+	these slopes replace the usual p-values in the regression
+	output.  This behavior can be suppressed by giving the
+	<opt>p-values</opt> option. The chi-square statistic tests the
+	null hypothesis that all coefficients are zero apart from the
+	constant.
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <opt>robust</opt> flag is given,
-	then QML or Huber&ndash;White standard errors are calculated
-	instead. In this case the estimated covariance matrix is a
-	<quote>sandwich</quote> of the inverse of the estimated Hessian
-	and the outer product of the gradient. See chapter 10 of Davidson
-	and MacKinnon for details.
+	inverse of the Hessian.  If the <opt>robust</opt> flag is
+	given, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance
+	matrix is a <quote>sandwich</quote> of the inverse of the
+	estimated Hessian and the outer product of the gradient. See
+	chapter 10 of Davidson and MacKinnon for details.
+      </para>
+      <para context="cli">
+	By default the pseudo-R-squared statistic suggested by <cite
+	key="mcfadden74">McFadden (1974)</cite> is shown, but in the
+	binary case if the <opt>estrella</opt> option is given, the
+	variant recommended by <cite key="estrella98">Estrella
+	(1998)</cite> is shown instead. This variant arguably mimics
+	more closely the properties of the regular
+	<math>R</math><sup>2</sup> in the context of least-squares
+	estimation.
       </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the "Robust standard errors" box is
-	checked, then QML or Huber&ndash;White standard errors are
-	calculated instead. In this case the estimated covariance matrix
-	is a <quote>sandwich</quote> of the inverse of the estimated
-	Hessian and the outer product of the gradient.  See chapter 10 of
-	Davidson and MacKinnon for details.
+	inverse of the Hessian.  If the <quote>Robust standard
+	errors</quote> box is checked, then QML or Huber&ndash;White
+	standard errors are calculated instead. In this case the
+	estimated covariance matrix is a <quote>sandwich</quote> of
+	the inverse of the estimated Hessian and the outer product of
+	the gradient.  See chapter 10 of Davidson and MacKinnon for
+	details.
       </para>
       <para>
-	If the dependent variable is not binary but is discrete, then Ordered
-	Probit estimates are obtained.  (If the variable selected as dependent
-	is not discrete, an error is flagged.)
+	If the dependent variable is not binary but is discrete, then
+	Ordered Probit estimates are obtained.  (If the variable
+	selected as dependent is not discrete, an error is flagged.)
       </para>
       <subhead>Probit for panel data</subhead>
       <para>
@@ -11819,7 +11985,7 @@
 	<quote>raw</quote> empirical quantiles are plotted against the
 	quantiles of the standard normal distribution.
       </para>
-      <para>
+      <para context="cli">
 	The option <opt>output</opt> has the effect of sending the
 	output to the specified file; use <quote>display</quote> to
 	force output to the screen. See the <cmdref targ="gnuplot"/>
@@ -11969,28 +12135,56 @@
 
     <description>
       <para>
-	Exits from the program, giving you the option of saving the
-	output from the session on the way out.
+	Exits from gretl's current modality.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    When called from a script, execution of the script is
+	    terminated.  If the context is gretlcli in batch mode,
+	    gretlcli itself exits, otherwise the program reverts to
+	    interactive mode.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    When called from the GUI console, the console window is
+	    closed.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    When called from gretlcli in interactive mode the program
+	    exits.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that this command cannot be called within functions or
+	loops.
+      </para>
+      <para>
+	In no case does the <lit>quit</lit> command cause the gretl
+	GUI program to exit. That is done via the <lit>Quit</lit> item
+	under the <lit>File</lit> menu, or <lit>Ctrl+Q</lit>, or by
+	clicking the close control on the title-bar of the main gretl
+	window.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/File/Exit</menu-path>
-    </gui-access>
   </command>
 
   <command name="regls" section="Estimation"
 	   label="Regularized least squares" context="gui">
     <description>
       <para>
-	This dialog gives you a limited degree of access to the
-	<lit>regls</lit> function for regularized least squares.
+	This dialog gives you access to the <lit>regls</lit> function
+	for regularized least squares.
       </para>
       <para>
-	Three variants are supported: LASSO, which limits the sum of
+	Three estimators are supported: LASSO, which limits the sum of
 	absolute values of the coefficients; Ridge, which limits the
 	sum of squared coefficients; and Elastic net, which is a
-	combination of the first two, governed by the hyperparameter
+	combination of the first two governed by the hyperparameter
 	&alpha;. (&alpha; = 1 gives LASSO, &alpha; = 0 gives Ridge,
 	intermediate values give a weighted combination.)
       </para>
@@ -12002,11 +12196,77 @@
 	the second case the penalty values are scaled automatically.
       </para>
       <para>
-	You can exercise much greater control over gretl's regularized
-	least squares facility by calling the <lit>regls</lit>
-	function via scripting. In particular you are able to specify
-	cross validation; see <doc>regls.pdf</doc> for details.
+	If you select multiple &lgr; values the option of cross
+	validation becomes available. In that case you can select the
+	number of <quote>folds</quote> for the training data (default
+	10) and whether these folds should be random or contiguous
+	subsets of the observations. You may also choose to show
+	a plot of average Mean Squared Error (MSE) against the
+	&lgr;-fraction.
       </para>
+      <para>
+	The <quote>Advanced</quote> button opens a further dialog that
+	provides somewhat greater control over the regularization
+	procedure. But note that you can exercise finer control by
+	calling the <lit>regls</lit> function via scripting; see
+	<doc>regls.pdf</doc> for details.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Further regls options" context="gui">
+    <description>
+      <para>
+	Selections made via this dialog are applied only where
+	relevant, based on the choices made in the main regls dialog.
+	They are remembered for the duration of the gretl session.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Choice of algorithm: You may select the Cyclical
+	    Coordinate Descent (CCD) method for either LASSO or Ridge
+	    regression, as opposed to the default methods, namely the
+	    Alternating Direction Method of Multipliers (ADMM) for
+	    LASSO and Singular Value Decomposition (SVD) for Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The default criterion for <quote>best</quote> performance
+	    on cross validation is minimization of MSE, but you can
+	    select the alternative <quote>one standard error</quote>
+	    rule. This alternative, which favors parsimony, selects
+	    the largest penalty factor whose MSE is within one
+	    standard error of the minimum.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Seed for random folds: If you wish to obtain replicable
+	    results when cross validating with random folds, it is
+	    necessary to specify a seed for the random number
+	    generator.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    By default regls will use MPI (if available) in an effort
+	    to speed up cross validation. The MPI checkbox (shown only
+	    if gretl is compiled with MPI support) lets you turn this
+	    off, which may yield a speed-up for smaller datasets.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The option of showing execution time may be helpful if you
+	    wish to compare the performance of different algorithms,
+	    or to check whether MPI is worthwhile. The timing shown in
+	    the output is for execution of the underlying C code.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -12221,25 +12481,28 @@
       </para>
       <para>
 	Depending on the context, the restrictions to be tested may be
-	expressed in various ways.  The simplest form is as follows: each
-	restriction is given as an equation, with a linear combination of
-	parameters on the left and a scalar value to the right of the equals
-	sign (either a numerical constant or the name of a scalar variable).
+	expressed in various ways.  The simplest form is as follows:
+	each restriction is given as an equation, with a linear
+	combination of parameters on the left and a scalar value to
+	the right of the equals sign (either a numerical constant or
+	the name of a scalar variable).
       </para>
       <para>
-	In the single-equation case, parameters may be referenced in the form
-	<lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
-	represents the position in the list of regressors (starting at 1), or
+	In the single-equation case, parameters may be referenced in
+	the form <lit>b[</lit><repl>i</repl><lit>]</lit>, where
+	<repl>i</repl> represents the position in the list of
+	regressors (starting at 1), or
 	<lit>b[</lit><repl>varname</repl><lit>]</lit>, where
-	<repl>varname</repl> is the name of the regressor in question. In the
-	system case, parameters are referenced using <lit>b</lit> plus two
-	numbers in square brackets. The leading number represents the position
-	of the equation within the system and the second number indicates
-	position in the list of regressors.  For example <lit>b[2,1]</lit>
-	denotes the first parameter in the second equation, and
-	<lit>b[3,2]</lit> the second parameter in the third equation.
-	The <lit>b</lit> terms in the equation representing a restriction may
-	be prefixed with a numeric multiplier, for example
+	<repl>varname</repl> is the name of the regressor in
+	question. In the system case, parameters are referenced using
+	<lit>b</lit> plus two numbers in square brackets. The leading
+	number represents the position of the equation within the
+	system and the second number indicates position in the list of
+	regressors.  For example <lit>b[2,1]</lit> denotes the first
+	parameter in the second equation, and <lit>b[3,2]</lit> the
+	second parameter in the third equation.  The <lit>b</lit>
+	terms in the equation representing a restriction may be
+	prefixed with a numeric multiplier, for example
 	<lit>3.5*b[4]</lit>.
       </para>
       <para>
@@ -12282,8 +12545,8 @@
 	otherwise.
       </para>
       <para>
-	There are two alternatives to the method of expressing restrictions
-	discussed above.  First, a set of <math>g</math> linear restrictions
+	There are three alternatives to the method of expressing restrictions
+	described above.  First, a set of <math>g</math> linear restrictions
 	on a <math>k</math>-vector of parameters, &bgr;, may be written
 	compactly as <math>R</math>&bgr; &minus; <math>q</math> = 0, where
 	<math>R</math> is an <by r="g" c="k"/> matrix and <math>q</math> is a
@@ -12298,7 +12561,27 @@
 	end restrict
       </code>
       <para>
-	Secondly, if you wish to test a nonlinear restriction (this is
+	Second, in a variant that may be useful when
+	<lit>restrict</lit> is used within a function, you can
+	construct the set of restriction statements in the form of an
+	array of strings.  You then use the <lit>inject</lit> keyword
+	with the name of the array. Here's a simple example:
+      </para>
+      <code>
+	strings SR = array(2)
+	RS[1] = "b[1,2] = 0"
+	RS[2] = "b[2,1] = 0"
+	restrict
+	  inject RS
+	end restrict	
+      </code>
+      <para>
+	In actual usage of this method one would likely use <fncref
+	targ="sprintf"/> to construct the strings, based on input to
+	a function.
+      </para>
+      <para>
+	Lastly, if you wish to test a nonlinear restriction (this is
 	currently available for single-equation models only) you should give
 	the restriction as the name of a function, preceded by
 	<quote><lit>rfunc = </lit></quote>, as in
@@ -12863,12 +13146,12 @@
 	script has its own window.
       </para>
       <para>
-	<emphasis>Enable auto-completion</emphasis>: If this is
-	checked, you will be offered possible completions for the word
-	you are typing, based on the words already entered in the
-	editor window or tab. To select a completion, use the up/down
-	arrow keys and the <lit>Enter</lit> key; or just keep on
-	typing to dismiss the suggested completions.
+	<emphasis>Enable auto-completion</emphasis>: If this option is
+	available and the box is checked, you will be offered possible
+	completions for the word you are typing, either as you type or
+	in response to the Tab key. To select a completion, use the
+	up/down arrow keys and the Tab key; or just keep on typing to
+	dismiss the suggested completions.
       </para>
       <para>
 	<emphasis>Enable auto-brackets</emphasis>: If this is checked,
@@ -13184,6 +13467,12 @@
 	  <lit>warn</lit> or <lit>stop</lit>. Controls the
 	  consequences of failure (return value of 0) from the
 	  <fncref targ="assert"/> function.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>datacols</lit>: an integer from 1 to 15, with
+	  default value 5. Sets the maximum number of series shown
+	  side-by-side when data are displayed by observation.
 	  </para>
 	</li>
       </ilist>
@@ -14382,10 +14671,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--csv</flag>
-	  <effect>use CSV format</effect>
-        </option>
-        <option>
 	  <flag>--omit-obs</flag>
 	  <effect>see below, on CSV format</effect>
         </option>
@@ -14436,6 +14721,10 @@
 	  <optparm>matrix-name</optparm>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--compat</flag>
+	  <effect>gdtb compatibility, see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -14453,23 +14742,44 @@
 	contains a full path specification.
       </para>
       <para>
+	Note that the <lit>store</lit> command behaves in a special
+	manner in the context of a <quote>progressive loop</quote>;
+	see <guideref targ="chap:looping"/> for details.
+      </para>
+      <subhead>Native formats</subhead>
+      <para>
+	If <repl>filename</repl> has extension <lit>.gdt</lit> or
+	<lit>.gtdb</lit> this implies saving the data in one of
+	gretl's native formats. In addition, if no extension is given
+	<lit>.gdt</lit> is taken to be implicit and the suffix is
+	added automatically. The <lit>gdt</lit> format is XML,
+	optionally gzip-compressed, while the <lit>gdtb</lit> format
+	is binary. The former is recommended for datasets of moderate
+	size (say, up to several hundred kilobytes of data); the
+	binary format is much faster for very large datasets.
+      </para>
+      <para>
+	The <lit>gdtb</lit> format was revised in gretl 2021a
+	(producing a huge write/read speed-up for super-large
+	datasets). But if you wish to write a binary data file
+	readable by earlier gretl (2018c or higher) you should append
+	the <opt>compat</opt> option.
+      </para>
+      <para>
+	When data are saved in <lit>gdt</lit> format the
+	<opt>gzipped</opt> option may be used for data compression.
+	The optional parameter for this flag controls the level of
+	compression (from 0 to 9): higher levels produce a smaller
+	file, but compression takes longer. The default level is 1; a
+	level of 0 means that no compression is applied.
+      </para>
+      <subhead>Other formats</subhead>
+      <para>
 	The format in which the data are written may be controlled to
 	a degree by the extension or suffix of <repl>filename</repl>,
 	as follows:
       </para>
       <ilist>
-	<li>
-	  <para>
-	    <lit>.gdt</lit>, or no extension: gretl's native XML
-	    data format. (If no extension is provided,
-	    <quote><lit>.gdt</lit></quote> is added automatically.)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.gtdb</lit>: gretl's native binary data format.
-	  </para>
-	</li>
 	<li>
 	  <para>
 	    <lit>.csv</lit>: comma-separated values (CSV).
@@ -14494,63 +14804,48 @@
       </ilist>
       <para>
 	The format-related option flags shown above can be used to
-	force the issue of the save format independently of the
-	filename (or to get gretl to write in the formats of PcGive or
-	JMulTi). However, if <repl>filename</repl> has extension
-	<lit>.gdt</lit> or <lit>.gdtb</lit> this necessarily implies
-	use of native format and the addition of a conflicting
-	option flag will generate an error.
+	force the choice of format independently of the filename (or
+	to get gretl to write in the formats of PcGive or JMulTi).
       </para>
-      <para>
-	When data are saved in native format (only), the
-	<opt>gzipped</opt> option may be used for data compression,
-	which can be useful for large datasets. The optional parameter
-	for this flag controls the level of compression (from 0 to 9):
-	higher levels produce a smaller file, but compression takes
-	longer. The default level is 1; a level of 0 means that no
-	compression is applied.
-      </para>
+      <subhead>CSV options</subhead>
       <para>
 	The option flags <opt>omit-obs</opt> and <opt>no-header</opt>
-	are applicable only when saving data in CSV format.  By default,
-	if the data are time series or panel, or if the dataset includes
-	specific observation markers, the CSV file includes a first column
-	identifying the observations (&eg; by date).  If the
+	are specific to saving data in CSV format.  By default, if the
+	data are time series or panel, or if the dataset includes
+	specific observation markers, the output file includes a first
+	column identifying the observations (&eg; by date).  If the
 	<opt>omit-obs</opt> flag is given this column is omitted. The
 	<opt>no-header</opt> flag suppresses the usual printing of the
 	names of the variables at the top of the columns.
       </para>
       <para>
 	The option flag <opt>decimal-comma</opt> is also confined to
-	the case of saving data in CSV format. The effect of this option
-	is to replace the decimal point with the decimal comma; in
-	addition the column separator is forced to be a semicolon.
+	CSV. Its effect is to replace the decimal point with decimal
+	comma; in addition the column separator is forced to be a
+	semicolon rather than a comma.
       </para>
+      <subhead>Storing to a database</subhead>
       <para>
-	The option of saving in gretl database format is intended to help
-	with the construction of large sets of series, possibly having
-	mixed frequencies and ranges of observations.  At present this
+	The option of saving in gretl database format is intended to
+	help with the construction of large sets of series with mixed
+	frequencies and ranges of observations.  At present this
 	option is available only for annual, quarterly or monthly
-	time-series data. If you save to a file that already exists, the
-	default action is to append the newly saved series to the existing
-	content of the database.  In this context it is an error if one or
-	more of the variables to be saved has the same name as a variable
-	that is already present in the database. The
-	<opt>overwrite</opt> flag has the effect that, if there are
-	variable names in common, the newly saved variable replaces the
-	variable of the same name in the original dataset.
+	time-series data. If you save to a file that already exists,
+	the default action is to append the newly saved series to the
+	existing content of the database.  In this context it is an
+	error if one or more of the variables to be saved has the same
+	name as a variable that is already present in the
+	database. The <opt>overwrite</opt> flag has the effect that,
+	if there are variable names in common, the newly saved
+	variable replaces the variable of the same name in the
+	original dataset.
       </para>
       <para>
-	The <opt>comment</opt> option is available when saving data
-	as a database or in CSV format. The required parameter is a
+	The <opt>comment</opt> option is available when saving data as
+	a database or as CSV. The required parameter is a
 	double-quoted one-line string, attached to the option flag
 	with an equals sign. The string is inserted as a comment into
 	the database index file or at the top of the CSV output.
-      </para>
-      <para>
-	The <lit>store</lit> command behaves in a special manner in
-	the context of a <quote>progressive loop</quote>.  See
-	<guideref targ="chap:looping"/> for details.
       </para>
       <subhead>Writing a matrix as a dataset</subhead>
       <para>
@@ -14567,7 +14862,7 @@
       <para>
 	Note that matrices can be written to file in their own right,
 	see the <fncref targ="mwrite"/> function. But in some cases
-	it may be more useful to write them in dataset mode.
+	it may be useful to write them in dataset mode.
       </para>
     </description>
 
@@ -15140,9 +15435,9 @@
       </options>
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
-		<demos>
-		<demo>penngrow.inp</demo>
-		</demos>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -15312,6 +15607,11 @@
 	  <flag>--lagselect</flag>
 	  <effect>show criteria for lag selection</effect>
         </option>
+        <option>
+	  <flag>--minlag</flag>
+	  <optparm>minimum lag</optparm>
+	  <effect>lag selection only, see below</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
@@ -15324,7 +15624,6 @@
     </usage>
 
     <description>
-
       <para context="gui">
 	This command requires specification of:
       </para>
@@ -15352,7 +15651,6 @@
 	lag, along with (optionally) forecast variance decompositions and
 	impulse response functions.
       </para>
-
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression
 	(VAR).  The first argument specifies the lag order &mdash; or
@@ -15370,7 +15668,6 @@
 	seasonal dummy variables may be added using the
 	<opt>seasonals</opt> flag.
       </para>
-
       <para context="cli">
 	While a VAR specification usually includes all lags from 1
 	to a given maximum, it is possible to select a specific
@@ -15385,7 +15682,6 @@
 	matrix p = {1,2,4}
 	var p ylist
       </code>
-
       <para context="cli">
 	A separate regression is reported for each variable in
 	<repl>ylist</repl>.  Output for each equation includes
@@ -15395,7 +15691,6 @@
 	flag is given, forecast variance decompositions and impulse
 	responses.
       </para>
-
       <para>
 	Forecast variance decompositions and impulse responses are
 	based on the Cholesky decomposition of the contemporaneous
@@ -15408,28 +15703,32 @@
 	function in matrix form, see the <fncref targ="irf"/>
 	function.
       </para>
-
       <para context="cli">
-	If the <opt>robust</opt> option is given, standard errors
-	are corrected for heteroskedasticity. Alternatively, the
-	<opt>robust-hac</opt> option can be given to produce
-	standard errors that are robust with respect to both
-	heteroskedasticity and autocorrelation (HAC). In general
-	the latter correction should not be needed if the VAR
-	includes sufficient lags.
+	If the <opt>robust</opt> option is given, standard errors are
+	corrected for heteroskedasticity. Alternatively, the
+	<opt>robust-hac</opt> option can be given to produce standard
+	errors that are robust with respect to both heteroskedasticity
+	and autocorrelation (HAC). In general the latter correction
+	should not be needed if the VAR includes sufficient lags.
       </para>
-
       <para context="cli">
-	If the <opt>lagselect</opt> option is given, the first parameter to
-	the <lit>var</lit> command is taken as the maximum lag order.  Output
-	consists of a table showing the values of the Akaike (AIC), Schwarz
-	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
-	VARs of order 1 to the given maximum.  This is intended to help
-	with the selection of the optimal lag order.  The usual VAR output is
-	not presented. The table of information criteria may be retrieved
-	as a matrix via the <fncref targ="$test"/> accessor.
+	If the <opt>lagselect</opt> option is given, the first
+	parameter to the <lit>var</lit> command is taken as the
+	maximum lag order.  Output consists of a table showing the
+	values of the Akaike (AIC), Schwarz (BIC) and
+	Hannan&ndash;Quinn (HQC) information criteria, by default
+	computed from VARs of order 1 to the given maximum.  This is
+	intended to help with the selection of the optimal lag order.
+	The usual VAR output is not presented. The table of
+	information criteria may be retrieved as a matrix via the
+	<fncref targ="$test"/> accessor. In this context (only) the
+	<opt>minlag</opt> option can be used to adjust the minimum lag
+	order. Set this to 0 to allow for the possibility that the
+	optimal lag order is zero, meaning that a VAR is not really
+	called for at all. Conversely you could set
+	<opt>minlag=4</opt> if you believe you need at least 4 lags,
+	thereby saving a little compute time.
       </para>
-
     </description>
 
     <gui-access>
@@ -15498,16 +15797,17 @@
 	If the <opt>type</opt> option is given, it should be followed
 	(after an equals sign) by one of the following typenames:
 	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
-	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit> or
-	<lit>accessor</lit>. The effect is to print the names of all
-	currently defined objects of the named type.
+	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit>,
+	<lit>array</lit> or <lit>accessor</lit>. The effect is to
+	print the names of all currently defined objects of the named
+	type.
       </para>
       <para>
 	As a special case, if the typename is <lit>accessor</lit>, the
 	names printed are those of the internal variables currently
-	available as <quote>accessors,</quote> such as <fncref
-	targ="$nobs"/> and <fncref targ="$uhat"/> (regardless of their
-	specific type).
+	available as <quote>accessors</quote>, such as <fncref
+	targ="$nobs"/> and <fncref targ="$uhat"/>, regardless of their
+	specific type.
       </para>
     </description>
 
@@ -15645,34 +15945,29 @@
 	related to the Johansen test for cointegration (see <cmdref
 	  targ="johansen"/>).
       </para>
-
       <para context="cli">
 	The <repl>order</repl> parameter to this command represents the lag
 	order of the VAR system.  The number of lags in the VECM itself (where
 	the dependent variable is given as a first difference) is one less than
 	<repl>order</repl>.
       </para>
-
       <para context="gui">
 	The lag order selected in the VECM dialog box is that of the VAR system.
 	The number of lags in the VECM itself (where the dependent variable is
 	given as a first difference) is one less than this number.
       </para>
-
       <para context="cli">
 	The <repl>rank</repl> parameter represents the cointegration rank, or in
 	other words the number of cointegrating vectors.  This must be greater
 	than zero and less than or equal to (generally, less than) the number of
 	endogenous variables given in <repl>ylist</repl>.
       </para>
-
       <para context="gui">
 	The <quote>rank</quote> represents the number of cointegrating
 	vectors.  This must be greater than zero and less than or
 	equal to (generally, less than) the number of endogenous
 	variables selected.
       </para>
-
       <para context="cli">
 	<repl>ylist</repl> supplies the list of endogenous variables,
 	in levels. The inclusion of deterministic terms in the model
@@ -15688,7 +15983,6 @@
 	these cases and the criteria for selecting a case are
 	explained in <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
 	allow you to specify sets of exogenous variables which enter the
@@ -15697,7 +15991,6 @@
 	separated from <repl>ylist</repl> and from each other by
 	semicolons.
       </para>
-
       <para context="gui">
 	In the <quote>Endogenous variables</quote> box you select the
 	vector of endogenous variables, in levels. The inclusion of
@@ -15712,7 +16005,6 @@
 	The meaning of these cases and the criteria for selecting a
 	case are explained in <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	In the <quote>Exogenous variables</quote> box you may add specific
 	exogenous variables.  By default these enter the model in
@@ -15722,14 +16014,12 @@
 	select <quote>Restricted</quote> from the pop-up menu.  The symbol
 	next to the variable will change to R.
       </para>
-
       <para context="cli">
 	The <opt>seasonals</opt> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
       </para>
-
       <para context="gui">
 	If the data are quarterly or monthly, a check box is shown that allows
 	you to include a set of centered seasonal dummy variables.  In all
@@ -15737,7 +16027,6 @@
 	for the printing of the auxiliary regressions that form the starting
 	point of the Johansen maximum likelihood estimation procedure.
       </para>
-
       <para context="cli">
 	The first example above specifies a VECM with lag order 4 and a single
 	cointegrating vector.  The endogenous variables are <lit>Y1</lit>,
@@ -15747,7 +16036,6 @@
 	appropriate if the cointegrating vectors may have a non-zero intercept
 	but the <lit>Y</lit> variables have no trend.
       </para>
-
       <para context="cli">
 	Following estimation of a VECM some special accessors are
 	available: <lit>$jalpha</lit>, <lit>$jbeta</lit> and
@@ -15835,6 +16123,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
         </option>
+	<option>
+	  <flag>--allow-zeros</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
     </usage>
 
@@ -15858,20 +16150,21 @@
 	sum of squared residuals from a regression of the weighted
 	dependent variable on the weighted constant alone.
       </para>
-
       <para context="cli">
-	If <repl>wtvar</repl> is a dummy variable, WLS estimation is
-	equivalent to eliminating all observations with value zero for
-	<repl>wtvar</repl>.
+	As a special case, if <repl>wtvar</repl> is a 0/1 dummy
+	variable, WLS estimation is equivalent to OLS on a sample that
+	excludes all observations with value zero for
+	<repl>wtvar</repl>. Otherwise including weights of zero is
+	considered an error, but if you really want to mix zero
+	weights with positive ones you can append the
+	<opt>allow-zeros</opt> option.
       </para>
-
-	  <para context="cli">
-	For weighted least squares estimation applied to panel data and
-	based on the unit specific error variances please see the
-	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit>
-	option.
-	  </para>
-
+      <para context="cli">
+	For weighted least squares estimation applied to panel data
+	and based on the unit specific error variances please see the
+	<cmdref targ="panel"/> command with the
+	<opt>unit-weights</opt> option.
+      </para>
       <para context="gui">
 	Let "wtvar" denote the variable selected in the "Weight variable"
 	box.  An OLS regression is run, where the dependent variable is
@@ -16084,7 +16377,7 @@
         </option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>see the bivariate case below</effect>
+	  <effect>suppress printed output</effect>
 	</option>
 	<option>
 	  <flag>--tex</flag>
@@ -16109,59 +16402,65 @@
 
     <description context="cli">
       <para>
-        Displays a contingency table or cross-tabulation for each
-        combination of the variables included in <repl>ylist</repl>;
-        if a second list <repl>xlist</repl> is given, each variable in
-        <repl>ylist</repl> is cross-tabulated by row against each
-        variable in <repl>xlist</repl> (by column).  Variables in
-        these lists can be referenced by name or by number.  Note that
-        all the variables must have been marked as discrete.
-        Alternatively, if the <opt>matrix</opt> option is given, the
-        named matrix is treated as a precomputed set of frequencies,
-        to be displayed as a cross-tabulation (see also the <fncref
-        targ="mxtab"/> function). In this case the
-        <repl>list</repl> argument(s) should be omitted.
+	Given just the <repl>ylist</repl> argument, computes (and by
+	default prints) a contingency table or cross-tabulation for
+	each combination of the variables included in the list.  If a
+	second list <repl>xlist</repl> is given, each variable in
+	<repl>ylist</repl> is cross-tabulated by row against each
+	variable in <repl>xlist</repl> (by column).  Variables in
+	these lists can be referenced by name or by number.  Note that
+	all the variables must have been marked as discrete.
+	Alternatively, if the <opt>matrix</opt> option is given, the
+	named matrix is treated as a precomputed set of frequencies,
+	to be displayed as a cross-tabulation (see also the <fncref
+	targ="mxtab"/> function). In this case the <repl>list</repl>
+	argument(s) should be omitted.
       </para>
       <para>
 	By default the cell entries are given as frequency counts. The
 	<opt>row</opt> and <opt>column</opt> options (which are
-	mutually exclusive), replace the counts with the percentages for
-	each row or column, respectively.  By default, cells with a zero
-	count are left blank; the <opt>zeros</opt> option, which has the
-	effect of showing zero counts explicitly, may be useful for
-	importing the table into another program, such as a spreadsheet.
+	mutually exclusive) replace the counts with the percentages
+	for each row or column, respectively.  By default, cells with
+	a zero count are left blank but the <opt>zeros</opt> option
+	has the effect of showing zero counts explicitly, which may be
+	useful for importing the table into another program, such as a
+	spreadsheet.
       </para>
       <para>
-        Pearson's chi-square test for independence is displayed if the
-        expected frequency under independence is at least 1.0e-7 for all
-        cells.  A common rule of thumb for the validity of this statistic is
-        that at least 80 percent of cells should have expected frequencies
-        of 5 or greater; if this criterion is not met a warning is printed.
+        Pearson's chi-square test for independence is shown if the
+        expected frequency under independence is at least 1.0e-7 for
+        all cells.  A common rule of thumb for the validity of this
+        statistic is that at least 80 percent of cells should have
+        expected frequencies of 5 or greater; if this criterion is not
+        met a warning is printed.
       </para>
       <para>
 	If the contingency table is 2 by 2, Fisher's Exact Test for
-	independence is computed.  Note that this test is based on the
-	assumption that the row and column totals are fixed, which may or
-	may not be appropriate depending on how the data were generated.
-	The left p-value should be used when the alternative to
-	independence is negative association (values tend to cluster in
-	the lower left and upper right cells); the right p-value should be
-	used if the alternative is positive association.  The two-tailed
-	p-value for this test is calculated by method (b) in section 2.1
-	of <cite key="agresti92">Agresti (1992)</cite>: it is the sum of
-	the probabilities of all possible tables having the given row and
-	column totals and having a probability less than or equal to that
-	of the observed table.
+	independence is shown.  Note that this test is based on the
+	assumption that the row and column totals are fixed, which may
+	or may not be appropriate depending on how the data were
+	generated.  The left p-value should be used when the
+	alternative to independence is negative association (values
+	tend to cluster in the lower left and upper right cells), the
+	right p-value when the alternative is positive association.
+	The two-tailed p-value for this test is calculated by method
+	(b) in section 2.1 of <cite key="agresti92">Agresti
+	(1992)</cite>: it is the sum of the probabilities of all
+	possible tables with the given row and column totals and a
+	probability no greater than that of the observed table.
       </para>
 
       <subhead>The bivariate case</subhead>
       <para>
-	In the simple case of a bivariate cross-tabulation the
-	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>
-	may be used to retrieve the Pearson chi-square test and its
-	p-value, provided the minimum expected value condition is
-	met. In that context the <opt>quiet</opt> option may be
-	used to suppress printing of the table.
+	In the case of a bivariate cross-tabulation (only one list is
+	given, and it has two members) certain results are stored. The
+	contingency table may be retrieved in matrix form via the
+	<fncref targ="$result"/> accessor. In addition, if the minimum
+	expected value condition is met, the Pearson chi-square test
+	and its p-value may be retrieved via the <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/> accessors. If it's
+	these results that are of interest, the <opt>quiet</opt>
+	option can be used to suppress the usual printout.
       </para>
 
       <subhead>&latex; output</subhead>
@@ -16180,14 +16479,6 @@
 	<opt>tex</opt> option is given, and also when one or both of
 	the cross-tabulated variables are string-valued.
       </para>
-
-      <subhead>The table as a matrix</subhead>
-      <para>
-	When a single list argument is given, the contingency table
-	may be retrieved in matrix form via the <fncref
-	targ="$result"/> accessor.
-      </para>
-
     </description>
 
     <description context="gui">
@@ -16197,35 +16488,37 @@
 	variables must be discrete.
       </para>
       <para>
-	By default, frequency count values are shown in the cells and on
-	the margins of the table.  However, you can choose to display
-	either row or column percentages instead.
+	By default, frequency count values are shown in the cells and
+	on the margins of the table.  However, you can choose to
+	display either row or column percentages instead.
       </para>
       <para>
-	By default, cells with a zero count are shown as empty, but you
-	can choose to show zero values explicitly.
+	By default, cells with a zero count are shown as empty, but
+	you can choose to show zero values explicitly.
       </para>
       <para>
         Pearson's chi-square test for independence is displayed if the
-        expected frequency under independence is at least 1.0e-7 for all
-        cells.  A common rule of thumb for the validity of this statistic is
-        that at least 80 percent of cells should have expected frequencies
-        of 5 or greater; if this criterion is not met a warning is printed.
+        expected frequency under independence is at least 1.0e-7 for
+        all cells.  A common rule of thumb for the validity of this
+        statistic is that at least 80 percent of cells should have
+        expected frequencies of 5 or greater; if this criterion is not
+        met a warning is printed.
       </para>
       <para>
 	If the contingency table is 2 by 2, Fisher's Exact Test for
-	independence is computed.  Note that this test is based on the
-	assumption that the row and column totals are fixed, which may or
-	may not be appropriate depending on how the data were generated.
-	The left p-value should be used when the alternative to
-	independence is negative association (values tend to cluster in
-	the lower left and upper right cells); the right p-value should be
-	used if the alternative is positive association.  The two-tailed
-	p-value for this test is calculated by method (b) in section 2.1
-	of <cite key="agresti92">Agresti (1992)</cite>: it is the sum of
-	the probabilities of all possible tables having the given row and
-	column totals and having a probability less than or equal to that
-	of the observed table.
+	independence is shown.  Note that this test is based on the
+	assumption that the row and column totals are fixed, which may
+	or may not be appropriate depending on how the data were
+	generated.  The left p-value should be used when the
+	alternative to independence is negative association (values
+	tend to cluster in the lower left and upper right cells); the
+	right p-value should be used if the alternative is positive
+	association.  The two-tailed p-value for this test is
+	calculated by method (b) in section 2.1 of <cite
+	key="agresti92">Agresti (1992)</cite>: it is the sum of the
+	probabilities of all possible tables having the given row and
+	column totals and having a probability less than or equal to
+	that of the observed table.
       </para>
     </description>
 

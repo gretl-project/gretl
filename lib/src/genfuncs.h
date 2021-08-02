@@ -131,7 +131,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt);
 
 double *get_fit_or_resid (const MODEL *pmod, DATASET *dset,
 			  ModelDataIndex idx, char *vname,
-			  char *vlabel, int *err);
+			  gchar **pdesc, int *err);
 
 int get_observation_number (const char *s, const DATASET *dset);
 
@@ -147,7 +147,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err);
 
-gretl_matrix *midas_multipliers (void *data, int cumulate,
+gretl_matrix *midas_multipliers (gretl_bundle *mb, int cumulate,
 				 int idx, int *err);
 
 int midas_linear_combo (double *y, const int *list,
@@ -210,7 +210,8 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int f, void *b, void *r,
+			      int f, gretl_bundle *b,
+			      gretl_bundle *res,
 			      DATASET *dset,
 			      PRN *prn, int *err);
 
@@ -269,11 +270,10 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 int fill_permutation_vector (gretl_vector *v, int n);
 
 int geoplot_driver (const char *fname,
-		    void *mapptr,
-		    const gretl_matrix *m,
+		    gretl_bundle *map,
 		    const double *x,
 		    const DATASET *dset,
-		    void *optptr);
+		    gretl_bundle *ops);
 
 int substitute_values (double *dest, const double *src, int n,
 		       const double *v0, int n0,

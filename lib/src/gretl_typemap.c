@@ -163,6 +163,7 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_DATE:         return "date"; /* ODBC special */
 
     case GRETL_TYPE_VOID:       return "void";
+    case GRETL_TYPE_NUMERIC:    return "numeric";
     case GRETL_TYPE_NONE:       return "null";
     case GRETL_TYPE_ANY:        return "any";
     default:
@@ -258,6 +259,8 @@ GretlType gretl_type_from_string (const char *s)
 	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
 	    return GRETL_TYPE_LIST_REF;
 	}
+    } else if (!strncmp(s, "numeric", 7)) {
+	return GRETL_TYPE_NUMERIC;
     } else {
 	/* aliases */
 	if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
@@ -322,6 +325,29 @@ GretlType gretl_get_gen_type (const char *s)
     return t;
 }
 
+/* Note: this must agree with the doc for the typeof() function */
+
+int gretl_type_get_order (GretlType type)
+{
+    if (gretl_scalar_type(type)) {
+        return 1;
+    } else if (type == GRETL_TYPE_SERIES) {
+        return 2;
+    } else if (type == GRETL_TYPE_MATRIX) {
+        return 3;
+    } else if (type == GRETL_TYPE_STRING) {
+        return 4;
+    } else if (type == GRETL_TYPE_BUNDLE) {
+        return 5;
+    } else if (type == GRETL_TYPE_ARRAY) {
+        return 6;
+    } else if (type == GRETL_TYPE_LIST) {
+        return 7;
+    } else {
+        return 0;
+    }
+}
+
 int gretl_is_array_type (GretlType type)
 {
     return type == GRETL_TYPE_STRINGS ||
@@ -346,6 +372,12 @@ int gretl_is_scalar_type (GretlType type)
 	type == GRETL_TYPE_INT ||
 	type == GRETL_TYPE_UNSIGNED ||
 	type == GRETL_TYPE_DOUBLE;
+}
+
+int gretl_is_series_type (GretlType type)
+{
+    return type == GRETL_TYPE_SERIES ||
+	type == GRETL_TYPE_USERIES;
 }
 
 void gretl_typemap_cleanup (void)

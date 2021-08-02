@@ -1,7 +1,7 @@
 \documentclass{article}
 \usepackage{doc,url,verbatim,fancyvrb}
 \usepackage{pifont}
-\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[pdftex]{graphicx}
 \usepackage{gretl}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
@@ -305,7 +305,7 @@ and they are picked up if you execute a script containing an
 \label{subsec:why-new-prog}
 
 That is, why can't we just produce MPI-enabled versions of the
-``traditional'' gretl command-line and GUI programs? 
+``traditional'' gretl command-line and GUI programs?
 
 Well, given the design of MPI this is not so easy. For one thing, as
 we've noted, running an MPI-enabled program requires a special
@@ -412,17 +412,17 @@ To shunt data around between the processes you have the following
 functions:
 \begin{center}
 \begin{tabular}{ll}
-\texttt{scalar mpisend(object x, int dest)} & 
+\texttt{scalar mpisend(object x, int dest)} &
   send object \texttt{x} to node \texttt{dest}\\
-\texttt{object mpirecv(int src)} & 
+\texttt{object mpirecv(int src)} &
   receive an object from node \texttt{src} \\
-\texttt{scalar mpibcast(object *x [,int root])} & 
+\texttt{scalar mpibcast(object *x [,int root])} &
   broadcast object \texttt{x} \\
-\texttt{scalar mpireduce(object *x, string op [,int root])} & 
+\texttt{scalar mpireduce(object *x, string op [,int root])} &
   reduce object \texttt{x} via \texttt{op} \\
-\texttt{scalar mpiallred(object *x, string op)} & 
+\texttt{scalar mpiallred(object *x, string op)} &
   reduce object \texttt{x} via \texttt{op}, all nodes \\
-\texttt{scalar mpiscatter(matrix *m, string op [,int root])} & 
+\texttt{scalar mpiscatter(matrix *m, string op [,int root])} &
   scatter matrix \texttt{m} using \texttt{op} \\
 \end{tabular}
 \end{center}
@@ -467,7 +467,6 @@ if $mpirank == 0
 endif
 mpibcast(&X)
 \end{code}
-%$
 After successful completion of the above fragment, each process will
 have a copy of the matrix \texttt{X} as defined in the process with
 rank 0.
@@ -487,7 +486,6 @@ matrix X
 X = mnormal(T, k)
 mpireduce(&X, sum)
 \end{code}
-%$
 After successful completion of the above, the root process will have a
 matrix \texttt{X} which is the sum of the matrices \texttt{X} at all
 processes. Note that the matrices at all processes other than root
@@ -512,7 +510,6 @@ if $mpirank == 0
 endif
 mpiscatter(&X, byrows)
 \end{code}
-%$
 If there are 4 processes, each one---\textit{including root}---will
 get a $2500 \times 10$ share of the original
 $X$ as it existed in the root process. If you want to preserve the
@@ -531,7 +528,6 @@ if $mpirank == 8
 endif
 mpibcast(&X, 8)
 \end{code}
-% $
 
 In addition to the data-transfer functions there's a utility function
 whose job is simply to enforce synchronization.  This is
@@ -582,14 +578,14 @@ The gretl \texttt{mpi} command supports the following options:
 \begin{center}
 \begin{tabular}{ll}
 \verb|--|\texttt{np=}\textsl{n} & specify the number of MPI processes\\
-\verb|--|\texttt{omp-threads=}\textsl{m} & 
+\verb|--|\texttt{omp-threads=}\textsl{m} &
   specify the number of OpenMP threads per process \\
-\verb|--|\texttt{send-functions} & 
+\verb|--|\texttt{send-functions} &
   share function definitions with \texttt{gretlmpi} \\
 \verb|--|\texttt{send-data}[\texttt{=}\textsl{list}] &
   share all or part of the current dataset \\
 \verb|--|\texttt{local} & ignore MPI hosts file, if present \\
-\verb|--|\texttt{single-rng} & 
+\verb|--|\texttt{single-rng} &
   use a single pseudo-random number generator \\
 \verb|--|\texttt{verbose} & print extra information, including
   the \texttt{mpiexec} command used
@@ -653,7 +649,7 @@ of a dataset via MPI, while at the same time allowing each MPI process
 to spawn a number of \textsf{OpenMP} threads for more ``micro''
 parallelization in tasks such as multiplying matrices.
 However, given finite computational resources the two modes of
-parallelization become substitutes at the margin. 
+parallelization become substitutes at the margin.
 
 Let $n_i$ denote the number of MPI processes running on host $i$,
 and $m_i$ the maximum number of \textsf{OpenMP} threads permitted per
@@ -875,7 +871,7 @@ MPICC=/opt/openmpi/bin/mpicc ./configure ...
 \end{code}
 
 Note that if MPI is auto-detected but you \emph{don't} want to use it
-you can give the option 
+you can give the option
 \begin{code}
 --without-mpi
 \end{code}
@@ -907,24 +903,38 @@ smpd -d
 (This opens a console window, which you can just minimize to get it
 out of the way.)
 
-\subsection{MacOS}
+\subsection{macOS}
 
-MPI support is enabled only in the ``quartz'' (Intel 64-bit) build of
-gretl. This build includes \texttt{gretlmpi}, linked against version
-1.6.5 of \textsf{Open MPI}, which is assumed to be installed under
-\texttt{/opt/openmpi}. This assumption will \textit{not} be correct in
-general, but you can make it so by installing the package
-\begin{code}
-openmpi-1.6.5-mac64.tar.xz
-\end{code}
-which can be found at
+MPI support is enabled in current builds of gretl for macOS: they
+include the \texttt{gretlmpi} executable linked against \textsf{Open
+  MPI}, which is assumed to be installed under
+\texttt{/opt/openmpi}.
+
+The details differ by processor type. For Macs with Intel processors,
+\texttt{gretlmpi} is linked against \textsf{Open MPI} version 1.6.5,
+while for Macs with M1 processors (``Apple Silicon'') the linkage is
+to \textsf{Open MPI} 4.1. To activate MPI support it's necessary to
+install the appropriate package, as follows:
+
+\begin{center}
+\begin{tabular}{ll}
+  Intel & \texttt{openmpi-1.6.5-mac64.tar.xz} \\
+  M1 & \texttt{openmpi-4.1-arm64.tar.xz}
+\end{tabular}
+\end{center}
+
+These can be found at
 
 \url{http://sourceforge.net/projects/gretl/files/osx-testing/}
 
-To unpack the package you would do, in \textsf{Terminal},
+To unpack the package you execute one of the following commands in a
+\textsf{Terminal} window:
 \begin{code}
 cd /
+# for Intel
 sudo tar xvf /where/you/put/openmpi-1.6.5-mac64.tar.xz
+# for M1
+sudo tar xvf /where/you/put/openmpi-4.1-arm64.tar.xz
 \end{code}
 %
 This will install the files under \texttt{/opt/openmpi}, which is
@@ -1010,11 +1020,11 @@ end function
 function matrix worker_task (const matrix X, const matrix b,
                              int iters)
   # semi-parametric bootstrap
-  matrix Bj = zeros(iters, cols(X))		      
+  matrix Bj = zeros(iters, cols(X))
   matrix U = mnormal(rows(X), iters)
   matrix y0 = X*b
   loop i=1..iters
-    yi = y0 + U[,i]  
+    yi = y0 + U[,i]
     Bj[i,] = mols(yi, X)'
   endloop
   return Bj
@@ -1057,7 +1067,7 @@ if $mpirank == 0
 else
   scalar my_seed = $mpirank * 1471
   set seed my_seed
-endif    
+endif
 
 # broadcast the data and the initial parameter estimates
 mpibcast(&X)
@@ -1086,7 +1096,7 @@ B_stats(B)
 You might wonder, why the funny number of total bootstrap iterations
 (6720)? That's because it's a common multiple of 2, 3, 5 and 7, so
 we're able to divide the work evenly across various numbers of
-processes for testing purposes. 
+processes for testing purposes.
 
 To give an indication of the benefit that can be gained by running in
 MPI mode even without access to a high-performance cluster we timed
@@ -1193,7 +1203,7 @@ function scalar gamma_llik(const matrix x, matrix param)
   scalar ret = n*(p * ln(a) - lngamma(p)) + sumc(l)
   return ret
 end function
- 
+
 function scalar mpi_gamma_llik(const matrix x, matrix param)
   set warnings off
   scalar llik = gamma_llik(x, param)
@@ -1362,4 +1372,3 @@ seconds) is much better than the minimum time with hyper-threading
 \end{figure}
 
 \end{document}
-

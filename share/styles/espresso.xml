@@ -55,6 +55,7 @@ https://sourceforge.net/users/gallinascripsit
   <style name="bracket-match" background="greyish-blue" foreground="espresso-brown" bold="false"/>
   <style name="bracket-mismatch" background="red" foreground="espresso-brown" bold="false"/>
   <style name="current-line" background="light-brown"/>
+  <style name="cursor" foreground="white"/>
   <style name="line-numbers" background="espresso-brown" foreground="gold"/>
   <style name="right-margin" background="espresso-brown" foreground="pale-brown"/>
   <style name="search-match" background="gold" foreground="espresso-brown"/>

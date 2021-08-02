@@ -72,8 +72,6 @@ const char *lang_string_from_id (int langid);
 
 char *utf8_to_rtf (const char *s);
 
-int iso_latin_version (void);
-
 int lang_id_from_name (const char *s);
 
 int lang_id_from_code (const char *s);
@@ -100,23 +98,7 @@ int east_asian_locale (void);
 
 int get_utf_width (const char *str, int width);
 
-void set_alt_gettext_mode (PRN *prn);
-
-#ifdef WIN32
-
-int get_gretl_cpage (void);
-
-char *locale_gettext (const char *msgid);
-
-char *alt_gettext (const char *msgid);
-
-#endif
-
 #ifdef ENABLE_NLS
-
-void set_gretl_charset (void);
-
-void set_native_utf8 (int s);
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 
@@ -127,8 +109,7 @@ int get_translated_width (const char *str);
 
 #else /* !ENABLE_NLS */
 
-#define gettext(s) s
-
+# define gettext(s) s
 # define UTF_WIDTH(s, w) w
 # define TRANSLATED_WIDTH(s) strlen(s)
 

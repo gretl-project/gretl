@@ -32,12 +32,6 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
-#define HAVE_ENTRY_ICON (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
-
 #include "mpack/mpack.h"
 
 struct msg_info {
@@ -556,8 +550,6 @@ static void mail_dialog_callback (GtkDialog *dlg, gint id, int *ret)
     }
 }
 
-#if HAVE_ENTRY_ICON
-
 static void icon_press_callback (GtkEntry *entry,
 				 GtkEntryIconPosition pos,
 				 GdkEvent *event,
@@ -570,8 +562,6 @@ static void icon_press_callback (GtkEntry *entry,
 				   GTK_ENTRY_ICON_SECONDARY,
 				   vis ? md->eye : md->eye_off);
 }
-
-#endif
 
 static void border_width (GtkWidget *w, int b)
 {
@@ -945,7 +935,6 @@ static int mail_to_dialog (const char *fname,
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 2, 3, GTK_FILL, GTK_FILL, 0, 0);
     md.pass_entry = gtk_entry_new();
     gtk_entry_set_visibility(GTK_ENTRY(md.pass_entry), FALSE);
-#if HAVE_ENTRY_ICON
     gtk_entry_set_icon_from_pixbuf(GTK_ENTRY(md.pass_entry),
 				   GTK_ENTRY_ICON_SECONDARY,
 				   md.eye);
@@ -954,7 +943,6 @@ static int mail_to_dialog (const char *fname,
 				   TRUE);
     g_signal_connect(G_OBJECT(md.pass_entry), "icon-press",
 		     G_CALLBACK(icon_press_callback), &md);
-#endif /* FIXME else? */
     gtk_table_attach_defaults(GTK_TABLE(tbl), md.pass_entry, 1, 2, 2, 3);
     if (minfo->pass != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(md.pass_entry), minfo->pass);
@@ -989,11 +977,11 @@ static int mail_to_dialog (const char *fname,
     return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
 
-static void mail_infobox (const char *msg)
+static void mail_infobox (const char *msg, GtkWindow *parent)
 {
     GtkWidget *dialog;
 
-    dialog = gtk_message_dialog_new(NULL,
+    dialog = gtk_message_dialog_new(parent,
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_INFO,
 				    GTK_BUTTONS_CLOSE,
@@ -1081,7 +1069,7 @@ int email_file (const char *fname, GtkWindow *parent, void (*help_func))
     if (doit) {
 	err = pack_and_mail(fname, msg, minfo);
 	if (!err) {
-	    mail_infobox(_("Mail sent"));
+	    mail_infobox(_("Mail sent"), parent);
 	}
     }
 

@@ -108,16 +108,17 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
    endif
 
    if !match
+      # FIXME: maybe allow join to handle this?
       funcerr "frequency does not match!"
    endif
 
    tmpfile = sprintf("%s/tmp%04d.csv", $dotdir, randgen1(i, 0, 9999))
    # n = b.totobs
-   outfile @tmpfile
+   outfile @tmpfile --quiet
       printf "obs\tdbseries\n"
       set warnings off
       loop i=1 .. b.T -q
-         printf "%s\t%20.15f\n", b.period[i], b.value[i]
+         printf "%s\t%.15g\n", b.period[i], b.value[i]
       endloop
    end outfile
 
@@ -125,7 +126,8 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
       setopt join --tkey="obs,%Y-%m-%d"
    endif
 
-   outfile tracestr --buffer
+   string tracestr
+   outfile --buffer=tracestr
       # try "append" first
       catch append @tmpfile --quiet --fixed-sample
       err = $error
@@ -168,10 +170,10 @@ end function
 function bundle dbnomics_get_series (const string datacode, bool verbose[0])
 
    bundle ret
+   string json
    ret.error = 0
    ret.has_data = 0
-   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&complete_missing_periods=1"
-   string json
+   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&metadata=0"
    ret.error = dbn_get_json(parms, verbose, &json)
    if ret.error
       return ret
@@ -179,6 +181,8 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
 
    catch bundle b = jsongetb(json, "series")
    if $error
+      ret.error = 1
+   elif inbundle(b, "series") == 0
       ret.error = 1
    elif nelem(b.series.docs) == 0
       ret.error = 1

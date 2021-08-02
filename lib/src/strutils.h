@@ -207,6 +207,9 @@ char *gretl_utf8_replace_char (char *targ, char *src, int pos);
 
 int gretl_scan_varname (const char *src, char *targ);
 
+int gretl_normalize_varname (char *targ, const char *src,
+			     int underscore, int seq);
+
 char *gretl_regexp_replace (const char *orig,
 			    const char *match,
 			    const char *repl,

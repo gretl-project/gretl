@@ -120,7 +120,10 @@ struct str_table dvars[] = {
     { R_RESULT,    "$result" },
     { R_PNGFONT,   "$pngfont" },
     { R_MAPFILE,   "$mapfile" },
+    { R_MAP,       "$map" },
     { R_INDEX,     "obs" },
+    { R_LOGLEVEL,  "$loglevel" },
+    { R_LOGSTAMP,  "$logstamp" },
     { 0,           NULL },
 };
 
@@ -234,6 +237,7 @@ struct str_table_ex ptrfuncs[] = {
     { F_GAMMA,    "gammafun", gammafun },
     { F_LNGAMMA,  "lngamma",  lngamma },
     { F_DIGAMMA,  "digamma",  digamma },
+    { F_TRIGAMMA, "trigamma", trigamma },
     { F_INVMILLS, "invmills", invmills },
     { F_ROUND,    "round",    gretl_round },
     { F_SGN,      "sgn",      gretl_sgn },
@@ -525,12 +529,11 @@ struct str_table funcs[] = {
     { F_DEFBUNDLE, "defbundle" },
     { F_DEFLIST,   "deflist" },
     { F_DEFARGS,   "_" },
-    { F_BPACK,     "bpack" },
     { F_KSETUP,    "ksetup" },
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
     { F_MLINCOMB,  "mlincomb" },
-    { F_MMULT,     "mmults" },
+    { F_MIDASMULT, "midasmult" },
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
@@ -575,6 +578,8 @@ struct str_table funcs[] = {
     { F_TDISAGG,   "tdisagg" },
     { F_ASSERT,    "assert" },
     { F_VMA,       "vma" },
+    { F_BCHECK,    "bcheck" },
+    { F_CONTAINS,  "contains" },
     { 0,           NULL }
 };
 
@@ -604,6 +609,7 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
+    { HF_SFCGI,    "_sfcgi" },
     { 0,           NULL }
 };
 
@@ -2166,8 +2172,8 @@ void lex (parser *p)
 		parser_getc(p);
 		p->sym = B_EQ;
 	    } else {
-		gretl_errmsg_set("If you meant to test for "
-				 "equality, please use '=='");
+		gretl_errmsg_set(_("If you meant to test for "
+				   "equality, please use '=='"));
 		p->err = E_PARSE;
 	    }
 	    return;
@@ -2380,8 +2386,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "SUB_ADDR";
     } else if (t == DMSTR) {
 	return "DMSTR";
-    } else if (t == MSLRAW) {
-	return "MSLRAW";
+    } else if (t == SLRAW) {
+	return "SLRAW";
     } else if (t == MSPEC) {
 	return "MSPEC";
     } else if (t == SUBSL) {

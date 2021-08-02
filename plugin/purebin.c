@@ -42,10 +42,10 @@ struct gbin_header_ {
     double sd0;       /* first obs as double */
     int nsv;          /* number of string-valued series */
     int labels;       /* number of series with labels */
-    int descrip;      /* dataset description, if any */
+    int has_descrip;  /* dataset description present? (0/1) */
     int panel_pd;     /* panel time-series frequency */
-    int panel_sd0;    /* panel time first obs */
-    int pangrps;      /* panel group-names present? (0/1) */
+    float panel_sd0;  /* panel time first obs */
+    int has_pangrps;  /* panel group-names present? (0/1) */
 };
 
 /* Write the VARINFO struct for series @i */
@@ -54,6 +54,7 @@ static void varinfo_write (const DATASET *dset, int i, FILE *fp)
 {
     VARINFO V = *dset->varinfo[i]; /* shallow copy */
 
+    V.stack_level = 0;
     V.label = NULL;
     V.st = NULL;
     fwrite(&V, sizeof V, 1, fp);
@@ -82,9 +83,9 @@ static void gbin_read_message (const char *fname,
 			       DATASET *dset,
 			       PRN *prn)
 {
-    pprintf(prn, A_("\nRead datafile %s\n"), fname);
-    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-		    "observations range: %s to %s\n"),
+    pprintf(prn, _("\nRead datafile %s\n"), fname);
+    pprintf(prn, _("periodicity: %d, maxobs: %d\n"
+		   "observations range: %s to %s\n"),
 	    (custom_time_series(dset))? 1 : dset->pd,
 	    dset->n, dset->stobs, dset->endobs);
     pputc(prn, '\n');
@@ -98,14 +99,18 @@ static void get_string_counts (const DATASET *dset,
 			       const int *list,
 			       gbin_header *gh)
 {
-    int i, ns = 0, nl = 0;
+    int ns = 0, nl = 0;
+    int i, vi, nv;
     const char *s;
 
-    for (i=1; i<=list[0]; i++) {
-	if (is_string_valued(dset, list[i])) {
+    nv = list != NULL ? list[0] : dset->v - 1;
+
+    for (i=1; i<=nv; i++) {
+	vi = list != NULL ? list[i] : i;
+	if (is_string_valued(dset, vi)) {
 	    ns++;
 	}
-	s = series_get_label(dset, list[i]);
+	s = series_get_label(dset, vi);
 	if (s != NULL && *s != '\0') {
 	    nl++;
 	}
@@ -113,8 +118,13 @@ static void get_string_counts (const DATASET *dset,
 
     gh->nsv = ns;
     gh->labels = nl;
-    gh->descrip = dset->descrip != NULL ? 1 : 0;
-    gh->pangrps = dset->pangrps != NULL ? 1 : 0;
+    gh->has_descrip = dset->descrip != NULL ? 1 : 0;
+    gh->has_pangrps = dset->pangrps != NULL ? 1 : 0;
+
+#if PBDEBUG
+    fprintf(stderr, "purebin: nsv %d, labels %d, descrip%d, pangrps %d\n",
+	    gh->nsv, gh->labels, gh->has_descrip, gh->has_pangrps);
+#endif
 }
 
 static void read_string (char *targ, int len, FILE *fp)
@@ -209,10 +219,13 @@ static void emit_string_tables (const DATASET *dset,
 				FILE *fp)
 {
     char **S;
-    int i, j, ns;
+    int i, vi, j, ns, nv;
 
-    for (i=1; i<=list[0]; i++) {
-	S = series_get_string_vals(dset, list[i], &ns, 1);
+    nv = list != NULL ? list[0] : dset->v - 1;
+
+    for (i=1; i<=nv; i++) {
+	vi = list != NULL ? list[i] : i;
+	S = series_get_string_vals(dset, vi, &ns, 1);
 	if (S != NULL) {
 	    /* series ID */
 	    fwrite(&i,  sizeof(int), 1, fp);
@@ -261,10 +274,13 @@ static void emit_var_labels (const DATASET *dset,
 			     FILE *fp)
 {
     const char *s;
-    int i;
+    int i, vi, nv;
 
-    for (i=1; i<=list[0]; i++) {
-	s = series_get_label(dset, list[i]);
+    nv = list != NULL ? list[0] : dset->v - 1;
+
+    for (i=1; i<=nv; i++) {
+	vi = list != NULL ? list[i] : i;
+	s = series_get_label(dset, vi);
 	if (s != NULL && *s != '\0') {
 	    /* series ID */
 	    fwrite(&i, sizeof(int), 1, fp);
@@ -338,7 +354,7 @@ static int read_purebin_basics (const char *fname,
 }
 
 /* Common function used by both the full data reader
-   and the subset version: write trailing metadata.
+   and the subset version: read trailing metadata.
 */
 
 static int read_purebin_tail (DATASET *bset,
@@ -371,16 +387,25 @@ static int read_purebin_tail (DATASET *bset,
     }
 
     /* description? */
-    if (!err && gh->descrip) {
+    if (!err && gh->has_descrip) {
 	bset->descrip = read_string_with_size(fp, 0, &err);
     }
 
     /* panels groups series? */
-    if (!err && gh->pangrps) {
+    if (!err && gh->has_pangrps) {
 	bset->pangrps = read_string_with_size(fp, 0, &err);
     }
 
     return err;
+}
+
+static void gh_to_bset_transcribe (gbin_header *gh, DATASET *bset)
+{
+    bset->structure = gh->structure;
+    bset->pd = gh->pd;
+    bset->sd0 = gh->sd0;
+    bset->panel_pd = gh->panel_pd;
+    bset->panel_sd0 = (double) gh->panel_sd0;
 }
 
 int purebin_read_data (const char *fname, DATASET *dset,
@@ -399,6 +424,11 @@ int purebin_read_data (const char *fname, DATASET *dset,
 	return err;
     }
 
+#if PBDEBUG
+    fprintf(stderr, "purebin read: gh.nvars=%d, gh.nobs=%d\n",
+	    gh.nvars, gh.nobs);
+#endif
+
     /* allocate dataset */
     bset = create_new_dataset(gh.nvars, gh.nobs, gh.markers);
     if (bset == NULL) {
@@ -407,14 +437,7 @@ int purebin_read_data (const char *fname, DATASET *dset,
 	goto bailout;
     }
 
-#if PBDEBUG
-    fprintf(stderr, "purebin read: v=%d, n=%d\n", bset->v, bset->n);
-#endif
-
-    bset->pd = gh.pd;
-    bset->sd0 = gh.sd0;
-    bset->panel_pd = gh.panel_pd;
-    bset->panel_sd0 = gh.panel_sd0;
+    gh_to_bset_transcribe(&gh, bset);
 
     /* variable names */
     for (i=1; i<bset->v; i++) {
@@ -441,6 +464,14 @@ int purebin_read_data (const char *fname, DATASET *dset,
 
     /* read remaining metadata */
     err = read_purebin_tail(bset, &gh, NULL, fp);
+
+    /* added 2021-06-21 */
+    if (dated_daily_data(bset) || dated_weekly_data(bset)) {
+	/* for the benefit of ntolabel() */
+	strcpy(bset->stobs, "0000-00-00");
+    }
+    ntolabel(bset->stobs, 0, bset);
+    ntolabel(bset->endobs, bset->n - 1, bset);
 
  bailout:
 
@@ -507,10 +538,7 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 	goto bailout;
     }
 
-    bset->pd = gh.pd;
-    bset->sd0 = gh.sd0;
-    bset->panel_pd = gh.panel_pd;
-    bset->panel_sd0 = gh.panel_sd0;
+    gh_to_bset_transcribe(&gh, bset);
 
     sel = make_selection_array(gh.nvars, vlist);
 
@@ -616,7 +644,7 @@ int purebin_write_data (const char *fname,
     FILE *fp;
     double *x;
     int nobs, nv;
-    int i, t;
+    int i, t, vi;
     int err = 0;
 
     fp = gretl_fopen(fname, "wb");
@@ -624,7 +652,7 @@ int purebin_write_data (const char *fname,
 	return E_FOPEN;
     }
 
-    nv = list[0];
+    nv = list != NULL ? list[0] : dset->v - 1;
     nobs = sample_size(dset);
 
     /* fill out header struct */
@@ -638,13 +666,18 @@ int purebin_write_data (const char *fname,
     gh.structure = dset->structure;
     gh.pd = dset->pd;
     get_string_counts(dset, list, &gh);
+#if 0
+    gh.sd0 = dset->sd0;
+#else
     if (dataset_is_time_series(dset)) {
+	/* allow for saving a sub-sample of @dset */
 	gh.sd0 = date_as_double(dset->t1, dset->pd, dset->sd0);
     } else {
 	gh.sd0 = 1;
     }
+#endif
     gh.panel_pd = dset->panel_pd;
-    gh.panel_sd0 = dset->panel_sd0;
+    gh.panel_sd0 = (float) dset->panel_sd0;
 
     /* write header */
     fwrite(magic, 1, strlen(magic), fp);
@@ -653,18 +686,21 @@ int purebin_write_data (const char *fname,
 
     /* variable names */
     for (i=1; i<=nv; i++) {
-	fputs(dset->varname[list[i]], fp);
+	vi = list != NULL ? list[i] : i;
+	fputs(dset->varname[vi], fp);
 	fputc(0, fp);
     }
 
     /* varinfo stuff */
     for (i=1; i<=nv; i++) {
-	varinfo_write(dset, list[i], fp);
+	vi = list != NULL ? list[i] : i;
+	varinfo_write(dset, vi, fp);
     }
 
     /* numerical values */
     for (i=1; i<=nv; i++) {
-	x = dset->Z[list[i]] + dset->t1;
+	vi = list != NULL ? list[i] : i;
+	x = dset->Z[vi] + dset->t1;
 	fwrite(x, sizeof *x, nobs, fp);
     }
 
@@ -687,12 +723,12 @@ int purebin_write_data (const char *fname,
     }
 
     /* description? */
-    if (gh.descrip) {
+    if (gh.has_descrip) {
 	emit_string_with_size(dset->descrip, fp);
     }
 
     /* panels groups series? */
-    if (gh.pangrps) {
+    if (gh.has_pangrps) {
 	emit_string_with_size(dset->pangrps, fp);
     }
 

@@ -2,6 +2,7 @@
    as a table of commands arranged by topic.
 
    Allin Cottrell, July 2006.
+   Modified July 2021: leave any UTF-8 text as is.
 */
 
 #include "libgretl.h"
@@ -23,8 +24,6 @@
 
 #define SECTLEN 64
 #define LBLLEN 128
-
-int maybe_recode;
 
 /* the order in which the topics should appear */
 enum {
@@ -127,26 +126,14 @@ static section *section_new (const char *name)
 
 static command *command_new (const char *name, const char *label)
 {
-    gsize read, wrote;
-    gchar *trbuf;
-    command *cmd;
+    command *cmd = malloc(sizeof *cmd);
 
-    cmd = malloc(sizeof *cmd);
     if (cmd != NULL) {
-	*cmd->name = 0;
+	*cmd->name = '\0';
 	strncat(cmd->name, name, 8);
-	*cmd->label = 0;
+	*cmd->label = '\0';
 	if (label != NULL) {
-	    if (maybe_recode && g_utf8_validate(label, -1, NULL)) {
-		trbuf = g_convert(label, -1, "ISO-8859-1", "UTF-8", 
-				  &read, &wrote, NULL);
-		if (trbuf != NULL) {
-		    strncat(cmd->label, trbuf, LBLLEN - 1);
-		    g_free(trbuf);
-		}
-	    } else {
-		strncat(cmd->label, label, LBLLEN - 1);
-	    }
+	    strncat(cmd->label, label, LBLLEN-1);
 	}
     }
 
@@ -467,13 +454,11 @@ void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
-    /* note: for TeX output */
-    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
 int main (int argc, char **argv)
 {
-    char *lang;
     sectlist slist;
     int err;
 
@@ -481,11 +466,6 @@ int main (int argc, char **argv)
 	fprintf(stderr, "Please supply one argument: the name of a "
 		"file to process\n");
 	exit(EXIT_FAILURE);
-    }
-
-    lang = getenv("LANG");
-    if (lang != NULL && strncmp(lang, "en", 2)) {
-	maybe_recode = 1;
     }
 
     nls_init();

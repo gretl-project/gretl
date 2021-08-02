@@ -79,6 +79,10 @@
 #define SHOWNAMELEN 15
 #define ICONVIEW_MIN_COLS 4
 
+#if GTK_MAJOR_VERSION < 3
+# define REMEDY_LABELS
+#endif
+
 typedef struct SESSION_ SESSION;
 typedef struct SESSION_TEXT_ SESSION_TEXT;
 typedef struct SESSION_MODEL_ SESSION_MODEL;
@@ -226,7 +230,7 @@ static char *bundle_items[] = {
 
 /* file-scope globals */
 
-SESSION session;            /* hold models, graphs */
+SESSION session; /* holds named models, graphs, etc. */
 
 static char sessionfile[MAXLEN];
 
@@ -802,6 +806,9 @@ static int real_add_graph_to_session (const char *fname,
 	mark_session_changed();
 	if (iconlist != NULL) {
 	    session_add_icon(graph, type, ICON_ADD_SINGLE);
+	    if (autoicon_on()) {
+		gtk_window_present(GTK_WINDOW(iconview));
+	    }
 	} else if (autoicon_on()) {
 	    auto_view_session();
 	}
@@ -1247,7 +1254,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     }
 }
 
-/* Called (via ui_utils.c) from toolbar.c, to implement
+/* Called (via gui_utils.c) from toolbar.c, to implement
    saving displayed bundle as icon; handles VIEW_BUNDLE
    and also VIEW_DBNOMICS
 */
@@ -1812,6 +1819,7 @@ void close_session (gretlopt opt)
     session_graph_count = 0;
     session_bundle_count = 0;
     reset_plot_count();
+    reset_collection_count();
 
     set_session_log(NULL, logcode);
 
@@ -2826,7 +2834,7 @@ static void rename_object_callback (GtkWidget *widget, dialog_t *dlg)
     if (newname != NULL && *newname != '\0' &&
 	strcmp(newname, obj->name)) {
 	GtkWidget *parent = edit_dialog_get_window(dlg);
-	gchar str[SHOWNAMELEN + 1];
+	gchar str[2*SHOWNAMELEN];
 
 	err = rename_session_object(obj, newname, parent);
 	if (!err) {
@@ -2951,7 +2959,7 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
     static int done;
 
     gtk_widget_override_background_color(widget,
-					 GTK_STATE_NORMAL,
+					 GTK_STATE_FLAG_NORMAL,
 					 &rgbw);
     if (!done) {
 	gdk_rgba_parse(&rgbb, "#4a90d9");
@@ -3032,7 +3040,9 @@ static void pack_single_icon (gui_obj *obj)
     real_pack_icon(obj, row, col);
 }
 
-static void batch_pack_icons (void)
+/* returns the number of rows used, counting 1 per icon + label */
+
+static int batch_pack_icons (void)
 {
     GList *mylist = g_list_first(iconlist);
     gui_obj *obj;
@@ -3053,6 +3063,8 @@ static void batch_pack_icons (void)
 	    mylist = mylist->next;
 	}
     }
+
+    return row / 2;
 }
 
 static int gui_user_var_callback (const char *name, GretlType type,
@@ -3125,7 +3137,9 @@ static void add_user_var_icon (gpointer data, gpointer intp)
     session_add_icon(data, GPOINTER_TO_INT(intp), ICON_ADD_BATCH);
 }
 
-static void add_all_icons (void)
+/* returns the number of rows of (icon + label) */
+
+static int add_all_icons (void)
 {
     int show_graph_page = check_for_program(latex);
     GList *list = NULL;
@@ -3181,7 +3195,7 @@ static void add_all_icons (void)
     g_list_foreach(list, add_user_var_icon, GINT_TO_POINTER(GRETL_OBJ_BUNDLE));
     g_list_free(list);
 
-    batch_pack_icons();
+    return batch_pack_icons();
 }
 
 static void undisplay_icon (gui_obj *obj, gpointer p)
@@ -3613,7 +3627,7 @@ static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,
 			      gui_obj *obj)
 {
 #if GTK_MAJOR_VERSION == 3
-    gtk_widget_set_state(icon, GTK_STATE_FLAG_PRELIGHT);
+    gtk_widget_set_state_flags(icon, GTK_STATE_FLAG_PRELIGHT, FALSE);
 #else
     gtk_widget_set_state(icon, GTK_STATE_SELECTED);
 #endif
@@ -3793,7 +3807,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     obj = gui_object_new(name, sort, data);
 
     /* full-length object name as tooltip */
-    if (strlen(name) > SHOWNAMELEN) {
+    if (g_utf8_strlen(name, -1) > SHOWNAMELEN) {
 	gretl_tooltips_add(GTK_WIDGET(obj->icon), name);
 	icon_named = 1;
     }
@@ -3997,6 +4011,9 @@ void view_session (void)
 {
     GtkWidget *ebox, *scroller;
     gchar *title;
+    int hmax = get_screen_height() / 2;
+    int hmin = 280;
+    int height;
 
     if (iconview != NULL) {
 	gtk_window_present(GTK_WINDOW(iconview));
@@ -4005,11 +4022,10 @@ void view_session (void)
 
     session_view_init();
 
-    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    iconview = gretl_gtk_window();
     title = g_strdup_printf("gretl: %s", _("icon view"));
     gtk_window_set_title(GTK_WINDOW(iconview), title);
     g_free(title);
-    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
 
     gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
     g_signal_connect(G_OBJECT(iconview), "destroy",
@@ -4033,7 +4049,14 @@ void view_session (void)
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller),
 					  icon_table);
 
-    add_all_icons();
+    height = 90 * add_all_icons();
+    if (height < hmin) {
+	height = hmin;
+    } else if (height > hmax) {
+	height = hmax;
+    }
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 440, height);
+
     window_list_add(iconview, OPEN_SESSION);
     g_signal_connect(G_OBJECT(iconview), "key-press-event",
 		     G_CALLBACK(catch_iconview_key), NULL);
@@ -4079,16 +4102,46 @@ static void make_short_label_string (char *targ, const char *src)
     }
 }
 
+#ifdef REMEDY_LABELS
+
+static gchar *rewrite_icon_label (const char *s)
+{
+    gchar *ret = NULL;
+    int i, l1, l2, ld, ldmin = 100;
+    int pos = 0;
+
+    for (i=0; s[i] != '\0'; i++) {
+	if (s[i] == ' ') {
+	    l1 = g_utf8_strlen(s, i);
+	    l2 = g_utf8_strlen(s + i + 1, -1);
+	    ld = abs(l1 - l2);
+	    if (ld < ldmin) {
+		ldmin = ld;
+		pos = i;
+	    }
+	}
+    }
+
+    if (pos > 0) {
+	ret = g_strdup(s);
+	ret[pos] = '\n';
+    }
+
+    return ret;
+}
+
+#endif
+
 static void create_gobj_icon (gui_obj *obj, const char **xpm)
 {
-    gchar str[2*SHOWNAMELEN];
     GdkPixbuf *pbuf;
     GtkWidget *image;
 
     pbuf = gdk_pixbuf_new_from_xpm_data(xpm);
 
     obj->icon = gtk_event_box_new();
-    gtk_widget_set_size_request(obj->icon, 36, 36);
+    gtk_widget_set_size_request(obj->icon, 44, 36);
+    obj->label = NULL;
 
     image = gtk_image_new_from_pixbuf(pbuf);
     g_object_unref(G_OBJECT(pbuf));
@@ -4100,8 +4153,23 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 	session_drag_setup(obj);
     }
 
-    make_short_label_string(str, obj->name);
-    obj->label = gtk_label_new(str);
+#ifdef REMEDY_LABELS
+    if (g_utf8_strlen(obj->name, -1) > 12 && strchr(obj->name, ' ')) {
+	gchar *tmp = rewrite_icon_label(obj->name);
+
+	if (tmp != NULL) {
+	    obj->label = gtk_label_new(tmp);
+	    g_free(tmp);
+	}
+    }
+#endif
+    if (obj->label == NULL) {
+	obj->label = gtk_label_new(obj->name);
+    }
+    gtk_label_set_width_chars(GTK_LABEL(obj->label), 12);
+    gtk_label_set_max_width_chars(GTK_LABEL(obj->label), SHOWNAMELEN);
+    gtk_label_set_line_wrap(GTK_LABEL(obj->label), TRUE);
+    gtk_label_set_justify(GTK_LABEL(obj->label), GTK_JUSTIFY_CENTER);
 
     g_object_ref(obj->icon);
     g_object_ref(obj->label);
@@ -4197,17 +4265,20 @@ gchar *session_graph_get_filename (void *p)
 static int is_idempotent (const gretl_matrix *m,
 			  const gretl_matrix *evals)
 {
+    double tol = 1.0e-12;
+
     if (evals != NULL) {
 	int i;
-
+	double x;
 	for (i=0; i<m->rows; i++) {
-	    if (evals->val[i] != 0.0 && evals->val[i] != 1.0) {
+	    x = fabs(evals->val[i] * (1.0 - evals->val[i])) > tol;
+	    if (x > tol) {
 		return 0;
 	    }
 	}
     }
 
-    return gretl_matrix_is_idempotent(m);
+    return gretl_matrix_is_idempotent(m, tol);
 }
 
 static void print_int_formatted (char *s, int k, PRN *prn)

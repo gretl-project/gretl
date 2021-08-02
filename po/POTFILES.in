@@ -42,6 +42,7 @@ lib/src/gretl_matrix.c
 lib/src/gretl_midas.c
 lib/src/gretl_model.c
 lib/src/gretl_mpi.c
+lib/src/gretl_mt.c
 lib/src/gretl_normal.c
 lib/src/gretl_panel.c
 lib/src/gretl_paths.c
@@ -85,6 +86,7 @@ lib/src/system.c
 lib/src/texprint.c
 lib/src/tokenize.c
 lib/src/transforms.c
+lib/src/tsjoin.c
 lib/src/tsls.c
 lib/src/usermat.c
 lib/src/uservar.c
@@ -93,13 +95,14 @@ lib/src/varprint.c
 lib/src/vartest.c
 cli/cli_object.c
 cli/complete.c
-cli/gretlcli-mpi.c
 cli/gretlcli.c
+cli/gretlcli-mpi.c
 gui/about.c
 gui/calculator.c
 gui/callbacks.c
 gui/clipboard.c
 gui/cmdstack.c
+gui/completions.c
 gui/console.c
 gui/database.c
 gui/datafiles.c
@@ -111,19 +114,21 @@ gui/fileselect.c
 gui/filters.c
 gui/fncall.c
 gui/fnsave.c
+gui/focus.c
 gui/fontfilter.c
 gui/gfn_arglists.c
+gui/gpt_collect.c
 gui/gpt_control.c
 gui/gpt_dialog.c
-gui/graph_page.c
 gui/graphics.c
+gui/graph_page.c
 gui/gretl.c
 gui/gretl_ipc.c
 gui/gretlwin32.c
 gui/gtkfontselhack.c
+gui/guiprint.c
 gui/gui_recode.c
 gui/gui_utils.c
-gui/guiprint.c
 gui/helpfiles.c
 gui/join-gui.c
 gui/lagpref.c
@@ -140,7 +145,6 @@ gui/series_view.c
 gui/session.c
 gui/session_xml.c
 gui/settings.c
-gui/spinner.c
 gui/ssheet.c
 gui/tabwin.c
 gui/textbuf.c
@@ -152,7 +156,6 @@ gui/varinfo.c
 gui/winstack.c
 plugin/addons-i18n.c
 plugin/anova.c
-plugin/arbond.c
 plugin/arma.c
 plugin/arma_cml.c
 plugin/arma_common.c
@@ -161,6 +164,7 @@ plugin/arma_x12.c
 plugin/as154.c
 plugin/as197.c
 plugin/as_driver.c
+plugin/bdstest.c
 plugin/biprobit.c
 plugin/dpanel.c
 plugin/duration.c
@@ -195,6 +199,7 @@ plugin/panurc.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
+plugin/purebin.c
 plugin/quantreg.c
 plugin/range-mean.c
 plugin/regls.c
@@ -206,8 +211,8 @@ plugin/stata_import.c
 plugin/stats_tables.c
 plugin/svm.c
 plugin/sysest.c
-plugin/tramo-x12a.c
 plugin/tramo_options.c
+plugin/tramo-x12a.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c

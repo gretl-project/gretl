@@ -1,6 +1,8 @@
+# This is a minimal script showing the simplest possible way
+# to create a map; you can find many more examples demonstrating
+# advanced usage of the map plotting facility in the "examples"
+# directory.
+
 include geoplot.gfn
-
-string JSON = "us-states.geojson"
-
-open "@JSON" --frompkg=geoplot --preserve --quiet
-geoplot(JSON)
+open us-states.geojson --frompkg=geoplot --quiet
+geoplot()

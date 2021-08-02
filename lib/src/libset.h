@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef LIBSET_H
@@ -36,65 +36,94 @@ typedef enum {
 } OptimCode;
 
 typedef enum {
-    STEPLEN_POWER,
-    STEPLEN_QUAD,
-    STEPLEN_MAX
-} SteplenCode;
-
-/* guard against consequences of typos */
-
-#define BFGS_MAXITER     "bfgs_maxiter"
-#define BOOT_ITERS       "boot_iters"
-#define BFGS_TOLER       "bfgs_toler"
-#define BFGS_MAXGRAD     "bfgs_maxgrad"
-#define BFGS_VERBSKIP    "bfgs_verbskip"
-#define BFGS_RSTEP       "bfgs_richardson"
-#define OPTIM_STEPLEN    "optim_steplen"
-#define BHHH_MAXITER     "bhhh_maxiter"
-#define BHHH_TOLER       "bhhh_toler"
-#define LBFGS_MEM        "lbfgs_mem"
-#define BOOTREP          "bootrep"
-#define FORCE_DECP       "force_decpoint"
-#define FORCE_HC         "force_hc"
-#define GARCH_VCV        "garch_vcv"
-#define GARCH_ROBUST_VCV "garch_robust_vcv"
-#define HAC_KERNEL       "hac_kernel"
-#define HAC_LAG          "hac_lag"
-#define HC_VERSION       "hc_version"
-#define HORIZON          "horizon"
-#define USE_LBFGS        "lbfgs"
-#define LOOP_MAXITER     "loop_maxiter"
-#define RQ_MAXITER       "rq_maxiter"
-#define MAX_VERBOSE      "max_verbose"
-#define NLS_TOLER        "nls_toler"
-#define PCSE             "pcse"
-#define PREWHITEN        "hac_prewhiten"
-#define QS_BANDWIDTH     "qs_bandwidth"
-#define SHELL_OK         "shell_ok"
-#define USE_CWD          "use_cwd"
-#define USE_SVD          "svd"
-#define USE_QR           "force_qr"
-#define VECM_NORM        "vecm_norm"
-#define GRETL_OPTIM      "optimizer"
-#define ARMA_VCV         "arma_vcv"
-#define SKIP_MISSING     "skip_missing"
-#define R_FUNCTIONS      "R_functions"
-#define R_LIB            "R_lib"
-#define DPDSTYLE         "dpdstyle"
-#define GMM_MAXITER      "gmm_maxiter"
-#define CSV_DIGITS       "csv_digits"
-#define NADARWAT_TRIM    "nadarwat_trim"
-#define CONV_HUGE        "huge"
-#define USE_OPENMP       "openmp"
-#define FDJAC_QUAL       "fdjac_quality"
-#define FDJAC_EPS        "fdjac_eps"
-#define ROBUST_Z         "robust_z"
-#define WILDBOOT_DIST    "wildboot"
-#define MWRITE_G         "mwrite_g"
-#define MPI_USE_SMT      "mpi_use_smt"
-#define GEOJSON_FAST     "geojson_fast"
-#define GRETL_ASSERT     "assert"
-#define QUANTILE_TYPE    "quantile_type"
+    USE_CWD         = 1 << 0,  /* store: use current dir as default */
+    ECHO_ON         = 1 << 1,  /* echoing commands or not */
+    MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
+    FORCE_DECPOINT  = 1 << 3,  /* override locale decimal character */
+    USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
+    USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
+    USE_QR          = 1 << 6,  /* QR decomp is least-squares command default */
+    PREWHITEN       = 1 << 7,  /* HAC pre-whitening? */
+    FORCE_HC        = 1 << 8,  /* don't use HAC for time series */
+    USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
+    SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
+    WARNINGS        = 1 << 11, /* print numerical warning messages */
+    SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
+    BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
+    ROBUST_Z        = 1 << 14, /* use z- not t-score with HCCM/HAC */
+    MWRITE_G        = 1 << 15, /* use %g format with mwrite() */
+    MPI_USE_SMT     = 1 << 16, /* MPI: use hyperthreads by default */
+    STATE_FLAG_MAX  = 1 << 17, /* separator */
+    /* state small int (but non-boolean) vars */
+    GRETL_OPTIM,
+    VECM_NORM,
+    GARCH_VCV,
+    GARCH_ALT_VCV,
+    ARMA_VCV,
+    WILDBOOT_DIST,
+    FDJAC_QUAL,
+    MAX_VERBOSE,
+    HC_VERSION,
+    HAC_KERNEL,
+    HAC_LAG,
+    USER_HAC_LAG,
+    LBFGS_MEM,
+    QUANTILE_TYPE,
+    STATE_SMALL_INT_MAX, /* separator: start state int vars */
+    HORIZON,
+    BOOTREP,
+    LOOP_MAXITER,
+    BFGS_MAXITER,
+    BFGS_VERBSKIP,
+    BOOT_ITERS,
+    BHHH_MAXITER,
+    RQ_MAXITER,
+    GMM_MAXITER,
+    STATE_INT_MAX, /* separator: end state int vars */
+    CONV_HUGE,
+    NLS_TOLER,
+    BFGS_TOLER,
+    BFGS_MAXGRAD,
+    BHHH_TOLER,
+    QS_BANDWIDTH,
+    NADARWAT_TRIM,
+    STATE_FLOAT_MAX, /* separator: end state floats */
+    CSV_WRITE_NA,
+    CSV_READ_NA,
+    INITVALS,
+    INITCURV,
+    MATMASK,
+    STATE_VARS_MAX, /* separator */
+    /* non-state vars follow */
+    GRETL_DEBUG,
+    GRETL_ASSERT,
+    DATACOLS,
+    PLOT_COLLECT,
+    R_FUNCTIONS,
+    R_LIB,
+    LOGLEVEL,
+    LOGSTAMP,
+    CSV_DIGITS,
+    NS_SMALL_INT_MAX, /* separator */
+    GMP_BITS,
+    NS_MAX, /* separator */
+    BLAS_MNK_MIN,
+    OMP_MNK_MIN,
+    OMP_N_THREADS,
+    SIMD_K_MAX,
+    SIMD_MN_MIN,
+    USE_DCMT,
+    NS_INT_MAX, /* separator */
+    SEED,
+    CSV_DELIM,
+    STOPWATCH,
+    VERBOSE,
+    SV_WORKDIR,
+    SV_LOGFILE,
+    GRAPH_THEME,
+    DISP_DIGITS,
+    SETVAR_MAX /* sentinel */
+} SetKey;
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
@@ -109,32 +138,24 @@ void libset_cleanup (void);
 int push_program_state (void);
 int pop_program_state (void);
 
-int libset_get_bool (const char *key);
-int libset_set_bool (const char *key, int val);
+int libset_get_bool (SetKey key);
+int libset_set_bool (SetKey key, int val);
 
-double libset_get_double (const char *key);
-int libset_set_double (const char *key, double val);
+double libset_get_double (SetKey key);
+int libset_set_double (SetKey key, double val);
 
-double libset_get_user_tolerance (const char *key);
+double libset_get_user_tolerance (SetKey key);
 
-int libset_get_int (const char *key);
-int libset_set_int (const char *key, int val);
+int libset_get_int (SetKey key);
+int libset_set_int (SetKey key, int val);
 
 int is_libset_var (const char *s);
-
-int libset_use_openmp (guint64 n);
-
-int gretl_n_processors (void);
-int gretl_n_physical_cores (void);
-
-void num_threads_init (int blas_type);
-int get_omp_n_threads (void);
 
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
 void set_panel_hccme (const char *s);
-void set_garch_robust_vcv (const char *s);
+void set_garch_alt_vcv (const char *s);
 
 int get_hac_lag (int T);
 int data_based_hac_bandwidth (void);
@@ -142,7 +163,7 @@ int data_based_hac_bandwidth (void);
 int get_bkbp_k (const DATASET *dset);
 void get_bkbp_periods (const DATASET *dset, int *l, int *u);
 
-void set_mp_bits (int b);
+/* convenience accessor */
 int get_mp_bits (void);
 
 gretl_matrix *get_initvals (void);
@@ -176,7 +197,6 @@ int gretl_in_tool_mode (void);
 
 void set_gretl_echo (int e);
 int gretl_echo_on (void);
-int gretl_echo_space (void);
 
 void set_gretl_messages (int e);
 int gretl_messages_on (void);
@@ -220,4 +240,3 @@ int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);
 
 #endif /* LIBSET_H */
-

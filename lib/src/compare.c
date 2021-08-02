@@ -80,7 +80,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	return NULL;
     }
 
-    if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+    if (pmod->ci == DPANEL) {
 	/* find correct offset into independent vars in list */
 	for (i=2; i<=pmod->list[0]; i++) {
 	    if (pmod->list[i] == LISTSEP) {
@@ -172,7 +172,11 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 #endif
 
     if (!err) {
-	wF = wX / gretl_vector_get_length(b);
+	if (wX < 0) {
+	    wF = wX = NADBL;
+	} else {
+	    wF = wX / gretl_vector_get_length(b);
+	}
     }
 
     if (!err) {
@@ -506,7 +510,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	cmp.robust = 1;
     }
 
-    if (pmodA->ci == ARBOND || pmodA->ci == DPANEL) {
+    if (pmodA->ci == DPANEL) {
 	/* FIXME: plus some other cases? */
 	opt |= OPT_X;
     }
@@ -733,9 +737,6 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	if (gretl_model_get_int(orig, "no-squares")) {
 	    myopt |= OPT_N;
 	}
-    } else if (orig->ci == ARBOND) {
-	param = gretl_model_get_data(orig, "istr");
-	myopt |= retrieve_dpanel_opts(orig);
     } else if (orig->ci == DPANEL) {
 	param = gretl_model_get_data(orig, "istr");
 	laglist = gretl_model_get_list(orig, "ylags");
@@ -814,9 +815,6 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	break;
     case AR1:
 	rep = ar1_model(list, dset, myopt, NULL);
-	break;
-    case ARBOND:
-	rep = arbond_model(list, param, dset, myopt, prn);
 	break;
     case DPANEL:
 	rep = dpd_model(list, laglist, param, dset, myopt, prn);
@@ -1212,7 +1210,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     /* create augmented regression list */
     if (orig->ci == IVREG) {
 	biglist = ivreg_list_add(orig->list, addvars, opt, &err);
-    } else if (orig->ci == ARBOND || orig->ci == DPANEL) {
+    } else if (orig->ci == DPANEL) {
 	biglist = panel_list_add(orig, addvars, &err);
     } else {
 	biglist = gretl_list_add(orig->list, addvars, &err);
@@ -1319,8 +1317,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
     if (pmod->ci == IVREG) {
 	test = ivreg_list_omit(pmod->list, list, opt, &err);
-    } else if (pmod->ci == PANEL || pmod->ci == ARBOND ||
-	       pmod->ci == DPANEL) {
+    } else if (pmod->ci == PANEL || pmod->ci == DPANEL) {
 	test = panel_list_omit(pmod, list, &err);
     } else {
 	test = gretl_list_omit(pmod->list, list, 2, &err);
@@ -1545,8 +1542,7 @@ static int make_short_list (MODEL *orig, const int *omitvars,
 
     if (orig->ci == IVREG) {
 	list = ivreg_list_omit(orig->list, omitvars, opt, &err);
-    } else if (orig->ci == PANEL || orig->ci == ARBOND ||
-	       orig->ci == DPANEL) {
+    } else if (orig->ci == PANEL || orig->ci == DPANEL) {
 	list = panel_list_omit(orig, omitvars, &err);
     } else {
 	list = gretl_list_omit(orig->list, omitvars, 2, &err);
@@ -1678,7 +1674,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	int minpos = 2;
 	int *omitlist = NULL;
 
-	if (orig->ci == ARBOND || orig->ci == DPANEL) {
+	if (orig->ci == DPANEL) {
 	    /* skip AR spec, separator, and dep var */
 	    minpos = 4;
 	}
@@ -2677,7 +2673,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines , \\\n"
 		"%g title \"%s\" w lines lt 0\n",
-		_(title), critval, "5% QLR critical value");
+		_(title), critval, _("5% QLR critical value"));
     } else {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines\n", _(title));
@@ -3688,7 +3684,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 }
 
 /**
- * panel_hausman_test:
+ * panel_specification_test:
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
  * @opt: option flags.
@@ -3699,8 +3695,8 @@ int comfac_test (MODEL *pmod, DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_hausman_test (MODEL *pmod, DATASET *dset,
-			gretlopt opt, PRN *prn)
+int panel_specification_test (MODEL *pmod, DATASET *dset,
+			      gretlopt opt, PRN *prn)
 {
     if (pmod->ci != OLS || !dataset_is_panel(dset)) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
@@ -3724,10 +3720,19 @@ int panel_hausman_test (MODEL *pmod, DATASET *dset,
     return 0;
 }
 
+/* wrapper for backward compatibility */
+
+int panel_hausman_test (MODEL *pmod, DATASET *dset,
+			gretlopt opt, PRN *prn)
+{
+    return panel_specification_test(pmod, dset, opt, prn);
+}
+
 /**
  * add_leverage_values_to_dataset:
  * @dset: dataset struct.
  * @m: matrix containing leverage values.
+ * @opt: OPT_O = overwrite series on save.
  * @flags: may include SAVE_LEVERAGE, SAVE_INFLUENCE,
  * and/or SAVE_DFFITS.
  *
@@ -3738,8 +3743,9 @@ int panel_hausman_test (MODEL *pmod, DATASET *dset,
  */
 
 int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
-				    int flags)
+				    gretlopt opt, int flags)
 {
+    int overwrite = (opt & OPT_O);
     int t1, t2;
     int addvars = 0;
 
@@ -3771,7 +3777,9 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    }
 	}
 	strcpy(dset->varname[v], "lever");
-	make_varname_unique(dset->varname[v], v, dset);
+	if (!overwrite) {
+	    make_varname_unique(dset->varname[v], v, dset);
+	}
 	series_set_label(dset, v, "leverage values");
     }
 
@@ -3788,7 +3796,9 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    }
 	}
 	strcpy(dset->varname[v], "influ");
-	make_varname_unique(dset->varname[v], v, dset);
+	if (!overwrite) {
+	    make_varname_unique(dset->varname[v], v, dset);
+	}
 	series_set_label(dset, v, "influence values");
     }
 
@@ -3815,7 +3825,9 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    }
 	}
 	strcpy(dset->varname[v], "dffits");
-	make_varname_unique(dset->varname[v], v, dset);
+	if (!overwrite) {
+	    make_varname_unique(dset->varname[v], v, dset);
+	}
 	series_set_label(dset, v, "DFFITS values");
     }
 
@@ -3829,7 +3841,8 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
  * @opt: if OPT_S, add calculated series to data set; operate
- * silently if OPT_Q.
+ * silently if OPT_Q. If includes OPT_O, do not adjust save
+ * names (overwrite any existing series of the same names).
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
@@ -3859,7 +3872,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 
     if (!err && (opt & OPT_S)) {
 	/* we got the --save option */
-	err = add_leverage_values_to_dataset(dset, m,
+	err = add_leverage_values_to_dataset(dset, m, opt,
 					     SAVE_LEVERAGE |
 					     SAVE_INFLUENCE|
 					     SAVE_DFFITS);

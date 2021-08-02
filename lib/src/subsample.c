@@ -242,9 +242,9 @@ int submask_cmp (const char *m1, const char *m2)
     return 0;
 }
 
-/* all values apart from the sentinel are initialized to zero; once
+/* All values apart from the sentinel are initialized to zero; once
    the mask is used, 1s will indicate included observations and
-   0s will indicate excluded observations
+   0s excluded observations.
 */
 
 static char *make_submask (int n)
@@ -3029,14 +3029,14 @@ int model_sample_problem (const MODEL *pmod, const DATASET *dset)
 	    /* data set is not sub-sampled either, OK */
 	    ret = 0;
 	} else {
-	    fputs(I_("dataset is subsampled, model is not\n"), stderr);
+	    fputs("dataset is subsampled, model is not\n", stderr);
 	    gretl_errmsg_set(_("dataset is subsampled, model is not\n"));
 	    ret = 1;
 	}
     } else {
 	/* the model does have sub-sampling info recorded */
 	if (dset->submask == NULL) {
-	    fputs(I_("model is subsampled, dataset is not\n"), stderr);
+	    fputs("model is subsampled, dataset is not\n", stderr);
 	    gretl_errmsg_set(_("model is subsampled, dataset is not\n"));
 	    ret = 1;
 	} else if (submasks_match(dset, pmod)) {

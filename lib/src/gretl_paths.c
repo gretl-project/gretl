@@ -75,7 +75,6 @@ struct INTERNAL_PATHS {
     char jlpath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
-    char dbhost[32];
     char pngfont[128];
     unsigned char status;
 };
@@ -126,7 +125,7 @@ static const char *helpfiles[] = {
 
 const char *helpfile_path (int id, int cli, int en)
 {
-    static char hpath[MAXLEN+18];
+    static char hpath[MAXLEN+19];
     int i = -1;
 
     *hpath = '\0';
@@ -155,8 +154,11 @@ const char *helpfile_path (int id, int cli, int en)
     }
 
     if (i >= 0) {
-        sprintf(hpath, "%s%s", paths.gretldir, en ? helpfiles[i] :
-                _(helpfiles[i]));
+	if (en || (strlen(_(helpfiles[i])) != strlen(helpfiles[i]))) {
+	    sprintf(hpath, "%s%s", paths.gretldir, helpfiles[i]);
+	} else {
+	    sprintf(hpath, "%s%s", paths.gretldir, _(helpfiles[i]));
+	}
     }
 
     return hpath;
@@ -183,10 +185,10 @@ int using_translated_helpfile (int id)
     */
 
     if (strcmp(helpfiles[i], _(helpfiles[i]))) {
-        char test[MAXLEN];
+        gchar *test;
         int err;
 
-        sprintf(test, "%s%s", paths.gretldir, _(helpfiles[i]));
+        test = g_strdup_printf("%s%s", paths.gretldir, _(helpfiles[i]));
         err = gretl_test_fopen(test, "r");
         if (err) {
             if (id == GRETL_CMDREF) {
@@ -197,6 +199,7 @@ int using_translated_helpfile (int id)
         } else {
             ret = 1;
         }
+	g_free(test);
     }
 
     return ret;
@@ -1015,6 +1018,15 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 
     *n_dirs = 0;
 
+    if (stype == FUNCS_SEARCH) {
+	/* for testing of gfns */
+	char *forcepath = getenv("FORCE_GFN_PATH");
+
+	if (forcepath != NULL) {
+	    err = strings_array_add(&dirs, n_dirs, forcepath);
+	}
+    }
+
     if (stype == DATA_SEARCH) {
         subdir = "data";
     } else if (stype == DB_SEARCH) {
@@ -1045,6 +1057,11 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
         err = strings_array_add(&dirs, n_dirs, dirname);
     }
 #endif
+
+    if (stype == FUNCS_SEARCH) {
+	/* we don't really want the additional paths below? */
+	return dirs;
+    }
 
     if (!err) {
         /* the user's working dir */
@@ -1114,7 +1131,6 @@ char *gretl_function_package_get_path (const char *name,
     }
 
     *path = '\0';
-
     dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
     for (i=0; i<n_dirs && !found; i++) {
@@ -2627,7 +2643,7 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
    gretldir
    gnuplot (but not for MS Windows package)
    tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, statapath,
-     pypath, jlpath, dbhost
+     pypath, jlpath
 
    * paths.workdir is updated via the separate working directory
      dialog
@@ -2649,10 +2665,6 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
         set_gretl_plugpath(paths.gretldir);
         ndelta++;
     }
-
-    /* native databases */
-    maybe_transcribe_path(paths.dbhost, cpaths->dbhost,
-                          PATH_BLANK_OK);
 
 #if !defined(WIN32) || !defined(PKGBUILD)
     /* gnuplot path: this is set immutably at start-up in the
@@ -2732,8 +2744,6 @@ static void load_default_path (char *targ)
 
     if (targ == paths.workdir) {
         load_default_workdir(targ);
-    } else if (targ == paths.dbhost) {
-        strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.x12a) {
         sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
     } else if (targ == paths.tramo) {
@@ -2743,7 +2753,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.rlibpath) {
         R_path_from_registry(targ, RLIB);
     } else if (targ == paths.oxlpath) {
-        sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
+        sprintf(targ, "%s\\OxMetrics8\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
         strcpy(targ, "C:\\Octave-3.6.4\\bin\\octave.exe");
     } else if (targ == paths.statapath) {
@@ -2809,7 +2819,7 @@ static void load_default_path (char *targ)
 {
 #ifdef OS_OSX
     const char *app_paths[] = {
-        "/Applications/OxMetrics6/ox/bin/oxl",
+        "/Applications/OxMetrics8/ox/bin/oxl",
         "/Applications/Octave.app/Contents/Resources/bin/octave",
         "/Applications/Stata/Stata.app/Contents/MacOS/Stata"
     };
@@ -2823,8 +2833,6 @@ static void load_default_path (char *targ)
 
     if (targ == paths.workdir) {
         load_default_workdir(targ);
-    } else if (targ == paths.dbhost) {
-        strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.gnuplot) {
 #if defined(OS_OSX) && defined(PKGBUILD)
         sprintf(targ, "%sgnuplot", gretl_bindir());
@@ -2917,9 +2925,6 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
 {
     /* working directory */
     path_init(paths.workdir, cpaths->workdir, 1);
-
-    /* database server */
-    path_init(paths.dbhost, cpaths->dbhost, 0);
 
     /* gnuplot */
 #if defined(WIN32) && defined(PKGBUILD)
@@ -3333,9 +3338,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
             handle_use_cwd(rc_bool(val), cpaths);
 #endif
         } else if (!strcmp(key, "lcnumeric")) {
-            libset_set_bool(FORCE_DECP, !rc_bool(val));
-        } else if (!strcmp(key, "dbhost")) {
-            strncat(cpaths->dbhost, val, 32 - 1);
+	    set_lcnumeric(LANG_AUTO, rc_bool(val));
         } else if (!strcmp(key, "dbproxy")) {
             strncat(dbproxy, val, PROXLEN - 1);
         } else if (!strcmp(key, "useproxy")) {
@@ -3379,7 +3382,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         } else if (!strcmp(key, "HC_panel")) {
             set_panel_hccme(val);
         } else if (!strcmp(key, "HC_garch")) {
-            set_garch_robust_vcv(val);
+            set_garch_alt_vcv(val);
         } else if (!strcmp(key, "graph_theme")) {
             *gptheme = g_strdup(val);
         } else if (!strcmp(key, "build_date")) {
@@ -3459,7 +3462,7 @@ int cli_read_rc (void)
     }
 
 #ifdef USE_CURL
-    gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+    gretl_www_init(dbproxy, use_proxy);
 #endif
 
 #if 0
@@ -3814,4 +3817,46 @@ char *gretl_build_path (char *targ, const gchar *first_element, ...)
     va_end(args);
 
     return targ;
+}
+
+struct foreign_paths {
+    const char *id;
+    const char *path;
+};
+
+static struct foreign_paths fpaths[] = {
+    { "Rbin",   paths.rbinpath },
+    { "Rlib",   paths.rlibpath },
+    { "ox",     paths.oxlpath },
+    { "octave", paths.octpath },
+    { "stata",  paths.statapath },
+    { "python", paths.pypath },
+    { "julia",  paths.jlpath },
+    { NULL, NULL}
+};
+
+gretl_bundle *foreign_info (void)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    gchar *fullpath;
+    int found, i;
+
+    for (i=0; fpaths[i].id != NULL; i++) {
+	if (fpaths[i].path[0] == '\0') {
+	    gretl_bundle_set_int(b, fpaths[i].id, 0);
+	} else if (g_path_is_absolute(fpaths[i].path)) {
+	    found = gretl_stat(fpaths[i].path, NULL) == 0;
+	    gretl_bundle_set_int(b, fpaths[i].id, found);
+	} else {
+	    fullpath = g_find_program_in_path(fpaths[i].path);
+	    if (fullpath == NULL) {
+		gretl_bundle_set_int(b, fpaths[i].id, 0);
+	    } else {
+		gretl_bundle_set_int(b, fpaths[i].id, 1);
+		g_free(fullpath);
+	    }
+	}
+    }
+
+    return b;
 }

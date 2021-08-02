@@ -27,8 +27,10 @@
 
 #define JDEBUG 0
 
-#define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
-#if !HAVE_PLACEHOLDER
+#if GTK_MAJOR_VERSION > 2
+# define HAVE_PLACEHOLDER 1
+#else
+# define HAVE_PLACEHOLDER 0
 # define PLACEHOLDER "place-holder"
 #endif
 
@@ -532,7 +534,11 @@ static void arrow_clicked (GtkWidget *button, join_info *jinfo)
 	}
 
 	if (text != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(targ), text);
+	    if (*text == '$' && targ == jinfo->import) {
+		; /* can't put it there */
+	    } else {
+		gtk_entry_set_text(GTK_ENTRY(targ), text);
+	    }
 	    g_free(text);
 	}
     }
@@ -748,6 +754,10 @@ static void join_dialog_setup (join_info *jinfo)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     vmax = (jinfo->n_rvars > NSHOW)? NSHOW : jinfo->n_rvars;
+
+    /* insert $obsmajor accessor */
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, "$obsmajor", -1);
 
     /* insert outer series names */
     for (i=1; i<=vmax; i++) {

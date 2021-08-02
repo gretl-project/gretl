@@ -1,4 +1,18 @@
-version 2020f, in progress
+2021-05-04 version 2021b
+
+The "arbond" command is now officially deprecated in favor of
+"dpanel" and will be removed in the next release.
+
+The default format for data saved as ".gdtb" is now a straight
+binary file, much faster than the old version.
+
+The --csv option to the "store" command is removed. Giving a
+suitable filename is sufficient.
+
+The getline() function now calls for its second argument to be
+given in pointer form, but the prior form is still accepted. 
+
+2021-01-18, version 2021a
 
 The command formerly known as "coint2" has been renamed as
 "johansen". The old name is accepted as an alias for now, but
@@ -47,9 +61,9 @@ works until further notice.
 Simplify iteration output from the --verbose flag for "mle"
 and similar commands. But the previous behavior can be
 obtained via "set max_verbose full".
-The "eigengen" function is now deprecated and has been 
-superseded by the new "eigen". 
 
+The "eigengen" function is now deprecated, having been
+superseded by the new "eigen".
 
 2019-12-22 version 2019d
 

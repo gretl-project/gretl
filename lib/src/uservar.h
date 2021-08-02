@@ -51,6 +51,8 @@ int user_var_delete_by_name (const char *name, PRN *prn);
 
 int gretl_is_user_var (const char *name);
 
+const char *uservar_name_complete (const char *s);
+
 GretlType user_var_get_type_by_name (const char *name);
 
 user_var *get_user_var_by_name (const char *name);

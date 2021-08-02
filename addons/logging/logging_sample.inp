@@ -1,0 +1,74 @@
+set verbose off
+include logging.gfn
+
+set logstamp off   # on/off: print timstamp or not
+
+set loglevel debug
+printf "\n\nloglevel = %d\n", $loglevel
+Debug("Should be printed")
+Info("Should be printed")
+Warn("Should be printed")
+Error("Should be printed")
+Critical("Should be printed")
+
+set loglevel info
+printf "\n\nloglevel = %d\n", $loglevel
+Debug("Should NOT be printed")
+Info("Should be printed")
+Warn("Should be printed")
+Error("Should be printed")
+Critical("Should be printed")
+
+set loglevel warn
+printf "\n\nloglevel = %d\n", $loglevel
+Debug("Should NOT be printed")
+Info("Should NOT be printed")
+Warn("Should be printed")
+Error("Should be printed")
+Critical("Should be printed")
+
+set loglevel error
+printf "\n\nloglevel = %d\n", $loglevel
+Debug("Should NOT be printed")
+Info("Should NOT be printed")
+Warn("Should NOT be printed")
+Error("Should be printed")
+Critical("Should be printed")
+
+set loglevel critical
+printf "\n\nloglevel = %d\n", $loglevel
+Debug("Should NOT be printed")
+Info("Should NOT be printed")
+Warn("Should NOT be printed")
+Error("Should NOT be printed")
+Critical("Should be printed")
+
+print "=========================================="
+
+function void foo (void)
+    Debug("Some debug msg")
+    Info("Some info msg")
+    Warn("Some warning msg")
+    Error("Some error msg")
+    Critical("Some critical msg")
+end function
+
+printf "\nCalls to messaging functions via function foo\n"
+
+loop i=0..4
+   printf "\nloglevel = %d:\n", i
+   set loglevel $i
+   foo()
+endloop
+printf "\n"
+
+
+# Log events in a separate file
+set loglevel info
+string path_logfile = "mylog.txt" # target file where to append
+set logfile "@path_logfile"
+
+Info("This message will not be printed but appended to a file.")
+print "File content"
+eval readfile(path_logfile)
+

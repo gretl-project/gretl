@@ -34,8 +34,6 @@
 # include <windows.h>
 #endif
 
-#include <glib.h>
-
 /**
  * SECTION:describe
  * @short_description: descriptive statistics plus some tests
@@ -501,8 +499,8 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
     for (i=0; i<k; i++) {
 	if (p[i] <= 0.0 || p[i] >= 1.0) {
 	    p[i] = NADBL;
-	    err = 1;
-	    continue;
+	    err = E_INVARG;
+	    break;
 	}
 
 	h = quantile_index(n, p[i]);
@@ -2837,12 +2835,12 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
     set_last_result_data(X, GRETL_TYPE_MATRIX);
 }
 
-/* for use in the context of "xtab" with --quiet option:
+/* For use in the context of "xtab" with --quiet option:
    compute and record the Pearson chi-square value and its
-   p-value
+   p-value.
 */
 
-static int xtab_test_only (const Xtab *tab)
+static int xtab_do_pearson (const Xtab *tab)
 {
     double x, y, ymin = 1.0e-7;
     double pearson = 0.0;
@@ -2950,10 +2948,9 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     }
 
     if (opt & OPT_Q) {
-	xtab_test_only(tab);
+	xtab_do_pearson(tab);
     } else {
-	opt |= OPT_S;
-	print_xtab(tab, NULL, opt, prn);
+	print_xtab(tab, NULL, opt | OPT_S, prn);
     }
 
     free_xtab(tab);
@@ -2967,21 +2964,20 @@ int crosstab (const int *list, const DATASET *dset,
     Xtab *tab;
     int *rowvar = NULL;
     int *colvar = NULL;
-    int i, j, k;
-    int pos = gretl_list_separator_position(list);
-    int simple = 0;
-    int err = 0;
-    int blanket = 0;
+    int i, j, vi, vj, k;
+    int pos, onelist;
     int nrv, ncv;
+    int err = 0;
+
+    pos = gretl_list_separator_position(list);
+    onelist = (pos == 0);
 
     if (pos == 0) {
+	/* single list case */
 	nrv = list[0];
 	ncv = nrv - 1;
-	blanket = 1;
-	if (ncv == 1) {
-	    simple = 1;
-	}
     } else {
+	/* double list case */
 	nrv = pos - 1;
 	ncv = list[0] - pos;
     }
@@ -2998,8 +2994,7 @@ int crosstab (const int *list, const DATASET *dset,
     j = 1;
     for (i=1; i<=nrv; i++) {
 	k = list[i];
-	if (series_is_discrete(dset, k) ||
-	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k]) > 1) {
+	if (accept_as_discrete(dset, k, 0)) {
 	    rowvar[j++] = k;
 	} else {
 	    pprintf(prn, _("dropping %s: not a discrete variable\n"),
@@ -3008,23 +3003,41 @@ int crosstab (const int *list, const DATASET *dset,
 	}
     }
 
-    if (rowvar[0] == 0 || (blanket && rowvar[0] == 1)) {
+    if (rowvar[0] == 0 || (onelist && rowvar[0] == 1)) {
 	gretl_errmsg_set("xtab: variables must be discrete");
 	free(rowvar);
 	return E_TYPES;
     }
 
-    if (!blanket) {
+    if (onelist && rowvar[0] == 2) {
+	/* the bivariate case */
+	tab = get_new_xtab(rowvar[1], rowvar[2], dset, &err);
+	if (!err) {
+	    /* make $result matrix available */
+	    record_xtab(tab, dset, opt);
+	    if (opt & OPT_Q) {
+		/* quiet: run and record the Pearson test */
+		xtab_do_pearson(tab);
+	    } else {
+		/* print, and record Pearson test */
+		print_xtab(tab, dset, opt | OPT_S, prn);
+	    }
+	    free_xtab(tab);
+	}
+	goto finish;
+    }
+
+    if (!onelist) {
+	/* construct the second list */
 	colvar = gretl_list_new(ncv);
 	if (colvar == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
-		k = pos + i;
-		if (series_is_discrete(dset, list[k]) ||
-		    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[list[k]]) > 1) {
-		    colvar[j++] = list[k];
+		k = list[pos+i];
+		if (accept_as_discrete(dset, k, 0)) {
+		    colvar[j++] = k;
 		} else {
 		    colvar[0] -= 1;
 		}
@@ -3036,33 +3049,20 @@ int crosstab (const int *list, const DATASET *dset,
     }
 
     for (i=1; i<=rowvar[0] && !err; i++) {
-	int vj, vi;
-
-	if (blanket) {
+	vi = rowvar[i];
+	if (onelist) {
+	    /* single list case */
 	    for (j=1; j<i && !err; j++) {
 		vj = rowvar[j];
-		vi = rowvar[i];
 		tab = get_new_xtab(vj, vi, dset, &err);
 		if (!err) {
-		    if (opt & OPT_Q) {
-			/* --quiet: no printing */
-			if (simple) {
-			    xtab_test_only(tab);
-			}
-		    } else {
-			if (simple) {
-			    /* add save/record flag */
-			    opt |= OPT_S;
-			}
-			print_xtab(tab, dset, opt, prn);
-			record_xtab(tab, dset, opt);
-		    }
+		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);
 		}
 	    }
 	} else {
+	    /* double list case */
 	    for (j=1; j<=colvar[0] && !err; j++) {
-		vi = rowvar[i];
 		vj = colvar[j];
 		tab = get_new_xtab(vi, vj, dset, &err);
 		if (!err) {
@@ -3072,6 +3072,8 @@ int crosstab (const int *list, const DATASET *dset,
 	    }
 	}
     }
+
+ finish:
 
     free(rowvar);
     free(colvar);
@@ -3093,19 +3095,12 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
     rv = list[1];
     cv = list[2];
 
-    if (!series_is_discrete(dset, rv) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[rv])) {
+    if (accept_as_discrete(dset, rv, 0) &&
+	accept_as_discrete(dset, cv, 0)) {
+	tab = get_new_xtab(rv, cv, dset, err);
+    } else {
 	*err = E_TYPES;
-	return NULL;
     }
-
-    if (!series_is_discrete(dset, cv) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[cv])) {
-	*err = E_TYPES;
-	return NULL;
-    }
-
-    tab = get_new_xtab(rv, cv, dset, err);
 
     if (!*err) {
 	print_xtab(tab, dset, opt, prn);
@@ -3790,7 +3785,7 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 			  int allpos)
 {
     char crit_string[16];
-    char title[128];
+    gchar *title;
     FILE *fp;
     int k, err = 0;
 
@@ -3812,9 +3807,10 @@ static int xcorrgm_graph (const char *xname, const char *yname,
     } else {
 	fputs("set yrange [-1.1:1.1]\n", fp);
     }
-    sprintf(title, _("Correlations of %s and lagged %s"),
-	    xname, yname);
+    title = g_strdup_printf(_("Correlations of %s and lagged %s"),
+			    xname, yname);
     fprintf(fp, "set title '%s'\n", title);
+    g_free(title);
     fprintf(fp, "set xrange [%d:%d]\n", -(m + 1), m + 1);
     if (allpos) {
 	fprintf(fp, "plot \\\n"
@@ -5161,6 +5157,8 @@ void print_summary (const Summary *summ,
 	    N_("IQ range"),
 	    N_("Missing obs.")
 	};
+	/* cases where 0.05 and 0.95 quantiles are OK */
+	int npct = 0;
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
 		UTF_WIDTH(_(ha[0]), 15), _(ha[0]),
@@ -5176,6 +5174,12 @@ void print_summary (const Summary *summ,
 	    printf15(summ->low[i], d, prn);
 	    printf15(summ->high[i], d, prn);
 	    pputc(prn, '\n');
+	    /* while we're at it, register cases where we can
+	       show the 0.05 and 0.95 quantiles
+	    */
+	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+		npct++;
+	    }
 	}
 	pputc(prn, '\n');
 
@@ -5207,7 +5211,7 @@ void print_summary (const Summary *summ,
 	}
 	pputc(prn, '\n');
 
-	if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+	if (npct > 0) {
 	    /* note: use pputs for strings containing literal '%' */
 	    gchar *hc0 = g_strdup(_(hc[0]));
 	    gchar *hc1 = g_strdup(_(hc[1]));
@@ -5226,17 +5230,21 @@ void print_summary (const Summary *summ,
 		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
 		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
 	} else {
+	    /* not showing any 0.05, 0.95 quantiles */
 	    pprintf(prn, "%*s%*s%*s\n", len, " ",
 		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
 		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
 	}
 
 	for (i=0; i<summ->list[0]; i++) {
-	    vi = summ->list[i + 1];
+	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
 		printf15(summ->perc05[i], d, prn);
 		printf15(summ->perc95[i], d, prn);
+	    } else if (npct > 0) {
+		pprintf(prn, "%*s", 15, "NA");
+		pprintf(prn, "%*s", 15, "NA");
 	    }
 	    printf15(summ->iqr[i], d, prn);
 	    pprintf(prn, "%15d", (int) summ->misscount[i]);
@@ -6359,27 +6367,29 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
     if (corr->dim == 2) {
 	printcorr(corr, prn);
     } else {
-	char date1[OBSLEN], date2[OBSLEN], tmp[96];
+	char date1[OBSLEN], date2[OBSLEN];
+	gchar *tmp = NULL;
 
 	ntolabel(date1, corr->t1, dset);
 	ntolabel(date2, corr->t2, dset);
 
 	pputc(prn, '\n');
 
-	sprintf(tmp, _("%s, using the observations %s - %s"),
-		_("Correlation Coefficients"), date1, date2);
+	tmp = g_strdup_printf(_("%s, using the observations %s - %s"),
+			      _("Correlation Coefficients"), date1, date2);
 	output_line(tmp, prn, 0);
+	g_free(tmp);
 
 	if (corr->missing) {
-	    strcpy(tmp, _("(missing values were skipped)"));
-	    output_line(tmp, prn, 1);
+	    output_line(_("(missing values were skipped)"), prn, 1);
 	}
 
 	if (corr->n > 0) {
-	    sprintf(tmp, _("5%% critical value (two-tailed) = "
-			   "%.4f for n = %d"), rhocrit95(corr->n),
-		    corr->n);
+	    tmp = g_strdup_printf(_("5%% critical value (two-tailed) = "
+				    "%.4f for n = %d"), rhocrit95(corr->n),
+				  corr->n);
 	    output_line(tmp, prn, 1);
+	    g_free(tmp);
 	}
 
 	text_print_vmatrix(corr, prn);

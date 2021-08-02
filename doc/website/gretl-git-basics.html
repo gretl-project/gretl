@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd"> 
+
+<head>
+<title>gretl git basics</title>
+<LINK REL=STYLESHEET TYPE="text/css"
+      HREF="./css-alt.html">
+<!-- <link rel="shortcut icon"  href="./favicon.ico"> -->
+<META name="generator" content="GNU Emacs">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+
+<body>
+
+<h1>gretl git basics</h1>
+
+<h2>Contents</h2>
+
+<p>
+<a href="#finding">Finding the repository on sourceforge</a><br>
+<a href="#getting">Getting a copy</a><br>
+<a href="#personal">Your personal git info</a><br>
+<a href="#update">Updating your copy</a><br>
+<a href="#commit">Committing a change</a><br>
+<a href="#revert">Reverting local changes</a><br>
+<a href="#diffs">Looking at diffs</a><br>
+<a href="#branch">Branching</a><br>
+<a href="#branch-clean">Cleaning up old branches</a><br>
+<a href="#windows">Using git on MS Windows</a>
+</p>  
+
+<h2><a name="finding">Finding the repository on sourceforge</a></h2>
+
+<p>Go to the gretl <q>project page</q> at
+<a
+href="http://sourceforge.net/projects/gretl/">http://sourceforge.net/projects/gretl/</a>
+and select the <kbd>Code</kbd> item on the taskbar.</p>
+
+<h2><a name="getting">Getting a copy</a></h2>
+
+<p>Following on from the above: if you are not logged in you will see
+an instruction by means of which you can grab a <i>read-only</i> copy of the
+gretl-git sources, namely</p>
+
+<pre>
+  git clone git://git.code.sf.net/p/gretl/git gretl-git
+</pre>
+
+<p>If you are logged in under your sourceforge <tt>USERNAME</tt>,
+and you have write privileges with git, you should see an instruction
+for getting a <i>read-write</i> copy, on the pattern</p>
+
+<pre>
+  git clone ssh://USERNAME@git.code.sf.net/p/gretl/git gretl-git
+</pre>
+
+<p>These are shell commands. Obviously, if you need access to update
+  translations you must use the second command.</p>
+
+<h2><a name="personal">Your personal git info</a></h2>
+
+<p>Before doing anything substantive with <kbd>git</kbd> you should
+  ensure that your basic personal information (name and email address)
+  is known to the program. This can be done via two shell
+  commands on the pattern:</p>
+
+<pre>
+  git config --global user.name "Your Name"
+  git config --global user.email "yourname@yourserver.ext"
+</pre>
+
+<p>As you might guess, the above commands will set username and email
+  for any and all git repositories on your local machine, If you wish
+  to set specific data for gretl commits, then change directory to
+  your copy of the gretl-git repository and issue commands on
+  the pattern above but omitting the <kbd>--global</kbd> option.
+  </p>
+
+<h2><a name="update">Updating your copy</a></h2>
+
+<p>The <kbd>git</kbd> command to update your copy of the source is</p>
+
+<pre>
+  git pull
+</pre>
+
+<p>So, very straightforward.</p>
+
+<h2><a name="commit">Committing a change</a></h2>
+
+<p>Having made a change that you wish to commit, you can do</p>
+
+<pre>
+  git commit &lt;filenames&gt;
+</pre>
+
+<p>to register changes to a specific file or files, or</p>
+
+<pre>
+  git commit -a
+</pre>
+
+<p>to commit any and all changes you have made. However, please
+  note that in git the &ldquo;commit&rdquo; action does <i>not</i>
+  upload your changes to the remote server (sourceforge). To
+  do that you need add a &ldquo;push&rdquo;:</p>
+
+<pre>
+  git push
+</pre>
+  
+<h2><a name="revert">Reverting local changes</a></h2>
+
+<p>This information is relevant only for gretl developers, who are in the
+business of making changes in the gretl code-base. It may happen from
+time to time (I speak from experience!) that you make some changes in
+your local copy of the gretl git sources and then decide (before committing)
+that some of these changes are ill advised, and you want to roll them
+back. One way of doing this is:
+</p>
+
+<pre>
+  git checkout .
+</pre>
+
+<p>This will revert changes to files that are already <q>tracked</q> by git
+(known to be part of the code base) but not already <q>staged</q> (set up
+for a push via the <kbd>git commit</kbd> command).</p>
+
+<p>To revert local changes that you have <i>already committed/staged</i> but not
+yet pushed, there are two variants:</p>
+
+<pre>
+git reset --soft HEAD~
+git reset --hard HEAD~
+</pre>
+
+<p>The first of these just <q>uncommits</q> the change, but does not revert the
+state of your local files to HEAD. The second both uncommits the changes and
+reverts your local files (or in other words, <q>nukes</q> your changes altogether).
+</p>
+
+<p>For a lot more on reverting changes, see
+  <a href="https://github.com/blog/2019-how-to-undo-almost-anything-with-git">this
+  GitHub blog entry</a>.</p>
+  
+<h2><a name="diffs">Looking at diffs</a></h2>
+
+<p>To see any updates in your working copy relative to the
+sourceforge repository, it's simple:</p>
+
+<pre>
+git diff
+</pre>
+
+<p>To inspect differences for a specific file, append the name of the file
+to this command.</p>
+
+<p>To see any updates made in the sourceforge repository relative to your
+working copy:<p>
+
+<pre>
+git fetch origin
+git diff HEAD origin/master
+</pre>
+
+<p>Note that unlike <kbd>pull</kbd>, a <kbd>fetch</kbd> doesn't actually
+modify the files in your working copy, it just grabs information about
+  what has changed in the repo.</p>
+
+<p>Now suppose you've done a <kbd>commit</kbd> in your working copy
+  but haven't yet (maybe inadvertently) done a <kbd>push</kbd>: how
+  can you tell how your working copy differs from what's at
+  sourceforge? Plain <kbd>git diff</kbd> won't do the job, but it's
+  not so difficult:</p>
+
+<pre>
+git diff origin/master
+</pre>
+
+<h2><a name="branch">Branching</a></h2>
+
+<p>To create a new branch, and then switch onto it:</p>
+
+<pre>
+git branch newbranch
+git checkout newbranch
+</pre>
+
+<p>or use this shortcut: <kbd>git checkout -b newbranch</kbd>.</p>
+
+<p>To push a new branch upstream and set up tracking:</p>
+
+<pre>
+git push -u origin newbranch
+</pre>
+
+<p>To switch back to <kbd>master</kbd> locally:</p>
+
+<pre>
+git checkout master
+</pre>
+
+<p>To merge <kbd>newbranch</kbd> into <kbd>master</kbd>:</p>
+
+<pre>
+git checkout master
+git merge newbranch
+</pre>
+
+<p>To delete <kbd>somebranch</kbd>:</p>
+
+<pre>
+git branch -d somebranch
+</pre>
+
+<p>and to delete it upstream too:</p>
+
+<pre>
+git push origin --delete somebranch
+</pre>
+
+<h2><a name="branch-clean">Cleaning up unused branches</a></h2>
+
+<p>When branching has been going on for some time, you may end up
+with references to defunct branches in your local copy: branches
+that were at one time active at &ldquo;origin&rdquo; but have since been
+merged and/or deleted. How to get rid of these dangling references?
+Fairly simple, though not totally easy to remember:</p>
+
+<pre>
+git remote prune origin
+</pre>
+
+<h2><a name="windows">Using git on MS Windows</a></h2>
+
+<p>The following from beanstalk looks like a good guide:
+  <a href="http://guides.beanstalkapp.com/version-control/git-on-windows.html">Working
+  with Git on Windows</a>.</p>
+  
+<h2>Bonus</h2>
+
+<p>John Anderson's 
+<a href="https://opensource.com/article/18/4/git-tips">13 Git tips for 
+Git's 13th birthday</a> (April 2018):
+some nice refinements here!</p>
+  
+<hr>
+
+<p>Allin Cottrell, last revised 2021-04-25</p>
+
+</body>

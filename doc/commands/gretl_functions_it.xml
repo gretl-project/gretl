@@ -3,7 +3,7 @@
 
 <funcref language="italian">
 
-  <funclist name="Accessori" ref="accessors">
+  <funclist name="Accessors" ref="accessors">
 
     <function name="$ahat" section="access" output="series">
       <description>
@@ -151,6 +151,17 @@
 	</para>
       </description>
     </function>    
+
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce la directory usata da gretl per
+	  salvare file temporanei, come ad esempio quelli creati da
+	  <fncref targ="mwrite"/> quando il terzo argomento non è
+	  zero.
+	</para>
+      </description>
+    </function>
 
     <function name="$dw" section="access" output="scalar">
       <description>
@@ -572,6 +583,14 @@
 	  Produce il numero delle osservazioni nel campione
 	  selezionato. Si veda anche <fncref targ="$tmax"/>.
 	</para>
+	<para>
+	  Nel caso di dati panel il valore restituito è il numero di
+	  osservazioni "pooled" (numero di unità per numero di
+	  osservazioni per unità). Per ottenere la dimensione
+	  temporale del panel va usato l'accessore <fncref
+	  targ="$pd"/>; il numero di unità longitudinali si può
+	  ottenere come <lit>$nobs</lit> diviso per <lit>$pd</lit>.
+	</para>
       </description>
     </function>
     
@@ -592,7 +611,13 @@
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
-	  Produce il numero delle variabili nel dataset (inclusa la costante).
+	  Produce il numero delle variabili nel dataset (inclusa la
+	  costante). Poiché <lit>const</lit> è sempre presente in
+	  qualunque dataset, un valore ritornato di 0 indica che
+	  nessun dataset è aperto. Si noti che se questo accessore
+	  viene usato in una funzione, il numero di serie
+	  effettivamente accessibili potrebbe benissimo essere minore
+	  di <lit>$nvars</lit>.
 	</para>
       </description>
     </function>
@@ -1241,6 +1266,20 @@
       </description>
     </function>
 
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso di default dove
+	  gretl legge e scrive file. Una descrizione più ampia si
+	  trova nella Command Reference sotto <cmdref
+	  targ="workdir"/>. Si noti che questa stringa può essere
+	  impostata tramite il comando <cmdref targ="set"/>. Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (@tramodir).
+        </para>
+      </description>
+    </function>
+
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1293,7 +1332,7 @@
 
   </funclist>
 
-  <funclist name="Stringhe predefinite" ref="string_constants">
+  <funclist name="Built-in strings" ref="string_constants">
     
     <function name="$dotdir" section="access" output="string">
       <description>
@@ -1343,20 +1382,6 @@
 	  usi la chiocciola (@tramodir).
         </para>
         </description>
-    </function>
-
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Questo accessore restituisce il percorso di default dove
-	  gretl legge e scrive file. Una descrizione più ampia si
-	  trova nella Command Reference sotto <cmdref
-	  targ="workdir"/>. Si noti che questa stringa può essere
-	  impostata tramite il comando <cmdref targ="set"/>. Per usare
-	  questa stringa in modalità sostituzione, si usi la
-	  chiocciola (@tramodir).
-        </para>
-      </description>
     </function>
 
     <function name="$x12a" section="straccess" output="string">
@@ -1427,17 +1452,17 @@
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
 	<fnarg type="series-or-list">byvar</fnarg>
-	<fnarg type="string">funcname</fnarg>   
+	<fnarg type="string" optional="true">funcname</fnarg>   
       </fnargs>
       <description>
 	<para>
 	  Nella versione più minimale, <argname>x</argname> è la
 	  parola chiave <lit>null</lit>, <argname>byvar</argname> è
-	  una serie e il terzo argomento è omesso. In tal caso la
-	  funzione produce una matrice con due colonne contenenti
-	  rispettivamente i valori distinti di
-	  <argname>byvar</argname>, ordinati in senso ascendente e le
-	  corrispondenti frequenze assolute di
+	  una serie e il terzo argomento è omesso oppure
+	  <lit>null</lit>. In tal caso la funzione produce una matrice
+	  con due colonne contenenti rispettivamente i valori distinti
+	  di <argname>byvar</argname>, ordinati in senso ascendente e
+	  le corrispondenti frequenze assolute di
 	  <argname>byvar</argname>. Ad esempio,
 	</para>
 	<code>
@@ -1445,18 +1470,8 @@
 	  eval aggregate(null, bedrms)
 	</code>
 	<para>
-	  Se invece sia <argname>x</argname> che
-	  <argname>byvar</argname> sono singole variabili, questa
-	  funzione restituisce una matrice con tre colonne: la prima
-	  contiene i valori distinti di <argname>byvar</argname>,
-	  ordinati in senso crescente; la seconda contiene il numero
-	  delle osservazioni in cui <argname>byvar</argname> assume
-	  ciascuno di questi valori; la terza, infine, contiene i
-	  valori della statistica specificata da
-	  <argname>funcname</argname>, calcolata sulla variabile
-	  <argname>x</argname> usando solo quelle osservazioni per cui
-	  <argname>byvar</argname> assume il valore specificato nella
-	  prima colonna.
+	  mostrerà che la serie <lit>bedrms</lit> ha come valori
+	  3 (in 5 casi) e 4 (in 9 casi).
 	</para>
 	<para>
 	  Più in generale, se <argname>byvar</argname> è una lista di
@@ -1464,13 +1479,36 @@
 	  colonne da sinistra contengono le combinazioni dei valori
 	  distinti di ciascuna delle <math>n</math> variabili, mentre la
 	  colonna immediatamente successiva contiene il numero delle
-	  osservazioni in cui ciascuna combinazione ricorre. Se
-	  <argname>x</argname> è una lista con <math>m</math>
-	  elementi, allora le <math>m</math> colonne più a destra
-	  contengono i valori della statistica specificata da
-	  <argname>funcname</argname> per ciascuna delle variabili
-	  <argname>x</argname>, calcolati sul sottocampione
-	  individuato dalle prime colonne.
+	  osservazioni in cui ciascuna combinazione
+	  ricorre. Quest'ultima, quindi, starà alla posizione
+	  <lit>nelem(byvar) + 1</lit>. 
+	</para>
+	<subhead>Uso con un operatore funzionale</subhead>
+	<para>
+	  Se viene usato il terzo argomento, <argname>x</argname> non
+	  può essere <lit>null</lit>, e le <math>m</math> colonne più
+	  a destra contengono i valori della statistica specificate da
+	  <argname>funcname</argname> per ciascuna delle variabili in
+	  <argname>x</argname>. (Pertanto, <math>m</math> è 1 se
+	  <argname>x</argname> <argname>x</argname> è una serie e
+	  <lit>nelem(x)</lit> se <argname>x</argname> è una lista.)
+	  La statistica è calcolata per righe sulla base dei
+	  sottocampioni definiti dalle combinazioni dei valori di
+	  <argname>byvar</argname>, in senso ascendente; tali
+	  combinazioni sono mostrate nelle prime <math>n</math>
+	  colonne della matrice risultato.
+	</para>
+	<para>
+	  Quindi, nel caso particolare in cui sia <argname>x</argname> che
+	  <argname>byvar</argname> siano serie, la matrice risultato
+	  avrà tre colonne, contenenti rispettivamente i valori di
+	  <argname>byvar</argname>, in senso ascendente, il numero di
+	  osservazioni di <argname>byvar</argname>
+	  per ognuno di essi e i valori della statistica specificata
+	  da <argname>funcname</argname>, calcolati su
+	  <argname>x</argname> sul sottocampione dato dalle
+	  osservazioni in cui <argname>byvar</argname> prende il
+	  valore in colonna 1.
 	</para>
 	<para>
 	  I seguenti valori di <argname>funcname</argname> sono
@@ -1513,18 +1551,21 @@
 	  Per un esempio che utilizza liste, si ipotizzi che
 	  <lit>gender</lit> sia una variabile dummy maschio/femmina e
 	  <lit>race</lit> una variabile categoriale con tre possibili
-	  valori. Allora quanto segue genererà una matrice con 6 righe
-	  e 5 colonne: le prime due colonne conterranno le
-	  combinazioni possibili gender/race; quella centrale
-	  il numero di osservazioni di ciascuna di queste combinazioni; e 
-	  le ultime due la deviazione standard campionaria di <lit>income</lit> e
-	  <lit>age</lit>:
+	  valori.
 	</para>
 	<code>
 	  list BY = gender race
 	  list X = income age
 	  matrix m = aggregate(X, BY, sd)
 	</code>
+	<para>
+	  Il codice qui sopra genererà una matrice con <by r="6"
+	  c="5"/>: le prime due colonne conterranno le combinazioni
+	  possibili gender/race; quella centrale il numero di
+	  osservazioni di ciascuna di queste combinazioni; e le ultime
+	  due la deviazione standard campionaria di <lit>income</lit>
+	  e <lit>age</lit>:
+	</para>
 	<para>
 	  Si noti che, nel caso in cui <argname>byvar</argname> sia
 	  una lista, alcune combinazioni dei valori di
@@ -1962,7 +2003,7 @@
 	</para>
 	<para>
 	  Quando <argname>k</argname> &gt; <argname>n</argname> oppure
-	  <argname>k</argname> &lt; 0, la funzione restituisce NA.
+	  <argname>k</argname> &lt; 0, la funzione produce un errore.
 	</para>
 	<para>
 	  Se i due argomenti sono di tipo diverso, il risultato è del
@@ -2810,6 +2851,62 @@
       </description>
     </function>
     
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione permette di determinare se l'oggetto
+	  <argname>x</argname> contiene uno degli elementi della matrice
+	  <argname>S</argname> usate per indicare un insieme.
+	</para>
+	<para>
+	  Il valore restituito è un oggetto della stessa dimensione di
+	  <argname>x</argname> contenente elementi zero o uno, a
+	  seconda che l'elemento corrispondente di
+	  <argname>x</argname> sia uguale ad uno degli elementi di <argname>S</argname>.
+	  Ad esempio, il codice
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  produce il seguente output
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1	  
+	</code>
+	<para>
+	  Questa funzione è particolarmente utile nei casi in cui
+	  <argname>x</argname> sia una serie contenente una codifica
+	  di una variabile qualitativa, e si desideri estrarre un
+	  sottoinsieme delle categorie. Includendo in
+	  <argname>S</argname> i valori da estrarre si può ottenere
+	  facilmente una dummy con valore 1 per le osservazioni volute
+	  e 0 altrimenti.
+	</para>
+	<para>
+	  Poiché <argname>S</argname> è inteso come insieme, è
+	  consigliabile per ragioni di efficienza di evitare che
+	  contenga valori ripetuti, anche se in realtà la funzione
+	  accetta matrici arbitarie.
+	</para>
+      </description>
+    </function>
+    
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -2967,11 +3064,11 @@
 	<para>
 	  Calcola i valori critici, ossia <math>x</math> tale che
 	  <equation status="inline" ascii="P(X &gt; x) = p" tex="$P(X
-								 &gt; x) = p$"/>, dove la distribuzione di <math>X</math> è
-								 determinata dal carattere <argname>c</argname>. Tra gli
-								 argomenti <argname>c</argname> e <argname>x</argname>,
-								 possono essere richiesti parametri aggiuntivi a seconda
-								 della distribuzione, come specificato qui di seguito.
+	  &gt; x) = p$"/>, dove la distribuzione di <math>X</math> è
+	  determinata dal carattere <argname>c</argname>. Tra gli
+	  argomenti <argname>c</argname> e <argname>x</argname>,
+	  possono essere richiesti parametri aggiuntivi a seconda
+	  della distribuzione, come specificato qui di seguito.
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -3515,7 +3612,13 @@
 	</para>
 	<para context="tex">
 	  Restituisce la funzione digamma (o Psi) di $x$, cioè
-	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
+	  $\frac {\mathrm{d}} {\mathrm{d} x}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="trigamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -3716,7 +3819,9 @@
 	  Calcola gli autovalori e, opzionalmente, gli autovettori destri
 	  e/o sinistri, della matrice <by r="n" c="n"/>
 	  <argname>A</argname>, che può essere reale o complessa. Gli
-	  autovalori sono ritornati come vettore colonna complesso.
+	  autovalori sono ritornati come vettore colonna
+	  complesso. Per ottenere la loro norma, si può usare la
+	  funzione <fncref targ="abs"/>, che accetta argomenti complessi.
 	</para>
 	<para>
 	  Se si desidera ottenere gli autovettori destri (nella forma di una
@@ -5031,16 +5136,17 @@
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Prodotto diretto orizzontale. I due argomenti devo avere lo stesso
-	  numero di righe, <math>r</math>. Il risultato è una matrice
-	  con <math>r</math> righe, in cui la riga
-	  <math>i</math>-esima è il prodotto di Kronecker 
-	  delle corrispondenti righe di <argname>X</argname> e
-	  <argname>Y</argname>.
+	  Prodotto diretto orizzontale. I due argomenti devo avere lo
+	  stesso numero di righe, <math>r</math>. Il risultato è una
+	  matrice con <math>r</math> righe, in cui la riga
+	  <math>i</math>-esima è il prodotto di Kronecker delle
+	  corrispondenti righe di <argname>X</argname> e
+	  <argname>Y</argname>. L'omissione di <argname>Y</argname> fa
+	  sì che venga usata la sintassi abbreviata (vedi sotto).
 	</para>
 	<para context="tex">
 	  In altri termini, se $X$ è una matrice $r \times k$, $Y$ è una matrice
@@ -5052,11 +5158,20 @@
 	  \]
 	  dove $n = (j-1) m + l$.
 	</para>
+	<para context="notex">
+	  Se <argname>X</argname> è una matrice <math>r x k</math> e
+	  <argname>Y</argname> è una matrice <math>r x m</math>, il
+	  risultato sarà una matrice con <math>r</math> righe e
+	  <math>km</math> colonne.
+	</para>
 	<para>
-	  "Prodotto diretto orizzontale" ("Horizontal direct product") è
-	  il modo con cui questa operazione viene chiamata nel linguaggio
-	  di programmazione GAUSS. Il suo equivalente in algebra
-	  matriciale standard si chiama "prodotto di Khatri-Rao per riga".
+	  <quote>Prodotto diretto orizzontale</quote>
+	  (<quote>Horizontal direct product</quote>) è il modo con cui
+	  questa operazione viene chiamata nel linguaggio di
+	  programmazione GAUSS. Il suo equivalente in algebra
+	  matriciale standard si chiama <quote>prodotto di Khatri-Rao
+	  per riga</quote>, o prodotto <quote>face-splitting</quote>
+	  in teoria dei segnali.
 	</para>
 	<para>
 	  Esempio: il codice
@@ -5070,9 +5185,46 @@
 	  produce la matrice seguente:
 	</para>
 	<code>
-          0    1    0    2    0    3 
+           0    1    0    2    0    3 
           -4    4   -5    5   -6    6 
 	</code>
+	<subhead>Sintassi abbreviata</subhead>
+	<para>
+	  Se <argname>X</argname> e <argname>Y</argname> sono uguali,
+	  ogni riga della matrice risultato sarà la vettorizzazione di
+	  una matrice simmetrica. In questi casi, il secondo argomento
+	  può essere omesso; tuttavia, la matrice risultato conterrà
+	  solo le colonne non ridondanti, e avrà quindi
+	  <math>k(k+1)/2</math> colonne.  Per esempio,
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  C = hdprod(A)
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+	  1    2    3    4    6    9 
+	  16   20   24   25   30   36 
+	</code>
+	<para context="tex">
+	  Si noti che la $i$-esima riga di $C$ è $\mathrm{vech}(a_i
+	  a_i')$, dove $a_i$ è la $i$-esima riga di $A$.
+	</para>
+	<para context="notex">
+	  Si noti che la <math>i</math>-esima riga di <math>C</math> è
+	  <math>vech(a</math><sub>i</sub>
+	  <math>a</math><sub>i</sub><math>')</math>, dove
+	  <math>a</math><sub>i</sub> è la <math>i</math>-esima riga
+	  di <math>A</math>.
+	</para>
+	<para>
+	  Quando si usa la sintassi abbreviata con matrici complesse,
+	  il secondo argomento implicito è la <i>coniugata</i> del
+	  primo, per far sì che ogni riga del risultato sia la
+	  vettorizzazione simmetrica di una matrice hermitiana.
+	</para>
       </description>
     </function>
 
@@ -7174,6 +7326,7 @@
     <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7186,7 +7339,11 @@
 	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
 	  media dei valori delle variabili nella lista per
 	  l'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti in <math>t</math>.
+	  valori mancanti in <math>t</math>. Per default, la funzione
+	  ritorna <lit>NA</lit> se ci si sono dei missing a
+	  <math>t</math>, ma se si passa un valore non-zero come opzione
+	  <argname>partial</argname> la statistica sarà calcolata sui
+	  soli dati validi.
 	</para>
 	<para>
 	  L'esempio seguente illustra la funzione:
@@ -7278,11 +7435,11 @@
 
     <function name="median" section="stats" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se <argname>y</argname> è una serie, calcola la mediana
+	  Se <argname>x</argname> è una serie, calcola la mediana
 	  delle osservazioni non mancanti.
 	</para>
 	<para>
@@ -7291,6 +7448,30 @@
 	  mediana dei valori delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> se c'è
 	  almeno un valore mancante all'osservazione <math>t</math>.
+	</para>
+	<para>
+	  L'esempio seguente illustra l'usa della funzione
+	</para>
+	<code>
+	  set verbose off
+	  open denmark.gdt
+	  eval median(LRM)
+	  list L = dataset
+	  series m = median(L)
+	</code>
+	<para>
+	  La prima chiamata restituisce la mediana (scalare) della
+	  serie <lit>LRM</lit>; la seconda ritorna una serie.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mean"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -7346,12 +7527,70 @@
 	</para>
 	<para>
 	  <seelist>
-	    <fncref targ="mweights"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
+            <fncref targ="mweights"/>
 	  </seelist>
 	</para>	
       </description>
     </function>    
+
+    <function name="midasmult" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="bundle">mod</fnarg>
+	<fnarg type="bool">cumulate</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola i moltiplicatori MIDAS. L'argomento
+	  <argname>mod</argname> dev'essere un bundle contenente un
+	  modello MIDAS, così come quello disponibile sotto <fncref
+	  targ="$model"/> dopo l'esecuzione del comando <cmdref
+	  targ="midasreg"/>. La funzione resituisce una matrice con i
+	  moltiplicatori MIDAS impliciti per la variabile
+	  <argname>v</argname> nella prima colonna e i relativi errori
+	  standard nella seconda. Se l'argomento
+	  <argname>cumulate</argname> è non-zero, i moltiplicatori
+	  vengono cumulati.
+	</para>
+	<para>
+	  Si noti che la matrice risultato possiede automaticamente
+	  delle etichette riga appropriate, cosicché la si può usare
+	  come argomento del comando <cmdref targ="modprint"/>. Ad
+	  esempio, il codice
+	</para>
+	<code>
+	  open gdp_midas.gdt
+	  list dIP = ld_indpro*
+	  smpl 1985:1 ;
+	  midasreg ld_qgdp 0 ; mds(dIP, 0, 6, 2)
+	  matrix ip_m = midasmult($model, 0, 1)
+	  modprint ip_m
+	</code>
+	<para>
+	  produce il seguente risultato:
+	</para>
+	<code>
+             coefficient   std. error      z       p-value
+  ---------------------------------------------------------
+  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
+  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
+  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
+  dIP_3      0.0601876     0.0621927     0.9678    0.3332
+  dIP_4      0.0131263     0.0259137     0.5065    0.6125
+  dIP_5      0.000965260   0.00346703    0.2784    0.7807
+  dIP_6      0.00000       0.00000      NA        NA
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
+            <fncref targ="mweights"/>
+	    <fncref targ="mlincomb"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
 
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
@@ -7415,13 +7654,32 @@
 	<para>
 	  Crea una variabile binaria uguale a 1 se
 	  <argname>x</argname> è <lit>NA</lit>. Se
-	  <argname>x</argname> è una variabile, il confronto viene
+	  <argname>x</argname> è una serie, il confronto viene
 	  effettuato elemento per elemento; se <argname>x</argname> è
-	  una lista di variabili, il risultato è una variabile con
+	  una lista di variabili, il risultato è una serie con
 	  elementi pari a 1 per le osservazioni per le quali almeno
 	  una delle variabili incluse nella lista ha valore mancante,
-	  e 0 altrimenti.
+	  e 0 altrimenti. Ad esempio, il codice
 	</para>
+	<code>
+		nulldata 3
+		series x = normal()
+		x[2] = NA
+		series x_ismiss = missing(x)
+		print x x_ismiss --byobs
+	</code>
+	<para>
+	  imputa un valore mancante alla seconda osservazione di
+	  <argname>x</argname> e crea una nuova dummy
+	  <argname>y</argname> che identifica il dato mancante
+	</para>
+	<code>
+		             y     y_ismiss
+
+		1    -1.551247            0
+		2                         1
+		3    -2.244616            0
+	</code>
 	<para>
 	  <seelist> 
 	    <fncref targ="misszero"/>
@@ -7439,8 +7697,30 @@
       <description>
 	<para>
 	  Converte gli <lit>NA</lit> in zeri. Se <argname>x</argname>
-	  è una variabile la conversione è effettuata elemento per
-	  elemento.
+	  è una serie la conversione è effettuata elemento per
+	  elemento. Ad esempio, il codice seguente
+	</para>
+	<code>
+		nulldata 3
+		series x = normal()
+		x[2] = NA
+		y = misszero(x)
+		print x y --byobs
+	</code>
+	<para>
+	 imputa un valore mancante alla seconda osservazione di
+	 <argname>x</argname> e crea una nuova serie
+	 <argname>y</argname> nella quale il dato mancante è
+	 rimpiazzato con zero:
+	</para>
+	<code>
+	             x            y
+
+		1    0.7355250    0.7355250
+		2                     0.000
+		3   -0.2465936   -0.2465936
+	</code>
+	<para>
 	  <seelist>
 	    <fncref targ="missing"/>
 	    <fncref targ="ok"/>
@@ -7483,15 +7763,38 @@
 	  <argname>m</argname> è omesso, al suo posto si utilizza
 	  lo zero.
 	</para>
-	<para context="notex">
-	  Se <argname>p</argname> è un vettore, l'operazione precedente
-	  è svolta per ciascun elemento di <argname>p</argname>,
-	  unendo le matrici così ottenute in senso orizzontale.
+	<para>
+	  Se <argname>p</argname> è un vettore, l'operazione
+	  precedente è svolta per ciascun elemento di
+	  <argname>p</argname>, unendo le matrici così ottenute in
+	  senso orizzontale. Il codice seguente illustra questa forma
+	  di uso, con un input <argname>X</argname> di due colonne e
+	  <argname>p</argname> che richiede i ritardi 1 e
+	  2. Contrariamente al default, i valori mancanti sono
+	  impostati a NA anziché 0.
 	</para>
-	<para context="tex">
-	  Se $p$ è un vettore, l'operazione precedente è svolta
-	  per ciascun elemento di $p$, unendo le matrici così ottenute
-	  in senso orizzontale.
+	<code>
+	matrix X = mnormal(5, 2)
+	print X
+	eval mlag(X, {1, 2}, NA)
+	</code>
+	<code>
+	m (5 x 2)
+
+      1.5953    -0.070740
+    -0.52713     -0.47669
+     -2.2056     -0.28112
+     0.97753       1.4280
+     0.49654      0.18532
+
+         nan          nan          nan          nan
+      1.5953    -0.070740          nan          nan
+    -0.52713     -0.47669       1.5953    -0.070740
+     -2.2056     -0.28112     -0.52713     -0.47669
+     0.97753       1.4280      -2.2056     -0.28112
+	</code>
+	<para>
+	  Vedi anche <fncref targ="lags"/>.
 	</para>
       </description>
     </function>
@@ -8310,7 +8613,8 @@
 	</code>
 	<para>
 	  <seelist>
-	    <fncref targ="mgradient"/>
+            <fncref targ="mgradient"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>	
@@ -8993,13 +9297,23 @@
 
     <function name="obslabel" section="data-utils" output="string">
       <fnargs>
-	<fnarg type="int">t</fnarg>
+	<fnarg type="scalar-or-vec">t</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce l'etichetta per la <argname>t</argname>-esima
-	  osservazione, dove <argname>t</argname> è un indice che
-	  parte da 1.  La funzione inversa è <fncref targ="obsnum"/>.
+	  Se <argname>t</argname> è uno scalare, restituisce
+	  l'etichetta per la <argname>t</argname>-esima osservazione.
+	  La funzione inversa è <fncref targ="obsnum"/>.
+	</para>
+	<para>
+	  Se <argname>t</argname> è un vettore, restituisce un array
+	  di stringhe, le etichette per le osservazioni date dagli
+	  elementi di <argname>t</argname>.
+	</para>
+	<para>
+	  In ambo i casi, i valori <argname>t</argname> devono essere
+	  interi, validi come indici delle osservazioni nel dataset
+	  corrente; altrimenti, viene prodotto un errore.
 	</para>
       </description>
     </function>
@@ -10674,6 +10988,7 @@
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>     
       <description>
 	<para>
@@ -10686,7 +11001,12 @@
 	  una variabile <math>y</math> tale per cui
 	  <math>y</math><sub>t</sub> è l'errore quadratico medio delle
 	  variabili nella lista all'osservazione <math>t</math>, o
-	  <lit>NA</lit> se ci sono dei valori mancanti <math>t</math>.
+	  <lit>NA</lit> se ci sono dei valori mancanti
+	  <math>t</math>. Per default, la funzione ritorna
+	  <lit>NA</lit> se ci si sono dei missing a <math>t</math>, ma
+	  se si passa un valore non-zero come opzione
+	  <argname>partial</argname> la statistica sarà calcolata sui
+	  soli dati validi.
 	</para>
 	<para>
 	  <seelist> 
@@ -11783,7 +12103,8 @@
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
-      </fnargs>      
+	<fnarg type="bool" optional="true">partial</fnarg>
+      </fnargs>     
       <description>
 	<para>
 	  Se <argname>x</argname> è una variabile restituisce la somma
@@ -11795,11 +12116,15 @@
 	  degli elementi della matrice.
 	</para> 
 	<para>
-	  Se <argname>x</argname> è una lista, restituisce una variabile 
-	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
-	  somma dei valori delle variabili nella lista
+	  Se <argname>x</argname> è una lista, restituisce una
+	  variabile <math>y</math> tale che <math>y</math><sub>t</sub>
+	  è la somma dei valori delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti all'osservazione <math>t</math>.
+	  valori mancanti all'osservazione <math>t</math>. Per
+	  default, la funzione ritorna <lit>NA</lit> se ci si sono dei
+	  missing a <math>t</math>, ma se si passa un valore non-zero
+	  come opzione <argname>partial</argname> la statistica sarà
+	  calcolata sui soli dati validi.
 	</para>
       </description>
     </function>
@@ -12095,6 +12420,29 @@
       </description>
     </function>
 
+
+    <function name="trigamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>    
+      <description>
+	<para context="notex">
+	  Restituisce la funzione trigamma di <argname>x</argname>,
+	  cioè la derivata seconda del logaritmo della funzione Gamma.
+	</para>
+	<para context="tex">
+	  Restituisce la funzione trigamma di $x$, cioè
+	  $\frac {\mathrm{d}?2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="digamma"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="trimr" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -12315,6 +12663,7 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>     
       <description>
 	<para>
@@ -12326,7 +12675,11 @@
 	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
 	  varianza campionaria dei valori delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti a <math>t</math>.
+	  valori mancanti a <math>t</math>. Per default, la funzione
+	  ritorna <lit>NA</lit> se ci si sono dei missing a
+	  <math>t</math>, ma se si passa un valore non-zero come opzione
+	  <argname>partial</argname> la statistica sarà calcolata sui
+	  soli dati validi.
 	</para>
 	<para>
 	  In ogni caso, la somma delle deviazioni al quadrato dalla
@@ -12560,6 +12913,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -12574,6 +12928,12 @@
 	  non-negativi.
 	</para>
 	<para>
+	  Per default, la funzione ritorna <lit>NA</lit> se ci si sono
+	  dei missing a <math>t</math>, ma se si passa un valore
+	  non-zero come opzione <argname>partial</argname> la
+	  statistica sarà calcolata sui soli dati validi.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="wsd"/>
 	    <fncref targ="wvar"/>
@@ -12586,6 +12946,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -12600,6 +12961,12 @@
 	  elementi ed i pesi devono essere non-negativi.
 	</para>
 	<para>
+	  Per default, la funzione ritorna <lit>NA</lit> se ci si sono
+	  dei missing a <math>t</math>, ma se si passa un valore
+	  non-zero come opzione <argname>partial</argname> la
+	  statistica sarà calcolata sui soli dati validi.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="wmean"/>
 	    <fncref targ="wvar"/>
@@ -12612,6 +12979,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -12624,6 +12992,12 @@
 	  tempo. Le due liste <argname>Y</argname> e
 	  <argname>W</argname> devono avere lo stesso numero di
 	  elementi ed i pesi devono essere non-negativi.
+	</para>
+	<para>
+	  Per default, la funzione ritorna <lit>NA</lit> se ci si sono
+	  dei missing a <math>t</math>, ma se si passa un valore
+	  non-zero come opzione <argname>partial</argname> la
+	  statistica sarà calcolata sui soli dati validi.
 	</para>
 	<para context="tex">
 	  La varianza ponderata è calcolata come 

@@ -40,7 +40,6 @@
  */
 
 /* codes for deterministic regressors */
-
 typedef enum {
     UR_NO_CONST = 1,
     UR_CONST,
@@ -50,20 +49,32 @@ typedef enum {
 } DetCode;
 
 /* flags for "special stuff" going on */
-
 typedef enum {
     ADF_EG_TEST   = 1 << 0, /* doing Engle-Granger test */
     ADF_EG_RESIDS = 1 << 1, /* final stage of the above */
     ADF_PANEL     = 1 << 2, /* working on panel data */
-    ADF_OLS_FIRST = 1 << 3  /* Perron-Qu, 2007 */
+    ADF_GLS       = 1 << 3, /* GLS: Elliott, Rothenberg, Stock */
+    ADF_PQ        = 1 << 4  /* Perron-Qu, 2007 */
 } AdfFlags;
 
 /* automatic lag selection methods */
-
 enum {
     k_AIC = 1,
     k_BIC,
     k_TSTAT
+};
+
+/* demean/detrend method */
+enum {
+    demean_GLS = 1,
+    demean_OLS
+};
+
+/* p-value type */
+enum {
+    PV_FINITE = 1,
+    PV_ASY,
+    PV_APPROX
 };
 
 typedef struct adf_info_ adf_info;
@@ -77,6 +88,7 @@ struct adf_info_ {
     int niv;         /* number of (co-)integrated vars (Engle-Granger) */
     AdfFlags flags;  /* bitflags: see above */
     DetCode det;     /* code for deterministics */
+    int pvtype;      /* code for p-value type */
     int nseas;       /* number of seasonal dummies */
     int T;           /* number of obs used in test */
     int df;          /* degrees of freedom, test regression */
@@ -164,7 +176,7 @@ static int GLS_demean_detrend (DATASET *dset, int v,
 	pprintf(prn, "\nGLS demean/detrend: using %s-%s (T = %d)\n",
 		date1, date2, yd->rows);
 	for (i=0; i<xcols; i++) {
-	    pprintf(prn, "  %s = %g\n", (i==0)? "mean" : "trend", b->val[i]);
+	    pprintf(prn, "  %s = %#.8g\n", (i==0)? "mean" : "trend", b->val[i]);
 	}
     }
 
@@ -194,7 +206,8 @@ static int GLS_demean_detrend (DATASET *dset, int v,
 /* replace @y with demeaned or detrended y via OLS */
 
 static int OLS_demean_detrend (double *y, int offset,
-			       int T, DetCode det)
+			       int T, DetCode det,
+			       PRN *prn)
 {
     gretl_matrix *yd = NULL;
     gretl_matrix *Xd = NULL;
@@ -239,6 +252,13 @@ static int OLS_demean_detrend (double *y, int offset,
     }
 
     err = gretl_matrix_ols(yd, Xd, b, NULL, NULL, NULL);
+
+    if (!err && prn != NULL) {
+	pprintf(prn, "\nOLS demean/detrend: (T = %d)\n", yd->rows);
+	for (t=0; t<xcols; t++) {
+	    pprintf(prn, "  %s = %#.8g\n", (t==0)? "mean" : "trend", b->val[t]);
+	}
+    }
 
     if (!err) {
 	for (t=0; t<T; t++) {
@@ -356,7 +376,8 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
 */
 
 static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
-			     gretlopt opt, PRN *prn)
+			     gretlopt opt, int demean_mode,
+			     PRN *prn)
 {
     int err = 0;
 
@@ -374,7 +395,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	}
     }
 
-    if (ainfo->flags & ADF_OLS_FIRST) {
+    if (demean_mode == demean_OLS) {
 	/* OLS adjustment is wanted (first pass) */
 	DetCode det = UR_CONST;
 	int v = dset->v;
@@ -388,10 +409,11 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	err = dataset_add_series(dset, 1);
 
 	if (!err) {
+	    PRN *vprn = ainfo->verbosity > 1 ? prn : NULL;
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
 
-	    err = OLS_demean_detrend(dset->Z[v], offset, T, det);
+	    err = OLS_demean_detrend(dset->Z[v], offset, T, det, vprn);
 	}
 
 	if (!err) {
@@ -399,7 +421,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    strcpy(dset->varname[v], "ydetols");
 	    ainfo->altv = v;
 	}
-    } else if (opt & OPT_G) {
+    } else if (demean_mode == demean_GLS) {
 	/* GLS adjustment is wanted */
 	DetCode det = (opt & OPT_T)? UR_TREND : UR_CONST;
 	int v;
@@ -439,11 +461,72 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
-#if 0 /* based on a much larger replication of ERS:
-	 activate this after putting an account of
-	 the simulation in place */
+/* Peter Sephton's response-surface based critical values for
+   ADF-GLS with testing down of lag order as per Ng and Perron,
+   or Perron and Qu. See PS's paper in Computational Economics,
+   https://doi.org/10.1007/s10614-020-10082-6
+*/
 
-static void get_df_gls_ct_cval (int T, double *c)
+static void sephton_adf_critvals (adf_info *ainfo, double *c)
+{
+    /* Each row contains 6 coeffs: const, 4 powers of 1/T,
+       and maxlag / T. The rows are in blocks of four:
+       (1) Ng-Perron constant; (2) Perron-Qu constant;
+       (3) Ng-Perron trend;    (3) Perron-Qu trend.
+       Within each block are coefficients for 4 critical
+       values: 0.01, 0.025, 0.05 and 0.1.
+    */
+    const double coef[16][6] = {
+	/* Ng-Perron constant */
+	{-2.5512, 1.084, -720.43, 18279, -175060, 0.3174},
+	{-2.2186, -3.7919, -333.25, 6665.6, -52297, 0.31557},
+	{-1.9341, -4.7232, -124.1, 1441.1, -6754.7, 0.0096449},
+	{-1.6136, -8.9613, 120.77, -3103.9, 24355, -0.15212},
+	/* Perron-Qu constant */
+	{-2.5449, -3.2252,  -626, 14049, -107060, 0.33716},
+	{-2.2154, -9.9681, -250.85, 3955.5, -12315, 0.5985},
+	{-1.932, -7.5717, -259.69, 5407.7, -31513, 0.2145},
+	{-1.6108, -8.9303, -83.401, 2341.3, -13132, -0.10669},
+	/* Ng-Perron trend */
+	{-3.3772, -0.2059, -1809.6, 46527, -415670,  1.27},
+	{-3.0761, 2.9114, -1466.4, 35993, -312430, 0.7397},
+	{-2.828, 7.4946, -1579.2, 39383, -341880, 0.47643},
+	{-2.545, 5.5607, -1133.2, 26203, -213800, 0.24246},
+	/* Perron-Qu trend */
+	{-3.3719, -14.027, -1194.7, 32450, -301000, 1.6079},
+	{-3.0688, -4.2253, -1135, 29133, -257020, 0.73835},
+	{-2.8196, 2.4706, -1346.6, 35398, -314840, 0.37564},
+	{-2.5401, -2.7442, -950.57, 25683, -233160, 0.52035}
+    };
+    int PQ = (ainfo->flags & ADF_PQ)? 1 : 0;
+    int trend = (ainfo->det == UR_TREND);
+    int i, j, rmin = 4 * PQ + trend ? 8 : 0;
+    const double *b;
+    double X[6];
+
+    X[0] = 1.0;
+    X[1] = 1.0 / ainfo->T;
+    X[2] = X[1] * X[1];
+    X[3] = X[2] * X[1];
+    X[4] = X[3] * X[1];
+    X[5] = ainfo->kmax * X[1];
+
+    for (i=0; i<4; i++) {
+	b = coef[rmin+i];
+	c[i] = 0;
+	for (j=0; j<6; j++) {
+	    c[i] += X[j] * b[j];
+	}
+    }
+}
+
+#if 0 /* unused? */
+
+/* based on a much larger replication of ERS using gretl:
+   see http://gretl.sourceforge.net/papers/df-gls-pvals.pdf
+*/
+
+static void get_df_gls_ct_cval (adf_info *ainfo, double *c)
 {
     static double b[4][3] = {
 	/* b0       b(1/T)    b(1/T^2) */
@@ -452,17 +535,14 @@ static void get_df_gls_ct_cval (int T, double *c)
 	{ -3.10420, -18.2513,  9.99274 }, /* 2.5% */
 	{ -3.40846, -19.4237, -23.9869 }  /* 1% */
     };
-    double T2 = T * T;
-    int i;
+    int i, T = ainfo->T;
 
     for (i=0; i<4; i++) {
-	c[i] = b[i][0] + b[i][1] / T + b[i][2] / T2;
+	c[i] = b[i][0] + b[i][1] / T + b[i][2] / (T*T);
     }
 }
 
-#else
-
-static void get_df_gls_ct_cval (int T, double *c)
+static void get_df_gls_ct_cval (adf_info *ainfo, double *c)
 {
     /* Elliott, Rothenberg and Stock (1996), Table 1 */
     static double df_gls_ct_cvals[4][4] = {
@@ -472,6 +552,7 @@ static void get_df_gls_ct_cval (int T, double *c)
 	{ -2.64, -2.93, -3.18, -3.46 }, /* T = 200 */
 	{ -2.57, -2.89, -3.15, -3.48 }  /* \infty  */
     };
+    int T = ainfo->T;
     int j, i = 3;
 
     if (T <= 50){
@@ -628,7 +709,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
     };
-    char pvstr[48];
+    gchar *pvstr = NULL;
     char taustr[16];
     int i;
 
@@ -638,13 +719,13 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     i = ainfo->det - 1;
 
     if (na(ainfo->pval)) {
-	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
+	pvstr = g_strdup_printf("%s %s", _("p-value"), _("unknown"));
+    } else if (ainfo->pvtype == PV_ASY) {
+	pvstr = g_strdup_printf("%s %.4g", _("asymptotic p-value"), ainfo->pval);
+    } else if (ainfo->pvtype == PV_APPROX) {
+	pvstr = g_strdup_printf("%s %.3f", _("approximate p-value"), ainfo->pval);
     } else {
-	int asy = (ainfo->order > 0 || (opt & OPT_G));
-
-	sprintf(pvstr, "%s %.4g",
-		(asy)? _("asymptotic p-value") : _("p-value"),
-		ainfo->pval);
+	pvstr = g_strdup_printf("%s %.4g", _("p-value"), ainfo->pval);
     }
 
     if (*blurb_done == 0) {
@@ -661,7 +742,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     }
 
     if (ainfo->flags & ADF_EG_RESIDS) {
-	/* last step of Engle-Granger test: IS THIS RIGHT? */
+	/* last step of Engle-Granger test */
 	pprintf(prn, "  %s ", _(DF_test_string(0)));
 	pputc(prn, '\n');
 	if (test_down) {
@@ -698,7 +779,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 		DF_model_string(i));
     }
 
-    if (opt & OPT_G) {
+    if (ainfo->flags & ADF_GLS) {
 	strcpy(taustr, "tau");
     } else {
 	sprintf(taustr, "tau_%s(%d)", urcstrs[i], ainfo->niv);
@@ -709,17 +790,19 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	    _("estimated value of (a - 1)"), ainfo->b0,
 	    _("test statistic"), taustr, ainfo->tau);
 
-    if ((opt & OPT_G) && i+1 == UR_TREND) {
+    if ((ainfo->flags & ADF_GLS) && na(ainfo->pval)) {
 	double c[4];
 
-	get_df_gls_ct_cval(ainfo->T, c);
+	sephton_adf_critvals(ainfo, c);
 	pprintf(prn, "\n  %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
 	pprintf(prn, "%g%%     %g%%     %g%%     %g%%\n", 10.0, 5.0, 2.5, 1.0);
 	pprintf(prn, "  %s: %.2f   %.2f   %.2f   %.2f\n",
-		_("Critical values"), c[0], c[1], c[2], c[3]);
+		_("Critical values"), c[3], c[2], c[1], c[0]);
     } else {
 	pprintf(prn, "  %s\n", pvstr);
     }
+
+    g_free(pvstr);
 
     if (!na(dfmod->rho)) {
 	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"),
@@ -764,16 +847,8 @@ static int t_adjust_order (adf_info *ainfo, DATASET *dset,
 	pval = normal_pvalue_2(tstat);
 
 	if (pval > 0.10) {
-#if ADF_DEBUG
-	    pprintf(prn, "\nt_adjust_order: lagged difference not "
-		    "significant at order %d (t = %g)\n\n", k, tstat);
-#endif
 	    gretl_list_delete_at_pos(ainfo->list, k + 2);
 	} else {
-#if ADF_DEBUG
-	    pprintf(prn, "\nt_adjust_order: lagged difference is "
-		    "significant at order %d (t = %g)\n\n", k, tstat);
-#endif
 	    break;
 	}
     }
@@ -847,8 +922,8 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 	return -1;
     }
 
-    if (opt & OPT_G) {
-	/* ADF-GLS */
+    if (ainfo->flags & ADF_GLS) {
+	/* modified criterion wanted */
 	use_MIC = 1;
     }
 
@@ -952,8 +1027,6 @@ static void copy_list_values (int *targ, const int *src)
  * (1 for simple unit-root test).
  * @itv: code: 1, 2, 3, 4 for nc, c, ct, ctt models
  * respectively.
- * @opt: give OPT_G if GLS adjustment was applied in
- * the test from which @tau was obtained.
  *
  * Retrieves the p-value for @tau from the Dickey–Fuller
  * unit-root test or the Engle–Granger cointegration
@@ -962,40 +1035,74 @@ static void copy_list_values (int *targ, const int *src)
  * Returns: p-value, or %NADBL on failure.
  */
 
-double get_urc_pvalue (double tau, int n, int niv, int itv,
-		       gretlopt opt)
+double get_urc_pvalue (double tau, int n, int niv, int itv)
 {
-    char datapath[FILENAME_MAX];
-    double (*mackinnon_pvalue)(double, int, int, int, char *);
+    double (*pvfunc)(double, int, int, int);
     double pval = NADBL;
-    static int nodata;
 
-    if (nodata) {
-	return pval;
-    }
-
-    mackinnon_pvalue = get_plugin_function("mackinnon_pvalue");
-    if (mackinnon_pvalue == NULL) {
-	nodata = 1;
+    pvfunc = get_plugin_function("mackinnon_pvalue");
+    if (pvfunc == NULL) {
         return pval;
     }
 
-    strcpy(datapath, gretl_plugin_path());
-
-    if ((opt & OPT_G) && itv == UR_CONST) {
-	itv = UR_NO_CONST;
-    }
-
-    pval = (*mackinnon_pvalue)(tau, n, niv, itv, datapath);
+    pval = (*pvfunc)(tau, n, niv, itv);
 
 #if ADF_DEBUG
-    fprintf(stderr, "getting pval: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
+    fprintf(stderr, "get_urc_pvalue: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
 	    tau, n, niv, itv, pval);
 #endif
 
-    if (*datapath == '\0') {
-	nodata = 1;
+    return pval;
+}
+
+static double get_mackinnon_pvalue (adf_info *ainfo)
+{
+    int asy = (ainfo->kmax > 0 || ainfo->order > 0);
+    int niv, T = asy ? 0 : ainfo->T;
+    double pval;
+
+    if (ainfo->flags & ADF_EG_RESIDS) {
+	niv = ainfo->niv;
+    } else {
+	niv = 1;
     }
+
+    pval = get_urc_pvalue(ainfo->tau, T, niv, ainfo->det);
+    if (!na(pval)) {
+	ainfo->pvtype = asy ? PV_ASY : PV_FINITE;
+    }
+
+    return pval;
+}
+
+static double get_dfgls_pvalue (adf_info *ainfo)
+{
+    double (*pvfunc)(double, int, int, int, int, int *);
+    double pval = NADBL;
+    int T = ainfo->T;
+    int PQ, trend, err = 0;
+
+    pvfunc = get_plugin_function("dfgls_pvalue");
+    if (pvfunc == NULL) {
+	return pval;
+    }
+
+    if (ainfo->kmax == 0 && ainfo->order > 0) {
+	/* fixed lag order > 0: asymptotic */
+	T = 0;
+    }
+    trend = (ainfo->det == UR_TREND);
+    PQ = (ainfo->flags & ADF_PQ)? 1 : 0;
+
+    pval = (*pvfunc)(ainfo->tau, T, trend, ainfo->kmax, PQ, &err);
+    if (!na(pval)) {
+	ainfo->pvtype = (T == 0)? PV_ASY : PV_APPROX;
+    }
+
+#if ADF_DEBUG
+    fprintf(stderr, "dfgls_pval: tau=%g, T=%d, trend=%d, kmax=%d, PQ=%d: pval=%g\n",
+	    ainfo->tau, T, trend, ainfo->kmax, PQ, pval);
+#endif
 
     return pval;
 }
@@ -1159,13 +1266,12 @@ static int set_deterministic_terms (adf_info *ainfo,
 */
 
 static int reset_detrended_data (adf_info *ainfo,
-				 DATASET *dset,
-				 gretlopt opt)
+				 DATASET *dset)
 {
-    if (ainfo->flags & ADF_OLS_FIRST) {
+    if (ainfo->flags & ADF_PQ) {
 	/* testing down using Perron-Qu */
 	return 1;
-    } else if ((opt & OPT_G) && dset->t1 > 0) {
+    } else if ((ainfo->flags & ADF_GLS) && dset->t1 > 0) {
 	/* GLS + testing down + t1 > 0 */
 	return 1;
     } else {
@@ -1203,12 +1309,10 @@ static int handle_test_down_option (adf_info *ainfo,
     if (!*err) {
 	/* take the given order to be the max */
 	ainfo->kmax = ainfo->order;
-	if (opt & OPT_U) {
+	if (ainfo->flags & ADF_PQ) {
 	    /* --perron-qu */
 	    if (kmethod != k_AIC && kmethod != k_BIC) {
 		*err = E_BADOPT;
-	    } else {
-		ainfo->flags |= ADF_OLS_FIRST;
 	    }
 	}
     }
@@ -1216,7 +1320,7 @@ static int handle_test_down_option (adf_info *ainfo,
     return kmethod;
 }
 
-static int check_adf_options (gretlopt opt)
+static int check_adf_options (adf_info *ainfo, gretlopt opt)
 {
     int err = 0;
 
@@ -1226,8 +1330,15 @@ static int check_adf_options (gretlopt opt)
 	/* options incompatible with --gls: no-const, seasonals,
 	   and quadratic trend
 	*/
-	if (opt & (OPT_N | OPT_D | OPT_R)) {
+	if (!err && (opt & (OPT_N | OPT_D | OPT_R))) {
 	    err = E_BADOPT;
+	}
+	if (!err) {
+	    ainfo->flags |= ADF_GLS;
+	    if (opt & OPT_U) {
+		/* Perron-Qu */
+		ainfo->flags |= ADF_PQ;
+	    }
 	}
     } else if (opt & OPT_U) {
 	/* option dependent on --gls: Perron-Qu modified AIC/BIC */
@@ -1246,13 +1357,14 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     int *biglist = NULL;
     int orig_nvars = dset->v;
     int blurb_done = 0;
+    int demean_mode = 0;
     int test_down = 0;
     int test_num = 0;
     int i, err;
 
     /* (most of) this may have been done already
        but it won't hurt to check here */
-    err = check_adf_options(opt);
+    err = check_adf_options(ainfo, opt);
     if (err) {
 	return err;
     }
@@ -1329,14 +1441,20 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     if (test_opt_not_set(opt)) {
 	/* default model(s) */
-	if (opt & OPT_G) {
+	if (ainfo->flags & ADF_GLS) {
 	    opt |= OPT_C;
 	} else {
 	    opt |= (OPT_C | OPT_T);
 	}
     }
 
-    err = adf_prepare_vars(ainfo, dset, opt, prn);
+    if (ainfo->flags & ADF_PQ) {
+	demean_mode = demean_OLS;
+    } else if (ainfo->flags & ADF_GLS) {
+	demean_mode = demean_GLS;
+    }
+
+    err = adf_prepare_vars(ainfo, dset, opt, demean_mode, prn);
     if (err) {
 	return err;
     }
@@ -1361,7 +1479,6 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	int b0pos = (i > UR_NO_CONST);
 
 	ainfo->det = i;
-
 	if (!test_wanted(ainfo->det, opt)) {
 	    continue;
 	}
@@ -1372,8 +1489,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    copy_list_values(ainfo->list, biglist);
 	}
 
-	if (opt & OPT_G) {
-	    /* DF-GLS: skip deterministics */
+	if (ainfo->flags & ADF_GLS) {
+	    /* skip deterministics */
 	    ainfo->list[0] = ainfo->order + 2;
 	    b0pos = 0;
 	} else {
@@ -1397,10 +1514,9 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
-	    } else if (reset_detrended_data(ainfo, dset, opt)) {
+	    } else if (reset_detrended_data(ainfo, dset)) {
 		/* swap out the detrended data */
-		ainfo->flags &= ~ADF_OLS_FIRST;
-		err = adf_prepare_vars(ainfo, dset, opt, prn);
+		err = adf_prepare_vars(ainfo, dset, opt, demean_GLS, prn);
 	    }
 	}
 
@@ -1433,21 +1549,19 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    ainfo->det = engle_granger_itv(eg_opt);
 	}
 
+	/* obtain p-value if wanted */
 	if (getenv("DFGLS_NO_PVALUE")) {
-	    /* to speed up monte carlo stuff */
+	    /* skip it, to speed up monte carlo stuff */
 	    ainfo->pval = NADBL;
-	} else if ((opt & OPT_G) && ainfo->det == UR_TREND) {
-	    /* DF-GLS with trend: MacKinnon p-values won't work */
-	    ainfo->pval = NADBL;
+	} else if (ainfo->flags & ADF_GLS) {
+	    /* use Cottrell/Komashko or Sephton */
+	    ainfo->pval = get_dfgls_pvalue(ainfo);
 	} else {
-	    /* Use asymp. p-value in augmented case; also the
-	       finite-sample MacKinnon p-values are not correct
-	       in the GLS case.
+	    /* no GLS adjustment applied: use MacKinnon p-values,
+	       either finite sample or asymptotic in the case
+	       of an augmented test
 	    */
-	    int asymp = (ainfo->order > 0 || (opt & OPT_G));
-
-	    ainfo->pval = get_urc_pvalue(ainfo->tau, asymp ? 0 : dfmod.nobs,
-					 ainfo->niv, ainfo->det, opt);
+	    ainfo->pval = get_mackinnon_pvalue(ainfo);
 	}
 
 	if (!(opt & (OPT_Q | OPT_I)) && !(ainfo->flags & ADF_PANEL)) {
@@ -1476,13 +1590,10 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     free(ainfo->list);
     ainfo->list = NULL;
-
     free(ainfo->slist);
     ainfo->slist = NULL;
-
     gretl_matrix_free(ainfo->g);
     ainfo->g = NULL;
-
     free(biglist);
 
     dataset_drop_last_variables(dset, dset->v - orig_nvars);
@@ -1669,6 +1780,7 @@ static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
 static int panel_DF_test (int v, int order, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
+    adf_info ainfo = {0};
     int u0 = dset->t1 / dset->pd;
     int uN = dset->t2 / dset->pd;
     int quiet = (opt & OPT_Q);
@@ -1715,20 +1827,19 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     /* number of units in sample range */
     n = uN - u0 + 1;
 
+    /* initialize @ainfo */
+    ainfo.v = v;
+    ainfo.niv = 1;
+    ainfo.flags = ADF_PANEL;
+
     /* run a Dickey-Fuller test for each unit and record the
        results */
 
     for (i=u0; i<=uN && !err; i++) {
-	adf_info ainfo = {0};
-
+	ainfo.order = order;
 	dset->t1 = i * dset->pd;
 	dset->t2 = dset->t1 + dset->pd - 1;
 	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
-
-	ainfo.v = v;
-	ainfo.order = order;
-	ainfo.niv = 1;
-	ainfo.flags = ADF_PANEL;
 
 	if (!err) {
 	    err = real_adf_test(&ainfo, dset, opt, prn);
@@ -1919,7 +2030,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 		   some points Ng uses floor(T/100.0) in the following
 		   expression, which can give a lower max order.
 		*/
-		int T = dset->t2 - dset->t1 + 1;
+		int T = sample_size(dset);
 
 		ainfo.order = 12.0 * pow(T/100.0, 0.25);
 	    }

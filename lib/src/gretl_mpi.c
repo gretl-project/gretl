@@ -2085,21 +2085,9 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 
 /* MPI timer */
 
-static double mpi_dt0;
-
-void gretl_mpi_stopwatch_init (void)
+double gretl_mpi_time (void)
 {
-    mpi_dt0 = mpi_wtime();
-}
-
-double gretl_mpi_stopwatch (void)
-{
-    double dt1 = mpi_wtime();
-    double x = dt1 - mpi_dt0;
-
-    mpi_dt0 = dt1;
-
-    return x;
+    return mpi_wtime();
 }
 
 /* end MPI timer */
@@ -2417,18 +2405,16 @@ int shm_write_matrix (const gretl_matrix *m,
 	memcpy(pos, &m->cols, sizeof m->cols);
 	pos += sizeof m->cols;
 	memcpy(pos, m->val, vsize);
-    }
 
-    if (ptr != NULL) {
 	munmap(ptr, msize);
     }
+
     if (fd != -1) {
 	close(fd);
     }
     if (err) {
 	shm_unlink(memname);
     }
-
     g_free(memname);
 
     return err;

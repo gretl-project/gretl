@@ -69,11 +69,10 @@ typedef struct name_setter_ name_setter;
 struct name_setter_ {
     int *cancel;
     char *vname;
-    char *descrip;
+    gchar **pdescrip;
     GtkWidget *dlg;
     GtkWidget *name_entry;
     GtkWidget *label_entry;
-    int changed[2];
 };
 
 static gui_varinfo *active_varinfo;
@@ -104,13 +103,11 @@ static void gui_varinfo_init (gui_varinfo *vset, int v)
 }
 
 static void name_setter_init (name_setter *nset, char *vname,
-			      char *descrip, int *cancel)
+			      gchar **pdescrip, int *cancel)
 {
     nset->cancel = cancel;
     nset->vname = vname;
-    nset->descrip = descrip;
-    nset->changed[0] = 0;
-    nset->changed[1] = 0;
+    nset->pdescrip = pdescrip;
     *cancel = 1;
 }
 
@@ -364,19 +361,21 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 {
     gchar *s = NULL;
-    int err = 0;
+    int changed;
 
     *nset->cancel = 0;
 
-    if (nset->changed[0]) {
+    /* series name first */
+    s = entry_get_trimmed_text(nset->name_entry);
+    changed = (s == NULL || strcmp(nset->vname, s));
+
+    if (changed) {
 	/* series name: take care in allowing overwrite of existing
 	   series */
 	int allow_overwrite = 1;
-	int v;
+	int v, err = 0;
 
-	s = entry_get_trimmed_text(nset->name_entry);
 	v = series_index(dataset, s);
-
 	if (v > 0 && v < dataset->v) {
 	    /* there's already a series of this name */
 	    if (series_is_parent(dataset, v)) {
@@ -395,24 +394,26 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 	if (err) {
 	    gtk_editable_select_region(GTK_EDITABLE(nset->name_entry), 0, -1);
 	    gtk_widget_grab_focus(nset->name_entry);
+	    g_free(s);
+	    return; /* highlight the error */
 	} else {
 	    strcpy(nset->vname, s);
+	    g_free(s);
 	}
+    }
 
+    /* then series description */
+    s = entry_get_trimmed_text(nset->label_entry);
+    changed = (s == NULL || strcmp(*nset->pdescrip, s));
+
+    if (changed) {
+	g_free(*nset->pdescrip);
+	*nset->pdescrip = s;
+    } else {
 	g_free(s);
     }
 
-    if (!err && nset->changed[1]) {
-	/* description */
-	s = entry_get_trimmed_text(nset->label_entry);
-	*nset->descrip = '\0';
-	strncat(nset->descrip, s, MAXLABEL - 1);
-	g_free(s);
-    }
-
-    if (!err) {
-	gtk_widget_destroy(nset->dlg);
-    }
+    gtk_widget_destroy(nset->dlg);
 }
 
 static void varinfo_cancel (GtkWidget *w, gui_varinfo *vset)
@@ -681,28 +682,6 @@ static void varinfo_id_changed (GtkSpinButton *b, gui_varinfo *vset)
     int id = gtk_spin_button_get_value_as_int(b);
 
     varinfo_set_field_changed(vset, VSET_IDNUM, id != vset->varnum);
-}
-
-static void nset_text_changed (GtkEditable *e, name_setter *nset)
-{
-    GtkWidget *w = GTK_WIDGET(e);
-    gchar *newstr = entry_get_trimmed_text(w);
-    const char *orig;
-    gboolean s;
-    int i;
-
-    if (w == nset->name_entry) {
-	orig = nset->vname;
-	i = 0;
-    } else {
-	orig = nset->descrip;
-	i = 1;
-    }
-
-    s = (newstr == NULL || strcmp(orig, newstr));
-
-    nset->changed[i] = s;
-    g_free(newstr);
 }
 
 /* get the GTK stock label for @id, with any underscore
@@ -991,7 +970,7 @@ void varinfo_dialog (int varnum)
 	tmp = gtk_check_button_new_with_label(_("Treat this variable "
 						"as discrete"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), d);
-	if (!d && !gretl_isdiscrete(0, dataset->n - 1, dataset->Z[varnum])) {
+	if (!d && !gretl_isdiscrete(0, dataset->n-1, dataset->Z[varnum])) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	}
 	g_signal_connect(tmp, "toggled",
@@ -1048,7 +1027,7 @@ void varinfo_dialog (int varnum)
     gtk_widget_show(vset->dlg);
 }
 
-void name_new_series_dialog (char *vname, char *descrip,
+void name_new_series_dialog (char *vname, gchar **pdescrip,
 			     windata_t *vwin, int *cancel)
 {
     GtkWidget *tmp, *vbox, *hbox;
@@ -1069,7 +1048,7 @@ void name_new_series_dialog (char *vname, char *descrip,
 				 vwin_toplevel(vwin), flags);
 
     make_varname_unique(vname, 0, dataset);
-    name_setter_init(nset, vname, descrip, cancel);
+    name_setter_init(nset, vname, pdescrip, cancel);
 
     g_signal_connect(nset->dlg, "destroy",
 		     G_CALLBACK(free_name_setter), nset);
@@ -1078,68 +1057,48 @@ void name_new_series_dialog (char *vname, char *descrip,
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new (_("Name:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
 
     nset->name_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(nset->name_entry), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(nset->name_entry), VNAMELEN+3);
     gtk_entry_set_text(GTK_ENTRY(nset->name_entry), nset->vname);
-    g_signal_connect(nset->name_entry, "changed",
-		     G_CALLBACK(nset_text_changed), nset);
-
-    gtk_box_pack_start(GTK_BOX(hbox),
-		       nset->name_entry, FALSE, FALSE, 0);
-    gtk_widget_show(nset->name_entry);
+    gtk_box_pack_start(GTK_BOX(hbox), nset->name_entry, FALSE, FALSE, 0);
     gtk_entry_set_activates_default(GTK_ENTRY(nset->name_entry), TRUE);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(nset->dlg));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 
     /* set descriptive string */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Description:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
-
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);
 
     hbox = gtk_hbox_new(FALSE, 5);
     nset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(nset->label_entry), MAXLABEL-1);
-    gtk_entry_set_text(GTK_ENTRY(nset->label_entry), nset->descrip);
-    g_signal_connect(nset->label_entry, "changed",
-		     G_CALLBACK(nset_text_changed), nset);
+    gtk_entry_set_text(GTK_ENTRY(nset->label_entry), *nset->pdescrip);
     gtk_box_pack_start(GTK_BOX(hbox), nset->label_entry, TRUE, TRUE, 5);
-    gtk_widget_show(nset->label_entry);
     gtk_entry_set_activates_default(GTK_ENTRY(nset->label_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 
     /* focus choice of name */
     gtk_widget_grab_focus(nset->name_entry);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(nset->dlg));
 
-    /* Cancel button */
+    /* Buttons: Cancel and OK */
     tmp = cancel_button(hbox);
     g_signal_connect(tmp, "clicked",
 		     G_CALLBACK(name_setter_cancel), nset);
-    gtk_widget_show(tmp);
-
-    /* "OK" button */
     tmp = ok_button(hbox);
     g_signal_connect(tmp, "clicked",
 		     G_CALLBACK(set_series_name_and_desc), nset);
-
     gtk_widget_grab_default(tmp);
-    gtk_widget_show(tmp);
 
-    gtk_widget_show_all(hbox);
     set_dataset_locked(TRUE);
-    gtk_widget_show(nset->dlg);
+    gtk_widget_show_all(nset->dlg);
 }
 
 void maybe_reset_varinfo_dialog (void)

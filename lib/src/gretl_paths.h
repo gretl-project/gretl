@@ -66,7 +66,6 @@ struct ConfigPaths_ {
     char jlpath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
-    char dbhost[64];
     char pngfont[128];
     int no_dotdir;
 };
@@ -226,6 +225,8 @@ int gretl_path_compose (char *targ, int len,
 char *gretl_build_path (char *targ,
 			const gchar *first_element,
 			...);
+
+gretl_bundle *foreign_info (void);
 
 #ifdef WIN32
 

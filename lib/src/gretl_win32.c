@@ -241,7 +241,7 @@ void win32_cli_read_rc (void)
     }
 
     gretl_set_paths(&cpaths);
-    gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+    gretl_www_init(dbproxy, use_proxy);
 
     if (gptheme != NULL) {
 	set_plotstyle(gptheme);
@@ -625,7 +625,7 @@ static gchar *compose_command_line (const char *arg)
     if (getenv("SHELLDEBUG")) {
 	cmdline = g_strdup_printf("%s\\cmd.exe /k %s", cmddir, arg);
     } else {
-	cmdline = g_strdup_printf("%s\\cmd.exe /c %s", cmddir, arg);
+	cmdline = g_strdup_printf("%s\\cmd.exe /s /c \"%s\"", cmddir, arg);
     }
 
     return cmdline;
@@ -854,6 +854,10 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 
     /* includes getting path to cmd.exe */
     cmdline = compose_command_line(cmd);
+#if 0
+    fprintf(stderr, "run_shell_cmd_wait: cmd='%s'\n", cmd);
+    fprintf(stderr, "  cmdline='%s'\n", cmdline);
+#endif
 
     ok = CreateProcess(NULL,
 		       cmdline,
@@ -1840,27 +1844,20 @@ void win32_pprint_nonfinite (PRN *prn, double x, char c)
     }
 }
 
-static LARGE_INTEGER timer_freq;
-static LARGE_INTEGER wt0;
-
-void win32_stopwatch_init (void)
+double win32_get_time (void)
 {
-    QueryPerformanceFrequency(&timer_freq);
-    QueryPerformanceCounter(&wt0);
-}
+    static LARGE_INTEGER timer_freq;
+    LARGE_INTEGER wt;
+    double xt;
 
-double win32_stopwatch (void)
-{
-    LARGE_INTEGER wt1;
-    gint64 dt;
+    if (timer_freq.QuadPart == 0) {
+	QueryPerformanceFrequency(&timer_freq);
+    }
 
-    QueryPerformanceCounter(&wt1);
-    dt = wt1.QuadPart - wt0.QuadPart;
-    dt *= 1000000;
-    dt /= timer_freq.QuadPart;
-    wt0 = wt1;
+    QueryPerformanceCounter(&wt);
+    xt = wt.QuadPart / (double) timer_freq.QuadPart;
 
-    return (double) dt / 1.0e6;
+    return xt;
 }
 
 static int vista_or_higher (void)
@@ -1879,12 +1876,17 @@ static int vista_or_higher (void)
     return ret;
 }
 
-int win32_set_console_charset (const char *package)
+/* Try to ensure that UTF-8 will be handled correctly in the
+   Windows console. Return 0 if it looks OK, non-zero if not.
+*/
+
+int try_for_CP_65001 (void)
 {
     int ttfont = 0;
     int gotinfo = 0;
     HANDLE h;
     int h_ok;
+    int ret = -1;
 
     h = GetStdHandle(STD_OUTPUT_HANDLE);
     h_ok = (h != NULL && h != INVALID_HANDLE_VALUE);
@@ -1942,23 +1944,13 @@ int win32_set_console_charset (const char *package)
 
     if (ttfont && IsValidCodePage(65001)) {
 	SetConsoleOutputCP(65001);
-	bind_textdomain_codeset(package, "UTF-8");
-	set_native_utf8(1);
+	ret = 0; /* OK signal */
 	if (windebug) {
 	    fprintf(fdb, "set console to UTF-8\n");
 	}
-    } else {
-	UINT CP = GetConsoleOutputCP();
-	char console_charset[16] = {0};
-
-	sprintf(console_charset, "CP%d", (int) CP);
-	bind_textdomain_codeset(package, console_charset);
-	if (windebug) {
-	    fprintf(fdb, "console uses %s\n", console_charset);
-	}
     }
 
-    return 0;
+    return ret;
 }
 
 int windows_is_xp (void)

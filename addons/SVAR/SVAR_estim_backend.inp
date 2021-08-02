@@ -2,17 +2,29 @@
 # to re-arrange some of the existing functions
 # (check LF here)
 
+##
+
+function void compatE(bundle *b)
+    # copy the residual matrix U into another matrix 
+    # called E like it was in versions pre-1.95, just
+    # to support older scripts
+    # remove this support at some point in the future
+    
+    matrix b.E = b.U
+end function
+
+
 ###########################
 
 function scalar base_est(bundle *SVARobj)
 
-/*
+   /*
    takes a SVAR object and adds the basic VAR estimates
    to the bundle; returns an errcode (virginity check).
-    */
+   */
 
     scalar step = SVARobj.step
-    err = (step>0)
+    err = step>0
 
     if err
         printf "Base estimation done already!\n"
@@ -24,17 +36,20 @@ function scalar base_est(bundle *SVARobj)
 
         scalar T   = SVARobj.T
 
-        matrix E
+        matrix U
         matrix mreg = SVARobj.X ~ mlag(mY, seq(1,p))
-        matrix olspar = mols(mY[p+1:T,], mreg[p+1:T,], &E)
-        matrix Sigma = (E'E) ./ (T - (n*p + k)) # was:  / df
+        matrix olspar = mols(mY[p+1:T,], mreg[p+1:T,], &U)
+        matrix Sigma = (U'U) ./ (T - (n*p + k)) # was:  / df
 
-        matrix SVARobj.VARpar = transp(olspar[k+1:k+n*p,])
-        matrix SVARobj.mu = (k>0) ? olspar[1:k,] : {} # was: d
+        matrix SVARobj.VARpar = transp(olspar[k+1 : k+n*p,])
+        matrix SVARobj.mu = k>0 ? olspar[1:k,] : {} # was: d
         matrix SVARobj.Sigma = Sigma
-        matrix SVARobj.E = E
+        matrix SVARobj.U = U
         SVARobj.step = 1
-        SVARobj.LL0 = T * (n* log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
+        SVARobj.LL0 = T * (n* log(2*$pi) - 0.5 * log(det(Sigma)) - 0.5)
+        
+        # compatibility for pre-1.95
+        compatE(&SVARobj)
     endif
 
     return err
@@ -59,30 +74,25 @@ function scalar vecm_est(bundle *SVARobj)
 
     # --- preliminary checks
 
-    err = (SVARobj.step > 0)
-
-    if err
+    if SVARobj.step > 0
         printf "Base estimation done already!\n"
-        return err
-    endif
+        return 1
 
-    err = (SVARobj.type != 4)
-
-    if err
+    elif SVARobj.type != 4
         printf "Wrong model type!\n"
-        return err
+        return 1
     endif
 
     # --- grab stuff from the bundle
 
     matrix mY     = SVARobj.Y
-    matrix jbeta   = SVARobj.jbeta
-    matrix jalpha  = SVARobj.jalpha
+    matrix jbeta  = SVARobj.jbeta
+    matrix jalpha = SVARobj.jalpha
     scalar p	  = SVARobj.p
     scalar n	  = SVARobj.n
     scalar k	  = SVARobj.k
     scalar r      = cols(jbeta)
-    scalar dcase   = SVARobj.jcase
+    scalar dcase  = SVARobj.jcase
     scalar ols_al = rows(jalpha) == 0
 
     scalar T      = SVARobj.T
@@ -91,7 +101,7 @@ function scalar vecm_est(bundle *SVARobj)
 
     matrix dY = diff(mY)
     matrix dep = dY[p+1:T,]
-    matrix E = {}
+    matrix U = {}
     ng = n * (p-1) # number coming from Gammas /lagged diffs (p>0 for SVEC)
 
     # deterministics
@@ -119,17 +129,15 @@ function scalar vecm_est(bundle *SVARobj)
     endif
 
     # trim the first rows
-    if rows(mreg)>0
+    if rows(mreg)
         mreg = mreg[p+1:T,]
-        matrix olspar = mols(dep, mreg, &E)
+        matrix olspar = mols(dep, mreg, &U)
     else
         matrix olspar = {}
-        E = dep
+        U = dep
     endif
 
-    df = T - (n*p + k - (n-r)) # FIXME: aren't the unrestr. determ. terms missing?
-    # (but apparently df is never used again...)
-    matrix Sigma = (E'E)./T
+    matrix Sigma = (U'U) ./ T
 
     # --- construct the various matrices required later
 
@@ -152,7 +160,7 @@ function scalar vecm_est(bundle *SVARobj)
         matrix mu = olspar[1,]
         scalar nd = 1
     elif dcase == 4
-        matrix mu =  olspar[1,] |(jbeta[n+1,] * jalpha')
+        matrix mu =  olspar[1,] | (jbeta[n+1,] * jalpha')
         scalar nd = 1
     elif dcase == 5
         matrix mu = olspar[1:2,]
@@ -160,7 +168,7 @@ function scalar vecm_est(bundle *SVARobj)
     endif
 
     if k > 0
-        mu = mu | olspar[nd + 1 : nd + k,] # was: mu ~ olspar[sel,]
+        mu |= olspar[nd + 1 : nd + k,] # was: mu ~ olspar[sel,]
     endif
 
     /*
@@ -179,15 +187,17 @@ function scalar vecm_est(bundle *SVARobj)
     endif
 
     matrix SVARobj.VARpar = A'
-    matrix SVARobj.mu = mu
-    matrix SVARobj.Sigma = Sigma
-    matrix SVARobj.E = E
+    matrix SVARobj.mu     = mu
+    matrix SVARobj.Sigma  = Sigma
+    matrix SVARobj.U      = U
     matrix SVARobj.jalpha = jalpha
     SVARobj.step = 1
-    SVARobj.LL0 = T*(n*log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
+    SVARobj.LL0 = T* (n*log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
 
+    # compatibility for pre-1.95
+    compatE(&SVARobj)
+    
     return err
-
 end function
 
 ##########
@@ -212,11 +222,11 @@ end function
 
 ##########
 
-function scalar loglik(matrix *theta, matrix *dat, scalar modeltype)
+function scalar loglik(const matrix theta, matrices dat, scalar modeltype)
     # modeltype < 0->C; modeltype>=0: AB (contains free elements of a)
-    matrix Sigma = {}
-    matrix Ss = {}
-    unscramble_dat(&dat, &Sigma, &Ss)
+    matrix Sigma = dat[1]
+    matrix Ss = dat[2]
+    
     if modeltype < 0
         matrix C = mat_exp(theta, Ss) # was: , 0)
     else
@@ -256,10 +266,9 @@ function matrix coeffVCV(matrix S, matrix *rhs, matrix *lhs[null])
     matrix IM = !exists(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
     # (should be correct with new InfoMat)
 
-
     # quick-dirty check for singularity
-    if rcond(IM)>1.0e-10
-        matrix iIM = invpd(IM)/$nobs
+    if rcond(IM) > 1.0e-10
+        matrix iIM = invpd(IM) / $nobs
     else
         matrix evec
         l = eigensym(IM, &evec)

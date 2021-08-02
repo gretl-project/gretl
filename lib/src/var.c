@@ -493,7 +493,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
     }
 
     if (!err && (v->ylist == NULL || v->ylist[0] < 1)) {
-        /* first test for at least 2 endog vars */
+        /* first test for at least 1 endog var */
         err = E_ARGS;
     }
 
@@ -769,7 +769,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 
     ci = (code >= VECM_ESTIMATE)? VECM : VAR;
 
-    if ((ci == VAR && order < 1) || (ci == VECM && order < 0)) {
+    if (order < 0) {
         gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
         *errp = E_INVARG;
         return NULL;
@@ -1195,7 +1195,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
         return E_ALLOC;
     }
 
-    B = VAR_coeff_matrix_from_VECM(var);
+    B = VAR_coeff_matrix_from_VECM(var, 0);
     if (B == NULL) {
         gretl_matrix_free(var->F);
         var->F = NULL;
@@ -2718,6 +2718,7 @@ static int *lags_from_laglist (const int *llist, int *err)
  *       if includes %OPT_I, print impulse responses;
  *       if includes %OPT_F, print forecast variance decompositions;
  *       if includes %OPT_D, add seasonal dummies;
+ *       if includes %OPT_M, set min lag for lag-selection.
  *       if includes %OPT_N, do not include a constant.
  *       if includes %OPT_Q, do not show individual regressions.
  *       if includes %OPT_T, include a linear trend.
@@ -2739,6 +2740,12 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
     GRETL_VAR *var = NULL;
     int code = (opt & OPT_L)? VAR_LAGSEL : VAR_ESTIMATE;
     int *lags = NULL;
+
+    if ((opt & OPT_M) && !(opt & OPT_L)) {
+	gretl_errmsg_sprintf("%s: inapplicable option", "--minlag");
+	*err = E_BADOPT;
+	return NULL;
+    }
 
     if (laglist != NULL) {
         lags = lags_from_laglist(laglist, err);
@@ -3152,7 +3159,7 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 
     err = allocate_johansen_extra_matrices(v);
     if (err) {
-        fprintf(stderr, "allocate_extra_matrices: err = %d\n", err);
+        fprintf(stderr, "allocate_johansen_extra_matrices: err = %d\n", err);
         return err;
     }
 
@@ -3172,6 +3179,11 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
         gretl_matrix *R = v->jinfo->RR;
 
         VECM_fill_Y(v, dset, Y);
+
+#if 0
+	gretl_matrix_print(v->X, "X in johansen_stage_1");
+	gretl_matrix_print(Y, "Y  in johansen_stage_1");
+#endif
 
 #if JVAR_USE_SVD
         err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);

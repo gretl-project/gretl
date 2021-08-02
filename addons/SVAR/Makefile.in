@@ -37,11 +37,10 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_main.inp \
 	SVAR_estim_backend.inp \
 	SVAR_signrestr.inp \
-	SVAR_signrestr_utils.inp \
-	SVAR_compatibility_funcs.inp
+	SVAR_signrestr_utils.inp 
 
 SPEC = SVAR.spec
-	
+
 all: $(PKG).gfn pdfdoc
 
 $(PKG).gfn: symlinks $(INP) $(SPEC)
@@ -65,12 +64,17 @@ check: $(PKG).gfn
 install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
-	for f in examples/* ; do \
+	for f in examples/*.inp ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+	for f in examples/*.gdt ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+	for f in examples/SignRestrictions/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SignRestrictions ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SignRestrictions
 
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip

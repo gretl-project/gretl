@@ -122,6 +122,7 @@ enum extra_cmds {
     BFGS_CONFIG,
     COUNTMOD,
     REGLS,
+    REGLS_ADV,
     BWFILTER,
     POLYWEIGHTS,
     EMAFILTER,
@@ -147,6 +148,10 @@ enum extra_cmds {
 };
 
 #define help_role(r) (r >= CMD_HELP && r <= FUNC_HELP_EN)
+
+#define editing_hansl(r) (r == EDIT_HANSL || \
+			  r == EDIT_PKG_CODE ||	\
+			  r == EDIT_PKG_SAMPLE)
 
 #define editing_alt_script(r) (r >= EDIT_R && r <= EDIT_DYNARE)
 
@@ -207,6 +212,8 @@ enum file_ops {
     SAVE_LABELS,
     SAVE_GFN_SPEC,
     SAVE_GFN_ZIP,
+    SAVE_MAP,
+    WRITE_MAP,
     END_SAVE_OTHER, /* marker for end of other user-file saving */
     EDIT_FUNCTIONS,
     SET_PROG,
@@ -337,6 +344,12 @@ enum script_output_policies {
     OUTPUT_POLICY_REPLACE,
     OUTPUT_POLICY_APPEND,
     OUTPUT_POLICY_NEW_WINDOW
+};
+
+enum icon_size {
+    ICON_SIZE_AUTO,
+    ICON_SIZE_SMALL,
+    ICON_SIZE_MEDIUM
 };
 
 #endif /* GRETL_ENUMS_H */

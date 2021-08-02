@@ -219,7 +219,7 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 	strcpy(sinfo->stobs, dbset.stobs);
 	strcpy(sinfo->endobs, dbset.endobs);
 	/* set up name and description */
-	normalize_join_colname(sinfo->varname, rawname, 0, 0);
+	gretl_normalize_varname(sinfo->varname, rawname, 0, 0);
 	descrip = g_strdup_printf("%s: %s", id, s2);
 	series_info_set_description(sinfo, descrip);
 	g_free(descrip);

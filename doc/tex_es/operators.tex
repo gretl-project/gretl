@@ -1,0 +1,173 @@
+\chapter{Operadores}
+\label{chap:operators}
+
+\section{Precedencia}
+
+La tabla~\ref{tab:ops} enumera los operadores disponibles en \app{GRETL} en
+orden de precedencia decreciente: los operadores de la primera fila son los de
+mayor preferencia, los de la segunda fila son los de segunda mayor preferencia,
+y así sucesivamente. Los operadores que están en una misma fila tienen la misma
+preferencia. Cuando operadores sucesivos tienen la misma preferencia, el orden
+general de evaluación es de izquierda a derecha. Las excepciones son las
+operaciones exponencial y multiplicación de una matriz traspuesta. La expresión
+\verb|a^b^c| equivale a \verb|a^(b^c)|, no a \verb|(a^b)^c|, y de forma similar
+\verb|A'B'C'| equivale a \verb|A'(B'(C'))|.
+
+\begin{table}[htbp]
+\caption{Precedencia de los operadores}
+\label{tab:ops}
+\begin{center}
+\begin{tabular}{lllllllll}
+\verb|()| & \verb|[]| & \texttt{.} & \verb|{}| \\
+\texttt{!} & \texttt{++} & \verb|--| & \verb|^| & \verb|'| \\
+\texttt{*} & \texttt{/} & \texttt{\%} & \verb+\+ & \texttt{**} \\
+\texttt{+} & \texttt{-} & \verb|~| & \verb+|+ & \\
+\verb|>| & \verb|<| & \verb|>=| & \verb|<=| & \texttt{..} \\
+\texttt{==} & \texttt{!=} \\
+\verb|&&| \\
+\verb+||+ \\
+\texttt{?:} \\
+\end{tabular}
+\end{center}
+\end{table}
+
+Además de las formas básicas mostradas en la Tabla, diversos operadores tienen
+también una ``forma con punto'' (como en ``\texttt{.+}'' que se lee como
+``punto más''). Estas son versiones al modo de los operadores básicos, pero
+para ser utilizados exclusivamente con matrices; tienen la misma precedencia que
+sus homólogos básicos. Los operadores con punto disponibles son los siguientes:
+
+\begin{center}
+\begin{tabular}{cccccccccc}
+\verb|.^| & \texttt{.*} & \texttt{./} & \texttt{.+} &
+ \texttt{.-} & \verb|.>| & \verb|.<| & \verb|.>=| &
+ \verb|.<=| & \texttt{.=} \\
+\end{tabular}
+\end{center}
+
+Cada operador básico se muestra una vez más en la siguiente lista junto con
+una breve consideración sobre su significado. Aparte de los tres primeros
+conjuntos de símbolos de agrupación, todos los operadores son binarios
+excepto cuando se advierta de lo contrario.
+
+\begin{longtable}{ll}
+\verb|()| & Llamada a una función \\
+\verb|[]|  & Indicación de subíndices \\
+\texttt{.} & Pertenencia a un `bundle' (mira abajo) \\
+\verb|{}|  & Definición de una matriz \\
+\texttt{!} & NO lógico unario \\
+\texttt{++} & Aumento (unario) \\
+\verb|--| & Disminución (unaria) \\
+\verb|^|  & Exponente \\
+\verb|'|  & Transposición matricial (unaria) o multiplicación de traspuesta (binaria) \\
+\texttt{*} & Multiplicación \\
+\texttt{/} & División, ``división a la derecha'' matricial \\
+\texttt{\%} & Módulo \\
+\verb+\+    & ``División a la izquierda'' matricial \\
+\texttt{**} & Producto de Kronecker \\
+\texttt{+} & Suma \\
+\texttt{-} & Resta \\
+\verb|~| & Concatenación matricial horizontal \\
+\verb+|+ & Concatenación matricial vertical \\
+\verb|>| & Mayor que (booleano) \\
+\verb|<| & Menor que (booleano) \\
+\verb|>=| & Mayor o igual que \\
+\verb|<=| & Menor o igual que \\
+\texttt{..} & Rango desde--hasta (al elaborar listas) \\
+\texttt{==} & Test de igualdad booleana \\
+\texttt{!=} & Test de desigualdad booleana \\
+\verb|&&| & Y lógico \\
+\verb+||+ & O lógico \\
+\texttt{?:} & Expresión condicional \\
+\end{longtable}
+
+Interpretar ``\texttt{.}'' como el operador de pertenencia  a un `bundle'
+se limita al caso en que está inmediatamente precedido por el identificador
+de un bundle, y seguido inmediatamente por un identificador válido (clave).
+
+Puedes encontrar los detalles sobre la utilización de los operadores
+relacionados con matrices (incluido el operador punto) en el capítulo sobre
+matrices en la \textit{Guía de Usuario de GRETL}.
+
+\section{Asignación}
+
+Los operadores mencionados más arriba están todos ideados para ser utilizados
+en el lado derecho de una expresión que asigna un valor a una variable (o que
+simplemente calcula y presenta un valor ---consulta la instrucción \texttt{eval}).
+Además, tienes el propio operador de asignación, ``\texttt{=}''. En efecto,
+este tiene la precedencia más baja de todas: se evalúa todo el lado derecho
+de la expresión antes de que tenga lugar la asignación.
+
+Además del ``\texttt{=}'' plano, dispones de diversas versiones ``inflexionadas''
+de asignación. Estas se pueden utilizar solo cuando la variable del lado izquierdo
+ya está definida. La asignación inflexionada produce un valor que es una
+función del valor previo en la izquierda y del valor calculado en la derecha.
+Esos operadores se forman anteponiendo un símbolo de operador normal al signo igual.
+Por ejemplo,
+%
+\begin{code}
+y += x
+\end{code}
+%
+El nuevo valor asignado a \texttt{y} por el enunciado de arriba es el valor
+previo de \texttt{y} más \texttt{x}. Los otros operadores inflexionados
+disponibles, que funcionan de un modo exactamente similar, son los
+siguientes:
+
+\begin{center}
+\begin{tabular}{ccccccc}
+\texttt{-=} & \texttt{*=} & \texttt{/=} & \verb|%=| & 
+  \verb|^=| & \verb|~=| & \verb+|=+ \\
+\end{tabular}
+\end{center}
+
+Además, para las matrices se proporciona una forma especial de asignación
+inflexionada. Supongamos que la matriz \texttt{M} es $2 \times 2$. Si ejecutas
+\texttt{M = 5}, esto tiene el efecto de sustituir \texttt{M} por una matriz
+$1 \times 1$ con un único elemento 5. Pero si indicas \texttt{M .= 5}, esto
+asigna el valor 5 a todos los elementos de \texttt{M} sin modificar la
+dimensión de esta.
+
+\section{Aumento y disminución}
+
+Los operadores unarios \texttt{++} y \verb|--| siguen a su operando,
+\footnote{El lenguaje C de programación también admite versiones de \texttt{++}
+  y \verb|--| como prefijos, que aumentan o disminuyen su operando
+  antes de proporcionar su valor. En \app{GRETL} únicamente se admite
+  la forma como sufijo.}  que debe ser una variable de tipo escalar.
+Su forma de utilización más simple es la de las expresiones aisladas, como
+%
+\begin{code}
+j++  # abreviatura para j = j + 1
+k--  # abreviatura para k = k - 1
+\end{code}
+%
+Sin embargo, también se pueden integrar en expresiones más complejas,
+en cuyo caso primero proporcionan el valor original de la variable en
+cuestión, y después tienen el efecto secundario de aumentar o disminuir
+el valor de la variable. Por ejemplo:
+%
+\begin{code}
+scalar i = 3
+k = i++
+matrix M = zeros(10, 1)
+M[i++] = 1
+\end{code}
+%
+Después de la segunda linea, \texttt{k} tiene el valor 3 y \texttt{i}
+tiene el valor 4. La última linea asigna el valor 1 al elemento 4 de la
+matriz \texttt{M} y establece que \texttt{i} = 5.
+
+\textit{Advertencia}: Como en el lenguaje C de programación, el operador
+unario de incremento o disminución no se debe aplicar a una variable
+junto con una referencia normal a la misma variable, en un único enunciado.
+Esto es debido a que la orden de evaluación no está garantizada, dando
+lugar a cierta ambigüedad. Considera lo siguiente:
+%
+\begin{code}
+M[i++] = i # ¡No hagas esto!
+\end{code}
+%
+Esto se supone que asigna el valor de \texttt{i} a \texttt{M[i]}, ahora
+bien, ¿es el valor original o el aumentado? Actualmente, esto no está
+definido.

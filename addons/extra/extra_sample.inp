@@ -40,6 +40,10 @@ eval eliminate(vec(I(3)))
 print "---- duplicate -----"
 eval duplicate(vech(I(3)))
 
+print "---- combinations -----"  ##
+matrix bucket = {1, 3, 5, 6, 7}
+eval combinations(bucket, 3)
+
 print "---- scores2x2 -----"##
 eval scores2x2({24, 4; 12, 9})
 

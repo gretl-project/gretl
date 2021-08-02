@@ -66,8 +66,7 @@ void transform_arma_const (double *b, arma_info *ainfo)
 
 static int init_transform_const (arma_info *ainfo)
 {
-    return ainfo->ifc && arma_exact_ml(ainfo) &&
-	!arma_cml_init(ainfo);
+    return ainfo->ifc && arma_exact_ml(ainfo);
 }
 
 void maybe_set_yscale (arma_info *ainfo)
@@ -114,9 +113,7 @@ void maybe_set_yscale (arma_info *ainfo)
     }
 }
 
-#define apply_yscaling(a,x) (arma_exact_ml(a) && \
-			     !arma_cml_init(a) && \
-			     !na(x))
+#define apply_yscaling(a,x) (arma_exact_ml(a) && !na(x))
 
 #define HR_MINLAGS 16
 
@@ -532,7 +529,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	    nv, T);
 #endif
 
-    if (ainfo->yscale != 1.0 && !arma_cml_init(ainfo)) {
+    if (ainfo->yscale != 1.0) {
 	y = prescale_y(y, ainfo, dset->n);
 	if (y == NULL) {
 	    err = E_ALLOC;

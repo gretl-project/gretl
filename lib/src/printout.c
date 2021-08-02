@@ -900,7 +900,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
  * to print column percentages, %OPT_Z to display zero entries,
  * %OPT_T to print as TeX (LaTeX), %OPT_N to omit marginal
  * totals, %OPT_B to bold-face counts where the row and
- * column values are equal (TeX only).
+ * column values are equal (TeX only), %OPT_S to record
+ * Pearson test result.
  * @prn: gretl printing struct.
  *
  * Print crosstab to @prn.
@@ -1294,8 +1295,8 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 
     if (tex) {
 	pputs(prn, "\\begin{center}\n");
-	pprintf(prn, "%s \\\\\n", A_("Cross-equation VCV for residuals"));
-	pprintf(prn, "(%s)\n\n", A_("correlations above the diagonal"));
+	pprintf(prn, "%s \\\\\n", _("Cross-equation VCV for residuals"));
+	pprintf(prn, "(%s)\n\n", _("correlations above the diagonal"));
 	pputs(prn, "\\[\n\\begin{array}{");
 	for (j=0; j<cols; j++) {
 	    pputc(prn, 'c');
@@ -1340,10 +1341,10 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
     if (!na(ldet)) {
 	if (tex) {
 	    if (ldet < 0) {
-		pprintf(prn, "\n%s = ", A_("log determinant"));
+		pprintf(prn, "\n%s = ", _("log determinant"));
 		pprintf(prn, "$-$%g\n", -ldet);
 	    } else {
-		pprintf(prn, "\n%s = %g\n", A_("log determinant"), ldet);
+		pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
 	    }
 	} else {
 	    pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
@@ -1568,12 +1569,39 @@ static int fit_resid_head (const FITRESID *fr,
     return ywidth;
 }
 
+static const char *get_series_name (const DATASET *dset, int i,
+				    gchar **altname, int debug)
+{
+    gchar *showname = NULL;
+    const char *sname = dset->varname[i];
+    const char *lname;
+    const char *ret;
+
+    if (debug) {
+	ret = sname;
+    } else if (series_is_listarg(dset, i, &lname)) {
+	if (lname != NULL) {
+	    showname = g_strdup_printf("%s.%s", lname, sname);
+	    *altname = showname;
+	    ret = showname;
+	} else {
+	    ret = "[masked]";
+	}
+    } else {
+	ret = sname;
+    }
+
+    return ret;
+}
+
 /* prints a heading with the names of the variables in @list */
 
 static void varheading (const int *list, int leader,
 			const int *wid, const DATASET *dset,
 			char delim, PRN *prn)
 {
+    const char *name;
+    gchar *tmp;
     int i, vi;
 
     if (delim) {
@@ -1600,7 +1628,10 @@ static void varheading (const int *list, int leader,
 	bufspace(leader, prn);
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    pprintf(prn, "%*s", wid[i], dset->varname[vi]);
+	    tmp = NULL;
+	    name = get_series_name(dset, vi, &tmp, 0);
+	    pprintf(prn, "%*s", wid[i], name);
+	    g_free(tmp);
 	}
 	pputs(prn, "\n\n");
     }
@@ -2050,9 +2081,10 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
     int fd = gretl_function_depth();
     int debug = (opt & OPT_D);
     const char *name;
+    gchar *tmp;
     int len, maxlen = 0;
-    int nv = 4;
-    int i, j, n = 0;
+    int nv = 4, n = 0;
+    int i, j;
 
     if (dset->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
@@ -2061,17 +2093,13 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 
     for (i=0; i<dset->v; i++) {
 	if (show_series(i, fd, dset, debug)) {
-	    if (debug) {
-		name = dset->varname[i];
-	    } else if (series_is_listarg(dset, i)) {
-		name = "[masked]";
-	    } else {
-		name = dset->varname[i];
-	    }
+	    tmp = NULL;
+	    name = get_series_name(dset, i, &tmp, debug);
 	    len = strlen(name);
 	    if (len > maxlen) {
 		maxlen = len;
 	    }
+	    g_free(tmp);
 	    n++;
 	}
     }
@@ -2089,13 +2117,8 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
     j = 1;
     for (i=0; i<dset->v; i++) {
 	if (show_series(i, fd, dset, debug)) {
-	    if (debug) {
-		name = dset->varname[i];
-	    } else if (series_is_listarg(dset, i)) {
-		name = "[masked]";
-	    } else {
-		name = dset->varname[i];
-	    }
+	    tmp = NULL;
+	    name = get_series_name(dset, i, &tmp, debug);
 	    if (debug) {
 		pprintf(prn, "%3d) %-*s level %d\n", i, maxlen + 2,
 			name, series_get_stack_level(dset, i));
@@ -2105,6 +2128,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 		    pputc(prn, '\n');
 		}
 	    }
+	    g_free(tmp);
 	    j++;
 	}
     }
@@ -2127,7 +2151,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 
 void maybe_list_series (const DATASET *dset, PRN *prn)
 {
-    if (gretl_messages_on()) {
+    if (gretl_messages_on() && !gretl_looping() && dset->v < 51) {
 	list_series(dset, OPT_NONE, prn);
     }
 }
@@ -2166,8 +2190,8 @@ static int print_listed_objects (const char *s,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    user_var *uv;
-    char *name;
+    const char *syms = "=+-/*<>?|~^!%&.,:;\\'[({$";
+    char *name = NULL;
     int err = 0;
 
     if (!strcmp(s, "$sysinfo")) {
@@ -2179,8 +2203,14 @@ static int print_listed_objects (const char *s,
 	return err;
     }
 
+    if (strcspn(s, syms) < strlen(s)) {
+	/* try treating as expression to be evaluated */
+	return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
+    }
+
     while ((name = gretl_word_strdup(s, &s, OPT_S | OPT_U, &err)) != NULL) {
-	uv = get_user_var_by_name(name);
+	user_var *uv = get_user_var_by_name(name);
+
 	if (uv == NULL) {
 	    err = E_UNKVAR;
 	    break;
@@ -2397,14 +2427,35 @@ static int *column_widths_from_list (const int *list,
     return ret;
 }
 
-#define BMAX 5
+static void print_plain_numbers (int *list, const DATASET *dset,
+				 PRN *prn)
+{
+    int i, vi, t;
 
-/* print the series referenced in 'list' by observation */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (na(dset->Z[vi][t])) {
+		pputs(prn, "NA");
+	    } else {
+		pprintf(prn, "%.8g", dset->Z[vi][t]);
+	    }
+	    if (i < list[0]) {
+		pputc(prn, ' ');
+	    } else {
+		pputc(prn, '\n');
+	    }
+	}
+    }
+}
+
+/* print the series referenced in @list by observation */
 
 static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, k, t, nrem;
     int *colwidths = NULL;
     int obslen = 0;
@@ -2496,6 +2547,8 @@ static int print_by_obs (int *list, const DATASET *dset,
 static int print_by_var (const int *list, const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
+    const char *name;
+    gchar *tmp;
     int i, vi;
 
     pputc(prn, '\n');
@@ -2506,7 +2559,10 @@ static int print_by_var (const int *list, const DATASET *dset,
 	    continue;
 	}
 	if (list[0] > 1) {
-	    pprintf(prn, "%s:\n", dset->varname[vi]);
+	    tmp = NULL;
+	    name = get_series_name(dset, vi, &tmp, 0);
+	    pprintf(prn, "%s:\n", name);
+	    g_free(tmp);
 	}
 	print_var_smpl(vi, dset, prn);
 	pputc(prn, '\n');
@@ -2543,21 +2599,22 @@ static int midas_print_list (const int *list,
 /**
  * printdata:
  * @list: list of variables to print.
- * @mstr: optional string holding names of non-series objects to print.
+ * @ostr: optional string holding names of non-series objects to print.
  * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
  * list in original time-series order; if OPT_R print specified range
- * of object.
+ * of object; if OPT_X (relevant only for series), print the data
+ * by observation without any header or observation info.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
- * defined sample range.
+ * defined sample range, or the objects named in @ostr.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int printdata (const int *list, const char *mstr,
+int printdata (const int *list, const char *ostr,
 	       DATASET *dset, gretlopt opt,
 	       PRN *prn)
 {
@@ -2567,14 +2624,14 @@ int printdata (const int *list, const char *mstr,
 
     if (list != NULL && list[0] == 0) {
 	/* explicitly empty list given */
-	if (mstr == NULL) {
+	if (ostr == NULL) {
 	    return 0; /* no-op */
 	} else {
 	    goto endprint;
 	}
     } else if (list == NULL) {
 	/* no list given */
-	if (mstr == NULL && dset != NULL) {
+	if (ostr == NULL && dset != NULL) {
 	    int nvars = 0;
 
 	    plist = full_var_list(dset, &nvars);
@@ -2635,7 +2692,9 @@ int printdata (const int *list, const char *mstr,
 	}
 	dset->t1 = save_t1 + start;
 	dset->t2 = save_t1 + stop;
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2643,7 +2702,9 @@ int printdata (const int *list, const char *mstr,
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
     } else {
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2652,8 +2713,8 @@ int printdata (const int *list, const char *mstr,
 
  endprint:
 
-    if (!err && mstr != NULL) {
-	err = print_listed_objects(mstr, dset, opt, prn);
+    if (!err && ostr != NULL) {
+	err = print_listed_objects(ostr, dset, opt, prn);
     }
 
     free(plist);
@@ -2666,6 +2727,7 @@ int print_series_with_format (const int *list,
 			      char fmt, int digits,
 			      PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, v, t, k, nrem = 0;
     int *colwidths, blist[BMAX+1];
     char obslabel[OBSLEN];
@@ -2990,7 +3052,8 @@ int print_data_in_columns (const int *list, const int *obsvec,
 }
 
 int print_fcast_stats_matrix (const gretl_matrix *m,
-			      int T, PRN *prn)
+			      int T, gretlopt opt,
+			      PRN *prn)
 {
     const char *strs[] = {
 	N_("Mean Error"),
@@ -2998,11 +3061,12 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
 	N_("Mean Absolute Percentage Error"),
-	N_("Theil's U"),
+	N_("Theil's U1"),
 	N_("Bias proportion, UM"),
 	N_("Regression proportion, UR"),
 	N_("Disturbance proportion, UD")
     };
+    const char *U2_str = N_("Theil's U2");
     double x;
     int i, n, nmax = 0;
     int len, err = 0;
@@ -3028,9 +3092,12 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
     pputs(prn, "\n\n");
 
     for (i=0; i<len; i++) {
+	const char *si;
+
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[i]), nmax), _(strs[i]), x);
+	    si = (i == 5 && (opt & OPT_T))? U2_str : strs[i];
+	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(si), nmax), _(si), x);
 	}
     }
     pputc(prn, '\n');
@@ -3055,7 +3122,7 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 		       opt, &err);
 
     if (!err) {
-	err = print_fcast_stats_matrix(m, n_used, prn);
+	err = print_fcast_stats_matrix(m, n_used, opt, prn);
     }
 
     gretl_matrix_free(m);
@@ -3069,6 +3136,7 @@ int text_print_fit_resid (const FITRESID *fr,
 			  const DATASET *dset,
 			  PRN *prn)
 {
+    gretlopt fc_opt = OPT_NONE;
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
@@ -3130,7 +3198,10 @@ int text_print_fit_resid (const FITRESID *fr,
 		     "2.5 standard errors\n"));
     }
 
-    fr_print_fc_stats(fr, OPT_NONE, prn);
+    if (dataset_is_time_series(dset)) {
+	fc_opt |= OPT_T;
+    }
+    fr_print_fc_stats(fr, fc_opt, prn);
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	err = plot_fcast_errs(fr, NULL, dset, OPT_NONE);
@@ -3267,7 +3338,12 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     pputc(prn, '\n');
 
     if (!(opt & OPT_N)) {
-	fr_print_fc_stats(fr, OPT_D, prn);
+	gretlopt fc_opt = OPT_D;
+
+	if (dataset_is_time_series(dset)) {
+	    fc_opt |= OPT_T;
+	}
+	fr_print_fc_stats(fr, fc_opt, prn);
     }
 
     /* do we really want a plot for non-time series? */

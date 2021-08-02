@@ -574,23 +574,24 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 	    "initial ldv = Z[%d][%d] = %g\n", i, t, lag, i, p, ldv);
 #endif
 
-    if (fc->method != FC_STATIC) {
-#if AR_DEBUG
-	fprintf(stderr, "fcast_get_ldv (non-static): p = %d\n", p);
-#endif
-	if (fc->method == FC_DYNAMIC && p >= 0) {
-	    if (!na(fc->yhat[p])) {
-		ldv = fc->yhat[p];
+    if (fc->method != FC_STATIC && p >= 0) {
+	double yhat = fc->yhat[p];
+	int fc_ok = !na(yhat);
+
+	if (fc->method == FC_DYNAMIC) {
+	    if (fc_ok) {
+		ldv = yhat;
 	    }
-	} else if (fc->method == FC_AUTO && p >= 0) {
+	} else if (fc->method == FC_AUTO) {
 	    if (t > fc->model_t2 + lag || na(ldv)) {
-		ldv = fc->yhat[p];
-#if AR_DEBUG
-		fprintf(stderr, "fcast_get_ldv (FC_AUTO): "
-			"reset ldv = yhat[%d] = %g\n", p, ldv);
-#endif
+		if (fc_ok) {
+		    ldv = yhat;
+		}
 	    }
 	}
+#if AR_DEBUG
+	fprintf(stderr, "fcast_get_ldv (non-static): using %g\n", ldv);
+#endif
     }
 
     return ldv;
@@ -722,7 +723,7 @@ static void special_print_fc_stats (gretl_matrix *fc,
     fcs = forecast_stats(y, f, 0, fc->rows - 1, &n_used,
 			 OPT_O, &err);
     if (fcs != NULL) {
-	print_fcast_stats_matrix(fcs, n_used, prn);
+	print_fcast_stats_matrix(fcs, n_used, OPT_NONE, prn);
 	gretl_matrix_free(fcs);
     }
 }
@@ -2675,8 +2676,7 @@ static int get_forecast_method (Forecast *fc,
 
     /* do setup for possible lags of the dependent variable,
        unless OPT_S for "static" has been given */
-    if (dataset_is_time_series(dset) && !(opt & OPT_S) &&
-	pmod->ci != ARMA) {
+    if (dataset_is_time_series(dset) && !(opt & OPT_S) && pmod->ci != ARMA) {
 	process_lagged_depvar(pmod, dset, &fc->dvlags);
     }
 
@@ -2710,6 +2710,13 @@ static int get_forecast_method (Forecast *fc,
     } else if ((dyn_ok || dyn_errs_ok) && fc->t2 > pmod->t2) {
 	/* do dynamic f'cast out of sample */
 	fc->method = FC_AUTO;
+    }
+
+    if (fc->method == FC_DYNAMIC || fc->method == FC_AUTO) {
+	if (fc->t1 > fc->model_t2 + 1) {
+	    /* we'll probably need intervening forecasts */
+	    fc->t1 = fc->model_t2 + 1;
+	}
     }
 
     return err;
@@ -3599,9 +3606,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     int os_case = 0;
     int err;
 
-    if (pmod->ci == ARBOND ||
-	pmod->ci == HECKIT ||
-	pmod->ci == DURATION) {
+    if (pmod->ci == HECKIT || pmod->ci == DURATION) {
 	/* FIXME */
 	return E_NOTIMP;
     }

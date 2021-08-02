@@ -60,6 +60,7 @@ typedef enum {
     ML_OP,
     ML_QML,
     ML_BW,
+    ML_HAC,
     ML_VCVMAX
 } MLVCVType;
 
@@ -98,7 +99,6 @@ struct VCVInfo_ {
 
 #define MODEL_COMMAND(c) (c == AR || \
                           c == AR1 || \
-                          c == ARBOND || \
                           c == ARCH || \
                           c == ARMA || \
 			  c == DPANEL ||   \
@@ -157,8 +157,7 @@ struct VCVInfo_ {
                       c == OLS || \
                       c == WLS)
 
-#define ASYMPTOTIC_MODEL(c) (c == ARBOND || \
-                             c == ARMA || \
+#define ASYMPTOTIC_MODEL(c) (c == ARMA || \
 			     c == DPANEL ||   \
 			     c == DURATION || \
                              c == GARCH || \
@@ -173,6 +172,8 @@ struct VCVInfo_ {
                              c == PROBIT || \
                              c == TOBIT || \
                              c == BIPROBIT)
+
+#define EQN_SYSTEM_COMMAND(c) (c == VAR || c == VECM || c == SYSTEM)
 
 /* model where the specification is not based on a list
    of variables */
@@ -259,7 +260,7 @@ void gretl_model_free_on_exit (MODEL *pmod);
 
 void display_model_data_items (const MODEL *pmod);
 
-int bundlize_model_data_items (const MODEL *pmod, void *ptr);
+int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b);
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
 					  GretlType type, size_t size, 
@@ -317,9 +318,9 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 				  const DATASET *dset,
 				  int i, char *targ);
 
-void *gretl_model_get_param_names (const MODEL *pmod,
-				   const DATASET *dset,
-				   int *err);
+gretl_array *gretl_model_get_param_names (const MODEL *pmod,
+					  const DATASET *dset,
+					  int *err);
 
 int gretl_model_get_param_number (const MODEL *pmod, 
 				  const DATASET *dset,
@@ -379,7 +380,7 @@ gretl_matrix *gretl_model_ahat_vec (const MODEL *pmod, int *err);
 
 int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos);
 
-int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos);
+int gretl_model_get_coeff_separator (const MODEL *pmod, char **ps, int *ppos);
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 

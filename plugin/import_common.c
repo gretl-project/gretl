@@ -19,10 +19,6 @@
 
 #include <errno.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# include "gtk_compat.h"
-#endif
-
 #if GTK_MAJOR_VERSION >= 3
 # include <gdk/gdkkeysyms-compat.h>
 #else
@@ -504,23 +500,17 @@ static void colspin_changed (GtkEditable *ed, GtkWidget *w)
 #ifdef EXCEL_IMPORTER
 # ifndef WIN32
 
-void infobox (const char *template, ...)
+static void debug_infobox (const gchar *msg, GtkWidget *parent)
 {
     GtkWidget *dialog;
-    char msg[MAXLEN];
-    va_list args;
 
-    va_start(args, template);
-    vsnprintf(msg, MAXLEN, template, args);
-    va_end(args);
-
-    dialog = gtk_message_dialog_new(NULL,
+    dialog = gtk_message_dialog_new(GTK_WINDOW(parent),
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_INFO,
 				    GTK_BUTTONS_CLOSE,
 				    "%s",
 				    msg);
-    gtk_dialog_run(GTK_DIALOG (dialog));
+    gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }
 
@@ -533,7 +523,11 @@ static void debug_callback (GtkWidget *w, wbook *book)
     }
 
     if (book_debugging(book) && !done) {
-	infobox(_("Sending debugging output to %s"), "stderr");
+	gchar *msg = g_strdup_printf(_("Sending debugging output to %s"),
+				     "stderr");
+
+	debug_infobox(msg, gtk_widget_get_toplevel(w));
+	g_free(msg);
 	done = 1;
     }
 }

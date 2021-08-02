@@ -36,14 +36,14 @@ enum {
     ST_ALLDBLS = 1 << 2
 };
 
-struct _series_table {
+struct series_table_ {
     int n_strs;       /* number of strings in table */
     char **strs;      /* saved strings */
     GHashTable *ht;   /* hash table for quick lookup */
     int flags;        /* status flags (above) */
 };
 
-struct _gretl_string_table {
+struct gretl_string_table_ {
     int *cols_list;       /* list of included columns */
     series_table **cols;  /* per-column tables (see above) */
     char *extra;          /* extra information, if any */
@@ -895,7 +895,8 @@ static built_in_string built_ins[] = {
     { "tramodir", NULL },
     { "seats",    NULL },
     { "pkgdir",   NULL },
-    { "lang",     NULL }
+    { "lang",     NULL },
+    { "logfile",  NULL }
 };
 
 void builtin_strings_cleanup (void)
@@ -1114,9 +1115,9 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
 
 /* returns a gretl_array of strings on success */
 
-void *retrieve_date_strings (const gretl_vector *v,
-			     const DATASET *dset,
-			     int *err)
+gretl_array *retrieve_date_strings (const gretl_vector *v,
+				    const DATASET *dset,
+				    int *err)
 {
     gretl_array *ret = NULL;
     char *s = NULL;
@@ -1232,11 +1233,13 @@ static gchar *regular_file_get_content (const char *fname,
 char *retrieve_file_content (const char *fname, const char *codeset,
 			     int *err)
 {
-    char *content = NULL;
+    char *ret = NULL;
+    gchar *content = NULL;
     size_t len = 0;
+    gssize sz;
 
     if (fname == NULL || *fname == '\0') {
-	*err = E_DATA;
+	*err = E_INVARG;
     } else if (is_web_resource(fname)) {
 #ifdef USE_CURL
 	content = retrieve_public_file_as_buffer(fname, &len, err);
@@ -1256,16 +1259,19 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	}
     }
 
-    if (content != NULL && !g_utf8_validate(content, len, NULL)) {
+    sz = (len > 0)? len : -1;
+    if (content != NULL && !g_utf8_validate(content, sz, NULL)) {
 	content = recode_content(content, codeset, err);
     }
 
-    if (*err && content != NULL) {
-	free(content);
-	content = NULL;
+    if (content != NULL) {
+	if (*err == 0) {
+	    ret = gretl_strdup(content);
+	}
+	g_free(content);
     }
 
-    return content;
+    return ret;
 }
 
 /* inserting string into format portion of (s)printf command:

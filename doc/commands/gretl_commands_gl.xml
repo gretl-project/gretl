@@ -175,81 +175,108 @@
 
     <description>
       <para context="gui">
-	Esta instrución necesita que indiques o nivel de retardos cun número enteiro;
-	se o nivel é cero, execútase a proba estándar de Dickey&ndash;Fuller (non
-	ampliada). Con ela calcúlase un conxunto de probas de Dickey&ndash;Fuller
-	sobre a(s) variable(s) do argumento, sendo a hipótese nula a existencia dunha
-	raíz unitaria. (Agora ben, cando escolles a opción 'difference', calcúlase a
-	primeira diferenza da(s) variable(s) antes de facer a proba, e a discusión de
-	abaixo debes de entendela como referida á(s) variable(s) transformada(s).)
+	Esta instrución necesita que indiques o nivel de retardos cun número
+	enteiro; se o nivel é cero, execútase a proba estándar (non ampliada)
+	de Dickey&ndash;Fuller. Calcúlase unha ou máis das probas de
+	Dickey&ndash;Fuller sobre a(s) variable(s) do argumento, sendo a
+	hipótese nula a existencia dunha raíz unitaria. (Agora ben, cando
+	escolles a opción 'difference', calcúlase a primeira diferenza da(s)
+	variable(s) antes de facer a proba, e a discusión de abaixo debes de
+	entendela como referida á(s) variable(s) transformada(s).)
       </para>
 
       <para context="cli">
-	As opcións que se amosan abaixo e a discusión que segue, correspóndense
-	co uso da instrución <lit>adf</lit> con datos de series temporais típicos.
-	Para utilizar esta instrución con datos de panel, mira máis abaixo.
+	As opcións que se amosan máis abaixo e a discusión que segue,
+	se corresponden principalmente co uso da instrución <lit>adf</lit>
+	con datos de típicas series temporais. Para utilizar esta instrución
+	con datos de panel, mira máis abaixo a sección titulada
+	<quote>Datos de panel</quote>.
       </para>
 
       <para context="cli">
-	Calcula un conxunto de probas de Dickey&ndash;Fuller sobre cada unha
-	das variables do argumento, sendo a hipótese nula a existencia dunha
-	raíz unitaria. (Agora ben, cando escolles a opción <opt>difference</opt>,
-	calcúlase a primeira diferenza da(s) variable(s) antes de facer a proba,
-	e a discusión de abaixo debes de entendela como referida á(s) variable(s)
-	transformada(s).)
+	Esta instrución calcula un conxunto de probas de Dickey&ndash;Fuller
+	sobre cada unha das variables do argumento, sendo a hipótese nula a
+	existencia dunha raíz unitaria. (Agora ben, cando escolles a opción
+	<opt>difference</opt>, calcúlase a primeira diferenza da(s) variable(s)
+	antes de facer a proba, e a discusión de abaixo debes de entendela
+	como referida á(s) variable(s) transformada(s).)
       </para>
 
       <para context="cli">
 	Por defecto, amósanse dúas variantes da proba: unha baseada nunha
 	regresión que utiliza unha constante, e outra que utiliza unha
-	constante máis unha tendencia linear. Podes controlar as variantes que
-	se presentan especificando un ou máis dos indicadores de opción.
+	constante máis unha tendencia linear. Podes controlar as variantes
+	que se presentan especificando un ou máis dos indicadores de
+	opción: <opt>nc</opt>, <opt>c</opt>, <opt>ct</opt>, ou <opt>ctt</opt>.
       </para>
 
       <para context="cli">
-	Podes utilizar a opción <opt>gls</opt> xunto con algunha das dúas
-	opcións <opt>c</opt> e <opt>ct</opt> (o modelo con constante, ou o
-	modelo con constante máis tendencia). O efecto desta opción é que a
-	detracción da media ou da tendencia da variable que se quere probar, faise
-	utilizando o procedemento de Mínimos Cadrados Xeneralizados suxerido
-	por <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
+	Podes utilizar a opción <opt>gls</opt> xunto con algunha das dúas opcións
+	<opt>c</opt> e <opt>ct</opt> (con constante, e con constante máis tendencia).
+	O efecto desta opción é que a serie que se quere probar, detráese da media
+	ou da tendencia usando o procedemento de Mínimos Cadrados Xeneralizados
+	proposto por <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
 	que proporciona unha proba de maior potencia que a aproximación
-	estándar de Dickey&ndash;Fuller. Esta opción non é compatible
-	con <opt>nc</opt>, <opt>ctt</opt> nin
-	<opt>seasonals</opt>.
+	estándar de Dickey&ndash;Fuller. Esta opción non é compatible con
+	<opt>nc</opt>, <opt>ctt</opt> nin <opt>seasonals</opt>.
       </para>
 
       <para>
-	En tódolos casos, a variable dependente é a primeira diferenza da
-	variable especificada (<math>y</math>) e a variable independente clave
-	é o primeiro retardo de <math>y</math>. O modelo constrúese de xeito que
-	o coeficiente da variable <math>y</math> retardada, é igual á raíz en
-	cuestión menos 1. Por exemplo, o modelo con constante pode escribirse como
+	En tódolos casos, a variable dependente na regresión da proba, é a
+	primeira diferenza da serie indicada (<math>y</math>), e a variable
+	independente chave é o primeiro retardo de <math>y</math>. A regresión
+	fórmase de xeito que o coeficiente da variable <math>y</math> retardada,
+	é igual á raíz en cuestión, &agr;, menos 1. Por exemplo, o modelo con
+	constante pode escribirse como
 	<equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	graphic="adf1"/>
-	Baixo a hipótese nula de existencia dunha raíz unitaria, o coeficiente da
-	variable <math>y</math> retardada é igual a cero; e baixo a hipótese
-	alternativa de que <math>y</math> é estacionaria, este coeficiente é negativo.
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)" graphic="adf1"/>
+	Baixo a hipótese nula de existencia dunha raíz unitaria, o coeficiente
+	da variable <math>y</math> retardada é igual a cero. Baixo a hipótese
+	alternativa de que <math>y</math> é estacionaria, este coeficiente é
+	negativo. Daquela a proba é propiamente dunha cola.
       </para>
 
       <subhead context="cli">Selección do nivel de retardos</subhead>
 
       <para context="cli">
-	Se o argumento <repl>nivel</repl> (de aquí en diante chamarémoslle nivel
-	ou orde <math>k</math>) é maior ca 0, entón inclúense <math>k</math>
-	retardos da variable dependente no lado dereito da regresión que se estima
-	para calcular o estatístico de proba en cada caso. Cando indicas o nivel de
-	retardos como &minus;1, <math>k</math> establécese seguindo o aconsellado
-	por <cite key="schwert89">Schwert (1989)</cite>: concretamente tómase a
-	parte enteira de calcular 12(<math>T</math>/100)<sup>0.25</sup>, onde
-	<math>T</math> indica o tamaño da mostra. Porén, en cada caso no que
-	indicas a opción <opt>test-down</opt>, entón <math>k</math> tómase como
-	o retardo <emphasis>máximo</emphasis>, e o nivel de retardos concreto que
-	se utilizará, obtense probando cara abaixo. Podes escoller o criterio
-	para ir probando cara abaixo, utilizando un dos parámetros de opción
-	que deberá ser <lit>AIC</lit> (por defecto), <lit>BIC</lit> ou
+	A versión máis sinxela da proba de Dickey&ndash;Fuller asume que a
+	perturbación aleatoria da regresión que se utiliza na proba non ten
+	autocorrelación. Na práctica, isto non é probable que aconteza polo
+	que a especificación da regresión habitualmente amplíase incluíndo
+	un ou máis retardos da variable dependente, orixinando unha proba
+	de Dickey&ndash;Fuller ampliada (ADF). O argumento <repl>nivel</repl>
+	determina o número deses retardos (<math>k</math>), eventualmente
+	dependendo do tamaño da mostra (<math>T</math>).
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Para usar un valor fixo de <math>k</math>, especificado polo
+	    usuario: indica un valor non negativo para <repl>nivel</repl>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Para usar un valor de <math>k</math> dependente de <math>T</math>:
+	    indica <repl>nivel</repl> igual a &minus;1. Así o nivel establécese
+	    segundo o consello de <cite key="schwert89">Schwert (1989)</cite>:
+	    concretamente tómase a parte enteira de calcular
+	    12(<math>T</math>/100)<sup>0.25</sup>.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	Porén, en xeral non se sabe cantos retardos serán necesarios para
+	<quote>branquear</quote> o erro da regresión de Dickey&ndash;Fuller.
+	En consecuencia é habitual especificar o <emphasis>máximo</emphasis>
+	valor de <math>k</math>, e deixar que os datos 'decidan' o número
+	concreto de retardos que se van incluír. Isto pódese facer mediante
+	a opción <opt>test-down</opt>. E tamén podes establecer o criterio
+	co que se determine un valor óptimo para <math>k</math>, utilizando
+	o parámetro para esta opción que deberá ser un a escoller entre
+	<lit>AIC</lit> (por defecto), <lit>BIC</lit> ou
 	<lit>tstat</lit>.
       </para>
 
@@ -267,16 +294,18 @@
       <para context="cli">
 	Cando pides que se probe cara atrás mediante AIC ou BIC, o nivel
 	de retardos final para a ecuación ADF é o que optimiza o criterio
-	de información escollido (de Akaike ou Bayesiano de Schwarz).
-	O procedemento exacto depende de se indicas ou non a opción
-	<opt>gls</opt>: cando se especifica a detracción con MCX (GLS) da
-	tendencia, os AIC e BIC son as versións <quote>modificadas</quote>
-	descritas en <cite key="ng-perron01">Ng e Perron (2001)</cite>;
-	se non, son as versións estándar. No caso de MCX, dispós dun
-	refinamento pois cando indicas a opción adicional <opt>perron-qu</opt>,
-	calcúlanse estes criterios de información modificados de acordo
-	co método revisado que recomendaron
-	<cite key="perron-qu07">Perron e Qu (2007)</cite>.
+	de información que escollas (de Akaike ou Bayesiano de Schwarz).
+	O procedemento exacto dependerá de se indicas ou non a opción
+	<opt>gls</opt>. Cando se especifica GLS (MCX), os criterios AIC
+	e BIC son as versións <quote>modificadas</quote> descritas en
+	<cite key="ng-perron01">Ng e Perron (2001)</cite>; se non, son
+	as versións estándar. No caso de MCX, dispós dun refinamento.
+	Cando indicas a opción adicional <opt>perron-qu</opt>, a selección do
+	nivel de retardo realízase mediante o método revisado que recomendaron
+	<cite key="perron-qu07">Perron e Qu (2007)</cite>. Neste caso, os
+	datos se detraen primeiro mediante OLS (MCO) da media ou da tendencia;
+	GLS (MCX) se aplica unha vez que se haxa determinado o nivel de
+	retardo.
       </para>
 
       <para context="gui">
@@ -289,7 +318,6 @@
 	Cando pides que se probe cara atrás mediante o método do estatístico
 	<math>t</math>, o procedemento é como se indica deseguido:
       </para>
-
       <nlist>
 	<li><para>
 	Estímase a regresión de Dickey&ndash;Fuller utilizando <math>k</math> retardos da variable dependente.
@@ -303,25 +331,37 @@
 	    </para>
 	</li>
       </nlist>
-
       <para>
-	No contexto do paso 2 de arriba, <quote>significativo</quote> quere dicir que o
-	estatístico <math>t</math> do derradeiro retardo ten un valor <emphasis>p</emphasis>
-	asintótico de dúas colas igual ou menor a 0.10, fronte á distribución Normal.
+	No contexto do paso 2 de arriba, <quote>significativo</quote> quere
+	dicir que o estatístico <math>t</math> do derradeiro retardo ten un
+	valor <emphasis>p</emphasis> asintótico de dúas colas igual ou menor
+	a 0.10, fronte á distribución Normal.
+      </para>
+
+      <para context="cli">
+	En resumo, se admitimos os diferentes argumentos de Perron, Ng, Qu
+	e Schwert indicados arriba, a instrución preferible para probar unha
+	serie <lit>y</lit> é probable que sexa:
+      </para>
+      <code context="cli">
+	adf -1 y --c --gls --test-down --perron-qu
+      </code>
+      <para context="cli">
+	(Ou substituíndo <opt>ct</opt> en troques de <opt>c</opt> se a serie
+	semella presentar unha tendencia.) O nivel de retardo para a proba será
+	entón determinado comprobándoo cara atrás, mediante os cambios no
+	AIC a partir do máximo de Schwert, co refinamento de Perron&ndash;Qu.
       </para>
 
       <para>
-	As probabilidades asociadas <emphasis>P</emphasis> para as probas
-	de Dickey&ndash;Fuller están baseadas en
-	<cite key="mackinnon96">MacKinnon (1996)</cite>; e o código relevante
-	inclúese co amable permiso do propio autor. (No caso de tratarse da
-	proba non aumentada, se proporcionan os valores para mostra finita.
-	Para un nivel de retardo positivo se utilizan os valores asintóticos.)
-	No caso da proba coa tendencia linear utilizando MCX (GLS),
-	estes valores <emphasis>P</emphasis> non son aplicables;
-	por iso, no seu lugar amósanse os puntos críticos da Táboa 1 que hai
-	en
-	<cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.
+	As Probabilidades Asociadas (valores <emphasis>P</emphasis>) para as
+	probas de Dickey&ndash;Fuller están baseadas en estimacións de tipo
+	superficie de resposta. Cando non se aplica MCX (GLS), se toman de
+	<cite key="mackinnon96">MacKinnon (1996)</cite>. Noutro caso, tómanse
+	de <cite key="cottrell15">Cottrell (2015)</cite> ou, cando se realiza
+	a comprobación cara atrás, de <cite key="sephton21">Sephton (2021)</cite>.
+	As Probabilidades Asociadas son específicas para o tamaño da mostra,
+	agás que estean etiquetadas como asintóticas.
       </para>
 
       <subhead context="cli">Datos de Panel</subhead>
@@ -410,7 +450,7 @@
       <para>
 	Cae na conta de que os resultados que amosa esta instrución son de feito un
 	subconxunto da información ofrecida polo seguinte procedemento, que podes
-	preparar doadamente no Gretl. (1) Xera un conxunto de variables ficticias que
+	preparar doadamente no GRETL. (1) Xera un conxunto de variables ficticias que
 	codifiquen todos os tipos de tratamento agás un. Para un ANOVA de dous factores,
 	xera ademais un conxunto de variables ficticias que codifiquen todos os bloques
 	de <quote>control</quote> agás un. (2) Fai a regresión de <repl>resposta</repl>
@@ -480,7 +520,7 @@
 	compatibilidade require (a) que o número de observacións dos
 	novos datos sexa igual ao número de datos actuais, ou (b) que
 	os novos datos carrexen clara información das observacións de
-	xeito que Gretl poda deducir como colocar os valores.
+	xeito que GRETL poda deducir como colocar os valores.
       </para>
       <para>
 	Un caso que non se admite é aquel no que os novos datos comezan
@@ -503,7 +543,7 @@
 	atemporal. Se o panel é <quote>cadrado</quote>, e <math>m</math>
 	é igual tanto a <math>n</math> como a <math>T</math>, aparece unha
 	ambigüidade. Por defecto, neste caso trátanse os novos datos como
-	invariantes no tempo, pero podes forzar a que Gretl trate os novos
+	invariantes no tempo, pero podes forzar a que GRETL trate os novos
 	datos como series temporais coa a opción <opt>time-series</opt>.
 	(Esta posibilidade ignórase en tódolos outros casos.)
       </para>
@@ -678,132 +718,6 @@
 
   </command>
 
-  <command name="arbond" section="Estimation" label="Arellano-Bond"
-	   context="cli">
-
-    <usage>
-      <arguments>
-	<argblock>
-	  <argument>p</argument>
-	  <argument optional="true">q</argument>
-	</argblock>
-	<argblock separated="true">
-	  <argument>depvar</argument>
-	  <argument>indepvars</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>instrumentos</argument>
-	</argblock>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>Non amosa o modelo estimado</effect>
-	</option>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>Presenta a matriz de covarianzas</effect>
-	</option>
-        <option>
-	  <flag>--two-step</flag>
-	  <effect>Realiza a estimación MXM (GMM) en 2 etapas</effect>
-        </option>
-        <option>
-	  <flag>--time-dummies</flag>
-	  <effect>Engade variables ficticias temporais</effect>
-        </option>
-        <option>
-	  <flag>--asymptotic</flag>
-	  <effect>Desviacións padrón asintóticas sen corrixir</effect>
-        </option>
-      </options>
-      <examples>
-        <example>arbond 2 ; y Dx1 Dx2</example>
-        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1</example>
-	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3)</example>
-	<demos>
-	  <demo>arbond91.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Se desaconsella esta instrución en favor da instrución actualizada e
-	máis flexible <cmdref targ="dpanel"/>. Probablemente será eliminada,
-	polo que non deberas utilizala nos novos guións que redactes.
-      </para>
-      <para>
-	Realiza a estimación de modelos dinámicos con datos de panel
-	(é dicir, modelos de panel que inclúen un ou máis retardos da
-	variable dependente) utilizando o método MXM-DIF establecido
-	por <cite key="arellano-bond91">Arellano e Bond (1991)</cite>.
-      </para>
-      <para>
-	O parámetro <repl>p</repl> representa o alcance da autorregresión da
-	variable dependente. O parámetro <repl>q</repl> (opcional) indica o
-	retardo máximo no nivel da variable dependente que se vai utilizar
-	como instrumento. Cando omites este argumento ou indicas que é 0,
-	utilízanse todos os retardos dispoñibles.
-      </para>
-      <para>
-	Debes de indicar a variable dependente no seu nivel, pois xa se vai
-	calcular automaticamente a súa diferenza (posto que este estimador
-	utiliza a diferenciación para eliminar os efectos individuais). As
-	diferenzas das variables independentes non se van calcular
-	automaticamente; se queres utilizar estas diferenzas (o que xeralmente
-	será o caso para variables cuantitativas habituais, aínda que quizais
-	non para variables ficticias temporais) debes de xerar primeiro as
-	diferenzas e logo indicar que estas son regresores.
-      </para>
-      <para>
-	O último campo (opcional) da instrución é para especificar os
-	instrumentos. Se non indicas instrumentos, asúmese que todas
-	as variables independentes son estritamente esóxenas. E se
-	especificas algún instrumento, debes de incluír na lista algunha
-	variable independente estritamente esóxena. Con regresores
-	predeterminados, podes utilizar a función <lit>GMM</lit> para
-	incluír un rango indicado de retardos en disposición diagonal por
-	bloques; como se ilustra no terceiro exemplo de arriba. Así, o
-	primeiro argumento de <lit>GMM</lit> é o nome da variable en
-	cuestión, o segundo é o retardo mínimo que se utiliza como
-	instrumento, e o terceiro é o retardo máximo. Cando indicas o
-	terceiro argumento cun 0, utilízanse todos os retardos dispoñibles.
-      </para>
-      <para>
-	Por defecto, preséntanse os resultados da estimación nunha etapa
-	(coas desviacións padrón robustas), pero podes escoller a estimación
-	en 2 etapas como opción. En ambos casos, proporciónanse as probas
-	de autocorrelación de orde 1 e 2, así como tamén a proba de
-	sobreidentificación de Sargan e o estatístico de proba de Wald para
-	a significación conxunta dos regresores. Cae na conta de que neste
-	modelo diferenciado, a autocorrelación de primeira orde non é unha
-	ameaza para a validez do modelo, pero a autocorrelación de segunda
-	orde viola os supostos estatísticos que o sosteñen.
-      </para>
-      <para>
-	No caso da estimación en 2 etapas, as desviacións padrón calcúlanse
-	por defecto utilizando a corrección de mostra finita suxerida por
-	<cite key="windmeijer05">Windmeijer (2005)</cite>. As desviacións
-	padrón asintóticas estándar, asociadas ao estimador do método en 2
-	etapas, xeralmente considérase que son unha guía pouco fiable para
-	a inferencia, pero se queres velas por algunha razón podes utilizar
-	a opción <opt>asymptotic</opt> para inhabilitar así a corrección de
-	Windmeijer.
-      </para>
-      <para>
-	Cando indicas a opción <opt>time-dummies</opt>, engádese un conxunto
-	de variables ficticias temporais aos regresores especificados. O
-	número de variables ficticias é igual ao número máximo de períodos
-	utilizados na estimación menos un, para evitar multicolinearidade
-	perfecta coa constante. As variables ficticias introdúcense en niveis;
-	se queres utilizar variables ficticias temporais en forma de primeiras
-	diferenzas, tes que definir e engadir estas variables manualmente.
-      </para>
-    </description>
-
-  </command>
-
   <command name="arch" section="Estimation" label="Modelo ARCH">
 
     <usage>
@@ -904,7 +818,7 @@
         </option>
         <option>
 	  <flag>--x-12-arima</flag>
-	  <effect>Utiliza ARIMA X-12 na estimación</effect>
+	  <effect>Utiliza ARIMA X-12 ou X-13 na estimación</effect>
         </option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -1004,12 +918,14 @@
       </para>
 
       <para>
-	Por defecto, utilízase a funcionalidade ARMA <quote>propia</quote> de Gretl,
-	coa estimación Máximo Verosímil (MV) exacta; pero dispós da opción de facer
-	a estimación mediante MV condicional. (Se o programa <program>ARIMA X-12</program>
-	está instalado no ordenador, tes a posibilidade de utilizalo en vez do
-	código propio.) Para outros detalles relacionados con estas opcións,
-	consulta o <guideref targ="chap:timeseries"/>.
+	Por defecto, utilízase a funcionalidade ARMA <quote>propia</quote> de
+	GRETL, coa estimación Máximo Verosímil (MV) exacta; pero dispós da
+	opción de facer a estimación mediante MV condicional. (Se o programa
+	<program>ARIMA X-12</program> está instalado no ordenador, tes a
+	posibilidade de utilizalo en vez do código propio. Ten en conta que,
+	do mesmo xeito, o máis recente <program>X13</program> pode funcionar
+	coma un recambio automático.) Para outros detalles relacionados con
+	estas opcións, consulta o <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
@@ -1038,7 +954,7 @@
 	A opción <opt>y-diff-only</opt> é específica da estimación de modelos
 	ARIMAX (modelos con orde de integración non nula, nos que se inclúen
 	regresores esóxenos) e aplícase só cando se utiliza a Máxima Verosimilitude
-	exacta propia de Gretl. Para eses modelos, o comportamento por defecto
+	exacta propia de GRETL. Para eses modelos, o comportamento por defecto
 	consiste en calcular as primeiras diferenzas tanto da variable dependente
 	como dos regresores; pero cando indicas esta opción, só se calcula para
 	a variable dependente, quedando os regresores en niveis.
@@ -1124,6 +1040,148 @@
     <description>
       <para>
 	Consulta <cmdref targ="arima"/>; <lit>arma</lit> é un alcume.
+      </para>
+    </description>
+  </command>
+
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>orde</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>Usa unha entrada matricial</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suprime a presentación de resultados</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
+    <description>
+      <para context="cli">
+	Realiza a proba BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman e LeBaron, 1996</cite>)
+	de non linearidade para a serie <repl>x</repl>. No contexto econométrico, isto
+	aplícase habitualmente para comprobar se as perturbacións dunha regresión
+	incumpren a condición IID (distribución idéntica e independente). A proba
+	baséase nun conxunto de integrais de correlación, amañadas para detectar a
+	non linearidade de dimensión progresivamente maior; e establécese o número
+	desas integrais co argumento <argname>orde</argname>. Estas deben de ser
+	polo menos 2; coa primeira integral establécese unha referencia de partida, pero
+	sen que permita unha proba. A proba BDS é de tipo <quote>portmanteau</quote>:
+	axeitada para detectar toda clase de desvíos respecto da linearidade, pero
+	non clarificadora do xeito exacto no que se incumpre a condición.
+      </para>
+      <para context="gui">
+	A proba BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman e LeBaron, 1996</cite>)
+	comproba a non linearidade dunha serie temporal. No contexto econométrico,
+	isto aplícase habitualmente para comprobar se as perturbacións dunha regresión
+	incumpren a condición IID (distribución idéntica e independente). A proba
+	baséase nun conxunto de integrais de correlación, amañadas para detectar a
+	non linearidade de dimensión progresivamente maior; o número desas integrais
+	elíxese mediante o control <quote>Dimensión máxima</quote>. Estas deben de ser
+	polo menos 2; coa primeira integral establécese unha referencia de partida, pero
+	sen que permita unha proba. A proba BDS é de tipo <quote>portmanteau</quote>:
+	axeitada para detectar toda clase de desvíos respecto da linearidade, pero
+	non clarificadora do xeito exacto no que se incumpre a condición.
+      </para>
+      <para context="cli">
+	En troques de indicar <repl>x</repl> como serie, podes usar a opción
+	<opt>matrix</opt> para especificar unha matriz como entrada, que
+	debe ter forma de vector (columna ou fila).
+      </para>
+      <subhead>Criterio de proximidade</subhead>
+      <para context="cli">
+	As integrais de correlación están baseadas nunha medida de
+	<quote>proximidade</quote> entre os puntos dos datos, de xeito
+	que se consideran próximos a dous deses puntos se están situados
+	un do outro a menos de &egr;. Dado que a proba necesita que se
+	especifique &egr;, por defecto, GRETL segue a recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; elíxese de modo que
+	a integral de correlación de primeira orde estea arredor de 0.7. Unha
+	alternativa habitual (que require menos cálculos) consiste en especificar
+	&egr; como un múltiplo da desviación padrón da serie de interese.
+	A opción <opt>sdcrit</opt> permite este derradeiro método;
+	así, no terceiro exemplo indicado máis arriba, &egr; establécese que
+	sexa igual a dúas veces a desviación padrón de <repl>x</repl>.
+	A opción <opt>corr1</opt> implica a utilización do método de Kanzler
+	pero permite outra correlación obxectivo diferente de 0.7. Debería
+	quedarche claro que estas dúas opcións exclúense mutuamente.
+      </para>
+      <para context="gui">
+	As integrais de correlación están baseadas nunha medida de
+	<quote>proximidade</quote> entre os puntos dos datos, de xeito
+	que se consideran próximos a dous deses puntos se están situados
+	un do outro a menos de &egr;. Dado que a proba necesita que se
+	especifique &egr;, por defecto, GRETL segue a recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; elíxese de modo que
+	a integral de correlación de primeira orde estea arredor de 0.7. Unha
+	alternativa habitual (que require menos cálculos) consiste en especificar
+	&egr; como un múltiplo da desviación padrón da serie de interese. 
+      </para>
+      <subhead context="cli">Mostraxe repetida</subhead>
+      <para context="cli">
+	Os estatísticos da proba BDS teñen distribución asintótica de tipo
+	<math>N</math>(0,1), pero a proba rexeita demasiado a hipótese nula
+	de xeito moi notable con mostras de tamaño entre pequeno e moderado.
+	Por ese motivo, os valores <math>P</math> obtéñense por defecto
+	mediante mostraxe repetida (bootstrapping) cando <argname>x</argname>
+	ten unha longura menor que 600 (e con referencia á distribución Normal,
+	noutro caso). Se queres utilizar a mostraxe repetida con mostras máis
+	longas, podes forzar esta cuestión indicando un valor non nulo para
+	a opción <opt>boot</opt>. Pola contra, se non queres que se faga a
+	mostraxe repetida coas mostras máis pequenas, indica un valor de
+	cero para <opt>boot</opt>.
+      </para>
+      <subhead context="gui">Valores p</subhead>
+      <para context="gui">
+	Os estatísticos da proba BDS teñen distribución asintótica de tipo
+	<math>N</math>(0,1), pero a proba rexeita demasiado a hipótese nula
+	de xeito moi notable con mostras de tamaño entre pequeno e moderado.
+	Por ese motivo, os valores <math>P</math> obtéñense por defecto
+	mediante mostraxe repetida (bootstrapping) cando <argname>x</argname>
+	ten unha longura menor que 600 (e con referencia á distribución Normal,
+	noutro caso).
+      </para>
+      <para context="cli">
+	Cando se fai a mostraxe repetida, o número de iteracións por defecto
+	é de 1999; pero podes especificar un número diferente indicando un
+	valor maior ca 1 coa opción <opt>boot</opt>.
+      </para>
+      <subhead context="cli">Matriz accesoria</subhead>
+      <para context="cli">
+	Cando se completa con éxito a execución desta instrución,
+	<fncref targ="$result"/> proporciona os resultados da proba en forma
+	dunha matriz con dúas filas e <argname>orde</argname> &minus; 1
+	columnas. A primeira fila contén os estatísticos de proba e a segunda
+	os valores <math>P</math>, de cada unha das probas por dimensión,
+	baixo a hipótese nula de que <argname>x</argname> é linear/IID.
       </para>
     </description>
   </command>
@@ -1267,7 +1325,7 @@
 	Esta táboa presenta unha sofisticada análise do grao e das causas da
 	multicolinearidade, mediante o exame dos autovalores da inversa da
 	matriz de correlacións. Para ter unha explicación polo miúdo do enfoque
-	BKW en relación a Gretl, e con diversos exemplos, consulta
+	BKW en relación a GRETL, e con diversos exemplos, consulta
 	<cite key="adkins15">Adkins, Waters e Hill (2015)</cite>.
       </para>
       <para>
@@ -1344,7 +1402,7 @@
 	    O número de repeticións a realizar. Ten en conta que cando
 	    estás construíndo un intervalo co 95 por cento de confianza,
 	    é desexable que 0.05(<math>B</math> + 1)/2 sexa un enteiro
-	    (onde <math>B</math> é o número de repeticións). Así, Gretl
+	    (onde <math>B</math> é o número de repeticións). Así, GRETL
 	    pode axustar o número de repeticións que escollas para
 	    garantir que este é o caso.
 	    </para>
@@ -1353,7 +1411,7 @@
 	    <para>
 	    Produce ou non unha gráfica da distribución bootstrap. Esta
 	    opción emprega o servizo de estimación da densidade do
-	    kernel de Gretl.
+	    kernel de GRETL.
 	    </para>
 	</li>
       </ilist>
@@ -1452,7 +1510,7 @@
       </para>
 
       <para context="cli">
-	As gráficas de caixas en Gretl xéranse utilizando a instrución
+	As gráficas de caixas en GRETL xéranse utilizando a instrución
 	<program>gnuplot</program>, e resulta posible especificar con
 	maior detalle a gráfica engadindo instrucións adicionais de Gnuplot,
 	contornadas entre chaves. Para obter máis detalles, consulta a axuda
@@ -1544,8 +1602,11 @@
 	Non podes utilizar a palabra chave <lit>catch</lit> antes de
 	<lit>if</lit>, <lit>elif</lit> ou <lit>endif</lit>. Ademais, non
 	debe de utilizarse en peticións a funcións definidas polo usuario,
-	pois preténdese utilizala só coas instrucións de Gretl e coas
+	pois preténdese utilizala só coas instrucións de GRETL e coas
 	peticións aos operadores ou funcións <quote>internos</quote>.
+	Máis aínda, non podes usar <lit>catch</lit> combinada coa asignación
+	mediante <quote>frecha atrás</quote> de modelos ou gráficas, a
+	iconas de sesión (consulta o <guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
@@ -1625,22 +1686,33 @@
 	  <flag>--dataset</flag>
 	  <effect>Libra só o conxunto de datos</effect>
 	</option>
+	<option>
+	  <flag>--functions</flag>
+	  <effect>Elimina as funcións (unicamente)</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Sen ningunha opción, quita da memoria todos os obxectos gardados,
-	incluíndo o conxunto de datos (se hai algún). Ten en conta que tamén
-	tes este efecto ao abrir un novo conxunto de datos, ou ao utilizar a
-	instrución <cmd>nulldata</cmd> para crear un conxunto de datos baleiro;
-	por iso normalmente non necesitas utilizar <cmd>clear</cmd>.
+	Por defecto, esta instrución quita da memoria o conxunto de datos
+	vixente (se hai algún), amais de todas as variables gardadas (escalares,
+	matrices, etc.). Ten en conta que tamén tes este efecto ao abrir un novo
+	conxunto de datos, ou ao utilizar a instrución <cmd>nulldata</cmd>
+	para crear un conxunto de datos baleiro; por iso normalmente non
+	necesitas facer uso explícito de <cmd>clear</cmd>.
       </para>
       <para>
 	Cando indicas a opción <opt>dataset</opt>, entón só se limpa
 	o conxunto de datos (máis calquera lista de series definida); outros
-	obxectos gardados como matrices e escalares xa definidos, vanse
+	obxectos gardados como matrices, escalares ou feixes, vanse
 	conservar.
+      </para>
+      <para>
+	Cando indicas a opción <opt>functions</opt>, entón se elimina da
+	memoria calquera función definida polo usuario e calquera función
+	definida nos paquetes que teñas cargados. O conxunto de datos e
+	outras variables non se ven afectados.
       </para>
     </description>
   </command>
@@ -1859,7 +1931,7 @@
 	datos para que teñan unha frecuencia menor (quizais antes de engadir unha
 	variable de baixa frecuencia ao conxunto de datos).
       </para>
-      <para>Gretl ofrece 5 opcións para compactar:</para>
+      <para>GRETL ofrece 5 opcións para compactar:</para>
       <ilist>
 	<li><para>Coa media: O valor que se escribe no conxunto de datos vai ser a
 	    media aritmética dos valores das series relevantes. Por exemplo, o valor
@@ -2305,7 +2377,7 @@
       </para>
       <para>
 	Ten en conta que se colles calquera destas opcións, aínda así
-	Gretl vai preservar a información da data, e vaiche ser posible
+	GRETL vai preservar a información da data, e vaiche ser posible
 	reconstruír o conxunto de datos de calendario completo máis
 	tarde, se o necesitas. Podes facer isto utilizando a instrución
 	<cmdref targ="dataset"/> coa opción <lit>pad-daily</lit>.
@@ -2349,7 +2421,7 @@
     <description>
       <para>
 	Le as variables de <repl>listavariables</repl> dun ficheiro de banco
-	de datos (propio de Gretl, RATS 4.0 ou PcGive) que debe de abrirse
+	de datos (propio de GRETL, RATS 4.0 ou PcGive) que debe de abrirse
 	previamente utilizando a instrución <cmdref targ="open"/>. Podes usar
 	a instrución <lit>data</lit> para importar series de DB.NOMICS ou dun
 	banco de datos ODBC; para obter detalles sobre estas variantes
@@ -2369,7 +2441,7 @@
       </code>
       <para>
 	As instrucións de arriba abren o banco de datos (que se ofrece con
-	Gretl) chamado <filename>fedstl.bin</filename>, determinan que os
+	GRETL) chamado <filename>fedstl.bin</filename>, determinan que os
 	datos son mensuais, que comezan en xaneiro de 2000, que a mostra
 	finaliza en decembro de 2019, e que se importan as series denominadas
 	<lit>unrate</lit> (taxa de desemprego) e <lit>cpiaucsl</lit> (IPC de todos).
@@ -2408,7 +2480,7 @@
 	(<quote>desagregación temporal </quote>).
       </para>
       <para>
-	No caso de bancos de datos propios (unicamente) de Gretl, podes
+	No caso de bancos de datos propios (unicamente) de GRETL, podes
 	utilizar os caracteres <quote>xenéricos</quote>, <lit>*</lit>
 	e <lit>?</lit> en <repl>listavariables</repl> para importar series que
 	coincidan co padrón indicado. Por exemplo, a seguinte expresión
@@ -2421,14 +2493,14 @@
       <para>
 	Podes usar a opción <opt>name</opt> para determinar un nome
 	distinto do nome orixinal no banco de datos, para a seire importada.
-	O parámetro debe de ser un identificador válido de Gretl. Esta opción
+	O parámetro debe de ser un identificador válido de GRETL. Esta opción
 	restrínxese ao caso no que especificas unha única serie a
 	importar.
       </para>
       <para>
 	A opción <opt>no-align</opt> aplícase só para importar series mediante
 	ODBC. Por defecto, necesítase que a solicitude ODBC devolva información
-	que indique a Gretl en que filas do conxunto de datos situar os datos que
+	que indique a GRETL en que filas do conxunto de datos situar os datos que
 	se reciben (ou que o número de valores que se reciben coincida, cando
 	menos, ben coa longura do conxunto de datos ou ben coa longura do
 	rango da mostra vixente). Determinando a opción <opt>no-align</opt>
@@ -2455,7 +2527,7 @@
 	Este diálogo te permite especificar ficheiros adicionais para
 	incluír cun paquete de funcións. Se inclúes ese material, iso
 	implica que o paquete vai tomar a forma dun ficheiro zip. Cando
-	Gretl vaia a crear o ficheiro zip para ti, todos os ficheiros
+	GRETL vaia a crear o ficheiro zip para ti, todos os ficheiros
 	aos que se fai referencia aquí deben de estar presentes no mesmo
 	cartafol ca o ficheiro gfn. Os subcartafoles poden indicarse
 	igual que ficheiros normais e, nese caso, iso implica que todo
@@ -2465,13 +2537,13 @@
 	Hai dúas intencións principais para usar este servizo. En primeiro
 	lugar, podes incluír un ficheiro de datos para utilizar co guión de
 	mostra do paquete, se non é adecuado ningún dos ficheiros de datos
-	ofrecidos coa distribución de Gretl. Neste caso, os datos deben de
-	estar no formato propio de Gretl (<lit>gdt</lit> ou <lit>gdtb</lit>
+	ofrecidos coa distribución de GRETL. Neste caso, os datos deben de
+	estar no formato propio de GRETL (<lit>gdt</lit> ou <lit>gdtb</lit>
 	binario). Segundo, se o teu paquete require unha matriz grande (por
 	exemplo, que conteña todos os puntos críticos dun estatístico de
 	proba especial), poderá ser más conveniente incluíla como un ficheiro
-	matricial de Gretl (<lit>mat</lit>) que integrar a matriz mediante
-	múltiples expresións da linguaxe Hansl do Gretl.
+	matricial de GRETL (<lit>mat</lit>) que integrar a matriz mediante
+	múltiples expresións da linguaxe HANSL do GRETL.
       </para>
       <para>
 	Para acceder a un ficheiro empaquetado <lit>gdt</lit> ou
@@ -2563,7 +2635,7 @@
       </para>
       <para>
 	<lit>clear</lit>: Non necesita ningún parámetro. Libra todos os datos
-	vixentes, devolvendo o Gretl a o seu estado <quote>baleiro</quote> inicial.
+	vixentes, devolvendo o GRETL a o seu estado <quote>baleiro</quote> inicial.
       </para>
       <para>
 	<lit>compact</lit>: Debe de estar seguido dun enteiro positivo que
@@ -2696,6 +2768,7 @@
     </description>
   </command>
 
+  <!--
   <command name="debug" section="Programming" context="cli"
     label="Depurar">
 
@@ -2707,12 +2780,12 @@
 
     <description>
       <para>
-	Depurador experimental para funcións definidas polo usuario, que está dispoñible
-	no programa Gretlcli de liñas de instrucións e na consola de Interface
-	Gráfica de Usuario (GUI). Debes de invocar esta instrución <lit>debug</lit>
-	despois de que estea definida a función en cuestión, pero antes de chamar
-	por ela. O efecto desta instrución consiste en que a execución detense
-	cando se chama pola función e amósase un indicador especial.
+	Depurador experimental para funcións definidas polo usuario, que está
+	dispoñible no programa gretlcli de liñas de instrucións. Debes de
+	invocar esta instrución <lit>debug</lit> despois de que estea definida
+	a función en cuestión, pero antes de chamar por ela. O efecto desta
+	instrución consiste en que a execución detense cando se chama pola
+	función e amósase un indicador especial.
       </para>
       <para>
 	Ante o indicador de depuración podes teclear <lit>next</lit> para
@@ -2725,6 +2798,7 @@
       </para>
     </description>
   </command>
+  -->
 
   <command name="delete" section="Dataset"
     label="Eliminar variables" context="cli">
@@ -2759,7 +2833,7 @@
 	eliminas series, vólvese a numerar calquera serie cuxo número ID sexa
 	maior que os das series da lista que se elimina. Se indicas a opción
 	<opt>db</opt>, as series da lista non se eliminan con esta instrución
-	do conxunto vixente de datos, pero si do banco de datos de Gretl
+	do conxunto vixente de datos, pero si do banco de datos de GRETL
 	(supoñendo que se abriu un deles e que o usuario ten permisos para
 	escribir no ficheiro en cuestión). Consulta tamén a instrución
 	<cmdref targ="open"/>.
@@ -2982,7 +3056,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Elimina o resultado presentado</effect>
+	  <effect>Suprime a presentación de resultados</effect>
 	</option>
       </options>
 	<examples>
@@ -3454,7 +3528,7 @@
 
     <description>
       <para>
-	A fórmula que emprega Gretl para calcular a media móbil exponencial
+	A fórmula que emprega GRETL para calcular a media móbil exponencial
 	(MME ou EMA) é a de <cite key="roberts59">Roberts (1959)</cite>,
 	concretamente
       </para>
@@ -3692,7 +3766,7 @@
     </usage>
     <description>
       <para>
-	Esta instrución fai que Gretl funcione como unha sofisticada
+	Esta instrución fai que GRETL funcione como unha sofisticada
 	calculadora. O programa avalía <repl>expresión</repl> e
 	presenta o seu valor. O argumento pode ser o nome dunha
 	variable, ou algo máis complicado. En calquera caso, debe
@@ -3700,25 +3774,22 @@
 	o lado dereito dun enunciado de asignación (igualdade).
       </para>
       <para>
-	Cae na conta de que unha instrución tal como
+	No uso interactivo (por exemplo coa consola de GRETL), un signo
+	igual funciona como unha abreviatura de <lit>eval</lit>, como en
       </para>
       <code>
-	print x^2
+	=sqrt(x)
       </code>
       <para>
-	non funcionará en Gretl posto que <lit>x^2</lit> non é (non pode ser)
-	o nome dunha variable, pero (dada unha variable escalar denominada
-	<lit>x</lit>)
-      </para>
-      <code>
-	eval x^2
-      </code>
-      <para>
-	funcionará correctamente, amosando o cadrado de <lit>x</lit>.
+	(con ou sen espazo despois de <quote>=</quote>). Pero esta variante
+	non se admite no modo de edición de guións xa que podería agochar
+	doadamente fallos de codificación.
       </para>
       <para>
-	Consulta tamén <cmdref targ="printf"/>, no caso de que queiras
-	combinar resultados numéricos e de texto.
+	Na maioría dos contextos, podes usar a instrución <cmdref targ="print"/>
+	no canto de <lit>eval</lit> para obter o mesmo efecto. Consulta tamén
+	<cmdref targ="printf"/> para aqueles casos nos que queiras combinar
+	resultados de texto e numéricos.
       </para>
     </description>
   </command>
@@ -3736,7 +3807,7 @@
 	de frecuencia maior, máis ca expandir as series de frecuencia menor.
       </para>
       <para>
-	Aclarado isto, Gretl admite a expansión mediante a simple repetición
+	Aclarado isto, GRETL admite a expansión mediante a simple repetición
 	dos valores de baixa frecuencia. Por exemplo, ao expandir desde
 	frecuencia trimestral a mensual, os valores trimestrais se repiten
 	para cada mes do trimestre. As series xeradas deste xeito non é
@@ -3748,7 +3819,7 @@
       <para>
 	Podes acceder a algunhas das prestacións da función <lit>tdisagg</lit>
 	mediante a interface gráfica, seleccionando unha serie na xanela
-	principal de Gretl, e a continuación procurar <quote>Desagregar</quote>
+	principal de GRETL, e a continuación procurar <quote>Desagregar</quote>
 	baixo o menú Variable.
       </para>
     </description>
@@ -3766,10 +3837,10 @@
       </para>
       <para>
 	Tamén tes a opción de exportar datos co formato dun ficheiro
-	de datos <quote>propio</quote> de Gretl, ou de exportalos a
-	un banco de datos de Gretl (se os datos son axeitados). Consulta
+	de datos <quote>propio</quote> de GRETL, ou de exportalos a
+	un banco de datos de GRETL (se os datos son axeitados). Consulta
 	<url>gretl.sourceforge.net/gretl_data.html</url> para ver un
-	relatorio dos bancos de datos de Gretl.
+	relatorio dos bancos de datos de GRETL.
       </para>
       <para>
 	Podes tamén exportar datos nun formato de texto plano axeitado para
@@ -3983,7 +4054,7 @@
       <para context="cli">
 	vai xerar unha gráfica con formato PDF. Respéctanse os nomes de
 	rutas que non ofrezan dúbidas; se non, os ficheiros escríbense
-	no cartafol de traballo de Gretl.
+	no cartafol de traballo de GRETL.
       </para>
       <para>
 	A natureza das desviacións padrón das predicións (se están dispoñibles)
@@ -4013,9 +4084,9 @@
       <para>
 	Esta sinxela instrución (sen argumentos, sen opcións) está ideada para
 	usarse en guións que levan algo de tempo, e que deben de executarse coa
-	Interface Gráfica de Usuario (GUI) de Gretl (o programa de liñas de
+	Interface Gráfica de Usuario (GUI) de GRETL (o programa de liñas de
 	instrución o ignora), para darlle ao usuario un indicio visual de que
-	as cousas estanse movendo e Gretl non está <quote>parado</quote>.
+	as cousas estanse movendo e GRETL non está <quote>parado</quote>.
       </para>
       <para>
 	Xeralmente, se lanzas un guión na Interface Gráfica de Usuario (GUI),
@@ -4025,7 +4096,7 @@
       <ilist>
        <li>
 	    <para>
-	   Na primeira chamada, Gretl abre unha xanela, amosa os resultados
+	   Na primeira chamada, GRETL abre unha xanela, amosa os resultados
 	   ata o presente e engade a mensaxe
 	   <quote>Procesando...</quote>.
 	    </para>
@@ -4108,7 +4179,7 @@
       <para>
 	Xunto con R, Octave e Stata, a opción <opt>send-data</opt>
 	ten como efecto o de facer accesibles os datos do espazo de
-	traballo do Gretl dentro do programa sinalado. Por defecto, se
+	traballo do GRETL dentro do programa sinalado. Por defecto, se
 	envía o conxunto completo de datos, pero ti podes limitar os
 	datos que se van enviar indicando o nome dunha lista de series
 	definida previamente. Por exemplo:
@@ -4274,7 +4345,7 @@
 	nula de que unha variable segue unha distribución Gamma; consulta
 	<cite key="locke76">Locke (1976)</cite>, e tamén
 	<cite key="shapiro-chen01">Shapiro e Chen (2001)</cite>. Cae na
-	conta de que a forma na que se indican en Gretl os parámetros da
+	conta de que a forma na que se indican en GRETL os parámetros da
 	distribución Gamma utilizada é (forma, escala).
       </para>
       <para>
@@ -4297,7 +4368,7 @@
 	histograma e non te interesa mirar o texto que o acompaña.
       </para>
       <para>
-	Ten en conta que Gretl non ten unha función que se corresponda
+	Ten en conta que GRETL non ten unha función que se corresponda
 	con esta instrución, pero resulta posible utilizar a función
 	<fncref targ="aggregate"/> para acadar o mesmo obxectivo.
 	Amais, podes obter a distribución de frecuencias que se xera coa
@@ -4333,10 +4404,10 @@
 	Este diálogo tamén permite elixir unha distribución teórica para representar
 	fronte aos datos: a Normal ou a Gamma. Cando escolles a opción Normal,
 	calcúlase o estatístico da proba de Normalidade de Doornik&ndash;Hansen.
-	Cando seleccionas a opción Gamma, Gretl calcula o estatístico da proba non
+	Cando seleccionas a opción Gamma, GRETL calcula o estatístico da proba non
 	paramétrica de Locke respecto á hipótese nula que sostén que a variable
 	segue unha distribución Gamma. Cae na conta de que a forma na que se
-	indican en Gretl os parámetros da distribución Gamma é (forma, escala).
+	indican en GRETL os parámetros da distribución Gamma é (forma, escala).
       </para>
     </description>
 
@@ -4387,8 +4458,11 @@
     <description>
       <para>
 	Abre un bloque de expresións nas que se define unha función. Este
-	bloque debe de estar rematado con <lit>end function</lit>. Consulta
-	o <guideref targ="chap:functions"/> para obter máis detalles.
+	bloque debe de estar rematado con <lit>end function</lit>. (Como
+	excepción está o caso no que queiras eliminar unha función definida polo
+	usuario, pois o podes conseguir mediante a sinxela liña de instrución
+	<lit>function foo delete</lit> para a función chamada <quote>foo</quote>.)
+	Consulta o <guideref targ="chap:functions"/> para obter máis detalles.
       </para>
     </description>
 
@@ -4497,7 +4571,7 @@
       </para>
 
       <para>
-	Por defecto, utilízase o propio código de Gretl para estimar os
+	Por defecto, utilízase o propio código de GRETL para estimar os
 	modelos GARCH, pero tamén tes a opción de usar o algoritmo de
 	<cite key="fiorentini96">Fiorentini, Calzolari e Panattoni (1996)</cite>.
 	O primeiro utiliza o maximizador BFGS mentres que o último usa
@@ -4731,7 +4805,7 @@
 	as instrucións <cmd>genr</cmd> que recuperan datos relacionados cun
 	modelo, sempre se refiren ao modelo que se estimou máis recentemente.
 	Isto tamén é certo no programa de Interface Gráfica de Usuario (GUI),
-	cando utilizas <cmd>genr</cmd> na <quote>consola de Gretl</quote>ou se
+	cando utilizas <cmd>genr</cmd> na <quote>consola de GRETL</quote>ou se
 	introduces unha fórmula usando a opción <quote>Definir nova variable</quote>
 	baixo o menú Engadir na xanela principal. Coa GUI, porén, tes a opción
 	de recuperar datos de calquera dos modelos que se amosan nese momento
@@ -4952,7 +5026,7 @@
     <description>
       <para>
 	A 'semente' controla o punto de inicio para a secuencia de números
-	pseudoaleatorios xerados nunha sesión determinada de Gretl. Por defecto,
+	pseudoaleatorios xerados nunha sesión determinada de GRETL. Por defecto,
 	a semente establécese cando se inicia o programa, utilizando o
 	reloxo do sistema. Isto te asegura que obtés unha secuencia distinta
 	de números aleatorios cada vez que executas o programa. Se queres
@@ -5050,10 +5124,11 @@
 	porén, pode que desexes utilizar etiquetas máis informativas. Podes
 	acadar isto mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrución. Para un modelo con <math>k</math>
-	parámetros, o argumento que sigue a esta palabra chave debe de ser,
-	ben unha cadea de texto literal entre comiñas que conteña <math>k</math>
-	nomes separados por espazos, ou ben o nome dunha variable de cadea que
-	conteña <math>k</math> deses nomes.
+	parámetros, o argumento que sigue a esta palabra chave debe de ser
+	unha cadea de texto literal entre comiñas que conteña <math>k</math>
+	nomes separados por espazos, o nome dunha variable de cadea que
+	conteña <math>k</math> deses nomes, ou o nome dun arranxo con
+	<math>k</math> cadeas de texto.
       </para>
     </description>
 
@@ -5308,7 +5383,7 @@
 	valores RGB hexadecimais, ou ben polo nome; e podes acceder á lista
 	de nomes de cores recoñecidas por Gnuplot dando a instrución
 	<quote><lit>show colornames</lit></quote> no propio Gnuplot
-	ou, na propia consola de Gretl, facendo
+	ou, na propia consola de GRETL, facendo
       </para>
       <code>
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
@@ -5414,10 +5489,10 @@
     <description>
 
       <para>
-	Gretl solicita que un programa distinto, concretamente Gnuplot,
+	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	xere gráficas. Gnuplot é un programa de representación gráfica moi
 	completo con miles de opcións. Mediante unha interface gráfica,
-	Gretl dáche acceso directo a un subconxunto destas opcións e trata
+	GRETL dáche acceso directo a un subconxunto destas opcións e trata
 	de elixir valores sensatos para ti; se queres, tamén te permite
 	que teñas un control completo sobre os detalles da gráfica.
       </para>
@@ -5500,7 +5575,7 @@
 
   </command>
 
-  <command name="graphpg" section="Graphs" label="Páxina de gráficas de Gretl">
+  <command name="graphpg" section="Graphs" label="Páxina de gráficas de GRETL">
 
     <usage>
       <altforms>
@@ -5534,7 +5609,7 @@
 	Ten en conta que en sistemas diferentes a MS Windows, poderías ter
 	que axustar a configuración do programa utilizado para ver ficheiros
 	PDF ou PostScript. Atópao baixo a lapela <quote>Programas</quote>
-	na caixa de diálogo das Preferencias xerais de Gretl (baixo o menú
+	na caixa de diálogo das Preferencias xerais de GRETL (baixo o menú
 	Ferramentas da xanela principal).
       </para>
       <para>
@@ -5608,9 +5683,9 @@
 	independentes nos eixes X e Y.
       </para>
       <para>
-	Ao contrario da maioría das gráficas de Gretl, unha gráfica interactiva
-	3-D contrólase mediante Gnuplot e non co propio Gretl. O menú de
-	edición de gráficas de Gretl non está dispoñible.
+	Ao contrario da maioría das gráficas de GRETL, unha gráfica interactiva
+	3-D contrólase mediante Gnuplot e non co propio GRETL. O menú de
+	edición de gráficas de GRETL non está dispoñible.
       </para>
     </description>
   </command>
@@ -5671,13 +5746,13 @@
       <para>
 	Ademais, certas funcións poden indicarse con <quote>no-print</quote>. En
 	xeral, cando se chama a unha función mediante o programa de Interface
-	Gráfica de Usuario (GUI), Gretl abre unha xanela para amosar o seu
-	resultado en texto. Ao marcar este cadriño estás indicándolle a Gretl
+	Gráfica de Usuario (GUI), GRETL abre unha xanela para amosar o seu
+	resultado en texto. Ao marcar este cadriño estás indicándolle a GRETL
 	que non faga isto, de aí que non debas de agardar resultados en texto.
       </para>
       <para>
 	Finalmente, podes marcar a función <lit>gui-main</lit> (se existe)
-	como <quote>menu-only</quote>. Isto indícalle a Gretl que a función
+	como <quote>menu-only</quote>. Isto indícalle a GRETL que a función
 	en cuestión está deseñada especificamente para que se invoque desde
 	o menú da Interface Gráfica de Usuario (GUI) á que está unida, e non
 	debe de presentarse aos usuarios, a non ser nese caso.
@@ -5690,13 +5765,13 @@
 
     <description>
       <para>
-	A calculadora de probas de Gretl acha os valores dos estatísticos
+	A calculadora de probas de GRETL acha os valores dos estatísticos
 	de proba e das súas probabilidades asociadas (valores p) en varias
 	probas habituais de hipóteses, relativas a unha ou dúas poboacións.
 	As entradas que se requiren consisten en estatísticos mostrais obtidos
 	dunha ou dúas mostras, en función da proba escollida; e podes escribir
 	estes estatísticos con valores numéricos. Alternativamente, se tes
-	aberto un ficheiro de datos, podes lograr que Gretl calcule os
+	aberto un ficheiro de datos, podes lograr que GRETL calcule os
 	estatísticos mostrais para unha ou varias variables escollidas
 	(no caso de medias e varianzas, pero non no caso de proporcións).
       </para>
@@ -5841,69 +5916,7 @@
 
     </description>
   </command>
-
-  <command name="hausman" section="Tests" label="Diagnósticos de panel">
-    <usage>
-      <options>
-	<option>
-	  <flag>--nerlove</flag>
-	  <effect>Utiliza o método de Nerlove para efectos aleatorios</effect>
-	</option>
-	<option>
-	  <flag>--matrix_diff</flag>
-	  <effect>Utiliza o método da matriz-diferenza para a proba de Hausman</effect>
-	</option>
-      </options>
-    </usage>
-    <description>
-      <para>
-	Esta proba está dispoñible unicamente despois de estimar un modelo
-	con datos de panel utilizando MCO (consulta tamén <cmd>setobs</cmd>).
-	Comproba o modelo combinado simple fronte ás principais alternativas,
-	o modelo de efectos fixos e o de efectos aleatorios.
-      </para>
-      <para>
-	O modelo de efectos fixos permite que a ordenada na orixe da regresión
-	varíe dunha unidade de sección cruzada a outra. Preséntase unha proba
-	<math>F</math> para a hipótese nula de que as ordenadas na orixe
-	non difiren. O modelo de efectos aleatorios descompón a varianza de
-	cada perturbación en dúas partes, unha parte específica da unidade
-	de sección cruzada e outra parte específica de cada observación
-	concreta. (Pódese calcular este estimador só cando o número de
-	unidades de sección cruzada no conxunto de datos supera ao número
-	de parámetros a estimar.) O estatístico de Multiplicadores de Lagrange
-	de Breusch&ndash;Pagan comproba a hipótese nula de que o estimador
-	combinado de MCO é axeitado fronte á alternativa de efectos aleatorios.
-      </para>
-      <para>
-	O modelo combinado de MCO pode rexeitarse fronte a ambas as dúas
-	alternativas, a de efectos fixos e a de efectos aleatorios. En tanto que
-	a perturbación específica por unidade ou grupo non estea correlacionada
-	coas variables independentes, o estimador de efectos aleatorios será
-	máis eficiente que o estimador de efectos fixos; se non, o estimador
-	de efectos aleatorios será inconsistente polo que prefírese o estimador
-	de efectos fixos. A hipótese nula da proba de Hausman indica que a
-	perturbación específica de grupo non está así correlacionada (e por iso
-	prefírese o modelo de efectos aleatorios). Un valor baixo da probabilidade
-	asociada (valor p) ao estatístico desta proba vai en contra do modelo
-	de efectos aleatorios e a favor do modelo de efectos fixos.
-      </para>
-      <para>
-	As dúas opcións desta instrución pertencen ao modelo de efectos
-	aleatorios. Por defecto, utilízase o método de Swamy e Arora, mediante
-	o cálculo do estatístico de proba de Hausman, utilizando o método
-	de regresión. As opcións permiten utilizar o estimador alternativo
-	da varianza de Nerlove, e /ou a aproximación da matriz-diferenza
-	ao estatístico de Hausman.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Xanela de modelo: Probas/Diagnósticos de panel</menu-path>
-    </gui-access>
-
-  </command>
-
+  
   <command name="hccme" section="Estimation" context="gui"
     label="Desviacións padrón robustas">
 
@@ -5929,7 +5942,7 @@
       <para>
 	Se utilizas o estimador HAC para MCO con datos de series temporais,
 	podes afinar a longura do retardo utilizando a instrución <cmd>set</cmd>.
-	Consulta o manual de Gretl ou o ficheiro de axuda das instrucións dun
+	Consulta o manual de GRETL ou o ficheiro de axuda das instrucións dun
 	guión para obter máis detalles.
       </para>
       <para>
@@ -5945,7 +5958,7 @@
 	e BW é o estimador de Bollerslev-Wooldridge.
       </para>
       <para>
-	Por defecto, Gretl usa a distribución <math>t</math>-Student ao calcular
+	Por defecto, GRETL usa a distribución <math>t</math>-Student ao calcular
 	as probabilidades asociadas (valores p) baseadas en desviacións padrón
 	robustas no contexto de estimadores de mínimos cadrados. A opción titulada
 	<quote>Utilizar a distribución Normal para obter valores p robustos</quote>
@@ -6229,7 +6242,7 @@
 	que en mostras finitas é posible obter un expoñente estimado maior ca 1.
       </para>
       <para>
-	En Gretl, o expoñente estímase utilizando submostraxe binaria:
+	En GRETL, o expoñente estímase utilizando submostraxe binaria:
 	comézase co rango completo de datos, despois coas dúas metades
 	do rango, despois cos 4 cuartos, etcétera. Para tamaños da mostra
 	menores que o rango de datos, o valor RS é a media entre as
@@ -6319,12 +6332,12 @@
 	para incluír definicións de funcións. O nome do ficheiro
 	(<repl>nomeficheiro</repl>) debería de ter a extensión <lit>inp</lit>
 	(un guión de texto plano) ou <lit>gfn</lit> (un paquete de funcións
-	de Gretl). As instrucións de <repl>nomeficheiro</repl> execútanse
+	de GRETL). As instrucións de <repl>nomeficheiro</repl> execútanse
 	e logo o control devólvese ao guión principal.
       </para>
       <para>
 	A opción <opt>force</opt> é específica dos ficheiros <lit>gfn</lit> e
-	o seu efecto consiste en forzar a Gretl a que volva ler o paquete de
+	o seu efecto consiste en forzar a GRETL a que volva ler o paquete de
 	funcións desde o ficheiro, mesmo aínda que xa estea cargado na memoria.
 	(Os ficheiros de texto plano <lit>inp</lit> sempre lense e procésanse
 	en resposta a esta instrución.)
@@ -6453,7 +6466,7 @@
     <description>
       <para>
 	Se escolles a opción 'bootstrap' cando representas respostas ao
-	impulso, Gretl calcula un intervalo de confianza para as respostas
+	impulso, GRETL calcula un intervalo de confianza para as respostas
 	utilizando o método bootstrap. Vólvese a facer a mostraxe cos erros
 	do VAR (ou VECM) orixinal, con substitución; constrúese un conxunto
 	de datos artificial baseado nas estimacións orixinais dos parámetros
@@ -6741,7 +6754,7 @@
 	Esta instrución incorpora unha ou máis series desde a orixe
 	<repl>nomeficheiro</repl> (que debe de ser ben un ficheiro de datos
 	co texto delimitado, ou ben un ficheiro de datos <quote>propio</quote>
-	de Gretl), co nome <repl>nomevar</repl>. Para obter máis detalles,
+	de GRETL), co nome <repl>nomevar</repl>. Para obter máis detalles,
 	consulta o <guideref targ="chap:join"/> pois aquí damos só un breve
 	resumo das opcións dispoñibles. Consulta tamén <cmdref targ="append"/>
 	para operacións de anexión máis simples.
@@ -6749,7 +6762,7 @@
       <para>
 	Podes utilizar a opción <opt>data</opt> para especificar o
 	encabezamento dos datos do ficheiro de orixe, se difire do
-	nome polo que os datos deberan de coñecerse en Gretl.
+	nome polo que os datos deberan de coñecerse en GRETL.
       </para>
       <para>
 	Podes usar a opción <opt>filter</opt> para especificar un
@@ -6805,17 +6818,19 @@
     <para>
 	    Na esquerda deberías de ver unha listaxe das series do conxunto de datos
 	    vixente. Aquí podes escoller unha serie, e utilizar os botóns coas frechas
-	    para especificala como unha ou outra das <quote>claves internas</quote>
-	    (opcionais). As claves funcionan para emparellar filas entre o conxunto
+	    para especificala como unha ou outra das <quote>chaves internas</quote>
+	    (opcionais). As chaves funcionan para emparellar filas entre o conxunto
 	    vixente de datos e o ficheiro do que esteas importando datos.
     </para>
     <para>
 	    Na dereita deberían de listarse as series do ficheiro de datos que
-	    escolliches. Podes usar os botóns coas frechas para elixir o nome
-	    das series a importar desa lista, e (de ser necesario) os nomes
-	    das series que se corresponden coas claves <quote>internas</quote>.
-	    (Por defecto, presuponse que as claves internas e externas teñen
-	    o mesmo nome.)
+	    escolliches. Podes usar os botóns coas frechas para elixir o nome das
+	    series a importar desa lista, e (de ser necesario) os nomes das series
+	    que se corresponden coas chaves <quote>internas</quote>. (Por defecto,
+	    suponse que as chaves internas e externas teñen o mesmo nome.) Na
+	    listaxe desta caixa tamén podes ver unha entrada <quote>ficticia</quote>
+	    nomeada <lit>$obsmajor</lit> que, aínda que non se pode importar,
+	    podes usala como chave; consulta <fncref targ="$obsmajor"/>.
     </para>
     <para>
 	    No medio do cadro de diálogo podes especificar parámetros
@@ -7231,19 +7246,23 @@
 
     <usage>
       <options>
-        <option>
+	<option>
 	  <flag>--save</flag>
 	  <effect>Garda as series resultantes</effect>
 	</option>
-        <option>
+	<option>
+	  <flag>--overwrite</flag>
+	  <effect>Conformidade para sobrescribir series xa existentes</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>Non presenta os resultados</effect>
 	</option>
 	<option>
 	  <flag>--plot</flag>
-	  <optparm>modo-ou-nomeficheiro</optparm>
+	  <optparm>Modo-ou-nomeficheiro</optparm>
 	  <effect>Mira abaixo</effect>
-        </option>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7292,15 +7311,18 @@
 	desviación padrón.
       </para>
       <para context="cli">
-	Cando especificas a opción <opt>save</opt> con esta instrución,
+	Cando especificas a opción <opt>save</opt> xunto con esta instrución,
 	os valores de pancamento, influencia e DFFITS engádense ao
 	conxunto vixente de datos; neste contexto, podes utilizar a opción
 	<opt>quiet</opt> para eliminar a presentación dos resultados. Os
 	nomes por defecto das series gardadas son <lit>lever</lit>,
-	<lit>influ</lit> e <lit>dffits</lit>, respectivamente. Porén, se xa
-	existen series con eses nomes, os das novas series gardadas
-	axústanse para garantir a unicidade; en calquera caso, estas serán
-	as 3 series con números ID máis grandes do conxunto de datos.
+	<lit>influ</lit> e <lit>dffits</lit>, respectivamente. Se xa existen
+	series con eses nomes, o que aconteza dependerá de se indicas
+	a opción <opt>overwrite</opt>, pois nese caso vanse sobrescribir
+	as series xa existentes. En caso contrario, os nomes vanse axustar
+	para poder garantir a unicidade, e as series novas xeradas serán
+	as tres series con números ID máis grandes do conxunto de
+	datos.
       </para>
       <para context="gui">
 	Coa icona '+' da parte de arriba da xanela da proba de pancamento,
@@ -7311,7 +7333,7 @@
 	Logo da execución, o accesorio <fncref targ="$test"/> devolve o criterio
 	de validación cruzada, que se define como
         \[
-        \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2
         \]
 	onde $\hat{y}_{-i}$ é o erro de predición para a observación
 	$i$-ésima, logo de que esta sexa excluída da mostra. Por iso, o
@@ -7507,6 +7529,8 @@
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
+	No caso de usar datos de panel, a especificación pode incluír os
+	efectos fixos individuais.
       </para>
       <para>
 	A variable dependente debe de ser estritamente positiva. Se
@@ -7555,6 +7579,7 @@
 
     <gui-access>
       <menu-path>/Modelar/Variable Dependente Limitada/Loxística</menu-path>
+      <menu-path>/Modelar/Panel/Loxística EF</menu-path>
     </gui-access>
 
   </command>
@@ -7597,6 +7622,10 @@
 	  <flag>--p-values</flag>
 	  <effect>Amosa os valores p en vez das pendentes</effect>
 	</option>
+	<option>
+	  <flag>--estrella</flag>
+	  <effect>Escolle a variante pseudo-R-cadrado</effect>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7618,7 +7647,8 @@
 	e estas pendentes substitúen os valores p habituais no resultado
 	da regresión. Podes prescindir deste proceder indicando a opción
 	<opt>p-values</opt>. O estatístico khi-cadrado proba a hipótese
-	nula de que todos os coeficientes son cero, agás o da constante.
+	nula de que todos os coeficientes son cero, agás o da
+	constante.
       </para>
       <para context="cli">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
@@ -7632,6 +7662,16 @@
 	desviacións padrón <quote>robustas por agrupación</quote>;
 	consulta o <guideref targ="chap:robust_vcv"/> para obter máis
 	detalles.
+      </para>
+      <para context="cli">
+	Por defecto, vaise amosar o estatístico pseudo-R-cadrado que foi
+	suxerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	mais no caso binario, se indicas a opción <opt>estrella</opt>
+	vaise amosar en troques a variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	previsiblemente imita de xeito máis semellante as propiedades do
+	<math>R</math><sup>2</sup> habitual no contexto da estimación
+	de mínimos cadrados.
       </para>
       <para context="gui">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
@@ -7754,7 +7794,7 @@
 	Consulta o <guideref targ="chap:looping"/> para obter outros detalles
 	e exemplos. Aí explícase o efecto da opción <opt>progressive</opt>
 	(que está deseñada para utilizarse con simulacións de tipo Monte
-	Carlo). Non podes utilizar todas as instrucións de Gretl dentro dun
+	Carlo). Non podes utilizar todas as instrucións de GRETL dentro dun
 	bucle; por iso as instrucións dispoñibles neste contexto tamén se
 	expoñen aí.
       </para>
@@ -7847,7 +7887,7 @@
     <description>
       <para>
 	Podes enviar un banco de datos (ou un guión de instrucións) como engadido
-	de correo desde dentro de Gretl, usando o SMTP (Simple Mail Transfer
+	de correo desde dentro de GRETL, usando o SMTP (Simple Mail Transfer
 	Protocol). Deseguido, explícase como interpretar as dúas táboas
 	(<quote>Configuración de correo</quote> e <quote>Mensaxe</quote>) da caixa
 	de diálogo do correo. Tamén se comentan os requirimentos de contrasinal.
@@ -7885,7 +7925,7 @@
       </ilist>
       <para>
 	A túa información de servidor e de usuario lémbrase dunha sesión de
-	Gretl ata a seguinte, de xeito que só tes que introducila unha vez.
+	GRETL ata a seguinte, de xeito que só tes que introducila unha vez.
 	De igual xeito que co contrasinal, é elección túa decidir gardala ou
 	non; consulta a sección <emphasis>Contrasinal de correo</emphasis>
 	de máis abaixo para obter máis detalles.
@@ -7899,7 +7939,7 @@
        <li>
 	 <para>
 	   A: é a dirección de correo do destinatario. A primeira vez vas
-	   ter que introducila pola túa conta, pois Gretl non ten acceso á
+	   ter que introducila pola túa conta, pois GRETL non ten acceso á
 	   túa axenda de direccións. Agora ben, unha vez introducida unha
 	   dirección, esta lémbrase e podes seleccionala máis adiante
 	   mediante unha lista despregable. Podes gardar ata dez direccións
@@ -7909,7 +7949,7 @@
        <li>
 	 <para>
 	   De: é a túa propia dirección de correo. Esta lémbrase dunha
-	   sesión de Gretl ata a seguinte.
+	   sesión de GRETL ata a seguinte.
 	 </para>
        </li>
        <li>
@@ -7931,7 +7971,7 @@
       <subhead>Contrasinal de correo</subhead>
       <para>
 	Si se necesita un contrasinal para enviar o correo, podes elixir que
-	Gretl o teña gardado. Nese caso, gárdase en formato arrevesado nun
+	GRETL o teña gardado. Nese caso, gárdase en formato arrevesado nun
 	directorio que está reservado para ti, no teu ordenador (en ningún
 	servidor de internet). Porén, non podemos garantir a súa
 	seguridade.
@@ -7940,7 +7980,7 @@
 	Se ti es usuario de gmail e utilizas a autenticación en 2-pasos,
 	ten en conta que o teu contrasinal habitual de gmail non vai
 	funcionar neste contexto. Vas necesitar unha
-	<quote>App de contrasinal</quote> para utilizala con Gretl; consulta
+	<quote>App de contrasinal</quote> para utilizala con GRETL; consulta
 	<url>https://support.google.com/accounts/answer/185833</url>.
       </para>
     </description>
@@ -7972,7 +8012,7 @@
 
     <description>
       <para>
-	Dá soporte á creación dun paquete de funcións de Gretl mediante a liña
+	Dá soporte á creación dun paquete de funcións de GRETL mediante a liña
 	de instrucións. O modo de funcionamento desta instrución depende da
 	extensión do <repl>nomeficheiro</repl>, que debe de ser ben
 	<lit>.gfn</lit> ou ben <lit>.zip</lit>.
@@ -7989,16 +8029,16 @@
       <para>
 	Escribe un ficheiro comprimido zip dun paquete (un gfn máis outros
 	elementos). En caso de acharse un ficheiro gfn co mesmo nome base
-	que <repl>nomeficheiro</repl>, Gretl comproba os ficheiros correspondentes
+	que <repl>nomeficheiro</repl>, GRETL comproba os ficheiros correspondentes
 	<lit>inp</lit> e <lit>spec</lit>, e se os atopa a ambos, sendo polo
 	menos un deles máis novo ca o ficheiro gfn, entón vólvese xerar
 	o gfn; se non, utilízase o gfn existente. Cando non se atopa
-	ese ficheiro, Gretl tenta primeiro xerar o gfn.
+	ese ficheiro, GRETL tenta primeiro xerar o gfn.
       </para>
       <subhead>Opcións de gfn</subhead>
       <para>
 	Os indicadores de opcións admiten a escritura de ficheiros auxiliares,
-	pensados para utilizar cos <quote>engadidos</quote> de Gretl. O
+	pensados para utilizar cos <quote>engadidos</quote> de GRETL. O
 	ficheiro índice é un curto documento XML que contén información
 	básica sobre o paquete, e que ten o seu mesmo nome como base
 	ademáis da extensión <lit>.xml</lit>. O ficheiro de traducións contén
@@ -8010,7 +8050,7 @@
       </para>
       <para>
 	Para obter máis detalles sobre todo isto, consulta o
-	<mnu targ="Pkgbook">Manual de paquetes de funcións</mnu> de Gretl.
+	<mnu targ="Pkgbook">Manual de paquetes de funcións</mnu> de GRETL.
       </para>
     </description>
 
@@ -8056,6 +8096,16 @@
 	  <para>
 	    border: Debera debuxarse un borde rectangular arredor do mapa?
 	    Por defecto, si; pero podes eliminar isto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    feature border width: Te proporciona o control sobre a anchura
+	    do borde ou do contorno que se debuxa arredor das distintas
+	    <quote>características</quote> do mapa (por exemplo: países,
+	    estados, rexións, provincias,...). Se o teu gráfico xa inclúe
+	    unha carga, podes reducir a anchura ata cero para eliminar eses
+	    bordes.
 	  </para>
 	</li>
 	<li>
@@ -8448,13 +8498,13 @@
 	datos (baixo o menú Datos).
       </para>
       <para>
-	Gretl ten a súa propia codificación interna para os valores ausentes,
+	GRETL ten a súa propia codificación interna para os valores ausentes,
 	pero á veces os datos que se importan poden empregar outro código
 	distinto. Por exemplo, se unha serie concreta está codificada de xeito
 	que o valor '-1' indica <quote>non aplicable</quote>, podes escoller
 	<quote>Establecer código de valor ausente</quote> baixo o menú
 	Variable e teclear o valor <quote>-1</quote> (sen as comiñas). Entón
-	Gretl vai ler eses (-1) como observacións ausentes.
+	GRETL vai ler eses (-1) como observacións ausentes.
       </para>
     </description>
   </command>
@@ -8475,8 +8525,8 @@
       <subhead>2. Xanela</subhead>
       <para>
 	Selecciona <quote>Xanela de modelo</quote> para un paquete de
-	funcións que fai algo cun modelo de Gretl, e deba de aparecer
-	na barra de menús dunha xanela de modelos de Gretl. Se non,
+	funcións que fai algo cun modelo de GRETL, e deba de aparecer
+	na barra de menús dunha xanela de modelos de GRETL. Se non,
 	selecciona <quote>Xanela principal</quote>.
       </para>
       <subhead>3. Árbore do menú</subhead>
@@ -8492,7 +8542,7 @@
 	de Usuario (GUI) para que se amose cando se invoque o paquete desde
 	un menú. E se o paquete está pensado para invocalo desde a xanela dun
 	modelo, podes especificar un certo tipo de modelo (identificado pola
-	súa palabra chave como instrución de Gretl) como requisito.
+	súa palabra chave como instrución de GRETL) como requisito.
       </para>
     </description>
   </command>
@@ -8520,7 +8570,8 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Matriz de covarianzas CMV (QML)</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>Matriz de covarianzas CMV (QML) ou HAC</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8557,10 +8608,16 @@
     <description context="gui">
       <para>
 	Realiza a estimación de Máxima Verosimilitude (MV ou ML) usando
-	o algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno). Debes de
-	especificar a función logaritmo de verosimilitude; e se te recomenda
-	que tamén proporciones as expresións das derivadas desta función
-	con respecto a cada un dos parámetros, se é posible.
+	ben o algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno) ou ben
+	o método de Newton. Debes de especificar a función logaritmo de
+	verosimilitude; e se te recomenda que tamén proporciones as expresións
+	das derivadas desta función con respecto a cada un dos parámetros,
+	se é posible.
+      </para>
+      <para>
+	Este texto de axuda asume que se utiliza o maximizador por defecto
+	BFGS. Para obter información relativa ao uso do método de Newton,
+	consulta o <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Exemplo sinxelo: Supón que temos unha serie <lit>X</lit> con
@@ -8672,8 +8729,13 @@
       </para>
       <para>
 	Ten en conta que calquera indicador de opción debe de engadirse á
-	liña final do bloque EMV (MLE).
+	liña final do bloque EMV (MLE). Por exemplo:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Matriz de covarianzas e desviacións padrón</subhead>
       <para>
 	Cando a función do logaritmo da verosimilitude devolve unha serie ou
@@ -8683,11 +8745,15 @@
 	baséanse pola contra na inversa negativa da matriz Hessiana, que se
 	aproxima numericamente. Cando indicas a opción <opt>robust</opt>,
 	utilízase un estimador CMV (QML, un <quote>emparedado</quote> entre
-	a inversa negativa da matriz Hessiana e o PEG). Agora ben, cando a
-	función do logaritmo da verosimilitude unicamente devolve un valor
-	escalar, o PEG non está dispoñible (polo tanto tampouco o estimador
-	CMV), e as desviacións padrón teñen que calcularse necesariamente
-	utilizando a matriz Hessiana numérica.
+	a inversa negativa da matriz Hessiana e o PEG). Se ademais engades o
+	parámetro <lit>hac</lit> a esta opción, o PEG se incrementa do xeito
+	de <cite key="newey-west87">Newey e West</cite> para permitir
+	autocorrelación do gradente. (Isto unicamente ten sentido con datos
+	de series de tempo.) Agora ben, cando a función do logaritmo da
+	verosimilitude unicamente devolve un valor escalar, o PEG non está
+	dispoñible (polo tanto tampouco o estimador CMV), e as desviacións
+	padrón teñen que calcularse necesariamente utilizando a matriz
+	Hessiana numérica.
       </para>
       <para>
 	No caso de que unicamente queiras as estimacións do parámetro
@@ -8697,7 +8763,7 @@
       </para>
       <subhead>Comprobando as derivadas analíticas</subhead>
       <para>
-	Se proporcionas as derivadas analíticas, por defecto Gretl executa
+	Se proporcionas as derivadas analíticas, por defecto GRETL executa
 	unha verificación numérica da súa credibilidade. Algunhas veces isto
 	pode producir falsos positivos, por situacións nas que as derivadas
 	correctas semellan ser incorrectas e a estimación rexéitase. Para
@@ -8714,9 +8780,10 @@
 	lograr mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrucións. Para un modelo con <math>k</math>
 	parámetros, o argumento que sigue a esta palabra chave debe de ser
-	ben unha cadea de texto literal contornada entre comiñas, que conteña
-	<math>k</math> nomes separados por espazos, ou ben o nome dunha
-	variable de cadea que conteña <math>k</math> deses nomes.
+	unha cadea de texto literal entre comiñas que conteña <math>k</math>
+	nomes separados por espazos, o nome dunha variable de cadea que
+	conteña <math>k</math> deses nomes, ou o nome dun arranxo con
+	<math>k</math> cadeas de texto.
       </para>
       <para>
 	Para unha descrición máis en profundidade da estimación
@@ -8755,7 +8822,7 @@
       </para>
 
       <para>
-	Gretl proporciona un medio para elaborar unha táboa deste tipo
+	GRETL proporciona un medio para elaborar unha táboa deste tipo
 	(e de copiala en texto plano, &latex; ou Rich Text Format).
 	Aquí tes como facelo:
       </para>
@@ -8778,10 +8845,10 @@
 	<li>
 	  <para>
 	    Cando xa teñas feita a estimación dos modelos, abre o visor de
-	    iconas da túa sesión de Gretl (escollendo <quote>Vista de iconas</quote>
-	    baixo o menú de Ver na xanela principal de Gretl, ou premendo na
+	    iconas da túa sesión de GRETL (escollendo <quote>Vista de iconas</quote>
+	    baixo o menú de Ver na xanela principal de GRETL, ou premendo na
 	    icona titulada <quote>Ver iconas de sesión</quote> na barra de
-	    ferramentas de Gretl).
+	    ferramentas de GRETL).
     </para>
 	</li>
 	<li>
@@ -8823,7 +8890,7 @@
 
     <description context="cli">
       <para>
-	Permite manexar a <quote>Táboa de modelos</quote> de Gretl;
+	Permite manexar a <quote>Táboa de modelos</quote> de GRETL;
 	consulta o <guideref targ="chap:modes"/> para obter máis
 	detalles. As instrucións subordinadas teñen os seguintes efectos:
 	<cmd>add</cmd> engade o derradeiro modelo estimado á táboa
@@ -9064,7 +9131,7 @@
       <para>
 	Cando un modelo se estima por Mínimos Cadrados en 2 Etapas (consulta
 	<cmdref targ="tsls"/>), ráchase o principio de Máxima Verosimilitude e
-	Gretl ofrece algúns equivalentes: a opción <flag>--autocorr</flag>
+	GRETL ofrece algúns equivalentes: a opción <flag>--autocorr</flag>
 	calcula o estatístico de Godfrey para probar autocorrelación
 	<cite key="godfrey94" p="true">(Godfrey, 1994)</cite> mentres que a opción
 	<flag>--white</flag> produce o estatístico da proba HET1 de heterocedasticidade
@@ -9114,7 +9181,7 @@
 	bits de precisión nos cálculos, pero podes aumentar isto mediante a
 	variable de contorna <lit>GRETL_MP_BITS</lit>. Por exemplo, cando
 	utilizas o intérprete Bash se te podería ocorrer a seguinte instrución
-	para establecer unha precisión de 1024 bits antes de comezar Gretl.
+	para establecer unha precisión de 1024 bits antes de comezar GRETL.
       </para>
       <code>
 	export GRETL_MP_BITS=1024
@@ -9422,7 +9489,7 @@
 	a estimación. Calquera opción deberás de engadila a esta liña.
       </para>
       <para>
-	Se proporcionas as derivadas analíticas, por defecto Gretl executa
+	Se proporcionas as derivadas analíticas, por defecto GRETL executa
 	unha verificación numérica da súa credibilidade. Algunhas veces isto
 	pode producir falsos positivos, por situacións nas que as derivadas
 	correctas semellan ser incorrectas e a estimación rexéitase. Para
@@ -9438,10 +9505,11 @@
 	pode que desexes utilizar etiquetas máis informativas. Isto o podes
 	lograr mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrucións. Para un modelo con <math>k</math>
-	parámetros, o argumento que sigue a esta palabra chave debe de ser,
-	ben unha cadea de texto literal contornada entre comiñas que conteña
-	<math>k</math> nomes separados por espazos, ou ben o nome dunha
-	variable de cadea que conteña <math>k</math> deses nomes.
+	parámetros, o argumento que sigue a esta palabra chave debe de ser
+	unha cadea de texto literal entre comiñas que conteña <math>k</math>
+	nomes separados por espazos, o nome dunha variable de cadea que
+	conteña <math>k</math> deses nomes, ou o nome dun arranxo con
+	<math>k</math> cadeas de texto.
       </para>
       <para>
 	Para obter outros detalles sobre a estimación MCNL (NLS), consulta
@@ -9544,7 +9612,7 @@
       </para>
       <para>
 	Por defecto, esta instrución libra todos os datos do espazo vixente
-	de traballo de Gretl, non só as series senón tamén as matrices, os
+	de traballo de GRETL, non só as series senón tamén as matrices, os
 	escalares, as cadeas de texto, etc. Agora ben, cando indicas a opción
 	<opt>preserve</opt>, retense calquera variable que non sexa unha serie
 	e estea definida nese momento.
@@ -9659,7 +9727,7 @@
       </code>
       <para context="cli">
 	garda os erros da estimación baixo o nome <lit>uh</lit>. Consulta a
-	sección <quote>Accesorios</quote> da Guía de funcións de Gretl para
+	sección <quote>Accesorios</quote> da Guía de funcións de GRETL para
 	obter máis detalles.
       </para>
 
@@ -9814,7 +9882,7 @@
 
     <description>
       <para>
-	Gretl é capaz de acceder a bancos de datos da Universidade Wake
+	GRETL é capaz de acceder a bancos de datos da Universidade Wake
 	Forest (o teu ordenador debe de estar conectado a Internet para
 	que isto funcione).
       </para>
@@ -9822,7 +9890,7 @@
 	Baixo o menú <quote>Ficheiro: Bancos de datos</quote>, escolle a
 	opción <quote>No servidor de bancos de datos</quote>. Debera de
 	aparecer unha xanela, amosando unha listaxe dos bancos de datos
-	de Gretl dispoñibles na Wake Forest. (Dependendo da túa localización
+	de GRETL dispoñibles na Wake Forest. (Dependendo da túa localización
 	e da velocidade da túa conexión a Internet, isto pode tardar uns
 	poucos segundos.) Xunto co nome do banco de datos e unha curta
 	descrición, aparece unha anotación <quote>Estado local</quote>:
@@ -9839,7 +9907,7 @@
 	de datos; entón preme un clic sobre <quote>Listar as series</quote>.
 	Isto abre unha xanela máis, desde a que podes representar os valores
 	dunha das series de datos que elixas, debuxar eses valores ou mesmo
-	importalos ao espazo de traballo de Gretl. Podes completar estas
+	importalos ao espazo de traballo de GRETL. Podes completar estas
 	tarefas utilizando o menú <quote>Series</quote>, ou mediante o menú
 	emerxente que aparece cando premes o botón dereito do rato sobre
 	unha determinada serie. Tamén podes buscar a listaxe dunha variable
@@ -9852,7 +9920,7 @@
 	o botón <quote>Instalar</quote>. Isto vai descargar o banco de
 	datos en formato comprimido, logo descomprimilo e instalalo no
 	teu disco duro. En adiante xa deberas de ser capaz de atopalo
-	baixo <quote>Ficheiro, Bancos de datos, Propio de Gretl</quote>
+	baixo <quote>Ficheiro, Bancos de datos, Propio de GRETL</quote>
 	no menú.
       </para>
     </description>
@@ -9875,6 +9943,11 @@
 	  <effect>Retén as variables que non son series</effect>
 	</option>
 	<option>
+	  <flag>--select</flag>
+	  <optparm>seleccion</optparm>
+	  <effect>Ler só as series indicadas, mira abaixo</effect>
+	</option>
+	<option>
 	  <flag>--frompkg</flag>
 	  <optparm>nomepaquete</optparm>
 	  <effect>Mira abaixo</effect>
@@ -9885,7 +9958,7 @@
 	</option>
 	<option>
 	  <flag>--www</flag>
-	  <effect>Utiliza un banco de datos do servidor de Gretl</effect>
+	  <effect>Utiliza un banco de datos do servidor de GRETL</effect>
 	</option>
 	<option>
 	  <flag>--odbc</flag>
@@ -9906,8 +9979,8 @@
 	Abre un ficheiro de datos ou un banco de datos (consulta o
 	<guideref targ="chap:datafiles"/> para ver unha explicación desta
 	distinción). As consecuencias son algo diferentes nos dous casos.
-	Cando abres un <emphasis>ficheiro de datos</emphasis>,léese todo o
-	seu contido no espazo de traballo de Gretl, substituíndo o banco de
+	Cando abres un <emphasis>ficheiro de datos</emphasis>, léese o
+	seu contido no espazo de traballo de GRETL, substituíndo o banco de
 	datos vixente (se hai algún). Para engadir datos ao conxunto vixente,
 	en troques de substituílo, consulta <cmdref targ="append"/> ou (para
 	ter maior flexibilidade) <cmdref targ="join"/>. Cando abres un
@@ -9919,29 +9992,29 @@
 	máis abaixo.
       </para>
       <para>
-	Se non indicas <repl>nomeficheiro</repl> cunha ruta completa, Gretl
+	Se non indicas <repl>nomeficheiro</repl> cunha ruta completa, GRETL
 	procura nalgunhas rutas destacadas para tratar de atopar o ficheiro, das
 	que o cartafol vixente (<cmdref targ="workdir"/>) é a primeira elección.
 	Se non indicas o sufixo no nome de ficheiro (como no primeiro exemplo
-	de arriba), Gretl asume que é un ficheiro de datos propio con sufixo
+	de arriba), GRETL asume que é un ficheiro de datos propio con sufixo
 	<lit>.gdt</lit>. Baseándose no nome do ficheiro e varias regras
-	heurísticas, Gretl tratará de detectar o formato do ficheiro de
+	heurísticas, GRETL tratará de detectar o formato do ficheiro de
 	datos (propio, texto plano, CSV, MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
-	Cando se utiliza a opción <opt>frompkg</opt>, Gretl vai procurar o
+	Cando se utiliza a opción <opt>frompkg</opt>, GRETL vai procurar o
 	ficheiro especificado de datos no subcartafol asociado ao paquete
 	de funcións especificado por <repl>nomepaquete</repl>.
       </para>
       <para>
 	Se o argumento <repl>nomeficheiro</repl> toma a forma dun
 	identificador de recursos uniforme (URI) que comeza por
-	<lit>http://</lit> ou por <lit>https://</lit>, entón Gretl tratará
+	<lit>http://</lit> ou por <lit>https://</lit>, entón GRETL tratará
 	de descargar o ficheiro de datos indicado, antes de abrilo.
       </para>
       <para>
 	Por defecto, ao abrir un novo ficheiro de datos líbrase a sesión vixente
-	de Gretl, o que inclúe a eliminación de todas as variables definidas,
+	de GRETL, o que inclúe a eliminación de todas as variables definidas,
 	incluíndo matrices, escalares e cadeas de texto. Se queres manter as
 	variables que teñas definidas nese momento (as que non sexan series, pois
 	estas elimínanse obrigatoriamente), utiliza a opción <opt>preserve</opt>.
@@ -9963,20 +10036,20 @@
 	--coloffset=3 --rowoffset=2
       </code>
       <para>
-	o que vai provocar que Gretl ignore as 3 primeiras columnas e as 2
+	o que vai provocar que GRETL ignore as 3 primeiras columnas e as 2
 	primeiras filas. Por defecto, hai un desprazamento de 0 en ambas
 	dimensións, é dicir, comézase a ler na cela de arriba á esquerda.
       </para>
       <subhead context="cli">Ficheiros de texto delimitado</subhead>
       <para>
-	Con ficheiros de texto plano, Gretl habitualmente agarda atopar
+	Con ficheiros de texto plano, GRETL habitualmente agarda atopar
 	as columnas de datos delimitadas dalgún xeito estándar (en xeral
 	mediante coma, tabulador, espazo, ou punto e coma). Por defecto,
-	Gretl procura na primeira columna as etiquetas ou as datas das
+	GRETL procura na primeira columna as etiquetas ou as datas das
 	observacións, se o seu encabezamento ben está baleiro ou ben
 	contén unha cadea de texto suxestiva tal como <quote>year</quote>,
 	<quote>date</quote> ou <quote>obs</quote>. Podes evitar que
-	Gretl trate de xeito especial a primeira columna indicando a opción 
+	GRETL trate de xeito especial a primeira columna indicando a opción 
 	<opt>all-cols</opt>.
       </para>
       <subhead context="cli">Texto de formato fixo</subhead>
@@ -9999,7 +10072,7 @@
 	open fixed.txt --fixed-cols=1,6,20,3
       </code>
       <para>
-	entón Gretl vai ler 6 bytes comezando na columna 1 para a
+	entón GRETL vai ler 6 bytes comezando na columna 1 para a
 	variable 1; e para a variable 2, vai ler 3 bytes comezando na
 	columna 20. As liñas que están en branco, ou que comezan con
 	<lit>#</lit> ignóranse; pero en caso contrario aplícase o 
@@ -10023,7 +10096,7 @@
 	O uso de <lit>open</lit> cun ficheiro de datos como argumento (ao
 	contrario do caso cun banco de datos, mira abaixo) xeralmente implica
 	cargar todas as series do ficheiro indicado. Porén, unicamente no
-	caso de ficheiros orixinais de Gretl (<lit>gdt</lit> e <lit>gdtb</lit>)
+	caso de ficheiros orixinais de GRETL (<lit>gdt</lit> e <lit>gdtb</lit>)
 	é posible especificar un subconxunto de series a cargar, mediante o
 	seu nome. Isto se consegue por medio da opción <opt>select</opt>, o
 	que require un argumento adxunto con algún destes tres formatos: o
@@ -10045,20 +10118,20 @@
 	Como se comentou antes, podes utilizar a instrución <lit>open</lit>
 	para abrir un ficheiro cun banco de datos, e a continuación lelo coa
 	instrución <cmdref targ="data"/>. Os tipos de ficheiros que se admiten
-	son os bancos de datos propios de Gretl, RATS 4.0 e PcGive.
+	son os bancos de datos propios de GRETL, RATS 4.0 e PcGive.
       </para>
       <para>
 	Ademais da lectura destas clases de ficheiros na máquina local,
 	se admiten outros tres casos máis. Primeiro, cando indicas a
-	opción <lit>www</lit>, Gretl vai tratar de acceder a un banco de
-	datos propio de Gretl co nome que proporciones, no servidor de
-	Gretl (por exemplo, o banco de datos <lit>fedbog.bin</lit> cos
+	opción <lit>www</lit>, GRETL vai tratar de acceder a un banco de
+	datos propio de GRETL co nome que proporciones, no servidor de
+	GRETL (por exemplo, o banco de datos <lit>fedbog.bin</lit> cos
 	tipos de interese da Reserva Federal do terceiro exemplo que se
 	indicou máis arriba). En segundo lugar, podes usar a instrución
 	<quote><lit>open dbnomics</lit></quote> para establecer que
 	DB.NOMICS sexa a orixe para ler bancos de datos; sobre isto
 	consulta <mnu targ="gretlDBN">dbnomics for gretl</mnu>. En
-	terceiro lugar, se indicas a opción <opt>odbc</opt>, Gretl vai
+	terceiro lugar, se indicas a opción <opt>odbc</opt>, GRETL vai
 	tratar de acceder a un banco de datos ODBC. Esta opción explícase
 	detalladamente no <guideref targ="chap:odbc"/>.
       </para>
@@ -10066,7 +10139,7 @@
 
     <gui-access>
       <menu-path>/Ficheiro/Abrir ficheiro de datos</menu-path>
-      <other-access>Arrastrar un ficheiro de datos ata a xanela principal de Gretl</other-access>
+      <other-access>Arrastrar un ficheiro de datos ata a xanela principal de GRETL</other-access>
     </gui-access>
 
   </command>
@@ -10196,7 +10269,7 @@
 	Atención: os ficheiros que se gardan no directorio 'punto', vanse
 	depurar ao saír do programa, polo que non utilices esta modalidade
 	se desexas que os resultados se conserven despois da túa sesión
-	de Gretl.
+	de GRETL.
       </para>
       <para>
 	Repetimos o sinxelo exemplo de arriba, cun par de liñas extra
@@ -10275,18 +10348,18 @@
   <command name="packages" section="Utilities" label="Paquetes de funcións" context="gui">
     <description>
       <para>
-	Podes ampliar as prestacións de Gretl mediante a utilización de
+	Podes ampliar as prestacións de GRETL mediante a utilización de
 	paquetes de funcións que son de dúas clases: os <quote>Complementos</quote>
 	oficiais e os paquetes de contribucións. En conxunto, cobren moitos
 	estimadores e utilidades que non están dispoñibles como instrucións
 	ou funcións integradas no programa.
       </para>
       <para>
-	Os 'Complementos' oficiais están incluídos nos instaladores de Gretl
+	Os 'Complementos' oficiais están incluídos nos instaladores de GRETL
 	para Windows e para Mac. Para Linux, se non se instalan previamente,
 	entón descárganse cando se solicite (por exemplo, se escolles o elemento
-	do menú /Modelar/Series temporais univariantes/GARCH, entón Gretl
-	vai descargar o 'Complemento' <lit>gig</lit> (GARCH in Gretl). Podes
+	do menú /Modelar/Series temporais univariantes/GARCH, entón GRETL
+	vai descargar o 'Complemento' <lit>gig</lit> (GARCH in GRETL). Podes
 	verificar que os teus 'Complementos' están actualizados mediante
 	<mnu targ="SFAddons">Comprobar complementos</mnu> no menú Axuda.
       </para>
@@ -10313,7 +10386,7 @@
 	<url>http://gretl.sf.net/gfnguide/gfn_for_dummies.html</url>.
       </para>
       <para>
-	Para tratar con paquetes mediante a liña de instrucións de Gretl,
+	Para tratar con paquetes mediante a liña de instrucións de GRETL,
 	consulta a instrución <cmdref targ="pkg"/>.
       </para>
     </description>
@@ -10448,7 +10521,7 @@
       <para context="cli">
 	A opción <opt>unbalanced</opt> está dispoñible só para modelos
 	con efectos aleatorios, e podes usala para elixir o método ANOVA
-	que empregar cun panel desequilibrado. Por defecto, Gretl emprega
+	que empregar cun panel desequilibrado. Por defecto, GRETL emprega
 	o método de Swamy&ndash;Arora igual que se fai para os paneis
 	equilibrados, agás que utiliza a media armónica das longuras das
 	series de tempo individuais en vez da <math>T</math> habitual.
@@ -10492,7 +10565,7 @@
       <para>
 	Este diálogo ofrece ata 3 opcións con respecto á definición dun conxunto
 	de datos como un panel. As dúas primeiras opcións requiren que o conxunto
-	de datos estea xa organizado no formato dun panel (mesmo que Gretl aínda
+	de datos estea xa organizado no formato dun panel (mesmo que GRETL aínda
 	non o teña recoñecido). A terceira opción require que o conxunto de datos
 	conteña variables que representen a estrutura dun panel.
       </para>
@@ -10500,14 +10573,14 @@
 	<emphasis>Serie temporais amontoadas</emphasis>: Supón que <repl>N</repl>
 	é o total de unidades de sección cruzada do conxunto de datos, e que
 	<repl>T</repl> = o número observacións das series temporais por unidade.
-	Escollendo esta opción estaslle indicando a Gretl que o conxunto de datos
+	Escollendo esta opción estaslle indicando a GRETL que o conxunto de datos
 	componse nese momento de <repl>N</repl> bloques consecutivos de
 	<repl>T</repl> observacións de series temporais, un por cada unidade de
 	sección cruzada. A seguinte etapa será especificar o valor de <repl>N</repl>.
       </para>
       <para>
 	<emphasis>Seccións cruzadas amontoadas</emphasis>: Estaslle indicando a
-	Gretl que o conxunto de datos componse nese momento de <repl>T</repl>
+	GRETL que o conxunto de datos componse nese momento de <repl>T</repl>
 	bloques consecutivos de <repl>N</repl> observacións de sección cruzada,
 	un por cada período de tempo. A seguinte etapa, de novo, será especificar
 	o valor de <repl>N</repl>.
@@ -10636,6 +10709,86 @@
 
     <gui-access>
       <other-access>Xanela principal: Menú emerxente (selección única)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="panspec" section="Tests" label="Especificación de panel">
+    <usage>
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>Utiliza o método de Nerlove para efectos aleatorios</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>Utiliza o método da matriz-diferenza para a proba de Hausman</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suprime a presentación de resultados</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Esta instrución está dispoñible unicamente despois de estimar un modelo
+	con datos de panel utilizando MCO (consulta tamén <cmd>setobs</cmd>).
+	Comproba a especificación combinada simple fronte ás principais alternativas,
+	a de efectos fixos e a de efectos aleatorios.
+      </para>
+      <para>
+	A especificación de efectos fixos permite que a ordenada na orixe da
+	regresión varíe dunha unidade de sección cruzada a outra. Preséntase
+	unha proba <math>F</math> de Wald para a hipótese nula de que as ordenadas
+	na orixe non difiren. A especificación de efectos aleatorios descompón a
+	varianza de cada perturbación en dúas partes, unha parte específica
+	da unidade de sección cruzada e outra parte específica de cada
+	observación concreta. (Pódese calcular este estimador só cando o
+	número de unidades de sección cruzada no conxunto de datos supera
+	ao número de parámetros a estimar.) O estatístico de Multiplicadores
+	de Lagrange de Breusch&ndash;Pagan comproba a hipótese nula de
+	que MCO combinados é axeitado fronte á alternativa de efectos
+	aleatorios.
+      </para>
+      <para>
+	MCO combinados poden rexeitarse fronte a ambas as dúas alternativas.
+	En tanto que a perturbación específica por unidade ou grupo non estea
+	correlacionada coas variables independentes, o estimador de efectos
+	aleatorios será máis eficiente que o de efectos fixos; se non, o estimador
+	de efectos aleatorios será inconsistente e serán preferibles os efectos
+	fixos. A hipótese nula da proba de Hausman indica que a perturbación
+	específica de grupo <emphasis>non</emphasis> está así correlacionada
+	(e por iso prefírese o estimador de efectos aleatorios). Un valor baixo
+	da probabilidade asociada (valor p) ao estatístico desta proba vai en
+	contra dos efectos aleatorios e a favor dos efectos fixos.
+      </para>
+      <para>
+	As dúas primeiras opcións desta instrución corresponden á estimación de efectos
+	aleatorios. Por defecto, utilízase o método de Swamy e Arora, mediante
+	o cálculo do estatístico de proba de Hausman, utilizando o método
+	de regresión. As opcións permiten utilizar o estimador alternativo
+	da varianza de Nerlove, e /ou a aproximación da matriz-diferenza
+	ao estatístico de Hausman.
+      </para>
+      <para>
+	Cando se completa con éxito, os accessorios <fncref targ="$test"/>
+	e <fncref targ="$pvalue"/> proporcionan 3 vectores que conteñen
+	os estatísticos de proba e os valores p para as tres probas indicadas
+	arriba: combinabilidade (Wald), combinabilidade (Breusch&ndash;Pagan),
+	e Hausman. Se só queres os resultados desta forma, podes indicar
+	a opción <opt>quiet</opt> para saltarte a presentación de resultados.
+      </para>
+      <para>
+	Cae na conta de que despois de estimar a especificación de efectos
+	aleatorios coa instrución <cmd>panel</cmd>, a proba de Hausman
+	execútase automaticamente e podes recuperar os resultados mediante
+	o accesorio <fncref targ="$hausman"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Xanela de modelo: Probas/Especificacións de panel</menu-path>
     </gui-access>
 
   </command>
@@ -10827,7 +10980,7 @@
     <description>
       <para>
 	Esta instrución proporciona un xeito de instalar, consultar, descargar,
-	eliminar ou indexar paquetes de funcións de Gretl. O argumento
+	eliminar ou indexar paquetes de funcións de GRETL. O argumento
 	<repl>acción</repl> debe de ser algún de entre <lit>install</lit>,
 	<lit>query</lit>, <lit>unload</lit>, <lit>remove</lit> ou <lit>index</lit>,
 	respectivamente.
@@ -10836,9 +10989,9 @@
 	<lit>install</lit>: Na súa forma máis elemental, sen ningún indicador
 	de opción e co argumento <repl>nomepaquete</repl> expresado
 	como o nome <quote>plano</quote> dun paquete de funcións de
-	Gretl (como no primeiro exemplo de arriba), o efecto desta opción
+	GRETL (como no primeiro exemplo de arriba), o efecto desta opción
 	consiste en descargar o paquete que se especifica do servidor de
-	Gretl (agás que <repl>nomepaquete</repl> comece con <lit>http://</lit>),
+	GRETL (agás que <repl>nomepaquete</repl> comece con <lit>http://</lit>),
 	e instalalo na máquina local. Neste caso, non é necesario
 	expresar unha extensión no nome do ficheiro. Porén, cando indicas
 	a opción <opt>local</opt>, o argumento <repl>nomepaquete</repl>
@@ -10854,14 +11007,15 @@
 	presentación de información básica sobre o paquete especificado
 	(autor, versión, etc.). Pero se engades a opción <opt>quiet</opt>,
 	non se presenta nada; en troques, gárdase a información do paquete
-	en forma dun feixe de Gretl, ao que se pode acceder mediante
-	<fncref targ="$result"/>.
+	en forma dun feixe de GRETL, ao que se pode acceder mediante
+	<fncref targ="$result"/>. Se non pode atoparse ningunha información,
+	este feixe estará baleiro.
       </para>
       <para>
 	<lit>unload</lit>: Debes de indicar o argumento <repl>pkgname</repl>
 	en modo 'plano', sen ruta nin extensión, como no derradeiro exemplo de
 	arriba. A consecuencia disto é a descarga dese paquete en cuestión da
-	memoria de Gretl (se está cargado nese momento), e tamén eliminalo do
+	memoria de GRETL (se está cargado nese momento), e tamén eliminalo do
 	menú da Interface Gráfica (GUI) ao que estea engadido, se o está a algún.
       </para>
       <para>
@@ -10876,7 +11030,7 @@
 	que se coñecen como <quote>Engadidos</quote> (ou Complementos). Esa
 	actualización faise automaticamente de cando en vez, pero nalgúns casos
 	pode resultar útil unha actualización manual. Neste caso, a opción
-	<opt>verbose</opt> provoca un resultado impreso sobre onde fixo Gretl
+	<opt>verbose</opt> provoca un resultado impreso sobre onde fixo GRETL
 	a procura, e o que atopou. Sendo claros, aquí tes o xeito de acadar
 	un resultado co índice completo:
       </para>
@@ -10903,7 +11057,7 @@
       <para>
 	Por exemplo, supón que utilizas unha ou máis funcións do paquete
 	<lit>extra</lit>, que contén varias utilidades para a redacción con
-	Hansl. Nese caso, poderías escribir
+	HANSL. Nese caso, poderías escribir
       </para>
       <code>
 	extra
@@ -11205,6 +11359,7 @@
 	<example>poisson y 0 x1 x2 ; S</example>
 	<demos>
 	  <demo>camtriv.inp</demo>
+	  <demo>greene19_3.inp</demo>
 	</demos>
       </examples>
     </usage>
@@ -11227,7 +11382,7 @@
 	de regresión de Poisson, o parámetro <math>v</math> está
 	representado como unha función dunha ou máis variables
 	independentes. A versión máis habitual (e a única que admite
-	Gretl) cumpre
+	GRETL) cumpre
         <equation status="display"
           tex="\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]"
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
@@ -11343,7 +11498,7 @@
       <para>
 	A terceira variante (co argumento <repl>nomesobxectos</repl>;
 	mira o segundo exemplo) agarda unha lista de nomes, separados
-	por espazos, de obxectos básicos de Gretl que non sexan
+	por espazos, de obxectos básicos de GRETL que non sexan
 	series (escalares, matrices, cadeas de texto, feixes, arranxos);
 	e amósase o valor destes obxectos.
       </para>
@@ -11372,7 +11527,7 @@
       </para>
       <para>
 	A opción <opt>tree</opt> é específica para presentar un feixe
-	(bundle) de Gretl. O efecto diso é que, se o feixe especificado
+	(bundle) de GRETL. O efecto diso é que, se o feixe especificado
 	contén outros feixes ou arranxos deles, se presentan os seus
 	contidos. Se non, só se presentan os elementos do nivel superior
 	do feixe.
@@ -11415,7 +11570,7 @@
 	reguladores dispoñibles en C. Exemplos: o formato <lit>%.10g</lit>
 	presenta un valor con 10 cifras significativas, e <lit>%12.6f</lit>
 	presenta un valor cun largo de 12 caracteres dos que 6 son
-	decimais. Porén, ten en conta que en Gretl o formato <lit>%g</lit>
+	decimais. Porén, ten en conta que en GRETL o formato <lit>%g</lit>
 	é unha boa elección por defecto para todos os valores numéricos,
 	e non tes necesidade de complicarte demasiado. Debes de
 	utilizar o formato <lit>%s</lit> para as cadeas de texto.
@@ -11512,6 +11667,10 @@
 	  <effect>Amosa os valores p en vez das pendentes</effect>
 	</option>
 	<option>
+	  <flag>--estrella</flag>
+	  <effect>Escolle a variante pseudo-R-cadrado</effect>
+	</option>
+	<option>
 	  <flag>--random-effects</flag>
 	  <effect>Estima un modelo Probit de panel con efectos aleatorios, EA</effect>
 	</option>
@@ -11542,7 +11701,8 @@
 	e estas pendentes substitúen aos valores p habituais no resultado
 	da regresión. Podes prescindir deste proceder indicando a opción
 	<opt>p-values</opt>. O estatístico khi-cadrado proba a hipótese
-	nula de que todos os coeficientes son cero, agás o da constante.
+	nula de que todos os coeficientes son cero, agás o da
+	constante.
       </para>
       <para context="cli">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa negativa
@@ -11553,14 +11713,25 @@
 	gradiente. Para obter máis detalles, consulta o capítulo 10 do libro de
 	<cite key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>.
       </para>
+      <para context="cli">
+	Por defecto, vaise amosar o estatístico pseudo-R-cadrado que foi
+	suxerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	mais no caso binario, se indicas a opción <opt>estrella</opt>
+	vaise amosar en troques a variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	previsiblemente imita de xeito máis semellante as propiedades do
+	<math>R</math><sup>2</sup> habitual no contexto da estimación
+	de mínimos cadrados.
+      </para>
       <para context="gui">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
-	negativa da matriz Hessiana. Se marcas o cadriño de 'Desviacións
-	padrón robustas', entón calcúlanse no seu lugar as desviacións padrón
-	CMV (QML) ou de Huber&ndash;White. Neste caso, a matriz de covarianzas
-	estimadas é un <quote>emparedado</quote> entre a inversa da matriz
-	Hessiana estimada e o produto externo do vector gradiente. Consulta o
-	capítulo 10 do libro de Davidson e MacKinnon para obter máis detalles.
+	negativa da matriz Hessiana. Se marcas o cadriño de
+	<quote>Desviacións padrón robustas</quote>, entón calcúlanse en
+	troques as desviacións padrón CMV (QML) ou de Huber&ndash;White.
+	Neste caso, a matriz de covarianzas estimadas é un
+	<quote>emparedado</quote> entre a inversa da matriz Hessiana
+	estimada e o produto externo do vector gradiente. Consulta o capítulo
+	10 do libro de Davidson e MacKinnon para obter máis detalles.
       </para>
       <para>
 	Se a variable dependente non é binaria senón discreta, entón se
@@ -11814,7 +11985,7 @@
 	<quote>en bruto</quote> fronte aos cuantís da distribución Normal
 	estándar.
       </para>
-      <para>
+      <para context="cli">
 	A opción <opt>output</opt> ten como efecto o envío do resultado ao
 	ficheiro especificado; utiliza <quote>display</quote> para forzar
 	que o resultado se presente na pantalla. Consulta a instrución
@@ -11884,11 +12055,11 @@
       </para>
       <para>
 	Se marcas a opción <quote>Calcular os intervalos de confianza</quote>,
-	Gretl calcula os intervalos de confianza para os coeficientes
+	GRETL calcula os intervalos de confianza para os coeficientes
 	en troques das desviacións padrón. E o cadriño de validación
 	de <quote>Desviacións padrón robustas</quote> ten outro efecto:
 	se non se marca, os intervalos calcúlanse baixo o suposto
-	de perturbacións IID; e ao marcalo, Gretl utiliza o estimador
+	de perturbacións IID; e ao marcalo, GRETL utiliza o estimador
 	robusto desenvolvido por
 	<cite key="koenker-machado99">Koenker e Machado (1999)</cite>.
 	Ten en conta que estes intervalos non son exactamente
@@ -11897,7 +12068,7 @@
 	    </para>
       <para>
 	Podes indicar unha lista de cuantís (consulta a lista despregable para
-	algunhas posibilidades xa definidas con anterioridade). Nese caso, Gretl
+	algunhas posibilidades xa definidas con anterioridade). Nese caso, GRETL
 	calcula as estimacións de cuantís e, ou ben as desviacións padrón ou
 	ben os intervalos de confianza para cada un dos valores especificados.
       </para>
@@ -11964,28 +12135,56 @@
 
     <description>
       <para>
-	Sae do programa, ofrecéndote a opción de gardar os resultados da
-	sesión ao saír.
+	Sae da modalidade vixente de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Cando esta instrución se invoca desde un guión, remátase a execución
+	    de ese guión. No contexto de gretlcli en modo de procesamento por
+	    lotes, o propio gretlcli remata; noutro caso, o programa recúa a
+	    modo interactivo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cando se invoca desde a consola do programa de Interface Gráfica
+	    de Usuario (GUI), péchase a xanela da consola.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cando se invoca desde gretlcli en modo interactivo, este programa
+	    remata.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Cae na conta de que esta instrución non pode invocarse desde dentro
+	de funcións nin de bucles.
+      </para>
+      <para>
+	A instrución <lit>quit</lit> en ningún caso provoca que remate o
+	programa de Interface Gráfica de Usuario (GUI) de GRETL. Isto faise
+	ben mediante a opción <lit>Saír</lit> do apartado <lit>Ficheiro</lit>
+	do menú, ben mediante <lit>Ctrl+Q</lit>, ou ben premendo co rato o
+	control de peche na barra do título da xanela principal de GRETL.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/Ficheiro/Saír</menu-path>
-    </gui-access>
   </command>
 
   <command name="regls" section="Estimation"
-	   label="Mínimos cadrados regularizados" context="gui">
+	   label="Mínimos Cadrados Regularizados" context="gui">
     <description>
       <para>
-	Este diálogo te permite un grao limitado de acceso á función
-	<lit>regls</lit> para mínimos cadrados regularizados.
+	Este diálogo te permite o acceso á función <lit>regls</lit> para
+	Mínimos Cadrados Regularizados.
       </para>
       <para>
-	Se toleran tres variantes: LASSO, que limita a suma dos valores absolutos
+	Se toleran tres estimadores: LASSO, que limita a suma dos valores absolutos
 	dos coeficientes; Ridge (crista), que limita a suma dos coeficientes
 	cadrados; e Elastic net (malla elástica), que é unha combinación das
-	dúas primeiras, rexida polo 'hiperparámetro' &alpha; de xeito que
+	dúas primeiras rexida polo 'hiperparámetro' &alpha; de xeito que
 	&alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona Ridge, e
 	valores intermedios proporcionan unha combinación ponderada.
       </para>
@@ -11993,15 +12192,81 @@
 	O termo &lgr; especifica o grao ata o que se penaliza a suma de
 	coeficientes absolutos ou cadrados. Podes ben indicar unha única
 	fracción &lgr; desde 0 (sen penalización) ata 1 (máxima penalización),
-	ou ben un número de valores &lgr;. No segundo caso, os valores de
+	ou ben un grupo de valores &lgr;. No segundo caso, os valores de
 	penalización escálanse automaticamente.
       </para>
       <para>
-	Podes exercer un control moito maior sobre a funcionalidade de Mínimos
-	Cadrados Regularizados de GRETL apelando á función <lit>regls</lit>
-	mediante o uso de guións. En particular, tes a potestade de especificar a
-	validación cruzada; consulta <doc>regls.pdf</doc> para ter máis detalles.
+	Se elixes varios valores para &lgr;, vaise habilitar a opción de
+	validación cruzada. Nese caso, vas poder escoller tanto o número de
+	<quote>pregos</quote> para os datos de ensaio (por defecto é 10),
+	como se estes pregos deben de ser subconxuntos aleatorios ou
+	contiguos de observacións. Tamén poderás escoller se queres que
+	se amose unha gráfica coas medias do Erro Cadrado Medio (MSE) fronte
+	ás fraccións &lgr;.
       </para>
+      <para>
+	O botón <quote>Avanzado</quote> abre un novo diálogo que proporciona
+	en certa maneira un maior grao de control sobre o procedemento de
+	regularización. Mais cae na conta de que podes exercer un control
+	máis detallado invocando á función <lit>regls</lit> mediante a redacción
+	de guións; para máis detalles consulta <doc>regls.pdf</doc>.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Outras opcións para regls" context="gui">
+    <description>
+      <para>
+	As escollas feitas mediante este diálogo aplícanse unicamente cando
+	son relevantes, en función das eleccións feitas no diálogo principal
+	<quote>reglsbest</quote>. Vanse lembrar mentres dure a sesión de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Elección de algoritmo: Podes escoller o método Descenso de Coordenada
+	    Cíclico (CCD) tanto para o LASSO como para a regresión Ridge (crista),
+	    en contraste co método por defecto; é dicir, o Método de Multiplicadores
+	    de Dirección Alterna (ADMM) para o LASSO e a Descomposición
+	    do Valor Singular (SVD) para o Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    O criterio por defecto para que renda <quote>mellor</quote>
+	    a validación cruzada é minimizar o Erro Cadrado Medio (MSE),
+	    pero podes seleccionar a regra alternativa
+	    <quote>unha desviación padrón</quote>. Esta alternativa, que
+	    favorece a sobriedade, escolle o maior factor de penalización
+	    cuxo MSE está a menos dunha desviación padrón do mínimo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Semente para os pregos aleatorios: Se queres obter resultados
+	    replicables na validación cruzada con pregos aleatorios, é
+	    necesario especificar unha semente para o xerador de números
+	    aleatorios.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Por defecto, regls utilizará MPI (se está dispoñible) nun esforzo por
+	    acelerar a validación cruzada. O recadro para MPI (que se amosa só
+	    cando se compila GRETL con soporte MPI) te permite desactivar isto,
+	    o que pode producir unha aceleración para bancos pequenos de datos.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    A opción de amosar o tempo de execución pode serte útil se queres
+	    comparar o comportamento de diferentes algoritmos, ou comprobar
+	    se paga a pena usar o MPI. O tempo que se amosa no resultado
+	    corresponde á execución do código C subxacente.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -12016,7 +12281,7 @@
       <options>
         <option>
 	      <flag>--quiet</flag>
-	      <effect>Suprime a presentación do resultado</effect>
+	      <effect>Suprime a presentación de resultados</effect>
         </option>
       </options>
     </usage>
@@ -12215,27 +12480,30 @@
 	sistema, pero aínda non o estimaches.
       </para>
       <para>
-	Dependendo do contexto, podes expresar de varios xeitos as restricións que
-	queiras probar. O máis simple é como se indica deseguido: cada restrición
-	exprésase como unha ecuación, cunha combinación linear de parámetros á
-	esquerda do signo de igualdade e un valor escalar á dereita (ben
-	unha constante numérica, ou ben o nome dunha variable escalar).
+	Dependendo do contexto, podes expresar de varios xeitos as
+	restricións que queiras probar. O máis simple é como se indica
+	deseguido: cada restrición exprésase como unha ecuación, cunha
+	combinación linear de parámetros á esquerda do signo de igualdade
+	e un valor escalar á dereita (ben unha constante numérica, ou ben
+	o nome dunha variable escalar).
       </para>
       <para>
-	No caso dunha única ecuación, podes referirte aos seus parámetros co
-	formato <lit>b[</lit><repl>i</repl><lit>]</lit>, onde <repl>i</repl>
-	representa a posición na lista de regresores (comezando no 1), ou
-	co formato <lit>b[</lit><repl>nomevar</repl><lit>]</lit>, onde
+	No caso dunha única ecuación, podes referirte aos parámetros
+	da mesma co formato <lit>b[</lit><repl>i</repl><lit>]</lit>, onde
+	<repl>i</repl> representa a posición na lista de regresores
+	(comezando no 1), ou co formato
+	<lit>b[</lit><repl>nomevar</repl><lit>]</lit>, onde
 	<repl>nomevar</repl> é o nome do regresor en cuestión. No caso
 	dun sistema, a referencia aos parámetros faise utilizando a letra
 	<lit>b</lit> xunto con dous números colocados entre corchetes.
 	O primeiro número representa a posición da ecuación dentro do
-	sistema, e o segundo número indica a posición do regresor dentro
-	da lista deles. Por exemplo, <lit>b[2,1]</lit> denota o primeiro
-	parámetro da segunda ecuación, mentres que <lit>b[3,2]</lit>
-	denota o segundo parámetro da terceira ecuación. Podes antepoñer
-	multiplicadores numéricos aos elementos <lit>b</lit> da ecuación
-	que representa unha restrición, por exemplo <lit>3.5*b[4]</lit>.
+	sistema, e o segundo número indica a posición do regresor
+	dentro da lista deles. Por exemplo, <lit>b[2,1]</lit> denota
+	o primeiro parámetro da segunda ecuación, mentres que
+	<lit>b[3,2]</lit> denota o segundo parámetro da terceira ecuación.
+	Podes antepoñer multiplicadores numéricos aos elementos
+	<lit>b</lit> da ecuación que representa unha restrición, por exemplo
+	<lit>3.5*b[4]</lit>.
       </para>
       <para>
 	Aquí tes un exemplo dun conxunto de restricións para un modelo
@@ -12277,7 +12545,7 @@
 	<math>F</math> asintótico, noutro caso.
       </para>
       <para>
-	Tes 2 alternativas ao método para expresar as restricións que se discutiu
+	Tes tres alternativas ao método para expresar as restricións descrito
 	máis arriba. Primeiro, podes escribir de forma compacta un conxunto de
 	<math>g</math> restricións lineais sobre o vector cos <math>k</math>
 	parámetros (&bgr;), como <math>R</math>&bgr; &minus; <math>q</math> = 0,
@@ -12293,7 +12561,27 @@
 	end restrict
       </code>
       <para>
-	En segundo lugar, se queres probar unha restrición non linear (o que
+	En segundo lugar, como variante que te pode ser útil cando uses a
+	función <lit>restrict</lit> dentro doutra función, podes elaborar
+	o conxunto de enunciados de restrición co formato dun arranxo de
+	cadeas de texto. Despois utiliza a palabra chave <lit>inject</lit>
+	co nome do arranxo. Este é un exemplo sinxelo:
+      </para>
+      <code>
+	strings SR = array(2)
+	RS[1] = "b[1,2] = 0"
+	RS[2] = "b[2,1] = 0"
+	restrict
+	  inject RS
+	end restrict	
+      </code>
+      <para>
+	Co uso actual deste método, posiblemente preferirás utilizar a función
+	<fncref targ="sprintf"/> para elaborar as cadeas de texto, en base
+	á entrada para unha función.
+      </para>
+      <para>
+	Finalmente, se queres probar unha restrición non linear (o que
 	actualmente só está dispoñible para modelos dunha única ecuación),
 	debes de indicar a restrición co nome dunha función, precedida por
 	<quote><lit>rfunc = </lit></quote>, como en
@@ -12309,7 +12597,7 @@
 	de devolver un vector que é cero baixo a hipótese nula, e non nulo
 	noutro caso. A dimensión do vector é igual ao número de restricións.
 	Esta función utilízase como unha <quote>chamada de volta</quote> da
-	rutina numérica para o Jacobiano, de Gretl, que calcula o estatístico
+	rutina numérica para o Jacobiano, de GRETL, que calcula o estatístico
 	de proba de Wald mediante o método delta.
       </para>
       <para>
@@ -12498,7 +12786,7 @@
 	negativa, isto suxire que a varianza decrece ao aumentar a media.
       </para>
       <para>
-	Ademais da gráfica, Gretl amosa as medias e rangos para cada
+	Ademais da gráfica, GRETL amosa as medias e rangos para cada
 	submostra, xunto co coeficiente da pendente dunha regresión MCO
 	do rango sobre a media, e coa probabilidade asociada ao estatístico
 	para probar a hipótese nula de que esta pendente é cero. Se o
@@ -12544,7 +12832,7 @@
 	Executa as instrucións de <repl>nomeficheiro</repl> e logo devolve
 	o control ao indicador interactivo. Esta instrución está pensada
 	para que a utilices co programa de liñas de instrución
-	<program>gretlcli</program> ou coa <quote>consola de Gretl</quote>
+	<program>gretlcli</program> ou coa <quote>consola de GRETL</quote>
 	no programa de Interface Gráfica de Usuario (GUI).
       </para>
       <para>
@@ -12667,7 +12955,7 @@
     label="Gardar ou eliminar etiquetas das series" context="gui">
     <description>
       <para>
-	Se escolles aquí 'Exportar', Gretl escribe un ficheiro que contén as
+	Se escolles aquí 'Exportar', GRETL escribe un ficheiro que contén as
 	etiquetas descritivas de calquera serie (que teña etiquetas) do
 	conxunto vixente de datos. Ese ficheiro é de texto plano cunha liña
 	por variable, pero a liña estará baleira para as variables que non
@@ -12690,7 +12978,7 @@
 	abrir ficheiros, co fin de que selecciones un de texto plano que conteña
 	as etiquetas descritivas para as series do conxunto vixente de datos. O
 	ficheiro deberá de conter unha etiqueta por liña, e unha liña en branco
-	significará que non hai etiqueta. Gretl tratará de ler tantas etiquetas
+	significará que non hai etiqueta. GRETL tratará de ler tantas etiquetas
 	como series haxa no conxunto de datos, excluíndo a constante.
       </para>
     </description>
@@ -12700,12 +12988,12 @@
     label="Gardar instrucións?" context="gui">
     <description>
       <para>
-	Se aquí escolles 'Si', Gretl escribe un ficheiro que contén un rexistro
+	Se aquí escolles 'Si', GRETL escribe un ficheiro que contén un rexistro
 	das instrucións que executaches na sesión vixente. A meirande parte das
 	instrucións que executas mediante <quote>apuntar e facer clic</quote>
 	teñen unha contrapartida de <quote>guión</quote>, e estas instrucións
 	de guión son as que se gardarán. Así poderás coller o ficheiro como base
-	para escribir un guión de instrucións de Gretl.
+	para escribir un guión de instrucións de GRETL.
       </para>
       <para>
 	Se non che importa que se te avise para gardar un rexistro das instrucións
@@ -12715,18 +13003,18 @@
   </command>
 
   <command name="save-session" section="Utilities"
-    label="Gardar esta sesión de Gretl?" context="gui">
+    label="Gardar esta sesión de GRETL?" context="gui">
     <description>
       <para>
-	Se aquí escolles 'Si', Gretl escribe un ficheiro que contén unha
+	Se aquí escolles 'Si', GRETL escribe un ficheiro que contén unha
 	<quote>foto instantánea</quote> da sesión vixente, incluíndo unha copia
 	do conxunto de datos co que se traballa, xunto con calquera modelo, gráfica
 	ou outro obxecto que gardaras <quote>como icona</quote>. Podes volver abrir este
-	ficheiro máis tarde para recrear o estado de Gretl tal como era no momento no que
+	ficheiro máis tarde para recrear o estado de GRETL tal como era no momento no que
 	saíches da sesión (consulta o menú <quote>Ficheiro/Ficheiros de sesión</quote>).
       </para>
       <para>
-	Se traballas con Gretl utilizando a maioría das veces guións de
+	Se traballas con GRETL utilizando a maioría das veces guións de
 	instrucións (o que se recomenda para un traballo econométrico
 	<quote>serio</quote>), probablemente non necesites gardar a
 	sesión, pero debes de asegurarte de gardar calquera cambio no
@@ -12832,14 +13120,14 @@
     <description>
       <para>
 	Cae na conta de que algunhas destas preferencias só se aplican cando
-	se editan guións de Gretl orixinais (Tabulador e Intro espelidos, Usar
+	se editan guións de GRETL orixinais (Tabulador e Intro espelidos, Usar
 	lapelas no editor de guións), e que outras tamén se aplican cando se edita
 	ou mira calquera guión (Amosar os números de liña, Estilo de resalte).
       </para>
       <para>
 	<emphasis>Tabulador e Intro espelidos</emphasis>: Se marcas
 	esta opción, entón cando premes a tecla <lit>Tabulador</lit> ao
-	comezo dunha liña nun guión de Hansl, en troques de introducir tan
+	comezo dunha liña nun guión de HANSL, en troques de introducir tan
 	só un salto de tabulación, o programa vai tratar de axustar o
 	nivel de sangrado da liña consistentemente con outras liñas que
 	xa se introduciran antes. Igualmente, cando premes a tecla
@@ -12858,12 +13146,12 @@
 	de notas; e se non, cada guión ten a súa propia xanela.
       </para>
       <para>
-	<emphasis>Habilitar autorecheo</emphasis>: Se marcas isto, se te
-	ofrecerá a posibilidade de completar a palabra que esteas tecleando,
-	en base ás palabras que xa introduciches na xanela ou lapela do
-	editor. Para escoller unha das posibilidades, utiliza as teclas de
-	frechas arriba/abaixo e a tecla <lit>Intro</lit>; ou simplemente
-	segue tecleando para descartar os termos suxeridos.
+	<emphasis>Habilitar autorecheo</emphasis>: Se está dispoñible esta
+	opción e marcas o cadriño, se te ofrecerá a posibilidade de completar
+	a palabra que esteas tecleando, ben mentres escribes ou ben en
+	resposta á tecla de tabulación. Para escoller unha das posibilidades,
+	utiliza as teclas de frechas arriba/abaixo e de tabulación; ou
+	simplemente segue tecleando para descartar os termos suxeridos.
       </para>
       <para>
 	<emphasis>Habilitar autocorchetes</emphasis>: Se marcas isto,
@@ -12940,14 +13228,14 @@
 	dos parámetros; con <opt>from-file</opt> para ler un ficheiro
 	de guión que conteña as configuracións dos parámetros e para
 	aplicalas á sesión vixente; con <lit>stopwatch</lit> para poñer
-	a cero o <quote>cronómetro</quote> de Gretl que podes usar para
+	a cero o <quote>cronómetro</quote> de GRETL que podes usar para
 	medir o tempo de CPU (consulta os comentarios para o accesorio
 	<fncref targ="$stopwatch"/>); ou para presentar as configuracións
 	actuais, cando indicas só a palabra <lit>set</lit>.
       </para>
       <para>
 	Os valores establecidos mediante esta instrución seguen vixentes
-	durante a duración da sesión de Gretl, agás que os troques por
+	durante a duración da sesión de GRETL, agás que os troques por
 	medio dunha chamada posterior a <cmd>set</cmd>. Os parámetros
 	que podes establecer deste xeito enuméranse máis abaixo. Ten en
 	conta que se utilizan as configuracións de <lit>hc_version</lit>,
@@ -12965,7 +13253,7 @@
 
       <para>
 	Estas configuracións utilízanse para controlar diversos aspectos
-	do xeito no que Gretl interactúa co usuario.
+	do xeito no que GRETL interactúa co usuario.
       </para>
       <ilist>
 	<li>
@@ -12979,13 +13267,13 @@
 	  Manexa a configuración do cartafol de traballo (<lit>workdir</lit>)
 	  inicial: se está en <lit>on</lit>, hérdase o cartafol de traballo
 	  desde o intérprete; se non, establécese onde queira que se
-	  seleccionou na sesión previa de Gretl.
+	  seleccionou na sesión previa de GRETL.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>echo</lit>: <lit>off</lit> ou <lit>on</lit> (por defecto).
 	  Elimina (ou acurta) a resonancia dos textos das instrucións nos
-	  resultados de Gretl.
+	  resultados de GRETL.
 	  </para>
 	</li>
 	<li>
@@ -13065,7 +13353,7 @@
 	</li>
 	<li>
 	  <para><lit>mwrite_g</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Cando se escribe unha matriz como texto nun ficheiro, Gretl
+	  Cando se escribe unha matriz como texto nun ficheiro, GRETL
 	  por defecto utiliza notación científica con 18 díxitos de
 	  precisión, asegurando deste xeito que os valores gardados
 	  son unha representación fiable dos números en memoria.
@@ -13077,7 +13365,7 @@
 	</li>
 	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Forza a Gretl a utilizar o carácter de punto decimal, nun
+	  Forza a GRETL a utilizar o carácter de punto decimal, nun
 	  escenario onde outro carácter (probablemente a coma) é o
 	  separador decimal estándar.
 	  </para>
@@ -13123,7 +13411,7 @@
 	</li>
 	<li>
 	  <para><lit>shell_ok</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Permite executar programas externos desde Gretl mediante o
+	  Permite executar programas externos desde GRETL mediante o
 	  intérprete de sistema. Isto non está habilitado por defecto
 	  por razóns de seguridade, e só podes habilitalo mediante a
 	  Interface Gráfica de Usuario (Ferramentas/Preferencias/Xeral).
@@ -13142,7 +13430,7 @@
 	</li>
 	<li>
 	  <para><lit>skip_missing</lit>: <lit>on</lit> (por defecto)
-	  ou <lit>off</lit>. Controla o comportamento de Gretl cando
+	  ou <lit>off</lit>. Controla o comportamento de GRETL cando
 	  se constrúe unha matriz a partir de series de datos: por
 	  defecto sáltanse as filas de datos que conteñen un ou máis
 	  valores ausentes, pero cando se pon <lit>skip_missing</lit>
@@ -13181,13 +13469,19 @@
 	  <fncref targ="assert"/>.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>datacols</lit>: Un número enteiro entre 1 e 15, cuxo valor
+	  por defecto é 5. Establece o número máximo de series que se presentan
+	  conxuntamente cando os datos se representan por observación.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Métodos numéricos</subhead>
 
       <para>
 	Estas configuracións utilízanse para controlar os algoritmos
-	numéricos que utiliza Gretl para a estimación.
+	numéricos que utiliza GRETL para a estimación.
 	</para>
       <ilist>
 	<li>
@@ -13201,7 +13495,7 @@
 	</li>
 	<li>
 	  <para><lit>bhhh_maxiter</lit>: Un enteiro, o número máximo de
-	  iteracións para a rutina interna BHHH de Gretl, que se utiliza na
+	  iteracións para a rutina interna BHHH de GRETL, que se utiliza na
 	  instrución <cmd>arma</cmd> para a estimación MV condicional.
 	  Se a converxencia non se acada logo de <lit>bhhh_maxiter</lit>,
 	  o programa devolve un fallo. Por defecto, establécese en 500.
@@ -13210,7 +13504,7 @@
 	<li>
 	  <para><lit>bhhh_toler</lit>: Un valor de punto flotante ou a
 	  cadea <lit>default</lit>. Isto utilízase na rutina interna
-	  BHHH de Gretl para verificar se a converxencia se acadou.
+	  BHHH de GRETL para verificar se a converxencia se acadou.
 	  O algoritmo remata de repetirse tan pronto como o incremento
 	  no logaritmo da verosimilitude entre iteracións sexa menor ca
 	  <lit>bhhh_toler</lit>. O valor por defecto é 1.0E&minus;06,
@@ -13220,7 +13514,7 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_maxiter</lit>: Un enteiro, o número máximo de
-	  iteracións para a rutina BFGS de Gretl, que se utiliza para
+	  iteracións para a rutina BFGS de GRETL, que se utiliza para
 	  <cmd>mle</cmd> (EMV), <cmd>gmm</cmd> (MGM) e varios
 	  estimadores específicos. Se non se acada a converxencia no
 	  número indicado de iteracións, o programa devolve un fallo.
@@ -13231,7 +13525,7 @@
 	<li>
 	  <para><lit>bfgs_toler</lit>: Un valor de punto flotante ou a
 	  cadea <lit>default</lit>. Isto utilízase na rutina interna BFGS
-	  de Gretl para verificar se a converxencia se acadou. O
+	  de GRETL para verificar se a converxencia se acadou. O
 	  algoritmo remata de repetirse tan pronto como a melloría
 	  relativa na función obxectivo entre iteracións sexa menor ca
 	  <lit>bfgs_toler</lit>. O valor por defecto é igual á precisión
@@ -13241,7 +13535,7 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_maxgrad</lit>: Un valor de punto flotante. Isto
-	  utilízase na rutina interna BFGS de Gretl, para verificar se a norma
+	  utilízase na rutina interna BFGS de GRETL, para verificar se a norma
 	  do vector gradiente está razoablemente preto de cero cando se
 	  acada o criterio <lit>bfgs_toler</lit>. Vaise presentar unha
 	  advertencia cando a norma do vector gradiente exceda de 1; e
@@ -13320,12 +13614,12 @@
 	<li>
 	  <para><lit>fcp</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
 	  Utiliza o algoritmo de Fiorentini, Calzolari e Panattoni en vez do
-	  código propio de Gretl, cando se calculan as estimacións GARCH.
+	  código propio de GRETL, cando se calculan as estimacións GARCH.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>gmm_maxiter</lit>: Un enteiro, o número máximo de
-	  iteracións da instrución <cmdref targ="gmm"/> de Gretl cando
+	  iteracións da instrución <cmdref targ="gmm"/> de GRETL cando
 	  se está en modo iterativo (en contraposición ao dun paso ou
 	  ao de dous pasos). O valor por defecto é 250.
 	  </para>
@@ -13401,7 +13695,7 @@
 	  Isto controla a distribución que se utiliza cando se calculan as
 	  probabilidades asociadas (valores p) baseadas nas desviacións
 	  padrón robustas, no contexto dos estimadores de mínimos cadrados.
-	  Por defecto, Gretl utiliza a distribución <math>t</math> de Student
+	  Por defecto, GRETL utiliza a distribución <math>t</math> de Student
 	  pero se activas <lit>robust_z</lit>, utilízase unha distribución
 	  Normal.
 	  </para>
@@ -13552,9 +13846,9 @@
 	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
 	    (a vixente por defecto), <lit>ethan</lit>, <lit>iwanthue</lit>
 	    ou <lit>sober</lit>. Isto establece o <quote>tema</quote> que
-	    se utiliza para as gráficas que xera Gretl. A opción
+	    se utiliza para as gráficas que xera GRETL. A opción
 	    <lit>classic</lit> supón volver ao sinxelo tema que estaba
-	    vixente con antelación á versión 2020c de Gretl.
+	    vixente con antelación á versión 2020c de GRETL.
 	  </para>
 	</li>
       </ilist>
@@ -13660,7 +13954,7 @@
 
 	<para>* Renomear unha variable (tipo serie).</para>
 
-	    <para>* Engadir ou editar a descrición da variable que aparece ao lado do nome destas, na xanela principal de Gretl.
+	    <para>* Engadir ou editar a descrición da variable que aparece ao lado do nome destas, na xanela principal de GRETL.
 	    </para>
 
 	    <para>* Engadir ou editar o 'nome a amosar' dunha variable (se a variable
@@ -13728,12 +14022,12 @@
 	    </para>
 
       <para context="gui">
-	Gretl ten a súa propia codificación interna para os valores ausentes,
+	GRETL ten a súa propia codificación interna para os valores ausentes,
 	pero ás veces cos datos que se importan púidose empregar un código
 	diferente. Por exemplo, se unha serie en concreto está codificada de
 	xeito que o valor -1 significa 'non aplicable', podes seleccionar
 	'Establecer código de valor ausente' baixo o menú Variable, e
-	teclear o valor '-1' (sen comiñas). Entón Gretl lerá os valores -1
+	teclear o valor '-1' (sen comiñas). Entón GRETL lerá os valores -1
 	como observacións ausentes.
       </para>
 
@@ -13827,7 +14121,7 @@
 	estándar (por exemplo, 12 = mensuais e 4 = trimestrais). Pero se
 	tes datos de series temporais pouco habituais para as que non se
 	aplica a interpretación estándar, podes sinalar isto indicando a
-	opción <opt>special-time-series</opt>. Nese caso, Gretl non vai
+	opción <opt>special-time-series</opt>. Nese caso, GRETL non vai
 	advertir de que os teus datos de (por exemplo) frecuencia igual
 	a 12, sexan mensuais.
       </para>
@@ -13929,7 +14223,7 @@
       <para>
 	Esta instrución permite a configuración previa de opcións para unha
 	instrución concreta. Normalmente isto non fai falta, pero pode ser
-	útil para os autores de funcións en Hansl, cando queren facer que
+	útil para os autores de funcións en HANSL, cando queren facer que
 	algunhas opcións das instrucións estean condicionadas ao valor dun
 	argumento que proporcione quen as solicita.
       </para>
@@ -14070,7 +14364,7 @@
         </option>
 	      <option>
 	  <flag>--quiet</flag>
-	  <effect>Non amosar o rango mostral</effect>
+	  <effect>Non amosa o rango mostral</effect>
 	      </option>
       </options>
       <examples>
@@ -14377,10 +14671,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--csv</flag>
-	  <effect>Utiliza o formato CSV</effect>
-        </option>
-        <option>
 	  <flag>--omit-obs</flag>
 	  <effect>Mira abaixo, sobre o formato CSV</effect>
         </option>
@@ -14415,7 +14705,7 @@
         </option>
         <option>
 	  <flag>--database</flag>
-	  <effect>Utiliza o formato de banco de datos de Gretl</effect>
+	  <effect>Utiliza o formato de banco de datos de GRETL</effect>
         </option>
         <option>
 	  <flag>--overwrite</flag>
@@ -14430,6 +14720,10 @@
 	  <flag>--matrix</flag>
 	  <optparm>nomematriz</optparm>
 	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
+	  <flag>--compat</flag>
+	  <effect>Compatibilidade gdtb, mira abaixo</effect>
         </option>
       </options>
     </usage>
@@ -14448,23 +14742,44 @@
 	conteña unha especificación completa da ruta.
       </para>
       <para>
+	Cae na conta de que a instrución <lit>store</lit> compórtase de xeito
+	especial no contexto dun <quote>bucle progresivo</quote>; consulta
+	o <guideref targ="chap:looping"/> para obter máis detalles.
+      </para>
+      <subhead>Formatos propios</subhead>
+      <para>
+	Se <repl>nomeficheiro</repl> ten extensión <lit>.gdt</lit> ou
+	<lit>.gtdb</lit>, isto implica que se garden os datos nun dos formatos
+	propios de GRETL. Amais, se non indicas unha extensión, considérase
+	implicitamente a <lit>.gdt</lit> e este sufixo engádese de xeito
+	automático. O formato <lit>gdt</lit> é de tipo XML, opcionalmente
+	comprimido en gzip; mentres que o formato <lit>gdtb</lit> é binario.
+	O primeiro recoméndase para conxuntos de datos de tamaño moderado
+	(digamos que ata varios centos de quilobytes de datos); co formato
+	binario é moito maior a velocidade con conxuntos de datos moi grandes.
+      </para>
+      <para>
+	O formato <lit>gdtb</lit> foi revisado no GRETL 2021a (provocando
+	unha enorme aceleración na escritura/lectura de conxuntos de datos
+	súper grandes). Pero se queres escribir un ficheiro de datos binarios
+	que sexa lexible por unha versión previa de GRETL (da 2018c en diante),
+	debes de engadir a opción <opt>compat</opt>.
+      </para>
+      <para>
+	Cando gardas os datos en formato <lit>gdt</lit>, podes utilizar a
+	opción <opt>gzipped</opt> para comprimilos. O parámetro (optativo)
+	desta opción controla o nivel de compresión (de 0 a 9): os valores
+	maiores xeran un ficheiro máis pequeno, pero a compresión leva
+	máis tempo. O nivel por defecto é o 1; e un nivel de 0 significa
+	que non se aplica ningunha compresión.
+      </para>
+      <subhead>Outros formatos</subhead>
+      <para>
 	Ata certo punto, podes controlar o formato no que se escriben os
 	datos mediante a extensión ou sufixo de <repl>nomeficheiro</repl>,
 	como se indica deseguido:
       </para>
       <ilist>
-	<li>
-	  <para>
-	    <lit>.gdt</lit> (ou sen extensión): Formato de datos XML propio
-	    de Gretl. (Se non indicas ningunha extensión, automaticamente
-	    engádese <quote><lit>.gdt</lit></quote>)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.gtdb</lit>: Formato de datos binario propio de Gretl.
-	  </para>
-	</li>
 	<li>
 	  <para>
 	    <lit>.csv</lit>: Valores Separados por Comas (CSV).
@@ -14488,64 +14803,49 @@
 	</li>
       </ilist>
       <para>
-	Podes usar os indicadores de opción relacionados co formato que se
-	amosan arriba para forzar a cuestión do formato cando se garda, con
-	independencia do nome do ficheiro (ou para lograr que Gretl escriba
-	nos formatos de PcGive ou JMulTi). Porén, se <repl>nomeficheiro</repl>
-	ten unha extensión <lit>.gdt</lit> ou <lit>.gdtb</lit>, isto implica
-	utilizar necesariamente o formato propio, e se engades un indicador
-	de opción conflitivo, vai xerarse un fallo.
+	Podes usar os indicadores de opción relacionados co formato amosados
+	arriba para forzar a elección do formato, con independencia do nome do
+	ficheiro (ou para lograr que GRETL escriba nos formatos de PcGive ou JMulTi).
       </para>
-      <para>
-	Cando gardas os datos no formato propio (unicamente), podes utilizar
-	a opción <opt>gzipped</opt> para comprimir os datos, o que pode ser
-	moi útil para conxuntos grandes de datos. O parámetro (optativo)
-	desta opción controla o nivel de compresión (de 0 a 9): os niveles
-	máis altos producen un ficheiro máis pequeno, pero a compresión leva
-	máis tempo. O nivel por defecto é 1, e un nivel igual a 0 significa
-	que non se aplica ningunha compresión.
-      </para>
+      <subhead>Opcións CSV</subhead>
       <para>
 	Os indicadores de opción <opt>omit-obs</opt> e <opt>no-header</opt>
-	son só aplicables cando se gardan datos no formato CSV. Por defecto,
+	son específicos para gardar datos no formato CSV. Por defecto,
 	se os datos son series temporais ou de panel, ou se o conxunto de
-	datos inclúe marcadores específicos de observación, o ficheiro CSV
+	datos inclúe marcadores específicos de observación, o ficheiro resultante
 	inclúe unha primeira columna que identifica as observacións (&eg; por data).
 	Cando indicas a opción <opt>omit-obs</opt>, esta columna omítese. A
 	opción <opt>no-header</opt> elimina a habitual representación dos
 	nomes das variables no encabezamento das columnas.
       </para>
       <para>
-	O indicador de opción <opt>decimal-comma</opt> está tamén limitado ao
-	caso de que se garden os datos en formato CSV. O efecto desta opción
-	consiste en substituír o punto decimal coa coma decimal; e, por engadido,
-	fórzase a que o separador de columnas sexa o punto e coma.
+	O indicador de opción <opt>decimal-comma</opt> está tamén limitado
+	a CSV. O seu efecto consiste en substituír o punto decimal coa coma
+	decimal; e, por engadido, fórzase a que o separador de columnas sexa
+	o punto e coma, en troques da coma.
       </para>
+      <subhead>Gardar nun banco de datos</subhead>
       <para>
-	A posibilidade de gardar no formato de banco de datos de Gretl está
-	pensada para axudar a construír conxuntos longos de series, tal vez
-	mesturando frecuencias e rangos de observacións. Neste momento, esta
-	opción só está dispoñible para datos de series temporais de tipo
-	anual, trimestral ou mensual. Se gardas nun ficheiro que xa existe,
-	o efecto por defecto consiste en engadir as series recentemente
-	gardadas ao contido existente no banco de datos. Neste contexto,
-	é un fallo que unha (ou máis) das variables que se van gardar teña
-	o mesmo nome ca unha variable que xa está presente no banco de datos.
-	A opción <opt>overwrite</opt> ten como consecuencia que, se hai nomes
-	de variables en común, a variable recentemente gardada substitúe á
-	variable do mesmo nome no conxunto de datos orixinal.
+	A posibilidade de gardar no formato de banco de datos de GRETL
+	está pensada para axudar a construír longos conxuntos de series,
+	con mesturas de frecuencias e rangos de observacións. Neste momento,
+	esta opción só está dispoñible para datos de series temporais de
+	tipo anual, trimestral ou mensual. Se fas o gardado nun ficheiro
+	que xa existe, o efecto por defecto consiste en engadir as series
+	recentemente gardadas ao contido existente no banco de datos.
+	Neste contexto, é un fallo que unha (ou máis) das variables que se
+	van gardar teña o mesmo nome ca unha variable que xa está presente
+	no banco de datos. A opción <opt>overwrite</opt> ten como consecuencia
+	que, se hai nomes de variables en común, a variable recentemente
+	gardada substitúe á variable do mesmo nome no conxunto de datos
+	orixinal.
       </para>
       <para>
 	A opción <opt>comment</opt> está dispoñible cando se gardan datos como
-	banco de datos ou en formato CSV. O parámetro que se require é unha
+	banco de datos ou como CSV. O parámetro que se require é unha
 	cadea nunha liña, entre comiñas, ligada ao indicador de opción mediante
 	un signo de igualdade. A cadea de texto insírese como comentario no
 	ficheiro índice do banco de datos ou no encabezamento do CSV.
-      </para>
-      <para>
-	A instrución <lit>store</lit> compórtase de xeito especial no contexto dun
-	<quote>bucle progresivo</quote>. Consulta o <guideref targ="chap:looping"/>
-	para obter máis detalles.
       </para>
       <subhead>Escribir unha matriz como conxunto de datos</subhead>
       <para>
@@ -14562,7 +14862,7 @@
       <para>
 	Cae na conta de que podes escribir as matrices como tales en ficheiros,
 	consulta para elo a función <fncref targ="mwrite"/>. Pero ás veces pode
-	resultarche máis útil escribilas en forma de conxuntos de datos.
+	resultarche útil escribilas en forma de conxuntos de datos.
       </para>
     </description>
 
@@ -14875,7 +15175,7 @@
       </para>
       <para>
 	Unha vez que estableces un formato personalizado deste xeito,
-	este lémbrase e utilízase ao longo do que dure a sesión de Gretl.
+	este lémbrase e utilízase ao longo do que dure a sesión de GRETL.
 	Para reverter isto ao formato por defecto, podes utilizar a variante
 	especial <opt>format=default</opt>.
       </para>
@@ -15307,6 +15607,11 @@
 	  <flag>--lagselect</flag>
 	  <effect>Amosa os criterios de selección de retardos</effect>
         </option>
+        <option>
+	  <flag>--minlag</flag>
+	  <optparm>retardo mínimo</optparm>
+	  <effect>Só selección de retardo, mira abaixo</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
@@ -15319,7 +15624,6 @@
     </usage>
 
     <description>
-
       <para context="gui">
 	Esta instrución require a especificación de:
       </para>
@@ -15347,7 +15651,6 @@
 	o retardo máximo, xunto con (opcionalmente) as descomposicións da
 	varianza de predición e as funcións de resposta ao impulso.
       </para>
-
       <para context="cli">
 	Establece e estima (utilizando MCO) unha autorregresión de vectores
 	(VAR). O primeiro argumento especifica o nivel de retardos (ou
@@ -15365,7 +15668,6 @@
 	e (c) podes engadir variables ficticias estacionais utilizando a
 	opción <opt>seasonals</opt>.
       </para>
-
       <para context="cli">
 	Mentres que unha especificación VAR habitualmente inclúe tódolos
 	retardos desde 1 ata o máximo que indiques, tamén podes escoller un
@@ -15380,7 +15682,6 @@
 	matrix p = {1,2,4}
 	var p ylista
       </code>
-
       <para context="cli">
 	Devólvese unha regresión por separado para cada unha das variables
 	de <repl>ylista</repl>. Os resultados para cada ecuación inclúen as
@@ -15390,7 +15691,6 @@
 	<opt>impulse-responses</opt>, as descomposicións da varianza da
 	predición e as respostas ao impulso.
       </para>
-
       <para>
 	As descomposicións da varianza da predición e as respostas ao
 	impulso baséanse na descomposición de Cholesky da matriz de
@@ -15403,28 +15703,32 @@
 	concreta de resposta ao impulso en forma matricial, consulta a
 	función <fncref targ="irf"/>.
       </para>
-
       <para context="cli">
-	Cando indicas a opción <opt>robust</opt>, as desviacións padrón
-	corríxense do efecto da heterocedasticidade. Como alternativa,
-	podes indicar a opción <opt>robust-hac</opt> para dar lugar a
-	desviacións padrón que sexan robustas con respecto tanto á
-	heterocedasticidade como á autocorrelación (HAC). En xeral,
-	esta última corrección non debera de ser necesaria se o VAR
-	inclúe un número suficiente de retardos.
+	Cando indicas a opción <opt>robust</opt>, as desviacións padrón 
+	corríxense do efecto da heterocedasticidade. Como alternativa, podes
+	indicar a opción <opt>robust-hac</opt> para dar lugar a desviacións
+	padrón que sexan robustas con respecto tanto á heterocedasticidade como
+	á autocorrelación (HAC). En xeral, esta última corrección non debera
+	de ser necesaria se o VAR inclúe un número suficiente de retardos.
       </para>
-
       <para context="cli">
-	Cando indicas a opción <opt>lagselect</opt>, tómase o primeiro parámetro
-	da instrución <lit>var</lit> como o nivel máximo de retardos. O resultado
-	consiste nunha táboa que amosa os valores dos criterios de información
-	de Akaike (AIC), Schwarz (BIC) e Hannan&ndash;Quinn (HQC) calculados
-	con VARs de niveis desde 1 ata o máximo indicado. Isto trata de axudar
-	na selección do nivel óptimo de retardos. O resultado habitual do VAR
+	Cando indicas a opción <opt>lagselect</opt>, tómase o primeiro
+	parámetro da instrución <lit>var</lit> como o nivel máximo de
+	retardos. O resultado consiste nunha táboa que amosa os valores
+	dos criterios de información de Akaike (AIC), Schwarz (BIC) e
+	Hannan&ndash;Quinn (HQC), calculados por defecto con VARs de
+	niveis desde 1 ata o máximo indicado. Isto trata de axudar na
+	selección do nivel óptimo de retardos. O resultado habitual do VAR
 	non se presenta. Podes recuperar a táboa cos criterios de información
 	en forma de matriz mediante o accesorio <fncref targ="$test"/>.
+	Neste contexto (unicamente), podes usar a opción <opt>minlag</opt>
+	para axustar o nivel mínimo de retardos. Fai que sexa 0 para permitir
+	a posibilidade de que o nivel óptimo de retardos sexa cero, querendo
+	isto dicir realmente que non se require un VAR para nada. Pola
+	contra, poderías facer que <opt>minlag=4</opt> se cres que necesitas
+	cando menos 4 retardos, de xeito que se aforre un pouco de tempo
+	de cálculo.
       </para>
-
     </description>
 
     <gui-access>
@@ -15490,19 +15794,20 @@
 	datos (se hai algunha); e podes utilizar <cmd>ls</cmd> como alcume.
       </para>
       <para>
-	Cando indicas a opción <opt>type</opt>, debe de ir seguida (tras dun
-	signo de igualdade) por un dos seguintes tipos: <lit>series</lit>,
+	Cando indicas a opción <opt>type</opt>, debe de ir seguida (despois
+	dun signo de igualdade) por un dos seguintes tipos: <lit>series</lit>,
 	<lit>scalar</lit>, <lit>matrix</lit>, <lit>list</lit>, <lit>string</lit>,
-	<lit>bundle</lit> ou <lit>accessor</lit>. O seu efecto consiste en
-	presentar os nomes de tódolos obxectos do tipo indicado que estean
-	definidos nese momento.
+	<lit>bundle</lit>, <lit>array</lit> ou <lit>accessor</lit>. O seu
+	efecto consiste en presentar os nomes de tódolos obxectos do tipo
+	indicado que estean definidos nese
+	momento.
       </para>
       <para>
 	Como caso especial, se o tipo é <lit>accessor</lit>, os nomes
 	que se presentan son aqueles das variables internas dispoñibles
 	nese momento como <quote>accesorios</quote>, como poden ser
-	<fncref targ="$nobs"/> e <fncref targ="$uhat"/> (sexa cal sexa o
-	seu tipo en concreto).
+	<fncref targ="$nobs"/> e <fncref targ="$uhat"/> (sexan os que sexan
+	os seus tipos concretos).
       </para>
     </description>
 
@@ -15640,34 +15945,29 @@
 	intimamente relacionada coa proba de cointegración de Johansen
 	(consulta <cmdref targ="johansen"/>).
       </para>
-
       <para context="cli">
 	O parámetro <repl>nivel</repl> desta instrución representa o nivel de
 	retardos do sistema VAR. O número de retardos no propio VECM (onde a
 	variable dependente se indica como unha primeira diferenza) é de un
 	menos ca <repl>nivel</repl>.
       </para>
-
       <para context="gui">
 	O nivel de retardos escollido na caixa de diálogo do VECM é o do sistema
 	VAR. O número de retardos no propio VECM (onde a variable dependente
 	indícase como unha primeira diferenza) é de un menos ca ese número.
       </para>
-
       <para context="cli">
 	O parámetro <repl>rango</repl> representa o rango de cointegración
 	ou, noutras palabras, o número de vectores cointegrantes. Este debe
 	de ser maior ca cero, e menor ou igual (xeralmente menor) que o número
 	de variables endóxenas indicadas en <repl>ylista</repl>.
       </para>
-
       <para context="gui">
 	O <quote>rango</quote> representa o número de vectores
 	cointegrantes. Este debe de ser maior ca cero, e menor ou
 	igual (xeralmente menor) que o número de variables endóxenas
 	escollidas.
       </para>
-
       <para context="cli">
 	O argumento <repl>ylista</repl> proporciona a lista de variables
 	endóxenas, expresadas en niveis. A inclusión de termos de tipo
@@ -15683,7 +15983,6 @@
 	Os significados destes casos e os criterios que se usan para escoller
 	un caso, explícanse no <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	As listas (opcionais) <repl>xlista</repl> e <repl>rxlista</repl> te
 	permiten especificar conxuntos de variables esóxenas que forman
@@ -15692,7 +15991,6 @@
 	listas sepáranse de <repl>ylista</repl> e unhas das outras, mediante
 	punto e coma.
       </para>
-
       <para context="gui">
 	No cadriño <quote>Variables endóxenas </quote> podes escoller
 	o vector de variables endóxenas, expresadas en niveis. A inclusión
@@ -15707,7 +16005,6 @@
 	significados destes casos e os criterios que se usan para escoller
 	un caso, explícanse no <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	No cadriño <quote>Variables esóxenas</quote> podes engadir determinadas
 	variables esóxenas. Por defecto, estas entran no modelo de forma non
@@ -15717,14 +16014,12 @@
 	ela e selecciona <quote>Restrinxida</quote> no menú emerxente. Entón
 	o símbolo á beira da variable vai trocarse en R.
       </para>
-
       <para context="cli">
 	A opción <opt>seasonals</opt>, que podes combinar con calquera das
 	outras opcións, especifica a inclusión dun conxunto de variables
 	ficticias estacionais centradas. Esta opción unicamente está dispoñible
 	para datos trimestrais ou mensuais.
       </para>
-
       <para context="gui">
 	Se os datos son trimestrais ou mensuais, amósase un cadro de verificación que
 	te permite incluír un conxunto de variables ficticias estacionais centradas. En
@@ -15732,7 +16027,6 @@
 	permite presentar as regresións auxiliares que forman o punto de
 	inicio do procedemento de estimación Máximo Verosímil de Johansen.
       </para>
-
       <para context="cli">
 	O primeiro exemplo de arriba especifica un VECM, cun nivel de retardos de 4 e
 	un único vector de cointegración. As variables endóxenas son <lit>Y1</lit>,
@@ -15742,7 +16036,6 @@
 	os vectores de cointegración poden ter ordenada na orixe non nula pero as
 	variables <lit>Y</lit> non teñen tendencia.
       </para>
-
       <para context="cli">
 	A continuación da estimación dun VECM, tes dispoñibles algúns accesorios
 	especiais: <lit>$jalpha</lit>, <lit>$jbeta</lit> e <lit>$jvbeta</lit>
@@ -15830,12 +16123,16 @@
 	  <flag>--quiet</flag>
 	  <effect>Non presenta os resultados</effect>
         </option>
+	<option>
+	  <flag>--allow-zeros</flag>
+	  <effect>Mira abaixo</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula as estimacións de mínimos cadrados ponderados (MCP ou WLS)
+	Calcula as estimacións de mínimos cadrados ponderados (MCP, WLS)
 	utilizando <repl>varponder</repl> como ponderación, <repl>depvar</repl>
 	como variable dependente e <repl>indepvars</repl> como lista de
 	variables independentes. Sexa <repl>w</repl> a raíz cadrada positiva
@@ -15853,20 +16150,21 @@
 	igual á suma de erros cadrados da regresión da variable dependente
 	ponderada sobre unicamente a constante ponderada.
       </para>
-
       <para context="cli">
-	Se <repl>varponder</repl> é unha variable ficticia, a estimación MCP
-	é equivalente á que resulta ao eliminar todas as observacións que
-	teñen un valor de cero para <repl>varponder</repl>.
+	Como caso especial, se <repl>varponder</repl> é unha variable ficticia
+	0/1, a estimación MCP (WLS) é equivalente a MCO (OLS) nunha mostra na
+	que se exclúen todas as observacións que teñen un valor de cero para
+	<repl>varponder</repl>. Pola contra, a inclusión de ponderacións iguais
+	a cero se considera un fallo, pero se realmente desexas mesturar
+	ponderacións iguais a cero con ponderacións positivas, podes engadir
+	a opción <opt>allow-zeros</opt>.
       </para>
-
-	  <para context="cli">
+      <para context="cli">
 	Para aplicar a estimación de Mínimos Cadrados Ponderados a datos
 	de panel, baseada nas varianzas do erro específico de cada unidade,
 	consulta a instrución <cmdref targ="panel"/> xunto coa opción
-	<lit>--unit-weights</lit>.
-	  </para>
-
+	<opt>unit-weights</opt>.
+	    </para>
       <para context="gui">
 	Sexa 'varponder' a variable escollida no cadriño 'Variable de ponderacións'.
 	Execútase unha regresión MCO, onde a variable dependente é o produto
@@ -15891,7 +16189,7 @@
 
     <description>
       <para>
-	O cartafol de traballo (ou <quote>workdir</quote>) é onde Gretl fai
+	O cartafol de traballo (ou <quote>workdir</quote>) é onde GRETL fai
 	a procura por defecto ao ler ou escribir ficheiros de datos ou guións,
 	mediante os diálogos 'Abrir ficheiro de datos' e 'Gardar datos'.
 	Ademais, é a localización por defecto para
@@ -15930,8 +16228,8 @@
       </code>
       <para>
 	Por defecto, o valor de <lit>workdir</lit> mantense ao longo das sesións
-	de Gretl. Porén, os usuarios que queiran traballar co indicador de
-	instrucións (lanzando Gretl desde unha xanela dun terminal) poden
+	de GRETL. Porén, os usuarios que queiran traballar co indicador de
+	instrucións (lanzando GRETL desde unha xanela dun terminal) poden
 	preferir ter o cartafol de traballo determinado automaticamente,
 	desde o principio, como cartafol vixente (de acordo co intérprete).
 	Podes escoller esta opción no diálogo ou mediante a instrución
@@ -15967,21 +16265,21 @@
       </para>
       <para>
 	Se escolles <quote>Executar directamente ARIMA-X-12 </quote> entón
-	Gretl escribe un ficheiro de instrucións para ARIMA X-12, e solicita
+	GRETL escribe un ficheiro de instrucións para ARIMA X-12, e solicita
 	que o programa 'x12a' execute as instrucións. Neste caso, tes a
 	posibilidade de xerar unha gráfica, e/ou gardar series escollidas do
-	resultado no conxunto de datos de Gretl.
+	resultado no conxunto de datos de GRETL.
       </para>
       <para>
 	Se escolles <quote>Preparar un ficheiro de instrucións de ARIMA X-12</quote>,
-	Gretl escribe un ficheiro de instrucións para ARIMA X-12 (igual que no
+	GRETL escribe un ficheiro de instrucións para ARIMA X-12 (igual que no
 	caso de arriba), pero entón abre este ficheiro nunha xanela do editor.
 	Nesta xanela podes facer cambios e gardar o ficheiro co nome que ti
 	elixas. Tamén podes enviar o ficheiro para que o execute 'x12a' (premendo
 	un clic no botón <quote>Executar</quote> na barra de ferramentas da
 	xanela do editor) e comprobar o resultado. Pero neste caso, non tes a
 	posibilidade de gardar os datos como series, nin de xerar unha gráfica
-	de Gretl.
+	de GRETL.
       </para>
     </description>
 
@@ -16052,8 +16350,8 @@
 
     <usage>
       <arguments>
-        <argument>ylista</argument>
-	      <argument optional="true" separated="true">xlista</argument>
+        <argument>listay</argument>
+	      <argument optional="true" separated="true">listax</argument>
       </arguments>
       <options>
         <option>
@@ -16079,7 +16377,7 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>Consulta o caso bivariante de abaixo</effect>
+	  <effect>Suprime a presentación de resultados</effect>
         </option>
 	      <option>
 	  <flag>--tex</flag>
@@ -16104,59 +16402,65 @@
 
     <description context="cli">
       <para>
-	Amosa unha táboa de continxencia ou unha tabulación cruzada para
-	cada combinación das variables incluídas en <repl>ylista</repl>; e cando
-	indicas unha segunda lista (<repl>xlista</repl>), cada variable de
-	<repl>ylista</repl> crúzase nunha táboa por fila fronte a cada variable
-	de <repl>xlista</repl> (por columna). Podes referirte ás variables
-	destas listas mediante os seus nomes ou os seus números. Ten en conta
-	que todas as variables teñen que estar marcadas como discretas. Como
-	alternativa, cando indicas a opción <opt>matrix</opt>, se trata a matriz
-	indicada como un conxunto calculado previamente de frecuencias a
-	presentar como tabulación cruzada (consulta tamén a función
-	<fncref targ="mxtab"/>). Neste caso deberás de omitir o argumento
-	<repl>list</repl>.
+	Indicando unicamente o argumento <repl>listay</repl>, calcula (e
+	presenta por defecto) unha táboa de continxencia ou unha tabulación
+	cruzada para cada combinación das variables incluídas nesa lista.
+	Cando indicas unha segunda lista (<repl>listax</repl>), cada variable
+	de <repl>listay</repl> crúzase nunha táboa por fila fronte a cada
+	variable de <repl>listax</repl> (por columna). Podes referirte ás
+	variables destas listas mediante os seus nomes ou os seus números.
+	Ten en conta que todas as variables teñen que estar marcadas como
+	discretas. Como alternativa, cando indicas a opción <opt>matrix</opt>,
+	se trata a matriz indicada como un conxunto calculado previamente de
+	frecuencias a presentar como tabulación cruzada (consulta tamén a
+	función <fncref targ="mxtab"/>). Neste caso deberás de omitir o
+	argumento <repl>list</repl>.
       </para>
       <para>
 	Por defecto, a anotación de cada cela indica o reconto da frecuencia de
 	casos. As opcións <opt>row</opt> e <opt>column</opt> (que se exclúen
-	mutuamente), substitúen os recontos coas porcentaxes para cada fila ou
-	columna, respectivamente. Por defecto, as celas cun reconto de cero casos
-	déixanse en branco; mais a opción <opt>zeros</opt>, que ten como efecto
-	a presentación explícita dos ceros, pode serche útil para importar a táboa
-	con outro programa tal como unha folla de cálculo.
+	mutuamente) substitúen os recontos coas porcentaxes para cada fila
+	ou columna, respectivamente. Por defecto, as celas cun reconto de
+	cero casos déixanse en branco, mais a opción <opt>zeros</opt> ten
+	como efecto a presentación explícita dos ceros, o que pode serche
+	útil para importar a táboa con un outro programa tal como unha folla
+	de cálculo.
       </para>
       <para>
-	A proba de independencia khi-cadrado de Pearson amósase se a frecuencia
-	agardada baixo independencia é cando menos de 1.0e-7 para todas as celas.
-	Unha regra xeral habitual da validez deste estatístico é que, polo menos
-	o 80 por cento das celas, deben de ter frecuencias agardadas iguais a 5
-	ou máis; e se este criterio non se cumpre, preséntase unha advertencia.
+	A proba de independencia khi-cadrado de Pearson amósase se a
+	frecuencia agardada baixo independencia é cando menos de 1.0e-7
+	para todas as celas. Unha regra xeral habitual da validez deste
+	estatístico é que, polo menos o 80 por cento das celas deben de
+	ter frecuencias agardadas iguais a 5 ou máis; e se este criterio
+	non se cumpre, preséntase unha advertencia.
       </para>
       <para>
-	Se unha táboa de continxencia é 2 por 2, calcúlase a Proba Exacta de
+	Se unha táboa de continxencia é 2 por 2, amósase a Proba Exacta de
 	independencia de Fisher. Cae na conta de que esta proba baséase no
 	suposto de que os totais por fila e por columna son fixos, o que pode
 	ser ou non ser adecuado dependendo de como se xeraron os datos. Debes
 	de utilizar a probabilidade asociada (valor p) da esquerda cando a hipótese
 	alternativa á de independencia é a asociación negativa (os valores tenden
-	a agruparse nas celas de abaixo á esquerda e de arriba á dereita); e
+	a agruparse nas celas de abaixo á esquerda, e de arriba á dereita); e
 	debes de utilizar o valor p da dereita se a alternativa é a asociación
 	positiva. O valor p de dúas colas para esta proba calcúlase mediante o
 	método (b) da sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
 	isto é a suma das probabilidades de todas as táboas posibles que teñan
 	os totais de filas e columnas indicados, e que teñan unha probabilidade
-	menor ou igual á da táboa observada.
+	non maior á da táboa observada.
       </para>
 
       <subhead>O caso bivariante</subhead>
       <para>
-	No sinxelo caso dunha tabulación cruzada bivariante, podes utilizar
-	os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/> para
-	recuperar o estatístico da proba khi-cadrado de Pearson e a súa
-	probabilidade asociada (con tal de que se cumpra a condición do
-	mínimo valor agardado). Nese contexto, podes utilizar a opción
-	<opt>quiet</opt> para eliminar a presentación da táboa.
+	No caso dunha tabulación cruzada bivariante (cando se indica tan
+	só unha lista que ten dous elementos) gárdanse algúns resultados.
+	Podes recuperar a táboa de continxencia en forma de matriz mediante
+	o accesorio <fncref targ="$result"/>. Amais, se se cumpre a condición
+	do valor agardado, podes recuperar o estatístico da proba khi-cadrado
+	de Pearson e a súa probabilidade asociada (valor p) mediante os
+	accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>. Se
+	estes son os resultados que te interesan, podes utilizar a opción
+	<opt>quiet</opt> para eliminar a presentación habitual de resultados.
       </para>
 
       <subhead>Saída &latex;</subhead>
@@ -16175,14 +16479,6 @@
 	indiques a opción <opt>tex</opt>; e tamén cando unha ou as dúas
 	variables da tabulación cruzada teña valores de cadea de texto.
       </para>
-
-      <subhead>A táboa como matriz</subhead>
-      <para>
-	Cando indicas un argumento con unha única lista, vas poder
-	obter a táboa de continxencia en forma de matriz, mediante o
-	accesorio <fncref targ="$result"/>.
-      </para>
-
     </description>
 
     <description context="gui">
@@ -16201,26 +16497,28 @@
 	pero podes escoller que se amose explicitamente o valor cero.
       </para>
       <para>
-	A proba de independencia khi-cadrado de Pearson amósase se a frecuencia
-	agardada baixo independencia é cando menos de 1.0e-7 para todas as celas.
-	Unha regra xeral habitual da validez deste estatístico é que, polo menos
-	o 80 por cento das celas, deben de ter frecuencias agardadas iguais a 5
-	ou máis; e se este criterio non se cumpre, preséntase unha advertencia.
+	A proba de independencia khi-cadrado de Pearson amósase se a
+	frecuencia agardada baixo independencia é cando menos de 1.0e-7
+	para todas as celas. Unha regra xeral habitual da validez deste
+	estatístico é que, polo menos o 80 por cento das celas, deben de
+	ter frecuencias agardadas iguais a 5 ou máis; e se este criterio
+	non se cumpre, preséntase unha advertencia.
       </para>
       <para>
-	Se unha táboa de continxencia é 2 por 2, calcúlase a Proba Exacta de
-	independencia de Fisher. Cae na conta de que esta proba baséase no
-	suposto de que os totais por fila e por columna son fixos, o que pode
-	ser ou non ser adecuado dependendo de como se xeraron os datos. Debes
-	de utilizar a probabilidade asociada (valor p) da esquerda cando a hipótese
-	alternativa á de independencia é a asociación negativa (os valores tenden
-	a agruparse nas celas de abaixo á esquerda e de arriba á dereita); e
-	debes de utilizar o valor p da dereita se a alternativa é a asociación
-	positiva. O valor p de dúas colas para esta proba calcúlase mediante o
-	método (b) da sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
-	isto é a suma das probabilidades de todas as táboas posibles que teñan
-	os totais de filas e columnas indicados, e que teñan unha probabilidade
-	menor ou igual á da táboa observada.
+	Se unha táboa de continxencia é 2 por 2, amósase a Proba Exacta
+	de independencia de Fisher. Cae na conta de que esta proba baséase
+	no suposto de que os totais por fila e por columna son fixos, o
+	que pode ser ou non ser adecuado dependendo de como se xeraron
+	os datos. Debes de utilizar a probabilidade asociada (valor p) da
+	esquerda cando a hipótese alternativa á de independencia é a d
+	asociación negativa (os valores tenden a agruparse nas celas de abaixo
+	á esquerda e de arriba á dereita); e debes de utilizar o valor p da
+	dereita se a alternativa é a de asociación positiva. O valor p de dúas
+	colas para esta proba calcúlase mediante o método (b) da sección 2.1
+	de <cite key="agresti92">Agresti (1992)</cite>: isto é a suma das
+	probabilidades de todas as táboas posibles que teñan os totais de
+	filas e columnas indicados, e que teñan unha probabilidade menor
+	ou igual á da táboa observada.
       </para>
     </description>
 

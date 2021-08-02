@@ -50,6 +50,7 @@
  <gentext key="bundleref"     text="riferimento a bundle"/>
  <gentext key="scalarref"     text="riferimento a scalare"/>
  <gentext key="objectref"     text="riferimento all'oggetto"/>
+ <gentext key="stringref"     text="riferimento alla stringa"/>
  <gentext key="cvec"          text="vettore colonna"/>
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>
@@ -74,4 +75,7 @@
  <gentext key="chapter"       text="il capitolo"/>
  <gentext key="applies-to"    text="Si applica a"/>
  <gentext key="none"          text="nessuna"/>
+ <gentext key="Accessors" text="Accessori" />
+ <gentext key="Built-in strings" text="Stringhe predefininte" />
+ <gentext key="Functions proper" text="Funzioni vere e proprie" /> 
 </localization>

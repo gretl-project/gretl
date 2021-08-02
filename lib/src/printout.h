@@ -63,7 +63,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn);
 
 void maybe_list_series (const DATASET *dset, PRN *prn);
 
-int printdata (const int *list, const char *mstr,
+int printdata (const int *list, const char *ostr,
 	       DATASET *dset, gretlopt opt,
 	       PRN *prn);
 
@@ -86,7 +86,8 @@ int print_fit_resid (const MODEL *pmod,
 int text_print_forecast (const FITRESID *fr, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
-int print_fcast_stats_matrix (const gretl_matrix *m, int T, PRN *prn);
+int print_fcast_stats_matrix (const gretl_matrix *m, int T,
+			      gretlopt opt, PRN *prn);
 
 void print_iter_info (int iter, double crit, int type, int k, 
 		      const double *b, const double *g, 

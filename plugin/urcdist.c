@@ -3,11 +3,11 @@
 
    See James G. MacKinnon, "Numerical Distribution Functions for Unit
    Root and Cointegration Tests", Journal of Applied Econometrics,
-   Vol. 11, No. 6, 1996, pp. 601-618, and also 
+   Vol. 11, No. 6, 1996, pp. 601-618, and also
 
    http://qed.econ.queensu.ca/pub/faculty/mackinnon/numdist/
 
-   The calculation code here is Copyright (c) James G. MacKinnon, 
+   The calculation code here is Copyright (c) James G. MacKinnon,
    1996 (corrected 2003-5-5).
 
    This "wrapper" written by Allin Cottrell, 2004; revised to
@@ -17,6 +17,7 @@
 #include "libgretl.h"
 #include "version.h"
 #include "swap_bytes.h"
+#include "matrix_extra.h"
 
 #define URDEBUG 0
 
@@ -134,11 +135,11 @@ static int cholx (double *a, int m, int n)
 
 /* Copyright (c) James G. MacKinnon, 1995.  Subroutine to do GLS
    estimation the obvious way.  Use only when sample size is small
-   (nobs <= 50). 1995-1-3 
+   (nobs <= 50). 1995-1-3
 */
 
-static int gls (double *xmat, double *yvec, double *omega, 
-		double *beta, double *xomx, double *fits, 
+static int gls (double *xmat, double *yvec, double *omega,
+		double *beta, double *xomx, double *fits,
 		double *resid, double *ssr, double *ssrt,
 		int T, int ivrt)
 {
@@ -154,7 +155,7 @@ static int gls (double *xmat, double *yvec, double *omega,
 
     /* xomx is covariance matrix of parameter estimates if omega is
        truly known. First, invert omega matrix if ivrt=0. Original one
-       gets replaced. 
+       gets replaced.
     */
 
     /* parameter adjustments */
@@ -183,11 +184,11 @@ static int gls (double *xmat, double *yvec, double *omega,
     for (i = 1; i <= T; ++i) {
 	for (k = 1; k <= T; ++k) {
 	    for (j = 1; j <= nvar; ++j) {
-		xomy[j - 1] += xmat[i + j * nomax] * 
+		xomy[j - 1] += xmat[i + j * nomax] *
 		    omega[k + i * nomax] * yvec[k];
 		for (l = j; l <= nvar; ++l) {
-		    xomx[j + l * nvmax] += xmat[i + j * nomax] * 
-			omega[k + i * nomax] * 
+		    xomx[j + l * nvmax] += xmat[i + j * nomax] *
+			omega[k + i * nomax] *
 			xmat[k + l * nomax];
 		}
 	    }
@@ -237,10 +238,10 @@ static int gls (double *xmat, double *yvec, double *omega,
 }
 
 /* Based on Fortran code copyright (c) James G. MacKinnon, 1995.
-   Routine to find P-value for any specified test statistic. 
+   Routine to find P-value for any specified test statistic.
 */
 
-static double fpval (double *beta, int nbeta, double *wght, 
+static double fpval (double *beta, int nbeta, double *wght,
 		     double *prob, double *cnorm,
 		     double tau, int T, int *err)
 {
@@ -255,17 +256,17 @@ static double fpval (double *beta, int nbeta, double *wght,
     double pval = 0.0;
 
     /* first compute all the estimated critical values,
-       and find the one closest to the test statistic, 
+       and find the one closest to the test statistic,
        indexed by @imin.
-    */    
+    */
     eval_all_crit(tau, beta, nbeta, T, crits, &imin);
 
     nph = np / 2;
     nptop = URCLEN - nph;
 
     if (imin > nph && imin < nptop) {
-	/* imin is not too close to the end. 
-	   Use np points around tau. 
+	/* imin is not too close to the end.
+	   Use np points around tau.
 	*/
 	for (i=1; i<=np; i++) {
 	    ic = imin - nph - 1 + i;
@@ -302,22 +303,22 @@ static double fpval (double *beta, int nbeta, double *wght,
 	se3 = sqrt(ssrt / (np - 4) * xomx[15]);
 	ttest = fabs(gamma[3]) / se3;
 	d1 = tau;
-	
+
 	if (ttest > precrt) {
-	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) + 
+	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) +
 		gamma[3] * (d1 * d1 * d1);
 	} else {
 	    *err = gls(xmat, yvec, omega, gamma, xomx, fits, resid,
 		       &ssr, &ssrt, np, 1);
 	    if (*err) {
 		goto bailout;
-	    }	    
+	    }
 	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1);
 	}
 	pval = normal_cdf(crfit);
     } else {
-	/* imin is close to one of the ends. Use points from 
-	   imin +/- nph to end. 
+	/* imin is close to one of the ends. Use points from
+	   imin +/- nph to end.
 	*/
 	if (imin < np) {
 	    np1 = imin + nph;
@@ -381,14 +382,14 @@ static double fpval (double *beta, int nbeta, double *wght,
 	d1 = tau;
 
 	if (ttest > precrt) {
-	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) + 
+	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) +
 		gamma[3] * (d1 * d1 * d1);
 	} else {
 	    *err = gls(xmat, yvec, omega, gamma, xomx, fits, resid,
 		       &ssr, &ssrt, np1, 1);
 	    if (*err) {
 		goto bailout;
-	    }	    
+	    }
 	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1);
 	}
 	pval = normal_cdf(crfit);
@@ -429,7 +430,7 @@ static void urc_swap_endianness (double *beta,
 
     for (i=1; i<=URCLEN; i++) {
 	reverse_double(wght[i]);
-    }    
+    }
 
     for (i=1; i<=URCLEN; i++) {
 	reverse_double(prob[i]);
@@ -437,7 +438,7 @@ static void urc_swap_endianness (double *beta,
 
     for (i=1; i<=URCLEN; i++) {
 	reverse_double(cnorm[i]);
-    }    
+    }
 }
 
 #endif
@@ -450,19 +451,19 @@ struct urcinfo {
     int pos;
 };
 
-/* 
+/*
    niv = # of integrated variables
    itv = appropriate ur_code for nc, c, ct, ctt models
    T = sample size (0 for asymptotic)
    tau = test statistic
-   pval = location to receive P-value
+   err = location to receive error code
 */
 
 static double urcval (int niv, int itv, int T, double tau,
-		      const char *path, int *err)
+		      int *err)
 {
     FILE *fp;
-    char datafile[FILENAME_MAX];
+    gchar *datapath = NULL;
     double beta[BIGLEN];
     double wght[URCLEN+1];
     double prob[URCLEN+1];
@@ -522,13 +523,17 @@ static double urcval (int niv, int itv, int T, double tau,
     }
 
     /* Open data file */
-    sprintf(datafile, "%sdata%curcdata.bin", path, SLASH);
-    fp = gretl_fopen(datafile, "rb");
+    datapath = g_strdup_printf("%sdata%curcdata.bin",
+			       gretl_plugin_path(), SLASH);
+    fp = gretl_fopen(datapath, "rb");
     if (fp == NULL) {
-	fprintf(stderr, "urcdata.bin not found\n");
+	fprintf(stderr, "Couldn't open %s\n", datapath);
 	*err = E_FOPEN;
+	g_free(datapath);
 	return pval;
     }
+
+    g_free(datapath);
 
     /* skip to appropriate location in data file */
     i = (niv-1) * 4 + (itv - 1);
@@ -554,7 +559,7 @@ static double urcval (int niv, int itv, int T, double tau,
     if (nr1 != nbeta * URCLEN || nr2 != URCLEN) {
 	fprintf(stderr, "error reading urcdata\n");
 	*err = E_DATA;
-    }    
+    }
 
     if (!*err) {
 	/* read from embedded "probs.tab" data */
@@ -573,7 +578,7 @@ static double urcval (int niv, int itv, int T, double tau,
     if (!*err) {
 	urc_swap_endianness(beta, nbeta, wght, prob, cnorm);
     }
-#endif    
+#endif
 
     if (!*err && T > 0 && T < ui->Tmin) {
 	/* error, or warning? */
@@ -589,18 +594,16 @@ static double urcval (int niv, int itv, int T, double tau,
     return pval;
 }
 
-/* 
+/*
    tau = test statistic
    T = sample size (or 0 for asymptotic)
    niv = # of integrated variables
    itv = 1, 2, 3, or 4 for nc, c, ct, ctt models.
-   path = path to urc data file
-   
+
    returns: the computed P-value
 */
 
-double mackinnon_pvalue (double tau, int T, int niv, int itv,
-			 char *path)
+double mackinnon_pvalue (double tau, int T, int niv, int itv)
 {
     double pval = NADBL;
     int err = 0;
@@ -610,12 +613,11 @@ double mackinnon_pvalue (double tau, int T, int niv, int itv,
     if (fdb != NULL) {
 	fprintf(fdb, "mackinnon_pvalue: tau=%g, T=%d, niv=%d, itv=%d\n",
 		tau, T, niv, itv);
-	fprintf(fdb, "mackinnon_pvalue: path='%s'\n", path);
 	fflush(fdb);
     }
 #endif
 
-    pval = urcval(niv, itv, T, tau, path, &err);
+    pval = urcval(niv, itv, T, tau, &err);
 
 #if URDEBUG
     if (fdb != NULL) {
@@ -623,10 +625,248 @@ double mackinnon_pvalue (double tau, int T, int niv, int itv,
     }
 #endif
 
-    if (err == E_FOPEN) {
-	*path = '\0';
-    }
-
     return pval;
 }
 
+/* Extra: code to obtain approximate finite-sample p-values for
+   DF-GLS tests a la Elliott-Rothenberg-Stock, using Sephton's
+   response surfaces for the test-down cases, otherwise Cottrell
+   and Komashko surfaces.
+*/
+
+#define N_ALPHA_C 25
+#define N_ALPHA_T 26
+
+static const double alpha_c[N_ALPHA_C] = {
+    0.001, 0.0025, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
+    0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.15, 0.2, 0.3,
+    0.4, 0.5, 0.6, 0.7, 0.9, 0.99
+};
+
+static const double alpha_t[N_ALPHA_T] = {
+    0.001, 0.0025, 0.005, 0.01, 0.02, 0.025, 0.03, 0.04, 0.05, 0.06,
+    0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.15, 0.2, 0.3, 0.4,
+    0.5, 0.6, 0.7, 0.9, 0.99
+};
+
+static const char *bnames[] = {
+    "dfgls-beta-c.bin", "dfgls-beta-t.bin"
+};
+
+static const char *snames[] = {
+    "npc.bin", "npt.bin", "pqc.bin", "pqt.bin"
+};
+
+static gretl_matrix *get_data_matrix (const char *base, int *err)
+{
+    gretl_matrix *m;
+    gchar *fname;
+
+    fname = g_strdup_printf("%sdata%c%s", gretl_plugin_path(),
+			    SLASH, base);
+    m = gretl_matrix_read_from_file(fname, 0, err);
+    if (*err) {
+	fprintf(stderr, "Couldn't open %s\n", fname);
+    }
+    g_free(fname);
+
+    return m;
+}
+
+#define PDEBUG 0
+
+double dfgls_pvalue (double tau, int T, int trend,
+		     int kmax, int PQ, int *err)
+{
+    const char *fbase;
+    gretl_matrix_block *B;
+    gretl_matrix *alpha = NULL;
+    gretl_matrix *beta = NULL;
+    gretl_matrix *C, *V, *g;
+    gretl_matrix *r, *y, *X;
+    const double *a, *b;
+    double d, dmin = 1.0e6;
+    double ci, s2, pval = NADBL;
+    int i1, i2, npoints, np2;
+    int sephton = (kmax > 0);
+    int nreg, ncoeff, nalpha;
+    int i, j, k, imin = 0;
+
+    fbase = sephton ? snames[trend + 2*PQ] : bnames[trend];
+    beta = get_data_matrix(fbase, err);
+
+    if (!*err && sephton) {
+	alpha = get_data_matrix("s_alpha.bin", err);
+	if (!*err) {
+	    a = alpha->val;
+	    nalpha = alpha->rows;
+	    npoints = 13;
+	}
+    } else if (!*err) {
+	a = trend ? alpha_t : alpha_c;
+	nalpha = trend ? N_ALPHA_T : N_ALPHA_C;
+	npoints = 5;
+    }
+
+    if (*err) {
+	gretl_matrix_free(beta);
+	return pval;
+    }
+
+    ncoeff = beta->rows;
+    b = beta->val;
+    np2 = npoints / 2;
+
+#if PDEBUG
+    fprintf(stderr, "dfgls: tau %.8g, trend %d, kmax %d, PQ %d\n",
+	    tau, trend, kmax, PQ);
+    fprintf(stderr, "dfgls: ncoeff %d, nalpha %d\n", ncoeff, nalpha);
+#endif
+
+    /* max # of second-stage regressors */
+    nreg = 4;
+
+    /* allocate all storage */
+    B = gretl_matrix_block_new(&C, nalpha, 1,
+			       &y, npoints, 1,
+			       &X, npoints, nreg,
+			       &g, nreg, 1,
+			       &V, nreg, nreg,
+			       &r, ncoeff, 1, NULL);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (T == 0) {
+	/* asymptotic value */
+	r->val[0] = 1.0;
+	for (j=1; j<ncoeff; j++) {
+	    r->val[j] = 0;
+	}
+    } else {
+	/* finite sample */
+	int npow = ncoeff - 2 - sephton;
+	double Tr = 1.0 / T;
+
+	r->val[0] = 1.0;
+	r->val[1] = Tr;
+	for (j=0; j<npow; j++) {
+	    r->val[j+2] = pow(Tr, j+2);
+	}
+	if (sephton) {
+	    r->val[ncoeff-1] = kmax * Tr;
+	}
+    }
+
+    /* compute all @nalpha critical values and determine
+       which is closest to @tau.
+    */
+    k = 0;
+    for (i=0; i<nalpha; i++) {
+	ci = 0;
+	for (j=0; j<ncoeff; j++) {
+	    ci += b[k+j] * r->val[j];
+	}
+	gretl_matrix_set(C, i, 0, ci);
+	if (i == 0) {
+	    if (tau < 1.25 * C->val[0]) {
+		/* extrapolation unlikely to work well for big
+		   negative tau: employ conservative fudge
+		*/
+		pval = 1.0e-5;
+		goto bailout;
+	    }
+	}
+	d = fabs(ci - tau);
+	if (d < dmin) {
+	    dmin = d;
+	    imin = i;
+	}
+	k += ncoeff;
+    }
+
+#if PDEBUG
+    if (sephton) {
+	/* these value agree with Octave on Sephton's programs */
+	fprintf(stderr, "sephton: compute critical values for T = %d\n", T);
+	fprintf(stderr, "cv 0.01: %g\n", C->val[12]);
+	fprintf(stderr, "cv 0.05: %g\n", C->val[20]);
+	fprintf(stderr, "cv 0.10: %g\n", C->val[30]);
+	fprintf(stderr, "sephton: dmin = %g, imin = %d\n", dmin, imin);
+    }
+#endif
+
+    /* select starting point @i1 for critvals range */
+    i1 = imin - np2; i2 = imin + np2;
+    if (i1 < 0) {
+	i1 = 0;
+    } else if (i2 >= nalpha) {
+	i2 = nalpha - 1;
+	i1 = i2 - npoints + 1;
+    }
+
+    /* fill out y */
+    for (i=0; i<npoints; i++) {
+	y->val[i] = normal_cdf_inverse(a[i1 + i]);
+    }
+
+#if PDEBUG
+    fprintf(stderr, " i1 = %d, i2 = %d\n", i1, i2);
+    for (i=0; i<npoints; i++) {
+	fprintf(stderr, " %d: a=%g -> y=%g\n", i, a[i1 + i], y->val[i]);
+    }
+#endif
+
+    /* fill out X */
+    for (j=0; j<nreg; j++) {
+	for (i=0; i<npoints; i++) {
+	    if (j == 0) {
+		gretl_matrix_set(X, i, j, 1.0);
+	    } else {
+		ci = C->val[i1 + i];
+		if (j == 1) {
+		    gretl_matrix_set(X, i, j, ci);
+		} else {
+		    gretl_matrix_set(X, i, j, pow(ci, j));
+		}
+	    }
+	}
+    }
+
+    /* we use SVD here just to avoid spamming stderr with
+       reports of near-perfect collinearity
+    */
+    *err = gretl_matrix_SVD_ols(y, X, g, V, NULL, &s2);
+
+    if (!*err) {
+	double t3 = g->val[3] / sqrt(gretl_matrix_get(V, 3, 3));
+
+	if (fabs(t3) < 2) {
+	    /* drop the cubic term */
+	    X->cols = 3;
+	    g->rows = 3;
+	    *err = gretl_matrix_SVD_ols(y, X, g, NULL, NULL, NULL);
+	}
+	if (!*err) {
+	    ci = g->val[0] + g->val[1] * tau;
+	    for (i=2; i<g->rows; i++) {
+		ci += pow(tau, i) * g->val[i];
+	    }
+	    pval = normal_cdf(ci);
+	}
+    }
+
+    if (!*err && (pval < 0 || pval > 1)) {
+	/* allow for a little inaccuracy at the extremes */
+	pval = pval < 0 ? 0 : 1;
+    }
+
+ bailout:
+
+    gretl_matrix_free(beta);
+    gretl_matrix_free(alpha);
+    gretl_matrix_block_destroy(B);
+
+    return pval;
+}

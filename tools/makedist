@@ -19,8 +19,10 @@ cp gretl-git/build/doc/commands/gretlhelp.refs gretl-git/share
 mv gretl-git ${versiondir}
 rm -f $tarfile
 tar cvJfX $tarfile tar_exclude ${versiondir}
+
+# restore local tree
 mv ${versiondir} gretl-git
-# remove pre-built helpfiles
+# remove pre-built helpfiles from git area
 rm -f gretl-git/share/gretl_*ref.*
 rm -f gretl-git/share/gretlhelp.refs
 

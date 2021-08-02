@@ -59,7 +59,8 @@ typedef enum {
     GRETL_FMT_DAT,       /* data in PcGive format */
     GRETL_FMT_DB,        /* gretl native database format */
     GRETL_FMT_JM,        /* JMulti ascii data */
-    GRETL_FMT_DTA        /* Stata .dta format */
+    GRETL_FMT_DTA,       /* Stata .dta format */
+    GRETL_FMT_JSON       /* geojson (maps) */
 } GretlDataFormat;
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
@@ -517,6 +518,7 @@ char *ntolabel (char *datestr, int t, const DATASET *dset)
 #if 0
     fprintf(stderr, "ntolabel: t=%d, pd=%d, sd0=%g, incoming stobs='%s'\n",
 	    t, dset->pd, dset->sd0, dset->stobs);
+    fprintf(stderr, " calendar_data(dset) %d\n", calendar_data(dset));
 #endif
 
     if (calendar_data(dset)) {
@@ -717,23 +719,6 @@ int get_precision (const double *x, int n, int placemax)
     return pmax;
 }
 
-gretlopt data_save_opt_from_suffix (const char *fname)
-{
-    gretlopt opt = OPT_NONE;
-
-    if (has_suffix(fname, ".R")) {
-	opt = OPT_R;
-    } else if (has_suffix(fname, ".m")) {
-	opt = OPT_M;
-    } else if (has_suffix(fname, ".csv") ||
-	       has_suffix(fname, ".txt") ||
-	       has_suffix(fname, ".asc")) {
-	opt = OPT_C;
-    }
-
-    return opt;
-}
-
 struct extmap {
     GretlFileType ftype;
     const char *ext;
@@ -830,7 +815,7 @@ GretlFileType data_file_type_from_name (const char *fname)
     return GRETL_UNRECOGNIZED;
 }
 
-#define non_native(o) (o & (OPT_M | OPT_R | OPT_C | OPT_D | OPT_G | OPT_J))
+#define non_native(o) (o & (OPT_M | OPT_R | OPT_D | OPT_G | OPT_J))
 
 static GretlDataFormat
 format_from_opt_or_name (gretlopt opt, const char *fname,
@@ -849,14 +834,14 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	    *err = E_BADOPT;
 	}
 	return GRETL_FMT_BINARY;
+    } else if (has_suffix(fname, ".geojson")) {
+	return GRETL_FMT_JSON;
     }
 
     if (opt & OPT_M) {
 	fmt = GRETL_FMT_OCTAVE;
     } else if (opt & OPT_R) {
 	fmt = GRETL_FMT_R;
-    } else if (opt & OPT_C) {
-	fmt = GRETL_FMT_CSV;
     } else if (opt & OPT_D) {
 	fmt = GRETL_FMT_DB;
     } else if (opt & OPT_G) {
@@ -1077,6 +1062,24 @@ static int write_dta_data (const char *fname, const int *list,
     return err;
 }
 
+static int write_map_data (const char *fname,
+			   const int *list,
+			   const DATASET *dset)
+{
+    gretl_bundle *b = NULL;
+    int err = 0;
+
+    b = get_current_map(dset, list, &err);
+
+    if (!err) {
+	err = gretl_bundle_write_to_file(b, fname, 0);
+    }
+
+    gretl_bundle_destroy(b);
+
+    return err;
+}
+
 #define DEFAULT_CSV_DIGITS 15
 
 static int real_write_data (const char *fname, int *list,
@@ -1139,6 +1142,12 @@ static int real_write_data (const char *fname, int *list,
     if (fmt == GRETL_FMT_DTA) {
 	/* Stata */
 	err = write_dta_data(fname, list, opt, dset);
+	goto write_exit;
+    }
+
+    if (fmt == GRETL_FMT_JSON) {
+	/* writing map as geojson */
+	err = write_map_data(fname, list, dset);
 	goto write_exit;
     }
 

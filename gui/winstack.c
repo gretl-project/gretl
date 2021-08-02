@@ -27,10 +27,7 @@
 #include "toolbar.h"
 #include "cmdstack.h"
 #include "winstack.h"
-
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
-# include "spinner.h"
-#endif
+#include "gretl_ipc.h"
 
 #include "uservar.h"
 
@@ -139,7 +136,7 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_TABLE;
     } else if (role == SAVE_FUNCTIONS) {
 	id = GRETL_STOCK_TOOLS;
-    } else if (role == VIEW_DBNOMICS) {
+    } else if (role == VIEW_DBNOMICS || role == VIEW_BUNDLE) {
 	id = GRETL_STOCK_BUNDLE;
     }
 
@@ -169,6 +166,40 @@ static const gchar *get_window_title (GtkWidget *w)
     return s;
 }
 
+static const char *window_label (GtkWidget *w, int role)
+{
+    if (role == MAINWIN) {
+#ifdef GRETL_PID_FILE
+	static char label[32];
+	int seqno = gretl_sequence_number();
+	gchar *tmp;
+
+	if (seqno > 1) {
+	    strcpy(label, _("Main window"));
+	    tmp = g_strdup_printf(" (%d)", seqno);
+	    strcat(label, tmp);
+	    g_free(tmp);
+	    return label;
+	}
+#endif
+	return _("Main window");
+    } else {
+	return get_window_title(w);
+    }
+}
+
+void plot_window_set_label (GtkWidget *w)
+{
+    gchar *aname = g_strdup_printf("%p", (void *) w);
+    GtkAction *action;
+
+    action = gtk_action_group_get_action(window_group, aname);
+    if (action != NULL) {
+	gtk_action_set_label(action, window_label(w, GNUPLOT));
+    }
+    g_free(aname);
+}
+
 /* callback to be invoked just before destroying a window that's
    on the list of open windows: remove its entry from the list
 */
@@ -176,12 +207,11 @@ static const gchar *get_window_title (GtkWidget *w)
 static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 {
     GtkAction *action;
-    char aname[32];
-
-    sprintf(aname, "%p", (void *) w);
+    gchar *aname = g_strdup_printf("%p", (void *) w);
 
 #if WDEBUG
-    fprintf(stderr, "window_list_remove: %s\n", aname);
+    fprintf(stderr, "window_list_remove: %s (%s)\n", aname,
+	    window_label(w, 0));
 #endif
 
     action = gtk_action_group_get_action(group, aname);
@@ -189,34 +219,7 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 	gtk_action_group_remove_action(group, action);
 	n_listed_windows--;
     }
-}
-
-static char *winname_double_underscores (const gchar *src)
-{
-    char *s, *targ;
-    int i, u = 0;
-
-    for (i=0; src[i]; i++) {
-	if (src[i] == '_') {
-	    u++;
-	}
-    }
-
-    targ = malloc(strlen(src) + u + 1);
-    s = targ;
-
-    for (i=0; src[i]; i++) {
-	if (src[i] == '_' && src[i+1] != '_') {
-	    *s++ = '_';
-	    *s++ = '_';
-	} else {
-	    *s++ = src[i];
-	}
-    }
-
-    *s = '\0';
-
-    return targ;
+    g_free(aname);
 }
 
 /* callback for command-accent on Mac or Alt-PgUp/PgDn on
@@ -278,8 +281,19 @@ void window_list_add (GtkWidget *w, int role)
     };
     GtkAction *action;
     const char *label;
-    char *modlabel = NULL;
+    gchar *modlabel = NULL;
     gchar *aname = NULL;
+
+    label = window_label(w, role);
+    if (label == NULL) {
+	return;
+    } else if (strchr(label, '_') != NULL) {
+	modlabel = double_underscores_new(label);
+    }
+
+#if WDEBUG
+    fprintf(stderr, "window_list_add: %p (%s)\n", (void *) w, label);
+#endif
 
     if (window_group == NULL) {
 	/* create the window list action group */
@@ -287,30 +301,9 @@ void window_list_add (GtkWidget *w, int role)
     }
 
     /* set up an action entry for window @w */
-
-    aname = g_strdup_printf("%p", (void *) w);
-    entry.name = aname;
+    entry.name = aname = g_strdup_printf("%p", (void *) w);
     entry.stock_id = window_list_icon(role);
-
-#if WDEBUG
-    fprintf(stderr, "window_list_add: %s\n", aname);
-#endif
-
-    if (role == MAINWIN) {
-	label = _("Main window");
-    } else {
-	label = get_window_title(w);
-	if (label != NULL && strchr(label, '_') != NULL) {
-	    modlabel = winname_double_underscores(label);
-	}
-    }
-
-    if (label == NULL) {
-	g_free(aname);
-	return;
-    }
-
-    entry.label = modlabel != NULL ? modlabel : label,
+    entry.label = (modlabel != NULL)? modlabel : label,
 
     /* add new action entry to group */
     gtk_action_group_add_actions(window_group, &entry, 1, NULL);
@@ -337,7 +330,7 @@ void window_list_add (GtkWidget *w, int role)
     n_listed_windows++;
 
     g_free(aname);
-    free(modlabel);
+    g_free(modlabel);
 }
 
 /* GCompareFunc: returns "a negative integer if the first value comes
@@ -393,32 +386,6 @@ static void make_bullet (char *bullet)
 	strcpy(bullet, " *");
     }
 }
-
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
-
-static const gchar *gtk_action_get_label (GtkAction *action)
-{
-    static char aname[32];
-    gchar *tmp = NULL;
-
-    g_object_get(action, "label", &tmp, NULL);
-
-    *aname = '\0';
-    if (tmp != NULL) {
-	strncat(aname, tmp, 31);
-	g_free(tmp);
-    }
-
-    return aname;
-}
-
-static void gtk_action_set_label (GtkAction *action,
-				  const gchar *label)
-{
-    g_object_set(action, "label", label, NULL);
-}
-
-#endif /* remedial functions for older GTK */
 
 /* show a bullet or asterisk next to the entry for
    the current window */
@@ -1305,7 +1272,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	return NULL;
     }
 
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    vwin->main = gretl_gtk_window();
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     }
@@ -1380,7 +1347,7 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, toolbar_icon_size);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
 
@@ -1458,6 +1425,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	} else {
 	    hbox = gtk_hbox_new(FALSE, 0);
+	    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 0);
 	    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
 	    if (vwin->role == VIEW_MODEL || vwin->role == VAR ||
@@ -1522,7 +1490,7 @@ windata_t *gretl_browser_new (int role, const gchar *title)
 	return NULL;
     }
 
-    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    vwin->main = gretl_gtk_window();
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 

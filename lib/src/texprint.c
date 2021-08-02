@@ -127,6 +127,48 @@ char *tex_escape (char *targ, const char *src)
     return p;
 }
 
+/**
+ * tex_escape_new:
+ * @src: source string.
+ *
+ * Returns: a copy of @src in which any characters that require
+ * escaping are preceded by a backslash.
+ */
+
+char *tex_escape_new (const char *src)
+{
+    const char *s = src;
+    char *ret = NULL;
+    int i, len = 0;
+
+    if (src == NULL) {
+	fprintf(stderr, "tex_escape: src is NULL\n");
+	return gretl_strdup("");
+    }
+
+    while (*s) {
+	if (*s == '$' || *s == '&' || *s == '_' ||
+	    *s == '%' || *s == '#') {
+	    len++;
+	}
+	len++;
+    }
+
+    ret = calloc(1, len + 1);
+    s = src;
+    i = 0;
+
+    while (*s) {
+	if (*s == '$' || *s == '&' || *s == '_' ||
+	    *s == '%' || *s == '#') {
+	    ret[i++] = '\\';
+	}
+	ret[i++] = *s;
+    }
+
+    return ret;
+}
+
 static int tex_math_pname (char *targ, const char *s)
 {
     char base[16], op[2], mod[8];
@@ -595,7 +637,7 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
     if (colspec[0][0]) {
 	/* coefficient */
 	if (na(mc->b)) {
-	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", _("undefined"));
 	} else {
 	    sprintf(fmt, "$%s$", colspec[0]);
 	    pprintf(prn, fmt, mc->b);
@@ -613,7 +655,7 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	}
 	/* standard error */
 	if (na(mc->se)) {
-	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", _("undefined"));
 	} else {
 	    pprintf(prn, colspec[1], mc->se);
 	}
@@ -631,7 +673,7 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	/* t-ratio */
 	if (na(mc->tval)) {
 	    if (mc->show_tval) {
-		pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+		pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", _("undefined"));
 	    } else {
 		pprintf(prn, "\\multicolumn{1}{c}{}");
 	    }
@@ -648,7 +690,7 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	/* p-value (or perhaps slope) */
 	if (mc->show_pval) {
 	    if (na(mc->pval)) {
-		pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", A_("undefined"));
+		pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", _("undefined"));
 	    } else {
 		pprintf(prn, colspec[3], mc->pval);
 	    }
@@ -732,7 +774,7 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
     }
 
     if (na(mc->b)) {
-	sprintf(col1, "\\multicolumn{2}{c}{\\rm %s}", A_("undefined"));
+	sprintf(col1, "\\multicolumn{2}{c}{\\rm %s}", _("undefined"));
     } else {
 	tex_rl_double(mc->b, col1);
     }
@@ -743,14 +785,14 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
 	ncols = 3;
     } else {
 	if (na(mc->se)) {
-	    sprintf(col2, "\\multicolumn{2}{c}{\\rm %s}", A_("undefined"));
+	    sprintf(col2, "\\multicolumn{2}{c}{\\rm %s}", _("undefined"));
 	} else {
 	    tex_rl_double(mc->se, col2);
 	}
 
 	if (na(mc->tval)) {
 	    if (mc->show_tval) {
-		sprintf(col3, "\\multicolumn{2}{c}{\\rm %s}", A_("undefined"));
+		sprintf(col3, "\\multicolumn{2}{c}{\\rm %s}", _("undefined"));
 	    } else {
 		strcpy(col3, "\\multicolumn{2}{c}{}");
 	    }
@@ -816,10 +858,10 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 
     pputs(prn, "}\n");
 
-    pprintf(prn, "\\multicolumn{1}{c}{%s} &\n", A_(cols[0]));
+    pprintf(prn, "\\multicolumn{1}{c}{%s} &\n", _(cols[0]));
 
     if (colspec[0][0]) {
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", A_(cols[1]));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", _(cols[1]));
     }
 
     if (!colspec[1][0] && !colspec[2][0] && !colspec[3][0]) {
@@ -831,7 +873,7 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	if (colspec[0][0]) {
 	    pputs(prn, " &\n");
 	}
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", A_(cols[2]));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", _(cols[2]));
     }
 
     if (!colspec[2][0] && !colspec[3][0]) {
@@ -843,14 +885,14 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	if (colspec[0][0] || colspec[1][0]) {
 	    pputs(prn, " &\n");
 	}
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", A_(cols[3]));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", _(cols[3]));
     }
 
     if (colspec[3][0]) {
 	if (colspec[0][0] || colspec[1][0] || colspec[2][0]) {
 	    pputs(prn, " &\n");
 	}
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", A_(cols[4]));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", _(cols[4]));
     }
 
     pputs(prn, " \\\\\n");
@@ -886,13 +928,13 @@ int tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	ncols += 2;
     }
 
-    pprintf(prn, "}\n%s &\n", A_(cols[0]));
+    pprintf(prn, "}\n%s &\n", _(cols[0]));
 
     mcols = (opt & OPT_M)? 1 : 2;
 
     for (i=1; cols[i] != NULL; i++) {
 	bufspace(i, prn);
-	pprintf(prn, "\\multicolumn{%d}{c}{%s%s} %s\n", mcols, A_(cols[i]),
+	pprintf(prn, "\\multicolumn{%d}{c}{%s%s} %s\n", mcols, _(cols[i]),
 		(cols[i+1] == NULL && binary)? "$^*$" : "",
 		(cols[i+1] == NULL)? "\\\\[1ex]" : "&");
     }
@@ -912,7 +954,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
     double x;
     int i, j;
 
-    pprintf(prn, "%s\n\n", A_("Cross-equation covariance matrix"));
+    pprintf(prn, "%s\n\n", _("Cross-equation covariance matrix"));
     pputs(prn, "\\vspace{1em}\n");
 
     pputs(prn, "\\begin{tabular}{");
@@ -951,7 +993,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
     pputs(prn, "\\vspace{1em}\n");
 
     pputs(prn, "\\noindent\n");
-    pprintf(prn, "%s = ", A_("determinant"));
+    pprintf(prn, "%s = ", _("determinant"));
     tex_print_double(exp(vecm->ldet), prn);
     pputs(prn, "\\\\\n");
 }
@@ -983,9 +1025,9 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
     double x;
 
     pputs(prn, "\\noindent\n");
-    pputs(prn, A_("Cointegrating vectors"));
+    pputs(prn, _("Cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, " (%s)\n", A_("standard errors in parentheses"));
+	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
     } else {
 	pputc(prn, '\n');
     }
@@ -1039,9 +1081,9 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
     rows = gretl_matrix_rows(jv->Alpha);
 
     pputs(prn, "\\noindent\n");
-    pprintf(prn, A_("Adjustment vectors"));
+    pprintf(prn, _("Adjustment vectors"));
     if (jv->Ase != NULL) {
-	pprintf(prn, " (%s)\n", A_("standard errors in parentheses"));
+	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
     } else {
 	pputc(prn, '\n');
     }
@@ -1096,17 +1138,17 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
 
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
 {
-    pprintf(prn, "\\noindent\n%s = ", A_("Log-likelihood"));
+    pprintf(prn, "\\noindent\n%s = ", _("Log-likelihood"));
     tex_print_double(var->ll, prn);
     pputs(prn, "\\par\n");
 
-    pprintf(prn, "\\noindent\n%s = ", A_("Determinant of covariance matrix"));
+    pprintf(prn, "\\noindent\n%s = ", _("Determinant of covariance matrix"));
     tex_print_double(exp(var->ldet), prn);
     pputs(prn, "\\par\n");
 
-    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", A_("AIC"), var->AIC);
-    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", A_("BIC"), var->BIC);
-    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", A_("HQC"), var->HQC);
+    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", _("AIC"), var->AIC);
+    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", _("BIC"), var->BIC);
+    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", _("HQC"), var->HQC);
 }
 
 static PRN *make_tex_prn (const char *fname,
@@ -1352,8 +1394,6 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	return E_NOTIMP;
     }
 
-    set_alt_gettext_mode(prn);
-
     if (COUNT_MODEL(pmod->ci)) {
 	offvar = gretl_model_get_int(pmod, "offset_var");
 	if (offvar > 0) {
@@ -1384,7 +1424,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	tex_escape(tmp, dset->varname[i]);
     }
 
-    if (pmod->ci == ARBOND) {
+    if (0 /* FIXME should this apply for DPANEL? (was ARBOND-specific) */) {
 	pprintf(prn, "\\widehat{\\Delta \\rm %s} %s= \n", tmp, (split? "&" : ""));
     } else {
 	pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));
@@ -1554,8 +1594,8 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 
     if (sderr_ok) {
 	pprintf(prn, "\\centerline{(%s)} \\notag\n",
-		(opt & OPT_T)? A_("$t$-statistics in parentheses") :
-		A_("standard errors in parentheses"));
+		(opt & OPT_T)? _("$t$-statistics in parentheses") :
+		_("standard errors in parentheses"));
     } else {
 	pputs(prn, "\\notag\n");
     }

@@ -50,6 +50,7 @@
  <gentext key="bundleref"     text="referencia a feixe"/>
  <gentext key="scalarref"     text="referencia a escalar"/>
  <gentext key="objectref"     text="referencia a obxecto"/>
+ <gentext key="stringref"     text="referencia a cadea"/>
  <gentext key="cvec"          text="vector columna"/>
  <gentext key="rvec"          text="vector fila"/>
  <gentext key="list"          text="lista"/>
@@ -74,4 +75,7 @@
  <gentext key="chapter"       text="Capítulo"/>
  <gentext key="applies-to"    text="Aplícase a"/>
  <gentext key="none"          text="nada"/>
+ <gentext key="Accessors" text="Accesorios" />
+ <gentext key="Built-in strings" text="Cadeas de texto internas predefinidas" />
+ <gentext key="Functions proper" text="Funcións propias" />
 </localization>

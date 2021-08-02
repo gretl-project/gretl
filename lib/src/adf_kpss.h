@@ -32,8 +32,7 @@ int levin_lin_test (int vnum, const int *plist, DATASET *dset,
 int engle_granger_test (int order, const int *list, DATASET *dset, 
 			gretlopt opt, PRN *prn);
 
-double get_urc_pvalue (double tau, int n, int niv, 
-		       int itv, gretlopt opt);
+double get_urc_pvalue (double tau, int n, int niv, int itv);
 
 gretl_matrix *kpss_critvals (int T, int trend, int *err);
 

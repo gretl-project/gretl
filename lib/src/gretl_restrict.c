@@ -79,6 +79,12 @@ struct gretl_restriction_ {
 				 && r->rows[i]->eq != NULL		\
 				 && r->rows[i]->eq[j] != R_UNSPEC)
 
+static int
+real_restriction_set_parse_line (gretl_restriction *rset,
+				 const char *line,
+				 const DATASET *dset,
+				 int first);
+
 /* @R is putatively the matrix in R \beta -q = 0.  Check that it makes
    sense in that role, i.e., that RR' is non-singular. */
 
@@ -1859,6 +1865,34 @@ static int parse_restriction_row (gretl_restriction *rset,
     return err;
 }
 
+static int parse_strings_line (const char *line,
+			       gretl_restriction *rset,
+			       const DATASET *dset)
+{
+    char aname[VNAMELEN];
+    int err = 0;
+
+    if (sscanf(line, "%31s", aname) != 1) {
+	err = E_PARSE;
+    } else {
+	gretl_array *a = get_strings_array_by_name(aname);
+
+	if (a == NULL) {
+	    err = E_INVARG;
+	} else {
+	    char **S;
+	    int i, n;
+
+	    S = gretl_array_get_strings(a, &n);
+	    for (i=0; i<n && !err; i++) {
+		err = real_restriction_set_parse_line(rset, S[i], dset, 0);
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int
 real_restriction_set_parse_line (gretl_restriction *rset,
 				 const char *line,
@@ -1899,6 +1933,9 @@ real_restriction_set_parse_line (gretl_restriction *rset,
     } else if (*s == 'R' || *s == 'q') {
 	/* restrictions given in matrix form */
 	err = read_matrix_line(s, rset);
+    } else if (!strncmp(s, "inject", 6)) {
+	/* restrictions given as an array of strings */
+	err = parse_strings_line(s + 6, rset, dset);
     } else {
 	/* a regular linear restriction */
 	err = parse_restriction_row(rset, s, dset);

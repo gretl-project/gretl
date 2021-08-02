@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="US-ASCII" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="en">
 
  <gentext key="args"          text="Arguments:  "/>
@@ -50,6 +50,7 @@
  <gentext key="bundleref"     text="reference to bundle"/>
  <gentext key="scalarref"     text="reference to scalar"/>
  <gentext key="objectref"     text="reference to object"/>
+ <gentext key="stringref"     text="reference to string"/>
  <gentext key="cvec"          text="column vector"/>
  <gentext key="rvec"          text="row vector"/>
  <gentext key="list"          text="list"/>
@@ -74,5 +75,8 @@
  <gentext key="chapter"       text="Chapter"/>
  <gentext key="applies-to"    text="Applies to"/>
  <gentext key="none"          text="none"/>
+ <gentext key="Accessors" text="Accessors" />
+ <gentext key="Built-in strings" text="Built-in strings" />
+ <gentext key="Functions proper" text="Functions proper" />
 
 </localization>

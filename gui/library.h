@@ -79,6 +79,8 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
 
 void do_run_script (GtkWidget *w, windata_t *vwin);
 
+void run_script_silent (GtkWidget *w, windata_t *vwin);
+
 void run_script_fragment (windata_t *vwin, gchar *buf);
 
 void gui_errmsg (int errcode);
@@ -308,6 +310,8 @@ void plot_from_selection (int code);
 int do_dummy_graph (selector *sr);
 
 int do_xyz_graph (selector *sr);
+
+int do_qq_from_selector (selector *sr);
 
 int do_xcorrgm (selector *sr);
 

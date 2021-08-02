@@ -4,7 +4,6 @@
 \section{Generic ML estimation with gretl}
 \label{sec:mle-intro}
 
-
 Maximum likelihood estimation is a cornerstone of modern inferential
 procedures. Gretl provides a way to implement this method for a wide
 range of estimation problems, by use of the \texttt{mle} command. We
@@ -121,7 +120,81 @@ using the \cmd{set} command: the relevant variables are
 \verb+bfgs_maxiter+ (default value 500) and \verb+bfgs_toler+ (default
 value, the machine precision to the power 3/4).
 
-\subsection{Covariance matrix and standard errors}
+\section{Syntax}
+\label{sec:ml-syntax}
+
+ML estimation in gretl is supported by the \cmd{mle} command
+block. This consists of an initial line holding the keyword
+\texttt{mle} plus an equation for the loglikelihood; one or more
+statements within the block (details below); and a trailer line to
+close the block: \texttt{end mle}. Option flags may be appended to the
+trailer line.
+
+Listing~\ref{ols-mle} gives a simple but complete example which serves
+to illustrate the equivalence of MLE and OLS in the context of the
+normal linear model.
+
+\begin{script}[htbp]
+  \scriptcaption{OLS and MLE}
+  \label{ols-mle}
+\begin{scode}
+open data9-7
+list X = const INCOME PRICE
+ols QNC X
+matrix b = $coeff
+scalar s2 = $sigma^2
+scalar l2pi = log(2*$pi)
+scalar n = $nobs
+mle lt = -0.5*l2pi -0.5*log(s2) - 1/(2*s2) * uhat^2
+   series uhat = QNC - lincomb(X, b)
+   s2 = sum(uhat^2)/n
+   params b
+end mle
+\end{scode}
+\end{script}
+
+\subsection{Initial line of block}
+
+If possible the given expression should evaluate to a series or vector
+(contribution to the loglikelihood per observation). Failing that, it
+must evaluate to a scalar (the total loglikelihood).  The identifier
+on the left-hand side (\texttt{lt} in Listing~\ref{ols-mle}) is up to
+the user. If the variable in question is defined prior to the
+\texttt{mle} block it can be referenced after ML estimation; otherwise
+it is treated as a temporary variable and is destroyed after
+estimation.
+
+\subsection{Lines within the block}
+
+These may take three forms:
+\begin{enumerate}
+\item ``Helper'' statements that calculate auxiliary quantities (in
+  the example, \texttt{uhat} and \texttt{s2}). Such statements will be
+  evaluated before the loglikelihood and then re-evaluated on each
+  iteration.
+\item Keyword plus parameter, as in ``\texttt{params b}'', which tells
+  \texttt{mle} that the parameter to be adjusted to maximize the
+  loglikelihood is the vector \texttt{b}. This sort of statement can
+  also be used to specify analytical derivatives of the loglikelihood
+  with respect to the parameters; see section~\ref{sec:anal-der} for
+  discussion and examples.
+\item Statements employing \texttt{print} or \texttt{printf} to track
+  the progress of calculation, which can be useful for debugging.
+\end{enumerate}
+
+\subsection{Final line}
+
+In the example above this merely terminates the block, but if one
+wanted standard errors calculated via a numerical approximation to the
+Hessian (for instance) one could substitute
+\begin{code}
+end mle --hessian
+\end{code}
+For a full listing of applicable options see the \cmd{mle} entry in
+the \GCR.
+
+\section{Covariance matrix and standard errors}
+\label{sec:ml-vcv}
 
 By default the covariance matrix of the parameter estimates is
 based on the Outer Product of the Gradient (OPG).  That is,
@@ -131,16 +204,25 @@ based on the Outer Product of the Gradient (OPG).  That is,
   \left(G'(\hat{\theta}) G(\hat{\theta}) \right)^{-1}
 \end{equation}
 where $G(\hat{\theta})$ is the $T \times k$ matrix of contributions to
-the gradient.  Two other options are available.  If the
-\option{hessian} flag is given, the covariance matrix is computed from
-a numerical approximation to the Hessian at convergence.  If the
-\option{robust} option is selected, the quasi-ML ``sandwich''
-estimator is used:
+the gradient.  Other options are available.  If the \option{hessian}
+flag is given, the covariance matrix is computed from a numerical
+approximation to the Hessian at convergence.  If the \option{robust}
+option is given the quasi-ML ``sandwich'' estimator is used:
 \[
 \widehat{\mbox{Var}}_{\mbox{\scriptsize QML}}(\hat{\theta}) = H(\hat{\theta})^{-1}
   G'(\hat{\theta}) G(\hat{\theta}) H(\hat{\theta})^{-1}
 \]
-where $H$ denotes the numerical approximation to the Hessian.
+where $H$ denotes the numerical approximation to the Hessian. A
+refinement here is that if the \texttt{hac} parameter is appended to
+the \option{robust} option, as in
+\begin{code}
+end mle --robust=hac
+\end{code}
+the sandwich estimator is augmented in the manner of
+\cite{newey-west87} to allow for serial correlation in the
+gradient. (Note that this only makes sense for time-series data.) In
+that case the details of the HAC estimator can be controlled via the
+\cmd{set} command, as described in chapter~\ref{chap:robust_vcv}.
 
 Cluster-robust estimation is also available: in order to activate it,
 use the \option{cluster=}\emph{\texttt{clustvar}}, where \cmd{clustvar}
@@ -279,7 +361,7 @@ end mle
 \label{sec:frontier}
 
 \emph{%
-Note: this section has the only purpose of illustrating the \cmd{mle}
+Note: this section has the sole purpose of illustrating the \cmd{mle}
 command. For the estimation of stochastic frontier cost or production
 functions, you may want to use the \package{frontier} function package.}
 
@@ -288,7 +370,7 @@ incorporate explicitly into the statistical model the notion that
 firms may be inefficient, so that the observed cost deviates from the
 theoretical figure not only because of unobserved heterogeneity
 between firms, but also because two firms could be operating at a
-different efficiency level, despite being identical under all other
+different efficiency level, despite being identical in all other
 respects. In this case we may write
 \[
   C_i = C^*_i + u_i + v_i
@@ -379,9 +461,9 @@ series p3 = ln(P3)
 
 # Cobb-Douglas cost function with homogeneity restrictions
 # (for initialization)
-genr rcost = cost - p1
-genr rp2 = p2 - p1
-genr rp3 = p3 - p1
+series rcost = cost - p1
+series rp2 = p2 - p1
+series rp3 = p3 - p1
 
 ols rcost const q1 q2 rp2 rp3
 
@@ -431,9 +513,9 @@ series p3 = ln(P3)
 
 # Cobb-Douglas cost function with homogeneity restrictions
 # (for initialization)
-genr rcost = cost - p1
-genr rp2 = p2 - p1
-genr rp3 = p3 - p1
+series rcost = cost - p1
+series rp2 = p2 - p1
+series rp3 = p3 - p1
 list X = const q1 q2 rp2 rp3
 
 ols rcost X
@@ -567,12 +649,12 @@ following script:
 \begin{code}
 nulldata 1000
 
-genr x1 = normal()
-genr x2 = normal()
-genr x3 = normal()
+series x1 = normal()
+series x2 = normal()
+series x3 = normal()
 
-genr ystar = x1 + x2 + x3 + normal()
-genr y = (ystar > 0)
+series ystar = x1 + x2 + x3 + normal()
+series y = (ystar > 0)
 
 scalar b0 = 0
 scalar b1 = 0

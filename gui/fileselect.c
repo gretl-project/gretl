@@ -77,6 +77,8 @@ static struct extmap action_map[] = {
     { SAVE_LABELS,       ".txt" },
     { SAVE_GFN_SPEC,     ".spec" },
     { SAVE_GFN_ZIP,      ".zip" },
+    { SAVE_MAP,          ".geojson" },
+    { WRITE_MAP,         ".geojson" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".txt" },
     { EXPORT_OCTAVE,     ".m" },
@@ -126,9 +128,9 @@ static const char *get_extension_for_action (int action, gpointer data)
 	else if (ttype == GP_TERM_SVG) s = ".svg";
 	else if (ttype == GP_TERM_PLT) s = ".plt";
     } else {
-	size_t i;
+	int i;
 
-	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
+	for (i=0; i < G_N_ELEMENTS(action_map); i++) {
 	    if (action == action_map[i].action) {
 		s = action_map[i].ext;
 		break;
@@ -240,27 +242,6 @@ static void script_window_update (windata_t *vwin,
     }
 
     mark_vwin_content_saved(vwin);
-}
-
-gchar *pre_trim_buffer (gchar *s)
-{
-    gchar *ret = s;
-    int n = 0;
-
-    if (*s == '#') {
-	while (*s) {
-	    if (*s == '#') {
-		n++;
-	    }
-	    if (n == 3 && *s == '\n') {
-		ret = s + 1;
-		break;
-	    }
-	    s++;
-	}
-    }
-
-    return ret;
 }
 
 static void handle_geoplot_save (const char *buf,
@@ -463,11 +444,9 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	script_open_choice(fname, vwin, role, foreign);
     } else if (foreign) {
 	view_script(fname, 1, role);
-    } else {
-	if (view_script(fname, 1, EDIT_HANSL) != NULL) {
-	    strcpy(scriptfile, fname);
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
-	}
+    } else if (view_script(fname, 1, EDIT_HANSL) != NULL) {
+	strcpy(scriptfile, fname);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
     }
 }
 
@@ -496,7 +475,9 @@ static void filesel_open_session (const char *fname)
    been imported from a file with name @fname and the user has
    now chosen "Save data" (implicitly in native format). We'd
    like to offer a suggestion for the name of the file to save.
-   A simple case would be, e.g. "foo.gdt" from imported "foo.xls".
+   A simple case would be, e.g., "foo" from imported "foo.xls".
+   We'll not add a suffix because this will depend on the user's
+   selection of gretl format, gdt vs gdtb.
 */
 
 static char *suggested_savename (const char *fname)
@@ -513,19 +494,20 @@ static char *suggested_savename (const char *fname)
     sfx = strrchr(s, '.');
 
     if (sfx != NULL) {
+	/* if what follows '.' really looks like a suffix,
+	   trim it off
+	*/
 	if (strlen(sfx) == 4 ||
 	    !strcmp(sfx, ".xlsx") ||
 	    !strcmp(sfx, ".gnumeric")) {
-	    if (strcmp(sfx, ".gdt")) {
-		strcpy(sfx, ".gdt");
-	    }
+	    *sfx = '\0';
 	}
     }
 
     return s;
 }
 
-static char *suggested_exportname (const char *fname, int action)
+static gchar *suggested_exportname (const char *fname, int action)
 {
     const char *ss = path_last_slash_const(fname);
     char *s, *sfx;
@@ -569,6 +551,18 @@ static char *suggested_exportname (const char *fname, int action)
     }
 
     return s;
+}
+
+static gchar *suggested_mapname (const char *fname)
+{
+    if (has_suffix(fname, ".shp")) {
+	gchar *targ = g_malloc0(strlen(fname) + 5);
+
+	switch_ext(targ, fname, "geojson");
+	return targ;
+    } else {
+	return NULL;
+    }
 }
 
 static void bootstrap_save_callback (const char *fname)
@@ -711,6 +705,8 @@ file_selector_process_result (const char *in_fname, int action,
 	err = save_function_package_spec(fname, data);
     } else if (action == SAVE_GFN_ZIP) {
 	err = save_function_package_zipfile(fname, data);
+    } else if (action == SAVE_MAP || action == WRITE_MAP) {
+	err = do_store(fname, action, data);
     } else if (action == SELECT_PDF) {
 	err = set_package_pdfname(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
@@ -828,6 +824,12 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
+    } else if (action == SAVE_DATA && *datafile != '\0') {
+	currname = suggested_mapname(datafile);
+	if (currname != NULL) {
+	    gtk_file_chooser_set_current_name(filesel, currname);
+	    g_free(currname);
+	}
     } else if (action == SAVE_CMD_LOG) {
 	gtk_file_chooser_set_current_name(filesel, "session.inp");
     } else if (action == SET_PROG || action == SET_DIR || action == SET_OTHER) {
@@ -1014,6 +1016,58 @@ static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
     return filt;
 }
 
+static void filesel_set_filter_patterns (GtkWidget *filesel,
+					 const char *pat1,
+					 const char *pat2)
+{
+    GtkFileFilter *filt = gtk_file_filter_new();
+
+    gtk_file_filter_add_pattern(filt, pat1);
+    gtk_file_filter_add_pattern(filt, pat2);
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filt);
+}
+
+static void save_filter_changed (GtkComboBox *cb, GtkWidget *w)
+{
+    GtkFileChooser *fc = GTK_FILE_CHOOSER(w);
+    GtkFileFilter *ff = gtk_file_chooser_get_filter(fc);
+    GtkWidget *ew = gtk_file_chooser_get_extra_widget(fc);
+    const char *s = gtk_file_filter_get_name(ff);
+
+    gtk_widget_set_sensitive(ew, strstr(s, ".gdtb") == NULL);
+}
+
+void find_filter_combo (GtkWidget *w, gpointer p)
+{
+    GtkWidget **pw = p;
+
+    if (GTK_IS_COMBO_BOX(w)) {
+	*pw = w;
+    } else if (*pw == NULL && GTK_IS_CONTAINER(w)) {
+	gtk_container_foreach(GTK_CONTAINER(w), find_filter_combo, pw);
+    }
+}
+
+static void conditionalize_compression (GtkWidget *filesel)
+{
+    GtkWidget *ca = gtk_dialog_get_content_area(GTK_DIALOG(filesel));
+    GList *L = gtk_container_get_children(GTK_CONTAINER(ca));
+
+    if (GTK_IS_BOX(L->data)) {
+	GtkWidget *combo = NULL;
+
+	gtk_container_foreach(GTK_CONTAINER(L->data),
+			      find_filter_combo, &combo);
+	if (combo != NULL) {
+	    g_signal_connect(G_OBJECT(combo), "changed",
+			     G_CALLBACK(save_filter_changed),
+			     filesel);
+	}
+    }
+
+    g_list_free(L);
+}
+
 /* return non-zero if we add more than one selectable filter */
 
 static int filesel_set_filters (GtkWidget *filesel, int action,
@@ -1050,8 +1104,8 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_SHP);
 	filesel_add_data_filter(filesel, GRETL_GEOJSON);
     } else if (action == UPLOAD_PKG) {
-	filesel_add_filter(filesel, N_("plain function packages (*.gfn)"), "*.gfn");
-	filesel_add_filter(filesel, N_("zipped function packages (*.zip)"), "*.zip");
+	/* could add OPEN_GFN here?? */
+	filesel_set_filter_patterns(filesel, "*.gfn", "*.zip");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 
@@ -1196,6 +1250,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	title = g_strdup_printf("gretl: %s", _("open file"));
 	plain_open = 1;
     } else {
+	/* it's a save action of some sort */
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
 	if (action == SAVE_FUNCTIONS ||
@@ -1204,7 +1259,13 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	    action == SAVE_GFN_ZIP) {
 	    remember = 0;
 	}
-	title = g_strdup_printf("gretl: %s", _("save file"));
+	if (action == SAVE_MAP) {
+	    title = g_strdup_printf("gretl: %s", _("save map as geojson"));
+	} else if (action == WRITE_MAP) {
+	    title = g_strdup_printf("gretl: %s", _("write map as geojson"));
+	} else {
+	    title = g_strdup_printf("gretl: %s", _("save file"));
+	}
     }
 
     if (dirname != NULL) {
@@ -1245,8 +1306,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (action == SAVE_DATA ||
 	action == SAVE_DATA_AS ||
 	action == SAVE_BOOT_DATA ||
-	action == EXPORT_GDT ||
-	action == EXPORT_GDTB) {
+	action == EXPORT_GDT) {
 	add_compression_level_option(filesel);
     }
 
@@ -1266,6 +1326,10 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
 				       src, data);
+    }
+
+    if (action == SAVE_DATA || action == SAVE_DATA_AS || action == SAVE_BOOT_DATA) {
+	conditionalize_compression(filesel);
     }
 
     response = gtk_dialog_run(GTK_DIALOG(filesel));

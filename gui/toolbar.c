@@ -46,44 +46,18 @@
 # include "gretlwin32.h"
 #endif
 
+#include <gio/gio.h>
+
 /* for viewer window toolbars */
-#include "../pixmaps/mini.tex.xpm"
-#include "../pixmaps/mini.tsplot.xpm"
-#include "../pixmaps/mini.boxplot.xpm"
-#include "../pixmaps/mini.pdf.xpm"
-#include "../pixmaps/mini.manual.xpm"
-#include "../pixmaps/mini.pin.xpm"
-#include "../pixmaps/mini.alpha.xpm"
 #include "../pixmaps/mini.en.xpm"
-#include "../pixmaps/mini.split_h.xpm"
-#include "../pixmaps/mini.split_v.xpm"
-#include "../pixmaps/mini.join_h.xpm"
-#include "../pixmaps/mini.join_v.xpm"
-#include "../pixmaps/mini.winlist.xpm"
-#include "../pixmaps/mini.bundle.xpm"
-#include "../pixmaps/mini.heatmap.xpm"
-#include "../pixmaps/mini.dbnomics.xpm"
-#include "../pixmaps/mail_16.xpm"
 
-/* for main-window toolbar */
-#include "../pixmaps/mini.calc.xpm"
-#include "../pixmaps/mini.sh.xpm"
-#include "../pixmaps/mini.session.xpm"
-#include "../pixmaps/mini.plot.xpm"
-#include "../pixmaps/mini.model.xpm"
-#include "../pixmaps/mini.func.xpm"
-#include "../pixmaps/mini.db.xpm"
+/* for pop-up search entry */
+#include "../pixmaps/close_16.xpm"
 
-/* for window-finder */
+/* for window-finder menu */
 #include "../pixmaps/mini.gretl.xpm"
 #include "../pixmaps/mini.table.xpm"
 #include "../pixmaps/mini.page.xpm"
-#include "../pixmaps/mini.tools.xpm"
-
-/* for plot bar */
-#include "../pixmaps/upsize.xpm"
-#include "../pixmaps/downsize.xpm"
-#include "../pixmaps/open_menu.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -115,71 +89,189 @@ enum {
     EDITOR_ITEM,
     NOTES_ITEM,
     NEW_ITEM,
-    CLOSE_ITEM,
     BUNDLE_ITEM,
     FIND_ITEM,
     COPY_SCRIPT_ITEM,
     BUILD_ITEM,
     HMAP_ITEM,
     DIGITS_ITEM,
-    DBN_ITEM
+    DBN_ITEM,
+    FCAST_ITEM,
+    CLOSE_ITEM
 } viewbar_flags;
 
-struct stock_maker {
-    char **xpm;
-    const char *str;
+int toolbar_icon_size = GTK_ICON_SIZE_MENU;
+
+struct png_stock_maker {
+    char *fname;
+    const char *id;
+    gint8 in_menu;
 };
+
+struct png_stock_maker png_stocks[] = {
+    { "calc.png",      GRETL_STOCK_CALC, 0 },
+    { "database.png",  GRETL_STOCK_DB, 0 },
+    { "fx.png",        GRETL_STOCK_FUNC, 0 },
+    { "betahat.png",   GRETL_STOCK_MODEL, 0 },
+    { "iconview.png",  GRETL_STOCK_ICONS, 0 },
+    { "console.png",   GRETL_STOCK_CONSOLE, 0 },
+    { "plot.png",      GRETL_STOCK_SCATTER, 0 },
+    { "winlist.png",   GRETL_STOCK_WINLIST },
+    { "bundle.png",    GRETL_STOCK_BUNDLE, 1 },
+    { "alpha.png",     GRETL_STOCK_ALPHA, 0 },
+    { "tex.png",       GRETL_STOCK_TEX, 0 },
+    { "bigger.png",    GRETL_STOCK_BIGGER, 0 },
+    { "smaller.png",   GRETL_STOCK_SMALLER, 0 },
+    { "menu.png",      GRETL_STOCK_MENU, 0 },
+    { "tools.png",     GRETL_STOCK_TOOLS, 0 },
+    { "dbnomics.png",  GRETL_STOCK_DBN, 1 },
+    { "fcast.png",     GRETL_STOCK_FCAST, 0 },
+    { "heatmap.png",   GRETL_STOCK_HMAP, 0 },
+    { "pushpin.png",   GRETL_STOCK_PIN, 0 },
+    { "mail.png",      GRETL_STOCK_MAIL, 1 },
+    { "pdf.png",       GRETL_STOCK_PDF, 1 },
+    { "split_h.png",   GRETL_STOCK_SPLIT_H, 0 },
+    { "join_h.png",    GRETL_STOCK_JOIN_H, 0 },
+    { "split_v.png",   GRETL_STOCK_SPLIT_V, 0 },
+    { "join_v.png",    GRETL_STOCK_JOIN_V, 0 },
+    { "boxplot.png",   GRETL_STOCK_BOX, 0 },
+    { "tsplot.png",    GRETL_STOCK_TS, 0 },
+    { "book.png",      GRETL_STOCK_BOOK, 0 }
+};
+
+struct xpm_stock_maker {
+    char **xpm;
+    const char *id;
+};
+
+#if GTK_MAJOR_VERSION == 3
+
+static void try_auto_icon_sizing (int *bigger)
+{
+    GdkDisplay *display = gdk_display_get_default();
+    GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
+    GdkScreen *screen = gdk_screen_get_default();
+
+    if (monitor != NULL) {
+	int mmw = gdk_monitor_get_width_mm(monitor);
+	int pxw = gdk_screen_get_width(screen);
+	double mm16 = 16 * mmw / (double) pxw;
+
+	if (mm16 < 2.8) {
+	    /* size of 16 pixels in millimeters */
+	    fprintf(stderr, " auto-setting larger icons\n");
+	    *bigger = 1;
+	}
+    }
+}
+
+#endif /* GTK3 */
 
 void gretl_stock_icons_init (void)
 {
-    struct stock_maker stocks[] = {
-	{ mini_tex_xpm, GRETL_STOCK_TEX },
-	{ mail_16_xpm, GRETL_STOCK_MAIL },
-	{ mini_tsplot_xpm, GRETL_STOCK_TS },
-	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
-	{ mini_pdf_xpm, GRETL_STOCK_PDF },
-	{ mini_manual_xpm, GRETL_STOCK_BOOK },
-	{ mini_calc_xpm, GRETL_STOCK_CALC },
-	{ mini_sh_xpm, GRETL_STOCK_CONSOLE },
-	{ mini_session_xpm, GRETL_STOCK_ICONS },
-	{ mini_plot_xpm, GRETL_STOCK_SCATTER },
-	{ mini_model_xpm, GRETL_STOCK_MODEL },
-	{ mini_func_xpm, GRETL_STOCK_FUNC },
-	{ mini_pin_xpm, GRETL_STOCK_PIN },
-	{ mini_alpha_xpm, GRETL_STOCK_ALPHA },
+    struct xpm_stock_maker xpm_stocks[] = {
 	{ mini_en_xpm, GRETL_STOCK_EN },
-	{ mini_split_h_xpm, GRETL_STOCK_SPLIT_H },
-	{ mini_split_v_xpm, GRETL_STOCK_SPLIT_V },
-	{ mini_join_h_xpm, GRETL_STOCK_JOIN_H },
-	{ mini_join_v_xpm, GRETL_STOCK_JOIN_V },
-	{ mini_winlist_xpm, GRETL_STOCK_WINLIST },
-	{ mini_bundle_xpm, GRETL_STOCK_BUNDLE },
-	{ mini_db_xpm, GRETL_STOCK_DB},
 	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
 	{ mini_table_xpm, GRETL_STOCK_TABLE},
 	{ mini_page_xpm, GRETL_STOCK_PAGE},
-	{ mini_tools_xpm, GRETL_STOCK_TOOLS},
-	{ upsize_xpm, GRETL_STOCK_BIGGER},
-	{ downsize_xpm, GRETL_STOCK_SMALLER},
-	{ open_menu_xpm, GRETL_STOCK_MENU},
-	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
-	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
+	{ close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
-    int n = G_N_ELEMENTS(stocks);
+    int n1 = G_N_ELEMENTS(png_stocks);
+    int n2 = G_N_ELEMENTS(xpm_stocks);
 
     if (gretl_factory == NULL) {
+	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
+	char icon_path[48], menu_path[48];
+	gchar *p, *pm, *respath;
+	GResource *icons;
+	GtkIconSource *isrc;
 	GtkIconSet *iset;
 	GdkPixbuf *pbuf;
 	int i;
 
+#if GTK_MAJOR_VERSION == 3
+	if (get_icon_sizing() == ICON_SIZE_AUTO) {
+	    try_auto_icon_sizing(&bigger);
+	}
+#endif
+
+	if (bigger) {
+#if GTK_MAJOR_VERSION == 3
+	    toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
+#else
+	    toolbar_icon_size = GTK_ICON_SIZE_SMALL_TOOLBAR;
+#endif
+	}
+
 	gretl_factory = gtk_icon_factory_new();
 
-	for (i=0; i<n; i++) {
-	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) stocks[i].xpm);
+	respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
+	icons = g_resource_load(respath, NULL);
+	if (icons == NULL) {
+	    fprintf(stderr, "g_resource_load: failed to load icons\n");
+	    g_free(respath);
+	    goto do_pixmaps;
+	}
+
+	g_resources_register(icons);
+
+	if (bigger) {
+	    strcpy(icon_path, "/gretl/icons/24x24/");
+	    strcpy(menu_path, "/gretl/icons/16x16/");
+	    pm = strrchr(menu_path, '/') + 1;
+	} else {
+	    strcpy(icon_path, "/gretl/icons/16x16/");
+	}
+	p = strrchr(icon_path, '/') + 1;
+
+	for (i=0; i<n1; i++) {
+	    strcat(icon_path, png_stocks[i].fname);
+	    pbuf = gdk_pixbuf_new_from_resource(icon_path, NULL);
+	    if (pbuf == NULL) {
+		fprintf(stderr, "Failed to load %s\n", icon_path);
+		*p = '\0';
+		continue;
+	    }
+	    if (bigger && png_stocks[i].in_menu) {
+		iset = gtk_icon_set_new();
+		/* for toolbar use */
+		isrc = gtk_icon_source_new();
+		gtk_icon_source_set_pixbuf(isrc, pbuf);
+		gtk_icon_source_set_size(isrc, toolbar_icon_size);
+		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
+		gtk_icon_set_add_source(iset, isrc);
+		g_object_unref(pbuf);
+		/* for menu use */
+		strcat(menu_path, png_stocks[i].fname);
+		pbuf = gdk_pixbuf_new_from_resource(menu_path, NULL);
+		isrc = gtk_icon_source_new();
+		gtk_icon_source_set_pixbuf(isrc, pbuf);
+		gtk_icon_source_set_size(isrc, GTK_ICON_SIZE_MENU);
+		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
+		gtk_icon_set_add_source(iset, isrc);
+		g_object_unref(pbuf);
+		*pm = '\0';
+	    } else {
+		/* we just need a single icon */
+		iset = gtk_icon_set_new_from_pixbuf(pbuf);
+	    }
+	    gtk_icon_factory_add(gretl_factory, png_stocks[i].id, iset);
+	    gtk_icon_set_unref(iset);
+	    *p = '\0';
+	}
+
+	g_free(respath);
+	g_resources_unregister(icons);
+	g_resource_unref(icons);
+
+    do_pixmaps:
+
+	for (i=0; i<n2; i++) {
+	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpm_stocks[i].xpm);
 	    iset = gtk_icon_set_new_from_pixbuf(pbuf);
 	    g_object_unref(pbuf);
-	    gtk_icon_factory_add(gretl_factory, stocks[i].str, iset);
+	    gtk_icon_factory_add(gretl_factory, xpm_stocks[i].id, iset);
 	    gtk_icon_set_unref(iset);
 	}
 
@@ -706,13 +798,22 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     if (vwin->role == VIEW_SERIES) {
 	series_view_graph(w, vwin);
     } else if (vwin->role == VIEW_BUNDLE) {
-	exec_bundle_plot_function(vwin->data, NULL);
+	exec_bundle_special_function(vwin->data, BUNDLE_PLOT,
+				     NULL, vwin->main);
     } else if (vwin->role == CORR) {
 	do_corr_plot(vwin);
     } else if (vwin->role == VIEW_DBNOMICS) {
 	show_dbnomics_data(vwin, 1);
     } else {
 	do_nonparam_plot(vwin);
+    }
+}
+
+static void toolbar_fcast_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->role == VIEW_BUNDLE) {
+	exec_bundle_special_function(vwin->data, BUNDLE_FCAST,
+				     NULL, vwin->main);
     }
 }
 
@@ -723,7 +824,12 @@ static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
 
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 {
-    preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+    if (vwin->role == CONSOLE) {
+	/* FIXME swallow console */
+	console_prefs_dialog(vwin->main);
+    } else {
+	preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+    }
 }
 
 static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
@@ -747,12 +853,26 @@ static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
 static int bundle_plot_ok (windata_t *vwin)
 {
     gretl_bundle *b = vwin->data;
-    gchar *pf = get_bundle_plot_function(b);
+    gchar *pf = get_bundle_special_function(b, BUNDLE_PLOT);
     int ret = 0;
 
     if (pf != NULL) {
 	ret = 1;
 	g_free(pf);
+    }
+
+    return ret;
+}
+
+static int bundle_fcast_ok (windata_t *vwin)
+{
+    gretl_bundle *b = vwin->data;
+    gchar *ff = get_bundle_special_function(b, BUNDLE_FCAST);
+    int ret = 0;
+
+    if (ff != NULL) {
+	ret = 1;
+	g_free(ff);
     }
 
     return ret;
@@ -765,7 +885,7 @@ static int suppress_hmap (VMatrix *corr)
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
-    text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
+    text_set_cursor(vwin->text, "help");
     set_window_help_active(vwin);
 }
 
@@ -824,6 +944,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(toolbar_plot_callback), PLOT_ITEM },
+    { N_("Forecast"), GRETL_STOCK_FCAST, G_CALLBACK(toolbar_fcast_callback), FCAST_ITEM },
     { N_("Heatmap"), GRETL_STOCK_HMAP, G_CALLBACK(toolbar_plot_callback), HMAP_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
     { N_("Edit values..."), GTK_STOCK_EDIT, G_CALLBACK(series_view_edit), EDITOR_ITEM },
@@ -878,7 +999,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == VIEW_PKG_SAMPLE || \
 			r == VIEW_PKG_CODE || \
 			r == VIEW_SCRIPT || \
-			r == VIEW_LOG)
+			r == VIEW_LOG || \
+			r == CONSOLE)
 
 /* for a non-editable script: can offer option to copy
    content into an editor window */
@@ -993,6 +1115,12 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	} else {
 	    return NULL;
 	}
+    } else if (f == FCAST_ITEM) {
+	if (r == VIEW_BUNDLE && bundle_fcast_ok(vwin)) {
+	    ; /* alright then */
+	} else {
+	    return NULL;
+	}
     } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
 	return NULL;
     } else if (!split_v_ok(r) && f == SPLIT_V_ITEM) {
@@ -1001,6 +1129,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SERIES && f == EDITOR_ITEM) {
 	return NULL;
+    } else if (r == CONSOLE && func == G_CALLBACK(editor_prefs_callback)) {
+	; /* alright then */
     } else if (r != EDIT_HANSL && r != EDIT_PKG_CODE &&
 	       r != EDIT_PKG_SAMPLE && f == EDIT_HANSL_ITEM) {
 	return NULL;
@@ -1131,7 +1261,7 @@ GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
 {
     GtkWidget *tb = gtk_toolbar_new();
 
-    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), GTK_ICON_SIZE_MENU);
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), toolbar_icon_size);
     gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
 
@@ -1159,7 +1289,7 @@ static GtkToolItem *gretl_menu_button (const char *icon,
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tip));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(icon, GTK_ICON_SIZE_MENU);
+    img = gtk_image_new_from_stock(icon, toolbar_icon_size /* GTK_ICON_SIZE_MENU */);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
     *pw = button;
@@ -1180,6 +1310,8 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
 	accel = "Ctrl+S";
     } else if (tool->flag == FIND_ITEM) {
 	accel = "Ctrl+F";
+    } else if (!strcmp(tool->icon, GTK_STOCK_FIND_AND_REPLACE)) {
+	accel = "Ctrl+H";
     }
 
     if (accel != NULL) {
@@ -1234,6 +1366,18 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
+/* right-click action for exec button */
+
+static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
+{
+    if (eb->button == 3) {
+	run_script_silent(NULL, vwin);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
 GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 				GCallback func,
 				GtkWidget *menu,
@@ -1257,6 +1401,10 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
 	} else {
 	    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
+	    if (tool->flag == EXEC_ITEM) {
+		g_signal_connect(G_OBJECT(item), "button-press-event",
+				 G_CALLBACK(exec_press), vwin);
+	    }
 	}
     }
 

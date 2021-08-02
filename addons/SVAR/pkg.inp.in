@@ -16,7 +16,6 @@ include @pkgdir/SVAR_setup.inp
 include @pkgdir/SVAR_main.inp
 include @pkgdir/SVAR_estim_backend.inp
 include @pkgdir/SVAR_signrestr_utils.inp
-include @pkgdir/SVAR_compatibility_funcs.inp
 include @pkgdir/SVAR_signrestr.inp
 
 makepkg SVAR.gfn --index --translations --quiet --dtd="@dtd"

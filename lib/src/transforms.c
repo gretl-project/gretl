@@ -182,42 +182,48 @@ static int
 make_transform_label (char *label, const char *parent,
 		      int ci, int aux)
 {
+    gchar *s = NULL;
     int err = 0;
 
     if (ci == DIFF) {
-	sprintf(label, _("= first difference of %s"), parent);
+	s = g_strdup_printf(_("= first difference of %s"), parent);
     } else if (ci == LDIFF) {
-	sprintf(label, _("= log difference of %s"), parent);
+	s = g_strdup_printf(_("= log difference of %s"), parent);
     } else if (ci == SDIFF) {
-	sprintf(label, _("= seasonal difference of %s"), parent);
+	s = g_strdup_printf(_("= seasonal difference of %s"), parent);
     } else if (ci == LOGS) {
-	sprintf(label, _("= log of %s"), parent);
+	s = g_strdup_printf(_("= log of %s"), parent);
     } else if (ci == SQUARE) {
-	sprintf(label, _("= %s squared"), parent);
+	s = g_strdup_printf(_("= %s squared"), parent);
     } else if (ci == LAGS) {
 	/* @aux = lag */
 	if (aux >= 0) {
-	    sprintf(label, "= %s(t - %d)", parent, aux);
+	    s = g_strdup_printf("= %s(t - %d)", parent, aux);
 	} else {
-	    sprintf(label, "= %s(t + %d)", parent, -aux);
+	    s = g_strdup_printf("= %s(t + %d)", parent, -aux);
 	}
     } else if (ci == INVERSE) {
-	sprintf(label, "= 1/%s", parent);
+	s = g_strdup_printf("= 1/%s", parent);
     } else if (ci == STDIZE) {
 	/* @aux = dfcorr */
 	if (aux < 0) {
-	    sprintf(label, _("= centered %s"), parent);
+	    s = g_strdup_printf(_("= centered %s"), parent);
 	} else {
-	    sprintf(label, _("= standardized %s"), parent);
+	    s = g_strdup_printf(_("= standardized %s"), parent);
 	}
     } else if (ci == RESAMPLE) {
-	sprintf(label, _("= resampled %s"), parent);
+	s = g_strdup_printf(_("= resampled %s"), parent);
     } else if (ci == HFDIFF) {
-	sprintf(label, _("= high-frequency difference of %s"), parent);
+	s = g_strdup_printf(_("= high-frequency difference of %s"), parent);
     } else if (ci == HFLDIFF) {
-	sprintf(label, _("= high-frequency log difference of %s"), parent);
+	s = g_strdup_printf(_("= high-frequency log difference of %s"), parent);
     } else {
 	err = 1;
+    }
+
+    if (!err) {
+	strcpy(label, gretl_utf8_truncate(s, MAXLABEL-1));
+	g_free(s);
     }
 
     return err;
@@ -809,21 +815,26 @@ static int get_transform (int ci, int v, int aux, double x,
 	return vno;
     }
 
-    if (ci == SQUARE && v != aux) {
-	sprintf(label, _("= %s times %s"), dset->varname[v],
-		dset->varname[aux]);
-    } else if (ci == DUMMIFY) {
-	if (is_string_valued(dset, v)) {
-	    const char *s = series_get_string_for_value(dset, v, x);
+    if (ci == DUMMIFY || (ci == SQUARE && v != aux)) {
+	/* special cases in respect of labeling */
+	gchar *s = NULL;
 
-	    if (s != NULL && *s != '\0') {
-		sprintf(label, _("dummy for %s = '%s'"), dset->varname[v], s);
+	if (ci == SQUARE && v != aux) {
+	    s = g_strdup_printf(_("= %s times %s"), dset->varname[v],
+				dset->varname[aux]);
+	} else if (is_string_valued(dset, v)) {
+	    const char *sval = series_get_string_for_value(dset, v, x);
+
+	    if (sval != NULL && *sval != '\0') {
+		s = g_strdup_printf(_("dummy for %s = '%s'"), dset->varname[v], sval);
 	    } else {
-		sprintf(label, _("dummy for %s = %g"), dset->varname[v], x);
+		s = g_strdup_printf(_("dummy for %s = %g"), dset->varname[v], x);
 	    }
 	} else {
-	    sprintf(label, _("dummy for %s = %g"), dset->varname[v], x);
+	    s = g_strdup_printf(_("dummy for %s = %g"), dset->varname[v], x);
 	}
+	strcpy(label, gretl_utf8_truncate(s, MAXLABEL-1));
+	g_free(s);
     } else {
 	make_transform_label(label, dset->varname[v], ci, aux);
     }
@@ -1223,15 +1234,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 		ok = 0;
 	    }
 	} else if (f == DUMMIFY) {
-	    ok = 0; /* reverse burden of proof */
-	    if (v > 0) {
-		if (series_is_discrete(dset, v)) {
-		    /* pre-approved */
-		    ok = 1;
-		} else if (gretl_isdiscrete(0, dset->n - 1, dset->Z[v])) {
-		    ok = 1;
-		}
-	    }
+	    ok = v > 0 && accept_as_discrete(dset, v, 0);
 	}
 
 	if (!ok) {
@@ -1469,7 +1472,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 	    return E_INVARG;
 	}
 	if (!gretl_is_midas_list(list, dset)) {
-	    gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	    gretl_warnmsg_set(_("The argument does not seem to be a MIDAS list"));
 	}
     }
 
@@ -1701,7 +1704,7 @@ static int check_hf_difflist (const int *list,
 	if (v > 0) {
 	    *n_add -= 1;
 	} else if (gretl_is_user_var(vname)) {
-	    gretl_errmsg_sprintf("%s: collides with existing object name",
+	    gretl_errmsg_sprintf(_("%s: collides with existing object name"),
 				 vname);
 	    err = E_TYPES;
 	}
@@ -1758,7 +1761,7 @@ int hf_list_diffgenr (int *list, int ci, double parm, DATASET *dset)
     }
 
     if (!gretl_is_midas_list(list, dset)) {
-	gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
+	gretl_warnmsg_set(_("The argument does not seem to be a MIDAS list"));
 	set_midas = 0;
     }
 

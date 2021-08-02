@@ -288,39 +288,30 @@ int dataset_allocate_obs_markers (DATASET *dset)
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
     memset(vinfo, 0, sizeof *vinfo);
-    vinfo->stack_level = gretl_function_depth();
-#if 0 /* prior to 2020-12-23 */
     vinfo->label = NULL;
-    vinfo->display_name[0] = '\0';
-    vinfo->parent[0] = '\0';
-    vinfo->flags = 0;
-    vinfo->transform = 0;
-    vinfo->lag = 0;
-    vinfo->midas_period = 0;
-    vinfo->midas_freq = 0;
-    vinfo->orig_pd = 0;
-    vinfo->compact_method = COMPACT_NONE;
-    vinfo->mtime = 0;
-    vinfo->stack_level = gretl_function_depth();
     vinfo->st = NULL;
-#endif
+    vinfo->stack_level = gretl_function_depth();
 }
 
-static void copy_label (char **targ, const char *src)
+static void copy_label (VARINFO *vinfo, const char *src)
 {
-    free(*targ);
+    free(vinfo->label);
     if (src == NULL) {
-	*targ = NULL;
+	vinfo->label = NULL;
     } else {
-	*targ = gretl_strdup(src);
+	vinfo->label = gretl_strdup(src);
     }
 }
 
 static int labels_differ (const char *s1, const char *s2)
 {
-    if ((s1 == NULL && s2 != NULL) || (s1 != NULL && s2 == NULL)) {
+    int nv = (s1 != NULL) + (s2 != NULL);
+
+    if (nv == 1) {
+	/* one is NULL, the other not */
 	return 1;
-    } else if (s1 != NULL && s2 != NULL) {
+    } else if (nv == 2) {
+	/* neither one is NULL */
 	return strcmp(s1, s2) != 0;
     } else {
 	return 0;
@@ -340,7 +331,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     if (src == NULL || targ == NULL) {
 	return;
     }
-    copy_label(&targ->label, src->label);
+    copy_label(targ, src->label);
     strcpy(targ->display_name, src->display_name);
     strcpy(targ->parent, src->parent);
     targ->flags = src->flags;
@@ -376,7 +367,7 @@ int shrink_varinfo (DATASET *dset, int nv)
 
     for (i=nv; i<dset->v; i++) {
 	free(dset->varname[i]);
-	free(dset->varinfo[i]);
+	free_varinfo(dset, i);
     }
 
     vnames = realloc(dset->varname, nv * sizeof *vnames);
@@ -419,7 +410,7 @@ int dataset_allocate_varnames (DATASET *dset)
 	return E_ALLOC;
     }
 
-    dset->varinfo = malloc(v * sizeof *dset->varinfo);
+    dset->varinfo = calloc(v, sizeof *dset->varinfo);
     if (dset->varinfo == NULL) {
 	free(dset->varname);
 	return E_ALLOC;
@@ -1895,8 +1886,8 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 #endif
 
     /* check that no vars to be deleted are marked "const", and do
-       some preliminary accounting while we're at it */
-
+       some preliminary accounting while we're at it
+    */
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0 && v < oldv) {
@@ -1931,7 +1922,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 	    dset->Z[v] = NULL;
 	    if (drop == DROP_NORMAL) {
 		free(dset->varname[v]);
-		free(dset->varinfo[v]);
+		free_varinfo(dset, v);
 	    }
 	}
     }
@@ -2017,16 +2008,16 @@ static int *make_dollar_list (DATASET *dset, int *err)
 
 /**
  * dataset_drop_listed_variables:
- * @list: list of variable to drop, by ID number.
+ * @list: list of series to drop, by ID number.
  * @dset: pointer to dataset.
  * @renumber: location for return of information on whether
  * remaining variables have been renumbered as a result, or
  * NULL.
  * @prn: pointer to printing struct.
  *
- * Deletes the variables given in @list from the dataset.  Remaining
- * variables may have their ID numbers changed as a consequence. If
- * @renumber is not NULL, this location receives 1 in case variables
+ * Deletes the series given in @list from the dataset.  Remaining
+ * series may have their ID numbers changed as a consequence. If
+ * @renumber is not NULL, this location receives 1 in case series
  * have been renumbered, 0 otherwise.
  *
  * Returns: 0 on success, E_ALLOC on error.
@@ -2082,7 +2073,6 @@ int dataset_drop_listed_variables (int *list,
 	if (!err && !dset->auxiliary) {
 	    err = gretl_lists_revise(dlist, 0);
 	}
-
 	if (!err && complex_subsampled()) {
 	    DATASET *fdset = fetch_full_dataset();
 
@@ -2283,6 +2273,18 @@ const char *dataset_get_mapfile (const DATASET *dset)
     return dset == NULL ? NULL : dset->mapfile;
 }
 
+void dataset_set_mapfile (DATASET *dset, const char *fname)
+{
+    if (dset != NULL) {
+	free(dset->mapfile);
+	if (fname != NULL) {
+	    dset->mapfile = gretl_strdup(fname);
+	} else {
+	    dset->mapfile = NULL;
+	}
+    }
+}
+
 const char *dataset_period_label (const DATASET *dset)
 {
     if (dset == NULL) {
@@ -2306,7 +2308,7 @@ const char *dataset_period_label (const DATASET *dset)
    series that contain nothing but NAs
 */
 
-int maybe_prune_dataset (DATASET **pdset, void *p)
+int maybe_prune_dataset (DATASET **pdset, gretl_string_table *st)
 {
     DATASET *dset = *pdset;
     int allmiss, prune = 0, err = 0;
@@ -2359,7 +2361,6 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 	}
 
 	if (!err) {
-	    gretl_string_table *st = (gretl_string_table *) p;
 	    size_t ssize = dset->n * sizeof **newset->Z;
 	    int k = 1;
 
@@ -2367,8 +2368,7 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 		if (!mask[i]) {
 		    memcpy(newset->Z[k], dset->Z[i], ssize);
 		    strcpy(newset->varname[k], dset->varname[i]);
-		    copy_label(&newset->varinfo[k]->label,
-			       dset->varinfo[i]->label);
+		    copy_label(newset->varinfo[k], dset->varinfo[i]->label);
 		    if (st != NULL && k < i) {
 			gretl_string_table_reset_column_id(st, i, k);
 		    }
@@ -2968,7 +2968,7 @@ int series_record_label (DATASET *dset, int i,
     char *targ = dset->varinfo[i]->label;
 
     if (labels_differ(targ, s)) {
-	copy_label(&dset->varinfo[i]->label, s);
+	copy_label(dset->varinfo[i], s);
 	set_dataset_is_changed(dset, 1);
     }
 
@@ -3763,14 +3763,22 @@ int series_is_generated (const DATASET *dset, int i)
  * series_is_listarg:
  * @dset: pointer to dataset.
  * @i: index number of series.
+ * @lname: location to receive list name, or NULL.
  *
  * Returns: non-zero iff series @i has been marked as
  * belonging to a list argument to a function.
  */
 
-int series_is_listarg (const DATASET *dset, int i)
+int series_is_listarg (const DATASET *dset, int i,
+		       const char **lname)
 {
-    return dset->varinfo[i]->flags & VAR_LISTARG;
+    int ret = dset->varinfo[i]->flags & VAR_LISTARG ? 1 : 0;
+
+    if (ret && lname != NULL) {
+	*lname = series_get_list_parent(i);
+    }
+
+    return ret;
 }
 
 /**
@@ -4039,7 +4047,7 @@ void series_set_label (DATASET *dset, int i,
 		       const char *s)
 {
     if (i > 0 && i < dset->v) {
-	copy_label(&dset->varinfo[i]->label, s);
+	copy_label(dset->varinfo[i], s);
     }
 }
 
@@ -4049,8 +4057,14 @@ void series_set_display_name (DATASET *dset, int i,
     if (i > 0 && i < dset->v) {
 	char *targ = dset->varinfo[i]->display_name;
 
-	*targ = '\0';
-	strncat(targ, s, MAXDISP-1);
+	if (strlen(s) >= MAXDISP) {
+	    gchar *tmp = g_strdup(s);
+
+	    strcpy(targ, gretl_utf8_truncate(tmp, MAXDISP-1));
+	    g_free(tmp);
+	} else {
+	    strcpy(targ, s);
+	}
     }
 }
 
@@ -4136,11 +4150,12 @@ void series_ensure_level_zero (DATASET *dset)
     }
 }
 
-void series_attach_string_table (DATASET *dset, int i, void *ptr)
+void series_attach_string_table (DATASET *dset, int i,
+				 series_table *st)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	series_set_discrete(dset, i, 1);
-	dset->varinfo[i]->st = ptr;
+	dset->varinfo[i]->st = st;
     }
 }
 
@@ -4407,10 +4422,17 @@ char **series_get_string_vals (const DATASET *dset, int i,
 
 int series_get_string_width (const DATASET *dset, int i)
 {
+    const char *lname;
     int n = 0;
 
     if (i > 0 && i < dset->v) {
 	n = strlen(dset->varname[i]);
+	if (dset->varinfo[i]->flags & VAR_LISTARG) {
+	    lname = series_get_list_parent(i);
+	    if (lname != NULL) {
+		n += strlen(lname) + 1;
+	    }
+	}
 	if (dset->varinfo[i]->st != NULL) {
 	    char **S;
 	    int j, ns, m;
@@ -4528,7 +4550,7 @@ static void maybe_adjust_label (DATASET *dset, int v,
 		strcat(tmp, ", ");
 	    }
 	}
-	copy_label(&dset->varinfo[v]->label, tmp);
+	copy_label(dset->varinfo[v], tmp);
 	free(tmp);
     }
 }
@@ -4586,9 +4608,8 @@ static int alt_strvals_case (DATASET *dset, int v, gretl_array *a)
 /* here we're trying to set strings values on a series from
    scratch */
 
-int series_set_string_vals (DATASET *dset, int i, void *ptr)
+int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 {
-    gretl_array *a = ptr;
     gretl_matrix *vals = NULL;
     char **S = NULL;
     int ns = 0;
@@ -5203,8 +5224,8 @@ void series_unset_orig_pd (const DATASET *dset, int i)
     }
 }
 
-void *series_info_bundle (const DATASET *dset, int i,
-			  int *err)
+gretl_bundle *series_info_bundle (const DATASET *dset,
+				  int i, int *err)
 {
     gretl_bundle *b = NULL;
 
@@ -5695,12 +5716,157 @@ linfo_matrix_via_data (const int *list,
    the list positions of the two source series.
 */
 
-void *list_info_matrix (const int *list, const DATASET *dset,
-			gretlopt opt, int *err)
+gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
+				gretlopt opt, int *err)
 {
     if (opt & OPT_B) {
 	return linfo_matrix_via_data(list, dset, opt, err);
     } else {
 	return linfo_matrix_via_labels(list, dset, opt, err);
     }
+}
+
+#define MAP_DEBUG 0
+
+#define excluded(l,i) (l != NULL && !in_gretl_list(l,i))
+
+/* Given the current dataset and the $mapfile name recorded
+   on it: get the content of $mapfile as a bundle then
+   revise the bundle (a) to include only the features in the
+   current sample and (b) to reflect any changes in the dataset
+   (series added, deleted or modified). Return the modified
+   bundle.
+*/
+
+gretl_bundle *get_current_map (const DATASET *dset,
+			       const int *list,
+			       int *err)
+{
+    const char *sj, *id, *fname;
+    gretl_bundle *fi, *pp, *jb = NULL;
+    gretl_array *features = NULL;
+    int ntarg, fmax = 0;
+    int i, j, dsi, fidx;
+    double xj;
+
+    fname = dataset_get_mapfile(dset);
+
+    if (fname == NULL) {
+	gretl_errmsg_set("no mapfile is present");
+	*err = E_DATA;
+    } else if (dataset_is_resampled(dset)) {
+	/* most unlikely */
+	gretl_errmsg_set("dataset is resampled!");
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	jb = gretl_bundle_read_from_file(fname, 0, err);
+	if (!*err) {
+	    features = gretl_bundle_get_array(jb, "features", err);
+	}
+    }
+
+    if (!*err) {
+	int nobs;
+
+	fmax = gretl_array_get_length(features);
+	if (dset->submask != NULL) {
+	    nobs = get_full_length_n();
+	} else {
+	    nobs = dset->n;
+	}
+	if (fmax != nobs) {
+	    /* Although it may be sub-sampled, the full dataset must
+	       have a number of observations equal to the number of
+	       features in the existing map.
+	    */
+	    gretl_errmsg_set("map and dataset are out of sync!");
+	    *err = E_DATA;
+	}
+	/* the number of features we're seeking */
+	ntarg = sample_size(dset);
+    }
+
+    if (*err) {
+	gretl_bundle_destroy(jb);
+	return NULL;
+    }
+
+#if MAP_DEBUG
+    fprintf(stderr, "get_current_map: fmax %d, ntarg %d\n", fmax, ntarg);
+    printf(stderr, "checking for features to include/drop\n");
+#endif
+
+    /* index into dataset rows */
+    dsi = -1;
+
+    for (i=0, fidx=0; i<fmax; i++) {
+	int skip = 0;
+
+	if (dset->submask != NULL) {
+	    if (dset->submask[i] == 0) {
+		skip = 1;
+	    } else {
+		dsi++;
+	    }
+	} else {
+	    dsi = i;
+	}
+	if (dsi < dset->t1) {
+	    skip = 1;
+	} else if (dsi > dset->t2) {
+	    /* we've got everything we need */
+	    break;
+	}
+	if (skip) {
+#if MAP_DEBUG
+	    fprintf(stderr, "  drop sampled-out feature %d\n", i);
+#endif
+	    gretl_array_delete_element(features, fidx);
+	} else {
+	    fi = gretl_array_get_element(features, fidx, NULL, err);
+	    pp = gretl_bundle_get_bundle(fi, "properties", err);
+	    /* clear the existing properties bundle */
+	    gretl_bundle_void_content(pp);
+	    /* and refill it from the dataset */
+	    for (j=1; j<dset->v; j++) {
+		if (excluded(list, j)) {
+		    continue;
+		}
+		id = dset->varname[j];
+		if (is_string_valued(dset, j)) {
+		    sj = series_get_string_for_obs(dset, j, dsi);
+		    gretl_bundle_set_string(pp, id, sj);
+		} else {
+		    xj = dset->Z[j][dsi];
+		    gretl_bundle_set_scalar(pp, id, xj);
+		}
+	    }
+	    fidx++;
+#if MAP_DEBUG
+	    fprintf(stderr, "  included feature %d, now got %d\n", i, fidx);
+#endif
+	    if (fidx == ntarg) {
+#if MAP_DEBUG
+		fprintf(stderr, "  reached target of %d features, break\n", ntarg);
+#endif
+		break;
+	    }
+	}
+    }
+
+    fmax = gretl_array_get_length(features);
+
+#if MAP_DEBUG
+    fprintf(stderr, "after loop, features array has %d elements, fidx=%d\n",
+	    fmax, fidx);
+#endif
+
+    /* delete any unwanted trailing features */
+    for (j=fidx; j<fmax; j++) {
+	gretl_array_delete_element(features, fidx);
+    }
+
+    return jb;
 }

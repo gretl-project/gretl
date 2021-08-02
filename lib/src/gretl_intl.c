@@ -135,10 +135,9 @@ int reset_local_decpoint (void)
 
     set_atof_point(decpoint);
 
-# if 0
-    fprintf(stderr, "reset_local_decpoint: returning '%c'\n",
-	    decpoint);
-# endif
+#ifdef OS_OSX
+    fprintf(stderr, "via localeconv, decimal = '%c'\n", decpoint);
+#endif
 
     return decpoint;
 }
@@ -159,317 +158,63 @@ int get_local_decpoint (void)
 
 #endif /* end of one NLS-only block */
 
-/* fudges for strings that should not be in utf-8 under some
-   conditions: under GTK translations always come out in utf-8 in the
-   GUI, but when we're sending stuff to stderr we may have to put it
-   into ISO-8859-N or some MS Code Page.
-*/
-
-static int gretl_cset_maj;
-static int gretl_cset_min;
-static int native_utf8;
-
-#ifdef WIN32
-
-static int gretl_cpage;
-
-int get_gretl_cpage (void)
-{
-    return gretl_cpage;
-}
-
-#endif
-
-void set_native_utf8 (int s)
-{
-    native_utf8 = s;
-}
-
-/* Use g_get_charset() to determine the current local character set,
-   and record this information.  If we get an "ISO-XXXX-Y" locale,
-   record the numerical elements as gretl_cset_maj and gretl_cset_min
-   respectively.  If we get a Windows "CPXXXX" reading, record the
-   codepage as gretl_cpage.
-*/
-
-void set_gretl_charset (void)
-{
-    const char *charset = NULL;
-    char gretl_charset[32];
-
-#ifdef OS_OSX
-    /* FIXME - why is this necessary? */
-    native_utf8 = 1;
-#else
-    native_utf8 = g_get_charset(&charset);
-#endif
-
-    *gretl_charset = '\0';
-
-    if (!native_utf8 && charset != NULL && *charset != '\0') {
-	char *p;
-
-	strncat(gretl_charset, charset, 31);
-	gretl_lower(gretl_charset);
-	p = strstr(gretl_charset, "iso");
-	if (p != NULL) {
-	    char numstr[6] = {0};
-
-	    while (*p && !isdigit((unsigned char) *p)) p++;
-	    strncat(numstr, p, 4);
-	    gretl_cset_maj = atoi(numstr);
-	    if (strlen(p) > 4) {
-		p += 4;
-		while (*p && !isdigit((unsigned char) *p)) p++;
-		gretl_cset_min = atoi(p);
-	    }
-
-	    if (gretl_cset_maj < 0 || gretl_cset_maj > 9000) {
-		gretl_cset_maj = gretl_cset_min = 0;
-	    } else if (gretl_cset_min < 0 || gretl_cset_min > 30) {
-		gretl_cset_maj = gretl_cset_min = 0;
-	    }
-	}
-#ifdef WIN32
-	if (p == NULL) {
-	    if (sscanf(gretl_charset, "cp%d", &gretl_cpage) == 0) {
-		sscanf(gretl_charset, "CP%d", &gretl_cpage);
-	    }
-	}
-#endif
-    }
-
-#ifdef WIN32
-    fprintf(stderr, "codepage = %d\n", gretl_cpage);
-    if (gretl_cpage != 1250) {
-	char *e = getenv("GRETL_CPAGE");
-
-	if (e != NULL && !strcmp(e, "1250")) {
-	    gretl_cpage = 1250;
-	    fprintf(stderr, "revised codepage to 1250\n");
-	}
-    }
-#endif
-}
-
-#ifdef WIN32
-
-static void set_cp_from_locale (const char *loc)
-{
-    const char *p = strrchr(loc, '.');
-
-    if (p != NULL && strlen(p) > 3 && isdigit(p[1])) {
-        gretl_cpage = atoi(p + 1);
-        fprintf(stderr, "set_cp_from_locale: CP = %d\n", gretl_cpage);
-    }
-}
-
-static const char *get_gretl_charset (void)
-{
-    static char cset[24];
-
-    if (gretl_cpage > 0) {
-	sprintf(cset, "CP%d", gretl_cpage);
-	return cset;
-    }
-
-    return NULL;
-}
-
-#endif /* WIN32 */
-
-int iso_latin_version (void)
-{
-    char *lang = NULL;
-
-    if (gretl_cset_maj == 8859 &&
-	(gretl_cset_min == 1 ||
-	 gretl_cset_min == 2 ||
-	 gretl_cset_min == 5 ||
-	 gretl_cset_min == 7 ||
-	 gretl_cset_min == 9 ||
-	 gretl_cset_min == 15)) {
-	return gretl_cset_min;
-    }
-
-#ifdef WIN32
-    if (gretl_cpage == 1252) {
-	/* Western European */
-	return 1;
-    } else if (gretl_cpage == 1250) {
-	/* Central European */
-	return 2;
-    } else if (gretl_cpage == 1251) {
-	/* Cyrillic */
-	return 5;
-    } else if (gretl_cpage == 1253) {
-	/* Greek */
-	return 7;
-    } else if (gretl_cpage == 1254) {
-	/* Turkish */
-	return 9;
-    }
-#endif
-
-    /* Polish, Russian, Turkish, Ukrainian: UTF-8 locale? */
-    lang = getenv("LANG");
-    if (lang != NULL) {
-	if (!strncmp(lang, "pl", 2)) {
-	    return 2;
-	} else if (!strncmp(lang, "ru", 2)) {
-	    return 5;
-	} else if (!strncmp(lang, "el", 2)) {
-	    return 7;
-	} else if (!strncmp(lang, "tr", 2)) {
-	    return 9;
-	} else if (!strncmp(lang, "uk", 2)) {
-	    return 5;
-	}
-    }
-
-    return 1;
-}
-
 int chinese_locale (void)
 {
+    int ret = 0;
+
 #ifdef WIN32
-    return (gretl_cpage == 936 || gretl_cpage == 950);
+    gchar *loc = g_win32_getlocale();
+
+    ret = (loc != NULL && !strncmp(loc, "zh", 2));
+    g_free(loc);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
-    return (loc != NULL && !strncmp(loc, "zh", 2));
-#else
-    return 0;
+    ret = (loc != NULL && !strncmp(loc, "zh", 2));
 #endif
+
+    return ret;
 }
 
 int japanese_locale (void)
 {
+    int ret = 0;
+
 #ifdef WIN32
-    return (gretl_cpage == 932);
+    gchar *loc = g_win32_getlocale();
+
+    ret = (loc != NULL && !strncmp(loc, "ja", 2));
+    g_free(loc);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
-    return (loc != NULL && !strncmp(loc, "ja", 2));
-#else
-    return 0;
+    ret = (loc != NULL && !strncmp(loc, "ja", 2));
 #endif
+
+    return ret;
 }
 
 int east_asian_locale (void)
 {
+    int ret = 0;
+
 #ifdef WIN32
-    return (gretl_cpage == 950 || gretl_cpage == 932 || gretl_cpage == 936);
+    gchar *loc = g_win32_getlocale();
+
+    ret = (loc != NULL && (!strncmp(loc, "zh", 2) ||
+			   !strncmp(loc, "ja", 2)));
+    g_free(loc);
 #elif defined(ENABLE_NLS)
     char *loc = setlocale(LC_ALL, NULL);
 
-    return (loc != NULL && (!strncmp(loc, "zh", 2) ||
-			    !strncmp(loc, "ja", 2)));
-#else
-    return 0;
+    ret = (loc != NULL && (!strncmp(loc, "zh", 2) ||
+			   !strncmp(loc, "ja", 2)));
 #endif
-}
-
-#ifndef WIN32
-
-void set_alt_gettext_mode (PRN *prn)
-{
-    return;
-}
-
-#else /* WIN32-specific block */
-
-/* Provides a means of forcing gretl.exe on Windows to
-   emit non-ASCII text in the locale encoding rather than
-   in UTF-8, possibly required under certain conditions.
-*/
-
-char *locale_gettext (const char *msgid)
-{
-    static int locale_switch = -1;
-    static const char *cset;
-    static int cli;
-    char *ret;
-
-    if (msgid == NULL) {
-	/* initialization */
-	cli = 1;
-	return NULL;
-    }
-
-    if (cli) {
-	return gettext(msgid);
-    }
-
-    if (locale_switch < 0) {
-	/* not yet determined */
-	cset = get_gretl_charset();
-	if (cset == NULL) {
-	    fprintf(stderr, "get_gretl_charset: using UTF-8\n");
-	} else {
-	    fprintf(stderr, "get_gretl_charset gave %s\n", cset);
-	}
-	locale_switch = (cset != NULL);
-    }
-
-    if (locale_switch) {
-	bind_textdomain_codeset(PACKAGE, cset);
-	ret = gettext(msgid);
-	bind_textdomain_codeset(PACKAGE, "UTF-8");
-    } else {
-	ret = gettext(msgid);
-    }
 
     return ret;
 }
 
-/* Return translated @msgid in UTF-8, when this is not
-   the default operation for plain gettext(). This is
-   wanted only when writing TeX or RTF via gretlcli.exe.
-*/
-
-static char *u8_gettext (const char *msgid)
-{
-    static const char *cset;
-    char *ret;
-
-    if (cset == NULL) {
-	cset = get_gretl_charset();
-    }
-
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
-    ret = gettext(msgid);
-    bind_textdomain_codeset(PACKAGE, cset);
-
-    return ret;
-}
-
-enum {
-    GETTEXT_DEFAULT,
-    GETTEXT_FORCE_UTF8
-};
-
-static int gettext_mode;
-
-void set_alt_gettext_mode (PRN *prn)
-{
-    gettext_mode = GETTEXT_DEFAULT;
-
-    if (!native_utf8 && !gretl_in_gui_mode()) {
-	if (tex_format(prn) || rtf_format(prn)) {
-	    gettext_mode = GETTEXT_FORCE_UTF8;
-	}
-    }
-}
-
-char *alt_gettext (const char *msgid)
-{
-    if (gettext_mode == GETTEXT_FORCE_UTF8) {
-	return u8_gettext(msgid);
-    } else {
-	return gettext(msgid);
-    }
-}
+#ifdef WIN32
 
 struct localeinfo {
     int id;
@@ -596,48 +341,6 @@ const char *lang_code_from_id (int langid)
 }
 
 #ifdef WIN32
-
-static const char *lang_code_from_windows_name (char *s)
-{
-    const char *ret = NULL;
-    int i, n;
-
-    if (strstr(s, "razil")) {
-	return "pt_BR";
-    } else if (!strncmp(s + 1, "hinese-t", 8) ||
-	       !strncmp(s + 1, "hinese (T", 9)) {
-	/* chinese-traditional */
-	return "zh_TW";
-    } else if (!strncmp(s + 1, "hinese-s", 8) ||
-	       !strncmp(s + 1, "hinese (S", 9)) {
-	/* chinese-simplified */
-	return "zh_CN";
-    }
-
-    for (i=1; i<LANG_MAX; i++) {
-	n = strlen(langs[i].name);
-	if (!strncmp(s, langs[i].name, n)) {
-	    ret = langs[i].code;
-	    break;
-	}
-    }
-
-    if (ret == NULL && strchr(s, '-')) {
-	/* Windows : "en-US" in place of "en_US"? */
-	char *p = strchr(s, '-');
-
-	*p = '_';
-	for (i=1; i<LANG_MAX; i++) {
-	    n = strlen(langs[i].code);
-	    if (!strncmp(s, langs[i].code, n)) {
-		ret = langs[i].code;
-		break;
-	    }
-	}
-    }
-
-    return ret;
-}
 
 static char *win32_set_numeric (const char *lang)
 {
@@ -796,10 +499,12 @@ static void record_locale (char *locale)
 # ifdef WIN32
     /* LANG probably not present, use setlocale output */
     if (locale != NULL) {
-	const char *s = lang_code_from_windows_name(locale);
+	gchar *s = g_win32_getlocale();
 
 	if (s != NULL) {
+            fprintf(stderr, "record_locale: got '%s'\n", s);
 	    gretl_insert_builtin_string("lang", s);
+	    g_free(s);
 	    done = 1;
 	}
     }
@@ -866,9 +571,7 @@ int force_language (int langid)
 # ifdef WIN32
 	    locale = gretl_strdup(setlocale(LC_ALL, lcode));
             fprintf(stderr, "lcode='%s' -> locale='%s'\n", lcode, locale);
-	    if (locale != NULL) {
-		set_cp_from_locale(locale);
-	    } else {
+	    if (locale == NULL) {
 		err = 1;
 	    }
 # else
@@ -888,11 +591,12 @@ int force_language (int langid)
 	    gretl_setenv("LANG", lcode);
 	}
     }
-# elif defined(OS_OSX)
+# else /* elif defined(OS_OSX) */
     if (langid != LANG_C) {
 	lcode = lang_code_from_id(langid);
 	if (lcode != NULL) {
 	    gretl_setenv("LANGUAGE", lcode);
+	    gretl_setenv("LANG", lcode);
 	}
     }
 # endif
@@ -1355,6 +1059,12 @@ char *asciify_utf8_varname (char *s)
     return s;
 }
 
+/* Convert from UTF-8 text in @s to a form suitable for
+   inclusion in RTF, where non-ASCII characters are
+   recoded to escaped Unicode numbering. Return the
+   converted text in a newly allocated string.
+*/
+
 char *utf8_to_rtf (const char *s)
 {
     const char *nextp, *p = s;
@@ -1364,7 +1074,6 @@ char *utf8_to_rtf (const char *s)
     int err = 0;
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-
     if (prn == NULL) {
 	return NULL;
     }
@@ -1475,6 +1184,29 @@ static int file_set_content (const char *fname,
     return err;
 }
 
+static gchar *glib_recode_buffer (const char *buf,
+				  const char *from_set,
+				  const char *to_set,
+				  gsize bytes,
+				  gsize *written,
+				  int *err)
+{
+    gchar *trbuf = NULL;
+    GError *gerr = NULL;
+    gsize got = 0;
+
+    trbuf = g_convert(buf, bytes, to_set, from_set,
+		      &got, written, &gerr);
+
+    if (gerr != NULL) {
+	*err = E_DATA;
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return trbuf;
+}
+
 /**
  * gretl_recode_file:
  * @path1: path to original file.
@@ -1498,25 +1230,15 @@ int gretl_recode_file (const char *path1, const char *path2,
     buf = file_get_content(path1, &bytes, prn, &err);
 
     if (!err) {
-	GError *gerr = NULL;
-	gchar *trbuf = NULL;
 	gsize written = 0;
-	gsize got = 0;
+	gchar *trbuf = glib_recode_buffer(buf, from_set, to_set,
+					  bytes, &written, &err);
 
-	/* recode the buffer */
-	trbuf = g_convert(buf, bytes, to_set, from_set,
-			  &got, &written, &gerr);
-
-	if (gerr != NULL) {
-	    err = E_DATA;
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	} else {
+	if (!err) {
 	    /* write recoded text to file */
 	    pprintf(prn, "recoded: %" G_GSIZE_FORMAT " bytes\n", written);
 	    err = file_set_content(path2, trbuf, written);
 	}
-
 	g_free(trbuf);
     }
 

@@ -361,8 +361,8 @@ static NODE *base (parser *p, NODE *up)
 
 #if SDEBUG
     notify("base", t, p);
-    fprintf(stderr, "on exit from base, p->sym = %d (p->err = %d)\n",
-	    p->sym, p->err);
+    fprintf(stderr, "on exit from base, p->sym = %s (p->err = %d)\n",
+	    getsymb(p->sym), p->err);
 #endif
 
     return t;
@@ -848,7 +848,6 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
 	    /* otherwise should be standard valid identifier */
 	    n = gretl_namechar_spn(p->point);
 	}
-
 	if (n == 0 || n >= VNAMELEN) {
 	    p->err = E_PARSE;
 	} else {
@@ -863,6 +862,9 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
 		ret = newstr(p->idstr);
 	    }
 	}
+    } else {
+	fprintf(stderr, "HERE, get_bundle_member_name, p->ch = '%c'\n", p->ch);
+	p->err = E_PARSE;
     }
 
     return ret;
@@ -1015,28 +1017,46 @@ static void get_slice_parts (NODE *t, parser *p)
     set_slice_off(p);
 }
 
-static void attach_child (NODE *parent, NODE *child, int k, int i,
-			  parser *p)
+/* contexts where empty arguments are never acceptable */
+#define no_empty(f) (f == F_DEFBUNDLE || f == F_DEFARRAY || f == F_DEFLIST)
+
+static void attach_child (NODE *parent, NODE *child, int f,
+			  int np, int i, parser *p)
 {
     if (p->err) {
 	return;
     }
 
 #if SDEBUG
-    fprintf(stderr, "attach_child: i=%d, type=%d\n", i, child->t);
+    fprintf(stderr, "attach_child: np=%d, i=%d, type '%s'\n", np, i,
+	    getsymb(child->t));
 #endif
 
-    if (k == 1) {
+    /* catch erroneous cases */
+    if (np > 0 && i == np) {
+	gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
+			     _("too many arguments"));
+	p->err = E_ARGS;
+    } else if (child->t == EMPTY && no_empty(f)) {
+	p->err = E_PARSE;
+    }
+
+    if (p->err) {
+	free_tree(child, p, 0);
+	return;
+    }
+
+    if (np == 1) {
 	/* 1-place node */
 	parent->L = child;
-    } else if (k == 2) {
+    } else if (np == 2) {
 	/* 2-place node */
 	if (i == 0) {
 	    parent->L = child;
 	} else {
 	    parent->R = child;
 	}
-    } else if (k == 3) {
+    } else if (np == 3) {
 	/* 3-place node */
 	if (i == 0) {
 	    parent->L = child;
@@ -1045,20 +1065,18 @@ static void attach_child (NODE *parent, NODE *child, int k, int i,
 	} else {
 	    parent->R = child;
 	}
-    } else {
+    } else if (child != NULL) {
 	/* n-place node */
 	p->err = push_bn_node(parent, child);
     }
 }
 
-static void pad_parent (NODE *parent, int k, int i, parser *p)
+static void pad_parent (NODE *parent, int np, int i, parser *p)
 {
-    NODE *n;
     int j;
 
-    for (j=i; j<k; j++) {
-	n = newempty();
-	attach_child(parent, n, k, j, p);
+    for (j=i; j<np; j++) {
+	attach_child(parent, newempty(), 0, np, j, p);
     }
 }
 
@@ -1087,8 +1105,7 @@ struct argrecord fncall_argrec[] = {
 
 static const int *get_callargs (int f)
 {
-    int n = G_N_ELEMENTS(fncall_argrec);
-    int i;
+    int i, n = G_N_ELEMENTS(fncall_argrec);
 
     for (i=0; i<n; i++) {
 	if (f == fncall_argrec[i].f) {
@@ -1125,7 +1142,8 @@ static int next_arg_is_string (int i, const int *callargs, int k,
    can find (the number unknown in advance).
 */
 
-static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
+static void get_args (NODE *t, parser *p, int f, int np,
+		      int opt, int *next)
 {
     NODE *child;
     const int *callargs;
@@ -1133,8 +1151,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     int i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args: f=%s, k=%d, ch='%c', point='%s'\n",
-	    getsymb(f), k, p->ch, p->point);
+    fprintf(stderr, "get_args: f=%s, np=%d, ch='%c', point='%s'\n",
+	    getsymb(f), np, p->ch, p->point);
 #endif
 
     if (p->sym != G_LPR) {
@@ -1149,6 +1167,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 
     callargs = get_callargs(f);
     if (callargs == NULL || callargs[0] == 0) {
+	/* nothing special about the first arg */
 	lex(p);
     }
 
@@ -1157,37 +1176,24 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	p->flags &= ~P_LISTDEF;
     }
 
-    while (((k > 0 && i < k) || p->ch) && !p->err) {
-	if (p->sym == G_RPR) {
-	    /* right paren: got to the end */
-	    break;
-	}
-
-	if (k > 0 && i == k) {
-	    gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
-				 _("too many arguments"));
-	    p->err = E_ARGS;
-	    break;
-	}
-
+    while (p->sym != G_RPR && p->ch != '\0' && !p->err) {
 	/* get the next argument */
-
 	if (p->sym == P_COM) {
 	    /* implies an empty argument slot */
 	    child = newempty();
 	} else if (i < 4 && callargs && callargs[i]) {
 	    /* a function-call argument: don't insist on quotation */
 	    child = get_literal_string_arg(p, 0);
-	} else if (i > 0 && i < k - 1 && (opt & MID_STR)) {
+	} else if (i > 0 && i < np - 1 && (opt & MID_STR)) {
 	    child = get_literal_string_arg(p, opt);
-	} else if (i == k - 1 && (opt & RIGHT_STR)) {
+	} else if (i == np - 1 && (opt & RIGHT_STR)) {
 	    child = get_final_string_arg(p, t, f, 0);
 	} else {
 	    child = expr(p);
 	}
 
 	if (!p->err) {
-	    attach_child(t, child, k, i++, p);
+	    attach_child(t, child, f, np, i++, p);
 	}
 
 	if (p->err || p->sym == G_RPR) {
@@ -1195,18 +1201,19 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	} else if (p->sym == P_COM) {
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
-	    /* lex unless next arg needs special handling */
-	    if (next_arg_is_string(i, callargs, k, opt)) {
-		/* don't let P_COM trip the newempty() call above,
-		   or else we'll get a spurious "too many args" error
-		*/
+	    if (next_arg_is_string(i, callargs, np, opt)) {
+		/* the next arg needs special handling */
 		p->sym = EMPTY;
 	    } else {
 		lex(p);
+		if (p->sym == G_RPR) {
+		    /* trailing empty argument slot */
+		    attach_child(t, newempty(), f, np, i++, p);
+		}
 	    }
 	} else {
 	    /* either arg-separating comma or closing paren was expected */
-	    cexp = (i < k)? ',' : ')';
+	    cexp = (i < np)? ',' : ')';
 	    break;
 	}
     }
@@ -1215,13 +1222,15 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	if (cexp) {
 	    expected_symbol_error(cexp, p, 0);
 	} else if (p->sym == G_RPR) {
-	    if (i < k) {
-		pad_parent(t, k, i, p);
+	    if (i < np) {
+		pad_parent(t, np, i, p);
 	    }
 	    lex(p);
 	    if (p->sym == G_LBR) {
 		*next = '[';
 	    }
+	} else {
+	    expected_symbol_error(')', p, 0);
 	}
     }
 
@@ -1245,7 +1254,10 @@ static void get_assertion (NODE *t, parser *p)
     }
 }
 
-/* get 1 or more comma-separated pairs of the form key=value */
+/* For defining a bundle via _(): get one or more comma-separated
+   terms: each must take the form key=value, or just key if the
+   key and the name of a pre-defined object are one and the same.
+*/
 
 static void get_bundle_pairs (NODE *t, parser *p, int *next)
 {
@@ -1254,14 +1266,14 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
     int n, j, i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args_args: ch='%c', point='%s'\n",
+    fprintf(stderr, "get_bundle_pairs: ch='%c', point='%s'\n",
 	    p->ch, p->point);
 #endif
 
     while (p->ch && !p->err) {
 	/* first get an unquoted key */
 	while (p->ch == ' ') parser_getc(p);
-	src = p->point -1;
+	src = p->point - 1;
 	n = gretl_namechar_spn(src);
 	if (n == 0) {
 	    p->err = E_PARSE;
@@ -1271,21 +1283,23 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    parser_getc(p);
 	}
 	p->idstr = gretl_strndup(src, n);
-	while (p->ch == ' ') parser_getc(p);
-	if (p->ch != '=') {
-	    if (p->ch == 0) lex(p);
-	    expected_symbol_error('=', p, p->ch);
-	    break;
-	}
 	child = newstr(p->idstr);
-	attach_child(t, child, -1, i++, p);
-	/* then get some parseable value */
-	parser_getc(p);
+	attach_child(t, child, 0, -1, i++, p);
 	while (p->ch == ' ') parser_getc(p);
-	lex(p);
-	child = expr(p);
+	if (p->ch == '=') {
+	    /* parse the folowing expresssion */
+	    parser_getc(p);
+	    while (p->ch == ' ') parser_getc(p);
+	    lex(p);
+	    child = expr(p);
+	} else {
+	    /* backtrack to get named object */
+	    parser_advance(p, -(p->point - src));
+	    lex(p);
+	    child = base(p, NULL);
+	}
 	if (!p->err) {
-	    attach_child(t, child, -1, i++, p);
+	    attach_child(t, child, 0, -1, i++, p);
 	}
 	if (p->sym == P_COM) {
 	    ; /* OK */
@@ -1297,22 +1311,6 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    p->err = E_PARSE;
 	}
     }
-}
-
-/* Distinguish between the variants _(id1=val1, id2=val2,...),
-   F_DEFARGS, and _(val1, val2,...), F_BPACK. The marker for
-   the latter is that after the first identifier we find ',',
-   or ')' if there's a singleton term.
-*/
-
-static int peek_bpack (parser *p)
-{
-    const char *s = p->point;
-
-    s += strspn(s, " ");    /* skip any spaces */
-    s += strcspn(s, ",=)"); /* skip identifier or key */
-    s += strspn(s, " ");    /* skip any spaces */
-    return (*s == ',' || *s == ')');
 }
 
 static NODE *powterm (parser *p, NODE *l)
@@ -1348,7 +1346,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    */
 	    t = newb2(OSL, l, NULL);
 	    if (t != NULL) {
-		t->R = newb2(MSLRAW, NULL, NULL);
+		t->R = newb2(SLRAW, NULL, NULL);
 		if (t->R != NULL) {
 		    get_slice_parts(t->R, p);
 		}
@@ -1467,7 +1465,7 @@ static NODE *powterm (parser *p, NODE *l)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, p->upsym);
-	    t->R = newb2(MSLRAW, NULL, NULL);
+	    t->R = newb2(SLRAW, NULL, NULL);
 	    if (t->R != NULL) {
 		lex(p);
 		get_slice_parts(t->R, p);
@@ -1528,7 +1526,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    if (sub) {
 		t = newb2(MSL, t, NULL);
 		if (t != NULL) {
-		    t->R = newb2(MSLRAW, NULL, NULL);
+		    t->R = newb2(SLRAW, NULL, NULL);
 		    if (t->R != NULL) {
 			lex(p);
 			get_slice_parts(t->R, p);
@@ -1551,16 +1549,11 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	}
     } else if (sym == F_DEFARGS) {
-	if (peek_bpack(p)) {
-	    sym = p->sym = F_BPACK;
-	}
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL && sym == F_BPACK) {
-		get_args(t->L, p, sym, -1, opt, &next);
-	    } else if (t != NULL) {
+	    if (t != NULL) {
 		get_bundle_pairs(t->L, p, &next);
 	    }
 	}
@@ -1596,7 +1589,7 @@ static NODE *powterm (parser *p, NODE *l)
 	/* support func(args)[slice], etc. */
 	t = newb2(OSL, t, NULL);
 	if (t != NULL) {
-	    t->R = newb2(MSLRAW, NULL, NULL);
+	    t->R = newb2(SLRAW, NULL, NULL);
 	    if (t->R != NULL) {
 		get_slice_parts(t->R, p);
 	    }

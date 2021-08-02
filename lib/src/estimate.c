@@ -123,10 +123,11 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 {
     double xx, sum = 0.0;
     int yno = pmod->list[1];
-    int t, dwt = 0;
+    int t, zw = 0;
 
-    if (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy")) {
-	dwt = pmod->nwt;
+    if (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_zeros")) {
+	/* WLS with some zero weights */
+	zw = 1;
     }
 
     pmod->ybar = pmod->sdy = NADBL;
@@ -136,7 +137,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
+	if (zw && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
@@ -148,7 +149,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 
     sum = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
+	if (zw && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
@@ -164,7 +165,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 
     sum = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
+	if (zw && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
@@ -401,18 +402,15 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
 static void get_wls_stats (MODEL *pmod, const DATASET *dset,
 			   gretlopt opt)
 {
-    int dumwt = gretl_model_get_int(pmod, "wt_dummy");
-    int t, wobs = pmod->nobs, yno = pmod->list[1];
     double x, dy, wmean = 0.0, wsum = 0.0;
+    int yno = pmod->list[1];
+    int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
 	    continue;
 	}
-	if (dset->Z[pmod->nwt][t] == 0.0 && !dumwt) {
-	    wobs--;
-	    pmod->dfd -= 1;
-	} else {
+	if (dset->Z[pmod->nwt][t] > 0) {
 	    wmean += dset->Z[pmod->nwt][t] * dset->Z[yno][t];
 	    wsum += dset->Z[pmod->nwt][t];
 	}
@@ -438,33 +436,33 @@ static void get_wls_stats (MODEL *pmod, const DATASET *dset,
 
 static void fix_wls_values (MODEL *pmod, const DATASET *dset)
 {
-    int t;
+    int dwt = gretl_model_get_int(pmod, "wt_dummy");
+    double yh, ess_orig = 0.0;
+    double sw, sigma_orig;
+    int t, i, v;
 
-    if (gretl_model_get_int(pmod, "wt_dummy")) {
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (dset->Z[pmod->nwt][t] == 0.0) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
-	    }
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
 	}
-    } else {
-	double ess_orig = 0.0;
-	double sw, sigma_orig;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (model_missing(pmod, t)) {
-		continue;
+	if (dset->Z[pmod->nwt][t] == 0.0) {
+	    yh = 0.0;
+	    for (i=0; i<pmod->ncoeff; i++) {
+		v = pmod->list[i+2];
+		yh += pmod->coeff[i] * dset->Z[v][t];
 	    }
-	    if (dset->Z[pmod->nwt][t] == 0.0) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
-		pmod->nobs -= 1;
-	    } else {
-		sw = sqrt(dset->Z[pmod->nwt][t]);
-		pmod->yhat[t] /= sw;
-		pmod->uhat[t] /= sw;
-		ess_orig += pmod->uhat[t] * pmod->uhat[t];
-	    }
+	    pmod->yhat[t] = yh;
+	    v = pmod->list[1];
+	    pmod->uhat[t] = dset->Z[v][t] - yh;
+	} else if (!dwt) {
+	    sw = sqrt(dset->Z[pmod->nwt][t]);
+	    pmod->yhat[t] /= sw;
+	    pmod->uhat[t] /= sw;
+	    ess_orig += pmod->uhat[t] * pmod->uhat[t];
 	}
+    }
 
+    if (!dwt) {
 	sigma_orig = sqrt(ess_orig / pmod->dfd);
 	gretl_model_set_double(pmod, "ess_orig", ess_orig);
 	gretl_model_set_double(pmod, "sigma_orig", sigma_orig);
@@ -498,6 +496,21 @@ static int model_missval_count (const MODEL *pmod)
     }
 
     return mc;
+}
+
+static int wls_usable_obs (MODEL *pmod, const DATASET *dset)
+{
+    int t, n = pmod->nobs;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (pmod->missmask[t] == '1') {
+	    n--;
+	} else if (dset->Z[pmod->nwt][t] == 0) {
+	    n--;
+	}
+    }
+
+    return n;
 }
 
 #define SMPL_DEBUG 0
@@ -563,6 +576,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 		pmod->t1, t1s, pmod->t2, t2s);
 	fprintf(stderr, "Valid observations in range = %d\n",
 		pmod->t2 - pmod->t1 + 1 - misscount);
+	fprintf(stderr, "Returning missv = %d\n", missv);
     }
 #endif
 
@@ -604,35 +618,55 @@ log_depvar_ll (MODEL *pmod, const DATASET *dset)
     }
 }
 
-static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
+static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
+			     gretlopt opt)
 {
-    const char *wtzero =
+    const char *all_zeros =
 	N_("Weight variable is all zeros, aborting regression");
-    const char *wtneg =
+    const char *some_neg =
 	N_("Weight variable contains negative values");
-    int t, allzero = 1;
+    const char *bad_zeros =
+	N_("Weight variable is not a dummy but contains zeros");
+    int ones = 0, zeros = 0, nobs = 0;
+    int t, is_dummy = 1;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (w[t] < 0.0) {
-	    gretl_errmsg_set(_(wtneg));
+	    gretl_errmsg_set(_(some_neg));
 	    pmod->errcode = E_DATA;
 	    return 1;
 	} else if (w[t] > 0.0) {
-	    allzero = 0;
+	    nobs++;
+	    if (w[t] == 1.0) {
+		ones++;
+	    } else {
+		is_dummy = 0;
+	    }
+	} else if (w[t] == 0.0) {
+	    zeros++;
 	}
     }
 
-    if (allzero) {
-	gretl_errmsg_set(_(wtzero));
+    if (nobs == 0) {
+	gretl_errmsg_set(_(all_zeros));
 	pmod->errcode = E_DATA;
 	return 1;
     }
 
-    *effobs = gretl_isdummy(pmod->t1, pmod->t2, w);
+    *effobs = nobs;
 
-    if (*effobs) {
-	/* the weight var is a dummy, with effobs 1s */
+    if (is_dummy) {
+	/* the weight var is a dummy */
 	gretl_model_set_int(pmod, "wt_dummy", 1);
+	gretl_model_set_int(pmod, "wt_zeros", zeros);
+    } else if (zeros > 0) {
+	if (opt & OPT_Z) {
+	    gretl_model_set_int(pmod, "wt_zeros", zeros);
+	} else {
+	    gretl_errmsg_set(_(bad_zeros));
+	    pmod->errcode = E_DATA;
+	    return 1;
+	}
     }
 
     return 0;
@@ -1106,7 +1140,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* Doing weighted least squares? */
     if (ci == WLS) {
-	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs);
+	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs, opt);
 	if (mdl.errcode) {
 	    return mdl;
 	}
@@ -1176,11 +1210,13 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     mdl.ncoeff = mdl.list[0] - 1;
-    if (effobs) {
-	mdl.nobs = effobs; /* FIXME? */
+    if (effobs > 0 && mdl.missmask == NULL) {
+	mdl.nobs = effobs;
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (mdl.missmask != NULL) {
+	if (mdl.nwt) {
+	    mdl.nobs = wls_usable_obs(&mdl, dset);
+	} else if (mdl.missmask != NULL) {
 	    mdl.nobs -= model_missval_count(&mdl);
 	}
     }
@@ -1213,6 +1249,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (rho != 0.0) {
+	gretl_model_set_int(&mdl, "maxlag", 1);
 	gretl_model_set_double(&mdl, "rho_gls", rho);
     }
 
@@ -3443,6 +3480,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
     clear_model(&rhomod);
 
+    gretl_model_set_int(&ar, "maxlag", maxlag);
     set_model_id(&ar, opt);
 
  bailout:
@@ -3547,6 +3585,11 @@ static int not_equal (double y, double x)
 
    FIXME: use inside a function, when the name of the dependent
    variable may be changed if it was a function argument?
+
+   TODO: for some purposes it could be useful to know not just
+   if there's a lagged dependent variable in the specification,
+   but also what the maximum such lag is. At present only lag 1
+   is handled.
 */
 
 static int lagdepvar (const int *list, const DATASET *dset)
@@ -3562,6 +3605,14 @@ static int lagdepvar (const int *list, const DATASET *dset)
 	    break;
 	}
 	xno = list[i];
+#if 0 /* not yet? */
+	/* check via varinfo */
+	if (series_get_parent_id(dset, xno) == yno &&
+	    series_get_lag(dset, xno) > 0) {
+	    ret = i;
+	    break;
+	}
+#endif
 	xname = dset->varname[xno];
 	p = strrchr(xname, '_');
 	if (p != NULL && isdigit(*(p + 1))) {
@@ -4391,48 +4442,6 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
     } else {
 	mod = tsls(list, dset, opt);
     }
-
-    return mod;
-}
-
-/**
- * arbond_model:
- * @list: regression list.
- * @ispec: may contain additional instrument specification.
- * @dset: dataset struct.
- * @opt: may include OPT_D to include time dummies,
- * OPT_H to transform the dependent variable via orthogonal
- * deviations rather than first differences, OPT_T for two-step
- * estimation, OPT_A to force production of asymptotic standard
- * errors rather than finite-sample corrected ones.
- * @prn: printing struct.
- *
- * Produces estimates of a dynamic panel-data model in
- * the manner of Arellano and Bond. See the documentation for
- * the "arbond" command in gretl for the construction of the
- * @list argument and also the syntax of @ispec.
- *
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL arbond_model (const int *list, const char *ispec,
-		    const DATASET *dset, gretlopt opt,
-		    PRN *prn)
-{
-    MODEL (*arbond_estimate) (const int *, const char *,
-			      const DATASET *, gretlopt, PRN *);
-    MODEL mod;
-
-    gretl_model_init(&mod, dset);
-
-    arbond_estimate = get_plugin_function("arbond_estimate");
-    if (arbond_estimate == NULL) {
-	mod.errcode = 1;
-	return mod;
-    }
-
-    mod = (*arbond_estimate)(list, ispec, dset, opt, prn);
-    set_model_id(&mod, opt);
 
     return mod;
 }

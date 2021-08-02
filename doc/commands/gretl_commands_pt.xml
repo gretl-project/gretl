@@ -654,135 +654,6 @@
 
   </command>
 
-  <command name="arbond" section="Estimation" label="Arellano-Bond">
-
-    <usage>
-      <arguments>
-	<argblock>
-	  <argument>p</argument>
-	  <argument optional="true">q</argument>
-	</argblock>
-	<argblock separated="true">
-	  <argument>variável-dependente</argument>
-	  <argument>variáveis-independentes</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>instrumentos</argument>
-	</argblock>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>não mostrar o modelo estimado</effect>
-	</option>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
-	</option>
-        <option>
-	  <flag>--two-step</flag>
-	  <effect>executa estimação pelo Método Generalizado dos Momentos (GMM) de 2-fases</effect>
-        </option>
-        <option>
-	  <flag>--time-dummies</flag>
-	  <effect>acrescenta variáveis auxiliares tempo</effect>
-        </option>
-        <option>
-	  <flag>--asymptotic</flag>
-	  <effect>erros padrão assimptóticos não corrigidos</effect>
-        </option>
-      </options>
-      <examples>
-        <example>arbond 2 ; y Dx1 Dx2</example>
-        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1</example>
-	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3)</example>
-	<demos>
-	  <demo>arbond91.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Executa a estimação de modelos de painel dinâmico (ou seja,
-        modelos de painel que contenham um ou mais desfasamentos da variável
-        dependente) recorrendo ao método Método Generalizado dos Momentos
-	(GMM-DIF) desenvolvido por <cite
-	key="arellano-bond91">Arellano and Bond (1991)</cite>.
-	Por favor ver <cmdref targ="dpanel"/> para uma versão mais flexível
-	e actualizada deste comando que também usa GMM-SYS para além do 
-	GMM-DIF.
-      </para>
-      <para>
-	O parâmetro <repl>p</repl> representa a ordem da autoregressão 
-        para a variável dependente.  O parâmetro opcional <repl>q</repl>
-        indica o máximo desfasamento do nível da variável dependente a ser usada
-        como um instrumento.  Se este argumento for omitido, ou de valor 
-        0, todos os desfasamentos disponíveis são usados.
-      </para>
-      <para>
-	A variável dependente deve ser dada na forma de níveis; ela será
-        automaticamente diferenciada (pois este estimador usa 
-        diferenciação para anular os efeitos individuais).  As variáveis
-        independentes não são automaticamente diferenciadas; se você 
-        pretende usar diferenças (o que acontece em geral para variáveis
-        quantitativas, mas não será, por exemplo, para variáveis 
-        auxiliares temporais), deve primeiro criar essas diferenças e 
-        depois especificar estas como sendo regressoras.
-      </para>
-      <para>
-	O último campo (opcional) do comando serve para especificar 
-        instrumentos.  Se não for dado nenhum, então é assumido que todas
-        as variáveis independentes são estritamente exógenas.  Se você
-        especificar alguns instrumentos, então deve incluir na lista 
-        quaisquer variáveis independentes estritamente exógenas.  Para
-        regressores predeterminados, você pode usar a função 
-        <lit>GMM</lit> para incluir uma gama de desfasamentos especificada
-	no modo bloco-diagonal.  Isto é ilustrado no terceiro exemplo acima.
-        O primeiro argumento de <lit>GMM</lit> é o nome da variável em 
-        questão, o segundo é o desfasamento mínimo a ser usado como
-	instrumento, e o terceiro é o desfasamento máximo.  Se o terceiro 
-	argumento for dado como 0, todos os desfasamentos disponíveis são
-	usados.
-      </para>
-      <para>
-	Por omissão são apresentados os resultados da estimação 1-fase 
-        (com erros padrão robustos).  Opcionalmente, você pode escolher 
-        estimação de 2-fases.  Em ambos os casos são efectuados testes de
-        autocorrelação de ordem 1 e 2, assim como o teste de 
-        sobre-identificação de Sargan e o teste de Wald para a 
-        significância conjunta dos regressores.  Note-se que este modelo 
-        de diferenciação com autocorrelação de primeira-ordem não invalida 
-        o modelo, mas que a autocorrelação de segunda-ordem não respeita 
-        as assunções estatísticas presentes.
-      </para>
-      <para>
-	No caso da estimação de 2-fases, por omissão, os erros padrão são
-        determinados usando a correcção de amostra-finita sugerida por 
-        <cite key="windmeijer05">Windmeijer (2005)</cite>.  Os erros padrão
-	assimptóticos associados ao estimador de 2-fases são em geral 
-	considerados como guias para inferência pouco fiáveis, mas se por
-	alguma razão os pretender ver, você pode usar a opção 
-	<lit>--asymptotic</lit> para desligar a correcção de Windmeijer.
-      </para>
-      <para>
-	Se for dada a opção <lit>--time-dummies</lit>, são acrescentadas
-        variáveis auxiliares temporais aos regressores especificados.  
-        Para evitar colinearidade perfeita com a constante, o número de 
-        auxiliares é uma unidade a menos que o número máximo de períodos
-        usados na estimação.  As auxiliares são introduzidas por níveis;
-        se você deseja usar auxiliares de tempo na forma de 
-        primeiras-diferenças, você terá que definir e acrescentar essas
-        variáveis manualmente.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelo/Painel/Arellano-Bond</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="arch" section="Estimation" label="Modelo ARCH">
 
     <usage>
@@ -2564,6 +2435,7 @@
     </description>
   </command>
 
+  <!--
   <command name="debug" section="Programming" context="cli"
     label="Despiste de erros de programa">
 
@@ -2594,6 +2466,7 @@
       </para>
     </description>
   </command>  
+  -->
 
   <command name="delete" section="Dataset" 
     label="Apagar variáveis" context="cli">
@@ -11907,10 +11780,6 @@
         <argument optional="true">varlist</argument>
       </arguments>
       <options>
-        <option>
-	  <flag>--csv</flag>
-	  <effect>use CSV format</effect>
-        </option>
         <option>
 	  <flag>--omit-obs</flag>
 	  <effect>see below, on CSV format</effect>

@@ -51,6 +51,8 @@
 #define GRETL_STOCK_MENU    "gretl-menu"
 #define GRETL_STOCK_HMAP    "gretl-hmap"
 #define GRETL_STOCK_DBN     "gretl-dbnomics"
+#define GRETL_STOCK_FCAST   "gretl-fcast"
+#define GRETL_STOCK_CLOSE   "gretl-close"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,
@@ -61,7 +63,9 @@ typedef enum {
     VWIN_TABBED          = 1 << 5,
     VWIN_CB_PDF          = 1 << 6,
     VWIN_MULTI_SERIES    = 1 << 7,
-    VWIN_NO_SAVE         = 1 << 8
+    VWIN_NO_SAVE         = 1 << 8,
+    VWIN_USE_FOOTER      = 1 << 9,
+    WVIN_KEY_SIGNAL_SET  = 1 << 10
 } windata_flags;
 
 typedef struct windata_t_ windata_t;

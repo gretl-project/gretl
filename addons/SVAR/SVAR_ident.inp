@@ -1,5 +1,6 @@
-function matrices SampleMatrices(matrix Ra, matrix da, matrix Rb, matrix db)
-/*
+function matrices SampleMatrices(const matrix Ra, const matrix da, 
+                                 const matrix Rb, const matrix db)                                 
+   /*                           
    Returns an array with A and B evaluated at a random point
    in the parameter space (useful for checking the constraint
    matrices).
@@ -12,13 +13,13 @@ function matrices SampleMatrices(matrix Ra, matrix da, matrix Rb, matrix db)
 
     matrix tmp = imp2exp(Ra ~ da)
     if cols(tmp) > 1
-        tmp *= muniform(cols(tmp)-1,1) | 1
+        tmp *= muniform(cols(tmp)-1) | 1
     endif
     ret += mshape(tmp,n,n)
 
     matrix tmp = imp2exp(Rb ~ db)
     if cols(tmp) > 1
-        tmp *= muniform(cols(tmp)-1,1) | 1
+        tmp *= muniform(cols(tmp)-1) | 1
     endif
     ret += mshape(tmp,n,n)
 
@@ -38,11 +39,11 @@ function matrix Dtn(int n)
 
     p = round(n*(n-1)/2)
 
-    matrix A = zeros(1,n) | (lower(unvech(seq(1,p)')) ~ zeros(n-1,1))
+    matrix A = zeros(1,n) | (lower(unvech(seq(1,p)')) ~ zeros(n-1))
     matrix B = zeros(n^2,p)
     matrix C
 
-    loop i=1..p --quiet
+    loop i = 1..p 
         C = A.=i
         B[,i] = vec(C .- C')
     endloop
@@ -52,27 +53,27 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function matrix Umat(int n, matrix R, matrix d, matrix S)
+function matrix Umat(int n, const matrix R, const matrix S)
 
     # See Lucchetti(2006) -- left-hand side of matrix T;
     # see eq. 26 on page 248
-
+  
     p = cols(S)
     matrix ret = {}
-    loop i=1..p --quiet
+    loop i = 1..p 
         ret |= R * (mshape(S[,i],n,n)' ** I(n))
     endloop
     return ret
 end function
 
-function matrix Tmat(int n, matrix R, matrix d, matrix S)
+function matrix Tmat(int n, const matrix R, const matrix S)
 
     # See Lucchetti(2006) -- right-hand side of matrix T;
     # see eq. 26 on page 248
 
     p = cols(S)
     matrix ret = {}
-    loop i=1..p --quiet
+    loop i = 1..p 
         ret |= R * (I(n) ** mshape(S[,i],n,n))
     endloop
     return ret
@@ -81,8 +82,8 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar strucond(int n, matrix Ra, matrix da,
-                         matrix Rb, matrix db, int verbose[0])
+function scalar strucond(int n, const matrix Ra, const matrix da,
+                         const matrix Rb, const matrix db, int verbose[0])
     /*
        Checks the structure condition and optionally
        prints out some of the relevant matrices:
@@ -91,22 +92,22 @@ function scalar strucond(int n, matrix Ra, matrix da,
        iprint = output mode:
     */
 
-    matrix Sa = imp2exp(Ra~da)
-    matrix Sb = imp2exp(Rb~db)
+    matrix Sa = imp2exp(Ra ~ da)
+    matrix Sb = imp2exp(Rb ~ db)
 
     if verbose > 1
         print Ra da Rb db Sa Sb
     endif
 
-    matrix Ua = Umat(n,Ra,da,Sa)
-    matrix Ub = Umat(n,Rb,db,Sb)
-    matrix Tb = Tmat(n,Rb,db,Sb)
+    matrix Ua = Umat(n,Ra,Sa) # removed redundant da arg
+    matrix Ub = Umat(n,Rb,Sb) # removed redundant db arg
+    matrix Tb = Tmat(n,Rb,Sb) # removed redundant db arg
 
     if verbose > 1
         print Ua Ub Tb
     endif
 
-    matrix C = Ua ~ zeros(rows(Ua),(n*(n-1)/2))
+    matrix C = Ua ~ zeros(rows(Ua), n*(n-1)/2)
     C |= Ub ~ Tb * Dtn(n)
     if verbose > 1
         print C
@@ -129,7 +130,7 @@ function scalar strucond(int n, matrix Ra, matrix da,
         matrix nspace = nullspace(CC)
         u_rank = cols(nspace)
         if verbose
-            loop i=1..u_rank --quiet
+            loop i = 1..u_rank 
                 printf "Q_%d = \n", i
                 printf "%6.1f", mshape(nspace[1:n*n,i],n,n)
                 printf "H_%d = \n", i
@@ -143,7 +144,7 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar ordercond(int n, matrix Ra, matrix Rb,
+function scalar ordercond(int n, const matrix Ra, const matrix Rb,
                           int verbose[0])
     /*
        Checks the order condition and optionally
@@ -168,8 +169,8 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db,
-                         int verbose[0])
+function scalar rankcond(int n, const matrix Ra, const matrix da, 
+                         const matrix Rb, const matrix db, int verbose[0])
     /*
        Checks the rank condition as per Amisano-Giannini and optionally
        prints out some of the relevant matrices:
@@ -194,7 +195,7 @@ function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db,
     scalar r = rank(Q)
 
     if verbose > 1
-        loop foreach m Q11 Q21 Q22 Q --quiet
+        loop foreach m Q11 Q21 Q22 Q 
             printf "\n$m:\n%7.2f", $m
         endloop
     endif
@@ -210,7 +211,6 @@ end function
 # ----------------------------------------------------------------------------
 
 function scalar ident(bundle *mod, int verbose[0])
-    # signature was: matrix *Ra, matrix *da, matrix *Rb, matrix *db, int verbose[0]
     /*
        Main function for checking identification.
        
@@ -256,9 +256,7 @@ function scalar ident(bundle *mod, int verbose[0])
     else             # plain, C-model or SVEC
         if !nelem(mod.fullRd)
             matrix mod.fullRd = get_full_Rd(&mod, 0) 
-            if !nelem(mod.fullRd) 	# possible only for C model?
-                funcerr "No restrictions specified!"
-            endif
+            errorif( !nelem(mod.fullRd), "No restrictions specified!") 	# possible only for C model?
         endif               
 
         matrix Rb = mod.fullRd[, 1:n2]

@@ -27,9 +27,9 @@ typedef enum {
     APPEND,
     AR,  
     AR1,
-    ARBOND,
     ARCH,
     ARMA,
+    BDS,
     BIPROBIT,
     BKW,
     BREAK,
@@ -72,7 +72,6 @@ typedef enum {
     GMM,
     GNUPLOT, 
     GRAPHPG,
-    HAUSMAN,
     HECKIT,
     HELP,
     HFPLOT,
@@ -116,6 +115,7 @@ typedef enum {
     OUTFILE,
     PANEL,
     PANPLOT,
+    PANSPEC,
     PCA,
     PERGM,
     PLOT,    
@@ -171,6 +171,7 @@ typedef enum {
 } GretlCmdIndex;
 
 #define TEXTSAVE_OK(c) (c == ADF || \
+			c == BDS || \
 	                c == BKW || \
                         c == CHOW || \
                         c == COEFFSUM || \
@@ -181,7 +182,7 @@ typedef enum {
                         c == CUSUM || \
                         c == FCAST || \
                         c == FREQ || \
-                        c == HAUSMAN || \
+                        c == PANSPEC || \
                         c == KPSS || \
                         c == LEVERAGE || \
                         c == LEVINLIN || \
@@ -213,7 +214,7 @@ typedef enum {
                               c == CUSUM || \
                               c == EQNPRINT || \
                               c == FCAST || \
-                              c == HAUSMAN || \
+                              c == PANSPEC || \
                               c == LEVERAGE || \
                               c == MODTEST || \
                               c == OMIT || \

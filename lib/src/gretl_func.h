@@ -69,7 +69,8 @@ typedef enum {
 				    r == GRETL_TYPE_BUNDLES ||	\
 				    r == GRETL_TYPE_LISTS ||	\
 				    r == GRETL_TYPE_ARRAYS ||	\
-				    r == GRETL_TYPE_VOID)
+				    r == GRETL_TYPE_VOID || \
+				    r == GRETL_TYPE_NUMERIC)
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
@@ -83,9 +84,11 @@ ufunc *get_user_function_by_name (const char *name);
 
 const ufunc *get_user_function_by_index (int idx);
 
-fncall *fncall_new (ufunc *fun);
+fncall *fncall_new (ufunc *fun, int preserve);
 
 void fncall_destroy (fncall *call);
+
+GretlType fncall_get_return_type (fncall *fc);
 
 fncall *get_pkg_function_call (const char *funcname,
 			       const char *pkgname,
@@ -179,6 +182,8 @@ int object_is_function_arg (const char *name);
 void allow_full_data_access (int s);
 
 int series_is_accessible_in_function (int ID, const DATASET *dset);
+
+const char *series_get_list_parent (int ID);
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 

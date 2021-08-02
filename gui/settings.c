@@ -33,6 +33,10 @@
 #include "build.h"
 #include "addons_utils.h"
 
+#ifdef HAVE_GTKSV_COMPLETION
+# include "completions.h"
+#endif
+
 #include "libset.h"
 #include "texprint.h"
 #include "uservar.h"
@@ -51,15 +55,12 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
-# ifndef USE_WIN32_FONTSEL
-#  include "gtkfontselhack.h"
-# endif
-#else /* not Windows */
-# if HAVE_GTK_FONT_CHOOSER
-#  include "fontfilter.h"
-# else
-#  include "gtkfontselhack.h"
-# endif
+#endif
+
+#if HAVE_GTK_FONT_CHOOSER
+# include "fontfilter.h"
+#else
+# include "gtkfontselhack.h"
 #endif
 
 #if defined(OS_OSX) && defined(HAVE_MAC_THEMES)
@@ -72,7 +73,7 @@ static int use_proxy;
 
 static ConfigPaths paths;
 
-static void make_prefs_tab (GtkWidget *notebook, int tab);
+static void make_prefs_tab (GtkWidget *notebook, int tab, int console);
 static void apply_changes (GtkWidget *widget, GtkWidget *parent);
 
 #ifndef G_OS_WIN32
@@ -87,12 +88,9 @@ static char system_appfont[64];
 #if defined(G_OS_WIN32)
 static char fixedfontname[MAXLEN] = "Courier New 10";
 static char default_fixedfont[64] = "Courier New 10";
-#elif defined(OS_OSX) /* FIXME ? */
+#elif defined(OS_OSX)
 static char fixedfontname[MAXLEN] = "Menlo 13";
 static char default_fixedfont[64] = "Menlo 13";
-#elif defined(MAC_THEMING)
-static char fixedfontname[MAXLEN] = "Menlo 10";
-static char default_fixedfont[64] = "Menlo 10";
 #else
 static char fixedfontname[MAXLEN] = "monospace 10";
 static char default_fixedfont[64] = "monospace 10";
@@ -119,8 +117,7 @@ static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor = 1;
 static int tabbed_models = 0;
-static int display_wdir = 1;
-static int wdir_tooltip = 1;
+static int auto_collect = 0;
 static int script_output_policy;
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -146,11 +143,12 @@ static char mpi_pref[8] = "OpenMPI";
 
 static int lcnumeric = 1;
 static double graph_scale = 1.0;
+static int icon_sizing = ICON_SIZE_AUTO;
 
 #if defined(MAC_THEMING)
 static char themepref[12] = "Adwaita";
 #elif defined(G_OS_WIN32)
-static char themepref[12] = "MS-Windows";
+static char themepref[12] = "Windows-10";
 #endif
 
 /* model table display variables */
@@ -225,10 +223,10 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt,
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "display_workdir", N_("Display working directory"), NULL, &display_wdir,
-      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
-    { "workdir_tooltip", "Working directory tooltip", NULL, &wdir_tooltip,
-      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+    { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "icon_sizing", N_("Toolbar icon size"), NULL, &icon_sizing,
+      LISTSET | INTSET | RESTART, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
@@ -262,7 +260,7 @@ RCVAR rc_vars[] = {
     { "calculator", N_("Calculator"), NULL, calculator,
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
-    { "x12a", N_("Path to x12arima"), NULL, paths.x12a,
+    { "x12a", N_("Path to x12arima (or x13)"), NULL, paths.x12a,
       MACHSET | BROWSER, sizeof paths.x12a, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
@@ -291,8 +289,6 @@ RCVAR rc_vars[] = {
     { "mpi_pref", N_("Installed MPI variant"), NULL, mpi_pref,
       LISTSET, 8, TAB_MPI, NULL},
 #endif
-    { "dbhost", N_("Database server name"), NULL, paths.dbhost,
-      USERSET, sizeof paths.dbhost, TAB_NET, NULL },
     { "dbproxy", N_("HTTP proxy"), NULL, http_proxy,
       USERSET, sizeof http_proxy, TAB_NET, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy,
@@ -317,9 +313,11 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor,
       BOOLSET, 0, TAB_EDITOR, NULL },
-#if GTK_MAJOR_VERSION >= 3 || GTK_MINOR_VERSION >= 16
-    { "script_auto_complete", N_("Enable auto-completion"), NULL, &script_auto_complete,
-      BOOLSET, 0, TAB_EDITOR, NULL },
+#ifdef HAVE_GTKSV_COMPLETION
+    { "hansl_completion", N_("Auto-completion"), NULL, &hansl_completion,
+      LISTSET | INTSET, 0, TAB_EDITOR, NULL },
+    { "console_completion", N_("Auto-completion"), NULL, &console_completion,
+      LISTSET | INTSET | INVISET, 0, TAB_EDITOR, NULL },
 #endif
     { "script_auto_bracket", N_("Enable auto-brackets"), NULL, &script_auto_bracket,
       BOOLSET, 0, TAB_EDITOR, NULL },
@@ -430,6 +428,11 @@ int autoicon_on (void)
     }
 }
 
+int get_icon_sizing (void)
+{
+    return icon_sizing;
+}
+
 int use_tabbed_editor (void)
 {
     return tabbed_editor;
@@ -448,16 +451,6 @@ int session_prompt_on (void)
 void set_session_prompt (int val)
 {
     session_prompt = val;
-}
-
-int display_workdir (void)
-{
-    return display_wdir;
-}
-
-int show_workdir_tooltip (void)
-{
-    return wdir_tooltip;
 }
 
 int get_keep_folder (void)
@@ -730,7 +723,7 @@ void set_gretl_startdir (void)
 	char *test = getenv("GRETL_STARTDIR");
 	gchar *startdir = NULL;
 
-	/* the environment variable check is mostly for the OS X
+	/* the environment variable check is mostly for the macOS
 	   package */
 
 	if (test != NULL) {
@@ -1044,15 +1037,14 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
-    gtk_widget_show(notebook);
 
-    make_prefs_tab(notebook, TAB_MAIN);
-    make_prefs_tab(notebook, TAB_PROGS);
-    make_prefs_tab(notebook, TAB_EDITOR);
-    make_prefs_tab(notebook, TAB_NET);
-    make_prefs_tab(notebook, TAB_VCV);
+    make_prefs_tab(notebook, TAB_MAIN, 0);
+    make_prefs_tab(notebook, TAB_PROGS, 0);
+    make_prefs_tab(notebook, TAB_EDITOR, 0);
+    make_prefs_tab(notebook, TAB_NET, 0);
+    make_prefs_tab(notebook, TAB_VCV, 0);
 #ifdef HAVE_MPI
-    make_prefs_tab(notebook, TAB_MPI);
+    make_prefs_tab(notebook, TAB_MPI, 0);
 #endif
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -1062,7 +1054,6 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(apply_changes), parent);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
 
     /* Cancel button */
     button = cancel_button(hbox);
@@ -1072,7 +1063,6 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget),
 		     dialog);
-    gtk_widget_show(button);
 
     /* OK button */
     button = ok_button(hbox);
@@ -1081,11 +1071,9 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget),
 		     dialog);
-    gtk_widget_show(button);
 
     /* Help button */
     button = context_help_button(hbox, -1);
-    gtk_widget_show(button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(show_prefs_help),
 		     notebook);
@@ -1095,14 +1083,68 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 		     button);
 
     if (page > 1 && page < TAB_MAX) {
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page - 1);
+	page--;
+	/* "show" the target page first (see GtkNoteBook API doc) */
+	gtk_widget_show(gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), page));
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page);
     }
 
     if (varname != NULL) {
 	highlight_preferences_entry(varname);
     }
 
-    gtk_widget_show(dialog);
+    gtk_widget_show_all(dialog);
+
+    return canceled;
+}
+
+int console_prefs_dialog (GtkWidget *parent)
+{
+    static GtkWidget *dialog;
+    GtkWidget *button;
+    GtkWidget *hbox;
+    GtkWidget *vbox;
+    int canceled = 0;
+
+    if (dialog != NULL) {
+	gtk_window_present(GTK_WINDOW(dialog));
+	return 0;
+    }
+
+    dialog = gretl_dialog_new(_("gretl: preferences"), parent,
+			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
+#if GTK_MAJOR_VERSION < 3
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
+#endif
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    gtk_box_set_spacing(GTK_BOX(vbox), 2);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed),
+		     &dialog);
+
+    make_prefs_tab(vbox, TAB_EDITOR, 1);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* Cancel button */
+    button = cancel_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(preferences_dialog_canceled),
+		     &canceled);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget),
+		     dialog);
+
+    /* OK button */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(apply_changes), parent);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget),
+		     dialog);
+
+    gtk_widget_show_all(dialog);
 
     return canceled;
 }
@@ -1205,7 +1247,6 @@ static GtkWidget *embed_style_sampler (GtkWidget *vbox)
     hbox = gtk_hbox_new(TRUE, 5);
     text = create_sample_source(sview_style);
     gtk_box_pack_start(GTK_BOX(hbox), text, TRUE, FALSE, 0);
-    gtk_widget_show_all(hbox);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 15);
 
     return text;
@@ -1226,8 +1267,19 @@ static const char **get_list_setting_strings (void *var, int *n)
     static const char *manpref_strs[] = {
         N_("English (US letter paper)"),
         N_("English (A4 paper)"),
-        N_("Italian"),
-	N_("Portuguese")
+        N_("Translation, if available")
+    };
+#ifdef HAVE_GTKSV_COMPLETION
+    static const char *completion_strs[] = {
+	N_("none"),
+	N_("automatic, as you type"),
+	N_("on demand, via Tab")
+    };
+#endif
+    static const char *icon_sizing_strs[] = {
+	N_("Automatic"),
+	N_("small"),
+	N_("medium")
     };
     const char **strs = NULL;
 
@@ -1246,6 +1298,14 @@ static const char **get_list_setting_strings (void *var, int *n)
     } else if (var == &manpref) {
 	strs = manpref_strs;
 	*n = sizeof manpref_strs / sizeof manpref_strs[0];
+#ifdef HAVE_GTKSV_COMPLETION
+    } else if (var == &hansl_completion || var == &console_completion) {
+	strs = completion_strs;
+	*n = sizeof completion_strs / sizeof completion_strs[0];
+#endif
+    } else if (var == &icon_sizing) {
+	strs = icon_sizing_strs;
+	*n = sizeof icon_sizing_strs / sizeof icon_sizing_strs[0];
     } else if (var == sview_style) {
 	strs = get_sourceview_style_ids(n);
     } else if (var == graph_theme) {
@@ -1280,9 +1340,17 @@ static const char **get_list_setting_strings (void *var, int *n)
     }
 #elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
     else if (var == themepref) {
-
 	static const char *theme_strs[] = {
-            "MS-Windows", "Clearlooks", "Windows-10", "Raleigh"
+            "Windows-10", "MS-Windows", "Clearlooks", "Raleigh"
+	};
+
+	strs = theme_strs;
+	*n = sizeof theme_strs / sizeof theme_strs[0];
+    }
+#elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
+    else if (var == themepref) {
+	static const char *theme_strs[] = {
+            "Windows 10", "Windows 7", "Adwaita"
 	};
 
 	strs = theme_strs;
@@ -1304,7 +1372,7 @@ static const char **get_radio_setting_strings (void *var, int *n)
 const char *get_default_hc_string (int ci)
 {
     if (ci == GARCH) {
-	int k = libset_get_int(GARCH_ROBUST_VCV);
+	int k = libset_get_int(GARCH_ALT_VCV);
 
 	return (k == ML_BW)? "BW" : "QML";
     } else if (!robust_conf(ci)) {
@@ -1326,19 +1394,36 @@ const char *get_default_hc_string (int ci)
 	    return "HAC";
 	} else {
 	    /* panel */
-	    return libset_get_bool(PCSE) ? "PCSE" : "Arellano";
+	    return libset_get_bool(USE_PCSE) ? "PCSE" : "Arellano";
 	}
     }
 }
 
+static int non_console_var (void *ptr)
+{
+    return (ptr == &smarttab || ptr == &script_line_numbers ||
+	    ptr == &tabbed_editor || ptr == &tabwidth ||
+	    ptr == &hansl_completion);
+}
+
+static int console_only (void *ptr)
+{
+    return (ptr == &console_completion);
+}
+
 static void
 get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse,
-		 int *n_list)
+		 int *n_list, int console)
 {
     int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].tab == page) {
+	    if (console && non_console_var(rc_vars[i].var)) {
+		continue;
+	    } else if (!console && console_only(rc_vars[i].var)) {
+		continue;
+	    }
 	    if (rc_vars[i].flags & BROWSER) {
 		*n_browse += 1;
 	    } else if (rc_vars[i].flags & LISTSET) {
@@ -1388,16 +1473,30 @@ static void add_themes_examples_button (GtkWidget *hbox)
 
     b = gtk_button_new_with_label(_("Examples"));
     gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
-    gtk_widget_show(b);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(themes_page), NULL);
 }
 
-static void make_prefs_tab (GtkWidget *notebook, int tab)
+static GtkWidget *scroller_page (GtkWidget *vbox)
+{
+    GtkWidget *scroller;
+
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_NEVER,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller),
+					  vbox);
+    return scroller;
+}
+
+static void make_prefs_tab (GtkWidget *notebook, int tab,
+			    int console)
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
     GtkWidget *l_table = NULL;
     GtkWidget *vbox, *w = NULL;
+    GtkWidget *page;
     int s_len = 1, b_len = 0, l_len = 1;
     int s_cols, b_cols = 0, l_cols = 0;
     int b_col = 0;
@@ -1408,30 +1507,37 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     RCVAR *rc;
     int i;
 
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_widget_show(vbox);
+    if (console) {
+	vbox = notebook; /* not really a notebook! */
+    } else {
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    if (tab == TAB_MAIN) {
-	w = gtk_label_new(_("General"));
-    } else if (tab == TAB_PROGS) {
-	w = gtk_label_new(_("Programs"));
-    } else if (tab == TAB_EDITOR) {
-	w = gtk_label_new(_("Editor"));
-    } else if (tab == TAB_NET) {
-	w = gtk_label_new(_("Network"));
-    } else if (tab == TAB_VCV) {
-	w = gtk_label_new(_("HCCME"));
+	if (tab == TAB_MAIN) {
+	    w = gtk_label_new(_("General"));
+	} else if (tab == TAB_PROGS) {
+	    w = gtk_label_new(_("Programs"));
+	} else if (tab == TAB_EDITOR) {
+	    w = gtk_label_new(_("Editor"));
+	} else if (tab == TAB_NET) {
+	    w = gtk_label_new(_("Network"));
+	} else if (tab == TAB_VCV) {
+	    w = gtk_label_new(_("HCCME"));
 #ifdef HAVE_MPI
-    } else if (tab == TAB_MPI) {
-	w = gtk_label_new(_("MPI"));
+	} else if (tab == TAB_MPI) {
+	    w = gtk_label_new(_("MPI"));
 #endif
+	}
+	if (tab == TAB_PROGS) {
+	    page = scroller_page(vbox);
+	} else {
+	    page = vbox;
+	}
+
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, w);
     }
 
-    gtk_widget_show(w);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, w);
-
-    get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list);
+    get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list, console);
 
     s_cols = (n_browse > 0)? 3 : 2;
 
@@ -1442,7 +1548,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
 	gtk_box_pack_start(GTK_BOX(vbox), l_table, FALSE, FALSE, 0);
-	gtk_widget_show(l_table);
     }
 
     if (n_str > 0) {
@@ -1450,7 +1555,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
 	gtk_box_pack_start(GTK_BOX(vbox), s_table, FALSE, FALSE, 0);
-	gtk_widget_show(s_table);
     }
 
     if (n_bool > 0) {
@@ -1459,7 +1563,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
 	gtk_box_pack_start(GTK_BOX(vbox), b_table, FALSE, FALSE, 10);
-	gtk_widget_show(b_table);
     }
 
     if (tab != TAB_VCV && n_list > 0) {
@@ -1473,8 +1576,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_table_set_col_spacings(GTK_TABLE(l_table), 10);
 	gtk_box_pack_start(GTK_BOX(hbox), l_table, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show(hbox);
-	gtk_widget_show(l_table);
     }
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1482,6 +1583,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	if (rc->tab != tab) {
 	    /* the item is not on this page */
+	    continue;
+	} else if (console && non_console_var(rc->var)) {
+	    rc->widget = NULL;
+	    continue;
+	} else if (!console && console_only(rc->var)) {
+	    rc->widget = NULL;
 	    continue;
 	}
 
@@ -1508,7 +1615,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				 rc_vars[i-1].widget);
 	    }
 
-	    gtk_widget_show(rc->widget);
 	    b_col++;
 
 	    if (tab == TAB_VCV || b_col == 2) {
@@ -1551,7 +1657,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_table_attach_defaults(GTK_TABLE(b_table), w,
 				      b_col, b_col + 1,
 				      b_len - 3, b_len - 2);
-	    gtk_widget_show(w);
 
 	    /* then a first button */
 	    button = gtk_radio_button_new_with_label(group, _(rc->link));
@@ -1561,7 +1666,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    if (!rcval) {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	    }
-	    gtk_widget_show(button);
 
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
@@ -1574,7 +1678,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    if (rcval) {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
 	    }
-	    gtk_widget_show(rc->widget);
 
 	    if (rc->flags & FIXSET) {
 		gtk_widget_set_sensitive(button, FALSE);
@@ -1595,7 +1698,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		w = gtk_hseparator_new();
 		gtk_table_attach_defaults(GTK_TABLE(b_table), w,
 					  0, rcol, b_len - 1, b_len);
-		gtk_widget_show(w);
 	    } else {
 		rcol = b_col + 1;
 	    }
@@ -1605,7 +1707,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_table_attach_defaults(GTK_TABLE(b_table), b,
 				      b_col, rcol,
 				      b_len - 1, b_len);
-	    gtk_widget_show(b);
 
 	    strs = get_radio_setting_strings(rc->var, &nopt);
 
@@ -1619,7 +1720,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		g_object_set_data(G_OBJECT(b), "action",
 				  GINT_TO_POINTER(j));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), j == rcval);
-		gtk_widget_show(b);
 		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
 		g_signal_connect(G_OBJECT(b), "clicked",
 				 G_CALLBACK(radio_change_value),
@@ -1641,7 +1741,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
-	    gtk_widget_show(w);
 
 	    rc->widget = gtk_combo_box_text_new();
 
@@ -1655,7 +1754,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_attach(GTK_TABLE(l_table), hbox,
 				 1, 2, l_len - 1, l_len,
 				 GTK_EXPAND | GTK_FILL, 0, 0, 0);
-		gtk_widget_show(hbox);
 	    } else {
 		gtk_table_attach(GTK_TABLE(l_table), rc->widget,
 				 1, 2, l_len - 1, l_len,
@@ -1719,12 +1817,11 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_set_size_request(rc->widget, ww, -1);
 	    }
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
-	    gtk_widget_show(rc->widget);
 	    if (langs) {
 		g_signal_connect(G_OBJECT(rc->widget), "changed",
 				 G_CALLBACK(try_switch_locale),
 				 NULL);
-	    } else if (tab == TAB_EDITOR) {
+	    } else if (rc->var == &sview_style) {
 		GtkWidget *sampler;
 
 		sampler = embed_style_sampler(vbox);
@@ -1742,14 +1839,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      w, 0, 1, l_len - 1, l_len);
-	    gtk_widget_show(w);
 
 	    /* for now, this is specific to tab-spaces */
 	    rc->widget = gtk_spin_button_new_with_range(2, 8, 1);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rc->widget), *intvar);
 	    gtk_table_attach_defaults(GTK_TABLE(l_table),
 				      rc->widget, 1, 2, l_len - 1, l_len);
-	    gtk_widget_show(rc->widget);
 	} else if (!(rc->flags & INVISET)) {
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1761,20 +1856,17 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(s_table), w,
 				      0, 1, s_len - 1, s_len);
-	    gtk_widget_show(w);
 
 	    rc->widget = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(s_table),
 				      rc->widget, 1, 2, s_len - 1, s_len);
 	    gtk_entry_set_text(GTK_ENTRY(rc->widget), strvar);
-	    gtk_widget_show(rc->widget);
 
 	    if (rc->flags & BROWSER) {
 		/* add path browse button */
 		w = make_path_browse_button(rc, notebook);
 		table_attach_fixed(GTK_TABLE(s_table), w,
 				   2, 3, s_len - 1, s_len);
-		gtk_widget_show(w);
 	    }
 
 	    if (rc->flags & FIXSET) {
@@ -1891,10 +1983,9 @@ static void rcvar_set_double (RCVAR *rcvar, const char *sval, int *changed)
     }
 }
 
-static void restart_message (GtkWidget *parent)
+static void restart_message (void)
 {
-    msgbox(_("This change will take effect when you restart gretl"),
-	   GTK_MESSAGE_INFO, parent);
+    infobox(_("This change will take effect when you restart gretl"));
 }
 
 /* register and react to changes from Preferences dialog */
@@ -1945,7 +2036,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     }
 
     if (changed > 1) {
-	restart_message(parent);
+	restart_message();
     }
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
@@ -1975,7 +2066,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
-    set_garch_robust_vcv(hc_garch);
+    set_garch_alt_vcv(hc_garch);
 
     selector_register_hc_choice();
 
@@ -1983,12 +2074,12 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 	windata_t *vwin = window_get_active_vwin(parent);
 
 	if (vwin != NULL && vwin->sbuf != NULL) {
-	    /* called from sourceview window or tab */
+	    /* called from sourceview window or tab, or console */
 	    update_script_editor_options(vwin);
 	}
     }
 
-    gretl_www_init(paths.dbhost, http_proxy, use_proxy);
+    gretl_www_init(http_proxy, use_proxy);
 }
 
 static void boolvar_to_str (void *b, char *s)
@@ -2066,11 +2157,11 @@ void sync_path_from_lib (const char *path_id)
     if (!strcmp(path_id, "tramo")) {
 	strcpy(paths.tramo, gretl_tramo());
 	write_rc(OPT_N);
-	restart_message(mdata->main);
+	restart_message();
     } else if (!strcmp(path_id, "x12a")) {
 	strcpy(paths.x12a, gretl_x12_arima());
 	write_rc(OPT_N);
-	restart_message(mdata->main);
+	restart_message();
     } else {
 	fprintf(stderr, "sync_path_from_lib: '%s' ??\n", path_id);
     }
@@ -2096,7 +2187,12 @@ static void str_to_int (const char *s, void *b)
     if (s == NULL) return;
 
     if (sscanf(s, "%d", ivar) != 1) {
-	*ivar = 0;
+	if (!strcmp(s, "true")) {
+	    /* remedy for ex-boolean */
+	    *ivar = 1;
+	} else {
+	    *ivar = 0;
+	}
     }
 }
 
@@ -2165,7 +2261,7 @@ static int common_read_rc_setup (int updated)
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
-    set_garch_robust_vcv(hc_garch);
+    set_garch_alt_vcv(hc_garch);
 
     err = gretl_set_paths(&paths);
     if (err) {
@@ -2174,7 +2270,7 @@ static int common_read_rc_setup (int updated)
 	set_gretl_alarm(0);
     }
 
-    gretl_www_init(paths.dbhost, http_proxy, use_proxy);
+    gretl_www_init(http_proxy, use_proxy);
     set_tex_use_pdf(latex);
     set_gp_theme();
 
@@ -2192,7 +2288,7 @@ static int common_read_rc_setup (int updated)
 
     langid = lang_id_from_name(langpref);
 #ifdef G_OS_WIN32
-    fprintf(stderr, "langpref='%s', langid=%d, lcnumeric=%d\n",
+    fprintf(stderr, "rc_setup: langpref='%s', langid=%d, lcnumeric=%d\n",
 	    langpref, langid, lcnumeric);
 #endif
     force_language(langid);
@@ -2200,6 +2296,10 @@ static int common_read_rc_setup (int updated)
 	force_english_help();
     }
     set_lcnumeric(langid, lcnumeric);
+
+    if (updated) {
+	update_addons_index(NULL);
+    }
 
     return err;
 }
@@ -2220,6 +2320,10 @@ static void find_and_set_rc_var (const char *key, const char *val)
 	    if (!(rcvar->flags & FIXSET)) {
 		if (rcvar->flags & BOOLSET) {
 		    str_to_boolvar(val, rcvar->var);
+		    if (!strcmp(key, "collect_plots")) {
+			/* special: set to "auto" */
+			libset_set_int(PLOT_COLLECT, 1);
+		    }
 		} else if (rcvar->flags & INTSET) {
 		    str_to_int(val, rcvar->var);
 		} else if (rcvar->flags & FLOATSET) {
@@ -2530,60 +2634,9 @@ static int fontsel_code (GtkAction *action)
     }
 }
 
-#ifdef USE_WIN32_FONTSEL
-
-/* font selection: Windows version first */
-
-static int choose_fontsel_action (void)
-{
-    const char *opts[] = {
-	N_("Select a specific font"),
-	N_("Reset to default")
-    };
-
-    return radio_dialog(NULL, NULL, opts, 2, 0, 0,
-			mdata->main);
-}
-
-static void windows_font_selector (GtkAction *action)
-{
-    int resp, which = fontsel_code(action);
-    char fontname[128];
-
-    *fontname = '\0';
-    resp = choose_fontsel_action();
-
-    if (resp == 0) {
-	/* actually choose a font */
-	if (which == FIXED_FONT_SELECTION) {
-	    strcpy(fontname, fixedfontname);
-	} else {
-	    strcpy(fontname, appfontname);
-	}
-	win32_font_selector(fontname, which);
-    } else if (resp == 1) {
-	/* reset the default font */
-	if (which == FIXED_FONT_SELECTION) {
-	    strcpy(fontname, default_fixedfont);
-	} else {
-	    strcpy(fontname, system_appfont);
-	}
-    }
-
-    if (*fontname != '\0') {
-	if (which == FIXED_FONT_SELECTION) {
-	    set_fixed_font(fontname, 1);
-	    write_rc(OPT_NONE);
-	} else {
-	    set_app_font(fontname, 1);
-	    write_rc(OPT_NONE);
-	}
-    }
-}
-
 /* font selection via GtkFontChooser */
 
-#elif HAVE_GTK_FONT_CHOOSER
+#if HAVE_GTK_FONT_CHOOSER
 
 gboolean latin_font_filter (PangoFontFamily *family,
 			    PangoFontFace *face,
@@ -2824,13 +2877,11 @@ static void gtk2_font_selector (GtkAction *action)
     gtk_widget_show(fontsel);
 }
 
-#endif /* end font selection dialog switch */
+#endif /* end font-selection dialog variants */
 
 void font_selector (GtkAction *action)
 {
-#ifdef USE_WIN32_FONTSEL
-    windows_font_selector(action);
-#elif HAVE_GTK_FONT_CHOOSER
+#if HAVE_GTK_FONT_CHOOSER
     chooser_font_selector(action);
 #else
     gtk2_font_selector(action);
@@ -2991,7 +3042,6 @@ struct wdir_setter {
     GtkWidget *wdir_combo;
     GtkWidget *cwd_radio;
     GtkWidget *keep_radio;
-    GtkWidget *show_check;
     GtkWidget *ok_button;
 };
 
@@ -3105,16 +3155,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
-    /* check box for show working dir in main */
-    vbox_add_hsep(vbox);
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_check_button_new_with_label(_("Show working directory in "
-					  "main window"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), display_wdir);
-    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    wset->show_check = w;
-
     /* button to open working directory via OS */
     vbox_add_hsep(vbox);
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3132,7 +3172,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 {
     char tmp[MAXLEN];
     gchar *str;
-    int dw, err;
+    int err;
 
     str = combo_box_get_active_text(GTK_COMBO_BOX(wset->wdir_combo));
     *tmp = '\0';
@@ -3154,12 +3194,6 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));
     keep_folder = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->keep_radio));
-    dw = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->show_check));
-
-    if (dw != display_wdir) {
-	display_wdir = dw;
-	restart_message(wset->dialog);
-    }
 
     if (!err) {
 	if (w == wset->ok_button) {
@@ -3211,14 +3245,6 @@ static void workdir_dialog (int from_wlabel)
 
     context_help_button(hbox, WORKDIR);
 
-    /* We'll assume that once the user has called this dialog
-       by clicking on the working dir label, the toolip for
-       that label becomes redundant.
-    */
-    if (from_wlabel) {
-	wdir_tooltip = 0;
-    }
-
     gtk_widget_show_all(dialog);
 }
 
@@ -3269,12 +3295,9 @@ void set_up_mac_look (void)
 
 void set_up_windows_look (void)
 {
-    fprintf(stderr, "set_up_windows_look: themepref = '%s'\n",
-	    themepref);
-
-    if (!strcmp(themepref, "MS-Windows") ||
-	!strcmp(themepref, "Clearlooks") ||
-	!strcmp(themepref, "Windows-10")) {
+    if (!strcmp(themepref, "Windows-10") ||
+	!strcmp(themepref, "MS-Windows") ||
+	!strcmp(themepref, "Clearlooks")) {
 	const char *prefix;
 	char sl[2] = {0};
 	gchar *gtkrc;
@@ -3305,10 +3328,28 @@ void set_up_windows_look (void)
 void set_wimp_preferred (int s)
 {
     if (s) {
-	strcpy(themepref, "MS-Windows");
+	strcpy(themepref, "Windows-10");
     } else {
 	strcpy(themepref, "Clearlooks");
     }
+}
+
+#elif defined (G_OS_WIN32) && GTK_MAJOR_VERSION == 3
+
+void set_up_windows_look (void)
+{
+    GtkSettings *settings = gtk_settings_get_default();
+    char theme_name[16];
+
+    if (!strcmp(themepref, "Windows 10")) {
+	strcpy(theme_name, "Windows-10");
+    } else if (!strcmp(themepref, "Windows 7")) {
+	strcpy(theme_name, "win32");
+    } else {
+	strcpy(theme_name, themepref);
+    }
+
+    g_object_set(G_OBJECT(settings), "gtk-theme-name", theme_name, NULL);
 }
 
 #endif

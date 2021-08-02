@@ -396,16 +396,16 @@ static int BKW_analyse (gretl_matrix *B, double maxcond,
 
     if (ngc30 > 0) {
 	/* variance proportion sums, cond >= 30 */
-	do_proportion_sums(B, bnames, labels[1], 30, prn);
+	do_proportion_sums(B, bnames, _(labels[1]), 30, prn);
     }
 
     pprintf(prn, "%s: %d\n", _(labels[2]), ngc10);
 
     if (ngc10 > ngc30) {
 	/* variance proportion sums, cond >= 10 */
-	do_proportion_sums(B, bnames, labels[3], 10, prn);
+	do_proportion_sums(B, bnames, _(labels[3]), 10, prn);
     } else if (ngc10 == 0) {
-	pprintf(prn, "\n%s\n", labels[4]);
+	pprintf(prn, "\n%s\n", _(labels[4]));
     }
 
     if (!err) {

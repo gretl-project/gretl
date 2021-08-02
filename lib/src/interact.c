@@ -1293,11 +1293,10 @@ static void query_package (const char *pkgname,
         /* --quiet */
         gretl_bundle *b = gretl_bundle_new();
 
-        if (b != NULL && err) {
-            gretl_bundle_set_int(b, "not_found", 1);
-            set_last_result_data(b, GRETL_TYPE_BUNDLE);
-        } else if (b != NULL) {
-            bundle_function_package_info(path, b);
+	if (b != NULL) {
+	    if (!err) {
+		bundle_function_package_info(path, b);
+	    }
             set_last_result_data(b, GRETL_TYPE_BUNDLE);
         }
     } else {
@@ -2018,9 +2017,6 @@ static int open_append_stage_1 (CMD *cmd,
         if (op->ftype == GRETL_CSV || op->ftype == GRETL_XML_DATA ||
             op->ftype == GRETL_BINARY_DATA) {
             set_dataset_is_changed(dset, 0);
-            if (op->ftype != GRETL_CSV) {
-                opt |= OPT_G;
-            }
             err = lib_join_data(cmd->parm2, op->fname, dset, opt, prn);
         } else {
             gretl_errmsg_set("join: only CSV and gdt[b] files are supported");
@@ -2202,15 +2198,19 @@ static int lib_open_append (ExecState *s,
     return err;
 }
 
-static int check_clear_data (void)
+static int check_clear (gretlopt opt)
 {
+    int err = 0;
+
     if (gretl_function_depth() > 0) {
         gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
                              gretl_command_word(CLEAR));
-        return E_DATA;
+        err = E_DATA;
+    } else {
+	err = incompatible_options(opt, OPT_D | OPT_F);
     }
 
-    return 0;
+    return err;
 }
 
 static EXEC_CALLBACK gui_callback;
@@ -2219,6 +2219,15 @@ static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
         s->flags |= CALLBACK_EXEC;
+    }
+}
+
+static void maybe_schedule_set_callback (ExecState *s)
+{
+    if (s->callback != NULL && s->cmd->param != NULL) {
+	if (!strcmp(s->cmd->param, "plot_collection")) {
+	    s->flags |= CALLBACK_EXEC;
+	}
     }
 }
 
@@ -2367,15 +2376,12 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     byvar = current_series_index(dset, byname);
     if (byvar < 0) {
         return E_UNKVAR;
-    }
-
-    x = (const double *) dset->Z[byvar];
-
-    if (!series_is_discrete(dset, byvar) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, x)) {
+    } else if (!accept_as_discrete(dset, byvar, 0)) {
         gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byname);
         return E_DATA;
     }
+
+    x = (const double *) dset->Z[byvar];
 
     if (list == NULL) {
         /* compose full series list, but exclude the "by" variable */
@@ -3217,9 +3223,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case CLEAR:
-        err = check_clear_data();
+        err = check_clear(cmd->opt);
         if (!err) {
-            if (gretl_in_gui_mode()) {
+	    if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else if (gretl_in_gui_mode()) {
                 schedule_callback(s);
             } else {
                 lib_clear_data(s, dset);
@@ -3455,6 +3463,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case SET:
         err = execute_set(cmd->param, cmd->parm2, dset, cmd->opt, prn);
+	if (!err && cmd->parm2 != NULL) {
+	    maybe_schedule_set_callback(s);
+	}
         break;
 
     case SETINFO:
@@ -3676,7 +3687,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         err = print_save_model(model, dset, cmd->opt, 0, prn, s);
         break;
 
-    case ARBOND:
     case PANEL:
     case DPANEL:
         if (!dataset_is_panel(dset)) {
@@ -3727,9 +3737,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             *model = garch(cmd->list, dset, cmd->opt, prn);
         } else if (cmd->ci == PANEL) {
             *model = panel_model(cmd->list, dset, cmd->opt, prn);
-        } else if (cmd->ci == ARBOND) {
-            *model = arbond_model(cmd->list, cmd->param, dset,
-                                  cmd->opt, prn);
         } else if (cmd->ci == DPANEL) {
             *model = dpd_model(cmd->list, cmd->auxlist, cmd->param,
                                dset, cmd->opt, prn);
@@ -3842,12 +3849,17 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case BDS:
+        err = bds_test_driver(cmd->order, cmd->list, dset,
+			      cmd->opt, prn);
+        break;
+
     case NORMTEST:
         err = gretl_normality_test(cmd->list[1], dset, cmd->opt, prn);
         break;
 
-    case HAUSMAN:
-        err = panel_hausman_test(model, dset, cmd->opt, prn);
+    case PANSPEC:
+        err = panel_specification_test(model, dset, cmd->opt, prn);
         break;
 
     case MODTEST:
@@ -4098,14 +4110,19 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
     } else {
         /* FIXME last arg to parse_command_line() ? */
         err = parse_command_line(s, dset, NULL);
-        if (loopstart != NULL && s->cmd->ci == LOOP) {
+        if (!err && loopstart != NULL && s->cmd->ci == LOOP) {
             *loopstart = 1;
         }
     }
 
     if (err) {
-        errmsg(err, s->prn);
-        return err;
+	errmsg(err, s->prn);
+	if (s->cmd->flags & CMD_CATCH) {
+	    set_gretl_errno(err);
+	    return 0;
+	} else {
+	    return err;
+	}
     }
 
     gretl_exec_state_transcribe_flags(s, s->cmd);

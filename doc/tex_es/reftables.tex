@@ -1,26 +1,24 @@
-\chapter{Reserved words}
+\chapter{Palabras Reservadas}
 \label{reswords}
 
-Reserved words, which cannot be used as the names of variables, fall
-into the following categories:
+Las palabras reservadas, que no se pueden usar como nombres de variables,
+están en las siguientes categorías:
 
 \begin{itemize}
-\item Names of constants:
-  %% generated automatically
-  \input ../tex/tabconstants.tex
-
-\item Names of internal variables and data types:
-  %% generated automatically
-  \input ../tex/tabinternals.tex
-
-\item Names of functions, as shown in Table~\ref{tab:functions}.
+\item Nombres de constantes y tipos de datos, además de algunas especiales:
+  \input tabinternals.tex
+  
+\item Nombres de instrucciones de \app{GRETL} (consulta la sección~\ref{cmd-cmd}).
 \end{itemize}
 
+Las funciones definidas por los usuarios no pueden tener nombres que choquen con
+funciones integradas, cuyos nombres se muestran en la Tabla~\ref{tab:functions}.
+
 \begin{table}[htbp]
-\caption{Function names}
+\caption{Nombres de funciones}
 \label{tab:functions}
 \begin{center}
 %% generated automatically
-\input ../tex/tabfunctions.tex
+\input tabfunctions.tex
 \end{center}
 \end{table}

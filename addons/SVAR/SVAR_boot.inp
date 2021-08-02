@@ -53,7 +53,7 @@ end function
 
 function matrix bias_correction(const bundle b, 
                                 const matrix Y0, matrix *BC,
-								const bundle bparams[null])
+                				const bundle bparams[null])
 
     /* This function implements a bias correction for
        the estimate of the VAR parameters as per Kilian,
@@ -70,19 +70,17 @@ function matrix bias_correction(const bundle b,
 	   (So the check below for what we need in the bundle.)
     */
 
-    if !inbundle(b,"BCiter") || !inbundle(b,"VARpar") || \
+    errorif( !inbundle(b,"BCiter") || !inbundle(b,"VARpar") || \
       !inbundle(b,"E") || !inbundle(b,"X") || !inbundle(b,"boottype") || \
-      !inbundle(b,"bmu")      
-		funcerr "needed input missing in bundle arg" 
-	endif
+      !inbundle(b,"bmu"), "needed input missing in bundle arg")
 
     # check for stationarity first
     scalar maxmod = max_eval(b.VARpar)
 
     if maxmod < 0.9999
         
-        matrix innov = prepres(b.E, b.boottype)        
-        bundle bootstuff = defbundle("Y0",Y0, "innov",innov)
+        matrix innov = prepres(b.U, b.boottype)        
+        bundle bootstuff = _(Y0, innov) # was: defbundle("Y0",Y0, "innov",innov)
         if exists(bparams)
             bootstuff.bparams = bparams
         endif 
@@ -115,12 +113,11 @@ function matrices avg_VARpar_boot(const bundle b, const bundle stuff)
     matrix lagseq = seq(1,b.p) 
     matrix Uinit = zeros(b.p, b.n)
     
-
     if rows(stuff.Y0) != b.p
         funcerr "wrong assumption about length of Y initvals here!"
     endif
                               
-    loop i=1 .. b.BCiter --quiet
+    loop i = 1..b.BCiter 
         matrix U = Uinit | drawbootres(stuff.innov, b.boottype, bparams) 
         if cols(b.bmu) > 0	# was mu
             U += b.bmu 
@@ -185,7 +182,7 @@ end function
 # These private functions introduced in Aug/Sep 2019
 # for general bootstrap
 
-function matrix prepres(matrix E,
+function matrix prepres(const matrix U,
                         int boottype[1:5:1] "bootstrap type" \
                         {"resampling", "wildN", "wildR", "wildM", \
 						 "moving blocks"})
@@ -193,29 +190,27 @@ function matrix prepres(matrix E,
     # the resampling (type 1). It isn't done together with the
     # new draws to avoid repeating it many times.
 
-    # (Cannot have 'const matrix E' as gretl versions <2019d would
-    #  crash when doing 'return E'.)
-	# (Copying the E matrix w/o doing anything shouldn't hurt 
-	#  performance too much because it is only done once.)
+    # (Can now have 'const matrix U' as gretl versions >=2019d handle this fine 
+    #  when doing 'return U'.)
 
     if boottype == 1
-        return cdemean(E)
+        return cdemean(U)
     else
-        return E
+        return U
     endif
 end function
 
 
-function matrix drawbootres(const matrix E,
+function matrix drawbootres(const matrix U,
                             int boottype[1:5:1] "bootstrap type" \
                             {"resampling", "wildN", "wildR", "wildM", \
 							 "moving blocks"},
                             const bundle bparams[null] "further inputs" )
 
     /*
-       Construct a new draw of residuals for bootstrapping, where E
+       Construct a new draw of residuals for bootstrapping, where U
        is a Txn matrix.
-       E can be original residuals or can be some pre-processed
+       U can be original residuals or can be some pre-processed
        input. (See the prepres() function - the pre-processing is
        not done here to avoid doing it repeatedly.)
 
@@ -227,43 +222,41 @@ function matrix drawbootres(const matrix E,
 		must be chosen.
 
        Other bootstrap types may be added in the future.
-       (The E input could be empty then, e.g. for a purely parametric-
+       (The U input could be empty then, e.g. for a purely parametric-
        distribution bootstrap. The bundle bparams is intended to be
        used then to specify parameters, in a way that is to be determined.)
     */
 
 	# process extra input
 	bl = 0 	# signals default data-based choice
-    if exists(bparams) && boottype == 5
-		if inbundle(bparams, "moveblocklen")
-			bl = bparams.moveblocklen
-		endif
+    if exists(bparams.moveblocklen) && boottype == 5
+        l = bparams.moveblocklen      
 	endif
 
 	## standard
     if boottype == 1	
-        return resample(E)
+        return resample(U)
 	endif 
 
-	T = rows(E)
+	T = rows(U)
 
 	## wild 
     if boottype <= 4	
         
         if boottype == 2
             # Normal
-            matrix w = mnormal(T,1)
+            matrix w = mnormal(T)
         elif boottype == 3
             # Rademacher
-            matrix w = muniform(T,1) .< 0.5 ? 1 : -1
+            matrix w = muniform(T) .< 0.5 ? 1 : -1
         elif boottype == 4
             # Mammen
             scalar s5 = sqrt(5)
             scalar p = (0.5/s5) * (s5 + 1)
-            matrix w = 0.5 + (muniform(T,1) .< p ? -s5/2 : s5/2)
+            matrix w = 0.5 + (muniform(T) .< p ? -s5/2 : s5/2)
         endif
 
-        return E .* w
+        return U .* w
 
 	## residual-based moving blocks
 	elif boottype == 5
@@ -283,14 +276,14 @@ function matrix drawbootres(const matrix E,
     	matrix ndx = vec(c .+ seq(0, bl-1)') 
 
     	## recentring
-    	matrix m = mshape(NA, bl, cols(E))
+    	matrix m = mshape(NA, bl, cols(U))
 		# calculate respective averages (bl different ones)
-    	loop i = 1..bl -q
-        	m[i,] = meanc(E[i: T-bl+i,])
+    	loop i = 1..bl 
+        	m[i,] = meanc(U[i: T-bl+i,])
     	endloop
 
     	ndx = ndx[1:T]	# cut off "overhanging tail"
-    	return E[ndx,] - (ones(s,1) ** m)[1:T, ]
+    	return U[ndx,] - (ones(s) ** m)[1:T, ]
 
     else
         funcerr "Shouldn't happen"
@@ -343,15 +336,13 @@ function scalar SVAR_boot(bundle *obj,
     # Do not override the previous setting.
 
     ## Copy some params and choices
-    loop foreach i n k T p type --quiet
+    loop foreach i n k T p type 
         scalar $i = obj.$i
     endloop
     obj.nboot = rep         # record bootstrap details
     obj.boot_alpha = alpha  # into original model
 
-    if type == 10
-        funcerr "Wrong turn: Set-ID not for bootstrapping..."
-    endif
+    errorif( type == 10, "Wrong turn: Set-ID not for bootstrapping...")
     
     ## Bootstrap type choice (if different from default)
     if exists(btypestr)
@@ -452,13 +443,18 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
     # Spar_mat: the result matrix 
     # (-- type==10 (set-ID) cannot/should not happen in here --)
     # need more cols if saving either A,B (for type 3) or C and the long-run matrix
-    numcols = (type > 2) || (rows(obj.Rd1l) || obj.calc_lr) ? 2*n2 : n2 
+    numcols = type>2 || (rows(obj.Rd1l) || obj.calc_lr) ? 2*n2 : n2 
     matrix Spar_mat = zeros(obj.nboot, numcols)
+
+    if type == 3 && inbundle(bobj, "C")
+        # clean up object from pre-computed C matrix
+        delete bobj.C
+    endif
     
     i = 1
     failed = 0
     set loop_maxiter 16384
-    loop while i <= obj.nboot --quiet
+    loop while i <= obj.nboot 
         # clear previous bootstrap indicator
         bobj.step = 0	
         
@@ -509,16 +505,18 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
 
         elif type == 2 || type == 4 # consolidate the SVEC case here
 
-            /* Watch out for the possibility of constraints that were 
-             partly redundant originally.
-             In the AB-model the cleaned restrictions are inherited 
-             from the original model, apart from the fact that they 
-             should already be caught at specification time (in SVAR_restrict).
-             But with long-run constraints (C, and especially SVEC with 
-              weakly exog.)
-             the restrictions depend on the simulated bootstrap data. 
-             So the cleaning of the restrictions must be re-done here.
-             */
+	    # Watch out for the possibility of constraints that were
+            # partly redundant originally.
+	    #
+            # In the AB-model the cleaned restrictions are inherited
+            # from the original model, apart from the fact that they
+            # should already be caught at specification time (in
+            # SVAR_restrict).
+	    #
+            # But with long-run constraints (C, and especially SVEC
+	    # with weakly exog.) the restrictions depend on the
+	    # bootstrap data, so the cleaning of the restrictions must
+	    # be re-done here.
              
             if type != 3 && inbundle(obj, "cleanfullRd")  
                 bobj.fullRd = {}	 # reset
@@ -539,18 +537,16 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
                 matrix fullRd = bobj.fullRd
             endif
 
-            matrix K = estC(&theta, bSigma, fullRd, null,
-              &errcode, obj.optmeth, 0)
+            matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
 
         elif type == 3 # "AB"
-            matrices transferAB = array(2)
+            matrices transferAB = array(0)
             # matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
             
             # new: get A,B instead of re-calc'ing it below
             # (obj.Rd0 was Rd2 before, but redundant...)
             matrix K = estAB(&theta, bSigma, obj.Rd0, obj.Rd1, null, \
               &errcode, obj.optmeth, 0, &transferAB)
-
         endif
 
         ## Process and store the simulated C results
@@ -567,8 +563,7 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
 
                 /* New Oct 2017: Also bootstrap the long-run matrix if wanted
                 Jan 2018: add type 4 */
-                if ( type < 3 && ( rows(bobj.Rd1l) || bobj.calc_lr ) ) \
-                      || type == 4
+                if ( type < 3 && ( rows(bobj.Rd1l) || bobj.calc_lr ) ) || type == 4
                     # (a plain or C model w/ long-run constr, or user switch)
                     # long-run mat (C1 comes from get_full_Rd() above
                     # (except type 1)):
@@ -596,9 +591,9 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
             i++
         else
             failed++
-            outfile stderr --write
-            printf "Iter %4d failed (error code = %d)\n", i, errcode
-            outfile --close	# TODO: should be replaced with 'end outfile' once we can require 2018b or so
+            outfile stderr 
+                printf "Iter %4d failed (error code = %d)\n", i, errcode
+            end outfile
         endif
     endloop
 

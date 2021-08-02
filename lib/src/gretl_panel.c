@@ -576,7 +576,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset)
     }
 
     /* call the appropriate function */
-    if (libset_get_bool(PCSE)) {
+    if (libset_get_bool(USE_PCSE)) {
 	err = beck_katz_vcv(pmod, pan, dset, XX, W, V);
     } else {
 	err = arellano_vcv(pmod, pan, dset, XX, W, V);
@@ -1557,14 +1557,19 @@ static void print_re_results (panelmod_t *pan,
 			      DATASET *dset,
 			      PRN *prn)
 {
-    pputs(prn, "Variance estimators:\n");
-    pprintf(prn, " between = %g\n", pan->s2v);
-    pprintf(prn, " within = %g\n", pan->s2e);
+    pputs(prn, _("Variance estimators:"));
+    pputc(prn, '\n');
+    pprintf(prn, _(" between = %g"), pan->s2v);
+    pputc(prn, '\n');
+    pprintf(prn, _(" within = %g"), pan->s2e);
+    pputc(prn, '\n');
 
     if (pan->balanced || pan->s2v == 0) {
-	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
+	pprintf(prn, _("theta used for quasi-demeaning = %g"), pan->theta);
+	pputc(prn, '\n');
     } else {
-	pputs(prn, "Panel is unbalanced: theta varies across units\n");
+	pputs(prn, _("Panel is unbalanced: theta varies across units"));
+	pputc(prn, '\n');
     }
     pputc(prn, '\n');
 
@@ -2291,6 +2296,11 @@ fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
     double yht, SSR = 0.0;
     int i, j, s, t;
     int err = 0;
+
+    if (yhat == NULL) {
+	fprintf(stderr, "fix_panel_hatvars: pan->pooled->yhat is NULL\n");
+	return E_DATA;
+    }
 
     y = Z[pan->pooled->list[1]];
 
@@ -3313,7 +3323,43 @@ static int breusch_pagan_LM (panelmod_t *pan, PRN *prn)
     return 0;
 }
 
-static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
+static void save_panspec_result (panelmod_t *pan, PRN *prn)
+{
+    gretl_matrix *tests = gretl_column_vector_alloc(3);
+    gretl_matrix *pvals = gretl_column_vector_alloc(3);
+    char **S = strings_array_new(3);
+
+    /* fixed-effects poolability F-test */
+    tests->val[0] = pan->Ffe;
+    pvals->val[0] = snedecor_cdf_comp(pan->Fdfn, pan->Fdfd, pan->Ffe);
+    /* random-effects poolability test */
+    tests->val[1] = pan->BP;
+    pvals->val[1] = chisq_cdf_comp(1, pan->BP);
+    /* Hausman test */
+    tests->val[2] = pan->H;
+    pvals->val[2] = chisq_cdf_comp(pan->dfH, pan->H);
+
+    if (S != NULL) {
+	/* add row names */
+	char **S2;
+
+	S[0] = gretl_strdup("Poolability (Wald)");
+	S[1] = gretl_strdup("Poolability (B-P)");
+	S[2] = gretl_strdup("Hausman");
+	S2 = strings_array_dup(S, 3);
+	gretl_matrix_set_rownames(tests, S);
+	if (S2 != NULL) {
+	    gretl_matrix_set_rownames(pvals, S2);
+	}
+    }
+
+    if (pan->opt & OPT_V) {
+	print_hausman_result(pan, prn);
+    }
+    record_matrix_test_result(tests, pvals);
+}
+
+static int finalize_hausman_test (panelmod_t *pan, int ci, PRN *prn)
 {
     int mdiff = 0, err = 0;
 
@@ -3326,11 +3372,13 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 	err = E_DATA;
     }
 
-    if (pan->opt & OPT_V) {
+    if (ci == PANSPEC) {
+	/* the context is the "panspec" command */
 	if (!err || (mdiff && err == E_NOTPD)) {
-	    print_hausman_result(pan, prn);
+	    save_panspec_result(pan, prn);
 	}
     } else {
+	/* the context is random-effects estimation */
 	if (mdiff && err == E_NOTPD) {
 	    pputs(prn, _("Hausman test matrix is not positive definite"));
 	    pputc(prn, '\n');
@@ -3511,13 +3559,15 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 }
 
 /* Called in relation to a model estimated by pooled OLS: test for
-   both fixed and random effects.
+   both fixed and random effects. Implements the "panspec" command.
 */
 
 int panel_diagnostics (MODEL *pmod, DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
     int nerlove = 0;
+    int quiet = (opt & OPT_Q);
+    gretlopt psopt = opt;
     panelmod_t pan;
     int xdf, err = 0;
 
@@ -3543,9 +3593,14 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	nerlove = 1;
     }
 
-    /* add OPT_V to make the fixed and random effects functions verbose */
+    /* Add OPT_V to make the fixed and random effects functions verbose,
+       unless we've been passed the --quiet option.
+    */
+    if (!quiet) {
+	psopt |= OPT_V;
+    }
     panelmod_init(&pan);
-    err = panelmod_setup(&pan, pmod, dset, 0, opt | OPT_V);
+    err = panelmod_setup(&pan, pmod, dset, 0, psopt);
     if (err) {
 	goto bailout;
     }
@@ -3588,11 +3643,13 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    /* header */
-    pputc(prn, '\n');
-    pprintf(prn, _("Diagnostics: using n = %d cross-sectional units\n"),
-	    pan.effn);
-    pputc(prn, '\n');
+    if (!quiet) {
+	/* header */
+	pputc(prn, '\n');
+	pprintf(prn, _("Diagnostics: using n = %d cross-sectional units\n"),
+		pan.effn);
+	pputc(prn, '\n');
+    }
 
     err = within_variance(&pan, dset, prn);
     if (err) {
@@ -3627,7 +3684,7 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 		/* this test hardly makes sense if GLS = OLS */
 		breusch_pagan_LM(&pan, prn);
 	    }
-	    finalize_hausman_test(&pan, prn);
+	    finalize_hausman_test(&pan, PANSPEC, prn);
 	}
 
 	if (gset != NULL) {
@@ -3982,7 +4039,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    err = random_effects(&pan, dset, gset, prn);
 	    if (!err) {
 		save_breusch_pagan_result(&pan);
-		finalize_hausman_test(&pan, prn);
+		finalize_hausman_test(&pan, PANEL, prn);
 	    }
 	}
 
@@ -4307,7 +4364,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 {
     MODEL mdl;
     panelmod_t pan;
-    gretlopt wlsopt = OPT_A;
+    gretlopt wlsopt = OPT_A | OPT_Z;
     double *uvar = NULL;
     double *bvec = NULL;
     double s2, diff = 1.0;
@@ -4826,11 +4883,11 @@ static int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
-    int save_pcse = libset_get_bool(PCSE);
+    int save_pcse = libset_get_bool(USE_PCSE);
     int orig_v = dset->v;
     int err;
 
-    libset_set_bool(PCSE, 0);
+    libset_set_bool(USE_PCSE, 0);
 
     if (pmod->ci == OLS || (pmod->opt & OPT_P)) {
 	err = pooled_autocorr_test(pmod, dset, opt, prn);
@@ -4838,7 +4895,7 @@ int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 	err = wooldridge_autocorr_test(pmod, dset, opt, prn);
     }
 
-    libset_set_bool(PCSE, save_pcse);
+    libset_set_bool(USE_PCSE, save_pcse);
     dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return err;
@@ -6232,7 +6289,7 @@ int plausible_panel_time_var (const DATASET *dset)
 
 /* FIXME: this does not yet handle the dropping of instruments */
 
-static int *arbond_list_omit (const MODEL *orig, const int *drop, int *err)
+static int *dpanel_list_omit (const MODEL *orig, const int *drop, int *err)
 {
     const int *old = orig->list;
     int *new = gretl_list_copy(old);
@@ -6284,8 +6341,8 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
     int *newlist = NULL;
     int i;
 
-    if (orig->ci == ARBOND || orig->ci == DPANEL) {
-	return arbond_list_omit(orig, drop, err);
+    if (orig->ci == DPANEL) {
+	return dpanel_list_omit(orig, drop, err);
     }
 
     /* sorry, can't drop the constant */
@@ -6330,7 +6387,7 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
 
 /* FIXME doesn't handle adding instruments */
 
-static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
+static int *dpanel_list_add (const MODEL *orig, const int *add, int *err)
 {
     const int *old = orig->list;
     int *new = gretl_list_copy(old);
@@ -6381,8 +6438,8 @@ static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
 
 int *panel_list_add (const MODEL *orig, const int *add, int *err)
 {
-    if (orig->ci == ARBOND || orig->ci == DPANEL) {
-	return arbond_list_add(orig, add, err);
+    if (orig->ci == DPANEL) {
+	return dpanel_list_add(orig, add, err);
     } else {
 	return gretl_list_add(orig->list, add, err);
     }

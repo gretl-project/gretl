@@ -1034,21 +1034,24 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	   the @path selected by the user
 	*/
 	GtkListStore *store;
+	GtkTreeSelection *sel;
 	GtkTreeIter iter;
+	gulong sigid;
 	int nfn0 = nfn;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model
 			       (GTK_TREE_VIEW(vwin->listbox)));
 	g_dir_rewind(dir);
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+	sigid = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sel), "menu_check"));
+	g_signal_handler_block(sel, sigid);
 	gtk_list_store_clear(store);
+	g_signal_handler_unblock(sel, sigid);
 	nfn = 0;
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	read_fn_files_in_dir(dir, path, store, &iter, &nfn);
 
 	if (nfn > 0) {
-	    GtkTreeSelection *sel;
-
-	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
 	    widget_set_int(vwin->listbox, "altdir", 1);
 	    presort_treelist(vwin);
@@ -1383,6 +1386,9 @@ static int get_menu_add_ok (windata_t *vwin)
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &pkgname);
+    if (pkgname != NULL && !strcmp(pkgname, "ridge")) {
+	return 0;
+    }
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 GFN_DIRNAME_COL, &dirname);
 
@@ -1431,12 +1437,13 @@ static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
 static void connect_menu_adjust_signal (windata_t *vwin)
 {
     GtkTreeSelection *sel;
+    gulong id;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
-
-    g_signal_connect(G_OBJECT(sel), "changed",
-		     G_CALLBACK(check_extra_buttons_state),
-		     vwin);
+    id = g_signal_connect(G_OBJECT(sel), "changed",
+			  G_CALLBACK(check_extra_buttons_state),
+			  vwin);
+    g_object_set_data(G_OBJECT(sel), "menu_check", GINT_TO_POINTER(id));
 }
 
 static void build_funcfiles_popup (windata_t *vwin)
@@ -1722,7 +1729,7 @@ static GretlToolItem pager_items[] = {
     { N_("First"),    GTK_STOCK_GOTO_FIRST, G_CALLBACK(dbnomics_pager_call), 1 },
     { N_("Previous"), GTK_STOCK_GO_BACK,    G_CALLBACK(dbnomics_pager_call), 2 },
     { N_("Next"),     GTK_STOCK_GO_FORWARD, G_CALLBACK(dbnomics_pager_call), 3 },
-    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 },
+    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
@@ -2078,7 +2085,7 @@ void display_files (int role, const gchar *path)
     if (role == FUNC_FILES || role == NATIVE_DB) {
 	title = files_title(role);
     } else if (role == PS_FILES) {
-	title = g_strdup(_("gretl: practice files"));
+	title = g_strdup(_("gretl: example scripts"));
     } else if (role == TEXTBOOK_DATA) {
 	title = g_strdup(_("gretl: data files"));
     } else if (role == REMOTE_DB) {
@@ -2237,7 +2244,7 @@ static int display_files_code (const gchar *s)
 }
 
 /* make a browser window to display a set of files: textbook
-   data files, practice scripts, databases...
+   data files, example (formerly: practice) scripts, databases...
 */
 
 void show_files (GtkAction *action, gpointer p)
@@ -2954,7 +2961,8 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
-	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
+	G_TYPE_BOOLEAN,  /* hidden boolean: zipfile? */
+	G_TYPE_STRING    /* hidden string: dependencies */
     };
     GType addons_types[] = {
 	G_TYPE_STRING,
@@ -3021,7 +3029,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = remote_func_titles;
 	types = remote_func_types;
 	cols = G_N_ELEMENTS(remote_func_types);
-	hidden_cols = 1;
+	hidden_cols = 2;
 	full_width = 760;
 	file_height = 340;
 	break;
@@ -3069,7 +3077,7 @@ static void switch_files_page (GtkNotebook *notebook,
 }
 
 /* below: construct a set of notebook pages for either data file
-   collections (Ramanathan, Wooldridge, etc.) or practice scripts.
+   collections (Ramanathan, Wooldridge, etc.) or example scripts.
    The function creates the pages but does not yet fill them out.
 */
 

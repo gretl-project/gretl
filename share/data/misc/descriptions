@@ -44,7 +44,6 @@
 "ooballot","Country votes on Office Open XML as ISO standard","cross section, n=87"
 "penngrow","Nerlove cross-country growth data","panel, T=6 N=94"
 "pension","Pension-plan participation (Papke, 2004)","cross section, n=194"
-"poisson","Test data for Poisson regression","cross section, n=100"
 "rac3d","Cameron-Trivedi doctor visits data","cross section, n=5190"
 "recid","Wooldridge recidivism (duration) data","cross section, n=1445"
 "rwm","German microdata, assorted socioeconomic variables","panel, T=7 N=7293"

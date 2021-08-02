@@ -33,6 +33,7 @@ const char *special_keyword[] = {
     "identity",
     "endog",
     "instr",
+    "equations",
     NULL
 };
 
@@ -49,6 +50,7 @@ const char *gretl_data_types[] = {
     "matrices",
     "bundles",
     "lists",
+    "arrays",
     "null",
     "void",
     "const",

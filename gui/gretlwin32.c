@@ -89,8 +89,7 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 
     if (IsValidCodePage(65001) && SetConsoleOutputCP(65001)) {
-	/* flag successful switch */
-	set_native_utf8(1);
+	; /* OK */
     }
 }
 
@@ -304,7 +303,6 @@ void gretl_win32_debug_init (int debug)
 	set_windebug(1);
 	fprintf(stderr, "Windows locale = %s\n",
 		winlocale == NULL ? "NULL" : winlocale);
-	fprintf(stderr, "codepage = %d\n", get_gretl_cpage());
 	g_get_charset(&charset);
 	fprintf(stderr, "charset = %s\n", charset);
 	pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
@@ -324,14 +322,10 @@ void gretl_win32_init (int debug)
     char tmp[4] = {0};
 
 #if GTK_MAJOR_VERSION < 3
-    /* Are we using the XP theme (as opposed to "classic")?
-       In that case we'll make use of libwimp the default,
-       prior to reading the user's config file.
-    */
     read_reg_val(HKEY_CURRENT_USER,
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager",
 		 "ThemeActive", tmp);
-    set_wimp_preferred(!strcmp(tmp, "1"));
+    set_wimp_preferred(strcmp(tmp, "1") == 0);
 #endif
 
     read_win32_config(debug);
@@ -727,162 +721,6 @@ int win32_open_file (const char *fname)
 
     return err;
 }
-
-#ifdef USE_WIN32_FONTSEL
-
-static PangoFont *try_font_remedy (const char *src,
-				   PangoContext *pc,
-				   int which)
-{
-    PangoFontDescription *pfd = NULL;
-    PangoFont *font = NULL;
-
-    if (strstr(src, "Italic") != NULL) {
-	/* maybe it's an Italic vs Oblique thing? */
-	int err = 0;
-	char *tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
-
-	if (tmp != NULL) {
-	    pfd = pango_font_description_from_string(tmp);
-	    font = pango_context_load_font(pc, pfd);
-	    fprintf(stderr, "font remedy: '%s' -> %p\n", tmp, (void *) font);
-	    pango_font_description_free(pfd);
-	    free(tmp);
-	}
-    }
-
-    if (font == NULL) {
-	/* try a (hopefully reliable) fallback? */
-	const char *fonts[2] = {
-            "Arial 8",
-            "Courier 10"
-	};
-	const char *try;
-
-	try = (which == FIXED_FONT_SELECTION)? fonts[1] : fonts[0];
-	pfd = pango_font_description_from_string(try);
-	font = pango_context_load_font(pc, pfd);
-	fprintf(stderr, "font remedy: '%s' -> %p\n", try, (void *) font);
-	pango_font_description_free(pfd);
-    }
-
-    return font;
-}
-
-/* convert from gretl font string @src to a pango font specification,
-   and thence to Windows LOGFONT
-*/
-
-static int fontspec_to_win32 (CHOOSEFONTW *cf,
-			      const char *src,
-			      int which)
-{
-    static PangoFontMap *map;
-    static PangoContext *pc;
-    PangoFontDescription *pfd;
-    PangoFont *font;
-    int err = 0;
-
-    if (map == NULL) {
-	map = pango_win32_font_map_for_display();
-	pc = pango_font_map_create_context(map);
-    }
-
-    pfd = pango_font_description_from_string(src);
-    font = pango_context_load_font(pc, pfd);
-    if (font == NULL) {
-	font = try_font_remedy(src, pc, which);
-    }
-    if (font == NULL) {
-	err = E_DATA;
-    } else {
-	cf->lpLogFont = pango_win32_font_logfontw(font);
-	g_object_unref(font);
-    }
-
-    pango_font_description_free(pfd);
-
-    return err;
-}
-
-/* convert from Windows CHOOSEFONT to pango font specification,
-   and thence to the string @spec for use by gretl
-*/
-
-static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
-{
-    PangoFontDescription *pfd;
-    gchar *fstr;
-
-    *spec = '\0';
-
-    pfd = pango_win32_font_description_from_logfontw(cf->lpLogFont);
-    if (pfd == NULL) {
-	return;
-    }
-
-    if (cf->lpLogFont->lfItalic) {
-	/* remedial for gnuplot fonts: "Oblique" -> "Italic",
-	   since "Oblique" is not getting recognized
-	*/
-	PangoStyle style = pango_font_description_get_style(pfd);
-
-	if (style == PANGO_STYLE_OBLIQUE) {
-	    pango_font_description_set_style(pfd, PANGO_STYLE_ITALIC);
-	}
-    }
-
-    pango_font_description_set_size(pfd, PANGO_SCALE * cf->iPointSize / 10);
-    fstr = pango_font_description_to_string(pfd);
-    if (fstr != NULL && *fstr != '\0') {
-	strcpy(spec, fstr);
-    }
-    g_free(fstr);
-    pango_font_description_free(pfd);
-}
-
-void win32_font_selector (char *fontname, int flag)
-{
-    CHOOSEFONTW cf; /* info for font selection dialog */
-    LOGFONTW lfont;
-    int free_font = 1;
-    int err;
-
-    ZeroMemory(&cf, sizeof cf);
-    cf.lStructSize = sizeof cf;
-    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE |
-	CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL;
-    if (flag == FIXED_FONT_SELECTION) {
-	cf.Flags |= CF_FIXEDPITCHONLY;
-    }
-    cf.nSizeMin = 6;
-    cf.nSizeMax = 24;
-
-    err = fontspec_to_win32(&cf, fontname, flag);
-
-    if (err) {
-	/* fall back to empty initializer */
-	fprintf(stderr, "win32_font_selector: empty initializer\n");
-	ZeroMemory(&lfont, sizeof lfont);
-	cf.lpLogFont = &lfont;
-	cf.Flags &= ~CF_INITTOLOGFONTSTRUCT;
-	free_font = 0;
-    }
-
-    if (ChooseFontW(&cf)) {
-	winfont_to_fontspec(fontname, &cf);
-    } else {
-	/* signal cancellation */
-	*fontname = '\0';
-    }
-
-    if (free_font) {
-	/* allocated via pango */
-	g_free(cf.lpLogFont);
-    }
-}
-
-#endif /* USE_WIN32_FONTSEL */
 
 int win32_rename_dir (const char *oldname, const char *newname)
 {
