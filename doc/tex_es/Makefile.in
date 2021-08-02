@@ -57,7 +57,7 @@ functex:
 	$(MAKE) -C ../commands functex_es
 
 date.tex:
-	LANG=es_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+	LANG=es_ES.UTF-8 date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 refpass: gretl-ref-es.tex links cmdtex topiclist
 	pdflatex $<

@@ -57,7 +57,7 @@ functex:
 	$(MAKE) -C ../commands functex_gl
 
 date.tex: $(ALLSRC)
-	LANG=gl_ES.UTF-8 date "+%B %Y" > $@
+	LANG=gl_ES.UTF-8 date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 refpass: gretl-ref-gl.tex links cmdtex_gl functex_gl textables_gl topiclist
 	 pdflatex $<
