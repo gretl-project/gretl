@@ -2183,30 +2183,78 @@ static int get_x12a_doc_path (char *path, const char *fname)
     return ret;
 }
 
-static int show_translation (const char *lang)
+static const char *tr_query (const char *lang)
 {
-    int in_locale = 0;
+    if (!strcmp(lang, "es")) {
+	return "¿Mostrar traducción al español?";
+    } else if (!strcmp(lang, "gl")) {
+	return "Mostrar tradución ao galego?";
+    } else if (!strcmp(lang, "it")) {
+	return "Mostra traduzione in italiano?";
+    } else if (!strcmp(lang, "pt")) {
+	return "Mostrar portugues tradução?";
+    } else if (!strcmp(lang, "ru")) {
+	return "Показать перевод на русский язык?";
+    } else {
+	return NULL;
+    }
+}
+
+static const char *have_translation (int code, const char *lang)
+{
+    gchar *ret = NULL;
+
+    if (code == HANSL_PRIMER) {
+	if (!strcmp(lang, "ru")) {
+	    ret = "hansl-primer-ru.pdf";
+	}
+    } else if (code == GRETL_REF) {
+	if (!strcmp(lang, "es")) {
+	    ret = "gretl-ref-es.pdf";
+	} else if (!strcmp(lang, "gl")) {
+	    ret = "gretl-ref-gl.pdf";
+	} else if (!strcmp(lang, "it")) {
+	    ret = "gretl-ref-it.pdf";
+	} else if (!strcmp(lang, "pt")) {
+	    ret = "gretl-ref-pt.pdf";
+	}
+    }
+
+    return ret;
+}
+
+static const char *show_translation (int code)
+{
+    const char *fname = NULL;
+    char lang[3] = {0};
 
 #ifdef WIN32
     gchar *loc = g_win32_getlocale();
 
-    in_locale = (loc != NULL && !strncmp(loc, lang, 2));
-    g_free(loc);
+    strncat(lang, loc, 2);
+    if (loc != NULL) {
+	fname = have_translation(code, lang);
+	g_free(loc);
+    }
 #elif defined(ENABLE_NLS)
-    char *loc = setlocale(LC_ALL, NULL);
+    char *loc = setlocale(LC_MESSAGES, NULL);
 
-    in_locale = (loc != NULL && !strncmp(loc, lang, 2));
+    if (loc != NULL) {
+	strncat(lang, loc, 2);
+	fname = have_translation(code, lang);
+    }
 #endif
 
-    if (in_locale) {
-	const char *msg = (strcmp(lang, "it") == 0)?
-	    "Mostra traduzione in italiano?" :
-	    "Показать перевод на русский язык?";
+    if (fname != NULL) {
+	const char *msg = tr_query(lang);
+	int resp = yes_no_dialog(NULL, msg, NULL);
 
-	return yes_no_dialog(NULL, msg, NULL) == GRETL_YES;
-    } else {
-	return 0;
+	if (resp != GRETL_YES) {
+	    fname = NULL;
+	}
     }
+
+    return fname;
 }
 
 /* @pref is the documentation preference registered in settings.c:
@@ -2224,7 +2272,6 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
     const char *ref_files[] = {
 	"gretl-ref.pdf",
 	"gretl-ref-a4.pdf",
-	"gretl-ref-it.pdf"
     };
     const char *kbd_files[] = {
 	"gretl-keys.pdf",
@@ -2233,7 +2280,6 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
     const char *primer_files[] = {
 	"hansl-primer.pdf",
 	"hansl-primer-a4.pdf",
-	"hansl-primer-ru.pdf"
     };
     const char *pkgbook_files[] = {
 	"pkgbook.pdf",
@@ -2247,7 +2293,7 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	"gretl-svm.pdf",
 	"gretl-svm-a4.pdf"
     };
-    const char *fname;
+    const char *fname = NULL;
     int gotit = 0;
     int err = 0;
 
@@ -2258,21 +2304,23 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 
     if (pref > 0) {
 	/* Try offering a translation where available: currently only
-	   for the Gretl Reference (Italian) and Hansl primer (Russian).
+	   for the Gretl Reference and Hansl primer (Russian).
 	*/
-	const char *lang = (code == GRETL_REF)? "it" :
-	    (code == HANSL_PRIMER)? "ru" : NULL;
-
-	if (lang != NULL && show_translation(lang)) {
-	    pref = 2;
-	} else {
-	    pref = 1;
+	pref = 1;
+	if (code == HANSL_PRIMER || code == GRETL_REF) {
+	    fname = show_translation(code);
 	}
     }
 
 #if 0
-    fprintf(stderr, "HERE code=%d, pref=%d\n", code, pref);
+    fprintf(stderr, "HERE code=%d, pref=%d, fname %s\n",
+	    code, pref, fname != NULL ? fname : "TBD");
 #endif
+
+    if (fname != NULL) {
+	/* got a specific translation */
+	goto next_step;
+    }
 
     if (code == GRETL_GUIDE) {
 	fname = guide_files[pref];
@@ -2303,6 +2351,8 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
     } else {
 	return E_DATA;
     }
+
+ next_step:
 
     fprintf(stderr, "pdf help: looking for %s\n", fname);
 
