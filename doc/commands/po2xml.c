@@ -6,7 +6,9 @@
    in translations of gretl_functions_en.xml, with the aim of
    making them come out correctly in the TeX/PDF version of the
    Gretl Reference. The LANG setting when the program is run
-   determines the language of the translated strings.
+   determines the language of the translated strings. E.g.
+   
+   LANG=gl_ES.UTF-8 ./po2xml will show Galician strings
 
    Allin Cottrell, August 2021
 */
