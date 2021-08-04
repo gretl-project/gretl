@@ -85,9 +85,7 @@ static void (*print_constraints) (lprec *lp, int columns);
 static void (*print_duals) (lprec *lp);
 
 static REAL (*get_objective) (lprec *lp);
-#if 0 /* requires latest lpsolve */
 static REAL (*get_accuracy) (lprec *lp);
-#endif
 static unsigned char (*get_primal_solution) (lprec *lp, REAL *pv);
 static unsigned char (*get_dual_solution) (lprec *lp, REAL *duals);
 static unsigned char (*get_sensitivity_rhs) (lprec *lp, REAL *duals,
@@ -109,7 +107,7 @@ static void *lpget (void *handle, const char *name, int *err)
     void *p = dlsym(handle, name);
 #endif
 
-    if (p == NULL) {
+    if (p == NULL && err != NULL) {
 	printf("lpget: couldn't find '%s'\n", name);
 	*err += 1;
     }
@@ -155,6 +153,7 @@ static int gretl_lpsolve_init (void)
 	get_dual_solution   = lpget(lphandle, "get_dual_solution", &err);
 	get_sensitivity_rhs = lpget(lphandle, "get_sensitivity_rhs", &err);
 	set_outputstream    = lpget(lphandle, "set_outputstream", &err);
+	get_accuracy        = lpget(lphandle, "get_accuracy", NULL);
 
 	if (err) {
 	    close_plugin(lphandle);
@@ -393,6 +392,12 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 
     obj = get_objective(lp);
     gretl_bundle_set_scalar(ret, "objective", obj);
+    if (get_accuracy != NULL) {
+	/* requires an up-to-date lpsolve version */
+	double acc = get_accuracy(lp);
+
+	gretl_bundle_set_scalar(ret, "accuracy", acc);
+    }
 
     if (get_primal_solution(lp, prim)) {
 	k = 1;
