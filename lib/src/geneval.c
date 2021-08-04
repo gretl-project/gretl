@@ -10492,6 +10492,24 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *lpsolve_bundle_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_bundle_node(p);
+
+    if (ret != NULL) {
+	gretl_bundle *(*lpfunc) (gretl_bundle *, PRN *, int *);
+
+	lpfunc = get_plugin_function("gretl_lpsolve");
+	if (lpfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    ret->v.b = (*lpfunc)(n->v.b, p->prn, &p->err);
+	}
+    }
+
+    return ret;
+}
+
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
     gretl_bundle *b = NULL;
@@ -17112,6 +17130,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;
+    case F_LPSOLVE:
+	if (l->t == BUNDLE) {
+	    ret = lpsolve_bundle_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
+	break;
     case F_SVM:
         ret = svm_driver_node(t, p);
         break;

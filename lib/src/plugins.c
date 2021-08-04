@@ -97,7 +97,8 @@ enum {
     P_REGLS,
     P_GEOPLOT,
     P_PUREBIN,
-    P_BDSTEST
+    P_BDSTEST,
+    P_LPSOLVE
 } plugin_codes;
 
 struct plugin_info {
@@ -162,6 +163,7 @@ struct plugin_info plugins[] = {
     { P_GEOPLOT,         "geoplot",         NULL },
     { P_PUREBIN,         "purebin",         NULL },
     { P_BDSTEST,         "bdstest",         NULL },
+    { P_LPSOLVE,         "lpsolve",         NULL },
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -326,6 +328,9 @@ struct plugin_function_info plugin_functions[] = {
 
     /* BDS nonlinearity test */
     { "bdstest", P_BDSTEST},
+
+    /* interface to lpsolve library */
+    { "gretl_lpsolve", P_LPSOLVE},
 
     /* sentinel */
     { NULL, 0 }
