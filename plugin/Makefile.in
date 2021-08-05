@@ -228,6 +228,8 @@ endif
 
 ifeq ($(macpkg),yes)
   LPLIB = -llpsolve55
+else ifeq ($(win32pkg),yes)
+  LPLIB = -llpsolve55.dll
 endif
 
 vpath %.c $(topsrc)/plugin/libole2

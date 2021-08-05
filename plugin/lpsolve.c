@@ -24,7 +24,7 @@
 #include "libgretl.h"
 #include "version.h"
 
-#if defined(OS_OSX)
+#if defined(PKGBUILD)
 # define PRELINKED
 #elif defined(WIN32)
 # include <windows.h>
