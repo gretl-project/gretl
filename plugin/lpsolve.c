@@ -247,7 +247,7 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	    if (mname != NULL) {
 		set_lp_name(lp, (char *) mname);
 	    }
-	    /* set liblpsolve verbosity level */
+	    /* set lpsolve verbosity level */
 	    if (opt & OPT_V) {
 		set_verbose(lp, NORMAL);
 	    } else {
@@ -444,17 +444,13 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 static gretlopt lp_options_from_bundle (gretl_bundle *b)
 {
     gretlopt opt = OPT_NONE;
-    const char *s;
 
-    s = gretl_bundle_get_string(b, "optimize", NULL);
-    if (s != NULL && !strncmp(s, "min", 3)) {
+    if (gretl_bundle_get_bool(b, "minimize", 0)) {
 	opt |= OPT_I;
     }
-
     if (gretl_bundle_get_bool(b, "verbose", 0)) {
 	opt |= OPT_V;
     }
-
     if (gretl_bundle_get_bool(b, "sensitivity", 0)) {
 	opt |= OPT_S;
     }
