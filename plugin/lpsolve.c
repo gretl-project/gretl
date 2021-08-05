@@ -17,20 +17,24 @@
  *
  */
 
-/*  Apparatus for interfacing with the lipsolve library for
+/*  Apparatus for interfacing with the lpsolve library for
     solution of linear programming problems.
 */
 
 #include "libgretl.h"
 #include "version.h"
 
-#ifdef WIN32
+#if defined(OS_OSX)
+# define PRELINKED
+#elif defined(WIN32)
 # include <windows.h>
 #else
 # include <dlfcn.h>
 #endif
 
-/* The bits of the lpsolve API that we need */
+/* The bits of the lpsolve API that we need; we prefer not to include
+   lp_lib.h since it contains some defines that conflict with GLib.
+*/
 
 typedef struct _lprec lprec;
 typedef double REAL;
@@ -46,7 +50,7 @@ enum { LE = 1, GE, EQ };
 #define DETAILED   5
 #define FULL       6
 
-/* Solver status values */
+/* solver status values */
 #define UNKNOWNERROR  -5
 #define DATAIGNORED   -4
 #define NOBFP         -3
@@ -63,12 +67,46 @@ enum { LE = 1, GE, EQ };
 #define RUNNING        8
 #define PRESOLVED      9
 
+#ifdef PRELINKED
+
+/* On macOS security considerations make it easier to link
+   against the lpsolve dylib and include it in the gretl
+   package. On other platforms we'll load the symbols that
+   we need dynamically.
+*/
+
+lprec *make_lp (int rows, int columns);
+void delete_lp (lprec *lp);
+void set_verbose (lprec *lp, int verbose);
+void set_maxim (lprec *lp);
+unsigned char set_lp_name (lprec *lp, char *s);
+unsigned char set_obj_fn (lprec *lp, REAL *row);
+unsigned char add_constraint (lprec *lp, REAL *row,
+			      int constr_type, REAL rh);
+unsigned char set_col_name (lprec *lp, int col, char *name);
+unsigned char set_row_name (lprec *lp, int row, char *name);
+int get_Nrows (lprec *lp);
+int get_Ncolumns (lprec *lp);
+int solve (lprec *lp);
+void print_objective (lprec *lp);
+void print_solution (lprec *lp, int columns);
+void print_constraints (lprec *lp, int columns);
+void print_duals (lprec *lp);
+REAL get_objective (lprec *lp);
+REAL get_accuracy (lprec *lp);
+unsigned char get_primal_solution (lprec *lp, REAL *pv);
+unsigned char get_dual_solution (lprec *lp, REAL *duals);
+unsigned char get_sensitivity_rhs (lprec *lp, REAL *duals,
+				   REAL *from, REAL *till);
+void set_outputstream (lprec *lp, FILE *fp);
+
+#else
+
 static lprec *(*make_lp) (int rows, int columns);
 static void (*delete_lp) (lprec *lp);
 static void (*set_verbose) (lprec *lp, int verbose);
 static void (*set_maxim) (lprec *lp);
 static unsigned char (*set_lp_name) (lprec *lp, char *s);
-
 static unsigned char (*set_obj_fn) (lprec *lp, REAL *row);
 static unsigned char (*add_constraint) (lprec *lp, REAL *row,
 					int constr_type, REAL rh);
@@ -76,24 +114,18 @@ static unsigned char (*set_col_name) (lprec *lp, int col, char *name);
 static unsigned char (*set_row_name) (lprec *lp, int row, char *name);
 static int (*get_Nrows) (lprec *lp);
 static int (*get_Ncolumns) (lprec *lp);
-
 static int (*solve) (lprec *lp);
-
 static void (*print_objective) (lprec *lp);
 static void (*print_solution) (lprec *lp, int columns);
 static void (*print_constraints) (lprec *lp, int columns);
 static void (*print_duals) (lprec *lp);
-
 static REAL (*get_objective) (lprec *lp);
 static REAL (*get_accuracy) (lprec *lp);
 static unsigned char (*get_primal_solution) (lprec *lp, REAL *pv);
 static unsigned char (*get_dual_solution) (lprec *lp, REAL *duals);
 static unsigned char (*get_sensitivity_rhs) (lprec *lp, REAL *duals,
 					     REAL *from, REAL *till);
-
 static void (*set_outputstream) (lprec *lp, FILE *fp);
-
-/* end lpsolve API info */
 
 static void *lphandle;            /* handle to the lpsolve library */
 static int gretl_lpsolve_err;     /* initialization error record */
@@ -167,6 +199,8 @@ static int gretl_lpsolve_init (void)
 
     return err;
 }
+
+#endif /* not PRELINKED */
 
 static void lp_row_from_mrow (double *targ, int nv,
 			      const gretl_matrix *m,
@@ -368,7 +402,6 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
     gretl_matrix *VC = gretl_matrix_alloc(nr, 1);
     gretl_matrix *VV = gretl_matrix_alloc(nc, 1);
     gretl_matrix *SP = gretl_matrix_alloc(nr, 1);
-    double obj;
 
     if (prim == NULL || dual == NULL ||
 	VC == NULL || VV == NULL || SP == NULL) {
@@ -390,14 +423,16 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 	gretl_matrix_set_rownames(SP, S);
     }
 
-    obj = get_objective(lp);
-    gretl_bundle_set_scalar(ret, "objective", obj);
-    if (get_accuracy != NULL) {
-	/* requires an up-to-date lpsolve version */
-	double acc = get_accuracy(lp);
+    gretl_bundle_set_scalar(ret, "objective", get_objective(lp));
 
-	gretl_bundle_set_scalar(ret, "accuracy", acc);
+    /* note: get_accuracy() requires lpsolve >= 5.5.2.11 */
+#ifdef PRELINKED
+    gretl_bundle_set_scalar(ret, "accuracy", get_accuracy(lp));
+#else
+    if (get_accuracy != NULL) {
+	gretl_bundle_set_scalar(ret, "accuracy", get_accuracy(lp));
     }
+#endif
 
     if (get_primal_solution(lp, prim)) {
 	k = 1;
@@ -460,7 +495,7 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b)
 
 /* Run the lpsolve solve() function, with provision to
    catch output that would by default go to stdout in
-   case or error, or of verbose output requested.
+   case of error, or when verbose output is requested.
 */
 
 static int maybe_catch_solve (lprec *lp, gretlopt opt,
@@ -503,6 +538,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     gretlopt opt;
     lprec *lp;
 
+#ifndef PRELINKED
     if (!gretl_lpsolve_initted) {
 	gretl_lpsolve_init();
     }
@@ -512,6 +548,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	*err = gretl_lpsolve_err;
 	return NULL;
     }
+#endif
 
     opt = lp_options_from_bundle(b);
     lp = lp_model_from_bundle(b, &cnames, &rnames, opt, err);
