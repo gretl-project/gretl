@@ -21,6 +21,7 @@ gtk_version = @gtk_version@
 use_gsf = @use_gsf@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
+macpkg = @macpkg@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -225,6 +226,10 @@ ifeq ($(have_odbc),yes)
   ODBC_LIBS = @ODBC_LIBS@
 endif
 
+ifeq ($(macpkg),yes)
+  LPLIB = -llpsolve55
+endif
+
 vpath %.c $(topsrc)/plugin/libole2
 vpath %.h $(topsrc)/plugin/libole2
 
@@ -388,7 +393,7 @@ bdstest.la: bdstest.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 lpsolve.la: lpsolve.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GRETLLIB) $(LPLIB)
 
 # plugins that require GTK+
 
