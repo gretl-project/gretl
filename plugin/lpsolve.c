@@ -69,13 +69,15 @@ enum { LE = 1, GE, EQ };
 
 #ifdef PRELINKED
 
-/* On macOS security considerations make it easier to link
-   against the lpsolve dylib and include it in the gretl
-   package. On other platforms we'll load the symbols that
-   we need dynamically.
+/* In our macOS and Windows packages we ease the user's path
+   by including the lpsolve shared library and linking this
+   plugin against it. Otherwise we look to load the required
+   symbols on demand at run-time. On Linux this should be
+   easy.
 */
 
 lprec *make_lp (int rows, int columns);
+unsigned char set_add_rowmode (lprec *lp, unsigned char s);
 void delete_lp (lprec *lp);
 void set_verbose (lprec *lp, int verbose);
 void set_maxim (lprec *lp);
@@ -104,6 +106,7 @@ void set_outputstream (lprec *lp, FILE *fp);
 #else
 
 static lprec *(*make_lp) (int rows, int columns);
+static unsigned char (*set_add_rowmode) (lprec *lp, unsigned char s);
 static void (*delete_lp) (lprec *lp);
 static void (*set_verbose) (lprec *lp, int verbose);
 static void (*set_maxim) (lprec *lp);
@@ -157,8 +160,11 @@ static int gretl_lpsolve_init (void)
 	return gretl_lpsolve_err;
     }
 
-#ifdef WIN32
+    /* FIXME make the library name/path configurable */
+#if defined(WIN32)
     lphandle = LoadLibrary("lpsolve55.dll");
+#elif defined(OS_OSX)
+    lphandle = dlopen("liblpsolve55.dylib", RTLD_NOW);
 #else
     lphandle = dlopen("liblpsolve55.so", RTLD_NOW);
 #endif
@@ -167,6 +173,7 @@ static int gretl_lpsolve_init (void)
 	err = E_EXTERNAL;
     } else {
 	make_lp             = lpget(lphandle, "make_lp", &err);
+	set_add_rowmode     = lpget(lphandle, "set_add_rowmode", &err);
 	set_lp_name         = lpget(lphandle, "set_lp_name", &err);
 	delete_lp           = lpget(lphandle, "delete_lp", &err);
 	set_verbose         = lpget(lphandle, "set_verbose", &err);
@@ -203,7 +210,7 @@ static int gretl_lpsolve_init (void)
     return err;
 }
 
-#endif /* not PRELINKED */
+#endif /* not PRELINKED to lpsolve library */
 
 static void lp_row_from_mrow (double *targ, int nv,
 			      const gretl_matrix *m,
@@ -221,7 +228,64 @@ static int lp_ctype_from_string (const char *s)
     if (!strcmp(s, "=")) return EQ;
     else if (!strcmp(s, "<=")) return LE;
     else if (!strcmp(s, ">=")) return GE;
-    else return -9;
+    else return -1;
+}
+
+/* We'll accept constraint-type specifiers either as strings
+   or as integer values */
+
+static int *get_constraint_types (gretl_bundle *b,
+				  int nc, int *err)
+{
+    gretl_array *S = NULL;
+    gretl_matrix *m = NULL;
+    int *ret = NULL;
+    GretlType t;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(b, "ctypes", &t, NULL, err);
+
+    if (!*err) {
+	if (t == GRETL_TYPE_ARRAY) {
+	    S = ptr;
+	    if (gretl_array_get_type(S) != GRETL_TYPE_STRINGS ||
+		gretl_array_get_length(S) != nc) {
+		*err = E_DATA;
+	    }
+	} else if (t == GRETL_TYPE_MATRIX) {
+	    m = ptr;
+	    if (gretl_vector_get_length(m) != nc) {
+		*err = E_DATA;
+	    }
+	} else {
+	    *err = E_DATA;
+	}
+    }
+
+    if (!*err) {
+	int i;
+
+	ret = malloc(nc * sizeof *ret);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+	for (i=0; i<nc && !*err; i++) {
+	    if (S != NULL) {
+		ret[i] = lp_ctype_from_string(gretl_array_get_data(S, i));
+	    } else {
+		ret[i] = m->val[i];
+	    }
+	    if (ret[i] < LE || ret[i] > EQ) {
+		*err = E_DATA;
+	    }
+	}
+	if (*err) {
+	    free(ret);
+	    ret = NULL;
+	}
+    }
+
+    return ret;
 }
 
 static lprec *lp_model_from_bundle (gretl_bundle *b,
@@ -234,7 +298,7 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     const gretl_matrix *O = NULL; /* objective coeffs */
     const gretl_matrix *R = NULL; /* constraints */
     const gretl_matrix *K = NULL; /* integer spec */
-    gretl_array *S = NULL;        /* strings: constraint types */
+    int *ctypes = NULL;           /* constraint types */
     int nv = 0;  /* number of variables */
     int nc = 0;  /* number of constraints */
     int ni = 0;  /* number of integer variables */
@@ -244,12 +308,9 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     if (!*err) {
 	R = gretl_bundle_get_matrix(b, "constraints", err);
     }
-    if (!*err) {
-	S = gretl_bundle_get_array(b, "ctypes", err);
-    }
 
     if (!*err) {
-	/* checks on @O, @R and @S */
+	/* checks on @O and @R */
 	nv = gretl_vector_get_length(O);
 	if (nv == 0) {
 	    *err = E_DATA;
@@ -261,10 +322,7 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	    nc = R->rows;
 	}
 	if (!*err) {
-	    if (gretl_array_get_type(S) != GRETL_TYPE_STRINGS ||
-		gretl_array_get_length(S) != nc) {
-		*err = E_DATA;
-	    }
+	    ctypes = get_constraint_types(b, nc, err);
 	}
     }
 
@@ -280,19 +338,18 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     }
 
     if (!*err) {
-	char **cs = gretl_array_get_strings(S, &nc);
 	const char **cnames = gretl_matrix_get_colnames(O);
 	const char **rnames = gretl_matrix_get_rownames(R);
 	const char *mname = gretl_bundle_get_string(b, "model_name", NULL);
 	double rhs, *row = calloc(nv+1, sizeof *row);
-	int col, ctype;
-	int i, j;
+	int col, i, j;
 
 	lp = make_lp(0, nv);
 
 	if (lp == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    /* set model name? */
 	    if (mname != NULL) {
 		set_lp_name(lp, (char *) mname);
 	    }
@@ -302,6 +359,8 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	    } else {
 		set_verbose(lp, CRITICAL);
 	    }
+	    /* set rowmode: this has to be placed carefully! */
+	    set_add_rowmode(lp, 1);
 	    /* objective function */
 	    if (!(opt & OPT_I)) {
 		set_maxim(lp);
@@ -313,7 +372,7 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 		}
 	    }
 	    set_obj_fn(lp, row);
-	    /* integer specs? */
+	    /* integer variable specifiers? */
 	    for (j=0; j<ni; j++) {
 		col = K->val[j];
 		if (col > 0 && col <= nv) {
@@ -321,24 +380,23 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 		}
 	    }
 	    /* constraints */
-	    for (i=0; i<nc && !*err; i++) {
-		ctype = lp_ctype_from_string(cs[i]);
-		if (ctype < 0) {
-		    *err = E_DATA;
-		} else {
-		    lp_row_from_mrow(row, nv, R, i);
-		    rhs = gretl_matrix_get(R, i, nv);
-		    add_constraint(lp, row, ctype, rhs);
-		    if (rnames != NULL) {
-			set_row_name(lp, i+1, (char *) rnames[i]);
-		    }
+	    for (i=0; i<nc; i++) {
+		lp_row_from_mrow(row, nv, R, i);
+		rhs = gretl_matrix_get(R, i, nv);
+		add_constraint(lp, row, ctypes[i], rhs);
+		if (rnames != NULL) {
+		    set_row_name(lp, i+1, (char *) rnames[i]);
 		}
 	    }
+	    /* turn off rowmode or lpsolve will likely crash */
+	    set_add_rowmode(lp, 0);
 	    *pcnames = cnames;
 	    *prnames = rnames;
 	}
 	free(row);
     }
+
+    free(ctypes);
 
     return lp;
 }
@@ -399,7 +457,7 @@ static void print_lpsolve_output (lprec *lp,
 	}
 	print_duals(lp);
 	fputc('\n', fp);
-	fclose(fp);
+	fflush(fp);
 	set_outputstream(lp, stdout);
 	if (g_file_get_contents(fname, &buf, NULL, NULL)) {
 	    pputs(prn, buf);
@@ -532,7 +590,6 @@ static int maybe_catch_solve (lprec *lp, gretlopt opt,
 
 	set_outputstream(lp, fp);
 	retval = solve(lp);
-	fclose(fp);
 	set_outputstream(lp, stdout);
 	if ((opt & OPT_V) || retval != OPTIMAL) {
 	    if (g_file_get_contents(fname, &buf, NULL, NULL)) {
