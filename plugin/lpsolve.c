@@ -85,6 +85,7 @@ unsigned char add_constraint (lprec *lp, REAL *row,
 			      int constr_type, REAL rh);
 unsigned char set_col_name (lprec *lp, int col, char *name);
 unsigned char set_row_name (lprec *lp, int row, char *name);
+unsigned char set_int (lprec *lp, int col, unsigned char s);
 int get_Nrows (lprec *lp);
 int get_Ncolumns (lprec *lp);
 int solve (lprec *lp);
@@ -112,6 +113,7 @@ static unsigned char (*add_constraint) (lprec *lp, REAL *row,
 					int constr_type, REAL rh);
 static unsigned char (*set_col_name) (lprec *lp, int col, char *name);
 static unsigned char (*set_row_name) (lprec *lp, int row, char *name);
+static unsigned char (*set_int) (lprec *lp, int col, unsigned char s);
 static int (*get_Nrows) (lprec *lp);
 static int (*get_Ncolumns) (lprec *lp);
 static int (*solve) (lprec *lp);
@@ -173,6 +175,7 @@ static int gretl_lpsolve_init (void)
 	add_constraint      = lpget(lphandle, "add_constraint", &err);
 	set_col_name        = lpget(lphandle, "set_col_name", &err);
 	set_row_name        = lpget(lphandle, "set_row_name", &err);
+	set_int             = lpget(lphandle, "set_int", &err);
 	get_Nrows           = lpget(lphandle, "get_Nrows", &err);
 	get_Ncolumns        = lpget(lphandle, "get_Ncolumns", &err);
 	solve               = lpget(lphandle, "solve", &err);
@@ -230,9 +233,11 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     lprec *lp = NULL;
     const gretl_matrix *O = NULL; /* objective coeffs */
     const gretl_matrix *R = NULL; /* constraints */
+    const gretl_matrix *K = NULL; /* integer spec */
     gretl_array *S = NULL;        /* strings: constraint types */
     int nv = 0;  /* number of variables */
     int nc = 0;  /* number of constraints */
+    int ni = 0;  /* number of integer variables */
 
     /* required model data */
     O = gretl_bundle_get_matrix(b, "objective", err);
@@ -264,13 +269,23 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     }
 
     if (!*err) {
+	/* check optional setting of integer variables */
+	K = gretl_bundle_get_matrix(b, "intvars", NULL);
+	if (K != NULL) {
+	    ni = gretl_vector_get_length(K);
+	    if (ni == 0 || ni > nv) {
+		*err = E_DATA;
+	    }
+	}
+    }
+
+    if (!*err) {
 	char **cs = gretl_array_get_strings(S, &nc);
 	const char **cnames = gretl_matrix_get_colnames(O);
 	const char **rnames = gretl_matrix_get_rownames(R);
 	const char *mname = gretl_bundle_get_string(b, "model_name", NULL);
-	double *row = calloc(nv+1, sizeof *row);
-	double rhs;
-	int ctype;
+	double rhs, *row = calloc(nv+1, sizeof *row);
+	int col, ctype;
 	int i, j;
 
 	lp = make_lp(0, nv);
@@ -298,6 +313,13 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 		}
 	    }
 	    set_obj_fn(lp, row);
+	    /* integer specs? */
+	    for (j=0; j<ni; j++) {
+		col = K->val[j];
+		if (col > 0 && col <= nv) {
+		    set_int(lp, col, 1);
+		}
+	    }
 	    /* constraints */
 	    for (i=0; i<nc && !*err; i++) {
 		ctype = lp_ctype_from_string(cs[i]);
