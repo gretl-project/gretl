@@ -88,6 +88,8 @@ unsigned char add_constraint (lprec *lp, REAL *row,
 			      int constr_type, REAL rh);
 unsigned char set_col_name (lprec *lp, int col, char *name);
 unsigned char set_row_name (lprec *lp, int row, char *name);
+char *get_col_name (lprec *lp, int col);
+char *get_row_name (lprec *lp, int row);
 unsigned char set_int (lprec *lp, int col, unsigned char s);
 int get_Nrows (lprec *lp);
 int get_Ncolumns (lprec *lp);
@@ -118,6 +120,8 @@ static unsigned char (*add_constraint) (lprec *lp, REAL *row,
 					int constr_type, REAL rh);
 static unsigned char (*set_col_name) (lprec *lp, int col, char *name);
 static unsigned char (*set_row_name) (lprec *lp, int row, char *name);
+static char *(*get_col_name) (lprec *lp, int col);
+static char *(*get_row_name) (lprec *lp, int row);
 static unsigned char (*set_int) (lprec *lp, int col, unsigned char s);
 static int (*get_Nrows) (lprec *lp);
 static int (*get_Ncolumns) (lprec *lp);
@@ -185,6 +189,8 @@ static int gretl_lpsolve_init (void)
 	add_constraint      = lpget(lphandle, "add_constraint", &err);
 	set_col_name        = lpget(lphandle, "set_col_name", &err);
 	set_row_name        = lpget(lphandle, "set_row_name", &err);
+	get_col_name        = lpget(lphandle, "get_col_name", &err);
+	get_row_name        = lpget(lphandle, "get_row_name", &err);
 	set_int             = lpget(lphandle, "set_int", &err);
 	get_Nrows           = lpget(lphandle, "get_Nrows", &err);
 	get_Ncolumns        = lpget(lphandle, "get_Ncolumns", &err);
@@ -404,12 +410,18 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     return lp;
 }
 
-static lprec *lp_model_from_file (const char *fname)
+static lprec *lp_model_from_file (const char *fname, PRN *prn,
+				  int *err)
 {
     lprec *lp = NULL;
     FILE *fp = gretl_fopen(fname, "r");
 
-    if (fp != NULL) {
+    if (fp == NULL) {
+	*err = E_FOPEN;
+    } else {
+	if (prn != NULL) {
+	    pprintf(prn, "Reading input from '%s'\n", fname);
+	}
 	lp = read_lp(fp, NORMAL, NULL);
 	fclose(fp); /* ? */
     }
@@ -485,6 +497,28 @@ static void print_lpsolve_output (lprec *lp,
     g_free(fname);
 }
 
+static char **get_lp_colnames (lprec *lp, int n)
+{
+    char **S = strings_array_new(n);
+    int i;
+
+    for (i=0; i<n; i++) {
+	S[i] = gretl_strdup(get_col_name(lp, i+1));
+    }
+    return S;
+}
+
+static char **get_lp_rownames (lprec *lp, int n)
+{
+    char **S = strings_array_new(n);
+    int i;
+
+    for (i=0; i<n; i++) {
+	S[i] = gretl_strdup(get_row_name(lp, i+1));
+    }
+    return S;
+}
+
 static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 			      const char **cnames,
 			      const char **rnames,
@@ -498,6 +532,7 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
     gretl_matrix *VC = gretl_matrix_alloc(nr, 1);
     gretl_matrix *VV = gretl_matrix_alloc(nc, 1);
     gretl_matrix *SP = gretl_matrix_alloc(nr, 1);
+    char **S = NULL;
 
     if (prim == NULL || dual == NULL ||
 	VC == NULL || VV == NULL || SP == NULL) {
@@ -505,17 +540,22 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
     }
 
     if (cnames != NULL) {
-	char **S;
-
 	S = strings_array_dup((char **) cnames, VV->rows);
 	gretl_matrix_set_rownames(VV, S);
+    } else {
+	S = get_lp_colnames(lp, VV->rows);
+	gretl_matrix_set_rownames(VV, S);
     }
-    if (rnames != NULL) {
-	char **S;
 
+    if (rnames != NULL) {
 	S = strings_array_dup((char **) rnames, VC->rows);
 	gretl_matrix_set_rownames(VC, S);
 	S = strings_array_dup((char **) rnames, VC->rows);
+	gretl_matrix_set_rownames(SP, S);
+    } else {
+	S = get_lp_rownames(lp, VC->rows);
+	gretl_matrix_set_rownames(VC, S);
+	S = get_lp_rownames(lp, VC->rows);
 	gretl_matrix_set_rownames(SP, S);
     }
 
@@ -547,14 +587,17 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
     }
 
     if (opt & OPT_S) {
-	int n = psize - 1;
+	int ns, n = psize - 1;
 	gretl_matrix *SE = gretl_matrix_alloc(n, 3);
 	double *x = SE->val;
 
 	if (!get_sensitivity_rhs(lp, x, x + n, x + 2*n)) {
 	    gretl_matrix_free(SE);
 	} else {
+	    S = gretl_string_split("dual lower upper", &ns, NULL);
+	    gretl_matrix_set_colnames(SE, S);
 	    gretl_bundle_donate_data(ret, "sensitivity", SE, GRETL_TYPE_MATRIX, 0);
+
 	}
     }
 
@@ -588,6 +631,7 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b,
     }
     if (gretl_bundle_has_key(b, "lp_filename")) {
 	*pfname = gretl_bundle_get_string(b, "lp_filename", NULL);
+	opt |= OPT_F;
     }
 
     return opt;
@@ -635,6 +679,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     const char **cnames = NULL;
     const char **rnames = NULL;
     const char *lpfname = NULL;
+    PRN *vprn = NULL;
     gretlopt opt;
     lprec *lp;
 
@@ -651,9 +696,10 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 #endif
 
     opt = lp_options_from_bundle(b, &lpfname);
+    vprn = (opt & OPT_V)? prn : NULL;
 
     if (lpfname != NULL) {
-	lp = lp_model_from_file(lpfname);
+	lp = lp_model_from_file(lpfname, vprn, err);
     } else {
 	lp = lp_model_from_bundle(b, &cnames, &rnames, opt, err);
     }
@@ -665,8 +711,6 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	if (*err) {
 	    gretl_errmsg_set("lpsolve: solution failed");
 	} else {
-	    PRN *vprn = (opt & OPT_V)? prn : NULL;
-
 	    ret = gretl_bundle_new();
 	    *err = get_lp_model_data(lp, ret, cnames, rnames,
 				     opt, vprn);
