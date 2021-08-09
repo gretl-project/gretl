@@ -166,13 +166,10 @@ static int gretl_lpsolve_init (void)
 	return gretl_lpsolve_err;
     }
 
-    /* FIXME make the library name/path configurable */
-#if defined(WIN32)
-    lphandle = LoadLibrary("lpsolve55.dll");
-#elif defined(OS_OSX)
-    lphandle = dlopen("liblpsolve55.dylib", RTLD_NOW);
+#ifdef WIN32
+    lphandle = LoadLibrary(gretl_lpsolve_path());
 #else
-    lphandle = dlopen("liblpsolve55.so", RTLD_NOW);
+    lphandle = dlopen(gretl_lpsolve_path(), RTLD_NOW);
 #endif
 
     if (lphandle == NULL) {

@@ -281,6 +281,10 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, sizeof paths.pypath, TAB_PROGS, NULL},
     { "julia", N_("Path to Julia executable"), NULL, paths.jlpath,
       MACHSET | BROWSER, sizeof paths.jlpath, TAB_PROGS, NULL},
+#ifndef PKGBUILD
+    { "lpsolve", N_("Path to lpsolve library"), NULL, paths.lppath,
+      MACHSET | BROWSER, sizeof paths.lppath, TAB_PROGS, NULL},
+#endif
 #ifdef HAVE_MPI
     { "mpiexec", N_("Path to mpiexec"), NULL, paths.mpiexec,
       MACHSET | BROWSER, sizeof paths.mpiexec, TAB_MPI, NULL},
