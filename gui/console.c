@@ -25,6 +25,7 @@
 #include "dlgutils.h"
 #include "gui_recode.h"
 #include "textbuf.h"
+#include "winstack.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
