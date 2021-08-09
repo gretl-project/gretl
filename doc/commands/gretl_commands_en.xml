@@ -5917,75 +5917,6 @@
     </description>
   </command>
 
-  <command name="hausman" section="Tests" label="Panel diagnostics">
-    <usage>
-      <options>
-	<option>
-	  <flag>--nerlove</flag>
-	  <effect>use Nerlove method for random effects</effect>
-	</option>
-	<option>
-	  <flag>--matrix_diff</flag>
-	  <effect>use matrix-difference method for Hausman test</effect>
-	</option>
-      </options>
-    </usage>
-    <description>
-      <para>
-	This test is available only after estimating an OLS model
-	using panel data (see also <cmd>setobs</cmd>).  It tests the
-	simple pooled model against the principal alternatives, the fixed
-	effects and random effects models.
-      </para>
-      <para>
-	The fixed effects model allows the intercept of the regression
-	to vary across the cross-sectional units.  An
-	<math>F</math>-test is reported for the null hypotheses that
-	the intercepts do not differ. The random effects model
-	decomposes the residual variance into two parts, one part
-	specific to the cross-sectional unit and the other specific to
-	the particular observation.  (This estimator can be computed
-	only if the number of cross-sectional units in the data set
-	exceeds the number of parameters to be estimated.) The
-	Breusch&ndash;Pagan LM statistic tests the null hypothesis
-	that the pooled OLS estimator is adequate against the random
-	effects alternative.
-      </para>
-      <para>
-	The pooled OLS model may be rejected against both of the
-	alternatives, fixed effects and random effects. Provided the
-	unit- or group-specific error is uncorrelated with the
-	independent variables, the random effects estimator is more
-	efficient than the fixed effects estimator; otherwise the
-	random effects estimator is inconsistent and the fixed effects
-	estimator is to be preferred. The null hypothesis for the
-	Hausman test is that the group-specific error is not so
-	correlated (and therefore the random effects model is
-	preferable).  A low p-value for this test counts against the
-	random effects model and in favor of fixed effects.
-      </para>
-      <para>
-	The two options for this command pertain to the random effects
-	model. By default the method of Swamy and Arora is used, and
-	the Hausman test statistic is calculated using the regression
-	method. The options enable the use of Nerlove's alternative
-	variance estimator and/or the matrix-difference approach to
-	the Hausman statistic.
-      </para>
-      <para>
-	Note that after estimating the random effects model with the
-	<cmd>panel</cmd> command instead of the pooled OLS model, the
-	Hausman test is automatically carried out and the results can
-	be retrieved via the <fncref targ="$hausman"/> accessor.
-      </para>	
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Panel diagnostics</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="hccme" section="Estimation" context="gui"
     label="Robust standard errors">
 
@@ -10782,6 +10713,86 @@
 
   </command>
 
+  <command name="panspec" section="Tests" label="Panel specification">
+    <usage>
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>use Nerlove method for random effects</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>use matrix-difference method for Hausman test</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suppress printed output</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	This command is available only after estimating a panel-data
+	model via OLS. It tests the simple pooled specification
+	against the most common alternatives, fixed effects and random
+	effects.
+      </para>
+      <para>
+	The fixed effects specification allows the intercept of the
+	regression to vary across the cross-sectional units.  A Wald
+	<math>F</math>-test is reported for the null hypotheses that
+	the intercepts do not differ. The random effects specification
+	decomposes the residual variance into two parts, one part
+	specific to the cross-sectional unit and the other specific to
+	the particular observation.  (This estimator can be computed
+	only if the number of cross-sectional units in the data set
+	exceeds the number of parameters to be estimated.) The
+	Breusch&ndash;Pagan LM statistic tests the null hypothesis
+	that pooled OLS is adequate against the random effects
+	alternative.
+      </para>
+      <para>
+	Pooled OLS may be rejected against both of the alternatives.
+	Provided the unit- or group-specific error is uncorrelated
+	with the independent variables, the random effects estimator
+	is more efficient than fixed effects; otherwise the random
+	effects estimator is inconsistent and fixed effects are to be
+	preferred. The null hypothesis for the Hausman test is that
+	the group-specific error is <emphasis>not</emphasis> so
+	correlated (and therefore the random effects estimator is
+	preferable).  A low p-value for this test counts against
+	random effects and in favor of fixed effects.
+      </para>
+      <para>
+	The first two options for this command pertain to random
+	effects estimation.  By default the method of Swamy and Arora
+	is used, and the Hausman test statistic is calculated using
+	the regression method. The options enable the use of Nerlove's
+	alternative variance estimator, and/or the matrix-difference
+	approach to the Hausman statistic.
+      </para>
+      <para>
+	On successful completion the accessors <fncref targ="$test"/>
+	and <fncref targ="$pvalue"/> retrieve 3-vectors holding test
+	statistics and p-values for the three tests noted above:
+	poolability (Wald), poolability (Breusch&ndash;Pagan), and
+	Hausman. If you just want the results in this form you can
+	give the <opt>quiet</opt> option to skip printed output.
+      </para>
+      <para>
+	Note that after estimating the random effects specification
+	via the <cmd>panel</cmd> command, the Hausman test is
+	automatically carried out and the results can be retrieved via
+	the <fncref targ="$hausman"/> accessor.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/Panel specification</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="pca" section="Statistics"
     label="Principal Components Analysis">
 
@@ -13135,12 +13146,12 @@
 	script has its own window.
       </para>
       <para>
-	<emphasis>Enable auto-completion</emphasis>: If this is
-	checked, you will be offered possible completions for the word
-	you are typing, based on the words already entered in the
-	editor window or tab. To select a completion, use the up/down
-	arrow keys and the <lit>Enter</lit> key; or just keep on
-	typing to dismiss the suggested completions.
+	<emphasis>Enable auto-completion</emphasis>: If this option is
+	available and the box is checked, you will be offered possible
+	completions for the word you are typing, either as you type or
+	in response to the Tab key. To select a completion, use the
+	up/down arrow keys and the Tab key; or just keep on typing to
+	dismiss the suggested completions.
       </para>
       <para>
 	<emphasis>Enable auto-brackets</emphasis>: If this is checked,
@@ -15424,9 +15435,9 @@
       </options>
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
-		<demos>
-		<demo>penngrow.inp</demo>
-		</demos>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -15596,6 +15607,11 @@
 	  <flag>--lagselect</flag>
 	  <effect>show criteria for lag selection</effect>
         </option>
+        <option>
+	  <flag>--minlag</flag>
+	  <optparm>minimum lag</optparm>
+	  <effect>lag selection only, see below</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
@@ -15608,7 +15624,6 @@
     </usage>
 
     <description>
-
       <para context="gui">
 	This command requires specification of:
       </para>
@@ -15636,7 +15651,6 @@
 	lag, along with (optionally) forecast variance decompositions and
 	impulse response functions.
       </para>
-
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression
 	(VAR).  The first argument specifies the lag order &mdash; or
@@ -15654,7 +15668,6 @@
 	seasonal dummy variables may be added using the
 	<opt>seasonals</opt> flag.
       </para>
-
       <para context="cli">
 	While a VAR specification usually includes all lags from 1
 	to a given maximum, it is possible to select a specific
@@ -15669,7 +15682,6 @@
 	matrix p = {1,2,4}
 	var p ylist
       </code>
-
       <para context="cli">
 	A separate regression is reported for each variable in
 	<repl>ylist</repl>.  Output for each equation includes
@@ -15679,7 +15691,6 @@
 	flag is given, forecast variance decompositions and impulse
 	responses.
       </para>
-
       <para>
 	Forecast variance decompositions and impulse responses are
 	based on the Cholesky decomposition of the contemporaneous
@@ -15692,28 +15703,32 @@
 	function in matrix form, see the <fncref targ="irf"/>
 	function.
       </para>
-
       <para context="cli">
-	If the <opt>robust</opt> option is given, standard errors
-	are corrected for heteroskedasticity. Alternatively, the
-	<opt>robust-hac</opt> option can be given to produce
-	standard errors that are robust with respect to both
-	heteroskedasticity and autocorrelation (HAC). In general
-	the latter correction should not be needed if the VAR
-	includes sufficient lags.
+	If the <opt>robust</opt> option is given, standard errors are
+	corrected for heteroskedasticity. Alternatively, the
+	<opt>robust-hac</opt> option can be given to produce standard
+	errors that are robust with respect to both heteroskedasticity
+	and autocorrelation (HAC). In general the latter correction
+	should not be needed if the VAR includes sufficient lags.
       </para>
-
       <para context="cli">
-	If the <opt>lagselect</opt> option is given, the first parameter to
-	the <lit>var</lit> command is taken as the maximum lag order.  Output
-	consists of a table showing the values of the Akaike (AIC), Schwarz
-	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
-	VARs of order 1 to the given maximum.  This is intended to help
-	with the selection of the optimal lag order.  The usual VAR output is
-	not presented. The table of information criteria may be retrieved
-	as a matrix via the <fncref targ="$test"/> accessor.
+	If the <opt>lagselect</opt> option is given, the first
+	parameter to the <lit>var</lit> command is taken as the
+	maximum lag order.  Output consists of a table showing the
+	values of the Akaike (AIC), Schwarz (BIC) and
+	Hannan&ndash;Quinn (HQC) information criteria, by default
+	computed from VARs of order 1 to the given maximum.  This is
+	intended to help with the selection of the optimal lag order.
+	The usual VAR output is not presented. The table of
+	information criteria may be retrieved as a matrix via the
+	<fncref targ="$test"/> accessor. In this context (only) the
+	<opt>minlag</opt> option can be used to adjust the minimum lag
+	order. Set this to 0 to allow for the possibility that the
+	optimal lag order is zero, meaning that a VAR is not really
+	called for at all. Conversely you could set
+	<opt>minlag=4</opt> if you believe you need at least 4 lags,
+	thereby saving a little compute time.
       </para>
-
     </description>
 
     <gui-access>

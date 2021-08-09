@@ -1866,10 +1866,10 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     if (pos >= 0) {
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
-	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
-				     path, NULL, FALSE, 0, 0);
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(vwin->listbox),
 				 path, NULL, FALSE);
+	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(vwin->listbox),
+				     path, NULL, TRUE, 0.5, 0);
 	vwin->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
     }
@@ -2185,19 +2185,111 @@ static int get_x12a_doc_path (char *path, const char *fname)
     return ret;
 }
 
-static int find_or_download_pdf (int code, int i, char *fullpath)
+/* Get a language-specific query string, for asking
+   the user whether a translation is preferred.
+*/
+
+static const char *tr_query (const char *lang)
+{
+    if (!strcmp(lang, "es")) {
+	return "¿Mostrar traducción al español?";
+    } else if (!strcmp(lang, "gl")) {
+	return "Mostrar tradución ao galego?";
+    } else if (!strcmp(lang, "it")) {
+	return "Mostra traduzione in italiano?";
+    } else if (!strcmp(lang, "pt")) {
+	return "Mostrar portugues tradução?";
+    } else if (!strcmp(lang, "ru")) {
+	return "Показать перевод на русский язык?";
+    } else {
+	return NULL;
+    }
+}
+
+/* For @code giving the ID number of a doc resource and
+   @lang identifying a language, return the filename of a
+   language-specific version of the resource, or NULL if
+   none is available.
+*/
+
+static const char *have_translation (int code, const char *lang)
+{
+    gchar *ret = NULL;
+
+    if (code == HANSL_PRIMER) {
+	if (!strcmp(lang, "ru")) {
+	    ret = "hansl-primer-ru.pdf";
+	}
+    } else if (code == GRETL_REF) {
+	if (!strcmp(lang, "es")) {
+	    ret = "gretl-ref-es.pdf";
+	} else if (!strcmp(lang, "gl")) {
+	    ret = "gretl-ref-gl.pdf";
+	} else if (!strcmp(lang, "it")) {
+	    ret = "gretl-ref-it.pdf";
+	} else if (!strcmp(lang, "pt")) {
+	    ret = "gretl-ref-pt.pdf";
+	}
+    }
+
+    return ret;
+}
+
+/* Determine if we should show a translation of the
+   doc resource indentified by @code. If so, return
+   the required filename; if not, return NULL.
+*/
+
+static const char *show_translation (int code)
+{
+    const char *fname = NULL;
+    char lang[3] = {0};
+
+#ifdef WIN32
+    gchar *loc = g_win32_getlocale();
+
+    strncat(lang, loc, 2);
+    if (loc != NULL) {
+	fname = have_translation(code, lang);
+	g_free(loc);
+    }
+#elif defined(ENABLE_NLS)
+    char *loc = setlocale(LC_MESSAGES, NULL);
+
+    if (loc != NULL) {
+	strncat(lang, loc, 2);
+	fname = have_translation(code, lang);
+    }
+#endif
+
+    if (fname != NULL) {
+	/* We have a translation, but does the user want it? */
+	const char *msg = tr_query(lang);
+	int resp = yes_no_dialog(NULL, msg, NULL);
+
+	if (resp != GRETL_YES) {
+	    fname = NULL;
+	}
+    }
+
+    return fname;
+}
+
+/* @pref is the documentation preference registered in settings.c:
+   0 = English, US letter
+   1 = English, A4
+   [2 = Translation, if available]
+*/
+
+static int find_or_download_pdf (int code, int pref, char *fullpath)
 {
     const char *guide_files[] = {
 	"gretl-guide.pdf",
-	"gretl-guide-a4.pdf",
-	"gretl-guide-it.pdf"
+	"gretl-guide-a4.pdf"
     };
     const char *ref_files[] = {
 	"gretl-ref.pdf",
 	"gretl-ref-a4.pdf",
-	"gretl-ref-it.pdf",
-	"gretl-ref-pt.pdf",
-	"gretl-ref-gl.pdf"
     };
     const char *kbd_files[] = {
 	"gretl-keys.pdf",
@@ -2205,7 +2297,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     };
     const char *primer_files[] = {
 	"hansl-primer.pdf",
-	"hansl-primer-a4.pdf"
+	"hansl-primer-a4.pdf",
     };
     const char *pkgbook_files[] = {
 	"pkgbook.pdf",
@@ -2219,37 +2311,49 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-svm.pdf",
 	"gretl-svm-a4.pdf"
     };
-    const char *fname;
+    const char *fname = NULL;
     int gotit = 0;
     int err = 0;
 
-    if (i < 0 || i > 4) {
-	i = 0;
+    if (pref < 0 || pref > 2) {
+	/* out of bounds */
+	pref = 0;
     }
 
-    if (code == GRETL_KEYS || code == HANSL_PRIMER ||
-	code == GRETL_MPI || code == GRETL_SVM) {
-	/* no (current) translations */
-	if (i > 1) i = 1;
-    } else if (code == GRETL_GUIDE) {
-	/* the only translation is Italian (and it's old) */
-	if (i > 2) i = 1;
+    if (pref > 0) {
+	/* Try offering a translation where available: currently only
+	   for the Gretl Reference and Hansl primer (Russian).
+	*/
+	pref = 1;
+	if (code == HANSL_PRIMER || code == GRETL_REF) {
+	    fname = show_translation(code);
+	}
+    }
+
+#if 0
+    fprintf(stderr, "HERE code=%d, pref=%d, fname %s\n",
+	    code, pref, fname != NULL ? fname : "TBD");
+#endif
+
+    if (fname != NULL) {
+	/* we got a specific translation */
+	goto next_step;
     }
 
     if (code == GRETL_GUIDE) {
-	fname = guide_files[i];
+	fname = guide_files[pref];
     } else if (code == GRETL_REF) {
-	fname = ref_files[i];
+	fname = ref_files[pref];
     } else if (code == GRETL_KEYS) {
-	fname = kbd_files[i];
+	fname = kbd_files[pref];
     } else if (code == HANSL_PRIMER) {
-	fname = primer_files[i];
+	fname = primer_files[pref];
     } else if (code == PKGBOOK) {
-	fname = pkgbook_files[i];
+	fname = pkgbook_files[pref];
     } else if (code == GRETL_MPI) {
-	fname = gretlMPI_files[i];
+	fname = gretlMPI_files[pref];
     } else if (code == GRETL_SVM) {
-	fname = gretlSVM_files[i];
+	fname = gretlSVM_files[pref];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2265,6 +2369,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     } else {
 	return E_DATA;
     }
+
+ next_step:
 
     fprintf(stderr, "pdf help: looking for %s\n", fname);
 

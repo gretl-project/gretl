@@ -125,7 +125,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { GMM,      "gmm",      CI_EXPR | CI_BLOCK },
     { GNUPLOT,  "gnuplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { GRAPHPG,  "graphpg",  CI_PARM1 | CI_PARM2 }, /* params optional */
-    { HAUSMAN,  "hausman",  0 },
     { HECKIT,   "heckit",   CI_LIST },
     { HELP,     "help",     CI_PARM1 },
     { HFPLOT,   "hfplot",   CI_LIST | CI_EXTRA },
@@ -169,6 +168,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL },
     { PANEL,    "panel",    CI_LIST },
     { PANPLOT,  "panplot",  CI_LIST | CI_LLEN1 | CI_EXTRA },
+    { PANSPEC,  "panspec",  0 },
     { PCA,      "pca",      CI_LIST | CI_DOALL },
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
     { PLOT,     "plot",     CI_BLOCK | CI_PARM1 },

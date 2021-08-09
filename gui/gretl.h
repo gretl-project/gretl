@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* gretl.h, main header file for gretl gui */
@@ -44,8 +44,10 @@
 # include <gdk/gdkkeysyms-compat.h>
 # include <gtksourceview/gtksource.h>
 # define gtk_combo_box_entry_new_text gtk_combo_box_text_new_with_entry
+# define GTKSOURCEVIEW_VERSION GTK_SOURCE_MAJOR_VERSION
 #else
 # include <gtksourceview/gtksourceview.h>
+# define GTKSOURCEVIEW_VERSION 2
 #endif
 
 /* remedial macro for Mac */
@@ -81,7 +83,7 @@
 #define SCRIPT_WIDTH 78
 #define SCRIPT_HEIGHT 420
 #define MODEL_WIDTH 72
-#define MODEL_HEIGHT 420 
+#define MODEL_HEIGHT 420
 
 /* basic global program vars */
 extern DATASET *dataset;

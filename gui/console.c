@@ -24,11 +24,14 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "gui_recode.h"
-#include "completions.h"
-#include "winstack.h"
+#include "textbuf.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
+#endif
+
+#ifdef HAVE_GTKSV_COMPLETION
+# include "completions.h"
 #endif
 
 #include "libset.h"
@@ -38,6 +41,7 @@
 #include "cmd_private.h"
 
 #define CDEBUG 0
+#define KDEBUG 0
 
 /* file-scope globals */
 static char **cmd_history;
@@ -292,14 +296,14 @@ static void print_result_to_console (GtkTextBuffer *buf,
 
     if (g_utf8_validate(prnbuf, -1, NULL)) {
 	gtk_text_buffer_insert_with_tags_by_name(buf, iter, prnbuf, -1,
-						 "plain", NULL);
+						 "output", NULL);
     } else {
 	gchar *trbuf = my_locale_to_utf8(prnbuf);
 
 	fprintf(stderr, "console text did not validate as utf8\n");
 	if (trbuf != NULL) {
 	    gtk_text_buffer_insert_with_tags_by_name(buf, iter, trbuf, -1,
-						     "plain", NULL);
+						     "output", NULL);
 	    g_free(trbuf);
 	}
     }
@@ -312,7 +316,7 @@ static void console_insert_prompt (GtkTextBuffer *buf,
 				   const char *prompt)
 {
     gtk_text_buffer_insert_with_tags_by_name(buf, iter, prompt, -1,
-					     "redtext", NULL);
+					     "prompt", NULL);
     gtk_text_buffer_place_cursor(buf, iter);
 }
 
@@ -485,7 +489,7 @@ windata_t *gretl_console (void)
 	console_insert_prompt(buf, &iter, "? ");
     } else {
 	gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
-						 "plain", NULL);
+						 "output", NULL);
 	console_insert_prompt(buf, &iter, "\n? ");
     }
 
@@ -555,6 +559,11 @@ static gint console_key_handler (GtkWidget *cview,
     GtkTextBuffer *buf;
     GtkTextMark *mark;
     gint ctrl = 0;
+
+#if KDEBUG
+    fprintf(stderr, "HERE console_key_handler (keyval %u, %s)\n",
+	    keyval, gdk_keyval_name(keyval));
+#endif
 
 #ifdef OS_OSX
     if (cmd_key(kevent)) {
@@ -679,10 +688,15 @@ static gint console_key_handler (GtkWidget *cview,
 	return TRUE;
     }
 
-    if (keyval == GDK_Tab && script_auto_complete) {
-	/* FIXME conditionality! */
-	tab_auto_complete(cview);
+#ifdef HAVE_GTKSV_COMPLETION
+    if (keyval == GDK_Tab && console_completion == COMPLETE_USER &&
+	maybe_try_completion((windata_t *) p)) {
+	call_user_completion(cview);
 	return TRUE;
+    }
+#endif
+    if (script_auto_bracket && lbracket(keyval)) {
+	return script_bracket_handler((windata_t *) p, keyval);
     }
 
     return FALSE;

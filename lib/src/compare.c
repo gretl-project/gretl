@@ -2673,7 +2673,7 @@ static int QLR_graph (const double *testvec, int t1, int t2,
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines , \\\n"
 		"%g title \"%s\" w lines lt 0\n",
-		_(title), critval, "5% QLR critical value");
+		_(title), critval, _("5% QLR critical value"));
     } else {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines\n", _(title));
@@ -3684,7 +3684,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 }
 
 /**
- * panel_hausman_test:
+ * panel_specification_test:
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
  * @opt: option flags.
@@ -3695,8 +3695,8 @@ int comfac_test (MODEL *pmod, DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_hausman_test (MODEL *pmod, DATASET *dset,
-			gretlopt opt, PRN *prn)
+int panel_specification_test (MODEL *pmod, DATASET *dset,
+			      gretlopt opt, PRN *prn)
 {
     if (pmod->ci != OLS || !dataset_is_panel(dset)) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
@@ -3718,6 +3718,14 @@ int panel_hausman_test (MODEL *pmod, DATASET *dset,
     }
 
     return 0;
+}
+
+/* wrapper for backward compatibility */
+
+int panel_hausman_test (MODEL *pmod, DATASET *dset,
+			gretlopt opt, PRN *prn)
+{
+    return panel_specification_test(pmod, dset, opt, prn);
 }
 
 /**

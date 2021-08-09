@@ -34,7 +34,10 @@ TEXSRC = cli.tex \
 	reftables.tex \
 	cmdref.tex \
 	funcref.tex \
-	optarg.tex
+	optarg.tex \
+	optshort.tex \
+	operators.tex \
+	comments.tex
 
 BIBSRC = gretl.bib gretl.bst
 

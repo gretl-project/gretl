@@ -109,8 +109,7 @@ int get_translated_width (const char *str);
 
 #else /* !ENABLE_NLS */
 
-#define gettext(s) s
-
+# define gettext(s) s
 # define UTF_WIDTH(s, w) w
 # define TRANSLATED_WIDTH(s) strlen(s)
 

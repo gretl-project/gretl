@@ -1806,7 +1806,7 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
  * if this function fails, which is distinct from the case
  * where it successfully diagnoses an error in @input.
  *
- * Returns: 0 if @input is deemed valid in light of @defualts,
+ * Returns: 0 if @input is deemed valid in light of @defaults,
  * non-zero otherwise.
  */
 

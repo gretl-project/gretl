@@ -2831,6 +2831,16 @@ static int process_csv_varname (csvdata *c, int j, int *numcount,
 	}
 	iso_to_ascii(vname);
 	strip_illegals(vname);
+	if (gretl_reserved_word(vname)) {
+	    /* try a fix for this */
+	    int n = strlen(vname);
+
+	    if (n < VNAMELEN-1) {
+		strcat(vname, "_");
+	    } else {
+		vname[n-1] = '_';
+	    }
+	}
 	if (check_varname(vname)) {
 	    errmsg(1, prn);
 	    err = E_DATA;

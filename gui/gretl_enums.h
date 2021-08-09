@@ -149,6 +149,10 @@ enum extra_cmds {
 
 #define help_role(r) (r >= CMD_HELP && r <= FUNC_HELP_EN)
 
+#define editing_hansl(r) (r == EDIT_HANSL || \
+			  r == EDIT_PKG_CODE ||	\
+			  r == EDIT_PKG_SAMPLE)
+
 #define editing_alt_script(r) (r >= EDIT_R && r <= EDIT_DYNARE)
 
 enum file_ops {

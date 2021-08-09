@@ -1,8 +1,5 @@
 set verbose off
-set workdir "/home/at/git/gretl-git/addons/logging"
-include logging.inp --force
-#include logging.gfn
-
+include logging.gfn
 
 set logstamp off   # on/off: print timstamp or not
 

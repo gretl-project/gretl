@@ -1233,11 +1233,13 @@ static gchar *regular_file_get_content (const char *fname,
 char *retrieve_file_content (const char *fname, const char *codeset,
 			     int *err)
 {
-    char *content = NULL;
+    char *ret = NULL;
+    gchar *content = NULL;
     size_t len = 0;
+    gssize sz;
 
     if (fname == NULL || *fname == '\0') {
-	*err = E_DATA;
+	*err = E_INVARG;
     } else if (is_web_resource(fname)) {
 #ifdef USE_CURL
 	content = retrieve_public_file_as_buffer(fname, &len, err);
@@ -1257,16 +1259,19 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	}
     }
 
-    if (content != NULL && !g_utf8_validate(content, len, NULL)) {
+    sz = (len > 0)? len : -1;
+    if (content != NULL && !g_utf8_validate(content, sz, NULL)) {
 	content = recode_content(content, codeset, err);
     }
 
-    if (*err && content != NULL) {
-	free(content);
-	content = NULL;
+    if (content != NULL) {
+	if (*err == 0) {
+	    ret = gretl_strdup(content);
+	}
+	g_free(content);
     }
 
-    return content;
+    return ret;
 }
 
 /* inserting string into format portion of (s)printf command:

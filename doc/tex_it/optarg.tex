@@ -17,15 +17,15 @@
 \cmd{gretl} \textsl{filedati}
       
 --- Avvia il programma caricando nello spazio di lavoro il file di
-dati indicato. Il file puÚ essere in uno dei vari formati supportati
-(si veda la \emph{Guida ai comandi di gretl}): il programma cercher‡
+dati indicato. Il file pu√≤ essere in uno dei vari formati supportati
+(si veda la \emph{Guida ai comandi di gretl}): il programma cercher√†
 di riconoscere il formato del file e di trattarlo in modo
 appropriato. Si veda anche la Sezione \ref{path-search} per quanto
 riguarda la ricerca dei percorsi.
       
 \cmd{gretl --help} (o \cmd{gretl -h})
       
---- Mostra un breve riepilogo delle modalit‡ di uso ed esce.
+--- Mostra un breve riepilogo delle modalit√† di uso ed esce.
       
 \cmd{gretl --version} (o \cmd{gretl -v})
       
@@ -53,7 +53,7 @@ percorso completo dei file.
 \cmd{gretl --dump} (o \cmd{gretl -c})
       
 --- Scrive le informazioni di configurazione del programma in un file
-di testo (il nome del file Ë mostrato nello standard output). PuÚ
+di testo (il nome del file √® mostrato nello standard output). Pu√≤
 essere utile nella risoluzione di problemi di funzionamento.
       
 \cmd{gretlw32 --debug} (o \cmd{gretlw32 -g})
@@ -63,57 +63,57 @@ eventuali messaggi inviati allo ``standard output'' o allo ``standard
 error''. Questi messaggi, che di solito non sono visibili in Windows,
 possono essere utili per risolvere problemi di funzionamento.
       
-\section{Men˘ preferenze}
+\section{Men√π preferenze}
 \label{guiprefs}
 
-Varie funzionalit‡ di \app{gretl} sono configurabili nel men˘
+Varie funzionalit√† di \app{gretl} sono configurabili nel men√π
 \textsf{Strumenti, Preferenze} menu.
       
-Il men˘ contiene opzioni per la scelta del carattere a larghezza fissa
+Il men√π contiene opzioni per la scelta del carattere a larghezza fissa
 da usare nelle schermate di \app{gretl}, e, su alcune piattaforme, il
-carattere usato per i men˘ e per gli altri messaggi.  Le altre opzioni
+carattere usato per i men√π e per gli altri messaggi.  Le altre opzioni
 sono organizzate in cinque pagine, nel modo seguente.
       
-Pagina \textbf{Generali}: qui Ë possibile configurare la directory
+Pagina \textbf{Generali}: qui √® possibile configurare la directory
 base per i file condivisi di \app{gretl}.  Inoltre, ci sono alcune
 caselle di testo: selezionando ``Avvisa in caso di aggiornamenti di
-gretl'', \app{gretl} cercher‡ di connettersi al server dei database
+gretl'', \app{gretl} cercher√† di connettersi al server dei database
 appena avviato; de-selezionando ``Mostra la barra degli strumenti di
-gretl'', la barra degli strumenti sar‡ disabilitata.  Se
+gretl'', la barra degli strumenti sar√† disabilitata.  Se
 l'impostazione locale del proprio sistema non usa il punto
 (``\texttt{.}'') come separatore delle cifre decimali, de-selezionando
 ``Usa le impostazioni locali per il punto decimale'', \app{gretl}
-user‡ comunque il carattere punto. Selezionando ``Abilita comandi
-shell'' sar‡ possibile invocare comandi della shell all'interno degli
-script e nel terminale di \app{gretl} (questa funzionalit‡ Ë
-disabilitata in modalit‡ predefinita per motivi di sicurezza).
+user√† comunque il carattere punto. Selezionando ``Abilita comandi
+shell'' sar√† possibile invocare comandi della shell all'interno degli
+script e nel terminale di \app{gretl} (questa funzionalit√† √®
+disabilitata in modalit√† predefinita per motivi di sicurezza).
       
-Inoltre, in ``Generali'' Ë possibile scegliere l'algoritmo usato da
+Inoltre, in ``Generali'' √® possibile scegliere l'algoritmo usato da
 \app{gretl} per calcolare le stime dei minimi quadrati. La scelta
-predefinita Ë la decomposizione di Cholesky, che Ë veloce,
+predefinita √® la decomposizione di Cholesky, che √® veloce,
 relativamente economica in termini di requisiti di memoria, e accurata
-per la maggior parte delle applicazioni. L'alternativa Ë la
-decomposizione QR, che Ë computazionalmente pi˘ impegnativa e richiede
-una maggiore quantit‡ di memoria, ma Ë pi˘ accurata.  » poco probabile
+per la maggior parte delle applicazioni. L'alternativa √® la
+decomposizione QR, che √® computazionalmente pi√π impegnativa e richiede
+una maggiore quantit√† di memoria, ma √® pi√π accurata.  √à poco probabile
 dover avere bisogno dell'accuratezza ulteriore fornita dalla
 decomposizione QR, a meno che non si abbia a che fare con dati molto
 mal-condizionati e si sia interessati a valori dei coefficienti e
-degli errori standard precisi per pi˘ di 7 cifre
-decimali\footnote{L'uso della decomposizione QR Ë attivabile anche
+degli errori standard precisi per pi√π di 7 cifre
+decimali\footnote{L'uso della decomposizione QR √® attivabile anche
   impostando la variabile di ambiente \verb@GRETL_USE_QR@ a un
   qualsiasi valore non nullo.}.
 
-Pagina \textbf{Database}: Ë possibile selezionare la directory in cui
+Pagina \textbf{Database}: √® possibile selezionare la directory in cui
 iniziare a cercare i database in formato interno di \app{gretl} e
 quella per i database in formato RATS 4; il nome host del server dei
 database di \app{gretl} a cui connettersi, e l'indirizzo IP e il
 numero di porta del proxy HTTP da usare per contattare il server dei
-database, se necessario (se si Ë dietro a un firewall).
+database, se necessario (se si √® dietro a un firewall).
       
-Pagina \textbf{Programmi}: Ë possibile specificare i nomi o i percorsi
+Pagina \textbf{Programmi}: √® possibile specificare i nomi o i percorsi
 per alcuni programmi esterni che possono essere chiamati da
 \app{gretl} in alcuni casi. Si noti che la voce ``Comando per
-compilare file {\TeX}'' puÚ essere impostata come latex o pdflatex: se
+compilare file {\TeX}'' pu√≤ essere impostata come latex o pdflatex: se
 si sceglie latex, le anteprime dei documenti {\TeX} saranno in formato
 DVI; se si sceglie pdflatex, le anteprime saranno in formato PDF.
       
@@ -121,13 +121,13 @@ Pagina \textbf{HCCME}: contiene le preferenze riguardanti la stima
 robusta della matrice di covarianza. Si veda la \emph{Guida ai comandi
   di gretl} per i dettagli.
       
-Pagina \textbf{Manuali}: Ë possibile scegliere la lingua preferita per
+Pagina \textbf{Manuali}: √® possibile scegliere la lingua preferita per
 la documentazione completa di \app{gretl} in formato PDF (al momento
 sono supportati solo inglese e italiano). Se si usa la documentazione
-inglese Ë possibile scegliere anche il formato della pagina, US letter
+inglese √® possibile scegliere anche il formato della pagina, US letter
 o A4.
       
-Le impostazioni scelte usando il men˘ preferenze sono conservate da
+Le impostazioni scelte usando il men√π preferenze sono conservate da
 una sessione di gretl all'altra. Su MS Windows vengono salvate nel
 registro di Windows, mentre su altre piattaforme sono salvate in un
 file di testo chiamato \texttt{.gretlrc} nella directory principale
@@ -144,15 +144,15 @@ dell'utente.
 \cmd{gretlcli} \textsl{filedati}
 
 --- Avvia il programma caricando nello spazio di lavoro il file di
-dati indicato. Il file puÚ essere in uno qualsiasi dei formati
+dati indicato. Il file pu√≤ essere in uno qualsiasi dei formati
 supportati da \app{gretl} (si veda la \emph{Guida ai comandi di gretl}
-per i dettagli). Il programma cercher‡ di riconoscere il formato del
+per i dettagli). Il programma cercher√† di riconoscere il formato del
 file e di trattarlo in modo appropriato. Si veda anche la Sezione
 \ref{path-search} per quanto riguarda la ricerca dei percorsi.
 
 \cmd{gretlcli --help} (o \cmd{gretlcli -h})
 
---- Mostra un breve riepilogo delle modalit‡ di uso ed esce.
+--- Mostra un breve riepilogo delle modalit√† di uso ed esce.
       
 \cmd{gretlcli --version} (o \cmd{gretlcli -v})
 
@@ -177,7 +177,7 @@ file.  Si veda la Sezione \ref{path-search} per quanto riguarda la
 ricerca dei percorsi.
 
 Se si usano le opzioni \cmd{--run} e \cmd{--batch}, il file richiamato
-deve indicare un file di dati da aprire. CiÚ puÚ essere fatto usando
+deve indicare un file di dati da aprire. Ci√≤ pu√≤ essere fatto usando
 il comando \cmd{open} nel file.
 
 
@@ -196,7 +196,7 @@ seguente:
   \ref{tab-path} per i valori predefiniti). Si noti che la la parola
   chiave \texttt{PERSONAL} viene interpretata da Windows a seconda
   dell'utente e della lingua del sistema: ad esempio su un sistema in
-  lingua inglese, verr‡ interpretata come la directory ``My
+  lingua inglese, verr√† interpretata come la directory ``My
   Documents''.
 \item In qualsiasi directory immediatamente contenuta nella directory
   gretl dell'utente.
@@ -216,7 +216,7 @@ seguente:
   \label{tab-path}
   \begin{center}
     \begin{tabular}{lll}
-      \textit{†} & \textit{Linux} & \textit{MS Windows} \\ [4pt]
+      \textit{¬†} & \textit{Linux} & \textit{MS Windows} \\ [4pt]
       Directory gretl dell'utente & \texttt{\$HOME/gretl} & 
       \verb@PERSONAL\gretl@ \\
       Directory di sistema dei dati & \texttt{PREFISSO/share/gretl/data} & 
@@ -227,14 +227,14 @@ seguente:
   \end{center}
 \end{table}
 
-Non Ë quindi necessario specificare il percorso completo per un file
+Non √® quindi necessario specificare il percorso completo per un file
 di dati o di comandi, a meno che non si voglia fare a meno del
-meccanismo di ricerca automatico (ciÚ Ë valido anche per
+meccanismo di ricerca automatico (ci√≤ √® valido anche per
 \app{gretlcli} quando si indica un nome di file come argomento per il
 comando \cmd{open} o il comando \cmd{run})
 
 Quando un file di comandi contiene l'istruzione di aprire un file di
-dati, l'ordine di ricerca per il file Ë quello descritto sopra, con
+dati, l'ordine di ricerca per il file √® quello descritto sopra, con
 l'eccezione che il file viene cercato anche nella directory che
 contiene lo script, immediatamente dopo aver tentato di cercare il
 file di dati ``esattamente come viene specificato''.
@@ -245,9 +245,9 @@ file di dati ``esattamente come viene specificato''.
 
 In MS Windows le informazioni di configurazione per \app{gretl} e
 \app{gretlcli} sono scritte nel registro di Windows. Quando
-\app{gretl} Ë installato per la prima volta, viene creata
+\app{gretl} √® installato per la prima volta, viene creata
 un'appropriata serie di voci di registro; successivamente le
-impostazioni possono essere modificate attraverso il men˘
+impostazioni possono essere modificate attraverso il men√π
 \textsf{Strumenti, Preferenze} di \app{gretl}. Se occorre eseguire
 delle modifiche manuali dei valori, le voci di registro possono essere
 trovate (usando il programma standard di Windows \app{regedit.exe})

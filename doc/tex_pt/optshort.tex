@@ -1,0 +1,24 @@
+As can be seen from section~\ref{cmd-cmd}, the behavior of many gretl
+commands can be modified via the use of option flags. These take the
+form of two dashes followed by a string which is somewhat descriptive
+of the effect of the option.
+
+Some options require a parameter, which must be joined to the option
+``flag'' with an equals sign. Among the options that do \emph{not}
+require a parameter, certain common ones have a short form---a single
+dash followed by a single letter---and it is considered idiomatic to
+use the short forms in hansl scripts. The table below shows the
+relevant mapping: for any command which supports the long-form option
+in the first column, the short form in the second column is also
+supported.
+
+\begin{center}
+\begin{tabular}{lc}
+long form & short form \\ [4pt]
+\option{verbose} & \texttt{-v} \\
+\option{quiet}   & \texttt{-q} \\
+\option{robust}  & \texttt{-r} \\
+\option{hessian} & \texttt{-h} \\
+\option{window}  & \texttt{-w} 
+\end{tabular}
+\end{center}

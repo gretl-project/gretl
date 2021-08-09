@@ -279,6 +279,9 @@ static char *get_next_arg (const char *s, int *len, int *err)
 /* conversion characters that may be preceded by 'l' */
 #define l_ok(c) (c == 'd' || c == 'u' || c == 'x')
 
+/* conversion characters that may be preceded by 'v' */
+#define v_ok(c) (c == 'f' || c == 'g' || c == 'e' || c == 'E')
+
 /* dup format string up to the end of the current conversion:
    e.g. "%10.4f", "%6g", "%.8g", %3s", "%.*s", "%#12.4g"
 */
@@ -288,7 +291,7 @@ get_printf_format_chunk (const char *s, char *conv,
 			 int *len, int *wstar, int *pstar,
 			 int *err)
 {
-    const char *cnvchars = "eEfgGduxsv";
+    const char *cnvchars = "eEfgGduxs";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;
@@ -349,6 +352,16 @@ get_printf_format_chunk (const char *s, char *conv,
 	    conv[0] = *p;
 	    conv[1] = *(p+1);
 	    p++;
+	} else if (*p == 'v') {
+	    if (v_ok(*(p+1))) {
+		/* allow "vf", "vg" for matrices */
+		conv[0] = *p;
+		conv[1] = *(p+1);
+		p++;
+	    } else {
+		/* allow plain 'v' -> "vg" */
+		conv[0] = *p;
+	    }
 	} else {
 	    fprintf(stderr, "bad conversion '%c'\n", *p);
 	    *err = E_PARSE;

@@ -1034,21 +1034,24 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	   the @path selected by the user
 	*/
 	GtkListStore *store;
+	GtkTreeSelection *sel;
 	GtkTreeIter iter;
+	gulong sigid;
 	int nfn0 = nfn;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model
 			       (GTK_TREE_VIEW(vwin->listbox)));
 	g_dir_rewind(dir);
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+	sigid = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sel), "menu_check"));
+	g_signal_handler_block(sel, sigid);
 	gtk_list_store_clear(store);
+	g_signal_handler_unblock(sel, sigid);
 	nfn = 0;
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	read_fn_files_in_dir(dir, path, store, &iter, &nfn);
 
 	if (nfn > 0) {
-	    GtkTreeSelection *sel;
-
-	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
 	    widget_set_int(vwin->listbox, "altdir", 1);
 	    presort_treelist(vwin);
@@ -1383,7 +1386,7 @@ static int get_menu_add_ok (windata_t *vwin)
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &pkgname);
-    if (!strcmp(pkgname, "ridge")) {
+    if (pkgname != NULL && !strcmp(pkgname, "ridge")) {
 	return 0;
     }
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
@@ -1434,12 +1437,13 @@ static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
 static void connect_menu_adjust_signal (windata_t *vwin)
 {
     GtkTreeSelection *sel;
+    gulong id;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
-
-    g_signal_connect(G_OBJECT(sel), "changed",
-		     G_CALLBACK(check_extra_buttons_state),
-		     vwin);
+    id = g_signal_connect(G_OBJECT(sel), "changed",
+			  G_CALLBACK(check_extra_buttons_state),
+			  vwin);
+    g_object_set_data(G_OBJECT(sel), "menu_check", GINT_TO_POINTER(id));
 }
 
 static void build_funcfiles_popup (windata_t *vwin)

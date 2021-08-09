@@ -4835,9 +4835,9 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     w = gtk_label_new(_("frequency axis scale:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_combo_box_text_new();
-    combo_box_append_text(w, "data-based");
-    combo_box_append_text(w, "radians");
-    combo_box_append_text(w, "degrees");
+    combo_box_append_text(w, _("data-based"));
+    combo_box_append_text(w, _("radians"));
+    combo_box_append_text(w, _("degrees"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     g_signal_connect(G_OBJECT(w), "changed",
                      G_CALLBACK(pergm_set_axis), opt);
@@ -4864,7 +4864,7 @@ static void set_response_yes (GtkButton *b, int *ret)
     *ret = GRETL_YES;
 }
 
-int yes_no_help_dialog (const char *msg, int hcode)
+int yes_no_help_dialog (const char *msg, int hcode, int deflt)
 {
     GtkWidget *dlg;
     GtkWidget *vbox, *hbox, *tmp;
@@ -4891,13 +4891,22 @@ int yes_no_help_dialog (const char *msg, int hcode)
                      G_CALLBACK(delete_widget), dlg);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
-    gtk_widget_grab_default(button);
+    gtk_widget_set_can_default(button, TRUE);
+    if (deflt == GRETL_YES) {
+	gtk_widget_grab_default(button);
+    } else {
+	gtk_widget_set_can_default(button, FALSE);
+    }
 
     /* No button */
     button = gtk_button_new_from_stock(GTK_STOCK_NO);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(delete_widget), dlg);
+    if (deflt == GRETL_NO) {
+	gtk_widget_set_can_default(button, TRUE);
+	gtk_widget_grab_default(button);
+    }
 
     /* Help button */
     context_help_button(hbox, hcode);

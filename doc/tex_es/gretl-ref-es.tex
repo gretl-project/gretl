@@ -1,20 +1,22 @@
-\documentclass[oneside]{book}
-\usepackage[T1]{fontenc}
-\usepackage{url,verbatim,fancyvrb,color,gretl,appendix}
+\documentclass[oneside,spanish]{book}
+\usepackage{url,verbatim,fancyvrb,color,appendix}
 \usepackage{array,longtable}
-\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage[spanish]{babel}
-\usepackage[compat2,a4paper,hmargin=1.1in,top=.5in]{geometry}
+\usepackage{babel}
+\usepackage[authoryear]{natbib}
+\usepackage{gretl}
+\usepackage[a4paper,body={6.07in,9.7in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 %% \pdfimageresolution=120
-\hypersetup{pdftitle={GuÌa de Instrucciones de Gretl},
+\hypersetup{pdftitle={Relaci√≥n de Instrucciones de GRETL},
             pdfsubject={GNU Regression, Econometrics and Time Series Library},
-            pdfauthor={Allin Cottrell},
+            pdfauthor={Allin Cottrell y Jack Lucchetti},
             colorlinks=true,
             linkcolor=blue,
             urlcolor=red,
+            citecolor=steel,
             plainpages=false
 }
 
@@ -25,37 +27,36 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
 
+\hyphenation{he-te-ro-ce-das-ti-ci-dad}
+
 %% titlepage
 
 \thispagestyle{empty}
 
 \begin{center}
-\pdfbookmark[1]{GuÌa de Instrucciones de Gretl}{titlepage}
+\pdfbookmark[1]{Gu√≠a de Instrucciones de GRETL}{titlepage}
 
-\gtitle{GuÌa de Instrucciones}
+\gtitle{Gu√≠a de Instrucciones de GRETL}
 
-\gsubtitle{Gnu Regression, Econometrics and Time-series}
+\gsubtitle{Gnu Regression, Econometrics and Time-series Library}
 
-{\large \sffamily 
+{\large \sffamily
 Allin Cottrell\\
 Department of Economics\\
-Wake Forest university
-}
+Wake Forest University\\
 
 \vspace{20pt}
-{\large \sffamily 
 Riccardo ``Jack'' Lucchetti\\
 Dipartimento di Economia\\
-Universit‡ Politecnica delle Marche
+Universit√† Politecnica delle Marche\\
+
+\vspace{20pt}
+Traducci√≥n espa√±ola \\
+Parmeeta Bhogal, Ignacio D√≠az-Emparanza y Juan Carlos Estevez Nu√±ez
+
+\vspace{20pt}
+\input date
 }
-
-%{\large \sffamily 
-%TraducciÛn espaÒola \\
-%Parmeeta Bhogal y Ignacio DÌaz-Emparanza
-%}
-
-%% \vspace{20pt}
-%% {\large \sffamily Noviembre, 2005}
 
 \end{center}
 \clearpage
@@ -68,38 +69,32 @@ Universit‡ Politecnica delle Marche
 
 \vspace*{2in}
 
-Copyright \copyright\ 2001--2005 Allin Cottrell
-
-Copyright de la traducciÛn espaÒola: \copyright\ 2006 Ignacio
-DÌaz-Emparanza (Basado en la traducciÛn del manual de 2003 de Parmeeta
-Bhogal e Ignacio DÌaz-Emparanza)
-
-Este documento puede ser copiado, distribuido y/o modificado bajo los
-tÈrminos de la \textit{GNU Free Documentation License}, VersiÛn 1.1 o
-cualquiera de las versiones posteriores publicadas por la Free
-Software Foundation (vÈase
-\url{http://www.gnu.org/licenses/fdl.html}).  
-
-Se agradece la financiaciÛn de la Universidad del PaÌs Vasco, a travÈs
-del grupo de investigaciÛn 9/UPV-00038.321-13503/2001, para la
-traducciÛn de este manual.
+Se concede permiso para copiar, distribu√≠r y/o modificar este documento bajo
+los t√©rminos de la \emph{Licencia de Documentaci√≥n Libre de GNU}, Versi√≥n 1.1
+o cualquiera versi√≥n posterior publicada por la Fundaci√≥n para el Software Libre
+(ver \url{http://www.gnu.org/licenses/fdl.html}).
 
 \clearpage
 
 %% end license page, start table of contents
-\pdfbookmark[1]{Õndice general}{contents}
+\pdfbookmark[1]{√çndice general}{contents}
 
-\pagenumbering{Roman}
+\pagenumbering{roman}
 \pagestyle{headings}
 
 \tableofcontents
 
 \clearpage
+
 \pagenumbering{arabic}
 
 \include{cmdref}
-%% \include{funcref}
+\include{funcref}
+\include{operators}
+\include{comments}
 \include{optarg}
 \include{reftables}
+\clearpage
+\include{biblio}
 
 \end{document}

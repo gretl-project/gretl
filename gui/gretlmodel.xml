@@ -36,7 +36,7 @@
       <menuitem action="modtest:c"/>
       <separator/>
       <menuitem action="modtest:d"/>
-      <menuitem action="hausman"/>
+      <menuitem action="panspec"/>
     </menu>      
     <menu action="Save"/>
     <menu action="Graphs">

@@ -64,6 +64,7 @@ struct ConfigPaths_ {
     char statapath[MAXLEN];
     char pypath[MAXLEN];
     char jlpath[MAXLEN];
+    char lppath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
     char pngfont[128];
@@ -199,6 +200,8 @@ const char *gretl_stata_path (void);
 const char *gretl_python_path (void);
 
 const char *gretl_julia_path (void);
+
+const char *gretl_lpsolve_path (void);
 
 const char *gretl_mpi_hosts (void);
 

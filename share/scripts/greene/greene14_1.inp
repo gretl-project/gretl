@@ -3,5 +3,5 @@ open greene14_1.gdt
 logs C Q PF
 ols l_C 0 l_Q l_PF LF
 # test for fixed and variable effects
-hausman
+panspec
 

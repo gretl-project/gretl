@@ -152,25 +152,14 @@ static void try_auto_icon_sizing (int *bigger)
     GdkDisplay *display = gdk_display_get_default();
     GdkMonitor *monitor = gdk_display_get_primary_monitor(display);
     GdkScreen *screen = gdk_screen_get_default();
-    int pxw, pxh;
-
-    pxw = gdk_screen_get_width(screen);
-    pxh = gdk_screen_get_height(screen);
-    fprintf(stderr, "screen size: %d x %d pixels\n", pxw, pxh);
 
     if (monitor != NULL) {
 	int mmw = gdk_monitor_get_width_mm(monitor);
-	int mmh = gdk_monitor_get_height_mm(monitor);
-	double diag, mm16;
+	int pxw = gdk_screen_get_width(screen);
+	double mm16 = 16 * mmw / (double) pxw;
 
-	fprintf(stderr, "via GdkMonitor: size = %d x %d mm\n", mmw, mmh);
-	/* diagonal size of monitor */
-	diag = sqrt(mmw*mmw + mmh*mmh);
-	fprintf(stderr, " diagonal = %.2f mm (%.2f in)\n", diag, diag / 25.4);
-	/* size of 16 pixels in millimeters */
-	mm16 = 16 * mmw / (double) pxw;
-	fprintf(stderr, " 16 pixels = %.2f mm\n", mm16);
 	if (mm16 < 2.8) {
+	    /* size of 16 pixels in millimeters */
 	    fprintf(stderr, " auto-setting larger icons\n");
 	    *bigger = 1;
 	}
@@ -194,8 +183,8 @@ void gretl_stock_icons_init (void)
 
     if (gretl_factory == NULL) {
 	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
-	gchar *p, *icon_path, *pm, *menu_path = NULL;
-	gchar *respath;
+	char icon_path[48], menu_path[48];
+	gchar *p, *pm, *respath;
 	GResource *icons;
 	GtkIconSource *isrc;
 	GtkIconSet *iset;
@@ -227,10 +216,8 @@ void gretl_stock_icons_init (void)
 	}
 
 	g_resources_register(icons);
-	icon_path = malloc(48);
 
 	if (bigger) {
-	    menu_path = malloc(48);
 	    strcpy(icon_path, "/gretl/icons/24x24/");
 	    strcpy(menu_path, "/gretl/icons/16x16/");
 	    pm = strrchr(menu_path, '/') + 1;
@@ -258,7 +245,7 @@ void gretl_stock_icons_init (void)
 		g_object_unref(pbuf);
 		/* for menu use */
 		strcat(menu_path, png_stocks[i].fname);
-		pbuf = gdk_pixbuf_new_from_file(menu_path, NULL);
+		pbuf = gdk_pixbuf_new_from_resource(menu_path, NULL);
 		isrc = gtk_icon_source_new();
 		gtk_icon_source_set_pixbuf(isrc, pbuf);
 		gtk_icon_source_set_size(isrc, GTK_ICON_SIZE_MENU);
@@ -275,8 +262,6 @@ void gretl_stock_icons_init (void)
 	    *p = '\0';
 	}
 
-	free(icon_path);
-	free(menu_path);
 	g_free(respath);
 	g_resources_unregister(icons);
 	g_resource_unref(icons);
@@ -840,7 +825,12 @@ static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
 
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 {
-    preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+    if (vwin->role == CONSOLE) {
+	/* FIXME swallow console */
+	console_prefs_dialog(vwin->main);
+    } else {
+	preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+    }
 }
 
 static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
@@ -1140,6 +1130,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SERIES && f == EDITOR_ITEM) {
 	return NULL;
+    } else if (r == CONSOLE && func == G_CALLBACK(editor_prefs_callback)) {
+	; /* alright then */
     } else if (r != EDIT_HANSL && r != EDIT_PKG_CODE &&
 	       r != EDIT_PKG_SAMPLE && f == EDIT_HANSL_ITEM) {
 	return NULL;

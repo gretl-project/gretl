@@ -4,10 +4,15 @@
 \section{Introduction}
 \label{sec:funcref-intro}
 
-This chapter presents two alphabetical listings: first, the
-``accessors'' which enable the user to retrieve the values of internal
-variables; and second, the functions proper that are available in the
-context of the \cmd{genr} command.
+This chapter presents two listings:
+\begin{itemize}
+\item ``Accessors'', whose names start with \verb|$| and which serve
+  to retrieve the values of internal variables or constants.  These do
+  not take any arguments.
+\item Functions proper. In almost all cases these require at least one
+  argument, and even if no argument is required an empty ``argument
+  slot'' \texttt{()} is mandatory.
+\end{itemize}
 
 %% auto-generated from XML base, genr_funcs.xml
 \input{funcbody}

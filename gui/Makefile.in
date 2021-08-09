@@ -17,6 +17,7 @@ EXEEXT = @EXEEXT@
 LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
+gtksv_completion = @gtksv_completion@
 have_zlib = @have_zlib@
 quiet_build = @quiet_build@
 pkg_build = @pkg_build@
@@ -176,7 +177,6 @@ SRCS = about.c \
 	calculator.c \
 	callbacks.c \
 	cmdstack.c \
-	completions.c \
 	console.c \
 	database.c \
 	datafiles.c \
@@ -241,6 +241,13 @@ else
   SRCS += clipboard.c
 endif
 
+ifeq ($(gtksv_completion),yes)
+  SRCS += completions.c
+endif
+
+PNG16 := $(wildcard $(topsrc)/share/icons/16x16/*.png)
+PNG24 := $(wildcard $(topsrc)/share/icons/24x24/*.png)
+
 OBJS = $(SRCS:.c=.o)
 
 all: $(PROG) gretl.lang NEWS gretl-icons.xml
@@ -281,7 +288,7 @@ gretl-sys.lang: $(MKLANG)
 NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
-gretl-icons.xml: $(MKPNGLIST)
+gretl-icons.xml: $(MKPNGLIST) $(PNG16) $(PNG24)
 	$(MKPNGLIST) $(topsrc)/share
 
 gretl-icons.gresource: gretl-icons.xml

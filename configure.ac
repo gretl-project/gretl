@@ -65,6 +65,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
+gtksv_completion="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -82,6 +83,7 @@ use_curl="yes"
 darwin_build="no"
 win32_build="no"
 win32pkg="no"
+macpkg="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
@@ -485,6 +487,9 @@ case $host_os in
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
     have_lapack="yes"
     darwin_build="yes"
+    if test $pkg_build = yes ; then
+       macpkg="yes"
+    fi
     AC_DEFINE(OS_OSX)
   ;;
   *mingw*)
@@ -772,7 +777,6 @@ dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
 if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.10.5,
-      AC_DEFINE(USE_GTKSOURCEVIEW_2)
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0",
       echo "version 2.0 >= 2.10.5 not found"
@@ -780,19 +784,34 @@ if test "$gtk_version" = "2.0" ; then
 fi
 
 dnl
-dnl Check for installed gtksourceview (GTK 3 variant)
+dnl Check for installed gtksourceview (GTK 3 variant, current)
 dnl
 if test "$gtk_version" = "3.0" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.10.2,
-      AC_DEFINE(USE_GTKSOURCEVIEW_3)
-      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
-      have_sourceview="3.0",
-      echo "version 3.0 >= 3.10.2 not found"
-    )
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-4,
+      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-4`
+      have_sourceview="4",
+        PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
+        GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+        have_sourceview="3.0",
+        echo "version 3.0 >= 3.20.0 not found"
+      )
+   )
 fi
 
-if test $have_sourceview = "3.0" || test $pkg_build = "yes" ; then
-   AC_DEFINE(HAVE_ALT_COMPLETE)
+dnl
+dnl Check for installed gtksourceview (GTK 3 variant, previous)
+dnl
+dnl if test "$gtk_version" = "3.0" ; then
+dnl    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
+dnl      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
+dnl      have_sourceview="3.0",
+dnl      echo "version 3.0 >= 3.20.0 not found"
+dnl    )
+dnl fi
+
+if test $have_sourceview = "3.0" || test $have_sourceview = "4" || test $pkg_build = "yes" ; then
+   AC_DEFINE(HAVE_GTKSV_COMPLETION)
+   gtksv_completion="yes"
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -814,7 +833,9 @@ AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
+AC_SUBST(macpkg)
 AC_SUBST(have_sourceview)
+AC_SUBST(gtksv_completion)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
@@ -1038,6 +1059,7 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_es/Makefile
     doc/tex_pt/Makefile
     doc/tex_gl/Makefile
+    doc/tex_ru/Makefile
     doc/tex/extract.mk
     doc/reference/Makefile
   ])
@@ -1127,16 +1149,16 @@ Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
-elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" != "2.0" ; then
+elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" = "no" ; then
 echo "
 Please install gtksourceview-2.0 and then reconfigure gretl.
 gtksourceview-2.0 is available from http://www.gnome.org/
 "
 
-elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
+elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" = "no" ; then
 echo "
-Please install gtksourceview-3.0 and then reconfigure gretl.
-gtksourceview-3.0 is available from http://www.gnome.org/
+Please install gtksourceview 3.0 or 4 and then reconfigure gretl.
+gtksourceview is available from http://www.gnome.org/
 "
 
 elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
@@ -1168,6 +1190,7 @@ Configuration:
   MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}
   Build with GTK version:                 ${gtk_version}
+  Use gtksourceview version:              ${have_sourceview}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}

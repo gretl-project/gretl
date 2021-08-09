@@ -1,210 +1,209 @@
-\chapter{Options, arguments and path-searching}
+\chapter{Opcións, argumentos e procura de rutas}
 \label{optarg}
 
-\section{Invoking gretl}
+\section{Chamada a gretl}
 \label{optarg1}
 
-\cmd{gretl} (under MS Windows, \cmd{gretl.exe})\footnote{On Linux,
-  a ``wrapper'' script named \texttt{gretl} is installed.  This script
-  checks whether the \texttt{DISPLAY} environment variable is set; if
-  so, it launches the GUI program, \verb@gretl_x11@, and if not it
-  launches the command-line program, \texttt{gretlcli}}.
+\cmd{gretl} (en MS Windows, \cmd{gretl.exe})\footnote{En Linux,
+  instálase un guión de ``envoltura'' denominado \texttt{gretl}. Este
+  guión comproba se a variable de contorna \texttt{DISPLAY} está determinada;
+  en tal caso, lanza o programa GUI, \verb@gretl_x11@, e se non o está,
+  lanza o programa de liñas de instrucións, \texttt{gretlcli}}.
 
---- Opens the program and waits for user input.
+--- Abre o programa e agarda polas achegas do usuario.
       
-\cmd{gretl} \textsl{datafile}
+\cmd{gretl} \textsl{ficheirodatos}
       
---- Starts the program with the specified datafile in its
-workspace. The data file may be in any of several formats (see the
-\emph{Gretl User's Guide}); the program will try to detect the format
-of the file and treat it appropriately. See also Section
-\ref{path-search} below for path-searching behavior.
+--- Comeza o programa co ficheiro de datos indicado no seu espazo de traballo.
+O ficheiro de datos pode estar en calquera de entre varios formatos (consulta
+o \emph{Manual de Usuario de GRETL}); o programa vai intentar detectar o
+formato do ficheiro e tratalo axeitadamente. Consulta tamén máis abaixo a
+Sección \ref{path-search} para ver o comportamento na procura de rutas.
       
-\cmd{gretl --help} (or \cmd{gretl -h})
+\cmd{gretl --help} (ou \cmd{gretl -h})
       
---- Print a brief summary of usage and exit.
+--- Presenta un breve resumo de uso e finaliza o programa.
       
-\cmd{gretl --version} (or \cmd{gretl -v})
+\cmd{gretl --version} (ou \cmd{gretl -v})
       
---- Print version identification for the program and exit.
+--- Presenta a identificación da versión do programa e finaliza o programa.
       
-\cmd{gretl --english} (or \cmd{gretl -e})
+\cmd{gretl --english} (ou \cmd{gretl -e})
       
---- Force use of English instead of translation.
+--- Forza a utilización do idioma inglés en troques da tradución.
       
-\cmd{gretl --run} \textsl{scriptfile} (or \cmd{gretl -r}
-\textsl{scriptfile})
+\cmd{gretl --run} \textsl{ficheiroguion} (ou \cmd{gretl -r}
+\textsl{ficheiroguion})
       
---- Start the program and open a window displaying the specified
-script file, ready to run.  See Section \ref{path-search} below for
-path-searching behavior.
+--- Comeza o programa e abre unha xanela que amosa o ficheiro de guión
+indicado, preparado para executarse. Consulta máis abaixo a Sección
+\ref{path-search} para ver o comportamento na procura de rutas.
       
-\cmd{gretl --db} \textsl{database} (or \cmd{gretl -d}
-\textsl{database})
+\cmd{gretl --db} \textsl{bancodatos} (ou \cmd{gretl -d}
+\textsl{bancodatos})
 
---- Start the program and open a window displaying the specified
-database.  If the database files (the \texttt{.bin} file and its
-accompanying \texttt{.idx} file) are not in the default system
-database directory, you must specify the full path.  See also the
-\emph{Gretl User's Guide} for details on databases.
+--- Comeza o programa e abre unha xanela que amosa o banco de datos indicada.
+Se os ficheiros de banco de datos (o ficheiro \texttt{.bin} e o seu ficheiro
+adxunto \texttt{.idx}) non están no directorio de banco de datos predeterminado
+do sistema, debes de indicar a ruta completa. Consulta tamén o
+\emph{Manual de Usuario de GRETL} para obter detalles sobre os bancos de datos.
       
-\cmd{gretl --dump} (or \cmd{gretl -c})
+\cmd{gretl --dump} (ou \cmd{gretl -c})
       
---- Dump the program's configuration information to a plain text file
-(the name of the file is printed on standard output).  May be useful
-for trouble-shooting.
+--- Deita a información de configuración do programa nun ficheiro de texto plano
+(o nome do ficheiro preséntase nunha saída de resultados normal). Pode ser de
+utilidade para solucionar problemas.
       
-\cmd{gretl --debug} (or \cmd{gretl -g})
+\cmd{gretl --debug} (ou \cmd{gretl -g})
 
---- (MS Windows only) Open a console window to display any messages
-sent to the ``standard output'' or ``standard error'' streams.  Such
-messages are not usually visible on Windows; this may be useful for
-trouble-shooting.
+--- (Só en MS Windows) Abre unha xanela de consola para presentar calquera
+mensaxe enviada a os fluxos de ``saída de resultados típica'' ou de
+``fallo típico''. Esas mensaxes habitualmente non son visibles en Windows;
+e isto pode ser de utilidade para solucionar problemas.
       
-\section{Preferences dialog}
+\section{Diálogo de preferencias}
 \label{guiprefs}
 
-Various things in \app{gretl} are configurable under the ``Tools,
-Preferences'' menu.  Separate menu items are devoted to the choice of
-the monospaced font to be used in \app{gretl} screen output, and, on
-some platforms, the font used for menus and other messages.  The other
-options are organized under five tabs, as follows.
+Se poden configurar diversas cousas en \app{GRETL}, no menú de
+``Ferramentas, Preferencias''. Os elementos do menú por separado dedícanse á
+elección da fonte monoespazada que se usa na pantalla de resultados de \app{GRETL},
+e, nalgunhas plataformas, a fonte utilizada nos menús e outras mensaxes.
+As outras opcións organízanse en cinco lapelas, do seguinte xeito.
       
-\textbf{General}: Here you can configure the base directory for
-\app{gretl}'s shared files. In addition there are several check
-boxes. If your native language setting is not English and the local
-decimal point character is not the period (``\texttt{.}''), unchecking
-``Use locale setting for decimal point'' will make \app{gretl} use the
-period regardless.  Checking ``Allow shell commands'' makes it
-possible to invoke shell commands in scripts and in the \app{gretl}
-console (this facility is disabled by default for security reasons).
+\textbf{Xeral}: Aquí podes configurar o directorio de base para os ficheiros
+compartidos de \app{GRETL}. Ademais, hai varios cadriños de verificación.
+Se a configuración do teu idioma nativo non é a do inglés e o carácter da
+parte decimal non é o punto (``\texttt{.}''), non marcar ``Usar as preferencias
+locais para o punto decimal'' vai facer que \app{GRETL} utilice de tódolos
+xeitos o punto. Marcar ``Permitir instrucións do intérprete'' fai posible
+chamar por instrucións do intérprete nos guións e na consola de \app{GRETL}
+(esta facilidade non está dispoñible por defecto debido a razóns de seguridade).
       
-\textbf{Programs} tab: You can specify the names or paths to various
-third-party programs that may called by \app{gretl} under certain
-conditions.
+\textbf{Programas}: Podes especificar os nomes ou rutas de diversos programas
+de terceiros que é posible chamar con \app{GRETL} baixo determinadas
+condicións.
 
-\textbf{Editor} tab: Set preferences pertaining to the \app{gretl}
-script editor.
+\textbf{Editor}: Establece as preferencias referidas ao editor de guións de
+\app{GRETL}.
 
-\textbf{Network} tab: Set the server on which to look for \app{gretl}
-databases, and also whether or not you use an HTTP proxy.
+\textbf{Rede}: Establece o servidor no que procurar bancos de datos de
+\app{GRETL}; e tamén se usar ou non usar un proxy HTTP.
       
-\textbf{HCCME} tab: Set preferences regarding robust covariance matrix
-estimation.  See the \emph{Gretl User's Guide} for details.
+\textbf{HCCME}: Establece as preferencias relativas á estimación da matriz
+robusta de covarianzas. Consulta o \emph{Manual de Usuario de GRETL} para máis detalles.
       
-\textbf{MPI} tab: This is shown only if gretl is built with support
-for MPI (Message Passing Interface).
+\textbf{MPI}: Isto só se amosa se GRETL está creado con apoio para MPI
+(Interface de Paso de Mensaxes).
       
-Settings chosen via the Preferences dialog are stored from one gretl
-session to the next.
+As configuracións escollidas mediante o diálogo de Preferencias gárdanse
+dunha sesión de GRETL á seguinte.
       
-\section{Invoking gretlcli}
+\section{Chamada a gretlcli}
 \label{optarg2}
 
 \cmd{gretlcli}
 
---- Opens the program and waits for user input.
+--- Abre o programa e agarda polas achegas do usuario.
       
-\cmd{gretlcli} \textsl{datafile}
+\cmd{gretlcli} \textsl{ficheirodatos}
 
---- Starts the program with the specified datafile in its
-workspace. The data file may be in any format supported by \app{gretl}
-(see the \emph{Gretl User's Guide} for details). The program will try
-to detect the format of the file and treat it appropriately. See also
-Section \ref{path-search} for path-searching behavior.
+--- Comeza o programa co ficheiro de datos indicado no seu espazo de traballo.
+O ficheiro de datos pode ser calquera de entre varios admitidos por
+\app{GRETL} (consulta o \emph{Manual de Usuario de GRETL} para máis detalles).
+O programa vai intentar detectar o formato do ficheiro e tratalo axeitadamente.
+Consulta tamén a Sección \ref{path-search} para ver o comportamento na procura de rutas.
 
-\cmd{gretlcli --help} (or \cmd{gretlcli -h})
+\cmd{gretlcli --help} (ou \cmd{gretlcli -h})
 
---- Prints a brief summary of usage.
+--- Presenta un breve resumo de uso.
 
-\cmd{gretlcli --version} (or \cmd{gretlcli -v})
+\cmd{gretlcli --version} (ou \cmd{gretlcli -v})
 
---- Prints version identification for the program.
+--- Presenta a identificación da versión do programa.
 
-\cmd{gretlcli --english} (or \cmd{gretlcli -e})
+\cmd{gretlcli --english} (ou \cmd{gretlcli -e})
 
---- Force use of English instead of translation.
+--- Forza a utilización do idioma inglés en troques da tradución.
 
-\cmd{gretlcli --run} \textsl{scriptfile} (or \cmd{gretlcli -r}
-\textsl{scriptfile})
+\cmd{gretlcli --run} \textsl{ficheiroguion} (ou \cmd{gretlcli -r}
+\textsl{ficheiroguion}
 
---- Execute the commands in \textsl{scriptfile} then hand over input
-to the command line.  See Section \ref{path-search} for path-searching
-behavior.
+--- Executa as instrucións de \textsl{ficheiroguion} e logo pasa o control
+das achegas do usuario á liña de instrucións. Consulta a Sección \ref{path-search}
+para ver o comportamento na procura de rutas.
 
-\cmd{gretlcli --batch} \textsl{scriptfile} (or \cmd{gretlcli -b}
-\textsl{scriptfile})
+\cmd{gretlcli --batch} \textsl{ficheiroguion} (ou \cmd{gretlcli -b}
+\textsl{ficheiroguion})
 
---- Execute the commands in \textsl{scriptfile} then exit.  When using
-this option you will probably want to redirect output to a file. See
-Section \ref{path-search} for path-searching behavior.
+--- Executa as instrucións de \textsl{ficheiroguion} e logo sae do programa.
+Cando utilices esta opción, probablemente vas querer redirixir a saída de
+resultados a un ficheiro. Consulta a Sección \ref{path-search} para ver o
+comportamento na procura de rutas.
 
-When using the \cmd{--run} and \cmd{--batch} options, the script file
-in question must call for a data file to be opened. This can be done
-using the \cmd{open} command within the script.
+Ao usar as opcións \cmd{--run} e \cmd{--batch}, o ficheiro de guión en cuestión
+debe chamar por un ficheiro de datos para abrilo. Isto pode facerse utilizando
+a instrución \cmd{open} dentro do propio guión.
       
-\section{Path searching}
+\section{Procura de rutas}
 \label{path-search}
 
-When the name of a data file or script file is supplied to \app{gretl}
-or \app{gretlcli} on the command line, the file is looked for as
-follows:
+Cando se indica o nome dun ficheiro de datos ou de guión a \app{GRETL} ou
+a \app{gretlcli} na liña de instrucións, procúrase o ficheiro do seguinte
+xeito:
 
 \begin{enumerate}
-\item ``As is''.  That is, in the current working directory or, if a
-  full path is specified, at the specified location.
-\item In the user's gretl directory (see Table \ref{tab-path} for the
-  default values; note that \texttt{PERSONAL} is a placeholder that is
-  expanded by Windows in a user- and language-specific way, typically
-  involving ``My Documents'' on English-language systems).
-\item In any immediate sub-directory of the user's gretl directory.
-\item In the case of a data file, search continues with the main
-  \app{gretl} data directory. In the case of a script file, the search
-  proceeds to the system script directory.  See Table \ref{tab-path}
-  for the default settings.  (\texttt{PREFIX} denotes the base
-  directory chosen at the time \app{gretl} is installed.)
-\item In the case of data files the search then proceeds to all
-  immediate sub-directories of the main data directory.
+\item ``Tal cal''.  Isto é, no directorio de traballo vixente ou, cando
+  se indica a ruta completa, na localización especificada.
+\item No directorio de GRETL do usuario (ver a Táboa \ref{tab-path} para os
+  valores predeterminados; cae na conta de que \texttt{PERSONAL} é un marcador
+  de posición que Windows expande dun xeito específico para o usuario e o
+  idioma, tipicamente implicando ``My Documents'' nos sistemas con idioma inglés).
+\item En calquera subdirectorio inmediato ao do usuario en GRETL.
+\item No caso dun ficheiro de datos, a procura continúa co directorio principal
+  de datos de \app{GRETL}. No caso dun ficheiro de guión, a procura continúa
+  co directorio de guións do sistema. Consulta a Táboa \ref{tab-path} para ver
+  as configuracións por defecto. (\texttt{PREFIX} denota o directorio de base
+  escollido no momento no que se instala \app{GRETL}.)
+\item No caso de ficheiros de datos, a procura continúa entón con tódolos
+  subdirectorios inmediatos ao directorio principal de datos.
 \end{enumerate}
 
 \begin{table}[htbp]
-  \caption{Default path settings}
+  \caption{Configuracións das rutas predeterminadas}
   \label{tab-path}
   \begin{center}
     \begin{tabular}{lll}
        & \textit{Linux} & \textit{MS Windows} \\ [4pt]
-      User directory & \texttt{\$HOME/gretl} & 
+      Directorio de usuario & \texttt{\$HOME/gretl} & 
         \verb@PERSONAL\gretl@ \\
-      System data directory & \texttt{PREFIX/share/gretl/data} & 
+      Directorio de datos do sistema & \texttt{PREFIX/share/gretl/data} & 
         \verb@PREFIX\gretl\data@ \\
-      System script directory & \texttt{PREFIX/share/gretl/scripts} & 
+      Directorio de guións do sistema & \texttt{PREFIX/share/gretl/scripts} & 
         \verb@PREFIX\gretl\scripts@ \\
     \end{tabular}
   \end{center}
 \end{table}
 
-Thus it is not necessary to specify the full path for a data or script
-file unless you wish to override the automatic searching
-mechanism. (This also applies within \app{gretlcli}, when you supply a
-filename as an argument to the \cmd{open} or \cmd{run} commands.)
+Polo tanto non é necesario indicar a ruta completa para un ficheiro de datos
+ou de guión, agás que queiras anular o mecanismo automático de procura.
+(Isto tamén se aplica con \app{gretlcli}, cando indicas un nome de ficheiro
+como argumento para as instrucións \cmd{open} ou \cmd{run}.)
 
-When a command script contains an instruction to open a data file, the
-search order for the data file is as stated above, except that the
-directory containing the script is also searched, immediately after
-trying to find the data file ``as is''.
+Cando un guión de instrucións contén unha consigna para abrir un ficheiro
+de datos, a orde na que se procura ese ficheiro é como a establecida máis
+arriba; agás que tamén se procure no directorio que contén o guión, xa que
+sería inmediatamente despois de intentar atopar o ficheiro de datos ``tal cal''.
       
 
 \subsection{MS Windows}
 \label{MS-behave}
 
-Under MS Windows configuration information for \app{gretl} and
-\app{gretlcli} is stored in the Windows registry. A suitable set of
-registry entries is created when \app{gretl} is first installed, and
-the settings can be changed under \app{gretl}'s ``Tools, Preferences''
-menu. In case anyone needs to make manual adjustments to this
-information, the entries can be found (using the standard Windows
-program \app{regedit.exe}) under \verb@Software\gretl@ in
-\verb@HKEY_LOCAL_MACHINE@ (the main \app{gretl} directory and the
-paths to various auxiliary programs) and \verb@HKEY_CURRENT_USER@ (all
-other configurable variables).
-
+En MS Windows, a información da configuración de \app{GRETL} e \app{gretlcli}
+gárdase no rexistro de Windows. Se crea un conxunto axeitado de entradas
+no rexistro cando se instala \app{GRETL} por primeira vez, e as configuracións
+poden trocarse no menú ``Ferramentas, Preferencias'' de \app{GRETL}'. No caso
+de que alguén necesite facer axustes manuais nesta información, poden atoparse
+as entradas (utilizando o programa típico de Windows \app{regedit.exe}) dentro
+de \verb@Software\gretl@ en \verb@HKEY_LOCAL_MACHINE@ (o directorio principal
+de \app{GRETL} e as rutas ata diversos programas auxiliares) e en
+\verb@HKEY_CURRENT_USER@ (tódalas outras variables que se poden configurar).

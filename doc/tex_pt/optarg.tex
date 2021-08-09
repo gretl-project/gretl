@@ -4,7 +4,7 @@
 \section{Invoking gretl}
 \label{optarg1}
 
-\cmd{gretl} (under MS Windows, \cmd{gretlw32.exe})\footnote{On Linux,
+\cmd{gretl} (under MS Windows, \cmd{gretl.exe})\footnote{On Linux,
   a ``wrapper'' script named \texttt{gretl} is installed.  This script
   checks whether the \texttt{DISPLAY} environment variable is set; if
   so, it launches the GUI program, \verb@gretl_x11@, and if not it
@@ -54,7 +54,7 @@ database directory, you must specify the full path.  See also the
 (the name of the file is printed on standard output).  May be useful
 for trouble-shooting.
       
-\cmd{gretlw32 --debug} (or \cmd{gretlw32 -g})
+\cmd{gretl --debug} (or \cmd{gretl -g})
 
 --- (MS Windows only) Open a console window to display any messages
 sent to the ``standard output'' or ``standard error'' streams.  Such
@@ -64,49 +64,39 @@ trouble-shooting.
 \section{Preferences dialog}
 \label{guiprefs}
 
-Various things in \app{gretl} are configurable under the ``Tools,
+Various things in gretl are configurable under the ``Tools,
 Preferences'' menu.  Separate menu items are devoted to the choice of
-the monospaced font to be used in \app{gretl} screen output, and, on
+the monospaced font to be used in gretl screen output, and, on
 some platforms, the font used for menus and other messages.  The other
 options are organized under five tabs, as follows.
       
 \textbf{General}: Here you can configure the base directory for
-\app{gretl}'s shared files. In addition there are several check
-boxes. Checking ``Tell me about gretl updates'' makes \app{gretl}
-attempt to query the update server at start-up. If your native
-language setting is not English and the local decimal point character
-is not the period (``\texttt{.}''), unchecking ``Use locale setting
-for decimal point'' will make \app{gretl} use the period regardless.
-Checking ``Allow shell commands'' makes it possible to invoke shell
-commands in scripts and in the \app{gretl} console (this facility is
-disabled by default for security reasons).
-      
-\textbf{Databases} tab: You can select the directory in which to start
-looking for native \app{gretl} databases; the directory in which to
-start looking for RATS 4 databases; the host name of the \app{gretl}
-database server to access; and the IP number and port number of the
-HTTP proxy server to use when contacting the database server (if
-you're behind a firewall).
+gretl's shared files. In addition there are several check
+boxes. If your native language setting is not English and the local
+decimal point character is not the period (``\texttt{.}''), unchecking
+``Use locale setting for decimal point'' will make gretl use the
+period regardless.  Checking ``Allow shell commands'' makes it
+possible to invoke shell commands in scripts and in the gretl
+console (this facility is disabled by default for security reasons).
       
 \textbf{Programs} tab: You can specify the names or paths to various
-third-party programs that may called by \app{gretl} under certain
-conditions. Note that the item ``Command to compile {\TeX} files'' can
-be set to either latex or pdflatex; if latex is selected, {\TeX}
-output will be previewed in DVI format; if pdflatex is selected, the
-preview will be in PDF format.
+third-party programs that may called by gretl under certain
+conditions.
+
+\textbf{Editor} tab: Set preferences pertaining to the gretl
+script editor.
+
+\textbf{Network} tab: Set the server on which to look for gretl
+databases, and also whether or not you use an HTTP proxy.
       
 \textbf{HCCME} tab: Set preferences regarding robust covariance matrix
 estimation.  See the \emph{Gretl User's Guide} for details.
       
-\textbf{Manuals} tab: Select your preferred language for the full
-\app{gretl} documentation in PDF format (currently only English and
-Italian are supported).  When using the English documentation you can
-also choose between US letter paper and A4 paper.
+\textbf{MPI} tab: This is shown only if gretl is built with support
+for MPI (Message Passing Interface).
       
 Settings chosen via the Preferences dialog are stored from one gretl
-session to the next.  Under MS Windows they are stored in the Windows
-registry; on other platforms they are stored in a plain text file
-named \texttt{.gretl2rc} in the user's home directory.
+session to the next.
       
 \section{Invoking gretlcli}
 \label{optarg2}
@@ -118,7 +108,7 @@ named \texttt{.gretl2rc} in the user's home directory.
 \cmd{gretlcli} \textsl{datafile}
 
 --- Starts the program with the specified datafile in its
-workspace. The data file may be in any format supported by \app{gretl}
+workspace. The data file may be in any format supported by gretl
 (see the \emph{Gretl User's Guide} for details). The program will try
 to detect the format of the file and treat it appropriately. See also
 Section \ref{path-search} for path-searching behavior.
@@ -156,7 +146,7 @@ using the \cmd{open} command within the script.
 \section{Path searching}
 \label{path-search}
 
-When the name of a data file or script file is supplied to \app{gretl}
+When the name of a data file or script file is supplied to gretl
 or \app{gretlcli} on the command line, the file is looked for as
 follows:
 
@@ -169,10 +159,10 @@ follows:
   involving ``My Documents'' on English-language systems).
 \item In any immediate sub-directory of the user's gretl directory.
 \item In the case of a data file, search continues with the main
-  \app{gretl} data directory. In the case of a script file, the search
+  gretl data directory. In the case of a script file, the search
   proceeds to the system script directory.  See Table \ref{tab-path}
   for the default settings.  (\texttt{PREFIX} denotes the base
-  directory chosen at the time \app{gretl} is installed.)
+  directory chosen at the time gretl is installed.)
 \item In the case of data files the search then proceeds to all
   immediate sub-directories of the main data directory.
 \end{enumerate}
@@ -182,7 +172,7 @@ follows:
   \label{tab-path}
   \begin{center}
     \begin{tabular}{lll}
-      \textit{ } & \textit{Linux} & \textit{MS Windows} \\ [4pt]
+       & \textit{Linux} & \textit{MS Windows} \\ [4pt]
       User directory & \texttt{\$HOME/gretl} & 
         \verb@PERSONAL\gretl@ \\
       System data directory & \texttt{PREFIX/share/gretl/data} & 
@@ -207,14 +197,14 @@ trying to find the data file ``as is''.
 \subsection{MS Windows}
 \label{MS-behave}
 
-Under MS Windows configuration information for \app{gretl} and
+Under MS Windows configuration information for gretl and
 \app{gretlcli} is stored in the Windows registry. A suitable set of
-registry entries is created when \app{gretl} is first installed, and
-the settings can be changed under \app{gretl}'s ``Tools, Preferences''
-menu. In case anyone needs to make manual adjustments to this
-information, the entries can be found (using the standard Windows
-program \app{regedit.exe}) under \verb@Software\gretl@ in
-\verb@HKEY_LOCAL_MACHINE@ (the main \app{gretl} directory and the
-paths to various auxiliary programs) and \verb@HKEY_CURRENT_USER@ (all
-other configurable variables).
+registry entries is created when gretl is first installed, and the
+settings can be changed under gretl's ``Tools, Preferences'' menu. In
+case anyone needs to make manual adjustments to this information, the
+entries can be found (using the standard Windows program
+\app{regedit.exe}) under \verb@Software\gretl@ in
+\verb@HKEY_LOCAL_MACHINE@ (the main gretl directory and the paths to
+various auxiliary programs) and \verb@HKEY_CURRENT_USER@ (all other
+configurable variables).
 

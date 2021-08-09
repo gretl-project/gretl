@@ -73,6 +73,7 @@ struct INTERNAL_PATHS {
     char statapath[MAXLEN];
     char pypath[MAXLEN];
     char jlpath[MAXLEN];
+    char lppath[MAXLEN];
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
     char pngfont[128];
@@ -2209,6 +2210,11 @@ const char *gretl_julia_path (void)
     return paths.jlpath;
 }
 
+const char *gretl_lpsolve_path (void)
+{
+    return paths.lppath;
+}
+
 const char *gretl_mpi_hosts (void)
 {
     return paths.mpi_hosts;
@@ -2643,7 +2649,7 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
    gretldir
    gnuplot (but not for MS Windows package)
    tramo, x12a, rbinpath, rlibpath, oxlpath, octpath, statapath,
-     pypath, jlpath
+     pypath, jlpath, lppath
 
    * paths.workdir is updated via the separate working directory
      dialog
@@ -2681,6 +2687,7 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     ndelta += maybe_transcribe_path(paths.statapath, cpaths->statapath, 0);
     ndelta += maybe_transcribe_path(paths.pypath, cpaths->pypath, 0);
     ndelta += maybe_transcribe_path(paths.jlpath, cpaths->jlpath, 0);
+    ndelta += maybe_transcribe_path(paths.lppath, cpaths->lppath, 0);
 
 #ifdef HAVE_MPI
     ndelta += maybe_transcribe_path(paths.mpiexec, cpaths->mpiexec, 0);
@@ -2762,6 +2769,8 @@ static void load_default_path (char *targ)
         strcpy(targ, "python.exe");
     } else if (targ == paths.jlpath) {
         strcpy(targ, "julia.exe");
+    } else if (targ == paths.lppath) {
+	strcpy(targ, "lpsolve55.dll");
     } else if (targ == paths.mpiexec) {
         strcpy(targ, "mpiexec.exe");
     } else if (targ == paths.mpi_hosts) {
@@ -2869,6 +2878,12 @@ static void load_default_path (char *targ)
         strcpy(paths.pypath, "python");
     } else if (targ == paths.jlpath) {
         strcpy(paths.jlpath, "julia");
+    } else if (targ == paths.lppath) {
+#if defined(OS_OSX)
+        strcpy(paths.lppath, "liblpsolve55.dylib");
+#else
+        strcpy(paths.lppath, "liblpsolve55.so");
+#endif
     } else if (targ == paths.mpiexec) {
 #if defined(OS_OSX)
         strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
@@ -2944,6 +2959,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.statapath, cpaths->statapath, 0);
     path_init(paths.pypath, cpaths->pypath, 0);
     path_init(paths.jlpath, cpaths->jlpath, 0);
+    path_init(paths.lppath, cpaths->lppath, 0);
     path_init(paths.mpiexec, cpaths->mpiexec, 0);
     path_init(paths.mpi_hosts, cpaths->mpi_hosts, 0);
 
@@ -3361,6 +3377,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
             strncat(cpaths->pypath, val, MAXLEN - 1);
         } else if (!strcmp(key, "julia")) {
             strncat(cpaths->jlpath, val, MAXLEN - 1);
+	} else if (!strcmp(key, "lpsolve")) {
+	    strncat(cpaths->lppath, val, MAXLEN - 1);
         } else if (!strcmp(key, "mpiexec")) {
             strncat(cpaths->mpiexec, val, MAXLEN - 1);
         } else if (!strcmp(key, "mpi_hosts")) {
@@ -3825,13 +3843,14 @@ struct foreign_paths {
 };
 
 static struct foreign_paths fpaths[] = {
-    { "Rbin",   paths.rbinpath },
-    { "Rlib",   paths.rlibpath },
-    { "ox",     paths.oxlpath },
-    { "octave", paths.octpath },
-    { "stata",  paths.statapath },
-    { "python", paths.pypath },
-    { "julia",  paths.jlpath },
+    { "Rbin",    paths.rbinpath },
+    { "Rlib",    paths.rlibpath },
+    { "ox",      paths.oxlpath },
+    { "octave",  paths.octpath },
+    { "stata",   paths.statapath },
+    { "python",  paths.pypath },
+    { "julia",   paths.jlpath },
+    { "lpsolve", paths.lppath },
     { NULL, NULL}
 };
 

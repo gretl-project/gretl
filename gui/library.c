@@ -1918,8 +1918,8 @@ void labels_callback (void)
         }
     } else {
         if (yes_no_help_dialog(_("The dataset has no variable labels.\n"
-                                 "Add some from file now?"),
-                               OPEN_LABELS) == GRETL_YES) {
+                                 "Add some from file now?"), OPEN_LABELS,
+			       GRETL_YES) == GRETL_YES) {
             file_selector(OPEN_LABELS, FSEL_DATA_NONE, NULL);
         }
     }
@@ -2712,7 +2712,7 @@ void do_panel_tests (GtkAction *action, gpointer p)
         gretl_print_destroy(prn);
     } else {
         view_buffer_with_parent(vwin, prn, 78, 400,
-                                _("gretl: panel model diagnostics"),
+                                _("gretl: panel model specification"),
                                 PANEL, NULL);
     }
 }
@@ -3352,9 +3352,9 @@ void do_dwpval (GtkAction *action, gpointer p)
             pputs(prn, _("p-value is \"very small\" (the Imhof integral could not\n"
                          "be evaluated so a definite value is not available)"));
         } else {
-	    pprintf(prn, "H1: positive autocorrelation\n");
+	    pprintf(prn, _("H1: positive autocorrelation\n"));
             pprintf(prn, "   %s = %g\n", _("p-value"), pv);
-	    pprintf(prn, "H1: negative autocorrelation\n");
+	    pprintf(prn, _("H1: negative autocorrelation\n"));
             pprintf(prn, "   %s = %g\n", _("p-value"), 1.0 - pv);
         }
         view_buffer_with_parent(vwin, prn, 78, 200,
@@ -8999,28 +8999,13 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
-static void maybe_add_compat_option (gretlopt *optp,
-                                     int *cancel)
+static void give_compat_warning (void)
 {
-    const char *label = _("gretl binary data format:");
-    const char *opts[] = {
-	N_("current (gretl >= 2020b, fastest)"),
-	N_("compatible with gretl >= 2018c"),
-	N_("compatible with gretl < 2018c")
-    };
-    int resp;
+    const char *msg =
+	N_("Data files written in the current gdtb binary format\n"
+	   "cannot be read by gretl versions older than 2020b");
 
-    push_option_param(STORE, OPT_C, NULL);
-    resp = radio_dialog(NULL, label, opts, 3, 0, 0, NULL);
-
-    if (resp == GRETL_CANCEL) {
-	*cancel = 1;
-    } else if (resp == 1) {
-	*optp |= OPT_C; /* --compat */
-    } else if (resp == 2) {
-	*optp |= OPT_C; /* --compat=2018b */
-	push_option_param(STORE, OPT_C, gretl_strdup("2018b"));
-    }
+    warnbox(_(msg));
 }
 
 /* Note that in this context "exporting" means that we're saving
@@ -9084,9 +9069,8 @@ static gretlopt store_action_to_opt (const char *fname, int action,
         if (level > 0) {
             opt |= OPT_Z; /* compression */
         }
-        /* offer binary compatibility option? */
         if (has_suffix(fname, ".gdtb")) {
-            maybe_add_compat_option(&opt, cancel);
+            give_compat_warning();
         }
     }
 

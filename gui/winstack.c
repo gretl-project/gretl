@@ -1264,7 +1264,7 @@ windata_t *vwin_new (int role, gpointer data)
 static int should_swallow_vwin (int role)
 {
     if (swallow) {
-	/* can add others here */
+	/* can add others here, after a lot of work! */
 	return role == CONSOLE;
     } else {
 	return 0;
@@ -1275,7 +1275,7 @@ static int should_swallow_vwin (int role)
    will/may contain additional panes besides the dataset
 */
 
-#define TWO_ROWS 1
+#define TWO_ROWS 0 /* not yet! */
 
 #if TWO_ROWS
 

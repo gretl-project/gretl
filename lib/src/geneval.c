@@ -5871,7 +5871,9 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
             list = gretl_list_new(1);
             list[1] = l->vnum;
         } else {
-            p->err = E_TYPES;
+	    gretl_errmsg_set(_("The first argument must be a named series "
+			       "in the current dataset"));
+            p->err = E_INVARG;
         }
 
         if (p->err) {
@@ -5883,7 +5885,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
             p->err = list_dumgenr(&list, p->dset, OPT_F);
             ret->v.ivec = list;
         } else if (list[0] > 1) {
-            gretl_errmsg_set("dummify(x, y): first argument should be a single variable");
+            gretl_errmsg_set("dummify(x, y): first argument should be a single series");
             free(list);
             p->err = E_DATA;
         } else {
@@ -8011,7 +8013,6 @@ static NODE *readfile_node (NODE *l, NODE *r, parser *p)
                 node_type_error(F_READFILE, 2, STR, r, p);
             }
         }
-
         if (!p->err) {
             ret->v.str = retrieve_file_content(l->v.str, codeset, &p->err);
         }
@@ -10487,6 +10488,24 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
         }
     }
 #endif /* curl supported in libgretl */
+
+    return ret;
+}
+
+static NODE *lpsolve_bundle_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_bundle_node(p);
+
+    if (ret != NULL) {
+	gretl_bundle *(*lpfunc) (gretl_bundle *, PRN *, int *);
+
+	lpfunc = get_plugin_function("gretl_lpsolve");
+	if (lpfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    ret->v.b = (*lpfunc)(n->v.b, p->prn, &p->err);
+	}
+    }
 
     return ret;
 }
@@ -17111,6 +17130,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;
+    case F_LPSOLVE:
+	if (l->t == BUNDLE) {
+	    ret = lpsolve_bundle_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
+	break;
     case F_SVM:
         ret = svm_driver_node(t, p);
         break;

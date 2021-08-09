@@ -1069,11 +1069,11 @@
 	<option>
 	  <flag>--matrix</flag>
 	  <optparm>m</optparm>
-	  <effect>Utilizar una entrada matricial</effect>
+	  <effect>Utiliza una entrada matricial</effect>
         </option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Eliminar la presentación de resultados</effect>
+	  <effect>Suprime la presentación de resultados</effect>
         </option>
       </options>
       <examples>
@@ -3056,7 +3056,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Elimina el resultado presentado</effect>
+	  <effect>Suprime la presentación de resultados</effect>
 	</option>
       </options>
 	<examples>
@@ -4434,7 +4434,7 @@
       </para>
       <para>
 	El argumento <repl>mensaje</repl> (opcional) puede tener
-	la forma de una cadena de texto literal, o del nome de una variable
+	la forma de una cadena de texto literal, o del nombre de una variable
 	de cadena; si está presente, se presenta como parte del mensaje
 	de fallo que se le muestra a quien invoca la función.
       </para>
@@ -5916,76 +5916,7 @@
 
     </description>
   </command>
-
-  <command name="hausman" section="Tests" label="Diagnósticos de panel">
-    <usage>
-      <options>
-	<option>
-	  <flag>--nerlove</flag>
-	  <effect>Utiliza el método de Nerlove para efectos aleatorios</effect>
-	</option>
-	<option>
-	  <flag>--matrix_diff</flag>
-	  <effect>Utiliza el método de la matriz-diferencia para el contraste de Hausman</effect>
-	</option>
-      </options>
-    </usage>
-    <description>
-      <para>
-	Este contraste está disponible únicamente después de estimar un modelo
-	con datos de panel utilizando MCO (consulta también <cmd>setobs</cmd>).
-	Contrasta el modelo combinado simple frente a las principales alternativas,
-	el modelo de efectos fijos y el de efectos aleatorios.
-      </para>
-      <para>
-	El modelo de efectos fijos permite que la ordenada en el origen de
-	la regresión varíe de una unidad de sección cruzada a otra. Se
-	presenta un contraste <math>F</math> para la hipótesis nula de que
-	las ordenadas en el origen no difieren. El modelo de efectos aleatorios
-	descompone la varianza de cada perturbación en dos partes, una parte
-	específica de la unidad de sección cruzada y otra parte específica de
-	cada observación concreta. (Se puede calcular este estimador solo
-	cuando el número de unidades de sección cruzada en el conjunto de
-	datos supera al número de parámetros a estimar.) El estadístico de
-	Multiplicadores de Lagrange de Breusch&ndash;Pagan contrasta la
-	hipótesis nula de que el estimador combinado de MCO es adecuado
-	frente a la alternativa de efectos aleatorios.
-      </para>
-      <para>
-	El modelo combinado de MCO puede rechazarse frente a ambas
-	alternativas, la de efectos fijos y la de efectos aleatorios. Mientras
-	la perturbación específica por unidad o grupo no esté correlacionada
-	con las variables independientes, el estimador de efectos aleatorios será
-	más eficiente que el estimador de efectos fijos; en otro caso, el estimador
-	de efectos aleatorios será inconsistente por lo que se prefiere el estimador
-	de efectos fijos. La hipótesis nula del contraste de Hausman indica que la
-	perturbación específica de grupo no está así correlacionada (y por eso
-	se prefiere el modelo de efectos aleatorios). Un valor bajo de la probabilidad
-	asociada (valor p) al estadístico de este contraste va en contra del modelo
-	de efectos aleatorios y a favor del modelo de efectos fijos.
-      </para>
-      <para>
-	Las dos opciones de esta instrucción pertenecen al modelo de efectos
-	aleatorios. Por defecto, se utiliza el método de Swamy y Arora, mediante
-	el cálculo del estadístico de contraste de Hausman, utilizando el método
-	de regresión. Las opciones permiten utilizar el estimador alternativo
-	de la varianza de Nerlove, y /o la aproximación de la matriz-diferencia
-	al estadístico de Hausman.
-      </para>
-      <para>
-	Ten en cuenta que luego de estimar el modelo de efectos aleatorios con
-	la instrucción <cmd>panel</cmd> en lugar de usar MCO combinados, el
-	test de Hausman se ejecuta automáticamente y puedes recuperar los
-	resultados mediante el accesor <fncref targ="$hausman"/>.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Ventana de modelo: Contrastes/Diagnósticos de panel</menu-path>
-    </gui-access>
-
-  </command>
-
+  
   <command name="hccme" section="Estimation" context="gui"
     label="Desviaciones típicas robustas">
 
@@ -10782,6 +10713,86 @@
 
   </command>
 
+  <command name="panspec" section="Tests" label="Especificación de panel">
+    <usage>
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>Utiliza el método de Nerlove para efectos aleatorios</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>Utiliza el método de la matriz-diferencia para el contraste de Hausman</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suprime la presentación de resultados</effect>
+	</option>
+      </options>
+    </usage>
+    <description>
+      <para>
+	Esta instrucción está disponible únicamente después de estimar un modelo
+	con datos de panel utilizando MCO (consulta también <cmd>setobs</cmd>).
+	Contrasta la especificación combinada simple frente a las principales
+	alternativas, la de efectos fijos y la de efectos aleatorios.
+      </para>
+      <para>
+	La especificación de efectos fijos permite que la ordenada en el origen de
+	la regresión varíe de una unidad de sección cruzada a otra. Se presenta
+	un contraste <math>F</math> de Wald para la hipótesis nula de que
+	las ordenadas en el origen no difieren. La especificación de efectos aleatorios
+	descompone la varianza de cada perturbación en dos partes, una parte
+	específica de la unidad de sección cruzada y otra parte específica de
+	cada observación concreta. (Se puede calcular este estimador solo
+	cuando el número de unidades de sección cruzada en el conjunto de
+	datos supera al número de parámetros a estimar.) El estadístico de
+	Multiplicadores de Lagrange de Breusch&ndash;Pagan contrasta la
+	hipótesis nula de que MCO combinados es adecuado frente a la
+	alternativa de efectos aleatorios.
+      </para>
+      <para>
+	MCO combinados pueden rechazarse frente a ambas alternativas. Mientras
+	la perturbación específica por unidad o grupo no esté correlacionada con
+	las variables independientes, el estimador de efectos aleatorios será más
+	eficiente que el de efectos fijos; en otro caso, el estimador de efectos
+	aleatorios será inconsistente y serán preferibles los efectos fijos. La
+	hipótesis nula del contraste de Hausman indica que la perturbación
+	específica de grupo <emphasis>no</emphasis> está así correlacionada
+	(y por eso se prefiere el estimador de efectos aleatorios). Un valor bajo
+	de la probabilidad asociada (valor p) al estadístico de este contraste va
+	en contra de los efectos aleatorios y a favor de los efectos fijos.
+      </para>
+      <para>
+	Las dos primeras opciones de esta instrucción se corresponden con la estimación de efectos
+	aleatorios. Por defecto, se utiliza el método de Swamy y Arora, mediante
+	el cálculo del estadístico de contraste de Hausman, utilizando el método
+	de regresión. Las opciones permiten utilizar el estimador alternativo
+	de la varianza de Nerlove, y /o la aproximación de la matriz-diferencia
+	al estadístico de Hausman.
+      </para>
+      <para>
+	Cuando se completa con éxito, los accesores <fncref targ="$test"/> y
+	<fncref targ="$pvalue"/> proporcionan 3 vectores que contienen los
+	estadísticos de prueba y los valores p para los tres contrastes indicados
+	arriba: combinabilidad (Wald), combinabilidad (Breusch&ndash;Pagan),
+	y Hausman. Si solo quieres los resultados de esta forma, puedes indicar
+	la opción <opt>quiet</opt> para saltarte la presentación de resultados.
+      </para>
+      <para>
+	Ten en cuenta que luego de estimar la especificación de efectos
+	aleatorios con la instrucción <cmd>panel</cmd> , el test de Hausman
+	se ejecuta automáticamente y puedes recuperar los resultados mediante
+	el accesor <fncref targ="$hausman"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de modelo: Contrastes/Especificaciones de panel</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="pca" section="Statistics"
     label="Análisis de Componentes Principales">
 
@@ -12270,7 +12281,7 @@
       <options>
         <option>
 	      <flag>--quiet</flag>
-	      <effect>Suprime la presentación del resultado</effect>
+	      <effect>Suprime la presentación de resultados</effect>
         </option>
       </options>
     </usage>
@@ -13135,11 +13146,11 @@
 	de notas; y en otro caso, cada guion tiene su propia ventana.
       </para>
       <para>
-	<emphasis>Activar autocompletado</emphasis>: Si marcas esto, se te
-	ofrecerá la posibilidad de completar la palabra que estés tecleando,
-	en base a las palabras que ya has introducido en la ventana o pestaña del
-	editor. Para escoger una de las posibilidades, utiliza las teclas de
-	flechas arriba/abajo y la tecla <lit>Intro</lit>; o simplemente
+	<emphasis>Activar autocompletado</emphasis>: Si está disponible esta
+	opción y marcas el cuadro, se te ofrecerá la posibilidad de completar
+	la palabra que estés tecleando, bien mientras escribes o bien en
+	respuesta a la tecla de tabulación. Para escoger una de las posibilidades,
+	utiliza las teclas de flechas arriba/abajo y de tabulación; o simplemente
 	sigue tecleando para descartar los términos sugeridos.
       </para>
       <para>
@@ -14353,7 +14364,7 @@
         </option>
 	      <option>
 	  <flag>--quiet</flag>
-	  <effect>No mostrar el rango muestral</effect>
+	  <effect>No muestra el rango muestral</effect>
 	      </option>
       </options>
       <examples>
@@ -15596,6 +15607,11 @@
 	  <flag>--lagselect</flag>
 	  <effect>Muestra los criterios de selección de retardos</effect>
         </option>
+        <option>
+	  <flag>--minlag</flag>
+	  <optparm>retardo mínimo</optparm>
+	  <effect>Solo selección de retardo, mira abajo</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
@@ -15608,7 +15624,6 @@
     </usage>
 
     <description>
-
       <para context="gui">
 	Esta instrucción requiere la especificación de:
       </para>
@@ -15636,7 +15651,6 @@
 	el retardo máximo, junto con (opcionalmente) las descomposiciones de la
 	varianza de predicción y las funciones de respuesta al impulso.
       </para>
-
       <para context="cli">
 	Establece y estima (utilizando MCO) una autorregresión de vectores
 	(VAR). El primer argumento especifica el orden de retardos (o
@@ -15654,7 +15668,6 @@
 	y (c) puedes añadir variables ficticias estacionales utilizando la
 	opción <opt>seasonals</opt>.
       </para>
-
       <para context="cli">
 	Mientras que una especificación VAR habitualmente incluye todos los
 	retardos desde 1 hasta el máximo que indiques, también puedes escoger un
@@ -15669,7 +15682,6 @@
 	matrix p = {1,2,4}
 	var p ylista
       </code>
-
       <para context="cli">
 	Se desenvuelve una regresión por separado para cada una de las variables
 	de <repl>ylista</repl>. Los resultados para cada ecuación incluyen los
@@ -15679,7 +15691,6 @@
 	<opt>impulse-responses</opt>, las descomposiciones de la varianza de la
 	predicción y las respuestas al impulso.
       </para>
-
       <para>
 	Las descomposiciones de la varianza de la predicción y las respuestas al
 	impulso se basan en la descomposición de Cholesky de la matriz de
@@ -15692,28 +15703,32 @@
 	concreta de respuesta al impulso en forma matricial, consulta la
 	función <fncref targ="irf"/>.
       </para>
-
       <para context="cli">
 	Cuando indicas la opción <opt>robust</opt>, las desviaciones típicas
-	se corrigen del efecto de la heterocedasticidad. Como alternativa,
-	puedes indicar la opción <opt>robust-hac</opt> para dar lugar a
-	desviaciones típicas que sean robustas con respecto tanto a la
-	heterocedasticidad como a la autocorrelación (HAC). En general,
-	esta última corrección no debiera de ser necesaria si el VAR
-	incluye un número suficiente de retardos.
+	se corrigen del efecto de la heterocedasticidad. Como alternativa, puedes
+	indicar la opción <opt>robust-hac</opt> para dar lugar a desviaciones
+	típicas que sean robustas con respecto tanto a la heterocedasticidad como
+	a la autocorrelación (HAC). En general, esta última corrección no debiera
+	de ser necesaria si el VAR incluye un número suficiente de retardos.
       </para>
-
       <para context="cli">
-	Cuando indicas la opción <opt>lagselect</opt>, se toma el primer parámetro
-	de la instrucción <lit>var</lit> como el orden máximo de retardos. El resultado
-	consiste en una tabla que muestra los valores de los criterios de información
-	de Akaike (AIC), Schwarz (BIC) y Hannan&ndash;Quinn (HQC) calculados
-	con VARs de órdenes desde 1 hasta el máximo indicado. Esto trata de ayudar
-	en la selección del orden óptimo de retardos. El resultado habitual del VAR
-	no se presenta. Puedes recuperar la tabla con los criterios de información
-	en forma de matriz mediante el accesor <fncref targ="$test"/>.
+	Cuando indicas la opción <opt>lagselect</opt>, se toma el primer
+	parámetro de la instrucción <lit>var</lit> como el orden máximo de
+	retardos. El resultado consiste en una tabla que muestra los valores
+	de los criterios de información de Akaike (AIC), Schwarz (BIC) y
+	Hannan&ndash;Quinn (HQC) calculados por defecto con VARs de órdenes
+	desde 1 hasta el máximo indicado. Esto trata de ayudar en la selección
+	del orden óptimo de retardos. El resultado habitual del VAR no se presenta.
+	Puedes recuperar la tabla con los criterios de información en forma de
+	matriz mediante el accesor <fncref targ="$test"/>. En este contexto
+	(únicamente), puedes usar la opción <opt>minlag</opt> para ajustar
+	el nivel mínimo de retardos. Ajústalo a 0 para permitir la posibilidad
+	de que el nivel óptimo de retardos sea cero, queriendo ello decir
+	realmente que no se requiere un VAR para nada. Por el contrario,
+	podrías hacer que <opt>minlag=4</opt> si crees que necesitas
+	4 retardos por lo menos, de forma que se ahorre un poco de tiempo
+	de cálculo.
       </para>
-
     </description>
 
     <gui-access>
@@ -16362,7 +16377,7 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>Elimina la presentación de resultados</effect>
+	  <effect>Suprime la presentación de resultados</effect>
         </option>
 	      <option>
 	  <flag>--tex</flag>

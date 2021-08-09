@@ -269,7 +269,7 @@ static GtkActionEntry model_test_items[] = {
     { "cusum:r", NULL, N_("CUSUM_SQ test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "modtest:c", NULL, N_("_Common factor"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "modtest:d", NULL, N_("_Cross-sectional dependence"), NULL, NULL, G_CALLBACK(do_modtest) },
-    { "hausman", NULL, N_("_Panel diagnostics"), NULL, NULL, G_CALLBACK(do_panel_tests) }
+    { "panspec", NULL, N_("_Panel specification"), NULL, NULL, G_CALLBACK(do_panel_tests) }
 };
 
 static GtkActionEntry base_hsk_items[] = {
@@ -688,12 +688,14 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     int Alt = (event->state & GDK_MOD1_MASK);
     guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
+    int console = vwin->role == CONSOLE;
 
     if (vwin_is_busy(vwin)) {
 	return TRUE;
     }
 
     if (editing && Alt) {
+	/* "Alt" specials for editor */
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
 	} else if (upkey == GDK_minus) {
@@ -724,9 +726,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	} else if (upkey == GDK_G) {
 	    text_find_again(NULL, vwin);
 	    return TRUE;
-	} else if (upkey == GDK_H) {
-	    text_replace(NULL, vwin);
-	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    if (editing) {
@@ -735,18 +734,18 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    } else {
 		return vwin_copy_callback(NULL, vwin);
 	    }
-	} else if (editing) {
+	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own
 	       "specials" here
 	    */
-	    if (upkey == GDK_S) {
+	    if (upkey == GDK_H) {
+		text_replace(NULL, vwin);
+		return TRUE;
+	    } else if (upkey == GDK_S) {
 		/* Ctrl-S: save */
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
-	    } else if (Alt && upkey == GDK_Q) {
-		/* let GTK handle this */
-		return FALSE;
 	    } else if (upkey == GDK_Q || upkey == GDK_W) {
 		if (!window_is_tab(vwin)) {
 		    /* Ctrl-Q or Ctrl-W, quit: but not for tabbed windows */
@@ -761,12 +760,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		    }
 		    return TRUE;
 		}
-	    } else if (upkey == GDK_T) {
-		if (window_is_tab(vwin)) {
-		    /* Ctrl-T: open new tab */
-		    do_new_script(vwin->role, NULL);
-		    return TRUE;
-		}
+	    } else if (upkey == GDK_T && window_is_tab(vwin)) {
+		/* Ctrl-T: open new tab */
+		do_new_script(vwin->role, NULL);
+		return TRUE;
 	    }
 	}
 	if (window_is_tab(vwin)) {
@@ -780,7 +777,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    gtk_widget_destroy(vwin->main);
 	    return TRUE;
 	}
-    } else if (Alt) {
+    } else if (Alt && !console) {
 	if (upkey == GDK_C && vwin->role == SCRIPT_OUT) {
 	    cascade_session_windows();
 	    return TRUE;
@@ -792,7 +789,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		return TRUE;
 	    }
 	}
-
     }
 
     if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {
@@ -1256,11 +1252,25 @@ static int get_csv_data (char *fname, int ftype, int append)
 {
     windata_t *vwin;
     PRN *prn;
-    gchar *title;
+    gchar *title = NULL;
+    gretlopt opt = OPT_NONE;
     int err = 0;
 
     if (datafile_missing(fname)) {
 	return E_FOPEN;
+    }
+
+    if (ftype == GRETL_CSV) {
+	const char *msg =
+	    N_("Usually gretl tries to interpret the first column of a CSV\n"
+	       "data file as containing observation information (for example,\n"
+	       "dates), if the column heading looks suitable.\n\n"
+	       "Do you want to force gretl to treat the first column as just\n"
+	       "an ordinary data series (regardless of the column heading)?");
+
+	if (no_yes_dialog(NULL, _(msg)) == GRETL_YES) {
+	    opt = OPT_A;
+	}
     }
 
     if (bufopen(&prn)) {
@@ -1268,10 +1278,10 @@ static int get_csv_data (char *fname, int ftype, int append)
     }
 
     if (ftype == GRETL_OCTAVE) {
-	err = import_other(fname, ftype, dataset, OPT_NONE, prn);
+	err = import_other(fname, ftype, dataset, opt, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "Octave");
     } else {
-	err = import_csv(fname, dataset, OPT_NONE, prn);
+	err = import_csv(fname, dataset, opt, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
     }
 
@@ -1279,7 +1289,6 @@ static int get_csv_data (char *fname, int ftype, int append)
     vwin = view_buffer(prn, 78, 350, title, IMPORT, NULL);
     gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
 				 GTK_WINDOW(mdata->main));
-
     g_free(title);
 
     if (err) {
@@ -2231,8 +2240,8 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
-#if 1
-    /* experiment!! */
+#if 0
+    /* experimental, not yet */
     if (swallow && role == EDIT_HANSL) {
 	ins = mainwin_get_vwin_insertion();
 	fprintf(stderr, "HERE ins=%d, title '%s'\n", ins, given_title);
@@ -2296,7 +2305,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
-	/* note: added 2021-05-18 */
+	/* since 2021-05-18 */
 	vwin->flags |= VWIN_USE_FOOTER;
     }
 
@@ -2322,9 +2331,11 @@ view_file_with_title (const char *filename, int editable, int del_file,
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
 
+#if 0 /* not yet */   
     if (vwin->flags & VWIN_SWALLOW) {
 	mainwin_insert_vwin(vwin);
     }
+#endif    
 
     return vwin;
 }

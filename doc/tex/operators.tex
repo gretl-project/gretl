@@ -3,15 +3,15 @@
 
 \section{Precedence}
 
-Table~\ref{tab:ops} lists the operators available in gretl in
-order of decreasing precedence: the operators on the first row have
+Table~\ref{tab:ops} lists the operators available in gretl in order of
+decreasing precedence. That is, the operators on the first row have
 the highest precedence, those on the second row have the second
-highest, and so on. Operators on any given row have equal
+highest, and so on, while operators on any given row have equal
 precedence. Where successive operators have the same precedence the
 order of evaluation is in general left to right. The exceptions are
 exponentiation and matrix transpose-multiply. The expression
-\verb|a^b^c| is equivalent to \verb|a^(b^c)|, not \verb|(a^b)^c|, 
-and similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
+\verb|a^b^c| is equivalent to \verb|a^(b^c)|, not \verb|(a^b)^c|, and
+similarly \verb|A'B'C'| is equivalent to \verb|A'(B'(C'))|.
 
 \begin{table}[htbp]
 \caption{Operator precedence}
@@ -47,8 +47,7 @@ basic counterparts. The available dot operators are as follows.
 
 Each basic operator is shown once again in the following list along
 with a brief account of its meaning. Apart from the first three sets
-of grouping symbols, all operators are binary except where otherwise
-noted.
+of grouping symbols, all operators are binary except where noted.
 
 \begin{longtable}{ll}
 \verb|()| & Function call \\

@@ -3,71 +3,24 @@ docsrc = $(topsrc)/doc
 
 MAKE = @MAKE@
 
-GUIDE = gretl-guide-pt.pdf
+TEXSRC = cmdref.tex \
+	comments.tex \
+	funcref.tex \
+	gretl-ref-pt.tex \
+	operators.tex \
+	optarg.tex \
+	optshort.tex \
+	reftables.tex
+
 REF = gretl-ref-pt.pdf
 
-TEXSRC = cli.tex \
-	criteria.tex \
-	graphs.tex \
-	modes.tex \
-	persistent.tex \
-	sampling.tex \
-	trouble.tex \
-	looping.tex \
-	starting.tex \
-	discrete.tex \
-	appendices.tex \
-	matrices.tex \
-	introduction.tex \
-	datafiles.tex \
-	robust_vcv.tex \
-	panel.tex \
-	dpanel.tex \
-	genr.tex \
-	biblio.tex \
-	mle.tex \
-	gmm.tex \
-	probit.tex \
-	nls.tex \
-	timeseries.tex \
-	forecast.tex \
-	vecm.tex \
-	kalman.tex \
-	functions.tex \
-	gretltex.tex \
-	cheatsheet.tex \
-	reftables.tex \
-	cmdref.tex \
-	funcref.tex \
-	comments.tex \
-	optarg.tex \
-	quantreg.tex \
-	odbc.tex \
-	gretlR.tex \
-	gretlOx.tex \
-	gretlOctave.tex \
-	datatypes.tex \
-	df.tex \
-	var.tex
-
-WEBDIR = /home/helio/gretl/website
-DOCDIR = /home/helio/share/gretl/doc
-
-BIBSRC = gretl.bib gretl.bst
+BIBSRC = gretl.bib gretl.bst biblio.tex
 
 STYSRC = $(docsrc)/gretl.sty.in
 
 ALLSRC = $(wildcard $(docsrc)/tex_pt/*.tex) $(STYSRC)
 
-all: $(REF) # $(GUIDE)
-
-$(GUIDE): gretl-guide-pt.tex links textables_pt date.tex $(STYSRC) $(BIBSRC)
-	pdflatex $<
-	bibtex gretl-guide-pt
-	pdflatex $<
-	bibtex gretl-guide-pt
-	pdflatex $<
-	pdflatex $<
+all: $(REF)
 
 $(REF): gretl-ref-pt.tex links cmdtex functex textables_pt topiclist \
 	date.tex $(STYSRC) $(BIBSRC)
@@ -78,21 +31,18 @@ $(REF): gretl-ref-pt.tex links cmdtex functex textables_pt topiclist \
 	pdflatex $<
 	pdflatex $<
 
-gretl-guide-pt.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_pt/$@ . ; fi
-
 gretl-ref-pt.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_pt/$@ . ; fi
 
-.PHONY : links cmdtex_pt functex_pt textables_pt onepass refpass topiclist install clean
+.PHONY : links cmdtex_pt functex_pt textables_pt refpass topiclist clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
-	rm -f figures && ln -s $(docsrc)/figures_pt ./figures
-	for f in $(TEXSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
 	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
+	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
+	rm -f figures && ln -s $(docsrc)/figures .
 
 cmdtex:
 	$(MAKE) -C ../commands cmdtex_pt
@@ -109,21 +59,14 @@ functex:
 date.tex: $(ALLSRC)
 	LANG=pt_PT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
-onepass: gretl-guide-pt.tex links textables_pt
-	 pdflatex $<
-
 refpass: gretl-ref-pt.tex links cmdtex_pt functex_pt textables_pt topiclist
 	 pdflatex $<
 
-bibpass: onepass refpass
-	bibtex gretl-guide-pt
+bibpass: refpass
 	bibtex gretl-ref-pt
-
-install: $(GUIDE) $(REF)
-	cp $(GUIDE) $(REF) $(WEBDIR) $(DOCDIR)
 
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f ../commands/textables_pt ../commands/topiclist_pt 
+	rm -f ../commands/textables_pt ../commands/topiclist_pt
 	rm -f ../commands/cmdtex_pt ../commands/functex_pt

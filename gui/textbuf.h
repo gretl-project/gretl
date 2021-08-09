@@ -30,6 +30,10 @@
 				       r == VIEW_LOG ||			\
 				       r == CONSOLE))
 
+#define lbracket(k) (k == GDK_parenleft || \
+		     k == GDK_bracketleft || \
+		     k == GDK_braceleft)
+
 extern int tabwidth;
 extern int smarttab;
 extern int script_line_numbers;
@@ -147,5 +151,13 @@ void textview_delete_processing_message (GtkWidget *view);
 void textview_format_paragraph (GtkWidget *view);
 
 void indent_hansl (GtkWidget *w, windata_t *vwin);
+
+gboolean script_bracket_handler (windata_t *vwin, guint keyval);
+
+#ifdef HAVE_GTKSV_COMPLETION
+
+int maybe_try_completion (windata_t *vwin);
+
+#endif
 
 #endif /* TEXTBUF_H */

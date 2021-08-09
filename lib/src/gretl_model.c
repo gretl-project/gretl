@@ -6160,7 +6160,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     case QLRTEST:
     case LEVERAGE:
     case RESET:
-    case HAUSMAN:
+    case PANSPEC:
 	/* OLS-only tests */
 	ok = (mci == OLS);
 	break;
@@ -6239,7 +6239,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_panel(dset)) {
 	/* panel-only tests */
-	if (ci == HAUSMAN) {
+	if (ci == PANSPEC) {
 	    ok = 0;
 	} else if (ci == MODTEST && (opt & (OPT_P | OPT_D))) {
 	    ok = 0;

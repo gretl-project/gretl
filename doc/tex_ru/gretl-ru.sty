@@ -1,0 +1,301 @@
+%% gretl.sty, originally written by Allin Cottrell, <2005/11/07>
+%% To be used when generating the Gretl manuals from LaTeX source.
+
+\RequirePackage{amsmath,xcolor,amssymb}
+\ProvidesPackage{gretl}
+
+\newcommand{\scriptname}{Listing}
+\newcommand{\GCR}{\textit{Gretl Command Reference}{}}
+\newcommand{\GUG}{the \textit{Gretl User's Guide}{}}
+\newcommand{\PKGBOOK}{\textit{Gretl Function Package Guide}{}}
+
+\newcommand{\gtitle}[1]{\vspace*{1in}
+   {\Huge \sffamily #1}\par
+   \vspace{.5in}
+  \includegraphics{figures/gretl-logo} 
+}
+
+\newcommand{\htitle}[1]{\vspace*{1in}
+   {\Huge \sffamily #1}\par
+   \vspace{.5in}
+  \includegraphics{figures/hansl-logo} 
+}
+
+\newcommand{\gsubtitle}[1]{%
+   {\Large \sffamily #1}
+   \vspace{.5in}
+}
+
+\newcommand{\guidechap}[1]{%
+   \hypertarget{chap:#1}{}%
+   \include{#1}
+}
+
+\ifcsname c@chapter\endcsname
+  \setcounter{secnumdepth}{1}
+  \setcounter{chapter}{-1}
+\else
+  \setcounter{secnumdepth}{2}
+\fi
+
+\newcommand{\app}[1]{\textsf{#1}}
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\varname}[1]{\texttt{#1}}
+\newcommand{\option}[1]{\texttt{-{}-#1}}
+\newcommand{\dollar}[1]{\texttt{\$#1}}
+\newcommand{\package}[1]{\textsl{#1}}
+
+\newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
+
+%% --- a few handy math additions ---------------------------------------
+
+\DeclareMathOperator*{\argmin}{\mathrm{Argmin}}
+\DeclareMathOperator*{\argmax}{\mathrm{Argmax}}
+\newcommand{\LogLik}{\ensuremath\ell}
+\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
+\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
+\newcommand{\convp}{\stackrel{\mathrm{p}}{\longrightarrow}}
+\newcommand{\convd}{\stackrel{\mathrm{d}}{\longrightarrow}}
+\renewcommand{\vec}[1]{{\rm vec}(#1)}
+
+%% ----------------------------------------------------------------------
+
+\newenvironment{textcode}{\par\small\ttfamily}
+{\normalfont\normalsize\par}
+
+\DefineVerbatimEnvironment%
+{code}{Verbatim}
+{fontsize=\small, xleftmargin=1em}
+
+\DefineVerbatimEnvironment%
+{scode}{Verbatim}
+{frame=lines, framesep=2ex, fontsize=\small,
+ formatcom=\color{myteal}, rulecolor=\color{mygray}}
+
+\DefineVerbatimEnvironment%
+{scodebit}{Verbatim}
+{fontsize=\small, formatcom=\color{myteal}}
+
+\DefineVerbatimEnvironment%
+{outbit}{Verbatim}
+{fontsize=\small, formatcom=\color{myteal}}
+
+\DefineVerbatimEnvironment%
+{scodebot}{Verbatim}
+{frame=bottomline, framesep=2ex, fontsize=\small,
+ formatcom=\color{myteal}, rulecolor=\color{mygray}}
+
+\renewcommand{\arraystretch}{1.2}
+
+\definecolor{mygray}{rgb}{0.85,0.85,0.85} 
+\definecolor{myteal}{rgb}{0.0,0.25,0.15}
+\definecolor{steel}{rgb}{0.03,0.20,0.45} 
+
+%% offset "tip" text
+\newcommand{\tip}[1]{\par\vspace{4pt}
+ \ding{43} {\small \sffamily #1}\par}
+
+%% rule for use in bibliography
+\newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
+
+%% floats
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+
+%% add script as float ("Listing")
+\ifcsname c@chapter\endcsname
+ \newcounter{script}[chapter]
+ \renewcommand \thescript
+     {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}
+\else
+ \newcounter{script}
+ \renewcommand \thescript
+     {\@arabic\c@script}
+\fi
+\def\fps@script{tbp}
+\def\ftype@script{1}
+\def\ext@script{los}
+\def\fnum@script{\scriptname\nobreakspace\thescript}
+\newenvironment{script}
+               {\@float{script}}
+               {\end@float}
+\newenvironment{script*}
+               {\@dblfloat{script}}
+               {\end@dblfloat}
+\ifcsname c@chapter\endcsname
+ \newcommand\theHscript{\thechapter.\arabic{script}}
+\else
+ \newcommand\theHscript{\arabic{script}}
+\fi
+
+%% section headings
+
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                   {-3ex \@plus -1ex \@minus -.2ex}%
+                                   {.5ex \@plus .2ex}%
+                                   {\normalfont\large\sffamily}}
+
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-2.5ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .5ex}%
+                                     {\normalfont\bfseries}}
+
+\renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
+                                     {-2ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .2ex}%
+                                     {\normalfont\normalsize\itshape}}
+
+%% revised caption style
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{\small {\bfseries #1}: #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\small {\bfseries #1}: #2}\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+
+%% The rest of the material below is specific to the book
+%% document class
+
+\ifcsname c@chapter\endcsname
+\else
+ \endinput
+\fi
+
+%% Make TOC match revised chapter style
+\renewcommand\tableofcontents{%
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\contentsname
+        \@mkboth{\contentsname}{\contentsname}}%
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi}
+
+%% get the bibliography into the TOC
+\renewenvironment{thebibliography}[1]
+     {\chapter*{\bibname\@mkboth{\bibname}{\bibname}}
+      \label{refs}
+      \addcontentsline{toc}{chapter}{\bibname}
+      \list{\@biblabel{\@arabic\c@enumiv}}%
+           {\settowidth\labelwidth{\@biblabel{#1}}%
+            \leftmargin\labelwidth
+            \advance\leftmargin\labelsep
+            \@openbib@code
+            \usecounter{enumiv}%
+            \let\p@enumiv\@empty
+            \renewcommand\theenumiv{\@arabic\c@enumiv}}%
+      \sloppy
+      \clubpenalty4000
+      \@clubpenalty \clubpenalty
+      \widowpenalty4000%
+      \sfcode`\.\@m}
+     {\def\@noitemerr
+       {\@latex@warning{Empty `thebibliography' environment}}%
+      \endlist}
+
+%% custom page headings 
+\if@twoside
+  \def\ps@headings{%
+      \let\@oddfoot\@empty\let\@evenfoot\@empty
+      \def\@evenhead{\thepage\hfil\sffamily\leftmark}%
+      \def\@oddhead{{\sffamily\rightmark}\hfil\sffamily\thepage}%
+      \let\@mkboth\markboth
+    \def\chaptermark##1{%
+      \markboth {{%
+        \ifnum \c@secnumdepth >\m@ne
+          \if@mainmatter
+            \@chapapp\ \thechapter. \ %
+          \fi
+        \fi
+        ##1}}{}}%
+    \def\sectionmark##1{%
+      \markright {{%
+        \ifnum \c@secnumdepth >\z@
+          \thesection. \ %
+        \fi
+        ##1}}}}
+\else
+  \def\ps@headings{%
+    \let\@oddfoot\@empty
+    \def\@oddhead{{\sffamily\rightmark}\hfil\sffamily\thepage}%
+    \let\@mkboth\markboth
+    \def\chaptermark##1{%
+      \markright {{%
+        \ifnum \c@secnumdepth >\m@ne
+          \if@mainmatter
+            \@chapapp\ \thechapter. \ %
+          \fi
+        \fi
+        ##1}}}}
+\fi
+
+\def\@makechapterhead#1{%
+  \vspace*{10\p@}%
+  {\parindent \z@ \centering \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+        \Large\sffamily \@chapapp\space \thechapter
+        \par\nobreak
+        \vskip 5\p@
+    \fi
+    \interlinepenalty\@M
+    \huge \sffamily #1\par\nobreak
+    \vskip 30\p@
+  }}
+
+\def\@schapter#1{%
+ \if@twocolumn \@topnewpage[\@makeschapterhead{#1}]
+ \else \@makeschapterhead{#1} 
+ \@afterheading\fi
+  \refstepcounter{chapter}
+  \if\pdfoutput=1 \@writetorep{#1}{chapter.\theHchapter}{0}\fi 
+ }
+
+\def\@makeschapterhead#1{%
+  \vspace*{10\p@}%
+  {\parindent \z@ \centering
+    \normalfont
+    \interlinepenalty\@M
+    \Large \sffamily  #1\par\nobreak
+    \vskip 30\p@
+  }}
+
+%% table of contents
+\renewcommand{\l@chapter}[2]{%
+  \ifnum \c@tocdepth >\m@ne
+    \addpenalty{-\@highpenalty}%
+    \vskip 1.0em \@plus\p@
+    \setlength\@tempdima{2em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak\hfil \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+      \penalty\@highpenalty
+    \endgroup
+  \fi}
+
+\renewcommand{\l@section}{\@dottedtocline{1}{1.5em}{2.8em}}
+\renewcommand{\l@subsection}{\@dottedtocline{2}{4.3em}{3.2em}}
+
+%% Script URLS
+
+\newcommand{\scriptcaption}[1]{%
+  \def\@scriptname{%
+    example-\ifnum\value{chapter}<10 0\fi\arabic{chapter}.\arabic{script}%
+  }
+  \caption{#1 %
+  \href{http://gretl.sourceforge.net/guidefiles/\@scriptname.inp}%
+  {[Download $\blacktriangledown$]}}%
+}
+
+\endinput
+%% end of gretl.sty
