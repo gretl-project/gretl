@@ -1406,6 +1406,9 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
 {
     if (vwin == NULL) {
 	return NULL;
+    } else if (vwin->flags & VWIN_SWALLOW) {
+	/* vwin swallowed by main */
+	return mdata->main;
     } else if (vwin->topmain != NULL) {
 	/* the tabbed case */
 	return vwin->topmain;
