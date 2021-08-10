@@ -596,37 +596,27 @@ static int col_strlen (const Xtab *tab)
     return nmax;
 }
 
-static void set_col_widths(const Xtab *tab, int *cw, int *tw)
-{
-    /* allow for wider columns when cell contents are 
-       large numbers */
+/* allow for wider columns when cell counts are large numbers */
 
-    int std_clen = 6;
-    int i;
-    int di, dmax = 0;
-    
+static void get_xtab_col_widths (const Xtab *tab, int stdwidth,
+				 int *cwidth, int *twidth)
+{
+    int i, di, dmax = 0;
+
+    /* column width */
     for (i=0; i<tab->cols; i++) {
 	di = (int) (floor(log10(tab->ctotal[i])));
 	dmax = di > dmax ? di : dmax;
     }
+    *cwidth = (dmax >= stdwidth - 2)? dmax + 3 : stdwidth;
 
-    if (dmax >= std_clen - 2) {
-	*cw = dmax + 3;
-    } else {
-	*cw = std_clen;
-    }
-
+    /* totals width */
     dmax = 0;
     for (i=0; i<tab->rows; i++) {
 	di = (int) (floor(log10(tab->rtotal[i])));
 	dmax = di > dmax ? di : dmax;
     }
-    
-    if (dmax >= std_clen - 2) {
-	*tw = dmax + 3;
-    } else {
-	*tw = std_clen;
-    }
+    *twidth = (dmax >= stdwidth - 2)? dmax + 3 : stdwidth;
 }
 
 static void real_print_xtab (const Xtab *tab, const DATASET *dset,
@@ -640,6 +630,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     char lbl[64];
     int rlen = 0;
     int clen = 0;
+    int cw, tw;
+    int stdw = 6;
     int totals = 1;
     int tex = 0;
     int bold = 0;
@@ -699,8 +691,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	rlen = 7;
     }
 
-    int cw, tw;
-    set_col_widths(tab, &cw, &tw);
+    /* allow for BIG integers */
+    get_xtab_col_widths(tab, stdw, &cw, &tw);
     
     if (tab->cstrs) {
 	clen = 2 + col_strlen(tab);
@@ -749,7 +741,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	if (tex) {
 	    pprintf(prn,"$\\Sigma$\\\\ \\hline\n");
 	} else {
-	    pprintf(prn,"  %s\n  \n", _("TOT."));
+	    bufspace(2 + (tw - stdw), prn);
+	    pprintf(prn,"%s\n  \n", _("TOT."));
 	}
     } else if (!tex) {
 	pputc(prn, '\n');
