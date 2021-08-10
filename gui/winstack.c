@@ -1475,6 +1475,8 @@ void window_add_winlist (GtkWidget *window, GtkWidget *hbox)
     }
 }
 
+#if 0 /* specific to "swallow" and unused at present */
+
 static void menubar_add_closer (windata_t *vwin)
 {
     GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
@@ -1503,6 +1505,8 @@ static void menubar_add_closer (windata_t *vwin)
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
 }
+
+#endif
 
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
 {
@@ -1571,7 +1575,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    vwin_add_finder(vwin);
 	}
 	if (vwin->flags & VWIN_SWALLOW) {
-	    menubar_add_closer(vwin);
+	    /* menubar_add_closer(vwin); */
 	    if (vwin->role == CONSOLE) {
 		GtkWidget *lbl = gtk_label_new(_("gretl console"));
 

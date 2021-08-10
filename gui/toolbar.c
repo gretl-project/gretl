@@ -1613,7 +1613,7 @@ static void tbar_show_funcs (GtkWidget *w, gpointer p)
 static GretlToolItem mainbar_items[] = {
     { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
-    { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
+    { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 1 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(view_session), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
@@ -1634,6 +1634,9 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 
     for (i=0; i<n; i++) {
 	item = &mainbar_items[i];
+	if (swallow && item->flag) {
+	    continue;
+	}
 	gretl_toolbar_insert(mdata->mbar, item, item->func, mdata, -1);
     }
 
