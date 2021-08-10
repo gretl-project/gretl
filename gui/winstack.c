@@ -1575,7 +1575,9 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    vwin_add_finder(vwin);
 	}
 	if (vwin->flags & VWIN_SWALLOW) {
-	    /* menubar_add_closer(vwin); */
+#if 0 /* don't show a close for swallowed console */
+	    menubar_add_closer(vwin);
+#endif
 	    if (vwin->role == CONSOLE) {
 		GtkWidget *lbl = gtk_label_new(_("gretl console"));
 
