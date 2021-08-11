@@ -321,6 +321,34 @@ static void console_insert_prompt (GtkTextBuffer *buf,
     gtk_text_buffer_place_cursor(buf, iter);
 }
 
+static int detect_quit (const char *s)
+{
+    s += strspn(s, " \t");
+    if (!strncmp(s, "quit", 4)) {
+	int n = strlen(s);
+
+	if (n == 4 || (n > 4 && isspace(s[4]))) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static void maybe_exit_on_quit (void)
+{
+    if (exit_check()) {
+	return;
+    } else {
+	const char *msg = N_("Really quit gretl?");
+	int resp = no_yes_dialog(NULL, _(msg));
+
+	if (resp == GRETL_YES) {
+	    gtk_main_quit();
+	}
+    }
+}
+
 static int real_console_exec (ExecState *state)
 {
     int err = 0;
@@ -328,6 +356,11 @@ static int real_console_exec (ExecState *state)
 #if CDEBUG
     fprintf(stderr, "*** real_console_exec: '%s'\n", state->line);
 #endif
+
+    if (swallow && detect_quit(state->line)) {
+	maybe_exit_on_quit();
+	return 0;
+    }
 
     push_history_line(state->line);
 
@@ -366,6 +399,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
     protect_console();
     real_console_exec(state);
+
     if (state->cmd->ci == QUIT) {
 	*state->line = '\0';
 	unprotect_console();
@@ -581,7 +615,7 @@ static gint console_key_handler (GtkWidget *cview,
 	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
-	} else if (swallow && upkey == GDK_Page_Up) {
+	} else if (swallow && (upkey == GDK_Page_Up || upkey == GDK_Tab)) {
 	    gtk_widget_grab_focus(mdata->listbox);
 	    return TRUE;
 	} else {
@@ -696,6 +730,7 @@ static gint console_key_handler (GtkWidget *cview,
 	return TRUE;
     }
 #endif
+
     if (script_auto_bracket && lbracket(keyval)) {
 	return script_bracket_handler((windata_t *) p, keyval);
     }

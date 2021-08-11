@@ -1021,7 +1021,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* Ctrl-V for paste */
 	mdata_handle_paste();
 	return TRUE;
-    } else if (swallow && Ctrl && k == GDK_Page_Down) {
+    } else if (swallow && Ctrl && (k == GDK_Page_Down || k == GDK_Tab)) {
 	gretl_console();
 	return TRUE;
     }

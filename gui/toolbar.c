@@ -826,7 +826,7 @@ static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == CONSOLE) {
-	console_prefs_dialog(vwin_toplevel(vwin));
+	console_prefs_dialog(vwin->main);
     } else {
 	preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
     }
