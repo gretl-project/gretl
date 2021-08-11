@@ -3761,32 +3761,42 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
     return ret;
 }
 
-static NODE *matrix_vector_func (NODE *l, NODE *r,
+static NODE *matrix_vector_func (NODE *l, NODE *m, NODE *r,
                                  int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-        gretl_matrix *m = l->v.m;
-        gretl_matrix *v = r->v.m;
-        int vlen = 0;
+        gretl_matrix *a = l->v.m;
+        gretl_matrix *v = NULL;
+        int colwise, dim = 0;
+	int free_v = 0;
 
-        if (gretl_is_null_matrix(m)) {
+        if (gretl_is_null_matrix(a)) {
             p->err = E_INVARG;
-        } else {
-            vlen = gretl_vector_get_length(v);
-            if (vlen != m->rows) {
-                p->err = E_NONCONF;
-            }
-        }
+        } else if (m->t == MAT) {
+	    v = m->v.m;
+	} else {
+	    dim = node_get_int(m, p);
+	}
+	if (!p->err) {
+	    colwise = node_get_bool(r, p, 0);
+	}
+	if (!p->err && v == NULL) {
+	    v = gretl_matrix_from_scalar((double) dim);
+	    free_v = 1;
+	}
         if (p->err) {
             return NULL;
         }
         /* currently only F_MSPLITBY comes here */
         ret = aux_array_node(p);
         if (ret != NULL) {
-            ret->v.a = gretl_matrix_split_by(m, v, &p->err);
+            ret->v.a = gretl_matrix_split_by(a, v, colwise, &p->err);
         }
+	if (free_v) {
+	    gretl_matrix_free(v);
+	}
     } else {
         ret = aux_array_node(p);
     }
@@ -16811,8 +16821,8 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MSPLITBY:
         /* matrix on left, vector on right */
-        if (l->t == MAT && r->t == MAT) {
-            ret = matrix_vector_func(l, r, t->t, p);
+        if (l->t == MAT && (m->t == MAT || m->t == NUM)) {
+            ret = matrix_vector_func(l, m, r, t->t, p);
         } else {
             p->err = E_TYPES;
         }

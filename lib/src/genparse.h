@@ -329,7 +329,6 @@ enum {
     F_RNAMESET,
     F_LJUNGBOX,
     F_MSORTBY,
-    F_MSPLITBY,
     F_LINCOMB,
     F_IMHOF,
     F_XMIN,
@@ -471,6 +470,7 @@ enum {
     F_VMA,
     F_FCSTATS,
     F_BCHECK,
+    F_MSPLITBY,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
