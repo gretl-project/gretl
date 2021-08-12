@@ -36,6 +36,9 @@ gretl_array *gretl_array_from_strings (char **S, int n,
 gretl_array *gretl_matrix_array_sized (int n, int r, int c,
 				       int *err);
 
+gretl_array *gretl_singleton_array (void *ptr, GretlType atype,
+				    int copy, int *err);
+
 void *gretl_array_get_element (gretl_array *A, int i,
 			       GretlType *type,
 			       int *err);

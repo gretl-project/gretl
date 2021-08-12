@@ -220,6 +220,24 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
     return A;
 }
 
+gretl_array *gretl_singleton_array (void *ptr, GretlType atype,
+				    int copy, int *err)
+{
+    gretl_array *A = gretl_array_new(atype, 1, err);
+
+    if (A != NULL) {
+	GretlType t = gretl_type_get_singular(atype);
+
+	*err = gretl_array_set_element(A, 0, ptr, t, copy);
+	if (*err) {
+	    free(A);
+	    A = NULL;
+	}
+    }
+
+    return A;
+}
+
 gretl_array *gretl_array_from_strings (char **S, int n,
 				       int copy, int *err)
 {
