@@ -10698,7 +10698,7 @@ static double *scalar_to_series (NODE *n, parser *p)
    to an array of strings. But I'm not sure that's a good idea.
 */
 
-static int lhs_type_check (GretlType spec, GretlType rhs)
+static int lhs_type_check (GretlType spec, GretlType rhs, int t)
 {
     int err = 0;
 
