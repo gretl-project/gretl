@@ -967,12 +967,15 @@ gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
     dim = colwise ? X->cols : X->rows;
 
     if (gretl_vector_get_length(v) == 1) {
+	/* the chunk-size variant */
 	chunk = v->val[0];
-	if (chunk <= 0 || chunk > dim || dim % chunk != 0) {
+	if (chunk <= 0 || chunk > dim) {
 	    *err = E_INVARG;
+	} else if (dim % chunk != 0) {
+	    *err = E_NONCONF;
 	}
     } else if (gretl_vector_get_length(v) == dim) {
-	/* only positive integers allowed */
+	/* vector of indices: only positive integers allowed */
 	for (i=0; i<dim; i++) {
 	    x = v->val[i];
 	    if (x != floor(x) || x <= 0 || x >= INT_MAX) {
