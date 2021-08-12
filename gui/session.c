@@ -4023,6 +4023,7 @@ void view_session (void)
     session_view_init();
 
     iconview = gretl_gtk_window();
+    gtk_window_set_position(GTK_WINDOW(iconview), GTK_WIN_POS_MOUSE);
     title = g_strdup_printf("gretl: %s", _("icon view"));
     gtk_window_set_title(GTK_WINDOW(iconview), title);
     g_free(title);
