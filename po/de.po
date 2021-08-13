@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-07-27 18:53-0400\n"
-"PO-Revision-Date: 2021-04-15 17:47+0200\n"
+"PO-Revision-Date: 2021-08-13 12:15+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
 #: lib/src/adf_kpss.c:592
 msgid "lagged differences"
@@ -668,9 +668,8 @@ msgid "Robust Wald test for break"
 msgstr "Robuster Wald-Test auf Bruch"
 
 #: lib/src/compare.c:2676
-#, fuzzy
 msgid "5% QLR critical value"
-msgstr "%g-Prozent kritischer Wert"
+msgstr "5% QLR kritischer Wert"
 
 #: lib/src/compare.c:2773
 msgid ""
@@ -2617,7 +2616,7 @@ msgstr "_periodische Dummies"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
-msgstr ""
+msgstr "nicht-zentrierte periodische Dummies"
 
 #: lib/src/genfuncs.c:2943
 #, c-format
@@ -2794,7 +2793,7 @@ msgstr "Unerwartetes Byte 0x%x\n"
 
 #: lib/src/genlex.c:2175
 msgid "If you meant to test for equality, please use '=='"
-msgstr ""
+msgstr "Falls logischer Vergleich gemeint, bitte '==' verwenden"
 
 #: lib/src/genlex.c:2354
 #, c-format
@@ -4095,11 +4094,11 @@ msgstr "Ungültiger MPI-Rang %d"
 #: lib/src/gretl_mt.c:175
 #, c-format
 msgid "omp_num_threads: must be >= 1 and <= %d"
-msgstr ""
+msgstr "omp_num_threads: muss zwischen 1 und %d liegen"
 
 #: lib/src/gretl_mt.c:186 lib/src/gretl_mt.c:213
 msgid "set_omp_n_threads: OpenMP is not enabled"
-msgstr ""
+msgstr "set_omp_n_threads: OpenMP nicht aktiviert"
 
 #: lib/src/gretl_panel.c:1560
 #, fuzzy
@@ -4123,7 +4122,7 @@ msgstr "theta benutzt für Quasi-Mittelwertbereinigung"
 
 #: lib/src/gretl_panel.c:1571
 msgid "Panel is unbalanced: theta varies across units"
-msgstr ""
+msgstr "Unbalanciertes Panel: theta variiert zwischen Gruppen"
 
 #: lib/src/gretl_panel.c:1576
 msgid ""
@@ -6141,7 +6140,7 @@ msgstr "McFadden-R-Quadrat"
 
 #: lib/src/modelprint.c:3175
 msgid "Estrella $R^2$"
-msgstr ""
+msgstr "Estrella $R^2$"
 
 #: lib/src/modelprint.c:3176
 msgid "Estrella R-squared"
@@ -7723,12 +7722,12 @@ msgstr "'catch' in diesem Kontext nicht benutzbar"
 
 #: lib/src/tokenize.c:2065
 msgid "savename is too long"
-msgstr ""
+msgstr "Speichername zu lang"
 
 #: lib/src/tokenize.c:2419
 #, c-format
 msgid "\"%s\": obsolete %s; please use the function %s"
-msgstr ""
+msgstr "\"%s\": obsoletes %s; bitte Funktion %s verwenden"
 
 #: lib/src/tokenize.c:2422
 #, fuzzy, c-format
@@ -7737,7 +7736,7 @@ msgstr "obsoleter Gebrauch von \"pi\": bitte \"$pi\" benutzen"
 
 #: lib/src/tokenize.c:2622
 msgid "'end loop': did you mean 'endloop'"
-msgstr ""
+msgstr "'end loop': meinten Sie 'endloop'"
 
 #: lib/src/tokenize.c:3318
 #, fuzzy, c-format
@@ -7821,7 +7820,7 @@ msgstr "Dummy für %s = %g"
 #: lib/src/transforms.c:1707
 #, c-format
 msgid "%s: collides with existing object name"
-msgstr ""
+msgstr "%s: kollidiert mit existierendem Objektnamen"
 
 #: lib/src/transforms.c:2039
 #, c-format
@@ -10694,15 +10693,16 @@ msgstr "Log-Skala"
 
 #: gui/dialogs.c:6866
 msgid "draw border around map"
-msgstr ""
+msgstr "Rand um Landkarte zeichnen"
 
 #: gui/dialogs.c:6874
+#, fuzzy
 msgid "Feature border width:"
-msgstr ""
+msgstr "Breite des Rands:"
 
 #: gui/dialogs.c:6888
 msgid "height in pixels:"
-msgstr ""
+msgstr "Höhe in Pixeln:"
 
 #: gui/dialogs.c:6967 gui/dialogs.c:7202
 msgid "constant"
@@ -10795,7 +10795,7 @@ msgstr "Kreuzvalidierungs-Kriterium"
 
 #: gui/dialogs.c:7532
 msgid "minimized MSE"
-msgstr ""
+msgstr "minimierter MSE"
 
 #: gui/dialogs.c:7533
 #, fuzzy
@@ -10875,11 +10875,11 @@ msgstr "Hessematrix"
 
 #: gui/dlgutils.c:1100
 msgid "Robust (QML)"
-msgstr ""
+msgstr "Robust (QML)"
 
 #: gui/dlgutils.c:1101
 msgid "Robust (HAC)"
-msgstr ""
+msgstr "Robust (HAC)"
 
 #: gui/dlgutils.c:1287 gui/dlgutils.c:1290
 msgid "(Please refer to Help for guidance)"
@@ -12430,7 +12430,7 @@ msgstr "Neue gretl-Instanz starten?"
 
 #: gui/gretl.c:158
 msgid "reuse an existing gretl instance unconditionally"
-msgstr ""
+msgstr "immer eine laufende gretl-Instanz weiterverwenden"
 
 #: gui/gretl.c:629
 msgid "Start a new gretl instance?"
@@ -13911,6 +13911,12 @@ msgid ""
 "Do you want to force gretl to treat the first column as just\n"
 "an ordinary data series (regardless of the column heading)?"
 msgstr ""
+"Normalerweise interpretiert gretl die erste Spalte einer CSV-\n"
+"Datendatei als Beobachtungsinformation (z.B. Datumsangaben),\n"
+"falls der Spaltenkopf dementsprechend erscheint.\n"
+"\n"
+"Soll gretl hier die erste Spalte als eine weitere Datenreihe\n"
+"behandeln, unabhängig vom Inhalt des Spaltenkopfs?"
 
 #: gui/gui_utils.c:1286 gui/gui_utils.c:1289
 #, c-format
@@ -14641,7 +14647,7 @@ msgstr "Fehler beim Hinzufügen der Variablen"
 #: gui/library.c:581
 #, c-format
 msgid "error correction term %d from VECM %d"
-msgstr ""
+msgstr "Fehlerkorrekturterm %d von VECM %d"
 
 #: gui/library.c:615
 #, c-format
@@ -15038,6 +15044,7 @@ msgstr "Durbin-Watson-Statistik"
 #: gui/library.c:3345
 msgid "Warning: the model contains a lagged dependent variable so DW is biased"
 msgstr ""
+"Warnung: das Modell enthält eine verzögerte Abhängige, sodass DW verzerrt ist"
 
 #: gui/library.c:3352
 msgid ""
@@ -15333,6 +15340,8 @@ msgid ""
 "Too many data values (%d) for display.\n"
 "You might try limiting the sample range."
 msgstr ""
+"Zuviele Werte (%d) anzuzeigen.\n"
+"Sie könnten den Stichprobenbereich eingrenzen."
 
 #: gui/library.c:7350
 #, c-format
@@ -15516,6 +15525,8 @@ msgid ""
 "Data files written in the current gdtb binary format\n"
 "cannot be read by gretl versions older than 2020b"
 msgstr ""
+"Datendateien im aktuellen gdtb-Binärformat können\n"
+"nicht von gretl-Versionen vor 2020b gelesen werden."
 
 #: gui/library.c:9555 gui/library.c:9694
 msgid "No commands to execute"
@@ -16412,11 +16423,11 @@ msgstr "Mehrere λ-Werte"
 
 #: gui/selector.c:6619
 msgid "Optimize via cross-validation"
-msgstr ""
+msgstr "Optimiere durch Kreuzvalidierung"
 
 #: gui/selector.c:6625
 msgid "Folds:"
-msgstr ""
+msgstr "Faltungen (folds):"
 
 #: gui/selector.c:6630
 #, fuzzy
@@ -16567,7 +16578,7 @@ msgstr "CSV"
 
 #: gui/selector.c:7098
 msgid "GeoJSON"
-msgstr ""
+msgstr "GeoJSON"
 
 #: gui/selector.c:7099
 msgid "gretl datafile (.gdt)"
@@ -17080,7 +17091,7 @@ msgstr "Aktiviere Auto-Vervollständigung"
 
 #: gui/settings.c:228
 msgid "Toolbar icon size"
-msgstr ""
+msgstr "Symbolgröße in Leiste"
 
 #: gui/settings.c:230
 msgid "Set working directory from shell"
@@ -17285,11 +17296,11 @@ msgstr "Portugiesisch"
 
 #: gui/settings.c:1276
 msgid "automatic, as you type"
-msgstr ""
+msgstr "automatisch beim Tippen"
 
 #: gui/settings.c:1277
 msgid "on demand, via Tab"
-msgstr ""
+msgstr "nur explizit bei Tab"
 
 #: gui/settings.c:1281 plugin/tramo_options.c:547 plugin/tramo_options.c:664
 #: plugin/tramo_options.c:724 plugin/tramo-x12a.c:267
