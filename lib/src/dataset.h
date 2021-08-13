@@ -24,13 +24,6 @@
 #include "gretl_bundle.h"
 
 typedef enum {
-    DATA_NONE,
-    DATA_XSECT,
-    DATA_TS,
-    DATA_PANEL
-} DatasetStructure;
-
-typedef enum {
     NO_MARKERS = 0,
     REGULAR_MARKERS,
     DAILY_DATE_STRINGS
