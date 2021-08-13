@@ -756,27 +756,9 @@ void minibuf_callback (void)
 
 void newdata_callback (void)
 {
-    int resp, n = 50;
-
-    if (dataset_locked()) {
-	return;
+    if (!dataset_locked()) {
+	new_data_structure_dialog();
     }
-
-    resp = spin_dialog(_("gretl: create data set"), NULL, &n,
-		       _("Number of observations:"),
-		       2, 1000000, 0, NULL);
-
-    if (resp < 0) {
-	/* canceled */
-	return;
-    }
-
-    if (open_nulldata(dataset, data_status, n, OPT_NONE, NULL)) {
-	errbox(_("Failed to create empty data set"));
-	return;
-    }
-
-    new_data_structure_dialog();
 }
 
 void edit_gfn_callback (void)
