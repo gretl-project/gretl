@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-13 13:56-0400\n"
-"PO-Revision-Date: 2021-08-13 12:15+0200\n"
+"PO-Revision-Date: 2021-08-13 23:09+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -1574,9 +1574,9 @@ msgid "Expected a valid variable name"
 msgstr "Erwartete einen gültigen Variablennamen"
 
 #: lib/src/dbread.c:2399
-#, fuzzy, c-format
+#, c-format
 msgid "ODBC import: '%s': no valid observations in sample range"
-msgstr "'%s': ungültiger Beobachtungsindex"
+msgstr "ODBC-Import: '%s': keine gültigen Beobachtungen im Stichprobenbereich"
 
 #: lib/src/dbread.c:2457 lib/src/dbread.c:2706 lib/src/dbread.c:2839
 msgid "No database has been opened"
@@ -2409,10 +2409,8 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Falscher Operandentyp für unäres '&'"
 
 #: lib/src/geneval.c:5869
-#, fuzzy
 msgid "The first argument must be a named series in the current dataset"
-msgstr ""
-"Die Reihe %s hat anscheinend dieselbe Periodizität wie der aktuelle Datensatz"
+msgstr "Das erste Argument muss ein Reihenname vom aktuellen Datensatz sein."
 
 #: lib/src/geneval.c:7724 lib/src/geneval.c:7751 lib/src/gretl_func.c:8974
 #, c-format
@@ -2610,9 +2608,8 @@ msgstr ""
 "Bitte wählen Sie eine kleinere Stichprobe."
 
 #: lib/src/genfuncs.c:2937
-#, fuzzy
 msgid "centered periodic dummy"
-msgstr "_periodische Dummies"
+msgstr "zentrierte periodische Dummy"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
@@ -3828,9 +3825,8 @@ msgstr "täglich"
 
 #: lib/src/gretl_midas.c:323 lib/src/transforms.c:1475
 #: lib/src/transforms.c:1764
-#, fuzzy
 msgid "The argument does not seem to be a MIDAS list"
-msgstr "Dies scheint keine zulässige SAS xport-Datei zu sein"
+msgstr "Das Argument scheint keine MIDAS-Liste zu sein"
 
 #: lib/src/gretl_midas.c:2329
 #, c-format
@@ -4101,24 +4097,23 @@ msgid "set_omp_n_threads: OpenMP is not enabled"
 msgstr "set_omp_n_threads: OpenMP nicht aktiviert"
 
 #: lib/src/gretl_panel.c:1560
-#, fuzzy
 msgid "Variance estimators:"
-msgstr "Kovarianzschätzer"
+msgstr "Varianzschätzer:"
 
 #: lib/src/gretl_panel.c:1562
-#, fuzzy, c-format
+#, c-format
 msgid " between = %g"
-msgstr " (Schrittweite = %g)"
+msgstr " Inter-Gruppen = %g"
 
 #: lib/src/gretl_panel.c:1564
-#, fuzzy, c-format
+#, c-format
 msgid " within = %g"
-msgstr "Bandbreite = %g"
+msgstr " Intra = %g"
 
 #: lib/src/gretl_panel.c:1568
-#, fuzzy, c-format
+#, c-format
 msgid "theta used for quasi-demeaning = %g"
-msgstr "theta benutzt für Quasi-Mittelwertbereinigung"
+msgstr "theta für Quasi-Mittelwertbereinigung = %g"
 
 #: lib/src/gretl_panel.c:1571
 msgid "Panel is unbalanced: theta varies across units"
@@ -7716,9 +7711,8 @@ msgid "Invalid lag order %g"
 msgstr "Ungültige Lagordnung %g"
 
 #: lib/src/tokenize.c:2048
-#, fuzzy
 msgid "catch: cannot be applied to this command"
-msgstr "'catch' in diesem Kontext nicht benutzbar"
+msgstr "'catch': für dieses Kommando nicht benutzbar"
 
 #: lib/src/tokenize.c:2065
 msgid "savename is too long"
@@ -7730,18 +7724,18 @@ msgid "\"%s\": obsolete %s; please use the function %s"
 msgstr "\"%s\": obsoletes %s; bitte Funktion %s verwenden"
 
 #: lib/src/tokenize.c:2422
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\": obsolete %s; please use \"%s\""
-msgstr "obsoleter Gebrauch von \"pi\": bitte \"$pi\" benutzen"
+msgstr "\"%s\": obsoletes %s; bitte \"%s\" benutzen"
 
 #: lib/src/tokenize.c:2622
 msgid "'end loop': did you mean 'endloop'"
 msgstr "'end loop': meinten Sie 'endloop'"
 
 #: lib/src/tokenize.c:3318
-#, fuzzy, c-format
+#, c-format
 msgid "end: invalid parameter '%s'"
-msgstr "%s: ungültiger Parametertyp"
+msgstr "end: ungültiger Parameter '%s'"
 
 #: lib/src/tokenize.c:3392
 #, c-format
@@ -9141,9 +9135,8 @@ msgstr ""
 "# vor Ausführen als Skript wohl überarbeitet werden muss.\n"
 
 #: gui/console.c:343
-#, fuzzy
 msgid "Really quit gretl?"
-msgstr "Benötigt gretl %s"
+msgstr "Wirklich gretl beenden?"
 
 #: gui/console.c:482
 msgid "gretl console: type 'help' for a list of commands"
@@ -10269,11 +10262,12 @@ msgid "Plot confidence interval using"
 msgstr "Plotte Konfidenzintervall mit"
 
 #: gui/dialogs.c:3384
-#, fuzzy
 msgid ""
 "No out-of-sample observations are available.\n"
 "Show \"forecast\" information for the estimation sample?"
-msgstr "Keine out-of-sample-Beobachtungen verfügbar"
+msgstr ""
+"Keine out-of-sample-Beobachtungen verfügbar.\n"
+"Die \"forecast\"-Information für die Schätzstichprobe zeigen?"
 
 #: gui/dialogs.c:3449 gui/library.c:6431
 msgid "Add observations"
@@ -10433,9 +10427,8 @@ msgid "frequency axis scale:"
 msgstr "Frequenzachsen-Skala:"
 
 #: gui/dialogs.c:4838
-#, fuzzy
 msgid "data-based"
-msgstr "Datenbanken"
+msgstr "datenbasiert"
 
 #: gui/dialogs.c:5037
 msgid "Number of bins:"
@@ -10677,22 +10670,18 @@ msgid "series code:"
 msgstr "Reihencode:"
 
 #: gui/dialogs.c:6812
-#, fuzzy
 msgid "gretl: display map"
-msgstr "gretl: zeige Daten"
+msgstr "gretl: zeige Landkarte"
 
 #: gui/dialogs.c:6824
-#, fuzzy
 msgid "series to plot:"
-msgstr "Zeitreihengraph"
+msgstr "Reihe zu plotten:"
 
 #: gui/dialogs.c:6843
-#, fuzzy
 msgid "palette:"
-msgstr "Palette"
+msgstr "Palette:"
 
 #: gui/dialogs.c:6857
-#, fuzzy
 msgid "Log scale"
 msgstr "Log-Skala"
 
@@ -10701,9 +10690,8 @@ msgid "draw border around map"
 msgstr "Rand um Landkarte zeichnen"
 
 #: gui/dialogs.c:6874
-#, fuzzy
 msgid "Feature border width:"
-msgstr "Breite des Rands:"
+msgstr "Breite der Umrandungen:"
 
 #: gui/dialogs.c:6888
 msgid "height in pixels:"
@@ -10784,17 +10772,14 @@ msgid "Bootstrap p-values"
 msgstr "Mit Bootstrap-p-Werten"
 
 #: gui/dialogs.c:7482
-#, fuzzy
 msgid "LASSO algorithm:"
-msgstr "Scoring-Algorithmus"
+msgstr "LASSO-Algorithmus:"
 
 #: gui/dialogs.c:7483
-#, fuzzy
 msgid "RIDGE algorithm:"
-msgstr "Scoring-Algorithmus"
+msgstr "RIDGE-Algorithmus:"
 
 #: gui/dialogs.c:7529
-#, fuzzy
 msgid "cross validation criterion"
 msgstr "Kreuzvalidierungs-Kriterium"
 
@@ -10803,24 +10788,20 @@ msgid "minimized MSE"
 msgstr "minimierter MSE"
 
 #: gui/dialogs.c:7533
-#, fuzzy
 msgid "one-standard-error rule"
-msgstr "Außergewöhnliche Frequenz"
+msgstr "ein-Standardfehler-Regel"
 
 #: gui/dialogs.c:7540
-#, fuzzy
 msgid "set seed for random folds"
-msgstr "gretl: Saat für Zufallszahlen"
+msgstr "Saat für Zufallsunterteilungen setzen"
 
 #: gui/dialogs.c:7555
-#, fuzzy
 msgid "use MPI if available"
-msgstr "benutze Niveau der Variable"
+msgstr "benutze MPI falls verfügbar"
 
 #: gui/dialogs.c:7563
-#, fuzzy
 msgid "show execution time"
-msgstr "Fehler bei Funktionsausführung"
+msgstr "zeige Ausführungsdauer"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11681,18 +11662,16 @@ msgid "Save changes?"
 msgstr "Änderungen speichern?"
 
 #: gui/fnsave.c:2621
-#, fuzzy
 msgid "Model requirement"
-msgstr "Keine besondere Voraussetzung"
+msgstr "Modell-Voraussetzung"
 
 #: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Irgendein Modell"
 
 #: gui/fnsave.c:2655
-#, fuzzy
 msgid "request access to out-of-sample data"
-msgstr "erlaube Zugriff außerhalb der Stichprobe"
+msgstr "erbitte Zugriff außerhalb der Stichprobe"
 
 #: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -11726,9 +11705,8 @@ msgid "Label"
 msgstr "Bezeichnung"
 
 #: gui/fnsave.c:2900
-#, fuzzy
 msgid "GUI help text"
-msgstr "Hilfetext"
+msgstr "GUI Hilfetext"
 
 #: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
@@ -11887,9 +11865,9 @@ msgid "build gfn file"
 msgstr "erstelle gfn-Datei"
 
 #: gui/gpt_collect.c:202
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: plot collection %d"
-msgstr "gretl: Graph-Farbauswahl"
+msgstr "gretl: Graphen-Sammlung %d"
 
 #: gui/gpt_collect.c:310 gui/gpt_collect.c:392 gui/gpt_control.c:5710
 msgid "gretl: graph"
@@ -12033,19 +12011,16 @@ msgid "Close"
 msgstr "Schließen"
 
 #: gui/gpt_control.c:4636 gui/gpt_control.c:4724
-#, fuzzy
 msgid "Delete plot"
-msgstr "Komponenten löschen"
+msgstr "Graphen löschen"
 
 #: gui/gpt_control.c:4638 gui/gpt_control.c:4725
-#, fuzzy
 msgid "Close collection"
-msgstr "Auswahl"
+msgstr "Schließe Sammlung"
 
 #: gui/gpt_control.c:4640 gui/gpt_control.c:4726
-#, fuzzy
 msgid "Extract plot"
-msgstr "Weitere Eigenschaften"
+msgstr "Graphen extrahieren"
 
 #: gui/gpt_control.c:4662 gui/graphics.c:258 gui/graph_page.c:697
 msgid "color"
@@ -12429,9 +12404,8 @@ msgid "print version information"
 msgstr "drucke Versionsinformation"
 
 #: gui/gretl.c:156
-#, fuzzy
 msgid "start a new gretl instance unconditionally"
-msgstr "Neue gretl-Instanz starten?"
+msgstr "Immer neue gretl-Instanz starten"
 
 #: gui/gretl.c:158
 msgid "reuse an existing gretl instance unconditionally"
@@ -13094,7 +13068,6 @@ msgid "_Hurst exponent"
 msgstr "_Hurst-Exponent"
 
 #: gui/gretl.c:1964
-#, fuzzy
 msgid "BDS nonlinearity test"
 msgstr "B_DS-Nichtlinearitätstest"
 
@@ -13817,9 +13790,8 @@ msgid "_Cross-sectional dependence"
 msgstr "_Querschnittsabhängigkeit"
 
 #: gui/gui_utils.c:272
-#, fuzzy
 msgid "_Panel specification"
-msgstr "_Spezifikation überarbeiten..."
+msgstr "_Panel-Spezifikation"
 
 #: gui/gui_utils.c:276 gui/gui_utils.c:283
 msgid "White's test"
@@ -14966,9 +14938,8 @@ msgid "Lag order for ARCH test:"
 msgstr "Lagordnung für ARCH-Test:"
 
 #: gui/library.c:2715
-#, fuzzy
 msgid "gretl: panel model specification"
-msgstr "gretl: Panel-Modelldiagnostik"
+msgstr "gretl: Panel-Modellspezifikation"
 
 #: gui/library.c:2789
 msgid "gretl: leverage and influence"
@@ -15056,14 +15027,12 @@ msgstr ""
 "berechnet werden, so dass kein definitiver Wert verfügbar ist)"
 
 #: gui/library.c:3355
-#, fuzzy
 msgid "H1: positive autocorrelation\n"
-msgstr "keine Autokorrelation"
+msgstr "H1: positive Autokorrelation\n"
 
 #: gui/library.c:3357
-#, fuzzy
 msgid "H1: negative autocorrelation\n"
-msgstr "keine Autokorrelation"
+msgstr "H1: negative Autokorrelation\n"
 
 #: gui/library.c:3564
 msgid "linear restrictions"
@@ -15217,9 +15186,8 @@ msgid "gretl: create dummy variables"
 msgstr "gretl: erzeuge Dummyvariablen"
 
 #: gui/library.c:6303
-#, fuzzy
 msgid "No discrete series are available"
-msgstr "Kein Modell verfügbar"
+msgstr "Keine diskreten Reihen verfügbar"
 
 #: gui/library.c:6426
 msgid "in the cross-sectional dimension"
@@ -15910,9 +15878,8 @@ msgid "Ridge"
 msgstr "Ridge"
 
 #: gui/selector.c:3551 gui/selector.c:6633
-#, fuzzy
 msgid "random"
-msgstr "Gesamtmittel"
+msgstr "zufällig"
 
 #: gui/selector.c:3575
 msgid "You must specify a quantile"
@@ -16428,22 +16395,19 @@ msgstr "Optimiere durch Kreuzvalidierung"
 
 #: gui/selector.c:6625
 msgid "Folds:"
-msgstr "Faltungen (folds):"
+msgstr "Unterteilungen:"
 
 #: gui/selector.c:6630
-#, fuzzy
 msgid "type:"
-msgstr "Art"
+msgstr "Typ:"
 
 #: gui/selector.c:6634
-#, fuzzy
 msgid "contiguous"
-msgstr "fortgesetzt"
+msgstr "zusammenhängend"
 
 #: gui/selector.c:6643
-#, fuzzy
 msgid "Show criterion plot"
-msgstr "Schwarz-Kriterium"
+msgstr "Zeige Kriteriumsgraphen"
 
 #: gui/selector.c:6676 gui/toolbar.c:710
 msgid "Confidence level"
@@ -17086,13 +17050,12 @@ msgid "Prompt to save session"
 msgstr "Auffordern zum Sitzung speichern"
 
 #: gui/settings.c:229
-#, fuzzy
 msgid "Enable collecting plots"
-msgstr "Aktiviere Auto-Vervollständigung"
+msgstr "Aktiviere Graphen-Sammlungen"
 
 #: gui/settings.c:231
 msgid "Main window includes console"
-msgstr ""
+msgstr "Hauptfenster enthält Konsole"
 
 #: gui/settings.c:233
 msgid "Toolbar icon size"
@@ -17179,9 +17142,8 @@ msgid "Path to Julia executable"
 msgstr "Pfad zur Julia-Programmdatei"
 
 #: gui/settings.c:290
-#, fuzzy
 msgid "Path to lpsolve library"
-msgstr "Pfad von R-Bibliothek"
+msgstr "Pfad der lpsolve-Bibliothek"
 
 #: gui/settings.c:294
 msgid "Path to mpiexec"
@@ -17236,9 +17198,8 @@ msgid "Script editor uses tabs"
 msgstr "Skripteditor verwendet Tabs"
 
 #: gui/settings.c:326 gui/settings.c:328
-#, fuzzy
 msgid "Auto-completion"
-msgstr "Aktiviere Auto-Vervollständigung"
+msgstr "Auto-Vervollständigung"
 
 #: gui/settings.c:331
 msgid "Enable auto-brackets"
@@ -17297,9 +17258,8 @@ msgid "English (A4 paper)"
 msgstr "Englisch (Papierformat A4)"
 
 #: gui/settings.c:1291
-#, fuzzy
 msgid "Translation, if available"
-msgstr "Keine Dateninformationen verfügbar.\n"
+msgstr "Übersetzung, falls verfügbar"
 
 #: gui/settings.c:1296
 msgid "automatic, as you type"
@@ -17315,14 +17275,12 @@ msgid "Automatic"
 msgstr "Automatisch"
 
 #: gui/settings.c:1302
-#, fuzzy
 msgid "small"
-msgstr "Kleiner"
+msgstr "klein"
 
 #: gui/settings.c:1303
-#, fuzzy
 msgid "medium"
-msgstr "Median"
+msgstr "mittel"
 
 #: gui/settings.c:1495
 msgid "Examples"
@@ -17956,9 +17914,8 @@ msgid "command reference"
 msgstr "Befehlsdokumentation"
 
 #: gui/toolbar.c:1620
-#, fuzzy
 msgid "find series"
-msgstr "endgültige Reihe"
+msgstr "finde Reihe"
 
 #: gui/toolbar.c:1621
 msgid "X-Y graph"
@@ -19016,9 +18973,9 @@ msgid "The n most important components"
 msgstr "Die n wichtigsten Komponenten"
 
 #: plugin/pca.c:203
-#, fuzzy, c-format
+#, c-format
 msgid " (dropped %d incomplete observations)"
-msgstr "%d Beobachtungen entfernt"
+msgstr "(%d unvollständige Beobachtungen entfernt)"
 
 #: plugin/pca.c:209
 msgid "Eigenanalysis of the Correlation Matrix"
