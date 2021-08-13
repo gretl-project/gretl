@@ -196,6 +196,8 @@ void clear_datainfo (DATASET *dset, int code)
 	maybe_free_full_dataset(dset);
 
 	dset->v = dset->n = 0;
+	dset->structure = 0;
+	dset->pd = 1;
     }
 }
 

@@ -1512,10 +1512,8 @@ static void sensitize_obs_spinners (GtkToggleButton *button,
 	int i, s, sv = widget_get_int(button, "setval");
 
 	for (i=0; i<4; i++) {
-	    if (opts->dspin[i] != NULL) {
-		s = (i == sv || (sv == 2 && i == 3));
-		gtk_widget_set_sensitive(opts->dspin[i], s);
-	    }
+	    s = (i == sv || (sv == 2 && i == 3));
+	    gtk_widget_set_sensitive(opts->dspin[i], s);
 	}
     }
 }
@@ -1534,9 +1532,7 @@ static void set_initial_obs_sensitivities (DATASET *dwinfo,
     }
 
     for (i=0; i<4; i++) {
-	if (opts->dspin[i] != NULL) {
-	    gtk_widget_set_sensitive(opts->dspin[i], s[i]);
-	}
+	gtk_widget_set_sensitive(opts->dspin[i], s[i]);
     }
 }
 
@@ -1556,10 +1552,6 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
     gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
     gtk_widget_show(table);
-
-    for (i=0; i<4; i++) {
-	opts->dspin[i] = NULL;
-    }
 
     for (i=0; i<3; i++) {
 	const char *s = dwiz_radio_strings(DW_SET_TYPE, i);
