@@ -400,6 +400,17 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     return err;
 }
 
+static int newdata_nobs (DATASET *dwinfo, dw_opts *opts)
+{
+    if (dwinfo->structure == CROSS_SECTION) {
+	return opts->dvals[0];
+    } else if (dataset_is_time_series(dwinfo)) {
+	return opts->dvals[1];
+    } else {
+	return opts->dvals[2] * opts->dvals[3];
+    }
+}
+
 /* alternative to dwiz_make_changes() for use when the existing
    dataset is empty
 */
@@ -411,7 +422,8 @@ static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
 	ntolabel(dwinfo->stobs, dwinfo->t1, dwinfo);
     }
 
-    fprintf(stderr, "HERE dwiz_create_dataset\n");
+    fprintf(stderr, "HERE dwiz_replace_dataset, pd = %d\n",
+	    dwinfo->pd);
 
     if (dwinfo->structure == CROSS_SECTION) {
 	fprintf(stderr, " cross section, n = %d\n", opts->dvals[0]);
@@ -575,7 +587,7 @@ static const char *dwiz_radio_strings (int step, int i)
 
 static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
 {
-    int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "setval"));
 
     if (opts->pdspin != NULL) {
 	if (val == PD_SPECIAL) {
@@ -605,16 +617,26 @@ static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
     *opts->setvar = val;
 }
 
-static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
+static int dw_nobs(DATASET *dwinfo, dw_opts *opts)
 {
+    if (dataset->n > 0) {
+	return dataset->n;
+    } else {
+	return newdata_nobs(dwinfo, opts);
+    }
+}
+
+static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
+{
+    int nobs = dw_nobs(dwinfo, opts);
     gchar *ret = NULL;
 
     if (dwinfo->structure == CROSS_SECTION) {
 	ret = g_strdup_printf(_("%s, observations 1 to %d"), _("Cross-sectional data"),
-			      dataset->n);
+			      nobs);
     } else if (time_series(dwinfo)) {
 	const char *tslabel = ts_frequency_string(dwinfo);
-	int lastobs = dwinfo->t1 + dataset->n - 1;
+	int lastobs = dwinfo->t1 + nobs - 1;
 	char stobs[OBSLEN];
 	char endobs[OBSLEN];
 
@@ -630,7 +652,7 @@ static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
 			      _("stacked time series"), dwinfo->n, dwinfo->pd);
     } else if (known_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
-	int nperiods = dataset->n / nunits;
+	int nperiods = nobs / nunits;
 
 	ret = g_strdup_printf(_("Panel data (%s)\n"
 				"%d cross-sectional units observed over %d periods"),
@@ -639,7 +661,7 @@ static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
 			      nunits, nperiods);
     }
 
-    if (flags & DW_DROPMISS) {
+    if (opts->flags & DW_DROPMISS) {
 	gchar *s;
 
 	s = g_strdup_printf("%s\n%s", ret, _("(dropping missing observations)"));
@@ -1470,7 +1492,7 @@ static void sensitize_obs_spinners (GtkToggleButton *button,
 				    dw_opts *opts)
 {
     if (button_is_active(button)) {
-	int i, s, sv = widget_get_int(button, "action");
+	int i, s, sv = widget_get_int(button, "setval");
 
 	for (i=0; i<4; i++) {
 	    s = i == sv || (sv == 2 && i == 3);
@@ -1496,6 +1518,8 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
     gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
     gtk_widget_show(table);
 
+    fprintf(stderr, "HERE combo dwinfo->structure = %d\n", dwinfo->structure);
+
     for (i=0; i<3; i++) {
 	const char *s = dwiz_radio_strings(DW_SET_TYPE, i);
 	
@@ -1513,7 +1537,7 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 	gtk_table_attach_defaults(GTK_TABLE(table), button, 0, 1, i, i+1);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(dwiz_set_radio_opt), opts);
-	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(setval));
+	g_object_set_data(G_OBJECT(button), "setval", GINT_TO_POINTER(setval));
 	gtk_widget_show(button);
 
 	/* dimension (n or T) selector(s) */
@@ -1558,18 +1582,11 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 */
 
 static void dwiz_build_radios (int step, DATASET *dwinfo,
-			       dw_opts *opts,
-			       GtkWidget *vbox)
+			       dw_opts *opts, GtkWidget *vbox)
 {
     GSList *group = NULL;
     GtkWidget *button = NULL;
     int i, setval;
-
-    /* FIXME code organization? */
-    if (step == DW_SET_TYPE && (opts->flags & DW_CREATE)) {
-	dwiz_new_dataset_combo(dwinfo, opts, vbox);
-	return;
-    }
 
     for (i=0; i<opts->n_radios; i++) {
 	GtkWidget *hbox;
@@ -1604,7 +1621,7 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(dwiz_set_radio_opt), opts);
-	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(setval));
+	g_object_set_data(G_OBJECT(button), "setval", GINT_TO_POINTER(setval));
 
 	if (step == DW_PANEL_MODE && dw_n_is_prime(opts)) {
 	    /* only the "index variables" option should be active */
@@ -1670,7 +1687,7 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 	    } else if (known_panel(dwinfo)) {
 		if (create) {
 		    dwinfo->structure = STACKED_TIME_SERIES;
-		    step = DW_PANEL_SIZE;
+		    step = DW_CONFIRM;
 		} else {
 		    step = DW_PANEL_MODE;
 		}
@@ -1837,7 +1854,7 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	GtkWidget *w = g_object_get_data(G_OBJECT(page), "label");
 	gchar *ctxt;
 
-	ctxt = make_confirmation_text(dwinfo, opts->flags);
+	ctxt = make_confirmation_text(dwinfo, opts);
 	gtk_label_set_text(GTK_LABEL(w), ctxt);
 	g_free(ctxt);
 	if (opts->flags & DW_CREATE) {
@@ -1853,7 +1870,11 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	clear_dwiz_page(page);
 
 	if (opts->n_radios > 0) {
-	    dwiz_build_radios(step, dwinfo, opts, page);
+	    if (step == DW_SET_TYPE && (opts->flags & DW_CREATE)) {
+		dwiz_new_dataset_combo(dwinfo, opts, page);
+	    } else {
+		dwiz_build_radios(step, dwinfo, opts, page);
+	    }
 	}
 
 	if (step == DW_STARTING_OBS) {
@@ -1945,7 +1966,8 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
 	if (opts->flags & DW_CREATE) {
 	    int i;
 
-	    fprintf(stderr, "HERE forward\n");
+	    fprintf(stderr, "HERE forward, dwinfo->structure = %d\n",
+		    dwinfo->structure);
 	    for (i=0; i<4; i++) {
 		opts->dvals[i] = spinner_get_int(opts->dspin[i]);
 		fprintf(stderr, "  dvals[%d] = %d\n", i, opts->dvals[i]);
