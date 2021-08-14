@@ -1475,29 +1475,18 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     }
 }
 
-static void get_dimensions (int i, dw_opts *opts,
+static void get_dimensions (int s, dw_opts *opts,
 			    int *dmax, int *d)
 {
-    int k = opts->dvals[i];
+    int k = opts->dvals[s];
 
-    *dmax = 1000000;
-
-    if (i == CROSS_SECTION) {
-	if (k == 0) {
-	    k = 100;
-	}
-    } else if (i == TIME_SERIES) {
-	if (k == 0) {
-	    k = 100;
-	}
+    if (s == STACKED_TIME_SERIES) {
+	*d = (k == 0)? 10 : k;
+	*dmax = 10000;
     } else {
-	if (k == 0) {
-	   k = 10;
-	}
-	*dmax = 1000;
+	*d = (k == 0)? 100 : k;
+	*dmax = 1000000;
     }
-
-    *d = k;
 }
 
 static void sensitize_obs_spinners (GtkToggleButton *button,
@@ -1577,8 +1566,9 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 	gtk_box_pack_start(GTK_BOX(hbox), opts->dspin[i], FALSE, FALSE, 5);
 	gtk_table_attach_defaults(GTK_TABLE(table), hbox, 1, 2, i, i+1);
 	gtk_widget_show_all(hbox);
+
 	if (i == 2) {
-	    /* panel: we need T as well as n */
+	    /* panel: we need a setter for T as well as n */
 	    hbox = gtk_hbox_new(FALSE, 5);
 	    label = gtk_label_new(strs[j+1]);
 	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -1614,20 +1604,13 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 {
     GSList *group = NULL;
     GtkWidget *button = NULL;
-    int i, setval;
+    int i;
 
     for (i=0; i<opts->n_radios; i++) {
-	GtkWidget *hbox;
-
 	/* determine the value to be set by button i */
-	setval = dwiz_i_to_setval(dwinfo, step, i);
+	int setval = dwiz_i_to_setval(dwinfo, step, i);
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
-#if DWDEBUG > 1
-	fprintf(stderr, "opts[%d]: setval = %d (deflt=%d)\n", i,
-		setval, opts->deflt);
-#endif
-
-	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
 
@@ -1636,7 +1619,6 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 	} else {
 	    group = NULL;
 	}
-
 	button = gtk_radio_button_new_with_label(group,
 						 _(dwiz_radio_strings(step, i)));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -1657,16 +1639,10 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 					 setval == PANEL_UNKNOWN);
 	    gtk_widget_set_sensitive(button, setval == PANEL_UNKNOWN);
 	} else if (opts->deflt == setval) {
-#if DWDEBUG > 1
-	    fprintf(stderr, "opts[%d]: setval = deflt = %d\n", i, setval);
-#endif
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	    if (opts->setvar != NULL && setval >= 0) {
-		/* pre-set the variable to its default value */
+		/* preset the variable to its default value */
 		*opts->setvar = setval;
-#if DWDEBUG > 1
-		fprintf(stderr, "button: setting setvar to %d\n", setval);
-#endif
 	    }
 	}
 
