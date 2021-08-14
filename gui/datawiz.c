@@ -150,8 +150,10 @@ static void dwinfo_init (DATASET *dwinfo)
 #endif
 }
 
-/* for the case where the structure wizard is being used
-   to create a new dataset */
+/* For the case where the structure wizard is being used
+   to create a new dataset, and the user has chosen to type
+   in some values.
+*/
 
 static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 {
@@ -168,7 +170,6 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 
     dataset->varname[1][0] = '\0';
     strncat(dataset->varname[1], buf, VNAMELEN - 1);
-
     edit_dialog_close(dlg);
 
     /* blank out the auto "index" variable */
@@ -651,6 +652,13 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 	ntolabel(stobs, dwinfo->t1, dwinfo);
 	ntolabel(endobs, lastobs, dwinfo);
 	ret = g_strdup_printf(_("%s, %s to %s"), _(tslabel), stobs, endobs);
+	if (opts->flags & DW_CREATE) {
+	    GString *gs = g_string_new(ret);
+
+	    g_string_append_printf(gs, ", T = %d", nobs);
+	    g_free(ret);
+	    ret = g_string_free(gs, FALSE);
+	}
     } else if (dwinfo->structure == PANEL_UNKNOWN) {
 	ret = g_strdup_printf(_("Panel data (%s)\n"
 				"%d cross-sectional units observed over %d periods"),
@@ -1868,7 +1876,7 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	gtk_label_set_text(GTK_LABEL(w), ctxt);
 	g_free(ctxt);
 	if (opts->flags & DW_CREATE) {
-	    if (newdata_nobs(dwinfo, opts) < 1001) {
+	    if (newdata_nobs(dwinfo, opts) <= 100) {
 		add_editing_option(page, &opts->flags);
 	    }
 	}
@@ -2148,6 +2156,7 @@ static void data_structure_wizard (int create)
 
     g_object_set_data(G_OBJECT(dialog), "nb", nb);
 
+    /* free allocated memory on exit */
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(free_dwinfo),
 		     dwinfo);
