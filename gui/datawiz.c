@@ -84,11 +84,6 @@ enum {
     DW_SSHEET     = 1 << 6
 };
 
-enum {
-    SET_N = 0,
-    SET_T
-};
-
 #define dw_n_is_prime(o) (o->flags & DW_N_PRIME)
 #define dw_vlist_done(o) (o->flags & DW_VLIST_DONE)
 
