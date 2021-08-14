@@ -7,11 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
-<<<<<<< HEAD
-"POT-Creation-Date: 2021-08-13 13:56-0400\n"
-=======
-"POT-Creation-Date: 2021-08-13 13:48-0400\n"
->>>>>>> alt_new_dataset
+"POT-Creation-Date: 2021-08-14 10:18-0400\n"
 "PO-Revision-Date: 2021-05-08 21:13+0100\n"
 "Last-Translator: Artur Bala <artur.bala.fr@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
@@ -1408,119 +1404,119 @@ msgstr "Importation des données du fichier %s '%s', %s\n"
 msgid "Data imported from %s, %s\n"
 msgstr "Données importés de %s, %s\n"
 
-#: lib/src/dataset.c:436
+#: lib/src/dataset.c:438
 msgid "auto-generated constant"
 msgstr "constante auto-générée"
 
-#: lib/src/dataset.c:1540 gui/gui_utils.c:6154 gui/toolbar.c:1588
+#: lib/src/dataset.c:1542 gui/gui_utils.c:6154 gui/toolbar.c:1588
 #: gui/toolbar.c:1597
 msgid "Please open a data file first"
 msgstr "SVP ouvrir un fichier de données d'abord"
 
-#: lib/src/dataset.c:1677 lib/src/gretl_utils.c:2052 lib/src/missing.c:580
+#: lib/src/dataset.c:1679 lib/src/gretl_utils.c:2052 lib/src/missing.c:580
 #, c-format
 msgid "The variable %s is read-only"
 msgstr "La variable %s est en lecture seule"
 
-#: lib/src/dataset.c:1970 lib/src/dataset.c:1980 lib/src/uservar.c:452
+#: lib/src/dataset.c:1972 lib/src/dataset.c:1982 lib/src/uservar.c:452
 #, c-format
 msgid "Deleted %s"
 msgstr "Supprimé %s"
 
-#: lib/src/dataset.c:1972 lib/src/dataset.c:1982
+#: lib/src/dataset.c:1974 lib/src/dataset.c:1984
 #, c-format
 msgid "Deleted %d variables"
 msgstr "Supprimées %d variables"
 
-#: lib/src/dataset.c:1978
+#: lib/src/dataset.c:1980
 msgid "No variables were deleted"
 msgstr "Aucune variable n'a été supprimée"
 
-#: lib/src/dataset.c:1984
+#: lib/src/dataset.c:1986
 msgid "some data were in use"
 msgstr "des données sonten cours d'utilisation"
 
-#: lib/src/dataset.c:2064 lib/src/system.c:712 lib/src/system.c:728
+#: lib/src/dataset.c:2066 lib/src/system.c:712 lib/src/system.c:728
 #: lib/src/tokenize.c:3353 plugin/dpanel.c:1991
 #, c-format
 msgid "variable %d duplicated in the command list."
 msgstr "variable %d doublée dans la liste de commandes."
 
-#: lib/src/dataset.c:2142 gui/gui_utils.c:5599
+#: lib/src/dataset.c:2144 gui/gui_utils.c:5599
 msgid "dataset is subsampled"
 msgstr "le jeu de données est sous-échantillonné"
 
-#: lib/src/dataset.c:2291 lib/src/dataset.c:2303 lib/src/graphing.c:8792
+#: lib/src/dataset.c:2293 lib/src/dataset.c:2305 lib/src/graphing.c:8792
 #: lib/src/gretl_utils.c:1239 lib/src/gretl_utils.c:1328
 msgid "periods"
 msgstr "périodes"
 
-#: lib/src/dataset.c:2293
+#: lib/src/dataset.c:2295
 msgid "quarters"
 msgstr "trimestres"
 
-#: lib/src/dataset.c:2293
+#: lib/src/dataset.c:2295
 msgid "months"
 msgstr "mois"
 
-#: lib/src/dataset.c:2295
+#: lib/src/dataset.c:2297
 msgid "years"
 msgstr "année"
 
-#: lib/src/dataset.c:2297
+#: lib/src/dataset.c:2299
 msgid "weeks"
 msgstr "semaines"
 
-#: lib/src/dataset.c:2299
+#: lib/src/dataset.c:2301
 msgid "days"
 msgstr "jours"
 
-#: lib/src/dataset.c:2301
+#: lib/src/dataset.c:2303
 msgid "hours"
 msgstr "heures"
 
-#: lib/src/dataset.c:3010 lib/src/dataset.c:3038 gui/library.c:6458
+#: lib/src/dataset.c:3012 lib/src/dataset.c:3040 gui/library.c:6458
 msgid "The data set is currently sub-sampled.\n"
 msgstr "Le jeu de données est actuellement sous-échantillonné.\n"
 
-#: lib/src/dataset.c:3018
+#: lib/src/dataset.c:3020
 #, c-format
 msgid "Panel time extended by %d observations"
 msgstr "Dimension temporelle du panel élargie de %d observations"
 
-#: lib/src/dataset.c:3024
+#: lib/src/dataset.c:3026
 #, c-format
 msgid "Dataset extended by %d observations"
 msgstr "Jeu de données augmenté de %d observations"
 
-#: lib/src/dataset.c:3345
+#: lib/src/dataset.c:3347
 #, c-format
 msgid "Variable %s cannot be renumbered"
 msgstr "Impossible de renuméroter la variable %s"
 
-#: lib/src/dataset.c:3348
+#: lib/src/dataset.c:3350
 #, c-format
 msgid "Target ID %d is not available"
 msgstr "Cette variable n'est pas disponible : ID %d"
 
-#: lib/src/dataset.c:3355
+#: lib/src/dataset.c:3357
 #, c-format
 msgid "Renumbered %s as variable %d\n"
 msgstr "%s est renuméroté en tant que %d\n"
 
-#: lib/src/dataset.c:3408
+#: lib/src/dataset.c:3410
 msgid "The 'dataset' command is not available within functions"
 msgstr "La commande 'dataset' n'est pas disponible dans les fonctions"
 
-#: lib/src/dataset.c:3416
+#: lib/src/dataset.c:3418
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Désolé, cette commande n'est pas disponibles en mode boucle\n"
 
-#: lib/src/dataset.c:3431
+#: lib/src/dataset.c:3433
 msgid "The data set is currently sub-sampled"
 msgstr "Le jeu de données est actuellement sous-échantillonné"
 
-#: lib/src/dataset.c:3489
+#: lib/src/dataset.c:3491
 msgid "dataset restore: dataset is not resampled\n"
 msgstr ""
 "restauration de la base de données : base de données non ré-échantillonnée\n"
@@ -4988,7 +4984,7 @@ msgstr "Génération aléatoire de nombres"
 msgid "Robust estimation"
 msgstr "Estimation robuste"
 
-#: lib/src/libset.c:1439 gui/datawiz.c:477 gui/datawiz.c:556
+#: lib/src/libset.c:1439 gui/datawiz.c:494 gui/datawiz.c:573
 #: gui/menustate.c:1006 plugin/addons-i18n.c:30
 msgid "Time series"
 msgstr "Séries temporelles"
@@ -7547,11 +7543,11 @@ msgstr "Jeu de données complet"
 msgid "Type"
 msgstr "Type"
 
-#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1334
+#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1368
 msgid "Number of cross-sectional units"
 msgstr "Processus individuels"
 
-#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1335
+#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1369
 msgid "Number of time periods"
 msgstr "Dimension temporelle"
 
@@ -9727,39 +9723,39 @@ msgstr "Fenêtre"
 msgid "Menu"
 msgstr "Menu"
 
-#: gui/datawiz.c:115
+#: gui/datawiz.c:110
 msgid "Structure of dataset"
 msgstr "Structure des données"
 
-#: gui/datawiz.c:116
+#: gui/datawiz.c:111
 msgid "Time series frequency"
 msgstr "Fréquence des séries temporelles"
 
-#: gui/datawiz.c:117
+#: gui/datawiz.c:112
 msgid "Daily date to represent week"
 msgstr "Date quotidienne pour représenter la semaine"
 
-#: gui/datawiz.c:118
+#: gui/datawiz.c:113
 msgid "Starting observation"
 msgstr "Observation de départ"
 
-#: gui/datawiz.c:119
+#: gui/datawiz.c:114
 msgid "Panel data organization"
 msgstr "Organisation des données de panel"
 
-#: gui/datawiz.c:120
+#: gui/datawiz.c:115
 msgid "Panel structure"
 msgstr "Structure du panel"
 
-#: gui/datawiz.c:121
+#: gui/datawiz.c:116
 msgid "Panel index variables"
 msgstr "Variables d'indéxation du panel"
 
-#: gui/datawiz.c:122
+#: gui/datawiz.c:117
 msgid "Confirm dataset structure"
 msgstr "Confirmer la structure du jeu de données"
 
-#: gui/datawiz.c:193
+#: gui/datawiz.c:188
 #, c-format
 msgid ""
 "Enter name for first variable\n"
@@ -9768,129 +9764,129 @@ msgstr ""
 "Entrer le nom pour la première variable\n"
 "(max %d caractères)"
 
-#: gui/datawiz.c:197 gui/dialogs.c:5562 gui/ssheet.c:1004
+#: gui/datawiz.c:192 gui/dialogs.c:5562 gui/ssheet.c:1004
 msgid "gretl: name variable"
 msgstr "gretl : nom de la variable"
 
-#: gui/datawiz.c:321 gui/ssheet.c:1713
+#: gui/datawiz.c:313 gui/ssheet.c:1713
 msgid "No changes were made"
 msgstr "Aucun changement n'a été fait"
 
-#: gui/datawiz.c:447 gui/dialogs.c:3682 gui/menustate.c:1010
+#: gui/datawiz.c:418
+msgid "Failed to create empty data set"
+msgstr "Échec de création d'un jeu de données vide"
+
+#: gui/datawiz.c:464 gui/dialogs.c:3682 gui/menustate.c:1010
 msgid "Annual"
 msgstr "Données annuelles"
 
-#: gui/datawiz.c:448 gui/dialogs.c:3681 gui/dialogs.c:6318 gui/menustate.c:1012
+#: gui/datawiz.c:465 gui/dialogs.c:3681 gui/dialogs.c:6318 gui/menustate.c:1012
 msgid "Quarterly"
 msgstr "Données trimestrielles"
 
-#: gui/datawiz.c:449 gui/dialogs.c:3688 gui/dialogs.c:6323 gui/menustate.c:1014
+#: gui/datawiz.c:466 gui/dialogs.c:3688 gui/dialogs.c:6323 gui/menustate.c:1014
 msgid "Monthly"
 msgstr "Données mensuelles"
 
-#: gui/datawiz.c:450 gui/dialogs.c:3687 gui/menustate.c:1018
+#: gui/datawiz.c:467 gui/dialogs.c:3687 gui/menustate.c:1018
 msgid "Weekly"
 msgstr "Données hebdomadaires"
 
-#: gui/datawiz.c:451 gui/dialogs.c:3695 gui/menustate.c:1020
+#: gui/datawiz.c:468 gui/dialogs.c:3695 gui/menustate.c:1020
 msgid "Daily (5 days)"
 msgstr "Données journalières (5 jours)"
 
-#: gui/datawiz.c:452 gui/dialogs.c:3696 gui/menustate.c:1022
+#: gui/datawiz.c:469 gui/dialogs.c:3696 gui/menustate.c:1022
 msgid "Daily (6 days)"
 msgstr "Données journalières (6 jours)"
 
-#: gui/datawiz.c:453 gui/dialogs.c:3694 gui/menustate.c:1024
+#: gui/datawiz.c:470 gui/dialogs.c:3694 gui/menustate.c:1024
 msgid "Daily (7 days)"
 msgstr "Données journalières (7 jours)"
 
-#: gui/datawiz.c:454 gui/menustate.c:1016
+#: gui/datawiz.c:471 gui/menustate.c:1016
 msgid "Hourly"
 msgstr "Horaire"
 
-#: gui/datawiz.c:455 gui/menustate.c:1026
+#: gui/datawiz.c:472 gui/menustate.c:1026
 msgid "Decennial"
 msgstr "Décennal"
 
-<<<<<<< HEAD
-#: gui/datawiz.c:420 gui/datawiz.c:439 gui/toolbar.c:746
-=======
-#: gui/datawiz.c:456 gui/datawiz.c:475 gui/toolbar.c:746
->>>>>>> alt_new_dataset
+#: gui/datawiz.c:473 gui/datawiz.c:492 gui/toolbar.c:746
 msgid "Other"
 msgstr "Autres"
 
-#: gui/datawiz.c:465
+#: gui/datawiz.c:482
 msgid "Stacked time series"
 msgstr "Série temporelle empilée"
 
-#: gui/datawiz.c:466
+#: gui/datawiz.c:483
 msgid "Stacked cross sections"
 msgstr "Coupe transversale empilée"
 
-#: gui/datawiz.c:467
+#: gui/datawiz.c:484
 msgid "Use index variables"
 msgstr "Utiliser les variables d'identification"
 
-#: gui/datawiz.c:486
+#: gui/datawiz.c:503
 msgid "Non-standard frequency"
 msgstr "Fréquence non standard"
 
-#: gui/datawiz.c:555
+#: gui/datawiz.c:572
 msgid "Cross-sectional"
 msgstr "Coupe transversale"
 
-#: gui/datawiz.c:557 gui/menustate.c:1031
+#: gui/datawiz.c:574 gui/menustate.c:1031
 msgid "Panel"
 msgstr "Panel"
 
-#: gui/datawiz.c:559 gui/dialogs.c:3750
+#: gui/datawiz.c:576 gui/dialogs.c:3750
 msgid "Monday"
 msgstr "Mundi"
 
-#: gui/datawiz.c:560 gui/dialogs.c:3751
+#: gui/datawiz.c:577 gui/dialogs.c:3751
 msgid "Tuesday"
 msgstr "Mardi"
 
-#: gui/datawiz.c:561 gui/dialogs.c:3752
+#: gui/datawiz.c:578 gui/dialogs.c:3752
 msgid "Wednesday"
 msgstr "Mercredi"
 
-#: gui/datawiz.c:562 gui/dialogs.c:3753
+#: gui/datawiz.c:579 gui/dialogs.c:3753
 msgid "Thursday"
 msgstr "Jeudi"
 
-#: gui/datawiz.c:563 gui/dialogs.c:3754
+#: gui/datawiz.c:580 gui/dialogs.c:3754
 msgid "Friday"
 msgstr "Vendredi"
 
-#: gui/datawiz.c:564 gui/dialogs.c:3755
+#: gui/datawiz.c:581 gui/dialogs.c:3755
 msgid "Saturday"
 msgstr "Samedi"
 
-#: gui/datawiz.c:565 gui/dialogs.c:3749
+#: gui/datawiz.c:582 gui/dialogs.c:3749
 msgid "Sunday"
 msgstr "Dimanche"
 
-#: gui/datawiz.c:566
+#: gui/datawiz.c:583
 msgid "None (don't use dates)"
 msgstr "Aucun (ne pas utiliser les dates)"
 
-#: gui/datawiz.c:613
+#: gui/datawiz.c:640
 #, c-format
 msgid "%s, observations 1 to %d"
 msgstr "%s, observations 1 à %d"
 
-#: gui/datawiz.c:613
+#: gui/datawiz.c:640
 msgid "Cross-sectional data"
 msgstr "Données en coupe transversale"
 
-#: gui/datawiz.c:626
+#: gui/datawiz.c:653
 #, c-format
 msgid "%s, %s to %s"
 msgstr "%s, %s à %s"
 
-#: gui/datawiz.c:628 gui/datawiz.c:635
+#: gui/datawiz.c:655 gui/datawiz.c:669
 #, c-format
 msgid ""
 "Panel data (%s)\n"
@@ -9899,55 +9895,55 @@ msgstr ""
 "Données de panel (%s)\n"
 "%d unités de coupe transversale observés pendant %d périodes"
 
-#: gui/datawiz.c:630 gui/datawiz.c:638
+#: gui/datawiz.c:657 gui/datawiz.c:672
 msgid "stacked time series"
 msgstr "série temporelle empilée"
 
-#: gui/datawiz.c:638
+#: gui/datawiz.c:672
 msgid "stacked cross sections"
 msgstr "coupe transversale empilée"
 
-#: gui/datawiz.c:645
+#: gui/datawiz.c:679
 msgid "(dropping missing observations)"
 msgstr "(observations manquantes omises)"
 
-#: gui/datawiz.c:867 gui/datawiz.c:934
+#: gui/datawiz.c:901 gui/datawiz.c:968
 msgid "The selected index variables do not represent a panel structure"
 msgstr ""
 "Les variables d’identification sélectionnées ne correspondent pas à un panel"
 
-#: gui/datawiz.c:898
+#: gui/datawiz.c:932
 msgid "The unit and time index variables must be distinct"
 msgstr ""
 "Les variables d'identification individuelle et temporelle doivent être "
 "distinctes"
 
-#: gui/datawiz.c:1033
+#: gui/datawiz.c:1067
 msgid "This dataset cannot be interpreted as a panel"
 msgstr "Le jeu de données ne peut pas être interprété comme un panel"
 
-#: gui/datawiz.c:1137
+#: gui/datawiz.c:1171
 msgid "Unit or group index variable"
 msgstr "Variable d'indentification individuelle ou de groupe"
 
-#: gui/datawiz.c:1138
+#: gui/datawiz.c:1172
 msgid "Time index variable"
 msgstr "Variable d'identification temporelle"
 
-#: gui/datawiz.c:1394
+#: gui/datawiz.c:1428
 msgid "purge missing observations"
 msgstr "retirer les observations manquantes"
 
-#: gui/datawiz.c:1633
+#: gui/datawiz.c:1678
 msgid "The data set contains no suitable index variables"
 msgstr ""
 "Le jeu de données ne contient pas de variables d'identification appropriées"
 
-#: gui/datawiz.c:1812
+#: gui/datawiz.c:1863
 msgid "start entering data values"
 msgstr "commencer à entrer les valeurs des données"
 
-#: gui/datawiz.c:2109
+#: gui/datawiz.c:2160
 msgid "Data structure wizard"
 msgstr "Structure des données"
 
@@ -19541,18 +19537,12 @@ msgstr "Statistiques/transformations"
 msgid "Decoration"
 msgstr "Décoration"
 
-<<<<<<< HEAD
-=======
 #~ msgid "gretl: create data set"
 #~ msgstr "gretl : créer un jeu de données"
 
 #~ msgid "Number of observations:"
 #~ msgstr "Nombre d'observations :"
 
-#~ msgid "Failed to create empty data set"
-#~ msgstr "Échec de création d'un jeu de données vide"
-
->>>>>>> alt_new_dataset
 #~ msgid "_Find variable..."
 #~ msgstr "_Chercher une variable..."
 
