@@ -10,7 +10,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2021-08-13 13:56-0400\n"
+=======
+"POT-Creation-Date: 2021-08-13 13:48-0400\n"
+>>>>>>> alt_new_dataset
 "PO-Revision-Date: 2021-01-26 17:49+0300\n"
 "Last-Translator: talhayalta <talhayalta@gmail.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
@@ -4937,7 +4941,7 @@ msgstr "Rastsal sayı oluşturma"
 msgid "Robust estimation"
 msgstr "Sağlam tahmin"
 
-#: lib/src/libset.c:1439 gui/datawiz.c:441 gui/datawiz.c:520
+#: lib/src/libset.c:1439 gui/datawiz.c:477 gui/datawiz.c:556
 #: gui/menustate.c:1006 plugin/addons-i18n.c:30
 msgid "Time series"
 msgstr "Zaman serisi"
@@ -7478,11 +7482,11 @@ msgstr "Tüm veri seti"
 msgid "Type"
 msgstr "Tür"
 
-#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1298
+#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1334
 msgid "Number of cross-sectional units"
 msgstr "Yatay-kesit birim sayısı"
 
-#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1299
+#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1335
 msgid "Number of time periods"
 msgstr "Dönem sayısı"
 
@@ -9075,51 +9079,39 @@ msgstr "Ortanca için güven aralığı ile"
 msgid "Factorized"
 msgstr "Çarpanlamalı"
 
-#: gui/callbacks.c:765
-msgid "gretl: create data set"
-msgstr "gretl: veri seti oluştur"
-
-#: gui/callbacks.c:766
-msgid "Number of observations:"
-msgstr "Gözlem sayısı:"
-
-#: gui/callbacks.c:775
-msgid "Failed to create empty data set"
-msgstr "Boş veri seti oluşturma başarısız"
-
-#: gui/callbacks.c:808 gui/callbacks.c:812
+#: gui/callbacks.c:790 gui/callbacks.c:794
 msgid "system gfn directory"
 msgstr "sistem gfn klasörü"
 
-#: gui/callbacks.c:809 gui/callbacks.c:815
+#: gui/callbacks.c:791 gui/callbacks.c:797
 msgid "personal gfn directory"
 msgstr "kullanıcı gfn klasörü"
 
-#: gui/callbacks.c:810 gui/callbacks.c:813 gui/callbacks.c:816
+#: gui/callbacks.c:792 gui/callbacks.c:795 gui/callbacks.c:798
 msgid "current working directory"
 msgstr "şu anki çalışma klasörü"
 
-#: gui/callbacks.c:819
+#: gui/callbacks.c:801
 msgid "Open .gfn file"
 msgstr ".gfn dosyası aç"
 
-#: gui/callbacks.c:819
+#: gui/callbacks.c:801
 msgid "Start looking in:"
 msgstr "Bakılacak konum:"
 
-#: gui/callbacks.c:850 gui/library.c:1419
+#: gui/callbacks.c:832 gui/library.c:1419
 msgid "cross-correlogram"
 msgstr "çapraz-ilintiçizit"
 
-#: gui/callbacks.c:865 gui/callbacks.c:924
+#: gui/callbacks.c:847 gui/callbacks.c:906
 msgid "Collinearity check"
 msgstr "Eşdoğrusallığı denetle"
 
-#: gui/callbacks.c:866
+#: gui/callbacks.c:848
 msgid "Include a constant?"
 msgstr "Sabit terim eklensin mi?"
 
-#: gui/callbacks.c:902
+#: gui/callbacks.c:884
 #, c-format
 msgid ""
 "X'X is singular to machine precision:\n"
@@ -9666,39 +9658,39 @@ msgstr "Pencere"
 msgid "Menu"
 msgstr "Menü"
 
-#: gui/datawiz.c:104
+#: gui/datawiz.c:115
 msgid "Structure of dataset"
 msgstr "Veri seti yapısı"
 
-#: gui/datawiz.c:105
+#: gui/datawiz.c:116
 msgid "Time series frequency"
 msgstr "Zaman serisi sıklığı"
 
-#: gui/datawiz.c:106
+#: gui/datawiz.c:117
 msgid "Daily date to represent week"
 msgstr "Haftayı temsil eden gün"
 
-#: gui/datawiz.c:107
+#: gui/datawiz.c:118
 msgid "Starting observation"
 msgstr "Başlangıç gözlemi"
 
-#: gui/datawiz.c:108
+#: gui/datawiz.c:119
 msgid "Panel data organization"
 msgstr "Panel veri düzeni"
 
-#: gui/datawiz.c:109
+#: gui/datawiz.c:120
 msgid "Panel structure"
 msgstr "Panel yapısı"
 
-#: gui/datawiz.c:110
+#: gui/datawiz.c:121
 msgid "Panel index variables"
 msgstr "Panel endeks değişkeni"
 
-#: gui/datawiz.c:111
+#: gui/datawiz.c:122
 msgid "Confirm dataset structure"
 msgstr "Veri seti yapısı doğrulama"
 
-#: gui/datawiz.c:182
+#: gui/datawiz.c:193
 #, c-format
 msgid ""
 "Enter name for first variable\n"
@@ -9707,125 +9699,129 @@ msgstr ""
 "Birinci değişkenin adını giriniz\n"
 "(ençok %d harf)"
 
-#: gui/datawiz.c:186 gui/dialogs.c:5562 gui/ssheet.c:1004
+#: gui/datawiz.c:197 gui/dialogs.c:5562 gui/ssheet.c:1004
 msgid "gretl: name variable"
 msgstr "gretl: değişkeni adlandır"
 
-#: gui/datawiz.c:311 gui/ssheet.c:1713
+#: gui/datawiz.c:321 gui/ssheet.c:1713
 msgid "No changes were made"
 msgstr "Yapılan bir değişiklik yok"
 
-#: gui/datawiz.c:411 gui/dialogs.c:3682 gui/menustate.c:1010
+#: gui/datawiz.c:447 gui/dialogs.c:3682 gui/menustate.c:1010
 msgid "Annual"
 msgstr "Yıllık"
 
-#: gui/datawiz.c:412 gui/dialogs.c:3681 gui/dialogs.c:6318 gui/menustate.c:1012
+#: gui/datawiz.c:448 gui/dialogs.c:3681 gui/dialogs.c:6318 gui/menustate.c:1012
 msgid "Quarterly"
 msgstr "Üç aylık"
 
-#: gui/datawiz.c:413 gui/dialogs.c:3688 gui/dialogs.c:6323 gui/menustate.c:1014
+#: gui/datawiz.c:449 gui/dialogs.c:3688 gui/dialogs.c:6323 gui/menustate.c:1014
 msgid "Monthly"
 msgstr "Aylık"
 
-#: gui/datawiz.c:414 gui/dialogs.c:3687 gui/menustate.c:1018
+#: gui/datawiz.c:450 gui/dialogs.c:3687 gui/menustate.c:1018
 msgid "Weekly"
 msgstr "Haftalık"
 
-#: gui/datawiz.c:415 gui/dialogs.c:3695 gui/menustate.c:1020
+#: gui/datawiz.c:451 gui/dialogs.c:3695 gui/menustate.c:1020
 msgid "Daily (5 days)"
 msgstr "Günlük (5 gün)"
 
-#: gui/datawiz.c:416 gui/dialogs.c:3696 gui/menustate.c:1022
+#: gui/datawiz.c:452 gui/dialogs.c:3696 gui/menustate.c:1022
 msgid "Daily (6 days)"
 msgstr "Günlük (6 gün)"
 
-#: gui/datawiz.c:417 gui/dialogs.c:3694 gui/menustate.c:1024
+#: gui/datawiz.c:453 gui/dialogs.c:3694 gui/menustate.c:1024
 msgid "Daily (7 days)"
 msgstr "Günlük (7 gün)"
 
-#: gui/datawiz.c:418 gui/menustate.c:1016
+#: gui/datawiz.c:454 gui/menustate.c:1016
 msgid "Hourly"
 msgstr "Saatlik"
 
-#: gui/datawiz.c:419 gui/menustate.c:1026
+#: gui/datawiz.c:455 gui/menustate.c:1026
 msgid "Decennial"
 msgstr "On yıllık"
 
+<<<<<<< HEAD
 #: gui/datawiz.c:420 gui/datawiz.c:439 gui/toolbar.c:746
+=======
+#: gui/datawiz.c:456 gui/datawiz.c:475 gui/toolbar.c:746
+>>>>>>> alt_new_dataset
 msgid "Other"
 msgstr "Diğer"
 
-#: gui/datawiz.c:429
+#: gui/datawiz.c:465
 msgid "Stacked time series"
 msgstr "İstifli zaman serileri"
 
-#: gui/datawiz.c:430
+#: gui/datawiz.c:466
 msgid "Stacked cross sections"
 msgstr "İstifli yatay-kesitler"
 
-#: gui/datawiz.c:431
+#: gui/datawiz.c:467
 msgid "Use index variables"
 msgstr "Endeks değişkenleri kullan"
 
-#: gui/datawiz.c:450
+#: gui/datawiz.c:486
 msgid "Non-standard frequency"
 msgstr "Ölçünlü-dışı sıklık"
 
-#: gui/datawiz.c:519
+#: gui/datawiz.c:555
 msgid "Cross-sectional"
 msgstr "Yatay-kesitsel"
 
-#: gui/datawiz.c:521 gui/menustate.c:1031
+#: gui/datawiz.c:557 gui/menustate.c:1031
 msgid "Panel"
 msgstr "Panel"
 
-#: gui/datawiz.c:523 gui/dialogs.c:3750
+#: gui/datawiz.c:559 gui/dialogs.c:3750
 msgid "Monday"
 msgstr "Pazartesi"
 
-#: gui/datawiz.c:524 gui/dialogs.c:3751
+#: gui/datawiz.c:560 gui/dialogs.c:3751
 msgid "Tuesday"
 msgstr "Salı"
 
-#: gui/datawiz.c:525 gui/dialogs.c:3752
+#: gui/datawiz.c:561 gui/dialogs.c:3752
 msgid "Wednesday"
 msgstr "Çarşamba"
 
-#: gui/datawiz.c:526 gui/dialogs.c:3753
+#: gui/datawiz.c:562 gui/dialogs.c:3753
 msgid "Thursday"
 msgstr "Perşembe"
 
-#: gui/datawiz.c:527 gui/dialogs.c:3754
+#: gui/datawiz.c:563 gui/dialogs.c:3754
 msgid "Friday"
 msgstr "Cuma"
 
-#: gui/datawiz.c:528 gui/dialogs.c:3755
+#: gui/datawiz.c:564 gui/dialogs.c:3755
 msgid "Saturday"
 msgstr "Cumartesi"
 
-#: gui/datawiz.c:529 gui/dialogs.c:3749
+#: gui/datawiz.c:565 gui/dialogs.c:3749
 msgid "Sunday"
 msgstr "Pazar"
 
-#: gui/datawiz.c:530
+#: gui/datawiz.c:566
 msgid "None (don't use dates)"
 msgstr "Hiçbiri (tarih kullanma)"
 
-#: gui/datawiz.c:577
+#: gui/datawiz.c:613
 #, c-format
 msgid "%s, observations 1 to %d"
 msgstr "%s, gözlemler 1 - %d arası"
 
-#: gui/datawiz.c:577
+#: gui/datawiz.c:613
 msgid "Cross-sectional data"
 msgstr "Yatay-kesit verileri"
 
-#: gui/datawiz.c:590
+#: gui/datawiz.c:626
 #, c-format
 msgid "%s, %s to %s"
 msgstr "%s, %s ile %s arası"
 
-#: gui/datawiz.c:592 gui/datawiz.c:599
+#: gui/datawiz.c:628 gui/datawiz.c:635
 #, c-format
 msgid ""
 "Panel data (%s)\n"
@@ -9834,51 +9830,51 @@ msgstr ""
 "Panel verileri (%1$s)\n"
 "%3$d dönem üzerinde gözlenen %2$d yatay-kesit birimi"
 
-#: gui/datawiz.c:594 gui/datawiz.c:602
+#: gui/datawiz.c:630 gui/datawiz.c:638
 msgid "stacked time series"
 msgstr "istifli zaman serileri"
 
-#: gui/datawiz.c:602
+#: gui/datawiz.c:638
 msgid "stacked cross sections"
 msgstr "istifli yatay-kesitler"
 
-#: gui/datawiz.c:609
+#: gui/datawiz.c:645
 msgid "(dropping missing observations)"
 msgstr "(kayıp gözlemler çıkarılıyor)"
 
-#: gui/datawiz.c:831 gui/datawiz.c:898
+#: gui/datawiz.c:867 gui/datawiz.c:934
 msgid "The selected index variables do not represent a panel structure"
 msgstr "Seçili endeks değişkenleri bir panel yapısı oluşturmuyor"
 
-#: gui/datawiz.c:862
+#: gui/datawiz.c:898
 msgid "The unit and time index variables must be distinct"
 msgstr "Birim ve zaman endeksi değişkenleri ayrı olmalı"
 
-#: gui/datawiz.c:997
+#: gui/datawiz.c:1033
 msgid "This dataset cannot be interpreted as a panel"
 msgstr "Bu veri seti bir panel olarak yorumlanamıyor"
 
-#: gui/datawiz.c:1101
+#: gui/datawiz.c:1137
 msgid "Unit or group index variable"
 msgstr "Birim ya da küme endeksi değişkeni"
 
-#: gui/datawiz.c:1102
+#: gui/datawiz.c:1138
 msgid "Time index variable"
 msgstr "Zaman endeksi değişkeni"
 
-#: gui/datawiz.c:1358
+#: gui/datawiz.c:1394
 msgid "purge missing observations"
 msgstr "kayıp gözlemlerden arındır"
 
-#: gui/datawiz.c:1481
+#: gui/datawiz.c:1633
 msgid "The data set contains no suitable index variables"
 msgstr "Veri seti uygun bir endeks değişkeni içermiyor"
 
-#: gui/datawiz.c:1660
+#: gui/datawiz.c:1812
 msgid "start entering data values"
 msgstr "veri değerleri girmeye başla"
 
-#: gui/datawiz.c:1935
+#: gui/datawiz.c:2109
 msgid "Data structure wizard"
 msgstr "Veri yapısı sihirbazı"
 
@@ -19462,6 +19458,18 @@ msgstr "İstatistikler/dönüştürmeler"
 msgid "Decoration"
 msgstr "Dekorasyon"
 
+<<<<<<< HEAD
+=======
+#~ msgid "gretl: create data set"
+#~ msgstr "gretl: veri seti oluştur"
+
+#~ msgid "Number of observations:"
+#~ msgstr "Gözlem sayısı:"
+
+#~ msgid "Failed to create empty data set"
+#~ msgstr "Boş veri seti oluşturma başarısız"
+
+>>>>>>> alt_new_dataset
 #~ msgid "_Find variable..."
 #~ msgstr "Değişken _bul..."
 

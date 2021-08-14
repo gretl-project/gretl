@@ -7,7 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2021-08-13 13:56-0400\n"
+=======
+"POT-Creation-Date: 2021-08-13 13:48-0400\n"
+>>>>>>> alt_new_dataset
 "PO-Revision-Date: 2021-07-28 12:08+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
@@ -4949,7 +4953,7 @@ msgstr "Xénese de números aleatorios"
 msgid "Robust estimation"
 msgstr "Estimación robusta"
 
-#: lib/src/libset.c:1439 gui/datawiz.c:441 gui/datawiz.c:520
+#: lib/src/libset.c:1439 gui/datawiz.c:477 gui/datawiz.c:556
 #: gui/menustate.c:1006 plugin/addons-i18n.c:30
 msgid "Time series"
 msgstr "Series temporais"
@@ -7500,11 +7504,11 @@ msgstr "Conxunto de datos completo"
 msgid "Type"
 msgstr "Tipo"
 
-#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1298
+#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1334
 msgid "Number of cross-sectional units"
 msgstr "Número de unidades de sección cruzada"
 
-#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1299
+#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1335
 msgid "Number of time periods"
 msgstr "Número de períodos de tempo"
 
@@ -9119,51 +9123,39 @@ msgstr "Con intervalo de confianza para a mediana"
 msgid "Factorized"
 msgstr "Con factor de separación"
 
-#: gui/callbacks.c:765
-msgid "gretl: create data set"
-msgstr "GRETL: Crear conxunto de datos"
-
-#: gui/callbacks.c:766
-msgid "Number of observations:"
-msgstr "Número total de observacións:"
-
-#: gui/callbacks.c:775
-msgid "Failed to create empty data set"
-msgstr "Fallo ao crear un conxunto de datos baldeiro"
-
-#: gui/callbacks.c:808 gui/callbacks.c:812
+#: gui/callbacks.c:790 gui/callbacks.c:794
 msgid "system gfn directory"
 msgstr "Cartafol gfn do sistema"
 
-#: gui/callbacks.c:809 gui/callbacks.c:815
+#: gui/callbacks.c:791 gui/callbacks.c:797
 msgid "personal gfn directory"
 msgstr "Cartafol gfn persoal"
 
-#: gui/callbacks.c:810 gui/callbacks.c:813 gui/callbacks.c:816
+#: gui/callbacks.c:792 gui/callbacks.c:795 gui/callbacks.c:798
 msgid "current working directory"
 msgstr "Cartafol actual de traballo"
 
-#: gui/callbacks.c:819
+#: gui/callbacks.c:801
 msgid "Open .gfn file"
 msgstr "Abrir ficheiro .gfn"
 
-#: gui/callbacks.c:819
+#: gui/callbacks.c:801
 msgid "Start looking in:"
 msgstr "Comezar mirando en:"
 
-#: gui/callbacks.c:850 gui/library.c:1419
+#: gui/callbacks.c:832 gui/library.c:1419
 msgid "cross-correlogram"
 msgstr "Correlograma cruzado"
 
-#: gui/callbacks.c:865 gui/callbacks.c:924
+#: gui/callbacks.c:847 gui/callbacks.c:906
 msgid "Collinearity check"
 msgstr "Comprobar multicolinearidade"
 
-#: gui/callbacks.c:866
+#: gui/callbacks.c:848
 msgid "Include a constant?"
 msgstr "Incluír unha constante?"
 
-#: gui/callbacks.c:902
+#: gui/callbacks.c:884
 #, c-format
 msgid ""
 "X'X is singular to machine precision:\n"
@@ -9708,39 +9700,39 @@ msgstr "Xanela"
 msgid "Menu"
 msgstr "Menú"
 
-#: gui/datawiz.c:104
+#: gui/datawiz.c:115
 msgid "Structure of dataset"
 msgstr "Estrutura do conxunto de datos"
 
-#: gui/datawiz.c:105
+#: gui/datawiz.c:116
 msgid "Time series frequency"
 msgstr "Frecuencia das series temporais"
 
-#: gui/datawiz.c:106
+#: gui/datawiz.c:117
 msgid "Daily date to represent week"
 msgstr "Día que representa á semana"
 
-#: gui/datawiz.c:107
+#: gui/datawiz.c:118
 msgid "Starting observation"
 msgstr "Observación inicial"
 
-#: gui/datawiz.c:108
+#: gui/datawiz.c:119
 msgid "Panel data organization"
 msgstr "Organización do panel de datos"
 
-#: gui/datawiz.c:109
+#: gui/datawiz.c:120
 msgid "Panel structure"
 msgstr "Estrutura de panel"
 
-#: gui/datawiz.c:110
+#: gui/datawiz.c:121
 msgid "Panel index variables"
 msgstr "Variables índices de panel"
 
-#: gui/datawiz.c:111
+#: gui/datawiz.c:122
 msgid "Confirm dataset structure"
 msgstr "Confirmar a estrutura do conxunto de datos"
 
-#: gui/datawiz.c:182
+#: gui/datawiz.c:193
 #, c-format
 msgid ""
 "Enter name for first variable\n"
@@ -9749,125 +9741,129 @@ msgstr ""
 "Inserir o nome da primeira variable\n"
 "(máx. %d caracteres)"
 
-#: gui/datawiz.c:186 gui/dialogs.c:5562 gui/ssheet.c:1004
+#: gui/datawiz.c:197 gui/dialogs.c:5562 gui/ssheet.c:1004
 msgid "gretl: name variable"
 msgstr "GRETL: Nomear variable"
 
-#: gui/datawiz.c:311 gui/ssheet.c:1713
+#: gui/datawiz.c:321 gui/ssheet.c:1713
 msgid "No changes were made"
 msgstr "Non se fixeron cambios"
 
-#: gui/datawiz.c:411 gui/dialogs.c:3682 gui/menustate.c:1010
+#: gui/datawiz.c:447 gui/dialogs.c:3682 gui/menustate.c:1010
 msgid "Annual"
 msgstr "Anual"
 
-#: gui/datawiz.c:412 gui/dialogs.c:3681 gui/dialogs.c:6318 gui/menustate.c:1012
+#: gui/datawiz.c:448 gui/dialogs.c:3681 gui/dialogs.c:6318 gui/menustate.c:1012
 msgid "Quarterly"
 msgstr "Trimestral"
 
-#: gui/datawiz.c:413 gui/dialogs.c:3688 gui/dialogs.c:6323 gui/menustate.c:1014
+#: gui/datawiz.c:449 gui/dialogs.c:3688 gui/dialogs.c:6323 gui/menustate.c:1014
 msgid "Monthly"
 msgstr "Mensual"
 
-#: gui/datawiz.c:414 gui/dialogs.c:3687 gui/menustate.c:1018
+#: gui/datawiz.c:450 gui/dialogs.c:3687 gui/menustate.c:1018
 msgid "Weekly"
 msgstr "Semanal"
 
-#: gui/datawiz.c:415 gui/dialogs.c:3695 gui/menustate.c:1020
+#: gui/datawiz.c:451 gui/dialogs.c:3695 gui/menustate.c:1020
 msgid "Daily (5 days)"
 msgstr "Diaria (5 días)"
 
-#: gui/datawiz.c:416 gui/dialogs.c:3696 gui/menustate.c:1022
+#: gui/datawiz.c:452 gui/dialogs.c:3696 gui/menustate.c:1022
 msgid "Daily (6 days)"
 msgstr "Diaria (6 días)"
 
-#: gui/datawiz.c:417 gui/dialogs.c:3694 gui/menustate.c:1024
+#: gui/datawiz.c:453 gui/dialogs.c:3694 gui/menustate.c:1024
 msgid "Daily (7 days)"
 msgstr "Diaria (7 días)"
 
-#: gui/datawiz.c:418 gui/menustate.c:1016
+#: gui/datawiz.c:454 gui/menustate.c:1016
 msgid "Hourly"
 msgstr "Horaria"
 
-#: gui/datawiz.c:419 gui/menustate.c:1026
+#: gui/datawiz.c:455 gui/menustate.c:1026
 msgid "Decennial"
 msgstr "Decenal"
 
+<<<<<<< HEAD
 #: gui/datawiz.c:420 gui/datawiz.c:439 gui/toolbar.c:746
+=======
+#: gui/datawiz.c:456 gui/datawiz.c:475 gui/toolbar.c:746
+>>>>>>> alt_new_dataset
 msgid "Other"
 msgstr "Outro"
 
-#: gui/datawiz.c:429
+#: gui/datawiz.c:465
 msgid "Stacked time series"
 msgstr "Series temporais amontoadas"
 
-#: gui/datawiz.c:430
+#: gui/datawiz.c:466
 msgid "Stacked cross sections"
 msgstr "Seccións cruzadas amontoadas"
 
-#: gui/datawiz.c:431
+#: gui/datawiz.c:467
 msgid "Use index variables"
 msgstr "Utilizar variables índice"
 
-#: gui/datawiz.c:450
+#: gui/datawiz.c:486
 msgid "Non-standard frequency"
 msgstr "Frecuencia non estándar"
 
-#: gui/datawiz.c:519
+#: gui/datawiz.c:555
 msgid "Cross-sectional"
 msgstr "De sección cruzada"
 
-#: gui/datawiz.c:521 gui/menustate.c:1031
+#: gui/datawiz.c:557 gui/menustate.c:1031
 msgid "Panel"
 msgstr "Panel"
 
-#: gui/datawiz.c:523 gui/dialogs.c:3750
+#: gui/datawiz.c:559 gui/dialogs.c:3750
 msgid "Monday"
 msgstr "Luns"
 
-#: gui/datawiz.c:524 gui/dialogs.c:3751
+#: gui/datawiz.c:560 gui/dialogs.c:3751
 msgid "Tuesday"
 msgstr "Martes"
 
-#: gui/datawiz.c:525 gui/dialogs.c:3752
+#: gui/datawiz.c:561 gui/dialogs.c:3752
 msgid "Wednesday"
 msgstr "Mércores"
 
-#: gui/datawiz.c:526 gui/dialogs.c:3753
+#: gui/datawiz.c:562 gui/dialogs.c:3753
 msgid "Thursday"
 msgstr "Xoves"
 
-#: gui/datawiz.c:527 gui/dialogs.c:3754
+#: gui/datawiz.c:563 gui/dialogs.c:3754
 msgid "Friday"
 msgstr "Venres"
 
-#: gui/datawiz.c:528 gui/dialogs.c:3755
+#: gui/datawiz.c:564 gui/dialogs.c:3755
 msgid "Saturday"
 msgstr "Sábado"
 
-#: gui/datawiz.c:529 gui/dialogs.c:3749
+#: gui/datawiz.c:565 gui/dialogs.c:3749
 msgid "Sunday"
 msgstr "Domingo"
 
-#: gui/datawiz.c:530
+#: gui/datawiz.c:566
 msgid "None (don't use dates)"
 msgstr "Ningún (non usar datas)"
 
-#: gui/datawiz.c:577
+#: gui/datawiz.c:613
 #, c-format
 msgid "%s, observations 1 to %d"
 msgstr "%s, observacións 1 a %d"
 
-#: gui/datawiz.c:577
+#: gui/datawiz.c:613
 msgid "Cross-sectional data"
 msgstr "Datos de sección cruzada"
 
-#: gui/datawiz.c:590
+#: gui/datawiz.c:626
 #, c-format
 msgid "%s, %s to %s"
 msgstr "%s, %s a %s"
 
-#: gui/datawiz.c:592 gui/datawiz.c:599
+#: gui/datawiz.c:628 gui/datawiz.c:635
 #, c-format
 msgid ""
 "Panel data (%s)\n"
@@ -9876,52 +9872,52 @@ msgstr ""
 "Datos de panel (%s)\n"
 "%d unidades de sección cruzada observadas durante %d períodos"
 
-#: gui/datawiz.c:594 gui/datawiz.c:602
+#: gui/datawiz.c:630 gui/datawiz.c:638
 msgid "stacked time series"
 msgstr "series temporais amontoadas"
 
-#: gui/datawiz.c:602
+#: gui/datawiz.c:638
 msgid "stacked cross sections"
 msgstr "seccións cruzadas amontoadas"
 
-#: gui/datawiz.c:609
+#: gui/datawiz.c:645
 msgid "(dropping missing observations)"
 msgstr "(prescindindo das observacións ausentes)"
 
-#: gui/datawiz.c:831 gui/datawiz.c:898
+#: gui/datawiz.c:867 gui/datawiz.c:934
 msgid "The selected index variables do not represent a panel structure"
 msgstr ""
 "As variables índices escollidas non representan unha estrutura de panel"
 
-#: gui/datawiz.c:862
+#: gui/datawiz.c:898
 msgid "The unit and time index variables must be distinct"
 msgstr "As variables índices de unidade e de tempo deben de ser distintas"
 
-#: gui/datawiz.c:997
+#: gui/datawiz.c:1033
 msgid "This dataset cannot be interpreted as a panel"
 msgstr "Este conxunto de datos non pode interpretarse como un panel"
 
-#: gui/datawiz.c:1101
+#: gui/datawiz.c:1137
 msgid "Unit or group index variable"
 msgstr "Variable índice de unidade ou de grupo"
 
-#: gui/datawiz.c:1102
+#: gui/datawiz.c:1138
 msgid "Time index variable"
 msgstr "Variable índice de tempo"
 
-#: gui/datawiz.c:1358
+#: gui/datawiz.c:1394
 msgid "purge missing observations"
 msgstr "Eliminar as observacións ausentes"
 
-#: gui/datawiz.c:1481
+#: gui/datawiz.c:1633
 msgid "The data set contains no suitable index variables"
 msgstr "O conxunto de datos non contén variables índice axeitadas"
 
-#: gui/datawiz.c:1660
+#: gui/datawiz.c:1812
 msgid "start entering data values"
 msgstr "Empezar a introducir os valores dos datos"
 
-#: gui/datawiz.c:1935
+#: gui/datawiz.c:2109
 msgid "Data structure wizard"
 msgstr "Asistente da estrutura de datos"
 
@@ -19478,6 +19474,18 @@ msgstr "Estatísticas/transformacións"
 msgid "Decoration"
 msgstr "Decoración"
 
+<<<<<<< HEAD
+=======
+#~ msgid "gretl: create data set"
+#~ msgstr "GRETL: Crear conxunto de datos"
+
+#~ msgid "Number of observations:"
+#~ msgstr "Número total de observacións:"
+
+#~ msgid "Failed to create empty data set"
+#~ msgstr "Fallo ao crear un conxunto de datos baldeiro"
+
+>>>>>>> alt_new_dataset
 #~ msgid "_Find variable..."
 #~ msgstr "_Buscar variable..."
 

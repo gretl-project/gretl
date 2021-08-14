@@ -30,11 +30,15 @@
 #include "gretl_panel.h"
 
 /* The code here answers to (1) the "/Data/Dataset structure" menu item
-   in the main gretl window; (2) at one remove, the "/File/New data set"
-   main-window item; and (3) finalize_data_open() in gui_utils.c. where
-   a newly opened data file has been considered simply as undated,
-   non-panel data. In each case we're offering the user the chance to
-   impose time-series or panel structure.
+   in the main gretl window; (2) finalize_data_open() in gui_utils.c;
+   and (3) the "/File/New data set" main-window menu item.
+
+   In the first two cases we have a dataset loaded and we're offering
+   the user the chance to impose time-series or panel structure.
+
+   In the third case the dataset will be empty (dataset->n = 0) and
+   we're determining both the size and the stucture of the dataset
+   the user wants to create.
 */
 
 #define DWDEBUG 0
@@ -86,16 +90,18 @@ enum {
 typedef struct dw_opts_ dw_opts;
 
 struct dw_opts_ {
-    gretlopt flags;     /* state bit-flags */
-    int n_radios;       /* number of radio-button options */
-    int deflt;          /* default setting for current radio variable */
-    int plf;            /* panel: least factor > 1 of # of observations */
-    int uid;            /* panel: ID number of "unit" variable */
-    int tid;            /* panel: ID number of "period" variable */
-    int *setvar;        /* pointer to variable currently being set */
-    int *extra;         /* additional pointer to int variable */
-    GtkWidget *pdspin;  /* used for setting custom time-series frequency */
-    GList *vlist;       /* panel: list of candidates for uid, tid */
+    gretlopt flags;      /* state bit-flags */
+    int n_radios;        /* number of radio-button options */
+    int deflt;           /* default setting for current radio variable */
+    int plf;             /* panel: least factor > 1 of # of observations */
+    int uid;             /* panel: ID number of "unit" variable */
+    int tid;             /* panel: ID number of "period" variable */
+    int *setvar;         /* pointer to variable currently being set */
+    int *extra;          /* additional pointer to int variable */
+    GtkWidget *pdspin;   /* used for setting custom time-series frequency */
+    GList *vlist;        /* panel: list of candidates for uid, tid */
+    GtkWidget *dspin[4]; /* dataset dimension setters (new dataset) */
+    int dvals[4];        /* dataset dimension values (new dataset) */
 };
 
 static const char *wizcode_string (int code)
@@ -236,9 +242,6 @@ static void eval_n_is_prime (dw_opts *opts)
 
     if (opts->plf == 1) {
 	opts->flags |= DW_N_PRIME;
-	if (opts->flags & DW_CREATE) {
-	    opts->flags |= DW_NO_PANEL;
-	}
     } else {
 	opts->flags &= ~DW_N_PRIME;
     }
@@ -264,13 +267,12 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 {
     gchar *setobs_cmd = NULL;
     gretlopt opt = OPT_NONE;
-    int create = (opts->flags & DW_CREATE);
     int delmiss = (opts->flags & DW_DROPMISS);
     int delete_markers = 0;
     int err = 0;
 
 #if DWDEBUG
-    fprintf(stderr, "dwiz_make_changes: create = %d\n", create);
+    fprintf(stderr, "dwiz_make_changes\n");
 #endif
 
     /* preliminaries */
@@ -304,7 +306,7 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     if (dwinfo->structure == dataset->structure &&
 	dwinfo->pd == dataset->pd &&
 	strcmp(dwinfo->stobs, dataset->stobs) == 0) {
-	if (create || delmiss) {
+	if (delmiss) {
 	    /* recording? */
 	    goto finalize;
 	} else {
@@ -369,15 +371,6 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     if (err) {
 	gui_errmsg(err);
-    } else if (create) {
-	if (opts->flags & DW_SSHEET) {
-	    gtk_widget_hide(dlg);
-	    maybe_start_editing();
-	} else {
-	    register_data(NULLDATA_STARTED);
-	    lib_command_sprintf("nulldata %d", dataset->n);
-	    record_command_verbatim();
-	}
     } else {
 	if (delete_markers) {
 	    dataset_destroy_obs_markers(dataset);
@@ -395,6 +388,66 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes: returning %d\n", err);
 #endif
+
+    return err;
+}
+
+static int newdata_nobs (DATASET *dwinfo, dw_opts *opts)
+{
+    if (dwinfo->structure == CROSS_SECTION) {
+	return opts->dvals[0];
+    } else if (dataset_is_time_series(dwinfo)) {
+	return opts->dvals[1];
+    } else {
+	return opts->dvals[2] * opts->dvals[3];
+    }
+}
+
+/* alternative to dwiz_make_changes() for use when the existing
+   dataset is empty
+*/
+
+static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
+				 GtkWidget *dlg)
+{
+    int err, n = newdata_nobs(dwinfo, opts);
+    gretlopt opt = OPT_NONE;
+
+    err = open_nulldata(dataset, data_status, n, OPT_NONE, NULL);
+    if (err) {
+	errbox(_("Failed to create empty data set"));
+	return err;
+    }
+
+    if (time_series(dwinfo)) {
+	ntolabel(dwinfo->stobs, dwinfo->t1, dwinfo);
+    }
+
+    if (dwinfo->structure == TIME_SERIES) {
+	opt = OPT_T;
+    } else if (dwinfo->structure == STACKED_TIME_SERIES) {
+	strcpy(dwinfo->stobs, "1:1");
+	dwinfo->pd = opts->dvals[3];
+	opt = OPT_S;
+    } else if (dwinfo->structure == CROSS_SECTION) {
+	opt = OPT_X;
+    } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	opt = OPT_N;
+    }
+
+    err = simple_set_obs(dataset, dwinfo->pd, dwinfo->stobs, opt);
+
+    if (opts->flags & DW_SSHEET) {
+	gtk_widget_hide(dlg);
+	maybe_start_editing();
+    } else {
+	register_data(NULLDATA_STARTED);
+	lib_command_sprintf("nulldata %d", dataset->n);
+	record_command_verbatim();
+	lib_command_sprintf("setobs %d %s%s", dwinfo->pd,
+			    dwinfo->stobs, print_flags(opt, SETOBS));
+	record_command_verbatim();
+    }
 
     return err;
 }
@@ -539,7 +592,7 @@ static const char *dwiz_radio_strings (int step, int i)
 
 static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
 {
-    int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "setval"));
 
     if (opts->pdspin != NULL) {
 	if (val == PD_SPECIAL) {
@@ -569,16 +622,26 @@ static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
     *opts->setvar = val;
 }
 
-static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
+static int dw_nobs (DATASET *dwinfo, dw_opts *opts)
 {
+    if (dataset->n > 0) {
+	return dataset->n;
+    } else {
+	return newdata_nobs(dwinfo, opts);
+    }
+}
+
+static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
+{
+    int nobs = dw_nobs(dwinfo, opts);
     gchar *ret = NULL;
 
     if (dwinfo->structure == CROSS_SECTION) {
 	ret = g_strdup_printf(_("%s, observations 1 to %d"), _("Cross-sectional data"),
-			      dataset->n);
+			      nobs);
     } else if (time_series(dwinfo)) {
 	const char *tslabel = ts_frequency_string(dwinfo);
-	int lastobs = dwinfo->t1 + dataset->n - 1;
+	int lastobs = dwinfo->t1 + nobs - 1;
 	char stobs[OBSLEN];
 	char endobs[OBSLEN];
 
@@ -593,8 +656,15 @@ static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
 				"%d cross-sectional units observed over %d periods"),
 			      _("stacked time series"), dwinfo->n, dwinfo->pd);
     } else if (known_panel(dwinfo)) {
-	int nunits = dwinfo->t1;
-	int nperiods = dataset->n / nunits;
+	int nunits, nperiods;
+
+	if (opts->flags & DW_CREATE) {
+	    nunits = opts->dvals[2];
+	    nperiods = opts->dvals[3];
+	} else {
+	    nunits = dwinfo->t1;
+	    nperiods = nobs / nunits;
+	}
 
 	ret = g_strdup_printf(_("Panel data (%s)\n"
 				"%d cross-sectional units observed over %d periods"),
@@ -603,7 +673,7 @@ static gchar *make_confirmation_text (DATASET *dwinfo, gretlopt flags)
 			      nunits, nperiods);
     }
 
-    if (flags & DW_DROPMISS) {
+    if (opts->flags & DW_DROPMISS) {
 	gchar *s;
 
 	s = g_strdup_printf("%s\n%s", ret, _("(dropping missing observations)"));
@@ -1405,13 +1475,142 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     }
 }
 
-/* make two or more radio buttons based on the current setings in
-   the "opts" structure
+static void get_dimensions (int i, dw_opts *opts,
+			    int *dmax, int *d)
+{
+    int k = opts->dvals[i];
+
+    *dmax = 1000000;
+
+    if (i == CROSS_SECTION) {
+	if (k == 0) {
+	    k = 100;
+	}
+    } else if (i == TIME_SERIES) {
+	if (k == 0) {
+	    k = 100;
+	}
+    } else {
+	if (k == 0) {
+	   k = 10;
+	}
+	*dmax = 1000;
+    }
+
+    *d = k;
+}
+
+static void sensitize_obs_spinners (GtkToggleButton *button,
+				    dw_opts *opts)
+{
+    if (button_is_active(button)) {
+	int i, s, sv = widget_get_int(button, "setval");
+
+	for (i=0; i<4; i++) {
+	    s = (i == sv || (sv == 2 && i == 3));
+	    gtk_widget_set_sensitive(opts->dspin[i], s);
+	}
+    }
+}
+
+static void set_initial_obs_sensitivities (DATASET *dwinfo,
+					   dw_opts *opts)
+{
+    int i, s[4] = {0};
+
+    if (dwinfo->structure == CROSS_SECTION) {
+	s[0] = 1;
+    } else if (dataset_is_time_series(dwinfo)) {
+	s[1] = 1;
+    } else {
+	s[2] = s[3] = 1;
+    }
+
+    for (i=0; i<4; i++) {
+	gtk_widget_set_sensitive(opts->dspin[i], s[i]);
+    }
+}
+
+static void dwiz_new_dataset_combo (DATASET *dwinfo,
+				    dw_opts *opts,
+				    GtkWidget *vbox)
+{
+    const gchar *strs[] = {"n =", "T ="};
+    GSList *group = NULL;
+    GtkWidget *button = NULL;
+    GtkWidget *label;
+    GtkWidget *hbox, *table;
+    int dmax, dval = 0;
+    int i, j;
+
+    table = gtk_table_new(4, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+    gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
+    gtk_widget_show(table);
+
+    for (i=0; i<3; i++) {
+	const char *s = dwiz_radio_strings(DW_SET_TYPE, i);
+	int setval = dwiz_i_to_setval(dwinfo, DW_SET_TYPE, i);
+
+	if (button != NULL) {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	} else {
+	    group = NULL;
+	}
+
+	/* dataset structure selector */
+	button = gtk_radio_button_new_with_label(group, _(s));
+	gtk_table_attach_defaults(GTK_TABLE(table), button, 0, 1, i, i+1);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(dwiz_set_radio_opt), opts);
+	g_object_set_data(G_OBJECT(button), "setval", GINT_TO_POINTER(setval));
+	gtk_widget_show(button);
+
+	/* dimension (n or T) selector(s) */
+	hbox = gtk_hbox_new(FALSE, 5);
+	j = (i == 2)? 0 : i;
+	label = gtk_label_new(strs[j]);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	get_dimensions(i, opts, &dmax, &dval);
+	opts->dspin[i] = gtk_spin_button_new_with_range(2, dmax, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->dspin[i]), dval);
+	gtk_box_pack_start(GTK_BOX(hbox), opts->dspin[i], FALSE, FALSE, 5);
+	gtk_table_attach_defaults(GTK_TABLE(table), hbox, 1, 2, i, i+1);
+	gtk_widget_show_all(hbox);
+	if (i == 2) {
+	    /* panel: we need T as well as n */
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    label = gtk_label_new(strs[j+1]);
+	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	    get_dimensions(i+1, opts, &dmax, &dval);
+	    opts->dspin[i+1] = gtk_spin_button_new_with_range(2, dmax, 1);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->dspin[i+1]), dval);
+	    gtk_box_pack_start(GTK_BOX(hbox), opts->dspin[i+1], FALSE, FALSE, 5);
+	    gtk_table_attach_defaults(GTK_TABLE(table), hbox, 1, 2, i+1, i+2);
+	    gtk_widget_show_all(hbox);
+	}
+
+	g_signal_connect(G_OBJECT(button), "toggled",
+			 G_CALLBACK(sensitize_obs_spinners), opts);
+
+	if (opts->deflt == setval) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	    if (opts->setvar != NULL && setval >= 0) {
+		/* preset the variable to its default value */
+		*opts->setvar = setval;
+	    }
+	}
+    }
+
+    set_initial_obs_sensitivities(dwinfo, opts);
+}
+
+/* make two or more radio buttons based on the current settings in
+   the @opts structure
 */
 
 static void dwiz_build_radios (int step, DATASET *dwinfo,
-			       dw_opts *opts,
-			       GtkWidget *vbox)
+			       dw_opts *opts, GtkWidget *vbox)
 {
     GSList *group = NULL;
     GtkWidget *button = NULL;
@@ -1444,15 +1643,13 @@ static void dwiz_build_radios (int step, DATASET *dwinfo,
 
 	if (step == DW_TS_FREQUENCY && i == opts->n_radios - 1) {
 	    /* time series, "other" (custom) frequency: need spinner */
-	    GtkWidget *freqspin = frequency_spinner(hbox, dwinfo);
-
-	    gtk_widget_set_sensitive(freqspin, FALSE);
-	    opts->pdspin = freqspin;
+	    opts->pdspin = frequency_spinner(hbox, dwinfo);
+	    gtk_widget_set_sensitive(opts->pdspin, FALSE);
 	}
 
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(dwiz_set_radio_opt), opts);
-	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(setval));
+	g_object_set_data(G_OBJECT(button), "setval", GINT_TO_POINTER(setval));
 
 	if (step == DW_PANEL_MODE && dw_n_is_prime(opts)) {
 	    /* only the "index variables" option should be active */
@@ -1518,7 +1715,7 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 	    } else if (known_panel(dwinfo)) {
 		if (create) {
 		    dwinfo->structure = STACKED_TIME_SERIES;
-		    step = DW_PANEL_SIZE;
+		    step = DW_CONFIRM;
 		} else {
 		    step = DW_PANEL_MODE;
 		}
@@ -1563,6 +1760,12 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 	    step = DW_CONFIRM;
 	}
     } else if (direction == DW_BACK) {
+	if (prevstep == DW_CONFIRM && create) {
+	    if (dwinfo->structure == CROSS_SECTION ||
+		dwinfo->structure == STACKED_TIME_SERIES) {
+		return DW_SET_TYPE;
+	    }
+	}
 	if (prevstep == DW_TS_FREQUENCY || prevstep == DW_PANEL_MODE) {
 	    step = DW_SET_TYPE;
 	} else if (prevstep == DW_STARTING_OBS) {
@@ -1685,11 +1888,13 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	GtkWidget *w = g_object_get_data(G_OBJECT(page), "label");
 	gchar *ctxt;
 
-	ctxt = make_confirmation_text(dwinfo, opts->flags);
+	ctxt = make_confirmation_text(dwinfo, opts);
 	gtk_label_set_text(GTK_LABEL(w), ctxt);
 	g_free(ctxt);
-	if ((opts->flags & DW_CREATE) && dataset->n < 1001) {
-	    add_editing_option(page, &opts->flags);
+	if (opts->flags & DW_CREATE) {
+	    if (newdata_nobs(dwinfo, opts) < 1001) {
+		add_editing_option(page, &opts->flags);
+	    }
 	}
     } else {
 	/* all other pages */
@@ -1697,7 +1902,11 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	clear_dwiz_page(page);
 
 	if (opts->n_radios > 0) {
-	    dwiz_build_radios(step, dwinfo, opts, page);
+	    if (step == DW_SET_TYPE && (opts->flags & DW_CREATE)) {
+		dwiz_new_dataset_combo(dwinfo, opts, page);
+	    } else {
+		dwiz_build_radios(step, dwinfo, opts, page);
+	    }
 	}
 
 	if (step == DW_STARTING_OBS) {
@@ -1723,7 +1932,11 @@ static void dwiz_finalize (GtkWidget *dlg, DATASET *dwinfo,
     dw_opts *opts = g_object_get_data(G_OBJECT(dlg), "opts");
 
     if (!cancel) {
-	dwiz_make_changes(dwinfo, opts, dlg);
+	if (opts->flags & DW_CREATE) {
+	    dwiz_replace_dataset(dwinfo, opts, dlg);
+	} else {
+	    dwiz_make_changes(dwinfo, opts, dlg);
+	}
     } else if (opts->flags & DW_CREATE) {
 	/* aborting creation of new dataset */
 	gui_clear_dataset();
@@ -1774,12 +1987,21 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
     dw_opts *opts = g_object_get_data(G_OBJECT(dlg), "opts");
     int newpg;
 
-    if (pg == DW_SET_TYPE && any_panel(dwinfo) && !panel_possible(opts)) {
-	/* special case: called for panel but it won't work */
-	dwinfo->structure = dataset->structure;
-	dwiz_prepare_page(nb, DW_SET_TYPE, DW_BACK, dwinfo);
-	gtk_notebook_set_current_page(nb, DW_SET_TYPE);
-	return;
+    if (pg == DW_SET_TYPE) {
+	if (any_panel(dwinfo) && !panel_possible(opts)) {
+	    /* special case: called for panel but it won't work */
+	    dwinfo->structure = dataset->structure;
+	    dwiz_prepare_page(nb, DW_SET_TYPE, DW_BACK, dwinfo);
+	    gtk_notebook_set_current_page(nb, DW_SET_TYPE);
+	    return;
+	}
+	if (opts->flags & DW_CREATE) {
+	    int i;
+
+	    for (i=0; i<4; i++) {
+		opts->dvals[i] = spinner_get_int(opts->dspin[i]);
+	    }
+	}
     }
 
     newpg = dwiz_compute_step(pg, DW_FORWARD, dwinfo, opts);
@@ -1892,9 +2114,12 @@ static dw_opts *dw_opts_new (int create)
 	opts->flags = (create)? DW_CREATE : 0;
 	opts->vlist = NULL;
 	opts->uid = opts->tid = 0;
-
 	if (create) {
-	    eval_n_is_prime(opts);
+	    int i;
+
+	    for (i=0; i<4; i++) {
+		opts->dvals[i] = 0;
+	    }
 	}
     }
 
