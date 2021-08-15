@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-14 10:18-0400\n"
-"PO-Revision-Date: 2021-07-28 15:07+0200\n"
+"PO-Revision-Date: 2021-08-15 09:12+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -9167,9 +9167,8 @@ msgstr ""
 "# eseguire questo file come script occorrono alcune correzioni.\n"
 
 #: gui/console.c:343
-#, fuzzy
 msgid "Really quit gretl?"
-msgstr "Serve gretl %s"
+msgstr "Uscire da gretl?"
 
 #: gui/console.c:482
 msgid "gretl console: type 'help' for a list of commands"
@@ -14984,9 +14983,8 @@ msgid "Lag order for ARCH test:"
 msgstr "Ordine di ritardi per test ARCH:"
 
 #: gui/library.c:2715
-#, fuzzy
 msgid "gretl: panel model specification"
-msgstr "gretl: diagnosi per modelli panel"
+msgstr "gretl: test diagnostici per modelli panel"
 
 #: gui/library.c:2789
 msgid "gretl: leverage and influence"
@@ -15074,14 +15072,12 @@ msgstr ""
 "l'integrale di Imhof e quindi un valore non è disponibile)"
 
 #: gui/library.c:3355
-#, fuzzy
 msgid "H1: positive autocorrelation\n"
-msgstr "Non c'è autocorrelazione"
+msgstr "H1: autocorrelazione positiva\n"
 
 #: gui/library.c:3357
-#, fuzzy
 msgid "H1: negative autocorrelation\n"
-msgstr "Non c'è autocorrelazione"
+msgstr "H1: autocorrelazione negativa\n"
 
 #: gui/library.c:3564
 msgid "linear restrictions"
@@ -17116,7 +17112,7 @@ msgstr "Abilita le collezioni di grafici"
 
 #: gui/settings.c:231
 msgid "Main window includes console"
-msgstr ""
+msgstr "La finestra principale include il terminale"
 
 #: gui/settings.c:233
 msgid "Toolbar icon size"
@@ -17203,13 +17199,12 @@ msgid "Path to Julia executable"
 msgstr "Percorso per l'eseguibile Julia"
 
 #: gui/settings.c:290
-#, fuzzy
 msgid "Path to lpsolve library"
-msgstr "Percorso per la libreria R"
+msgstr "Percorso per la libreria lpsolve"
 
 #: gui/settings.c:294
 msgid "Path to mpiexec"
-msgstr "Path di mpiexec"
+msgstr "Percorso per mpiexec"
 
 #: gui/settings.c:296
 msgid "Path to MPI hosts file"
@@ -17320,9 +17315,8 @@ msgid "English (A4 paper)"
 msgstr "Inglese (formato A4)"
 
 #: gui/settings.c:1291
-#, fuzzy
 msgid "Translation, if available"
-msgstr "Non sono disponibili informazioni sui dati.\n"
+msgstr "Traduzione, se disponibile"
 
 #: gui/settings.c:1296
 msgid "automatic, as you type"
@@ -17980,9 +17974,8 @@ msgid "command reference"
 msgstr "guida comandi"
 
 #: gui/toolbar.c:1620
-#, fuzzy
 msgid "find series"
-msgstr "serie finale"
+msgstr "trova serie"
 
 #: gui/toolbar.c:1621
 msgid "X-Y graph"
