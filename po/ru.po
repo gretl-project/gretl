@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-14 10:18-0400\n"
-"PO-Revision-Date: 2021-07-28 18:21+0200\n"
+"PO-Revision-Date: 2021-08-15 13:33+0200\n"
 "Last-Translator: Vitalie Ciubotaru <vitalie@ciubotaru.tk>\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -676,9 +676,8 @@ msgid "Robust Wald test for break"
 msgstr "робастный тест Вальда на наличие сдвигов"
 
 #: lib/src/compare.c:2676
-#, fuzzy
 msgid "5% QLR critical value"
-msgstr "%g-процентное критическое значение"
+msgstr "5% QLR критическое значение"
 
 #: lib/src/compare.c:2773
 msgid ""
@@ -1591,9 +1590,9 @@ msgid "Expected a valid variable name"
 msgstr "Ожидалось правильное имя переменной"
 
 #: lib/src/dbread.c:2399
-#, fuzzy, c-format
+#, c-format
 msgid "ODBC import: '%s': no valid observations in sample range"
-msgstr "'%s': неверный индекс наблюдения"
+msgstr "Импорт ODBC: '%s': нет действительных наблюдений в диапазоне выборки"
 
 #: lib/src/dbread.c:2457 lib/src/dbread.c:2706 lib/src/dbread.c:2839
 msgid "No database has been opened"
@@ -2431,9 +2430,8 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Неверный тип операнда для унарного '&'"
 
 #: lib/src/geneval.c:5869
-#, fuzzy
 msgid "The first argument must be a named series in the current dataset"
-msgstr "Похоже, ряд %s имеет ту же частоту, что и текущий набор данных"
+msgstr "Первый аргумент должен быть именованной серией в текущем наборе данных"
 
 #: lib/src/geneval.c:7724 lib/src/geneval.c:7751 lib/src/gretl_func.c:8974
 #, c-format
@@ -2630,9 +2628,8 @@ msgstr ""
 "Задайте меньшую выборку."
 
 #: lib/src/genfuncs.c:2937
-#, fuzzy
 msgid "centered periodic dummy"
-msgstr "_Фиктивные переменные для периодов"
+msgstr "центрированная периодическая фиктивная переменная"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
@@ -3849,9 +3846,8 @@ msgstr "ежедневные"
 
 #: lib/src/gretl_midas.c:323 lib/src/transforms.c:1475
 #: lib/src/transforms.c:1764
-#, fuzzy
 msgid "The argument does not seem to be a MIDAS list"
-msgstr "Этот файл не является файлом SAS"
+msgstr "Возможно, этот аргумент не является списком MIDAS"
 
 #: lib/src/gretl_midas.c:2329
 #, c-format
@@ -4124,24 +4120,23 @@ msgid "set_omp_n_threads: OpenMP is not enabled"
 msgstr "set_omp_n_threads: OpenMP не включен"
 
 #: lib/src/gretl_panel.c:1560
-#, fuzzy
 msgid "Variance estimators:"
-msgstr "Оценка ковариации"
+msgstr "Оценки ковариации:"
 
 #: lib/src/gretl_panel.c:1562
-#, fuzzy, c-format
+#, c-format
 msgid " between = %g"
-msgstr " (длина шага = %g)"
+msgstr " внутригруп = %g"
 
 #: lib/src/gretl_panel.c:1564
-#, fuzzy, c-format
+#, c-format
 msgid " within = %g"
-msgstr "полоса пропускания = %g"
+msgstr "внешнегруп = %g"
 
 #: lib/src/gretl_panel.c:1568
-#, fuzzy, c-format
+#, c-format
 msgid "theta used for quasi-demeaning = %g"
-msgstr "тета (theta), использованная для квази-деусреднения (demeaning)"
+msgstr "тета (theta), использованная для квази-уменьшения = %g"
 
 #: lib/src/gretl_panel.c:1571
 msgid "Panel is unbalanced: theta varies across units"
@@ -7775,9 +7770,8 @@ msgid "Invalid lag order %g"
 msgstr "Неверный порядок лага %g"
 
 #: lib/src/tokenize.c:2048
-#, fuzzy
 msgid "catch: cannot be applied to this command"
-msgstr "Команда 'catch' недопустима в данном контексте"
+msgstr "Команда 'catch' неприменима к данной команде"
 
 #: lib/src/tokenize.c:2065
 msgid "savename is too long"
@@ -7798,9 +7792,9 @@ msgid "'end loop': did you mean 'endloop'"
 msgstr "'end loop': вы имели ввиду 'endloop'"
 
 #: lib/src/tokenize.c:3318
-#, fuzzy, c-format
+#, c-format
 msgid "end: invalid parameter '%s'"
-msgstr "%s: неверный тип параметра"
+msgstr "end: неверный параметр '%s'"
 
 #: lib/src/tokenize.c:3392
 #, c-format
@@ -9194,9 +9188,8 @@ msgstr ""
 "# этих команд в скрипте, возможно, придется внести некоторые изменения.\n"
 
 #: gui/console.c:343
-#, fuzzy
 msgid "Really quit gretl?"
-msgstr "Требуется gretl %s"
+msgstr "Вы действительно хотите выйти?"
 
 #: gui/console.c:482
 msgid "gretl console: type 'help' for a list of commands"
@@ -10328,11 +10321,12 @@ msgid "Plot confidence interval using"
 msgstr "Показывать доверительные интервалы как"
 
 #: gui/dialogs.c:3384
-#, fuzzy
 msgid ""
 "No out-of-sample observations are available.\n"
 "Show \"forecast\" information for the estimation sample?"
-msgstr "Наблюдения вне выборки отсутствуют"
+msgstr ""
+"Нет доступных наблюдений за пределами выборки.\n"
+"Показать \"прогнозную\" информацию для оценочной выборки?"
 
 #: gui/dialogs.c:3449 gui/library.c:6431
 msgid "Add observations"
@@ -10493,9 +10487,8 @@ msgid "frequency axis scale:"
 msgstr "масштаб частотной оси:"
 
 #: gui/dialogs.c:4838
-#, fuzzy
 msgid "data-based"
-msgstr "базы данных"
+msgstr "основан. на данных"
 
 #: gui/dialogs.c:5037
 msgid "Number of bins:"
@@ -10739,24 +10732,20 @@ msgid "series code:"
 msgstr "коды рядов:"
 
 #: gui/dialogs.c:6812
-#, fuzzy
 msgid "gretl: display map"
-msgstr "gretl: показать данные"
+msgstr "gretl: показать карту"
 
 #: gui/dialogs.c:6824
-#, fuzzy
 msgid "series to plot:"
-msgstr "График временного ряда"
+msgstr "ряды для построения графика:"
 
 #: gui/dialogs.c:6843
-#, fuzzy
 msgid "palette:"
-msgstr "Палитра"
+msgstr "палитра:"
 
 #: gui/dialogs.c:6857
-#, fuzzy
 msgid "Log scale"
-msgstr "логарифмическая шкала"
+msgstr "Логарифмическая шкала"
 
 #: gui/dialogs.c:6866
 msgid "draw border around map"
@@ -10844,43 +10833,36 @@ msgid "Bootstrap p-values"
 msgstr "р-значение бутстреп"
 
 #: gui/dialogs.c:7482
-#, fuzzy
 msgid "LASSO algorithm:"
-msgstr "Алгоритм оценивания"
+msgstr "Алгоритм LASSO:"
 
 #: gui/dialogs.c:7483
-#, fuzzy
 msgid "RIDGE algorithm:"
-msgstr "Алгоритм оценивания"
+msgstr "Алгоритм RIDGE:"
 
 #: gui/dialogs.c:7529
-#, fuzzy
 msgid "cross validation criterion"
-msgstr "Критерий перекрестной проверки"
+msgstr "критерий перекрестной проверки"
 
 #: gui/dialogs.c:7532
 msgid "minimized MSE"
 msgstr "минимизир. MSE"
 
 #: gui/dialogs.c:7533
-#, fuzzy
 msgid "one-standard-error rule"
-msgstr "Нестандартная частота"
+msgstr "правило одной стандартной ошибки"
 
 #: gui/dialogs.c:7540
-#, fuzzy
 msgid "set seed for random folds"
-msgstr "gretl: инициализация датчика случайных чисел"
+msgstr "установить seed для случайных подмножеств"
 
 #: gui/dialogs.c:7555
-#, fuzzy
 msgid "use MPI if available"
-msgstr "использовать уровень переменной"
+msgstr "по возможности использовать MPI"
 
 #: gui/dialogs.c:7563
-#, fuzzy
 msgid "show execution time"
-msgstr "Ошибка при выполнении функции"
+msgstr "отображать время выполнения"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11957,9 +11939,9 @@ msgid "build gfn file"
 msgstr "построить gfn файл"
 
 #: gui/gpt_collect.c:202
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: plot collection %d"
-msgstr "gretl: выбор цвета для графика"
+msgstr "gretl: собрать графики %d"
 
 #: gui/gpt_collect.c:310 gui/gpt_collect.c:392 gui/gpt_control.c:5710
 msgid "gretl: graph"
@@ -12103,19 +12085,16 @@ msgid "Close"
 msgstr "Закрыть"
 
 #: gui/gpt_control.c:4636 gui/gpt_control.c:4724
-#, fuzzy
 msgid "Delete plot"
-msgstr "Удалить компоненты"
+msgstr "Удалить график"
 
 #: gui/gpt_control.c:4638 gui/gpt_control.c:4725
-#, fuzzy
 msgid "Close collection"
-msgstr "Без коррекции среднего"
+msgstr "Закрыть собранные графики"
 
 #: gui/gpt_control.c:4640 gui/gpt_control.c:4726
-#, fuzzy
 msgid "Extract plot"
-msgstr "Дополнительные свойства"
+msgstr "Извлечь график"
 
 #: gui/gpt_control.c:4662 gui/graphics.c:258 gui/graph_page.c:697
 msgid "color"
@@ -12499,9 +12478,8 @@ msgid "print version information"
 msgstr "Вывести информацию о версии"
 
 #: gui/gretl.c:156
-#, fuzzy
 msgid "start a new gretl instance unconditionally"
-msgstr "Запустить новый экземпляр gretl?"
+msgstr "по умолчанию запускать новый экземпляр gretl"
 
 #: gui/gretl.c:158
 msgid "reuse an existing gretl instance unconditionally"
@@ -13164,9 +13142,8 @@ msgid "_Hurst exponent"
 msgstr "Экспонента Хёрста (Hurst)"
 
 #: gui/gretl.c:1964
-#, fuzzy
 msgid "BDS nonlinearity test"
-msgstr "_Тест BDS на нелинейность"
+msgstr "Тест BDS на нелинейность"
 
 #: gui/gretl.c:1965 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -13886,9 +13863,8 @@ msgid "_Cross-sectional dependence"
 msgstr "_Независимость рядов в перекрестных данных"
 
 #: gui/gui_utils.c:272
-#, fuzzy
 msgid "_Panel specification"
-msgstr "_Изменить модель..."
+msgstr "Спецификация панели"
 
 #: gui/gui_utils.c:276 gui/gui_utils.c:283
 msgid "White's test"
@@ -15033,9 +15009,8 @@ msgid "Lag order for ARCH test:"
 msgstr "Порядок лагов для теста ARCH:"
 
 #: gui/library.c:2715
-#, fuzzy
 msgid "gretl: panel model specification"
-msgstr "gretl: диагностика панельной модели"
+msgstr "gretl: спецификация панельной модели"
 
 #: gui/library.c:2789
 msgid "gretl: leverage and influence"
@@ -15124,14 +15099,12 @@ msgstr ""
 "поэтому точное значение недоступно)"
 
 #: gui/library.c:3355
-#, fuzzy
 msgid "H1: positive autocorrelation\n"
-msgstr "автокорреляция отсутствует"
+msgstr "H1: положительная автокорреляция\n"
 
 #: gui/library.c:3357
-#, fuzzy
 msgid "H1: negative autocorrelation\n"
-msgstr "автокорреляция отсутствует"
+msgstr "H1: отрицательная автокорреляция\n"
 
 #: gui/library.c:3564
 msgid "linear restrictions"
@@ -15285,9 +15258,8 @@ msgid "gretl: create dummy variables"
 msgstr "gretl: создание фиктивных переменных"
 
 #: gui/library.c:6303
-#, fuzzy
 msgid "No discrete series are available"
-msgstr "Модели недоступны"
+msgstr "Дискретные ряды недоступны"
 
 #: gui/library.c:6426
 msgid "in the cross-sectional dimension"
@@ -15982,9 +15954,8 @@ msgid "Ridge"
 msgstr "Ребро"
 
 #: gui/selector.c:3551 gui/selector.c:6633
-#, fuzzy
 msgid "random"
-msgstr "Общее среднее"
+msgstr "случайный"
 
 #: gui/selector.c:3575
 msgid "You must specify a quantile"
@@ -16506,19 +16477,16 @@ msgid "Folds:"
 msgstr "Складывается как:"
 
 #: gui/selector.c:6630
-#, fuzzy
 msgid "type:"
-msgstr "Тип"
+msgstr "тип:"
 
 #: gui/selector.c:6634
-#, fuzzy
 msgid "contiguous"
-msgstr "продолжение"
+msgstr "contiguous"
 
 #: gui/selector.c:6643
-#, fuzzy
 msgid "Show criterion plot"
-msgstr "Крит. Шварца"
+msgstr "Показать график крит."
 
 #: gui/selector.c:6676 gui/toolbar.c:710
 msgid "Confidence level"
@@ -17163,13 +17131,12 @@ msgid "Prompt to save session"
 msgstr "Запрос на сохранение сессии"
 
 #: gui/settings.c:229
-#, fuzzy
 msgid "Enable collecting plots"
-msgstr "Включить автозаполнение"
+msgstr "Включить сбор графиков"
 
 #: gui/settings.c:231
 msgid "Main window includes console"
-msgstr ""
+msgstr "Главное окно включает консоль"
 
 #: gui/settings.c:233
 msgid "Toolbar icon size"
@@ -17256,9 +17223,8 @@ msgid "Path to Julia executable"
 msgstr "Путь к программе Julia"
 
 #: gui/settings.c:290
-#, fuzzy
 msgid "Path to lpsolve library"
-msgstr "Путь к R библиотеке"
+msgstr "Путь к библиотеке lpsolve"
 
 #: gui/settings.c:294
 msgid "Path to mpiexec"
@@ -17313,9 +17279,8 @@ msgid "Script editor uses tabs"
 msgstr "Редактор скриптов использует вкладки"
 
 #: gui/settings.c:326 gui/settings.c:328
-#, fuzzy
 msgid "Auto-completion"
-msgstr "Включить автозаполнение"
+msgstr "Автозаполнение"
 
 #: gui/settings.c:331
 msgid "Enable auto-brackets"
@@ -17376,9 +17341,8 @@ msgid "English (A4 paper)"
 msgstr "Английский язык (формат А4)"
 
 #: gui/settings.c:1291
-#, fuzzy
 msgid "Translation, if available"
-msgstr "Информация о данных недоступна.\n"
+msgstr "Перевод, если доступен"
 
 #: gui/settings.c:1296
 msgid "automatic, as you type"
@@ -17394,14 +17358,12 @@ msgid "Automatic"
 msgstr "Авто"
 
 #: gui/settings.c:1302
-#, fuzzy
 msgid "small"
-msgstr "Меньше"
+msgstr "маленький"
 
 #: gui/settings.c:1303
-#, fuzzy
 msgid "medium"
-msgstr "медиана"
+msgstr "средний"
 
 #: gui/settings.c:1495
 msgid "Examples"
@@ -18035,9 +17997,8 @@ msgid "command reference"
 msgstr "Справка по командам"
 
 #: gui/toolbar.c:1620
-#, fuzzy
 msgid "find series"
-msgstr "заключительные строки данных"
+msgstr "найти ряды данных"
 
 #: gui/toolbar.c:1621
 msgid "X-Y graph"
@@ -19104,9 +19065,9 @@ msgid "The n most important components"
 msgstr "N наиболее важных компонентов"
 
 #: plugin/pca.c:203
-#, fuzzy, c-format
+#, c-format
 msgid " (dropped %d incomplete observations)"
-msgstr "Отброшено %d наблюдений"
+msgstr "(отброшено %d неполных наблюдений)"
 
 #: plugin/pca.c:209
 msgid "Eigenanalysis of the Correlation Matrix"
