@@ -8597,29 +8597,44 @@
     <function name="msplitby" section="matrix" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="vector">v</fnarg>
+	<fnarg type="scalar-or-matrix">v</fnarg>
+	<fnarg type="bool">bycol</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns an array of matrices, the result of splitting
-	  <argname>X</argname> vertically under the control of the
-	  vector <argname>v</argname>. This vector must be of length
-	  equal to the row dimension of <argname>X</argname>, and
-	  should contain integer values with a minimum of 1 and a
-	  maximum equal to the number of matrices in the desired
-	  array. Each element of <argname>v</argname> indicates the
-	  array index of the matrix to which the corresponding row of
-	  <argname>X</argname> should be assigned.
+	  <argname>X</argname> horizontally or vertically under the
+	  control of the arguments <argname>v</argname> and
+	  <argname>bycol</argname>. If <argname>bycol</argname> is
+	  nonzero, the matrix will be split by columns; otherwise, as
+	  per default, by rows.
+	</para>
+	<para> 
+	  The argument <argname>v</argname> can be either a vector or
+	  a scalar.  In the former case, the vector must be of length
+	  equal to the relevant (row or column) dimension of
+	  <argname>X</argname>, and should contain integer values with
+	  a minimum of 1 and a maximum equal to the number of matrices
+	  in the desired array. Each element of <argname>v</argname>
+	  indicates the array index of the matrix to which the
+	  corresponding row of <argname>X</argname> should be
+	  assigned. If, instead, <argname>v</argname> is a scalar,
+	  then <argname>X</argname> will be split in chunks with
+	  <argname>v</argname> rows/columns each (as dictated by
+	  <argname>bycol</argname>); an error will be flagged if the
+	  relevant matrix dimension is not an exact multiple of
+	  <argname>v</argname>.
 	</para>
 	<para>
-	  In the following example we split a <by r="3" c="3"/> matrix
+	  In the following example we split a <by r="4" c="3"/> matrix
 	  into three matrices: the first two rows are assigned to the
-	  first matrix; the second matrix is left empty; and the third
-	  matrix gets row 3 of <argname>X</argname>.
+	  first matrix; the second matrix is left empty; the third and
+	  fourth matrices gets row 3 and 4 of <argname>X</argname>,
+	  respectively
 	</para>
 	<code>
-	  matrix X = {1,2,3; 4,5,6; 7,8,9}
-	  matrices M = msplitby(X, {1,1,3})
+	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}
+	  matrices M = msplitby(X, {1,1,3,4})
 	  print M
 	</code>
 	<para>
@@ -8630,6 +8645,28 @@
 	  [1] 2 x 3
 	  [2] null
 	  [3] 1 x 3
+	  [4] 1 x 3
+	</code>
+	<para>
+	  The next example, instead, splits <argname>X</argname> evenly:  
+	</para>
+	<code>
+	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}
+	  matrices MM = msplitby(X, 2)
+	  print MM[1]
+	  print MM[2]
+	</code>
+	<para>
+	  which gives
+	</para>
+	<code>
+	  ? print MM[1]
+	  1   2   3 
+	  4   5   6 
+
+	  ? print MM[2]
+	  7    8    9 
+	  10   11   12 
 	</code>
 	<para>
 	  See <fncref targ="flatten"/> for the inverse operation.
