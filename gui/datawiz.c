@@ -1488,7 +1488,7 @@ static void get_dimensions (int s, dw_opts *opts,
 {
     int k = opts->dvals[s];
 
-    if (s == STACKED_TIME_SERIES) {
+    if (s >= STACKED_TIME_SERIES) {
 	*d = (k == 0)? 10 : k;
 	*dmax = 10000;
     } else {
