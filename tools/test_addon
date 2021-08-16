@@ -18,7 +18,7 @@ for f in *.inp ; do
 done
 
 if [ -d examples ] ; then
-  for f in examples/*.inp ; do
+  for f in `find examples/ -name "*.inp"` ; do
     if $GRETLCLI -b $f >> test.out ; then 
        echo "$f: OK"
     else
