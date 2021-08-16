@@ -1596,10 +1596,11 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 		*opts->setvar = setval;
 	    }
 	}
-	
+
     }
 
     for (i=0; i<3; i++) {
+	/* we defer this hook-up until all the spinners are created */
 	g_signal_connect(G_OBJECT(buttons[i]), "toggled",
 			 G_CALLBACK(sensitize_obs_spinners), opts);
     }
@@ -1888,7 +1889,7 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	/* all other pages */
 	set_up_dw_opts(opts, step, dwinfo);
 	clear_dwiz_page(page);
-	
+
 	if (opts->n_radios > 0) {
 	    if (step == DW_SET_TYPE && (opts->flags & DW_CREATE)) {
 		dwiz_new_dataset_combo(dwinfo, opts, page);
