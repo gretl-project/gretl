@@ -4430,7 +4430,9 @@
       <para>
 	Applicable only in the context of a user-defined function (see
 	<cmdref targ="function"/>). Causes execution of the current
-	function to terminate with an error condition flagged.
+	function to terminate with an error condition flagged. 
+	An exception is the special MPI mode for parallelized program
+	execution, where only the associated string is printed. 
       </para>
       <para>
 	The optional <repl>message</repl> argument can take the
