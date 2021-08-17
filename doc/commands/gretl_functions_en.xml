@@ -4149,6 +4149,8 @@
 	  an error condition flagged; the <argname>msg</argname>
 	  argument is then printed as part of the message shown to the
 	  caller of the function in question.
+	  An exception is the special MPI mode for parallelized program
+		execution, where only the associated string is printed. 
 	</para>
 	<para>
 	  The return value from this function (1) is purely nominal.

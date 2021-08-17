@@ -1535,6 +1535,7 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
     const gchar *strs[] = {"n =", "T ="};
     GSList *group = NULL;
     GtkWidget *button = NULL;
+    GtkWidget *buttons[3];
     GtkWidget *label;
     GtkWidget *hbox, *table;
     int dmax, dval = 0;
@@ -1556,7 +1557,7 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 	}
 
 	/* dataset structure selector */
-	button = gtk_radio_button_new_with_label(group, _(s));
+	buttons[i] = button = gtk_radio_button_new_with_label(group, _(s));
 	gtk_table_attach_defaults(GTK_TABLE(table), button, 0, 1, i, i+1);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(dwiz_set_radio_opt), opts);
@@ -1588,9 +1589,6 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 	    gtk_widget_show_all(hbox);
 	}
 
-	g_signal_connect(G_OBJECT(button), "toggled",
-			 G_CALLBACK(sensitize_obs_spinners), opts);
-
 	if (opts->deflt == setval) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	    if (opts->setvar != NULL && setval >= 0) {
@@ -1598,6 +1596,13 @@ static void dwiz_new_dataset_combo (DATASET *dwinfo,
 		*opts->setvar = setval;
 	    }
 	}
+
+    }
+
+    for (i=0; i<3; i++) {
+	/* we defer this hook-up until all the spinners are created */
+	g_signal_connect(G_OBJECT(buttons[i]), "toggled",
+			 G_CALLBACK(sensitize_obs_spinners), opts);
     }
 
     set_initial_obs_sensitivities(dwinfo, opts);

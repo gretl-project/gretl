@@ -8504,14 +8504,14 @@ una o più delle variabili del test.</para>
 	  mds(X, 3, 11, 1, theta)
 	</code>
 	<para context="cli">
-	  <lit>mdsl</lit>: in gnere richiede 3 argomenti: il nome di una
-	  lista di ritardi MIDAS, un intero per il tipo di
+	  <lit>mdsl</lit>: in gnere richiede 3 argomenti: il nome di
+	  una lista di ritardi MIDAS, un intero per il tipo di
 	  parametrizzazione e il nome di un vettore di valori
 	  iniziali. In questo caso i ritardi minimo e massimo sono
-	  impliciti nell'argomento lista iniziale. Nell'esempio seguente
-	  <lit>Xlags</lit> dev'essere una lista che contiene già i
-	  ritardi necessari; essa può essere costruita tramite la
-	  funzione <fncref targ="hflags"/> function.
+	  impliciti nell'argomento lista iniziale. Nell'esempio
+	  seguente <lit>Xlags</lit> deve essere una lista che contiene
+	  già i ritardi necessari; essa può essere costruita tramite
+	  la funzione <fncref targ="hflags"/> function.
 	</para>
 	<code context="cli">
 	  mdsl(XLags, 1, theta)
@@ -8719,24 +8719,25 @@ una o più delle variabili del test.</para>
       </para>
       <para>
 	Questo messaggio di aiuto presuppone l'utilizzo dell'algoritmo
-	di massimizzazione BFGS, per maggiori informazioni circa l'uso
+	di massimizzazione BFGS; per maggiori informazioni circa l'uso
 	dell'algoritmo di Newton si consulti <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Esempio: si supponga di avere una serie <lit>X</lit> con
 	valori 0 o 1 e di voler ottenere la stima di massima
 	verosimiglianza della probabilità <lit>p</lit> che
-	<lit>X</lit> valga 1 (è semplice intuire che la stima ML di
+	<lit>X</lit> valga 1 (è facile dimostrare che la stima ML di
 	<lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
 	campione).
       </para>
       <para>
-	Occorre per prima cosa aggiungere <lit>p</lit> al dataset
-	e assegnargli un valore iniziale, attraverso il comando
+	Per prima cosa, occorre creare lo scalare <lit>p</lit> e
+	assegnargli un valore iniziale usando il comando
 	<cmd>genr</cmd> o i comandi del menù.  È possibile scrivere
-	delle istruzioni <quote>genr</quote> appropriate nella finestra
-	di specificazione del comando di stima, prima di indicare la
-	specificazione della funzione di log-verosimiglianza.
+	delle istruzioni <quote>genr</quote> appropriate nella
+	finestra di specificazione del comando di stima, prima di
+	indicare la specificazione della funzione di
+	log-verosimiglianza.
       </para>
       <para>
 	Si scrivano i seguenti comandi nella finestra del comando:
@@ -8760,7 +8761,7 @@ una o più delle variabili del test.</para>
       </code>
       <para>
 	Per impostazione predefinita, gli errori standard sono basati
-	sul prodotto esterno del gradiente. Se si richiedono errori
+	sul prodotto esterno del gradiente (OPG). Se si richiedono errori
 	standard robusti, viene usato uno stimatore QML (ossia, un
 	sandwich dell'inversa negativa dell'Hessiana e della matrice
 	di covarianza del gradiente).  L'Hessiana è approssimata
@@ -8777,13 +8778,13 @@ una o più delle variabili del test.</para>
       <para>
 	Esegue la stima di massima verosimiglianza (ML, Maximum
 	Likelihood) usando a scelta o l'algoritmo BFGS (Broyden,
-	Fletcher, Goldfarb, Shanno) o l'algoritmo di Newton.
-	Occorre specificare la funzione di log-verosimiglianza e
-	dichiarare i valori iniziali per i parametri della funzione
-	Se possibile è consigliabile indicare anche le espressioni
-	per le derivate di questa funzione, rispetto ad ognuno dei
-	parametri; se non si indicano le derivate analitiche, verrà
-	calcolata un'approssimazione numerica.
+	Fletcher, Goldfarb, Shanno) o quello di Newton.  Occorre
+	specificare la funzione di log-verosimiglianza e dichiarare i
+	valori iniziali per i parametri della funzione Se possibile è
+	consigliabile indicare anche le espressioni per le derivate di
+	questa funzione, rispetto ad ognuno dei parametri; se non si
+	indicano le derivate analitiche, verrà calcolata
+	un'approssimazione numerica.
       </para>
       <para>
 	Questo messaggio di aiuto presuppone l'utilizzo dell'algoritmo
@@ -13251,37 +13252,32 @@ l'indentazione della linea sia corretta.
   linea nel margine sinistro della finestra.
 </para>
 <para>
-  <emphasis>Script editor uses tabs</emphasis>: Affects program
-  behavior when you are editing more than one script at a
-  time. If this is checked then each script is shown in a
-  <quote>tab</quote> in a notebook-style window; otherwise each
-  script has its own window.
+  <emphasis>Usa i tab nell'editor</emphasis>: Fa sì che, quando siano
+  aperti più script contemporaneamente, ognuno di essi sia mostrato in
+  un <quote>tab</quote>; altrimenti, ci sarà una finestra per ogni script.
 </para>
 <para>
-  <emphasis>Enable auto-completion</emphasis>: If this is
-  checked, you will be offered possible completions for the word
-  you are typing, based on the words already entered in the
-  editor window or tab. To select a completion, use the up/down
-  arrow keys and the <lit>Enter</lit> key; or just keep on
-  typing to dismiss the suggested completions.
+  <emphasis>Auto-completamento</emphasis>: Se questa opzione è
+  disponibile, verranno offerti possibile completamenti per la parola
+  cche si sta digitando, in automatico o premendo il tasto
+  tabulazione. Per selezionare un completamento, si possono usare le
+  frecce su/giù e il tasto <lit>Invio</lit>; continuando a digitare i
+  suggerimenti vengono cancellati.
 </para>
 <para>
-  <emphasis>Enable auto-brackets</emphasis>: If this is checked,
-  then when you type a left parenthesis, bracket or brace at the
-  end of a line the matching right-hand delimiter will be added
-  automatically, and the cursor moved between the two
-  delimiters.
+  <emphasis>Attiva le parentesi automatiche</emphasis>: Fa sì che,
+  digitando una parentesi sinistra tonda, quadra o graffa alla fine
+  della linea venga inserita in automatico la parentesi destra
+  corrispondente. Il cursore verrà posizionato fre le due.
 </para>      
 <para>
-  <emphasis>Number of spaces per Tab</emphasis>: How wide do you
-  want a tab-stop or indentation level to be? An integer value
-  from 2 to 8.
+  <emphasis>Numero di spazi per tab</emphasis>: A quanti spazi
+  corrisponde la tabulazione? Un intero da 2 a 8.
 </para>
 <para>
-  <emphasis>Highlighting style</emphasis>: Provides a drop-down
-  list of syntax highlighting styles. Some of these are
-  dark-on-light and some light-on-dark: experiment and find what
-  you like.
+  <emphasis>Stile grafico</emphasis>: In questa tendina sono elencati
+  varie combinazioni di colori; alcuni sono a fondo chiaro e altri a
+  fondo scuro.
 </para>
 </description>
 
@@ -13310,258 +13306,282 @@ l'indentazione della linea sia corretta.
 
 </command>
 
-<command name="set" section="Programming" label="Imposta parametri del programma" context="cli">
-
+<command name="set" section="Programming" 
+	 label="Imposta parametri del programma" context="cli">
   <usage>
     <altforms>
-<altform><lit>set</lit> <repl>variabile</repl> <repl>valore</repl></altform>
-<altform><lit>set --to-file=</lit><repl>filename</repl></altform>
-<altform><lit>set --from-file=</lit><repl>filename</repl></altform>
-<altform><lit>set stopwatch</lit></altform>
-<altform><lit>set</lit></altform>
-</altforms>
-<examples>
-<example>set svd on</example>
-<example>set csv_delim tab</example>
-<example>set horizon 10</example>
-<example>set --to-file=mysettings.inp</example>
-</examples>    
-</usage>
-
-<description>
-  <para>
-    L'uso più comune di questo comando è quello mostrato nella
-    prima variante qui sopra, dove viene fissato il valore di un
-    certo parametro. Più avanti, questo aspetto sarà analizzato in
-    dettaglio. Gli altri usi sono: con <opt>from-file</opt> per
-    leggere un file di script contenente certe impostazioni e
-    applicarle alla sessione corrente; con <opt>stopwatch</opt>,
-    per azzerare il <quote>cronometro</quote> della CPU di gretl
-    (si veda lo help per l'accessore <fncref targ="$stopwatch"/>).
-    Se il comando <cmd>set</cmd> è usato senza parametri, vengono
-    mostrate le impostazioni attuali per tutti i parametri
-    rilevanti.
-</para>
-<para>
-  Il valore impostato rimane in vigore per la durata della
-  sessione di gretl, a meno di non essere modificato da un
-  ulteriore esecuzione del comando <cmd>set</cmd>. I parametri
-  che possono essere impostati in questo modo sono elencati di
-  seguito.  Si noti che le impostazioni di <lit>hac_lag</lit>,
-  <lit>hc_version</lit> e <lit>hac_kernel</lit> sono usate
-  quando viene data l'opzione <opt>robust</opt> a un comando di
-  stima.
-</para>
-<para>
-  Le impostazioni disponibili sono raggruppate in categorie:
-  interazione col programma, metodi numerici, generazione di
-  numeri casuali, stima robusta, filtri, stima di modelli per
-  serie storiche e interazione con R.
-</para>
-
-<para>
-<emphasis>Interazione con il programma</emphasis>
-</para>
-<para>
-  Queste impostazioni servono per controllare vari aspetti del modo in cui
-  gretl interagisce con l'utente.
-</para>
-<ilist>
+       <altform><lit>set</lit> <repl>variabile</repl> <repl>valore</repl></altform>
+       <altform><lit>set --to-file=</lit><repl>filename</repl></altform>
+       <altform><lit>set --from-file=</lit><repl>filename</repl></altform>
+       <altform><lit>set stopwatch</lit></altform>
+       <altform><lit>set</lit></altform>
+    </altforms>
+    <examples>
+      <example>set svd on</example>
+      <example>set csv_delim tab</example>
+      <example>set horizon 10</example>
+      <example>set --to-file=mysettings.inp</example>
+    </examples>    
+  </usage>
+  
+  <description>
+    <para>
+      L'uso più comune di questo comando è quello mostrato nella
+      prima variante qui sopra, dove viene fissato il valore di un
+      certo parametro. Più avanti, questo aspetto sarà analizzato in
+      dettaglio. Gli altri usi sono: con <opt>from-file</opt> per
+      leggere un file di script contenente certe impostazioni e
+      applicarle alla sessione corrente; con <opt>stopwatch</opt>,
+      per azzerare il <quote>cronometro</quote> della CPU di gretl
+      (si veda lo help per l'accessore <fncref targ="$stopwatch"/>).
+      Se il comando <cmd>set</cmd> è usato senza parametri, vengono
+      mostrate le impostazioni attuali per tutti i parametri
+      rilevanti.
+    </para>
+    <para>
+      Il valore impostato rimane in vigore per la durata della
+      sessione di gretl, a meno di non essere modificato da un
+      ulteriore esecuzione del comando <cmd>set</cmd>. I parametri
+      che possono essere impostati in questo modo sono elencati di
+      seguito.  Si noti che le impostazioni di <lit>hac_lag</lit>,
+      <lit>hc_version</lit> e <lit>hac_kernel</lit> sono usate
+      quando viene data l'opzione <opt>robust</opt> a un comando di
+      stima.
+    </para>
+    <para>
+      Le impostazioni disponibili sono raggruppate in categorie:
+      interazione col programma, metodi numerici, generazione di
+      numeri casuali, stima robusta, filtri, stima di modelli per
+      serie storiche e interazione con R.
+    </para>
+    
+    <para>
+      <emphasis>Interazione con il programma</emphasis>
+    </para>
+    <para>
+      Queste impostazioni servono per controllare vari aspetti del modo in cui
+      gretl interagisce con l'utente.
+    </para>
+    <ilist>
+      <li>
+	<para><lit>workdir</lit>: <repl>path</repl>.  Stabilisce la
+	directory di default per la lettura/scrittura dei file, ogni
+	qual volta non si specifichino percorsi completi.
+      </para>
+    </li>
+    <li>
+      <para><lit>use_cwd</lit>: <lit>on</lit> oppure
+      <lit>off</lit> (il default). Regola l'inizializzazione
+      automatica di <lit>workdir</lit>: se <lit>on</lit>, essa
+      viene ereditata dalla shell, altrimenti viene fissata al
+      valore che aveva nella sessione gretl precedente.
+    </para>
+  </li>	
   <li>
-    <para><lit>workdir</lit>: <repl>path</repl>.  Stabilisce la
-    directory di default per la lettura/scrittura dei file, ogni
-    qual volta non si specifichino percorsi completi.
-</para>
-</li>
-<li>
-  <para><lit>use_cwd</lit>: <lit>on</lit> oppure
-  <lit>off</lit> (il default). Regola l'inizializzazione
-  automatica di <lit>workdir</lit>: se <lit>on</lit>, essa
-  viene ereditata dalla shell, altrimenti viene fissata al
-  valore che aveva nella sessione gretl precedente.
-</para>
-</li>	
-<li>
-<para><lit>echo</lit>: <lit>off</lit> o <lit>on</lit>
-(valore predefinito).  Sopprime o ripristina l'indicazione
-dei comandi eseguiti nell'output dei risultati.</para>
-</li>
-<li>
-  <para><lit>messages</lit>: <lit>off</lit> o <lit>on</lit> (valore
-  predefinito). Sopprime o ripristina l'indicazione dei messaggi
-  informativi associati a vari comandi, ad esempio quando viene
-  generata una nuova variabile o viene modificato l'intervallo del
-  campione.
-</para>
-</li>
-<li>
-  <para><lit>verbose</lit>: <lit>off</lit> oppure
-  <lit>on</lit> (valore predefinito). Funziona come
-  <quote>interruttore doppio</quote> per <lit>echo</lit> e
-  <lit>messages</lit> (vedi sopra), ponendoli ambedue accesi o
-  spenti.
-</para>
-</li>
-<li>
-  <para><lit>warnings</lit>: <lit>off</lit> oppure
-  <lit>on</lit> (valore predefinito). Sopprime o ripristina i
-  messaggi cautelativi, emessi quando certe operazioni
-  aritmetiche producono valori non finiti. 
-</para>
-</li>
-<li>
-  <para><lit>csv_delim</lit>: <lit>comma</lit> (virgola,
-  valore predefinito), <lit>space</lit> (spazio), o
-  <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
-  salvataggio di dati su file in formato CSV.
-</para>
-</li>
-<li>
-  <para><lit>csv_write_na</lit>: la stringa usata per
-  rappresentare i valori mancanti quando si esportano dati in
-  formato CSV. Massimo 7 caratteri; il default è
-  <lit>NA</lit>.
-</para>
-</li>
-<li>
-  <para><lit>csv_read_na</lit>: la stringa usata per
-  rappresentare i valori mancanti quando si esportano dati in
-  formato CSV. Massimo 7 caratteri; il default dipende se una
-  colonna di dati contiene dati numerici (o per lo più tali) o
-  stringa. Per dati numerici, i valori seguenti sono tutti
-  sinomimi di <quote>dato mancant</quote>: una cella vuota, or
-  una qualunque delle stringhe <lit>NA</lit>, <lit>N.A.</lit>,
-  <lit>na</lit>, <lit>n.a.</lit>, <lit>N/A</lit>,
-  <lit>#N/A</lit>, <lit>NaN</lit>, <lit>.NaN</lit>,
-  <lit>.</lit>, <lit>..</lit>, <lit>-999</lit>, and
-  <lit>-9999</lit>.  Per valori stringa, si conta come
-  mancante una cella vuota o una contenente una stringa
-  vuota. Questi valori di default possono essere reimpostati
-  dando <lit>default</lit> come valore per
-  <lit>csv_read_na</lit>. Per specificare che siano
-  considerate mancanti solo celle vuote, va dato un valore di
-  <lit>""</lit>. Si noti comunque che celle vuote vengono
-  lette come valori mancanti indipendentemente da questo
-  settaggio.
-</para>
-</li>
-<li>
-  <para><lit>csv_digits</lit>: un intero positivo contenente
-  il numero di cifre significative da usare quando si salva in
-  formato CSV. Di default, si usano fino a 15 cifre (a seconda
-  della precisione dei dati originali). Si noti che l'output
-  in CSV usa la funzione <lit>fprintf</lit> della libreria C
-  con la conversione <quote><lit>%g</lit></quote>, il che
-  implica che gli zeri in fondi non vengono stampati.
-</para>
-</li>
-<li>
-  <para><lit>display_digits</lit>: un intero da 3 a 6,
-  specificante il numero di cifre significative da usare
-  nell'output di coefficienti di regressione e corrispondenti
-  errori standard (il default è 6). Questo settaggio è anche
-  attivo sul numero di cifre usato dal comando <cmdref
-  targ="summary"/>; in questo caso, il default (che è anche il
-  massimo) è 5, o 4 con l'opzione <opt>simple</opt>.
-</para>
-</li>
-<li>
-  <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
-  (the default). When writing a matrix to file as text, gretl
-  by default uses scientific notation with 18-digit precision,
-  hence ensuring that the stored values are a faithful
-  representation of the numbers in memory. When writing
-  primary data with no more than 6 digits of precision it may
-  be preferable to use <lit>%g</lit> format for a more compact
-  and human-readable file; you can make this switch via
-  <lit>set mwrite_g on</lit>.
-</para>
-</li>
-<li>
-  <para><lit>force_decpoint</lit>: <lit>on</lit> o <lit>off</lit>
-  (valore predefinito).  Forza gretl a usare il carattere punto come
-  separatore decimale, in un ambiente in cui il separatore standard è
-  un'altro carattere (tipicamente la virgola).
-</para>
-</li>
-<li>
-  <para><lit>loop_maxiter</lit>: un valore intero non
-  negativo.  Imposta il numero massimo di iterazioni
-  consentite prima che un loop di tipo <lit>while</lit> si
-  fermi (si veda <cmdref targ="loop"/>).  Si noti che questa
-  impostazione riguarda solo la variante <lit>while</lit>,
-  visto che lo scopo è quello di interrompere possibili cicli
-  infiniti. Il valore speciale 0 viene usato per rendere tali
-  cicli potenzialmente infiniti, visto che non viene fatto
-  alcun controllo sul numero di iterazioni. Usare con cautela.
-</para>
-</li>
-<li>
-  <para><lit>max_verbose</lit>: <lit>on</lit> o
-  <lit>off</lit> (valore predefinito). Attiva l'output aggiuntivo per la
-  funzione <lit>BFGSmax</lit> (si veda la Guida all'uso per i dettagli).
-</para>
-</li>
-<li>
-<para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> o <lit>0</lit>
-(valore predefinito). Da usare per le funzioni definite dall'utente.
-Impostare <lit>debug</lit> a 1 equivale a impostare
-<lit>messages</lit> in tutte queste funzioni; impostando la
-variabile a <lit>2</lit> ha l'effetto aggiuntivo di impostare
-<lit>max_verbose</lit> in tutte le funzioni.
-</para>
-</li>
-<li>
-<para><lit>shell_ok</lit>: <lit>on</lit> o <lit>off</lit>
-(valore predefinito). Abilita l'esecuzione di programmi esterni da
-gretl attraverso la shell di sistema. Per motivi di sicurezza, la
-funzione è disabilitata per impostazione predefinita; inoltre è
-possibile abilitarla solo tramite l'interfaccia grafica
-(Strumenti/Preferenze/Generali). Una volta abilitata, l'impostazione
-rimarrà attiva per le successive sessioni, fino a che non sarà
-disabilitata esplicitamente.
-</para>
-</li>
-<li>
-  <para><lit>bfgs_verbskip</lit>: one integer. This setting
-  affects the behavior of the <opt>verbose</opt> option to
-  those commands that use BFGS as an optimization algorithm and
-  is used to compact output. if <lit>bfgs_verbskip</lit> is
-  set to, say, 3, then the <opt>verbose</opt> switch will
-  only print iterations 3, 6, 9 and so on.
-</para>
-</li>
-<li>
-  <para><lit>skip_missing</lit>: <lit>on</lit> (the default)
-  or <lit>off</lit>. Controls gretl's behavior when
-  contructing a matrix from data series: the default is to
-  skip data rows that contain one or more missing values but
-  if <lit>skip_missing</lit> is set <lit>off</lit> missing
-  values are converted to NaNs.
-</para>
-</li>
-<li>
-  <para><lit>matrix_mask</lit>: the name of a series, or the
-  keyword <lit>null</lit>. Offers greater control than 
-  <lit>skip_missing</lit> when constructing matrices from
-  series: the data rows selected for matrices are those
-  with non-zero (and non-missing) values in the specified
-  series. The selected mask remains in force until it is 
-  replaced, or removed via the <lit>null</lit> keyword.
-</para>
-</li>
-<li>
-  <para><lit>huge</lit>: un numero grande positivo (di default,
-  1.0E100). Questo settaggio controlla il valore ritornato
-  dall'accessore <fncref targ="$huge"/>.
-</para>
-</li>
-<li>
-  <para><lit>assert</lit>: <lit>off</lit> (default),
-  <lit>warn</lit> oppure <lit>stop</lit>. Controlla cosa
-  succede se la funzione <fncref targ="assert"/> fallisce,
-  ossia ritorna 0.
-</para>
+    <para><lit>echo</lit>: <lit>off</lit> o <lit>on</lit>
+    (valore predefinito).  Sopprime o ripristina l'indicazione
+    dei comandi eseguiti nell'output dei risultati.</para>
+  </li>
+  <li>
+    <para><lit>messages</lit>: <lit>off</lit> o <lit>on</lit> (valore
+    predefinito). Sopprime o ripristina l'indicazione dei messaggi
+    informativi associati a vari comandi, ad esempio quando viene
+    generata una nuova variabile o viene modificato l'intervallo del
+    campione.
+    </para>
+  </li>
+  <li>
+    <para><lit>verbose</lit>: <lit>off</lit> oppure
+    <lit>on</lit> (valore predefinito). Funziona come
+    <quote>interruttore doppio</quote> per <lit>echo</lit> e
+    <lit>messages</lit> (vedi sopra), ponendoli ambedue accesi o
+    spenti.
+    </para>
+  </li>
+  <li>
+    <para><lit>warnings</lit>: <lit>off</lit> oppure
+    <lit>on</lit> (valore predefinito). Sopprime o ripristina i
+    messaggi cautelativi, emessi quando certe operazioni
+    aritmetiche producono valori non finiti. 
+    </para>
+  </li>
+  <li>
+    <para><lit>csv_delim</lit>: <lit>comma</lit> (virgola,
+    valore predefinito), <lit>space</lit> (spazio), o
+    <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
+    salvataggio di dati su file in formato CSV.
+    </para>
+  </li>
+  <li>
+    <para><lit>csv_write_na</lit>: la stringa usata per
+    rappresentare i valori mancanti quando si esportano dati in
+    formato CSV. Massimo 7 caratteri; il default è
+    <lit>NA</lit>.
+    </para>
+  </li>
+  <li>
+    <para><lit>csv_read_na</lit>: la stringa usata per
+    rappresentare i valori mancanti quando si esportano dati in
+    formato CSV. Massimo 7 caratteri; il default dipende se una
+    colonna di dati contiene dati numerici (o per lo più tali) o
+    stringa. Per dati numerici, i valori seguenti sono tutti
+    sinomimi di <quote>dato mancant</quote>: una cella vuota, or
+    una qualunque delle stringhe <lit>NA</lit>, <lit>N.A.</lit>,
+    <lit>na</lit>, <lit>n.a.</lit>, <lit>N/A</lit>,
+    <lit>#N/A</lit>, <lit>NaN</lit>, <lit>.NaN</lit>,
+    <lit>.</lit>, <lit>..</lit>, <lit>-999</lit>, and
+    <lit>-9999</lit>.  Per valori stringa, si conta come
+    mancante una cella vuota o una contenente una stringa
+    vuota. Questi valori di default possono essere reimpostati
+    dando <lit>default</lit> come valore per
+    <lit>csv_read_na</lit>. Per specificare che siano
+    considerate mancanti solo celle vuote, va dato un valore di
+    <lit>""</lit>. Si noti comunque che celle vuote vengono
+    lette come valori mancanti indipendentemente da questo
+    settaggio.
+    </para>
+  </li>
+  <li>
+    <para><lit>csv_digits</lit>: un intero positivo contenente
+    il numero di cifre significative da usare quando si salva in
+    formato CSV. Di default, si usano fino a 15 cifre (a seconda
+    della precisione dei dati originali). Si noti che l'output
+    in CSV usa la funzione <lit>fprintf</lit> della libreria C
+    con la conversione <quote><lit>%g</lit></quote>, il che
+    implica che gli zeri in fondi non vengono stampati.
+  </para>
+  </li>
+  <li>
+    <para><lit>display_digits</lit>: un intero da 3 a 6,
+    specificante il numero di cifre significative da usare
+    nell'output di coefficienti di regressione e corrispondenti
+    errori standard (il default è 6). Questo settaggio è anche
+    attivo sul numero di cifre usato dal comando <cmdref
+    targ="summary"/>; in questo caso, il default (che è anche il
+    massimo) è 5, o 4 con l'opzione <opt>simple</opt>.
+    </para>
+  </li>
+  <li>
+    <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
+    (the default). When writing a matrix to file as text, gretl
+    by default uses scientific notation with 18-digit precision,
+    hence ensuring that the stored values are a faithful
+    representation of the numbers in memory. When writing
+    primary data with no more than 6 digits of precision it may
+    be preferable to use <lit>%g</lit> format for a more compact
+    and human-readable file; you can make this switch via
+    <lit>set mwrite_g on</lit>.
+    </para>
+  </li>
+  <li>
+    <para><lit>force_decpoint</lit>: <lit>on</lit> o <lit>off</lit>
+    (valore predefinito).  Forza gretl a usare il carattere punto come
+    separatore decimale, in un ambiente in cui il separatore standard è
+    un altro carattere (tipicamente la virgola).
+    </para>
+  </li>
+  <li>
+    <para><lit>loop_maxiter</lit>: un valore intero non
+    negativo.  Imposta il numero massimo di iterazioni
+    consentite prima che un loop di tipo <lit>while</lit> si
+    fermi (si veda <cmdref targ="loop"/>).  Si noti che questa
+    impostazione riguarda solo la variante <lit>while</lit>,
+    visto che lo scopo è quello di interrompere possibili cicli
+    infiniti. Il valore speciale 0 viene usato per rendere tali
+    cicli potenzialmente infiniti, visto che non viene fatto
+    alcun controllo sul numero di iterazioni. Usare con cautela.
+    </para>
+  </li>
+  <li>
+    <para><lit>max_verbose</lit>: <lit>on</lit> o
+    <lit>off</lit> (valore predefinito). Attiva l'output aggiuntivo per la
+    funzione <lit>BFGSmax</lit> (si veda la Guida all'uso per i dettagli).
+    </para>
+  </li>
+  <li>
+    <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> o <lit>0</lit>
+    (valore predefinito). Da usare per le funzioni definite dall'utente.
+    Impostare <lit>debug</lit> a 1 equivale a impostare
+    <lit>messages</lit> in tutte queste funzioni; impostando la
+    variabile a <lit>2</lit> ha l'effetto aggiuntivo di impostare
+    <lit>max_verbose</lit> in tutte le funzioni.
+    </para>
+  </li>
+  <li>
+    <para><lit>shell_ok</lit>: <lit>on</lit> o <lit>off</lit>
+    (valore predefinito). Abilita l'esecuzione di programmi esterni da
+    gretl attraverso la shell di sistema. Per motivi di sicurezza, la
+    funzione è disabilitata per impostazione predefinita; inoltre è
+    possibile abilitarla solo tramite l'interfaccia grafica
+    (Strumenti/Preferenze/Generali). Una volta abilitata, l'impostazione
+    rimarrà attiva per le successive sessioni, fino a che non sarà
+    disabilitata esplicitamente.
+    </para>
+  </li>
+  <li>
+    <para><lit>bfgs_verbskip</lit>: un intero. Questo parametro regola
+    l'effetto dell'opzione <opt>verbose</opt> per quei comandi che
+    usano BFGS come algoritmo di ottimizzazione, e serve a rendere
+    l'output più compatto. Se <lit>bfgs_verbskip</lit> è, ad esempio,
+    3, allora l'opzione <opt>verbose</opt> farà si che vengano
+    stampate solo le iterazioni 3, 6, 9 e così via.
+    </para>
+  </li>
+  <li>
+    <para><lit>skip_missing</lit>: <lit>on</lit> (il default) oppure
+    <lit>off</lit>. Controlla ciò che gretl fa quando si costruisce
+    una matrice da una o più serie: il default è di saltare le righe
+    che contengono almeno un valore mancante, ma impostando questo
+    parametro a <lit>off</lit> i valori mancanti vengono convertiti in
+    NaNs.
+    </para>
+  </li>
+  <li>
+    <para><lit>matrix_mask</lit>: il nome di una serie, o la parola
+    <lit>null</lit>. Questo parametro permette di costruire matrici da
+    serie con maggiore flessibilità rispetto a
+    <lit>skip_missing</lit>: le righe che andranno nella matrice sono
+    quelle per cui la serie specificata presenta valori validi
+    non-zero. Questo settaggio resta in vigore finché non viene
+    specificata una serie diversa, o rimosso usando la parola
+    <lit>null</lit>.
+    </para>
+  </li>
+  <li>
+    <para><lit>huge</lit>: un numero grande positivo (di default,
+    1.0E100). Questo settaggio controlla il valore ritornato
+    dall'accessore <fncref targ="$huge"/>.
+    </para>
+  </li>
+  <li>
+    <para><lit>assert</lit>: <lit>off</lit> (default),
+    <lit>warn</lit> oppure <lit>stop</lit>. Controlla cosa
+    succede se la funzione <fncref targ="assert"/> fallisce,
+    ossia ritorna 0.
+    </para>
+  </li>
+  <li>
+    <para><lit>datacols</lit>: un intero da 1 a 15, con valore
+    di default 5. Fissa il massimo numero di serie mostrate
+    fianco a fianco quando i dati sono mostrati per osservazione.
+    </para>
+  </li>
+  <li>
+    <para><lit>plot_collection</lit>: <lit>on</lit>,
+    <lit>auto</lit> o <lit>off</lit>. Questo parametro determina
+    il modo in cui i grafici sono mostrati durante l'uso
+    interattivo. Quando è <lit>on</lit>, grafici della stessa
+    dimensione (in termini di pixel) sono raggruppati in una
+    <quote>collezione</quote>, ossia una finestra unica nella
+    quale si può scorrere avanti e indietro per visualizzare i
+    diversi grafici. Quando è <lit>off</lit>, invece, verrà
+    generata una finestra per grafico, come nelle versioni
+    precedenti di gretl. Infine, il valore <lit>auto</lit> fa sì
+    che la collezione venga abilitata solo per grafici che sono
+    generati con un intervallo inferiore agli 1.25 secondi l'uno
+    dall'altro (ad esempio, quando il comando di generazione
+    grafico fa parte di un loop).
+  </para>
 </li>
 </ilist>
 
@@ -13574,12 +13594,12 @@ disabilitata esplicitamente.
 </para>
 <ilist>
   <li>	
-    <para><lit>optimizer</lit>: either <lit>auto</lit> (the
-    default), <lit>BFGS</lit> or <lit>newton</lit>. Sets the
-    optimization algorithm used for various ML estimators, in
-    cases where both BFGS and Newton&ndash;Raphson are
-    applicable. The default is to use Newton&ndash;Raphson
-    where an analytical Hessian is available, otherwise BFGS.
+    <para><lit>optimizer</lit>: <lit>auto</lit> (il default),
+    <lit>BFGS</lit> oppure <lit>newton</lit>. Seleziona il metodo di
+    ottimizzazione usato in vari stimatori ML, quando sono applicabili
+    sia BFGS che Newton&ndash;Raphson. Il settaggio di default è di
+    usare Newton&ndash;Raphson quando sia disponibile l'hessiana
+    analitica, e se no BFGS.
 </para>
 </li>
 <li>	
