@@ -4983,7 +4983,8 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 	    pprintf(prn, "\n%s: z = %f,\n", _("Test statistic"), CD);
 	    pprintf(prn, "%s = P(|z| > %g) = %.3g\n", _("with p-value"),
 		    CD, pval);
-	    pprintf(prn, "Average absolute correlation = %.3f\n", arsum / Nr);
+	    pprintf(prn, _("Average absolute correlation = %.3f"), arsum / Nr);
+	    pputc(prn, '\n');
 	}
 
 	if (opt & OPT_S) {
