@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-14 10:18-0400\n"
-"PO-Revision-Date: 2021-07-28 12:08+0200\n"
+"PO-Revision-Date: 2021-08-18 01:13+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.4.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -9179,9 +9179,8 @@ msgstr ""
 "# precisarás editar este guión antes de executalo.\n"
 
 #: gui/console.c:343
-#, fuzzy
 msgid "Really quit gretl?"
-msgstr "Require GRETL %s"
+msgstr "Saír realmente de GRETL?"
 
 #: gui/console.c:482
 msgid "gretl console: type 'help' for a list of commands"
@@ -17103,7 +17102,7 @@ msgstr "Habilitar gráficas de recopilación"
 
 #: gui/settings.c:231
 msgid "Main window includes console"
-msgstr ""
+msgstr "A xanela principal inclúe a consola"
 
 #: gui/settings.c:233
 msgid "Toolbar icon size"
@@ -17191,9 +17190,8 @@ msgid "Path to Julia executable"
 msgstr "Ruta ao executable de Julia"
 
 #: gui/settings.c:290
-#, fuzzy
 msgid "Path to lpsolve library"
-msgstr "Ruta á biblioteca de R"
+msgstr "Ruta á biblioteca lpsolve"
 
 #: gui/settings.c:294
 msgid "Path to mpiexec"
@@ -17310,9 +17308,8 @@ msgid "English (A4 paper)"
 msgstr "Inglés (en papel A4)"
 
 #: gui/settings.c:1291
-#, fuzzy
 msgid "Translation, if available"
-msgstr "Non hai información dispoñible sobre os datos.\n"
+msgstr "Tradución, se está dispoñible"
 
 #: gui/settings.c:1296
 msgid "automatic, as you type"
@@ -17969,9 +17966,8 @@ msgid "command reference"
 msgstr "Instrucións"
 
 #: gui/toolbar.c:1620
-#, fuzzy
 msgid "find series"
-msgstr "Serie final"
+msgstr "Atopar serie"
 
 #: gui/toolbar.c:1621
 msgid "X-Y graph"

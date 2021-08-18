@@ -4431,6 +4431,8 @@
 	Só é aplicable no contexto dunha función definida polo usuario
 	(consulta <cmdref targ="function"/>). Provoca que a execución da
 	function actual, remate coa sinalización dunha condición de fallo.
+	Como excepción está o modo MPI especial para a execución de
+	programas en paralelo, no que só se amosa a cadea asociada.
       </para>
       <para>
 	O argumento <repl>mensaxe</repl> (opcional) pode ter
@@ -13473,6 +13475,22 @@
 	  <para><lit>datacols</lit>: Un número enteiro entre 1 e 15, cuxo valor
 	  por defecto é 5. Establece o número máximo de series que se presentan
 	  conxuntamente cando os datos se representan por observación.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	  <lit>plot_collection</lit>: <lit>on</lit>, <lit>auto</lit> ou <lit>off</lit>.
+	  Esta configuración afecta ao xeito no que se amosan as gráficas durante
+	  o uso interactivo. Se está en <lit>on</lit>, as gráficas do mesmo tamaño
+	  en pixels reúnense nunha <quote>colección de gráficas</quote>, é dicir,
+	  nunha única xanela de saída de resultados na que podes navegar entre
+	  as diversas gráficas indo cara adiante e cara atrás. Co axuste en
+	  <lit>off</lit>, pola contra vaise xerar unha xanela distinta para cada
+	  gráfica, como nas versións anteriores de GRETL. Finalmente, o axuste
+	  en <lit>auto</lit> ten como efecto que permite o modo de colección de
+	  gráficas só para as gráficas que se xeran antes de que pasen 1.25
+	  segundos despois de outra (por exemplo, como resultado da execución
+	  de instrucións de representación gráfica dentro dun bucle).
 	  </para>
 	</li>
       </ilist>
