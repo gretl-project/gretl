@@ -1824,7 +1824,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
-		    combo_box_append_text(rc->widget, strs[j]);
+		    combo_box_append_text(rc->widget, _(strs[j]));
 		    if (strvar != NULL && !strcmp(strs[j], strvar)) {
 			active = j;
 		    } else if (intvar != NULL && j == *intvar) {
