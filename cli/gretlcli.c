@@ -273,7 +273,7 @@ static void nls_init (void)
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
 # else
     const char *localedir = LOCALEDIR;
-# endif /* WIN32 package */
+# endif /* WIN32 package or not */
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
