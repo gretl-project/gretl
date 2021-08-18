@@ -85,6 +85,7 @@ CMD_COMMON = $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 FNC_COMMON = $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
+TRDEFS = -DLOCALEDIR=\"$(localedir)\" -DCMDSDIR=\"$(CMDSDIR)\"
 
 CPROGS = xsltrans skeleton reflow bbl2txt chaprefs validate topiclist tables \
 	matfuncs us2a4
@@ -105,6 +106,9 @@ chaprefs: chaprefs.c
 
 us2a4: us2a4.c
 	$(CC) $(CFLAGS) -o $@ $<
+
+grabtrans: grab_translations.c
+	$(CC) $(XML_CFLAGS) $(TRDEFS) -o $@ $< $(XML_LIBS)
 
 skeleton: skeleton.o $(GRETLLIB)
 	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
