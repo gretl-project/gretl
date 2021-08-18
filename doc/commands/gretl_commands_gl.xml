@@ -1044,7 +1044,7 @@
     </description>
   </command>
 
-  <command name="bds" section="Tests" label="BDS nonlinearity test">
+  <command name="bds" section="Tests" label="Proba BDS de non linearidade">
     <usage>
       <arguments>
         <argument>orde</argument>
