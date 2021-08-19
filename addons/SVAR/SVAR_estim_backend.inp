@@ -197,7 +197,7 @@ function scalar vecm_est(bundle *SVARobj)
     # compatibility for pre-1.95
     compatE(&SVARobj)
     
-    return err
+    return 0
 end function
 
 ##########

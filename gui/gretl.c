@@ -1021,6 +1021,9 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* Ctrl-V for paste */
 	mdata_handle_paste();
 	return TRUE;
+    } else if (swallow && Ctrl && (k == GDK_Page_Down || k == GDK_Tab)) {
+	gretl_console();
+	return TRUE;
     }
 
 #ifdef OS_OSX
@@ -1511,6 +1514,67 @@ void show_link_cursor (GtkWidget *w, gpointer p)
     }
 }
 
+int mainwin_get_vwin_insertion (void)
+{
+    int ins = -1;
+
+    if (mdata->hpanes1 != NULL) {
+	if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
+	    ins = 1;
+	} else if (mdata->hpanes2 != NULL) {
+	    if (gtk_paned_get_child1(GTK_PANED(mdata->hpanes2)) == NULL) {
+		ins = 2;
+	    } else if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes2)) == NULL) {
+		ins = 3;
+	    }
+	}
+    }
+
+    return ins;
+}
+
+int mainwin_insert_vwin (windata_t *vwin)
+{
+    int ret = 0;
+
+    if (vwin == NULL) {
+	return ret;
+    }
+    if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
+	gtk_paned_add2(GTK_PANED(mdata->hpanes1), vwin->vbox);
+	gtk_paned_set_position(GTK_PANED(mdata->hpanes1), mainwin_width/2);
+	ret = 1;
+    } else if (mdata->hpanes2 != NULL) {
+	GtkWidget *vp = gtk_widget_get_parent(mdata->hpanes2);
+
+	fprintf(stderr, "HERE hpanes2\n");
+	if (gtk_paned_get_child1(GTK_PANED(mdata->hpanes2)) == NULL) {
+	    gtk_paned_add1(GTK_PANED(mdata->hpanes2), vwin->vbox);
+	    fprintf(stderr, " add child 1\n");
+	    ret = 2;
+	} else if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes2)) == NULL) {
+	    gtk_paned_add2(GTK_PANED(mdata->hpanes2), vwin->vbox);
+	    fprintf(stderr, " add child 2\n");
+	    gtk_paned_set_position(GTK_PANED(mdata->hpanes2), mainwin_width/2);
+	    ret = 3;
+	}
+	if (ret) {
+	    gtk_paned_set_position(GTK_PANED(vp), mainwin_height/2);
+	}
+    }
+
+    return ret;
+}
+
+static void gretl_show_console (void)
+{
+    if (swallow) {
+	mainwin_insert_vwin(gretl_console());
+    } else {
+	gretl_console();
+    }
+}
+
 static void make_main_window (void)
 {
 #ifdef MAC_INTEGRATION
@@ -1536,7 +1600,6 @@ static void make_main_window (void)
     }
 
     gui_scale = get_gui_scale();
-
 #if GUI_DEBUG
     fprintf(stderr, " gui_scale = %g\n", (double) gui_scale);
 #endif
@@ -1545,6 +1608,9 @@ static void make_main_window (void)
 	/* set default window size */
 	mainwin_width = 650 * gui_scale;
 	mainwin_height = 460 * gui_scale;
+	if (swallow) {
+	    mainwin_width *= 1.6;
+	}
 	set_main_window_scale();
     }
 
@@ -1568,9 +1634,14 @@ static void make_main_window (void)
 #endif
 
     /* put the main menu bar in place */
-    box = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), mdata->mbar, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(mdata->vbox), box, FALSE, FALSE, 0);
+    if (swallow) {
+	box = g_object_get_data(G_OBJECT(mdata->main), "topbox");
+	gtk_box_pack_start(GTK_BOX(box), mdata->mbar, TRUE, TRUE, 0);
+    } else {
+	box = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box), mdata->mbar, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(mdata->vbox), box, FALSE, FALSE, 0);
+    }
 
 #ifdef MAC_INTEGRATION
     mac_mgr = add_mac_menu();
@@ -1646,6 +1717,10 @@ static void make_main_window (void)
 #if GUI_DEBUG
     fprintf(stderr, "  add_mainwin_toolbar done\n");
 #endif
+
+    if (swallow) {
+	gretl_show_console();
+    }
 
     gtk_widget_show_all(mdata->main);
 
@@ -1754,7 +1829,7 @@ GtkActionEntry main_entries[] = {
     { "NonparamTests", NULL, N_("_Nonparametric tests"), NULL, NULL, G_CALLBACK(stats_calculator) },
     { "SetSeed", NULL, N_("_Seed for random numbers"), NULL, NULL, G_CALLBACK(rand_seed_dialog) },
     { "CommandLog", NULL, N_("_Command log"), NULL, NULL, G_CALLBACK(view_command_log) },
-    { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_console) },
+    { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_show_console) },
     { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(launch_gnuplot_interactive) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
     { "NistTest", NULL, N_("_NIST test suite"), NULL, NULL, NULL },
@@ -1765,7 +1840,6 @@ GtkActionEntry main_entries[] = {
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
     { "DataSelectAll", NULL, N_("Select _all"), CTRL_ALL, NULL, G_CALLBACK(mdata_select_all) },
-    { "VarFind", GTK_STOCK_FIND, N_("_Find variable..."), NULL, NULL, G_CALLBACK(listbox_find) },
     { "DefineList", NULL, N_("Define or edit _list..."), NULL, NULL, G_CALLBACK(gui_define_list) },
     { "SelectList", NULL, N_("_Set selection from list..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
     { "DisplayValues", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_selected) },

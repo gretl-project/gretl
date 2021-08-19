@@ -136,7 +136,8 @@ struct png_stock_maker png_stocks[] = {
     { "join_v.png",    GRETL_STOCK_JOIN_V, 0 },
     { "boxplot.png",   GRETL_STOCK_BOX, 0 },
     { "tsplot.png",    GRETL_STOCK_TS, 0 },
-    { "book.png",      GRETL_STOCK_BOOK, 0 }
+    { "book.png",      GRETL_STOCK_BOOK, 0 },
+    { "query.png",     GRETL_STOCK_QUERY, 0 },
 };
 
 struct xpm_stock_maker {
@@ -825,7 +826,6 @@ static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == CONSOLE) {
-	/* FIXME swallow console */
 	console_prefs_dialog(vwin->main);
     } else {
 	preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
@@ -954,7 +954,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(stickiness_callback), STICKIFY_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
-    { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
+    { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
@@ -1613,10 +1613,11 @@ static void tbar_show_funcs (GtkWidget *w, gpointer p)
 static GretlToolItem mainbar_items[] = {
     { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
-    { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
+    { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 1 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(view_session), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
+    { N_("find series"),        GTK_STOCK_FIND,      G_CALLBACK(listbox_find), 0 },
     { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },
     { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
     { N_("databases"),          GRETL_STOCK_DB,      G_CALLBACK(show_native_dbs), 0 },
@@ -1633,6 +1634,9 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 
     for (i=0; i<n; i++) {
 	item = &mainbar_items[i];
+	if (swallow && item->flag) {
+	    continue;
+	}
 	gretl_toolbar_insert(mdata->mbar, item, item->func, mdata, -1);
     }
 

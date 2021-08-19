@@ -675,6 +675,7 @@ have_odbc
 have_gnu_regex
 gtksv_completion
 have_sourceview
+macpkg
 win32pkg
 win32_build
 mac_native
@@ -2910,6 +2911,7 @@ use_curl="yes"
 darwin_build="no"
 win32_build="no"
 win32pkg="no"
+macpkg="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
@@ -20840,6 +20842,9 @@ case $host_os in
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
     have_lapack="yes"
     darwin_build="yes"
+    if test $pkg_build = yes ; then
+       macpkg="yes"
+    fi
     $as_echo "#define OS_OSX 1" >>confdefs.h
 
   ;;
@@ -22878,6 +22883,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 

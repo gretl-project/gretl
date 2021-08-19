@@ -8,6 +8,7 @@ version 2021c, in progress
   is still kept as an alias for backward compatibility
 - fcstats() matrix row labels: distinguish U1 vs U2 variant
   of Theil's U statistic
+- msplitby(): allow for more flexible syntax
 - printing of bundles: sort members by type and key
 - "print" command: make more flexible, it now includes
   most of the functionality of "eval"

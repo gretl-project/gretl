@@ -49,6 +49,9 @@
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
 
 #include <errno.h>
 
@@ -2165,8 +2168,14 @@ static int lib_open_append (ExecState *s,
                 pputs(prn, buf);
             }
         } else if (op.ftype != GRETL_NATIVE_DB_WWW && op.ftype != GRETL_ODBC) {
-            /* print minimal success message */
-            pprintf(prn, _("Read datafile %s\n"), op.fname);
+#ifdef HAVE_MPI
+	    /* print minimal success message? */
+	    if (!gretl_mpi_initialized() || gretl_mpi_rank() == 0) {
+		pprintf(prn, _("Read datafile %s\n"), op.fname);
+	    }
+#else
+	    pprintf(prn, _("Read datafile %s\n"), op.fname);
+#endif
         }
         gretl_print_destroy(vprn);
     }

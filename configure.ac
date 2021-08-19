@@ -83,6 +83,7 @@ use_curl="yes"
 darwin_build="no"
 win32_build="no"
 win32pkg="no"
+macpkg="no"
 quiet_build="no"
 swap_ends="no"
 pkg_build="no"
@@ -486,6 +487,9 @@ case $host_os in
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
     have_lapack="yes"
     darwin_build="yes"
+    if test $pkg_build = yes ; then
+       macpkg="yes"
+    fi
     AC_DEFINE(OS_OSX)
   ;;
   *mingw*)
@@ -829,6 +833,7 @@ AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
+AC_SUBST(macpkg)
 AC_SUBST(have_sourceview)
 AC_SUBST(gtksv_completion)
 AC_SUBST(have_gnu_regex)

@@ -2229,6 +2229,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 {
     windata_t *vwin;
     FILE *fp;
+    int ins = 0;
 
     /* first check that we can open the specified file */
     fp = gretl_fopen(filename, "r");
@@ -2239,7 +2240,18 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
-    if (role == EDIT_HANSL && use_tabbed_editor()) {
+#if 0
+    /* experimental, not yet */
+    if (swallow && role == EDIT_HANSL) {
+	ins = mainwin_get_vwin_insertion();
+	fprintf(stderr, "HERE ins=%d, title '%s'\n", ins, given_title);
+	if (ins) {
+	    preset_viewer_flag(VWIN_SWALLOW);
+	}
+    }
+#endif
+
+    if (!ins && role == EDIT_HANSL && use_tabbed_editor()) {
 	vwin = viewer_tab_new(role, filename, NULL);
     } else if (editing_alt_script(role) && use_tabbed_editor()) {
 	vwin = viewer_tab_new(role, filename, NULL);
@@ -2319,6 +2331,12 @@ view_file_with_title (const char *filename, int editable, int del_file,
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
 
+#if 0 /* not yet */   
+    if (vwin->flags & VWIN_SWALLOW) {
+	mainwin_insert_vwin(vwin);
+    }
+#endif    
+
     return vwin;
 }
 
@@ -2349,22 +2367,26 @@ windata_t *view_script (const char *filename, int editable,
 windata_t *console_window (int hsize, int vsize)
 {
     windata_t *vwin;
-    gchar *title = NULL;
 
-#ifdef GRETL_PID_FILE
-    int seqno = gretl_sequence_number();
-
-    if (seqno > 1) {
-	title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
-    }
-#endif
-
-    if (title != NULL) {
-	vwin = gretl_viewer_new(CONSOLE, title, NULL);
-	g_free(title);
+    if (swallow) {
+	vwin = gretl_viewer_new(CONSOLE, NULL, NULL);
     } else {
-	vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
+	gchar *title = NULL;
+#ifdef GRETL_PID_FILE
+	int seqno = gretl_sequence_number();
+
+	if (seqno > 1) {
+	    title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
+	}
+#endif
+	if (title != NULL) {
+	    vwin = gretl_viewer_new(CONSOLE, title, NULL);
+	    g_free(title);
+	} else {
+	    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
+	}
     }
+
     if (vwin == NULL) {
 	return NULL;
     }
@@ -2379,7 +2401,9 @@ windata_t *console_window (int hsize, int vsize)
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->main);
+    if (vwin->main != vwin->vbox) {
+	gtk_widget_show(vwin->main);
+    }
 
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);

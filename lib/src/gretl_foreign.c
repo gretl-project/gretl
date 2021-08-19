@@ -753,7 +753,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 	g_error_free(gerr);
 	err = 1;
     } else if (status != 0) {
-	pprintf(prn, "%s exited with status %d", argv[0], status);
+	pprintf(prn, "%s exited with status %d\n", argv[0], status);
 	if (sout != NULL && *sout != '\0') {
 	    pputs(prn, "stdout:\n");
 	    pputs(prn, sout);

@@ -53,6 +53,7 @@
 #define GRETL_STOCK_DBN     "gretl-dbnomics"
 #define GRETL_STOCK_FCAST   "gretl-fcast"
 #define GRETL_STOCK_CLOSE   "gretl-close"
+#define GRETL_STOCK_QUERY   "gretl-query"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,
@@ -65,7 +66,8 @@ typedef enum {
     VWIN_MULTI_SERIES    = 1 << 7,
     VWIN_NO_SAVE         = 1 << 8,
     VWIN_USE_FOOTER      = 1 << 9,
-    WVIN_KEY_SIGNAL_SET  = 1 << 10
+    WVIN_KEY_SIGNAL_SET  = 1 << 10,
+    VWIN_SWALLOW         = 1 << 11
 } windata_flags;
 
 typedef struct windata_t_ windata_t;
@@ -73,6 +75,8 @@ typedef struct windata_t_ windata_t;
 struct windata_t_ {
     GtkWidget *main;      /* top-level GTK window */
     GtkWidget *topmain;   /* for use when embedded in tabs */
+    GtkWidget *hpanes1;   /* upper horizontally opposed panes */
+    GtkWidget *hpanes2;   /* lower horizontally opposed panes */
     GtkWidget *vbox;      /* vbox within main */
     GtkWidget *text;      /* text or sourceview object */
     GtkWidget *listbox;   /* or: box containing tree or list */
@@ -117,7 +121,7 @@ struct GretlToolItem_ {
 #define unset_window_help_active(w) (w->flags &= ~VWIN_HELP_ACTIVE)
 #define window_is_tab(w)            (w->flags & VWIN_TABBED)
 
-#define window_delete_filename(w)       (w->flags & VWIN_DELETE_FNAME)
-#define set_window_delete_filename(w)   (w->flags |= VWIN_DELETE_FNAME)
+#define window_delete_filename(w)     (w->flags & VWIN_DELETE_FNAME)
+#define set_window_delete_filename(w) (w->flags |= VWIN_DELETE_FNAME)
 
 #endif /* GRETLTYPES_H */

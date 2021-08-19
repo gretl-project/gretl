@@ -79,7 +79,7 @@ void force_english_help (void);
 
 int preferences_dialog (int page, const char *varname, GtkWidget *parent);
 
-int console_prefs_dialog (GtkWidget *parent);
+int console_prefs_dialog (GtkWidget *caller);
 
 void font_selector (GtkAction *action);
 

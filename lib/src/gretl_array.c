@@ -220,6 +220,24 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
     return A;
 }
 
+gretl_array *gretl_singleton_array (void *ptr, GretlType atype,
+				    int copy, int *err)
+{
+    gretl_array *A = gretl_array_new(atype, 1, err);
+
+    if (A != NULL) {
+	GretlType t = gretl_type_get_singular(atype);
+
+	*err = gretl_array_set_element(A, 0, ptr, t, copy);
+	if (*err) {
+	    free(A);
+	    A = NULL;
+	}
+    }
+
+    return A;
+}
+
 gretl_array *gretl_array_from_strings (char **S, int n,
 				       int copy, int *err)
 {
@@ -812,86 +830,193 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     return ret;
 }
 
-gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
-				    const gretl_matrix *v,
-				    int *err)
+static int split_matrix_by_chunks (gretl_array *A, int n,
+				   const gretl_matrix *X,
+				   int chunk, int colwise)
 {
-    gretl_array *ret = NULL;
-    int i, j, k, l, n = 1;
-    gretl_matrix *tmp = NULL;
-    gretl_matrix *vals = NULL;
-    const double *sel;
-    int *nrows = NULL;
-    double x;
+    int rows = colwise ? X->rows : chunk;
+    int cols = colwise ? chunk : X->cols;
+    gretl_matrix *tmp;
+    int i, err = 0;
 
-    if (gretl_vector_get_length(v) != X->rows) {
-	*err = E_INVARG;
-	return ret;
-    }
-
-    /* only positive integers allowed */
-    for (i=0; i<X->rows; i++) {
-	x = v->val[i];
-	if (x != floor(x) || x <= 0 || x >= INT_MAX) {
-	    *err = E_INVARG;
-	    return ret;
+    /* allocate the matrices */
+    for (i=0; i<n && !err; i++) {
+	tmp = gretl_matrix_alloc(rows, cols);
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_array_set_element(A, i, tmp, GRETL_TYPE_MATRIX, 0);
 	}
     }
 
-    sel = v->val;
-    vals = gretl_matrix_values(sel, X->rows, OPT_NONE, err);
-    if (*err) {
-	return ret;
+    /* fill the matrices */
+    if (!err && colwise) {
+	int nelem = rows * cols;
+	size_t csize = nelem * sizeof *X->val;
+	const double *src = X->val;
+
+	for (i=0; i<n; i++) {
+	    tmp = A->data[i];
+	    memcpy(tmp->val, src, csize);
+	    src += nelem;
+	}
+    } else if (!err) {
+	int k, j, ii = 0;
+	double x;
+
+	for (k=0; k<n; k++) {
+	    tmp = A->data[k];
+	    for (j=0; j<cols; j++) {
+		for (i=0; i<rows; i++) {
+		    x = gretl_matrix_get(X, ii+i, j);
+		    gretl_matrix_set(tmp, i, j, x);
+		}
+	    }
+	    ii += rows;
+	}
     }
 
-    /* get the maximum index value */
-    for (i=0; i<vals->rows; i++) {
-	n = vals->val[i] > n ? vals->val[i] : n;
-    }
+    return err;
+}
 
-    ret = gretl_array_new(GRETL_TYPE_MATRICES, n, err);
-    if (*err) {
-	return NULL;
-    }
+static int split_matrix_by_vector (gretl_array *A, int n,
+				   const gretl_matrix *X,
+				   int dim, int colwise,
+				   gretl_matrix *vals,
+				   const double *sel)
+{
+    int *nj = NULL;
+    gretl_matrix *tmp;
+    int rows, cols;
+    int i, j, k;
+    int err = 0;
 
-    /* count how many rows we have for each array element and
-       allocate accordingly */
-    nrows = calloc(n, sizeof *nrows);
-    if (nrows == NULL) {
-	*err = E_ALLOC;
+    /* How many rows or columns will each matrix need? */
+    nj = calloc(n, sizeof *nj);
+    if (nj == NULL) {
+	err = E_ALLOC;
     } else {
-	for (i=0; i<X->rows; i++) {
+	for (i=0; i<dim; i++) {
 	    j = sel[i] - 1;
-	    nrows[j] += 1;
+	    nj[j] += 1;
 	}
     }
-    for (i=0; i<n && !*err; i++) {
-	if (nrows[i] > 0) {
-	    tmp = gretl_matrix_alloc(nrows[i], X->cols);
+    for (i=0; i<n && !err; i++) {
+	if (nj[i] > 0) {
+	    rows = colwise ? X->rows : nj[i];
+	    cols = colwise ? nj[i] : X->cols;
+	    tmp = gretl_matrix_alloc(rows, cols);
 	    if (tmp == NULL) {
-		*err = E_ALLOC;
+		err = E_ALLOC;
 	    } else {
-		gretl_array_set_element(ret, i, tmp, GRETL_TYPE_MATRIX, 0);
-		/* @nrows serves as an array of counters below */
-		nrows[i] = 0;
+		gretl_array_set_element(A, i, tmp, GRETL_TYPE_MATRIX, 0);
+		/* @nj will serve as an array of counters below */
+		nj[i] = 0;
 	    }
 	}
     }
 
     /* fill the individual matrices */
-    for (i=0; i<X->rows; i++) {
-	k = sel[i] - 1;
-	l = 0;
-	for (j=0; j<X->cols; j++) {
-	    x = gretl_matrix_get(X, i, j);
-	    tmp = ret->data[k];
-	    gretl_matrix_set(tmp, nrows[k], l++, x);
+    if (!err && colwise) {
+	size_t csize = X->rows * sizeof *X->val;
+	const double *src = X->val;
+	double *targ;
+
+	for (i=0; i<X->cols; i++) {
+	    k = sel[i] - 1;
+	    tmp = A->data[k];
+	    targ = tmp->val + nj[k];
+	    memcpy(targ, src, csize);
+	    /* advance the read and write positions */
+	    src += X->rows;
+	    nj[k] += X->rows;
 	}
-	/* advance the write position */
-	nrows[k] += 1;
+    } else if (!err) {
+	double x;
+	int jj;
+
+	for (i=0; i<X->rows; i++) {
+	    k = sel[i] - 1;
+	    tmp = A->data[k];
+	    jj = 0;
+	    for (j=0; j<X->cols; j++) {
+		x = gretl_matrix_get(X, i, j);
+		gretl_matrix_set(tmp, nj[k], jj++, x);
+	    }
+	    /* advance the write position */
+	    nj[k] += 1;
+	}
     }
 
-    free(nrows);
+    free(nj);
+
+    return err;
+}
+
+gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
+				    const gretl_matrix *v,
+				    int colwise, int *err)
+{
+    gretl_array *ret = NULL;
+    int i, dim, nm = 0;
+    int chunk = 0;
+    gretl_matrix *vals = NULL;
+    const double *sel;
+    double x;
+
+    dim = colwise ? X->cols : X->rows;
+
+    if (gretl_vector_get_length(v) == 1) {
+	/* the chunk-size variant */
+	chunk = v->val[0];
+	if (chunk <= 0 || chunk > dim) {
+	    *err = E_INVARG;
+	} else if (dim % chunk != 0) {
+	    *err = E_NONCONF;
+	}
+    } else if (gretl_vector_get_length(v) == dim) {
+	/* vector of indices: only positive integers allowed */
+	for (i=0; i<dim; i++) {
+	    x = v->val[i];
+	    if (x != floor(x) || x <= 0 || x >= INT_MAX) {
+		*err = E_INVARG;
+		break;
+	    }
+	}
+    } else {
+	*err = E_INVARG;
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    /* How many matrices do we need ? */
+    if (chunk > 0) {
+	nm = dim / chunk;
+    } else {
+	sel = v->val;
+	vals = gretl_matrix_values(sel, dim, OPT_NONE, err);
+	if (!*err) {
+	    /* get the maximum index value */
+	    for (i=0; i<vals->rows; i++) {
+		nm = vals->val[i] > nm ? vals->val[i] : nm;
+	    }
+	}
+    }
+
+    if (!*err) {
+	ret = gretl_array_new(GRETL_TYPE_MATRICES, nm, err);
+    }
+
+    if (!*err && chunk > 0) {
+	/* the easier case */
+	*err = split_matrix_by_chunks(ret, nm, X, chunk, colwise);
+    } else if (!*err) {
+	/* the fiddly but general one */
+	*err = split_matrix_by_vector(ret, nm, X, dim, colwise, vals, sel);
+    }
+
     gretl_matrix_free(vals);
 
     if (*err && ret != NULL) {

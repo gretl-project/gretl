@@ -21,6 +21,7 @@ gtk_version = @gtk_version@
 use_gsf = @use_gsf@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
+macpkg = @macpkg@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -140,7 +141,8 @@ SRCS = excel_import.c \
 	regls.c \
 	geoplot.c \
 	purebin.c \
-	bdstest.c
+	bdstest.c \
+	lpsolve.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -185,7 +187,8 @@ PLUGINS = arma.la \
 	regls.la \
 	geoplot.la \
 	purebin.la \
-	bdstest.la
+	bdstest.la \
+	lpsolve.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -221,6 +224,12 @@ ifeq ($(have_odbc),yes)
   PLUGINS += odbc_import.la
   ODBC_CFLAGS = @ODBC_CFLAGS@
   ODBC_LIBS = @ODBC_LIBS@
+endif
+
+ifeq ($(macpkg),yes)
+  LPLIB = -llpsolve55
+else ifeq ($(win32pkg),yes)
+  LPLIB = -llpsolve55.dll
 endif
 
 vpath %.c $(topsrc)/plugin/libole2
@@ -384,6 +393,9 @@ regls.la: regls.lo
 
 bdstest.la: bdstest.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
+
+lpsolve.la: lpsolve.lo
+	$(LINK) -o $@ $< $(GRETLLIB) $(LPLIB)
 
 # plugins that require GTK+
 

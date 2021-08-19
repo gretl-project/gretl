@@ -4148,7 +4148,9 @@
 	  ello implica que la ejecución de la función vigente finalice con la
 	  presentación de un mensaje condicionado a que se produzca un fallo;
 	  entonces el argumento <argname>mensaje</argname> se presentará como
-	  parte del mensaje de fallo que se muestra al llamar a la función.
+	  parte del mensaje de fallo que se muestra al llamar a la función. Una
+	  excepción es el modo MPI especial para la ejecución de programas en
+	  paralelo, en el que solo se muestra la cadena asociada.
 	</para>
 	<para>
 	  El valor que se devuelve con esta función (1) es simplemente nominal.
@@ -6205,7 +6207,7 @@
 	  su representación en la forma (de 1 a 4) que elijas mediante el
 	  argumento opcional <argname>resultado</argname>. Si omites ese
 	  argumento, la conversión por defecto se hace del siguiente modo:
-	  cuando el argumento <argname>origen</argname> es un nome de un país,
+	  cuando el argumento <argname>origen</argname> es un nombre de un país,
 	  el resultado es el código de 2 letras del país; en caso contrario, el
 	  resultado es el nombre del país. Debajo se ilustran varias solicitudes
 	  válidas con formato interactivo.
@@ -8597,29 +8599,44 @@
     <function name="msplitby" section="matrix" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="vector">v</fnarg>
+	<fnarg type="scalar-or-matrix">v</fnarg>
+	<fnarg type="bool">porcolum</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve una formación de matrices, como resultado de separar
-	  las filas de <argname>X</argname> verticalmente, bajo el control
-	  del vector <argname>v</argname>. Este vector debe ser de longitud
-	  igual a la dimensión en filas de <argname>X</argname>, y debe
-	  constar de valores enteros con 1 como valor mínimo, y un máximo
-	  igual al número de matrices que tendrá la formación deseada.
-	  Cada elemento de <argname>v</argname> indica a qué fila de la
-	  formación de matrices se debe asignar cada fila de la matriz
-	  <argname>X</argname>.
+	  horizontal o verticalmente la matriz <argname>X</argname>, bajo
+	  el control de los argumentos <argname>v</argname> y
+	  <argname>porcolum</argname>. Si el argumento <argname>porcolum</argname>
+	  no es nulo, la matriz se va a separar por columnas; en caso contrario
+	  y como predeterminado, se hará por filas.
 	</para>
 	<para>
-	  En el siguiente ejemplo se separan las filas de una matriz
-	  <by r="3" c="3"/> en una formación de tres matrices: las dos primeras
-	  filas se asignan a la primera matriz; la segunda matriz se deja vacía;
-	  y la tercera matriz incluye la tercera fila de <argname>X</argname>.
+	  El argumento <argname>v</argname> puede ser un vector o un escalar.
+	  En el primer caso, el vector debe tener una longitud igual a la
+	  dimensión relevante (de filas o de columnas) de la matriz
+	  <argname>X</argname>; además debe contener números enteros con
+	  un valor mínimo de 1, y un máximo igual al número de matrices que
+	  tendrá el 'array' que se quiere. Cada elemento de <argname>v</argname>
+	  representa el índice que tiene en el 'array', la matriz a la que deberá
+	  asignarse la correspondiente fila de <argname>X</argname>. Si, en cambio,
+	  <argname>v</argname> es un escalar, entonces se va a separar la matriz
+	  <argname>X</argname> en trozos que tendrán <argname>v</argname>
+	  filas/columnas cada uno (según lo exija el argumento
+	  <argname>porcolum</argname>); y se mostrará un fallo si la
+	  dimensión de la matriz relevante no es un múltiplo exacto de
+	  <argname>v</argname>.
+	</para>
+	<para>
+	  En el siguiente ejemplo se separan las filas de una matriz <by r="4" c="3"/>
+	  en tres matrices: las dos primeras filas se asignan a la primera
+	  matriz; la segunda matriz se deja vacía; la tercera y cuarta
+	  matrices incluye la tercera y cuarta filas de <argname>X</argname>,
+	  respectivamente.
 	</para>
 	<code>
-	  matrix X = {1,2,3; 4,5,6; 7,8,9}
-	  matrices M = msplitby(X,{1,1,3})
+	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}
+	  matrices M = msplitby(X, {1,1,3,4})
 	  print M
 	</code>
 	<para>
@@ -8630,6 +8647,28 @@
 	  [1] 2 x 3
 	  [2] null
 	  [3] 1 x 3
+	  [4] 1 x 3
+	</code>
+	<para>
+	  En cambio, el siguiente ejemplo separa <argname>X</argname> equitativamente:
+	</para>
+	<code>
+	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}
+	  matrices MM = msplitby(X, 2)
+	  print MM[1]
+	  print MM[2]
+	</code>
+	<para>
+	  que depara
+	</para>
+	<code>
+	  ? print MM[1]
+	  1   2   3 
+	  4   5   6 
+
+	  ? print MM[2]
+	  7    8    9 
+	  10   11   12 
 	</code>
 	<para>
 	  Consulta la función <fncref targ="flatten"/> para la operación inversa.

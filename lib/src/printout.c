@@ -596,6 +596,29 @@ static int col_strlen (const Xtab *tab)
     return nmax;
 }
 
+/* allow for wider columns when cell counts are large numbers */
+
+static void get_xtab_col_widths (const Xtab *tab, int stdwidth,
+				 int *cwidth, int *twidth)
+{
+    int i, di, dmax = 0;
+
+    /* column width */
+    for (i=0; i<tab->cols; i++) {
+	di = (int) (floor(log10(tab->ctotal[i])));
+	dmax = di > dmax ? di : dmax;
+    }
+    *cwidth = (dmax >= stdwidth - 2)? dmax + 3 : stdwidth;
+
+    /* totals width */
+    dmax = 0;
+    for (i=0; i<tab->rows; i++) {
+	di = (int) (floor(log10(tab->rtotal[i])));
+	dmax = di > dmax ? di : dmax;
+    }
+    *twidth = (dmax >= stdwidth - 2)? dmax + 3 : stdwidth;
+}
+
 static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 			     gretlopt opt, PRN *prn)
 {
@@ -607,6 +630,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     char lbl[64];
     int rlen = 0;
     int clen = 0;
+    int cw, tw;
+    int stdw = 6;
     int totals = 1;
     int tex = 0;
     int bold = 0;
@@ -622,6 +647,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	/* don't bother with chi-square */
 	pearson = NADBL;
     }
+    
     if (opt & OPT_N) {
 	totals = 0;
     }
@@ -665,17 +691,20 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	rlen = 7;
     }
 
+    /* allow for BIG integers */
+    get_xtab_col_widths(tab, stdw, &cw, &tw);
+    
     if (tab->cstrs) {
 	clen = 2 + col_strlen(tab);
-	if (clen > 10) {
-	    clen = 10;
-	} else if (clen < 6) {
+	if (clen > 12) {
+	    clen = 12;
+	} else if (clen < cw) {
 	    clen = 6;
 	}
     } else {
-	clen = 6;
+	clen = cw;
     }
-
+    
     bufspace(rlen, prn);
 
     /* header row: column labels */
@@ -696,7 +725,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    if (tex) {
 		pprintf(prn, "%4g", cj);
 	    } else {
-		pprintf(prn, "[%4g]", cj);
+		pprintf(prn, "[%*g]", cw-2, cj);
 	    }
 	}
 	if (tex) {
@@ -712,7 +741,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	if (tex) {
 	    pprintf(prn,"$\\Sigma$\\\\ \\hline\n");
 	} else {
-	    pprintf(prn,"  %s\n  \n", _("TOT."));
+	    bufspace(2 + (tw - stdw), prn);
+	    pprintf(prn,"%s\n  \n", _("TOT."));
 	}
     } else if (!tex) {
 	pputc(prn, '\n');
@@ -801,7 +831,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 		    pprintf(prn, "%5.1f%%", x);
 		}
 	    } else {
-		pprintf(prn, "%6d", tab->rtotal[i]);
+		pprintf(prn, "%*d", tw, tab->rtotal[i]);
 	    }
 	}
 	/* terminate row */
@@ -841,7 +871,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 		pputs(prn, "& ");
 	    }
 	}
-	pprintf(prn, "%6d\n", tab->n);
+	pprintf(prn, "%*d\n", tw, tab->n);
     }
 
     if (tex) {

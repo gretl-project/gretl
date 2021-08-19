@@ -1547,10 +1547,12 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	unset_window_help_active(vwin);
 	text_set_cursor(vwin->text, NULL);
 
-	if (pos <= 0) {
-	    warnbox(_("Sorry, help not found"));
-	} else {
-	    real_do_help(idx, pos, role);
+	if (text != NULL && *text != '\0') {
+	    if (pos <= 0) {
+		warnbox(_("Sorry, help not found"));
+	    } else {
+		real_do_help(idx, pos, role);
+	    }
 	}
     }
 
@@ -2183,6 +2185,10 @@ static int get_x12a_doc_path (char *path, const char *fname)
     return ret;
 }
 
+/* Get a language-specific query string, for asking
+   the user whether a translation is preferred.
+*/
+
 static const char *tr_query (const char *lang)
 {
     if (!strcmp(lang, "es")) {
@@ -2199,6 +2205,12 @@ static const char *tr_query (const char *lang)
 	return NULL;
     }
 }
+
+/* For @code giving the ID number of a doc resource and
+   @lang identifying a language, return the filename of a
+   language-specific version of the resource, or NULL if
+   none is available.
+*/
 
 static const char *have_translation (int code, const char *lang)
 {
@@ -2223,6 +2235,11 @@ static const char *have_translation (int code, const char *lang)
     return ret;
 }
 
+/* Determine if we should show a translation of the
+   doc resource indentified by @code. If so, return
+   the required filename; if not, return NULL.
+*/
+
 static const char *show_translation (int code)
 {
     const char *fname = NULL;
@@ -2246,6 +2263,7 @@ static const char *show_translation (int code)
 #endif
 
     if (fname != NULL) {
+	/* We have a translation, but does the user want it? */
 	const char *msg = tr_query(lang);
 	int resp = yes_no_dialog(NULL, msg, NULL);
 
@@ -2260,7 +2278,7 @@ static const char *show_translation (int code)
 /* @pref is the documentation preference registered in settings.c:
    0 = English, US letter
    1 = English, A4
-   2 = Translation, if available
+   [2 = Translation, if available]
 */
 
 static int find_or_download_pdf (int code, int pref, char *fullpath)
@@ -2318,7 +2336,7 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 #endif
 
     if (fname != NULL) {
-	/* got a specific translation */
+	/* we got a specific translation */
 	goto next_step;
     }
 

@@ -106,6 +106,7 @@ extern int main_x;
 extern int main_y;
 extern int mainwin_width;
 extern int mainwin_height;
+extern int swallow;
 
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
 extern char viewps[MAXSTR];
@@ -151,6 +152,9 @@ int is_control_key (guint k);
 void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
+
+int mainwin_get_vwin_insertion (void);
+int mainwin_insert_vwin (windata_t *vwin);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

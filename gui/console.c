@@ -25,6 +25,7 @@
 #include "dlgutils.h"
 #include "gui_recode.h"
 #include "textbuf.h"
+#include "winstack.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -84,12 +85,12 @@ static void command_history_destroy (void)
     hlines = hpos = 0;
 }
 
-static ExecState *gretl_console_init (char *cbuf)
+static ExecState *console_init (char *cbuf)
 {
     ExecState *s;
     PRN *prn;
 
-    s = mymalloc(sizeof *s);
+    s = calloc(1, sizeof *s);
     if (s == NULL) {
 	return NULL;
     }
@@ -320,6 +321,34 @@ static void console_insert_prompt (GtkTextBuffer *buf,
     gtk_text_buffer_place_cursor(buf, iter);
 }
 
+static int detect_quit (const char *s)
+{
+    s += strspn(s, " \t");
+    if (!strncmp(s, "quit", 4)) {
+	int n = strlen(s);
+
+	if (n == 4 || (n > 4 && isspace(s[4]))) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static void maybe_exit_on_quit (void)
+{
+    if (exit_check()) {
+	return;
+    } else {
+	const char *msg = N_("Really quit gretl?");
+	int resp = no_yes_dialog(NULL, _(msg));
+
+	if (resp == GRETL_YES) {
+	    gtk_main_quit();
+	}
+    }
+}
+
 static int real_console_exec (ExecState *state)
 {
     int err = 0;
@@ -327,6 +356,11 @@ static int real_console_exec (ExecState *state)
 #if CDEBUG
     fprintf(stderr, "*** real_console_exec: '%s'\n", state->line);
 #endif
+
+    if (swallow && detect_quit(state->line)) {
+	maybe_exit_on_quit();
+	return 0;
+    }
 
     push_history_line(state->line);
 
@@ -365,6 +399,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
     protect_console();
     real_console_exec(state);
+
     if (state->cmd->ci == QUIT) {
 	*state->line = '\0';
 	unprotect_console();
@@ -408,7 +443,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
 int console_is_busy (void)
 {
-    if (console_main != NULL) {
+    if (console_main != NULL && GTK_IS_WINDOW(console_main)) {
 	gtk_window_present(GTK_WINDOW(console_main));
 	return 1;
     } else {
@@ -425,8 +460,10 @@ static void console_destroyed (GtkWidget *w, ExecState *state)
     gretl_print_destroy(state->prn);
     gretl_exec_state_destroy(state);
     console_main = NULL;
-    /* exit the command loop */
-    gtk_main_quit();
+    if (!swallow) {
+	/* exit the command loop */
+	gtk_main_quit();
+    }
 }
 
 static gboolean console_destroy_check (void)
@@ -434,12 +471,9 @@ static gboolean console_destroy_check (void)
     return console_protected ? TRUE : FALSE;
 }
 
-/* callback from menu/button: launches the console and remains
-   in a command loop until done */
-
-void gretl_console (void)
+windata_t *gretl_console (void)
 {
-    char cbuf[MAXLINE];
+    static char cbuf[MAXLINE];
     windata_t *vwin;
     GtkTextBuffer *buf;
     GtkTextIter iter;
@@ -448,15 +482,23 @@ void gretl_console (void)
 	N_("gretl console: type 'help' for a list of commands");
 
     if (console_main != NULL) {
-	gtk_window_present(GTK_WINDOW(console_main));
-	return;
+	if (GTK_IS_WINDOW(console_main)) {
+	    gtk_window_present(GTK_WINDOW(console_main));
+	} else {
+	    vwin = g_object_get_data(G_OBJECT(console_main), "vwin");
+	    gtk_widget_grab_focus(vwin->text);
+	}
+	return NULL;
     }
 
-    state = gretl_console_init(cbuf);
+    state = console_init(cbuf);
     if (state == NULL) {
-	return;
+	return NULL;
     }
 
+    if (swallow) {
+	preset_viewer_flag(VWIN_SWALLOW);
+    }
     vwin = console_window(78, 450);
     console_main = vwin->main;
 
@@ -478,19 +520,26 @@ void gretl_console (void)
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(buf, &iter);
 
-    /* insert intro string and first prompt */
-    gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
-					     "output", NULL);
-    console_insert_prompt(buf, &iter, "\n? ");
+    if (swallow) {
+	console_insert_prompt(buf, &iter, "? ");
+    } else {
+	gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
+						 "output", NULL);
+	console_insert_prompt(buf, &iter, "\n? ");
+    }
 
     gtk_widget_grab_focus(vwin->text);
 
-    /* enter command loop */
-    gtk_main();
+    if (!swallow) {
+	/* enter command loop */
+	gtk_main();
+    }
 
 #if CDEBUG
     fprintf(stderr, "gretl_console: returning\n");
 #endif
+
+    return vwin;
 }
 
 /* handle backslash continuation of console command line */
@@ -566,6 +615,9 @@ static gint console_key_handler (GtkWidget *cview,
 	} else if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
 	    return FALSE;
+	} else if (swallow && (upkey == GDK_Page_Up || upkey == GDK_Tab)) {
+	    gtk_widget_grab_focus(mdata->listbox);
+	    return TRUE;
 	} else {
 	    ctrl = 1;
 	}
@@ -678,6 +730,7 @@ static gint console_key_handler (GtkWidget *cview,
 	return TRUE;
     }
 #endif
+
     if (script_auto_bracket && lbracket(keyval)) {
 	return script_bracket_handler((windata_t *) p, keyval);
     }

@@ -580,6 +580,7 @@ struct str_table funcs[] = {
     { F_VMA,       "vma" },
     { F_BCHECK,    "bcheck" },
     { F_CONTAINS,  "contains" },
+    { F_LPSOLVE,   "lpsolve" },
     { 0,           NULL }
 };
 

@@ -4430,7 +4430,9 @@
       <para>
 	Applicable only in the context of a user-defined function (see
 	<cmdref targ="function"/>). Causes execution of the current
-	function to terminate with an error condition flagged.
+	function to terminate with an error condition flagged. 
+	An exception is the special MPI mode for parallelized program
+	execution, where only the associated string is printed. 
       </para>
       <para>
 	The optional <repl>message</repl> argument can take the
@@ -13365,9 +13367,9 @@
 	</li>
 	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> or <lit>off</lit>
-	    (the default).  Force gretl to use the decimal point
-	    character, in a locale where another character (most likely
-	    the comma) is the standard decimal separator.
+	  (the default).  Force gretl to use the decimal point
+	  character, in a locale where another character (most likely
+	  the comma) is the standard decimal separator.
 	  </para>
 	</li>
 	<li>
@@ -13402,11 +13404,11 @@
 	</li>
 	<li>
 	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> or <lit>0</lit>
-	    (the default).  This is for use with user-defined functions.
-	    Setting <lit>debug</lit> to 1 is equivalent to turning
-	    <lit>messages</lit> on within all such functions; setting this
-	    variable to <lit>2</lit> has the additional effect of turning on
-	    <lit>max_verbose</lit> within all functions.
+	  (the default).  This is for use with user-defined functions.
+	  Setting <lit>debug</lit> to 1 is equivalent to turning
+	  <lit>messages</lit> on within all such functions; setting this
+	  variable to <lit>2</lit> has the additional effect of turning on
+	  <lit>max_verbose</lit> within all functions.
 	  </para>
 	</li>
 	<li>
@@ -13473,6 +13475,22 @@
 	  <para><lit>datacols</lit>: an integer from 1 to 15, with
 	  default value 5. Sets the maximum number of series shown
 	  side-by-side when data are displayed by observation.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>plot_collection</lit>: <lit>on</lit>,
+	  <lit>auto</lit> or <lit>off</lit>. This setting affects the
+	  way plots are displayed during interactive use. If it's
+	  <lit>on</lit>, plots of the same pixel size are gathered in
+	  a <quote>plot collection</quote>, that is a single output
+	  window in which you can browse through the various plots
+	  going back and forth. With the <lit>off</lit> setting,
+	  instead, a different window for each plot will be generated,
+	  as in older gretl versions. Finally, the <lit>auto</lit>
+	  setting has the effect of enabling the plot collection mode
+	  only for graphs that are generated within 1.25 seconds from
+	  one another (for example, as a result of executing plotting
+	  commands in a loop).
 	  </para>
 	</li>
       </ilist>

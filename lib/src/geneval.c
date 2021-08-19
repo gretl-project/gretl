@@ -3761,31 +3761,26 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
     return ret;
 }
 
-static NODE *matrix_vector_func (NODE *l, NODE *r,
+static NODE *matrix_vector_func (NODE *l, NODE *m, NODE *r,
                                  int f, parser *p)
 {
     NODE *ret = NULL;
 
-    if (starting(p)) {
-        gretl_matrix *m = l->v.m;
-        gretl_matrix *v = r->v.m;
-        int vlen = 0;
+    /* at present only F_MSPLITBY comes here */
 
-        if (gretl_is_null_matrix(m)) {
-            p->err = E_INVARG;
-        } else {
-            vlen = gretl_vector_get_length(v);
-            if (vlen != m->rows) {
-                p->err = E_NONCONF;
-            }
-        }
-        if (p->err) {
-            return NULL;
-        }
-        /* currently only F_MSPLITBY comes here */
-        ret = aux_array_node(p);
+    if (starting(p)) {
+        gretl_matrix *a = node_get_matrix(l, p, 0, 1);
+        gretl_matrix *v = node_get_matrix(m, p, 1, 2);
+        int colwise = 0;
+
+	if (!p->err) {
+	    colwise = node_get_bool(r, p, 0);
+	}
+        if (!p->err) {
+	    ret = aux_array_node(p);
+	}
         if (ret != NULL) {
-            ret->v.a = gretl_matrix_split_by(m, v, &p->err);
+            ret->v.a = gretl_matrix_split_by(a, v, colwise, &p->err);
         }
     } else {
         ret = aux_array_node(p);
@@ -10492,6 +10487,24 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *lpsolve_bundle_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_bundle_node(p);
+
+    if (ret != NULL) {
+	gretl_bundle *(*lpfunc) (gretl_bundle *, PRN *, int *);
+
+	lpfunc = get_plugin_function("gretl_lpsolve");
+	if (lpfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else {
+	    ret->v.b = (*lpfunc)(n->v.b, p->prn, &p->err);
+	}
+    }
+
+    return ret;
+}
+
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
     gretl_bundle *b = NULL;
@@ -10677,12 +10690,15 @@ static double *scalar_to_series (NODE *n, parser *p)
     return ret;
 }
 
-/* note: we come here only if we setting a bundle-member or
-   an element of an array
+/* We come here only when setting a bundle-member or an element
+   of an array -- otherwise we use get_check_return_type().
+   Note 2021-08-12: in principle we could allow the case
+   where @spec is an array type and @rhs is the singular of
+   that type, and support auto-promotion of (e.g.) a string
+   to an array of strings. But I'm not sure that's a good idea.
 */
 
-static int lhs_type_check (GretlType spec, GretlType rhs,
-                           int t)
+static int lhs_type_check (GretlType spec, GretlType rhs, int t)
 {
     int err = 0;
 
@@ -16792,9 +16808,9 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_MSPLITBY:
-        /* matrix on left, vector on right */
-        if (l->t == MAT && r->t == MAT) {
-            ret = matrix_vector_func(l, r, t->t, p);
+        /* matrix on left, vector, optional boolean */
+        if (ok_matrix_node(l) && ok_matrix_node(m)) {
+            ret = matrix_vector_func(l, m, r, t->t, p);
         } else {
             p->err = E_TYPES;
         }
@@ -17112,6 +17128,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;
+    case F_LPSOLVE:
+	if (l->t == BUNDLE) {
+	    ret = lpsolve_bundle_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
+	break;
     case F_SVM:
         ret = svm_driver_node(t, p);
         break;
@@ -20370,16 +20393,17 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	} else {
-	    /* allow forming array from single element */
+	    /* Allow promotion of a single object to an array of
+	       size 1? Note 2021-08-12: not sure this is actually
+	       a good idea.
+	    */
 	    GretlType rtype = gretl_type_from_gen_type(r->t);
 	    GretlType atype = p->lh.gtype;
 
 	    if (rtype == gretl_type_get_singular(atype)) {
-		gretl_array *a = gretl_array_new(atype, 1, &p->err);
+		gretl_array *a = gretl_singleton_array(r->v.ptr, atype,
+						       1, &p->err);
 
-		if (!p->err) {
-		    p->err = gretl_array_set_element(a, 0, r->v.ptr, rtype, 1);
-		}
 		if (!p->err) {
 		    p->err = gen_add_or_replace(p, atype, a);
 		}

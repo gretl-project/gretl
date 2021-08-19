@@ -4431,6 +4431,8 @@
 	Solo es aplicable en el contexto de una función definida por el usuario
 	(consulta <cmdref targ="function"/>). Provoca que la ejecución de la
 	función actual, finalice con la señalización de una condición de fallo.
+	Una excepción es el modo MPI especial para la ejecución de programas
+	en paralelo, en el que solo se muestra la cadena asociada.
       </para>
       <para>
 	El argumento <repl>mensaje</repl> (opcional) puede tener
@@ -13473,6 +13475,22 @@
 	  <para><lit>datacols</lit>: Un número entero de 1 a 15, cuyo valor por
 	  defecto es 5. Establece el número máximo de series que se presentan
 	  conjuntamente cuando los datos se representan por observación.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	  <lit>plot_collection</lit>: <lit>on</lit>, <lit>auto</lit> u <lit>off</lit>.
+	  Esta configuración afecta al modo en el que se muestran los gráficos
+	  durante el uso interactivo. Si está en <lit>on</lit>, los gráficos del mismo
+	  tamaño en pixels se reúnen en una <quote>colección de gráficos</quote>,
+	  es decir, en una única pantalla de salida de resultados en la que puedes
+	  navegar entre los diversos gráficos yendo adelante y hacia atrás. Con el
+	  ajuste en <lit>off</lit>, por el contrario, se va a generar una pantalla
+	  distinta para cada gráfico, como en las versiones anteriores de GRETL.
+	  Finalmente, el ajuste en <lit>auto</lit> tiene como efecto que permite el
+	  modo de colección de gráficos solo para aquellos que se generan antes de
+	  que pasen 1.25 segundos después de otro (por ejemplo, como resultado de
+	  ejecutar instrucciones de representación gráfica dentro de un bucle).
 	  </para>
 	</li>
       </ilist>

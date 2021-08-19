@@ -196,6 +196,8 @@ void clear_datainfo (DATASET *dset, int code)
 	maybe_free_full_dataset(dset);
 
 	dset->v = dset->n = 0;
+	dset->structure = 0;
+	dset->pd = 1;
     }
 }
 
@@ -3500,16 +3502,18 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     return err;
 }
 
+/* this supports the $datatype accessor */
+
 int dataset_get_structure (const DATASET *dset)
 {
     if (dset == NULL || dset->n == 0) {
-	return DATA_NONE;
+	return 0;
     } else if (dataset_is_panel(dset)) {
-	return DATA_PANEL;
+	return 3;
     } else if (dataset_is_time_series(dset)) {
-	return DATA_TS;
+	return 2;
     } else {
-	return DATA_XSECT;
+	return 1;
     }
 }
 

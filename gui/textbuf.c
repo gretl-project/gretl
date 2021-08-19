@@ -992,7 +992,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	hsize += 48; /* ?? */
     }
 
-    if (hsize > 0 && vsize > 0) {
+    if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
 
 	if (window_is_tab(vwin)) {
@@ -4730,7 +4730,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 	vsize = 0.62 * hsize;
     }
 
-    if (hsize > 0 && vsize > 0) {
+    if (vwin->main != vwin->vbox && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
 
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);

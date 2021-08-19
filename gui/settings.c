@@ -74,7 +74,7 @@ static int use_proxy;
 static ConfigPaths paths;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab, int console);
-static void apply_changes (GtkWidget *widget, GtkWidget *parent);
+static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent);
 
 #ifndef G_OS_WIN32
 static int read_gretlrc (void);
@@ -108,6 +108,8 @@ PangoFontDescription *fixed_font;
 
 /* end font handling */
 
+int swallow = 0;
+
 static int usecwd;
 static int shellok;
 static int manpref;
@@ -118,6 +120,7 @@ static int keep_folder = 1;
 static int tabbed_editor = 1;
 static int tabbed_models = 0;
 static int auto_collect = 0;
+
 static int script_output_policy;
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -225,6 +228,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
+    { "swallow_console", N_("Main window includes console"), NULL, &swallow,
+      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "icon_sizing", N_("Toolbar icon size"), NULL, &icon_sizing,
       LISTSET | INTSET | RESTART, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
@@ -281,6 +286,10 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, sizeof paths.pypath, TAB_PROGS, NULL},
     { "julia", N_("Path to Julia executable"), NULL, paths.jlpath,
       MACHSET | BROWSER, sizeof paths.jlpath, TAB_PROGS, NULL},
+#ifndef PKGBUILD
+    { "lpsolve", N_("Path to lpsolve library"), NULL, paths.lppath,
+      MACHSET | BROWSER, sizeof paths.lppath, TAB_PROGS, NULL},
+#endif
 #ifdef HAVE_MPI
     { "mpiexec", N_("Path to mpiexec"), NULL, paths.mpiexec,
       MACHSET | BROWSER, sizeof paths.mpiexec, TAB_MPI, NULL},
@@ -1052,7 +1061,7 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     /* Apply button */
     button = apply_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(apply_changes), parent);
+		     G_CALLBACK(apply_prefs_changes), parent);
     gtk_widget_grab_default(button);
 
     /* Cancel button */
@@ -1067,7 +1076,7 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(apply_changes), parent);
+		     G_CALLBACK(apply_prefs_changes), parent);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget),
 		     dialog);
@@ -1098,9 +1107,15 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     return canceled;
 }
 
-int console_prefs_dialog (GtkWidget *parent)
+static void refocus_console (GtkWidget *widget, GtkWidget *caller)
+{
+    gtk_widget_grab_focus(caller);
+}
+
+int console_prefs_dialog (GtkWidget *caller)
 {
     static GtkWidget *dialog;
+    GtkWidget *parent;
     GtkWidget *button;
     GtkWidget *hbox;
     GtkWidget *vbox;
@@ -1111,6 +1126,7 @@ int console_prefs_dialog (GtkWidget *parent)
 	return 0;
     }
 
+    parent = swallow ? mdata->main : caller;
     dialog = gretl_dialog_new(_("gretl: preferences"), parent,
 			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
 #if GTK_MAJOR_VERSION < 3
@@ -1119,6 +1135,11 @@ int console_prefs_dialog (GtkWidget *parent)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gtk_box_set_spacing(GTK_BOX(vbox), 2);
 
+    if (swallow) {
+	g_signal_connect(G_OBJECT(dialog), "destroy",
+			 G_CALLBACK(refocus_console),
+			 caller);
+    }
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
 		     &dialog);
@@ -1139,7 +1160,7 @@ int console_prefs_dialog (GtkWidget *parent)
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(apply_changes), parent);
+		     G_CALLBACK(apply_prefs_changes), caller);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget),
 		     dialog);
@@ -1803,7 +1824,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
-		    combo_box_append_text(rc->widget, strs[j]);
+		    combo_box_append_text(rc->widget, _(strs[j]));
 		    if (strvar != NULL && !strcmp(strs[j], strvar)) {
 			active = j;
 		    } else if (intvar != NULL && j == *intvar) {
@@ -1988,9 +2009,11 @@ static void restart_message (void)
     infobox(_("This change will take effect when you restart gretl"));
 }
 
-/* register and react to changes from Preferences dialog */
+/* Register and react to changes from the main Preferences dialog
+   or the console-specific preferences.
+*/
 
-static void apply_changes (GtkWidget *widget, GtkWidget *parent)
+static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 {
     RCVAR *rcvar;
     GtkWidget *w;

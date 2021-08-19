@@ -18,8 +18,9 @@
     <function name="$aic" section="access" output="scalar">
       <description>
 	<para>
-	  Produce il criterio di informazione di Akaike per l'ultimo modello
-          stimato. Si veda <guideref targ="chap:criteria"/> per dettagli.
+	  Produce il criterio di informazione di Akaike per l'ultimo
+	  modello stimato, se disponibile. Si veda <guideref
+	  targ="chap:criteria"/> per dettagli.
 	</para>
       </description>
     </function>
@@ -27,8 +28,9 @@
     <function name="$bic" section="access" output="scalar">
       <description>
 	<para>
-	  Produce il criterio di informazione bayesiana di Schwarz per l'ultimo
-          modello stimato. Si veda <guideref targ="chap:criteria"/> per dettagli.
+	  Produce il criterio di informazione bayesiano di Schwarz per
+	  l'ultimo modello stimato, se disponibile. Si veda <guideref
+	  targ="chap:criteria"/> per dettagli.
 	</para>
       </description>
     </function>
@@ -8511,42 +8513,79 @@
     <function name="msplitby" section="matrix" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="vector">v</fnarg>
+	<fnarg type="scalar-or-matrix">v</fnarg>
+	<fnarg type="bool">bycol</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Ritorna un array di matrici, il risultato della divisione verticale di 
-	  <argname>X</argname> sotto il controllo del vettore
-	  <argname>v</argname>. Questo vettore deve essere di lunghezza
-	  uguale alla dimensione delle righe di <argname>X</argname>, e
-	  dovrà contenere valori interi pari minimo ad 1 e un 
-	  massimo pari al numero di matrici nel vettore desiderato.
-	  Ogni elemento di <argname>v</argname> indica l'indice
-	  vettoriale della matrice al quale la corrispondente riga di
-	  <argname>X</argname> dovrà essere assegnata.
+	  Ritorna un array di matrici, il risultato della divisione,
+	  orizzontale o verticale, di <argname>X</argname> sotto il
+	  controllo degli argomenti <argname>v</argname> e
+	  <argname>bycol</argname>. Se quest'ultimo è non-zero, la
+	  matrice sarà divisa per colonne; altrimenti, per righe.
 	</para>
 	<para>
-	  Nel seguente esempio si divide una matrice <by r="3" c="3"/>
+	  L'argomento <argname>v</argname> deve essere un vettore o
+	  uno scalare. Nel primo caso, il vettore deve essere di
+	  lunghezza uguale alla dimensione rilevante (righe o colonne)
+	  di <argname>X</argname>, e dovrà contenere valori interi
+	  pari minimo ad 1 e un massimo pari al numero di matrici nel
+	  vettore desiderato.  Ogni elemento di <argname>v</argname>
+	  indica l'indice vettoriale della matrice al quale la
+	  corrispondente riga di <argname>X</argname> dovrà essere
+	  assegnata. Nel secondo caso, in cui <argname>v</argname> è
+	  uno scalare, <argname>X</argname> verrà divisa in blocchi di
+	  <argname>v</argname> righe/colonne (a seconda del valore di
+	  <argname>bycol</argname>); se la dimensione rilevante delle
+	  matrice (righe o colonne) non è un multiplo esatto di
+	  <argname>v</argname>, si verificherà un errore.
+	</para>
+	<para>
+	  Nel seguente esempio si divide una matrice <by r="4" c="3"/>
 	  in tre matrici: le prime due righe sono assegnate alla prima
-	  matrice; la seconda matrice è lasciata vuota; e la terza
-	  matrice riceve riga 3 di<argname>X</argname>.
+	  matrice; la seconda matrice è lasciata vuota; la terza
+	  matrice e la quarta ricevono riga 3 e 4 rispettivamente
+	  di <argname>X</argname>.
 	</para>
 	<code>
-	  matrix X = {1,2,3; 4,5,6; 7,8,9}
-	  matrices M = msplitby(X, {1,1,3})
+	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}
+	  matrices M = msplitby(X, {1,1,3,4})
 	  print M
 	</code>
 	<para>
-	  La frase stampata recita:
+	  L'output recita:
 	</para>
 	<code>
 	  Vettore di marici, lunghezza 3
 	  [1] 2 x 3
 	  [2] null
 	  [3] 1 x 3
+	  [4] 1 x 3
 	</code>
 	<para>
-	  Si <fncref targ="flatten"/> per l'operazione inversa.
+	  In questo esempio, inveced, la matrice <argname>X</argname>
+	  è divisa in blocchi di dimensione uguale:  
+	</para>
+	<code>
+	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}
+	  matrices MM = msplitby(X, 2)
+	  print MM[1]
+	  print MM[2]
+	</code>
+	<para>
+	  che produce
+	</para>
+	<code>
+	  ? print MM[1]
+	  1   2   3 
+	  4   5   6 
+
+	  ? print MM[2]
+	  7    8    9 
+	  10   11   12 
+	</code>
+	<para>
+	  Si veda <fncref targ="flatten"/> per l'operazione inversa.
 	</para>
       </description>
     </function>
