@@ -32,7 +32,7 @@
 # include <dlfcn.h>
 #endif
 
-#if defined(_WIN32) && !defined(_WIN64)
+#if 0 // defined(_WIN32) && !defined(_WIN64)
 # include <lpsolve/lp_lib.h>
 #else
 
