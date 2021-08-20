@@ -2399,6 +2399,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="cmod"/>
 	    <fncref targ="atan2"/>
 	  </seelist>
@@ -2757,7 +2758,14 @@
 	  + <math>y</math><sup>2</sup>.
 	</para>
 	<para>
+	  NOTE: this is a legacy function, and is superseded by the
+	  <fncref targ="abs"/> function. It is kept for backward
+	  compatibility only, but it will be removed at some
+	  point. You may want to adjust your existing scripts.
+        </para>
+	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="carg"/>
 	  </seelist>
 	</para>
@@ -2963,7 +2971,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="carg"/>
-	    <fncref targ="cmod"/>
+	    <fncref targ="abs"/>
 	  </seelist>
 	</para>
       </description>
