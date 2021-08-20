@@ -676,6 +676,7 @@ have_gnu_regex
 gtksv_completion
 have_sourceview
 macpkg
+win32bit
 win32pkg
 win32_build
 mac_native
@@ -2911,6 +2912,7 @@ use_curl="yes"
 darwin_build="no"
 win32_build="no"
 win32pkg="no"
+win32bit="no"
 macpkg="no"
 quiet_build="no"
 swap_ends="no"
@@ -7842,6 +7844,12 @@ case $host_os in
       WINDRES=windres
     fi
 
+  ;;
+esac
+
+case $host_cpu in
+  i?86*)
+    win32bit=yes
   ;;
 esac
 
@@ -22883,6 +22891,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 

@@ -83,6 +83,7 @@ use_curl="yes"
 darwin_build="no"
 win32_build="no"
 win32pkg="no"
+win32bit="no"
 macpkg="no"
 quiet_build="no"
 swap_ends="no"
@@ -359,6 +360,12 @@ case $host_os in
       WINDRES=windres
     fi
     AC_SUBST(WINDRES)
+  ;;
+esac
+
+case $host_cpu in
+  i?86*)
+    win32bit=yes
   ;;
 esac
 
@@ -833,6 +840,7 @@ AC_SUBST(gtk_version)
 AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
+AC_SUBST(win32bit)
 AC_SUBST(macpkg)
 AC_SUBST(have_sourceview)
 AC_SUBST(gtksv_completion)
