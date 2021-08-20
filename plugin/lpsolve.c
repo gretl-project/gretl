@@ -24,7 +24,9 @@
 #include "libgretl.h"
 #include "version.h"
 
-#if defined(PKGBUILD)
+#if defined(PKGBUILD) && defined(_WIN32) && !defined(_WIN64)
+# include <windows.h>
+#elif defined(PKGBUILD)
 # define PRELINKED
 #elif defined(WIN32)
 # include <windows.h>
@@ -32,7 +34,8 @@
 # include <dlfcn.h>
 #endif
 
-#if 0 // defined(_WIN32) && !defined(_WIN64)
+/* tried for defined(_WIN32) && !defined(_WIN64) */
+#if 0
 # include <lpsolve/lp_lib.h>
 #else
 
@@ -171,7 +174,13 @@ static int gretl_lpsolve_init (void)
     }
 
 #ifdef WIN32
+# if defined(PKGBUILD) && !defined(_WIN64)
+    gchar *lpath = g_strdup_printf("%slpsolve55.dll", gretl_home());
+    lphandle = LoadLibrary(lpath);
+    g_free(lpath);
+#endif
     lphandle = LoadLibrary(gretl_lpsolve_path());
+#else
 #else
     lphandle = dlopen(gretl_lpsolve_path(), RTLD_NOW);
 #endif
