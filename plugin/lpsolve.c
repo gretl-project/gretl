@@ -24,20 +24,13 @@
 #include "libgretl.h"
 #include "version.h"
 
-#if defined(PKGBUILD) && defined(_WIN32) && !defined(_WIN64)
-# include <windows.h>
-#elif defined(PKGBUILD)
+#if defined(PKGBUILD)
 # define PRELINKED
 #elif defined(WIN32)
 # include <windows.h>
 #else
 # include <dlfcn.h>
 #endif
-
-/* tried for defined(_WIN32) && !defined(_WIN64) */
-#if 0
-# include <lpsolve/lp_lib.h>
-#else
 
 /* The bits of the lpsolve API that we need; we prefer not to include
    lp_lib.h since it contains some defines that conflict with GLib.
@@ -173,11 +166,7 @@ static int gretl_lpsolve_init (void)
 	return gretl_lpsolve_err;
     }
 
-#if defined(PKGBUILD) && defined(WIN32) && !defined(_WIN64)
-    gchar *lpath = g_strdup_printf("%slpsolve55.dll", gretl_home());
-    lphandle = LoadLibrary(lpath);
-    g_free(lpath);
-#elif defined(WIN32)
+#ifdef WIN32
     lphandle = LoadLibrary(gretl_lpsolve_path());
 #else
     lphandle = dlopen(gretl_lpsolve_path(), RTLD_NOW);
@@ -228,7 +217,6 @@ static int gretl_lpsolve_init (void)
 }
 
 #endif /* not PRELINKED to lpsolve library */
-#endif /* lp_lib.h not included */
 
 static void lp_row_from_mrow (double *targ, int nv,
 			      const gretl_matrix *m,
