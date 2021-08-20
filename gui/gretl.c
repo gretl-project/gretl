@@ -1504,10 +1504,8 @@ static void set_main_window_scale (void)
 void show_link_cursor (GtkWidget *w, gpointer p)
 {
     GdkWindow *window = gtk_widget_get_window(w);
-    GdkDisplay *disp = gdk_display_get_default();
-    GdkCursor *c;
+    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
 
-    c = gdk_cursor_new_from_name(disp, "pointer");
     if (c != NULL) {
 	gdk_window_set_cursor(window, c);
 	gdk_cursor_unref(c);

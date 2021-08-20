@@ -1545,7 +1545,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	g_free(text);
 	unset_window_help_active(vwin);
-	text_set_cursor(vwin->text, NULL);
+	text_set_cursor(vwin->text, 0);
 
 	if (text != NULL && *text != '\0') {
 	    if (pos <= 0) {

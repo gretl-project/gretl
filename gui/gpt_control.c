@@ -430,11 +430,10 @@ void set_plot_has_y2_axis (png_plot *plot, gboolean s)
 void plot_position_click (GtkWidget *w, png_plot *plot)
 {
     if (plot != NULL) {
-	GdkDisplay *disp = gdk_display_get_default();
 	GtkWidget *entry;
 	GdkCursor *cursor;
 
-	cursor = gdk_cursor_new_from_name(disp, "crosshair");
+	cursor = gdk_cursor_new(GDK_CROSSHAIR);
 	if (cursor != NULL) {
 	    gdk_window_set_cursor(plot->window, cursor);
 	    gdk_cursor_unref(cursor);
@@ -4564,8 +4563,7 @@ static void clear_labels (png_plot *plot)
 
 static void prepare_for_zoom (png_plot *plot)
 {
-    GdkDisplay *disp = gdk_display_get_default();
-    GdkCursor* cursor = gdk_cursor_new_from_name(disp, "crosshair");
+    GdkCursor* cursor = gdk_cursor_new(GDK_CROSSHAIR);
 
     if (cursor != NULL) {
 	gdk_window_set_cursor(plot->window, cursor);
