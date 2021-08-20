@@ -173,14 +173,12 @@ static int gretl_lpsolve_init (void)
 	return gretl_lpsolve_err;
     }
 
-#ifdef WIN32
-# if defined(PKGBUILD) && !defined(_WIN64)
+#if defined(PKGBUILD) && defined(WIN32) && !defined(_WIN64)
     gchar *lpath = g_strdup_printf("%slpsolve55.dll", gretl_home());
     lphandle = LoadLibrary(lpath);
     g_free(lpath);
-#endif
+#elif defined(WIN32)
     lphandle = LoadLibrary(gretl_lpsolve_path());
-#else
 #else
     lphandle = dlopen(gretl_lpsolve_path(), RTLD_NOW);
 #endif
