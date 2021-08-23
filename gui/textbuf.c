@@ -100,16 +100,15 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 
-void text_set_cursor (GtkWidget *w, const char *name)
+void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
                                               GTK_TEXT_WINDOW_TEXT);
 
-    if (name == NULL) {
+    if (cspec == 0) {
 	gdk_window_set_cursor(win, NULL);
     } else {
-	GdkDisplay *disp = gdk_display_get_default();
-	GdkCursor *cursor = gdk_cursor_new_from_name(disp, name);
+	GdkCursor *cursor = gdk_cursor_new(cspec);
 
 	if (cursor != NULL) {
 	    gdk_window_set_cursor(win, cursor);
@@ -2101,21 +2100,17 @@ static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
     return FALSE;
 }
 
-static GdkCursor *get_text_cursor (const char *name)
+static GdkCursor *hand_cursor = NULL;
+static GdkCursor *regular_cursor = NULL;
+
+static void ensure_text_cursors (void)
 {
-    static GdkCursor *hc;
-    static GdkCursor *tc;
-    GdkCursor **pc;
-
-    pc = strcmp(name, "text") == 0 ? &tc : &hc;
-
-    if (*pc == NULL) {
-	GdkDisplay *d = gdk_display_get_default();
-
-	*pc = gdk_cursor_new_from_name(d, name);
+    if (hand_cursor == NULL) {
+	hand_cursor = gdk_cursor_new(GDK_HAND2);
     }
-
-    return *pc;
+    if (regular_cursor == NULL) {
+	regular_cursor = gdk_cursor_new(GDK_XTERM);
+    }
 }
 
 static void
@@ -2144,10 +2139,10 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 	hovering_over_link = hovering;
 	if (hovering_over_link) {
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
-				  get_text_cursor("pointer"));
+				  hand_cursor);
 	} else {
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
-				  get_text_cursor("text"));
+				  regular_cursor);
 	}
     }
 
@@ -2185,6 +2180,7 @@ cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
 
 static void connect_link_signals (windata_t *vwin)
 {
+    ensure_text_cursors();
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(cmdref_key_press), NULL);
     g_signal_connect(G_OBJECT(vwin->text), "event-after",
@@ -2199,6 +2195,8 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
 {
     int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text),
 						 "sigs_connected"));
+
+    ensure_text_cursors();
 
     if (!done) {
 	gpointer en_ptr = GINT_TO_POINTER(en);

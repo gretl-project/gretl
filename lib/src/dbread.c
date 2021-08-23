@@ -830,9 +830,9 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     } else if (dinfo->info == 1) {
 	startfrac = 0;
     } else {
-	fprintf(stderr, "frequency (%d) does not make seem to make sense\n",
+	fprintf(stderr, "frequency (%d) does not seem to make sense\n",
 		(int) dinfo->info);
-	gretl_errmsg_sprintf(("frequency (%d) does not make seem to make sense"),
+	gretl_errmsg_sprintf(("frequency (%d) does not seem to make sense"),
 			     (int) dinfo->info);
 	err = 1;
     }

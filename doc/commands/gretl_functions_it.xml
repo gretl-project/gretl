@@ -2303,7 +2303,7 @@
 	</para>
 	<para>
 	  <seelist>
-	    <fncref targ="cmod"/>
+	    <fncref targ="abs"/>
 	    <fncref targ="atan2"/>
 	  </seelist>
 	</para>
@@ -2647,6 +2647,12 @@
 	  alla radice quadrata di <math>x</math><sup>2</sup> +
 	  <math>y</math><sup>2</sup>.
 	</para>
+	<para>
+	  NOTA: questa funzione è obsoleta, ed è rimpiazzata dalla
+	  funzione <fncref targ="abs"/>. Per il momento, è mantenuta
+	  in vita per compatibilità all'indietro, ma prima o poi verrà
+	  cancellata. Vi consigliamo di aggiornare i vostri script.
+        </para>
 	<para>
 	  <seelist>
 	    <fncref targ="carg"/>

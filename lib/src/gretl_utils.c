@@ -1189,7 +1189,7 @@ int set_obs (const char *parm1, const char *parm2,
 
     pd = gretl_int_from_string(parm1, &err);
     if (!err && pd < 1) {
-	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
+	gretl_errmsg_sprintf(_("frequency (%d) does not seem to make sense"), pd);
 	return E_DATA;
     }
 
@@ -1214,7 +1214,7 @@ int set_obs (const char *parm1, const char *parm2,
     }
 
     if (panel && dset->n > 0 && pd > dset->n) {
-	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
+	gretl_errmsg_sprintf(_("frequency (%d) does not seem to make sense"), pd);
 	return 1;
     }
 

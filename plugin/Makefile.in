@@ -21,6 +21,7 @@ gtk_version = @gtk_version@
 use_gsf = @use_gsf@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
+win32bit = @win32bit@
 macpkg = @macpkg@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
@@ -187,8 +188,7 @@ PLUGINS = arma.la \
 	regls.la \
 	geoplot.la \
 	purebin.la \
-	bdstest.la \
-	lpsolve.la
+	bdstest.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -203,6 +203,7 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 
 JSON_PLUGIN = json_get.la
 GMP_PLUGIN = mp_ols.la
+LPSOLVE_PLUGIN = lpsolve.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
@@ -218,6 +219,10 @@ endif
 
 ifneq ($(GMP_LIBS),)
   PLUGINS += $(GMP_PLUGIN)
+endif
+
+ifneq ($(win32bit),yes)
+  PLUGINS += $(LPSOLVE_PLUGIN)
 endif
 
 ifeq ($(have_odbc),yes)

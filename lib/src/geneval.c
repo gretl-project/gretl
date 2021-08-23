@@ -10487,6 +10487,18 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+#if defined(WIN32) && !defined(WIN64)
+
+static NODE *lpsolve_bundle_node (NODE *n, parser *p)
+{
+    gretl_errmsg_set("lpsolve is not supported on 32-bit Windows");
+    p->err = E_DATA;
+
+    return NULL;
+}
+
+#else
+
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -10504,6 +10516,8 @@ static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 
     return ret;
 }
+
+#endif
 
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {

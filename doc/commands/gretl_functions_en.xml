@@ -2399,6 +2399,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="cmod"/>
 	    <fncref targ="atan2"/>
 	  </seelist>
@@ -2758,6 +2759,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="carg"/>
 	  </seelist>
 	</para>
@@ -2963,7 +2965,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="carg"/>
-	    <fncref targ="cmod"/>
+	    <fncref targ="abs"/>
 	  </seelist>
 	</para>
       </description>
