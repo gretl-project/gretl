@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-23 08:06-0400\n"
-"PO-Revision-Date: 2021-08-20 03:02+0100\n"
+"PO-Revision-Date: 2021-08-23 22:42+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -4301,9 +4301,9 @@ msgid "Auxiliary regression including lagged residual"
 msgstr "Regressão auxiliar utilizando o resíduo defasado"
 
 #: lib/src/gretl_panel.c:4986
-#, fuzzy, c-format
+#, c-format
 msgid "Average absolute correlation = %.3f"
-msgstr "eps = %g, correlação de primeira-ordem %.3f"
+msgstr "Média da correlação absoluta = %.3f"
 
 #: lib/src/gretl_panel.c:5318
 #, c-format
@@ -4593,7 +4593,7 @@ msgid "starting obs '%s' is invalid"
 msgstr "observação inicial '%s' inválida"
 
 #: lib/src/gretl_utils.c:1192 lib/src/gretl_utils.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "frequency (%d) does not seem to make sense"
 msgstr "a frequência (%d) não parece fazer sentido"
 
@@ -8380,7 +8380,8 @@ msgstr ""
 "Traduzido por\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>,\n"
 "Henrique Andrade <henrique.coelho@economia.gov.br> e\n"
-"Raquel Guimarães.(atualizada em 20 de agosto de 2021)"
+"Raquel Guimarães.\n"
+"(atualizada em 23 de agosto de 2021)"
 
 #: gui/about.c:209
 msgid "News"
