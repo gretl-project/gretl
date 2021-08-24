@@ -4702,7 +4702,7 @@ void do_nonparam_plot (windata_t *vwin)
             for (i=0; i<n; i++) {
                 gretl_matrix_set(plotmat, i, j, x[i+dataset->t1]);
                 if (!need_sort && j == 2 && i > 0 &&
-                    !na(x[i]) && !na(x[i]) && x[i] < x[i-1]) {
+                    !na(x[i]) && !na(x[i-1]) && x[i] < x[i-1]) {
                     need_sort = 1;
                 }
             }

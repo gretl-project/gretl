@@ -1543,7 +1543,6 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    pos = help_pos_from_string(text, &idx, &role);
 	}
 
-	g_free(text);
 	unset_window_help_active(vwin);
 	text_set_cursor(vwin->text, 0);
 
@@ -1554,6 +1553,8 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 		real_do_help(idx, pos, role);
 	    }
 	}
+
+	g_free(text);
     }
 
     return FALSE;
