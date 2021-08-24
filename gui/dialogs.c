@@ -6129,13 +6129,13 @@ static gchar *pc_change_get_vname (GtkWidget *dialog,
 
 static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
 {
-    gchar *newname = NULL;
+    gchar *lhname = NULL;
     int autoname = 0;
     int err = 0;
 
     if (pci->entry != NULL) {
-        newname = pc_change_get_vname(pci->dialog, pci->entry);
-        if (newname == NULL) {
+        lhname = pc_change_get_vname(pci->dialog, pci->entry);
+        if (lhname == NULL) {
             return;
         }
     } else {
@@ -6143,7 +6143,6 @@ static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
     }
 
     if (!err) {
-        gchar *genline;
         int use_logs = 0;
         int i, ctrl = 0;
 
@@ -6158,37 +6157,38 @@ static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
 
         for (i=1; i<=pci->varlist[0] && !err; i++) {
             const char *vname = dataset->varname[pci->varlist[i]];
+	    gchar *genline = NULL;
 
             if (autoname) {
-                newname = auto_pc_name(vname, 0);
+                lhname = auto_pc_name(vname, 0);
             }
             if (ctrl == 0) {
                 /* period to period rate */
                 if (use_logs) {
                     genline = g_strdup_printf("series %s=100*log(%s/%s(-1))",
-                                              newname, vname, vname);
+                                              lhname, vname, vname);
                 } else {
                     genline = g_strdup_printf("series %s=100*(%s/%s(-1)-1)",
-                                              newname, vname, vname);
+                                              lhname, vname, vname);
                 }
             } else if (ctrl == 1) {
                 /* annualized */
                 if (use_logs) {
                     int mult = dataset->pd * 100;
                     genline = g_strdup_printf("series %s=%d*log(%s/%s(-1))",
-                                              newname, mult, vname, vname);
+                                              lhname, mult, vname, vname);
                 } else {
                     genline = g_strdup_printf("series %s=100*((%s/%s(-1))^%d-1)",
-                                              newname, vname, vname, dataset->pd);
+                                              lhname, vname, vname, dataset->pd);
                 }
             } else {
                 /* year on year */
                 if (use_logs) {
                     genline = g_strdup_printf("series %s=100*log(%s/%s(-%d))",
-                                              newname, vname, vname, dataset->pd);
+                                              lhname, vname, vname, dataset->pd);
                 } else {
                     genline = g_strdup_printf("series %s=100*(%s/%s(-%d)-1)",
-                                              newname, vname, vname, dataset->pd);
+                                              lhname, vname, vname, dataset->pd);
                 }
             }
 
@@ -6202,8 +6202,15 @@ static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
             }
 
             g_free(genline);
-            g_free(newname);
+	    if (autoname) {
+		g_free(lhname);
+		lhname = NULL;
+	    }
         }
+    }
+
+    if (!autoname) {
+	g_free(lhname);
     }
 
     if (!err) {
@@ -6214,13 +6221,13 @@ static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
 static void index_values_callback (GtkWidget *w,
                                    struct index_vals_info *ixi)
 {
-    gchar *newname = NULL;
+    gchar *lhname = NULL;
     int autoname = 0;
     int err = 0;
 
     if (ixi->entry != NULL) {
-        newname = pc_change_get_vname(ixi->dialog, ixi->entry);
-        if (newname == NULL) {
+        lhname = pc_change_get_vname(ixi->dialog, ixi->entry);
+        if (lhname == NULL) {
             return;
         }
     } else {
@@ -6228,7 +6235,6 @@ static void index_values_callback (GtkWidget *w,
     }
 
     if (!err) {
-        gchar *genline;
         char obsstr[OBSLEN];
         int i, t1;
 
@@ -6237,12 +6243,13 @@ static void index_values_callback (GtkWidget *w,
 
         for (i=1; i<=ixi->varlist[0] && !err; i++) {
             const char *vname = dataset->varname[ixi->varlist[i]];
+	    gchar *genline = NULL;
 
             if (autoname) {
-                newname = auto_pc_name(vname, 1);
+                lhname = auto_pc_name(vname, 1);
             }
             genline = g_strdup_printf("series %s=100*%s/%s[%s]",
-                                      newname, vname, vname, obsstr);
+                                      lhname, vname, vname, obsstr);
             err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
             if (err) {
                 gui_errmsg(err);
@@ -6251,8 +6258,15 @@ static void index_values_callback (GtkWidget *w,
                 refresh_data();
             }
             g_free(genline);
-            g_free(newname);
+	    if (autoname) {
+		g_free(lhname);
+		lhname = NULL;
+	    }
         }
+    }
+
+    if (!autoname) {
+	g_free(lhname);
     }
 
     if (!err) {

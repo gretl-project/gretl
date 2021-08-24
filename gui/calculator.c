@@ -422,7 +422,7 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 static void
 range_from_dist (int d, double *parms, int alt, FILE *fp)
 {
-    double x, tmin, tmax;
+    double x, tmin = 0, tmax = 0;
 
     dist_xmin_xmax(d, parms, &tmin, &tmax, alt);
 
@@ -444,7 +444,7 @@ static void
 adjust_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 {
     double *t_range = spec->range[GP_T_RANGE];
-    double tmin, tmax;
+    double tmin = 0, tmax = 0;
 
     dist_xmin_xmax(d, parms, &tmin, &tmax, alt);
 

@@ -3551,7 +3551,7 @@ static int get_data_xy (png_plot *plot, int x, int y,
 	}
     }
 
-    if (na(dx) || na(dx)) {
+    if (na(dx) || na(dy)) {
 	ok = 0;
     } else if (has_log_axis(plot->spec)) {
 	double base, dprop, lr;
@@ -5701,6 +5701,9 @@ static int plot_add_shell (png_plot *plot, const char *name)
     plot->shell = gretl_gtk_window();
     g_object_ref(plot->shell);
     g_object_set_data(G_OBJECT(plot->shell), "plot", plot);
+#if 0 /* do we want this? */
+    gtk_window_set_position(GTK_WINDOW(plot->shell), GTK_WIN_POS_MOUSE);
+#endif
 
     if (name != NULL) {
 	title = g_strdup_printf("gretl: %s", name);
