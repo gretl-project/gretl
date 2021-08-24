@@ -646,6 +646,8 @@ int main (int argc, char *argv[])
         noalloc();
     }
 
+    runfile[0] = filearg[0] = '\0';
+
     if (argc < 2) {
         force_language(LANG_AUTO);
         load_datafile = 0;

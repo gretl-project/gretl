@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-23 08:06-0400\n"
-"PO-Revision-Date: 2021-08-20 02:44+0100\n"
+"PO-Revision-Date: 2021-08-23 22:39+0100\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -4291,9 +4291,9 @@ msgid "Auxiliary regression including lagged residual"
 msgstr "Regressão auxiliar incluindo resíduos desfasados"
 
 #: lib/src/gretl_panel.c:4986
-#, fuzzy, c-format
+#, c-format
 msgid "Average absolute correlation = %.3f"
-msgstr "eps = %g, correlação de primeira-ordem %.3f"
+msgstr "Média da correlação absoluta = %.3f"
 
 #: lib/src/gretl_panel.c:5318
 #, c-format
@@ -4585,7 +4585,7 @@ msgid "starting obs '%s' is invalid"
 msgstr "observação inicial '%s' inválida"
 
 #: lib/src/gretl_utils.c:1192 lib/src/gretl_utils.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "frequency (%d) does not seem to make sense"
 msgstr "a frequência (%d) não parece fazer sentido"
 
@@ -8379,7 +8379,7 @@ msgstr "data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>. \n"
-"Tradução de 20 de Agosto de 2021"
+"Tradução de 23 de Agosto de 2021"
 
 #: gui/about.c:209
 msgid "News"
