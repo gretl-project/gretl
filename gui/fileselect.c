@@ -824,7 +824,7 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	currname = suggested_exportname(datafile, action);
 	gtk_file_chooser_set_current_name(filesel, currname);
 	g_free(currname);
-    } else if (action == SAVE_DATA && *datafile != '\0') {
+    } else if (action == SAVE_MAP && *datafile != '\0') {
 	currname = suggested_mapname(datafile);
 	if (currname != NULL) {
 	    gtk_file_chooser_set_current_name(filesel, currname);
@@ -936,8 +936,6 @@ static GtkFileFilter *add_filter_by_index (GtkWidget *filesel,
 	    gtk_file_filter_add_pattern(filt, "*.json");
 	} else if (fi->id == GRETL_CSV) {
 	    gtk_file_filter_add_pattern(filt, "*.csv.gz");
-	} else if (fi->id == GRETL_CSV) {
-	    gtk_file_filter_add_pattern(filt, "*.txt.gz");
 	} else {
 	    maybe_upcase_filter_pattern(filt, fi->pat);
 	}
