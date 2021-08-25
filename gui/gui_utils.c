@@ -2331,11 +2331,11 @@ view_file_with_title (const char *filename, int editable, int del_file,
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
 
-#if 0 /* not yet */   
+#if 0 /* not yet */
     if (vwin->flags & VWIN_SWALLOW) {
 	mainwin_insert_vwin(vwin);
     }
-#endif    
+#endif
 
     return vwin;
 }

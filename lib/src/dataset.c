@@ -2667,6 +2667,7 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
     free_spoints(sv);
     free(xs);
     free(S);
+    free(x);
 
     return err;
 }

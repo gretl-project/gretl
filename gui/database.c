@@ -1082,7 +1082,6 @@ static void db_view_codebook (GtkWidget *w, windata_t *vwin)
     if (vwin->flags & VWIN_CB_PDF) {
 	cbname = g_strdup_printf("%s.pdf", vwin->fname);
 	gretl_show_pdf(cbname, NULL);
-	g_free(cbname);
     } else {
 	cbname = g_strdup_printf("%s.cb", vwin->fname);
 	view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
@@ -2964,7 +2963,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 				  _("Up to date"));
 	    if (local != NULL) {
 		populate_filelist(local, NULL);
-	    } else {
+	    } else if (targ != NULL) {
 		offer_db_open(targ, vwin);
 	    }
 	}
@@ -4248,9 +4247,12 @@ static void maybe_prune_db_list (GtkTreeView *tview,
 
     ndb = *pndb;
     S = strings_array_new(ndb);
-    icpy = malloc(ndb * sizeof *icpy);
-    if (S == NULL || icpy == NULL) {
+    if (S == NULL) {
 	return;
+    }
+    icpy = malloc(ndb * sizeof *icpy);
+    if (icpy == NULL) {
+	goto bailout;
     }
 
     while (1) {
@@ -4278,6 +4280,8 @@ static void maybe_prune_db_list (GtkTreeView *tview,
 	    i++;
 	}
     }
+
+ bailout:
 
     for (i=0; i<ndb; i++) {
 	g_free(S[i]);

@@ -3551,7 +3551,7 @@ static int get_data_xy (png_plot *plot, int x, int y,
 	}
     }
 
-    if (na(dx) || na(dx)) {
+    if (na(dx) || na(dy)) {
 	ok = 0;
     } else if (has_log_axis(plot->spec)) {
 	double base, dprop, lr;
