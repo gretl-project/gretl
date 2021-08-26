@@ -728,12 +728,16 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
+#if 1 /* 2021-08-26 */
+	    return vwin_copy_callback(NULL, vwin);
+#else
 	    if (editing) {
 		/* let GTK handle this */
 		return FALSE;
 	    } else {
 		return vwin_copy_callback(NULL, vwin);
 	    }
+#endif
 	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own
