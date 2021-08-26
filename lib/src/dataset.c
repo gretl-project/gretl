@@ -373,16 +373,14 @@ int shrink_varinfo (DATASET *dset, int nv)
     }
 
     vnames = realloc(dset->varname, nv * sizeof *vnames);
-    if (vnames == NULL) {
+    vi = realloc(dset->varinfo, nv * sizeof *vi);
+
+    if (vnames == NULL || vi == NULL) {
+	free(vnames);
+	free(vi);
 	err = E_ALLOC;
     } else {
 	dset->varname = vnames;
-    }
-
-    vi = realloc(dset->varinfo, nv * sizeof *vi);
-    if (vi == NULL) {
-	err = E_ALLOC;
-    } else {
 	dset->varinfo = vi;
     }
 
@@ -1357,6 +1355,10 @@ dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
 	}
     }
 
+    if (!err) {
+	sync_dataset_shared_members(dset);
+    }
+
     return err;
 }
 
@@ -1631,20 +1633,18 @@ static int shrink_dataset_to_size (DATASET *dset, int nv, int drop)
 #endif
 
     if (drop == DROP_NORMAL) {
-	char **varname;
-	VARINFO **varinfo;
+	char **varname = realloc(dset->varname, nv * sizeof *varname);
+	VARINFO **varinfo = realloc(dset->varinfo, nv * sizeof *varinfo);
 
-	varname = realloc(dset->varname, nv * sizeof *varname);
-	if (varname == NULL) {
+	if (varname == NULL || varinfo == NULL) {
+	    free(varname);
+	    free(varinfo);
 	    return E_ALLOC;
 	}
+
 	dset->varname = varname;
-
-	varinfo = realloc(dset->varinfo, nv * sizeof *varinfo);
-	if (varinfo == NULL) {
-	    return E_ALLOC;
-	}
 	dset->varinfo = varinfo;
+	sync_dataset_shared_members(dset);
     }
 
     newZ = realloc(dset->Z, nv * sizeof *newZ);
@@ -1883,8 +1883,14 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
     }
 
 #if DDEBUG
-    fprintf(stderr, "real_drop_listed_variables: dropping %d vars:\n",
-	    list[0]);
+    fprintf(stderr, "real_drop_listed_variables: ");
+    if (d1 == 1) {
+	fprintf(stderr, "dropping var %d:\n", list[1]);
+    } else {
+	fprintf(stderr, "dropping %d vars:\n", d1);
+    }
+    fprintf(stderr, "memo: dset=%p, dset->varname=%p\n",
+	    (void *) dset, (void *) dset->varname);
 #endif
 
     /* check that no vars to be deleted are marked "const", and do

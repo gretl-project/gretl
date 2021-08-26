@@ -333,6 +333,14 @@ static void relink_to_full_dataset (DATASET *dset)
     peerset = NULL;
 }
 
+void sync_dataset_shared_members (const DATASET *dset)
+{
+    if (fullset != NULL && dset != fullset) {
+	fullset->varname = dset->varname;
+	fullset->varinfo = dset->varinfo;
+    }
+}
+
 /* sync malloced elements of the fullset struct that might
    have been moved via realloc
 */

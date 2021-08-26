@@ -26,6 +26,8 @@
 
 DATASET *fetch_full_dataset (void);
 
+void sync_dataset_shared_members (const DATASET *dset);
+
 void free_subsample_mask (char *s);
 
 char *copy_subsample_mask (const char *src, int *err);
