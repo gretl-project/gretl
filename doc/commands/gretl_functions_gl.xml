@@ -2399,6 +2399,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="cmod"/>
 	    <fncref targ="atan2"/>
 	  </seelist>
@@ -2758,6 +2759,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="carg"/>
 	  </seelist>
 	</para>
@@ -2963,7 +2965,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="carg"/>
-	    <fncref targ="cmod"/>
+	    <fncref targ="abs"/>
 	  </seelist>
 	</para>
       </description>
@@ -8643,14 +8645,14 @@
 	  A orde de impresión depara
 	</para>
 	<code>
-	  Arranxo de matrices, longura 3
+	  Arranxo de matrices, longura 4
 	  [1] 2 x 3
 	  [2] null
 	  [3] 1 x 3
 	  [4] 1 x 3
 	</code>
 	<para>
-	  En troques, o seguinte exemplo separa <argname>X</argname> equitativamente:
+	  O seguinte exemplo separa <argname>X</argname> equitativamente:
 	</para>
 	<code>
 	  matrix X = {1,2,3; 4,5,6; 7,8,9; 10,11,12}

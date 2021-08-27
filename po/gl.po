@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-23 08:06-0400\n"
-"PO-Revision-Date: 2021-08-18 01:13+0200\n"
+"PO-Revision-Date: 2021-08-27 12:57+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -4286,9 +4286,9 @@ msgid "Auxiliary regression including lagged residual"
 msgstr "Regresión auxiliar incluíndo erros retardados"
 
 #: lib/src/gretl_panel.c:4986
-#, fuzzy, c-format
+#, c-format
 msgid "Average absolute correlation = %.3f"
-msgstr "eps = %g, correlación de 1ª orde %.3f"
+msgstr "Correlación absoluta media = %.3f"
 
 #: lib/src/gretl_panel.c:5318
 #, c-format
@@ -4572,7 +4572,7 @@ msgid "starting obs '%s' is invalid"
 msgstr "Observación inicial '%s' incorrecta"
 
 #: lib/src/gretl_utils.c:1192 lib/src/gretl_utils.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "frequency (%d) does not seem to make sense"
 msgstr "A frecuencia (%d) non semella ter senso"
 
