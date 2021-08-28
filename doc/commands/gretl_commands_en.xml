@@ -11502,7 +11502,8 @@
 	argument; see the second example) expects a space-separated
 	list of names of primary gretl objects other than series
 	(scalars, matrices, strings, bundles, arrays). The value(s) of
-	these objects are displayed.
+	these objects are displayed. In the case of bundles, its
+	entries are sorted by type and alphabetically.
       </para>
       <para>
 	In the fourth form (third example),
