@@ -1119,7 +1119,7 @@ int console_prefs_dialog (GtkWidget *caller)
     GtkWidget *button;
     GtkWidget *hbox;
     GtkWidget *vbox;
-    int canceled = 0;
+    int i, canceled = 0;
 
     if (dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(dialog));
@@ -1143,6 +1143,10 @@ int console_prefs_dialog (GtkWidget *caller)
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
 		     &dialog);
+
+    for (i=0; rc_vars[i].key != NULL; i++) {
+	rc_vars[i].widget = NULL;
+    }
 
     make_prefs_tab(vbox, TAB_EDITOR, 1);
 
@@ -2025,7 +2029,8 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 	w = rcvar->widget;
 	if (w == NULL) {
 	    continue;
-	} else if (rcvar->flags & BOOLSET) {
+	}
+	if (rcvar->flags & BOOLSET) {
 	    int bval = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
 	    rcvar_set_int(rcvar, bval, &changed);
