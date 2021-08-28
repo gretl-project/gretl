@@ -694,6 +694,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     }
 
+#if 0
+    fprintf(stderr, "HERE catch_viewer_key\n"
+	    " editing=%d, console=%d, Ctrl=%d, Alt=%d, key=%s\n",
+	    editing, console, Ctrl, Alt, gdk_keyval_name(upkey));
+#endif
+
     if (editing && Alt) {
 	/* "Alt" specials for editor */
 	if (maybe_insert_greek(upkey, vwin)) {
@@ -728,16 +734,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
-#if 1 /* 2021-08-26 */
 	    return vwin_copy_callback(NULL, vwin);
-#else
-	    if (editing) {
-		/* let GTK handle this */
-		return FALSE;
-	    } else {
-		return vwin_copy_callback(NULL, vwin);
-	    }
-#endif
 	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own
@@ -2401,7 +2398,7 @@ windata_t *console_window (int hsize, int vsize)
     text_table_setup(vwin->vbox, vwin->text);
 
     /* catch some special keystrokes */
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
+    g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
