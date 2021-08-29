@@ -11,8 +11,7 @@ version 2021c, in progress
 - msplitby(): allow for more flexible syntax
 - printing of bundles: sort members by type and key
 - "print" command: make more flexible, it now includes
-  most of the functionality of "eval"; also, bundle elements
-  get sorted
+  most of the functionality of "eval"
 - "var" command with --lagselect option: add a --minlag
   option to allow testing against 0 lags, or imposing the
   assumption that at least p > 1 lags are needed
