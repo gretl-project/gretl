@@ -4714,7 +4714,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     set_source_tabs(vwin->text, cw);
 
 #ifdef HAVE_GTKSV_COMPLETION
-    if (hansl_completion) {
+    if (console_completion) {
 	/* since 2021-06-11 */
 	set_sv_completion(vwin);
     }

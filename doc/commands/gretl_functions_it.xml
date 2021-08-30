@@ -996,7 +996,15 @@
 	  </li>
 	  <li>
             <para>
-              <lit>nproc</lit>: intero, il numero di processori disponibili.
+              <lit>ncores</lit>: integer, il numero di processori
+	      fisici disponibili.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>nproc</lit>: intero, il numero di processori
+	      disponibili, che può essere più grande di
+	      <lit>ncores</lit> se lo hyperthreading è abilitato nel sistema.
             </para>
 	  </li>
 	  <li>
@@ -1031,6 +1039,27 @@
               essere individuato).
             </para>
 	  </li>   
+	  <li>
+            <para>
+              <lit>mem</lit>: un vettore di due elementi indicante la
+	      memoria totale fisica e quella disponibile (in
+	      MB). Questa informazione potrebbe non essere disponibile
+	      su tutti i sistemi operativi ma dovrebbe funzionare
+	      correttamente in Windows, macOS e Linux.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>foreign</lit>:  un bundle contenente
+              indicatori binari per la presenza nel sistema di vari
+	      programmi utilizzabili col comando <cmdref targ
+	      ="foreign">foreign</cmdref>, ossia <lit>julia</lit>,
+              <lit>octave</lit>, <lit>ox</lit>, <lit>python</lit>,
+              <lit>Rbin</lit>, <lit>Rlib</lit> e <lit>stata</lit>.
+              Le due chiavi relative a R fanno riferimento
+	      rispettivamente all'eseguibile R e alla libreria.
+            </para>
+	  </li>
 	</ilist>
 	<para>
 	  Si noti che i singoli elementi del bundle possono essere recuperati
@@ -1803,6 +1832,94 @@
 	  Si veda anche <fncref targ="sscanf"/> per modalità più flessibili di 
 	  conversione da stringa a numero.
 	</para>
+      </description>
+    </function>
+
+    <function name="bcheck" section="programming" output="scalar">
+      <fnargs>
+	<fnarg type="bundleref">target</fnarg>
+	<fnarg type="bundle">input</fnarg>
+	<fnarg type="strings" optional="true">required-keys</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione è tipicamente usata per la scrittura di
+	  pacchetti di funzioni quando, data una funzione che prende
+	  un bundle come argomento, diverse scelte sono
+	  possibili: alcuni elementi del bundle possono avere dei
+	  default, cosicché una scelta esplicita non è indispensabile,
+	  mentre altri elementi potrebbero essere obbligatori. Bisogna
+	  determinare se il bundle passato come argomento è valido.
+	</para>
+	<para>
+	  A tal fine, si costruisce un bundle di riferimento che
+	  contiene tutte le chiavi supportate, con valori che
+	  esemplificano il tipo associato ad ognuna; questo bundle di
+	  riferimento viene passato, in forma di puntatore, come
+	  <argname>target</argname>. Il secondo argomento,
+	  <argname>input</argname>, è il bundle passato alla funzione
+	  originaria. la funzione <lit>bcheck</lit> effettua i
+	  seguenti controlli:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Ci sono delle chiavi in <argname>input</argname> ma non
+	      in <argname>target</argname>? In tal caso,
+	      <lit>bcheck</lit> ritorna un valore non-zero, indicante
+	      che <argname>input</argname> è erroneo.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Ci sono delle chiavi in <argname>input</argname> di tipo
+	      diverso da quello della chiave corrispondente in
+	      <argname>target</argname>? Anche in questo caso, il
+	      valore restituito dalla funzione è non-zero.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Se uno o più argomenti in <argname>target</argname> non
+	      hanno un valore di default (e quindi il valore assegnato
+	      è semplicemente un esempio del tipo di dato atteso),
+	      bisogna passare alla funzione <lit>bcheck</lit> un terzo
+	      argomento: un array di stringhe con le chiavi per cui
+	      l'input non è opzionale. Questo farà sì che il valore
+	      restituito dalla funzione sia non-zero se il bundle
+	      <argname>input</argname> è privo di una o più di queste
+	      chiavi.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Se i controlli precedenti sono andati a buon fine, i valori
+	  contenuti in <argname>input</argname> vengono copiati in
+	  <argname>target</argname> (e quindi i valori di default sono
+	  rimpiazzati da quelli scelti dall'utente). Se si verificano
+	  errori a questo punto, verrà stampato un messaggio
+	  esplicativo dei problemi riscontrati in
+	  <argname>input</argname>.
+	</para>
+	<para>
+	  Facciamo un semplice esempio: prendiamo una funzione che ha
+	  come argomento un bundle contenente (obbligatoriamente) una
+	  matrice <lit>X</lit>, uno scalare <lit>z</lit> con default
+	  pari a 0, e una stringa <lit>s</lit> con default pari a
+	  <quote><lit>display</lit></quote>. Il frammento seguente
+	  controllerà la correttezza del bundle <lit>uservals</lit>,
+	  che si immagina fornito dalla funzione chiamante:
+	</para>
+	<code>
+	  bundle target = _(X={}, z=0, s="display")
+	  strings req = defarray("X")
+	  err = bcheck(&amp;target, uservals, req)
+	  if err
+	     # fa' qualcosa
+	  else
+	     # vai avanti
+	  endif
+	</code>
       </description>
     </function>
 

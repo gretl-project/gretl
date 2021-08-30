@@ -11640,11 +11640,12 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
   le serie nel dataset aperto.
 </para>
 <para>
-  La terza variante (con l'argomento <repl>nomi-oggetto</repl>;
-  vedi il secondo esempio) funziona con una lista di nomi
-  (separati da spazi) di variabili diversi da serie: scalari,
-  matrici, stringhe, bundle, array. Di questi oggetti, vengono
-  mostrati i valori.
+  La terza variante (con l'argomento <repl>nomi-oggetto</repl>; vedi
+  il secondo esempio) funziona con una lista di nomi (separati da
+  spazi) di variabili diversi da serie: scalari, matrici, stringhe,
+  bundle, array. Di questi oggetti, vengono mostrati i valori. Nel
+  caso dei bundle, gli elementi vengono ordinati per tipo e
+  alfabeticamente.
 </para>
 <para>
   Nella quarta forma (terzo esempio), <repl>stringa</repl>

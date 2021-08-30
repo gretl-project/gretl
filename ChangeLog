@@ -1,4 +1,4 @@
-version 2021c, in progress
+2021-08-30 version 2021c
 - New function contains(): indicates whether a numerical
   object contains members of a specified set
 - New function bcheck(): aids in handling bundle arguments
@@ -19,7 +19,10 @@ version 2021c, in progress
   number of series to print side by side
 - "foreign" command mechanism: updates to support version
   4.1.0 of R and version 8.0 of Ox Console
-- GUI: introduce experimental "plot collection"
+- "eval" command: introduce "=" as an alias
+- extend the ".=" operator to the "strings .= string" case
+- GUI: introduce experimental features: plot collections and
+  integrated console
 - GUI: add option to use the tab key as the trigger for
   autocompletion in the script editor and console
 - GUI: add command-line options: --new to start a new gretl
@@ -38,7 +41,7 @@ version 2021c, in progress
   variant of "panplot" with some patterns of missing values
 - Fix bug: wrong results from the polyfit() function when
   applied to panel data
-- Numerous additional small big fixes
+- Numerous additional small bug fixes
 - Internals: make "libset" code more compact and efficient
 - Internals: clear out old gettext variants that encoded
   translations in a Windows code page rather than UTF-8

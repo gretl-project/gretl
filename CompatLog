@@ -1,3 +1,9 @@
+2021-08-30 version 2021c
+
+No known incompatible changes. But a warning that the old fft
+function will be retired before long, in favor of what is now
+called fft2.
+
 2021-05-04 version 2021b
 
 The "arbond" command is now officially deprecated in favor of
