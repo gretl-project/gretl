@@ -41,7 +41,7 @@
   variant of "panplot" with some patterns of missing values
 - Fix bug: wrong results from the polyfit() function when
   applied to panel data
-- Numerous additional small big fixes
+- Numerous additional small bug fixes
 - Internals: make "libset" code more compact and efficient
 - Internals: clear out old gettext variants that encoded
   translations in a Windows code page rather than UTF-8
