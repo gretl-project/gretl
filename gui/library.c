@@ -9605,8 +9605,8 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
         pputs(prn, "> ");
     }
 
-    if (s->in_comment || (line[0] == '/' && line[1] == '*') ||
-        (line[n-1] == '/' && line[n-2] == '*')) {
+    if (s->in_comment || (n >= 2 && ((line[0] == '/' && line[1] == '*') ||
+				     (line[n-1] == '/' && line[n-2] == '*')))) {
         pprintf(prn, "%s\n", line);
     } else if (*line == '#') {
         pprintf(prn, "%s\n", line);

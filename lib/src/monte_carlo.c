@@ -1398,6 +1398,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 	loop->type = EACH_LOOP;
 	loop->init.val = 1;
 	loop->final.val = nf;
+	loop->itermax = nf;
 	err = loop_attach_index_var(loop, ivar, dset);
     }
 
