@@ -1018,9 +1018,29 @@ static void show_prefs_help (GtkWidget *w, GtkWidget *notebook)
     }
 }
 
+/* To record state of preferences dialogs, and avoid opening
+   both the 'global' one and the one specific to the console
+   simultaneously, which would lead to bad effects.
+*/
+static GtkWidget *all_prefs;
+static GtkWidget *console_prefs;
+
+static void preferences_dialog_destroyed (GtkWidget *w,
+					  GtkWidget **pw)
+{
+    int i;
+
+    for (i=0; rc_vars[i].key != NULL; i++) {
+	rc_vars[i].widget = NULL;
+    }
+    if (pw != NULL) {
+	*pw = NULL;
+    }
+}
+
 int preferences_dialog (int page, const char *varname, GtkWidget *parent)
 {
-    static GtkWidget *dialog;
+    GtkWidget *dialog = all_prefs;
     GtkWidget *notebook;
     GtkWidget *button;
     GtkWidget *hbox;
@@ -1030,10 +1050,13 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     if (dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(dialog));
 	return 0;
+    } else if (console_prefs != NULL) {
+	gtk_widget_destroy(console_prefs);
     }
 
     dialog = gretl_dialog_new(_("gretl: preferences"), parent,
 			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
+    all_prefs = dialog;
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
 #endif
@@ -1041,8 +1064,8 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     gtk_box_set_spacing(GTK_BOX(vbox), 2);
 
     g_signal_connect(G_OBJECT(dialog), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed),
-		     &dialog);
+		     G_CALLBACK(preferences_dialog_destroyed),
+		     &all_prefs);
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
@@ -1114,21 +1137,23 @@ static void refocus_console (GtkWidget *widget, GtkWidget *caller)
 
 int console_prefs_dialog (GtkWidget *caller)
 {
-    static GtkWidget *dialog;
+    GtkWidget *dialog = console_prefs;
     GtkWidget *parent;
     GtkWidget *button;
     GtkWidget *hbox;
     GtkWidget *vbox;
-    int i, canceled = 0;
+    int canceled = 0;
 
     if (dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(dialog));
-	return 0;
+    } else if (all_prefs != NULL) {
+	gtk_widget_destroy(all_prefs);
     }
 
     parent = swallow ? mdata->main : caller;
     dialog = gretl_dialog_new(_("gretl: preferences"), parent,
 			      GRETL_DLG_RESIZE | GRETL_DLG_BLOCK);
+    console_prefs = dialog;
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
 #endif
@@ -1141,12 +1166,8 @@ int console_prefs_dialog (GtkWidget *caller)
 			 caller);
     }
     g_signal_connect(G_OBJECT(dialog), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed),
-		     &dialog);
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	rc_vars[i].widget = NULL;
-    }
+		     G_CALLBACK(preferences_dialog_destroyed),
+		     &console_prefs);
 
     make_prefs_tab(vbox, TAB_EDITOR, 1);
 

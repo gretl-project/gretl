@@ -1,3 +1,7 @@
+version 2021d, in progress
+- Prevent opening of general and console preferences
+  dialogs simultaneously
+
 2021-08-30 version 2021c
 - New function contains(): indicates whether a numerical
   object contains members of a specified set
