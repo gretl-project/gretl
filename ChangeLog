@@ -3,7 +3,8 @@ version 2021d, in progress
   dialogs simultaneously
 - Fix potential failure mode in echoing script input lines
   in the GUI program
-- Fix a small and unlikely memory leak
+- Fix a small and somewhat unlikely memory leak
+- Fix a GUI build error when using GTK 2
 
 2021-08-30 version 2021c
 - New function contains(): indicates whether a numerical
