@@ -437,18 +437,18 @@ exclusive options can be specified: \option{two-step} or
 \begin{scode}
 open cig_ch10.gdt
 # real avg price including sales tax
-genr ravgprs = avgprs / cpi
+ravgprs = avgprs / cpi
 # real avg cig-specific tax
-genr rtax = tax / cpi
+rtax = tax / cpi
 # real average total tax
-genr rtaxs = taxs / cpi
+rtaxs = taxs / cpi
 # real average sales tax
-genr rtaxso = rtaxs - rtax
+rtaxso = rtaxs - rtax
 # logs of consumption, price, income
-genr lpackpc = log(packpc)
-genr lravgprs = log(ravgprs)
-genr perinc = income / (pop*cpi)
-genr lperinc = log(perinc)
+lpackpc = log(packpc)
+lravgprs = log(ravgprs)
+perinc = income / (pop*cpi)
+lperinc = log(perinc)
 # restrict sample to 1995 observations
 smpl --restrict year==1995
 # Equation (10.16) by tsls

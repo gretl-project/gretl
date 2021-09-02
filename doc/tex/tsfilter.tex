@@ -43,7 +43,7 @@ Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots
     
 In gretl this transformation can be accomplished by the syntax 
 \begin{code}
-genr Y = fracdiff(X,0.5)
+Y = fracdiff(X, 0.5)
 \end{code}
 
 \section{The Hodrick--Prescott filter}
@@ -80,8 +80,8 @@ cyclical component, $c_t$, of the original series.  If you want the
 smoothed trend you can subtract the cycle from the original:
 
 \begin{code}
-genr ct = hpfilt(yt)
-genr gt = yt - ct
+ct = hpfilt(yt)
+gt = yt - ct
 \end{code}
 
 \cite{hodrick97} suggest that a value of $\lambda = 1600$ is reasonable
@@ -91,7 +91,7 @@ quarterly data).  The value can be adjusted using an optional
 second argument to \verb+hpfilt()+, as in
 %
 \begin{code}
-genr ct = hpfilt(yt, 1300)
+ct = hpfilt(yt, 1300)
 \end{code}
 
 As of version 2018a, the \cmd{hpfilt()} function accepts a third,

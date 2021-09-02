@@ -560,9 +560,9 @@ open greene5_1.gdt
 
 # Use OLS to initialize the parameters
 ols realcons 0 realdpi --quiet
-genr a = $coeff(0)
-genr b = $coeff(realdpi)
-genr g = 1.0
+a = $coeff(0)
+b = $coeff(realdpi)
+g = 1.0
 
 # Run NLS with analytical derivatives
 nls realcons = a + b * (realdpi^g)
