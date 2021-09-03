@@ -2797,6 +2797,20 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
+#if !BIPROBIT_TRIM
+    if (!err && ci == BIPROBIT) {
+	void (*vcv_adjust) (gretl_matrix *, double);
+	double athrho = gretl_model_get_double(pmod, "athrho");
+
+	vcv_adjust = get_plugin_function("biprobit_adjust_vcv");
+	if (vcv_adjust == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    vcv_adjust(GG, athrho);
+	}
+    }
+#endif
+
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE, GG,
 				 V, GRETL_MOD_NONE);

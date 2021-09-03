@@ -867,11 +867,24 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
+void biprobit_adjust_vcv (gretl_matrix *V, double athrho)
+{
+    double vij, ca = cosh(athrho);
+    double J = 1 / (ca * ca);
+    int i, k = V->rows - 1;
+
+    for (i=0; i<=k; i++) {
+	vij = gretl_matrix_get(V, k, i);
+	gretl_matrix_set(V, k, i, vij * J);
+	vij = gretl_matrix_get(V, i, k);
+	gretl_matrix_set(V, i, k, vij * J);
+    }
+}
+
 static gretl_matrix *biprobit_hessian_inverse (double *theta,
-					       void *ptr,
+					       bp_container *bp,
 					       int *err)
 {
-    bp_container *bp = ptr;
     gretl_matrix *H;
 
     H = gretl_matrix_alloc(bp->npar, bp->npar);
@@ -879,12 +892,18 @@ static gretl_matrix *biprobit_hessian_inverse (double *theta,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = biprobit_hessian(theta, H, ptr);
+	*err = biprobit_hessian(theta, H, bp);
     }
 
     if (!*err) {
 	*err = gretl_invert_symmetric_matrix(H);
     }
+
+#if !BIPROBIT_TRIM
+    if (!*err) {
+	biprobit_adjust_vcv(H, bp->arho);
+    }
+#endif
 
     return H;
 }
@@ -1025,24 +1044,15 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     return err;
 }
 
-static void vcv_fix_rho (gretl_matrix *V, double athrho)
-{
-    double vij, ca = cosh(athrho);
-    double J = 1 / (ca * ca);
-    int i, k = V->rows - 1;
-
-    for (i=0; i<=k; i++) {
-	vij = gretl_matrix_get(V, k, i);
-	gretl_matrix_set(V, k, i, vij * J);
-	vij = gretl_matrix_get(V, i, k);
-	gretl_matrix_set(V, i, k, vij * J);
-    }
-}
-
 static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 			 const DATASET *dset, gretlopt opt)
 {
     int err = 0;
+
+#if !BIPROBIT_TRIM
+    gretl_model_set_int(pmod, "rho_included", 1);
+    gretl_model_set_double(pmod, "athrho", bp->arho);
+#endif
 
     if (opt & OPT_G) {
 	err = gretl_model_add_OPG_vcv(pmod, bp->score, NULL);
@@ -1059,26 +1069,17 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 					      H, bp->score, dset, opt,
 					      NULL);
 	    } else {
-#if BIPROBIT_TRIM
 		err = gretl_model_add_hessian_vcv(pmod, H);
-#else
-		vcv_fix_rho(H, bp->arho);
-		err = gretl_model_add_hessian_vcv(pmod, H);
-		H = NULL;
-#endif
 	    }
 	}
-	free(theta);
 #if BIPROBIT_TRIM /* it's a temporary thing */
-	vcv_fix_rho(H, bp->arho);
 	gretl_model_set_data(pmod, "full_vcv", H, GRETL_TYPE_MATRIX, 0);
 	int nc = gretl_matrix_rows(H);
 	double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1));
 	fprintf(stderr, "athrho = %g, serho = %g\n", bp->arho, serho);
 	gretl_model_set_double(pmod, "se_rho", serho);
-#else
-	gretl_matrix_free(H);
 #endif
+	free(theta);
     }
 
     return err;
