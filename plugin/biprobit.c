@@ -1050,6 +1050,12 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	free(theta);
 #if 1 /* it's a temporary thing */
 	gretl_model_set_data(pmod, "full_vcv", H, GRETL_TYPE_MATRIX, 0);
+	int nc = gretl_matrix_rows(H);
+	double athrho = theta[nc-1];
+	double J = 1/cosh(athrho);
+	double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1)) * J * J;
+	fprintf(stderr, "athrho = %g, serho = %g\n", athrho, serho);
+	gretl_model_set_double(pmod, "se_rho", serho);
 #else
 	gretl_matrix_free(H);
 #endif
