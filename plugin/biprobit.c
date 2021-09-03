@@ -1044,14 +1044,15 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 					      H, bp->score, dset, opt,
 					      NULL);
 	    } else {
-#if 0
-		gretl_matrix_write_to_file(H, "bpHinv.bin", 0);
-#endif
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
 	}
 	free(theta);
+#if 1 /* it's a temporary thing */
+	gretl_model_set_data(pmod, "full_vcv", H, GRETL_TYPE_MATRIX, 0);
+#else
 	gretl_matrix_free(H);
+#endif
     }
 
     return err;
