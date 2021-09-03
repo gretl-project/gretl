@@ -26,6 +26,7 @@
 #include "missing_private.h"
 
 #define BIPDEBUG 0
+#define BIPROBIT_TRIM 1
 
 typedef struct bp_container_ bp_container;
 
@@ -1024,6 +1025,20 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     return err;
 }
 
+static void vcv_fix_rho (gretl_matrix *V, double athrho)
+{
+    double vij, ca = cosh(athrho);
+    double J = 1 / (ca * ca);
+    int i, k = V->rows - 1;
+
+    for (i=0; i<=k; i++) {
+	vij = gretl_matrix_get(V, k, i);
+	gretl_matrix_set(V, k, i, vij * J);
+	vij = gretl_matrix_get(V, i, k);
+	gretl_matrix_set(V, i, k, vij * J);
+    }
+}
+
 static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 			 const DATASET *dset, gretlopt opt)
 {
@@ -1044,17 +1059,22 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 					      H, bp->score, dset, opt,
 					      NULL);
 	    } else {
+#if BIPROBIT_TRIM
 		err = gretl_model_add_hessian_vcv(pmod, H);
+#else
+		vcv_fix_rho(H, bp->arho);
+		err = gretl_model_add_hessian_vcv(pmod, H);
+		H = NULL;
+#endif
 	    }
 	}
 	free(theta);
-#if 1 /* it's a temporary thing */
+#if BIPROBIT_TRIM /* it's a temporary thing */
+	vcv_fix_rho(H, bp->arho);
 	gretl_model_set_data(pmod, "full_vcv", H, GRETL_TYPE_MATRIX, 0);
 	int nc = gretl_matrix_rows(H);
-	double athrho = theta[nc-1];
-	double J = 1/cosh(athrho);
-	double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1)) * J * J;
-	fprintf(stderr, "athrho = %g, serho = %g\n", athrho, serho);
+	double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1));
+	fprintf(stderr, "athrho = %g, serho = %g\n", bp->arho, serho);
 	gretl_model_set_double(pmod, "se_rho", serho);
 #else
 	gretl_matrix_free(H);
@@ -1194,39 +1214,65 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
     return err;
 }
 
+static int biprobit_resize_coeff (MODEL *pmod, int npar)
+{
+    double *tmp = realloc(pmod->coeff, npar * sizeof *tmp);
+
+    if (tmp == NULL) {
+	return E_ALLOC;
+    } else {
+	pmod->coeff = tmp;
+	pmod->ncoeff = npar;
+    }
+
+    return 0;
+}
+
 static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
 				const DATASET *dset,
 				gretlopt opt)
 {
-    double *tmp;
-    int npar = bp->npar - 1;
-    int i, xi, err = 0;
+    int npar, xi;
+    int i, j, err = 0;
 
-    tmp = realloc(pmod->coeff, npar * sizeof *tmp);
+#if BIPROBIT_TRIM
+    npar = bp->npar - 1;
+#else
+    npar = bp->npar;
+#endif
 
-    if (tmp == NULL) {
-	err = E_ALLOC;
-    } else {
-	pmod->coeff = tmp;
-	pmod->ncoeff = npar;
+    if (npar != pmod->ncoeff) {
+	err = biprobit_resize_coeff(pmod, npar);
+    }
+    if (!err) {
 	err = gretl_model_allocate_param_names(pmod, npar);
     }
-
     if (err) {
 	return err;
     }
 
+    j = 0;
+
     for (i=0; i<bp->k1; i++) {
 	xi = bp->X1list[i+1];
-	gretl_model_set_param_name(pmod, i, dset->varname[xi]);
-	pmod->coeff[i] = gretl_vector_get(bp->beta, i);
+	gretl_model_set_param_name(pmod, j, dset->varname[xi]);
+	pmod->coeff[j] = gretl_vector_get(bp->beta, i);
+	j++;
     }
 
     for (i=0; i<bp->k2; i++) {
 	xi = bp->X2list[i+1];
-	gretl_model_set_param_name(pmod, i+bp->k1, dset->varname[xi]);
-	pmod->coeff[i + bp->k1] = gretl_vector_get(bp->gama, i);
+	gretl_model_set_param_name(pmod, j, dset->varname[xi]);
+	pmod->coeff[j] = gretl_vector_get(bp->gama, i);
+	j++;
     }
+
+    pmod->rho = tanh(bp->arho);
+
+#if !BIPROBIT_TRIM
+    gretl_model_set_param_name(pmod, npar-1, "rho");
+    pmod->coeff[j] = pmod->rho;
+#endif
 
     /* scrub some invalid statistics */
     pmod->rsq = pmod->adjrsq = NADBL;
@@ -1237,8 +1283,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     pmod->yhat = NULL;
 
     pmod->lnL = bp->ll;
-    mle_criteria(pmod, 1); /* allow for estimation of rho */
-    pmod->rho = tanh(bp->arho);
+    mle_criteria(pmod, bp->npar - npar); /* allow for estimation of rho */
 
     free(pmod->list);
     pmod->list = gretl_list_copy(bp->list);

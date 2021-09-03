@@ -2696,6 +2696,10 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     return err;
 }
 
+#define BIPROBIT_TRIM 1
+
+#if BIPROBIT_TRIM
+
 /* Special for biprobit, maybe just temporary: trim
    the last row and column of the covariance matrix,
    pertaining to the "extra" parameter rho. The
@@ -2729,6 +2733,8 @@ static int prune_vcv (gretl_matrix **pV)
 
     return 0;
 }
+
+#endif
 
 /**
  * gretl_model_add_QML_vcv:
@@ -2802,9 +2808,11 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
+#if BIPROBIT_TRIM
     if (!err && ci == BIPROBIT) {
 	err = prune_vcv(&V);
     }
+#endif
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, V);
@@ -2834,6 +2842,8 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
     return err;
 }
 
+#define BIPROBIT_TRIM_VCV
+
 /**
  * gretl_model_add_hessian_vcv:
  * @pmod: pointer to model.
@@ -2851,6 +2861,7 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
 {
     int err = 0;
 
+#if BIPROBIT_TRIM
     if (pmod->ci == BIPROBIT) {
 	gretl_matrix *H0 = gretl_matrix_copy(H);
 
@@ -2862,6 +2873,9 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
     } else {
 	gretl_model_write_vcv(pmod, H);
     }
+#else
+    gretl_model_write_vcv(pmod, H);
+#endif
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
@@ -2896,9 +2910,11 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
 
     err = gretl_invert_symmetric_matrix(GG);
 
+#if BIPROBIT_TRIM
     if (!err && pmod->ci == BIPROBIT) {
 	err = prune_vcv(&GG);
     }
+#endif
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, GG);
