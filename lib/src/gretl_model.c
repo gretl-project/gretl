@@ -2696,10 +2696,6 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     return err;
 }
 
-#define BIPROBIT_TRIM 1
-
-#if BIPROBIT_TRIM
-
 /* Special for biprobit, maybe just temporary: trim
    the last row and column of the covariance matrix,
    pertaining to the "extra" parameter rho. The
@@ -2734,7 +2730,34 @@ static int prune_vcv (gretl_matrix **pV)
     return 0;
 }
 
-#endif
+/* Hopefully the following is just temporary: handle the
+   two cases where rho is or is not included in the
+   covariance matrix for biprobit estimation.
+*/
+
+static int biprobit_vcv_special (MODEL *pmod,
+				 gretl_matrix **pV)
+{
+    int err = 0;
+
+    if (gretl_model_get_int(pmod, "rho_included")) {
+	/* adjust the rho elements in @V */
+	void (*vcv_adjust) (gretl_matrix *, double);
+	double athrho = gretl_model_get_double(pmod, "athrho");
+
+	vcv_adjust = get_plugin_function("biprobit_adjust_vcv");
+	if (vcv_adjust == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    vcv_adjust(*pV, athrho);
+	}
+    } else {
+	/* old-style: trim the rho elements off @V */
+	err = prune_vcv(pV);
+    }
+
+    return err;
+}
 
 /**
  * gretl_model_add_QML_vcv:
@@ -2797,20 +2820,6 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
-#if !BIPROBIT_TRIM
-    if (!err && ci == BIPROBIT) {
-	void (*vcv_adjust) (gretl_matrix *, double);
-	double athrho = gretl_model_get_double(pmod, "athrho");
-
-	vcv_adjust = get_plugin_function("biprobit_adjust_vcv");
-	if (vcv_adjust == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    vcv_adjust(GG, athrho);
-	}
-    }
-#endif
-
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE, GG,
 				 V, GRETL_MOD_NONE);
@@ -2822,11 +2831,9 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
-#if BIPROBIT_TRIM
     if (!err && ci == BIPROBIT) {
-	err = prune_vcv(&V);
+	err = biprobit_vcv_special(pmod, &V);
     }
-#endif
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, V);
@@ -2856,8 +2863,6 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
     return err;
 }
 
-#define BIPROBIT_TRIM_VCV
-
 /**
  * gretl_model_add_hessian_vcv:
  * @pmod: pointer to model.
@@ -2875,21 +2880,21 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
 {
     int err = 0;
 
-#if BIPROBIT_TRIM
     if (pmod->ci == BIPROBIT) {
-	gretl_matrix *H0 = gretl_matrix_copy(H);
+	if (gretl_model_get_int(pmod, "rho_included")) {
+	    gretl_model_write_vcv(pmod, H);
+	} else {
+	    gretl_matrix *H0 = gretl_matrix_copy(H);
 
-	err = prune_vcv(&H0);
-	if (!err) {
-	    err = gretl_model_write_vcv(pmod, H0);
+	    err = prune_vcv(&H0);
+	    if (!err) {
+		err = gretl_model_write_vcv(pmod, H0);
+	    }
+	    gretl_matrix_free(H0);
 	}
-	gretl_matrix_free(H0);
     } else {
 	gretl_model_write_vcv(pmod, H);
     }
-#else
-    gretl_model_write_vcv(pmod, H);
-#endif
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
@@ -2924,11 +2929,9 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
 
     err = gretl_invert_symmetric_matrix(GG);
 
-#if BIPROBIT_TRIM
     if (!err && pmod->ci == BIPROBIT) {
-	err = prune_vcv(&GG);
+	err = biprobit_vcv_special(pmod, &GG);
     }
-#endif
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, GG);
@@ -4238,10 +4241,15 @@ static const char *test_get_descrip (const ModelTest *test)
 {
     static const char *dfree =
 	N_("Distribution free Wald test for heteroskedasticity");
+    static const char *lr_indep =
+	N_("Likelihood ratio test of independence");
 
     if (test->type == GRETL_TEST_GROUPWISE &&
 	test->teststat == GRETL_STAT_WALD_CHISQ) {
 	return dfree;
+    } else if (test->type == GRETL_TEST_INDEP &&
+	       test->teststat == GRETL_STAT_LR) {
+	return lr_indep;
     } else {
 	int i;
 

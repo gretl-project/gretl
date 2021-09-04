@@ -26,7 +26,19 @@
 #include "missing_private.h"
 
 #define BIPDEBUG 0
-#define BIPROBIT_TRIM 1
+
+/* temporary switch stuff */
+
+static int biprobit_trim = 1;
+
+static void biprobit_set_trim (void)
+{
+    if (getenv("BIPROBIT_NOTRIM") != NULL) {
+	biprobit_trim = 0;
+    }
+}
+
+/* end temporary switch stuff */
 
 typedef struct bp_container_ bp_container;
 
@@ -899,12 +911,6 @@ static gretl_matrix *biprobit_hessian_inverse (double *theta,
 	*err = gretl_invert_symmetric_matrix(H);
     }
 
-#if !BIPROBIT_TRIM
-    if (!*err) {
-	biprobit_adjust_vcv(H, bp->arho);
-    }
-#endif
-
     return H;
 }
 
@@ -1049,10 +1055,10 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 {
     int err = 0;
 
-#if !BIPROBIT_TRIM
-    gretl_model_set_int(pmod, "rho_included", 1);
-    gretl_model_set_double(pmod, "athrho", bp->arho);
-#endif
+    if (!biprobit_trim) {
+	gretl_model_set_int(pmod, "rho_included", 1);
+	gretl_model_set_double(pmod, "athrho", bp->arho);
+    }
 
     if (opt & OPT_G) {
 	err = gretl_model_add_OPG_vcv(pmod, bp->score, NULL);
@@ -1069,23 +1075,30 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 					      H, bp->score, dset, opt,
 					      NULL);
 	    } else {
+		if (!biprobit_trim) {
+		    biprobit_adjust_vcv(H, bp->arho);
+		}
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
 	}
-#if BIPROBIT_TRIM /* it's a temporary thing */
-	gretl_model_set_data(pmod, "full_vcv", H, GRETL_TYPE_MATRIX, 0);
-	int nc = gretl_matrix_rows(H);
-	double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1));
-	fprintf(stderr, "athrho = %g, serho = %g\n", bp->arho, serho);
-	gretl_model_set_double(pmod, "se_rho", serho);
-#endif
+
+	if (biprobit_trim) {
+	    /* it's a temporary thing */
+	    int nc = gretl_matrix_rows(H);
+	    double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1));
+
+	    gretl_model_set_data(pmod, "full_H", H, GRETL_TYPE_MATRIX, 0);
+	    fprintf(stderr, "athrho = %g, serho = %g\n", bp->arho, serho);
+	    gretl_model_set_double(pmod, "se_rho", serho);
+	}
 	free(theta);
     }
 
     return err;
 }
 
-static int add_indep_LR_test (MODEL *pmod, double LR)
+static int add_indep_test (MODEL *pmod, bp_container *bp,
+			   gretlopt opt)
 {
     ModelTest *test = model_test_new(GRETL_TEST_INDEP);
     int err = 0;
@@ -1093,10 +1106,23 @@ static int add_indep_LR_test (MODEL *pmod, double LR)
     if (test == NULL) {
 	err = E_ALLOC;
     } else {
-        model_test_set_teststat(test, GRETL_STAT_LR);
+	double testval;
+
+	if (opt & OPT_R) {
+	    /* QML: use Wald */
+	    int k = bp->npar - 1;
+	    double z = pmod->coeff[k] / pmod->sderr[k];
+
+	    testval = z * z;
+	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+	} else {
+	    /* max likelihood: use LR */
+	    testval = 2 * (bp->ll - bp->ll0);
+	    model_test_set_teststat(test, GRETL_STAT_LR);
+	}
         model_test_set_dfn(test, 1);
-        model_test_set_value(test, LR);
-        model_test_set_pvalue(test, chisq_cdf_comp(1, LR));
+        model_test_set_value(test, testval);
+        model_test_set_pvalue(test, chisq_cdf_comp(1, testval));
         maybe_add_test_to_model(pmod, test);
     }
 
@@ -1236,11 +1262,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     int npar, xi;
     int i, j, err = 0;
 
-#if BIPROBIT_TRIM
-    npar = bp->npar - 1;
-#else
-    npar = bp->npar;
-#endif
+    npar = biprobit_trim ? bp->npar - 1 : bp->npar;
 
     if (npar != pmod->ncoeff) {
 	err = biprobit_resize_coeff(pmod, npar);
@@ -1270,10 +1292,10 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
 
     pmod->rho = tanh(bp->arho);
 
-#if !BIPROBIT_TRIM
-    gretl_model_set_param_name(pmod, npar-1, "rho");
-    pmod->coeff[j] = pmod->rho;
-#endif
+    if (!biprobit_trim) {
+	gretl_model_set_param_name(pmod, npar-1, "rho");
+	pmod->coeff[j] = pmod->rho;
+    }
 
     /* scrub some invalid statistics */
     pmod->rsq = pmod->adjrsq = NADBL;
@@ -1307,7 +1329,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     }
 
     if (!err) {
-	err = add_indep_LR_test(pmod, 2 * (bp->ll - bp->ll0));
+	err = add_indep_test(pmod, bp, opt);
     }
 
     return err;
@@ -1355,6 +1377,9 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     if (opt & OPT_V) {
 	vprn = prn;
     }
+
+    /* temporary: read environment */
+    biprobit_set_trim();
 
     mod.errcode = bp_container_fill(bp, &mod, dset, vprn);
     if (mod.errcode) {
