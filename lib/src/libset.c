@@ -124,8 +124,9 @@ static struct global_vars_ {
     gint8 loglevel;
     gint8 logstamp;
     gint8 csv_digits;
+    gint8 biprobit_trim;
     int gmp_bits;
-} globals = {0, 0, 5, 0, 0, 1, 2, 0, UNSET_INT, 256};
+} globals = {0, 0, 5, 0, 0, 1, 2, 0, UNSET_INT, 0, 256};
 
 /* globals for internal use */
 static int seed_is_set;
@@ -216,6 +217,7 @@ setvar setvars[] = {
     { R_LIB,         "R_lib",       CAT_BEHAVE, offsetof(global_vars,R_lib) },
     { LOGLEVEL,      "loglevel",    CAT_BEHAVE, offsetof(global_vars,loglevel) },
     { LOGSTAMP,      "logstamp",    CAT_BEHAVE, offsetof(global_vars,logstamp) },
+    { BIPROBIT_TRIM, "biprobit_trim", CAT_BEHAVE, offsetof(global_vars,biprobit_trim) },
     { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE, offsetof(global_vars,csv_digits) },
     { NS_SMALL_INT_MAX, NULL },
     { GMP_BITS,      "gmp_bits",    CAT_BEHAVE, offsetof(global_vars,gmp_bits) },
@@ -239,7 +241,7 @@ setvar setvars[] = {
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || \
-			   k==R_LIB || k==LOGSTAMP)
+			   k==R_LIB || k==LOGSTAMP || k==BIPROBIT_TRIM)
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
@@ -1964,6 +1966,8 @@ int libset_get_bool (SetKey key)
         return gretl_rand_get_dcmt();
     } else if (key == LOGSTAMP) {
 	return globals.logstamp;
+    } else if (key == BIPROBIT_TRIM) {
+	return globals.biprobit_trim;
     }
 
     if (check_for_state()) {
@@ -2062,6 +2066,9 @@ int libset_set_bool (SetKey key, int val)
 	return gretl_rand_set_dcmt(val);
     } else if (key == LOGSTAMP) {
 	globals.logstamp = val;
+	return 0;
+    } else if (key == BIPROBIT_TRIM) {
+	globals.biprobit_trim = val;
 	return 0;
     }
 

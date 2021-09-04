@@ -27,18 +27,8 @@
 
 #define BIPDEBUG 0
 
-/* temporary switch stuff */
-
-static int biprobit_trim = 1;
-
-static void biprobit_set_trim (void)
-{
-    if (getenv("BIPROBIT_NOTRIM") != NULL) {
-	biprobit_trim = 0;
-    }
-}
-
-/* end temporary switch stuff */
+/* temporary switch */
+static int biprobit_trim = 0;
 
 typedef struct bp_container_ bp_container;
 
@@ -736,7 +726,6 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	gretl_matrix_block_zero(bp->B);
 
 	/* first, put the OPG matrix into H */
-
 	err = gretl_matrix_multiply_mod(bp->score, GRETL_MOD_TRANSPOSE,
 					bp->score, GRETL_MOD_NONE,
 					H, GRETL_MOD_NONE);
@@ -1007,6 +996,30 @@ static int biprobit_OPG_vcv (MODEL *pmod,
     return err;
 }
 
+static int biprobit_hessian_vcv (MODEL *pmod,
+				 gretl_matrix **pH,
+				 bp_container *bp)
+{
+    int err = 0;
+
+    if (biprobit_trim) {
+	/* old-style: trim the rho elements off @V */
+	err = biprobit_prune_vcv(pH);
+    } else {
+	/* adjust the rho elements in @V */
+	biprobit_adjust_vcv(pmod, *pH, bp->arho);
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, *pH);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	}
+    }
+
+    return err;
+}
+
 static gretl_matrix *biprobit_hessian_inverse (double *theta,
 					       bp_container *bp,
 					       int *err)
@@ -1171,8 +1184,9 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 
     if (!biprobit_trim) {
 	gretl_model_set_int(pmod, "rho_included", 1);
-	gretl_model_set_double(pmod, "athrho", bp->arho);
     }
+
+    gretl_model_set_double(pmod, "athrho", bp->arho);
 
     if (opt & OPT_G) {
 	err = biprobit_OPG_vcv(pmod, bp->score, bp);
@@ -1187,24 +1201,11 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	    if (opt & OPT_R) {
 		err = biprobit_QML_vcv(pmod, H, bp->score, bp);
 	    } else {
-		if (!biprobit_trim) {
-		    biprobit_adjust_vcv(pmod, H, bp->arho);
-		}
-		err = gretl_model_add_hessian_vcv(pmod, H);
+		err = biprobit_hessian_vcv(pmod, &H, bp);
 	    }
 	}
-
-	if (biprobit_trim) {
-	    /* it's a temporary thing */
-	    int nc = gretl_matrix_rows(H);
-	    double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1));
-
-	    gretl_model_set_data(pmod, "full_H", H, GRETL_TYPE_MATRIX, 0);
-	    fprintf(stderr, "athrho = %g, se_rho = %g\n", bp->arho, serho);
-	    gretl_model_set_double(pmod, "se_rho", serho);
-	}
-
 	free(theta);
+	gretl_matrix_free(H);
     }
 
     return err;
@@ -1491,8 +1492,8 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
 	vprn = prn;
     }
 
-    /* temporary: read environment */
-    biprobit_set_trim();
+    /* temporary: read temporary set variable */
+    biprobit_trim = libset_get_bool(BIPROBIT_TRIM);
 
     mod.errcode = bp_container_fill(bp, &mod, dset, vprn);
     if (mod.errcode) {
