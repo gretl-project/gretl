@@ -1108,7 +1108,7 @@ static int add_indep_test (MODEL *pmod, bp_container *bp,
     } else {
 	double testval;
 
-	if (opt & OPT_R) {
+	if ((opt & OPT_R) && gretl_model_get_int(pmod, "rho_included")) {
 	    /* QML: use Wald */
 	    int k = bp->npar - 1;
 	    double z = pmod->coeff[k] / pmod->sderr[k];
