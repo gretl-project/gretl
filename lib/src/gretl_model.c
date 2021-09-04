@@ -4299,6 +4299,13 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	}
     }
 
+    if (test->type == GRETL_TEST_INDEP &&
+	test->teststat == GRETL_STAT_WALD_CHISQ &&
+	H0 != NULL && !strcmp(H0, "rho = 0")) {
+	/* adjust for QML biprobit */
+	H0 = N_("atanh(rho) = 0");
+    }
+
     if (H0 == NULL && test->type != GRETL_TEST_WITHIN_F &&
 	test->type != GRETL_TEST_RE_WALD) {
 	return;

@@ -520,7 +520,7 @@ static int *prelim_list (const int *list)
    the two probit models to be estimated subsequently
 */
 
-MODEL bp_preliminary_ols (const int *list, DATASET *dset)
+static MODEL bp_preliminary_ols (const int *list, DATASET *dset)
 {
 #if BIPDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
@@ -879,11 +879,16 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
-void biprobit_adjust_vcv (gretl_matrix *V, double athrho)
+static void biprobit_adjust_vcv (MODEL *pmod, gretl_matrix *V,
+				 double athrho)
 {
-    double vij, ca = cosh(athrho);
+    double v, vij, ca = cosh(athrho);
     double J = 1 / (ca * ca);
     int i, k = V->rows - 1;
+
+    /* save the std error of atanh(rho) first */
+    v = gretl_matrix_get(V, k, k);
+    gretl_model_set_double(pmod, "se_athrho", sqrt(v));
 
     for (i=0; i<=k; i++) {
 	vij = gretl_matrix_get(V, k, i);
@@ -891,6 +896,115 @@ void biprobit_adjust_vcv (gretl_matrix *V, double athrho)
 	vij = gretl_matrix_get(V, i, k);
 	gretl_matrix_set(V, i, k, vij * J);
     }
+}
+
+static int biprobit_prune_vcv (gretl_matrix **pV)
+{
+    gretl_matrix *V, *V0 = *pV;
+    int i, j, k = V0->rows - 1;
+    double vij;
+
+    V = gretl_matrix_alloc(k, k);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=0; j<k; j++) {
+	for (i=0; i<k; i++) {
+	    vij = gretl_matrix_get(V0, i, j);
+	    gretl_matrix_set(V, i, j, vij);
+	}
+    }
+
+    gretl_matrix_free(V0);
+    *pV = V;
+
+    return 0;
+}
+
+static int finalize_biprobit_vcv (MODEL *pmod,
+				  gretl_matrix **pV,
+				  bp_container *bp)
+{
+    int err = 0;
+
+    if (biprobit_trim) {
+	/* old-style: trim the rho elements off @V */
+	err = biprobit_prune_vcv(pV);
+    } else {
+	/* adjust the rho elements in @V */
+	biprobit_adjust_vcv(pmod, *pV, bp->arho);
+    }
+
+    return err;
+}
+
+static int biprobit_QML_vcv (MODEL *pmod,
+			     const gretl_matrix *H,
+			     const gretl_matrix *G,
+			     bp_container *bp)
+{
+    gretl_matrix *GG = NULL;
+    gretl_matrix *V = NULL;
+    int k = H->rows;
+    int err = 0;
+
+    V = gretl_matrix_alloc(k, k);
+    GG = gretl_matrix_XTX_new(G);
+
+    if (V == NULL || GG == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_qform(H, GRETL_MOD_NONE, GG,
+				 V, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = finalize_biprobit_vcv(pmod, &V, bp);
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, V);
+    }
+
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+	pmod->opt |= OPT_R;
+    }
+
+    gretl_matrix_free(GG);
+    gretl_matrix_free(V);
+
+    return err;
+}
+
+static int biprobit_OPG_vcv (MODEL *pmod,
+			     const gretl_matrix *G,
+			     bp_container *bp)
+{
+    gretl_matrix *V = gretl_matrix_XTX_new(G);
+    int err = 0;
+
+    if (V == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_invert_symmetric_matrix(V);
+    }
+
+    if (!err) {
+	err = finalize_biprobit_vcv(pmod, &V, bp);
+    }
+
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, V);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	}
+    }
+
+    gretl_matrix_free(V);
+
+    return err;
 }
 
 static gretl_matrix *biprobit_hessian_inverse (double *theta,
@@ -1061,7 +1175,7 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
     }
 
     if (opt & OPT_G) {
-	err = gretl_model_add_OPG_vcv(pmod, bp->score, NULL);
+	err = biprobit_OPG_vcv(pmod, bp->score, bp);
     } else {
 	double *theta = make_bp_theta(bp, &err);
 	gretl_matrix *H = NULL;
@@ -1071,12 +1185,10 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	}
 	if (!err) {
 	    if (opt & OPT_R) {
-		err = gretl_model_add_QML_vcv(pmod, BIPROBIT,
-					      H, bp->score, dset, opt,
-					      NULL);
+		err = biprobit_QML_vcv(pmod, H, bp->score, bp);
 	    } else {
 		if (!biprobit_trim) {
-		    biprobit_adjust_vcv(H, bp->arho);
+		    biprobit_adjust_vcv(pmod, H, bp->arho);
 		}
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
@@ -1088,9 +1200,10 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	    double serho = sqrt(gretl_matrix_get(H, nc-1, nc-1));
 
 	    gretl_model_set_data(pmod, "full_H", H, GRETL_TYPE_MATRIX, 0);
-	    fprintf(stderr, "athrho = %g, serho = %g\n", bp->arho, serho);
+	    fprintf(stderr, "athrho = %g, se_rho = %g\n", bp->arho, serho);
 	    gretl_model_set_double(pmod, "se_rho", serho);
 	}
+
 	free(theta);
     }
 
@@ -1109,9 +1222,9 @@ static int add_indep_test (MODEL *pmod, bp_container *bp,
 	double testval;
 
 	if ((opt & OPT_R) && gretl_model_get_int(pmod, "rho_included")) {
-	    /* QML: use Wald */
-	    int k = bp->npar - 1;
-	    double z = pmod->coeff[k] / pmod->sderr[k];
+	    /* QML: Wald test on athrho as per Stata */
+	    double se = gretl_model_get_double(pmod, "se_athrho");
+	    double z = bp->arho / se;
 
 	    testval = z * z;
 	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
