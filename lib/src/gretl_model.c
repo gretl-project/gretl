@@ -2696,69 +2696,6 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     return err;
 }
 
-/* Special for biprobit, maybe just temporary: trim
-   the last row and column of the covariance matrix,
-   pertaining to the "extra" parameter rho. The
-   alternative to this would be promoting rho to
-   full "coeff" status.
-
-   Fixes breakage in the $vcv accessor noticed and
-   discussed in late October 2020.
-*/
-
-static int prune_vcv (gretl_matrix **pV)
-{
-    gretl_matrix *V, *V0 = *pV;
-    int i, j, k = V0->rows - 1;
-    double vij;
-
-    V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	return E_ALLOC;
-    }
-
-    for (j=0; j<k; j++) {
-	for (i=0; i<k; i++) {
-	    vij = gretl_matrix_get(V0, i, j);
-	    gretl_matrix_set(V, i, j, vij);
-	}
-    }
-
-    gretl_matrix_free(V0);
-    *pV = V;
-
-    return 0;
-}
-
-/* Hopefully the following is just temporary: handle the
-   two cases where rho is or is not included in the
-   covariance matrix for biprobit estimation.
-*/
-
-static int biprobit_vcv_special (MODEL *pmod,
-				 gretl_matrix **pV)
-{
-    int err = 0;
-
-    if (gretl_model_get_int(pmod, "rho_included")) {
-	/* adjust the rho elements in @V */
-	void (*vcv_adjust) (gretl_matrix *, double);
-	double athrho = gretl_model_get_double(pmod, "athrho");
-
-	vcv_adjust = get_plugin_function("biprobit_adjust_vcv");
-	if (vcv_adjust == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    vcv_adjust(*pV, athrho);
-	}
-    } else {
-	/* old-style: trim the rho elements off @V */
-	err = prune_vcv(pV);
-    }
-
-    return err;
-}
-
 /**
  * gretl_model_add_QML_vcv:
  * @pmod: pointer to model.
@@ -2831,10 +2768,6 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
-    if (!err && ci == BIPROBIT) {
-	err = biprobit_vcv_special(pmod, &V);
-    }
-
     if (!err) {
 	err = gretl_model_write_vcv(pmod, V);
     }
@@ -2878,23 +2811,7 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 int gretl_model_add_hessian_vcv (MODEL *pmod,
 				 const gretl_matrix *H)
 {
-    int err = 0;
-
-    if (pmod->ci == BIPROBIT) {
-	if (gretl_model_get_int(pmod, "rho_included")) {
-	    gretl_model_write_vcv(pmod, H);
-	} else {
-	    gretl_matrix *H0 = gretl_matrix_copy(H);
-
-	    err = prune_vcv(&H0);
-	    if (!err) {
-		err = gretl_model_write_vcv(pmod, H0);
-	    }
-	    gretl_matrix_free(H0);
-	}
-    } else {
-	gretl_model_write_vcv(pmod, H);
-    }
+    int err = gretl_model_write_vcv(pmod, H);
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
@@ -2928,10 +2845,6 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
     }
 
     err = gretl_invert_symmetric_matrix(GG);
-
-    if (!err && pmod->ci == BIPROBIT) {
-	err = biprobit_vcv_special(pmod, &GG);
-    }
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, GG);
