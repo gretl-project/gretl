@@ -21,6 +21,7 @@
 # include "config.h"
 #endif
 
+#include "version.h"
 #include "strutils.h"
 #include "zipunzip.h"
 
