@@ -18,8 +18,8 @@
  */
 
 #include "libgretl.h"
-#include "varinfo_priv.h"
 #include "version.h"
+#include "varinfo_priv.h"
 
 /* Writing and reading of gretl-native "pure binary" data files,
    developed in December 2020 as an alterative to the original
