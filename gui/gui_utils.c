@@ -619,6 +619,7 @@ static struct greek_map greek_keys[] = {
     { GDK_L, 0x9b }, /* lambda */
     { GDK_M, 0x9c }, /* mu */
     { GDK_N, 0x9d }, /* nu */
+    { GDK_O, 0x9f }, /* omicron */
     { GDK_P, 0xa0 }, /* pi */
     { GDK_Q, 0x98 }, /* theta */
     { GDK_R, 0xa1 }, /* rho */
@@ -648,8 +649,14 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
 	lc = 1;
-    } else if (ok_greek_cap(key)) {
-	ukey = key;
+    } else if (key >= GDK_A && key <= GDK_Z) {
+	if (ok_greek_cap(key)) {
+	    ukey = key;
+	} else {
+	    /* insert the look-alike? */
+	    textview_insert_text(vwin->text, gdk_keyval_name(key));
+	    return 1;
+	}
     }
 
     if (ukey > 0) {
@@ -700,7 +707,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    editing, console, Ctrl, Alt, gdk_keyval_name(upkey));
 #endif
 
-    if (editing && Alt) {
+    if (editing && Alt && !Ctrl) {
 	/* "Alt" specials for editor */
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
