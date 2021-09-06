@@ -3406,6 +3406,14 @@ static int utf8_fail (char *s)
     }
 }
 
+/* @c is A-Z or a-z */
+
+static int is_ascii_alpha (int c)
+{
+    return (c >= 0x41 && c <= 0x5A) ||
+	(c >= 0x61 && c <= 0x7A);
+}
+
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
 /* tokenize_line: parse @line into a set of tokens on a
@@ -3433,6 +3441,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 #if CDEBUG || TDEBUG
     fprintf(stderr, "*** %s: line = '%s'\n",
 	    compmode ? "get_command_index" : "parse_command_line", s);
+    fprintf(stderr, " first byte %0x\n", (unsigned char) s[0]);
 #endif
 
     if (utf8_fail(s)) {
@@ -3475,12 +3484,12 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 		    free(vtok);
 		}
 	    }
-	} else if (wild_ok && (isalpha(*s) || *s == '*')) {
+	} else if (wild_ok && (is_ascii_alpha((int) *s) || *s == '*')) {
 	    n = 1 + wild_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
 	    err = push_string_token(cmd, tok, s, pos);
-	} else if (isalpha(*s) || *s == '$' || (at_ok && *s == '@')) {
+	} else if (is_ascii_alpha((int) *s) || *s == '$' || (at_ok && *s == '@')) {
 	    /* regular or accessor identifier */
 	    if (*s == '@' && !compmode) {
 		fprintf(stderr, "tokenize: found '@':\n '%s'\n", state->line);
