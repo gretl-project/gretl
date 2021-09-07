@@ -5148,7 +5148,7 @@ static int get_inner_key_values (joiner *jr, int i,
                                  keynum *pk1, keynum *pk2,
                                  int *missing)
 {
-    DATASET *l_dset = jr->l_dset;
+    DATASET *dset = jr->dset;
     int err = 0;
 
     *pk1 = *pk2 = 0;
@@ -5157,8 +5157,8 @@ static int get_inner_key_values (joiner *jr, int i,
         /* using the LHS dataset obs info */
         char obs[OBSLEN];
 
-        ntolabel(obs, i, l_dset);
-        if (calendar_data(l_dset)) {
+        ntolabel(obs, i, dset);
+        if (calendar_data(dset)) {
             guint32 ed = get_epoch_day(obs);
 
             if (jr->n_keys == 2) {
@@ -5181,9 +5181,9 @@ static int get_inner_key_values (joiner *jr, int i,
         double dk1, dk2 = 0;
         keynum k1 = 0, k2 = 0;
 
-        dk1 = l_dset->Z[ikeyvars[1]][i];
+        dk1 = dset->Z[ikeyvars[1]][i];
         if (jr->n_keys == 2) {
-            dk2 = l_dset->Z[ikeyvars[2]][i];
+            dk2 = dset->Z[ikeyvars[2]][i];
         }
         if (na(dk1) || na(dk2)) {
             *missing = 1;
@@ -5225,7 +5225,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
     DATASET *dset = jr->l_dset;
     double *xmatch = NULL;
     double *auxmatch = NULL;
-    keynum key, key2 = 0;
+    keynum key1, key2 = 0;
     int revseq = 0;
     int i, t, nmax;
     int err = 0;
@@ -5295,7 +5295,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
             int nomatch = 0;
             double z;
 
-            err = get_inner_key_values(jr, t, ikeyvars, &key, &key2, &missing);
+            err = get_inner_key_values(jr, t, ikeyvars, &key1, &key2, &missing);
 
             if (err) {
                 break;
@@ -5304,15 +5304,15 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
                 continue;
             }
 
-            z = aggr_value(jr, key, key2, rv, revseq, xmatch, auxmatch,
+            z = aggr_value(jr, key1, key2, rv, revseq, xmatch, auxmatch,
                            &nomatch, &err);
 #if AGGDEBUG
             if (na(z)) {
                 fprintf(stderr, " aggr_value: got NA (keys=%g,%g, err=%d)\n",
-                        key, key2, err);
+                        key1, key2, err);
             } else {
                 fprintf(stderr, " aggr_value: got %.12g (keys=%g,%g, err=%d)\n",
-                        z, key, key2, err);
+                        z, key1, key2, err);
             }
 #endif
             if (!err && strcheck && !na(z)) {
