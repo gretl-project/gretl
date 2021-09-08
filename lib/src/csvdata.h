@@ -20,17 +20,6 @@
 #ifndef CSVDATA_H
 #define CSVDATA_H
 
-typedef enum {
-    AGGR_NONE,
-    AGGR_COUNT,
-    AGGR_AVG,
-    AGGR_SUM,
-    AGGR_MIN,
-    AGGR_MAX,
-    AGGR_SEQ,
-    AGGR_MIDAS
-} AggrType;
-
 #define NON_NUMERIC 1.0e99
 
 void import_na_init (void);
@@ -49,23 +38,6 @@ int non_numeric_check (DATASET *dset, int **plist,
 		       PRN *prn);
 
 void reverse_data (DATASET *dset, PRN *prn);
-
-int gretl_join_data (const char *fname,
-		     const char **vnames,
-		     int nvars,
-		     DATASET *dset, 
-		     const int *ikeyvars,
-		     const char *okey,
-		     const char *filter,
-		     const char *srcname,
-		     AggrType agg,
-		     int seqval,
-		     const char *auxname,
-		     const char *tconvstr,
-		     const char *tconvfmt,
-		     int midas_pd,
-		     gretlopt opt,
-		     PRN *prn);
 
 int probe_csv (const char *fname, char ***varnames,
 	       int *nvars, gretlopt *opt);
