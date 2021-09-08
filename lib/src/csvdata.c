@@ -5148,7 +5148,7 @@ static int get_inner_key_values (joiner *jr, int i,
                                  keynum *pk1, keynum *pk2,
                                  int *missing)
 {
-    DATASET *dset = jr->dset;
+    DATASET *dset = jr->l_dset;
     int err = 0;
 
     *pk1 = *pk2 = 0;
