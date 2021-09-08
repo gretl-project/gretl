@@ -4900,6 +4900,29 @@ static int midas_day_index (int t, DATASET *dset)
     return idx;
 }
 
+struct jr_matcher_ {
+    keynum *k1;
+    keynum *k2;
+    int *pos;
+};
+
+typedef struct jr_matcher_ jr_matcher;
+
+#define KEYMISS -999
+
+static keynum matcher_get_k2 (jr_matcher *matcher, int i)
+{
+    return matcher->k2 == NULL ? 0 : matcher->k2[i];
+}
+
+static void matcher_set_k2 (jr_matcher *matcher, int i,
+			    keynum val)
+{
+    if (matcher->k2 != NULL) {
+	matcher->k2[i] = val;
+    }
+}
+
 #define midas_daily(j) (j->midas_m > 20)
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
@@ -4916,39 +4939,25 @@ static int midas_day_index (int t, DATASET *dset)
 */
 
 static double aggr_value (joiner *jr,
-                          keynum key1,
-                          keynum key2,
-                          int v, int revseq,
+			  jr_matcher *matcher,
+			  int s, int v,
+                          int revseq,
                           double *xmatch,
                           double *auxmatch,
-                          int *nomatch,
                           int *err)
 {
+    keynum key1 = matcher->k1[s];
+    keynum key2 = matcher_get_k2(matcher, s);
+    int pos = matcher->pos[s];
     double x, xa;
-    int imin, imax, pos;
+    int imin, imax;
     int i, n, ntotal;
 
-    /* find the position of the inner (primary) key in the
-       array of unique outer key values */
-    pos = binsearch(key1, jr->keys, jr->n_unique, 0);
-
 #if AGGDEBUG
-    if (pos < 0) {
-        fprintf(stderr, " key1 = %g: no match\n", key1);
-    } else {
-        fprintf(stderr, " key1 = %g: matched at position %d\n", key1, pos);
-    }
+    fprintf(stderr, " key1 = %g: matched at position %d\n", key1, pos);
 #endif
 
-    if (pos < 0) {
-        /* (primary) inner key value not found */
-        *nomatch = 1;
-        return jr->aggr == AGGR_COUNT ? 0 : NADBL;
-    }
-
-    /* how many matches at @pos? (must be at least 1 unless
-       something very bad has happened)
-    */
+    /* how many matches at @pos? */
     n = jr->key_freq[pos];
 
 #if AGGDEBUG
@@ -5111,6 +5120,21 @@ static double aggr_value (joiner *jr,
     return x;
 }
 
+static void handle_midas_setup (joiner *jr, int i, int lv, int rv,
+                                int revseq)
+{
+    char label[MAXLABEL];
+
+    series_set_midas_period(jr->l_dset, lv, revseq);
+    sprintf(label, "%s in sub-period %d",
+            jr->r_dset->varname[rv], revseq);
+    series_record_label(jr->l_dset, lv, label);
+    series_set_midas_freq(jr->l_dset, lv, jr->r_dset->pd);
+    if (i == 1) {
+        series_set_midas_anchor(jr->l_dset, lv);
+    }
+}
+
 /* Handle the case where (a) the value from the right, @rz, is
    actually the coding of a string value, and (b) the LHS series is
    pre-existing and already has a string table attached. The RHS
@@ -5143,59 +5167,111 @@ static double maybe_adjust_string_code (series_table *rst,
     return rz;
 }
 
-static int get_inner_key_values (joiner *jr, int i,
-                                 const int *ikeyvars,
-                                 keynum *pk1, keynum *pk2,
-                                 int *missing)
+static void jr_matcher_free (jr_matcher *matcher)
+{
+    free(matcher->k1);
+    free(matcher->k2);
+    free(matcher->pos);
+}
+
+static int jr_matcher_init (jr_matcher *matcher, int nobs,
+                            int nkeys)
+{
+    int i, err = 0;
+
+    matcher->k1 = malloc(nobs * sizeof *matcher->k1);
+    matcher->pos = malloc(nobs * sizeof *matcher->pos);
+    matcher->k2 = NULL;
+
+    if (matcher->k1 == NULL || matcher->pos == NULL) {
+        err = E_ALLOC;
+    } else if (nkeys == 2) {
+        matcher->k2 = malloc(nobs * sizeof *matcher->k2);
+        if (matcher->k2 == NULL) {
+            err = E_ALLOC;
+        }
+    }
+
+    if (err) {
+        jr_matcher_free(matcher);
+        return err;
+    }
+
+    for (i=0; i<nobs; i++) {
+        matcher->k1[i] = 0;
+        matcher->pos[i] = 0;
+        if (matcher->k2 != NULL) {
+            matcher->k2[i] = 0;
+        }
+    }
+
+    return 0;
+}
+
+static int get_all_inner_key_values (joiner *jr,
+                                     const int *ikeyvars,
+                                     jr_matcher *matcher)
 {
     DATASET *dset = jr->l_dset;
-    int err = 0;
+    int i, j, n = sample_size(dset);
+    int err;
 
-    *pk1 = *pk2 = 0;
+    err = jr_matcher_init(matcher, n, jr->n_keys);
+    if (err) {
+        return err;
+    }
 
-    if (using_auto_keys(jr)) {
-        /* using the LHS dataset obs info */
-        char obs[OBSLEN];
+    for (i=dset->t1, j=0; i<=dset->t2 && !err; i++, j++) {
+        if (using_auto_keys(jr)) {
+            /* using the LHS dataset obs info */
+            char obs[OBSLEN];
 
-        ntolabel(obs, i, dset);
-        if (calendar_data(dset)) {
-            guint32 ed = get_epoch_day(obs);
+            ntolabel(obs, i, dset);
+            if (calendar_data(dset)) {
+                guint32 ed = get_epoch_day(obs);
 
-            if (jr->n_keys == 2) {
-                /* inner daily, outer monthly */
-                int y, m, d;
+                if (jr->n_keys == 2) {
+                    /* inner daily, outer monthly */
+                    int y, m, d;
 
-                ymd_bits_from_epoch_day(ed, &y, &m, &d);
-                *pk1 = y;
-                *pk2 = m;
+                    ymd_bits_from_epoch_day(ed, &y, &m, &d);
+                    matcher->k1[j] = y;
+                    matcher->k2[j] = m;
+                } else {
+                    matcher->k1[j] = ed;
+                }
             } else {
-                *pk1 = ed;
+                /* monthly or quarterly (FIXME any others?) */
+                matcher->k1[j] = atoi(obs);
+		matcher_set_k2(matcher, j, atoi(obs + 5));
             }
         } else {
-            /* monthly or quarterly (FIXME any others?) */
-            *pk1 = atoi(obs);
-            *pk2 = atoi(obs + 5);
-        }
-    } else {
-        /* using regular LHS key series */
-        double dk1, dk2 = 0;
-        keynum k1 = 0, k2 = 0;
+            /* using regular LHS key series */
+            double dk1, dk2 = 0;
+            keynum k1 = 0, k2 = 0;
 
-        dk1 = dset->Z[ikeyvars[1]][i];
-        if (jr->n_keys == 2) {
-            dk2 = dset->Z[ikeyvars[2]][i];
-        }
-        if (na(dk1) || na(dk2)) {
-            *missing = 1;
-        } else {
-            k1 = dtoll(dk1, &err);
-            if (!err && jr->n_keys == 2) {
-                k2 = dtoll(dk2, &err);
+            dk1 = dset->Z[ikeyvars[1]][i];
+            if (jr->n_keys == 2) {
+                dk2 = dset->Z[ikeyvars[2]][i];
+            }
+            if (na(dk1) || na(dk2)) {
+                matcher->pos[j] = KEYMISS;
+            } else {
+                k1 = dtoll(dk1, &err);
+                if (!err && jr->n_keys == 2) {
+                    k2 = dtoll(dk2, &err);
+                }
+            }
+            if (!err && matcher->pos[j] != KEYMISS) {
+                matcher->k1[j] = k1;
+		matcher_set_k2(matcher, j, k2);
             }
         }
-        if (!err && !*missing) {
-            *pk1 = k1;
-            *pk2 = k2;
+
+        if (!err && matcher->pos[j] != KEYMISS) {
+            /* look up position in outer keys array */
+            matcher->pos[j] = binsearch(matcher->k1[j], jr->keys,
+                                        jr->n_unique, 0);
         }
     }
 
@@ -5220,12 +5296,12 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
                            const int *targvars, joinspec *jspec,
                            int orig_v, int *modified)
 {
+    jr_matcher matcher = {0};
     series_table *rst = NULL;
     series_table *lst = NULL;
     DATASET *dset = jr->l_dset;
     double *xmatch = NULL;
     double *auxmatch = NULL;
-    keynum key1, key2 = 0;
     int revseq = 0;
     int i, t, nmax;
     int err = 0;
@@ -5262,10 +5338,16 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
         }
     }
 
-    for (i=1; i<=targvars[0]; i++) {
+    err = get_all_inner_key_values(jr, ikeyvars, &matcher);
+
+    for (i=1; i<=targvars[0] && !err; i++) {
         /* loop across the series to be added/modified */
-        int rv, lv = targvars[i];
+        int s, rv, lv = targvars[i];
         int strcheck = 0;
+
+#if AGGDEBUG
+        fprintf(stderr, "\nworking on series %d\n", i);
+#endif
 
         if (jr->aggr == AGGR_MIDAS) {
             rv = jspec->colnums[JOIN_TARG];
@@ -5290,43 +5372,44 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
            imported from the right
         */
 
-        for (t=dset->t1; t<=dset->t2 && !err; t++) {
-            int missing = 0;
-            int nomatch = 0;
-            double z;
+        for (t=dset->t1, s=0; t<=dset->t2 && !err; t++, s++) {
+	    int nomatch = 0;
+            double zt;
 
-            err = get_inner_key_values(jr, t, ikeyvars, &key1, &key2, &missing);
-
-            if (err) {
-                break;
-            } else if (missing) {
+#if AGGDEBUG
+            fprintf(stderr, " working on obs %d\n", t);
+#endif
+            if (matcher.pos[s] == KEYMISS) {
                 dset->Z[lv][t] = NADBL;
                 continue;
-            }
-
-            z = aggr_value(jr, key1, key2, rv, revseq, xmatch, auxmatch,
-                           &nomatch, &err);
+            } else if (matcher.pos[s] < 0) {
+		nomatch = 1;
+		zt = (jr->aggr == AGGR_COUNT)? 0 : NADBL;
+	    } else {
+		zt = aggr_value(jr, &matcher, s, rv, revseq, xmatch,
+				auxmatch, &err);
+	    }
 #if AGGDEBUG
-            if (na(z)) {
+            if (na(zt)) {
                 fprintf(stderr, " aggr_value: got NA (keys=%g,%g, err=%d)\n",
-                        key1, key2, err);
+                        matcher.k1[s], matcher_get_k2(&matcher, s), err);
             } else {
                 fprintf(stderr, " aggr_value: got %.12g (keys=%g,%g, err=%d)\n",
-                        z, key1, key2, err);
+                        zt, matcher.k1[s], matcher_get_k2(&matcher, s), err);
             }
 #endif
-            if (!err && strcheck && !na(z)) {
-                z = maybe_adjust_string_code(rst, lst, z, &err);
+            if (!err && strcheck && !na(zt)) {
+                zt = maybe_adjust_string_code(rst, lst, zt, &err);
             }
             if (!err) {
                 if (lv >= orig_v) {
                     /* @lv is a newly added series */
-                    dset->Z[lv][t] = z;
-                } else if (z != dset->Z[lv][t]) {
+                    dset->Z[lv][t] = zt;
+                } else if (zt != dset->Z[lv][t]) {
                     if (nomatch && !na(dset->Z[lv][t])) {
                         ; /* leave existing data alone (?) */
                     } else {
-                        dset->Z[lv][t] = z;
+                        dset->Z[lv][t] = zt;
                         *modified += 1;
                     }
                 }
@@ -5334,23 +5417,14 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
         }
 
         if (!err && jr->aggr == AGGR_MIDAS) {
-            /* set MIDAS-specific info on series @lv */
-            char label[MAXLABEL];
-
-            series_set_midas_period(dset, lv, revseq);
-            sprintf(label, "%s in sub-period %d",
-                    jr->r_dset->varname[rv], revseq);
-            series_record_label(dset, lv, label);
-            series_set_midas_freq(dset, lv, jr->r_dset->pd);
-            if (i == 1) {
-                series_set_midas_anchor(dset, lv);
-            }
+            handle_midas_setup(jr, i, lv, rv, revseq);
         }
 
         revseq--;
     }
 
     free(xmatch);
+    jr_matcher_free(&matcher);
 
     return err;
 }
