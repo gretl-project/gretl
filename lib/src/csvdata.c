@@ -65,6 +65,8 @@ struct csvprobe_ {
     DATASET *dset; /* more info might be wanted */
 };
 
+typedef struct csvprobe_ csvprobe;
+
 struct csvdata_ {
     int flags;
     char delim;
@@ -3441,7 +3443,7 @@ int real_import_csv (const char *fname,
 		     const char *cols,
 		     const char *rows,
 		     joinspec *join,
-		     csvprobe *probe,
+		     void *probe,
 		     gretl_matrix **pm,
 		     gretlopt opt,
 		     PRN *prn)

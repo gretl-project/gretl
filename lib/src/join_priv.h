@@ -20,6 +20,8 @@
 #ifndef JOIN_PRIV_H
 #define JOIN_PRIV_H
 
+/* stuff that needs to be shared between csvdata.c and gretl_join.c */
+
 enum {
     TCONV_FMT = 0,
     TKEY_FMT = 1
@@ -45,7 +47,6 @@ struct joinspec_ {
 };
 
 typedef struct joinspec_ joinspec;
-typedef struct csvprobe_ csvprobe;
 
 struct time_mapper {
     int ncols;         /* number of "timeconv" columns */
@@ -66,7 +67,7 @@ int real_import_csv (const char *fname,
 		     const char *cols,
 		     const char *rows,
 		     joinspec *join,
-		     csvprobe *probe,
+		     void *probe,
 		     gretl_matrix **pm,
 		     gretlopt opt,
 		     PRN *prn);
