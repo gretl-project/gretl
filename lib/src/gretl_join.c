@@ -27,8 +27,13 @@
 #include "join_priv.h"
 #include "gretl_join.h"
 
+#ifdef WIN32
+# include "gretl_win32.h" /* for strptime() */
+#endif
+
 #define AGGDEBUG 0  /* aggregation in "join" */
 #define TDEBUG 0    /* handling of time keys in "join" */
+#define JDEBUG 0    /* joining in general */
 
 enum {
     JOIN_KEY,
@@ -462,7 +467,7 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
         filter->val = r_dset->Z[v];
         *nrows = 0;
 
-#if CDEBUG > 1
+#if JDEBUG > 1
         fprintf(stderr, "filter genr: '%s':\n", line);
         for (i=0; i<r_dset->n; i++) {
             fprintf(stderr, " %d: %g\n", i+1, filter->val[i]);
@@ -520,7 +525,7 @@ static int join_row_wanted (jr_filter *filter, int i)
 {
     int ret = filter->val[i] != 0;
 
-#if CDEBUG > 2
+#if JDEBUG > 2
     fprintf(stderr, "join filter: %s row %d\n",
             ret ? "keeping" : "discarding", i);
 #endif
@@ -569,7 +574,7 @@ static joiner *build_joiner (joinspec *jspec,
     int auxcol  = jspec->colnums[JOIN_AUX];
     int i, nrows = r_dset->n;
 
-#if CDEBUG
+#if JDEBUG
     fprintf(stderr, "joiner column numbers:\n"
             "KEY %d, VAL %d, F1 %d, F2 %d, F3 %d, KEY2 %d, AUX %d\n",
             keycol, valcol, jspec->colnums[JOIN_F1],
@@ -587,7 +592,7 @@ static joiner *build_joiner (joinspec *jspec,
         }
     }
 
-#if CDEBUG
+#if JDEBUG
     fprintf(stderr, "after filtering: dset->n = %d, nrows = %d\n",
             r_dset->n, nrows);
 #endif
@@ -625,7 +630,7 @@ static joiner *build_joiner (joinspec *jspec,
             }
         }
 
-#if CDEBUG
+#if JDEBUG
         fprintf(stderr, "use_iso_basic = %d\n", use_iso_basic);
 #endif
 
@@ -746,7 +751,7 @@ static int joiner_sort (joiner *jr)
                     rkeyval = jr->rows[i].keyval2;
                 }
                 lkeyval = strmap[rkeyval];
-#if CDEBUG > 1
+#if JDEBUG > 1
                 fprintf(stderr, "k = %d, row %d, keyval: %d -> %d\n", k, i, rkeyval, lkeyval);
 #endif
                 if (lkeyval > 0) {
@@ -823,7 +828,7 @@ static int joiner_sort (joiner *jr)
     return err;
 }
 
-#if CDEBUG > 1
+#if JDEBUG > 1
 
 static void joiner_print (joiner *jr)
 {
@@ -863,7 +868,7 @@ static void joiner_print (joiner *jr)
     }
 }
 
-# if CDEBUG > 2
+# if JDEBUG > 2
 static void print_outer_dataset (const DATASET *dset, const char *fname)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
@@ -874,7 +879,7 @@ static void print_outer_dataset (const DATASET *dset, const char *fname)
 }
 # endif
 
-#endif
+#endif /* JDEBUG */
 
 static int seqval_out_of_bounds (joiner *jr, int seqmax)
 {
@@ -1625,7 +1630,7 @@ static jr_filter *join_filter_new (int *err)
     return filter;
 }
 
-#if CDEBUG
+#if JDEBUG
 
 static void print_filter_vnames (jr_filter *f)
 {
@@ -1706,7 +1711,7 @@ static jr_filter *make_join_filter (const char *s, int *err)
         }
     }
 
-#if CDEBUG
+#if JDEBUG
     print_filter_vnames(filter);
 #endif
 
@@ -1837,7 +1842,7 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
     char *s = auto_keys->timefmt;
     int i, err = 0;
 
-#if CDEBUG
+#if JDEBUG
     fprintf(stderr, "check_for_quarterly_format: '%s'\n", s);
 #endif
 
@@ -2048,7 +2053,7 @@ static int process_tconvert_info (joinspec *jspec,
         err = make_time_formats_array(tmp, &fmts);
     }
 
-#if CDEBUG
+#if JDEBUG
     printlist(list, "timeconv list");
 #endif
 
@@ -2172,7 +2177,7 @@ static int check_for_missing_columns (joinspec *jspec)
             gretl_errmsg_sprintf(_("%s: column '%s' was not found"), "join", name);
             return E_DATA;
         }
-#if CDEBUG
+#if JDEBUG
         if (name != NULL) {
             fprintf(stderr, "colname '%s' -> colnum %d\n", name, jspec->colnums[i]);
         }
@@ -3039,7 +3044,7 @@ int gretl_join_data (const char *fname,
     obskey_init(&auto_keys);
     timeconv_map_init();
 
-#if CDEBUG
+#if JDEBUG
     fputs("*** gretl_join_data:\n", stderr);
     fprintf(stderr, " filename = '%s'\n", fname);
     if (nvars > 1) {
@@ -3178,7 +3183,7 @@ int gretl_join_data (const char *fname,
         if (!err) {
             outer_dset = outer_dataset(&jspec);
         }
-#if CDEBUG > 2
+#if JDEBUG > 2
         if (!err) {
             print_outer_dataset(outer_dset, fname);
         }
@@ -3253,7 +3258,7 @@ int gretl_join_data (const char *fname,
         if (jr->n_keys > 0) {
             err = joiner_sort(jr);
         }
-#if CDEBUG > 1
+#if JDEBUG > 1
         if (!err) joiner_print(jr);
 #endif
     }
@@ -3320,7 +3325,7 @@ int gretl_join_data (const char *fname,
         }
     }
 
-#if CDEBUG
+#if JDEBUG
     fprintf(stderr, "join: add_v = %d, modified = %d\n",
             add_v, modified);
 #endif

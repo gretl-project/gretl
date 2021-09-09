@@ -37,7 +37,7 @@
 
 #include <errno.h>
 
-#define CDEBUG 0    /* CSV reading in general */
+#define CDEBUG 0  /* CSV reading in general */
 
 #define CSVSTRLEN 128
 
