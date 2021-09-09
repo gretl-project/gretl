@@ -40,6 +40,11 @@ enum {
     JOIN_TARG
 };
 
+enum {
+    TCONV_FMT = 0,
+    TKEY_FMT = 1
+};
+
 typedef double keynum;
 
 /* below: apparatus to implement the "join" command */
@@ -99,6 +104,14 @@ struct jr_filter_ {
 typedef struct jr_filter_ jr_filter;
 
 #define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
+
+struct time_mapper {
+    int ncols;         /* number of "timeconv" columns */
+    char **colnames;   /* array of outer-dataset column names */
+    char *tname;       /* the name of the "tkey", if among colnames, or NULL */
+    char **fmt;        /* array of up to two time-format strings, or NULL */
+    char m_means_q[2]; /* array of "monthly means quarterly" flags */
+};
 
 /* file-scope global */
 struct time_mapper tconv_map;
@@ -3352,4 +3365,36 @@ int gretl_join_data (const char *fname,
     free(targvars);
 
     return err;
+}
+
+#define no_formats(map) (map.fmt == NULL)
+#define no_tkey_format(map) (map.tname == NULL)
+#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
+#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
+
+/* called in csvdata.c */
+
+int timecol_get_format (const DATASET *dset, int v,
+			char **pfmt, int *q)
+{
+    if (no_formats(tconv_map)) {
+        return 0;
+    } else if (no_tkey_format(tconv_map)) {
+        /* get the common "tconvert" format */
+        *pfmt = tconv_map.fmt[TCONV_FMT];
+        *q = tconv_map.m_means_q[TCONV_FMT];
+        return 1;
+    } else if (is_tkey_variable(dset->varname[v], tconv_map)) {
+        /* get the tkey-specific format */
+        *pfmt = tconv_map.fmt[TKEY_FMT];
+        *q = tconv_map.m_means_q[TKEY_FMT];
+        return 1;
+    } else if (has_tconv_format(tconv_map)) {
+        /* get the other one */
+        *pfmt = tconv_map.fmt[TCONV_FMT];
+        *q = tconv_map.m_means_q[TCONV_FMT];
+        return 1;
+    }
+
+    return 0;
 }

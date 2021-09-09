@@ -141,11 +141,6 @@ struct csvdata_ {
 #define joining(c) (c->jspec != NULL)
 #define probing(c) (c->probe != NULL)
 
-#define no_formats(map) (map.fmt == NULL)
-#define no_tkey_format(map) (map.tname == NULL)
-#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
-#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
-
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr,
                          int convert_pd, PRN *prn);
@@ -154,35 +149,11 @@ time_series_label_check (DATASET *dset, int reversed, char *skipstr,
 static char import_na[8];
 
 
-/* for use in join */
+/* for use in gretl_join.c */
+
 DATASET *csvdata_get_dataset (csvdata *c)
 {
     return c->dset;
-}
-
-static int timecol_get_format (const DATASET *dset, int v,
-                               char **pfmt, int *q)
-{
-    if (no_formats(tconv_map)) {
-        return 0;
-    } else if (no_tkey_format(tconv_map)) {
-        /* get the common "tconvert" format */
-        *pfmt = tconv_map.fmt[TCONV_FMT];
-        *q = tconv_map.m_means_q[TCONV_FMT];
-        return 1;
-    } else if (is_tkey_variable(dset->varname[v], tconv_map)) {
-        /* get the tkey-specific format */
-        *pfmt = tconv_map.fmt[TKEY_FMT];
-        *q = tconv_map.m_means_q[TKEY_FMT];
-        return 1;
-    } else if (has_tconv_format(tconv_map)) {
-        /* get the other one */
-        *pfmt = tconv_map.fmt[TCONV_FMT];
-        *q = tconv_map.m_means_q[TCONV_FMT];
-        return 1;
-    }
-
-    return 0;
 }
 
 /* shared with gretl_join.c */

@@ -22,11 +22,6 @@
 
 /* stuff that needs to be shared between csvdata.c and gretl_join.c */
 
-enum {
-    TCONV_FMT = 0,
-    TKEY_FMT = 1
-};
-
 typedef struct csvdata_ csvdata;
 
 struct joinspec_ {
@@ -48,16 +43,6 @@ struct joinspec_ {
 
 typedef struct joinspec_ joinspec;
 
-struct time_mapper {
-    int ncols;         /* number of "timeconv" columns */
-    char **colnames;   /* array of outer-dataset column names */
-    char *tname;       /* the name of the "tkey", if among colnames, or NULL */
-    char **fmt;        /* array of up to two time-format strings, or NULL */
-    char m_means_q[2]; /* array of "monthly means quarterly" flags */
-};
-
-extern struct time_mapper tconv_map;
-
 DATASET *csvdata_get_dataset (csvdata *c);
 
 void csvdata_free (csvdata *c);
@@ -71,5 +56,8 @@ int real_import_csv (const char *fname,
 		     gretl_matrix **pm,
 		     gretlopt opt,
 		     PRN *prn);
+
+int timecol_get_format (const DATASET *dset, int v,
+			char **pfmt, int *q);
 
 #endif /* JOIN_PRIV_H */
