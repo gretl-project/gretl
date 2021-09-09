@@ -25,11 +25,6 @@ enum {
     TKEY_FMT = 1
 };
 
-#define no_formats(map) (map.fmt == NULL)
-#define no_tkey_format(map) (map.tname == NULL)
-#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
-#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
-
 typedef struct csvdata_ csvdata;
 
 struct joinspec_ {

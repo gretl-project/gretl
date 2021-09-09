@@ -139,6 +139,11 @@ struct csvdata_ {
 #define joining(c) (c->jspec != NULL)
 #define probing(c) (c->probe != NULL)
 
+#define no_formats(map) (map.fmt == NULL)
+#define no_tkey_format(map) (map.tname == NULL)
+#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
+#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
+
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr,
                          int convert_pd, PRN *prn);
