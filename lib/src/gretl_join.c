@@ -3367,29 +3367,25 @@ int gretl_join_data (const char *fname,
     return err;
 }
 
-#define no_formats(map) (map.fmt == NULL)
-#define no_tkey_format(map) (map.tname == NULL)
-#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
-#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
-
 /* called in csvdata.c */
 
 int timecol_get_format (const DATASET *dset, int v,
 			char **pfmt, int *q)
 {
-    if (no_formats(tconv_map)) {
+    if (tconv_map.fmt == NULL) {
+	/* no formats present */
         return 0;
-    } else if (no_tkey_format(tconv_map)) {
+    } else if (tconv_map.tname == NULL) {
         /* get the common "tconvert" format */
         *pfmt = tconv_map.fmt[TCONV_FMT];
         *q = tconv_map.m_means_q[TCONV_FMT];
         return 1;
-    } else if (is_tkey_variable(dset->varname[v], tconv_map)) {
+    } else if (!strcmp(dset->varname[v], tconv_map.tname)) {
         /* get the tkey-specific format */
         *pfmt = tconv_map.fmt[TKEY_FMT];
         *q = tconv_map.m_means_q[TKEY_FMT];
         return 1;
-    } else if (has_tconv_format(tconv_map)) {
+    } else if (tconv_map.fmt[TCONV_FMT] != NULL) {
         /* get the other one */
         *pfmt = tconv_map.fmt[TCONV_FMT];
         *q = tconv_map.m_means_q[TCONV_FMT];
