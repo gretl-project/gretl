@@ -31,10 +31,6 @@ typedef enum {
     AGGR_MIDAS
 } AggrType;
 
-typedef struct joinspec_ joinspec;
-typedef struct csvprobe_ csvprobe;
-typedef struct csvdata_ csvdata;
-
 int gretl_join_data (const char *fname,
                      const char **vnames,
                      int nvars,
@@ -51,7 +47,5 @@ int gretl_join_data (const char *fname,
                      int midas_pd,
                      gretlopt opt,
                      PRN *prn);
-
-int join_wants_col_zero (csvdata *c, const char *s);
 
 #endif /* GRETL_JOIN_H */

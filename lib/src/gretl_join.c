@@ -22,7 +22,9 @@
 #include "libset.h"
 #include "gretl_xml.h"
 #include "gretl_midas.h"
+#include "uservar.h"
 #include "csvdata.h"
+#include "join_priv.h"
 #include "gretl_join.h"
 
 #define AGGDEBUG 0  /* aggregation in "join" */
@@ -36,23 +38,6 @@ enum {
     JOIN_KEY2,
     JOIN_AUX,
     JOIN_TARG
-};
-
-struct joinspec_ {
-    int ncols;
-    const char **colnames;
-    const char *mdsbase;
-    int *colnums;
-    int *timecols;
-    csvdata *c;
-    DATASET *dset;
-    int wildcard;
-    int auto_midas;
-    int midas_pd;
-    char **wildnames;
-    char **mdsnames;
-    char **tmpnames;
-    int n_tmp;
 };
 
 typedef double keynum;
@@ -112,6 +97,11 @@ struct jr_filter_ {
 };
 
 typedef struct jr_filter_ jr_filter;
+
+#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
+
+/* file-scope global */
+struct time_mapper tconv_map;
 
 static int expand_jspec (joinspec *jspec, int addvars);
 
@@ -223,6 +213,65 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
     }
 
     return err;
+}
+
+/* Handle the case where the user gave a "%q" or "%Q" conversion
+   specifier (which we take to mean quarter). We convert this to %m
+   for use with strptime(), but record that the fact that "month means
+   quarter".
+*/
+
+static int format_uses_quarterly (char *fmt)
+{
+    char *s = fmt;
+    int i, ret = 0;
+
+    for (i=0; s[i]; i++) {
+        if (s[i] == '%' &&
+            (s[i+1] == 'q' || s[i+1] == 'Q') &&
+            (i == 0 || s[i-1] != '%')) {
+            s[i+1] = 'm';
+            ret = 1;
+        }
+    }
+
+    return ret;
+}
+
+static void timeconv_map_set (int ncols, char **colnames,
+                              char *tname, char **fmt)
+{
+    tconv_map.ncols = ncols;
+    tconv_map.colnames = colnames;
+    tconv_map.tname = tname;
+    tconv_map.fmt = fmt;
+
+    if (fmt != NULL) {
+        if (fmt[TCONV_FMT] != NULL) {
+            tconv_map.m_means_q[TCONV_FMT] =
+                format_uses_quarterly(fmt[TCONV_FMT]);
+        }
+        if (fmt[TKEY_FMT] != NULL) {
+            tconv_map.m_means_q[TKEY_FMT] =
+                format_uses_quarterly(fmt[TKEY_FMT]);
+        }
+    }
+}
+
+static void timeconv_map_init (void)
+{
+    timeconv_map_set(0, NULL, NULL, NULL);
+}
+
+static void timeconv_map_destroy (void)
+{
+    if (tconv_map.colnames != NULL) {
+        strings_array_free(tconv_map.colnames, tconv_map.ncols);
+    }
+    if (tconv_map.fmt != NULL) {
+        strings_array_free(tconv_map.fmt, 2);
+    }
+    timeconv_map_init();
 }
 
 static int set_time_format (obskey *auto_keys, const char *fmt)
@@ -461,10 +510,23 @@ static int join_row_wanted (jr_filter *filter, int i)
 static DATASET *outer_dataset (joinspec *jspec)
 {
     if (jspec->c != NULL) {
-        return jspec->c->dset;
+        return csvdata_get_dataset(jspec->c);
     } else {
         return jspec->dset;
     }
+}
+
+static int column_is_timecol (const char *colname)
+{
+    int i, n = tconv_map.ncols;
+
+    for (i=0; i<n; i++) {
+        if (!strcmp(colname, tconv_map.colnames[i])) {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 #define using_auto_keys(j) (j->auto_keys->timefmt != NULL)
@@ -1757,29 +1819,6 @@ static int process_outer_key (const char *s, int n_keys,
     return err;
 }
 
-/* Handle the case where the user gave a "%q" or "%Q" conversion
-   specifier (which we take to mean quarter). We convert this to %m
-   for use with strptime(), but record that the fact that "month means
-   quarter".
-*/
-
-static int format_uses_quarterly (char *fmt)
-{
-    char *s = fmt;
-    int i, ret = 0;
-
-    for (i=0; s[i]; i++) {
-        if (s[i] == '%' &&
-            (s[i+1] == 'q' || s[i+1] == 'Q') &&
-            (i == 0 || s[i-1] != '%')) {
-            s[i+1] = 'm';
-            ret = 1;
-        }
-    }
-
-    return ret;
-}
-
 static int check_for_quarterly_format (obskey *auto_keys, int pd)
 {
     char *s = auto_keys->timefmt;
@@ -2494,7 +2533,7 @@ static int join_import_csv (const char *fname,
                               NULL, NULL, opt, prn);
         if (0 && !err) {
             /* question, 2021-01-09: this is zeroed out: why? */
-            DATASET *dset = jspec->c->dset;
+            DATASET *dset = csvdata_get_dataset(jspec->c);
             int pd, reversed = 0;
 
             fprintf(stderr, "join_import_csv: n=%d, v=%d, pd=%d, markers=%d\n",
@@ -3313,23 +3352,4 @@ int gretl_join_data (const char *fname,
     free(targvars);
 
     return err;
-}
-
-int join_wants_col_zero (csvdata *c, const char *s)
-{
-    const char *colname;
-    int i;
-
-    if (*s == '\0') {
-        return 0;
-    }
-
-    for (i=0; i<c->jspec->ncols; i++) {
-        colname = c->jspec->colnames[i];
-        if (colname != NULL && !strcmp(s, colname)) {
-            return 1;
-        }
-    }
-
-    return 0;
 }

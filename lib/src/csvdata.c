@@ -28,6 +28,7 @@
 #include "matrix_extra.h"
 #include "gretl_www.h"
 #include "gretl_join.h"
+#include "join_priv.h"
 #include "csvdata.h"
 
 #ifdef WIN32
@@ -138,72 +139,18 @@ struct csvdata_ {
 #define joining(c) (c->jspec != NULL)
 #define probing(c) (c->probe != NULL)
 
-#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
-
 static int
 time_series_label_check (DATASET *dset, int reversed, char *skipstr,
                          int convert_pd, PRN *prn);
 
-static int format_uses_quarterly (char *fmt);
-
 /* file-scope global */
 static char import_na[8];
 
-struct time_mapper {
-    int ncols;         /* number of "timeconv" columns */
-    char **colnames;   /* array of outer-dataset column names */
-    char *tname;       /* the name of the "tkey", if among colnames, or NULL */
-    char **fmt;        /* array of up to two time-format strings, or NULL */
-    char m_means_q[2]; /* array of "monthly means quarterly" flags */
-};
 
-/* file-scope global */
-struct time_mapper tconv_map;
-
-enum {
-    TCONV_FMT = 0,
-    TKEY_FMT = 1
-};
-
-#define no_formats(map) (map.fmt == NULL)
-#define no_tkey_format(map) (map.tname == NULL)
-#define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
-#define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
-
-static void timeconv_map_set (int ncols, char **colnames,
-                              char *tname, char **fmt)
+/* for use in join */
+DATASET *csvdata_get_dataset (csvdata *c)
 {
-    tconv_map.ncols = ncols;
-    tconv_map.colnames = colnames;
-    tconv_map.tname = tname;
-    tconv_map.fmt = fmt;
-
-    if (fmt != NULL) {
-        if (fmt[TCONV_FMT] != NULL) {
-            tconv_map.m_means_q[TCONV_FMT] =
-                format_uses_quarterly(fmt[TCONV_FMT]);
-        }
-        if (fmt[TKEY_FMT] != NULL) {
-            tconv_map.m_means_q[TKEY_FMT] =
-                format_uses_quarterly(fmt[TKEY_FMT]);
-        }
-    }
-}
-
-static void timeconv_map_init (void)
-{
-    timeconv_map_set(0, NULL, NULL, NULL);
-}
-
-static void timeconv_map_destroy (void)
-{
-    if (tconv_map.colnames != NULL) {
-        strings_array_free(tconv_map.colnames, tconv_map.ncols);
-    }
-    if (tconv_map.fmt != NULL) {
-        strings_array_free(tconv_map.fmt, 2);
-    }
-    timeconv_map_init();
+    return c->dset;
 }
 
 static int timecol_get_format (const DATASET *dset, int v,
@@ -231,20 +178,9 @@ static int timecol_get_format (const DATASET *dset, int v,
     return 0;
 }
 
-static int column_is_timecol (const char *colname)
-{
-    int i, n = tconv_map.ncols;
+/* shared with gretl_join.c */
 
-    for (i=0; i<n; i++) {
-        if (!strcmp(colname, tconv_map.colnames[i])) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-static void csvdata_free (csvdata *c)
+void csvdata_free (csvdata *c)
 {
     if (c == NULL) {
         return;
@@ -1936,6 +1872,25 @@ int import_obs_label (const char *s)
             !strcmp(tmp, "observation_date"));
 }
 
+static int join_wants_col_zero (csvdata *c, const char *s)
+{
+    const char *colname;
+    int i;
+
+    if (*s == '\0') {
+        return 0;
+    }
+
+    for (i=0; i<c->jspec->ncols; i++) {
+        colname = c->jspec->colnames[i];
+        if (colname != NULL && !strcmp(s, colname)) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static void check_first_field (const char *line, csvdata *c, PRN *prn)
 {
     const char *s;
@@ -3471,20 +3426,20 @@ static int csv_set_dataset_dimensions (csvdata *c)
  * @prn: gretl printing struct (or NULL).
  *
  * Open a Comma-Separated Values data file and read the data into
- * the current work space.
+ * the current work space. Shared with gretl_join.c.
  *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-static int real_import_csv (const char *fname,
-                            DATASET *dset,
-                            const char *cols,
-                            const char *rows,
-                            joinspec *join,
-                            csvprobe *probe,
-                            gretl_matrix **pm,
-                            gretlopt opt,
-                            PRN *prn)
+int real_import_csv (const char *fname,
+		     DATASET *dset,
+		     const char *cols,
+		     const char *rows,
+		     joinspec *join,
+		     csvprobe *probe,
+		     gretl_matrix **pm,
+		     gretlopt opt,
+		     PRN *prn)
 {
     csvdata *c = NULL;
     gzFile fp = NULL;
