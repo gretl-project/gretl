@@ -47,8 +47,6 @@ enum {
 
 typedef double keynum;
 
-/* below: apparatus to implement the "join" command */
-
 struct jr_row_ {
     int n_keys;     /* number of keys (needed for qsort callback) */
     keynum keyval;  /* primary key value */
@@ -103,8 +101,6 @@ struct jr_filter_ {
 
 typedef struct jr_filter_ jr_filter;
 
-#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
-
 struct time_mapper {
     int ncols;         /* number of "timeconv" columns */
     char **colnames;   /* array of outer-dataset column names */
@@ -112,6 +108,18 @@ struct time_mapper {
     char **fmt;        /* array of up to two time-format strings, or NULL */
     char m_means_q[2]; /* array of "monthly means quarterly" flags */
 };
+
+struct jr_matcher_ {
+    keynum *k1;    /* first key value, per observation */
+    keynum *k2;    /* second key value per obs, or NULL */
+    int *pos;      /* position of match in outer key array */
+};
+
+typedef struct jr_matcher_ jr_matcher;
+
+#define KEYMISS -999
+
+#define is_wildstr(s) (strchr(s, '*') || strchr(s, '?'))
 
 /* file-scope global */
 struct time_mapper tconv_map;
@@ -945,14 +953,6 @@ static int midas_day_index (int t, DATASET *dset)
 
     return idx;
 }
-
-struct jr_matcher_ {
-    keynum *k1;
-    keynum *k2;
-    int *pos;
-};
-
-typedef struct jr_matcher_ jr_matcher;
 
 #define KEYMISS -999
 
