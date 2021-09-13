@@ -27,9 +27,6 @@
 
 #define BIPDEBUG 0
 
-/* temporary switch */
-static int biprobit_trim = 0;
-
 typedef struct bp_container_ bp_container;
 
 struct bp_container_ {
@@ -887,47 +884,6 @@ static void biprobit_adjust_vcv (MODEL *pmod, gretl_matrix *V,
     }
 }
 
-static int biprobit_prune_vcv (gretl_matrix **pV)
-{
-    gretl_matrix *V, *V0 = *pV;
-    int i, j, k = V0->rows - 1;
-    double vij;
-
-    V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	return E_ALLOC;
-    }
-
-    for (j=0; j<k; j++) {
-	for (i=0; i<k; i++) {
-	    vij = gretl_matrix_get(V0, i, j);
-	    gretl_matrix_set(V, i, j, vij);
-	}
-    }
-
-    gretl_matrix_free(V0);
-    *pV = V;
-
-    return 0;
-}
-
-static int finalize_biprobit_vcv (MODEL *pmod,
-				  gretl_matrix **pV,
-				  bp_container *bp)
-{
-    int err = 0;
-
-    if (biprobit_trim) {
-	/* old-style: trim the rho elements off @V */
-	err = biprobit_prune_vcv(pV);
-    } else {
-	/* adjust the rho elements in @V */
-	biprobit_adjust_vcv(pmod, *pV, bp->arho);
-    }
-
-    return err;
-}
-
 static int biprobit_QML_vcv (MODEL *pmod,
 			     const gretl_matrix *H,
 			     const gretl_matrix *G,
@@ -949,10 +905,7 @@ static int biprobit_QML_vcv (MODEL *pmod,
     }
 
     if (!err) {
-	err = finalize_biprobit_vcv(pmod, &V, bp);
-    }
-
-    if (!err) {
+	biprobit_adjust_vcv(pmod, V, bp->arho);
 	err = gretl_model_write_vcv(pmod, V);
     }
 
@@ -981,10 +934,7 @@ static int biprobit_OPG_vcv (MODEL *pmod,
     }
 
     if (!err) {
-	err = finalize_biprobit_vcv(pmod, &V, bp);
-    }
-
-    if (!err) {
+	biprobit_adjust_vcv(pmod, V, bp->arho);
 	err = gretl_model_write_vcv(pmod, V);
 	if (!err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
@@ -997,21 +947,16 @@ static int biprobit_OPG_vcv (MODEL *pmod,
 }
 
 static int biprobit_hessian_vcv (MODEL *pmod,
-				 gretl_matrix **pH,
+				 gretl_matrix *H,
 				 bp_container *bp)
 {
     int err = 0;
 
-    if (biprobit_trim) {
-	/* old-style: trim the rho elements off @V */
-	err = biprobit_prune_vcv(pH);
-    } else {
-	/* adjust the rho elements in @V */
-	biprobit_adjust_vcv(pmod, *pH, bp->arho);
-    }
+    /* adjust the rho elements in @V */
+    biprobit_adjust_vcv(pmod, H, bp->arho);
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, *pH);
+	err = gretl_model_write_vcv(pmod, H);
 	if (!err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	}
@@ -1182,10 +1127,6 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 {
     int err = 0;
 
-    if (!biprobit_trim) {
-	gretl_model_set_int(pmod, "rho_included", 1);
-    }
-
     gretl_model_set_double(pmod, "athrho", bp->arho);
 
     if (opt & OPT_G) {
@@ -1201,7 +1142,7 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	    if (opt & OPT_R) {
 		err = biprobit_QML_vcv(pmod, H, bp->score, bp);
 	    } else {
-		err = biprobit_hessian_vcv(pmod, &H, bp);
+		err = biprobit_hessian_vcv(pmod, H, bp);
 	    }
 	}
 	free(theta);
@@ -1222,7 +1163,7 @@ static int add_indep_test (MODEL *pmod, bp_container *bp,
     } else {
 	double testval;
 
-	if ((opt & OPT_R) && gretl_model_get_int(pmod, "rho_included")) {
+	if (opt & OPT_R) {
 	    /* QML: Wald test on athrho as per Stata */
 	    double se = gretl_model_get_double(pmod, "se_athrho");
 	    double z = bp->arho / se;
@@ -1373,16 +1314,13 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
 				const DATASET *dset,
 				gretlopt opt)
 {
-    int npar, xi;
-    int i, j, err = 0;
+    int i, j, xi, err = 0;
 
-    npar = biprobit_trim ? bp->npar - 1 : bp->npar;
-
-    if (npar != pmod->ncoeff) {
-	err = biprobit_resize_coeff(pmod, npar);
+    if (bp->npar != pmod->ncoeff) {
+	err = biprobit_resize_coeff(pmod, bp->npar);
     }
     if (!err) {
-	err = gretl_model_allocate_param_names(pmod, npar);
+	err = gretl_model_allocate_param_names(pmod, bp->npar);
     }
     if (err) {
 	return err;
@@ -1405,11 +1343,8 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     }
 
     pmod->rho = tanh(bp->arho);
-
-    if (!biprobit_trim) {
-	gretl_model_set_param_name(pmod, npar-1, "rho");
-	pmod->coeff[j] = pmod->rho;
-    }
+    gretl_model_set_param_name(pmod, bp->npar - 1, "rho");
+    pmod->coeff[j] = pmod->rho;
 
     /* scrub some invalid statistics */
     pmod->rsq = pmod->adjrsq = NADBL;
@@ -1420,7 +1355,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     pmod->yhat = NULL;
 
     pmod->lnL = bp->ll;
-    mle_criteria(pmod, bp->npar - npar); /* allow for estimation of rho */
+    mle_criteria(pmod, 0);
 
     free(pmod->list);
     pmod->list = gretl_list_copy(bp->list);
@@ -1491,9 +1426,6 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     if (opt & OPT_V) {
 	vprn = prn;
     }
-
-    /* temporary: read temporary set variable */
-    biprobit_trim = libset_get_bool(BIPROBIT_TRIM);
 
     mod.errcode = bp_container_fill(bp, &mod, dset, vprn);
     if (mod.errcode) {

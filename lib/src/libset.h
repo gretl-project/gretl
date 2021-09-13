@@ -103,7 +103,6 @@ typedef enum {
     R_LIB,
     LOGLEVEL,
     LOGSTAMP,
-    BIPROBIT_TRIM,
     CSV_DIGITS,
     NS_SMALL_INT_MAX, /* separator */
     GMP_BITS,
