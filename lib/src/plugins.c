@@ -244,7 +244,8 @@ struct plugin_function_info plugin_functions[] = {
     { "heckit_estimate",   P_HECKIT },
     { "interval_estimate", P_INTREG },
     { "tobit_via_intreg",  P_INTREG },
-    { "biprobit_estimate", P_BIPROBIT },
+    { "biprobit_estimate",   P_BIPROBIT },
+    { "biprobit_adjust_vcv", P_BIPROBIT },
     { "reprobit_estimate", P_REPROBIT },
 
     /* Dickey-Fuller test p-values */

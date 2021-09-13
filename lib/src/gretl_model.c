@@ -2696,6 +2696,21 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     return err;
 }
 
+static int do_biprobit_adjustment (MODEL *pmod,
+				    gretl_matrix *V)
+{
+    void (*biprobit_adj) (MODEL *, gretl_matrix *);
+
+    biprobit_adj = get_plugin_function("biprobit_adjust_vcv");
+
+    if (biprobit_adj == NULL) {
+	return E_FOPEN;
+    } else {
+	(*biprobit_adj) (pmod, V);
+	return 0;
+    }
+}
+
 /**
  * gretl_model_add_QML_vcv:
  * @pmod: pointer to model.
@@ -2769,6 +2784,9 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
     }
 
     if (!err) {
+	if (ci == BIPROBIT) {
+	    do_biprobit_adjustment(pmod, V);
+	}
 	err = gretl_model_write_vcv(pmod, V);
     }
 

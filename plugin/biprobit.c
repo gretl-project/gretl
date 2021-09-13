@@ -865,9 +865,9 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
-static void biprobit_adjust_vcv (MODEL *pmod, gretl_matrix *V,
-				 double athrho)
+void biprobit_adjust_vcv (MODEL *pmod, gretl_matrix *V)
 {
+    double athrho = gretl_model_get_double(pmod, "athrho");
     double v, vij, ca = cosh(athrho);
     double J = 1 / (ca * ca);
     int i, k = V->rows - 1;
@@ -905,7 +905,7 @@ static int biprobit_QML_vcv (MODEL *pmod,
     }
 
     if (!err) {
-	biprobit_adjust_vcv(pmod, V, bp->arho);
+	biprobit_adjust_vcv(pmod, V);
 	err = gretl_model_write_vcv(pmod, V);
     }
 
@@ -934,7 +934,7 @@ static int biprobit_OPG_vcv (MODEL *pmod,
     }
 
     if (!err) {
-	biprobit_adjust_vcv(pmod, V, bp->arho);
+	biprobit_adjust_vcv(pmod, V);
 	err = gretl_model_write_vcv(pmod, V);
 	if (!err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
@@ -952,14 +952,10 @@ static int biprobit_hessian_vcv (MODEL *pmod,
 {
     int err = 0;
 
-    /* adjust the rho elements in @V */
-    biprobit_adjust_vcv(pmod, H, bp->arho);
-
+    biprobit_adjust_vcv(pmod, H);
+    err = gretl_model_write_vcv(pmod, H);
     if (!err) {
-	err = gretl_model_write_vcv(pmod, H);
-	if (!err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
-	}
+	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
     }
 
     return err;
@@ -1138,12 +1134,18 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	if (!err) {
 	    H = biprobit_hessian_inverse(theta, bp, &err);
 	}
-	if (!err) {
-	    if (opt & OPT_R) {
-		err = biprobit_QML_vcv(pmod, H, bp->score, bp);
+	if (!err && (opt & OPT_R)) {
+	    if (opt & OPT_C) {
+		/* clustered */
+		err = gretl_model_add_QML_vcv(pmod, BIPROBIT,
+					      H, bp->score,
+					      dset, opt, NULL);
 	    } else {
-		err = biprobit_hessian_vcv(pmod, H, bp);
+		/* plain QML */
+		err = biprobit_QML_vcv(pmod, H, bp->score, bp);
 	    }
+	} else if (!err) {
+	    err = biprobit_hessian_vcv(pmod, H, bp);
 	}
 	free(theta);
 	gretl_matrix_free(H);
