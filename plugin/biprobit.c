@@ -958,7 +958,7 @@ static int biprobit_hessian_vcv (MODEL *pmod,
     if (!err) {
 	err = gretl_model_write_vcv(pmod, H);
 	if (!err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
 	}
     }
 
