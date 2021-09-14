@@ -952,7 +952,7 @@
         condizionale.  Se è stato installato il programma
         <program>X-12-ARIMA</program> è possibile usare questo al
         posto del codice interno di gretl.  Per i dettagli su queste
-        opzioni si veda la <guideref targ="chap:timeseries"/>.
+        opzioni si veda <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
@@ -1296,14 +1296,19 @@
       </para>
       <para>
 	Per default, gli errori standard sono calcolati usando
-	un'approssimazione numerica dell'Hessiana calcolata in
-	corrispondenza delle stime dei parametri. L'opzione
-	<opt>opg</opt> permette di stimare la matrice di covarianza
-	usando il prodotto esterno del gradiente (Outer Product of the
-	Gradient, OPG); l'opzione <opt>robust</opt> permette di
-	calcolare gli standard error QML a partire dalla matrice di
-	covarianza <quote>sandwich</quote> che usa sia l'inversa
-	dell'Hessiana che la matrice OPG.
+	l'Hessiana analitica calcolata in corrispondenza delle stime
+	dei parametri. L'opzione <opt>opg</opt> permette di stimare la
+	matrice di covarianza usando il prodotto esterno del gradiente
+	(Outer Product of the Gradient, OPG); l'opzione
+	<opt>robust</opt> permette di calcolare gli standard error QML
+	a partire dalla matrice di covarianza <quote>sandwich</quote>
+	che usa sia l'inversa dell'Hessiana che la matrice OPG.
+      </para>
+      <para>
+	Si noti che la stima di rho, il coefficiente di correlazione
+	fra i due termini di disturbo, è incluso nel vettore dei
+	coefficienti, all'ultimo posto, con le ovvie conseguenze sugli
+	accessori <lit>coeff</lit>, <lit>stderr</lit> e <lit>vcv</lit>.
       </para>
       <para>
 	Una volta completata con successo la stima, l'accessore
@@ -1321,12 +1326,11 @@
 	funzioni indice delle rispettive equazioni.
       </para>
       <para>
-	L'output comprende un test del rapporto di verosimiglianza
-	dell'ipotesi nulla che gli errori delle due equazioni siano
-	incorrelati fra loro. Si noti che, se lo stimatore è inteso
-	come stimatore QMLE e quindi viene usata l'opzione
-	<opt>robust</opt>, il test potrebbe non essere valido, anche
-	asintoticamente.
+	L'output comprende un test dell'ipotesi che gli errori delle
+	due equazioni siano incorrelati fra loro. Il test è un test di
+	tipo LR, a meno che lo stimatore sia inteso come stimatore
+	QMLE e quindi venga usata l'opzione <opt>robust</opt>; in
+	questo caso, si usa un test di Wald.
       </para>
     </description>
   </command>
@@ -4307,7 +4311,7 @@
 	foreign language=R --send-data=Rlist
       </code>
       <para>
-	Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
+	Si veda <guideref targ="chap:gretlR"/> per dettagli ed esempi.
       </para>
     </description>
     
@@ -4591,7 +4595,7 @@
       cancellare dalla memoria una funzione definita dall'utente, si
       usa il comando <lit>function pippo delete</lit>, dove
       <quote>pippo</quote> è la funzione da cancellare.) Per maggiori
-      dettagli, si veda la <guideref targ="chap:functions"/>.
+      dettagli, si veda <guideref targ="chap:functions"/>.
     </para>
   </description>
 
@@ -4788,7 +4792,7 @@
       NOTA: questo comando ha subito molti cambiamenti e migliorie
       da quando l'help seguente è stato scritto, per cui per
       informazioni complete e aggiornate consigliamo di far
-      riferimento alla <guideref targ="chap:genr"/>. D'altro canto,
+      riferimento al<guideref targ="chap:genr"/>. D'altro canto,
       il testo che segue non contiene informazioni erronee, per cui
       può essere interpretato come <quote>questo ed altro</quote>.
     </para>
@@ -4809,7 +4813,7 @@
       formula dev'essere una combinazione ben definita di nomi di
       variabile, costanti, operatori e funzioni (descritte
       oltre). Ulteriori dettagli su alcuni aspetti di questo comando
-      si possono trovare nella <guideref targ="chap:genr"/>.
+      si possono trovare nel<guideref targ="chap:genr"/>.
     </para>
 
     <para context="gui">
@@ -5225,7 +5229,7 @@
 	va messa nella riga del comando <lit>end gmm</lit>.
       </para>
       <para>
-	Si veda la <guideref targ="chap:gmm"/> per i dettagli. Quello che segue
+	Si veda <guideref targ="chap:gmm"/> per i dettagli. Quello che segue
 	è un semplice esempio illustrativo.
       </para>
       <code>
@@ -6727,30 +6731,32 @@ possono essere nidificati.
       aggiustati per l'ampiezza campionaria.
     </para>
     <para context="cli">
-      L'inclusione di trend deterministici nel modello è controllata dalle
-      opzioni del comando. Se non si indica alcuna opzione, viene inclusa una
-      <quote>costante non vincolata</quote>, che permette la presenza di
-      un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
-      trend nei livelli delle variabili endogene. Nella letteratura originata
-      dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
-      si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+      L'inclusione di trend deterministici nel modello è controllata
+      dalle opzioni del comando. Se non si indica alcuna opzione,
+      viene inclusa una <quote>costante non vincolata</quote>, che
+      permette la presenza di un'intercetta diversa da zero nelle
+      relazioni di cointegrazione e di un trend nei livelli delle
+      variabili endogene. Nella letteratura originata dal lavoro di
+      Johansen (si veda ad esempio il suo libro del 1995), si fa
+      riferimento a questo come al <quote>caso 3</quote>.  Le prime
       quattro opzioni mostrate sopra, che sono mutualmente esclusive,
-      producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-      casi e i criteri per scegliere tra di essi sono spiegati nella
-      <guideref targ="chap:vecm"/>.
+      producono rispettivamente i casi 1, 2, 4 e 5. Il significato di
+      questi casi e i criteri per scegliere tra di essi sono spiegati
+      nel<guideref targ="chap:vecm"/>.
     </para>
     <para context="gui">
-      L'inclusione di termini deterministici nel modello è controllata dai
-      pulsanti delle opzioni. L'opzione predefinita è di includere una
-      <quote>costante non vincolata</quote>, che permette la presenza di
-      un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
-      trend nei livelli delle variabili endogene. Nella letteratura originata
-      dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
-      si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
-      quattro opzioni mostrate sopra, che sono mutualmente esclusive,
-      producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-      casi e i criteri per scegliere tra di essi sono spiegati nella
-      <guideref targ="chap:vecm"/>.
+      L'inclusione di termini deterministici nel modello è controllata
+      dai pulsanti delle opzioni. L'opzione predefinita è di includere
+      una <quote>costante non vincolata</quote>, che permette la
+      presenza di un'intercetta diversa da zero nelle relazioni di
+      cointegrazione e di un trend nei livelli delle variabili
+      endogene. Nella letteratura originata dal lavoro di Johansen (si
+      veda ad esempio il suo libro del 1995), si fa riferimento a
+      questo come al <quote>caso 3</quote>.  Le prime quattro opzioni
+      mostrate sopra, che sono mutualmente esclusive, producono
+      rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+      casi e i criteri per scegliere tra di essi sono spiegati
+      nel<guideref targ="chap:vecm"/>.
     </para>
     <para context="cli">
       Le liste opzionali <repl>lista-x</repl> e
@@ -7915,7 +7921,7 @@ una o più delle variabili del test.</para>
       seguito da una variabile indice e una lista.
     </para>
     <para>
-      Si veda la <guideref targ="chap:looping"/> per altri dettagli ed esempi,
+      Si veda <guideref targ="chap:looping"/> per altri dettagli ed esempi,
       oltre che per la spiegazione dell'opzione <opt>progressive</opt> (che
       è destinata ad essere usata nelle simulazioni Monte Carlo) e per
       l'elenco dei comandi di gretl che possono essere usati all'interno di un
@@ -9011,7 +9017,7 @@ una o più delle variabili del test.</para>
     <description context="cli">
       <para>
 	Manipola la <quote>tabella modelli</quote> di gretl. Si veda
-	la <guideref targ="chap:modes"/> per i dettagli. Le opzioni
+	<guideref targ="chap:modes"/> per i dettagli. Le opzioni
 	hanno i seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo
 	modello stimato alla tabella modelli, se possibile;
 	<cmd>show</cmd> mostra la tabella modelli in una finestra;
@@ -9549,7 +9555,8 @@ una o più delle variabili del test.</para>
       scalar gamma = 1
     </code>
     <para>
-      Per ulteriori dettagli sulla stima NLS si veda la <guideref targ="chap:nls"/>.
+      Per ulteriori dettagli sulla stima NLS si veda <guideref
+      targ="chap:nls"/>.
     </para>
   </description>
 
@@ -9649,7 +9656,8 @@ una o più delle variabili del test.</para>
       nomi <math>k</math> di variabile al suo interno.
       </para>
       <para>
-	Per ulteriori dettagli sulla stima NLS si veda la <guideref targ="chap:nls"/>.
+	Per ulteriori dettagli sulla stima NLS si veda <guideref
+	targ="chap:nls"/>.
       </para>
       </description>
 
@@ -9853,7 +9861,7 @@ del comando <cmdref targ="set"/>.
       L'opzione <opt>print-final</opt> è utilizzabile solo nel contesto
       di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
       regressione in modo silenzioso per tutte le iterazioni del loop
-      tranne l'ultima. Si veda la <guideref targ="chap:looping"/> per i dettagli.
+      tranne l'ultima. Si veda <guideref targ="chap:looping"/> per i dettagli.
     </para>
 
     <para context="cli">
@@ -10685,7 +10693,8 @@ del comando <cmdref targ="set"/>.
       comando <lit>xtreg</lit> in Stata.
     </para>
     <para>
-      Per maggiori dettagli sulla stima panel, si veda la <guideref targ="chap:panel"/>.
+      Per maggiori dettagli sulla stima panel, si veda <guideref
+      targ="chap:panel"/>.
     </para>
   </description>
 
@@ -11295,9 +11304,11 @@ del comando <cmdref targ="set"/>.
   <description>
     <para>
       Il blocco <lit>plot</lit> offre un'alternativa al comando
-      <cmdref targ="gnuplot"/>, che potrebbe essere più efficace
-      per produrre grafici particolarmente elaborati (con diverse
-      opzioni e/o comandi gnuplot inseriti).
+      <cmdref targ="gnuplot"/>, che potrebbe essere più efficace per
+      produrre grafici particolarmente elaborati (con diverse opzioni
+      e/o comandi gnuplot inseriti). Oltre alla spiegazione seguente,
+      si possono trovare altri esempi consultando <guideref
+      targ="chap:graphs"/>.
     </para>
     <para>
       Un blocco <lit>plot</lit> comincia col comando <lit>plot</lit>
@@ -12220,7 +12231,7 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 	valori specificati.
       </para>
       <para>
-	Per un approfondimento, si veda la <guideref targ="chap:quantreg"/>.
+	Per un approfondimento, si veda <guideref targ="chap:quantreg"/>.
       </para>
     </description>
     
@@ -12830,7 +12841,7 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 	</code>
 
 	<para>
-	  Si veda anche la <guideref targ="chap:vecm"/>.
+	  Si veda anche <guideref targ="chap:vecm"/>.
 	</para>
 
       </description>
@@ -13056,7 +13067,7 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 		originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
 		<para>
-		  Si veda la <guideref targ="chap:sampling"/> per maggiori dettagli.</para>
+		  Si veda <guideref targ="chap:sampling"/> per maggiori dettagli.</para>
 
 		</description>
 	      </command>
@@ -13672,7 +13683,7 @@ l'indentazione della linea sia corretta.
   restrizioni associate ai VECM. A differenza di altri
   settaggi, <lit>initvals</lit> non è persistente: dopo,
   l'uso, viene automaticamente resettato.  Per i dettagli
-  legati alla stima di modelli ARMA, si veda la <guideref
+  legati alla stima di modelli ARMA, si veda <guideref
   targ="chap:timeseries"/>.
 </para>
 </li>
@@ -13924,12 +13935,11 @@ qual caso viene usato QML.
     </para>
   </li>
   <li>
-    <para><lit>R_functions</lit>: <lit>off</lit> (the default) or
-    <lit>on</lit>. Recognize functions defined in R as if they were
-    native functions (the namespace prefix
-    <quote><lit>R.</lit></quote> is required). See <guideref
-    targ="chap:gretlR"/> for details on this and the
-    previous item.
+    <para><lit>R_functions</lit>: <lit>off</lit> (il default) oppure
+    <lit>on</lit>. Riconosce funzioni di Rcome se fossero funzioni
+    gretl (premettendo il prefisso <quote><lit>R.</lit></quote>). Si
+    veda <guideref targ="chap:gretlR"/> per dettagli su questo punto e
+    sul precedente.
     </para>
   </li>
 </ilist>
@@ -14586,7 +14596,7 @@ qual caso viene usato QML.
     </para>
 
     <para>
-      Si veda la <guideref targ="chap:sampling"/> per ulteriori
+      Si veda <guideref targ="chap:sampling"/> per ulteriori
       dettagli.
     </para>
     
@@ -16111,7 +16121,7 @@ qual caso viene usato QML.
 	3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
 	mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
 	significato di questi casi e i criteri per scegliere tra di essi sono
-	spiegati nella <guideref targ="chap:vecm"/>.
+	spiegati nel<guideref targ="chap:vecm"/>.
       </para>
       <para context="cli">
 	Le liste opzionali <repl>xlist</repl> e <repl>rxlist</repl>
@@ -16132,7 +16142,7 @@ qual caso viene usato QML.
 	(si veda ad esempio il suo libro del 1995), si fa riferimento a questo
 	come al <quote>caso 3</quote>.  Le altre quattro opzioni producono
 	rispettivamente i casi 1, 2, 4 e 5. Il significato di questi casi e i
-	criteri per scegliere tra di essi sono spiegati nella <guideref
+	criteri per scegliere tra di essi sono spiegati nel<guideref
 	targ="chap:vecm"/>.
       </para>
       <para context="gui">
