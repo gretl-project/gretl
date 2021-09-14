@@ -82,6 +82,7 @@ struct str_table dummies[] = {
     { DUM_LOWER,   "lower" },
     { DUM_REAL,    "real" },
     { DUM_IMAG,    "imag" },
+    { DUM_END,     "end" },
     { DUM_DATASET, "dataset" },
     { 0,        NULL }
 };
@@ -89,7 +90,7 @@ struct str_table dummies[] = {
 /* Identify matrix-selection dummy constants:
    these can be valid only between '[' and ']'.
 */
-#define MSEL_DUM(d) (d >= DUM_DIAG && d <= DUM_IMAG)
+#define MSEL_DUM(d) (d >= DUM_DIAG && d <= DUM_END)
 
 /* dvars: dataset- and test-related accessors */
 
@@ -1025,7 +1026,11 @@ static int dummy_lookup (const char *s, parser *p)
     }
 
     if (MSEL_DUM(d) && parser_next_char(p) != ']') {
-	d = 0;
+	if (d == DUM_END && (p->upsym == MAT || p->upsym == ARRAY)) {
+	    ; /* OK? */
+	} else {
+	    d = 0;
+	}
     }
 
     return d;

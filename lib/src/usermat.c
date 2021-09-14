@@ -224,28 +224,49 @@ static int bad_sel_vector (const gretl_vector *v, int n)
 
 static int bad_sel_range (int *range, int n)
 {
-    int i, k;
+    int i, k, err = 0;
 
     for (i=0; i<2; i++) {
 	k = range[i];
 	if (k != MSEL_MAX && (k < 1 || k > n)) {
-	    fprintf(stderr, "bad_sel_range (n=%d)\n", n);
-	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
-	    return E_INVARG;
+	    err = E_INVARG;
+	    if (k > n && k > 2000000000) {
+		k -= IDX_TBD - n;
+		if (k > 0) {
+		    range[i] = k;
+		    err = 0;
+		}
+	    }
+	    if (err) {
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
+		break;
+	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
-static int bad_sel_single (int k, int n)
+static int bad_sel_single (int *pk, int n)
 {
-    if (k != MSEL_MAX && (k < 1 || k > n)) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
-	return E_INVARG;
+    int err = 0;
+
+    if (*pk != MSEL_MAX && (*pk < 1 || *pk > n)) {
+	err = E_INVARG;
+	if (*pk > n && *pk > 2000000000) {
+	    volatile int k = *pk + n - IDX_TBD;
+
+	    if (k > 0) {
+		*pk = k;
+		err = 0;
+	    }
+	}
+	if (err) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), *pk);
+	}
     }
 
-    return 0;
+    return err;
 }
 
 /* convert a matrix subspec component into list of rows
@@ -561,7 +582,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     if (spec_is_single(spec)) {
 	int k = spec_single_val(spec);
 
-	err = bad_sel_single(k, veclen);
+	err = bad_sel_single(&k, veclen);
 	if (!err) {
 	    spec->ltype = spec->rtype = SEL_ELEMENT;
 	    mspec_set_offset(spec, k - 1);

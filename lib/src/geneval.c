@@ -4869,7 +4869,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     rscalar = (r != NULL && scalar_node(r));
 
     if (lscalar) {
-        i = node_get_int(l, p);
+	i = node_get_int(l, p);
         if (!p->err && i == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
             p->err = E_INVARG;
@@ -4883,7 +4883,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         }
     }
     if (!p->err && rscalar) {
-        j = node_get_int(r, p);
+	j = node_get_int(r, p);
         if (!p->err && j == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
             p->err = E_INVARG;
@@ -6293,6 +6293,20 @@ static NODE *trend_node (parser *p)
                 ret->flags &= ~TMP_NODE;
             }
         }
+    }
+
+    return ret;
+}
+
+static NODE *array_last_node (parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+        ret = aux_scalar_node(p);
+        if (!p->err) {
+	    ret->v.xval = IDX_TBD;
+	}
     }
 
     return ret;
@@ -16631,6 +16645,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = dataset_list_node(p);
         } else if (t->v.idnum == DUM_TREND) {
             ret = trend_node(p);
+	} else if (t->v.idnum == DUM_END) {
+	    ret = array_last_node(p);
         } else {
             /* otherwise treat as terminal */
             ret = t;
@@ -20294,9 +20310,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, SERIES, p);
 		}
 	    } else if (k == sample_size(p->dset)) {
-		/* treat as series of current sample length
-		   2016-03-03: removed clause "&& mt1 == 0"
-		*/
+		/* treat as series of current sample length */
 		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, SERIES, p);
 		}

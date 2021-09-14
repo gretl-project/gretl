@@ -21,6 +21,7 @@
 #define USERMAT_H_
 
 #define MSEL_MAX INT_MIN
+#define IDX_TBD  INT_MAX
 
 typedef enum {
     SEL_NULL,    /* nothing supplied */
