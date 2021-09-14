@@ -421,6 +421,7 @@ static int run_mpi_with_pipes (char **argv, struct iodata *io,
     } else {
 	io->fd = sout;
 	io->len = sizeof io->buf;
+	io->buf[0] = '\0';
 	io->err = &err;
 	io->prn = prn;
 	io->finished = 0;
