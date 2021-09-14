@@ -11162,6 +11162,8 @@
 	<cmdref targ="gnuplot"/> command which may be more convenient
 	when you are producing an elaborate plot (with several options
 	and/or gnuplot commands to be inserted into the plot file).
+	In addition to the following explanation, please also refer
+	to <guideref targ="chap:graphs"/> for some further examples.
       </para>
       <para>
 	A <lit>plot</lit> block starts with the command-word
