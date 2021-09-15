@@ -256,8 +256,8 @@ static int bad_sel_single (int *pk, int n)
 	if (*pk > n && *pk > 2000000000) {
 	    volatile int k = *pk + n - IDX_TBD;
 
+	    *pk = k;
 	    if (k > 0) {
-		*pk = k;
 		err = 0;
 	    }
 	}
