@@ -1762,6 +1762,9 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	if (labels != NULL) {
 	    pd = importer_dates_check(labels, &book->flags, newset, prn, &err);
 	    free(labels);
+	    if (pd < 0) {
+		book_unset_numeric_dates(book);
+	    }
 	}
 
 	if (pd > 0) {

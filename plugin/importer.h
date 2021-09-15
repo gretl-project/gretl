@@ -45,6 +45,7 @@ enum {
 #define book_debugging(b)     ((b)->flags & BOOK_DEBUG)
 
 #define book_set_numeric_dates(b) ((b)->flags |= BOOK_NUMERIC_DATES)
+#define book_unset_numeric_dates(b) ((b)->flags &= ~BOOK_NUMERIC_DATES)
 #define book_set_base_1904(b)     ((b)->flags |= BOOK_DATE_BASE_1904)
 #define book_set_auto_varnames(b) ((b)->flags |= BOOK_AUTO_VARNAMES)
 #define book_set_time_series(b)   ((b)->flags |= BOOK_TIME_SERIES)
