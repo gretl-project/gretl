@@ -1,4 +1,6 @@
 version 2021d, in progress
+- "biprobit" command: include rho in $coeff, $stderr and
+  $vcv
 - Prevent opening of general and console preferences
   dialogs simultaneously
 - Fix potential failure mode in echoing script input lines
@@ -7,6 +9,9 @@ version 2021d, in progress
 - Fix a GUI build error when using GTK 2
 - Fix Windows bug: greek-letter identifiers not working
   in some locales
+- Fix Mac bug: binary data read/write not accessible
+- Fix Linux bug: possible crash when running MPI from the
+  GUI program
 
 2021-08-30 version 2021c
 - New function contains(): indicates whether a numerical
