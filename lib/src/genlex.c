@@ -2065,8 +2065,10 @@ static void lex_try_utf8 (parser *p)
 
 #define word_start_special(c) (c == '$' || c == '_')
 
+/* accept 'to', but only with spaces before and after */
 #define lag_range_sym(p) ((p->flags & P_LAGPRSE) && p->ch == 't' && \
                           *p->point == 'o' && \
+			  *(p->point - 2) == ' ' && \
 			  *(p->point + 1) == ' ')
 
 void lex (parser *p)
