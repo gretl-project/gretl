@@ -7747,23 +7747,52 @@ static NODE *do_funcerr (NODE *n, parser *p)
     return ret;
 }
 
+static void write_mpi_errmsg (const char *funcname, const char *s)
+{
+#ifdef HAVE_MPI
+    gchar *tmp = gretl_make_dotpath("mpi.fail");
+    FILE *fp = gretl_fopen(tmp, "wb");
+
+    if (fp != NULL) {
+	if (funcname != NULL) {
+	    fprintf(fp, _("Error message from %s():\n %s"),
+		    funcname, s);
+	    fputc('\n', fp);
+	} else {
+	    fprintf(fp, "Error message from gretlmpi: %s\n", s);
+	}
+	fclose(fp);
+    }
+    g_free(tmp);
+#else
+    return;
+#endif
+}
+
 static NODE *do_errorif (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
+    int fd = gretl_function_depth();
 
-    if (gretl_function_depth() == 0) {
-        gretl_errmsg_sprintf("'%s': can only be used within a function",
-                             "errorif");
+    if (fd == 0 && !gretl_mpi_initialized()) {
+	gretl_errmsg_sprintf("'%s': can only be used within a function",
+			     "errorif");
         p->err = E_DATA;
     } else {
         int cond = node_get_bool(l, p, -1);
 
         if (cond && !p->err) {
-            const char *funcname = NULL;
+	    const char *funcname = NULL;
 
-            current_function_info(&funcname, NULL);
-            gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
-                                 funcname, r->v.str);
+	    if (fd > 0) {
+		current_function_info(&funcname, NULL);
+	    }
+	    if (gretl_mpi_initialized()) {
+		write_mpi_errmsg(funcname, r->v.str);
+	    } else {
+		gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+				     funcname, r->v.str);
+	    }
             p->err = E_FUNCERR;
         }
     }

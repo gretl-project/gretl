@@ -3366,6 +3366,24 @@ static int write_foreign_io_file (int lang, PRN *prn)
     return err;
 }
 
+#ifdef HAVE_MPI
+
+static void try_for_mpi_errmsg (PRN *prn)
+{
+    gchar *tmp = gretl_make_dotpath("mpi.fail");
+    gchar *msg = NULL;
+
+    g_file_get_contents(tmp, &msg, NULL, NULL);
+    if (msg != NULL) {
+	pputs(prn, msg);
+	g_free(msg);
+    }
+    gretl_remove(tmp);
+    g_free(tmp);
+}
+
+#endif
+
 /**
  * foreign_execute:
  * @dset: dataset struct.
@@ -3418,11 +3436,14 @@ int foreign_execute (const DATASET *dset,
 # else
 	    err = lib_run_mpi_sync(foreign_opt, ptr, prn);
 # endif
+	    if (err) {
+		try_for_mpi_errmsg(prn);
+	    }
 	}
 	foreign_destroy();
 	return err; /* handled */
     }
-#endif
+#endif /* HAVE_MPI */
 
     if (foreign_lang == LANG_R) {
 #ifdef USE_RLIB
