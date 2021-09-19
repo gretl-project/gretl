@@ -313,14 +313,15 @@ int *mspec_make_list (int type, union msel *sel, int n,
 		ns = n - 1;
 		single_exclude = sr0;
 	    }
-	} else if (bad_sel_range(sel->range, n)) {
-	    *err = E_DATA;
 	} else {
-	    ns = sr1 - sr0 + 1;
-	    if (ns <= 0) {
-		gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
-				     sr0, sr1);
-		*err = E_DATA;
+	    *err = bad_sel_range(sel->range, n);
+	    if (!*err) {
+		ns = sel->range[1] - sel->range[0] + 1;
+		if (ns <= 0) {
+		    gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
+					 sel->range[0], sel->range[1]);
+		    *err = E_DATA;
+		}
 	    }
 	}
     }
