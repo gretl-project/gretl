@@ -1014,6 +1014,9 @@ const char *gretl_const_name (int i)
 
 /* end external stuff */
 
+/* cases where 'end' can indicate 'last element of' */
+#define DUM_END_OK(t) (t==MAT || t==ARRAY || t==MVAR)
+
 static int dummy_lookup (const char *s, parser *p)
 {
     int i, d = 0;
@@ -1026,8 +1029,12 @@ static int dummy_lookup (const char *s, parser *p)
     }
 
     if (MSEL_DUM(d) && parser_next_char(p) != ']') {
-	if (d == DUM_END && (p->upsym == MAT || p->upsym == ARRAY)) {
+	if (d == DUM_END && DUM_END_OK(p->upsym)) {
 	    ; /* OK? */
+	} else if (d == DUM_END) {
+	    fprintf(stderr, "DUM_END: not interpreted for upsym %s\n",
+		    getsymb(p->upsym));
+	    d = 0;
 	} else {
 	    d = 0;
 	}
@@ -1730,16 +1737,9 @@ static void word_check_next_char (parser *p)
     }
 
     if (p->sym == UNDEF) {
-#if 1
 	/* 2020-03-16: suspend disbelief, we might be in a branch
 	   of "cond ? x : y" that ends up not being taken */
 	return;
-#else
-	if (p->idstr != NULL && p->idstr[0] != '\0') {
-	    undefined_symbol_error(p->idstr, p);
-	    return;
-	}
-#endif
     }
 
     if (p->ch == '(') {

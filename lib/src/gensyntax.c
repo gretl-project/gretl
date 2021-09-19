@@ -945,10 +945,12 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 
 static void get_slice_parts (NODE *t, parser *p)
 {
+    int slice_upsym = p->upsym;
     char cexp = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_slice_parts, p->sym = %d\n", p->sym);
+    fprintf(stderr, "get_slice_parts, p->sym = %d (%s), upsym %s\n",
+	    p->sym, getsymb(p->sym), getsymb(p->upsym));
 #endif
 
     set_slice_on(p);
@@ -980,6 +982,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    return;
 	}
 	if (p->sym == P_COM) {
+	    p->upsym = slice_upsym; /* 2021-09-19 */
 	    lex(p);
 	    if (p->sym == G_RBR) {
 		/* empty column spec, OK */
