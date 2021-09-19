@@ -254,7 +254,7 @@ static int bad_sel_single (int *pk, int n)
     if (*pk != MSEL_MAX && (*pk < 1 || *pk > n)) {
 	err = E_INVARG;
 	if (*pk > n && *pk > 2000000000) {
-	    volatile int k = *pk + n - IDX_TBD;
+	    int k = *pk + (n - IDX_TBD);
 
 	    *pk = k;
 	    if (k > 0) {
