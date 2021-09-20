@@ -420,9 +420,7 @@ static lprec *lp_model_from_file (const char *fname,
     } else {
 	tmp = gretl_make_dotpath("tmp.lp");
 	fp = gretl_fopen(tmp, "wb");
-	if (fp == NULL) {
-	    *err = E_FOPEN;
-	} else {
+	if (fp != NULL) {
 	    fputs(buf, fp);
 	    fclose(fp);
 	    fp = gretl_fopen(tmp, "rb");
