@@ -2693,7 +2693,7 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 
     /* first off: see if the series name is already unique! */
     vi = current_series_index(dset, vname);
-    if (vi == v) {
+    if ((v == 0 && vi < 0) || vi == v) {
 	return vname;
     }
 
