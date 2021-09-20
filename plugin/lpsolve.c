@@ -407,20 +407,34 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     return lp;
 }
 
-static lprec *lp_model_from_file (const char *fname, PRN *prn,
-				  int *err)
+static lprec *lp_model_from_file (const char *fname,
+				  const char *buf,
+				  PRN *prn, int *err)
 {
     lprec *lp = NULL;
-    FILE *fp = gretl_fopen(fname, "r");
+    gchar *tmp = NULL;
+    FILE *fp;
+
+    if (fname != NULL) {
+	gretl_fopen(fname, "r");
+    } else {
+	tmp = gretl_make_dotpath("tmp.lp");
+	gretl_fopen(fname, "r");
+    }
 
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
-	if (prn != NULL) {
+	if (fname != NULL && prn != NULL) {
 	    pprintf(prn, "Reading input from '%s'\n", fname);
 	}
 	lp = read_lp(fp, NORMAL, NULL);
-	fclose(fp); /* ? */
+	fclose(fp); /* check that lpsolve doesn't close close this? */
+    }
+
+    if (tmp != NULL) {
+	gretl_remove(tmp);
+	g_free(tmp);
     }
 
     return lp;
@@ -613,7 +627,8 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 }
 
 static gretlopt lp_options_from_bundle (gretl_bundle *b,
-					const char **pfname)
+					const char **pfname,
+					const char **pbuf)
 {
     gretlopt opt = OPT_NONE;
 
@@ -626,9 +641,11 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b,
     if (gretl_bundle_get_bool(b, "sensitivity", 0)) {
 	opt |= OPT_S;
     }
+
     if (gretl_bundle_has_key(b, "lp_filename")) {
 	*pfname = gretl_bundle_get_string(b, "lp_filename", NULL);
-	opt |= OPT_F;
+    } else if (gretl_bundle_has_key(b, "lp_buffer")) {
+	*pbuf = gretl_bundle_get_string(b, "lp_buffer", NULL);
     }
 
     return opt;
@@ -676,6 +693,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     const char **cnames = NULL;
     const char **rnames = NULL;
     const char *lpfname = NULL;
+    const char *lpbuf = NULL;
     PRN *vprn = NULL;
     gretlopt opt;
     lprec *lp;
@@ -692,11 +710,11 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     }
 #endif
 
-    opt = lp_options_from_bundle(b, &lpfname);
+    opt = lp_options_from_bundle(b, &lpfname, &lpbuf);
     vprn = (opt & OPT_V)? prn : NULL;
 
-    if (lpfname != NULL) {
-	lp = lp_model_from_file(lpfname, vprn, err);
+    if (lpfname != NULL || lpbuf != NULL) {
+	lp = lp_model_from_file(lpfname, lpbuf, vprn, err);
     } else {
 	lp = lp_model_from_bundle(b, &cnames, &rnames, opt, err);
     }
