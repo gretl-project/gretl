@@ -419,7 +419,14 @@ static lprec *lp_model_from_file (const char *fname,
 	gretl_fopen(fname, "r");
     } else {
 	tmp = gretl_make_dotpath("tmp.lp");
-	gretl_fopen(fname, "r");
+	fp = gretl_fopen(tmp, "wb");
+	if (fp == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    fputs(buf, fp);
+	    fclose(fp);
+	    fp = gretl_fopen(tmp, "rb");
+	}
     }
 
     if (fp == NULL) {
