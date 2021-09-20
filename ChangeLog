@@ -748,6 +748,8 @@ version 2021d, in progress
 - randgen() function (and related): add support for the
   Exponential distribution
 - CSV importation: improved handling of quote symbols
+- Function packages: add "wants-data-access" flag for packages
+  that want to access pre- or post-sample data
 - Fix bug: incorrect standard errors when the --robust option
   is given for random-effects panel estimator in presence
   of missing values
