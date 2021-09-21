@@ -1390,14 +1390,18 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
 	warned = 1;
     }
 
-    tmp = malloc(strlen(args) + 9);
-
-    if (tmp == NULL) {
-	err = E_ALLOC;
+    if (args == NULL) {
+	err = E_DATA;
     } else {
-	sprintf(tmp, "sscanf(%s)", args);
-	err = generate(tmp, dset, GRETL_TYPE_NONE, OPT_O, prn);
-	free(tmp);
+	tmp = malloc(strlen(args) + 9);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    sprintf(tmp, "sscanf(%s)", args);
+	    err = generate(tmp, dset, GRETL_TYPE_NONE, OPT_O, prn);
+	    free(tmp);
+	}
     }
 
     return err;
