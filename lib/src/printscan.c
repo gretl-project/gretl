@@ -1381,7 +1381,6 @@ int do_sscanf (const char *src, const char *format, const char *args,
 static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
 {
     static int warned;
-    char *tmp;
     int err;
 
     if (!warned) {
@@ -1393,7 +1392,7 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
     if (args == NULL) {
 	err = E_DATA;
     } else {
-	tmp = malloc(strlen(args) + 9);
+	char *tmp = malloc(strlen(args) + 9);
 
 	if (tmp == NULL) {
 	    err = E_ALLOC;

@@ -589,9 +589,9 @@ static int check_for_lags (MODEL *pmod, const DATASET *dset)
     int ldv = model_lags(pmod->list, dset, &pmax);
 
     if (pmax > 0) {
-	gretl_model_set_int(pmod, "max_xlag", pmax);
-    } else if (gretl_model_get_int(pmod, "max_xlag")) {
-	gretl_model_destroy_data_item(pmod, "max_xlag");
+	gretl_model_set_int(pmod, "maxlag", pmax);
+    } else if (gretl_model_get_int(pmod, "maxlag")) {
+	gretl_model_destroy_data_item(pmod, "maxlag");
     }
 
     if (ldv) {
