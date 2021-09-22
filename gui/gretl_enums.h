@@ -70,6 +70,7 @@ enum extra_cmds {
     EDIT_STATA,
     EDIT_JULIA,
     EDIT_DYNARE,
+    EDIT_LPSOLVE,
     EDIT_X12A,
     EDIT_SPEC,
     EDIT_MAX,
@@ -153,7 +154,7 @@ enum extra_cmds {
 			  r == EDIT_PKG_CODE ||	\
 			  r == EDIT_PKG_SAMPLE)
 
-#define editing_alt_script(r) (r >= EDIT_R && r <= EDIT_DYNARE)
+#define editing_alt_script(r) (r >= EDIT_R && r <= EDIT_LPSOLVE)
 
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */
@@ -201,6 +202,7 @@ enum file_ops {
     SAVE_STATA_CMDS,
     SAVE_JULIA_CODE,
     SAVE_DYNARE_CODE,
+    SAVE_LPSOLVE_CODE,
     SAVE_SPEC_FILE,
     SAVE_HELP_TEXT,
     SAVE_CONSOLE,

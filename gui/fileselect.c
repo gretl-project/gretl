@@ -71,6 +71,7 @@ static struct extmap action_map[] = {
     { SAVE_STATA_CMDS,   ".do" },
     { SAVE_JULIA_CODE,   ".jl" },
     { SAVE_DYNARE_CODE,  ".mod" },
+    { SAVE_LPSOLVE_CODE, ".lp" },
     { SAVE_SPEC_FILE,    ".spec" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
@@ -319,7 +320,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	       action == SAVE_PYTHON_CMDS ||
 	       action == SAVE_STATA_CMDS ||
 	       action == SAVE_JULIA_CODE ||
-	       action == SAVE_DYNARE_CODE) {
+	       action == SAVE_DYNARE_CODE ||
+	       action == SAVE_LPSOLVE_CODE) {
 	script_window_update(vwin, fname);
     }
 }
@@ -430,6 +432,8 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	role = EDIT_JULIA;
     } else if (has_suffix(fname, ".mod")) {
 	role = EDIT_DYNARE;
+    } else if (has_suffix(fname, ".lp")) {
+	role = EDIT_LPSOLVE;
     }
 
     if (role >= EDIT_GP && role < EDIT_MAX) {
@@ -908,7 +912,8 @@ static struct filter_info script_filters[] = {
     { N_("Julia files (*.jl)"), "*.jl", EDIT_JULIA },
     { N_("Ox files (*.ox)"), "*.ox", EDIT_OX },
     { N_("Stata files (*.do)"), "*.do", EDIT_STATA },
-    { N_("Dynare files (*.mod)"), "*.mod", EDIT_DYNARE }
+    { N_("Dynare files (*.mod)"), "*.mod", EDIT_DYNARE },
+    { N_("lpsolve files (*.lp)"), "*.lp", EDIT_LPSOLVE }
 };
 
 static int n_data_filters = G_N_ELEMENTS(data_filters);

@@ -346,6 +346,8 @@ static int script_type (const char *fname)
 	return EDIT_STATA;
     } else if (has_suffix(fname, ".mod")) {
 	return EDIT_DYNARE;
+    } else if (has_suffix(fname, ".lp")) {
+	return EDIT_LPSOLVE;
     } else {
 	return 0;
     }

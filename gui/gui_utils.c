@@ -1570,6 +1570,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_STATA_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_DYNARE) {
 	    file_selector(SAVE_DYNARE_CODE, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_LPSOLVE) {
+	    file_selector(SAVE_LPSOLVE_CODE, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}
@@ -1815,6 +1817,8 @@ gchar *title_from_filename (const char *fname,
 	    title = g_strdup(_("gretl: edit Stata program"));
 	} else if (role == EDIT_DYNARE) {
 	    title = g_strdup(_("gretl: edit Dynare script"));
+	} else if (role == EDIT_LPSOLVE) {
+	    title = g_strdup(_("gretl: edit lpsolve script"));
 	} else if (role == EDIT_SPEC) {
 	    title = g_strdup(_("gretl: edit package spec file"));
 	} else {
@@ -1900,6 +1904,7 @@ static gchar *make_viewer_title (int role, const char *fname,
     case EDIT_JULIA:
     case EDIT_STATA:
     case EDIT_DYNARE:
+    case EDIT_LPSOLVE:
     case EDIT_SPEC:
 	title = title_from_filename(fname, role, TRUE);
 	break;
