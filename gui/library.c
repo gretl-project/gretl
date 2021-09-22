@@ -8563,6 +8563,9 @@ static void ensure_newline_termination (gchar **ps)
    successful, put the lpsolve output into a window and attach the
    output bundle: this will contain various key results that can be
    saved in scalar or matrix form.
+
+   The @opt argument is currently unused; I'm not yet sure if there's
+   any valid/interesting use for it.
 */
 
 static void call_lpsolve_function (gchar *buf, gretlopt opt)
