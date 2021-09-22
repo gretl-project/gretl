@@ -8559,6 +8559,43 @@ static void ensure_newline_termination (gchar **ps)
     }
 }
 
+static void call_lpsolve_function (gchar *buf, gretlopt opt)
+{
+    gretl_bundle *(*lpf) (gretl_bundle *, PRN *, int *);
+    gretl_bundle *b_inp, *b_out;
+    PRN *prn = NULL;
+    int err = 0;
+
+    lpf = gui_get_plugin_function("gretl_lpsolve");
+    if (lpf == NULL) {
+	return;
+    }
+
+    b_inp = gretl_bundle_new();
+    if (b_inp == NULL) {
+	gui_errmsg(E_ALLOC);
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	gretl_bundle_destroy(b_inp);
+	return;
+    }
+
+    gretl_bundle_set_string(b_inp, "lp_buffer", buf);
+    gretl_bundle_set_int(b_inp, "verbose", 1);
+    b_out = lpf(b_inp, prn, &err);
+
+    if (err) {
+	gretl_bundle_destroy(b_out);
+	gui_errmsg(err);
+    } else {
+	view_buffer(prn, 80, 480, "lpsolve output", VIEW_BUNDLE, b_out);
+    }
+
+    gretl_bundle_destroy(b_inp);
+}
+
 static void real_run_script (GtkWidget *w, windata_t *vwin,
 			     int silent)
 {
@@ -8575,6 +8612,7 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
         vwin->role == EDIT_PYTHON ||
         vwin->role == EDIT_JULIA ||
         vwin->role == EDIT_DYNARE ||
+	vwin->role == EDIT_LPSOLVE ||
         vwin->role == EDIT_STATA ||
         vwin->role == EDIT_X12A) {
         buf = textview_get_text(vwin->text);
@@ -8637,6 +8675,8 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
         run_foreign_script(buf, LANG_JULIA, opt);
     } else if (vwin->role == EDIT_DYNARE) {
         run_foreign_script(buf, LANG_OCTAVE, opt);
+    } else if (vwin->role == EDIT_LPSOLVE) {
+	call_lpsolve_function(buf, opt);
     } else if (vwin->role == EDIT_STATA) {
         run_foreign_script(buf, LANG_STATA, opt);
     } else if (vwin->role == EDIT_X12A) {
@@ -8755,6 +8795,8 @@ void new_script_callback (GtkAction *action)
         etype = EDIT_JULIA;
     } else if (!strcmp(s, "DynareScript")) {
         etype = EDIT_DYNARE; /* FIXME not reached */
+    } else if (!strcmp(s, "lpsolveScript")) {
+	etype = EDIT_LPSOLVE;
     }
 
     do_new_script(etype, NULL);

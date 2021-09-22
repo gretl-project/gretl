@@ -30,6 +30,7 @@
 	  <menuitem action="JuliaScript"/>
 	  <menuitem action="OxScript"/>
 	  <menuitem action="StataScript"/>
+	  <menuitem action="lpsolveScript"/>
 	</menu>
 	<separator/>
 	<placeholder name="RecentScripts"/>

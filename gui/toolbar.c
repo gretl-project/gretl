@@ -353,6 +353,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_JULIA_CODE;
     } else if (vwin->role == EDIT_DYNARE) {
 	u = SAVE_DYNARE_CODE;
+    } else if (vwin->role == EDIT_LPSOLVE) {
+	u = SAVE_LPSOLVE_CODE;
     } else if (vwin->role == EDIT_STATA) {
 	u = SAVE_STATA_CMDS;
     } else if (vwin->role == EDIT_SPEC) {

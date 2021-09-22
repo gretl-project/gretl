@@ -1782,6 +1782,7 @@ GtkActionEntry main_entries[] = {
     { "JuliaScript", NULL, N_("Julia program"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "StataScript", NULL, N_("Stata program"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "lpsolveScript", NULL, N_("lpsolve program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_session_callback) },

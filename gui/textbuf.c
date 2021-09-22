@@ -81,7 +81,8 @@ enum {
 				r == EDIT_PYTHON || \
 				r == EDIT_STATA ||  \
 				r == EDIT_JULIA || \
-				r == EDIT_DYNARE)
+				r == EDIT_DYNARE || \
+				r == EDIT_LPSOLVE)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -515,6 +516,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	id = "stata";
     } else if (vwin->role == EDIT_DYNARE) {
 	id = "cpp";
+    } else if (vwin->role == EDIT_LPSOLVE) {
+	id = "lpsolve";
     } else if (vwin->role == EDIT_SPEC) {
 	id = "gfnspec";
     } else {

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ This file is for use with GtkSourceView
+
+ Author: Allin Cottrell
+
+-->
+<language id="lpsolve" name="lpsolve" version="2.0" _section="Other">
+  <metadata>
+    <property name="mimetypes">text/x-lpsolve</property>
+    <property name="globs">*.lp</property>
+    <property name="line-comment-start">//</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" name="Comment" map-to="def:comment"/>
+    <style id="keyword" name="Keyword" map-to="def:keyword"/>
+    <style id="decimal" name="Decimal" map-to="def:decimal"/>
+  </styles>
+
+  <definitions>
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+      <start>//</start>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="block-comment" style-ref="comment">
+      <start>/\*</start>
+      <end>\*/</end>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>    
+    <context id="decimal" style-ref="decimal">
+      <match>-?(?:[1-9][0-9]*|0)(?![.eE])</match>
+    </context>
+    <context id="keyword" style-ref="keyword">
+      <keyword>max</keyword>
+      <keyword>int</keyword>
+    </context>
+    <context id="lpsolve" class="no-spell-check">
+      <include>
+        <context ref="decimal"/>
+        <context ref="keyword"/>
+      </include>
+    </context>
+  </definitions>
+</language>

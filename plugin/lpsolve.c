@@ -709,7 +709,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     }
 
     if (gretl_lpsolve_err) {
-	gretl_errmsg_set("lpsolve: failed to load library");
+	gretl_errmsg_sprintf("lpsolve: failed to load %s", gretl_lpsolve_path());
 	*err = gretl_lpsolve_err;
 	return NULL;
     }
