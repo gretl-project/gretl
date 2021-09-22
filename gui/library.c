@@ -8559,6 +8559,12 @@ static void ensure_newline_termination (gchar **ps)
     }
 }
 
+/* Call the lpsolve library to solve the linear program in @buf.  If
+   successful, put the lpsolve output into a window and attach the
+   output bundle: this will contain various key results that can be
+   saved in scalar or matrix form.
+*/
+
 static void call_lpsolve_function (gchar *buf, gretlopt opt)
 {
     gretl_bundle *(*lpf) (gretl_bundle *, PRN *, int *);
