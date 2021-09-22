@@ -413,10 +413,10 @@ static lprec *lp_model_from_file (const char *fname,
 {
     lprec *lp = NULL;
     gchar *tmp = NULL;
-    FILE *fp;
+    FILE *fp = NULL;
 
     if (fname != NULL) {
-	gretl_fopen(fname, "r");
+	fp = gretl_fopen(fname, "r");
     } else {
 	tmp = gretl_make_dotpath("tmp.lp");
 	fp = gretl_fopen(tmp, "wb");
