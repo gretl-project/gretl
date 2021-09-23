@@ -22,6 +22,7 @@ PKGBOOK = pkgbook.pdf
 MPIDOC = gretl-mpi.pdf
 MIDASDOC = midas-gretl.pdf
 SVMDOC = gretl-svm.pdf
+LPDOC = lpsolve-gretl.pdf
 KBD = gretl-keys.pdf
 US = $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(MIDASDOC) $(SVMDOC) $(KBD)
 
@@ -32,6 +33,7 @@ ALTPKGBOOK = pkgbook-a4.pdf
 ALTMPIDOC = gretl-mpi-a4.pdf
 ALTMIDASDOC = midas-gretl-a4.pdf
 ALTSVMDOC = gretl-svm-a4.pdf
+ALTLPDOC = lpsolve-gretl-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
 A4 = $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTMIDASDOC) \
  $(ALTSVMDOC) $(ALTKBD)
