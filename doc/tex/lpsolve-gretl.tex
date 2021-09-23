@@ -1,0 +1,207 @@
+\documentclass{article}
+\usepackage{doc,url,verbatim,fancyvrb}
+\usepackage{pifont}
+\usepackage[authoryear]{natbib}
+\usepackage{gretl}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2212}{-}
+
+\bibliographystyle{gretl}
+
+% \usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{secnumdepth}{1}
+
+\newenvironment{funcdoc}
+{\noindent\hrulefill\\[-10pt]}
+{\medskip}
+
+\newcommand{\argname}[1]{\textsl{#1}}
+  
+\title{gretl + lpsolve}
+\author{Allin Cottrell}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+As of the 2021d release gretl offers support for \textsf{lpsolve}, an
+open-source library for solving linear programming problems (see
+\url{https://sourceforge.net/projects/lpsolve/}).\footnote{For
+  technical reasons this is not currently available in the 32-bit
+  build of gretl for MS Windows. That may follow if we're able to
+  resolve the problems we've encountered.}
+
+While linear programming is not part of the standard econometrics
+toolkit it surely falls under the rubric adopted in the founding of
+the Econometrics Society in 1930, namely ``to promote studies that aim
+at a unification between the theoretical-quantitative and the
+empirical-quantitative approach to economic problems.''\footnote{See 
+  \url{https://www.econometricsociety.org/society/about}.} And
+some well known econometric studies have used linear programs as a
+complement to estimation methodology---see for example
+\cite{ferrier-lovell90}.
+
+Section~\ref{sec:platforms} gives specifics per platform. Note that on
+Linux you have to install the \textsf{lpsolve} package to activate
+gretl's support.
+
+\section{Implementation}
+\label{sec:implement}
+
+There are two main ways of using \textsf{lpsolve} from within gretl.
+\begin{itemize}
+\item In the GUI program you can load or compose a linear program in
+  the native format of \textsf{lpsolve}, send it for solution, and
+  retrieve the results as native gretl objects.
+\item Using either the GUI program or the command-line program
+  \texttt{gretlcli}, you can formulate a linear program in various
+  ways and call the \texttt{lpsolve()} function to obtain the solution
+  in the form of a gretl bundle.
+\end{itemize}
+
+The following two subsections give details of the two methods.
+
+\subsection{Via the script editor}
+
+\subsection{Via the \texttt{lpsolve} function}
+
+The \texttt{lpsolve()} function has this signature:
+\begin{verbatim}
+  bundle lpsolve (const bundle specs)
+\end{verbatim}
+
+The input bundle, \texttt{specs}, must hold a specification of the
+problem to be solved and may hold some optional elements.  The
+problem specification itself may take any of these three forms:
+\begin{itemize}
+\item Under the key \texttt{lp\_filename}, the name of an \texttt{lp}
+  file, as described under the heading ``Via the script editor.''
+\item Under the key \texttt{lp\_buffer}, a multi-line string in
+  \texttt{lp} format. Such a string can be composed using gretl's
+  \texttt{sprintf} function and string concatenation. You can think of
+  this as an \texttt{lp} file existing in memory rather than on disk.
+\item Under the key \texttt{lp\_bundle}, a gretl bundle in which a
+  linear program is represented by (primarily) a set of matrices. The
+  requirements for such a bundle are set out in
+  section~\ref{sec:lp-bundle} below.
+\end{itemize}
+
+\section{Top-level options}
+\label{sec:gen-opts}
+
+By ``top-level'' we mean that these options should be included
+directly in the \texttt{specs} bundle passed to
+\texttt{lpsolve()}. They apply regardless of the method by which the
+linear program is specified.
+
+\begin{itemize}
+\item \texttt{verbose} (boolean, default 0): If this has a non-zero
+  value output similar to that from the \texttt{lp\_solve} executable
+  is printed. Otherwise \texttt{lpsolve()} runs silently unless the
+  solver fails.
+\item \texttt{sensitivity} (boolean, default 0): If this has a
+  non-zero value additional output is provided as described in
+  section~\ref{sec:retval}.
+\item \texttt{model\_name} (string): If this is included it is shown
+  when verbose output is produced.
+\end{itemize}
+
+\section{Contents of the return bundle}
+\label{sec:retval}
+
+Let $n$ and $m$ denote, respectively, the number of variables whose
+values are to be optimized and the number of linear constraints.
+
+The bundle returned by the \textsf{lpsolve} function includes the
+following:
+\begin{itemize}
+\item \texttt{objective}: a scalar, the optimized value of the objective
+  function.
+\item \texttt{variable\_values}: an $n$-vector holding the optimized
+  values of the variables.
+\item \texttt{constraint\_values}: an $m$-vector holding the values of
+  the constrained magnitudes at the solution.
+\item \texttt{shadow\_prices}: an $m$-vector holding the Lagrange
+  multipliers associated with the constraints.
+\end{itemize}
+
+In addition, if the \textsf{lpsolve} library version is 5.5.2.11 or
+higher a scalar \texttt{accuracy} value is included. This gives the
+accuracy with which the constraints are met; it is 0 at an exact
+solution, larger values indicate approximation.
+
+If the sensitivity option is activated the bundle contains an
+additional $(n+m) \times 3$ matrix under the name
+\texttt{sensitivity}. This holds all the dual variables along with the
+lower and upper limits of their validity.
+
+\section{Specifying a linear program via bundle}
+\label{sec:lp-bundle}
+
+A bundle given as \texttt{lp\_bundle} must have at least three
+required, as follows.
+\begin{itemize}
+\item \texttt{objective}: a row vector of length $n$ holding the
+  coefficients on the variables in the linear objective
+  function. Zeros must be inserted for variables that do not feature
+  in the objective. If column names are attached to
+  \texttt{objective} the variables are named accordingly in the
+  printed output (if any) and the rows of \texttt{variable\_values}
+  in the output bundle are named.
+\item \texttt{constraints}: a matrix of dimension $m \times
+  (n+1)$. Row $i$ holds the coefficient on each of the variables in
+  constraint $i$ (again, with zeros inserted for any variables not
+  referenced in the constraint), followed by the right-hand side
+  value. If row names are attached to \texttt{constraints}, these
+  names are used in the output.
+\item \texttt{ctypes}: a specification of the types of the constraints
+  (inequalities or equalities). It can take the form of an array of
+  $m$ strings, each of which must be ``\texttt{<=}'', ``\texttt{>=}''
+  or ``\texttt{=}'', or alternatively an $m$-vector in which these
+  types are encoded as 1, 2 or 3, respectively.
+\end{itemize}
+
+The following optional elements of \texttt{lp\_bundle} are supported:
+\begin{itemize}
+\item \texttt{minimize} (boolean, default 0): If this has a non-zero
+  value the objective is minimized; by default it is maximized.
+\item \texttt{intvars} (matrix): If one or more of the variables can
+  take on only integer values, this should be indicated by supplying a
+  vector holding the indices of the variables in question.
+\end{itemize}
+
+\section{Platform specifics}
+\label{sec:platforms}
+
+In the gretl packages for 64-bit MS Windows and macOS, the
+\textsf{lpsolve} library (as of this writing, version 5.5.2.11) is
+included; no additional installation is required.
+
+On Linux, however, it's easy to install the \textsf{lpsolve} library
+via the package manager so we leave that up to the user. Here are the
+commands that should be used on three Linux distributions:
+\begin{center}
+\begin{tabular}{ll}
+  Fedora & \texttt{sudo dnf install lpsolve} \\
+  Arch & \texttt{sudo pacman -S lpsolve} \\
+  Debian & \texttt{sudo apt-get install lp-solve}
+\end{tabular}
+\end{center}
+After executing the relevant command it may be necessary to follow up
+with
+\begin{verbatim}
+sudo ldconfig
+\end{verbatim}
+to ensure that the newly installed library can be found by gretl.
+
+\bibliography{gretl}
+
+\end{document}
