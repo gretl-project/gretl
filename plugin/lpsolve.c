@@ -346,7 +346,6 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     if (!*err) {
 	const char **cnames = gretl_matrix_get_colnames(O);
 	const char **rnames = gretl_matrix_get_rownames(R);
-	const char *mname = gretl_bundle_get_string(b, "model_name", NULL);
 	double rhs, *row = calloc(nv+1, sizeof *row);
 	int col, i, j;
 
@@ -355,10 +354,6 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	if (lp == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    /* set model name? */
-	    if (mname != NULL) {
-		set_lp_name(lp, (char *) mname);
-	    }
 	    /* set lpsolve verbosity level */
 	    if (opt & OPT_V) {
 		set_verbose(lp, NORMAL);
@@ -634,7 +629,8 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 static gretlopt lp_options_from_bundle (gretl_bundle *b,
 					const char **pfname,
 					const char **pbuf,
-					gretl_bundle **pb)
+					gretl_bundle **pb,
+					const char **pname)
 {
     gretlopt opt = OPT_NONE;
 
@@ -647,6 +643,10 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b,
     }
     if (gretl_bundle_get_bool(b, "sensitivity", 0)) {
 	opt |= OPT_S;
+    }
+
+    if (gretl_bundle_has_key(b, "model_name")) {
+	*pname = gretl_bundle_get_string(b, "model_name", NULL);
     }
 
     if (gretl_bundle_has_key(b, "lp_filename")) {
@@ -704,6 +704,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     const char **rnames = NULL;
     const char *lpfname = NULL;
     const char *lpbuf = NULL;
+    const char *lpname = NULL;
     lprec *lp = NULL;
     PRN *vprn = NULL;
     int msg_set = 0;
@@ -721,7 +722,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     }
 #endif
 
-    opt = lp_options_from_bundle(b, &lpfname, &lpbuf, &lpb);
+    opt = lp_options_from_bundle(b, &lpfname, &lpbuf, &lpb, &lpname);
     vprn = (opt & OPT_V)? prn : NULL;
 
     if (lpfname != NULL || lpbuf != NULL) {
@@ -739,6 +740,9 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	    gretl_errmsg_set("lpsolve: failed to build model");
 	}
     } else {
+	if (lpname != NULL) {
+	    set_lp_name(lp, (char *) lpname);
+	}
 	*err = maybe_catch_solve(lp, opt, prn);
 	if (*err) {
 	    gretl_errmsg_set("lpsolve: solution failed");
