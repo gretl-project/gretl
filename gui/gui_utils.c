@@ -874,12 +874,18 @@ const char *path_last_slash_const (const char *path)
 char *gretl_basename (char *dest, const char *src, int addscore)
 {
     const char *p = path_last_slash_const(src);
+    const char *s = (p != NULL)? p + 1 : src;
 
-    if (p != NULL) {
-	/* take last part of @src filename */
-	strcpy(dest, p + 1);
-    } else {
-	strcpy(dest, src);
+    if (dest == NULL) {
+	/* allocate return value */
+	size_t len = strlen(s) + 1;
+
+	dest = calloc(len, 1);
+	addscore = 0;
+    }
+
+    if (dest != NULL) {
+	strcpy(dest, s);
     }
 
     if (addscore) {

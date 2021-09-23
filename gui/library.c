@@ -8568,7 +8568,8 @@ static void ensure_newline_termination (gchar **ps)
    any valid/interesting use for it.
 */
 
-static void call_lpsolve_function (gchar *buf, gretlopt opt)
+static void call_lpsolve_function (gchar *buf, const char *fname,
+				   gretlopt opt)
 {
     gretl_bundle *(*lpf) (gretl_bundle *, PRN *, int *);
     gretl_bundle *b_inp, *b_out;
@@ -8593,6 +8594,18 @@ static void call_lpsolve_function (gchar *buf, gretlopt opt)
 
     gretl_bundle_set_string(b_inp, "lp_buffer", buf);
     gretl_bundle_set_int(b_inp, "verbose", 1);
+    if (*fname != '\0' && strstr(fname, "script_tmp") == NULL) {
+	char *tmp = gretl_basename(NULL, fname, 0);
+	char *s = strstr(tmp, ".lp");
+
+	if (s != NULL) {
+	    *s = '\0';
+	}
+	gretl_bundle_set_string(b_inp, "model_name", tmp);
+	free(tmp);
+    } else {
+	gretl_bundle_set_string(b_inp, "model_name", "untitled");
+    }
     b_out = lpf(b_inp, prn, &err);
 
     if (err) {
@@ -8685,7 +8698,7 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
     } else if (vwin->role == EDIT_DYNARE) {
         run_foreign_script(buf, LANG_OCTAVE, opt);
     } else if (vwin->role == EDIT_LPSOLVE) {
-	call_lpsolve_function(buf, opt);
+	call_lpsolve_function(buf, vwin->fname, opt);
     } else if (vwin->role == EDIT_STATA) {
         run_foreign_script(buf, LANG_STATA, opt);
     } else if (vwin->role == EDIT_X12A) {
