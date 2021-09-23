@@ -633,11 +633,13 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 
 static gretlopt lp_options_from_bundle (gretl_bundle *b,
 					const char **pfname,
-					const char **pbuf)
+					const char **pbuf,
+					gretl_bundle **pb)
 {
     gretlopt opt = OPT_NONE;
 
     if (gretl_bundle_get_bool(b, "minimize", 0)) {
+	/* should be specific to lp_bundle? */
 	opt |= OPT_I;
     }
     if (gretl_bundle_get_bool(b, "verbose", 0)) {
@@ -651,6 +653,8 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b,
 	*pfname = gretl_bundle_get_string(b, "lp_filename", NULL);
     } else if (gretl_bundle_has_key(b, "lp_buffer")) {
 	*pbuf = gretl_bundle_get_string(b, "lp_buffer", NULL);
+    } else if (gretl_bundle_has_key(b, "lp_bundle")) {
+	*pb = gretl_bundle_get_bundle(b, "lp_bundle", NULL);
     }
 
     return opt;
@@ -695,13 +699,15 @@ static int maybe_catch_solve (lprec *lp, gretlopt opt,
 gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 {
     gretl_bundle *ret = NULL;
+    gretl_bundle *lpb = NULL;
     const char **cnames = NULL;
     const char **rnames = NULL;
     const char *lpfname = NULL;
     const char *lpbuf = NULL;
+    lprec *lp = NULL;
     PRN *vprn = NULL;
+    int msg_set = 0;
     gretlopt opt;
-    lprec *lp;
 
 #ifndef PRELINKED
     if (!gretl_lpsolve_initted) {
@@ -715,17 +721,23 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     }
 #endif
 
-    opt = lp_options_from_bundle(b, &lpfname, &lpbuf);
+    opt = lp_options_from_bundle(b, &lpfname, &lpbuf, &lpb);
     vprn = (opt & OPT_V)? prn : NULL;
 
     if (lpfname != NULL || lpbuf != NULL) {
 	lp = lp_model_from_file(lpfname, lpbuf, vprn, err);
+    } else if (lpb != NULL) {
+	lp = lp_model_from_bundle(lpb, &cnames, &rnames, opt, err);
     } else {
-	lp = lp_model_from_bundle(b, &cnames, &rnames, opt, err);
+	gretl_errmsg_set("lpsolve: didn't find a model specification");
+	msg_set = 1;
+	*err = E_ARGS;
     }
 
     if (*err) {
-	gretl_errmsg_set("lpsolve: failed to build model");
+	if (!msg_set) {
+	    gretl_errmsg_set("lpsolve: failed to build model");
+	}
     } else {
 	*err = maybe_catch_solve(lp, opt, prn);
 	if (*err) {
@@ -737,7 +749,9 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	}
     }
 
-    delete_lp(lp);
+    if (lp != NULL) {
+	delete_lp(lp);
+    }
 
     return ret;
 }
