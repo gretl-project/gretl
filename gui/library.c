@@ -8612,7 +8612,7 @@ static void call_lpsolve_function (gchar *buf, const char *fname,
 	gretl_bundle_destroy(b_out);
 	gui_errmsg(err);
     } else {
-	view_buffer(prn, 80, 480, "lpsolve output", VIEW_BUNDLE, b_out);
+	view_buffer(prn, 84, 480, "lpsolve output", VIEW_BUNDLE, b_out);
     }
 
     gretl_bundle_destroy(b_inp);

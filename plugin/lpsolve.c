@@ -82,6 +82,7 @@ unsigned char set_add_rowmode (lprec *lp, unsigned char s);
 void delete_lp (lprec *lp);
 void set_verbose (lprec *lp, int verbose);
 void set_maxim (lprec *lp);
+void set_minim (lprec *lp);
 unsigned char set_lp_name (lprec *lp, char *s);
 unsigned char set_obj_fn (lprec *lp, REAL *row);
 unsigned char add_constraint (lprec *lp, REAL *row,
@@ -114,6 +115,7 @@ static unsigned char (*set_add_rowmode) (lprec *lp, unsigned char s);
 static void (*delete_lp) (lprec *lp);
 static void (*set_verbose) (lprec *lp, int verbose);
 static void (*set_maxim) (lprec *lp);
+static void (*set_minim) (lprec *lp);
 static unsigned char (*set_lp_name) (lprec *lp, char *s);
 static unsigned char (*set_obj_fn) (lprec *lp, REAL *row);
 static unsigned char (*add_constraint) (lprec *lp, REAL *row,
@@ -182,6 +184,7 @@ static int gretl_lpsolve_init (void)
 	delete_lp           = lpget(lphandle, "delete_lp", &err);
 	set_verbose         = lpget(lphandle, "set_verbose", &err);
 	set_maxim           = lpget(lphandle, "set_maxim", &err);
+	set_minim           = lpget(lphandle, "set_minim", &err);
 	set_obj_fn          = lpget(lphandle, "set_obj_fn", &err);
 	add_constraint      = lpget(lphandle, "add_constraint", &err);
 	set_col_name        = lpget(lphandle, "set_col_name", &err);
@@ -362,10 +365,6 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	    }
 	    /* set rowmode: this has to be placed carefully! */
 	    set_add_rowmode(lp, 1);
-	    /* objective function */
-	    if (!(opt & OPT_I)) {
-		set_maxim(lp);
-	    }
 	    for (j=0; j<nv; j++) {
 		row[j+1] = O->val[j];
 		if (cnames != NULL) {
@@ -635,7 +634,6 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b,
     gretlopt opt = OPT_NONE;
 
     if (gretl_bundle_get_bool(b, "minimize", 0)) {
-	/* should be specific to lp_bundle? */
 	opt |= OPT_I;
     }
     if (gretl_bundle_get_bool(b, "verbose", 0)) {
@@ -742,6 +740,11 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     } else {
 	if (lpname != NULL) {
 	    set_lp_name(lp, (char *) lpname);
+	}
+	if (opt & OPT_I) {
+	    set_minim(lp);
+	} else {
+	    set_maxim(lp);
 	}
 	*err = maybe_catch_solve(lp, opt, prn);
 	if (*err) {
