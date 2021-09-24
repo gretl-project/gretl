@@ -24,7 +24,7 @@
 {\medskip}
 
 \newcommand{\argname}[1]{\textsl{#1}}
-  
+
 \title{gretl + lpsolve}
 \author{Allin Cottrell}
 \maketitle
@@ -43,7 +43,7 @@ While linear programming is not part of the standard econometrics
 toolkit it surely falls under the rubric adopted in the founding of
 the Econometrics Society in 1930, namely ``to promote studies that aim
 at a unification between the theoretical-quantitative and the
-empirical-quantitative approach to economic problems.''\footnote{See 
+empirical-quantitative approach to economic problems.''\footnote{See
   \url{https://www.econometricsociety.org/society/about}.} And
 some well known econometric studies have used linear programs as a
 complement to estimation methodology---see for example
@@ -52,6 +52,53 @@ complement to estimation methodology---see for example
 Section~\ref{sec:platforms} gives specifics per platform. Note that on
 Linux you have to install the \textsf{lpsolve} package to activate
 gretl's support.
+
+\section{LP basics}
+\label{sec:basics}
+
+We're not going to say much here about Linear Programming (LP) in general,
+or \textsf{lpsolve}'s \texttt{lp} file format in particular, since
+there's plenty of good material at
+\url{http://lpsolve.sourceforge.net/5.5/}. But we'll say enough to
+establish notation for what follows and give a brief overview of
+\texttt{lp} format.
+
+The basic expression of an LP problem in matrix form is
+\begin{align*}
+  \mbox{maximize} & \quad c'x \\
+  \mbox{subject to} & \quad Ax \leq b \\
+  & \quad x \geq 0
+\end{align*}
+where $x$ is an $n$-vector of variables, $c$ is an $n$-vector of
+coefficients, $A$ is an $m\times n$ matrix of coefficients and $b$ is
+an $m$-vector of limits.
+
+\subsection{lp file format}
+
+\begin{itemize}
+\item A comment can be opened with ``\texttt{/*}'' and closed with
+  ``\texttt{*/}'', or ``\texttt{//}'' can be used for a single-line
+  comment.
+\item All statements are terminated with a semicolon.
+\item The first statement should give the objective function, as a
+  linear combination of variables (or a single variable).
+\item Constraints are expressed as a linear combination of variables
+  followed by an operator, followed by a constant.  The operator must
+  be <=, <, >=, > or =.
+\item A trailing statement starting with the keyword \texttt{int} can
+  be given to identify variables that are supposed to be integer
+  valued, as in ``\texttt{int A, B;}''.
+\end{itemize}
+
+In \texttt{lp} format, each term of a linear combination must take the
+form of a numerical constant (or an implicit 1) followed by the name
+of a variable, as in ``\texttt{3 x}'' or just
+``\texttt{3x}''. Multiplication is implicit (the symbol ``\texttt{*}''
+is accepted but is not required or idiomatic). Parentheses are not
+accepted. Here's an example constraint:
+\begin{verbatim}
+
+\end{verbatim}
 
 \section{Implementation}
 \label{sec:implement}
