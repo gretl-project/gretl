@@ -3,6 +3,7 @@
 \usepackage{pifont}
 \usepackage[authoryear]{natbib}
 \usepackage{gretl}
+\usepackage{graphicx}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
@@ -33,11 +34,10 @@
 \label{sec:intro}
 
 As of the 2021d release gretl offers support for \textsf{lpsolve}, an
-open-source library for solving linear programming problems (see
-\url{https://sourceforge.net/projects/lpsolve/}).\footnote{For
-  technical reasons this is not currently available in the 32-bit
-  build of gretl for MS Windows. That may follow if we're able to
-  resolve the problems we've encountered.}
+open-source library for solving linear programming
+problems.\footnote{For technical reasons this is not currently
+  available in the 32-bit build of gretl for MS Windows. That may
+  follow if we're able to resolve the problems we've encountered.}
 
 While linear programming is not part of the standard econometrics
 toolkit it surely falls under the rubric adopted in the founding of
@@ -56,11 +56,11 @@ gretl's support.
 \section{LP basics}
 \label{sec:basics}
 
-We're not going to say much here about Linear Programming (LP) in general,
+We're not going to say much here about Linear Programming in general,
 or \textsf{lpsolve}'s \texttt{lp} file format in particular, since
 there's plenty of good material at
 \url{http://lpsolve.sourceforge.net/5.5/}. But we'll say enough to
-establish notation for what follows and give a brief overview of
+establish notation for what follows, and give a brief overview of
 \texttt{lp} format.
 
 The basic expression of an LP problem in matrix form is
@@ -69,13 +69,19 @@ The basic expression of an LP problem in matrix form is
   \mbox{subject to} & \quad Ax \leq b \\
   & \quad x \geq 0
 \end{align*}
-where $x$ is an $n$-vector of variables, $c$ is an $n$-vector of
-coefficients, $A$ is an $m\times n$ matrix of coefficients and $b$ is
-an $m$-vector of limits.
+where $x$ is an $n$-vector of variables and $c$ an $n$-vector of
+coefficients, such that $c'x$ constitutes the objective function. In
+the constraints on the variables $A$ is an $m\times n$ matrix of
+coefficients and $b$ is an $m$-vector of upper limits. Note that in
+\texttt{lpsolve} non-negativity constraints are implicit for all
+elements of $x$; if you need to allow any negative values you must
+contradict this assumption explicitly.
 
-\subsection{lp file format}
-
+The native \textsf{lpsolve} file format---for which the standard
+filename extension is ``\texttt{.lp}''---has the following
+characteristics.
 \begin{itemize}
+\item Names of variables must start with a letter.
 \item A comment can be opened with ``\texttt{/*}'' and closed with
   ``\texttt{*/}'', or ``\texttt{//}'' can be used for a single-line
   comment.
@@ -84,7 +90,7 @@ an $m$-vector of limits.
   linear combination of variables (or a single variable).
 \item Constraints are expressed as a linear combination of variables
   followed by an operator, followed by a constant.  The operator must
-  be <=, <, >=, > or =.
+  be \texttt{<=}, \texttt{<}, \texttt{>=}, \texttt{>} or \texttt{=}.
 \item A trailing statement starting with the keyword \texttt{int} can
   be given to identify variables that are supposed to be integer
   valued, as in ``\texttt{int A, B;}''.
@@ -97,10 +103,11 @@ of a variable, as in ``\texttt{3 x}'' or just
 is accepted but is not required or idiomatic). Parentheses are not
 accepted. Here's an example constraint:
 \begin{verbatim}
-
+  A - 10 m1A - 20 m2A - 30 m3A = 0;
 \end{verbatim}
+See section~\ref{sec:examples} for full examples of usage.
 
-\section{Implementation}
+\section{Implementation of lpsolve support}
 \label{sec:implement}
 
 There are two main ways of using \textsf{lpsolve} from within gretl.
@@ -114,18 +121,33 @@ There are two main ways of using \textsf{lpsolve} from within gretl.
   in the form of a gretl bundle.
 \end{itemize}
 
-The following two subsections give details of the two methods.
+Some details follow.
 
-\subsection{Via the script editor}
+\subsection{Via the GUI script editor}
 
 A script in the default format of \textsf{lpsolve} can be loaded into
 gretl by via the \textsf{File/Script files} menu or drag and drop.
 Gretl expects a filename suffix of ``\texttt{.lp}'' for such files.
 In the script editor you can modify the file if you wish, and execute
-it via the toolbar or the \texttt{Ctrl+R} shortcut. The solution will
-be shown in an output window. This window's toolbar will include a
-bundle button which pulls down a menu allowing you to save the
-solution data.
+it via the toolbar or the \texttt{Ctrl+R} shortcut
+(Figure~\ref{fig:kantor1}). The solution will be shown in an output
+window. This window's toolbar will include a bundle button which pulls
+down a menu allowing you to save the solution data
+(Figure~\ref{fig:kantor2})
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[scale=0.7]{figures/kantor-edit}
+  \caption{Editing an \textsf{lpsolve} script}
+  \label{fig:kantor1}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[scale=0.7]{figures/kantor-run}
+  \caption{Partial output from an \textsf{lpsolve} run}
+  \label{fig:kantor2}
+\end{figure}
 
 \subsection{Via the \texttt{lpsolve} function}
 
@@ -159,6 +181,8 @@ directly in the \texttt{specs} bundle passed to
 linear program is specified.
 
 \begin{itemize}
+\item \texttt{minimize} (boolean, default 0): If this has a non-zero
+  value the objective is minimized; by default it is maximized.  
 \item \texttt{verbose} (boolean, default 0): If this has a non-zero
   value output similar to that from the \texttt{lp\_solve} executable
   is printed. Otherwise \texttt{lpsolve()} runs silently unless the
@@ -225,14 +249,10 @@ members, as follows.
   types are encoded as 1, 2 or 3, respectively.
 \end{itemize}
 
-The following optional elements of \texttt{lp\_bundle} are supported:
-\begin{itemize}
-\item \texttt{minimize} (boolean, default 0): If this has a non-zero
-  value the objective is minimized; by default it is maximized.
-\item \texttt{intvars} (matrix): If one or more of the variables can
-  take on only integer values, this should be indicated by supplying a
-  vector holding the indices of the variables in question.
-\end{itemize}
+If you require that certain variables be integer-valued, you should
+supply a fourth member of \texttt{lp\_bundle}: a matrix under the key
+\texttt{intvars}. This is a vector holding the 1-based indices of the
+variables in question.
 
 \section{Platform specifics}
 \label{sec:platforms}
@@ -243,12 +263,12 @@ included; no additional installation is required.
 
 On Linux, however, it's easy to install the \textsf{lpsolve} library
 via the package manager so we leave that up to the user. Here are the
-commands that should be used on three Linux distributions:
+commands that should be used on three popular Linux distributions:
 \begin{center}
 \begin{tabular}{ll}
   Fedora & \texttt{sudo dnf install lpsolve} \\
-  Arch & \texttt{sudo pacman -S lpsolve} \\
-  Debian & \texttt{sudo apt-get install lp-solve}
+  Debian & \texttt{sudo apt-get install lp-solve} \\
+  Arch & \texttt{sudo pacman -S lpsolve}
 \end{tabular}
 \end{center}
 After executing the relevant command it may be necessary to follow up
@@ -257,6 +277,52 @@ with
 sudo ldconfig
 \end{verbatim}
 to ensure that the newly installed library can be found by gretl.
+
+\section{Examples}
+\label{sec:examples}
+
+For a first case, consider L. V. Kantorovich's illustrative ``Example
+1'' of 1939 (translated in \cite{kantorovich60}), one of the first
+linear programs ever posed and solved. We require that two components
+of a finished product, \texttt{A} and \texttt{B}, be produced in equal
+number and that this number be maximized. The constraints take the
+form of the numbers and capacities of machines of three different
+types that are available for producing the components. The producer
+has three machines of type 1, three of type 2, and one of type 3. The
+capacities of these machines (maximum output per working day) are
+
+\begin{center}
+\begin{tabular}{cccc}
+  & type 1 & type 2 & type 3 \\
+  A & 10 & 20 & 30 \\
+  B & 20 & 30 & 80 
+\end{tabular}
+\end{center}
+
+To set up the LP problem we introduce the variables \texttt{m1A},
+\texttt{m1B}, \texttt{m2A}, \texttt{m2B}, \texttt{m3A} and
+\texttt{m3B}, where \texttt{m}$ij$ represents the quantity of
+component $j$ ($j=$ \texttt{A}, \texttt{B}) produced by machines of
+type $i$ ($i=1,2,3$). The \textsf{lpsolve} script for this problem was
+shown in Figure~\ref{fig:kantor1}; we reproduce it in
+Listing~\ref{ls:kantor} in case you want to copy and paste.
+
+\begin{script}[htbp]
+  \label{ls:kantor}
+\begin{scode}
+A; // maximize output of As
+
+A - B = 0; // produce equal numbers of As and Bs
+A - 10 m1A - 20 m2A - 30 m3A = 0;
+B - 20 m1B - 30 m2B - 80 m3B = 0;
+m1A + m1B <= 3; // we have 3 machines of type 1
+m2A + m2B <= 3; // 3 machines of type 2
+m3A + m3B <= 1; // 1 machine of type 3
+
+int A, B;
+\end{scode}
+  \caption{Kantorovich's Example 1}
+\end{script}
 
 \bibliography{gretl}
 

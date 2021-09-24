@@ -1025,7 +1025,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
 		       r == VIEW_LOG || r == VIEW_PKG_CODE || \
-		       vwin_editing_script(r))
+		       r == VIEW_BUNDLE || vwin_editing_script(r))
 
 #define split_v_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT)
 
