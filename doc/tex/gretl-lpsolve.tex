@@ -301,10 +301,10 @@ capacities of these machines (maximum output per working day) are
 
 To set up the LP problem we introduce the variables \texttt{m1A},
 \texttt{m1B}, \texttt{m2A}, \texttt{m2B}, \texttt{m3A} and
-\texttt{m3B}, where \texttt{m}$ij$ represents the quantity of
-component $j$ ($j=$ \texttt{A}, \texttt{B}) produced by machines of
-type $i$ ($i=1,2,3$). The \textsf{lpsolve} script for this problem was
-shown in Figure~\ref{fig:kantor1}; we reproduce it in
+\texttt{m3B}, where \texttt{m}$ij$ represents the type $i$
+machine-days ($i=1,2,3$) devoted to production of component $j$ ($j=$
+\texttt{A}, \texttt{B}).  The \textsf{lpsolve} script for this problem
+was shown in Figure~\ref{fig:kantor1}; we reproduce it in
 Listing~\ref{ls:kantor} in case you want to copy and paste.
 
 \begin{script}[htbp]
@@ -316,13 +316,15 @@ A - B = 0; // produce equal numbers of As and Bs
 A - 10 m1A - 20 m2A - 30 m3A = 0;
 B - 20 m1B - 30 m2B - 80 m3B = 0;
 m1A + m1B <= 3; // we have 3 machines of type 1
-m2A + m2B <= 3; // 3 machines of type 2
-m3A + m3B <= 1; // 1 machine of type 3
+m2A + m2B <= 3; // and 3 machines of type 2
+m3A + m3B <= 1; // and 1 machine of type 3
 
 int A, B;
 \end{scode}
   \caption{Kantorovich's Example 1}
 \end{script}
+
+We find that in the optimal solution...
 
 \bibliography{gretl}
 
