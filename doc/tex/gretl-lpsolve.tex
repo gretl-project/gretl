@@ -108,7 +108,7 @@ accepted. Here's an example constraint:
 \begin{verbatim}
   A - 10 m1A - 20 m2A - 30 m3A = 0;
 \end{verbatim}
-See section~\ref{sec:example} for a full example of usage.
+See Section~\ref{sec:example} for a full example of usage.
 
 \section{Implementation of lpsolve support}
 \label{sec:implement}
@@ -166,7 +166,7 @@ problem to be solved and may hold some optional elements.  The
 problem specification itself may take any of these three forms:
 \begin{itemize}
 \item Under the key \texttt{lp\_filename}, the name of an \texttt{lp}
-  file, as described under the heading ``Via the script editor.''
+  file.
 \item Under the key \texttt{lp\_buffer}, a multi-line string in
   \texttt{lp} format. Such a string can be composed using gretl's
   \texttt{sprintf} function and string concatenation. You can think of
@@ -299,21 +299,27 @@ of these machines (maximum output per working day) are
 \begin{center}
 \begin{tabular}{cccc}
   & type 1 & type 2 & type 3 \\
-  A & 10 & 20 & 30 \\
-  B & 20 & 30 & 80 
+  \texttt{A} & 10 & 20 & 30 \\
+  \texttt{B} & 20 & 30 & 80 
 \end{tabular}
 \end{center}
 
 To set up the LP problem we introduce the variables \texttt{m1A},
-\texttt{m1B}, \texttt{m2A}, \texttt{m2B}, \texttt{m3A} and
+\texttt{m2A}, \texttt{m3A}, \texttt{m1B}, \texttt{m2B} and
 \texttt{m3B}, where \texttt{m}$ij$ represents the type $i$
 machine-days ($i=1,2,3$) devoted to production of component $j$ ($j=$
 \texttt{A}, \texttt{B}).  The \textsf{lpsolve} script for this problem
 was shown in Figure~\ref{fig:kantor1}; we reproduce it in
-Listing~\ref{ls:kantor} in case you want to copy and paste.
+Listing~\ref{ls:kantor-lp} in case you want to copy and
+paste. Listing~\ref{ls:kantor-inp} shows a simple script which passes
+\texttt{kantorovich.lp} to the \textsf{lpsolve} library and returns a
+bundle containing the results. Listing\ref{ls:kantor-bundle} shows how
+the same problem can be specified by means of a gretl bundle rather
+than an \texttt{lp} script.
 
 \begin{script}[htbp]
-  \label{ls:kantor}
+  \caption{Kantorovich's Example 1 as file \texttt{kantorovich.lp}}
+  \label{ls:kantor-lp}
 \begin{scode}
 A; // maximize output of As
 
@@ -324,12 +330,53 @@ m1A + m1B <= 3; // we have 3 machines of type 1
 m2A + m2B <= 3; // and 3 machines of type 2
 m3A + m3B <= 1; // and 1 machine of type 3
 
-int A, B;
+int A, B; // require that A, B values be integers
 \end{scode}
-  \caption{Kantorovich's Example 1}
 \end{script}
 
-We find that in the optimal solution...
+\begin{script}[htbp]
+  \caption{Executing Kantorovich example in gretl}
+  \label{ls:kantor-inp}
+\begin{scode}
+bundle b = _(lp_filename="kantorovich.lp", verbose=1)
+bundle solution = lpsolve(b)
+\end{scode}
+\end{script}
+
+\begin{script}[htbp]
+  \caption{Kantorovich example specified via bundle}
+  \label{ls:kantor-bundle}
+\begin{scode}
+set verbose off
+string vnames = "A B m1A m2A m3A m1B m2B m3B"
+nvars = 8
+
+matrix Obj = zeros(1, nvars)
+Obj[1] = 1
+cnameset(Obj, vnames)
+print Obj
+
+# machine productivities (rows A B, cols m1 m2 m3)
+matrix P = {10, 20, 30; 20, 30, 80}
+
+matrix C = zeros(6, nvars+1)
+C[1,1:2] = {1, -1}
+C[2,1] = 1
+C[2,3:5] = -P[1,]
+C[3,2] = 1
+C[3,6:8] = -P[2,]
+C[4:6,3:9] = I(3) ~ I(3) ~ {3,3,1}'
+string rnames = "A=B Asum Bsum nm1 nm2 nm3"
+rnameset(C, rnames)
+print C
+strings Ops = defarray("=", "=", "=", "<=", "<=", "<=")
+
+bundle lpb = _(objective=Obj, constraints=C, ctypes=Ops, intvars={1,2})
+bundle specs = _(lp_bundle=lpb, model_name="kantorovich", verbose=1)
+bundle ret = lpsolve(specs)
+\end{scode}
+\end{script}
+
 
 \bibliography{gretl}
 
