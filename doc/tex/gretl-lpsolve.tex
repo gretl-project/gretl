@@ -75,11 +75,11 @@ the constraints on the variables $A$ is an $m\times n$ matrix of
 coefficients and $b$ is an $m$-vector of upper limits. Note that in
 \texttt{lpsolve} non-negativity constraints are implicit for all
 elements of $x$; if you need to allow any negative values you must
-contradict this assumption explicitly.
+contradict this assumption explicitly, as in ``\texttt{x1 >= -100;}''.
 
 The native \textsf{lpsolve} file format---for which the standard
 filename extension is ``\texttt{.lp}''---has the following
-characteristics.
+basic characteristics.
 \begin{itemize}
 \item Names of variables must start with a letter.
 \item A comment can be opened with ``\texttt{/*}'' and closed with
@@ -91,6 +91,9 @@ characteristics.
 \item Constraints are expressed as a linear combination of variables
   followed by an operator, followed by a constant.  The operator must
   be \texttt{<=}, \texttt{<}, \texttt{>=}, \texttt{>} or \texttt{=}.
+  But note that \textsf{lpsolve} takes all inequality constraints to
+  be real-valued, so \texttt{<=} and \texttt{<} are strictly
+  equivalent, as are \texttt{>=} and \texttt{>}.
 \item A trailing statement starting with the keyword \texttt{int} can
   be given to identify variables that are supposed to be integer
   valued, as in ``\texttt{int A, B;}''.
@@ -105,7 +108,7 @@ accepted. Here's an example constraint:
 \begin{verbatim}
   A - 10 m1A - 20 m2A - 30 m3A = 0;
 \end{verbatim}
-See section~\ref{sec:examples} for full examples of usage.
+See section~\ref{sec:example} for a full example of usage.
 
 \section{Implementation of lpsolve support}
 \label{sec:implement}
@@ -138,14 +141,16 @@ down a menu allowing you to save the solution data
 \begin{figure}[p]
   \centering
   \includegraphics[scale=0.7]{figures/kantor-edit}
-  \caption{Editing an \textsf{lpsolve} script}
+  \caption{Editing an \textsf{lpsolve} script. The execute icon is the
+    sixth from the left.}
   \label{fig:kantor1}
 \end{figure}
 
 \begin{figure}[p]
   \centering
   \includegraphics[scale=0.7]{figures/kantor-run}
-  \caption{Partial output from an \textsf{lpsolve} run}
+  \caption{Partial output from an \textsf{lpsolve} run. The
+    bundle-menu icon is the second from the left.}
   \label{fig:kantor2}
 \end{figure}
 
@@ -184,8 +189,8 @@ linear program is specified.
 \item \texttt{minimize} (boolean, default 0): If this has a non-zero
   value the objective is minimized; by default it is maximized.  
 \item \texttt{verbose} (boolean, default 0): If this has a non-zero
-  value output similar to that from the \texttt{lp\_solve} executable
-  is printed. Otherwise \texttt{lpsolve()} runs silently unless the
+  value details of the solution process and the results are
+  printed. Otherwise \texttt{lpsolve()} runs silently unless the
   solver fails.
 \item \texttt{sensitivity} (boolean, default 0): If this has a
   non-zero value additional output is provided as described in
@@ -265,9 +270,9 @@ On Linux, however, it's easy to install the \textsf{lpsolve} library
 via the package manager so we leave that up to the user. Here are the
 commands that should be used on three popular Linux distributions:
 \begin{center}
-\begin{tabular}{ll}
-  Fedora & \texttt{sudo dnf install lpsolve} \\
+  \begin{tabular}{ll}
   Debian & \texttt{sudo apt-get install lp-solve} \\
+  Fedora & \texttt{sudo dnf install lpsolve} \\
   Arch & \texttt{sudo pacman -S lpsolve}
 \end{tabular}
 \end{center}
@@ -278,18 +283,18 @@ sudo ldconfig
 \end{verbatim}
 to ensure that the newly installed library can be found by gretl.
 
-\section{Examples}
-\label{sec:examples}
+\section{Example}
+\label{sec:example}
 
-For a first case, consider L. V. Kantorovich's illustrative ``Example
-1'' of 1939 (translated in \cite{kantorovich60}), one of the first
-linear programs ever posed and solved. We require that two components
-of a finished product, \texttt{A} and \texttt{B}, be produced in equal
-number and that this number be maximized. The constraints take the
-form of the numbers and capacities of machines of three different
-types that are available for producing the components. The producer
-has three machines of type 1, three of type 2, and one of type 3. The
-capacities of these machines (maximum output per working day) are
+Consider L. V. Kantorovich's illustrative ``Example 1'' of 1939
+(translated in \cite{kantorovich60}), one of the first linear programs
+ever posed and solved. We require that two components of a finished
+product, \texttt{A} and \texttt{B}, be produced in equal number and
+that this number be maximized. The constraints take the form of the
+numbers and capacities of machines of three different types that are
+available for producing the components. The producer has three
+machines of type 1, three of type 2, and one of type 3. The capacities
+of these machines (maximum output per working day) are
 
 \begin{center}
 \begin{tabular}{cccc}
