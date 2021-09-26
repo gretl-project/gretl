@@ -12,7 +12,16 @@
 
 \bibliographystyle{gretl}
 
-% \usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
+\hypersetup{pdftitle={gretl + lpsolve},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            plainpages=false
+}
 
 \begin{document}
 
@@ -41,7 +50,7 @@ problems.\footnote{For technical reasons this is not currently
 
 While linear programming is not part of the standard econometrics
 toolkit it surely falls under the rubric adopted in the founding of
-the Econometrics Society in 1930, namely ``to promote studies that aim
+the Econometric Society in 1930, namely ``to promote studies that aim
 at a unification between the theoretical-quantitative and the
 empirical-quantitative approach to economic problems.''\footnote{See
   \url{https://www.econometricsociety.org/society/about}.} And
@@ -189,7 +198,7 @@ linear program is specified.
 \item \texttt{minimize} (boolean, default 0): If this has a non-zero
   value the objective is minimized; by default it is maximized.  
 \item \texttt{verbose} (boolean, default 0): If this has a non-zero
-  value details of the solution process and the results are
+  value details of the solution process and results are
   printed. Otherwise \texttt{lpsolve()} runs silently unless the
   solver fails.
 \item \texttt{sensitivity} (boolean, default 0): If this has a
@@ -233,7 +242,7 @@ lower and upper limits of their validity.
 
 A bundle given as \texttt{lp\_bundle} must have at least three
 members, as follows.
-\begin{itemize}
+\begin{enumerate}
 \item \texttt{objective}: a row vector of length $n$ holding the
   coefficients on the variables in the linear objective
   function. Zeros must be inserted for variables that do not feature
@@ -252,7 +261,7 @@ members, as follows.
   $m$ strings, each of which must be ``\texttt{<=}'', ``\texttt{>=}''
   or ``\texttt{=}'', or alternatively an $m$-vector in which these
   types are encoded as 1, 2 or 3, respectively.
-\end{itemize}
+\end{enumerate}
 
 If you require that certain variables be integer-valued, you should
 supply a fourth member of \texttt{lp\_bundle}: a matrix under the key
@@ -313,9 +322,27 @@ was shown in Figure~\ref{fig:kantor1}; we reproduce it in
 Listing~\ref{ls:kantor-lp} in case you want to copy and
 paste. Listing~\ref{ls:kantor-inp} shows a simple script which passes
 \texttt{kantorovich.lp} to the \textsf{lpsolve} library and returns a
-bundle containing the results. Listing\ref{ls:kantor-bundle} shows how
-the same problem can be specified by means of a gretl bundle rather
-than an \texttt{lp} script.
+bundle containing the results.
+
+Listing~\ref{ls:kantor-bundle} shows how the same problem can be
+specified by means of a gretl bundle rather than an \texttt{lp}
+script. The bundle method may appear to be more cumbersome, but note
+that it permits expression of the constraints in a structured manner,
+using primary information such as (in the Kantorovich example) the
+matrix \texttt{P} which holds the machine productivities.
+
+Listing~\ref{ls:kantor-analysis} is a self-contained script for
+execution by gretl which solves the problem (without printing
+anything) and illustrates usage of information from the output
+bundle. In the optimal solution to the Kantorovich problem 86
+\texttt{A}s and \texttt{B}s are produced. The script shows the usage
+rate of the three machine types: machines of type 1 and 2 are fully
+employed but the type 3 machine has a little down-time, being employed
+to 97.5\% of its capacity. The second piece of analysis shows that
+machines of types 2 and 3 are fully specialized according to their
+comparative advantage, while the type 1 machines produce both
+\texttt{A}s and \texttt{B}s.
+
 
 \begin{script}[htbp]
   \caption{Kantorovich's Example 1 as file \texttt{kantorovich.lp}}
@@ -374,6 +401,52 @@ strings Ops = defarray("=", "=", "=", "<=", "<=", "<=")
 bundle lpb = _(objective=Obj, constraints=C, ctypes=Ops, intvars={1,2})
 bundle specs = _(lp_bundle=lpb, model_name="kantorovich", verbose=1)
 bundle ret = lpsolve(specs)
+\end{scode}
+\end{script}
+
+\begin{script}[htbp]
+  \caption{Use of information from the bundle returned by \texttt{lpsolve}}
+  \label{ls:kantor-analysis}
+Input:
+\begin{scode}
+set verbose off
+bundle b = _(lp_filename="kantorovich.lp")
+ret = lpsolve(b)
+printf "\nTotal number of As and Bs produced: %d\n\n", ret.objective
+
+matrix vv = ret.variable_values
+matrix cv = ret.constraint_values
+
+matrix u = cv[4:6]'
+cnameset(u, "m1 m2 m3")
+printf "Usage levels of machines:\n\n%8g\n", u
+
+# machine productivities (rows: A, B)
+matrix P = {10, 20, 30; 20, 30, 80}
+
+# Outputs per machine type
+matrix Q = zeros(2,3)
+Q[1,] = vv[3:5]' .* P[1,]
+Q[2,] = vv[6:8]' .* P[2,]
+Q ~= sumr(Q)
+cnameset(Q, "m1 m2 m3 sum")
+rnameset(Q, "A B")
+printf "Numbers of As and Bs produced per machine type:\n\n%6g\n", Q
+\end{scode}
+Output
+\begin{scode}
+Total number of As and Bs produced: 86
+
+Usage levels of machines:
+
+      m1      m2      m3
+       3       3   0.975
+
+Numbers of As and Bs produced per machine type:
+
+      m1    m2    m3   sum
+A     26    60     0    86
+B      8     0    78    86
 \end{scode}
 \end{script}
 
