@@ -304,6 +304,7 @@
       <menuitem action="gretlSVM"/>
       <menuitem action="gretlDBN"/>
       <menuitem action="GeoplotDoc"/>
+      <menuitem action="LpsolveDoc"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>

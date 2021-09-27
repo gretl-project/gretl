@@ -2090,7 +2090,8 @@ enum {
     GRETL_MPI,
     GRETL_SVM,
     GRETL_DBN,
-    GRETL_GEO
+    GRETL_GEO,
+    GRETL_LP
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2312,6 +2313,10 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	"gretl-svm.pdf",
 	"gretl-svm-a4.pdf"
     };
+    const char *gretlLP_files[] = {
+	"gretl-lpsolve.pdf",
+	"gretl-lpsolve-a4.pdf"
+    };
     const char *fname = NULL;
     int gotit = 0;
     int err = 0;
@@ -2355,6 +2360,8 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	fname = gretlMPI_files[pref];
     } else if (code == GRETL_SVM) {
 	fname = gretlSVM_files[pref];
+    } else if (code == GRETL_LP) {
+	fname = gretlLP_files[pref];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2487,6 +2494,8 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_DBN;
 	} else if (!strcmp(aname, "GeoplotDoc")) {
 	    code = GRETL_GEO;
+	} else if (!strcmp(aname, "LpsolveDoc")) {
+	    code = GRETL_LP;
 	}
     }
 

@@ -1636,6 +1636,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("dbnomics for gretl");
     } else if (!strcmp(key, "GeoplotDoc")) {
 	s = _("Creating maps");
+    } else if (!strcmp(key, "LpsolveDoc")) {
+	s = _("Linear Programs");
     } else {
 	s = key;
     }
