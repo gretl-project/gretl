@@ -357,39 +357,40 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	if (lp == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    /* set lpsolve verbosity level */
-	    if (opt & OPT_V) {
-		set_verbose(lp, NORMAL);
-	    } else {
-		set_verbose(lp, CRITICAL);
-	    }
 	    /* set rowmode: this has to be placed carefully! */
 	    set_add_rowmode(lp, 1);
 	    for (j=0; j<nv; j++) {
 		row[j+1] = O->val[j];
-		if (cnames != NULL) {
+	    }
+	    /* add objective function */
+	    set_obj_fn(lp, row);
+	    /* constraints */
+	    for (i=0; i<nc; i++) {
+		lp_row_from_mrow(row, nv, R, i);
+		rhs = gretl_matrix_get(R, i, nv);
+		add_constraint(lp, row, ctypes[i], rhs);
+	    }
+	    /* turn off rowmode or lpsolve will likely crash */
+	    set_add_rowmode(lp, 0);
+	    /* add column names? */
+	    if (cnames != NULL) {
+		for (j=0; j<nv; j++) {
 		    set_col_name(lp, j+1, (char *) cnames[j]);
 		}
 	    }
-	    set_obj_fn(lp, row);
+	    /* add row names? */
+	    if (rnames != NULL) {
+		for (i=0; i<nc; i++) {
+		    set_row_name(lp, i+1, (char *) rnames[i]);
+		}
+	    }
 	    /* integer variable specifiers? */
 	    for (j=0; j<ni; j++) {
 		col = K->val[j];
 		if (col > 0 && col <= nv) {
 		    set_int(lp, col, 1);
 		}
-	    }
-	    /* constraints */
-	    for (i=0; i<nc; i++) {
-		lp_row_from_mrow(row, nv, R, i);
-		rhs = gretl_matrix_get(R, i, nv);
-		add_constraint(lp, row, ctypes[i], rhs);
-		if (rnames != NULL) {
-		    set_row_name(lp, i+1, (char *) rnames[i]);
-		}
-	    }
-	    /* turn off rowmode or lpsolve will likely crash */
-	    set_add_rowmode(lp, 0);
+	    }	    
 	    *pcnames = cnames;
 	    *prnames = rnames;
 	}
@@ -746,6 +747,11 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	} else {
 	    set_maxim(lp);
 	}
+	if (opt & OPT_V) {
+	    set_verbose(lp, NORMAL);
+	} else {
+	    set_verbose(lp, CRITICAL);
+	}	
 	*err = maybe_catch_solve(lp, opt, prn);
 	if (*err) {
 	    gretl_errmsg_set("lpsolve: solution failed");
