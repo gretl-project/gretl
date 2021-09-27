@@ -2451,6 +2451,23 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
     return err;
 }
 
+int get_pdf_path (const char *name, char *fullpath)
+{
+    int code = 0;
+
+    if (!strcmp(name, "gretl-lpsolve.pdf")) {
+	code = GRETL_LP;
+    } else if (!strcmp(name, "gretl-svm.pdf")) {
+	code = GRETL_SVM;
+    }
+
+    if (code > 0) {
+	return find_or_download_pdf(code, 0, fullpath);
+    } else {
+	return 1;
+    }
+}
+
 void gretl_show_pdf (const char *fname, const char *option)
 {
 #if defined(G_OS_WIN32)

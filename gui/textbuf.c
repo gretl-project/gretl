@@ -1962,7 +1962,13 @@ static void open_pdf_file (GtkTextTag *tag)
 		gretl_show_pdf(path, NULL);
 		free(path);
 	    } else {
-		warn = 1;
+		/* not an addon file */
+		char fname[FILENAME_MAX] = {0};
+
+		warn = get_pdf_path(name, fname);
+		if (!warn) {
+		    gretl_show_pdf(fname, NULL);
+		}
 	    }
 	} else if (gretl_stat(name, NULL) == 0) {
 	    gretl_show_pdf(name, NULL);

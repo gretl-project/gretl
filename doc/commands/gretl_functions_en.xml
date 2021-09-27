@@ -7117,8 +7117,8 @@
       <description>
 	<para>
 	  Solves a linear programming problem using the lpsolve
-	  library. See <doc>gretl-lpsolve.pdf</doc>, for
-	  full details and examples.
+	  library. See <doc>gretl-lpsolve.pdf</doc> for
+	  details and examples of usage.
 	</para>
       </description>
     </function>
