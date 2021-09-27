@@ -1009,8 +1009,10 @@ static void real_register_data (int flag, const char *user_fname,
     }
 
     if (mdata != NULL) {
-	/* focus the data window */
-	gtk_widget_grab_focus(mdata->listbox);
+	if (flag != OPENED_VIA_CLI) {
+	    /* focus the data window */
+	    gtk_widget_grab_focus(mdata->listbox);
+	}
 	/* invalidate "remove extra obs" menu item */
 	drop_obs_state(FALSE);
     }
