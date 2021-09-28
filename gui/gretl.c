@@ -346,7 +346,7 @@ static int script_type (const char *fname)
 	return EDIT_STATA;
     } else if (has_suffix(fname, ".mod")) {
 	return EDIT_DYNARE;
-#if !defined(WIN32) || defined(WIN64)
+#if !defined(WIN32) || defined(_WIN64)
     } else if (has_suffix(fname, ".lp")) {
 	return EDIT_LPSOLVE;
 #endif
@@ -2346,7 +2346,7 @@ static GtkWidget *make_main_menu (void)
 	}
     }
 
-#if defined(WIN32) && !defined(WIN64)
+#if defined(WIN32) && !defined(_WIN64)
     flip(mdata->ui, "/menubar/File/ScriptFiles/NewScript/lpsolveScript", FALSE);
     flip(mdata->ui, "/menubar/Help/LpsolveDoc", FALSE);
 #endif

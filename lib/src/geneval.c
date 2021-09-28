@@ -10530,7 +10530,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-#if defined(WIN32) && !defined(WIN64)
+#if defined(WIN32) && !defined(_WIN64)
 
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
