@@ -5134,18 +5134,10 @@ static NODE *list_range_node (int *list, int r1, int r2, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	int n = r2 - r1 + 1;
-
 	ret = aux_list_node(p);
 	if (ret != NULL) {
-	    ret->v.ivec = gretl_list_new(n);
-	    if (ret->v.ivec != NULL) {
-		int i, j = 1;
-
-		for (i=r1; i<=r2; i++) {
-		    ret->v.ivec[j++] = list[i];
-		}
-	    } else {
+	    ret->v.ivec = gretl_list_sublist(list, r1, r2);
+	    if (ret->v.ivec == NULL) {
 		p->err = E_ALLOC;
 	    }
         }
