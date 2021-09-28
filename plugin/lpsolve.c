@@ -411,7 +411,7 @@ static lprec *lp_model_from_file (const char *fname,
     FILE *fp = NULL;
 
     if (fname != NULL) {
-	fp = gretl_fopen(fname, "r");
+	fp = gretl_read_user_file(fname);
     } else {
 	tmp = gretl_make_dotpath("tmp.lp");
 	fp = gretl_fopen(tmp, "wb");
@@ -429,7 +429,10 @@ static lprec *lp_model_from_file (const char *fname,
 	    pprintf(prn, "Reading input from '%s'\n", fname);
 	}
 	lp = read_lp(fp, NORMAL, NULL);
-	fclose(fp); /* check that lpsolve doesn't close close this? */
+	if (lp == NULL) {
+	    *err = E_DATA;
+	}
+	fclose(fp);
     }
 
     if (tmp != NULL) {
