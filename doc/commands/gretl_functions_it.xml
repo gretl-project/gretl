@@ -7133,6 +7133,20 @@
       </description>
     </function>
 
+    <function name="lpsolve" section="math" output="bundle">
+      <fnargs>
+	<fnarg type="bundle">specs</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Risolve numericamente un problema di programmazione lineare
+	  usando la libreria <lit>lpsolve</lit>. Si veda
+	  <doc>gretl-lpsolve.pdf</doc> (in inglese) per dettagli ed
+	  esempi d'uso.
+	</para>
+      </description>
+    </function>
+
     <function name="lower" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
