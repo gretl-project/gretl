@@ -1015,7 +1015,7 @@ const char *gretl_const_name (int i)
 /* end external stuff */
 
 /* cases where 'end' can indicate 'last element of' */
-#define DUM_END_OK(t) (t==MAT || t==ARRAY || t==MVAR)
+#define DUM_END_OK(t) (t==MAT || t==ARRAY || t==MVAR || t==STR || t == LIST)
 
 static int dummy_lookup (const char *s, parser *p)
 {

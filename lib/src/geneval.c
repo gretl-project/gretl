@@ -5129,45 +5129,25 @@ static NODE *array_subspec_node (gretl_array *a, int *list,
     return ret;
 }
 
-static int check_range_spec (int range[], int n)
-{
-    int err = 0;
-
-    if (range[0] < 1 || range[0] > n) {
-        gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[0]);
-        err = E_DATA;
-    } else if (range[1] == MSEL_MAX) {
-        range[1] = n;
-    }
-
-    if (!err && (range[1] < 1 || range[1] > n || range[1] < range[0])) {
-        gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[1]);
-        err = E_DATA;
-    }
-
-    return err;
-}
-
-static NODE *list_range_node (int *list, int range[], parser *p)
+static NODE *list_range_node (int *list, int r1, int r2, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-        p->err = check_range_spec(range, list[0]);
-        if (!p->err) {
-            int n = range[1] - range[0] + 1;
+	int n = r2 - r1 + 1;
 
-            ret = aux_list_node(p);
-            if (ret != NULL) {
-                ret->v.ivec = gretl_list_new(n);
-                if (ret->v.ivec != NULL) {
-                    int i, j = 1;
+	ret = aux_list_node(p);
+	if (ret != NULL) {
+	    ret->v.ivec = gretl_list_new(n);
+	    if (ret->v.ivec != NULL) {
+		int i, j = 1;
 
-                    for (i=range[0]; i<=range[1]; i++) {
-                        ret->v.ivec[j++] = list[i];
-                    }
-                }
-            }
+		for (i=r1; i<=r2; i++) {
+		    ret->v.ivec[j++] = list[i];
+		}
+	    } else {
+		p->err = E_ALLOC;
+	    }
         }
     } else {
         ret = aux_any_node(p);
@@ -5181,15 +5161,10 @@ static NODE *string_range_node (const char *s, int r1, int r2, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        int range[2] = {r1, r2};
-
-        p->err = check_range_spec(range, g_utf8_strlen(s, -1));
-        if (!p->err) {
-            ret = aux_string_node(p);
-            if (ret != NULL) {
-                ret->v.str = gretl_substring(s, r1, r2, &p->err);
-            }
-        }
+	ret = aux_string_node(p);
+	if (ret != NULL) {
+	    ret->v.str = gretl_substring(s, r1, r2, &p->err);
+	}
     } else {
         ret = aux_any_node(p);
     }
@@ -5288,35 +5263,6 @@ static int mspec_get_array_index (matrix_subspec *spec,
     return idx;
 }
 
-/* Here we're checking @spec for suitability in specifying
-   a "slice" of an array, list or string: unlike the matrix
-   case, @spec must be one-dimensional, and moreover (at
-   present) it must come down to a single element or a
-   straightforward range (so not a vector).
-*/
-
-static int test_for_single_range (matrix_subspec *spec,
-                                  parser *p)
-{
-    int ret = 0;
-
-    if (spec->ltype == SEL_SINGLE) {
-        ret = spec->lsel.range[0];
-    } else if (spec->ltype == SEL_RANGE && spec->rtype == SEL_NULL) {
-        /* note: it's not an error if the range is non-degenerate,
-           we just don't return a valid single index value
-        */
-        if (spec->lsel.range[0] == spec->lsel.range[1]) {
-            ret = spec->lsel.range[0];
-        }
-    } else {
-        p->err = E_TYPES;
-        ret = -1;
-    }
-
-    return ret;
-}
-
 /* stricter variant of test_for_single_range */
 
 static int get_single_element (matrix_subspec *spec,
@@ -5408,7 +5354,6 @@ static int want_singleton_array (NODE *n, parser *p)
 
 static int *array_subspec_list (NODE *l, NODE *r, parser *p)
 {
-    int len = gretl_array_get_length(l->v.a);
     matrix_subspec *spec = r->v.mspec;
     int *list = NULL;
 
@@ -5416,7 +5361,20 @@ static int *array_subspec_list (NODE *l, NODE *r, parser *p)
 	/* array selection must be one-dimensional */
 	p->err = E_INVARG;
     } else {
-	/* convert spec to list of elements */
+	int len;
+
+	if (l->t == ARRAY) {
+	    len = gretl_array_get_length(l->v.a);
+	} else if (l->t == STR) {
+	    len = g_utf8_strlen(l->v.str, -1);
+	} else if (l->t == LIST) {
+	    len = l->v.ivec[0];
+	} else {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
+
+	/* convert @spec to list of elements */
 	list = mspec_make_list(spec->ltype, &spec->lsel,
 			       len, &p->err);
     }
@@ -5449,25 +5407,23 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    }
             free(vlist);
         } else if (l->t == LIST || l->t == STR) {
-            int i = test_for_single_range(r->v.mspec, p);
+	    int *vlist = array_subspec_list(l, r, p);
 
-            if (!p->err && i > 0) {
-                if (l->t == LIST) {
-                    ret = list_member_node(l->v.ivec, i, p);
-                } else {
-                    ret = string_range_node(l->v.str, i, i, p);
-                }
-            } else if (!p->err) {
-                int range[2];
+	    if (!p->err && !gretl_list_is_consecutive(vlist)) {
+		p->err = E_INVARG;
+	    }
+	    if (!p->err && vlist[0] == 1 && l->t == LIST) {
+		ret = list_member_node(l->v.ivec, vlist[1], p);
+	    } else if (!p->err) {
+		int r1 = vlist[1];
+		int r2 = vlist[vlist[0]];
 
-                range[0] = r->v.mspec->lsel.range[0];
-                range[1] = r->v.mspec->lsel.range[1];
                 if (l->t == LIST) {
-                    ret = list_range_node(l->v.ivec, range, p);
+                    ret = list_range_node(l->v.ivec, r1, r2, p);
                 } else {
-                    ret = string_range_node(l->v.str, range[0], range[1], p);
+                    ret = string_range_node(l->v.str, r1, r2, p);
                 }
-            }
+	    }
         } else if (l->t == SERIES) {
             int t = mspec_get_series_index(r->v.mspec, p);
 
