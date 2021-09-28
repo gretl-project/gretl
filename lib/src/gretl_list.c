@@ -2085,6 +2085,32 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
 }
 
 /**
+ * gretl_list_sublist:
+ * @list: the source list.
+ * @pos0: the starting position.
+ * $pos1: the ending position.
+ *
+ * Returns: a newly allocated sublist containing elements @pos0
+ * to @pos1 of the source.
+ */
+
+int *gretl_list_sublist (const int *list, int pos0, int pos1)
+{
+    int n = pos1 - pos0 + 1;
+    int *ret = gretl_list_new(n);
+
+    if (n > 0 && ret != NULL) {
+	int i, j = 1;
+
+	for (i=pos0; i<=pos1; i++) {
+	    ret[j++] = list[i];
+	}
+    }
+
+    return ret;
+}
+
+/**
  * list_members_replaced:
  * @pmod: the model whose list is to be tested.
  * @dset: dataset information.

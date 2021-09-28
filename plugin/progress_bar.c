@@ -20,6 +20,7 @@
 /* progress bar implementation for gretl */
 
 #include "libgretl.h"
+#include "version.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"

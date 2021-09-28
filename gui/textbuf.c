@@ -81,7 +81,8 @@ enum {
 				r == EDIT_PYTHON || \
 				r == EDIT_STATA ||  \
 				r == EDIT_JULIA || \
-				r == EDIT_DYNARE)
+				r == EDIT_DYNARE || \
+				r == EDIT_LPSOLVE)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -515,6 +516,8 @@ static void sourceview_apply_language (windata_t *vwin)
 	id = "stata";
     } else if (vwin->role == EDIT_DYNARE) {
 	id = "cpp";
+    } else if (vwin->role == EDIT_LPSOLVE) {
+	id = "lpsolve";
     } else if (vwin->role == EDIT_SPEC) {
 	id = "gfnspec";
     } else {
@@ -1633,6 +1636,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("dbnomics for gretl");
     } else if (!strcmp(key, "GeoplotDoc")) {
 	s = _("Creating maps");
+    } else if (!strcmp(key, "LpsolveDoc")) {
+	s = _("Linear Programs");
     } else {
 	s = key;
     }
@@ -1957,7 +1962,13 @@ static void open_pdf_file (GtkTextTag *tag)
 		gretl_show_pdf(path, NULL);
 		free(path);
 	    } else {
-		warn = 1;
+		/* not an addon file */
+		char fname[FILENAME_MAX] = {0};
+
+		warn = get_pdf_path(name, fname);
+		if (!warn) {
+		    gretl_show_pdf(fname, NULL);
+		}
 	    }
 	} else if (gretl_stat(name, NULL) == 0) {
 	    gretl_show_pdf(name, NULL);

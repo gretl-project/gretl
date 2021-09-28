@@ -22,8 +22,9 @@ PKGBOOK = pkgbook.pdf
 MPIDOC = gretl-mpi.pdf
 MIDASDOC = midas-gretl.pdf
 SVMDOC = gretl-svm.pdf
+LPDOC = gretl-lpsolve.pdf
 KBD = gretl-keys.pdf
-US = $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(MIDASDOC) $(SVMDOC) $(KBD)
+US = $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(LPDOC) $(KBD)
 
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
@@ -32,9 +33,10 @@ ALTPKGBOOK = pkgbook-a4.pdf
 ALTMPIDOC = gretl-mpi-a4.pdf
 ALTMIDASDOC = midas-gretl-a4.pdf
 ALTSVMDOC = gretl-svm-a4.pdf
+ALTLPDOC = gretl-lpsolve-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
-A4 = $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTMIDASDOC) \
- $(ALTSVMDOC) $(ALTKBD)
+A4 = $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) \
+ $(ALTLPDOC) $(ALTKBD)
 
 GUIDETEX = gretl-guide.tex \
 	introduction.tex \
@@ -118,6 +120,7 @@ PKGTEX = pkgbook.tex
 MPITEX = gretl-mpi.tex
 MIDASTEX = midas-gretl.tex
 SVMTEX = gretl-svm.tex
+LPTEX = gretl-lpsolve.tex
 KBDTEX = gretl-keys.tex
 
 BIBSRC = gretl.bib gretl.bst biblio.tex
@@ -135,8 +138,7 @@ GENTEX2 = tabinternals.tex tabfunctions.tex tabloopcmds.tex \
 
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
-all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD) \
-	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
+all: $(US) $(A4)
 
 $(GUIDE): $(GUIDETEX) $(GENTEX1) date.tex $(STYSRC) $(BIBSRC) | figlink
 	pdflatex $<
@@ -178,6 +180,12 @@ $(MIDASDOC): $(MIDASTEX) date.tex $(STYSRC) | figlink
 $(SVMDOC): $(SVMTEX) $(STYSRC) | figlink
 	pdflatex $<
 	bibtex gretl-svm
+	pdflatex $<
+	pdflatex $<
+
+$(LPDOC): $(LPTEX) $(STYSRC) | figlink
+	pdflatex $<
+	bibtex gretl-lpsolve
 	pdflatex $<
 	pdflatex $<
 
@@ -227,6 +235,12 @@ $(ALTSVMDOC): $(SVMTEX) gretl-svm-a4.tex $(STYSRC)
 	pdflatex gretl-svm-a4
 	pdflatex gretl-svm-a4
 
+$(ALTLPDOC): $(LPTEX) gretl-lpsolve-a4.tex $(STYSRC)
+	pdflatex gretl-lpsolve-a4
+	bibtex gretl-lpsolve-a4
+	pdflatex gretl-lpsolve-a4
+	pdflatex gretl-lpsolve-a4
+
 $(ALTKBD): $(KBDTEX) gretl-keys-a4.tex $(STYSRC)
 	pdflatex gretl-keys-a4
 
@@ -256,9 +270,9 @@ refbody.tex: $(XMLSRC)
 cmdtopics.tex: $(XMLSRC)
 	make -C ../commands ../tex/$@
 
-letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD)
+letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(LPDOC) $(KBD)
 
-a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
+a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTLPDOC) $(ALTKBD)
 
 gretl-guide-a4.tex: $(texsrc)/gretl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
@@ -281,6 +295,9 @@ midas-gretl-a4.tex: $(texsrc)/midas-gretl.tex ../commands/us2a4
 gretl-svm-a4.tex: $(texsrc)/gretl-svm.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
+gretl-lpsolve-a4.tex: $(texsrc)/gretl-lpsolve.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
+
 gretl-keys-a4.tex: $(texsrc)/gretl-keys.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
@@ -300,6 +317,8 @@ $(MIDASTEX): | midaslink
 
 $(SVMTEX): | svmlink
 
+$(LPTEX): | lplink
+
 $(BIBSRC): | biblink
 
 $(STYSRC): | stylink
@@ -311,7 +330,7 @@ date.tex: $(ALLSRC)
 	LANG=en_US date "+%B, %Y" > $@
 
 .PHONY : guidelink reflink hplink pkglink biblink stylink kbdlink \
-	figlink mpilink midaslink svmlink onepass refpass bibpass \
+	figlink mpilink midaslink svmlink lplink onepass refpass bibpass \
 	install installdirs install-us install-a4 clean distclean
 
 guidelink:
@@ -348,6 +367,10 @@ midaslink:
 
 svmlink:
 	@for f in $(SVMTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+lplink:
+	@for f in $(LPTEX) ; do \
 	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
 
 stylink:

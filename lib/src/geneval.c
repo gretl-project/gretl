@@ -4869,7 +4869,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     rscalar = (r != NULL && scalar_node(r));
 
     if (lscalar) {
-        i = node_get_int(l, p);
+	i = node_get_int(l, p);
         if (!p->err && i == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
             p->err = E_INVARG;
@@ -4883,7 +4883,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         }
     }
     if (!p->err && rscalar) {
-        j = node_get_int(r, p);
+	j = node_get_int(r, p);
         if (!p->err && j == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
             p->err = E_INVARG;
@@ -5129,45 +5129,17 @@ static NODE *array_subspec_node (gretl_array *a, int *list,
     return ret;
 }
 
-static int check_range_spec (int range[], int n)
-{
-    int err = 0;
-
-    if (range[0] < 1 || range[0] > n) {
-        gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[0]);
-        err = E_DATA;
-    } else if (range[1] == MSEL_MAX) {
-        range[1] = n;
-    }
-
-    if (!err && (range[1] < 1 || range[1] > n || range[1] < range[0])) {
-        gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[1]);
-        err = E_DATA;
-    }
-
-    return err;
-}
-
-static NODE *list_range_node (int *list, int range[], parser *p)
+static NODE *list_range_node (int *list, int r1, int r2, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-        p->err = check_range_spec(range, list[0]);
-        if (!p->err) {
-            int n = range[1] - range[0] + 1;
-
-            ret = aux_list_node(p);
-            if (ret != NULL) {
-                ret->v.ivec = gretl_list_new(n);
-                if (ret->v.ivec != NULL) {
-                    int i, j = 1;
-
-                    for (i=range[0]; i<=range[1]; i++) {
-                        ret->v.ivec[j++] = list[i];
-                    }
-                }
-            }
+	ret = aux_list_node(p);
+	if (ret != NULL) {
+	    ret->v.ivec = gretl_list_sublist(list, r1, r2);
+	    if (ret->v.ivec == NULL) {
+		p->err = E_ALLOC;
+	    }
         }
     } else {
         ret = aux_any_node(p);
@@ -5181,15 +5153,10 @@ static NODE *string_range_node (const char *s, int r1, int r2, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        int range[2] = {r1, r2};
-
-        p->err = check_range_spec(range, g_utf8_strlen(s, -1));
-        if (!p->err) {
-            ret = aux_string_node(p);
-            if (ret != NULL) {
-                ret->v.str = gretl_substring(s, r1, r2, &p->err);
-            }
-        }
+	ret = aux_string_node(p);
+	if (ret != NULL) {
+	    ret->v.str = gretl_substring(s, r1, r2, &p->err);
+	}
     } else {
         ret = aux_any_node(p);
     }
@@ -5288,35 +5255,6 @@ static int mspec_get_array_index (matrix_subspec *spec,
     return idx;
 }
 
-/* Here we're checking @spec for suitability in specifying
-   a "slice" of an array, list or string: unlike the matrix
-   case, @spec must be one-dimensional, and moreover (at
-   present) it must come down to a single element or a
-   straightforward range (so not a vector).
-*/
-
-static int test_for_single_range (matrix_subspec *spec,
-                                  parser *p)
-{
-    int ret = 0;
-
-    if (spec->ltype == SEL_SINGLE) {
-        ret = spec->lsel.range[0];
-    } else if (spec->ltype == SEL_RANGE && spec->rtype == SEL_NULL) {
-        /* note: it's not an error if the range is non-degenerate,
-           we just don't return a valid single index value
-        */
-        if (spec->lsel.range[0] == spec->lsel.range[1]) {
-            ret = spec->lsel.range[0];
-        }
-    } else {
-        p->err = E_TYPES;
-        ret = -1;
-    }
-
-    return ret;
-}
-
 /* stricter variant of test_for_single_range */
 
 static int get_single_element (matrix_subspec *spec,
@@ -5408,7 +5346,6 @@ static int want_singleton_array (NODE *n, parser *p)
 
 static int *array_subspec_list (NODE *l, NODE *r, parser *p)
 {
-    int len = gretl_array_get_length(l->v.a);
     matrix_subspec *spec = r->v.mspec;
     int *list = NULL;
 
@@ -5416,7 +5353,20 @@ static int *array_subspec_list (NODE *l, NODE *r, parser *p)
 	/* array selection must be one-dimensional */
 	p->err = E_INVARG;
     } else {
-	/* convert spec to list of elements */
+	int len;
+
+	if (l->t == ARRAY) {
+	    len = gretl_array_get_length(l->v.a);
+	} else if (l->t == STR) {
+	    len = g_utf8_strlen(l->v.str, -1);
+	} else if (l->t == LIST) {
+	    len = l->v.ivec[0];
+	} else {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
+
+	/* convert @spec to list of elements */
 	list = mspec_make_list(spec->ltype, &spec->lsel,
 			       len, &p->err);
     }
@@ -5449,25 +5399,23 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    }
             free(vlist);
         } else if (l->t == LIST || l->t == STR) {
-            int i = test_for_single_range(r->v.mspec, p);
+	    int *vlist = array_subspec_list(l, r, p);
 
-            if (!p->err && i > 0) {
-                if (l->t == LIST) {
-                    ret = list_member_node(l->v.ivec, i, p);
-                } else {
-                    ret = string_range_node(l->v.str, i, i, p);
-                }
-            } else if (!p->err) {
-                int range[2];
+	    if (!p->err && !gretl_list_is_consecutive(vlist)) {
+		p->err = E_INVARG;
+	    }
+	    if (!p->err && vlist[0] == 1 && l->t == LIST) {
+		ret = list_member_node(l->v.ivec, vlist[1], p);
+	    } else if (!p->err) {
+		int r1 = vlist[1];
+		int r2 = vlist[vlist[0]];
 
-                range[0] = r->v.mspec->lsel.range[0];
-                range[1] = r->v.mspec->lsel.range[1];
                 if (l->t == LIST) {
-                    ret = list_range_node(l->v.ivec, range, p);
+                    ret = list_range_node(l->v.ivec, r1, r2, p);
                 } else {
-                    ret = string_range_node(l->v.str, range[0], range[1], p);
+                    ret = string_range_node(l->v.str, r1, r2, p);
                 }
-            }
+	    }
         } else if (l->t == SERIES) {
             int t = mspec_get_series_index(r->v.mspec, p);
 
@@ -6293,6 +6241,20 @@ static NODE *trend_node (parser *p)
                 ret->flags &= ~TMP_NODE;
             }
         }
+    }
+
+    return ret;
+}
+
+static NODE *array_last_node (parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+        ret = aux_scalar_node(p);
+        if (!p->err) {
+	    ret->v.xval = IDX_TBD;
+	}
     }
 
     return ret;
@@ -7733,23 +7695,52 @@ static NODE *do_funcerr (NODE *n, parser *p)
     return ret;
 }
 
+static void write_mpi_errmsg (const char *funcname, const char *s)
+{
+#ifdef HAVE_MPI
+    gchar *tmp = gretl_make_dotpath("mpi.fail");
+    FILE *fp = gretl_fopen(tmp, "wb");
+
+    if (fp != NULL) {
+	if (funcname != NULL) {
+	    fprintf(fp, _("Error message from %s():\n %s"),
+		    funcname, s);
+	    fputc('\n', fp);
+	} else {
+	    fprintf(fp, "Error message from gretlmpi: %s\n", s);
+	}
+	fclose(fp);
+    }
+    g_free(tmp);
+#else
+    return;
+#endif
+}
+
 static NODE *do_errorif (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
+    int fd = gretl_function_depth();
 
-    if (gretl_function_depth() == 0) {
-        gretl_errmsg_sprintf("'%s': can only be used within a function",
-                             "errorif");
+    if (fd == 0 && !gretl_mpi_initialized()) {
+	gretl_errmsg_sprintf("'%s': can only be used within a function",
+			     "errorif");
         p->err = E_DATA;
     } else {
         int cond = node_get_bool(l, p, -1);
 
         if (cond && !p->err) {
-            const char *funcname = NULL;
+	    const char *funcname = NULL;
 
-            current_function_info(&funcname, NULL);
-            gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
-                                 funcname, r->v.str);
+	    if (fd > 0) {
+		current_function_info(&funcname, NULL);
+	    }
+	    if (gretl_mpi_initialized()) {
+		write_mpi_errmsg(funcname, r->v.str);
+	    } else {
+		gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+				     funcname, r->v.str);
+	    }
             p->err = E_FUNCERR;
         }
     }
@@ -10487,7 +10478,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-#if defined(WIN32) && !defined(WIN64)
+#if defined(WIN32) && !defined(_WIN64)
 
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
@@ -16631,6 +16622,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = dataset_list_node(p);
         } else if (t->v.idnum == DUM_TREND) {
             ret = trend_node(p);
+	} else if (t->v.idnum == DUM_END) {
+	    ret = array_last_node(p);
         } else {
             /* otherwise treat as terminal */
             ret = t;
@@ -20294,9 +20287,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, SERIES, p);
 		}
 	    } else if (k == sample_size(p->dset)) {
-		/* treat as series of current sample length
-		   2016-03-03: removed clause "&& mt1 == 0"
-		*/
+		/* treat as series of current sample length */
 		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, SERIES, p);
 		}

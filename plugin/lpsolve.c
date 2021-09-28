@@ -82,6 +82,7 @@ unsigned char set_add_rowmode (lprec *lp, unsigned char s);
 void delete_lp (lprec *lp);
 void set_verbose (lprec *lp, int verbose);
 void set_maxim (lprec *lp);
+void set_minim (lprec *lp);
 unsigned char set_lp_name (lprec *lp, char *s);
 unsigned char set_obj_fn (lprec *lp, REAL *row);
 unsigned char add_constraint (lprec *lp, REAL *row,
@@ -114,6 +115,7 @@ static unsigned char (*set_add_rowmode) (lprec *lp, unsigned char s);
 static void (*delete_lp) (lprec *lp);
 static void (*set_verbose) (lprec *lp, int verbose);
 static void (*set_maxim) (lprec *lp);
+static void (*set_minim) (lprec *lp);
 static unsigned char (*set_lp_name) (lprec *lp, char *s);
 static unsigned char (*set_obj_fn) (lprec *lp, REAL *row);
 static unsigned char (*add_constraint) (lprec *lp, REAL *row,
@@ -182,6 +184,7 @@ static int gretl_lpsolve_init (void)
 	delete_lp           = lpget(lphandle, "delete_lp", &err);
 	set_verbose         = lpget(lphandle, "set_verbose", &err);
 	set_maxim           = lpget(lphandle, "set_maxim", &err);
+	set_minim           = lpget(lphandle, "set_minim", &err);
 	set_obj_fn          = lpget(lphandle, "set_obj_fn", &err);
 	add_constraint      = lpget(lphandle, "add_constraint", &err);
 	set_col_name        = lpget(lphandle, "set_col_name", &err);
@@ -346,7 +349,6 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     if (!*err) {
 	const char **cnames = gretl_matrix_get_colnames(O);
 	const char **rnames = gretl_matrix_get_rownames(R);
-	const char *mname = gretl_bundle_get_string(b, "model_name", NULL);
 	double rhs, *row = calloc(nv+1, sizeof *row);
 	int col, i, j;
 
@@ -355,47 +357,40 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
 	if (lp == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    /* set model name? */
-	    if (mname != NULL) {
-		set_lp_name(lp, (char *) mname);
-	    }
-	    /* set lpsolve verbosity level */
-	    if (opt & OPT_V) {
-		set_verbose(lp, NORMAL);
-	    } else {
-		set_verbose(lp, CRITICAL);
-	    }
 	    /* set rowmode: this has to be placed carefully! */
 	    set_add_rowmode(lp, 1);
-	    /* objective function */
-	    if (!(opt & OPT_I)) {
-		set_maxim(lp);
-	    }
 	    for (j=0; j<nv; j++) {
 		row[j+1] = O->val[j];
-		if (cnames != NULL) {
+	    }
+	    /* add objective function */
+	    set_obj_fn(lp, row);
+	    /* constraints */
+	    for (i=0; i<nc; i++) {
+		lp_row_from_mrow(row, nv, R, i);
+		rhs = gretl_matrix_get(R, i, nv);
+		add_constraint(lp, row, ctypes[i], rhs);
+	    }
+	    /* turn off rowmode or lpsolve will likely crash */
+	    set_add_rowmode(lp, 0);
+	    /* add column names? */
+	    if (cnames != NULL) {
+		for (j=0; j<nv; j++) {
 		    set_col_name(lp, j+1, (char *) cnames[j]);
 		}
 	    }
-	    set_obj_fn(lp, row);
+	    /* add row names? */
+	    if (rnames != NULL) {
+		for (i=0; i<nc; i++) {
+		    set_row_name(lp, i+1, (char *) rnames[i]);
+		}
+	    }
 	    /* integer variable specifiers? */
 	    for (j=0; j<ni; j++) {
 		col = K->val[j];
 		if (col > 0 && col <= nv) {
 		    set_int(lp, col, 1);
 		}
-	    }
-	    /* constraints */
-	    for (i=0; i<nc; i++) {
-		lp_row_from_mrow(row, nv, R, i);
-		rhs = gretl_matrix_get(R, i, nv);
-		add_constraint(lp, row, ctypes[i], rhs);
-		if (rnames != NULL) {
-		    set_row_name(lp, i+1, (char *) rnames[i]);
-		}
-	    }
-	    /* turn off rowmode or lpsolve will likely crash */
-	    set_add_rowmode(lp, 0);
+	    }	    
 	    *pcnames = cnames;
 	    *prnames = rnames;
 	}
@@ -407,20 +402,42 @@ static lprec *lp_model_from_bundle (gretl_bundle *b,
     return lp;
 }
 
-static lprec *lp_model_from_file (const char *fname, PRN *prn,
-				  int *err)
+static lprec *lp_model_from_file (const char *fname,
+				  const char *buf,
+				  PRN *prn, int *err)
 {
     lprec *lp = NULL;
-    FILE *fp = gretl_fopen(fname, "r");
+    gchar *tmp = NULL;
+    FILE *fp = NULL;
+
+    if (fname != NULL) {
+	fp = gretl_read_user_file(fname);
+    } else {
+	tmp = gretl_make_dotpath("tmp.lp");
+	fp = gretl_fopen(tmp, "wb");
+	if (fp != NULL) {
+	    fputs(buf, fp);
+	    fclose(fp);
+	    fp = gretl_fopen(tmp, "rb");
+	}
+    }
 
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
-	if (prn != NULL) {
+	if (fname != NULL && prn != NULL) {
 	    pprintf(prn, "Reading input from '%s'\n", fname);
 	}
 	lp = read_lp(fp, NORMAL, NULL);
-	fclose(fp); /* ? */
+	if (lp == NULL) {
+	    *err = E_DATA;
+	}
+	fclose(fp);
+    }
+
+    if (tmp != NULL) {
+	gretl_remove(tmp);
+	g_free(tmp);
     }
 
     return lp;
@@ -613,7 +630,10 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 }
 
 static gretlopt lp_options_from_bundle (gretl_bundle *b,
-					const char **pfname)
+					const char **pfname,
+					const char **pbuf,
+					gretl_bundle **pb,
+					const char **pname)
 {
     gretlopt opt = OPT_NONE;
 
@@ -626,9 +646,17 @@ static gretlopt lp_options_from_bundle (gretl_bundle *b,
     if (gretl_bundle_get_bool(b, "sensitivity", 0)) {
 	opt |= OPT_S;
     }
+
+    if (gretl_bundle_has_key(b, "model_name")) {
+	*pname = gretl_bundle_get_string(b, "model_name", NULL);
+    }
+
     if (gretl_bundle_has_key(b, "lp_filename")) {
 	*pfname = gretl_bundle_get_string(b, "lp_filename", NULL);
-	opt |= OPT_F;
+    } else if (gretl_bundle_has_key(b, "lp_buffer")) {
+	*pbuf = gretl_bundle_get_string(b, "lp_buffer", NULL);
+    } else if (gretl_bundle_has_key(b, "lp_bundle")) {
+	*pb = gretl_bundle_get_bundle(b, "lp_bundle", NULL);
     }
 
     return opt;
@@ -673,12 +701,16 @@ static int maybe_catch_solve (lprec *lp, gretlopt opt,
 gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 {
     gretl_bundle *ret = NULL;
+    gretl_bundle *lpb = NULL;
     const char **cnames = NULL;
     const char **rnames = NULL;
     const char *lpfname = NULL;
+    const char *lpbuf = NULL;
+    const char *lpname = NULL;
+    lprec *lp = NULL;
     PRN *vprn = NULL;
+    int msg_set = 0;
     gretlopt opt;
-    lprec *lp;
 
 #ifndef PRELINKED
     if (!gretl_lpsolve_initted) {
@@ -686,24 +718,43 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     }
 
     if (gretl_lpsolve_err) {
-	gretl_errmsg_set("lpsolve: failed to load library");
+	gretl_errmsg_sprintf("lpsolve: failed to load %s", gretl_lpsolve_path());
 	*err = gretl_lpsolve_err;
 	return NULL;
     }
 #endif
 
-    opt = lp_options_from_bundle(b, &lpfname);
+    opt = lp_options_from_bundle(b, &lpfname, &lpbuf, &lpb, &lpname);
     vprn = (opt & OPT_V)? prn : NULL;
 
-    if (lpfname != NULL) {
-	lp = lp_model_from_file(lpfname, vprn, err);
+    if (lpfname != NULL || lpbuf != NULL) {
+	lp = lp_model_from_file(lpfname, lpbuf, vprn, err);
+    } else if (lpb != NULL) {
+	lp = lp_model_from_bundle(lpb, &cnames, &rnames, opt, err);
     } else {
-	lp = lp_model_from_bundle(b, &cnames, &rnames, opt, err);
+	gretl_errmsg_set("lpsolve: didn't find a model specification");
+	msg_set = 1;
+	*err = E_ARGS;
     }
 
     if (*err) {
-	gretl_errmsg_set("lpsolve: failed to build model");
+	if (!msg_set) {
+	    gretl_errmsg_set("lpsolve: failed to build model");
+	}
     } else {
+	if (lpname != NULL) {
+	    set_lp_name(lp, (char *) lpname);
+	}
+	if (opt & OPT_I) {
+	    set_minim(lp);
+	} else {
+	    set_maxim(lp);
+	}
+	if (opt & OPT_V) {
+	    set_verbose(lp, NORMAL);
+	} else {
+	    set_verbose(lp, CRITICAL);
+	}	
 	*err = maybe_catch_solve(lp, opt, prn);
 	if (*err) {
 	    gretl_errmsg_set("lpsolve: solution failed");
@@ -714,7 +765,9 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	}
     }
 
-    delete_lp(lp);
+    if (lp != NULL) {
+	delete_lp(lp);
+    }
 
     return ret;
 }

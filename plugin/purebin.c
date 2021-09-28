@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "varinfo_priv.h"
 
 /* Writing and reading of gretl-native "pure binary" data files,

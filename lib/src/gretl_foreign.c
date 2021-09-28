@@ -38,6 +38,10 @@
 # endif
 #endif
 
+#if defined(MPI_PIPES) && !defined(G_OS_WIN32)
+# define UNIX_MPI_IO 1
+#endif
+
 #ifdef USE_RLIB
 # include <Rinternals.h> /* for SEXP and friends */
 #endif
@@ -339,7 +343,7 @@ static gchar *gretl_mpi_binary (void)
     return ret;
 }
 
-# if MPI_PIPES && !defined(G_OS_WIN32)
+# ifdef UNIX_MPI_IO
 
 /* This approach works on Linux */
 
@@ -389,7 +393,8 @@ static void relay_mpi_output (struct iodata *io)
     }
 }
 
-static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
+static int run_mpi_with_pipes (char **argv, struct iodata *io,
+			       gretlopt opt, PRN *prn)
 {
     gint sout;
     GError *gerr = NULL;
@@ -414,24 +419,25 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	g_error_free(gerr);
 	err = 1;
     } else {
-	struct iodata io = {0};
+	io->fd = sout;
+	io->len = sizeof io->buf;
+	io->buf[0] = '\0';
+	io->err = &err;
+	io->prn = prn;
+	io->finished = 0;
+	io->got_all = 0;
 
-	io.fd = sout;
-	io.len = sizeof io.buf;
-	io.err = &err;
-	io.prn = prn;
+	g_child_watch_add(child_pid, mpi_childwatch, io);
 
-	g_child_watch_add(child_pid, mpi_childwatch, &io);
-
-	while (!io.finished && !io.got_all) {
-	    relay_mpi_output(&io);
-	    if (!io.got_all) {
+	while (!io->finished && !io->got_all) {
+	    relay_mpi_output(io);
+	    if (!io->got_all) {
 		g_usleep(100000); /* 0.10 seconds */
 	    }
 	    g_main_context_iteration(NULL, FALSE);
 	}
-	while (!err && !io.got_all) {
-	    relay_mpi_output(&io);
+	while (!err && !io->got_all) {
+	    relay_mpi_output(io);
 	}
 	close(sout);
     }
@@ -439,7 +445,7 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
     return err;
 }
 
-# endif /* MPI_PIPES && !Windows */
+# endif /* UNIX_MPI_IO */
 
 #else /* no MPI support */
 
@@ -714,7 +720,7 @@ static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-#if MPI_PIPES
+#ifdef MPI_PIPES
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_R, prn);
 #else
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
@@ -878,7 +884,7 @@ static void print_mpi_command (char **argv, PRN *prn)
 
 #define MPI_VGRIND 0 /* debugging via valgrind */
 
-static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
+static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
     char np = 0;
@@ -959,8 +965,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-#if MPI_PIPES
-	err = run_mpi_with_pipes(argv, opt, prn);
+#ifdef MPI_PIPES
+	err = run_mpi_with_pipes(argv, ptr, opt, prn);
 #else
 	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
 #endif
@@ -1603,7 +1609,7 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
     if (!err) {
 	/* put out the stored 'foreign' lines */
 	put_foreign_lines(fp);
-#if MPI_PIPES
+#ifdef MPI_PIPES
 	/* plus an easily recognized trailer */
 	fputs("flush\n", fp);
 	fputs("mpibarrier()\n", fp);
@@ -3360,6 +3366,24 @@ static int write_foreign_io_file (int lang, PRN *prn)
     return err;
 }
 
+#ifdef HAVE_MPI
+
+static void try_for_mpi_errmsg (PRN *prn)
+{
+    gchar *tmp = gretl_make_dotpath("mpi.fail");
+    gchar *msg = NULL;
+
+    g_file_get_contents(tmp, &msg, NULL, NULL);
+    if (msg != NULL) {
+	pputs(prn, msg);
+	g_free(msg);
+    }
+    gretl_remove(tmp);
+    g_free(tmp);
+}
+
+#endif
+
 /**
  * foreign_execute:
  * @dset: dataset struct.
@@ -3375,6 +3399,12 @@ static int write_foreign_io_file (int lang, PRN *prn)
 int foreign_execute (const DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
+#ifdef UNIX_MPI_IO
+    static struct iodata io;
+    void *ptr = &io;
+#else
+    void *ptr = NULL;
+#endif
     int i, err = 0;
 
     if (opt & OPT_I) {
@@ -3404,13 +3434,16 @@ int foreign_execute (const DATASET *dset,
 # ifdef G_OS_WIN32
 	    err = win32_lib_run_mpi_sync(foreign_opt, prn);
 # else
-	    err = lib_run_mpi_sync(foreign_opt, prn);
+	    err = lib_run_mpi_sync(foreign_opt, ptr, prn);
 # endif
+	    if (err) {
+		try_for_mpi_errmsg(prn);
+	    }
 	}
 	foreign_destroy();
 	return err; /* handled */
     }
-#endif
+#endif /* HAVE_MPI */
 
     if (foreign_lang == LANG_R) {
 #ifdef USE_RLIB

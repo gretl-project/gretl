@@ -1,3 +1,9 @@
+2021d, in progress
+
+In the output from the "biprobit" command, rho (the correlation
+of the disturbances across the equations) is now included in
+$coeff, $stderr and $vcv, in the last place of each.
+
 2021-08-30 version 2021c
 
 No known incompatible changes. But a warning that the old fft

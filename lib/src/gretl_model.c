@@ -2696,38 +2696,19 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     return err;
 }
 
-/* Special for biprobit, maybe just temporary: trim
-   the last row and column of the covariance matrix,
-   pertaining to the "extra" parameter rho. The
-   alternative to this would be promoting rho to
-   full "coeff" status.
-
-   Fixes breakage in the $vcv accessor noticed and
-   discussed in late October 2020.
-*/
-
-static int prune_vcv (gretl_matrix **pV)
+static int do_biprobit_adjustment (MODEL *pmod,
+				    gretl_matrix *V)
 {
-    gretl_matrix *V, *V0 = *pV;
-    int i, j, k = V0->rows - 1;
-    double vij;
+    void (*biprobit_adj) (MODEL *, gretl_matrix *);
 
-    V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	return E_ALLOC;
+    biprobit_adj = get_plugin_function("biprobit_adjust_vcv");
+
+    if (biprobit_adj == NULL) {
+	return E_FOPEN;
+    } else {
+	(*biprobit_adj) (pmod, V);
+	return 0;
     }
-
-    for (j=0; j<k; j++) {
-	for (i=0; i<k; i++) {
-	    vij = gretl_matrix_get(V0, i, j);
-	    gretl_matrix_set(V, i, j, vij);
-	}
-    }
-
-    gretl_matrix_free(V0);
-    *pV = V;
-
-    return 0;
 }
 
 /**
@@ -2802,11 +2783,10 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
-    if (!err && ci == BIPROBIT) {
-	err = prune_vcv(&V);
-    }
-
     if (!err) {
+	if (ci == BIPROBIT) {
+	    do_biprobit_adjustment(pmod, V);
+	}
 	err = gretl_model_write_vcv(pmod, V);
     }
 
@@ -2849,19 +2829,7 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 int gretl_model_add_hessian_vcv (MODEL *pmod,
 				 const gretl_matrix *H)
 {
-    int err = 0;
-
-    if (pmod->ci == BIPROBIT) {
-	gretl_matrix *H0 = gretl_matrix_copy(H);
-
-	err = prune_vcv(&H0);
-	if (!err) {
-	    err = gretl_model_write_vcv(pmod, H0);
-	}
-	gretl_matrix_free(H0);
-    } else {
-	gretl_model_write_vcv(pmod, H);
-    }
+    int err = gretl_model_write_vcv(pmod, H);
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
@@ -2895,10 +2863,6 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
     }
 
     err = gretl_invert_symmetric_matrix(GG);
-
-    if (!err && pmod->ci == BIPROBIT) {
-	err = prune_vcv(&GG);
-    }
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, GG);
@@ -4208,10 +4172,15 @@ static const char *test_get_descrip (const ModelTest *test)
 {
     static const char *dfree =
 	N_("Distribution free Wald test for heteroskedasticity");
+    static const char *lr_indep =
+	N_("Likelihood ratio test of independence");
 
     if (test->type == GRETL_TEST_GROUPWISE &&
 	test->teststat == GRETL_STAT_WALD_CHISQ) {
 	return dfree;
+    } else if (test->type == GRETL_TEST_INDEP &&
+	       test->teststat == GRETL_STAT_LR) {
+	return lr_indep;
     } else {
 	int i;
 
@@ -4346,6 +4315,13 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 		H0 = tstrings[i].H0;
 	    }
 	}
+    }
+
+    if (test->type == GRETL_TEST_INDEP &&
+	test->teststat == GRETL_STAT_WALD_CHISQ &&
+	H0 != NULL && !strcmp(H0, "rho = 0")) {
+	/* adjust for QML biprobit */
+	H0 = N_("atanh(rho) = 0");
     }
 
     if (H0 == NULL && test->type != GRETL_TEST_WITHIN_F &&

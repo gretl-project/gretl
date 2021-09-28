@@ -1542,8 +1542,6 @@ static int ends_in_comment (const char *s, int n)
  * parenthesis was found, otherwise 0.
  */
 
-#include <assert.h>
-
 int top_n_tail (char *str, size_t maxlen, int *err)
 {
     int i, n, cont = 0;
@@ -1561,7 +1559,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
     /* chop any trailing space */
     for (i=n; i>=0; i--) {
 	if (isspace((unsigned char) str[i])) {
-	    str[i] = 0;
+	    str[i] = '\0';
 	    n--;
 	} else {
 	    break;
@@ -1726,7 +1724,7 @@ char *compress_spaces (char *s)
     int i = 0, inquote = 0;
     char *p, *q;
 
-    if (s == NULL || *s == 0) {
+    if (s == NULL || *s == '\0') {
 	return s;
     }
 
@@ -1742,7 +1740,7 @@ char *compress_spaces (char *s)
 	    }
 	    if (*s == ' ') {
 		p = s + 1;
-		if (*p == 0) break;
+		if (*p == '\0') break;
 		while (*p == ' ') p++;
 		if (p - s > 1) {
 		    memmove(s + 1, p, strlen(p) + 1);
@@ -2695,7 +2693,7 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 
     /* first off: see if the series name is already unique! */
     vi = current_series_index(dset, vname);
-    if (vi == v) {
+    if ((v == 0 && vi < 0) || vi == v) {
 	return vname;
     }
 

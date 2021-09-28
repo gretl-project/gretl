@@ -16,9 +16,10 @@ commas), preceded by the keyword \cmd{params}.  The tolerance
 (criterion for terminating the iterative estimation procedure) can be
 adjusted using the \cmd{set} command.
 
-The syntax for specifying the function to be estimated is the same as
-for the \cmd{genr} command.  Here are two examples, with accompanying
-derivatives.
+The syntax for specifying the function to be estimated consists of the
+name of the dependent variable, followed by an expression to generate
+it. This is illustrated in the following two examples, with
+accompanying derivatives.
 
 \begin{code}
 # Consumption function from Greene
@@ -45,9 +46,8 @@ line the covariance matrix of the parameter estimates is printed.
 \label{nls-param}
 
 The parameters of the regression function must be given initial values
-prior to the \cmd{nls} command.  This can be done using the \cmd{genr}
-command (or, in the GUI program, via the menu item ``Variable, Define new
-variable'').  
+prior to the \cmd{nls} command. (In the GUI program this may be done
+via the menu item ``Variable, Define new variable'').
 
 In some cases, where the nonlinear function is a generalization of (or
 a restricted form of) a linear model, it may be convenient to run an
@@ -56,17 +56,17 @@ estimates.  In relation to the first example above, one might do:
 %
 \begin{code}
 ols C 0 Y
-genr alpha = $coeff(0)
-genr beta = $coeff(Y)
-genr gamma = 1
+alpha = $coeff(0)
+beta = $coeff(Y)
+gamma = 1
 \end{code}
 
 And in relation to the second example one might do:
 %
 \begin{code}
 ols y 0 x1 x2
-genr alpha = $coeff(0)
-genr beta = $coeff(x1)
+alpha = $coeff(0)
+beta = $coeff(x1)
 \end{code}
 
 \section{NLS dialog window}
@@ -75,12 +75,12 @@ genr beta = $coeff(x1)
 It is probably most convenient to compose the commands for NLS
 estimation in the form of a gretl script but you can also do so
 interactively, by selecting the item ``Nonlinear Least Squares'' under
-the ``Model, Nonlinear models'' menu.  This opens a dialog box where you can
-type the function specification (possibly prefaced by \cmd{genr} lines to set
-the initial parameter values) and the derivatives, if available.  An
-example of this is shown in Figure~\ref{fig-nls-dialog}.  Note that in
-this context you do not have to supply the \cmd{nls} and \cmd{end nls}
-tags.
+the ``Model, Nonlinear models'' menu.  This opens a dialog box where
+you can type the function specification (possibly prefaced by
+statements to set the initial parameter values) and the derivatives,
+if available.  An example of this is shown in
+Figure~\ref{fig-nls-dialog}.  Note that in this context you do not
+have to supply the \cmd{nls} and \cmd{end nls} tags.
 
 \begin{figure}[htbp]
   \begin{center}

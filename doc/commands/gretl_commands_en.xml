@@ -1268,13 +1268,19 @@
 	common set of regressors.
       </para>
       <para>
-	By default, standard errors are computed using a numerical
-	approximation to the Hessian at convergence.  But if the
-	<opt>opg</opt> option is given the covariance matrix is based on
-	the Outer Product of the Gradient (OPG), or if the
-	<opt>robust</opt> option is given QML standard errors are
-	calculated, using a <quote>sandwich</quote> of the inverse of the
-	Hessian and the OPG.
+	By default, standard errors are computed using the analytical
+	Hessian at convergence.  But if the <opt>opg</opt> option is
+	given the covariance matrix is based on the Outer Product of
+	the Gradient (OPG), or if the <opt>robust</opt> option is
+	given QML standard errors are calculated, using a
+	<quote>sandwich</quote> of the inverse of the Hessian and the
+	OPG.
+      </para>
+      <para>
+	Note that the estimate of rho, the correlation of the error
+	terms across the two equations, is included in the coefficient
+	vector; it's the last element in the accessors
+	<lit>coeff</lit>, <lit>stderr</lit> and <lit>vcv</lit>.
       </para>
       <para>
 	After successful estimation, the accessor <lit>$uhat</lit>
@@ -1290,11 +1296,10 @@
 	of the index functions for the respective equations.
       </para>
       <para>
-	The output includes a likelihood ratio test of the null
-	hypothesis that the disturbances in the two equations are
-	uncorrelated. Note that if this estimator is meant as a QMLE
-	estimator and the <opt>robust</opt> option is used, this test
-	may not be valid, even asymptotically.
+	The output includes a test of the null hypothesis that the
+	disturbances in the two equations are uncorrelated. This is a
+	likelihood ratio test unless the QML variance estimator is
+	requested, in which case it's a Wald test.
       </para>
     </description>
   </command>
@@ -11157,6 +11162,8 @@
 	<cmdref targ="gnuplot"/> command which may be more convenient
 	when you are producing an elaborate plot (with several options
 	and/or gnuplot commands to be inserted into the plot file).
+	In addition to the following explanation, please also refer
+	to <guideref targ="chap:graphs"/> for some further examples.
       </para>
       <para>
 	A <lit>plot</lit> block starts with the command-word

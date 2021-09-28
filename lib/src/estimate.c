@@ -113,7 +113,7 @@ static void regress (MODEL *pmod, double *xpy,
 		     double rho, gretlopt opt);
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt);
-static int lagdepvar (const int *list, const DATASET *dset);
+static int model_lags (const int *list, const DATASET *dset, int *pmax);
 static double estimate_rho (const int *list, DATASET *dset,
 			    gretlopt opt, PRN *prn, int *err);
 
@@ -583,10 +583,16 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
     return missv;
 }
 
-static int
-lagged_depvar_check (MODEL *pmod, const DATASET *dset)
+static int check_for_lags (MODEL *pmod, const DATASET *dset)
 {
-    int ldv = lagdepvar(pmod->list, dset);
+    int pmax = 0;
+    int ldv = model_lags(pmod->list, dset, &pmax);
+
+    if (pmax > 0) {
+	gretl_model_set_int(pmod, "maxlag", pmax);
+    } else if (gretl_model_get_int(pmod, "maxlag")) {
+	gretl_model_destroy_data_item(pmod, "maxlag");
+    }
 
     if (ldv) {
 	gretl_model_set_int(pmod, "ldepvar", ldv);
@@ -597,8 +603,7 @@ lagged_depvar_check (MODEL *pmod, const DATASET *dset)
     return ldv;
 }
 
-static void
-log_depvar_ll (MODEL *pmod, const DATASET *dset)
+static void log_depvar_ll (MODEL *pmod, const DATASET *dset)
 {
     char parent[VNAMELEN];
 
@@ -675,7 +680,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
 void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset)
 {
     if (gretl_model_get_int(pmod, "ldepvar")) {
-	lagged_depvar_check(pmod, dset);
+	check_for_lags(pmod, dset);
     }
 }
 
@@ -1200,8 +1205,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* Check for presence of lagged dependent variable?
        (Don't bother if this is an auxiliary regression.) */
-    if (!(opt & OPT_A)) {
-	ldv = lagged_depvar_check(&mdl, dset);
+    if (!(opt & OPT_A) && !dataset_is_cross_section(dset)) {
+	ldv = check_for_lags(&mdl, dset);
     }
 
     /* AR1: advance the starting observation by one? */
@@ -1249,7 +1254,6 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     if (rho != 0.0) {
-	gretl_model_set_int(&mdl, "maxlag", 1);
 	gretl_model_set_double(&mdl, "rho_gls", rho);
     }
 
@@ -1292,6 +1296,9 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	}
 	if ((opt & OPT_H) && (opt & OPT_B)) {
 	    gretl_model_set_int(&mdl, "no-corc", 1);
+	}
+	if (gretl_model_get_int(&mdl, "maxlag") < 1) {
+	    gretl_model_set_int(&mdl, "maxlag", 1);
 	}
     }
 
@@ -3277,7 +3284,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 {
     double diff, ess, tss, xx;
     int i, j, vi, t, t1, t2, vc, yno, ryno, iter;
-    int k, maxlag, v = dset->v;
+    int k, pmax, v = dset->v;
     int *arlist = NULL, *rholist = NULL;
     int *reglist = NULL, *reglist2 = NULL;
     int cpos, nvadd;
@@ -3307,7 +3314,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 	goto bailout;
     }
 
-    maxlag = ar_list_max(arlist);
+    pmax = ar_list_max(arlist);
     cpos = reglist_check_for_const(reglist, dset);
 
     /* first pass: estimate model via OLS: use OPT_M to generate an
@@ -3377,7 +3384,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 	for (i=1; i<=reglist[0]; i++) {
 	    vi = reglist[i];
 	    for (t=0; t<dset->n; t++) {
-		if (t < t1 + maxlag || t > t2) {
+		if (t < t1 + pmax || t > t2) {
 		    dset->Z[vc][t] = NADBL;
 		} else {
 		    xx = dset->Z[vi][t];
@@ -3458,12 +3465,12 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
     ar.lnL = NADBL;
     mle_criteria(&ar, 0);
-    ar.dw = dwstat(maxlag, &ar, dset);
-    ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
+    ar.dw = dwstat(pmax, &ar, dset);
+    ar.rho = rhohat(pmax, ar.t1, ar.t2, ar.uhat);
 
     dataset_drop_last_variables(dset, nvadd);
 
-    if (gretl_model_add_arinfo(&ar, maxlag)) {
+    if (gretl_model_add_arinfo(&ar, pmax)) {
 	ar.errcode = E_ALLOC;
     } else {
 	double *y = dset->Z[reglist[1]];
@@ -3480,7 +3487,9 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
     clear_model(&rhomod);
 
-    gretl_model_set_int(&ar, "maxlag", maxlag);
+    if (gretl_model_get_int(&ar, "maxlag") < pmax) {
+	gretl_model_set_int(&ar, "maxlag", pmax);
+    }
     set_model_id(&ar, opt);
 
  bailout:
@@ -3569,68 +3578,38 @@ static void omitzero (MODEL *pmod, const DATASET *dset,
     }
 }
 
-static int not_equal (double y, double x)
-{
-    if (na(y) && na(x)) {
-	/* y and x are equal for the current purpose */
-	return 0;
-    } else {
-	return y != x;
-    }
-}
-
-/* lagdepvar: attempt to detect presence of a lagged dependent
-   variable among the regressors -- if found, return the position of
-   this lagged var in the list; otherwise return 0.
+/* model_lags: attempt to detect presence of a lagged dependent
+   variable among the regressors -- if found, return its position
+   in @list, otherwise return 0. Also write into *pmax the maximum
+   lag among the regressors.
 
    FIXME: use inside a function, when the name of the dependent
    variable may be changed if it was a function argument?
-
-   TODO: for some purposes it could be useful to know not just
-   if there's a lagged dependent variable in the specification,
-   but also what the maximum such lag is. At present only lag 1
-   is handled.
 */
 
-static int lagdepvar (const int *list, const DATASET *dset)
+static int model_lags (const int *list, const DATASET *dset, int *pmax)
 {
-    const char *p, *yname, *xname;
     int xno, yno = list[1];
-    int i, t, ret = 0;
+    int ilag, maxlag = 0;
+    int i, ret = 0;
 
-    yname = dset->varname[yno];
-
-    for (i=2; i<=list[0] && !ret; i++) {
-	if (list[i] == LISTSEP) {
-	    break;
-	}
+    for (i=2; i<=list[0]; i++) {
 	xno = list[i];
-#if 0 /* not yet? */
-	/* check via varinfo */
-	if (series_get_parent_id(dset, xno) == yno &&
-	    series_get_lag(dset, xno) > 0) {
-	    ret = i;
+	if (xno == LISTSEP) {
 	    break;
 	}
-#endif
-	xname = dset->varname[xno];
-	p = strrchr(xname, '_');
-	if (p != NULL && isdigit(*(p + 1))) {
-	    /* this looks like a lag */
-	    size_t len = strlen(xname) - strlen(p);
-
-	    if (!strncmp(yname, xname, len)) {
-		/* strong candidate for lagged depvar, but make sure */
+	ilag = series_get_lag(dset, xno);
+	if (ilag > 0) {
+	    if (ret == 0 && series_get_parent_id(dset, xno) == yno) {
 		ret = i;
-		for (t=dset->t1+1; t<=dset->t2; t++) {
-		    if (not_equal(dset->Z[yno][t-1], dset->Z[xno][t])) {
-			ret = 0; /* nope */
-			break;
-		    }
-		}
+	    }
+	    if (ilag > maxlag) {
+		maxlag = ilag;
 	    }
 	}
     }
+
+    *pmax = maxlag;
 
     return ret;
 }

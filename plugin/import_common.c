@@ -354,6 +354,9 @@ importer_dates_check (char **labels, BookFlag *pflags,
 	ret = test_markers_for_dates(newset, &reversed, NULL, prn);
 	if (reversed) {
 	    *pflags |= BOOK_DATA_REVERSED;
+	} else if (ret < 0) {
+	    /* not really time series */
+	    fprintf(stderr, "importer_dates_check: scrubbing time series\n");
 	}
     }
 

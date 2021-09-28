@@ -346,6 +346,10 @@ static int script_type (const char *fname)
 	return EDIT_STATA;
     } else if (has_suffix(fname, ".mod")) {
 	return EDIT_DYNARE;
+#if !defined(WIN32) || defined(_WIN64)
+    } else if (has_suffix(fname, ".lp")) {
+	return EDIT_LPSOLVE;
+#endif
     } else {
 	return 0;
     }
@@ -1780,6 +1784,7 @@ GtkActionEntry main_entries[] = {
     { "JuliaScript", NULL, N_("Julia program"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "OxScript", NULL, N_("Ox program"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "StataScript", NULL, N_("Stata program"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "lpsolveScript", NULL, N_("lpsolve program"), NULL, NULL, G_CALLBACK(new_script_callback) },
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_session_callback) },
@@ -2037,6 +2042,7 @@ GtkActionEntry main_entries[] = {
     { "gretlSVM", GRETL_STOCK_PDF, N_("_gretl + SVM"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "GeoplotDoc", GRETL_STOCK_PDF, N_("Creating maps"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "LpsolveDoc", GRETL_STOCK_PDF, N_("Linear Programs"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
@@ -2339,6 +2345,11 @@ static GtkWidget *make_main_menu (void)
 	    }
 	}
     }
+
+#if defined(WIN32) && !defined(_WIN64)
+    flip(mdata->ui, "/menubar/File/ScriptFiles/NewScript/lpsolveScript", FALSE);
+    flip(mdata->ui, "/menubar/Help/LpsolveDoc", FALSE);
+#endif
 
     g_free(main_ui);
 

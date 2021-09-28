@@ -35,6 +35,8 @@ void display_text_help (GtkAction *action);
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin);
 
+int get_pdf_path (const char *name, char *fullpath);
+
 void gretl_show_pdf (const char *fname, const char *option);
 
 void display_pdf_help (GtkAction *action);

@@ -3565,8 +3565,6 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	print_overdisp_test(pmod, prn);
     } else if (pmod->ci == DURATION) {
 	print_duration_alpha(pmod, prn);
-    } else if (pmod->ci == BIPROBIT) {
-	print_probit_rho(pmod, prn);
     } else if (pmod->ci == NLS ||
 	       (pmod->ci == MIDASREG &&
 		!gretl_model_get_int(pmod, "umidas"))) {
@@ -4700,6 +4698,9 @@ static int separator_wanted (int i, int seppos, char **sepstr,
 		ret = 1;
 	    }
 	}
+    } else if (pmod->ci == BIPROBIT && i == pmod->ncoeff - 1) {
+	/* the last coefficient is biprobit rho */
+	ret = 1;
     }
 
     return ret;
@@ -4921,7 +4922,9 @@ static int plain_print_coeffs (const MODEL *pmod,
 	if (separator_wanted(i, seppos, &sepstr, pmod)) {
 	    if (pmod->ci == BIPROBIT) {
 		pputc(prn, '\n');
-		print_coeff_left_string(sepstr, prn);
+		if (i == seppos) {
+		    print_coeff_left_string(sepstr, prn);
+		}
 	    } else {
 		print_coeff_separator(sepstr, dotlen, prn);
 	    }

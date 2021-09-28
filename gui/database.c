@@ -29,7 +29,7 @@
 #include "gretl_zip.h"
 #include "gretl_string_table.h"
 #include "addons_utils.h"
-#include "csvdata.h"
+#include "gretl_join.h"
 #include "menustate.h"
 #include "treeutils.h"
 #include "textbuf.h"

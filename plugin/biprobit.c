@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2010 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -59,7 +59,7 @@ struct bp_container_ {
     double arho;             /* atan(rho) */
 
     gretl_matrix_block *B;   /* workspace for the analytical Hessian */
-    gretl_matrix *H11; 
+    gretl_matrix *H11;
     gretl_matrix *H12;
     gretl_matrix *H13;
     gretl_matrix *H22;
@@ -174,13 +174,13 @@ static int bp_cont_fill_data (bp_container *bp, DATASET *dset)
 	    bp->s2[i] = (dset->Z[bp->depvar2][t] == 1.0);
 	    i++;
 	}
-    }	    
+    }
 
     bp->reg1 = gretl_matrix_data_subset_masked(bp->X1list, dset,
-					       bp->t1, bp->t2, 
+					       bp->t1, bp->t2,
 					       bp->mask, &err);
     bp->reg2 = gretl_matrix_data_subset_masked(bp->X2list, dset,
-					       bp->t1, bp->t2, 
+					       bp->t1, bp->t2,
 					       bp->mask, &err);
 
     return err;
@@ -258,7 +258,7 @@ static int bp_make_lists (bp_container *bp, int **plist1, int **plist2)
     list2[1] = bp->depvar2;
     for (i=1; i<=bp->k2; i++) {
 	list2[i+1] = bp->X2list[i];
-    }   
+    }
 
     *plist1 = list1;
     *plist2 = list2;
@@ -283,7 +283,7 @@ static int check_initial_probit (MODEL *pmod, bp_container *bp,
 				 int eqn)
 {
     int err = pmod->errcode;
-    
+
     if (!err) {
 	int nparm = eqn == 1 ? bp->k1 : bp->k2;
 
@@ -297,22 +297,22 @@ static int check_initial_probit (MODEL *pmod, bp_container *bp,
     return err;
 }
 
-/* 
-   The following function runs the initial probit models, which 
-   serves several purposes: 
+/*
+   The following function runs the initial probit models, which
+   serves several purposes:
 
    1) the parameter vectors inside the container are initialised
    2) an initial estimate of rho is computed on the basis of
-      the correlation between the residuals of the single equation 
+      the correlation between the residuals of the single equation
       models
-   3) Several other quantities are stored in the container (ll0, 
+   3) Several other quantities are stored in the container (ll0,
       for one)
    4) the missing values mask is computed by ANDing the residuals;
-      they should match anyway because of the preliminary OLS done 
+      they should match anyway because of the preliminary OLS done
       in bp_preliminary_ols(), but hey, checking is always good.
 */
 
-static int biprobit_first_pass (bp_container *bp, MODEL *olsmod, 
+static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 				DATASET *dset, PRN *prn)
 {
     MODEL probmod;
@@ -382,7 +382,7 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
     err = check_initial_probit(&probmod, bp, 2);
     if (err) {
 	goto bailout;
-    }    
+    }
 
     if (prn != NULL) {
 	probmod.aux = AUX_BIPROB;
@@ -401,7 +401,7 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
     }
 
     bp->arho = 0;
-    
+
  bailout:
 
     clear_model(&probmod);
@@ -414,12 +414,12 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 }
 
 /*
-  This function fills up the container: first some base info, 
-  then the output from the separate univariate probit models, 
+  This function fills up the container: first some base info,
+  then the output from the separate univariate probit models,
   then the rest (matrices, etc.)
 */
 
-static int bp_container_fill (bp_container *bp, MODEL *olsmod, 
+static int bp_container_fill (bp_container *bp, MODEL *olsmod,
 			      DATASET *dset, PRN *prn)
 {
     int err;
@@ -507,7 +507,7 @@ static int *prelim_list (const int *list)
    the two probit models to be estimated subsequently
 */
 
-MODEL bp_preliminary_ols (const int *list, DATASET *dset) 
+static MODEL bp_preliminary_ols (const int *list, DATASET *dset)
 {
 #if BIPDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
@@ -563,13 +563,13 @@ static int biprob_prelim (const double *theta, bp_container *bp)
 	gretl_vector_set(bp->gama, i, theta[bp->k1+i]);
     }
 
-    err = gretl_matrix_multiply_mod(bp->beta, GRETL_MOD_NONE, 
-				    bp->reg1, GRETL_MOD_TRANSPOSE, 
+    err = gretl_matrix_multiply_mod(bp->beta, GRETL_MOD_NONE,
+				    bp->reg1, GRETL_MOD_TRANSPOSE,
 				    bp->fitted1, GRETL_MOD_NONE);
 
     if (!err) {
-	err = gretl_matrix_multiply_mod(bp->gama, GRETL_MOD_NONE, 
-					bp->reg2, GRETL_MOD_TRANSPOSE, 
+	err = gretl_matrix_multiply_mod(bp->gama, GRETL_MOD_NONE,
+					bp->reg2, GRETL_MOD_TRANSPOSE,
 					bp->fitted2, GRETL_MOD_NONE);
     }
 
@@ -591,15 +591,15 @@ static double biprob_loglik (const double *theta, void *ptr)
 
     ll = 0.0;
     rho = tanh(bp->arho);
-    
+
     for (i=0; i<bp->nobs; i++) {
 	a = gretl_vector_get(bp->fitted1, i);
 	b = gretl_vector_get(bp->fitted2, i);
-	
+
 	a = bp->s1[i] ? a : -a;
 	b = bp->s2[i] ? b : -b;
 	eqt = (bp->s1[i] == bp->s2[i]);
-	
+
 	P = bvnorm_cdf((eqt ? rho : -rho), a, b);
 	llt = log(P);
 	ll += llt;
@@ -610,7 +610,7 @@ static double biprob_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
+static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 			 void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
@@ -632,16 +632,16 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     for (i=0; i<bp->nobs; i++) {
 	a = gretl_vector_get(bp->fitted1, i);
 	b = gretl_vector_get(bp->fitted2, i);
-	
+
 	a = bp->s1[i] ? a : -a;
 	b = bp->s2[i] ? b : -b;
 	eqt = (bp->s1[i] == bp->s2[i]);
 	ssa = eqt ? sa : -sa;
-	
+
 	P = bvnorm_cdf(ssa/ca, a, b);
-	
+
 	/* score */
-	
+
 	u_ba = (ca*b - ssa*a);
 	u_ab = (ca*a - ssa*b);
 	f = ca/M_2PI * exp(-0.5* (a*a + u_ba*u_ba));
@@ -660,14 +660,14 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	    tmp += gretl_vector_get(bp->sscore, j);
 	    gretl_vector_set(bp->sscore, j, tmp);
 	}
-	
+
 	for (j=0; j<bp->k2; j++) {
 	    tmp = gretl_matrix_get(bp->reg2, i, j) * d2;
 	    gretl_matrix_set(bp->score, i, bp->k1 + j, tmp);
 	    tmp += gretl_vector_get(bp->sscore, bp->k1 + j);
 	    gretl_vector_set(bp->sscore, bp->k1 + j, tmp);
 	}
-	
+
 	gretl_matrix_set(bp->score, i, bp->npar - 1, da);
 	tmp = da + gretl_vector_get(bp->sscore, bp->npar - 1);
 	gretl_vector_set(bp->sscore, bp->npar - 1, tmp);
@@ -683,9 +683,9 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
-/* 
-   Analytical Hessian for the biprobit model; it is assumed that 
-   the score matrix has already been computed and is safely stored 
+/*
+   Analytical Hessian for the biprobit model; it is assumed that
+   the score matrix has already been computed and is safely stored
    in the container. This is important because we use a neat trick:
 
    \frac{\partial^2 ln f(x)}{\partial x \partial x'} =
@@ -693,7 +693,7 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 
    where g = \frac{\partial ln f(x)}{\partial x}.
    In practice, we just compute explicitly the difference between
-   the OPG and the actual Hessian, and then reconstruct H from 
+   the OPG and the actual Hessian, and then reconstruct H from
    there.
  */
 
@@ -723,7 +723,6 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	gretl_matrix_block_zero(bp->B);
 
 	/* first, put the OPG matrix into H */
-
 	err = gretl_matrix_multiply_mod(bp->score, GRETL_MOD_TRANSPOSE,
 					bp->score, GRETL_MOD_NONE,
 					H, GRETL_MOD_NONE);
@@ -739,27 +738,27 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	   cases (00, 01, 10, 11) and the associated sign switches;
 	   this may be very tricky. The code below should be bug-free
 	   from this point of view, but you never know. Kudos to
-	   Claudia Pigini for going through this with incredible 
+	   Claudia Pigini for going through this with incredible
 	   perseverance.
 	*/
 
 	a = gretl_vector_get(bp->fitted1, t);
 	b = gretl_vector_get(bp->fitted2, t);
-	
+
 	a = bp->s1[t] ? a : -a;
 	b = bp->s2[t] ? b : -b;
 	eqt = (bp->s1[t] == bp->s2[t]);
 	ssa = eqt ? sa : -sa;
 	rho = ssa/ca;
 	P = bvnorm_cdf(rho, a, b);
-	
+
 	/* score (for atan(rho) we use the precomputed one) */
-	
+
 	u_ba = (ca*b - ssa*a);
 	u_ab = (ca*a - ssa*b);
 
 	d1 = exp(-0.5*a*a) * normal_cdf(u_ba) / (P * SQRT_2_PI);
-	d2 = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);       
+	d2 = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
 
 	f = ca/M_2PI * exp(-0.5* (a*a + u_ba*u_ba));
 
@@ -827,20 +826,20 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 
     for (i=0; i<bp->k1; i++) {
 	for (j=i; j<bp->k1; j++) {
-	    tmp = gretl_matrix_get(H, i, j) - 
+	    tmp = gretl_matrix_get(H, i, j) -
 		gretl_matrix_get(bp->H11, i, j);
 	    gretl_matrix_set(H, i, j, tmp);
 	    gretl_matrix_set(H, j, i, tmp);
 	}
-	
+
 	for (j=0; j<bp->k2; j++) {
-	    tmp = gretl_matrix_get(H, i, j+k1) - 
+	    tmp = gretl_matrix_get(H, i, j+k1) -
 		gretl_matrix_get(bp->H12, i, j);
 	    gretl_matrix_set(H, i, j+k1, tmp);
 	    gretl_matrix_set(H, j+k1, i, tmp);
 	}
-	
-	tmp = gretl_matrix_get(H, i, k1+k2) - 
+
+	tmp = gretl_matrix_get(H, i, k1+k2) -
 	    gretl_matrix_get(bp->H13, i, 0);
 	gretl_matrix_set(H, i, k1+k2, tmp);
 	gretl_matrix_set(H, k1+k2, i, tmp);
@@ -848,13 +847,13 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 
     for (i=0; i<bp->k2; i++) {
 	for (j=i; j<bp->k2; j++) {
-	    tmp = gretl_matrix_get(H, i+k1, j+k1) - 
+	    tmp = gretl_matrix_get(H, i+k1, j+k1) -
 		gretl_matrix_get(bp->H22, i, j);
 	    gretl_matrix_set(H, i+k1, j+k1, tmp);
 	    gretl_matrix_set(H, j+k1, i+k1, tmp);
 	}
-	
-	tmp = gretl_matrix_get(H, i+k1, k1+k2) - 
+
+	tmp = gretl_matrix_get(H, i+k1, k1+k2) -
 	    gretl_matrix_get(bp->H23, i, 0);
 	gretl_matrix_set(H, i+k1, k1+k2, tmp);
 	gretl_matrix_set(H, k1+k2, i+k1, tmp);
@@ -866,19 +865,114 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
-static gretl_matrix *biprobit_hessian_inverse (double *theta, 
-					       void *ptr,
+void biprobit_adjust_vcv (MODEL *pmod, gretl_matrix *V)
+{
+    double athrho = gretl_model_get_double(pmod, "athrho");
+    double v, vij, ca = cosh(athrho);
+    double J = 1 / (ca * ca);
+    int i, k = V->rows - 1;
+
+    /* save the std error of atanh(rho) first */
+    v = gretl_matrix_get(V, k, k);
+    gretl_model_set_double(pmod, "se_athrho", sqrt(v));
+
+    for (i=0; i<=k; i++) {
+	vij = gretl_matrix_get(V, k, i);
+	gretl_matrix_set(V, k, i, vij * J);
+	vij = gretl_matrix_get(V, i, k);
+	gretl_matrix_set(V, i, k, vij * J);
+    }
+}
+
+static int biprobit_QML_vcv (MODEL *pmod,
+			     const gretl_matrix *H,
+			     const gretl_matrix *G,
+			     bp_container *bp)
+{
+    gretl_matrix *GG = NULL;
+    gretl_matrix *V = NULL;
+    int k = H->rows;
+    int err = 0;
+
+    V = gretl_matrix_alloc(k, k);
+    GG = gretl_matrix_XTX_new(G);
+
+    if (V == NULL || GG == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_qform(H, GRETL_MOD_NONE, GG,
+				 V, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	biprobit_adjust_vcv(pmod, V);
+	err = gretl_model_write_vcv(pmod, V);
+    }
+
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+	pmod->opt |= OPT_R;
+    }
+
+    gretl_matrix_free(GG);
+    gretl_matrix_free(V);
+
+    return err;
+}
+
+static int biprobit_OPG_vcv (MODEL *pmod,
+			     const gretl_matrix *G,
+			     bp_container *bp)
+{
+    gretl_matrix *V = gretl_matrix_XTX_new(G);
+    int err = 0;
+
+    if (V == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_invert_symmetric_matrix(V);
+    }
+
+    if (!err) {
+	biprobit_adjust_vcv(pmod, V);
+	err = gretl_model_write_vcv(pmod, V);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	}
+    }
+
+    gretl_matrix_free(V);
+
+    return err;
+}
+
+static int biprobit_hessian_vcv (MODEL *pmod,
+				 gretl_matrix *H,
+				 bp_container *bp)
+{
+    int err = 0;
+
+    biprobit_adjust_vcv(pmod, H);
+    err = gretl_model_write_vcv(pmod, H);
+    if (!err) {
+	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+    }
+
+    return err;
+}
+
+static gretl_matrix *biprobit_hessian_inverse (double *theta,
+					       bp_container *bp,
 					       int *err)
 {
-    bp_container *bp = ptr;
     gretl_matrix *H;
 
     H = gretl_matrix_alloc(bp->npar, bp->npar);
-    
+
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = biprobit_hessian(theta, H, ptr);
+	*err = biprobit_hessian(theta, H, bp);
     }
 
     if (!*err) {
@@ -890,9 +984,9 @@ static gretl_matrix *biprobit_hessian_inverse (double *theta,
 
 #if 0
 
-/* 
+/*
    numerical hessian: shouldn't be needed, but let's keep it
-   around, just in case 
+   around, just in case
 */
 
 int biprobit_numerical_hessian (double *b, gretl_matrix *H, void *ptr)
@@ -905,11 +999,11 @@ int biprobit_numerical_hessian (double *b, gretl_matrix *H, void *ptr)
     int n = bp->npar;
     int m = n*(n+1)/2;
     int i, j, k, err = 0;
-    
+
     theta  = malloc(n * sizeof *theta);
     splus  = gretl_matrix_alloc(1, n);
     sminus = gretl_matrix_alloc(1, n);
-    
+
     if (theta == NULL || H == NULL ||
 	splus == NULL || sminus == NULL) {
 
@@ -1008,13 +1102,13 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 	int grcount = 0;
 
 	crittol = 1.0e-11;
-	err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount, 
+	err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount,
 		       &grcount, biprob_loglik, C_LOGLIK,
 		       biprob_score, bp, NULL,
 		       maxopt, quiet ? NULL : prn);
-    } else {	
+    } else {
 	err = newton_raphson_max(theta, bp->npar, maxit, crittol, gradtol,
-				 &fncount, C_LOGLIK, biprob_loglik, 
+				 &fncount, C_LOGLIK, biprob_loglik,
 				 biprob_score, biprobit_hessian,
 				 bp, maxopt, quiet ? NULL : prn);
     }
@@ -1024,13 +1118,15 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     return err;
 }
 
-static int biprobit_vcv (MODEL *pmod, bp_container *bp, 
+static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 			 const DATASET *dset, gretlopt opt)
 {
     int err = 0;
 
+    gretl_model_set_double(pmod, "athrho", bp->arho);
+
     if (opt & OPT_G) {
-	err = gretl_model_add_OPG_vcv(pmod, bp->score, NULL);
+	err = biprobit_OPG_vcv(pmod, bp->score, bp);
     } else {
 	double *theta = make_bp_theta(bp, &err);
 	gretl_matrix *H = NULL;
@@ -1038,14 +1134,18 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	if (!err) {
 	    H = biprobit_hessian_inverse(theta, bp, &err);
 	}
-	if (!err) {
-	    if (opt & OPT_R) {
-		err = gretl_model_add_QML_vcv(pmod, BIPROBIT, 
-					      H, bp->score, dset, opt,
-					      NULL);
+	if (!err && (opt & OPT_R)) {
+	    if (opt & OPT_C) {
+		/* clustered */
+		err = gretl_model_add_QML_vcv(pmod, BIPROBIT,
+					      H, bp->score,
+					      dset, opt, NULL);
 	    } else {
-		err = gretl_model_add_hessian_vcv(pmod, H);
+		/* plain QML */
+		err = biprobit_QML_vcv(pmod, H, bp->score, bp);
 	    }
+	} else if (!err) {
+	    err = biprobit_hessian_vcv(pmod, H, bp);
 	}
 	free(theta);
 	gretl_matrix_free(H);
@@ -1054,7 +1154,8 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
     return err;
 }
 
-static int add_indep_LR_test (MODEL *pmod, double LR)
+static int add_indep_test (MODEL *pmod, bp_container *bp,
+			   gretlopt opt)
 {
     ModelTest *test = model_test_new(GRETL_TEST_INDEP);
     int err = 0;
@@ -1062,12 +1163,25 @@ static int add_indep_LR_test (MODEL *pmod, double LR)
     if (test == NULL) {
 	err = E_ALLOC;
     } else {
-        model_test_set_teststat(test, GRETL_STAT_LR);
+	double testval;
+
+	if (opt & OPT_R) {
+	    /* QML: Wald test on athrho as per Stata */
+	    double se = gretl_model_get_double(pmod, "se_athrho");
+	    double z = bp->arho / se;
+
+	    testval = z * z;
+	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+	} else {
+	    /* max likelihood: use LR */
+	    testval = 2 * (bp->ll - bp->ll0);
+	    model_test_set_teststat(test, GRETL_STAT_LR);
+	}
         model_test_set_dfn(test, 1);
-        model_test_set_value(test, LR);
-        model_test_set_pvalue(test, chisq_cdf_comp(1, LR));
+        model_test_set_value(test, testval);
+        model_test_set_pvalue(test, chisq_cdf_comp(1, testval));
         maybe_add_test_to_model(pmod, test);
-    } 
+    }
 
     return err;
 }
@@ -1107,7 +1221,7 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 		if (Yhcols == 4) {
 		    gretl_matrix_set(Yh, t, 2, NADBL);
 		    gretl_matrix_set(Yh, t, 3, NADBL);
-		}		    
+		}
 		continue;
 	    }
 
@@ -1119,7 +1233,7 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 		   corresponds to the flag --save-xbeta */
 		gretl_matrix_set(Yh, t, 0, a);
 		gretl_matrix_set(Yh, t, 1, b);
-	    } 
+	    }
 
 	    p11 = bvnorm_cdf( rho,  a,  b);
 	    p10 = bvnorm_cdf(-rho,  a, -b);
@@ -1168,7 +1282,7 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 
 	    im = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
 	    gretl_matrix_set(Uh, t, 1, bp->s2[i] ? im : -im);
-	    
+
 	    i++;
 	}
 
@@ -1184,39 +1298,55 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
     return err;
 }
 
-static int biprobit_fill_model (MODEL *pmod, bp_container *bp, 
-				const DATASET *dset,
-				gretlopt opt)
+static int biprobit_resize_coeff (MODEL *pmod, int npar)
 {
-    double *tmp;
-    int npar = bp->npar - 1;
-    int i, xi, err = 0;
-
-    tmp = realloc(pmod->coeff, npar * sizeof *tmp);
+    double *tmp = realloc(pmod->coeff, npar * sizeof *tmp);
 
     if (tmp == NULL) {
-	err = E_ALLOC;
+	return E_ALLOC;
     } else {
 	pmod->coeff = tmp;
 	pmod->ncoeff = npar;
-	err = gretl_model_allocate_param_names(pmod, npar);
     }
 
+    return 0;
+}
+
+static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
+				const DATASET *dset,
+				gretlopt opt)
+{
+    int i, j, xi, err = 0;
+
+    if (bp->npar != pmod->ncoeff) {
+	err = biprobit_resize_coeff(pmod, bp->npar);
+    }
+    if (!err) {
+	err = gretl_model_allocate_param_names(pmod, bp->npar);
+    }
     if (err) {
 	return err;
     }
 
+    j = 0;
+
     for (i=0; i<bp->k1; i++) {
 	xi = bp->X1list[i+1];
-	gretl_model_set_param_name(pmod, i, dset->varname[xi]);
-	pmod->coeff[i] = gretl_vector_get(bp->beta, i);
+	gretl_model_set_param_name(pmod, j, dset->varname[xi]);
+	pmod->coeff[j] = gretl_vector_get(bp->beta, i);
+	j++;
     }
-	
+
     for (i=0; i<bp->k2; i++) {
 	xi = bp->X2list[i+1];
-	gretl_model_set_param_name(pmod, i+bp->k1, dset->varname[xi]);
-	pmod->coeff[i + bp->k1] = gretl_vector_get(bp->gama, i);
+	gretl_model_set_param_name(pmod, j, dset->varname[xi]);
+	pmod->coeff[j] = gretl_vector_get(bp->gama, i);
+	j++;
     }
+
+    pmod->rho = tanh(bp->arho);
+    gretl_model_set_param_name(pmod, bp->npar - 1, "rho");
+    pmod->coeff[j] = pmod->rho;
 
     /* scrub some invalid statistics */
     pmod->rsq = pmod->adjrsq = NADBL;
@@ -1227,8 +1357,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     pmod->yhat = NULL;
 
     pmod->lnL = bp->ll;
-    mle_criteria(pmod, 1); /* allow for estimation of rho */
-    pmod->rho = tanh(bp->arho);
+    mle_criteria(pmod, 0);
 
     free(pmod->list);
     pmod->list = gretl_list_copy(bp->list);
@@ -1251,18 +1380,18 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     }
 
     if (!err) {
-	err = add_indep_LR_test(pmod, 2 * (bp->ll - bp->ll0));
+	err = add_indep_test(pmod, bp, opt);
     }
-    
+
     return err;
 }
 
-/* 
+/*
    The driver function for the plugin.
 */
 
-MODEL biprobit_estimate (const int *list, DATASET *dset, 
-			 gretlopt opt, PRN *prn) 
+MODEL biprobit_estimate (const int *list, DATASET *dset,
+			 gretlopt opt, PRN *prn)
 {
     PRN *vprn = NULL;
     bp_container *bp;
@@ -1289,7 +1418,7 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     if (mod.errcode) {
 	bp_container_destroy(bp);
 	return mod;
-    } 
+    }
 
     if (opt & OPT_C) {
 	/* cluster implies robust */
@@ -1303,7 +1432,7 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     mod.errcode = bp_container_fill(bp, &mod, dset, vprn);
     if (mod.errcode) {
 	return mod;
-    } 
+    }
 
     mod.errcode = bp_do_maxlik(bp, opt, prn);
 
@@ -1312,6 +1441,6 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     }
 
     bp_container_destroy(bp);
-    
+
     return mod;
 }

@@ -451,7 +451,7 @@ static int is_date_format (int fmt)
     } else if (fmt >= 50 && fmt <= 58) {
 	ret = 1;
     } else if (fmt == 164) {
-	/* FRED uses this */
+	/* user-defined: FRED uses this */
 	ret = 1;
     }
 
@@ -1664,6 +1664,9 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 		print_version();
 	    }
 	} else {
+	    if (getenv("IMPORT_DEBUG") != NULL) {
+		debug_print = 1;
+	    }
 	    err = wbook_check_params(book);
 	    if (err) {
 		gretl_errmsg_set(_("Invalid argument for worksheet import"));
@@ -1759,6 +1762,9 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	if (labels != NULL) {
 	    pd = importer_dates_check(labels, &book->flags, newset, prn, &err);
 	    free(labels);
+	    if (pd < 0) {
+		book_unset_numeric_dates(book);
+	    }
 	}
 
 	if (pd > 0) {

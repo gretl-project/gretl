@@ -1447,14 +1447,23 @@ const char *get_default_hc_string (int ci)
 
 static int non_console_var (void *ptr)
 {
+#ifdef HAVE_GTKSV_COMPLETION
     return (ptr == &smarttab || ptr == &script_line_numbers ||
 	    ptr == &tabbed_editor || ptr == &tabwidth ||
 	    ptr == &hansl_completion);
+#else
+    return (ptr == &smarttab || ptr == &script_line_numbers ||
+	    ptr == &tabbed_editor || ptr == &tabwidth);
+#endif
 }
 
 static int console_only (void *ptr)
 {
+#ifdef HAVE_GTKSV_COMPLETION
     return (ptr == &console_completion);
+#else
+    return 0;
+#endif
 }
 
 static void

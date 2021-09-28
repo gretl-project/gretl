@@ -619,6 +619,7 @@ static struct greek_map greek_keys[] = {
     { GDK_L, 0x9b }, /* lambda */
     { GDK_M, 0x9c }, /* mu */
     { GDK_N, 0x9d }, /* nu */
+    { GDK_O, 0x9f }, /* omicron */
     { GDK_P, 0xa0 }, /* pi */
     { GDK_Q, 0x98 }, /* theta */
     { GDK_R, 0xa1 }, /* rho */
@@ -648,8 +649,14 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
 	lc = 1;
-    } else if (ok_greek_cap(key)) {
-	ukey = key;
+    } else if (key >= GDK_A && key <= GDK_Z) {
+	if (ok_greek_cap(key)) {
+	    ukey = key;
+	} else {
+	    /* insert the look-alike? */
+	    textview_insert_text(vwin->text, gdk_keyval_name(key));
+	    return 1;
+	}
     }
 
     if (ukey > 0) {
@@ -700,7 +707,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    editing, console, Ctrl, Alt, gdk_keyval_name(upkey));
 #endif
 
-    if (editing && Alt) {
+    if (editing && Alt && !Ctrl) {
 	/* "Alt" specials for editor */
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
@@ -867,12 +874,18 @@ const char *path_last_slash_const (const char *path)
 char *gretl_basename (char *dest, const char *src, int addscore)
 {
     const char *p = path_last_slash_const(src);
+    const char *s = (p != NULL)? p + 1 : src;
 
-    if (p != NULL) {
-	/* take last part of @src filename */
-	strcpy(dest, p + 1);
-    } else {
-	strcpy(dest, src);
+    if (dest == NULL) {
+	/* allocate return value */
+	size_t len = strlen(s) + 1;
+
+	dest = calloc(len, 1);
+	addscore = 0;
+    }
+
+    if (dest != NULL) {
+	strcpy(dest, s);
     }
 
     if (addscore) {
@@ -996,8 +1009,10 @@ static void real_register_data (int flag, const char *user_fname,
     }
 
     if (mdata != NULL) {
-	/* focus the data window */
-	gtk_widget_grab_focus(mdata->listbox);
+	if (flag != OPENED_VIA_CLI) {
+	    /* focus the data window */
+	    gtk_widget_grab_focus(mdata->listbox);
+	}
 	/* invalidate "remove extra obs" menu item */
 	drop_obs_state(FALSE);
     }
@@ -1563,6 +1578,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_STATA_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_DYNARE) {
 	    file_selector(SAVE_DYNARE_CODE, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_LPSOLVE) {
+	    file_selector(SAVE_LPSOLVE_CODE, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}
@@ -1808,6 +1825,8 @@ gchar *title_from_filename (const char *fname,
 	    title = g_strdup(_("gretl: edit Stata program"));
 	} else if (role == EDIT_DYNARE) {
 	    title = g_strdup(_("gretl: edit Dynare script"));
+	} else if (role == EDIT_LPSOLVE) {
+	    title = g_strdup(_("gretl: edit lpsolve script"));
 	} else if (role == EDIT_SPEC) {
 	    title = g_strdup(_("gretl: edit package spec file"));
 	} else {
@@ -1893,6 +1912,7 @@ static gchar *make_viewer_title (int role, const char *fname,
     case EDIT_JULIA:
     case EDIT_STATA:
     case EDIT_DYNARE:
+    case EDIT_LPSOLVE:
     case EDIT_SPEC:
 	title = title_from_filename(fname, role, TRUE);
 	break;

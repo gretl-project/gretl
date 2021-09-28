@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ This file is for use with GtkSourceView
+
+ Author: Allin Cottrell
+
+-->
+<language id="lpsolve" name="lpsolve" version="2.0" _section="Other">
+  <metadata>
+    <property name="mimetypes">text/x-lpsolve</property>
+    <property name="globs">*.lp</property>
+    <property name="line-comment-start">//</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" name="Comment" map-to="def:comment"/>
+    <style id="keyword" name="Keyword" map-to="def:keyword"/>
+    <style id="floating-point" name="Float" map-to="def:floating-point"/>
+    <style id="integer-number" name="Integer" map-to="def:base-n-integer"/>
+  </styles>
+
+  <definitions>
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+      <start>//</start>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="block-comment" style-ref="comment">
+      <start>/\*</start>
+      <end>\*/</end>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="floating-point" style-ref="floating-point">
+      <match extended="true">
+        (?&lt;![\w\.])
+        ([0-9]+[Ee][-+]?[0-9]+|
+         ([0-9]*\.[0-9]+|[0-9]+\.)([Ee][-+]?[0-9]+)?)
+        [i]?
+        (?![\w\.])
+      </match>
+    </context>
+    <context id="integer-number" style-ref="integer-number">
+      <match extended="true">
+        (?&lt;![\w\.])
+        ([1-9][0-9]*|0)[i]?
+        (?![\w\.])
+      </match>
+    </context>
+    <context id="keyword" style-ref="keyword">
+      <keyword>max</keyword>
+      <keyword>int</keyword>
+    </context>
+    <context id="lpsolve" class="no-spell-check">
+      <include>
+        <context ref="keyword"/>
+	<context ref="floating-point"/>
+	<context ref="integer-number"/>
+	<context ref="block-comment"/>
+	<context ref="line-comment"/>
+      </include>
+    </context>
+  </definitions>
+</language>

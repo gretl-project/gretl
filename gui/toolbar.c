@@ -353,6 +353,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_JULIA_CODE;
     } else if (vwin->role == EDIT_DYNARE) {
 	u = SAVE_DYNARE_CODE;
+    } else if (vwin->role == EDIT_LPSOLVE) {
+	u = SAVE_LPSOLVE_CODE;
     } else if (vwin->role == EDIT_STATA) {
 	u = SAVE_STATA_CMDS;
     } else if (vwin->role == EDIT_SPEC) {
@@ -1023,7 +1025,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
 		       r == VIEW_LOG || r == VIEW_PKG_CODE || \
-		       vwin_editing_script(r))
+		       r == VIEW_BUNDLE || vwin_editing_script(r))
 
 #define split_v_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT)
 

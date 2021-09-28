@@ -533,6 +533,7 @@ enum {
     DUM_LOWER,
     DUM_REAL,
     DUM_IMAG,
+    DUM_END,
     DUM_DATASET,
     DUM_TREND
 };

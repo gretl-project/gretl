@@ -326,7 +326,7 @@ install-exec: $(PROG) installdirs
 
 install-lang: gretl.lang installdirs
 	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(svdir)/gretl.lang
-	for f in gnuplot.lang stata.lang gfnspec.lang ; do \
+	for f in gnuplot.lang stata.lang lpsolve.lang gfnspec.lang ; do \
 	$(INSTALL_DATA) $(topsrc)/gui/$$f $(DESTDIR)$(svdir)/$$f ; done
 	if [ x$(JULIA_LANG) != x ] ; then \
 	$(INSTALL_DATA) $(topsrc)/gui/$(JULIA_LANG) $(DESTDIR)$(svdir)/julia.lang ; fi
