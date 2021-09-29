@@ -7412,13 +7412,20 @@ static int panel_overlay_ts_plot (const int vnum,
     nv = nunits + 2;
     u0 = dset->t1 / T;
 
-    obs = gretl_plotx(dset, OPT_P);
-    if (obs == NULL) {
+    gset = create_auxiliary_dataset(nv, T, 0);
+    if (gset == NULL) {
 	return E_ALLOC;
     }
 
-    gset = create_auxiliary_dataset(nv, T, 0);
-    if (gset == NULL) {
+    if (dset->panel_pd > 0) {
+	/* add time series info to @gset */
+	gset->structure = TIME_SERIES;
+	gset->pd = dset->panel_pd;
+	gset->sd0 = dset->panel_sd0;
+    }
+
+    obs = gretl_plotx(gset, OPT_P);
+    if (obs == NULL) {
 	return E_ALLOC;
     }
 
