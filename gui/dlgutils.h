@@ -37,7 +37,8 @@ typedef enum {
 
 enum {
     OPT_TYPE_RADIO,
-    OPT_TYPE_COMBO
+    OPT_TYPE_COMBO,
+    OPT_TYPE_CHECK
 };
 
 struct combo_opts_ {

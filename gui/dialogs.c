@@ -3530,6 +3530,16 @@ static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
         gtk_widget_show(hbox);
         gtk_widget_show(v2);
+    } else if (opts->type == OPT_TYPE_CHECK) {
+	GtkWidget *b, *hbox;
+
+	b = gtk_check_button_new_with_label(_(opts->strs[0]));
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(b), "clicked",
+			 G_CALLBACK(dialog_option_callback), opts);
+	gtk_widget_show_all(hbox);
     } else {
         /* handle combo eventually? */
         dummy_call();
