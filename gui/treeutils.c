@@ -25,6 +25,10 @@
 #include "dlgutils.h"
 #include "menustate.h"
 
+static void tree_view_get_string2 (GtkTreeView *view,
+				   GtkTreePath *path,
+				   int col, gchar **val);
+
 /* special comparator which always preserves "const" (variable 0) in
    the first position when sorting variables by name */
 
@@ -352,7 +356,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
     if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path, 
 				      NULL, NULL, NULL)) {
-	gint row = tree_path_get_row_number(path);
+	gint row = gtk_tree_path_get_indices(path)[0];
 
 	if (row == 0) {
 	    ret = TRUE;
@@ -362,7 +366,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
 	    g_object_set_data(G_OBJECT(vwin->listbox), "active_row",
 			      GINT_TO_POINTER(row));
-	    tree_view_get_string(view, row, 0, &varnum);
+	    tree_view_get_string2(view, path, 0, &varnum);
 	    vwin->active_var = atoi(varnum);
 	    g_free(varnum);
 	    p = series_get_midas_period(dataset, vwin->active_var);
@@ -725,6 +729,19 @@ void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
 	gtk_tree_model_get(model, &iter, col, val, -1);
     }
     g_free(path);
+}
+
+static void tree_view_get_string2 (GtkTreeView *view,
+				   GtkTreePath *path,
+				   int col, gchar **val)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+
+    model = gtk_tree_view_get_model(view);
+    if (gtk_tree_model_get_iter(model, &iter, path)) {
+	gtk_tree_model_get(model, &iter, col, val, -1);
+    }
 }
 
 static void tree_view_set_string (GtkTreeView *view, int row, int col, 
