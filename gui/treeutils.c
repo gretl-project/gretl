@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* treeutils.c for gretl */
@@ -32,7 +32,7 @@ static void tree_view_get_string2 (GtkTreeView *view,
 /* special comparator which always preserves "const" (variable 0) in
    the first position when sorting variables by name */
 
-static gint list_alpha_compare (GtkTreeModel *model, 
+static gint list_alpha_compare (GtkTreeModel *model,
 				GtkTreeIter *a, GtkTreeIter *b,
 				gpointer p)
 {
@@ -53,21 +53,21 @@ static gint list_alpha_compare (GtkTreeModel *model,
 	ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
     } else {
 	ret = strcmp(str_a, str_b);
-    }    
+    }
 
     g_free(id_a);
     g_free(id_b);
 
     g_free(str_a);
     g_free(str_b);
-    
+
     return ret;
 }
 
 /* special comparator which preserves 0 in first position when sorting
    variables by ID number */
 
-static gint list_id_compare (GtkTreeModel *model, 
+static gint list_id_compare (GtkTreeModel *model,
 			     GtkTreeIter *a, GtkTreeIter *b,
 			     gpointer p)
 {
@@ -77,7 +77,7 @@ static gint list_id_compare (GtkTreeModel *model,
 
     gtk_tree_sortable_get_sort_column_id(GTK_TREE_SORTABLE(model),
 					 &scol, &order);
-    
+
     gtk_tree_model_get(model, a, 0, &id_a, -1);
     gtk_tree_model_get(model, b, 0, &id_b, -1);
 
@@ -90,11 +90,11 @@ static gint list_id_compare (GtkTreeModel *model,
 	ret = (order == GTK_SORT_DESCENDING)? 0 : 1;
     } else {
 	ret = ia - ib;
-    }    
+    }
 
     g_free(id_a);
     g_free(id_b);
-    
+
     return ret;
 }
 
@@ -103,7 +103,7 @@ static gint list_id_compare (GtkTreeModel *model,
    descending sort action in the first (series name) column
 */
 
-static gint db_series_compare (GtkTreeModel *model, 
+static gint db_series_compare (GtkTreeModel *model,
 			       GtkTreeIter *a, GtkTreeIter *b,
 			       GtkTreeViewColumn *col)
 {
@@ -132,11 +132,11 @@ static gint db_series_compare (GtkTreeModel *model,
 	ret = ib - ia;
 	gtk_tree_view_column_set_sort_indicator(col, FALSE);
     }
-    
+
     return ret;
 }
 
-static gint 
+static gint
 compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
 		   gpointer p)
 {
@@ -151,7 +151,7 @@ compare_treenames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
     g_free(s1);
     g_free(s2);
 
-    return ret;    
+    return ret;
 }
 
 /* sort in ascending order by the strings in the first column
@@ -164,7 +164,7 @@ void presort_treelist (windata_t *vwin)
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
 
-    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
+    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model),
 					 0, GTK_SORT_ASCENDING);
     gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
 				    compare_treenames, NULL, NULL);
@@ -185,7 +185,7 @@ static void get_selected_varnum (GtkTreeModel *model, GtkTreePath *path,
 {
     gchar *id;
 
-    gtk_tree_model_get(model, iter, 0, &id, -1);  
+    gtk_tree_model_get(model, iter, 0, &id, -1);
     *v = atoi(id);
     g_free(id);
 }
@@ -197,12 +197,12 @@ int tree_selection_count (GtkTreeSelection *select, int *vnum)
     if (select != NULL) {
 	selcount = gtk_tree_selection_count_selected_rows(select);
     }
-    
+
     if (vnum != NULL && selcount == 1) {
-	gtk_tree_selection_selected_foreach(select, 
-					    (GtkTreeSelectionForeachFunc) 
+	gtk_tree_selection_selected_foreach(select,
+					    (GtkTreeSelectionForeachFunc)
 					    get_selected_varnum,
-					    vnum);	
+					    vnum);
     }
 
     return selcount;
@@ -220,7 +220,7 @@ static void my_gtk_entry_append_text (GtkEntry *entry, gchar *add)
 {
     const gchar *old = gtk_entry_get_text(entry);
     gchar *new = g_strdup_printf("%s%s", old, add);
-    
+
     gtk_entry_set_text(entry, new);
     gtk_editable_set_position(GTK_EDITABLE(entry), -1);
     g_free(new);
@@ -245,18 +245,18 @@ static void update_dialogs_from_varclick (int active_var)
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
     } else if (active_edit_name != NULL) {
 	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
-	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
+	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name),
 				 dataset->varname[active_var]);
     } else if (active_edit_text != NULL) {
 	GtkTextBuffer *tbuf;
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(active_edit_text));
 	if (tbuf != NULL) {
-	    gtk_text_buffer_insert_at_cursor(tbuf, 
-					     dataset->varname[active_var], 
+	    gtk_text_buffer_insert_at_cursor(tbuf,
+					     dataset->varname[active_var],
 					     -1);
 	}
-    }  
+    }
 }
 
 #ifdef OS_OSX
@@ -264,7 +264,7 @@ static void update_dialogs_from_varclick (int active_var)
 /* Support for command-click as replacement for Ctrl-click
    on OS X */
 
-static gboolean maybe_do_meta_click (GdkEventButton *event, 
+static gboolean maybe_do_meta_click (GdkEventButton *event,
 				     GtkTreeView *view,
 				     GtkTreePath *path)
 {
@@ -272,7 +272,7 @@ static gboolean maybe_do_meta_click (GdkEventButton *event,
 	/* The idea here is that we add to the current selection
 	   and return TRUE to block further processing of the
 	   click, so as to implement selection of non-contiguous
-	   rows in the GtkTreeView. It works on Linux using 
+	   rows in the GtkTreeView. It works on Linux using
 	   GDK_CONTROL_MASK as the criterion (i.e. faking the
 	   standard behavior of Ctrl-click as test of concept).
 	*/
@@ -331,7 +331,7 @@ static int extend_midas_selection (GtkTreeView *view,
 	gtk_tree_selection_unselect_all(selection);
 	gtk_tree_selection_select_range(selection, path0, path1);
     }
-    
+
     gtk_tree_path_free(path0);
     gtk_tree_path_free(path1);
 
@@ -354,7 +354,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 	return TRUE;
     }
 
-    if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path, 
+    if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path,
 				      NULL, NULL, NULL)) {
 	gint row = gtk_tree_path_get_indices(path)[0];
 
@@ -380,7 +380,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 		ret = maybe_do_meta_click(event, view, path);
 #endif
 	    }
-	} 
+	}
 
 	gtk_tree_path_free(path);
     } else {
@@ -414,7 +414,7 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gtk_tree_path_free(path);
 }
 
-static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event, 
+static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
 			       windata_t *vwin)
 {
     int key = event->keyval;
@@ -426,9 +426,9 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
 	}
 	return TRUE;
     }
-#endif	
+#endif
 
-    if (key == GDK_q) { 
+    if (key == GDK_q) {
 	/* Q = quit */
 	if (vwin != mdata) {
 	    gtk_widget_destroy(vwin->main);
@@ -446,8 +446,8 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
 		listbox_find_again(NULL, vwin);
 	    }
 	    return TRUE;
-	}	
-    } 
+	}
+    }
 
     return FALSE;
 }
@@ -485,21 +485,21 @@ static void set_active_row (GtkTreeModel *model, GtkTreePath *path,
     vwin->active_var = tree_path_get_row_number(path);
 }
 
-static void check_db_series_selection (GtkTreeSelection *sel, 
+static void check_db_series_selection (GtkTreeSelection *sel,
 				       windata_t *vwin)
 {
     int nsel = gtk_tree_selection_count_selected_rows(sel);
 
     if (nsel == 1) {
-	gtk_tree_selection_selected_foreach(sel, 
-					    (GtkTreeSelectionForeachFunc) 
+	gtk_tree_selection_selected_foreach(sel,
+					    (GtkTreeSelectionForeachFunc)
 					    set_active_row, vwin);
     } else {
 	check_series_pd(NULL, NULL, NULL, NULL);
-	gtk_tree_selection_selected_foreach(sel, 
-					    (GtkTreeSelectionForeachFunc) 
+	gtk_tree_selection_selected_foreach(sel,
+					    (GtkTreeSelectionForeachFunc)
 					    check_series_pd, vwin);
-    }  
+    }
 }
 
 static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
@@ -521,10 +521,10 @@ static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
                              v->role == PCGIVE_SERIES || \
                              v->role == REMOTE_SERIES)
 
-void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
+void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			int ncols, int hidden_cols,
 			GType *types, const char **titles,
-			int tree) 
+			int tree)
 {
     GtkListStore *lstore = NULL;
     GtkTreeStore *tstore = NULL;
@@ -545,9 +545,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(lstore));
     }
 
-#ifndef G_OS_WIN32    
+#ifndef G_OS_WIN32
     gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
-#endif    
+#endif
 
     renderer = gtk_cell_renderer_text_new();
     g_object_set(renderer, "ypad", 0, NULL);
@@ -569,7 +569,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	} else {
 	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
 							      renderer,
-							      "text", i, 
+							      "text", i,
 							      NULL);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
@@ -589,19 +589,19 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 		    g_signal_connect(G_OBJECT(column), "clicked",
 				     G_CALLBACK(id_col_clicked), view);
 		} else if (db_series_window(vwin)) {
-		    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0, 
-						    (GtkTreeIterCompareFunc) 
+		    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(lstore), 0,
+						    (GtkTreeIterCompareFunc)
 						    db_series_compare,
 						    column, NULL);
 		}
 	    }
-	}	
+	}
     }
 
     for (i=viscols; i<ncols; i++) {
 	column = gtk_tree_view_column_new_with_attributes(NULL,
 							  renderer,
-							  "text", i, 
+							  "text", i,
 							  NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	gtk_tree_view_column_set_visible(column, FALSE);
@@ -610,14 +610,14 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     /* set the selection properties on the tree view */
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
-    if (vwin == mdata) { 
+    if (vwin == mdata) {
 	/* gretl main window */
 	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
-	gtk_tree_selection_set_select_function(select, 
+	gtk_tree_selection_set_select_function(select,
 					       (GtkTreeSelectionFunc)
 					       no_select_row_zero,
 					       NULL, NULL);
-	gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK 
+	gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK
 			      | GDK_POINTER_MOTION_HINT_MASK);
         g_signal_connect(G_OBJECT(view), "motion-notify-event",
 			 G_CALLBACK(listbox_drag), NULL);
@@ -640,19 +640,19 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 
     /* set sort properties on the tree model */
     if (vwin == mdata && tstore != NULL) {
-	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 0, 
-					(GtkTreeIterCompareFunc) 
+	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 0,
+					(GtkTreeIterCompareFunc)
 					list_id_compare,
 					NULL, NULL);
-	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 1, 
-					(GtkTreeIterCompareFunc) 
+	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 1,
+					(GtkTreeIterCompareFunc)
 					list_alpha_compare,
 					NULL, NULL);
-	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 2, 
-					(GtkTreeIterCompareFunc) 
+	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 2,
+					(GtkTreeIterCompareFunc)
 					list_alpha_compare,
 					NULL, NULL);
-    } 
+    }
 
     if (lstore != NULL) {
 	g_object_unref(G_OBJECT(lstore));
@@ -744,7 +744,7 @@ static void tree_view_get_string2 (GtkTreeView *view,
     }
 }
 
-static void tree_view_set_string (GtkTreeView *view, int row, int col, 
+static void tree_view_set_string (GtkTreeView *view, int row, int col,
 				  const gchar *val, int tstore)
 {
     GtkTreeModel *model;
@@ -836,17 +836,17 @@ static void add_to_selection_list (GtkTreeModel *model, GtkTreePath *path,
     g_free(varnum);
 }
 
-int *main_window_selection_as_list (void) 
+int *main_window_selection_as_list (void)
 {
     GtkTreeSelection *select;
     int *list = NULL;
     int scount = 0;
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
-    gtk_tree_selection_selected_foreach(select, 
-					(GtkTreeSelectionForeachFunc) 
+    gtk_tree_selection_selected_foreach(select,
+					(GtkTreeSelectionForeachFunc)
 					add_to_selection_count,
-					&scount); 
+					&scount);
 
     if (scount > 0) {
 	list = gretl_list_new(scount);
@@ -854,10 +854,10 @@ int *main_window_selection_as_list (void)
 
     if (list != NULL) {
 	list[0] = 0;
-	gtk_tree_selection_selected_foreach(select, 
-					    (GtkTreeSelectionForeachFunc) 
+	gtk_tree_selection_selected_foreach(select,
+					    (GtkTreeSelectionForeachFunc)
 					    add_to_selection_list,
-					    list); 
+					    list);
     }
 
     return list;

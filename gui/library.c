@@ -7902,10 +7902,21 @@ void plot_from_selection (int code)
     gretlopt opt = OPT_G;
     int pan_between = 0;
     int multiplot = 0;
-    char *liststr;
+    int *list = NULL;
+    char *liststr = NULL;
+    int n_selected = 0;
     int cancel = 0;
 
-    liststr = main_window_selection_as_string();
+    list = main_window_selection_as_list();
+
+    if (list != NULL) {
+	int err = 0;
+
+	n_selected = list[0];
+	liststr = gretl_list_to_string(list, dataset, &err);
+	free(list);
+    }
+
     if (liststr == NULL || *liststr == '\0') {
         return;
     }
@@ -7930,7 +7941,7 @@ void plot_from_selection (int code)
                 pan_between = 1;
             }
             dialog_opts_free(opts);
-        } else {
+        } else if (n_selected == 2) {
             dialog_opts *opts;
             const char *strs[] = {N_("suppress fitted line")};
             gretlopt vals[] = {OPT_F};
@@ -7943,7 +7954,9 @@ void plot_from_selection (int code)
 		opt |= OPT_F;
 	    }
             dialog_opts_free(opts);
-        }
+        } else {
+            cancel = maybe_reorder_list(liststr, NULL);
+	}
     } else if (code == GR_PLOT) {
         int k = mdata_selection_count();
 
