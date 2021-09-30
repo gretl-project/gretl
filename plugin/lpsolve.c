@@ -32,6 +32,10 @@
 # include <dlfcn.h>
 #endif
 
+#if defined(WIN32) && !defined(_WIN64)
+# include <lpsolve/lp_lib.h>
+#else
+
 /* The bits of the lpsolve API that we need; we prefer not to include
    lp_lib.h since it contains some defines that conflict with GLib.
 */
@@ -220,6 +224,7 @@ static int gretl_lpsolve_init (void)
 }
 
 #endif /* not PRELINKED to lpsolve library */
+#endif /* 32-bit Windows experiment */
 
 static void lp_row_from_mrow (double *targ, int nv,
 			      const gretl_matrix *m,

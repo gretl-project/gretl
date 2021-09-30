@@ -912,12 +912,8 @@ static struct filter_info script_filters[] = {
     { N_("Julia files (*.jl)"), "*.jl", EDIT_JULIA },
     { N_("Ox files (*.ox)"), "*.ox", EDIT_OX },
     { N_("Stata files (*.do)"), "*.do", EDIT_STATA },
-#if defined(WIN32) && !defined(_WIN64)
-    { N_("Dynare files (*.mod)"), "*.mod", EDIT_DYNARE }
-#else
     { N_("Dynare files (*.mod)"), "*.mod", EDIT_DYNARE },
     { N_("lpsolve files (*.lp)"), "*.lp", EDIT_LPSOLVE }
-#endif
 };
 
 static int n_data_filters = G_N_ELEMENTS(data_filters);
