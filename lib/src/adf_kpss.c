@@ -105,6 +105,8 @@ struct adf_info_ {
 struct kpss_info_ {
     int T;
     int order;
+    int pmin;
+    int pmax;
     double test;
     double pval;
 };
@@ -2223,8 +2225,16 @@ real_kpss_test (int order, int varno, DATASET *dset,
     if (order < 0) {
 	order = 4.0 * pow(T / 100.0, 0.25);
     }
+
+    /* record order for panel case */
     if (kinfo != NULL) {
 	kinfo->order = order;
+	if (order < kinfo->pmin) {
+	    kinfo->pmin = order;
+	}
+	if (order > kinfo->pmax) {
+	    kinfo->pmax = order;
+	}
     }
 
     if (kinfo == NULL && (opt & OPT_V)) {
@@ -2343,6 +2353,22 @@ real_kpss_test (int order, int varno, DATASET *dset,
     return err;
 }
 
+static void panel_kpss_header (const char *vname, kpss_info *kinfo,
+			       gretlopt opt, PRN *prn)
+{
+    pprintf(prn, _("\nKPSS test for %s %s\n"), vname,
+	    (opt & OPT_T)? _("(including trend)") : _("(without trend)"));
+    if (kinfo->pmin > 0 && kinfo->pmax == kinfo->pmin) {
+	pprintf(prn, _("Lag truncation parameter = %d\n"), kinfo->pmin);
+    } else if (kinfo->pmin > 0 && kinfo->pmax > kinfo->pmin) {
+	pprintf(prn, _("Lag truncation parameter: %d - %d\n"),
+		kinfo->pmin, kinfo->pmax);
+    } else {
+	pputs(prn, _("Lag truncation automatic\n"));
+    }
+    pputc(prn, '\n');
+}
+
 static int panel_kpss_test (int order, int v, DATASET *dset,
 			    gretlopt opt, PRN *prn)
 {
@@ -2356,17 +2382,19 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
     double pval;
     int i, err = 0;
 
+    if (order < 0) {
+	kinfo.pmin = 1000000;
+	kinfo.pmax = -1;
+    } else {
+	kinfo.pmin = kinfo.pmax = order;
+    }
+
+    if (verbose) {
+	panel_kpss_header(dset->varname[v], &kinfo, opt, prn);
+    }
+
     /* run a KPSS test for each unit and record the
        results */
-
-    pprintf(prn, _("\nKPSS test for %s %s\n"), dset->varname[v],
-	    (opt & OPT_T)? _("(including trend)") : _("(without trend)"));
-    if (order > 0) {
-	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
-    } else {
-	pputs(prn, _("Lag truncation automatic\n"));
-    }
-    pputc(prn, '\n');
 
     for (i=u0; i<=uN && !err; i++) {
 	dset->t1 = i * dset->pd;
@@ -2427,6 +2455,10 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 		lpv += log(pval / (1-pval));
 	    }
 	}
+    }
+
+    if (!err && !verbose) {
+	panel_kpss_header(dset->varname[v], &kinfo, opt, prn);
     }
 
     if (!err && !na(ppv)) {
