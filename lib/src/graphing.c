@@ -9605,7 +9605,7 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 	    /* already in seconds since epoch start */
 	    x = atof(s);
 	} else if (*fmt != '\0') {
-	    struct tm t = {0};
+	    struct tm t = {0,0,0,1,0,0,0,0,-1};
 	    time_t etime;
 	    char *test;
 
