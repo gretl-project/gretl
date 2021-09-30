@@ -1,8 +1,11 @@
-version 2021d, in progress
+2021-09-30 version 2021d
 - "biprobit" command: include rho in $coeff, $stderr and
   $vcv
+- New function lpsolve(): supports linear programming via
+  the lpsolve library
 - Prevent opening of general and console preferences
   dialogs simultaneously
+- Fix partial breakage of the panel-time plotting facility
 - Fix potential failure mode in echoing script input lines
   in the GUI program
 - Fix a small and somewhat unlikely memory leak
