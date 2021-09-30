@@ -8541,7 +8541,7 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
     }
 
     if (!p->err) {
-        struct tm tm = {0};
+        struct tm tm = {0,0,0,1,0,0,0,0,-1};
         char *s;
 
         if (src == NULL) {
