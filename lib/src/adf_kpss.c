@@ -104,6 +104,7 @@ struct adf_info_ {
 
 struct kpss_info_ {
     int T;
+    int order;
     double test;
     double pval;
 };
@@ -2222,6 +2223,9 @@ real_kpss_test (int order, int varno, DATASET *dset,
     if (order < 0) {
 	order = 4.0 * pow(T / 100.0, 0.25);
     }
+    if (kinfo != NULL) {
+	kinfo->order = order;
+    }
 
     if (kinfo == NULL && (opt & OPT_V)) {
 	KPSSmod.aux = AUX_KPSS;
@@ -2357,7 +2361,11 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 
     pprintf(prn, _("\nKPSS test for %s %s\n"), dset->varname[v],
 	    (opt & OPT_T)? _("(including trend)") : _("(without trend)"));
-    pprintf(prn, _("Lag truncation parameter = %d\n"), order);
+    if (order > 0) {
+	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
+    } else {
+	pputs(prn, _("Lag truncation automatic\n"));
+    }
     pputc(prn, '\n');
 
     for (i=u0; i<=uN && !err; i++) {
@@ -2367,7 +2375,12 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 	if (!err) {
 	    err = real_kpss_test(order, v, dset, opt | OPT_Q, &kinfo, prn);
 	    if (!err && verbose) {
-		pprintf(prn, "Unit %d, T = %d\n", i + 1, kinfo.T);
+		if (order < 0) {
+		    pprintf(prn, "Unit %d, T = %d, order %d\n", i + 1,
+			    kinfo.T, kinfo.order);
+		} else {
+		    pprintf(prn, "Unit %d, T = %d\n", i + 1, kinfo.T);
+		}
 		if (na(kinfo.pval)) {
 		    pputs(prn, "\n\n");
 		} else {
