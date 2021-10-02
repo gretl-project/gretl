@@ -1225,6 +1225,7 @@ int set_obs (const char *parm1, const char *parm2,
     }
 
     if (opt == OPT_I) {
+	/* --panel-time */
 	dset->panel_pd = pd;
 	dset->panel_sd0 = sd0;
 	return 0;
