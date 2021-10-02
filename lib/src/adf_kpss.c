@@ -1756,9 +1756,9 @@ static void record_choi_test (double *ct, double *cp)
 	    pvals->val[i] = cp[i];
 	}
 	if (S != NULL) {
-	    S[0] = gretl_strdup("Choi inverse chi^2");
-	    S[1] = gretl_strdup("Choi inverse normal");
-	    S[2] = gretl_strdup("Choi logit");
+	    S[0] = gretl_strdup(_("Inverse chi-square"));
+	    S[1] = gretl_strdup(_("Inverse normal test"));
+	    S[2] = gretl_strdup(_("Logit test"));
 	    gretl_matrix_set_rownames(tests, S);
 	}
 	record_matrix_test_result(tests, pvals);
