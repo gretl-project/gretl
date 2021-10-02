@@ -1743,6 +1743,32 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
     return err;
 }
 
+static void record_choi_test (double *ct, double *cp)
+{
+    gretl_matrix *tests = gretl_column_vector_alloc(3);
+    gretl_matrix *pvals = gretl_column_vector_alloc(3);
+    char **S = strings_array_new(3);
+    int i;
+
+    if (tests != NULL && pvals != NULL) {
+	for (i=0; i<3; i++) {
+	    tests->val[i] = ct[i];
+	    pvals->val[i] = cp[i];
+	}
+	if (S != NULL) {
+	    S[0] = gretl_strdup("Choi inverse chi^2");
+	    S[1] = gretl_strdup("Choi inverse normal");
+	    S[2] = gretl_strdup("Choi logit");
+	    gretl_matrix_set_rownames(tests, S);
+	}
+	record_matrix_test_result(tests, pvals);
+    } else {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
+	strings_array_free(S, 3);
+    }
+}
+
 /* See In Choi, "Unit root tests for panel data", Journal of
    International Money and Finance 20 (2001), 249-272.
 */
@@ -1750,19 +1776,32 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 static void do_choi_test (double ppv, double zpv, double lpv,
 			  int n, PRN *prn)
 {
-    double P = -2 * ppv;
-    double Z = zpv / sqrt((double) n);
+    double choi_test[3];
+    double choi_pval[3];
     int tdf = 5 * n + 4;
     double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
-    double L = sqrt(k) * lpv;
+
+    /* inverse chi^2 */
+    choi_test[0] = -2 * ppv;
+    choi_pval[0] = chisq_cdf_comp(2*n, choi_test[0]);
+
+    /* inverse normal */
+    choi_test[1] = zpv / sqrt((double) n);
+    choi_pval[1] = normal_pvalue_1(-choi_test[1]);
+
+    /* logit */
+    choi_test[2] = sqrt(k) * lpv;
+    choi_pval[2] = student_pvalue_1(tdf, -choi_test[2]);
 
     pprintf(prn, "%s\n", _("Choi meta-tests:"));
     pprintf(prn, "   %s(%d) = %g [%.4f]\n", _("Inverse chi-square"),
-	    2*n, P, chisq_cdf_comp(2*n, P));
+	    2*n, choi_test[0], choi_pval[0]);
     pprintf(prn, "   %s = %g [%.4f]\n", _("Inverse normal test"),
-	    Z, normal_pvalue_1(-Z));
+	    choi_test[1], choi_pval[1]);
     pprintf(prn, "   %s: t(%d) = %g [%.4f]\n", _("Logit test"),
-	    tdf, L, student_pvalue_1(tdf, -L));
+	    tdf, choi_test[2], choi_pval[2]);
+
+    record_choi_test(choi_test, choi_pval);
 }
 
 static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
@@ -2339,6 +2378,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
     }
 
     if (kinfo == NULL) {
+	/* not doing the panel case */
 	if (pval == PV_GT10 || pval == PV_LT01) {
 	    /* invalidate for record_test_result */
 	    pval = NADBL;
