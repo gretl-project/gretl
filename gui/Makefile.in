@@ -167,7 +167,7 @@ else ifeq ($(win32_build),yes)
   INSTALL_GTKRC = install-gtkrc
 else
   PROG = gretl_x11$(EXEEXT)
-  INSTALL_SCRIPT = install-script
+  INSTALL_WRAPPER = install-script
 endif
 
 vpath %.c $(topsrc)/gui
@@ -301,7 +301,7 @@ gretl-icons.gresource: gretl-icons.xml
 
 .PHONY:
 
-install: install-exec install-ui $(INSTALL_SCRIPT) install-data install-lang install-styles \
+install: install-exec install-ui $(INSTALL_WRAPPER) install-data install-lang install-styles \
 	install-icons install-news $(INSTALL_GTKRC) $(INSTALL_CMDFILE)
 
 install-strip: $(PROG) install-data
