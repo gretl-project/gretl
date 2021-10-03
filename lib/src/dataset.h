@@ -216,6 +216,17 @@ typedef struct series_table_ series_table;
                            || p->pd == 52) && strchr(p->stobs, '-'))
 
 /**
+ * probably_calendar_data:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a dataset should calendar
+ * dates for observation strings (1) or not (0).
+ */
+#define probably_calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
+				   (p->pd == 5 || p->pd == 6 || p->pd == 7 \
+				    || p->pd == 52))
+
+/**
  * quarterly_or_monthly:
  * @p: pointer to data information struct.
  *
