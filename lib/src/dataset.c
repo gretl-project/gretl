@@ -87,12 +87,12 @@ static void dataset_set_nobs (DATASET *dset, int n)
 void free_Z (DATASET *dset)
 {
     if (dset != NULL && dset->Z != NULL) {
-	int i, v = dset_zcols_borrowed(dset) ? 1 : dset->v;
+	int i, vmax = dset_zcols_borrowed(dset) ? 1 : dset->v;
 
 #if DDEBUG
-	fprintf(stderr, "Freeing Z (%p): %d vars\n", (void *) dset->Z, v);
+	fprintf(stderr, "Freeing Z (%p): %d vars\n", (void *) dset->Z, vmax);
 #endif
-	for (i=0; i<v; i++) {
+	for (i=0; i<vmax; i++) {
 	    free(dset->Z[i]);
 	}
 	free(dset->Z);
