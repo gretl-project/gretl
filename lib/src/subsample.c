@@ -1782,6 +1782,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 {
     DATASET *subset;
     gretlopt zopt = OPT_R;
+    int rebalance = (opt & OPT_B);
     int err = 0;
 
     if (dset->auxiliary) {
@@ -1795,7 +1796,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	return E_DATA;
     }
 
-    if ((opt & OPT_B) && !dataset_is_panel(dset)) {
+    if (rebalance && !dataset_is_panel(dset)) {
 	gretl_errmsg_set(_("--balanced option is invalid: the (full) "
 			   "dataset is not a panel"));
 	return E_BADOPT;
@@ -1822,7 +1823,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 
 	if (nunits > 1 && subset->n > nunits) {
 	    /* there's some possibility of doing so */
-	    if (opt & OPT_B) {
+	    if (rebalance) {
 		/* add padding rows? only if this was requested */
 		npad = make_panel_submask(mask, dset, &err);
 		if (err) {
@@ -2712,20 +2713,19 @@ static int t_from_verified_aqm (const char *s, int pd)
     }
 }
 
-#define panel_range_ok(t1,t2,T) (t1>=1 && t1<=T && t2>=t1 && t2<=T)
+#define panel_range_ok(t1,t2,T) (t1>=0 && t1<T && t2>=t1 && t2<T)
 
 static int panel_time_sample (const char *start, const char *stop,
-			      int t1, int t2, DATASET *dset)
+			      int t1, int t2, gretlopt opt,
+			      DATASET *dset)
 {
     int T = dset->pd;
+    int pd = dset->panel_pd;
     int err = 0;
 
-    fprintf(stderr, "HERE, panel pd = %d\n", dset->panel_pd);
-    fprintf(stderr, "start '%s' (%d), stop '%s' (%d)\n", start, t1, stop, t2);
-
     if (panel_range_ok(t1, t2, T)) {
-	fprintf(stderr, " OK time range %d to %d\n", t1, t2);
-    } else if (dset->panel_pd > 0) {
+	; /* alright */
+    } else if (pd == 1 || pd == 4 || pd == 12) {
 	DATASET tset = {0};
 	int t0;
 
@@ -2733,10 +2733,17 @@ static int panel_time_sample (const char *start, const char *stop,
 	t0 = t_from_verified_aqm(tset.stobs, tset.pd);
 	t1 = obs_index_from_aqm(start, tset.pd, t0, T);
 	t2 = obs_index_from_aqm(stop, tset.pd, t0, T);
-	if (panel_range_ok(t1, t2, T)) {
-	    fprintf(stderr, " OK time range %s to %s (%d to %d)\n",
-		    start, stop, t1, t2);
-	} else {
+	if (!panel_range_ok(t1, t2, T)) {
+	    err = E_DATA;
+	}
+    } else if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) &&
+	       dset->panel_sd0 > 10000) {
+	DATASET tset = {0};
+
+	time_series_from_panel(&tset, dset);
+	t1 = calendar_obs_number(start, &tset);
+	t2 = calendar_obs_number(stop, &tset);
+	if (!panel_range_ok(t1, t2, T)) {
 	    err = E_DATA;
 	}
     } else {
@@ -2747,6 +2754,38 @@ static int panel_time_sample (const char *start, const char *stop,
 	gretl_errmsg_sprintf("Invalid sample range %s to %s\n",
 			     start, stop);
 	err = E_DATA;
+    } else {
+	char *mask = calloc(dset->n, 1);
+	int i, t;
+
+	if (mask == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int s, N;
+
+	    if (opt & OPT_P) {
+		/* replacing prior sample restriction */
+		s = 0;
+		N = dset->n / T;
+	    } else {
+		/* compounding sample by unit, if present */
+		s = dset->t1;
+		N = panel_sample_size(dset);
+	    }
+	    for (i=0; i<N; i++) {
+		for (t=0; t<T; t++) {
+		    if (t >= t1 && t <= t2) {
+			mask[s] = 1;
+		    }
+		    s++;
+		}
+	    }
+	    err = restrict_sample_from_mask(mask, dset, OPT_NONE);
+	}
+	if (!err) {
+	    dset->panel_pd = pd;
+	    dset->panel_sd0 = get_date_x(pd, start);
+	}
     }
 
     return err;
@@ -2755,7 +2794,7 @@ static int panel_time_sample (const char *start, const char *stop,
 int set_panel_sample (const char *start, const char *stop,
 		      gretlopt opt, DATASET *dset)
 {
-    int s1, s2 = -1;
+    int s1 = -1, s2 = -1;
     int err = 0;
 
     if (incompatible_options(opt, OPT_U | OPT_X)) {
@@ -2765,14 +2804,16 @@ int set_panel_sample (const char *start, const char *stop,
 	return E_BADOPT;
     }
 
-    /* first pass: read start and stop as integer values */
-    s1 = smpl_get_int(start, dset, &err);
-    if (!err) {
+    /* first pass: read start and stop as integer values? */
+    if (strchr(start, ':') == NULL && strchr(start, '-') == NULL) {
+	s1 = smpl_get_int(start, dset, &err);
+    }
+    if (!err && strchr(stop, ':') == NULL && strchr(stop, '-') == NULL) {
 	s2 = smpl_get_int(stop, dset, &err);
     }
 
     if (opt & OPT_X) {
-	return panel_time_sample(start, stop, s1, s2, dset);
+	return panel_time_sample(start, stop, s1-1, s2-1, opt, dset);
     }
 
     if (!err) {
