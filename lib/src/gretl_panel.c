@@ -6589,16 +6589,12 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
     } else if (tset->pd == 4 || tset->pd == 12) {
 	double dyr = floor(tset->sd0);
 	double dp = tset->sd0 - dyr;
-	int yr = -1, p = -1;
+	int yr, p;
 
-	if (dyr > 0 && dyr < 9999) {
-	    yr = (int) dyr;
-	    dp *= (tset->pd == 4)? 10 : 100;
-	    if (dp > 0 && dp < tset->pd) {
-		p = nearbyint(dp);
-	    }
-	}
-	if (yr > 0 && yr < 9999 && p > 0 && p < 12) {
+	yr = (int) dyr;
+	dp *= (tset->pd == 4)? 10 : 100;
+	p = nearbyint(dp);
+	if (yr > 0 && yr < 9999 && p > 0 && p < tset->pd && p < 12) {
 	    if (tset->pd == 4) {
 		sprintf(tset->stobs, "%d:%d", yr, p);
 	    } else {
@@ -6608,22 +6604,8 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 	    err = 1;
 	}
     } else if (probably_calendar_data(tset)) {
-	guint32 ed0 = (guint32) tset->sd0;
-	char *ymd;
-
-	ymd = ymd_extended_from_epoch_day(ed0, 0, &err);
-	if (!err) {
-	    strcpy(tset->stobs, ymd);
-	    free(ymd);
-	}
+	calendar_date_string(tset->stobs, 0, tset);
     }
-
-#if 0
-    if (!err) {
-	fprintf(stderr, "HERE time_series_from_panel: sd0=%g -> stobs='%s'\n",
-		tset->sd0, tset->stobs);
-    }
-#endif
 
     return err;
 }
