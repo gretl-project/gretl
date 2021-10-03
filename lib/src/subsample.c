@@ -2703,23 +2703,76 @@ int set_sample (const char *start,
     return err;
 }
 
+static int t_from_verified_aqm (const char *s, int pd)
+{
+    if (pd == 1) {
+	return atoi(s);
+    } else {
+	return pd * atoi(s) + atoi(s + 5);
+    }
+}
+
+#define panel_range_ok(t1,t2,T) (t1>=1 && t1<=T && t2>=t1 && t2<=T)
+
+static int panel_time_sample (const char *start, const char *stop,
+			      int t1, int t2, DATASET *dset)
+{
+    int T = dset->pd;
+    int err = 0;
+
+    fprintf(stderr, "HERE, panel pd = %d\n", dset->panel_pd);
+    fprintf(stderr, "start '%s' (%d), stop '%s' (%d)\n", start, t1, stop, t2);
+
+    if (panel_range_ok(t1, t2, T)) {
+	fprintf(stderr, " OK time range %d to %d\n", t1, t2);
+    } else if (dset->panel_pd > 0) {
+	DATASET tset = {0};
+	int t0;
+
+	time_series_from_panel(&tset, dset);
+	t0 = t_from_verified_aqm(tset.stobs, tset.pd);
+	t1 = obs_index_from_aqm(start, tset.pd, t0, T);
+	t2 = obs_index_from_aqm(stop, tset.pd, t0, T);
+	if (panel_range_ok(t1, t2, T)) {
+	    fprintf(stderr, " OK time range %s to %s (%d to %d)\n",
+		    start, stop, t1, t2);
+	} else {
+	    err = E_DATA;
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	gretl_errmsg_sprintf("Invalid sample range %s to %s\n",
+			     start, stop);
+	err = E_DATA;
+    }
+
+    return err;
+}
+
 int set_panel_sample (const char *start, const char *stop,
 		      gretlopt opt, DATASET *dset)
 {
-    int s1, s2, err = 0;
+    int s1, s2 = -1;
+    int err = 0;
 
-    if (!dataset_is_panel(dset)) {
+    if (incompatible_options(opt, OPT_U | OPT_X)) {
+	return E_BADOPT;
+    } else if (!dataset_is_panel(dset)) {
 	gretl_errmsg_sprintf(_("%s: inapplicable option"), print_flags(opt, SMPL));
 	return E_BADOPT;
     }
 
-    /* maybe some day implement option to sample in the
-       panel time dimension here? (not trivial)
-    */
-
+    /* first pass: read start and stop as integer values */
     s1 = smpl_get_int(start, dset, &err);
     if (!err) {
 	s2 = smpl_get_int(stop, dset, &err);
+    }
+
+    if (opt & OPT_X) {
+	return panel_time_sample(start, stop, s1, s2, dset);
     }
 
     if (!err) {

@@ -3147,8 +3147,8 @@ static int check_smpl_full (gretlopt opt)
 
 static int panel_smpl_special (gretlopt opt)
 {
-    /* --unit [or, maybe someday, --time] */
-    return opt & OPT_U;
+    /* the option --unit or --time is given */
+    return opt & (OPT_U | OPT_X);
 }
 
 static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)

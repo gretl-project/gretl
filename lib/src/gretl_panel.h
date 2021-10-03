@@ -78,4 +78,6 @@ int panel_padding_rows (const DATASET *dset);
 
 int time_series_from_panel (DATASET *tset, const DATASET *pset);
 
+int obs_index_from_aqm (const char *s, int pd, int t0, int n);
+
 #endif /* GRETL_PANEL_H_ */

@@ -6627,3 +6627,38 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 
     return err;
 }
+
+int obs_index_from_aqm (const char *s, int pd, int t0, int n)
+{
+    const char *digits = "0123456789";
+    int ok_len = (pd == 1)? 4 : (pd == 4)? 6 : 7;
+    int len = strlen(s);
+    int t = 0;
+
+    if (len != ok_len || strspn(s, digits) != 4) {
+	return -1;
+    }
+
+    if (pd == 1) {
+	t = atoi(s);
+    } else if (s[4] != ':' || strspn(s + 5, digits) != len - 5) {
+	t = -1;
+    } else {
+	int sub = atoi(s + 5);
+
+	if (sub > pd) {
+	    t = -1;
+	} else {
+	    t = pd * atoi(s) + sub;
+	}
+    }
+
+    if (t >= 0) {
+	t -= t0;
+	if (t < 0 || t >= n) {
+	    t = -1;
+	}
+    }
+
+    return t;
+}
