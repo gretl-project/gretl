@@ -482,7 +482,7 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
  * @dset: pointer to dataset.
  *
  * Writes to @targ the calendar representation of the date of
- * observation @t, in the form YY[YY]/MM/DD.
+ * observation @t, in the form YY[YY]-MM-DD.
  *
  * Returns: 0 on success, non-zero on error.
  */
