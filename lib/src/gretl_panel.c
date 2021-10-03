@@ -6563,3 +6563,67 @@ int panel_padding_rows (const DATASET *dset)
 
     return nmiss;
 }
+
+/* Given auxiliary time-series info attached to the panel
+   dataset @pdset, transcribe it to the time-series dataset
+   @tsset.
+*/
+
+int time_series_from_panel (DATASET *tset, const DATASET *pset)
+{
+    int err = 0;
+
+    if (pset->panel_pd == 0) {
+	/* the panel time dimension is not set */
+	tset->structure = SPECIAL_TIME_SERIES;
+	tset->pd = 1;
+	return 0;
+    }
+
+    tset->structure = TIME_SERIES;
+    tset->pd = pset->panel_pd;
+    tset->sd0 = pset->panel_sd0;
+
+    if (tset->pd == 1) {
+	sprintf(tset->stobs, "%d", (int) tset->sd0);
+    } else if (tset->pd == 4 || tset->pd == 12) {
+	double dyr = floor(tset->sd0);
+	double dp = tset->sd0 - dyr;
+	int yr = -1, p = -1;
+
+	if (dyr > 0 && dyr < 9999) {
+	    yr = (int) dyr;
+	    dp *= (tset->pd == 4)? 10 : 100;
+	    if (dp > 0 && dp < tset->pd) {
+		p = nearbyint(dp);
+	    }
+	}
+	if (yr > 0 && yr < 9999 && p > 0 && p < 12) {
+	    if (tset->pd == 4) {
+		sprintf(tset->stobs, "%d:%d", yr, p);
+	    } else {
+		sprintf(tset->stobs, "%d:%02d", yr, p);
+	    }
+	} else {
+	    err = 1;
+	}
+    } else if (probably_calendar_data(tset)) {
+	guint32 ed0 = (guint32) tset->sd0;
+	char *ymd;
+
+	ymd = ymd_extended_from_epoch_day(ed0, 0, &err);
+	if (!err) {
+	    strcpy(tset->stobs, ymd);
+	    free(ymd);
+	}
+    }
+
+#if 0
+    if (!err) {
+	fprintf(stderr, "HERE time_series_from_panel: sd0=%g -> stobs='%s'\n",
+		tset->sd0, tset->stobs);
+    }
+#endif
+
+    return err;
+}
