@@ -2755,34 +2755,27 @@ static int panel_time_sample (const char *start, const char *stop,
 			     start, stop);
 	err = E_DATA;
     } else {
-	char *mask = calloc(dset->n, 1);
-	int i, t;
+	err = dataset_add_series(dset, 1);
+	if (!err) {
+	    int dnum = dset->v - 1;
+	    int N = dset->n / T;
+	    int i, t, s = 0;
 
-	if (mask == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    int s, N;
-
-	    if (opt & OPT_P) {
-		/* replacing prior sample restriction */
-		s = 0;
-		N = dset->n / T;
-	    } else {
-		/* compounding sample by unit, if present */
-		s = dset->t1;
-		N = panel_sample_size(dset);
-	    }
+	    strcpy(dset->varname[dnum], "panel_time__");
 	    for (i=0; i<N; i++) {
 		for (t=0; t<T; t++) {
 		    if (t >= t1 && t <= t2) {
-			mask[s] = 1;
+			dset->Z[dnum][s] = 1;
 		    }
 		    s++;
 		}
 	    }
-	    err = restrict_sample_from_mask(mask, dset, OPT_NONE);
+	    err = restrict_sample(dset->varname[dnum], NULL, dset,
+				  NULL, opt | OPT_O, NULL, NULL);
+	    dataset_drop_variable(dnum, dset);
 	}
 	if (!err) {
+	    /* should perhaps be redundant? */
 	    dset->panel_pd = pd;
 	    dset->panel_sd0 = get_date_x(pd, start);
 	}
