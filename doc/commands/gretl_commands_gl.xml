@@ -1044,7 +1044,7 @@
     </description>
   </command>
 
-  <command name="bds" section="Tests" label="Proba BDS de non linearidade">
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
     <usage>
       <arguments>
         <argument>orde</argument>
@@ -1268,13 +1268,19 @@
 	que representa un conxunto de regresores común.
       </para>
       <para>
-	Por defecto, as desviacións padrón calcúlanse utilizando unha
-	aproximación numérica á matriz Hessiana ao converxer. Pero se
-	indicas a opción <opt>opg</opt>, a matriz de covarianzas baséase no
-	Produto Externo do vector Gradiente (PEG ou OPG); ou se indicas a
-	opción <opt>robust</opt>, calcúlanse as desviacións padrón case que
-	máximo verosímiles (QML), utilizando un <quote>emparedado</quote>
-	entre a inversa da matriz Hessiana e o PEG.
+	Por defecto, as desviacións padrón calcúlanse utilizando a matriz
+	Hessiana analítica ao converxer. Pero se indicas a opción <opt>opg</opt>,
+	a matriz de covarianzas baséase no Produto Externo do vector Gradiente
+	(PEG ou OPG); ou se indicas a opción <opt>robust</opt>, calcúlanse as
+	desviacións padrón case máximo verosímiles (QML), utilizando un
+	<quote>emparedado</quote> entre a inversa da matriz Hessiana e o
+	PEG.
+      </para>
+      <para>
+	Cae na conta de que a estimación de rho (a correlación dos termos de
+	erro entre as dúas ecuacións) inclúese no vector de coeficientes;
+	é o derradeiro elemento dos accesorios <lit>coeff</lit>,
+	<lit>stderr</lit> e <lit>vcv</lit>.
       </para>
       <para>
 	Logo dunha estimación correcta, o accesorio <lit>$uhat</lit>
@@ -1290,11 +1296,10 @@
 	e contén os valores das funcións índice das ecuacións respectivas.
       </para>
       <para>
-	O resultado inclúe unha proba de Razón de Verosimilitudes respecto á
-	hipótese nula de que as perturbacións das dúas ecuacións non están
-	correlacionadas. Ten en conta que cando se designa este estimador como
-	estimador case que máximo verosímil (QMLE) e se utiliza a opción
-	<opt>robust</opt>, esta proba pode non ser válida, mesmo asintoticamente.
+	O resultado inclúe unha proba da hipótese nula de que as perturbacións
+	das dúas ecuacións non están correlacionadas. Esta é unha proba de Razón
+	de Verosimilitudes agás que se solicite o estimador case máximo verosímil
+	(QML) da varianza, en cuxo caso utilízase a proba de Wald.
       </para>
     </description>
   </command>
@@ -4762,7 +4767,7 @@
 	  <quote>help functions</quote>.
 	</refnote>
 	<refnote xref="true">
-	  Para ver unha listaxe de funcións e accesorios, consulta o
+	  Para ver unha listaxe de funcións e accesorios, consulta a
 	  <gfr targ="chap:funcref"/>.
 	</refnote>
       </para>
@@ -11156,7 +11161,9 @@
 	O bloque <lit>plot</lit> proporciona unha alternativa á instrución
 	<cmdref targ="gnuplot"/> que pode ser máis conveniente cando estás
 	xerando unha gráfica complicada (con varias opcións e/ou instrucións
-	Gnuplot para que se insiran no ficheiro gráfico).
+	Gnuplot para que se insiran no ficheiro gráfico). Ademais da seguinte
+	explicación, por favor, consulta tamén o <guideref targ="chap:graphs"/>
+	para ver outros exemplos.
       </para>
       <para>
 	Un bloque de tipo <lit>plot</lit> comeza coa palabra de instrución
@@ -11500,9 +11507,10 @@
       <para>
 	A terceira variante (co argumento <repl>nomesobxectos</repl>;
 	mira o segundo exemplo) agarda unha lista de nomes, separados
-	por espazos, de obxectos básicos de GRETL que non sexan
-	series (escalares, matrices, cadeas de texto, feixes, arranxos);
-	e amósase o valor destes obxectos.
+	por espazos, de obxectos básicos de GRETL que non sexan series
+	(escalares, matrices, cadeas de texto, feixes, arranxos); e amósase
+	o valor destes obxectos. No caso dos feixes, as súas compoñentes
+	ordénanse por tipo e alfabeticamente.
       </para>
       <para>
 	Na cuarta forma (terceiro exemplo), <repl>cadealiteral</repl>
@@ -14380,7 +14388,11 @@
 	  <flag>--unit</flag>
 	  <effect>Datos de panel: mostra na dimensión atemporal</effect>
         </option>
-	      <option>
+        <option>
+	  <flag>--time</flag>
+	  <effect>Datos de panel: mostra na dimensión temporal</effect>
+        </option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>Non amosa o rango mostral</effect>
 	      </option>
@@ -14491,15 +14503,35 @@
 	Pero ten en conta que non sempre é posible cumprir esta petición.
       </para>
 
+      <subhead>Opcións específicas para datos de panel</subhead>
+
       <para>
-	A opción <opt>unit</opt> é específica para datos de panel, e te
-	permite indicar directamente un rango de <quote>individuos</quote>
-	na dimensión atemporal dese tipo de datos. Por exemplo:
+	As opcións <opt>unit</opt> e <opt>time</opt> son específicas para
+	datos de panel. Te permiten indicar, respectivamente, un rango de
+	<quote>unidades</quote> ou de períodos de tempo.
+	Por exemplo:
       </para>
       <code>
-	# Limita a mostra aos primeiros 50 individuos nesa dimensión
+	# Limita a mostra ás primeiras 50 unidades
 	smpl 1 50 --unit
+	# Limita a mostra aos períodos de tempo de 2 a 20
+	smpl 2 20 --time
       </code>
+      <para>
+	Cando se especifica a dimensión temporal dun conxunto de datos de
+	panel mediante a instrución <cmdref targ="setobs"/> coa opción
+	<opt>panel-time</opt>, a instrución <lit>smpl</lit> coa opción
+	<opt>time</opt> pode expresarse en termos de datas en troques de
+	números de observación planos. Este é un exemplo:
+      </para>
+      <code>
+	# Especificar o tempo dun panel como trimestral, comezando no primeiro de 1990
+	setobs 4 1990:1 --panel-time
+	# Limitar a mostra desde 2000:1 ata 2007:1
+	smpl 2000:1 2007:1 --time
+      </code>
+
+      <subhead>Establecer a mostra como permanente ou provisional</subhead>
 
       <para>
 	Por defecto, podes desfacer as limitacións que establezas sobre o

@@ -1268,13 +1268,19 @@
 	que representa un conjunto de regresores común.
       </para>
       <para>
-	Por defecto, las desviaciones típicas se calculan utilizando una
-	aproximación numérica a la matriz Hessiana al converger. Pero si
-	indicas la opción <opt>opg</opt>, la matriz de covarianzas se basa en el
-	Producto Externo del vector Gradiente (PEG o OPG); o si indicas la
-	opción <opt>robust</opt>, se calculan las desviaciones típicas cuasi
-	máximo verosímiles (QML), utilizando un <quote>emparedado</quote>
-	entre la inversa de la matriz Hessiana y el PEG.
+	Por defecto, las desviaciones típicas se calculan utilizando la matriz
+	Hessiana analítica al converger. Pero si indicas la opción <opt>opg</opt>,
+	la matriz de covarianzas se basa en el Producto Externo del vector
+	Gradiente (PEG o OPG); o si indicas la opción <opt>robust</opt>, se
+	calculan las desviaciones típicas cuasi máximo verosímiles (QML),
+	utilizando un <quote>emparedado</quote> entre la inversa de la matriz
+	Hessiana y el PEG.
+      </para>
+      <para>
+	Observa que la estimación de rho, la correlación de los términos de
+	error entre las dos ecuaciones, se incluye en el vector de coeficientes;
+	es el último elemento de los accesores <lit>coeff</lit>,
+	<lit>stderr</lit> y <lit>vcv</lit>.
       </para>
       <para>
 	Luego de una estimación correcta, el accesor <lit>$uhat</lit>
@@ -1290,11 +1296,10 @@
 	y contiene los valores de las funciones índice de las ecuaciones respectivas.
       </para>
       <para>
-	El resultado incluye un contraste de Razón de Verosimilitudes respecto a la
-	hipótesis nula de que las perturbaciones de las dos ecuaciones no están
-	correlacionadas. Observa que cuando se designa este estimador como estimador
-	cuasi máximo verosímil (QMLE) y se utiliza la opción <opt>robust</opt>,
-	este contraste puede no ser válido, ni siquiera asintóticamente.
+	El resultado incluye un contraste de la hipótesis nula de que las
+	perturbaciones de las dos ecuaciones no están correlacionadas. Este es
+	un test de razón de verosimilitudes excepto que se solicite el estimador
+	cuasi máximo verosímil (QML) de la varianza, en cuyo caso se usa el test de Wald.
       </para>
     </description>
   </command>
@@ -11156,7 +11161,9 @@
 	El bloque <lit>plot</lit> proporciona una alternativa a la instrucción
 	<cmdref targ="gnuplot"/> que puede ser más conveniente cuando estás
 	generando un gráfico complicado (con varias opciones y/o instrucciones
-	Gnuplot para que se inserten en el archivo gráfico).
+	Gnuplot para que se inserten en el archivo gráfico). Además de la siguiente
+	explicación, por favor, consulta también <guideref targ="chap:graphs"/>
+	para ver otros ejemplos.
       </para>
       <para>
 	Un bloque de tipo <lit>plot</lit> comienza con la palabra de instrucción
@@ -11500,9 +11507,10 @@
       <para>
 	La tercera variante (con el argumento <repl>nombresobjetos</repl>;
 	mira el segundo ejemplo) espera una lista de nombres, separados
-	por espacios, de objetos básicos de GRETL que no sean
-	series (escalares, matrices, cadenas de texto, bundles, arrays);
-	y se muestra el valor de estos objetos.
+	por espacios, de objetos básicos de GRETL que no sean series
+	(escalares, matrices, cadenas de texto, bundles, arrays); y se muestra
+	el valor de estos objetos. En el caso de los 'bundles', sus componentes
+	se ordenan por tipo y alfabéticamente.
       </para>
       <para>
 	En la cuarta forma (tercer ejemplo), <repl>cadenaliteral</repl>
@@ -14380,7 +14388,11 @@
 	  <flag>--unit</flag>
 	  <effect>Datos de panel: muestra en la dimensión de sección cruzada</effect>
         </option>
-	      <option>
+        <option>
+	  <flag>--time</flag>
+	  <effect>Datos de panel: muestra en la dimensión temporal</effect>
+        </option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>No muestra el rango muestral</effect>
 	      </option>
@@ -14491,15 +14503,35 @@
 	Pero ten en cuenta que no siempre es posible cumplir esta petición.
       </para>
 
+      <subhead>Opciones específicas para datos de panel</subhead>
+
       <para>
-	La opción <opt>unit</opt> es específica para datos de panel, y te
-	permite indicar directamente un rango de <quote>individuos</quote>
-	en la dimensión atemporal de ese tipo de datos. Por ejemplo:
+	Las opciones <opt>unit</opt> y <opt>time</opt> son específicas para
+	datos de panel. Te permiten indicar, respectivamente, un rango de
+	<quote>unidades</quote> o de períodos de tiempo.
+	Por ejemplo:
       </para>
       <code>
-	# Limita la muestra a los primeros 50 individuos en esa dimensión
+	# Limita la muestra a las primeras 50 unidades
 	smpl 1 50 --unit
+	# Limita la muestra a los períodos de tiempo de 2 a 20
+	smpl 2 20 --time
       </code>
+      <para>
+	Cuando se especifica la dimensión temporal de un conjunto de datos de
+	panel por medio de la instrucción <cmdref targ="setobs"/> con la opción
+	<opt>panel-time</opt>, la instrucción <lit>smpl</lit> con la opción
+	<opt>time</opt> puede expresarse en términos de fechas en lugar de
+	números de observación planos. Este es un ejemplo:
+      </para>
+      <code>
+	# Indicar el tiempo de un panel como trimestral, empezando en el primero de 1990
+	setobs 4 1990:1 --panel-time
+	# Limitar la muestra desde 2000:1 hasta 2007:1
+	smpl 2000:1 2007:1 --time
+      </code>
+
+      <subhead>Establecer la muestra como permanente o provisional</subhead>
 
       <para>
 	Por defecto, puedes deshacer las limitaciones que establezcas sobre el
