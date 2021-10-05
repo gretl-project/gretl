@@ -779,8 +779,30 @@ static int opts_add_tsinfo (dw_opts *opts, DATASET *dwinfo)
     } else {
 	opts->tsinfo->structure = TIME_SERIES;
 	opts->tsinfo->pd = dwinfo->panel_pd;
+	opts->tsinfo->sd0 = dwinfo->panel_sd0;
 	return 0;
     }
+}
+
+static int x_date_inverse (double x1, int pd, double x0)
+{
+    int fx1 = floor(x1);
+    int fx0 = floor(x0);
+    int t0, t1, dt = 0;
+
+    if (pd == 1) {
+	dt = fx1 - fx0;
+    } else if (pd == 4) {
+	t0 = 4*fx0 + 10*(x0 - fx0);
+	t1 = 4*fx1 + 10*(x1 - fx1);
+	dt = t1 - t0;
+    } else if (pd == 12) {
+	t0 = 12*fx0 + 100*(x0 - fx0);
+	t1 = 12*fx1 + 100*(x1 - fx1);
+	dt = t1 - t0;
+    }
+
+    return dt;
 }
 
 static int compute_default_ts_info (DATASET *dwinfo, int step,
@@ -882,10 +904,13 @@ static int compute_default_ts_info (DATASET *dwinfo, int step,
 	}
     }
 
+    /* set sd0 "way back" to allow selection of early start */
     dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
 
     if (step == DW_PANEL_STOBS) {
-	; /* hmm */
+	if (dwinfo->panel_sd0 > 0) {
+	    dinfo->t1 = x_date_inverse(dwinfo->panel_sd0, dinfo->pd, dinfo->sd0);
+	}
     } else if (dataset->structure == TIME_SERIES &&
 	       dataset->pd == dinfo->pd) {
 	/* make the current start the default */
