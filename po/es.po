@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-23 08:06-0400\n"
-"PO-Revision-Date: 2021-08-01 12:13-0400\n"
+"PO-Revision-Date: 2021-10-05 16:03+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -665,9 +665,8 @@ msgid "Robust Wald test for break"
 msgstr "Contraste de Wald robusto para el cambio estructural"
 
 #: lib/src/compare.c:2676
-#, fuzzy
 msgid "5% QLR critical value"
-msgstr "Valor crítico al %g por ciento"
+msgstr "Valor crítico del estadístico QLR al 5%"
 
 #: lib/src/compare.c:2773
 msgid ""
@@ -1587,9 +1586,9 @@ msgid "Expected a valid variable name"
 msgstr "Se esperaba un nombre de variable válido"
 
 #: lib/src/dbread.c:2399
-#, fuzzy, c-format
+#, c-format
 msgid "ODBC import: '%s': no valid observations in sample range"
-msgstr "'%s': Índice de observation no válido"
+msgstr "ODBC importar: '%s': no hay observaciones válidas en el rango muestral"
 
 #: lib/src/dbread.c:2457 lib/src/dbread.c:2706 lib/src/dbread.c:2839
 msgid "No database has been opened"
@@ -2427,10 +2426,10 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Tipo de operando incorrecto para el operador de un solo parámetro '&'"
 
 #: lib/src/geneval.c:5869
-#, fuzzy
 msgid "The first argument must be a named series in the current dataset"
 msgstr ""
-"La serie %s parece ser de la misma frecuencia que el conjunto de datos actual"
+"El primer argumento debe ser una serie con nombre que esté en el conjunto "
+"de  datos actual"
 
 #: lib/src/geneval.c:7724 lib/src/geneval.c:7751 lib/src/gretl_func.c:8974
 #, c-format
@@ -2630,13 +2629,12 @@ msgstr ""
 "Por favor, seleccione una muestra más pequeña."
 
 #: lib/src/genfuncs.c:2937
-#, fuzzy
 msgid "centered periodic dummy"
-msgstr "Variables _ficticias estacionales"
+msgstr "variable ficticia periódica centrada"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
-msgstr ""
+msgstr "variable ficticia periódica no centrada"
 
 #: lib/src/genfuncs.c:2943
 #, c-format
@@ -2815,7 +2813,7 @@ msgstr "Byte no esperado 0x%x\n"
 
 #: lib/src/genlex.c:2176
 msgid "If you meant to test for equality, please use '=='"
-msgstr ""
+msgstr "Si desea contrastar la igualdad, por favor use '=='"
 
 #: lib/src/genlex.c:2355
 #, c-format
@@ -3862,9 +3860,8 @@ msgstr "diaria"
 
 #: lib/src/gretl_midas.c:323 lib/src/transforms.c:1475
 #: lib/src/transforms.c:1764
-#, fuzzy
 msgid "The argument does not seem to be a MIDAS list"
-msgstr "Este no parece ser un fichero xport de SAS válido"
+msgstr "El argumento no parece ser una lista MIDAS"
 
 #: lib/src/gretl_midas.c:2329
 #, c-format
@@ -4128,35 +4125,34 @@ msgstr "Rango de MPI no válido %d"
 #: lib/src/gretl_mt.c:175
 #, c-format
 msgid "omp_num_threads: must be >= 1 and <= %d"
-msgstr ""
+msgstr "omp_num_threads: debe ser >= 1 y  <= %d"
 
 #: lib/src/gretl_mt.c:186 lib/src/gretl_mt.c:213
 msgid "set_omp_n_threads: OpenMP is not enabled"
-msgstr ""
+msgstr "set_omp_n_threads: OpenMP no está activo"
 
 #: lib/src/gretl_panel.c:1560
-#, fuzzy
 msgid "Variance estimators:"
-msgstr "Estimado de covarianza"
+msgstr "Estimadores de varianza:"
 
 #: lib/src/gretl_panel.c:1562
-#, fuzzy, c-format
+#, c-format
 msgid " between = %g"
-msgstr " (tamaño del paso = %g)"
+msgstr "entre = %g"
 
 #: lib/src/gretl_panel.c:1564
-#, fuzzy, c-format
+#, c-format
 msgid " within = %g"
-msgstr "Ancho de banda = %g"
+msgstr "dentro de (within) = %g"
 
 #: lib/src/gretl_panel.c:1568
-#, fuzzy, c-format
+#, c-format
 msgid "theta used for quasi-demeaning = %g"
-msgstr "theta usado para quasi-demeaning (cuasi-centrado de los datos)"
+msgstr "theta usado para cuasicentrado (quasi-demeaning) de los datos = %g"
 
 #: lib/src/gretl_panel.c:1571
 msgid "Panel is unbalanced: theta varies across units"
-msgstr ""
+msgstr "El panel está desequilibrado: Theta varía a través de las unidades"
 
 #: lib/src/gretl_panel.c:1576
 msgid ""
@@ -4313,9 +4309,9 @@ msgid "Auxiliary regression including lagged residual"
 msgstr "Regresión auxiliar incluyendo el residuo retardado"
 
 #: lib/src/gretl_panel.c:4986
-#, fuzzy, c-format
+#, c-format
 msgid "Average absolute correlation = %.3f"
-msgstr "eps = %g, correlación de primer orden %.3f"
+msgstr "Correlación media absoluta = %.3f"
 
 #: lib/src/gretl_panel.c:5318
 #, c-format
@@ -4604,9 +4600,9 @@ msgid "starting obs '%s' is invalid"
 msgstr "la observación inicial '%s' no es válida"
 
 #: lib/src/gretl_utils.c:1192 lib/src/gretl_utils.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "frequency (%d) does not seem to make sense"
-msgstr "frecuencia (%d) no parece tener sentido"
+msgstr "la frecuencia (%d) no parece tener sentido"
 
 #: lib/src/gretl_utils.c:1236 lib/src/gretl_utils.c:1325
 #, c-format
@@ -7801,32 +7797,31 @@ msgid "Invalid lag order %g"
 msgstr "Número de retardos no válido %g"
 
 #: lib/src/tokenize.c:2048
-#, fuzzy
 msgid "catch: cannot be applied to this command"
-msgstr "La instrucción 'catch' no puede usarse en este contexto"
+msgstr "catch: La instrucción 'catch' no puede aplicarse a este comando"
 
 #: lib/src/tokenize.c:2065
 msgid "savename is too long"
-msgstr ""
+msgstr "el nombre a guardar es demasiado largo"
 
 #: lib/src/tokenize.c:2419
 #, c-format
 msgid "\"%s\": obsolete %s; please use the function %s"
-msgstr ""
+msgstr "\"%s\": %s está obsoleta; por favor use la función %s"
 
 #: lib/src/tokenize.c:2422
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\": obsolete %s; please use \"%s\""
-msgstr "Utilización obsoleta de \"pi\": por favor use \"$pi\" en su lugar"
+msgstr "\"%s\": %s está obsoleta; por favor use \"%s\""
 
 #: lib/src/tokenize.c:2622
 msgid "'end loop': did you mean 'endloop'"
-msgstr ""
+msgstr "'end loop': quizá quiso decir 'endloop'"
 
 #: lib/src/tokenize.c:3318
-#, fuzzy, c-format
+#, c-format
 msgid "end: invalid parameter '%s'"
-msgstr "%s: Tipo de parámetro no válido"
+msgstr "end: el parámetro '%s' no es válido"
 
 #: lib/src/tokenize.c:3392
 #, c-format
@@ -7905,7 +7900,7 @@ msgstr "Variable ficticia para %s = %g"
 #: lib/src/transforms.c:1707
 #, c-format
 msgid "%s: collides with existing object name"
-msgstr ""
+msgstr "%s: colisiona con un nombre de objeto ya existente"
 
 #: lib/src/transforms.c:2039
 #, c-format
@@ -9224,9 +9219,8 @@ msgstr ""
 "# de ejecutarlo.\n"
 
 #: gui/console.c:343
-#, fuzzy
 msgid "Really quit gretl?"
-msgstr "Requiere gretl %s"
+msgstr "¿quiere realmente abandonar gretl?"
 
 #: gui/console.c:482
 msgid "gretl console: type 'help' for a list of commands"
@@ -10357,11 +10351,13 @@ msgid "Plot confidence interval using"
 msgstr "Representar el intervalo de confianza usando"
 
 #: gui/dialogs.c:3384
-#, fuzzy
 msgid ""
 "No out-of-sample observations are available.\n"
 "Show \"forecast\" information for the estimation sample?"
-msgstr "No se dispone de datos fuera de la muestra"
+msgstr ""
+"No se dispone de datos fuera de la muestra.\n"
+"¿Desea ver la información de \"predicción\" para la muestra con la que se ha "
+"estimado?"
 
 #: gui/dialogs.c:3449 gui/library.c:6431
 msgid "Add observations"
@@ -10521,9 +10517,8 @@ msgid "frequency axis scale:"
 msgstr "Escala del eje de frecuencia:"
 
 #: gui/dialogs.c:4838
-#, fuzzy
 msgid "data-based"
-msgstr "Bases de datos"
+msgstr "basado en datos"
 
 #: gui/dialogs.c:5037
 msgid "Number of bins:"
@@ -10765,36 +10760,32 @@ msgid "series code:"
 msgstr "código de serie:"
 
 #: gui/dialogs.c:6812
-#, fuzzy
 msgid "gretl: display map"
-msgstr "gretl: mostrar datos"
+msgstr "gretl: mostrar mapa"
 
 #: gui/dialogs.c:6824
-#, fuzzy
 msgid "series to plot:"
-msgstr "Gráfico de series temporales"
+msgstr "series a representar:"
 
 #: gui/dialogs.c:6843
-#, fuzzy
 msgid "palette:"
-msgstr "Paleta"
+msgstr "paleta:"
 
 #: gui/dialogs.c:6857
-#, fuzzy
 msgid "Log scale"
-msgstr "escala logarítmica"
+msgstr "Escala logarítmica"
 
 #: gui/dialogs.c:6866
 msgid "draw border around map"
-msgstr ""
+msgstr "dibujar el borde alrededor del mapa"
 
 #: gui/dialogs.c:6874
 msgid "Feature border width:"
-msgstr ""
+msgstr "Anchura del borde:"
 
 #: gui/dialogs.c:6888
 msgid "height in pixels:"
-msgstr ""
+msgstr "altura en píxeles:"
 
 #: gui/dialogs.c:6967 gui/dialogs.c:7202
 msgid "constant"
@@ -10871,43 +10862,36 @@ msgid "Bootstrap p-values"
 msgstr "Valores p obtenidos mediante bootstrap"
 
 #: gui/dialogs.c:7482
-#, fuzzy
 msgid "LASSO algorithm:"
-msgstr "Algoritmo de tanteo"
+msgstr "Algoritmo LASSO:"
 
 #: gui/dialogs.c:7483
-#, fuzzy
 msgid "RIDGE algorithm:"
-msgstr "Algoritmo de tanteo"
+msgstr "Algoritmo RIDGE"
 
 #: gui/dialogs.c:7529
-#, fuzzy
 msgid "cross validation criterion"
-msgstr "Criterio de validación cruzada"
+msgstr "criterio de validación cruzada"
 
 #: gui/dialogs.c:7532
 msgid "minimized MSE"
-msgstr ""
+msgstr "ECM minimizado"
 
 #: gui/dialogs.c:7533
-#, fuzzy
 msgid "one-standard-error rule"
-msgstr "Frecuencia no estándar"
+msgstr "regla de una desviación típica"
 
 #: gui/dialogs.c:7540
-#, fuzzy
 msgid "set seed for random folds"
-msgstr "gretl: semilla para los números aleatorios"
+msgstr "establecer la semilla para las celdas aleatorias"
 
 #: gui/dialogs.c:7555
-#, fuzzy
 msgid "use MPI if available"
-msgstr "Usar nivel de la variable"
+msgstr "utilizar MPI si está disponible"
 
 #: gui/dialogs.c:7563
-#, fuzzy
 msgid "show execution time"
-msgstr "Error al ejecutar una función"
+msgstr "mostrar el tiempo de ejecución"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11973,9 +11957,9 @@ msgid "build gfn file"
 msgstr "crear un archivo gfn"
 
 #: gui/gpt_collect.c:202
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: plot collection %d"
-msgstr "gretl: selección del color del gráfico"
+msgstr "gretl: colección de gráficos %d"
 
 #: gui/gpt_collect.c:310 gui/gpt_collect.c:392 gui/gpt_control.c:5708
 msgid "gretl: graph"
@@ -12119,19 +12103,16 @@ msgid "Close"
 msgstr "Cerrar"
 
 #: gui/gpt_control.c:4634 gui/gpt_control.c:4722
-#, fuzzy
 msgid "Delete plot"
-msgstr "Borrar componentes"
+msgstr "Borrar gráfico"
 
 #: gui/gpt_control.c:4636 gui/gpt_control.c:4723
-#, fuzzy
 msgid "Close collection"
-msgstr "selección"
+msgstr "Cerrar la colección"
 
 #: gui/gpt_control.c:4638 gui/gpt_control.c:4724
-#, fuzzy
 msgid "Extract plot"
-msgstr "Propiedades extra"
+msgstr "Extraer el gráfico"
 
 #: gui/gpt_control.c:4660 gui/graphics.c:258 gui/graph_page.c:697
 msgid "color"
@@ -12515,13 +12496,12 @@ msgid "print version information"
 msgstr "Mostrar la información de la versión"
 
 #: gui/gretl.c:156
-#, fuzzy
 msgid "start a new gretl instance unconditionally"
-msgstr "¿Iniciar una nueva instancia de Gretl?"
+msgstr "comenzar una nueva instancia de Gretl incondicionalmente"
 
 #: gui/gretl.c:158
 msgid "reuse an existing gretl instance unconditionally"
-msgstr ""
+msgstr "reutilizar incondicionalmente una instancia de Gretl ya existente"
 
 #: gui/gretl.c:629
 msgid "Start a new gretl instance?"
@@ -13180,9 +13160,8 @@ msgid "_Hurst exponent"
 msgstr "Exponente de _Hurst"
 
 #: gui/gretl.c:1962
-#, fuzzy
 msgid "BDS nonlinearity test"
-msgstr "Contraste de no linealidad _BDS"
+msgstr "Contraste de no linealidad BDS"
 
 #: gui/gretl.c:1963 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -13901,9 +13880,8 @@ msgid "_Cross-sectional dependence"
 msgstr "Dependencia de sección _cruzada"
 
 #: gui/gui_utils.c:272
-#, fuzzy
 msgid "_Panel specification"
-msgstr "_Revisar la especificación..."
+msgstr "Especificación de _Panel"
 
 #: gui/gui_utils.c:276 gui/gui_utils.c:283
 msgid "White's test"
@@ -13996,6 +13974,13 @@ msgid ""
 "Do you want to force gretl to treat the first column as just\n"
 "an ordinary data series (regardless of the column heading)?"
 msgstr ""
+"Normalmente Gretl intenta interpretar la primera columna de un archivo\n"
+"de datos CSV como si contuviera información de la observación (Por ejemplo,\n"
+"fechas), si la cabecera de la columna parece adecuada.\n"
+"\n"
+"¿desea Vd. forzar a que Gretl trate la primera columna como solamente\n"
+"una serie de datos ordinaria (independientemente de lo que ponga en la\n"
+"cabecera de la columna)?"
 
 #: gui/gui_utils.c:1282 gui/gui_utils.c:1285
 #, c-format
@@ -14724,7 +14709,7 @@ msgstr "Error al añadir variables"
 #: gui/library.c:581
 #, c-format
 msgid "error correction term %d from VECM %d"
-msgstr ""
+msgstr "término de corrección del error %d del VECM %d"
 
 #: gui/library.c:615
 #, c-format
@@ -15044,9 +15029,8 @@ msgid "Lag order for ARCH test:"
 msgstr "Orden del retardo para el contraste ARCH:"
 
 #: gui/library.c:2715
-#, fuzzy
 msgid "gretl: panel model specification"
-msgstr "gretl: diagnósticos del modelo de panel"
+msgstr "gretl: especificación de modelo de panel"
 
 #: gui/library.c:2789
 msgid "gretl: leverage and influence"
@@ -15124,6 +15108,8 @@ msgstr "Estadístico de Durbin-Watson"
 #: gui/library.c:3345
 msgid "Warning: the model contains a lagged dependent variable so DW is biased"
 msgstr ""
+"Atención: el modelo contiene una variable dependiente retardada, así que DW "
+"es sesgado"
 
 #: gui/library.c:3352
 msgid ""
@@ -15134,14 +15120,12 @@ msgstr ""
 "ha podido ser evaluada así que no hay un valor definido disponible)"
 
 #: gui/library.c:3355
-#, fuzzy
 msgid "H1: positive autocorrelation\n"
-msgstr "no hay autocorrelación"
+msgstr "H1: autocorrelación positiva\n"
 
 #: gui/library.c:3357
-#, fuzzy
 msgid "H1: negative autocorrelation\n"
-msgstr "no hay autocorrelación"
+msgstr "H1: autocorrelación negativa\n"
 
 #: gui/library.c:3564
 msgid "linear restrictions"
@@ -15295,9 +15279,8 @@ msgid "gretl: create dummy variables"
 msgstr "gretl: crear variables ficticias"
 
 #: gui/library.c:6303
-#, fuzzy
 msgid "No discrete series are available"
-msgstr "No hay disponible ningún modelo"
+msgstr "No hay disponible ninguna serie discreta"
 
 #: gui/library.c:6426
 msgid "in the cross-sectional dimension"
@@ -15419,6 +15402,8 @@ msgid ""
 "Too many data values (%d) for display.\n"
 "You might try limiting the sample range."
 msgstr ""
+"Hay demasiados valores a mostrar (%d).\n"
+"Vd. puede intentar limitar el rango muestral."
 
 #: gui/library.c:7350
 #, c-format
@@ -15602,6 +15587,8 @@ msgid ""
 "Data files written in the current gdtb binary format\n"
 "cannot be read by gretl versions older than 2020b"
 msgstr ""
+"Los ficheros de datos guardados en el formato binario actual gdtb\n"
+"no pueden ser leídos con las versiones de Gretl anteriores a la 2020b"
 
 #: gui/library.c:9555 gui/library.c:9694
 msgid "No commands to execute"
@@ -15986,9 +15973,8 @@ msgid "Ridge"
 msgstr "Ridge"
 
 #: gui/selector.c:3551 gui/selector.c:6633
-#, fuzzy
 msgid "random"
-msgstr "Media global"
+msgstr "aleatoria"
 
 #: gui/selector.c:3575
 msgid "You must specify a quantile"
@@ -16500,26 +16486,23 @@ msgstr "Valores λ múltiples"
 
 #: gui/selector.c:6619
 msgid "Optimize via cross-validation"
-msgstr ""
+msgstr "Optimizar por medio de validación cruzada"
 
 #: gui/selector.c:6625
 msgid "Folds:"
-msgstr ""
+msgstr "Pliegues:"
 
 #: gui/selector.c:6630
-#, fuzzy
 msgid "type:"
-msgstr "Tipo"
+msgstr "tipo:"
 
 #: gui/selector.c:6634
-#, fuzzy
 msgid "contiguous"
-msgstr "continuó"
+msgstr "contiguo"
 
 #: gui/selector.c:6643
-#, fuzzy
 msgid "Show criterion plot"
-msgstr "Criterio de Schwarz"
+msgstr "Mostrar gráfico de criterio"
 
 #: gui/selector.c:6676 gui/toolbar.c:710
 msgid "Confidence level"
@@ -17162,17 +17145,16 @@ msgid "Prompt to save session"
 msgstr "Preguntar si se desea guardar sesión"
 
 #: gui/settings.c:229
-#, fuzzy
 msgid "Enable collecting plots"
-msgstr "Activar autocompletado"
+msgstr "Activar agrupación de gráficos"
 
 #: gui/settings.c:231
 msgid "Main window includes console"
-msgstr ""
+msgstr "Que la ventana principal incluya la consola"
 
 #: gui/settings.c:233
 msgid "Toolbar icon size"
-msgstr ""
+msgstr "Tamaño de los iconos de la barra de herramientas"
 
 #: gui/settings.c:235
 msgid "Set working directory from shell"
@@ -17257,9 +17239,8 @@ msgid "Path to Julia executable"
 msgstr "Camino al ejecutable de Julia"
 
 #: gui/settings.c:290
-#, fuzzy
 msgid "Path to lpsolve library"
-msgstr "Camino a la biblioteca de R"
+msgstr "Camino a la biblioteca de lpsolve"
 
 #: gui/settings.c:294
 msgid "Path to mpiexec"
@@ -17314,9 +17295,8 @@ msgid "Script editor uses tabs"
 msgstr "Usar pestañas en el editor de guiones"
 
 #: gui/settings.c:326 gui/settings.c:328
-#, fuzzy
 msgid "Auto-completion"
-msgstr "Activar autocompletado"
+msgstr "Autocompletado"
 
 #: gui/settings.c:331
 msgid "Enable auto-brackets"
@@ -17376,17 +17356,16 @@ msgid "English (A4 paper)"
 msgstr "Inglés (en papel A4)"
 
 #: gui/settings.c:1291
-#, fuzzy
 msgid "Translation, if available"
-msgstr "No hay información disponible sobre los datos.\n"
+msgstr "Traducción, si está disponible"
 
 #: gui/settings.c:1296
 msgid "automatic, as you type"
-msgstr ""
+msgstr "automático, según escribes"
 
 #: gui/settings.c:1297
 msgid "on demand, via Tab"
-msgstr ""
+msgstr "a demanda, vía tabulador"
 
 #: gui/settings.c:1301 plugin/tramo_options.c:547 plugin/tramo_options.c:664
 #: plugin/tramo_options.c:724 plugin/tramo-x12a.c:267
@@ -17394,14 +17373,12 @@ msgid "Automatic"
 msgstr "Automático"
 
 #: gui/settings.c:1302
-#, fuzzy
 msgid "small"
-msgstr "Más pequeño"
+msgstr "pequeño"
 
 #: gui/settings.c:1303
-#, fuzzy
 msgid "medium"
-msgstr "mediana"
+msgstr "mediano"
 
 #: gui/settings.c:1495
 msgid "Examples"
@@ -18035,9 +18012,8 @@ msgid "command reference"
 msgstr "Guía de instrucciones"
 
 #: gui/toolbar.c:1620
-#, fuzzy
 msgid "find series"
-msgstr "serie final"
+msgstr "buscar las series"
 
 #: gui/toolbar.c:1621
 msgid "X-Y graph"
@@ -19095,9 +19071,9 @@ msgid "The n most important components"
 msgstr "Los n componentes más importantes"
 
 #: plugin/pca.c:203
-#, fuzzy, c-format
+#, c-format
 msgid " (dropped %d incomplete observations)"
-msgstr "Se han quitado %d observaciones"
+msgstr "(Se han quitado %d observaciones incompletas)"
 
 #: plugin/pca.c:209
 msgid "Eigenanalysis of the Correlation Matrix"
@@ -19553,7 +19529,6 @@ msgstr "Decoración"
 #~ msgid "Portuguese"
 #~ msgstr "Portugués"
 
-#, c-format
 #~ msgid "Writing %.0f Kbytes of data\n"
 #~ msgstr "Escribiendo %.0f Kbytes de datos\n"
 
@@ -19566,7 +19541,6 @@ msgstr "Decoración"
 #~ msgid "of data"
 #~ msgstr "de los datos"
 
-#, c-format
 #~ msgid "%s, page %d"
 #~ msgstr "%s, página %d"
 
