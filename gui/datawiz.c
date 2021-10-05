@@ -65,6 +65,7 @@ enum {
     DW_PANEL_MODE,
     DW_PANEL_SIZE,
     DW_PANEL_VARS,
+    DW_PANEL_TIME,
     DW_CONFIRM
 };
 
@@ -114,6 +115,7 @@ static const char *wizcode_string (int code)
 	N_("Panel data organization"),
 	N_("Panel structure"),
 	N_("Panel index variables"),
+	N_("Panel time dimension"),
 	N_("Confirm dataset structure")
     };
 
@@ -454,6 +456,7 @@ static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
 }
 
 #define TS_INFO_MAX 10
+#define PANEL_TS_MAX 9
 #define PANEL_INFO_MAX 3
 
 struct freq_info {
@@ -471,7 +474,18 @@ struct freq_info ts_info[] = {
     {  7, N_("Daily (7 days)") },
     { 24, N_("Hourly") },
     { 10, N_("Decennial") },
-    { PD_SPECIAL, N_("Other") },
+    { PD_SPECIAL, N_("Other") }
+};
+
+struct freq_info panel_ts_info[] = {
+    {  0, N_("Undated") },
+    {  1, N_("Annual") },
+    {  4, N_("Quarterly") },
+    { 12, N_("Monthly") },
+    { 52, N_("Weekly") },
+    {  5, N_("Daily (5 days)") },
+    {  6, N_("Daily (6 days)") },
+    {  7, N_("Daily (7 days)") }
 };
 
 struct panel_info {
@@ -531,6 +545,8 @@ static int dwiz_radio_default (DATASET *dwinfo, int step)
 	deflt = dwinfo->v;
     } else if (step == DW_PANEL_MODE) {
 	deflt = dwinfo->structure;
+    } else if (step == DW_PANEL_TIME) {
+	deflt = dwinfo->panel_pd;
     }
 
 #if DWDEBUG
@@ -556,6 +572,8 @@ static int dwiz_i_to_setval (DATASET *dwinfo, int step, int i)
 	setval = (i < TS_INFO_MAX)? ts_info[i].pd : 0;
     } else if (step == DW_PANEL_MODE) {
 	setval = (i < PANEL_INFO_MAX)? pan_info[i].code : 0;
+    } else if (step == DW_PANEL_TIME) {
+	setval = (i < PANEL_TS_MAX)? panel_ts_info[i].pd : 0;
     } else {
 	setval = i;
     }
@@ -586,6 +604,8 @@ static const char *dwiz_radio_strings (int step, int i)
 	return ts_info[i].label;
     } else if (step == DW_PANEL_MODE) {
 	return pan_info[i].label;
+    } else if (step == DW_PANEL_TIME) {
+	return panel_ts_info[i].label;
     }
 
     return "";
@@ -1480,6 +1500,9 @@ static void set_up_dw_opts (dw_opts *opts, int step,
 	eval_n_is_prime(opts);
     } else if (step == DW_PANEL_SIZE) {
 	opts->setvar = &dwinfo->pd;
+    } else if (step == DW_PANEL_TIME) {
+	opts->n_radios = PANEL_TS_MAX;
+	opts->setvar = &dwinfo->panel_pd;
     }
 }
 
@@ -1738,14 +1761,18 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 		/* error: don't proceed */
 		step = DW_PANEL_VARS;
 	    } else {
-		step = DW_CONFIRM;
+		// step = DW_CONFIRM;
+		step = DW_PANEL_TIME;
 	    }
-	} else if (prevstep == DW_STARTING_OBS ||
-		   prevstep == DW_PANEL_SIZE) {
-	    if (prevstep == DW_PANEL_SIZE &&
-		dwinfo->structure == STACKED_TIME_SERIES) {
+	} else if (prevstep == DW_STARTING_OBS) {
+	    step = DW_CONFIRM;
+	} else if (prevstep == DW_PANEL_SIZE) {
+	    if (dwinfo->structure == STACKED_TIME_SERIES) {
 		dwinfo->pd = dwinfo->t2;
 	    }
+	    //step = DW_CONFIRM;
+	    step = DW_PANEL_TIME;
+	} else if (prevstep == DW_PANEL_TIME) {
 	    step = DW_CONFIRM;
 	}
     } else if (direction == DW_BACK) {
