@@ -1036,6 +1036,26 @@ static const char *get_pd_string (DATASET *dset)
     return pdstr;
 }
 
+static void special_panel_label (DATASET *dset)
+{
+    DATASET tset = {0};
+    char st1[OBSLEN], st2[OBSLEN];
+    int u1, u2;
+    gchar *s;
+
+    tset.structure = TIME_SERIES;
+    tset.pd = dset->panel_pd;
+    tset.sd0 = dset->panel_sd0;
+    u1 = 1 + dset->t1 / dset->pd;
+    u2 = 1 + dset->t2 / dset->pd;
+    ntolabel(st1, 0, &tset);
+    ntolabel(st2, dset->pd - 1, &tset);
+    s = g_strdup_printf("Panel: units %d:%d, time %s:%s",
+			u1, u2, st1, st2);
+    gtk_label_set_text(GTK_LABEL(mdata->status), s);
+    g_free(s);
+}
+
 void set_sample_label (DATASET *dset)
 {
     GtkWidget *dlabel;
@@ -1062,7 +1082,9 @@ void set_sample_label (DATASET *dset)
        (this goes at the foot of the window)
     */
 
-    if (complex_subsampled() && !tsubset && dataset_is_cross_section(dset)) {
+    if (dataset_is_panel(dset) && dset->panel_pd > 0) {
+	special_panel_label(dset);
+    } else if (complex_subsampled() && !tsubset && dataset_is_cross_section(dset)) {
         tmp = g_strdup_printf(_("Undated: Full range n = %d; current sample"
                                 " n = %d"), get_full_length_n(), dataset->n);
         gtk_label_set_text(GTK_LABEL(mdata->status), tmp);

@@ -130,6 +130,7 @@ static const char *wizcode_string (int code)
 }
 
 static int translate_panel_vars (dw_opts *opts, int *uv, int *tv);
+static int usable_panel_start_year (const DATASET *dset);
 
 /* Initialize the "dummy" DATASET structure @dwinfo, based
    on the current data info. This will just be a cross-section
@@ -278,6 +279,7 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     gretlopt opt = OPT_NONE;
     int delmiss = (opts->flags & DW_DROPMISS);
     int delete_markers = 0;
+    int panel_ts_delta = 0;
     int err = 0;
 
 #if DWDEBUG
@@ -311,11 +313,17 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	goto finalize;
     }
 
-    /* check for nothing to be done */
+    /* check for panel-time change */
+    if (dwinfo->panel_pd != dataset->panel_pd ||
+	dwinfo->panel_sd0 != dataset->panel_sd0) {
+	panel_ts_delta = 1;
+    }
+
+    /* check for no changes */
     if (dwinfo->structure == dataset->structure &&
 	dwinfo->pd == dataset->pd &&
 	strcmp(dwinfo->stobs, dataset->stobs) == 0) {
-	if (delmiss) {
+	if (delmiss || panel_ts_delta) {
 	    /* recording? */
 	    goto finalize;
 	} else {
@@ -374,8 +382,13 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
  finalize:
 
-    if (!err && delmiss) {
-	err = dataset_purge_missing_rows(dataset);
+    if (!err) {
+	if (delmiss) {
+	    err = dataset_purge_missing_rows(dataset);
+	} else if (panel_ts_delta) {
+	    dataset->panel_pd = dwinfo->panel_pd;
+	    dataset->panel_sd0 = dwinfo->panel_sd0;
+	}
     }
 
     if (err) {
@@ -565,6 +578,15 @@ static int dwiz_radio_default (DATASET *dwinfo, int step)
     } else if (step == DW_PANEL_MODE) {
 	deflt = dwinfo->structure;
     } else if (step == DW_PANEL_PD) {
+	if (dwinfo->panel_pd == 0 && dataset_is_panel(dataset)) {
+	    /* try for evidence of annual panel time? */
+	    int y0 = usable_panel_start_year(dataset);
+
+	    if (y0 > 0) {
+		dwinfo->panel_pd = 1;
+		dwinfo->panel_sd0 = y0;
+	    }
+	}
 	deflt = dwinfo->panel_pd;
     }
 
@@ -770,6 +792,54 @@ static int default_start_decade (void)
     return d;
 }
 
+/* If the current dataset is defined as a panel, but we
+   don't have the additional information conveyed by
+   panel_pd, check for the presence of a "year" variable
+   that might imply an annual time-series dimension.
+   The requirments are that (a) the starting year should
+   not be prior to 1400, (b) each panel unit should have
+   the same starting year and (c) years must be strictly
+   consecutive.
+*/
+
+static int usable_panel_start_year (const DATASET *dset)
+{
+    const double *zi;
+    int i, j, t, s, y0;
+    int T = dset->pd;
+    int N = dset->n / T;
+    int ok, ret = 0;
+
+    for (i=1; i<dset->v; i++) {
+	zi = dset->Z[i];
+	if (g_ascii_strcasecmp(dset->varname[i], "year") ||
+	    zi[0] < 1400 || floor(zi[0]) != zi[0]) {
+	    continue;
+	}
+	ok = 1;
+	y0 = zi[0];
+	for (j=0, s=0; j<N && ok; j++) {
+	    for (t=0; t<T; t++, s++) {
+		if (t == 0) {
+		    if (j > 0 && zi[s] != y0) {
+			ok = 0;
+			break;
+		    }
+		} else if (zi[s] != zi[s-1] + 1) {
+		    ok = 0;
+		    break;
+		}
+	    }
+	}
+	if (ok) {
+	    ret = y0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 static int opts_add_tsinfo (dw_opts *opts, DATASET *dwinfo)
 {
     opts->tsinfo = calloc(sizeof *opts->tsinfo, 1);
@@ -810,7 +880,7 @@ static int compute_default_ts_info (DATASET *dwinfo, int step,
 {
     DATASET *dinfo;
 
-#if 1 || DWDEBUG
+#if DWDEBUG
     char obsstr[OBSLEN];
 
     fprintf(stderr, "compute_ts_info() called: pd=%d, structure=%d\n",
@@ -826,7 +896,6 @@ static int compute_default_ts_info (DATASET *dwinfo, int step,
 	    if (opts_add_tsinfo(opts, dwinfo) != 0) {
 		return E_ALLOC;
 	    }
-	    fprintf(stderr, "HERE, added opts->tsinfo\n");
 	}
 	dinfo = opts->tsinfo;
     } else {
@@ -919,7 +988,7 @@ static int compute_default_ts_info (DATASET *dwinfo, int step,
 
     ntolabel(dinfo->endobs, dinfo->n - 1, dinfo);
 
-#if 1 || DWDEBUG
+#if DWDEBUG
     ntolabel(obsstr, dinfo->t1, dinfo);
     fprintf(stderr, "dinfo: v=%d, n=%d, pd=%d, stobs='%s', endobs='%s', sd0=%g, t1=%d (%s)\n",
 	    dinfo->v, dinfo->n, dinfo->pd, dinfo->stobs, dinfo->endobs, dinfo->sd0,
@@ -2119,7 +2188,7 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
     int pg = gtk_notebook_get_current_page(nb);
     DATASET *dwinfo = g_object_get_data(G_OBJECT(dlg), "dwinfo");
     dw_opts *opts = g_object_get_data(G_OBJECT(dlg), "opts");
-    int newpg;
+    int i, newpg;
 
     if (pg == DW_SET_TYPE) {
 	if (any_panel(dwinfo) && !panel_possible(opts)) {
@@ -2130,8 +2199,6 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
 	    return;
 	}
 	if (opts->flags & DW_CREATE) {
-	    int i;
-
 	    for (i=0; i<4; i++) {
 		opts->dvals[i] = spinner_get_int(opts->dspin[i]);
 	    }
