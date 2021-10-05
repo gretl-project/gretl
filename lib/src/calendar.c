@@ -118,6 +118,44 @@ guint32 epoch_day_from_ymd (int y, int m, int d)
 }
 
 /**
+ * nearby_epoch_day:
+ * @y: year (1 <= y <= 9999).
+ * @m: month (1 <= m <= 12).
+ * @d: day of month (1 <= d <= 31).
+ * @wkdays: number of days per week.
+ *
+ * Returns: 0 if the supplied date is invalid, otherwise the
+ * epoch day number for @y, @m, @d, or the first subsequent
+ * epoch day if the date in question is not included in the
+ * calendar, based on @wkdays (for example, the day is a
+ * Sunday and @wkdays is 5 or 6).
+ */
+
+guint32 nearby_epoch_day (int y, int m, int d, int wkdays)
+{
+    GDate date;
+    int wd;
+    guint32 j;
+
+    if (!g_date_valid_dmy(d, m, y)) {
+	return 0;
+    }
+
+    g_date_clear(&date, 1);
+    g_date_set_dmy(&date, d, m, y);
+    j = g_date_get_julian(&date);
+    wd = g_date_get_weekday(&date);
+
+    if (wkdays != 7 && wd == G_DATE_SUNDAY) {
+	j++;
+    } else if (wkdays == 5 && wd == G_DATE_SATURDAY) {
+	j += 2;
+    }
+
+    return j;
+}
+
+/**
  * ymd_bits_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  * @y: location to receive year.
