@@ -854,7 +854,7 @@ static int opts_add_tsinfo (dw_opts *opts, DATASET *dwinfo)
     }
 }
 
-static int x_date_inverse (double x1, int pd, double x0)
+static int x_date_inverse (double x1, int pd, double x0, int t1)
 {
     int fx1 = floor(x1);
     int fx0 = floor(x0);
@@ -870,6 +870,9 @@ static int x_date_inverse (double x1, int pd, double x0)
 	t0 = 12*fx0 + 100*(x0 - fx0);
 	t1 = 12*fx1 + 100*(x1 - fx1);
 	dt = t1 - t0;
+    } else {
+	/* FIXME calendar dates */
+	dt = t1;
     }
 
     return dt;
@@ -978,7 +981,8 @@ static int compute_default_ts_info (DATASET *dwinfo, int step,
 
     if (step == DW_PANEL_STOBS) {
 	if (dwinfo->panel_sd0 > 0) {
-	    dinfo->t1 = x_date_inverse(dwinfo->panel_sd0, dinfo->pd, dinfo->sd0);
+	    dinfo->t1 = x_date_inverse(dwinfo->panel_sd0, dinfo->pd,
+				       dinfo->sd0, dinfo->t1);
 	}
     } else if (dataset->structure == TIME_SERIES &&
 	       dataset->pd == dinfo->pd) {
