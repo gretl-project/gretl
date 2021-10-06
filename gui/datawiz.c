@@ -854,7 +854,7 @@ static int opts_add_tsinfo (dw_opts *opts, DATASET *dwinfo)
     }
 }
 
-static int x_date_inverse (double x1, int pd, double x0, int t1)
+static int x_date_inverse (double x1, int pd, double x0, int dt0)
 {
     int fx1 = floor(x1);
     int fx0 = floor(x0);
@@ -872,7 +872,7 @@ static int x_date_inverse (double x1, int pd, double x0, int t1)
 	dt = t1 - t0;
     } else {
 	/* FIXME calendar dates */
-	dt = t1;
+	dt = dt0;
     }
 
     return dt;
