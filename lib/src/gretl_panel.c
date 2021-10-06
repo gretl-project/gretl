@@ -6594,10 +6594,10 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 	yr = (int) dyr;
 	dp *= (tset->pd == 4)? 10 : 100;
 	p = nearbyint(dp);
-	if (yr > 0 && yr < 9999 && p > 0 && p < tset->pd && p < 12) {
-	    if (tset->pd == 4) {
+	if (yr > 0 && yr < 9999 && p > 0) {
+	    if (tset->pd == 4 && p < 4) {
 		sprintf(tset->stobs, "%d:%d", yr, p);
-	    } else {
+	    } else if (p < 12) {
 		sprintf(tset->stobs, "%d:%02d", yr, p);
 	    }
 	} else {
