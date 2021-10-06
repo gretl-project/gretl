@@ -2655,7 +2655,6 @@ access_request_button (GtkWidget *holder,
     button = gtk_check_button_new_with_label(_("request access to out-of-sample data"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), finfo->data_access);
-    // g_signal_connect(button, "toggled", access_button_callback, finfo);
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 
     return button;
