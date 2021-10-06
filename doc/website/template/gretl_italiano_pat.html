@@ -1,8 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
      "http://www.w3.org/TR/REC-html40/loose.dtd"> 
 
-<head><title>gretl</title>
+<head>
+<title>gretl</title>
 <LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+<link rel="shortcut icon"  href="./favicon.ico">
 <META name="description" 
       content="homepage di gretl, the Gnu Regression, Econometrics 
                and Time-series Library">
@@ -125,13 +127,15 @@ della Licenza Pubblica Generica GNU
 dalla
 <a href="http://www.gnu.org">Free Software Foundation</a>.</p>
 
-<h2>gretl conference 2013</h2>
+<h2>gretl conference</h2>
 
-<p>La terza "gretl conference" ha avuto luogo ad Oklahoma City il 20-21
-giugno 2013; dettagli <a href="http://www.gretlconference.org/">qui</a>.
-I nostri più fervidi ringraziamenti a Lee Adkins per aver organizzato
-l'evento!  Al momento sembra che la prossima "gretl conference" (in
-2015) si terrà a Berlino.</p>
+<p>La sesta "gretl conference" ha avuto luogo a Napoli il 13-14 giugno
+2019; dettagli <a href="http://www.gretlconference.org/">qui</a>.  Le
+precedenti si sono tenute ad Atene (2017), Berlino (2015), Oklahoma
+City (2013), Toruń (2011) e Bilbao
+(2009). Vedi <a href="http://www.gretlconference.org/">gretlconference.org</a>
+per più dettagli.  I nostri più fervidi ringraziamenti a tutti gli
+organizzatori.</p>
 
 <h2><a name="feat">Caratteristiche</a></h2>
 
@@ -142,35 +146,59 @@ francese, italiano, spagnolo, polacco, tedesco, basco, catalano,
 galiziano, portoghese, russo, turco, ceco, cinese tradizionale,
 albanese, greco, oltre che in inglese)</p></li>
 
-<li><p class="in-list">Un'ampia varietà di stimatori: minimi quadrati, GMM;
-metodi per singole equazioni e per sistemi.</p></li>
+<li><p class="in-list">Un'ampia varietà di stimatori: minimi quadrati,
+GMM; metodi per singole equazioni e per sistemi. Minimi quadrati
+regolarizzati (LASSO, Ridge, elastic net)</p></li>
 
-<li><p class="in-list">Metodi per serie storiche: ARMA, GARCH, VAR e VECM,
-test per radici unitarie e cointegrazione, ecc.</p></li>
+<li><p class="in-list">Metodi per serie storiche: ARMA, GARCH di molti
+    tipi, VAR e VECM (anche SVAR e SVECM), test per radici unitarie e
+    cointegrazione, filtro di Kalman, ecc.</p></li>
 
-<li><p class="in-list">Variabili dipendenti limitate: logit, probit, tobit,
-regressione per intervallo, modelli per dati di conteggio e di durata, ecc.</p></li> 
+<li><p class="in-list">Variabili dipendenti limitate: logit, probit,
+    tobit, heckit, regressione per intervallo, modelli per dati di
+    conteggio e di durata, ecc.</p></li>
+
+<li><p class="in-list">Stimatori panel di molti tipi (statici,
+    dinamici, GMM, nonlineari, IV...)</p></li>
 
 <li><p class="in-list">Risultati dei modelli esportabili sotto forma di tabelle o
 equazioni LaTeX</p></li>
 
-<li><p class="in-list">Potente linguaggio di scripting integrato</p></li>
-
-<li><p class="in-list">Struttura loop per le simulazioni Monte Carlo e le procedure di
-stima iterativa</p></li>
+<li><p class="in-list">Potente linguaggio di scripting integrato
+    (chiamato
+    <a href="http://sourceforge.net/projects/gretl/files/manual/hansl-primer.pdf">hansl</a>),
+    con un'ampia gamma di funzioni, anche matriciali</p></li>
 
 <li><p class="in-list">Controlli interattivi per personalizzare i grafici Gnuplot</p></li>
+
+<li><p class="in-list">Possibilità di scambio dati e interazione con
+ <a href="./gretl_and_R.html">GNU R</a>,
+    <a href="http://www.gnu.org/software/octave">GNU Octave</a>,
+    <a href="https://www.python.org/">Python</a>,
+    <a href="https://julialang.org/">Julia</a>,
+    <a href="http://www.doornik.com">Ox</a> e
+    <a href="http://www.stata.com">Stata</a></p></li>
+
+<li><p class="in-list">Parallelizazione via <a href="https://computing.llnl.gov/tutorials/mpi/">MPI</a>
+     (<a href="https://sourceforge.net/projects/gretl/files/manual/gretl-mpi.pdf">dettagli</a>)</p></li>
+
+<li><p class="in-list">Supporto per serie storiche a frequenza mista (MIDAS)
+    (<a href="https://sourceforge.net/projects/gretl/files/manual/midas-gretl.pdf">dettagli</a>)
+    </p></li>
+
+<li><p class="in-list">Uso di
+    <a href="https://www.csie.ntu.edu.tw/~cjlin/libsvm/">LIBSVM</a>
+    per le Support Vector Machine
+    (<a href="https://sourceforge.net/projects/gretl/files/manual/gretl-svm.pdf">dettagli</a>)</p></li>
+
+</ul>
+
 
 <li><p class="in-list">Un crescente assortimento di 
 <a href="http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS">pacchetti
 esterni</a></p>
 </li>
 
-<li><p class="in-list">Compatibile con <a href="./gretl_and_R_it.html">GNU R</a>,
-<a href="http://www.gnu.org/software/octave">GNU Octave</a> e
-<a href="http://www.doornik.com">Ox</a> per analisi statistiche ancora più approfondite</p></li>
-
-</ul>
 
 <h2><a name="formats">Formati di dati</a></h2>
 
@@ -212,6 +240,12 @@ pre-compilati, potreste essere interessati alle <a href="./depend_it.html">dipen
 <p>Una versione di gretl per MS Windows si
 trova <a href="./win32/index_it.html">qui</a>, mentre quella per Mac
 OS X si trova <a href="./osx_it.html">qui</a>.</p>
+
+<p> Chi ha Linux e volesse compilarsi la versione più recente di
+    gretl, troverà <a href="./buildgretl.tar.gz">in questo tarball</a>
+    uno script che automatizza quasi tutto il lavoro (si presuppone
+    che sappiate quel che fate; comunque, nel tarball c'è un README).
+</p>
 
 <p>Versioni Linux dei programmi per l'analisi di serie storiche
 X-12-ARIMA e TRAMO/SEATS sono disponibili dalle fonti seguenti:</p>
