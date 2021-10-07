@@ -1355,7 +1355,9 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
     if (!g_date_valid_julian(ed1) ||
 	!g_date_valid_julian(ed2) ||
 	ed2 < ed1) {
-	*err = E_INVARG;
+	if (err != NULL) {
+	    *err = E_INVARG;
+	}
     } else if (wkdays == 7) {
 	/* simple! */
 	n = ed2 - ed1 + 1;

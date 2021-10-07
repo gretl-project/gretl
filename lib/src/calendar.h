@@ -27,7 +27,6 @@
  * Returns: a guess at the 4-digit year intended when
  * two digits were provided. But really, who knows?
  */
-
 #define FOUR_DIGIT_YEAR(y) ((y < 50)? y + 2000 : y + 1900)
 
 guint32 epoch_day_from_ymd (int y, int m, int d);
