@@ -325,7 +325,6 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	dwinfo->pd == dataset->pd &&
 	strcmp(dwinfo->stobs, dataset->stobs) == 0) {
 	if (delmiss || panel_ts_delta) {
-	    /* recording? */
 	    goto finalize;
 	} else {
 	    infobox(_("No changes were made"));
@@ -347,8 +346,7 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
 	/* we don't offer a choice of "starting obs" in the
 	   cross-sectional dimension */
-	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)?
-	    T : N;
+	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? T : N;
 	strcpy(dwinfo->stobs, "1:1");
     }
 
@@ -767,12 +765,14 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 	g_string_append(gs, panel_ts_frequency_string(dwinfo));
 	if (opts->tsinfo != NULL) {
 	    int lastobs = opts->tsinfo->t1 + dwinfo->pd - 1;
-	    char endobs[OBSLEN];
 
 	    ntolabel(opts->tsinfo->stobs, opts->tsinfo->t1, opts->tsinfo);
-	    lastobs = opts->tsinfo->t1 + dwinfo->pd - 1;
-	    ntolabel(endobs, lastobs, opts->tsinfo);
-	    g_string_append_printf(gs, ", %s to %s", opts->tsinfo->stobs, endobs);
+	    ntolabel(opts->tsinfo->endobs, lastobs, opts->tsinfo);
+	    g_string_append_printf(gs, ", %s to %s", opts->tsinfo->stobs,
+				   opts->tsinfo->endobs);
+	    dwinfo->panel_sd0 = get_date_x(opts->tsinfo->pd, opts->tsinfo->stobs);
+	    fprintf(stderr, "HERE dwinfo->panel_sd0 = %g, tsinfo->sd0 %g\n",
+		    dwinfo->panel_sd0, opts->tsinfo->sd0);
 	} else {
 	    g_string_append_printf(gs, ", 1 to %d", dwinfo->pd);
 	}
@@ -860,6 +860,8 @@ static int usable_panel_start_year (const DATASET *dset)
     return ret;
 }
 
+/* FIXME: overwite tsinfo if it already exists? */
+
 static int opts_add_tsinfo (dw_opts *opts, DATASET *dwinfo)
 {
     opts->tsinfo = calloc(sizeof *opts->tsinfo, 1);
@@ -880,7 +882,9 @@ static int x_date_inverse (double x1, int pd, double x0, int dt0)
     int fx0 = floor(x0);
     int t0, t1, dt = 0;
 
-    if (pd == 1) {
+    if (pd == 5 || pd == 6 || pd == 7) {
+	dt = day_span((guint32) x0, (guint32) x1, pd, NULL) - 1;
+    } else if (pd == 1) {
 	dt = fx1 - fx0;
     } else if (pd == 4) {
 	t0 = 4*fx0 + 10*(x0 - fx0);
@@ -891,7 +895,6 @@ static int x_date_inverse (double x1, int pd, double x0, int dt0)
 	t1 = 12*fx1 + 100*(x1 - fx1);
 	dt = t1 - t0;
     } else {
-	/* FIXME calendar dates */
 	dt = dt0;
     }
 

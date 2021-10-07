@@ -1039,6 +1039,7 @@ static const char *get_pd_string (DATASET *dset)
 static void special_panel_label (DATASET *dset)
 {
     DATASET tset = {0};
+    DATASET *ptset = &tset;
     char st1[OBSLEN], st2[OBSLEN];
     int u1, u2;
     gchar *s;
@@ -1048,7 +1049,15 @@ static void special_panel_label (DATASET *dset)
     tset.sd0 = dset->panel_sd0;
     u1 = 1 + dset->t1 / dset->pd;
     u2 = 1 + dset->t2 / dset->pd;
-    ntolabel(st1, 0, &tset);
+    if (probably_calendar_data(ptset)) {
+	int y = 0, m = 0, d = 0;
+
+	ymd_bits_from_epoch_day((guint32) tset.sd0, &y, &m, &d);
+	sprintf(tset.stobs, "%04d-%02d-%02d", y, m, d);
+	strcpy(st1, tset.stobs);
+    } else {
+	ntolabel(st1, 0, ptset);
+    }
     ntolabel(st2, dset->pd - 1, &tset);
     s = g_strdup_printf("Panel: units %d:%d, time %s:%s",
 			u1, u2, st1, st2);
