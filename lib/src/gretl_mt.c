@@ -40,10 +40,10 @@
 
 static int omp_n_threads;
 
-#ifdef OS_OSX
-static int omp_mnk_min = -1; /* ? */
-#else
+#if defined(_OPENMP) && !defined(OS_OSX)
 static int omp_mnk_min = 80000;
+#else
+static int omp_mnk_min = -1; /* ? */
 #endif
 
 int gretl_n_processors (void)
