@@ -508,13 +508,13 @@ esac
 dnl More detail for macOS build
 if test "$darwin_build" = "yes" ; then
   case $host_os in
-    *-darwin1[[0-8]]*
+    *-darwin1[[0-8]]*)
       MACLIB="-Wl,-framework -Wl,Carbon"
       AC_SUBST(MACLIB)
       AC_DEFINE(USE_CARBON)
       echo "macOS: using Carbon"
     ;;
-    *-darwin19* | *-darwin2*
+    *-darwin19* | *-darwin2*)
       MACLIB="-Wl,-framework -Wl,CoreServices"
       AC_SUBST(MACLIB)
       AC_DEFINE(USE_SSE2)
