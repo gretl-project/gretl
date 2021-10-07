@@ -80,4 +80,7 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset);
 
 int obs_index_from_aqm (const char *s, int pd, int t0, int n);
 
+int usable_group_names_series_id (const DATASET *dset,
+				  int maxlen);
+
 #endif /* GRETL_PANEL_H_ */

@@ -6610,6 +6610,19 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
     return err;
 }
 
+/* Given an annual, quarterly or monthly date string @s in gretl's
+   standard format (YYYY, YYYY:Q or YYYY:MM), convert to a zero-based
+   observation index relative to a series of frequency @pd and length
+   @n starting at @t0.
+
+   @t0 is assumed to be given in a form that makes the calculation
+   easy, namely the number of periods since the start of the year 0.
+   For annual data this is just the year; for quarterly its 4 * year
+   plus initial quarter and for monthly 12 * year plus initial month.
+
+   If the resulting index is out of bounds, -1 is returned.
+*/
+
 int obs_index_from_aqm (const char *s, int pd, int t0, int n)
 {
     const char *digits = "0123456789";
@@ -6643,4 +6656,55 @@ int obs_index_from_aqm (const char *s, int pd, int t0, int n)
     }
 
     return t;
+}
+
+/* Scan @dset for a string-valued series that's suitable for defining
+   panel group names: its number of string values must equal the
+   number of groups, and its value must be constant within each
+   group's time series. In addition, if @maxlen > 0 the strings must
+   be no longer than @maxlen UTF-8 characters (we're looking to use
+   these strings for plotting and we don't want them too long).
+
+   We return the ID number of the first series to match these
+   criteria, or 0 if we can't find any such series.
+*/
+
+int usable_group_names_series_id (const DATASET *dset, int maxlen)
+{
+    char **S;
+    int N = dset->n / dset->pd;
+    int j, t, s, ns, ok;
+    int i, ret = 0;
+
+    for (i=1; i<dset->v; i++) {
+	if (!is_string_valued(dset, i)) {
+	    continue;
+	}
+	S = series_get_string_vals(dset, i, &ns, 0);
+	if (ns < N) {
+	    continue;
+	}
+	ok = 1;
+	for (j=0, s=0; j<N && ok; j++) {
+	    if (maxlen > 0 && g_utf8_strlen(S[j], -1) > maxlen) {
+		/* too long to be usable for plots? */
+		ok = 0;
+	    }
+	    for (t=0; t<dset->pd && ok; t++) {
+		if (t > 0 && dset->Z[i][s] != dset->Z[i][s-1]) {
+		    ok = 0;
+		} else if (j > 0 && t == 0 &&
+			   dset->Z[i][s] == dset->Z[i][s-1]) {
+		    ok = 0;
+		}
+		s++;
+	    }
+	}
+	if (ok) {
+	    ret = i;
+	    break;
+	}
+    }
+
+    return ret;
 }

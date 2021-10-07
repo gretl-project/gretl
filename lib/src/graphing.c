@@ -7167,7 +7167,7 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 
     /* If we have valid panel group names, use them
        as obs markers here */
-    grpnames = panel_group_names_ok(dset, 0);
+    grpnames = panel_group_names_ok(dset);
     if (grpnames) {
 	dataset_allocate_obs_markers(gset);
     }

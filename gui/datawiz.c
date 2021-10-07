@@ -105,6 +105,7 @@ struct dw_opts_ {
     GtkWidget *dspin[4]; /* dataset dimension setters (new dataset) */
     int dvals[4];        /* dataset dimension values (new dataset) */
     DATASET *tsinfo;     /* for handling panel time dimension */
+    int unames_id;       /* panel: candidate series ID for unit names */
 };
 
 static const char *wizcode_string (int code)
@@ -275,12 +276,12 @@ static void maybe_unrestrict_dataset (void)
 static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 			      GtkWidget *dlg)
 {
-    gchar *setobs_cmd = NULL;
+    gchar *setobs_cmd[3] = {NULL, NULL, NULL};
     gretlopt opt = OPT_NONE;
     int delmiss = (opts->flags & DW_DROPMISS);
     int delete_markers = 0;
     int panel_ts_delta = 0;
-    int err = 0;
+    int i, err = 0;
 
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes\n");
@@ -306,9 +307,9 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	    err = set_panel_structure_from_vars(uv, tv, dataset);
 	}
 	if (!err) {
-	    setobs_cmd = g_strdup_printf("setobs %s %s --panel-vars",
-					 dataset->varname[uv],
-					 dataset->varname[tv]);
+	    setobs_cmd[0] = g_strdup_printf("setobs %s %s --panel-vars",
+					    dataset->varname[uv],
+					    dataset->varname[tv]);
 	}
 	goto finalize;
     }
@@ -341,12 +342,13 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     /* handle panel structure */
     if (known_panel(dwinfo)) {
-	int nunits = dwinfo->t1;
-	int nperiods = dataset->n / nunits;
+	int N = dwinfo->t1;
+	int T = dataset->n / N;
 
-	/* we don't offer a choice of "starting obs" */
+	/* we don't offer a choice of "starting obs" in the
+	   cross-sectional dimension */
 	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)?
-	    nperiods : nunits;
+	    T : N;
 	strcpy(dwinfo->stobs, "1:1");
     }
 
@@ -368,27 +370,35 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     }
 
     err = simple_set_obs(dataset, dwinfo->pd, dwinfo->stobs, opt);
-
 #if DWDEBUG
     fprintf(stderr, "pd=%d, stobs='%s', opt=%d; set_obs returned %d\n",
 	    dwinfo->pd, dwinfo->stobs, opt, err);
 #endif
-
-    if (!err && setobs_cmd == NULL) {
-	setobs_cmd = g_strdup_printf("setobs %d %s%s",
+    if (!err && setobs_cmd[0] == NULL) {
+	setobs_cmd[0] = g_strdup_printf("setobs %d %s%s",
 				     dwinfo->pd, dwinfo->stobs,
 				     print_flags(opt, SETOBS));
     }
 
  finalize:
 
-    if (!err) {
-	if (delmiss) {
-	    err = dataset_purge_missing_rows(dataset);
-	} else if (panel_ts_delta) {
-	    dataset->panel_pd = dwinfo->panel_pd;
-	    dataset->panel_sd0 = dwinfo->panel_sd0;
-	}
+    if (!err && delmiss) {
+	err = dataset_purge_missing_rows(dataset);
+    }
+    if (!err && panel_ts_delta) {
+	/* specifying the panel time dimension */
+	dataset->panel_pd = dwinfo->panel_pd;
+	dataset->panel_sd0 = dwinfo->panel_sd0;
+	setobs_cmd[1] = g_strdup_printf("setobs %d %s --panel-time",
+					dataset->panel_pd,
+					opts->tsinfo->stobs);
+    }
+    if (!err && opts->unames_id > 0) {
+	/* specifying the panel "group names" series */
+	const char *vname = dataset->varname[opts->unames_id];
+
+	set_panel_groups_name(dataset, vname);
+	setobs_cmd[2] = g_strdup_printf("setobs %s --panel-groups", vname);
     }
 
     if (err) {
@@ -400,12 +410,20 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	mark_dataset_as_modified();
     }
 
-    if (!err && setobs_cmd != NULL) {
-	lib_command_strcpy(setobs_cmd);
-	record_command_verbatim();
+    for (i=0; i<3; i++) {
+	if (setobs_cmd[i] != NULL) {
+	    if (!err) {
+		lib_command_strcpy(setobs_cmd[i]);
+		record_command_verbatim();
+	    }
+	    g_free(setobs_cmd[i]);
+	}
     }
 
-    g_free(setobs_cmd);
+    if (!dataset_is_panel(dataset)) {
+	/* scrub panel groups name, if previously set */
+	set_panel_groups_name(dataset, NULL);
+    }
 
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes: returning %d\n", err);
@@ -734,6 +752,9 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 	} else {
 	    nunits = dwinfo->t1;
 	    nperiods = nobs / nunits;
+	    if (dataset->pangrps == NULL) {
+		opts->unames_id = usable_group_names_series_id(dataset, 12);
+	    }
 	}
 
 	g_string_append_printf(gs, _("Panel data (%s)\n"
@@ -746,13 +767,12 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 	g_string_append(gs, panel_ts_frequency_string(dwinfo));
 	if (opts->tsinfo != NULL) {
 	    int lastobs = opts->tsinfo->t1 + dwinfo->pd - 1;
-	    char stobs[OBSLEN];
 	    char endobs[OBSLEN];
 
-	    ntolabel(stobs, opts->tsinfo->t1, opts->tsinfo);
+	    ntolabel(opts->tsinfo->stobs, opts->tsinfo->t1, opts->tsinfo);
 	    lastobs = opts->tsinfo->t1 + dwinfo->pd - 1;
 	    ntolabel(endobs, lastobs, opts->tsinfo);
-	    g_string_append_printf(gs, ", %s to %s", stobs, endobs);
+	    g_string_append_printf(gs, ", %s to %s", opts->tsinfo->stobs, endobs);
 	} else {
 	    g_string_append_printf(gs, ", 1 to %d", dwinfo->pd);
 	}
@@ -1647,6 +1667,35 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, gretlopt *flags)
     }
 }
 
+static void update_unames (GtkToggleButton *b, dw_opts *opts)
+{
+    opts->unames_id = gtk_toggle_button_get_active(b) ?
+	widget_get_int(b, "unid") : 0;
+}
+
+static void maybe_add_unit_names_option (GtkWidget *vbox, dw_opts *opts)
+{
+    int unames_id = usable_group_names_series_id(dataset, 12);
+
+    if (unames_id > 0) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *b;
+	gchar *msg;
+
+	msg = g_strdup_printf(_("Take unit names from %s?"),
+			      dataset->varname[unames_id]);
+	b = gtk_check_button_new_with_label(msg);
+	widget_set_int(b, "unid", unames_id);
+	g_signal_connect(G_OBJECT(b), "toggled",
+			 G_CALLBACK(update_unames), opts);
+	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+	gtk_widget_show_all(hbox);
+	g_free(msg);
+    }
+}
+
 /* Calculate the options set-up for a given step of the wizard
    process: How many radio-button options should we show (if any)?
    What variable are we setting?  What should be the default value for
@@ -2102,6 +2151,8 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	    if (newdata_nobs(dwinfo, opts) <= 100) {
 		add_editing_option(page, &opts->flags);
 	    }
+	} else if (known_panel(dwinfo) && dataset->pangrps == NULL) {
+	    maybe_add_unit_names_option(page, opts);
 	}
     } else {
 	/* all other pages */
@@ -2323,6 +2374,7 @@ static dw_opts *dw_opts_new (int create)
 	opts->flags = (create)? DW_CREATE : 0;
 	opts->vlist = NULL;
 	opts->uid = opts->tid = 0;
+	opts->unames_id = 0;
 	opts->tsinfo = NULL;
 	if (create) {
 	    for (i=0; i<4; i++) {

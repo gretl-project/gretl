@@ -21,6 +21,7 @@
 #include "gretl_func.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "gretl_panel.h"
 #include "libset.h"
 #include "dbread.h"
 #include "varinfo_priv.h"
@@ -4826,9 +4827,13 @@ int set_panel_groups_name (DATASET *dset, const char *vname)
 	free(dset->pangrps);
     }
 
-    dset->pangrps = gretl_strdup(vname);
-
-    return (dset->pangrps == NULL)? E_ALLOC : 0;
+    if (vname == NULL) {
+	dset->pangrps = NULL;
+	return 0;
+    } else {
+	dset->pangrps = gretl_strdup(vname);
+	return (dset->pangrps == NULL)? E_ALLOC : 0;
+    }
 }
 
 /* This should be called only after the "group names"
@@ -4853,10 +4858,8 @@ const char *get_panel_group_name (const DATASET *dset, int obs)
     return (s != NULL)? s : "??";
 }
 
-int panel_group_names_ok (const DATASET *dset, int maxlen)
+int panel_group_names_ok (const DATASET *dset)
 {
-    int ok = 0;
-
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
 	int ns, v = current_series_index(dset, dset->pangrps);
 
@@ -4864,22 +4867,12 @@ int panel_group_names_ok (const DATASET *dset, int maxlen)
 	    char **S = series_get_string_vals(dset, v, &ns, 0);
 
 	    if (S != NULL && ns >= dset->n / dset->pd) {
-		ok = 1; /* provisional */
-		if (maxlen > 0) {
-		    int i;
-
-		    for (i=0; i<ns; i++) {
-			if (strlen(S[i]) > maxlen) {
-			    ok = 0;
-			    break;
-			}
-		    }
-		}
+		return 1;
 	    }
 	}
     }
 
-    return ok;
+    return 0;
 }
 
 const char *panel_group_names_varname (const DATASET *dset)
@@ -4890,12 +4883,8 @@ const char *panel_group_names_varname (const DATASET *dset)
 	if (v > 0 && v < dset->v) {
 	    char **S = series_get_string_vals(dset, v, &ns, 0);
 
-	    if (S != NULL) {
-		int ng = dset->n / dset->pd;
-
-		if (ns >= ng) {
-		    return dset->pangrps;
-		}
+	    if (S != NULL && ns >= dset->n / dset->pd) {
+		return dset->pangrps;
 	    }
 	}
     }
@@ -4910,54 +4899,6 @@ int is_panel_group_names_series (const DATASET *dset, int v)
     } else {
 	return 0;
     }
-}
-
-static int suitable_group_names_series (const DATASET *dset,
-					int maxlen,
-					int exclude)
-{
-    int i, vfound = 0;
-
-    for (i=1; i<dset->v && !vfound; i++) {
-	if (i == exclude) {
-	    continue;
-	}
-	if (is_string_valued(dset, i)) {
-	    int ns = 0;
-	    char **S = series_get_string_vals(dset, i, &ns, 0);
-
-	    if (S != NULL && ns >= dset->n / dset->pd) {
-		const char *sbak = NULL;
-		int t, u, ubak = -1;
-		int fail = 0;
-
-		for (t=dset->t1; t<=dset->t2 && !fail; t++) {
-		    const char *st = series_get_string_for_obs(dset, i, t);
-
-		    u = t / dset->pd;
-		    if (st == NULL || sbak == NULL) {
-			fail = 1;
-		    } else if (u == ubak && strcmp(st, sbak)) {
-			/* same unit, different label: no */
-			fail = 1;
-		    } else if (ubak >= 0 && u != ubak && !strcmp(st, sbak)) {
-			/* different unit, same label: no */
-			fail = 2;
-		    }
-		    if (!fail && maxlen > 0 && strlen(st) > maxlen) {
-			fail = 1;
-		    }
-		    ubak = u;
-		    sbak = st;
-		}
-		if (!fail) {
-		    vfound = i;
-		}
-	    }
-	}
-    }
-
-    return vfound;
 }
 
 /* For plotting purposes, try to get labels for panel groups,
@@ -4979,13 +4920,13 @@ series_table *get_panel_group_table (const DATASET *dset,
     }
 
     /* first see if we have valid group labels set explicitly */
-    if (vpg > 0 && panel_group_names_ok(dset, maxlen)) {
+    if (vpg > 0 && panel_group_names_ok(dset)) {
 	st = dset->varinfo[vpg]->st;
     }
 
     if (st == NULL) {
 	/* can we find a suitable string-valued series? */
-	int altv = suitable_group_names_series(dset, maxlen, vpg);
+	int altv = usable_group_names_series_id(dset, maxlen);
 
 	if (altv > 0) {
 	    vpg = altv;

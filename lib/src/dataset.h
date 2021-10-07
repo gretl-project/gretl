@@ -586,7 +586,7 @@ int set_panel_groups_name (DATASET *dset, const char *vname);
 
 const char *get_panel_group_name (const DATASET *dset, int obs);
 
-int panel_group_names_ok (const DATASET *dset, int maxlen);
+int panel_group_names_ok (const DATASET *dset);
 
 const char *panel_group_names_varname (const DATASET *dset);
 
