@@ -4,7 +4,9 @@ version 2021e, in progress
 - "kpss" command for panel data: improve output for the case
   where automatic lag order is selected; record $test and
   $pvalue in matrix form
-- Build fixes for FreeBSD
+- Build fixes for FreeBSD and for the non-OPENMP case
+- "genr": get informative error messages to appear in more
+  cases
 
 2021-09-30 version 2021d
 - "biprobit" command: include rho in $coeff, $stderr and
