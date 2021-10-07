@@ -9327,7 +9327,7 @@ int do_store (char *filename, int action, gpointer data)
 
 #ifdef OS_OSX
 
-# ifdef HAVE_CARBON
+# ifdef USE_CARBON
 
 # include <Carbon/Carbon.h>
 

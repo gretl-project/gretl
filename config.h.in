@@ -162,7 +162,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* On Mac, using GTK themes? */
 #undef HAVE_MAC_THEMES
 
-/* On Mac, have Carbon.framework? */
-#undef HAVE_CARBON
+/* On Mac, use the Carbon.framework? */
+#undef USE_CARBON
 
 #endif /* CONFIG_H */

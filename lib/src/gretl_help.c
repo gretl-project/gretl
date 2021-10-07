@@ -26,7 +26,7 @@
 #if defined(G_OS_WIN32)
 # include <windows.h>
 #elif defined(OS_OSX)
-# if defined(HAVE_CARBON)
+# if defined(USE_CARBON)
 #  include <Carbon/Carbon.h>
 # else
 #  include <CoreFoundation/CoreFoundation.h>
@@ -309,7 +309,7 @@ static int show_pkg_pdf (const char *fname)
 	err = E_FOPEN;
     }
 #elif defined(OS_OSX)
-# if defined(HAVE_CARBON)
+# if defined(USE_CARBON)
     FSRef ref;
 
     err = FSPathMakeRef((const UInt8 *) fname, &ref, NULL);

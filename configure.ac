@@ -91,7 +91,6 @@ pkg_build="no"
 mac_native="no"
 mac_integration="no"
 gui_disabled="no"
-have_carbon="yes"
 gp_3d="yes"
 MAKE="make"
 XML_LIBS=
@@ -202,13 +201,6 @@ AC_ARG_ENABLE(pkgbuild,
 then
   AC_DEFINE(PKGBUILD)
   pkg_build="yes"
-fi])
-
-AC_ARG_ENABLE(carbon,
-[  --disable-carbon        Don't try to use Carbon on macOS],
-[if test "$enableval" = "no"
-then
-  have_carbon="no"
 fi])
 
 AC_ARG_ENABLE(gnuplot-checks,
@@ -513,18 +505,23 @@ case $host_os in
   ;;
 esac
 
-dnl And while we're at it...
+dnl More detail for macOS build
 if test "$darwin_build" = "yes" ; then
-  if test "$have_carbon" = "yes" ; then
-    MACLIB="-Wl,-framework -Wl,Carbon"
-    AC_SUBST(MACLIB)
-    AC_DEFINE(HAVE_CARBON)
-  else
-    MACLIB="-Wl,-framework -Wl,CoreServices"
-    AC_SUBST(MACLIB)
-    AC_DEFINE(USE_SSE2)
-    sse2_result="yes"
-  fi
+  case $host_os in
+    *-darwin1[[0-8]]*
+      MACLIB="-Wl,-framework -Wl,Carbon"
+      AC_SUBST(MACLIB)
+      AC_DEFINE(USE_CARBON)
+      echo "macOS: using Carbon"
+    ;;
+    *-darwin19* | *-darwin2*
+      MACLIB="-Wl,-framework -Wl,CoreServices"
+      AC_SUBST(MACLIB)
+      AC_DEFINE(USE_SSE2)
+      sse2_result="yes"
+      echo "macOS: using CoreServices, not Carbon"
+    ;;
+  esac
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
     AC_SUBST(DARWIN_RPATH)
