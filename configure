@@ -21399,14 +21399,7 @@ rm -f conf.lapacktest
 esac
 
 if test "$darwin_build" = "yes" ; then
-  case $host_os in
-    *-darwin1[0-8]*)
-      MACLIB="-Wl,-framework -Wl,Carbon"
-
-      $as_echo "#define USE_CARBON 1" >>confdefs.h
-
-      echo "macOS: using Carbon"
-    ;;
+  case ${host_os} in
     *-darwin19* | *-darwin2*)
       MACLIB="-Wl,-framework -Wl,CoreServices"
 
@@ -21414,7 +21407,14 @@ if test "$darwin_build" = "yes" ; then
 
       sse2_result="yes"
       echo "macOS: using CoreServices, not Carbon"
-    ;;
+      ;;
+    *)
+      MACLIB="-Wl,-framework -Wl,Carbon"
+
+      $as_echo "#define USE_CARBON 1" >>confdefs.h
+
+      echo "macOS: using Carbon"
+      ;;
   esac
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
