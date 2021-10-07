@@ -21399,8 +21399,9 @@ rm -f conf.lapacktest
 esac
 
 if test "$darwin_build" = "yes" ; then
-  case ${host_os} in
-    *-darwin19* | *-darwin2*)
+  echo "darwin host_os: $host_os"
+  case $host_os in
+    *darwin19* | *darwin2*)
       MACLIB="-Wl,-framework -Wl,CoreServices"
 
       $as_echo "#define USE_SSE2 1" >>confdefs.h
