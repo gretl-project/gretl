@@ -798,6 +798,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
     g_free(ls1);
     g_free(ls2);
 
+    // fprintf(stderr, "run_child_with_pipe: returning %d\n", err);
     return err;
 }
 
@@ -837,6 +838,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	}
     }
 
+    // fprintf(stderr, "run_cmd_with_pipes: returning %d\n", err);
     return err;
 }
 
