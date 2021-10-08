@@ -67,6 +67,7 @@ GtkWidget *obs_button_new (GtkAdjustment *adj, DATASET *dset,
     spinner = gtk_spin_button_new(adj, 1, 0);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spinner), FALSE);
     gtk_entry_set_width_chars(GTK_ENTRY(spinner), (n < 2)? 2 : n);
+    gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spinner), TRUE);
 #if GTK_MAJOR_VERSION == 3
     /* remedy required for gtk3 */
     gtk_entry_set_max_width_chars(GTK_ENTRY(spinner), (n < 2)? 2 : n);
