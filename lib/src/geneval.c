@@ -7727,21 +7727,24 @@ static NODE *do_errorif (NODE *l, NODE *r, parser *p)
 			     "errorif");
         p->err = E_DATA;
     } else {
-        int cond = node_get_bool(l, p, -1);
+        int cond = node_get_bool(l, p, 1);
 
-        if (cond && !p->err) {
+        if (cond) {
 	    const char *funcname = NULL;
 
 	    if (fd > 0) {
 		current_function_info(&funcname, NULL);
 	    }
 	    if (gretl_mpi_initialized()) {
-		write_mpi_errmsg(funcname, r->v.str);
+		if (mpi_rank == 0) {
+		    write_mpi_errmsg(funcname, r->v.str);
+		    p->err = E_FUNCERR;
+		}
 	    } else {
 		gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
 				     funcname, r->v.str);
+		p->err = E_FUNCERR;
 	    }
-            p->err = E_FUNCERR;
         }
     }
 
