@@ -656,10 +656,14 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 	*/
 	CHAR buf[BUFSIZE];
 	DWORD dwread;
+	int ok;
 
 	while (1) {
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
+	    if (!ok) {
+		fputs("Readfile on read handle failed\n", stderr);
+	    }
 	    if (!ok || dwread == 0) {
 		break;
 	    }
