@@ -900,9 +900,9 @@ static int x_date_inverse (double x1, int pd, double x0, int dt0)
     int t0, t1, dt = 0;
 
     if (pd == 5 || pd == 6 || pd == 7) {
-	dt = day_span((guint32) x0, (guint32) x1, pd, NULL) - 1;
+	dt = day_span((guint32) x0, (guint32) x1, pd, NULL);
     } else if (pd == 52) {
-	dt = day_span((guint32) x0, (guint32) x1, 7, NULL) - 1;
+	dt = day_span((guint32) x0, (guint32) x1, 7, NULL);
 	dt /= 7;
     } else if (pd == 1) {
 	dt = fx1 - fx0;
