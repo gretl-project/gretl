@@ -180,7 +180,7 @@ typedef struct series_table_ series_table;
  */
 #define dated_daily_data(p) (p != NULL && p->structure == TIME_SERIES \
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
-                             && p->sd0 > 10000.0)
+                             && p->sd0 > 100000)
 
 /**
  * dated_seven_day_data:
@@ -191,7 +191,7 @@ typedef struct series_table_ series_table;
  */
 #define dated_seven_day_data(p) (p != NULL && p->structure == TIME_SERIES \
                                  && p->pd == 7 && \
-                                 p->sd0 > 10000.0)
+                                 p->sd0 > 100000)
 
 /**
  * dated_weekly_data:
@@ -202,7 +202,7 @@ typedef struct series_table_ series_table;
  */
 #define dated_weekly_data(p) (p != NULL && p->structure == TIME_SERIES \
                               && p->pd == 52 && \
-                              p->sd0 > 10000.0)
+                              p->sd0 > 100000)
 
 /**
  * calendar_data:
@@ -213,18 +213,7 @@ typedef struct series_table_ series_table;
  */
 #define calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
                           (p->pd == 5 || p->pd == 6 || p->pd == 7 \
-                           || p->pd == 52) && strchr(p->stobs, '-'))
-
-/**
- * probably_calendar_data:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a dataset should calendar
- * dates for observation strings (1) or not (0).
- */
-#define probably_calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
-				   (p->pd == 5 || p->pd == 6 || p->pd == 7 \
-				    || p->pd == 52))
+                           || p->pd == 52) && p->sd0 > 100000)
 
 /**
  * quarterly_or_monthly:

@@ -6603,7 +6603,7 @@ int time_series_from_panel (DATASET *tset, const DATASET *pset)
 	} else {
 	    err = 1;
 	}
-    } else if (probably_calendar_data(tset)) {
+    } else if (calendar_data(tset)) {
 	calendar_date_string(tset->stobs, 0, tset);
     }
 
