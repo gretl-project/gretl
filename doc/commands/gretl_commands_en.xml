@@ -4672,8 +4672,9 @@
 
       <para context="cli">
 	In the appropriate context, <lit>series</lit>,
-	<lit>scalar</lit>, <lit>matrix</lit>, <lit>string</lit> and
-	<lit>bundle</lit> are synonyms for this command.
+	<lit>scalar</lit>, <lit>matrix</lit>, <lit>string</lit>,
+	<lit>bundle</lit> and <lit>array</lit> are synonyms for this
+	command.
       </para>
 
       <para context="cli">
