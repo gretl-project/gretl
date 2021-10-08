@@ -4436,8 +4436,6 @@
 	Applicable only in the context of a user-defined function (see
 	<cmdref targ="function"/>). Causes execution of the current
 	function to terminate with an error condition flagged.
-	An exception is the special MPI mode for parallelized program
-	execution, where only the associated string is printed.
       </para>
       <para>
 	The optional <repl>message</repl> argument can take the
@@ -9156,6 +9154,23 @@
       <menu-path>Model window, /Tests</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="mpi" section="Programming"
+	   label="Message Passing Interface">
+    <usage>
+      <arguments>
+	<argument>see below</argument>
+      </arguments>
+    </usage>
+    <description>
+      <para>
+	The <lit>mpi</lit> command starts a block of statements (which
+	must be ended with <lit>end mpi</lit>) to be executed using
+	MPI (Message Passing Interface) parallelization. See
+	<doc>gretl-mpi.pdf</doc> for a full account of this facility.
+      </para>
+    </description>
   </command>
 
   <command name="mpols" section="Estimation" label="Multiple-precision OLS">

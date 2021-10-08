@@ -1637,7 +1637,7 @@ static gchar *get_mnu_string (const char *key)
     } else if (!strcmp(key, "GeoplotDoc")) {
 	s = _("Creating maps");
     } else if (!strcmp(key, "LpsolveDoc")) {
-	s = _("Linear Programs");
+	s = _("Linear Programming");
     } else {
 	s = key;
     }

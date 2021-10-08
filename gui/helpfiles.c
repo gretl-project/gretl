@@ -2459,6 +2459,8 @@ int get_pdf_path (const char *name, char *fullpath)
 	code = GRETL_LP;
     } else if (!strcmp(name, "gretl-svm.pdf")) {
 	code = GRETL_SVM;
+    } else if (!strcmp(name, "gretl-mpi.pdf")) {
+	code = GRETL_MPI;
     }
 
     if (code > 0) {

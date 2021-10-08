@@ -4145,14 +4145,13 @@
       </fnargs>
       <description>
 	<para>
-	  Applicable only in the context of a user-defined function.
-	  If <argname>condition</argname> evaluates as non-zero, it
+	  Applicable only in the context of a user-defined function,
+	  or within an <cmdref targ="mpi"/> block.  If
+	  <argname>condition</argname> evaluates as non-zero, it
 	  causes execution of the current function to terminate with
 	  an error condition flagged; the <argname>msg</argname>
 	  argument is then printed as part of the message shown to the
 	  caller of the function in question.
-	  An exception is the special MPI mode for parallelized program
-		execution, where only the associated string is printed. 
 	</para>
 	<para>
 	  The return value from this function (1) is purely nominal.
