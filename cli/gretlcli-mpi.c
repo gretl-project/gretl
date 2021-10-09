@@ -485,7 +485,11 @@ int main (int argc, char *argv[])
 
     while (cmd.ci != QUIT && fb != NULL) {
         if (err) {
-            gretl_mpi_abort(linecopy);
+	    if (err == E_FUNCERR) {
+		mpi_exit(1);
+	    } else {
+		gretl_mpi_abort(linecopy);
+	    }
         }
 
         if (gretl_execute_loop()) {
