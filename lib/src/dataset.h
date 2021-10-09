@@ -212,8 +212,8 @@ typedef struct series_table_ series_table;
  * dates for observation strings (1) or not (0).
  */
 #define calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
-                          (p->pd == 5 || p->pd == 6 || p->pd == 7 \
-                           || p->pd == 52) && p->sd0 > 100000)
+                          (p->pd == 5 || p->pd == 6 || p->pd == 7 || p->pd == 52) && \
+			  (p->sd0 > 100000 || strchr(p->stobs, '-')))
 
 /**
  * quarterly_or_monthly:
