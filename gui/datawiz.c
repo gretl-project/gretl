@@ -315,10 +315,12 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	goto finalize;
     }
 
-    /* check for panel-time change */
-    if (dwinfo->panel_pd != dataset->panel_pd ||
-	dwinfo->panel_sd0 != dataset->panel_sd0) {
-	panel_ts_delta = 1;
+    if (opts->tsinfo != NULL) {
+	/* check for panel-time change */
+	if (opts->tsinfo->pd != dataset->panel_pd ||
+	    opts->tsinfo->sd0 != dataset->panel_sd0) {
+	    panel_ts_delta = 1;
+	}
     }
 
     /* check for no changes */
@@ -386,10 +388,10 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     }
     if (!err && panel_ts_delta) {
 	/* specifying the panel time dimension */
-	dataset->panel_pd = dwinfo->panel_pd;
-	dataset->panel_sd0 = dwinfo->panel_sd0;
+	dataset->panel_pd = opts->tsinfo->pd;
+	dataset->panel_sd0 = opts->tsinfo->sd0;
 	setobs_cmd[1] = g_strdup_printf("setobs %d %s --panel-time",
-					dataset->panel_pd,
+					opts->tsinfo->pd,
 					opts->tsinfo->stobs);
     }
     if (!err && opts->unames_id > 0) {
@@ -475,9 +477,9 @@ static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
     }
 
     err = simple_set_obs(dataset, dwinfo->pd, dwinfo->stobs, opt);
-    if (!err && dwinfo->panel_pd > 0) {
-	dataset->panel_pd = dwinfo->panel_pd;
-	dataset->panel_sd0 = dwinfo->panel_sd0;
+    if (!err && opts->tsinfo != NULL && opts->tsinfo->pd > 0) {
+	dataset->panel_pd = opts->tsinfo->pd;
+	dataset->panel_sd0 = opts->tsinfo->sd0;
     }
 
     if (opts->flags & DW_SSHEET) {
@@ -490,9 +492,9 @@ static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
 	lib_command_sprintf("setobs %d %s%s", dwinfo->pd,
 			    dwinfo->stobs, print_flags(opt, SETOBS));
 	record_command_verbatim();
-	if (dwinfo->panel_pd > 0) {
+	if (opts->tsinfo != NULL && opts->tsinfo->pd > 0) {
 	    lib_command_sprintf("setobs %d %s --panel-time",
-				dataset->panel_pd, opts->tsinfo->stobs);
+				opts->tsinfo->pd, opts->tsinfo->stobs);
 	    record_command_verbatim();
 	}
     }
@@ -766,8 +768,8 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 	    N = opts->dvals[2];
 	    dwinfo->pd = T = opts->dvals[3];
 	} else {
-	    N = dwinfo->t1;
-	    T = nobs / N;
+	    T = dwinfo->pd;
+	    N = nobs / T;
 	    if (dataset->pangrps == NULL) {
 		opts->unames_id = usable_group_names_series_id(dataset, 12);
 	    }
@@ -782,12 +784,11 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 	g_string_append(gs, _("Time dimension: "));
 	g_string_append(gs, panel_ts_frequency_string(dwinfo));
 	if (opts->tsinfo != NULL) {
-	    int lastobs = opts->tsinfo->t1 + dwinfo->pd - 1;
-
-	    ntolabel(opts->tsinfo->endobs, lastobs, opts->tsinfo);
+	    opts->tsinfo->sd0 = get_date_x(opts->tsinfo->pd, opts->tsinfo->stobs);
+	    opts->tsinfo->t1 = 0;
+	    ntolabel(opts->tsinfo->endobs, dwinfo->pd - 1, opts->tsinfo);
 	    g_string_append_printf(gs, ", %s to %s", opts->tsinfo->stobs,
 				   opts->tsinfo->endobs);
-	    dwinfo->panel_sd0 = get_date_x(opts->tsinfo->pd, opts->tsinfo->stobs);
 	} else {
 	    g_string_append_printf(gs, ", 1 to %d", dwinfo->pd);
 	}
@@ -1486,7 +1487,7 @@ static int add_startobs_spinner (GtkWidget *vbox,
 					       0, dinfo->n - 1,
 					       1, 10, 0);
     opts->tsspin = spin = data_start_button(adj, dinfo);
-    gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
+    //gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
 
     hbox = gtk_hbox_new(FALSE, 5);
     if (step == DW_PANEL_STOBS) {
@@ -2101,16 +2102,19 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
 	gtk_widget_show(cancel);
 	gtk_widget_hide(back);
 	gtk_widget_show(forward);
+	gtk_widget_grab_default(forward);
 	gtk_widget_hide(apply);
     } else if (step == DW_CONFIRM) {
 	gtk_widget_show(cancel);
 	gtk_widget_show(back);
 	gtk_widget_hide(forward);
 	gtk_widget_show(apply);
+	gtk_widget_grab_default(apply);
     } else {
 	gtk_widget_show(cancel);
 	gtk_widget_show(back);
 	gtk_widget_show(forward);
+	gtk_widget_grab_default(forward);
 	gtk_widget_hide(apply);
     }
 
@@ -2334,6 +2338,7 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
 
     /* "Forward" button */
     b = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+    gtk_widget_set_can_default(b, TRUE);
     g_object_set_data(G_OBJECT(b), "dlg", dlg);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(dwiz_forward),
@@ -2343,6 +2348,7 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
 
     /* "Apply" button */
     b = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+    gtk_widget_set_can_default(b, TRUE);
     g_object_set_data(G_OBJECT(b), "dlg", dlg);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(dwiz_apply),
