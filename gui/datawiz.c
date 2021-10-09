@@ -1487,7 +1487,9 @@ static int add_startobs_spinner (GtkWidget *vbox,
 					       0, dinfo->n - 1,
 					       1, 10, 0);
     opts->tsspin = spin = data_start_button(adj, dinfo);
-    //gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
+#if 0 /* could mask an invalid entry? */
+    gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
+#endif
 
     hbox = gtk_hbox_new(FALSE, 5);
     if (step == DW_PANEL_STOBS) {
