@@ -1,12 +1,18 @@
 version 2021e, in progress
+- Panel data time dimension: add apparatus to specify this
+  via the graphical interface
+- Packaged panel data files: add more metadata where wanted
 - Ensure the expected round-trip from strptime to strftime
-  for underspecified dates
+  for underspecified dates such as "1990"
 - "kpss" command for panel data: improve output for the case
   where automatic lag order is selected; record $test and
   $pvalue in matrix form
-- Build fixes for FreeBSD and for the non-OPENMP case
+- Build fixes for FreeBSD, for the non-OPENMP case, and for
+  recent macOS
 - "genr": get informative error messages to appear in more
   cases
+- errorif() function: get this working within an mpi block,
+  in which case it can be used outside of a function
 
 2021-09-30 version 2021d
 - "biprobit" command: include rho in $coeff, $stderr and
