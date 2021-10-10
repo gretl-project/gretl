@@ -748,7 +748,9 @@ run_child_with_pipe (const char *arg, const char *currdir,
     ZeroMemory(&sinfo, sizeof sinfo);
 
     sinfo.cb = sizeof sinfo;
+#if 0 /* Too Much Information? */
     sinfo.hStdError = hwrite;
+#endif
     sinfo.hStdOutput = hwrite;
     sinfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     sinfo.dwFlags |= (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW);
