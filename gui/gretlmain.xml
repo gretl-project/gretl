@@ -301,9 +301,9 @@
       <menuitem action="Primer"/>
       <menuitem action="Pkgbook"/>
       <menuitem action="GeoplotDoc"/>
+      <menuitem action="gretlDBN"/>
       <menuitem action="gretlMPI"/>
       <menuitem action="gretlSVM"/>
-      <menuitem action="gretlDBN"/>
       <menuitem action="gretlLpsolve"/>
       <separator/>
       <menuitem action="UpdateCheck"/>

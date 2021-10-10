@@ -2037,9 +2037,9 @@ GtkActionEntry main_entries[] = {
     { "Primer", GRETL_STOCK_PDF, N_("_Hansl primer"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "Pkgbook", GRETL_STOCK_PDF, N_("_Function package guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "GeoplotDoc", GRETL_STOCK_PDF, N_("Creating maps"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlMPI", GRETL_STOCK_PDF, N_("_gretl + MPI"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlSVM", GRETL_STOCK_PDF, N_("_gretl + SVM"), NULL, NULL, G_CALLBACK(display_pdf_help) },
-    { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlLpsolve", GRETL_STOCK_PDF, N_("_gretl + lpsolve"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
@@ -2343,6 +2343,17 @@ static GtkWidget *make_main_menu (void)
 	    }
 	}
     }
+
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlDBN",
+			  N_("International data access"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlMPI",
+			  N_("Parallelization"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlMPI",
+			  N_("Parallelization"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlSVM",
+			  N_("Support Vector Machines"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlLpsolve",
+			  N_("Linear Programming"));
 
     g_free(main_ui);
 

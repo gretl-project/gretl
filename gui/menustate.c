@@ -54,6 +54,19 @@ void flip (GtkUIManager *ui, const char *path, gboolean s)
     }
 }
 
+void menu_item_set_tooltip (GtkUIManager *ui, const char *path,
+			    const char *tip)
+{
+    if (ui != NULL) {
+	GtkWidget *w;
+
+	w = gtk_ui_manager_get_widget(ui, path);
+	if (w != NULL) {
+	    gtk_widget_set_tooltip_text(w, _(tip));
+	}
+    }
+}
+
 /* by using gretl_set_window_modal() we make the main
    window visibly insensitive */
 
