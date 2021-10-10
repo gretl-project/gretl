@@ -1626,6 +1626,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("Check for _addons");
     } else if (!strcmp(key, "Registry")) {
 	s = _("Package registry");
+    } else if (!strcmp(key, "GeoplotDoc")) {
+	s = _("Creating maps");
     } else if (!strcmp(key, "gretlMPI")) {
 	s = _("gretl + MPI");
     } else if (!strcmp(key, "gretlSVM")) {
@@ -1634,10 +1636,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("_Seed for random numbers");
     } else if (!strcmp(key, "gretlDBN")) {
 	s = _("dbnomics for gretl");
-    } else if (!strcmp(key, "GeoplotDoc")) {
-	s = _("Creating maps");
-    } else if (!strcmp(key, "LpsolveDoc")) {
-	s = _("Linear Programming");
+    } else if (!strcmp(key, "gretlLpsolve")) {
+	s = _("gretl + lpsolve");
     } else {
 	s = key;
     }

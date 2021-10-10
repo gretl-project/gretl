@@ -300,11 +300,11 @@
       <menuitem action="KbdRef"/>
       <menuitem action="Primer"/>
       <menuitem action="Pkgbook"/>
+      <menuitem action="GeoplotDoc"/>
       <menuitem action="gretlMPI"/>
       <menuitem action="gretlSVM"/>
       <menuitem action="gretlDBN"/>
-      <menuitem action="GeoplotDoc"/>
-      <menuitem action="LpsolveDoc"/>
+      <menuitem action="gretlLpsolve"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>
