@@ -28,4 +28,6 @@ int console_sample_changed (const DATASET *pdinfo);
 
 int console_is_busy (void);
 
+void clear_console (GtkWidget *w, windata_t *vwin);
+
 #endif /* CONSOLE_H */

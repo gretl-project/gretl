@@ -957,7 +957,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(stickiness_callback), STICKIFY_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
-    { N_("Clear"), GTK_STOCK_CLEAR, G_CALLBACK(dummy_call), CLEAR_ITEM },
+    { N_("Clear"), GTK_STOCK_CLEAR, G_CALLBACK(clear_console), CLEAR_ITEM },
     { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
