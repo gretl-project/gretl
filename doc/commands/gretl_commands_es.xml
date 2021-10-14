@@ -2625,9 +2625,10 @@
 	pero ciertas variables determinísticas se reconocen y su contenido se
 	extiende al rango añadido; en concreto, las variables con tendencia lineal
 	simple y las variables ficticias periódicas. Si el conjunto de datos tiene
-	la estructura de un panel, puedes usar la opción <opt>panel-time</opt>
-	para alargar las series de tiempo para cada unidad de sección cruzada 
-	(con el efecto, por defecto, de añadir <math>n</math> de esos elementos).
+	la estructura de un panel, la acción predeterminada consiste en añadir
+	<math>n</math> unidades de sección cruzada al panel; pero si indicas
+	la opción <opt>panel-time</opt>, el efecto consiste en añadir
+	<math>n</math> observaciones a las series temporales para cada unidad.
       </para>
       <para>
 	<lit>insobs</lit>: Debe estar seguido de un entero positivo (no
@@ -3272,7 +3273,7 @@
       <para context="gui">
 	En lo referente al manejo de los instrumentos, consulta la documentación para
 	a versión de guion de esta instrucción. Actualmente no puedes especificar
-	instrumentos explícitamente en la Interface Gráfica de Usuario (GUI), así
+	instrumentos explícitamente en la Interfaz Gráfica de Usuario (GUI), así
 	todas las variables independientes se consideran estrictamente exógenas.
       </para>
       <para>
@@ -3823,7 +3824,7 @@
       </para>
       <para>
 	Puedes acceder a algunas de las prestaciones de la función
-	<lit>tdisagg</lit> por medio de la interface gráfica, seleccionando
+	<lit>tdisagg</lit> por medio de la interfaz gráfica, seleccionando
 	una serie en la ventana principal de GRETL, y a continuación buscar
 	<quote>Desagregar</quote> bajo el menú Variable.
       </para>
@@ -4089,12 +4090,12 @@
       <para>
 	Esta sencilla instrucción (sin argumentos, sin opciones) está ideada para
 	ser usada en guiones que llevan algo de tiempo, y que deben ejecutarse con la
-	Interface Gráfica de Usuario (GUI) de GRETL (el programa de líneas de
+	Interfaz Gráfica de Usuario (GUI) de GRETL (el programa de líneas de
 	instrucción lo ignora), para darle al usuario un indicio visual de que
 	las cosas se están moviendo y GRETL no está <quote>parado</quote>.
       </para>
       <para>
-	Generalmente, si lanzas un guion en la Interface Gráfica de Usuario (GUI),
+	Generalmente, si lanzas un guion en la Interfaz Gráfica de Usuario (GUI),
 	no se muestra el resultado hasta que se complete su ejecución, pero
 	el efecto de invocar <lit>flush</lit> es como se indica a continuación:
       </para>
@@ -4436,8 +4437,6 @@
 	Solo es aplicable en el contexto de una función definida por el usuario
 	(consulta <cmdref targ="function"/>). Provoca que la ejecución de la
 	función actual, finalice con la señalización de una condición de fallo.
-	Una excepción es el modo MPI especial para la ejecución de programas
-	en paralelo, en el que solo se muestra la cadena asociada.
       </para>
       <para>
 	El argumento <repl>mensaje</repl> (opcional) puede tener
@@ -4673,7 +4672,8 @@
       <para context="cli">
 	Para esta instrucción y en el contexto apropiado, las expresiones
 	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
-	<lit>string</lit> y <lit>bundle</lit> son sinónimos.
+	<lit>string</lit>, <lit>bundle</lit> y <lit>array</lit> son
+	sinónimos.
       </para>
 
       <para context="cli">
@@ -4811,7 +4811,7 @@
 	<emphasis>Advertencia</emphasis>: Con el programa en líneas de instrucción,
 	las instrucciones <cmd>genr</cmd> que recuperan datos relacionados con un
 	modelo, siempre se refieren al modelo que se estimó más recientemente.
-	Esto también es cierto en el programa de Interface Gráfica de Usuario (GUI),
+	Esto también es cierto en el programa de Interfaz Gráfica de Usuario (GUI),
 	cuando utilizas <cmd>genr</cmd> en la <quote>consola de GRETL</quote>o si
 	introduces una fórmula usando la opción <quote>Definir nueva variable</quote>
 	bajo el menú Añadir en la ventana principal. Con la GUI, sin embargo, tienes la opción
@@ -5498,7 +5498,7 @@
       <para>
 	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	genere gráficos. Gnuplot es un programa de representación gráfica muy
-	completo con miles de opciones. Mediante una interface gráfica,
+	completo con miles de opciones. Mediante una interfaz gráfica,
 	GRETL te da acceso directo a un subconjunto de estas opciones y trata
 	de elegir valores sensatos para ti; si quieres, también te permite
 	que tengas un control completo sobre los detalles del gráfico.
@@ -5621,7 +5621,7 @@
       </para>
       <para>
 	También es posible trabajar en la página de gráficos mediante un guion, o
-	utilizando la consola (en el programa de Interface Gráfica de Usuario,
+	utilizando la consola (en el programa de Interfaz Gráfica de Usuario,
 	GUI). Se le da apoyo a las siguientes instrucciones y opciones:
       </para>
       <para>
@@ -5734,9 +5734,9 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>gui-main</lit>: La interface pública que debiera de presentarse por
-	    defecto a los usuarios al utilizar la Interface Gráfica de Usuario (GUI).
-	    Esto resulta útil solo cuando el paquete tiene más de una interface pública.
+	    <lit>gui-main</lit>: La interfaz pública que debiera de presentarse por
+	    defecto a los usuarios al utilizar la Interfaz Gráfica de Usuario (GUI).
+	    Esto resulta útil solo cuando el paquete tiene más de una interfaz pública.
 	  </para>
 	</li>
 	<li>
@@ -5752,7 +5752,7 @@
       </ilist>
       <para>
 	Además, ciertas funciones pueden indicarse con <quote>no-print</quote>. En
-	general, cuando se llama a una función mediante el programa de Interface
+	general, cuando se llama a una función mediante el programa de Interfaz
 	Gráfica de Usuario (GUI), GRETL abre una ventana para mostrar su
 	resultado en texto. Al marcar este cuadradito estás indicándole a GRETL
 	que no haga esto, de ahí que no debas esperar resultados en texto.
@@ -5761,7 +5761,7 @@
 	Finalmente, puedes marcar la función <lit>gui-main</lit> (si existe)
 	como <quote>menu-only</quote>. Esto le indica a GRETL que la función
 	en cuestión está diseñada específicamente para que se invoque desde
-	el menú de la Interface Gráfica de Usuario (GUI) a la que está unida, y no
+	el menú de la Interfaz Gráfica de Usuario (GUI) a la que está unida, y no
 	debe presentarse a los usuarios, a no ser en ese caso.
       </para>
     </description>
@@ -8545,7 +8545,7 @@
       <subhead>Elementos opcionales</subhead>
       <para>
 	Además, puedes utilizar el botón <quote>Texto de ayuda</quote> de la GUI
-	para añadir o editar texto de ayuda específico de Interface Gráfica
+	para añadir o editar texto de ayuda específico de Interfaz Gráfica
 	de Usuario (GUI) para que se muestre cuando se invoque el paquete desde
 	un menú. Y si el paquete está pensado para invocarlo desde la ventana de un
 	modelo, puedes especificar un cierto tipo de modelo (identificado por su
@@ -9155,6 +9155,23 @@
       <menu-path>Ventana de modelo: Contrastes</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="mpi" section="Programming"
+	   label="Interfaz de Paso de Mensajes">
+    <usage>
+      <arguments>
+	<argument>Mira abajo</argument>
+      </arguments>
+    </usage>
+    <description>
+      <para>
+	La instrucción <lit>mpi</lit> comienza un bloque de expresiones (que se
+	deben finalizar con <lit>end mpi</lit>) para ser ejecutadas usando el
+	cómputo en paralelo de MPI (Interfaz de Paso de Mensajes). Consulta
+	<doc>gretl-mpi.pdf</doc> para obtener un informe completo de esta facultad.
+      </para>
+    </description>
   </command>
 
   <command name="mpols" section="Estimation" label="MCO de alta precisión">
@@ -10379,7 +10396,7 @@
 	elementos se encuentran bajo el elemento /Archivo/Paquetes de funciones.
       </para>
       <para>
-	Muchos paquetes proponen agregarse por sí mismos a los menús de la Interface
+	Muchos paquetes proponen agregarse por sí mismos a los menús de la Interfaz
 	Gráfica de Usuario (GUI). Puedes revisar estas anexiones mediante
 	<mnu targ="Registry">Registro de paquetes</mnu> (accede a él mediante
 	el botón de Preferencias en el buscador de paquetes instalados).
@@ -11023,7 +11040,7 @@
 	modo 'plano', sin ruta ni extensión, como en el último ejemplo de arriba.
 	La consecuencia de esto es la descarga de ese paquete en cuestión de la
 	memoria de GRETL (si está cargado en ese momento), y también eliminarlo del
-	menú de la Interface Gráfica (GUI) al que esté añadido, si lo está a alguno.
+	menú de la Interfaz Gráfica (GUI) al que esté añadido, si lo está a alguno.
       </para>
       <para>
 	<lit>remove</lit>: Realiza las acciones indicadas para <lit>unload</lit>
@@ -11190,7 +11207,7 @@
       <para>
 	La línea de comienzo se puede preceder de la expresión
 	<quote><repl>savename</repl> <lit>&lt;-</lit></quote> para que
-	se guarde un gráfico como icono en el programa de Interface Gráfica
+	se guarde un gráfico como icono en el programa de Interfaz Gráfica
 	de Usuario (GUI). El bloque acaba con <lit>end plot</lit>.
       </para>
       <para>
@@ -12158,7 +12175,7 @@
 	</li>
 	<li>
 	  <para>
-	    Cuando se invoca desde la consola del programa de Interface Gráfica
+	    Cuando se invoca desde la consola del programa de Interfaz Gráfica
 	    de Usuario (GUI), se cierra la ventana de la consola.
 	  </para>
 	</li>
@@ -12175,7 +12192,7 @@
       </para>
       <para>
 	La instrucción <lit>quit</lit> en ningún caso provoca que finalice el
-	programa de Interface Gráfica de Usuario (GUI) de GRETL. Esto se
+	programa de Interfaz Gráfica de Usuario (GUI) de GRETL. Esto se
 	hace mediante la opción <lit>Salir</lit> del apartado <lit>Archivo</lit>
 	del menú, o mediante <lit>Ctrl+Q</lit>, o pulsando con el ratón el
 	control de cierre en la barra de título de la ventana principal de GRETL.
@@ -12843,7 +12860,7 @@
 	el control al indicador interactivo. Esta instrucción está pensada
 	para que la utilices con el programa de líneas de instrucción
 	<program>gretlcli</program> o con la <quote>consola de GRETL</quote>
-	en el programa de Interface Gráfica de Usuario (GUI).
+	en el programa de Interfaz Gráfica de Usuario (GUI).
       </para>
       <para>
 	Consulta también <cmdref targ="include"/>.
@@ -13424,7 +13441,7 @@
 	  Permite ejecutar programas externos desde GRETL mediante el
 	  intérprete de sistema. Esto no está habilitado por defecto
 	  por razones de seguridad, y solo puedes habilitarlo mediante la
-	  Interface Gráfica de Usuario (Herramientas/Preferencias/General).
+	  Interfaz Gráfica de Usuario (Herramientas/Preferencias/General).
 	  Sin embargo, una vez activada, esta configuración permanecerá activa
 	  para sesiones futuras hasta que se desactive explícitamente.
 	  </para>
@@ -13940,7 +13957,7 @@
 	cadena de texto entre comillas, esa cadena se utiliza para establecer
 	la etiqueta descriptiva de la variable. Esta etiqueta se muestra en respuesta
 	a la instrucción <cmdref targ="labels"/>, y también se muestra en la ventana
-	principal del programa de Interface Gráfica de Usuario (GUI).
+	principal del programa de Interfaz Gráfica de Usuario (GUI).
       </para>
       <para>
 	Cuando especificas la opción <opt>graph-name</opt> seguida de una
@@ -14321,7 +14338,7 @@
       <para>
 	Por razones de seguridad, esta prestación no se permite por defecto. Para
 	activarla, marca el cuadradito <quote>Permitir instrucciones de shell</quote>
-	bajo el menú Herramientas/Preferencias/General en el programa de Interface Gráfica
+	bajo el menú Herramientas/Preferencias/General en el programa de Interfaz Gráfica
 	de Usuario (GUI). Esto también hace que estén disponibles las instrucciones del
 	intérprete en el programa de instrucciones en líneas (y resulta el único modo de hacerlo).
       </para>
@@ -16292,7 +16309,7 @@
       </para>
       <para>
 	El diálogo del directorio de trabajo también te permite determinar el
-	comportamiento del selector de archivos de la Interface Gráfica de Usuario
+	comportamiento del selector de archivos de la Interfaz Gráfica de Usuario
 	(GUI). Así, si abres o guardas un archivo en un determinado directorio, ¿el
 	selector debe recordarlo y volver al mismo directorio en la siguiente solicitud?
 	¿O el selector debe visitar siempre el directorio de trabajo elegido?

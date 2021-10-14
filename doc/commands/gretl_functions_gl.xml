@@ -984,7 +984,7 @@
 	  <li>
             <para>
               <lit>mpi</lit>: número enteiro igual a 1 se o sistema admite
-              MPI (Message Passing Interface), e 0 noutro caso.
+              MPI (Interface de Paso de Mensaxes), e 0 noutro caso.
             </para>
 	  </li>
 	  <li>
@@ -4146,13 +4146,12 @@
       <description>
 	<para>
 	  Esta función só se aplica no contexto dunha función definida polo
-	  usuario. Se a <argname>condicion</argname> se valora como non nula,
+	  usuario, ou dentro dun bloque <cmdref targ="mpi"/>. Se a
+	  <argname>condicion</argname> se valora como non nula,
 	  iso implica que a execución da función vixente remate coa presentación
 	  dunha mensaxe condicionada a que se produza un fallo; entón o
 	  argumento <argname>mensaxe</argname> vaise presentar como parte
-	  da mensaxe de fallo que se amosa ao chamar á función. Como excepción
-	  está o modo MPI especial para a execución de programas en paralelo,
-	  no que só se amosa a cadea asociada.
+	  da mensaxe de fallo que se amosa ao chamar á función en cuestión.
 	</para>
 	<para>
 	  O valor que se devolve con esta función (1) é simplemente nominal.

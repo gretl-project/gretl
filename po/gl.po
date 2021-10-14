@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2021-08-27 12:57+0200\n"
+"PO-Revision-Date: 2021-10-14 18:27+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -274,7 +274,7 @@ msgstr ""
 #: lib/src/adf_kpss.c:2367 lib/src/adf_kpss.c:2402
 #, c-format
 msgid "Lag truncation parameter = %d\n"
-msgstr "Parámetro de truncamento dos retardos = %d\n"
+msgstr "Parámetro de tronzado dos retardos = %d\n"
 
 #: lib/src/adf_kpss.c:2368 lib/src/compare.c:395 lib/src/compare.c:983
 #: lib/src/compare.c:1964 lib/src/compare.c:2183 lib/src/compare.c:2388
@@ -316,14 +316,13 @@ msgid "(without trend)"
 msgstr "(sen tendencia)"
 
 #: lib/src/adf_kpss.c:2404
-#, fuzzy, c-format
+#, c-format
 msgid "Lag truncation parameter: %d - %d\n"
-msgstr "Parámetro de truncamento dos retardos = %d\n"
+msgstr "Parámetro de tronzado de retardos:%d - %d\n"
 
 #: lib/src/adf_kpss.c:2407
-#, fuzzy
 msgid "Lag truncation automatic\n"
-msgstr "Parámetro de truncamento dos retardos = %d\n"
+msgstr "Tronzado de retardos automático\n"
 
 #: lib/src/adf_kpss.c:2461
 msgid "interpolated p-value"
@@ -1096,7 +1095,7 @@ msgstr "'%s' -- non se fixo conversión numérica!"
 #: lib/src/csvdata.c:3223
 #, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "Aviso: Truncáronse %d etiquetas.\n"
+msgstr "Aviso: Tronzáronse %d etiquetas.\n"
 
 #: lib/src/csvdata.c:3265
 msgid "scanning for data...\n"
@@ -2692,11 +2691,11 @@ msgstr "relativo ao modelo"
 #: gui/gui_utils.c:3472 gui/join-gui.c:231 gui/join-gui.c:234
 #: gui/join-gui.c:407 gui/join-gui.c:462 gui/join-gui.c:797 gui/settings.c:1320
 msgid "none"
-msgstr "ningunha"
+msgstr "Non"
 
 #: lib/src/genfuncs.c:6665
 msgid "other"
-msgstr "outro"
+msgstr "Outro"
 
 #: lib/src/genfuncs.c:8000
 #, c-format
@@ -3986,9 +3985,8 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Proba de heterocedasticidade de distribución libre de Wald"
 
 #: lib/src/gretl_model.c:4176
-#, fuzzy
 msgid "Likelihood ratio test of independence"
-msgstr "Proba de razón de verosimilitudes"
+msgstr "Proba de razón de verosimilitudes para independencia"
 
 #: lib/src/gretl_model.c:4211
 msgid "robust variant"
@@ -3999,9 +3997,8 @@ msgid "No first-order autocorrelation (rho = 0)"
 msgstr "Sen autocorrelación de 1ª orde (rho = 0)"
 
 #: lib/src/gretl_model.c:4324
-#, fuzzy
 msgid "atanh(rho) = 0"
-msgstr "[rho = 0]"
+msgstr "atanh(rho) = 0"
 
 #: lib/src/gretl_model.c:4385
 #, c-format
@@ -9702,14 +9699,12 @@ msgid "Panel index variables"
 msgstr "Variables índices de panel"
 
 #: gui/datawiz.c:122
-#, fuzzy
 msgid "Panel time dimension"
-msgstr "na dimensión temporal"
+msgstr "Dimensión temporal do panel"
 
 #: gui/datawiz.c:123
-#, fuzzy
 msgid "Panel first period"
-msgstr "Í_ndice de unidades en panel"
+msgstr "Primeiro período do panel"
 
 #: gui/datawiz.c:124
 msgid "Confirm dataset structure"
@@ -9870,9 +9865,8 @@ msgid "stacked cross sections"
 msgstr "seccións cruzadas amontoadas"
 
 #: gui/datawiz.c:784
-#, fuzzy
 msgid "Time dimension: "
-msgstr "Dimension máxima:"
+msgstr "Dimension temporal: "
 
 #: gui/datawiz.c:801
 msgid "(dropping missing observations)"
@@ -9906,7 +9900,7 @@ msgstr "Eliminar as observacións ausentes"
 #: gui/datawiz.c:1698
 #, c-format
 msgid "Take unit names from %s?"
-msgstr ""
+msgstr "Coller os nomes das unidades de %s?"
 
 #: gui/datawiz.c:1936
 msgid "The data set contains no suitable index variables"
@@ -10136,9 +10130,8 @@ msgid "gretl: set sample"
 msgstr "GRETL: Poñer mostra"
 
 #: gui/dialogs.c:2070
-#, fuzzy
 msgid "Units"
-msgstr "Unidade"
+msgstr "Unidades"
 
 #: gui/dialogs.c:2070
 msgid "Periods"
@@ -11045,9 +11038,8 @@ msgid "Dynare files (*.mod)"
 msgstr "Ficheiros Dynare (*.mod)"
 
 #: gui/fileselect.c:916
-#, fuzzy
 msgid "lpsolve files (*.lp)"
-msgstr "Todos os ficheiros (*.*)"
+msgstr "Ficheiros de LPSOLVE (*.lp)"
 
 #: gui/fileselect.c:1101
 msgid "Gretl datafiles (*.gdt)"
@@ -12582,9 +12574,8 @@ msgid "Stata program"
 msgstr "Programa Stata"
 
 #: gui/gretl.c:1785
-#, fuzzy
 msgid "lpsolve program"
-msgstr "Periodograma da mostra"
+msgstr "Programa LPSOLVE"
 
 #: gui/gretl.c:1787
 msgid "_Session files"
@@ -13403,9 +13394,8 @@ msgid "_gretl + SVM"
 msgstr "_GRETL + SVM"
 
 #: gui/gretl.c:2043
-#, fuzzy
 msgid "_gretl + lpsolve"
-msgstr "Consola de GRETL"
+msgstr "_GRETL + LPSOLVE"
 
 #: gui/gretl.c:2044
 msgid "Check for _updates"
@@ -13425,21 +13415,19 @@ msgstr "_Análise"
 
 #: gui/gretl.c:2348
 msgid "International data access"
-msgstr ""
+msgstr "Acceso a datos internacionais"
 
 #: gui/gretl.c:2350 gui/gretl.c:2352
-#, fuzzy
 msgid "Parallelization"
-msgstr "Disposición de parámetros"
+msgstr "Cómputo en paralelo"
 
 #: gui/gretl.c:2354
 msgid "Support Vector Machines"
-msgstr ""
+msgstr "Máquinas de Soporte Vectorial"
 
 #: gui/gretl.c:2356
-#, fuzzy
 msgid "Linear Programming"
-msgstr "Programación"
+msgstr "Programación Linear"
 
 #: gui/gretl.c:2412
 msgid "Enter name for list of series"
@@ -14055,9 +14043,8 @@ msgid "gretl: edit Dynare script"
 msgstr "GRETL: Editar un guión Dynare"
 
 #: gui/gui_utils.c:1827
-#, fuzzy
 msgid "gretl: edit lpsolve script"
-msgstr "GRETL: Editar un guión de R"
+msgstr "GRETL: Editar un guión de LPSOLVE"
 
 #: gui/gui_utils.c:1829
 msgid "gretl: edit package spec file"
@@ -15442,9 +15429,8 @@ msgid "Plot group means"
 msgstr "Debuxar as medias dos grupos"
 
 #: gui/library.c:7946
-#, fuzzy
 msgid "suppress fitted line"
-msgstr "Recta estimada"
+msgstr "Eliminar a recta estimada"
 
 #: gui/library.c:7965
 msgid "on a single graph"
@@ -17720,9 +17706,8 @@ msgid "dbnomics for gretl"
 msgstr "DBNOMICS para GRETL"
 
 #: gui/textbuf.c:1640
-#, fuzzy
 msgid "gretl + lpsolve"
-msgstr "Consola de GRETL"
+msgstr "GRETL + LPSOLVE"
 
 #: gui/textbuf.c:1783
 #, c-format
@@ -18749,7 +18734,7 @@ msgstr "Estimacións iterativas de MCX"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr "Rho truncado cara a cero"
+msgstr "Rho tronzado cara a cero"
 
 #: plugin/interpolate.c:1736
 msgid "Temporal disaggregation"
@@ -19062,7 +19047,7 @@ msgstr "incluíndo %.2f retardos de (1-L)%s (media)"
 #: plugin/panurc.c:574
 #, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Truncamento de Bartlett en %d retardos\n"
+msgstr "Tronzado de Bartlett en %d retardos\n"
 
 #: plugin/pca.c:118
 msgid "Components with eigenvalues > mean"

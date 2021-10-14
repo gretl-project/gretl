@@ -2625,9 +2625,10 @@
 	variables determinísticas se recoñecen, e o seu contido esténdese ao
 	rango engadido; en concreto, as variables con tendencia linear simple
 	e as variables ficticias periódicas. Se o conxunto de datos ten a
-	estrutura dun panel, podes usar a opción <opt>panel-time</opt> para
-	alongar as series de tempo para cada unidade de sección cruzada (co
-	efecto, por defecto, de engadir <math>n</math> deses elementos).
+	estrutura dun panel, a acción predeterminada consiste en engadir
+	<math>n</math> unidades de sección cruzada ao panel; pero se indicas
+	a opción <opt>panel-time</opt>, o efecto consiste en engadir
+	<math>n</math> observacións ás series temporais para cada unidade.
       </para>
       <para>
 	<lit>insobs</lit>: Debe de estar seguido dun enteiro positivo (non
@@ -4436,8 +4437,6 @@
 	Só é aplicable no contexto dunha función definida polo usuario
 	(consulta <cmdref targ="function"/>). Provoca que a execución da
 	function actual, remate coa sinalización dunha condición de fallo.
-	Como excepción está o modo MPI especial para a execución de
-	programas en paralelo, no que só se amosa a cadea asociada.
       </para>
       <para>
 	O argumento <repl>mensaxe</repl> (opcional) pode ter
@@ -4673,7 +4672,8 @@
       <para context="cli">
 	Para esta instrución e no contexto apropiado, as expresións
 	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
-	<lit>string</lit> e <lit>bundle</lit> son sinónimos.
+	<lit>string</lit>, <lit>bundle</lit> e <lit>array</lit> son
+	sinónimos.
       </para>
 
       <para context="cli">
@@ -9155,6 +9155,23 @@
       <menu-path>Xanela de modelo: Probas</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="mpi" section="Programming"
+	   label="Interface de Paso de Mensaxes">
+    <usage>
+      <arguments>
+	<argument>Mira abaixo</argument>
+      </arguments>
+    </usage>
+    <description>
+      <para>
+	A instrución <lit>mpi</lit> empeza un bloque de expresións (que deben
+	rematarse con <lit>end mpi</lit>) para executarse utilizando o cómputo
+	en paralelo da MPI (Interface de Paso de Mensaxes). Consulta
+	<doc>gretl-mpi.pdf</doc> para obter un informe completo desta facultade.
+      </para>
+    </description>
   </command>
 
   <command name="mpols" section="Estimation" label="MCO de alta precisión">

@@ -984,7 +984,7 @@
 	  <li>
             <para>
               <lit>mpi</lit>: número entero igual a 1 si el sistema admite
-              MPI (Message Passing Interface), y 0 en caso contrario.
+              MPI (Interfaz de Paso de Mensajes), y 0 en caso contrario.
             </para>
 	  </li>
 	  <li>
@@ -3386,7 +3386,7 @@
 	  está presente <lit>postdata</lit>, va implícito el método
 	  <lit>POST</lit>; en caso contrario, va implícito el método <lit>GET</lit>.
 	  (Pero observa que para sencillas solicitudes <lit>GET</lit>, la
-	  función <fncref targ="readfile"/> ofrece una interface más
+	  función <fncref targ="readfile"/> ofrece una interfaz más
 	  simple.)
 	</para>
 	<para>
@@ -4146,13 +4146,12 @@
       <description>
 	<para>
 	  Esta función solo se aplica en el contexto de una función definida por
-	  el usuario. Si la <argname>condicion</argname> se valora como no nula,
+	  el usuario, o dentro de un bloque <cmdref targ="mpi"/>. Si la
+	  <argname>condicion</argname> se valora como no nula,
 	  ello implica que la ejecución de la función vigente finalice con la
 	  presentación de un mensaje condicionado a que se produzca un fallo;
 	  entonces el argumento <argname>mensaje</argname> se presentará como
-	  parte del mensaje de fallo que se muestra al llamar a la función. Una
-	  excepción es el modo MPI especial para la ejecución de programas en
-	  paralelo, en el que solo se muestra la cadena asociada.
+	  parte del mensaje de fallo que se muestra al llamar a la función en cuestión.
 	</para>
 	<para>
 	  El valor que se devuelve con esta función (1) es simplemente nominal.
