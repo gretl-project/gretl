@@ -921,6 +921,22 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
     }
 }
 
+static void maybe_extend_lags (DATASET *dset, int oldn)
+{
+    int i, j, t, p;
+
+    for (i=1; i<dset->v; i++) {
+	if ((p = dset->varinfo[i]->lag) > 0 && dset->varinfo[i]->parent[0]) {
+	    j = current_series_index(dset, dset->varinfo[i]->parent);
+	    if (j > 1) {
+		for (t=oldn; t<dset->n; t++) {
+		    dset->Z[i][t] = dset->Z[j][t-p];
+		}
+	    }
+	}
+    }
+}
+
 /* regular, not panel-time, version */
 
 static int real_dataset_add_observations (DATASET *dset, int n,
@@ -979,6 +995,9 @@ static int real_dataset_add_observations (DATASET *dset, int n,
     if (opt & OPT_A) {
 	maybe_extend_trends(dset, oldn);
 	maybe_extend_dummies(dset, oldn);
+	if (dataset_is_time_series(dset)) {
+	    maybe_extend_lags(dset, oldn);
+	}
     }
 
     /* does daily data need special handling? */
