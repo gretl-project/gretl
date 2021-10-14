@@ -2625,9 +2625,10 @@
 	missing, but certain deterministic variables are recognized
 	and extended, namely, a simple linear trend and periodic dummy
 	variables. If the dataset takes the form of a panel, the
-	<opt>panel-time</opt> flag can be used to lengthen the time
-	series for each cross-sectional unit (the default action being
-	to add <math>n</math> such units).
+	default action is to add <math>n</math> cross-sectional units
+	to the panel, but if the <opt>panel-time</opt> flag is given
+	the effect is to add <math>n</math> observations to the time
+	series for each unit.
       </para>
       <para>
 	<lit>insobs</lit>: Must be followed by a positive integer no
