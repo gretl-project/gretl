@@ -1967,8 +1967,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
+    FcastFlags flags = 0;
     int t2, t1 = 0;
-    int flags = 0;
     int premax, pre_n = 0;
     int t1min = 0;
     int recursive = 0, k = 1, *kptr;

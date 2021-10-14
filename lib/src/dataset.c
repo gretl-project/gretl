@@ -926,7 +926,7 @@ static void maybe_extend_lags (DATASET *dset, int t1, int t2)
     int i, j, t, p;
 
     for (i=1; i<dset->v; i++) {
-	if ((p = dset->varinfo[i]->lag) > 0 && dset->varinfo[i]->parent[0]) {
+	if ((p = dset->varinfo[i]->lag) > 0) {
 	    j = current_series_index(dset, dset->varinfo[i]->parent);
 	    if (j > 1) {
 		for (t=t1; t<=t2; t++) {

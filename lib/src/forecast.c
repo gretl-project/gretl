@@ -3902,11 +3902,11 @@ int do_forecast (const char *str, DATASET *dset,
 }
 
 /* try to determine in advance how far we can go with a forecast,
-   either dynamic or static (ftype) */
+   either dynamic or static (@ftype) */
 
-static int
-fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
-		 const DATASET *dset, int ftype)
+static int fcast_get_t2max (const int *list, const int *dvlags,
+			    const MODEL *pmod, const DATASET *dset,
+			    int ftype)
 {
     const double *ay = NULL;
     int i, vi, t;
@@ -3918,7 +3918,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
     }
 
     for (t=pmod->t2; t<dset->n; t++) {
-	int all_ok = 1;
+	int p, vj, all_ok = 1;
 
 	if (ay != NULL && na(ay[t-1])) {
 	    /* FIXME? */
@@ -3935,6 +3935,11 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 		continue;
 	    } else if (is_periodic_dummy(dset->Z[vi], dset)) {
 		continue;
+	    } else if ((p = series_get_lag(dset, vi)) > 0) {
+		vj = series_get_parent_id(dset, vi);
+		if (vj > 0 && !na(dset->Z[vj][t-p])) {
+		    continue;
+		}
 	    }
 	    if (na(dset->Z[vi][t])) {
 		all_ok = 0;
@@ -4041,7 +4046,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
  * forecast_options_for_model:
  * @pmod: the model from which forecasts are wanted.
  * @dset: dataset struct.
- * @flags: location to receive flags from among #ForecastFlags.
+ * @flags: location to receive flags from among #FcastFlags.
  * @dt2max: location to receive the last observation that can
  * be supported for a dynamic forecast.
  * @st2max: location to receive the last observation that can
@@ -4052,7 +4057,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
  */
 
 void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
-				 int *flags, int *dt2max, int *st2max)
+				 FcastFlags *flags, int *dt2max,
+				 int *st2max)
 {
     int *dvlags = NULL;
     int dv, exo = 1;
