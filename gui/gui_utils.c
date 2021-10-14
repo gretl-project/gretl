@@ -950,11 +950,9 @@ static void gui_record_data_opening (const char *fname,
     }
 }
 
-#define file_opened(f) (f == DATAFILE_OPENED || \
-	                f == OPENED_VIA_CLI || \
-                        f == OPENED_VIA_SESSION)
+#define file_opened(f) (f & (DATAFILE_OPENED | OPENED_VIA_CLI | OPENED_VIA_SESSION))
 
-static void real_register_data (int flag, const char *user_fname,
+static void real_register_data (int flags, const char *user_fname,
 				const int *list)
 {
     /* basic accounting */
@@ -962,7 +960,7 @@ static void real_register_data (int flag, const char *user_fname,
     orig_vars = dataset->v;
 
     /* set appropriate data_status bits */
-    if (file_opened(flag)) {
+    if (file_opened(flags)) {
 	if (!(data_status & IMPORT_DATA)) {
 	    /* we opened a native data file */
 	    if (has_system_prefix(datafile, DATA_SEARCH)) {
@@ -977,7 +975,7 @@ static void real_register_data (int flag, const char *user_fname,
 	    } else {
 		data_status &= ~GZIPPED_DATA;
 	    }
-	    if (flag == OPENED_VIA_SESSION) {
+	    if (flags & OPENED_VIA_SESSION) {
 		data_status |= SESSION_DATA;
 	    } else {
 		data_status &= ~SESSION_DATA;
@@ -1004,12 +1002,12 @@ static void real_register_data (int flag, const char *user_fname,
        it if the data file was opened via the initial command line,
        and the gretl GUI is not yet built.
     */
-    if (mdata != NULL && flag == DATAFILE_OPENED) {
+    if (mdata != NULL && (flags & DATAFILE_OPENED)) {
 	gui_record_data_opening(user_fname, list);
     }
 
     if (mdata != NULL) {
-	if (flag != OPENED_VIA_CLI) {
+	if (!(flags & (OPENED_VIA_CLI | FOCUS_CONSOLE))) {
 	    /* focus the data window */
 	    gtk_widget_grab_focus(mdata->listbox);
 	}
@@ -1018,9 +1016,9 @@ static void real_register_data (int flag, const char *user_fname,
     }
 }
 
-void register_data (int flag)
+void register_data (int flags)
 {
-    real_register_data(flag, NULL, NULL);
+    real_register_data(flags, NULL, NULL);
 }
 
 void register_startup_data (const char *fname)

@@ -10626,8 +10626,10 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
                                 OPT_NONE, prn);
             if (err) {
                 errmsg(err, prn);
-            } else {
-                register_data(NULLDATA_STARTED);
+            } else if (swallow && (s->flags & CONSOLE_EXEC)) {
+		register_data(NULLDATA_STARTED | FOCUS_CONSOLE);
+	    } else {
+		register_data(NULLDATA_STARTED);
             }
         }
         break;
