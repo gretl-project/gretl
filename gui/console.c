@@ -750,13 +750,7 @@ void clear_console (GtkWidget *w, windata_t *vwin)
     GtkTextIter start, end;
 
     gtk_text_buffer_get_bounds(buf, &start, &end);
-    gtk_text_iter_forward_line(&start);
     gtk_text_buffer_delete(buf, &start, &end);
-    /* re-initialize the @start iter, and move forward */
     gtk_text_buffer_get_start_iter(buf, &start);
-    gtk_text_iter_forward_line(&start);
     console_insert_prompt(buf, &start, "? ");
-    /* re-initialize the @end iter */
-    gtk_text_buffer_get_end_iter(buf, &end);
-    console_scroll_to_end(cview, buf, &end);
 }
