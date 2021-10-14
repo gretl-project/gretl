@@ -921,7 +921,7 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
     }
 }
 
-static void maybe_extend_lags (DATASET *dset, int oldn)
+static void maybe_extend_lags (DATASET *dset, int t1, int t2)
 {
     int i, j, t, p;
 
@@ -929,7 +929,7 @@ static void maybe_extend_lags (DATASET *dset, int oldn)
 	if ((p = dset->varinfo[i]->lag) > 0 && dset->varinfo[i]->parent[0]) {
 	    j = current_series_index(dset, dset->varinfo[i]->parent);
 	    if (j > 1) {
-		for (t=oldn; t<dset->n; t++) {
+		for (t=t1; t<=t2; t++) {
 		    dset->Z[i][t] = dset->Z[j][t-p];
 		}
 	    }
@@ -996,7 +996,7 @@ static int real_dataset_add_observations (DATASET *dset, int n,
 	maybe_extend_trends(dset, oldn);
 	maybe_extend_dummies(dset, oldn);
 	if (dataset_is_time_series(dset)) {
-	    maybe_extend_lags(dset, oldn);
+	    maybe_extend_lags(dset, oldn, dset->n - 1);
 	}
     }
 
@@ -1006,7 +1006,8 @@ static int real_dataset_add_observations (DATASET *dset, int n,
     return err;
 }
 
-static int panel_dataset_extend_time (DATASET *dset, int n)
+static int panel_dataset_extend_time (DATASET *dset, int n,
+				      gretlopt opt)
 {
     double *utmp, *vtmp;
     char **S = NULL;
@@ -1106,6 +1107,16 @@ static int panel_dataset_extend_time (DATASET *dset, int n)
 	dset->Z[i] = vtmp;
     }
 
+    if (opt & OPT_A) {
+	int t2, t1 = oldT;
+
+	for (j=0; j<n_units; j++) {
+	    t2 = t1 + n - 1;
+	    maybe_extend_lags(dset, t1, t2);
+	    t1 += newT;
+	}
+    }
+
     if (S != NULL) {
 	int k = 0;
 
@@ -1166,7 +1177,7 @@ static int panel_dataset_extend_time (DATASET *dset, int n)
 int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
 {
     if (opt & OPT_T) {
-	return panel_dataset_extend_time(dset, n);
+	return panel_dataset_extend_time(dset, n, opt);
     } else {
 	return real_dataset_add_observations(dset, n, opt);
     }
@@ -3042,7 +3053,7 @@ static int add_obs (int n, DATASET *dset, gretlopt opt, PRN *prn)
 	err = E_PARSE;
     } else if (opt & OPT_T) {
 	/* extending panel time */
-	err = panel_dataset_extend_time(dset, n);
+	err = panel_dataset_extend_time(dset, n, opt | OPT_A);
 	if (!err) {
 	    pprintf(prn, _("Panel time extended by %d observations"), n);
 	    pputc(prn, '\n');
