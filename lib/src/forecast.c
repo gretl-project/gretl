@@ -471,31 +471,21 @@ static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
    Returns 1 on error, 0 otherwise.
 */
 
-static int process_lagged_depvar (MODEL *pmod,
-				  const DATASET *dset,
-				  int **depvar_lags)
+static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
 {
     const int *xlist = NULL;
     int *dvlags = NULL;
-    int lag, anylags;
-    int err = 0;
 
-    anylags = has_depvar_lags(pmod, dset);
-
-    if (!anylags) {
-	*depvar_lags = NULL;
-	return 0;
+    if (!has_depvar_lags(pmod, dset)) {
+	return NULL;
     }
 
     xlist = model_xlist(pmod);
-
     dvlags = malloc(xlist[0] * sizeof *dvlags);
 
-    if (dvlags == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (dvlags != NULL) {
 	const char *yname, *parent;
-	int i, vi;
+	int i, vi, lag;
 
 	yname = gretl_model_get_depvar_name(pmod, dset);
 
@@ -511,42 +501,7 @@ static int process_lagged_depvar (MODEL *pmod,
 	}
     }
 
-    *depvar_lags = dvlags;
-
-    return err;
-}
-
-/* Tries to determine if a model has any "real" exogenous regressors:
-   we discount a simple time trend and periodic dummy variables, since
-   these can be extended automatically.  If dvlags is non-NULL we use
-   it to screen out "independent vars" that are really lags of the
-   dependent variable.
-*/
-
-static int
-has_real_exog_regressors (MODEL *pmod, const int *dvlags,
-			  const DATASET *dset)
-{
-    const int *xlist = model_xlist(pmod);
-    int i, xi, ret = 0;
-
-    if (xlist != NULL) {
-	for (i=0; i<xlist[0]; i++) {
-	    xi = xlist[i + 1];
-	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
-		if (is_trend_variable(dset->Z[xi], dset->n)) {
-		    continue;
-		} else if (is_periodic_dummy(dset->Z[xi], dset)) {
-		    continue;
-		} else {
-		    ret = 1;
-		    break;
-		}
-	    }
-	}
-    }
-
-    return ret;
+    return dvlags;
 }
 
 /* Get a value for a lag of the dependent variable.  If method is
@@ -2677,7 +2632,7 @@ static int get_forecast_method (Forecast *fc,
     /* do setup for possible lags of the dependent variable,
        unless OPT_S for "static" has been given */
     if (dataset_is_time_series(dset) && !(opt & OPT_S) && pmod->ci != ARMA) {
-	process_lagged_depvar(pmod, dset, &fc->dvlags);
+	fc->dvlags = process_lagged_depvar(pmod, dset);
     }
 
     if (!(opt & OPT_S)) {
@@ -4042,6 +3997,46 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     return fr;
 }
 
+/* Try to determine whether adding observations to the dataset
+   (without actually adding more "real" data) can serve to extend the
+   range of out-of-sample prediction. The answer will in general be No
+   if the specification includes exogenous regressors other than
+   deterministic terms that can be extended automatically.  However,
+   if an exogenous regressor is a lag series of order p we can extend
+   it automatically for p periods.
+
+   The @dvlags argument will be non-NULL only if the specification
+   includes at least one lag of the dependent variable.
+*/
+
+static int addobs_can_help (MODEL *pmod, const int *dvlags,
+			    const DATASET *dset)
+{
+    const int *xlist = model_xlist(pmod);
+    int i, xi, ret = 1;
+
+    if (xlist != NULL) {
+	for (i=0; i<xlist[0]; i++) {
+	    xi = xlist[i + 1];
+	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
+		if (is_trend_variable(dset->Z[xi], dset->n)) {
+		    continue;
+		} else if (is_periodic_dummy(dset->Z[xi], dset)) {
+		    continue;
+		} else if (series_get_lag(dset, xi) &&
+			   series_get_parent_id(dset, xi)) {
+		    continue;
+		} else {
+		    ret = 1;
+		    break;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
  * forecast_options_for_model:
  * @pmod: the model from which forecasts are wanted.
@@ -4060,8 +4055,9 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 				 FcastFlags *flags, int *dt2max,
 				 int *st2max)
 {
+    const int *xlist;
     int *dvlags = NULL;
-    int dv, exo = 1;
+    int dv;
 
     *flags = 0;
 
@@ -4094,24 +4090,17 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     }
 
     if (*flags & FC_DYNAMIC_OK) {
-	int err = process_lagged_depvar(pmod, dset, &dvlags);
-
-	if (!err) {
-	    exo = has_real_exog_regressors(pmod, dvlags, dset);
-	}
-	if (!exo) {
-	    *flags |= FC_ADDOBS_OK;
-	    *dt2max = dset->n - 1;
-	}
+	dvlags = process_lagged_depvar(pmod, dset);
     }
 
-    if (exo) {
-	const int *xlist = model_xlist(pmod);
+    if (addobs_can_help(pmod, dvlags, dset)) {
+	*flags |= FC_ADDOBS_OK;
+    }
 
-	if (xlist != NULL) {
-	    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_DYNAMIC);
-	    *st2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_STATIC);
-	}
+    xlist = model_xlist(pmod);
+    if (xlist != NULL) {
+	*dt2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_DYNAMIC);
+	*st2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_STATIC);
     }
 
     if (dvlags != NULL) {
