@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2021-08-15 09:12+0200\n"
+"PO-Revision-Date: 2021-10-15 10:26+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -315,14 +315,13 @@ msgid "(without trend)"
 msgstr "(senza trend)"
 
 #: lib/src/adf_kpss.c:2404
-#, fuzzy, c-format
+#, c-format
 msgid "Lag truncation parameter: %d - %d\n"
-msgstr "Parametro di troncamento del ritardo = %d\n"
+msgstr "Parametro di troncamento del ritardo: %d - %d\n"
 
 #: lib/src/adf_kpss.c:2407
-#, fuzzy
 msgid "Lag truncation automatic\n"
-msgstr "Parametro di troncamento del ritardo = %d\n"
+msgstr "Troncamento del ritardo automatico\n"
 
 #: lib/src/adf_kpss.c:2461
 msgid "interpolated p-value"
@@ -3994,9 +3993,8 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Test non-parametrico di Wald per l'eteroschedasticità"
 
 #: lib/src/gretl_model.c:4176
-#, fuzzy
 msgid "Likelihood ratio test of independence"
-msgstr "Test del rapporto di verosimiglianza"
+msgstr "Test del LR per l'indipendenza"
 
 #: lib/src/gretl_model.c:4211
 msgid "robust variant"
@@ -4007,9 +4005,8 @@ msgid "No first-order autocorrelation (rho = 0)"
 msgstr "Non c'è utocorrelazione del prim'ordine (rho = 0)"
 
 #: lib/src/gretl_model.c:4324
-#, fuzzy
 msgid "atanh(rho) = 0"
-msgstr "rho = 0"
+msgstr "atanh(rho) = 0"
 
 #: lib/src/gretl_model.c:4385
 #, c-format
@@ -4265,9 +4262,9 @@ msgid "Auxiliary regression including lagged residual"
 msgstr "Regressione ausiliaria con l'aggiunta dei residui ritardati"
 
 #: lib/src/gretl_panel.c:4986
-#, fuzzy, c-format
+#, c-format
 msgid "Average absolute correlation = %.3f"
-msgstr "eps = %g, correlazione del prim'ordine %.3f"
+msgstr "Correlazione media assoluta = %.3f"
 
 #: lib/src/gretl_panel.c:5318
 #, c-format
@@ -4550,7 +4547,7 @@ msgid "starting obs '%s' is invalid"
 msgstr "l'osservazione iniziale '%s' non è valida"
 
 #: lib/src/gretl_utils.c:1192 lib/src/gretl_utils.c:1217
-#, fuzzy, c-format
+#, c-format
 msgid "frequency (%d) does not seem to make sense"
 msgstr "la frequenza (%d) non sembra aver senso"
 
@@ -9692,14 +9689,12 @@ msgid "Panel index variables"
 msgstr "Variabili indice del panel"
 
 #: gui/datawiz.c:122
-#, fuzzy
 msgid "Panel time dimension"
-msgstr "nella dimensione temporale"
+msgstr "Dimensione panel temporale"
 
 #: gui/datawiz.c:123
-#, fuzzy
 msgid "Panel first period"
-msgstr "Indice panel degli individui"
+msgstr "Primo periodo del panel"
 
 #: gui/datawiz.c:124
 msgid "Confirm dataset structure"
@@ -9860,9 +9855,8 @@ msgid "stacked cross sections"
 msgstr "pila di dati cross section"
 
 #: gui/datawiz.c:784
-#, fuzzy
 msgid "Time dimension: "
-msgstr "Dimensione massima:"
+msgstr "Dimensione temporale:"
 
 #: gui/datawiz.c:801
 msgid "(dropping missing observations)"
@@ -9895,7 +9889,7 @@ msgstr "elimina osservazioni mancanti"
 #: gui/datawiz.c:1698
 #, c-format
 msgid "Take unit names from %s?"
-msgstr ""
+msgstr "Prendere i nomi delle unità da %s?"
 
 #: gui/datawiz.c:1936
 msgid "The data set contains no suitable index variables"
@@ -10125,7 +10119,6 @@ msgid "gretl: set sample"
 msgstr "gretl: modifica campione"
 
 #: gui/dialogs.c:2070
-#, fuzzy
 msgid "Units"
 msgstr "Unità"
 
@@ -11035,9 +11028,8 @@ msgid "Dynare files (*.mod)"
 msgstr "File Dynare (*.mod) "
 
 #: gui/fileselect.c:916
-#, fuzzy
 msgid "lpsolve files (*.lp)"
-msgstr "tutti i file (*.*)"
+msgstr "file lpsolve (*.lp)"
 
 #: gui/fileselect.c:1101
 msgid "Gretl datafiles (*.gdt)"
@@ -12573,9 +12565,8 @@ msgid "Stata program"
 msgstr "Programma Stata"
 
 #: gui/gretl.c:1785
-#, fuzzy
 msgid "lpsolve program"
-msgstr "Periodogramma"
+msgstr "prgramma lpsolve"
 
 #: gui/gretl.c:1787
 msgid "_Session files"
@@ -13396,9 +13387,8 @@ msgid "_gretl + SVM"
 msgstr "_gretl + SVM"
 
 #: gui/gretl.c:2043
-#, fuzzy
 msgid "_gretl + lpsolve"
-msgstr "Terminale di gretl"
+msgstr "_gretl + lpsolve"
 
 #: gui/gretl.c:2044
 msgid "Check for _updates"
@@ -13418,21 +13408,19 @@ msgstr "_Analisi"
 
 #: gui/gretl.c:2348
 msgid "International data access"
-msgstr ""
+msgstr "Accesso a dati internazionali"
 
 #: gui/gretl.c:2350 gui/gretl.c:2352
-#, fuzzy
 msgid "Parallelization"
-msgstr "Parametrizzazione"
+msgstr "Parallelizzazione"
 
 #: gui/gretl.c:2354
 msgid "Support Vector Machines"
-msgstr ""
+msgstr "Support Vector Machine"
 
 #: gui/gretl.c:2356
-#, fuzzy
 msgid "Linear Programming"
-msgstr "Programmazione"
+msgstr "Programmazione lineare"
 
 #: gui/gretl.c:2412
 msgid "Enter name for list of series"
@@ -14050,9 +14038,8 @@ msgid "gretl: edit Dynare script"
 msgstr "gretl: modifica script Dynare"
 
 #: gui/gui_utils.c:1827
-#, fuzzy
 msgid "gretl: edit lpsolve script"
-msgstr "gretl: modifica script R"
+msgstr "gretl: modifica script lpsolve"
 
 #: gui/gui_utils.c:1829
 msgid "gretl: edit package spec file"
@@ -15445,9 +15432,8 @@ msgid "Plot group means"
 msgstr "Graficare le medie per gruppo"
 
 #: gui/library.c:7946
-#, fuzzy
 msgid "suppress fitted line"
-msgstr "linea stimata"
+msgstr "elimina la linea stimata"
 
 #: gui/library.c:7965
 msgid "on a single graph"
@@ -17729,9 +17715,8 @@ msgid "dbnomics for gretl"
 msgstr "dbnomics per gretl"
 
 #: gui/textbuf.c:1640
-#, fuzzy
 msgid "gretl + lpsolve"
-msgstr "Terminale di gretl"
+msgstr "gretl + lpsolve"
 
 #: gui/textbuf.c:1783
 #, c-format
