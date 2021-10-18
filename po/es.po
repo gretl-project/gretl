@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2021-10-18 17:49+0200\n"
+"PO-Revision-Date: 2021-10-18 18:06+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -12852,7 +12852,7 @@ msgstr "Gráfico de series _temporales..."
 
 #: gui/gretl.c:1865
 msgid "X-Y _scatter..."
-msgstr "Gráfico X-Y (_scatter)..."
+msgstr "Gráfico de dispersión X-Y (_scatter)..."
 
 #: gui/gretl.c:1866
 msgid "X-Y with _impulses..."
@@ -15699,7 +15699,7 @@ msgstr "Colinealidad"
 
 #: gui/menustate.c:605 gui/selector.c:7411
 msgid "XY scatterplot"
-msgstr "Gráfico dispersión XY"
+msgstr "Gráfico de dispersión XY"
 
 #: gui/menustate.c:609
 msgid "Add log"
