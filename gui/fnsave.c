@@ -3970,7 +3970,11 @@ static void finfo_dialog (function_info *finfo)
 
 static void web_get_login (GtkWidget *w, gpointer p)
 {
+#ifdef SFCGI
+    browser_open("http://gretl.sourceforge.net/cgi-bin/apply/");
+#else
     browser_open("http://gretl.ecn.wfu.edu/cgi-bin/apply/");
+#endif
 }
 
 static void login_dialog (login_info *linfo, GtkWidget *parent)
