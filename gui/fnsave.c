@@ -4022,11 +4022,19 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 	}
     }
 
+#ifdef SFCGI
+    label_hbox(vbox,
+	       _("If you don't have a login to the gretl server\n"
+		 "please see http://gretl.sourceforge.net/cgi-bin/apply/.\n"
+		 "The 'Website' button below should open this page\n"
+		 "in your web browser."));
+#else
     label_hbox(vbox,
 	       _("If you don't have a login to the gretl server\n"
 		 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
 		 "The 'Website' button below should open this page\n"
 		 "in your web browser."));
+#endif
 
     /* control button area */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(linfo->dlg));
