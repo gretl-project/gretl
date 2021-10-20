@@ -321,6 +321,27 @@ static int numdate_to_string (char *targ, double x)
     }
 }
 
+/* Translate from, e.g. "1990-Q2", as written by gretl's CSV exporter,
+   to "1990-04-01", the "excess precision" YYYY-MM-DD variant of the
+   given quarterly date.
+*/
+
+static int yq2ymd (char *targ, const char *src)
+{
+    const char *digits = "0123456789";
+
+    if (strlen(src) == 7 && strspn(src, digits) == 4 &&
+	src[4] == '-' && src[5] == 'Q' && isdigit(src[6])) {
+	int y = atoi(src);
+	int m = 3 * atoi(src+6) - 2;
+
+	sprintf(targ, "%d-%02d-01", y, m);
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
 /* Parse a string from row @i of the outer dataset and set the
    key(s) on row @j of the joiner struct. The indices @i and @j may
    not be equal if a filter is being used. Note: we don't come
@@ -388,6 +409,10 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
                 err = 0; /* we might be OK, cancel the error for now */
             }
         }
+	if (err && pd == 4 && yq2ymd(sconv, s) == 0) {
+	    s = sconv;
+	    err = 0;
+	}
         if (err) {
             gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
             fprintf(stderr, "time-format match error in read_outer_auto_keys:\n"
