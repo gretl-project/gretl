@@ -84,11 +84,11 @@ struct urlinfo_ {
 
 static const char *sf_dbserver = "gretl.sourceforge.net";
 static const char *sf_dbcgi    = "/cgi-bin/gretldata.cgi";
-static const char *wf_dbserver = "ricardo.ecn.wfu.edu";
-static const char *wf_dbcgi    = "/gretl/cgi-bin/gretldata.cgi";
-
 static const char *sf_gretlhost = "gretl.sourceforge.net";
 static const char *sf_datacgi   = "/cgi-bin/gretldata.cgi";
+
+static const char *wf_dbserver = "ricardo.ecn.wfu.edu";
+static const char *wf_dbcgi    = "/gretl/cgi-bin/gretldata.cgi";
 static const char *wf_gretlhost = "ricardo.ecn.wfu.edu";
 static const char *wf_datacgi   = "/gretl/cgi-bin/gretldata.cgi";
 

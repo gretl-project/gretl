@@ -6,8 +6,9 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 
 CC = @CC@
-CXX = @CXX@
 CFLAGS = @CFLAGS@
+CXX = @CXX@
+CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
@@ -68,7 +69,7 @@ override CFLAGS += -I.. -I$(topsrc)/gui -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
-COMPILX = $(LIBTOOL) --mode=compile $(CXXV) -c $(CFLAGS)
+COMPILX = $(LIBTOOL) --mode=compile $(CXXV) -c $(CXXFLAGS)
 
 ifeq ($(quiet_build),yes)
   AMP = @
@@ -185,6 +186,7 @@ PLUGINS = arma.la \
 	panurc.la \
 	xml_get.la \
 	svm.la \
+	lpsolve.la \
 	regls.la \
 	geoplot.la \
 	purebin.la \
@@ -203,7 +205,6 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 
 JSON_PLUGIN = json_get.la
 GMP_PLUGIN = mp_ols.la
-LPSOLVE_PLUGIN = lpsolve.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
@@ -221,10 +222,6 @@ ifneq ($(GMP_LIBS),)
   PLUGINS += $(GMP_PLUGIN)
 endif
 
-ifneq ($(win32bit),yes)
-  PLUGINS += $(LPSOLVE_PLUGIN)
-endif
-
 ifeq ($(have_odbc),yes)
   PLUGINS += odbc_import.la
   ODBC_CFLAGS = @ODBC_CFLAGS@
@@ -234,7 +231,7 @@ endif
 ifeq ($(macpkg),yes)
   LPLIB = -llpsolve55
 else ifeq ($(win32pkg),yes)
-  LPLIB = -llpsolve55.dll
+  LPLIB = -llpsolve55
 endif
 
 vpath %.c $(topsrc)/plugin/libole2

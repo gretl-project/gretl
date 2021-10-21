@@ -334,7 +334,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     int numdates = jr->auto_keys->numdates;
     int tcol = jr->auto_keys->keycol;
     int pd = jr->l_dset->pd;
-    struct tm t = {0};
+    struct tm t = {0,0,0,1,0,0,0,0,-1};
     const char *s = NULL;
     char *test = NULL;
     char sconv[32];

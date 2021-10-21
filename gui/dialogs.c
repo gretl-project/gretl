@@ -1818,13 +1818,13 @@ static struct range_setting *rset_new (guint code, gpointer p,
 }
 
 /* Special sample range selector for panel datasets: express the
-   choice as a matter of which units/groups to include. The
-   @temp argument is non-zero if we're just setting the panel sample
-   temporarily for the purpose of doing a panel plot.
+   choice as a matter of which units to include. The @temp argument is
+   non-zero if we're just setting the panel sample temporarily for the
+   purpose of doing a panel plot.
 */
 
-static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
-                                        int temp)
+static GtkWidget *panel_unit_sample_spinbox (struct range_setting *rset,
+					     int temp)
 {
     GtkWidget *lbl;
     GtkWidget *vbox;
@@ -1896,8 +1896,6 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     return hbox;
 }
 
-#if 0 /* not ready yet */
-
 typedef struct panel_setting_ {
     int u1, u2;
     int t1, t2;
@@ -1905,18 +1903,18 @@ typedef struct panel_setting_ {
     GtkWidget *spin[4];
     GtkWidget *dlg;
     GtkWidget *obslabel;
+    DATASET *tset;
 } panel_setting;
 
 static panel_setting *pset_new (void)
 {
-    panel_setting *pset;
+    panel_setting *pset = mymalloc(sizeof *pset);
 
-    pset = mymalloc(sizeof *pset);
-    if (pset == NULL) return NULL;
-
-    pset->dlg = gretl_dialog_new(_("gretl: set sample"), NULL,
-                                 GRETL_DLG_BLOCK);
-    pset->obslabel = NULL;
+    if (pset != NULL) {
+	pset->dlg = gretl_dialog_new(_("gretl: set sample"), NULL,
+				     GRETL_DLG_BLOCK);
+	pset->obslabel = NULL;
+    }
 
     return pset;
 }
@@ -1931,19 +1929,51 @@ static void gui_set_panel_sample (GtkWidget *w, panel_setting *pset)
     int orig_u1 = 1 + dataset->t1 / dataset->pd;
     int orig_u2 = (dataset->t2 + 1) / dataset->pd;
     int T = pset->t2 - pset->t1 + 1;
-
-    fprintf(stderr, "set panel sample\n");
-    fprintf(stderr, "orig_u1 = %d, orig_u2 = %d\n", orig_u1, orig_u2);
-    fprintf(stderr, "u1 = %d, u2 = %d, t1 = %d, t2 = %d\n",
-            pset->u1, pset->u2, pset->t1, pset->t2);
+    char s1[OBSLEN], s2[OBSLEN];
+    int changed = 0;
+    int err = 0;
 
     if (T < dataset->pd) {
-        fprintf(stderr, "Need to shrink (restrict) by time\n");
+	if (pset->tset != NULL) {
+	    strcpy(s1, obs_button_get_string(pset->spin[2]));
+	    strcpy(s2, obs_button_get_string(pset->spin[3]));
+	} else {
+	    sprintf(s1, "%d", pset->t1);
+	    sprintf(s2, "%d", pset->t2);
+	}
+	err = set_panel_sample(s1, s2, OPT_X, dataset);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    lib_command_sprintf("smpl %s %s --time", s1, s2);
+	    record_command_verbatim();
+	    changed++;
+	}
     }
 
-    if (pset->u1 != orig_u1 || pset->u2 != orig_u2) {
-        fprintf(stderr, "Need to smpl by unit\n");
+    if (!err && (pset->u1 != orig_u1 || pset->u2 != orig_u2)) {
+	sprintf(s1, "%d", pset->u1);
+	sprintf(s2, "%d", pset->u2);
+	err = set_panel_sample(s1, s2, OPT_U, dataset);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    lib_command_sprintf("smpl %s %s --unit", s1, s2);
+	    record_command_verbatim();
+	    changed++;
+	}
     }
+
+    if (changed) {
+	set_sample_label(dataset);
+    }
+
+    gtk_widget_destroy(pset->dlg);
+}
+
+static void spinset (GtkWidget *w, int val)
+{
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), val);
 }
 
 static void panel_sample_callback (GtkSpinButton *b,
@@ -1954,40 +1984,40 @@ static void panel_sample_callback (GtkSpinButton *b,
     gchar *msg;
 
     if (w == pset->spin[0]) {
+	/* first unit */
         if (k > pset->u2) {
             if (pset->u2 < pset->Nmax) {
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[1]),
-                                          pset->u2 + 1);
+		spinset(pset->spin[1], pset->u2 + 1);
             } else {
                 gtk_spin_button_set_value(b, --k);
             }
         }
         pset->u1 = k;
     } else if (w == pset->spin[1]) {
+	/* last unit */
         if (k < pset->u1) {
             if (pset->u1 > 1) {
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[0]),
-                                          pset->u1 - 1);
+		spinset(pset->spin[0], pset->u1 - 1);
             } else {
                 gtk_spin_button_set_value(b, ++k);
             }
         }
         pset->u2 = k;
     } else if (w == pset->spin[2]) {
+	/* first period */
         if (k > pset->t2) {
             if (pset->t2 < pset->Tmax) {
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[3]),
-                                          pset->t2 + 1);
+		spinset(pset->spin[3], pset->t2 + 1);
             } else {
                 gtk_spin_button_set_value(b, --k);
             }
         }
         pset->t1 = k;
     } else if (w == pset->spin[3]) {
+	/* last period */
         if (k < pset->t1) {
             if (pset->t1 > 1) {
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[2]),
-                                          pset->t1 - 1);
+		spinset(pset->spin[2], pset->t1 - 1);
             } else {
                 gtk_spin_button_set_value(b, ++k);
             }
@@ -2003,8 +2033,11 @@ static void panel_sample_callback (GtkSpinButton *b,
     g_free(msg);
 }
 
-static void panel_new_spinbox (panel_setting *pset)
+static void panel_new_spinbox (panel_setting *pset,
+			       DATASET *tset)
 {
+    GtkAdjustment *adj1 = NULL;
+    GtkAdjustment *adj2 = NULL;
     GtkWidget *lbl, *vbox;
     GtkWidget *tbl, *spin;
     GtkWidget *hbox;
@@ -2017,6 +2050,7 @@ static void panel_new_spinbox (panel_setting *pset)
     pset->t2 = dataset->pd;
     pset->Nmax = dataset->n / dataset->pd;
     pset->Tmax = dataset->pd;
+    pset->tset = tset;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(pset->dlg));
     hbox = gtk_hbox_new(FALSE, 5);
@@ -2027,26 +2061,36 @@ static void panel_new_spinbox (panel_setting *pset)
     gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    k = 0;
-
-    /* group/unit spinners */
-    for (i=0; i<2; i++) {
+    /* unit and period spinners */
+    for (i=0, k=0; i<2; i++) {
         int spinmax = (i==0)? pset->Nmax : pset->Tmax;
         int s1 = (i==0)? pset->u1 : pset->t1;
         int s2 = (i==0)? pset->u2 : pset->t2;
 
-        lbl = gtk_label_new((i==0)? _("Groups") : _("Periods"));
+        lbl = gtk_label_new((i==0)? _("Units") : _("Periods"));
         gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
-        spin = gtk_spin_button_new_with_range(1, spinmax, 1);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s1);
+	if (tset != NULL && i == 1) {
+	    adj1 = (GtkAdjustment *) gtk_adjustment_new(tset->t1, 0, tset->t2,
+							1, tset->pd, 0);
+	    spin = obs_button_new(adj1, tset, OBS_BUTTON_T1);
+	} else {
+	    spin = gtk_spin_button_new_with_range(1, spinmax, 1);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s1);
+	}
         pset->spin[k++] = spin;
         gtk_table_attach_defaults(GTK_TABLE(tbl), spin,
                                   1, 2, i, i+1);
         lbl = gtk_label_new(_("to"));
         gtk_table_attach_defaults(GTK_TABLE(tbl), lbl,
                                   2, 3, i, i+1);
-        spin = gtk_spin_button_new_with_range(1, spinmax, 1);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s2);
+	if (tset != NULL && i == 1) {
+	    adj2 = (GtkAdjustment *) gtk_adjustment_new(tset->t2, 0, tset->t2,
+							1, tset->pd, 0);
+	    spin = obs_button_new(adj2, tset, OBS_BUTTON_T2);
+	} else {
+	    spin = gtk_spin_button_new_with_range(1, spinmax, 1);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s2);
+	}
         pset->spin[k++] = spin;
         gtk_table_attach_defaults(GTK_TABLE(tbl), spin,
                                   3, 4, i, i+1);
@@ -2069,8 +2113,21 @@ static void panel_new_spinbox (panel_setting *pset)
     g_free(msg);
 }
 
+static void prepare_panel_ts_dset (DATASET *tset)
+{
+    tset->structure = TIME_SERIES;
+    tset->pd = dataset->panel_pd;
+    tset->sd0 = dataset->panel_sd0;
+    tset->n = dataset->pd;
+    tset->t1 = 0;
+    tset->t2 = tset->n - 1;
+    ntolabel(tset->stobs, tset->t1, tset);
+    ntolabel(tset->endobs, tset->t2, tset);
+}
+
 static void panel_sample_dialog (void)
 {
+    DATASET tset = {0};
     panel_setting *pset;
     GtkWidget *w, *hbox;
 
@@ -2079,7 +2136,12 @@ static void panel_sample_dialog (void)
         return;
     }
 
-    panel_new_spinbox(pset);
+    if (dataset->panel_pd > 0) {
+	prepare_panel_ts_dset(&tset);
+	panel_new_spinbox(pset, &tset);
+    } else {
+	panel_new_spinbox(pset, NULL);
+    }
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(pset->dlg));
@@ -2094,8 +2156,6 @@ static void panel_sample_dialog (void)
     gretl_dialog_keep_above(pset->dlg);
     gtk_widget_show_all(pset->dlg);
 }
-
-#endif /* not ready */
 
 typedef enum {
     SPIN_LABEL_NONE,
@@ -2262,12 +2322,10 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     int u = sample_range_code(action);
     int T = sample_size(dataset);
 
-#if 0 /* not ready */
     if (dataset_is_panel(dataset) && u == SMPL) {
         panel_sample_dialog();
         return;
     }
-#endif
 
     if (u == SMPLRAND && T < 2) {
         warnbox(_("The current data range is too small for this option"));
@@ -2299,10 +2357,6 @@ void sample_range_dialog (GtkAction *action, gpointer p)
         gtk_box_pack_start(GTK_BOX(hbox), rset->spin1, FALSE, FALSE, 5);
 
         gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    } else if (u == SMPL && dataset_is_panel(dataset)) {
-        hbox = panel_sample_spinbox(rset, 0);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-        rset->opt = OPT_P;
     } else {
         /* either plain SMPL or CREATE_DATASET */
         hbox = obs_spinbox(rset, _("Set sample range"),
@@ -2588,7 +2642,7 @@ int panel_graph_dialog (int *t1, int *t2)
     }
 
     vbox_add_hsep(vbox);
-    hbox = panel_sample_spinbox(rset, 1);
+    hbox = panel_unit_sample_spinbox(rset, 1);
     rset->obslabel = gtk_label_new("");
     w = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), rset->obslabel, FALSE, FALSE, 5);
@@ -3530,6 +3584,16 @@ static void dialog_add_opts (dialog_opts *opts, GtkWidget *vbox)
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
         gtk_widget_show(hbox);
         gtk_widget_show(v2);
+    } else if (opts->type == OPT_TYPE_CHECK) {
+	GtkWidget *b, *hbox;
+
+	b = gtk_check_button_new_with_label(_(opts->strs[0]));
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(b), "clicked",
+			 G_CALLBACK(dialog_option_callback), opts);
+	gtk_widget_show_all(hbox);
     } else {
         /* handle combo eventually? */
         dummy_call();

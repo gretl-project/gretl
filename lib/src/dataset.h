@@ -180,7 +180,7 @@ typedef struct series_table_ series_table;
  */
 #define dated_daily_data(p) (p != NULL && p->structure == TIME_SERIES \
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
-                             && p->sd0 > 10000.0)
+                             && p->sd0 > 100000)
 
 /**
  * dated_seven_day_data:
@@ -191,7 +191,7 @@ typedef struct series_table_ series_table;
  */
 #define dated_seven_day_data(p) (p != NULL && p->structure == TIME_SERIES \
                                  && p->pd == 7 && \
-                                 p->sd0 > 10000.0)
+                                 p->sd0 > 100000)
 
 /**
  * dated_weekly_data:
@@ -202,7 +202,7 @@ typedef struct series_table_ series_table;
  */
 #define dated_weekly_data(p) (p != NULL && p->structure == TIME_SERIES \
                               && p->pd == 52 && \
-                              p->sd0 > 10000.0)
+                              p->sd0 > 100000)
 
 /**
  * calendar_data:
@@ -212,8 +212,8 @@ typedef struct series_table_ series_table;
  * dates for observation strings (1) or not (0).
  */
 #define calendar_data(p) (p != NULL && p->structure == TIME_SERIES && \
-                          (p->pd == 5 || p->pd == 6 || p->pd == 7 \
-                           || p->pd == 52) && strchr(p->stobs, '-'))
+                          (p->pd == 5 || p->pd == 6 || p->pd == 7 || p->pd == 52) && \
+			  (p->sd0 > 100000 || strchr(p->stobs, '-')))
 
 /**
  * quarterly_or_monthly:
@@ -575,7 +575,7 @@ int set_panel_groups_name (DATASET *dset, const char *vname);
 
 const char *get_panel_group_name (const DATASET *dset, int obs);
 
-int panel_group_names_ok (const DATASET *dset, int maxlen);
+int panel_group_names_ok (const DATASET *dset);
 
 const char *panel_group_names_varname (const DATASET *dset);
 

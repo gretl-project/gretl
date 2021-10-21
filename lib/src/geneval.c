@@ -7727,21 +7727,24 @@ static NODE *do_errorif (NODE *l, NODE *r, parser *p)
 			     "errorif");
         p->err = E_DATA;
     } else {
-        int cond = node_get_bool(l, p, -1);
+        int cond = node_get_bool(l, p, 1);
 
-        if (cond && !p->err) {
+        if (cond) {
 	    const char *funcname = NULL;
 
 	    if (fd > 0) {
 		current_function_info(&funcname, NULL);
 	    }
 	    if (gretl_mpi_initialized()) {
-		write_mpi_errmsg(funcname, r->v.str);
+		if (mpi_rank == 0) {
+		    write_mpi_errmsg(funcname, r->v.str);
+		    p->err = E_FUNCERR;
+		}
 	    } else {
 		gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
 				     funcname, r->v.str);
+		p->err = E_FUNCERR;
 	    }
-            p->err = E_FUNCERR;
         }
     }
 
@@ -8541,7 +8544,7 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
     }
 
     if (!p->err) {
-        struct tm tm = {0};
+        struct tm tm = {0,0,0,1,0,0,0,0,-1};
         char *s;
 
         if (src == NULL) {
@@ -10478,18 +10481,6 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-#if defined(WIN32) && !defined(_WIN64)
-
-static NODE *lpsolve_bundle_node (NODE *n, parser *p)
-{
-    gretl_errmsg_set("lpsolve is not supported on 32-bit Windows");
-    p->err = E_DATA;
-
-    return NULL;
-}
-
-#else
-
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -10507,8 +10498,6 @@ static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 
     return ret;
 }
-
-#endif
 
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
@@ -12627,6 +12616,11 @@ static int scan_to_vector (NODE *n, const char *fmt,
 
     return nmax;
 }
+
+/* Common code to handle printf(), sprintf() and sscanf(). The @l node
+   is non-NULL only in the case of sscanf(). The @m node is a format
+   string in all cases, and the @r node holds args or NULL.
+*/
 
 static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {

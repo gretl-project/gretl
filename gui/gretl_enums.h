@@ -292,12 +292,13 @@ enum data_status_flags {
 };
 
 enum register_data_flags {
-    DATAFILE_OPENED = 1,
-    OPENED_VIA_CLI,
-    OPENED_VIA_SESSION,
-    DATA_APPENDED,
-    NULLDATA_STARTED,
-    DATA_PASTED
+    DATAFILE_OPENED    = 1 << 0,
+    OPENED_VIA_CLI     = 1 << 1,
+    OPENED_VIA_SESSION = 1 << 2,
+    DATA_APPENDED      = 1 << 3,
+    NULLDATA_STARTED   = 1 << 4,
+    DATA_PASTED        = 1 << 5,
+    FOCUS_CONSOLE      = 1 << 6
 };
 
 enum drag_types {

@@ -2459,6 +2459,8 @@ int get_pdf_path (const char *name, char *fullpath)
 	code = GRETL_LP;
     } else if (!strcmp(name, "gretl-svm.pdf")) {
 	code = GRETL_SVM;
+    } else if (!strcmp(name, "gretl-mpi.pdf")) {
+	code = GRETL_MPI;
     }
 
     if (code > 0) {
@@ -2503,15 +2505,15 @@ void display_pdf_help (GtkAction *action)
 	    code = HANSL_PRIMER;
 	} else if (!strcmp(aname, "Pkgbook")) {
 	    code = PKGBOOK;
+	} else if (!strcmp(aname, "GeoplotDoc")) {
+	    code = GRETL_GEO;
 	} else if (!strcmp(aname, "gretlMPI")) {
 	    code = GRETL_MPI;
 	} else if (!strcmp(aname, "gretlSVM")) {
 	    code = GRETL_SVM;
 	} else if (!strcmp(aname, "gretlDBN")) {
 	    code = GRETL_DBN;
-	} else if (!strcmp(aname, "GeoplotDoc")) {
-	    code = GRETL_GEO;
-	} else if (!strcmp(aname, "LpsolveDoc")) {
+	} else if (!strcmp(aname, "gretlLpsolve")) {
 	    code = GRETL_LP;
 	}
     }

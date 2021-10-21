@@ -97,7 +97,8 @@ enum {
     DIGITS_ITEM,
     DBN_ITEM,
     FCAST_ITEM,
-    CLOSE_ITEM
+    CLOSE_ITEM,
+    CLEAR_ITEM
 } viewbar_flags;
 
 int toolbar_icon_size = GTK_ICON_SIZE_MENU;
@@ -956,6 +957,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(stickiness_callback), STICKIFY_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
+    { N_("Clear"), GTK_STOCK_CLEAR, G_CALLBACK(clear_console), CLEAR_ITEM },
     { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
@@ -1082,6 +1084,10 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	    return NULL;
 	}
     } else if (f == COPY_SCRIPT_ITEM) {
+	return NULL;
+    }
+
+    if (f == CLEAR_ITEM && r != CONSOLE) {
 	return NULL;
     }
 

@@ -2161,7 +2161,7 @@ static int csv_non_numeric_check (csvdata *c, PRN *prn)
 static double special_time_val (const char *s, const char *fmt,
                                 int m_means_q)
 {
-    struct tm t = {0};
+    struct tm t = {0,0,0,1,0,0,0,0,-1};
     char *test;
 
     test = strptime(s, fmt, &t);

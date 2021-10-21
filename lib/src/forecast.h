@@ -30,7 +30,7 @@ typedef enum {
     FC_ADDOBS_OK    = 1 << 2,
     FC_INTEGRATE_OK = 1 << 3,
     FC_MEAN_OK      = 1 << 4
-} ForecastFlags;
+} FcastFlags;
 
 struct _FITRESID {
     int model_ID;   /* ID of model on which forecast is based */
@@ -72,7 +72,8 @@ int do_forecast (const char *str, DATASET *dset,
 		 gretlopt opt, PRN *prn);
 
 void forecast_options_for_model (MODEL *pmod, const DATASET *dset, 
-				 int *flags, int *dt2max, int *st2max);
+				 FcastFlags *flags, int *dt2max,
+				 int *st2max);
 
 gretl_matrix *get_forecast_matrix (int idx, int *err);
 

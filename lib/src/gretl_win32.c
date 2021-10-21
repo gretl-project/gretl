@@ -637,7 +637,7 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 			   char **sout, PRN *inprn)
 {
     PRN *prn;
-    int ok;
+    int err = 0;
 
     if (sout != NULL) {
 	prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
@@ -646,20 +646,24 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     }
 
     /* close the write end of the pipe */
-    ok = CloseHandle(hwrite);
+    err = (CloseHandle(hwrite) == 0);
 
-    if (!ok) {
-	fputs("Closing handle failed\n", stderr);
+    if (err) {
+	fputs("Closing write handle failed\n", stderr);
     } else {
 	/* read output from the child process: note that the
 	   buffer must be NUL-terminated for use with pputs()
 	*/
 	CHAR buf[BUFSIZE];
 	DWORD dwread;
+	int ok;
 
 	while (1) {
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
+	    if (!ok) {
+		fputs("Readfile on read handle failed\n", stderr);
+	    }
 	    if (!ok || dwread == 0) {
 		break;
 	    }
@@ -667,12 +671,14 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 	}
     }
 
+    CloseHandle(hread);
+
     if (sout != NULL) {
 	*sout = gretl_print_steal_buffer(prn);
 	gretl_print_destroy(prn);
     }
 
-    return ok;
+    return err;
 }
 
 static int relay_mpi_output (HANDLE hread, char *buf, PRN *prn)
@@ -713,7 +719,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
     gchar *targdir = NULL;
     gchar *ls1 = NULL;
     gchar *ls2 = NULL;
-    int ok, err;
+    int ok, err = 0;
 
     /* FIXME? */
     err = ensure_locale_encoding(&arg, &ls1, &currdir, &ls2);
@@ -742,7 +748,9 @@ run_child_with_pipe (const char *arg, const char *currdir,
     ZeroMemory(&sinfo, sizeof sinfo);
 
     sinfo.cb = sizeof sinfo;
+#if 0 /* Too Much Information? */
     sinfo.hStdError = hwrite;
+#endif
     sinfo.hStdOutput = hwrite;
     sinfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     sinfo.dwFlags |= (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW);
@@ -760,15 +768,15 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		       &pinfo);
 
     if (!ok) {
+	err = E_EXTERNAL;
 	win_show_last_error();
     } else {
 	if (prn != NULL) {
 	    /* try reading output in real time */
 	    char buf[BUFSIZE];
-	    DWORD excode;
-	    int ok, got_all;
+	    DWORD excode = 0;
+	    int got_all = 0;
 
-	    fprintf(stderr, "Entering MPI real-time read loop\n");
 	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
 		   && excode == STILL_ACTIVE) {
 		got_all = relay_mpi_output(hread, buf, prn);
@@ -776,7 +784,11 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		    break;
 		}
 	    }
-	    fprintf(stderr, "HERE got_all = %d\n", got_all);
+	    fprintf(stderr, "run_child_with_pipe: got_all = %d\n", got_all);
+	    if (!got_all) {
+		err = E_EXTERNAL;
+	    }
+	    CloseHandle(hread);
 	    CloseHandle(hwrite);
 	}
 	CloseHandle(pinfo.hProcess);
@@ -788,7 +800,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
     g_free(ls1);
     g_free(ls2);
 
-    return ok;
+    // fprintf(stderr, "run_child_with_pipe: returning %d\n", err);
+    return err;
 }
 
 static int run_cmd_with_pipes (const char *arg, const char *currdir,
@@ -796,7 +809,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 {
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sattr;
-    int ok;
+    int ok, err = 0;
 
     /* set the bInheritHandle flag so pipe handles are inherited */
     sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -807,6 +820,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
     ok = CreatePipe(&hread, &hwrite, &sattr, 0);
 
     if (!ok) {
+	err = E_EXTERNAL;
 	win_show_last_error();
     } else {
 	/* ensure that the read handle to the child process's pipe for
@@ -814,17 +828,20 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
 	if (prn != NULL && (opt & OPT_R)) {
 	    /* OPT_R is intended to support real time output */
-	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, prn);
+	    err = run_child_with_pipe(arg, currdir, hwrite, hread,
+				      opt, prn);
 	} else {
-	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, NULL);
-	    if (ok) {
+	    err = run_child_with_pipe(arg, currdir, hwrite, hread,
+				      opt, NULL);
+	    if (!err) {
 		/* read from child's output pipe on termination */
-		read_from_pipe(hwrite, hread, sout, prn);
+		err = read_from_pipe(hwrite, hread, sout, prn);
 	    }
 	}
     }
 
-    return !ok; /* error return */
+    // fprintf(stderr, "run_cmd_with_pipes: returning %d\n", err);
+    return err;
 }
 
 /* used only by gretl_shell() below */

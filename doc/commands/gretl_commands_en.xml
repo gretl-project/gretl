@@ -923,7 +923,7 @@
 	conditional ML is available as an option.  (If
 	<program>X-12-ARIMA</program> is installed you have the option
 	of using it instead of native code. Note that the newer
-	<program>X13</program> works as a drop-in replacement in 
+	<program>X13</program> works as a drop-in replacement in
 	exactly the same way.) For details regarding
 	these options, please see <guideref targ="chap:timeseries"/>.
       </para>
@@ -2625,9 +2625,10 @@
 	missing, but certain deterministic variables are recognized
 	and extended, namely, a simple linear trend and periodic dummy
 	variables. If the dataset takes the form of a panel, the
-	<opt>panel-time</opt> flag can be used to lengthen the time
-	series for each cross-sectional unit (the default action being
-	to add <math>n</math> such units).
+	default action is to add <math>n</math> cross-sectional units
+	to the panel, but if the <opt>panel-time</opt> flag is given
+	the effect is to add <math>n</math> observations to the time
+	series for each unit.
       </para>
       <para>
 	<lit>insobs</lit>: Must be followed by a positive integer no
@@ -4435,9 +4436,7 @@
       <para>
 	Applicable only in the context of a user-defined function (see
 	<cmdref targ="function"/>). Causes execution of the current
-	function to terminate with an error condition flagged. 
-	An exception is the special MPI mode for parallelized program
-	execution, where only the associated string is printed. 
+	function to terminate with an error condition flagged.
       </para>
       <para>
 	The optional <repl>message</repl> argument can take the
@@ -4466,8 +4465,8 @@
       <para>
 	Opens a block of statements in which a function is defined. This
 	block must be closed with <lit>end function</lit>. (An exception is
-	the case when a user-defined function shall be deleted, which is 
-	achieved by the single command line <lit>function foo delete</lit> 
+	the case when a user-defined function shall be deleted, which is
+	achieved by the single command line <lit>function foo delete</lit>
 	for a function named <quote>foo</quote>.) See
 	<guideref targ="chap:functions"/> for details.
       </para>
@@ -4672,8 +4671,9 @@
 
       <para context="cli">
 	In the appropriate context, <lit>series</lit>,
-	<lit>scalar</lit>, <lit>matrix</lit>, <lit>string</lit> and
-	<lit>bundle</lit> are synonyms for this command.
+	<lit>scalar</lit>, <lit>matrix</lit>, <lit>string</lit>,
+	<lit>bundle</lit> and <lit>array</lit> are synonyms for this
+	command.
       </para>
 
       <para context="cli">
@@ -9157,6 +9157,23 @@
 
   </command>
 
+  <command name="mpi" section="Programming"
+	   label="Message Passing Interface">
+    <usage>
+      <arguments>
+	<argument>see below</argument>
+      </arguments>
+    </usage>
+    <description>
+      <para>
+	The <lit>mpi</lit> command starts a block of statements (which
+	must be ended with <lit>end mpi</lit>) to be executed using
+	MPI (Message Passing Interface) parallelization. See
+	<doc>gretl-mpi.pdf</doc> for a full account of this facility.
+      </para>
+    </description>
+  </command>
+
   <command name="mpols" section="Estimation" label="Multiple-precision OLS">
 
     <usage>
@@ -12583,7 +12600,7 @@
 	RS[2] = "b[2,1] = 0"
 	restrict
 	  inject RS
-	end restrict	
+	end restrict
       </code>
       <para>
 	In actual usage of this method one would likely use <fncref
@@ -14388,6 +14405,10 @@
 	  <flag>--unit</flag>
 	  <effect>panel data: sample in cross-sectional dimension</effect>
         </option>
+        <option>
+	  <flag>--time</flag>
+	  <effect>panel data: sample in time-series dimension</effect>
+        </option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't report sample range</effect>
@@ -14499,15 +14520,35 @@
 	is not always possible to comply with this request.
       </para>
 
+      <subhead>Panel-specific options</subhead>
+
       <para>
-	The <opt>unit</opt> option is specific to panel data: it
-	allows you to specify a range of <quote>individuals</quote>
-	directly. For example:
+	The <opt>unit</opt> and <opt>time</opt> options are specific
+	to panel data. They allow you to specify, respectively, a
+	range of <quote>units</quote> or time-periods. For
+	example:
       </para>
       <code>
-	# limit the sample to the first 50 individuals
+	# limit the sample to the first 50 units
 	smpl 1 50 --unit
+	# limit the sample to periods 2 to 20
+	smpl 2 20 --time
       </code>
+      <para>
+	If the time dimension of a panel dataset has been specified
+	via the <cmdref targ="setobs"/> command with the
+	<opt>panel-time</opt> option, <lit>smpl</lit> with the
+	<opt>time</opt> option can be expressed in terms of dates
+	rather than plain observation numbers. Here's an example:
+      </para>
+      <code>
+	# specify panel time as quarterly, starting in Q1 of 1990
+	setobs 4 1990:1 --panel-time
+	# limit the sample to 2000:1 to 2007:1
+	smpl 2000:1 2007:1 --time
+      </code>
+
+      <subhead>Permanent versus temporary sampling</subhead>
 
       <para>
 	By default, restrictions on the current sample range can be

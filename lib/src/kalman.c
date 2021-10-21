@@ -981,6 +981,9 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     gretl_matrix_print(K->y, "K->y");
     gretl_matrix_print(K->H, "K->H");
     gretl_matrix_print(K->F, "K->F");
+    if (nmat == 4) {
+	gretl_matrix_print(K->Q, "K->Q");
+    }
 #endif
 
     kalman_set_dimensions(K);
@@ -2048,6 +2051,17 @@ struct K_input_mat K_input_mats[] = {
     { K_S, "inistate" },
     { K_P, "inivar" }
 };
+
+int extra_mats[] = {
+    K_A,
+    K_R,
+    K_m,
+    K_x,
+    K_S,
+    K_P,
+};
+
+static int n_extra_mats = G_N_ELEMENTS(extra_mats);
 
 static int obsy_check (kalman *K)
 {
@@ -4552,9 +4566,9 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     kalman *K, *Knew;
     gretl_bundle *b = NULL;
     gretl_matrix *M[5] = {NULL};
+    int copy[5] = {1, 1, 1, 1, 1};
     gretl_matrix *m, **pm, **pm1;
     const char *name;
-    int copy[5] = {1, 1, 1, 1, 1};
     int i, id, k = 4;
 
     K = gretl_bundle_get_private_data((gretl_bundle *) src);
@@ -4564,10 +4578,12 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
 	return NULL;
     }
 
+    /* set pointers to required Kalman matrices */
     M[0] = K->y;
     M[1] = K->H;
     M[2] = K->F;
 
+    /* variants dependent on presence/absence of cross-correlation */
     if (kalman_xcorr(K)) {
 	M[3] = K->B;
 	M[4] = K->C;
@@ -4585,11 +4601,12 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     Knew = gretl_bundle_get_private_data(b);
     Knew->flags = K->flags;
 
-    for (i=k; i<K_MMAX && !*err; i++) {
-	id = K_input_mats[i].sym;
+    /* add any "extra" matrices, beyond the required ones */
+    for (i=0; i<n_extra_mats && !*err; i++) {
+	id = extra_mats[i];
 	m = (gretl_matrix *) k_input_matrix_by_id(K, id);
 	if (m != NULL) {
-	    *err = kalman_bundle_set_matrix(Knew, m, i, 1);
+	    *err = kalman_bundle_set_matrix(Knew, m, id, 1);
 	}
     }
 

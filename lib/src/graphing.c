@@ -7108,12 +7108,7 @@ static int panel_means_ts_plot (const int vnum,
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
 
-    if (dset->panel_pd > 0) {
-	/* add time series info to @gset */
-	gset->structure = TIME_SERIES;
-	gset->pd = dset->panel_pd;
-	gset->sd0 = dset->panel_sd0;
-    }
+    time_series_from_panel(gset, dset);
 
     s0 = dset->t1;
 
@@ -7172,7 +7167,7 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 
     /* If we have valid panel group names, use them
        as obs markers here */
-    grpnames = panel_group_names_ok(dset, 0);
+    grpnames = panel_group_names_ok(dset);
     if (grpnames) {
 	dataset_allocate_obs_markers(gset);
     }
@@ -7390,15 +7385,14 @@ static int panel_overlay_ts_plot (const int vnum,
     int *list = NULL;
     gchar *literal = NULL;
     gchar *title = NULL;
-    const double *obs = NULL;
     series_table *gst = NULL;
     const char *sval;
     int vg = 0;
-    int nv, panel_labels = 0;
+    int panel_labels = 0;
     int maxlen = 0;
     int single_series;
     int use = 0, strip = 0;
-    int i, t, s, s0;
+    int i, s, s0;
     int err = 0;
 
     single_series = series_is_group_invariant(dset, vnum);
@@ -7409,20 +7403,17 @@ static int panel_overlay_ts_plot (const int vnum,
 	nunits = panel_sample_size(dset);
     }
 
-    nv = nunits + 2;
     u0 = dset->t1 / T;
 
-    obs = gretl_plotx(dset, OPT_P);
-    if (obs == NULL) {
-	return E_ALLOC;
-    }
-
-    gset = create_auxiliary_dataset(nv, T, 0);
+    gset = create_auxiliary_dataset(nunits + 1, T, OPT_B);
     if (gset == NULL) {
 	return E_ALLOC;
     }
 
-    list = gretl_consecutive_list_new(1, nv - 1);
+    /* add time series info to @gset */
+    time_series_from_panel(gset, dset);
+
+    list = gretl_consecutive_list_new(1, nunits);
     if (list == NULL) {
 	destroy_dataset(gset);
 	return E_ALLOC;
@@ -7444,6 +7435,7 @@ static int panel_overlay_ts_plot (const int vnum,
 
     s0 = dset->t1;
 
+    /* compose varnames and transcribe data */
     for (i=0; i<nunits; i++) {
 	s = s0 + i * T;
 	if (single_series) {
@@ -7467,13 +7459,8 @@ static int panel_overlay_ts_plot (const int vnum,
 	} else {
 	    sprintf(gset->varname[i+1], "%d", u0+i+1);
 	}
-	for (t=0; t<T; t++) {
-	    gset->Z[i+1][t] = dset->Z[vnum][s++];
-	}
-    }
-
-    for (t=0; t<T; t++) {
-	gset->Z[nv-1][t] = obs[t];
+	/* borrow the appropriate chunk of data */
+	gset->Z[i+1] = dset->Z[vnum] + s;
     }
 
     if (nunits > 9 && T < 50) {
@@ -7482,9 +7469,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	opt |= OPT_O; /* use lines */
     }
 
-    if (single_series) {
-	opt |= OPT_S; /* suppress-fitted */
-    } else {
+    if (!single_series) {
 	const char *gname = series_get_graph_name(dset, vnum);
 	const char *vname = panel_group_names_varname(dset);
 
@@ -7501,7 +7486,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	xwide = 1;
     }
 
-    err = gnuplot(list, literal, gset, opt);
+    err = gnuplot(list, literal, gset, opt | OPT_T);
 
     xwide = 0;
     g_free(title);
@@ -9598,7 +9583,7 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 	    /* already in seconds since epoch start */
 	    x = atof(s);
 	} else if (*fmt != '\0') {
-	    struct tm t = {0};
+	    struct tm t = {0,0,0,1,0,0,0,0,-1};
 	    time_t etime;
 	    char *test;
 

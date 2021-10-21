@@ -65,6 +65,8 @@ enum {
     DW_PANEL_MODE,
     DW_PANEL_SIZE,
     DW_PANEL_VARS,
+    DW_PANEL_PD,
+    DW_PANEL_STOBS,
     DW_CONFIRM
 };
 
@@ -98,10 +100,13 @@ struct dw_opts_ {
     int tid;             /* panel: ID number of "period" variable */
     int *setvar;         /* pointer to variable currently being set */
     int *extra;          /* additional pointer to int variable */
-    GtkWidget *pdspin;   /* used for setting custom time-series frequency */
+    GtkWidget *pdspin;   /* for setting custom time-series frequency */
+    GtkWidget *tsspin;   /* for setting time-series starting obs */
     GList *vlist;        /* panel: list of candidates for uid, tid */
     GtkWidget *dspin[4]; /* dataset dimension setters (new dataset) */
     int dvals[4];        /* dataset dimension values (new dataset) */
+    DATASET *tsinfo;     /* for handling panel time dimension */
+    int unames_id;       /* panel: candidate series ID for unit names */
 };
 
 static const char *wizcode_string (int code)
@@ -114,6 +119,8 @@ static const char *wizcode_string (int code)
 	N_("Panel data organization"),
 	N_("Panel structure"),
 	N_("Panel index variables"),
+	N_("Panel time dimension"),
+	N_("Panel first period"),
 	N_("Confirm dataset structure")
     };
 
@@ -125,6 +132,7 @@ static const char *wizcode_string (int code)
 }
 
 static int translate_panel_vars (dw_opts *opts, int *uv, int *tv);
+static int usable_panel_start_year (const DATASET *dset);
 
 /* Initialize the "dummy" DATASET structure @dwinfo, based
    on the current data info. This will just be a cross-section
@@ -141,6 +149,9 @@ static void dwinfo_init (DATASET *dwinfo)
     strcpy(dwinfo->stobs, dataset->stobs);
     strcpy(dwinfo->endobs, dataset->endobs);
     dwinfo->sd0 = dataset->sd0;
+
+    dwinfo->panel_pd = dataset->panel_pd;
+    dwinfo->panel_sd0 = dataset->panel_sd0;
 
 #if DWDEBUG
     fprintf(stderr, "dwinfo_init:\n"
@@ -266,11 +277,12 @@ static void maybe_unrestrict_dataset (void)
 static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 			      GtkWidget *dlg)
 {
-    gchar *setobs_cmd = NULL;
+    gchar *setobs_cmd[3] = {NULL, NULL, NULL};
     gretlopt opt = OPT_NONE;
     int delmiss = (opts->flags & DW_DROPMISS);
     int delete_markers = 0;
-    int err = 0;
+    int panel_ts_delta = 0;
+    int i, err = 0;
 
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes\n");
@@ -296,19 +308,26 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	    err = set_panel_structure_from_vars(uv, tv, dataset);
 	}
 	if (!err) {
-	    setobs_cmd = g_strdup_printf("setobs %s %s --panel-vars",
-					 dataset->varname[uv],
-					 dataset->varname[tv]);
+	    setobs_cmd[0] = g_strdup_printf("setobs %s %s --panel-vars",
+					    dataset->varname[uv],
+					    dataset->varname[tv]);
 	}
 	goto finalize;
     }
 
-    /* check for nothing to be done */
+    if (opts->tsinfo != NULL) {
+	/* check for panel-time change */
+	if (opts->tsinfo->pd != dataset->panel_pd ||
+	    opts->tsinfo->sd0 != dataset->panel_sd0) {
+	    panel_ts_delta = 1;
+	}
+    }
+
+    /* check for no changes */
     if (dwinfo->structure == dataset->structure &&
 	dwinfo->pd == dataset->pd &&
 	strcmp(dwinfo->stobs, dataset->stobs) == 0) {
-	if (delmiss) {
-	    /* recording? */
+	if (delmiss || panel_ts_delta || opts->unames_id) {
 	    goto finalize;
 	} else {
 	    infobox(_("No changes were made"));
@@ -325,12 +344,12 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     /* handle panel structure */
     if (known_panel(dwinfo)) {
-	int nunits = dwinfo->t1;
-	int nperiods = dataset->n / nunits;
+	int N = dwinfo->t1;
+	int T = dataset->n / N;
 
-	/* we don't offer a choice of "starting obs" */
-	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)?
-	    nperiods : nunits;
+	/* we don't offer a choice of "starting obs" in the
+	   cross-sectional dimension */
+	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? T : N;
 	strcpy(dwinfo->stobs, "1:1");
     }
 
@@ -352,14 +371,12 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
     }
 
     err = simple_set_obs(dataset, dwinfo->pd, dwinfo->stobs, opt);
-
 #if DWDEBUG
     fprintf(stderr, "pd=%d, stobs='%s', opt=%d; set_obs returned %d\n",
 	    dwinfo->pd, dwinfo->stobs, opt, err);
 #endif
-
-    if (!err && setobs_cmd == NULL) {
-	setobs_cmd = g_strdup_printf("setobs %d %s%s",
+    if (!err && setobs_cmd[0] == NULL) {
+	setobs_cmd[0] = g_strdup_printf("setobs %d %s%s",
 				     dwinfo->pd, dwinfo->stobs,
 				     print_flags(opt, SETOBS));
     }
@@ -368,6 +385,21 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     if (!err && delmiss) {
 	err = dataset_purge_missing_rows(dataset);
+    }
+    if (!err && panel_ts_delta) {
+	/* specifying the panel time dimension */
+	dataset->panel_pd = opts->tsinfo->pd;
+	dataset->panel_sd0 = opts->tsinfo->sd0;
+	setobs_cmd[1] = g_strdup_printf("setobs %d %s --panel-time",
+					opts->tsinfo->pd,
+					opts->tsinfo->stobs);
+    }
+    if (!err && opts->unames_id > 0) {
+	/* specifying the panel "group names" series */
+	const char *vname = dataset->varname[opts->unames_id];
+
+	set_panel_groups_name(dataset, vname);
+	setobs_cmd[2] = g_strdup_printf("setobs %s --panel-groups", vname);
     }
 
     if (err) {
@@ -379,12 +411,20 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 	mark_dataset_as_modified();
     }
 
-    if (!err && setobs_cmd != NULL) {
-	lib_command_strcpy(setobs_cmd);
-	record_command_verbatim();
+    for (i=0; i<3; i++) {
+	if (setobs_cmd[i] != NULL) {
+	    if (!err) {
+		lib_command_strcpy(setobs_cmd[i]);
+		record_command_verbatim();
+	    }
+	    g_free(setobs_cmd[i]);
+	}
     }
 
-    g_free(setobs_cmd);
+    if (!dataset_is_panel(dataset)) {
+	/* scrub panel groups name, if previously set */
+	set_panel_groups_name(dataset, NULL);
+    }
 
 #if DWDEBUG
     fprintf(stderr, "dwiz_make_changes: returning %d\n", err);
@@ -437,6 +477,10 @@ static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
     }
 
     err = simple_set_obs(dataset, dwinfo->pd, dwinfo->stobs, opt);
+    if (!err && opts->tsinfo != NULL && opts->tsinfo->pd > 0) {
+	dataset->panel_pd = opts->tsinfo->pd;
+	dataset->panel_sd0 = opts->tsinfo->sd0;
+    }
 
     if (opts->flags & DW_SSHEET) {
 	gtk_widget_hide(dlg);
@@ -448,12 +492,18 @@ static int dwiz_replace_dataset (DATASET *dwinfo, dw_opts *opts,
 	lib_command_sprintf("setobs %d %s%s", dwinfo->pd,
 			    dwinfo->stobs, print_flags(opt, SETOBS));
 	record_command_verbatim();
+	if (opts->tsinfo != NULL && opts->tsinfo->pd > 0) {
+	    lib_command_sprintf("setobs %d %s --panel-time",
+				opts->tsinfo->pd, opts->tsinfo->stobs);
+	    record_command_verbatim();
+	}
     }
 
     return err;
 }
 
 #define TS_INFO_MAX 10
+#define PANEL_TS_MAX 8
 #define PANEL_INFO_MAX 3
 
 struct freq_info {
@@ -471,7 +521,18 @@ struct freq_info ts_info[] = {
     {  7, N_("Daily (7 days)") },
     { 24, N_("Hourly") },
     { 10, N_("Decennial") },
-    { PD_SPECIAL, N_("Other") },
+    { PD_SPECIAL, N_("Other") }
+};
+
+struct freq_info panel_ts_info[] = {
+    {  0, N_("Undated") },
+    {  1, N_("Annual") },
+    {  4, N_("Quarterly") },
+    { 12, N_("Monthly") },
+    { 52, N_("Weekly") },
+    {  5, N_("Daily (5 days)") },
+    {  6, N_("Daily (6 days)") },
+    {  7, N_("Daily (7 days)") }
 };
 
 struct panel_info {
@@ -485,19 +546,32 @@ struct panel_info pan_info[] = {
     { PANEL_UNKNOWN,         N_("Use index variables") }
 };
 
-static const char *ts_frequency_string (const DATASET *dwinfo)
+static const char *ts_frequency_string (const DATASET *dinfo)
 {
-    int i, pd = dwinfo->pd;
+    int i;
 
-    if (pd == PD_SPECIAL) {
+    if (dinfo->pd == PD_SPECIAL) {
 	return N_("Other");
-    } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+    } else if (dinfo->structure == SPECIAL_TIME_SERIES) {
 	return N_("Time series");
     } else {
 	for (i=0; i<TS_INFO_MAX; i++) {
-	    if (ts_info[i].pd == pd) {
+	    if (ts_info[i].pd == dinfo->pd) {
 		return ts_info[i].label;
 	    }
+	}
+    }
+
+    return N_("Non-standard frequency");
+}
+
+static const char *panel_ts_frequency_string (const DATASET *dinfo)
+{
+    int i;
+
+    for (i=0; i<PANEL_TS_MAX; i++) {
+	if (panel_ts_info[i].pd == dinfo->panel_pd) {
+	    return panel_ts_info[i].label;
 	}
     }
 
@@ -531,6 +605,17 @@ static int dwiz_radio_default (DATASET *dwinfo, int step)
 	deflt = dwinfo->v;
     } else if (step == DW_PANEL_MODE) {
 	deflt = dwinfo->structure;
+    } else if (step == DW_PANEL_PD) {
+	if (dwinfo->panel_pd == 0 && dataset_is_panel(dataset)) {
+	    /* try for evidence of annual panel time? */
+	    int y0 = usable_panel_start_year(dataset);
+
+	    if (y0 > 0) {
+		dwinfo->panel_pd = 1;
+		dwinfo->panel_sd0 = y0;
+	    }
+	}
+	deflt = dwinfo->panel_pd;
     }
 
 #if DWDEBUG
@@ -556,6 +641,8 @@ static int dwiz_i_to_setval (DATASET *dwinfo, int step, int i)
 	setval = (i < TS_INFO_MAX)? ts_info[i].pd : 0;
     } else if (step == DW_PANEL_MODE) {
 	setval = (i < PANEL_INFO_MAX)? pan_info[i].code : 0;
+    } else if (step == DW_PANEL_PD) {
+	setval = (i < PANEL_TS_MAX)? panel_ts_info[i].pd : 0;
     } else {
 	setval = i;
     }
@@ -586,6 +673,8 @@ static const char *dwiz_radio_strings (int step, int i)
 	return ts_info[i].label;
     } else if (step == DW_PANEL_MODE) {
 	return pan_info[i].label;
+    } else if (step == DW_PANEL_PD) {
+	return panel_ts_info[i].label;
     }
 
     return "";
@@ -637,6 +726,14 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
     int nobs = dw_nobs(dwinfo, opts);
     gchar *ret = NULL;
 
+    if (opts->tsspin != NULL) {
+	dwinfo->t1 = obs_button_get_value(opts->tsspin);
+	if (opts->tsinfo != NULL) {
+	    const char *s = obs_button_get_string(opts->tsspin);
+	    strcpy(opts->tsinfo->stobs, s);
+	}
+    }
+
     if (dwinfo->structure == CROSS_SECTION) {
 	ret = g_strdup_printf(_("%s, observations 1 to %d"), _("Cross-sectional data"),
 			      nobs);
@@ -664,21 +761,38 @@ static gchar *make_confirmation_text (DATASET *dwinfo, dw_opts *opts)
 				"%d cross-sectional units observed over %d periods"),
 			      _("stacked time series"), dwinfo->n, dwinfo->pd);
     } else if (known_panel(dwinfo)) {
-	int nunits, nperiods;
+	GString *gs = g_string_new(NULL);
+	int N, T;
 
 	if (opts->flags & DW_CREATE) {
-	    nunits = opts->dvals[2];
-	    nperiods = opts->dvals[3];
+	    N = opts->dvals[2];
+	    dwinfo->pd = T = opts->dvals[3];
 	} else {
-	    nunits = dwinfo->t1;
-	    nperiods = nobs / nunits;
+	    T = dwinfo->pd;
+	    N = nobs / T;
+	    if (dataset->pangrps == NULL) {
+		opts->unames_id = usable_group_names_series_id(dataset, 12);
+	    }
 	}
 
-	ret = g_strdup_printf(_("Panel data (%s)\n"
-				"%d cross-sectional units observed over %d periods"),
-			      (dwinfo->structure == STACKED_TIME_SERIES)?
-			      _("stacked time series") : _("stacked cross sections"),
-			      nunits, nperiods);
+	g_string_append_printf(gs, _("Panel data (%s)\n"
+				      "%d cross-sectional units observed over %d periods"),
+			       (dwinfo->structure == STACKED_TIME_SERIES)?
+			       _("stacked time series") : _("stacked cross sections"),
+			       N, T);
+	g_string_append(gs, "\n\n");
+	g_string_append(gs, _("Time dimension: "));
+	g_string_append(gs, panel_ts_frequency_string(dwinfo));
+	if (opts->tsinfo != NULL) {
+	    opts->tsinfo->sd0 = get_date_x(opts->tsinfo->pd, opts->tsinfo->stobs);
+	    opts->tsinfo->t1 = 0;
+	    ntolabel(opts->tsinfo->endobs, dwinfo->pd - 1, opts->tsinfo);
+	    g_string_append_printf(gs, ", %s to %s", opts->tsinfo->stobs,
+				   opts->tsinfo->endobs);
+	} else {
+	    g_string_append_printf(gs, ", 1 to %d", dwinfo->pd);
+	}
+	ret = g_string_free(gs, FALSE);
     }
 
     if (opts->flags & DW_DROPMISS) {
@@ -714,8 +828,105 @@ static int default_start_decade (void)
     return d;
 }
 
-static void compute_default_ts_info (DATASET *dwinfo)
+/* If the current dataset is defined as a panel, but we
+   don't have the additional information conveyed by
+   panel_pd, check for the presence of a "year" variable
+   that might imply an annual time-series dimension.
+   The requirments are that (a) the starting year should
+   not be prior to 1400, (b) each panel unit should have
+   the same starting year and (c) years must be strictly
+   consecutive.
+*/
+
+static int usable_panel_start_year (const DATASET *dset)
 {
+    const double *zi;
+    int i, j, t, s, y0;
+    int T = dset->pd;
+    int N = dset->n / T;
+    int ok, ret = 0;
+
+    for (i=1; i<dset->v; i++) {
+	zi = dset->Z[i];
+	if (g_ascii_strcasecmp(dset->varname[i], "year") ||
+	    zi[0] < 1400 || floor(zi[0]) != zi[0]) {
+	    continue;
+	}
+	ok = 1;
+	y0 = zi[0];
+	for (j=0, s=0; j<N && ok; j++) {
+	    for (t=0; t<T; t++, s++) {
+		if (t == 0) {
+		    if (j > 0 && zi[s] != y0) {
+			ok = 0;
+			break;
+		    }
+		} else if (zi[s] != zi[s-1] + 1) {
+		    ok = 0;
+		    break;
+		}
+	    }
+	}
+	if (ok) {
+	    ret = y0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+static int opts_ensure_tsinfo (dw_opts *opts, DATASET *dwinfo)
+{
+    if (opts->tsinfo == NULL) {
+	opts->tsinfo = calloc(sizeof *opts->tsinfo, 1);
+	if (opts->tsinfo == NULL) {
+	    nomem();
+	    return E_ALLOC;
+	}
+    }
+
+    /* should this be conditional on tsinfo newly created? */
+    opts->tsinfo->structure = TIME_SERIES;
+    opts->tsinfo->pd = dwinfo->panel_pd;
+    opts->tsinfo->sd0 = dwinfo->panel_sd0;
+
+    return 0;
+}
+
+static int x_date_inverse (double x1, int pd, double x0, int dt0)
+{
+    int fx1 = floor(x1);
+    int fx0 = floor(x0);
+    int t0, t1, dt = 0;
+
+    if (pd == 5 || pd == 6 || pd == 7) {
+	dt = day_span((guint32) x0, (guint32) x1, pd, NULL);
+    } else if (pd == 52) {
+	dt = day_span((guint32) x0, (guint32) x1, 7, NULL);
+	dt /= 7;
+    } else if (pd == 1) {
+	dt = fx1 - fx0;
+    } else if (pd == 4) {
+	t0 = 4*fx0 + 10*(x0 - fx0);
+	t1 = 4*fx1 + 10*(x1 - fx1);
+	dt = t1 - t0;
+    } else if (pd == 12) {
+	t0 = 12*fx0 + 100*(x0 - fx0);
+	t1 = 12*fx1 + 100*(x1 - fx1);
+	dt = t1 - t0;
+    } else {
+	dt = dt0;
+    }
+
+    return dt;
+}
+
+static int compute_default_ts_info (DATASET *dwinfo, int step,
+				    dw_opts *opts)
+{
+    DATASET *dinfo;
+
 #if DWDEBUG
     char obsstr[OBSLEN];
 
@@ -726,97 +937,110 @@ static void compute_default_ts_info (DATASET *dwinfo)
     }
 #endif
 
-    if (dwinfo->pd < 0) {
-	dwinfo->pd = 1;
+    if (step == DW_PANEL_STOBS) {
+	/* panel-data time */
+	dinfo = opts->tsinfo;
+    } else {
+	/* plain time-series */
+	if (dwinfo->pd < 0) {
+	    dwinfo->pd = 1;
+	}
+	dinfo = dwinfo;
     }
 
-    if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+    if (dinfo->structure == SPECIAL_TIME_SERIES) {
 	/* non-standard time series */
-	dwinfo->n = 9999 * dwinfo->pd;
-	dwinfo->t1 = 0;
-	if (dwinfo->pd > 1) {
-	    int p = dwinfo->pd;
+	dinfo->n = 9999 * dinfo->pd;
+	dinfo->t1 = 0;
+	if (dinfo->pd > 1) {
+	    int p = dinfo->pd;
 
-	    strcpy(dwinfo->stobs, "1:");
+	    strcpy(dinfo->stobs, "1:");
 	    while ((p = p / 10) > 0) {
-		strcat(dwinfo->stobs, "0");
+		strcat(dinfo->stobs, "0");
 	    }
-	    strcat(dwinfo->stobs, "1");
+	    strcat(dinfo->stobs, "1");
 	} else {
-	    strcpy(dwinfo->stobs, "1");
+	    strcpy(dinfo->stobs, "1");
 	}
-    } else if (dwinfo->pd == 1) {
-	strcpy(dwinfo->stobs, "1");
-	dwinfo->n = 2100;
-	dwinfo->t1 = 1959; /* 1960 */
-    } else if (dwinfo->pd == 10) {
+    } else if (dinfo->pd == 1) {
+	strcpy(dinfo->stobs, "1");
+	dinfo->n = 2100;
+	dinfo->t1 = 1959; /* 1960 */
+    } else if (dinfo->pd == 10) {
 	int dd = default_start_decade();
 
-	sprintf(dwinfo->stobs, "%d", dd);
+	sprintf(dinfo->stobs, "%d", dd);
 	if (dd > 1700) {
-	    dwinfo->n = 30;
-	    dwinfo->t1 = 0;
+	    dinfo->n = 30;
+	    dinfo->t1 = 0;
 	} else {
-	    dwinfo->n = 40;
-	    dwinfo->t1 = 25;
+	    dinfo->n = 40;
+	    dinfo->t1 = 25;
 	}
-    } else if (dwinfo->pd == 4) {
-	strcpy(dwinfo->stobs, "1300:1");
-	dwinfo->n = 1600 + 1400;
-	dwinfo->t1 = 1600 + 1040; /* 1960:1 */
-    } else if (dwinfo->pd == 12) {
-	strcpy(dwinfo->stobs, "1300:01");
-	dwinfo->n = 4800 + 4200;
-	dwinfo->t1 = 4800 + 3120; /* 1960:01 */
-    } else if (dwinfo->pd == 24) {
-	strcpy(dwinfo->stobs, "1:01");
-	dwinfo->n = 1500;
-	dwinfo->t1 = 0;
-    } else if (dwinfo->pd == 52) {
-	if (dwinfo->v >= 7) {
-	    dwinfo->n = 500;
-	    dwinfo->t1 = 0;
-	    strcpy(dwinfo->stobs, "1");
+    } else if (dinfo->pd == 4) {
+	strcpy(dinfo->stobs, "1300:1");
+	dinfo->n = 1600 + 1400;
+	dinfo->t1 = 1600 + 1040; /* 1960:1 */
+    } else if (dinfo->pd == 12) {
+	strcpy(dinfo->stobs, "1300:01");
+	dinfo->n = 4800 + 4200;
+	dinfo->t1 = 4800 + 3120; /* 1960:01 */
+    } else if (dinfo->pd == 24) {
+	strcpy(dinfo->stobs, "1:01");
+	dinfo->n = 1500;
+	dinfo->t1 = 0;
+    } else if (dinfo->pd == 52) {
+	if (dinfo->v >= 7) {
+	    dinfo->n = 500;
+	    dinfo->t1 = 0;
+	    strcpy(dinfo->stobs, "1");
 	} else {
-	    make_weekly_stobs(dwinfo);
-	    dwinfo->n = 13000;
-	    dwinfo->t1 = 7826;
+	    make_weekly_stobs(dinfo);
+	    dinfo->n = 13000;
+	    dinfo->t1 = 7826;
 	}
-    } else if (dwinfo->pd == 5 ||
-	       dwinfo->pd == 6 ||
-	       dwinfo->pd == 7) {
-	strcpy(dwinfo->stobs, "1900-01-01");
-	dwinfo->n = 50000;
+    } else if (dinfo->pd == 5 ||
+	       dinfo->pd == 6 ||
+	       dinfo->pd == 7) {
+	strcpy(dinfo->stobs, "1900-01-01");
+	dinfo->n = 50000;
 	/* set default start to 1960-01-01 (a Friday) */
-	if (dwinfo->pd == 5) {
-	    dwinfo->t1 = 15654;
-	} else if (dwinfo->pd == 6) {
-	    dwinfo->t1 = 18784;
+	if (dinfo->pd == 5) {
+	    dinfo->t1 = 15654;
+	} else if (dinfo->pd == 6) {
+	    dinfo->t1 = 18784;
 	} else {
-	    dwinfo->t1 = 21914;
+	    dinfo->t1 = 21914;
 	}
     }
 
-    dwinfo->sd0 = get_date_x(dwinfo->pd, dwinfo->stobs);
+    /* set sd0 "way back" to allow selection of early start */
+    dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
 
-    if (dataset->structure == TIME_SERIES &&
-	dataset->pd == dwinfo->pd) {
-	/* make the current start the default */
-	dwinfo->t1 = dateton(dataset->stobs, dwinfo);
+    /* if a starting date is already specified, make it the default */
+    if (step == DW_PANEL_STOBS && dwinfo->panel_sd0 > 0) {
+	dinfo->t1 = x_date_inverse(dwinfo->panel_sd0, dinfo->pd,
+				   dinfo->sd0, dinfo->t1);
+    } else if (dataset->structure == TIME_SERIES &&
+	       dataset->pd == dinfo->pd) {
+	dinfo->t1 = dateton(dataset->stobs, dinfo);
     }
 
-    ntolabel(dwinfo->endobs, dwinfo->n - 1, dwinfo);
+    ntolabel(dinfo->endobs, dinfo->n - 1, dinfo);
 
 #if DWDEBUG
-    ntolabel(obsstr, dwinfo->t1, dwinfo);
-    fprintf(stderr, "dwinfo: v=%d, pd=%d, stobs='%s', endobs='%s', sd0=%g, t1=%d (%s)\n",
-	    dwinfo->v, dwinfo->pd, dwinfo->stobs, dwinfo->endobs, dwinfo->sd0,
-	    dwinfo->t1, obsstr);
+    ntolabel(obsstr, dinfo->t1, dinfo);
+    fprintf(stderr, "dinfo: v=%d, n=%d, pd=%d, stobs='%s', endobs='%s', sd0=%g, t1=%d (%s)\n",
+	    dinfo->v, dinfo->n, dinfo->pd, dinfo->stobs, dinfo->endobs, dinfo->sd0,
+	    dinfo->t1, obsstr);
 
     ntolabel(obsstr, dataset->t1, dataset);
     fprintf(stderr, "dataset: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
 	    dataset->pd, dataset->stobs, dataset->sd0, dataset->t1, obsstr);
 #endif
+
+    return 0;
 }
 
 static int default_panel_size (dw_opts *opts, DATASET *dwinfo)
@@ -1223,50 +1447,62 @@ static GtkWidget *dwiz_combo (GList *vlist, dw_opts *opts)
     return table;
 }
 
-static void dw_set_custom_frequency (GtkWidget *w, DATASET *dwinfo)
+static void dw_set_custom_frequency (GtkWidget *w, DATASET *dinfo)
 {
-    dwinfo->pd = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
+    dinfo->pd = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
 #if DWDEBUG
-    fprintf(stderr, "dw_set_custom_frequency: set dwinfo->pd = %d\n", dwinfo->pd);
-#endif
-}
-
-static void dw_set_t1 (GtkWidget *w, DATASET *dwinfo)
-{
-    dwinfo->t1 = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
-#if DWDEBUG
-    fprintf(stderr, "dw_set_t1: set dwinfo->t1 = %d\n", dwinfo->t1);
-    fprintf(stderr, "(memo: dwinfo->n = %d)\n", dwinfo->n);
+    fprintf(stderr, "dw_set_custom_frequency: set dinfo->pd = %d\n", dinfo->pd);
 #endif
 }
 
 /* spinner for time-series starting observation */
 
-static void add_startobs_spinner (GtkWidget *vbox,
-				  DATASET *dwinfo,
-				  int direction)
+static int add_startobs_spinner (GtkWidget *vbox,
+				 DATASET *dwinfo,
+				 dw_opts *opts,
+				 int direction,
+				 int step)
 {
+    DATASET *dinfo = dwinfo;
     GtkWidget *hbox, *label, *spin;
     GtkAdjustment *adj;
+    int err = 0;
 
-    if (direction == DW_FORWARD) {
-	compute_default_ts_info(dwinfo);
+    if (step == DW_PANEL_STOBS) {
+	/* panel-data time */
+	if (opts_ensure_tsinfo(opts, dwinfo) != 0) {
+	    return E_ALLOC;
+	}
+	dinfo = opts->tsinfo;
     }
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(dwinfo->t1,
-					       0, dwinfo->n - 1,
+    if (direction == DW_FORWARD) {
+	err = compute_default_ts_info(dwinfo, step, opts);
+	if (err) {
+	    return err;
+	}
+    }
+
+    adj = (GtkAdjustment *) gtk_adjustment_new(dinfo->t1,
+					       0, dinfo->n - 1,
 					       1, 10, 0);
-    g_signal_connect(G_OBJECT(adj), "value-changed",
-		     G_CALLBACK(dw_set_t1), dwinfo);
-    spin = data_start_button(adj, dwinfo);
+    opts->tsspin = spin = data_start_button(adj, dinfo);
+#if 0 /* could mask an invalid entry? */
     gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
+#endif
 
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new(_(ts_frequency_string(dwinfo)));
+    if (step == DW_PANEL_STOBS) {
+	label = gtk_label_new(_(panel_ts_frequency_string(dwinfo)));
+    } else {
+	label = gtk_label_new(_(ts_frequency_string(dinfo)));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
+
+    return 0;
 }
 
 /* spinner for selecting custom time-series frequency */
@@ -1444,6 +1680,35 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, gretlopt *flags)
     }
 }
 
+static void update_unames (GtkToggleButton *b, dw_opts *opts)
+{
+    opts->unames_id = gtk_toggle_button_get_active(b) ?
+	widget_get_int(b, "unid") : 0;
+}
+
+static void maybe_add_unit_names_option (GtkWidget *vbox, dw_opts *opts)
+{
+    int unames_id = usable_group_names_series_id(dataset, 12);
+
+    if (unames_id > 0) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *b;
+	gchar *msg;
+
+	msg = g_strdup_printf(_("Take unit names from %s?"),
+			      dataset->varname[unames_id]);
+	b = gtk_check_button_new_with_label(msg);
+	widget_set_int(b, "unid", unames_id);
+	g_signal_connect(G_OBJECT(b), "toggled",
+			 G_CALLBACK(update_unames), opts);
+	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+	gtk_widget_show_all(hbox);
+	g_free(msg);
+    }
+}
+
 /* Calculate the options set-up for a given step of the wizard
    process: How many radio-button options should we show (if any)?
    What variable are we setting?  What should be the default value for
@@ -1456,6 +1721,7 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     opts->setvar = NULL;
     opts->extra = NULL;
     opts->pdspin = NULL;
+    opts->tsspin = NULL;
     opts->n_radios = 0;
 
     opts->deflt = dwiz_radio_default(dwinfo, step);
@@ -1480,6 +1746,9 @@ static void set_up_dw_opts (dw_opts *opts, int step,
 	eval_n_is_prime(opts);
     } else if (step == DW_PANEL_SIZE) {
 	opts->setvar = &dwinfo->pd;
+    } else if (step == DW_PANEL_PD) {
+	opts->n_radios = PANEL_TS_MAX;
+	opts->setvar = &dwinfo->panel_pd;
     }
 }
 
@@ -1704,7 +1973,7 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 	    } else if (known_panel(dwinfo)) {
 		if (create) {
 		    dwinfo->structure = STACKED_TIME_SERIES;
-		    step = DW_CONFIRM;
+		    step = DW_PANEL_PD;
 		} else {
 		    step = DW_PANEL_MODE;
 		}
@@ -1738,18 +2007,30 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 		/* error: don't proceed */
 		step = DW_PANEL_VARS;
 	    } else {
-		step = DW_CONFIRM;
+		step = DW_PANEL_PD;
 	    }
-	} else if (prevstep == DW_STARTING_OBS ||
-		   prevstep == DW_PANEL_SIZE) {
-	    if (prevstep == DW_PANEL_SIZE &&
-		dwinfo->structure == STACKED_TIME_SERIES) {
+	} else if (prevstep == DW_STARTING_OBS) {
+	    step = DW_CONFIRM;
+	} else if (prevstep == DW_PANEL_SIZE) {
+	    if (dwinfo->structure == STACKED_TIME_SERIES) {
 		dwinfo->pd = dwinfo->t2;
 	    }
+	    step = DW_PANEL_PD;
+	} else if (prevstep == DW_PANEL_PD) {
+	    if (dwinfo->panel_pd > 0) {
+		step = DW_PANEL_STOBS;
+	    } else {
+		step = DW_CONFIRM;
+	    }
+	} else if (prevstep == DW_PANEL_STOBS) {
 	    step = DW_CONFIRM;
 	}
     } else if (direction == DW_BACK) {
-	if (prevstep == DW_CONFIRM && create) {
+	if (prevstep == DW_PANEL_STOBS) {
+	    step = DW_PANEL_PD;
+	} else if (prevstep == DW_PANEL_PD) {
+	    step = DW_PANEL_MODE; /* FIXME? */
+	} else if (prevstep == DW_CONFIRM && create) {
 	    if (dwinfo->structure == CROSS_SECTION ||
 		dwinfo->structure == STACKED_TIME_SERIES) {
 		return DW_SET_TYPE;
@@ -1823,16 +2104,19 @@ static void dwiz_button_visibility (GtkWidget *dlg, int step)
 	gtk_widget_show(cancel);
 	gtk_widget_hide(back);
 	gtk_widget_show(forward);
+	gtk_widget_grab_default(forward);
 	gtk_widget_hide(apply);
     } else if (step == DW_CONFIRM) {
 	gtk_widget_show(cancel);
 	gtk_widget_show(back);
 	gtk_widget_hide(forward);
 	gtk_widget_show(apply);
+	gtk_widget_grab_default(apply);
     } else {
 	gtk_widget_show(cancel);
 	gtk_widget_show(back);
 	gtk_widget_show(forward);
+	gtk_widget_grab_default(forward);
 	gtk_widget_hide(apply);
     }
 
@@ -1884,6 +2168,8 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	    if (newdata_nobs(dwinfo, opts) <= 100) {
 		add_editing_option(page, &opts->flags);
 	    }
+	} else if (known_panel(dwinfo) && dataset->pangrps == NULL) {
+	    maybe_add_unit_names_option(page, opts);
 	}
     } else {
 	/* all other pages */
@@ -1898,8 +2184,8 @@ static void dwiz_prepare_page (GtkNotebook *nb,
 	    }
 	}
 
-	if (step == DW_STARTING_OBS) {
-	    add_startobs_spinner(page, dwinfo, direction);
+	if (step == DW_STARTING_OBS || step == DW_PANEL_STOBS) {
+	    add_startobs_spinner(page, dwinfo, opts, direction, step);
 	    if (dataset != NULL && dataset->Z != NULL &&
 		dataset_is_daily(dwinfo)) {
 		maybe_add_missobs_purger(page, &opts->flags);
@@ -1974,7 +2260,7 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
     int pg = gtk_notebook_get_current_page(nb);
     DATASET *dwinfo = g_object_get_data(G_OBJECT(dlg), "dwinfo");
     dw_opts *opts = g_object_get_data(G_OBJECT(dlg), "opts");
-    int newpg;
+    int i, newpg;
 
     if (pg == DW_SET_TYPE) {
 	if (any_panel(dwinfo) && !panel_possible(opts)) {
@@ -1985,8 +2271,6 @@ static void dwiz_forward (GtkWidget *b, GtkWidget *dlg)
 	    return;
 	}
 	if (opts->flags & DW_CREATE) {
-	    int i;
-
 	    for (i=0; i<4; i++) {
 		opts->dvals[i] = spinner_get_int(opts->dspin[i]);
 	    }
@@ -2022,6 +2306,9 @@ static void free_dw_opts (GtkWidget *w, dw_opts *opts)
     if (opts->vlist != NULL) {
 	g_list_free(opts->vlist);
     }
+    if (opts->tsinfo != NULL) {
+	free(opts->tsinfo);
+    }
     free(opts);
 }
 
@@ -2053,6 +2340,7 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
 
     /* "Forward" button */
     b = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+    gtk_widget_set_can_default(b, TRUE);
     g_object_set_data(G_OBJECT(b), "dlg", dlg);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(dwiz_forward),
@@ -2062,6 +2350,7 @@ static void build_dwiz_buttons (GtkWidget *dlg, DATASET *dwinfo)
 
     /* "Apply" button */
     b = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+    gtk_widget_set_can_default(b, TRUE);
     g_object_set_data(G_OBJECT(b), "dlg", dlg);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(dwiz_apply),
@@ -2098,14 +2387,15 @@ static void dwiz_page_add_title (GtkWidget *vbox, int i, int smax)
 static dw_opts *dw_opts_new (int create)
 {
     dw_opts *opts = mymalloc(sizeof *opts);
+    int i;
 
     if (opts != NULL) {
 	opts->flags = (create)? DW_CREATE : 0;
 	opts->vlist = NULL;
 	opts->uid = opts->tid = 0;
+	opts->unames_id = 0;
+	opts->tsinfo = NULL;
 	if (create) {
-	    int i;
-
 	    for (i=0; i<4; i++) {
 		opts->dvals[i] = 0;
 	    }

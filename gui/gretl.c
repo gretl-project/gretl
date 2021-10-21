@@ -346,10 +346,8 @@ static int script_type (const char *fname)
 	return EDIT_STATA;
     } else if (has_suffix(fname, ".mod")) {
 	return EDIT_DYNARE;
-#if !defined(WIN32) || defined(_WIN64)
     } else if (has_suffix(fname, ".lp")) {
 	return EDIT_LPSOLVE;
-#endif
     } else {
 	return 0;
     }
@@ -2038,11 +2036,11 @@ GtkActionEntry main_entries[] = {
     { "KbdRef", GRETL_STOCK_PDF, N_("_Keyboard shortcuts"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "Primer", GRETL_STOCK_PDF, N_("_Hansl primer"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "Pkgbook", GRETL_STOCK_PDF, N_("_Function package guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "GeoplotDoc", GRETL_STOCK_PDF, N_("Creating maps"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlMPI", GRETL_STOCK_PDF, N_("_gretl + MPI"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlSVM", GRETL_STOCK_PDF, N_("_gretl + SVM"), NULL, NULL, G_CALLBACK(display_pdf_help) },
-    { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
-    { "GeoplotDoc", GRETL_STOCK_PDF, N_("Creating maps"), NULL, NULL, G_CALLBACK(display_pdf_help) },
-    { "LpsolveDoc", GRETL_STOCK_PDF, N_("Linear Programs"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "gretlLpsolve", GRETL_STOCK_PDF, N_("_gretl + lpsolve"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
@@ -2346,10 +2344,16 @@ static GtkWidget *make_main_menu (void)
 	}
     }
 
-#if defined(WIN32) && !defined(_WIN64)
-    flip(mdata->ui, "/menubar/File/ScriptFiles/NewScript/lpsolveScript", FALSE);
-    flip(mdata->ui, "/menubar/Help/LpsolveDoc", FALSE);
-#endif
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlDBN",
+			  N_("International data access"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlMPI",
+			  N_("Parallelization"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlMPI",
+			  N_("Parallelization"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlSVM",
+			  N_("Support Vector Machines"));
+    menu_item_set_tooltip(mdata->ui, "/menubar/Help/gretlLpsolve",
+			  N_("Linear Programming"));
 
     g_free(main_ui);
 

@@ -1165,7 +1165,7 @@ int genr_function_word (const char *s)
 
 int parser_ensure_error_buffer (parser *p)
 {
-    if (p->errprn == NULL) {
+    if (p->prn == NULL && p->errprn == NULL) {
 	p->errprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
 	if (p->errprn != NULL) {
 	    p->prn = p->errprn;
@@ -1188,6 +1188,7 @@ void undefined_symbol_error (const char *s, parser *p)
     } else {
 	pprintf(p->prn, _("The symbol '%s' is undefined"), s);
     }
+    pputc(p->prn, '\n');
     p->err = E_DATA;
 }
 
@@ -1197,6 +1198,7 @@ static void function_noargs_error (const char *s, parser *p)
     parser_print_input(p);
 
     pprintf(p->prn, _("'%s': no argument was given"), s);
+    pputc(p->prn, '\n');
     p->err = E_ARGS;
 }
 

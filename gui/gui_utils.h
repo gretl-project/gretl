@@ -66,7 +66,7 @@ void nomem (void);
 
 void mark_dataset_as_modified (void);
 
-void register_data (int flag);
+void register_data (int flags);
 
 void register_startup_data (const char *fname);
 

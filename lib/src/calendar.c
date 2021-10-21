@@ -118,6 +118,44 @@ guint32 epoch_day_from_ymd (int y, int m, int d)
 }
 
 /**
+ * nearby_epoch_day:
+ * @y: year (1 <= y <= 9999).
+ * @m: month (1 <= m <= 12).
+ * @d: day of month (1 <= d <= 31).
+ * @wkdays: number of days per week.
+ *
+ * Returns: 0 if the supplied date is invalid, otherwise the
+ * epoch day number for @y, @m, @d, or the first subsequent
+ * epoch day if the date in question is not included in the
+ * calendar, based on @wkdays (for example, the day is a
+ * Sunday and @wkdays is 5 or 6).
+ */
+
+guint32 nearby_epoch_day (int y, int m, int d, int wkdays)
+{
+    GDate date;
+    int wd;
+    guint32 j;
+
+    if (!g_date_valid_dmy(d, m, y)) {
+	return 0;
+    }
+
+    g_date_clear(&date, 1);
+    g_date_set_dmy(&date, d, m, y);
+    j = g_date_get_julian(&date);
+    wd = g_date_get_weekday(&date);
+
+    if (wkdays != 7 && wd == G_DATE_SUNDAY) {
+	j++;
+    } else if (wkdays == 5 && wd == G_DATE_SATURDAY) {
+	j += 2;
+    }
+
+    return j;
+}
+
+/**
  * ymd_bits_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  * @y: location to receive year.
@@ -482,7 +520,7 @@ guint32 epoch_day_from_t (int t, const DATASET *dset)
  * @dset: pointer to dataset.
  *
  * Writes to @targ the calendar representation of the date of
- * observation @t, in the form YY[YY]/MM/DD.
+ * observation @t, in the form YY[YY]-MM-DD.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -1317,7 +1355,9 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
     if (!g_date_valid_julian(ed1) ||
 	!g_date_valid_julian(ed2) ||
 	ed2 < ed1) {
-	*err = E_INVARG;
+	if (err != NULL) {
+	    *err = E_INVARG;
+	}
     } else if (wkdays == 7) {
 	/* simple! */
 	n = ed2 - ed1 + 1;

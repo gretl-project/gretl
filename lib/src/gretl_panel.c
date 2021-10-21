@@ -6563,3 +6563,148 @@ int panel_padding_rows (const DATASET *dset)
 
     return nmiss;
 }
+
+/* Given auxiliary time-series info attached to the panel
+   dataset @pdset, transcribe it to the time-series dataset
+   @tsset.
+*/
+
+int time_series_from_panel (DATASET *tset, const DATASET *pset)
+{
+    int err = 0;
+
+    if (pset->panel_pd == 0) {
+	/* the panel time dimension is not set */
+	tset->structure = SPECIAL_TIME_SERIES;
+	tset->pd = 1;
+	return 0;
+    }
+
+    tset->structure = TIME_SERIES;
+    tset->pd = pset->panel_pd;
+    tset->sd0 = pset->panel_sd0;
+
+    if (tset->pd == 1) {
+	sprintf(tset->stobs, "%d", (int) tset->sd0);
+    } else if (tset->pd == 4 || tset->pd == 12) {
+	double dyr = floor(tset->sd0);
+	double dp = tset->sd0 - dyr;
+	int yr, p;
+
+	yr = (int) dyr;
+	dp *= (tset->pd == 4)? 10 : 100;
+	p = nearbyint(dp);
+	if (yr > 0 && yr < 9999 && p > 0) {
+	    if (tset->pd == 4 && p < 4) {
+		sprintf(tset->stobs, "%d:%d", yr, p);
+	    } else if (p < 12) {
+		sprintf(tset->stobs, "%d:%02d", yr, p);
+	    }
+	} else {
+	    err = 1;
+	}
+    } else if (calendar_data(tset)) {
+	calendar_date_string(tset->stobs, 0, tset);
+    }
+
+    return err;
+}
+
+/* Given an annual, quarterly or monthly date string @s in gretl's
+   standard format (YYYY, YYYY:Q or YYYY:MM), convert to a zero-based
+   observation index relative to a series of frequency @pd and length
+   @n starting at @t0.
+
+   @t0 is assumed to be given in a form that makes the calculation
+   easy, namely the number of periods since the start of the year 0.
+   For annual data this is just the year; for quarterly its 4 * year
+   plus initial quarter and for monthly 12 * year plus initial month.
+
+   If the resulting index is out of bounds, -1 is returned.
+*/
+
+int obs_index_from_aqm (const char *s, int pd, int t0, int n)
+{
+    const char *digits = "0123456789";
+    int ok_len = (pd == 1)? 4 : (pd == 4)? 6 : 7;
+    int len = strlen(s);
+    int t = 0;
+
+    if (len != ok_len || strspn(s, digits) != 4) {
+	return -1;
+    }
+
+    if (pd == 1) {
+	t = atoi(s);
+    } else if (s[4] != ':' || strspn(s + 5, digits) != len - 5) {
+	t = -1;
+    } else {
+	int sub = atoi(s + 5);
+
+	if (sub > pd) {
+	    t = -1;
+	} else {
+	    t = pd * atoi(s) + sub;
+	}
+    }
+
+    if (t >= 0) {
+	t -= t0;
+	if (t < 0 || t >= n) {
+	    t = -1;
+	}
+    }
+
+    return t;
+}
+
+/* Scan @dset for a string-valued series that's suitable for defining
+   panel group names: its number of string values must equal the
+   number of groups, and its value must be constant within each
+   group's time series. In addition, if @maxlen > 0 the strings must
+   be no longer than @maxlen UTF-8 characters (we're looking to use
+   these strings for plotting and we don't want them too long).
+
+   We return the ID number of the first series to match these
+   criteria, or 0 if we can't find any such series.
+*/
+
+int usable_group_names_series_id (const DATASET *dset, int maxlen)
+{
+    char **S;
+    int N = dset->n / dset->pd;
+    int j, t, s, ns, ok;
+    int i, ret = 0;
+
+    for (i=1; i<dset->v; i++) {
+	if (!is_string_valued(dset, i)) {
+	    continue;
+	}
+	S = series_get_string_vals(dset, i, &ns, 0);
+	if (ns < N) {
+	    continue;
+	}
+	ok = 1;
+	for (j=0, s=0; j<N && ok; j++) {
+	    if (maxlen > 0 && g_utf8_strlen(S[j], -1) > maxlen) {
+		/* too long to be usable for plots? */
+		ok = 0;
+	    }
+	    for (t=0; t<dset->pd && ok; t++) {
+		if (t > 0 && dset->Z[i][s] != dset->Z[i][s-1]) {
+		    ok = 0;
+		} else if (j > 0 && t == 0 &&
+			   dset->Z[i][s] == dset->Z[i][s-1]) {
+		    ok = 0;
+		}
+		s++;
+	    }
+	}
+	if (ok) {
+	    ret = i;
+	    break;
+	}
+    }
+
+    return ret;
+}

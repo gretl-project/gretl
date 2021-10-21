@@ -2655,7 +2655,6 @@ access_request_button (GtkWidget *holder,
     button = gtk_check_button_new_with_label(_("request access to out-of-sample data"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), finfo->data_access);
-    // g_signal_connect(button, "toggled", access_button_callback, finfo);
     gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 
     return button;
@@ -3971,7 +3970,11 @@ static void finfo_dialog (function_info *finfo)
 
 static void web_get_login (GtkWidget *w, gpointer p)
 {
+#ifdef SFCGI
+    browser_open("http://gretl.sourceforge.net/cgi-bin/apply/");
+#else
     browser_open("http://gretl.ecn.wfu.edu/cgi-bin/apply/");
+#endif
 }
 
 static void login_dialog (login_info *linfo, GtkWidget *parent)
@@ -4023,11 +4026,19 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 	}
     }
 
+#ifdef SFCGI
+    label_hbox(vbox,
+	       _("If you don't have a login to the gretl server\n"
+		 "please see http://gretl.sourceforge.net/cgi-bin/apply/.\n"
+		 "The 'Website' button below should open this page\n"
+		 "in your web browser."));
+#else
     label_hbox(vbox,
 	       _("If you don't have a login to the gretl server\n"
 		 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
 		 "The 'Website' button below should open this page\n"
 		 "in your web browser."));
+#endif
 
     /* control button area */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(linfo->dlg));

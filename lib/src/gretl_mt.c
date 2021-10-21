@@ -17,7 +17,7 @@
  *
  */
 
-/* gretl_mt.c for gretl */
+/* gretl_mt.c: functions related to multithreading */
 
 #include "libgretl.h"
 #include "libset.h"
@@ -34,14 +34,16 @@
 #elif defined(OS_OSX)
 # include <sys/param.h>
 # include <sys/sysctl.h>
+#else
+# include <unistd.h> /* for sysconf() */
 #endif
 
 static int omp_n_threads;
 
-#ifdef OS_OSX
-static int omp_mnk_min = -1; /* ? */
-#else
+#if defined(_OPENMP) && !defined(OS_OSX)
 static int omp_mnk_min = 80000;
+#else
+static int omp_mnk_min = -1; /* ? */
 #endif
 
 int gretl_n_processors (void)

@@ -244,7 +244,12 @@ kstock).</description>
 <obs>10 10 10 1954 5.119999885559082 58.119998931884766 14.329999923706055 20 </obs>
 </observations>
 <string-tables count="2">
-<valstrings owner="firmname" count="11">"General Motors" "US Steel" "General Electric" "Chrysler" "Atlantic Refining" "IBM" "Union Oil" "Westinghouse" "Goodyear" "Diamond Match" "American Steel" </valstrings>
-<valstrings owner="ticker" count="11">"GM" "US" "GE" "CH" "AR" "IBM" "UO" "WH" "GY" "DM" "AS" </valstrings>
+<valstrings owner="firmname" count="10">"General Motors" "US Steel" "General Electric" "Chrysler" "Atlantic Refining" "IBM" "Union Oil" "Westinghouse" "Goodyear" "Diamond Match" </valstrings>
+<valstrings owner="ticker" count="10">"GM" "US" "GE" "CH" "AR" "IBM" "UO" "WH" "GY" "DM" </valstrings>
 </string-tables>
+<panel-info
+ group-names="ticker"
+ time-frequency="1"
+ time-start="1935"
+/>
 </gretldata>

@@ -656,6 +656,11 @@ static gint console_key_handler (GtkWidget *cview,
 	gtk_text_iter_set_line_index(&ins, 2);
 	gtk_text_buffer_place_cursor(buf, &ins);
 	return TRUE;
+    } else if (ctrl && upkey == GDK_D && !swallow) {
+	/* Ctrl-D: exit terminal? Only when not swallowed */
+	windata_t *vwin = (windata_t *) p;
+
+	gtk_widget_destroy(vwin->main);
     }
 
     /* At this point 'ins' indicates the insertion point and
@@ -736,4 +741,16 @@ static gint console_key_handler (GtkWidget *cview,
     }
 
     return FALSE;
+}
+
+void clear_console (GtkWidget *w, windata_t *vwin)
+{
+    GtkWidget *cview = vwin->text;
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
+    GtkTextIter start, end;
+
+    gtk_text_buffer_get_bounds(buf, &start, &end);
+    gtk_text_buffer_delete(buf, &start, &end);
+    gtk_text_buffer_get_start_iter(buf, &start);
+    console_insert_prompt(buf, &start, "? ");
 }
