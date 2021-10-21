@@ -37,7 +37,7 @@
 #define numeric_type(t) (t == G_TYPE_DOUBLE || t == G_TYPE_INT64)
 
 #define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
-#define null_node(n) (n == NULL || json_node_is_null(n))
+#define null_json_node(n) (n == NULL || json_node_is_null(n))
 
 #if JSON_MAJOR_VERSION < 1
 static GType jnode_get_value_type (JsonNode *node)
@@ -85,7 +85,7 @@ static JsonNode *get_root_for_path (JsonNode *node,
     if (json_path_compile(path, pathstr, &gerr)) {
 	/* compilation went OK */
 	match = json_path_match(path, node);
-	if (null_node(match)) {
+	if (null_json_node(match)) {
 	    if (match != NULL) {
 		json_node_free(match);
 		match = NULL;
@@ -171,7 +171,7 @@ static int output_json_node_value (JsonNode *node,
     GType type = 0;
     int err = 0;
 
-    if (null_node(node)) {
+    if (null_json_node(node)) {
 	gretl_errmsg_set("jsonget: got a null node");
 	return E_DATA;
     }
@@ -293,7 +293,7 @@ static int real_json_get (JsonNode *match,
 
     repeat:
 
-	if (null_node(node)) {
+	if (null_json_node(node)) {
 	    gretl_errmsg_set("jsonget: failed to match JsonPath");
 	    ntype = 0;
 	    err = allow_empty ? 0 : E_DATA;
