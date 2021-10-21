@@ -1,7 +1,7 @@
 author = Riccardo "Jack" Lucchetti and Allin Cottrell
 email = r.lucchetti@univpm.it
-version = 0.41
-date = 2021-03-29
+version = 0.42
+date = 2021-10-21
 description = obtain data via dbnomics
 tags = C81
 label = dbnomics
