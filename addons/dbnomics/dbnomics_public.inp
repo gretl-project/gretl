@@ -124,11 +124,15 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
    if daily
       setopt join --tkey="obs,%Y-%m-%d"
+   elif instring(b.period[1], "-Q")
+      # quarterly
+      setopt join --tkey="obs,%Y-Q%q"
    endif
 
    string tracestr
    outfile --buffer=tracestr
       # try "append" first
+      print "trying append..."
       catch append @tmpfile --quiet --fixed-sample
       err = $error
       if !err
@@ -137,6 +141,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
       else
          # "append" may fail because data are not ordered properly
          # if that's the case, "join" may still work
+         print "append failed, trying join..."
          catch join @tmpfile x --data="dbseries"
          err = $error
          if !err
@@ -154,12 +159,9 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
    if verbose
       printf "dbnomics_bundle_get_data:\n%s\n", b.series_name
-      if err
-         printf "error = %d\n", err
-         printf "trace:\n%s\n\n", tracestr
-      else
-         printf "tool = %s\n", tool
-      endif
+      printf "tool = %s\n", tool
+      printf "error = %d\n", err
+      printf "trace:\n%s\n\n", tracestr
    endif
 
    return 0
