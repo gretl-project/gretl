@@ -859,12 +859,14 @@ char *do_sprintf_function (const char *format, const char *args,
     PRN *prn;
 
     if (format == NULL || *format == '\0') {
+	gretl_errmsg_set("sprintf: format string is missing");
 	*err = E_DATA;
 	return NULL;
     }
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
     if (*err) {
+	fprintf(stderr, "sprintf: creation of buffer failed\n");
 	return NULL;
     }
 
@@ -875,7 +877,7 @@ char *do_sprintf_function (const char *format, const char *args,
 	} else if (*p == '%') {
 	    *err = print_arg(&p, &q, dset, -1, prn);
 	} else if (*p == '\\') {
-	    *err = printf_escape(*(p+1), prn);
+	    printf_escape(*(p+1), prn);
 	    p += 2;
 	} else {
 	    pputc(prn, *p);

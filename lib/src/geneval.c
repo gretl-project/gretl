@@ -12617,6 +12617,11 @@ static int scan_to_vector (NODE *n, const char *fmt,
     return nmax;
 }
 
+/* Common code to handle printf(), sprintf() and sscanf(). The @l node
+   is non-NULL only in the case of sscanf(). The @m node is a format
+   string in all cases, and the @r node holds args or NULL.
+*/
+
 static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
     NODE *ret;

@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2021-10-05 16:03+0200\n"
+"PO-Revision-Date: 2021-10-18 18:06+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Lokalize 19.12.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:595
@@ -315,14 +315,13 @@ msgid "(without trend)"
 msgstr "(sin tendencia)"
 
 #: lib/src/adf_kpss.c:2404
-#, fuzzy, c-format
+#, c-format
 msgid "Lag truncation parameter: %d - %d\n"
-msgstr "Parámetro de truncamiento de los retardos = %d\n"
+msgstr "Parámetro de truncamiento de los retardos = %d - %d\n"
 
 #: lib/src/adf_kpss.c:2407
-#, fuzzy
 msgid "Lag truncation automatic\n"
-msgstr "Parámetro de truncamiento de los retardos = %d\n"
+msgstr "Truncamiento de los retardos automático\n"
 
 #: lib/src/adf_kpss.c:2461
 msgid "interpolated p-value"
@@ -4005,9 +4004,8 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Contraste de heterocedasticidad libre de distribución de Wald"
 
 #: lib/src/gretl_model.c:4176
-#, fuzzy
 msgid "Likelihood ratio test of independence"
-msgstr "Contraste de razón de verosimilitudes"
+msgstr "Contraste de razón de verosimilitudes de independencia"
 
 #: lib/src/gretl_model.c:4211
 msgid "robust variant"
@@ -4018,9 +4016,8 @@ msgid "No first-order autocorrelation (rho = 0)"
 msgstr "No autocorrelación de primer orden (rho = 0)"
 
 #: lib/src/gretl_model.c:4324
-#, fuzzy
 msgid "atanh(rho) = 0"
-msgstr "[rho = 0]"
+msgstr "atanh(rho) = 0"
 
 #: lib/src/gretl_model.c:4385
 #, c-format
@@ -9735,14 +9732,12 @@ msgid "Panel index variables"
 msgstr "Variables índices de panel"
 
 #: gui/datawiz.c:122
-#, fuzzy
 msgid "Panel time dimension"
-msgstr "en la dimensión temporal"
+msgstr "Dimensión temporal del panel"
 
 #: gui/datawiz.c:123
-#, fuzzy
 msgid "Panel first period"
-msgstr "Índice de unidades en datos de _panel"
+msgstr "Primer período del panel"
 
 #: gui/datawiz.c:124
 msgid "Confirm dataset structure"
@@ -9903,9 +9898,8 @@ msgid "stacked cross sections"
 msgstr "secciones cruzadas apiladas"
 
 #: gui/datawiz.c:784
-#, fuzzy
 msgid "Time dimension: "
-msgstr "Dimensión máxima:"
+msgstr "Dimensión temporal:"
 
 #: gui/datawiz.c:801
 msgid "(dropping missing observations)"
@@ -9939,7 +9933,7 @@ msgstr "Eliminar las observaciones ausentes"
 #: gui/datawiz.c:1698
 #, c-format
 msgid "Take unit names from %s?"
-msgstr ""
+msgstr "¿Tomar las unidades desde %s?"
 
 #: gui/datawiz.c:1936
 msgid "The data set contains no suitable index variables"
@@ -10169,9 +10163,8 @@ msgid "gretl: set sample"
 msgstr "gretl: establecer muestra"
 
 #: gui/dialogs.c:2070
-#, fuzzy
 msgid "Units"
-msgstr "Unidad"
+msgstr "Unidades"
 
 #: gui/dialogs.c:2070
 msgid "Periods"
@@ -11079,9 +11072,8 @@ msgid "Dynare files (*.mod)"
 msgstr "Ficheros de Dynare (*.mod)"
 
 #: gui/fileselect.c:916
-#, fuzzy
 msgid "lpsolve files (*.lp)"
-msgstr "Todos los ficheros (*.*)"
+msgstr "ficheros lpsolve (*.lp)"
 
 #: gui/fileselect.c:1101
 msgid "Gretl datafiles (*.gdt)"
@@ -12619,9 +12611,8 @@ msgid "Stata program"
 msgstr "Programa Stata"
 
 #: gui/gretl.c:1785
-#, fuzzy
 msgid "lpsolve program"
-msgstr "Periodograma muestral"
+msgstr "programa lpsolve"
 
 #: gui/gretl.c:1787
 msgid "_Session files"
@@ -12861,7 +12852,7 @@ msgstr "Gráfico de series _temporales..."
 
 #: gui/gretl.c:1865
 msgid "X-Y _scatter..."
-msgstr "Gráfico X-Y (_scatter)..."
+msgstr "Gráfico de dispersión X-Y (_scatter)..."
 
 #: gui/gretl.c:1866
 msgid "X-Y with _impulses..."
@@ -13440,9 +13431,8 @@ msgid "_gretl + SVM"
 msgstr "_gretl + SVM"
 
 #: gui/gretl.c:2043
-#, fuzzy
 msgid "_gretl + lpsolve"
-msgstr "consola de Gretl"
+msgstr "_gretl + lpsolve"
 
 #: gui/gretl.c:2044
 msgid "Check for _updates"
@@ -13462,21 +13452,19 @@ msgstr "_Análisis"
 
 #: gui/gretl.c:2348
 msgid "International data access"
-msgstr ""
+msgstr "Acceso a datos internacionales"
 
 #: gui/gretl.c:2350 gui/gretl.c:2352
-#, fuzzy
 msgid "Parallelization"
-msgstr "Parametrización"
+msgstr "Paralelización"
 
 #: gui/gretl.c:2354
 msgid "Support Vector Machines"
-msgstr ""
+msgstr "Máquinas de vectores de soporte"
 
 #: gui/gretl.c:2356
-#, fuzzy
 msgid "Linear Programming"
-msgstr "Programación"
+msgstr "Programación lineal"
 
 #: gui/gretl.c:2412
 msgid "Enter name for list of series"
@@ -14091,9 +14079,8 @@ msgid "gretl: edit Dynare script"
 msgstr "gretl: editar un guion de Dynare"
 
 #: gui/gui_utils.c:1827
-#, fuzzy
 msgid "gretl: edit lpsolve script"
-msgstr "gretl: editar un guion de R"
+msgstr "gretl: editar un guion de lpsolve"
 
 #: gui/gui_utils.c:1829
 msgid "gretl: edit package spec file"
@@ -15483,9 +15470,8 @@ msgid "Plot group means"
 msgstr "Representar las medias de grupo"
 
 #: gui/library.c:7946
-#, fuzzy
 msgid "suppress fitted line"
-msgstr "Recta estimada"
+msgstr "suprimir la recta estimada"
 
 #: gui/library.c:7965
 msgid "on a single graph"
@@ -15713,7 +15699,7 @@ msgstr "Colinealidad"
 
 #: gui/menustate.c:605 gui/selector.c:7411
 msgid "XY scatterplot"
-msgstr "Gráfico de dos variables XY"
+msgstr "Gráfico de dispersión XY"
 
 #: gui/menustate.c:609
 msgid "Add log"
@@ -16731,7 +16717,7 @@ msgstr "Gráfico 3D"
 
 #: gui/selector.c:7417
 msgid "multiple scatterplots"
-msgstr "Gráficos bivariantes múltiples"
+msgstr "Gráficos de dispersión múltiples"
 
 #: gui/selector.c:7419
 msgid "factorized plot"
@@ -16743,7 +16729,7 @@ msgstr "Gráfico de caja con factor de separación"
 
 #: gui/selector.c:7423
 msgid "scatterplot with control"
-msgstr "Gráfico de dos variables con control"
+msgstr "Gráfico de dispersión con control"
 
 #: gui/selector.c:7458
 msgid "Variables to test"
@@ -17761,9 +17747,8 @@ msgid "dbnomics for gretl"
 msgstr "dbnomics para gretl"
 
 #: gui/textbuf.c:1640
-#, fuzzy
 msgid "gretl + lpsolve"
-msgstr "consola de Gretl"
+msgstr "gretl + lpsolve"
 
 #: gui/textbuf.c:1783
 #, c-format

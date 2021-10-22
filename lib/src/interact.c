@@ -2104,6 +2104,7 @@ static int lib_open_append (ExecState *s,
 {
     CMD *cmd = s->cmd;
     gretlopt opt = cmd->opt;
+    int catch = cmd->flags & CMD_CATCH;
     OpenOp op = {0};
     PRN *vprn = prn;
     int err;
@@ -2132,8 +2133,12 @@ static int lib_open_append (ExecState *s,
     }
 
     if (op.quiet) {
-        /* in case we hit any problems below... */
-        vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+	if (catch) {
+	    vprn = NULL;
+	} else {
+	    /* in case we hit any problems below... */
+	    vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+	}
     }
 
     if (op.ftype == GRETL_XML_DATA || op.ftype == GRETL_BINARY_DATA) {
@@ -2157,7 +2162,7 @@ static int lib_open_append (ExecState *s,
         err = gretl_get_data(op.fname, dset, opt, vprn);
     }
 
-    if (vprn != prn) {
+    if (vprn != NULL && vprn != prn) {
         if (err) {
             /* The user asked for --quiet operation, but something
                went wrong so let's print any info we got on
@@ -2183,7 +2188,11 @@ static int lib_open_append (ExecState *s,
 
 
     if (err) {
-        errmsg(err, prn);
+	if (op.quiet && catch) {
+	    ; /* keep quiet */
+	} else {
+	    errmsg(err, prn);
+	}
     } else {
         if (dset->v > 0 && !op.dbdata && !op.quiet) {
             list_series(dset, OPT_NONE, prn);
