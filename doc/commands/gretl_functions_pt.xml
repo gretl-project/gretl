@@ -988,7 +988,7 @@
 	  <li>
             <para>
               <lit>os</lit>: texto representando o sistema operacional e é
-              igual a <lit>linux</lit>, <lit>osx</lit>,
+              igual a <lit>linux</lit>, <lit>macos</lit>,
               <lit>windows</lit> ou <lit>other</lit>.
             </para>
 	  </li>

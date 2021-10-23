@@ -1027,7 +1027,7 @@
 	  <li>
             <para>
               <lit>os</lit>: stringa contenente il sistema operativo: può
-              essere pari a <lit>linux</lit>, <lit>osx</lit>,
+              essere pari a <lit>linux</lit>, <lit>macos</lit>,
               <lit>windows</lit> o <lit>other</lit>.
             </para>
 	  </li>

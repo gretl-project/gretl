@@ -2838,7 +2838,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 #if defined(G_OS_WIN32)
 	    gretl_bundle_set_string(b, "os", "windows");
 #elif defined(OS_OSX)
-	    gretl_bundle_set_string(b, "os", "osx");
+	    gretl_bundle_set_string(b, "os", "macos");
 #elif defined(linux)
 	    gretl_bundle_set_string(b, "os", "linux");
 #else

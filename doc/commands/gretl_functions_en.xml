@@ -1026,7 +1026,7 @@
 	  <li>
             <para>
               <lit>os</lit>: string representing the operating system,
-              either <lit>linux</lit>, <lit>osx</lit>,
+              either <lit>linux</lit>, <lit>macos</lit>,
               <lit>windows</lit> or <lit>other</lit>.
             </para>
 	  </li>
