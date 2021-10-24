@@ -1027,7 +1027,11 @@
             <para>
               <lit>os</lit>: string representing the operating system,
               either <lit>linux</lit>, <lit>macos</lit>,
-              <lit>windows</lit> or <lit>other</lit>.
+              <lit>windows</lit> or <lit>other</lit>. Note that
+              versions of gretl prior to 2021e gave the string
+              <lit>osx</lit> for the Mac operating system; a
+              version-independent test for Mac is therefore
+	      <lit>instring($sysinfo.os, "os")</lit>
             </para>
 	  </li>
 	  <li>
