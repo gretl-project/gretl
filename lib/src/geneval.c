@@ -3789,6 +3789,27 @@ static NODE *matrix_vector_func (NODE *l, NODE *m, NODE *r,
     return ret;
 }
 
+static NODE *matrix_string_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = NULL;
+
+    /* at present only F_DISTANCE comes here */
+
+    if (starting(p)) {
+        gretl_matrix *X = l->v.m;
+        const char *s = r->v.str;
+
+	ret = aux_matrix_node(p);
+        if (ret != NULL) {
+            ret->v.m = distance(X, s, &p->err);
+        }
+    } else {
+        ret = aux_matrix_node(p);
+    }
+
+    return ret;
+}
+
 /* both operands are known to be matrices or scalars */
 
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
@@ -16804,6 +16825,16 @@ static NODE *eval (NODE *t, parser *p)
             ret = matrix_scalar_func(l, r, t->t, p);
         } else if (l->t == MAT) {
             node_type_error(t->t, 2, NUM, r, p);
+        } else {
+            node_type_error(t->t, 1, MAT, l, p);
+        }
+        break;
+    case F_DISTANCE:
+	/* matrix on left, string on right */
+	if (l->t == MAT && r->t == STR) {
+	    ret = matrix_string_func(l, r, t->t, p);
+        } else if (l->t == MAT) {
+            node_type_error(t->t, 2, STR, r, p);
         } else {
             node_type_error(t->t, 1, MAT, l, p);
         }

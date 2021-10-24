@@ -6926,6 +6926,91 @@ MahalDist *get_mahal_distances (const int *list, DATASET *dset,
     return md;
 }
 
+enum {
+    EUCLIDEAN,
+    MANHATTAN,
+    HAMMING,
+    CHEBYSHEV
+};
+
+static int distance_type (const char *s)
+{
+    if (!strcmp(s, "euclidean")) {
+	return EUCLIDEAN;
+    } else if (!strcmp(s, "manhattan")) {
+	return MANHATTAN;
+    } else if (!strcmp(s, "hamming")) {
+	return HAMMING;
+    } else if (!strcmp(s, "chebyshev") ||
+	       !strcmp(s, "chebychev")) {
+	return CHEBYSHEV;
+    } else {
+	return -1;
+    }
+}
+
+gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
+{
+    gretl_matrix *ret;
+    double d, dij, x, y;
+    int dtype, n, k;
+    int i, j, t;
+
+    if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    dtype = distance_type(type);
+    if (dtype < 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    n = X->rows;
+    k = X->cols;
+
+    ret = gretl_matrix_alloc(k, k);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<k; i++) {
+	gretl_matrix_set(ret, i, i, 0);
+	for (j=i+1; j<k; j++) {
+	    dij = 0;
+	    for (t=0; t<n; t++) {
+		x = gretl_matrix_get(X, t, i);
+		y = gretl_matrix_get(X, t, j);
+		if (dtype == MANHATTAN) {
+		    dij += fabs(x - y);
+		} else if (dtype == HAMMING) {
+		    dij += (x - y != 0);
+		} else if (dtype == CHEBYSHEV) {
+		    d = fabs(x - y);
+		    if (d > dij) {
+			dij = d;
+		    }
+		} else {
+		    /* euclidean */
+		    d = x - y;
+		    dij += d * d;
+		}
+	    }
+	    if (dtype == EUCLIDEAN) {
+		dij = sqrt(dij);
+	    } else if (dtype == HAMMING) {
+		dij /= n;
+	    }
+	    gretl_matrix_set(ret, i, j, dij);
+	    gretl_matrix_set(ret, j, i, dij);
+	}
+    }
+
+    return ret;
+}
+
 /*
    G = [(2 * \sum_i^n (i * x_i)) / (n * \sum_i^n x_i )] - [(n + 1)/n]
 

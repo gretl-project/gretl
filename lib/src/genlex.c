@@ -582,6 +582,7 @@ struct str_table funcs[] = {
     { F_BCHECK,    "bcheck" },
     { F_CONTAINS,  "contains" },
     { F_LPSOLVE,   "lpsolve" },
+    { F_DISTANCE,  "distance" },
     { 0,           NULL }
 };
 

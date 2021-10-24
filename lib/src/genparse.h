@@ -402,6 +402,7 @@ enum {
     F_BINCOEFF,
     F_ASSERT,
     F_CONTAINS,
+    F_DISTANCE,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,

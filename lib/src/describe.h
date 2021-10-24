@@ -283,6 +283,9 @@ int mahal_dist_get_n (const MahalDist *md);
 
 const int *mahal_dist_get_varlist(const MahalDist *md);
 
+gretl_matrix *distance (const gretl_matrix *X, const char *type,
+			int *err);
+
 double gretl_gini (int t1, int t2, const double *x);
 
 int gini (int varno, DATASET *dset, gretlopt opt, PRN *prn);
