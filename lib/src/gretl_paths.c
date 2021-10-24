@@ -3850,7 +3850,9 @@ static struct foreign_paths fpaths[] = {
     { "stata",   paths.statapath },
     { "python",  paths.pypath },
     { "julia",   paths.jlpath },
+#if 0
     { "lpsolve", paths.lppath },
+#endif
     { NULL, NULL}
 };
 
