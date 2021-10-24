@@ -6930,7 +6930,8 @@ enum {
     EUCLIDEAN,
     MANHATTAN,
     HAMMING,
-    CHEBYSHEV
+    CHEBYSHEV,
+    COSINE
 };
 
 static int distance_type (const char *s)
@@ -6944,6 +6945,8 @@ static int distance_type (const char *s)
     } else if (!strcmp(s, "chebyshev") ||
 	       !strcmp(s, "chebychev")) {
 	return CHEBYSHEV;
+    } else if (!strcmp(s, "cosine")) {
+	return COSINE;
     } else {
 	return -1;
     }
@@ -6953,6 +6956,7 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 {
     gretl_matrix *ret;
     double d, dij, x, y;
+    double den1, den2;
     int dtype, n, k;
     int i, j, t;
 
@@ -6979,7 +6983,7 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
     for (i=0; i<k; i++) {
 	gretl_matrix_set(ret, i, i, 0);
 	for (j=i+1; j<k; j++) {
-	    dij = 0;
+	    den1 = den2 = dij = 0;
 	    for (t=0; t<n; t++) {
 		x = gretl_matrix_get(X, t, i);
 		y = gretl_matrix_get(X, t, j);
@@ -6992,6 +6996,10 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 		    if (d > dij) {
 			dij = d;
 		    }
+		} else if (dtype == COSINE) {
+		    dij += x * y;
+		    den1 += x * x;
+		    den2 += y * y;
 		} else {
 		    /* euclidean */
 		    d = x - y;
@@ -7002,6 +7010,8 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 		dij = sqrt(dij);
 	    } else if (dtype == HAMMING) {
 		dij /= n;
+	    } else if (dtype == COSINE) {
+		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
 	    gretl_matrix_set(ret, i, j, dij);
 	    gretl_matrix_set(ret, j, i, dij);
