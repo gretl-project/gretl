@@ -6936,16 +6936,22 @@ enum {
 
 static int distance_type (const char *s)
 {
-    if (!strcmp(s, "euclidean")) {
+    int n = strlen(s);
+
+    if (n == 0 || (n == 1 && *s == 'c')) {
+	return -1;
+    }
+
+    if (!strncmp(s, "euclidean", n)) {
 	return EUCLIDEAN;
-    } else if (!strcmp(s, "manhattan")) {
+    } else if (!strncmp(s, "manhattan", n)) {
 	return MANHATTAN;
-    } else if (!strcmp(s, "hamming")) {
+    } else if (!strncmp(s, "hamming", n)) {
 	return HAMMING;
-    } else if (!strcmp(s, "chebyshev") ||
-	       !strcmp(s, "chebychev")) {
+    } else if (!strncmp(s, "chebyshev", n) ||
+	       !strncmp(s, "chebychev", n)) {
 	return CHEBYSHEV;
-    } else if (!strcmp(s, "cosine")) {
+    } else if (!strncmp(s, "cosine", n)) {
 	return COSINE;
     } else {
 	return -1;
