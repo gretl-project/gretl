@@ -4341,8 +4341,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	} else if (f == F_UNVECH) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
+		fprintf(stderr, "HERE err 1\n");
 		node_type_error(f, 2, NUM, r, p);
-	    } else {
+	    } else if (!null_node(r)) {
 		xparm = node_get_scalar(r, p);
 		gotopt = 1;
 	    }
