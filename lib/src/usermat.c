@@ -1580,12 +1580,27 @@ gretl_matrix *user_matrix_square (const gretl_matrix *m,
 	R = gretl_null_matrix_new();
     } else if ((k = gretl_vector_get_length(m)) == 0) {
 	*err = E_NONCONF;
+    } else if (m->is_complex) {
+	*err = E_CMPLX;
     } else {
-	int n = (int) ((sqrt(1.0 + 8.0 * k) - 1.0) / 2.0);
+	int n = (int) ((sqrt(1.0 + 8.0 * k) + 1.0) / 2.0);
+	int i, k;
+	double x;
 
-	R = gretl_matching_matrix_new(n, n, m);
+	R = gretl_matrix_alloc(n, n);
 	if (R != NULL) {
-	    *err = gretl_matrix_unvectorize_h(R, m);
+	    k = 0;
+	    for (j=0; j<n; j++) {
+		for (i=j; i<n; i++) {
+		    if (i == j) {
+			gretl_matrix_set(R, i, j, d);
+		    } else {
+			x = m->val[k++];
+			gretl_matrix_set(R, i, j, x);
+			gretl_matrix_set(R, j, i, x);
+		    }
+		}
+	    }
 	}
     }
 

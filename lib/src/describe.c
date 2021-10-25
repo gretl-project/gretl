@@ -6980,7 +6980,7 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 
     k = X->rows;
     n = X->cols;
-    vlen = k * (1 + k) / 2 - k;
+    vlen = k * (k - 1) / 2;
     pos = 0;
 
     ret = gretl_matrix_alloc(1, vlen);
