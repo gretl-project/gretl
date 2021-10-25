@@ -1584,7 +1584,7 @@ gretl_matrix *user_matrix_square (const gretl_matrix *m,
 	*err = E_CMPLX;
     } else {
 	int n = (int) ((sqrt(1.0 + 8.0 * k) + 1.0) / 2.0);
-	int i, k;
+	int i, j;
 	double x;
 
 	R = gretl_matrix_alloc(n, n);
