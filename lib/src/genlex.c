@@ -2435,7 +2435,7 @@ const char *getsymb_full (int t, const parser *p)
 	return "DBUNDLE";
     } else if (t == DBMEMB) {
 	return "DBMEMB";
-    } else if (t == DBMEMB) {
+    } else if (t == MMEMB) {
 	return "MMEMB";
     } else if (t == PTR) {
 	return "PTR";

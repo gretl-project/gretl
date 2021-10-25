@@ -225,7 +225,7 @@ function matrix combinations (matrix from "Set of all choices",
     endif
 
     scalar n = nelem(from)
-    if h>n
+    if h > n
         string s = argname(from)
         printf "\nError: number of elements of %s less than argument 2\n", strlen(s) ? s : "argument 1"
 
@@ -247,9 +247,31 @@ function matrix combinations (matrix from "Set of all choices",
     matrix ret = {}
     scalar hh = h-1
     loop i = 1 .. (n-hh)
-        matrix ret |= from[i] ~ combinations(from[i+1:], hh)
+        ret |= from[i] ~ combinations(from[i+1:], hh)
     endloop
 
+    return ret
+end function
+
+####
+
+# this is originally from Jack's StrucTiSM code 
+function matrix qformvech(const matrix X)
+    # vech(X'AX) = P (X ** X)' Q vech(A) = G vech(A)
+    # this function returns G
+
+    n = rows(X)
+    m = round(n * (n+1) / 2)
+    matrix s = seq(1,m)
+    matrix P = vec(upper(unvech(s'))) .= s
+
+    n = cols(X)
+    m = round(n * (n+1) / 2)
+    s = seq(1,m)
+    matrix Q = vec(upper(unvech(s'))) .= s
+    Q =   Q || vec(lower(unvech(s'))) .= s
+
+    matrix ret = P'(X ** X) * Q
     return ret
 end function
 

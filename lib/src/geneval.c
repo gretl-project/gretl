@@ -4305,6 +4305,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
         gretl_matrix *m = NULL;
+	double xparm = NADBL;
         int tmpmat = 0;
         int parm = 0;
         int gotopt = 0;
@@ -4330,13 +4331,20 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
         if (f == F_MREV || f == F_SDC || f == F_MCOV ||
             f == F_CDEMEAN || f == F_STDIZE || f == F_PSDROOT) {
-            /* if present, the @r node should hold a scalar */
+            /* if present, the @r node should hold an integer */
             if (!null_or_scalar(r)) {
                 node_type_error(f, 2, NUM, r, p);
             } else if (!null_node(r)) {
                 parm = node_get_int(r, p);
                 gotopt = 1;
             }
+	} else if (f == F_UNVECH) {
+	    /* if present, the @r node should hold a scalar */
+	    if (!null_or_scalar(r)) {
+		node_type_error(f, 2, NUM, r, p);
+	    } else if (!null_node(r)) {
+		xparm = node_get_scalar(r, p);
+	    }
         } else if (f == F_RANKING) {
             if (gretl_vector_get_length(m) == 0) {
                 /* m must be a vector */
@@ -4454,7 +4462,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = user_matrix_vech(m, &p->err);
             break;
         case F_UNVECH:
-            ret->v.m = user_matrix_unvech(m, &p->err);
+	    ret->v.m = user_matrix_unvech(m, xparm, &p->err);
             break;
         case F_MREV:
             if (parm != 0) {

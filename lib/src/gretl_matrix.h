@@ -439,14 +439,18 @@ gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src);
 
 gretl_matrix *gretl_matrix_vectorize_new (const gretl_matrix *m);
 
-int
-gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src);
+int gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src);
 
 int
 gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src);
 
 int
 gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src);
+
+int
+gretl_matrix_unvectorize_h_diag (gretl_matrix *targ,
+				 const gretl_matrix *src,
+				 double diag);
 
 int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
 				  const gretl_matrix *src,

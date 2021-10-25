@@ -147,6 +147,14 @@ list L3 = L1 - L2
 The result contains all the elements of \texttt{L1} that are not 
 present in \texttt{L2}.
 
+Indexing into a defined list is also possible, as if it were a vector:
+% 
+\begin{code}
+list L2 = L1[1:4]
+\end{code}
+%
+This leaves L2 with the first four members of \texttt{L1}. Notice that
+the ordering of list members is path-dependent. 
 
 \subsection{Lists and matrices}
 

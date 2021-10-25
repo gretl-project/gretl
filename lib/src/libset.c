@@ -976,12 +976,21 @@ static int libset_get_scalar (SetKey key, const char *arg,
     return err;
 }
 
-static int libset_get_unsigned (const char *arg, unsigned int *pu)
+/* Called only when setting the PRNG seed */
+
+static int libset_get_unsigned (const char *arg, unsigned int *pu,
+				int *automatic)
 {
     unsigned long lu = 0;
     char *test = NULL;
     double x = NADBL;
     int err = 0;
+
+    if (!strcmp(arg, "auto")) {
+	*automatic = 1;
+	*pu = time(NULL);
+	return 0;
+    }
 
     errno = 0;
     lu = strtoul(arg, &test, 10);
@@ -1698,14 +1707,16 @@ int execute_set (const char *setobj, const char *setarg,
 		err = 0;
 	    }
 	} else if (sv->key == SEED) {
-	    err = libset_get_unsigned(setarg, &u);
+	    int automatic = 0;
+
+	    err = libset_get_unsigned(setarg, &u, &automatic);
 	    if (!err) {
 		gretl_rand_set_seed(u);
 		if (gretl_messages_on()) {
 		    pprintf(prn,
 			    _("Pseudo-random number generator seeded with %u\n"), u);
 		}
-		seed_is_set = 1;
+		seed_is_set = !automatic;
 	    }
 	} else if (sv->key == HORIZON) {
 	    /* horizon for VAR impulse responses */

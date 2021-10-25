@@ -1546,20 +1546,31 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
     return R;
 }
 
-gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
+gretl_matrix *user_matrix_unvech (const gretl_matrix *m,
+				  double diag, int *err)
 {
     gretl_matrix *R = NULL;
+    int k;
 
     if (gretl_is_null_matrix(m)) {
 	R = gretl_null_matrix_new();
-    } else if (m->cols != 1) {
+    } else if ((k = gretl_vector_get_length(m)) == 0) {
 	*err = E_NONCONF;
     } else {
-	int n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
+	int n;
 
+	if (na(diag)) {
+	    n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
+	} else {
+	    n = (int) ((sqrt(1.0 + 8.0 * m->rows) + 1.0) / 2.0);
+	}
 	R = gretl_matching_matrix_new(n, n, m);
 	if (R != NULL) {
-	    *err = gretl_matrix_unvectorize_h(R, m);
+	    if (na(diag)) {
+		*err = gretl_matrix_unvectorize_h(R, m);
+	    } else {
+		*err = gretl_matrix_unvectorize_h_diag(R, m, diag);
+	    }
 	}
     }
 
