@@ -1521,7 +1521,8 @@ gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err)
     return R;
 }
 
-gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
+gretl_matrix *user_matrix_vech (const gretl_matrix *m,
+				int omit_diag, int *err)
 {
     gretl_matrix *R = NULL;
 
@@ -1530,12 +1531,20 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
     } else if (m->rows != m->cols) {
 	*err = E_NONCONF;
     } else {
-	int n = m->rows;
-	int k = n * (n + 1) / 2;
+	int k, n = m->rows;
 
+	if (omit_diag) {
+	    k = n * (n - 1) / 2;
+	} else {
+	    k = n * (n + 1) / 2;
+	}
 	R = gretl_matching_matrix_new(k, 1, m);
 	if (R != NULL) {
-	    *err = gretl_matrix_vectorize_h(R, m);
+	    if (omit_diag) {
+		*err = gretl_matrix_vectorize_h_skip(R, m);
+	    } else {
+		*err = gretl_matrix_vectorize_h(R, m);
+	    }
 	}
     }
 

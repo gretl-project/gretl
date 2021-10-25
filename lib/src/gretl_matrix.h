@@ -445,6 +445,9 @@ int
 gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src);
 
 int
+gretl_matrix_vectorize_h_skip (gretl_matrix *targ, const gretl_matrix *src);
+
+int
 gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src);
 
 int

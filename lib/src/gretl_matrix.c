@@ -3482,10 +3482,10 @@ gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
 
 /**
  * gretl_matrix_vectorize_h:
- * @targ: target vector, (m * (m+1)/2) x 1.
- * @src: source square matrix, m x m.
+ * @targ: target vector, length n * (n+1)/2.
+ * @src: source square matrix, n x n.
  *
- * Writes into @targ vech(@src), that is, a column vector
+ * Writes into @targ vech(@src), that is, a vector
  * containing the lower-triangular elements of @src.
  * This is only useful for symmetric matrices, but for the
  * sake of performance we don't check for that.
@@ -3501,7 +3501,7 @@ gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
     int m = n * (n+1) / 2;
     int i, j, k;
 
-    if (targ->cols != 1 || targ->rows != m) {
+    if (gretl_vector_get_length(targ) != m) {
 	return E_NONCONF;
     } else if (src->is_complex + targ->is_complex == 1) {
 	return E_MIXED;
@@ -3510,6 +3510,49 @@ gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
     k = 0;
     for (i=0; i<n; i++) {
 	for (j=i; j<n; j++) {
+	    if (src->is_complex) {
+		targ->z[k++] = gretl_cmatrix_get(src, i, j);
+	    } else {
+		targ->val[k++] = gretl_matrix_get(src, i, j);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_vectorize_h_skip:
+ * @targ: target vector, length n * (n-1)/2.
+ * @src: source square matrix, n x n.
+ *
+ * Like gretl_matrix_vectorize_h() except that the diagonal
+ * of @src is skipped in the vectorization.
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if
+ * @targ is not correctly dimensioned.
+ */
+
+int
+gretl_matrix_vectorize_h_skip (gretl_matrix *targ,
+			       const gretl_matrix *src)
+{
+    int n = src->rows;
+    int m = n * (n-1) / 2;
+    int i, j, k;
+
+    if (gretl_vector_get_length(targ) != m) {
+	return E_NONCONF;
+    } else if (src->is_complex + targ->is_complex == 1) {
+	return E_MIXED;
+    }
+
+    k = 0;
+    for (i=0; i<n; i++) {
+	for (j=i; j<n; j++) {
+	    if (i == j) {
+		continue;
+	    }
 	    if (src->is_complex) {
 		targ->z[k++] = gretl_cmatrix_get(src, i, j);
 	    } else {
@@ -3605,7 +3648,7 @@ int gretl_matrix_unvectorize_h_diag (gretl_matrix *targ,
 		    z = diag + 0 * I;
 		    gretl_cmatrix_set(targ, i, j, z);
 		} else {
-		    gretl_cmatrix_set(targ, i, j, diag);
+		    gretl_matrix_set(targ, i, j, diag);
 		}
 	    } else if (src->is_complex) {
 		z = src->z[k++];

@@ -114,7 +114,8 @@ double user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
 
 gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err);
 
-gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
+gretl_matrix *user_matrix_vech (const gretl_matrix *m,
+				int omit_diag, int *err);
 
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m,
 				  double d, int *err);

@@ -207,7 +207,6 @@ enum {
     F_DIAG,
     F_TRANSP,
     F_VEC,
-    F_VECH,
     F_ROWS,
     F_COLS,
     F_DET,
@@ -402,6 +401,7 @@ enum {
     F_ASSERT,
     F_CONTAINS,
     F_DISTANCE,
+    F_VECH,
     F_UNVECH,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,

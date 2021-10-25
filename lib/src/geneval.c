@@ -4330,7 +4330,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         }
 
         if (f == F_MREV || f == F_SDC || f == F_MCOV ||
-            f == F_CDEMEAN || f == F_STDIZE || f == F_PSDROOT) {
+            f == F_CDEMEAN || f == F_STDIZE ||
+	    f == F_PSDROOT || f == F_VECH) {
             /* if present, the @r node should hold an integer */
             if (!null_or_scalar(r)) {
                 node_type_error(f, 2, NUM, r, p);
@@ -4459,7 +4460,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = user_matrix_vec(m, &p->err);
             break;
         case F_VECH:
-            ret->v.m = user_matrix_vech(m, &p->err);
+            ret->v.m = user_matrix_vech(m, parm, &p->err);
             break;
         case F_UNVECH:
 	    ret->v.m = user_matrix_unvech(m, xparm, &p->err);
