@@ -3789,7 +3789,8 @@ static NODE *matrix_vector_func (NODE *l, NODE *m, NODE *r,
     return ret;
 }
 
-static NODE *matrix_string_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *matrix_string_func (NODE *l, NODE *m, NODE *r,
+				 int f, parser *p)
 {
     NODE *ret = NULL;
 
@@ -3797,11 +3798,19 @@ static NODE *matrix_string_func (NODE *l, NODE *r, int f, parser *p)
 
     if (starting(p)) {
         gretl_matrix *X = l->v.m;
-        const char *s = r->v.str;
+	gretl_matrix *Y = NULL;
+        const char *s = m->v.str;
 
-	ret = aux_matrix_node(p);
+	if (!null_node(r) && r->t != MAT) {
+	    node_type_error(f, 3, MAT, r, p);
+	} else if (!null_node(r)) {
+	    Y = r->v.m;
+	}
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
         if (ret != NULL) {
-            ret->v.m = distance(X, s, &p->err);
+            ret->v.m = distance(X, Y, s, &p->err);
         }
     } else {
         ret = aux_matrix_node(p);
@@ -16839,9 +16848,9 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_DISTANCE:
-	/* matrix on left, string on right */
-	if (l->t == MAT && r->t == STR) {
-	    ret = matrix_string_func(l, r, t->t, p);
+	/* matrix on left, string, then optional matrix */
+	if (l->t == MAT && m->t == STR) {
+	    ret = matrix_string_func(l, m, r, t->t, p);
         } else if (l->t == MAT) {
             node_type_error(t->t, 2, STR, r, p);
         } else {

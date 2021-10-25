@@ -400,7 +400,6 @@ enum {
     F_BINCOEFF,
     F_ASSERT,
     F_CONTAINS,
-    F_DISTANCE,
     F_VECH,
     F_UNVECH,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
@@ -472,6 +471,7 @@ enum {
     F_FCSTATS,
     F_BCHECK,
     F_MSPLITBY,
+    F_DISTANCE,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

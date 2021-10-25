@@ -6958,16 +6958,38 @@ static int distance_type (const char *s)
     }
 }
 
-gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
+/* distance(): produces a vector of pairwise distances, either between
+   the rows of @X, or if @Y is non-NULL, between the rows of @X and
+   the rows of @Y.
+
+   If @X is m x n and @Y is NULL, the result is a vector &v of length
+   m * (m - 1) / 2, comprising the non-redundant pairwise distances
+   with the zeros on the diagonal suppressed. This can be turned into
+   a square matrix via unvech(v, 0).
+
+   If @X is m x n and @Y is p x n, the result is a vector of length
+   m * p.
+
+   If @X and @Y have different column dimensions an error is flagged.
+*/
+
+gretl_matrix *distance (const gretl_matrix *X,
+			const gretl_matrix *Y,
+			const char *type, int *err)
 {
     gretl_matrix *ret;
     double d, dij, x, y;
     double den1, den2;
-    int dtype, n, k;
-    int vlen, pos;
-    int i, j, t;
+    int dtype, vlen, pos;
+    int r1, r2, c, jmin;
+    int i, j, k;
 
     if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (Y != NULL && (gretl_is_complex(Y) || Y->cols != X->cols)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -6978,10 +7000,16 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 	return NULL;
     }
 
-    k = X->rows;
-    n = X->cols;
-    vlen = k * (k - 1) / 2;
-    pos = 0;
+    r1 = X->rows;
+    c  = X->cols;
+
+    if (Y == NULL) {
+	r2 = r1;
+	vlen = r1 * (r1 - 1) / 2;
+    } else {
+	r2 = Y->rows;
+	vlen = r1 * r2;
+    }
 
     ret = gretl_matrix_alloc(1, vlen);
     if (ret == NULL) {
@@ -6989,12 +7017,18 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 	return NULL;
     }
 
-    for (i=0; i<k; i++) {
-	for (j=i+1; j<k; j++) {
+    pos = 0;
+    for (i=0; i<r1; i++) {
+	jmin = (Y == NULL)? i + 1 : 0;
+	for (j=jmin; j<r2; j++) {
 	    den1 = den2 = dij = 0;
-	    for (t=0; t<n; t++) {
-		x = gretl_matrix_get(X, i, t);
-		y = gretl_matrix_get(X, j, t);
+	    for (k=0; k<c; k++) {
+		x = gretl_matrix_get(X, i, k);
+		if (Y == NULL) {
+		    y = gretl_matrix_get(X, j, k);
+		} else {
+		    y = gretl_matrix_get(Y, j, k);
+		}
 		if (dtype == MANHATTAN) {
 		    dij += fabs(x - y);
 		} else if (dtype == HAMMING) {
@@ -7017,7 +7051,7 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 	    if (dtype == EUCLIDEAN) {
 		dij = sqrt(dij);
 	    } else if (dtype == HAMMING) {
-		dij /= n;
+		dij /= c;
 	    } else if (dtype == COSINE) {
 		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
