@@ -6964,6 +6964,7 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
     double d, dij, x, y;
     double den1, den2;
     int dtype, n, k;
+    int vlen, pos;
     int i, j, t;
 
     if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
@@ -6977,22 +6978,23 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 	return NULL;
     }
 
-    n = X->rows;
-    k = X->cols;
+    k = X->rows;
+    n = X->cols;
+    vlen = k * (1 + k) / 2 - k;
+    pos = 0;
 
-    ret = gretl_matrix_alloc(k, k);
+    ret = gretl_matrix_alloc(1, vlen);
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
     for (i=0; i<k; i++) {
-	gretl_matrix_set(ret, i, i, 0);
 	for (j=i+1; j<k; j++) {
 	    den1 = den2 = dij = 0;
 	    for (t=0; t<n; t++) {
-		x = gretl_matrix_get(X, t, i);
-		y = gretl_matrix_get(X, t, j);
+		x = gretl_matrix_get(X, i, t);
+		y = gretl_matrix_get(X, j, t);
 		if (dtype == MANHATTAN) {
 		    dij += fabs(x - y);
 		} else if (dtype == HAMMING) {
@@ -7019,8 +7021,7 @@ gretl_matrix *distance (const gretl_matrix *X, const char *type, int *err)
 	    } else if (dtype == COSINE) {
 		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
-	    gretl_matrix_set(ret, i, j, dij);
-	    gretl_matrix_set(ret, j, i, dij);
+	    ret->val[pos++] = dij;
 	}
     }
 
