@@ -4341,11 +4341,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	} else if (f == F_UNVECH) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
-		fprintf(stderr, "HERE err 1\n");
 		node_type_error(f, 2, NUM, r, p);
 	    } else if (!null_node(r)) {
 		xparm = node_get_scalar(r, p);
-		gotopt = 1;
 	    }
         } else if (f == F_RANKING) {
             if (gretl_vector_get_length(m) == 0) {
@@ -4464,11 +4462,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = user_matrix_vech(m, &p->err);
             break;
         case F_UNVECH:
-	    if (gotopt) {
-		ret->v.m = user_matrix_square(m, xparm, &p->err);
-	    } else {
-		ret->v.m = user_matrix_unvech(m, &p->err);
-	    }
+	    ret->v.m = user_matrix_unvech(m, xparm, &p->err);
             break;
         case F_MREV:
             if (parm != 0) {

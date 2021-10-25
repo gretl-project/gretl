@@ -3537,12 +3537,13 @@ gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 int
 gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 {
-    int n = targ->rows, m = src->rows;
+    int m = gretl_vector_get_length(src);
+    int n = targ->rows;
     double complex z;
     double x;
     int i, j, k;
 
-    if (src->cols != 1 || n * (n + 1) != 2 * m) {
+    if (m == 0 || n * (n + 1) != 2 * m) {
 	return E_NONCONF;
     } else if (src->is_complex + targ->is_complex == 1) {
 	return E_MIXED;
@@ -3552,6 +3553,61 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
     for (j=0; j<n; j++) {
 	for (i=j; i<n; i++) {
 	    if (src->is_complex) {
+		z = src->z[k++];
+		gretl_cmatrix_set(targ, i, j, conj(z));
+		gretl_cmatrix_set(targ, j, i, z);
+	    } else {
+		x = src->val[k++];
+		gretl_matrix_set(targ, i, j, x);
+		gretl_matrix_set(targ, j, i, x);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_unvectorize_h_diag:
+ * @targ: target matrix, n x n.
+ * @src: source vector.
+ * @diag: value for filling the diagonal.
+ *
+ * Like gretl_matrix_unvectorize_h(), but expects input @src in which
+ * the diagonal elements are omitted, while @diag gives the value
+ * to put in place of the omitted elements.
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if
+ * @targ is not correctly dimensioned.
+ */
+
+int gretl_matrix_unvectorize_h_diag (gretl_matrix *targ,
+				     const gretl_matrix *src,
+				     double diag)
+{
+    int m = gretl_vector_get_length(src);
+    int n = targ->rows;
+    double complex z;
+    double x;
+    int i, j, k;
+
+    if (m == 0 || n * (n - 1) != 2 * m) {
+	return E_NONCONF;
+    } else if (src->is_complex + targ->is_complex == 1) {
+	return E_MIXED;
+    }
+
+    k = 0;
+    for (j=0; j<n; j++) {
+	for (i=j; i<n; i++) {
+	    if (i == j) {
+		if (src->is_complex) {
+		    z = diag + 0 * I;
+		    gretl_cmatrix_set(targ, i, j, z);
+		} else {
+		    gretl_cmatrix_set(targ, i, j, diag);
+		}
+	    } else if (src->is_complex) {
 		z = src->z[k++];
 		gretl_cmatrix_set(targ, i, j, conj(z));
 		gretl_cmatrix_set(targ, j, i, z);

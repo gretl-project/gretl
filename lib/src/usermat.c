@@ -1546,32 +1546,8 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
     return R;
 }
 
-gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
-{
-    gretl_matrix *R = NULL;
-
-    if (gretl_is_null_matrix(m)) {
-	R = gretl_null_matrix_new();
-    } else if (m->cols != 1) {
-	*err = E_NONCONF;
-    } else {
-	int n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
-
-	R = gretl_matching_matrix_new(n, n, m);
-	if (R != NULL) {
-	    *err = gretl_matrix_unvectorize_h(R, m);
-	}
-    }
-
-    if (R == NULL && !*err) {
-	*err = E_ALLOC;
-    }
-
-    return R;
-}
-
-gretl_matrix *user_matrix_square (const gretl_matrix *m,
-				  double d, int *err)
+gretl_matrix *user_matrix_unvech (const gretl_matrix *m,
+				  double diag, int *err)
 {
     gretl_matrix *R = NULL;
     int k;
@@ -1580,26 +1556,20 @@ gretl_matrix *user_matrix_square (const gretl_matrix *m,
 	R = gretl_null_matrix_new();
     } else if ((k = gretl_vector_get_length(m)) == 0) {
 	*err = E_NONCONF;
-    } else if (m->is_complex) {
-	*err = E_CMPLX;
     } else {
-	int n = (int) ((sqrt(1.0 + 8.0 * k) + 1.0) / 2.0);
-	int i, j;
-	double x;
+	int n;
 
-	R = gretl_matrix_alloc(n, n);
+	if (na(diag)) {
+	    n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
+	} else {
+	    n = (int) ((sqrt(1.0 + 8.0 * m->rows) + 1.0) / 2.0);
+	}
+	R = gretl_matching_matrix_new(n, n, m);
 	if (R != NULL) {
-	    k = 0;
-	    for (j=0; j<n; j++) {
-		for (i=j; i<n; i++) {
-		    if (i == j) {
-			gretl_matrix_set(R, i, j, d);
-		    } else {
-			x = m->val[k++];
-			gretl_matrix_set(R, i, j, x);
-			gretl_matrix_set(R, j, i, x);
-		    }
-		}
+	    if (na(diag)) {
+		*err = gretl_matrix_unvectorize_h(R, m);
+	    } else {
+		*err = gretl_matrix_unvectorize_h_diag(R, m, diag);
 	    }
 	}
     }
