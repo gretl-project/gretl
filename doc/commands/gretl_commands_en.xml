@@ -13684,10 +13684,12 @@
 
       <ilist>
 	<li>
-	  <para><lit>seed</lit>: an unsigned integer.  Sets the seed for
-	    the pseudo-random number generator.  By default this is set from the
-	    system time; if you want to generate repeatable sequences of random
-	    numbers you must set the seed manually.
+	  <para><lit>seed</lit>: an unsigned integer or the keyword
+	  <lit>auto</lit>.  Sets the seed for the pseudo-random number
+	  generator.  By default this is set from the system time; if
+	  you want to generate repeatable sequences of random numbers
+	  you must set the seed manually. To reset the seed to a
+	  time-based automatic value, use <lit>auto</lit>.
 	  </para>
 	</li>
       </ilist>
