@@ -18790,6 +18790,8 @@ static void assignment_type_errmsg (int targ, int rhs, int op)
 
     if (*rhstr == '?') {
         rhstr = getsymb(rhs);
+    } else if (targ == LIST && rhs == SERIES) {
+	rhstr = "anonymous series";
     }
     gretl_errmsg_sprintf(_("Incompatible types in assignment: "
                            "%s %s %s"), typestr(targ), get_opstr(op),
