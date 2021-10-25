@@ -35,7 +35,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{June 2021, release 1.1}
+\date{October 2021, release 1.2}
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -148,6 +148,18 @@ matrix will have $n \choose k$ rows if successful, otherwise it will be a 1x1 ma
 
 \emph{Nota bene}: The recursive algorithm used may be a little slow if
 the number of elements of $x$ is large.
+
+\subsection{qformvech}
+
+\ArgRet{\texttt{matrix X}}{matrix}
+This function relies on the relation
+$vech(X'AX) = P (X \otimes X)' Q \; vech(A) = G \; vech(A)$,
+where $P$ and $Q$ are certain interim results.
+It returns the matrix $G$ such that the right-hand side
+of the equalities becomes feasible, which should be 
+numerically more efficient than the direct application
+of the left-hand side. 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -468,7 +480,7 @@ the returned list will contain the series \texttt{blah1},
 \section{Authors}
 \begin{itemize}
 \item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset,
-  drill, correspondence, combinations: Jack Lucchetti
+  drill, correspondence, combinations, qformvech: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
 splitfname, multi\_instrings, fracorder:
@@ -483,6 +495,7 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
+\item October 2021: 1.2, add qformvech  
 \item June 2021: 1.1, add combinations, and increase gretl version requirement to 2020c
 \item November 2020: 1.0, add mat2list
 \item September 2020: 0.8, add fracorder, remove bwritejson
