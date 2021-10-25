@@ -395,7 +395,14 @@ occur in a block of the program that is conditional on process rank.
 In a hansl script to be executed via \texttt{gretlmpi}---as also
 in the context of an MPI command block in a ``regular'' hansl
 script---you have access to all the standard gretl commands and
-functions, plus some extra ones.
+functions,\footnote{The error-throwing command \texttt{funcerr} and
+its sister hansl function \texttt{errorif()} constitute exceptions
+to this rule. You should avoid \texttt{funcerr} in hansl functions
+that are going to be used in an MPI context. The built-in function
+\texttt{errorif()} can be used within an MPI script or block, but
+in such a context it will not actually terminate execution, printing 
+only the specified error string.} 
+plus some extra ones.
 
 First, you have these two accessors:
 \begin{center}
