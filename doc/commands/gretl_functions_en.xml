@@ -3799,6 +3799,39 @@
 	  data-points, give <argname>X</argname> as a single row and
 	  let <argname>Y</argname> have <math>k</math> rows.
 	</para>
+	<subhead>Definitions of the supported metrics</subhead>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>euclidean</lit>: the square root of the sum of
+	      squared deviations in each of the dimensions.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>manhattan</lit>: the sum of the absolute deviations
+	      in each of the dimensions.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>hamming</lit>: the proportion of the dimensions in
+	      which the deviation is non-zero (so bounded by 0 and 1).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>chebyshev</lit>: the greatest absolute deviation in
+	      any dimension.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>cosine</lit>: 1 minus the cosine of the angle
+	      between the <quote>points</quote>, considered as vectors.
+	    </para>
+	  </li>
+	</ilist>
 	<subhead>Other metrics</subhead>
 	<para>
 	  Standardized Euclidean distances and correlation distances
