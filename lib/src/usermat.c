@@ -29,6 +29,8 @@
 #define MDEBUG 0
 #define CONTIG_DEBUG 0
 
+#define MONSTER_INT 2000000000
+
 /* mspec convenience macros */
 
 #define mspec_get_offset(m) (m->lsel.range[0])
@@ -230,7 +232,7 @@ static int bad_sel_range (int *range, int n)
 	k = range[i];
 	if (k != MSEL_MAX && (k < 1 || k > n)) {
 	    err = E_INVARG;
-	    if (k > n && k > 2000000000) {
+	    if (k > n && k > MONSTER_INT) {
 		k -= IDX_TBD - n;
 		if (k > 0) {
 		    range[i] = k;
@@ -253,7 +255,7 @@ static int bad_sel_single (int *pk, int n)
 
     if (*pk != MSEL_MAX && (*pk < 1 || *pk > n)) {
 	err = E_INVARG;
-	if (*pk > n && *pk > 2000000000) {
+	if (*pk > n && *pk > MONSTER_INT) {
 	    int k = *pk + (n - IDX_TBD);
 
 	    *pk = k;
@@ -305,6 +307,9 @@ int *mspec_make_list (int type, union msel *sel, int n,
 	if (sr0 < 0 && sr1 == sr0) {
 	    /* excluding a single row or column? */
 	    sr0 = -sr0;
+	    if (sr0 == IDX_TBD) {
+		sr0 = n;
+	    }
 	    if (sr0 > n) {
 		gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 				     sr0);
