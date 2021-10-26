@@ -4329,9 +4329,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         int gotopt = 0;
         int a = 0, b = 0, c = 0;
 
-        /* note: @parm is an integer parameter, required
-           for some functions, optional for others
+        /* Note: @parm is an integer parameter, required
+           for some functions, optional for others. In the
+	   special case of stdize() the default @parm
+	   value is 1;
         */
+	if (f == F_STDIZE) {
+	    parm = 1;
+	}
 
         m = node_get_matrix(n, p, 0, 0);
         tmpmat = n->t == MAT && is_tmp_node(n);
