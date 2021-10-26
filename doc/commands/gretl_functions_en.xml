@@ -3740,6 +3740,79 @@
       </description>
     </function>
 
+    <function name="distance" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="string">metric</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes distances between points on a metric that can be
+	  <lit>euclidean</lit> (the default), <lit>manhattan</lit>,
+	  <lit>hamming</lit>, <lit>chebyshev</lit> or
+	  <lit>cosine</lit>. The string identifying the metric can be
+	  given as an unambiguous truncation. The additional metrics
+	  correlation, standardized Euclidean and Mahalanobis are
+	  supported via simple transformations of the inputs; see
+	  below.
+	</para>
+	<para>
+	  Each row of the <by r="m" c="n"/> matrix
+	  <argname>X</argname> is treated as a point in an
+	  <math>n</math>-dimensional space; in an econometric context
+	  this is likely to represent a single observation comprising
+	  the values of <math>n</math> variables.
+	</para>
+	<para>
+	  If <argname>Y</argname> is not given, the return value is a
+	  column vector of length <math>m</math>(<math>m</math>
+	  &minus; 1)/2 comprising the non-redundant subset of all
+	  pairwise distances between the <math>m</math> points (rows
+	  of <argname>X</argname>). Given such a vector named
+	  <lit>d</lit>, the full symmetric matrix of inter-point
+	  distances (with zeros on the principal diagonal) can be
+	  constructed via
+	</para>
+	<code>
+	  D = unvech(d, 0)
+	</code>
+	<para>
+	  since <lit>d</lit> is akin to the vech of <lit>D</lit>, with
+	  diagonal elements omitted. The optional second argument to
+	  <fncref targ="unvech"/> says that the diagonal should be
+	  filled with zeros.
+	</para>
+	<para>
+	  If <argname>Y</argname> is given, it must be a <by r="p"
+	  c="n"/> matrix, each row of which is again treated as a
+	  point in <math>n</math>-space. In this case the return value
+	  is a column vector of length <math>mp</math>. The first
+	  <math>p</math> elements are the pairwise distances of the
+	  points in <argname>Y</argname> from the first point in
+	  <argname>X</argname>, the next <math>p</math> are distances
+	  from the second point in <argname>X</argname>, and so on.
+	</para>
+	<para>
+	  To obtain the distances from a given reference point (for
+	  example, the centroid) to each of <math>k</math>
+	  data-points, give <argname>X</argname> as a single row and
+	  let <argname>Y</argname> have <math>k</math> rows.
+	</para>
+	<subhead>Other metrics</subhead>
+	<para>
+	  Standardized Euclidean distances and correlation distances
+	  can be obtained as follows:
+	</para>
+	<code>
+	  # standardized euclidean
+	  dseu = distance(stdize(X), "eu")
+	  # correlation (based on cosine)
+	  dcor = distance(stdize(X')', "cos")
+	</code>
+      </description>
+    </function>
+
     <function name="dnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
