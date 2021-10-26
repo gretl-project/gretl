@@ -3799,12 +3799,21 @@ static NODE *matrix_string_func (NODE *l, NODE *m, NODE *r,
     if (starting(p)) {
         gretl_matrix *X = l->v.m;
 	gretl_matrix *Y = NULL;
-        const char *s = m->v.str;
+        const char *s = "e"; /* euclidean default */
 
-	if (!null_node(r) && r->t != MAT) {
-	    node_type_error(f, 3, MAT, r, p);
-	} else if (!null_node(r)) {
-	    Y = r->v.m;
+	if (!null_node(m)) {
+	    if (m->t == STR) {
+		s = m->v.str;
+	    } else {
+		node_type_error(f, 2, STR, m, p);
+	    }
+	}
+	if (!null_node(r)) {
+	    if (r->t == MAT) {
+		Y = r->v.m;
+	    } else {
+		node_type_error(f, 3, MAT, r, p);
+	    }
 	}
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
@@ -16848,11 +16857,9 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_DISTANCE:
-	/* matrix on left, string, then optional matrix */
-	if (l->t == MAT && m->t == STR) {
+	/* matrix on left, plus optional terms */
+	if (l->t == MAT) {
 	    ret = matrix_string_func(l, m, r, t->t, p);
-        } else if (l->t == MAT) {
-            node_type_error(t->t, 2, STR, r, p);
         } else {
             node_type_error(t->t, 1, MAT, l, p);
         }

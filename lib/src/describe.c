@@ -6931,8 +6931,35 @@ enum {
     MANHATTAN,
     HAMMING,
     CHEBYSHEV,
-    COSINE
+    COSINE,
+    CORREL
 };
+
+static int corr_temp (const gretl_matrix *X,
+		      const gretl_matrix *Y,
+		      gretl_matrix **Xtmp,
+		      gretl_matrix **Ytmp)
+{
+    int err = 0;
+
+    *Xtmp = gretl_matrix_copy(X);
+    if (*Xtmp != NULL) {
+	gretl_matrix_demean_by_row(*Xtmp);
+	if (Y != NULL) {
+	    *Ytmp = gretl_matrix_copy(Y);
+	    if (*Ytmp != NULL) {
+		gretl_matrix_demean_by_row(*Ytmp);
+	    } else {
+		gretl_matrix_free(*Xtmp);
+		err = E_ALLOC;
+	    }
+	}
+    } else {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
 
 static int distance_type (const char *s)
 {
@@ -6953,6 +6980,8 @@ static int distance_type (const char *s)
 	return CHEBYSHEV;
     } else if (!strncmp(s, "cosine", n)) {
 	return COSINE;
+    } else if (!strncmp(s, "correlation", n)) {
+	return CORREL;
     } else {
 	return -1;
     }
@@ -6978,6 +7007,8 @@ gretl_matrix *distance (const gretl_matrix *X,
 			const char *type, int *err)
 {
     gretl_matrix *ret;
+    gretl_matrix *Xtmp = NULL;
+    gretl_matrix *Ytmp = NULL;
     double d, dij, x, y;
     double den1, den2;
     int dtype, vlen, pos;
@@ -7011,10 +7042,23 @@ gretl_matrix *distance (const gretl_matrix *X,
 	vlen = r1 * r2;
     }
 
-    ret = gretl_matrix_alloc(1, vlen);
+    /* column vector for results */
+    ret = gretl_matrix_alloc(vlen, 1);
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
+    }
+
+    if (dtype == CORREL) {
+	*err = corr_temp(X, Y, &Xtmp, &Ytmp);
+	if (*err) {
+	    gretl_matrix_free(ret);
+	    return NULL;
+	}
+	X = Xtmp;
+	if (Y != NULL) {
+	    Y = Ytmp;
+	}
     }
 
     pos = 0;
@@ -7038,7 +7082,7 @@ gretl_matrix *distance (const gretl_matrix *X,
 		    if (d > dij) {
 			dij = d;
 		    }
-		} else if (dtype == COSINE) {
+		} else if (dtype == COSINE || dtype == CORREL) {
 		    dij += x * y;
 		    den1 += x * x;
 		    den2 += y * y;
@@ -7052,12 +7096,15 @@ gretl_matrix *distance (const gretl_matrix *X,
 		dij = sqrt(dij);
 	    } else if (dtype == HAMMING) {
 		dij /= c;
-	    } else if (dtype == COSINE) {
+	    } else if (dtype == COSINE || dtype == CORREL) {
 		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
 	    ret->val[pos++] = dij;
 	}
     }
+
+    gretl_matrix_free(Xtmp);
+    gretl_matrix_free(Ytmp);
 
     return ret;
 }

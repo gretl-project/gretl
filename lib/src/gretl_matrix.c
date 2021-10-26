@@ -7558,7 +7558,7 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
 
 void gretl_matrix_demean_by_row (gretl_matrix *m)
 {
-    double rmean;
+    double x, rmean;
     int i, j;
 
     for (i=0; i<m->rows; i++) {
@@ -7568,7 +7568,8 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
 	}
 	rmean /= m->cols;
 	for (j=0; j<m->cols; j++) {
-	    gretl_matrix_cum(m, i, j, -rmean);
+	    x = gretl_matrix_get(m, i, j);
+	    gretl_matrix_set(m, i, j, x - rmean);
 	}
     }
 }
