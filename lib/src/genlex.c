@@ -1029,16 +1029,13 @@ static int dummy_lookup (const char *s, parser *p)
 	}
     }
 
-    if (MSEL_DUM(d) && parser_next_char(p) != ']') {
-	if (d == DUM_END && DUM_END_OK(p->upsym)) {
-	    ; /* OK? */
-	} else if (d == DUM_END) {
-	    fprintf(stderr, "DUM_END: not interpreted for upsym %s\n",
-		    getsymb(p->upsym));
-	    d = 0;
-	} else {
-	    d = 0;
-	}
+    if (d == DUM_END && !DUM_END_OK(p->upsym)) {
+	d = 0;
+    } else if (MSEL_DUM(d) && parser_next_char(p) != ']') {
+	/* the other MSEL dummies are stand-alone; they
+	   can be valid only if followed by ']'
+	*/
+	d = 0;
     }
 
     return d;
