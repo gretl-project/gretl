@@ -43,9 +43,9 @@ const gchar *website = "http://gretl.sourceforge.net/";
 # elif defined(G_OS_WIN32)
 #  define SYSINFO "MS Windows (i686, "
 # elif defined(OS_OSX) && defined(__aarch64__)
-#  define SYSINFO "MacOS (quartz, arm64, "
+#  define SYSINFO "macOS (arm64, "
 # elif defined(OS_OSX)
-#  define SYSINFO "MacOS (quartz, x86_64, "
+#  define SYSINFO "macOS (x86_64, "
 # endif
 #elif defined(__GNUC__)
 # if defined(linux) && defined(__x86_64__)
