@@ -4,6 +4,8 @@ version 2021e, in progress
 - Packaged panel data files: add more metadata where wanted
 - Ensure the expected round-trip from strptime to strftime
   for underspecified dates such as "1990"
+- "set seed" command: allow parameter "auto" to revert to an
+  automatic clock-based seed
 - "kpss" command for panel data: improve output for the case
   where automatic lag order is selected; record $test and
   $pvalue in matrix form
@@ -11,6 +13,8 @@ version 2021e, in progress
   recent macOS
 - "genr": get informative error messages to appear in more
   cases
+- stdize() function: make it default to working as stated
+  in the help text (df correction of 1 for std. dev.)
 - errorif() function: get this working within an mpi block,
   in which case it can be used outside of a function
 - GUI console: allow Ctrl+D to exit, if not swallowed, and
