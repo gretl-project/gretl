@@ -6688,12 +6688,12 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
 struct MahalDist_ {
     int *list;
     int n;
-    double *d;
+    gretl_matrix *d;
 };
 
 const double *mahal_dist_get_distances (const MahalDist *md)
 {
-    return md->d;
+    return md->d->val;
 }
 
 int mahal_dist_get_n (const MahalDist *md)
@@ -6709,7 +6709,7 @@ const int *mahal_dist_get_varlist(const MahalDist *md)
 void free_mahal_dist (MahalDist *md)
 {
     free(md->list);
-    free(md->d);
+    gretl_matrix_free(md->d);
     free(md);
 }
 
@@ -6718,14 +6718,14 @@ static MahalDist *mahal_dist_new (const int *list, int n)
     MahalDist *md = malloc(sizeof *md);
 
     if (md != NULL) {
-	md->d = malloc(n * sizeof *md->d);
+	md->d = gretl_column_vector_alloc(n);
 	if (md->d == NULL) {
 	    free(md);
 	    md = NULL;
 	} else {
 	    md->list = gretl_list_copy(list);
 	    if (md->list == NULL) {
-		free(md->d);
+		gretl_matrix_free(md->d);
 		free(md);
 		md = NULL;
 	    } else {
@@ -6738,7 +6738,7 @@ static MahalDist *mahal_dist_new (const int *list, int n)
 	int t;
 
 	for (t=0; t<n; t++) {
-	    md->d[t] = NADBL;
+	    md->d->val[t] = NADBL;
 	}
     }
 
@@ -6872,7 +6872,7 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 	    if (savevar > 0) {
 		dset->Z[savevar][t] = m;
 	    } else if (md != NULL) {
-		md->d[t] = m;
+		md->d->val[t] = m;
 	    }
 	}
 
@@ -6931,14 +6931,15 @@ enum {
     MANHATTAN,
     HAMMING,
     CHEBYSHEV,
-    COSINE
+    COSINE,
+    MAHALANOBIS
 };
 
 static int distance_type (const char *s)
 {
     int n = strlen(s);
 
-    if (n == 0 || (n == 1 && *s == 'c')) {
+    if (n == 0 || (n == 1 && (*s == 'c' || *s == 'm'))) {
 	return -1;
     }
 
@@ -6953,9 +6954,48 @@ static int distance_type (const char *s)
 	return CHEBYSHEV;
     } else if (!strncmp(s, "cosine", n)) {
 	return COSINE;
+    } else if (!strncmp(s, "mahalanobis", n)) {
+	return MAHALANOBIS;
     } else {
 	return -1;
     }
+}
+
+/* Convert from matrix @X supplied to distance() to
+   dataset, to use the Mahalonobis distance code
+   above.
+*/
+
+static gretl_matrix *mahal_bridge (const gretl_matrix *X,
+				   const gretl_matrix *Y,
+				   int *err)
+{
+    gretl_matrix *d = NULL;
+    MahalDist *md = NULL;
+    DATASET *dset = NULL;
+
+    if (Y != NULL) {
+	/* we're not going to handle a second matrix */
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    dset = gretl_dataset_from_matrix(X, NULL, OPT_B, err);
+    if (!*err) {
+	int *list = gretl_consecutive_list_new(1, X->cols);
+
+	md = get_mahal_distances(list, dset, OPT_NONE, NULL, err);
+	free(list);
+    }
+    if (!*err) {
+	d = md->d;
+	md->d = NULL;
+    }
+
+    destroy_dataset(dset);
+    free_mahal_dist(md);
+
+    return d;
 }
 
 /* distance(): produces a vector of pairwise distances, either between
@@ -6998,6 +7038,10 @@ gretl_matrix *distance (const gretl_matrix *X,
     if (dtype < 0) {
 	*err = E_INVARG;
 	return NULL;
+    }
+
+    if (dtype == MAHALANOBIS) {
+	return mahal_bridge(X, Y, err);
     }
 
     r1 = X->rows;
