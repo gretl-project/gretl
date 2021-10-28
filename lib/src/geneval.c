@@ -6297,13 +6297,29 @@ static NODE *trend_node (parser *p)
     return ret;
 }
 
-static NODE *array_last_node (parser *p)
+#if 1
+
+static void parentage (NODE *t)
+{
+    NODE *pa = t->parent;
+
+    while (pa != NULL) {
+	fprintf(stderr, " parent type %s\n", getsymb(pa->t));
+	pa = pa->parent;
+    }
+}
+
+#endif
+
+static NODE *array_last_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
         ret = aux_scalar_node(p);
         if (!p->err) {
+	    fprintf(stderr, "array_last_node\n");
+	    parentage(t);
 	    ret->v.xval = IDX_TBD;
 	}
     }
@@ -16685,7 +16701,7 @@ static NODE *eval (NODE *t, parser *p)
         } else if (t->v.idnum == DUM_TREND) {
             ret = trend_node(p);
 	} else if (t->v.idnum == DUM_END) {
-	    ret = array_last_node(p);
+	    ret = array_last_node(t, p);
         } else {
             /* otherwise treat as terminal */
             ret = t;
