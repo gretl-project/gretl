@@ -9749,7 +9749,13 @@ static int allow_full_data;
 
 void allow_full_data_access (int s)
 {
-    allow_full_data = (s != 0);
+    if (s == 1000) {
+	allow_full_data = s;
+    } else if (s > 0) {
+	allow_full_data = 1;
+    } else if (s == 0 && allow_full_data > 0) {
+	allow_full_data--;
+    }
 }
 
 /**

@@ -1636,6 +1636,17 @@ int execute_set (const char *setobj, const char *setarg,
 	return print_settings(prn, OPT_D);
     }
 
+#if 1 /* temporary hack for testing */
+    if (!strcmp(setobj, "data_access") && setarg != NULL) {
+	if (!strcmp(setarg, "on")) {
+	    allow_full_data_access(1000);
+	} else if (!strcmp(setarg, "off")) {
+	    allow_full_data_access(0);
+	}
+	return 0;
+    }
+#endif
+
     sv = get_setvar_by_name(setobj);
     if (sv == NULL) {
 	gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
