@@ -3835,7 +3835,6 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret;
 
-#if 1
     if ((op == B_MUL || op == B_TRMUL || op == B_ADD || op == B_SUB) &&
         l->t == MAT && r->t == MAT) {
         ml = l->v.m;
@@ -3848,7 +3847,6 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
             return ret;
         }
     }
-#endif
 
     if (op == B_DOTPOW || op == B_POW) {
         if (op == B_POW) {
@@ -16320,7 +16318,7 @@ static int series_calc_nodes (NODE *l, NODE *r)
 
 static int cast_series_to_list (parser *p, NODE *n, short f)
 {
-#if 1
+#if 0
     NODE *parent = n->parent;
     fprintf(stderr, "*** cast series to list? (n->t = %s, parent %p) ***\n",
 	    getsymb(n->t), (void *) parent);
@@ -16563,13 +16561,18 @@ static NODE *eval (NODE *t, parser *p)
         return NULL;
     }
 
-#if EDEBUG
+#if 1 || EDEBUG
     if (t->vname != NULL) {
         fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n",
                 (void *) t, getsymb(t->t), t->vname);
     } else {
         fprintf(stderr, "eval: incoming node %p ('%s')\n",
                 (void *) t, getsymb(t->t));
+    }
+    if (t->parent != NULL) {
+	fprintf(stderr, " parent type %s\n", getsymb(t->parent->t));
+    } else {
+	fprintf(stderr, " parent is NULL\n");
     }
 #endif
 
@@ -16589,6 +16592,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (t->L) {
+	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
@@ -16602,6 +16606,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && t->M != NULL) {
+	t->M->parent = t;
         if (m_return(t->t)) {
             m = t->M;
         } else {
@@ -16613,6 +16618,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && t->R != NULL) {
+	t->R->parent = t;
         if (r_return(t->t)) {
             r = t->R;
         } else {
