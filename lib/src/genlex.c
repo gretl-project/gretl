@@ -1016,7 +1016,7 @@ const char *gretl_const_name (int i)
 /* end external stuff */
 
 /* cases where 'end' can indicate 'last element of' */
-#define DUM_END_OK(t) (t==MAT || t==ARRAY || t==MVAR || t==STR || t == LIST)
+#define DUM_END_OK(t) (t==MAT || t==ARRAY || t==MVAR || t==STR || t==LIST)
 
 static int dummy_lookup (const char *s, parser *p)
 {
@@ -1029,8 +1029,10 @@ static int dummy_lookup (const char *s, parser *p)
 	}
     }
 
-    if (d == DUM_END && !DUM_END_OK(p->upsym)) {
-	d = 0;
+    if (d == DUM_END) {
+	if (!DUM_END_OK(p->upsym)) {
+	    d = 0;
+	}
     } else if (MSEL_DUM(d) && parser_next_char(p) != ']') {
 	/* the other MSEL dummies are stand-alone; they
 	   can be valid only if followed by ']'
