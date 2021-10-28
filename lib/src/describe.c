@@ -6708,9 +6708,11 @@ const int *mahal_dist_get_varlist(const MahalDist *md)
 
 void free_mahal_dist (MahalDist *md)
 {
-    free(md->list);
-    gretl_matrix_free(md->d);
-    free(md);
+    if (md != NULL) {
+	free(md->list);
+	gretl_matrix_free(md->d);
+	free(md);
+    }
 }
 
 static MahalDist *mahal_dist_new (const int *list, int n)
@@ -6962,7 +6964,7 @@ static int distance_type (const char *s)
 }
 
 /* Convert from matrix @X supplied to distance() to
-   dataset, to use the Mahalonobis distance code
+   dataset, to use the Mahalanobis distance code
    above.
 */
 
