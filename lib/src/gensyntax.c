@@ -60,6 +60,7 @@ NODE *new_node (int t)
 	n->t = t;
 	n->vnum = NO_VNUM;
 	n->L = n->M = n->R = NULL;
+	n->parent = NULL;
     }
 
     return n;
@@ -170,6 +171,9 @@ static NODE *newb1 (int t, NODE *b)
 
     if (n != NULL) {
 	n->L = b;
+	if (b != NULL) {
+	    b->parent = n;
+	}
     }
 
     return n;
@@ -184,6 +188,12 @@ NODE *newb2 (int t, NODE *l, NODE *r)
     if (n != NULL) {
 	n->L = l;
 	n->R = r;
+	if (l != NULL) {
+	    l->parent = n;
+	}
+	if (r != NULL) {
+	    r->parent = n;
+	}
     }
 
     return n;
@@ -197,6 +207,9 @@ static NODE *newb3 (int t, NODE *l)
 
     if (n != NULL) {
 	n->L = l;
+	if (l != NULL) {
+	    l->parent = n;
+	}
     }
 
     return n;
@@ -229,6 +242,7 @@ static int push_bn_node (NODE *t, NODE *n)
     t->v.bn.n = nn;
     t->v.bn.n[k] = n;
     t->v.bn.n_nodes += 1;
+    n->parent = t;
 
 #if SDEBUG
     fprintf(stderr, "push_bn_node: n_nodes now = %d, "
@@ -1052,6 +1066,7 @@ static void attach_child (NODE *parent, NODE *child, int f,
     if (np == 1) {
 	/* 1-place node */
 	parent->L = child;
+	child->parent = parent;
     } else if (np == 2) {
 	/* 2-place node */
 	if (i == 0) {
@@ -1059,6 +1074,7 @@ static void attach_child (NODE *parent, NODE *child, int f,
 	} else {
 	    parent->R = child;
 	}
+	child->parent = parent;
     } else if (np == 3) {
 	/* 3-place node */
 	if (i == 0) {
@@ -1068,9 +1084,11 @@ static void attach_child (NODE *parent, NODE *child, int f,
 	} else {
 	    parent->R = child;
 	}
+	child->parent = parent;
     } else if (child != NULL) {
 	/* n-place node */
 	p->err = push_bn_node(parent, child);
+	child->parent = parent;
     }
 }
 
