@@ -6299,14 +6299,51 @@ static NODE *trend_node (parser *p)
 
 #if 1
 
-static void parentage (NODE *t)
+static int array_last_value (NODE *t, parser *p)
 {
     NODE *pa = t->parent;
+    void *objptr = NULL;
+    int objtype = 0;
+    int colspec = 0;
+    int k = -1;
 
     while (pa != NULL) {
-	fprintf(stderr, " parent type %s\n", getsymb(pa->t));
+	if (pa->t == SLRAW) {
+	    colspec = (t == pa->R);
+	}
+	if (pa->t == MSL || pa->t == OSL) {
+	    objptr = pa->L->v.ptr;
+	    objtype = pa->L->t;
+	}
 	pa = pa->parent;
     }
+#if 0
+    fprintf(stderr, "HERE objtype = %s, colspec = %d\n",
+	    getsymb(objtype), colspec);
+#endif
+    if (colspec && objtype != MAT) {
+	p->err = E_INVARG;
+    } else if (objtype == MAT) {
+	const gretl_matrix *m = objptr;
+
+	k = colspec ? m->cols : m->rows;
+    } else if (objtype == ARRAY) {
+	gretl_array *a = objptr;
+
+	k = gretl_array_get_length(a);
+    } else if (objtype == LIST) {
+	const int *list = objptr;
+
+	k = list[0];
+    } else if (objtype == STR) {
+	const char *s = objptr;
+
+	k = strlen(s);
+    }
+
+    fprintf(stderr, "array last value: returning %d\n", k);
+
+    return k;
 }
 
 #endif
@@ -6318,9 +6355,11 @@ static NODE *array_last_node (NODE *t, parser *p)
     if (starting(p)) {
         ret = aux_scalar_node(p);
         if (!p->err) {
-	    fprintf(stderr, "array_last_node\n");
-	    parentage(t);
+#if 1
+	    ret->v.xval = array_last_value(t, p);
+#else
 	    ret->v.xval = IDX_TBD;
+#endif
 	}
     }
 
@@ -16342,7 +16381,7 @@ static int cast_series_to_list (parser *p, NODE *n, short f)
 	fprintf(stderr, "  parent type %s\n", getsymb(parent->t));
 	parent = parent->parent;
     }
-#endif    
+#endif
     if (p->tree->t == F_GENSERIES || p->tree->t == UFUN) {
         /* FIXME: other cases when we shouldn't do this "cast"? */
         return 0;
@@ -16577,7 +16616,7 @@ static NODE *eval (NODE *t, parser *p)
         return NULL;
     }
 
-#if 1 || EDEBUG
+#if EDEBUG
     if (t->vname != NULL) {
         fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n",
                 (void *) t, getsymb(t->t), t->vname);
