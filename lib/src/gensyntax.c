@@ -172,12 +172,6 @@ NODE *newb2 (int t, NODE *l, NODE *r)
     if (n != NULL) {
 	n->L = l;
 	n->R = r;
-	if (l != NULL) {
-	    l->parent = n;
-	}
-	if (r != NULL) {
-	    r->parent = n;
-	}
     }
 
     return n;
@@ -191,9 +185,6 @@ static NODE *newb3 (int t, NODE *l)
 
     if (n != NULL) {
 	n->L = l;
-	if (l != NULL) {
-	    l->parent = n;
-	}
     }
 
     return n;
