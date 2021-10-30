@@ -6297,36 +6297,53 @@ static NODE *trend_node (parser *p)
     return ret;
 }
 
-#if 1
+/* Cash out 'end' where it is legit, namely indicating
+   the last element of a matrix row or column, an array,
+   list or string.
+*/
 
 static int array_last_value (NODE *t, parser *p)
 {
     NODE *pa = t->parent;
     void *objptr = NULL;
     int objtype = 0;
-    int colspec = 0;
+    int dim2 = 0;
     int k = -1;
 
     while (pa != NULL) {
 	if (pa->t == SLRAW) {
-	    colspec = (t == pa->R);
+	    dim2 = (t == pa->R);
 	}
 	if (pa->t == MSL || pa->t == OSL) {
-	    objptr = pa->L->v.ptr;
-	    objtype = pa->L->t;
+	    if (pa->L->aux != NULL) {
+		objptr = pa->L->aux->v.ptr;
+		objtype = pa->L->aux->t;
+	    } else {
+		objptr = pa->L->v.ptr;
+		objtype = pa->L->t;
+	    }
 	}
 	pa = pa->parent;
     }
 #if 0
-    fprintf(stderr, "HERE objtype = %s, colspec = %d\n",
-	    getsymb(objtype), colspec);
+    fprintf(stderr, "HERE objtype = %s, dim2 = %d\n",
+	    getsymb(objtype), dim2);
 #endif
-    if (colspec && objtype != MAT) {
+    if (dim2 && objtype != MAT) {
 	p->err = E_INVARG;
     } else if (objtype == MAT) {
 	const gretl_matrix *m = objptr;
 
-	k = colspec ? m->cols : m->rows;
+	if (dim2) {
+	    /* must refer to last column */
+	    k = m->cols;
+	} else {
+	    /* may refer to last row or column */
+	    k = gretl_vector_get_length(m);
+	    if (k == 0) {
+		k = m->rows;
+	    }
+	}
     } else if (objtype == ARRAY) {
 	gretl_array *a = objptr;
 
@@ -6339,14 +6356,13 @@ static int array_last_value (NODE *t, parser *p)
 	const char *s = objptr;
 
 	k = strlen(s);
+    } else {
+	gretl_errmsg_set("'end' is not defined in this context");
+	p->err = E_INVARG;
     }
-
-    fprintf(stderr, "array last value: returning %d\n", k);
 
     return k;
 }
-
-#endif
 
 static NODE *array_last_node (NODE *t, parser *p)
 {
@@ -6355,11 +6371,10 @@ static NODE *array_last_node (NODE *t, parser *p)
     if (starting(p)) {
         ret = aux_scalar_node(p);
         if (!p->err) {
-#if 1
 	    ret->v.xval = array_last_value(t, p);
-#else
-	    ret->v.xval = IDX_TBD;
-#endif
+	    if (p->err) {
+		ret->v.xval = NADBL;
+	    }
 	}
     }
 
