@@ -6305,6 +6305,7 @@ static NODE *trend_node (parser *p)
 static int array_last_value (NODE *t, parser *p)
 {
     NODE *pa = t->parent;
+    NODE *last = NULL;
     void *objptr = NULL;
     int objtype = 0;
     int dim2 = 0;
@@ -6312,7 +6313,7 @@ static int array_last_value (NODE *t, parser *p)
 
     while (pa != NULL) {
 	if (pa->t == SLRAW) {
-	    dim2 = (t == pa->R);
+	    dim2 = (t == pa->R || (last != NULL && last == pa->R));
 	}
 	if (pa->t == MSL || pa->t == OSL) {
 	    if (pa->L->aux != NULL) {
@@ -6322,6 +6323,10 @@ static int array_last_value (NODE *t, parser *p)
 		objptr = pa->L->v.ptr;
 		objtype = pa->L->t;
 	    }
+	    break;
+	} else {
+	    /* the node immediately under SLRAW? */
+	    last = pa;
 	}
 	pa = pa->parent;
     }
@@ -6360,6 +6365,9 @@ static int array_last_value (NODE *t, parser *p)
 	gretl_errmsg_set("'end' is not defined in this context");
 	p->err = E_INVARG;
     }
+#if 0
+    fprintf(stderr, "HERE array_last_value returns %d\n", k);
+#endif
 
     return k;
 }
