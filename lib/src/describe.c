@@ -6688,12 +6688,12 @@ int vars_test (const int *list, const DATASET *dset, PRN *prn)
 struct MahalDist_ {
     int *list;
     int n;
-    double *d;
+    gretl_matrix *d;
 };
 
 const double *mahal_dist_get_distances (const MahalDist *md)
 {
-    return md->d;
+    return md->d->val;
 }
 
 int mahal_dist_get_n (const MahalDist *md)
@@ -6708,9 +6708,11 @@ const int *mahal_dist_get_varlist(const MahalDist *md)
 
 void free_mahal_dist (MahalDist *md)
 {
-    free(md->list);
-    free(md->d);
-    free(md);
+    if (md != NULL) {
+	free(md->list);
+	gretl_matrix_free(md->d);
+	free(md);
+    }
 }
 
 static MahalDist *mahal_dist_new (const int *list, int n)
@@ -6718,14 +6720,14 @@ static MahalDist *mahal_dist_new (const int *list, int n)
     MahalDist *md = malloc(sizeof *md);
 
     if (md != NULL) {
-	md->d = malloc(n * sizeof *md->d);
+	md->d = gretl_column_vector_alloc(n);
 	if (md->d == NULL) {
 	    free(md);
 	    md = NULL;
 	} else {
 	    md->list = gretl_list_copy(list);
 	    if (md->list == NULL) {
-		free(md->d);
+		gretl_matrix_free(md->d);
 		free(md);
 		md = NULL;
 	    } else {
@@ -6738,7 +6740,7 @@ static MahalDist *mahal_dist_new (const int *list, int n)
 	int t;
 
 	for (t=0; t<n; t++) {
-	    md->d[t] = NADBL;
+	    md->d->val[t] = NADBL;
 	}
     }
 
@@ -6872,7 +6874,7 @@ real_mahalanobis_distance (const int *list, DATASET *dset,
 	    if (savevar > 0) {
 		dset->Z[savevar][t] = m;
 	    } else if (md != NULL) {
-		md->d[t] = m;
+		md->d->val[t] = m;
 	    }
 	}
 
@@ -6931,14 +6933,15 @@ enum {
     MANHATTAN,
     HAMMING,
     CHEBYSHEV,
-    COSINE
+    COSINE,
+    MAHALANOBIS
 };
 
 static int distance_type (const char *s)
 {
     int n = strlen(s);
 
-    if (n == 0 || (n == 1 && *s == 'c')) {
+    if (n == 0 || (n == 1 && (*s == 'c' || *s == 'm'))) {
 	return -1;
     }
 
@@ -6953,12 +6956,51 @@ static int distance_type (const char *s)
 	return CHEBYSHEV;
     } else if (!strncmp(s, "cosine", n)) {
 	return COSINE;
+    } else if (!strncmp(s, "mahalanobis", n)) {
+	return MAHALANOBIS;
     } else {
 	return -1;
     }
 }
 
-/* distance(): produces a vector of pairwise distances, either between
+/* Convert from matrix @X supplied to distance() to
+   dataset, to use the Mahalanobis distance code
+   above.
+*/
+
+static gretl_matrix *mahal_bridge (const gretl_matrix *X,
+				   const gretl_matrix *Y,
+				   int *err)
+{
+    gretl_matrix *d = NULL;
+    MahalDist *md = NULL;
+    DATASET *dset = NULL;
+
+    if (Y != NULL) {
+	/* we're not going to handle a second matrix */
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    dset = gretl_dataset_from_matrix(X, NULL, OPT_B, err);
+    if (!*err) {
+	int *list = gretl_consecutive_list_new(1, X->cols);
+
+	md = get_mahal_distances(list, dset, OPT_NONE, NULL, err);
+	free(list);
+    }
+    if (!*err) {
+	d = md->d;
+	md->d = NULL;
+    }
+
+    destroy_dataset(dset);
+    free_mahal_dist(md);
+
+    return d;
+}
+
+/* distance(): produces a set of pairwise distances, either between
    the rows of @X, or if @Y is non-NULL, between the rows of @X and
    the rows of @Y.
 
@@ -6967,8 +7009,8 @@ static int distance_type (const char *s)
    with the zeros on the diagonal suppressed. This can be turned into
    a square matrix via unvech(v, 0).
 
-   If @X is m x n and @Y is p x n, the result is a vector of length
-   m * p.
+   If @X is m x n and @Y is p x n, the result is a matrix with m rows
+   and p columns.
 
    If @X and @Y have different column dimensions an error is flagged.
 */
@@ -6983,7 +7025,8 @@ gretl_matrix *distance (const gretl_matrix *X,
     int dtype, vlen, pos;
     int r1, r2, c, jmin;
     int i, j, k;
-
+    int nothirdarg = (Y == NULL);
+    
     if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
 	*err = E_INVARG;
 	return NULL;
@@ -7000,19 +7043,24 @@ gretl_matrix *distance (const gretl_matrix *X,
 	return NULL;
     }
 
+    if (dtype == MAHALANOBIS) {
+	return mahal_bridge(X, Y, err);
+    }
+
     r1 = X->rows;
     c  = X->cols;
 
-    if (Y == NULL) {
+    if (nothirdarg) {
 	r2 = r1;
 	vlen = r1 * (r1 - 1) / 2;
+	/* column vector for results */
+	ret = gretl_matrix_alloc(vlen, 1);
     } else {
 	r2 = Y->rows;
-	vlen = r1 * r2;
+	/* matrix for results */
+	ret = gretl_matrix_alloc(r2, r1);
     }
 
-    /* column vector for results */
-    ret = gretl_matrix_alloc(vlen, 1);
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -7020,7 +7068,7 @@ gretl_matrix *distance (const gretl_matrix *X,
 
     pos = 0;
     for (i=0; i<r1; i++) {
-	jmin = (Y == NULL)? i + 1 : 0;
+	jmin = nothirdarg ? i + 1 : 0;
 	for (j=jmin; j<r2; j++) {
 	    den1 = den2 = dij = 0;
 	    for (k=0; k<c; k++) {

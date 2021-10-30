@@ -2834,6 +2834,7 @@
 	  and (3) compute the square root of the ratio of the largest
 	  to the smallest eigenvalue.
 	</para>
+
 	<para>
 	  <seelist>
             <fncref targ="rcond"/>
@@ -3787,17 +3788,14 @@
 	  If <argname>Y</argname> is given, it must be a <by r="p"
 	  c="n"/> matrix, each row of which is again treated as a
 	  point in <math>n</math>-space. In this case the return value
-	  is a column vector of length <math>mp</math>. The first
-	  <math>p</math> elements are the pairwise distances of the
-	  points in <argname>Y</argname> from the first point in
-	  <argname>X</argname>, the next <math>p</math> are distances
-	  from the second point in <argname>X</argname>, and so on.
+	  is a <by r="p" c="m"/> matrix with the pairwise distances
+	  between the points in <argname>Y</argname> and those in
+	  <argname>X</argname>.
 	</para>
 	<para>
 	  To obtain the distances from a given reference point (for
-	  example, the centroid) to each of <math>k</math>
-	  data-points, give <argname>X</argname> as a single row and
-	  let <argname>Y</argname> have <math>k</math> rows.
+	  example, the centroid) to each of <math>n</math>
+	  data-points, give <argname>Y</argname> as a single row.
 	</para>
 	<subhead>Definitions of the supported metrics</subhead>
 	<ilist>
@@ -12765,24 +12763,56 @@
     <function name="unvech" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns an <by r="n" c="n"/> symmetric matrix obtained by
-	  rearranging the elements of <math>v</math>. The number of elements
-	  in <math>v</math> must be a triangular integer&mdash;&ie;, a
-	  number <math>k</math> such that an integer <math>n</math> exists
-	  with the property <equation
-          status="inline" ascii="k = n(n+1)/2"
-          tex="$k = n(n+1)/2$"/>. This is the inverse of the function
-	  <fncref targ="vech"/>.
+	  If the second argument is omitted, returns an <by r="n"
+	  c="n"/> symmetric matrix obtained by rearranging the
+	  elements of <math>v</math>. The number of elements in
+	  <math>v</math> must be a triangular integer&mdash;&ie;, a
+	  number <math>k</math> such that an integer <math>n</math>
+	  exists with the property <equation status="inline" ascii="k
+	  = n(n+1)/2" tex="$k = n(n+1)/2$"/>. This is the inverse of
+	  the function <fncref targ="vech"/>.
 	</para>
 	<para>
-	  <seelist>
-            <fncref targ="mshape"/>
-            <fncref targ="vech"/>
-	  </seelist>
-	</para>
+	  If the argument <argname>d</argname> is given, the function
+	  returns an <by r="(n+1)" c="(n+1)"/> matrix with the
+	  extra-diagonal entries filled with the elements of
+	  <math>v</math> as above. All the elements of the diagonal
+	  are set to <argname>d</argname> instead.
+       </para>
+    <para>
+        Example:
+    </para>
+    <code>
+        v = {1;2;3}
+        matrix one = unvech(v)
+        matrix two = unvech(v, 99)
+        print one two
+    </code>
+    <para>
+      returns
+    </para>
+    <code>
+      one (2 x 2)
+
+      1   2 
+      2   3 
+
+      two (3 x 3)
+      
+      99     1     2 
+       1    99     3 
+       2     3    99 
+    </code>
+    <para>
+      <seelist>
+        <fncref targ="mshape"/>
+        <fncref targ="vech"/>
+      </seelist>
+    </para>
       </description>
     </function>
 
@@ -12982,11 +13012,11 @@
 		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)."
 		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
 	  The coefficient matrix <argname>A</argname> is composed by
-	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
-	  it is <by r="n" c="np"/>, with one row per equation. This
-	  corresponds to the first <math>n</math> rows of the matrix
-	  <lit>$compan</lit> provided by gretl's <lit>var</lit> and
-	  <lit>vecm</lit> commands.
+	  stacking the <math>A</math><sub>i</sub> matrices
+	  horizontally; it is <by r="n" c="np"/>, with one row per
+	  equation. This corresponds to the first <math>n</math> rows
+	  of the matrix <lit>$compan</lit> provided by the
+	  <lit>var</lit> and <lit>vecm</lit> commands.
 	</para>
 	<para>
 	  The <math>u_t</math> vectors are contained (as rows) in
@@ -13038,23 +13068,29 @@
     <function name="vech" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
+	<fnarg optional="true" type="bool">omit-diag</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns in a column vector the elements of <argname>A</argname>
-	  on and above the diagonal. Typically, this function is used on
-	  symmetric matrices, in which case it can be undone by the
-	  function <fncref targ="unvech"/>. If the input matrix is not
+	  This function rearranges the the elements of
+	  <argname>A</argname> on and above the diagonal into a column
+	  vector, unless the <argname>omit-diag</argname> is given a
+	  non-zero value, in which case only the entries above the
+	  diagonal are considered.
+        </para>
+        <para>
+	  Typically, this function is used on symmetric
+	  matrices, in which case it can be undone by the function
+	  <fncref targ="unvech"/>. If the input matrix is not
 	  symmetric and it's the lower triangle that contains the
 	  <quote>right</quote> values, <lit>vech(A')</lit> will give
 	  the desired answer.
 	  <seelist>
             <fncref targ="vec"/>
-	  </seelist>
-	</para>
+          </seelist>
+        </para>
       </description>
     </function>
-
 
     <function name="vma" section="timeseries" output="matrix">
       <fnargs>
