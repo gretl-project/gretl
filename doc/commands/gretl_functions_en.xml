@@ -13079,12 +13079,13 @@
 	  diagonal are considered.
         </para>
         <para>
-	  Typically, this function is used on symmetric
-	  matrices, in which case it can be undone by the function
-	  <fncref targ="unvech"/>. If the input matrix is not
-	  symmetric and it's the lower triangle that contains the
+	  Typically, this function is used on symmetric matrices, in
+	  which case it can be undone by the function <fncref
+	  targ="unvech"/>. If the input matrix is not symmetric and
+	  it's the lower triangle that contains the
 	  <quote>right</quote> values, <lit>vech(A')</lit> will give
-	  the desired answer.
+	  the desired answer (its elements may have to be re-ordered,
+	  however).
 	  <seelist>
             <fncref targ="vec"/>
           </seelist>

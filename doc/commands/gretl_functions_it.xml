@@ -3748,6 +3748,109 @@
       </description>
     </function>
 
+    <function name="distance" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="string">metrica</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola distanze fra punti, secondo una matrica che può
+	  essere <lit>euclidean</lit> (il default),
+	  <lit>manhattan</lit>, <lit>hamming</lit>,
+	  <lit>chebyshev</lit> oppure <lit>cosine</lit>. La stringa
+	  per la metrica può essere abbreviata, purché non risulti
+	  ambigua. Altre metriche, come quella di correlazione,
+	  Euclidea standardizzata e di Mahalanobis possono essere
+	  ottenute con semplici trasformazioni dell'argomento
+	  <argname>X</argname>; vedi più avanti.
+	</para>
+	<para>
+	  Ogni riga della matrice <by r="m" c="n"/>
+	  <argname>X</argname> è considerata un punto a <math>n</math>
+	  dimensioni; in un contesto econometrico l'uso tipico è di
+	  rappresentare un'osservazione su <math>n</math> variabili.
+	</para>
+	<para>
+	  Se <argname>Y</argname> non è specificato, il risultato è un
+	  vettore colonna con <math>m</math>(<math>m</math> &minus;
+	  1)/2 elementi, con tutte le distanze fra le <math>m</math>
+	  righe di <argname>X</argname>. Dato tale vettore
+	  <lit>d</lit>, la matrice completa delle distanze fra i punti
+	  con zero sulla diagonale) può essere ottenuta col comando
+	</para>
+	<code>
+	  D = unvech(d, 0)
+	</code>
+	<para>
+	  poiché <lit>d</lit> è il vech di <lit>D</lit>, una volta che
+	  la diagonale sia omessa. Il secondo argomento di <fncref
+	  targ="unvech"/> indica che la diagonale va popolata con
+	  zeri.
+	</para>
+	<para>
+	  Se l'argomento <argname>Y</argname> è specificato, esso
+	  dev'essere una matrice <by r="p" c="n"/>, le cui righe sono
+	  a loro volta prese come punti a <math>n</math>
+	  dimensioni. In questo caso il risultato è una matrice di <by
+	  r="m" c="p"/> elementi, che contiene le distanze fra i punti
+	  di <argname>X</argname> e quelli di <argname>Y</argname>.
+	</para>
+	<para>
+	  Per ottenere le distanze da un punto di riferimento dato (ad
+	  esempio il centroide) a ognuno di <math>k</math> punti, si
+	  può specificare <argname>X</argname> come matrice di una
+	  riga e <argname>Y</argname> con <math>k</math> righe, o
+	  viceversa.
+	</para>
+	<subhead>Definizione delle metriche</subhead>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>euclidean</lit>: la radice quadrata della somma
+	      delle differenze al quadrato fra le coordinate.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>manhattan</lit>: la somma delle differenze fra le
+	      coordinate in modulo.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>hamming</lit>: la proporzione di coordinate per cui
+	      la differenza è zero (quindi, compresa fra 0 e 1).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>chebyshev</lit>: l'elemento più grande tra le
+	      differenze fra le coordinate in modulo.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>cosine</lit>: 1 meno il coseno dell'angolo fra i
+	      <quote>punti</quote> dati dai vettori.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Altre metriche</subhead>
+	<para>
+	  La distanza euclidea standardizzata e la distanza di
+	  correlazione possono essere ottenute come segue:
+	</para>
+	<code>
+	  # euclidea standardizzata
+	  dseu = distance(stdize(X), "eu")
+	  # correlazione (basata sul coseno)
+	  dcor = distance(stdize(X')', "cos")
+	</code>
+      </description>
+    </function>
+
     <function name="dnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -12731,17 +12834,50 @@
     <function name="unvech" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
       </fnargs>      
       <description>
 	<para>
-	  Restituisce una matrice simmetrica <by r="n" c="n"/>
-	  ottenuta riordinando gli elementi di <math>v</math>. Il
-	  numero di elementi in <math>v</math> deve essere un intero
-	  triangolare, ossia un numero <math>k</math> che può essere
-	  scritto come <equation status="inline" ascii="k = n(n+1)/2"
-	  tex="$k = n(n+1)/2$"/>, con <math>n</math> intero. Questa
-	  funzione è l'inversa della funzione <fncref targ="vech"/>.
+	  Se il secondo argomento è omesso, restituisce una matrice
+	  simmetrica <by r="n" c="n"/> ottenuta riordinando gli
+	  elementi di <math>v</math>. Il numero di elementi in
+	  <math>v</math> deve essere un intero triangolare, ossia un
+	  numero <math>k</math> che può essere scritto come <equation
+	  status="inline" ascii="k = n(n+1)/2" tex="$k = n(n+1)/2$"/>,
+	  con <math>n</math> intero. Questa funzione è l'inversa della
+	  funzione <fncref targ="vech"/>.
 	</para>
+	<para>
+	  Se invece l'argomento <argname>d</argname> è presente, la
+	  funzione restituisce una matrice <by r="(n+1)" c="(n+1)"/> i
+	  cui elementi extradiagonali sono presi da <math>v</math>
+	  come sopra. Gli elementi della diagonale sono posti uguali a
+	  <argname>d</argname>.
+       </para>
+    <para>
+        Per esempio:
+    </para>
+    <code>
+        v = {1;2;3}
+        matrix one = unvech(v)
+        matrix two = unvech(v, 99)
+        print one two
+    </code>
+    <para>
+      produce
+    </para>
+    <code>
+      one (2 x 2)
+
+      1   2 
+      2   3 
+
+      two (3 x 3)
+      
+      99     1     2 
+       1    99     3 
+       2     3    99 
+    </code>
 	<para>
 	  <seelist>
 	    <fncref targ="mshape"/>
@@ -13008,14 +13144,23 @@
     <function name="vech" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
-      </fnargs>    
+ 	<fnarg optional="true" type="bool">omit-diag</fnarg>
+     </fnargs>    
       <description>
 	<para>
 	  Restituisce, sotto forma di vettore colonna, gli elementi di
 	  <argname>A</argname> sulla diagonale e al di sopra di
-	  essa. L'uso tipico di questa funzione è con matrici
-	  simmetriche, nel qual caso la sua funzione inversa è <fncref
-	  targ="unvech"/>.
+	  essa, a meno che l'argomento <argname>omit-diag</argname>
+	  sia nonzero, nel qual caso vengono considerati solo gli
+	  elementi al di sopra della diagonale. 
+	  </para>
+	  <para>
+	    L'uso tipico di questa funzione è con matrici simmetriche,
+	    nel qual caso la sua funzione inversa è <fncref
+	    targ="unvech"/>. Se la matrice <argname>A</argname> non
+	    fosse simmetrica, e ciò che si desidera è il triangolo
+	    inferiore, si può usare <lit>vech(A')</lit> (ma potrebbe
+	    essere necessario riordinare gli elementi).
 	  <seelist> 
 	    <fncref targ="vec"/>
 	  </seelist>
