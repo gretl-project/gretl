@@ -7000,7 +7000,7 @@ static gretl_matrix *mahal_bridge (const gretl_matrix *X,
     return d;
 }
 
-/* distance(): produces a vector of pairwise distances, either between
+/* distance(): produces a set of pairwise distances, either between
    the rows of @X, or if @Y is non-NULL, between the rows of @X and
    the rows of @Y.
 
