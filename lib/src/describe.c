@@ -7058,7 +7058,7 @@ gretl_matrix *distance (const gretl_matrix *X,
     } else {
 	r2 = Y->rows;
 	/* matrix for results */
-	ret = gretl_matrix_alloc(r2, r1);
+	ret = gretl_matrix_alloc(r1, r2);
     }
 
     if (ret == NULL) {
@@ -7104,7 +7104,11 @@ gretl_matrix *distance (const gretl_matrix *X,
 	    } else if (dtype == COSINE) {
 		dij = 1.0 - dij / sqrt(den1 * den2);
 	    }
-	    ret->val[pos++] = dij;
+	    if (nothirdarg) {
+		ret->val[pos++] = dij;
+	    } else {
+		gretl_matrix_set(ret, i, j, dij);
+	    }
 	}
     }
 

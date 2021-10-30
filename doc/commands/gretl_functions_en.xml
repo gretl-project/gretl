@@ -3788,9 +3788,10 @@
 	  If <argname>Y</argname> is given, it must be a <by r="p"
 	  c="n"/> matrix, each row of which is again treated as a
 	  point in <math>n</math>-space. In this case the return value
-	  is a <by r="p" c="m"/> matrix with the pairwise distances
-	  between the points in <argname>Y</argname> and those in
-	  <argname>X</argname>.
+	  is an <by r="m" c="p"/> matrix whose <math>i,j</math>
+	  element holds the distance between row <math>i</math> of
+	  <argname>X</argname> and row <math>j</math> of
+	  <argname>Y</argname>.
 	</para>
 	<para>
 	  To obtain the distances from a given reference point (for
