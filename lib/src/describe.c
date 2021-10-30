@@ -7009,8 +7009,8 @@ static gretl_matrix *mahal_bridge (const gretl_matrix *X,
    with the zeros on the diagonal suppressed. This can be turned into
    a square matrix via unvech(v, 0).
 
-   If @X is m x n and @Y is p x n, the result is a vector of length
-   m * p.
+   If @X is m x n and @Y is p x n, the result is a matrix with m rows
+   and p columns.
 
    If @X and @Y have different column dimensions an error is flagged.
 */
@@ -7025,7 +7025,8 @@ gretl_matrix *distance (const gretl_matrix *X,
     int dtype, vlen, pos;
     int r1, r2, c, jmin;
     int i, j, k;
-
+    int nothirdarg = (Y == NULL);
+    
     if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
 	*err = E_INVARG;
 	return NULL;
@@ -7049,16 +7050,17 @@ gretl_matrix *distance (const gretl_matrix *X,
     r1 = X->rows;
     c  = X->cols;
 
-    if (Y == NULL) {
+    if (nothirdarg) {
 	r2 = r1;
 	vlen = r1 * (r1 - 1) / 2;
+	/* column vector for results */
+	ret = gretl_matrix_alloc(vlen, 1);
     } else {
 	r2 = Y->rows;
-	vlen = r1 * r2;
+	/* matrix for results */
+	ret = gretl_matrix_alloc(r2, r1);
     }
 
-    /* column vector for results */
-    ret = gretl_matrix_alloc(vlen, 1);
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -7066,7 +7068,7 @@ gretl_matrix *distance (const gretl_matrix *X,
 
     pos = 0;
     for (i=0; i<r1; i++) {
-	jmin = (Y == NULL)? i + 1 : 0;
+	jmin = nothirdarg ? i + 1 : 0;
 	for (j=jmin; j<r2; j++) {
 	    den1 = den2 = dij = 0;
 	    for (k=0; k<c; k++) {
