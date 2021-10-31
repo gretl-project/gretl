@@ -6297,6 +6297,29 @@ static NODE *trend_node (parser *p)
     return ret;
 }
 
+static int object_get_size (NODE *n, parser *p)
+{
+    int ret = 0;
+
+    if (n->t == NUM) {
+	ret = 1;
+    } else if (n->t == MAT) {
+	ret = n->v.m->rows * n->v.m->cols;
+    } else if (n->t == ARRAY) {
+	ret = gretl_array_get_length(n->v.a);
+    } else if (n->t == BUNDLE) {
+	ret = gretl_bundle_get_n_members(n->v.b);
+    } else if (n->t == LIST) {
+	ret = n->v.ivec[0];
+    } else if (n->t == STR) {
+	ret = strlen(n->v.str);
+    } else {
+	p->err = E_TYPES;
+    }
+
+    return ret;
+}
+
 /* Cash out 'end' where it is legit, namely indicating
    the last element of a matrix row or column, an array,
    list or string.
@@ -6306,23 +6329,16 @@ static int array_last_value (NODE *t, parser *p)
 {
     NODE *pa = t->parent;
     NODE *last = NULL;
-    void *objptr = NULL;
-    int objtype = 0;
-    int dim2 = 0;
+    NODE *obj = NULL;
+    int idx2 = 0;
     int k = -1;
 
     while (pa != NULL) {
 	if (pa->t == SLRAW) {
-	    dim2 = (t == pa->R || (last != NULL && last == pa->R));
+	    idx2 = (t == pa->R || (last != NULL && last == pa->R));
 	}
 	if (pa->t == MSL || pa->t == OSL) {
-	    if (pa->L->aux != NULL) {
-		objptr = pa->L->aux->v.ptr;
-		objtype = pa->L->aux->t;
-	    } else {
-		objptr = pa->L->v.ptr;
-		objtype = pa->L->t;
-	    }
+	    obj = (pa->L->aux != NULL)? pa->L->aux : pa->L;
 	    break;
 	} else {
 	    /* the node immediately under SLRAW? */
@@ -6331,43 +6347,31 @@ static int array_last_value (NODE *t, parser *p)
 	pa = pa->parent;
     }
 #if 0
-    fprintf(stderr, "HERE objtype = %s, dim2 = %d\n",
-	    getsymb(objtype), dim2);
+    fprintf(stderr, "HERE objtype = %s, idx2 = %d\n",
+	    obj == NULL ? "none" : getsymb(obj->t), idx2);
 #endif
-    if (dim2 && objtype != MAT) {
+    if (obj == NULL || (idx2 && obj->t != MAT)) {
 	p->err = E_INVARG;
-    } else if (objtype == MAT) {
-	const gretl_matrix *m = objptr;
-
-	if (dim2) {
+    } else if (obj->t == MAT) {
+	if (idx2) {
 	    /* must refer to last column */
-	    k = m->cols;
+	    k = obj->v.m->cols;
 	} else {
 	    /* may refer to last row or column */
-	    k = gretl_vector_get_length(m);
+	    k = gretl_vector_get_length(obj->v.m);
 	    if (k == 0) {
-		k = m->rows;
+		k = obj->v.m->rows;
 	    }
 	}
-    } else if (objtype == ARRAY) {
-	gretl_array *a = objptr;
-
-	k = gretl_array_get_length(a);
-    } else if (objtype == LIST) {
-	const int *list = objptr;
-
-	k = list[0];
-    } else if (objtype == STR) {
-	const char *s = objptr;
-
-	k = strlen(s);
+    } else if (obj->t == ARRAY || obj->t == LIST || obj->t == STR) {
+	k = object_get_size(obj, p);
     } else {
-	gretl_errmsg_set("'end' is not defined in this context");
 	p->err = E_INVARG;
     }
-#if 0
-    fprintf(stderr, "HERE array_last_value returns %d\n", k);
-#endif
+
+    if (p->err) {
+	gretl_errmsg_set("'end' is not defined in this context");
+    }
 
     return k;
 }
@@ -7503,38 +7507,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-        if (n->t == NUM) {
-            ret->v.xval = 1;
-        } else if (n->t == MAT) {
-            gretl_matrix *m = n->v.m;
-
-            ret->v.xval = m->rows * m->cols;
-        } else if (n->t == ARRAY) {
-            gretl_array *a = n->v.a;
-
-            ret->v.xval = gretl_array_get_length(a);
-        } else if (n->t == BUNDLE) {
-            gretl_bundle *b = n->v.b;
-
-            ret->v.xval = gretl_bundle_get_n_members(b);
-        } else if (n->t == LIST) {
-            int *list = n->v.ivec;
-
-            ret->v.xval = list[0];
-        } else if (n->t == STR) {
-            int *list = get_list_by_name(n->v.str);
-
-            if (list != NULL) {
-                /* backward compatibility (?): _name_ of list */
-                ret->v.xval = list[0];
-            } else if (n->v.str != NULL) {
-                ret->v.xval = strlen(n->v.str);
-            } else {
-                ret->v.xval = 0;
-            }
-        } else {
-            p->err = E_TYPES;
-        }
+	ret->v.xval = object_get_size(n, p);
     }
 
     return ret;
