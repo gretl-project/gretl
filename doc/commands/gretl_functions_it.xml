@@ -3793,9 +3793,11 @@
 	  Se l'argomento <argname>Y</argname> è specificato, esso
 	  dev'essere una matrice <by r="p" c="n"/>, le cui righe sono
 	  a loro volta prese come punti a <math>n</math>
-	  dimensioni. In questo caso il risultato è una matrice di <by
-	  r="m" c="p"/> elementi, che contiene le distanze fra i punti
-	  di <argname>X</argname> e quelli di <argname>Y</argname>.
+	  dimensioni. In questo caso il risultato è una matrice <by
+	  r="m" c="p"/>, il cui elemento <math>i,j</math> contiene la
+	  distanza fra la <math>i</math>-esima riga di
+	  <argname>X</argname> e la <math>i</math>-esima di
+	  <argname>Y</argname>.
 	</para>
 	<para>
 	  Per ottenere le distanze da un punto di riferimento dato (ad
