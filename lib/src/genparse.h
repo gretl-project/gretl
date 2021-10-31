@@ -642,6 +642,7 @@ struct node {
     union val v;     /* value (of whatever type) */
     NODE *L, *M, *R; /* up to three child nodes */
     NODE *aux;       /* auxiliary (result) node */
+    NODE *parent;    /* parent node (or NULL) */
     int refcount;    /* reference counter, used by aux nodes */
 };
 

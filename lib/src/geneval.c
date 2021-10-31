@@ -3835,7 +3835,6 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret;
 
-#if 1
     if ((op == B_MUL || op == B_TRMUL || op == B_ADD || op == B_SUB) &&
         l->t == MAT && r->t == MAT) {
         ml = l->v.m;
@@ -3848,7 +3847,6 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
             return ret;
         }
     }
-#endif
 
     if (op == B_DOTPOW || op == B_POW) {
         if (op == B_POW) {
@@ -6299,14 +6297,104 @@ static NODE *trend_node (parser *p)
     return ret;
 }
 
-static NODE *array_last_node (parser *p)
+static int object_get_size (NODE *n, parser *p)
+{
+    int ret = 0;
+
+    if (n->t == NUM) {
+	ret = 1;
+    } else if (n->t == MAT) {
+	ret = n->v.m->rows * n->v.m->cols;
+    } else if (n->t == ARRAY) {
+	ret = gretl_array_get_length(n->v.a);
+    } else if (n->t == BUNDLE) {
+	ret = gretl_bundle_get_n_members(n->v.b);
+    } else if (n->t == LIST) {
+	ret = n->v.ivec[0];
+    } else if (n->t == STR) {
+	ret = strlen(n->v.str);
+    } else {
+	p->err = E_TYPES;
+    }
+
+    return ret;
+}
+
+/* Cash out 'end' where it is legit, namely indicating the last
+   element of a matrix row or column, or an array, list or string. We
+   need to find the object to which 'end' is supposed to refer (@obj),
+   and we also need to determine whether 'end' occurs in the first or
+   second of the two possible indexation slots under the SLRAW node in
+   its parentage. The second slot (@idx2) is valid only as the column
+   index for a matrix.
+*/
+
+static int object_end_index (NODE *t, parser *p)
+{
+    NODE *pa = t->parent;
+    NODE *last = NULL;
+    NODE *obj = NULL;
+    int idx2 = 0;
+    int ret = -1;
+
+    while (pa != NULL) {
+	/* examine the parentage of @t */
+	if (pa->t == SLRAW) {
+	    idx2 = (t == pa->R || (last != NULL && last == pa->R));
+	}
+	if (pa->t == MSL || pa->t == OSL) {
+	    obj = (pa->L->aux != NULL)? pa->L->aux : pa->L;
+	    break;
+	} else {
+	    /* the node immediately under SLRAW? */
+	    last = pa;
+	}
+	pa = pa->parent;
+    }
+#if 0
+    fprintf(stderr, "HERE objtype = %s, idx2 = %d\n",
+	    obj == NULL ? "none" : getsymb(obj->t), idx2);
+#endif
+    if (obj == NULL || (idx2 && obj->t != MAT)) {
+	/* either we didn't find a referent, or it's a
+	   case of an invalid second index
+	*/
+	p->err = E_INVARG;
+    } else if (obj->t == MAT) {
+	if (idx2) {
+	    /* must refer to column */
+	    ret = obj->v.m->cols;
+	} else {
+	    /* may refer to row or column */
+	    ret = gretl_vector_get_length(obj->v.m);
+	    if (ret == 0) {
+		ret = obj->v.m->rows;
+	    }
+	}
+    } else if (obj->t == ARRAY || obj->t == LIST || obj->t == STR) {
+	ret = object_get_size(obj, p);
+    } else {
+	p->err = E_INVARG;
+    }
+
+    if (p->err) {
+	gretl_errmsg_set("'end' is not defined in this context");
+    }
+
+    return ret;
+}
+
+static NODE *array_last_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
         ret = aux_scalar_node(p);
         if (!p->err) {
-	    ret->v.xval = IDX_TBD;
+	    ret->v.xval = object_end_index(t, p);
+	    if (p->err) {
+		ret->v.xval = NADBL;
+	    }
 	}
     }
 
@@ -7427,38 +7515,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-        if (n->t == NUM) {
-            ret->v.xval = 1;
-        } else if (n->t == MAT) {
-            gretl_matrix *m = n->v.m;
-
-            ret->v.xval = m->rows * m->cols;
-        } else if (n->t == ARRAY) {
-            gretl_array *a = n->v.a;
-
-            ret->v.xval = gretl_array_get_length(a);
-        } else if (n->t == BUNDLE) {
-            gretl_bundle *b = n->v.b;
-
-            ret->v.xval = gretl_bundle_get_n_members(b);
-        } else if (n->t == LIST) {
-            int *list = n->v.ivec;
-
-            ret->v.xval = list[0];
-        } else if (n->t == STR) {
-            int *list = get_list_by_name(n->v.str);
-
-            if (list != NULL) {
-                /* backward compatibility (?): _name_ of list */
-                ret->v.xval = list[0];
-            } else if (n->v.str != NULL) {
-                ret->v.xval = strlen(n->v.str);
-            } else {
-                ret->v.xval = 0;
-            }
-        } else {
-            p->err = E_TYPES;
-        }
+	ret->v.xval = object_get_size(n, p);
     }
 
     return ret;
@@ -16320,6 +16377,15 @@ static int series_calc_nodes (NODE *l, NODE *r)
 
 static int cast_series_to_list (parser *p, NODE *n, short f)
 {
+#if 0
+    NODE *parent = n->parent;
+    fprintf(stderr, "*** cast series to list? (n->t = %s, parent %p) ***\n",
+	    getsymb(n->t), (void *) parent);
+    while (parent != NULL) {
+	fprintf(stderr, "  parent type %s\n", getsymb(parent->t));
+	parent = parent->parent;
+    }
+#endif
     if (p->tree->t == F_GENSERIES || p->tree->t == UFUN) {
         /* FIXME: other cases when we shouldn't do this "cast"? */
         return 0;
@@ -16562,6 +16628,11 @@ static NODE *eval (NODE *t, parser *p)
         fprintf(stderr, "eval: incoming node %p ('%s')\n",
                 (void *) t, getsymb(t->t));
     }
+    if (t->parent != NULL) {
+	fprintf(stderr, " parent type %s\n", getsymb(t->parent->t));
+    } else {
+	fprintf(stderr, " parent is NULL\n");
+    }
 #endif
 
     /* handle terminals first */
@@ -16580,6 +16651,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (t->L) {
+	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
@@ -16593,6 +16665,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && t->M != NULL) {
+	t->M->parent = t;
         if (m_return(t->t)) {
             m = t->M;
         } else {
@@ -16604,6 +16677,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && t->R != NULL) {
+	t->R->parent = t;
         if (r_return(t->t)) {
             r = t->R;
         } else {
@@ -16670,7 +16744,7 @@ static NODE *eval (NODE *t, parser *p)
         } else if (t->v.idnum == DUM_TREND) {
             ret = trend_node(p);
 	} else if (t->v.idnum == DUM_END) {
-	    ret = array_last_node(p);
+	    ret = array_last_node(t, p);
         } else {
             /* otherwise treat as terminal */
             ret = t;
