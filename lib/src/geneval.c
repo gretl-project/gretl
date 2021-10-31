@@ -6320,20 +6320,25 @@ static int object_get_size (NODE *n, parser *p)
     return ret;
 }
 
-/* Cash out 'end' where it is legit, namely indicating
-   the last element of a matrix row or column, an array,
-   list or string.
+/* Cash out 'end' where it is legit, namely indicating the last
+   element of a matrix row or column, or an array, list or string. We
+   need to find the object to which 'end' is supposed to refer (@obj),
+   and we also need to determine whether 'end' occurs in the first or
+   second of the two possible indexation slots under the SLRAW node in
+   its parentage. The second slot (@idx2) is valid only as the column
+   index for a matrix.
 */
 
-static int array_last_value (NODE *t, parser *p)
+static int object_end_index (NODE *t, parser *p)
 {
     NODE *pa = t->parent;
     NODE *last = NULL;
     NODE *obj = NULL;
     int idx2 = 0;
-    int k = -1;
+    int ret = -1;
 
     while (pa != NULL) {
+	/* examine the parentage of @t */
 	if (pa->t == SLRAW) {
 	    idx2 = (t == pa->R || (last != NULL && last == pa->R));
 	}
@@ -6351,20 +6356,23 @@ static int array_last_value (NODE *t, parser *p)
 	    obj == NULL ? "none" : getsymb(obj->t), idx2);
 #endif
     if (obj == NULL || (idx2 && obj->t != MAT)) {
+	/* either we didn't find a referent, or it's a
+	   case of an invalid second index
+	*/
 	p->err = E_INVARG;
     } else if (obj->t == MAT) {
 	if (idx2) {
-	    /* must refer to last column */
-	    k = obj->v.m->cols;
+	    /* must refer to column */
+	    ret = obj->v.m->cols;
 	} else {
-	    /* may refer to last row or column */
-	    k = gretl_vector_get_length(obj->v.m);
-	    if (k == 0) {
-		k = obj->v.m->rows;
+	    /* may refer to row or column */
+	    ret = gretl_vector_get_length(obj->v.m);
+	    if (ret == 0) {
+		ret = obj->v.m->rows;
 	    }
 	}
     } else if (obj->t == ARRAY || obj->t == LIST || obj->t == STR) {
-	k = object_get_size(obj, p);
+	ret = object_get_size(obj, p);
     } else {
 	p->err = E_INVARG;
     }
@@ -6373,7 +6381,7 @@ static int array_last_value (NODE *t, parser *p)
 	gretl_errmsg_set("'end' is not defined in this context");
     }
 
-    return k;
+    return ret;
 }
 
 static NODE *array_last_node (NODE *t, parser *p)
@@ -6383,7 +6391,7 @@ static NODE *array_last_node (NODE *t, parser *p)
     if (starting(p)) {
         ret = aux_scalar_node(p);
         if (!p->err) {
-	    ret->v.xval = array_last_value(t, p);
+	    ret->v.xval = object_end_index(t, p);
 	    if (p->err) {
 		ret->v.xval = NADBL;
 	    }
