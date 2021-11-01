@@ -2528,6 +2528,19 @@ static int count_markers (FILE *fp, char *line, int linelen,
     return n;
 }
 
+static void finalize_add_markers (DATASET *dset, char **S, int err)
+{
+    if (err) {
+	strings_array_free(S, dset->n);
+    } else {
+	if (dset->S != NULL) {
+	    strings_array_free(dset->S, dset->n);
+	}
+	dset->markers = REGULAR_MARKERS;
+	dset->S = S;
+    }
+}
+
 /**
  * add_obs_markers_from_file:
  * @dset: data information struct.
@@ -2547,12 +2560,19 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
     char **S = NULL;
     FILE *fp;
     char line[128], marker[32];
-    int done = 0;
+    int ns, panel_units = 0;
     int t, err = 0;
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
+    }
+
+    ns = count_markers(fp, line, sizeof line, marker);
+    if (dataset_is_panel(dset) && ns == dset->n / dset->pd) {
+	panel_units = 1; /* OK */
+    } else if (ns < dset->n) {
+	return E_INVARG;
     }
 
     S = strings_array_new_with_length(dset->n, OBSLEN);
@@ -2561,36 +2581,26 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
 	return E_ALLOC;
     }
 
-    if (dataset_is_panel(dset)) {
-	/* allow the case where we get just enough markers to
-	   label the cross-sectional units */
-	int nm = count_markers(fp, line, sizeof line, marker);
-	int N = dset->n / dset->pd; /* = number of units */
+    if (panel_units) {
+	int T = dset->pd;
+	int t, i = 0;
 
-	if (nm == N) {
-	    int T = dset->pd;
-	    int t, i = 0;
-
-	    while (fgets(line, sizeof line, fp) && !err) {
-		*marker = '\0';
-		if (sscanf(line, "%31[^\n\r]", marker) == 1) {
-		    g_strstrip(marker);
-		    strncat(S[i], marker, OBSLEN - 1);
-		    err = check_imported_string(S[i], i+1, OBSLEN);
-		    if (!err) {
-			/* copy to remaining observations */
-			for (t=1; t<T; t++) {
-			    strcpy(S[i+t], S[i]);
-			}
+	while (fgets(line, sizeof line, fp) && !err) {
+	    *marker = '\0';
+	    if (sscanf(line, "%31[^\n\r]", marker) == 1) {
+		g_strstrip(marker);
+		strncat(S[i], marker, OBSLEN - 1);
+		err = check_imported_string(S[i], i+1, OBSLEN);
+		if (!err) {
+		    /* copy to remaining observations */
+		    for (t=1; t<T; t++) {
+			strcpy(S[i+t], S[i]);
 		    }
-		    i += T;
 		}
+		i += T;
 	    }
-	    done = 1;
 	}
-    }
-
-    if (!done) {
+    } else {
 	for (t=0; t<dset->n && !err; t++) {
 	    if (fgets(line, sizeof line, fp) == NULL) {
 		gretl_errmsg_sprintf("Expected %d markers; found %d\n",
@@ -2607,15 +2617,68 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
 	}
     }
 
-    if (err) {
-	strings_array_free(S, dset->n);
-    } else {
-	if (dset->S != NULL) {
-	    strings_array_free(dset->S, dset->n);
-	}
-	dset->markers = REGULAR_MARKERS;
-	dset->S = S;
+    finalize_add_markers(dset, S, err);
+
+    return err;
+}
+
+static int add_obs_markers_from_array (DATASET *dset, const char *aname)
+{
+    gretl_array *a;
+    char **S = NULL;
+    const char *s;
+    const char *white = " \t\r\n";
+    char marker[32];
+    int ns, panel_units = 0;
+    int t, err = 0;
+
+    a = get_strings_array_by_name(aname);
+    if (a == NULL) {
+	return E_INVARG;
     }
+
+    ns = gretl_array_get_length(a);
+    if (dataset_is_panel(dset) && ns == dset->n / dset->pd) {
+	panel_units = 1; /* OK */
+    } else if (ns < dset->n) {
+	return E_INVARG;
+    }
+
+    S = strings_array_new_with_length(dset->n, OBSLEN);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    if (panel_units) {
+	int N = dset->n / dset->pd;
+	int T = dset->pd;
+	int i, j = 0;
+
+	for (i=0; i<N; i++) {
+	    s = gretl_array_get_data(a, i);
+	    s += strspn(s, white);
+	    *marker = '\0';
+	    strncat(marker, s, 31);
+	    g_strstrip(marker);
+	    gretl_utf8_truncate_b(marker, OBSLEN-1);
+	    strcpy(S[j++], marker);
+	    for (t=1; t<T; t++) {
+		strcpy(S[j++], marker);
+	    }
+	}
+    } else {
+	for (t=0; t<dset->n; t++) {
+	    s = gretl_array_get_data(a, t);
+	    s += strspn(s, white);
+	    *marker = '\0';
+	    strncat(marker, s, 31);
+	    g_strstrip(marker);
+	    gretl_utf8_truncate_b(marker, OBSLEN-1);
+	    strcpy(S[t], marker);
+	}
+    }
+
+    finalize_add_markers(dset, S, err);
 
     return err;
 }
@@ -2973,8 +3036,8 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
     } else if (opt & OPT_R) {
 	/* from-array */
 	const char *aname = get_optval_string(MARKERS, OPT_R);
-	
-	err = 1; /* add_obs_markers_from_array(dset, aname); */
+
+	add_obs_markers_from_array(dset, aname);
     }
 
     return err;
