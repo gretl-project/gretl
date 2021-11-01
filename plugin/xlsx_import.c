@@ -1429,7 +1429,7 @@ static int set_xlsx_offsets_from_cli (xlsx_info *xinfo,
     return err;
 }
 
-static int xlsx_sheet_dialog (xlsx_info *xinfo)
+static int xlsx_sheet_dialog (xlsx_info *xinfo, GtkWidget *parent)
 {
     wbook book;
 
@@ -1439,10 +1439,10 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
     book.row_offset = xinfo->yoffset;
 
     if (book.nsheets > 1) {
-	wsheet_menu(&book, 1);
+	wsheet_menu(&book, 1, parent);
 	xinfo->selsheet = book.selected;
     } else {
-	wsheet_menu(&book, 0);
+	wsheet_menu(&book, 0, parent);
 	xinfo->selsheet = 0;
     }
 
@@ -1651,7 +1651,8 @@ static int finalize_xlsx_import (DATASET *dset,
 */
 
 int xlsx_get_data (const char *fname, int *list, char *sheetname,
-		   DATASET *dset, gretlopt opt, PRN *prn)
+		   DATASET *dset, gretlopt opt, PRN *prn,
+		   GtkWidget *parent)
 {
     int gui = (opt & OPT_G);
     char *save_errmsg = NULL;
@@ -1675,7 +1676,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 
     if (!err) {
 	if (gui) {
-	    int resp = xlsx_sheet_dialog(&xinfo);
+	    int resp = xlsx_sheet_dialog(&xinfo, parent);
 
 	    if (resp < 0) {
 		/* canceled */

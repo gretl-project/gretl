@@ -3329,7 +3329,8 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 {
     FILE *fp;
     int (*importer) (const char*, int *, char *,
-		     DATASET *, gretlopt, PRN *);
+		     DATASET *, gretlopt, PRN *,
+		     void *);
     int err = 0;
 
     import_na_init();
@@ -3363,7 +3364,7 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     } else {
 	gchar *thisdir = g_get_current_dir();
 
-	err = (*importer)(fname, list, sheetname, dset, opt, prn);
+	err = (*importer)(fname, list, sheetname, dset, opt, prn, NULL);
 
 	if (thisdir != NULL) {
 	    /* come back out of dotdir? */

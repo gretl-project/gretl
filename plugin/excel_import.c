@@ -1614,7 +1614,8 @@ static void maybe_revise_xls_codelist (xls_info *xi)
 }
 
 int xls_get_data (const char *fname, int *list, char *sheetname,
-		  DATASET *dset, gretlopt opt, PRN *prn)
+		  DATASET *dset, gretlopt opt, PRN *prn,
+		  GtkWidget *parent)
 {
     int gui = (opt & OPT_G);
     wbook xbook;
@@ -1658,7 +1659,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     if (!err) {
 	if (gui) {
-	    wsheet_menu(book, book->nsheets > 1);
+	    wsheet_menu(book, book->nsheets > 1, parent);
 	    if (book_debugging(book)) {
 		debug_print = 1;
 		print_version();

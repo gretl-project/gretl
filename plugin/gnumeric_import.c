@@ -634,7 +634,8 @@ static int finalize_gnumeric_import (DATASET *dset,
 }
 
 int gnumeric_get_data (const char *fname, int *list, char *sheetname,
-		       DATASET *dset, gretlopt opt, PRN *prn)
+		       DATASET *dset, gretlopt opt, PRN *prn,
+		       GtkWidget *parent)
 {
     int gui = (opt & OPT_G);
     wbook gbook;
@@ -664,10 +665,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
     if (gui) {
 	if (book->nsheets > 1) {
-	    wsheet_menu(book, 1);
+	    wsheet_menu(book, 1, parent);
 	    sheetnum = book->selected;
 	} else {
-	    wsheet_menu(book, 0);
+	    wsheet_menu(book, 0, parent);
 	    sheetnum = 0;
 	}
     } else {

@@ -690,7 +690,15 @@ gboolean esc_cancels (GtkWidget *w, GdkEventKey *key, wbook *book)
     }
 }
 
-static void wsheet_menu (wbook *book, int multisheet)
+static gint parent_wsheet_menu (GtkWidget *w, gpointer p)
+{
+    gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(p));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
+
+    return FALSE;
+}
+
+static void wsheet_menu (wbook *book, int multisheet, GtkWidget *parent)
 {
     GtkWidget *w, *tmp, *label;
     GtkWidget *vbox, *hbox;
@@ -706,6 +714,11 @@ static void wsheet_menu (wbook *book, int multisheet)
 		     G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(G_OBJECT(w), "realize",
 		     G_CALLBACK(make_wmenu_modal), NULL);
+    if (parent != NULL) {
+	g_signal_connect(G_OBJECT(w), "realize",
+			 G_CALLBACK(parent_wsheet_menu),
+			 parent);
+    }
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(w));
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);

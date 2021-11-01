@@ -1180,7 +1180,9 @@ static int set_ods_params_from_cli (ods_sheet *sheet,
     return 0;
 }
 
-static int ods_sheet_dialog (ods_sheet *sheet, int *err)
+static int ods_sheet_dialog (ods_sheet *sheet,
+			     GtkWidget *parent,
+			     int *err)
 {
     wbook book;   
 
@@ -1193,10 +1195,10 @@ static int ods_sheet_dialog (ods_sheet *sheet, int *err)
     book.row_offset = sheet->tables[0]->yoffset;
 
     if (book.nsheets > 1) {
-	wsheet_menu(&book, 1);
+	wsheet_menu(&book, 1, parent);
 	sheet->seltab = book.selected;
     } else {
-	wsheet_menu(&book, 0);
+	wsheet_menu(&book, 0, parent);
 	sheet->seltab = 0;
     }
 
@@ -1239,7 +1241,8 @@ static int finalize_ods_import (DATASET *dset,
 }
 
 int ods_get_data (const char *fname, int *list, char *sheetname,
-		  DATASET *dset, gretlopt opt, PRN *prn)
+		  DATASET *dset, gretlopt opt, PRN *prn,
+		  GtkWidget *parent)
 {
     int gui = (opt & OPT_G);
     ods_sheet *sheet = NULL;
@@ -1272,7 +1275,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 
     if (!err) {
 	if (gui) {
-	    int resp = ods_sheet_dialog(sheet, &err);
+	    int resp = ods_sheet_dialog(sheet, parent, &err);
 
 	    if (resp < 0) {
 		/* canceled */

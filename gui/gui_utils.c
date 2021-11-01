@@ -1160,7 +1160,7 @@ int get_imported_data (char *fname, int ftype, int append)
     int list[4] = {3, 0, 0, 0};
     int *plist = NULL;
     int (*ss_importer) (const char *, int *, char *, DATASET *,
-			gretlopt, PRN *);
+			gretlopt, PRN *, GtkWidget *);
     int (*misc_importer) (const char *, DATASET *,
 			  gretlopt, PRN *);
     int err = 0;
@@ -1216,8 +1216,10 @@ int get_imported_data (char *fname, int ftype, int append)
 
     /* call the actual importer function */
     if (SPREADSHEET_IMPORT(ftype)) {
+	GtkWidget *parent = (mdata == NULL)? NULL : mdata->main;
+
 	err = (*ss_importer)(fname, plist, NULL, dataset,
-			     OPT_G, prn);
+			     OPT_G, prn, parent);
     } else {
 	err = (*misc_importer)(fname, dataset, OPT_G, prn);
     }
