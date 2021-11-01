@@ -2927,7 +2927,8 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
     const char *fname = NULL;
     int err;
 
-    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F);
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F |
+			       OPT_A | OPT_R);
     if (err) {
 	return err;
     }
@@ -2969,6 +2970,11 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	const char *aname = get_optval_string(MARKERS, OPT_A);
 
 	err = save_obs_markers_to_array(dset, aname);
+    } else if (opt & OPT_R) {
+	/* from-array */
+	const char *aname = get_optval_string(MARKERS, OPT_R);
+	
+	err = 1; /* add_obs_markers_from_array(dset, aname); */
     }
 
     return err;
