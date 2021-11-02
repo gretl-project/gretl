@@ -9,10 +9,15 @@ version 2021e, in progress
 - "kpss" command for panel data: improve output for the case
   where automatic lag order is selected; record $test and
   $pvalue in matrix form
+- "markers" command: add a --from-array option to read from
+  an array of strings
 - Build fixes for FreeBSD, for the non-OPENMP case, and for
   recent macOS
 - "genr": get informative error messages to appear in more
   cases
+- Indexing into matrices, arrays, lists and strings: support
+  the keyword 'end' to denote the last element; in the case
+  of matrices this is specific to row or column
 - stdize() function: make it default to working as stated
   in the help text (df correction of 1 for std. dev.)
 - errorif() function: get this working within an mpi block,
