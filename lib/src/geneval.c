@@ -16377,17 +16377,8 @@ static int series_calc_nodes (NODE *l, NODE *r)
 
 static int cast_series_to_list (parser *p, NODE *n, short f)
 {
-#if 0
-    NODE *parent = n->parent;
-    fprintf(stderr, "*** cast series to list? (n->t = %s, parent %p) ***\n",
-	    getsymb(n->t), (void *) parent);
-    while (parent != NULL) {
-	fprintf(stderr, "  parent type %s\n", getsymb(parent->t));
-	parent = parent->parent;
-    }
-#endif
     if (p->tree->t == F_GENSERIES || p->tree->t == UFUN) {
-        /* FIXME: other cases when we shouldn't do this "cast"? */
+        /* any other cases when we shouldn't do this "cast"? */
         return 0;
     } else if (p->targ == LIST && useries_node(n)) {
         return (f == F_LOG || f == F_DIFF ||
