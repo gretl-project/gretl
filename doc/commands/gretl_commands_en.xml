@@ -8136,8 +8136,9 @@
     <usage>
       <altforms>
 	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
-	<altform><lit>markers --to-array=</lit><repl>name</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --to-array=</lit><repl>name</repl></altform>
+	<altform><lit>markers --from-array=</lit><repl>name</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
     </usage>
@@ -8157,13 +8158,15 @@
       </para>
       <para>
 	With the option <opt>from-file</opt>, reads the specified
-	file (which should be plain text) and assigns observation
+	file (which should be UTF-8 text) and assigns observation
 	markers to the rows in the dataset, reading one marker per
 	line. In general there should be at least as many markers in
 	the file as observations in the dataset, but if the dataset is
 	a panel it is also acceptable if the number of markers in the
 	file matches the number of cross-sectional units (in which
-	case the markers are repeated for each time period.)
+	case the markers are repeated for each time period.) The
+	<opt>from-array</opt> option works similarly, reading from
+	a named array of strings.
       </para>
       <para>
 	The <opt>delete</opt> option does what you'd expect: it
