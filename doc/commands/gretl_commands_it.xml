@@ -13483,14 +13483,14 @@ l'indentazione della linea sia corretta.
   </li>
   <li>
     <para><lit>mwrite_g</lit>: <lit>on</lit> or <lit>off</lit>
-    (the default). When writing a matrix to file as text, gretl
-    by default uses scientific notation with 18-digit precision,
-    hence ensuring that the stored values are a faithful
-    representation of the numbers in memory. When writing
-    primary data with no more than 6 digits of precision it may
-    be preferable to use <lit>%g</lit> format for a more compact
-    and human-readable file; you can make this switch via
-    <lit>set mwrite_g on</lit>.
+    (il default). Quando gretl scrive una matrice come file di testo, 
+    di default usa la notazione scientifica con precisione a 18 cifre,
+    ciò che garantisce cche i valori salvati siano una
+    rappresentazione fedele delle quantità in memoria. Tuttavia, a
+    volte può essere preferibile usare una notazione più compatta, con
+    6 cifre di precisione massima e il formato <lit>%g</lit>, per
+    rendere il file più leggibile ad occhi umani; questo effetto si
+    ottiene con <lit>set mwrite_g on</lit>.
     </para>
   </li>
   <li>
@@ -13936,10 +13936,10 @@ qual caso viene usato QML.
 
 <ilist>
   <li>
-    <para><lit>R_lib</lit>: <lit>on </lit>(the default) or
-    <lit>off</lit>.  When sending instructions to be executed by R,
-    use the R shared library by preference to the R executable, if the
-    library is available.
+    <para><lit>R_lib</lit>: <lit>on</lit> (il default) or
+    <lit>off</lit>.  Quando vengono inviate istruzioni a R, il
+    settaggio <lit>on</lit> fa sì che di preferenza venga usata la
+    libreria di R, se disponibile, anziché l'eseguibile R.
     </para>
   </li>
   <li>

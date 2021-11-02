@@ -184,7 +184,7 @@
 	  key="imhof61">Imhof</cite>. Essa ritorna il p-value per un
 	  test a una coda con l'alternativa dei autocorrelazione di
 	  primo ordine positiva. Per il p-value del test a due code,
-	  is usi 2<math>P</math> se DW &lt; 2 oppure 2(1 &minus;
+	  si usi 2<math>P</math> se DW &lt; 2 oppure 2(1 &minus;
 	  <math>P</math>) se DW &gt; 2, dove <math>P</math> è il
 	  valore fornito dall'accessore.
 	</para>
@@ -13464,8 +13464,8 @@
 	  ret = xmlget(xbuf, "//some/thing", &amp;ngot)
 	</code>
 	<para>
-	  However, an error is still flagged in case of a malformed
-	  query.
+	  Tuttavia, nel caso di una query non correttamente formata
+	  sarà comunque generato un errore.
 	</para>
 	<para>
 	  Per una buona introduzione a XPath e alla sua sintassi, si
