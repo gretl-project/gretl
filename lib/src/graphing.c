@@ -8373,6 +8373,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
     double startdate;
     double xmin, xmax, xrange;
     int nvars, nobs, incr;
+    int rows, cols;
     int i, v, t, t1;
     int err = 0;
 
@@ -8406,7 +8407,17 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
 	return err;
     }
 
-    fprintf(fp, "set multiplot layout %d,1\n", nvars);
+    if (nvars <= 3) {
+	rows = nvars;
+	cols = 1;
+    } else if (nvars == 4) {
+	rows = cols = 2;
+    } else {
+	rows = 3;
+	cols = ceil(nvars / 3);
+    }
+
+    fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
     fputs("set nokey\n", fp);
     fputs("set xzeroaxis\n", fp);
     fputs("set noxlabel\n", fp);
