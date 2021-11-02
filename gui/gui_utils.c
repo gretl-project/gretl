@@ -4881,7 +4881,13 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 
     for (i=0; i<neqns; i++) {
 	sprintf(min, "residplot_%d %s", i+1, cmdword);
-	sprintf(maj, N_("Equation %d"), i+1);
+	if (var != NULL) {
+	    vtarg = gretl_VAR_get_variable_number(var, i);
+	} else {
+	    vtarg = sys->ylist[i+1];
+	}
+	double_underscores(tmp, dataset->varname[vtarg]);
+	strcpy(maj, tmp);
 	item.name = min;
 	item.label = maj;
 	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
