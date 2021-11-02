@@ -3751,12 +3751,11 @@
 	<para>
 	  Computes distances between points on a metric that can be
 	  <lit>euclidean</lit> (the default), <lit>manhattan</lit>,
-	  <lit>hamming</lit>, <lit>chebyshev</lit> or
-	  <lit>cosine</lit>. The string identifying the metric can be
-	  given as an unambiguous truncation. The additional metrics
-	  correlation, standardized Euclidean and Mahalanobis are
-	  supported via simple transformations of the inputs; see
-	  below.
+	  <lit>hamming</lit>, <lit>chebyshev</lit>, <lit>cosine</lit>
+	  or <lit>mahalanobis</lit>. The string identifying the metric
+	  can be given as an unambiguous truncation. The additional
+	  metrics correlation, standardized Euclidean are supported
+	  via simple transformations of the inputs; see below.
 	</para>
 	<para>
 	  Each row of the <by r="m" c="n"/> matrix
@@ -3764,6 +3763,12 @@
 	  <math>n</math>-dimensional space; in an econometric context
 	  this is likely to represent a single observation comprising
 	  the values of <math>n</math> variables.
+	</para>
+	<subhead>Standard cases</subhead>
+	<para>
+	  This section applies to all metrics except the Mahalanobis
+	  distance, for which the syntax is slightly different (see
+	  below).
 	</para>
 	<para>
 	  If <argname>Y</argname> is not given, the return value is a
@@ -3797,6 +3802,19 @@
 	  To obtain the distances from a given reference point (for
 	  example, the centroid) to each of <math>n</math>
 	  data-points, give <argname>Y</argname> as a single row.
+	</para>
+	<subhead>Mahalanobis distance</subhead>
+	<para>
+	  The Mahalanobis distance can be obtained by supplying as
+	  second argument the string <quote>mahalanobis</quote> or any
+	  unambiguous abbreviation. In this case the third
+	  <argname>Y</argname> argument is not supported, and the
+	  return value is a column vector of length <math>m</math>
+	  with the Mahalanobis distances from the centroid of
+	  <argname>X</argname> (that is, its sample mean). In
+	  practice, the output matrix in this case is the same you get
+	  by executing the <cmdref targ="mahal"/> command on a list of
+	  series corresponding to the columns of <argname>X</argname>.
 	</para>
 	<subhead>Definitions of the supported metrics</subhead>
 	<ilist>
