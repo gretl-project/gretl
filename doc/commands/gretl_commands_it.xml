@@ -8258,32 +8258,40 @@ una o più delle variabili del test.</para>
     <altforms>
       <altform><lit>markers --to-file=</lit><repl>nomefile</repl></altform>
       <altform><lit>markers --from-file=</lit><repl>nomefile</repl></altform>
+      <altform><lit>markers --to-array=</lit><repl>nome</repl></altform>
+      <altform><lit>markers --from-array=</lit><repl>nome</repl></altform>
       <altform><lit>markers --delete</lit></altform>
     </altforms>
   </usage>
 
   <description>
     <para>
-      Con l'opzione <opt>to-file</opt>, scrive nel file indicato le
-      stringhe marcatrici delle osservazioni presenti nel dataset
-      corrente, una per ogni linea. Se il dataset non contiene
-      stringhe viene emesso un messaggio d'errore. Il file di output
-      verrà scritto nella directory corrispondente al valore
-      corrente di <cmdref targ="workdir"/>, a meno che il nome di file
-      contenga un percorso completo.
+      Le opzioni <opt>to-file</opt> e <opt>to-array</opt> fanno sì che
+      si possano salvare le stringhe marcatrici delle osservazioni
+      presenti nel dataset corrente, in un file o un array di
+      stringhe. Se il dataset non contiene stringhe viene emesso un
+      messaggio d'errore. Se l'output è un file, esso verrà scritto
+      nella directory corrispondente al valore corrente di <cmdref
+      targ="workdir"/>, a meno che il nome di file contenga un
+      percorso completo; le stringhe saranno una per riga. Quando
+      l'output è un array, se <repl>nome</repl> è un array già
+      esistente, verrà sovrascritto; altrimenti ne verrà creato uno
+      nuovo.
     </para>
     <para>
-      Con l'opzione <opt>from-file</opt>, legge dal file specificato
-      (che deve essere in formato testo) e assegna alle righe del
-      dataset i marcatori di osservazione, leggendone uno per
-      riga. In generale il file dovrebbe contenere tanti marcatori
-      quante sono le osservazioni nel dataset, ma se quest'ultimo è
-      un panel il numero di marcatori nel file potrebbe anche essere
-      pari al numero di unità in cross-section (nel qual caso i
-      marcatori sono ripetuti a ogni data).
+      Con l'opzione <opt>from-file</opt>, il comando legge dal file
+      specificato (che deve essere in formato testo UTF-8) e assegna
+      alle righe del dataset i marcatori di osservazione, leggendone
+      uno per riga. In generale il file dovrebbe contenere tanti
+      marcatori quante sono le osservazioni nel dataset, ma se
+      quest'ultimo è un panel il numero di marcatori nel file potrebbe
+      anche essere pari al numero di unità in cross-section (nel qual
+      caso i marcatori sono ripetuti a ogni data). L'opzione
+      <opt>from-array</opt> funziona in modo analogo, leggendo da un
+      array di stringhe.
     </para>
     <para>
-      L'opzione <opt>delete</opt> fa quello che vi aspettate: 
+      L'opzione <opt>delete</opt> fa quello che ci si aspetta:
       cancella le stringhe marcatrici delle osservazioni dal dataset.
     </para>      
   </description>
