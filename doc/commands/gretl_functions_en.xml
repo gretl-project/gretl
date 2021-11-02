@@ -3867,7 +3867,7 @@
 	<para>
 	  To obtain Mahalanobis distances using a different centroid,
 	  <lit>mu</lit>, and/or inverse covariance matrix,
-	  <lit>IVC</lit>, the following syntax can be used:
+	  <lit>ICV</lit>, the following syntax can be used:
 	</para>
 	<code>
 	  dmahal = distance(X*cholesky(ICV), "euc", mu)
