@@ -11,13 +11,14 @@ version 2021e, in progress
   $pvalue in matrix form
 - "markers" command: add a --from-array option to read from
   an array of strings
-- Build fixes for FreeBSD, for the non-OPENMP case, and for
-  recent macOS
 - "genr": get informative error messages to appear in more
   cases
 - Indexing into matrices, arrays, lists and strings: support
   the keyword 'end' to denote the last element; in the case
   of matrices this is specific to row or column
+- New function distance(): evaluate the distance between
+  points on various metrics such as Euclidean, Manhattan,
+  Hamming, Chebyshev, Cosine and Mahalanobis
 - stdize() function: make it default to working as stated
   in the help text (df correction of 1 for std. dev.)
 - errorif() function: get this working within an mpi block,
@@ -25,6 +26,10 @@ version 2021e, in progress
 - GUI console: allow Ctrl+D to exit, if not swallowed, and
   add a "Clear" button to clear the prior content of the
   console window
+- GUI VAR/system, Graphs menu: improve appearance of multiple
+  residual plots
+- Build fixes for FreeBSD, for the non-OPENMP case, and for
+  recent macOS
 
 2021-09-30 version 2021d
 - "biprobit" command: include rho in $coeff, $stderr and
