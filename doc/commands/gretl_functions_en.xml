@@ -3858,7 +3858,28 @@
 	  # standardized euclidean
 	  dseu = distance(stdize(X), "eu")
 	  # correlation (based on cosine)
-	  dcor = distance(stdize(X')', "cos")
+	  dcor = distance(stdize(X', -1)', "cos")
+	</code>
+	<para>
+	  Mahalanobis distances are defined as the Euclidean distances
+	  between the points in question (rows of
+	  <argname>X</argname>) and a given centroid, scaled by the
+	  inverse of a covariance matrix. In the simplest case the
+	  centroid is constituted by the sample means of the variables
+	  (columns of <argname>X</argname>) and the covariance matrix
+	  is their sample covariance. That case is supported natively
+	  by the syntax
+	</para>
+	<code>
+	  dmahal = distance(X, "mahal")
+	</code>
+	<para>
+	  To obtain Mahalanobis distances using a different centroid,
+	  <lit>mu</lit>, and/or inverse covariance matrix,
+	  <lit>IVC</lit>, the following syntax can be used:
+	</para>
+	<code>
+	  dmahal = distance(X*cholesky(ICV), "euc", mu)
 	</code>
       </description>
     </function>
