@@ -3803,19 +3803,6 @@
 	  example, the centroid) to each of <math>n</math>
 	  data-points, give <argname>Y</argname> as a single row.
 	</para>
-	<subhead>Mahalanobis distance</subhead>
-	<para>
-	  The Mahalanobis distance can be obtained by supplying as
-	  second argument the string <quote>mahalanobis</quote> or any
-	  unambiguous abbreviation. In this case the third
-	  <argname>Y</argname> argument is not supported, and the
-	  return value is a column vector of length <math>m</math>
-	  with the Mahalanobis distances from the centroid of
-	  <argname>X</argname> (that is, its sample mean). In
-	  practice, the output matrix in this case is the same you get
-	  by executing the <cmdref targ="mahal"/> command on a list of
-	  series corresponding to the columns of <argname>X</argname>.
-	</para>
 	<subhead>Definitions of the supported metrics</subhead>
 	<ilist>
 	  <li>
@@ -3849,6 +3836,42 @@
 	    </para>
 	  </li>
 	</ilist>
+	<subhead>Mahalanobis distance</subhead>
+	<para>
+	  Mahalanobis distances are defined as the Euclidean distances
+	  between the points in question (rows of
+	  <argname>X</argname>) and a given centroid, scaled by the
+	  inverse of a covariance matrix. In the simplest case the
+	  centroid is constituted by the sample means of the variables
+	  (columns of <argname>X</argname>) and the covariance matrix
+	  is their sample covariance.
+        </para>
+        <para>
+	  These can be obtained by supplying as second argument the
+	  string <quote>mahalanobis</quote> or any unambiguous
+	  abbreviation, as in
+	</para>
+	<code>
+	  dmahal = distance(X, "mahal")
+	</code>
+	<para>
+          In this case the third argument <argname>Y</argname> is not
+          supported, and the return value is a column vector of length
+          <math>m</math> with the Mahalanobis distances from the
+          centroid of <argname>X</argname> (that is, its sample
+          mean). In practice, the output matrix in this case is the
+          same you get by executing the <cmdref targ="mahal"/> command
+          on a list of series corresponding to the columns of
+          <argname>X</argname>.
+	</para>
+	<para>
+	  To obtain Mahalanobis distances using a different centroid,
+	  <lit>mu</lit>, and/or inverse covariance matrix,
+	  <lit>IVC</lit>, the following syntax can be used:
+	</para>
+	<code>
+	  dmahal = distance(X*cholesky(ICV), "euc", mu)
+	</code>
 	<subhead>Other metrics</subhead>
 	<para>
 	  Standardized Euclidean distances and correlation distances
@@ -3859,27 +3882,6 @@
 	  dseu = distance(stdize(X), "eu")
 	  # correlation (based on cosine)
 	  dcor = distance(stdize(X', -1)', "cos")
-	</code>
-	<para>
-	  Mahalanobis distances are defined as the Euclidean distances
-	  between the points in question (rows of
-	  <argname>X</argname>) and a given centroid, scaled by the
-	  inverse of a covariance matrix. In the simplest case the
-	  centroid is constituted by the sample means of the variables
-	  (columns of <argname>X</argname>) and the covariance matrix
-	  is their sample covariance. That case is supported natively
-	  by the syntax
-	</para>
-	<code>
-	  dmahal = distance(X, "mahal")
-	</code>
-	<para>
-	  To obtain Mahalanobis distances using a different centroid,
-	  <lit>mu</lit>, and/or inverse covariance matrix,
-	  <lit>IVC</lit>, the following syntax can be used:
-	</para>
-	<code>
-	  dmahal = distance(X*cholesky(ICV), "euc", mu)
 	</code>
       </description>
     </function>
