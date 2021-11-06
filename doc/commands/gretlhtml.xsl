@@ -594,9 +594,11 @@
 </xsl:template>
 
 <xsl:template match="doc">
-  <xsl:text>&lt;tt&gt;</xsl:text>
+  <xsl:text>&lt;a href="http://sourceforge.net/projects/gretl/files/manual/</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>&lt;/tt&gt;</xsl:text>
+  <xsl:text>"&gt;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&lt;/a&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="cite">
