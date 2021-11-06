@@ -69,6 +69,8 @@
 # define LHDEBUG 0
 #endif
 
+#define FARGS_DEBUG 1
+
 #if LHDEBUG || EDEBUG > 1
 # define IN_GENEVAL
 # include "mspec_debug.c"
@@ -13451,7 +13453,9 @@ static int check_argc (int f, int k, parser *p)
 		argc_max = fn_argspecs[i].argc_max;
 		break;
 	    }
-	    n_args_error(k, argc_min, argc_max, f, p);
+	    if (k < argc_min || k > argc_max) {
+		n_args_error(k, argc_min, argc_max, f, p);
+	    }
 	}
     }
 
@@ -16314,6 +16318,14 @@ static int node_is_false (NODE *n, parser *p)
     return (node_get_scalar(n, p) == 0.0);
 }
 
+/* clean up a node holding evaluated sub-nodes of FARGS */
+
+static void destroy_multi (NODE *m)
+{
+    free(m->v.bn.n);
+    free(m);
+}
+
 /* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
@@ -16327,7 +16339,7 @@ static NODE *eval (NODE *t, parser *p)
         return NULL;
     }
 
-#if 1 || EDEBUG
+#if EDEBUG
     if (t->vname != NULL) {
         fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n",
                 (void *) t, getsymb(t->t), t->vname);
@@ -16358,8 +16370,6 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (t->L) {
-	fprintf(stderr, "HERE 1 got t->L: %p (%s)\n", (void *) t->L,
-		getsymb(t->L->t));
 	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
@@ -16370,17 +16380,22 @@ static NODE *eval (NODE *t, parser *p)
 
 	    l = t->L;
 	    multi = bncopy(l, &p->err);
-	    fprintf(stderr, "HERE 2, done bncopy, err %d\n", p->err);
+#if FARGS_DEBUG
+	    fprintf(stderr, "HERE 1, done bncopy, err %d\n", p->err);
+#endif
 	    for (j=0; j<l->v.bn.n_nodes && !p->err; j++) {
 		multi->v.bn.n[j] = eval(l->v.bn.n[j], p);
+#if FARGS_DEBUG
 		fprintf(stderr, "FARGS[%d]: '%s'\n", j, getsymb(multi->v.bn.n[j]->t));
+#endif
 	    }
-	    fprintf(stderr, "HERE 3, done multi, err %d\n", p->err);
+#if FARGS_DEBUG
+	    fprintf(stderr, "HERE 2, done multi, err %d\n", p->err);
+#endif
 	    l = NULL;
 	    goto do_switch;
         } else {
             l = eval(t->L, p);
-	    fprintf(stderr, "HERE 4 eval'd l = %p (%s)\n\n", (void *) l, getsymb(l->t));
         }
         if (l == NULL && !p->err) {
             p->err = 1;
@@ -16482,6 +16497,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case FARGS:
         /* will be evaluated in context */
+	fprintf(stderr, "FARGS: should not be reached!\n");
         ret = t;
         break;
     case B_ADD:
@@ -17628,7 +17644,7 @@ static NODE *eval (NODE *t, parser *p)
         if (t->t == F_FEVAL) {
             ret = eval_feval(t, p);
         } else if (multi == NULL) {
-	    fprintf(stderr, "HERE multi is NULL\n");
+	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
 	    p->err = E_DATA;
 	} else {
             ret = eval_nargs_func(t, multi, p);
@@ -18014,6 +18030,10 @@ static NODE *eval (NODE *t, parser *p)
         } else {
             p->err = attach_aux_node(t, ret, p);
         }
+    }
+
+    if (multi != NULL) {
+	destroy_multi(multi);
     }
 
  bailout:
