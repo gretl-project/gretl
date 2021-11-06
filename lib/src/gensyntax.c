@@ -204,6 +204,28 @@ static NODE *newbn (int t)
     return n;
 }
 
+NODE *bncopy (NODE *t, int *err)
+{
+    NODE *n = new_node(t->t);
+
+    if (n != NULL) {
+	int i, k = t->v.bn.n_nodes;
+	NODE **nn = malloc(k * sizeof *nn);
+
+	if (nn == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    n->v.bn.n_nodes = k;
+	    n->v.bn.n = nn;
+	    for (i=0; i<k; i++) {
+		n->v.bn.n[i] = t->v.bn.n[i];
+	    }
+	}
+    }
+
+    return n;
+}
+
 static int push_bn_node (NODE *t, NODE *n)
 {
     NODE **nn;

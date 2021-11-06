@@ -736,6 +736,7 @@ NODE *newdbl (double x);
 NODE *newempty (void);
 NODE *newb2 (int t, NODE *l, NODE *r);
 NODE *obs_node (parser *p);
+NODE *bncopy (NODE *t, int *err);
 const char *getsymb (int t);
 const char *getsymb_full (int t, const parser *p);
 void set_parsing_query (int s);

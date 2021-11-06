@@ -39,6 +39,7 @@
 #include "qr_estimate.h"
 #include "gretl_foreign.h"
 #include "gretl_midas.h"
+#include "gretl_tdisagg.h"
 #include "gretl_xml.h"
 #include "gretl_mt.h"
 #include "var.h"
@@ -3393,11 +3394,18 @@ static const char *node_get_fncall (NODE *n, parser *p)
     return ret;
 }
 
-static void n_args_error (int k, int n, int f, parser *p)
+static void n_args_error (int k, int nmin, int nmax, int f, parser *p)
 {
-    gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
-                            "match the number of\nparameters for "
-                            "function %s (%d)"), k, getsymb(f), n);
+    if (nmax == nmin) {
+	gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
+				"match the number of\nparameters for "
+				"function %s (%d)"), k, getsymb(f), nmin);
+    } else {
+	gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
+				"match the number of\nparameters for "
+				"function %s (%d to %d)"), k, getsymb(f),
+			      nmin, nmax);
+    }
     p->err = 1;
 }
 
@@ -3414,7 +3422,7 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
     int i, k = n->v.bn.n_nodes;
 
     if (k < 3 || k > 4) {
-        n_args_error(k, 3, F_BFGSCMAX, p);
+        n_args_error(k, 3, 4, F_BFGSCMAX, p);
     }
 
     for (i=0; i<k && !p->err; i++) {
@@ -10641,7 +10649,7 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     int i, k = n->v.bn.n_nodes;
 
     if (k < 2 || k > 4) {
-        n_args_error(k, 2, F_SVM, p);
+        n_args_error(k, 2, 4, F_SVM, p);
     }
 
     for (i=0; i<k && !p->err; i++) {
@@ -13221,7 +13229,7 @@ static NODE *isoconv_node (NODE *t, parser *p)
     }
 
     if (k < 3 || k > 4) {
-        n_args_error(k, 4, t->t, p);
+        n_args_error(k, 3, 4, t->t, p);
     } else {
         /* evaluate the first (series) argument */
         e = eval(n->v.bn.n[0], p);
@@ -13395,186 +13403,92 @@ static int bundle_pointer_arg0 (NODE *t)
     return 0;
 }
 
-/* Called in the context of tdisagg driver, when we're trying
-   to determine if the target y (series or list) needs
-   compressing. This will be the case if y just repeats
-   low-frequency values.
+struct fn_argspec {
+    int f;
+    int argc_min;
+    int argc_max;
+};
+
+/* check the number of arguments, @k, supplied for the multi-arg
+   function @f
 */
 
-static int tdisagg_get_y_compression (int ynum, int xconv,
-                                      int s, parser *p)
+static int check_argc (int f, int k, parser *p)
 {
-    if (ynum > 0 && series_get_orig_pd(p->dset, ynum)) {
-        return s;
-    } else if (p->targ == SERIES) {
-        return s;
-    } else if (p->dset->pd == 4 && s == 4) {
-        return s;
-    } else if (p->dset->pd == 12 && s == 12) {
-        return s;
-    } else if (xconv == 1) {
-        /* X was given as a series or list */
-        return s;
-    } else {
-        return 1;
-    }
-}
+    struct fn_argspec fn_argspecs[] = {
+	{ F_BKFILT,    1, 4 },
+	{ F_FILTER,    1, 5 },
+	{ F_MCOVG,     4, 4 },
+	{ F_MRLS,      4, 6 },
+	{ F_LOESS,     2, 6 },
+	{ F_GHK,       4, 5 },
+	{ F_QUADTAB,   1, 4 },
+	{ F_QLRPVAL,   4, 4 },
+	{ F_BOOTCI,    1, 5 },
+	{ F_BOOTPVAL,  1, 3 },
+	{ HF_CLOGFI,   3, 4 },
+	{ F_NADARWAT,  2, 5 },
+	{ F_HYP2F1,    4, 4 },
+	{ F_CHOWLIN,   2, 3 },
+	{ F_MIDASMULT, 1, 3 },
+	{ F_TDISAGG,   3, 5 },
+    };
 
-/* tdisagg: advance the sample start if the first
-   high-frequency X observation is not aligned to
-   the first sub-period.
-*/
+    if (f == F_DEFBUNDLE || f == F_DEFARGS) {
+	if (k % 2 != 0) {
+	    gretl_errmsg_sprintf(_("%s: requires an even number of arguments"),
+				 getsymb(f));
+	    p->err = E_INVARG;
+	}
+    } else if (f != F_DEFARRAY && f != F_DEFLIST) {
+	int argc_min = 2;
+	int argc_max = 4;
+	int i;
 
-static int maybe_advance_t1 (int t1, const DATASET *dset)
-{
-    int subper = 0;
-
-    date_maj_min(t1, dset, NULL, &subper);
-    if (subper > 1) {
-        t1 += dset->pd - subper + 1;
-    }
-    return t1;
-}
-
-/* tdisagg: when both Y and X are dataset objects, try to
-   restrict the sample ranges appropriately and ensure
-   alignment at the start of the data.
-*/
-
-static int tdisagg_get_start_stop (int ynum, const int *ylist,
-                                   int xnum, const int *xlist,
-                                   const DATASET *dset,
-                                   int cfac, int xmidas,
-                                   int *start, int *ystop,
-                                   int *xstop)
-{
-    int yvars[2] = {1, ynum};
-    int xvars[2] = {1, xnum};
-    int t1 = dset->t1;
-    int t2 = dset->t2;
-    int err = 0;
-
-    if ((ynum == 0 && ylist == NULL) ||
-        (xnum == 0 && xlist == NULL)) {
-        /* can't do this */
-        return 0;
+	for (i=0; i<G_N_ELEMENTS(fn_argspecs); i++) {
+	    if (fn_argspecs[i].f == f) {
+		argc_min = fn_argspecs[i].argc_min;
+		argc_max = fn_argspecs[i].argc_max;
+		break;
+	    }
+	    n_args_error(k, argc_min, argc_max, f, p);
+	}
     }
 
-    if (ylist == NULL) {
-        ylist = yvars;
-    }
-    if (xlist == NULL) {
-        xlist = xvars;
-    }
-
-    err = list_adjust_sample(xlist, &t1, &t2, dset, NULL);
-
-    if (!err && !xmidas) {
-        t1 = maybe_advance_t1(t1, dset);
-    }
-
-    if (!err) {
-        int yt1 = t1, yt2 = t2;
-        int nmiss = 0;
-
-        if (cfac > 1) {
-            err = list_adjust_sample(ylist, &yt1, &yt2, dset, &nmiss);
-        } else {
-            err = list_adjust_sample(ylist, &yt1, &yt2, dset, NULL);
-        }
-        if (!err) {
-            if (yt1 > t1) {
-                t1 = yt1;
-                if (!xmidas) {
-                    t1 = maybe_advance_t1(t1, dset);
-                }
-            }
-            *start = t1;
-            *ystop = yt2;
-            *xstop = t2;
-        }
-    }
-
-    return err;
-}
-
-/* tdisagg: when Y is a dataset object and no stochastic
-   X is given, try to restrict the sample range for Y
-   appropriately.
-*/
-
-static int tdisagg_get_y_start_stop (int ynum, const int *ylist,
-                                     const DATASET *dset, int cfac,
-                                     int *t1, int *t2)
-{
-    int yvars[2] = {1, ynum};
-    int err = 0;
-
-    if (ynum == 0 && ylist == NULL) {
-        /* can't do this */
-        return 0;
-    } else if (ylist == NULL) {
-        ylist = yvars;
-    }
-
-    if (cfac > 1) {
-        int nmiss = 0;
-
-        err = list_adjust_sample(ylist, t1, t2, dset, &nmiss);
-    } else {
-        err = list_adjust_sample(ylist, t1, t2, dset, NULL);
-    }
-
-    return err;
+    return p->err;
 }
 
 /* evaluate a built-in function that has more than three arguments */
 
-static NODE *eval_nargs_func (NODE *t, parser *p)
+static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 {
-    NODE *save_aux = p->aux;
-    NODE *n = t->L;
-    NODE *ret = NULL;
-    NODE *e = NULL;
+    NODE *e, *ret = NULL;
     int i, k = n->v.bn.n_nodes;
+
+    check_argc(t->t, k, p);
+    if (p->err) {
+	return NULL;
+    }
 
     if (t->t == F_BKFILT) {
         const double *x = NULL;
         int bk[3] = {0};
 
-        if (k < 1 || k > 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
-        /* evaluate the first (series) argument */
-        if (!p->err) {
-            e = eval(n->v.bn.n[0], p);
-        }
-        if (!p->err && e->t != SERIES) {
-            node_type_error(t->t, 1, SERIES, e, p);
-        }
-
-        if (!p->err) {
-            x = e->v.xvec;
-        }
-
-        for (i=1; i<k && !p->err; i++) {
+        for (i=0; i<k && !p->err; i++) {
             e = n->v.bn.n[i];
-            if (null_node(e)) {
+	    if (i == 0) {
+		if (e->t != SERIES) {
+		    node_type_error(t->t, 1, SERIES, e, p);
+		} else {
+		    x = e->v.xvec;
+		}
+	    } else if (null_node(e)) {
                 ; /* NULL arguments are OK */
             } else {
-                e = eval(n->v.bn.n[i], p);
-                if (e == NULL) {
-                    fprintf(stderr, "eval_nargs_func: failed "
-                            "to evaluate arg %d\n", i);
-                } else {
-                    bk[i-1] = node_get_int(e, p);
-                }
+		bk[i-1] = node_get_int(e, p);
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_series_node(p);
         }
         if (!p->err) {
@@ -13588,15 +13502,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *x0 = NULL;
         double y0 = 0;
 
-        if (k < 1 || k > 5) {
-            n_args_error(k, 5, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+	    e = n->v.bn.n[i];
+            if (i == 0) {
                 /* the series or matrix to filter */
                 if (e->t != SERIES && e->t != MAT) {
                    node_type_error(t->t, i+1, 0, e, p);
@@ -13638,9 +13546,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 }
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             if (X != NULL) {
                 /* matrix output wanted */
                 ret = aux_matrix_node(p);
@@ -13662,16 +13568,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_vector *w = NULL;
         int targ, maxlag = 0;
 
-        if (k != 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
             targ = (i == 3)? NUM : MAT;
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if ((i == 1 || i == 2) && null_node(e)) {
+            e = n->v.bn.n[i];
+            if ((i == 1 || i == 2) && null_node(e)) {
                 ; /* for u or w, NULL is acceptable */
             } else if (e->t != targ) {
                 node_type_error(t->t, i+1, targ, e, p);
@@ -13685,9 +13585,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 maxlag = e->v.xval;
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -13700,15 +13598,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *V = NULL;
         char freemat[2] = {0};
 
-        if (k < 2 || k > 4) {
-            n_args_error(k, 1, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (p->err) {
-                break;
-            }
+            e = n->v.bn.n[i];
             if (i < 2) {
                 if (e->t == SERIES) {
                     M[i] = tmp_matrix_from_series(e, p);
@@ -13728,9 +13619,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 }
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -13743,15 +13632,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *U = NULL;
         gretl_matrix *V = NULL;
 
-        if (k < 4 || k > 6) {
-            n_args_error(k, 1, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (p->err) {
-                break;
-            }
+            e = n->v.bn.n[i];
             if (i < 4) {
                 M[i] = node_get_real_matrix(e, p, i, i+1);
             } else {
@@ -13766,9 +13648,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 }
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -13780,15 +13660,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         const char *sg = NULL;
         const char *sh = NULL;
 
-        if (k < 2 || k > 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (p->err) {
-                break;
-            }
+            e = n->v.bn.n[i];
             if (i == 0) {
                 b = mat_node_get_real_matrix(e, p);
             } else if (i == 1) {
@@ -13807,7 +13680,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 sh = e->v.str;
             }
         }
-
         if (!p->err) {
             if (!gretl_vector_get_length(b)) {
                 p->err = E_TYPES;
@@ -13817,12 +13689,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 p->err = E_TYPES;
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
         }
-
         if (!p->err) {
             int minimize = alias_reversed(t) ? 1 : 0;
 
@@ -13835,15 +13704,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         int poly_order = 1;
         gretlopt opt = OPT_NONE;
 
-        if (k < 2 || k > 6) {
-            n_args_error(k, 5, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (p->err) {
-                break;
-            }
+            e = n->v.bn.n[i];
             if (i < 2) {
                 if (e->t != SERIES) {
                     node_type_error(t->t, i+1, SERIES, e, p);
@@ -13877,7 +13739,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_series_node(p);
             if (ret != NULL) {
                 p->err = gretl_loess(y, x, poly_order, bandwidth,
@@ -13888,15 +13749,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *M[4] = {NULL};
         gretl_matrix *dP = NULL;
 
-        if (k < 4 || k > 5) {
-            n_args_error(k, 5, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i < 4) {
+            e = n->v.bn.n[i];
+            if (i < 4) {
                 M[i] = node_get_real_matrix(e, p, i, i+1);
             } else {
                 /* the optional last argument */
@@ -13910,7 +13765,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -13926,15 +13780,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         double a = NADBL;
         double b = NADBL;
 
-        if (k < 1 || k > 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
                 order = node_get_int(e, p);
             } else if (!null_or_scalar(e)) {
                 node_type_error(t->t, i+1, NUM, e, p);
@@ -13947,7 +13795,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -13959,15 +13806,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         double alpha = 0.0;
         gretl_bundle *vb = NULL;
 
-        if (k < 2 || k > 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
                 targ = node_get_int(e, p);
             } else if (i == 1) {
                 shock = node_get_int(e, p);
@@ -13986,7 +13827,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -14006,15 +13846,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         double p1 = 0, p2 = 0;
         int df = 0;
 
-        if (k != 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
                 X2 = node_get_scalar(e, p);
             } else if (i == 1) {
                 df = node_get_int(e, p);
@@ -14025,7 +13859,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
         }
         if (!p->err) {
@@ -14036,15 +13869,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         int studentize = 1;
         double alpha = NADBL;
 
-        if (k < 1 || k > 5) {
-            n_args_error(k, 5, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
                 cnum = node_get_int(e, p);
             } else if (!null_or_scalar(e)) {
                 node_type_error(t->t, i+1, NUM, e, p);
@@ -14059,7 +13886,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -14069,15 +13895,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_BOOTPVAL) {
         int cnum = -1, method = 1, B = 0;
 
-        if (k < 1 || k > 3) {
-            n_args_error(k, 3, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
                 cnum = node_get_int(e, p);
             } else if (!null_or_scalar(e)) {
                 node_type_error(t->t, i+1, NUM, e, p);
@@ -14088,7 +13908,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
         }
         if (!p->err) {
@@ -14101,18 +13920,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         int len = 0, ctrl = -9999;
         int EMA = 0;
 
-        if (k < 2 || k > 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            if (i > 1 && null_node(n->v.bn.n[i])) {
+	    e = n->v.bn.n[i];
+            if (i > 1 && null_node(e)) {
                 continue; /* OK */
-            }
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+             } else if (i == 0) {
                 if (e->t == SERIES) {
                     x = e->v.xvec;
                 } else {
@@ -14134,7 +13946,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_series_node(p);
         }
         if (!p->err) {
@@ -14154,15 +13965,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *df = NULL;
         int T = 0, K = 0;
 
-        if (k < 3 || k > 4) {
-            n_args_error(k, 4, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (e == NULL) {
-                fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if (i == 0) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
                 if (scalar_node(e)) {
                     T = node_get_int(e, p);
                 } else {
@@ -14192,113 +13997,90 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 }
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
         }
-
         if (!p->err) {
             ret->v.xval = clogit_fi(T, K, z, df, &p->err);
         }
     } else if (t->t == F_DEFARRAY) {
-        gretl_array *A;
+        gretl_array *A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
+	int donate;
         void *ptr;
 
-	A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
-
-        if (!p->err) {
-            for (i=0; i<k && !p->err; i++) {
-                int donate = 0;
-
-                e = eval(n->v.bn.n[i], p);
-                if (!p->err) {
-                    p->err = check_array_element_type(A, e);
-                }
-                if (!p->err) {
-		    if (e->t == NUM) {
-                        ptr = gretl_matrix_from_scalar(e->v.xval);
-                        donate = 1;
-                    } else {
-                        ptr = node_get_ptr(e, t->t, p, &donate);
-                    }
-                    if (donate) {
-                        /* copy not required */
-                        p->err = gretl_array_append_object(A, ptr, 0);
-                    } else {
-                        p->err = gretl_array_append_object(A, ptr, 1);
-                    }
-                }
-            }
-        }
-
+	for (i=0; i<k && !p->err; i++) {
+	    donate = 0;
+	    e = n->v.bn.n[i];
+	    p->err = check_array_element_type(A, e);
+	    if (p->err) {
+		break;
+	    }
+	    if (e->t == NUM) {
+		ptr = gretl_matrix_from_scalar(e->v.xval);
+		donate = 1;
+	    } else {
+		ptr = node_get_ptr(e, t->t, p, &donate);
+	    }
+	    if (donate) {
+		/* copy not required */
+		p->err = gretl_array_append_object(A, ptr, 0);
+	    } else {
+		p->err = gretl_array_append_object(A, ptr, 1);
+	    }
+	}
         if (p->err) {
             gretl_array_destroy(A);
         } else {
-            reset_p_aux(p, save_aux);
             ret = aux_array_node(p);
             if (ret != NULL) {
                 ret->v.a = A;
             }
         }
     } else if (t->t == F_DEFBUNDLE || t->t == F_DEFARGS) {
-        gretl_bundle *b = NULL;
+        gretl_bundle *b = gretl_bundle_new();
         GretlType gtype;
         char *key = NULL;
         void *ptr;
         int donate;
 
-        if (k % 2 != 0) {
-            p->err = E_PARSE;
-        } else {
-            b = gretl_bundle_new();
-            if (b == NULL) {
-                p->err = E_ALLOC;
-            }
-        }
+	if (b == NULL) {
+	    p->err = E_ALLOC;
+	}
+	for (i=0; i<k && !p->err; i++) {
+	    ptr = NULL;
+	    e = n->v.bn.n[i];
+	    if (i == 0 || i % 2 == 0) {
+		/* we need a key string */
+		if (e->t == STR) {
+		    key = e->v.str;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else {
+		/* we need some valid content */
+		gtype = gretl_type_from_gen_type(e->t);
+		if (type_can_be_bundled(gtype)) {
+		    int size = 0;
 
-        if (!p->err) {
-            for (i=0; i<k && !p->err; i++) {
-                ptr = NULL;
-                e = eval(n->v.bn.n[i], p);
-                if (p->err) {
-                    break;
-                }
-                if (i == 0 || i % 2 == 0) {
-                    /* we need a key string */
-                    if (e->t == STR) {
-                        key = e->v.str;
-                    } else {
-                        p->err = E_TYPES;
-                    }
-                } else {
-                    /* we need some valid content */
-                    gtype = gretl_type_from_gen_type(e->t);
-                    if (type_can_be_bundled(gtype)) {
-                        int size = 0;
-
-                        if (e->t == SERIES) {
-                            size = p->dset->n;
-                        } else if (scalar_matrix_node(e)) {
-                            gtype = GRETL_TYPE_DOUBLE;
-                        }
-                        ptr = node_get_ptr(e, t->t, p, &donate);
-                        if (donate) {
-                            gretl_bundle_donate_data(b, key, ptr, gtype, size);
-                        } else {
-                            gretl_bundle_set_data(b, key, ptr, gtype, size);
-                        }
-                    } else {
-                        p->err = E_TYPES;
-                    }
-                }
-            }
-        }
-
+		    if (e->t == SERIES) {
+			size = p->dset->n;
+		    } else if (scalar_matrix_node(e)) {
+			gtype = GRETL_TYPE_DOUBLE;
+		    }
+		    ptr = node_get_ptr(e, t->t, p, &donate);
+		    if (donate) {
+			gretl_bundle_donate_data(b, key, ptr, gtype, size);
+		    } else {
+			gretl_bundle_set_data(b, key, ptr, gtype, size);
+		    }
+		} else {
+		    p->err = E_TYPES;
+		}
+	    }
+	}
         if (p->err) {
             gretl_bundle_destroy(b);
         } else {
-            reset_p_aux(p, save_aux);
             ret = aux_bundle_node(p);
             if (ret != NULL) {
                 ret->v.b = b;
@@ -14309,28 +14091,24 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
         for (i=0; i<k && !p->err; i++) {
             li = NULL;
-            e = eval(n->v.bn.n[i], p);
-            if (!p->err) {
-                if (k == 1 && e->t == ARRAY) {
-                    li = list_from_strings_array(e->v.a, p);
-                } else if (ok_list_node_plus(e)) {
-                    li = node_get_list(e, p);
-                } else if (e->t == MAT) {
-                    li = node_get_list(e, p);
-                } else {
-                    p->err = E_TYPES;
-                }
-            }
+            e = n->v.bn.n[i];
+	    if (k == 1 && e->t == ARRAY) {
+		li = list_from_strings_array(e->v.a, p);
+	    } else if (ok_list_node_plus(e)) {
+		li = node_get_list(e, p);
+	    } else if (e->t == MAT) {
+		li = node_get_list(e, p);
+	    } else {
+		p->err = E_TYPES;
+	    }
             if (!p->err && li[0] > 0) {
                 gretl_list_append_list(&full_list, li, &p->err);
             }
             free(li);
         }
-
         if (p->err) {
             free(full_list);
         } else {
-            reset_p_aux(p, save_aux);
             ret = aux_list_node(p);
             if (ret != NULL) {
                 ret->v.ivec = full_list;
@@ -14343,13 +14121,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         double h = 0;
         double trim = NADBL;
 
-        if (k < 2 || k > 5) {
-            n_args_error(k, 5, t->t, p);
-        }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (i < 2 && !p->err && e->t != SERIES) {
+            e = n->v.bn.n[i];
+            if (i < 2 && e->t != SERIES) {
                 node_type_error(t->t, i+1, SERIES, e, p);
             }
             if (p->err) {
@@ -14383,9 +14157,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 trim = node_get_scalar(e, p);
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_series_node(p);
         }
         if (!p->err) {
@@ -14399,11 +14171,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *x = NULL;
         double a[3];
 
-        if (k != 4) {
-            n_args_error(k, 4, t->t, p);
-        }
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
+            e = n->v.bn.n[i];
             if (i < 3) {
                 a[i] = node_get_scalar(e, p);
             } else {
@@ -14411,7 +14180,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -14438,11 +14206,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         gretl_matrix *X = NULL;
         int fac = 0;
 
-        if (k < 2 || k > 3) {
-            n_args_error(k, 3, t->t, p);
-        }
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
+            e = n->v.bn.n[i];
             if (i == 0) {
                 /* Y matrix */
                 if (e->t == MAT) {
@@ -14463,7 +14228,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -14474,12 +14238,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int cum = 0;
 	int idx = 1;
 
-        if (k < 1 || k > 3) {
-            n_args_error(k, 3, t->t, p);
-        }
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-	    if (p->err) break;
+            e = n->v.bn.n[i];
             if (i == 0) {
                 if (e->t == BUNDLE) {
                     mb = e->v.b;
@@ -14495,7 +14255,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -14517,11 +14276,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         int xconv = 0;
         int xmidas = 0;
 
-        if (k < 3 || k > 5) {
-            n_args_error(k, 4, t->t, p);
-        }
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
+            e = n->v.bn.n[i];
             if (i == 0) {
                 /* Y: matrix, series or list */
                 if (e->t == MAT) {
@@ -14576,55 +14332,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             /* Conversion from dataset object to matrix
                is needed, for Y and/or X.
             */
-            int save_t1 = p->dset->t1;
-            int save_t2 = p->dset->t2;
-            int t1 = p->dset->t1;
-            int t2 = p->dset->t2;
-            int yt2 = 0, xt2 = 0;
-            int cfac = 1;
+	    GretlType targ = gretl_type_from_gen_type(p->targ);
 
-            if (yconv) {
-                cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
-            }
-            if (yconv && (xconv || xmidas)) {
-                p->err = tdisagg_get_start_stop(ynum, ylist, xnum, xlist,
-                                                p->dset, cfac, xmidas, &t1,
-                                                &yt2, &xt2);
-                if (!p->err) {
-                    p->dset->t1 = t1;
-                }
-            } else if (yconv) {
-                p->err = tdisagg_get_y_start_stop(ynum, ylist, p->dset,
-                                                  cfac, &t1, &t2);
-                if (!p->err) {
-                    p->dset->t1 = t1;
-                    p->dset->t2 = t2;
-                }
-            }
-            if (!p->err && yconv) {
-                if (yt2 > 0) {
-                    p->dset->t2 = yt2;
-                }
-                Y = tdisagg_matrix_from_series(yval, ynum, ylist, p->dset,
-                                               cfac, &p->err);
-            }
-            if (!p->err && xconv) {
-                if (xt2 > 0) {
-                    p->dset->t2 = xt2;
-                }
-                X = tdisagg_matrix_from_series(xval, xnum, xlist, p->dset,
-                                               1, &p->err);
-            } else if (!p->err && xmidas) {
-                if (xt2 > 0) {
-                    p->dset->t2 = xt2;
-                }
-                X = midas_list_to_vector(xlist, p->dset, &p->err);
-            }
-            p->dset->t1 = save_t1;
-            p->dset->t2 = save_t2;
+	    p->err = tdisagg_data_to_matrix(yconv, ynum, ylist, yval,
+					    xconv, xnum, xlist, xval,
+					    xmidas, fac, targ,
+					    &Y, &X, p->dset);
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
@@ -14874,7 +14589,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         int copy[5] = {0};
 
         if (k < 4) {
-            n_args_error(k, 4, t->t, p);
+            n_args_error(k, 4, 4, t->t, p);
         }
 
         for (i=0; i<k && !p->err; i++) {
@@ -14914,7 +14629,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         gretl_bundle *b = get_kalman_bundle_arg(n, p);
 
         if (!p->err && k != 1) {
-            n_args_error(k, 1, t->t, p);
+            n_args_error(k, 1, 1, t->t, p);
         }
         if (!p->err) {
             reset_p_aux(p, save_aux);
@@ -14933,7 +14648,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
                 e = eval(n->v.bn.n[1], p);
                 dkstyle = node_get_int(e, p);
             } else if (k < 1 || k > 2) {
-                n_args_error(k, 2, t->t, p);
+                n_args_error(k, 1, 2, t->t, p);
             }
         }
         if (!p->err) {
@@ -14948,7 +14663,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         gretl_bundle *b = get_kalman_bundle_arg(n, p);
 
         if (!p->err && k != 1) {
-            n_args_error(k, 1, t->t, p);
+            n_args_error(k, 1, 1, t->t, p);
         }
         if (!p->err) {
             reset_p_aux(p, save_aux);
@@ -14967,7 +14682,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         int get_state = 0;
 
         if (!p->err && k != 2 && k != 3) {
-            n_args_error(k, 2, t->t, p);
+            n_args_error(k, 2, 3, t->t, p);
         }
 
         for (i=1; i<k && !p->err; i++) {
@@ -16604,6 +16319,7 @@ static int node_is_false (NODE *n, parser *p)
 static NODE *eval (NODE *t, parser *p)
 {
     NODE *l = NULL, *m = NULL, *r = NULL;
+    NODE *multi = NULL;
     NODE *ret = NULL;
 
     if (t == NULL) {
@@ -16611,7 +16327,7 @@ static NODE *eval (NODE *t, parser *p)
         return NULL;
     }
 
-#if EDEBUG
+#if 1 || EDEBUG
     if (t->vname != NULL) {
         fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n",
                 (void *) t, getsymb(t->t), t->vname);
@@ -16642,13 +16358,29 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (t->L) {
+	fprintf(stderr, "HERE 1 got t->L: %p (%s)\n", (void *) t->L,
+		getsymb(t->L->t));
 	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
+	} else if (t->L->t == FARGS) {
+	    int j;
+
+	    l = t->L;
+	    multi = bncopy(l, &p->err);
+	    fprintf(stderr, "HERE 2, done bncopy, err %d\n", p->err);
+	    for (j=0; j<l->v.bn.n_nodes && !p->err; j++) {
+		multi->v.bn.n[j] = eval(l->v.bn.n[j], p);
+		fprintf(stderr, "FARGS[%d]: '%s'\n", j, getsymb(multi->v.bn.n[j]->t));
+	    }
+	    fprintf(stderr, "HERE 3, done multi, err %d\n", p->err);
+	    l = NULL;
+	    goto do_switch;
         } else {
             l = eval(t->L, p);
+	    fprintf(stderr, "HERE 4 eval'd l = %p (%s)\n\n", (void *) l, getsymb(l->t));
         }
         if (l == NULL && !p->err) {
             p->err = 1;
@@ -17895,8 +17627,11 @@ static NODE *eval (NODE *t, parser *p)
         /* built-in functions taking more than three args */
         if (t->t == F_FEVAL) {
             ret = eval_feval(t, p);
-        } else {
-            ret = eval_nargs_func(t, p);
+        } else if (multi == NULL) {
+	    fprintf(stderr, "HERE multi is NULL\n");
+	    p->err = E_DATA;
+	} else {
+            ret = eval_nargs_func(t, multi, p);
         }
         break;
     case F_KSETUP:
