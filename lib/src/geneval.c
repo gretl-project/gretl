@@ -9644,9 +9644,9 @@ static void *get_complex_counterpart (void *func)
     if (func == acos) return cacos;
     if (func == asin) return casin;
     if (func == atan) return catan;
-    if (func == cos) return ccos;
-    if (func == sin) return csin;
-    if (func == tan) return ctan;
+    if (func == cos)  return ccos;
+    if (func == sin)  return csin;
+    if (func == tan)  return ctan;
     if (func == acosh) return cacosh;
     if (func == asinh) return casinh;
     if (func == atanh) return catanh;
@@ -9733,7 +9733,7 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     return ret;
 }
 
-static gretl_matrix *matrix_from_scalars (GPtrArray *a, int m,
+static gretl_matrix *matrix_from_scalars (NODE **nn, int m,
                                           int nsep, int seppos,
                                           parser *p)
 {
@@ -9752,7 +9752,7 @@ static gretl_matrix *matrix_from_scalars (GPtrArray *a, int m,
     } else if (nsep > 0) {
         k = 0;
         for (i=0; i<m; i++) {
-            n = g_ptr_array_index(a, i);
+            n = nn[i];
             if (null_node(n)) {
                 if (i - k != seppos) {
                     p->err = E_PARSE;
@@ -9781,9 +9781,9 @@ static gretl_matrix *matrix_from_scalars (GPtrArray *a, int m,
         k = 0;
         for (i=0; i<r && !p->err; i++) {
             for (j=0; j<c; j++) {
-                n = g_ptr_array_index(a, k++);
+                n = nn[k++];
                 if (null_node(n)) {
-                    n = g_ptr_array_index(a, k++);
+                    n = nn[k++];
                 }
                 x = node_get_scalar(n, p);
                 gretl_matrix_set(M, i, j, x);
@@ -14627,7 +14627,7 @@ static NODE *kalman_data_node (NODE *l, NODE *r, parser *p)
    dataset.)
 */
 
-static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
+static gretl_matrix *assemble_matrix (NODE **nn, int nnodes, parser *p)
 {
     NODE *n;
     gretl_matrix *m = NULL;
@@ -14644,7 +14644,7 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
         /* take a shortcut if we just got a single series
            and there's no "matrix mask" in place
         */
-        n = g_ptr_array_index(a, 0);
+        n = nn[0];
         if (n->t == SERIES) {
             m = series_to_matrix(n->v.xvec, p);
             return m;
@@ -14653,7 +14653,7 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
 
     /* how many columns will we need? */
     for (i=0; i<nnodes; i++) {
-        n = g_ptr_array_index(a, i);
+        n = nn[i];
         if (n->t == LIST) {
             k += n->v.ivec[0];
         } else if (n->t == SERIES) {
@@ -14683,7 +14683,7 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
     /* attach series pointers to Z */
     k = 0;
     for (i=0; i<nnodes; i++) {
-        n = g_ptr_array_index(a, i);
+        n = nn[i];
         if (n->t == LIST) {
             list = n->v.ivec;
             for (j=1; j<=list[0]; j++) {
@@ -14719,7 +14719,6 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
 
 static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
 {
-    GPtrArray *a;
     gretl_matrix *M = NULL;
     NODE *e, *ret = NULL;
     int k = n->v.bn.n_nodes;
@@ -14738,8 +14737,6 @@ static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
 #if EDEBUG
     fprintf(stderr, "Processing MDEF...\n");
 #endif
-
-    a = g_ptr_array_sized_new(k);
 
     for (i=0; i<k && !p->err; i++) {
         e = n->v.bn.n[i];
@@ -14773,20 +14770,19 @@ static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
                composed of series or lists */
             p->err = E_TYPES;
         }
-        if (!p->err) {
-            g_ptr_array_add(a, e);
-        }
     }
 
     if (!p->err) {
+	NODE **nn = n->v.bn.n;
+
         if (nvec > 0 || nlist > 1) {
-            M = assemble_matrix(a, k, p);
+            M = assemble_matrix(nn, k, p);
         } else if (nnum > 0) {
-            M = matrix_from_scalars(a, k, nsep, seppos, p);
+            M = matrix_from_scalars(nn, k, nsep, seppos, p);
         } else if (nlist) {
-            M = matrix_from_list(g_ptr_array_index(a, 0), p);
+            M = matrix_from_list(nn[0], p);
         } else if (dum) {
-            n = g_ptr_array_index(a, 0);
+            n = nn[0];
             if (n->v.idnum == DUM_DATASET) {
 		if (gretl_function_depth() > 0) {
 		    gretl_errmsg_set("'dataset' is not recognized as a list within functions");
@@ -14802,10 +14798,6 @@ static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
             /* empty matrix def */
             M = gretl_null_matrix_new();
         }
-    }
-
-    if (a != NULL) {
-        g_ptr_array_free(a, TRUE);
     }
 
     if (p->err) {
