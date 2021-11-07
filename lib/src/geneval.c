@@ -16110,6 +16110,18 @@ static void destroy_multi (NODE *m)
     free(m);
 }
 
+static NODE *evaluate_multi_args (NODE *nn, parser *p)
+{
+    NODE *ret = bncopy(nn, &p->err);
+    int i;
+
+    for (i=0; i<nn->v.bn.n_nodes && !p->err; i++) {
+	ret->v.bn.n[i] = eval(nn->v.bn.n[i], p);
+    }
+
+    return ret;
+}
+
 /* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
@@ -16117,6 +16129,8 @@ static NODE *eval (NODE *t, parser *p)
     NODE *l = NULL, *m = NULL, *r = NULL;
     NODE *multi = NULL;
     NODE *ret = NULL;
+    int ldone = 0;
+    int rdone = 0;
 
     if (t == NULL) {
         /* catch NULL node right away */
@@ -16153,25 +16167,23 @@ static NODE *eval (NODE *t, parser *p)
         goto do_switch;
     }
 
-    if (t->L) {
+    /* handle multi-argument subnodes */
+    if (t->L != NULL && bnsym(t->L->t)) {
+	t->L->parent = t;
+	multi = evaluate_multi_args(t->L, p);
+	ldone = 1;
+    } else if (t->R != NULL && bnsym(t->R->t)) {
+	t->R->parent = t;
+	multi = evaluate_multi_args(t->R, p);
+	rdone = 1;
+    }
+
+    if (t->L && !ldone) {
 	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
-	} else if (bnsym(t->L->t)) {
-	    NODE *nn = t->L;
-	    int j;
-
-	    multi = bncopy(nn, &p->err);
-	    for (j=0; j<nn->v.bn.n_nodes && !p->err; j++) {
-		multi->v.bn.n[j] = eval(nn->v.bn.n[j], p);
-	    }
-	    if (p->err) {
-		goto bailout;
-	    } else {
-		goto do_switch;
-	    }
         } else {
             l = eval(t->L, p);
         }
@@ -16192,7 +16204,7 @@ static NODE *eval (NODE *t, parser *p)
         }
     }
 
-    if (!p->err && t->R != NULL) {
+    if (!p->err && t->R != NULL && !rdone) {
 	t->R->parent = t;
         if (r_return(t->t)) {
             r = t->R;
@@ -16274,8 +16286,7 @@ static NODE *eval (NODE *t, parser *p)
         ret = scalar_postfix_node(t, p);
         break;
     case FARGS:
-        /* will be evaluated in context */
-	fprintf(stderr, "FARGS: should not be reached!\n");
+	fprintf(stderr, "eval: FARGS: parent %s\n", getsymb(t->parent->t));
         ret = t;
         break;
     case B_ADD:
