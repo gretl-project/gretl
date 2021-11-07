@@ -16167,7 +16167,7 @@ static NODE *eval (NODE *t, parser *p)
         goto do_switch;
     }
 
-    /* handle multi-argument subnodes */
+    /* handle multi-argument L or R subnodes */
     if (t->L != NULL && bnsym(t->L->t)) {
 	t->L->parent = t;
 	multi = evaluate_multi_args(t->L, p);
