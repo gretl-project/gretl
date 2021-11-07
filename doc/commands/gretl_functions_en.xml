@@ -4475,12 +4475,12 @@
       <description>
 	<para>
 	  Primarily useful for writers of functions. The first
-	  argument should be the name of a function, and the remaining
-	  one or more arguments should be the arguments to be passed
-	  to the function in question. This permits treating the
-	  function identified by <argname>funcname</argname> as itself
-	  a variable. The return value is whatever the named function
-	  returns given the specified arguments.
+	  argument should be the name of a function; the remaining
+	  arguments will be passed to the specified function. This
+	  permits treating the function identified by
+	  <argname>funcname</argname> as itself a variable. The return
+	  value is whatever the named function returns given the
+	  specified arguments.
 	</para>
 	<para>
 	  The example below illustrates some possible uses.
