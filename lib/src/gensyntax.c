@@ -1538,27 +1538,20 @@ static NODE *powterm (parser *p, NODE *l)
 	   a "subslice" specification */
 	int sub = 0;
 
-#if 1
 	t = new_node(F_DEFMAT);
 	if (t != NULL) {
 	    t->L = newbn(MDEF);
 	    if (t->L != NULL) {
 		get_matrix_def(t->L, p, &sub);
 	    }
-	}
-#else
-	t = newbn(MDEF);
-	if (t != NULL) {
-	    get_matrix_def(t, p, &sub);
-	}
-#endif
-	if (sub) {
-	    t = newb2(MSL, t, NULL);
-	    if (t != NULL) {
-		t->R = new_node(SLRAW);
-		if (t->R != NULL) {
-		    lex(p);
-		    get_slice_parts(t->R, p);
+	    if (sub) {
+		t = newb2(MSL, t, NULL);
+		if (t != NULL) {
+		    t->R = new_node(SLRAW);
+		    if (t->R != NULL) {
+			lex(p);
+			get_slice_parts(t->R, p);
+		    }
 		}
 	    }
 	}
