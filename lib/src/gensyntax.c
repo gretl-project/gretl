@@ -1538,17 +1538,27 @@ static NODE *powterm (parser *p, NODE *l)
 	   a "subslice" specification */
 	int sub = 0;
 
+#if 1
+	t = new_node(F_DEFMAT);
+	if (t != NULL) {
+	    t->L = newbn(MDEF);
+	    if (t->L != NULL) {
+		get_matrix_def(t->L, p, &sub);
+	    }
+	}
+#else
 	t = newbn(MDEF);
 	if (t != NULL) {
 	    get_matrix_def(t, p, &sub);
-	    if (sub) {
-		t = newb2(MSL, t, NULL);
-		if (t != NULL) {
-		    t->R = new_node(SLRAW);
-		    if (t->R != NULL) {
-			lex(p);
-			get_slice_parts(t->R, p);
-		    }
+	}
+#endif
+	if (sub) {
+	    t = newb2(MSL, t, NULL);
+	    if (t != NULL) {
+		t->R = new_node(SLRAW);
+		if (t->R != NULL) {
+		    lex(p);
+		    get_slice_parts(t->R, p);
 		}
 	    }
 	}
@@ -1562,7 +1572,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	    lex(p);
 	    t->R = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t->R != NULL) {
 		get_args(t->R, p, sym, -1, opt, &next);
 	    }
 	}
@@ -1571,7 +1581,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t->L != NULL) {
 		get_bundle_pairs(t->L, p, &next);
 	    }
 	}
@@ -1580,7 +1590,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t->L != NULL) {
 		int k = -1;
 
 		if (sym == F_NRMAX ||

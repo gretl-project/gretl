@@ -519,34 +519,6 @@ static void reset_p_aux (parser *p, NODE *n)
 # define reset_p_aux(p, n) (p->aux = n)
 #endif
 
-static NODE *newmdef (int k)
-{
-    NODE *n = new_node(MDEF);
-
-    if (n != NULL) {
-	int i;
-
-	if (k > 0) {
-	    n->v.bn.n = malloc(k * sizeof n);
-	    if (n->v.bn.n != NULL) {
-		for (i=0; i<k; i++) {
-		    n->v.bn.n[i] = NULL;
-		}
-	    } else {
-		free(n);
-		n = NULL;
-	    }
-	} else {
-	    n->v.bn.n = NULL;
-	}
-	if (n != NULL) {
-	    n->v.bn.n_nodes = k;
-	}
-    }
-
-    return n;
-}
-
 static double *na_array (int n)
 {
     double *x = malloc(n * sizeof *x);
@@ -853,8 +825,6 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	    ret = newmat(flags);
 	} else if (t == MSPEC) {
 	    ret = newmspec();
-	} else if (t == MDEF) {
-	    ret = newmdef(n);
 	} else if (t == STR) {
 	    ret = newstring(flags);
 	} else if (t == BUNDLE) {
@@ -993,7 +963,7 @@ static NODE *list_pointer_node (parser *p)
 #define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
 #define aux_matrix_node(p) get_aux_node(p,MAT,0,TMP_NODE)
 #define matrix_pointer_node(p) get_aux_node(p,MAT,0,0)
-#define aux_mspec_node(p) get_aux_node(p,MSPEC,0,TMP_NODE) /* was 0 */
+#define aux_mspec_node(p) get_aux_node(p,MSPEC,0,TMP_NODE)
 #define aux_string_node(p) get_aux_node(p,STR,0,TMP_NODE)
 #define string_pointer_node(p) get_aux_node(p,STR,0,0)
 #define aux_bundle_node(p) get_aux_node(p,BUNDLE,0,TMP_NODE)
@@ -9974,12 +9944,10 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
-static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
+static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 {
-    NODE *l = t->L;
-    NODE *r = t->R;
-    NODE *save_aux = p->aux;
     NODE *ret = NULL;
+    NODE *l = t->L;
     const char *funname = l->vname;
     ufunc *uf = l->v.ptr;
     fncall *fc = NULL;
@@ -10017,17 +9985,10 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
         return NULL;
     }
 
-#if 1 /* for now, just warn */
     if (t == p->tree && (p->flags & P_CATCH)) {
         gretl_warnmsg_set(_("\"catch\" should not be used on calls to "
                             "user-defined functions"));
     }
-#else
-    if (t == p->tree && (p->flags & P_CATCH)) {
-        p->err = E_BADCATCH;
-        return NULL;
-    }
-#endif
 
     fc = fncall_new(uf, 1);
     if (fc == NULL) {
@@ -10035,35 +9996,17 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
         return NULL;
     }
 
-    /* evaluate the function argument nodes */
+    /* check the function argument nodes */
 
     for (i=0; i<argc && !p->err; i++) {
-        NODE *arg, *ni = r->v.bn.n[i];
-        GretlType argt = 0;
+        NODE *arg = r->v.bn.n[i];
         int reftype = 0;
-        void *data;
 
-        if (starting(p)) {
-            /* evaluate all nodes */
-            arg = eval(ni, p);
-        } else if (ni->vname != NULL) {
-            /* otherwise let named variables through "as is" */
-            arg = ni;
-        } else {
-            arg = eval(ni, p);
-        }
-
-        if (p->err || arg == NULL) {
-            fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i+1);
-            fprintf(stderr, " (input node was of type %d, '%s')\n", ni->t,
-                    getsymb(ni->t));
-            p->err = (p->err == 0)? E_DATA : p->err;
-        } else if (!ok_ufunc_sym(arg->t)) {
+        if (!ok_ufunc_sym(arg->t)) {
             gretl_errmsg_sprintf("%s: invalid argument type %s", funname,
                                  typestr(arg->t));
             p->err = E_TYPES;
         }
-
 #if EDEBUG
         fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n", funname, i+1,
                 arg == NULL ? "?" : getsymb(arg->t), p->err);
@@ -10071,25 +10014,22 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
         if (p->err) {
             break;
         }
-
-        if (!p->err && arg->t == U_ADDR) {
+        if (arg->t == U_ADDR) {
             /* address node: switch to the 'content' sub-node */
             reftype = 1;
             arg = arg->L;
-        }
-
-        if (!p->err && arg->t == DUM && arg->v.idnum != DUM_NULL) {
+        } else if (arg->t == DUM && arg->v.idnum != DUM_NULL) {
             p->err = E_TYPES;
         }
-
         if (!p->err) {
             /* assemble info and push argument */
             user_var *uv = NULL;
+	    GretlType argt = 0;
+	    void *data;
 
             data = arg_get_data(arg, reftype, &argt, &uv);
             p->err = push_function_arg(fc, arg->vname, uv, argt, data);
         }
-
         if (p->err) {
             fprintf(stderr, "%s: error evaluating arg %d\n", funname, i);
         }
@@ -10137,12 +10077,7 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 	}
 
         if (!p->err && retp != NULL) {
-            reset_p_aux(p, save_aux);
-            if (rn != NULL) {
-                ret = rn;
-            } else {
-                ret = suitable_ufunc_ret_node(p, rtype);
-            }
+	    ret = suitable_ufunc_ret_node(p, rtype);
         }
 
         if (!p->err && ret != NULL) {
@@ -10203,11 +10138,9 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 
 /* evaluate an R function */
 
-static NODE *eval_Rfunc (NODE *t, parser *p)
+static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 {
-    NODE *save_aux = p->aux;
     NODE *l = t->L;
-    NODE *r = t->R;
     int i, argc = r->v.bn.n_nodes;
     const char *funname = l->v.str;
     int rtype = GRETL_TYPE_NONE;
@@ -10222,7 +10155,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
     /* evaluate the function arguments */
     for (i=0; i<argc && !p->err; i++) {
-        NODE *arg = eval(r->v.bn.n[i], p);
+        NODE *arg = r->v.bn.n[i];
         GretlType type;
 
         if (arg == NULL) {
@@ -10272,7 +10205,6 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
         p->err = gretl_R_function_exec(funname, &rtype, &retp);
 
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             if (gretl_scalar_type(rtype)) {
                 ret = aux_scalar_node(p);
                 if (ret != NULL) {
@@ -12917,9 +12849,8 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
     return ret;
 }
 
-/* Bessel function handler: the 'r' node can be of scalar, series or
-   matrix type.  Right now, this only supports scalar order ('m'
-   node).
+/* Bessel function handler: the @r node can be of scalar, series or
+   matrix type. But the @m node (order) must hold a scalar.
 */
 
 static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
@@ -13365,8 +13296,8 @@ struct fn_argspec {
     int argc_max;
 };
 
-/* check the number of arguments, @k, supplied for the multi-arg
-   function @f
+/* Check the number of arguments, @k, supplied for the multi-arg
+   function @f.
 */
 
 static int check_argc (int f, int k, parser *p)
@@ -13389,28 +13320,20 @@ static int check_argc (int f, int k, parser *p)
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
     };
+    int argc_min = 2;
+    int argc_max = 4;
+    int i;
 
-    if (f == F_DEFBUNDLE || f == F_DEFARGS) {
-	if (k % 2 != 0) {
-	    gretl_errmsg_sprintf(_("%s: requires an even number of arguments"),
-				 getsymb(f));
-	    p->err = E_INVARG;
+    for (i=0; i<G_N_ELEMENTS(fn_argspecs); i++) {
+	if (fn_argspecs[i].f == f) {
+	    argc_min = fn_argspecs[i].argc_min;
+	    argc_max = fn_argspecs[i].argc_max;
+	    break;
 	}
-    } else if (f != F_DEFARRAY && f != F_DEFLIST) {
-	int argc_min = 2;
-	int argc_max = 4;
-	int i;
+    }
 
-	for (i=0; i<G_N_ELEMENTS(fn_argspecs); i++) {
-	    if (fn_argspecs[i].f == f) {
-		argc_min = fn_argspecs[i].argc_min;
-		argc_max = fn_argspecs[i].argc_max;
-		break;
-	    }
-	    if (k < argc_min || k > argc_max) {
-		n_args_error(k, argc_min, argc_max, f, p);
-	    }
-	}
+    if (k < argc_min || k > argc_max) {
+	n_args_error(k, argc_min, argc_max, f, p);
     }
 
     return p->err;
@@ -13961,117 +13884,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             ret->v.xval = clogit_fi(T, K, z, df, &p->err);
         }
-    } else if (t->t == F_DEFARRAY) {
-        gretl_array *A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
-	int donate;
-        void *ptr;
-
-	for (i=0; i<k && !p->err; i++) {
-	    donate = 0;
-	    e = n->v.bn.n[i];
-	    p->err = check_array_element_type(A, e);
-	    if (p->err) {
-		break;
-	    }
-	    if (e->t == NUM) {
-		ptr = gretl_matrix_from_scalar(e->v.xval);
-		donate = 1;
-	    } else {
-		ptr = node_get_ptr(e, t->t, p, &donate);
-	    }
-	    if (donate) {
-		/* copy not required */
-		p->err = gretl_array_append_object(A, ptr, 0);
-	    } else {
-		p->err = gretl_array_append_object(A, ptr, 1);
-	    }
-	}
-        if (p->err) {
-            gretl_array_destroy(A);
-        } else {
-            ret = aux_array_node(p);
-            if (ret != NULL) {
-                ret->v.a = A;
-            }
-        }
-    } else if (t->t == F_DEFBUNDLE || t->t == F_DEFARGS) {
-        gretl_bundle *b = gretl_bundle_new();
-        GretlType gtype;
-        char *key = NULL;
-        void *ptr;
-        int donate;
-
-	if (b == NULL) {
-	    p->err = E_ALLOC;
-	}
-	for (i=0; i<k && !p->err; i++) {
-	    ptr = NULL;
-	    e = n->v.bn.n[i];
-	    if (i == 0 || i % 2 == 0) {
-		/* we need a key string */
-		if (e->t == STR) {
-		    key = e->v.str;
-		} else {
-		    p->err = E_TYPES;
-		}
-	    } else {
-		/* we need some valid content */
-		gtype = gretl_type_from_gen_type(e->t);
-		if (type_can_be_bundled(gtype)) {
-		    int size = 0;
-
-		    if (e->t == SERIES) {
-			size = p->dset->n;
-		    } else if (scalar_matrix_node(e)) {
-			gtype = GRETL_TYPE_DOUBLE;
-		    }
-		    ptr = node_get_ptr(e, t->t, p, &donate);
-		    if (donate) {
-			gretl_bundle_donate_data(b, key, ptr, gtype, size);
-		    } else {
-			gretl_bundle_set_data(b, key, ptr, gtype, size);
-		    }
-		} else {
-		    p->err = E_TYPES;
-		}
-	    }
-	}
-        if (p->err) {
-            gretl_bundle_destroy(b);
-        } else {
-            ret = aux_bundle_node(p);
-            if (ret != NULL) {
-                ret->v.b = b;
-            }
-        }
-    } else if (t->t == F_DEFLIST) {
-        int *li, *full_list = gretl_list_new(0);
-
-        for (i=0; i<k && !p->err; i++) {
-            li = NULL;
-            e = n->v.bn.n[i];
-	    if (k == 1 && e->t == ARRAY) {
-		li = list_from_strings_array(e->v.a, p);
-	    } else if (ok_list_node_plus(e)) {
-		li = node_get_list(e, p);
-	    } else if (e->t == MAT) {
-		li = node_get_list(e, p);
-	    } else {
-		p->err = E_TYPES;
-	    }
-            if (!p->err && li[0] > 0) {
-                gretl_list_append_list(&full_list, li, &p->err);
-            }
-            free(li);
-        }
-        if (p->err) {
-            free(full_list);
-        } else {
-            ret = aux_list_node(p);
-            if (ret != NULL) {
-                ret->v.ivec = full_list;
-            }
-        }
     } else if (t->t == F_NADARWAT) {
         const double *x = NULL;
         const double *y = NULL;
@@ -14317,6 +14129,137 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
     return ret;
 }
 
+/* evaluate an object definition function (bundle, array, list) */
+
+static NODE *object_def_node (NODE *t, NODE *n, parser *p)
+{
+    NODE *e, *ret = NULL;
+    int i, f = t->t;
+    int k = n->v.bn.n_nodes;
+
+    if ((f == F_DEFBUNDLE || f == F_DEFARGS) && k % 2 != 0) {
+	gretl_errmsg_sprintf(_("%s: requires an even number of arguments"),
+			     getsymb(f));
+	p->err = E_INVARG;
+	return NULL;
+    }
+
+    if (f == F_DEFARRAY) {
+        gretl_array *A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
+	int donate;
+        void *ptr;
+
+	for (i=0; i<k && !p->err; i++) {
+	    donate = 0;
+	    e = n->v.bn.n[i];
+	    p->err = check_array_element_type(A, e);
+	    if (p->err) {
+		break;
+	    }
+	    if (e->t == NUM) {
+		ptr = gretl_matrix_from_scalar(e->v.xval);
+		donate = 1;
+	    } else {
+		ptr = node_get_ptr(e, t->t, p, &donate);
+	    }
+	    if (donate) {
+		/* copy not required */
+		p->err = gretl_array_append_object(A, ptr, 0);
+	    } else {
+		p->err = gretl_array_append_object(A, ptr, 1);
+	    }
+	}
+        if (p->err) {
+            gretl_array_destroy(A);
+        } else {
+            ret = aux_array_node(p);
+            if (ret != NULL) {
+                ret->v.a = A;
+            }
+        }
+    } else if (f == F_DEFBUNDLE || f == F_DEFARGS) {
+        gretl_bundle *b = gretl_bundle_new();
+        GretlType gtype;
+        char *key = NULL;
+        void *ptr;
+        int donate;
+
+	if (b == NULL) {
+	    p->err = E_ALLOC;
+	}
+	for (i=0; i<k && !p->err; i++) {
+	    ptr = NULL;
+	    e = n->v.bn.n[i];
+	    if (i == 0 || i % 2 == 0) {
+		/* we need a key string */
+		if (e->t == STR) {
+		    key = e->v.str;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else {
+		/* we need some valid content */
+		gtype = gretl_type_from_gen_type(e->t);
+		if (type_can_be_bundled(gtype)) {
+		    int size = 0;
+
+		    if (e->t == SERIES) {
+			size = p->dset->n;
+		    } else if (scalar_matrix_node(e)) {
+			gtype = GRETL_TYPE_DOUBLE;
+		    }
+		    ptr = node_get_ptr(e, t->t, p, &donate);
+		    if (donate) {
+			gretl_bundle_donate_data(b, key, ptr, gtype, size);
+		    } else {
+			gretl_bundle_set_data(b, key, ptr, gtype, size);
+		    }
+		} else {
+		    p->err = E_TYPES;
+		}
+	    }
+	}
+        if (p->err) {
+            gretl_bundle_destroy(b);
+        } else {
+            ret = aux_bundle_node(p);
+            if (ret != NULL) {
+                ret->v.b = b;
+            }
+        }
+    } else if (f == F_DEFLIST) {
+        int *li, *full_list = gretl_list_new(0);
+
+        for (i=0; i<k && !p->err; i++) {
+            li = NULL;
+            e = n->v.bn.n[i];
+	    if (k == 1 && e->t == ARRAY) {
+		li = list_from_strings_array(e->v.a, p);
+	    } else if (ok_list_node_plus(e)) {
+		li = node_get_list(e, p);
+	    } else if (e->t == MAT) {
+		li = node_get_list(e, p);
+	    } else {
+		p->err = E_TYPES;
+	    }
+            if (!p->err && li[0] > 0) {
+                gretl_list_append_list(&full_list, li, &p->err);
+            }
+            free(li);
+        }
+        if (p->err) {
+            free(full_list);
+        } else {
+            ret = aux_list_node(p);
+            if (ret != NULL) {
+                ret->v.ivec = full_list;
+            }
+        }
+    }
+
+    return ret;
+}
+
 /* Create a temporary empty node to handle the case where,
    in feval(), we get fewer arguments than the max for a
    built-in function. If the missing (presumably trailing)
@@ -14457,7 +14400,7 @@ static NODE *eval_feval (NODE *t, parser *p)
             }
             tmp.L = &l;
             tmp.R = &r;
-            ret = eval_ufunc(&tmp, p, NULL);
+            ret = eval_ufunc(&tmp, NULL, p); /* FIXME */
             reset_p_aux(p, save_aux); /* tmp.aux? */
             free(r.v.bn.n);
         }
@@ -14774,13 +14717,12 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
 
 /* composing a matrix from scalars, series or lists */
 
-static NODE *matrix_def_node (NODE *nn, parser *p)
+static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
 {
     GPtrArray *a;
     gretl_matrix *M = NULL;
-    NODE *save_aux = p->aux;
-    NODE *n, *ret = NULL;
-    int k = nn->v.bn.n_nodes;
+    NODE *e, *ret = NULL;
+    int k = n->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
     int nlist = 0;
@@ -14800,27 +14742,21 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
     a = g_ptr_array_sized_new(k);
 
     for (i=0; i<k && !p->err; i++) {
-        n = eval(nn->v.bn.n[i], p);
-        if (n == NULL && !p->err) {
-            p->err = E_UNSPEC; /* "can't happen" */
-        }
-        if (p->err) {
-            break;
-        }
-        if (!ok_matdef_sym(n->t) && !scalar_matrix_node(n)) {
-            fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
+        e = n->v.bn.n[i];
+        if (!ok_matdef_sym(e->t) && !scalar_matrix_node(e)) {
+            fprintf(stderr, "matrix_def_node: node type %d: not OK\n", e->t);
             p->err = E_TYPES;
             break;
         }
-        if (scalar_node(n)) {
+        if (scalar_node(e)) {
             nnum++;
-        } else if (n->t == SERIES) {
+        } else if (e->t == SERIES) {
             nvec++;
-        } else if (n->t == DUM) {
+        } else if (e->t == DUM) {
             dum++;
-        } else if (n->t == LIST) {
+        } else if (e->t == LIST) {
             nlist++;
-        } else if (n->t == EMPTY) {
+        } else if (e->t == EMPTY) {
             if (nsep == 0) {
                 seppos = i;
             }
@@ -14838,7 +14774,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
             p->err = E_TYPES;
         }
         if (!p->err) {
-            g_ptr_array_add(a, n);
+            g_ptr_array_add(a, e);
         }
     }
 
@@ -14877,7 +14813,6 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
             gretl_matrix_free(M);
         }
     } else {
-        reset_p_aux(p, save_aux);
         ret = aux_matrix_node(p);
         if (ret != NULL) {
             ret->v.m = M;
@@ -16314,25 +16249,24 @@ static NODE *eval (NODE *t, parser *p)
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
             p->flags ^= P_OBJQRY;
-	} else if (t->L->t == FARGS) {
+	} else if (bnsym(t->L->t)) {
+	    NODE *nn = t->L;
 	    int j;
 
-	    l = t->L;
-	    multi = bncopy(l, &p->err);
+	    multi = bncopy(nn, &p->err);
 #if FARGS_DEBUG
 	    fprintf(stderr, "\nHERE 1 (%s), done bncopy, err %d\n",
 		    getsymb(t->t), p->err);
 #endif
-	    for (j=0; j<l->v.bn.n_nodes && !p->err; j++) {
-		multi->v.bn.n[j] = eval(l->v.bn.n[j], p);
+	    for (j=0; j<nn->v.bn.n_nodes && !p->err; j++) {
+		multi->v.bn.n[j] = eval(nn->v.bn.n[j], p);
 #if FARGS_DEBUG
-		fprintf(stderr, "FARGS[%d]: '%s'\n", j, getsymb(multi->v.bn.n[j]->t));
+		fprintf(stderr, "bn[%d]: '%s'\n", j, getsymb(multi->v.bn.n[j]->t));
 #endif
 	    }
 #if FARGS_DEBUG
-	    fprintf(stderr, "HERE 2, done multi, err %d\n", p->err);
+	    fprintf(stderr, "HERE 2, done bn, err %d\n", p->err);
 #endif
-	    l = NULL;
 	    goto do_switch;
         } else {
             l = eval(t->L, p);
@@ -17568,9 +17502,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_BOOTCI:
     case F_BOOTPVAL:
     case F_MOVAVG:
-    case F_DEFARRAY:
-    case F_DEFBUNDLE:
-    case F_DEFLIST:
     case F_IRF:
     case F_NADARWAT:
     case F_FEVAL:
@@ -17578,7 +17509,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case F_TDISAGG:
     case HF_CLOGFI:
-    case F_DEFARGS:
     case F_MIDASMULT:
         /* built-in functions taking more than three args */
         if (t->t == F_FEVAL) {
@@ -17590,6 +17520,15 @@ static NODE *eval (NODE *t, parser *p)
             ret = eval_nargs_func(t, multi, p);
         }
         break;
+    case F_DEFARRAY:
+    case F_DEFBUNDLE:
+    case F_DEFARGS:
+    case F_DEFLIST:
+	ret = object_def_node(t, multi, p);
+	break;
+    case F_DEFMAT:
+	ret = matrix_def_node(t, multi, p);
+	break;
     case F_KSETUP:
     case F_KFILTER:
     case F_KSMOOTH:
@@ -17621,10 +17560,6 @@ static NODE *eval (NODE *t, parser *p)
     case DVAR:
         /* dataset "dollar" variable */
         ret = dollar_var_node(t, p);
-        break;
-    case MDEF:
-        /* matrix definition */
-        ret = matrix_def_node(t, p);
         break;
     case F_OBSNUM:
     case F_ISDISCR:
@@ -17689,11 +17624,11 @@ static NODE *eval (NODE *t, parser *p)
         ret = retrieve_const(t, p);
         break;
     case UFUN:
-        ret = eval_ufunc(t, p, NULL);
+        ret = eval_ufunc(t, multi, p);
         break;
 #ifdef USE_RLIB
     case RFUN:
-        ret = eval_Rfunc(t, p);
+        ret = eval_Rfunc(t, multi, p);
         break;
 #endif
     case QUERY:

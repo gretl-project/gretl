@@ -497,6 +497,7 @@ enum {
     F_DEFBUNDLE,
     F_DEFLIST,
     F_DEFARGS,
+    F_DEFMAT,
     F_KSETUP,
     F_BFGSCMAX,
     F_SVM,
