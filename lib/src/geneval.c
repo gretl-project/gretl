@@ -14101,6 +14101,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 					  xmidas, fac, targ,
 					  Y, X, p->dset, b, r,
 					  p->prn, &p->err);
+	    fprintf(stderr, "F_TDISAGG, done tdisagg_matrix: err=%d\n", p->err);
         }
     }
 
