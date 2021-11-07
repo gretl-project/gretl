@@ -17,7 +17,10 @@
  *
  */
 
-/* support for temporal disaggregation functionality in gretl */
+/* Helper functions for temporal disaggregation functionality in gretl,
+   called from geneval.c. The main tdisagg code is in interpolate.c
+   in the plugin directory.
+*/
 
 #include "libgretl.h"
 #include "gretl_midas.h"
@@ -28,6 +31,7 @@
    only every cfac-th row from the data source.
 */
 
+static
 gretl_matrix *tdisagg_matrix_from_series (const double *x,
 					  int xnum,
 					  const int *list,
@@ -302,7 +306,7 @@ int tdisagg_data_to_matrix (int yconv, int ynum,
 			    const int *ylist, const double *yval,
 			    int xconv, int xnum,
 			    const int *xlist, const double *xval,
-			    int xmidas, int fac, GretlType targ, 
+			    int xmidas, int fac, GretlType targ,
 			    gretl_matrix **X, gretl_matrix **Y,
 			    DATASET *dset)
 {

@@ -20,12 +20,6 @@
 #ifndef GRETL_TDISAGG_H
 #define GRETL_TDISAGG_H
 
-gretl_matrix *tdisagg_matrix_from_series (const double *x,
-					  int xnum,
-					  const int *list,
-					  const DATASET *dset,
-					  int cfac, int *err);
-
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, gretl_bundle *b,
