@@ -20,20 +20,13 @@
 #ifndef GRETL_TDISAGG_H
 #define GRETL_TDISAGG_H
 
-gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
-			      const gretl_matrix *X,
-			      int f, gretl_bundle *b,
-			      gretl_bundle *res,
-			      DATASET *dset,
-			      PRN *prn, int *err);
-
-int tdisagg_data_to_matrix (int yconv, int ynum,
-			    const int *ylist, const double *yval,
-			    int xconv, int xnum,
-			    const int *xlist, const double *xval,
-			    int xmidas, int fac, GretlType targ, 
-			    gretl_matrix **X, gretl_matrix **Y,
-			    DATASET *dset);
+gretl_matrix *
+get_tdisagg_matrix (int ynum, const int *ylist, const double *yval,
+		    int xnum, const int *xlist, const double *xval,
+		    int xmidas, int fac, GretlType targ,
+		    gretl_matrix *Y, gretl_matrix *X,
+		    DATASET *dset, gretl_bundle *b,
+		    gretl_bundle *r, PRN *prn, int *err);
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,

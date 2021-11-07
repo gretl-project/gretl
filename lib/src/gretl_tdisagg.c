@@ -107,12 +107,12 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
  * NULL on failure.
  */
 
-gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
-			      const gretl_matrix *X,
-			      int s, gretl_bundle *b,
-			      gretl_bundle *res,
-			      DATASET *dset,
-			      PRN *prn, int *err)
+static gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
+				     const gretl_matrix *X,
+				     int s, gretl_bundle *b,
+				     gretl_bundle *res,
+				     DATASET *dset,
+				     PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
@@ -302,14 +302,15 @@ static int tdisagg_get_y_start_stop (int ynum, const int *ylist,
     return err;
 }
 
-int tdisagg_data_to_matrix (int yconv, int ynum,
-			    const int *ylist, const double *yval,
-			    int xconv, int xnum,
-			    const int *xlist, const double *xval,
-			    int xmidas, int fac, GretlType targ,
-			    gretl_matrix **X, gretl_matrix **Y,
-			    DATASET *dset)
+static int
+tdisagg_data_to_matrix (int ynum, const int *ylist, const double *yval,
+			int xnum, const int *xlist, const double *xval,
+			int xmidas, int fac, GretlType targ,
+			gretl_matrix **pY, gretl_matrix **pX,
+			DATASET *dset)
 {
+    int yconv = (pY != NULL);
+    int xconv = (pX != NULL);
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int t1 = dset->t1;
@@ -340,24 +341,63 @@ int tdisagg_data_to_matrix (int yconv, int ynum,
 	if (yt2 > 0) {
 	    dset->t2 = yt2;
 	}
-	*Y = tdisagg_matrix_from_series(yval, ynum, ylist, dset,
-				       cfac, &err);
+	*pY = tdisagg_matrix_from_series(yval, ynum, ylist, dset,
+					 cfac, &err);
     }
-    if (!err && xconv) {
+    if (!err && xmidas) {
 	if (xt2 > 0) {
 	    dset->t2 = xt2;
 	}
-	*X = tdisagg_matrix_from_series(xval, xnum, xlist, dset,
-				       1, &err);
-    } else if (!err && xmidas) {
+	*pX = midas_list_to_vector(xlist, dset, &err);
+    } else if (!err && xconv) {
 	if (xt2 > 0) {
 	    dset->t2 = xt2;
 	}
-	*X = midas_list_to_vector(xlist, dset, &err);
+	*pX = tdisagg_matrix_from_series(xval, xnum, xlist, dset,
+					 1, &err);
     }
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
     return err;
+}
+
+gretl_matrix *
+get_tdisagg_matrix (int ynum, const int *ylist, const double *yval,
+		    int xnum, const int *xlist, const double *xval,
+		    int xmidas, int fac, GretlType targ,
+		    gretl_matrix *Y, gretl_matrix *X,
+		    DATASET *dset, gretl_bundle *b,
+		    gretl_bundle *r, PRN *prn, int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *tmpY = NULL;
+    gretl_matrix *tmpX = NULL;
+
+    if (Y == NULL || X == NULL) {
+	/* Conversion from dataset object to matrix
+	   is needed, for Y and/or X.
+	*/
+	gretl_matrix **pY = (Y == NULL)? &tmpY : NULL;
+	gretl_matrix **pX = (X == NULL)? &tmpX : NULL;
+
+	*err = tdisagg_data_to_matrix(ynum, ylist, yval,
+				      xnum, xlist, xval,
+				      xmidas, fac, targ,
+				      pY, pX, dset);
+	if (Y == NULL) Y = tmpY;
+	if (X == NULL) X = tmpX;
+    }
+
+    if (!*err) {
+	DATASET *ddset = (tmpY != NULL || tmpX != NULL)? dset : NULL;
+
+	ret = matrix_tdisagg(Y, X, fac, b, r, ddset, prn, err);
+    }
+
+    gretl_matrix_free(tmpY);
+    gretl_matrix_free(tmpX);
+
+    return ret;
 }
