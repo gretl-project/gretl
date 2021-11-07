@@ -17678,15 +17678,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_MRANDGEN:
     case F_RANDGEN1:
     case F_URCPVAL:
-        if (t->L->t == FARGS) {
-            if (t->t == F_URCPVAL) {
-                ret = eval_urcpval(t, multi, p);
-            } else {
-                ret = eval_pdist(t, multi, p);
-            }
-        } else {
-            node_type_error(t->t, 0, FARGS, t->L, p);
-        }
+	if (t->t == F_URCPVAL) {
+	    ret = eval_urcpval(t, multi, p);
+	} else {
+	    ret = eval_pdist(t, multi, p);
+	}
         break;
     case CON:
         /* built-in constant */
