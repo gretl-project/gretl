@@ -69,8 +69,6 @@
 # define LHDEBUG 0
 #endif
 
-#define FARGS_DEBUG 1
-
 #if LHDEBUG || EDEBUG > 1
 # define IN_GENEVAL
 # include "mspec_debug.c"
@@ -14042,8 +14040,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         int fac = 0;
         int ynum = 0;
         int xnum = 0;
-        int yconv = 0;
-        int xconv = 0;
         int xmidas = 0;
 
         for (i=0; i<k && !p->err; i++) {
@@ -14055,10 +14051,8 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 } else if (e->t == SERIES) {
                     ynum = e->vnum;
                     yval = e->v.xvec;
-                    yconv = 1;
                 } else if (e->t == LIST) {
                     ylist = e->v.ivec;
-                    yconv = 1;
                 } else {
                     p->err = E_TYPES;
                 }
@@ -14069,14 +14063,12 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 } else if (e->t == SERIES) {
                     xnum = e->vnum;
                     xval = e->v.xvec;
-                    xconv = 1;
                 } else if (e->t == LIST) {
                     if (gretl_is_midas_list(e->v.ivec, p->dset)) {
                         xlist = e->v.ivec;
                         xmidas = 1;
                     } else {
                         xlist = e->v.ivec;
-                        xconv = 1;
                     }
                 } else if (!null_node(e)) {
                     p->err = E_TYPES;
@@ -14098,31 +14090,17 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 p->err = E_TYPES;
             }
         }
-        if (!p->err && (yconv || xconv || xmidas)) {
-            /* Conversion from dataset object to matrix
-               is needed, for Y and/or X.
-            */
-	    GretlType targ = gretl_type_from_gen_type(p->targ);
-
-	    p->err = tdisagg_data_to_matrix(yconv, ynum, ylist, yval,
-					    xconv, xnum, xlist, xval,
-					    xmidas, fac, targ,
-					    &Y, &X, p->dset);
-        }
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-            DATASET *dset = (yconv || xconv || xmidas)? p->dset : NULL;
+	    GretlType targ = gretl_type_from_gen_type(p->targ);
 
-            ret->v.m = matrix_tdisagg(Y, X, fac, b, r, dset,
-                                      p->prn, &p->err);
-        }
-        if (yconv) {
-            gretl_matrix_free(Y);
-        }
-        if (xconv || xmidas) {
-            gretl_matrix_free(X);
+	    ret->v.m = get_tdisagg_matrix(ynum, ylist, yval,
+					  xnum, xlist, xval,
+					  xmidas, fac, targ,
+					  Y, X, p->dset, b, r,
+					  p->prn, &p->err);
         }
     }
 
@@ -14260,126 +14238,71 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
     return ret;
 }
 
-/* Create a temporary empty node to handle the case where,
-   in feval(), we get fewer arguments than the max for a
-   built-in function. If the missing (presumably trailing)
-   arguments are optional this will work OK; otherwise the
-   called function will flag the appropriate error.
-*/
-
-static NODE *auxempty (int *del)
+static NODE *eval_feval (NODE *t, NODE *n, parser *p)
 {
-    NODE *n = newempty();
-
-    *del = 1;
-    return n;
-}
-
-static NODE *eval_feval (NODE *t, parser *p)
-{
-    NODE *save_aux = p->aux;
-    NODE *n = t->L;
     NODE *e, *ret = NULL;
     int argc, f = 0;
     ufunc *u = NULL;
-    int i, k = n->v.bn.n_nodes;
+    int k = n->v.bn.n_nodes;
 
     if (k < 1) {
         p->err = E_ARGS;
         return NULL;
     }
 
-#if AUX_NODES_DEBUG
-    fprintf(stderr, "feval: p->aux = %p, t->aux = %p\n",
-            (void *) p->aux, (void *) t->aux);
-#endif
-
-    argc = k - 1;
-
-    /* evaluate the first (string) arg: should be the
-       name of a function */
-    e = eval(n->v.bn.n[0], p);
+    /* the first (string) arg should be the name of a function */
+    e = n->v.bn.n[0];
     if (!p->err && e->t != STR) {
         node_type_error(t->t, 1, STR, e, p);
+	return NULL;
     }
 
-    reset_p_aux(p, save_aux);
+    /* the number of remaining arguments available for passing */
+    argc = k - 1;
 
-    if (!p->err) {
-        /* try for a built-in function */
-	int del[3] = {0};
+    /* first try for a built-in function */
+    f = function_lookup(e->v.str);
+    if (f != 0) {
+	NODE **nn = n->v.bn.n;
+	NODE tmp = {0};
+	NODE aux = {0};
+	NODE l = {0};
+	int np;
 
-        f = function_lookup(e->v.str);
-        if (f != 0) {
-            NODE *fn = aux_parent_node(p);
-            int np;
+	tmp.t = f;
+	if (f < FP_MAX) {
+	    tmp.v.ptr = get_genr_function_pointer(f);
+	}
 
-            fn->t = f;
-	    if (f < FP_MAX) {
-		fn->v.ptr = get_genr_function_pointer(f);
+	np = func1_symb(f) ? 1 : func2_symb(f) ? 2 :
+	    func3_symb(f) ? 3 : -1;
+	aux.t = EMPTY;
+
+	if (np > 0) {
+	    /* known max number of arguments */
+	    if (argc > np) {
+		gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
+		p->err = E_DATA;
+	    } else if (np == 1) {
+		tmp.L = argc > 0 ? nn[1] : &aux;
+	    } else if (np == 2) {
+		tmp.L = argc > 0 ? nn[1] : &aux;
+		tmp.R = argc > 1 ? nn[2] : &aux;
+	    } else if (np == 3) {
+		tmp.L = argc > 0 ? nn[1] : &aux;
+		tmp.M = argc > 1 ? nn[2] : &aux;
+		tmp.R = argc > 2 ? nn[3] : &aux;
 	    }
-            fn->flags |= TMP_NODE;
-
-	    np = func1_symb(f) ? 1 : func2_symb(f) ? 2 :
-		func3_symb(f) ? 3 : -1;
-
-	    if (np > 0) {
-		/* known max number of arguments */
-		if (argc > np) {
-		    gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
-		    p->err = E_DATA;
-		} else if (np == 1) {
-                    fn->L = argc > 0 ? n->v.bn.n[1] : auxempty(&del[0]);
-                } else if (np == 2) {
-		    fn->L = argc > 0 ? n->v.bn.n[1] : auxempty(&del[0]);
-                    fn->R = argc > 1 ? n->v.bn.n[2] : auxempty(&del[2]);
-                } else if (np == 3) {
-                    fn->L = argc > 0 ? n->v.bn.n[1] : auxempty(&del[0]);
-                    fn->M = argc > 1 ? n->v.bn.n[2] : auxempty(&del[1]);
-                    fn->R = argc > 2 ? n->v.bn.n[3] : auxempty(&del[2]);
-                }
-	    } else {
-                /* multi-arg function */
-                NODE *args = fn->L;
-
-                if (args != NULL && args->t != FARGS) {
-                    fprintf(stderr, "feval, multiargs, fn type is wrong!\n");
-                    p->err = E_DATA;
-                }
-                if (args == NULL) {
-                    fn->L = args = newempty();
-                    args->t = FARGS;
-                    args->v.bn.n_nodes = argc;
-                    args->v.bn.n = malloc(argc * sizeof(NODE *));
-                }
-                if (!p->err) {
-                    for (i=1; i<k; i++) {
-                        args->v.bn.n[i-1] = n->v.bn.n[i];
-                    }
-                }
-            }
-            if (!p->err) {
-                ret = eval(fn, p);
-                /* there was a leak here, OK now? */
-#if AUX_NODES_DEBUG
-                fprintf(stderr, "feval: attach aux at %p (%s) to %p\n",
-                        (void *) fn, getsymb(fn->t), (void *) t);
-#endif
-                t->aux = fn;
-		if (np > 0) {
-		    /* destroy "auxempty" nodes, if any were created */
-		    if (del[0]) {
-			free(fn->L); fn->L = NULL;
-		    }
-		    if (del[1]) {
-			free(fn->M); fn->M = NULL;
-		    }
-		    if (del[2]) {
-			free(fn->R); fn->R = NULL;
-		    }
-		}
-            }
-        }
+	} else {
+	    /* multi-arg function */
+	    l.t = FARGS;
+	    l.v.bn.n_nodes = argc;
+	    l.v.bn.n = n->v.bn.n + 1;
+	    tmp.L = &l;
+	}
+	if (!p->err) {
+	    ret = eval(&tmp, p);
+	}
     }
 
     if (!p->err && f == 0) {
@@ -14394,15 +14317,10 @@ static NODE *eval_feval (NODE *t, parser *p)
             l.vname = e->v.str;
             l.v.ptr = u;
             r.v.bn.n_nodes = argc;
-            r.v.bn.n = malloc(argc * sizeof(NODE *));
-            for (i=1; i<k; i++) {
-                r.v.bn.n[i-1] = n->v.bn.n[i];
-            }
+	    r.v.bn.n = n->v.bn.n + 1;
             tmp.L = &l;
             tmp.R = &r;
-            ret = eval_ufunc(&tmp, NULL, p); /* FIXME */
-            reset_p_aux(p, save_aux); /* tmp.aux? */
-            free(r.v.bn.n);
+            ret = eval_ufunc(&tmp, &r, p);
         }
     }
 
@@ -16246,20 +16164,14 @@ static NODE *eval (NODE *t, parser *p)
 	    int j;
 
 	    multi = bncopy(nn, &p->err);
-#if FARGS_DEBUG
-	    fprintf(stderr, "\nHERE 1 (%s), done bncopy, err %d\n",
-		    getsymb(t->t), p->err);
-#endif
 	    for (j=0; j<nn->v.bn.n_nodes && !p->err; j++) {
 		multi->v.bn.n[j] = eval(nn->v.bn.n[j], p);
-#if FARGS_DEBUG
-		fprintf(stderr, "bn[%d]: '%s'\n", j, getsymb(multi->v.bn.n[j]->t));
-#endif
 	    }
-#if FARGS_DEBUG
-	    fprintf(stderr, "HERE 2, done bn, err %d\n", p->err);
-#endif
-	    goto do_switch;
+	    if (p->err) {
+		goto bailout;
+	    } else {
+		goto do_switch;
+	    }
         } else {
             l = eval(t->L, p);
         }
@@ -17503,11 +17415,11 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CLOGFI:
     case F_MIDASMULT:
         /* built-in functions taking more than three args */
-        if (t->t == F_FEVAL) {
-            ret = eval_feval(t, p);
-        } else if (multi == NULL) {
+	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
 	    p->err = E_DATA;
+        } else if (t->t == F_FEVAL) {
+            ret = eval_feval(t, multi, p);
 	} else {
             ret = eval_nargs_func(t, multi, p);
         }
