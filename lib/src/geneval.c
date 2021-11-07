@@ -1421,6 +1421,21 @@ static double cmatrix_xy_comp (gretl_matrix *m, double x,
     return ret;
 }
 
+static void n_args_error (int k, int nmin, int nmax, int f, parser *p)
+{
+    if (nmax == nmin) {
+	gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
+				"match the number of\nparameters for "
+				"function %s (%d)"), k, getsymb(f), nmin);
+    } else {
+	gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
+				"match the number of\nparameters for "
+				"function %s (%d to %d)"), k, getsymb(f),
+			      nmin, nmax);
+    }
+    p->err = 1;
+}
+
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
 static int check_dist_count (int d, int f, int *np, int *argc)
@@ -1753,24 +1768,11 @@ static int node_get_bool (NODE *n, parser *p, int deflt)
 
 static NODE *DW_node (NODE *r, parser *p)
 {
-    NODE *s, *e, *ret = NULL;
-    NODE *save_aux = p->aux;
+    NODE *ret = NULL;
     int i, parm[2] = {0};
 
     for (i=0; i<2 && !p->err; i++) {
-	s = r->v.bn.n[i+1];
-	if (scalar_node(s)) {
-	    parm[i] = node_get_int(s, p);
-	} else {
-	    e = eval(s, p);
-	    if (!p->err) {
-		if (scalar_node(e)) {
-		    parm[i] = node_get_int(e, p);
-		} else {
-		    p->err = E_INVARG;
-		}
-	    }
-	}
+	parm[i] = node_get_int(r->v.bn.n[i+1], p);
     }
 
     if (!p->err && (parm[0] < 6 || parm[1] < 0)) {
@@ -1778,7 +1780,6 @@ static NODE *DW_node (NODE *r, parser *p)
     }
 
     if (!p->err) {
-	reset_p_aux(p, save_aux);
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    ret->v.m = gretl_get_DW(parm[0], parm[1], &p->err);
@@ -1788,35 +1789,31 @@ static NODE *DW_node (NODE *r, parser *p)
     return ret;
 }
 
-static NODE *eval_urcpval (NODE *n, parser *p)
+static NODE *eval_urcpval (NODE *n, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	NODE *save_aux = p->aux;
-	NODE *s, *e, *r = n->L;
+	NODE *e;
 	int i, m = r->v.bn.n_nodes;
 	int iargs[3] = {0};
 	double tau = NADBL;
 
 	if (m != 4) {
-	    p->err = E_INVARG;
+	    n_args_error(m, 4, 4, n->t, p);
 	}
 
 	/* need double, int, int, int */
 	for (i=0; i<4 && !p->err; i++) {
-	    s = r->v.bn.n[i];
-	    e = eval(s, p);
-	    if (!p->err) {
-		if (scalar_node(e)) {
-		    if (i == 0) {
-			tau = node_get_scalar(e, p);
-		    } else {
-			iargs[i-1] = node_get_int(e, p);
-		    }
+	    e = r->v.bn.n[i];
+	    if (scalar_node(e)) {
+		if (i == 0) {
+		    tau = node_get_scalar(e, p);
 		} else {
-		    p->err = E_TYPES;
+		    iargs[i-1] = node_get_int(e, p);
 		}
+	    } else {
+		p->err = E_TYPES;
 	    }
 	}
 
@@ -1825,7 +1822,6 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 	    int niv = iargs[1];
 	    int itv = iargs[2];
 
-	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
 		ret->v.xval = get_urc_pvalue(tau, nobs, niv, itv);
@@ -1867,7 +1863,6 @@ static NODE *bvnorm_node (NODE *n, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	NODE *save_aux = p->aux;
 	double *avec = NULL, *bvec = NULL;
 	gretl_matrix *amat = NULL, *bmat = NULL;
 	double a, b, args[2];
@@ -1876,10 +1871,7 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 	int i, mode = 0;
 
 	for (i=0; i<3 && !p->err; i++) {
-	    e = eval(n->v.bn.n[i+1], p);
-	    if (p->err) {
-		break;
-	    }
+	    e = n->v.bn.n[i+1];
 	    if (scalar_node(e)) {
 		if (i == 0) {
 		    rho = node_get_scalar(e, p);
@@ -1904,7 +1896,6 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 	}
 
 	if (!p->err) {
-	    reset_p_aux(p, save_aux);
 	    if ((avec != NULL && bmat != NULL) ||
 		(bvec != NULL && amat != NULL)) {
 		p->err = E_INVARG;
@@ -1950,7 +1941,6 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 	    if (!p->err && r > 0 && c > 0) {
 		m = gretl_matrix_alloc(r, c);
 	    }
-
 	    if (m != NULL) {
 		int i, n = r * c;
 
@@ -1964,11 +1954,9 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 		    }
 		}
 	    }
-
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-
 	    ret->v.m = m;
 	}
     } else {
@@ -1981,13 +1969,12 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 /* return a node containing the evaluated result of a
    probability distribution function */
 
-static NODE *eval_pdist (NODE *n, parser *p)
+static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	NODE *save_aux = p->aux;
-	NODE *e, *s, *r = n->L;
+	NODE *e, *s;
 	int i, k, m = r->v.bn.n_nodes;
 	int rgen = (n->t == F_RANDGEN);
 	int mrgen = (n->t == F_MRANDGEN);
@@ -1999,15 +1986,15 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	int pvlen[2] = {0};
 	gretl_matrix *argmat = NULL;
 	int rows = 0, cols = 0;
-	int d, np, argc, bb;
+	int np, argc, bb, d = 0;
 
 	if (mrgen) {
 	    if (m < 4 || m > 7) {
-		p->err = E_INVARG;
+		n_args_error(m, 4, 7, n->t, p);
 		goto disterr;
 	    }
 	} else if (m < 2 || m > 5) {
-	    p->err = E_INVARG;
+	    n_args_error(m, 2, 5, n->t, p);
 	    goto disterr;
 	}
 
@@ -2024,17 +2011,19 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    }
 	    if (d == 0) {
 		p->err = E_INVARG;
-		goto disterr;
 	    }
 	} else {
 	    node_type_error(n->t, 0, STR, s, p);
-	    goto disterr;
 	}
 
-	p->err = check_dist_count(d, n->t, &np, &argc);
-	k = np + argc + 2 * mrgen;
-	if (!p->err && k != m - 1) {
-	    p->err = E_INVARG;
+	if (!p->err) {
+	    p->err = check_dist_count(d, n->t, &np, &argc);
+	}
+	if (!p->err) {
+	    k = np + argc + 2 * mrgen;
+	    if (k != m - 1) {
+		p->err = E_INVARG;
+	    }
 	}
 	if (p->err) {
 	    goto disterr;
@@ -2051,11 +2040,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	for (i=1; i<=k && !p->err; i++) {
-	    s = r->v.bn.n[i];
-	    e = eval(s, p);
-	    if (p->err) {
-		break;
-	    }
+	    e = r->v.bn.n[i];
 	    if (scalar_node(e)) {
 		/* scalars always acceptable */
 		if (mrgen) {
@@ -2125,8 +2110,6 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	if (p->err) {
 	    goto disterr;
 	}
-
-	reset_p_aux(p, save_aux);
 
 	if (mrgen) {
 	    ret = aux_matrix_node(p);
@@ -3396,25 +3379,8 @@ static const char *node_get_fncall (NODE *n, parser *p)
     return ret;
 }
 
-static void n_args_error (int k, int nmin, int nmax, int f, parser *p)
+static NODE *BFGS_constrained_max (NODE *t, NODE *n, parser *p)
 {
-    if (nmax == nmin) {
-	gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
-				"match the number of\nparameters for "
-				"function %s (%d)"), k, getsymb(f), nmin);
-    } else {
-	gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
-				"match the number of\nparameters for "
-				"function %s (%d to %d)"), k, getsymb(f),
-			      nmin, nmax);
-    }
-    p->err = 1;
-}
-
-static NODE *BFGS_constrained_max (NODE *t, parser *p)
-{
-    NODE *save_aux = p->aux;
-    NODE *n = t->L;
     NODE *ret = NULL;
     NODE *e = NULL;
     gretl_matrix *b = NULL;
@@ -3432,10 +3398,7 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
         if (i == 0) {
             b = mat_node_get_real_matrix(e, p);
         } else if (i == 1) {
-            e = eval(n->v.bn.n[i], p);
-            if (!p->err) {
-                bounds = mat_node_get_real_matrix(e, p);
-            }
+	    bounds = mat_node_get_real_matrix(e, p);
         } else if (i == 2) {
             sf = node_get_fncall(e, p);
         } else if (i == 3 && !null_node(e)) {
@@ -3444,7 +3407,6 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
     }
 
     if (!p->err) {
-        reset_p_aux(p, save_aux);
         ret = aux_scalar_node(p);
     }
 
@@ -10639,10 +10601,8 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
     return b;
 }
 
-static NODE *svm_driver_node (NODE *t, parser *p)
+static NODE *svm_driver_node (NODE *t, NODE *n, parser *p)
 {
-    NODE *save_aux = p->aux;
-    NODE *n = t->L;
     NODE *e, *ret = NULL;
     int *list = NULL;
     gretl_bundle *bparm = NULL;
@@ -10655,7 +10615,7 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     }
 
     for (i=0; i<k && !p->err; i++) {
-        e = eval(n->v.bn.n[i], p);
+        e = n->v.bn.n[i];
         if (i == 0) {
             list = node_get_list(e, p);
         } else if (i == 1) {
@@ -10672,7 +10632,6 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     }
 
     if (!p->err) {
-        reset_p_aux(p, save_aux);
         ret = aux_series_node(p);
     }
 
@@ -13216,37 +13175,33 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
     return ret;
 }
 
-static NODE *isoconv_node (NODE *t, parser *p)
+static NODE *isoconv_node (NODE *t, NODE *n, parser *p)
 {
-    NODE *save_aux = p->aux;
-    NODE *e, *n = t->L;
-    NODE *ret = NULL;
+    NODE *e, *ret = NULL;
     const double *x = NULL;
     double *ymd[3] = {NULL, NULL, NULL};
     int i, k = n->v.bn.n_nodes;
 
     if (p->dset == NULL) {
         p->err = E_NODATA;
-        return NULL;
+    } else if (k < 3 || k > 4) {
+	n_args_error(k, 3, 4, t->t, p);
     }
 
-    if (k < 3 || k > 4) {
-        n_args_error(k, 3, 4, t->t, p);
-    } else {
-        /* evaluate the first (series) argument */
-        e = eval(n->v.bn.n[0], p);
-        if (!p->err && e->t != SERIES) {
-            node_type_error(t->t, 1, SERIES, e, p);
-        } else {
-            x = e->v.xvec + p->dset->t1;
-        }
+    if (p->err) {
+	return NULL;
     }
 
-    for (i=1; i<k && !p->err; i++) {
-        /* the remaining args must be addresses of series */
-        e = n->v.bn.n[i];
-        if (i == 3 && null_node(e)) {
-            ; /* OK for the last one to be omitted */
+    for (i=0; i<k && !p->err; i++) {
+	e = n->v.bn.n[i];
+	if (i == 0) {
+	    if (e->t == SERIES) {
+		x = e->v.xvec + p->dset->t1;
+	    } else {
+		node_type_error(t->t, 1, SERIES, e, p);
+	    }
+	} else if (i == 3 && null_node(e)) {
+            ; /* OK for the last arg to be omitted */
         } else if (e->t != U_ADDR) {
             node_type_error(t->t, i+1, U_ADDR, e, p);
         } else {
@@ -13260,7 +13215,6 @@ static NODE *isoconv_node (NODE *t, parser *p)
     }
 
     if (!p->err) {
-        reset_p_aux(p, save_aux);
         ret = aux_scalar_node(p);
     }
 
@@ -14580,12 +14534,9 @@ static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
     return b;
 }
 
-static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
+static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
 {
-    NODE *save_aux = p->aux;
-    NODE *n = t->L;
-    NODE *ret = NULL;
-    NODE *e = NULL;
+    NODE *e, *ret = NULL;
     int i, k = n->v.bn.n_nodes;
 
     if (t->t == F_KSETUP) {
@@ -14595,34 +14546,29 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         if (k < 4) {
             n_args_error(k, 4, 4, t->t, p);
         }
-
         for (i=0; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (!p->err) {
-                if (e->t == MAT) {
-                    M[i] = mat_node_get_real_matrix(e, p);
-                    if (!p->err) {
-                        if (is_tmp_node(e)) {
-                            e->v.m = NULL;
-                        } else {
-                            copy[i] = 1;
-                        }
-                    }
-                } else if (i == 0) {
-                    /* obsy: accept series or list */
-                    M[i] = node_get_matrix_lenient(e, SERIES, p);
-                } else {
-                    /* system matrices, state variance */
-                    M[i] = node_get_matrix_lenient(e, NUM, p);
-                }
-            }
-        }
-
+            e = n->v.bn.n[i];
+	    if (e->t == MAT) {
+		M[i] = mat_node_get_real_matrix(e, p);
+		if (!p->err) {
+		    if (is_tmp_node(e)) {
+			e->v.m = NULL;
+		    } else {
+			copy[i] = 1;
+		    }
+		}
+	    } else if (i == 0) {
+		/* obsy: accept series or list */
+		M[i] = node_get_matrix_lenient(e, SERIES, p);
+	    } else {
+		/* system matrices, state variance */
+		M[i] = node_get_matrix_lenient(e, NUM, p);
+	    }
+	}
         if (!p->err) {
             gretl_bundle *b = kalman_bundle_new(M, copy, k, &p->err);
 
             if (!p->err) {
-                reset_p_aux(p, save_aux);
                 ret = aux_bundle_node(p);
                 if (ret != NULL) {
                     ret->v.b = b;
@@ -14636,7 +14582,6 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
             n_args_error(k, 1, 1, t->t, p);
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
         }
         if (!p->err) {
@@ -14649,7 +14594,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 
         if (!p->err) {
             if (k == 2) {
-                e = eval(n->v.bn.n[1], p);
+                e = n->v.bn.n[1];
                 dkstyle = node_get_int(e, p);
             } else if (k < 1 || k > 2) {
                 n_args_error(k, 1, 2, t->t, p);
@@ -14657,7 +14602,6 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         }
         if (!p->err) {
             param += dkstyle != 0;
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
             if (!p->err) {
                 ret->v.xval = kalman_bundle_smooth(b, param, p->prn);
@@ -14670,7 +14614,6 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
             n_args_error(k, 1, 1, t->t, p);
         }
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
             if (!p->err) {
                 ret->v.xval = kalman_bundle_smooth(b, 0, p->prn);
@@ -14688,10 +14631,9 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
         if (!p->err && k != 2 && k != 3) {
             n_args_error(k, 2, 3, t->t, p);
         }
-
         for (i=1; i<k && !p->err; i++) {
-            e = eval(n->v.bn.n[i], p);
-            if (!p->err && i == 1) {
+            e = n->v.bn.n[i];
+            if (i == 1) {
                 if (e->t == MAT) {
                     U = mat_node_get_real_matrix(e, p);
                 } else {
@@ -14700,21 +14642,20 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
                         freeU = 1;
                     }
                 }
-            } else if (!p->err) {
+            } else {
                 get_state = node_get_int(e, p);
             }
         }
-
         if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
             ret->v.m = kalman_bundle_simulate(b, U, get_state,
                                               p->prn, &p->err);
         }
-
-        if (freeU) gretl_matrix_free(U);
+        if (freeU) {
+	    gretl_matrix_free(U);
+	}
     }
 
     return ret;
@@ -14722,12 +14663,10 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 
 static NODE *kalman_data_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *save_aux = p->aux;
     gretl_bundle *b = get_kalman_bundle_arg(l, p);
     NODE *ret = NULL;
 
     if (!p->err) {
-        reset_p_aux(p, save_aux);
         ret = aux_matrix_node(p);
     }
     if (!p->err) {
@@ -16381,7 +16320,8 @@ static NODE *eval (NODE *t, parser *p)
 	    l = t->L;
 	    multi = bncopy(l, &p->err);
 #if FARGS_DEBUG
-	    fprintf(stderr, "HERE 1, done bncopy, err %d\n", p->err);
+	    fprintf(stderr, "\nHERE 1 (%s), done bncopy, err %d\n",
+		    getsymb(t->t), p->err);
 #endif
 	    for (j=0; j<l->v.bn.n_nodes && !p->err; j++) {
 		multi->v.bn.n[j] = eval(l->v.bn.n[j], p);
@@ -17011,7 +16951,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_SVM:
-        ret = svm_driver_node(t, p);
+        ret = svm_driver_node(t, multi, p);
         break;
     case F_TYPESTR:
         /* numerical type code to string */
@@ -17455,7 +17395,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_BFGSCMAX:
-        ret = BFGS_constrained_max(t, p);
+        ret = BFGS_constrained_max(t, multi, p);
         break;
     case F_SIMANN:
     case F_NMMAX:
@@ -17656,7 +17596,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_KSIMUL:
     case F_KDSMOOTH:
         if (t->t == F_KSETUP || bundle_pointer_arg0(t)) {
-            ret = eval_kalman_bundle_func(t, p);
+            ret = eval_kalman_bundle_func(t, multi, p);
         } else {
             p->err = E_TYPES;
         }
@@ -17669,7 +17609,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_ISOCONV:
-        ret = isoconv_node(t, p);
+        ret = isoconv_node(t, multi, p);
         break;
     case MVAR:
         /* variable "under" model */
@@ -17740,9 +17680,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_URCPVAL:
         if (t->L->t == FARGS) {
             if (t->t == F_URCPVAL) {
-                ret = eval_urcpval(t, p);
+                ret = eval_urcpval(t, multi, p);
             } else {
-                ret = eval_pdist(t, p);
+                ret = eval_pdist(t, multi, p);
             }
         } else {
             node_type_error(t->t, 0, FARGS, t->L, p);
