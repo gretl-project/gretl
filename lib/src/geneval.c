@@ -14029,53 +14029,44 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             ret->v.m = midas_multipliers(mb, cum, idx, &p->err);
         }
     } else if (t->t == F_TDISAGG) {
-        gretl_matrix *Y = NULL;
-        gretl_matrix *X = NULL;
+	struct tdisagg_info tdi = {0};
         gretl_bundle *b = NULL;
         gretl_bundle *r = NULL;
-        const double *yval = NULL;
-        const double *xval = NULL;
-        const int *ylist = NULL;
-        const int *xlist = NULL;
-        int fac = 0;
-        int ynum = 0;
-        int xnum = 0;
-        int xmidas = 0;
 
         for (i=0; i<k && !p->err; i++) {
             e = n->v.bn.n[i];
             if (i == 0) {
                 /* Y: matrix, series or list */
                 if (e->t == MAT) {
-                    Y = e->v.m;
+                    tdi.Y = e->v.m;
                 } else if (e->t == SERIES) {
-                    ynum = e->vnum;
-                    yval = e->v.xvec;
+                    tdi.ynum = e->vnum;
+                    tdi.yval = e->v.xvec;
                 } else if (e->t == LIST) {
-                    ylist = e->v.ivec;
+                    tdi.ylist = e->v.ivec;
                 } else {
                     p->err = E_TYPES;
                 }
             } else if (i == 1) {
                 /* X: matrix, series, list or null */
                 if (e->t == MAT) {
-                    X = e->v.m;
+                    tdi.X = e->v.m;
                 } else if (e->t == SERIES) {
-                    xnum = e->vnum;
-                    xval = e->v.xvec;
+                    tdi.xnum = e->vnum;
+                    tdi.xval = e->v.xvec;
                 } else if (e->t == LIST) {
                     if (gretl_is_midas_list(e->v.ivec, p->dset)) {
-                        xlist = e->v.ivec;
-                        xmidas = 1;
+                        tdi.xlist = e->v.ivec;
+                        tdi.xmidas = 1;
                     } else {
-                        xlist = e->v.ivec;
+                        tdi.xlist = e->v.ivec;
                     }
                 } else if (!null_node(e)) {
                     p->err = E_TYPES;
                 }
             } else if (i == 2) {
                 /* integer expansion factor */
-                fac = node_get_int(e, p);
+                tdi.efac = node_get_int(e, p);
             } else if (i == 3) {
                 /* optional options bundle */
                 if (e->t == BUNDLE) {
@@ -14094,14 +14085,9 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-	    GretlType targ = gretl_type_from_gen_type(p->targ);
-
-	    ret->v.m = get_tdisagg_matrix(ynum, ylist, yval,
-					  xnum, xlist, xval,
-					  xmidas, fac, targ,
-					  Y, X, p->dset, b, r,
+	    tdi.targ = gretl_type_from_gen_type(p->targ);
+	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
 					  p->prn, &p->err);
-	    fprintf(stderr, "F_TDISAGG, done tdisagg_matrix: err=%d\n", p->err);
         }
     }
 

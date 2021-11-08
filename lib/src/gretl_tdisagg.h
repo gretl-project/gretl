@@ -20,13 +20,20 @@
 #ifndef GRETL_TDISAGG_H
 #define GRETL_TDISAGG_H
 
-gretl_matrix *
-get_tdisagg_matrix (int ynum, const int *ylist, const double *yval,
-		    int xnum, const int *xlist, const double *xval,
-		    int xmidas, int fac, GretlType targ,
-		    gretl_matrix *Y, gretl_matrix *X,
-		    DATASET *dset, gretl_bundle *b,
-		    gretl_bundle *r, PRN *prn, int *err);
+struct tdisagg_info {
+    int ynum, xnum;            /* series IDs, if applicable */
+    const int *ylist, *xlist;  /* series lists, if applicable */
+    const double *yval, *xval; /* series values */
+    gretl_matrix *Y, *X;       /* matrix values */
+    int xmidas;                /* 0/1: X given as a MIDAS list? */
+    int efac;                  /* expansion factor */
+    GretlType targ;            /* target return type */
+};
+
+gretl_matrix *get_tdisagg_matrix (struct tdisagg_info *tdi,
+				  DATASET *dset, gretl_bundle *b,
+				  gretl_bundle *r, PRN *prn,
+				  int *err);
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
