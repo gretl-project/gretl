@@ -174,20 +174,21 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
    low-frequency values.
 */
 
-static int tdisagg_get_y_compression (int ynum, int xconv,
-                                      int s, GretlType targ,
-				      DATASET *dset)
+static int tdisagg_get_y_compression (struct tdisagg_info *tdi,
+                                      int xconv, DATASET *dset)
 {
-    if (ynum > 0 && series_get_orig_pd(dset, ynum)) {
+    int s = tdi->efac;
+
+    if (tdi->ynum > 0 && series_get_orig_pd(dset, tdi->ynum)) {
         return s;
-    } else if (targ == GRETL_TYPE_SERIES) {
+    } else if (tdi->targ == GRETL_TYPE_SERIES) {
         return s;
     } else if (dset->pd == 4 && s == 4) {
         return s;
     } else if (dset->pd == 12 && s == 12) {
         return s;
-    } else if (xconv == 1) {
-        /* X was given as a series or list */
+    } else if (xconv && !tdi->xmidas) {
+        /* X was given as a series or (non-MIDAS) list */
         return s;
     } else {
         return 1;
@@ -318,8 +319,7 @@ static int tdisagg_data_to_matrix (struct tdisagg_info *tdi,
     int err = 0;
 
     if (yconv) {
-	cfac = tdisagg_get_y_compression(tdi->ynum, xconv, tdi->efac,
-					 tdi->targ, dset);
+	cfac = tdisagg_get_y_compression(tdi, xconv, dset);
     }
     if (yconv && (xconv || tdi->xmidas)) {
 	err = tdisagg_get_start_stop(tdi, dset, &t1, &yt2, &xt2);
