@@ -377,17 +377,6 @@ static void free_node (NODE *t, parser *p)
 	    gretl_array_destroy(t->v.a);
 	} else if (t->t == STR) {
 	    free(t->v.str);
-	} else if (funcn_symb(t->t)) {
-	    /* special case: a multi-args function node attached as
-	       auxiliary by feval(): here we should free all and only
-	       those elements that were allocated independently,
-	       namely the array to hold the arguments (v.bn.n) and
-	       the args node itself.
-	    */
-	    NODE *args = t->L;
-
-	    free(args->v.bn.n);
-	    free(args);
 	}
     }
 
@@ -12343,7 +12332,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 ylist = m->v.ivec;
                 p->err = aggregate_discrete_check(ylist, p->dset);
             }
-
             if (!p->err) {
                 A = aggregate_by(x, y, xlist, ylist, fncall,
                                  p->dset, &p->err);
@@ -12747,7 +12735,6 @@ static void bad_date_message (int y, int m, int d)
 static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 {
     NODE *ret = NULL;
-    NODE *nodes[3] = {ny, nm, nd};
     double *x[3] = {NULL, NULL, NULL};
     double xymd[3];
     int ymd[3] = {-1, -1, -1};
@@ -12776,6 +12763,8 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
             node_type_error(F_EPOCHDAY, 1, NUM, ny, p);
         }
     } else {
+	NODE *nodes[3] = {ny, nm, nd};
+
         for (i=0; i<3 && !p->err; i++) {
             if (scalar_node(nodes[i])) {
                 sval = node_get_scalar(nodes[i], p);
@@ -16165,7 +16154,7 @@ static NODE *eval (NODE *t, parser *p)
 	rdone = 1;
     }
 
-    if (t->L && !ldone) {
+    if (!p->err && t->L && !ldone) {
 	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
