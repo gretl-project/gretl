@@ -10234,7 +10234,16 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
     return ret;
 }
 
-#endif /* USE_RLIB */
+#else
+
+static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
+{
+    gretl_errmsg_set(_("R functions cannot be called via this gretl build"));
+    p->err = 1;
+    return NULL;
+}
+
+#endif /* USE_RLIB or not */
 
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
@@ -16383,12 +16392,12 @@ static NODE *eval (NODE *t, parser *p)
                             MAT, (l->t == MAT)? r : l, p);
         }
         break;
+    case SUBSL:
+    case B_RANGE:
+        /* matrix sub-slice, x:y, or lag range, 'p to q' */
+        ret = process_subslice(l, r, p);
+        break;
     case B_HCAT:
-        if (l->t == STR) {
-            ret = two_string_func(l, r, NULL, t->t, p);
-            break;
-        }
-        /* Falls through. */
     case B_VCAT:
     case F_QFORM:
     case F_HDPROD:
@@ -16401,8 +16410,11 @@ static NODE *eval (NODE *t, parser *p)
     case B_LDIV:
     case B_KRON:
     case F_CONV2D:
-        /* matrix-only binary operators (but promote scalars) */
-        if (ok_matrix_node(l) && ok_matrix_node(r)) {
+	if (t->t == B_HCAT && l->t == STR) {
+	    /* special case: string concatenation */
+	    ret = two_string_func(l, r, NULL, t->t, p);
+	} else if (ok_matrix_node(l) && ok_matrix_node(r)) {
+	    /* matrix-only binary operators (but promote scalars) */
             ret = matrix_matrix_calc(l, r, t->t, p);
 	} else if (ok_matrix_node(l) && null_node(r) && t->t == F_HDPROD) {
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
@@ -16720,11 +16732,6 @@ static NODE *eval (NODE *t, parser *p)
     case SLRAW:
         /* unevaluated object slice spec */
         ret = mspec_node(l, r, p);
-        break;
-    case SUBSL:
-    case B_RANGE:
-        /* matrix sub-slice, x:y, or lag range, 'p to q' */
-        ret = process_subslice(l, r, p);
         break;
     case BMEMB:
     case F_INBUNDLE:
@@ -17517,11 +17524,9 @@ static NODE *eval (NODE *t, parser *p)
     case UFUN:
         ret = eval_ufunc(t, multi, p);
         break;
-#ifdef USE_RLIB
     case RFUN:
         ret = eval_Rfunc(t, multi, p);
         break;
-#endif
     case QUERY:
         ret = eval_query(t, p);
         break;
