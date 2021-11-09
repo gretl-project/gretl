@@ -17378,8 +17378,8 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_BESSEL:
-        /* functions taking one char, one scalar/series and one
-           matrix/series/scalar as args */
+        /* functions taking one char, one scalar and one
+           scalar/series/matrix as args */
         if (l->t != STR) {
             node_type_error(t->t, 1, STR, l, p);
         } else if (!scalar_node(m)) {
