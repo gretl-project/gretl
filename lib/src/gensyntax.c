@@ -881,7 +881,7 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
     return ret;
 }
 
-static void get_matrix_def (NODE *t, parser *p, int *sub)
+static void get_matrix_def (NODE *t, parser *p)
 {
     NODE *n;
     char cexp = 0;
@@ -915,10 +915,6 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 		lex(p);
 	    } else if (p->sym == G_RCB) {
 		/* right curly bracket: reached the end */
-		if (p->ch == '[') {
-		    parser_ungetc(p);
-		    *sub = 1;
-		}
 		break;
 	    } else {
 		/* something that doesn't belong here */
@@ -1462,7 +1458,9 @@ static NODE *powterm (parser *p, NODE *l)
     } else if (func1_symb(sym)) {
 	t = new_node(sym);
 	if (t != NULL) {
-	    t->v.ptr = p->data; /* attach function pointer, if available */
+	    if (sym < FP_MAX) {
+		t->v.ptr = p->data; /* attach function pointer */
+	    }
 	    lex(p);
 	    get_args(t, p, sym, 1, opt, &next);
 	}
@@ -1479,7 +1477,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (sym == LAG) {
 	    set_lag_parse_off(p);
 	}
-    } else if (sym == MSL || sym == OSL) {
+    } else if (sym == OSL) {
 	t = new_node(sym);
 	if (t != NULL) {
 	    t->L = newref(p, p->upsym);
@@ -1534,25 +1532,12 @@ static NODE *powterm (parser *p, NODE *l)
 	/* parenthesized expression */
 	t = base(p, NULL);
     } else if (sym == G_LCB) {
-	/* explicit matrix definition, possibly followed by
-	   a "subslice" specification */
-	int sub = 0;
-
+	/* explicit matrix definition */
 	t = new_node(F_DEFMAT);
 	if (t != NULL) {
-	    t->L = newbn(MDEF);
+	    t->L = newbn(FARGS);
 	    if (t->L != NULL) {
-		get_matrix_def(t->L, p, &sub);
-	    }
-	    if (sub) {
-		t = newb2(MSL, t, NULL);
-		if (t != NULL) {
-		    t->R = new_node(SLRAW);
-		    if (t->R != NULL) {
-			lex(p);
-			get_slice_parts(t->R, p);
-		    }
-		}
+		get_matrix_def(t->L, p);
 	    }
 	}
     } else if (sym == UFUN || sym == RFUN) {

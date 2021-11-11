@@ -98,20 +98,18 @@ enum {
 	      NUM_P,      /* user scalar++ */
 	      NUM_M,      /* user scalar-- */
 	      OBS,	  /* observation from a series */
-              MSL,	  /* matrix plus subspec */
-  /* 70 */    DMSTR,	  /* "dollar" matrix plus string subspec */
-	      SLRAW,	  /* unevaluated "slice" specification */
+	      DMSTR,	  /* "dollar" matrix plus string subspec */
+  /* 70 */    SLRAW,	  /* unevaluated "slice" specification */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
-	      MDEF,	  /* explicit matrix definition {...} */
               LAG,        /* variable plus lag length */
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      LISTVAR,    /* variable in list, dot syntax */
 	      DBUNDLE,    /* $ bundle accessor */
-  /* 80 */    BMEMB,      /* member of bundle */
+	      BMEMB,      /* member of bundle */
 	      DBMEMB,     /* member of $ bundle */
-	      MMEMB,      /* member of named model */
+  /* 80 */    MMEMB,      /* member of named model */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
@@ -119,9 +117,9 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-  /* 90 */    IVEC,       /* array of ints, not a varlist */
-	      OSL,        /* "slice" of object other than matrix */
-	      USERIES,    /* named series (defined only for error reporting) */
+	      IVEC,       /* array of ints, not a varlist */
+	      OSL,        /* "slice" of object (matrix, array, string) */
+  /* 90 */    USERIES,    /* named series (defined only for error reporting) */
 	      SUB_ADDR,   /* "address" of (e.g.) array element */
               INC,        /* increment */
               DEC,        /* decrement */
@@ -165,11 +163,11 @@ enum {
     F_CNORM,
     F_DNORM,
     F_QNORM,
-    F_CARG,
-    F_CMOD,
+    F_LOGISTIC,
     F_REAL,
     F_IMAG,
-    F_LOGISTIC,
+    F_CARG,
+    F_CMOD,
     FP_MAX,      /* separator: end of pointerized functions */
     F_CONJ,
     F_TOINT,
@@ -553,7 +551,7 @@ enum {
 #define func3_symb(s) (s > F2_MAX && s < F3_MAX)
 #define funcn_symb(s) (s > F3_MAX && s < FN_MAX)
 
-#define bnsym(s) (s == MDEF || s == FARGS)
+#define bnsym(s) (s == FARGS)
 
 #define alias_reversed(n) (n->flags & ALS_NODE)
 

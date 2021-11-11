@@ -245,11 +245,11 @@ struct str_table_ex ptrfuncs[] = {
     { F_CNORM, "cnorm", normal_cdf },
     { F_DNORM, "dnorm", normal_pdf },
     { F_QNORM, "qnorm", normal_cdf_inverse },
-    { F_CARG,  "carg",  carg },
-    { F_CMOD,  "cmod",  cabs },
+    { F_LOGISTIC, "logistic", logistic_cdf },
     { F_REAL,  "Re",    creal },
     { F_IMAG,  "Im",    cimag },
-    { F_LOGISTIC, "logistic", logistic_cdf },
+    { F_CARG,  "carg",  carg },
+    { F_CMOD,  "cmod",  cabs },
     { 0, NULL, NULL }
 };
 
@@ -1642,9 +1642,6 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = LIST;
 		}
 		p->idstr = gretl_strdup(s);
-	    } else if (gretl_get_object_by_name(s)) {
-		p->sym = UOBJ;
-		p->idstr = gretl_strdup(s);
 	    } else if (defining_list(p) && varname_match_any(p->dset, s)) {
 		p->sym = WLIST;
 		p->idstr = gretl_strdup(s);
@@ -1668,6 +1665,9 @@ static void look_up_word (const char *s, parser *p)
 		/* deprecated */
 		p->idnum = CONST_PI;
 		p->sym = CON;
+	    } else if (gretl_get_object_by_name(s)) {
+		p->sym = UOBJ;
+		p->idstr = gretl_strdup(s);
 	    } else {
 		err = E_UNKVAR;
 	    }
@@ -1763,23 +1763,21 @@ static void word_check_next_char (parser *p)
 	}
     } else if (p->ch == '[') {
 	p->upsym = p->sym;
-	if (p->sym == MAT) {
-	    /* slice of user matrix */
-	    p->sym = MSL;
+	if (p->sym == MAT || p->sym == ARRAY ||
+	    p->sym == LIST || p->sym == STR) {
+	    /* slice of sliceable object */
+	    p->sym = OSL;
 	} else if (*p->point != '"' &&
 		   (p->sym == MVAR || p->sym == DVAR) &&
 		   could_be_matrix(p->idnum)) {
 	    /* slice of $-matrix? */
-	    p->sym = MSL;
+	    p->sym = OSL;
 	} else if (p->sym == SERIES) {
 	    /* observation from series */
 	    p->sym = OBS;
 	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
 	    /* observation from "dollar" series */
 	    p->sym = OBS;
-	} else if (p->sym == ARRAY || p->sym == LIST || p->sym == STR) {
-	    /* element or range of array, list or string */
-	    p->sym = OSL;
 	} else if (p->sym == MVAR && model_data_list(p->idnum)) {
 	    /* element/range of accessor list */
 	    p->sym = OSL;
@@ -2370,7 +2368,10 @@ void lex (parser *p)
 
 const char *getsymb_full (int t, const parser *p)
 {
-    if ((t > F1_MIN && t < F1_MAX) ||
+    if (t == F_DEFMAT) {
+	/* pseudo function */
+	return "DEFMAT";
+    } else if ((t > F1_MIN && t < F1_MAX) ||
 	(t > F1_MAX && t < F2_MAX) ||
 	(t > F2_MAX && t < FN_MAX)) {
 	return funname(t);
@@ -2383,8 +2384,6 @@ const char *getsymb_full (int t, const parser *p)
     /* yes, well */
     if (t == OBS) {
 	return "OBS";
-    } else if (t == MSL) {
-	return "MSL";
     } else if (t == OSL) {
 	return "OSL";
     } else if (t == SUB_ADDR) {
@@ -2397,8 +2396,6 @@ const char *getsymb_full (int t, const parser *p)
 	return "MSPEC";
     } else if (t == SUBSL) {
 	return "SUBSL";
-    } else if (t == MDEF) {
-	return "MDEF";
     } else if (t == FARGS) {
 	return "FARGS";
     } else if (t == LIST || t == WLIST) {

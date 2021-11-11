@@ -6271,7 +6271,7 @@ static int object_end_index (NODE *t, parser *p)
 	if (pa->t == SLRAW) {
 	    idx2 = (t == pa->R || (last != NULL && last == pa->R));
 	}
-	if (pa->t == MSL || pa->t == OSL) {
+	if (pa->t == OSL) {
 	    obj = (pa->L->aux != NULL)? pa->L->aux : pa->L;
 	    break;
 	} else {
@@ -14638,7 +14638,7 @@ static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "Processing MDEF...\n");
+    fprintf(stderr, "Processing DEFMAT...\n");
 #endif
 
     for (i=0; i<k && !p->err; i++) {
@@ -16163,7 +16163,7 @@ static NODE *eval (NODE *t, parser *p)
 	rdone = 1;
     }
 
-    if (!p->err && t->L && !ldone) {
+    if (!p->err && t->L != NULL && !ldone) {
 	t->L->parent = t;
         if (t->t == F_EXISTS || t->t == F_TYPEOF) {
             p->flags |= P_OBJQRY;
@@ -16707,16 +16707,6 @@ static NODE *eval (NODE *t, parser *p)
             ret = lhs_terminal_node(t, l, r, p);
         } else {
             ret = series_obs(l, r, p);
-        }
-        break;
-    case MSL:
-        /* matrix plus subspec */
-        if (t->flags & LHT_NODE) {
-            ret = lhs_terminal_node(t, l, r, p);
-        } else if (l->t == MAT && r->t == MSPEC) {
-            ret = submatrix_node(l, r, p);
-        } else {
-            p->err = E_TYPES;
         }
         break;
     case OSL:
@@ -18058,7 +18048,7 @@ static void printnode (NODE *t, parser *p, int value)
         printsymb(t->t, p);
         printnode(t->R, p, 0);
         pputc(p->prn, ')');
-    } else if (t->t == MSL) {
+    } else if (t->t == OSL) {
         printnode(t->L, p, 0);
         pputc(p->prn, '[');
         printnode(t->R, p, 0);
@@ -18088,8 +18078,6 @@ static void printnode (NODE *t, parser *p, int value)
         pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == PTR) {
         pprintf(p->prn, "%s", t->vname);
-    } else if (t->t == MDEF) {
-        pprintf(p->prn, "{ MDEF }");
     } else if (t->t == DMSTR || t->t == UFUN) {
         printnode(t->L, p, 0);
         pputc(p->prn, '(');
@@ -18460,7 +18448,7 @@ static int compound_const_check (NODE *lhs, parser *p)
         }
     }
 
-    while (n->t == MSL || n->t == OBS || n->t == BMEMB || n->t == OSL) {
+    while (n->t == OSL || n->t == OBS || n->t == BMEMB) {
         n = n->L;
         if (i == 0 && lhs->t == OSL && n->t == ARRAY) {
             if (gretl_array_get_type(n->v.a) == GRETL_TYPE_LISTS) {
@@ -19596,7 +19584,7 @@ static int explore_node (NODE *t, int lev, NODE *prev,
 	fprintf(stderr, "doing ASSIGN to %s\n\n",
 		t->t == MAT ? "MAT" : "aux MAT");
 #endif
-	pms.t = MSL;
+	pms.t = OSL;
 	/* pms.L: node holding target matrix */
 	pms.L = t->t == MAT ? t : t->aux;
 	/* pms.R: node holding mspec */
@@ -19748,8 +19736,6 @@ static int save_generated_var (parser *p, PRN *prn)
 #endif
 	if (compound_t == BMEMB) {
 	    p->err = set_bundle_value(p->lhres, r, p);
-	} else if (compound_t == MSL) {
-	    p->err = set_matrix_chunk(p->lhres, r, p);
 	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
 	} else if (compound_t == OSL) {
