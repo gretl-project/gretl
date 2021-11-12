@@ -1763,21 +1763,6 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
     }
 }
 
-static void
-get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
-			 char *haystack)
-{
-    gchar *tmp = NULL;
-
-    gtk_tree_model_get(mod, iter, col, &tmp, -1);
-    if (tmp != NULL) {
-	strcpy(haystack, tmp);
-	g_free(tmp);
-    } else {
-	*haystack = '\0';
-    }
-}
-
 static gboolean real_find_in_listbox (windata_t *vwin,
 				      const gchar *s,
 				      gboolean sensitive,
@@ -1785,7 +1770,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 {
     int search_cols[4] = {0, 0, -1, -1};
     int minvar, wrapped = 0;
-    char haystack[MAXLEN];
+    gchar *haystack;
     char pstr[16];
     GtkTreeModel *model = NULL;
     GtkTreeIter iter;
@@ -1835,6 +1820,9 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	search_cols[0] = 0;  /* package name */
 	search_cols[1] = 4;  /* description */
 	search_cols[2] = 3;  /* author */
+    } else if (vwin->role == DBNOMICS_DB) {
+	search_cols[0] = 1;  /* content */
+	search_cols[1] = 0;  /* code */
     } else {
 	/* databases, datafiles */
 	search_cols[0] = 1; /* description */
@@ -1845,8 +1833,14 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 
     while (pos < 0) {
 	for (i=0; pos < 0 && search_cols[i] >= 0; i++) {
-	    get_tree_model_haystack(model, &iter, search_cols[i], haystack);
-	    pos = string_match_pos(haystack, needle, sensitive, 0);
+	    gtk_tree_model_get(model, &iter, i, &haystack, -1);
+	    if (haystack != NULL) {
+		if (*haystack != '\0') {
+		    pos = string_match_pos(haystack, needle, sensitive, 0);
+		}
+		g_free(haystack);
+		haystack = NULL;
+	    }
 	}
 	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
 	    break;
@@ -1886,9 +1880,9 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 gboolean find_package_in_viewer (windata_t *vwin,
 				 const gchar *targ)
 {
-    char haystack[MAXLEN];
     GtkTreeModel *model;
     GtkTreeIter iter;
+    gchar *haystack;
     int pos = -1;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
@@ -1898,10 +1892,16 @@ gboolean find_package_in_viewer (windata_t *vwin,
     }
 
     while (pos < 0) {
-	get_tree_model_haystack(model, &iter, 0, haystack);
-	pos = string_match_pos(haystack, targ, TRUE, 0);
-	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
-	    break;
+	gtk_tree_model_get(model, &iter, 0, &haystack);
+	if (haystack != NULL) {
+	    if (*haystack != '\0') {
+		pos = string_match_pos(haystack, targ, TRUE, 0);
+	    }
+	    g_free(haystack);
+	    haystack = NULL;
+	    if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
+		break;
+	    }
 	}
     }
 
