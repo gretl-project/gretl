@@ -10386,6 +10386,9 @@ static int gui_do_smpl (CMD *cmd, DATASET *dset, PRN *prn)
     } else if (cmd->opt & OPT_U) {
         /* the panel --unit option */
         err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset);
+    } else if (cmd->opt & OPT_X) {
+	/* the panel --time option */
+	err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset);
     } else if (smpl_restrict(cmd->opt)) {
         /* --restrict, --dummy, etc. */
         err = restrict_sample(cmd->param, cmd->list, dset,
