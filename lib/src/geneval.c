@@ -15177,23 +15177,16 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 }
 
 /* Evaluate a ternary "query" expression: C ? X : Y.  The condition C
-   may be a scalar, series or matrix.  The relevant sub-nodes of @t
-   are named "l" (left, the condition), "m" and "r" (middle and right
-   respectively, the two alternates).
+   may be a scalar, series or matrix. On entry to this function @c will
+   hold the evaluated C; the alternates are represented by the M and R
+   sub-nodes of @t, not yet evaluated.
 */
 
-static NODE *eval_query (NODE *t, parser *p)
+static NODE *eval_query (NODE *t, NODE *c, parser *p)
 {
-    NODE *save_aux = p->aux;
-    NODE *c, *ret = NULL;
-
-    /* evaluate and check the condition */
-    c = eval(t->L, p);
+    NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "eval_query: t=%p, l=%p, m=%p, r=%p\n",
-            (void *) t, (void *) t->L, (void *) t->M,
-            (void *) t->R);
     if (c->t == NUM) {
         fprintf(stderr, " condition type=NUM, value=%g\n", c->v.xval);
     } else {
@@ -15201,22 +15194,19 @@ static NODE *eval_query (NODE *t, parser *p)
     }
 #endif
 
-    if (!p->err) {
-        reset_p_aux(p, save_aux);
-        if (c->t == NUM) {
-            ret = query_eval_scalar(c->v.xval, t, p);
-        } else if (c->t == SERIES) {
-            ret = query_eval_series(c->v.xvec, t, p);
-        } else if (c->t == MAT) {
-            if (gretl_matrix_is_scalar(c->v.m)) {
-                ret = query_eval_scalar(c->v.m->val[0], t, p);
-            } else {
-                ret = query_eval_matrix(c->v.m, t, p);
-            }
-        } else {
-            /* invalid type for boolean condition */
-            p->err = E_TYPES;
-        }
+    if (c->t == NUM) {
+	ret = query_eval_scalar(c->v.xval, t, p);
+    } else if (c->t == SERIES) {
+	ret = query_eval_series(c->v.xvec, t, p);
+    } else if (c->t == MAT) {
+	if (gretl_matrix_is_scalar(c->v.m)) {
+	    ret = query_eval_scalar(c->v.m->val[0], t, p);
+	} else {
+	    ret = query_eval_matrix(c->v.m, t, p);
+	}
+    } else {
+	/* invalid type for boolean condition */
+	p->err = E_TYPES;
     }
 
 #if EDEBUG
@@ -16149,7 +16139,12 @@ static NODE *eval (NODE *t, parser *p)
 
     if (t->t == QUERY) {
         /* needs special treatment, see eval_query() */
-        goto do_switch;
+	l = eval(t->L, p);
+	if (p->err) {
+	    goto bailout;
+	} else {
+	    goto do_switch;
+	}
     }
 
     /* handle multi-argument L or R subnodes */
@@ -17518,7 +17513,7 @@ static NODE *eval (NODE *t, parser *p)
         ret = eval_Rfunc(t, multi, p);
         break;
     case QUERY:
-        ret = eval_query(t, p);
+        ret = eval_query(t, l, p);
         break;
     case B_LCAT:
         /* list concatenation */
