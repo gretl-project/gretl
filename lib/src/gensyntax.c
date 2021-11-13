@@ -1329,9 +1329,7 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 
 static NODE *powterm (parser *p, NODE *l)
 {
-    /* watch out for unary operators */
-    int sym = p->sym == B_SUB ? U_NEG :
-	p->sym == B_ADD ? U_POS : p->sym;
+    int sym = p->sym;
     int opt = OPT_NONE;
     int next = 0;
     NODE *t = NULL;
@@ -1386,21 +1384,11 @@ static NODE *powterm (parser *p, NODE *l)
 	opt |= MID_STR;
     }
 
-    if (unary_op(sym)) {
-	if (p->ch == 0) {
-	    context_error(0, p, "powterm");
-	    return NULL;
-	}
+    if (sym == U_ADDR) {
         t = new_node(sym);
         if (t != NULL) {
             lex(p);
-	    if (sym == U_ADDR) {
-		t->L = u_addr_base(p);
-	    } else {
-		/* FIXME we never come here? See factor() */
-		t->L = powterm(p, NULL);
-		fprintf(stderr, "unary: L = %p\n", (void *) t->L);
-	    }
+	    t->L = u_addr_base(p);
         }
     } else if (func2_symb(sym)) {
 	int unset = 0;
@@ -1643,14 +1631,10 @@ static NODE *factor (parser *p)
     }
 
     if (unary_op(sym) && sym != U_ADDR) {
-	if (p->ch == 0) {
-	    context_error(0, p, "factor");
-	    return NULL;
-	}
         t = new_node(sym);
         if (t != NULL) {
             lex(p);
-            t->L = factor(p);
+	    t->L = factor(p);
         }
     } else {
 	t = powterm(p, NULL);
