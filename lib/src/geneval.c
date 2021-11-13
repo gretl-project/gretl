@@ -14912,7 +14912,7 @@ enum {
 
 /* Determine whether or not a series is constant in boolean terms,
    i.e. all elements zero, or all non-zero, over the relevant range.
-   If so, return FORK_L (all 1) or FORK_R (all 0), othewise
+   If so, return FORK_L (all 1) or FORK_R (all 0), otherwise
    return FORK_UNK.
 */
 
