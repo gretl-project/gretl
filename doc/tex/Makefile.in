@@ -53,7 +53,7 @@ GUIDETEX = gretl-guide.tex \
 	discrete.tex \
 	looping.tex \
 	functions.tex \
-	persistent.tex \
+	lists_strings.tex \
 	string_series.tex \
 	matrices.tex \
 	complex_matrices.tex \
