@@ -15016,10 +15016,9 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
 {
     NODE *save_aux = p->aux;
     NODE *l = NULL, *r = NULL, *ret = NULL;
-    int indef = na(x) || isnan(x);
     int branch;
 
-    branch = indef ? FORK_NONE : (x != 0 ? FORK_L : FORK_R);
+    branch = na(x) ? FORK_NONE : (x != 0 ? FORK_L : FORK_R);
 
     if (autoreg(p) || branch != FORK_R) {
         l = eval(n->M, p);
