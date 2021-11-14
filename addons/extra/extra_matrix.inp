@@ -256,22 +256,22 @@ end function
 ####
 
 # this is originally from Jack's StrucTiSM code 
-function matrix qformvech(const matrix X)
+function matrix qformvech(const matrix Xt)
     # vech(X'AX) = P (X ** X)' Q vech(A) = G vech(A)
     # this function returns G
 
-    n = rows(X)
+    n = rows(Xt)
     m = round(n * (n+1) / 2)
     matrix s = seq(1,m)
     matrix P = vec(upper(unvech(s'))) .= s
 
-    n = cols(X)
+    n = cols(Xt)
     m = round(n * (n+1) / 2)
     s = seq(1,m)
     matrix Q = vec(upper(unvech(s'))) .= s
     Q =   Q || vec(lower(unvech(s'))) .= s
 
-    matrix ret = P'(X ** X) * Q
+    matrix ret = P'(Xt ** Xt) * Q
     return ret
 end function
 
