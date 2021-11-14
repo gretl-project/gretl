@@ -2,6 +2,7 @@ version 2021e, in progress
 - Panel data time dimension: add apparatus to specify this
   via the graphical interface
 - Packaged panel data files: add more metadata where wanted
+- Add a daily data file to the package: bikesharing.gdt
 - Ensure the expected round-trip from strptime to strftime
   for underspecified dates such as "1990"
 - "set seed" command: allow parameter "auto" to revert to an

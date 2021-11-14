@@ -225,9 +225,10 @@ is a vector. Otherwise the comma is mandatory.
 
 In addition there are some predefined index specifications,
 represented by the keywords \texttt{diag}, \texttt{lower},
-\texttt{upper}, \texttt{real} and \texttt{imag}. These imply specific
-row \textit{and} column selections, and therefore cannot be combined
-with any additional, comma-separated term.
+\texttt{upper}, \texttt{real}, \texttt{imag} and \texttt{end}. With
+the exception of \texttt{end}, these keywords imply specific row
+\textit{and} column selections, and therefore cannot be combined with
+any additional, comma-separated term.
 
 \begin{itemize}
 \item The \texttt{diag} specification selects the principal diagonal
@@ -236,6 +237,9 @@ with any additional, comma-separated term.
   elements of a matrix below and those above the principal diagonal.
 \item \texttt{real} and \texttt{imag} are specific to complex matrices
   and are described in chapter~\ref{chap:complex}.
+\item \texttt{end} selects the last element in a given row or column.
+  It can be employed in arithmetical expressions, so for example
+  \texttt{end-1} accesses the second-last element in a row or column.
 \end{itemize}
 
 You can use submatrix selections on either the right-hand side of a

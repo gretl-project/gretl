@@ -204,6 +204,28 @@ static NODE *newbn (int t)
     return n;
 }
 
+NODE *bncopy (NODE *t, int *err)
+{
+    NODE *n = new_node(t->t);
+
+    if (n != NULL) {
+	int i, k = t->v.bn.n_nodes;
+	NODE **nn = malloc(k * sizeof *nn);
+
+	if (nn == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    n->v.bn.n_nodes = k;
+	    n->v.bn.n = nn;
+	    for (i=0; i<k; i++) {
+		n->v.bn.n[i] = t->v.bn.n[i];
+	    }
+	}
+    }
+
+    return n;
+}
+
 static int push_bn_node (NODE *t, NODE *n)
 {
     NODE **nn;
@@ -859,7 +881,7 @@ static NODE *get_bundle_member_name (parser *p, int dollarize)
     return ret;
 }
 
-static void get_matrix_def (NODE *t, parser *p, int *sub)
+static void get_matrix_def (NODE *t, parser *p)
 {
     NODE *n;
     char cexp = 0;
@@ -893,10 +915,6 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 		lex(p);
 	    } else if (p->sym == G_RCB) {
 		/* right curly bracket: reached the end */
-		if (p->ch == '[') {
-		    parser_ungetc(p);
-		    *sub = 1;
-		}
 		break;
 	    } else {
 		/* something that doesn't belong here */
@@ -1311,9 +1329,7 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 
 static NODE *powterm (parser *p, NODE *l)
 {
-    /* watch out for unary operators */
-    int sym = p->sym == B_SUB ? U_NEG :
-	p->sym == B_ADD ? U_POS : p->sym;
+    int sym = p->sym;
     int opt = OPT_NONE;
     int next = 0;
     NODE *t = NULL;
@@ -1368,21 +1384,11 @@ static NODE *powterm (parser *p, NODE *l)
 	opt |= MID_STR;
     }
 
-    if (unary_op(sym)) {
-	if (p->ch == 0) {
-	    context_error(0, p, "powterm");
-	    return NULL;
-	}
+    if (sym == U_ADDR) {
         t = new_node(sym);
         if (t != NULL) {
             lex(p);
-	    if (sym == U_ADDR) {
-		t->L = u_addr_base(p);
-	    } else {
-		/* FIXME we never come here? See factor() */
-		t->L = powterm(p, NULL);
-		fprintf(stderr, "unary: L = %p\n", (void *) t->L);
-	    }
+	    t->L = u_addr_base(p);
         }
     } else if (func2_symb(sym)) {
 	int unset = 0;
@@ -1440,7 +1446,9 @@ static NODE *powterm (parser *p, NODE *l)
     } else if (func1_symb(sym)) {
 	t = new_node(sym);
 	if (t != NULL) {
-	    t->v.ptr = p->data; /* attach function pointer, if available */
+	    if (sym < FP_MAX) {
+		t->v.ptr = p->data; /* attach function pointer */
+	    }
 	    lex(p);
 	    get_args(t, p, sym, 1, opt, &next);
 	}
@@ -1457,7 +1465,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (sym == LAG) {
 	    set_lag_parse_off(p);
 	}
-    } else if (sym == MSL || sym == OSL) {
+    } else if (sym == OSL) {
 	t = new_node(sym);
 	if (t != NULL) {
 	    t->L = newref(p, p->upsym);
@@ -1512,22 +1520,12 @@ static NODE *powterm (parser *p, NODE *l)
 	/* parenthesized expression */
 	t = base(p, NULL);
     } else if (sym == G_LCB) {
-	/* explicit matrix definition, possibly followed by
-	   a "subslice" specification */
-	int sub = 0;
-
-	t = newbn(MDEF);
+	/* explicit matrix definition */
+	t = new_node(F_DEFMAT);
 	if (t != NULL) {
-	    get_matrix_def(t, p, &sub);
-	    if (sub) {
-		t = newb2(MSL, t, NULL);
-		if (t != NULL) {
-		    t->R = new_node(SLRAW);
-		    if (t->R != NULL) {
-			lex(p);
-			get_slice_parts(t->R, p);
-		    }
-		}
+	    t->L = newbn(FARGS);
+	    if (t->L != NULL) {
+		get_matrix_def(t->L, p);
 	    }
 	}
     } else if (sym == UFUN || sym == RFUN) {
@@ -1540,7 +1538,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	    lex(p);
 	    t->R = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t->R != NULL) {
 		get_args(t->R, p, sym, -1, opt, &next);
 	    }
 	}
@@ -1549,7 +1547,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t->L != NULL) {
 		get_bundle_pairs(t->L, p, &next);
 	    }
 	}
@@ -1558,7 +1556,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t->L != NULL) {
 		int k = -1;
 
 		if (sym == F_NRMAX ||
@@ -1633,14 +1631,10 @@ static NODE *factor (parser *p)
     }
 
     if (unary_op(sym) && sym != U_ADDR) {
-	if (p->ch == 0) {
-	    context_error(0, p, "factor");
-	    return NULL;
-	}
         t = new_node(sym);
         if (t != NULL) {
             lex(p);
-            t->L = factor(p);
+	    t->L = factor(p);
         }
     } else {
 	t = powterm(p, NULL);

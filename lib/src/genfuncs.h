@@ -202,23 +202,6 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 
 double logistic_cdf (double x);
 
-gretl_matrix *tdisagg_matrix_from_series (const double *x,
-					  int xnum,
-					  const int *list,
-					  const DATASET *dset,
-					  int cfac, int *err);
-
-gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
-			      const gretl_matrix *X,
-			      int f, gretl_bundle *b,
-			      gretl_bundle *res,
-			      DATASET *dset,
-			      PRN *prn, int *err);
-
-gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
-			      const gretl_matrix *X,
-			      int s, int *err);
-
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 
 int nadaraya_watson (const double *y, const double *x, double h,
