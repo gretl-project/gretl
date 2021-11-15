@@ -4973,6 +4973,11 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
     }
 
+    /* wants data access? */
+    if (finfo->data_access) {
+	pputs(prn, "wants-data-access = true\n");
+    }
+
     /* write out dependency listing? */
     if (finfo->depends != NULL) {
 	pputs(prn, "depends = ");
