@@ -64,7 +64,7 @@ struct diag_info_ {
     int minlag;  /* minimum lag order */
     int maxlag;  /* maximum lag order */
     int level;   /* instrument spec is for levels */
-    int rows;    /* max rows occupied in Zi (for dpanel only) */
+    int rows;    /* max rows occupied in Zi */
     int tbase;   /* first obs with potentially available instruments */
 };
 
@@ -250,7 +250,7 @@ static int dpd_flags_from_opt (gretlopt opt)
     return f;
 }
 
-static ddset *ddset_new (int ci, int *list, const int *ylags,
+static ddset *ddset_new (int *list, const int *ylags,
 			 const DATASET *dset, gretlopt opt,
 			 diag_info *d, int nzb, int *err)
 {
@@ -1376,31 +1376,16 @@ static void dpd_add_param_names (MODEL *pmod, ddset *dpd,
     char tmp[32];
     int i, j = 0;
 
-    if (pmod->ci == DPANEL) {
-	if (dpd->laglist != NULL) {
-	    for (i=1; i<=dpd->laglist[0]; i++) {
-		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno],
-			dpd->laglist[i]);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
-	} else {
-	    for (i=0; i<dpd->p; i++) {
-		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
+    if (dpd->laglist != NULL) {
+	for (i=1; i<=dpd->laglist[0]; i++) {
+	    sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno],
+		    dpd->laglist[i]);
+	    gretl_model_set_param_name(pmod, j++, tmp);
 	}
     } else {
-	if (dpd->laglist != NULL) {
-	    for (i=1; i<=dpd->laglist[0]; i++) {
-		sprintf(tmp, "D%.10s(-%d)", dset->varname[dpd->yno],
-			dpd->laglist[i]);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
-	} else {
-	    for (i=0; i<dpd->p; i++) {
-		sprintf(tmp, "D%.10s(-%d)", dset->varname[dpd->yno], i+1);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
+	for (i=0; i<dpd->p; i++) {
+	    sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
+	    gretl_model_set_param_name(pmod, j++, tmp);
 	}
     }
 
@@ -1559,17 +1544,15 @@ static int dpd_finalize_model (MODEL *pmod,
 	if (dpd->flags & DPD_TIMEDUM) {
 	    pmod->opt |= OPT_D;
 	}
-	if (pmod->ci == DPANEL) {
-	    if (dpd->flags & DPD_SYSTEM) {
-		pmod->opt |= OPT_L;
-	    }
-	    if (dpd_style(dpd)) {
-		pmod->opt |= OPT_X;
-	    }
-	    if (dpd->maxTi > 0 && dpd->minTi > 0 && dpd->maxTi > dpd->minTi) {
-		gretl_model_set_int(pmod, "Tmin", dpd->minTi);
-		gretl_model_set_int(pmod, "Tmax", dpd->maxTi);
-	    }
+	if (dpd->flags & DPD_SYSTEM) {
+	    pmod->opt |= OPT_L;
+	}
+	if (dpd_style(dpd)) {
+	    pmod->opt |= OPT_X;
+	}
+	if (dpd->maxTi > 0 && dpd->minTi > 0 && dpd->maxTi > dpd->minTi) {
+	    gretl_model_set_int(pmod, "Tmin", dpd->minTi);
+	    gretl_model_set_int(pmod, "Tmax", dpd->maxTi);
 	}
     }
 
@@ -1862,7 +1845,7 @@ static int diag_try_list (const char *vname, int *vp, int *nd,
    exists and that m1 and m2 have sane values.
 */
 
-static int parse_diag_info (int ci, const char *s, diag_info **dp,
+static int parse_diag_info (const char *s, diag_info **dp,
 			    int *ip, int *nd, const DATASET *dset)
 {
     char vname[VNAMELEN];
@@ -1926,7 +1909,7 @@ static int parse_diag_info (int ci, const char *s, diag_info **dp,
 */
 
 static int
-parse_GMM_instrument_spec (int ci, const char *spec,
+parse_GMM_instrument_spec (const char *spec,
 			   const DATASET *dset,
 			   diag_info **pd, int *pnspec,
 			   int *pnlevel)
@@ -1973,7 +1956,7 @@ parse_GMM_instrument_spec (int ci, const char *spec,
 	    } else {
 		*test = '\0';
 		strncat(test, s, len);
-		err = parse_diag_info(ci, test, &d, &i, &nspec, dset);
+		err = parse_diag_info(test, &d, &i, &nspec, dset);
 		s = p + 1;
 	    }
 	}
@@ -3469,10 +3452,7 @@ static int print_step_1 (ddset *dpd, MODEL *pmod,
     return err;
 }
 
-/* Public interface for new dpanel command.
-   To build the H matrix as per Ox/DPD use
-   the option --dpdstyle (OPT_X).
-*/
+/* Public interface for the dpanel command */
 
 MODEL dpd_estimate (const int *list, const int *laglist,
 		    const char *ispec, const DATASET *dset,
@@ -3498,8 +3478,8 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, dset,
-						&d, &nzb, &nlevel);
+	mod.errcode = parse_GMM_instrument_spec(ispec, dset, &d,
+						&nzb, &nlevel);
 	if (mod.errcode) {
 	    return mod;
 	}
@@ -3516,7 +3496,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 	return mod;
     }
 
-    dpd = ddset_new(DPANEL, dlist, laglist, dset, opt, d, nzb, &mod.errcode);
+    dpd = ddset_new(dlist, laglist, dset, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
