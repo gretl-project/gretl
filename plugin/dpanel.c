@@ -2043,11 +2043,6 @@ static void dpanel_residuals (dpmod *dpd)
     }
 
     if (gmm_sys(dpd)) {
-	/* we could attach these to the final model */
-#if 0
-	fprintf(stderr, "nobs (diffs) = %d\n", dpd->ndiff);
-	fprintf(stderr, "SSR (diffs) = %g\n", SSRd);
-#endif
 	dpd->nobs = dpd->nlev;
 	dpd->SSR = SSRl;
     } else {
@@ -2058,10 +2053,17 @@ static void dpanel_residuals (dpmod *dpd)
     if (dpd_style(dpd)) {
 	dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
     } else {
-	/* xtabond2 always uses differences for this,
-	   without a df-correction, it seems
+	/* The following produces agreement with xtabond2's Sargan
+	   test in the GMM-diff case, but I haven't yet figured
+	   out the GMM-system case.
 	*/
 	dpd->s2 = SSRd / dpd->ndiff;
+#if 0
+	fprintf(stderr, "s2 variants: %g, %g, %g, %g\n",
+		SSRd / dpd->ndiff, SSRl / dpd->nlev,
+		(SSRd + SSRl) / dpd->nobs,
+		(SSRd + SSRl) / (dpd->ndiff + dpd->nlev));
+#endif
     }
 }
 
