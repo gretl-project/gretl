@@ -2224,7 +2224,11 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 #if IVDEBUG
 	    fprintf(stderr, "  max insts at t=%d = %d\n", t, ii);
 #endif
-	    imax += ii; /* FIXME collapse case */
+	    if (collapse(dpd)) {
+		if (ii > imax) imax = ii;
+	    } else {
+		imax += ii;
+	    }
 	}
 
 #if IVDEBUG
@@ -2312,7 +2316,11 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 #if IVDEBUG
 	    fprintf(stderr, "  max insts at t=%d = %d\n", t, ii);
 #endif
-	    imax += ii; /* FIXME collapse case */
+	    if (collapse(dpd)) {
+		if (ii > imax) imax = ii;
+	    } else {
+		imax += ii;
+	    }
 	}
 
 #if IVDEBUG
@@ -2769,7 +2777,11 @@ static int gmm_inst_diff (ddset *dpd, int bnum, const double *x,
 	t1 = goodobs[i];
 	t2 = goodobs[i+1];
 	col = col0 + t2 - dpd->dcolskip;
-	row = row0 + row_increment(&dpd->d[bnum], t1+1);
+	if (collapse(dpd)) {
+	    row = row0;
+	} else {
+	    row = row0 + row_increment(&dpd->d[bnum], t1+1);
+	}
 	for (t=0; t<=tmax; t++) {
 	    /* 2010-09-04: this was: t2 - t >= minlag && t1 - t < maxlag */
 	    if (t1 - t >= minlag - 1 && t1 - t < maxlag) {
@@ -2806,7 +2818,11 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
     for (i=1; i<=goodobs[0]; i++) {
 	t1 = goodobs[i];
 	col = col0 + t1 - dpd->lcolskip;
-	row = row0 + row_increment(&dpd->d2[bnum], t1);
+	if (collapse(dpd)) {
+	    row = row0;
+	} else {
+	    row = row0 + row_increment(&dpd->d2[bnum], t1);
+	}
 	for (t=1; t<=tmax; t++) {
 	    k = t1 - t;
 	    if (k <= maxlag && k >= minlag) {
