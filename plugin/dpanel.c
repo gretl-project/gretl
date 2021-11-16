@@ -2179,7 +2179,7 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 	int maxlag = dpd->d[i].maxlag;
 	int usable_maxlag = 0;
 	int tbase = tmax + 2;
-	int ii, itot = 0;
+	int ii, imax = 0;
 
 	dpd->d[i].rows = 0;
 
@@ -2224,18 +2224,18 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 #if IVDEBUG
 	    fprintf(stderr, "  max insts at t=%d = %d\n", t, ii);
 #endif
-	    itot += ii;
+	    imax += ii; /* FIXME collapse case */
 	}
 
 #if IVDEBUG
-	fprintf(stderr, " total insts = %d\n", itot);
+	fprintf(stderr, " total insts = %d\n", imax);
 	fprintf(stderr, " usable maxlag = %d\n", usable_maxlag);
 #endif
 
 	dpd->d[i].tbase = tbase;
-	dpd->d[i].rows = itot;
+	dpd->d[i].rows = imax;
 	dpd->d[i].maxlag = usable_maxlag;
-	nrows += itot;
+	nrows += imax;
     }
 
     return nrows;
@@ -2265,7 +2265,7 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 	int maxlag = dpd->d2[i].maxlag;
 	int usable_maxlag = 0;
 	int tbase = ttop + 1;
-	int ii, itot = 0;
+	int ii, imax = 0;
 
 	dpd->d2[i].rows = 0;
 
@@ -2312,18 +2312,18 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 #if IVDEBUG
 	    fprintf(stderr, "  max insts at t=%d = %d\n", t, ii);
 #endif
-	    itot += ii;
+	    imax += ii; /* FIXME collapse case */
 	}
 
 #if IVDEBUG
-	fprintf(stderr, " total insts = %d\n", itot);
+	fprintf(stderr, " total insts = %d\n", imax);
 	fprintf(stderr, " usable maxlag = %d\n", usable_maxlag);
 #endif
 
 	dpd->d2[i].tbase = tbase;
-	dpd->d2[i].rows = itot;
+	dpd->d2[i].rows = imax;
 	dpd->d2[i].maxlag = usable_maxlag;
-	nrows += itot;
+	nrows += imax;
     }
 
     return nrows;
