@@ -37,11 +37,13 @@ enum {
     DPD_WINCORR  = 1 << 2,
     DPD_SYSTEM   = 1 << 3,
     DPD_DPDSTYLE = 1 << 4,
-    DPD_REDO     = 1 << 5
+    DPD_REDO     = 1 << 5,
+    DPD_COLLAPSE = 1 << 6
 };
 
-#define gmm_sys(d) (d->flags & DPD_SYSTEM)
+#define gmm_sys(d)   (d->flags & DPD_SYSTEM)
 #define dpd_style(d) (d->flags & DPD_DPDSTYLE)
+#define collapse(d)  (d->flags & DPD_COLLAPSE)
 
 #define LEVEL_ONLY 2
 
@@ -231,20 +233,21 @@ static int dpd_flags_from_opt (gretlopt opt)
 	/* include time dummies */
 	f |= DPD_TIMEDUM;
     }
-
     if (opt & OPT_T) {
 	/* two-step estimation */
 	f |= DPD_TWOSTEP;
     }
-
     if (opt & OPT_L) {
 	/* system GMM: include levels equations */
 	f |= DPD_SYSTEM;
     }
-
     if (opt & OPT_X) {
 	/* compute H as per Ox/DPD */
 	f |= DPD_DPDSTYLE;
+    }
+    if (opt & OPT_C) {
+	/* "collapse" instruments as per Roodman */
+	f |= DPD_COLLAPSE;
     }
 
     return f;
@@ -2219,7 +2222,7 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 		}
 	    }
 #if IVDEBUG
-	    fprintf(stderr, "  ii = max insts at t=%d = %d\n", t, ii);
+	    fprintf(stderr, "  max insts at t=%d = %d\n", t, ii);
 #endif
 	    itot += ii;
 	}
@@ -2307,7 +2310,7 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 		}
 	    }
 #if IVDEBUG
-	    fprintf(stderr, "  ii = max insts at t=%d = %d\n", t, ii);
+	    fprintf(stderr, "  max insts at t=%d = %d\n", t, ii);
 #endif
 	    itot += ii;
 	}
@@ -2331,6 +2334,10 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
    maxlag values to what is supported on the data,
    and for each spec, count and record the implied number
    of instrument rows that will appear in the Z matrix.
+
+   Note, 2021-11-15: the functions diff_iv_accounts() and
+   lev_iv_accounts will need inflection to handle the
+   "collapse" case.
 */
 
 static int block_instrument_count (ddset *dpd, int t1lev, int t2pen)
@@ -2856,6 +2863,8 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
         Z' = | G1 :  0 : I1 :  0 |
              |  0 : G2 : I2 : D2 |
 
+   Note 2021-11-15: we'll have to do something different here
+   in the "collapse" case.
 */
 
 static void build_Z (ddset *dpd, int *goodobs,
@@ -2877,7 +2886,7 @@ static void build_Z (ddset *dpd, int *goodobs,
 
 #if IVDEBUG
     if (unit == 0) {
-	fprintf(stderr, "Z0: %d x %d\n", Zi->rows, Zi->cols);
+	fprintf(stderr, "Z is %d x %d\n", Zi->rows, Zi->cols);
 	fprintf(stderr, "  nzb (levels for diffs)  = %d\n", dpd->nzb);
 	fprintf(stderr, "  nzb2 (diffs for levels) = %d\n", dpd->nzb2);
 	fprintf(stderr, "  nzr (differenced exog vars) = %d\n", dpd->nzr);
@@ -2978,7 +2987,7 @@ static int trim_zero_inst (ddset *dpd, PRN *prn)
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->A, "dpd-bigA.mat", 0);
+    gretl_matrix_write_to_file(dpd->A, "dpd-bigA.bin", 0);
 #endif
 
     mask = gretl_matrix_zero_diag_mask(dpd->A, &err);
@@ -3101,7 +3110,7 @@ static void stack_unit_data (ddset *dpd,
     }
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->ZT, "dpdZT.mat", 0);
+    gretl_matrix_write_to_file(dpd->ZT, "dpdZT.bin", 0);
 #endif
 
     *row = s;
@@ -3119,7 +3128,7 @@ static int do_units (ddset *dpd, const DATASET *dset,
 		     int **Goodobs)
 {
 #if DPDEBUG
-    char ystr[16];
+    char istr[32];
 #endif
     gretl_matrix *D = NULL;
     gretl_matrix *Yi = NULL;
@@ -3179,10 +3188,12 @@ static int do_units (ddset *dpd, const DATASET *dset,
 	build_X(dpd, goodobs, dset, t, Xi);
 	build_Z(dpd, goodobs, dset, t, Zi, i);
 #if DPDEBUG
-	sprintf(ystr, "do_units: Y_%d", i);
-	gretl_matrix_print(Yi, ystr);
-	gretl_matrix_print(Xi, "do_units: Xi");
-	gretl_matrix_print(Zi, "do_units: Zi");
+	sprintf(istr, "do_units: Y[%d]", i);
+	gretl_matrix_print(Yi, istr);
+	sprintf(istr, "do_units: X[%d]", i);
+	gretl_matrix_print(Xi, istr);
+	sprintf(istr, "do_units: Z[%d]", i);
+	gretl_matrix_print(Zi, istr);
 #endif
 	if (D != NULL) {
 	    build_unit_H_matrix(dpd, goodobs, D);
@@ -3199,8 +3210,8 @@ static int do_units (ddset *dpd, const DATASET *dset,
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->Y, "dpdY.mat", 0);
-    gretl_matrix_write_as_text(dpd->X, "dpdX.mat", 0);
+    gretl_matrix_write_to_file(dpd->Y, "dpdY.bin", 0);
+    gretl_matrix_write_to_file(dpd->X, "dpdX.bin", 0);
 #endif
 
     gretl_matrix_free(D);
@@ -3512,6 +3523,12 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     if (!err) {
 	do_unit_accounting(dpd, dset, Goodobs);
 	err = dpd_allocate_matrices(dpd);
+#if ADEBUG
+	if (!err) {
+	    fprintf(stderr, "allocate_matrices: dpd->Zi is %d x %d\n",
+		    dpd->Zi->rows, dpd->Zi->cols);
+	}
+#endif
     }
 
     if (!err) {
