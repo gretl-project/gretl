@@ -2055,15 +2055,10 @@ static void dpanel_residuals (dpmod *dpd)
     } else {
 	/* The following produces agreement with xtabond2's Sargan
 	   test in the GMM-diff case, but I haven't yet figured
-	   out the GMM-system case.
+	   out the GMM-system case, particularly with 1-step
+	   estimation.
 	*/
 	dpd->s2 = SSRd / dpd->ndiff;
-#if 0
-	fprintf(stderr, "s2 variants: %g, %g, %g, %g\n",
-		SSRd / dpd->ndiff, SSRl / dpd->nlev,
-		(SSRd + SSRl) / dpd->nobs,
-		(SSRd + SSRl) / (dpd->ndiff + dpd->nlev));
-#endif
     }
 }
 
