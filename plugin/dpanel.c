@@ -1867,13 +1867,14 @@ static int parse_diag_info (const char *s, diag_info **dp,
     }
     s += strspn(s, " ");
 
+    /* count the comma separators */
     c = 0;
     for (i=0; s[i] != '\0'; i++) {
 	if (s[i] == ',') c++;
     }
 
     if (c == 3) {
-	/* three commas; we need a fourth field */
+	/* three commas; we need four fields */
 	c = 0;
 	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%%d[^ )])", VNAMELEN-1, 8);
 	if (sscanf(s, fmt, vname, &m1, &m2, copt) != 4) {
