@@ -2782,10 +2782,10 @@ static int gmm_inst_diff (ddset *dpd, int bnum, const double *x,
 	} else {
 	    row = row0 + row_increment(&dpd->d[bnum], t1+1);
 	}
-	for (t=0; t<=tmax; t++) {
-	    /* 2010-09-04: this was: t2 - t >= minlag && t1 - t < maxlag */
+	for (t=tmax; t>=0; t--) {
+	    /* 2021-11-16: the iteration was: t=0; t<=tmax; t++ */
 	    if (t1 - t >= minlag - 1 && t1 - t < maxlag) {
-		/* the criterion here needs care */
+		/* the criterion here needs care! */
 		xt = x[s+t];
 		if (!na(xt)) {
 #if IVDEBUG
@@ -2796,7 +2796,6 @@ static int gmm_inst_diff (ddset *dpd, int bnum, const double *x,
 		row++;
 	    }
 	}
-
     }
 
     return row0 + dpd->d[bnum].rows;
@@ -2823,7 +2822,8 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
 	} else {
 	    row = row0 + row_increment(&dpd->d2[bnum], t1);
 	}
-	for (t=1; t<=tmax; t++) {
+	for (t=tmax; t>=1; t--) {
+	    /* 2021-11-16: the iteration was: t=1; t<=tmax; t++ */
 	    k = t1 - t;
 	    if (k <= maxlag && k >= minlag) {
 		x0 = x[s+t-1];
