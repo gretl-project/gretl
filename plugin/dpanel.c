@@ -1853,9 +1853,10 @@ static int parse_diag_info (const char *s, diag_info **dp,
 			    int *ip, int *nd, const DATASET *dset)
 {
     char vname[VNAMELEN];
-    char fmt[24];
+    char copt[9];
+    char fmt[32];
     int level = 0;
-    int m1, m2;
+    int i, m1, m2, c;
     int err = 0;
 
     if (!strncmp(s, "GMM(", 4)) {
@@ -1864,12 +1865,36 @@ static int parse_diag_info (const char *s, diag_info **dp,
 	level = 1;
 	s += 9;
     }
+    s += strspn(s, " ");
 
-    sprintf(fmt, "%%%d[^, ] , %%d , %%d)", VNAMELEN-1);
+    c = 0;
+    for (i=0; s[i] != '\0'; i++) {
+	if (s[i] == ',') c++;
+    }
 
-    if (sscanf(s, fmt, vname, &m1, &m2) != 3) {
-	err = E_PARSE;
+    if (c == 3) {
+	/* three commas; we need a fourth field */
+	c = 0;
+	sprintf(fmt, "%%%d[^, ] , %%d , %%d , %%%d[^ )])", VNAMELEN-1, 8);
+	if (sscanf(s, fmt, vname, &m1, &m2, copt) != 4) {
+	    err = E_PARSE;
+	} else if (!strcmp(copt, "collapse")) {
+	    c = 1;
+	} else {
+	    err = E_PARSE;
+	}
+    } else if (c == 2) {
+	/* we must have three fields */
+	c = 0;
+	sprintf(fmt, "%%%d[^, ] , %%d , %%d)", VNAMELEN-1);
+	if (sscanf(s, fmt, vname, &m1, &m2) != 3) {
+	    err = E_PARSE;
+	}
     } else {
+	err = E_PARSE;
+    }
+
+    if (!err) {
 	int v = current_series_index(dset, vname);
 	int *vlist = NULL;
 
@@ -1895,6 +1920,7 @@ static int parse_diag_info (const char *s, diag_info **dp,
 		d->minlag = m1;
 		d->maxlag = m2;
 		d->rows = 0;
+		d->collapse = c;
 	    }
 
 	    *ip = i + nv;
