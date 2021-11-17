@@ -2163,16 +2163,7 @@ static int check_unit_obs (dpmod *dpd, int *goodobs,
 
 static void copy_diag_info (diag_info *targ, diag_info *src)
 {
-#if 1
     *targ = *src;
-#else
-    targ->v = src->v;
-    targ->depvar = src->depvar;
-    targ->minlag = src->minlag;
-    targ->maxlag = src->maxlag;
-    targ->level = src->level;
-    targ->rows = src->rows;
-#endif
 }
 
 /* diff_iv_accounts:
