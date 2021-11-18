@@ -706,21 +706,52 @@ static int dpd_wald_test (dpmod *dpd)
     return err;
 }
 
+#define TRY_SARGAN 0
+
 static int dpd_sargan_test (dpmod *dpd)
 {
-    int save_rows, save_cols;
+    int L1rows = dpd->L1->rows;
+    int L1cols = dpd->L1->cols;
     gretl_matrix *ZTE;
     int err = 0;
 
-    save_rows = gretl_matrix_rows(dpd->L1);
-    save_cols = gretl_matrix_cols(dpd->L1);
-
     ZTE = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, ZTE);
+
+#if TRY_SARGAN
+    if (1) {
+	/* Sargan test as such (not Hansen)? See the xtabond2 doc,
+	   section 2.5. Roodman says Sargan =
+
+	   (1/N) (Z'E)' (Z'Z)^{-1} Z'E
+
+	   where N is the total number of observations.
+	   As of 2021-11-18 this is not coming out right.
+	*/
+	gretl_matrix *S = gretl_matrix_alloc(dpd->nz, dpd->nz);
+
+	if (S != NULL) {
+	    int N = dpd->nobs;
+	    double sargan;
+	    int my_err = 0;
+
+	    gretl_matrix_multiply_mod(dpd->ZT, GRETL_MOD_NONE,
+				      dpd->ZT, GRETL_MOD_TRANSPOSE,
+				      S, GRETL_MOD_NONE);
+	    gretl_invert_symmetric_matrix(S);
+	    sargan = gretl_scalar_qform(ZTE, S, &my_err);
+	    fprintf(stderr, "Try sargan: %g\n", sargan);
+	    fprintf(stderr, " divided by N: %g\n", sargan / N);
+	    fprintf(stderr, " s2-modified: %g\n", sargan * 2.0 / dpd->s2);
+	    gretl_matrix_free(S);
+	}
+    }
+#endif /* TRY_SARGAN */
+
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     dpd->sargan = gretl_scalar_qform(ZTE, dpd->A, &err);
 
-    gretl_matrix_reuse(dpd->L1, save_rows, save_cols);
+    gretl_matrix_reuse(dpd->L1, L1rows, L1cols);
 
     if (!err && dpd->sargan < 0) {
 	dpd->sargan = NADBL;
@@ -1844,8 +1875,8 @@ static int diag_try_list (const char *vname, int *vp, int *nd,
     return 0;
 }
 
-/* Parse a particular entry in the (optional) incoming array
-   of "GMM(foo,m1,m2)" specifications.  We check that foo
+/* Parse a particular entry in the (optional) incoming array of
+   "GMM(foo,m1,m2[,collapse])" specifications.  We check that foo
    exists and that m1 and m2 have sane values.
 */
 
@@ -1933,10 +1964,10 @@ static int parse_diag_info (const char *s, diag_info **dp,
 
 /* parse requests of the form
 
-      GMM(xvar, minlag, maxlag)
+      GMM(xvar, minlag, maxlag[, collapse])
 
    which call for inclusion of lags of xvar in block-diagonal
-   fashion
+   (or perhaps collapsed) fashion
 */
 
 static int
@@ -3522,6 +3553,8 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     if (opt & OPT_V) {
 	verbose = 1;
 	vprn = prn;
+    } else if (opt & OPT_Q) {
+	prn = NULL;
     }
 
     /* parse GMM instrument info, if present */
