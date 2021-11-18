@@ -4432,10 +4432,10 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
  * NULL.
  * @ispec: may contain additional instrument specification.
  * @dset: dataset struct.
- * @opt: to be hooked up.
+ * @opt: may include... see options.c.
  * @prn: printing struct.
  *
- * This is at present a secret function, for testing only.
+ * Implements the "dpanel" command.
  *
  * Returns: a #MODEL struct, containing the estimates.
  */
