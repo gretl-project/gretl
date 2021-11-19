@@ -2701,10 +2701,10 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
     gretl_bundle *b = NULL;
 
     xmlKeepBlanksDefault(0);
-    doc = xmlParseMemory(buf, len);
+    doc = xmlReadMemory(buf, len, NULL, NULL, XML_PARSE_HUGE);
 
     if (doc == NULL) {
-	gretl_errmsg_set(_("xmlParseMemory failed"));
+	gretl_errmsg_set(_("xmlReadMemory failed"));
 	*err = 1;
     } else {
 	xmlNodePtr cur = xmlDocGetRootElement(doc);
