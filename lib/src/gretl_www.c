@@ -1146,7 +1146,7 @@ char *get_uri_for_addon (const char *pkgname, int *err)
  * @localname: full path to which the package file should be
  * written on the local machine.
  *
- * Retrieves the specified package from sourceforge.
+ * Retrieves the specified package from the frs area on sourceforge.
  *
  * Returns: 0 on success, non-zero on failure.
  */
