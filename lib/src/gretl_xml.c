@@ -67,9 +67,9 @@ int gretl_xml_open_doc_root (const char *fname,
 	*pnode = NULL;
     }
 
-    doc = xmlParseFile(fname);
+    doc = xmlReadFile(fname, NULL, XML_PARSE_HUGE);
     if (doc == NULL) {
-	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
+	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
 	err = 1;
     }
 
@@ -4628,10 +4628,10 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     xmlNodePtr node;
     char *ret = NULL;
 
-    doc = xmlParseFile(fname);
+    doc = xmlReadFile(fname, NULL, XML_PARSE_HUGE);
 
     if (doc == NULL) {
-	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
+	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
 	*err = E_DATA;
     } else {
 	node = xmlDocGetRootElement(doc);
