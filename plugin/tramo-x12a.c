@@ -1804,10 +1804,11 @@ static int parse_deseas_bundle (x12a_opts *xopt, gretl_bundle *b,
     }
 
     if (gretl_bundle_get_bool(b, "verbose", 0)) {
-	pprintf(prn, "deseas options:\n");
-	pprintf(prn, "  outlier correction: %d\n", xopt->outliers);
-	pprintf(prn, "  reading days correction: %d\n", xopt->trdays);
-	pprintf(prn, "  log transformation: %s\n", tr_strs[xopt->logtrans-1]);
+	/* FIXME translations */
+	pprintf(prn, "deseasonalization options:\n");
+	pprintf(prn, "  outlier correction:      %s\n", xopt->outliers ? "yes" : "no");
+	pprintf(prn, "  trading days correction: %s\n", xopt->trdays ? "yes" : "no");
+	pprintf(prn, "  log transformation:      %s\n", tr_strs[xopt->logtrans-1]);
 	pputc(prn, '\n');
     }
 
