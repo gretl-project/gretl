@@ -9405,7 +9405,8 @@ static int get_logtrans (const char *s)
    in that case the aux value should be a scalar, unless
    we're doing F_DESEAS, in which case it should be a string,
    or one of the panel stats functions, in which case it should
-   be a series.
+   be a series. In case of F_HPFILT and F_DESEAS, the 'o' node
+   can be used to pass an additional optional argument.
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
@@ -9511,14 +9512,25 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
             p->err = cum_series(x, y, p->dset);
             break;
         case F_DESEAS:
-            if (rtype == STR) {
-                int tramo = use_tramo(r->v.str);
-                int logt = get_logtrans(r->v.str);
+	    {
+		gretl_bundle *b = NULL;
 
-                p->err = seasonally_adjust_series(x, y, p->dset, tramo, logt);
-            } else {
-                p->err = seasonally_adjust_series(x, y, p->dset, 0, 0);
-            }
+		if (!null_node(o)) {
+		    if (o->t == BUNDLE) {
+			b = o->v.b;
+		    } else {
+			node_type_error(f, 3, BUNDLE, o, p);
+		    }
+		}
+		if (!p->err && rtype == STR) {
+		    int tramo = use_tramo(r->v.str);
+		    int logt = get_logtrans(r->v.str);
+
+		    p->err = seasonally_adjust_series(x, y, p->dset, tramo, logt);
+		} else if (!p->err) {
+		    p->err = seasonally_adjust_series(x, y, p->dset, 0, 0);
+		}
+	    }
             break;
         case F_TRAMOLIN:
             p->err = tramo_linearize_series(x, y, p->dset);
@@ -16811,7 +16823,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_TRAMOLIN:
         /* series argument needed */
         if (l->t == SERIES || l->t == MAT) {
-            if (t->t == F_HPFILT) {
+            if (t->t == F_HPFILT || t->t == F_DESEAS) {
                 ret = series_series_func(l, m, r, t->t, p);
             } else {
                 ret = series_series_func(l, r, NULL, t->t, p);

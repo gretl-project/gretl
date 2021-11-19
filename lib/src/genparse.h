@@ -330,7 +330,6 @@ enum {
     F_XMAX,
     F_FRACLAG,
     F_MREV,
-    F_DESEAS,
     F_PERGM,
     F_NPV,
     F_DSUM,
@@ -469,6 +468,7 @@ enum {
     F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
+    F_DESEAS,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -566,14 +566,14 @@ enum {
 		      s == F_BESSEL || s == F_MRANDGEN || s == F_RANDGEN1)
 
 /* functions taking a string arg in last position */
-#define string_last_func(s) (s == F_DESEAS || s == F_AGGRBY || \
+#define string_last_func(s) (s == F_AGGRBY || s == F_GENSERIES || \
 			     s == F_PRINTF || s == F_SPRINTF || \
 			     s == F_ALLREDUCE || s == F_NORMTEST || \
 			     s == F_SSCANF || s == F_NPCORR || \
-			     s == F_INBUNDLE || s == F_GENSERIES)
+			     s == F_INBUNDLE)
 
 /* functions taking string arg in middle position */
-#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
+#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER || s == F_DESEAS)
 
 /* functions taking one or more "fncall" (string) arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
