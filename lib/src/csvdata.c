@@ -46,19 +46,20 @@ enum {
     CSV_GOTDELIM = 1 << 1,
     CSV_GOTTAB   = 1 << 2,
     CSV_GOTSEMI  = 1 << 3,
-    CSV_BLANK1   = 1 << 4,
-    CSV_OBS1     = 1 << 5,
-    CSV_TRAIL    = 1 << 6,
-    CSV_AUTONAME = 1 << 7,
-    CSV_REVERSED = 1 << 8,
-    CSV_DOTSUB   = 1 << 9,
-    CSV_ALLCOLS  = 1 << 10,
-    CSV_BOM      = 1 << 11,
-    CSV_VERBOSE  = 1 << 12,
-    CSV_THOUSEP  = 1 << 13,
-    CSV_NOHEADER = 1 << 14,
-    CSV_QUOTES   = 1 << 15,
-    CSV_AS_MAT   = 1 << 16
+    CSV_GOTPIPE  = 1 << 4,
+    CSV_BLANK1   = 1 << 5,
+    CSV_OBS1     = 1 << 6,
+    CSV_TRAIL    = 1 << 7,
+    CSV_AUTONAME = 1 << 8,
+    CSV_REVERSED = 1 << 9,
+    CSV_DOTSUB   = 1 << 10,
+    CSV_ALLCOLS  = 1 << 11,
+    CSV_BOM      = 1 << 12,
+    CSV_VERBOSE  = 1 << 13,
+    CSV_THOUSEP  = 1 << 14,
+    CSV_NOHEADER = 1 << 15,
+    CSV_QUOTES   = 1 << 16,
+    CSV_AS_MAT   = 1 << 17
 };
 
 struct csvprobe_ {
@@ -99,6 +100,7 @@ struct csvdata_ {
 #define csv_has_blank_column(c)   (c->flags & CSV_BLANK1)
 #define csv_got_tab(c)            (c->flags & CSV_GOTTAB)
 #define csv_got_semi(c)           (c->flags & CSV_GOTSEMI)
+#define csv_got_pipe(c)           (c->flags & CSV_GOTPIPE)
 #define csv_got_delim(c)          (c->flags & CSV_GOTDELIM)
 #define csv_autoname(c)           (c->flags & CSV_AUTONAME)
 #define csv_skip_col_1(c)         (c->flags & (CSV_OBS1 | CSV_BLANK1))
@@ -119,6 +121,7 @@ struct csvdata_ {
 #define csv_set_blank_column(c)     (c->flags |= CSV_BLANK1)
 #define csv_set_got_tab(c)          (c->flags |= CSV_GOTTAB)
 #define csv_set_got_semi(c)         (c->flags |= CSV_GOTSEMI)
+#define csv_set_got_pipe(c)         (c->flags |= CSV_GOTPIPE)
 #define csv_set_got_delim(c)        (c->flags |= CSV_GOTDELIM)
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
 #define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
@@ -1642,7 +1645,9 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
             }
             if (c == ';') {
                 csv_set_got_semi(cdata);
-            }
+            } else if (c == '|') {
+		csv_set_got_pipe(cdata);
+	    }
             if (c == cdata->delim) {
                 csv_set_got_delim(cdata);
             } else if (c == '"') {
@@ -1717,7 +1722,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
     return maxlinelen;
 }
 
-#define nonspace_delim(d) (d != ',' && d != ';' && d != '\t')
+#define nonspace_delim(d) (d != ',' && d != ';' && d != '\t' && d != '|')
 
 static int count_csv_fields (csvdata *c)
 {
@@ -3518,6 +3523,8 @@ int real_import_csv (const char *fname,
             c->delim = '\t';
         } else if (csv_got_semi(c)) {
             c->delim = ';';
+	} else if (csv_got_pipe(c)) {
+	    c->delim = '|';
         } else {
             c->delim = ' ';
         }
@@ -3560,7 +3567,10 @@ int real_import_csv (const char *fname,
             c->delim = ';';
             err = 0;
             goto alt_delim;
-        }
+        } else if (c->delim != '|' && csv_got_pipe(c)) {
+            err = 0;
+            goto alt_delim;
+	}
         pputs(prn, _(csv_msg));
         goto csv_bailout;
     }

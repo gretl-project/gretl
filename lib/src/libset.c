@@ -384,7 +384,7 @@ static const char *wbt_strs[] = {"rademacher", "mammen", NULL};
 static const char *qnt_strs[] = {"Q6", "Q7", "Q8", NULL};
 static const char *ast_strs[] = {"off", "warn", "stop", NULL};
 static const char *plc_strs[] = {"off", "auto", "on", NULL};
-static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
+static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", "pipe", NULL};
 static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
 static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
 
@@ -1248,7 +1248,7 @@ static int set_logfile (const char *s)
     return err;
 }
 
-const char *csv_delims = ", \t;";
+const char *csv_delims = ", \t;|";
 
 static char delim_from_arg (const char *s)
 {
