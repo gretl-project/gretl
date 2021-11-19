@@ -1778,8 +1778,44 @@ int write_tx_data (char *fname,
     return err;
 }
 
+static int parse_deseas_bundle (x12a_opts *xopt, gretl_bundle *b,
+				PRN *prn)
+{
+    const char *tr_strs[] = {
+	"log", "none", "auto"
+    };
+    int err = 0;
+
+    xopt->outliers = gretl_bundle_get_bool(b, "outlier_correction", 0);
+    xopt->trdays = gretl_bundle_get_bool(b, "trading_correction", 0);
+
+    if (gretl_bundle_has_key(b, "transform")) {
+	const char *s = gretl_bundle_get_string(b, "transform", &err);
+
+	if (!err) {
+	    if (!strcmp(s, "log")) {
+		xopt->logtrans = 1;
+	    } else if (!strcmp(s, "none")) {
+		xopt->logtrans = 2;
+	    } else if (!strcmp(s, "auto")) {
+		xopt->logtrans = 3;
+	    }
+	}
+    }
+
+    if (gretl_bundle_get_bool(b, "verbose", 0)) {
+	pprintf(prn, "deseas options:\n");
+	pprintf(prn, "  outlier correction: %d\n", xopt->outliers);
+	pprintf(prn, "  reading days correction: %d\n", xopt->trdays);
+	pprintf(prn, "  log transformation: %s\n", tr_strs[xopt->logtrans-1]);
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
 int adjust_series (const double *x, double *y, const DATASET *dset,
-		   int tramo, int use_log)
+		   int tramo, gretl_bundle *opts, PRN *prn)
 {
     int prog = (tramo)? TRAMO_SEATS : X12A;
     int savelist[2] = {1, TX_SA};
@@ -1805,29 +1841,26 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     }
 
     if (prog == X12A) {
-	x12a_opts xopt = { 2, /* log transformation flag (2 == no) */
-			   0, /* don't correct for outliers */
-			   0  /* trading days correction */
-	};
+	/* first element, xopt.logtrans: 3 = auto */
+	x12a_opts xopt = {3, 0, 0};
 
-	if (use_log) {
-	    xopt.logtrans = 1;
+	if (opts != NULL) {
+	    err = parse_deseas_bundle(&xopt, opts, prn);
 	}
-	if (dset->pd == 12) {
-	    xopt.trdays = 1;
+	if (!err) {
+	    gretl_build_path(fname, workdir, vname, NULL);
+	    strcat(fname, ".spc");
+	    write_spc_file(fname, x, vname, dset, savelist, &xopt);
 	}
-	gretl_build_path(fname, workdir, vname, NULL);
-	strcat(fname, ".spc");
-	write_spc_file(fname, x, vname, dset, savelist, &xopt);
     } else {
 	gretl_build_path(fname, workdir, vname, NULL);
 	write_tramo_file(fname, x, vname, dset, NULL);
     }
 
-    if (prog == X12A) {
+    if (!err && prog == X12A) {
 	clear_x12a_files(workdir, vname);
 	err = helper_spawn(exepath, vname, workdir, X12A);
-    } else {
+    } else if (!err) {
 	char seats[MAXLEN];
 
 	clear_tramo_files(workdir, vname);

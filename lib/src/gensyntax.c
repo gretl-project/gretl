@@ -744,7 +744,7 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 	    unmatched_symbol_error('(', p);
 	    return NULL;
 	}
-	close = (i1 > 0 && i1 < i2)? i1 : i2;
+	close = (i1 >= 0 && i1 < i2)? i1 : i2;
 	p->idstr = gretl_strndup(p->point - 1, close + 1);
     } else {
 	/* handle the function-call case: the terminator of

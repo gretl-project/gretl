@@ -9378,18 +9378,38 @@ static NODE *series_matrix_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-static int get_logtrans (const char *s)
+static int deseasonalize (const double *x, double *y,
+			  NODE *nc, NODE *nb, parser *p)
 {
-    if (s != NULL) {
-        if (*s != 'T' && strchr(s, 'l')) {
-            return 1;
-        }
+    gretl_bundle *b = NULL;
+    int tramo = 0;
+    int err = 0;
+
+    if (!null_node(nc)) {
+	if (nc->t != STR) {
+	    node_type_error(F_DESEAS, 2, STR, nc, p);
+	    err = p->err;
+	} else if (!strcmp(nc->v.str, "T")) {
+	    tramo = 1;
+	} else if (strcmp(nc->v.str, "X")) {
+	    err = E_INVARG;
+	}
+    }
+    if (!p->err && !null_node(nb)) {
+	if (nb->t == BUNDLE) {
+	    b = nb->v.b;
+	} else {
+	    node_type_error(F_DESEAS, 3, BUNDLE, nb, p);
+	    err = p->err;
+	}
+    }
+    if (!err) {
+	err = seasonally_adjust_series(x, y, p->dset, tramo,
+				       b, p->prn);
     }
 
-    return 0;
+    return err;
 }
-
-#define use_tramo(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
 #define is_panel_stat(f) (f == F_PNOBS || \
                           f == F_PMIN ||  \
@@ -9512,25 +9532,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
             p->err = cum_series(x, y, p->dset);
             break;
         case F_DESEAS:
-	    {
-		gretl_bundle *b = NULL;
-
-		if (!null_node(o)) {
-		    if (o->t == BUNDLE) {
-			b = o->v.b;
-		    } else {
-			node_type_error(f, 3, BUNDLE, o, p);
-		    }
-		}
-		if (!p->err && rtype == STR) {
-		    int tramo = use_tramo(r->v.str);
-		    int logt = get_logtrans(r->v.str);
-
-		    p->err = seasonally_adjust_series(x, y, p->dset, tramo, logt);
-		} else if (!p->err) {
-		    p->err = seasonally_adjust_series(x, y, p->dset, 0, 0);
-		}
-	    }
+	    p->err = deseasonalize(x, y, r, o, p);
             break;
         case F_TRAMOLIN:
             p->err = tramo_linearize_series(x, y, p->dset);
