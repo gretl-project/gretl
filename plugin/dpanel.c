@@ -706,7 +706,7 @@ static int dpd_wald_test (dpmod *dpd)
     return err;
 }
 
-#define TRY_SARGAN 0
+#define TRY_SARGAN 1
 
 static int dpd_sargan_test (dpmod *dpd)
 {
@@ -738,7 +738,9 @@ static int dpd_sargan_test (dpmod *dpd)
 	    gretl_matrix_multiply_mod(dpd->ZT, GRETL_MOD_NONE,
 				      dpd->ZT, GRETL_MOD_TRANSPOSE,
 				      S, GRETL_MOD_NONE);
+	    // gretl_matrix_divide_by_scalar(S, dpd->s2);
 	    gretl_invert_symmetric_matrix(S);
+	    gretl_matrix_print(S, "Sinv");
 	    sargan = gretl_scalar_qform(ZTE, S, &my_err);
 	    fprintf(stderr, "Try sargan: %g\n", sargan);
 	    fprintf(stderr, " divided by N: %g\n", sargan / N);

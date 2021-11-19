@@ -17,7 +17,7 @@
  *
  */
 
-/* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
+/* TRAMO/SEATS, X-13-ARIMA plugin for gretl */
 
 #include "libgretl.h"
 #include "version.h"
@@ -232,7 +232,7 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
     GSList *group;
     int i;
 
-    tmp = gtk_label_new(_("X-12-ARIMA options"));
+    tmp = gtk_label_new(_("X-13-ARIMA options"));
     gtk_box_pack_start(vbox, tmp, TRUE, TRUE, 5);
 
     tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
@@ -330,11 +330,11 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
-    b[0] = gtk_radio_button_new_with_label(NULL, _("Execute X-12-ARIMA directly"));
+    b[0] = gtk_radio_button_new_with_label(NULL, _("Execute X-13-ARIMA directly"));
     gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
-    b[1] = gtk_radio_button_new_with_label(group, _("Make X-12-ARIMA command file"));
+    b[1] = gtk_radio_button_new_with_label(group, _("Make X-13-ARIMA command file"));
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
     g_object_set_data(G_OBJECT(b[1]), "checks", chk);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
@@ -453,7 +453,7 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
 
     request->dialog =
 	gtk_dialog_new_with_buttons((request->prog == TRAMO_SEATS)?
-				    "TRAMO/SEATS" : "X-12-ARIMA",
+				    "TRAMO/SEATS" : "X-13-ARIMA",
 				    parent,
 				    dflags,
 				    GTK_STOCK_CANCEL,
@@ -762,7 +762,7 @@ static int seats_no_seasonal (const char *path)
 static const char *addstr (tx_request *request)
 {
     if (request->prog == X12A) {
-	return "(X-12-ARIMA)";
+	return "(X-13-ARIMA)";
     } else if (request->prog == TRAMO_SEATS) {
 	return "(TRAMO/SEATS)";
     } else {
@@ -1499,7 +1499,7 @@ static int check_sample_bound (int prog, const DATASET *dset)
 	int pdmax = get_x12a_maxpd();
 
 	if (T > 50 * pdmax) {
-	    gretl_errmsg_sprintf(_("X-12-ARIMA can't handle more than %d observations.\n"
+	    gretl_errmsg_sprintf(_("X-13-ARIMA can't handle more than %d observations.\n"
 				   "Please select a smaller sample."), 50 * pdmax);
 	    return E_EXTERNAL;
 	}
