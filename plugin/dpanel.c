@@ -706,7 +706,7 @@ static int dpd_wald_test (dpmod *dpd)
     return err;
 }
 
-#define TRY_SARGAN 1
+#define TRY_SARGAN 0
 
 static int dpd_sargan_test (dpmod *dpd)
 {
