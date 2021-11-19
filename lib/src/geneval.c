@@ -5681,9 +5681,6 @@ static NODE *misc_scalar_node (NODE *n, int f, parser *p)
 	if (f == F_SLEEP) {
 	    g_usleep(G_USEC_PER_SEC * s);
 	    ret->v.xval = 0;
-	} else {
-	    gretl_set_sf_cgi(s);
-	    ret->v.xval = 0;
 	}
     }
 
@@ -16654,7 +16651,6 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_SLEEP:
-    case HF_SFCGI:
         if (scalar_node(l)) {
             ret = misc_scalar_node(l, t->t, p);
         } else {

@@ -285,7 +285,6 @@ enum {
     F_BARRIER,
     F_LPSOLVE,
     HF_JBTERMS,
-    HF_SFCGI,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_SUM,

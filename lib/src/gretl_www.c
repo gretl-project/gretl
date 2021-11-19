@@ -82,51 +82,22 @@ struct urlinfo_ {
     int timeout;             /* seconds till timing out */
 };
 
-static const char *sf_dbserver = "gretl.sourceforge.net";
-static const char *sf_dbcgi    = "/cgi-bin/gretldata.cgi";
+static const char *sf_dbserver  = "gretl.sourceforge.net";
+static const char *sf_dbcgi     = "/cgi-bin/gretldata.cgi";
 static const char *sf_gretlhost = "gretl.sourceforge.net";
 static const char *sf_datacgi   = "/cgi-bin/gretldata.cgi";
-
-static const char *wf_dbserver = "ricardo.ecn.wfu.edu";
-static const char *wf_dbcgi    = "/gretl/cgi-bin/gretldata.cgi";
-static const char *wf_gretlhost = "ricardo.ecn.wfu.edu";
-static const char *wf_datacgi   = "/gretl/cgi-bin/gretldata.cgi";
 
 static const char *dbserver;
 static const char *dbcgi;
 static const char *gretlhost;
 static const char *datacgi;
 
-static int SF_CGI;
-
 static void set_server_paths (void)
 {
-    if (SF_CGI > 0) {
-	dbserver = sf_dbserver;
-	dbcgi = sf_dbcgi;
-    } else {
-	dbserver = wf_dbserver;
-	dbcgi = wf_dbcgi;
-    }
-    if (SF_CGI > 1) {
-	gretlhost = sf_gretlhost;
-	datacgi = sf_datacgi;
-    } else {
-	gretlhost = wf_gretlhost;
-	datacgi = wf_datacgi;
-    }
-}
-
-void gretl_set_sf_cgi (int s)
-{
-    if (s > 1) {
-	SF_CGI = 2;
-    } else if (s != 0) {
-	SF_CGI = 1;
-    } else {
-	SF_CGI = 0;
-    }
-    set_server_paths();
+    dbserver = sf_dbserver;
+    dbcgi = sf_dbcgi;
+    gretlhost = sf_gretlhost;
+    datacgi = sf_datacgi;
 }
 
 static void urlinfo_init (urlinfo *u,
@@ -644,10 +615,6 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, datapkg_list);
     } else {
 	strcat(u.url, datacgi);
-    }
-
-    if (strstr(gretlhost, "ricardo") == NULL) {
-	fprintf(stderr, "using gretlhost = '%s'\n", gretlhost);
     }
 
     if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
