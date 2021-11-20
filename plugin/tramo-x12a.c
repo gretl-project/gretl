@@ -30,7 +30,7 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
-#define DSDEBUG 1
+#define DSDEBUG 0
 
 #define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
