@@ -820,12 +820,15 @@ static int add_series_from_file (const char *path, int src,
     int t;
 
     if (request->prog == X13A) {
+	const char **save_strings;
+	int seats = request->xopt.seats;
 	char *p;
 
+	save_strings = seats ? x13_seats_save_strings : x11_save_strings;
 	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
 	if (p != NULL) {
-	    strcpy(p + 1, x11_save_strings[src]);
+	    strcpy(p + 1, save_strings[src]);
 	}
     } else {
 	tramo_got_irfin = 1;
