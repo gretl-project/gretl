@@ -2184,6 +2184,16 @@ static int get_x12a_doc_path (char *path, const char *fname)
 #endif
     }
 
+#if !defined(G_OS_WIN32)
+    if (ret && gretl_test_fopen(path, "r") != 0) {
+	/* try lower-casing filename (recent x13as!) */
+	char *tmp = gretl_strdup(fname);
+
+	sprintf(path, "/opt/x13as/docs/%s", gretl_lower(tmp));
+	free(tmp);
+    }
+#endif
+
     return ret;
 }
 
@@ -2380,19 +2390,22 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 
  next_step:
 
-    fprintf(stderr, "pdf help: looking for %s\n", fname);
+    fprintf(stderr, "pdf help: looking for '%s'\n", fname);
 
     if (code != GRETL_DBN && code != GRETL_GEO) {
 	/* is the file available in public dir? */
 	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
     }
 
-    err = gretl_test_fopen(fullpath, "r");
-    if (!err) {
+    if (*fullpath != '\0' && gretl_test_fopen(fullpath, "r") == 0) {
+	gotit = 1;
+    } else if (fname != NULL && *fname != '\0' &&
+	       gretl_test_fopen(fname, "r") == 0) {
 	gotit = 1;
     }
 
     if (!gotit && code == X12A_REF) {
+	*fullpath = '\0';
 	get_x12a_doc_path(fullpath, fname);
 	if (*fullpath != '\0') {
 	    err = gretl_test_fopen(fullpath, "r");

@@ -210,6 +210,7 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_DATA:
     case SAVE_DATA_AS:
     case SAVE_SPEC_FILE:
+    case SAVE_X13_SPC:
     case SAVE_HELP_TEXT:
 	file_selector(ci, FSEL_DATA_VWIN, vwin);
 	break;

@@ -365,6 +365,8 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_PKG_HELP ||
 	       vwin->role == EDIT_PKG_GHLP) {
 	u = SAVE_HELP_TEXT;
+    } else if (vwin->role == EDIT_X12A) {
+	u = SAVE_X13_SPC;
     } else {
 	dummy_call();
 	return;

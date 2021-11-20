@@ -73,6 +73,7 @@ static struct extmap action_map[] = {
     { SAVE_DYNARE_CODE,  ".mod" },
     { SAVE_LPSOLVE_CODE, ".lp" },
     { SAVE_SPEC_FILE,    ".spec" },
+    { SAVE_X13_SPC,      ".spc" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
     { SAVE_LABELS,       ".txt" },
@@ -321,7 +322,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	       action == SAVE_STATA_CMDS ||
 	       action == SAVE_JULIA_CODE ||
 	       action == SAVE_DYNARE_CODE ||
-	       action == SAVE_LPSOLVE_CODE) {
+	       action == SAVE_LPSOLVE_CODE ||
+	       action == SAVE_X13_SPC) {
 	script_window_update(vwin, fname);
     }
 }
