@@ -28,7 +28,7 @@ enum tx_objects {
 };
 
 typedef struct _common_opt_info common_opt_info;
-typedef struct _x12a_opts x12a_opts;
+typedef struct _x13a_opts x13a_opts;
 typedef struct _tx_request tx_request;
 
 struct _common_opt_info {
@@ -38,14 +38,15 @@ struct _common_opt_info {
     char savename[VNAMELEN];
 };
 
-struct _x12a_opts {
+struct _x13a_opts {
     int logtrans;
     int outliers;
     int trdays;
+    int seats;
 };
 
 struct _tx_request {
-    int prog;          /* tramo vs x12arima */
+    int prog;          /* tramo vs x13as */
     GtkWidget *dialog;
     void (*helpfunc);
     common_opt_info opts[TX_MAXOPT];
@@ -55,7 +56,7 @@ struct _tx_request {
     int savevars;
     int pd;
     int seasonal_ok;
-    x12a_opts xopt;
+    x13a_opts xopt;
 };
 
 int add_tramo_options (tx_request *request, GtkWidget *vbox);

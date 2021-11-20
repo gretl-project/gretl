@@ -17,7 +17,7 @@
  *
  */
 
-/* TRAMO/SEATS, X-13-ARIMA plugin for gretl */
+/* TRAMO/SEATS, X-13ARIMA plugin for gretl */
 
 #include "libgretl.h"
 #include "version.h"
@@ -30,6 +30,8 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
+#define DSDEBUG 1
+
 #define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
 #ifdef WIN32
@@ -39,13 +41,20 @@
 enum prog_codes {
     TRAMO_SEATS,
     TRAMO_ONLY,
-    X12A
+    X13A
 };
 
-const char *x12a_save_strings[] = {
+const char *x11_save_strings[] = {
     "d11", /* seasonally adjusted */
     "d12", /* trend/cycle */
     "d13", /* irregular */
+    NULL
+};
+
+const char *x13_seats_save_strings[] = {
+    "s11", /* seasonally adjusted */
+    "s12", /* trend/cycle */
+    "s13", /* irregular */
     NULL
 };
 
@@ -180,6 +189,11 @@ static void toggle_trading_days (GtkToggleButton *b, tx_request *request)
     request->xopt.trdays = gtk_toggle_button_get_active(b);
 }
 
+static void toggle_seats (GtkToggleButton *b, tx_request *request)
+{
+    request->xopt.seats = gtk_toggle_button_get_active(b);
+}
+
 static void set_logtrans (GtkButton *b, tx_request *request)
 {
     gpointer p = g_object_get_data(G_OBJECT(b), "transval");
@@ -214,7 +228,7 @@ void update_tx_savename (GtkEntry *entry, char *name)
     strcpy(name, gtk_entry_get_text(entry));
 }
 
-static void add_x12a_options (tx_request *request, GtkBox *vbox)
+static void add_x13a_options (tx_request *request, GtkBox *vbox)
 {
     const gchar *save_strs[] = {
 	N_("Seasonally adjusted series"),
@@ -228,12 +242,31 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
 	TX_SA, TX_TR, TX_IR
     };
     GtkWidget *tmp, *hb, *b[3], *chk[4];
+    GtkWidget *rx, *rs;
     GtkWidget *tbl;
     GSList *group;
     int i;
 
-    tmp = gtk_label_new(_("X-13-ARIMA options"));
+    tmp = gtk_label_new(_("X-13ARIMA options"));
     gtk_box_pack_start(vbox, tmp, TRUE, TRUE, 5);
+
+    hb = gtk_hbox_new(FALSE, 0);
+    tmp = gtk_label_new(_("Seasonal adjustment algrithm:"));
+    gtk_box_pack_start(GTK_BOX(hb), tmp, 0, 0, 0);
+    gtk_box_pack_start(vbox, hb, FALSE, FALSE, 0);
+
+    /* radio buttons for X11 vs SEATS */
+    rx = gtk_radio_button_new_with_label(NULL, "X11");
+    gtk_box_pack_start(vbox, rx, FALSE, FALSE, 0);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rx));
+    rs = gtk_radio_button_new_with_label(group, "SEATS");
+    gtk_box_pack_start(vbox, rs, FALSE, FALSE, 0);
+    g_signal_connect(GTK_TOGGLE_BUTTON(rs), "toggled",
+		     G_CALLBACK(toggle_seats), request);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rx), TRUE);
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
     tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
@@ -299,7 +332,7 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
 	gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN-1);
 	sprintf(request->opts[idx].savename, "%.8s_%s", request->yname,
-		x12a_save_strings[i]);
+		x11_save_strings[i]);
 	gtk_entry_set_text(GTK_ENTRY(entry), request->opts[idx].savename);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	g_object_set_data(G_OBJECT(chk[i]), "entry", entry);
@@ -330,11 +363,11 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
-    b[0] = gtk_radio_button_new_with_label(NULL, _("Execute X-13-ARIMA directly"));
+    b[0] = gtk_radio_button_new_with_label(NULL, _("Execute X-13ARIMA directly"));
     gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
-    b[1] = gtk_radio_button_new_with_label(group, _("Make X-13-ARIMA command file"));
+    b[1] = gtk_radio_button_new_with_label(group, _("Make X-13ARIMA command file"));
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
     g_object_set_data(G_OBJECT(b[1]), "checks", chk);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
@@ -343,7 +376,7 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE);
 }
 
-static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
+static GtkWidget *x13a_help_button (GtkWidget *hbox, tx_request *request)
 {
     GtkWidget *button;
 
@@ -376,7 +409,7 @@ static void tx_errbox (tx_request *request)
 
 static int check_savevars (tx_request *request)
 {
-    int imax = request->prog == X12A ? TX_IR : TX_LN;
+    int imax = request->prog == X13A ? TX_IR : TX_LN;
     int i, err = 0;
 
     for (i=0; i<=imax && !err; i++) {
@@ -447,13 +480,13 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
 	request->opts[i].check = NULL;
     }
 
-    if (request->prog != X12A) {
+    if (request->prog != X13A) {
 	dflags |= GTK_DIALOG_MODAL;
     }
 
     request->dialog =
 	gtk_dialog_new_with_buttons((request->prog == TRAMO_SEATS)?
-				    "TRAMO/SEATS" : "X-13-ARIMA",
+				    "TRAMO/SEATS" : "X-13ARIMA",
 				    parent,
 				    dflags,
 				    GTK_STOCK_CANCEL,
@@ -476,7 +509,7 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
 #endif
 	add_tramo_options(request, vbox);
     } else {
-	add_x12a_options(request, GTK_BOX(vbox));
+	add_x13a_options(request, GTK_BOX(vbox));
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -485,9 +518,9 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(request->dialog));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    if (request->prog == X12A) {
+    if (request->prog == X13A) {
 	hbox = gtk_dialog_get_action_area(GTK_DIALOG(request->dialog));
-	x12a_help_button(hbox, request);
+	x13a_help_button(hbox, request);
     }
 
     g_signal_connect(G_OBJECT(request->dialog), "response",
@@ -705,15 +738,19 @@ static void clear_tramo_files (const char *path, const char *vname)
     gretl_remove(fname);
 }
 
-static void clear_x12a_files (const char *path, const char *vname)
+static void clear_x13a_files (const char *path, const char *vname)
 {
     char fname[MAXLEN];
     int i;
 
     gretl_build_path(fname, path, vname, NULL);
 
-    for (i=0; x12a_save_strings[i] != NULL; i++) {
-	switch_ext_in_place(fname, x12a_save_strings[i]);
+    for (i=0; x11_save_strings[i] != NULL; i++) {
+	switch_ext_in_place(fname, x11_save_strings[i]);
+	gretl_remove(fname);
+    }
+    for (i=0; x13_seats_save_strings[i] != NULL; i++) {
+	switch_ext_in_place(fname, x13_seats_save_strings[i]);
 	gretl_remove(fname);
     }
 
@@ -761,8 +798,8 @@ static int seats_no_seasonal (const char *path)
 
 static const char *addstr (tx_request *request)
 {
-    if (request->prog == X12A) {
-	return "(X-13-ARIMA)";
+    if (request->prog == X13A) {
+	return "(X-13ARIMA)";
     } else if (request->prog == TRAMO_SEATS) {
 	return "(TRAMO/SEATS)";
     } else {
@@ -782,13 +819,13 @@ static int add_series_from_file (const char *path, int src,
     int d, yr, per, err = 0;
     int t;
 
-    if (request->prog == X12A) {
+    if (request->prog == X13A) {
 	char *p;
 
 	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
 	if (p != NULL) {
-	    strcpy(p + 1, x12a_save_strings[src]);
+	    strcpy(p + 1, x11_save_strings[src]);
 	}
     } else {
 	tramo_got_irfin = 1;
@@ -846,9 +883,9 @@ static int add_series_from_file (const char *path, int src,
     /* formulate name of new variable to add */
     strcpy(varname, request->opts[src].savename);
     if (*varname == '\0') {
-	if (request->prog == X12A) {
+	if (request->prog == X13A) {
 	    sprintf(varname, "%.8s_%s", dset->varname[0],
-		    x12a_save_strings[src]);
+		    x11_save_strings[src]);
 	} else {
 	    sprintf(varname, "%.8s_%.2s", dset->varname[0],
 		    tramo_save_strings[src]);
@@ -915,7 +952,8 @@ static int add_series_from_file (const char *path, int src,
 
 static int grab_deseasonal_series (double *y, const double *x,
 				   const DATASET *dset,
-				   int prog, const char *path)
+				   int prog, x13a_opts *xopt,
+				   const char *path)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN], date[16];
@@ -929,12 +967,14 @@ static int grab_deseasonal_series (double *y, const double *x,
 			 tramo_save_strings[TX_SA], NULL);
     } else {
 	/* @path should end with ".spc" */
+	const char **save_strings;
 	char *p;
 
+	save_strings = xopt->seats ? x13_seats_save_strings : x11_save_strings;
 	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
 	if (p != NULL) {
-	    strcpy(p + 1, x12a_save_strings[TX_SA]);
+	    strcpy(p + 1, save_strings[TX_SA]);
 	}
     }
 
@@ -1081,9 +1121,10 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
 
     strcpy(request->yname, dset->varname[varnum]);
 
-    request->xopt.logtrans = 3; /* x12a: automatic logs or not */
-    request->xopt.outliers = 1; /* x12a: detect outliers */
-    request->xopt.trdays = 0;   /* x12a: trading days correction */
+    request->xopt.logtrans = 3; /* x13a: automatic logs or not */
+    request->xopt.outliers = 1; /* x13a: detect outliers */
+    request->xopt.trdays = 0;   /* x13a: trading days correction */
+    request->xopt.seats = 0;    /* x13a: use SEATS rather than X11 */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
@@ -1224,8 +1265,9 @@ static int write_spc_file (const char *fname,
 			   const char *vname,
 			   const DATASET *dset,
 			   const int *savelist,
-			   x12a_opts *xopt)
+			   x13a_opts *xopt)
 {
+    const char **save_strings;
     int startyr, startper;
     char *p, tmp[16];
     double x;
@@ -1293,15 +1335,25 @@ static int write_spc_file (const char *fname,
 
     fputs("automdl{}\n", fp);
 
-    fputs("x11{", fp);
+#if DSDEBUG
+    fprintf(stderr, "x13as: using %s\n", xopt->seats ? "seats" : "x11");
+#endif
+
+    if (xopt->seats) {
+	save_strings = x13_seats_save_strings;
+	fputs("seats{", fp);
+    } else {
+	save_strings = x11_save_strings;
+	fputs("x11{", fp);
+    }
 
     if (savelist[0] > 0) {
 	if (savelist[0] == 1) {
-	    fprintf(fp, " save=%s ", x12a_save_strings[savelist[1]]);
+	    fprintf(fp, " save=%s ", save_strings[savelist[1]]);
 	} else {
 	    fputs(" save=( ", fp);
 	    for (i=1; i<=savelist[0]; i++) {
-		fprintf(fp, "%s ", x12a_save_strings[savelist[i]]);
+		fprintf(fp, "%s ", save_strings[savelist[i]]);
 	    }
 	    fputs(") ", fp);
 	}
@@ -1318,7 +1370,7 @@ static int write_spc_file (const char *fname,
 
 static void form_savelist (int *list, tx_request *request)
 {
-    int imax = request->prog == X12A ? TX_IR : TX_LN;
+    int imax = request->prog == X13A ? TX_IR : TX_LN;
     int i, j = 1;
 
     list[0] = 0;
@@ -1390,7 +1442,7 @@ static int helper_spawn (const char *path,
 	cmd = g_strdup_printf("\"%s\" -i %s -k serie", path, vname);
     } else if (prog == TRAMO_SEATS) {
 	cmd = g_strdup_printf("\"%s\" -OF %s", path, vname);
-    } else if (prog == X12A) {
+    } else if (prog == X13A) {
 	cmd = g_strdup_printf("\"%s\" %s -r -p -q", path, vname);
     } else {
 	return E_EXTERNAL;
@@ -1419,7 +1471,7 @@ static int helper_spawn (const char *path,
 	err = glib_spawn(workdir, path, "-i", vname, "-k", "serie", NULL);
     } else if (prog == TRAMO_SEATS) {
 	err = glib_spawn(workdir, path, "-OF", vname, NULL);
-    } else if (prog == X12A) {
+    } else if (prog == X13A) {
 	err = glib_spawn(workdir, path, vname, "-r", "-p", "-q", NULL);
     } else {
 	err = E_EXTERNAL;
@@ -1430,13 +1482,13 @@ static int helper_spawn (const char *path,
 
 #endif
 
-/* The x12a .err file is always produced, but often contains no
+/* The x13a .err file is always produced, but often contains no
    warning or error messages: in that case it contains 2 lines
    of boiler-plate text followed by two blank lines. Here we
    check if we got more than 4 lines of output.
 */
 
-static int got_x12a_warning (const char *fname, int *err)
+static int got_x13a_warning (const char *fname, int *err)
 {
     FILE *fp = gretl_fopen(fname, "r");
     int ret = 0;
@@ -1459,15 +1511,15 @@ static int got_x12a_warning (const char *fname, int *err)
     return ret;
 }
 
-/* make a default x12a.mdl file if it doesn't already exist */
+/* make a default x13a.mdl file if it doesn't already exist */
 
-static int check_x12a_model_file (const char *workdir)
+static int check_x13a_model_file (const char *workdir)
 {
     gchar *fname;
     FILE *fp;
     int err = 0;
 
-    fname = g_strdup_printf("%s%cx12a.mdl", workdir, SLASH);
+    fname = g_strdup_printf("%s%cx13a.mdl", workdir, SLASH);
     fp = gretl_fopen(fname, "r");
 
     if (fp != NULL) {
@@ -1495,11 +1547,11 @@ static int check_sample_bound (int prog, const DATASET *dset)
 	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
-    } else if (prog == X12A) {
-	int pdmax = get_x12a_maxpd();
+    } else if (prog == X13A) {
+	int pdmax = get_x13as_maxpd();
 
 	if (T > 50 * pdmax) {
-	    gretl_errmsg_sprintf(_("X-13-ARIMA can't handle more than %d observations.\n"
+	    gretl_errmsg_sprintf(_("X-13ARIMA can't handle more than %d observations.\n"
 				   "Please select a smaller sample."), 50 * pdmax);
 	    return E_EXTERNAL;
 	}
@@ -1509,15 +1561,15 @@ static int check_sample_bound (int prog, const DATASET *dset)
 }
 
 /* Callback for the "Run" button in a gretl editor window displaying
-   an x12a command file: run the commands (which are provided in @buf),
-   and fill @outname with the name of the x12a output file.
+   an x13a command file: run the commands (which are provided in @buf),
+   and fill @outname with the name of the x13a output file.
 */
 
 int exec_tx_script (char *outname, const gchar *buf)
 {
     const char *exepath;
     const char *workdir = NULL;
-    const char *tmpname = "x12atmp";
+    const char *tmpname = "x13atmp";
     FILE *fp;
     int err = 0;
 
@@ -1537,8 +1589,8 @@ int exec_tx_script (char *outname, const gchar *buf)
     fputs(buf, fp);
     fclose(fp);
 
-    clear_x12a_files(workdir, tmpname);
-    err = helper_spawn(exepath, tmpname, workdir, X12A);
+    clear_x13a_files(workdir, tmpname);
+    err = helper_spawn(exepath, tmpname, workdir, X13A);
 
     if (err == E_EXTERNAL) {
 	; /* fatal: couldn't run program */
@@ -1555,7 +1607,7 @@ int exec_tx_script (char *outname, const gchar *buf)
 }
 
 /* Driver for access to TRAMO/SEATS (if @tramo is non-zero) or
-   X-12-ARIMA, for analysis of the series with ID number @varnum. The
+   X-13ARIMA, for analysis of the series with ID number @varnum. The
    @opt pointer is filled out based on selections from a dialog box.
 
    The @fname argument is filled out to tell the caller the name of
@@ -1563,10 +1615,10 @@ int exec_tx_script (char *outname, const gchar *buf)
    be an empty string if the user cancels, or if we fail to execute
    the program in question.
 
-   At present the @help_func argument is used only for X-12-ARIMA,
+   At present the @help_func argument is used only for X-13ARIMA,
    for which we offer a special option, namely writing a spec file
    for display in an editor window rather than directly executing
-   x12a commands. If that option is selected we signal the caller
+   x13a commands. If that option is selected we signal the caller
    by putting OPT_S into @opt, and we return the name of the gretl-
    generated command file in @fname.
 */
@@ -1594,7 +1646,7 @@ int write_tx_data (char *fname,
 	exepath = gretl_tramo();
 	workdir = gretl_tramo_dir();
     } else {
-	request.prog = X12A;
+	request.prog = X13A;
 	exepath = gretl_x12_arima();
 	workdir = gretl_x12_arima_dir();
     }
@@ -1640,8 +1692,8 @@ int write_tx_data (char *fname,
 
 	copy_basic_data_info(tmpset, dset);
 
-	if (request.prog == X12A) {
-	    err = check_x12a_model_file(workdir);
+	if (request.prog == X13A) {
+	    err = check_x13a_model_file(workdir);
 	    if (err) {
 		goto bailout;
 	    }
@@ -1651,8 +1703,8 @@ int write_tx_data (char *fname,
     strcpy(vname, dset->varname[varnum]);
     form_savelist(savelist, &request);
 
-    if (request.prog == X12A) {
-	/* write out the .spc file for x12a */
+    if (request.prog == X13A) {
+	/* write out the .spc file for x13a */
 	gretl_build_path(fname, workdir, vname, NULL);
 	strcat(fname, ".spc");
 	write_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
@@ -1671,7 +1723,7 @@ int write_tx_data (char *fname,
     }
 
     if (savescript) {
-	/* x12a file written; we're done */
+	/* x13a file written; we're done */
 	return 0;
     }
 
@@ -1679,9 +1731,9 @@ int write_tx_data (char *fname,
        old output files get deleted first
     */
 
-    if (request.prog == X12A) {
-	clear_x12a_files(workdir, vname);
-	err = helper_spawn(exepath, vname, workdir, X12A);
+    if (request.prog == X13A) {
+	clear_x13a_files(workdir, vname);
+	err = helper_spawn(exepath, vname, workdir, X13A);
     } else {
 	char seats[MAXLEN];
 
@@ -1700,12 +1752,12 @@ int write_tx_data (char *fname,
 	goto bailout;
     }
 
-    if (request.prog == X12A) {
+    if (request.prog == X13A) {
 	/* see if we got a warning -- and if so, whether it
 	   should count as an error */
 	gretl_build_path(fname, workdir, vname, NULL);
 	strcat(fname, ".err");
-	*warning = got_x12a_warning(fname, &err);
+	*warning = got_x13a_warning(fname, &err);
 	if (!err) {
 	    /* switch @fname to the .out file */
 	    switch_ext_in_place(fname, "out");
@@ -1726,7 +1778,7 @@ int write_tx_data (char *fname,
 
     /* save vars locally if needed; graph if wanted */
     if (savelist[0] > 0) {
-	const char *path = request.prog == X12A ? fname : workdir;
+	const char *path = request.prog == X13A ? fname : workdir;
 
 	copy_variable(tmpset, 0, dset, varnum);
 
@@ -1735,8 +1787,8 @@ int write_tx_data (char *fname,
 				       i, &request);
 	    if (err) {
 		fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
-		if (request.prog == X12A) {
-		    /* switch @fname to point to X12A error file */
+		if (request.prog == X13A) {
+		    /* switch @fname to point to X13A error file */
 		    switch_ext_in_place(fname, "err");
 		}
 		break;
@@ -1756,7 +1808,7 @@ int write_tx_data (char *fname,
 	    }
 	}
 
-	if (request.prog == X12A) {
+	if (request.prog == X13A) {
 	    if (request.opts[TEXTOUT].save) {
 		*opt &= ~OPT_Q;
 	    } else {
@@ -1778,7 +1830,7 @@ int write_tx_data (char *fname,
     return err;
 }
 
-static int parse_deseas_bundle (x12a_opts *xopt, gretl_bundle *b,
+static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 				PRN *prn)
 {
     const char *tr_strs[] = {
@@ -1788,6 +1840,7 @@ static int parse_deseas_bundle (x12a_opts *xopt, gretl_bundle *b,
 
     xopt->outliers = gretl_bundle_get_bool(b, "outlier_correction", 0);
     xopt->trdays = gretl_bundle_get_bool(b, "trading_correction", 0);
+    xopt->seats = gretl_bundle_get_bool(b, "seats", 0);
 
     if (gretl_bundle_has_key(b, "transform")) {
 	const char *s = gretl_bundle_get_string(b, "transform", &err);
@@ -1806,6 +1859,7 @@ static int parse_deseas_bundle (x12a_opts *xopt, gretl_bundle *b,
     if (gretl_bundle_get_bool(b, "verbose", 0)) {
 	/* FIXME translations */
 	pprintf(prn, "deseasonalization options:\n");
+	pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
 	pprintf(prn, "  outlier correction:      %s\n", xopt->outliers ? "yes" : "no");
 	pprintf(prn, "  trading days correction: %s\n", xopt->trdays ? "yes" : "no");
 	pprintf(prn, "  log transformation:      %s\n", tr_strs[xopt->logtrans-1]);
@@ -1815,18 +1869,25 @@ static int parse_deseas_bundle (x12a_opts *xopt, gretl_bundle *b,
     return err;
 }
 
+/* implements the deseas() function */
+
 int adjust_series (const double *x, double *y, const DATASET *dset,
 		   int tramo, gretl_bundle *opts, PRN *prn)
 {
-    int prog = (tramo)? TRAMO_SEATS : X12A;
+    int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
+    x13a_opts xopt = {3, 0, 0, 0};
     const char *vname = "x";
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
     int err = 0;
 
-    if (prog == X12A) {
+#if DSDEBUG
+    fprintf(stderr, "deseas: using %s\n", prog == X13A ? "x13as" : "tramo");
+#endif
+
+    if (prog == X13A) {
 	exepath = gretl_x12_arima();
 	workdir = gretl_x12_arima_dir();
     } else {
@@ -1834,17 +1895,14 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 	workdir = gretl_tramo_dir();
     }
 
-    if (prog == X12A) {
-	err = check_x12a_model_file(workdir);
+    if (prog == X13A) {
+	err = check_x13a_model_file(workdir);
 	if (err) {
 	    return err;
 	}
     }
 
-    if (prog == X12A) {
-	/* first element, xopt.logtrans: 3 = auto */
-	x12a_opts xopt = {3, 0, 0};
-
+    if (prog == X13A) {
 	if (opts != NULL) {
 	    err = parse_deseas_bundle(&xopt, opts, prn);
 	}
@@ -1858,9 +1916,9 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 	write_tramo_file(fname, x, vname, dset, NULL);
     }
 
-    if (!err && prog == X12A) {
-	clear_x12a_files(workdir, vname);
-	err = helper_spawn(exepath, vname, workdir, X12A);
+    if (!err && prog == X13A) {
+	clear_x13a_files(workdir, vname);
+	err = helper_spawn(exepath, vname, workdir, X13A);
     } else if (!err) {
 	char seats[MAXLEN];
 
@@ -1873,13 +1931,15 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     }
 
     if (!err) {
-	const char *path = (prog == X12A)? fname : workdir;
+	const char *path = (prog == X13A)? fname : workdir;
 
-	err = grab_deseasonal_series(y, x, dset, prog, path);
+	err = grab_deseasonal_series(y, x, dset, prog, &xopt, path);
     }
 
     return err;
 }
+
+/* implements the linearize() function */
 
 int linearize_series (const double *x, double *y, const DATASET *dset)
 {

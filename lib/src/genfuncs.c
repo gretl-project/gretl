@@ -1206,10 +1206,10 @@ int seasonally_adjust_series (const double *x, double *y,
 			   "Please select a smaller sample."));
 	return E_EXTERNAL;
     } else if (!tramo) {
-	int pdmax = get_x12a_maxpd();
+	int pdmax = get_x13as_maxpd();
 
 	if (T > 50 * pdmax) {
-	    gretl_errmsg_sprintf(_("X-12-ARIMA can't handle more than %d observations.\n"
+	    gretl_errmsg_sprintf(_("X-13ARIMA can't handle more than %d observations.\n"
 				   "Please select a smaller sample."), 50 * pdmax);
 	    return E_EXTERNAL;
 	}

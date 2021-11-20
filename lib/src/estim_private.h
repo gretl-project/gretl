@@ -30,6 +30,6 @@ void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset);
 
 MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt);
 
-int get_x12a_maxpd (void);
+int get_x13as_maxpd (void);
 
 #endif /* ESTIM_PRIVATE_H */

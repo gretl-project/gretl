@@ -4093,15 +4093,15 @@ static void gretl_glib_grab_output (const char *prog,
 #endif
 
 /*
- * get_x12a_maxpd:
+ * get_x13as_maxpd:
  *
- * Retrieve the highest data frequency handled by X-12-ARIMA,
+ * Retrieve the highest data frequency handled by X-13ARIMA,
  * which may vary depending on how the program was built.
  * This may be relevant when executing the gretl arima
- * command with the option to use X-12-ARIMA.
+ * command with the option to use X-13ARIMA.
  */
 
-int get_x12a_maxpd (void)
+int get_x13as_maxpd (void)
 {
     static int n;
 
@@ -4193,10 +4193,10 @@ MODEL arma (const int *list, const int *pqlags,
     }
 
     if (opt & OPT_X) {
-	int pdmax = get_x12a_maxpd();
+	int pdmax = get_x13as_maxpd();
 
 	if ((dset->t2 - dset->t1 + 1) > pdmax * 50) {
-	    gretl_errmsg_sprintf(_("X-12-ARIMA can't handle more than %d observations.\n"
+	    gretl_errmsg_sprintf(_("X-13ARIMA can't handle more than %d observations.\n"
 				   "Please select a smaller sample."), pdmax * 50);
 	    armod.errcode = E_DATA;
 	    return armod;

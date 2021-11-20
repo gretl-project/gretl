@@ -1956,7 +1956,7 @@ GtkActionEntry main_entries[] = {
     { "FilterPoly", NULL, N_("_Polynomial trend"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterFD", NULL, N_("_Fractional difference"), NULL, NULL, G_CALLBACK(filter_callback) },
 #ifdef HAVE_X12A
-    { "X12A", NULL, N_("_X-13-ARIMA analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
+    { "X12A", NULL, N_("_X-13ARIMA analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
 #ifdef HAVE_TRAMO
     { "Tramo", NULL, N_("_TRAMO analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },

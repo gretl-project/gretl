@@ -1151,8 +1151,8 @@ static int next_arg_is_string (int i, const int *callargs, int k,
     return 0;
 }
 
-/* Get up to @k comma-separated arguments (possibly optional).
-   However, if k < 0 this is a signal to get as many arguments as we
+/* Get up to @np comma-separated arguments (possibly optional).
+   However, if np < 0 this is a signal to get as many arguments as we
    can find (the number unknown in advance).
 */
 
