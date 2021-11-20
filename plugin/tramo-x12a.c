@@ -925,7 +925,7 @@ static int add_series_from_file (const char *path, int src,
 	    }
 	}
     } else {
-	/* grab the data from the x12arima file */
+	/* grab the data from the x13as file */
 	while (fgets(line, 127, fp)) {
 	    if (*line == 'd' || *line == '-') {
 		continue;
@@ -1018,7 +1018,7 @@ static int grab_deseasonal_series (double *y, const double *x,
 	    }
 	}
     } else {
-	/* grab the data from the x12arima file */
+	/* grab the data from the x13as file */
 	while (fgets(line, 127, fp)) {
 	    if (*line == 'd' || *line == '-') {
 		continue;
@@ -1248,7 +1248,7 @@ static int write_tramo_file (const char *fname,
     return 0;
 }
 
-static int x12_get_subperiod (double x, const DATASET *dset)
+static int x13_get_subperiod (double x, const DATASET *dset)
 {
     int i, d = ceil(log10(dset->pd));
     int ret;
@@ -1289,7 +1289,7 @@ static int write_spc_file (const char *fname,
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
     if (p != NULL) {
-	startper = x12_get_subperiod(x, dset);
+	startper = x13_get_subperiod(x, dset);
     } else {
 	startper = 1;
     }
