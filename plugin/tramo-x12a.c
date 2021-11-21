@@ -1891,7 +1891,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     return err;
 }
 
-static void display_x13a_output (char *fname, x13a_opts *xopt, PRN *prn)
+static void display_x13a_output (char *fname, PRN *prn)
 {
     FILE *fp;
 
@@ -1905,8 +1905,7 @@ static void display_x13a_output (char *fname, x13a_opts *xopt, PRN *prn)
 	while (fgets(line, sizeof line, fp)) {
 	    if (g_utf8_validate(line, -1, NULL)) {
 		pputs(prn, line);
-	    } else if (xopt->seats) {
-		fputs(line, stderr);
+	    } else {
 		tmp = g_convert(line, -1, "UTF-8", "ISO-8859-1",
 				NULL, NULL, NULL);
 		if (tmp != NULL) {
@@ -1988,7 +1987,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     }
 
     if (!err && xopt.verbose > 1) {
-	display_x13a_output(fname, &xopt, prn);
+	display_x13a_output(fname, prn);
     }
 
     return err;
