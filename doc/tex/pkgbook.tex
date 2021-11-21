@@ -2716,9 +2716,10 @@ displaying a \textsf{gig} bundle.
 \section{Extra elements}
 \label{sec:spec-extra}
 
-At present there are three spec file entries in this category; in the
-GUI package editor they appear under the tabs \textsf{Data files} and
-\textsf{Dependencies} in the \textsf{Extra properties} window.
+At present there are five spec file entries in this category; in the
+GUI package editor they appear in the \textsf{Extra properties} window
+under the tabs \textsf{Data files}, \textsf{Dependencies}, and
+\textsf{Menu entry}.
 
 \begin{description}
 
@@ -2765,6 +2766,20 @@ GUI package editor they appear under the tabs \textsf{Data files} and
   package that requires \textsf{R} and its \textsf{glmnet} package.
 
   \ttusage{R-depends = R 3.5.3 glmnet 2.0-18}
+
+\item \texttt{wants-data-access} (optional): In some cases your package
+  may need to read data outside of the active sample range. This could
+  be past initial values in a dynamic model, or it could be future values
+  of exogenous regressors used for out-of-sample (conditional) forecasting.
+  But since a user-written hansl function is normally restricted to the
+  incoming sample specified by the caller of the function, this would not
+  be possible. In such situations, your package should specify this switch,
+  and if upon execution the gretl user agrees, your relevant packaged function
+  may use the \texttt{smpl} command to reset the active sample inside the
+  function even beyond the incoming limits. (Of course, the original sample
+  will be restored when exiting the function, as always.)
+
+  \ttusage{wants-data-access = true}
 
 \end{description}
 
