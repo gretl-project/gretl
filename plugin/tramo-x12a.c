@@ -1870,7 +1870,11 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	}
     }
 
-    if (!err && gretl_bundle_get_bool(b, "verbose", 0)) {
+    if (!err) {
+	xopt->verbose = gretl_bundle_get_int(b, "verbose", NULL);
+    }
+
+    if (xopt->verbose > 0) {
 	const char **ostrs = xopt->seats ? x13_seats_save_strings :
 	    x11_save_strings;
 
@@ -1887,6 +1891,34 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     return err;
 }
 
+static void display_x13a_output (char *fname, x13a_opts *xopt, PRN *prn)
+{
+    FILE *fp;
+
+    switch_ext_in_place(fname, "out");
+    fp = fopen(fname, "r");
+
+    if (fp != NULL) {
+	char line[1024];
+	gchar *tmp;
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (g_utf8_validate(line, -1, NULL)) {
+		pputs(prn, line);
+	    } else if (xopt->seats) {
+		fputs(line, stderr);
+		tmp = g_convert(line, -1, "UTF-8", "ISO-8859-1",
+				NULL, NULL, NULL);
+		if (tmp != NULL) {
+		    pputs(prn, tmp);
+		    g_free(tmp);
+		}
+	    }
+	}
+	fclose(fp);
+    }
+}
+
 /* implements the deseas() function */
 
 int adjust_series (const double *x, double *y, const DATASET *dset,
@@ -1894,7 +1926,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
-    x13a_opts xopt = {3, 0, 0, 0, 0};
+    x13a_opts xopt = {3, 0, 0, 0, 0, 0};
     const char *vname = "x";
     const char *exepath;
     const char *workdir;
@@ -1953,6 +1985,10 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 	const char *path = (prog == X13A)? fname : workdir;
 
 	err = grab_adjusted_series(y, x, dset, prog, &xopt, path);
+    }
+
+    if (!err && xopt.verbose > 1) {
+	display_x13a_output(fname, &xopt, prn);
     }
 
     return err;

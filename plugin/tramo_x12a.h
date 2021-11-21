@@ -44,6 +44,7 @@ struct _x13a_opts {
     int trdays;
     int seats;
     int output;
+    int verbose;
 };
 
 struct _tx_request {
