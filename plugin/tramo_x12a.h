@@ -43,6 +43,7 @@ struct _x13a_opts {
     int outliers;
     int trdays;
     int seats;
+    int output;
 };
 
 struct _tx_request {

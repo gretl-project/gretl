@@ -953,10 +953,10 @@ static int add_series_from_file (const char *path, int src,
     return err;
 }
 
-static int grab_deseasonal_series (double *y, const double *x,
-				   const DATASET *dset,
-				   int prog, x13a_opts *xopt,
-				   const char *path)
+static int grab_adjusted_series (double *y, const double *x,
+				 const DATASET *dset,
+				 int prog, x13a_opts *xopt,
+				 const char *path)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN], date[16];
@@ -969,7 +969,7 @@ static int grab_deseasonal_series (double *y, const double *x,
 	gretl_build_path(sfname, path, "graph", "series",
 			 tramo_save_strings[TX_SA], NULL);
     } else {
-	/* @path should end with ".spc" */
+	/* x13as: @path should end with ".spc" */
 	const char **save_strings;
 	char *p;
 
@@ -977,7 +977,7 @@ static int grab_deseasonal_series (double *y, const double *x,
 	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
 	if (p != NULL) {
-	    strcpy(p + 1, save_strings[TX_SA]);
+	    strcpy(p + 1, save_strings[xopt->output]);
 	}
     }
 
@@ -1859,13 +1859,28 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	}
     }
 
-    if (gretl_bundle_get_bool(b, "verbose", 0)) {
+    if (gretl_bundle_has_key(b, "output")) {
+	int output = gretl_bundle_get_int(b, "output", &err);
+
+	if (!err && (output < 1 || output > 3)) {
+	    err = E_INVARG;
+	} else {
+	    /* zero-based */
+	    xopt->output = output - 1;
+	}
+    }
+
+    if (!err && gretl_bundle_get_bool(b, "verbose", 0)) {
+	const char **ostrs = xopt->seats ? x13_seats_save_strings :
+	    x11_save_strings;
+
 	/* FIXME translations */
-	pprintf(prn, "deseasonalization options:\n");
+	pprintf(prn, "x13as options:\n");
 	pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
 	pprintf(prn, "  outlier correction:      %s\n", xopt->outliers ? "yes" : "no");
 	pprintf(prn, "  trading days correction: %s\n", xopt->trdays ? "yes" : "no");
 	pprintf(prn, "  log transformation:      %s\n", tr_strs[xopt->logtrans-1]);
+	pprintf(prn, "  output series:           %s\n", ostrs[xopt->output]);
 	pputc(prn, '\n');
     }
 
@@ -1879,7 +1894,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
-    x13a_opts xopt = {3, 0, 0, 0};
+    x13a_opts xopt = {3, 0, 0, 0, 0};
     const char *vname = "x";
     const char *exepath;
     const char *workdir;
@@ -1908,6 +1923,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     if (prog == X13A) {
 	if (opts != NULL) {
 	    err = parse_deseas_bundle(&xopt, opts, prn);
+	    savelist[1] = xopt.output;
 	}
 	if (!err) {
 	    gretl_build_path(fname, workdir, vname, NULL);
@@ -1936,7 +1952,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     if (!err) {
 	const char *path = (prog == X13A)? fname : workdir;
 
-	err = grab_deseasonal_series(y, x, dset, prog, &xopt, path);
+	err = grab_adjusted_series(y, x, dset, prog, &xopt, path);
     }
 
     return err;
