@@ -706,8 +706,6 @@ static int dpd_wald_test (dpmod *dpd)
     return err;
 }
 
-#define TRY_SARGAN 0
-
 static int dpd_sargan_test (dpmod *dpd)
 {
     int L1rows = dpd->L1->rows;
@@ -717,38 +715,6 @@ static int dpd_sargan_test (dpmod *dpd)
 
     ZTE = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, ZTE);
-
-#if TRY_SARGAN
-    if (1) {
-	/* Sargan test as such (not Hansen)? See the xtabond2 doc,
-	   section 2.5. Roodman says Sargan =
-
-	   (1/N) (Z'E)' (Z'Z)^{-1} Z'E
-
-	   where N is the total number of observations.
-	   As of 2021-11-18 this is not coming out right.
-	*/
-	gretl_matrix *S = gretl_matrix_alloc(dpd->nz, dpd->nz);
-
-	if (S != NULL) {
-	    int N = dpd->nobs;
-	    double sargan;
-	    int my_err = 0;
-
-	    gretl_matrix_multiply_mod(dpd->ZT, GRETL_MOD_NONE,
-				      dpd->ZT, GRETL_MOD_TRANSPOSE,
-				      S, GRETL_MOD_NONE);
-	    // gretl_matrix_divide_by_scalar(S, dpd->s2);
-	    gretl_invert_symmetric_matrix(S);
-	    gretl_matrix_print(S, "Sinv");
-	    sargan = gretl_scalar_qform(ZTE, S, &my_err);
-	    fprintf(stderr, "Try sargan: %g\n", sargan);
-	    fprintf(stderr, " divided by N: %g\n", sargan / N);
-	    fprintf(stderr, " s2-modified: %g\n", sargan * 2.0 / dpd->s2);
-	    gretl_matrix_free(S);
-	}
-    }
-#endif /* TRY_SARGAN */
 
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     dpd->sargan = gretl_scalar_qform(ZTE, dpd->A, &err);
@@ -2114,11 +2080,11 @@ static void dpanel_residuals (dpmod *dpd)
 	dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
     } else {
 	/* The following produces agreement with xtabond2's Sargan
-	   test in the GMM-diff case, but I haven't yet figured
-	   out the GMM-system case, particularly with 1-step
-	   estimation.
+	   test, though xtabond's reported 'sig2' value is half of
+	   the dpd->s2 we calculate here.
 	*/
-	dpd->s2 = SSRd / dpd->ndiff;
+	dpd->SSR = SSRd;
+	dpd->s2 = dpd->SSR / dpd->nobs;
     }
 }
 
@@ -3275,6 +3241,7 @@ static int do_units (dpmod *dpd, const DATASET *dset,
 #if DPDEBUG
     gretl_matrix_print(dpd->Y, "dpd->Y");
     gretl_matrix_print(dpd->X, "dpd->X");
+    gretl_matrix_print(dpd->H, "dpd->H");
 #endif
 
 #if WRITE_MATRICES
