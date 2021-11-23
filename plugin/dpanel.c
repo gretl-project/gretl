@@ -101,7 +101,8 @@ struct dpmod_ {
     double s2;            /* residual variance */
     double AR1;           /* z statistic for AR(1) errors */
     double AR2;           /* z statistic for AR(2) errors */
-    double sargan;        /* overidentification test statistic */
+    double sargan;        /* overidentification test statistic (1-step) */
+    double hansen;        /* overidentification test statistic (FEGMM) */
     double wald[2];       /* Wald test statistic(s) */
     int wdf[2];           /* degrees of freedom for Wald test(s) */
     int *xlist;           /* list of independent variables */
@@ -319,6 +320,7 @@ static dpmod *dpmod_new (int *list, const int *ylags,
     dpd->AR1 = NADBL;
     dpd->AR2 = NADBL;
     dpd->sargan = NADBL;
+    dpd->hansen = NADBL;
     dpd->wald[0] = dpd->wald[1] = NADBL;
     dpd->wdf[0] = dpd->wdf[1] = 0;
 
@@ -706,34 +708,40 @@ static int dpd_wald_test (dpmod *dpd)
     return err;
 }
 
-static int dpd_sargan_test (dpmod *dpd)
+static int dpd_overid_test (dpmod *dpd)
 {
     int L1rows = dpd->L1->rows;
     int L1cols = dpd->L1->cols;
     gretl_matrix *ZTE;
+    double test;
     int err = 0;
 
     ZTE = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, ZTE);
 
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
-    dpd->sargan = gretl_scalar_qform(ZTE, dpd->A, &err);
+    test = gretl_scalar_qform(ZTE, dpd->A, &err);
+    fprintf(stderr, "dpd->step = %d, overid test %g\n", dpd->step, test);
 
     gretl_matrix_reuse(dpd->L1, L1rows, L1cols);
 
-    if (!err && dpd->sargan < 0) {
-	dpd->sargan = NADBL;
+    if (!err && test < 0) {
+	test = NADBL;
 	err = E_NOTPD;
     }
 
     if (!err && dpd->step == 1) {
 	/* allow for scale factor in H matrix */
-	dpd->sargan *= 2.0 / dpd->s2;
+	test *= 2.0 / dpd->s2;
     }
 
     if (err) {
-	fprintf(stderr, "dpd_sargan_test failed: %s\n",
+	fprintf(stderr, "dpd_overid_test failed: %s\n",
 		errmsg_get_with_default(err));
+    } else if (dpd->step == 1 || dpd_style(dpd)) {
+	dpd->sargan = test;
+    } else {
+	dpd->hansen = test;
     }
 
     return err;
@@ -1502,9 +1510,13 @@ static int dpd_finalize_model (MODEL *pmod,
 	if (!na(dpd->AR2)) {
 	    gretl_model_set_double(pmod, "AR2", dpd->AR2);
 	}
-	gretl_model_set_int(pmod, "sargan_df", dpd->nz - dpd->k);
 	if (!na(dpd->sargan)) {
+	    gretl_model_set_int(pmod, "sargan_df", dpd->nz - dpd->k);
 	    gretl_model_set_double(pmod, "sargan", dpd->sargan);
+	}
+	if (!na(dpd->hansen)) {
+	    gretl_model_set_int(pmod, "hansen_df", dpd->nz - dpd->k);
+	    gretl_model_set_double(pmod, "hansen", dpd->hansen);
 	}
 	gretl_model_set_int(pmod, "wald_df", dpd->wdf[0]);
 	if (!na(dpd->wald[0])) {
@@ -1701,7 +1713,7 @@ static int dpd_step_2 (dpmod *dpd)
 
     if (!err) {
 	dpd_ar_test(dpd);
-	dpd_sargan_test(dpd);
+	dpd_overid_test(dpd);
 	dpd_wald_test(dpd);
     }
 
@@ -1788,10 +1800,8 @@ static int dpd_step_1 (dpmod *dpd, gretlopt opt)
     }
 
     if (!err) {
-	/* is step 1 the final destination? */
-	int onestep = !(dpd->flags & DPD_TWOSTEP);
-
-	if (onestep) {
+	if (!(dpd->flags & DPD_TWOSTEP)) {
+	    /* step 1 is the final destination */
 	    if (dpd->nzb2 > 0 && (opt & OPT_A)) {
 		/* GMMlev + asymptotic + 1step: as per Ox/DPD,
 		   skip the AR tests (which won't work)
@@ -1800,10 +1810,13 @@ static int dpd_step_1 (dpmod *dpd, gretlopt opt)
 	    } else {
 		dpd_ar_test(dpd);
 	    }
-	    dpd_sargan_test(dpd);
+	    dpd_overid_test(dpd);
 	    dpd_wald_test(dpd);
-	} else if (opt & OPT_V) {
-	    dpd_sargan_test(dpd);
+	} else if (!dpd_style(dpd) || (opt & OPT_V)) {
+	    /* we're going on to step 2, but record the
+	       result of the first-step Sargan test
+	    */
+	    dpd_overid_test(dpd);
 	}
     }
 
