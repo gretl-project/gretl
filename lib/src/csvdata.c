@@ -2618,10 +2618,13 @@ static int csv_fields_check (gzFile fp, csvdata *c, PRN *prn)
         if (c->ncols == 0) {
             c->ncols = chkcols;
             pprintf(prn, _("   number of columns = %d\n"), c->ncols);
-        } else if (chkcols != c->ncols) {
+        } else if (chkcols > c->ncols) {
             pprintf(prn, _("   ...but row %d has %d fields: aborting\n"),
                     c->nrows, chkcols);
             err = E_DATA;
+        } else if (chkcols < c->ncols) {
+            pprintf(prn, _("Warning: row %d has %d fields: %d entries set to missing\n"),
+                    c->nrows, chkcols, c->ncols - chkcols);
         } else if (cols_subset(c)) {
             int datacols = csv_skip_col_1(c) ? (c->ncols - 1) : c->ncols;
 
