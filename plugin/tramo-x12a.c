@@ -38,6 +38,8 @@
 # include <windows.h>
 #endif
 
+static void display_x13a_output (char *fname, int err, PRN *prn);
+
 enum prog_codes {
     TRAMO_SEATS,
     TRAMO_ONLY,
@@ -83,6 +85,105 @@ const char *default_mdl = {
     "(0 2 2)(0 1 1) X\n"
     "(2 1 2)(0 1 1)\n"
 };
+
+/* apparatus for "packaged" seasonal adjustment options */
+
+/*
+   trans (Transformation): 0 = no, 1 = test
+   leap_years: 0 = no, 1 = test
+   (also working days, trading days, easter, outliers)
+   automdl: 0 = airline model, 1 = automatic optimization
+   where applicable, 2 = yes (omit testing?)
+*/
+
+rsa x13_rsa[] = {
+    { "X11",   0, 0, 0, 0, 0, 0, 0 },
+    { "RSA1",  1, 0, 0, 0, 0, 1, 0 },
+    { "RSA2c", 1, 1, 1, 0, 1, 1, 0 },
+    { "RSA3",  1, 0, 0, 0, 0, 1, 1 },
+    { "RSA4c", 1, 1, 1, 0, 1, 1, 1 },
+    { "RSA5",  1, 1, 0, 1, 1, 1, 1 }
+};
+
+static rsa *get_x13_rsa_by_name (const char *s)
+{
+    int i, n = G_N_ELEMENTS(x13_rsa);
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(s, x13_rsa[i].name)) {
+	    return &x13_rsa[i];
+	}
+    }
+
+    return NULL;
+}
+
+#if 0 /* not supported yet */
+
+rsa ts_rsa[] = {
+    { "RSA0",    0, 0, 0, 0, 0, 0, 0 },
+    { "RSA1",    1, 0, 0, 0, 0, 1, 0 },
+    { "RSA2",    1, 0, 1, 0, 1, 1, 0 },
+    { "RSA3",    1, 0, 0, 0, 0, 1, 1 },
+    { "RSA4",    1, 0, 1, 0, 1, 1, 1 },
+    { "RSA5",    1, 0, 0, 2, 1, 1, 1 },
+    { "RSAfull", 1, 2, 0, 1, 2, 1, 1 } /* 2 = test (Include Easter) */
+};
+
+static rsa *get_ts_rsa_by_name (const char *s)
+{
+    int i, n = G_N_ELEMENTS(ts_rsa);
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(s, ts_rsa[i].name)) {
+	    return &ts_rsa[i];
+	}
+    }
+
+    return NULL;
+}
+
+#endif /* tramo-seats unsupported */
+
+static void print_x13_rsa (rsa *r, FILE *fp)
+{
+    char testvars[32] = {0};
+
+    if (r->trans) {
+	fputs("transform{function=auto}\n", fp);
+    } else {
+	fputs("transform{function=none}\n", fp);
+    }
+#if 0
+    if (r->leap_years) {
+	/* if not present, 'tdnolpyear' inflection for td ? */
+	fputs("\n", fp);
+    }
+    if (r->working days) {
+	/* ?? */
+	fputs("\n", fp);
+    }
+#endif
+    if (r->trading_days) {
+	strcat(testvars, "td ");
+    }
+    if (r->easter) {
+	strcat(testvars, "easter");
+    }
+    if (*testvars != '\0') {
+	fprintf(fp, "regression{aictest = (%s)}\n", testvars);
+    }
+    if (r->outliers) {
+	fputs("outlier{}\n", fp);
+    }
+    if (r->automdl) {
+	fputs("automdl{}\n", fp);
+    } else {
+	fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
+    }
+}
+
+/* end "packaged" seasonal adjustment material */
 
 const char *get_tramo_save_string (int i)
 {
@@ -956,7 +1057,7 @@ static int add_series_from_file (const char *path, int src,
 static int grab_adjusted_series (double *y, const double *x,
 				 const DATASET *dset,
 				 int prog, x13a_opts *xopt,
-				 const char *path)
+				 const char *path, PRN *prn)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN], date[16];
@@ -985,10 +1086,14 @@ static int grab_adjusted_series (double *y, const double *x,
 
     if (fp == NULL) {
 	err = E_FOPEN;
-	if (prog == TRAMO_SEATS && seats_no_seasonal(path)) {
-	    gretl_warnmsg_set(_("no seasonality was detected"));
-	    no_seas = 1;
-	    err = 0;
+	if (prog == TRAMO_SEATS) {
+	    if (seats_no_seasonal(path)) {
+		gretl_warnmsg_set(_("no seasonality was detected"));
+		no_seas = 1;
+		err = 0;
+	    }
+	} else if (prn != NULL) {
+	    display_x13a_output(sfname, 1, prn);
 	}
 	if (err) {
 	    return err;
@@ -1128,6 +1233,7 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
     request->xopt.outliers = 1; /* x13a: detect outliers */
     request->xopt.trdays = 0;   /* x13a: trading days correction */
     request->xopt.seats = 0;    /* x13a: use SEATS rather than X11 */
+    request->xopt.pkg = NULL;   /* seasonal adj "package" */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
@@ -1320,23 +1426,25 @@ static int write_spc_file (const char *fname,
     }
     fputs(" )\n}\n", fp);
 
-    if (xopt->logtrans == 1) {
-	fputs("transform{function=log}\n", fp);
-    } else if (xopt->logtrans == 2) {
-	fputs("transform{function=none}\n", fp);
+    if (xopt->pkg != NULL) {
+	print_x13_rsa(xopt->pkg, fp);
     } else {
-	fputs("transform{function=auto}\n", fp);
+	/* custom-selected specifications */
+	if (xopt->logtrans == 1) {
+	    fputs("transform{function=log}\n", fp);
+	} else if (xopt->logtrans == 2) {
+	    fputs("transform{function=none}\n", fp);
+	} else {
+	    fputs("transform{function=auto}\n", fp);
+	}
+	if (xopt->trdays) {
+	    fputs("regression{variables = td}\n", fp);
+	}
+	if (xopt->outliers) {
+	    fputs("outlier{}\n", fp);
+	}
+	fputs("automdl{}\n", fp);
     }
-
-    if (xopt->trdays) {
-	fputs("regression{variables = td}\n", fp);
-    }
-
-    if (xopt->outliers) {
-	fputs("outlier{}\n", fp);
-    }
-
-    fputs("automdl{}\n", fp);
 
 #if DSDEBUG
     fprintf(stderr, "x13as: using %s\n", xopt->seats ? "seats" : "x11");
@@ -1870,6 +1978,17 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	}
     }
 
+    if (gretl_bundle_has_key(b, "rsa")) {
+	const char *s = gretl_bundle_get_string(b, "rsa", &err);
+
+	if (!err) {
+	    xopt->pkg = get_x13_rsa_by_name(s);
+	    if (xopt->pkg == NULL) {
+		err = E_INVARG;
+	    }
+	}
+    }
+
     if (!err) {
 	xopt->verbose = gretl_bundle_get_int(b, "verbose", NULL);
     }
@@ -1879,23 +1998,33 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	    x11_save_strings;
 
 	/* FIXME translations */
-	pprintf(prn, "x13as options:\n");
-	pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
-	pprintf(prn, "  outlier correction:      %s\n", xopt->outliers ? "yes" : "no");
-	pprintf(prn, "  trading days correction: %s\n", xopt->trdays ? "yes" : "no");
-	pprintf(prn, "  log transformation:      %s\n", tr_strs[xopt->logtrans-1]);
-	pprintf(prn, "  output series:           %s\n", ostrs[xopt->output]);
-	pputc(prn, '\n');
+
+	if (xopt->pkg != NULL) {
+	    pprintf(prn, "x13as adjustment package: %s\n\n", xopt->pkg->name);
+	} else {
+	    pprintf(prn, "x13as options:\n");
+	    pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
+	    pprintf(prn, "  outlier correction:      %s\n", xopt->outliers ? "yes" : "no");
+	    pprintf(prn, "  trading days correction: %s\n", xopt->trdays ? "yes" : "no");
+	    pprintf(prn, "  log transformation:      %s\n", tr_strs[xopt->logtrans-1]);
+	    pprintf(prn, "  output series:           %s\n", ostrs[xopt->output]);
+	    pputc(prn, '\n');
+	}
     }
 
     return err;
 }
 
-static void display_x13a_output (char *fname, PRN *prn)
+static void display_x13a_output (char *fname, int err, PRN *prn)
 {
     FILE *fp;
 
-    switch_ext_in_place(fname, "out");
+    if (err) {
+	switch_ext_in_place(fname, "err");
+    } else {
+	switch_ext_in_place(fname, "out");
+    }
+
     fp = fopen(fname, "r");
 
     if (fp != NULL) {
@@ -1925,7 +2054,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
-    x13a_opts xopt = {3, 0, 0, 0, 0, 0};
+    x13a_opts xopt = {3, 0, 0, 0, 0, 0, NULL};
     const char *vname = "x";
     const char *exepath;
     const char *workdir;
@@ -1983,11 +2112,11 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     if (!err) {
 	const char *path = (prog == X13A)? fname : workdir;
 
-	err = grab_adjusted_series(y, x, dset, prog, &xopt, path);
+	err = grab_adjusted_series(y, x, dset, prog, &xopt, path, prn);
     }
 
     if (!err && xopt.verbose > 1) {
-	display_x13a_output(fname, prn);
+	display_x13a_output(fname, 0, prn);
     }
 
     return err;
