@@ -2736,8 +2736,7 @@ static int handle_tgz (const char *fname,
     int err;
 
     fullname = gretl_make_dotpath(fname);
-    /* using WFU server for now, could be moved to sourceforge */
-    uri = g_strdup_printf("http://ricardo.ecn.wfu.edu/pub/gretl/%s", fname);
+    uri = g_strdup_printf("https://sourceforge.net/projects/gretl/files/x13as/%s", fname);
     err = retrieve_public_file(uri, fullname);
 
     if (!err) {
