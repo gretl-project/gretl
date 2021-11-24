@@ -721,7 +721,6 @@ static int dpd_overid_test (dpmod *dpd)
 
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     test = gretl_scalar_qform(ZTE, dpd->A, &err);
-    fprintf(stderr, "dpd->step = %d, overid test %g\n", dpd->step, test);
 
     gretl_matrix_reuse(dpd->L1, L1rows, L1cols);
 
@@ -732,7 +731,9 @@ static int dpd_overid_test (dpmod *dpd)
 
     if (!err && dpd->step == 1) {
 	/* allow for scale factor in H matrix */
-	test *= 2.0 / dpd->s2;
+	double adj = dpd_style(dpd)? 2.0 : 1.0;
+
+	test *= adj / dpd->s2;
     }
 
     if (err) {
@@ -2097,7 +2098,7 @@ static void dpanel_residuals (dpmod *dpd)
 	   the dpd->s2 we calculate here.
 	*/
 	dpd->SSR = SSRd;
-	dpd->s2 = dpd->SSR / dpd->nobs;
+	dpd->s2 = dpd->SSR / (2 * dpd->nobs);
     }
 }
 
