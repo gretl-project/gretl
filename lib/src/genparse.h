@@ -398,6 +398,8 @@ enum {
     F_CONTAINS,
     F_VECH,
     F_UNVECH,
+    F_DESEAS,
+    F_DESEAS2, /* temporary name! */
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -468,7 +470,6 @@ enum {
     F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
-    F_DESEAS,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

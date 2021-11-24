@@ -9379,28 +9379,22 @@ static NODE *series_matrix_func (NODE *n, int f, parser *p)
 }
 
 static int deseasonalize (const double *x, double *y,
-			  NODE *nc, NODE *nb, parser *p)
+			  int f, NODE *r, parser *p)
 {
     gretl_bundle *b = NULL;
     int tramo = 0;
     int err = 0;
 
-    if (!null_node(nc)) {
-	if (nc->t != STR) {
-	    node_type_error(F_DESEAS, 2, STR, nc, p);
-	    err = p->err;
-	} else if (!strcmp(nc->v.str, "T")) {
-	    tramo = 1;
-	} else if (strcmp(nc->v.str, "X")) {
-	    err = E_INVARG;
-	}
-    }
-    if (!p->err && !null_node(nb)) {
-	if (nb->t == BUNDLE) {
-	    b = nb->v.b;
+    if (!null_node(r)) {
+	if (f == F_DESEAS) {
+	    if (!strcmp(r->v.str, "T")) {
+		tramo = 1;
+	    } else if (strcmp(r->v.str, "X")) {
+		err = E_INVARG;
+	    }
 	} else {
-	    node_type_error(F_DESEAS, 3, BUNDLE, nb, p);
-	    err = p->err;
+	    /* F_DESEAS2 */
+	    b = r->v.b;
 	}
     }
     if (!err) {
@@ -9424,9 +9418,10 @@ static int deseasonalize (const double *x, double *y,
    Note that the 'r' node may contain an auxiliary parameter;
    in that case the aux value should be a scalar, unless
    we're doing F_DESEAS, in which case it should be a string,
-   or one of the panel stats functions, in which case it should
-   be a series. In case of F_HPFILT and F_DESEAS, the 'o' node
-   can be used to pass an additional optional argument.
+   F_DESEAS2 (it should be a bundle), or one of the panel stats
+   functions, in which case it should be a series. In case of
+   F_HPFILT and F_DESEAS, the 'o' node can be used to pass an
+   additional optional argument.
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
@@ -9442,6 +9437,8 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 
     if (f == F_DESEAS) {
         rtype = STR;
+    } else if (f == F_DESEAS2) {
+	rtype = BUNDLE;
     } else if (is_panel_stat(f)) {
         rtype = SERIES;
     }
@@ -9478,6 +9475,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
     if (ret != NULL) {
         gretl_matrix *tmp = NULL;
         double parm = NADBL;
+	int oneside = 0;
         const double *z = NULL;
         const double *x;
         double *y;
@@ -9501,15 +9499,12 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 
         switch (f) {
         case F_HPFILT:
-            {
-                int oneside = node_get_bool(o, p, 0);
-
-                if (!p->err && oneside) {
-                    p->err = oshp_filter(x, y, p->dset, parm, OPT_NONE);
-                } else if (!p->err) {
-                    p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
-                }
-            }
+	    oneside = node_get_bool(o, p, 0);
+	    if (!p->err && oneside) {
+		p->err = oshp_filter(x, y, p->dset, parm, OPT_NONE);
+	    } else if (!p->err) {
+		p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
+	    }
             break;
         case F_FRACDIFF:
             p->err = fracdiff_series(x, y, parm, 1, autoreg(p) ? p->obs : -1, p->dset);
@@ -9532,7 +9527,8 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
             p->err = cum_series(x, y, p->dset);
             break;
         case F_DESEAS:
-	    p->err = deseasonalize(x, y, r, o, p);
+	case F_DESEAS2:
+	    p->err = deseasonalize(x, y, f, r, p);
             break;
         case F_TRAMOLIN:
             p->err = tramo_linearize_series(x, y, p->dset);
@@ -16822,10 +16818,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_PXNOBS:
     case F_PSD:
     case F_DESEAS:
+    case F_DESEAS2:
     case F_TRAMOLIN:
         /* series argument needed */
         if (l->t == SERIES || l->t == MAT) {
-            if (t->t == F_HPFILT || t->t == F_DESEAS) {
+            if (t->t == F_HPFILT) {
                 ret = series_series_func(l, m, r, t->t, p);
             } else {
                 ret = series_series_func(l, r, NULL, t->t, p);
