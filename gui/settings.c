@@ -208,7 +208,7 @@ RCVAR rc_vars[] = {
 #endif
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric,
-      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #endif
 #if defined(MAC_THEMING) || defined(G_OS_WIN32)
     { "themepref", N_("Theme preference"), NULL, themepref,
@@ -1990,6 +1990,11 @@ static void rcvar_set_int (RCVAR *rcvar, int ival, int *changed)
     if (ival != *intvar) {
 	flag_changed(rcvar, changed);
 	*intvar = ival;
+	if (intvar == &lcnumeric) {
+	    int langid = lang_id_from_name(langpref);
+
+	    set_lcnumeric(langid, lcnumeric);
+	}
     }
 }
 
