@@ -28,7 +28,6 @@ enum tx_objects {
 };
 
 typedef struct _common_opt_info common_opt_info;
-typedef struct _rsa rsa;
 typedef struct _x13a_opts x13a_opts;
 typedef struct _tx_request tx_request;
 
@@ -39,25 +38,14 @@ struct _common_opt_info {
     char savename[VNAMELEN];
 };
 
-struct _rsa {
-    char name[8];
-    gint8 trans;
-    gint8 leap_years;
-    gint8 working_days;
-    gint8 trading_days;
-    gint8 easter;
-    gint8 outliers;
-    gint8 automdl;
-};
-
 struct _x13a_opts {
     int logtrans;
     int outliers;
     int trdays;
     int seats;
+    int airline;
     int output;
     int verbose;
-    rsa *pkg;
 };
 
 struct _tx_request {
