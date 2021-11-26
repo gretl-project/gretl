@@ -32,7 +32,7 @@
 # include "gretl_mpi.h"
 # include "gretl_xml.h"
 # ifdef G_OS_WIN32
-#  define MPI_PIPES 1 /* somewhat experimental */
+#  define MPI_PIPES 0 /* somewhat experimental */
 # else
 #  define MPI_PIPES 1 /* somewhat experimental */
 # endif
