@@ -2037,10 +2037,17 @@ static int validate_writedir (const char *dirname)
 
     if (!err) {
         /* ensure the directory is writable */
+#ifdef WIN32
+	long mypid = (long) GetCurrentProcessId();
+#else
+	long mypid = (long) getpid();
+#endif
         char testname[FILENAME_MAX];
+	gchar *chkfile;
         FILE *fp;
 
-        gretl_build_path(testname, dirname, "write.chk", NULL);
+	chkfile = g_strdup_printf("write.%ld.chk", mypid);
+        gretl_build_path(testname, dirname, chkfile, NULL);
         fp = gretl_fopen(testname, "w");
         if (fp == NULL) {
             gretl_errmsg_sprintf(_("Couldn't write to '%s': "
@@ -2051,6 +2058,7 @@ static int validate_writedir (const char *dirname)
             fclose(fp);
             gretl_remove(testname);
         }
+	g_free(chkfile);
     }
 
     if (err) {
