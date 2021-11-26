@@ -721,8 +721,10 @@ static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	}
 
 #ifdef MPI_PIPES
+	/* try for real-time output to @prn */
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_R, prn);
 #else
+	/* write output to @prn on completion */
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
 #endif
 

@@ -831,6 +831,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	    err = run_child_with_pipe(arg, currdir, hwrite, hread,
 				      opt, prn);
 	} else {
+	    /* note: passing NULL for prn here */
 	    err = run_child_with_pipe(arg, currdir, hwrite, hread,
 				      opt, NULL);
 	    if (!err) {
