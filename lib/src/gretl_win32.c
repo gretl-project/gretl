@@ -790,6 +790,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	    }
 	    CloseHandle(hread);
 	    CloseHandle(hwrite);
+	} else {
+	    WaitForSingleObject(pinfo.hProcess, INFINITE);
 	}
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
