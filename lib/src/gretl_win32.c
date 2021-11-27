@@ -791,6 +791,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	    CloseHandle(hread);
 	    CloseHandle(hwrite);
 	} else {
+	    /* is this right? */
 	    WaitForSingleObject(pinfo.hProcess, INFINITE);
 	}
 	CloseHandle(pinfo.hProcess);
