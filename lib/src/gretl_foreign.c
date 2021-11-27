@@ -213,7 +213,7 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 #ifdef HAVE_MPI
 	if (gretl_mpi_initialized()) {
 	    gretl_errmsg_set(_("MPI is already initialized"));
-	    err = E_EXTERNAL;
+	    err = 1; // E_EXTERNAL
 	} else {
 	    foreign_lang = LANG_MPI;
 	}
@@ -366,7 +366,7 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
 
     if (!g_spawn_check_exit_status(status, &gerr)) {
 	pprintf(io->prn, "gretlmpi: %s\n", gerr->message);
-	*(io->err) = E_EXTERNAL;
+	*(io->err) = 1; // E_EXTERNAL
 	io->got_all = 1;
     }
 #endif
