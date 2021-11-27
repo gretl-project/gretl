@@ -332,16 +332,16 @@ the difference-only estimator is selected, as in
   dpanel 1 ; y const
 \end{code}
 In this case the default \texttt{dpanel} behavior, which agrees with
-David Roodman's \texttt{xtabond2}, is to drop the constant (since
-differencing reduces it to nothing but zeros). However, for
-compatibility with the DPD package for Ox, you can give the option
-\verb|--dpdstyle|, in which case the constant is retained (equivalent
-to including a linear trend in equation~\ref{eq:dpd-def}).  A similar
-point applies to the period-specific dummy variables which can be
-added in \texttt{dpanel} via the \verb|--time-dummies| option: in the
-differences-only case these dummies are entered in differenced form by
-default, but when the \verb|--dpdstyle| switch is applied they are
-entered in levels.
+David Roodman's \texttt{xtabond2} for Stata \citep{Roodman2009}, is
+to drop the constant (since differencing reduces it to nothing but
+zeros). However, for compatibility with the DPD package for Ox, you
+can give the option \verb|--dpdstyle|, in which case the constant is
+retained (equivalent to including a linear trend in
+equation~\ref{eq:dpd-def}).  A similar point applies to the
+period-specific dummy variables which can be added in \texttt{dpanel}
+via the \verb|--time-dummies| option: in the differences-only case
+these dummies are entered in differenced form by default, but when the
+\verb|--dpdstyle| switch is applied they are entered in levels.
 
 The standard gretl syntax applies if you want to use lagged
 explanatory variables, so for example the command
@@ -823,12 +823,12 @@ dpanel 1 ; ly X ; GMM(X,2,99) --two-step
 dpanel 1 ; ly X ; GMM(X,2,99) GMMlevel(X,1,1) --two-step --sys
 \end{code}
 
-For comparison we estimated the same two models using Ox/DPD and the
-Stata command \texttt{xtabond2}. (In each case we constructed a
-comma-separated values dataset containing the data as transformed in
-the gretl script shown above, using a missing-value code appropriate
-to the target program.) For reference, the commands used with
-Stata are reproduced below:
+For comparison we estimated the same two models using Ox/DPD and
+\texttt{xtabond2}. (In each case we constructed a comma-separated
+values dataset containing the data as transformed in the gretl script
+shown above, using a missing-value code appropriate to the target
+program.) For reference, the commands used with Stata are reproduced
+below:
 %
 \begin{code}
 #delimit ;
@@ -913,48 +913,92 @@ the estimator.
 \section{Auxiliary test statistics}
 \label{sec:dpanel-aux}
 
-We have concentrated above on the parameter estimates and standard
-errors. Here we add a few words on the additional test statistics that
-typically accompany both GMM-DIF and GMM-SYS estimation. These include
-the Sargan test for overidentification, one or more Wald tests for the
-joint significance of the regressors (and time dummies, if applicable)
-and tests for first- and second-order autocorrelation of the residuals
-from the equations in differences.
+We have concentrated above on parameter estimates and standard
+errors. Here we add some discussion of the additional test statistics
+that typically accompany both GMM-DIF and GMM-SYS estimation---tests
+of overidentification, for first- and second-order autocorrelation,
+and for the joint significance of regressors.
 
-As in Ox/DPD, the Sargan test statistic reported by gretl is
+\subsection{Overidentification}
+
+If a model estimated with the use of instrumental variables is
+just-identified, the condition of orthogonality of the residuals and
+the instruments can be satisfied exactly. But if the specification is
+overidentified (more instruments than endogenous regressors) this
+condition can only be approximated, and the degree to which
+orthogonality ``fails'' serves as a test for the validity of the
+instruments (and/or the specification). Since dynamic panel models are
+almost always overidentified such a test is of particular importance.
+
+There are two such tests in the econometric literature, devised
+respectively by \cite{sargan58} and \cite{hansen82}. They share a
+common principle: a suitably scaled measure of deviation from perfect
+orthogonality can be shown to be distributed as $\chi^2(k)$, with $k$
+the degree of overidentification, under the null hypothesis of valid
+instruments and correct specification. Both test statistics can be
+written as
 \[
   S = \left(\sum_{i=1}^N \hat{\bv}^{*\prime}_i \bZ_i\right)  
    \bA_N \left(\sum_{i=1}^N \bZ_i' \hat{\bv}^*_i\right)
 \]
-where the $\hat{\bv}^*_i$ are the transformed (e.g.\ differenced)
-residuals for unit $i$.  Under the null hypothesis that the
-instruments are valid, $S$ is asymptotically distributed as chi-square
-with degrees of freedom equal to the number of overidentifying
-restrictions.
+where the $\hat{\bv}^*_i$ are the residuals in first differences for
+unit $i$, and for that reason they are often rolled together---for
+example, as ``Hansen-Sargan'' tests by \cite{davidson-mackinnon04}.
 
-In general we see a good level of agreement between gretl, DPD and
-\texttt{xtabond2} with regard to these statistics, with a few
-relatively minor exceptions. Specifically, \texttt{xtabond2} computes
-both a ``Sargan test'' and a ``Hansen test'' for overidentification,
-but what it calls the Hansen test is, apparently, what DPD calls the
-Sargan test. (We have had difficulty determining from the
-\texttt{xtabond2} documentation \citep{Roodman2009} exactly how its
-Sargan test is computed.) In addition there are cases where the
-degrees of freedom for the Sargan test differ between DPD and gretl;
-this occurs when the $\bA_N$ matrix is singular
-(section~\ref{sec:rankdef}). In concept the df equals the number of
-instruments minus the number of parameters estimated; for the first of
-these terms gretl uses the rank of $\bA_N$, while DPD appears to use
-the full dimension of this matrix.
+The Sargan vs Hansen difference is buried in $\bA_N$: Sargan's
+original test is the minimized orthogonality score divided by a scalar
+estimate of the error variance (which is presumed to be
+homoskedastic), while Hansen's is the minimized criterion from
+efficient GMM estimation, in which the scalar variance estimate is
+replaced by a heteroskedasticity- and autocorrelation-consistent (HAC)
+estimator of the variance matrix of the error term. These variants
+correspond to 1-step and 2-step estimates of the given specification.
 
-Negative first-order autocorrelation of the residuals is expected by
-construction of the estimator, so a significant value for the AR(1)
-test does not indicate a problem. If the AR(2) test is significant,
-however, this indicates violation of the maintained assumptions. Note
-that valid AR tests cannot be produced when the \verb|--asymptotic|
-option is specified in conjunction with one-step GMM-SYS estimation;
-if you need the tests, either add the \verb|two-step| option or drop
-the asymptotic flag (which is recommended in any case).
+Up till version 2021d, gretl followed Ox/DPD in presenting a single
+overidentification statistic under the name ``Sargan''---in effect, a
+Sargan test proper for the 1-step estimator and a Hansen test for
+2-step. Subsequently, however, gretl follows \texttt{xtabond2} in
+distinguishing between the tests and presenting both statistics, under
+their original names, when 2-step estimation is selected (and
+therefore the HAC variance estimator is available). This choice
+responds to an argument made by \cite{Roodman2009a}: the Sargan test
+is questionable owing to its assumption of homoskedasticity but the
+Hansen test is seriously weakened by an excessive number of
+instruments (it may under-reject substantially), so there may be a
+benefit to taking both tests into consideration.
+
+There are cases where the degrees of freedom for the
+overidentification test differs between DPD and gretl; this occurs
+when the $\bA_N$ matrix is singular (section~\ref{sec:rankdef}). In
+concept the df equals the number of instruments minus the number of
+parameters estimated; for the first of these terms gretl uses the rank
+of $\bA_N$, while DPD appears to use the full dimension of this
+matrix.
+
+\subsection{Autocorrelation}
+
+Negative first-order autocorrelation of the residuals in differences
+is expected by construction of the dynamic panel estimator, so a
+significant value for the AR(1) test does not indicate a problem. If
+the AR(2) test rejects, however, this indicates violation of the
+maintained assumptions. Note that valid AR tests cannot be produced
+when the \verb|--asymptotic| option is specified in conjunction with
+one-step GMM-SYS estimation; if you need the tests, either add the
+\verb|two-step| option or drop the asymptotic flag (which is
+recommended in any case).
+
+\subsection{Wald tests on regressors}
+
+Wald tests on the regressors (and separately on the time dummy
+variables, if included), are based on the estimated variance matrix of
+the parameter estimates and are generally in agreement across software
+packages provided the parameter variance is estimated in the same
+way. One small exception pertains to comparison between Ox/DPD and
+gretl when the difference estimator is used, a constant term is
+included, and the \verb|--dpdstyle| option is given with
+\texttt{dpanel} (so the constant is not automatically omitted). In
+this case DPD includes the constant in the time-dummies Wald test but
+gretl does not.
 
 \section{Post-estimation available statistics}
 \label{sec:dpanel-post}
@@ -972,7 +1016,12 @@ self-explanatory, but here's a partial list:
                                statistics \\
   \texttt{sargan}, \texttt{sargan\_df} & Sargan test for
                                          overidentifying restrictions
-                                         and corresponding degrees of freedom \\
+                                         and corresponding degrees of
+                                         freedom \\
+  \texttt{hansen}, \texttt{hansen\_df} & Hansen test for
+                                         overidentifying restrictions
+                                         and corresponding degrees of
+                                         freedom \\
   \texttt{wald}, \texttt{wald\_df} & Wald test for
                                      overall significance
                                      and corresponding degrees of
@@ -985,12 +1034,13 @@ self-explanatory, but here's a partial list:
 \end{tabular}
 \end{center}
 
-Note, however, that \texttt{GMMinst} and \texttt{wgtmat} (which may be
-quite large matrices) are not saved in the \dollar{model} bundle by
-default; that requires use of the \option{keep-extra} option with the
-\cmd{dpanel} command. Listing~\ref{ex:dpanel-rep} illustrates use
-of these matrices to replicate via hansl commands the calculation of
-the GMM estimator.
+Note that \texttt{hansen} and \texttt{hansen\_df} are not included
+when 1-step estimation is selected. Note also that \texttt{GMMinst}
+and \texttt{wgtmat} (which may be quite large matrices) are not saved
+in the \dollar{model} bundle by default; that requires use of the
+\option{keep-extra} option with the \cmd{dpanel}
+command. Listing~\ref{ex:dpanel-rep} illustrates use of these matrices
+to replicate via hansl commands the calculation of the GMM estimator.
 
 \begin{script}[p]
   \scriptcaption{replication of built-in command via hansl commands}
