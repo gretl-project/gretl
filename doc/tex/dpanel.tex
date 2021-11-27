@@ -75,20 +75,20 @@ where
 \begin{align*}
   \Delta \by_i  & =
      \left[ \begin{array}{ccc}
-         \Delta y_{i,3} & \cdots & \Delta y_{i,T}
+         \Delta y_{i3} & \cdots & \Delta y_{iT}
        \end{array} \right]' \\
   \bW_i  & = 
      \left[ \begin{array}{ccc}
-         \Delta y_{i,2} & \cdots & \Delta y_{i,T-1} \\
-         \Delta x_{i,3} & \cdots & \Delta x_{i,T} \\
+         \Delta y_{i2} & \cdots & \Delta y_{i,T-1} \\
+         \Delta x_{i3} & \cdots & \Delta x_{iT} \\
        \end{array} \right]' \\
   \bZ_i  & = 
      \left[ \begin{array}{ccccccc}
          y_{i1} & 0 & 0 & \cdots & 0 & \Delta x_{i3}\\
          0 & y_{i1} & y_{i2} & \cdots & 0 & \Delta x_{i4}\\
          & & \vdots \\
-         0 & 0 & 0 & \cdots & y_{i, T-2} & \Delta x_{iT} \\
-       \end{array} \right]' \\
+         0 & 0 & 0 & \cdots & y_{i,T-2} & \Delta x_{iT} \\
+       \end{array} \right] \\
   \intertext{and}
   \bA_N & = \left( \sum_i \bZ_i' H \bZ_i \right)^{-1}
 \end{align*}
@@ -97,7 +97,7 @@ Once the 1-step estimator is computed, the sample covariance matrix of
 the estimated residuals can be used instead of $H$ to obtain 2-step
 estimates, which are not only consistent but asymptotically
 efficient. (In principle the process may be iterated, but nobody seems
-to be interested.) Standard GMM theory applies, except for one thing:
+to be interested.) Standard GMM theory applies, except for one point:
 \cite{Windmeijer05} has computed finite-sample corrections to the
 asymptotic covariance matrix of the parameters, which are nowadays
 almost universally used.
@@ -143,15 +143,15 @@ where
        \end{array} \right]' \\
   \tilde{\bZ}_i  & =
      \left[ \begin{array}{ccccccccc}
-         y_{i1} & 0 & 0       & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i,3}\\
-         0 & y_{i1} & y_{i2} & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i,4}\\
+         y_{i1} & 0 & 0       & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i3}\\
+         0 & y_{i1} & y_{i2} & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i4}\\
          & & \vdots \\
-         0 & 0 & 0 & \cdots & y_{i, T-2} & 0  & \cdots & 0  & \Delta x_{iT}\\
+         0 & 0 & 0 & \cdots & y_{i,T-2} & 0  & \cdots & 0  & \Delta x_{iT}\\
          & & \vdots \\
          0 & 0 & 0 & \cdots & 0 & \Delta y_{i2} & \cdots & 0  & x_{i3}\\
          & & \vdots \\
          0 & 0 & 0 & \cdots & 0 & 0 & \cdots & \Delta y_{i,T-1}  & x_{iT}\\
-       \end{array} \right]' \\
+       \end{array} \right] \\
   \intertext{and}
   \bA_N & = \left( \sum_i \tilde{\bZ}_i' H^* \tilde{\bZ}_i \right)^{-1}
 \end{align*}
@@ -180,17 +180,17 @@ Both the difference estimator (\ref{eq:dif-gmm}) and the system
 estimator (\ref{eq:sys-gmm}) depend for their existence on the
 invertibility of $\bA_N$. This matrix may turn out to be singular for
 several reasons. However, this does not mean that the estimator is not
-computable: in some cases, adjustments are possible such that the
-estimator does exist, but the user should be aware that in these cases
+computable. In some cases, adjustments are possible such that the
+estimator does exist, but the user should be aware that in such cases
 not all software packages use the same strategy and replication of
 results may prove difficult or even impossible.
 
-A first reason why $\bA_N$ may be singular could be the unavailability
-of instruments, chiefly because of missing observations. This case is
+A first reason why $\bA_N$ may be singular is unavailability of
+instruments, chiefly because of missing observations. This case is
 easy to handle. If a particular row of $\tilde{\bZ}_i$ is zero for all
 units, the corresponding orthogonality condition (or the corresponding
-instrument if you prefer) is automatically dropped; of course, the
-overidentification rank is adjusted for testing purposes.
+instrument if you prefer) is automatically dropped; the
+overidentification rank is then adjusted for testing purposes.
 
 Even if no instruments are zero, however, $\bA_N$ could be rank
 deficient. A trivial case occurs if there are collinear instruments,
@@ -198,43 +198,41 @@ but a less trivial case may arise when $T$ (the total number of time
 periods available) is not much smaller than $N$ (the number of units),
 as, for example, in some macro datasets where the units are
 countries. The total number of potentially usable orthogonality
-conditions is $O(T^2)$, which may well exceed $N$ in some cases. Of
-course $\bA_N$ is the sum of $N$ matrices which have, at most, rank $2T -
-3$ and therefore it could well happen that the sum is singular.
+conditions is $O(T^2)$, which may well exceed $N$ in some cases. Since
+$\bA_N$ is the sum of $N$ matrices which have, at most, rank $2T -
+3$ it could well happen that the sum is singular.
 
-In all these cases, what we consider the ``proper'' way to go is to
-substitute the pseudo-inverse of $\bA_N$ (Moore--Penrose) for its regular
-inverse. Again, our choice is shared by some software packages, but
-not all, so replication may be hard.
+In all these cases, \texttt{dpanel} substitutes the pseudo-inverse of
+$\bA_N$ (Moore--Penrose) for its regular inverse. Our choice is shared
+by some software packages, but not all, so replication may be hard.
 
 \subsection{Covariance matrix and standard errors}
 
-By default the standard errors shown by \texttt{dpanel} for 1-step
-estimation are robust, based on the heteroskedasticity-consistent
-variance estimator
+By default the standard errors shown for 1-step estimation are robust,
+based on the heteroskedasticity-consistent variance estimator
 \[
   \widehat{\rm Var}(\hat{\gamma}) =
     \bM^{-1} \left(\sum_i\bW_i'\bZ_i\right)
     \bA_N\hat{\mathbf{V}}_N\bA_N
     \left(\sum_i\bZ_i'\bW_i\right) \bM^{-1}
-  \]
-  where $\bM = (\sum_i\bW_i'\bZ_i) \bA_N (\sum_i\bZ_i'\bW_i)$ and
-  $\hat{\mathbf{V}}_N = N^{-1} \sum_i
-  \bZ_i'\hat{\mathbf{u}}_i\hat{\mathbf{u}}_i'\bZ_i$, with
-  $\hat{\mathbf{u}}_i$ the vector of residuals in differences for
-  individual $i$.  In addition, as noted above, the variance estimator
-  for 2-step estimation employs the finite-sample correction of
-  \cite{Windmeijer05}.
+\]
+where $\bM = (\sum_i\bW_i'\bZ_i) \bA_N (\sum_i\bZ_i'\bW_i)$ and
+$\hat{\mathbf{V}}_N = N^{-1} \sum_i
+\bZ_i'\hat{\mathbf{u}}_i\hat{\mathbf{u}}_i'\bZ_i$, with
+$\hat{\mathbf{u}}_i$ the vector of residuals in differences for
+individual $i$.  In addition, as noted above, the variance estimator
+for 2-step estimation employs the finite-sample correction of
+\cite{Windmeijer05}.
 
-  When the \verb|--asymptotic| option is passed to \texttt{dpanel},
-  however, the 1-step variance estimator is simply
-  $\hat{\sigma}_u^2 M^{-1}$, which is not
-  heteroskedasticity-consistent, and the Windmeijer correction is not
-  applied for 2-step estimation. Use of the asymptotic option is not
-  recommended unless you wish to replicate prior results that did not
-  report robust standard errors. In particular, tests based on the
-  asymptotic 2-step variance estimator are known to over-reject quite
-  substantially (standard errors too small).
+When the \verb|--asymptotic| option is passed to \texttt{dpanel},
+however, the 1-step variance estimator is simply
+$\hat{\sigma}_u^2 M^{-1}$, which is not heteroskedasticity-consistent,
+and the Windmeijer correction is not applied for 2-step
+estimation. Use of this option is not recommended unless you wish to
+replicate prior results that did not report robust standard errors. In
+particular, tests based on the asymptotic 2-step variance estimator
+are known to over-reject quite substantially (standard errors too
+small).
 
 \subsection{Treatment of missing values}
 
@@ -265,9 +263,9 @@ However, we can use a $k$-difference operator and get
 \[
 \Delta_k y_t = \alpha \Delta_k y_{t-1} + \Delta_k \epsilon_t
 \]
-where $\Delta_k = 1 - L^k$ and past levels of $y_t$ are perfectly
-valid instruments. In this example, we can choose $k=3$ and use $y_1$
-as an instrument, so this unit is in fact perfectly usable.
+where $\Delta_k = 1 - L^k$ and past levels of $y_t$ are valid
+instruments. In this example, we can choose $k=3$ and use $y_1$ as an
+instrument, so this unit is in fact usable.
 
 Not all software packages seem to be aware of this possibility, so
 replicating published results may prove tricky if your dataset
@@ -276,11 +274,10 @@ contains individuals with gaps between valid observations.
 \section{Usage}
 \label{sec:dpanel-usage}
 
-One of the concepts underlying the syntax of \texttt{dpanel} is that
-you get default values for several choices you may want to make, so
-that in a ``standard'' situation the command is very concise.  The
-simplest case of the model (\ref{eq:dpd-def}) is a plain AR(1)
-process:
+One feature of \texttt{dpanel}'s syntax is that you get default values
+for several choices you may wish to make, so that in a ``standard''
+situation the command is very concise.  The simplest case of the model
+(\ref{eq:dpd-def}) is a plain AR(1) process:
 \begin{equation}
 \label{eq:dp1}
   y_{i,t} = \alpha y_{i,t-1} + \eta_{i} + v_{it} .
@@ -289,7 +286,7 @@ If you give the command
 \begin{code}
   dpanel 1 ; y
 \end{code}
-gretl assumes that you want to estimate (\ref{eq:dp1}) via the
+Gretl assumes that you want to estimate (\ref{eq:dp1}) via the
 difference estimator (\ref{eq:dif-gmm}), using as many orthogonality
 conditions as possible.  The scalar \texttt{1} between \texttt{dpanel}
 and the semicolon indicates that only one lag of \texttt{y} is
@@ -323,11 +320,11 @@ are appended automatically (see eq.\ \ref{eq:sys-gmm}).
 
 \subsection{Regressors}
 
-If we want to introduce additional regressors, we list them after the
-dependent variable in the same way as other gretl commands, such as
-\texttt{ols}.  For the difference orthogonality relations,
-\texttt{dpanel} takes care of transforming the regressors in parallel
-with the dependent variable.
+If additional regressors are to be included, they should be listed
+after the dependent variable in the same way as other gretl estimation
+commands, such as \texttt{ols}.  For the difference orthogonality
+relations, \texttt{dpanel} takes care of transforming the regressors
+in parallel with the dependent variable.
 
 One case of potential ambiguity is when an intercept is specified but
 the difference-only estimator is selected, as in
@@ -335,15 +332,16 @@ the difference-only estimator is selected, as in
   dpanel 1 ; y const
 \end{code}
 In this case the default \texttt{dpanel} behavior, which agrees with
-Stata's \texttt{xtabond2}, is to drop the constant (since differencing
-reduces it to nothing but zeros). However, for compatibility with the
-DPD package for Ox, you can give the option \verb|--dpdstyle|, in
-which case the constant is retained (equivalent to including a linear
-trend in equation~\ref{eq:dpd-def}).  A similar point applies to the
-period-specific dummy variables which can be added in \texttt{dpanel}
-via the \verb|--time-dummies| option: in the differences-only case
-these dummies are entered in differenced form by default, but when the
-\verb|--dpdstyle| switch is applied they are entered in levels.
+David Roodman's \texttt{xtabond2}, is to drop the constant (since
+differencing reduces it to nothing but zeros). However, for
+compatibility with the DPD package for Ox, you can give the option
+\verb|--dpdstyle|, in which case the constant is retained (equivalent
+to including a linear trend in equation~\ref{eq:dpd-def}).  A similar
+point applies to the period-specific dummy variables which can be
+added in \texttt{dpanel} via the \verb|--time-dummies| option: in the
+differences-only case these dummies are entered in differenced form by
+default, but when the \verb|--dpdstyle| switch is applied they are
+entered in levels.
 
 The standard gretl syntax applies if you want to use lagged
 explanatory variables, so for example the command
@@ -357,7 +355,6 @@ would result in estimation of the model
   \eta_{i} + v_{it} .
 \]
 
-
 \subsection{Instruments}
 
 The default rules for instruments are: 
@@ -370,7 +367,7 @@ The default rules for instruments are:
 
 If a different policy is wanted, the instruments should be specified
 in an additional list, separated from the regressors list by a
-semicolon. The syntax closely mirrors that for the \texttt{tsls}
+semicolon. The syntax closely mirrors that of the \texttt{tsls}
 command, but in this context it is necessary to distinguish between
 ``regular'' instruments and what are often called ``GMM-style''
 instruments (that is, instruments that are handled in the same
@@ -406,7 +403,7 @@ is
 
 \begin{altcode}
 \texttt{GMM(}\textsl{name}\texttt{,} \textsl{minlag}\texttt{,} 
-\textsl{maxlag}\texttt{)}
+\textsl{maxlag}\texttt{[,collapse])}
 \end{altcode}
 
 \noindent
@@ -419,8 +416,9 @@ One common use of \texttt{GMM()} is to limit the number of lagged
 levels of the dependent variable used as instruments for the equations
 in differences. It's well known that although exploiting all possible
 orthogonality conditions yields maximal asymptotic efficiency, in
-finite samples it may be preferable to use a smaller subset (but see
-also \cite{OkuiJoE2009}).  For example, the specification
+finite samples it may be preferable to use a smaller subset---see
+\cite{Roodman2009a}, \cite{OkuiJoE2009}.  For example, the
+specification
 
 \begin{code}
   dpanel 1 ; y ; GMM(y, 2, 4)
@@ -428,10 +426,68 @@ also \cite{OkuiJoE2009}).  For example, the specification
 ensures that no lags of $y_t$ earlier than $t-4$ will be used as
 instruments.
 
-A second use of \texttt{GMM()} is to exploit more fully the potential
-block-diagonal orthogonality conditions offered by an exogenous
-regressor, or a related variable that does not appear as a regressor.
-For example, in
+A second means of limiting the number of instruments is to
+``collapse'' the sets of block-diagonal instruments shown following
+equations~\ref{eq:dif-gmm} and \ref{eq:sys-gmm}. Instead of having a
+distinct instrument per observation per lag, this is reduced to a
+distinct instrument per lag, as shown in Figure~\ref{fig:collapse}.
+
+\begin{figure}[htbp]
+  \centering
+  \texttt{GMM()}
+  \[
+    \left[
+      \begin{array}{ccccccc}
+        y_{i1} & 0 & 0 & 0 & 0 & 0 & \cdots \\
+        0 & y_{i1} & y_{i2} & 0 & 0 & 0 & \cdots \\
+        0 & 0 & 0 & y_{i1} & y_{i2} & y_{i3} & \cdots \\
+        \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots
+      \end{array}
+    \right]
+    \Longrightarrow
+    \left[
+      \begin{array}{cccc}
+        y_{i1} & 0 & 0 & \cdots \\
+        y_{i1} & y_{i2} & 0 & \cdots \\
+        y_{i1} & y_{i2} & y_{i3} & \cdots \\
+        \vdots & \vdots & \vdots & \ddots
+      \end{array}
+    \right]
+  \]
+  \texttt{GMMlevel()}
+  \[
+    \left[
+      \begin{array}{cccc}
+        \Delta y_{i2} & 0 & 0 & \cdots \\
+        0 & \Delta y_{i3} & 0 & \cdots \\
+        0 & 0 & \Delta y_{i4} & \cdots \\
+        \vdots & \vdots & \vdots & \ddots
+      \end{array}
+    \right]
+    \Longrightarrow
+    \left[
+      \begin{array}{c}
+        \Delta y_{i2} \\
+        \Delta y_{i3} \\
+        \Delta y_{i4} \\
+        \vdots
+      \end{array}
+    \right]
+  \]
+  \caption{Collapsing block-diagonal instruments}
+  \label{fig:collapse}
+\end{figure}
+
+This treatment of instruments can be selected per \texttt{GMM} or
+\texttt{GMMlevel} case---by appending the \texttt{collapse} flag
+following the \textsl{maxlag} value---or it can be set ``globally'' by
+use of the \verb|--collapse| option to the \texttt{dpanel} command.
+To our knowledge Roodman's \texttt{xtabond2} was the first software to
+offer this useful facility.
+
+A further use of \texttt{GMM()} is to exploit more fully the potential
+orthogonality conditions afforded by an exogenous regressor, or a
+related variable that does not appear as a regressor.  For example, in
 
 \begin{code}
   dpanel 1 ; y x ; GMM(z, 2, 6)
@@ -453,10 +509,10 @@ In terms of the $\bZ_i$ matrix, the first form adds a single row to
 the bottom of the instruments matrix, while the second form adds a
 diagonal block with $T-2$ columns; that is,
 \[
-  \left[ \begin{array}{cccc}
-         z_{i3} & z_{i4} & \cdots & z_{it}
-       \end{array} \right]
-\] 
+  \left[ \begin{array}{cccc} z_{i3} & z_{i4} & \cdots & z_{it}
+         \end{array}
+  \right]
+\]
 versus
 \[
   \left[ \begin{array}{cccc}
@@ -464,7 +520,8 @@ versus
          0 & z_{i4} & \cdots & 0 \\
           & \ddots & \ddots &  \\
          0 & 0 & \cdots & z_{it} 
-       \end{array} \right]
+         \end{array}
+  \right]
 \]
 
 \section{Replication of DPD results}
@@ -986,7 +1043,7 @@ print coef
   \verb|--system| & Calls for GMM-SYS, with default treatment of the 
                     dependent variable, as in \texttt{GMMlevel(y,1,1)} \\
   \verb|--collapse| & Collapse block-diagonal sets of GMM instruments
-                      as per \cite{Roodman2009}
+                      as per \cite{Roodman2009} \\
   \verb|--time-dummies| & Includes period-specific dummy variables \\
   \verb|--dpdstyle| & Compute the $H$ matrix as in DPD; also suppresses
                       differencing of automatic time dummies and omission of intercept
