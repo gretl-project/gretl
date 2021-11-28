@@ -42,10 +42,12 @@ struct _x13a_opts {
     int logtrans;
     int outliers;
     int trdays;
+    int easter;
     int seats;
     int airline;
     int output;
     int verbose;
+    double critical;
 };
 
 struct _tx_request {

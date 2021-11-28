@@ -1133,8 +1133,10 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
     request->xopt.logtrans = 3; /* x13a: automatic logs or not */
     request->xopt.outliers = 1; /* x13a: detect outliers */
     request->xopt.trdays = 0;   /* x13a: trading days correction */
+    request->xopt.easter = 0;   /* x13a: Easter effect */
     request->xopt.seats = 0;    /* x13a: use SEATS rather than X11 */
     request->xopt.airline = 0;  /* x13a: force "airline" ARIMA spec */
+    request->xopt.critical = NADBL; /* for use with outliers */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
@@ -1334,13 +1336,27 @@ static int write_spc_file (const char *fname,
     } else {
 	fputs("transform{function=auto}\n", fp);
     }
-    if (xopt->trdays == 2) {
-	fprintf(fp, "regression{aictest = (%s)}\n", "td");
-    } else if (xopt->trdays) {
-	fputs("regression{variables = td}\n", fp);
+    if (xopt->trdays) {
+	if (xopt->easter) {
+	    if (xopt->trdays == 2) {
+		fprintf(fp, "regression{aictest = (td easter)}\n");
+	    } else if (xopt->trdays) {
+		fputs("regression{variables = (td easter)}\n", fp);
+	    }
+	} else {
+	    if (xopt->trdays == 2) {
+		fprintf(fp, "regression{aictest = (%s)}\n", "td");
+	    } else if (xopt->trdays) {
+		fputs("regression{variables = td}\n", fp);
+	    }
+	}
     }
     if (xopt->outliers) {
-	fputs("outlier{}\n", fp);
+	if (!na(xopt->critical)) {
+	    fprintf(fp, "outlier{critical = %g}\n", xopt->critical);
+	} else {
+	    fputs("outlier{}\n", fp);
+	}
     }
     if (xopt->airline) {
 	fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
@@ -1854,8 +1870,9 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     int err = 0;
 
     xopt->outliers = gretl_bundle_get_bool(b, "outlier_correction", 0);
-    xopt->seats = gretl_bundle_get_bool(b, "seats", 0);
-    xopt->airline = gretl_bundle_get_bool(b, "airline", 0);
+    xopt->seats    = gretl_bundle_get_bool(b, "seats", 0);
+    xopt->airline  = gretl_bundle_get_bool(b, "airline", 0);
+    xopt->easter   = gretl_bundle_get_bool(b, "easter", 0);
 
     if (gretl_bundle_has_key(b, "logtrans")) {
 	lt = gretl_bundle_get_int(b, "logtrans", &err);
@@ -1879,6 +1896,17 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	}
 	if (!err) {
 	    xopt->trdays = td;
+	}
+    }
+
+    if (gretl_bundle_has_key(b, "critical")) {
+	double crit = gretl_bundle_get_scalar(b, "critical", &err);
+
+	if (!err && (crit < 2 || crit > 10)) {
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    xopt->critical = crit;
 	}
     }
 
@@ -1906,8 +1934,18 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 
 	pprintf(prn, "x13as options:\n");
 	pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
-	pprintf(prn, "  outlier correction:      %s\n", xopt->outliers ? "yes" : "no");
+	if (xopt->outliers) {
+	    if (na(xopt->critical)) {
+		pprintf(prn, "  outlier correction:      %s\n", "yes");
+	    } else {
+		pprintf(prn, "  outlier correction:      %s (critical value %g)\n",
+			"yes", xopt->critical);
+	    }
+	} else {
+	    pprintf(prn, "  outlier correction:      %s\n", "no");
+	}
 	pprintf(prn, "  trading days correction: %s\n", trival_strs[td]);
+	pprintf(prn, "  easter effect:           %s\n", xopt->easter ? "yes" : "no");
 	pprintf(prn, "  log transformation:      %s\n", trival_strs[lt]);
 	pprintf(prn, "  force 'airline' model:   %s\n", xopt->airline ? "yes" : "no");
 	pprintf(prn, "  output series:           %s\n", ostrs[xopt->output]);
@@ -1956,7 +1994,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
-    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0};
+    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, NADBL};
     const char *vname = "x";
     const char *exepath;
     const char *workdir;
