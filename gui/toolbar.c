@@ -1029,7 +1029,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
 		       r == VIEW_LOG || r == VIEW_PKG_CODE || \
-		       r == VIEW_BUNDLE || vwin_editing_script(r))
+		       r == VIEW_BUNDLE || r == X12A || \
+		       vwin_editing_script(r))
 
 #define split_v_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT)
 
@@ -1154,7 +1155,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != EDIT_GP && f == GP_HELP_ITEM) {
 	return NULL;
-    } else if (r != EDIT_X12A && r != X12A && f == X12A_HELP_ITEM) {
+    } else if (r != EDIT_X12A && f == X12A_HELP_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM && !save_ok) {
 	return NULL;

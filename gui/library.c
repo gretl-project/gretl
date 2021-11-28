@@ -5638,7 +5638,7 @@ static gchar *retrieve_tx_output (const char *fname,
 
     *err = gretl_file_get_contents(fname, &buf, NULL);
 
-    if (!*err && role == X12A && (buf == NULL && strlen(buf) < 1024)) {
+    if (!*err && role == X12A && (buf == NULL || strlen(buf) < 1024)) {
 	/* try for the error file? */
 	gchar *tmp = g_strdup(fname);
 
