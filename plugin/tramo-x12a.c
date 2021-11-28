@@ -1341,7 +1341,7 @@ static int write_spc_file (const char *fname,
 	    if (xopt->trdays == 2) {
 		fprintf(fp, "regression{aictest = (td easter)}\n");
 	    } else if (xopt->trdays) {
-		fputs("regression{variables = (td easter)}\n", fp);
+		fputs("regression{variables = (td easter[8])}\n", fp);
 	    }
 	} else {
 	    if (xopt->trdays == 2) {

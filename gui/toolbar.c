@@ -1154,7 +1154,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != EDIT_GP && f == GP_HELP_ITEM) {
 	return NULL;
-    } else if (r != EDIT_X12A && f == X12A_HELP_ITEM) {
+    } else if (r != EDIT_X12A && r != X12A && f == X12A_HELP_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM && !save_ok) {
 	return NULL;

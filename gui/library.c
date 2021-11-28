@@ -5630,17 +5630,28 @@ static void display_x12a_warning (const char *fname,
     }
 }
 
-static gchar *retrieve_tx_output (const char *fname, int *err)
+static gchar *retrieve_tx_output (const char *fname,
+				  int role, int *err)
 {
     gchar *buf = NULL;
     gchar *ret = NULL;
 
     *err = gretl_file_get_contents(fname, &buf, NULL);
 
+    if (!*err && role == X12A && (buf == NULL && strlen(buf) < 1024)) {
+	/* try for the error file? */
+	gchar *tmp = g_strdup(fname);
+
+	switch_ext_in_place(tmp, "err");
+	g_free(buf);
+	*err = gretl_file_get_contents(tmp, &buf, NULL);
+	g_free(tmp);
+    }
+
     if (*err) {
         remove(fname);
     } else if (!g_utf8_validate(buf, -1, NULL)) {
-        /* here we assume that the text encoding in both x12a
+        /* here we assume that the text encoding in both x13as
            and tramo output will be ISO-8859 (if not ASCII)
         */
         GError *gerr = NULL;
@@ -5668,11 +5679,12 @@ static void display_tx_output (const char *fname, int graph_ok,
         /* text output suppressed */
         remove(fname);
     } else {
+	int role = (tramo)? TRAMO : X12A;
         gchar *buf;
         PRN *prn;
         int err = 0;
 
-        buf = retrieve_tx_output(fname, &err);
+        buf = retrieve_tx_output(fname, role, &err);
         if (err) {
             return;
         }
@@ -5680,8 +5692,8 @@ static void display_tx_output (const char *fname, int graph_ok,
         prn = gretl_print_new_with_buffer(buf);
         view_buffer(prn, (tramo)? 106 : 84, 500,
                     (tramo)? _("gretl: TRAMO analysis") :
-                    _("gretl: X-12-ARIMA analysis"),
-                    (tramo)? TRAMO : X12A, NULL);
+                    _("gretl: X-13ARIMA analysis"),
+                    role, NULL);
     }
 
     if (graph_ok && (opt & OPT_G)) {
