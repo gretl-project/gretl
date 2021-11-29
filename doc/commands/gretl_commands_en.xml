@@ -3209,6 +3209,10 @@
 	  <effect>add equations in levels</effect>
         </option>
         <option>
+	  <flag>--collapse</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>add time dummy variables</effect>
         </option>
@@ -3270,6 +3274,13 @@
 	function to specify GMM-type instruments for the equations
 	in levels.
       </para>
+      <para context="cli">
+	The <opt>collapse</opt> option can be used to limit the
+	proliferation of <quote>GMM-style</quote> instruments, which
+	can be a problem with this estimator. Its effect is to reduce
+	such instruments from one per lag per observation to one per
+	lag.
+      </para>
       <para context="gui">
 	As regards the handling of instruments, please see the
 	documentation for the script version of this command.  Currently
@@ -3278,13 +3289,14 @@
       </para>
       <para>
 	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as an
-	option.  In both cases tests for autocorrelation of orders 1 and 2
-	are provided, as well as the Sargan overidentification test and a
-	Wald test for the joint significance of the regressors.  Note that
-	in this differenced model first-order autocorrelation is not a
-	threat to the validity of the model, but second-order
-	autocorrelation violates the maintained statistical assumptions.
+	robust standard errors).  You may select 2-step estimation as
+	an option.  In both cases tests for autocorrelation of orders
+	1 and 2 are provided, as well as Sargan and/or Hansen
+	overidentification tests and a Wald test for the joint
+	significance of the regressors.  Note that in this differenced
+	model first-order autocorrelation is not a threat to the
+	validity of the model, but second-order autocorrelation
+	violates the maintained statistical assumptions.
       </para>
       <para context="cli">
 	In the case of 2-step estimation, standard errors are by default
