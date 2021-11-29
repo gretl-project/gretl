@@ -781,19 +781,27 @@ a file that contained suitable time or date information, or if a
 time-series interpretation has been imposed using either the
 \texttt{setobs} command or its GUI equivalent.  Then---apart, perhaps,
 from some very special cases---joining additional data is bound to
-involve matching observations by time-period. 
+involve matching observations by time-period. In this case, contrary
+to the cross-sectional case, the inner dataset has a natural ordering
+of which gretl is aware; hence, no ``inner key'' is required.
 
-In this case, contrary to the cross-sectional case, the inner dataset
-has a natural ordering which gretl is aware of; hence, no ``inner
-key'' is required. All we need is a means of identifying the period on
-the right and this is why, in a time-series context, we'll refer to
-the outer key as the ``time key''. Most likely, this information will
-appear in a single column in the outer data file, often but not always
-the first column.
+If, in addition, the file from data which are to be joined is in
+native gretl format and contains time-series information, keys are not
+needed at all. Three cases can arise: the frequency of the outer
+dataset may be the same, lower or higher than that of the inner
+dataset. In the first two cases \texttt{join} should work without any
+special apparatus; lower-frequency values will be repeated for each
+high-frequency period. In the third case, however, an aggregation
+method must be specified: gretl needs to know how to map
+higher-frequency data into the existing dataset (by averaging,
+summing, or whatever).
 
-The \texttt{join} command provides a simple (but limited) default for
-extracting period information from the outer data file, plus an
-option that can be used if the default is not applicable, as follows.
+If the outer data file is \textit{not} in native gretl format we need
+a means of identifying the period of each observation on the right, an
+outer key which we'll call a ``time key''.  The \texttt{join} command
+provides a simple (but limited) default for extracting period
+information from the outer data file, plus an option that can be used
+if the default is not applicable, as follows.
 \begin{itemize}
 \item The default assumptions are: (1) the time key appears in the
   first column; (2) the heading of this column is either left blank or
