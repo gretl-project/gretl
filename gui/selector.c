@@ -293,6 +293,7 @@ static char dpd_2step;
 static char dpd_asy;
 static char dpd_dpd;
 static char dpd_p;
+static char dpd_coll;
 
 static int y_x_lags_enabled;
 static int y_w_lags_enabled;
@@ -499,7 +500,7 @@ void clear_selector (void)
     lovar = hivar = 0;
 
     dpd_asy = dpd_2step = 0;
-    dpd_dpd = 0;
+    dpd_dpd = dpd_coll = 0;
     dpd_p = 1;
 
     arma_p = 1;
@@ -870,6 +871,9 @@ void selector_from_model (windata_t *vwin)
 	    }
 	    if (pmod->opt & OPT_X) {
 		model_opt |= OPT_X;
+	    }
+	    if (pmod->opt & OPT_C) {
+		model_opt |= OPT_C;
 	    }
 	} else if (pmod->ci == LAD) {
 	    if (gretl_model_get_int(pmod, "rq")) {
@@ -4252,6 +4256,7 @@ static void compose_cmdlist (selector *sr)
 	    dpd_2step = (sr->opts & OPT_T)? 1 : 0;
 	    dpd_asy = (sr->opts & OPT_A)? 1 : 0;
 	    dpd_dpd = (sr->opts & OPT_X)? 1 : 0;
+	    dpd_coll = (sr->opts & OPT_C)? 1 : 0;
 	} else if (NONPARAM_CODE(sr->ci)) {
 	    nonparam_record_xvar(endbit);
 	}
@@ -6241,6 +6246,8 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
 	tmp = gtk_check_button_new_with_label(_("Include levels equations (GMM-SYS)"));
 	pack_switch(tmp, sr, (model_opt & OPT_L), FALSE, OPT_L, 0);
+	tmp = gtk_check_button_new_with_label(_("Collapse instruments"));
+	pack_switch(tmp, sr, (dpd_coll || (model_opt & OPT_C)), FALSE, OPT_C, 0);
 	tmp = gtk_check_button_new_with_label(_("Asymptotic standard errors"));
 	pack_switch(tmp, sr, (dpd_asy || (model_opt & OPT_A)), FALSE, OPT_A, 0);
 	tmp = gtk_check_button_new_with_label(_("DPD-style initial covariance matrix"));

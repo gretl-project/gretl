@@ -1531,6 +1531,10 @@ static int dpd_finalize_model (MODEL *pmod,
 	    gretl_model_set_int(pmod, "asy", 1);
 	    pmod->opt |= OPT_A;
 	}
+	if (dpd->flags & DPD_COLLAPSE) {
+	    gretl_model_set_int(pmod, "collapse", 1);
+	    pmod->opt |= OPT_C;
+	}
 	if (dpd->A != NULL) {
 	    gretl_model_set_int(pmod, "ninst", dpd->A->rows);
 	    if (keep_extra) {
