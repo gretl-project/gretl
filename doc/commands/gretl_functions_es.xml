@@ -1026,8 +1026,12 @@
 	  <li>
             <para>
               <lit>os</lit>: cadena de texto que representa el sistema
-              operativo, bien <lit>linux</lit>, <lit>osx</lit>,
-              <lit>windows</lit> o <lit>other</lit>.
+              operativo, bien <lit>linux</lit>, <lit>macos</lit>,
+              <lit>windows</lit> o <lit>outro</lit>. Ten en cuenta que
+              las versiones de GRETL previas a la '2021e' proporcionan
+              la cadena <lit>osx</lit> para el sistema operativo de Mac;
+              por lo tanto, una expresión de comprobación para Mac
+              independiente de la versión es <lit>instring($sysinfo.os, "os")</lit>.
             </para>
 	  </li>
 	  <li>
@@ -2830,6 +2834,7 @@
 	  autovalores; y (3) calcular la raíz cuadrada de la razón entre el mayor
 	  y el menor autovalor.
 	</para>
+	
 	<para>
 	  <seelist>
             <fncref targ="rcond"/>
@@ -3610,24 +3615,24 @@
       </fnargs>
       <description>
 	<para>
-	  Precisa que estén instalados el TRAMO/SEATS y/o X-12-ARIMA. Devuelve
+	  Precisa que estén instalados el TRAMO/SEATS y/o X-13-ARIMA. Devuelve
 	  una versión desestacionalizada (ajustada estacionalmente) de la serie
 	  <argname>x</argname>, que debe ser una serie temporal mensual
-	  o trimestral. Para utilizar el X-12-ARIMA indica <lit>X</lit> como
+	  o trimestral. Para utilizar el X-13-ARIMA indica <lit>X</lit> como
 	  segundo argumento; y para usar el TRAMO/SEATS indica <lit>T</lit>.
-	  Si omites el segundo argumento, GRETL utiliza el X-12-ARIMA.
+	  Si omites el segundo argumento, GRETL utiliza el X-13-ARIMA.
 	</para>
 	<para>
 	  Observa que, cuando la serie de entrada no tiene una componente
 	  estacional detectable, la ejecución de la función va a fallar. Ten en cuenta
-	  también que tanto el TRAMO/SEATS como el X-12-ARIMA ofrecen un gran
+	  también que tanto el TRAMO/SEATS como el X-13-ARIMA ofrecen un gran
 	  número de opciones; ahora bien, la función <lit>deseas</lit> las utiliza
 	  con todas sus opciones en sus valores por defecto. En ambos
 	  programas, los factores estacionales se calculan basados en un
 	  modelo ARIMA seleccionado automáticamente. Una de las diferencias entre
 	  los dos que puede llevar a resultados bastante distintos, es que el
 	  TRAMO/SEATS realiza un ajuste previo de las observaciones con valores
-	  atípicos, mientras que el X-12-ARIMA no lo hace.
+	  atípicos, mientras que el X-13-ARIMA no lo hace.
 	</para>
       </description>
     </function>
@@ -3733,6 +3738,151 @@
             <fncref targ="trigamma"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="distance" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="string">metrica</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula las distancias entre puntos sobre una métrica que puede ser
+	  <lit>euclidean</lit> (a predeterminada), <lit>manhattan</lit>,
+	  <lit>hamming</lit>, <lit>chebyshev</lit>, <lit>cosine</lit> o
+	  <lit>mahalanobis</lit>. Puedes indicar la cadena de texto que identifica
+	  la métrica, truncándola de forma que no resulte ambigua. Las otras
+	  métricas adicionales, de correlación y la euclídea tipificada se admiten
+	  mediante transformaciones simples de las anteriores (mira más abajo).
+	</para>
+	<para>
+	  Cada fila de la matriz <argname>X</argname> (que es <by r="m" c="n"/>)
+	  se trata como un punto de un espacio <math>n</math>-dimensional; en
+	  un contexto econométrico, esto probablemente represente una única
+	  observación que comprenda los valores de <math>n</math>
+	  variables.
+	</para>
+	<subhead>Casos típicos</subhead>
+	<para>
+	  Esta sección se aplica a todas las métricas, excepto a la distancia
+	  de Mahalanobis, para la que la sintaxis es levemente diferente
+	  (mira más abajo).
+	</para>
+	<para>
+	  Si no indicas <argname>Y</argname>, el valor que se devuelve es un
+	  vector columna de longitud <math>m</math>(<math>m</math> &minus; 1)/2
+	  que comprende el subconjunto no redundante de todas las distancias por
+	  parejas entre los <math>m</math> puntos (las filas de <argname>X</argname>).
+	  Entonces, dado un vector de este tipo denominado <lit>d</lit>,
+	  puedes generar la matriz simétrica completa con las distancias
+	  entre los puntos(con ceros en la diagonal principal, naturalmente)
+	  por medio de
+	</para>
+	<code>
+	  D = unvech(d, 0)
+	</code>
+	<para>
+	  puesto que <lit>d</lit> es similar al vector columna resultante al usar
+	  la función vech sobre <lit>D</lit>, sin los elementos de la diagonal
+	  principal. El segundo argumento (opcional) de <fncref targ="unvech"/>
+	  indica que debe rellenarse la diagonal con ceros.
+	</para>
+	<para>
+	  Si indicas <argname>Y</argname>, debe ser una matriz <by r="p" c="n"/>
+	  en la que cada una de sus filas se trate otra vez como un punto en el
+	  espacio <math>n</math>-dimensional. En este caso, e valor que se
+	  devuelve es una matriz <by r="m" c="p"/> cuyo elemento <math>i,j</math>
+	  contiene la distancia que hay entre la fila <math>i</math> de la
+	  matriz <argname>X</argname> y la fila <math>j</math> de la matriz
+	  <argname>Y</argname>.
+	</para>
+	<para>
+	  Para obtener las distancias desde un punto de referencia dado (por ejemplo,
+	  el centroide) hasta cada uno de los <math>n</math> puntos de datos, indica
+	  <argname>Y</argname> como una única fila.
+	</para>
+	<subhead>Definiciones de las métricas admitidas</subhead>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>euclidean</lit>: la raíz cuadrada de la suma de las desviaciones
+	      elevadas al cuadrado, en cada una de las dimensiones.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>manhattan</lit>: a suma de los valores absolutos de las
+	      desviaciones, en cada una de las dimensiones.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>hamming</lit>: la proporción de las dimensiones en las que
+	      las desviaciones no son nulas (acotada entonces por 0 y 1).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>chebyshev</lit>: el mayor de los valores absolutos de las
+	      desviaciones en cualquiera de las dimensiones.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>cosine</lit>: 1 menos el coseno del ángulo que se forma entre
+	      los <quote>puntos</quote>, considerados como vectores.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Distancia de Mahalanobis</subhead>
+	<para>
+	  Las distancias de Mahalanobis se definen como distancias euclídeas,
+	  entre los puntos considerados (filas de la matriz <argname>X</argname>)
+	  y un centroide dado, escaladas mediante la inversa de una matriz de
+	  covarianzas. En el caso más simple, el centroide está constituido por las
+	  medias muestrales de las variables (columnas de <argname>X</argname>)
+	  y la matriz de covarianzas está formada por las covarianzas entre ellas
+	  en la muestra.
+  </para>
+  <para>
+	  Esto se puede obtener indicando como segundo argumento la cadena de
+	  texto <quote>mahalanobis</quote> o cualquier abreviatura no ambigua,
+	  como en
+	</para>
+	<code>
+	  dmahal = distance(X, "mahal")
+	</code>
+	<para>
+    En este caso, el tercer argumento <argname>Y</argname> no se
+    admite, y el valor que se devuelve es un vector columna de longitud
+    <math>m</math> con las distancias de Mahalanobis desde el centroide
+    de <argname>X</argname> (es decir, su media muestral). En la práctica,
+    la matriz del resultado en este caso es la misma que obtienes al
+    ejecutar la instrucción <cmdref targ="mahal"/> sobre una lista de
+    series que se correspondan con las columnas de la matriz
+    <argname>X</argname>.
+	</para>
+	<para>
+	  Para obtener las distancias de Mahalanobis usando un centroide
+	  distinto, <lit>mu</lit>, y/o la inversa de la matriz de covarianzas,
+	  <lit>ICV</lit>, puedes utilizar la siguiente sintaxis:
+	</para>
+	<code>
+	  dmahal = distance(X*cholesky(ICV), "euc", mu)
+	</code>
+	<subhead>Otras métricas</subhead>
+	<para>
+	  Puedes obtener las distancias euclídeas tipificadas y de correlaciones
+	  del modo siguiente:
+	</para>
+	<code>
+	  # Euclídea tipificada
+	  dseu = distance(stdize(X), "eu")
+	  # Correlación (basada en el coseno)
+	  dcor = distance(stdize(X', -1)', "cos")
+	</code>
       </description>
     </function>
 
@@ -4325,12 +4475,12 @@
       <description>
 	<para>
 	  Principalmente útil para los creadores de funciones. El primer
-	  argumento debe ser el nombre de una función, y los restantes
-	  argumentos (uno o varios) deben ser los argumentos a los que
-	  se le aplica la función en cuestión. Esto permite tratar la propia
+	  argumento debe ser el nombre de una función; los restantes argumentos
+	  se pasarán a la función especificada. Esto permite tratar la propia
 	  función identificada mediante <argname>nombrefuncion</argname>
-	  como una variable. El valor que se devuelve es cualquier cosa que
-	  produzca la función indicada, dados los argumentos especificados.
+	  como una variable en si misma. El valor que se devuelve es cualquier
+	  cosa que produzca la función indicada, dados los argumentos
+	  especificados.
 	</para>
 	<para>
 	  El ejemplo de abajo, ilustra algunos de sus posibles usos.
@@ -12655,18 +12805,50 @@
     <function name="unvech" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+	<fnarg optional="true" type="scalar">d</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve la matriz simétrica de orden <by r="n" c="n"/> que se obtiene
-	  reordenando los elementos del vector <math>v</math> en forma de matriz
-	  triangular inferior, y copiando los de las posiciones simétricas. El número
-	  de elementos de <math>v</math> debe ser un entero triangular,
-	  o sea, un número <math>k</math> tal que exista un entero
-	  <math>n</math> que cumpla la siguiente propiedad:
+	  Si omites el segundo argumento, devuelve la matriz simétrica de orden
+	  <by r="n" c="n"/> que se obtiene reordenando los elementos del vector
+	  <math>v</math> en forma de matriz triangular inferior, y copiando los
+	  de las posiciones simétricas. El número de elementos de <math>v</math>
+	  debe ser un entero triangular, o sea, un número <math>k</math> tal que
+	  exista un entero <math>n</math> que cumpla la siguiente propiedad:
 	  <equation status="inline" ascii="k = n(n+1)/2" tex="$k = n(n+1)/2$"/>.
 	  Esta función es la inversa de <fncref targ="vech"/>.
 	</para>
+	<para>
+	  Si indicas el argumento <argname>d</argname>, la función devuelve
+	  una matriz <by r="(n+1)" c="(n+1)"/>, con las posiciones fuera de la
+	  diagonal principal ocupadas con los elementos de <math>v</math>, como
+	  en el caso anterior. Por el contrario, todos los elementos de la diagonal
+	  principal se establece que sean iguales a <argname>d</argname>.
+	</para>
+	<para>
+        Ejemplo:
+	</para>
+    <code>
+        v = {1;2;3}
+        matrix uno = unvech(v)
+        matrix dos = unvech(v, 99)
+        print uno dos
+    </code>
+    <para>
+      devuelve
+    </para>
+    <code>
+      uno (2 x 2)
+
+      1   2 
+      2   3 
+
+      dos (3 x 3)
+      
+      99     1     2 
+       1    99     3 
+       2     3    99 
+    </code>
 	<para>
 	  <seelist>
             <fncref targ="mshape"/>
@@ -12876,7 +13058,7 @@
 	  orden <by r="n" c="np"/>, con una fila por cada ecuación. Esta
 	  se corresponde con las primeras <math>n</math> filas de la matriz
 	  <lit>$compan</lit> que proporcionan las instrucciones <lit>var</lit> y
-	  <lit>vecm</lit> de GRETL.
+	  <lit>vecm</lit>.
 	</para>
 	<para>
 	  Los vectores <math>u_t</math> están incluidos (como filas) en la matriz
@@ -12928,23 +13110,30 @@
     <function name="vech" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
+	<fnarg optional="true" type="bool">omitir-diag</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve un vector columna con los elementos de <argname>A</argname>
-	  que están en su diagonal principal y por arriba de ella. Normalmente
-	  esta función se utiliza con matrices simétricas, en cuyo caso, esa
-	  operación puede revertirse mediante la función <fncref targ="unvech"/>.
-	  Si la matriz de entrada no es simétrica y su triángulo inferior contiene
-	  los valores <quote>correctos</quote>, puedes obtener el resultado
-	  deseado por medio de <lit>vech(A')</lit>.
+	  Esta función vuelve a ordenar en un vector columna, los elementos de la
+	  matriz <argname>A</argname> que están en la diagonal principal y por
+	  encima de ella, excepto que le asignes un valor no nulo a la opción
+	  <argname>omitir-diag</argname>, en cuyo caso solo se tienen en cuenta
+	  las posiciones por encima.
+  </para>
+	<para>
+	  Normalmente esta función se utiliza con matrices simétricas, en
+	  cuyo caso, esa operación puede revertirse mediante la función
+	  <fncref targ="unvech"/>. Si la matriz de entrada no es simétrica y su
+	  triángulo inferior contiene los valores <quote>correctos</quote>,
+	  puedes obtener el resultado deseado por medio de <lit>vech(A')</lit>
+	  (aunque sus elementos puede que necesiten volver a ordenarse
+	  de nuevo).
 	  <seelist>
             <fncref targ="vec"/>
 	  </seelist>
 	</para>
       </description>
     </function>
-
 
     <function name="vma" section="timeseries" output="matrix">
       <fnargs>

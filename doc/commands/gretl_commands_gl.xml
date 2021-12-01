@@ -3209,6 +3209,10 @@
 	  <effect>Engade ecuacións en niveis</effect>
         </option>
         <option>
+	  <flag>--collapse</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>Engade variables ficticias temporais</effect>
         </option>
@@ -3270,6 +3274,13 @@
 	mesma sintaxe coa función <lit>GMMlevel</lit> para especificar
 	instrumentos de tipo MXM para as ecuacións en niveis.
       </para>
+      <para context="cli">
+	Podes usar a opción <opt>collapse</opt> para limitar o inzamento de
+	instrumentos de <quote>estilo GMM</quote>, o que podería chegar a
+	ser un problema con este estimador. O seu efecto consiste en reducir
+	ese tipo de instrumentos, de un por cada retardo e por observación,
+	a un por cada retardo.
+      </para>
       <para context="gui">
 	No referente ao manexo dos instrumentos, consulta a documentación para
 	a versión de guión desta instrución. Actualmente non podes especificar
@@ -3280,11 +3291,12 @@
 	Por defecto, preséntanse os resultados da estimación en 1 etapa (coas
 	desviacións padrón robustas) pero tes a opción de escoller a estimación
 	en 2 etapas. En ambos casos, preséntanse as probas de autocorrelación
-	de orde 1 e 2 , así como a proba de sobreidentificación de Sargan e o
-	estatístico da proba de Wald para a significación conxunta dos regresores.
-	Ten en conta que neste modelo en diferenzas, a autocorrelación de primeira
-	orde non é unha ameaza para a validez do modelo, pero a autocorrelación
-	de segunda orde infrinxe os supostos estatísticos vixentes.
+	de orde 1 e 2 , así como as probas de Sargan e/ou Hansen de
+	sobreidentificación, e o estatístico da proba de Wald para a significación
+	conxunta dos regresores. Ten en conta que neste modelo en diferenzas,
+	a autocorrelación de primeira orde non é unha ameaza para a validez do
+	modelo, pero a autocorrelación de segunda orde infrinxe os supostos
+	estatísticos vixentes.
       </para>
       <para context="cli">
 	No caso da estimación en 2 etapas, as desviacións padrón calcúlanse
@@ -8136,8 +8148,9 @@
     <usage>
       <altforms>
 	<altform><lit>markers --to-file=</lit><repl>nomeficheiro</repl></altform>
-	<altform><lit>markers --to-array=</lit><repl>nome</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>nomeficheiro</repl></altform>
+	<altform><lit>markers --to-array=</lit><repl>nome</repl></altform>
+	<altform><lit>markers --from-array=</lit><repl>nome</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
     </usage>
@@ -8157,13 +8170,15 @@
       </para>
       <para>
 	Coa opción <opt>from-file</opt>, lese o ficheiro especificado (que
-	debe de ser de texto plano) e asígnanse os marcadores de observación
+	debe de ser de texto UTF-8) e asígnanse os marcadores de observación
 	contidos neste, un por cada liña, ás filas do conxunto de datos. En
 	xeral, debería de haber como mínimo tantos marcadores no ficheiro
 	como observacións no conxunto de datos; pero se o conxunto de datos
 	é de tipo panel, tamén se acepta que o número de marcadores no
 	ficheiro coincida co número de unidades de sección cruzada (en cuxo
-	caso os marcadores repítense para cada período de tempo.)
+	caso os marcadores repítense para cada período de tempo.) A opción
+	<opt>from-array</opt> funciona de xeito similar, facendo a lectura a
+	partir dun arranxo de cadeas de texto determinado.
       </para>
       <para>
 	A opción <opt>delete</opt> fai o que xa agardarías, é dicir, eliminar
@@ -13684,10 +13699,12 @@
 
       <ilist>
 	<li>
-	  <para><lit>seed</lit>: Un número natural positivo. Establece a semente
-	  para o xerador de números pseudoaleatorios. Por defecto, isto establécese
-	  a partir do tempo do sistema; pero se queres xerar secuencias repetibles
-	  de números aleatorios debes de establecer a semente manualmente.
+	  <para><lit>seed</lit>: Un número natural positivo ou a palabra chave
+	  <lit>auto</lit>. Establece a semente para o xerador de números
+	  pseudoaleatorios. Por defecto, isto establécese a partir do tempo
+	  do sistema; pero se queres xerar secuencias repetibles de números
+	  aleatorios debes de establecer a semente manualmente. Para restablecer
+	  a semente a un valor automático baseado no tempo, usa <lit>auto</lit>.
 	  </para>
 	</li>
       </ilist>

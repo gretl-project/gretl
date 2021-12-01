@@ -3209,6 +3209,10 @@
 	  <effect>Añade ecuaciones en niveles</effect>
         </option>
         <option>
+	  <flag>--collapse</flag>
+	  <effect>Mira abajo</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>Añade variables ficticias temporales</effect>
         </option>
@@ -3270,6 +3274,13 @@
 	misma sintaxis con la función <lit>GMMlevel</lit> para especificar
 	instrumentos de tipo GMM para las ecuaciones en niveles.
       </para>
+      <para context="cli">
+	Puedes usar la opción <opt>collapse</opt> para limitar la proliferación
+	de instrumentos de <quote>estilo GMM</quote>, lo que podría llegar a
+	ser un problema con este estimador. Su efecto consiste en reducir ese
+	tipo de instrumentos, de uno por cada retardo y por observación, a
+	uno por cada retardo.
+      </para>
       <para context="gui">
 	En lo referente al manejo de los instrumentos, consulta la documentación para
 	a versión de guion de esta instrucción. Actualmente no puedes especificar
@@ -3277,13 +3288,14 @@
 	todas las variables independientes se consideran estrictamente exógenas.
       </para>
       <para>
-	Por defecto, se presentan los resultados de la estimación en 1 etapa (con las
-	desviaciones típicas robustas) pero tienes la opción de escoger la estimación
-	en 2 etapas. En ambos casos, se presentan los contrastes de autocorrelación
-	de orden 1 y 2 , así como el contraste de sobreidentificación de Sargan y el
-	estadístico del contraste de Wald para la significación conjunta de los regresores.
-	Ten en cuenta que en este modelo en diferencias, la autocorrelación de primer
-	orden no es una amenaza para la validez del modelo, pero la autocorrelación
+	Por defecto, se presentan los resultados de la estimación en 1 etapa
+	(con las desviaciones típicas robustas) pero tienes la opción de escoger
+	la estimación en 2 etapas. En ambos casos, se presentan los contrastes
+	de autocorrelación de orden 1 y 2 , así como los contrastes de Sargan
+	y/o de Hansen de sobreidentificación, y el estadístico del contraste de
+	Wald para la significación conjunta de los regresores. Ten en cuenta
+	que en este modelo en diferencias, la autocorrelación de primer orden
+	no es una amenaza para la validez del modelo, pero la autocorrelación
 	de segundo orden infringe los supuestos estadísticos vigentes.
       </para>
       <para context="cli">
@@ -8136,8 +8148,9 @@
     <usage>
       <altforms>
 	<altform><lit>markers --to-file=</lit><repl>nombrearchivo</repl></altform>
-	<altform><lit>markers --to-array=</lit><repl>nombre</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>nombrearchivo</repl></altform>
+	<altform><lit>markers --to-array=</lit><repl>nombre</repl></altform>
+	<altform><lit>markers --from-array=</lit><repl>nombre</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
     </usage>
@@ -8157,13 +8170,15 @@
       </para>
       <para>
 	Con la opción <opt>from-file</opt>, se lee el archivo especificado (que
-	debe ser de texto plano) y se asignan las etiquetas de observación
+	debe ser de texto UTF-8) y se asignan las etiquetas de observación
 	contenidas en este, uno por cada línea, a las filas del conjunto de datos. En
 	general, debería haber como mínimo tantas etiquetas en el archivo
 	como observaciones en el conjunto de datos; pero si el conjunto de datos
 	es de tipo panel, también se acepta que el número de etiquetas en el
 	archivo coincida con el número de unidades de sección cruzada (en cuyo
-	caso las etiquetas se repiten para cada período de tiempo.)
+	caso las etiquetas se repiten para cada período de tiempo.) La opción
+	<opt>from-array</opt> funciona de modo similar, realizando la lectura a
+	partir de un 'array' de cadenas de texto determinado.
       </para>
       <para>
 	La opción <opt>delete</opt> hace lo que ya esperarías, es decir, eliminar
@@ -13684,10 +13699,12 @@
 
       <ilist>
 	<li>
-	  <para><lit>seed</lit>: Un número natural positivo. Establece la semilla
-	  para el generador de números pseudoaleatorios. Por defecto, esto se establece
-	  a partir del tiempo del sistema; pero si quieres generar secuencias repetibles
-	  de números aleatorios debes establecer la semilla manualmente.
+	  <para><lit>seed</lit>: Un número natural positivo o la palabra clave
+	  <lit>auto</lit>. Establece la semilla para el generador de números
+	  pseudoaleatorios. Por defecto, esto se establece a partir del tiempo
+	  del sistema; pero si quieres generar secuencias repetibles de números
+	  aleatorios debes establecer la semilla manualmente. Para restablecer
+	  la semilla a un valor automático basado en el tiempo, usa <lit>auto</lit>.
 	  </para>
 	</li>
       </ilist>
