@@ -81,6 +81,7 @@ struct fmap {
 };
 
 static void write_R_io_file (FILE *fp, const char *ddir);
+static void do_stata_printout (PRN *prn);
 
 #ifdef UNIX_MPI_IO
 
@@ -239,6 +240,68 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	pprintf(prn, "%s: unknown language\n", lang);
 	err = E_DATA;
     }
+
+    return err;
+}
+
+static int lib_run_prog_sync (char **argv, gretlopt opt,
+			      int lang, PRN *prn)
+{
+    gchar *sout = NULL;
+    gchar *errout = NULL;
+    gint status = 0;
+    GError *gerr = NULL;
+    int err = 0;
+
+    g_spawn_sync(gretl_workdir(), argv,
+		 NULL, G_SPAWN_SEARCH_PATH,
+		 NULL, NULL, &sout, &errout,
+		 &status, &gerr);
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    } else if (status != 0) {
+	pprintf(prn, "%s exited with status %d\n", argv[0], status);
+	if (sout != NULL && *sout != '\0') {
+	    pputs(prn, "stdout:\n");
+	    pputs(prn, sout);
+	    pputc(prn, '\n');
+	}
+	if (errout != NULL && *errout != '\0') {
+	    pputs(prn, "\nstderr:\n");
+	    pputs(prn, errout);
+	    pputc(prn, '\n');
+	}
+	err = 1;
+    } else if (sout != NULL) {
+	if (lang == LANG_MPI || !(opt & OPT_Q)) {
+	    /* with OPT_Q, don't print non-error output,
+	       unless we're running MPI
+	    */
+	    if (foreign_lang == LANG_STATA) {
+		do_stata_printout(prn);
+	    } else if (*sout != '\0') {
+		pputs(prn, sout);
+		pputc(prn, '\n');
+	    }
+	}
+	if (opt & OPT_V) {
+	    /* also print stderr output, if any */
+	    if (errout != NULL && *errout != '\0') {
+		pputs(prn, "\nstderr:\n");
+		pputs(prn, errout);
+		pputc(prn, '\n');
+	    }
+	}
+    } else {
+	pprintf(prn, "%s: %s\n", argv[0], "Got no output");
+	err = 1;
+    }
+
+    g_free(sout);
+    g_free(errout);
 
     return err;
 }
@@ -758,71 +821,7 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-#endif /* G_OS_WIN32 */
-
-static int lib_run_prog_sync (char **argv, gretlopt opt,
-			      int lang, PRN *prn)
-{
-    gchar *sout = NULL;
-    gchar *errout = NULL;
-    gint status = 0;
-    GError *gerr = NULL;
-    int err = 0;
-
-    g_spawn_sync(gretl_workdir(), argv,
-		 NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &sout, &errout,
-		 &status, &gerr);
-
-    if (gerr != NULL) {
-	pprintf(prn, "%s\n", gerr->message);
-	g_error_free(gerr);
-	err = 1;
-    } else if (status != 0) {
-	pprintf(prn, "%s exited with status %d\n", argv[0], status);
-	if (sout != NULL && *sout != '\0') {
-	    pputs(prn, "stdout:\n");
-	    pputs(prn, sout);
-	    pputc(prn, '\n');
-	}
-	if (errout != NULL && *errout != '\0') {
-	    pputs(prn, "\nstderr:\n");
-	    pputs(prn, errout);
-	    pputc(prn, '\n');
-	}
-	err = 1;
-    } else if (sout != NULL) {
-	if (lang == LANG_MPI || !(opt & OPT_Q)) {
-	    /* with OPT_Q, don't print non-error output,
-	       unless we're running MPI
-	    */
-	    if (foreign_lang == LANG_STATA) {
-		do_stata_printout(prn);
-	    } else if (*sout != '\0') {
-		pputs(prn, sout);
-		pputc(prn, '\n');
-	    }
-	}
-	if (opt & OPT_V) {
-	    /* also print stderr output, if any */
-	    if (errout != NULL && *errout != '\0') {
-		pputs(prn, "\nstderr:\n");
-		pputs(prn, errout);
-		pputc(prn, '\n');
-	    }
-	}
-    } else {
-	pprintf(prn, "%s: %s\n", argv[0], "Got no output");
-	err = 1;
-    }
-
-    g_free(sout);
-    g_free(errout);
-
-    return err;
-}
-
-#ifndef G_OS_WIN32 /* non-Windows code follows */
+#else /* non-Windows code follows */
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
