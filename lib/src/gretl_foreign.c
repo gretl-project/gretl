@@ -84,6 +84,11 @@ struct fmap {
 
 static void write_R_io_file (FILE *fp, const char *ddir);
 
+#ifdef _WIN64
+static int lib_run_prog_sync (char **argv, gretlopt opt,
+			      int lang, PRN *prn);
+#endif
+
 static struct fmap foreign_map[] = {
      { LANG_OX,     "gretltmp.ox", "gretl_io.ox", NULL },
      { LANG_OCTAVE, "gretltmp.m",  "gretl_io.m", NULL },
@@ -723,9 +728,11 @@ static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 #ifdef MPI_PIPES
 	/* try for real-time output to @prn */
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_R, prn);
+#elif defined(_WIN64)
+	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
 #else
-	/* write output to @prn on completion */
-	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
+	/* FIXME */
+	gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
 #endif
 
 	g_free(mpiprog);
