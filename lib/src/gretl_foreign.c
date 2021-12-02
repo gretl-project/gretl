@@ -656,6 +656,17 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #if 1 /* use same treatment as on Linux */
 
+static void print_mpi_command (char **argv, PRN *prn)
+{
+    int i;
+
+    pputs(prn, "gretl mpi command:\n ");
+    for (i=0; argv[i] != NULL; i++) {
+	pprintf(prn, "%s ", argv[i]);
+    }
+    pputc(prn, '\n');
+}
+
 static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
