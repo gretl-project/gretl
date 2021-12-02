@@ -740,7 +740,7 @@ static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-#ifdef MPI_PIPES
+#if MPI_PIPES
 	err = run_mpi_with_pipes(argv, ptr, opt, prn);
 #else
 	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
