@@ -856,10 +856,9 @@ int main (int argc, char **argv)
     fprintf(stderr, "finished miscellaneous init functions\n");
 #endif
 
-    if (argc > 1) {
+    if (*filearg != '\0') {
 	/* Record what is presumably a filename argument
-	   given on the command line (by now any options will
-	   have been extracted from the @argv array).
+	   given on the command line.
 	*/
 	record_filearg(tryfile, filearg);
     }
