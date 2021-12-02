@@ -2260,17 +2260,7 @@ void gretl_set_script_dir (const char *s)
 void gretl_script_dirs_cleanup (void)
 {
     if (script_dirs != NULL) {
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
-        GList *l0 = g_list_first(script_dirs);
-
-        while (l0) {
-            g_free(l0->data);
-            l0 = l0->next;
-        }
-        g_list_free(script_dirs);
-#else
         g_list_free_full(script_dirs, g_free);
-#endif
         script_dirs = NULL;
     }
 }

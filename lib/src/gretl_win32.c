@@ -28,8 +28,6 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define USE_UNICODE 1
-
 static int windebug;
 static FILE *fdb;
 
@@ -380,86 +378,6 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     return err;
 }
 
-#ifndef USE_UNICODE
-
-/* This code now obsolete so long as win_run_sync_unicode()
-   works in all relevant cases.
-*/
-
-static int win_run_sync_locale (char *cmdline,
-				const char *currdir,
-				int console_app)
-{
-    STARTUPINFO sinfo;
-    PROCESS_INFORMATION pinfo;
-    DWORD exitcode;
-    DWORD flags;
-    gchar *ls1 = NULL;
-    gchar *ls2 = NULL;
-    int ok, err = 0;
-
-    err = ensure_locale_encoding((const char **) &cmdline, &ls1,
-				 &currdir, &ls2);
-    if (err) {
-	return err;
-    }
-
-    ZeroMemory(&sinfo, sizeof sinfo);
-    ZeroMemory(&pinfo, sizeof pinfo);
-    sinfo.cb = sizeof sinfo;
-
-    if (console_app) {
-	flags = CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS;
-    } else {
-	sinfo.dwFlags = STARTF_USESHOWWINDOW;
-	sinfo.wShowWindow = SW_SHOWMINIMIZED;
-	flags = HIGH_PRIORITY_CLASS;
-    }
-
-    /* zero return means failure */
-    ok = CreateProcess(NULL,
-		       cmdline,
-		       NULL,
-		       NULL,
-		       FALSE,
-		       flags,
-		       NULL,
-		       currdir,
-		       &sinfo,
-		       &pinfo);
-
-    if (!ok) {
-	fprintf(stderr, "win_run_sync: failed command:\n%s\n", cmdline);
-	win_copy_last_error();
-	err = 1;
-    } else {
-	WaitForSingleObject(pinfo.hProcess, INFINITE);
-	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
-	    /* the call "succeeded" */
-	    if (exitcode != 0) {
-		fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
-		gretl_errmsg_sprintf("%s: exit code %u", cmdline,
-				     exitcode);
-		err = 1;
-	    }
-	} else {
-	    fprintf(stderr, "win_run_sync: no exit code:\n%s\n", cmdline);
-	    win_copy_last_error();
-	    err = 1;
-	}
-    }
-
-    CloseHandle(pinfo.hProcess);
-    CloseHandle(pinfo.hThread);
-
-    g_free(ls1);
-    g_free(ls2);
-
-    return err;
-}
-
-#endif /* not-USE_UNICODE */
-
 static int win_run_sync_unicode (char *cmdline,
 				 const char *currdir,
 				 int console_app)
@@ -539,21 +457,14 @@ static int win_run_sync_unicode (char *cmdline,
  *
  * Run a command synchronously (i.e. block until it is
  * completed) under MS Windows. This is intended for use
- * with "slave" console applications. But if USE_UNICODE
- * is defined it should not be used for executables that
- * can't handle UTF-16 -- at least when any arguments are
- * passed in @cmdline.
+ * with "slave" console applications.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
 int win_run_sync (char *cmdline, const char *currdir)
 {
-#ifdef USE_UNICODE
     return win_run_sync_unicode(cmdline, currdir, 1);
-#else
-    return win_run_sync_locale(cmdline, currdir, 1);
-#endif
 }
 
 /**
@@ -562,18 +473,14 @@ int win_run_sync (char *cmdline, const char *currdir)
  *
  * Slightly simplified variant of win_run_sync(), used
  * when the working directory should be inherited from
- * gretl rather than being set explicitly.
+ * libgretl rather than being set explicitly.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
 int gretl_spawn (char *cmdline)
 {
-#ifdef USE_UNICODE
     return win_run_sync_unicode(cmdline, NULL, 0);
-#else
-    return win_run_sync_locale(cmdline, NULL, 0);
-#endif
 }
 
 /* Retrieve various special paths from the bowels of MS

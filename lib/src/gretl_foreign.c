@@ -36,10 +36,6 @@
 # endif
 #endif
 
-#ifdef MPI_REALTIME
-# define UNIX_MPI_IO 1
-#endif
-
 #ifdef USE_RLIB
 # include <Rinternals.h> /* for SEXP and friends */
 #endif
@@ -83,7 +79,7 @@ struct fmap {
 static void write_R_io_file (FILE *fp, const char *ddir);
 static void do_stata_printout (PRN *prn);
 
-#ifdef UNIX_MPI_IO
+#ifdef MPI_REALTIME
 
 struct iodata {
     int fd;
@@ -97,7 +93,7 @@ struct iodata {
 
 static int run_mpi_with_pipes (char **argv, struct iodata *io,
 			       gretlopt opt, PRN *prn);
-#endif /* UNIX_MPI_IO */
+#endif /* MPI_REALTIME */
 
 static struct fmap foreign_map[] = {
      { LANG_OX,     "gretltmp.ox", "gretl_io.ox", NULL },
@@ -531,15 +527,13 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
     return err;
 }
 
-# ifdef UNIX_MPI_IO
+# ifdef MPI_REALTIME
 
 /* This approach works on Linux */
 
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
     struct iodata *io = p;
-
-#if GLIB_MINOR_VERSION >= 34
     GError *gerr = NULL;
 
     if (!g_spawn_check_exit_status(status, &gerr)) {
@@ -547,7 +541,6 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
 	*(io->err) = 1;
 	io->got_all = 1;
     }
-#endif
     g_spawn_close_pid(pid);
     io->finished = 1;
 }
@@ -623,7 +616,7 @@ static int run_mpi_with_pipes (char **argv, struct iodata *io,
     return err;
 }
 
-# endif /* UNIX_MPI_IO */
+# endif /* MPI_REALTIME */
 
 #else /* no MPI support */
 
