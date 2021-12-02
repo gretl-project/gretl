@@ -809,7 +809,7 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
 	gretl_setenv("OCTAVE_HISTFILE", "c:\\nul");
     }
 
-    err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
+    err = gretl_win32_pipe_output(cmd, gretl_workdir(), prn);
 
     if (!err && foreign_lang == LANG_STATA && !(opt & OPT_Q)) {
 	/* output will be in log file, not stdout */

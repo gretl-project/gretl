@@ -5906,7 +5906,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
        (composed in gretl_foreign.c) will be in the locale
        encoding, ready to pass on the Windows command line
        as in "foreign.exe fname"; this composite string is
-       given to gretl_win32_grab_output() or gretl_spawn()
+       given to gretl_spawn() or gretl_win32_pipe_output()
        below.
     */
 
@@ -5947,7 +5947,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 		pputc(prn, '\n');
 	    }
 	} else {
-	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), OPT_NONE, prn);
+	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
 	}
 
 	if (got_printable_output(prn)) {

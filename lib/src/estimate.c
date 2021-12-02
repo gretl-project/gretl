@@ -4072,25 +4072,23 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
     return mod;
 }
 
-#ifndef WIN32
-
 static void gretl_glib_grab_output (const char *prog,
 				    char **sout)
 {
     gchar *argv[] = { (gchar *) prog, NULL };
+    gchar *serr = NULL;
     gboolean ok;
 
     ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		      NULL, NULL, sout, NULL,
+		      NULL, NULL, sout, &serr,
 		      NULL, NULL);
 
     if (!ok && *sout != NULL) {
 	g_free(*sout);
 	*sout = NULL;
     }
+    g_free(serr);
 }
-
-#endif
 
 /*
  * get_x13as_maxpd:
@@ -4109,11 +4107,7 @@ int get_x13as_maxpd (void)
 	const char *x12a = gretl_x12_arima();
 	char *sout = NULL;
 
-#ifdef WIN32
-	gretl_win32_grab_output(x12a, gretl_dotdir(), &sout);
-#else
 	gretl_glib_grab_output(x12a, &sout);
-#endif
 	if (sout != NULL) {
 	    char *p = strstr(sout, "PSP = ");
 

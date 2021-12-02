@@ -28,6 +28,8 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
+#define USE_UNICODE 1
+
 static int windebug;
 static FILE *fdb;
 
@@ -281,8 +283,8 @@ void win_copy_last_error (void)
     g_free(buf);
 }
 
-static int ensure_utf16 (const char *s1, gunichar2 **pmod1,
-			 const char *s2, gunichar2 **pmod2)
+static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
+			 const char *s2, gunichar2 **s2u16)
 {
     GError *gerr = NULL;
     int err = 0;
@@ -291,8 +293,8 @@ static int ensure_utf16 (const char *s1, gunichar2 **pmod1,
 	if (windebug) {
 	    fprintf(stderr, "recoding s1 to UTF-16\n");
 	}
-	*pmod1 = g_utf8_to_utf16(s1, -1, NULL, NULL, &gerr);
-	if (*pmod1 == NULL || gerr != NULL) {
+	*s1u16 = g_utf8_to_utf16(s1, -1, NULL, NULL, &gerr);
+	if (*s1u16 == NULL || gerr != NULL) {
 	    err = 1;
 	}
     }
@@ -301,8 +303,8 @@ static int ensure_utf16 (const char *s1, gunichar2 **pmod1,
 	if (windebug) {
 	    fprintf(stderr, "recoding s2 to UTF-16\n");
 	}
-	*pmod2 = g_utf8_to_utf16(s2, -1, NULL, NULL, &gerr);
-	if (*pmod2 == NULL || gerr != NULL) {
+	*s2u16 = g_utf8_to_utf16(s2, -1, NULL, NULL, &gerr);
+	if (*s2u16 == NULL || gerr != NULL) {
 	    err = 1;
 	}
     }
@@ -378,14 +380,15 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     return err;
 }
 
-/* covers the cases of (a) exec'ing a console application
-   as "slave" (without opening a console window) and (b)
-   exec'ing a GUI app (in fact, just wgnuplot.exe) as slave
+#ifndef USE_UNICODE
+
+/* This code now obsolete so long as win_run_sync_unicode()
+   works in all relevant cases.
 */
 
-static int real_win_run_sync (char *cmdline,
-			      const char *currdir,
-			      int console_app)
+static int win_run_sync_locale (char *cmdline,
+				const char *currdir,
+				int console_app)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
@@ -454,6 +457,8 @@ static int real_win_run_sync (char *cmdline,
 
     return err;
 }
+
+#endif /* not-USE_UNICODE */
 
 static int win_run_sync_unicode (char *cmdline,
 				 const char *currdir,
@@ -534,27 +539,40 @@ static int win_run_sync_unicode (char *cmdline,
  *
  * Run a command synchronously (i.e. block until it is
  * completed) under MS Windows. This is intended for use
- * with "slave" console applications such a latex, dvips,
- * tramo, x12a and so on.
+ * with "slave" console applications. But if USE_UNICODE
+ * is defined it should not be used for executables that
+ * can't handle UTF-16 -- at least when any arguments are
+ * passed in @cmdline.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
 int win_run_sync (char *cmdline, const char *currdir)
 {
-#if 1
+#ifdef USE_UNICODE
     return win_run_sync_unicode(cmdline, currdir, 1);
 #else
-    return real_win_run_sync(cmdline, currdir, 1);
+    return win_run_sync_locale(cmdline, currdir, 1);
 #endif
 }
 
+/**
+ * gretl_spawn:
+ * @cmdline: command line to execute.
+ *
+ * Slightly simplified variant of win_run_sync(), used
+ * when the working directory should be inherited from
+ * gretl rather than being set explicitly.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
 int gretl_spawn (char *cmdline)
 {
-#if 1
+#ifdef USE_UNICODE
     return win_run_sync_unicode(cmdline, NULL, 0);
 #else
-    return real_win_run_sync(cmdline, NULL, 0);
+    return win_run_sync_locale(cmdline, NULL, 0);
 #endif
 }
 
@@ -681,37 +699,14 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return err;
 }
 
-static int relay_mpi_output (HANDLE hread, char *buf, PRN *prn)
-{
-    DWORD dwread;
-    int done = 0;
-
-    memset(buf, 0, BUFSIZE);
-    ReadFile(hread, buf, BUFSIZE - 1, &dwread, NULL);
-
-    if (dwread > 0) {
-	char *s = strstr(buf, "__GRETLMPI_EXIT__");
-
-	if (s != NULL) {
-	    done = 1;
-	    *s = '\0';
-	}
-	pputs(prn, buf);
-	gretl_flush(prn);
-    }
-
-    return done;
-}
-
 /* Option: OPT_S for shell mode, as opposed to running an
-   executable directly. If @prn is non-NULL we try to pass
-   back output in real time.
+   executable directly.
 */
 
 static int
 run_child_with_pipe (const char *arg, const char *currdir,
 		     HANDLE hwrite, HANDLE hread,
-		     gretlopt opt, PRN *prn)
+		     gretlopt opt)
 {
     PROCESS_INFORMATION pinfo;
     STARTUPINFO sinfo;
@@ -771,29 +766,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	err = E_EXTERNAL;
 	win_show_last_error();
     } else {
-	if (prn != NULL) {
-	    /* try reading output in real time */
-	    char buf[BUFSIZE];
-	    DWORD excode = 0;
-	    int got_all = 0;
-
-	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
-		   && excode == STILL_ACTIVE) {
-		got_all = relay_mpi_output(hread, buf, prn);
-		if (got_all) {
-		    break;
-		}
-	    }
-	    fprintf(stderr, "run_child_with_pipe: got_all = %d\n", got_all);
-	    if (!got_all) {
-		err = E_EXTERNAL;
-	    }
-	    CloseHandle(hread);
-	    CloseHandle(hwrite);
-	} else {
-	    /* is this right? */
-	    WaitForSingleObject(pinfo.hProcess, INFINITE);
-	}
+	/* is this right? */
+	WaitForSingleObject(pinfo.hProcess, INFINITE);
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
     }
@@ -803,7 +777,6 @@ run_child_with_pipe (const char *arg, const char *currdir,
     g_free(ls1);
     g_free(ls2);
 
-    // fprintf(stderr, "run_child_with_pipe: returning %d\n", err);
     return err;
 }
 
@@ -829,18 +802,11 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	/* ensure that the read handle to the child process's pipe for
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	if (prn != NULL && (opt & OPT_R)) {
-	    /* OPT_R is intended to support real time output */
-	    err = run_child_with_pipe(arg, currdir, hwrite, hread,
-				      opt, prn);
-	} else {
-	    /* note: passing NULL for prn here */
-	    err = run_child_with_pipe(arg, currdir, hwrite, hread,
-				      opt, NULL);
-	    if (!err) {
-		/* read from child's output pipe on termination */
-		err = read_from_pipe(hwrite, hread, sout, prn);
-	    }
+	/* note: passing NULL for prn here */
+	err = run_child_with_pipe(arg, currdir, hwrite, hread, opt);
+	if (!err) {
+	    /* read from child's output pipe on termination */
+	    err = read_from_pipe(hwrite, hread, sout, prn);
 	}
     }
 
@@ -954,19 +920,12 @@ static int run_shell_cmd_async (const char *cmd)
     return err;
 }
 
-int gretl_win32_grab_output (const char *cmdline,
-			     const char *currdir,
-			     char **sout)
-{
-    return run_cmd_with_pipes(cmdline, currdir, sout, NULL, OPT_NONE);
-}
-
 int gretl_win32_pipe_output (const char *cmdline,
 			     const char *currdir,
-			     gretlopt opt,
 			     PRN *prn)
 {
-    return run_cmd_with_pipes(cmdline, currdir, NULL, prn, opt);
+    return run_cmd_with_pipes(cmdline, currdir, NULL,
+			      prn, OPT_NONE);
 }
 
 /* note: gretl_shell_grab() is declared in interact.h,
