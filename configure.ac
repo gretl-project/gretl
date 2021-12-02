@@ -671,10 +671,10 @@ fi
 dnl
 dnl glib 2.0 (needed even if not building GUI)
 dnl
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.28.0, have_glib2="yes", have_glib2="no")
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.46.0, have_glib2="yes", have_glib2="no")
 if test "${have_glib2}" = "no" ; then
    echo "
-Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.46.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
    exit 1
