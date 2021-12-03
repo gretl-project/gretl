@@ -3300,7 +3300,7 @@ static void try_for_mpi_errmsg (PRN *prn)
 int foreign_execute (const DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
-#ifdef UNIX_MPI_IO
+#ifdef MPI_REALTIME
     static struct iodata io;
     void *ptr = &io;
 #else
