@@ -746,6 +746,10 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 				   &status,
 				   &gerr);
 
+    fprintf(stderr, "ok=%d, cmdline=++%s++\n sout='%s',\n serr='%s'\n status=%d\n",
+	    ok, cmdline, sout, serr, status);
+    fprintf(stderr, "gerr=%p\n", (void *) gerr);
+
     if (ok) {
 	pputs(prn, sout);
     } else {
@@ -845,8 +849,6 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 
     if (opt & OPT_A) {
 	err = run_shell_cmd_async(arg);
-    } else if (getenv("GRETL_SHELL_NEW")) {
-	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
     } else {
 	err = run_shell_cmd_wait(arg, prn);
     }
