@@ -725,59 +725,42 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 
 static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 {
-    STARTUPINFO sinfo;
-    PROCESS_INFORMATION pinfo;
-    const char *currdir;
-    gchar *cmdline = NULL;
-    gchar *ls1 = NULL;
-    gchar *ls2 = NULL;
-    int ok, err = 0;
+    gchar *cmdline;
+    gchar *sout = NULL;
+    gchar *serr = NULL;
+    gint status = 0;
+    GError *gerr = NULL;
+    gboolean ok;
 
-    currdir = gretl_workdir();
-    err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
-    if (err) {
-	return err;
-    }
-
-    ZeroMemory(&sinfo, sizeof sinfo);
-    ZeroMemory(&pinfo, sizeof pinfo);
-
-    sinfo.cb = sizeof sinfo;
-    sinfo.dwFlags = STARTF_USESHOWWINDOW;
-    sinfo.wShowWindow = SW_SHOWMINIMIZED;
-
-    /* includes getting path to cmd.exe */
-    cmdline = compose_command_line(cmd);
-#if 0
-    fprintf(stderr, "run_shell_cmd_wait: cmd='%s'\n", cmd);
-    fprintf(stderr, "  cmdline='%s'\n", cmdline);
-#endif
-
-    ok = CreateProcess(NULL,
-		       cmdline,
-		       NULL,
-		       NULL,
-		       FALSE,
-		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-		       NULL,
-		       currdir,
-		       &sinfo,
-		       &pinfo);
-
-    if (!ok) {
-	win_show_last_error();
-	err = 1;
+    if (strstr(cmd, ".exe") == NULL) {
+	cmdline = g_strdup_printf("cmd.exe %s", cmd);
     } else {
-	WaitForSingleObject(pinfo.hProcess, INFINITE);
-	CloseHandle(pinfo.hProcess);
-	CloseHandle(pinfo.hThread);
+	cmdline = g_strdup(cmd);
     }
 
-    g_free(cmdline);
-    g_free(ls1);
-    g_free(ls2);
+    gretl_charsub(cmdline, '\"', '\'');
 
-    return err;
+    ok = g_spawn_command_line_sync(cmdline,
+				   &sout,
+				   &serr,
+				   &status,
+				   &gerr);
+
+    if (ok) {
+	pputs(prn, sout);
+    } else {
+	fputs(serr, stderr);
+	if (gerr != NULL) {
+	    fputs(gerr->message, stderr);
+	    g_free(gerr);
+	}
+    }
+
+    g_free(sout);
+    g_free(serr);
+    g_free(cmdline);
+
+    return !ok;
 }
 
 static int run_shell_cmd_async (const char *cmd)

@@ -516,7 +516,7 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-#ifdef MPI_REALTIME /* note: not supported on Windows */
+#ifdef MPI_REALTIME /* note: does not seem to work on Windows */
 	err = run_mpi_with_pipes(argv, ptr, opt, prn);
 #else
 	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
