@@ -379,11 +379,11 @@ int bds_test_driver (int order, int *list, DATASET *dset,
     const double *x = NULL;
     const char *vname = NULL;
     double detail[2] = {0};
-    double eps = -0.7;
+    double eps = 0.7;
     int t1 = dset->t1;
     int t2 = dset->t2;
     int boot = -1;
-    int c1 = 1;
+    int ctarget = 1;
     int n, v = 0;
     int err = 0;
 
@@ -415,14 +415,13 @@ int bds_test_driver (int order, int *list, DATASET *dset,
 	    if (!err && eps <= 0) {
 		err = E_INVARG;
 	    }
-	    c1 = 0;
+	    ctarget = 0;
 	} else if (opt & OPT_C) {
 	    /* eps as target first-order correlation */
 	    eps = get_optval_double(BDS, OPT_C, &err);
 	    if (!err && (eps < 0.1 || eps > 0.9)) {
 		err = E_INVARG;
 	    }
-	    c1 = 1;
 	}
     }
 
@@ -446,13 +445,13 @@ int bds_test_driver (int order, int *list, DATASET *dset,
 		/* auto selection */
 		boot = n < 600;
 	    }
-	    res = bdstest(x + t1, n, order, eps, c1, boot, detail, &err);
+	    res = bdstest(x + t1, n, order, eps, ctarget, boot, detail, &err);
 	}
     }
 
     if (res != NULL) {
 	if (!(opt & OPT_Q)) {
-	    bds_print(res, vname, order, eps, c1, boot, detail, prn);
+	    bds_print(res, vname, order, eps, ctarget, boot, detail, prn);
 	}
 	set_last_result_data(res, GRETL_TYPE_MATRIX);
     }

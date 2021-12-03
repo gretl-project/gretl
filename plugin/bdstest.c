@@ -523,7 +523,7 @@ gretl_matrix *make_return_matrix (kinfo *ki, int NB,
    @n: length of series
    @maxdim: maximum order of correlation integral
    @eps: proximity-of-points criterion
-   @ci: flag to interpret @eps as target 1st-order correlation
+   @ctarget: flag to interpret @eps as target 1st-order correlation
    @boot: flag to produce bootstrapped p-values
    @detail: location to receive additional info (eps, c1), or NULL
    @err: location to recive error code
@@ -532,7 +532,7 @@ gretl_matrix *make_return_matrix (kinfo *ki, int NB,
 */
 
 gretl_matrix *bdstest (const double *x, int n, int maxdim,
-		       double eps, int c1, int boot,
+		       double eps, int ctarget, int boot,
 		       double *detail, int *err)
 {
     kinfo ki = {0};
@@ -550,9 +550,10 @@ gretl_matrix *bdstest (const double *x, int n, int maxdim,
 	return NULL;
     }
 
-    if (c1) {
+    if (ctarget) {
 	ki.eps = kanzler_eps(x, n, eps);
     } else {
+	/* use multiple of standard deviation */
 	ki.eps = eps * gretl_stddev(0, n-1, x);
     }
     if (na(ki.eps) || ki.eps <= 0) {
