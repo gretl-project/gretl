@@ -408,6 +408,14 @@ int bds_test_driver (int order, int *list, DATASET *dset,
 	err = incompatible_options(opt, OPT_S | OPT_C);
     }
 
+    /* Note: @ctarget = 1 means that the value of @eps we pass to the
+       bdstest() function is actually the target first-order
+       correlation (with a default value of 0.7 that can be adjusted
+       via the --corr1 option to the command). The alternative is that
+       the user can specify @eps as a multiple of the std dev of the
+       input series, in which case we set @ctarget to 0.
+    */
+
     if (!err) {
 	if (opt & OPT_S) {
 	    /* eps as multiple of std dev of @x */
