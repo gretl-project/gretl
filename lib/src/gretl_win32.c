@@ -28,6 +28,8 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
+#define CPDEBUG 1
+
 static int windebug;
 static FILE *fdb;
 
@@ -274,8 +276,7 @@ void win_show_last_error (void)
 
 void win_copy_last_error (void)
 {
-    gint err = GetLastError();
-    gchar *buf = g_win32_error_message(err);
+    gchar *buf = g_win32_error_message(GetLastError());
 
     gretl_errmsg_set(buf);
     g_free(buf);
@@ -390,6 +391,11 @@ static int win_run_sync_unicode (char *cmdline,
     gunichar2 *cd16 = NULL;
     int ok, err = 0;
 
+#if CPDEBUG
+    fprintf(stderr, "win_run_sync_unicode\n");
+    fprintf(stderr, " cmdline = '%s'\n", cmdline);
+#endif
+
     err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
     if (err) {
 	return err;
@@ -445,6 +451,10 @@ static int win_run_sync_unicode (char *cmdline,
 
     g_free(cl16);
     g_free(cd16);
+
+#if CPDEBUG
+    fprintf(stderr, "win_run_sync_unicode: return err = %d\n", err);
+#endif
 
     return err;
 }
@@ -587,11 +597,14 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
 	    if (!ok) {
-		fputs("Readfile on read handle failed\n", stderr);
+		fputs("ReadFile on read handle failed\n", stderr);
 	    }
 	    if (!ok || dwread == 0) {
 		break;
 	    }
+#if CPDEBUG
+	    fprintf(stderr, "Read from pipe: got %d bytes\n", (int) dwread);
+#endif
 	    pputs(prn, buf);
 	}
     }
@@ -622,6 +635,11 @@ run_child_with_pipe (const char *arg, const char *currdir,
     gchar *ls1 = NULL;
     gchar *ls2 = NULL;
     int ok, err = 0;
+
+#if CPDEBUG
+    fprintf(stderr, "run_child_with_pipe\n");
+    fprintf(stderr, " arg = '%s'\n", arg);
+#endif
 
     /* Required for CreateProcess */
     err = ensure_locale_encoding(&arg, &ls1, &currdir, &ls2);
@@ -669,9 +687,13 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		       &sinfo,
 		       &pinfo);
 
+#if CPDEBUG
+    fprintf(stderr, " CreateProcess: ok = %d\n", ok);
+#endif
+
     if (!ok) {
 	err = E_EXTERNAL;
-	win_show_last_error();
+	win_copy_last_error();
     } else {
 	/* is this right? */
 	WaitForSingleObject(pinfo.hProcess, INFINITE);
@@ -684,6 +706,10 @@ run_child_with_pipe (const char *arg, const char *currdir,
     g_free(ls1);
     g_free(ls2);
 
+#if CPDEBUG
+    fprintf(stderr, "run_child_with_pipe: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -693,6 +719,11 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sattr;
     int ok, err = 0;
+
+#if CPDEBUG
+    fprintf(stderr, "run_cmd_with_pipes\n");
+    fprintf(stderr, " arg = '%s'\n");
+#endif
 
     /* set the bInheritHandle flag so pipe handles are inherited */
     sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -716,7 +747,10 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	}
     }
 
-    // fprintf(stderr, "run_cmd_with_pipes: returning %d\n", err);
+#if CPDEBUG
+    fprintf(stderr, "run_cmd_with_pipes: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -747,7 +781,8 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 
     /* includes getting path to cmd.exe */
     cmdline = compose_command_line(cmd);
-#if 1
+
+#if CPDEBUG
     fprintf(stderr, "run_shell_cmd_wait: cmd='%s'\n", cmd);
     fprintf(stderr, "  cmdline='%s'\n", cmdline);
 #endif
@@ -791,6 +826,11 @@ static int run_shell_cmd_async (const char *cmd)
     gchar *ls2 = NULL;
     int ok, err = 0;
 
+#if CPDEBUG
+    fprintf(stderr, "run_shell_cmd_async\n");
+    fprintf(stderr, " cmd = '%s'\n");
+#endif
+
     currdir = gretl_workdir();
     err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
     if (err) {
@@ -813,17 +853,22 @@ static int run_shell_cmd_async (const char *cmd)
 		       currdir,
 		       &sinfo,
 		       &pinfo);
+
     g_free(cmdcpy);
     g_free(ls1);
     g_free(ls2);
 
     if (!ok) {
-	win_show_last_error();
+	win_copy_last_error();
 	err = 1;
     } else {
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
     }
+
+#if CPDEBUG
+    fprintf(stderr, "run_shell_cmd_async: returning %d\n", err);
+#endif
 
     return err;
 }
