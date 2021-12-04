@@ -28,7 +28,7 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define CPDEBUG 1
+#define CPDEBUG 0
 
 static int windebug;
 static FILE *fdb;
