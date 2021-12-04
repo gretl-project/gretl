@@ -392,7 +392,7 @@ static int win_run_sync_unicode (char *cmdline,
     int ok, err = 0;
 
 #if CPDEBUG
-    fprintf(stderr, "win_run_sync_unicode\n");
+    fprintf(stderr, "\nwin_run_sync_unicode\n");
     fprintf(stderr, " cmdline = '%s'\n", cmdline);
 #endif
 
@@ -597,9 +597,14 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
 	    if (!ok) {
-		fputs("ReadFile on read handle failed\n", stderr);
+		if (GetLastError() != ERROR_IO_PENDING) {
+		    ok = 1;
+		} else {
+		    fputs("ReadFile on read handle failed\n", stderr);
+		}
 	    }
 	    if (!ok || dwread == 0) {
+		fputs("break out of ReadFile loop\n", stderr);
 		break;
 	    }
 #if CPDEBUG
@@ -637,7 +642,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
     int ok, err = 0;
 
 #if CPDEBUG
-    fprintf(stderr, "run_child_with_pipe\n");
+    fprintf(stderr, "\nrun_child_with_pipe\n");
     fprintf(stderr, " arg = '%s'\n", arg);
 #endif
 
@@ -721,7 +726,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
     int ok, err = 0;
 
 #if CPDEBUG
-    fprintf(stderr, "run_cmd_with_pipes\n");
+    fprintf(stderr, "\nrun_cmd_with_pipes\n");
     fprintf(stderr, " arg = '%s'\n");
 #endif
 
@@ -783,7 +788,7 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
     cmdline = compose_command_line(cmd);
 
 #if CPDEBUG
-    fprintf(stderr, "run_shell_cmd_wait: cmd='%s'\n", cmd);
+    fprintf(stderr, "\nrun_shell_cmd_wait: cmd='%s'\n", cmd);
     fprintf(stderr, "  cmdline='%s'\n", cmdline);
 #endif
 
@@ -827,7 +832,7 @@ static int run_shell_cmd_async (const char *cmd)
     int ok, err = 0;
 
 #if CPDEBUG
-    fprintf(stderr, "run_shell_cmd_async\n");
+    fprintf(stderr, "\nrun_shell_cmd_async\n");
     fprintf(stderr, " cmd = '%s'\n");
 #endif
 
@@ -888,6 +893,9 @@ int gretl_win32_pipe_output (const char *cmdline,
 
 int gretl_shell_grab (const char *arg, char **sout)
 {
+#if CPDEBUG
+    fprintf(stderr, "\ngretl_shell_grab\n");
+#endif
     return run_cmd_with_pipes(arg, NULL, sout, NULL, OPT_S);
 }
 
