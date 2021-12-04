@@ -255,7 +255,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 		 &status, &gerr);
 
     if (gerr != NULL) {
-	pprintf(prn, "%s\n", gerr->message);
+	pprintf(prn, "g_spawn_sync: %s\n", gerr->message);
 	g_error_free(gerr);
 	err = 1;
     } else if (status != 0) {

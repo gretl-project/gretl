@@ -623,7 +623,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
     gchar *ls2 = NULL;
     int ok, err = 0;
 
-    /* FIXME? */
+    /* Required for CreateProcess */
     err = ensure_locale_encoding(&arg, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
@@ -709,7 +709,6 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	/* ensure that the read handle to the child process's pipe for
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	/* note: passing NULL for prn here */
 	err = run_child_with_pipe(arg, currdir, hwrite, hread, opt);
 	if (!err) {
 	    /* read from child's output pipe on termination */
@@ -725,46 +724,61 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 
 static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 {
-    gchar *cmdline;
-    gchar *sout = NULL;
-    gchar *serr = NULL;
-    gint status = 0;
-    GError *gerr = NULL;
-    gboolean ok;
+    STARTUPINFO sinfo;
+    PROCESS_INFORMATION pinfo;
+    const char *currdir;
+    gchar *cmdline = NULL;
+    gchar *ls1 = NULL;
+    gchar *ls2 = NULL;
+    int ok, err = 0;
 
-    if (strstr(cmd, ".exe") == NULL) {
-	cmdline = g_strdup_printf("cmd.exe %s", cmd);
-    } else {
-	cmdline = g_strdup(cmd);
+    currdir = gretl_workdir();
+    err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
+    if (err) {
+	return err;
     }
 
-    gretl_charsub(cmdline, '\"', '\'');
+    ZeroMemory(&sinfo, sizeof sinfo);
+    ZeroMemory(&pinfo, sizeof pinfo);
 
-    ok = g_spawn_command_line_sync(cmdline,
-				   &sout,
-				   &serr,
-				   &status,
-				   &gerr);
+    sinfo.cb = sizeof sinfo;
+    sinfo.dwFlags = STARTF_USESHOWWINDOW;
+    sinfo.wShowWindow = SW_SHOWMINIMIZED;
 
-    fprintf(stderr, "ok=%d, cmdline=++%s++\n sout='%s',\n serr='%s'\n status=%d\n",
-	    ok, cmdline, sout, serr, status);
-    fprintf(stderr, "gerr=%p\n", (void *) gerr);
+    /* includes getting path to cmd.exe */
+    cmdline = compose_command_line(cmd);
+#if 1
+    fprintf(stderr, "run_shell_cmd_wait: cmd='%s'\n", cmd);
+    fprintf(stderr, "  cmdline='%s'\n", cmdline);
+#endif
 
-    if (ok) {
-	pputs(prn, sout);
+    ok = CreateProcess(NULL,
+		       cmdline,
+		       NULL,
+		       NULL,
+		       FALSE,
+		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+		       NULL,
+		       currdir,
+		       &sinfo,
+		       &pinfo);
+
+    fprintf(stderr, "CreateProcess: ok = %d\n", ok);
+
+    if (!ok) {
+	win_show_last_error();
+	err = 1;
     } else {
-	fputs(serr, stderr);
-	if (gerr != NULL) {
-	    fputs(gerr->message, stderr);
-	    g_free(gerr);
-	}
+	WaitForSingleObject(pinfo.hProcess, INFINITE);
+	CloseHandle(pinfo.hProcess);
+	CloseHandle(pinfo.hThread);
     }
 
-    g_free(sout);
-    g_free(serr);
     g_free(cmdline);
+    g_free(ls1);
+    g_free(ls2);
 
-    return !ok;
+    return err;
 }
 
 static int run_shell_cmd_async (const char *cmd)
@@ -849,6 +863,8 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 
     if (opt & OPT_A) {
 	err = run_shell_cmd_async(arg);
+    } else if (getenv("GRETL_SHELL_NEW")) {
+	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
     } else {
 	err = run_shell_cmd_wait(arg, prn);
     }
