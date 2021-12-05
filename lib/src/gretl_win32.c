@@ -621,7 +621,7 @@ static int run_child_with_pipe (const char *cmdline,
 
 #if CPDEBUG
     fprintf(stderr, "\nrun_child_with_pipe\n");
-    fprintf(stderr, " cmdline = '%s'\n", arg);
+    fprintf(stderr, " cmdline = '%s'\n", cmdline);
 #endif
 
     if (opt & OPT_S) {
