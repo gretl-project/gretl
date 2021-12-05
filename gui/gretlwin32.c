@@ -465,16 +465,19 @@ static int dde_open_pdf (const char *exename,
 static gchar *get_exe_for_type (const char *ext)
 {
     gchar *exe = NULL;
+    gunichar2 *uext;
     HRESULT ret;
     DWORD len = 0;
 
+    uext = g_utf8_to_utf16(ext, -1, NULL, NULL, NULL);
+
     ret = AssocQueryStringW(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE,
-			    ext, NULL, NULL, &len);
+			    uext, NULL, NULL, &len);
     if (ret == S_FALSE) {
 	gunichar2 *tmp = g_malloc0((len + 1) * sizeof *tmp);
 
 	ret = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE,
-				ext, NULL, tmp, &len);
+				uext, NULL, tmp, &len);
 	if (ret == S_OK) {
 	    exe = g_utf16_to_utf8(tmp, -1, NULL, NULL, NULL);
 	} else {
@@ -482,6 +485,8 @@ static gchar *get_exe_for_type (const char *ext)
 	}
 	g_free(tmp);
     }
+
+    g_free(uext);
 
     return exe;
 }
@@ -565,6 +570,7 @@ static int coinitted;
 static int win32_open_arg (const char *arg, const char *ext)
 {
     gunichar2 *arg16;
+    gunichar2 *op16;
     int err = 0;
 
     if (!coinitted) {
@@ -578,6 +584,8 @@ static int win32_open_arg (const char *arg, const char *ext)
 	return 1;
     }
 
+    op16 = g_utf8_to_utf16("open", -1, NULL, NULL, NULL);
+
     /* From the MSDN doc: "If the function succeeds, it returns a
        value greater than 32. If the function fails, it returns an
        error value that indicates the cause of the failure. The return
@@ -587,7 +595,7 @@ static int win32_open_arg (const char *arg, const char *ext)
        32 or the following error codes below..."
     */
 
-    if ((int) ShellExecuteW(NULL, "open", arg16, NULL, NULL, SW_SHOW) <= 32) {
+    if ((int) ShellExecuteW(NULL, op16, arg16, NULL, NULL, SW_SHOW) <= 32) {
 	/* if the above fails, try via the registry */
 	gchar *exe = get_exe_for_type(ext);
 
@@ -603,6 +611,7 @@ static int win32_open_arg (const char *arg, const char *ext)
     }
 
     g_free(arg16);
+    g_free(op16);
 
     return err;
 }

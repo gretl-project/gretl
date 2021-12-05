@@ -28,7 +28,7 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define CPDEBUG 0
+#define CPDEBUG 1
 
 static int windebug;
 static FILE *fdb;
@@ -861,7 +861,7 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 
     if (opt & OPT_A) {
 	err = win_run_async(arg, gretl_workdir());
-    } else if (getenv("GRETL_SHELL_NEW")) {
+    } else if (1 || getenv("GRETL_SHELL_NEW")) {
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
     } else {
 	err = run_shell_cmd_wait(arg, prn);
