@@ -39,9 +39,6 @@ enum {
 
 void set_windebug (int s);
 
-int ensure_locale_encoding (const char **ps1, gchar **ls1,
-			    const char **ps2, gchar **ls2);
-
 int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval);
 
@@ -56,6 +53,8 @@ void win_show_last_error (void);
 void win_print_last_error (void);
 
 int win_run_sync (char *cmdline, const char *currdir);
+
+int win_run_async (char *cmdline, const char *currdir);
 
 int gretl_spawn (char *cmdline);
 

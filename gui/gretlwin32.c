@@ -93,32 +93,15 @@ void redirect_io_to_console (void)
     }
 }
 
-/* Asynchronous execution of child process. We'll be ready
-   to re-encode @arg if necessary, but in some cases (see
-   the calls below) that will already be handled. This is
-   flagged by the fact that the recoded argument is already
-   composited into @prog, and the @prog string will start
-   with a double quote.
-*/
+/* asynchronous execution of child process */
 
 static int real_create_child_process (const char *prog,
 				      const char *arg,
 				      const char *opts,
 				      int showerr)
 {
-    PROCESS_INFORMATION proc_info;
-    STARTUPINFO start_info;
     gchar *cmdline = NULL;
-    gchar *pconv = NULL;
-    gchar *aconv = NULL;
-    int ret, err = 0;
-
-    /* We assume that @opts will not need recoding */
-
-    err = ensure_locale_encoding(&prog, &pconv, &arg, &aconv);
-    if (err) {
-	return err;
-    }
+    int err = 0;
 
     if (arg == NULL && opts == NULL) {
 	if (*prog == '"') {
@@ -135,39 +118,12 @@ static int real_create_child_process (const char *prog,
 	cmdline = g_strdup_printf("\"%s\" %s", prog, opts);
     }
 
-    ZeroMemory(&proc_info, sizeof proc_info);
-    ZeroMemory(&start_info, sizeof start_info);
-    start_info.cb = sizeof start_info;
-
-    ret = CreateProcess(NULL,
-			cmdline,       /* command line */
-			NULL,          /* process security attributes  */
-			NULL,          /* primary thread security attributes */
-			FALSE,         /* handles are inherited?  */
-			0,             /* creation flags  */
-			NULL,          /* NULL => use parent's environment  */
-			NULL,          /* use parent's current directory  */
-			&start_info,   /* receives STARTUPINFO */
-			&proc_info);   /* receives PROCESS_INFORMATION  */
-
-    if (ret == 0) {
-	if (showerr) {
-	    win_show_last_error();
-	}
-	err = 1;
+    err = win_run_async(cmdline, NULL);
+    if (err && showerr) {
+	gui_errmsg(err);
     }
-
-#ifdef CHILD_DEBUG
-    if (err) {
-	fprintf(stderr, "gretl: create_child_process():\n"
-		" cmdline='%s'\n\n", cmdline);
-	fprintf(stderr, " return from CreateProcess() = %d\n", ret);
-    }
-#endif
 
     g_free(cmdline);
-    g_free(pconv);
-    g_free(aconv);
 
     return err;
 }
@@ -506,23 +462,25 @@ static int dde_open_pdf (const char *exename,
 			 const char *fname,
 			 const char *dest);
 
-static char *get_exe_for_type (const char *ext)
+static gchar *get_exe_for_type (const char *ext)
 {
-    char *exe = NULL;
+    gchar *exe = NULL;
     HRESULT ret;
     DWORD len = 0;
 
-    ret = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE,
-			   ext, NULL, NULL, &len);
+    ret = AssocQueryStringW(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE,
+			    ext, NULL, NULL, &len);
     if (ret == S_FALSE) {
-	exe = calloc(len + 1, 1);
-	ret = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
-			       ext, NULL, exe, &len);
-	if (ret != S_OK) {
+	gunichar2 *tmp = g_malloc0((len + 1) * sizeof *tmp);
+
+	ret = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE,
+				ext, NULL, tmp, &len);
+	if (ret == S_OK) {
+	    exe = g_utf16_to_utf8(tmp, -1, NULL, NULL, NULL);
+	} else {
 	    fprintf(stderr, "couldn't determine exe for type %s\n", ext);
-	    free(exe);
-	    exe = NULL;
 	}
+	g_free(tmp);
     }
 
     return exe;
@@ -604,17 +562,20 @@ static int get_pdf_service_name (char *service, const char *exe)
 
 static int coinitted;
 
-/* If and when win32_open_arg() gets called, @arg should
-   already be re-encoded to the locale if necessary.
-*/
-
-static int win32_open_arg (const char *arg, char *ext)
+static int win32_open_arg (const char *arg, const char *ext)
 {
+    gunichar2 *arg16;
     int err = 0;
 
     if (!coinitted) {
 	CoInitialize(NULL);
 	coinitted = 1;
+    }
+
+    arg16 = g_utf8_to_utf16(arg, -1, NULL, NULL, NULL);
+    if (arg16 == NULL) {
+	fprintf(stderr, "win32_open_arg: conversion to UTF-16 failed\n");
+	return 1;
     }
 
     /* From the MSDN doc: "If the function succeeds, it returns a
@@ -626,9 +587,9 @@ static int win32_open_arg (const char *arg, char *ext)
        32 or the following error codes below..."
     */
 
-    if ((int) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
+    if ((int) ShellExecuteW(NULL, "open", arg16, NULL, NULL, SW_SHOW) <= 32) {
 	/* if the above fails, try via the registry */
-	char *exe = get_exe_for_type(ext);
+	gchar *exe = get_exe_for_type(ext);
 
 	if (exe == NULL) {
 	    err = 1;
@@ -637,27 +598,20 @@ static int win32_open_arg (const char *arg, char *ext)
 
 	    err = real_create_child_process(cmd, NULL, NULL, 1);
 	    g_free(cmd);
-	    free(exe);
+	    g_free(exe);
 	}
     }
+
+    g_free(arg16);
 
     return err;
 }
 
 int win32_open_pdf (const char *fname, const char *dest)
 {
-    char *exe = get_exe_for_type(".pdf");
-    gchar *fconv = NULL;
+    gchar *exe = get_exe_for_type(".pdf");
     gchar *cmd = NULL;
     int err = 0;
-
-    if (utf8_encoded(fname)) {
-	/* note: @exe will be in the locale already */
-	fconv = g_win32_locale_filename_from_utf8(fname);
-	if (fconv != NULL) {
-	    fname = (const char *) fconv;
-	}
-    }
 
     if (exe != NULL && strstr(exe, "Acro") != NULL) {
 	/* give DDE a whirl */
@@ -678,8 +632,7 @@ int win32_open_pdf (const char *fname, const char *dest)
 	err = win32_open_arg(fname, ".pdf");
     }
 
-    free(exe);
-    g_free(fconv);
+    g_free(exe);
     g_free(cmd);
 
     return err;
@@ -687,39 +640,21 @@ int win32_open_pdf (const char *fname, const char *dest)
 
 int browser_open (const char *url)
 {
-    char sfx[5] = ".htm";
-
-    return win32_open_arg(url, sfx);
+    return win32_open_arg(url, ".htm");
 }
 
 int win32_open_file (const char *fname)
 {
-    char sfx[5];
-    int err = 0;
+    char sfx[5] = {0};
 
     if (has_suffix(fname, ".pdf")) {
 	strcpy(sfx, ".pdf");
     } else if (has_suffix(fname, ".ps") ||
 	       has_suffix(fname, ".eps")) {
 	strcpy(sfx, ".ps");
-    } else {
-	*sfx = '\0';
     }
 
-    if (utf8_encoded(fname)) {
-	gchar *fconv = g_win32_locale_filename_from_utf8(fname);
-
-	if (fconv != NULL) {
-	    err = win32_open_arg(fconv, sfx);
-	    g_free(fconv);
-	} else {
-	    err = E_FOPEN;
-	}
-    } else {
-	err = win32_open_arg(fname, sfx);
-    }
-
-    return err;
+    return win32_open_arg(fname, sfx);
 }
 
 int win32_rename_dir (const char *oldname, const char *newname)
@@ -882,6 +817,7 @@ static int dde_open_pdf (const char *exename,
     HCONV conversation = NULL;
     char ddename[32];
     char *buf = NULL;
+    gchar *lname = NULL;
     int err = 0;
 
     /* Try to figure out the name of the DDE service
@@ -906,6 +842,14 @@ static int dde_open_pdf (const char *exename,
        first (if it's already open) then reopen it.
     */
 
+    /* The strings below should be CP_WINANSI as things stand */
+    if (utf8_encoded(fname)) {
+	lname = g_win32_locale_filename_from_utf8(fname);
+	if (lname != NULL) {
+	    fname = lname;
+	}
+    }
+
     sprintf(buf, "[DocClose(\"%s\")]", fname);
     exec_dde_command(buf, conversation, session);
     sprintf(buf, "[DocOpen(\"%s\")]", fname);
@@ -922,6 +866,7 @@ static int dde_open_pdf (const char *exename,
     err = exec_dde_command(buf, conversation, session);
 
     free(buf);
+    g_free(lname);
 
     if (conversation) {
 	DdeDisconnect(conversation);

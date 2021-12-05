@@ -289,9 +289,6 @@ static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
     int err = 0;
 
     if (s1 != NULL && *s1 != '\0') {
-	if (windebug) {
-	    fprintf(stderr, "recoding s1 to UTF-16\n");
-	}
 	*s1u16 = g_utf8_to_utf16(s1, -1, NULL, NULL, &gerr);
 	if (*s1u16 == NULL || gerr != NULL) {
 	    err = 1;
@@ -299,9 +296,6 @@ static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
     }
 
     if (!err && s2 != NULL && *s2 != '\0') {
-	if (windebug) {
-	    fprintf(stderr, "recoding s2 to UTF-16\n");
-	}
 	*s2u16 = g_utf8_to_utf16(s2, -1, NULL, NULL, &gerr);
 	if (*s2u16 == NULL || gerr != NULL) {
 	    err = 1;
@@ -318,70 +312,9 @@ static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
     return err;
 }
 
-/* If the command-line (*ps1) and/or current directory
-   (*ps2) are UTF-8, convert them to locale encoding
-   ("system codepage") in *ls1 and *ls2 respectively,
-   and make *ps1, *ps2 point to the converted values.
-
-   This is exclusively for the benefit of third-party
-   software that expects "ANSI" filenames.
-
-   2020-10-28: We get out of here immediately if it turns
-   out that the Windows charset is UTF-8; but it remains to
-   be seen if it actually works to pass UTF-8 filenames
-   to third-party programs in that case.
-*/
-
-int ensure_locale_encoding (const char **ps1, gchar **ls1,
-			    const char **ps2, gchar **ls2)
-{
-    GError *gerr = NULL;
-    int err = 0;
-
-    if (g_get_charset(NULL)) {
-	/* the Windows charset is UTF-8 */
-	return 0;
-    }
-
-    if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
-	/* *ps1 will be the command line */
-	if (windebug) {
-	    fprintf(stderr, "ensure_locale_encoding: recoding cmdline to locale\n");
-	}
-	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
-	if (*ls1 == NULL || gerr != NULL) {
-	    err = 1;
-	} else {
-	    *ps1 = (const char *) *ls1;
-	    if (windebug) {
-		fprintf(stderr, "recoded cmdline: '%s'\n", *ps1);
-	    }
-	}
-    }
-
-    if (!err && ps2 != NULL && *ps2 != NULL && utf8_encoded(*ps2)) {
-	/* *ps2, if present, will be the current directory */
-	*ls2 = g_win32_locale_filename_from_utf8(*ps2);
-	if (*ls2 == NULL) {
-	    err = 1;
-	} else {
-	    *ps2 = (const char *) *ls2;
-	}
-    }
-
-    if (gerr != NULL) {
-	fprintf(stderr, "ensure_locale_encoding: got GLib error:\n");
-	fprintf(stderr, " '%s'\n", gerr->message);
-	gretl_errmsg_set(gerr->message);
-	g_error_free(gerr);
-    }
-
-    return err;
-}
-
-static int win_run_sync_unicode (char *cmdline,
-				 const char *currdir,
-				 int console_app)
+static int real_win_run_sync (char *cmdline,
+			      const char *currdir,
+			      int console_app)
 {
     STARTUPINFOW sinfo;
     PROCESS_INFORMATION pinfo;
@@ -392,7 +325,7 @@ static int win_run_sync_unicode (char *cmdline,
     int ok, err = 0;
 
 #if CPDEBUG
-    fprintf(stderr, "\nwin_run_sync_unicode\n");
+    fprintf(stderr, "\nreal_win_run_sync\n");
     fprintf(stderr, " cmdline = '%s'\n", cmdline);
 #endif
 
@@ -453,7 +386,7 @@ static int win_run_sync_unicode (char *cmdline,
     g_free(cd16);
 
 #if CPDEBUG
-    fprintf(stderr, "win_run_sync_unicode: return err = %d\n", err);
+    fprintf(stderr, "real_win_run_sync: return err = %d\n", err);
 #endif
 
     return err;
@@ -474,7 +407,7 @@ static int win_run_sync_unicode (char *cmdline,
 
 int win_run_sync (char *cmdline, const char *currdir)
 {
-    return win_run_sync_unicode(cmdline, currdir, 1);
+    return real_win_run_sync(cmdline, currdir, 1);
 }
 
 /**
@@ -490,7 +423,7 @@ int win_run_sync (char *cmdline, const char *currdir)
 
 int gretl_spawn (char *cmdline)
 {
-    return win_run_sync_unicode(cmdline, NULL, 0);
+    return real_win_run_sync(cmdline, NULL, 0);
 }
 
 /* Retrieve various special paths from the bowels of MS
@@ -552,15 +485,20 @@ char *program_files_x86_path (void)
 
 static gchar *compose_command_line (const char *arg)
 {
-    CHAR cmddir[MAX_PATH];
+    gunichar2 wpath[MAX_PATH];
     char *cmdline = NULL;
+    gchar *u8path;
 
-    GetSystemDirectory(cmddir, sizeof cmddir);
+    GetSystemDirectoryW(wpath, sizeof wpath);
+    u8path = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
 
-    if (getenv("SHELLDEBUG")) {
-	cmdline = g_strdup_printf("%s\\cmd.exe /k %s", cmddir, arg);
-    } else {
-	cmdline = g_strdup_printf("%s\\cmd.exe /s /c \"%s\"", cmddir, arg);
+    if (u8path != NULL) {
+	if (getenv("SHELLDEBUG")) {
+	    cmdline = g_strdup_printf("%s\\cmd.exe /k %s", u8path, arg);
+	} else {
+	    cmdline = g_strdup_printf("%s\\cmd.exe /s /c \"%s\"", u8path, arg);
+	}
+	g_free(u8path);
     }
 
     return cmdline;
@@ -624,6 +562,17 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return err;
 }
 
+static gchar *trimmed_path (const char *path)
+{
+    gchar *tp = g_strdup(path);
+    int n = strlen(tp);
+
+    if (tp[n-1] == '\\') {
+	tp[n-1] = '\0';
+    }
+    return tp;
+}
+
 /* Option: OPT_S for shell mode, as opposed to running an
    executable directly.
 */
@@ -634,23 +583,17 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		     gretlopt opt)
 {
     PROCESS_INFORMATION pinfo;
-    STARTUPINFO sinfo;
+    STARTUPINFOW sinfo;
     gchar *cmdline = NULL;
     gchar *targdir = NULL;
-    gchar *ls1 = NULL;
-    gchar *ls2 = NULL;
+    gunichar2 *cl16 = NULL;
+    gunichar2 *cd16 = NULL;
     int ok, err = 0;
 
 #if CPDEBUG
     fprintf(stderr, "\nrun_child_with_pipe\n");
     fprintf(stderr, " arg = '%s'\n", arg);
 #endif
-
-    /* Required for CreateProcess */
-    err = ensure_locale_encoding(&arg, &ls1, &currdir, &ls2);
-    if (err) {
-	return err;
-    }
 
     if (opt & OPT_S) {
 	/* shell mode */
@@ -660,19 +603,18 @@ run_child_with_pipe (const char *arg, const char *currdir,
     }
 
     if (currdir != NULL) {
-	int n;
+	targdir = trimmed_path(currdir);
+    }
 
-	targdir = g_strdup(currdir);
-	n = strlen(targdir);
-	if (targdir[n-1] == '\\') {
-	    targdir[n-1] = '\0';
-	}
+    err = ensure_utf16(cmdline, &cl16, targdir, &cd16);
+    if (err) {
+	return err;
     }
 
     ZeroMemory(&pinfo, sizeof pinfo);
     ZeroMemory(&sinfo, sizeof sinfo);
-
     sinfo.cb = sizeof sinfo;
+
 #if 0 /* Too Much Information? */
     sinfo.hStdError = hwrite;
 #endif
@@ -681,16 +623,16 @@ run_child_with_pipe (const char *arg, const char *currdir,
     sinfo.dwFlags |= (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW);
     sinfo.wShowWindow = SW_SHOWMINIMIZED;
 
-    ok = CreateProcess(NULL,
-		       cmdline,
-		       NULL,          /* process security attributes */
-		       NULL,          /* primary thread security attributes */
-		       TRUE,          /* handles are inherited */
-		       CREATE_NO_WINDOW,
-		       NULL,          /* use parent's environment */
-		       targdir,
-		       &sinfo,
-		       &pinfo);
+    ok = CreateProcessW(NULL,
+			cl16,
+			NULL,          /* process security attributes */
+			NULL,          /* primary thread security attributes */
+			TRUE,          /* handles are inherited */
+			CREATE_NO_WINDOW,
+			NULL,          /* use parent's environment */
+			cd16,
+			&sinfo,
+			&pinfo);
 
 #if CPDEBUG
     fprintf(stderr, " CreateProcess: ok = %d\n", ok);
@@ -708,8 +650,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
 
     g_free(cmdline);
     g_free(targdir);
-    g_free(ls1);
-    g_free(ls2);
+    g_free(cl16);
+    g_free(cd16);
 
 #if CPDEBUG
     fprintf(stderr, "run_child_with_pipe: returning %d\n", err);
@@ -763,17 +705,21 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 
 static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 {
-    STARTUPINFO sinfo;
+    STARTUPINFOW sinfo;
     PROCESS_INFORMATION pinfo;
-    const char *currdir;
     gchar *cmdline = NULL;
-    gchar *ls1 = NULL;
-    gchar *ls2 = NULL;
+    gchar *currdir = NULL;
+    gunichar2 *cl16 = NULL;
+    gunichar2 *cd16 = NULL;
     int ok, err = 0;
 
-    currdir = gretl_workdir();
-    err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
+    cmdline = compose_command_line(cmd);
+    currdir = trimmed_path(gretl_workdir());
+
+    err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
     if (err) {
+	g_free(cmdline);
+	g_free(currdir);
 	return err;
     }
 
@@ -784,24 +730,21 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
     sinfo.dwFlags = STARTF_USESHOWWINDOW;
     sinfo.wShowWindow = SW_SHOWMINIMIZED;
 
-    /* includes getting path to cmd.exe */
-    cmdline = compose_command_line(cmd);
-
 #if CPDEBUG
     fprintf(stderr, "\nrun_shell_cmd_wait: cmd='%s'\n", cmd);
     fprintf(stderr, "  cmdline='%s'\n", cmdline);
 #endif
 
-    ok = CreateProcess(NULL,
-		       cmdline,
-		       NULL,
-		       NULL,
-		       FALSE,
-		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-		       NULL,
-		       currdir,
-		       &sinfo,
-		       &pinfo);
+    ok = CreateProcessW(NULL,
+			cl16,
+			NULL,
+			NULL,
+			FALSE,
+			CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+			NULL,
+			cd16,
+			&sinfo,
+			&pinfo);
 
     fprintf(stderr, "CreateProcess: ok = %d\n", ok);
 
@@ -815,53 +758,55 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
     }
 
     g_free(cmdline);
-    g_free(ls1);
-    g_free(ls2);
+    g_free(currdir);
+    g_free(cl16);
+    g_free(cd16);
 
     return err;
 }
 
-static int run_shell_cmd_async (const char *cmd)
+int win_run_async (const char *cmd, const char *currdir)
 {
-    STARTUPINFO sinfo;
+    STARTUPINFOW sinfo;
     PROCESS_INFORMATION pinfo;
-    const char *currdir;
-    gchar *cmdcpy;
-    gchar *ls1 = NULL;
-    gchar *ls2 = NULL;
+    gchar *targdir = NULL;
+    gunichar2 *cl16 = NULL;
+    gunichar2 *cd16 = NULL;
     int ok, err = 0;
 
 #if CPDEBUG
-    fprintf(stderr, "\nrun_shell_cmd_async\n");
+    fprintf(stderr, "\nwin_run_async\n");
     fprintf(stderr, " cmd = '%s'\n");
 #endif
 
-    currdir = gretl_workdir();
-    err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
+    if (currdir != NULL) {
+	targdir = trimmed_path(currdir);
+    }
+
+    err = ensure_utf16(cmd, &cl16, targdir, &cd16);
     if (err) {
+	g_free(targdir);
 	return err;
     }
 
     ZeroMemory(&sinfo, sizeof sinfo);
     ZeroMemory(&pinfo, sizeof pinfo);
-
     sinfo.cb = sizeof sinfo;
 
-    cmdcpy = g_strdup(cmd); /* not supposed to be const */
-    ok = CreateProcess(NULL,
-		       cmdcpy,
-		       NULL,
-		       NULL,
-		       FALSE,
-		       0,
-		       NULL,
-		       currdir,
-		       &sinfo,
-		       &pinfo);
+    ok = CreateProcessW(NULL,
+			cl16,
+			NULL,
+			NULL,
+			FALSE,
+			0,
+			NULL,
+			cd16,
+			&sinfo,
+			&pinfo);
 
-    g_free(cmdcpy);
-    g_free(ls1);
-    g_free(ls2);
+    g_free(targdir);
+    g_free(cl16);
+    g_free(cd16);
 
     if (!ok) {
 	win_copy_last_error();
@@ -872,7 +817,7 @@ static int run_shell_cmd_async (const char *cmd)
     }
 
 #if CPDEBUG
-    fprintf(stderr, "run_shell_cmd_async: returning %d\n", err);
+    fprintf(stderr, "win_run_async: returning %d\n", err);
 #endif
 
     return err;
@@ -915,7 +860,7 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     arg += strspn(arg, " \t");
 
     if (opt & OPT_A) {
-	err = run_shell_cmd_async(arg);
+	err = win_run_async(arg, gretl_workdir());
     } else if (getenv("GRETL_SHELL_NEW")) {
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
     } else {
