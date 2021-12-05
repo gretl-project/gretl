@@ -569,7 +569,6 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 		}
 	    }
 	    if (!ok || dwread == 0) {
-		fputs("break out of ReadFile loop\n", stderr);
 		break;
 	    }
 #if CPDEBUG
@@ -690,8 +689,6 @@ static int run_child_with_pipe (const char *cmdline,
 
     return err;
 }
-
-/* */
 
 static int run_cmd_with_pipes (const char *cmdline,
 			       const char *currdir,
