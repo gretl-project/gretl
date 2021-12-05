@@ -6523,7 +6523,7 @@
 	  support all elements of JsonPath. Moreover, the exact
 	  functionality of <lit>json-glib</lit> may differ depending
 	  on the version you have on your system. See
-	  <url>http://developer.gnome.org/json-glib/</url> if you
+	  <url>https://wiki.gnome.org/Projects/JsonGlib</url> if you
 	  need details.
 	</para>
 	<para>
