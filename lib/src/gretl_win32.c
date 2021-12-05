@@ -312,7 +312,7 @@ static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
     return err;
 }
 
-static int real_win_run_sync (char *cmdline,
+static int real_win_run_sync (const char *cmdline,
 			      const char *currdir,
 			      int console_app)
 {
@@ -405,7 +405,7 @@ static int real_win_run_sync (char *cmdline,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int win_run_sync (char *cmdline, const char *currdir)
+int win_run_sync (const char *cmdline, const char *currdir)
 {
     return real_win_run_sync(cmdline, currdir, 1);
 }
@@ -421,7 +421,7 @@ int win_run_sync (char *cmdline, const char *currdir)
  * Returns: 0 on success, non-zero on failure.
  */
 
-int gretl_spawn (char *cmdline)
+int gretl_spawn (const char *cmdline)
 {
     return real_win_run_sync(cmdline, NULL, 0);
 }

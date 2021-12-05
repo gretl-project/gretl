@@ -52,11 +52,11 @@ void win_show_last_error (void);
 
 void win_print_last_error (void);
 
-int win_run_sync (char *cmdline, const char *currdir);
+int win_run_sync (const char *cmdline, const char *currdir);
 
-int win_run_async (char *cmdline, const char *currdir);
+int win_run_async (const char *cmdline, const char *currdir);
 
-int gretl_spawn (char *cmdline);
+int gretl_spawn (const char *cmdline);
 
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn);
 
