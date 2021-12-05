@@ -28,7 +28,8 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define CPDEBUG 1
+#define CPDEBUG 0
+#define SHELL_USE_PIPE 1
 
 static int windebug;
 static FILE *fdb;
@@ -282,6 +283,11 @@ void win_copy_last_error (void)
     g_free(buf);
 }
 
+/* Recode @s1 and/or @s2 (if non-NULL) from UTF-8 to UTF-16.
+   Typically @s1 will be a command-line and @s2 a working
+   directory.
+*/
+
 static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
 			 const char *s2, gunichar2 **s2u16)
 {
@@ -311,6 +317,35 @@ static int ensure_utf16 (const char *s1, gunichar2 **s1u16,
 
     return err;
 }
+
+static int assess_exit_status (PROCESS_INFORMATION *pinfo,
+			       const char *caller,
+			       const char *cmdline)
+{
+    DWORD exitcode;
+    int err = 0;
+
+    if (GetExitCodeProcess(pinfo->hProcess, &exitcode)) {
+	/* the call "succeeded" */
+	if (exitcode != 0) {
+	    fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
+	    gretl_errmsg_sprintf("%s: exit code %u", cmdline,
+				 exitcode);
+	    err = 1;
+	}
+    } else {
+	fprintf(stderr, "%s: no exit code:\n%s\n", caller, cmdline);
+	win_copy_last_error();
+	err = 1;
+    }
+
+    return err;
+}
+
+/* Run @cmdline synchronously. Note that there's no
+   facility to retrieve stdout or stderr via this
+   function.
+*/
 
 static int real_win_run_sync (const char *cmdline,
 			      const char *currdir,
@@ -346,7 +381,6 @@ static int real_win_run_sync (const char *cmdline,
 	flags = HIGH_PRIORITY_CLASS;
     }
 
-    /* zero return means failure */
     ok = CreateProcessW(NULL,
 			cl16,
 			NULL,
@@ -364,19 +398,7 @@ static int real_win_run_sync (const char *cmdline,
 	err = 1;
     } else {
 	WaitForSingleObject(pinfo.hProcess, INFINITE);
-	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
-	    /* the call "succeeded" */
-	    if (exitcode != 0) {
-		fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
-		gretl_errmsg_sprintf("%s: exit code %u", cmdline,
-				     exitcode);
-		err = 1;
-	    }
-	} else {
-	    fprintf(stderr, "win_run_sync: no exit code:\n%s\n", cmdline);
-	    win_copy_last_error();
-	    err = 1;
-	}
+	err = assess_exit_status(&pinfo, "win_run_sync", cmdline);
     }
 
     CloseHandle(pinfo.hProcess);
@@ -489,10 +511,15 @@ static gchar *compose_command_line (const char *arg)
     char *cmdline = NULL;
     gchar *u8path;
 
+    /* get the Windows system directory as UTF-16 and
+       recode it to UTF-8 in @u8path, so we can supply
+       the full path to cmd.exe
+    */
     GetSystemDirectoryW(wpath, sizeof wpath);
     u8path = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
 
     if (u8path != NULL) {
+	/* form @cmdline by prepending to @arg a call to cmd.exe */
 	if (getenv("SHELLDEBUG")) {
 	    cmdline = g_strdup_printf("%s\\cmd.exe /k %s", u8path, arg);
 	} else {
@@ -562,6 +589,9 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return err;
 }
 
+/* return a copy of @path from which a trailing backslash
+   has been stripped, if present */
+
 static gchar *trimmed_path (const char *path)
 {
     gchar *tp = g_strdup(path);
@@ -573,18 +603,18 @@ static gchar *trimmed_path (const char *path)
     return tp;
 }
 
-/* Option: OPT_S for shell mode, as opposed to running an
+/* @opt: OPT_S for shell mode, as opposed to running an
    executable directly.
 */
 
-static int
-run_child_with_pipe (const char *arg, const char *currdir,
-		     HANDLE hwrite, HANDLE hread,
-		     gretlopt opt)
+static int run_child_with_pipe (const char *cmdline,
+				const char *currdir,
+				HANDLE hwrite, HANDLE hread,
+				gretlopt opt)
 {
     PROCESS_INFORMATION pinfo;
     STARTUPINFOW sinfo;
-    gchar *cmdline = NULL;
+    gchar *fullcmd = NULL;
     gchar *targdir = NULL;
     gunichar2 *cl16 = NULL;
     gunichar2 *cd16 = NULL;
@@ -592,21 +622,21 @@ run_child_with_pipe (const char *arg, const char *currdir,
 
 #if CPDEBUG
     fprintf(stderr, "\nrun_child_with_pipe\n");
-    fprintf(stderr, " arg = '%s'\n", arg);
+    fprintf(stderr, " cmdline = '%s'\n", arg);
 #endif
 
     if (opt & OPT_S) {
 	/* shell mode */
-	cmdline = compose_command_line(arg);
+	fullcmd = compose_command_line(cmdline);
     } else {
-	cmdline = g_strdup(arg);
+	fullcmd = g_strdup(cmdline);
     }
 
     if (currdir != NULL) {
 	targdir = trimmed_path(currdir);
     }
 
-    err = ensure_utf16(cmdline, &cl16, targdir, &cd16);
+    err = ensure_utf16(fullcmd, &cl16, targdir, &cd16);
     if (err) {
 	return err;
     }
@@ -642,13 +672,14 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	err = E_EXTERNAL;
 	win_copy_last_error();
     } else {
-	/* is this right? */
 	WaitForSingleObject(pinfo.hProcess, INFINITE);
-	CloseHandle(pinfo.hProcess);
-	CloseHandle(pinfo.hThread);
+	err = assess_exit_status(&pinfo, "run_child_with_pipe", fullcmd);
     }
 
-    g_free(cmdline);
+    CloseHandle(pinfo.hProcess);
+    CloseHandle(pinfo.hThread);
+
+    g_free(fullcmd);
     g_free(targdir);
     g_free(cl16);
     g_free(cd16);
@@ -660,8 +691,12 @@ run_child_with_pipe (const char *arg, const char *currdir,
     return err;
 }
 
-static int run_cmd_with_pipes (const char *arg, const char *currdir,
-			       char **sout, PRN *prn, gretlopt opt)
+/* */
+
+static int run_cmd_with_pipes (const char *cmdline,
+			       const char *currdir,
+			       char **sout, PRN *prn,
+			       gretlopt opt)
 {
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sattr;
@@ -669,7 +704,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 
 #if CPDEBUG
     fprintf(stderr, "\nrun_cmd_with_pipes\n");
-    fprintf(stderr, " arg = '%s'\n");
+    fprintf(stderr, " cmdline = '%s'\n", cmdline);
 #endif
 
     /* set the bInheritHandle flag so pipe handles are inherited */
@@ -687,7 +722,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	/* ensure that the read handle to the child process's pipe for
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	err = run_child_with_pipe(arg, currdir, hwrite, hread, opt);
+	err = run_child_with_pipe(cmdline, currdir, hwrite, hread, opt);
 	if (!err) {
 	    /* read from child's output pipe on termination */
 	    err = read_from_pipe(hwrite, hread, sout, prn);
@@ -701,7 +736,9 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
     return err;
 }
 
-/* used only by gretl_shell() below */
+#if !SHELL_USE_PIPE
+
+/* used only by gretl_shell() below, if not using pipes */
 
 static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 {
@@ -753,9 +790,11 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 	err = 1;
     } else {
 	WaitForSingleObject(pinfo.hProcess, INFINITE);
-	CloseHandle(pinfo.hProcess);
-	CloseHandle(pinfo.hThread);
+	err = assess_exit_status(&pinfo, "run_shell_cmd_wait", cmdline);
     }
+
+    CloseHandle(pinfo.hProcess);
+    CloseHandle(pinfo.hThread);
 
     g_free(cmdline);
     g_free(currdir);
@@ -765,7 +804,9 @@ static int run_shell_cmd_wait (const char *cmd, PRN *prn)
     return err;
 }
 
-int win_run_async (const char *cmd, const char *currdir)
+#endif /* !SHELL_USE_PIPE */
+
+int win_run_async (const char *cmdline, const char *currdir)
 {
     STARTUPINFOW sinfo;
     PROCESS_INFORMATION pinfo;
@@ -776,14 +817,14 @@ int win_run_async (const char *cmd, const char *currdir)
 
 #if CPDEBUG
     fprintf(stderr, "\nwin_run_async\n");
-    fprintf(stderr, " cmd = '%s'\n");
+    fprintf(stderr, " cmdline = '%s'\n", cmdline);
 #endif
 
     if (currdir != NULL) {
 	targdir = trimmed_path(currdir);
     }
 
-    err = ensure_utf16(cmd, &cl16, targdir, &cd16);
+    err = ensure_utf16(cmdline, &cl16, targdir, &cd16);
     if (err) {
 	g_free(targdir);
 	return err;
@@ -861,10 +902,12 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 
     if (opt & OPT_A) {
 	err = win_run_async(arg, gretl_workdir());
-    } else if (1 || getenv("GRETL_SHELL_NEW")) {
-	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
     } else {
+#if SHELL_USE_PIPE
+	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
+#else
 	err = run_shell_cmd_wait(arg, prn);
+#endif
     }
 
     return err;
