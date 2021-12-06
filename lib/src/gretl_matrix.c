@@ -13439,12 +13439,16 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		    }
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
-		    xx += gretl_matrix_get(C, i, j);
+		    xij = gretl_matrix_get(C, i, j) + xx;
 		} else if (cmod == GRETL_MOD_DECREMENT) {
-		    xx = gretl_matrix_get(C, i, j) - xx;
+		    xij = gretl_matrix_get(C, i, j) - xx;
+		} else {
+		    xij = xx;
 		}
-		gretl_matrix_set(C, i, j, xx);
-		gretl_matrix_set(C, j, i, xx);
+		gretl_matrix_set(C, i, j, xij);
+		if (i != j) {
+		    gretl_matrix_set(C, j, i, xij);
+		}
 	    }
 	}
     } else {
@@ -13462,12 +13466,16 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		    }
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
-		    xx += gretl_matrix_get(C, i, j);
+		    xij = gretl_matrix_get(C, i, j) + xx;
 		} else if (cmod == GRETL_MOD_DECREMENT) {
-		    xx = gretl_matrix_get(C, i, j) - xx;
+		    xij = gretl_matrix_get(C, i, j) - xx;
+		} else {
+		    xij = xx;
 		}
-		gretl_matrix_set(C, i, j, xx);
-		gretl_matrix_set(C, j, i, xx);
+		gretl_matrix_set(C, i, j, xij);
+		if (i != j) {
+		    gretl_matrix_set(C, j, i, xij);
+		}
 	    }
 	}
     }
