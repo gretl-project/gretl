@@ -851,6 +851,7 @@ int nlspec_add_weights (nlspec *s, const char *str)
     if (s->oc->W == NULL) {
 	return gmm_unkvar(s->oc->Wname);
     }
+    s->oc->userwts = 1;
 
     k = s->oc->noc;
 
