@@ -2384,8 +2384,9 @@ static void find_and_set_rc_var (const char *key, const char *val)
 		if (rcvar->flags & BOOLSET) {
 		    str_to_boolvar(val, rcvar->var);
 		    if (!strcmp(key, "collect_plots")) {
-			/* special: set to "auto" */
-			libset_set_int(PLOT_COLLECT, 1);
+			/* special: set to "off" or "auto" */
+			int *bvar = (int *) rcvar->var;
+			libset_set_int(PLOT_COLLECT, *bvar);
 		    }
 		} else if (rcvar->flags & INTSET) {
 		    str_to_int(val, rcvar->var);
