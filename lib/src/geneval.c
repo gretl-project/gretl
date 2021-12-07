@@ -18805,7 +18805,7 @@ static int matrix_may_be_masked (const gretl_matrix *m, int n,
 /* check whether a matrix result can be assigned to a series
    on return */
 
-static int series_compatible (const gretl_matrix *m, parser *p)
+static int series_compatible_matrix (const gretl_matrix *m, parser *p)
 {
     int n = gretl_vector_get_length(m);
     int mt2 = gretl_matrix_get_t2(m);
@@ -18830,6 +18830,23 @@ static int series_compatible (const gretl_matrix *m, parser *p)
     } else if (n == 1) {
         /* scalar: can be expanded */
         ok = 1;
+    }
+
+    return ok;
+}
+
+static int series_compatible_array (const gretl_array *a, parser *p)
+{
+    int ok = 0;
+
+    if (gretl_array_get_type((gretl_array *) a) == GRETL_TYPE_STRINGS) {
+	int n = gretl_array_get_length((gretl_array *) a);
+	int T = sample_size(p->dset);
+
+	if (n == T || n == p->dset->n) {
+	    /* length matches current sample or full series length */
+	    ok = 1;
+	}
     }
 
     return ok;
@@ -19363,11 +19380,17 @@ static int gen_check_return_type (parser *p)
             err = E_TYPES;
         }
     } else if (p->targ == SERIES) {
-        /* result must be scalar, series, or conformable matrix */
+        /* result must be scalar, series, or conformable matrix
+	   or array of strings
+	*/
         if (r->t == NUM || r->t == SERIES) {
             ; /* OK */
         } else if (r->t == MAT) {
-            if (!series_compatible(r->v.m, p)) {
+            if (!series_compatible_matrix(r->v.m, p)) {
+                err = E_TYPES;
+            }
+	} else if (r->t == ARRAY) {
+            if (p->op != B_ASN || !series_compatible_array(r->v.a, p)) {
                 err = E_TYPES;
             }
         } else {
@@ -19677,6 +19700,103 @@ static int set_nested_matrix_value (NODE *lhs,
     return err;
 }
 
+/* Support direct assignment from an array of strings to a series
+   (which will be string-valued, of course). The source array must
+   hold a number of strings equal to either the length of the
+   dataset or the size of the current sample.
+*/
+
+static int series_from_strings (DATASET *dset, int v, gretl_array *a)
+{
+    int ns = 0;
+    char **S = gretl_array_get_strings(a, &ns);
+    char **uS = NULL;
+    int T = sample_size(dset);
+    int *idx = calloc(T, sizeof *idx);
+    double *y = dset->Z[v];
+    int i, j, t, skip, m;
+    int err = 0;
+
+    i = (ns == T)? 0 : dset->t1;
+    m = 0;
+
+    /* put the indices of the unique strings into @idx,
+       and assign values to the series @y as we go
+    */
+    for (t=dset->t1; t<=dset->t2; t++,i++) {
+	skip = 0;
+	for (j=0; j<m; j++) {
+	    if (strcmp(S[i], S[idx[j]]) == 0) {
+		y[t] = idx[j] + 1;
+		skip = 1;
+		break;
+	    }
+	}
+	if (!skip) {
+	    idx[m++] = i;
+	    y[t] = m;
+	}
+    }
+
+    /* create an array of the unique strings */
+    uS = strings_array_new(m);
+    if (uS == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<m && !err; i++) {
+	    uS[i] = gretl_strdup(S[idx[i]]);
+	    if (uS[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+    free(idx);
+
+    if (err) {
+	strings_array_free(uS, m);
+    } else {
+	err = series_set_string_vals_direct(dset, v, uS, m);
+    }
+
+    return err;
+}
+
+static void series_from_matrix (double *y, const gretl_matrix *m,
+				parser *p)
+{
+    int k = gretl_vector_get_length(m);
+    int mt1 = gretl_matrix_get_t1(m);
+    int s, t;
+
+    if (p->flags & P_MMASK) {
+	/* result needs special alignment */
+	align_matrix_to_series(y, m, p);
+    } else if (k == 1) {
+	/* result is effectively a scalar */
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	    y[t] = xy_calc(y[t], m->val[0], p->op, SERIES, p);
+	}
+    } else if (k == p->dset->n) {
+	/* treat result as full-length series */
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	    y[t] = xy_calc(y[t], m->val[t], p->op, SERIES, p);
+	}
+    } else if (k == sample_size(p->dset)) {
+	/* treat as series of current sample length */
+	for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
+	    y[t] = xy_calc(y[t], m->val[s], p->op, SERIES, p);
+	}
+    } else if (mt1 > 0) {
+	/* align using matrix "t1" value */
+	for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
+	    if (t >= p->dset->t1) {
+		y[t] = xy_calc(y[t], m->val[t - mt1], p->op,
+				  SERIES, p);
+	    }
+	}
+    }
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -19899,37 +20019,15 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, SERIES, p);
 	    }
 	} else if (r->t == MAT) {
-	    const gretl_matrix *m = r->v.m;
-	    int k = gretl_vector_get_length(m);
-	    int mt1 = gretl_matrix_get_t1(m);
-	    int s;
-
-	    if (p->flags & P_MMASK) {
-		/* result needs special alignment */
-		align_matrix_to_series(Z[v], m, p);
-	    } else if (k == 1) {
-		/* result is effectively a scalar */
-		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    Z[v][t] = xy_calc(Z[v][t], m->val[0], p->op, SERIES, p);
-		}
-	    } else if (k == p->dset->n) {
-		/* treat result as full-length series */
-		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, SERIES, p);
-		}
-	    } else if (k == sample_size(p->dset)) {
-		/* treat as series of current sample length */
-		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
-		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, SERIES, p);
-		}
-	    } else if (mt1 > 0) {
-		/* align using matrix "t1" value */
-		for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
-		    if (t >= p->dset->t1) {
-			Z[v][t] = xy_calc(Z[v][t], m->val[t - mt1], p->op,
-					  SERIES, p);
-		    }
-		}
+	    series_from_matrix(Z[v], r->v.m, p);
+	} else if (r->t == ARRAY) {
+	    if (p->lh.vnum >= 0 && dataset_is_subsampled(p->dset)) {
+		p->err = E_TYPES;
+	    } else {
+		p->err = series_from_strings(p->dset, v, r->v.a);
+	    }
+	    if (p->err) {
+		return p->err;
 	    }
 	}
 	strcpy(p->dset->varname[v], p->lh.name);
