@@ -1000,7 +1000,7 @@ static int real_dataset_add_observations (DATASET *dset, int n,
 	}
     }
 
-    /* does daily data need special handling? */
+    /* does irregular daily data need special handling? */
     ntolabel(dset->endobs, bign - 1, dset);
 
     return err;
