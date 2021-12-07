@@ -1426,6 +1426,8 @@ static int kalman_iter_2 (kalman *K, int missobs)
 	    fprintf(stderr, "K->PH[1,1] = %.18g\n", K->PH->val[0]);
 	    gretl_matrix_print(K->PH, "K->PH");
 	    gretl_matrix_print(K->Vt, "K->Vt");
+	    fprintf(stderr, "Vt[0] - 0.5 = %.18g\n", K->Vt->val[0] - 0.5);
+	    fprintf(stderr, "Vt[1] + 0.5 = %.18g\n", K->Vt->val[1] + 0.5);
 	    fprintf(stderr, "(err = %d)\n", err);
 	}
     }
