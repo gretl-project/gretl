@@ -13388,7 +13388,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 			GretlMatrixMod cmod)
 {
     register int i, j, ii, jj;
-    double xi, xj, xij, xx;
+    double xi, xj, xij, xx, cij;
     int m, k;
     guint64 N;
 
@@ -13439,15 +13439,15 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		    }
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
-		    xij = gretl_matrix_get(C, i, j) + xx;
+		    cij = gretl_matrix_get(C, i, j) + xx;
 		} else if (cmod == GRETL_MOD_DECREMENT) {
-		    xij = gretl_matrix_get(C, i, j) - xx;
+		    cij = gretl_matrix_get(C, i, j) - xx;
 		} else {
-		    xij = xx;
+		    cij = xx;
 		}
-		gretl_matrix_set(C, i, j, xij);
-		if (i != j) {
-		    gretl_matrix_set(C, j, i, xij);
+		gretl_matrix_set(C, i, j, cij);
+		if (j != i) {
+		    gretl_matrix_set(C, j, i, cij);
 		}
 	    }
 	}
@@ -13466,15 +13466,15 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		    }
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
-		    xij = gretl_matrix_get(C, i, j) + xx;
+		    cij = gretl_matrix_get(C, i, j) + xx;
 		} else if (cmod == GRETL_MOD_DECREMENT) {
-		    xij = gretl_matrix_get(C, i, j) - xx;
+		    cij = gretl_matrix_get(C, i, j) - xx;
 		} else {
-		    xij = xx;
+		    cij = xx;
 		}
-		gretl_matrix_set(C, i, j, xij);
-		if (i != j) {
-		    gretl_matrix_set(C, j, i, xij);
+		gretl_matrix_set(C, i, j, cij);
+		if (j != i) {
+		    gretl_matrix_set(C, j, i, cij);
 		}
 	    }
 	}
