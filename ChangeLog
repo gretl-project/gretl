@@ -17,6 +17,8 @@ version 2021e, in progress
 - Indexing into matrices, arrays, lists and strings: support
   the keyword 'end' to denote the last element; in the case
   of matrices this is specific to row or column
+- Support direct assignment of array of strings to string-
+  valued series, if the array is of appropriate size
 - New function distance(): evaluate the distance between
   points on various metrics such as Euclidean, Manhattan,
   Hamming, Chebyshev, Cosine and Mahalanobis
