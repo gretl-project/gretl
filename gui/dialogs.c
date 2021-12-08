@@ -497,6 +497,11 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
 
 int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 {
+    const char *titles[] = {
+	N_("gretl: data delimiter"),
+	N_("Copy to clipboard")
+    };
+    const char *title;
     GtkWidget *dialog, *vbox, *hbox;
     GtkWidget *tmp, *button;
     GSList *group = NULL;
@@ -516,8 +521,8 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     csvp->decpoint = '.';
     csvp->xobs = get_csv_exclude_obs();
 
-    dialog = gretl_dialog_new(_("gretl: data delimiter"), parent,
-                              GRETL_DLG_BLOCK);
+    title = (ci == COPY_CSV)? titles[1] : titles[0];
+    dialog = gretl_dialog_new(_(title), parent, GRETL_DLG_BLOCK);
 
     g_signal_connect(G_OBJECT(dialog), "destroy",
                      G_CALLBACK(destroy_delim_dialog), csvp);
@@ -610,7 +615,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
         /* On export/copy of series data only: allow choice to exclude
            the observations column, and/or on representation of NAs,
            if applicable.
-         */
+	*/
         int hsep_done = 0;
 
         if (dataset_is_time_series(dataset) || dataset->S != NULL) {

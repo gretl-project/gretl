@@ -1022,6 +1022,9 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* Ctrl-V for paste */
 	mdata_handle_paste();
 	return TRUE;
+    } else if (Ctrl && k == GDK_c) {
+	csv_selected_to_clipboard();
+	return TRUE;	
     } else if (swallow && Ctrl && (k == GDK_Page_Down || k == GDK_Tab)) {
 	gretl_console();
 	return TRUE;
@@ -1061,7 +1064,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* invoke genr */
 	genr_callback();
 	return TRUE;
-    } else if (k == GDK_c) {
+    } else if (k == GDK_c && !Ctrl) {
 	/* launch the console */
 	gretl_console();
 	return TRUE;
