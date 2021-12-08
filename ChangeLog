@@ -24,11 +24,17 @@ version 2021e, in progress
   in the help text (df correction of 1 for std. dev.)
 - errorif() function: get this working within an mpi block,
   in which case it can be used outside of a function
+- Fix gmm bug: crash when a user-supplied weights matrix is
+  wrongly sized
+- Fix bug in "bds" command: failure in case no --corr1 or
+  --sdcrit option is given
 - GUI console: allow Ctrl+D to exit, if not swallowed, and
   add a "Clear" button to clear the prior content of the
   console window
 - GUI VAR/system, Graphs menu: improve appearance of multiple
   residual plots
+- GUI main window: support Ctrl-C to copy selected series to
+  the clipboard
 - Build fixes for FreeBSD, for the non-OPENMP case, and for
   recent macOS
 
