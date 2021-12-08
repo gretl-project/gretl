@@ -937,6 +937,73 @@ static void maybe_extend_lags (DATASET *dset, int t1, int t2)
     }
 }
 
+/* Determine the increment in days from a given day of the week to the
+   "next" day, according to a weekly calendar or a daily one, allowing
+   that a daily calendar may skip Sundays or weekends.
+*/
+
+static int ed_increment (DATASET *dset, int *pwday)
+{
+    int wday = *pwday;
+    int delta = 1;
+
+    if (dset->pd == 52) {
+	/* weekly: next date is 7 days later */
+	delta = 7;
+    } else if (dset->pd == 7) {
+	/* full daily calendar: next date is following day */
+	delta = 1;
+    } else if (dset->pd == 6) {
+	/* daily, Sunday omitted */
+	if (wday == 6) {
+	    delta = 2;
+	    *pwday = 1;
+	} else {
+	    *pwday = wday + 1;
+	}
+    } else if (dset->pd == 5) {
+	/* daily, weekends omitted */
+	if (wday == 5) {
+	    delta = 3;
+	    *pwday = 1;
+	} else {
+	    *pwday = wday + 1;
+	}
+    }
+
+    return delta;
+}
+
+/* Special for daily or weekly data with observation markers in the
+   form of date strings. When adding observations to such a dataset we
+   may attempt to figure what the additional dates should be. However,
+   this is error-prone: a time-series dataset takes the form we're
+   trying to handle here only if it's NOT on a regular calendar
+   (missing observations are skipped as if their dates didn't exist).
+*/
+
+static int extend_date_markers (DATASET *dset, int t1, int T)
+{
+    const char *s = dset->S[t1-1];
+    guint32 ed = get_epoch_day(s);
+    int err = 0;
+
+    if (ed == 0) {
+	err = 1;
+    } else {
+	int t, wday = weekday_from_epoch_day(ed);
+	int y, m, d;
+
+	for (t=t1; t<T; t++) {
+	    ed += ed_increment(dset, &wday);
+	    ymd_bits_from_epoch_day(ed, &y, &m, &d);
+	    sprintf(dset->S[t], "%04d-%02d-%02d", y, m, d);
+	}
+    }
+
+    return err;
+}
+
 /* regular, not panel-time, version */
 
 static int real_dataset_add_observations (DATASET *dset, int n,
@@ -977,11 +1044,18 @@ static int real_dataset_add_observations (DATASET *dset, int n,
 	if (opt & OPT_D) {
 	    dataset_destroy_obs_markers(dset);
 	} else {
+	    int plain_obs = 1;
+
 	    if (reallocate_markers(dset, bign)) {
 		return E_ALLOC;
 	    }
-	    for (t=oldn; t<bign; t++) {
-		sprintf(dset->S[t], "%d", t + 1);
+	    if (calendar_data(dset)) {
+		plain_obs = extend_date_markers(dset, oldn, bign);
+	    }
+	    if (plain_obs) {
+		for (t=oldn; t<bign; t++) {
+		    sprintf(dset->S[t], "%d", t + 1);
+		}
 	    }
 	}
     }
