@@ -3071,7 +3071,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
     if (rtf) {
 	pputs(prn, "}\n");
-    } else {
+    } else if (!csv) {
 	pputc(prn, '\n');
     }
 
