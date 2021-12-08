@@ -2500,9 +2500,9 @@ static void data_structure_wizard (int create)
 void data_structure_dialog (void)
 {
     if (dataset != NULL && dataset->markers == DAILY_DATE_STRINGS) {
-	const char *s = N_("The current dataset appears to be an irregular time series.\n"
-			   "Attempting to modify its structure may break the existing\n"
-			   "metadata. Do you want to continue?");
+	const char *s = N_("The current dataset appears to hold irregular time series.\n"
+			   "Modifying its structure may break the existing existing "
+			   "metadata.\n\nDo you want to continue?");
 	int resp = no_yes_dialog(NULL, _(s));
 
 	if (resp == GRETL_NO) {
