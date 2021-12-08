@@ -1404,31 +1404,21 @@ static int kalman_iter_2 (kalman *K, int missobs)
 
     if (K->p == 0 && !missobs) {
 	/* revise "P0" as P_{t|t} = P - PH(H'PH + R)^{-1}H'P */
-	double qf = NADBL, p0 = K->P0->val[0];
-#if 1 /* try different code paths */
-	if (K->P0->rows == 1 && K->P0->cols == 1) {
-	    qf = gretl_scalar_qform(K->PH, K->Vt, &err);
-	    K->P0->val[0] -= qf;
-	} else {
-	    gretl_matrix *tmp = gretl_matrix_alloc(K->PH->rows, K->PH->rows);
-	    err = gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt, tmp, GRETL_MOD_NONE);
-	    gretl_matrix_subtract_from(K->P0, tmp);
-	    gretl_matrix_free(tmp);
-	}
-#else
+	double p0 = K->P0->val[0];
+
 	err = gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt,
 				 K->P0, GRETL_MOD_DECREMENT);
-#endif
 	if (K->P0->val[0] < 0) {
 	    fprintf(stderr, "P0 in kalman_iter_2, after qform: %.18g\n", K->P0->val[0]);
-	    fprintf(stderr, "(before, was %.18g)\n", p0);
-	    if (!na(qf)) fprintf(stderr, "(qf = %.18g)\n", qf);
-	    fprintf(stderr, "K->PH[1,1] = %.18g\n", K->PH->val[0]);
-	    gretl_matrix_print(K->PH, "K->PH");
-	    gretl_matrix_print(K->Vt, "K->Vt");
-	    fprintf(stderr, "Vt[1,1] = %+.18g\n", K->Vt->val[0]);
-	    fprintf(stderr, "Vt[2,1] = %.18g\n", K->Vt->val[1]);
-	    fprintf(stderr, "Vt[1,1] + Vt[2,1] = %.18g\n", K->Vt->val[0] + K->Vt->val[1]);
+	    fprintf(stderr, "before, was  %+.20g\n", p0);
+	    fprintf(stderr, "K->PH[1,1] = %+.20g\n", K->PH->val[0]);
+	    fprintf(stderr, "K->PH[1,2] = %+.20g\n", K->PH->val[1]);
+	    fprintf(stderr, "Vt[1,1] = %+.20g\n", K->Vt->val[0]);
+	    fprintf(stderr, "Vt[2,1] = %+.20g\n", K->Vt->val[1]);
+	    fprintf(stderr, "Vt[1,2] = %+.20g\n", K->Vt->val[2]);
+	    fprintf(stderr, "Vt[2,2] = %+.20g\n", K->Vt->val[3]);
+	    fprintf(stderr, "Vt[1,1] + Vt[2,1] = %.20g\n", K->Vt->val[0] + K->Vt->val[1]);
+	    fprintf(stderr, "Vt[1,2] + Vt[2,2] = %.20g\n", K->Vt->val[2] + K->Vt->val[3]);
 	    fprintf(stderr, "(err = %d)\n", err);
 	}
     }
