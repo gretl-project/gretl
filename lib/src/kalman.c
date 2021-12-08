@@ -1408,7 +1408,7 @@ static int kalman_iter_2 (kalman *K, int missobs)
 
 	err = gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->Vt,
 				 K->P0, GRETL_MOD_DECREMENT);
-	if (K->P0->val[0] < 0) {
+	if (K->P0->val[0] < 0 && K->n == 2) {
 	    fprintf(stderr, "P0 in kalman_iter_2, after qform: %.18g\n", K->P0->val[0]);
 	    fprintf(stderr, "before, was  %+.20g\n", p0);
 	    fprintf(stderr, "K->PH[1,1] = %+.20g\n", K->PH->val[0]);
