@@ -1727,7 +1727,12 @@ static void make_main_window (void)
 #endif
 
     if (winsize && main_x >= 0 && main_y >= 0) {
-	fprintf(stderr, "HERE main_x %d, main_y %d\n", main_x, main_y);
+#ifdef GRETL_OPEN_HANDLER
+	if (optnew) {
+	    main_x += 40;
+	    main_y += 30;
+	}
+#endif
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
 
