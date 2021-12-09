@@ -50,6 +50,10 @@ int install_open_handler (void);
 
 gboolean forward_open_request (long gpid, const char *fname);
 
+void record_gretl_binary_path (const char *argv0);
+
+gchar *get_gretl_binary_path (void);
+
 #endif
 
 #endif /* GRETL_IPC_H */

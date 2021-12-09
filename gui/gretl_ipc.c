@@ -416,6 +416,18 @@ void delete_pid_from_file (void)
 
 #ifdef GRETL_OPEN_HANDLER
 
+static gchar *gretlbin;
+
+void record_gretl_binary_path (const char *argv0)
+{
+    gretlbin = g_canonicalize_filename(argv0, NULL);
+}
+
+gchar *get_gretl_binary_path (void)
+{
+    return gretlbin;
+}
+
 # ifdef WIN32
 /* message number for inter-program communication */
 static UINT WM_GRETL;

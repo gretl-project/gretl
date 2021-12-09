@@ -597,6 +597,17 @@ static void gui_show_activity (void)
 
 #ifdef GRETL_OPEN_HANDLER
 
+static void new_instance_callback (GtkAction *action, gpointer p)
+{
+    gchar *binpath = get_gretl_binary_path();
+
+#ifdef G_OS_WIN32
+    win32_run_async(binpath, "-n");
+#else
+    gretl_fork(binpath, "-n", NULL);
+#endif
+}
+
 static gchar *absolutize_path (const char *fname)
 {
     gchar *ret;
@@ -919,6 +930,7 @@ int main (int argc, char **argv)
 
 #ifdef GRETL_OPEN_HANDLER
     install_open_handler();
+    record_gretl_binary_path(argv[0]);
 #endif
 
 #if GUI_DEBUG
@@ -1024,7 +1036,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     } else if (Ctrl && k == GDK_c) {
 	selected_series_to_clipboard();
-	return TRUE;	
+	return TRUE;
     } else if (swallow && Ctrl && (k == GDK_Page_Down || k == GDK_Tab)) {
 	gretl_console();
 	return TRUE;
@@ -1631,10 +1643,6 @@ static void make_main_window (void)
 	exit(EXIT_FAILURE);
     }
 
-#if GUI_DEBUG
-    fprintf(stderr, " got past make_main_menu()\n");
-#endif
-
     /* put the main menu bar in place */
     if (swallow) {
 	box = g_object_get_data(G_OBJECT(mdata->main), "topbox");
@@ -1672,10 +1680,6 @@ static void make_main_window (void)
     g_signal_connect(ebox, "enter-notify-event",
 		     G_CALLBACK(show_link_cursor), NULL);
 
-#if GUI_DEBUG
-    fprintf(stderr, " adding main-window listbox...\n");
-#endif
-
     vwin_add_list_box(mdata, GTK_BOX(box), 3, 0, types, titles, 1);
 
     gtk_drag_dest_set(mdata->listbox,
@@ -1693,32 +1697,16 @@ static void make_main_window (void)
     mdata->status = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(mdata->vbox), mdata->status, FALSE, TRUE, 0);
 
-#if GUI_DEBUG
-    fprintf(stderr, " finalizing main window...\n");
-#endif
-
     /* put stuff into list box, activate menus */
     if (have_data()) {
 	populate_varlist();
     }
 
-#if GUI_DEBUG
-    fprintf(stderr, "  step 1 done\n");
-#endif
-
     /* set a proportional font for menus, etc. */
     set_app_font(NULL, 1);
 
-#if GUI_DEBUG
-    fprintf(stderr, "  set_app_font done\n");
-#endif
-
     vwin_add_winlist(mdata);
     add_mainwin_toolbar(mdata->vbox);
-
-#if GUI_DEBUG
-    fprintf(stderr, "  add_mainwin_toolbar done\n");
-#endif
 
     if (swallow) {
 	gretl_show_console();
@@ -1732,21 +1720,14 @@ static void make_main_window (void)
     }
 #endif
 
-#if GUI_DEBUG
-    fprintf(stderr, "  gtk_widget_show_all done\n");
-#endif
-
     if (winsize && main_x >= 0 && main_y >= 0) {
+	fprintf(stderr, "HERE main_x %d, main_y %d\n", main_x, main_y);
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
 
     if (wlabel != NULL) {
 	set_workdir_label();
     }
-
-#if GUI_DEBUG
-    fprintf(stderr, "  possible window_move done\n");
-#endif
 }
 
 #ifdef OS_OSX
@@ -1770,7 +1751,9 @@ GtkActionEntry main_entries[] = {
     { "MailData", GRETL_STOCK_MAIL, N_("Send To..."), NULL, NULL, G_CALLBACK(email_data) },
     { "NewData", GTK_STOCK_NEW, N_("_New data set"), NULL, NULL, G_CALLBACK(newdata_callback) },
     { "ClearData", GTK_STOCK_CLEAR, N_("C_lear data set"), NULL, NULL, G_CALLBACK(verify_clear_data) },
-
+#ifdef GRETL_OPEN_HANDLER
+    { "NewInstance", GTK_STOCK_NEW, N_("New gretl instance"), NULL, NULL, G_CALLBACK(new_instance_callback) },
+#endif
     { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(workdir_dialog0) },
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
@@ -2186,6 +2169,15 @@ static void add_conditional_items (windata_t *vwin)
 			  "/menubar/Variable/Tramo",
 			  N_("_TRAMO analysis"),
 			  "Tramo",
+			  GTK_UI_MANAGER_MENUITEM,
+			  FALSE);
+#endif
+
+#ifdef GRETL_OPEN_HANDLER
+    gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),
+			  "/menubar/File/NewInstance",
+			  N_("_New gretl instance"),
+			  "NewInstance",
 			  GTK_UI_MANAGER_MENUITEM,
 			  FALSE);
 #endif
