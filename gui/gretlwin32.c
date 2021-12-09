@@ -349,29 +349,13 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	}
 	GlobalUnlock(winclip);
 
-#if 1
 	if (ubuf != NULL) {
 	    clip_format = CF_UNICODETEXT;
 	} else if (rtf_format) {
 	    clip_format = RegisterClipboardFormat("Rich Text Format");
-	} else if (fmt == GRETL_FORMAT_CSV) {
-	    clip_format = RegisterClipboardFormat("CommaSeparatedValue");
 	} else {
 	    clip_format = CF_TEXT;
 	}
-#else
-	if (ubuf != NULL) {
-	    clip_format = CF_UNICODETEXT;
-	} else if (rtf_format) {
-	    clip_format = RegisterClipboardFormat("Rich Text Format");
-	} else if (fmt == GRETL_FORMAT_CSV) {
-	    clip_format = RegisterClipboardFormat("CSV");
-	} else if (fmt == GRETL_FORMAT_XML) {
-	    clip_format = RegisterClipboardFormat("XML");
-	} else {
-	    clip_format = CF_TEXT;
-	}
-#endif
 
 	SetClipboardData(clip_format, winclip);
 
