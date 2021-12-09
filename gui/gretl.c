@@ -1608,6 +1608,12 @@ static void make_main_window (void)
 	G_TYPE_STRING
     };
 
+#ifdef GRETL_OPEN_HANDLER
+    if (optnew) {
+	set_main_winpos(GTK_WIN_POS_NONE);
+    }
+#endif
+
     mdata = gretl_viewer_new(MAINWIN, "gretl", NULL);
     if (mdata == NULL) {
 	noalloc();

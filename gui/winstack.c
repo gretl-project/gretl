@@ -1329,6 +1329,13 @@ static void mainwin_swallow_setup (windata_t *vwin)
 
 #endif
 
+static int main_winpos = GTK_WIN_POS_CENTER;
+
+void set_main_winpos (int pos)
+{
+    main_winpos = pos;
+}
+
 windata_t *
 gretl_viewer_new_with_parent (windata_t *parent, int role,
 			      const gchar *title,
@@ -1376,8 +1383,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 #endif
 
     if (role == MAINWIN) {
-	gtk_window_set_position(GTK_WINDOW(vwin->main),
-				GTK_WIN_POS_CENTER);
+	gtk_window_set_position(GTK_WINDOW(vwin->main), main_winpos);
     } else {
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(free_windata), vwin);

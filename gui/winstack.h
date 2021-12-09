@@ -112,5 +112,7 @@ void vwin_action_set_sensitive (windata_t *vwin,
 				const char *name,
 				gboolean s);
 
+void set_main_winpos (int pos);
+
 #endif
 
