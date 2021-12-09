@@ -117,6 +117,8 @@
       <menuitem action="DataTranspose"/>
       <menuitem action="DataSort"/>
       <separator/>
+      <menuitem action="DataPaste"/>
+      <separator/>
       <menuitem action="GSETMISS"/>
       <menuitem action="CountMissing"/>
     </menu>

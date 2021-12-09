@@ -1851,6 +1851,7 @@ GtkActionEntry main_entries[] = {
     { "DataExpand", NULL, N_("_Expand data..."), NULL, NULL, G_CALLBACK(do_expand_data_set) },
     { "DataTranspose", NULL, N_("_Transpose data..."), NULL, NULL, G_CALLBACK(gui_transpose_data) },
     { "DataSort", NULL, N_("_Sort data..."), NULL, NULL, G_CALLBACK(gui_sort_data) },
+    { "DataPaste", NULL, N_("Paste from clipboard..."), NULL, NULL, G_CALLBACK(mdata_handle_paste) },
     { "GSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
 
     /* View */
