@@ -3587,7 +3587,7 @@ int real_import_csv (const char *fname,
     pprintf(mprn, _("   number of variables: %d\n"), c->dset->v - 1);
     pprintf(mprn, _("   number of non-blank lines: %d\n"), c->nrows);
 
-    if (c->dset->n == 0) {
+    if (c->dset->v == 1 || c->dset->n == 0) {
         pputs(prn, _("Invalid data file\n"));
         err = E_DATA;
         goto csv_bailout;
