@@ -112,13 +112,14 @@ static gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 				     int s, gretl_bundle *b,
 				     gretl_bundle *res,
 				     DATASET *dset,
-				     PRN *prn, int *err)
+				     int yconv, PRN *prn,
+				     int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
 			      int, gretl_bundle *,
 			      gretl_bundle *,
-			      DATASET *,
+			      DATASET *, int,
 			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
@@ -144,7 +145,7 @@ static gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, res, dset, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, res, dset, yconv, prn, err);
     }
 
     return ret;
@@ -162,7 +163,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     gretl_matrix *m = NULL;
 
     gretl_bundle_set_string(b, "aggtype", "avg");
-    m = matrix_tdisagg(Y, X, s, b, NULL, NULL, NULL, err);
+    m = matrix_tdisagg(Y, X, s, b, NULL, NULL, 0, NULL, err);
     gretl_bundle_destroy(b);
 
     return m;
@@ -392,7 +393,7 @@ gretl_matrix *get_tdisagg_matrix (struct tdisagg_info *tdi,
 	DATASET *ddset = (yconv || xconv)? dset : NULL;
 
 	ret = matrix_tdisagg(tdi->Y, tdi->X, tdi->efac,
-			     b, r, ddset, prn, err);
+			     b, r, ddset, yconv, prn, err);
     }
 
     gretl_matrix_free(tmpY);

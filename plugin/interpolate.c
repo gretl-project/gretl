@@ -1416,7 +1416,8 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 				   gretl_bundle *r,
 				   int verbose, int plot,
 				   DATASET *dset,
-				   PRN *prn, int *err)
+				   int yconv, PRN *prn,
+				   int *err)
 {
     gretl_matrix *ret = NULL;
 
@@ -1459,10 +1460,10 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	if (ret->rows == X->rows && gretl_matrix_is_dated(X)) {
 	    gretl_matrix_transcribe_obs_info(ret, X);
 	}
-    } else if (ret != NULL && gretl_matrix_get_t2(Y0) > 0) {
+    } else if (ret != NULL && yconv && gretl_matrix_get_t2(Y0) > 0) {
 	/* experimental, 2021-12-09 */
 	int t1 = gretl_matrix_get_t1(Y0);
-	
+
 	gretl_matrix_set_t1(ret, t1);
 	gretl_matrix_set_t2(ret, t1 + ret->rows - 1);
     }
@@ -1614,7 +1615,8 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 int s, gretl_bundle *b,
 				 gretl_bundle *res,
 				 DATASET *dset,
-				 PRN *prn, int *err)
+				 int yconv, PRN *prn,
+				 int *err)
 {
     int agg = 0, method = 0, det = 1;
     int verbose = 0, plot = 0;
@@ -1638,7 +1640,8 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			res, verbose, plot, dset, prn, err);
+			res, verbose, plot, dset, yconv,
+			prn, err);
 }
 
 /* Add basic info to dummy dataset @hf, sufficient to get
