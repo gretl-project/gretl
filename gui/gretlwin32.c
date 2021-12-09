@@ -354,6 +354,8 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	    clip_format = CF_UNICODETEXT;
 	} else if (rtf_format) {
 	    clip_format = RegisterClipboardFormat("Rich Text Format");
+	} else if (fmt == GRETL_FORMAT_CSV) {
+	    clip_format = RegisterClipboardFormat("CommaSeparatedValue");
 	} else {
 	    clip_format = CF_TEXT;
 	}
