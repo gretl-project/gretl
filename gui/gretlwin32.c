@@ -308,7 +308,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	rtf_format = 1;
-    } else if (format == GRETL_FORMAT_XML) {
+    } else if (fmt == GRETL_FORMAT_XML) {
 	xml_format = 1;
     }
 

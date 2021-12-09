@@ -420,7 +420,18 @@ static gchar *gretlbin;
 
 void record_gretl_binary_path (const char *argv0)
 {
+#if GLIB_MINOR_VERSION >= 58
     gretlbin = g_canonicalize_filename(argv0, NULL);
+#else
+    if (g_path_is_absolute(argv0)) {
+	gretlbin = g_strdup(argv0);
+    } else {
+	gchar *cwd = g_get_current_dir();
+
+	gretlbin = g_build_filename(cwd, argv0, NULL);
+	g_free(cwd);
+    }
+#endif
 }
 
 gchar *get_gretl_binary_path (void)
