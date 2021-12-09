@@ -1460,7 +1460,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    gretl_matrix_transcribe_obs_info(ret, X);
 	}
     } else if (ret != NULL && gretl_matrix_get_t2(Y0) > 0) {
-	/* experimental */
+	/* experimental, 2021-12-09 */
 	int t1 = gretl_matrix_get_t1(Y0);
 	
 	gretl_matrix_set_t1(ret, t1);
