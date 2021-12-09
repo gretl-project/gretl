@@ -1023,7 +1023,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	mdata_handle_paste();
 	return TRUE;
     } else if (Ctrl && k == GDK_c) {
-	csv_selected_to_clipboard();
+	selected_series_to_clipboard();
 	return TRUE;	
     } else if (swallow && Ctrl && (k == GDK_Page_Down || k == GDK_Tab)) {
 	gretl_console();
@@ -2688,7 +2688,11 @@ static void mdata_text_received (GtkClipboard *cb,
 	    return;
 	}
 
-	err = user_fopen(CLIPTEMP, fullname, &prn);
+	if (!strncmp(text, "<?xml ", 6)) {
+	    err = user_fopen(CLIPTEMP_GDT, fullname, &prn);
+	} else {
+	    err = user_fopen(CLIPTEMP_TXT, fullname, &prn);
+	}
 
 	if (!err) {
 	    int ci = append ? APPEND_DATA : OPEN_DATA;

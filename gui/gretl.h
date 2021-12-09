@@ -78,7 +78,8 @@
 
 #define GRETL_BUFSIZE 8192
 #define MAXSTR FILENAME_MAX
-#define CLIPTEMP "cliptmp.txt"
+#define CLIPTEMP_TXT "cliptmp.txt"
+#define CLIPTEMP_GDT "cliptmp.gdt"
 
 #define SCRIPT_WIDTH 78
 #define SCRIPT_HEIGHT 420

@@ -129,6 +129,11 @@ static char *simple_fname (char *dest, const char *src)
     char *p;
     const char *s;
 
+    if (src == NULL) {
+	strcpy(dest, "gdttmp");
+	return dest;
+    }
+
     s = strrslash(src);
 
     /* take last part of src filename */
@@ -2622,7 +2627,9 @@ static int real_write_gdt (const char *fname,
     }
     free(list);
 
-    gretl_print_destroy(prn);
+    if (prn != inprn) {
+	gretl_print_destroy(prn);
+    }
 
     return err;
 }

@@ -677,7 +677,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
         show_spreadsheet(SHEET_EDIT_VARLIST);
         break;
     case MNU_CLIPB:
-        csv_selected_to_clipboard();
+        selected_series_to_clipboard();
         break;
     case MNU_DELET:
         delete_single_var(v);
@@ -824,7 +824,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MNU_EDIT)  {
         show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MNU_CLIPB) {
-        csv_selected_to_clipboard();
+        selected_series_to_clipboard();
     } else if (i == MNU_DELET)  {
         delete_selected_vars();
     } else if (i == MNU_LOGS || i == MNU_DIFF)  {

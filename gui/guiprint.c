@@ -33,6 +33,7 @@
 
 #include "uservar.h"
 #include "libset.h"
+#include "gretl_xml.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -1917,7 +1918,8 @@ static int data_to_buf_as_csv (const int *list, gretlopt opt,
     return err;
 }
 
-static int real_csv_to_clipboard (const int *list)
+static int real_series_to_clipboard (const int *list,
+				     int use_gdt)
 {
     PRN *prn = NULL;
     gretlopt opt = OPT_NONE;
@@ -1927,18 +1929,22 @@ static int real_csv_to_clipboard (const int *list)
 	return 1;
     }
 
-    if (get_csv_exclude_obs()) {
-	opt = OPT_X;
+    if (use_gdt) {
+	err = gretl_write_gdt_to_prn(prn, list, dataset);
+    } else {
+	if (get_csv_exclude_obs()) {
+	    opt = OPT_X;
+	}
+	err = data_to_buf_as_csv(list, opt, prn);
     }
 
-    err = data_to_buf_as_csv(list, opt, prn);
     if (!err) {
 	err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	if (err) {
 	    fprintf(stderr, "prn_to_clipboard: err = %d\n", err);
 	}
     } else {
-	fprintf(stderr, "data_to_buf_as_csv: err = %d\n", err);
+	fprintf(stderr, "series_to_clipboard: err = %d\n", err);
     }
 
     gretl_print_destroy(prn);
@@ -1946,16 +1952,27 @@ static int real_csv_to_clipboard (const int *list)
     return err;
 }
 
-int csv_selected_to_clipboard (void)
+int selected_series_to_clipboard (void)
 {
     int *list = main_window_selection_as_list();
     int err = 0;
 
     if (list != NULL) {
-	int resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET, NULL);
+	const char *opts[] = {
+	    N_("Delimited text"),
+	    N_("XML (gdt)")
+	};
+	int resp = radio_dialog(_("Copy to clipboard"),
+				_("Format:"),
+				opts, 2, 0, 0, mdata->main);
 
-	if (!canceled(resp)) {
-	    err = real_csv_to_clipboard(list);
+	if (resp == 1) {
+	    err = real_series_to_clipboard(list, 1);
+	} else if (resp == 0) {
+	    resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET, NULL);
+	    if (!canceled(resp)) {
+		err = real_series_to_clipboard(list, 0);
+	    }
 	}
 	free(list);
     }
@@ -1980,7 +1997,7 @@ int csv_to_clipboard (GtkWidget *parent)
 	    cancel = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET,
 					parent);
 	    if (!cancel) {
-		err = real_csv_to_clipboard(list);
+		err = real_series_to_clipboard(list, 0);
 	    }
 	    free(list);
 	}

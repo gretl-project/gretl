@@ -1108,7 +1108,7 @@ static void finalize_data_open (const char *fname, int ftype,
 	return;
     }
 
-    if (strstr(fname, CLIPTEMP)) {
+    if (strstr(fname, CLIPTEMP_TXT) || strstr(fname, CLIPTEMP_GDT)) {
 	real_register_data(DATA_PASTED, NULL, list);
     } else {
 	if (fname != datafile) {

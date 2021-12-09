@@ -64,7 +64,7 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
 
 int csv_to_clipboard (GtkWidget *parent);
 
-int csv_selected_to_clipboard (void);
+int selected_series_to_clipboard (void);
 
 int copy_vars_formatted (windata_t *vwin, int fmt, int action);
 
