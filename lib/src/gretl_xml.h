@@ -159,6 +159,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     const DATASET *dset, gretlopt opt,
 		     int progress);
 
+int gretl_write_gdt_to_prn (PRN *prn, const int *list,
+			    const DATASET *dset);
+
 int gretl_read_gdt (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 

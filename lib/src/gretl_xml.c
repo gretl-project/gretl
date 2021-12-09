@@ -2234,8 +2234,11 @@ static void strval_saver_restore (DATASET *dset,
 
 /* end apparatus from trimming string-values */
 
-static int real_write_gdt (const char *fname, const int *inlist,
-			   const DATASET *dset, gretlopt opt,
+static int real_write_gdt (const char *fname,
+			   PRN *inprn,
+			   const int *inlist,
+			   const DATASET *dset,
+			   gretlopt opt,
 			   int progress)
 {
     PRN *prn = NULL;
@@ -2275,7 +2278,9 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	return E_DATA;
     }
 
-    if (opt & OPT_B) {
+    if (inprn != NULL) {
+	prn = inprn;
+    } else if (opt & OPT_B) {
 	binary = G_BYTE_ORDER;
 	progress = 0;
 	prn = open_gdt_write_stream(fname, OPT_NONE);
@@ -2655,7 +2660,7 @@ static int write_old_gdtb (const char *fname, const int *list,
 	char xmlfile[FILENAME_MAX];
 
 	gretl_build_path(xmlfile, zdir, "data.xml", NULL);
-	err = real_write_gdt(xmlfile, list, dset, opt | OPT_B, 0);
+	err = real_write_gdt(xmlfile, NULL, list, dset, opt | OPT_B, 0);
 
 	if (!err) {
 	    int level = get_compression_option(STORE);
@@ -2704,10 +2709,16 @@ int gretl_write_gdt (const char *fname, const int *list,
 	err = write_purebin(fname, list, dset, opt);
     } else {
 	/* plain gdt file */
-	err = real_write_gdt(fname, list, dset, opt, progress);
+	err = real_write_gdt(fname, NULL, list, dset, opt, progress);
     }
 
     return err;
+}
+
+int gretl_write_gdt_to_prn (PRN *prn, const int *list,
+			    const DATASET *dset)
+{
+    return real_write_gdt(NULL, prn, list, dset, OPT_NONE, 0);
 }
 
 static void transcribe_string (char *targ, const char *src, int maxlen)
