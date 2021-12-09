@@ -19766,6 +19766,7 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
 {
     int k = gretl_vector_get_length(m);
     int mt1 = gretl_matrix_get_t1(m);
+    int mt2 = gretl_matrix_get_t2(m);
     int s, t;
 
     if (p->flags & P_MMASK) {
@@ -19786,11 +19787,11 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
 	for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 	    y[t] = xy_calc(y[t], m->val[s], p->op, SERIES, p);
 	}
-    } else if (mt1 > 0) {
+    } else if (mt2 > 0 && mt2 >= mt1) {
 	/* align using matrix "t1" value */
 	for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
 	    if (t >= p->dset->t1) {
-		y[t] = xy_calc(y[t], m->val[t - mt1], p->op,
+		y[t] = xy_calc(y[t], m->val[t-mt1], p->op,
 				  SERIES, p);
 	    }
 	}
