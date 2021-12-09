@@ -501,11 +501,20 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 	N_("gretl: data delimiter"),
 	N_("Copy to clipboard")
     };
+    const char *labels[] = {
+	N_("auto-detect"),
+	N_("comma (,)"),
+	N_("space"),
+	N_("tab"),
+	N_("semicolon")
+    };
+    const char *delims = "a, \t;";
     const char *title;
     GtkWidget *dialog, *vbox, *hbox;
     GtkWidget *tmp, *button;
     GSList *group = NULL;
     csv_stuff *csvp = NULL;
+    int i, imin = 1;
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -517,7 +526,16 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
         return ret;
     }
 
-    csvp->delim = ',';
+    /* set the default delimiter */
+    if (ci == COPY_CSV) {
+	csvp->delim = '\t';
+    } else if (ci == OPEN_DATA || ci == APPEND_DATA) {
+	csvp->delim = 'a';
+	imin = 0;
+    } else {
+	csvp->delim = ',';
+    }
+
     csvp->decpoint = '.';
     csvp->xobs = get_csv_exclude_obs();
 
@@ -532,58 +550,19 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     tmp = gtk_label_new(_("separator for data columns:"));
     pack_in_hbox(tmp, vbox, 5);
 
-    if (ci == OPEN_DATA || ci == APPEND_DATA) {
-        /* on input only, add option to auto-detect separator */
-        button = gtk_radio_button_new_with_label(group, _("auto-detect"));
-        group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-        pack_in_hbox(button, vbox, 0);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-        g_signal_connect(G_OBJECT(button), "clicked",
-                         G_CALLBACK(set_delim), csvp);
-        g_object_set_data(G_OBJECT(button), "action",
-                          GINT_TO_POINTER('a'));
+    /* choice of separator */
+    for (i=imin; delims[i]; i++) {
+	button = gtk_radio_button_new_with_label(group, _(labels[i]));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	pack_in_hbox(button, vbox, 0);
+	if (csvp->delim == delims[i]) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	}
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_delim), csvp);
+	g_object_set_data(G_OBJECT(button), "action",
+			  GINT_TO_POINTER(delims[i]));
     }
-
-    /* comma separator */
-    button = gtk_radio_button_new_with_label(group, _("comma (,)"));
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    csvp->comma_sep = button;
-    pack_in_hbox(button, vbox, 0);
-    if (ci != OPEN_DATA && ci != APPEND_DATA)
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_delim), csvp);
-    g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(','));
-
-    /* space separator */
-    button = gtk_radio_button_new_with_label(group, _("space"));
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    pack_in_hbox(button, vbox, 0);
-    if (csvp->delim == ' ')
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_delim), csvp);
-    g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(' '));
-
-    /* tab separator */
-    button = gtk_radio_button_new_with_label(group, _("tab"));
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    pack_in_hbox(button, vbox, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_delim), csvp);
-    g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER('\t'));
-
-    /* semicolon separator */
-    button = gtk_radio_button_new_with_label(group, _("semicolon"));
-    csvp->semic_button = button;
-    pack_in_hbox(button, vbox, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_delim), csvp);
-    g_object_set_data(G_OBJECT(button), "action",
-                      GINT_TO_POINTER(';'));
 
     if (',' == get_local_decpoint()) {
         GSList *dgroup;
