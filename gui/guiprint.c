@@ -1919,7 +1919,7 @@ static int data_to_buf_as_csv (const int *list, gretlopt opt,
 }
 
 static int real_series_to_clipboard (const int *list,
-				     int use_gdt)
+				     int format)
 {
     PRN *prn = NULL;
     gretlopt opt = OPT_NONE;
@@ -1929,7 +1929,7 @@ static int real_series_to_clipboard (const int *list,
 	return 1;
     }
 
-    if (use_gdt) {
+    if (format == GRETL_FORMAT_XML) {
 	err = gretl_write_gdt_to_prn(prn, list, dataset);
     } else {
 	if (get_csv_exclude_obs()) {
@@ -1939,7 +1939,7 @@ static int real_series_to_clipboard (const int *list,
     }
 
     if (!err) {
-	err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+	err = prn_to_clipboard(prn, format);
 	if (err) {
 	    fprintf(stderr, "prn_to_clipboard: err = %d\n", err);
 	}
@@ -1967,11 +1967,11 @@ int selected_series_to_clipboard (void)
 				opts, 2, 0, 0, mdata->main);
 
 	if (resp == 1) {
-	    err = real_series_to_clipboard(list, 1);
+	    err = real_series_to_clipboard(list, GRETL_FORMAT_XML);
 	} else if (resp == 0) {
 	    resp = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET, NULL);
 	    if (!canceled(resp)) {
-		err = real_series_to_clipboard(list, 0);
+		err = real_series_to_clipboard(list, GRETL_FORMAT_CSV);
 	    }
 	}
 	free(list);

@@ -293,6 +293,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
     char *buf = gretl_print_steal_buffer(prn);
     char *modbuf = NULL;
     int rtf_format = 0;
+    int xml_format = 0;
     int err = 0;
 
     if (buf == NULL || *buf == '\0') {
@@ -307,11 +308,15 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	rtf_format = 1;
+    } else if (format == GRETL_FORMAT_XML) {
+	xml_format = 1;
     }
 
     EmptyClipboard();
 
-    err = maybe_post_process_buffer(buf, fmt, W_COPY, &modbuf);
+    if (!xml_format) {
+	err = maybe_post_process_buffer(buf, fmt, W_COPY, &modbuf);
+    }
 
     if (!err) {
 	HGLOBAL winclip;
@@ -324,7 +329,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
 	winbuf = modbuf != NULL ? modbuf : buf;
 
-	if (!rtf_format && !gretl_is_ascii(winbuf)) {
+	if (!rtf_format && !xml_format && !gretl_is_ascii(winbuf)) {
 	    /* for Windows clipboard, recode UTF-8 to UTF-16 */
 	    ubuf = g_utf8_to_utf16(winbuf, -1, NULL, &wrote, NULL);
 	}
@@ -350,6 +355,8 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	    clip_format = RegisterClipboardFormat("Rich Text Format");
 	} else if (fmt == GRETL_FORMAT_CSV) {
 	    clip_format = RegisterClipboardFormat("CSV");
+	} else if (fmt == GRETL_FORMAT_XML) {
+	    clip_format = RegisterClipboardFormat("XML");
 	} else {
 	    clip_format = CF_TEXT;
 	}

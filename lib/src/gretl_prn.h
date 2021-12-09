@@ -50,7 +50,8 @@ typedef enum {
     GRETL_FORMAT_TAB       = 1 << 8,
     GRETL_FORMAT_MODELTAB  = 1 << 9,
     GRETL_FORMAT_LANDSCAPE = 1 << 10,
-    GRETL_FORMAT_HAS_MINUS = 1 << 11
+    GRETL_FORMAT_HAS_MINUS = 1 << 11,
+    GRETL_FORMAT_XML       = 1 << 12
 } PrnFormat;
 
 /* functions follow */

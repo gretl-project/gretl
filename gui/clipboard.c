@@ -263,7 +263,9 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     gretl_clipboard_free();
 
-    err = maybe_post_process_buffer(buf, fmt, W_COPY, &modbuf);
+    if (fmt != GRETL_FORMAT_XML) {
+	err = maybe_post_process_buffer(buf, fmt, W_COPY, &modbuf);
+    }
 
     if (!err) {
 	if (modbuf != NULL) {

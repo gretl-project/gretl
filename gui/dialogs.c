@@ -639,6 +639,7 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
     tmp = ok_validate_button(hbox, &ret, NULL);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(really_set_csv_stuff), csvp);
