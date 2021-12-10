@@ -80,9 +80,9 @@ also the value at the end of the last month of the quarter, and we're
 trying to figure out what the value might have been at the end of
 months 1 and 2. We're filling in the blanks, or interpolating. In the
 GDP case, however, the procedure is \textit{distribution} rather than
-interpolation. We have a given an annual total and we're trying to
-figure out how it should be distributed over the quarters. We're also
-doing distribution for variables taking the form of indices or ratios,
+interpolation. We have a given annual total and we're trying to figure
+out how it should be distributed over the quarters. We're also doing
+distribution for variables taking the form of indices or ratios,
 except in this case we're seeking plausible values whose mean equals
 the given low-frequency value.
 
@@ -139,17 +139,17 @@ the absence of any genuine high-frequency information disaggregation
 just amounts to a ``mechanical'' smoothing. But some people may have a
 use for such smoothing, and it's permitted by \texttt{tdisagg}.
 
-In light of the foregoing, we should draw attention to a design
-decision in \texttt{tdisagg}: we have separated the specification of
-indicators in $\Xb$ from certain standard deterministic terms that
-might be wanted, namely, a constant, a linear trend and a quadratic
-trend. This means that if you want a disaggregation \textit{without}
-stochastic indicators, you can omit (or set to \texttt{null}) the
-argument corresponding to $\Xb$. In that case a constant (only) will
-be employed automatically, but for the Chow--Lin methods one can
-adjust the deterministic terms used via an option named \texttt{det},
-described below. In other words the content of $\Xb$ becomes
-implicit. See section~\ref{sec:tdisagg-det} for more detail.
+We should draw attention to a design decision in \texttt{tdisagg}: we
+have separated the specification of indicators in $\Xb$ from certain
+standard deterministic terms that might be wanted, namely, a constant,
+linear trend or quadratic trend. If you want a disaggregation
+\textit{without} stochastic indicators, you can omit (or set to
+\texttt{null}) the argument corresponding to $\Xb$. In that case a
+constant (only) will be employed automatically, but for the Chow--Lin
+methods one can adjust the deterministic terms used via an option
+named \texttt{det}, described below. In other words the content of
+$\Xb$ becomes implicit. See section~\ref{sec:tdisagg-det} for more
+detail.
 
 Here's an important point to note when $\Xb$ is given explicitly:
 although this matrix may contain extra observations ``at the end'' we

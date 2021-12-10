@@ -802,7 +802,7 @@ static void fill_CX (gretl_matrix *CX, int s, int det,
 }
 
 /* Variant of fill_CX() in which C is a selection matrix,
-   for interpolation in the strict sense (stock variables).
+   for interpolation proper (stock variables).
 */
 
 static void fill_CX2 (gretl_matrix *CX, int s, int det,
@@ -1654,8 +1654,9 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 			prn, err);
 }
 
-/* Add basic info to dummy dataset @hf, sufficient to get
-   a time-series x-axis in td plot, if possible.
+/* Add basic info to dummy high-frequency dataset @hf, sufficient to
+   get a time-series x-axis in td_plot(), if possible. We key off the
+   low-frequency dataset @lf.
 */
 
 static int set_hf_data_info (DATASET *hf, DATASET *lf, int s)
@@ -1753,7 +1754,7 @@ static int td_plot (const gretl_matrix *y0,
 	    ok = set_hf_data_info(&hfd, dset, s);
 	    dset = ok ? &hfd : NULL;
 	} else if (gretl_matrix_get_t2(y0) > 0) {
-	    /* y0 must be a series in the hi-freq dataset */
+	    /* y0 must come from a series in the hi-freq dataset */
 	    dset->t1 = gretl_matrix_get_t1(y0);
 	    dset->t2 = dset->t1 + y->rows - 1;
 	}
@@ -1763,7 +1764,7 @@ static int td_plot (const gretl_matrix *y0,
 			    method_names[method]);
     err = write_tdisagg_plot(YY, mult, title, dset);
 
-    /* in case we messed with these */
+    /* in case we messed with these above */
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
