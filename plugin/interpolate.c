@@ -82,6 +82,12 @@ static const char *aggtype_names[] = {
     "average", "sum", "last", "first"
 };
 
+static const char *det_names[] = {
+    "none", "constant",
+    "constant + trend",
+    "constant + quadratic trend"
+};
+
 static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
     "fernandez", "denton-pfd", "denton-afd", NULL
@@ -1515,12 +1521,12 @@ static int tdisagg_get_options (gretl_bundle *b,
 				PRN *prn)
 {
     double rho = NADBL;
-    const char *str;
     int agg = AGG_SUM; /* debatable */
     int method = 0;
     int det = 1;
     int verbose = 0;
     int plot = 0;
+    const char *str;
     int err = 0;
 
     if (gretl_bundle_has_key(b, "aggtype")) {
@@ -1566,7 +1572,8 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pverb = verbose;
 	*pplot = plot;
 	if (verbose && method <= R_UROOT) {
-	    pprintf(prn, "Aggregation type %s\n", aggtype_names[agg]);
+	    pprintf(prn, "aggtype: %s\n", aggtype_names[agg]);
+	    pprintf(prn, "deterministics: %s\n", det_names[det]);
 	    if (!na(rho)) {
 		pprintf(prn, "Input rho value %g\n", rho);
 	    }
@@ -1618,9 +1625,12 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 int yconv, PRN *prn,
 				 int *err)
 {
-    int agg = 0, method = 0, det = 1;
-    int verbose = 0, plot = 0;
     double rho = NADBL;
+    int agg = AGG_SUM; /* debatable? */
+    int method = 0;
+    int det = 1;
+    int verbose = 0;
+    int plot = 0;
 
     *err = td_matrix_check(Y0, X);
 
@@ -1699,6 +1709,8 @@ static int td_plot (const gretl_matrix *y0,
     int i, k, T = y0->rows;
     int sT = s * T;
     int t, sTm = y->rows;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int mult = 1;
     int err = 0;
 
@@ -1729,7 +1741,7 @@ static int td_plot (const gretl_matrix *y0,
     if (dset != NULL) {
 	/* Either Y0 or X was a dataset object: we should make
 	   use of dataset info in the plot if we can. But is the
-	   dataset of the higher or lower frequency?
+	   dataset of the higher (@hf) or lower frequency?
 	*/
 	int ok, hf = (dset->pd > 1 && dset->pd != 52);
 
@@ -1737,14 +1749,23 @@ static int td_plot (const gretl_matrix *y0,
 	    hf = 0;
 	}
 	if (!hf) {
+	    /* try faking up a hi-freq dataset */
 	    ok = set_hf_data_info(&hfd, dset, s);
 	    dset = ok ? &hfd : NULL;
+	} else if (gretl_matrix_get_t2(y0) > 0) {
+	    /* y0 must be a series in the hi-freq dataset */
+	    dset->t1 = gretl_matrix_get_t1(y0);
+	    dset->t2 = dset->t1 + y->rows - 1;
 	}
     }
 
     title = g_strdup_printf("%s (%s)", _("Temporal disaggregation"),
 			    method_names[method]);
     err = write_tdisagg_plot(YY, mult, title, dset);
+
+    /* in case we messed with these */
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     gretl_matrix_free(YY);
     g_free(title);
