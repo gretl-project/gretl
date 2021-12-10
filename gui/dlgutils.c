@@ -1450,7 +1450,7 @@ blocking_edit_dialog (int ci, const char *title,
 	context_help_button(d->bbox, helpcode);
     }
 
-    if (ci == GENR) {
+    if (ci == GENR || ci == MINIBUF) {
 	gtk_widget_set_size_request(GTK_WIDGET(d->dialog), 400, -1);
     }
 
