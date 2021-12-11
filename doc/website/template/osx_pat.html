@@ -158,8 +158,16 @@ analysis of seasonal time series data, in 64-bit macOS versions compatible with 
 can be installed via the "gretl console" in the GUI program; just type the
 following commands, respectively:</p>
 <pre>
-pkg install x13as-mac64.tar.gz
-pkg install tramo-seats-mac64.tar.gz
+  pkg install x13as-mac64.tar.gz
+  pkg install tramo-seats-mac64.tar.gz
+</pre>
+<p>At present these addons are Intel-only. On Macs with M1 (Apple
+  Silicon) processor you will need Apple's "Rosetta 2" translator to
+  run them. This can be installed via the command line in a Terminal
+  window:
+</p>
+<pre>
+  /usr/sbin/softwareupdate --install-rosetta --agree-to-license
 </pre>
 
 <p>
