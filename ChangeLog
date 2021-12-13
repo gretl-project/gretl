@@ -1,4 +1,7 @@
 version 2021e, in progress
+- Copy/Paste data in the GUI: make this facility more
+  visible, and support gdt format in addition to delimited
+  text; support Ctrl-C to copy
 - Panel data time dimension: add apparatus to specify this
   via the graphical interface
 - Packaged panel data files: add more metadata where wanted
@@ -7,6 +10,8 @@ version 2021e, in progress
   for underspecified dates such as "1990"
 - "set seed" command: allow parameter "auto" to revert to an
   automatic clock-based seed
+- "dpanel" command: add facility to "collapse" instruments
+  as in David Roodman's xtabond2
 - "kpss" command for panel data: improve output for the case
   where automatic lag order is selected; record $test and
   $pvalue in matrix form
@@ -35,8 +40,6 @@ version 2021e, in progress
   console window
 - GUI VAR/system, Graphs menu: improve appearance of multiple
   residual plots
-- GUI main window: support Ctrl-C to copy selected series to
-  the clipboard
 - Build fixes for FreeBSD, for the non-OPENMP case, and for
   recent macOS
 
