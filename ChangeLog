@@ -42,6 +42,8 @@ version 2021e, in progress
   residual plots
 - Build fixes for FreeBSD, for the non-OPENMP case, and for
   recent macOS
+- Package for macOS with M1 processor: add more syntax
+  highlighting styles for script editor
 
 2021-09-30 version 2021d
 - "biprobit" command: include rho in $coeff, $stderr and
