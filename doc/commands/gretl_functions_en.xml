@@ -3611,28 +3611,26 @@
     <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="char">c</fnarg>
+	<fnarg optional="true" type="string">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Depends on having TRAMO/SEATS or X-13-ARIMA installed. Returns a
-	  deseasonalized (seasonally adjusted) version of the input series
-	  <argname>x</argname>, which must be a quarterly or monthly time
-	  series.  To use X-13-ARIMA give <lit>X</lit> as the second argument;
-	  to use TRAMO give <lit>T</lit>.  If the second argument is omitted
-	  then X-13-ARIMA is used.
+	  Depends on having X-13ARIMA-SEATS or TRAMO/SEATS
+	  installed. Returns a deseasonalized (seasonally adjusted)
+	  version of the input series <argname>x</argname>, which must
+	  be a quarterly or monthly time series.  To specify TRAMO
+	  give <lit>"T"</lit> as the second argument; to specify
+	  X-13ARIMA give <lit>"X"</lit>; but if the second argument is
+	  omitted then X-13ARIMA is used.
 	</para>
 	<para>
 	  Note that if the input series has no detectable seasonal
-	  component this function will fail.  Also note that both
-	  TRAMO/SEATS and X-13-ARIMA offer numerous options;
-	  <lit>deseas</lit> calls them with all options at their default
-	  settings. For both programs, the seasonal factors are calculated
-	  on the basis of an automatically selected ARIMA model. One
-	  difference between the programs which can sometimes make a
-	  substantial difference to the results is that by default TRAMO
-	  performs a prior adjustment for outliers while X-13-ARIMA does
-	  not.
+	  component this function may fail.  Also note that both
+	  X-13ARIMA and TRAMO/SEATS offer numerous options;
+	  <lit>deseas</lit> calls them with all options at their
+	  default settings. For both programs, the seasonal factors
+	  are calculated on the basis of an automatically selected
+	  ARIMA model.
 	</para>
       </description>
     </function>
