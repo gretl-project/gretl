@@ -3,6 +3,10 @@ version 2021e, in progress
 The identifying string for macOS in the $sysinfo bundle (under
 the key "os") has been updated from "osx" to "macos".
 
+If the optional second argument to the deseas() function is a
+string, it must now be quoted ("T" or "X", as opposed to
+unquoted T or X).
+
 2021-09-30 version 2021d
 
 In the output from the "biprobit" command, rho (the correlation
