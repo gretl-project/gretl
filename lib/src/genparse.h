@@ -399,7 +399,6 @@ enum {
     F_VECH,
     F_UNVECH,
     F_DESEAS,
-    F_DESEAS2, /* temporary name! */
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -574,7 +573,7 @@ enum {
 			     s == F_INBUNDLE)
 
 /* functions taking string arg in middle position */
-#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER || s == F_DESEAS)
+#define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
 
 /* functions taking one or more "fncall" (string) arguments */
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \

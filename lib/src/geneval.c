@@ -9386,14 +9386,15 @@ static int deseasonalize (const double *x, double *y,
     int err = 0;
 
     if (!null_node(r)) {
-	if (f == F_DESEAS) {
+	if (r->t == STR) {
+	    /* old-style */
 	    if (!strcmp(r->v.str, "T")) {
 		tramo = 1;
 	    } else if (strcmp(r->v.str, "X")) {
 		err = E_INVARG;
 	    }
 	} else {
-	    /* F_DESEAS2 */
+	    /* new-style */
 	    b = r->v.b;
 	}
     }
@@ -9414,45 +9415,42 @@ static int deseasonalize (const double *x, double *y,
                           f == F_PXNOBS ||  \
                           f == F_PSD)
 
-/* Functions taking a series as argument and returning a series.
-   Note that the 'r' node may contain an auxiliary parameter;
-   in that case the aux value should be a scalar, unless
-   we're doing F_DESEAS, in which case it should be a string,
-   F_DESEAS2 (it should be a bundle), or one of the panel stats
-   functions, in which case it should be a series. In case of
-   F_HPFILT and F_DESEAS, the 'o' node can be used to pass an
-   additional optional argument.
+/* Functions taking a series as argument and returning a series.  Note
+   that the @r node may be null or may contain an auxiliary parameter,
+   as follows:
+
+   @f == F_DESEAS: bundle or (backward compat) string
+   @f == panel stats function: series
+   otherwise: scalar
+
+   In case @f == F_HPFILT, the @o node can be used to pass
+   an additional optional argument.
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
                                  int f, parser *p)
 {
     NODE *ret = NULL;
-    int rtype = NUM; /* the optional right-node type */
 
-    if (f == F_SDIFF && !dataset_is_seasonal(p->dset)) {
+    if ((f == F_SDIFF || f == F_DESEAS) &&
+	!dataset_is_seasonal(p->dset)) {
         p->err = E_PDWRONG;
         return NULL;
     }
 
-    if (f == F_DESEAS) {
-        rtype = STR;
-    } else if (f == F_DESEAS2) {
-	rtype = BUNDLE;
-    } else if (is_panel_stat(f)) {
-        rtype = SERIES;
-    }
-
+    /* check the @r argument */
     if (null_node(r)) {
-        rtype = 0; /* not present, OK */
-    } else if (rtype == NUM) {
-        if (!scalar_node(r)) {
-            node_type_error(f, 2, rtype, r, p);
-            return NULL;
-        }
-    } else if (r->t != rtype) {
-        node_type_error(f, 2, rtype, r, p);
-        return NULL;
+        ; /* not present, OK */
+    } else if (f == F_DESEAS) {
+	if (r->t != STR && r->t != BUNDLE) {
+	    p->err = E_TYPES;
+	}
+    } else if (is_panel_stat(f)) {
+	if (r->t != SERIES) {
+	    node_type_error(f, 2, SERIES, r, p);
+	}
+    } else if (!scalar_node(r)) {
+	node_type_error(f, 2, NUM, r, p);
     }
 
     if (l->t == MAT && f == F_BOXCOX) {
@@ -9483,13 +9481,13 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
         if (l->t == MAT) {
             cast_to_series(l, f, &tmp, NULL, NULL, p);
         }
-
-        if (rtype == SERIES) {
-            z = r->v.xvec;
-        } else if (rtype == NUM) {
-            parm = node_get_scalar(r, p);
+	if (!null_node(r)) {
+	    if (r->t == SERIES) {
+		z = r->v.xvec;
+	    } else if (scalar_node(r)) {
+		parm = node_get_scalar(r, p);
+	    }
         }
-
         if (p->err) {
             return NULL;
         }
@@ -9527,14 +9525,13 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
             p->err = cum_series(x, y, p->dset);
             break;
         case F_DESEAS:
-	case F_DESEAS2:
 	    p->err = deseasonalize(x, y, f, r, p);
             break;
         case F_TRAMOLIN:
             p->err = tramo_linearize_series(x, y, p->dset);
             break;
         case F_RESAMPLE:
-            if (rtype == NUM) {
+            if (!na(parm)) {
                 p->err = block_resample_series(x, y, parm, p->dset);
             } else {
                 p->err = resample_series(x, y, p->dset);
@@ -16818,7 +16815,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_PXNOBS:
     case F_PSD:
     case F_DESEAS:
-    case F_DESEAS2:
     case F_TRAMOLIN:
         /* series argument needed */
         if (l->t == SERIES || l->t == MAT) {
