@@ -47,13 +47,15 @@ enum {
     SAVE_TO_BUFFER
 } save_opt;
 
-/* paths specific to sourceforge */
 static const char *updatecgi    = "/cgi-bin/gretl_update.cgi";
 static const char *manual_path  = "/project/gretl/manual/";
 static const char *dataset_path = "/project/gretl/datafiles/";
 static const char *datapkg_list = "/addons-data/datapkgs.txt";
 static const char *sffiles      = "downloads.sourceforge.net";
 static const char *sfweb        = "gretl.sourceforge.net";
+
+static const char *gretlhost = "gretl.sourceforge.net";
+static const char *datacgi   = "/cgi-bin/gretldata.cgi";
 
 static int wproxy = 0;
 static char proxyhost[128] = {0};
@@ -81,24 +83,6 @@ struct urlinfo_ {
     int pstarted;            /* progress bar status flag */
     int timeout;             /* seconds till timing out */
 };
-
-static const char *sf_dbserver  = "gretl.sourceforge.net";
-static const char *sf_dbcgi     = "/cgi-bin/gretldata.cgi";
-static const char *sf_gretlhost = "gretl.sourceforge.net";
-static const char *sf_datacgi   = "/cgi-bin/gretldata.cgi";
-
-static const char *dbserver;
-static const char *dbcgi;
-static const char *gretlhost;
-static const char *datacgi;
-
-static void set_server_paths (void)
-{
-    dbserver = sf_dbserver;
-    dbcgi = sf_dbcgi;
-    gretlhost = sf_gretlhost;
-    datacgi = sf_datacgi;
-}
 
 static void urlinfo_init (urlinfo *u,
 			  const char *hostname,
@@ -600,7 +584,7 @@ static int retrieve_url (const char *hostname,
     urlinfo_init(&u, hostname, saveopt, localfile);
 
     if (is_db_transaction(opt)) {
-	strcat(u.url, dbcgi);
+	strcat(u.url, datacgi);
     } else if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
 	strcat(u.url, fname);
     } else if (opt == GRAB_PDF) {
@@ -643,8 +627,6 @@ static int retrieve_url (const char *hostname,
 
 int gretl_www_init (const char *proxy, int use_proxy)
 {
-    set_server_paths();
-
     if (use_proxy && proxy != NULL && *proxy != '\0') {
 	*proxyhost = '\0';
 	strncat(proxyhost, proxy, sizeof proxyhost - 1);
@@ -892,7 +874,7 @@ int curl_does_smtp (void)
 
 int list_remote_dbs (char **getbuf)
 {
-    return retrieve_url(dbserver, LIST_DBS, NULL, NULL,
+    return retrieve_url(gretlhost, LIST_DBS, NULL, NULL,
 			NULL, 0, getbuf);
 }
 
@@ -924,7 +906,7 @@ int list_remote_data_packages (char **getbuf)
 
 int retrieve_remote_db_index (const char *dbname, char **getbuf)
 {
-    return retrieve_url(dbserver, GRAB_IDX, dbname, NULL,
+    return retrieve_url(gretlhost, GRAB_IDX, dbname, NULL,
 			NULL, 0, getbuf);
 }
 
@@ -932,7 +914,7 @@ int retrieve_remote_db (const char *dbname,
 			const char *localname,
 			int opt)
 {
-    return retrieve_url(dbserver, opt, dbname, NULL,
+    return retrieve_url(gretlhost, opt, dbname, NULL,
 			localname, 0, NULL);
 }
 
@@ -941,7 +923,7 @@ int check_remote_db (const char *dbname)
     char *getbuf = NULL;
     int err;
 
-    err = retrieve_url(dbserver, CHECK_DB, dbname, NULL,
+    err = retrieve_url(gretlhost, CHECK_DB, dbname, NULL,
 		       NULL, 0, &getbuf);
 
     if (!err && getbuf != NULL) {
@@ -1177,7 +1159,7 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    return retrieve_url(dbserver, opt, dbname, varname,
+    return retrieve_url(gretlhost, opt, dbname, varname,
 			NULL, 0, getbuf);
 }
 
