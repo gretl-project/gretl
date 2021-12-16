@@ -1477,8 +1477,8 @@ gretl_matrix *gretl_rand_dirichlet (const gretl_vector *a,
 		    rsum += gretl_matrix_get(D, i, j);
 		}
 		for (j=0; j<k; j++) {
-		    dij = gretl_matrix_get(D, i, j) / rsum;
-		    gretl_matrix_set(D, i, j, dij);
+		    dij = gretl_matrix_get(D, i, j);
+		    gretl_matrix_set(D, i, j, dij / rsum);
 		}
 	    }
 	}
