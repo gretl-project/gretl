@@ -3044,6 +3044,7 @@ int dist_code_from_string (const char *s)
 	{ D_NC_F,     "ncf" },
 	{ D_NC_T,     "nct" },
 	{ D_LOGISTIC, "s" },
+	{ D_DIRICHLET, "dir" },
 	{ D_NONE,     NULL }
     };
     char test[8];

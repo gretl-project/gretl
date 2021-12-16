@@ -1433,6 +1433,66 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
 }
 
 /**
+ * gretl_rand_dirichlet:
+ * @a: parameter vector, length k.
+ * @n: number of rows (replications) in return matrix.
+ * @err: location to receive error code.
+ *
+ * Fill the selected range of array @x with pseudo-random drawings
+ * from the binomial distribution with @n trials and success
+ * probability distributed according to the beta distribution with
+ * shape parameters @s1 and @s2.
+ *
+ * Returns: on success, an @n x @k matrix matrix containing drawings
+ * from the Dirichlet distribution of order @k.
+ */
+
+gretl_matrix *gretl_rand_dirichlet (const gretl_vector *a,
+				    int n, int *err)
+{
+    int k = gretl_vector_get_length(a);
+    gretl_matrix *D = NULL;
+
+    if (k < 2) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    D = gretl_matrix_alloc(n, k);
+
+    if (D == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double dij, rsum;
+	int t1 = 0, t2 = n-1;
+	int i, j;
+
+	for (j=0; j<k && !*err; j++) {
+	    gretl_rand_gamma(D->val, t1, t2, a->val[j], 1.0);
+	    t1 += n;
+	    t2 += n;
+	}
+	if (*err) {
+	    gretl_matrix_free(D);
+	    D = NULL;
+	} else {
+	    for (i=0; i<n; i++) {
+		rsum = 0.0;
+		for (j=0; j<k; j++) {
+		    rsum += gretl_matrix_get(D, i, j);
+		}
+		for (j=0; j<k; j++) {
+		    dij = gretl_matrix_get(D, i, j) / rsum;
+		    gretl_matrix_set(D, i, j, dij);
+		}
+	    }
+	}
+    }
+
+    return D;
+}
+
+/**
  * gretl_rand_int_max:
  * @max: the maximum value (open)
  *

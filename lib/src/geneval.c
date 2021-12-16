@@ -1409,7 +1409,7 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    err = E_INVARG;
 	}
     } else if (d == D_UNIFORM || d == D_UDISCRT) {
-	/* only RANDGEN is supported */
+	/* only randgen is supported */
 	if (randgen(f)) {
 	    *np = 2; /* min, max */
 	} else {
@@ -1501,6 +1501,13 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    *np = 2; /* location, scale */
 	} else if (f == F_CDF) {
 	    *np = 0; /* (0,1) assumed */
+	} else {
+	    err = E_INVARG;
+	}
+    } else if (d == D_DIRICHLET) {
+	/* randgen only */
+	if (randgen(f)) {
+	    *np = 1; /* alpha vector */
 	} else {
 	    err = E_INVARG;
 	}
@@ -1923,6 +1930,30 @@ static NODE *bvnorm_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *dirichlet_node (NODE *args, parser *p)
+{
+    NODE *ret = NULL;
+    gretl_matrix *alpha = NULL;
+    int n = 0;
+
+    if (args->v.bn.n[1]->t == MAT) {
+	alpha = args->v.bn.n[1]->v.m;
+    }
+    if (args->v.bn.n[2]->t == NUM) {
+	n = node_get_int(args->v.bn.n[2], p);
+    }
+    if (alpha == NULL || n <= 0) {
+	p->err = E_INVARG;
+    } else {
+	ret = aux_matrix_node(p);
+	if (!p->err) {
+	    ret->v.m = gretl_rand_dirichlet(alpha, n, &p->err);
+	}
+    }
+
+    return ret;
+}
+
 /* return a node containing the evaluated result of a
    probability distribution function */
 
@@ -1945,13 +1976,8 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 	int rows = 0, cols = 0;
 	int np, argc, bb, d = 0;
 
-	if (mrgen) {
-	    if (m < 4 || m > 7) {
-		n_args_error(m, 4, 7, n->t, p);
-		goto disterr;
-	    }
-	} else if (m < 2 || m > 5) {
-	    n_args_error(m, 2, 5, n->t, p);
+	if (m < 2) {
+	    p->err = E_ARGS;
 	    goto disterr;
 	}
 
@@ -1973,10 +1999,24 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 	    node_type_error(n->t, 0, STR, s, p);
 	}
 
-	if (!p->err) {
+	if (mrgen) {
+	    if (d == D_DIRICHLET) {
+		if (m != 3) {
+		    n_args_error(m, 3, 3, n->t, p);
+		}
+	    } else if (m < 4 || m > 7) {
+		n_args_error(m, 4, 7, n->t, p);
+	    }
+	} else if (m > 5) {
+	    n_args_error(m, 2, 5, n->t, p);
+	}
+
+	if (p->err) {
+	    goto disterr;
+	} else {
 	    p->err = check_dist_count(d, n->t, &np, &argc);
 	}
-	if (!p->err) {
+	if (!p->err && d != D_DIRICHLET) {
 	    k = np + argc + 2 * mrgen;
 	    if (k != m - 1) {
 		p->err = E_INVARG;
@@ -1994,6 +2034,8 @@ static NODE *eval_pdist (NODE *n, NODE *r, parser *p)
 	} else if (d == D_BINORM) {
 	    /* special: bivariate normal */
 	    return bvnorm_node(r, p);
+	} else if (d == D_DIRICHLET) {
+	    return dirichlet_node(r, p);
 	}
 
 	for (i=1; i<=k && !p->err; i++) {
