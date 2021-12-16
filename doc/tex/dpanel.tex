@@ -792,12 +792,16 @@ instruments in the levels equations. We report robust standard errors
 throughout. (As a purely notational matter, we now use ``$t-1$'' to
 refer to values five years prior to $t$, as in \cite{Bond2001}).
 
-The gretl script to do this job is shown below. Note that the final
-transformed versions of the variables (logs, with time-means
-subtracted) are named \texttt{ly} ($y_{it}$), \texttt{linv} ($s_{it}$)
-and \texttt{lngd} ($n_{it} + g + \delta$).
-%
-\begin{code}
+The gretl script to do this job is shown in
+Listing~\ref{script:cel}. Note that the final transformed versions of
+the variables (logs, with time-means subtracted) are named \texttt{ly}
+($y_{it}$), \texttt{linv} ($s_{it}$) and \texttt{lngd}
+($n_{it} + g + \delta$).
+
+\begin{script}[htbp]
+  \scriptcaption{GDP growth example}
+  \label{script:cel}
+\begin{scode}
 open CEL.gdt
 
 ngd = n + 0.05
@@ -821,7 +825,8 @@ dpanel 1 ; ly X ; GMM(X,2,99)
 dpanel 1 ; ly X ; GMM(X,2,99) --two-step
 # GMM-SYS
 dpanel 1 ; ly X ; GMM(X,2,99) GMMlevel(X,1,1) --two-step --sys
-\end{code}
+\end{scode}
+\end{script}
 
 For comparison we estimated the same two models using Ox/DPD and
 \texttt{xtabond2}. (In each case we constructed a comma-separated
@@ -943,7 +948,7 @@ written as
 \]
 where the $\hat{\bv}^*_i$ are the residuals in first differences for
 unit $i$, and for that reason they are often rolled together---for
-example, as ``Hansen-Sargan'' tests by \cite{davidson-mackinnon04}.
+example, as ``Hansen--Sargan'' tests by \cite{davidson-mackinnon04}.
 
 The Sargan vs Hansen difference is buried in $\bA_N$: Sargan's
 original test is the minimized orthogonality score divided by a scalar
