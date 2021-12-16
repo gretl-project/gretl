@@ -1438,13 +1438,8 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
  * @n: number of rows (replications) in return matrix.
  * @err: location to receive error code.
  *
- * Fill the selected range of array @x with pseudo-random drawings
- * from the binomial distribution with @n trials and success
- * probability distributed according to the beta distribution with
- * shape parameters @s1 and @s2.
- *
- * Returns: on success, an @n x @k matrix matrix containing drawings
- * from the Dirichlet distribution of order @k.
+ * Returns: on success, an @n x @k matrix matrix containing
+ * @n drawings from the Dirichlet distribution of order k.
  */
 
 gretl_matrix *gretl_rand_dirichlet (const gretl_vector *a,
@@ -1468,7 +1463,7 @@ gretl_matrix *gretl_rand_dirichlet (const gretl_vector *a,
 	int i, j;
 
 	for (j=0; j<k && !*err; j++) {
-	    gretl_rand_gamma(D->val, t1, t2, a->val[j], 1.0);
+	    *err = gretl_rand_gamma(D->val, t1, t2, a->val[j], 1.0);
 	    t1 += n;
 	    t2 += n;
 	}
