@@ -27,11 +27,12 @@ describes the operations that are supported for such series.
 
 \section{Creating a string-valued series}
 
-This can be done in two ways: first, by reading such a series from a
-suitable source file and second, by taking a suitable numerical series
+This can be done in three ways: first, by reading such a series from a
+suitable source file; second, by taking a suitable numerical series
 within gretl and adding string values using the \cmd{stringify()}
-function. In either case string values will be preserved when such
-a series is saved in a gretl-native data file.
+function; and third, by direct assignment to a series from an array of
+strings.  In each case string values will be preserved when such a
+series is saved in a gretl-native data file.
 
 \subsection{Reading string-valued series}
 \label{sec:reading}
@@ -168,6 +169,28 @@ The inverse operation of \cmd{stringify()} can be performed by the
 from a series (or returns an empty array if the series is not
 string-valued).
 
+\subsection{Assigning from an array of strings}
+\label{sec:array-assign}
+
+Given an array of strings whose length matches either the full length
+of the current dataset or the length of the current sample range, you
+can assign directly to a series result. Here's a trivial example:
+\begin{code}
+nulldata 6
+strings S = defarray("a", "b", "c", "b", "a", "d")
+series sx = S
+print sx --byobs
+\end{code}
+And here's a second example where we create a string-valued series
+using the ``observation markers'' from the current dataset, after
+grabbing them as an array via the \texttt{markers} command.
+\begin{code}
+open data4-10
+markers --to-array=S
+series state = S
+print state --byobs
+\end{code}
+
 \section{Permitted operations}
 
 One question that arises with string-valued series is, what are you
@@ -232,13 +255,14 @@ combinations even if they are not all represented in the given sample.
 
 \subsection{Assignment to an entire series}
 
-Other than the ``logical product'' case described above, this is
-disallowed at present: you can't execute an assignment with the name
-of a string-valued series \textit{per se} on the left-hand side. Put
-differently, you cannot overwrite an entire string-valued series at
-once. While this is debatable, it's the easiest way of ensuring that
-we never end up with a broken mapping. It's possible this restriction
-may be relaxed in future.
+Other than the ``assignment from array of strings'' and ``logical
+product'' cases described above, this is disallowed at present: you
+can't execute an assignment with the name of a string-valued series
+\textit{per se} on the left-hand side. Put differently, you cannot
+overwrite an entire string-valued series at once. While this is
+debatable, it's the easiest way of ensuring that we never end up with
+a broken mapping. It's possible this restriction may be relaxed in
+future.
 
 Besides assigning an out-of-bounds numerical value to a particular
 observation, this sort of assignment is in fact the only operation
