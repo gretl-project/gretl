@@ -79,13 +79,4 @@ void *gretl_mpi_receive (int source, GretlType *type,
 
 double gretl_mpi_time (void);
 
-int shm_write_matrix (const gretl_matrix *m,
-		      const char *fname);
-
-gretl_matrix *shm_read_matrix (const char *fname,
-			       int finalize,
-			       int *err);
-
-int shm_finalize_matrix (const char *fname);
-
 #endif /* GRETL_MPI_H */

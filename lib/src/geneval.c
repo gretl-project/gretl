@@ -3608,19 +3608,9 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 
         ret = aux_scalar_node(p);
         if (ret != NULL) {
-            int done = 0;
+	    int export = node_get_bool(r, p, 0);
 
-#ifdef HAVE_MPI
-            if (has_suffix(fname, ".shm")) {
-                ret->v.xval = shm_write_matrix(l->v.m, fname);
-                done = 1;
-            }
-#endif
-            if (!done) {
-                int export = node_get_bool(r, p, 0);
-
-                ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
-            }
+	    ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
         }
     } else {
         ret = aux_scalar_node(p);
@@ -4607,7 +4597,6 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
         int import = node_get_bool(r, p, 0);
         int csv = 0;
 	int gdt = 0;
-        int done = 0;
 
         gretl_error_clear();
 
@@ -4628,19 +4617,13 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 
         switch (f) {
         case F_MREAD:
-#ifdef HAVE_MPI
-            if (has_suffix(fname, ".shm")) {
-                ret->v.m = shm_read_matrix(fname, 1, &p->err);
-                done = 1;
-            }
-#endif
-            if (!done && csv) {
+            if (csv) {
                 ret->v.m = import_csv_as_matrix(realpath, &p->err);
-	    } else if (!done && gdt) {
+	    } else if (gdt) {
 		set_dset_matrix_target(&ret->v.m);
 		p->err = gretl_read_gdt(realpath, NULL, OPT_NONE, NULL);
 		set_dset_matrix_target(NULL);
-            } else if (!done) {
+            } else {
                 ret->v.m = gretl_matrix_read_from_file(realpath, 0, &p->err);
             }
             break;
