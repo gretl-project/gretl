@@ -1710,14 +1710,21 @@ static int td_plot (const gretl_matrix *y0,
     int i, k, T = y0->rows;
     int sT = s * T;
     int t, sTm = y->rows;
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
+    int have_dset = 0;
+    int save_t1 = 0;
+    int save_t2 = 0;
     int mult = 1;
     int err = 0;
 
     YY = gretl_matrix_alloc(sTm, 2);
     if (YY == NULL) {
 	return E_ALLOC;
+    }
+
+    if (dset != NULL) {
+	have_dset = (dset != NULL);
+	save_t1 = dset->t1;
+	save_t2 = dset->t2;
     }
 
     /* original data in first column */
@@ -1739,7 +1746,7 @@ static int td_plot (const gretl_matrix *y0,
 	}
     }
 
-    if (dset != NULL) {
+    if (have_dset) {
 	/* Either Y0 or X was a dataset object: we should make
 	   use of dataset info in the plot if we can. But is the
 	   dataset of the higher (@hf) or lower frequency?
@@ -1765,8 +1772,10 @@ static int td_plot (const gretl_matrix *y0,
     err = write_tdisagg_plot(YY, mult, title, dset);
 
     /* in case we messed with these above */
-    dset->t1 = save_t1;
-    dset->t2 = save_t2;
+    if (have_dset) {
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
+    }
 
     gretl_matrix_free(YY);
     g_free(title);
