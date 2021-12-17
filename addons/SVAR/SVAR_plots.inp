@@ -42,8 +42,8 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
     cumulate = exists(cumul) ? sum(cumul .= vnum) > 0 : 0
 
     tmpfname = int(1000 * muniform(1))
-    string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
-      sprintf("@dotdir/irf%d.gp", tmpfname)
+    string tmpfile = $windows ? sprintf("%s\\irf%d.gp", $dotdir, tmpfname) : \
+      sprintf("%s/irf%d.gp", $dotdir, tmpfname)
 
     k = (snum-1) * n + vnum
 
@@ -262,15 +262,11 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
 
     scalar tmpfname = int(10000 * muniform(1))
     if $windows
-        string datfile = sprintf("@dotdir\\fevd%d.txt", tmpfname)
-        # sprintf datfile "@dotdir\\fevd%d.txt", tmpfname
-        string tmpfile = sprintf("@dotdir\\fevd%d.gp", tmpfname)
-        # sprintf tmpfile "@dotdir\\fevd%d.gp", tmpfname
+        string datfile = sprintf("%s\\fevd%d.txt", $dotdir, tmpfname)
+        string tmpfile = sprintf("%s\\fevd%d.gp", $dotdir, tmpfname)
     else
-        string datfile = sprintf("@dotdir/fevd%d.txt", tmpfname)
-        # sprintf datfile "@dotdir/fevd%d.txt", tmpfname
-        string tmpfile = sprintf("@dotdir/fevd%d.gp", tmpfname)
-        # sprintf tmpfile "@dotdir/fevd%d.gp", tmpfname
+        string datfile = sprintf("%s/fevd%d.txt", $dotdir, tmpfname)
+        string tmpfile = sprintf("%s/fevd%d.gp", $dotdir, tmpfname)
     endif
 
     matrix sel = (v-1)*n + seq(1,n)
