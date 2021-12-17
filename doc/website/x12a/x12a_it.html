@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl and X-12-ARIMA</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="../index.html">pagina principale di gretl</a>]
+
+<center>
+<h1>gretl e X-12-ARIMA</h1>
+</center>
+
+<p>X-12-ARIMA è il programma attualmente in uso da parte
+dell'U.S. Census Bureau per la destagionalizzazione.  La pgina web per
+questo programma
+è <a href="http://www.census.gov/srd/www/x12a/">www.census.gov</a>, a
+cui rimandiamo per documentazione e dettagli.</p>
+
+<p>Ci sono vari pacchetti che permettono di usare X-12-ARIMA da dentro gretl.
+Si veda la <a href="../index.html">pagina principale</a> per dettagli sul download.
+</p>
+
+<p>Il supporto per X-12-ARIMA has been available since versionè
+  disponibile fin dalla versione 1.0.2 di gretl (Dicembre 2002) e, al
+  momento, ha tre aspetti.</p>
+
+<ul>
+
+<li><p>Nell'interfaccia grafica, you can call for anè possibile far
+    analizzare a X-12-ARIMA una serie mensile o trimestrale.  Le
+    componenti stagionale, di trend/ciclo e irregolare possono essere
+    graficate e/o salvate.
+</p></li>
+
+<li><p>Nel comando gretl <kbd>arma</kbd> c'è l'opzione di usare
+X-12-ARIMA.  (Ma per default gretl usa il suo codice nativo.)
+</p></li>
+
+<li><p>Inoltre, esiste una funzione, <kbd>deseas</kbd>, che si può
+    usare per produrre una serie destagionalizzata via X-12-ARIMA.
+</p></li>
+
+</ul>
+
+<p>Gli screenshot seguenti illustrano La prima delle opzioni suddette.</p>
+
+<p>Dopo aver aperto un dataset contenente serie storiche ad opportuna
+  frequenza, selezionare una variabile nella finestra principale e
+  quindi aprire il menu "Variabile". Selezionare "Analisi X13-ARIMA".</p>
+
+<center>
+<IMG SRC="x12a-menu_it.png" ALT="Variable menu">
+</center>
+
+<p>Apparirà una finestra di dialogo con a scelta di salvare nel
+  dataset attualmente aperto fino a tre delle serie generate da
+  X-12-ARIMA, e cioè la serie destagionalizzata, la stima della
+  componente di trend/ciclo e la stima della componente irregolare. A
+  questo punto, si può anche scegliere se mostrare o no un grafico con
+  queste tre serie.</p>
+
+<center>
+<IMG SRC="x12a-dialog.png" ALT="Dialog box">
+</center>
+
+<p>Se si sceglie di mostrare il grafico, si dovrebbe vedere qualcosa
+  del tipo:</p>
+
+<center>
+<IMG SRC="x12a-graph.png" ALT="x12a graph">
+</center>
+
+<p>Oltre che salvare le serie di output e mostrare il grafico, gretl
+  mostrerà anche l'output completo dell'analisi X-12-ARIMA.  Qui
+  sotto, un frammento:.</p>
+
+<center>
+<IMG SRC="x12a-output.png" ALT="x12a output">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+ 
+
+</body>
+
+
+
+
