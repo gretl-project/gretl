@@ -1788,9 +1788,11 @@ int kalman_forecast (kalman *K, PRN *prn)
 	int missobs = 0;
 	double llt = 0.0;
 
+#if 0
 	if (K->P0->val[0] < 0) {
 	    gretl_matrix_print(K->P0, "HERE 0 before refresh, P0");
 	}
+#endif
 
 #if KDEBUG > 1
 	kalman_print_state(K);
