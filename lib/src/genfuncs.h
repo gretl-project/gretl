@@ -73,8 +73,9 @@ int movavg_series (const double *x, double *y, const DATASET *dset,
 		   int k, int center);
 
 int seasonally_adjust_series (const double *x, double *y,
-			      DATASET *dset, int tramo,
-			      gretl_bundle *b, PRN *prn);
+			      const char *vname, DATASET *dset,
+			      int tramo, gretl_bundle *b,
+			      PRN *prn);
 
 int tramo_linearize_series (const double *x, double *y,
 			    DATASET *dset);

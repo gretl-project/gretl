@@ -1989,13 +1989,14 @@ static void display_x13a_output (char *fname, int err, PRN *prn)
 
 /* implements the deseas() function */
 
-int adjust_series (const double *x, double *y, const DATASET *dset,
-		   int tramo, gretl_bundle *opts, PRN *prn)
+int adjust_series (const double *x, double *y,
+		   const char *vname, const DATASET *dset,
+		   int tramo, gretl_bundle *opts,
+		   PRN *prn)
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
     x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, NADBL};
-    const char *vname = "x";
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
@@ -2004,6 +2005,10 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 #if DSDEBUG
     fprintf(stderr, "deseas: using %s\n", prog == X13A ? "x13as" : "tramo");
 #endif
+
+    if (vname == NULL) {
+	vname = "x";
+    }
 
     if (prog == X13A) {
 	exepath = gretl_x12_arima();

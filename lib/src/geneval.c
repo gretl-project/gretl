@@ -9404,7 +9404,8 @@ static NODE *series_matrix_func (NODE *n, int f, parser *p)
 }
 
 static int deseasonalize (const double *x, double *y,
-			  int f, NODE *r, parser *p)
+			  const char *vname, int f,
+			  NODE *r, parser *p)
 {
     gretl_bundle *b = NULL;
     int tramo = 0;
@@ -9424,8 +9425,8 @@ static int deseasonalize (const double *x, double *y,
 	}
     }
     if (!err) {
-	err = seasonally_adjust_series(x, y, p->dset, tramo,
-				       b, p->prn);
+	err = seasonally_adjust_series(x, y, vname, p->dset,
+				       tramo, b, p->prn);
     }
 
     return err;
@@ -9497,6 +9498,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 
     if (ret != NULL) {
         gretl_matrix *tmp = NULL;
+	const char *vname = NULL;
         double parm = NADBL;
 	int oneside = 0;
         const double *z = NULL;
@@ -9505,7 +9507,9 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 
         if (l->t == MAT) {
             cast_to_series(l, f, &tmp, NULL, NULL, p);
-        }
+        } else if (l->vnum > 0) {
+	    vname = p->dset->varname[l->vnum];
+	}
 	if (!null_node(r)) {
 	    if (r->t == SERIES) {
 		z = r->v.xvec;
@@ -9550,7 +9554,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
             p->err = cum_series(x, y, p->dset);
             break;
         case F_DESEAS:
-	    p->err = deseasonalize(x, y, f, r, p);
+	    p->err = deseasonalize(x, y, vname, f, r, p);
             break;
         case F_TRAMOLIN:
             p->err = tramo_linearize_series(x, y, p->dset);
