@@ -309,14 +309,6 @@ static int show_pkg_pdf (const char *fname)
 	err = E_FOPEN;
     }
 #elif defined(OS_OSX)
-# if defined(USE_CARBON)
-    FSRef ref;
-
-    err = FSPathMakeRef((const UInt8 *) fname, &ref, NULL);
-    if (!err) {
-	err = LSOpenFSRef(&ref, NULL);
-    }
-# else
     CFURLRef u;
 
     u = CFURLCreateFromFileSystemRepresentation(NULL,
@@ -329,7 +321,6 @@ static int show_pkg_pdf (const char *fname)
     } else {
         err = 1;
     }
-# endif
 #else
     char *syscmd = g_strdup_printf("xdg-open \"%s\"", fname);
 
