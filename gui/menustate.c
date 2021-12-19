@@ -1013,7 +1013,11 @@ void set_main_window_title (const char *name, gboolean modified)
 
 static const char *get_pd_string (DATASET *dset)
 {
+    int markers = dataset_has_markers(dset);
+    int plain_sd0 = dset->sd0 < 100000;
     char *pdstr;
+
+    fprintf(stderr, "HERE dset->sd0 = %g\n", dset->sd0);
 
     if (custom_time_series(dset)) {
         pdstr = N_("Time series");
@@ -1030,11 +1034,26 @@ static const char *get_pd_string (DATASET *dset)
         case 52:
             pdstr = N_("Weekly"); break;
         case 5:
-            pdstr = N_("Daily (5 days)"); break;
-        case 6:
-            pdstr = N_("Daily (6 days)"); break;
-        case 7:
-            pdstr = N_("Daily (7 days)"); break;
+	    if (markers || plain_sd0) {
+		pdstr = N_("Daily (5 days, incomplete)");
+	    } else {
+		pdstr = N_("Daily (5 days)");
+	    }
+	    break;
+	case 6:
+	    if (markers || plain_sd0) {
+		pdstr = N_("Daily (6 days, incomplete)");
+	    } else {
+		pdstr = N_("Daily (6 days)");
+	    }
+	    break;
+	case 7:
+	    if (markers || plain_sd0) {
+		pdstr = N_("Daily (7 days, incomplete)");
+	    } else {
+		pdstr = N_("Daily (7 days)");
+	    }
+	    break;
         case 10:
             pdstr = N_("Decennial"); break;
         default:
