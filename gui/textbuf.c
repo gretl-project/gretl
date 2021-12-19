@@ -4599,7 +4599,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP ||
 #endif
 	role == VIEW_DBNOMICS || role == IMPORT ||
-	role == VIEW_DBSEARCH) {
+	role == VIEW_DBSEARCH || role == INFO) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     } else {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
