@@ -288,6 +288,138 @@ int diff_series (const double *x, double *y, int f,
     return 0;
 }
 
+/* Special case of interpolate_series() for panel data. */
+
+static int panel_interpolate (const double *x, double *y,
+			      const DATASET *dset)
+{
+    int i, t, s, dt;
+    int i1 = dset->t1 / dset->pd;
+    int i2 = dset->t2 / dset->pd;
+    int t1, t2, tt, tt0, tt2, tnext;
+    double b;
+
+    for (i=i1; i<=i2; i++) {
+	/* process the data for unit @i */
+	tt0 = i * dset->pd;
+	t1 = 0;
+	t2 = dset->pd - 1;
+	for (t=0; t<=t2; t++) {
+	    s = tt0 + t;
+	    y[s] = x[s];
+	    if (na(x[s])) {
+		t1++;
+	    } else {
+		break;
+	    }
+	}
+	for (t=t2; t>=t1; t--) {
+	    s = tt0 + t;
+	    y[s] = x[s];
+	    if (na(x[s])) {
+		t2--;
+	    } else {
+		break;
+	    }
+	}
+	/* having found the first and last non-missing
+	   observations, perform interpolation
+	*/
+	tt2 = tt0 + t2;
+	for (t=t1; t<=t2; t++) {
+	    tt = tt0 + t;
+	    dt = 0;
+	    for (s=tt+1; s<=tt2; s++) {
+		if (na(x[s])) {
+		    dt++;
+		} else {
+		    break;
+		}
+	    }
+	    y[tt] = x[tt];
+	    if (dt > 0) {
+		tnext = s - 1 - tt0;
+		b = (x[s] - x[tt]) / (dt+1);
+		for (s=1; s<=dt; s++) {
+		    y[tt+s] = x[tt] + b*s;
+		}
+		t = tnext;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * interpolate_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @dset: data set information.
+ *
+ * Performs linear interpolation of missing values in @x,
+ * writing the result into @y. Panel data are handled:
+ * interpolation is strictly in the time-series dimension.
+ * No extrapolation is performed.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int interpolate_series (const double *x, double *y,
+			const DATASET *dset)
+{
+    int t, s, dt;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int tnext;
+    double b;
+
+    if (dataset_is_panel(dset)) {
+	return panel_interpolate(x, y, dset);
+    }
+
+    /* first determine the first and last non-missing values */
+    for (t=dset->t1; t<=dset->t2; t++) {
+	y[t] = x[t];
+	if (na(x[t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+    for (t=dset->t2; t>=t1; t--) {
+	y[t] = x[t];
+	if (na(x[t])) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }
+
+    /* perform linear interpolation */
+    for (t=t1; t<=t2; t++) {
+	dt = 0;
+	for (s=t+1; s<=t2; s++) {
+	    if (na(x[s])) {
+		dt++;
+	    } else {
+		break;
+	    }
+	}
+	y[t] = x[t];
+	if (dt > 0) {
+	    tnext = s-1;
+	    b = (x[s] - x[t]) / (dt+1);
+	    for (s=1; s<=dt; s++) {
+		y[t+s] = x[t] + b*s;
+	    }
+	    t = tnext;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * standardize_series:
  * @x: array of original data.

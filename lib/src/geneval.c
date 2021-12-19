@@ -9559,6 +9559,9 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
         case F_TRAMOLIN:
             p->err = tramo_linearize_series(x, y, p->dset);
             break;
+	case F_INTERPOL:
+            p->err = interpolate_series(x, y, p->dset);
+            break;
         case F_RESAMPLE:
             if (!na(parm)) {
                 p->err = block_resample_series(x, y, parm, p->dset);
@@ -16812,9 +16815,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_LDIFF:
     case F_SDIFF:
     case F_ODEV:
+    case F_INTERPOL:
         if (l->t == SERIES && cast_series_to_list(p, l, t->t)) {
             ret = apply_list_func(l, NULL, t->t, p);
-        } else if (l->t == SERIES || (t->t != F_ODEV && l->t == MAT)) {
+        } else if (l->t == SERIES ||
+		   (t->t != F_ODEV && t->t != F_INTERPOL && l->t == MAT)) {
             ret = series_series_func(l, r, NULL, t->t, p);
         } else if (ok_list_node(l, p)) {
             ret = apply_list_func(l, NULL, t->t, p);

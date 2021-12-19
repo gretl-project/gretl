@@ -284,6 +284,7 @@ enum {
     F_MLOG,
     F_BARRIER,
     F_LPSOLVE,
+    F_INTERPOL,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
