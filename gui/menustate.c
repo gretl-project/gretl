@@ -1017,8 +1017,6 @@ static const char *get_pd_string (DATASET *dset)
     int plain_sd0 = dset->sd0 < 100000;
     char *pdstr;
 
-    fprintf(stderr, "HERE dset->sd0 = %g\n", dset->sd0);
-
     if (custom_time_series(dset)) {
         pdstr = N_("Time series");
     } else if (dataset_is_time_series(dset)) {
