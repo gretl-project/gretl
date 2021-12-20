@@ -5036,7 +5036,7 @@ void function_package_unload_full_by_filename (const char *fname)
 
 int function_package_unload_full (const char *pkgname)
 {
-    fnpkg *pkg = get_loaded_pkg_by_name(pkgname, NULL);
+    fnpkg *pkg = get_loaded_pkg_by_name(pkgname);
 
     if (pkg != NULL) {
 	real_function_package_unload(pkg, 1);
