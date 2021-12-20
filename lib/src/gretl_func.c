@@ -4968,6 +4968,23 @@ static fnpkg *get_loaded_pkg_by_filename (const char *fname,
     return NULL;
 }
 
+static fnpkg *get_loaded_pkg_by_name (const char *pkgname)
+{
+    int i;
+
+    if (pkgname == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(pkgname, pkgs[i]->name)) {
+	    return pkgs[i];
+	}
+    }
+
+    return NULL;
+}
+
 /**
  * function_package_unload_by_filename:
  * @fname: package filename.
@@ -5002,6 +5019,30 @@ void function_package_unload_full_by_filename (const char *fname)
 
     if (pkg != NULL) {
 	real_function_package_unload(pkg, 1);
+    }
+}
+
+/**
+ * function_package_unload_full:
+ * @pkgname: package name.
+ *
+ * Unloads the specified function package from memory, if it
+ * is currently loaded.  The functions 'owned' by the package
+ * are also unloaded from memory.
+ *
+ * Returns: 1 if the specified package was loaded and is
+ * new unloaded, otherwise 0.
+ */
+
+int function_package_unload_full (const char *pkgname)
+{
+    fnpkg *pkg = get_loaded_pkg_by_name(pkgname, NULL);
+
+    if (pkg != NULL) {
+	real_function_package_unload(pkg, 1);
+	return 1;
+    } else {
+	return 0;
     }
 }
 

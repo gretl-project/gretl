@@ -270,6 +270,8 @@ void function_package_unload_by_filename (const char *fname);
 
 void function_package_unload_full_by_filename (const char *fname);
 
+int function_package_unload_full (const char *pkgname);
+
 int delete_function_package (const char *gfnname);
 
 int uninstall_function_package (const char *package, gretlopt opt,

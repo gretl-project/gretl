@@ -1270,7 +1270,10 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 	       information in response to a subsequent call to
 	       "check for addons"
 	    */
-	    function_package_unload_full_by_filename(local_path);
+	    if (function_package_unload_full(pkgname)) {
+		/* old version was loaded, so load the new one */
+		include_gfn(local_path, OPT_NONE, NULL);
+	    }
 	    free(local_path);
 	}
 
