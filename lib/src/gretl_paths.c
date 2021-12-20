@@ -3600,13 +3600,10 @@ const char *gretl_function_package_path (void)
 #endif
         if (sys_first) {
             err = get_system_install_path(path, "functions");
-            if (err) {
-                err = get_user_install_path(path, "functions");
-            }
-        } else {
+	}
+	if (err || !sys_first) {
             err = get_user_install_path(path, "functions");
         }
-
         if (err) {
             *path = '\0';
         } else {
