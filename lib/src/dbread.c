@@ -2550,7 +2550,7 @@ static int get_one_db_series (const char *sername,
 {
     CompactMethod this_method = cmethod;
     const char *impname;
-    SERIESINFO sinfo; /* sinfo declared */
+    SERIESINFO sinfo;
     double **dbZ;
     int v, err = 0;
 
@@ -2572,9 +2572,7 @@ static int get_one_db_series (const char *sername,
 #endif
 
     /* find the series information in the database */
-    if (saved_db_type == GRETL_DBNOMICS) {
-	err = get_dbnomics_series_info(sername, &sinfo);
-    } else if (saved_db_type == GRETL_RATS_DB) {
+    if (saved_db_type == GRETL_RATS_DB) {
 	err = get_rats_series_info(sername, &sinfo);
     } else if (saved_db_type == GRETL_PCGIVE_DB) {
 	err = get_pcgive_series_info(sername, &sinfo);
@@ -2599,9 +2597,7 @@ static int get_one_db_series (const char *sername,
 	    sinfo.offset, sinfo.nobs);
 #endif
 
-    if (saved_db_type == GRETL_DBNOMICS) {
-	err = get_dbnomics_data(saved_db_name, &sinfo, dbZ);
-    } else if (saved_db_type == GRETL_RATS_DB) {
+    if (saved_db_type == GRETL_RATS_DB) {
 	err = get_rats_db_data(saved_db_name, &sinfo, dbZ);
     } else if (saved_db_type == GRETL_PCGIVE_DB) {
 	err = get_pcgive_db_data(saved_db_name, &sinfo, dbZ);
@@ -2768,6 +2764,9 @@ int db_get_series (const char *line, DATASET *dset,
 	    } else {
 		err = E_INVARG;
 	    }
+	} else if (saved_db_type == GRETL_DBNOMICS) {
+	    err = get_one_dbnomics_series(vnames[i], altname, dset,
+					  cmethod, prn);
 	} else {
 	    err = get_one_db_series(vnames[i], altname, dset,
 				    cmethod, idxname, prn);

@@ -1816,21 +1816,20 @@ int lib_join_data (const char *param,
     char *tconvfmt = NULL;
     int *ikeyvars = NULL;
     int aggr = 0, seqval = 0;
+    int tseries, nvars = 1;
     int midas_pd = 0;
-    int tseries = 0;
-    int nvars = 1;
     int i, err = 0;
+
+    tseries = dataset_is_time_series(dset);
 
     if (opt & OPT_K) {
         /* --tkey implies special handling of keys */
         if (opt & (OPT_I | OPT_O)) {
             return E_BADOPT;
-        } else if (!dataset_is_time_series(dset)) {
+        } else if (!tseries) {
             return E_PDWRONG;
         }
     }
-
-    tseries = dataset_is_time_series(dset);
 
     err = get_selected_import_names(param, JOIN, dset, &vnames, &nvars);
 
@@ -1843,40 +1842,40 @@ int lib_join_data (const char *param,
 
     for (i=0; opts[i] && !err; i++) {
         gretlopt jopt = opts[i];
-        const char *param;
+        const char *optparm;
 
         if (opt & jopt) {
-            param = get_optval_string(JOIN, jopt);
-            if (param == NULL) {
+            optparm = get_optval_string(JOIN, jopt);
+            if (optparm == NULL) {
                 gretl_errmsg_set("Missing option parameter");
                 err = E_DATA;
             } else if (jopt == OPT_I) {
                 /* --ikey: the inner key(s) string */
-                ikeyvars = get_inner_keys(param, dset, &err);
+                ikeyvars = get_inner_keys(optparm, dset, &err);
             } else if (jopt == OPT_O) {
                 /* --okey: the outer key(s) string */
-                okey = gretl_strdup(param);
+                okey = gretl_strdup(optparm);
             } else if (jopt == OPT_F) {
                 /* --filter: string specifying a row filter */
-                filter = gretl_strdup(param);
+                filter = gretl_strdup(optparm);
             } else if (jopt == OPT_A) {
                 /* --aggr: aggregation */
-                aggr = join_aggregation_method(param, &seqval,
+                aggr = join_aggregation_method(optparm, &seqval,
                                                &auxname, &err);
             } else if (jopt == OPT_D) {
                 /* --data: string specifying the outer data series */
-                dataname = gretl_strdup(param);
+                dataname = gretl_strdup(optparm);
             } else if (jopt == OPT_K) {
                 /* --tkey: string specifying outer time key */
-                okey = gretl_strdup(param);
+                okey = gretl_strdup(optparm);
             } else if (jopt == OPT_X) {
                 /* --tconvert: list of time/date cols */
-                tconvstr = gretl_strdup(param);
+                tconvstr = gretl_strdup(optparm);
             } else if (jopt == OPT_T) {
                 /* --tconv-fmt: format for tconvert columns */
-                tconvfmt = gretl_strdup(param);
+                tconvfmt = gretl_strdup(optparm);
             } else if (jopt == OPT_P) {
-                midas_pd = atoi(param);
+                midas_pd = atoi(optparm);
             }
         }
     }
