@@ -400,6 +400,7 @@ enum {
     F_VECH,
     F_UNVECH,
     F_DESEAS,
+    F_MAT2LIST,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,

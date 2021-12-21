@@ -15766,6 +15766,19 @@ static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *mat2list_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_list_node(p);
+
+    if (ret != NULL) {
+	const char *pfx = null_node(r) ? NULL : r->v.str;
+
+        ret->v.ivec = list_from_matrix(l->v.m, pfx, p->dset, &p->err);
+    }
+
+    return ret;
+}
+
 /* see if a plain NUM node can be interpreted as holding a
    series ID, in the context of creating a list */
 
@@ -16462,6 +16475,16 @@ static NODE *eval (NODE *t, parser *p)
             p->err = E_TYPES;
         }
         break;
+    case F_MAT2LIST:
+	/* parlay matrix into list of series */
+	if (l->t != MAT) {
+	    node_type_error(t->t, 1, MAT, l, p);
+	} else if (!null_node(r) && r->t != STR) {
+	    node_type_error(t->t, 2, STR, r, p);
+	} else {
+	    ret = mat2list_node(l, r, p);
+	}
+	break;
     case B_JOIN:
         /* list join with separator */
         if (ok_list_node(l, p) && ok_list_node(r, p)) {

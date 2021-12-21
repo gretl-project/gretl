@@ -8230,3 +8230,131 @@ int substitute_values (double *dest, const double *src, int n,
 
     return 0;
 }
+
+static int get_column_name (char *vname, int i,
+			    const char *prefix,
+			    int numlen,
+			    const char **S)
+{
+    int done = 0;
+    int err = 0;
+
+    if (prefix != NULL) {
+	if (numlen + strlen(prefix) >= VNAMELEN) {
+	    err = E_INVARG;
+	} else {
+	    err = check_varname(prefix);
+	}
+	if (!err) {
+	    sprintf(vname, "%s%d", prefix, i+1);
+	    done = 1;
+	}
+    } else if (S != NULL && check_varname(S[i]) == 0) {
+	strcpy(vname, S[i]);
+	done = 1;
+    }
+
+    if (!err && !done) {
+	sprintf(vname, "column%d", i+1);
+    }
+
+    return err;
+}
+
+static int name_collision (const char *vname)
+{
+    GretlType t = user_var_get_type_by_name(vname);
+    gchar *msg = name_conflict_message(vname, t);
+
+    gretl_errmsg_set(msg);
+    g_free(msg);
+
+    return E_TYPES;
+}
+
+/**
+ * list_from_matrix:
+ * @m: source matrix.
+ * @prefix: prefix for series names or NULL.
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Constructs a series from each column of @m and returns
+ * a list of the series.
+ *
+ * Returns: list on successful completion, NULL otherwise.
+ */
+
+int *list_from_matrix (const gretl_matrix *m,
+		       const char *prefix,
+		       DATASET *dset, int *err)
+{
+    int *list = NULL;
+    int n, k;
+
+    if (gretl_is_null_matrix(m)) {
+	return gretl_null_list();
+    }
+
+    n = m->rows;
+    k = m->cols;
+
+    if (n != dset->n && n != sample_size(dset)) {
+	*err = E_NONCONF;
+    } else {
+	const char **S = gretl_matrix_get_colnames(m);
+	char vname[VNAMELEN];
+	int numlen = ceil(log10(k));
+	int orig_v = dset->v;
+	int i, vi, nadd = 0;
+
+	list = gretl_list_new(k);
+
+	for (i=0; i<k && !*err; i++) {
+	    *err = get_column_name(vname, i, prefix, numlen, S);
+	    vi = current_series_index(dset, vname);
+	    if (vi > 0) {
+		list[i+1] = vi;
+	    } else if (gretl_is_user_var(vname)) {
+		*err = name_collision(vname);
+	    } else {
+		nadd++;
+	    }
+	}
+
+	if (!*err && nadd > 0) {
+	    *err = dataset_add_NA_series(dset, nadd);
+	}
+
+	if (!*err) {
+	    double *dest, *src = m->val;
+	    size_t csize = n * sizeof *src;
+	    int vnew = orig_v;
+
+	    if (n == dset->n) {
+		src += dset->t1;
+	    }
+
+	    for (i=0; i<k; i++) {
+		vi = list[i+1];
+		if (vi == 0) {
+		    /* a new series */
+		    get_column_name(vname, i, prefix, numlen, S);
+		    vi = vnew++;
+		    list[i+1] = vi;
+		    strcpy(dset->varname[vi], vname);
+		}
+		dest = dset->Z[vi] + dset->t1;
+		memcpy(dest, src, csize);
+		src += n;
+	    }
+	}
+
+	if (*err && list != NULL) {
+	    free(list);
+	    list = NULL;
+	}
+    }
+
+    return list;
+}

@@ -266,4 +266,8 @@ int substitute_values (double *dest, const double *src, int n,
 		       const double *v0, int n0,
 		       const double *v1, int n1);
 
+int *list_from_matrix (const gretl_matrix *m,
+		       const char *prefix,
+		       DATASET *dset, int *err);
+
 #endif /* GENFUNCS_H */
