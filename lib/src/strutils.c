@@ -3072,7 +3072,7 @@ int gretl_scan_varname (const char *src, char *targ)
  * with underscore.
  * @seq: sequence number in array of names, if applicable.
  *
- * Writes a vaid gretl identifier to @targ, which must be
+ * Writes a valid gretl identifier to @targ, which must be
  * at least #VNAMELEN bytes in length, taking @src as basis
  * and replacing any illegal characters as described in the
  * documentation for the userland fixname function.
