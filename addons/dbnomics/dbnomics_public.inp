@@ -100,6 +100,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
    endif
    pd = b.frequency
    daily = pd == 7
+   use_join = daily
 
    if daily # daily data need special treatment
       match = maxc($pd .= {5;6;7})
@@ -131,17 +132,22 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
    string tracestr
    outfile --buffer=tracestr
-      # try "append" first
-      print "trying append..."
-      catch append @tmpfile --quiet --fixed-sample
-      err = $error
-      if !err
-         tool = "append"
-         x = dbseries
-      else
-         # "append" may fail because data are not ordered properly
-         # if that's the case, "join" may still work
-         print "append failed, trying join..."
+      if !use_join
+         # try "append" first
+         print "trying append..."
+         catch append @tmpfile --quiet --fixed-sample
+         err = $error
+         if !err
+            tool = "append"
+            x = dbseries
+         else
+            # "append" may fail because data are not ordered properly
+            # if that's the case, "join" may still work
+            print "append failed, trying join..."
+            use_join = 1
+         endif
+      endif
+      if use_join
          catch join @tmpfile x --data="dbseries"
          err = $error
          if !err
