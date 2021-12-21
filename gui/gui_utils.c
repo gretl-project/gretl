@@ -5631,7 +5631,7 @@ static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 static int object_overwrite_ok (const char *name, GretlType t,
 				GtkWidget *parent)
 {
-    gchar *info = type_conflict_message(name, t);
+    gchar *info = name_conflict_message(name, t);
     gchar *msg = g_strdup_printf("%s\n%s", info, _("OK to overwrite it?"));
     int resp;
 
@@ -5690,7 +5690,7 @@ static int real_gui_validate_varname (const char *name,
 		err = !object_overwrite_ok(name, t, parent);
 	    } else {
 		/* the types disgree: won't work */
-		gchar *msg = type_conflict_message(name, t0);
+		gchar *msg = name_conflict_message(name, t0);
 
 		errbox(msg);
 		g_free(msg);

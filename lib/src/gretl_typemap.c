@@ -385,7 +385,7 @@ void gretl_typemap_cleanup (void)
     gretl_get_gen_type(NULL);
 }
 
-gchar *type_conflict_message (const char *name, GretlType type)
+gchar *name_conflict_message (const char *name, GretlType type)
 {
     gchar *s = NULL;
 
