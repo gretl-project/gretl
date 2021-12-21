@@ -5628,33 +5628,10 @@ static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
     return FALSE;
 }
 
-static gchar *exists_string (const char *name, GretlType t)
-{
-    gchar *s = NULL;
-
-    if (t == GRETL_TYPE_SERIES) {
-	s = g_strdup_printf(_("A series named %s already exists"), name);
-    } else if (t == GRETL_TYPE_MATRIX) {
-	s = g_strdup_printf(_("A matrix named %s already exists"), name);
-    } else if (t == GRETL_TYPE_DOUBLE) {
-	s = g_strdup_printf(_("A scalar named %s already exists"), name);
-    } else if (t == GRETL_TYPE_LIST) {
-	s = g_strdup_printf(_("A list named %s already exists"), name);
-    } else if (t == GRETL_TYPE_STRING) {
-	s = g_strdup_printf(_("A string named %s already exists"), name);
-    } else if (t == GRETL_TYPE_BUNDLE) {
-	s = g_strdup_printf(_("A bundle named %s already exists"), name);
-    } else if (t == GRETL_TYPE_ARRAY) {
-	s = g_strdup_printf(_("An array named %s already exists"), name);
-    }
-
-    return s;
-}
-
 static int object_overwrite_ok (const char *name, GretlType t,
 				GtkWidget *parent)
 {
-    gchar *info = exists_string(name, t);
+    gchar *info = type_conflict_message(name, t);
     gchar *msg = g_strdup_printf("%s\n%s", info, _("OK to overwrite it?"));
     int resp;
 
@@ -5713,7 +5690,7 @@ static int real_gui_validate_varname (const char *name,
 		err = !object_overwrite_ok(name, t, parent);
 	    } else {
 		/* the types disgree: won't work */
-		gchar *msg = exists_string(name, t0);
+		gchar *msg = type_conflict_message(name, t0);
 
 		errbox(msg);
 		g_free(msg);

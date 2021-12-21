@@ -52,4 +52,6 @@ int gretl_is_series_type (GretlType type);
 
 void gretl_typemap_cleanup (void);
 
+gchar *type_conflict_message (const char *name, GretlType type);
+
 #endif /* GRETL_TYPEMAP_H_ */

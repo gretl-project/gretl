@@ -384,3 +384,26 @@ void gretl_typemap_cleanup (void)
 {
     gretl_get_gen_type(NULL);
 }
+
+gchar *type_conflict_message (const char *name, GretlType type)
+{
+    gchar *s = NULL;
+
+    if (type == GRETL_TYPE_SERIES) {
+	s = g_strdup_printf(_("A series named %s already exists"), name);
+    } else if (type == GRETL_TYPE_MATRIX) {
+	s = g_strdup_printf(_("A matrix named %s already exists"), name);
+    } else if (type == GRETL_TYPE_DOUBLE) {
+	s = g_strdup_printf(_("A scalar named %s already exists"), name);
+    } else if (type == GRETL_TYPE_LIST) {
+	s = g_strdup_printf(_("A list named %s already exists"), name);
+    } else if (type == GRETL_TYPE_STRING) {
+	s = g_strdup_printf(_("A string named %s already exists"), name);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	s = g_strdup_printf(_("A bundle named %s already exists"), name);
+    } else if (type == GRETL_TYPE_ARRAY) {
+	s = g_strdup_printf(_("An array named %s already exists"), name);
+    }
+
+    return s;
+}
