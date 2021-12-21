@@ -8231,6 +8231,12 @@ int substitute_values (double *dest, const double *src, int n,
     return 0;
 }
 
+/* Write into @vname the putative name for a series
+   to be made from column @i of a matrix. Check for
+   validity of the name and return non-zero in case
+   of error.
+*/
+
 static int get_column_name (char *vname, int i,
 			    const char *prefix,
 			    int numlen,
@@ -8310,6 +8316,7 @@ int *list_from_matrix (const gretl_matrix *m,
 
 	list = gretl_list_new(k);
 
+	/* check the names to be assigned to series */
 	for (i=0; i<k && !*err; i++) {
 	    *err = get_column_name(vname, i, prefix, numlen, S);
 	    vi = current_series_index(dset, vname);
