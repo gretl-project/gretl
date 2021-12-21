@@ -8298,7 +8298,10 @@ int *list_from_matrix (const gretl_matrix *m,
     int *list = NULL;
     int n, k;
 
-    if (gretl_is_null_matrix(m)) {
+    if (m != NULL && m->is_complex) {
+	*err = E_CMPLX;
+	return NULL;
+    } else if (gretl_is_null_matrix(m)) {
 	return gretl_null_list();
     }
 
