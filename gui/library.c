@@ -6498,6 +6498,33 @@ void do_remove_obs (void)
     }
 }
 
+void do_pad_daily (void)
+{
+    const char *msg = N_("Pad incomplete daily data");
+    const char *spintxt = N_("Days per week");
+    char param[16];
+    int wkdays = dataset->pd;
+    int resp, err;
+
+    resp = spin_dialog(NULL, _(msg), &wkdays, _(spintxt),
+		       dataset->pd, 7, 0, mdata->main);
+    if (resp != GRETL_YES) {
+	return;
+    }
+
+    sprintf(param, "%d", wkdays);
+    err = modify_dataset(dataset, DS_PAD_DAILY, NULL, param,
+			 OPT_NONE, NULL);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	lib_command_sprintf("dataset pad-daily %d", wkdays);
+	record_command_verbatim();
+	mark_dataset_as_modified();
+    }
+}
+
 static int stdize_option_dialog (int selvar, gretlopt *opt)
 {
     const char *opts[] = {

@@ -2490,6 +2490,24 @@ static void data_structure_wizard (int create)
     gtk_widget_show(dialog);
 }
 
+static void maybe_pad_daily_data (void)
+{
+    const char *s = N_("The current dataset holds daily data on an incomplete calendar\n"
+		       "(missing values are skipped rather than recorded as such).\n\n"
+		       "If you wish, gretl can pad the data (insert NAs) to create a\n"
+		       "complete calendar. But note that this may make it difficult to\n"
+		       "apply time-series methods, many of which cannot handle missing\n"
+		       "values within the sample range. If you decide to do padding, you\n"
+		       "can choose the number of days per week (5, 6 or 7) for the\n"
+		       "completed calendar.\n\n"
+		       "Do you want to continue?");
+    int resp = no_yes_dialog(NULL, _(s));
+
+    if (resp == GRETL_YES) {
+	do_pad_daily();
+    }
+}
+
 /* public interface */
 
 /* Take the user through a series of dialogs to define the structure
@@ -2500,16 +2518,10 @@ static void data_structure_wizard (int create)
 void data_structure_dialog (void)
 {
     if (dataset_is_incomplete_daily(dataset)) {
-	const char *s = N_("The current dataset appears to hold irregular time series.\n"
-			   "Modifying its structure may break the existing existing "
-			   "metadata.\n\nDo you want to continue?");
-	int resp = no_yes_dialog(NULL, _(s));
-
-	if (resp == GRETL_NO) {
-	    return;
-	}
+	maybe_pad_daily_data();
+    } else {
+	data_structure_wizard(0);
     }
-    data_structure_wizard(0);
 }
 
 void new_data_structure_dialog (void)

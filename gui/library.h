@@ -263,6 +263,8 @@ void do_add_obs (void);
 
 void do_remove_obs (void);
 
+void do_pad_daily (void);
+
 void add_logs_etc (int ci, int varnum, int midas);
 
 void add_discrete_dummies (int varnum);
