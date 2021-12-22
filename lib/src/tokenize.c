@@ -2315,6 +2315,22 @@ static int legacy_accept_strays (CMD *c, int i)
     return 0;
 }
 
+static int stray_symbol_error (cmd_token *tok)
+{
+    GretlType t = user_var_get_type_by_name(tok->s);
+
+    if (t == GRETL_TYPE_NONE) {
+	gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
+			     tok->s);
+	return E_PARSE;
+    } else {
+	gretl_errmsg_sprintf(_("The variable %s is of type %s, "
+			       "not acceptable in context"),
+			     tok->s, gretl_type_get_name(t));
+	return E_TYPES;
+    }
+}
+
 static int check_for_stray_tokens (CMD *c)
 {
     if (!(c->ciflags & (CI_EXPR | CI_ADHOC))) {
@@ -2324,9 +2340,7 @@ static int check_for_stray_tokens (CMD *c)
 	for (i=0; i<c->ntoks && !c->err; i++) {
 	    tok = &c->toks[i];
 	    if (!token_done(tok) && !legacy_accept_strays(c, i)) {
-		gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
-				     tok->s);
-		c->err = E_PARSE;
+		c->err = stray_symbol_error(tok);
 	    }
 	}
     }
