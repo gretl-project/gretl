@@ -2499,7 +2499,7 @@ static void data_structure_wizard (int create)
 
 void data_structure_dialog (void)
 {
-    if (dataset != NULL && dataset->markers == DAILY_DATE_STRINGS) {
+    if (dataset_is_incomplete_daily(dataset)) {
 	const char *s = N_("The current dataset appears to hold irregular time series.\n"
 			   "Modifying its structure may break the existing existing "
 			   "metadata.\n\nDo you want to continue?");

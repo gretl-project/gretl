@@ -142,6 +142,17 @@ typedef struct series_table_ series_table;
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7))
 
 /**
+ * dataset_is_incomplete_daily:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a dataset contains daily on an
+ * incomplete calendar (1) or not (0).
+ */
+#define dataset_is_incomplete_daily(p) (p != NULL && p->structure == TIME_SERIES \
+					&& (p->pd == 5 || p->pd == 6 || p->pd == 7) \
+					&& p->markers == DAILY_DATE_STRINGS)
+
+/**
  * dataset_is_weekly:
  * @p: pointer to data information struct.
  *
