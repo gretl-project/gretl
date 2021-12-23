@@ -268,7 +268,12 @@ static int tdisagg_get_start_stop (struct tdisagg_info *tdi,
             *start = t1;
             *ystop = yt2;
             *xstop = t2;
-        }
+	    if (tdi->extmax >= 0 && t2 - yt2 > tdi->extmax) {
+		*xstop = tdi->extmax + yt2;
+		fprintf(stderr, "tdisagg: revise t2 for X data: %d -> %d\n",
+			t2, *xstop);
+	    }
+	}
     }
 
     return err;
@@ -361,6 +366,16 @@ static int tdisagg_data_to_matrix (struct tdisagg_info *tdi,
     return err;
 }
 
+static void retrieve_extmax (struct tdisagg_info *tdi,
+			     gretl_bundle *b)
+{
+    if (gretl_bundle_has_key(b, "extmax")) {
+	tdi->extmax = gretl_bundle_get_int(b, "extmax", NULL);
+    } else {
+	tdi->extmax = tdi->efac;
+    }
+}
+
 gretl_matrix *get_tdisagg_matrix (struct tdisagg_info *tdi,
 				  DATASET *dset, gretl_bundle *b,
 				  gretl_bundle *r, PRN *prn,
@@ -369,10 +384,14 @@ gretl_matrix *get_tdisagg_matrix (struct tdisagg_info *tdi,
     gretl_matrix *ret = NULL;
     gretl_matrix *tmpY = NULL;
     gretl_matrix *tmpX = NULL;
-    int yconv, xconv;
+    int yconv, xconv = 0;
 
     yconv = (tdi->Y == NULL);
-    xconv = (tdi->X == NULL && (tdi->xval != NULL || tdi->xlist != NULL));
+
+    if (tdi->X == NULL && (tdi->xval != NULL || tdi->xlist != NULL)) {
+	xconv = 1;
+	retrieve_extmax(tdi, b);
+    }
 
     if (yconv || xconv) {
 	/* Conversion from dataset object to matrix

@@ -25,6 +25,7 @@
 #define CL_DEBUG 0
 #define SSR_LOGISTIC 1
 #define RHOMAX 0.999
+#define EXTMAX_AUTO -99
 
 /* aggregation types */
 enum {
@@ -1052,6 +1053,7 @@ static int fill_chowlin_bundle (struct gls_info *G,
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
  * @rho: fixed rho value, if wanted.
+ * @extmax: max number of values to extrapolate.
  * @verbose: 0, 1 or 2.
  * @plot: currently just a boolean.
  * @prn: printing struct pointer.
@@ -1075,8 +1077,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      int det, double rho,
 				      gretl_bundle *res,
 				      int verbose, int plot,
-				      DATASET *dset,
-				      PRN *prn, int *perr)
+				      DATASET *dset, PRN *prn,
+				      int *perr)
 {
     struct gls_info G = {0};
     gretl_matrix_block *B;
@@ -1415,17 +1417,82 @@ static gretl_matrix *denton_fd (const gretl_matrix *Y0,
     return Y;
 }
 
+static int get_mmax (int m, int s, int extmax)
+{
+    if (extmax == -1) {
+	/* unlimited */
+	return m;
+    } else if (extmax >= 0) {
+	/* user-specified limit */
+	return MIN(extmax, m);
+    } else {
+	/* extrapolate for at most one low-frequency period */
+	return MIN(m, s);
+    }
+}
+
+static gretl_matrix *tdisagg_trim_X (const gretl_matrix *X, int rows)
+{
+    gretl_matrix *Xm = gretl_matrix_alloc(rows, X->cols);
+    size_t csize = rows * sizeof(double);
+    double *dest, *src;
+    int j, t1, t2;
+
+#if CL_DEBUG
+    fprintf(stderr, "Trmming X from %d to %d rows\n", X->rows, rows);
+#endif
+
+    if (Xm == NULL) {
+	return NULL;
+    }
+
+    dest = Xm->val;
+    src = X->val;
+
+    for (j=0; j<X->cols; j++) {
+	memcpy(dest, src, csize);
+	dest += rows;
+	src += X->rows;
+    }
+
+    t1 = gretl_matrix_get_t1(X);
+    t2 = gretl_matrix_get_t2(X);
+    if (t2 > t1) {
+	gretl_matrix_set_t1(Xm, t1);
+	gretl_matrix_set_t2(Xm, t1 + rows - 1);
+    }
+
+    return Xm;
+}
+
 static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 				   const gretl_matrix *X,
 				   int s, int agg, int method,
 				   int det, double rho,
 				   gretl_bundle *r,
-				   int verbose, int plot,
-				   DATASET *dset,
+				   int extmax, int verbose,
+				   int plot, DATASET *dset,
 				   int yconv, PRN *prn,
 				   int *err)
 {
     gretl_matrix *ret = NULL;
+    gretl_matrix *Xm = NULL;
+
+    if (X != NULL) {
+	/* m = number of "extra" observations */
+	int mmax, m = X->rows - s * Y0->rows;
+
+	mmax = get_mmax(m, s, extmax);
+	if (mmax < m) {
+	    /* we want a trimmed version of the @X matrix */
+	    Xm = tdisagg_trim_X(X, s * Y0->rows + mmax);
+	    if (Xm == NULL) {
+		*err = E_ALLOC;
+		return NULL;
+	    }
+	    X = Xm;
+	}
+    }
 
     if (method < 4) {
 	/* Chow-Lin variants */
@@ -1474,6 +1541,8 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	gretl_matrix_set_t2(ret, t1 + ret->rows - 1);
     }
 
+    gretl_matrix_free(Xm);
+
     return ret;
 }
 
@@ -1517,13 +1586,14 @@ static int get_tdisagg_method (const char *s, int *err)
 static int tdisagg_get_options (gretl_bundle *b,
 				int *pagg, int *pmeth,
 				int *pdet, double *pr,
-				int *pverb, int *pplot,
-				PRN *prn)
+				int *pemax, int *pverb,
+				int *pplot, PRN *prn)
 {
     double rho = NADBL;
     int agg = AGG_SUM; /* debatable */
     int method = 0;
     int det = 1;
+    int extmax = EXTMAX_AUTO;
     int verbose = 0;
     int plot = 0;
     const char *str;
@@ -1553,6 +1623,10 @@ static int tdisagg_get_options (gretl_bundle *b,
 	    err = E_INVARG;
 	}
     }
+
+    if (!err && gretl_bundle_has_key(b, "extmax")) {
+	extmax = gretl_bundle_get_int(b, "extmax", NULL);
+    }
     if (!err && gretl_bundle_has_key(b, "verbose")) {
 	verbose = gretl_bundle_get_int(b, "verbose", NULL);
     }
@@ -1569,6 +1643,7 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pmeth = method;
 	*pdet = det;
 	*pr = rho;
+	*pemax = extmax;
 	*pverb = verbose;
 	*pplot = plot;
 	if (verbose && method <= R_UROOT) {
@@ -1629,6 +1704,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
     int agg = AGG_SUM; /* debatable? */
     int method = 0;
     int det = 1;
+    int extmax = EXTMAX_AUTO;
     int verbose = 0;
     int plot = 0;
 
@@ -1636,8 +1712,8 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 
     if (!*err && b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det,
-				   &rho, &verbose, &plot,
-				   prn);
+				   &rho, &extmax, &verbose,
+				   &plot, prn);
     }
 
     if (*err) {
@@ -1650,8 +1726,8 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			res, verbose, plot, dset, yconv,
-			prn, err);
+			res, extmax, verbose, plot, dset,
+			yconv, prn, err);
 }
 
 /* Add basic info to dummy high-frequency dataset @hf, sufficient to

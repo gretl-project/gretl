@@ -27,6 +27,7 @@ struct tdisagg_info {
     gretl_matrix *Y, *X;       /* matrix values */
     int xmidas;                /* 0/1: X given as a MIDAS list? */
     int efac;                  /* expansion factor */
+    int extmax;                /* max # of extrapolated obs */
     GretlType targ;            /* target return type */
 };
 
