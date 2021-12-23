@@ -2414,11 +2414,12 @@ static int get_print_range (int len, int *start, int *stop)
 		fprintf(stderr, "get_print_range: got empty range\n");
 	    }
 	}
-	if (!err && (k1 > len || k2 > len)) {
+	if (!err && (k1 < 1 || k1 > len || k2 < 1 || k2 > len)) {
 	    fprintf(stderr, "get_print_range: out of bounds\n");
 	    err = E_INVARG;
 	}
 	if (!err) {
+	    /* convert to zero-based */
 	    *start = k1 - 1;
 	    *stop = k2 - 1;
 	}

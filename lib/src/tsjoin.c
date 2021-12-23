@@ -107,7 +107,7 @@ static int fill_ts_joiner (DATASET *ldset, DATASET *rdset,
     tjr->t2 = ym2obs(obsl, y, m, ldset);
 
     /* possible adjustment of the endpoint in case the outer
-       dataset is of lower frequency
+       dataset is of lower frequency (2021-12-23)
     */
     if (tjr->pdr > 1 && m < 12) {
 	int alt_t2 = tjr->t2 + tjr->pdr - 1;
