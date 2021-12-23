@@ -270,8 +270,10 @@ static int tdisagg_get_start_stop (struct tdisagg_info *tdi,
             *xstop = t2;
 	    if (tdi->extmax >= 0 && t2 - yt2 > tdi->extmax) {
 		*xstop = tdi->extmax + yt2;
+#if 0
 		fprintf(stderr, "tdisagg: revise t2 for X data: %d -> %d\n",
 			t2, *xstop);
+#endif
 	    }
 	}
     }
