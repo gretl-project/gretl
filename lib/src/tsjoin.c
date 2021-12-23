@@ -82,29 +82,38 @@ static int fill_ts_joiner (DATASET *ldset, DATASET *rdset,
 {
     guint32 edl, edr;
     int y, m, d;
-    char ol[OBSLEN];
-    char or[OBSLEN];
+    char obsl[OBSLEN];
+    char obsr[OBSLEN];
+
+    /* frequency ratio */
+    tjr->pdr = ldset->pd / rdset->pd;
 
     /* start at the later of ldset->t1 and the first
        observation in rdset
     */
-    edl = eday(ol, ldset->t1, ldset);
-    edr = eday(or, rdset->t1, rdset);
+    edl = eday(obsl, ldset->t1, ldset);
+    edr = eday(obsr, rdset->t1, rdset);
     ymd_bits_from_epoch_day(MAX(edl, edr), &y, &m, &d);
-    tjr->t1  = ym2obs(ol, y, m, ldset);
-    tjr->rt1 = ym2obs(or, y, m, rdset);
+    tjr->t1  = ym2obs(obsl, y, m, ldset);
+    tjr->rt1 = ym2obs(obsr, y, m, rdset);
     tjr->rminor = get_rminor(ldset, rdset, m);
 
     /* stop at the earlier of ldset->t2 and the last
        observation in rdset
     */
-    edl = eday(ol, ldset->t2, ldset);
-    edr = eday(or, rdset->t2, rdset);
+    edl = eday(obsl, ldset->t2, ldset);
+    edr = eday(obsr, rdset->t2, rdset);
     ymd_bits_from_epoch_day(MIN(edl, edr), &y, &m, &d);
-    tjr->t2 = ym2obs(ol, y, m, ldset);
+    tjr->t2 = ym2obs(obsl, y, m, ldset);
 
-    /* frequency ratio and starting "minor" period on right */
-    tjr->pdr = ldset->pd / rdset->pd;
+    /* possible adjustment of the endpoint in case the outer
+       dataset is of lower frequency
+    */
+    if (tjr->pdr > 1 && m < 12) {
+	int alt_t2 = tjr->t2 + tjr->pdr - 1;
+
+	tjr->t2 = MIN(ldset->t2, alt_t2);
+    }
 
     return 0;
 }
