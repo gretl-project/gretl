@@ -23,7 +23,7 @@ method of \cite{chowlin71}; the method of \cite{fernandez81}; and two
 variants of the method of \cite{denton71} as modified by
 \cite{cholette84}. Given the analytical similarities between them, the
 three Chow--Lin variants and the Fern\'andez method will be grouped in
-the discussion as below ``Chow--Lin methods''.
+the discussion below as ``Chow--Lin methods''.
 
 The balance of this section provides a gentle introduction to the idea
 of temporal disaggregation; experts may wish to skip to the next
@@ -118,8 +118,7 @@ point in section~\ref{sec:tdisagg-multi}.
 
 If the $m$ in $(s \cdot T + m)$ is greater than zero, that implies
 that there are some ``extra'' high-frequency observations available
-for extrapolation. The output of the function will therefore have as
-many rows as $\Xb$, including $m$ forecasts if applicable.
+for extrapolation---see section~\ref{sec:extrapolate} for details.
 
 We need to say something more about what goes into $\Xb$. Under the
 Denton methods this must be a single series, generally known as the
@@ -233,6 +232,19 @@ year or the first month of a quarter). But please note: when gretl
 automatically excludes leading or trailing missing values,
 intra-sample missing values will still provoke an error.
 
+\section{Extrapolation}
+\label{sec:extrapolate}
+
+As mentioned above, if $\Xb$ holds covariate data which extend beyond
+the range of the original series to be disaggregated then
+extrapolation is supported. But this is inherently risky, and becomes
+riskier the longer the horizon over which it is attempted.  In
+\texttt{tdisagg} extrapolation is by default limited to one
+low-frequency period (= $s$ high-frequency periods) beyond the end of
+the original data. The user can adjust this behavior via the
+\texttt{extmax} member of the opts bundle passed to \texttt{tdisagg},
+described in the next section.
+
 \section{Function signature}
 \label{sec:tdisagg-sig}
 
@@ -264,19 +276,30 @@ current sample range. Details on the arguments follow.
 \tditem[opts](bundle, optional): a bundle holding additional
   options. The recognized keys are (in alphabetical order):
   \begin{description}
-  \tditem[aggtype](string): Specifies the type of temporal
+    \tditem[aggtype](string): Specifies the type of temporal
     aggregation appropriate to the series in question. The value must
     be one of \texttt{sum} (each low-frequency value is a sum of $s$
     high-frequency values, the default); \texttt{avg} (each
     low-frequency value is the average of $s$ high frequency values);
     or \texttt{last} or \texttt{first}, indicating respectively that
     each low-frequency value is the last or first of $s$ high
-    frequency values.  \tditem[det](int): Relevant only when one of
-    the Chow--Lin methods is selected. This is a numeric code for the
-    deterministic terms to be included in the regressions: 0 means
-    none; 1, constant only; 2, constant and linear trend; 3, constant
-    and quadratic trend. The default is 1.
-  \tditem[method](string): Selects the method of disaggregation (see
+    frequency values.
+
+    \tditem[det](int): Relevant only when one of the Chow--Lin methods
+    is selected. This is a numeric code for the deterministic terms to
+    be included in the regressions: 0 means none; 1, constant only; 2,
+    constant and linear trend; 3, constant and quadratic trend. The
+    default is 1.
+
+    \tditem[extmax](int): the maximum number of high-frequency periods
+    over which extrapolation should be carried out, conditional on the
+    availability of covariate data. A zero value means no
+    extrapolation; a value of $-1$ means as many periods as possible;
+    and a positive value limits extrapolation to the specified number
+    of periods. See section~\ref{sec:extrapolate} for a statement of
+    the default value.
+
+    \tditem[method](string): Selects the method of disaggregation (see
     the listing below). Note that the Chow--Lin methods employ an
     autoregression coefficient, $\rho$, which captures the persistence
     of the target series at the higher frequency and is used in GLS
@@ -572,9 +595,9 @@ Aggregation type sum
 GLS estimates (chow-lin) T = 294
 Dependent variable: gdpc1
 
-             coefficient    std. error    t-ratio   p-value 
+             coefficient    std. error    t-ratio   p-value
   ----------------------------------------------------------
-  const      312.394       263.372         1.186    0.2365  
+  const      312.394       263.372         1.186    0.2365
   indpro      10.9158        1.75785       6.210    1.83e-09 ***
   payems       0.0242860     0.00171935   14.13     7.39e-35 ***
 
@@ -583,4 +606,3 @@ Dependent variable: gdpc1
 Generated series gdpm (ID 4)
 \end{outbit}
 \end{script}
-
