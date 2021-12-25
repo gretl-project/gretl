@@ -14334,23 +14334,43 @@
       </arguments>
       <examples>
         <example>! ls -al</example>
-	<example>! notepad</example>
+	<example>! dir c:\users</example>
 	<example>launch notepad</example>
+	<example>launch emacs myfile.txt</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	An exclamation mark, <cmd>!</cmd>, or the keyword
-	<cmd>launch</cmd>, at the beginning of a command line is
-	interpreted as an escape to the user's shell.  Thus arbitrary
-	shell commands can be executed from within
-	<program>gretl</program>.  When <cmd>!</cmd> is used, the
-	external command is executed synchronously.  That is,
-	<program>gretl</program> waits for it to complete before
-	proceeding.  If you want to start another program from within
-	<program>gretl</program> and not wait for its completion
-	(asynchronous operation), use <cmd>launch</cmd> instead.
+	An exclamation mark, <cmd>!</cmd>, at the beginning of a
+	command line is interpreted as an escape to the user's shell.
+	Thus arbitrary shell commands can be executed from within
+	<program>gretl</program>. The <repl>shellcommand</repl>
+	argument is passed to <lit>/bin/sh</lit> on unix-type systems
+	such as Linux and macOS or to <lit>cmd.exe</lit> on MS
+	Windows. It is executed in synchronous
+	mode&mdash;<program>gretl</program> waits for it to complete
+	before proceeding. If the command outputs any text this is
+	printed to the console or script output window.
+      </para>
+      <para>
+	A variant of synchronous shell access allows the user to
+	<quote>grab</quote> the output of a shell command into a
+	string variable. This is achieved by wrapping the command in
+	parentheses, preceded by a dollar sign, as in
+      </para>
+      <code>
+	string s = $(ls -l $HOME)
+      </code>
+      <para>
+	The <cmd>launch</cmd> keyword, on the other hand, executes an
+	external program asynchronously (without waiting for
+	completion), as in the third and fourth examples above. This
+	is suitable for opening an application in interactive mode.
+	The user's <lit>PATH</lit> is searched for the specified
+	executable. On MS Windows the command is executed directly,
+	not passed to <lit>cmd.exe</lit>; in this case environment
+	variables are not expanded automatically.
       </para>
       <para>
 	For reasons of security this facility is not enabled by
