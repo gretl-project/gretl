@@ -14342,6 +14342,10 @@
 
     <description>
       <para>
+	The facility described here is not activated by default. See
+	below for details.
+      </para>
+      <para>
 	An exclamation mark, <cmd>!</cmd>, at the beginning of a
 	command line is interpreted as an escape to the user's shell.
 	Thus arbitrary shell commands can be executed from within
@@ -14355,8 +14359,8 @@
       </para>
       <para>
 	A variant of synchronous shell access allows the user to
-	<quote>grab</quote> the output of a shell command into a
-	string variable. This is achieved by wrapping the command in
+	<quote>grab</quote> the output of a command into a string
+	variable. This is achieved by wrapping the command in
 	parentheses, preceded by a dollar sign, as in
       </para>
       <code>
@@ -14366,18 +14370,20 @@
 	The <cmd>launch</cmd> keyword, on the other hand, executes an
 	external program asynchronously (without waiting for
 	completion), as in the third and fourth examples above. This
-	is suitable for opening an application in interactive mode.
+	is designed for opening an application in interactive mode.
 	The user's <lit>PATH</lit> is searched for the specified
 	executable. On MS Windows the command is executed directly,
 	not passed to <lit>cmd.exe</lit> (so environment variables are
 	not expanded automatically).
       </para>
+      <subhead>Activation</subhead>
       <para>
-	For reasons of security this facility is not enabled by
-	default.  To activate it, check the box titled <quote>Allow
-	shell commands</quote> under Tools/Preferences/General in
-	the GUI program.  This also makes shell commands available in
-	the command-line program (and is the only way to do so).
+	For reasons of security the shell-access facility is not
+	enabled by default.  To activate it, check the box titled
+	<quote>Allow shell commands</quote> under
+	Tools/Preferences/General in the GUI program.  This also makes
+	shell commands available in the command-line program (and is
+	the only way to do so).
       </para>
     </description>
 
