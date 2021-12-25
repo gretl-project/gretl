@@ -656,11 +656,6 @@ static gint console_key_handler (GtkWidget *cview,
 	gtk_text_iter_set_line_index(&ins, 2);
 	gtk_text_buffer_place_cursor(buf, &ins);
 	return TRUE;
-    } else if (ctrl && upkey == GDK_D && !swallow) {
-	/* Ctrl-D: exit terminal? Only when not swallowed */
-	windata_t *vwin = (windata_t *) p;
-
-	gtk_widget_destroy(vwin->main);
     }
 
     /* At this point 'ins' indicates the insertion point and
