@@ -14369,8 +14369,8 @@
 	is suitable for opening an application in interactive mode.
 	The user's <lit>PATH</lit> is searched for the specified
 	executable. On MS Windows the command is executed directly,
-	not passed to <lit>cmd.exe</lit>; in this case environment
-	variables are not expanded automatically.
+	not passed to <lit>cmd.exe</lit> (so environment variables are
+	not expanded automatically).
       </para>
       <para>
 	For reasons of security this facility is not enabled by

@@ -2062,7 +2062,7 @@ struct K_input_mat {
     const char *name;
 };
 
-/* mapping to names used in "kalman ... end kalman" block */
+/* mapping to names used in setting elements of kalman bundle */
 
 struct K_input_mat K_input_mats[] = {
     { K_y, "obsy" },
