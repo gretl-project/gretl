@@ -2070,7 +2070,10 @@ static void print_model_heading (const MODEL *pmod,
 	const char *estr = estimator_string(pmod, prn);
 	const char *fmt;
 
-	if (char_len(estr) > 32) {
+	if (dset->v == 0) {
+	    fmt = N_("%s, using %d observations");
+	    pprintf(prn, _(fmt), _(estr), pmod->nobs);
+	} else if (char_len(estr) > 32) {
 	    fmt = N_("%s, obs. %s%s%s");
 	    pprintf(prn, _(fmt), _(estr), startdate,
 		    (tex)? "--" : "-", enddate);

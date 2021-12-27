@@ -109,9 +109,13 @@ static int check_lhs_vec (nlspec *s)
     int v = gretl_vector_get_length(s->lvec);
 
     if (v != s->nobs) {
-	fprintf(stderr, "LHS vector should be of length %d, is %d\n",
-		s->nobs, v);
-	return 1;
+	if (v > 0 && s->nobs == 1) {
+	    s->nobs = v;
+	} else {
+	    fprintf(stderr, "LHS vector should be of length %d, is %d\n",
+		    s->nobs, v);
+	    return 1;
+	}
     }
 
     return 0;
@@ -1072,7 +1076,9 @@ static int nl_missval_check (nlspec *s, const DATASET *dset)
 
     s->t1 = s->real_t1 = t1;
     s->t2 = s->real_t2 = t2;
-    s->nobs = t2 - t1 + 1;
+    if (s->lhtype != GRETL_TYPE_MATRIX) {
+	s->nobs = t2 - t1 + 1;
+    }
 
 #if NLS_DEBUG
     fprintf(stderr, "  after: spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
