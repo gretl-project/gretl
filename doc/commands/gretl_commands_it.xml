@@ -14395,32 +14395,59 @@ qual caso viene usato QML.
       <example>! ls -al</example>
       <example>! notepad</example>
       <example>launch notepad</example>
-</examples>
-</usage>
+      <example>launch emacs myfile.txt</example>
+    </examples>
+  </usage>
 
-<description>
-  <para>
-    Un <cmd>!</cmd>, o la parola chiave <cmd>launch</cmd>, all'inizio di una
-    riga di comando è interpretato come passaggio all'interprete di comandi
-    (shell) usato dall'utente nel sistema operativo. In questo modo è
-    possibile eseguire comandi shell arbitrari dall'interno di
-    <program>gretl</program>. Quando si usa <cmd>!</cmd>, il comando esterno
-    viene eseguito in modalità sincrona, ossia <program>gretl</program> aspetta
-    il termine della sua esecuzione prima di procedere. Se invece si vuole
-    avviare un altro programma da dentro <program>gretl</program> senza
-    aspettare che abbia completato la sua esecuzione (modalità asincrona),
-    occorre usare <cmd>launch</cmd>.
-</para>
-
-<para>
-  Per motivi di sicurezza, questa funzionalità è disabilitata in modalità
-  predefinita. Per attivarla, occorre selezionare la casella
-  <quote>Abilita comandi shell</quote> nel menù File, Preferenze. In
-  questo modo si renderanno disponibili i comandi shell anche nella
-  modalità a riga di comando di <program>gretl</program> (questo è l'unico
-  modo per farlo).
-</para>
-</description>
+  <description>
+      <para>
+	Di default, questo comando non è attivo. Vedi sotto per dettagli.
+      </para>
+      <para>
+	Un <cmd>!</cmd> all'inizio di una riga di comando è
+	interpretato come passaggio all'interprete di comandi (shell)
+	usato dall'utente nel sistema operativo. In questo modo è
+	possibile eseguire comandi shell arbitrari dall'interno di
+	<program>gretl</program>. L'argomento
+	<repl>comando-shell</repl> è passato a <lit>/bin/sh</lit> su
+	sistemi di tipo unix come Linux e macOS, oppure a
+	<lit>cmd.exe</lit> su Windows.  Il comando esterno viene
+	eseguito in modalità sincrona: <program>gretl</program>
+	aspetta il termine della sua esecuzione prima di procedere
+	oltre. Se il comando produce un output di testo, questo viene
+	mostrato nella console o nella finestra di output.
+      </para>
+      <para>
+	In una variante della modalità sincrona, l'utente può salvare
+	in una stringa il risultato del comando. Per fare ciò, bisogna
+	racchiudere il comando fra parentesi, con un caratter
+	<quote>dollaro</quote> all'inizio, come in
+      </para>
+      <code>
+	string s = $(ls -l $HOME)
+      </code>
+      <para>
+	Se invece si vuole avviare un programma esterno da dentro
+	<program>gretl</program> in modalità asincrona (senza
+	aspettare che abbia completato la sua esecuzione), si può
+	usare il comando <cmd>launch</cmd>. Questa modalità è indicata
+	per lanciare programmi in modo interattivo. Il programma da
+	lanciare sarà cercato nel <lit>PATH</lit> dell'utente. Su
+	Windows, il comando viene eseguito direttamente, e non passato
+	a <lit>cmd.exe</lit> (e quiindi le variabili di ambiente non
+	sono automaticamente espanse).
+      </para>
+      <subhead>Attivazione</subhead>
+      <para>
+	Per motivi di sicurezza, di default questa funzionalità è
+	disabilitata. Per attivarla, occorre selezionare la casella
+	<quote>Abilita comandi shell</quote> sotto
+	Strumenti/Preferenze/Generali nel programma GUI. In questo
+	modo, si renderanno disponibili i comandi shell anche nella
+	modalità a riga di comando di <program>gretl</program> (questo
+	è l'unico modo per farlo).
+      </para>
+    </description>
 
 </command>
 
