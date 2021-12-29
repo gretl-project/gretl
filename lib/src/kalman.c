@@ -621,7 +621,7 @@ static int kalman_check_dimensions (kalman *K)
 
 static inline void fast_copy_values (gretl_matrix *B, const gretl_matrix *A)
 {
-    mempcpy(B->val, A->val, B->rows * B->cols * sizeof(double));
+    memcpy(B->val, A->val, B->rows * B->cols * sizeof(double));
 }
 
 /* Write the vech of @src into row @t of @targ */
