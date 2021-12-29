@@ -95,6 +95,10 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int checked,
                                          int verbose);
 
+static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
+		      const gretl_matrix *X, gretl_matrix *C,
+		      GretlMatrixMod cmod);
+
 static inline void *mval_malloc (size_t sz)
 {
 #if 0 /* ifdef USE_SIMD */
@@ -13331,9 +13335,10 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
 
 static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		      const gretl_matrix *X, gretl_matrix *C,
-		      GretlMatrixMod cmod, int r)
+		      GretlMatrixMod cmod)
 {
     gretl_matrix *Tmp;
+    int r = (amod)? A->cols : A->rows;
 
     Tmp = gretl_matrix_alloc(r, X->cols);
     if (Tmp == NULL) {
@@ -13421,7 +13426,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
     if (N > 100000) {
 	/* take advantage of optimized matrix multiplication */
-	return alt_qform(A, amod, X, C, cmod, m);
+	return alt_qform(A, amod, X, C, cmod);
     }
 
     if (amod) {
