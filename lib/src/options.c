@@ -133,7 +133,6 @@ struct gretl_option gretl_opts[] = {
     { APPEND,   OPT_U, "update-overlap", 0 },
     { APPEND,   OPT_X, "fixed-sample", 0 },
     { ARMA,     OPT_A, "as154", 0 },
-    { ARMA,     OPT_K, "kalman", 0 },
     { ARMA,     OPT_C, "conditional", 0 },
     { ARMA,     OPT_E, "save-ehat", 0 },
     { ARMA,     OPT_G, "opg", 0 },
