@@ -53,7 +53,7 @@ given by the following pair of equations:
 %
 \begin{align}
   \label{eq:obs}
-  \obsvec_t &= \obsxmat_t\obsx_t' + \obsymat_t \statevec_t +
+  \obsvec_t &= \obsxmat_t\obsx_t + \obsymat_t \statevec_t +
   \obsdist_t \\
   \label{eq:state}
   \statevec_{t+1} &= \statemat_t \statevec_t + \strdist_t
@@ -68,9 +68,9 @@ $\obsdist_t$ and the ($r \times 1$) vector $\strdist_t$ are assumed to
 be vector white noise:
 %
 \begin{align*}
-E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s, 
+E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s,
     \mbox{ otherwise } \mathbf{0} \\
-E(\strdist_t \strdist_s') &= \statevar_t \mbox{ for } t = s, 
+E(\strdist_t \strdist_s') &= \statevar_t \mbox{ for } t = s,
     \mbox{ otherwise } \mathbf{0}
 \end{align*}
 
@@ -79,7 +79,7 @@ when $\obsymat_t = \obsymat$, $\statemat_t = \statemat$,
 $\obsxmat_t = \obsxmat$, $\obsvar_t = \obsvar$ and
 $\statevar_t = \statevar$ and for all $t$, the model is said to be
 \emph{time-invariant}. We assume time-invariance in most of what
-follows, but discuss the time-varying case in
+follows but discuss the time-varying case in
 section~\ref{sec:tvarying}.
 
 \section{Defining the model as a bundle}
@@ -99,7 +99,7 @@ corresponding bundle keys are as follows:
 \begin{tabular}{ccl}
 Symbol & Dimensions & Reserved key \\[6pt]
 $\obsvec$    & $N \times n$ & \texttt{obsy}\\
-$\obsymat'$   & $r \times n$ & \texttt{obsymat}\\
+$\obsymat'$  & $r \times n$ & \texttt{obsymat}\\
 $\statemat$  & $r \times r$ & \texttt{statemat}\\
 $\statevar$  & $r \times r$ & \texttt{statevar}\\
 \end{tabular}
@@ -107,8 +107,8 @@ $\statevar$  & $r \times r$ & \texttt{statevar}\\
 
 For example,
 \begin{code}
-bundle SSmod = ksetup(y, Z, T, Q)
-\end{code} 
+bundle SSmod = ksetup(y, Z', T, Q)
+\end{code}
 
 The names of these input matrices don't matter; in fact they may be
 anonymous matrices constructed on the fly. But if and when you wish to
@@ -132,8 +132,8 @@ Symbol & Dimensions & Key & If omitted\dots \\[6pt]
 $\obsx$ & $N \times k$ & \texttt{obsx} &
  no exogenous terms in observation equation\\
 $\obsxmat'$ & $k \times n$ & \texttt{obsxmat} &
- no exogenous terms in observation equation\\ 
-$\obsvar$ & $n \times n$ & \texttt{obsvar} & 
+ no exogenous terms in observation equation\\
+$\obsvar$ & $n \times n$ & \texttt{obsvar} &
  no disturbance term in observation equation \\
 $\hat{\statevec}_0$ & $r \times 1$ & \texttt{inistate} &
  $\hat{\statevec}_0$ is a zero vector\\
@@ -144,9 +144,10 @@ $\statecvar_0$ & $r \times r$ & \texttt{inivar} &
 
 However, these optional matrices are not passed to \cmd{ksetup},
 rather you add them to the bundle returned by \cmd{ksetup} (under
-their reserved keys) as you usually add elements to a bundle:
+their reserved keys) as you usually add elements to a bundle, for
+example:
 \begin{code}
-SSmod.obsxmat = B
+SSmod.obsxmat = B'
 \end{code}
 
 Once setup is complete the dimensions of the model, $r$, $n$, $k$ and
@@ -186,30 +187,31 @@ SSmod.diffuse = 1
 \label{sec:ss-special}
 
 A bundle created by \cmd{ksetup} works in most ways like any other
-gretl bundle; however, some differences should be kept in mind.  With
-an ordinary bundle you can replace or delete members at will; with a
-state-space bundle there are certain constraints.
+gretl bundle but some differences should be noted.  With an ordinary
+bundle you can replace or delete members at will; with a state-space
+bundle there are certain constraints.
 
 \begin{itemize}
 \item You can replace the coefficient matrices \texttt{obsymat},
   \texttt{statemat}, \texttt{statevar} and (if applicable)
   \texttt{obsvar} and/or \texttt{obsxmat} in a given bundle if you
   wish---but only on condition that the replacement matrix has the
-  same dimensions as the original. Or in other words, the dimensions
-  $r$, $n$ and $k$ are set once and for all by the initialization
+  same dimensions as the original. In other words, the dimensions $r$,
+  $n$ and $k$ are set once and for all by the \texttt{ksetup} call
   (section~\ref{sec:setup}).
 \item You can replace the data matrices \texttt{obsy} and (if
   applicable) \texttt{obsx} subject to the condition that the number
-  of columns is unchanged ($n$ and $k$ respectively): the time-series
-  length, $N$, is mutable. But note that if \texttt{obsx} is present
-  it must have at least as many rows as \texttt{obsy} (which defines
-  $N$ for the bundle).
+  of columns is unchanged ($n$ and $k$ respectively); the time-series
+  length, $N$, is mutable. But if \texttt{obsx} is present it must
+  have at least as many rows as \texttt{obsy} (which defines $N$ for
+  the bundle).
 \item None of the input matrices just mentioned can be deleted from
   the bundle.
 \item Output matrices that are automatically added to the bundle by
   the functions described in the following sections \textit{can} be
   deleted (if you don't need them and want to save on storage). But
-  they cannot be replaced by arbitrary user content.
+  they cannot be replaced by arbitrary user content under the same
+  key.
 \item The only other ``special'' member that can be deleted is the
   function call (string) that is discussed in
   section~\ref{sec:tvarying}.
@@ -220,7 +222,7 @@ other than the reserved ones noted in this chapter), the usual rules
 apply.
 
 For all the ``\cmd{k}'' functions described below the first argument
-(in most cases the only argument) must be a pointer to a bundle
+(and in most cases the only argument) must be a pointer to a bundle
 obtained via \cmd{ksetup}. Any old bundle will not do. A ``pointer to
 bundle'' is specified by prefixing the name of the bundle with an
 ampersand, as in ``\verb|&SSmod|''. Passing the argument in pointer
@@ -241,29 +243,29 @@ key \texttt{lnl} gives the overall log-likelihood under the joint
 normality assumption,
 %
 \[
-  \ell = -\frac{1}{2} \left[nT \log(2 \pi) + \sum_{t=1}^T\log \left|\predvar_t\right| + 
-    \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
+  \ell = -\frac{1}{2} \left[nN \log(2 \pi) + \sum_{t=1}^N\log \left|\predvar_t\right| +
+    \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
 %
 and the scalar \texttt{s2} holds the estimated variance,
 %
 \[
-\hat{\sigma}^2 = \frac{1}{nT} 
-   \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
+\hat{\sigma}^2 = \frac{1}{nN}
+   \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
 \]
 (but see section~\ref{sec:lldiffuse} below for modifications to these
 formulae for the case of a diffuse prior).  The key \texttt{llt} gives
-access to a $T$-vector, element $t$ of which is
+access to a $N$-vector, element $t$ of which is
 %
 \[
-  \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \log \left|\predvar_t\right| + 
+  \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \log \left|\predvar_t\right| +
     \prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
 %
 
-Five additional matrices also become available.  Each of these has $T$
+Five additional matrices also become available.  Each of these has $N$
 rows, one for each time-step; the contents of the rows are shown in
 the following listing.
 %
@@ -280,9 +282,9 @@ the following listing.
   \texttt{gain}.
 \end{enumerate}
 
-The Kalman gain is defined as 
+The Kalman gain is computed as
 \[
-\gain_t = \statemat_t \statecvar_{t|t-1} \obsymat_t 
+\gain_t = \statemat_t \statecvar_{t|t-1} \obsymat_t
 \left[\obsymat_t' \statecvar_{t|t-1} \obsymat_t + \obsvar_t\right]^{-1}
 \]
 This matrix is rarely required by the user. However, it is the key
@@ -300,7 +302,7 @@ Then, for example, if you want to retrieve the matrix $\gain$ at time
 10, you need to reshape the tenth row of the matrix \texttt{G} into
 the appropriate dimensions:
 \begin{code}
-matrix K10 = mshape(G[10,], SSmod.r, SSmod.n)  
+matrix K10 = mshape(G[10,], SSmod.r, SSmod.n)
 \end{code}
 
 \section{The \cmd{ksmooth} function}
@@ -321,21 +323,21 @@ state space model contains no parameters that have to be estimated,
 the model setup can be followed directly by a call to
 \cmd{ksmooth}. (And the same goes for \cmd{kdsmooth} below.)
 
-The backward-pass algorithm is as follows: for $t=T,\dots,1$
+The backward-pass algorithm is as follows: for $t=N,\dots,1$
 %
 \begin{align*}
 L_t &= \statemat_t - \gain_t \obsymat_t' \\
-u_{t-1} &= \obsymat_t \predvar_t^{-1} \prederr_t 
+u_{t-1} &= \obsymat_t \predvar_t^{-1} \prederr_t
  + L_t' u_t \\
-U_{t-1} &= \obsymat_t \predvar_t^{-1} \obsymat_t' + 
+U_{t-1} &= \obsymat_t \predvar_t^{-1} \obsymat_t' +
   L_t' U_t L_t \\
-\hat{\statevec}_{t|T} &= \hat{\statevec}_{t|t-1} + 
+\hat{\statevec}_{t|T} &= \hat{\statevec}_{t|t-1} +
   \statecvar_{t|t-1} u_{t-1} \\
-\statecvar_{t|T} &= \statecvar_{t|t-1} - 
+\statecvar_{t|T} &= \statecvar_{t|t-1} -
   \statecvar_{t|t-1} U_{t-1} \statecvar_{t|t-1}
 \end{align*}
 %
-with initial values $u_T = 0$ and $U_T =
+with initial values $u_N = 0$ and $U_N =
 0$.\footnote{See I. Karibzhanov's clear exposition at
 \url{http://karibzhanov.com/help/kalcvs.htm}.}
 
@@ -345,7 +347,7 @@ section~\ref{sec:kfilter}), but the keys \texttt{state} and
 \texttt{stvar} now give the smoothed estimates.  That is, row $t$ of
 the \texttt{state} matrix holds $\hat{\statevec}_{t|T}'$ and row $t$
 of \texttt{stvar} holds $\statecvar_{t|T}$, in transposed vech form
-($r(r+1)/2$ elements).
+eith $r(r+1)/2$ elements.
 
 \section{The \cmd{kdsmooth} function}
 \label{sec:kdsmooth}
@@ -357,7 +359,7 @@ estimate of the disturbances along with a dispersion measure, using
 the methods described in \cite{koopman93} and \cite{koopman-etal99}.
 
 Upon successful execution of the function, the bundle will contain
-under the key \texttt{smdist} a $T \times (r+n)$ matrix holding
+under the key \texttt{smdist} an $N \times (r+n)$ matrix holding
 smoothed estimates of $\strdist_t$ and $\obsdist_t$. That is, a matrix
 whose $t$-th row contains
 \[
@@ -366,7 +368,7 @@ whose $t$-th row contains
    \obsvec_1, \ldots, \obsvec_T \right]
 \]
 (This assumes the observation equation has a stochastic component; if
-it does not, then \texttt{smdist} is just $T \times r$.)
+it does not, then \texttt{smdist} is just $N \times r$.)
 
 An associated dispersion measure is provided under the key
 \texttt{smdisterr}. The precise definition of this matrix depends on a
@@ -397,7 +399,7 @@ mean squared error, which we'll write as $V^{(2)}_t$.
 V^{(2)}_t = E\left[\left(\hat{\strdist}_t - \strdist_t\right)
   \left(\hat{\strdist}_t - \strdist_t\right)'
   | \,\obsvec_1, \ldots, \obsvec_T \right]
-\] 
+\]
 We calculate this matrix using the formulae given in \citet[section
 4.5.2]{durbin-koopman12}. Its diagonal elements can be used to form
 confidence intervals for the true disturbances.
@@ -410,7 +412,7 @@ default) they are based on $V^{(1)}_t$. In either case row $t$ of
 of the matrix in question: the first $r$ elements pertain to the state
 disturbances and the following $n$ elements to the observation
 equation (if applicable). Like \texttt{smdist}, \texttt{smdisterr} has
-$T$ rows and either $r+n$ or $r$ columns depending on whether or not
+$N$ rows and either $r+n$ or $r$ columns depending on whether or not
 there's a disturbance term in the observation equation. We return
 standard deviations rather than variances since most of the time
 it's the former that users will actually want.
@@ -429,43 +431,43 @@ returns a matrix of simulation results. An optional trailing Boolean
 argument is supported, the purpose of which is explained below.
 
 If the disturbances are not cross-correlated, the matrix argument must
-be either $T \times r$, if there is no disturbance in the observation
-equation, or $T \times (r+n)$ if the $\obsvar$ (\texttt{obsvar})
+be either $N \times r$, if there is no disturbance in the observation
+equation, or $N \times (r+n)$ if the $\obsvar$ (\texttt{obsvar})
 matrix is specified. Row $t$ holds either $\strdist_t'$ or
 $(\strdist_t', \obsdist_t')$. Note that if $\statevar$
 (\texttt{statevar}) is not simply an identity matrix you will have to
 scale the artificial state disturbances appropriately; the same goes
 for $\obsvar$ and the observation disturbances, if present. Given a
 matrix $U$ containing standard normal variates, in the general case
-this requires finding a matrix $Z$ such that
+this requires finding a matrix $A$ such that
 \[
-ZZ' = \Omega \equiv \left(
+AA' = \Omega \equiv \left(
 \begin{array}{ll}
 Q & 0_{r \times n} \\
 0_{n\times r} & R
 \end{array}
 \right)
 \]
-and post-multiplying $U$ by $Z'$ (although it's not necessary to form
-$Z$ explicitly if the disturbance variance matrices are
+and post-multiplying $U$ by $A'$ (although it's not necessary to form
+$A$ explicitly if the disturbance variance matrices are
 diagonal). This is not particularly onerous if $\Omega$ is
-time-invariant; gretl's \cmd{psdroot} function can be used to form $Z$
+time-invariant; gretl's \cmd{psdroot} function can be used to form $A$
 if it's needed. If $Q$ and/or $R$ are time-varying, however, this
 scaling can become quite burdensome. As a convenience, the ancillary
 function \cmd{ksimdata} can be used to pre-process the $U$ matrix
 automatically. Here's an example (we assume that a bundle named
-\texttt{B} has been obtained via \cmd{ksetup}):
+\texttt{b} has been obtained via \cmd{ksetup}):
 %
 \begin{code}
-matrix N = mnormal(500, B.r + B.n)
-matrix E = ksimdata(&B, N)
-matrix sim = ksimul(&B, E)
+matrix N = mnormal(500, b.r + b.n)
+matrix E = ksimdata(&b, N)
+matrix sim = ksimul(&b, E)
 \end{code}
 %
 or if you have no need to store the disturbances:
 %
 \begin{code}
-matrix sim = ksimul(&B, ksimdata(&B, mnormal(500, B.r + B.n)))
+matrix sim = ksimul(&b, ksimdata(&b, mnormal(500, b.r + b.n)))
 \end{code}
 %
 Time-variation or no, \cmd{ksimdata} should ensure that the
@@ -511,8 +513,8 @@ The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$
 is as follows: for $t=1,\dots,N$
 %
 \begin{align*}
-  \tilde{\obsvec}_t &= \obsxmat_t'\obsx_t + 
-   \obsymat_t' \tilde{\statevec}_t + \obsdist_t  \\ 
+  \tilde{\obsvec}_t &= \obsxmat_t\obsx_t +
+   \obsymat_t \tilde{\statevec}_t + \obsdist_t  \\
   \tilde{\statevec}_{t+1} &= \statemat_t \tilde{\statevec}_t + \strdist_t
 \end{align*}
 %
@@ -525,7 +527,7 @@ vector. A further note on initializing the state can be found in
 section~\ref{sec:simstart}.
 
 % \textbf{IDEA}: it would be very nice to find a simple case to
-% exemplify this in a bootstrap context, along the lines of 
+% exemplify this in a bootstrap context, along the lines of
 % \cite{stoffer-wall91}.
 
 \section{Some finer points}
@@ -542,9 +544,9 @@ formulation allows for cross-correlation.  In place of
 (\ref{eq:obs})--(\ref{eq:state}) we may write
 %
 \begin{align*}
-  \obsvec_t &= \obsxmat_t'\obsx_t + \obsymat_t' \statevec_t + 
+  \obsvec_t &= \obsxmat_t\obsx_t + \obsymat_t \statevec_t +
      \altobsvar_t \alldist_t \\
-  \statevec_{t+1} &= \statemat_t \statevec_t + 
+  \statevec_{t+1} &= \statemat_t \statevec_t +
      \altstatevar_t \alldist_t
 \end{align*}
 %
@@ -563,7 +565,7 @@ are cross-correlated five arguments should be given to the
 giving $\statevar$ you should give the two matrices identified above as
 $\altobsvar$ and $\altstatevar$, as in
 \begin{code}
-bundle SSxmod = ksetup(y, Z, T, G, H)
+bundle SSxmod = ksetup(y, Z', T, G, H)
 \end{code}
 
 In case you wish to retrieve or update information on the variance of
@@ -574,19 +576,19 @@ factors $\altstatevar$ and $\altobsvar$ respectively.
 \subsection{Intercept in the state equation}
 \label{sec:stconst}
 
-In some applications it is useful to be able to have an ``intercept''
-in the state transition equation, thus generalizing equation
-\eqref{eq:state} to
+In some applications it may be useful to have an ``intercept'' in the
+state transition equation, thus generalizing equation \eqref{eq:state}
+to
 \[
   \statevec_{t+1} = \statemu_t + \statemat_t \statevec_t + \strdist_t \\
 \]
 The term $\statemu$ is never strictly necessary: the system
-(\ref{eq:obs}) and  (\ref{eq:state}) without $\statemu$ is general
-enough to accommodate such a term, by absorbing it as an extra (non
-time-varying) element in the state vector.  However, this comes at the
-cost of expanding all the matrices that touch the state ($\statevec$,
-$\statemat$, $\strdist$, $\statevar$, $\obsymat$), making the model
-relatively awkward to formulate and forecasts more expensive to
+(\ref{eq:obs}) and (\ref{eq:state}) is general enough to accommodate
+such a term, by absorbing it as an extra (non time-varying) element in
+the state vector.  However, this comes at the cost of expanding all
+the matrices that touch the state ($\statevec$, $\statemat$,
+$\strdist$, $\statevar$, $\obsymat$), making the model relatively
+awkward to formulate and forecasts more expensive to
 compute. Therefore, we adopt the convention above on practical
 grounds.
 
@@ -639,8 +641,8 @@ end function
 \end{code}
 %
 where \texttt{b.Zvals} is a bundled $N$-vector. An updater that
-operates on both $\obsymat$ ($n \times p$) and $\statemat$ ($p \times
-p$) might be
+operates on both $\obsymat$ ($n \times r$) and $\statemat$ ($r \times
+r$) might be
 %
 \begin{code}
 function void update_2 (bundle *b)
@@ -672,7 +674,7 @@ in section~\ref{sec:ss-examples}.
 \label{sec:lldiffuse}
 
 This note pertains to the \cmd{kfilter} function (see
-section~\ref{sec:kfilter}). 
+section~\ref{sec:kfilter}).
 
 There seems to be general agreement in the literature that the
 loglikelihood calculation should be modified in the case of a diffuse
@@ -682,8 +684,8 @@ emulate \textsf{SsfPack}.  In case
 $\statecvar_{1|0} = \kappa I_p$, we set $d = p$ and calculate
 %
 \[
-  \ell = -\frac{1}{2} \left[(nN-d) \log(2 \pi) + 
-    \sum_{t=1}^N\log \left|\predvar_t\right| + 
+  \ell = -\frac{1}{2} \left[(nN-d) \log(2 \pi) +
+    \sum_{t=1}^N\log \left|\predvar_t\right| +
     \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
     - d \log(\kappa)
   \right]
@@ -692,7 +694,7 @@ $\statecvar_{1|0} = \kappa I_p$, we set $d = p$ and calculate
 and
 %
 \[
-\hat{\sigma}^2 = \frac{1}{nN-d} 
+\hat{\sigma}^2 = \frac{1}{nN-d}
    \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
 \]
 
@@ -742,13 +744,13 @@ function void arma11_via_kalman (series y)
     scalar phi = 0
     scalar theta = 0
     scalar sigma = 1
-    
+
     /* state-space model setup */
     matrix Z = {1; theta}
     matrix T = {phi, 0; 1, 0}
     matrix Q = {sigma^2, 0; 0, 0}
     bundle kb = ksetup(y, Z, T, Q)
-    
+
     /* maximum likelihood estimation */
     mle logl = ERR ? NA : kb.llt
         kb.obsymat[2] = theta
@@ -788,15 +790,15 @@ and the state transition equation corresponding to (\ref{eq:state}) is
   \left[ \begin{array}{c} \alpha_t \\ \alpha_{t-1} \end{array} \right] =
   \left[ \begin{array}{cc} \phi & 0 \\ 1 & 0 \end{array} \right]
   \left[ \begin{array}{c} \alpha_{t-1} \\ \alpha_{t-2} \end{array} \right] +
-  \left[ \begin{array}{c} \varepsilon_t \\ 0 \end{array} \right] 
+  \left[ \begin{array}{c} \varepsilon_t \\ 0 \end{array} \right]
 \]
 
 The \textsf{hansl} syntax for a corresponding filter would be
 \begin{code}
-matrix H = {1; theta}
-matrix F = {phi, 0; 1, 0}
+matrix Z = {1, theta}
+matrix T = {phi, 0; 1, 0}
 matrix Q = {s^2, 0; 0, 0}
-bundle kb = ksetup(y, H, F, Q)
+bundle kb = ksetup(y, Z', T, Q)
 \end{code}
 %
 or, if you prefer, just a one-liner:
@@ -835,18 +837,18 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
     # State transition matrix
     matrix T = {2,-1;1,0}
     # Observation matrix
-    matrix Z = {1;0}
+    matrix Z = {1,0}
     # Covariance matrix in the state equation
     matrix Q = {1/sqrt(lambda), 0; 0, 0}
     matrix my = {y}
 
     string desc = ""
-    if oneside 
+    if oneside
         matrix my = my | 0
         desc = "1-sided "
     endif
-    
-    ssm = ksetup(my, Z, T, Q)
+
+    ssm = ksetup(my, Z', T, Q)
     ssm.obsvar = sqrt(lambda)
     ssm.inistate = {2*y[1]-y[2] ; 3*y[1]-2*y[2]}
     ssm.diffuse = 1
@@ -858,7 +860,7 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
         mu = oneside ? ssm.state[2:,2] : ssm.state[,1]
         series ret = y - mu
     endif
-    
+
     string d = sprintf("%sHP-filtered %s (lambda = %g)", desc, argname(y), lambda)
     setinfo ret --description="@d"
     return ret
@@ -867,7 +869,7 @@ end function
 # --- example ------------------------------------------------------------
 
 clear
-open fedstl.bin 
+open fedstl.bin
 data houst
 y = log(houst)
 
@@ -883,9 +885,9 @@ ols n2c const h2c --simple-print
 \end{scode}
 \end{script}
 
-The Hodrick--Prescott filter (HP for short) can be obtained as the
-solution of a prediction problem, that is obtaining estimates of the
-latent time series $\mu_t$ in
+The Hodrick--Prescott (HP) filter can be obtained as the solution of a
+prediction problem, that is obtaining estimates of the latent time
+series $\mu_t$ in
 \begin{eqnarray*}
   x_t & = & \mu_t + \varepsilon_t \\
   \Delta^2 \mu_t & = & \eta_t ,
@@ -913,7 +915,7 @@ A possible space-state representation of the model above is
   x_t & = & [1 \quad 0]
             \left[ \begin{array}{c} \mu_t \\ \mu_{t-1}\end{array}\right]
   + \varepsilon_t \\
-  \left[ \begin{array}{c} \mu_t \\ \mu_{t-1}\end{array}\right] & = & 
+  \left[ \begin{array}{c} \mu_t \\ \mu_{t-1}\end{array}\right] & = &
   \left[ \begin{array}{rr} 2 & -1 \\ 1 & 0 \end{array}\right]
   \left[ \begin{array}{c} \mu_{t-1} \\ \mu_{t-2}\end{array}\right] +
   \eta_t .
@@ -925,7 +927,7 @@ in script~\ref{script:hp}, which also shows an example with the
 ``housing starts'' series from the St.~Louis Fed database. The example
 also compares the result of the function to that from the native
 \cmd{hpfilt()} function.
-  
+
 Note that, in the case of the one-sided filter, a little trick is
 required in order to get the desired result: the state matrix that the
 \cmd{kfilter()} function stores in the bundle is the estimate of
@@ -984,12 +986,12 @@ is a random walk with normal increments of variance $\sigma^2_1$ and
 $\varepsilon_t$ is normal white noise with variance $\sigma^2_2$,
 independent of $\mu_t$. This is known as the ``local level'' model,
 and it can be cast in state-space form as equations
-(\ref{eq:obs})-(\ref{eq:state}) with $\statemat = 1$, $\strdist_t \sim
+(\ref{eq:obs})--(\ref{eq:state}) with $\statemat = 1$, $\strdist_t \sim
 N(0,\, \sigma^2_1)$, $\obsymat = 1$ and $\obsdist_t \sim N(0,\,
 \sigma^2_2)$.\footnote{Note that the local level model, plus other
   common ``Structural Time Series'' models are implemented in the
   \package{StrucTiSM} function package.} The translation to \textsf{hansl}
-is 
+is
 \begin{code}
 bundle llmod = ksetup(y, 1, 1, s1)
 llmod.obsvar = s2
