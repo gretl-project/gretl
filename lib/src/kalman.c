@@ -47,8 +47,8 @@
 typedef struct stepinfo_ stepinfo;
 
 struct stepinfo_ {
-    gretl_matrix *T;  /* N x (r * r) */
-    gretl_matrix *Z;  /* N x (r * n) */
+    gretl_matrix *T;   /* N x (r * r) */
+    gretl_matrix *ZT;  /* N x (r * n) */
 };
 
 struct kalman_ {
@@ -76,12 +76,16 @@ struct kalman_ {
     gretl_matrix *P1; /* r x r: MSE matrix, after updating */
     gretl_matrix *v;  /* n x 1: one-step forecast error(s), time t */
 
+    /* for the diffuse case */
+    gretl_matrix *Pk0;
+    gretl_matrix *Pk1;
+
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
     */
     gretl_matrix *T;  /* r x r: state transition matrix */
-    gretl_matrix *B;  /* k x n: coeffs on exogenous vars, obs eqn */
-    gretl_matrix *Z;  /* r x n: coeffs on state variables, obs eqn */
+    gretl_matrix *BT; /* k x n: B', coeffs on exogenous vars, obs eqn */
+    gretl_matrix *ZT; /* r x n: Z', coeffs on state variables, obs eqn */
     gretl_matrix *HH; /* r x r: contemp covariance matrix, state eqn */
     gretl_matrix *GG; /* n x n: contemp covariance matrix, obs eqn */
     gretl_matrix *mu; /* r x 1: constant term in state transition */
@@ -140,6 +144,7 @@ struct kalman_ {
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
+#define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 
 #define filter_is_varying(K) (K->matcall != NULL)
 
@@ -155,8 +160,8 @@ static int check_for_matrix_updates (kalman *K, ufunc *uf);
 
 enum {
     K_T = 0,
-    K_B,
-    K_Z,
+    K_BT,
+    K_ZT,
     K_Q,
     K_R,
     K_m,
@@ -171,7 +176,7 @@ void free_stepinfo (kalman *K)
 {
     if (K->step != NULL) {
 	gretl_matrix_free(K->step->T);
-	gretl_matrix_free(K->step->Z);
+	gretl_matrix_free(K->step->ZT);
 	free(K->step);
 	K->step = NULL;
     }
@@ -184,9 +189,11 @@ void kalman_free (kalman *K)
     }
 
     gretl_matrix_free(K->a0);
-    gretl_matrix_free(K->P0);
     gretl_matrix_free(K->a1);
+    gretl_matrix_free(K->P0);
     gretl_matrix_free(K->P1);
+    gretl_matrix_free(K->Pk0);
+    gretl_matrix_free(K->Pk1);
     gretl_matrix_free(K->v);
     gretl_matrix_free(K->LL);
 
@@ -194,7 +201,7 @@ void kalman_free (kalman *K)
 
     if (K->flags & KALMAN_BUNDLE) {
 	gretl_matrix **mptr[] = {
-	    &K->T, &K->B, &K->Z, &K->HH, &K->GG,
+	    &K->T, &K->BT, &K->ZT, &K->HH, &K->GG,
 	    &K->mu, &K->y, &K->x, &K->aini, &K->Pini
 	};
 	int i;
@@ -238,10 +245,11 @@ static kalman *kalman_new_empty (int flags)
 	K->aini = K->Pini = NULL;
 	K->a0 = K->a1 = NULL;
 	K->P0 = K->P1 = NULL;
+	K->Pk0 = K->Pk1 = NULL;
 	K->LL = NULL;
 	K->v = NULL;
 	K->Blk = NULL;
-	K->T = K->B = K->Z = NULL;
+	K->T = K->BT = K->ZT = NULL;
 	K->HH = K->GG = K->HG = NULL;
 	K->H = K->G = NULL;
 	K->V = K->F = K->A = K->P = K->K = NULL;
@@ -263,17 +271,18 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
-#define kappa 1.0e7
-
-static void diffuse_Pini (kalman *K)
+static int diffuse_Pini (kalman *K)
 {
-    int i;
-
     gretl_matrix_zero(K->P0);
 
-    for (i=0; i<K->r; i++) {
-	gretl_matrix_set(K->P0, i, i, kappa);
+    if (K->Pk0 == NULL) {
+	K->Pk0 = gretl_identity_matrix_new(K->r);
+	K->Pk1 = gretl_matrix_alloc(K->r, K->r);
+	if (K->Pk0 == NULL || K->Pk1 == NULL) {
+	    return E_ALLOC;
+	}
     }
+    return 0;
 }
 
 static int T_out_of_bounds (kalman *K)
@@ -313,8 +322,7 @@ static int construct_Pini (kalman *K)
     int r2, err = 0;
 
     if (K->flags & KALMAN_DIFFUSE) {
-	diffuse_Pini(K);
-	return 0;
+	return diffuse_Pini(K);
     }
 
     r2 = K->r * K->r;
@@ -337,8 +345,7 @@ static int construct_Pini (kalman *K)
 	/* failed: are some of the eigenvalues out of bounds? */
 	err = T_out_of_bounds(K);
 	if (err == E_SINGULAR) {
-	    err = 0;
-	    diffuse_Pini(K);
+	    err = diffuse_Pini(K);
 	    K->flags |= KALMAN_DIFFUSE;
 	}
     } else {
@@ -358,10 +365,10 @@ static int check_matrix_dims (kalman *K, const gretl_matrix *m, int i)
 
     if (i == K_T || i == K_Q || i == K_P) {
 	r = c = K->r;
-    } else if (i == K_B) {
+    } else if (i == K_BT) {
 	r = K->k;
 	c = K->n;
-    } else if (i == K_Z) {
+    } else if (i == K_ZT) {
 	r = K->r;
 	c = K->n;
     } else if (i == K_R)  {
@@ -450,9 +457,9 @@ static int kalman_check_dimensions (kalman *K)
 	err = check_matrix_dims(K, K->T, K_T);
     }
 
-    /* Z is mandatory, should be r x n */
+    /* Z' is mandatory, should be r x n */
     if (!err) {
-	err = check_matrix_dims(K, K->Z, K_Z);
+	err = check_matrix_dims(K, K->ZT, K_ZT);
     }
 
     if (K->H != NULL) {
@@ -485,10 +492,10 @@ static int kalman_check_dimensions (kalman *K)
 	err = check_matrix_dims(K, K->Pini, K_P);
     }
 
-    /* B should be k x n, if present (B->rows defines k; n is defined by y) */
+    /* B' should be k x n, if present (BT->rows defines k) */
     if (!err) {
-	if (K->B != NULL) {
-	    err = check_matrix_dims(K, K->B, K_B);
+	if (K->BT != NULL) {
+	    err = check_matrix_dims(K, K->BT, K_BT);
 	} else if (K->x != NULL) {
 	    /* B is NULL => can't have a non-NULL x */
 	    err = E_NONCONF;
@@ -667,7 +674,7 @@ static void load_to_row_offset (gretl_matrix *targ,
     }
 }
 
-static void set_row (gretl_matrix *targ, int t, double x)
+static void set_row_to_value (gretl_matrix *targ, int t, double x)
 {
     int i;
 
@@ -733,9 +740,9 @@ static int kalman_init (kalman *K)
 
 static void kalman_set_dimensions (kalman *K)
 {
-    K->r = gretl_matrix_rows(K->T); /* T->rows defines r */
-    K->k = gretl_matrix_rows(K->B); /* B->rows defines k */
-    K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
+    K->r = gretl_matrix_rows(K->T);  /* T->rows defines r */
+    K->k = gretl_matrix_rows(K->BT); /* BT->rows defines k */
+    K->n = gretl_matrix_cols(K->y);  /* y->cols defines n */
 
     if (!kalman_simulating(K)) {
 	/* y->rows defines T, except when simulating */
@@ -778,7 +785,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     }
 
     targ[0] = &K->y;
-    targ[1] = &K->Z;
+    targ[1] = &K->ZT;
     targ[2] = &K->T;
 
     if (nmat == 5) {
@@ -954,7 +961,7 @@ static int kalman_set_Bx (kalman *K)
     for (i=0; i<K->n && !missobs; i++) {
 	if (K->x == NULL) {
 	    /* the implicit constant case */
-	    bxi = K->B->val[i];
+	    bxi = K->BT->val[i];
 	} else {
 	    bxi = 0;
 	    for (j=0; j<K->k && !missobs; j++) {
@@ -966,7 +973,7 @@ static int kalman_set_Bx (kalman *K)
 		if (na(xjt)) {
 		    missobs = 1;
 		} else {
-		    bxi += xjt * gretl_matrix_get(K->B, j, i);
+		    bxi += xjt * gretl_matrix_get(K->BT, j, i);
 		}
 	    }
 	}
@@ -978,7 +985,7 @@ static int kalman_set_Bx (kalman *K)
 
 /* Compute the one-step ahead forecast error:
 
-   v_t = y_t - B'x - Z'a
+   v_t = y_t - B'x - Za
 
    Return 1 if missing values found, otherwise 0.
 */
@@ -997,7 +1004,7 @@ static int compute_forecast_error (kalman *K)
 	}
     }
 
-    if (K->B != NULL && !missobs) {
+    if (K->BT != NULL && !missobs) {
 	/* subtract effect of exogenous terms, if any */
 	missobs = kalman_set_Bx(K);
 	if (!missobs) {
@@ -1007,7 +1014,7 @@ static int compute_forecast_error (kalman *K)
 
     if (!missobs) {
 	/* subtract contribution from state */
-	gretl_matrix_multiply_mod(K->Z,  GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(K->ZT,  GRETL_MOD_TRANSPOSE,
 				  K->a0, GRETL_MOD_NONE,
 				  K->v, GRETL_MOD_DECREMENT);
     }
@@ -1113,7 +1120,7 @@ static int kalman_update_matrices (kalman *K, PRN *prn)
 static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
     gretl_matrix **mptr[] = {
-	&K->T, &K->B, &K->Z, &K->HH, &K->GG, &K->mu
+	&K->T, &K->BT, &K->ZT, &K->HH, &K->GG, &K->mu
     };
     int cross_update = 0;
     int i, err = 0;
@@ -1143,12 +1150,12 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     }
 
     if (!err && K->step != NULL) {
-	/* keep a record of T and/or Z at the given time step */
+	/* keep a record of T and/or Z' at the given time step */
 	if (K->step->T != NULL) {
 	    load_to_vec(K->step->T, K->T, K->t);
 	}
-	if (K->step->Z != NULL) {
-	    load_to_vec(K->step->Z, K->Z, K->t);
+	if (K->step->ZT != NULL) {
+	    load_to_vec(K->step->ZT, K->ZT, K->t);
 	}
     }
 
@@ -1206,6 +1213,124 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
+static int koopman_exact_nonsingular (kalman *K,
+				      gretl_matrix *Fk)
+{
+    gretl_matrix *Mk;
+    gretl_matrix *Ck;
+    gretl_matrix *PkZ;
+    int err = 0;
+
+    Mk  = gretl_matrix_alloc(K->r, K->n);
+    Ck  = gretl_matrix_alloc(K->r, K->r);
+    PkZ = gretl_matrix_alloc(K->r, K->n);
+
+    /* Mk = T*Pk*Z' */
+    gretl_matrix_multiply(K->Pk0, K->ZT, PkZ);
+    gretl_matrix_multiply(K->T, PkZ, Mk);
+
+    /* Kt = Mk ./ Fk[1] */
+    fast_copy_values(K->Kt, Mk);
+    gretl_matrix_divide_by_scalar(K->Kt, Fk->val[0]);
+
+    /* Ct = Mt*Kt' */
+    gretl_matrix_multiply_mod(K->Mt, GRETL_MOD_NONE,
+			      K->Kt, GRETL_MOD_TRANSPOSE,
+			      K->Ct, GRETL_MOD_NONE);
+
+    /* Mt <- Mt - Kt*Ft */
+    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+			      K->Ft, GRETL_MOD_NONE,
+			      K->Mt, GRETL_MOD_DECREMENT);
+
+    /* Ct += Kt*(Mt - Kt*Ft)' */
+    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+			      K->Mt, GRETL_MOD_TRANSPOSE,
+			      K->Ct, GRETL_MOD_CUMULATE);
+
+    /* Ck = Kt * Mk' */
+    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+			      Mk, GRETL_MOD_TRANSPOSE,
+			      Ck, GRETL_MOD_NONE);
+
+    /* Pk = T*Pk*T' - Ck */
+    gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
+		       K->Pk1, GRETL_MOD_NONE);
+    gretl_matrix_subtract_from(K->Pk1, Ck);
+    fast_copy_values(K->Pk0, K->Pk1);
+
+    gretl_matrix_free(Mk);
+    gretl_matrix_free(Ck);
+    gretl_matrix_free(PkZ);
+
+    return err;
+}
+
+/* Handling of missing y_t or x_t, for the case of
+   univariate y_t (or all y_t values missing).
+*/
+
+static void handle_missing_obs (kalman *K, int smoothing)
+{
+    /* state update */
+    gretl_matrix_multiply(K->T, K->a0, K->a1);
+
+    /* var(state) update */
+    fast_copy_values(K->P1, K->HH);
+    gretl_matrix_qform(K->T, GRETL_MOD_NONE,
+		       K->P0, K->P1, GRETL_MOD_CUMULATE);
+    fast_copy_values(K->P0, K->P1);
+
+    /* record stuff if wanted */
+    if (K->F != NULL) {
+	if (smoothing) {
+	    set_row_to_value(K->F, K->t, 0.0);
+	} else {
+	    set_row_to_value(K->F, K->t, NADBL); /* ? */
+	}
+    }
+    if (K->LL != NULL) {
+	gretl_vector_set(K->LL, K->t, 0.0); /* ? */
+    }
+    if (K->K != NULL) {
+	set_row_to_value(K->K, K->t, 0.0);
+    }
+    if (K->V != NULL) {
+	if (smoothing) {
+	    set_row_to_value(K->V, K->t, 0.0);
+	} else {
+	    set_row_to_value(K->V, K->t, NADBL); /* ? */
+	}
+    }
+}
+
+static double max_pos_val (const gretl_matrix *m)
+{
+    double ret = 0;
+    int i, n = m->rows * m->cols;
+
+    for (i=0; i<n; i++) {
+	if (m->val[i] > ret) {
+	    ret = m->val[i];
+	}
+    }
+
+    return ret;
+}
+
+static int get_Fk (kalman *K, gretl_matrix **pFk)
+{
+    if (*pFk == NULL) {
+	*pFk = gretl_matrix_alloc(K->n, K->n);
+    }
+    if (*pFk != NULL) {
+	gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE,
+			   K->Pk0, *pFk, GRETL_MOD_NONE);
+	return 0;
+    }
+    return E_ALLOC;
+}
+
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct.
@@ -1220,8 +1345,8 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
 int kalman_forecast (kalman *K, PRN *prn)
 {
     double ll0 = K->n * LN_2_PI;
+    gretl_matrix *Fk = NULL;
     int smoothing;
-    int Nmiss = 0;
     int err = 0;
 
 #if KDEBUG
@@ -1236,8 +1361,8 @@ int kalman_forecast (kalman *K, PRN *prn)
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
 	int missobs = 0;
-	double qt, llt = NADBL;
-	double ldet = 0;
+	double llt = NADBL;
+	double ldet = 0, qt = 0;
 
 #if KDEBUG > 1
 	kalman_print_state(K);
@@ -1259,37 +1384,66 @@ int kalman_forecast (kalman *K, PRN *prn)
 	/* calculate v_t */
 	missobs = compute_forecast_error(K);
 	if (missobs) {
-	    Nmiss++;
+	    K->okN -= 1;
+	    /* FIXME the case of multivariate y_t with not all
+	       elements missing is more complicated than this.
+	    */
+	    handle_missing_obs(K, smoothing);
+	    continue;
 	}
 
 	/* calculate PZ' */
-	gretl_matrix_multiply(K->P0, K->Z, K->PZ);
+	gretl_matrix_multiply(K->P0, K->ZT, K->PZ);
 
 	/* calculate F_t = ZPZ' [+ GG'] */
-	gretl_matrix_multiply_mod(K->Z, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(K->ZT, GRETL_MOD_TRANSPOSE,
 				  K->PZ, GRETL_MOD_NONE,
 				  K->Ft, GRETL_MOD_NONE);
 	if (K->GG != NULL) {
 	    gretl_matrix_add_to(K->Ft, K->GG);
 	}
 
-	/* form F_t^{-1} and find log determinant */
-	fast_copy_values(K->iFt, K->Ft);
-	err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
-	if (err) {
-	    fprintf(stderr, "kalman_forecast: failed to invert F\n");
+	/* calculate M_t = TPZ' [+ HG'] */
+	gretl_matrix_multiply(K->T, K->PZ, K->Mt);
+	if (K->HG != NULL) {
+	    gretl_matrix_add_to(K->Mt, K->HG);
+	}
+
+	if (kalman_diffuse(K)) {
+	    /* determine the relevant diffuse case */
+	    if (max_pos_val(K->Pk0) > 1.0e-15) {
+		fprintf(stderr, "t=%d, Pk != 0\n", K->t);
+		/* compute F_k = Z Pk Z' */
+		get_Fk(K, &Fk);
+		if (K->n == 1 && Fk->val[0] < 1.0e-15) {
+		    ldet = log(K->Ft->val[0]);
+		    fast_copy_values(K->Kt, K->Mt);
+		    K->iFt->val[0] = 1.0 / K->Ft->val[0];
+		    gretl_matrix_multiply_by_scalar(K->Kt, K->iFt->val[0]);
+		    qt = K->v->val[0] * K->v->val[0] * K->iFt->val[0];
+		} else if (K->n == 1) {
+		    ldet = log(Fk->val[0]);
+		    qt = 0;
+		    koopman_exact_nonsingular(K, Fk);
+		} else {
+		    ;
+		}
+	    }
+	} else {
+	    /* form F_t^{-1} and find log determinant */
+	    fast_copy_values(K->iFt, K->Ft);
+	    err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
+	    if (err) {
+		fprintf(stderr, "kalman_forecast: failed to invert F\n");
+	    } else {
+		qt = gretl_scalar_qform(K->v, K->iFt, &err);
+	    }
 	}
 
 	if (K->F != NULL) {
+	    /* FIXME diffuse case */
 	    /* we're recording F_t for all t */
-	    if (missobs) {
-		if (smoothing) {
-		    set_row(K->F, K->t, 0.0);
-		} else {
-		    /* FIXME? */
-		    set_row(K->F, K->t, 1.0/0.0);
-		}
-	    } else if (smoothing) {
+	    if (smoothing) {
 		/* record inverse */
 		load_to_vech(K->F, K->iFt, K->n, K->t);
 	    } else {
@@ -1302,20 +1456,13 @@ int kalman_forecast (kalman *K, PRN *prn)
 	if (err) {
 	    K->loglik = NADBL;
 	    break;
-	} else if (!missobs) {
-	    qt = gretl_scalar_qform(K->v, K->iFt, &err);
+	} else {
 	    llt = -0.5 * (ll0 + ldet + qt);
 	    K->SSRw += qt;
 	    K->loglik += llt;
 	}
 	if (K->LL != NULL) {
 	    gretl_vector_set(K->LL, K->t, llt);
-	}
-
-	/* calculate M_t = TPZ' [+ HG'] */
-	gretl_matrix_multiply(K->T, K->PZ, K->Mt);
-	if (K->HG != NULL) {
-	    gretl_matrix_add_to(K->Mt, K->HG);
 	}
 
 	/* calculate gain K_t = M_t F_t^{-1}, and C matrix */
@@ -1326,11 +1473,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
 	if (!err && K->K != NULL) {
 	    /* record the gain */
-	    if (missobs) {
-		set_row(K->K, K->t, 0.0);
-	    } else {
-		load_to_vec(K->K, K->Kt, K->t);
-	    }
+	    load_to_vec(K->K, K->Kt, K->t);
 	}
 
 	/* update state: a1 = T a0 + K_t v_t [+ mu] */
@@ -1354,11 +1497,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
 	/* record forecast errors if wanted */
 	if (!err && K->V != NULL) {
-	    if (missobs && smoothing) {
-		set_row(K->V, K->t, 0.0);
-	    } else {
-		load_to_row(K->V, K->v, K->t);
-	    }
+	    load_to_row(K->V, K->v, K->t);
 	}
     }
 
@@ -1368,7 +1507,6 @@ int kalman_forecast (kalman *K, PRN *prn)
 	/* FIXME, get value of @d from new exact code */
 	int nN, d = 0;
 
-	K->okN = K->N - Nmiss;
 	nN = K->n * K->okN;
 	K->s2 = K->SSRw / (nN - d);
     }
@@ -1393,20 +1531,20 @@ struct K_input_mat {
 /* mapping to names used in setting elements of kalman bundle */
 
 struct K_input_mat K_input_mats[] = {
-    { K_y, "obsy" },
-    { K_Z, "obsymat" },
-    { K_x, "obsx" },
-    { K_B, "obsxmat" },
-    { K_R, "obsvar" },
-    { K_T, "statemat" },
-    { K_Q, "statevar" },
-    { K_m, "stconst" },
-    { K_a, "inistate" },
-    { K_P, "inivar" }
+    { K_y,  "obsy" },
+    { K_ZT, "obsymat" },
+    { K_x,  "obsx" },
+    { K_BT,  "obsxmat" },
+    { K_R,  "obsvar" },
+    { K_T,  "statemat" },
+    { K_Q,  "statevar" },
+    { K_m,  "stconst" },
+    { K_a,  "inistate" },
+    { K_P,  "inivar" }
 };
 
 int extra_mats[] = {
-    K_B,
+    K_BT,
     K_R,
     K_m,
     K_x,
@@ -1442,9 +1580,9 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 
     K->flags ^= KALMAN_CHECK;
 
-    if (!err && (K->Z == NULL || K->T == NULL || K->HH == NULL)) {
+    if (!err && (K->ZT == NULL || K->T == NULL || K->HH == NULL)) {
 	fprintf(stderr, "kalman_bundle_kalman_recheck_matrices: Z=%p, T=%p, Q=%p\n",
-		K->Z, K->T, K->HH);
+		K->ZT, K->T, K->HH);
 	err = missing_matrix_error(NULL);
     }
 
@@ -1456,7 +1594,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
     kalman_set_dimensions(K);
 
     if (gretl_matrix_rows(K->T) != K->r ||
-	gretl_matrix_rows(K->B) != K->k) {
+	gretl_matrix_rows(K->BT) != K->k) {
 	err = E_NONCONF;
     } else if (!kalman_simulating(K)) {
 	err = obsy_check(K);
@@ -1650,8 +1788,9 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
    row and reconstitute the matrix in @targ.
 */
 
-static int load_from_vec (gretl_matrix *targ, const gretl_matrix *src,
-			   int t)
+static int load_from_vec (gretl_matrix *targ,
+			  const gretl_matrix *src,
+			  int t)
 {
     int i, k = targ->rows * targ->cols;
 
@@ -1717,10 +1856,10 @@ static int retrieve_Tt (kalman *K, int t)
 
 static int retrieve_Zt (kalman *K, int t)
 {
-    if (K->step == NULL || K->step->Z == NULL) {
+    if (K->step == NULL || K->step->ZT == NULL) {
 	return E_DATA;
     } else {
-	return load_from_vec((gretl_matrix *) K->Z, K->step->Z, t);
+	return load_from_vec((gretl_matrix *) K->ZT, K->step->ZT, t);
     }
 }
 
@@ -1874,7 +2013,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	if (matrix_is_varying(K, K_T)) {
 	    err = retrieve_Tt(K, t);
 	}
-	if (!err && matrix_is_varying(K, K_Z)) {
+	if (!err && matrix_is_varying(K, K_ZT)) {
 	    err = retrieve_Zt(K, t);
 	}
 	if (err) {
@@ -1952,14 +2091,14 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	/* L_t = T - KZ' */
 	fast_copy_values(L, K->T);
 	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				  K->Z, GRETL_MOD_TRANSPOSE,
+				  K->ZT, GRETL_MOD_TRANSPOSE,
 				  L, GRETL_MOD_DECREMENT);
 
 	/* save r_t values in R */
 	load_to_row(R, r1, t);
 
 	/* r_{t-1} = Z F_t^{-1}v_t + L_t' r_t */
-	gretl_matrix_multiply(K->Z, K->Ft, tr);
+	gretl_matrix_multiply(K->ZT, K->Ft, tr);
 	gretl_matrix_multiply(tr, K->v, r2);
 	if (t < K->N - 1) {
 	    gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
@@ -1975,7 +2114,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	}
 
 	/* N_{t-1} = Z F_t^{-1}Z' + L' N L */
-	gretl_matrix_qform(K->Z, GRETL_MOD_NONE,
+	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
 			   K->Ft, N2, GRETL_MOD_NONE);
 	if (t < K->N - 1) {
 	    gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
@@ -2117,7 +2256,7 @@ static int anderson_moore_smooth (kalman *K)
 	if (matrix_is_varying(K, K_T)) {
 	    err = retrieve_Tt(K, t);
 	}
-	if (!err && matrix_is_varying(K, K_Z)) {
+	if (!err && matrix_is_varying(K, K_ZT)) {
 	    err = retrieve_Zt(K, t);
 	}
 	if (err) {
@@ -2128,16 +2267,16 @@ static int anderson_moore_smooth (kalman *K)
 	fast_copy_values(L, K->T);
 	load_from_vec(K->Kt, K->K, t);
 	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				  K->Z, GRETL_MOD_TRANSPOSE,
+				  K->ZT, GRETL_MOD_TRANSPOSE,
 				  L, GRETL_MOD_DECREMENT);
 
 	/* u_{t-1} = Z_t F_t v_t + L_t' u_t */
 	load_from_vech(K->Ft, K->F, K->n, t, GRETL_MOD_NONE);
 	load_from_row(K->v, K->V, t, GRETL_MOD_NONE);
 	gretl_matrix_multiply(K->Ft, K->v, Ve);
-	gretl_matrix_multiply(K->Z, Ve, u1);
+	gretl_matrix_multiply(K->ZT, Ve, u1);
 	if (t == K->N - 1) {
-	    gretl_matrix_multiply(K->Z, Ve, u);
+	    gretl_matrix_multiply(K->ZT, Ve, u);
 	} else {
 	    gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
 				      u, GRETL_MOD_NONE,
@@ -2147,10 +2286,10 @@ static int anderson_moore_smooth (kalman *K)
 
 	/* U_{t-1} = Z_t F_t Z_t' + L_t' U_t L_t */
 	if (t == K->N - 1) {
-	    gretl_matrix_qform(K->Z, GRETL_MOD_NONE,
+	    gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
 			       K->Ft, U, GRETL_MOD_NONE);
 	} else {
-	    gretl_matrix_qform(K->Z, GRETL_MOD_NONE,
+	    gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
 			       K->Ft, U1, GRETL_MOD_NONE);
 	    gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
 			       U, U1, GRETL_MOD_CUMULATE);
@@ -2178,7 +2317,7 @@ static int anderson_moore_smooth (kalman *K)
 }
 
 /* If we're doing smoothing for a system that has time-varying
-   coefficients in K->T or K->Z we'll record the vec of the
+   coefficients in K->T or K->ZT we'll record the vec of the
    coefficient matrices for each time-step on the forward pass.
    Here we allocate the required storage.
 */
@@ -2193,7 +2332,7 @@ static int kalman_add_stepinfo (kalman *K)
 	return E_ALLOC;
     }
 
-    K->step->T = K->step->Z = NULL;
+    K->step->T = K->step->ZT = NULL;
 
     if (matrix_is_varying(K, K_T)) {
 	K->step->T = gretl_matrix_alloc(K->N, K->r * K->r);
@@ -2202,9 +2341,9 @@ static int kalman_add_stepinfo (kalman *K)
 	}
     }
 
-    if (!err && matrix_is_varying(K, K_Z)) {
-	K->step->Z = gretl_matrix_alloc(K->N, K->r * K->n);
-	if (K->step->Z == NULL) {
+    if (!err && matrix_is_varying(K, K_ZT)) {
+	K->step->ZT = gretl_matrix_alloc(K->N, K->r * K->n);
+	if (K->step->ZT == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -2296,7 +2435,7 @@ gretl_matrix *kalman_smooth (kalman *K,
 	goto bailout;
     }
 
-    if (matrix_is_varying(K, K_T) || matrix_is_varying(K, K_Z)) {
+    if (matrix_is_varying(K, K_T) || matrix_is_varying(K, K_ZT)) {
 	/* add recorder for T_t and/or Z_t */
 	*err = kalman_add_stepinfo(K);
 	if (*err) {
@@ -2394,7 +2533,7 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 	return err;
     }
 
-    if (matrix_is_varying(K, K_T) || matrix_is_varying(K, K_Z)) {
+    if (matrix_is_varying(K, K_T) || matrix_is_varying(K, K_ZT)) {
 	/* add recorder for T_t and/or Z_t */
 	err = kalman_add_stepinfo(K);
 	if (err) {
@@ -2602,10 +2741,10 @@ static int kalman_simulate (kalman *K,
 	}
 
 	/* y_t = B'*x_t + Z'*a_t + w_t */
-	gretl_matrix_multiply_mod(K->Z, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(K->ZT, GRETL_MOD_TRANSPOSE,
 				  K->a0, GRETL_MOD_NONE,
 				  yt, GRETL_MOD_NONE);
-	if (K->B != NULL) {
+	if (K->BT != NULL) {
 	    missobs = kalman_set_Bx(K);
 	    if (!missobs) {
 		gretl_matrix_add_to(yt, K->Bx);
@@ -2975,7 +3114,7 @@ static int check_replacement_dims (const gretl_matrix *orig,
 				   const gretl_matrix *repl,
 				   int id)
 {
-    if (id == K_Z || id == K_B || id == K_R || id == K_T ||
+    if (id == K_ZT || id == K_BT || id == K_R || id == K_T ||
 	id == K_Q || id == K_m || id == K_a || id == K_P) {
 	if (repl->rows != orig->rows ||
 	    repl->cols != orig->cols) {
@@ -3029,10 +3168,10 @@ get_input_matrix_target_by_id (kalman *K, int i)
 
     if (i == K_T) {
 	targ = &K->T;
-    } else if (i == K_B) {
-	targ = &K->B;
-    } else if (i == K_Z) {
-	targ = &K->Z;
+    } else if (i == K_BT) {
+	targ = &K->BT;
+    } else if (i == K_ZT) {
+	targ = &K->ZT;
     } else if (i == K_Q) {
 	if (kalman_xcorr(K)) {
 	    targ = &K->H;
@@ -3261,10 +3400,10 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
 
     if (i == K_T) {
 	m = K->T;
-    } else if (i == K_B) {
-	m = K->B;
-    } else if (i == K_Z) {
-	m = K->Z;
+    } else if (i == K_BT) {
+	m = K->BT;
+    } else if (i == K_ZT) {
+	m = K->ZT;
     } else if (i == K_Q) {
 	if (kalman_xcorr(K)) {
 	    m = K->H;
@@ -3807,7 +3946,7 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
 
     /* set pointers to required Kalman matrices */
     M[0] = K->y;
-    M[1] = K->Z;
+    M[1] = K->ZT;
     M[2] = K->T;
 
     /* variants dependent on presence/absence of cross-correlation */
