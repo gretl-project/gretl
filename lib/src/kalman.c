@@ -145,6 +145,7 @@ struct kalman_ {
 #define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
+#define kalman_smoothing(K)   (K->flags & KALMAN_SMOOTH)
 
 #define filter_is_varying(K) (K->matcall != NULL)
 
@@ -285,7 +286,7 @@ static int diffuse_Pini (kalman *K)
     return 0;
 }
 
-static int T_out_of_bounds (kalman *K)
+static int statemat_out_of_bounds (kalman *K)
 {
     gretl_matrix *evals;
     double r, c, x;
@@ -343,7 +344,7 @@ static int construct_Pini (kalman *K)
     err = gretl_LU_solve(Svar, vQ);
     if (err) {
 	/* failed: are some of the eigenvalues out of bounds? */
-	err = T_out_of_bounds(K);
+	err = statemat_out_of_bounds(K);
 	if (err == E_SINGULAR) {
 	    err = diffuse_Pini(K);
 	    K->flags |= KALMAN_DIFFUSE;
@@ -651,12 +652,10 @@ static void load_to_row (gretl_matrix *targ,
 			 const gretl_vector *src,
 			 int t)
 {
-    double x;
     int i;
 
     for (i=0; i<targ->cols; i++) {
-	x = gretl_vector_get(src, i);
-	gretl_matrix_set(targ, t, i, x);
+	gretl_matrix_set(targ, t, i, src->val[i]);
     }
 }
 
@@ -1270,7 +1269,7 @@ static int koopman_exact_nonsingular (kalman *K,
    univariate y_t (or all y_t values missing).
 */
 
-static void handle_missing_obs (kalman *K, int smoothing)
+static void handle_missing_obs (kalman *K)
 {
     /* state update */
     gretl_matrix_multiply(K->T, K->a0, K->a1);
@@ -1283,7 +1282,7 @@ static void handle_missing_obs (kalman *K, int smoothing)
 
     /* record stuff if wanted */
     if (K->F != NULL) {
-	if (smoothing) {
+	if (kalman_smoothing(K)) {
 	    set_row_to_value(K->F, K->t, 0.0);
 	} else {
 	    set_row_to_value(K->F, K->t, NADBL); /* ? */
@@ -1296,7 +1295,7 @@ static void handle_missing_obs (kalman *K, int smoothing)
 	set_row_to_value(K->K, K->t, 0.0);
     }
     if (K->V != NULL) {
-	if (smoothing) {
+	if (kalman_smoothing(K)) {
 	    set_row_to_value(K->V, K->t, 0.0);
 	} else {
 	    set_row_to_value(K->V, K->t, NADBL); /* ? */
@@ -1346,14 +1345,13 @@ int kalman_forecast (kalman *K, PRN *prn)
 {
     double ll0 = K->n * LN_2_PI;
     gretl_matrix *Fk = NULL;
-    int smoothing;
+    int d = 0;
     int err = 0;
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: N = %d\n", K->N);
 #endif
 
-    smoothing = (K->flags & KALMAN_SMOOTH)? 1 : 0;
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
     K->okN = K->N;
@@ -1388,7 +1386,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    /* FIXME the case of multivariate y_t with not all
 	       elements missing is more complicated than this.
 	    */
-	    handle_missing_obs(K, smoothing);
+	    handle_missing_obs(K);
 	    continue;
 	}
 
@@ -1409,28 +1407,25 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    gretl_matrix_add_to(K->Mt, K->HG);
 	}
 
-	if (kalman_diffuse(K)) {
-	    /* determine the relevant diffuse case */
-	    if (max_pos_val(K->Pk0) > 1.0e-15) {
-		fprintf(stderr, "t=%d, Pk != 0\n", K->t);
-		/* compute F_k = Z Pk Z' */
-		get_Fk(K, &Fk);
-		if (K->n == 1 && Fk->val[0] < 1.0e-15) {
-		    ldet = log(K->Ft->val[0]);
-		    fast_copy_values(K->Kt, K->Mt);
-		    K->iFt->val[0] = 1.0 / K->Ft->val[0];
-		    gretl_matrix_multiply_by_scalar(K->Kt, K->iFt->val[0]);
-		    qt = K->v->val[0] * K->v->val[0] * K->iFt->val[0];
-		} else if (K->n == 1) {
-		    ldet = log(Fk->val[0]);
-		    qt = 0;
-		    koopman_exact_nonsingular(K, Fk);
-		} else {
-		    ;
-		}
+	if (kalman_diffuse(K) && max_pos_val(K->Pk0) > 1.0e-15) {
+	    /* handle initial exact iterations */
+	    get_Fk(K, &Fk);
+	    if (K->n == 1 && Fk->val[0] < 1.0e-15) {
+		ldet = log(K->Ft->val[0]);
+		fast_copy_values(K->Kt, K->Mt);
+		K->iFt->val[0] = 1.0 / K->Ft->val[0];
+		gretl_matrix_multiply_by_scalar(K->Kt, K->iFt->val[0]);
+		qt = K->v->val[0] * K->v->val[0] * K->iFt->val[0];
+	    } else if (K->n == 1) {
+		ldet = log(Fk->val[0]);
+		qt = 0;
+		koopman_exact_nonsingular(K, Fk);
+	    } else {
+		/* insert general case */
+		;
 	    }
 	} else {
-	    /* form F_t^{-1} and find log determinant */
+	    /* standard Kalman procedure */
 	    fast_copy_values(K->iFt, K->Ft);
 	    err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
 	    if (err) {
@@ -1438,12 +1433,15 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    } else {
 		qt = gretl_scalar_qform(K->v, K->iFt, &err);
 	    }
+	    if (kalman_diffuse(K) && d == 0) {
+		d = K->t + 1;
+	    }
 	}
 
 	if (K->F != NULL) {
 	    /* FIXME diffuse case */
 	    /* we're recording F_t for all t */
-	    if (smoothing) {
+	    if (kalman_smoothing(K)) {
 		/* record inverse */
 		load_to_vech(K->F, K->iFt, K->n, K->t);
 	    } else {
@@ -1501,11 +1499,13 @@ int kalman_forecast (kalman *K, PRN *prn)
 	}
     }
 
+    gretl_matrix_free(Fk);
+
     set_kalman_stopped(K);
 
     if (!na(K->loglik)) {
 	/* FIXME, get value of @d from new exact code */
-	int nN, d = 0;
+	int nN;
 
 	nN = K->n * K->okN;
 	K->s2 = K->SSRw / (nN - d);
@@ -1515,9 +1515,9 @@ int kalman_forecast (kalman *K, PRN *prn)
 	err = E_NAN;
     }
 
-#if KDEBUG
-    fprintf(stderr, "kalman_forecast: err=%d, ll=%#.12g\n", err,
-	    K->loglik);
+#if 1 || KDEBUG
+    fprintf(stderr, "kalman_forecast: err=%d, ll=%#.12g, d=%d\n",
+	    err, K->loglik, d);
 #endif
 
     return err;
