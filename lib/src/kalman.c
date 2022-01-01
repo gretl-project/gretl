@@ -190,6 +190,7 @@ void kalman_free (kalman *K)
 	return;
     }
 
+    /* internally allocated matrices */
     gretl_matrix_free(K->a0);
     gretl_matrix_free(K->a1);
     gretl_matrix_free(K->P0);
@@ -200,6 +201,7 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->v);
     gretl_matrix_free(K->LL);
 
+    /* internally allocated workspace */
     gretl_matrix_block_destroy(K->Blk);
 
     if (K->flags & KALMAN_BUNDLE) {
@@ -213,7 +215,7 @@ void kalman_free (kalman *K)
 	    gretl_matrix_free(*mptr[i]);
 	}
 
-	/* we also own these "export" matrices */
+	/* @K also owns these "export" matrices */
 	gretl_matrix_free(K->V);
 	gretl_matrix_free(K->F);
 	gretl_matrix_free(K->A);
@@ -228,6 +230,7 @@ void kalman_free (kalman *K)
     free(K->varying);
 
     if (kalman_xcorr(K)) {
+	/* correlated errors info */
 	gretl_matrix_free(K->H);
 	gretl_matrix_free(K->G);
 	gretl_matrix_free(K->HG);
@@ -456,7 +459,8 @@ static int kalman_check_dimensions (kalman *K)
 
     if (K->r < 1 || K->n < 1 || K->N < 2) {
 	/* the state and observation vectors must have at least one
-	   element, and there must be at least two observations */
+	   element, and there must be at least two observations
+	*/
 	err = E_DATA;
     }
 
@@ -751,7 +755,7 @@ static void kalman_set_dimensions (kalman *K)
     K->n = gretl_matrix_cols(K->y);  /* y->cols defines n */
 
     if (!kalman_simulating(K)) {
-	/* y->rows defines T, except when simulating */
+	/* y->rows defines N, except when simulating */
 	K->N = gretl_matrix_rows(K->y);
     }
 
@@ -766,12 +770,41 @@ static void kalman_set_dimensions (kalman *K)
     K->p = (K->H != NULL)? gretl_matrix_cols(K->H): 0;
 }
 
+/* Allow for the possibility that "Z" was given as such,
+   not transposed. That's encouraged by the notation new
+   in 2022, but the C code still requires that we have Z'.
+*/
+
+static gretl_matrix *get_Z_transpose (gretl_matrix *Z,
+				      const gretl_matrix *y,
+				      const gretl_matrix *T,
+				      int *err)
+{
+    gretl_matrix *ZT = Z;
+    int n = y->cols;
+    int r = T->rows;
+
+    if (Z->rows == r && Z->cols == n) {
+	; /* @Z = Z' already, OK */
+    } else if (Z->rows == n && Z->cols == r) {
+	ZT = gretl_matrix_copy_transpose(Z);
+	if (ZT == NULL) {
+	    *err = E_ALLOC;
+	}
+    } else {
+	*err = E_NONCONF;
+    }
+
+    return ZT;
+}
+
 /* supports hansl function for creating a named Kalman bundle */
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 			    int nmat, int *err)
 {
     gretl_matrix **targ[5];
+    gretl_matrix *ZT;
     kalman *K;
     int i;
 
@@ -799,7 +832,19 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 	targ[3] = &K->H;
 	targ[4] = &K->G;
     } else {
-	targ[3] = &K->HH;
+	targ[3] = &K->HH; /* "Q" */
+    }
+
+    /* backward compatibility */
+    ZT = get_Z_transpose(M[1], M[0], M[2], err);
+    if (*err) {
+	free(K);
+	return NULL;
+    } else if (ZT != M[1]) {
+	if (!copy[1]) {
+	    gretl_matrix_free(M[1]);
+	}
+	M[1] = ZT;
     }
 
     for (i=0; i<nmat; i++) {
@@ -1239,8 +1284,6 @@ static int koopman_exact_general (kalman *K,
     size_t sz;
     int err = 0;
 
-    /* FIXME: ensure these matrices are sized properly! */
-
     B = gretl_matrix_block_new(&Mk,  K->r, K->n,
 			       &Ck,  K->r, K->r,
 			       &Fmk, K->n, K->n,
@@ -1411,7 +1454,10 @@ static void handle_missing_obs (kalman *K)
     /* state update: a1 = T*a0 */
     gretl_matrix_multiply(K->T, K->a0, K->a1);
 
-    /* handle stconst? */
+    /* handle stconst if present */
+    if (K->mu != NULL) {
+	gretl_matrix_add_to(K->a1, K->mu);
+    }
 
     /* var(state) update: P1 = T*P0*T' + HH */
     fast_copy_values(K->P1, K->HH);
@@ -3244,39 +3290,100 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
     return E;
 }
 
-/* below: functions to support the "wrapping" of a Kalman
-   struct in a gretl bundle */
+/*
+   below: functions to support the "wrapping" of a Kalman
+   struct in a gretl bundle
+*/
 
 static int check_replacement_dims (const gretl_matrix *orig,
 				   const gretl_matrix *repl,
 				   int id)
 {
-    if (id == K_ZT || id == K_BT || id == K_R || id == K_T ||
-	id == K_Q || id == K_m || id == K_a || id == K_P) {
-	if (repl->rows != orig->rows ||
-	    repl->cols != orig->cols) {
-	    gretl_errmsg_set("You cannot resize a state-space "
-			     "system matrix");
-	    return E_DATA;
+    int err = 0;
+
+    if (id == K_R || id == K_T || id == K_Q ||
+	id == K_m || id == K_a || id == K_P) {
+	if (repl->rows != orig->rows || repl->cols != orig->cols) {
+	    err = E_DATA;
 	}
     } else if (id == K_y || id == K_x) {
 	if (repl->cols != orig->cols) {
-	    gretl_errmsg_set("You cannot resize a state-space "
-			     "system matrix");
-	    return E_DATA;
+	    err = E_DATA;
 	}
     }
 
-    return 0;
+    if (err) {
+	gretl_errmsg_set("You cannot resize a state-space "
+			 "system matrix");
+    }
+
+    return err;
 }
 
-static int add_or_replace_k_matrix (gretl_matrix **targ,
+static int check_for_transpose (kalman *K, gretl_matrix *m,
+				int id, int *transpose)
+{
+    int err = 0;
+
+    if (id == K_ZT) {
+	if (m->rows == K->r && m->cols == K->n) {
+	    ; /* OK */
+	} else if (m->rows == K->n && m->cols == K->r) {
+	    *transpose = 1;
+	} else {
+	    err = E_DATA;
+	}
+    } else {
+	/* K_BT */
+	if (m->rows == K->k && m->cols == K->n) {
+	    ; /* OK */
+	} else if (m->rows == K->n && m->cols == K->k) {
+	    *transpose = 1;
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set("You cannot resize a state-space "
+			 "system matrix");
+    }
+
+    return err;
+}
+
+/* On input @targ is a pointer to the matrix to be replaced, if
+   there's already a matrix corresponding to @id in place; @src is
+   the new matrix, to be copied in if @copy is non-zero or
+   otherwise just attached. On output @targ points to the new
+   matrix.
+*/
+
+static int add_or_replace_k_matrix (kalman *K,
+				    gretl_matrix **targ,
 				    gretl_matrix *src,
 				    int id, int copy)
 {
     int err = 0;
 
     if (*targ != src) {
+	if (id == K_ZT || id == K_BT) {
+	    int transpose = 0;
+
+	    err = check_for_transpose(K, src, id, &transpose);
+	    if (err) {
+		return err;
+	    } else if (transpose) {
+		gretl_matrix *tmp = gretl_matrix_copy_transpose(src);
+
+		if (!copy) {
+		    gretl_matrix_free(src);
+		} else {
+		    copy = 0;
+		}
+		src = tmp;
+	    }
+	}
 	if (*targ != NULL) {
 	    err = check_replacement_dims(*targ, src, id);
 	    if (err) {
@@ -3336,17 +3443,22 @@ get_input_matrix_target_by_id (kalman *K, int i)
     return targ;
 }
 
-/* try attaching a matrix to a Kalman bundle */
+/* Try attaching a matrix to a Kalman bundle: similar
+   to kalman_bundle_set_matrix() below, but allowing
+   for the possibility that the @data input of type
+   @vtype has to be converted first.
+*/
 
 static int
 kalman_bundle_try_set_matrix (kalman *K, void *data,
-			      GretlType vtype, int i,
+			      GretlType vtype, int id,
 			      int copy)
 {
     gretl_matrix **targ;
     int err = 0;
 
-    targ = get_input_matrix_target_by_id(K, i);
+    /* determine the location for this matrix */
+    targ = get_input_matrix_target_by_id(K, id);
 
     if (targ == NULL) {
 	err = E_DATA;
@@ -3355,13 +3467,13 @@ kalman_bundle_try_set_matrix (kalman *K, void *data,
 
 	if (vtype == GRETL_TYPE_MATRIX) {
 	    m = data;
-	    err = add_or_replace_k_matrix(targ, m, i, copy);
+	    err = add_or_replace_k_matrix(K, targ, m, id, copy);
 	} else if (vtype == GRETL_TYPE_DOUBLE) {
 	    m = gretl_matrix_from_scalar(*(double *) data);
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = add_or_replace_k_matrix(targ, m, i, 0);
+		err = add_or_replace_k_matrix(K, targ, m, id, 0);
 	    }
 	} else {
 	    err = E_TYPES;
@@ -3371,8 +3483,15 @@ kalman_bundle_try_set_matrix (kalman *K, void *data,
     return err;
 }
 
+/* Called by kalman_deserialize() when reconstructing a
+   kalman bundle from XML, and also by kalman_bundle_copy()
+   when duplicating such a bundle. In these contexts we
+   know we have a gretl_matrix on input.
+*/
+
 static int
-kalman_bundle_set_matrix (kalman *K, gretl_matrix *m, int i, int copy)
+kalman_bundle_set_matrix (kalman *K, gretl_matrix *m,
+			  int i, int copy)
 {
     gretl_matrix **targ;
     int err = 0;
@@ -3382,7 +3501,7 @@ kalman_bundle_set_matrix (kalman *K, gretl_matrix *m, int i, int copy)
     if (targ == NULL) {
 	err = E_DATA;
     } else {
-	err = add_or_replace_k_matrix(targ, m, i, copy);
+	err = add_or_replace_k_matrix(K, targ, m, i, copy);
     }
 
     return err;
@@ -3593,6 +3712,18 @@ static GretlType kalman_extra_type (const char *key)
     }
 }
 
+/* Called by real_bundle_set_data() in gretl_bundle.c.
+   The return value indicates whether the putative
+   setting was handled (1) or not (0). Not being
+   handled here is not necessarily an error.
+
+   The @copy flag here is inherited from the specific
+   caller of real_bundle_set_data(): @copy = 1 if the
+   caller was gretl_bundle_set_data(), 0 if it was
+   gretl_bundle_donate_data(). Either way the kalman
+   struct takes ownership.
+*/
+
 int maybe_set_kalman_element (void *kptr,
 			      const char *key,
 			      void *vptr,
@@ -3600,7 +3731,7 @@ int maybe_set_kalman_element (void *kptr,
 			      int copy,
 			      int *err)
 {
-    GretlType targ;
+    GretlType targtype;
     kalman *K = kptr;
     int fncall = 0;
     int i, id = -1;
@@ -3612,12 +3743,12 @@ int maybe_set_kalman_element (void *kptr,
 	return 0;
     }
 
-    /* check for optional "extra" kalman items that
-       live outside of the kalman struct itself
+    /* Check for optional "extra" kalman items that
+       live outside of the kalman struct itself.
     */
-    targ = kalman_extra_type(key);
-    if (targ != GRETL_TYPE_NONE) {
-	if (vtype != targ) {
+    targtype = kalman_extra_type(key);
+    if (targtype != GRETL_TYPE_NONE) {
+	if (vtype != targtype) {
 	    *err = E_TYPES;
 	}
 	return 0;
@@ -3629,6 +3760,7 @@ int maybe_set_kalman_element (void *kptr,
 
     if (Kflag) {
 	if (vtype == GRETL_TYPE_DOUBLE) {
+	    /* note: double serving as boolean */
 	    double x = *(double *) vptr;
 
 	    if (na(x)) {
