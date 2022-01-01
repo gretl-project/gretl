@@ -62,6 +62,7 @@ struct kalman_ {
     int N;   /* rows of y = number of observations */
     int okN; /* N - number of missing observations */
     int t;   /* current time step, when filtering */
+    int d;   /* time-step at which standard iterations start */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
 
@@ -273,6 +274,7 @@ static kalman *kalman_new_empty (int flags)
 	K->prn = NULL;
 	K->data = NULL;
 	K->b = NULL;
+	K->d = 0;
     }
 
     return K;
@@ -1518,7 +1520,6 @@ static double max_val (const gretl_matrix *m)
 int kalman_forecast (kalman *K, PRN *prn)
 {
     double ll0 = K->n * LN_2_PI;
-    int d = 0;
     int err = 0;
 
 #if KDEBUG
@@ -1528,6 +1529,7 @@ int kalman_forecast (kalman *K, PRN *prn)
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
     K->okN = K->N;
+    K->d = 0;
     set_kalman_running(K);
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
@@ -1607,8 +1609,8 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    } else {
 		qt = gretl_scalar_qform(K->v, K->iFt, &err);
 	    }
-	    if (kalman_diffuse(K) && d == 0) {
-		d = K->t + 1;
+	    if (kalman_diffuse(K) && K->d == 0) {
+		K->d = K->t + 1;
 	    }
 	}
 
@@ -1689,7 +1691,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	int nN;
 
 	nN = K->n * K->okN;
-	K->s2 = K->SSRw / (nN - d);
+	K->s2 = K->SSRw / (nN - K->d);
     }
 
     if (na(K->loglik)) {
@@ -1698,7 +1700,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err=%d, ll=%#.12g, d=%d\n",
-	    err, K->loglik, d);
+	    err, K->loglik, K->d);
 #endif
 
     return err;
@@ -3562,7 +3564,7 @@ static int output_matrix_slot (const char *s)
     return -1;
 }
 
-#define K_N_SCALARS 9
+#define K_N_SCALARS 10
 
 enum {
     Ks_t = 0,
@@ -3574,6 +3576,7 @@ enum {
     Ks_n,
     Ks_N,
     Ks_p,
+    Ks_d
 };
 
 static const char *kalman_output_scalar_names[K_N_SCALARS] = {
@@ -3585,7 +3588,8 @@ static const char *kalman_output_scalar_names[K_N_SCALARS] = {
     "r",
     "n",
     "N",
-    "p"
+    "p",
+    "d"
 };
 
 static double *kalman_output_scalar (kalman *K,
@@ -3642,6 +3646,9 @@ static double *kalman_output_scalar (kalman *K,
 	break;
     case Ks_p:
 	retval[idx] = K->p;
+	break;
+    case Ks_d:
+	retval[idx] = K->d;
 	break;
     default:
 	break;
