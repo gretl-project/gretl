@@ -1222,33 +1222,33 @@ static int koopman_exact_general (kalman *K,
 				  double *ldet,
 				  double *qt)
 {
-    /* FIXME use a matrix block here */
+    gretl_matrix_block *B;
     gretl_matrix *Mk;
     gretl_matrix *Ck;
     gretl_matrix *Fmk;
     gretl_matrix *Fmt;
     gretl_matrix *MFk;
     gretl_matrix *PkZ;
-    gretl_matrix *l = NULL;
     gretl_matrix *V, *J;
+    gretl_matrix *l = NULL;
     double xij, rlj;
     int i, j, ns;
     size_t sz;
     int err = 0;
 
-    /* FIXME: size these matrices properly! */
+    /* FIXME: ensure these matrices are sized properly! */
 
-    Mk  = gretl_matrix_alloc(K->r, K->n);
-    Ck  = gretl_matrix_alloc(K->r, K->n);
-    Fmt = gretl_matrix_alloc(K->r, K->n);
-    Fmk = gretl_matrix_alloc(K->r, K->n);
-    MFk = gretl_matrix_alloc(K->r, K->n);
-    PkZ = gretl_matrix_alloc(K->r, K->n);
+    B = gretl_matrix_block_new(&Mk,  K->r, K->n,
+			       &Ck,  K->r, K->r,
+			       &Fmk, K->n, K->n,
+			       &Fmt, K->n, K->n,
+			       &MFk, K->r, K->n,
+			       &PkZ, K->r, K->n,
+			       &V,   K->n, K->n,
+			       &J,   K->n, K->n,
+			       NULL);
 
-    V   = gretl_matrix_alloc(K->n, K->n);
-    J   = gretl_matrix_alloc(K->n, K->n);
-
-    if (Mk == NULL || V == NULL || J == NULL) {
+    if (B == NULL) {
 	err = E_ALLOC;
     } else {
 	/* Mk = T*Pk*Z' */
@@ -1326,7 +1326,7 @@ static int koopman_exact_general (kalman *K,
 			      Mk,  GRETL_MOD_TRANSPOSE,
 			      Ck, GRETL_MOD_NONE);
 
-    /* Pk1 = T*Pk0*T' - Ck */
+    /* Pk = T*Pk*T' - Ck */
     gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
 		       K->Pk1, GRETL_MOD_NONE);
     gretl_matrix_subtract_from(K->Pk1, Ck);
@@ -1338,18 +1338,14 @@ static int koopman_exact_general (kalman *K,
 
  bailout:
 
-    gretl_matrix_free(V);
-    gretl_matrix_free(J);
-    gretl_matrix_free(l);
-    gretl_matrix_free(Mk);
-    gretl_matrix_free(Ck);
-    gretl_matrix_free(Fmk);
-    gretl_matrix_free(Fmt);
-    gretl_matrix_free(MFk);
-    gretl_matrix_free(PkZ);
+    gretl_matrix_block_destroy(B);
 
     return err;
 }
+
+/* exact initial iteration for uniivariate y_t,
+   when F^\infty (Fk) > 0
+*/
 
 static int koopman_exact_nonsingular (kalman *K)
 {
@@ -1390,7 +1386,7 @@ static int koopman_exact_nonsingular (kalman *K)
 			      Mk, GRETL_MOD_TRANSPOSE,
 			      Ck, GRETL_MOD_NONE);
 
-    /* Pk1 = T*Pk0*T' - Ck */
+    /* Pk = T*Pk*T' - Ck */
     gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
 		       K->Pk1, GRETL_MOD_NONE);
     gretl_matrix_subtract_from(K->Pk1, Ck);
