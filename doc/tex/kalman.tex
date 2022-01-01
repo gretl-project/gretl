@@ -99,7 +99,7 @@ corresponding bundle keys are as follows:
 \begin{tabular}{ccl}
 Symbol & Dimensions & Reserved key \\[6pt]
 $\obsvec$    & $N \times n$ & \texttt{obsy}\\
-$\obsymat'$  & $r \times n$ & \texttt{obsymat}\\
+$\obsymat$   & $n \times r$ & \texttt{obsymat}\\
 $\statemat$  & $r \times r$ & \texttt{statemat}\\
 $\statevar$  & $r \times r$ & \texttt{statevar}\\
 \end{tabular}
@@ -107,7 +107,7 @@ $\statevar$  & $r \times r$ & \texttt{statevar}\\
 
 For example,
 \begin{code}
-bundle SSmod = ksetup(y, Z', T, Q)
+bundle SSmod = ksetup(y, Z, T, Q)
 \end{code}
 
 The names of these input matrices don't matter; in fact they may be
@@ -131,7 +131,7 @@ section~\ref{sec:stconst} below.}
 Symbol & Dimensions & Key & If omitted\dots \\[6pt]
 $\obsx$ & $N \times k$ & \texttt{obsx} &
  no exogenous terms in observation equation\\
-$\obsxmat'$ & $k \times n$ & \texttt{obsxmat} &
+$\obsxmat$ & $n \times k$ & \texttt{obsxmat} &
  no exogenous terms in observation equation\\
 $\obsvar$ & $n \times n$ & \texttt{obsvar} &
  no disturbance term in observation equation \\
@@ -147,7 +147,7 @@ rather you add them to the bundle returned by \cmd{ksetup} (under
 their reserved keys) as you usually add elements to a bundle, for
 example:
 \begin{code}
-SSmod.obsxmat = B'
+SSmod.obsxmat = B
 \end{code}
 
 Once setup is complete the dimensions of the model, $r$, $n$, $k$ and
@@ -565,7 +565,7 @@ are cross-correlated five arguments should be given to the
 giving $\statevar$ you should give the two matrices identified above as
 $\altobsvar$ and $\altstatevar$, as in
 \begin{code}
-bundle SSxmod = ksetup(y, Z', T, G, H)
+bundle SSxmod = ksetup(y, Z, T, G, H)
 \end{code}
 
 In case you wish to retrieve or update information on the variance of
@@ -798,7 +798,7 @@ The \textsf{hansl} syntax for a corresponding filter would be
 matrix Z = {1, theta}
 matrix T = {phi, 0; 1, 0}
 matrix Q = {s^2, 0; 0, 0}
-bundle kb = ksetup(y, Z', T, Q)
+bundle kb = ksetup(y, Z, T, Q)
 \end{code}
 %
 or, if you prefer, just a one-liner:
@@ -848,7 +848,7 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
         desc = "1-sided "
     endif
 
-    ssm = ksetup(my, Z', T, Q)
+    ssm = ksetup(my, Z, T, Q)
     ssm.obsvar = sqrt(lambda)
     ssm.inistate = {2*y[1]-y[2] ; 3*y[1]-2*y[2]}
     ssm.diffuse = 1
