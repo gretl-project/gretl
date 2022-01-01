@@ -43,12 +43,12 @@ Here is a brief high-level overview of gretl's Kalman apparatus.
   described in detail below.
 \item You then ``do things'' with your state space model via the
   functions \texttt{kfilter} (forecasting) \texttt{ksmooth} (state
-  smoothing) and \texttt{kdsmooth} (disturbance smoothing).
+  smoothing) and/or \texttt{kdsmooth} (disturbance smoothing).
 \end{itemize}
 
 \section{Notation}
 
-In this document our basic representation of a state-space model is
+In this document our basic representation of a state space model is
 given by the following pair of equations:
 %
 \begin{align}
@@ -80,7 +80,9 @@ $\obsxmat_t = \obsxmat$, $\obsvar_t = \obsvar$ and
 $\statevar_t = \statevar$ and for all $t$, the model is said to be
 \emph{time-invariant}. We assume time-invariance in most of what
 follows but discuss the time-varying case in
-section~\ref{sec:tvarying}.
+section~\ref{sec:tvarying}. That section also covers the case where
+the disturbances are correlated across the observation and state
+transition equations.
 
 \section{Defining the model as a bundle}
 \label{sec:setup}
@@ -164,7 +166,7 @@ if the column dimension of $\obsxmat$ is 1 greater than $k$ it is
 assumed that the first element of $\obsxmat$ is associated with an
 implicit column of ones.
 
-The automatic initialization of $\statecvar_0$ (in case
+The automatic initialization of $\statecvar_{1|0}$ (in case
 \texttt{inivar} is not specified) is applicable only if all the
 eigenvalues of $\statemat$ lie inside the unit circle. In this case,
 the variance for the marginal distribution of $\statevec_t$ is well
@@ -173,15 +175,31 @@ defined and equals
 \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
 \right]^{-1} \myvec(\statevar) ,
 \]
-which is the formula used internally. FIXME, Otherwise, we apply a
-diffuse prior, setting $\statecvar_{1|0} = \kappa I_r$ with
-$\kappa = 10^7$.  You can impose this diffuse prior from the outset by
-setting a non-zero scalar value on the bundle under the (reserved) key
-\texttt{diffuse}:
+which is the formula used internally. Otherwise, we apply a ``diffuse
+prior'', setting $\statecvar_{1|0} = \kappa I_r$ with
+$\kappa \rightarrow \infty$ and using the exact initial iterations for
+this case as set out in \cite{koopman97}. You can impose this diffuse
+prior from the outset by setting a non-zero scalar value on the bundle
+under the (reserved) key \texttt{diffuse}:
 %
 \begin{code}
 SSmod.diffuse = 1
 \end{code}
+The advantage of this setting is that it cuts out some unnecessary
+computation when you know in advance that the automatic initialization
+described above is bound to fail.
+
+The ``traditional'' alternative to Koopman's procedure when
+$\statecvar_{1|0}$ is unknown is to specify a large finite variance,
+as in
+%
+\begin{code}
+SSmod.inivar = 1.0e7 * I(r)
+\end{code}
+%
+This may lead to numerical problems, but in some cases it may be worth
+trying if the Koopman method fails.
+
 
 \section{Special features of state-space bundles}
 \label{sec:ss-special}
