@@ -282,7 +282,7 @@ static int diffuse_Pini (kalman *K)
     if (K->Pk0 == NULL) {
 	K->Pk0 = gretl_identity_matrix_new(K->r);
 	K->Pk1 = gretl_matrix_alloc(K->r, K->r);
-	K->Fk  = gretl_matrix_alloc(K->r, K->r);
+	K->Fk  = gretl_matrix_alloc(K->n, K->n);
 	if (K->Pk0 == NULL || K->Pk1 == NULL || K->Fk == NULL) {
 	    return E_ALLOC;
 	}
@@ -1321,7 +1321,7 @@ static int koopman_exact_general (kalman *K,
 
     /* Ct += MFk*(Mt - MFk*Fmt)' */
     gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
-			      K->Mt, GRETL_MOD_NONE,
+			      K->Mt, GRETL_MOD_TRANSPOSE,
 			      K->Ct, GRETL_MOD_CUMULATE);
 
     /* Ck = MFk*Mk' */
@@ -1546,10 +1546,10 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    } else if (K->n == 1) {
 		ldet = log(K->Fk->val[0]);
 		qt = 0;
-		koopman_exact_nonsingular(K);
+		err = koopman_exact_nonsingular(K);
 		Kt_done = 1;
 	    } else {
-		koopman_exact_general(K, &ldet, &qt);
+		err = koopman_exact_general(K, &ldet, &qt);
 		Kt_done = 1;
 	    }
 	} else {
@@ -1597,7 +1597,10 @@ int kalman_forecast (kalman *K, PRN *prn)
 	}
 
 	if (!Kt_done) {
-	    /* calculate gain K_t = M_t F_t^{-1}, and C matrix */
+	    /* Calculate gain K_t = M_t F_t^{-1}, and C matrix.
+	       Note that this will have been done correctly already
+	       in two of the "exact initial" cases above.
+	    */
 	    gretl_matrix_multiply(K->Mt, K->iFt, K->Kt);
 	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
 				      K->Mt, GRETL_MOD_TRANSPOSE,
