@@ -14334,30 +14334,56 @@
       </arguments>
       <examples>
         <example>! ls -al</example>
-	      <example>! notepad</example>
-	      <example>launch notepad</example>
+        <example>! dir c:\users</example>
+        <example>launch notepad</example>
+        <example>launch emacs myfile.txt</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Un signo de exclamación (<cmd>!</cmd>) ou a palabra clave <cmd>launch</cmd>,
-	ao comezo dunha liña de instrución se interpreta como unha escapada
-	do intérprete de usuario. Así podes executar instrucións do intérprete
-	ao teu antollo desde dentro de <program>Gretl</program>. Se utilizas
-	<cmd>!</cmd>, a instrución externa execútase de forma síncrona; é
-	dicir, <program>Gretl</program> agarda a que se complete a instrución
-	antes de proseguir. Cando queiras comezar outro programa desde dentro
-	de <program>Gretl</program> e non ter que agardar a que se complete
-	(operación asíncrona ), utiliza no seu lugar
-	<cmd>launch</cmd>.
+	A prestación que se describe aquí non está activada por defecto.
+	Mira máis abaixo para os detalles.
       </para>
       <para>
-	Por razóns de seguridade, esta prestación non se permite por defecto. Para
-	activala, marca o cadriño <quote>Permitir instrucións do intérprete</quote>
-	baixo o menú Ferramentas/Preferencias/Xeral no programa de Interface Gráfica
-	de Usuario (GUI). Isto tamén fai que estean dispoñibles as instrucións do
-	intérprete no programa de instrucións en liñas (e resulta o único xeito de facelo).
+	Un signo de exclamación (<cmd>!</cmd>) ao comezo dunha liña de
+	instrución se interpreta como unha escapada do intérprete de usuario.
+	Así podes executar instrucións do intérprete ao teu antollo desde dentro
+	de <program>GRETL</program>. O argumento <repl>instrucshell</repl>
+	pásase a <lit>/bin/sh</lit> en sistemas de tipo Unix como Linux e
+	macOS, ou a <lit>cmd.exe</lit> en MS Windows. Execútase de forma
+	síncrona; é dicir, <program>GRETL</program> vai agardar a que se
+	complete a instrución antes de proseguir. Se a instrución dá como
+	resultado algún texto, este se presenta na consola ou na xanela de
+	resultados de guións.
+      </para>
+      <para>
+	Unha variante do acceso síncrono co intérprete, permite ao usuario
+	<quote>capturar</quote> o resultado dunha instrución nunha variable
+	de cadea de texto. Isto pódese acadar envolvendo a instrución entre
+	parénteses, precedidos por un signo dólar, como en
+      </para>
+      <code>
+	string s = $(ls -l $HOME)
+      </code>
+      <para>
+	Por outra banda, a clave <cmd>launch</cmd>, executa un programa
+	externo de xeito asíncrono (sen agardar a que se complete), como
+	no terceiro e no cuarto exemplos de arriba. Isto está pensado para
+	abrir unha aplicación en modo interactivo. A <lit>RUTA</lit> do
+	usuario vaise procurar para o executable especificado. En MS Windows,
+	a instrución vaise executar directamente, sen pasala a <lit>cmd.exe</lit>
+	(dese xeito as variables de contorna non se van expandir de forma
+	automática).
+      </para>
+      <subhead>Activación</subhead>
+      <para>
+	Por razóns de seguridade, a prestación de acceso co intérprete
+	non se permite por defecto. Para activala, marca o cadriño
+	<quote>Permitir instrucións do intérprete</quote> baixo o menú
+	Ferramentas/Preferencias/Xeral no programa de Interface Gráfica de Usuario
+	(GUI). Isto tamén fai que estean dispoñibles as instrucións do intérprete
+	no programa de instrucións en liñas (e resulta o único xeito de facelo).
       </para>
     </description>
 

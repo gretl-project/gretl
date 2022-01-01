@@ -3611,28 +3611,26 @@
     <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="char">c</fnarg>
+	<fnarg optional="true" type="string">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Precisa que estean instalados o TRAMO/SEATS e/ou X-13-ARIMA. Devolve
-	  unha versión desestacionalizada (axustada estacionalmente) da serie
-	  <argname>x</argname>, que debe de ser unha serie temporal mensual
-	  ou trimestral. Para utilizar o X-13-ARIMA indica <lit>X</lit> como
-	  segundo argumento; e para usar o TRAMO/SEATS indica <lit>T</lit>.
-	  Se omites o segundo argumento, GRETL utiliza o X-13-ARIMA.
+	  Precisa que estean instalados o X-13ARIMA-SEATS e/ou o TRAMO/SEATS.
+	  Devolve unha versión desestacionalizada (axustada estacionalmente)
+	  da serie <argname>x</argname>, que debe de ser unha serie temporal
+	  trimestrtal ou mensual. Para especificar o TRAMO indica <lit>T</lit>
+	  como segundo argumento; para especificar o X-13ARIMA indica
+	  <lit>"X"</lit>; pero se omites o segundo argumento, GRETL utiliza
+	  o X-13ARIMA.
 	</para>
 	<para>
 	  Observa que, cando a serie de entrada non ten unha compoñente
-	  estacional detectable, a execución da función vai fallar. Cae na conta
-	  tamén de que tanto o TRAMO/SEATS como o X-13-ARIMA ofrecen un gran
-	  número de opcións; agora ben, a función <lit>deseas</lit> as utiliza
-	  con todas as súas opcións nos seus valores por defecto. En ambos
-	  os dous programas, os factores estacionais calcúlanse baseados nun
-	  modelo ARIMA seleccionado automaticamente. Unha das diferenzas entre
-	  os dous que pode levar a resultados bastante distintos, é que o
-	  TRAMO/SEATS realiza un axuste previo das observacións con valores
-	  atípicos, mentres que o X-13-ARIMA non o fai.
+	  estacional detectable, a execución da función podería fallar. Cae na
+	  conta tamén de que tanto o X-13ARIMA como o TRAMO/SEATS ofrecen un
+	  gran número de opcións; agora ben, a función <lit>deseas</lit> as
+	  utiliza con todas as súas opcións nos seus valores por defecto. En
+	  ambos os dous programas, os factores estacionais calcúlanse en base
+	  a un modelo ARIMA seleccionado automaticamente.
 	</para>
       </description>
     </function>
@@ -6523,7 +6521,7 @@
 	  elementos de JsonPath. E ademais, a funcionalidade concreta
 	  que desenvolve <lit>json-glib</lit> pode ser moi diferente,
 	  dependendo da versión que teñas no teu sistema. Podes consultar
-	  <url>http://developer.gnome.org/json-glib/</url> se necesitas
+	  <url>https://wiki.gnome.org/Projects/JsonGlib</url> se necesitas
 	  ter máis detalles.
 	</para>
 	<para>
