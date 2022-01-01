@@ -286,7 +286,10 @@ static int diffuse_Pini (kalman *K)
 	if (K->Pk0 == NULL || K->Pk1 == NULL || K->Fk == NULL) {
 	    return E_ALLOC;
 	}
+    } else {
+	gretl_matrix_inscribe_I(K->Pk0, 0, 0, K->r);
     }
+
     return 0;
 }
 
@@ -988,7 +991,7 @@ static int kalman_set_Bx (kalman *K)
 
 /* Compute the one-step ahead forecast error:
 
-   v_t = y_t - B'x - Za
+   v_t = y_t - Bx - Za
 
    Return 1 if missing values found, otherwise 0.
 */
@@ -1405,14 +1408,18 @@ static int koopman_exact_nonsingular (kalman *K)
 
 static void handle_missing_obs (kalman *K)
 {
-    /* state update */
+    /* state update: a1 = T*a0 */
     gretl_matrix_multiply(K->T, K->a0, K->a1);
 
-    /* var(state) update */
+    /* handle stconst? */
+
+    /* var(state) update: P1 = T*P0*T' + HH */
     fast_copy_values(K->P1, K->HH);
     gretl_matrix_qform(K->T, GRETL_MOD_NONE,
 		       K->P0, K->P1, GRETL_MOD_CUMULATE);
     fast_copy_values(K->P0, K->P1);
+
+    /* need to do anything with Pk? */
 
     /* record stuff if wanted */
     if (K->F != NULL) {
@@ -1478,6 +1485,7 @@ int kalman_forecast (kalman *K, PRN *prn)
     set_kalman_running(K);
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
+	int Kt_done = 0;
 	int missobs = 0;
 	double llt = NADBL;
 	double ldet = 0, qt = 0;
@@ -1533,16 +1541,16 @@ int kalman_forecast (kalman *K, PRN *prn)
 			       K->Pk0, K->Fk, GRETL_MOD_NONE);
 	    if (K->n == 1 && K->Fk->val[0] < 1.0e-15) {
 		ldet = log(K->Ft->val[0]);
-		fast_copy_values(K->Kt, K->Mt);
 		K->iFt->val[0] = 1.0 / K->Ft->val[0];
-		gretl_matrix_multiply_by_scalar(K->Kt, K->iFt->val[0]);
 		qt = K->v->val[0] * K->v->val[0] * K->iFt->val[0];
 	    } else if (K->n == 1) {
 		ldet = log(K->Fk->val[0]);
 		qt = 0;
 		koopman_exact_nonsingular(K);
+		Kt_done = 1;
 	    } else {
 		koopman_exact_general(K, &ldet, &qt);
+		Kt_done = 1;
 	    }
 	} else {
 	    /* standard Kalman procedure */
@@ -1559,7 +1567,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	}
 
 	if (K->F != NULL) {
-	    /* FIXME diffuse case */
+	    /* FIXME diffuse case? */
 	    /* we're recording F_t for all t */
 	    if (kalman_smoothing(K)) {
 		/* record inverse */
@@ -1576,6 +1584,11 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    break;
 	} else {
 	    llt = -0.5 * (ll0 + ldet + qt);
+	    if (na(llt)) {
+		fprintf(stderr, "kfilter: t=%d, ldet %g, qt %g\n", K->t, ldet, qt);
+		K->loglik = NADBL;
+		break;
+	    }
 	    K->SSRw += qt;
 	    K->loglik += llt;
 	}
@@ -1583,11 +1596,13 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    gretl_vector_set(K->LL, K->t, llt);
 	}
 
-	/* calculate gain K_t = M_t F_t^{-1}, and C matrix */
-	gretl_matrix_multiply(K->Mt, K->iFt, K->Kt);
-	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				  K->Mt, GRETL_MOD_TRANSPOSE,
-				  K->Ct, GRETL_MOD_NONE);
+	if (!Kt_done) {
+	    /* calculate gain K_t = M_t F_t^{-1}, and C matrix */
+	    gretl_matrix_multiply(K->Mt, K->iFt, K->Kt);
+	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+				      K->Mt, GRETL_MOD_TRANSPOSE,
+				      K->Ct, GRETL_MOD_NONE);
+	}
 
 	if (!err && K->K != NULL) {
 	    /* record the gain */
@@ -1622,7 +1637,6 @@ int kalman_forecast (kalman *K, PRN *prn)
     set_kalman_stopped(K);
 
     if (!na(K->loglik)) {
-	/* FIXME, get value of @d from new exact code */
 	int nN;
 
 	nN = K->n * K->okN;
@@ -1633,7 +1647,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	err = E_NAN;
     }
 
-#if 1 || KDEBUG
+#if KDEBUG
     fprintf(stderr, "kalman_forecast: err=%d, ll=%#.12g, d=%d\n",
 	    err, K->loglik, d);
 #endif
@@ -1783,6 +1797,8 @@ static int kalman_ensure_output_matrices (kalman *K)
 
     return err;
 }
+
+/* Implements the user-space kfilter() function */
 
 int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 {
