@@ -1628,7 +1628,6 @@ int kalman_forecast (kalman *K, PRN *prn)
             /* we're recording F_t for all t */
             if (kalman_smoothing(K)) {
                 /* record inverse */
-		fprintf(stderr, "record iFt = %g\n", K->iFt->val[0]);
                 load_to_vech(K->F, K->iFt, K->n, K->t);
             } else {
                 /* record F_t itself */
@@ -2524,8 +2523,8 @@ static int anderson_moore_smooth (kalman *K)
 	    gretl_matrix_print(N0, "N0");
 	    gretl_matrix_print(atT, "smoothed atT");
 	    gretl_matrix_print(PtT, "smoothed P0");
-#endif
 	}
+#endif
     }
 
     gretl_matrix_block_destroy(B);
