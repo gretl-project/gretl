@@ -855,7 +855,7 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
     # State transition matrix
     matrix T = {2,-1;1,0}
     # Observation matrix
-    matrix Z = {1,0}
+    matrix Z = {1;0}
     # Covariance matrix in the state equation
     matrix Q = {1/sqrt(lambda), 0; 0, 0}
     matrix my = {y}
