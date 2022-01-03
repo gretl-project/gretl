@@ -38,9 +38,9 @@
 #define KDEBUG 0
 
 /*
-   State:   a_{t+1} = T_t*a_t + u_t,       E(u_t*u_t') = Q
+   State:   a_{t+1} = T_t*a_t + u_t,     E(u_t*u_t') = Q
 
-   Obs:     y_t = B'*x_t + Z'*a_t + w_t,   E(w_t*w_t') = R
+   Obs:     y_t = B*x_t + Z*a_t + w_t,   E(w_t*w_t') = R
 
 */
 
@@ -53,7 +53,6 @@ struct stepinfo_ {
 
 struct kalman_ {
     int flags;   /* for recording any options */
-    int fnlevel; /* level of function execution */
 
     int r;   /* rows of a = number of elements in state */
     int n;   /* columns of y = number of observables */
@@ -77,10 +76,11 @@ struct kalman_ {
     gretl_matrix *P1; /* r x r: MSE matrix, after updating */
     gretl_matrix *v;  /* n x 1: one-step forecast error(s), time t */
 
-    /* for the diffuse case */
+    /* for the exact diffuse case */
     gretl_matrix *Pk0;
     gretl_matrix *Pk1;
     gretl_matrix *Fk;
+    gretl_matrix *PK; /* not actually used yet */
 
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
@@ -260,7 +260,7 @@ static kalman *kalman_new_empty (int flags)
         K->T = K->BT = K->ZT = NULL;
         K->HH = K->GG = K->HG = NULL;
         K->H = K->G = NULL;
-        K->V = K->F = K->A = K->P = K->K = NULL;
+        K->V = K->F = K->A = K->K = K->P = NULL;
         K->y = K->x = NULL;
         K->mu = NULL;
         K->U = NULL;
@@ -269,7 +269,6 @@ static kalman *kalman_new_empty (int flags)
         K->varying = NULL;
         K->step = NULL;
         K->flags = flags;
-        K->fnlevel = 0;
         K->t = 0;
         K->prn = NULL;
         K->data = NULL;
@@ -989,10 +988,15 @@ static void kalman_record_state (kalman *K)
     if (K->A != NULL) {
         load_to_row(K->A, K->a0, K->t);
     }
-
     if (K->P != NULL) {
-        load_to_vech(K->P, K->P0, K->r, K->t);
+	load_to_vech(K->P, K->P0, K->r, K->t);
     }
+#if 0
+    if (K->PK != NULL) {
+	/* FIXME this needs re-working */
+	load_to_vech(K->PK, K->Pk0, K->r, K->t);
+    }
+#endif
 }
 
 /* Read from the appropriate row of x (N x k) and multiply by B' to
@@ -2423,7 +2427,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
    overwrite these with the smoothed values as we go. We also need
    stored values for the prediction error, its MSE, and the gain at
    each time step.  Note that r_t and N_t are set to zero for
-   t = T - 1.
+   t = N - 1.
 */
 
 static int anderson_moore_smooth (kalman *K)
@@ -2448,6 +2452,10 @@ static int anderson_moore_smooth (kalman *K)
 
     gretl_matrix_zero(r0);
     gretl_matrix_zero(N0);
+
+#if 0 /* for exact smoothing, not ready yet */
+    gretl_matrix *rk = gretl_zero_matrix_new(K->r, 1);
+#endif
 
     for (t=K->N-1; t>=0 && !err; t--) {
         /* get T_t and/or Z_t if need be */
@@ -2494,22 +2502,26 @@ static int anderson_moore_smooth (kalman *K)
             fast_copy_values(N0, N1);
         }
 
-	/* FIXME: the following calculations have to be
-	   modified for the diffuse case?
+	/* FIXME: the following calculations have to be modified
+	   for the exact diffuse case and t <= d. See Durbin and
+	   Koopman (2012), chapter 5, section 3.
 	*/
 
         /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
         load_from_row(atT, K->A, t, GRETL_MOD_NONE);
         load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
-#if SMDEBUG
-	if (t < 7) {
-	    gretl_matrix_print(atT, "incoming atT");
-	    gretl_matrix_print(K->P0, "incoming P0");
-	}
-#endif
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
+#if 0 /* not ready yet! */
+	if (K->PK != NULL && t <= K->d) {
+	    load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(K->kP0, GRETL_MOD_NONE,
+				      rk, GRETL_MOD_NONE,
+				      atT, GRETL_MOD_CUMULATE);
+	    /* and form the next iterate for rk */
+	}
+#endif
         load_to_row(K->A, atT, t);
 
         /* P_{t|T} = P_{t|t-1} - P_{t|t-1} N_{t-1} P_{t|t-1} */
@@ -2517,14 +2529,6 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_qform(K->P0, GRETL_MOD_NONE,
                            N0, PtT, GRETL_MOD_DECREMENT);
         load_to_vech(K->P, PtT, K->r, t);
-#if SMDEBUG
-	if (t < 7) {
-	    gretl_matrix_print(r0, "r0");
-	    gretl_matrix_print(N0, "N0");
-	    gretl_matrix_print(atT, "smoothed atT");
-	    gretl_matrix_print(PtT, "smoothed P0");
-	}
-#endif
     }
 
     gretl_matrix_block_destroy(B);
@@ -2617,13 +2621,14 @@ gretl_matrix *kalman_smooth (kalman *K,
                              gretl_matrix **pU,
                              int *err)
 {
-    gretl_matrix *V, *S, *P = NULL;
+    gretl_matrix *V, *S;
     gretl_matrix *G, *F;
+    gretl_matrix *P = NULL;
     int nr, nn;
 
     if (pP == NULL && pU != NULL) {
         /* optional accessor for smoothed disturbances a la Koopman:
-           experimental, and avilable only if @pP is not given
+           experimental, and available only if @pP is not given
         */
         *err = ensure_U_matrix(K);
         if (*err) {
