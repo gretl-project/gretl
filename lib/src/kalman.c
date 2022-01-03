@@ -52,7 +52,8 @@ struct stepinfo_ {
 };
 
 struct kalman_ {
-    int flags;   /* for recording any options */
+    int flags;  /* for recording any options */
+    int exact;  /* exact initial iterations? */
 
     int r;   /* rows of a = number of elements in state */
     int n;   /* columns of y = number of observables */
@@ -80,7 +81,7 @@ struct kalman_ {
     gretl_matrix *Pk0;
     gretl_matrix *Pk1;
     gretl_matrix *Fk;
-    gretl_matrix *PK; /* not actually used yet */
+    gretl_matrix *PK; /* for smoothing, not actually used yet */
 
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
@@ -249,6 +250,7 @@ static kalman *kalman_new_empty (int flags)
     kalman *K = malloc(sizeof *K);
 
     if (K != NULL) {
+	K->exact = 0;
         K->aini = K->Pini = NULL;
         K->a0 = K->a1 = NULL;
         K->P0 = K->P1 = NULL;
@@ -279,19 +281,30 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
+#define kappa 1.0e7
+
 static int diffuse_Pini (kalman *K)
 {
     gretl_matrix_zero(K->P0);
 
-    if (K->Pk0 == NULL) {
-        K->Pk0 = gretl_identity_matrix_new(K->r);
-        K->Pk1 = gretl_matrix_alloc(K->r, K->r);
-        K->Fk  = gretl_matrix_alloc(K->n, K->n);
-        if (K->Pk0 == NULL || K->Pk1 == NULL || K->Fk == NULL) {
-            return E_ALLOC;
-        }
+    if (K->exact) {
+	if (K->Pk0 == NULL) {
+	    K->Pk0 = gretl_identity_matrix_new(K->r);
+	    K->Pk1 = gretl_matrix_alloc(K->r, K->r);
+	    K->Fk  = gretl_matrix_alloc(K->n, K->n);
+	    if (K->Pk0 == NULL || K->Pk1 == NULL || K->Fk == NULL) {
+		return E_ALLOC;
+	    }
+	} else {
+	    gretl_matrix_inscribe_I(K->Pk0, 0, 0, K->r);
+	}
     } else {
-        gretl_matrix_inscribe_I(K->Pk0, 0, 0, K->r);
+	/* old-style */
+	int i;
+
+	for (i=0; i<K->r; i++) {
+	    gretl_matrix_set(K->P0, i, i, kappa);
+	}
     }
 
     return 0;
@@ -771,41 +784,12 @@ static void kalman_set_dimensions (kalman *K)
     K->p = (K->H != NULL)? gretl_matrix_cols(K->H): 0;
 }
 
-/* Allow for the possibility that "Z" was given as such,
-   not transposed. That's encouraged by the notation new
-   in 2022, but the C code still requires that we have Z'.
-*/
-
-static gretl_matrix *get_Z_transpose (gretl_matrix *Z,
-                                      const gretl_matrix *y,
-                                      const gretl_matrix *T,
-                                      int *err)
-{
-    gretl_matrix *ZT = Z;
-    int n = y->cols;
-    int r = T->rows;
-
-    if (Z->rows == r && Z->cols == n) {
-        ; /* @Z = Z' already, OK */
-    } else if (Z->rows == n && Z->cols == r) {
-        ZT = gretl_matrix_copy_transpose(Z);
-        if (ZT == NULL) {
-            *err = E_ALLOC;
-        }
-    } else {
-        *err = E_NONCONF;
-    }
-
-    return ZT;
-}
-
 /* supports hansl function for creating a named Kalman bundle */
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
                             int nmat, int *err)
 {
     gretl_matrix **targ[5];
-    gretl_matrix *ZT;
     kalman *K;
     int i;
 
@@ -834,18 +818,6 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
         targ[4] = &K->G;
     } else {
         targ[3] = &K->HH; /* "Q" */
-    }
-
-    /* backward compatibility */
-    ZT = get_Z_transpose(M[1], M[0], M[2], err);
-    if (*err) {
-        free(K);
-        return NULL;
-    } else if (ZT != M[1]) {
-        if (!copy[1]) {
-            gretl_matrix_free(M[1]);
-        }
-        M[1] = ZT;
     }
 
     for (i=0; i<nmat; i++) {
@@ -1487,7 +1459,7 @@ static void handle_missing_obs (kalman *K)
 		       K->P1, GRETL_MOD_CUMULATE);
     fast_copy_values(K->P0, K->P1);
 
-    if (kalman_diffuse(K) && max_val(K->Pk0) > 1.0e-15) {
+    if (K->exact && max_val(K->Pk0) > 1.0e-15) {
 	/* update P∞ */
 	gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
 			   K->Pk1, GRETL_MOD_NONE);
@@ -1502,7 +1474,7 @@ static void handle_missing_obs (kalman *K)
         }
     }
     if (K->LL != NULL) {
-        gretl_vector_set(K->LL, K->t, 0.0); /* ? */
+        gretl_vector_set(K->LL, K->t, NADBL); /* ? */
     }
     if (K->K != NULL) {
         set_row_to_value(K->K, K->t, 0.0);
@@ -1536,10 +1508,14 @@ int kalman_forecast (kalman *K, PRN *prn)
     fprintf(stderr, "kalman_forecast: N = %d\n", K->N);
 #endif
 
+    if (kalman_diffuse(K) && !K->exact) {
+	K->d = K->r;
+    } else {
+	K->d = 0;
+    }
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
     K->okN = K->N;
-    K->d = 0;
     set_kalman_running(K);
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
@@ -1593,7 +1569,7 @@ int kalman_forecast (kalman *K, PRN *prn)
             gretl_matrix_add_to(K->Mt, K->HG);
         }
 
-        if (kalman_diffuse(K) && max_val(K->Pk0) > 1.0e-15) {
+        if (K->exact && max_val(K->Pk0) > 1.0e-15) {
             /* handle initial exact iterations */
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE,
                                K->Pk0, K->Fk, GRETL_MOD_NONE);
@@ -1623,7 +1599,7 @@ int kalman_forecast (kalman *K, PRN *prn)
             } else {
                 qt = gretl_scalar_qform(K->v, K->iFt, &err);
             }
-            if (kalman_diffuse(K) && K->d == 0) {
+            if (K->exact && K->d == 0) {
                 K->d = K->t + 1;
             }
         }
@@ -1702,15 +1678,15 @@ int kalman_forecast (kalman *K, PRN *prn)
 
     set_kalman_stopped(K);
 
-    if (!na(K->loglik)) {
-        int nN;
-
-        nN = K->n * K->okN;
-        K->s2 = K->SSRw / (nN - K->d);
-    }
-
     if (na(K->loglik)) {
-        err = E_NAN;
+	err = E_NAN;
+    } else {
+        int nN = K->n * K->okN;
+
+        K->s2 = K->SSRw / (nN - K->d);
+	if (K->d > 0 && !K->exact) {
+	    K->loglik += 0.5 * K->d * (log(kappa) + LN_2_PI);
+	}
     }
 
 #if KDEBUG
@@ -3339,45 +3315,13 @@ static int check_replacement_dims (const gretl_matrix *orig,
 {
     int err = 0;
 
-    if (id == K_R || id == K_T || id == K_Q ||
-        id == K_m || id == K_a || id == K_P) {
+    if (id == K_ZT || id == K_R || id == K_T || id == K_Q ||
+        id == K_BT || id == K_m || id == K_a || id == K_P) {
         if (repl->rows != orig->rows || repl->cols != orig->cols) {
             err = E_DATA;
         }
     } else if (id == K_y || id == K_x) {
         if (repl->cols != orig->cols) {
-            err = E_DATA;
-        }
-    }
-
-    if (err) {
-        gretl_errmsg_set("You cannot resize a state-space "
-                         "system matrix");
-    }
-
-    return err;
-}
-
-static int check_for_transpose (kalman *K, gretl_matrix *m,
-                                int id, int *transpose)
-{
-    int err = 0;
-
-    if (id == K_ZT) {
-        if (m->rows == K->r && m->cols == K->n) {
-            ; /* OK */
-        } else if (m->rows == K->n && m->cols == K->r) {
-            *transpose = 1;
-        } else {
-            err = E_DATA;
-        }
-    } else {
-        /* K_BT */
-        if (m->rows == K->k && m->cols == K->n) {
-            ; /* OK */
-        } else if (m->rows == K->n && m->cols == K->k) {
-            *transpose = 1;
-        } else {
             err = E_DATA;
         }
     }
@@ -3405,23 +3349,6 @@ static int add_or_replace_k_matrix (kalman *K,
     int err = 0;
 
     if (*targ != src) {
-        if (id == K_ZT || id == K_BT) {
-            int transpose = 0;
-
-            err = check_for_transpose(K, src, id, &transpose);
-            if (err) {
-                return err;
-            } else if (transpose) {
-                gretl_matrix *tmp = gretl_matrix_copy_transpose(src);
-
-                if (!copy) {
-                    gretl_matrix_free(src);
-                } else {
-                    copy = 0;
-                }
-                src = tmp;
-            }
-        }
         if (*targ != NULL) {
             err = check_replacement_dims(*targ, src, id);
             if (err) {
@@ -3757,12 +3684,14 @@ static GretlType kalman_extra_type (const char *key)
 
 /* respond to "diffuse" setting via bundle apparatus */
 
-static int kalman_set_diffuse (kalman *K, gboolean diffuse)
+static int kalman_set_diffuse (kalman *K, int d)
 {
-    if (diffuse) {
+    if (d) {
+	K->exact = (d == 2);
 	K->flags |= KALMAN_DIFFUSE;
 	return diffuse_Pini(K);
     } else {
+	K->exact = 0;
 	K->flags &= ~KALMAN_DIFFUSE;
 	if (K->Pk0 != NULL) {
 	    gretl_matrix_free(K->Pk0);
@@ -3787,11 +3716,11 @@ static int kalman_set_diffuse (kalman *K, gboolean diffuse)
 */
 
 int maybe_set_kalman_element (void *kptr,
-                              const char *key,
-                              void *vptr,
-                              GretlType vtype,
-                              int copy,
-                              int *err)
+			      const char *key,
+			      void *vptr,
+			      GretlType vtype,
+			      int copy,
+			      int *err)
 {
     GretlType targtype;
     kalman *K = kptr;
@@ -3800,8 +3729,8 @@ int maybe_set_kalman_element (void *kptr,
     int done = 0;
 
     if (K == NULL) {
-        *err = E_DATA;
-        return 0;
+	*err = E_DATA;
+	return 0;
     }
 
     /* Check for optional "extra" kalman items that
@@ -3809,28 +3738,25 @@ int maybe_set_kalman_element (void *kptr,
     */
     targtype = kalman_extra_type(key);
     if (targtype != GRETL_TYPE_NONE) {
-        if (vtype != targtype) {
-            *err = E_TYPES;
-        }
-        return 0;
+	if (vtype != targtype) {
+	    *err = E_TYPES;
+	}
+	return 0;
     }
 
     if (!strcmp(key, "diffuse")) {
-        if (vtype == GRETL_TYPE_DOUBLE) {
-            /* note: double serving as boolean */
-            double d = *(double *) vptr;
+	if (vtype == GRETL_TYPE_DOUBLE) {
+	    double d = *(double *) vptr;
 
-            if (na(d)) {
-                *err = E_DATA;
-                return 0;
-            } else {
-		*err = kalman_set_diffuse(K, d != 0);
-            }
-            return 1; /* done */
-        } else {
-            *err = E_TYPES;
-            return 0;
-        }
+	    if (d != 0 && d != 1 && d != 2) {
+		*err = E_INVARG;
+	    } else {
+		*err = kalman_set_diffuse(K, (int) d);
+	    }
+	} else {
+	    *err = E_TYPES;
+	}
+	return 1; /* done, error or no */
     }
 
     if (!strcmp(key, "timevar_call")) {
