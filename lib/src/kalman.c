@@ -1447,11 +1447,11 @@ static void handle_missing_obs (kalman *K)
 {
     /* state update: a1 = T*a0 */
     gretl_matrix_multiply(K->T, K->a0, K->a1);
-
     /* handle stconst if present */
     if (K->mu != NULL) {
         gretl_matrix_add_to(K->a1, K->mu);
     }
+    fast_copy_values(K->a0, K->a1);
 
     /* var(state) update: P1 = T*P0*T' + HH (C = 0) */
     fast_copy_values(K->P1, K->HH);
