@@ -37,6 +37,9 @@
 
 #define KDEBUG 0
 
+/* exact initial smoothing: work in progress */
+#define EXACT_SM 0
+
 /*
    State:   a_{t+1} = T_t*a_t + u_t,     E(u_t*u_t') = Q
 
@@ -966,7 +969,8 @@ static int kalman_record_state (kalman *K)
     if (K->P != NULL) {
 	load_to_vech(K->P, K->P0, K->r, K->t);
     }
-#if 0 /* not yet */
+
+#if EXACT_SM
     if (K->PK != NULL && K->t < K->r) {
 	fprintf(stderr, "HERE record_state: t=%d, d=%d\n",
 		K->t, K->d);
@@ -2398,8 +2402,6 @@ static int koopman_smooth (kalman *K, int dkstyle)
     return err;
 }
 
-#define SMDEBUG 0
-
 /* Anderson-Moore Kalman smoothing: see Iskander Karibzhanov's
    exposition at http://karibzhanov.com/help/kalcvs.htm
    This is much the clearest account I have seen (AC 2009-04-14,
@@ -2436,7 +2438,7 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_zero(r0);
     gretl_matrix_zero(N0);
 
-#if SMDEBUG /* not yet */
+#if EXACT_SM /* not yet */
     if (K->exact && K->PK != NULL) {
 	gretl_zero_matrix_new(K->r, 1);
     }
@@ -2504,7 +2506,7 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
-#if SMDEBUG /* not ready yet! */
+#if EXACT_SM
 	if (K->exact && K->PK != NULL && t <= K->d) {
 	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
 	    //load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
@@ -2659,7 +2661,7 @@ gretl_matrix *kalman_smooth (kalman *K,
         }
     }
 
-#if SMDEBUG
+#if EXACT_SM
     if (K->exact) {
 	fprintf(stderr, "smoothing, K->exact, add PK\n");
 	K->PK = gretl_zero_matrix_new(K->r, nr);
@@ -2673,7 +2675,7 @@ gretl_matrix *kalman_smooth (kalman *K,
     K->A = S;
     K->P = P;
 
-#if SMDEBUG
+#if 0
     /* and recheck dimensions */
     *err = user_kalman_recheck_matrices(K, prn);
 #endif
@@ -2769,7 +2771,7 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
         }
     }
 
-#if SMDEBUG
+#if EXACT_SM
     if (K->exact) {
 	int rr = (K->r * K->r + K->r) / 2;
 
@@ -2800,7 +2802,7 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
         }
     }
 
-#if SMDEBUG
+#if EXACT_SM
     if (K->PK != NULL) {
 	gretl_matrix_free(K->PK);
 	K->PK = NULL;
