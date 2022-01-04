@@ -1474,7 +1474,7 @@ static void handle_missing_obs (kalman *K)
         }
     }
     if (K->LL != NULL) {
-        gretl_vector_set(K->LL, K->t, NADBL); /* ? */
+        gretl_vector_set(K->LL, K->t, 0.0); /* ? */
     }
     if (K->K != NULL) {
         set_row_to_value(K->K, K->t, 0.0);
