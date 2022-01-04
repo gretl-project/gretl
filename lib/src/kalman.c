@@ -255,6 +255,7 @@ static kalman *kalman_new_empty (int flags)
         K->a0 = K->a1 = NULL;
         K->P0 = K->P1 = NULL;
         K->Pk0 = K->Pk1 = NULL;
+	K->PK = NULL;
         K->Fk = NULL;
         K->LL = NULL;
         K->v = NULL;
@@ -955,20 +956,25 @@ static void kalman_print_state (kalman *K)
 }
 #endif
 
-static void kalman_record_state (kalman *K)
+static int kalman_record_state (kalman *K)
 {
+    int err = 0;
+
     if (K->A != NULL) {
         load_to_row(K->A, K->a0, K->t);
     }
     if (K->P != NULL) {
 	load_to_vech(K->P, K->P0, K->r, K->t);
     }
-#if 0
-    if (K->PK != NULL) {
-	/* FIXME this needs re-working */
-	load_to_vech(K->PK, K->Pk0, K->r, K->t);
+#if 0 /* not yet */
+    if (K->PK != NULL && K->t < K->r) {
+	fprintf(stderr, "HERE record_state: t=%d, d=%d\n",
+		K->t, K->d);
+	// load_to_vech(K->PK, K->Pk0, K->r, K->t);
     }
 #endif
+
+    return err;
 }
 
 /* Read from the appropriate row of x (N x k) and multiply by B' to
@@ -2410,6 +2416,7 @@ static int anderson_moore_smooth (kalman *K)
 {
     gretl_matrix_block *B;
     gretl_matrix *r0, *r1, *N0, *N1, *iFv, *L;
+    gretl_matrix *rk = NULL;
     gretl_matrix *atT, *PtT;
     int t, err = 0;
 
@@ -2429,8 +2436,16 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_zero(r0);
     gretl_matrix_zero(N0);
 
-#if 0 /* for exact smoothing, not ready yet */
-    gretl_matrix *rk = gretl_zero_matrix_new(K->r, 1);
+#if SMDEBUG /* not yet */
+    if (K->exact && K->PK != NULL) {
+	gretl_zero_matrix_new(K->r, 1);
+    }
+    fprintf(stderr, "HERE smooth, d=%d\n", K->d);
+    if (K->PK != NULL) {
+	gretl_matrix_print(K->PK, "K->PK");
+    } else {
+	fprintf(stderr, "K->PK is NULL\n");
+    }
 #endif
 
     for (t=K->N-1; t>=0 && !err; t--) {
@@ -2489,12 +2504,15 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
-#if 0 /* not ready yet! */
-	if (K->PK != NULL && t <= K->d) {
-	    load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(K->kP0, GRETL_MOD_NONE,
-				      rk, GRETL_MOD_NONE,
-				      atT, GRETL_MOD_CUMULATE);
+#if SMDEBUG /* not ready yet! */
+	if (K->exact && K->PK != NULL && t <= K->d) {
+	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
+	    //load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
+	    //gretl_matrix_printf(K->Pk0, "Pk0");
+	    //load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
+	    //gretl_matrix_multiply_mod(K->kP0, GRETL_MOD_NONE,
+	    //			      rk, GRETL_MOD_NONE,
+	    //			      atT, GRETL_MOD_CUMULATE);
 	    /* and form the next iterate for rk */
 	}
 #endif
@@ -2508,6 +2526,7 @@ static int anderson_moore_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
+    gretl_matrix_free(rk);
 
     return err;
 }
@@ -2640,6 +2659,13 @@ gretl_matrix *kalman_smooth (kalman *K,
         }
     }
 
+#if SMDEBUG
+    if (K->exact) {
+	fprintf(stderr, "smoothing, K->exact, add PK\n");
+	K->PK = gretl_zero_matrix_new(K->r, nr);
+    }
+#endif
+
     /* attach all export matrices to Kalman */
     K->V = V;
     K->F = F;
@@ -2647,7 +2673,7 @@ gretl_matrix *kalman_smooth (kalman *K,
     K->A = S;
     K->P = P;
 
-#if 0
+#if SMDEBUG
     /* and recheck dimensions */
     *err = user_kalman_recheck_matrices(K, prn);
 #endif
@@ -2685,6 +2711,11 @@ gretl_matrix *kalman_smooth (kalman *K,
     gretl_matrix_free(V);
     gretl_matrix_free(F);
     gretl_matrix_free(G);
+
+    if (K->PK != NULL) {
+	gretl_matrix_free(K->PK);
+	K->PK = NULL;
+    }
 
     if (!*err && pP != NULL) {
         *pP = P;
@@ -2738,6 +2769,14 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
         }
     }
 
+#if SMDEBUG
+    if (K->exact) {
+	int rr = (K->r * K->r + K->r) / 2;
+
+	K->PK = gretl_zero_matrix_new(K->r, rr);
+    }
+#endif
+
     if (!err) {
         err = kalman_bundle_recheck_matrices(K, prn);
     }
@@ -2760,6 +2799,13 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
             err = anderson_moore_smooth(K);
         }
     }
+
+#if SMDEBUG
+    if (K->PK != NULL) {
+	gretl_matrix_free(K->PK);
+	K->PK = NULL;
+    }
+#endif
 
  bailout:
 
