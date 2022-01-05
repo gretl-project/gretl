@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2021-10-22 09:42+0200\n"
+"PO-Revision-Date: 2022-01-05 16:28+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1793,7 +1793,7 @@ msgstr "Scarto quadratico medio"
 #: lib/src/describe.c:4932 lib/src/describe.c:5148 lib/src/describe.c:5846
 #: gui/guiprint.c:514 gui/guiprint.c:941
 msgid "C.V."
-msgstr "Coeff. di variazione"
+msgstr "Cf. variaz."
 
 #: lib/src/describe.c:4933 lib/src/describe.c:5149 lib/src/describe.c:5847
 #: gui/guiprint.c:514 gui/guiprint.c:941
@@ -1803,7 +1803,7 @@ msgstr "Asimmetria"
 #: lib/src/describe.c:4934 lib/src/describe.c:5150 lib/src/describe.c:5848
 #: gui/guiprint.c:514
 msgid "Ex. kurtosis"
-msgstr "Curtosi"
+msgstr "Curtosi ecc."
 
 #: lib/src/describe.c:4936
 #, no-c-format
@@ -1817,12 +1817,12 @@ msgstr "95° percentile"
 
 #: lib/src/describe.c:4939
 msgid "Interquartile range"
-msgstr "Range interquartile"
+msgstr "Scarto interquartile"
 
 #: lib/src/describe.c:4940 lib/src/describe.c:5158 lib/src/describe.c:5854
 #: gui/guiprint.c:536 gui/guiprint.c:973
 msgid "Missing obs."
-msgstr "Osservazioni mancanti"
+msgstr "Oss. mancanti"
 
 #: lib/src/describe.c:4942
 msgid "Within s.d."
@@ -1888,7 +1888,7 @@ msgstr "95% perc."
 
 #: lib/src/describe.c:5157 lib/src/describe.c:5853 gui/guiprint.c:536
 msgid "IQ range"
-msgstr "Range interquartile"
+msgstr "Scarto interq."
 
 #: lib/src/describe.c:5492 lib/src/describe.c:5659 lib/src/describe.c:5749
 #, c-format
@@ -13553,7 +13553,7 @@ msgstr "95\\% perc."
 
 #: gui/guiprint.c:972
 msgid "IQ Range"
-msgstr "Range interquartile"
+msgstr "Scarto interq."
 
 #: gui/guiprint.c:1072
 #, c-format
@@ -20147,10 +20147,6 @@ msgstr "Decorazione"
 
 #~ msgid "Probability distributions"
 #~ msgstr "Distribuzioni di probabilità"
-
-#, fuzzy
-#~ msgid "State space modeling"
-#~ msgstr "Modello stato-spazio"
 
 #~ msgid "iteration %2d: SSR = %.8g\n"
 #~ msgstr "iterazione %2d: SSR = %.8g\n"
