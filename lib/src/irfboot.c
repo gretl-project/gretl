@@ -486,12 +486,19 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var,
 	    gretl_errmsg_set("VAR coefficient matrix B is missing!");
 	    return NULL;
 	} else if (B->rows != nb && B->rows != var->ncoeff) {
-	    gretl_errmsg_set("VAR coefficient matrix B is of wrong size!");
-	    fprintf(stderr, "B should have %d or %d rows, but has %d\n",
-		    nb, var->ncoeff, B->rows);
-	    gretl_matrix_print(B, "var->B");
-	    return NULL;
-	} else {
+	    int ok = 0;
+
+	    if (var->jinfo->Ra != NULL &&
+		B->rows == var->ncoeff - var->jinfo->rank) {
+		ok = 1;
+	    }
+	    if (!ok) {
+		gretl_errmsg_set("VAR coefficient matrix B is of wrong size!");
+		fprintf(stderr, "B should have %d or %d rows, but has %d\n",
+			nb, var->ncoeff, B->rows);
+		gretl_matrix_print(B, "var->B");
+		return NULL;
+	    }
 	    nb = B->rows;
 	}
     }
