@@ -38,12 +38,12 @@
 #define KDEBUG 0
 
 /* exact initial smoothing: work in progress */
-#define EXACT_SM 1
+#define EXACT_SM 0
 
 /*
-   State:   a_{t+1} = T_t*a_t + u_t,     E(u_t*u_t') = Q
+   State: a_{t+1} = T_t*a_t + u_t,     E(u_t*u_t') = Q
 
-   Obs:     y_t = B*x_t + Z*a_t + w_t,   E(w_t*w_t') = R
+   Obs:   y_t = B*x_t + Z*a_t + w_t,   E(w_t*w_t') = R
 
 */
 
@@ -2423,7 +2423,9 @@ static int anderson_moore_smooth (kalman *K)
 {
     gretl_matrix_block *B;
     gretl_matrix *r0, *r1, *N0, *N1, *iFv, *L;
-    gretl_matrix *rk = NULL;
+    gretl_matrix *rk0 = NULL;
+    gretl_matrix *rk1 = NULL;
+    gretl_matrix *Lk = NULL;
     gretl_matrix *atT, *PtT;
     int t, err = 0;
 
@@ -2445,9 +2447,10 @@ static int anderson_moore_smooth (kalman *K)
 
 #if EXACT_SM
     if (K->exact && K->PK != NULL) {
-	gretl_zero_matrix_new(K->r, 1);
+	rk0 = gretl_zero_matrix_new(K->r, 1);
+	rk1 = gretl_matrix_alloc(K->r, 1);
+	Lk = gretl_matrix_alloc(K->r, K->r);
     }
-    fprintf(stderr, "HERE anderson_moore_smooth, d=%d\n", K->d);
 #endif
 
     for (t=K->N-1; t>=0 && !err; t--) {
@@ -2528,7 +2531,12 @@ static int anderson_moore_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(rk);
+
+    if (rk0 != NULL) {
+	gretl_matrix_free(rk0);
+	gretl_matrix_free(rk1);
+	gretl_matrix_free(Lk);
+    }
 
     return err;
 }
