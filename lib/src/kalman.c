@@ -2530,7 +2530,6 @@ static int anderson_moore_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(rk);
 
     if (rk0 != NULL) {
 	gretl_matrix_free(rk0);
