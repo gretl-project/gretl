@@ -481,6 +481,11 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var,
     /* Is var->B required? And if so how many B rows do we need? */
     nb = var->ifc + nexo + nseas + utrend;
 
+#if 1
+    fprintf(stderr, "VAR_coeff_matrix_from_VECM: nb = %d\n", nb);
+    gretl_matrix_print(B, "incoming var->B");
+#endif
+
     if (nb > 0) {
 	if (B == NULL) {
 	    gretl_errmsg_set("VAR coefficient matrix B is missing!");
