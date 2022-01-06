@@ -288,6 +288,36 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
+#if 0 /* not yet used */
+
+/* Determine if matrix @m is an instance of kappa * I_r,
+   for kappa >= 1.0e4.
+*/
+
+static int is_kappa_I (const gretl_matrix *m, int r)
+{
+    double mij, k = m->val[0];
+    int i, j;
+
+    if (k < 1.0e4) {
+	return 0;
+    }
+
+    for (j=0; j<r; j++) {
+	for (i=0; i<r; i++) {
+	    mij = gretl_matrix_get(m, i, j);
+	    if ((i == j && mij != k) ||
+		(i != j && mij != 0.0)) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
+#endif
+
 #define kappa 1.0e7
 
 static int diffuse_Pini (kalman *K)
