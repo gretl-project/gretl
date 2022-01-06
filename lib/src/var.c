@@ -1202,6 +1202,10 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
         return E_ALLOC;
     }
 
+#if 0
+    gretl_matrix_print(B, "fcast-ready var->B");
+#endif
+
     /* start of dynamic portion of forecast? */
     tdyn = VAR_get_tdyn(var, t1, t2, opt);
 

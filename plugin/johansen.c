@@ -701,6 +701,9 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 #if JDEBUG
     fprintf(stderr, "vecm_check_size: ncoeff: %d -> %d; xc = %d\n",
 	    v->ncoeff, v->ncoeff + jrank(v), xc);
+    if (v->B != NULL) {
+	fprintf(stderr, "v->B->rows = %d\n", v->B->rows);
+    }
 #endif
 
     v->ncoeff += jrank(v);
@@ -708,6 +711,11 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
     if (estimate_alpha(flags)) {
 	xc += jrank(v);
     }
+
+#if JDEBUG
+    fprintf(stderr, "after alpha: ncoeff = %d, xc = %d\n", v->ncoeff, xc);
+#endif
+
 
     if (xc == 0) {
 	/* nothing to be done */
@@ -735,13 +743,15 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
     }
 
     if (!err) {
+	int rows = v->ncoeff; /* 2021-01-06: was xc */
+
 	if (v->B == NULL) {
-	    v->B = gretl_matrix_alloc(xc, v->neqns);
+	    v->B = gretl_matrix_alloc(rows, v->neqns);
 	    if (v->B == NULL) {
 		err = E_ALLOC;
 	    }
-	} else if (v->B->rows < xc) {
-	    err = gretl_matrix_realloc(v->B, xc, v->neqns);
+	} else if (v->B->rows < rows) {
+	    err = gretl_matrix_realloc(v->B, rows, v->neqns);
 	}
     }
 
@@ -920,6 +930,33 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 #endif
 }
 
+/* In the case where the EC coefficients were not estimated via
+   OLS but precomputed in v->jinfo->Alpha, augment the B matrix
+   with the alpha values.
+*/
+
+static void var_B_insert_alpha (GRETL_VAR *v)
+{
+    gretl_matrix *A = v->jinfo->Alpha;
+    double *bval = v->B->val;
+    int r = v->B->rows;
+    int c = v->B->cols;
+    int j, n = (r - 1) * c;
+    int mv = v->ncoeff - r;
+    size_t csize = r * sizeof *bval;
+    size_t rem = n * sizeof *bval;
+
+    for (j=0; j<c-1; j++) {
+	bval += r;
+	memmove(bval+mv, bval, rem);
+	rem -= csize;
+	bval += mv;
+    }
+
+    gretl_matrix_reuse(v->B, v->ncoeff, -1);
+    gretl_matrix_inscribe_matrix(v->B, A, r, 0, GRETL_MOD_TRANSPOSE);
+}
+
 /* The following is designed to accommodate the case where alpha is
    restricted, in which case we can't just run OLS conditional on
    beta.
@@ -1007,6 +1044,9 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     if (!err) {
 	if (xc > 0) {
 	    /* run the regressions */
+	    if (v->B->rows > xc) {
+		gretl_matrix_reuse(v->B, xc, -1);
+	    }
 	    if (bootstrap(flags)) {
 		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, NULL);
 	    } else {
@@ -1031,10 +1071,15 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	copy_coeffs_to_Gamma(v, G);
     }
 
-    if (!err && estimate_alpha(flags)) {
-	err = OLS_to_alpha(v);
-	if (!err) {
-	    form_Pi(v, Pi);
+    if (!err) {
+	if (estimate_alpha(flags)) {
+	    err = OLS_to_alpha(v);
+	    if (!err) {
+		form_Pi(v, Pi);
+	    }
+	} else if (xc < v->ncoeff) {
+	    /* transcribe EC terms to v->B */
+	    var_B_insert_alpha(v);
 	}
     }
 
