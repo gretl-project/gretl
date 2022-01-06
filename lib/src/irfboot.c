@@ -481,9 +481,10 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var,
     /* Is var->B required? And if so how many B rows do we need? */
     nb = var->ifc + nexo + nseas + utrend;
 
-#if 1
+#if 0
     fprintf(stderr, "VAR_coeff_matrix_from_VECM: nb = %d\n", nb);
     gretl_matrix_print(B, "incoming var->B");
+    gretl_matrix_print(var->jinfo->Alpha, "alpha");
 #endif
 
     if (nb > 0) {
@@ -491,19 +492,12 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var,
 	    gretl_errmsg_set("VAR coefficient matrix B is missing!");
 	    return NULL;
 	} else if (B->rows != nb && B->rows != var->ncoeff) {
-	    int ok = 0;
-
-	    if (var->jinfo->Ra != NULL &&
-		B->rows == var->ncoeff - var->jinfo->rank) {
-		ok = 1;
-	    }
-	    if (!ok) {
-		gretl_errmsg_set("VAR coefficient matrix B is of wrong size!");
-		fprintf(stderr, "B should have %d or %d rows, but has %d\n",
-			nb, var->ncoeff, B->rows);
-		gretl_matrix_print(B, "var->B");
-		return NULL;
-	    }
+	    gretl_errmsg_set("VAR coefficient matrix B is of wrong size!");
+	    fprintf(stderr, "B should have %d or %d rows, but has %d\n",
+		    nb, var->ncoeff, B->rows);
+	    gretl_matrix_print(B, "var->B");
+	    return NULL;
+	} else {
 	    nb = B->rows;
 	}
     }
