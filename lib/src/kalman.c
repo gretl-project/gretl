@@ -1728,9 +1728,11 @@ int kalman_forecast (kalman *K, PRN *prn)
         int nN = K->n * K->okN;
 
         K->s2 = K->SSRw / (nN - K->d);
+#if 0
 	if (K->d > 0 && !K->exact) {
 	    K->loglik += 0.5 * K->d * (log(kappa) + LN_2_PI);
 	}
+#endif
     }
 
 #if KDEBUG
@@ -2501,7 +2503,7 @@ static int anderson_moore_smooth (kalman *K)
                                   K->ZT, GRETL_MOD_TRANSPOSE,
                                   L, GRETL_MOD_DECREMENT);
 
-        /* r_{t-1} = Z_t F^{-1}_t v_t + L_t' r_t */
+        /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
         load_from_vech(K->iFt, K->F, K->n, t, GRETL_MOD_NONE);
         load_from_row(K->v, K->V, t, GRETL_MOD_NONE);
         gretl_matrix_multiply(K->iFt, K->v, iFv);
