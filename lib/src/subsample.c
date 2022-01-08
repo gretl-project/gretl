@@ -1746,6 +1746,18 @@ make_restriction_mask (int mode, const char *s,
     return err;
 }
 
+static void panel_time_to_time (DATASET *subset,
+				DATASET *dset)
+{
+    DATASET tset = {0};
+
+    tset.structure = TIME_SERIES;
+    tset.pd = dset->panel_pd;
+    tset.sd0 = dset->panel_sd0;
+    ntolabel(tset.stobs, 0, &tset);
+    simple_set_obs(subset, dset->panel_pd, tset.stobs, OPT_T);
+}
+
 static void finalize_panel_subset (DATASET *subset,
 				   DATASET *dset,
 				   int npad)
@@ -1842,7 +1854,11 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	    }
 	} else if (nunits == 1 && subset->n == dset->pd) {
 	    /* time series for single panel unit */
-	    subset->structure = SPECIAL_TIME_SERIES;
+	    if (dset->panel_pd > 0) {
+		panel_time_to_time(subset, dset);
+	    } else {
+		subset->structure = SPECIAL_TIME_SERIES;
+	    }
 	}
     } else if (dated_daily_data(dset)) {
 	/* see if we can preserve daily time series */
