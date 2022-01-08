@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define MINIMAL_SETVARS 1 /* activated 2021-02-07 */
 #define STRICT_CONST 1    /* activated 2021-04-08 */
 
 #define LSDEBUG 0       /* debug handling of saved loops */
@@ -111,6 +110,8 @@ struct obsinfo_ {
     int added;          /* number of observations added within function */
     char changed;       /* sample has been changed within the function call? */
     char stobs[OBSLEN]; /* string representation of starting obs */
+    int panel_pd;       /* panel time frequency, if applicable */
+    double panel_sd0;   /* panel time starting point */
 };
 
 /* structure representing a call to a user-defined function */
@@ -8552,15 +8553,25 @@ static void record_obs_info (obsinfo *oi, DATASET *dset)
 	oi->t1 = dset->t1;
 	oi->t2 = dset->t2;
 	strcpy(oi->stobs, dset->stobs);
+	oi->panel_pd = dset->panel_pd;
+	oi->panel_sd0 = dset->panel_sd0;
     }
 }
 
-/* on function exit, restore the sample information that was in force
-   on entry */
+/* On function exit, restore the observations information
+   ("setobs" stuff) that was in force on entry.
+*/
 
-static int restore_obs_info (obsinfo *oi, DATASET *dset)
+static int maybe_restore_obs_info (obsinfo *oi, DATASET *dset)
 {
     gretlopt opt = OPT_NONE;
+
+    dset->panel_pd = oi->panel_pd;
+    dset->panel_sd0 = oi->panel_sd0;
+
+    if (!oi->changed) {
+	return 0;
+    }
 
     if (oi->structure == CROSS_SECTION) {
 	opt = OPT_X;
@@ -8574,8 +8585,6 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 
     return simple_set_obs(dset, oi->pd, oi->stobs, opt);
 }
-
-#if MINIMAL_SETVARS
 
 static void push_verbosity (fncall *call)
 {
@@ -8592,8 +8601,6 @@ static void pop_verbosity (fncall *call)
     set_gretl_messages(call->flags & FC_PREV_MSGS);
     set_gretl_echo(call->flags & FC_PREV_ECHO);
 }
-
-#endif /* MINIMAL_SETVARS */
 
 /* do the basic housekeeping that is required when a function exits:
    destroy local variables, restore previous sample info, etc.
@@ -8679,18 +8686,14 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
 
-#if MINIMAL_SETVARS
     if (call->fun->flags & UFUN_USES_SET) {
 	pop_program_state();
     } else {
 	pop_verbosity(call);
     }
-#else
-    pop_program_state();
-#endif
 
-    if (dset != NULL && call->obs.changed) {
-	restore_obs_info(&call->obs, dset);
+    if (dset != NULL) {
+	maybe_restore_obs_info(&call->obs, dset);
     }
 
     set_executing_off(call, dset, prn);
@@ -8749,15 +8752,11 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     set_previous_depth(fn_executing);
     fn_executing++;
 
-#if MINIMAL_SETVARS
     if (call->fun->flags & UFUN_USES_SET) {
 	push_program_state();
     } else {
 	push_verbosity(call);
     }
-#else
-    push_program_state();
-#endif
 
     callstack = g_list_append(callstack, call);
 
