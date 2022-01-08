@@ -288,37 +288,7 @@ static kalman *kalman_new_empty (int flags)
     return K;
 }
 
-#if 0 /* not yet used */
-
-/* Determine if matrix @m is an instance of kappa * I_r,
-   for kappa >= 1.0e4.
-*/
-
-static int is_kappa_I (const gretl_matrix *m, int r)
-{
-    double mij, k = m->val[0];
-    int i, j;
-
-    if (k < 1.0e4) {
-	return 0;
-    }
-
-    for (j=0; j<r; j++) {
-	for (i=0; i<r; i++) {
-	    mij = gretl_matrix_get(m, i, j);
-	    if ((i == j && mij != k) ||
-		(i != j && mij != 0.0)) {
-		return 0;
-	    }
-	}
-    }
-
-    return 1;
-}
-
-#endif
-
-#define kappa 1.0e7
+#define kappa 1.0e7 /* 1.0e6? */
 
 static int diffuse_Pini (kalman *K)
 {
@@ -1467,11 +1437,11 @@ static double max_val (const gretl_matrix *m)
     return ret;
 }
 
-static void P_infty_update (kalman *K, int Czero)
+static void P_infty_update (kalman *K, int C_zero)
 {
     gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
                        K->Pk1, GRETL_MOD_NONE);
-    if (!Czero) {
+    if (!C_zero) {
 	gretl_matrix_subtract_from(K->Pk1, K->Ck);
     }
     fast_copy_values(K->Pk0, K->Pk1);
@@ -1614,7 +1584,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         if (K->exact && max_val(K->Pk0) > K_TINY) {
             /* handle initial exact iterations */
-	    int Czero = 0;
+	    int C_zero = 0;
 
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE,
                                K->Pk0, K->Fk, GRETL_MOD_NONE);
@@ -1623,7 +1593,7 @@ int kalman_forecast (kalman *K, PRN *prn)
                 ldet = log(K->Ft->val[0]);
                 K->iFt->val[0] = 1.0 / K->Ft->val[0];
                 qt = K->v->val[0] * K->v->val[0] * K->iFt->val[0];
-		Czero = 1;
+		C_zero = 1;
             } else if (K->n == 1) {
 		/* univariate F∞ nonsingular */
                 ldet = log(K->Fk->val[0]);
@@ -1636,7 +1606,7 @@ int kalman_forecast (kalman *K, PRN *prn)
                 err = koopman_exact_general(K, &ldet, &qt);
                 Kt_done = 1;
             }
-	    P_infty_update(K, Czero);
+	    P_infty_update(K, C_zero);
         } else {
             /* standard Kalman procedure */
             fast_copy_values(K->iFt, K->Ft);
@@ -1725,14 +1695,7 @@ int kalman_forecast (kalman *K, PRN *prn)
     if (na(K->loglik)) {
 	err = E_NAN;
     } else {
-        int nN = K->n * K->okN;
-
-        K->s2 = K->SSRw / (nN - K->d);
-#if 0
-	if (K->d > 0 && !K->exact) {
-	    K->loglik += 0.5 * K->d * (log(kappa) + LN_2_PI);
-	}
-#endif
+        K->s2 = K->SSRw / (K->n * K->okN - K->d);
     }
 
 #if KDEBUG
@@ -2454,9 +2417,6 @@ static int anderson_moore_smooth (kalman *K)
 {
     gretl_matrix_block *B;
     gretl_matrix *r0, *r1, *N0, *N1, *iFv, *L;
-    gretl_matrix *rk0 = NULL;
-    gretl_matrix *rk1 = NULL;
-    gretl_matrix *Lk = NULL;
     gretl_matrix *atT, *PtT;
     int t, err = 0;
 
@@ -2475,14 +2435,6 @@ static int anderson_moore_smooth (kalman *K)
 
     gretl_matrix_zero(r0);
     gretl_matrix_zero(N0);
-
-#if EXACT_SM
-    if (K->exact && K->PK != NULL) {
-	rk0 = gretl_zero_matrix_new(K->r, 1);
-	rk1 = gretl_matrix_alloc(K->r, 1);
-	Lk = gretl_matrix_alloc(K->r, K->r);
-    }
-#endif
 
     for (t=K->N-1; t>=0 && !err; t--) {
         /* get T_t and/or Z_t if need be */
@@ -2536,20 +2488,16 @@ static int anderson_moore_smooth (kalman *K)
 
         /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
         load_from_row(atT, K->A, t, GRETL_MOD_NONE);
-        load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
+	load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
 #if EXACT_SM
-	if (K->PK != NULL && t <= K->d) {
-	    fprintf(stderr, "HERE exact initial smoothing, t=%d\n", t);
-	    //load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
-	    //gretl_matrix_printf(K->Pk0, "Pk0");
-	    //load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
-	    //gretl_matrix_multiply_mod(K->kP0, GRETL_MOD_NONE,
-	    //			      rk, GRETL_MOD_NONE,
-	    //			      atT, GRETL_MOD_CUMULATE);
-	    /* and form the next iterate for rk */
+	if (t <= K->d + 1) {
+	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
+	    gretl_matrix_print(K->P0, "K->P0");
+	    gretl_matrix_print(r0, "r0");
+	    gretl_matrix_print(atT, "atT");
 	}
 #endif
         load_to_row(K->A, atT, t);
@@ -2562,12 +2510,6 @@ static int anderson_moore_smooth (kalman *K)
     }
 
     gretl_matrix_block_destroy(B);
-
-    if (rk0 != NULL) {
-	gretl_matrix_free(rk0);
-	gretl_matrix_free(rk1);
-	gretl_matrix_free(Lk);
-    }
 
     return err;
 }
