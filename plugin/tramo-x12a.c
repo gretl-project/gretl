@@ -1916,14 +1916,15 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	}
     } 
     
-    if (!td && gretl_bundle_has_key(b, "working_days")) { 
-    	/* only may kick in if trading_days switched off */ 
+    if ((!td || !gretl_bundle_has_key(b, "trading_days")) && gretl_bundle_has_key(b, "working_days")) { 
+    	/* cannot kick in if trading days explicitly set to non-zero */ 
     	wd = gretl_bundle_get_int(b, "working_days", &err);
     	if (!err && (wd < 0 || wd > 2)) {
 	    err = E_INVARG;
 	}
 	if (!err) {
 	    xopt->wdays = wd;
+	    xopt->trdays = 0; /* working days and trading days should not coexist */
 	}
     }
     
