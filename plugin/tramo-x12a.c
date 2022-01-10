@@ -1366,7 +1366,7 @@ static int write_spc_file (const char *fname,
 	    }
 	}
     }
-    
+
     if (xopt->outliers) {
 	if (!na(xopt->critical)) {
 	    fprintf(fp, "outlier{critical = %g}\n", xopt->critical);
@@ -1881,9 +1881,10 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     const char *trival_strs[] = {
 	"no", "yes", "auto"
     };
-    int lt = 2;
-    int td = 2;
+    int lt = 2; /* log transformation */
+    int td = 2; /* trading days */
     int wd = 0; /* working days */
+    int got_td_spec = 0;
     int err = 0;
 
     xopt->outliers = gretl_bundle_get_bool(b, "outlier_correction", 0);
@@ -1907,6 +1908,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     }
 
     if (gretl_bundle_has_key(b, "trading_days")) {
+	got_td_spec = 1;
 	td = gretl_bundle_get_int(b, "trading_days", &err);
 	if (!err && (td < 0 || td > 2)) {
 	    err = E_INVARG;
@@ -1914,20 +1916,20 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	if (!err) {
 	    xopt->trdays = td;
 	}
-    } 
-    
-    if ((!td || !gretl_bundle_has_key(b, "trading_days")) && gretl_bundle_has_key(b, "working_days")) { 
-    	/* cannot kick in if trading days explicitly set to non-zero */ 
+    }
+
+    if (gretl_bundle_has_key(b, "working_days") && (!td || !got_td_spec)) {
+	/* cannot kick in if trading days explicitly set to non-zero */
     	wd = gretl_bundle_get_int(b, "working_days", &err);
     	if (!err && (wd < 0 || wd > 2)) {
 	    err = E_INVARG;
 	}
 	if (!err) {
+	    /* working days and trading days should not coexist */
 	    xopt->wdays = wd;
-	    xopt->trdays = 0; /* working days and trading days should not coexist */
+	    xopt->trdays = 0;
 	}
     }
-    
 
     if (gretl_bundle_has_key(b, "critical")) {
 	double crit = gretl_bundle_get_scalar(b, "critical", &err);

@@ -24,7 +24,7 @@ enum tx_objects {
     TX_LN,    /* save linearized series */
     TRIGRAPH, /* graph showing some/all of the above */
     TEXTOUT,  /* for full text output */
-    TX_MAXOPT
+    TX_MAXOPT /* sentinel */
 };
 
 typedef struct _common_opt_info common_opt_info;
@@ -39,16 +39,16 @@ struct _common_opt_info {
 };
 
 struct _x13a_opts {
-    int logtrans;
-    int outliers;
-    int trdays;
-    int wdays; /* working days */
-    int easter;
-    int seats;
-    int airline;
-    int output;
-    int verbose;
-    double critical;
+    int logtrans; /* log transformation */
+    int outliers; /* outlier detection */
+    int trdays;   /* trading days */
+    int wdays;    /* working days */
+    int easter;   /* Easter effect */
+    int seats;    /* Use SEATS with x13as (vs X-11) */
+    int airline;  /* use the airline model (vs auto model selection) */
+    int output;   /* which output series is wanted? */
+    int verbose;  /* verbosity level */
+    double critical; /* critical value for outliers (vs auto) */
 };
 
 struct _tx_request {
