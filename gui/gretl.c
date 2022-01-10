@@ -2022,6 +2022,7 @@ GtkActionEntry main_entries[] = {
     { "mle", NULL, N_("_Maximum likelihood"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "kalman", NULL, N_("State space model"), NULL, NULL, G_CALLBACK(kalman_callback) },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
