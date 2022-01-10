@@ -42,6 +42,7 @@ struct _x13a_opts {
     int logtrans;
     int outliers;
     int trdays;
+    int wdays; /* working days */
     int easter;
     int seats;
     int airline;

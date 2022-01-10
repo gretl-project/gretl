@@ -1133,6 +1133,7 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
     request->xopt.logtrans = 3; /* x13a: automatic logs or not */
     request->xopt.outliers = 1; /* x13a: detect outliers */
     request->xopt.trdays = 0;   /* x13a: trading days correction */
+    request->xopt.wdays = 0;    /* x13a: working days correction */
     request->xopt.easter = 0;   /* x13a: Easter effect */
     request->xopt.seats = 0;    /* x13a: use SEATS rather than X11 */
     request->xopt.airline = 0;  /* x13a: force "airline" ARIMA spec */
@@ -1350,7 +1351,22 @@ static int write_spc_file (const char *fname,
 		fputs("regression{variables = td}\n", fp);
 	    }
 	}
+    } else if (xopt->wdays) {
+    	if (xopt->easter) {
+	    if (xopt->wdays == 2) {
+		fprintf(fp, "regression{aictest = (td1coef easter)}\n");
+	    } else if (xopt->wdays) {
+		fputs("regression{variables = (td1coef easter[8])}\n", fp);
+	    }
+	} else {
+	    if (xopt->wdays == 2) {
+		fprintf(fp, "regression{aictest = (%s)}\n", "td1coef");
+	    } else if (xopt->wdays) {
+		fputs("regression{variables = td1coef}\n", fp);
+	    }
+	}
     }
+    
     if (xopt->outliers) {
 	if (!na(xopt->critical)) {
 	    fprintf(fp, "outlier{critical = %g}\n", xopt->critical);
@@ -1867,6 +1883,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     };
     int lt = 2;
     int td = 2;
+    int wd = 0; /* working days */
     int err = 0;
 
     xopt->outliers = gretl_bundle_get_bool(b, "outlier_correction", 0);
@@ -1897,7 +1914,20 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	if (!err) {
 	    xopt->trdays = td;
 	}
+    } 
+    
+    if ((!td || !gretl_bundle_has_key(b, "trading_days")) && gretl_bundle_has_key(b, "working_days")) { 
+    	/* cannot kick in if trading days explicitly set to non-zero */ 
+    	wd = gretl_bundle_get_int(b, "working_days", &err);
+    	if (!err && (wd < 0 || wd > 2)) {
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    xopt->wdays = wd;
+	    xopt->trdays = 0; /* working days and trading days should not coexist */
+	}
     }
+    
 
     if (gretl_bundle_has_key(b, "critical")) {
 	double crit = gretl_bundle_get_scalar(b, "critical", &err);
@@ -1945,6 +1975,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 	    pprintf(prn, "  outlier correction:      %s\n", "no");
 	}
 	pprintf(prn, "  trading days correction: %s\n", trival_strs[td]);
+	pprintf(prn, "  working days correction: %s\n", trival_strs[wd]);
 	pprintf(prn, "  easter effect:           %s\n", xopt->easter ? "yes" : "no");
 	pprintf(prn, "  log transformation:      %s\n", trival_strs[lt]);
 	pprintf(prn, "  force 'airline' model:   %s\n", xopt->airline ? "yes" : "no");
@@ -1996,7 +2027,7 @@ int adjust_series (const double *x, double *y,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[2] = {1, TX_SA};
-    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, NADBL};
+    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, NADBL};
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
