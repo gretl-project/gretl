@@ -10125,8 +10125,11 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     *err = 0;
 
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
+    if (gretl_is_null_matrix(m) || m->rows != m->cols) {
+	/* If we're not actually testing for symmetry, we must
+	   at least test for squareness, on pain of crashing.
+	*/
+	*err = E_INVARG;
 	return NULL;
     }
 
