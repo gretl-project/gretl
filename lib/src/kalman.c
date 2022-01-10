@@ -1574,9 +1574,6 @@ int kalman_forecast (kalman *K, PRN *prn)
             continue;
         }
 
-        /* calculate PZ' */
-        gretl_matrix_multiply(K->P0, K->ZT, K->PZ);
-
         /* calculate F_t = ZPZ' [+ GG'] */
 	if (K->GG != NULL) {
 	    fast_copy_values(K->Ft, K->GG);
@@ -1588,6 +1585,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	}
 
         /* calculate M_t = TPZ' [+ HG'] */
+	gretl_matrix_multiply(K->P0, K->ZT, K->PZ);
         gretl_matrix_multiply(K->T, K->PZ, K->Mt);
         if (K->HG != NULL) {
             gretl_matrix_add_to(K->Mt, K->HG);
