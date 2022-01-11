@@ -107,10 +107,16 @@ $\statevar$  & $r \times r$ & \texttt{statevar}\\
 \end{tabular}
 \end{center}
 
-For example,
+\textbf{Please note}: The matrix $\obsymat$ must be given in
+transposed form to the \texttt{ksetup} function. This is
+(unfortunately) required to preserve compatibility with gretl versions
+prior to 2022a. So, for example, you might write
 \begin{code}
-bundle SSmod = ksetup(y, Z, T, Q)
+bundle SSmod = ksetup(y, Z', T, Q)
 \end{code}
+where $\obsymat$ is $n \times r$. This point also applies to the
+matrix $\obsxmat$ in the observation equation, but not to any other
+matrices.
 
 The names of these input matrices don't matter; in fact they may be
 anonymous matrices constructed on the fly. But if and when you wish to
@@ -119,7 +125,7 @@ copy them out of the bundle, you must use the specified keys:
 matrix Z = SSmod.obsymat
 \end{code}
 
-Although all the arguments are in concept matrices, as a convenience
+Although all the arguments are in principle matrices, as a convenience
 you may give \texttt{obsy} as a series or list of series, and the
 other arguments can be given as scalars if in context they are
 $1 \times 1$.
@@ -149,7 +155,7 @@ rather you add them to the bundle returned by \cmd{ksetup} (under
 their reserved keys) as you usually add elements to a bundle, for
 example:
 \begin{code}
-SSmod.obsxmat = B
+SSmod.obsxmat = B'
 \end{code}
 
 Once setup is complete the dimensions of the model, $r$, $n$, $k$ and
