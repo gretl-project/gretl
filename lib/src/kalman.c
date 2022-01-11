@@ -1679,11 +1679,9 @@ int kalman_forecast (kalman *K, PRN *prn)
         if (K->mu != NULL) {
             gretl_matrix_add_to(K->a1, K->mu);
         }
-        if (!missobs) {
-            gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-                                      K->v,  GRETL_MOD_NONE,
-                                      K->a1, GRETL_MOD_CUMULATE);
-        }
+	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+				  K->v,  GRETL_MOD_NONE,
+				  K->a1, GRETL_MOD_CUMULATE);
         fast_copy_values(K->a0, K->a1);
 
         /* update var(state): P1 = TPT' + HH' - C */
