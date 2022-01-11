@@ -376,6 +376,9 @@ int interpolate_series (const double *x, double *y,
 
     if (dataset_is_panel(dset)) {
         return panel_interpolate(x, y, dset);
+    } else if (!dataset_is_time_series(dset)) {
+	gretl_errmsg_set(_("This function requires time-series or panel data"));
+	return E_PDWRONG;
     }
 
     /* first determine the first and last non-missing values */

@@ -5912,6 +5912,22 @@
       </description>
     </function>
 
+    <function name="interpol" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a series in which missing values in
+	  <argname>x</argname> are imputed via linear interpolation,
+	  for time series data or in the time dimension of a panel
+	  dataset. Extrapolation is not performed; missing values are
+	  replaced only if they are both preceded and followed by
+	  valid observations.
+	</para>
+      </description>
+    </function>
+
     <function name="inv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
