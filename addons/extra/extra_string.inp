@@ -39,7 +39,7 @@ end function
 ####################
 
 function strings powerset (strings S)
-    /* Computes the powerset of the input S, i.e. all possible cominations
+    /* Computes the powerset of the input S, i.e. all possible combinations
     of the string elements in S. (Including the empty set / empty
     string "".) Each combination yields one string in the output array.
     Being a set, the ordering is not defined. */
