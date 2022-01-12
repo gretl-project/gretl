@@ -5929,6 +5929,22 @@
       </description>
     </function>
 
+    <function name="interpol" section="data-utils" output="series">
+      <fnargs>
+       <fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+       <para>
+	 Ritorna una serie in cui i valori mancanti in
+	 <argname>x</argname> vengono imputati tramite interpolazione
+	 lineare per dati in serie storica oppure, nel caso di un
+	 dataset panel, lungo la dimensione temporale. La funzione non
+	 effettua estrapolazione: i valori mancanti sono interpolati
+	 solo se preceduti e succeduti da almeno un'osservazione valida.
+       </para>
+      </description>
+    </function>
+    
     <function name="inv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
