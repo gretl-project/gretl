@@ -1517,7 +1517,7 @@ static void table_attach_fixed (GtkTable *table,
 
 static void themes_page (GtkButton *button, gpointer p)
 {
-    if (browser_open("http://ricardo.ecn.wfu.edu/pub/gretl/plots/")) {
+    if (browser_open("http://gretl.sourceforge.net/pub/gretl/plots/")) {
 	errbox("Failed to open URL");
     }
 }
