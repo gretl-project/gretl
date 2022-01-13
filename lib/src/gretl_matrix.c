@@ -10120,7 +10120,7 @@ gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
     gretl_matrix *ret = NULL;
-    static int ev_ver;
+    static int ev_ver = 0; /* questionable? */
     int save_nt = 0;
 
     *err = 0;

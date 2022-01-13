@@ -19,6 +19,8 @@ Remote:
   Manager to mark the new files as the default downloads.
 * Also make a new versioned subdirectory of "addons" and
   upload the .zip addon files, if need be.
+* Upload to the SF cgi-bin directory a text file named RELEASE
+  containing the new version ID, e.g. "gretl-2021d"
 
 Local:
 * Update all the web docs (this is automated: ./update_html)

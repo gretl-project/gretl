@@ -1279,18 +1279,6 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 	return E_DATA;
     }
 
-    /* Should we restrict the length of bundle keys to that of
-       regular gretl identifiers? That's what we were doing until
-       July 2018, when we relaxed to support long keys coming
-       from dbnomics sources.
-    */
-#if 0
-    if (strlen(key) >= VNAMELEN) {
-	gretl_errmsg_sprintf("'%s': invalid key string", key);
-	return E_DATA;
-    }
-#endif
-
     if (b->type == BUNDLE_KALMAN) {
 	done = maybe_set_kalman_element(b->data, key,
 					ptr, type, copy,

@@ -1070,7 +1070,6 @@ static const char *get_pd_string (DATASET *dset)
 static void special_panel_label (DATASET *dset)
 {
     DATASET tset = {0};
-    DATASET *ptset = &tset;
     char st1[OBSLEN], st2[OBSLEN];
     int u1, u2;
     gchar *s;
@@ -1080,7 +1079,7 @@ static void special_panel_label (DATASET *dset)
     tset.sd0 = dset->panel_sd0;
     u1 = 1 + dset->t1 / dset->pd;
     u2 = 1 + dset->t2 / dset->pd;
-    ntolabel(st1, 0, ptset);
+    ntolabel(st1, 0, &tset);
     ntolabel(st2, dset->pd - 1, &tset);
     s = g_strdup_printf("Panel: units %d:%d, time %s:%s",
 			u1, u2, st1, st2);
