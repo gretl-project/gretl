@@ -4343,7 +4343,7 @@ static fncall *get_addon_function_call (const char *addon,
 
     if (!err && *ppkgpath == NULL) {
 	*ppkgpath = gretl_addon_get_path(addon);
-	if (*ppkgpath == NULL) {
+	if (*ppkgpath == NULL || gretl_test_fopen(*ppkgpath, "r") != 0) {
 	    /* not found locally */
 	    err = download_addon(addon, ppkgpath);
 	}
@@ -4351,6 +4351,8 @@ static fncall *get_addon_function_call (const char *addon,
 
     if (!err && *ppkgpath != NULL) {
 	fc = get_pkg_function_call(funcname, addon, *ppkgpath);
+    } else {
+	gui_errmsg(err);
     }
 
     return fc;
