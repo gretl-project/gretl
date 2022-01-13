@@ -107,22 +107,19 @@ $\statevar$  & $r \times r$ & \texttt{statevar}\\
 \end{tabular}
 \end{center}
 
-\textbf{Please note}: The matrix $\obsymat$ must be given in
-transposed form to the \texttt{ksetup} function. This is
-(unfortunately) required to preserve compatibility with gretl versions
-prior to 2022a. So, for example, you might write
-\begin{code}
-bundle SSmod = ksetup(y, Z', T, Q)
-\end{code}
-where $\obsymat$ is $n \times r$. This point also applies to the
-matrix $\obsxmat$ in the observation equation, but not to any other
-matrices.
+\tip{Please note that the matrices $\obsymat$ and (if applicable)
+  $\obsxmat$ in the observation equation must be given in
+  \textsl{transposed} form. This is required to preserve compatibility
+  with gretl versions prior to 2022a. Correspondingly, if you retrieve
+  either of these matrices using their keys, \texttt{obsymat} and
+  \texttt{obsxmat}, it's the transpose you actually obtain.}
 
 The names of these input matrices don't matter; in fact they may be
 anonymous matrices constructed on the fly. But if and when you wish to
-copy them out of the bundle, you must use the specified keys:
+copy them out of the bundle, you must use the specified keys, as in
 \begin{code}
-matrix Z = SSmod.obsymat
+matrix Z = SSmod.obsymat'
+matrix T = SSmod.statemat
 \end{code}
 
 Although all the arguments are in principle matrices, as a convenience
@@ -181,30 +178,59 @@ defined and equals
 \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
 \right]^{-1} \myvec(\statevar) ,
 \]
-which is the formula used internally. Otherwise, we apply a ``diffuse
-prior'', setting $\statecvar_{1|0} = \kappa I_r$ with
-$\kappa \rightarrow \infty$ and using the exact initial iterations for
-this case as set out in \cite{koopman97}. You can impose this diffuse
-prior from the outset by setting a non-zero scalar value on the bundle
-under the (reserved) key \texttt{diffuse}:
+which is the formula used internally. Otherwise, we apply a diffuse
+prior, setting $\statecvar_{1|0} = \kappa I_r$ with $\kappa = 10^7$.
+You can impose this diffuse prior from the outset by setting a value
+of 1 on the bundle under the (reserved) key \texttt{diffuse}:
 %
 \begin{code}
 SSmod.diffuse = 1
 \end{code}
-The advantage of this setting is that it cuts out some unnecessary
-computation when you know in advance that the automatic initialization
-described above is bound to fail.
-
-The ``traditional'' alternative to Koopman's procedure when
-$\statecvar_{1|0}$ is unknown is to specify a large finite variance,
-as in
+%
+In some cases this diffuse initialization may lead to numerical
+problems. It may then be helpful to specifying a diffuse initializer
+via \texttt{inivar} using a somewhat smaller value of $\kappa$, as in
 %
 \begin{code}
-SSmod.inivar = 1.0e7 * I(r)
+SSmod.inivar = 1.0e5 * I(r)
 \end{code}
-%
-This may lead to numerical problems, but in some cases it may be worth
-trying if the Koopman method fails.
+where $r$ is the dimension of the state.\footnote{Exact diffuse
+  initialization in the manner of \cite{koopman97} is in the works,
+  and should be available in a future version of gretl.}
+
+% The automatic initialization of $\statecvar_{1|0}$ (in case
+% \texttt{inivar} is not specified) is applicable only if all the
+% eigenvalues of $\statemat$ lie inside the unit circle. In this case,
+% the variance for the marginal distribution of $\statevec_t$ is well
+% defined and equals
+% \[
+% \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
+% \right]^{-1} \myvec(\statevar) ,
+% \]
+% which is the formula used internally. Otherwise, we apply a ``diffuse
+% prior'', setting $\statecvar_{1|0} = \kappa I_r$ with
+% $\kappa \rightarrow \infty$ and using the exact initial iterations for
+% this case as set out in \cite{koopman97}. You can impose this diffuse
+% prior from the outset by setting a non-zero scalar value on the bundle
+% under the (reserved) key \texttt{diffuse}:
+% %
+% \begin{code}
+% SSmod.diffuse = 1
+% \end{code}
+% The advantage of this setting is that it cuts out some unnecessary
+% computation when you know in advance that the automatic initialization
+% described above is bound to fail.
+
+% The ``traditional'' alternative to Koopman's procedure when
+% $\statecvar_{1|0}$ is unknown is to specify a large finite variance,
+% as in
+% %
+% \begin{code}
+% SSmod.inivar = 1.0e7 * I(r)
+% \end{code}
+% %
+% This may lead to numerical problems, but in some cases it may be worth
+% trying if the Koopman method fails.
 
 
 \section{Special features of state-space bundles}
@@ -263,7 +289,7 @@ numerical problems were encountered.
 
 On successful completion, several elements are added to the input
 bundle (or updated if they're already present).  A scalar under the
-key \texttt{lnl} gives the overall log-likelihood under the joint
+key \texttt{lnl} gives the overall loglikelihood under the joint
 normality assumption,
 %
 \[
@@ -272,22 +298,23 @@ normality assumption,
   \right]
 \]
 %
-and the scalar \texttt{s2} holds the estimated variance,
-%
-\[
-\hat{\sigma}^2 = \frac{1}{nN}
-   \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
-\]
-(but see section~\ref{sec:lldiffuse} below for modifications to these
-formulae for the case of a diffuse prior).  The key \texttt{llt} gives
-access to a $N$-vector, element $t$ of which is
+while the key \texttt{llt} gives access to a $N$-vector, element $t$ of
+which is
 %
 \[
   \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \log \left|\predvar_t\right| +
     \prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
+In addition the scalar \texttt{s2} holds the scale factor,
 %
+\[
+\hat{\sigma}^2 = \frac{1}{nN-d}
+   \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
+ \]
+where $d$ denotes the number of elements in the state vector subject
+to a diffuse initialization. This is as in \textsf{SsfPack 2.2}
+\citep{koopman-etal99}.
 
 Five additional matrices also become available.  Each of these has $N$
 rows, one for each time-step; the contents of the rows are shown in
@@ -494,7 +521,7 @@ or if you have no need to store the disturbances:
 matrix sim = ksimul(&b, ksimdata(&b, mnormal(500, b.r + b.n)))
 \end{code}
 %
-Time-variation or no, \cmd{ksimdata} should ensure that the
+Time-variation or no, \cmd{ksimdata} will ensure that the
 disturbances are scaled to the variances specified by $Q_t$ and $R_t$.
 
 If the disturbances are cross-correlated (see
@@ -531,7 +558,7 @@ $(\tilde{\statevec}_t', \tilde{\obsvec}_t')$.
 Note that the original \texttt{obsy} member of the bundle is not
 overwritten by \texttt{ksimul}, nor is \texttt{state} or any other
 user-accessible output matrix. On exit from \texttt{ksimul} the prior
-$T$ value is restored.
+value of $N$ is restored.
 
 The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$
 is as follows: for $t=1,\dots,N$
@@ -556,6 +583,35 @@ section~\ref{sec:simstart}.
 
 \section{Some finer points}
 \label{sec:finer}
+
+\subsection{Numerical optimization}
+\label{sec:ssopt}
+
+If the object of using a state space model is to produce maximum
+likelihood estimates of some parameters of interest, note that the
+loglikelihood surface may be quite awkward (far from globally
+concave), posing a challenge for numerical methods such as BFGS (the
+default maximizer under gretl's \texttt{mle} command). Symptoms may
+include failure of convergence---typically due to an excessive
+computed gradient even as the maximizer cannot find an improvement in
+the objective function---or an excessive number of iterations. In such
+cases it is worth considering the following points.
+\begin{itemize}
+\item If you can obtain plausible initial values for the parameters,
+  things are likely to go better than starting with arbitrary values.
+\item The limited-memory version of BFGS (L-BFGS) may work better than
+  the standard version. To engage this, issue the command
+\begin{code}
+set lbfgs on
+\end{code}
+  prior to ML estimation.
+\item It may be helpful to employ a more computationally expensive
+  but more accurate method for computing the gradient, namely
+  Richardson extrapolation. Here the command is
+\begin{code}
+set bfgs_richardson on
+\end{code}
+\end{itemize}
 
 \subsection{Cross-correlated disturbances}
 \label{sec:crossd}
@@ -694,34 +750,6 @@ the user-defined elements.
 An extended example of use of the time-variation facility is presented
 in section~\ref{sec:ss-examples}.
 
-\subsection{Likelihood under the diffuse prior}
-\label{sec:lldiffuse}
-
-This note pertains to the \cmd{kfilter} function (see
-section~\ref{sec:kfilter}).
-
-There seems to be general agreement in the literature that the
-loglikelihood calculation should be modified in the case of a diffuse
-prior for $\statecvar_{1|0}$.  However, it is not clear to us that
-there is a well-defined ``correct'' method for this.  At present we
-emulate \textsf{SsfPack}.  In case
-$\statecvar_{1|0} = \kappa I_p$, we set $d = p$ and calculate
-%
-\[
-  \ell = -\frac{1}{2} \left[(nN-d) \log(2 \pi) +
-    \sum_{t=1}^N\log \left|\predvar_t\right| +
-    \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
-    - d \log(\kappa)
-  \right]
-\]
-%
-and
-%
-\[
-\hat{\sigma}^2 = \frac{1}{nN-d}
-   \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
-\]
-
 \subsection{The initial state under simulation}
 \label{sec:simstart}
 
@@ -733,7 +761,7 @@ by \textsf{SsfPack}, namely setting
 \[
 \alpha_1 = a + A v_0
 \]
-where $a$ is a non-stochastic $r$-vector, $v_0$ is an $p$-vector
+where $a$ is a non-stochastic $r$-vector, $v_0$ is an $r$-vector
 of standard normal random numbers, and $A$ is a matrix such
 that $AA' = \statecvar_0$.
 
@@ -745,7 +773,7 @@ could set $\alpha_1$ thus:
 %
 \begin{code}
 matrix A = psdroot(B.inivar)
-B.simstart = B.inistate + A * mnormal(B.p, 1)
+B.simstart = B.inistate + A * mnormal(B.r, 1)
 \end{code}
 
 \section{Example scripts}
@@ -770,10 +798,10 @@ function void arma11_via_kalman (series y)
     scalar sigma = 1
 
     /* state-space model setup */
-    matrix Z = {1; theta}
+    matrix Z = {1, theta}
     matrix T = {phi, 0; 1, 0}
     matrix Q = {sigma^2, 0; 0, 0}
-    bundle kb = ksetup(y, Z, T, Q)
+    bundle kb = ksetup(y, Z', T, Q)
 
     /* maximum likelihood estimation */
     mle logl = ERR ? NA : kb.llt
@@ -822,7 +850,7 @@ The \textsf{hansl} syntax for a corresponding filter would be
 matrix Z = {1, theta}
 matrix T = {phi, 0; 1, 0}
 matrix Q = {s^2, 0; 0, 0}
-bundle kb = ksetup(y, Z, T, Q)
+bundle kb = ksetup(y, Z', T, Q)
 \end{code}
 %
 or, if you prefer, just a one-liner:
@@ -859,9 +887,9 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
         lambda = 100 * $pd^2
     endif
     # State transition matrix
-    matrix T = {2,-1;1,0}
+    matrix T = {2, -1; 1, 0}
     # Observation matrix
-    matrix Z = {1;0}
+    matrix Z = {1, 0}
     # Covariance matrix in the state equation
     matrix Q = {1/sqrt(lambda), 0; 0, 0}
     matrix my = {y}
@@ -872,7 +900,7 @@ function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
         desc = "1-sided "
     endif
 
-    ssm = ksetup(my, Z, T, Q)
+    ssm = ksetup(my, Z', T, Q)
     ssm.obsvar = sqrt(lambda)
     ssm.inistate = {2*y[1]-y[2] ; 3*y[1]-2*y[2]}
     ssm.diffuse = 1
@@ -916,23 +944,23 @@ series $\mu_t$ in
   x_t & = & \mu_t + \varepsilon_t \\
   \Delta^2 \mu_t & = & \eta_t ,
 \end{eqnarray*}
-where is an observable time series $x_t$ and $\varepsilon_t$ and
+where $x_t$ is an observable time series and $\varepsilon_t$ and
 $\eta_t$ are mutually uncorrelated white noise processes; the ratio
 between the two variances is the ``smoothing'' parameter: $\lambda =
 \frac{V(\varepsilon_t)}{V(\eta_t)}$. This is normally calibrated
 rather than estimated, and a common choice for macro data is to make
-this a function of the data periodicity: $\lambda = 100 \cdot p^2$,
+it a function of the data periodicity: $\lambda = 100 \cdot p^2$,
 where $p$ is the number of subperiods in a year. See
 \cite{harvey1993detrending} and \cite{KingRebelo1993} for details.
 
-The most common usage of the HP filter is to retrieve an estimate of
-$\mu_t$ by using all the available data, so that the estimate of the
-trend $\mu_t$ at some point $t$ uses the future values of $x_t$ as
-well as data points from the past. In some cases (for example, for
-forecasting purposes) this is undesirable, and it may be preferable to
-construct $\hat{\mu}_t$ as a function of $x_t, x_{t-1}, \ldots$
-only. This point was famously made by \cite{stock-watson1999}, and the
-resulting estimator is known as the one-sided HP filter.
+The most common use of the HP filter is to obtain an estimate of the
+trend $\mu_t$ using all the available data, so that the estimate for
+each period $t$ uses future as well as prior values of $x_t$. But in
+some uses (such as forecasting) this is clearly undesirable, and we
+may wish to construct $\hat{\mu}_t$ as a function of
+$x_t, x_{t-1}, \ldots$ only. This point was famously made by
+\cite{stock-watson1999}, and the resulting estimator is known as the
+one-sided HP filter.
 
 A possible space-state representation of the model above is
 \begin{eqnarray*}
@@ -944,20 +972,19 @@ A possible space-state representation of the model above is
   \left[ \begin{array}{c} \mu_{t-1} \\ \mu_{t-2}\end{array}\right] +
   \eta_t .
 \end{eqnarray*}
-and the estimates for $\mu_t$ can be easily obtained by running a
-forward filter for the one-sided version and a smoothing pass for the
-two-sided one. The corresponding code implementing the filter is shown
-in script~\ref{script:hp}, which also shows an example with the
-``housing starts'' series from the St.~Louis Fed database. The example
-also compares the result of the function to that from the native
-\cmd{hpfilt()} function.
+Estimates for $\mu_t$ can be obtained by running a forward filter for
+the one-sided version, plus a smoothing pass for the two-sided
+one. Code implementing the filter is shown in script~\ref{script:hp},
+along with an example using the ``housing starts'' series from the
+St.~Louis Fed database. The example also compares the result of the
+function to that from gretl's native \cmd{hpfilt()} function.
 
-Note that, in the case of the one-sided filter, a little trick is
-required in order to get the desired result: the state matrix that the
-\cmd{kfilter()} function stores in the bundle is the estimate of
-$\hat{\statevec}_{t|t-1}$, whereas what is required is in fact
-$\hat{\statevec}_{t|t}$. In order to circumvent the problem, we add an
-extra observation to the end of the series and retrieve the
+Note that in the case of the one-sided filter a little trick is
+required in order to get the desired result: the state matrix stored
+by the \cmd{kfilter()} function is the estimate of
+$\hat{\statevec}_{t|t-1}$, whereas what we require is in fact
+$\hat{\statevec}_{t|t}$. To work around this we add an extra
+observation to the end of the series and retrieve the
 \emph{one-step-ahead} estimate of the \emph{lagged} state.
 
 \subsection{Local level model}
@@ -1027,22 +1054,22 @@ estimated via maximum likelihood.  Script~\ref{script:loclev} provides
 an example of simulation and estimation of such a model. Since
 simulating the local level model is trivial using ordinary gretl
 commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
-  the way the script is, there is an ``off-by-one'' misalignment
+  as the script stands, there is an ``off-by-one'' misalignment
   between the state vector and the observable series. For convenience,
   the script is written as if equation \eqref{eq:state} was modified
   into the equivalent formulation
   \[
-  \statevec_{t} = \statemat \statevec_{t-1} + \strdist_t ;
+  \statevec_{t} = \statemat \statevec_{t-1} + \strdist_t
   \]
-  we tried to keep the script as simple as possible, so that the
-  reader is free to focus on the interesting aspects.}
+  We kept the script as simple as possible so that the reader can
+  focus on the interesting aspects.}
 
 \subsection{Time-varying models}
 \label{sec:example_PhCurve}
 
-In order to illustrate state space models with time-varying system
-matrices, we will use time-varying OLS. Suppose the DGP for an
-observable time series $y_t$ is given by
+To illustrate state space models with time-varying system matrices we
+will use time-varying OLS. Suppose the DGP for an observable time
+series $y_t$ is given by
 \begin{equation}
   \label{eq:tvarols-1}
     y_t = \beta_0 + \beta_{1,t} x_t + \varepsilon_t
@@ -1055,12 +1082,12 @@ where the slope coefficient $\beta_1$ evolves through time according to
 
 It is easy to see that the pair of equations above define a state
 space model, with equation \eqref{eq:tvarols-1} as the measurement
-equation and \eqref{eq:tvarols-2} as the state transition equation. In
-other terms, $\beta_{1,t}$ is the unobservable state, $\statemat = 1$
-and $\statevar = V(\eta_t) = \sigma^2_{\eta}$; as for the measurement
-equation, $\obsvar = V(\varepsilon_t) = \sigma^2_{\varepsilon}$, but
-the matrix multiplying $\beta_{1,t}$, and hence $\obsymat$, is $x_t$,
-which is clearly time-varying.
+equation and \eqref{eq:tvarols-2} as the state transition equation.
+The unobservable state is $\beta_{1,t}$, $\statemat = 1$ and
+$\statevar = \sigma^2_{\eta}$. As for the measurement equation,
+$\obsvar = \sigma^2_{\varepsilon}$, while the matrix multiplying
+$\beta_{1,t}$, and hence playing the role of $\obsymat_t$, is the
+time-varying $x_t$.
 
 \begin{figure}[htbp]
   \centering
@@ -1072,11 +1099,11 @@ which is clearly time-varying.
 
 Once the system is framed as a state-space model, estimation of the
 three unknown parameters $\beta_0$, $\sigma^2_{\varepsilon}$ and
-$\sigma^2_{\eta}$ may proceed by maximum likelihood in a manner
+$\sigma^2_{\eta}$ can proceed by maximum likelihood in a manner
 similar to example \ref{script:armaest} and \ref{script:loclev}. The
-sequence of slope coefficients $\beta_{1,t}$ is, instead, estimated by
+sequence of slope coefficients $\beta_{1,t}$ can then be estimated by
 running the smoother, which also yields a consistent estimate of the
-dispersion of the estimated state
+dispersion of the estimated state.
 
 Script \ref{script:PhCurve} presents an example of the above, in which
 data from the AWM database are used to estimate a Phillips Curve
