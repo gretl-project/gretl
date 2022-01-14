@@ -5148,10 +5148,13 @@ static int load_public_function (fnpkg *pkg, int i)
 	if (strcmp(fun->name, "bkw")) {
 	    /* for now, don't throw an error on loading Lee Adkins'
 	       bkw package */
-	    gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
-				 fun->name);
-	    fprintf(stderr, "%s: function %s would override a built-in\n",
-		    pkg->name, fun->name);
+	    gretl_errmsg_sprintf(_("Package loading error:\n"
+				   "%s %s defines a function %s(), "
+				   "which conflicts with a built-in\n"
+				   "function in gretl %s. Please check for an "
+				   "updated version of %s."),
+				 pkg->name, pkg->version, fun->name,
+				 GRETL_VERSION, pkg->name);
 	    err = E_DATA;
 	}
     }
