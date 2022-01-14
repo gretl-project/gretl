@@ -129,10 +129,16 @@ C = seasonals(1,1)
 printf "correspondence(x, S4) = %d\n\n", correspondence(x, S4)
 
 print "---- gap_filler -----"  #
-series play = LRM
-play[10] = NA	# insert missing
-series playout = gap_filler(play, 2)
-print  playout
+
+nulldata 24
+setobs 4 2010:1
+smpl +2 -2
+series x = normal()
+x[10] = NA	# insert missing
+series x1 = gap_filler(x, 1)
+series x2 = gap_filler(x, 2)
+smpl full
+print x x1 x2 --byobs
 
 print "---- winsor -----"  #
 series winDM = winsor(ldiff(LRM))
@@ -144,14 +150,3 @@ print "---- fracorder ------"
 open djclose.gdt --quiet	# need longer data here
 matrix M = fracorder(ldiff(djclose), 20)
 print  M
-
-print "---- mat2list ------"
-
-nulldata 20
-matrix M = mnormal($nobs, 2)
-list   L = mat2list(M)
-matrix M = muniform($nobs, 3)
-cnameset(M, defarray("foo", "bar", "baz"))
-list   L = mat2list(M)
-
-print --byobs

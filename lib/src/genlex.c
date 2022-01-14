@@ -584,7 +584,7 @@ struct str_table funcs[] = {
     { F_LPSOLVE,   "lpsolve" },
     { F_DISTANCE,  "distance" },
     { F_INTERPOL,  "interpol" },
-    { F_MAT2LIST,  "mx2list" },
+    { F_MAT2LIST,  "mat2list" },
     { 0,           NULL }
 };
 
