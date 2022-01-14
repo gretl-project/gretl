@@ -1,5 +1,5 @@
-version 2021e, in progress
-- Copy/Paste data in the GUI: make this facility more
+version 2022a, in progress
+- Copy/Paste of data in the GUI: make this facility more
   visible, and support gdt format in addition to delimited
   text; support Ctrl-C to copy
 - Panel data time dimension: add apparatus to specify this
@@ -19,14 +19,21 @@ version 2021e, in progress
   an array of strings
 - "genr": get informative error messages to appear in more
   cases
+- Kalman (state space) apparatus: revise the documentation
+  to use more standard notation; revise internal code
 - Indexing into matrices, arrays, lists and strings: support
   the keyword 'end' to denote the last element; in the case
   of matrices this is specific to row or column
 - Support direct assignment of array of strings to string-
   valued series, if the array is of appropriate size
+- New function interpol() for linear interpolation
+- New function mat2list(): create a list of series from the
+  columns of a suitable matrix
 - New function distance(): evaluate the distance between
   points on various metrics such as Euclidean, Manhattan,
   Hamming, Chebyshev, Cosine and Mahalanobis
+- deseas() function: add several options to inflect the
+  specifics of deseasonalization via X-13ARIMA-SEATS
 - stdize() function: make it default to working as stated
   in the help text (df correction of 1 for std. dev.)
 - errorif() function: get this working within an mpi block,
@@ -35,9 +42,8 @@ version 2021e, in progress
   wrongly sized
 - Fix bug in "bds" command: failure in case no --corr1 or
   --sdcrit option is given
-- GUI console: allow Ctrl+D to exit, if not swallowed, and
-  add a "Clear" button to clear the prior content of the
-  console window
+- GUI console: add "Clear" button to clear the prior content
+  of the console window
 - GUI VAR/system, Graphs menu: improve appearance of multiple
   residual plots
 - Build fixes for FreeBSD, for the non-OPENMP case, and for
