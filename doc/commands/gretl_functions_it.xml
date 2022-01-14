@@ -7431,6 +7431,47 @@
       </description>
     </function>
 
+    <function name="mat2list" section="data-utils" output="list">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="string">prefisso</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione costruisce una lista di serie a partire
+	  dalle colonne di una matrice. La matrice 
+	  <argname>X</argname> deve avere un numero di righe pari alla
+	  lunghezza del dataset corrente, o al numero di osservazioni
+	  nel sottocampione corrente.
+	</para>
+	<para>
+	  I nomi delle serie risultanti sono assegnati nel modo
+	  seguente. Se l'argomento opzionale
+	  <argname>prefisso</argname> è specificato, la serie
+	  create dalla colonna <math>i</math> di <argname>X</argname>
+	  prenderà quel nome con l'aggiunta di <math>i</math>, come ad
+	  esempio in <lit>pippo1</lit>, <lit>pippo2</lit> e così via.
+	  Altrimenti, se <argname>X</argname> ha dei nomi di colonna (vedi
+	  <fncref targ="cnameset"/>) vengono usati questi.  Infine,
+	  se nessuna delle due condizioni è vera, i nomi sono
+	  <lit>column1</lit>, <lit>column2</lit> e così via.
+	</para>
+	<para>
+	  Quello che segue è un piccolo esempio:
+	</para>
+	<code>
+	  matrix X = mnormal($nobs, 8)
+	  list L = mat2list(X, "xnorm")
+	  # or alternativamente, se non serve salvare X separatamente
+	  list L = mat2list(mnormal($nobs, 8), "xnorm")
+	</code>
+	<para>
+	  Questo codice aggiungerà al dataset otto serie chiamate
+	  <lit>xnorm1</lit>, <lit>xnorm2</lit> eccetera.
+	</para>
+      </description>
+    </function>
+
     <function name="max" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
