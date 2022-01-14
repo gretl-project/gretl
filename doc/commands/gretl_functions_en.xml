@@ -3611,26 +3611,100 @@
     <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="string">s</fnarg>
+	<fnarg optional="true" type="bundle">opts</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Depends on having X-13ARIMA-SEATS or TRAMO/SEATS
-	  installed. Returns a deseasonalized (seasonally adjusted)
-	  version of the input series <argname>x</argname>, which must
-	  be a quarterly or monthly time series.  To specify TRAMO
-	  give <lit>"T"</lit> as the second argument; to specify
-	  X-13ARIMA give <lit>"X"</lit>; but if the second argument is
-	  omitted then X-13ARIMA is used.
+	  Note: besides its current mode, this function has a
+	  backward-compatibility mode&mdash;see <quote>Legacy
+	  mode</quote> below for details.
 	</para>
 	<para>
-	  Note that if the input series has no detectable seasonal
-	  component this function may fail.  Also note that both
-	  X-13ARIMA and TRAMO/SEATS offer numerous options;
-	  <lit>deseas</lit> calls them with all options at their
-	  default settings. For both programs, the seasonal factors
-	  are calculated on the basis of an automatically selected
-	  ARIMA model.
+	  The primary purpose of this function is to produce a
+	  deseasonalized version of the (quarterly or monthly) input
+	  series <argname>x</argname>, using X-13ARIMA-SEATS; it is
+	  available only if X-13ARIMA-SEATS is installed. If the
+	  second, optional argument is omitted, seasonal adjustment is
+	  carried out with all X-13ARIMA options at their default
+	  values. When <argname>opts</argname> is supplied, it may
+	  contain any of the following option specifications.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>seats</lit>: 1 to use the SEATS algorithm in place
+	      of the default X11 algorithm for seasonal adjustment, or
+	      0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>airline</lit>: 1 to use the <quote>airline</quote>
+	      ARIMA model specification (0,1,1)(0,1,1) in place of the
+	      default automatic model selection, or 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	    <lit>outliers</lit>: 1 to enable detection and correction
+	    for outliers, or 0 (the default) to omit this feature.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>critical</lit>: scalar, the critical value for
+	      outlier detection, the default being automatic,
+	      dependent on the sample size. Relevant only when
+	      <lit>outliers</lit> is specified.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>logtrans</lit>: should the input series be put in
+	      log form? 0 = no, 1 = yes, 2 = automatically selected.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>trading_days</lit>: should trading-day effects be
+	      included?  0 = no, 1 = yes, 2 = automatic.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>working_days</lit>: a simpler version of
+	      <lit>trading_days</lit> with a single distinction
+	      between weekdays and weekends rather than individual day
+	      effects. 0 = no, 1 = yes, 2 = automatic.  Use only one
+	      of <lit>trading_days</lit> and <lit>working_days</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>easter</lit>:
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>output</lit>:
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Legacy mode</subhead>
+	<para>
+	  In place of an <argname>opts</argname> bundle, you can
+	  instead pass a string as a second argument to
+	  <lit>deseas</lit>. (This was the only acceptable form prior
+	  to version 2022a of gretl.) This string should be either
+	  <lit>"T"</lit> to specify use of TRAMO-SEATS or
+	  <lit>"X"</lit> for X-13ARIMA (the default). In each case a
+	  seasonally adjusted series is returned, the adjustment being
+	  carried out using the default settings of the selected
+	  program. Note that this is not in fact 100 percent
+	  backward-compatible, in that prior to gretl 2022a the second
+	  argument could be passed as an unquoted string literal; now
+	  it must be either a quoted string or the name of a string
+	  variable.
 	</para>
       </description>
     </function>

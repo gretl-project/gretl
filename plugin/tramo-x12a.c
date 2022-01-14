@@ -1887,7 +1887,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     int got_td_spec = 0;
     int err = 0;
 
-    xopt->outliers = gretl_bundle_get_bool(b, "outlier_correction", 0);
+    xopt->outliers = gretl_bundle_get_bool(b, "outliers", 0);
     xopt->seats    = gretl_bundle_get_bool(b, "seats", 0);
     xopt->airline  = gretl_bundle_get_bool(b, "airline", 0);
     xopt->easter   = gretl_bundle_get_bool(b, "easter", 0);
