@@ -8234,10 +8234,16 @@ int substitute_values (double *dest, const double *src, int n,
     return 0;
 }
 
-/* Write into @vname the putative name for a series
-   to be made from column @i of a matrix. Check for
-   validity of the name and return non-zero in case
-   of error.
+/* Write into @vname the putative name for a series to be made from
+   column @i of a matrix. Check for validity of the name and return
+   non-zero in case of error.
+
+   The naming procedure is as follows.
+
+   * If @prefix is non-NULL, name series @i as <prefix><i>.
+   * Otherwise if @S (matrix column names) is non-NULL, name
+     the series using S[i].
+   * Otherwise name the series as column<i>.
 */
 
 static int get_column_name (char *vname, int i,

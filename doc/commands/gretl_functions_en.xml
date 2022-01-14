@@ -7401,6 +7401,47 @@
       </description>
     </function>
 
+    <function name="mat2list" section="data-utils" output="list">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="string">prefix</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  A convenience function for making a list of series using the
+	  columns of a suitable matrix as input. The row dimension of
+	  <argname>X</argname> must equal either the length of the
+	  current dataset or the number of observations in the current
+	  sample range.
+	</para>
+	<para>
+	  The naming of the series in the returned list proceeds as
+	  follows. First, if the optional <argname>prefix</argname>
+	  argument is supplied, the series created from column
+	  <math>i</math> of <argname>X</argname> is named by appending
+	  <math>i</math> to the given string, as in
+	  <lit>myprefix1</lit>, <lit>myprefix2</lit> and so on.
+	  Otherwise, if <argname>X</argname> has column names set (see
+	  <fncref targ="cnameset"/>) these names are used.  Finally,
+	  if neither of the above conditions is satisfied, the names
+	  are <lit>column1</lit>, <lit>column2</lit> and so on.
+	</para>
+	<para>
+	  Here is an illustrative example of usage:
+	</para>
+	<code>
+	  matrix X = mnormal($nobs, 8)
+	  list L = mat2list(X, "xnorm")
+	  # or alternatively, if you don't need X as such
+	  list L = mat2list(mnormal($nobs, 8), "xnorm")
+	</code>
+	<para>
+	  This will add to the dataset eight full-length series named
+	  <lit>xnorm1</lit>, <lit>xnorm2</lit> and so on.
+	</para>
+      </description>
+    </function>
+
     <function name="max" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
