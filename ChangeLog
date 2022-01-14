@@ -17,6 +17,7 @@ version 2022a, in progress
   $pvalue in matrix form
 - "markers" command: add a --from-array option to read from
   an array of strings
+- "shell" command: clarify the help text
 - "genr": get informative error messages to appear in more
   cases
 - Kalman (state space) apparatus: revise the documentation
@@ -38,10 +39,18 @@ version 2022a, in progress
   in the help text (df correction of 1 for std. dev.)
 - errorif() function: get this working within an mpi block,
   in which case it can be used outside of a function
+- tdisagg() function: limit (per default) the number of
+  observations for which automatic extrapolation is done
 - Fix gmm bug: crash when a user-supplied weights matrix is
   wrongly sized
 - Fix bug in "bds" command: failure in case no --corr1 or
   --sdcrit option is given
+- Fix bug: automatic on-demand downloading of some addons was
+  not working (at least dbnomics, regls)
+- Fix bug: panel time-series information could get lost on
+  exit from a function in which a panel dataset is subsampled
+- Guard against crash on non-square invalid input to the
+  eigensym() function
 - GUI console: add "Clear" button to clear the prior content
   of the console window
 - GUI VAR/system, Graphs menu: improve appearance of multiple
