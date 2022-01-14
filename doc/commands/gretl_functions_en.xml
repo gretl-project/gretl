@@ -3626,8 +3626,9 @@
 	  available only if X-13ARIMA-SEATS is installed. If the
 	  second, optional argument is omitted, seasonal adjustment is
 	  carried out with all X-13ARIMA options at their default
-	  values. When <argname>opts</argname> is supplied, it may
-	  contain any of the following option specifications.
+	  values (fully automatic procedure). When
+	  <argname>opts</argname> is supplied, it may contain any of
+	  the following option specifications.
 	</para>
 	<ilist>
 	  <li>
@@ -3661,13 +3662,14 @@
 	  <li>
 	    <para>
 	      <lit>logtrans</lit>: should the input series be put in
-	      log form? 0 = no, 1 = yes, 2 = automatically selected.
+	      log form? 0 = no, 1 = yes, 2 = automatically selected
+	      (the default).
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      <lit>trading_days</lit>: should trading-day effects be
-	      included?  0 = no, 1 = yes, 2 = automatic.
+	      included?  0 = no, 1 = yes, 2 = automatic (the default).
 	    </para>
 	  </li>
 	  <li>
@@ -3675,18 +3677,23 @@
 	      <lit>working_days</lit>: a simpler version of
 	      <lit>trading_days</lit> with a single distinction
 	      between weekdays and weekends rather than individual day
-	      effects. 0 = no, 1 = yes, 2 = automatic.  Use only one
-	      of <lit>trading_days</lit> and <lit>working_days</lit>.
+	      effects. 0 = no (the default), 1 = yes, 2 = automatic.
+	      Use only one of <lit>trading_days</lit> and
+	      <lit>working_days</lit>.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>easter</lit>:
+	      <lit>easter</lit>: 1 to allow for an easter effect, as a
+	      supplement to either <lit>trading_days</lit> or
+	      <lit>working_days</lit>, or 0 (the default).
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>output</lit>:
+	      <lit>output</lit>: selects the type of the output
+	      series, 1 for deseasonalized (the default), 2 for the
+	      estimated trend, 3 for the irregular component.
 	    </para>
 	  </li>
 	</ilist>
