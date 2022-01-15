@@ -5038,7 +5038,7 @@ static int vector_suitable_for_series (const gretl_matrix *m)
     }
 }
 
-static void save_bundled_item_call (GtkAction *action, gpointer p)
+void save_bundled_item_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     gretl_bundle *bundle = vwin->data;
@@ -5272,6 +5272,10 @@ static void add_kalman_items_to_menu (GtkWidget *menu,
     S = kalman_bundle_get_scalar_names(K, &ns);
 
     for (i=0; i<ns; i++) {
+	if (S[i] == NULL) {
+	    /* just in case */
+	    break;
+	}
 	label = g_strdup_printf("%s (scalar)", S[i]);
 	action = gtk_action_new(S[i], label, NULL, NULL);
 	g_signal_connect(G_OBJECT(action), "activate",

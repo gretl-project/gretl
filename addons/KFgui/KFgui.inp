@@ -90,7 +90,7 @@ end function
 ### Public function
 ### --------------------------------------------------
 
-function bundle KFgui (list X "observables",
+function bundle KFgui (list y "observables",
                        matrix Z "Observation matrix",
                        matrix T "State transition matrix",
                        bool has_obsvar[0] "Disturbance in obs. equation?",
@@ -98,7 +98,7 @@ function bundle KFgui (list X "observables",
                        int verbosity[0:2:1] "verbosity" {"Quiet", "Normal", "Verbose"},
                        bool smooth[1] "do smoothing")
 
-   scalar n = nelem(X)
+   scalar n = nelem(y)
    bundle ret = null
    scalar k = rows(T)
    if cols(T) != k || rows(Z) != k || cols(Z) != k
@@ -107,9 +107,9 @@ function bundle KFgui (list X "observables",
       return ret
    endif
 
-   bundle ret = defbundle("n", n, "k", k, "has_obsvar", has_obsvar)
+   bundle ret = _(n, k, has_obsvar)
 
-   bundle kmod = ksetup(X, Z, F, I(k) .* 0.1)
+   bundle kmod = ksetup(y, Z, T, I(k) .* 0.1)
    kmod.inivar = 1.0e4 * I(k)
    npar = has_obsvar ? n+k : k
    matrix param = ones(npar, 1)
@@ -140,8 +140,8 @@ function bundle KFgui (list X "observables",
          ksmooth(&kmod)
       endif
       ret.kmod = kmod
-      coeff = $coeff
-      vcv = $vcv
+      matrix coeff = $coeff
+      matrix vcv = $vcv
       fix_parametrization(&coeff, &vcv, param_type)
       ret.coeff = coeff
       ret.vcv = vcv
@@ -149,6 +149,8 @@ function bundle KFgui (list X "observables",
       if verbosity > 0
          printout(ret)
       endif
+   else
+      printf "Filtering failed:\n%s\n", errmsg(ret.err)
    endif
 
    return ret

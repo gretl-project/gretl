@@ -4333,7 +4333,7 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
 {
     char **S;
 
-    *ns = K_N_SCALARS -1 - na(K->s2) - na(K->loglik);
+    *ns = K_N_SCALARS - 1 - na(K->s2) - na(K->loglik);
      S = strings_array_new(*ns);
 
     if (S != NULL) {
@@ -4356,6 +4356,9 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
         S[i++] = gretl_strdup("n");
         S[i++] = gretl_strdup("N");
         S[i++] = gretl_strdup("p");
+
+	/* diffuse phase */
+	S[i++] = gretl_strdup("d");
     }
 
     return S;

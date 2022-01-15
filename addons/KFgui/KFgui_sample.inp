@@ -1,6 +1,6 @@
 clear
 set verbose off
-include KFproto.gfn
+include KFgui.gfn
 
 set seed 280921
 
@@ -16,7 +16,7 @@ Z = {1}
 T = {1}
 do_smooth = 1
 paramtype = 2
-b = KFproto (y, Z, T, 1, paramtype, 1, do_smooth)
+b = KFgui(y, Z, T, 1, paramtype, 1, do_smooth)
 series mhat = b.state
 gnuplot m mhat --time-series --with-lines --output=display
 

@@ -1490,7 +1490,6 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     if (hpane != NULL) {
 	g_object_set_data(G_OBJECT(hpane), "vpane", vpane);
     }
-
     if (vpane != NULL) {
 	g_object_set_data(G_OBJECT(vpane), "hpane", hpane);
     }

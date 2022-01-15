@@ -509,6 +509,7 @@ static GList *get_selection_list (int type)
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
 	list = add_names_for_type(list, GRETL_TYPE_LIST);
+	list = add_series_names(list);
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
     } else if (bundle_arg(type)) {
@@ -830,7 +831,8 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
 {
     int n = n_user_matrices();
 
-    if (!strcmp(cinfo->pkgname, "SVAR")) {
+    if (!strcmp(cinfo->pkgname, "SVAR") ||
+	!strcmp(cinfo->pkgname, "KFgui")) {
 	widget_set_int(cinfo->dlg, "matrix-no-series", 1);
     }
 
