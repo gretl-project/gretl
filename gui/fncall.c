@@ -4719,7 +4719,13 @@ int real_do_regls (const char *buf)
 
 /* geomap related functions */
 
-static GList *plausible_payload_list (int v, int *selpos)
+/* See if we can assemble a list of series that could possibly play
+   the role of "payload" in a map plot. If there's a single series
+   currently selected in the main gretl window and it seems suitable,
+   we'll make it the default choice.
+*/
+
+static GList *plausible_payload_list (int *selpos)
 {
     GList *list = NULL;
     int i, j = 1;
@@ -4728,7 +4734,8 @@ static GList *plausible_payload_list (int v, int *selpos)
 	if (!is_string_valued(dataset, i) &&
 	    !gretl_isconst(dataset->t1, dataset->t2, dataset->Z[i])) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
-	    if (i == v) {
+	    if (i == mdata->active_var) {
+		/* the series at position @j becomes the default */
 		*selpos = j;
 	    }
 	    j++;
@@ -4744,7 +4751,7 @@ static GList *plausible_payload_list (int v, int *selpos)
 
 /* Called in response to "Display map" */
 
-void map_plot_callback (int v)
+void map_plot_callback (void)
 {
     const char *mapfile = dataset_get_mapfile(dataset);
 
@@ -4760,7 +4767,7 @@ void map_plot_callback (int v)
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
-	payload_list = plausible_payload_list(v, &selpos);
+	payload_list = plausible_payload_list(&selpos);
 
 	/* get options from the user */
 	resp = map_options_dialog(payload_list, selpos,

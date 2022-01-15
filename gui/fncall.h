@@ -104,7 +104,7 @@ void *dbnomics_probe_series (const char *prov,
 			     int limit, int offset,
 			     int *err);
 
-void map_plot_callback (int v);
+void map_plot_callback (void);
 
 int real_do_regls (const char *buf);
 
