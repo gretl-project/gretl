@@ -1,0 +1,10 @@
+set echo off
+set messages off
+
+string topsrc = "@top_srcdir@"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
+string pkgdir = topsrc ~ "/addons/KFgui"
+
+include @pkgdir/KFgui.inp
+
+makepkg KFgui.gfn --index --quiet --dtd="@dtd"

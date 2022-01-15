@@ -1,0 +1,10 @@
+author = Riccardo "Jack" Lucchetti
+email = r.lucchetti@univpm.it
+version = 1.0
+date = 2022-01-15
+description = Kalman Filter GUI prototype
+tags = C32
+min-version = 2022a
+public = KFgui 
+help = KFgui.pdf
+sample-script = KFgui_sample.inp

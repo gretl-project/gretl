@@ -1,0 +1,26 @@
+topsrc = @top_srcdir@
+TEXDIR = $(topsrc)/doc/tex
+
+PKG = KFgui
+DOCDIR = $(topsrc)/addons/$(PKG)/doc
+FIG1 = GUIScreenshot.png
+FIG2 = state.pdf
+
+SRCS = $(PKG).tex $(FIG1) $(FIG2) gretl.sty
+
+$(PKG).pdf: $(SRCS)
+	@pdflatex $(PKG)
+	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
+
+.PHONY : symlinks clean
+
+symlinks:
+	@if [ ! -f gretl.sty ] || [ ../../../doc/gretl.sty -nt gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
+	@for f in $(PKG).tex $(FIG1) $(FIG2) ; do \
+	if [ ! -f $$f ] || [ $(DOCDIR)/$$f -nt $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
+
+clean:
+	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf
+
