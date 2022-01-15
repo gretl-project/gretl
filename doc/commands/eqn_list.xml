@@ -38,12 +38,6 @@ $y_t = \sum_{\tau=1}^t x_{\tau}$
 <texequation fileref="hurst">
 \[\mathrm{RS}(x) = an^H\]
 </texequation>
-<texequation fileref="">
-\[y^*_t = x_t \beta+\epsilon_t\]
-</texequation>
-<texequation fileref="">
-\[m_t \le y_t \le M_t\]
-</texequation>
 <texequation fileref="dffit">
 $\sqrt{h/(1 - h)}$
 </texequation>
