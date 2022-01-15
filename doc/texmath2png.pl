@@ -17,7 +17,7 @@ sub usage
 usage: texmath2png.pl xmlfile
 
 texmath2png.pl -- A program for making png images of equations from
-                  an XML source file using dbtexmath mark-up.
+                  an XML source.
 
 EndUsage
 }
