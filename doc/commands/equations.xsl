@@ -5,15 +5,23 @@
 <xsl:output method="text" encoding="utf-8"/>
 
 <xsl:template match="equation">
-  <xsl:text>&lt;texequation </xsl:text>
-  <xsl:text>fileref="</xsl:text>
-  <xsl:value-of select="@graphic"/>
-  <xsl:text>"&gt;&#10;</xsl:text>
-  <xsl:value-of select="normalize-space(@tex)"/>
-  <xsl:text>&#10;&lt;/texequation&gt;&#10;</xsl:text>
+  <xsl:if test="(@graphic)">
+    <xsl:text>&lt;texequation </xsl:text>
+    <xsl:text>fileref="</xsl:text>
+    <xsl:value-of select="@graphic"/>
+    <xsl:text>"&gt;&#10;</xsl:text>
+    <xsl:value-of select="normalize-space(@tex)"/>
+    <xsl:text>&#10;&lt;/texequation&gt;&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="commandref">
+  <xsl:text>&lt;equation-set latexopt="12pt" density="96x96" usepackage="mathptmx"&gt;&#10;</xsl:text>
+  <xsl:apply-templates select=".//equation"/>
+  <xsl:text>&lt;/equation-set&gt;&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="funcref">
   <xsl:text>&lt;equation-set latexopt="12pt" density="96x96" usepackage="mathptmx"&gt;&#10;</xsl:text>
   <xsl:apply-templates select=".//equation"/>
   <xsl:text>&lt;/equation-set&gt;&#10;</xsl:text>

@@ -6944,13 +6944,13 @@
 	  all the information needed to define a linear state space
 	  model of the form
 	  <equation status="display"
-		    tex="\[y_t=H'\alpha_t\]"
-		    ascii="y(t) = H'a(t)"
+		    tex="\[y_t=Z\alpha_t\]"
+		    ascii="y(t) = Za(t)"
 		    graphic="kalman1"/>
 	  and state transition equation
 	  <equation status="display"
-		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
-		    ascii="a(t+1) = F a(t) + u(t)"
+		    tex="\[\alpha_{t+1}=T \alpha_t + u_t\]"
+		    ascii="a(t+1) = T a(t) + u(t)"
 		    graphic="kalman2"/>
 	  where Var<math>(u) = Q</math>.
 	</para>

@@ -63,6 +63,7 @@ XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
   $(CMDSDIR)/hlpstrs_it.xml $(CMDSDIR)/hlpstrs_gl.xml
 
 EQNLIST = $(CMDSDIR)/eqn_list.xml
+EQNLIST2 = $(CMDSDIR)/eqn_list2.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
 
 ALL_HELPFILES = gretl_cli_cmdref gretl_gui_cmdref gretl_gui_help gretl_cli_fnref gretl_gui_fnref
@@ -156,9 +157,15 @@ $(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands_en.xml
 	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
 	rm -f eqn_list.new
 
+$(EQNLIST2): $(EQNXSL) $(CMDSDIR)/gretl_functions_en.xml
+	xsltproc $(EQNXSL) $(CMDSDIR)/gretl_functions_en.xml > eqn_list2.new
+	if diff --brief $@ eqn_list2.new | grep eqn ; then cp eqn_list2.new $@ ; fi
+	rm -f eqn_list2.new
+
 # we'll do the following manually only when needed: it's a bit hyperactive
-figs: $(EQNLIST)
-	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs
+figs: $(EQNLIST) $(EQNLIST2)
+	$(topsrc)/doc/texmath2png.pl $(EQNLIST) $(SHAREDIR)/texfigs
+	$(topsrc)/doc/texmath2png.pl $(EQNLIST2) $(SHAREDIR)/texfigs
 
 # Rules for "online" help files in various languages
 
