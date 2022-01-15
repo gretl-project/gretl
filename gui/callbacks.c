@@ -32,6 +32,7 @@
 #include "treeutils.h"
 #include "datawiz.h"
 #include "winstack.h"
+#include "fncall.h"
 #include "matrix_extra.h"
 
 static void doubleclick_action (windata_t *vwin)
@@ -982,6 +983,15 @@ void send_attachment (const char *filename)
     }
 }
 
+#if 1
+
+void kalman_callback (GtkAction *action, gpointer data)
+{
+    open_function_package("KFgui", NULL, mdata);
+}
+
+#else 
+
 static void kalman_close (GtkWidget *w, GtkWidget *dialog)
 {
     gtk_widget_destroy(dialog);
@@ -1011,3 +1021,5 @@ void kalman_callback (GtkAction *action, gpointer data)
 
     gtk_widget_show_all(dialog);
 }
+
+#endif

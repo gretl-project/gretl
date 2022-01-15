@@ -12,11 +12,11 @@ COMPARE = 0
 
 series m = cum(normal() * 0.25)
 series y = m + normal()
-H = {1}
-F = {1}
+Z = {1}
+T = {1}
 do_smooth = 1
 paramtype = 2
-b = KFproto (y, H, F, 1, paramtype, 1, do_smooth)
+b = KFproto (y, Z, T, 1, paramtype, 1, do_smooth)
 series mhat = b.state
 gnuplot m mhat --time-series --with-lines --output=display
 
@@ -26,6 +26,5 @@ if COMPARE
     mod = STSM_setup(y, 1, 1, 0)
     STSM_estimate(&mod)
     list C = STSM_components(mod)
-
     ols mhat const y_level
 endif

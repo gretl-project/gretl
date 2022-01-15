@@ -1,12 +1,17 @@
 \documentclass[a4paper]{article}
 
+\usepackage{geometry}
 \usepackage{bm}
-\usepackage{mathpazo}
+\usepackage{fancyvrb,color,gretl}
+%\usepackage{mathpazo}
 \usepackage{graphicx}
 
-\title{The Kalman Filter GUI prototype}
-\author{Jack}
-\date{not a proper package yet---work in progress}
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0pt}
+
+\title{Kalman Filter GUI}
+\author{Jack Lucchetti}
+\date{\it this facility is work in progress}
 
 \newcommand{\obs}{\ensuremath\mathbf{y}_t}
 \newcommand{\obsdist}{\ensuremath\boldsymbol{\varepsilon}_t}
@@ -17,22 +22,22 @@
 \begin{document}
 \maketitle
 
-The goal here is to provide a native GUI hook so as to give some
-more visibility to the computing facilities we have available for
-state space modelling (\texttt{ksetup()} and friends).
+The goal here is to provide a native GUI hook so as to give some more
+visibility to the facilities gretl has available for state space
+modelling (\texttt{ksetup()} and friends).
 
 The GUI hook presented here can be used for performing ML estimation of
 models of the kind
 \begin{eqnarray}
   \label{eq:obs}
-  \obs & = & H' \state{t} + \obsdist \\
+  \obs & = & Z \state{t} + \obsdist \\
   \label{eq:state}
-  \state{t} & = & F \state{t-1} + \stdist
+  \state{t} & = & T \state{t-1} + \stdist
 \end{eqnarray}
 where $V(\obsdist)$ and $V(\stdist)$ are diagonal matrices; in fact,
 $\obsdist$ may have zero variance, in which case $\obsdist$ is
 identically 0 and the last term of equation (\ref{eq:obs}) is
-dropped. The $H$ and $F$ matrices are assumed to be known, so
+dropped. The $Z$ and $T$ matrices are assumed to be known, so
 estimation only concerns the variances of $\obsdist$ and $\stdist$.
 Clearly, this is a very limited subset of the range of models that
 gretl can handle, but it may be of some pedagogical value.
@@ -45,19 +50,21 @@ remain in hansl for easier maintenance, like we do with parts of the
 fact, for reasons of numerical performance, it is convenient to have
 the choice of representing variances as transformations of the BFGS
 parameters in one of the three following ways:
+
 \begin{description}
-\item[Absolute value]: maximization is performed on the variances, so
-  $\sigma^2 = |\theta|$.
-\item[Square] maximization is performed on the standard deviations, so
-  $\sigma^2 = \theta^2$.
-\item[Exponential] maximization is performed on the log standard deviations, so
-  $\sigma^2 = \exp(2 \cdot \theta)$.
+\item[Absolute value] maximization is performed on the variances:
+  $\sigma^2 = |\theta|$
+\item[Square] maximization is performed on the standard deviations:
+  $\sigma^2 = \theta^2$
+\item[Exponential] maximization is performed on the log standard deviations:
+  $\sigma^2 = \exp(2 \cdot \theta)$
 \end{description}
+
 Normally, this choice should make no difference for well-behaved
 data. In any case, the function reports the estimates of the standard
 errors whatever the parametrization type.
 
-Once the parameters are estimated, the user has the choice of
+Once the parameters are estimated the user has the choice of
 performing the smoothing of the states.
 
 \begin{figure}[htbp]
@@ -69,17 +76,17 @@ performing the smoothing of the states.
 
 The GUI hook is shown in figure \ref{fig:GUI}: the ``observables'' box
 is used for specifying a list of series for $\obs$. The next two boxes
-handle the $H$ and $F$ matrices, respectively. These can be
+handle the $Z$ and $T$ matrices, respectively. These can be
 pre-existing matrices or created ``on the fly'' using the GUI facility
 we have for that. The remaining GUI elements should hopefully be
 self-explanatory.
 
 The function, at present, returns a bundle with a few elements of
-interest, among which a sub-bundle called \texttt{kmod} with all the
+interest, among which are a sub-bundle called \texttt{kmod} with all the
 state-space internals and a matrix with the estimated states, under
-the \texttt{state} key. Clearly, the final version of this GUI hook
-will probably provide many other elements to access the estimated
-parameters or other items or plotting the states etc.
+the \texttt{state} key. The final version of this GUI hook
+will probably provide other elements, to give access to the estimated
+parameters, to support plotting the states, and so on.
 
 \section*{Example: Random walk plus noise}
 
@@ -87,10 +94,10 @@ The model here is
 \[
   y_t = \mu_t + \varepsilon_t \qquad \mu_t = \mu_{t-1} + \eta_t
 \]
-so that $H = F = 1$. The following script simulates the DGP above
+so that $Z = T = 1$. The following script simulates the DGP above
 with $V(\varepsilon) = 1$ and $V(\eta) = 1/8$.
 
-\begin{verbatim}
+\begin{code}
 clear
 set verbose off
 include KFproto.gfn
@@ -104,19 +111,19 @@ setobs 1 1 --special
 
 series m = cum(normal() * 0.25)
 series y = m + normal()
-H = {1}
-F = {1}
+Z = {1}
+T = {1}
 do_smooth = 1
 paramtype = 2
-b = KFproto (y, H, F, 1, paramtype, 1, do_smooth)
+b = KFproto (y, Z, T, 1, paramtype, 1, do_smooth)
 series mhat = b.state
 gnuplot m mhat --time-series --with-lines --output=display
-\end{verbatim}
+\end{code}
 
-which returns the output below and the picture depicted in Figure
+which returns the output below and the picture shown in Figure
 \ref{fig:state}
 
-\begin{verbatim}
+\begin{code}
 KFproto 1.0, 2021-12-21 (jack)
 
 Observation equation
@@ -131,7 +138,9 @@ State transition equation
              coefficient   std. error     z     p-value 
   ------------------------------------------------------
   stdev[1]    0.274650     0.0488922    5.617   1.94e-08 ***
-\end{verbatim}
+\end{code}
+
+
 \begin{figure}[hb]
   \centering
   \includegraphics[scale=0.7]{state}

@@ -2551,9 +2551,9 @@ static void maybe_open_sample_script (call_info *cinfo,
     g_free(msg);
 }
 
-/* Called from the function-package browser: unless the
-   package can't be loaded we should return 0 to signal
-   that loading happened.
+/* Called (mostly) from the function-package browser: unless the
+   package can't be loaded we should return 0 to signal that loading
+   happened.
 */
 
 int open_function_package (const char *pkgname,
@@ -2561,15 +2561,25 @@ int open_function_package (const char *pkgname,
 			   windata_t *vwin)
 {
     call_info *cinfo;
+    char *fname2 = NULL;
     int can_call = 1;
     int free_cinfo = 1;
     int err = 0;
+
+    if (fname == NULL) {
+	fname2 = gretl_addon_get_path(pkgname);
+	if (fname2 == NULL) {
+	    return E_FOPEN;
+	} else {
+	    fname = fname2;
+	}
+    }
 
     /* note: this ensures the package gets loaded */
     cinfo = start_cinfo_for_package(pkgname, fname, vwin, &err);
 
     if (err) {
-	return err;
+	goto bailout;
     }
 
     /* do we have suitable data in place? */
@@ -2583,7 +2593,7 @@ int open_function_package (const char *pkgname,
     } else if (err) {
 	/* fatal error */
 	gui_errmsg(err);
-	return err;
+	goto bailout;
     }
 
     if (can_call) {
@@ -2593,6 +2603,12 @@ int open_function_package (const char *pkgname,
     } else {
 	/* notify and give choice of running sample */
 	maybe_open_sample_script(cinfo, vwin, fname);
+    }
+
+ bailout:
+
+    if (fname2 != NULL) {
+	free(fname2);
     }
 
     if (free_cinfo) {

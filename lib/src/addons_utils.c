@@ -254,6 +254,9 @@ int gretl_is_updated (const char *prev_build)
    addon. We first try for this via the simple plain
    text index file addons.idx. If that's not found
    we construct the index from scratch.
+
+   The path that's returned is newly allocated and
+   should be freed by the caller.
 */
 
 char *gretl_addon_get_path (const char *addon)
