@@ -31,10 +31,11 @@
 
 This chapter describes the handling of linear state space models in
 gretl 2017a and higher.\footnote{The user interface was substantially
-  different in earlier versions of gretl. If anyone needs
+  different in earlier versions of gretl.  For example, be aware that
+  \cite{lucchetti11} is based on the old syntax. If anyone needs
   documentation for the original interface it can be found at
-  \url{http://gretl.sourceforge.net/papers/kalman_old.pdf}.}
-Here is a brief high-level overview of gretl's Kalman apparatus.
+  \url{http://gretl.sourceforge.net/papers/kalman_old.pdf}.}  Here is
+a brief high-level overview of gretl's Kalman apparatus.
 %
 \begin{itemize}
 \item To obtain a Kalman structure---in the form of a bundle ()---you
@@ -155,9 +156,11 @@ example:
 SSmod.obsxmat = B'
 \end{code}
 
-Once setup is complete the dimensions of the model, $r$, $n$, $k$ and
-$N$, become available as scalar members of the bundle (under their own
-names).
+Naturally, the arguments you pass to \cmd{ksetup} must have coherent
+dimensions: for example, \texttt{statemat} and \texttt{statevar} must
+be of the same size; otherwise, an error is returned. Once setup is
+complete the dimensions of the model, $r$, $n$, $k$ and $N$, become
+available as scalar members of the bundle (under their own names).
 
 It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
 ($\obsxmat$) matrices must go together---either both are given or
@@ -590,13 +593,16 @@ section~\ref{sec:simstart}.
 If the object of using a state space model is to produce maximum
 likelihood estimates of some parameters of interest, note that the
 loglikelihood surface may be quite awkward (far from globally
-concave), posing a challenge for numerical methods such as BFGS (the
-default maximizer under gretl's \texttt{mle} command). Symptoms may
+concave), posing a challenge for numerical methods such as BFGS, the
+default maximizer under gretl's \texttt{mle} command. Symptoms may
 include failure of convergence---typically due to an excessive
 computed gradient even as the maximizer cannot find an improvement in
 the objective function---or an excessive number of iterations. In such
 cases it is worth considering the following points.
 \begin{itemize}
+\item In some cases, scaling the observables may help: if the order of
+  magnitude of $y_t$ is too small or too large, floating-point
+  precision may become an issue for estimating variances.
 \item If you can obtain plausible initial values for the parameters,
   things are likely to go better than starting with arbitrary values.
 \item The limited-memory version of BFGS (L-BFGS) may work better than
@@ -798,10 +804,10 @@ function void arma11_via_kalman (series y)
     scalar sigma = 1
 
     /* state-space model setup */
-    matrix Z = {1, theta}
+    matrix Z = {1; theta}
     matrix T = {phi, 0; 1, 0}
     matrix Q = {sigma^2, 0; 0, 0}
-    bundle kb = ksetup(y, Z', T, Q)
+    bundle kb = ksetup(y, Z, T, Q)
 
     /* maximum likelihood estimation */
     mle logl = ERR ? NA : kb.llt
