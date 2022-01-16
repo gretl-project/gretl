@@ -1970,6 +1970,9 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     const char *output_strs[] = {
         "sa", "trend", "irreg", "all"
     };
+    const char *output_strs[] = {
+	"sa", "trend", "irreg", "all"
+    };
     int lt = 2; /* log transformation */
     int td = 2; /* trading days */
     int wd = 0; /* working days */
