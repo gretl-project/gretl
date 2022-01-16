@@ -955,17 +955,11 @@ static int add_series_from_file (const char *path, int src,
     return err;
 }
 
-<<<<<<< HEAD
 /* Simple grabber for TRAMO-SEATS seasonally adjusted series. */
 
 static int grab_tramo_output_series (double *y, const double *x,
                                      const DATASET *dset,
                                      const char *path, PRN *prn)
-=======
-static int grab_tramo_output_series (double *y, const double *x,
-				     const DATASET *dset,
-				     const char *path, PRN *prn)
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN];
@@ -974,7 +968,6 @@ static int grab_tramo_output_series (double *y, const double *x,
     int t, err = 0;
 
     gretl_build_path(sfname, path, "graph", "series",
-<<<<<<< HEAD
                      tramo_save_strings[TX_SA], NULL);
     fp = gretl_fopen(sfname, "r");
 
@@ -988,27 +981,11 @@ static int grab_tramo_output_series (double *y, const double *x,
         if (err) {
             return err;
         }
-=======
-		     tramo_save_strings[TX_SA], NULL);
-    fp = gretl_fopen(sfname, "r");
-
-    if (fp == NULL) {
-	err = E_FOPEN;
-	if (seats_no_seasonal(path)) {
-	    gretl_warnmsg_set(_("no seasonality was detected"));
-	    no_seas = 1;
-	    err = 0;
-	}
-	if (err) {
-	    return err;
-	}
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
     }
 
     gretl_push_c_numeric_locale();
 
     if (no_seas) {
-<<<<<<< HEAD
         /* give back the original series? */
         for (t=dset->t1; t<=dset->t2; t++) {
             y[t] = x[t];
@@ -1028,156 +1005,13 @@ static int grab_tramo_output_series (double *y, const double *x,
                 y[t++] = yt;
             }
         }
-=======
-	/* give back the original series? */
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    y[t] = x[t];
-	}
-    } else {
-	int i = 0;
-
-	t = dset->t1;
-	while (fgets(line, 127, fp)) {
-	    i++;
-	    if (i >= 7 && sscanf(line, " %lf", &yt) == 1) {
-		if (t >= dset->n) {
-		    fprintf(stderr, "t = %d >= dset->n = %d\n", t, dset->n);
-		    err = E_DATA;
-		    break;
-		}
-		y[t++] = yt;
-	    }
-	}
     }
 
     gretl_pop_c_numeric_locale();
 
-    if (fp != NULL) {
-	fclose(fp);
-    }
-
-    return err;
-}
-
-static int grab_x13_output_series (double *y, const double *x,
-				   const DATASET *dset,
-				   x13a_opts *xopt,
-				   const char *path,
-				   gretl_bundle *b,
-				   PRN *prn)
-{
-    gretl_matrix *Y = NULL;
-    const char **save_strings;
-    char line[128], sfname[MAXLEN], date[16];
-    char *p;
-    double yt, *dest;
-    int ncols, no_seas = 0;
-    int i, t, d, yr, per;
-    int tmin, tmax;
-    int err = 0;
-
-    ncols = xopt->savelist[0];
-
-    if (ncols > 1) {
-	int T = sample_size(dset);
-
-	Y = gretl_matrix_alloc(T, ncols);
-	if (Y == NULL) {
-	    return E_ALLOC;
-	}
-	gretl_matrix_set_t1(Y, dset->t1);
-	gretl_matrix_set_t2(Y, dset->t2);
-	dest = Y->val;
-	tmin = 0;
-	tmax = T-1;
-    } else {
-	dest = y;
-	tmin = dset->t1;
-	tmax = dset->t2;
-    }
-
-    gretl_push_c_numeric_locale();
-
-    save_strings = xopt->seats ? x13_seats_save_strings : x11_save_strings;
-    strcpy(sfname, path);
-    p = strrchr(sfname, '.');
-
-    for (i=0; i<ncols; i++) {
-	FILE *fp;
-
-	if (p != NULL) {
-	    strcpy(p + 1, save_strings[i]);
-	}
- 	fp = gretl_fopen(sfname, "r");
-
-	if (fp == NULL) {
-	    /* FIXME "noseas" case? */
-	    err = E_FOPEN;
-	    if (prn != NULL) {
-		display_x13a_output(sfname, 1, prn);
-	    }
-	    break;
-	}
-
-	if (no_seas) {
-	    /* give back the original series? */
-	    for (t=tmin; t<=tmax; t++) {
-		dest[t] = x[t];
-	    }
-	} else {
-	    /* grab the data from the x13as file */
-	    while (fgets(line, 127, fp)) {
-		if (*line == 'd' || *line == '-') {
-		    continue;
-		}
-		if (sscanf(line, "%d %lf", &d, &yt) != 2) {
-		    err = 1;
-		    break;
-		}
-		yr = d / 100;
-		per = d % 100;
-		sprintf(date, "%d.%d", yr, per);
-		t = dateton(date, dset);
-		if (t < tmin || t > tmax) {
-		    err = E_DATA;
-		    break;
-		}
-		dest[t] = yt;
-	    }
-	}
-	fclose(fp);
-	if (Y != NULL && i < ncols-1) {
-	    dest += Y->rows;
-	}
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
-    }
-
-    if (Y != NULL) {
-	/* finish building of output matrix */
-	if (err) {
-	    gretl_matrix_free(Y);
-	} else {
-	    char **S = strings_array_new(3);
-
-<<<<<<< HEAD
     if (fp != NULL) {
         fclose(fp);
-=======
-	    S[0] = gretl_strdup("sa");
-	    S[1] = gretl_strdup("trend");
-	    S[2] = gretl_strdup("irreg");
-	    gretl_matrix_set_colnames(Y, S);
-	    gretl_bundle_donate_data(b, "results", Y,
-				     GRETL_TYPE_MATRIX, 0);
-	}
-	/* and transcribe "sa" to @y */
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    y[t] = Y->val[t - dset->t1];
-	}
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
     }
-
-    gretl_pop_c_numeric_locale();
 
     return err;
 }
@@ -2136,9 +1970,6 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     const char *output_strs[] = {
         "sa", "trend", "irreg", "all"
     };
-    const char *output_strs[] = {
-	"sa", "trend", "irreg", "all"
-    };
     int lt = 2; /* log transformation */
     int td = 2; /* trading days */
     int wd = 0; /* working days */
@@ -2201,7 +2032,6 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     }
 
     if (gretl_bundle_has_key(b, "output")) {
-<<<<<<< HEAD
         const char *s = gretl_bundle_get_string(b, "output", &err);
         int i, otype = -1;
 
@@ -2227,33 +2057,6 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
                 xopt->savelist[1] = xopt->output;
             }
         }
-=======
-	const char *s = gretl_bundle_get_string(b, "output", &err);
-	int i, otype = -1;
-
-	if (!err) {
-	    for (i=0; i<4; i++) {
-		if (!strcmp(s, output_strs[i])) {
-		    otype = i;
-		    break;
-		}
-	    }
-	    if (otype == -1) {
-		err = E_INVARG;
-	    } else if (otype == 3) {
-		/* let the series return value be "sa" */
-		xopt->output = 0;
-		/* but save all to matrix */
-		xopt->savelist[0] = 3;
-		xopt->savelist[1] = 0;
-		xopt->savelist[2] = 1;
-		xopt->savelist[3] = 2;
-	    } else {
-		xopt->output = otype;
-		xopt->savelist[1] = xopt->output;
-	    }
-	}
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
     }
 
     if (!err) {
@@ -2361,7 +2164,6 @@ int adjust_series (const double *x, double *y,
     }
 
     if (prog == X13A) {
-<<<<<<< HEAD
         if (opts != NULL) {
             err = parse_deseas_bundle(&xopt, opts, prn);
         }
@@ -2370,16 +2172,6 @@ int adjust_series (const double *x, double *y,
             strcat(fname, ".spc");
             write_spc_file(fname, x, vname, dset, savelist, &xopt);
         }
-=======
-	if (opts != NULL) {
-	    err = parse_deseas_bundle(&xopt, opts, prn);
-	}
-	if (!err) {
-	    gretl_build_path(fname, workdir, vname, NULL);
-	    strcat(fname, ".spc");
-	    write_spc_file(fname, x, vname, dset, savelist, &xopt);
-	}
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
     } else {
         gretl_build_path(fname, workdir, vname, NULL);
         write_tramo_file(fname, x, vname, dset, NULL);
@@ -2400,21 +2192,12 @@ int adjust_series (const double *x, double *y,
     }
 
     if (!err) {
-<<<<<<< HEAD
         if (prog == X13A) {
             err = grab_x13_output_series(y, x, dset, &xopt, fname,
                                          opts, prn);
         } else {
             err = grab_tramo_output_series(y, x, dset, workdir, prn);
         }
-=======
-	if (prog == X13A) {
-	    err = grab_x13_output_series(y, x, dset, &xopt, fname,
-					 opts, prn);
-	} else {
-	    err = grab_tramo_output_series(y, x, dset, workdir, prn);
-	}
->>>>>>> 0617f77bd (deseas: work on supporting supplementary matrix output)
     }
 
     if (!err && xopt.verbose > 1) {
