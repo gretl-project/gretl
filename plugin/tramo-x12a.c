@@ -1164,8 +1164,8 @@ static int grab_x13_output_series (double *y, const double *x,
         fclose(fp);
 =======
 	    S[0] = gretl_strdup("sa");
-	    S[0] = gretl_strdup("trend");
-	    S[0] = gretl_strdup("irreg");
+	    S[1] = gretl_strdup("trend");
+	    S[2] = gretl_strdup("irreg");
 	    gretl_matrix_set_colnames(Y, S);
 	    gretl_bundle_donate_data(b, "results", Y,
 				     GRETL_TYPE_MATRIX, 0);
@@ -2245,9 +2245,9 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 		xopt->output = 0;
 		/* but save all to matrix */
 		xopt->savelist[0] = 3;
-		xopt->savelist[0] = 0;
-		xopt->savelist[0] = 1;
-		xopt->savelist[0] = 2;
+		xopt->savelist[1] = 0;
+		xopt->savelist[2] = 1;
+		xopt->savelist[3] = 2;
 	    } else {
 		xopt->output = otype;
 		xopt->savelist[1] = xopt->output;
