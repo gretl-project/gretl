@@ -3702,7 +3702,11 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    gtk_widget_set_sensitive(w, FALSE);
+    if (fncall) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
+    } else {
+	gtk_widget_set_sensitive(w, FALSE);
+    }
     mdlg.formula = w;
 
     /* option: build numerically */
@@ -3755,7 +3759,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec,
     gtk_box_pack_start(GTK_BOX(hbox), tab, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    if (series_ok) {
+    if (series_ok || fncall) {
 	gtk_widget_set_sensitive(hbox, FALSE);
     } else {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb), TRUE);
