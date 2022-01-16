@@ -81,12 +81,11 @@ pre-existing matrices or created ``on the fly'' using the GUI facility
 we have for that. The remaining GUI elements should hopefully be
 self-explanatory.
 
-The function, at present, returns a bundle with a few elements of
-interest, among which are a sub-bundle called \texttt{kmod} with all the
-state-space internals and a matrix with the estimated states, under
-the \texttt{state} key. The final version of this GUI hook
-will probably provide other elements, to give access to the estimated
-parameters, to support plotting the states, and so on.
+The function returns a bundle which includes a sub-bundle called
+\texttt{kmod} with all the state-space internals; a matrix called
+\texttt{state} holding the estimated states; and matrices
+\texttt{coeff} and \texttt{vcv} holding respectively, the coefficients
+and standard obtained via ML estimation.
 
 \section*{Example: Random walk plus noise}
 
