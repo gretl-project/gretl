@@ -804,10 +804,10 @@ function void arma11_via_kalman (series y)
     scalar sigma = 1
 
     /* state-space model setup */
-    matrix Z = {1; theta}
+    matrix Z = {1, theta}
     matrix T = {phi, 0; 1, 0}
     matrix Q = {sigma^2, 0; 0, 0}
-    bundle kb = ksetup(y, Z, T, Q)
+    bundle kb = ksetup(y, Z', T, Q)
 
     /* maximum likelihood estimation */
     mle logl = ERR ? NA : kb.llt
