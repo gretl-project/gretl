@@ -2332,26 +2332,23 @@ static void open_bundle (gui_obj *obj)
     user_var *u = (user_var *) obj->data;
     const char *name = user_var_get_name(u);
     gretl_bundle *b = user_var_get_value(u);
+    int role = VIEW_BUNDLE;
+    int done = 0;
     PRN *prn = NULL;
-    int role, done = 0;
 
     if (maybe_raise_object_window(b)) {
 	return;
-    }
-
-    if (!gretl_bundle_has_content(b)) {
+    } else if (!gretl_bundle_has_content(b)) {
 	warnbox(_("Bundle is empty"));
 	return;
-    }
-
-    if (bufopen(&prn)) {
+    } else if (bufopen(&prn)) {
 	return;
     }
 
-    role = VIEW_BUNDLE;
     done = try_exec_bundle_print_function(b, prn);
 
     if (!done) {
+	/* nothing fancy, just show content */
 	gretl_bundle_print(b, prn);
     } else if (is_dbnomics_bundle(b)) {
 	role = VIEW_DBNOMICS;
@@ -3793,6 +3790,11 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case GRETL_OBJ_MATRIX:
     case GRETL_OBJ_BUNDLE:
 	name = g_strdup(user_var_get_name((user_var *) data));
+	if (name == NULL || *name == '\0') {
+	    fprintf(stderr, "session_add_icon: got no name for %s at %p\n",
+		    sort == GRETL_OBJ_MATRIX ? "matrix" : "bundle",
+		    (void *) data);
+	}
 	break;
     default:
 	break;

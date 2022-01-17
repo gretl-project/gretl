@@ -3615,11 +3615,6 @@
       </fnargs>
       <description>
 	<para>
-	  Note: besides its current mode, this function has a
-	  backward-compatibility mode&mdash;see <quote>Legacy
-	  mode</quote> below for details.
-	</para>
-	<para>
 	  The primary purpose of this function is to produce a
 	  deseasonalized version of the (quarterly or monthly) input
 	  series <argname>x</argname>, using X-13ARIMA-SEATS; it is
@@ -3653,17 +3648,20 @@
 	  </li>
 	  <li>
 	    <para>
-	      <lit>critical</lit>: scalar, the critical value for
-	      outlier detection, the default being automatic,
-	      dependent on the sample size. Relevant only when
-	      <lit>outliers</lit> is specified.
+	      <lit>critical</lit>: a positive scalar, the critical
+	      value for defining outliers, the default being
+	      automatic, dependent on the sample size. Relevant only
+	      when <lit>outliers</lit> is specified.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      <lit>logtrans</lit>: should the input series be put in
 	      log form? 0 = no, 1 = yes, 2 = automatically selected
-	      (the default).
+	      (the default). Note that it is not recommended to pass
+	      the input series in log form; if you want the log to be
+	      used, pass the <quote>raw</quote> level but specify
+	      <lit>logtrans=1</lit>.
 	    </para>
 	  </li>
 	  <li>
@@ -3691,28 +3689,33 @@
 	  </li>
 	  <li>
 	    <para>
-	      <lit>output</lit>: selects the type of the output
-	      series, 1 for deseasonalized (the default), 2 for the
-	      estimated trend, 3 for the irregular component.
+	      <lit>output</lit>: a string to select the type of the
+	      output series, <lit>"sa"</lit> for deseasonalized (the
+	      default), <lit>"trend"</lit> for the estimated trend, or
+	      <lit>"irreg"</lit> for the irregular component.
 	    </para>
 	  </li>
 	</ilist>
-	<subhead>Legacy mode</subhead>
+	<subhead>Augmented results</subhead>
 	<para>
-	  In place of an <argname>opts</argname> bundle, you can
-	  instead pass a string as a second argument to
-	  <lit>deseas</lit>. (This was the only acceptable form prior
-	  to version 2022a of gretl.) This string should be either
-	  <lit>"T"</lit> to specify use of TRAMO-SEATS or
-	  <lit>"X"</lit> for X-13ARIMA (the default). In each case a
-	  seasonally adjusted series is returned, the adjustment being
-	  carried out using the default settings of the selected
-	  program. Note that this is not in fact 100 percent
-	  backward-compatible, in that prior to gretl 2022a the second
-	  argument could be passed as an unquoted string literal; now
-	  it must be either a quoted string or the name of a string
-	  variable.
+	  In some cases one may wish to obtain all three of the
+	  results available from X-13ARIMA via a single call to
+	  <lit>deseas</lit>. This is supported as follows. Pass the
+	  <argname>opts</argname> bundle in pointer form, and give the
+	  string <lit>"all"</lit> under the <lit>output</lit> key.
+	  The direct return value is then the seasonally adjusted
+	  series, but on successful completion <argname>opts</argname>
+	  will contain a matrix named <lit>results</lit> with three
+	  columns: seasonally adjusted, trend and irregular. Here's an
+	  illustration (where the direct return value is discarded).
 	</para>
+	<code>
+	  bundle b = _(output="all")
+	  deseas(y, &amp;b)
+	  series y_dseas = b.results[,1]
+	  series y_trend = b.results[,2]
+	  series y_irreg = b.results[,3]
+	</code>
       </description>
     </function>
 
@@ -5993,7 +5996,7 @@
       </description>
     </function>
 
-    <function name="interpol" section="data-utils" output="series">
+    <function name="interpol" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
       </fnargs>

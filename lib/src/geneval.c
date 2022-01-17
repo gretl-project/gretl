@@ -158,6 +158,7 @@ static gretl_matrix *series_to_matrix (const double *x, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
+static gretl_bundle *node_get_bundle (NODE *n, parser *p);
 
 /* ok_list_node: This is a first-pass assessment of whether
    a given node _may_ be interpretable as holding a LIST.
@@ -9413,15 +9414,15 @@ static int deseasonalize (const double *x, double *y,
 
     if (!null_node(r)) {
 	if (r->t == STR) {
-	    /* old-style */
+	    /* legacy usage */
 	    if (!strcmp(r->v.str, "T")) {
 		tramo = 1;
 	    } else if (strcmp(r->v.str, "X")) {
 		err = E_INVARG;
 	    }
 	} else {
-	    /* new-style */
-	    b = r->v.b;
+	    /* current style */
+	    b = node_get_bundle(r, p);
 	}
     }
     if (!err) {
@@ -9468,7 +9469,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
     if (null_node(r)) {
         ; /* not present, OK */
     } else if (f == F_DESEAS) {
-	if (r->t != STR && r->t != BUNDLE) {
+	if (r->t != STR && r->t != BUNDLE && r->t != U_ADDR) {
 	    p->err = E_TYPES;
 	}
     } else if (is_panel_stat(f)) {

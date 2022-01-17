@@ -2827,24 +2827,33 @@ gchar *get_bundle_special_function (gretl_bundle *b,
 
 int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 {
-    gchar *funname;
+    const char *bname = user_var_get_name_by_data(b);
+    gchar *funname = NULL;
     int ret = 0;
 
-    funname = get_bundle_special_function(b, BUNDLE_PRINT);
+    if (bname != NULL && *bname != '\0') {
+	funname = get_bundle_special_function(b, BUNDLE_PRINT);
+    } else {
+	/* FIXME under some conditions the bundle's name will
+	   turn blank -- a bug in session.c?
+	*/
+	fprintf(stderr, "bundle_print_function: bundle name is %s\n",
+		bname == NULL ? "NULL" : "empty string");
+    }
 
     if (funname != NULL) {
-	const char *name = user_var_get_name_by_data(b);
 	gchar *genline;
 	int err;
 
-	genline = g_strdup_printf("%s(&%s)", funname, name);
+	genline = g_strdup_printf("%s(&%s)", funname, bname);
 	err = generate_void(genline, dataset, prn);
-	g_free(genline);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
 	    ret = 1;
 	}
+	g_free(genline);
+	g_free(funname);
     }
 
     return ret;

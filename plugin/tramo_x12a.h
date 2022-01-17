@@ -49,6 +49,7 @@ struct _x13a_opts {
     int output;   /* which output series is wanted? */
     int verbose;  /* verbosity level */
     double critical; /* critical value for outliers (vs auto) */
+    int *savelist;   /* spec for series to save */
 };
 
 struct _tx_request {
