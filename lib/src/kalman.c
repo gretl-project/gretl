@@ -132,7 +132,6 @@ struct kalman_ {
     gretl_matrix *PZ;
     gretl_matrix *Ft;
     gretl_matrix *iFt;
-    gretl_matrix *Bx;
     gretl_matrix *Kt;
     gretl_matrix *Mt;
     gretl_matrix *Ct;
@@ -753,7 +752,6 @@ static int kalman_init (kalman *K)
     K->Blk = gretl_matrix_block_new(&K->PZ,  K->r, K->n, /* P*Z */
                                     &K->Ft,  K->n, K->n, /* (Z'*P*Z + R)^{-1} */
                                     &K->iFt, K->n, K->n, /* Ft-inverse */
-                                    &K->Bx,  K->n, 1,    /* B'*x at obs t */
                                     &K->Kt,  K->r, K->n, /* gain at t */
                                     &K->Mt,  K->r, K->n, /* intermediate term */
                                     &K->Ct,  K->r, K->r, /* intermediate term */
@@ -1003,10 +1001,15 @@ static int kalman_record_state (kalman *K)
    The case where x is NULL and B an n-vector (implicit constant)
    is also handled.
 
+   There's no need to store B'x_t: we either want to add this to,
+   or subtract it from, the n-vector @targ (the operator being
+   indicated by the @mod argument).
+
    Return 1 if missing values encountered, otherwise 0.
 */
 
-static int kalman_set_Bx (kalman *K)
+static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
+			 GretlMatrixMod mod)
 {
     double xjt, bxi;
     int i, j, missobs = 0;
@@ -1030,7 +1033,11 @@ static int kalman_set_Bx (kalman *K)
                 }
             }
         }
-        gretl_vector_set(K->Bx, i, bxi);
+	if (mod == GRETL_MOD_DECREMENT) {
+	    targ->val[i] -= bxi;
+	} else {
+	    targ->val[i] += bxi;
+	}
     }
 
     return missobs;
@@ -1059,10 +1066,7 @@ static int compute_forecast_error (kalman *K)
 
     if (K->BT != NULL && !missobs) {
         /* subtract effect of exogenous terms, if any */
-        missobs = kalman_set_Bx(K);
-        if (!missobs) {
-            gretl_matrix_subtract_from(K->v, K->Bx);
-        }
+        missobs = kalman_do_Bx(K, K->v, GRETL_MOD_DECREMENT);
     }
 
     if (!missobs) {
@@ -2972,8 +2976,6 @@ static int kalman_simulate (kalman *K,
     }
 
     for (K->t = tmin; K->t < K->N && !err; K->t += 1) {
-        int missobs = 0;
-
         if (filter_is_varying(K)) {
             err = kalman_refresh_matrices(K, prn);
             if (err) {
@@ -2986,10 +2988,7 @@ static int kalman_simulate (kalman *K,
                                   K->a0, GRETL_MOD_NONE,
                                   yt, GRETL_MOD_NONE);
         if (K->BT != NULL) {
-            missobs = kalman_set_Bx(K);
-            if (!missobs) {
-                gretl_matrix_add_to(yt, K->Bx);
-            }
+            kalman_do_Bx(K, yt, GRETL_MOD_CUMULATE);
         }
         if (K->p > 0) {
             /* G \varepsilon_t */
