@@ -486,15 +486,22 @@ static GList *add_names_for_type (GList *list, GretlType type)
 
 static GList *add_series_names (GList *list)
 {
-    int i;
+    int i, imin = 1;
 
-    for (i=1; i<dataset->v; i++) {
+    if (!strcmp(dataset->varname[1], "index")) {
+	/* don't show this first */
+	imin = 2;
+    }
+
+    for (i=imin; i<dataset->v; i++) {
 	if (!series_is_hidden(dataset, i)) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
     }
 
-    list = g_list_append(list, (gpointer) dataset->varname[0]);
+    for (i=0; i<imin; i++) {
+	list = g_list_append(list, (gpointer) dataset->varname[i]);
+    }
 
     return list;
 }
