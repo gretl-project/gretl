@@ -6880,6 +6880,26 @@
     </description>
   </command>
 
+  <command name="kalman" section="Utilities"
+	   label="State space modeling" context="gui">
+    <description>
+      <para>
+	This graphical interface offers a small sample of the
+	functionality available via scripting in gretl's state space
+	apparatus.
+      </para>
+      <para>
+	If you're interested in what you see here, please take a look
+	at <guideref targ="chap:kalman"/> (titled <quote>State Space
+	Modeling</quote>. There you'll find details on how to handle
+	time-varying matrices, disturbances that are correlated across
+	the observation and state transition equations, and much
+	more. You will also find several downloadable example scripts.
+	The examples illustrate, among other things, how to hook up
+	gretl's Kalman filter to its likelihood maximizer.
+      </para>
+    </description>
+  </command>
 
   <command name="kpss" section="Tests" label="KPSS stationarity test">
 

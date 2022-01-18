@@ -162,6 +162,7 @@ static struct gui_help_item gui_help_items[] = {
     { PKGHELP,        "packages" },
     { DBNHELP,        "dbnomics" },
     { MAPHELP,        "maps" },
+    { KALMAN,         "kalman" },
     { -1,             NULL },
 };
 

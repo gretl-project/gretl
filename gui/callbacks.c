@@ -983,43 +983,8 @@ void send_attachment (const char *filename)
     }
 }
 
-#if 1
-
 void kalman_callback (GtkAction *action, gpointer data)
 {
     open_function_package("KFgui", NULL, mdata);
 }
 
-#else 
-
-static void kalman_close (GtkWidget *w, GtkWidget *dialog)
-{
-    gtk_widget_destroy(dialog);
-    dummy_call();
-}
-
-void kalman_callback (GtkAction *action, gpointer data)
-{
-    GtkWidget *dialog, *label;
-    GtkWidget *vbox, *hbox, *ok;
-
-    dialog = gretl_dialog_new(_("gretl: state space model"), NULL, GRETL_DLG_BLOCK);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    /* select options, arguments */
-    label = gtk_label_new("This is where the Kalman GUI will appear.");
-    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
-
-    /* buttons */
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
-    cancel_delete_button(hbox, dialog);
-    ok = ok_button(hbox);
-    g_signal_connect(G_OBJECT(ok), "clicked",
-                     G_CALLBACK(kalman_close), dialog);
-    gtk_widget_grab_default(ok);
-    // context_help_button(hbox, KALMAN);
-
-    gtk_widget_show_all(dialog);
-}
-
-#endif

@@ -332,7 +332,11 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
-    if (cinfo->label != NULL) {
+    if (!strcmp(cinfo->pkgname, "KFgui")) {
+	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span> (%s)",
+				      _("State space model"),
+				      _("see Help for more"));
+    } else if (cinfo->label != NULL) {
 	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
 				      _(cinfo->label));
     } else {
@@ -1704,9 +1708,13 @@ static int function_call_dialog (call_info *cinfo)
     gtk_widget_grab_default(button);
 
     /* Help button */
-    button = context_help_button(bbox, -1);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(fncall_help), cinfo);
+    if (!strcmp(cinfo->pkgname, "KFgui")) {
+	context_help_button(bbox, KALMAN);
+    } else {
+	button = context_help_button(bbox, -1);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(fncall_help), cinfo);
+    }
 
     if (cinfo->vwin != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(cinfo->dlg),
