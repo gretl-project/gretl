@@ -108,7 +108,6 @@ struct obsinfo_ {
     int pd;             /* data frequency */
     int t1, t2;         /* starting and ending observations */
     int added;          /* number of observations added within function */
-    char changed;       /* sample has been changed within the function call? */
     char stobs[OBSLEN]; /* string representation of starting obs */
     int panel_pd;       /* panel time frequency, if applicable */
     double panel_sd0;   /* panel time starting point */
@@ -8547,7 +8546,6 @@ function_assign_returns (fncall *call, int rtype,
 
 static void record_obs_info (obsinfo *oi, DATASET *dset)
 {
-    oi->changed = 0;
     oi->added = 0;
 
     if (dset != NULL) {
@@ -8565,16 +8563,12 @@ static void record_obs_info (obsinfo *oi, DATASET *dset)
    ("setobs" stuff) that was in force on entry.
 */
 
-static int maybe_restore_obs_info (obsinfo *oi, DATASET *dset)
+static int restore_obs_info (obsinfo *oi, DATASET *dset)
 {
     gretlopt opt = OPT_NONE;
 
     dset->panel_pd = oi->panel_pd;
     dset->panel_sd0 = oi->panel_sd0;
-
-    if (!oi->changed) {
-	return 0;
-    }
 
     if (oi->structure == CROSS_SECTION) {
 	opt = OPT_X;
@@ -8696,7 +8690,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }
 
     if (dset != NULL) {
-	maybe_restore_obs_info(&call->obs, dset);
+	restore_obs_info(&call->obs, dset);
     }
 
     set_executing_off(call, dset, prn);
@@ -9582,11 +9576,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (err) {
 	    set_func_error_message(err, u, &state, line, lineno);
 	    break;
-	}
-
-	if (state.cmd->ci == SETOBS) {
-	    /* set flag for reverting on exit */
-	    call->obs.changed = 1;
 	}
 
 	if (gretl_execute_loop()) {
