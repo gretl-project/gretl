@@ -39,13 +39,6 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 
 void kalman_free (kalman *K);
 
-int kalman_forecast (kalman *K, PRN *prn);
-
-gretl_matrix *kalman_smooth (kalman *K,
-			     gretl_matrix **pP,
-			     gretl_matrix **pU,
-			     int *err);
-
 #ifndef __GTK_DOC_IGNORE__
 
 int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp);
@@ -60,8 +53,6 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 				     const gretl_matrix *U,
 				     PRN *prn, int *err);
-
-/* for interfacing with gretl bundle mechanism */
 
 int maybe_set_kalman_element (void *kptr,
 			      const char *key,

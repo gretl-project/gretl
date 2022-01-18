@@ -1525,7 +1525,7 @@ static void handle_missing_obs (kalman *K)
  * Returns: 0 on success, non-zero on error.
  */
 
-int kalman_forecast (kalman *K, PRN *prn)
+static int kalman_forecast (kalman *K, PRN *prn)
 {
     double ll0 = K->n * LN_2_PI;
     int err = 0;
@@ -2467,21 +2467,23 @@ static int anderson_moore_smooth (kalman *K)
 	}
 #endif
 
-        /* L_t = T_t - K_t Z_t */
-        fast_copy_values(L, K->T);
-        load_from_vec(K->Kt, K->K, t);
-        gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-                                  K->ZT, GRETL_MOD_TRANSPOSE,
-                                  L, GRETL_MOD_DECREMENT);
+	if (t < K->N - 1) {
+	    /* L_t = T_t - K_t Z_t */
+	    fast_copy_values(L, K->T);
+	    load_from_vec(K->Kt, K->K, t);
+	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+				      K->ZT, GRETL_MOD_TRANSPOSE,
+				      L, GRETL_MOD_DECREMENT);
+	}
 
         /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
         load_from_vech(K->iFt, K->F, K->n, t, GRETL_MOD_NONE);
         load_from_row(K->v, K->V, t, GRETL_MOD_NONE);
         gretl_matrix_multiply(K->iFt, K->v, iFv);
-        gretl_matrix_multiply(K->ZT, iFv, r1);
         if (t == K->N - 1) {
             gretl_matrix_multiply(K->ZT, iFv, r0);
         } else {
+	    gretl_matrix_multiply(K->ZT, iFv, r1);
             gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
                                       r0, GRETL_MOD_NONE,
                                       r1, GRETL_MOD_CUMULATE);
@@ -2594,151 +2596,6 @@ static int ensure_U_matrix (kalman *K)
     }
 
     return err;
-}
-
-/**
- * kalman_smooth:
- * @K: pointer to kalman struct.
- * @pP: pointer to matrix in which to retrieve the MSE of the
- * smoothed state (or NULL if this is not required).
- * @pU: pointer to matrix in which to retrieve the smoothed
- * disturbances (or NULL if this is not required).
- * @err: location to receive error code.
- *
- * Runs a filtering pass followed by a backward, smoothing pass.
- * At present the @pU argument is experimental and a bodge: it will
- * not actually do anything unless @pP is left NULL.
- *
- * Returns: matrix containing the smoothed estimate of the
- * state, or NULL on error.
- */
-
-gretl_matrix *kalman_smooth (kalman *K,
-                             gretl_matrix **pP,
-                             gretl_matrix **pU,
-                             int *err)
-{
-    gretl_matrix *V, *S;
-    gretl_matrix *G, *F;
-    gretl_matrix *P = NULL;
-    int nr, nn;
-
-    if (pP == NULL && pU != NULL) {
-        /* optional accessor for smoothed disturbances a la Koopman:
-           experimental, and available only if @pP is not given
-        */
-        *err = ensure_U_matrix(K);
-        if (*err) {
-            return NULL;
-        }
-    }
-
-    nr = (K->r * K->r + K->r) / 2;
-    nn = (K->n * K->n + K->n) / 2;
-
-    /* Set up the matrices we need to store computed results from all
-       time steps on the forward pass: prediction error, (inverse)
-       error variance, gain, state a_{t|t-1} and MSE of state,
-       P_{t|t-1}.
-    */
-    V = gretl_matrix_alloc(K->N, K->n);
-    F = gretl_matrix_alloc(K->N, nn);
-    G = gretl_matrix_alloc(K->N, K->r * K->n);
-    S = gretl_matrix_alloc(K->N, K->r);
-    P = gretl_matrix_alloc(K->N, nr);
-
-    if (V == NULL || F == NULL || G == NULL ||
-        S == NULL || P == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    if (matrix_is_varying(K, K_T) || matrix_is_varying(K, K_ZT)) {
-        /* add recorder for T_t and/or Z_t */
-        *err = kalman_add_stepinfo(K);
-        if (*err) {
-            goto bailout;
-        }
-    }
-
-#if EXACT_SM
-    if (K->exact) {
-	fprintf(stderr, "smoothing, K->exact, add PK\n");
-	K->PK = gretl_zero_matrix_new(K->r, nr);
-    }
-#endif
-
-    /* attach all export matrices to Kalman */
-    K->V = V;
-    K->F = F;
-    K->K = G;
-    K->A = S;
-    K->P = P;
-
-#if 0
-    /* and recheck dimensions */
-    *err = user_kalman_recheck_matrices(K, prn);
-#endif
-
-    if (!*err) {
-        /* forward pass */
-        K->flags |= KALMAN_SMOOTH;
-        *err = kalman_forecast(K, NULL);
-        K->flags &= ~KALMAN_SMOOTH;
-    }
-
-    K->t = 0;
-
-    if (!*err) {
-        /* bodge */
-        if (K->U != NULL) {
-            *err = koopman_smooth(K, 0);
-        } else {
-            *err = anderson_moore_smooth(K);
-        }
-    }
-
-    /* detach matrices */
-    K->V = NULL;
-    K->F = NULL;
-    K->K = NULL;
-    K->A = NULL;
-    K->P = NULL;
-
-    /* and trash the "stepinfo" storage */
-    free_stepinfo(K);
-
- bailout:
-
-    gretl_matrix_free(V);
-    gretl_matrix_free(F);
-    gretl_matrix_free(G);
-
-    if (K->PK != NULL) {
-	gretl_matrix_free(K->PK);
-	K->PK = NULL;
-    }
-
-    if (!*err && pP != NULL) {
-        *pP = P;
-    } else {
-        gretl_matrix_free(P);
-    }
-
-    if (!*err && pU != NULL) {
-        *pU = K->U;
-    } else {
-        gretl_matrix_free(K->U);
-    }
-
-    K->U = NULL;
-
-    if (*err) {
-        gretl_matrix_free(S);
-        S = NULL;
-    }
-
-    return S;
 }
 
 int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
