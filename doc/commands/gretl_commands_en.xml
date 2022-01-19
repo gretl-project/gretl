@@ -6891,7 +6891,7 @@
       <para>
 	If you're interested in what you see here, please take a look
 	at <guideref targ="chap:kalman"/> (titled <quote>State Space
-	Modeling</quote>. There you'll find details on how to handle
+	Modeling</quote>). There you'll find details on how to handle
 	time-varying matrices, disturbances that are correlated across
 	the observation and state transition equations, and much
 	more. You will also find several downloadable example scripts.
