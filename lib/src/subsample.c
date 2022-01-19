@@ -2265,6 +2265,7 @@ int restrict_sample (const char *param, const int *list,
     fprintf(stderr, " dset=%p, state=%p, fullset=%p\n", (void *) dset,
 	    (void *) state, (void *) fullset);
     printlist(list, "list param");
+    fprintf(stderr, "%s\n", print_flags(opt, SMPL));
 #endif
 
     if (opt & OPT_C) {
@@ -2303,8 +2304,8 @@ int restrict_sample (const char *param, const int *list,
 	;
     }
 
-    if (do_precompute(mode, oldmask, param)) {
-	/* we come in here only if cumulating restrictions */
+    if (!(opt & OPT_P) && do_precompute(mode, oldmask, param)) {
+	/* we come here only if cumulating restrictions */
 	mask = precompute_mask(param, oldmask, dset, prn, &err);
     }
 
@@ -2396,10 +2397,6 @@ int restrict_sample (const char *param, const int *list,
     }
 
     free(oldrestr);
-
-#if PANDEBUG
-    panreport("restrict sample", dset);
-#endif
 
     return err;
 }
