@@ -83,6 +83,26 @@ function void KFgui_print (bundle *b)
    modprint cs pnames
 end function
 
+function scalar check_sizes(scalar n, scalar k, matrix T, matrix Z)
+    err = 0
+    if cols(T) != k
+	printf "ERROR: The state transition matrix isn't square\n"
+	printf "%6.1f\n", T
+	err = 37
+    elif rows(Z) != k
+	printf "ERROR: The rows of the Z matrix don't match the number of states (%d)", k
+	printf "%6.1f\n", Z
+	err = 37
+    elif cols(Z) != n
+	printf "ERROR: The columns of the Z matrix don't match the number of series (%d)", n
+	printf "%6.1f\n", Z
+	err = 37
+    endif
+
+    return err
+end function
+
+
 ### --------------------------------------------------
 ### Public functions
 ### --------------------------------------------------
@@ -98,9 +118,8 @@ function bundle KFgui (list y "observables",
    scalar n = nelem(y)
    bundle ret = null
    scalar k = rows(T)
-   if cols(T) != k || rows(Z) != k || cols(Z) != k
-      printf "Error: the system matrices are incorrectly sized (r=%d, n=%d)\m", r, n
-      ret.err = 37
+   ret.err = check_sizes(n, k, T, Z)
+   if ret.err
       return ret
    endif
 
