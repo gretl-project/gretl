@@ -32,13 +32,16 @@ models of the kind
   \label{eq:obs}
   \obs & = & Z \state{t} + \obsdist \\
   \label{eq:state}
-  \state{t} & = & T \state{t-1} + \stdist
+  \state{t} & = & T \state{t-1} + R \stdist
 \end{eqnarray}
 where $V(\obsdist)$ and $V(\stdist)$ are diagonal matrices; in fact,
 $\obsdist$ may have zero variance, in which case $\obsdist$ is
 identically 0 and the last term of equation (\ref{eq:obs}) is
-dropped. The $Z$ and $T$ matrices are assumed to be known, so
-estimation only concerns the variances of $\obsdist$ and $\stdist$.
+dropped. The matrix $R$ is useful for cases when the covariance matrix
+of the state transition equation is singular.
+
+The system matrices $Z$, $T$ and $R$ are assumed to be known,
+so estimation only concerns the variances of $\obsdist$ and $\stdist$.
 Clearly, this is a very limited subset of the range of models that
 gretl can handle, but it may be of some pedagogical value.
 
