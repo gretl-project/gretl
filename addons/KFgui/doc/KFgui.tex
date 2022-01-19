@@ -82,8 +82,12 @@ The GUI hook is shown in figure \ref{fig:GUI}: the ``observables'' box
 is used for specifying a list of series for $\obs$. The next two boxes
 handle the $Z$ and $T$ matrices, respectively. These can be
 pre-existing matrices or created ``on the fly'' using the GUI facility
-we have for that. The remaining GUI elements should hopefully be
-self-explanatory.
+we have for that. 
+
+The same applies for the next box, dedicated to the $R$
+matrix. However, the $R$ matrix could be omitted, in which case it is
+implicitly assumed $R = I$.  The remaining GUI elements should
+hopefully be self-explanatory.
 
 The function returns a bundle which includes a sub-bundle called
 \texttt{kmod} with all the state-space internals; a matrix called
