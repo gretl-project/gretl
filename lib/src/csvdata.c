@@ -3353,7 +3353,10 @@ static int csv_set_dataset_dimensions (csvdata *c)
         if (c->dset->n == 0) {
             if (csv_no_header(c)) {
                 c->dset->n = c->nrows;
-            } else {
+            } else if (c->nrows == 1) {
+		csv_set_no_header(c);
+		c->dset->n = 1;
+	    } else {
                 /* allow for varnames row */
                 c->dset->n = c->nrows - 1;
             }
