@@ -6998,6 +6998,27 @@ possono essere nidificati.
   </description>
 </command>
 
+<command name="kalman" section="Utilities"
+	 label="State space modeling" context="gui">
+  <description>
+    <para>
+      Questa interfaccia grafica offre una piccola parte delle
+      funzionalità di gretl per i modelli in spazio degli stati.
+    </para>
+    <para>
+      Chi fosse interessato ad approfondire può consultare il capitolo
+      intitolato <quote>State Space Modeling</quote> del<guideref
+      targ="chap:kalman"/> (in inglese). La guida contiene dettagli su
+      modelli più generali, come quelli com matrici di sistema
+      variabili nel tempo, disturbi correlati fra le equazioni di
+      misura e di transizione, e molto altro. La guida contiene anche
+      script di esempio scaricabili che illustrano, fra le altre cose,
+      come usare il filtro di Kalman di gretl alla stima di massima
+      verosimiglianza.
+    </para>
+  </description>
+</command>
+
 <command name="kpss" section="Tests" label="Test KPSS di stazionarietà">
   <usage>
     <arguments>
