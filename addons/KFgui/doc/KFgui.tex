@@ -4,6 +4,7 @@
 \usepackage{bm}
 \usepackage{fancyvrb,color,gretl}
 %\usepackage{mathpazo}
+\usepackage{amsmath}
 \usepackage{graphicx}
 
 \setlength{\parskip}{1ex}
@@ -102,7 +103,7 @@ with $V(\varepsilon) = 1$ and $V(\eta) = 1/8$.
 \begin{code}
 clear
 set verbose off
-include KFproto.gfn
+include KFgui.gfn
 
 set seed 280921
 
@@ -126,20 +127,20 @@ which returns the output below and the picture shown in Figure
 \ref{fig:state}
 
 \begin{code}
-KFproto 1.0, 2021-12-21 (jack)
-
 Observation equation
 
              coefficient   std. error     z     p-value 
   ------------------------------------------------------
-  stdev[1]    0.939311     0.0496287    18.93   6.87e-80 ***
+  stdev[1]    0.939311     0.0496287    18.93   6.86e-80 ***
 
 
 State transition equation
 
              coefficient   std. error     z     p-value 
   ------------------------------------------------------
-  stdev[1]    0.274650     0.0488922    5.617   1.94e-08 ***
+  stdev[1]    0.274650     0.0488920    5.617   1.94e-08 ***
+
+  Log-likelihood = -388.946
 \end{code}
 
 
@@ -148,6 +149,83 @@ State transition equation
   \includegraphics[scale=0.7]{state}
   \caption{Estimated state}\label{fig:state}
 \end{figure}
+
+\section*{Example: Random walk plus noise plus seasonal}
+
+The model here is
+\[
+  y_t = \mu_t + s_t + \varepsilon_t,
+\]
+where $\mu_t = \mu_{t-1} + \eta_{1,t}$, like in the previous example
+and $s_t$ is a seasonal component, implicitly defined by the property
+\[
+  s_t = -\sum_{j=1}^{S-1} s_{t-i} + \eta_{2,t},
+\]
+$S$ being the number of subperiods. For example, with quarterly data
+the system matrices would be
+\[
+  Z = \begin{bmatrix}  1 & 1 & 0 & 0  \end{bmatrix}
+  \quad
+  T = \begin{bmatrix}
+    1 & 0 & 0 & 0 \\
+    0 & -1 & -1 & -1 \\
+    0 & 1 & 0 & 0 \\
+    0 & 0 & 1 & 0
+  \end{bmatrix}
+  \quad
+  R = \begin{bmatrix}  1 & 0 \\ 0 & 1 \\ 0 & 0 \\ 0 & 0   \end{bmatrix}
+\]
+
+The following script applies this model to one of the series in the
+gretl examnple dataset \texttt{data9-3.gdt}:
+
+\begin{code}
+set verbose off
+include KFgui.gfn
+open data9-3
+y = log(reskwh)
+
+Z = ones(2,1) | zeros(2,1)
+SeasMat = -ones(1,3) | I(2,3)
+T = diagcat(1, SeasMat)
+R = I(2) | zeros(2,2)
+
+bun = KFgui(y, Z, T, R)
+
+series trend = bun.state[,1]
+series seas = bun.state[,2]
+
+scatters y trend seas
+\end{code}
+
+which returns the output below and the picture shown in Figure
+\ref{fig:rw+seas}
+
+\begin{code}
+
+Observation equation
+
+             coefficient   std. error     z     p-value
+  -----------------------------------------------------
+  stdev[1]    0.0173633    0.00448117   3.875   0.0001  ***
+
+
+State transition equation
+
+             coefficient   std. error     z     p-value 
+  ------------------------------------------------------
+  stdev[1]   0.0269790     0.00409457   6.589   4.43e-11 ***
+  stdev[2]   0.00648082    0.00202576   3.199   0.0014   ***
+
+  Log-likelihood = 121.33
+\end{code}
+
+\begin{figure}[hb]
+  \centering
+  \includegraphics[scale=0.7]{rw+seas}
+  \caption{Estimated state}\label{fig:rw+seas}
+\end{figure}
+
 
 \end{document}
 

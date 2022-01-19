@@ -1,0 +1,15 @@
+set verbose off
+include KFgui.gfn
+open data9-3
+y = log(reskwh)
+
+Z = ones(2,1) | zeros(2,1)
+SeasMat = -ones(1,3) | I(2,3)
+T = diagcat(1, SeasMat)
+R = I(2) | zeros(2,2)
+
+bun = KFgui(y, Z, T, R)
+
+series trend = bun.state[,1]
+series seas = bun.state[,2]
+
