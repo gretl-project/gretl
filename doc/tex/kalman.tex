@@ -942,6 +942,7 @@ series h2c = hp_via_kalman(y, 1600)
 ols n2c const h2c --simple-print
 \end{scode}
 \end{script}
+% $
 
 The Hodrick--Prescott (HP) filter can be obtained as the solution of a
 prediction problem, that is obtaining estimates of the latent time
@@ -1250,6 +1251,236 @@ end plot --output=display
     from disturbance smoother}
   \label{fig:nile}
 \end{figure}
+
+\section{The GUI interface}
+\label{sec:kalman-gui}
+\newcommand{\steta}{\eta}
+\newcommand{\strR}{R}
+
+At this point, the reader is probably aware of the fact that setting
+up a state space model could be quite a complex undertaking, and the
+only general way to accomplish it is by writing a script.  However,
+some cases are simple enough to lend themselves to a standardized
+treatment, so that they can be handled via a relatively streamlined
+graphical interface.  As of version 2022a, the gretl provides just
+this: a GUI interface for estimating a subset of state space models
+that, despite limited, may still be useful for didactical purposes,
+sparing the user from the intricacies of scripting.  In this section,
+we describe the GUI interface and the class of models it can be adapted
+to.
+
+The GUI hook presented here can be used for performing ML estimation of
+models of the kind
+\begin{eqnarray}
+  \label{eq:GUIobs}
+  \obsvec_t & = & \obsymat \statevec_{t} + \obsdist_t \\
+  \label{eq:GUIstate}
+  \statevec_{t} & = & \statemat \statevec_{t-1} + \strR \steta_t
+\end{eqnarray}
+where $V(\obsdist_t)$ is a diagonal matrix, possibly 0, in which case
+the last term of equation (\ref{eq:GUIobs}) is dropped. As for the
+covariance matrix of the shocks to equation (\ref{eq:GUIstate}), it is
+assumed that $\steta_t$ is an IID sequence of normal random variable
+with diagonal covariance matrix $\Sigma_\steta$. Therefore, the
+covariance matrix we have been indicating with $\statevar$ so far
+(whose corresponding key in the Kalman bundle is \cmd{statevar}), is
+assumed to be $\statevar = R \Sigma_\steta R'$. Note that $\strR$ can have
+fewer columns than $r$, thereby making $\statevar$ singular.
+
+The system matrices $\obsymat$, $\statemat$ and $\strR$ are assumed to
+be known, so estimation only concerns the variances of $\obsdist_t$
+and $\steta_t$.  Clearly, this is a very limited subset of the range
+of models that gretl can handle, but it may be of some pedagogical
+value.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.6]{figures/KFgui-sshot.png}
+  \caption{GUI hook for state space models}
+  \label{fig:GUI}
+\end{figure}
+
+ML estimation is carried out internally using the \texttt{mle} command
+with the limited-memory version of the BFGS optimizer. For reasons of
+numerical performance, it is convenient to have the choice of
+representing variances as transformations of the BFGS parameters in
+one of the three following ways:
+\begin{description}
+\item[Absolute value] maximization is performed on the variances:
+  $\sigma^2 = |\theta|$
+\item[Square] maximization is performed on the standard deviations:
+  $\sigma^2 = \theta^2$
+\item[Exponential] maximization is performed on the log standard deviations:
+  $\sigma^2 = \exp(2 \cdot \theta)$
+\end{description}
+Normally, this choice should make no difference for well-behaved
+data. In any case, the function reports the estimates of the standard
+errors whatever the parametrization type.  Once the parameters are
+estimated the user has the choice of performing the smoothing of the
+states.
+
+The GUI hook is shown in figure \ref{fig:GUI}: the ``observables'' box
+is used for specifying a list of series for $\obsvec_t$. The next two
+boxes handle the $\obsymat$ and $\statemat$ matrices,
+respectively. These can be pre-existing matrices or created ``on the
+fly''. The same applies for the next box, dedicated to the $\strR$
+matrix. However, the $R$ matrix could be omitted, in which case it is
+implicitly assumed $\strR = I$.  The remaining GUI elements should
+hopefully be self-explanatory.
+
+The function returns a bundle which includes a sub-bundle called
+\texttt{kmod} with all the state-space internals; a matrix called
+\texttt{state} holding the estimated states; and matrices
+\texttt{coeff} and \texttt{vcv} holding respectively, the coefficients
+and standard obtained via ML estimation.
+
+\subsection{Example: Random walk plus noise}
+
+The model here is
+\[
+  y_t = \statevec_t + \obsdist_t \qquad \statevec_t = \statevec_{t-1} + \steta_t
+\]
+so that $\obsymat = \statemat = \strR = 1$.
+
+The following script simulates the DGP above with $V(\obsdist_t) = 1$
+and $V(\steta_t) = 1/8$, and sets up the two matrices \texttt{Z} and
+\texttt{T} so that the can be entered into the second and third box of
+the GUI helper, respectively; obviously, the first box will have to
+contain the string \texttt{y}.
+
+\begin{code}
+clear
+set verbose off
+set seed 280921
+
+nulldata 256
+setobs 1 1 --special
+
+# example 1: random walk plus noise
+
+series m = cum(normal() * 0.25)
+series y = m + normal()
+Z = {1}
+T = {1}
+\end{code}
+
+\begin{figure}[hb]
+  \centering
+  \includegraphics[scale=0.7]{figures/GUIrwstate}
+  \caption{Estimated state}\label{fig:GUIrwstate}
+\end{figure}
+
+Once this is done, clicking on the ``OK'' button should result in the
+output shown below; by clicking on the ``Graph'' icon the picture
+shown in Figure \ref{fig:GUIrwstate} should be produced.
+
+\begin{code}
+Observation equation
+
+             coefficient   std. error     z     p-value 
+  ------------------------------------------------------
+  stdev[1]    0.939311     0.0496287    18.93   6.86e-80 ***
+
+
+State transition equation
+
+             coefficient   std. error     z     p-value 
+  ------------------------------------------------------
+  stdev[1]    0.274650     0.0488920    5.617   1.94e-08 ***
+
+  Log-likelihood = -388.946
+\end{code}
+
+\subsection{Example: Random walk plus noise plus seasonal}
+
+The model here is
+\[
+  y_t = \mu_t + s_t + \obsdist_t,
+\]
+where $\mu_t = \mu_{t-1} + \steta_{1,t}$, is a random walklike in the previous example
+and $s_t$ is a seasonal component, implicitly defined by the property
+\[
+  s_t = -\sum_{j=1}^{S-1} s_{t-i} + \steta_{2,t},
+\]
+$S$ being the number of subperiods. This model is amenable to the
+representation used in this section by defining the state vector as
+\[
+  \statevec_t = [ \mu_t, s_t, s_{t-1}, s_{t-2}]' .
+\]
+
+For example, with quarterly data the system matrices would be equal
+to
+\[
+  Z = \begin{bmatrix}  1 & 1 & 0 & 0  \end{bmatrix}
+  \quad
+  T = \begin{bmatrix}
+    1 & 0 & 0 & 0 \\
+    0 & -1 & -1 & -1 \\
+    0 & 1 & 0 & 0 \\
+    0 & 0 & 1 & 0
+  \end{bmatrix}
+  \quad
+  R = \begin{bmatrix}  1 & 0 \\ 0 & 1 \\ 0 & 0 \\ 0 & 0   \end{bmatrix}
+\]
+
+The following script applies this model to one of the series in the
+gretl examnple dataset \texttt{data9-3.gdt}:
+
+\begin{code}
+open data9-3
+y = log(reskwh)
+
+Z = ones(2,1) | zeros(2,1)
+SeasMat = -ones(1,3) | I(2,3)
+T = diagcat(1, SeasMat)
+R = I(2) | zeros(2,2)
+\end{code}
+
+Again, filling the GUI boxes in the obvious way and clicking ``OK''
+will produce the output below:
+
+\begin{code}
+
+Observation equation
+
+             coefficient   std. error     z     p-value
+  -----------------------------------------------------
+  stdev[1]    0.0173633    0.00448117   3.875   0.0001  ***
+
+
+State transition equation
+
+             coefficient   std. error     z     p-value 
+  ------------------------------------------------------
+  stdev[1]   0.0269790     0.00409457   6.589   4.43e-11 ***
+  stdev[2]   0.00648082    0.00202576   3.199   0.0014   ***
+
+  Log-likelihood = 121.33
+\end{code}
+
+Note that the output window will contain a few icons on the top
+bar. By clicking on the second one from the left, it is possible to
+save to the gretl workspace one or more elements from the returned
+bundle. For example, the \texttt{kmod} key correspondes to the
+estimated kalman bundle. Saving it under the name \texttt{b} and
+running the code below will produce the plot shown in Figure \ref{fig:rw+seas}.
+
+\begin{code}
+series trend = bun.state[,1]
+series seas = bun.state[,2]
+
+scatters y trend seas
+\end{code}
+
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale=1.0]{figures/rw+seas}
+  \caption{Estimated state}\label{fig:rw+seas}
+\end{figure}
+
+\let\steta\relax
+\let\strR\relax
 
 %%% Local Variables:
 %%% mode: latex
