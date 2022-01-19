@@ -5,7 +5,7 @@ PKG = KFgui
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 FIG1 = GUIScreenshot.png
 FIG2 = state.pdf
-FIG3 = rw+state.pdf
+FIG3 = rw+seas.pdf
 
 SRCS = $(PKG).tex $(FIG1) $(FIG2) $(FIG3) gretl.sty
 
