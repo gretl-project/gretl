@@ -3,42 +3,58 @@
 ### --------------------------------------------------
 
 function scalar handle_vars (bundle *mod,
+                             const matrix R,
                              matrix param,
                              scalar type,
                              scalar n,
-                             scalar k,
+                             scalar act_k,
                              bool has_obsvar)
 
-   # inject parameters into variance matrices,
-   # taking into account the the variance for the
-   # observation equation shock may be 0
+    # inject parameters into variance matrices,
+    # taking into account the the variance for the
+    # observation equation shock may be 0
 
-   err = 0 # for future use, maybe?
-   if type==1   # variance
-      if has_obsvar
-         mod.obsvar[diag] = abs(param[1:n])
-         mod.statevar[diag] = abs(param[n+1:n+k])
-      else
-         mod.statevar[diag] = abs(param[1:k])
-      endif
-   elif type==2 # st. dev.
-      if has_obsvar
-         mod.obsvar[diag] = param[1:n].^2
-         mod.statevar[diag] = param[n+1:n+k].^2
-      else
-         mod.statevar[diag] = param[1:k].^2
-      endif
-   elif type==3 # log(stdev)
-      err = maxc(param) > 20
-      if has_obsvar
-         mod.obsvar[diag] = exp(2 * param[1:n])
-         mod.statevar[diag] = exp(2 * param[n+1:n+k])
-      else
-         mod.statevar[diag] = exp(2 * param[1:k])
-      endif
-   endif
+    err = 0
 
-   return err
+    if type==1   # variance
+        err = maxc(abs(param)) > 1.0e20
+    elif type==2 # st. dev.
+        err = maxc(abs(param)) > 1.0e10
+    elif type==3 # log(stdev)
+        err = maxc(abs(param)) > 50
+    endif
+
+    if err
+        return err
+    endif
+
+    if has_obsvar
+        if type==1   # variance
+            matrix ovar = abs(param[1:n])
+            matrix se_teq = sqrt(abs(param[n+1:n+act_k]))
+        elif type==2 # st. dev.
+            matrix ovar = param[1:n].^2
+            matrix se_teq = abs(param[n+1:n+act_k])
+        elif type==3 # log(stdev)
+            matrix ovar = exp(2 * param[1:n])
+            matrix se_teq = exp(param[n+1:n+act_k])
+        endif
+
+        mod.obsvar[diag] = ovar
+    else
+        if type==1   # variance
+            matrix se_teq = sqrt(abs(param[1:act_k]))
+        elif type==2 # st. dev.
+            matrix se_teq = abs(param[1:act_k])
+        elif type==3 # log(stdev)
+            matrix se_teq = exp(param[1:act_k])
+        endif
+    endif
+
+    matrix tmp = R .* se_teq'
+    mod.statevar = tmp*tmp'
+
+    return err
 end function
 
 function void fix_parametrization(matrix *coeff,
@@ -58,36 +74,46 @@ end function
 
 function void KFgui_print (bundle *b)
    n = b.n
-   k = b.k
+   k = b.act_k
    ini = 1
    fin = k
    if b.has_obsvar
-      printf "\nObservation equation\n"
-      strings pnames = array(n)
-      loop i = 1..n
-         pnames[i] = sprintf("stdev[%d]", i)
-      endloop
-      cs = b.coeff[1:n] ~ sqrt(diag(b.vcv)[1:n])
-      modprint cs pnames
-      printf "\n"
-      ini += n
-      fin += n
+       printf "\nObservation equation\n"
+       strings pnames = array(n)
+       loop i = 1..n
+           pnames[i] = sprintf("stdev[%d]", i)
+       endloop
+       cs = b.coeff[1:n] ~ sqrt(diag(b.vcv)[1:n])
+       modprint cs pnames
+       printf "\n"
+       ini += n
+       fin += n
    endif
 
    printf "State transition equation\n"
    strings pnames = array(k)
    loop i = 1..k
-      pnames[i] = sprintf("stdev[%d]", i)
+       pnames[i] = sprintf("stdev[%d]", i)
    endloop
+   pnames += defarray("Log-likelihood")
    cs = b.coeff[ini:fin] ~ sqrt(diag(b.vcv)[ini:fin])
-   modprint cs pnames
+   matrix addstats = b.kmod.lnl
+   modprint cs pnames addstats
 end function
 
-function scalar check_sizes(scalar n, scalar k, matrix T, matrix Z)
+function scalar check_sizes(scalar n, scalar k, matrix T, matrix Z, matrix R)
     err = 0
     if cols(T) != k
 	printf "ERROR: The state transition matrix isn't square\n"
 	printf "%6.1f\n", T
+	err = 37
+    elif rows(R) != k
+	printf "ERROR: The rows of the R matrix don't match the number of states (%d)", k
+	printf "%6.1f\n", R
+	err = 37
+    elif rows(R) < cols(R)
+	printf "ERROR: R can't have more columns than rows"
+	printf "%6.1f\n", R
 	err = 37
     elif rows(Z) != k
 	printf "ERROR: The rows of the Z matrix don't match the number of states (%d)", k
@@ -110,45 +136,50 @@ end function
 function bundle KFgui (list y "observables",
                        matrix Z "Observation matrix",
                        matrix T "State transition matrix",
-                       bool has_obsvar[0] "Disturbance in obs. equation?",
+		       matrix R_in[null] "State variance transform",
+                       bool has_obsvar[1] "Disturbance in obs. equation?",
                        int param_type[1:3:2] "Parametrization" {"Absolute value", "Square", "Exponential"},
                        int verbosity[0:2:1] "verbosity" {"Quiet", "Normal", "Verbose"},
                        bool smooth[1] "do smoothing")
 
-   scalar n = nelem(y)
-   bundle ret = null
-   scalar k = rows(T)
-   ret.err = check_sizes(n, k, T, Z)
-   if ret.err
-      return ret
-   endif
+    scalar n = nelem(y)
+    bundle ret = null
+    scalar k = rows(T)
+    matrix R = exists(R_in) ? R_in : I(k)
+    scalar act_k = cols(R)
 
-   bundle ret = _(n, k, has_obsvar)
+    ret.err = check_sizes(n, k, T, Z, R)
+    if ret.err
+        return ret
+    endif
 
-   bundle kmod = ksetup(y, Z, T, I(k) .* 0.1)
-   kmod.inivar = 1.0e4 * I(k)
-   npar = has_obsvar ? n+k : k
-   matrix param = ones(npar, 1)
+    bundle ret = _(n, k, has_obsvar, act_k)
 
-   if verbosity == 2
-      setopt mle --verbose
-   endif
+    bundle kmod = ksetup(y, Z, T, R*R')
+    kmod.inivar = 1.0e4 * I(k)
+    npar = has_obsvar ? n + act_k : act_k
+    matrix param = ones(npar, 1)
 
-   matrix kmod.statevar = I(k)
-   if has_obsvar
-      matrix kmod.obsvar = I(n)
-   endif
+    if verbosity == 2
+        setopt mle --verbose
+    endif
 
-   # do the maximization
+    # matrix kmod.statevar = Omega
+    if has_obsvar
+        matrix kmod.obsvar = I(n)
+    endif
 
-   set bfgs_richardson on
-   series ll = NA
-   catch mle llik = ll
-      ERR = handle_vars(&kmod, param[1: npar], param_type, n, k, has_obsvar)
-      ERR = ERR || kfilter(&kmod)
-      ll = ERR ? NA: kmod.llt
-      params param
-   end mle --hessian --quiet
+    # do the maximization
+
+    set bfgs_richardson on
+    series ll = NA
+    catch mle llik = ll
+        ERR = handle_vars(&kmod, R, param, param_type, n, act_k, has_obsvar)
+        moo = kmod.statevar
+        ERR = ERR || kfilter(&kmod)
+        ll = ERR ? NA: kmod.llt
+        params param
+    end mle --hessian --quiet
 
    ret.err = $error
    if !ret.err
@@ -177,13 +208,15 @@ function void KFgui_plot (bundle *b)
 
    if cols(b.kmod.obsy) == 1 && cols(b.kmod.state) == 1
       cnameset(P, "y state")
-   else
-      strings S = array(cols(y) + cols(state)
-      loop i=1..cols(y)
+  else
+      n = b.n
+      k = b.k
+      strings S = array(n + k)
+      loop i = 1 .. n
          S[i] = sprintf("y%d", i)
       endloop
-      loop i=1..cols(state)
-         S[i] = sprintf("state%d", i)
+      loop i = 1 .. k
+         S[n+i] = sprintf("state%d", i)
       endloop
       cnameset(P, S)
    endif
