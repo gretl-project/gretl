@@ -1087,42 +1087,6 @@ where the slope coefficient $\beta_1$ evolves through time according to
     \beta_{1,t+1} = \beta_{1,t} + \eta_t
 \end{equation}
 
-It is easy to see that the pair of equations above define a state
-space model, with equation \eqref{eq:tvarols-1} as the measurement
-equation and \eqref{eq:tvarols-2} as the state transition equation.
-The unobservable state is $\beta_{1,t}$, $\statemat = 1$ and
-$\statevar = \sigma^2_{\eta}$. As for the measurement equation,
-$\obsvar = \sigma^2_{\varepsilon}$, while the matrix multiplying
-$\beta_{1,t}$, and hence playing the role of $\obsymat_t$, is the
-time-varying $x_t$.
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics{figures/timevar_PhCurve} \\[10pt]
-  \caption{Phillips Curve on Euro data: time-varying slope and
-    95\% confidence interval}
-  \label{fig:tvar}
-\end{figure}
-
-Once the system is framed as a state-space model, estimation of the
-three unknown parameters $\beta_0$, $\sigma^2_{\varepsilon}$ and
-$\sigma^2_{\eta}$ can proceed by maximum likelihood in a manner
-similar to example \ref{script:armaest} and \ref{script:loclev}. The
-sequence of slope coefficients $\beta_{1,t}$ can then be estimated by
-running the smoother, which also yields a consistent estimate of the
-dispersion of the estimated state.
-
-Script \ref{script:PhCurve} presents an example of the above, in which
-data from the AWM database are used to estimate a Phillips Curve
-with time-varying slope:
-\[
-\mbox{INFQ}_t = \beta_0 + \beta_{1,t} \mbox{URX}_t + \varepsilon_t
-\]
-where INFQ is a measure of quarterly inflation and URX a measure of
-unemployment.  At the end of the script, the evolution through time of
-the slope coefficient is plotted together with a 95\% confidence
-band---see Figure~\ref{fig:tvar}.
-
 \begin{script}[htbp]
   \scriptcaption{Phillips curve on Euro data with time-varying slope}
   \label{script:PhCurve}
@@ -1164,6 +1128,43 @@ gnuplot tvar_b1hat --time-series --with-lines --output=display \
 \end{scode}
 \end{script}
 
+It is easy to see that the pair of equations above define a state
+space model, with equation \eqref{eq:tvarols-1} as the measurement
+equation and \eqref{eq:tvarols-2} as the state transition equation.
+The unobservable state is $\beta_{1,t}$, $\statemat = 1$ and
+$\statevar = \sigma^2_{\eta}$. As for the measurement equation,
+$\obsvar = \sigma^2_{\varepsilon}$, while the matrix multiplying
+$\beta_{1,t}$, and hence playing the role of $\obsymat_t$, is the
+time-varying $x_t$.
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics{figures/timevar_PhCurve} \\[10pt]
+  \caption{Phillips Curve on Euro data: time-varying slope and
+    95\% confidence interval}
+  \label{fig:tvar}
+\end{figure}
+
+Once the system is framed as a state-space model, estimation of the
+three unknown parameters $\beta_0$, $\sigma^2_{\varepsilon}$ and
+$\sigma^2_{\eta}$ can proceed by maximum likelihood in a manner
+similar to example \ref{script:armaest} and \ref{script:loclev}. The
+sequence of slope coefficients $\beta_{1,t}$ can then be estimated by
+running the smoother, which also yields a consistent estimate of the
+dispersion of the estimated state.
+
+Script \ref{script:PhCurve} presents an example of the above, in which
+data from the AWM database are used to estimate a Phillips Curve
+with time-varying slope:
+\[
+\mbox{INFQ}_t = \beta_0 + \beta_{1,t} \mbox{URX}_t + \varepsilon_t
+\]
+where INFQ is a measure of quarterly inflation and URX a measure of
+unemployment.  At the end of the script, the evolution through time of
+the slope coefficient is plotted together with a 95\% confidence
+band---see Figure~\ref{fig:tvar}.
+
+
 \subsection{Disturbance smoothing}
 \label{sec:example_dsmooth}
 
@@ -1178,28 +1179,6 @@ in the state-space modeling literature. We focus on the state
 equation; that is, the random-walk component of the observed series.
 For consistency with the literature let us call the $t$-dated
 disturbance to the state $\eta_t$.
-
-In the first call to \cmd{kdsmooth} we omit the optional switch and
-therefore compute $E(\hat{\eta}_t\hat{\eta}_t')$ for each $t$. This
-quantity is suitable for constructing the auxiliary residuals shown in
-the top panel of Figure~\ref{fig:nile} (for similar plots see
-\cite{koopman-etal99}, \cite{pelagatti11}).  This plot suggests the
-presence of a structural break shortly prior to 1900, as various
-authors have observed.
-
-In the second \cmd{kdsmooth} call we ask gretl to compute instead
-$E[(\hat{\eta}_t-\eta_t)(\hat{\eta}_t-\eta_t)' | y_1,\ldots,y_T]$, the
-MSE of $\hat{\eta}_t$ considered as an estimator of $\eta_t$. And in
-the lower panel of the Figure we plot $\hat{\eta}_t$ along with a 90\%
-confidence band (roughly, $\pm 1.64$ times the RMSE). This reveals
-that, given the sampling variance of $\hat{\eta}_t$, we're not really
-sure that any of the $\eta_t$ values were truly different from
-zero. The resolution of the seeming conflict here is commonly reckoned
-to be that there was in fact a change in mean around 1900, but besides
-that event there's little evidence for a non-zero
-$\sigma^2_{\eta}$. Or in other words the standard local level model is
-not really applicable to the data.
-
 
 \begin{script}[htbp]
   \scriptcaption{Working with smoothed disturbances -- Nile data}
@@ -1252,6 +1231,27 @@ end plot --output=display
   \label{fig:nile}
 \end{figure}
 
+In the first call to \cmd{kdsmooth} we omit the optional switch and
+therefore compute $E(\hat{\eta}_t\hat{\eta}_t')$ for each $t$. This
+quantity is suitable for constructing the auxiliary residuals shown in
+the top panel of Figure~\ref{fig:nile} (for similar plots see
+\cite{koopman-etal99}, \cite{pelagatti11}).  This plot suggests the
+presence of a structural break shortly prior to 1900, as various
+authors have observed.
+
+In the second \cmd{kdsmooth} call we ask gretl to compute instead
+$E[(\hat{\eta}_t-\eta_t)(\hat{\eta}_t-\eta_t)' | y_1,\ldots,y_T]$, the
+MSE of $\hat{\eta}_t$ considered as an estimator of $\eta_t$. And in
+the lower panel of the Figure we plot $\hat{\eta}_t$ along with a 90\%
+confidence band (roughly, $\pm 1.64$ times the RMSE). This reveals
+that, given the sampling variance of $\hat{\eta}_t$, we're not really
+sure that any of the $\eta_t$ values were truly different from
+zero. The resolution of the seeming conflict here is commonly reckoned
+to be that there was in fact a change in mean around 1900, but besides
+that event there's little evidence for a non-zero
+$\sigma^2_{\eta}$. Or in other words the standard local level model is
+not really applicable to the data.
+
 \section{Graphical interface}
 \label{sec:kalman-gui}
 \newcommand{\steta}{\eta}
@@ -1275,20 +1275,22 @@ The GUI can be used for performing ML estimation of models of the kind
   \label{eq:GUIstate}
   \statevec_{t} & = \statemat \statevec_{t-1} + \strR \steta_t
 \end{align}
-where $V(\obsdist_t)$ is a diagonal matrix---or possibly 0, in which
-case the last term of equation (\ref{eq:GUIobs}) is dropped. As for
-the covariance matrix of the shocks to equation (\ref{eq:GUIstate}),
-it is assumed that $\steta_t$ is an IID sequence of normal random
-variates with diagonal covariance matrix $\Sigma_\steta$. Therefore,
-the covariance matrix denoted by $\statevar$ above (whose
-corresponding key in the Kalman bundle is \cmd{statevar}) is assumed
-to be $\statevar = R \Sigma_\steta R'$. Note that $\strR$ can have
-fewer columns than $r$, thereby making $\statevar$ singular.
+where $\obsvec_t$ is a vector of observables, $V(\obsdist_t)$ is a
+diagonal matrix---or possibly 0, in which case the last term of
+equation (\ref{eq:GUIobs}) is dropped. As for the covariance matrix of
+the shocks to equation (\ref{eq:GUIstate}), it is assumed that
+$\steta_t$ is an IID sequence of normal random variates with diagonal
+covariance matrix $\Sigma_\steta$. Therefore, the covariance matrix
+denoted by $\statevar$ above (whose corresponding key in the Kalman
+bundle is \cmd{statevar}) is assumed to be
+$\statevar = R \Sigma_\steta R'$. Note that $\strR$ can have fewer
+columns than $r$, thereby making $\statevar$ singular.
 
 The system matrices $\obsymat$, $\statemat$ and $\strR$ are assumed to
-be known, so estimation only concerns the variances of $\obsdist_t$
-and $\steta_t$.  Clearly, this is a limited subset of the range of
-models that gretl can handle, but it may be of some value to users.
+be time-invariant and known, so estimation only concerns the variances
+of $\obsdist_t$ and $\steta_t$.  Clearly, this is a limited subset of
+the range of models that gretl can handle, but it may be of some value
+to users.
 
 \begin{figure}[htbp]
   \centering
@@ -1298,10 +1300,12 @@ models that gretl can handle, but it may be of some value to users.
 \end{figure}
 
 ML estimation is carried out internally using the \texttt{mle} command
-with the limited-memory version of the BFGS optimizer. For reasons of
-numerical performance, it is convenient to have the choice of
-representing variances as transformations of the BFGS parameters in
-one of the three following ways:
+with the limited-memory version of the BFGS optimizer, and the user is
+given the option of tracking the optimization process via a
+``verbosity'' option. For reasons of numerical performance, it is
+convenient to have the choice of representing variances as
+transformations of the BFGS parameters in one of the three following
+ways:
 \begin{description}
 \item[Absolute value] maximization is performed on the variances:
   $\sigma^2 = |\theta|$
@@ -1340,10 +1344,11 @@ The model here is
 so that $\obsymat = \statemat = \strR = 1$.
 
 The following script simulates the DGP above with $V(\obsdist_t) = 1$
-and $V(\steta_t) = 1/8$, and sets up the two matrices \texttt{Z} and
+and $V(\steta_t) = 1/16$, and sets up the two matrices \texttt{Z} and
 \texttt{T}, ready to be entered into the second and third boxes of the
 GUI helper, respectively; obviously, the first box should contain the
-string \texttt{y}.
+string \texttt{y}. Note that the first box expects as argument a
+named list, thereby allowing for multivariate models.
 
 \begin{code}
 clear
