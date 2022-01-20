@@ -28,6 +28,7 @@ vpath %.spec $(PKGSRC)
 INP = KFgui.inp
 SPEC = KFgui.spec
 SMPL = KFgui_sample.inp
+HELP = KFgui.txt
 
 all: $(PKG).gfn
 
