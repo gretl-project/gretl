@@ -1,0 +1,9 @@
+This addon provides a graphical interface for a limited subset of gretl's
+state space modeling functionality. For more information, please see
+
+* the chapter titled "State Space Modeling" in the Gretl User's Guide, in
+particular the section titled "Graphical interface", and
+
+* the item "State space model" under the Model menu in the main gretl
+window (with a dataset loaded). The dialog box opened by this item has a
+Help button.

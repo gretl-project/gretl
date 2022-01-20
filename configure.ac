@@ -1104,7 +1104,6 @@ if test "${build_addons}" = "yes" ; then
     addons/logging/doc/Makefile
     addons/KFgui/pkg.inp
     addons/KFgui/Makefile
-    addons/KFgui/doc/Makefile    
   ])
 fi
 
