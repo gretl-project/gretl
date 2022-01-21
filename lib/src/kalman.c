@@ -325,7 +325,7 @@ static int missing_matrix_error (const char *name)
     if (name == NULL) {
 	gretl_errmsg_set(_("kalman: a required matrix is missing"));
     } else {
-	gretl_errmsg_sprintf(_("kalman: required matrix %s is missing"), 
+	gretl_errmsg_sprintf(_("kalman: required matrix %s is missing"),
 			     name);
     }
     return E_DATA;
@@ -609,7 +609,7 @@ static int kalman_init (kalman *K)
  * observation equation, transposed.
  * @HH: r x r contemporaneous covariance matrix for the errors in the
  * state equation.
- * @GG: n x n contemporaneous covariance matrix for the errors in the 
+ * @GG: n x n contemporaneous covariance matrix for the errors in the
  * observation equation (or NULL if this is not applicable).
  * @y: T x n matrix of dependent variable(s).
  * @x: T x k matrix of exogenous variable(s).  May be NULL if there
@@ -688,10 +688,10 @@ kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
 /**
  * kalman_get_loglik:
  * @K: pointer to Kalman struct.
- * 
- * Retrieves the log-likelhood calculated via a run of 
+ *
+ * Retrieves the log-likelhood calculated via a run of
  * kalman_forecast().
- * 
+ *
  * Returns: ll value, or #NADBL on failure.
  */
 
@@ -703,10 +703,10 @@ double kalman_get_loglik (const kalman *K)
 /**
  * kalman_get_arma_variance:
  * @K: pointer to Kalman struct.
- * 
+ *
  * Retrieves the estimated variance for an ARMA model
  * estimated using the Kalman filter.
- * 
+ *
  * Returns: sigma-squared value, or #NADBL on failure.
  */
 
@@ -723,10 +723,10 @@ double kalman_get_arma_variance (const kalman *K)
  * kalman_set_initial_state_vector:
  * @K: pointer to Kalman struct.
  * @a: vector of values to set.
- * 
+ *
  * Resets the initial value of the state vector in a Kalman
  * struct, using the values from @a.  See also kalman_new().
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -739,10 +739,10 @@ int kalman_set_initial_state_vector (kalman *K, const gretl_vector *a)
  * kalman_set_initial_MSE_matrix:
  * @K: pointer to Kalman struct.
  * @P: matrix of values to set.
- * 
+ *
  * Resets the initial value of the MSE matrix in a Kalman
  * struct, using the values from @P.  See also kalman_new().
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -1907,7 +1907,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
 
 	K->loglik = -0.5 * (K->okN * ll1 + sumldet);
-    } else {	
+    } else {
         K->s2 = K->SSRw / (K->n * K->okN - K->d);
     }
 
@@ -1930,7 +1930,7 @@ struct K_input_mat K_input_mats[] = {
     { K_y,  "obsy" },
     { K_ZT, "obsymat" },
     { K_x,  "obsx" },
-    { K_BT,  "obsxmat" },
+    { K_BT, "obsxmat" },
     { K_R,  "obsvar" },
     { K_T,  "statemat" },
     { K_Q,  "statevar" },
