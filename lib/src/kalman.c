@@ -593,9 +593,19 @@ static int kalman_init (kalman *K)
     return err;
 }
 
-/* The following section includes functions that support the plain C
+/* The following section includes functions that support the "plain C"
    Kalman API, as opposed to the bundle-based interface that subserves
-   userspace state space functionality.
+   userland state-space functionality. We use this API in gretl's arma
+   plugin in the special case of ARIMA with non-zero order of
+   integration along with missing values. It's also possible that
+   third-party users of libgretl might wish to use it.
+
+   TODO: at present (2022-01) we don't have a smoothing function in
+   this API. We did have kalman_smooth() and kalman_arma_smooth()
+   functions until gretl 2021d but they were not actually used
+   internally, nor were they properly tested. The 2021d codes could
+   perhaps be revisited but it might be better to design a
+   (non-bundle) smoothing API from scratch.
 */
 
 /**
