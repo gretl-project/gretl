@@ -554,7 +554,7 @@ static int kalman_arma_finish (MODEL *pmod,
 {
     khelper *kh = kalman_get_data(K);
     int do_opg = arma_use_opg(opt);
-    int kopt, i, t, k = ainfo->nc;
+    int i, t, k = ainfo->nc;
     int QML = (opt & OPT_R);
     double s2;
     int err;
@@ -586,7 +586,6 @@ static int kalman_arma_finish (MODEL *pmod,
     pmod->sigma = sqrt(s2);
 
     pmod->lnL = kalman_get_loglik(K);
-    kopt = kalman_get_options(K);
 
     if (!do_opg) {
         /* base covariance matrix on Hessian (perhaps QML) */
