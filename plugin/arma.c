@@ -31,13 +31,15 @@
 
 #include "arma_common.c"
 
-#define KALMAN_ALL 999
-
 static const double *as197_llt_callback (const double *b,
 					 int i, void *data);
 
 static const double *as154_llt_callback (const double *b,
 					 int i, void *data);
+
+static const double *kalman_arma_llt_callback (const double *b,
+					       int i,
+                                               void *data);
 
 int maybe_correct_MA (arma_info *ainfo,
 		      double *theta,
@@ -181,9 +183,11 @@ static int arma_OPG_vcv (MODEL *pmod, void *data, int algo,
     if (algo == 154) {
 	G = numerical_score_matrix(b, T, k, as154_llt_callback,
 				   data, &err);
-    } else {
-	/* AS 197 */
+    } else if (algo == 197) {
 	G = numerical_score_matrix(b, T, k, as197_llt_callback,
+				   data, &err);
+    } else {
+	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
 				   data, &err);
     }
 
@@ -229,11 +233,13 @@ static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H,
     if (algo == 154) {
 	G = numerical_score_matrix(b, T, k, as154_llt_callback,
 				   data, &err);
-    } else {
-	/* AS 197 */
+    } else if (algo == 197) {
 	G = numerical_score_matrix(b, T, k, as197_llt_callback,
 				   data, &err);
-    }
+    } else {
+	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
+				   data, &err);
+    }	
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(G, sqrt(s2));
@@ -345,6 +351,10 @@ static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
 # include "as197.c"
 # include "as154.c"
 # include "as_driver.c"
+
+/* support for native Kalman filter */
+
+#include "kalman_arma.c"
 
 static void arma_init_message (arma_info *ainfo)
 {
@@ -732,7 +742,8 @@ MODEL arma_model (const int *list, const int *pqspec,
 	if (ainfo->d > 0 || ainfo->D > 0) {
 	    if (arma_missvals(ainfo)) {
 		/* for now: insist on native Kalman, since only it
-		   handles the levels formulation of ARIMA */
+		   handles the levels formulation of ARIMA
+		*/
 		opt &= ~OPT_A;
 		opt |= OPT_K;
 		set_arima_levels(ainfo);
@@ -811,7 +822,11 @@ MODEL arma_model (const int *list, const int *pqspec,
     if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
-	    err = as_arma(coeff, dset, ainfo, &armod, opt);
+	    if (opt & OPT_K) {
+		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
+	    } else {
+		err = as_arma(coeff, dset, ainfo, &armod, opt);
+	    }
 	} else {
 	    err = bhhh_arma(coeff, dset, ainfo, &armod, opt);
 	}

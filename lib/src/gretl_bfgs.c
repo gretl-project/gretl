@@ -596,6 +596,55 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
     }
 }
 
+/* In the case of ARMA with missing values we can end up with
+   a certain number of trailing NAs in the score calculation.
+   This function checks for that condition and if necessary
+   trims off the rows in question.
+*/
+
+static gretl_matrix *maybe_trim_score (gretl_matrix *G)
+{
+    gretl_matrix *ret = NULL;
+    int T = G->rows;
+    int okrows = T;
+    int i, t, nancount;
+
+    for (t=T-1; t>0; t--) {
+	nancount = 0;
+	for (i=0; i<G->cols; i++) {
+	    if (isnan(gretl_matrix_get(G, t, i))) {
+		nancount++;
+	    }
+	}
+	if (nancount == G->cols) {
+	    okrows--;
+	} else {
+	    break;
+	}
+    }
+
+    if (okrows < T) {
+	ret = gretl_matrix_alloc(okrows, G->cols);
+
+	if (ret != NULL) {
+	    size_t csize = okrows * sizeof(double);
+	    double *dest = ret->val;
+	    double *src = G->val;
+
+	    for (i=0; i<G->cols; i++) {
+		memcpy(dest, src, csize);
+		dest += okrows;
+		src += G->rows;
+	    }
+	    gretl_matrix_free(G);
+	}
+    } else {
+	ret = G;
+    }
+
+    return ret;
+}
+
 #define ALT_OPG 0
 
 /* build the T x k matrix G, given a set of coefficient estimates,
@@ -651,6 +700,9 @@ gretl_matrix *numerical_score_matrix (double *b, int T, int k,
 	fprintf(stderr, "b[%d]: using %#.12g and %#.12g\n", i, bi0 - h, bi0 + h);
 #endif
     }
+
+    /* trim missing values? */
+    G = maybe_trim_score(G);
 
 #if NLS_DEBUG
     gretl_matrix_print(G, "Numerically estimated score");

@@ -29,7 +29,8 @@ enum {
     KALMAN_CROSS   = 1 << 5, /* cross-correlated disturbances */
     KALMAN_CHECK   = 1 << 6, /* checking user-defined matrices */
     KALMAN_BUNDLE  = 1 << 7, /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 8  /* on simulation, emulate SsfPack */
+    KALMAN_SSFSIM  = 1 << 8, /* on simulation, emulate SsfPack */
+    KALMAN_ARMA_LL = 1 << 9  /* filtering for ARMA estimation */
 };
 
 typedef struct kalman_ kalman;
@@ -38,6 +39,39 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 			    int nmat, int *err);
 
 void kalman_free (kalman *K);
+
+/* the "raw" C API */
+
+kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
+		    gretl_matrix *T, gretl_matrix *BT,
+		    gretl_matrix *ZT, gretl_matrix *HH,
+		    gretl_matrix *GG, gretl_matrix *y,
+		    gretl_matrix *x, gretl_matrix *mu,
+		    gretl_matrix *V, int *err);
+
+int kalman_forecast (kalman *K, PRN *prn);
+
+double kalman_get_loglik (const kalman *K);
+
+double kalman_get_arma_variance (const kalman *K);
+
+int kalman_set_initial_state_vector (kalman *K, const gretl_vector *a);
+
+int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
+
+void kalman_set_options (kalman *K, int opts);
+
+int kalman_get_options (kalman *K);
+
+void kalman_attach_data (kalman *K, void *data);
+
+void *kalman_get_data (const kalman *K);
+
+void kalman_attach_printer (kalman *K, PRN *prn);
+
+PRN *kalman_get_printer (const kalman *K);
+
+/* end "raw" C API */
 
 #ifndef __GTK_DOC_IGNORE__
 
