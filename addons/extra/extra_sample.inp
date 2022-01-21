@@ -141,6 +141,7 @@ smpl full
 print x x1 x2 --byobs
 
 print "---- winsor -----"  #
+open denmark.gdt --quiet
 series winDM = winsor(ldiff(LRM))
 series winDM_asy = winsor(ldiff(LRM), 0.01, 0.8)
 print  winDM_asy
