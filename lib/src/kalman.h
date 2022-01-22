@@ -51,6 +51,11 @@ kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
 
 int kalman_forecast (kalman *K, PRN *prn);
 
+int kalman_run (kalman *K, PRN *prn, int *errp);
+
+gretl_matrix *kalman_smooth (kalman *K, gretlopt opt,
+			     PRN *prn, int *err);
+
 double kalman_get_loglik (const kalman *K);
 
 double kalman_get_arma_variance (const kalman *K);

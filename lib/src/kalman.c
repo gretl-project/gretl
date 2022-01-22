@@ -599,13 +599,6 @@ static int kalman_init (kalman *K)
    plugin in the special case of ARIMA with non-zero order of
    integration along with missing values. It's also possible that
    third-party users of libgretl might wish to use it.
-
-   TODO: at present (2022-01) we don't have a smoothing function in
-   this API. We did have kalman_smooth() and kalman_arma_smooth()
-   functions until gretl 2021d but they were not actually used
-   internally, nor were they properly tested. The 2021d codes could
-   perhaps be revisited but it might be better to design a
-   (non-bundle) smoothing API from scratch.
 */
 
 /**
@@ -621,7 +614,7 @@ static int kalman_init (kalman *K)
  * state equation.
  * @GG: n x n contemporaneous covariance matrix for the errors in the
  * observation equation (or NULL if this is not applicable).
- * @y: T x n matrix of dependent variable(s).
+ * @y: T x n matrix of observable variable(s).
  * @x: T x k matrix of exogenous variable(s).  May be NULL if there
  * are no exogenous variables, or if there's only a constant.
  * @mu: r x 1 vector of constants in the state transition, or NULL.
@@ -2072,15 +2065,9 @@ static int kalman_ensure_output_matrices (kalman *K)
     return err;
 }
 
-/* Implements the user-space kfilter() function */
-
-int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
+int kalman_run (kalman *K, PRN *prn, int *errp)
 {
-    kalman *K = gretl_bundle_get_private_data(b);
-    int err;
-
-    K->b = b; /* attach bundle pointer */
-    err = kalman_ensure_output_matrices(K);
+    int err = kalman_ensure_output_matrices(K);
 
     if (!err) {
         gretl_matrix_zero(K->v);
@@ -2107,6 +2094,18 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     }
 
     return err;
+}
+
+/* Implements the userland kfilter() function */
+
+int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+    int err;
+
+    K->b = b; /* attach bundle pointer */
+
+    return kalman_run(K, prn, errp);
 }
 
 /* Copy row @t from @src into @targ; or add row @t of @src to
@@ -2624,16 +2623,11 @@ static int koopman_smooth (kalman *K, int dkstyle)
     return err;
 }
 
-/* Anderson-Moore Kalman smoothing: see Iskander Karibzhanov's
-   exposition at http://karibzhanov.com/help/kalcvs.htm
-   This is much the clearest account I have seen (AC 2009-04-14,
-   URL updated 2016-03-24).
-
-   This method uses a_{t|t-1} and P_{t|t-1} for all t, but we can
-   overwrite these with the smoothed values as we go. We also need
-   stored values for the prediction error, its MSE, and the gain at
-   each time step.  Note that r_t and N_t are set to zero for
-   t = N - 1.
+/* Anderson-Moore Kalman smoothing.  This method uses a_{t|t-1} and
+   P_{t|t-1} for all t, but we overwrite these with the smoothed
+   values as we go. We also need stored values for the prediction
+   error, its MSE, and the gain at each time step.  Note that r_t and
+   N_t are set to zero for t = N - 1.
 */
 
 static int anderson_moore_smooth (kalman *K)
@@ -2810,19 +2804,9 @@ static int ensure_U_matrix (kalman *K)
     return err;
 }
 
-int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
+static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
-    kalman *K = gretl_bundle_get_private_data(b);
-    int err;
-
-    if (K == NULL) {
-        fprintf(stderr, "kalman_bundle_smooth: K is NULL\n");
-        return E_DATA;
-    }
-
-    K->b = b; /* attach bundle pointer */
-
-    err = kalman_ensure_output_matrices(K);
+    int err = kalman_ensure_output_matrices(K);
 
     if (!err && dist) {
         err = ensure_U_matrix(K);
@@ -2884,6 +2868,64 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
     free_stepinfo(K);
 
     return err;
+}
+
+/* For use with userland bundle-based API */
+
+int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+
+    if (K == NULL) {
+        fprintf(stderr, "kalman_bundle_smooth: K is NULL\n");
+        return E_DATA;
+    }
+
+    K->b = b; /* attach bundle pointer */
+
+    return real_kalman_smooth(K, dist, prn);
+}
+
+/* For use with "plain C" API. TODO: support disturbance
+   smoothing via @opt -- right now only state smoothing
+   is offered.
+*/
+
+gretl_matrix *kalman_smooth (kalman *K, gretlopt opt,
+			     PRN *prn, int *err)
+{
+    gretl_matrix *S = NULL;
+
+    *err = real_kalman_smooth(K, 0, prn);
+
+    if (K->A != NULL && K->P != NULL) {
+	int r = K->A->rows;
+	int c = K->A->cols;
+	size_t Asize = r * c * sizeof(double);
+	size_t Psize = 0;
+
+	if (opt & OPT_M) {
+	    /* include MSE of state */
+	    c += K->P->cols;
+	    Psize = r * K->P->cols * sizeof(double);
+	}
+	if (r > 0 && c > 0) {
+	    S = gretl_matrix_alloc(r, c);
+	    if (S == NULL) {
+		*err = E_ALLOC;
+	    }
+	} else {
+	    *err = E_DATA;
+	}
+	if (S != NULL) {
+	    memcpy(S->val, K->A->val, Asize);
+	    if (opt & OPT_M) {
+		memcpy(S->val + r * K->A->cols, K->P->val, Psize);
+	    }
+	}
+    }
+
+    return S;
 }
 
 static gretl_matrix *extract_Q (kalman *K,
