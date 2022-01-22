@@ -661,8 +661,8 @@ static int check_arma_options (gretlopt opt)
     err = options_incompatible_with(opt, OPT_C, OPT_L | OPT_R);
 
     if (!err) {
-	/* nor more than one of AS 154, CML */
-	err = incompatible_options(opt, OPT_A | OPT_C);
+	/* nor more than one of AS 154, CML, Kalman */
+	err = incompatible_options(opt, OPT_A | OPT_C | OPT_K);
     }
 
     return err;

@@ -137,6 +137,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_E, "save-ehat", 0 },
     { ARMA,     OPT_G, "opg", 0 },
     { ARMA,     OPT_H, "hessian", 0 },
+    { ARMA,     OPT_K, "kalman", 0 },
     { ARMA,     OPT_L, "lbfgs", 0 },
     { ARMA,     OPT_N, "nc", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
