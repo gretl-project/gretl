@@ -14,20 +14,20 @@
 typedef struct kalman_helper_ khelper;
 
 struct kalman_helper_ {
-    gretl_matrix_block *B;
-    gretl_matrix *S;
+    gretl_matrix_block *Bk;
+    gretl_matrix *a;
     gretl_matrix *P;
-    gretl_matrix *F;
-    gretl_matrix *A;
-    gretl_matrix *H;
+    gretl_matrix *T;
+    gretl_matrix *B;
+    gretl_matrix *Z;
     gretl_matrix *Q;
-    gretl_matrix *E;
-    gretl_matrix *Svar;
+    gretl_matrix *V;
+    gretl_matrix *avar;
 
-    gretl_matrix *Svar2;
+    gretl_matrix *avar2;
     gretl_matrix *vQ;
 
-    gretl_matrix *F_; /* used only for ARIMA via levels */
+    gretl_matrix *T_; /* used only for ARIMA via levels */
     gretl_matrix *Q_; /* ditto */
     gretl_matrix *P_; /* ditto */
 
@@ -39,10 +39,10 @@ static int kalman_do_ma_check = 1;
 static void kalman_helper_free (khelper *kh)
 {
     if (kh != NULL) {
-        gretl_matrix_block_destroy(kh->B);
-        gretl_matrix_free(kh->Svar2);
+        gretl_matrix_block_destroy(kh->Bk);
+        gretl_matrix_free(kh->avar2);
         gretl_matrix_free(kh->vQ);
-        gretl_matrix_free(kh->F_);
+        gretl_matrix_free(kh->T_);
         gretl_matrix_free(kh->Q_);
         gretl_matrix_free(kh->P_);
         free(kh);
@@ -64,27 +64,27 @@ static khelper *kalman_helper_new (arma_info *ainfo,
     r0 = ainfo->r0;
     r2 = r0 * r0;
 
-    kh->Svar2 = kh->vQ = NULL;
-    kh->F_ = kh->Q_ = kh->P_ = NULL;
+    kh->avar2 = kh->vQ = NULL;
+    kh->T_ = kh->Q_ = kh->P_ = NULL;
 
-    kh->B = gretl_matrix_block_new(&kh->S, r, 1,
-                                   &kh->P, r, r,
-                                   &kh->F, r, r,
-                                   &kh->A, k, 1,
-                                   &kh->H, r, 1,
-                                   &kh->Q, r, r,
-                                   &kh->E, ainfo->fullT, 1,
-                                   &kh->Svar, r2, r2,
-                                   NULL);
+    kh->Bk = gretl_matrix_block_new(&kh->a, r, 1,
+				    &kh->P, r, r,
+				    &kh->T, r, r,
+				    &kh->B, k, 1,
+				    &kh->Z, r, 1,
+				    &kh->Q, r, r,
+				    &kh->V, ainfo->fullT, 1,
+				    &kh->avar, r2, r2,
+				    NULL);
 
-    if (kh->B == NULL) {
+    if (kh->Bk == NULL) {
         err = E_ALLOC;
     } else if (arma_using_vech(ainfo)) {
         int m = r0 * (r0 + 1) / 2;
 
-        kh->Svar2 = gretl_matrix_alloc(m, m);
+        kh->avar2 = gretl_matrix_alloc(m, m);
         kh->vQ = gretl_column_vector_alloc(m);
-        if (kh->Svar2 == NULL || kh->vQ == NULL) {
+        if (kh->avar2 == NULL || kh->vQ == NULL) {
             err = E_ALLOC;
         }
     } else {
@@ -95,10 +95,10 @@ static khelper *kalman_helper_new (arma_info *ainfo,
     }
 
     if (!err && arima_levels(ainfo)) {
-        kh->F_ = gretl_matrix_alloc(r0, r0);
+        kh->T_ = gretl_matrix_alloc(r0, r0);
         kh->Q_ = gretl_matrix_alloc(r0, r0);
         kh->P_ = gretl_matrix_alloc(r0, r0);
-        if (kh->F_ == NULL || kh->Q_ == NULL || kh->P_ == NULL) {
+        if (kh->T_ == NULL || kh->Q_ == NULL || kh->P_ == NULL) {
             err = E_ALLOC;
         }
     }
@@ -299,22 +299,22 @@ static int kalman_matrices_init (arma_info *ainfo,
                                  const double *y)
 {
     int r0 = ainfo->r0;
-    int r = kh->F->rows;
+    int r = kh->T->rows;
 
-    gretl_matrix_zero(kh->A);
-    gretl_matrix_zero(kh->S);
+    gretl_matrix_zero(kh->B);
+    gretl_matrix_zero(kh->a);
     gretl_matrix_zero(kh->P);
-    gretl_matrix_zero(kh->F);
-    gretl_matrix_inscribe_I(kh->F, 1, 0, r0 - 1);
+    gretl_matrix_zero(kh->T);
+    gretl_matrix_inscribe_I(kh->T, 1, 0, r0 - 1);
 
     gretl_matrix_zero(kh->Q);
     gretl_matrix_set(kh->Q, 0, 0, 1.0);
 
-    gretl_matrix_zero(kh->H);
-    gretl_vector_set(kh->H, 0, 1.0);
+    gretl_matrix_zero(kh->Z);
+    gretl_vector_set(kh->Z, 0, 1.0);
 
     if (arima_levels(ainfo)) {
-        /* write additional constant elements of F, H and S */
+        /* write additional constant elements of T, Z and a */
         int d = ainfo->d, D = ainfo->D;
         int s = ainfo->pd;
         int i, k = d + s * D;
@@ -325,30 +325,30 @@ static int kalman_matrices_init (arma_info *ainfo,
             return E_ALLOC;
         }
         for (i=0; i<k; i++) {
-            gretl_matrix_set(kh->F, r0, r0 + i, c[i]);
+            gretl_matrix_set(kh->T, r0, r0 + i, c[i]);
         }
-        gretl_matrix_set(kh->F, r0, 0, 1.0);
+        gretl_matrix_set(kh->T, r0, 0, 1.0);
         if (r - r0 > 1) {
-            gretl_matrix_inscribe_I(kh->F, r0 + 1, r0, k - 1);
+            gretl_matrix_inscribe_I(kh->T, r0 + 1, r0, k - 1);
         }
         for (i=0; i<k; i++) {
-            gretl_vector_set(kh->H, r0 + i, c[i]);
+            gretl_vector_set(kh->Z, r0 + i, c[i]);
             /* lagged data */
             y0 = y[ainfo->t1 - 1 - i];
             if (ainfo->yscale != 1.0 && !na(y0)) {
                 y0 -= ainfo->yshift;
                 y0 *= ainfo->yscale;
             }
-            gretl_vector_set(kh->S, r0 + i, y0);
+            gretl_vector_set(kh->a, r0 + i, y0);
         }
         free(c);
 
 #if ARMA_DEBUG
-        gretl_matrix_print(kh->S, "S0 (arima via levels)");
+        gretl_matrix_print(kh->a, "a0 (arima via levels)");
 #endif
         /* initialize the plain-arma "shadow" matrices */
-        gretl_matrix_zero(kh->F_);
-        gretl_matrix_inscribe_I(kh->F_, 1, 0, r0 - 1);
+        gretl_matrix_zero(kh->T_);
+        gretl_matrix_inscribe_I(kh->T_, 1, 0, r0 - 1);
         gretl_matrix_zero(kh->Q_);
         gretl_matrix_set(kh->Q_, 0, 0, 1.0);
         gretl_matrix_zero(kh->P_);
@@ -371,94 +371,94 @@ static int write_kalman_matrices (khelper *kh,
     const double *Theta = theta + ainfo->nq;
     const double *beta =  Theta + ainfo->Q;
     double mu = (ainfo->ifc)? b[0] : 0.0;
-    int rewrite_A = 0;
-    int rewrite_F = 0;
-    int rewrite_H = 0;
+    int rewrite_B = 0;
+    int rewrite_T = 0;
+    int rewrite_Z = 0;
     int i, k, err = 0;
 
     if (idx == KALMAN_ALL) {
-        rewrite_A = rewrite_F = rewrite_H = 1;
+        rewrite_B = rewrite_T = rewrite_Z = 1;
     } else {
         /* called in context of calculating score, for OPG matrix */
         int pmax = ainfo->ifc + ainfo->np + ainfo->P;
         int tmax = pmax + ainfo->nq + ainfo->Q;
 
         if (ainfo->ifc && idx == 0) {
-            rewrite_A = 1;
+            rewrite_B = 1;
         } else if (idx >= ainfo->ifc && idx < pmax) {
-            rewrite_F = 1;
+            rewrite_T = 1;
         } else if (idx >= ainfo->ifc && idx < tmax) {
-            rewrite_H = 1;
+            rewrite_Z = 1;
         } else {
-            rewrite_A = 1;
+            rewrite_B = 1;
         }
     }
 
     /* revise for pure MA model */
     if (ainfo->np == 0 && ainfo->P == 0 && !arima_levels(ainfo)) {
-        rewrite_F = 0;
+        rewrite_T = 0;
     }
     /* and for case of no constant or other regressors */
     if (ainfo->ifc == 0 && ainfo->nexo == 0) {
-        rewrite_A = 0;
+        rewrite_B = 0;
     }
 
     /* See Hamilton, Time Series Analysis, ch 13, p. 375 */
 
-    if (rewrite_A) {
+    if (rewrite_B) {
         /* const and coeffs on exogenous vars */
-        gretl_vector_set(kh->A, 0, mu);
+        gretl_vector_set(kh->B, 0, mu);
         for (i=0; i<ainfo->nexo; i++) {
-            gretl_vector_set(kh->A, i + 1, beta[i]);
+            gretl_vector_set(kh->B, i + 1, beta[i]);
         }
     }
 
-    if (rewrite_H) {
-        /* form the H vector using theta and/or Theta */
+    if (rewrite_Z) {
+        /* form the Z' vector using theta and/or Theta */
         if (ainfo->Q > 0) {
-            write_big_theta(theta, Theta, ainfo, kh->H, NULL);
+            write_big_theta(theta, Theta, ainfo, kh->Z, NULL);
         } else {
             k = 0;
             for (i=0; i<ainfo->q; i++) {
                 if (MA_included(ainfo, i)) {
-                    gretl_vector_set(kh->H, i+1, theta[k++]);
+                    gretl_vector_set(kh->Z, i+1, theta[k++]);
                 } else {
-                    gretl_vector_set(kh->H, i+1, 0.0);
+                    gretl_vector_set(kh->Z, i+1, 0.0);
                 }
             }
         }
     }
 
-    if (rewrite_F) {
-        /* form the F matrix using phi and/or Phi */
-        gretl_matrix *F = (kh->F_ != NULL)? kh->F_ : kh->F;
+    if (rewrite_T) {
+        /* form the T matrix using phi and/or Phi */
+        gretl_matrix *T = (kh->T_ != NULL)? kh->T_ : kh->T;
         gretl_matrix *Q = (kh->Q_ != NULL)? kh->Q_ : kh->Q;
         gretl_matrix *P = (kh->P_ != NULL)? kh->P_ : kh->P;
 
         if (ainfo->P > 0) {
-            write_big_phi(phi, Phi, ainfo, F);
+            write_big_phi(phi, Phi, ainfo, T);
         } else {
             k = 0;
             for (i=0; i<ainfo->p; i++) {
                 if (AR_included(ainfo, i)) {
-                    gretl_matrix_set(F, 0, i, phi[k++]);
+                    gretl_matrix_set(T, 0, i, phi[k++]);
                 } else {
-                    gretl_matrix_set(F, 0, i, 0.0);
+                    gretl_matrix_set(T, 0, i, 0.0);
                 }
             }
         }
 
         if (arima_levels(ainfo)) {
-            /* the full F matrix incorporates \theta */
+            /* the full T matrix incorporates \theta */
             if (ainfo->Q > 0) {
-                write_big_theta(theta, Theta, ainfo, NULL, kh->F);
+                write_big_theta(theta, Theta, ainfo, NULL, kh->T);
             } else {
                 k = 0;
                 for (i=0; i<ainfo->q; i++) {
                     if (MA_included(ainfo, i)) {
-                        gretl_matrix_set(kh->F, ainfo->r0, i+1, theta[k++]);
+                        gretl_matrix_set(kh->T, ainfo->r0, i+1, theta[k++]);
                     } else {
-                        gretl_matrix_set(kh->F, ainfo->r0, i+1, 0.0);
+                        gretl_matrix_set(kh->T, ainfo->r0, i+1, 0.0);
                     }
                 }
             }
@@ -466,18 +466,18 @@ static int write_kalman_matrices (khelper *kh,
 
         /* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378. */
 
-        gretl_matrix_kronecker_product(F, F, kh->Svar);
-        gretl_matrix_I_minus(kh->Svar);
+        gretl_matrix_kronecker_product(T, T, kh->avar);
+        gretl_matrix_I_minus(kh->avar);
         if (arma_using_vech(ainfo)) {
-            condense_state_vcv(kh->Svar2, kh->Svar, gretl_matrix_rows(F));
+            condense_state_vcv(kh->avar2, kh->avar, gretl_matrix_rows(T));
             gretl_matrix_vectorize_h(kh->vQ, Q);
-            err = gretl_LU_solve(kh->Svar2, kh->vQ);
+            err = gretl_LU_solve(kh->avar2, kh->vQ);
             if (!err) {
                 gretl_matrix_unvectorize_h(P, kh->vQ);
             }
         } else {
             gretl_matrix_vectorize(kh->vQ, Q);
-            err = gretl_LU_solve(kh->Svar, kh->vQ);
+            err = gretl_LU_solve(kh->avar, kh->vQ);
             if (!err) {
                 gretl_matrix_unvectorize(P, kh->vQ);
             }
@@ -485,8 +485,8 @@ static int write_kalman_matrices (khelper *kh,
     }
 
     if (arima_levels(ainfo)) {
-        /* complete the job on F, Q, P */
-        gretl_matrix_inscribe_matrix(kh->F, kh->F_, 0, 0, GRETL_MOD_NONE);
+        /* complete the job on T, Q, P */
+        gretl_matrix_inscribe_matrix(kh->T, kh->T_, 0, 0, GRETL_MOD_NONE);
         gretl_matrix_inscribe_matrix(kh->Q, kh->Q_, 0, 0, GRETL_MOD_NONE);
         gretl_matrix_inscribe_matrix(kh->P, kh->P_, 0, 0, GRETL_MOD_NONE);
     }
@@ -500,12 +500,14 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
     int err = write_kalman_matrices(kh, b, i);
 
     if (!err) {
-        kalman_set_initial_state_vector(K, kh->S);
+        kalman_set_initial_state_vector(K, kh->a);
         kalman_set_initial_MSE_matrix(K, kh->P);
     }
 
     return err;
 }
+
+/* used only in obtaining the OPG, if wanted */
 
 static const double *kalman_arma_llt_callback (const double *b, int i,
                                                void *data)
@@ -517,7 +519,7 @@ static const double *kalman_arma_llt_callback (const double *b, int i,
     rewrite_kalman_matrices(K, b, i);
     err = kalman_forecast(K, NULL);
 
-    return (err)? NULL : kh->E->val;
+    return (err)? NULL : kh->V->val;
 }
 
 static double kalman_arma_ll (const double *b, void *data)
@@ -579,7 +581,7 @@ static int kalman_arma_finish (MODEL *pmod,
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-        pmod->uhat[t] = gretl_vector_get(kh->E, i++);
+        pmod->uhat[t] = gretl_vector_get(kh->V, i++);
     }
 
     s2 = kalman_get_arma_variance(K);
@@ -678,6 +680,40 @@ static void free_arma_X_matrix (arma_info *ainfo, gretl_matrix *X)
     }
 }
 
+static int add_smoothed_y (kalman *K, MODEL *pmod,
+			   arma_info *ainfo)
+{
+    gretl_matrix *S;
+    int err = 0;
+
+    S = kalman_smooth(K, OPT_NONE, NULL, &err);
+
+#if 0
+    fprintf(stderr, "HERE ainfo->r0 = %d\n", ainfo->r0);
+    fprintf(stderr, " ainfo->t1 = %d, ainfo->t2 = %d\n", ainfo->t1, ainfo->t2);
+#endif
+
+    if (S != NULL) {
+	gretl_matrix *m = gretl_matrix_alloc(S->rows, 1);
+	int t;
+
+	if (m == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (t=0; t<S->rows; t++) {
+		m->val[t] = gretl_matrix_get(S, t+1, ainfo->r0);
+	    }
+	    m->val[S->rows-1] = NADBL;
+	    gretl_matrix_set_t1(m, ainfo->t1);
+	    gretl_matrix_set_t2(m, ainfo->t2);
+	    gretl_model_set_matrix_as_data(pmod, "smstate", m);
+	}
+	gretl_matrix_free(S);
+    }
+
+    return err;
+}
+
 static int kalman_arma (const double *coeff,
                         const DATASET *dset,
                         arma_info *ainfo,
@@ -730,8 +766,8 @@ static int kalman_arma (const double *coeff,
 
     kalman_matrices_init(ainfo, kh, dset->Z[ainfo->yno]);
 
-    K = kalman_new(kh->S, kh->P, kh->F, kh->A, kh->H, kh->Q,
-                   NULL, y, X, NULL, kh->E, &err);
+    K = kalman_new(kh->a, kh->P, kh->T, kh->B, kh->Z, kh->Q,
+                   NULL, y, X, NULL, kh->V, &err);
 
     if (err) {
         fprintf(stderr, "kalman_new(): err = %d\n", err);
@@ -765,7 +801,10 @@ static int kalman_arma (const double *coeff,
 
         if (err) {
             fprintf(stderr, "kalman_arma: optimizer returned %d\n", err);
-        }
+        } else if (ainfo->yscale == 1.0 && ainfo->r0 > 0) {
+	    /* experimental, could handle non-unit yscale with some work? */
+	    add_smoothed_y(K, pmod, ainfo);
+	}
     }
 
     if (!err && ainfo->yscale != 1.0) {
