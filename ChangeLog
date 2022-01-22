@@ -21,7 +21,8 @@ version 2022a, in progress
 - "genr": get informative error messages to appear in more
   cases
 - Kalman (state space) apparatus: revise the documentation
-  to use more standard notation; revise internal code
+  to use more standard notation; revise internal code for
+  better maintainability (could be faster too)
 - Indexing into matrices, arrays, lists and strings: support
   the keyword 'end' to denote the last element; in the case
   of matrices this is specific to row or column
