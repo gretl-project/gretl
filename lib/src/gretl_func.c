@@ -10137,24 +10137,27 @@ void *function_package_get_editor (fnpkg *pkg)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int delete_function_package (const char *gfnname)
+int delete_function_package (const char *gfnpath)
 {
-    char *p = strrslash(gfnname);
+    char *p = strrslash(gfnpath);
     gchar *pkgname = NULL;
     gchar *pkgdir = NULL;
     gchar *pkgsub = NULL;
     int err = 0;
 
     if (p != NULL) {
+	/* @pkgname: strip extension from @gfnpath */
 	pkgname = g_strdup(p + 1);
 	p = strrchr(pkgname, '.');
 	if (p != NULL) {
 	    *p = '\0';
 	}
-	pkgdir = g_strdup(gfnname);
+	/* @pkgdir: directory in which the gfn lives */
+	pkgdir = g_strdup(gfnpath);
 	p = strrslash(pkgdir);
 	*p = '\0';
 	p = strrslash(pkgdir);
+	/* @pkgsub: subdir in which the gfn lives */
 	if (p != NULL) {
 	    pkgsub = g_strdup(p + 1);
 	}
@@ -10162,10 +10165,28 @@ int delete_function_package (const char *gfnname)
 
     if (pkgname != NULL && pkgdir != NULL && pkgsub != NULL &&
 	!strcmp(pkgname, pkgsub)) {
+	/* We should delete the tree @pkgdir only if the last
+	   directory in that path, @pkgsub, compares equal to
+	   the basename of the package, @pkgname. For example:
+	   foo(.gfn) lives in <path-to-functions>/foo/.
+	*/
 	err = gretl_deltree(pkgdir);
+	if (err) {
+	    gretl_errmsg_sprintf("Couldn't delete %s", pkgdir);
+	}
     } else {
-	/* should not happen! */
-	err = gretl_remove(gfnname);
+	/* just delete the .gfn file itself */
+	err = gretl_remove(gfnpath);
+	if (err) {
+	    gretl_errmsg_sprintf("Couldn't delete %s", gfnpath);
+	}
+    }
+
+    if (err) {
+	fprintf(stderr, "failure in delete_function_package: gfnpath '%s'\n",
+		gfnpath);
+	fprintf(stderr, " pkgname '%s', pkgdir '%s', pkgsub '%s'\n",
+		pkgname, pkgdir, pkgsub);
     }
 
     g_free(pkgname);
