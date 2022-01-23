@@ -2065,6 +2065,8 @@ static int kalman_ensure_output_matrices (kalman *K)
     return err;
 }
 
+/* For use with the non-bundle Kalman API */
+
 int kalman_run (kalman *K, PRN *prn, int *errp)
 {
     int err = kalman_ensure_output_matrices(K);
@@ -2101,7 +2103,6 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 {
     kalman *K = gretl_bundle_get_private_data(b);
-    int err;
 
     K->b = b; /* attach bundle pointer */
 
