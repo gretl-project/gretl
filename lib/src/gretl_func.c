@@ -8689,7 +8689,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	pop_verbosity(call);
     }
 
-    if (dset != NULL) {
+    if (dset != NULL && dset->v > 0) {
 	restore_obs_info(&call->obs, dset);
     }
 
@@ -8764,7 +8764,9 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 
     switch_uservar_hash(fn_executing);
 
-    record_obs_info(&call->obs, dset);
+    if (dset != NULL && dset->v > 0) {
+	record_obs_info(&call->obs, dset);
+    }
 
     if (gretl_debugging_on() || call->fun->debug) {
 	set_gretl_echo(1);
