@@ -141,9 +141,12 @@ struct kalman_ {
 
 #if USE_INCOMPLETE_OBS
     /* backups for matrices that are shrunk in case of
-       incomplete observations */
+       incomplete observations, plus recorder array for
+       use with the smoother (if needed)
+    */
     gretl_matrix *saveZT;
     gretl_matrix *saveGG;
+    guint16 *nt;
 #endif
 
     gretl_bundle *b; /* the bundle of which this struct is a member */
@@ -1263,18 +1266,15 @@ static void shrink_to_ok (kalman *K, int nt)
     double *tmp = NULL;
     int i, j, k;
 
+    fprintf(stderr, "HERE: at obs %d, shrink n from %d to %d\n",
+	    K->t + 1, K->n, nt);
+
     /* allocate workspace for vt */
     tmp = malloc(nt * sizeof *tmp);
 
-    /* back up ZT, GG */
+    /* back up and replace ZT */
     K->saveZT = K->ZT;
-    K->saveGG = K->GG;
-
-    /* and allocate reduced temporary versions */
     K->ZT = gretl_matrix_alloc(K->r, nt);
-    K->GG = gretl_matrix_alloc(nt, nt); /* cross-correlated case? */
-
-    /* copy across usable columns of ZT (r x n) */
     for (j=0, k=0; j<K->n; j++) {
 	if (!na(K->vt->val[j])) {
 	    for (i=0; i<K->r; i++) {
@@ -1283,14 +1283,29 @@ static void shrink_to_ok (kalman *K, int nt)
 	}
     }
 
-    /* copy across usable rows/cols of GG (n x n) */
-    for (j=0, k=0; j<K->n; j++) {
-	if (!na(K->vt->val[j])) {
-	    for (i=0; i<K->n; i++) {
-		if (!na(K->vt->val[i])) {
-		    K->GG->val[k++] = gretl_matrix_get(K->saveGG, i, j);
+    if (K->GG != NULL) {
+	/* back up and replace GG (n x n) */
+	double gij;
+
+	K->saveGG = K->GG;
+	K->GG = gretl_matrix_alloc(nt, nt);
+
+	for (j=0, k=0; j<K->n; j++) {
+	    if (!na(K->vt->val[j])) {
+		for (i=0; i<K->n; i++) {
+		    if (!na(K->vt->val[i])) {
+			gij = gretl_matrix_get(K->saveGG, i, j);
+			K->GG->val[k++] = gij;
+		    }
 		}
 	    }
+	}
+	if (K->HG != NULL) {
+	    /* FIXME need to retrieve and modify G! */
+	    gretl_matrix_reuse(K->HG, K->r, nt);
+	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
+				      K->G, GRETL_MOD_TRANSPOSE,
+				      K->HG, GRETL_MOD_NONE);
 	}
     }
 
@@ -1305,8 +1320,19 @@ static void shrink_to_ok (kalman *K, int nt)
 
     /* resize workspace matrices */
     gretl_matrix_reuse(K->Ft, nt, nt);
-    gretl_matrix_reuse(K->Mt, -1, nt);
-    gretl_matrix_reuse(K->Kt, -1, nt);
+    gretl_matrix_reuse(K->iFt, nt, nt);
+    gretl_matrix_reuse(K->Mt, K->r, nt);
+    gretl_matrix_reuse(K->Kt, K->r, nt);
+    gretl_matrix_reuse(K->PZ, K->r, nt);
+
+    if (kalman_smoothing(K)) {
+	if (K->nt == NULL) {
+	    K->nt = calloc(K->N, sizeof *K->nt);
+	}
+	if (K->nt != NULL) {
+	    K->nt[K->t] = nt;
+	}
+    }
 
     free(tmp);
 }
@@ -1319,14 +1345,23 @@ static void kalman_undo_shrinkage (kalman *K)
     K->ZT = K->saveZT;
     K->saveZT = NULL;
 
-    gretl_matrix_free(K->GG);
-    K->GG = K->saveGG;
-    K->saveGG = NULL;
+    if (K->GG != NULL) {
+	gretl_matrix_free(K->GG);
+	K->GG = K->saveGG;
+	K->saveGG = NULL;
+    }
 
     gretl_matrix_reuse(K->vt, K->n, 1);
     gretl_matrix_reuse(K->Ft, K->n, K->n);
+    gretl_matrix_reuse(K->iFt, K->n, K->n);
     gretl_matrix_reuse(K->Mt, K->r, K->n);
     gretl_matrix_reuse(K->Kt, K->r, K->n);
+    gretl_matrix_reuse(K->PZ, K->r, K->n);
+
+    if (K->HG != NULL) {
+	gretl_matrix_reuse(K->HG, K->r, K->n);
+	/* and recompute! */
+    }
 }
 
 #endif /* USE_INCOMPLETE_OBS */
@@ -1361,7 +1396,6 @@ static int compute_forecast_error (kalman *K)
     }
 
     if (nt > 0 && nt < K->n) {
-	fprintf(stderr, "FIXME: should handle partial observation\n");
 #if USE_INCOMPLETE_OBS /* not yet */
 	shrink_to_ok(K, nt);
 #else
@@ -1876,9 +1910,6 @@ int kalman_forecast (kalman *K, PRN *prn)
         if (nt == 0) {
 	    /* no valid observables at t */
             K->okN -= 1;
-            /* FIXME the case of multivariate y_t with not all
-               elements missing is more complicated than this.
-            */
             handle_missing_obs(K);
             continue;
         }
@@ -1930,7 +1961,7 @@ int kalman_forecast (kalman *K, PRN *prn)
             fast_copy_values(K->iFt, K->Ft);
             err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
             if (err) {
-                fprintf(stderr, "kalman_forecast: failed to invert F\n");
+                fprintf(stderr, "kalman_forecast: failed to invert Ft\n");
             } else {
                 qt = gretl_scalar_qform(K->vt, K->iFt, &err);
             }
@@ -2949,6 +2980,10 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         err = kalman_bundle_recheck_matrices(K, prn);
     }
 
+#if USE_INCOMPLETE_OBS
+    K->nt = NULL;
+#endif
+
     if (!err) {
         /* forward pass */
         K->flags |= KALMAN_SMOOTH;
@@ -2967,6 +3002,13 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
             err = anderson_moore_smooth(K);
         }
     }
+
+#if USE_INCOMPLETE_OBS
+    if (K->nt != NULL) {
+	free(K->nt);
+	K->nt = NULL;
+    }
+#endif
 
 #if EXACT_SM
     if (K->PK != NULL) {
