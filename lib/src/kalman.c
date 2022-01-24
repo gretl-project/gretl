@@ -146,6 +146,7 @@ struct kalman_ {
     */
     gretl_matrix *saveZT;
     gretl_matrix *saveGG;
+    gretl_matrix *saveG;
     guint16 *nt;
 #endif
 
@@ -981,6 +982,33 @@ static void load_to_row (gretl_matrix *targ,
 }
 
 /* copy from vector @src into row @t of @targ,
+   allowing for insertion of missing values
+*/
+
+static void load_to_row_special (gretl_matrix *targ,
+				 const gretl_vector *src,
+				 int t, char *missmap)
+{
+    int i;
+
+    if (missmap != NULL) {
+	int k = 0;
+
+	for (i=0; i<targ->cols; i++) {
+	    if (missmap[i]) {
+		gretl_matrix_set(targ, t, i, NADBL);
+	    } else {
+		gretl_matrix_set(targ, t, i, src->val[k++]);
+	    }
+	}
+    } else {
+	for (i=0; i<targ->cols; i++) {
+	    gretl_matrix_set(targ, t, i, src->val[i]);
+	}
+    }
+}
+
+/* copy from vector @src into row @t of @targ,
    starting at column offset @j in @targ */
 
 static void load_to_row_offset (gretl_matrix *targ,
@@ -1259,34 +1287,30 @@ static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
     return missvals;
 }
 
-#if USE_INCOMPLETE_OBS /* not yet */
+#if USE_INCOMPLETE_OBS
 
-static void shrink_to_ok (kalman *K, int nt)
+static int get_effective_n (kalman *K, int t)
 {
-    double *tmp = NULL;
+    if (K->nt == NULL || K->nt[t] == 0) {
+	/* no missing values */
+	return K->n;
+    } else {
+	return K->nt[t];
+    }
+}
+
+/* We have two cases to handle here, the more complex one
+   being when the disturbances are correlated across the
+   observation and state-transition equations.
+*/
+
+static void shrink_obsvar (kalman *K, int nt)
+{
+    double gij;
     int i, j, k;
 
-    fprintf(stderr, "HERE: at obs %d, shrink n from %d to %d\n",
-	    K->t + 1, K->n, nt);
-
-    /* allocate workspace for vt */
-    tmp = malloc(nt * sizeof *tmp);
-
-    /* back up and replace ZT */
-    K->saveZT = K->ZT;
-    K->ZT = gretl_matrix_alloc(K->r, nt);
-    for (j=0, k=0; j<K->n; j++) {
-	if (!na(K->vt->val[j])) {
-	    for (i=0; i<K->r; i++) {
-		K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
-	    }
-	}
-    }
-
-    if (K->GG != NULL) {
-	/* back up and replace GG (n x n) */
-	double gij;
-
+    if (K->G == NULL) {
+	/* the relatively simple case */
 	K->saveGG = K->GG;
 	K->GG = gretl_matrix_alloc(nt, nt);
 
@@ -1300,12 +1324,70 @@ static void shrink_to_ok (kalman *K, int nt)
 		}
 	    }
 	}
+    } else {
+	/* the more complex case */
+	K->saveG = K->G;
+	K->G = gretl_matrix_alloc(nt, K->p);
+
+	for (i=0, k=0; i<K->n; i++) {
+	    if (!na(K->vt->val[i])) {
+		for (j=0; j<K->p; j++) {
+		    gij = gretl_matrix_get(K->saveG, i, j);
+		    gretl_matrix_set(K->G, k, j, gij);
+		}
+		k++;
+	    }
+	}
+	gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
+				  K->G, GRETL_MOD_TRANSPOSE,
+				  K->GG, GRETL_MOD_NONE);
 	if (K->HG != NULL) {
-	    /* FIXME need to retrieve and modify G! */
 	    gretl_matrix_reuse(K->HG, K->r, nt);
 	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
 				      K->G, GRETL_MOD_TRANSPOSE,
 				      K->HG, GRETL_MOD_NONE);
+	}
+    }
+}
+
+/* The inverse operation of shrink_obsvar() above */
+
+static void unshrink_obsvar (kalman *K)
+{
+    if (K->G == NULL) {
+	gretl_matrix_free(K->GG);
+	K->GG = K->saveGG;
+	K->saveGG = NULL;
+    } else {
+	gretl_matrix_free(K->G);
+	K->G = K->saveG;
+	K->saveG = NULL;
+	gretl_matrix_reuse(K->GG, K->n, K->n);
+	gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
+				  K->G, GRETL_MOD_TRANSPOSE,
+				  K->GG, GRETL_MOD_NONE);
+	if (K->HG != NULL) {
+	    gretl_matrix_reuse(K->HG, K->r, K->n);
+	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
+				      K->G, GRETL_MOD_TRANSPOSE,
+				      K->HG, GRETL_MOD_NONE);
+	}
+    }
+}
+
+static void shrink_ZT_and_vt (kalman *K, int nt)
+{
+    double *tmp = malloc(nt * sizeof *tmp);
+    int i, j, k;
+
+    K->saveZT = K->ZT;
+    K->ZT = gretl_matrix_alloc(K->r, nt);
+
+    for (j=0, k=0; j<K->n; j++) {
+	if (!na(K->vt->val[j])) {
+	    for (i=0; i<K->r; i++) {
+		K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
+	    }
 	}
     }
 
@@ -1315,8 +1397,33 @@ static void shrink_to_ok (kalman *K, int nt)
 	    tmp[k++] = K->vt->val[i];
 	}
     }
+
     memcpy(K->vt->val, tmp, nt * sizeof(double));
     gretl_matrix_reuse(K->vt, nt, 1);
+    free(tmp);
+}
+
+static void unshrink_ZT_and_vt (kalman *K)
+{
+    gretl_matrix_free(K->ZT);
+    K->ZT = K->saveZT;
+    K->saveZT = NULL;
+    gretl_matrix_reuse(K->vt, K->n, 1);
+}
+
+static void shrink_to_ok (kalman *K, int nt)
+{
+#if 1
+    fprintf(stderr, "HERE: at obs %d, shrink n from %d to %d\n",
+	    K->t + 1, K->n, nt);
+#endif
+
+    if (K->GG != NULL) {
+	shrink_obsvar(K, nt);
+    }
+
+    /* back up and replace ZT */
+    shrink_ZT_and_vt(K, nt);
 
     /* resize workspace matrices */
     gretl_matrix_reuse(K->Ft, nt, nt);
@@ -1333,35 +1440,20 @@ static void shrink_to_ok (kalman *K, int nt)
 	    K->nt[K->t] = nt;
 	}
     }
-
-    free(tmp);
 }
 
 /* undo the shrinkage carried out by shrink_to_ok() above */
 
 static void kalman_undo_shrinkage (kalman *K)
 {
-    gretl_matrix_free(K->ZT);
-    K->ZT = K->saveZT;
-    K->saveZT = NULL;
+    unshrink_ZT_and_vt(K);
+    unshrink_obsvar(K);
 
-    if (K->GG != NULL) {
-	gretl_matrix_free(K->GG);
-	K->GG = K->saveGG;
-	K->saveGG = NULL;
-    }
-
-    gretl_matrix_reuse(K->vt, K->n, 1);
     gretl_matrix_reuse(K->Ft, K->n, K->n);
     gretl_matrix_reuse(K->iFt, K->n, K->n);
     gretl_matrix_reuse(K->Mt, K->r, K->n);
     gretl_matrix_reuse(K->Kt, K->r, K->n);
     gretl_matrix_reuse(K->PZ, K->r, K->n);
-
-    if (K->HG != NULL) {
-	gretl_matrix_reuse(K->HG, K->r, K->n);
-	/* and recompute! */
-    }
 }
 
 #endif /* USE_INCOMPLETE_OBS */
@@ -1374,9 +1466,13 @@ static void kalman_undo_shrinkage (kalman *K)
    a valid observation at time t.
 */
 
-static int compute_forecast_error (kalman *K)
+static int compute_forecast_error (kalman *K, char *missmap)
 {
     int i, nt = K->n;
+
+    if (missmap != NULL) {
+	memset(missmap, 0, K->n);
+    }
 
     /* initialize v_t to y_t */
     for (i=0; i<K->n; i++) {
@@ -1391,15 +1487,18 @@ static int compute_forecast_error (kalman *K)
     /* count any missing values in v_t */
     for (i=0; i<K->n; i++) {
 	if (na(K->vt->val[i])) {
+	    if (missmap != NULL) {
+		missmap[i] = 1;
+	    }
 	    nt--;
 	}
     }
 
     if (nt > 0 && nt < K->n) {
-#if USE_INCOMPLETE_OBS /* not yet */
+#if USE_INCOMPLETE_OBS
 	shrink_to_ok(K, nt);
 #else
-	nt = 0; /* wrong, but "safe", for now */
+	nt = 0; /* wrong, but "safer" */
 #endif
     }
 
@@ -1866,10 +1965,17 @@ int kalman_forecast (kalman *K, PRN *prn)
 {
     double ll0 = K->n * LN_2_PI;
     double sumldet = 0;
+    char *missmap = NULL;
     int err = 0;
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: N = %d\n", K->N);
+#endif
+
+#if USE_INCOMPLETE_OBS
+    if (kalman_smoothing(K)) {
+	missmap = calloc(K->n, 1);
+    }
 #endif
 
     if (kalman_diffuse(K) && !K->exact) {
@@ -1906,7 +2012,7 @@ int kalman_forecast (kalman *K, PRN *prn)
         }
 
         /* calculate v_t */
-        nt = compute_forecast_error(K);
+        nt = compute_forecast_error(K, missmap);
         if (nt == 0) {
 	    /* no valid observables at t */
             K->okN -= 1;
@@ -2034,10 +2140,10 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         /* record forecast errors if wanted */
         if (!err && K->V != NULL) {
-            load_to_row(K->V, K->vt, K->t);
+            load_to_row_special(K->V, K->vt, K->t, missmap);
         }
 
-#if USE_INCOMPLETE_OBS /* not yet */
+#if USE_INCOMPLETE_OBS
 	if (nt > 0 && nt < K->n) {
 	    /* restore the affected matrices to full size */
 	    kalman_undo_shrinkage(K);
@@ -2779,6 +2885,7 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_block *B;
     gretl_matrix *r0, *r1, *N0, *N1, *iFv, *L;
     gretl_matrix *atT, *PtT;
+    int nt = K->n;
     int t, err = 0;
 
     B = gretl_matrix_block_new(&atT, K->r, 1,
@@ -2809,6 +2916,18 @@ static int anderson_moore_smooth (kalman *K)
             break;
         }
 
+	/* load the forecast error */
+	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+
+#if USE_INCOMPLETE_OBS
+	nt = get_effective_n(K, t);
+	if (nt < K->n) {
+	    shrink_ZT_and_vt(K, nt);
+	    gretl_matrix_reuse(iFv, nt, 1);
+	    gretl_matrix_reuse(K->Kt, K->r, nt);
+	}
+#endif
+
 #if EXACT_SM
 	if (t <= K->d + 1) {
 	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
@@ -2827,8 +2946,7 @@ static int anderson_moore_smooth (kalman *K)
 	}
 
         /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
-        load_from_vech(K->iFt, K->F, K->n, t, GRETL_MOD_NONE);
-        load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+        load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
         gretl_matrix_multiply(K->iFt, K->vt, iFv);
         if (t == K->N - 1) {
             gretl_matrix_multiply(K->ZT, iFv, r0);
@@ -2863,7 +2981,7 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
-#if 0 // EXACT_SM
+#if EXACT_SM
 	if (t <= K->d + 1) {
 	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
 	    gretl_matrix_print(K->P0, "K->P0");
@@ -2878,6 +2996,14 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_qform(K->P0, GRETL_MOD_NONE,
                            N0, PtT, GRETL_MOD_DECREMENT);
         load_to_vech(K->P, PtT, K->r, t);
+
+#if USE_INCOMPLETE_OBS
+	if (nt < K->n) {
+	    unshrink_ZT_and_vt(K);
+	    gretl_matrix_reuse(iFv, K->n, 1);
+	    gretl_matrix_reuse(K->Kt, K->r, K->n);
+	}
+#endif
     }
 
     gretl_matrix_block_destroy(B);
