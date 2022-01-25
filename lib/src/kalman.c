@@ -1055,7 +1055,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
         targ[3] = &K->H;
         targ[4] = &K->G;
     } else {
-        targ[3] = &K->HH; /* "Q" */
+        targ[3] = &K->HH; /* aka "Q" */
     }
 
     for (i=0; i<nmat; i++) {
@@ -1255,7 +1255,7 @@ static int kalman_record_state (kalman *K)
 	gretl_matrix_print(K->vt,  "vt");
 	gretl_matrix_print(K->HH,  "HH");
 	gretl_matrix_print(K->GG,  "GG");
-	//load_to_vech(K->PK, K->Pk0, K->r, K->t);
+	load_to_vech(K->PK, K->Pk0, K->r, K->t);
     }
 #endif
 
@@ -2960,10 +2960,9 @@ static int anderson_moore_smooth (kalman *K)
 	/* load the forecast error */
 	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
 
-	/* handle possibly incomplete observation */
 	nt = get_effective_n(K, t);
 	if (nt < K->n) {
-	    // fprintf(stderr, "smoothing: nt = %d at obs %d\n", nt, t+1);
+	    /* handle incomplete observation */
 	    shrink_ZT_and_vt(K, nt);
 	    gretl_matrix_reuse(iFv, nt, 1);
 	    gretl_matrix_reuse(K->iFt, nt, nt);
@@ -3016,9 +3015,11 @@ static int anderson_moore_smooth (kalman *K)
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
 #if EXACT_SM
-	if (t <= K->d + 1) {
+	if (t == K->d - 1) {
+	    load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
 	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
 	    gretl_matrix_print(K->P0, "K->P0");
+	    gretl_matrix_print(K->PK, "K->Pk0");
 	    gretl_matrix_print(r0, "r0");
 	    gretl_matrix_print(atT, "atT");
 	}
