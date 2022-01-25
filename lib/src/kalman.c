@@ -2107,9 +2107,6 @@ int kalman_forecast (kalman *K, PRN *prn)
         }
         if (K->LL != NULL) {
             gretl_vector_set(K->LL, K->t, llt);
-	    if (nt < K->n) {
-		fprintf(stderr, "ll[%d] = %g\n", K->t+1, llt);
-	    }
         }
 
         if (!Kt_done) {
@@ -2925,23 +2922,15 @@ static int anderson_moore_smooth (kalman *K)
 	/* load the forecast error */
 	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
 
-	/* handle possibily incomplete observation */
+	/* handle possibly incomplete observation */
 	nt = get_effective_n(K, t);
 	if (nt < K->n) {
-	    fprintf(stderr, "smoothing: nt = %d at obs %d\n", nt, t+1);
+	    // fprintf(stderr, "smoothing: nt = %d at obs %d\n", nt, t+1);
 	    shrink_ZT_and_vt(K, nt);
 	    gretl_matrix_reuse(iFv, nt, 1);
 	    gretl_matrix_reuse(K->iFt, nt, nt);
 	    gretl_matrix_reuse(K->Kt, K->r, nt);
 	}
-
-#if EXACT_SM
-	if (t <= K->d + 1) {
-	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
-	    gretl_matrix_print(r0, "r0");
-	    gretl_matrix_print(N0, "N0");
-	}
-#endif
 
 	if (t < K->N - 1) {
 	    /* L_t = T_t - K_t Z_t */
