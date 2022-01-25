@@ -1107,6 +1107,37 @@ enum {
     UPDATE_STEP  /* refreshing matrices per time-step */
 };
 
+/* Ensure we have suitable matrices into which to write
+   HH', GG' and HG'
+*/
+
+static int ensure_covariance_matrices (kalman *K)
+{
+    int r[] = {K->H->rows, K->G->rows, K->H->rows};
+    int c[] = {K->H->rows, K->G->rows, K->G->rows};
+    gretl_matrix **V[] = {&K->HH, &K->GG, &K->HG};
+    gretl_matrix **targ;
+    int i, err = 0;
+
+    for (i=0; i<3 && !err; i++) {
+	targ = V[i];
+	if (*targ == NULL) {
+	    *targ = gretl_matrix_alloc(r[i], c[i]);
+	} else {
+	    gretl_matrix *Vi = *targ;
+
+	    if (Vi->rows != r[i] || Vi->cols != c[i]) {
+		gretl_matrix_realloc(Vi, r[i], c[i]);
+	    }
+	}
+	if (*targ == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
 /* After reading 'Q' = H and 'R' = G from the user, either at
    (re-)initialization or at a given time-step in the case where either
    of these matrices is time-varying, record the user input in K->H
@@ -1122,15 +1153,22 @@ static int kalman_update_crossinfo (kalman *K, int mode)
 
     /* Note that H and G may be needed as such for simulation */
 
+    if (mode == UPDATE_INIT) {
+	err = ensure_covariance_matrices(K);
+	if (err) {
+	    return err;
+	}
+    }
+
     if (mode == UPDATE_INIT || matrix_is_varying(K, K_Q)) {
-        /* recreate HH' using modified H */
+        /* (re)create HH' using modified H */
         err = gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
                                         K->H, GRETL_MOD_TRANSPOSE,
                                         K->HH, GRETL_MOD_NONE);
     }
 
     if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_R))) {
-        /* recreate GG' using modified G */
+        /* (re)create GG' using modified G */
         err = gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
                                         K->G, GRETL_MOD_TRANSPOSE,
                                         K->GG, GRETL_MOD_NONE);
@@ -1138,7 +1176,7 @@ static int kalman_update_crossinfo (kalman *K, int mode)
 
     if (!err && (mode == UPDATE_INIT || matrix_is_varying(K, K_Q) ||
                  matrix_is_varying(K, K_R))) {
-        /* recreate HG' using modified H and/or G */
+        /* (re)create HG' using modified H and/or G */
         err = gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
                                         K->G, GRETL_MOD_TRANSPOSE,
                                         K->HG, GRETL_MOD_NONE);
