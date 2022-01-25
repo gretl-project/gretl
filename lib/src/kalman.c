@@ -2978,6 +2978,18 @@ static int anderson_moore_smooth (kalman *K)
 				      L, GRETL_MOD_DECREMENT);
 	}
 
+#if EXACT_SM
+	if (t == K->d - 1) {
+	    /* just to expose what's going on */
+	    load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
+	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
+	    gretl_matrix_print(K->P0, "K->P0");
+	    gretl_matrix_print(K->PK, "K->Pk0");
+	    gretl_matrix_print(r0, "rd");
+	    gretl_matrix_print(atT, "atT");
+	}
+#endif
+
         /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
         load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
         gretl_matrix_multiply(K->iFt, K->vt, iFv);
@@ -3014,16 +3026,6 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   atT, GRETL_MOD_CUMULATE);
-#if EXACT_SM
-	if (t == K->d - 1) {
-	    load_from_vech(K->Pk0, K->PK, K->r, t, GRETL_MOD_NONE);
-	    fprintf(stderr, "HERE smoothing, t=%d\n", t);
-	    gretl_matrix_print(K->P0, "K->P0");
-	    gretl_matrix_print(K->PK, "K->Pk0");
-	    gretl_matrix_print(r0, "r0");
-	    gretl_matrix_print(atT, "atT");
-	}
-#endif
         load_to_row(K->A, atT, t);
 
         /* P_{t|T} = P_{t|t-1} - P_{t|t-1} N_{t-1} P_{t|t-1} */
