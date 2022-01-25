@@ -30,7 +30,8 @@ enum {
     KALMAN_CHECK   = 1 << 6, /* checking user-defined matrices */
     KALMAN_BUNDLE  = 1 << 7, /* kalman is inside a bundle */
     KALMAN_SSFSIM  = 1 << 8, /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 9  /* filtering for ARMA estimation */
+    KALMAN_ARMA_LL = 1 << 9, /* filtering for ARMA estimation */
+    KALMAN_SM_AM   = 1 << 10 /* Anderson-Moore smoothing */
 };
 
 typedef struct kalman_ kalman;

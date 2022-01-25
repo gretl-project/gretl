@@ -37,10 +37,10 @@
 
 #define KDEBUG 0
 
-/* exact initial smoothing: work in progress */
+/* exact initial smoothing: not ready yet */
 #define EXACT_SM 0
 
-/* handle use of incomplete observations? */
+/* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 0
 
 /*
@@ -139,7 +139,6 @@ struct kalman_ {
     gretl_matrix *Mt;
     gretl_matrix *Ct;
 
-#if USE_INCOMPLETE_OBS
     /* backups for matrices that are shrunk in case of
        incomplete observations, plus recorder array for
        use with the smoother (if needed)
@@ -148,7 +147,6 @@ struct kalman_ {
     gretl_matrix *saveGG;
     gretl_matrix *saveG;
     guint16 *nt;
-#endif
 
     gretl_bundle *b; /* the bundle of which this struct is a member */
     void *data;      /* handle for attaching additional info */
@@ -177,6 +175,7 @@ enum {
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 #define kalman_smoothing(K)   (K->flags & KALMAN_SMOOTH)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
+#define basic_smoothing(K)    (K->flags & KALMAN_SM_AM)
 
 #define filter_is_varying(K) (K->matcall != NULL)
 
@@ -989,21 +988,13 @@ static void load_to_row_special (gretl_matrix *targ,
 				 const gretl_vector *src,
 				 int t, char *missmap)
 {
-    int i;
+    int i, k;
 
-    if (missmap != NULL) {
-	int k = 0;
-
-	for (i=0; i<targ->cols; i++) {
-	    if (missmap[i]) {
-		gretl_matrix_set(targ, t, i, NADBL);
-	    } else {
-		gretl_matrix_set(targ, t, i, src->val[k++]);
-	    }
-	}
-    } else {
-	for (i=0; i<targ->cols; i++) {
-	    gretl_matrix_set(targ, t, i, src->val[i]);
+    for (i=0, k=0; i<targ->cols; i++) {
+	if (missmap[i]) {
+	    gretl_matrix_set(targ, t, i, NADBL);
+	} else {
+	    gretl_matrix_set(targ, t, i, src->val[k++]);
 	}
     }
 }
@@ -1287,7 +1278,21 @@ static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
     return missvals;
 }
 
-#if USE_INCOMPLETE_OBS
+/* Apparatus for handling the case where the number of observables,
+   K->n, is > 1 and we hit a partially missing obs at time t. Instead
+   of discarding the entire observation it's optimal to make use of
+   the components of y_t for which we have valid values. This requires
+   shrinking the observation-related matrices ZT and GG, plus the
+   vector v_t and all other matrices whose dimensions involve K->n.
+   (See the brief discussion in Koopman's 1997 JASA paper.)
+
+   In addition, these matrices must be restored to their original sizes
+   when we've finished dealing with period t.
+*/
+
+/* For use in the smoother: retrieve the effective number of
+   observables at time t (recorded in the forward pass).
+*/
 
 static int get_effective_n (kalman *K, int t)
 {
@@ -1380,7 +1385,7 @@ static void shrink_ZT_and_vt (kalman *K, int nt)
     double *tmp = malloc(nt * sizeof *tmp);
     int i, j, k;
 
-    K->saveZT = K->ZT;
+    K->saveZT = K->ZT; /* save the original matrix */
     K->ZT = gretl_matrix_alloc(K->r, nt);
 
     for (j=0, k=0; j<K->n; j++) {
@@ -1397,7 +1402,6 @@ static void shrink_ZT_and_vt (kalman *K, int nt)
 	    tmp[k++] = K->vt->val[i];
 	}
     }
-
     memcpy(K->vt->val, tmp, nt * sizeof(double));
     gretl_matrix_reuse(K->vt, nt, 1);
     free(tmp);
@@ -1413,7 +1417,7 @@ static void unshrink_ZT_and_vt (kalman *K)
 
 static void shrink_to_ok (kalman *K, int nt)
 {
-#if 1
+#if 0
     fprintf(stderr, "HERE: at obs %d, shrink n from %d to %d\n",
 	    K->t + 1, K->n, nt);
 #endif
@@ -1432,7 +1436,8 @@ static void shrink_to_ok (kalman *K, int nt)
     gretl_matrix_reuse(K->Kt, K->r, nt);
     gretl_matrix_reuse(K->PZ, K->r, nt);
 
-    if (kalman_smoothing(K)) {
+    if (basic_smoothing(K)) {
+	/* make a record for the smoother */
 	if (K->nt == NULL) {
 	    K->nt = calloc(K->N, sizeof *K->nt);
 	}
@@ -1455,8 +1460,6 @@ static void kalman_undo_shrinkage (kalman *K)
     gretl_matrix_reuse(K->Kt, K->r, K->n);
     gretl_matrix_reuse(K->PZ, K->r, K->n);
 }
-
-#endif /* USE_INCOMPLETE_OBS */
 
 /* Compute the one-step ahead forecast error:
 
@@ -1495,11 +1498,11 @@ static int compute_forecast_error (kalman *K, char *missmap)
     }
 
     if (nt > 0 && nt < K->n) {
-#if USE_INCOMPLETE_OBS
-	shrink_to_ok(K, nt);
-#else
-	nt = 0; /* wrong, but "safer" */
-#endif
+	if (missmap != NULL) {
+	    shrink_to_ok(K, nt);
+	} else {
+	    nt = 0; /* skip this observation */
+	}
     }
 
     if (nt > 0) {
@@ -1973,7 +1976,8 @@ int kalman_forecast (kalman *K, PRN *prn)
 #endif
 
 #if USE_INCOMPLETE_OBS
-    if (kalman_smoothing(K)) {
+    if (!kalman_smoothing(K) || basic_smoothing(K)) {
+	/* we won't do this for disturbance smoothing */
 	missmap = calloc(K->n, 1);
     }
 #endif
@@ -2011,10 +2015,10 @@ int kalman_forecast (kalman *K, PRN *prn)
             }
         }
 
-        /* calculate v_t */
+        /* calculate v_t, checking for missing values */
         nt = compute_forecast_error(K, missmap);
         if (nt == 0) {
-	    /* no valid observables at t */
+	    /* skip this observation */
             K->okN -= 1;
             handle_missing_obs(K);
             continue;
@@ -2103,6 +2107,9 @@ int kalman_forecast (kalman *K, PRN *prn)
         }
         if (K->LL != NULL) {
             gretl_vector_set(K->LL, K->t, llt);
+	    if (nt < K->n) {
+		fprintf(stderr, "ll[%d] = %g\n", K->t+1, llt);
+	    }
         }
 
         if (!Kt_done) {
@@ -2140,15 +2147,17 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         /* record forecast errors if wanted */
         if (!err && K->V != NULL) {
-            load_to_row_special(K->V, K->vt, K->t, missmap);
+	    if (missmap != NULL) {
+		load_to_row_special(K->V, K->vt, K->t, missmap);
+	    } else {
+		load_to_row(K->V, K->vt, K->t);
+	    }
         }
 
-#if USE_INCOMPLETE_OBS
 	if (nt > 0 && nt < K->n) {
-	    /* restore the affected matrices to full size */
+	    /* restore certain matrices to full size */
 	    kalman_undo_shrinkage(K);
 	}
-#endif
     }
 
     set_kalman_stopped(K);
@@ -2661,11 +2670,6 @@ static int koopman_smooth (kalman *K, int dkstyle)
     /* The backward recursion */
 
     for (t=K->N-1; t>=0 && !err; t--) {
-        /* load vt, Ft and Kt for time t */
-        load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
-        load_from_vech(K->Ft, K->F, K->n, t, GRETL_MOD_NONE);
-        load_from_vec(K->Kt, K->K, t);
-
         /* get T_t and/or Z_t if need be */
         if (matrix_is_varying(K, K_T)) {
             err = retrieve_Tt(K, t);
@@ -2677,6 +2681,11 @@ static int koopman_smooth (kalman *K, int dkstyle)
             break;
         }
 
+ 	/* load vt, Ft^{-1} and Kt */
+	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+        load_from_vech(K->iFt, K->F, K->n, t, GRETL_MOD_NONE);
+        load_from_vec(K->Kt, K->K, t);
+
         if (filter_is_varying(K)) {
             /* K->HH and/or K->GG may be time-varying */
             K->t = t;
@@ -2684,7 +2693,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
         }
 
         /* u_t = F_t^{-1} v_t - K_t' r_t */
-        gretl_matrix_multiply(K->Ft, K->vt, u);
+        gretl_matrix_multiply(K->iFt, K->vt, u);
         if (t < K->N - 1) {
             gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
                                       r1, GRETL_MOD_NONE,
@@ -2711,7 +2720,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
         }
 
         /* D_t = F_t^{-1} + K_t' N_t K_t */
-        fast_copy_values(D, K->Ft);
+        fast_copy_values(D, K->iFt);
         if (t < K->N - 1) {
             gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
                                N1, D, GRETL_MOD_CUMULATE);
@@ -2755,7 +2764,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
         load_to_row(R, r1, t);
 
         /* r_{t-1} = Z F_t^{-1}v_t + L_t' r_t */
-        gretl_matrix_multiply(K->ZT, K->Ft, tr);
+        gretl_matrix_multiply(K->ZT, K->iFt, tr);
         gretl_matrix_multiply(tr, K->vt, r2);
         if (t < K->N - 1) {
             gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
@@ -2772,7 +2781,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 
         /* N_{t-1} = Z F_t^{-1}Z' + L' N L */
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
-                           K->Ft, N2, GRETL_MOD_NONE);
+                           K->iFt, N2, GRETL_MOD_NONE);
         if (t < K->N - 1) {
             gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
                                N1, N2, GRETL_MOD_CUMULATE);
@@ -2799,6 +2808,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
             gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
                                       r1, GRETL_MOD_NONE,
                                       Ut, GRETL_MOD_NONE);
+	    /* vt length? */
             load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
             gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
                                       K->vt, GRETL_MOD_NONE,
@@ -2831,19 +2841,16 @@ static int koopman_smooth (kalman *K, int dkstyle)
                     gretl_matrix_set(K->U, t, i, x);
                 }
             }
-            if (n1 != NULL) {
-                load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
-                gretl_matrix_multiply(K->GG, K->vt, n1);
-                for (i=0; i<K->n; i++) {
-                    x = gretl_vector_get(n1, i);
-                    gretl_matrix_set(K->U, t, K->r + i, x);
-                }
-            }
+	    load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+	    gretl_matrix_multiply(K->GG, K->vt, n1);
+	    for (i=0; i<K->n; i++) {
+		x = gretl_vector_get(n1, i);
+		gretl_matrix_set(K->U, t, K->r + i, x);
+	    }
         }
     }
 
-    /* Write initial smoothed state into first row of S */
-
+    /* Write initial smoothed state */
     if (K->Pini != NULL) {
         gretl_matrix_multiply(K->Pini, r0, K->a0);
     } else {
@@ -2856,7 +2863,6 @@ static int koopman_smooth (kalman *K, int dkstyle)
     load_to_row(K->A, K->a0, 0);
 
     /* Smoothed state, remaining time steps */
-
     for (t=1; t<K->N; t++) {
         /* a_{t+1} = Ta_t + v_t (or + H*eps_t) */
         load_from_row(K->a0, K->A, t-1, GRETL_MOD_NONE);
@@ -2919,14 +2925,15 @@ static int anderson_moore_smooth (kalman *K)
 	/* load the forecast error */
 	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
 
-#if USE_INCOMPLETE_OBS
+	/* handle possibily incomplete observation */
 	nt = get_effective_n(K, t);
 	if (nt < K->n) {
+	    fprintf(stderr, "smoothing: nt = %d at obs %d\n", nt, t+1);
 	    shrink_ZT_and_vt(K, nt);
 	    gretl_matrix_reuse(iFv, nt, 1);
+	    gretl_matrix_reuse(K->iFt, nt, nt);
 	    gretl_matrix_reuse(K->Kt, K->r, nt);
 	}
-#endif
 
 #if EXACT_SM
 	if (t <= K->d + 1) {
@@ -2997,13 +3004,12 @@ static int anderson_moore_smooth (kalman *K)
                            N0, PtT, GRETL_MOD_DECREMENT);
         load_to_vech(K->P, PtT, K->r, t);
 
-#if USE_INCOMPLETE_OBS
 	if (nt < K->n) {
 	    unshrink_ZT_and_vt(K);
 	    gretl_matrix_reuse(iFv, K->n, 1);
+	    gretl_matrix_reuse(K->iFt, K->n, K->n);
 	    gretl_matrix_reuse(K->Kt, K->r, K->n);
 	}
-#endif
     }
 
     gretl_matrix_block_destroy(B);
@@ -3106,15 +3112,19 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         err = kalman_bundle_recheck_matrices(K, prn);
     }
 
-#if USE_INCOMPLETE_OBS
+    /* recorder for partially missing observations */
     K->nt = NULL;
-#endif
 
     if (!err) {
         /* forward pass */
         K->flags |= KALMAN_SMOOTH;
+	if (dist == 0) {
+	    /* Anderson-Moore */
+	    K->flags |= KALMAN_SM_AM;
+	}
         err = kalman_forecast(K, NULL);
         K->flags &= ~KALMAN_SMOOTH;
+	K->flags &= ~KALMAN_SM_AM;
     }
 
     K->t = 0;
@@ -3129,12 +3139,10 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         }
     }
 
-#if USE_INCOMPLETE_OBS
     if (K->nt != NULL) {
 	free(K->nt);
 	K->nt = NULL;
     }
-#endif
 
 #if EXACT_SM
     if (K->PK != NULL) {
