@@ -1257,7 +1257,7 @@ not really applicable to the data.
 \newcommand{\steta}{\eta}
 \newcommand{\strR}{R}
 
-Bt this point, the reader will have gathered that setting up a state
+By this point, the reader will have gathered that setting up a state
 space model can be quite a complex undertaking, and the only general
 way to accomplish it is by writing a script.  However, some cases are
 simple enough to lend themselves to a standardized treatment, and so
@@ -1281,10 +1281,11 @@ equation (\ref{eq:GUIobs}) is dropped. As for the covariance matrix of
 the shocks to equation (\ref{eq:GUIstate}), it is assumed that
 $\steta_t$ is an IID sequence of normal random variates with diagonal
 covariance matrix $\Sigma_\steta$. Therefore, the covariance matrix
-denoted by $\statevar$ above (whose corresponding key in the Kalman
-bundle is \cmd{statevar}) is assumed to be
-$\statevar = R \Sigma_\steta R'$. Note that $\strR$ can have fewer
-columns than $r$, thereby making $\statevar$ singular.
+denoted by $\statevar$ in the previous sections of this chapter (whose
+corresponding key in the Kalman bundle is \cmd{statevar}) is assumed
+to be $\statevar = R \Sigma_\steta R'$. Note that $\strR$ can have
+fewer columns than $r$, thereby making $\statevar$ singular. In the
+graphical interface, this is called the ``state variance factor''.
 
 The system matrices $\obsymat$, $\statemat$ and $\strR$ are assumed to
 be time-invariant and known, so estimation only concerns the variances
@@ -1314,11 +1315,14 @@ ways:
 \item[Exponential] maximization is performed on the log standard deviations:
   $\sigma^2 = \exp(2 \cdot \theta)$
 \end{description}
-Normally, this choice should make no difference for well-behaved
-data. In any case, the function reports the estimates of the standard
-errors whatever the parametrization type.  Once the parameters are
-estimated the user has the choice of performing smoothing of the
-states.
+Normally, this choice should make no difference for well-behaved data,
+although numerical problems may occur sometimes. In these cases, it
+may be helpful to rescale the data by multiplying $y_t$ by some scalar
+(such as 100 or 0.0001) so as to make the order of magnitude of the
+parameters less prone to finite-precision issues. In any case, the
+function reports the estimates of the standard errors whatever the
+parametrization type.  Once the parameters are estimated the user has
+the choice of performing smoothing of the states.
 
 The GUI is shown in figure \ref{fig:GUI}. The ``observables'' box is
 used for specifying a list of series (or a single series) for

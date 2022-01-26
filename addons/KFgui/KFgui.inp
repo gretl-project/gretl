@@ -134,9 +134,9 @@ end function
 ### --------------------------------------------------
 
 function bundle KFgui (list y "observables",
-                       matrix Z "Observation matrix",
-                       matrix T "State transition matrix",
-		       matrix R_in[null] "State variance transform",
+                       matrix Z "Observation matrix (Z)",
+                       matrix T "State transition matrix (T)",
+		       matrix R_in[null] "State variance factor matrix (R)",
                        bool has_obsvar[1] "Disturbance in obs. equation?",
                        int param_type[1:3:2] "Parametrization" {"Absolute value", "Square", "Exponential"},
                        int verbosity[0:2:1] "verbosity" {"Quiet", "Normal", "Verbose"},
