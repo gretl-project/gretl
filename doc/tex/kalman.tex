@@ -649,9 +649,9 @@ In terms of input syntax, if the state and observation disturbances
 are cross-correlated five arguments should be given to the
 \cmd{ksetup} function (see section~\ref{sec:setup}): in place of
 giving $\statevar$ you should give the two matrices identified above as
-$\altobsvar$ and $\altstatevar$, as in
+$\altstatevar$ and $\altobsvar$, as in
 \begin{code}
-bundle SSxmod = ksetup(y, Z, T, G, H)
+bundle SSxmod = ksetup(y, Z, T, H, G)
 \end{code}
 
 In case you wish to retrieve or update information on the variance of
