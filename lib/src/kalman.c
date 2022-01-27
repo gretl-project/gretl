@@ -2834,7 +2834,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
         /* save r_t values in R */
         load_to_row(R, r1, t);
 
-        /* r_{t-1} = Z F_t^{-1}v_t + L_t' r_t */
+        /* r_{t-1} = Z F_t^{-1} v_t + L_t' r_t */
         gretl_matrix_multiply(K->ZT, K->iFt, tr);
         gretl_matrix_multiply(tr, K->vt, r2);
         if (t < K->N - 1) {
@@ -2850,7 +2850,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
             fast_copy_values(r0, r2);
         }
 
-        /* N_{t-1} = Z F_t^{-1}Z' + L' N L */
+        /* N_{t-1} = Z F_t^{-1} Z' + L' N L */
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
                            K->iFt, N2, GRETL_MOD_NONE);
         if (t < K->N - 1) {
@@ -3021,7 +3021,8 @@ static int exact_initial_smooth (kalman *K,
     gretl_matrix *K0, *K1;
     gretl_matrix *L1, *L2;
     gretl_matrix *Pdag, *Ldag;
-    gretl_matrix *rdag, *dag_;
+    gretl_matrix *rdag, *rdag_;
+    gretl_matrix *Ndag, *Ndag_;
     gretl_matrix *tmp = K->PZ;
     gretl_matrix rl = {0};
     int rr = 2 * K->r;
@@ -3038,7 +3039,9 @@ static int exact_initial_smooth (kalman *K,
 			       &Pdag, K->r, rr,
 			       &Ldag, rr, rr,
 			       &rdag, rr, 1,
-			       &dag_, rr, 1,
+			       &rdag_, rr, 1,
+			       &Ndag, rr, rr,
+			       &Ndag_, rr, rr,
 			       NULL);
     if (B == NULL) {
 	return E_ALLOC;
@@ -3050,9 +3053,13 @@ static int exact_initial_smooth (kalman *K,
     }
 
     /* target for the bottom r rows of r†_{t-1} */
-    rl.val = dag_->val + K->r;
+    rl.val = rdag_->val + K->r;
     rl.rows = K->r;
     rl.cols = 1;
+
+    gretl_matrix_zero(Ndag);
+    gretl_matrix_inscribe_matrix(Ndag, N0, 0, 0, GRETL_MOD_NONE);
+    gretl_matrix_zero(Ndag_);
 
     for (t=K->d-1; t>=0; t--) {
 	err = load_filter_data(K, t, &nt, 1);
@@ -3117,6 +3124,11 @@ static int exact_initial_smooth (kalman *K,
 	gretl_matrix_multiply_mod(K1, GRETL_MOD_NONE,
 				  K->ZT, GRETL_MOD_TRANSPOSE,
 				  L1, GRETL_MOD_DECREMENT);
+	/* L† = (L0 ~ L1) | (0 ~ L0) */
+	gretl_matrix_zero(Ldag);
+	gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(Ldag, L1, 0, K->r, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(Ldag, L0, K->r, K->r, GRETL_MOD_NONE);
 
 	/* P† = P★ ~ P∞ */
 	gretl_matrix_inscribe_matrix(Pdag, K->P0, 0, 0,
@@ -3124,51 +3136,48 @@ static int exact_initial_smooth (kalman *K,
 	gretl_matrix_inscribe_matrix(Pdag, K->Pk0, 0, K->r,
 				     GRETL_MOD_NONE);
 
-	/* L† = (L0 ~ L1) | (0 ~ L0) */
-	gretl_matrix_zero(Ldag);
-	gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ldag, L1, 0, K->r, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ldag, L0, K->r, K->r, GRETL_MOD_NONE);
-
 	/* r†_{t-1} = (0 | rl) + L†_t * r†_t */
-	gretl_matrix_zero(dag_);
+	gretl_matrix_zero(rdag_);
 	gretl_matrix_multiply(K->ZT, F1, tmp);
 	gretl_matrix_multiply(tmp, K->vt, &rl);
 	gretl_matrix_multiply_mod(Ldag, GRETL_MOD_NONE, /* ? */
 				  rdag, GRETL_MOD_NONE,
-				  dag_, GRETL_MOD_CUMULATE);
+				  rdag_, GRETL_MOD_CUMULATE);
 
 	/* \hat{\alpha}_t = a_t + P†_t * r†_{t-1} */
 	fast_copy_values(K->a1, K->a0);
 	gretl_matrix_multiply_mod(Pdag, GRETL_MOD_NONE,
-				  dag_, GRETL_MOD_NONE,
+				  rdag_, GRETL_MOD_NONE,
 				  K->a1, GRETL_MOD_CUMULATE);
 	load_to_row(K->A, K->a1, t);
-	fast_copy_values(rdag, dag_);
-
-#if 0 /* important, but not ready */
-	/* evolution of var(state) */
-
-	/* N0_{t-1} = L0' * N0 * L0 */
-	gretl_matrix_qform(LO, GRETL_MOD_TRANSPOSE, N0,
-			   N0_, GRETL_MOD_NONE);
-
-	/* N1_{t-1} = Z'*F1*Z + L0'*N2*L0 + L1'*N0*L0*/
-	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F1,
-			   N_, GRETL_MOD_NONE);
-	gretl_matrix_qform(L0, GRETL_MOD_TRANSPOSE, N2,
-			   N1_, GRETL_MOD_CUMULATE);
-	gretl_matrix_qform(L1, GRETL_MOD_TRANSPOSE, N0,
-			   N1_, GRETL_MOD_CUMULATE);
-
-	/* N2_{t-1} = Z'*F2*Z + L0'*N2*l0 + L0'*N1*L1 + L1'*N1*L0 + L1'*N0*L1 */
-
-	/* V = ... */
-#endif
-
 	gretl_matrix_print(rdag, "rdag");
-	gretl_matrix_print(dag_, "rdag_minus");
+	gretl_matrix_print(rdag_, "rdag_minus");
 	gretl_matrix_print(K->a1, "ahat");
+	fast_copy_values(rdag, rdag_);
+
+	/* N†_{t-1} = (0 ~ Z'*F1*Z) | (Z'*F1*Z ~ Z'*F2*Z) + L†'*N†*L† */
+	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F1,
+			   K->P1, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(Ndag_, K->P1, 0, K->r,
+				     GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, 0,
+				     GRETL_MOD_NONE);
+	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F2,
+			   K->P1, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, K->r,
+				     GRETL_MOD_NONE);
+	gretl_matrix_qform(Ldag, GRETL_MOD_TRANSPOSE, Ndag,
+			   Ndag_, GRETL_MOD_CUMULATE);
+
+	/* Vt = P★ - P† * N†_{t-1} * P†' */
+	fast_copy_values(K->P1, K->P0);
+	gretl_matrix_qform(Pdag, GRETL_MOD_NONE, Ndag_,
+			   K->P1, GRETL_MOD_DECREMENT);
+	load_to_vech(K->P, K->P1, K->r, t);
+	gretl_matrix_print(Ndag, "Ndag");
+	gretl_matrix_print(Ndag_, "Ndag_minus");
+	gretl_matrix_print(K->P1, "Vt");
+	fast_copy_values(Ndag, Ndag_);
 
 	if (nt < K->n) {
 	    unshrink_ZT_and_vt(K);
@@ -3199,12 +3208,10 @@ static int anderson_moore_smooth (kalman *K)
 {
     gretl_matrix_block *B;
     gretl_matrix *r0, *r1, *N0, *N1, *iFv, *L;
-    gretl_matrix *PtT;
     int nt = K->n;
     int t, err = 0;
 
-    B = gretl_matrix_block_new(&PtT, K->r, K->r,
-                               &r0,  K->r, 1,
+    B = gretl_matrix_block_new(&r0,  K->r, 1,
                                &r1,  K->r, 1,
                                &N0,  K->r, K->r,
                                &N1,  K->r, K->r,
@@ -3275,10 +3282,10 @@ static int anderson_moore_smooth (kalman *K)
         load_to_row(K->A, K->a1, t);
 
         /* P_{t|T} = P_{t|t-1} - P_{t|t-1} N_{t-1} P_{t|t-1} */
-        fast_copy_values(PtT, K->P0);
-        gretl_matrix_qform(K->P0, GRETL_MOD_NONE,
-                           N0, PtT, GRETL_MOD_DECREMENT);
-        load_to_vech(K->P, PtT, K->r, t);
+        fast_copy_values(K->P1, K->P0);
+        gretl_matrix_qform(K->P0, GRETL_MOD_NONE, N0,
+			   K->P1, GRETL_MOD_DECREMENT);
+        load_to_vech(K->P, K->P1, K->r, t);
 
 	if (nt < K->n) {
 	    unshrink_ZT_and_vt(K);
