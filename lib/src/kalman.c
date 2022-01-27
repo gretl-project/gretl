@@ -3009,13 +3009,17 @@ static int load_filter_data (kalman *K, int t, int *pnt,
    the case d > 1.
 */
 
-static int exact_initial_smooth (kalman *K, gretl_matrix *r0)
+static int exact_initial_smooth (kalman *K,
+				 gretl_matrix *r0,
+				 gretl_matrix *L0,
+				 gretl_matrix *N0,
+				 gretl_matrix *N1)
 {
     gretl_matrix_block *B;
     gretl_matrix *Mk;
     gretl_matrix *F1, *F2;
     gretl_matrix *K0, *K1;
-    gretl_matrix *L0, *L1;
+    gretl_matrix *L1, *L2;
     gretl_matrix *Pdag, *Ldag;
     gretl_matrix *rdag, *dag_;
     gretl_matrix *tmp = K->PZ;
@@ -3029,8 +3033,8 @@ static int exact_initial_smooth (kalman *K, gretl_matrix *r0)
 			       &F2, K->n, K->n,
 			       &K0, K->r, K->n,
 			       &K1, K->r, K->n,
-			       &L0, K->r, K->r,
 			       &L1, K->r, K->r,
+			       &L2, K->r, K->r,
 			       &Pdag, K->r, rr,
 			       &Ldag, rr, rr,
 			       &rdag, rr, 1,
@@ -3142,7 +3146,25 @@ static int exact_initial_smooth (kalman *K, gretl_matrix *r0)
 	load_to_row(K->A, K->a1, t);
 	fast_copy_values(rdag, dag_);
 
-	/* FIXME evolution of MSE! */
+#if 0 /* important, but not ready */
+	/* evolution of var(state) */
+
+	/* N0_{t-1} = L0' * N0 * L0 */
+	gretl_matrix_qform(LO, GRETL_MOD_TRANSPOSE, N0,
+			   N0_, GRETL_MOD_NONE);
+
+	/* N1_{t-1} = Z'*F1*Z + L0'*N2*L0 + L1'*N0*L0*/
+	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F1,
+			   N_, GRETL_MOD_NONE);
+	gretl_matrix_qform(L0, GRETL_MOD_TRANSPOSE, N2,
+			   N1_, GRETL_MOD_CUMULATE);
+	gretl_matrix_qform(L1, GRETL_MOD_TRANSPOSE, N0,
+			   N1_, GRETL_MOD_CUMULATE);
+
+	/* N2_{t-1} = Z'*F2*Z + L0'*N2*l0 + L0'*N1*L1 + L1'*N1*L0 + L1'*N0*L1 */
+
+	/* V = ... */
+#endif
 
 	gretl_matrix_print(rdag, "rdag");
 	gretl_matrix_print(dag_, "rdag_minus");
@@ -3200,7 +3222,7 @@ static int anderson_moore_smooth (kalman *K)
 #if EXACT_SM
 	if (t == K->d - 1) {
 	    fprintf(stderr, "HERE switch to exact initial smoothing at t=%d\n", t);
-	    exact_initial_smooth(K, r0);
+	    exact_initial_smooth(K, r0, L, N0, N1);
 	    break;
 	}
 #endif
