@@ -2858,58 +2858,37 @@ static int koopman_smooth (kalman *K, int dkstyle)
 #endif
 
     /* Smoothed disturbances, all time steps */
-
-    if (K->p > 0) {
-        /* eps = H' r_t + G' e_t  */
-        for (t=0; t<K->N; t++) {
-            if (filter_is_varying(K)) {
-                K->t = t;
-                ksmooth_refresh_matrices(K, NULL);
-            }
-            load_from_row(r1, R, t, GRETL_MOD_NONE);
-            gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
-                                      r1, GRETL_MOD_NONE,
-                                      Ut, GRETL_MOD_NONE);
-	    /* vt length? */
-            load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
-            gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
-                                      K->vt, GRETL_MOD_NONE,
-                                      Ut, GRETL_MOD_CUMULATE);
-            gretl_matrix_multiply(K->H, Ut, r2);
-            load_to_row(R, r2, t);
-            gretl_matrix_multiply(K->G, Ut, n1);
-            for (i=0; i<K->r; i++) {
-                x = gretl_vector_get(r2, i);
-                gretl_matrix_set(K->U, t, i, x);
-            }
-            for (i=0; i<K->n; i++) {
-                x = gretl_vector_get(n1, i);
-                gretl_matrix_set(K->U, t, K->r + i, x);
-            }
-        }
-    } else {
-        /* the independent case */
-        for (t=0; t<K->N; t++) {
-            if (filter_is_varying(K)) {
-                K->t = t;
-                ksmooth_refresh_matrices(K, NULL);
-            }
-            load_from_row(r1, R, t, GRETL_MOD_NONE);
-            gretl_matrix_multiply(K->HH, r1, r2);
-            load_to_row(R, r2, t);
-            if (K->U != NULL) {
-                for (i=0; i<K->r; i++) {
-                    x = gretl_vector_get(r2, i);
-                    gretl_matrix_set(K->U, t, i, x);
-                }
-            }
-	    load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+    for (t=0; t<K->N; t++) {
+	if (filter_is_varying(K)) {
+	    K->t = t;
+	    ksmooth_refresh_matrices(K, NULL);
+	}
+	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE); /* vt length! */
+	if (K->p > 0) {
+	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
+				      r1, GRETL_MOD_NONE,
+				      Ut, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
+				      K->vt, GRETL_MOD_NONE,
+				      Ut, GRETL_MOD_CUMULATE);
+	    gretl_matrix_multiply(K->H, Ut, r2);
+	} else {
+	    gretl_matrix_multiply(K->HH, r1, r2);
+	}
+	load_to_row(R, r2, t);
+	for (i=0; i<K->r; i++) {
+	    x = gretl_vector_get(r2, i);
+	    gretl_matrix_set(K->U, t, i, x);
+	}
+	if (K->p > 0) {
+	    gretl_matrix_multiply(K->G, Ut, n1);
+	} else {
 	    gretl_matrix_multiply(K->GG, K->vt, n1);
-	    for (i=0; i<K->n; i++) {
-		x = gretl_vector_get(n1, i);
-		gretl_matrix_set(K->U, t, K->r + i, x);
-	    }
-        }
+	}
+	for (i=0; i<K->n; i++) {
+	    x = gretl_vector_get(n1, i);
+	    gretl_matrix_set(K->U, t, K->r + i, x);
+	}
     }
 
     /* Write initial smoothed state */
@@ -2941,14 +2920,20 @@ static int koopman_smooth (kalman *K, int dkstyle)
     return err;
 }
 
+enum {
+    SM_STATE_STD,  /* regular state smoother */
+    SM_STATE_INIT, /* exact initial state smoother */
+    SM_DIST_STD,   /* regular disturbance smoother */
+    SM_DIST_INIT   /* exact initial disturbance smoother */
+};
+
 /* For use with state filtering (standard or exact initial): load what
    we need for step @t, from the record that was kept on the prior
    forecasting pass. Pass back the effective size of the observables
    vector in @pnt.
 */
 
-static int load_filter_data (kalman *K, int t, int *pnt,
-			     int initial)
+static int load_filter_data (kalman *K, int t, int *pnt, int smtype)
 {
     int nt, err = 0;
 
@@ -2970,7 +2955,7 @@ static int load_filter_data (kalman *K, int t, int *pnt,
     *pnt = nt = get_effective_n(K, t);
     if (nt < K->n) {
 	shrink_ZT_and_vt(K, nt);
-	if (!initial) {
+	if (smtype == SM_STATE_STD) {
 	    gretl_matrix_reuse(K->iFt, nt, nt);
 	    gretl_matrix_reuse(K->Kt, K->r, nt);
 	}
@@ -2980,10 +2965,10 @@ static int load_filter_data (kalman *K, int t, int *pnt,
     load_from_row(K->a0, K->A, t, GRETL_MOD_NONE);
     load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
 
-    if (initial) {
+    if (smtype == SM_STATE_INIT) {
 	/* load P∞ */
 	load_from_vechT(K->Pk0, K->PK, K->r, t);
-    } else {
+    } else if (smtype == SM_STATE_STD) {
 	/* load the gain and F^{-1} */
 	load_from_vec(K->Kt, K->K, t);
 	load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
@@ -3048,7 +3033,7 @@ static int exact_initial_smooth (kalman *K,
 #if EXACT_DEBUG
 	fprintf(stderr, "*** exact_initial_smooth: t=%d ***\n\n", t);
 #endif
-	err = load_filter_data(K, t, &nt, 1);
+	err = load_filter_data(K, t, &nt, SM_STATE_INIT);
 	if (err) {
 	    break;
 	} else if (nt < K->n) {
@@ -3219,7 +3204,7 @@ static int anderson_moore_smooth (kalman *K)
 	    break;
 	}
 
-	err = load_filter_data(K, t, &nt, 0);
+	err = load_filter_data(K, t, &nt, SM_STATE_STD);
 	if (err) {
 	    break;
 	} else if (nt < K->n) {
