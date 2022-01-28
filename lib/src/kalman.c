@@ -201,6 +201,14 @@ enum {
     K_MMAX /* sentinel */
 };
 
+enum {
+    SM_TYPE_NONE,  /* not doing smoothing */
+    SM_STATE_STD,  /* regular state smoother */
+    SM_STATE_INIT, /* exact initial state smoother */
+    SM_DIST_STD,   /* regular disturbance smoother */
+    SM_DIST_INIT   /* exact initial disturbance smoother */
+};
+
 void free_stepinfo (kalman *K)
 {
     if (K->step != NULL) {
@@ -1426,18 +1434,23 @@ static void unshrink_obsvar (kalman *K)
     }
 }
 
-static void shrink_ZT_and_vt (kalman *K, int nt)
+static void shrink_vt (kalman *K, int nt, int smtype)
 {
     double *tmp = malloc(nt * sizeof *tmp);
-    int i, j, k;
+    int i, k;
 
-    K->saveZT = K->ZT; /* save the original matrix */
-    K->ZT = gretl_matrix_alloc(K->r, nt);
+    if (smtype < SM_DIST_STD) {
+	/* We need to shrink ZT too */
+	int j;
 
-    for (j=0, k=0; j<K->n; j++) {
-	if (!na(K->vt->val[j])) {
-	    for (i=0; i<K->r; i++) {
-		K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
+	K->saveZT = K->ZT; /* save the original matrix */
+	K->ZT = gretl_matrix_alloc(K->r, nt);
+
+	for (j=0, k=0; j<K->n; j++) {
+	    if (!na(K->vt->val[j])) {
+		for (i=0; i<K->r; i++) {
+		    K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
+		}
 	    }
 	}
     }
@@ -1453,15 +1466,23 @@ static void shrink_ZT_and_vt (kalman *K, int nt)
     free(tmp);
 }
 
-static void unshrink_ZT_and_vt (kalman *K)
+static void unshrink_vt (kalman *K, int smtype)
 {
-    gretl_matrix_free(K->ZT);
-    K->ZT = K->saveZT;
-    K->saveZT = NULL;
+    if (smtype < SM_DIST_STD) {
+	/* We need to restore ZT too */
+	gretl_matrix_free(K->ZT);
+	K->ZT = K->saveZT;
+	K->saveZT = NULL;
+    }
     gretl_matrix_reuse(K->vt, K->n, 1);
 }
 
-static void shrink_to_ok (kalman *K, int nt)
+/* Shrink the observation vector and associated in the case
+   where we encounter a partially missing observation. Used
+   only on a filtering pass.
+*/
+
+static void shrink_obs_to_ok (kalman *K, int nt)
 {
 #if 0
     fprintf(stderr, "HERE: at obs %d, shrink n from %d to %d\n",
@@ -1472,8 +1493,8 @@ static void shrink_to_ok (kalman *K, int nt)
 	shrink_obsvar(K, nt);
     }
 
-    /* back up and replace ZT */
-    shrink_ZT_and_vt(K, nt);
+    /* includes back up and replacement of ZT */
+    shrink_vt(K, nt, SM_TYPE_NONE);
 
     /* resize workspace matrices */
     gretl_matrix_reuse(K->Ft, nt, nt);
@@ -1493,11 +1514,14 @@ static void shrink_to_ok (kalman *K, int nt)
     }
 }
 
-/* undo the shrinkage carried out by shrink_to_ok() above */
+/* Undo the shrinkage of the observation vector and associated
+   matrices carried out by shrink_obs_to_ok() above. Used only
+   on a filtering pass.
+*/
 
 static void kalman_undo_shrinkage (kalman *K)
 {
-    unshrink_ZT_and_vt(K);
+    unshrink_vt(K, SM_TYPE_NONE);
     unshrink_obsvar(K);
 
     gretl_matrix_reuse(K->Ft, K->n, K->n);
@@ -1545,7 +1569,7 @@ static int compute_forecast_error (kalman *K, char *missmap)
 
     if (nt > 0 && nt < K->n) {
 	if (missmap != NULL) {
-	    shrink_to_ok(K, nt);
+	    shrink_obs_to_ok(K, nt);
 	} else {
 	    nt = 0; /* skip this observation */
 	}
@@ -2667,6 +2691,73 @@ static int combined_dist_variance (kalman *K,
     return 0;
 }
 
+/* For use with smoothing: load what we need for step @t, from the
+   record that was kept on the prior forecasting pass. Pass back the
+   effective size of the observables vector in @pnt. What we need
+   from the forward pass depends on what exactly we're computing,
+   which is conveyed by @smtype.
+
+   We need to handle several complications here. In particular
+   we must update anything that's time-varying, and deal with any
+   incomplete observations (which have implications for the
+   dimensions of various matrices).
+*/
+
+static int load_filter_data (kalman *K, int t, int *pnt, int smtype)
+{
+    int nt, err = 0;
+
+    /* load the forecast error */
+    load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+
+    if (smtype == SM_DIST_STD) {
+	/* Koopman-style */
+	if (filter_is_varying(K)) {
+	    K->t = t;
+	    ksmooth_refresh_matrices(K, NULL);
+	    /* FIXME shrink_obsvar()? */
+	}
+    } else {
+	/* state: get T_t and/or Z_t if need be */
+	if (matrix_is_varying(K, K_T)) {
+	    err = retrieve_Tt(K, t);
+	}
+	if (!err && matrix_is_varying(K, K_ZT)) {
+	    err = retrieve_Zt(K, t);
+	}
+	if (err) {
+	    return err;
+	}
+    }
+
+    /* check for an incomplete observation */
+    *pnt = nt = get_effective_n(K, t);
+    if (nt < K->n) {
+	shrink_vt(K, nt, smtype);
+	if (smtype == SM_STATE_STD) {
+	    gretl_matrix_reuse(K->iFt, nt, nt);
+	    gretl_matrix_reuse(K->Kt, K->r, nt);
+	}
+    }
+
+    if (smtype < SM_DIST_STD) {
+	/* load the state and its MSE */
+	load_from_row(K->a0, K->A, t, GRETL_MOD_NONE);
+	load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
+
+	if (smtype == SM_STATE_INIT) {
+	    /* load P∞ */
+	    load_from_vechT(K->Pk0, K->PK, K->r, t);
+	} else if (smtype == SM_STATE_STD) {
+	    /* load the gain and F^{-1} */
+	    load_from_vec(K->Kt, K->K, t);
+	    load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
+	}
+    }
+
+    return err;
+}
+
 /* See Koopman, Shephard and Doornik, section 4.4 */
 
 static int koopman_smooth (kalman *K, int dkstyle)
@@ -2682,6 +2773,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
     gretl_matrix *NH = NULL;
     gretl_matrix *Ut = NULL;
     double x;
+    int nt = K->n;
     int i, t, err = 0;
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
@@ -2729,29 +2821,14 @@ static int koopman_smooth (kalman *K, int dkstyle)
     gretl_matrix_zero(r1);
     gretl_matrix_zero(N1);
 
-    /* The backward recursion */
+    /* The backward recursion: requires retrieval of
+       v_t, F_t^{-1}, Kt, Tt, Zt
+    */
 
     for (t=K->N-1; t>=0 && !err; t--) {
-        /* get T_t and/or Z_t if need be */
-        if (matrix_is_varying(K, K_T)) {
-            err = retrieve_Tt(K, t);
-        }
-        if (!err && matrix_is_varying(K, K_ZT)) {
-            err = retrieve_Zt(K, t);
-        }
+	err = load_filter_data(K, t, &nt, SM_STATE_INIT);
         if (err) {
             break;
-        }
-
- 	/* load vt, Ft^{-1} and Kt */
-	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
-        load_from_vech(K->iFt, K->F, K->n, t, GRETL_MOD_NONE);
-        load_from_vec(K->Kt, K->K, t);
-
-        if (filter_is_varying(K)) {
-            /* K->HH and/or K->GG may be time-varying */
-            K->t = t;
-            ksmooth_refresh_matrices(K, NULL);
         }
 
         /* u_t = F_t^{-1} v_t - K_t' r_t */
@@ -2761,8 +2838,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
                                       r1, GRETL_MOD_NONE,
                                       u, GRETL_MOD_DECREMENT);
         }
-
-        /* save u_t values in V */
+        /* and store u_t values in V (but is this OK?) */
         load_to_row(K->V, u, t);
 
         if (K->Vsd != NULL && K->p == 0) {
@@ -2833,8 +2909,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
                                       r1, GRETL_MOD_NONE,
                                       r2, GRETL_MOD_CUMULATE);
         }
-        /* transcribe for next step */
-        fast_copy_values(r1, r2);
+	fast_copy_values(r1, r2);
 
         /* preserve r_0 for smoothing of state */
         if (t == 0) {
@@ -2848,8 +2923,12 @@ static int koopman_smooth (kalman *K, int dkstyle)
             gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
                                N1, N2, GRETL_MOD_CUMULATE);
         }
-        /* transcribe for next step */
         fast_copy_values(N1, N2);
+
+	if (nt < K->n) {
+	    unshrink_vt(K, SM_STATE_INIT);
+	    ; /* FIXME what else needs to be reset? */
+	}
     }
 
 #if 0
@@ -2859,11 +2938,10 @@ static int koopman_smooth (kalman *K, int dkstyle)
 
     /* Smoothed disturbances, all time steps */
     for (t=0; t<K->N; t++) {
-	if (filter_is_varying(K)) {
-	    K->t = t;
-	    ksmooth_refresh_matrices(K, NULL);
+	err = load_filter_data(K, t, &nt, SM_DIST_STD);
+	if (err) {
+	    break;
 	}
-	load_from_row(K->vt, K->V, t, GRETL_MOD_NONE); /* vt length! */
 	if (K->p > 0) {
 	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
 				      r1, GRETL_MOD_NONE,
@@ -2888,6 +2966,11 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	for (i=0; i<K->n; i++) {
 	    x = gretl_vector_get(n1, i);
 	    gretl_matrix_set(K->U, t, K->r + i, x);
+	}
+
+	if (nt < K->n) {
+	    unshrink_vt(K, SM_DIST_STD);
+	    ; /* FIXME what else needs to be reset? */
 	}
     }
 
@@ -2916,63 +2999,6 @@ static int koopman_smooth (kalman *K, int dkstyle)
     gretl_matrix_block_destroy(BX);
     gretl_matrix_free(Vvt);
     gretl_matrix_free(Vwt);
-
-    return err;
-}
-
-enum {
-    SM_STATE_STD,  /* regular state smoother */
-    SM_STATE_INIT, /* exact initial state smoother */
-    SM_DIST_STD,   /* regular disturbance smoother */
-    SM_DIST_INIT   /* exact initial disturbance smoother */
-};
-
-/* For use with state filtering (standard or exact initial): load what
-   we need for step @t, from the record that was kept on the prior
-   forecasting pass. Pass back the effective size of the observables
-   vector in @pnt.
-*/
-
-static int load_filter_data (kalman *K, int t, int *pnt, int smtype)
-{
-    int nt, err = 0;
-
-    /* get T_t and/or Z_t if need be */
-    if (matrix_is_varying(K, K_T)) {
-	err = retrieve_Tt(K, t);
-    }
-    if (!err && matrix_is_varying(K, K_ZT)) {
-	err = retrieve_Zt(K, t);
-    }
-    if (err) {
-	return err;
-    }
-
-    /* load the forecast error */
-    load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
-
-    /* and check for an incomplete observation */
-    *pnt = nt = get_effective_n(K, t);
-    if (nt < K->n) {
-	shrink_ZT_and_vt(K, nt);
-	if (smtype == SM_STATE_STD) {
-	    gretl_matrix_reuse(K->iFt, nt, nt);
-	    gretl_matrix_reuse(K->Kt, K->r, nt);
-	}
-    }
-
-    /* load the state and its MSE */
-    load_from_row(K->a0, K->A, t, GRETL_MOD_NONE);
-    load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
-
-    if (smtype == SM_STATE_INIT) {
-	/* load P∞ */
-	load_from_vechT(K->Pk0, K->PK, K->r, t);
-    } else if (smtype == SM_STATE_STD) {
-	/* load the gain and F^{-1} */
-	load_from_vec(K->Kt, K->K, t);
-	load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
-    }
 
     return err;
 }
@@ -3155,7 +3181,7 @@ static int exact_initial_smooth (kalman *K,
 	fast_copy_values(Ndag, Ndag_);
 
 	if (nt < K->n) {
-	    unshrink_ZT_and_vt(K);
+	    unshrink_vt(K, SM_STATE_INIT);
 	    gretl_matrix_reuse(Mk, K->r, K->n);
 	    gretl_matrix_reuse(F1, K->n, K->n);
 	    gretl_matrix_reuse(F2, K->n, K->n);
@@ -3219,6 +3245,11 @@ static int anderson_moore_smooth (kalman *K)
 				      L, GRETL_MOD_DECREMENT);
 	}
 
+	/* If doing dist smoothing, could compute and store
+	   here u_t = F^{-1}_t v_t - K_t' r_t, but would also
+	   have to store r_t?
+	*/
+
         /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
         gretl_matrix_multiply(K->iFt, K->vt, iFv);
         if (t == K->N - 1) {
@@ -3257,7 +3288,7 @@ static int anderson_moore_smooth (kalman *K)
         load_to_vech(K->P, K->P1, K->r, t);
 
 	if (nt < K->n) {
-	    unshrink_ZT_and_vt(K);
+	    unshrink_vt(K, SM_STATE_STD);
 	    gretl_matrix_reuse(iFv, K->n, 1);
 	    gretl_matrix_reuse(K->iFt, K->n, K->n);
 	    gretl_matrix_reuse(K->Kt, K->r, K->n);
