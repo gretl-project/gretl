@@ -37,9 +37,6 @@
 
 #define KDEBUG 0
 
-/* exact initial smoothing: not ready yet */
-#define EXACT_SM 0
-
 /* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 0
 
@@ -935,8 +932,6 @@ static void load_to_vech (gretl_matrix *targ,
     }
 }
 
-#if EXACT_SM
-
 /* Write the vech of @src into column @t of @targ */
 
 static void load_to_vechT (gretl_matrix *targ,
@@ -953,8 +948,6 @@ static void load_to_vechT (gretl_matrix *targ,
         }
     }
 }
-
-#endif
 
 /* Write the vec of @src into row @t of @targ */
 
@@ -1265,8 +1258,7 @@ static int kalman_record_state (kalman *K)
 	load_to_vech(K->P, K->P0, K->r, K->t);
     }
 
-#if EXACT_SM
-    if (K->PK != NULL) {
+    if (K->exact && K->PK != NULL) {
 	if (K->t >= K->PK->cols) {
 	    err = gretl_matrix_realloc(K->PK, K->PK->rows, K->t + 1);
 	}
@@ -1274,7 +1266,6 @@ static int kalman_record_state (kalman *K)
 	    load_to_vechT(K->PK, K->Pk0, K->r, K->t);
 	}
     }
-#endif
 
     return err;
 }
@@ -3001,13 +2992,9 @@ static int load_filter_data (kalman *K, int t, int *pnt,
     return err;
 }
 
-#if EXACT_SM
+#define EXACT_DEBUG 1
 
-/* Try handling exact initial smoothing in the simplest case,
-   where d = 1. If this can be made to work it should be
-   possible to carry the special recursion further back, for
-   the case d > 1.
-*/
+/* Implement exact initial state smoothing for t <= d */
 
 static int exact_initial_smooth (kalman *K,
 				 gretl_matrix *r0,
@@ -3024,7 +3011,7 @@ static int exact_initial_smooth (kalman *K,
     gretl_matrix *rdag, *rdag_;
     gretl_matrix *Ndag, *Ndag_;
     gretl_matrix *tmp = K->PZ;
-    gretl_matrix rl = {0};
+    gretl_matrix *rbot;
     int rr = 2 * K->r;
     int nt = K->n;
     int i, t, err = 0;
@@ -3040,6 +3027,7 @@ static int exact_initial_smooth (kalman *K,
 			       &Ldag, rr, rr,
 			       &rdag, rr, 1,
 			       &rdag_, rr, 1,
+			       &rbot, K->r, 1,
 			       &Ndag, rr, rr,
 			       &Ndag_, rr, rr,
 			       NULL);
@@ -3047,27 +3035,23 @@ static int exact_initial_smooth (kalman *K,
 	return E_ALLOC;
     }
 
-    /* r† = [rd 0]' */
+    /* initial r† = [rd 0]' */
     for (i=0; i<rr; i++) {
 	rdag->val[i] = (i < K->r)? r0->val[i] : 0;
     }
-
-    /* target for the bottom r rows of r†_{t-1} */
-    rl.val = rdag_->val + K->r;
-    rl.rows = K->r;
-    rl.cols = 1;
 
     gretl_matrix_zero(Ndag);
     gretl_matrix_inscribe_matrix(Ndag, N0, 0, 0, GRETL_MOD_NONE);
     gretl_matrix_zero(Ndag_);
 
     for (t=K->d-1; t>=0; t--) {
+#if EXACT_DEBUG
+	fprintf(stderr, "*** exact_initial_smooth: t=%d ***\n\n", t);
+#endif
 	err = load_filter_data(K, t, &nt, 1);
 	if (err) {
 	    break;
-	}
-
-	if (nt < K->n) {
+	} else if (nt < K->n) {
 	    gretl_matrix_reuse(Mk, K->r, nt);
 	    gretl_matrix_reuse(F1, nt, nt);
 	    gretl_matrix_reuse(F2, nt, nt);
@@ -3136,11 +3120,13 @@ static int exact_initial_smooth (kalman *K,
 	gretl_matrix_inscribe_matrix(Pdag, K->Pk0, 0, K->r,
 				     GRETL_MOD_NONE);
 
-	/* r†_{t-1} = (0 | rl) + L†_t * r†_t */
+	/* r†_{t-1} = (0 | rbot) + L†_t * r†_t */
 	gretl_matrix_zero(rdag_);
 	gretl_matrix_multiply(K->ZT, F1, tmp);
-	gretl_matrix_multiply(tmp, K->vt, &rl);
-	gretl_matrix_multiply_mod(Ldag, GRETL_MOD_NONE, /* ? */
+	gretl_matrix_multiply(tmp, K->vt, rbot);
+	gretl_matrix_inscribe_matrix(rdag_, rbot, K->r, 0,
+				     GRETL_MOD_NONE);
+	gretl_matrix_multiply_mod(Ldag, GRETL_MOD_TRANSPOSE,
 				  rdag, GRETL_MOD_NONE,
 				  rdag_, GRETL_MOD_CUMULATE);
 
@@ -3150,9 +3136,11 @@ static int exact_initial_smooth (kalman *K,
 				  rdag_, GRETL_MOD_NONE,
 				  K->a1, GRETL_MOD_CUMULATE);
 	load_to_row(K->A, K->a1, t);
+#if EXACT_DEBUG
 	gretl_matrix_print(rdag, "rdag");
 	gretl_matrix_print(rdag_, "rdag_minus");
 	gretl_matrix_print(K->a1, "ahat");
+#endif
 	fast_copy_values(rdag, rdag_);
 
 	/* N†_{t-1} = (0 ~ Z'*F1*Z) | (Z'*F1*Z ~ Z'*F2*Z) + L†'*N†*L† */
@@ -3174,9 +3162,11 @@ static int exact_initial_smooth (kalman *K,
 	gretl_matrix_qform(Pdag, GRETL_MOD_NONE, Ndag_,
 			   K->P1, GRETL_MOD_DECREMENT);
 	load_to_vech(K->P, K->P1, K->r, t);
+#if EXACT_DEBUG
 	gretl_matrix_print(Ndag, "Ndag");
 	gretl_matrix_print(Ndag_, "Ndag_minus");
 	gretl_matrix_print(K->P1, "Vt");
+#endif
 	fast_copy_values(Ndag, Ndag_);
 
 	if (nt < K->n) {
@@ -3194,8 +3184,6 @@ static int exact_initial_smooth (kalman *K,
 
     return err;
 }
-
-#endif
 
 /* Anderson-Moore Kalman smoothing.  This method uses a_{t|t-1} and
    P_{t|t-1} for all t, but we overwrite these with the smoothed
@@ -3226,19 +3214,15 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_zero(N0);
 
     for (t=K->N-1; t>=0 && !err; t--) {
-#if EXACT_SM
-	if (t == K->d - 1) {
-	    fprintf(stderr, "HERE switch to exact initial smoothing at t=%d\n", t);
+	if (K->exact && t == K->d - 1) {
 	    exact_initial_smooth(K, r0, L, N0, N1);
 	    break;
 	}
-#endif
+
 	err = load_filter_data(K, t, &nt, 0);
 	if (err) {
 	    break;
-	}
-
-	if (nt < K->n) {
+	} else if (nt < K->n) {
 	    gretl_matrix_reuse(iFv, nt, 1);
 	}
 
@@ -3383,14 +3367,12 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         }
     }
 
-#if EXACT_SM
     if (K->exact) {
 	int rr = (K->r * K->r + K->r) / 2;
 
 	/* Note: PK will need more than K->r cols if d > K->r */
 	K->PK = gretl_zero_matrix_new(rr, K->r);
     }
-#endif
 
     if (!err) {
         err = kalman_bundle_recheck_matrices(K, prn);
@@ -3423,17 +3405,15 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         }
     }
 
+    /* free "special case" storage */
     if (K->nt != NULL) {
 	free(K->nt);
 	K->nt = NULL;
     }
-
-#if EXACT_SM
     if (K->PK != NULL) {
 	gretl_matrix_free(K->PK);
 	K->PK = NULL;
     }
-#endif
 
  bailout:
 
