@@ -2777,13 +2777,13 @@ static int koopman_smooth (kalman *K, int dkstyle)
         if (K->Vsd != NULL && K->p == 0) {
             /* variance of state disturbance */
             if (dkstyle) {
-                /* Q_t - Q_t N_t Q_t */
+                /* HH' - HH' N_t HH' */
                 fast_copy_values(Vvt, K->HH);
                 gretl_matrix_qform(K->HH, GRETL_MOD_TRANSPOSE,
                                    N1, Vvt, GRETL_MOD_DECREMENT);
 
             } else {
-                /* Q_t N_t Q_t */
+                /* HH' N_t HH' */
                 gretl_matrix_qform(K->HH, GRETL_MOD_TRANSPOSE,
                                    N1, Vvt, GRETL_MOD_NONE);
             }
@@ -2869,7 +2869,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
     /* Smoothed disturbances, all time steps */
 
     if (K->p > 0) {
-        /* eps = B' r_t + G' e_t */
+        /* eps = H' r_t + G' e_t  */
         for (t=0; t<K->N; t++) {
             if (filter_is_varying(K)) {
                 K->t = t;
