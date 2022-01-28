@@ -288,7 +288,19 @@ Once a model is established, as described in the previous section,
 \cmd{kfilter} can be used to run a forward, forecasting pass.  This
 function takes a single argument, namely a bundle-pointer, and it
 returns a scalar code: 0 for successful completion, or non-zero if
-numerical problems were encountered.
+numerical problems were encountered. The forward iteration is as
+follows.
+%
+\begin{align*}
+  \prederr_t &= \obsvec_t - \obsxmat_t\obsx_t - \obsymat_t \statevec_t \\
+  F_t &= \obsymat_t \statecvar_t \obsymat_t' + R_t \\
+  M_t &= \statemat_t \statecvar_t \obsymat_t'\\
+  \statevec_{t+1} &= \statemat_t \statevec_t + K_t \prederr_t \\
+  \statecvar_{t+1} &= \statemat_t \statecvar_t \statemat_t' + Q_t - C_t\\
+\end{align*}
+%
+where $K_t = M_t\predvar^{-1}_t$ is the Kalman gain, and
+$C_t = M_t\predvar^{-1}_tM'_t$.
 
 On successful completion, several elements are added to the input
 bundle (or updated if they're already present).  A scalar under the
@@ -336,16 +348,11 @@ the following listing.
   \texttt{gain}.
 \end{enumerate}
 
-The Kalman gain is computed as
-\[
-\gain_t = \statemat_t \statecvar_{t|t-1} \obsymat_t
-\left[\obsymat_t' \statecvar_{t|t-1} \obsymat_t + \obsvar_t\right]^{-1}
-\]
-This matrix is rarely required by the user. However, it is the key
-quantity in the filtering algorithm, so we make it available under a
-dedicated key for diagnostic purposes in case numerical problems
-should arise. For example, the following retrieves the gain after a
-filtering operation:
+The Kalman gain is rarely required by the user as such. However, since
+it is a key quantity in the filtering algorithm we make it available
+under a dedicated key for diagnostic purposes in case numerical
+problems should arise. For example, the following retrieves the gain
+after a filtering operation:
 %
 \begin{code}
 kfilter(&SSmod)
@@ -474,7 +481,6 @@ it's the former that users will actually want.
 Section~\ref{sec:example_dsmooth} presents a script which exercises
 the disturbance smoother and illustrates the difference between
 $V^{(1)}_t$ and $V^{(2)}_t$.
-
 
 \section{The \cmd{ksimul} function}
 \label{sec:ksimul}
@@ -871,12 +877,12 @@ an \texttt{obsvar} element to the bundle.
 
 Once the filter is set up, all it takes to compute the log-likelihood
 for given values of $\phi$, $\theta$ and $\sigma^2_{\varepsilon}$ is
-to execute the \cmd{kfilter} function and read the Kalman
-bundle's \texttt{lnl} member (which holds the total loglikelihood)
-or, more appropriately if the likelihood has to be maximized through
-\cmd{mle}, \texttt{llt}, which gives the series of individual
-contribution to the log-likelihood for each observation. An example is
-shown in script~\ref{script:armaest}.
+to execute the \cmd{kfilter} function and read the Kalman bundle's
+\texttt{lnl} member (which holds the total loglikelihood) or---more
+appropriately if the likelihood has to be maximized through
+\cmd{mle}---\texttt{llt}, which gives the series of contributions to
+the log-likelihood per observation. An example is shown in
+script~\ref{script:armaest}.
 
 \subsection{The Hodrick--Prescott filter}
 \label{sec:example_hp}
