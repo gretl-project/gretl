@@ -2825,7 +2825,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
 {
     gretl_matrix_block *B, *BX = NULL;
     gretl_matrix *u, *D, *L, *R;
-    gretl_matrix *r0, *r1, *r2, *N1, *N2, *n1, *tr;
+    gretl_matrix *r0, *r1, *r2, *N0, *N1, *n1, *tr;
     gretl_matrix *Vvt = NULL;
     gretl_matrix *Vwt = NULL;
     gretl_matrix *DG = NULL;
@@ -2844,8 +2844,8 @@ static int koopman_smooth (kalman *K, int dkstyle)
                                &r0, K->r, 1,
                                &r1, K->r, 1,
                                &r2, K->r, 1,
+                               &N0, K->r, K->r,
                                &N1, K->r, K->r,
-                               &N2, K->r, K->r,
                                &n1, K->n, 1,
                                &tr, K->r, 1,
                                NULL);
@@ -2879,10 +2879,10 @@ static int koopman_smooth (kalman *K, int dkstyle)
         return err;
     }
 
-    gretl_matrix_zero(r1);
-    gretl_matrix_zero(N1);
+    gretl_matrix_zero(r0);
+    gretl_matrix_zero(N0);
 
-    /* The backward recursion */
+    /* The backward recursion, per Koopman */
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	err = load_filter_data(K, t, &nt, SM_KOOP_STD);
@@ -2903,57 +2903,57 @@ static int koopman_smooth (kalman *K, int dkstyle)
         gretl_matrix_multiply(K->iFt, K->vt, u);
         if (t < K->N - 1) {
             gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
-                                      r1, GRETL_MOD_NONE,
+                                      r0, GRETL_MOD_NONE,
                                       u, GRETL_MOD_DECREMENT);
         }
         /* store u_t values in V */
         load_to_row(K->V, u, t);
 
         if (K->Vsd != NULL && K->p == 0) {
-	    state_dist_variance(K, Vvt, N1, t, dkstyle);
+	    state_dist_variance(K, Vvt, N0, t, dkstyle);
         }
         if (K->GG != NULL && K->Vsd != NULL) {
-	    err = all_dist_variance(K, D, Vvt, Vwt, N1, BX,
+	    err = all_dist_variance(K, D, Vvt, Vwt, N0, BX,
 				    t, nt, dkstyle);
 	    if (err) {
 		break;
 	    }
         }
 
-        /* L_t = T - KZ' */
+        /* L_t = T_t - K_t Z_t */
         fast_copy_values(L, K->T);
         gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
                                   K->ZT, GRETL_MOD_TRANSPOSE,
                                   L, GRETL_MOD_DECREMENT);
 
         /* save r_t values in R */
-        load_to_row(R, r1, t);
+        load_to_row(R, r0, t);
 
-        /* r_{t-1} = Z F_t^{-1}v_t + L_t' r_t */
+        /* r_{t-1} = Z_t' F_t^{-1} v_t + L_t' r_t */
         gretl_matrix_multiply(K->ZT, K->iFt, tr);
-        gretl_matrix_multiply(tr, K->vt, r2);
+        gretl_matrix_multiply(tr, K->vt, r1);
         if (t < K->N - 1) {
             gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
-                                      r1, GRETL_MOD_NONE,
-                                      r2, GRETL_MOD_CUMULATE);
+                                      r0, GRETL_MOD_NONE,
+                                      r1, GRETL_MOD_CUMULATE);
         }
         /* transcribe for next step */
-        fast_copy_values(r1, r2);
+        fast_copy_values(r0, r1);
 
         /* preserve r_0 for smoothing of state */
         if (t == 0) {
-            fast_copy_values(r0, r2);
+            fast_copy_values(r2, r1);
         }
 
-        /* N_{t-1} = Z F_t^{-1}Z' + L' N L */
+        /* N_{t-1} = Z_t' F_t^{-1} Z_t + L_t' N_t L_t */
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
-                           K->iFt, N2, GRETL_MOD_NONE);
+                           K->iFt, N1, GRETL_MOD_NONE);
         if (t < K->N - 1) {
             gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
-                               N1, N2, GRETL_MOD_CUMULATE);
+                               N0, N1, GRETL_MOD_CUMULATE);
         }
         /* transcribe for next step */
-        fast_copy_values(N1, N2);
+        fast_copy_values(N0, N1);
 
 	if (nt < K->n) {
 	    unshrink_vt(K, SM_KOOP_STD);
@@ -2980,22 +2980,22 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	} else if (nt < K->n) {
 	    gretl_matrix_reuse(n1, nt, 1);
 	}
-	load_from_row(r1, R, t, GRETL_MOD_NONE);
+	load_from_row(r0, R, t, GRETL_MOD_NONE);
 	if (K->p > 0) {
 	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
-				      r1, GRETL_MOD_NONE,
+				      r0, GRETL_MOD_NONE,
 				      Ut, GRETL_MOD_NONE);
 	    load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
 	    gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
 				      K->vt, GRETL_MOD_NONE,
 				      Ut, GRETL_MOD_CUMULATE);
-	    gretl_matrix_multiply(K->H, Ut, r2);
+	    gretl_matrix_multiply(K->H, Ut, r1);
 	} else {
-	    gretl_matrix_multiply(K->HH, r1, r2);
+	    gretl_matrix_multiply(K->HH, r0, r1);
 	}
-	load_to_row(R, r2, t);
+	load_to_row(R, r1, t);
 	for (i=0; i<K->r; i++) {
-	    x = gretl_vector_get(r2, i);
+	    x = gretl_vector_get(r1, i);
 	    gretl_matrix_set(K->U, t, i, x);
 	}
 	if (K->p > 0) {
@@ -3016,10 +3016,10 @@ static int koopman_smooth (kalman *K, int dkstyle)
 
     /* Write initial smoothed state */
     if (K->Pini != NULL) {
-        gretl_matrix_multiply(K->Pini, r0, K->a0);
+        gretl_matrix_multiply(K->Pini, r2, K->a0);
     } else {
         construct_Pini(K);
-        gretl_matrix_multiply(K->P0, r0, K->a0);
+        gretl_matrix_multiply(K->P0, r2, K->a0);
     }
     if (K->aini != NULL) {
         gretl_matrix_add_to(K->a0, K->aini);
