@@ -2940,7 +2940,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
         /* transcribe for next step */
         fast_copy_values(r0, r1);
 
-        /* preserve r_0 for smoothing of state */
+        /* preserve r_1 for smoothing of state */
         if (t == 0) {
             fast_copy_values(r2, r1);
         }
@@ -3007,7 +3007,6 @@ static int koopman_smooth (kalman *K, int dkstyle)
 	    x = gretl_vector_get(n1, i);
 	    gretl_matrix_set(K->U, t, K->r + i, x);
 	}
-
 	if (nt < K->n) {
 	    unshrink_vt(K, SM_DIST_STD);
 	    gretl_matrix_reuse(n1, K->n, 1);
