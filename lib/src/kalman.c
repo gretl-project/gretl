@@ -285,12 +285,12 @@ static kalman *kalman_new_empty (int flags)
     kalman *K = malloc(sizeof *K);
 
     if (K != NULL) {
-	K->exact = 0;
+        K->exact = 0;
         K->aini = K->Pini = NULL;
         K->a0 = K->a1 = NULL;
         K->P0 = K->P1 = NULL;
         K->Pk0 = K->Pk1 = NULL;
-	K->PK = NULL;
+        K->PK = NULL;
         K->Fk = K->Ck = NULL;
         K->LL = NULL;
         K->vt = NULL;
@@ -342,10 +342,10 @@ static void kalman_set_dimensions (kalman *K)
 static int missing_matrix_error (const char *name)
 {
     if (name == NULL) {
-	gretl_errmsg_set(_("kalman: a required matrix is missing"));
+        gretl_errmsg_set(_("kalman: a required matrix is missing"));
     } else {
-	gretl_errmsg_sprintf(_("kalman: required matrix %s is missing"),
-			     name);
+        gretl_errmsg_sprintf(_("kalman: required matrix %s is missing"),
+                             name);
     }
     return E_DATA;
 }
@@ -441,9 +441,9 @@ static int kalman_check_dimensions (kalman *K)
             err = missing_matrix_error("obsymat");
         } else if (K->H->rows != K->r || K->H->cols != K->p ||
                    K->G->rows != K->n || K->G->cols != K->p) {
-	    fprintf(stderr, "H is %d x %d, G is %d x %d, p=%d, r=%d, n=%d\n",
-		    K->H->rows, K->H->cols, K->G->rows, K->G->cols,
-		    K->p, K->r, K->n);
+            fprintf(stderr, "H is %d x %d, G is %d x %d, p=%d, r=%d, n=%d\n",
+                    K->H->rows, K->H->cols, K->G->rows, K->G->cols,
+                    K->p, K->r, K->n);
             err = E_NONCONF;
         }
     } else {
@@ -651,27 +651,27 @@ static int kalman_init (kalman *K)
  */
 
 kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
-		    gretl_matrix *T, gretl_matrix *BT,
-		    gretl_matrix *ZT, gretl_matrix *HH,
-		    gretl_matrix *GG, gretl_matrix *y,
-		    gretl_matrix *x, gretl_matrix *mu,
-		    gretl_matrix *V, int *err)
+                    gretl_matrix *T, gretl_matrix *BT,
+                    gretl_matrix *ZT, gretl_matrix *HH,
+                    gretl_matrix *GG, gretl_matrix *y,
+                    gretl_matrix *x, gretl_matrix *mu,
+                    gretl_matrix *V, int *err)
 {
     kalman *K;
 
     *err = 0;
 
     if (y == NULL || T == NULL || ZT == NULL || HH == NULL) {
-	fprintf(stderr, "kalman_new: y=%p, T=%p, ZT=%p, HH=%p\n",
-		(void *) y, (void *) T, (void *) ZT, (void *) HH);
-	*err = missing_matrix_error(NULL);
-	return NULL;
+        fprintf(stderr, "kalman_new: y=%p, T=%p, ZT=%p, HH=%p\n",
+                (void *) y, (void *) T, (void *) ZT, (void *) HH);
+        *err = missing_matrix_error(NULL);
+        return NULL;
     }
 
     K = kalman_new_empty(0);
     if (K == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+        *err = E_ALLOC;
+        return NULL;
     }
 
     /* use pointers for input matrices, don't copy */
@@ -693,17 +693,17 @@ kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
 
     *err = kalman_check_dimensions(K);
     if (*err) {
-	free(K);
-	return NULL;
+        free(K);
+        return NULL;
     }
 
     *err = kalman_init(K);
 
     if (*err) {
-	kalman_free(K);
-	K = NULL;
+        kalman_free(K);
+        K = NULL;
     } else {
-	gretl_matrix_zero(K->vt);
+        gretl_matrix_zero(K->vt);
     }
 
     return K;
@@ -737,9 +737,9 @@ double kalman_get_loglik (const kalman *K)
 double kalman_get_arma_variance (const kalman *K)
 {
     if (na(K->SSRw)) {
-	return NADBL;
+        return NADBL;
     } else {
-	return K->SSRw / K->okN;
+        return K->SSRw / K->okN;
     }
 }
 
@@ -778,7 +778,7 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P)
 void kalman_attach_data (kalman *K, void *data)
 {
     if (K != NULL) {
-	K->data = data;
+        K->data = data;
     }
 }
 
@@ -790,7 +790,7 @@ void *kalman_get_data (const kalman *K)
 void kalman_attach_printer (kalman *K, PRN *prn)
 {
     if (K != NULL) {
-	K->prn = prn;
+        K->prn = prn;
     }
 }
 
@@ -818,25 +818,25 @@ static int diffuse_Pini (kalman *K)
     gretl_matrix_zero(K->P0);
 
     if (K->exact) {
-	if (K->Pk0 == NULL) {
-	    K->Pk0 = gretl_identity_matrix_new(K->r);
-	    K->Pk1 = gretl_matrix_alloc(K->r, K->r);
-	    K->Fk  = gretl_matrix_alloc(K->n, K->n);
-	    K->Ck  = gretl_matrix_alloc(K->r, K->r);
-	    if (K->Pk0 == NULL || K->Pk1 == NULL ||
-		K->Fk == NULL || K->Ck == NULL) {
-		return E_ALLOC;
-	    }
-	} else {
-	    gretl_matrix_inscribe_I(K->Pk0, 0, 0, K->r);
-	}
+        if (K->Pk0 == NULL) {
+            K->Pk0 = gretl_identity_matrix_new(K->r);
+            K->Pk1 = gretl_matrix_alloc(K->r, K->r);
+            K->Fk  = gretl_matrix_alloc(K->n, K->n);
+            K->Ck  = gretl_matrix_alloc(K->r, K->r);
+            if (K->Pk0 == NULL || K->Pk1 == NULL ||
+                K->Fk == NULL || K->Ck == NULL) {
+                return E_ALLOC;
+            }
+        } else {
+            gretl_matrix_inscribe_I(K->Pk0, 0, 0, K->r);
+        }
     } else {
-	/* old-style */
-	int i;
+        /* old-style */
+        int i;
 
-	for (i=0; i<K->r; i++) {
-	    gretl_matrix_set(K->P0, i, i, kappa);
-	}
+        for (i=0; i<K->r; i++) {
+            gretl_matrix_set(K->P0, i, i, kappa);
+        }
     }
 
     return 0;
@@ -1010,17 +1010,17 @@ static void load_to_row (gretl_matrix *targ,
 */
 
 static void load_to_row_special (gretl_matrix *targ,
-				 const gretl_vector *src,
-				 int t, char *missmap)
+                                 const gretl_vector *src,
+                                 int t, char *missmap)
 {
     int i, k;
 
     for (i=0, k=0; i<targ->cols; i++) {
-	if (missmap[i]) {
-	    gretl_matrix_set(targ, t, i, NADBL);
-	} else {
-	    gretl_matrix_set(targ, t, i, src->val[k++]);
-	}
+        if (missmap[i]) {
+            gretl_matrix_set(targ, t, i, NADBL);
+        } else {
+            gretl_matrix_set(targ, t, i, src->val[k++]);
+        }
     }
 }
 
@@ -1145,19 +1145,19 @@ static int ensure_covariance_matrices (kalman *K)
     int i, err = 0;
 
     for (i=0; i<3 && !err; i++) {
-	targ = V[i];
-	if (*targ == NULL) {
-	    *targ = gretl_matrix_alloc(r[i], c[i]);
-	} else {
-	    gretl_matrix *Vi = *targ;
+        targ = V[i];
+        if (*targ == NULL) {
+            *targ = gretl_matrix_alloc(r[i], c[i]);
+        } else {
+            gretl_matrix *Vi = *targ;
 
-	    if (Vi->rows != r[i] || Vi->cols != c[i]) {
-		gretl_matrix_realloc(Vi, r[i], c[i]);
-	    }
-	}
-	if (*targ == NULL) {
-	    err = E_ALLOC;
-	}
+            if (Vi->rows != r[i] || Vi->cols != c[i]) {
+                gretl_matrix_realloc(Vi, r[i], c[i]);
+            }
+        }
+        if (*targ == NULL) {
+            err = E_ALLOC;
+        }
     }
 
     return err;
@@ -1179,10 +1179,10 @@ static int kalman_update_crossinfo (kalman *K, int mode)
     /* Note that H and G may be needed as such for simulation */
 
     if (mode == UPDATE_INIT) {
-	err = ensure_covariance_matrices(K);
-	if (err) {
-	    return err;
-	}
+        err = ensure_covariance_matrices(K);
+        if (err) {
+            return err;
+        }
     }
 
     if (mode == UPDATE_INIT || matrix_is_varying(K, K_Q)) {
@@ -1264,16 +1264,16 @@ static int kalman_record_state (kalman *K)
         load_to_row(K->A, K->a0, K->t);
     }
     if (K->P != NULL) {
-	load_to_vech(K->P, K->P0, K->r, K->t);
+        load_to_vech(K->P, K->P0, K->r, K->t);
     }
 
     if (K->exact && K->PK != NULL) {
-	if (K->t >= K->PK->cols) {
-	    err = gretl_matrix_realloc(K->PK, K->PK->rows, K->t + 1);
-	}
-	if (!err) {
-	    load_to_vechT(K->PK, K->Pk0, K->r, K->t);
-	}
+        if (K->t >= K->PK->cols) {
+            err = gretl_matrix_realloc(K->PK, K->PK->rows, K->t + 1);
+        }
+        if (!err) {
+            load_to_vechT(K->PK, K->Pk0, K->r, K->t);
+        }
     }
 
     return err;
@@ -1295,7 +1295,7 @@ static int kalman_record_state (kalman *K)
 */
 
 static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
-			 GretlMatrixMod mod)
+                         GretlMatrixMod mod)
 {
     double xjt, bji, bxi;
     int i, j, missvals = 0;
@@ -1312,22 +1312,22 @@ static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
                 } else {
                     xjt = gretl_matrix_get(K->x, K->t, j);
                 }
-		bji = gretl_matrix_get(K->BT, j, i);
-		if (bji != 0) {
-		    /* here we'll implicitly take 0 * NA as 0 */
-		    if (na(xjt)) {
-			missvals++;
-		    } else {
-			bxi += xjt * bji;
-		    }
-		}
+                bji = gretl_matrix_get(K->BT, j, i);
+                if (bji != 0) {
+                    /* here we'll implicitly take 0 * NA as 0 */
+                    if (na(xjt)) {
+                        missvals++;
+                    } else {
+                        bxi += xjt * bji;
+                    }
+                }
             }
         }
-	if (mod == GRETL_MOD_DECREMENT) {
-	    targ->val[i] -= bxi;
-	} else {
-	    targ->val[i] += bxi;
-	}
+        if (mod == GRETL_MOD_DECREMENT) {
+            targ->val[i] -= bxi;
+        } else {
+            targ->val[i] += bxi;
+        }
     }
 
     return missvals;
@@ -1352,10 +1352,10 @@ static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
 static int get_effective_n (kalman *K, int t)
 {
     if (K->nt == NULL || K->nt[t] == 0) {
-	/* no missing values */
-	return K->n;
+        /* no missing values */
+        return K->n;
     } else {
-	return K->nt[t];
+        return K->nt[t];
     }
 }
 
@@ -1370,55 +1370,55 @@ static void shrink_obsvar (kalman *K, int nt)
     int i, j, k;
 
     if (K->G == NULL) {
-	/* the relatively simple case */
-	K->saveGG = K->GG;
-	K->GG = gretl_matrix_alloc(nt, nt);
+        /* the relatively simple case */
+        K->saveGG = K->GG;
+        K->GG = gretl_matrix_alloc(nt, nt);
 
-	for (j=0, k=0; j<K->n; j++) {
-	    if (!na(K->vt->val[j])) {
-		for (i=0; i<K->n; i++) {
-		    if (!na(K->vt->val[i])) {
-			gij = gretl_matrix_get(K->saveGG, i, j);
-			K->GG->val[k++] = gij;
-		    }
-		}
-	    }
-	}
+        for (j=0, k=0; j<K->n; j++) {
+            if (!na(K->vt->val[j])) {
+                for (i=0; i<K->n; i++) {
+                    if (!na(K->vt->val[i])) {
+                        gij = gretl_matrix_get(K->saveGG, i, j);
+                        K->GG->val[k++] = gij;
+                    }
+                }
+            }
+        }
     } else {
-	/* the more complex case */
-	K->saveG = K->G;
-	K->G = gretl_matrix_alloc(nt, K->p);
+        /* the more complex case */
+        K->saveG = K->G;
+        K->G = gretl_matrix_alloc(nt, K->p);
 
-	for (i=0, k=0; i<K->n; i++) {
-	    if (!na(K->vt->val[i])) {
-		for (j=0; j<K->p; j++) {
-		    gij = gretl_matrix_get(K->saveG, i, j);
-		    gretl_matrix_set(K->G, k, j, gij);
-		}
-		k++;
-	    }
-	}
-	gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
-				  K->G, GRETL_MOD_TRANSPOSE,
-				  K->GG, GRETL_MOD_NONE);
-	if (K->HG != NULL) {
-	    gretl_matrix_reuse(K->HG, K->r, nt);
-	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
-				      K->G, GRETL_MOD_TRANSPOSE,
-				      K->HG, GRETL_MOD_NONE);
-	}
+        for (i=0, k=0; i<K->n; i++) {
+            if (!na(K->vt->val[i])) {
+                for (j=0; j<K->p; j++) {
+                    gij = gretl_matrix_get(K->saveG, i, j);
+                    gretl_matrix_set(K->G, k, j, gij);
+                }
+                k++;
+            }
+        }
+        gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
+                                  K->G, GRETL_MOD_TRANSPOSE,
+                                  K->GG, GRETL_MOD_NONE);
+        if (K->HG != NULL) {
+            gretl_matrix_reuse(K->HG, K->r, nt);
+            gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
+                                      K->G, GRETL_MOD_TRANSPOSE,
+                                      K->HG, GRETL_MOD_NONE);
+        }
     }
 }
 
 static int obsvar_resize_needed (kalman *K, int smtype)
 {
     if (K->GG != NULL) {
-	return smtype == SM_TYPE_NONE ||
-	    smtype == SM_DIST_BKWD ||
-	    smtype == SM_DIST_FRWD ||
-	    smtype == SM_STATE_INI;
+        return smtype == SM_TYPE_NONE ||
+            smtype == SM_DIST_BKWD ||
+            smtype == SM_DIST_FRWD ||
+            smtype == SM_STATE_INI;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -1427,23 +1427,23 @@ static int obsvar_resize_needed (kalman *K, int smtype)
 static void unshrink_obsvar (kalman *K)
 {
     if (K->G == NULL) {
-	gretl_matrix_free(K->GG);
-	K->GG = K->saveGG;
-	K->saveGG = NULL;
+        gretl_matrix_free(K->GG);
+        K->GG = K->saveGG;
+        K->saveGG = NULL;
     } else {
-	gretl_matrix_free(K->G);
-	K->G = K->saveG;
-	K->saveG = NULL;
-	gretl_matrix_reuse(K->GG, K->n, K->n);
-	gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
-				  K->G, GRETL_MOD_TRANSPOSE,
-				  K->GG, GRETL_MOD_NONE);
-	if (K->HG != NULL) {
-	    gretl_matrix_reuse(K->HG, K->r, K->n);
-	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
-				      K->G, GRETL_MOD_TRANSPOSE,
-				      K->HG, GRETL_MOD_NONE);
-	}
+        gretl_matrix_free(K->G);
+        K->G = K->saveG;
+        K->saveG = NULL;
+        gretl_matrix_reuse(K->GG, K->n, K->n);
+        gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
+                                  K->G, GRETL_MOD_TRANSPOSE,
+                                  K->GG, GRETL_MOD_NONE);
+        if (K->HG != NULL) {
+            gretl_matrix_reuse(K->HG, K->r, K->n);
+            gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
+                                      K->G, GRETL_MOD_TRANSPOSE,
+                                      K->HG, GRETL_MOD_NONE);
+        }
     }
 }
 
@@ -1453,23 +1453,23 @@ static void shrink_vt (kalman *K, int nt, int smtype)
     int i, k;
 
     if (smtype < SM_DIST_BKWD) {
-	/* We need to shrink ZT too */
-	int j;
+        /* We need to shrink ZT too */
+        int j;
 
-	K->saveZT = K->ZT; /* save the original matrix */
-	K->ZT = gretl_matrix_alloc(K->r, nt);
+        K->saveZT = K->ZT; /* save the original matrix */
+        K->ZT = gretl_matrix_alloc(K->r, nt);
 
-	for (j=0, k=0; j<K->n; j++) {
-	    if (!na(K->vt->val[j])) {
-		for (i=0; i<K->r; i++) {
-		    K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
-		}
-	    }
-	}
+        for (j=0, k=0; j<K->n; j++) {
+            if (!na(K->vt->val[j])) {
+                for (i=0; i<K->r; i++) {
+                    K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
+                }
+            }
+        }
     }
 
     if (obsvar_resize_needed(K, smtype)) {
-	shrink_obsvar(K, nt);
+        shrink_obsvar(K, nt);
     }
 
     /* K-member workspace matrices */
@@ -1481,9 +1481,9 @@ static void shrink_vt (kalman *K, int nt, int smtype)
 
     /* remove missing rows of vt */
     for (i=0, k=0; i<K->n; i++) {
-	if (!na(K->vt->val[i])) {
-	    tmp[k++] = K->vt->val[i];
-	}
+        if (!na(K->vt->val[i])) {
+            tmp[k++] = K->vt->val[i];
+        }
     }
     memcpy(K->vt->val, tmp, nt * sizeof(double));
     gretl_matrix_reuse(K->vt, nt, 1);
@@ -1493,10 +1493,10 @@ static void shrink_vt (kalman *K, int nt, int smtype)
 static void unshrink_vt (kalman *K, int smtype)
 {
     if (smtype < SM_DIST_BKWD) {
-	/* We need to restore ZT too */
-	gretl_matrix_free(K->ZT);
-	K->ZT = K->saveZT;
-	K->saveZT = NULL;
+        /* We need to restore ZT too */
+        gretl_matrix_free(K->ZT);
+        K->ZT = K->saveZT;
+        K->saveZT = NULL;
     }
     gretl_matrix_reuse(K->vt, K->n, 1);
 
@@ -1508,7 +1508,7 @@ static void unshrink_vt (kalman *K, int smtype)
     gretl_matrix_reuse(K->PZ, K->r, K->n);
 
     if (obsvar_resize_needed(K, smtype)) {
-	unshrink_obsvar(K);
+        unshrink_obsvar(K);
     }
 }
 
@@ -1523,13 +1523,13 @@ static void shrink_obs_to_ok (kalman *K, int nt)
     shrink_vt(K, nt, SM_TYPE_NONE);
 
     if (basic_smoothing(K)) {
-	/* make a record for the smoother */
-	if (K->nt == NULL) {
-	    K->nt = calloc(K->N, sizeof *K->nt);
-	}
-	if (K->nt != NULL) {
-	    K->nt[K->t] = nt;
-	}
+        /* make a record for the smoother */
+        if (K->nt == NULL) {
+            K->nt = calloc(K->N, sizeof *K->nt);
+        }
+        if (K->nt != NULL) {
+            K->nt[K->t] = nt;
+        }
     }
 }
 
@@ -1546,7 +1546,7 @@ static int compute_forecast_error (kalman *K, char *missmap)
     int i, nt = K->n;
 
     if (missmap != NULL) {
-	memset(missmap, 0, K->n);
+        memset(missmap, 0, K->n);
     }
 
     /* initialize v_t to y_t */
@@ -1561,20 +1561,20 @@ static int compute_forecast_error (kalman *K, char *missmap)
 
     /* count any missing values in v_t */
     for (i=0; i<K->n; i++) {
-	if (na(K->vt->val[i])) {
-	    if (missmap != NULL) {
-		missmap[i] = 1;
-	    }
-	    nt--;
-	}
+        if (na(K->vt->val[i])) {
+            if (missmap != NULL) {
+                missmap[i] = 1;
+            }
+            nt--;
+        }
     }
 
     if (nt > 0 && nt < K->n) {
-	if (missmap != NULL) {
-	    shrink_obs_to_ok(K, nt);
-	} else {
-	    nt = 0; /* skip this observation */
-	}
+        if (missmap != NULL) {
+            shrink_obs_to_ok(K, nt);
+        } else {
+            nt = 0; /* skip this observation */
+        }
     }
 
     if (nt > 0) {
@@ -1966,12 +1966,12 @@ static void P_infty_update (kalman *K, int C_zero)
     gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
                        K->Pk1, GRETL_MOD_NONE);
     if (!C_zero) {
-	gretl_matrix_subtract_from(K->Pk1, K->Ck);
+        gretl_matrix_subtract_from(K->Pk1, K->Ck);
     }
     fast_copy_values(K->Pk0, K->Pk1);
 
     if (K->d == 0 && max_val(K->Pk0) < K_TINY) {
-	K->d = K->t + 1;
+        K->d = K->t + 1;
     }
 }
 
@@ -1992,14 +1992,14 @@ static void handle_missing_obs (kalman *K)
     /* var(state) update: P1 = T*P0*T' + HH (C = 0) */
     fast_copy_values(K->P1, K->HH);
     gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->P0,
-		       K->P1, GRETL_MOD_CUMULATE);
+                       K->P1, GRETL_MOD_CUMULATE);
     fast_copy_values(K->P0, K->P1);
 
     if (K->exact && max_val(K->Pk0) > K_TINY) {
-	/* update P∞ (what about K->d?) */
-	gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
-			   K->Pk1, GRETL_MOD_NONE);
-	fast_copy_values(K->Pk0, K->Pk1);
+        /* update P∞ (what about K->d?) */
+        gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
+                           K->Pk1, GRETL_MOD_NONE);
+        fast_copy_values(K->Pk0, K->Pk1);
     }
 
     /* record stuff if wanted */
@@ -2049,15 +2049,15 @@ int kalman_forecast (kalman *K, PRN *prn)
 
 #if USE_INCOMPLETE_OBS
     if (!kalman_smoothing(K) || basic_smoothing(K)) {
-	/* we won't do this for disturbance smoothing, yet */
-	missmap = calloc(K->n, 1);
+        /* we won't do this for disturbance smoothing, yet */
+        missmap = calloc(K->n, 1);
     }
 #endif
 
     if (kalman_diffuse(K) && !K->exact) {
-	K->d = K->r;
+        K->d = K->r;
     } else {
-	K->d = 0;
+        K->d = 0;
     }
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
@@ -2090,24 +2090,24 @@ int kalman_forecast (kalman *K, PRN *prn)
         /* calculate v_t, checking for missing values */
         nt = compute_forecast_error(K, missmap);
         if (nt == 0) {
-	    /* skip this observation */
+            /* skip this observation */
             K->okN -= 1;
             handle_missing_obs(K);
             continue;
         }
 
         /* calculate F_t = ZPZ' [+ GG'] */
-	if (K->GG != NULL) {
-	    fast_copy_values(K->Ft, K->GG);
-	    gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
-			       K->Ft, GRETL_MOD_CUMULATE);
-	} else {
-	    gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
-			       K->Ft, GRETL_MOD_NONE);
-	}
+        if (K->GG != NULL) {
+            fast_copy_values(K->Ft, K->GG);
+            gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
+                               K->Ft, GRETL_MOD_CUMULATE);
+        } else {
+            gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
+                               K->Ft, GRETL_MOD_NONE);
+        }
 
         /* calculate M_t = TPZ' [+ HG'] */
-	gretl_matrix_multiply(K->P0, K->ZT, K->PZ);
+        gretl_matrix_multiply(K->P0, K->ZT, K->PZ);
         gretl_matrix_multiply(K->T, K->PZ, K->Mt);
         if (K->HG != NULL) {
             gretl_matrix_add_to(K->Mt, K->HG);
@@ -2115,29 +2115,29 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         if (K->exact && max_val(K->Pk0) > K_TINY) {
             /* handle initial exact iterations */
-	    int C_zero = 0;
+            int C_zero = 0;
 
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE,
                                K->Pk0, K->Fk, GRETL_MOD_NONE);
             if (K->n == 1 && K->Fk->val[0] < K_TINY) {
-		/* univariate F∞ = 0 */
+                /* univariate F∞ = 0 */
                 ldet = log(K->Ft->val[0]);
                 K->iFt->val[0] = 1.0 / K->Ft->val[0];
                 qt = K->vt->val[0] * K->vt->val[0] * K->iFt->val[0];
-		C_zero = 1;
+                C_zero = 1;
             } else if (K->n == 1) {
-		/* univariate F∞ nonsingular */
+                /* univariate F∞ nonsingular */
                 ldet = log(K->Fk->val[0]);
-		K->iFt->val[0] = 0;
+                K->iFt->val[0] = 0;
                 qt = 0;
                 err = koopman_exact_nonsingular(K);
                 Kt_done = 1;
             } else {
-		/* multivariate case */
+                /* multivariate case */
                 err = koopman_exact_general(K, &ldet, &qt);
                 Kt_done = 1;
             }
-	    P_infty_update(K, C_zero);
+            P_infty_update(K, C_zero);
         } else {
             /* standard Kalman procedure */
             fast_copy_values(K->iFt, K->Ft);
@@ -2172,7 +2172,7 @@ int kalman_forecast (kalman *K, PRN *prn)
             }
             K->SSRw += qt;
             K->loglik += llt;
-	    sumldet += ldet;
+            sumldet += ldet;
         }
         if (K->LL != NULL) {
             gretl_vector_set(K->LL, K->t, llt);
@@ -2199,9 +2199,9 @@ int kalman_forecast (kalman *K, PRN *prn)
         if (K->mu != NULL) {
             gretl_matrix_add_to(K->a1, K->mu);
         }
-	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				  K->vt, GRETL_MOD_NONE,
-				  K->a1, GRETL_MOD_CUMULATE);
+        gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+                                  K->vt, GRETL_MOD_NONE,
+                                  K->a1, GRETL_MOD_CUMULATE);
         fast_copy_values(K->a0, K->a1);
 
         /* update var(state): P1 = TPT' + HH' - C */
@@ -2213,27 +2213,27 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         /* record forecast errors if wanted */
         if (!err && K->V != NULL) {
-	    if (missmap != NULL) {
-		load_to_row_special(K->V, K->vt, K->t, missmap);
-	    } else {
-		load_to_row(K->V, K->vt, K->t);
-	    }
+            if (missmap != NULL) {
+                load_to_row_special(K->V, K->vt, K->t, missmap);
+            } else {
+                load_to_row(K->V, K->vt, K->t);
+            }
         }
 
-	if (nt > 0 && nt < K->n) {
-	    /* restore certain matrices to full size */
-	    unshrink_vt(K, SM_TYPE_NONE);
-	}
+        if (nt > 0 && nt < K->n) {
+            /* restore certain matrices to full size */
+            unshrink_vt(K, SM_TYPE_NONE);
+        }
     }
 
     set_kalman_stopped(K);
 
     if (na(K->loglik)) {
-	err = E_NAN;
+        err = E_NAN;
     } else if (kalman_arma_ll(K)) {
-	double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
+        double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
 
-	K->loglik = -0.5 * (K->okN * ll1 + sumldet);
+        K->loglik = -0.5 * (K->okN * ll1 + sumldet);
     } else {
         K->s2 = K->SSRw / (K->n * K->okN - K->d);
     }
@@ -2522,7 +2522,7 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
 */
 
 static void load_from_vechT (gretl_matrix *targ, const gretl_matrix *src,
-			     int n, int t)
+                             int n, int t)
 {
     int i, j, m = 0;
     double x;
@@ -2637,43 +2637,43 @@ static int load_filter_data (kalman *K, int t, int *pnt, int smtype)
     load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
 
     if (smtype == SM_DIST_BKWD) {
-	/* disturbances */
-	if (filter_is_varying(K)) {
-	    K->t = t;
-	    ksmooth_refresh_matrices(K, NULL);
-	}
+        /* disturbances */
+        if (filter_is_varying(K)) {
+            K->t = t;
+            ksmooth_refresh_matrices(K, NULL);
+        }
     } else {
-	/* state: get T_t and/or Z_t if need be */
-	if (matrix_is_varying(K, K_T)) {
-	    err = retrieve_Tt(K, t);
-	}
-	if (!err && matrix_is_varying(K, K_ZT)) {
-	    err = retrieve_Zt(K, t);
-	}
-	if (err) {
-	    return err;
-	}
+        /* state: get T_t and/or Z_t if need be */
+        if (matrix_is_varying(K, K_T)) {
+            err = retrieve_Tt(K, t);
+        }
+        if (!err && matrix_is_varying(K, K_ZT)) {
+            err = retrieve_Zt(K, t);
+        }
+        if (err) {
+            return err;
+        }
     }
 
     /* check for an incomplete observation */
     *pnt = nt = get_effective_n(K, t);
     if (nt < K->n) {
-	shrink_vt(K, nt, smtype);
+        shrink_vt(K, nt, smtype);
     }
 
     if (smtype < SM_DIST_BKWD) {
-	/* load the state and its MSE */
-	load_from_row(K->a0, K->A, t, GRETL_MOD_NONE);
-	load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
+        /* load the state and its MSE */
+        load_from_row(K->a0, K->A, t, GRETL_MOD_NONE);
+        load_from_vech(K->P0, K->P, K->r, t, GRETL_MOD_NONE);
     }
 
     if (smtype == SM_STATE_INI) {
-	/* load P∞ */
-	load_from_vechT(K->Pk0, K->PK, K->r, t);
+        /* load P∞ */
+        load_from_vechT(K->Pk0, K->PK, K->r, t);
     } else if (smtype == SM_STATE_STD || smtype == SM_DIST_BKWD) {
-	/* load the gain and F^{-1} */
-	load_from_vec(K->Kt, K->K, t);
-	load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
+        /* load the gain and F^{-1} */
+        load_from_vec(K->Kt, K->K, t);
+        load_from_vech(K->iFt, K->F, nt, t, GRETL_MOD_NONE);
     }
 
     return err;
@@ -2756,50 +2756,50 @@ static int combined_dist_variance (kalman *K,
 }
 
 static int all_dist_variance (kalman *K,
-			      gretl_matrix *D,
-			      gretl_matrix *Vvt,
-			      gretl_matrix *Vwt,
-			      gretl_matrix *Nt,
-			      gretl_matrix_block *BX,
-			      int t, int nt,
-			      int dkstyle)
+                              gretl_matrix *D,
+                              gretl_matrix *Vvt,
+                              gretl_matrix *Vwt,
+                              gretl_matrix *Nt,
+                              gretl_matrix_block *BX,
+                              int t, int nt,
+                              int dkstyle)
 {
     int err = 0;
 
     if (K->exact && t < K->d) {
-	/* not reached: D_t = K_t' N_t K_t */
-	gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
-			   Nt, D, GRETL_MOD_NONE);
+        /* not reached: D_t = K_t' N_t K_t */
+        gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
+                           Nt, D, GRETL_MOD_NONE);
     } else {
-	/* D_t = F_t^{-1} + K_t' N_t K_t */
-	fast_copy_values(D, K->iFt);
-	if (t < K->N - 1) {
-	    gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
-			       Nt, D, GRETL_MOD_CUMULATE);
-	}
+        /* D_t = F_t^{-1} + K_t' N_t K_t */
+        fast_copy_values(D, K->iFt);
+        if (t < K->N - 1) {
+            gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
+                               Nt, D, GRETL_MOD_CUMULATE);
+        }
     }
 
     if (K->p == 0) {
-	/* variance of obs disturbance */
-	if (dkstyle) {
-	    /* GG' - GG D_t GG' */
-	    fast_copy_values(Vwt, K->GG);
-	    gretl_matrix_qform(K->GG, GRETL_MOD_TRANSPOSE,
-			       D, Vwt, GRETL_MOD_DECREMENT);
-	} else {
-	    /* GG' D_t GG' */
-	    gretl_matrix_qform(K->GG, GRETL_MOD_TRANSPOSE,
-			       D, Vwt, GRETL_MOD_NONE);
-	}
-	load_to_diag(K->Vsd, Vwt, t, K->r);
+        /* variance of obs disturbance */
+        if (dkstyle) {
+            /* GG' - GG D_t GG' */
+            fast_copy_values(Vwt, K->GG);
+            gretl_matrix_qform(K->GG, GRETL_MOD_TRANSPOSE,
+                               D, Vwt, GRETL_MOD_DECREMENT);
+        } else {
+            /* GG' D_t GG' */
+            gretl_matrix_qform(K->GG, GRETL_MOD_TRANSPOSE,
+                               D, Vwt, GRETL_MOD_NONE);
+        }
+        load_to_diag(K->Vsd, Vwt, t, K->r);
     } else {
-	/* variance of combined disturbance */
-	err = combined_dist_variance(K, D, Nt, Vvt, Vwt, BX,
-				     nt, dkstyle);
-	if (!err) {
-	    load_to_diag(K->Vsd, Vvt, t, 0);
-	    load_to_diag(K->Vsd, Vwt, t, K->r);
-	}
+        /* variance of combined disturbance */
+        err = combined_dist_variance(K, D, Nt, Vvt, Vwt, BX,
+                                     nt, dkstyle);
+        if (!err) {
+            load_to_diag(K->Vsd, Vvt, t, 0);
+            load_to_diag(K->Vsd, Vwt, t, K->r);
+        }
     }
 
     return err;
@@ -2808,20 +2808,20 @@ static int all_dist_variance (kalman *K,
 /* variance of state disturbance */
 
 static void state_dist_variance (kalman *K,
-				 gretl_matrix *Vvt,
-				 gretl_matrix *Nt,
-				 int t, int dkstyle)
+                                 gretl_matrix *Vvt,
+                                 gretl_matrix *Nt,
+                                 int t, int dkstyle)
 {
     if (dkstyle) {
-	/* HH' - HH' N_t HH' */
-	fast_copy_values(Vvt, K->HH);
-	gretl_matrix_qform(K->HH, GRETL_MOD_TRANSPOSE,
-			   Nt, Vvt, GRETL_MOD_DECREMENT);
+        /* HH' - HH' N_t HH' */
+        fast_copy_values(Vvt, K->HH);
+        gretl_matrix_qform(K->HH, GRETL_MOD_TRANSPOSE,
+                           Nt, Vvt, GRETL_MOD_DECREMENT);
 
     } else {
-	/* HH' N_t HH' */
-	gretl_matrix_qform(K->HH, GRETL_MOD_TRANSPOSE,
-			   Nt, Vvt, GRETL_MOD_NONE);
+        /* HH' N_t HH' */
+        gretl_matrix_qform(K->HH, GRETL_MOD_TRANSPOSE,
+                           Nt, Vvt, GRETL_MOD_NONE);
     }
     load_to_diag(K->Vsd, Vvt, t, 0);
 }
@@ -2904,19 +2904,19 @@ static int koopman_smooth (kalman *K, int dkstyle)
     /* The backward recursion, per Koopman */
 
     for (t=K->N-1; t>=0 && !err; t--) {
-	err = load_filter_data(K, t, &nt, SM_DIST_BKWD);
+        err = load_filter_data(K, t, &nt, SM_DIST_BKWD);
         if (err) {
             break;
         } else if (nt < K->n) {
-	    /* shrink workspace matrices */
-	    gretl_matrix_reuse(u, nt, 1);
-	    gretl_matrix_reuse(D, nt, nt);
-	    gretl_matrix_reuse(n1, nt, 1);
-	    if (BX != NULL) {
-		gretl_matrix_reuse(DG, nt, K->p);
-		gretl_matrix_reuse(KN, nt, K->r);
-	    }
-	}
+            /* shrink workspace matrices */
+            gretl_matrix_reuse(u, nt, 1);
+            gretl_matrix_reuse(D, nt, nt);
+            gretl_matrix_reuse(n1, nt, 1);
+            if (BX != NULL) {
+                gretl_matrix_reuse(DG, nt, K->p);
+                gretl_matrix_reuse(KN, nt, K->r);
+            }
+        }
 
         /* u_t = F_t^{-1} v_t - K_t' r_t */
         gretl_matrix_multiply(K->iFt, K->vt, u);
@@ -2926,20 +2926,20 @@ static int koopman_smooth (kalman *K, int dkstyle)
                                       u, GRETL_MOD_DECREMENT);
         }
         /* Store u_t values in V: these are needed in
-	   the forward pass to compute the smoothed
-	   disturbances, below.
-	*/
+           the forward pass to compute the smoothed
+           disturbances, below.
+        */
         load_to_row(K->V, u, t);
 
         if (K->Vsd != NULL && K->p == 0) {
-	    state_dist_variance(K, Vvt, N0, t, dkstyle);
+            state_dist_variance(K, Vvt, N0, t, dkstyle);
         }
         if (K->GG != NULL && K->Vsd != NULL) {
-	    err = all_dist_variance(K, D, Vvt, Vwt, N0, BX,
-				    t, nt, dkstyle);
-	    if (err) {
-		break;
-	    }
+            err = all_dist_variance(K, D, Vvt, Vwt, N0, BX,
+                                    t, nt, dkstyle);
+            if (err) {
+                break;
+            }
         }
 
         /* L_t = T_t - K_t Z_t */
@@ -2977,16 +2977,16 @@ static int koopman_smooth (kalman *K, int dkstyle)
         /* transcribe for next step */
         fast_copy_values(N0, N1);
 
-	if (nt < K->n) {
-	    unshrink_vt(K, SM_DIST_BKWD);
-	    gretl_matrix_reuse(u, K->n, 1);
-	    gretl_matrix_reuse(D, K->n, K->n);
-	    gretl_matrix_reuse(n1, K->n, 1);
-	    if (BX != NULL) {
-		gretl_matrix_reuse(DG, K->n, K->p);
-		gretl_matrix_reuse(KN, K->n, K->r);
-	    }
-	}
+        if (nt < K->n) {
+            unshrink_vt(K, SM_DIST_BKWD);
+            gretl_matrix_reuse(u, K->n, 1);
+            gretl_matrix_reuse(D, K->n, K->n);
+            gretl_matrix_reuse(n1, K->n, 1);
+            if (BX != NULL) {
+                gretl_matrix_reuse(DG, K->n, K->p);
+                gretl_matrix_reuse(KN, K->n, K->r);
+            }
+        }
     }
 
 #if 0
@@ -2996,53 +2996,53 @@ static int koopman_smooth (kalman *K, int dkstyle)
 
     /* Smoothed disturbances, all time steps */
     for (t=0; t<K->N; t++) {
-	err = load_filter_data(K, t, &nt, SM_DIST_FRWD);
-	if (err) {
-	    break;
-	} else if (nt < K->n) {
-	    gretl_matrix_reuse(n1, nt, 1);
-	}
-	load_from_row(r0, R, t, GRETL_MOD_NONE);
-	if (K->p > 0) {
-	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
-				      r0, GRETL_MOD_NONE,
-				      Ut, GRETL_MOD_NONE);
-	    load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
-				      K->vt, GRETL_MOD_NONE,
-				      Ut, GRETL_MOD_CUMULATE);
-	    gretl_matrix_multiply(K->H, Ut, r1);
-	} else {
-	    gretl_matrix_multiply(K->HH, r0, r1);
-	}
-	load_to_row(R, r1, t);
-	for (i=0; i<K->r; i++) {
-	    x = gretl_vector_get(r1, i);
-	    gretl_matrix_set(K->U, t, i, x);
-	}
-	if (K->p > 0) {
-	    gretl_matrix_multiply(K->G, Ut, n1);
-	} else if (K->exact && t < K->d) {
-	    /* not reached: -GG' * Kt' * r_t */
-	    gretl_matrix *tmp = gretl_zero_matrix_new(nt, 1);
+        err = load_filter_data(K, t, &nt, SM_DIST_FRWD);
+        if (err) {
+            break;
+        } else if (nt < K->n) {
+            gretl_matrix_reuse(n1, nt, 1);
+        }
+        load_from_row(r0, R, t, GRETL_MOD_NONE);
+        if (K->p > 0) {
+            gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
+                                      r0, GRETL_MOD_NONE,
+                                      Ut, GRETL_MOD_NONE);
+            load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+            gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
+                                      K->vt, GRETL_MOD_NONE,
+                                      Ut, GRETL_MOD_CUMULATE);
+            gretl_matrix_multiply(K->H, Ut, r1);
+        } else {
+            gretl_matrix_multiply(K->HH, r0, r1);
+        }
+        load_to_row(R, r1, t);
+        for (i=0; i<K->r; i++) {
+            x = gretl_vector_get(r1, i);
+            gretl_matrix_set(K->U, t, i, x);
+        }
+        if (K->p > 0) {
+            gretl_matrix_multiply(K->G, Ut, n1);
+        } else if (K->exact && t < K->d) {
+            /* not reached: -GG' * Kt' * r_t */
+            gretl_matrix *tmp = gretl_zero_matrix_new(nt, 1);
 
-	    load_from_vec(K->Kt, K->K, t);
-	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
-				      r0, GRETL_MOD_NONE,
-				      tmp, GRETL_MOD_DECREMENT);
-	    gretl_matrix_multiply(K->GG, tmp, n1);
-	    gretl_matrix_free(tmp);
-	} else {
-	    gretl_matrix_multiply(K->GG, K->vt, n1);
-	}
-	for (i=0; i<nt; i++) {
-	    x = gretl_vector_get(n1, i);
-	    gretl_matrix_set(K->U, t, K->r + i, x);
-	}
-	if (nt < K->n) {
-	    unshrink_vt(K, SM_DIST_FRWD);
-	    gretl_matrix_reuse(n1, K->n, 1);
-	}
+            load_from_vec(K->Kt, K->K, t);
+            gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_TRANSPOSE,
+                                      r0, GRETL_MOD_NONE,
+                                      tmp, GRETL_MOD_DECREMENT);
+            gretl_matrix_multiply(K->GG, tmp, n1);
+            gretl_matrix_free(tmp);
+        } else {
+            gretl_matrix_multiply(K->GG, K->vt, n1);
+        }
+        for (i=0; i<nt; i++) {
+            x = gretl_vector_get(n1, i);
+            gretl_matrix_set(K->U, t, K->r + i, x);
+        }
+        if (nt < K->n) {
+            unshrink_vt(K, SM_DIST_FRWD);
+            gretl_matrix_reuse(n1, K->n, 1);
+        }
     }
 
     /* initial smoothed state: a + P*r0 */
@@ -3079,10 +3079,10 @@ static int koopman_smooth (kalman *K, int dkstyle)
 /* Implement exact initial state smoothing for t <= d */
 
 static int exact_initial_smooth (kalman *K,
-				 gretl_matrix *r0,
-				 gretl_matrix *L0,
-				 gretl_matrix *N0,
-				 gretl_matrix *N1)
+                                 gretl_matrix *r0,
+                                 gretl_matrix *L0,
+                                 gretl_matrix *N0,
+                                 gretl_matrix *N1)
 {
     gretl_matrix_block *B;
     gretl_matrix *Mk;
@@ -3099,27 +3099,27 @@ static int exact_initial_smooth (kalman *K,
     int i, t, err = 0;
 
     B = gretl_matrix_block_new(&Mk, K->r, K->n,
-			       &F1, K->n, K->n,
-			       &F2, K->n, K->n,
-			       &K0, K->r, K->n,
-			       &K1, K->r, K->n,
-			       &L1, K->r, K->r,
-			       &L2, K->r, K->r,
-			       &Pdag, K->r, rr,
-			       &Ldag, rr, rr,
-			       &rdag, rr, 1,
-			       &rdag_, rr, 1,
-			       &rbot, K->r, 1,
-			       &Ndag, rr, rr,
-			       &Ndag_, rr, rr,
-			       NULL);
+                               &F1, K->n, K->n,
+                               &F2, K->n, K->n,
+                               &K0, K->r, K->n,
+                               &K1, K->r, K->n,
+                               &L1, K->r, K->r,
+                               &L2, K->r, K->r,
+                               &Pdag, K->r, rr,
+                               &Ldag, rr, rr,
+                               &rdag, rr, 1,
+                               &rdag_, rr, 1,
+                               &rbot, K->r, 1,
+                               &Ndag, rr, rr,
+                               &Ndag_, rr, rr,
+                               NULL);
     if (B == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     /* initial r† = [rd 0]' */
     for (i=0; i<rr; i++) {
-	rdag->val[i] = (i < K->r)? r0->val[i] : 0;
+        rdag->val[i] = (i < K->r)? r0->val[i] : 0;
     }
 
     gretl_matrix_zero(Ndag);
@@ -3128,138 +3128,138 @@ static int exact_initial_smooth (kalman *K,
 
     for (t=K->d-1; t>=0; t--) {
 #if EXACT_DEBUG
-	fprintf(stderr, "*** exact_initial_smooth: t=%d ***\n\n", t);
+        fprintf(stderr, "*** exact_initial_smooth: t=%d ***\n\n", t);
 #endif
-	err = load_filter_data(K, t, &nt, SM_STATE_INI);
-	if (err) {
-	    break;
-	} else if (nt < K->n) {
-	    gretl_matrix_reuse(Mk, K->r, nt);
-	    gretl_matrix_reuse(F1, nt, nt);
-	    gretl_matrix_reuse(F2, nt, nt);
-	    gretl_matrix_reuse(K0, K->r, nt);
-	    gretl_matrix_reuse(K1, K->r, nt);
-	    gretl_matrix_reuse(tmp, K->r, nt);
-	}
+        err = load_filter_data(K, t, &nt, SM_STATE_INI);
+        if (err) {
+            break;
+        } else if (nt < K->n) {
+            gretl_matrix_reuse(Mk, K->r, nt);
+            gretl_matrix_reuse(F1, nt, nt);
+            gretl_matrix_reuse(F2, nt, nt);
+            gretl_matrix_reuse(K0, K->r, nt);
+            gretl_matrix_reuse(K1, K->r, nt);
+            gretl_matrix_reuse(tmp, K->r, nt);
+        }
 
-	/* F∞ = Z * P∞ * Z' */
-	gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->Pk0,
-			   F1, GRETL_MOD_NONE);
-	/* M∞ = P∞ * Z' */
-	gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
+        /* F∞ = Z * P∞ * Z' */
+        gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->Pk0,
+                           F1, GRETL_MOD_NONE);
+        /* M∞ = P∞ * Z' */
+        gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
 
-	/* F★ = Z * P★ * Z' [+ GG'] */
-	if (K->GG != NULL) {
-	    fast_copy_values(K->Ft, K->GG);
-	    gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
-			       K->Ft, GRETL_MOD_CUMULATE);
-	} else {
-	    gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
-			       K->Ft, GRETL_MOD_NONE);
-	}
-	/* M★ = P★ * Z' */
-	gretl_matrix_multiply(K->P0, K->ZT, K->Mt);
+        /* F★ = Z * P★ * Z' [+ GG'] */
+        if (K->GG != NULL) {
+            fast_copy_values(K->Ft, K->GG);
+            gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
+                               K->Ft, GRETL_MOD_CUMULATE);
+        } else {
+            gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
+                               K->Ft, GRETL_MOD_NONE);
+        }
+        /* M★ = P★ * Z' */
+        gretl_matrix_multiply(K->P0, K->ZT, K->Mt);
 
-	/* F1 = inv(F∞) */
-	gretl_invert_symmetric_matrix(F1);
+        /* F1 = inv(F∞) */
+        gretl_invert_symmetric_matrix(F1);
 
-	/* F2 = -iF∞ * F★ * iF∞ */
-	gretl_matrix_zero(F2);
-	gretl_matrix_qform(F1, GRETL_MOD_TRANSPOSE, K->Ft,
-			   F2, GRETL_MOD_DECREMENT);
+        /* F2 = -iF∞ * F★ * iF∞ */
+        gretl_matrix_zero(F2);
+        gretl_matrix_qform(F1, GRETL_MOD_TRANSPOSE, K->Ft,
+                           F2, GRETL_MOD_DECREMENT);
 
-	/* K0 = T * M∞ * F1 */
-	gretl_matrix_multiply(K->T, Mk, tmp);
-	gretl_matrix_multiply(tmp, F1, K0);
+        /* K0 = T * M∞ * F1 */
+        gretl_matrix_multiply(K->T, Mk, tmp);
+        gretl_matrix_multiply(tmp, F1, K0);
 
-	/* K1 = T * M★ * F1 + T * M∞ * F2 */
-	gretl_matrix_multiply(K->T, K->Mt, tmp);
-	gretl_matrix_multiply(tmp, F1, K1);
-	gretl_matrix_multiply(K->T, Mk, tmp);
-	gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-				  F2, GRETL_MOD_NONE,
-				  K1, GRETL_MOD_CUMULATE);
+        /* K1 = T * M★ * F1 + T * M∞ * F2 */
+        gretl_matrix_multiply(K->T, K->Mt, tmp);
+        gretl_matrix_multiply(tmp, F1, K1);
+        gretl_matrix_multiply(K->T, Mk, tmp);
+        gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+                                  F2, GRETL_MOD_NONE,
+                                  K1, GRETL_MOD_CUMULATE);
 
-	/* L0 = T - K0 * Z */
-	fast_copy_values(L0, K->T);
-	gretl_matrix_multiply_mod(K0, GRETL_MOD_NONE,
-				  K->ZT, GRETL_MOD_TRANSPOSE,
-				  L0, GRETL_MOD_DECREMENT);
-	/* L1 = -K1 * Z */
-	gretl_matrix_zero(L1);
-	gretl_matrix_multiply_mod(K1, GRETL_MOD_NONE,
-				  K->ZT, GRETL_MOD_TRANSPOSE,
-				  L1, GRETL_MOD_DECREMENT);
-	/* L† = (L0 ~ L1) | (0 ~ L0) */
-	gretl_matrix_zero(Ldag);
-	gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ldag, L1, 0, K->r, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ldag, L0, K->r, K->r, GRETL_MOD_NONE);
+        /* L0 = T - K0 * Z */
+        fast_copy_values(L0, K->T);
+        gretl_matrix_multiply_mod(K0, GRETL_MOD_NONE,
+                                  K->ZT, GRETL_MOD_TRANSPOSE,
+                                  L0, GRETL_MOD_DECREMENT);
+        /* L1 = -K1 * Z */
+        gretl_matrix_zero(L1);
+        gretl_matrix_multiply_mod(K1, GRETL_MOD_NONE,
+                                  K->ZT, GRETL_MOD_TRANSPOSE,
+                                  L1, GRETL_MOD_DECREMENT);
+        /* L† = (L0 ~ L1) | (0 ~ L0) */
+        gretl_matrix_zero(Ldag);
+        gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
+        gretl_matrix_inscribe_matrix(Ldag, L1, 0, K->r, GRETL_MOD_NONE);
+        gretl_matrix_inscribe_matrix(Ldag, L0, K->r, K->r, GRETL_MOD_NONE);
 
-	/* P† = P★ ~ P∞ */
-	gretl_matrix_inscribe_matrix(Pdag, K->P0, 0, 0,
-				     GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Pdag, K->Pk0, 0, K->r,
-				     GRETL_MOD_NONE);
+        /* P† = P★ ~ P∞ */
+        gretl_matrix_inscribe_matrix(Pdag, K->P0, 0, 0,
+                                     GRETL_MOD_NONE);
+        gretl_matrix_inscribe_matrix(Pdag, K->Pk0, 0, K->r,
+                                     GRETL_MOD_NONE);
 
-	/* r†_{t-1} = (0 | rbot) + L†_t * r†_t */
-	gretl_matrix_zero(rdag_);
-	gretl_matrix_multiply(K->ZT, F1, tmp);
-	gretl_matrix_multiply(tmp, K->vt, rbot);
-	gretl_matrix_inscribe_matrix(rdag_, rbot, K->r, 0,
-				     GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(Ldag, GRETL_MOD_TRANSPOSE,
-				  rdag, GRETL_MOD_NONE,
-				  rdag_, GRETL_MOD_CUMULATE);
+        /* r†_{t-1} = (0 | rbot) + L†_t * r†_t */
+        gretl_matrix_zero(rdag_);
+        gretl_matrix_multiply(K->ZT, F1, tmp);
+        gretl_matrix_multiply(tmp, K->vt, rbot);
+        gretl_matrix_inscribe_matrix(rdag_, rbot, K->r, 0,
+                                     GRETL_MOD_NONE);
+        gretl_matrix_multiply_mod(Ldag, GRETL_MOD_TRANSPOSE,
+                                  rdag, GRETL_MOD_NONE,
+                                  rdag_, GRETL_MOD_CUMULATE);
 
-	/* \hat{\alpha}_t = a_t + P†_t * r†_{t-1} */
-	fast_copy_values(K->a1, K->a0);
-	gretl_matrix_multiply_mod(Pdag, GRETL_MOD_NONE,
-				  rdag_, GRETL_MOD_NONE,
-				  K->a1, GRETL_MOD_CUMULATE);
-	load_to_row(K->A, K->a1, t);
+        /* \hat{\alpha}_t = a_t + P†_t * r†_{t-1} */
+        fast_copy_values(K->a1, K->a0);
+        gretl_matrix_multiply_mod(Pdag, GRETL_MOD_NONE,
+                                  rdag_, GRETL_MOD_NONE,
+                                  K->a1, GRETL_MOD_CUMULATE);
+        load_to_row(K->A, K->a1, t);
 #if EXACT_DEBUG
-	gretl_matrix_print(rdag, "rdag");
-	gretl_matrix_print(rdag_, "rdag_minus");
-	gretl_matrix_print(K->a1, "ahat");
+        gretl_matrix_print(rdag, "rdag");
+        gretl_matrix_print(rdag_, "rdag_minus");
+        gretl_matrix_print(K->a1, "ahat");
 #endif
-	fast_copy_values(rdag, rdag_);
+        fast_copy_values(rdag, rdag_);
 
-	/* N†_{t-1} = (0 ~ Z'*F1*Z) | (Z'*F1*Z ~ Z'*F2*Z) + L†'*N†*L† */
-	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F1,
-			   K->P1, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ndag_, K->P1, 0, K->r,
-				     GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, 0,
-				     GRETL_MOD_NONE);
-	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F2,
-			   K->P1, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, K->r,
-				     GRETL_MOD_NONE);
-	gretl_matrix_qform(Ldag, GRETL_MOD_TRANSPOSE, Ndag,
-			   Ndag_, GRETL_MOD_CUMULATE);
+        /* N†_{t-1} = (0 ~ Z'*F1*Z) | (Z'*F1*Z ~ Z'*F2*Z) + L†'*N†*L† */
+        gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F1,
+                           K->P1, GRETL_MOD_NONE);
+        gretl_matrix_inscribe_matrix(Ndag_, K->P1, 0, K->r,
+                                     GRETL_MOD_NONE);
+        gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, 0,
+                                     GRETL_MOD_NONE);
+        gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F2,
+                           K->P1, GRETL_MOD_NONE);
+        gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, K->r,
+                                     GRETL_MOD_NONE);
+        gretl_matrix_qform(Ldag, GRETL_MOD_TRANSPOSE, Ndag,
+                           Ndag_, GRETL_MOD_CUMULATE);
 
-	/* Vt = P★ - P† * N†_{t-1} * P†' */
-	fast_copy_values(K->P1, K->P0);
-	gretl_matrix_qform(Pdag, GRETL_MOD_NONE, Ndag_,
-			   K->P1, GRETL_MOD_DECREMENT);
-	load_to_vech(K->P, K->P1, K->r, t);
+        /* Vt = P★ - P† * N†_{t-1} * P†' */
+        fast_copy_values(K->P1, K->P0);
+        gretl_matrix_qform(Pdag, GRETL_MOD_NONE, Ndag_,
+                           K->P1, GRETL_MOD_DECREMENT);
+        load_to_vech(K->P, K->P1, K->r, t);
 #if EXACT_DEBUG
-	gretl_matrix_print(Ndag, "Ndag");
-	gretl_matrix_print(Ndag_, "Ndag_minus");
-	gretl_matrix_print(K->P1, "Vt");
+        gretl_matrix_print(Ndag, "Ndag");
+        gretl_matrix_print(Ndag_, "Ndag_minus");
+        gretl_matrix_print(K->P1, "Vt");
 #endif
-	fast_copy_values(Ndag, Ndag_);
+        fast_copy_values(Ndag, Ndag_);
 
-	if (nt < K->n) {
-	    unshrink_vt(K, SM_STATE_INI);
-	    gretl_matrix_reuse(Mk, K->r, K->n);
-	    gretl_matrix_reuse(F1, K->n, K->n);
-	    gretl_matrix_reuse(F2, K->n, K->n);
-	    gretl_matrix_reuse(K0, K->r, K->n);
-	    gretl_matrix_reuse(K1, K->r, K->n);
-	    gretl_matrix_reuse(tmp, K->r, K->n);
-	}
+        if (nt < K->n) {
+            unshrink_vt(K, SM_STATE_INI);
+            gretl_matrix_reuse(Mk, K->r, K->n);
+            gretl_matrix_reuse(F1, K->n, K->n);
+            gretl_matrix_reuse(F2, K->n, K->n);
+            gretl_matrix_reuse(K0, K->r, K->n);
+            gretl_matrix_reuse(K1, K->r, K->n);
+            gretl_matrix_reuse(tmp, K->r, K->n);
+        }
     }
 
     gretl_matrix_block_destroy(B);
@@ -3296,32 +3296,32 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_zero(N0);
 
     for (t=K->N-1; t>=0 && !err; t--) {
-	if (K->exact && t == K->d - 1) {
-	    exact_initial_smooth(K, r0, L, N0, N1);
-	    break;
-	}
+        if (K->exact && t == K->d - 1) {
+            exact_initial_smooth(K, r0, L, N0, N1);
+            break;
+        }
 
-	err = load_filter_data(K, t, &nt, SM_STATE_STD);
-	if (err) {
-	    break;
-	} else if (nt < K->n) {
-	    gretl_matrix_reuse(iFv, nt, 1);
-	}
+        err = load_filter_data(K, t, &nt, SM_STATE_STD);
+        if (err) {
+            break;
+        } else if (nt < K->n) {
+            gretl_matrix_reuse(iFv, nt, 1);
+        }
 
-	if (t < K->N - 1) {
-	    /* L_t = T_t - K_t Z_t */
-	    fast_copy_values(L, K->T);
-	    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				      K->ZT, GRETL_MOD_TRANSPOSE,
-				      L, GRETL_MOD_DECREMENT);
-	}
+        if (t < K->N - 1) {
+            /* L_t = T_t - K_t Z_t */
+            fast_copy_values(L, K->T);
+            gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+                                      K->ZT, GRETL_MOD_TRANSPOSE,
+                                      L, GRETL_MOD_DECREMENT);
+        }
 
         /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
         gretl_matrix_multiply(K->iFt, K->vt, iFv);
         if (t == K->N - 1) {
             gretl_matrix_multiply(K->ZT, iFv, r0);
         } else {
-	    gretl_matrix_multiply(K->ZT, iFv, r1);
+            gretl_matrix_multiply(K->ZT, iFv, r1);
             gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
                                       r0, GRETL_MOD_NONE,
                                       r1, GRETL_MOD_CUMULATE);
@@ -3341,7 +3341,7 @@ static int anderson_moore_smooth (kalman *K)
         }
 
         /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
-	fast_copy_values(K->a1, K->a0);
+        fast_copy_values(K->a1, K->a0);
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   K->a1, GRETL_MOD_CUMULATE);
@@ -3350,13 +3350,13 @@ static int anderson_moore_smooth (kalman *K)
         /* P_{t|T} = P_{t|t-1} - P_{t|t-1} N_{t-1} P_{t|t-1} */
         fast_copy_values(K->P1, K->P0);
         gretl_matrix_qform(K->P0, GRETL_MOD_NONE, N0,
-			   K->P1, GRETL_MOD_DECREMENT);
+                           K->P1, GRETL_MOD_DECREMENT);
         load_to_vech(K->P, K->P1, K->r, t);
 
-	if (nt < K->n) {
-	    unshrink_vt(K, SM_STATE_STD);
-	    gretl_matrix_reuse(iFv, K->n, 1);
-	}
+        if (nt < K->n) {
+            unshrink_vt(K, SM_STATE_STD);
+            gretl_matrix_reuse(iFv, K->n, 1);
+        }
     }
 
     gretl_matrix_block_destroy(B);
@@ -3450,10 +3450,10 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     }
 
     if (K->exact) {
-	int rr = (K->r * K->r + K->r) / 2;
+        int rr = (K->r * K->r + K->r) / 2;
 
-	/* Note: PK will need more than K->r cols if d > K->r */
-	K->PK = gretl_zero_matrix_new(rr, K->r);
+        /* Note: PK will need more than K->r cols if d > K->r */
+        K->PK = gretl_zero_matrix_new(rr, K->r);
     }
 
     if (!err) {
@@ -3466,23 +3466,23 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     if (!err) {
         /* forward pass */
         K->flags |= KALMAN_SMOOTH;
-	if (dist == 0) {
-	    /* Anderson-Moore */
-	    K->flags |= KALMAN_SM_AM;
-	} else {
-	    if (K->exact) {
-		/* exact initial disturbance smoother not ready */
-		pputs(prn, "Warning: exact initial disturbance smoothing is not "
-		      "supported\n\n");
-		kalman_set_diffuse(K, 1);
-	    }
-	    /* don't overwrite P (not needed for disturbance smoother) */
-	    save_P = K->P;
-	    K->P = NULL;
-	}
+        if (dist == 0) {
+            /* Anderson-Moore */
+            K->flags |= KALMAN_SM_AM;
+        } else {
+            if (K->exact) {
+                /* exact initial disturbance smoother not ready */
+                pputs(prn, "Warning: exact initial disturbance smoothing is not "
+                      "supported\n\n");
+                kalman_set_diffuse(K, 1);
+            }
+            /* don't overwrite P (not needed for disturbance smoother) */
+            save_P = K->P;
+            K->P = NULL;
+        }
         err = kalman_forecast(K, NULL);
         K->flags &= ~KALMAN_SMOOTH;
-	K->flags &= ~KALMAN_SM_AM;
+        K->flags &= ~KALMAN_SM_AM;
     }
 
     K->t = 0;
@@ -3498,21 +3498,21 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     }
 
     if (save_exact) {
-	/* re-establish 'exact' status */
-	kalman_set_diffuse(K, 2);
+        /* re-establish 'exact' status */
+        kalman_set_diffuse(K, 2);
     }
     if (save_P != NULL) {
-	K->P = save_P;
+        K->P = save_P;
     }
 
     /* free "special case" storage */
     if (K->nt != NULL) {
-	free(K->nt);
-	K->nt = NULL;
+        free(K->nt);
+        K->nt = NULL;
     }
     if (K->PK != NULL) {
-	gretl_matrix_free(K->PK);
-	K->PK = NULL;
+        gretl_matrix_free(K->PK);
+        K->PK = NULL;
     }
 
  bailout:
@@ -3545,37 +3545,37 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 */
 
 gretl_matrix *kalman_smooth (kalman *K, gretlopt opt,
-			     PRN *prn, int *err)
+                             PRN *prn, int *err)
 {
     gretl_matrix *S = NULL;
 
     *err = real_kalman_smooth(K, 0, prn);
 
     if (K->A != NULL && K->P != NULL) {
-	int r = K->A->rows;
-	int c = K->A->cols;
-	size_t Asize = r * c * sizeof(double);
-	size_t Psize = 0;
+        int r = K->A->rows;
+        int c = K->A->cols;
+        size_t Asize = r * c * sizeof(double);
+        size_t Psize = 0;
 
-	if (opt & OPT_M) {
-	    /* include MSE of state */
-	    c += K->P->cols;
-	    Psize = r * K->P->cols * sizeof(double);
-	}
-	if (r > 0 && c > 0) {
-	    S = gretl_matrix_alloc(r, c);
-	    if (S == NULL) {
-		*err = E_ALLOC;
-	    }
-	} else {
-	    *err = E_DATA;
-	}
-	if (S != NULL) {
-	    memcpy(S->val, K->A->val, Asize);
-	    if (opt & OPT_M) {
-		memcpy(S->val + r * K->A->cols, K->P->val, Psize);
-	    }
-	}
+        if (opt & OPT_M) {
+            /* include MSE of state */
+            c += K->P->cols;
+            Psize = r * K->P->cols * sizeof(double);
+        }
+        if (r > 0 && c > 0) {
+            S = gretl_matrix_alloc(r, c);
+            if (S == NULL) {
+                *err = E_ALLOC;
+            }
+        } else {
+            *err = E_DATA;
+        }
+        if (S != NULL) {
+            memcpy(S->val, K->A->val, Asize);
+            if (opt & OPT_M) {
+                memcpy(S->val + r * K->A->cols, K->P->val, Psize);
+            }
+        }
     }
 
     return S;
@@ -3752,7 +3752,7 @@ static int kalman_simulate (kalman *K,
                                   K->a0, GRETL_MOD_NONE,
                                   yt, GRETL_MOD_NONE);
         if (K->BT != NULL) {
-	    /* handle missing values? */
+            /* handle missing values? */
             kalman_do_Bx(K, yt, GRETL_MOD_CUMULATE);
         }
         if (K->p > 0) {
@@ -4495,19 +4495,19 @@ static GretlType kalman_extra_type (const char *key)
 static int kalman_set_diffuse (kalman *K, int d)
 {
     if (d) {
-	K->exact = (d == 2);
-	K->flags |= KALMAN_DIFFUSE;
-	return diffuse_Pini(K);
+        K->exact = (d == 2);
+        K->flags |= KALMAN_DIFFUSE;
+        return diffuse_Pini(K);
     } else {
-	K->exact = 0;
-	K->flags &= ~KALMAN_DIFFUSE;
-	if (K->Pk0 != NULL) {
-	    gretl_matrix_free(K->Pk0);
-	    gretl_matrix_free(K->Pk1);
-	    gretl_matrix_free(K->Fk);
-	    K->Pk0 = K->Pk1 = K->Fk = NULL;
-	}
-	return 0;
+        K->exact = 0;
+        K->flags &= ~KALMAN_DIFFUSE;
+        if (K->Pk0 != NULL) {
+            gretl_matrix_free(K->Pk0);
+            gretl_matrix_free(K->Pk1);
+            gretl_matrix_free(K->Fk);
+            K->Pk0 = K->Pk1 = K->Fk = NULL;
+        }
+        return 0;
     }
 }
 
@@ -4524,11 +4524,11 @@ static int kalman_set_diffuse (kalman *K, int d)
 */
 
 int maybe_set_kalman_element (void *kptr,
-			      const char *key,
-			      void *vptr,
-			      GretlType vtype,
-			      int copy,
-			      int *err)
+                              const char *key,
+                              void *vptr,
+                              GretlType vtype,
+                              int copy,
+                              int *err)
 {
     GretlType targtype;
     kalman *K = kptr;
@@ -4537,8 +4537,8 @@ int maybe_set_kalman_element (void *kptr,
     int done = 0;
 
     if (K == NULL) {
-	*err = E_DATA;
-	return 0;
+        *err = E_DATA;
+        return 0;
     }
 
     /* Check for optional "extra" kalman items that
@@ -4546,25 +4546,25 @@ int maybe_set_kalman_element (void *kptr,
     */
     targtype = kalman_extra_type(key);
     if (targtype != GRETL_TYPE_NONE) {
-	if (vtype != targtype) {
-	    *err = E_TYPES;
-	}
-	return 0;
+        if (vtype != targtype) {
+            *err = E_TYPES;
+        }
+        return 0;
     }
 
     if (!strcmp(key, "diffuse")) {
-	if (vtype == GRETL_TYPE_DOUBLE) {
-	    double d = *(double *) vptr;
+        if (vtype == GRETL_TYPE_DOUBLE) {
+            double d = *(double *) vptr;
 
-	    if (d != 0 && d != 1 && d != 2) {
-		*err = E_INVARG;
-	    } else {
-		*err = kalman_set_diffuse(K, (int) d);
-	    }
-	} else {
-	    *err = E_TYPES;
-	}
-	return 1; /* done, error or no */
+            if (d != 0 && d != 1 && d != 2) {
+                *err = E_INVARG;
+            } else {
+                *err = kalman_set_diffuse(K, (int) d);
+            }
+        } else {
+            *err = E_TYPES;
+        }
+        return 1; /* done, error or no */
     }
 
     if (!strcmp(key, "timevar_call")) {
@@ -5121,8 +5121,8 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
         S[i++] = gretl_strdup("N");
         S[i++] = gretl_strdup("p");
 
-	/* diffuse phase */
-	S[i++] = gretl_strdup("d");
+        /* diffuse phase */
+        S[i++] = gretl_strdup("d");
     }
 
     return S;
