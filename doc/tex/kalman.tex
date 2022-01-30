@@ -398,9 +398,7 @@ U_{t-1} &= \obsymat_t \predvar_t^{-1} \obsymat_t' +
   \statecvar_{t|t-1} U_{t-1} \statecvar_{t|t-1}
 \end{align*}
 %
-with initial values $u_N = 0$ and $U_N =
-0$.\footnote{See I. Karibzhanov's clear exposition at
-\url{http://karibzhanov.com/help/kalcvs.htm}.}
+with initial values $u_N = 0$ and $U_N = 0$.
 
 On successful completion, all the quantities computed by
 \cmd{kfilter} are available as bundle members (see
@@ -429,7 +427,12 @@ whose $t$-th row contains
    \obsvec_1, \ldots, \obsvec_T \right]
 \]
 (This assumes the observation equation has a stochastic component; if
-it does not, then \texttt{smdist} is just $N \times r$.)
+it does not, then \texttt{smdist} is just $N \times r$.) Once the
+smoothed disturbances are obtained the smoothed state can be
+calculated quickly and easily, so a call to \texttt{kdsmooth} updates
+the \texttt{state} member of the bundle passed as argument. However,
+the variance of the state (\texttt{stvar}) is \textit{not} updated by
+\texttt{kdsmooth}; only \texttt{ksmooth} does that.
 
 An associated dispersion measure is provided under the key
 \texttt{smdisterr}. The precise definition of this matrix depends on a
@@ -1006,6 +1009,38 @@ observation to the end of the series and retrieve the
 Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
 \cmd{ksmooth}.
 
+Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
+is a random walk with normal increments of variance $\sigma^2_1$ and
+$\varepsilon_t$ is normal white noise with variance $\sigma^2_2$,
+independent of $\mu_t$. This is known as the ``local level'' model,
+and it can be cast in state-space form as equations
+(\ref{eq:obs})--(\ref{eq:state}) with $\statemat = 1$, $\strdist_t \sim
+N(0,\, \sigma^2_1)$, $\obsymat = 1$ and $\obsdist_t \sim N(0,\,
+\sigma^2_2)$.\footnote{Note that the local level model, plus other
+  common ``Structural Time Series'' models are implemented in the
+  \package{StrucTiSM} function package.} The translation to \textsf{hansl}
+is
+\begin{code}
+bundle llmod = ksetup(y, 1, 1, s1)
+llmod.obsvar = s2
+llmod.diffuse = 1
+\end{code}
+
+The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
+estimated via maximum likelihood.  Listing~\ref{script:loclev} provides
+an example of simulation and estimation of such a model. Since
+simulating the local level model is trivial using ordinary gretl
+commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
+  as the script stands, there is an ``off-by-one'' misalignment
+  between the state vector and the observable series. For convenience,
+  the script is written as if equation \eqref{eq:state} was modified
+  into the equivalent formulation
+  \[
+  \statevec_{t} = \statemat \statevec_{t-1} + \strdist_t
+  \]
+  We kept the script as simple as possible so that the reader can
+  focus on the interesting aspects.}
+
 \begin{script}[htbp]
   \scriptcaption{Local level model}
   \label{script:loclev}
@@ -1044,38 +1079,6 @@ ksmooth(&kb)
 series muhat = kb.state
 \end{scode}
 \end{script}
-
-Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
-is a random walk with normal increments of variance $\sigma^2_1$ and
-$\varepsilon_t$ is normal white noise with variance $\sigma^2_2$,
-independent of $\mu_t$. This is known as the ``local level'' model,
-and it can be cast in state-space form as equations
-(\ref{eq:obs})--(\ref{eq:state}) with $\statemat = 1$, $\strdist_t \sim
-N(0,\, \sigma^2_1)$, $\obsymat = 1$ and $\obsdist_t \sim N(0,\,
-\sigma^2_2)$.\footnote{Note that the local level model, plus other
-  common ``Structural Time Series'' models are implemented in the
-  \package{StrucTiSM} function package.} The translation to \textsf{hansl}
-is
-\begin{code}
-bundle llmod = ksetup(y, 1, 1, s1)
-llmod.obsvar = s2
-llmod.diffuse = 1
-\end{code}
-
-The two unknown parameters $\sigma^2_1$ and $\sigma^2_2$ can be
-estimated via maximum likelihood.  Script~\ref{script:loclev} provides
-an example of simulation and estimation of such a model. Since
-simulating the local level model is trivial using ordinary gretl
-commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
-  as the script stands, there is an ``off-by-one'' misalignment
-  between the state vector and the observable series. For convenience,
-  the script is written as if equation \eqref{eq:state} was modified
-  into the equivalent formulation
-  \[
-  \statevec_{t} = \statemat \statevec_{t-1} + \strdist_t
-  \]
-  We kept the script as simple as possible so that the reader can
-  focus on the interesting aspects.}
 
 \subsection{Time-varying models}
 \label{sec:example_PhCurve}
@@ -1159,15 +1162,15 @@ sequence of slope coefficients $\beta_{1,t}$ can then be estimated by
 running the smoother, which also yields a consistent estimate of the
 dispersion of the estimated state.
 
-Script \ref{script:PhCurve} presents an example of the above, in which
-data from the AWM database are used to estimate a Phillips Curve
-with time-varying slope:
+Listing \ref{script:PhCurve} presents an example in which data from
+the AWM database are used to estimate a Phillips Curve with
+time-varying slope:
 \[
 \mbox{INFQ}_t = \beta_0 + \beta_{1,t} \mbox{URX}_t + \varepsilon_t
 \]
 where INFQ is a measure of quarterly inflation and URX a measure of
-unemployment.  At the end of the script, the evolution through time of
-the slope coefficient is plotted together with a 95\% confidence
+unemployment.  At the end of the script the evolution of the slope
+coefficient over time is plotted along with a 95\% confidence
 band---see Figure~\ref{fig:tvar}.
 
 
@@ -1181,10 +1184,10 @@ function can produce two different measures of the dispersion of the
 smoothed disturbances, depending on the the value of the (optional)
 trailing Boolean parameter. Here we show what these two measures are
 good for, using the famous Nile flow data that have been much analysed
-in the state-space modeling literature. We focus on the state
-equation; that is, the random-walk component of the observed series.
-For consistency with the literature let us call the $t$-dated
-disturbance to the state $\eta_t$.
+in the state-space literature. We focus on the state equation; that
+is, the random-walk component of the observed series.  For consistency
+with the literature let us call the $t$-dated disturbance to the state
+$\eta_t$.
 
 \begin{script}[htbp]
   \scriptcaption{Working with smoothed disturbances -- Nile data}
@@ -1205,8 +1208,7 @@ series eta_aux = LLM.smdist[,1] ./ LLM.smdisterr[,1]
 series zero = 0
 plot eta_aux
     options time-series with-lines band=zero,const,2
-    option band-style=dash
-    literal set ylabel ''
+    literal unset ylabel
     literal set title 'Auxiliary residual, state equation'
 end plot --output=display
 
@@ -1216,8 +1218,7 @@ series sdeta = LLM.smdisterr[,1]
 
 plot etahat
     options time-series with-lines band=etahat,sdeta,1.64485
-    option band-style=dash
-    literal set ylabel ''
+    literal unset ylabel
     literal set title 'State disturbance with 90% confidence band'
 end plot --output=display
 \end{scode}
@@ -1237,13 +1238,16 @@ end plot --output=display
   \label{fig:nile}
 \end{figure}
 
-In the first call to \cmd{kdsmooth} we omit the optional switch and
-therefore compute $E(\hat{\eta}_t\hat{\eta}_t')$ for each $t$. This
-quantity is suitable for constructing the auxiliary residuals shown in
-the top panel of Figure~\ref{fig:nile} (for similar plots see
-\cite{koopman-etal99}, \cite{pelagatti11}).  This plot suggests the
-presence of a structural break shortly prior to 1900, as various
-authors have observed.
+Our script is shown in Listing~\ref{script:auxres}. This is an
+instance of the Local Level model and the ML variance estimates are
+obtained as in Listing~\ref{script:loclev}. In the first call to
+\cmd{kdsmooth} we omit the optional switch and therefore compute
+$E(\hat{\eta}_t\hat{\eta}_t')$ for each $t$. This quantity is suitable
+for constructing the auxiliary residuals shown in the top panel of
+Figure~\ref{fig:nile} \citep[for similar plots
+see][]{koopman-etal99,pelagatti11}.  This plot suggests the presence
+of a structural break shortly prior to 1900, as various authors have
+observed.
 
 In the second \cmd{kdsmooth} call we ask gretl to compute instead
 $E[(\hat{\eta}_t-\eta_t)(\hat{\eta}_t-\eta_t)' | y_1,\ldots,y_T]$, the
