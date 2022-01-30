@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2021-08-25 15:22+0200\n"
+"PO-Revision-Date: 2022-01-30 19:30+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: lib/src/adf_kpss.c:595
 msgid "lagged differences"
@@ -317,14 +317,13 @@ msgid "(without trend)"
 msgstr "(ohne Trend)"
 
 #: lib/src/adf_kpss.c:2404
-#, fuzzy, c-format
+#, c-format
 msgid "Lag truncation parameter: %d - %d\n"
-msgstr "Lag-Berücksichtigungsschwelle = %d\n"
+msgstr "Lag-Trunkierungsparameter: %d - %d\n"
 
 #: lib/src/adf_kpss.c:2407
-#, fuzzy
 msgid "Lag truncation automatic\n"
-msgstr "Lag-Berücksichtigungsschwelle = %d\n"
+msgstr "Lag-Trunkierung automatisch\n"
 
 #: lib/src/adf_kpss.c:2461
 msgid "interpolated p-value"
@@ -3974,9 +3973,8 @@ msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "Verteilungsfreier Wald-Test auf Heteroskedastizität"
 
 #: lib/src/gretl_model.c:4176
-#, fuzzy
 msgid "Likelihood ratio test of independence"
-msgstr "Likelihood-Quotienten-Test"
+msgstr "Likelihood-Quotienten-Test auf Unabhängigkeit"
 
 #: lib/src/gretl_model.c:4211
 msgid "robust variant"
@@ -3987,9 +3985,8 @@ msgid "No first-order autocorrelation (rho = 0)"
 msgstr "Keine Autokorrelation erster Ordnung (rho = 0)"
 
 #: lib/src/gretl_model.c:4324
-#, fuzzy
 msgid "atanh(rho) = 0"
-msgstr "rho = 0"
+msgstr "atanh(rho) = 0"
 
 #: lib/src/gretl_model.c:4385
 #, c-format
@@ -9648,14 +9645,12 @@ msgid "Panel index variables"
 msgstr "Panel-Indexvariable"
 
 #: gui/datawiz.c:122
-#, fuzzy
 msgid "Panel time dimension"
-msgstr "in der Zeitdimension"
+msgstr "Panel-Zeitdimension"
 
 #: gui/datawiz.c:123
-#, fuzzy
 msgid "Panel first period"
-msgstr "_Panel-Gruppenindex"
+msgstr "Panel, erste Zeitperiode"
 
 #: gui/datawiz.c:124
 msgid "Confirm dataset structure"
@@ -9816,9 +9811,8 @@ msgid "stacked cross sections"
 msgstr "gestapelte Querschnitte"
 
 #: gui/datawiz.c:784
-#, fuzzy
 msgid "Time dimension: "
-msgstr "Maximale Dimension:"
+msgstr "Zeitdimension: "
 
 #: gui/datawiz.c:801
 msgid "(dropping missing observations)"
@@ -9851,7 +9845,7 @@ msgstr "Fehlwert-Beobachtungen entfernen"
 #: gui/datawiz.c:1698
 #, c-format
 msgid "Take unit names from %s?"
-msgstr ""
+msgstr "Gruppen-Namen von %s nehmen?"
 
 #: gui/datawiz.c:1936
 msgid "The data set contains no suitable index variables"
@@ -10081,9 +10075,8 @@ msgid "gretl: set sample"
 msgstr "gretl: Wähle Bereich"
 
 #: gui/dialogs.c:2070
-#, fuzzy
 msgid "Units"
-msgstr "Gruppe"
+msgstr "Gruppen"
 
 #: gui/dialogs.c:2070
 msgid "Periods"
@@ -10990,9 +10983,8 @@ msgid "Dynare files (*.mod)"
 msgstr "Dynare-Dateien (*.mod)"
 
 #: gui/fileselect.c:916
-#, fuzzy
 msgid "lpsolve files (*.lp)"
-msgstr "Alle Dateien (*.*)"
+msgstr "lpsolve-Dateien (*.lp)"
 
 #: gui/fileselect.c:1101
 msgid "Gretl datafiles (*.gdt)"
@@ -12528,9 +12520,8 @@ msgid "Stata program"
 msgstr "Stata-Programm"
 
 #: gui/gretl.c:1785
-#, fuzzy
 msgid "lpsolve program"
-msgstr "Stichproben-_Periodogramm"
+msgstr "lpsolve-Programm"
 
 #: gui/gretl.c:1787
 msgid "_Session files"
@@ -13349,9 +13340,8 @@ msgid "_gretl + SVM"
 msgstr "_gretl + SVM"
 
 #: gui/gretl.c:2043
-#, fuzzy
 msgid "_gretl + lpsolve"
-msgstr "gretl-Konsole"
+msgstr "_gretl + lpsolve"
 
 #: gui/gretl.c:2044
 msgid "Check for _updates"
@@ -13371,21 +13361,19 @@ msgstr "_Analyse"
 
 #: gui/gretl.c:2348
 msgid "International data access"
-msgstr ""
+msgstr "Internationaler Datenzugriff"
 
 #: gui/gretl.c:2350 gui/gretl.c:2352
-#, fuzzy
 msgid "Parallelization"
-msgstr "Parametrisierung"
+msgstr "Parallelisierung"
 
 #: gui/gretl.c:2354
 msgid "Support Vector Machines"
-msgstr ""
+msgstr "Support Vector Machines"
 
 #: gui/gretl.c:2356
-#, fuzzy
 msgid "Linear Programming"
-msgstr "Programmieren"
+msgstr "Lineare Optimierung"
 
 #: gui/gretl.c:2412
 msgid "Enter name for list of series"
@@ -14003,9 +13991,8 @@ msgid "gretl: edit Dynare script"
 msgstr "gretl: bearbeite Dynare-Skript"
 
 #: gui/gui_utils.c:1827
-#, fuzzy
 msgid "gretl: edit lpsolve script"
-msgstr "gretl: bearbeite R-Skript"
+msgstr "gretl: bearbeite lpsolve-Skript"
 
 #: gui/gui_utils.c:1829
 msgid "gretl: edit package spec file"
@@ -15391,9 +15378,8 @@ msgid "Plot group means"
 msgstr "Plotte Gruppenmittel"
 
 #: gui/library.c:7946
-#, fuzzy
 msgid "suppress fitted line"
-msgstr "angepasste Kurve"
+msgstr "unterdrücke Kurvenanpassung"
 
 #: gui/library.c:7965
 msgid "on a single graph"
@@ -17662,9 +17648,8 @@ msgid "dbnomics for gretl"
 msgstr "dbnomics für gretl"
 
 #: gui/textbuf.c:1640
-#, fuzzy
 msgid "gretl + lpsolve"
-msgstr "gretl-Konsole"
+msgstr "gretl + lpsolve"
 
 #: gui/textbuf.c:1783
 #, c-format
@@ -19022,7 +19007,7 @@ msgstr "Die n wichtigsten Komponenten"
 #: plugin/pca.c:203
 #, c-format
 msgid " (dropped %d incomplete observations)"
-msgstr "(%d unvollständige Beobachtungen entfernt)"
+msgstr " (%d unvollständige Beobachtungen entfernt)"
 
 #: plugin/pca.c:209
 msgid "Eigenanalysis of the Correlation Matrix"
