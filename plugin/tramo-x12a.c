@@ -512,6 +512,11 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
         add_tramo_options(request, vbox);
     } else {
         add_x13a_options(request, GTK_BOX(vbox));
+        /* here we map the simple on/off GUI outliers choice to our encoding for x13's default;
+        FIXME: but this is probably not the right place to do that */
+        if (request->xopt.outliers) {
+            request->xopt.outliers = 3;
+        } 
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1217,7 +1222,7 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
     strcpy(request->yname, dset->varname[varnum]);
 
     request->xopt.logtrans = 3; /* x13a: automatic logs or not */
-    request->xopt.outliers = 1; /* x13a: detect outliers */
+    request->xopt.outliers = 3; /* x13a: detect outliers (3 encodes x13's default ao+ls) */
     request->xopt.trdays = 0;   /* x13a: trading days correction */
     request->xopt.wdays = 0;    /* x13a: working days correction */
     request->xopt.easter = 0;   /* x13a: Easter effect */
@@ -1372,6 +1377,7 @@ static int write_spc_file (const char *fname,
     double x;
     FILE *fp;
     int i, t;
+    int outl; /* outlier option abbreviation */
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
@@ -1455,10 +1461,21 @@ static int write_spc_file (const char *fname,
 
     if (xopt->outliers) {
         if (!na(xopt->critical)) {
-            fprintf(fp, "outlier{critical = %g}\n", xopt->critical);
+            fprintf(fp, "outlier{critical = %g, types = (", xopt->critical);
         } else {
-            fputs("outlier{}\n", fp);
+            fputs("outlier{types = (", fp);
+            outl = xopt->outliers;
+            if (outl == 1 || outl == 3 || outl == 5 || outl == 7) {
+                fputs("ao ", fp);
+            }
+            if (outl == 2 || outl == 3 || outl == 6 || outl == 7) {
+                fputs("ls ", fp);
+            }
+            if (outl >= 4) {
+                fputs("tc ", fp);
+            }
         }
+        fputs(")}\n", fp);
     }
     if (xopt->airline) {
         fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
@@ -1973,13 +1990,28 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     int lt = 2; /* log transformation */
     int td = 2; /* trading days */
     int wd = 0; /* working days */
+    int outl = 0; /* outliers choice */
     int got_td_spec = 0;
     int err = 0;
 
-    xopt->outliers = gretl_bundle_get_bool(b, "outliers", 0);
     xopt->seats    = gretl_bundle_get_bool(b, "seats", 0);
     xopt->airline  = gretl_bundle_get_bool(b, "airline", 0);
     xopt->easter   = gretl_bundle_get_bool(b, "easter", 0);
+
+    if (gretl_bundle_has_key(b, "outliers")) {
+        /* the outliers user choice can be between 0 and 7 for x13 
+        (bit flags: 1 - ao, 2 - ls, 4 - tc; x13's default is 3 = ao+ls) */
+        outl = gretl_bundle_get_int(b, "outliers", &err);
+        if (!err) {
+            if (outl >= 0 && outl <= 7) {
+                xopt->outliers = outl;
+            } else {
+                err = E_INVARG;
+            }        
+        } 
+    } else {
+        xopt->outliers = 0;
+    }
 
     if (gretl_bundle_has_key(b, "logtrans")) {
         lt = gretl_bundle_get_int(b, "logtrans", &err);
@@ -2074,6 +2106,18 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
                 pprintf(prn, "  outlier correction:      %s (critical value %g)\n",
                         "yes", xopt->critical);
             }
+            outl = xopt->outliers;
+            pprintf(prn, "  ( types ");
+            if (outl == 1 || outl == 3 || outl == 5 || outl == 7) {
+                pprintf(prn, "ao ");
+            }
+            if (outl == 2 || outl == 3 || outl == 6 || outl == 7) {
+                pprintf(prn, "ls ");
+            }
+            if (outl >= 4) {
+                pprintf(prn, "tc ");
+            }
+            pprintf(prn, ")\n"
         } else {
             pprintf(prn, "  outlier correction:      %s\n", "no");
         }
