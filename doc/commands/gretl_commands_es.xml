@@ -6880,6 +6880,26 @@
     </description>
   </command>
 
+  <command name="kalman" section="Utilities"
+	   label="Modelado del espacio de estados" context="gui">
+    <description>
+      <para>
+	Esta interfaz gráfica ofrece una pequeña muestra de la funcionalidad
+	que está disponible mediante la creación de secuencias de comando en
+	el mecanismo sobre estado de espacios de GRETL.
+      </para>
+      <para>
+	Si te interesa lo que estás leyendo aquí, por favor, echa un vistazo a
+	<guideref targ="chap:kalman"/> (titulado <quote>State Space Modeling</quote>).
+	Ahí encontrarás detalles sobre cómo manejar matrices que varían con el
+	tiempo, perturbaciones que están correlacionadas a través de observaciones
+	y ecuaciones de transición entre estados, y mucho más. También vas a
+	encontrar varios guiones de ejemplo que se pueden descargar. Estos
+	ejemplos ilustran, entre otras cosas, como conectar el filtro de Kalman
+	de GRETL con su maximizador de la verosimilitud.
+      </para>
+    </description>
+  </command>
 
   <command name="kpss" section="Tests" label="Contraste de estacionariedad KPSS">
 

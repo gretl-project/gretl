@@ -3611,27 +3611,111 @@
     <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="string">s</fnarg>
+	<fnarg optional="true" type="bundle">opciones</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Precisa que estén instalados el X-13ARIMA-SEATS y/o el TRAMO/SEATS.
-	  Devuelve una versión desestacionalizada (ajustada estacionalmente)
-	  de la serie <argname>x</argname>, que debe ser una serie temporal
-	  trimestral o mensual. Para especificar el TRAMO indica <lit>T</lit>
-	  como segundo argumento; para especificar el X-13ARIMA indica
-	  <lit>"X"</lit>; pero si omites el segundo argumento, GRETL utiliza
-	  el X-13ARIMA.
+	  La intención principal de esta función es producir una versión
+	  desestacionalizada de la serie <argname>x</argname> (mensual o
+	  trimestral) de entrada, utilizando para ello X-13ARIMA-SEATS; esto
+	  estará disponible únicamente si está instalado X-13ARIMA-SEATS. Si
+	  omites el 'bundle' necesario para el segundo argumento (opcional), el
+	  ajuste estacional se hace incluyendo toda las opciones de X-13ARIMA
+	  establecidas en sus valores por defecto (procedimiento completamente
+	  automático). Cuando indicas el 'bundle' de <argname>opciones</argname>,
+	  se podría incluir cualquiera de las siguientes especificaciones para las opciones.
 	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>seats</lit>: 1 para utilizar el algoritmo SEATS en lugar
+	      del algoritmo predeterminado X11 para el ajuste estacional, o
+	      0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>airline</lit>: 1 para utilizar la especificación <quote>airline</quote>
+	      (0,1,1)(0,1,1) de modelos ARIMA en lugar de la selección de
+	      modelos automática predeterminada, o 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	    <lit>outliers</lit>: 1 para permitir la detección y corrección de
+	    valores atípicos, o 0 (por defecto) para omitir esta característica.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>critical</lit>: Un escalar positivo con el valor crítico para
+	      definir los valores atípicos, siendo automático el predeterminado
+	      que se hace en función del tamaño de la muestra. Relevante solo
+	      cuando indicas la opción <lit>outliers</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>logtrans</lit>: Debería pasarse la serie de entrada a
+	      logaritmos? 0 = no, 1 = si, 2 = selección automática (por
+	      defecto). Ten en cuenta que no se recomienda que indiques
+	      una serie de entrada ya en logaritmos; si quieres que se utilice
+	      el logaritmo, indica el nivel <quote>de base</quote> pero
+	      especificando después <lit>logtrans=1</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>trading_days</lit>: Deberían incluirse los días de operación?
+	      0 = no, 1 = si, 2 = automático (por defecto).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>working_days</lit>: Una versión más simple de
+	      <lit>trading_days</lit> con una única distinción entre días de la
+	      semana y fines de semana, en vez de los efectos de los días
+	      particulares. 0 = no (por defecto), 1 = si, 2 = automático.
+	      Utiliza solo una de las dos opciones, <lit>trading_days</lit>
+	      o <lit>working_days</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>easter</lit>: 1 para permitir el efecto de la Pascua, como
+	      complemento a <lit>trading_days</lit> o a <lit>working_days</lit>,
+	      o 0 (por defecto).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>output</lit>: Una cadena de texto para escoger el tipo de serie
+	      del resultado: <lit>"sa"</lit> para desestacionalizado (por
+	      defecto), <lit>"trend"</lit> para la tendencia estimada, o
+	      <lit>"irreg"</lit> para la componente irregular.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Resultados ampliados</subhead>
 	<para>
-	  Observa que, cuando la serie de entrada no tiene una componente
-	  estacional detectable, la ejecución de la función podría fallar. Ten
-	  en cuenta también que tanto el X-13ARIMA como el TRAMO/SEATS ofrecen
-	  un gran número de opciones; ahora bien, la función <lit>deseas</lit>
-	  las utiliza con todas sus opciones en sus valores por defecto. En
-	  ambos programas, los factores estacionales se calculan en base a un
-	  modelo ARIMA seleccionado automáticamente.
+	  En algunos casos podrías desear obtener los tres resultados disponibles
+	  del X-13ARIMA mediante una única llamada a <lit>deseas</lit>. Esto se
+	  admite del siguiente modo. Pasa el 'bundle' <argname>opciones</argname>
+	  en formato de puntero, e indica la cadena de texto <lit>"all"</lit>
+	  bajo la clave <lit>output</lit>. El valor directo que se devuelve entonces
+	  es la serie ajustada estacionalmente, pero cuando se completa con
+	  éxito <argname>opciones</argname> va a contener una matriz denominada
+	  <lit>results</lit> con tres columnas: ajustada estacionalmente,
+	  tendencia e irregular. A continuación tienes un ejemplo (en el que se
+	  descarta el valor del resultado directo).
 	</para>
+	<code>
+	  bundle b = _(output="all")
+	  deseas(y, &amp;b)
+	  series y_dseas = b.results[,1]
+	  series y_trend = b.results[,2]
+	  series y_irreg = b.results[,3]
+	</code>
       </description>
     </function>
 
@@ -5912,6 +5996,22 @@
       </description>
     </function>
 
+    <function name="interpol" section="timeseries" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una serie en la que los valores ausentes de <argname>x</argname>
+	  se imputan mediante interpolación lineal, tanto para datos de series
+	  temporales como para la dimensión temporal de un conjunto de datos de
+	  panel. Pero no se hace extrapolación; los valores ausentes se reemplazan
+	  únicamente si están precedidos y seguidos a la vez de observaciones
+	  válidas.
+	</para>
+      </description>
+    </function>
+
     <function name="inv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -6847,13 +6947,13 @@
 	  la información necesaria para definir un modelo de espacio de los estados
 	  lineal, de la forma
 	  <equation status="display"
-		    tex="\[y_t=H'\alpha_t\]"
-		    ascii="y(t) = H'a(t)"
+		    tex="\[y_t=Z\alpha_t\]"
+		    ascii="y(t) = Za(t)"
 		    graphic="kalman1"/>
 	  y con la ecuación de transición de estado
 	  <equation status="display"
-		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
-		    ascii="a(t+1) = F a(t) + u(t)"
+		    tex="\[\alpha_{t+1}=T \alpha_t + u_t\]"
+		    ascii="a(t+1) = T a(t) + u(t)"
 		    graphic="kalman2"/>
 	  en la que Var<math>(u) = Q</math>.
 	</para>
@@ -7382,6 +7482,47 @@
 	  # Variante 2
 	  matrix x = A \ b
 	</code>
+      </description>
+    </function>
+
+    <function name="mat2list" section="data-utils" output="list">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="string">prefijo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta es una función conveniente para elaborar una lista de series
+	  utilizando las columnas de una matriz apropiada como entrada. La
+	  dimensión de las filas de <argname>X</argname> debe ser igual a la
+	  longitud del conjunto de datos vigente, o al número de observaciones
+	  del rango de la muestra vigente.
+	</para>
+	<para>
+	  Las series de la lista que se devuelve se nombran del siguiente modo.
+	  Primero, cuando se proporciona el argumento opcional
+	  <argname>prefijo</argname>, la serie creada de la columna <math>i</math>
+	  de <argname>X</argname> se nombra añadiendo <math>i</math> a la cadena
+	  de texto proporcionada, como en <lit>prefijo1</lit>, <lit>prefijo2</lit>,
+	  etcétera. En caso contrario, si la matriz <argname>X</argname> tiene un
+	  conjunto de nombres de las columnas (consulta <fncref targ="cnameset"/>),
+	  se utilizan esos nombres. Finalmente, si no se cumple ninguna de las
+	  condiciones anteriores, los nombres son <lit>columna1</lit>,
+	  <lit>columna2</lit>, etcétera.
+	</para>
+	<para>
+	  Aquí tienes un ejemplo ilustrativo de su uso:
+	</para>
+	<code>
+	  matrix X = mnormal($nobs, 8)
+	  list L = mat2list(X, "xnorm")
+	  # o alternativamente, si no necesitas crear la propia X
+	  list L = mat2list(mnormal($nobs, 8), "xnorm")
+	</code>
+	<para>
+	  Esto va a añadir al conjunto de datos, ocho series de longitud completa
+	  nombradas <lit>xnorm1</lit>, <lit>xnorm2</lit>, etcétera.
+	</para>
       </description>
     </function>
 
