@@ -183,7 +183,8 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
 static void toggle_outliers (GtkToggleButton *b, tx_request *request)
 {
-    request->xopt.outliers = gtk_toggle_button_get_active(b);
+    /* we map the on/off GUI choice to our code for x13's default, namely 3 */
+    request->xopt.outliers = gtk_toggle_button_get_active(b) ? 3 : 0;
 }
 
 static void toggle_trading_days (GtkToggleButton *b, tx_request *request)
@@ -511,12 +512,7 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
 #endif
         add_tramo_options(request, vbox);
     } else {
-        add_x13a_options(request, GTK_BOX(vbox));
-        /* here we map the simple on/off GUI outliers choice to our encoding for x13's default;
-        FIXME: but this is probably not the right place to do that */
-        if (request->xopt.outliers) {
-            request->xopt.outliers = 3;
-        } 
+        add_x13a_options(request, GTK_BOX(vbox)); 
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1460,23 +1456,31 @@ static int write_spc_file (const char *fname,
     }
 
     if (xopt->outliers) {
+        outl = xopt->outliers;
+        
+        fputs("outlier{", fp);
         if (!na(xopt->critical)) {
-            fprintf(fp, "outlier{critical = %g, types = (", xopt->critical);
-        } else {
-            fputs("outlier{types = (", fp);
-            outl = xopt->outliers;
-            if (outl == 1 || outl == 3 || outl == 5 || outl == 7) {
+            fprintf(fp, "critical = %g", xopt->critical);
+            if (outl != 3) {    /* types will follow */
+                fputs(", ", fp);
+            }
+        }
+        if (outl != 3) {    /* if not x13's default */
+            fputs("types = (", fp);
+            if (outl == 1 || outl == 5 || outl == 7) {
                 fputs("ao ", fp);
             }
-            if (outl == 2 || outl == 3 || outl == 6 || outl == 7) {
+            if (outl == 2 || outl == 6 || outl == 7) {
                 fputs("ls ", fp);
             }
             if (outl >= 4) {
                 fputs("tc ", fp);
             }
+            fputs(")", fp);
         }
-        fputs(")}\n", fp);
+        fputs("}\n", fp);
     }
+
     if (xopt->airline) {
         fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
     } else {
@@ -2117,7 +2121,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
             if (outl >= 4) {
                 pprintf(prn, "tc ");
             }
-            pprintf(prn, ")\n"
+            pprintf(prn, ")\n");
         } else {
             pprintf(prn, "  outlier correction:      %s\n", "no");
         }
