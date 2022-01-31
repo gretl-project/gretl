@@ -1256,6 +1256,11 @@ static void kalman_print_state (kalman *K)
 }
 #endif
 
+/* On filtering: record the state and/or its variance, as
+   wanted. Plus in the "exact initial" case record P∞,t
+   in K->PK.
+*/
+
 static int kalman_record_state (kalman *K)
 {
     int err = 0;
@@ -1359,9 +1364,9 @@ static int get_effective_n (kalman *K, int t)
     }
 }
 
-/* We have two cases to handle here, the more complex one
-   being when the disturbances are correlated across the
-   observation and state-transition equations.
+/* We have two cases to handle here, the more complex one being when
+   the disturbances are correlated across the observation and
+   state-transition equations.
 */
 
 static void shrink_obsvar (kalman *K, int nt)
@@ -1535,10 +1540,11 @@ static void shrink_obs_to_ok (kalman *K, int nt)
 
 /* Compute the one-step ahead forecast error:
 
-   v_t = y_t - Bx - Za
+   v_t = y_t - B_t*x_t - Z_t*a_t
 
-   Return the number of observables for which there's
-   a valid observation at time t.
+   if @missmap is non-NULL, return the number of observables for which
+   there's a valid observation at time t; otherwise return 0 if any
+   elements of y_t are missing.
 */
 
 static int compute_forecast_error (kalman *K, char *missmap)
@@ -1559,7 +1565,7 @@ static int compute_forecast_error (kalman *K, char *missmap)
         kalman_do_Bx(K, K->vt, GRETL_MOD_DECREMENT);
     }
 
-    /* count any missing values in v_t */
+    /* check for any missing values in v_t */
     for (i=0; i<K->n; i++) {
         if (na(K->vt->val[i])) {
             if (missmap != NULL) {
@@ -1587,10 +1593,9 @@ static int compute_forecast_error (kalman *K, char *missmap)
     return nt;
 }
 
-/* Given a unified function to update one or more of the
-   potentially time-varying matrices, try to figure out
-   which matrix or matrices are actually modified by
-   this function.
+/* Given a unified function to update one or more of the potentially
+   time-varying matrices, try to figure out which matrix or matrices
+   are actually modified by this function.
 */
 
 static int check_for_matrix_updates (kalman *K, ufunc *uf)
@@ -1641,10 +1646,10 @@ static int check_for_matrix_updates (kalman *K, ufunc *uf)
     return 0;
 }
 
-/* Function to update any time-varying matrices, for use
-   with a kalman bundle. Bypasses the regular "genr" apparatus,
-   passing the attached bundle directly to the given user
-   function after is has been found by name.
+/* Function to update any time-varying matrices, for use with a kalman
+   bundle. Bypasses the regular "genr" apparatus, passing the attached
+   bundle directly to the given user function after it has been found
+   by name.
 */
 
 static int kalman_update_matrices (kalman *K, PRN *prn)
@@ -1900,7 +1905,7 @@ static int koopman_exact_general (kalman *K,
 }
 
 /* exact initial iteration for univariate y_t,
-   when F^\infty (Fk) > 0
+   when F_\infty ("Fk") > 0
 */
 
 static int koopman_exact_nonsingular (kalman *K)
@@ -2433,10 +2438,10 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
     return kalman_run(K, prn, errp);
 }
 
-/* Copy row @t from @src into @targ; or add row @t of @src to
-   @targ; or subtract row @t of @src from @targ.  We allow the
-   possibility that the length of vector @targ is less than
-   the number of columns in @src, but not the converse.
+/* Copy row @t from @src into @targ; or add row @t of @src to @targ;
+   or subtract row @t of @src from @targ.  We allow the possibility
+   that the length of vector @targ is less than the number of columns
+   in @src, but not the converse.
 */
 
 static int load_from_row (gretl_vector *targ,
@@ -2466,9 +2471,9 @@ static int load_from_row (gretl_vector *targ,
     return 0;
 }
 
-/* As load_from_row(), except that a column offset, @j, is
-   supported for the reading of a row from @src, and we
-   don't support the @mod option.
+/* As load_from_row(), except that a column offset, @j, is supported
+   for the reading of a row from @src, and we don't support the @mod
+   option.
 */
 
 static int load_from_row_offset (gretl_vector *targ,
@@ -2555,10 +2560,10 @@ static int load_from_vec (gretl_matrix *targ,
     return 0;
 }
 
-/* For disturbance smoothing: ensure we have on hand
-   matrices that are correctly sized to hold estimates
-   of the variance of the disturbance(s) in the state
-   and (if applicable) observation equations.
+/* For disturbance smoothing: ensure we have on hand matrices that are
+   correctly sized to hold estimates of the variance of the
+   disturbance(s) in the state and (if applicable) observation
+   equations.
 */
 
 static int maybe_resize_dist_mse (kalman *K,
@@ -2679,9 +2684,9 @@ static int load_filter_data (kalman *K, int t, int *pnt, int smtype)
     return err;
 }
 
-/* Calculate the variance of the smoothed disturbances
-   for the cross-correlated case. See Koopman, Shephard
-   and Doornik (1998), page 19, var(\varepsilon_t|Y_n).
+/* Calculate the variance of the smoothed disturbances for the
+   cross-correlated case. See Koopman, Shephard and Doornik (1998),
+   page 19, var(\varepsilon_t|Y_n).
 */
 
 static int combined_dist_variance (kalman *K,
@@ -2852,9 +2857,8 @@ static int koopman_smooth (kalman *K, int dkstyle)
     gretl_matrix *RZS = NULL;
     gretl_matrix *NH = NULL;
     gretl_matrix *Ut = NULL;
-    double x;
     int nt = K->n;
-    int i, t, err = 0;
+    int t, err = 0;
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
                                &D,  K->n, K->n,
@@ -3016,10 +3020,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
             gretl_matrix_multiply(K->HH, r0, r1);
         }
         load_to_row(R, r1, t);
-        for (i=0; i<K->r; i++) {
-            x = gretl_vector_get(r1, i);
-            gretl_matrix_set(K->U, t, i, x);
-        }
+	load_to_row_offset(K->U, r1, t, 0);
         if (K->p > 0) {
             gretl_matrix_multiply(K->G, Ut, n1);
         } else if (K->exact && t < K->d) {
@@ -3035,10 +3036,7 @@ static int koopman_smooth (kalman *K, int dkstyle)
         } else {
             gretl_matrix_multiply(K->GG, K->vt, n1);
         }
-        for (i=0; i<nt; i++) {
-            x = gretl_vector_get(n1, i);
-            gretl_matrix_set(K->U, t, K->r + i, x);
-        }
+	load_to_row_offset(K->U, n1, t, K->r);
         if (nt < K->n) {
             unshrink_vt(K, SM_DIST_FRWD);
             gretl_matrix_reuse(n1, K->n, 1);
@@ -3464,7 +3462,7 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     K->nt = NULL;
 
     if (!err) {
-        /* forward pass */
+        /* prior forward pass */
         K->flags |= KALMAN_SMOOTH;
         if (dist == 0) {
             /* Anderson-Moore */
@@ -3603,8 +3601,8 @@ static gretl_matrix *extract_Q (kalman *K,
 }
 
 /* See the account in Koopman, Shephard and Doornik, Econometrics
-   Journal, 1999 (volume 2, pp. 113-166), section 4.2, regarding
-   the initialization of the state under simulation.
+   Journal, 1999 (volume 2, pp. 113-166), section 4.2, regarding the
+   initialization of the state under simulation.
 */
 
 static int sim_state_0 (kalman *K, const gretl_matrix *U,
@@ -3687,8 +3685,8 @@ static int sim_state_0 (kalman *K, const gretl_matrix *U,
     return err;
 }
 
-/* note: it's OK for @S to be NULL (if the simulated
-   state is not wanted), so watch out for that!
+/* note: it's OK for @S to be NULL (if the simulated state is not
+   wanted), so watch out for that!
 */
 
 static int kalman_simulate (kalman *K,
@@ -4216,10 +4214,9 @@ get_input_matrix_target_by_id (kalman *K, int i)
     return targ;
 }
 
-/* Try attaching a matrix to a Kalman bundle: similar
-   to kalman_bundle_set_matrix() below, but allowing
-   for the possibility that the @data input of type
-   @vtype has to be converted first.
+/* Try attaching a matrix to a Kalman bundle: similar to
+   kalman_bundle_set_matrix() below, but allowing for the possibility
+   that the @data input of type @vtype has to be converted first.
 */
 
 static int
@@ -4256,10 +4253,9 @@ kalman_bundle_try_set_matrix (kalman *K, void *data,
     return err;
 }
 
-/* Called by kalman_deserialize() when reconstructing a
-   kalman bundle from XML, and also by kalman_bundle_copy()
-   when duplicating such a bundle. In these contexts we
-   know we have a gretl_matrix on input.
+/* Called by kalman_deserialize() when reconstructing a kalman bundle
+   from XML, and also by kalman_bundle_copy() when duplicating such a
+   bundle. In these contexts we know we have a gretl_matrix on input.
 */
 
 static int
@@ -4511,16 +4507,14 @@ static int kalman_set_diffuse (kalman *K, int d)
     }
 }
 
-/* Called by real_bundle_set_data() in gretl_bundle.c.
-   The return value indicates whether the putative
-   setting was handled (1) or not (0). Not being
-   handled here is not necessarily an error.
+/* Called by real_bundle_set_data() in gretl_bundle.c.  The return
+   value indicates whether the putative setting was handled (1) or not
+   (0). Not being handled here is not necessarily an error.
 
-   The @copy flag here is inherited from the specific
-   caller of real_bundle_set_data(): @copy = 1 if the
-   caller was gretl_bundle_set_data(), 0 if it was
-   gretl_bundle_donate_data(). Either way the kalman
-   struct takes ownership.
+   The @copy flag here is inherited from the specific caller of
+   real_bundle_set_data(): @copy = 1 if the caller was
+   gretl_bundle_set_data(), 0 if it was gretl_bundle_donate_data().
+   Either way the kalman struct takes ownership.
 */
 
 int maybe_set_kalman_element (void *kptr,
@@ -4797,8 +4791,8 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
     return err;
 }
 
-/* for use in context of a kalman bundle: serialize the
-   information in the kalman struct to XML
+/* For use in context of a kalman bundle: serialize the information in
+   the kalman struct to XML
 */
 
 int kalman_serialize (void *kptr, PRN *prn)
@@ -4859,8 +4853,8 @@ static int required_matrix_slot (const char *s)
     return -1;
 };
 
-/* for use in context of a kalman bundle: deserialize the
-   kalman struct from XML
+/* For use in context of a kalman bundle: deserialize the kalman
+   struct from XML
 */
 
 gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
