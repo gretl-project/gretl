@@ -1232,6 +1232,7 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
     request->xopt.easter = 0;   /* x13a: Easter effect */
     request->xopt.seats = 0;    /* x13a: use SEATS rather than X11 */
     request->xopt.airline = 0;  /* x13a: force "airline" ARIMA spec */
+    request->xopt.save_spc = 0; /* x13a: add record of spc content */
     request->xopt.critical = NADBL; /* for use with outliers */
 
     for (i=0; i<TX_MAXOPT; i++) {
@@ -2019,6 +2020,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
     xopt->seats    = gretl_bundle_get_bool(b, "seats", 0);
     xopt->airline  = gretl_bundle_get_bool(b, "airline", 0);
     xopt->easter   = gretl_bundle_get_bool(b, "easter", 0);
+    xopt->save_spc = gretl_bundle_get_bool(b, "save_spc", 0);
 
     if (gretl_bundle_has_key(b, "outliers")) {
         /* the outliers user choice can be between 0 and 7 for x13
@@ -2140,6 +2142,7 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
         pprintf(prn, "  log transformation:      %s\n", trival_strs[lt]);
         pprintf(prn, "  force 'airline' model:   %s\n", xopt->airline ? "yes" : "no");
         pprintf(prn, "  output series:           %s\n", output_strs[xopt->output]);
+	pprintf(prn, "  save spc content:        %s\n", xopt->save_spc ? "yes" : "no");
         pputc(prn, '\n');
     }
 
@@ -2178,6 +2181,24 @@ static void display_x13a_output (char *fname, int err, PRN *prn)
     }
 }
 
+static int save_spc_to_bundle (const char *fname,
+			       gretl_bundle *b)
+{
+    gchar *spc = NULL;
+    int err = 0;
+
+    g_file_get_contents(fname, &spc, NULL, NULL);
+
+    if (spc != NULL) {
+	gretl_bundle_set_string(b, "x13a_spc", spc);
+	g_free(spc);
+    } else {
+	err = E_FOPEN;
+    }
+
+    return err;
+}
+
 /* implements the deseas() function */
 
 int adjust_series (const double *x, double *y,
@@ -2187,7 +2208,7 @@ int adjust_series (const double *x, double *y,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[4] = {0};
-    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, NADBL, savelist};
+    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, 0, NADBL, savelist};
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
@@ -2228,6 +2249,9 @@ int adjust_series (const double *x, double *y,
             gretl_build_path(fname, workdir, vname, NULL);
             strcat(fname, ".spc");
             write_spc_file(fname, x, vname, dset, savelist, &xopt);
+	    if (xopt.save_spc) {
+		save_spc_to_bundle(fname, opts);
+	    }
         }
     } else {
         gretl_build_path(fname, workdir, vname, NULL);

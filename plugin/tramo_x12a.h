@@ -48,6 +48,7 @@ struct _x13a_opts {
     int airline;  /* use the airline model (vs auto model selection) */
     int output;   /* which output series is wanted? */
     int verbose;  /* verbosity level */
+    int save_spc; /* option to save spc file content */
     double critical; /* critical value for outliers (vs auto) */
     int *savelist;   /* spec for series to save */
 };
