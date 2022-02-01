@@ -30,8 +30,6 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
-#define DSDEBUG 0
-
 #define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
 #ifdef WIN32
@@ -47,9 +45,9 @@ enum prog_codes {
 };
 
 enum {
-    X13_AO = 1,
-    X13_LS = 2,
-    X13_TC = 4
+    X13_AO = 1, /* additive outlier */
+    X13_LS = 2, /* level shift */
+    X13_TC = 4  /* temporary change (spike plus decay) */
 };
 
 #define X13_STD_OUTLIERS (X13_AO | X13_LS)
@@ -1506,10 +1504,6 @@ static int write_spc_file (const char *fname,
         fputs("automdl{}\n", fp);
     }
 
-#if DSDEBUG
-    fprintf(stderr, "x13as: using %s\n", xopt->seats ? "seats" : "x11");
-#endif
-
     if (xopt->seats) {
         save_strings = x13_seats_save_strings;
         fputs("seats{", fp);
@@ -2213,10 +2207,6 @@ int adjust_series (const double *x, double *y,
     const char *workdir;
     char fname[MAXLEN];
     int err = 0;
-
-#if DSDEBUG
-    fprintf(stderr, "deseas: using %s\n", prog == X13A ? "x13as" : "tramo");
-#endif
 
     if (vname == NULL) {
         vname = "x";
