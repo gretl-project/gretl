@@ -3615,31 +3615,132 @@
     <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-	<fnarg optional="true" type="char">c</fnarg>
+	<fnarg optional="true" type="bundle">opts</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Richiede che TRAMO/SEATS o X-12-ARIMA siano
-	  installati. Restituisce la serie <argname>x</argname>
-	  destagionalizzata. La serie in ingresso <argname>x</argname>
-	  deve essere trimestrale o mensile. Per
-	  usare X-12-ARIMA inserire <lit>X</lit> come secondo
-	  argomento; per usare TRAMO inserire <lit>T</lit>. Se il
-	  secondo argomento è omesso, è utilizzato X-12-ARIMA.
+	  Lo scopo principale di questo comando è di produrre una
+	  versione destagionalizzata della serie in ingresso
+	  <argname>x</argname> (che deve essere trimestrale o mensile)
+	  usando X-13-ARIMA-SEATS; quest'ultimo dev'essere installato
+	  separatamente. Se il secondo argomento viene omesso,
+	  l'aggiustamento stagionale viene effettuato usando tutti i
+	  default di X13-ARIMA, cioè usando la cosiddetta procedura
+	  automatica. Quando il bundle <argname>opts</argname> viene
+	  specificato, esso può contenere una o più delle seguenti
+	  chiavi:
 	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>seats</lit>: 1 per usare l'algoritmo SEATS anziché
+	      il default (X11), oppure 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>airline</lit>: 1 per forzare la specificazione
+	      ARIMA al modello <quote>airline</quote>, ossia
+	      (0,1,1)(0,1,1) anziché usare un modello ARIMA
+	      selezionato automaticamente; 0 (default) per la
+	      selezione automatica.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	    <lit>outliers</lit>: usato per abilitare la correzione
+	    automatica degli outlier. Le scelte vanno da 0 a 7. Il
+	    valore 0 disattiva questa operazione. Per quanto riguarda
+	    gli altri valori, ci sono tre tipi possibiili di
+	    correzione, i cui codici numerici sono: 1 = outlier
+	    additivo (ao), 2 = salto di livello (level shift, ls), 4 =
+	    cambiamento temporaneo (temporary change, tc). Questi
+	    codici funzionano a livello di bit, talché i vari tipi
+	    possono essere combinati addizionando i codici; per
+	    esempio, usare 1 + 2 + 4 = 7 per attivarli tutti e tre. Si
+	    noti che la scelta 3 = 1 + 2 (ao e ls) corrisponde al
+	    default di X-13ARIMA-SEATS, per cui il significato della
+	    casella acceso/spento per gli outlier nella finestra di
+	    dialogo della GUI per la destagionalizzazione via X13
+	    riguarda l'opzione 3.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>critical</lit>: uno scalare positivo,
+	      corrispondente al valore critico per definire gli
+	      outlier. Il default è automatico, e dipende dalla
+	      numerosità dei dati. Si applica solo quando
+	      <lit>outliers</lit> è diverso da 0.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>logtrans</lit>: trasformazione logaritimica della
+	      serie in ingresso. 0 = no, 1 = sì, 2 = selezione
+	      automatica (il default). Si noti che è sconsigliato
+	      passare la serie già trasformata in logaritmo; se si
+	      vuole usare il logaritmo, meglio usare la serie in
+	      livelli e specificare <lit>logtrans=1</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>trading_days</lit>: Includere l'effetto "giorni
+	      lavorativi"?  0 = no, 1 = sì, 2 = scelta automatica (il
+	      default).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>working_days</lit>: una versione più semplice di
+	      <lit>trading_days</lit> in cui l'unica distinzione che
+	      viene fatta è fra giorni feriali e fine settimana. 0 =
+	      no (il default), 1 = sì, 2 = automatico.  Nota:
+	      <lit>trading_days</lit> e <lit>working_days</lit> non
+	      possono essere usati insieme.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>easter</lit>: 1 per incorporare l'effetto Pasqua,
+	      in supplemento a <lit>trading_days</lit> o
+	      <lit>working_days</lit>, oppure 0 (il default).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>output</lit>: una stringa per selezionare il tipo
+	      di output desiderato: <lit>"sa"</lit> per la serie
+	      aggiustata (il default), <lit>"trend"</lit> per il trend
+	      stimato, o <lit>"irreg"</lit> per la componente
+	      irregolare.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Risultati "completi"</subhead>
 	<para>
-	  Se la variabile in ingresso non possiede una componente
-	  stagionale identificabile, la funzione fallisce. Si noti che
-	  sia TRAMO/SEATS sia X-12-ARIMA hanno numerose opzioni;
-	  <lit>deseas</lit> richiama i due programmi con tutte le
-	  opzioni ai valori predefiniti. In entrambi i programmi i
-	  fattori stagionali sono calcolati sulla base di un modello
-	  ARIMA selezionato automaticamente. Una differenza tra i due
-	  programmi, che a volte produce differenze sostanziali nei
-	  risultati, è che per impostazione predefinita TRAMO compie
-	  un aggiustamento preventivo per gli outlier, al contrario di
-	  X-12-ARIMA che non lo fa.
+	  In certi casi, potrebbe essere necessario ottenere tutti e
+	  tre i risultati di cui sopra usando una sola invocazione
+	  della funzione <lit>deseas</lit>. Se così fosse, si può
+	  passare l'argomento <argname>opts</argname> come puntatore,
+	  e nella chiave the <lit>output</lit> inserire la stringa
+	  <lit>"all"</lit>.  Il risultato della funzione sarà la serie
+	  destagionalizzata, ma se la funzione è andata a buon fine
+	  <argname>opts</argname> conterrà una matrice a tre colonne
+	  di nome <lit>results</lit>, contenente le tre
+	  componenti. Per esempio, 
 	</para>
+	<code>
+	  bundle b = _(output="all")
+	  deseas(y, &amp;b)
+	  series y_dseas = b.results[,1]
+	  series y_trend = b.results[,2]
+	  series y_irreg = b.results[,3]
+	</code>
+	<para>
+	  si noti che il risultato della funzione non viene salvato.
+        </para>
       </description>
     </function>
 
