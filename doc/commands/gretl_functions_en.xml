@@ -3642,17 +3642,17 @@
 	  </li>
 	  <li>
 	    <para>
-	    <lit>outliers</lit>: enable detection and correction
-	    for outliers (choices 1 through 7), or 0 (the default)
-	    to omit this feature. The three available outlier types 
-	    with their numerical codes are: 1 = additive outlier (ao),
-	    2 = level shift (ls), 4 = tc (temporary change). The codes
-	    operate like a bit flag pattern, such that the types can be
-	    combined by adding the codes, e.g. 1 + 2 + 4 = 7 to activate
-	    all three. Notice that the choice 3 = 1 + 2 (ao and ls) 
-	    corresponds to the default within X-13ARIMA-SEATS, and 
-	    thus also to the meaning of the outlier tickbox in gretl's
-	    dialog window for seasonal adjustment via X13.  
+	      <lit>outliers</lit>: enable detection and correction for
+	      outliers (choices 1 through 7), or 0 (the default) to
+	      omit this feature. The three available outlier types
+	      with their numerical codes are: 1 = additive outlier
+	      (ao), 2 = level shift (ls), 4 = tc (temporary
+	      change). To combine options you add the codes, for
+	      example 1 + 2 + 4 = 7 to activate all three. Note that
+	      the choice 3 = 1 + 2 (ao and ls) is the default within
+	      X-13ARIMA-SEATS, and is selected via the outlier tickbox
+	      in gretl's dialog window for seasonal adjustment via
+	      X13.
 	    </para>
 	  </li>
 	  <li>
