@@ -3648,9 +3648,21 @@
 	  </li>
 	  <li>
 	    <para>
-	    <lit>outliers</lit>: 1 per abilitare la correzione
-	    automatica degli outliers, o 0 (default) per
-	    disabilitarla.
+	    <lit>outliers</lit>: usato per abilitare la correzione
+	    automatica degli outlier. Le scelte vanno da 0 a 7. Il
+	    valore 0 disattiva questa operazione. Per quanto riguarda
+	    gli altri valori, ci sono tre tipi possibiili di
+	    correzione, i cui codici numerici sono: 1 = outlier
+	    additivo (ao), 2 = salto di livello (level shift, ls), 4 =
+	    cambiamento temporaneo (temporary change, tc). Questi
+	    codici funzionano a livello di bit, talché i vari tipi
+	    possono essere combinati addizionando i codici; per
+	    esempio, usare 1 + 2 + 4 = 7 per attivarli tutti e tre. Si
+	    noti che la scelta 3 = 1 + 2 (ao e ls) corrisponde al
+	    default di X-13ARIMA-SEATS, per cui il significato della
+	    casella acceso/spento per gli outlier nella finestra di
+	    dialogo della GUI per la destagionalizzazione via X13
+	    riguarda l'opzione 3.
 	    </para>
 	  </li>
 	  <li>
