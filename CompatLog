@@ -1,4 +1,4 @@
-version 2022a, in progress
+2022-02-02 version 2022a
 
 The identifying string for macOS in the $sysinfo bundle (under
 the key "os") has been updated from "osx" to "macos".

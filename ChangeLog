@@ -1,4 +1,4 @@
-version 2022a, in progress
+2022-02-02 version 2022a
 - Copy/Paste of data in the GUI: make this facility more
   visible, and support gdt format in addition to delimited
   text; support Ctrl-C to copy
