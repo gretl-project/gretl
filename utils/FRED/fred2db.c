@@ -117,7 +117,7 @@ static int get_series_list (void)
 	err = allocate_series_names(n);
 	if (!err) {
 	    int i;
-	    
+
 	    rewind(fp);
 	    i = 0;
 	    while (fgets(line, sizeof line, fp)) {
@@ -479,8 +479,8 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 		} else {
 		    fprintf(stderr, "parse_fred_xml: expected 'seriess', got '%s'\n",
 			    (char *) node->name);
-		    err = 1;
-		}		
+		    err = E_LIMIT;
+		}
 	    }
 	} else if (fb->task == FRED_OBS) {
 	    if (!xmlStrcmp(node->name, (XUC) "observations")) {
@@ -488,7 +488,7 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 	    } else {
 		fprintf(stderr, "parse_fred_xml: expected 'observations', got '%s'\n",
 			(char *) node->name);
-		err = 1;
+		err = E_LIMIT;
 	    }
 	}
     }
@@ -625,7 +625,7 @@ int main (int argc, char **argv)
     err = get_series_list();
     if (err) {
 	exit(EXIT_FAILURE);
-    }    
+    }
 
     fidx = fopen("fedstl.idx", "w");
     fbin = fopen("fedstl.bin", "wb");
@@ -644,7 +644,7 @@ int main (int argc, char **argv)
     for (i=0; i<n_series && !err; i++) {
 	int attempt = 1;
 	int stime = 20;
-	
+
 	mangle(tmp, series_names[i]);
     retry:
 	fb = fredget(FRED_SERIES, tmp, fidx, &err);
@@ -661,13 +661,13 @@ int main (int argc, char **argv)
 		    err = 0;
 		    FREDbuf_free(fb);
 		    goto retry;
-		}	    
+		}
 	    } else if (err) {
 		fprintf(stderr, "parse_fred_xml: err = %d\n", err);
 	    }
 	}
 	FREDbuf_free(fb);
-	if (i > 0 && i % 15 == 0) {
+	if (i > 0 && i % 12 == 0) {
 	    fprintf(stderr, "brief pause...\n");
 	    sleep(6);
 	}
