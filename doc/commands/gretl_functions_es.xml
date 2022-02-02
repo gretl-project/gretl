@@ -3642,8 +3642,17 @@
 	  </li>
 	  <li>
 	    <para>
-	    <lit>outliers</lit>: 1 para permitir la detección y corrección de
-	    valores atípicos, o 0 (por defecto) para omitir esta característica.
+	    <lit>outliers</lit>: Permite la detección y corrección de valores
+	      atípicos (elecciones de 1 hasta 7), o 0 (predeterminado) para
+	      omitir esta característica. Los tres tipos de valores atípicos
+	      disponibles con sus códigos numéricos son: 1 = valor atípico
+	      aditivo (ao), 2 = paso de nivel (ls), 4 = cambio temporal (tc).
+	      Para combinar las opciones puedes añadir códigos, por ejemplo:
+	      1 + 2 + 4 = 7 para activar las tres a un tiempo. Ten en cuenta
+	      que la elección 3 = 1 + 2 (ao con ls) es la predeterminada en
+	      X-13ARIMA-SEATS, y se selecciona mediante la casilla de valores
+	      atípicos en la ventana de diálogo de GRETL para el ajuste
+	      estacional por medio de X13.
 	    </para>
 	  </li>
 	  <li>
