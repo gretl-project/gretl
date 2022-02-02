@@ -8565,11 +8565,20 @@ static void record_obs_info (obsinfo *oi, DATASET *dset)
 
 static int restore_obs_info (obsinfo *oi, DATASET *dset)
 {
+    if (dset != NULL) {
+	dset->structure = oi->structure;
+	dset->pd = oi->pd;
+	dset->t1 = oi->t1;
+	dset->t2 = oi->t2;
+	strcpy(dset->stobs, oi->stobs);
+	dset->panel_pd = oi->panel_pd;
+	dset->panel_sd0 = oi->panel_sd0;
+    }
+
+    return 0;
+
+#if 0 /* the following broke fcModels.gfn, 2022-02-01 */
     gretlopt opt = OPT_NONE;
-
-    dset->panel_pd = oi->panel_pd;
-    dset->panel_sd0 = oi->panel_sd0;
-
     if (oi->structure == CROSS_SECTION) {
 	opt = OPT_X;
     } else if (oi->structure == TIME_SERIES) {
@@ -8579,8 +8588,8 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
     } else if (oi->structure == SPECIAL_TIME_SERIES) {
 	opt = OPT_N;
     }
-
     return simple_set_obs(dset, oi->pd, oi->stobs, opt);
+#endif
 }
 
 static void push_verbosity (fncall *call)
