@@ -9,7 +9,7 @@
     <head>
       <title>gretl addons</title>
       <link rel="stylesheet" type="text/css"
-      href="../server.css"/>
+      href="../style/server.css"/>
     </head>
     <body>
       <p>[<a href="http://gretl.sourceforge.net/">gretl main page</a>]</p>
