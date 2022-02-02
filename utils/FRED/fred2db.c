@@ -643,7 +643,7 @@ int main (int argc, char **argv)
 
     for (i=0; i<n_series && !err; i++) {
 	int attempt = 1;
-	int stime = 15;
+	int stime = 20;
 	
 	mangle(tmp, series_names[i]);
     retry:
@@ -669,7 +669,7 @@ int main (int argc, char **argv)
 	FREDbuf_free(fb);
 	if (i > 0 && i % 15 == 0) {
 	    fprintf(stderr, "brief pause...\n");
-	    sleep(3);
+	    sleep(6);
 	}
     }
 
