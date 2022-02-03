@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2022-01-22 22:22+0100\n"
+"PO-Revision-Date: 2022-02-03 16:24+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -2214,7 +2214,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Ajustez rho en utilisant la procédure CORC...\n"
+"Ajustement de rho par la procédure CORC...\n"
 "\n"
 
 #: lib/src/estimate.c:2306
@@ -2224,7 +2224,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Exécution d'un calcul itératif de rho...\n"
+"Calcul itératif de rho...\n"
 "\n"
 
 #: lib/src/estimate.c:2309
@@ -2603,7 +2603,7 @@ msgstr ""
 
 #: lib/src/genfuncs.c:2937
 msgid "centered periodic dummy"
-msgstr "Indicatrices _périodiques centrées"
+msgstr "indicatrices périodiques centrées"
 
 #: lib/src/genfuncs.c:2940
 msgid "uncentered periodic dummy"
@@ -4111,7 +4111,7 @@ msgstr "set_omp_n_threads: OpenMP n’est pas activé"
 
 #: lib/src/gretl_panel.c:1560
 msgid "Variance estimators:"
-msgstr "Estimateurs de la variance"
+msgstr "Estimateurs de la variance :"
 
 #: lib/src/gretl_panel.c:1562
 #, c-format
@@ -4577,7 +4577,7 @@ msgstr "observation de départ « %s » non valide"
 #: lib/src/gretl_utils.c:1192 lib/src/gretl_utils.c:1217
 #, c-format
 msgid "frequency (%d) does not seem to make sense"
-msgstr "La fréquence (%d) ne semble pas avoir du sens"
+msgstr "la fréquence (%d) ne semble pas avoir du sens"
 
 #: lib/src/gretl_utils.c:1237 lib/src/gretl_utils.c:1326
 #, c-format
@@ -5783,7 +5783,7 @@ msgstr "T"
 
 #: lib/src/modelprint.c:1930
 msgid "Using line search with conditional OLS"
-msgstr "Recherche par ligne avec MCO conditionnel"
+msgstr "Recherche par ligne avec MCO conditionnels"
 
 #: lib/src/modelprint.c:1932
 msgid "Using L-BFGS-B with conditional OLS"
@@ -5997,7 +5997,7 @@ msgstr "Pente"
 #: lib/src/modelprint.c:2543
 msgid "Warning: data matrix close to singularity!"
 msgstr ""
-"Avertissement : la matrice des données est proche d'une matrice singulière"
+"Avertissement : la matrice des données est proche d'une matrice singulière !"
 
 #: lib/src/modelprint.c:2565
 msgid ""
@@ -7575,7 +7575,7 @@ msgstr "FIML"
 
 #: lib/src/system.c:103
 msgid "Seemingly Unrelated Regressions"
-msgstr "Régressions Apparemment Non-reliées (SUR)"
+msgstr "Régressions Apparemment Non-reliées"
 
 #: lib/src/system.c:104
 msgid "Three-Stage Least Squares"
@@ -8362,7 +8362,7 @@ msgstr "À propos de gretl"
 
 #: gui/about.c:153 gui/about.c:159 plugin/excel_import.c:108
 msgid "build date"
-msgstr "compilé le :"
+msgstr "compilé le"
 
 #: gui/about.c:198 gui/about.c:200
 msgid "translator_credits"
@@ -9888,7 +9888,7 @@ msgstr "coupe transversale empilée"
 
 #: gui/datawiz.c:784
 msgid "Time dimension: "
-msgstr "Dimension temporelle :"
+msgstr "Dimension temporelle : "
 
 #: gui/datawiz.c:801
 msgid "(dropping missing observations)"
@@ -10760,7 +10760,7 @@ msgstr "échelle Logarithmique"
 
 #: gui/dialogs.c:6944
 msgid "draw border around map"
-msgstr "dessiner une bordure autour de la carte "
+msgstr "dessiner une bordure autour de la carte"
 
 #: gui/dialogs.c:6952
 msgid "Feature border width:"
@@ -10785,7 +10785,7 @@ msgstr "Nom du résultat:"
 
 #: gui/dialogs.c:7247
 msgid "Aggregation type:"
-msgstr "Type d’agrégation"
+msgstr "Type d’agrégation :"
 
 #: gui/dialogs.c:7260
 msgid "Regression based"
@@ -10873,7 +10873,7 @@ msgstr "utiliser MPI si disponible"
 
 #: gui/dialogs.c:7641
 msgid "show execution time"
-msgstr "Afficher le temps d'exécution"
+msgstr "afficher le temps d'exécution"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -12207,7 +12207,7 @@ msgstr "Principal"
 
 #: gui/gpt_dialog.c:1698
 msgid "key position"
-msgstr "Légende"
+msgstr "légende"
 
 #: gui/gpt_dialog.c:1727
 msgid "fitted line"
@@ -12577,11 +12577,11 @@ msgstr "_Nouveau code"
 
 #: gui/gretl.c:1777
 msgid "gretl script"
-msgstr "Code gretl"
+msgstr "code gretl"
 
 #: gui/gretl.c:1778
 msgid "gnuplot script"
-msgstr "Code gnuplot"
+msgstr "code gnuplot"
 
 #: gui/gretl.c:1779
 msgid "R script"
@@ -13177,7 +13177,7 @@ msgstr "_Modèle"
 
 #: gui/gretl.c:1973
 msgid "_Ordinary Least Squares"
-msgstr "Moindres Carrés _Ordinaires - MCO"
+msgstr "Moindres Carrés _Ordinaires, MCO"
 
 #: gui/gretl.c:1974
 msgid "_Instrumental variables"
@@ -13185,15 +13185,15 @@ msgstr "Variables _instrumentales"
 
 #: gui/gretl.c:1975
 msgid "_Two-Stage Least Squares"
-msgstr "_Doubles Moindres Carrés - 2MC"
+msgstr "_Doubles Moindres Carrés, 2MC"
 
 #: gui/gretl.c:1976
 msgid "_LIML"
-msgstr "Maximum de Vraisemblance à Information _Limitée - MVIL"
+msgstr "Maximum de Vraisemblance à Information _Limitée, MVIL"
 
 #: gui/gretl.c:1977 gui/gretl.c:2026
 msgid "_GMM"
-msgstr "Méthode des Moments _Généralisés - MMG"
+msgstr "Méthode des Moments _Généralisés, MMG"
 
 #: gui/gretl.c:1978
 msgid "Other _linear models"
@@ -13201,7 +13201,7 @@ msgstr "Autres modèles _linéaires"
 
 #: gui/gretl.c:1979
 msgid "_Weighted Least Squares"
-msgstr "Moindres Carrés _Pondérés - MCP"
+msgstr "Moindres Carrés _Pondérés, MCP"
 
 #: gui/gretl.c:1980
 msgid "H_eteroskedasticity corrected"
@@ -13249,7 +13249,7 @@ msgstr "Séries temporelles _multivariées"
 
 #: gui/gretl.c:1992
 msgid "_Vector Autoregression"
-msgstr "_Vecteur Autorégressif - VAR"
+msgstr "_Vecteur Autorégressif, VAR"
 
 #: gui/gretl.c:1993
 msgid "VAR _lag selection"
@@ -13257,7 +13257,7 @@ msgstr "Sé_lection des retards du VAR"
 
 #: gui/gretl.c:1994
 msgid "V_ECM"
-msgstr "Modèle à correction d’erreurs (V_ECM)"
+msgstr "Modèle à correction d’erreurs, V_ECM"
 
 #: gui/gretl.c:1995
 msgid "Cointegration test (_Johansen)"
@@ -13353,7 +13353,7 @@ msgstr "Estimation _robuste"
 
 #: gui/gretl.c:2020
 msgid "Least _Absolute Deviation"
-msgstr "Moindres Différences _Absolues (LAD)"
+msgstr "Moindres Différences _Absolues, LAD"
 
 #: gui/gretl.c:2021
 msgid "_Quantile regression"
@@ -13369,11 +13369,11 @@ msgstr "_Nadaraya-Watson"
 
 #: gui/gretl.c:2024
 msgid "_Nonlinear Least Squares"
-msgstr "Moindres Carrés _Non-Linéaires - MCNL"
+msgstr "Moindres Carrés _Non-Linéaires, MCNL"
 
 #: gui/gretl.c:2025
 msgid "_Maximum likelihood"
-msgstr "_Maximum de vraisemblance - MV"
+msgstr "_Maximum de vraisemblance, MV"
 
 #: gui/gretl.c:2027
 msgid "_Simultaneous equations"
@@ -13638,7 +13638,7 @@ msgstr "$U2$ de Theil"
 
 #: gui/guiprint.c:1331 gui/guiprint.c:1348
 msgid "Model estimation range:"
-msgstr "Modèle de l'estimation de l'étendue :"
+msgstr "Etendue de l’estimation du modèle :"
 
 #: gui/guiprint.c:1334 gui/guiprint.c:1352
 #, c-format
@@ -14020,9 +14020,10 @@ msgid ""
 "close the current one.  Any unsaved work\n"
 "will be lost.  Proceed to open data file?"
 msgstr ""
-"L'ouverture d'un nouveau fichier de données fermera\n"
-"automatiquement le fichier actuel. Tout travail\n"
-"sera perdu. Procéder à l'ouverture du fichier de données ?"
+"Ouvrir un nouveau fichier de données implique la fermeture du fichier en "
+"cours. \n"
+"Tout travail non enregistré sera perdu. \n"
+"Continuer avec l’ouverture du fichier de données ?"
 
 #: gui/gui_utils.c:1468
 msgid "gretl: open session"
@@ -14614,7 +14615,7 @@ msgstr "Non-paramétrique"
 
 #: gui/helpfiles.c:358
 msgid "State space"
-msgstr "Modèle état-espace"
+msgstr "Modèle espace-état"
 
 #: gui/helpfiles.c:362
 msgid "Strings"
@@ -15812,7 +15813,7 @@ msgstr ""
 
 #: gui/model_table.c:238
 msgid "Model is already included in the table"
-msgstr "Modèle est déjà inclus dans la table"
+msgstr "Modèle déjà inclus dans la table"
 
 #: gui/model_table.c:294 gui/model_table.c:296
 msgid "Model added to table"
@@ -15999,7 +16000,7 @@ msgstr "Ridge"
 
 #: gui/selector.c:3551 gui/selector.c:6633
 msgid "random"
-msgstr "Aléatoire"
+msgstr "aléatoire"
 
 #: gui/selector.c:3575
 msgid "You must specify a quantile"
@@ -16067,11 +16068,11 @@ msgstr "Vous devez spécifier les régresseurs pour l'équation de sélection"
 
 #: gui/selector.c:4302
 msgid "Heteroskedasticity corrected"
-msgstr "Hétéroscédasticité corrigée"
+msgstr "Correction de l’hétéroscédasticité"
 
 #: gui/selector.c:4304
 msgid "AR(1) errors"
-msgstr "erreurs AR(1)"
+msgstr "Erreurs AR(1)"
 
 #: gui/selector.c:4316
 msgid "Random effects (binary) probit"
@@ -16099,7 +16100,7 @@ msgstr "MCP groupés"
 
 #: gui/selector.c:4336
 msgid "Between-groups model"
-msgstr "Modèle between"
+msgstr "Modèle between-groups"
 
 #: gui/selector.c:4338
 msgid "Dynamic panel model"
@@ -16351,7 +16352,7 @@ msgstr "Spécifié(e) par l'utilisateur"
 
 #: gui/selector.c:5284
 msgid "Use robust weights"
-msgstr "Utiliser des pondérations corrigées"
+msgstr "Utiliser des pondérations robustes"
 
 #: gui/selector.c:5285
 msgid "Use \"leave one out\""
@@ -16958,7 +16959,7 @@ msgstr "Échec de copie du fichier graphique"
 
 #: gui/session.c:1224
 msgid "Model is already saved"
-msgstr "Modèle est déjà sauvegardé"
+msgstr "Modèle déjà sauvegardé"
 
 #: gui/session.c:1538
 msgid "Couldn't set sample"
@@ -19209,7 +19210,7 @@ msgstr "Ce fichier ne semble pas être un fichier SAS xport valide"
 
 #: plugin/spss_import.c:1962
 msgid "cannot read SPSS .sav on this platform"
-msgstr "Ne peut pas lire les fichiers .sav de SPSS sur cette plateforme"
+msgstr "ne peut pas lire les fichiers .sav de SPSS sur cette plateforme"
 
 #: plugin/stata_import.c:516 plugin/stata_import.c:553
 msgid "unknown data type"
@@ -19245,7 +19246,7 @@ msgstr "Modèle de série temporelle avec ajustement saisonnier"
 
 #: plugin/tramo_options.c:364
 msgid "Time-series model only"
-msgstr "Modèle seulement de séries temporelles"
+msgstr "Modèle de séries temporelles uniquement"
 
 #: plugin/tramo_options.c:370
 msgid "Standard automatic analysis"
