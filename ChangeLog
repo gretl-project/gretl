@@ -1,3 +1,6 @@
+version 2022b, in progress
+- delete unused file, addons.txt
+
 2022-02-02 version 2022a
 - Copy/Paste of data in the GUI: make this facility more
   visible, and support gdt format in addition to delimited
