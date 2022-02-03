@@ -8547,49 +8547,28 @@ function_assign_returns (fncall *call, int rtype,
 static void record_obs_info (obsinfo *oi, DATASET *dset)
 {
     oi->added = 0;
-
-    if (dset != NULL) {
-	oi->structure = dset->structure;
-	oi->pd = dset->pd;
-	oi->t1 = dset->t1;
-	oi->t2 = dset->t2;
-	strcpy(oi->stobs, dset->stobs);
-	oi->panel_pd = dset->panel_pd;
-	oi->panel_sd0 = dset->panel_sd0;
-    }
+    oi->structure = dset->structure;
+    oi->pd = dset->pd;
+    oi->t1 = dset->t1;
+    oi->t2 = dset->t2;
+    strcpy(oi->stobs, dset->stobs);
+    oi->panel_pd = dset->panel_pd;
+    oi->panel_sd0 = dset->panel_sd0;
 }
 
 /* On function exit, restore the observations information
    ("setobs" stuff) that was in force on entry.
 */
 
-static int restore_obs_info (obsinfo *oi, DATASET *dset)
+static void restore_obs_info (obsinfo *oi, DATASET *dset)
 {
-    if (dset != NULL) {
-	dset->structure = oi->structure;
-	dset->pd = oi->pd;
-	dset->t1 = oi->t1;
-	dset->t2 = oi->t2;
-	strcpy(dset->stobs, oi->stobs);
-	dset->panel_pd = oi->panel_pd;
-	dset->panel_sd0 = oi->panel_sd0;
-    }
-
-    return 0;
-
-#if 0 /* the following broke fcModels.gfn, 2022-02-01 */
-    gretlopt opt = OPT_NONE;
-    if (oi->structure == CROSS_SECTION) {
-	opt = OPT_X;
-    } else if (oi->structure == TIME_SERIES) {
-	opt = OPT_T;
-    } else if (oi->structure == STACKED_TIME_SERIES) {
-	opt = OPT_S;
-    } else if (oi->structure == SPECIAL_TIME_SERIES) {
-	opt = OPT_N;
-    }
-    return simple_set_obs(dset, oi->pd, oi->stobs, opt);
-#endif
+    dset->structure = oi->structure;
+    dset->pd = oi->pd;
+    dset->t1 = oi->t1;
+    dset->t2 = oi->t2;
+    strcpy(dset->stobs, oi->stobs);
+    dset->panel_pd = oi->panel_pd;
+    dset->panel_sd0 = oi->panel_sd0;
 }
 
 static void push_verbosity (fncall *call)
