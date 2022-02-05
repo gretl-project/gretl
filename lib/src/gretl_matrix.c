@@ -4313,13 +4313,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet,
 
 static double det_22 (const double *a, int *err)
 {
-    double d = a[0]*a[3] - a[1]*a[2];
-
-    if (na(d)) {
-	*err = E_NAN;
-    }
-
-    return d;
+    return a[0]*a[3] - a[1]*a[2];
 }
 
 static double det_33 (const double *a, int *err)
@@ -4327,10 +4321,6 @@ static double det_33 (const double *a, int *err)
     double d = a[0]*a[4]*a[8] - a[0]*a[7]*a[5]
 	+ a[3]*a[7]*a[2] - a[3]*a[1]*a[8]
 	+ a[6]*a[1]*a[5] - a[6]*a[4]*a[2];
-
-    if (na(d)) {
-	*err = E_NAN;
-    }
 
     return d;
 }
