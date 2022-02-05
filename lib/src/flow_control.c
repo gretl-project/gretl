@@ -88,7 +88,9 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     int ret = -1;
 
 #if IFDEBUG
-    fprintf(stderr, "if_eval: s = '%s'\n", s);
+    if (s != NULL) {
+	fprintf(stderr, "if_eval: s = '%s'\n", s);
+    }
 #endif
 
     if (ptr != NULL) {
@@ -107,11 +109,18 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 
 	    *pgen = ifgen = genr_compile(s, dset, GRETL_TYPE_BOOL,
 					 OPT_P | OPT_N, NULL, err);
+#if IFDEBUG
+	    fprintf(stderr, "if_eval: genr_compile (%s), err = %d\n",
+		    s, *err);
+#endif
 	}
     }
 
     if (ifgen != NULL) {
 	val = evaluate_if_cond(ifgen, dset, prn, err);
+#if IFDEBUG
+	fprintf(stderr, "ran @ifgen: val %g, err %d\n", val, *err);
+#endif
     } else if (s == NULL) {
 	*err = E_DATA;
     } else {

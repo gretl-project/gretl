@@ -3788,6 +3788,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    if (cond_compiled(loop, j)) {
 		/* compiled IF or ELIF */
 		cmd->ci = ci;
+		s->cmd->vstart = NULL;
 		flow_control(s, dset, &loop->cmds[j].genr);
 		if (cmd->err) {
 		    /* we hit an error evaluating the if state */

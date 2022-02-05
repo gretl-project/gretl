@@ -451,6 +451,11 @@ CMD *gretl_cmd_new (void)
     return cmd;
 }
 
+static void cmd_set_vstart (CMD *c, const char *s)
+{
+    c->vstart = s;
+}
+
 int gretl_cmd_init (CMD *c)
 {
     int i, n = 16;
@@ -3277,7 +3282,7 @@ static int set_command_vstart (CMD *cmd, ExecState *state,
     }
 #endif
 
-    cmd->vstart = s;
+    cmd_set_vstart(cmd, s);
 
     return 0;
 }
@@ -3469,7 +3474,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	/* treat as a bare expression to be evaluated */
 	cmd->ci = EVAL;
 	cmd->gtype = GRETL_TYPE_NONE;
-	cmd->vstart = s + 1;
+	cmd_set_vstart(cmd, s + 1);
 	goto skipit;
     }
 
@@ -3646,7 +3651,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    break;
 	} else if ((cmd->ciflags & CI_ADHOC) && (cmd->ciflags & CI_NOOPT)) {
 	    /* ditto */
-	    cmd->vstart = s + n;
+	    cmd_set_vstart(cmd, s + n);
 	    break;
 	}
 
@@ -3805,7 +3810,7 @@ static int post_process_sprintf_command (CMD *cmd,
 
     cmd->ci = GENR;
     cmd->gtype = GRETL_TYPE_STRING;
-    cmd->vstart = line;
+    cmd_set_vstart(cmd, line);
 
     return err;
 }
@@ -4091,7 +4096,7 @@ static int get_flow_control_ci (ExecState *state)
 	}
 	if (s[n] != '\0' && (ci == IF || ci == ELIF)) {
 	    /* set pointer to the condition */
-	    state->cmd->vstart = s + n + 1;
+	    cmd_set_vstart(state->cmd, s + n + 1);
 	}
     }
 

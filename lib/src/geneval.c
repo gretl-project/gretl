@@ -44,6 +44,7 @@
 #include "gretl_mt.h"
 #include "var.h"
 #include "vartest.h"
+#include "flow_control.h"
 
 #include <time.h> /* for the $now accessor */
 
@@ -7838,11 +7839,15 @@ static NODE *do_assert (NODE *l, NODE *r, parser *p)
 	pprintf(p->prn, _("Warning: assertion '%s' failed"), r->v.str);
 	pputc(p->prn, '\n');
 	ret->v.xval = 0;
-    } else {
-	/* complain and halt on failure */
+    } else if (assert_val == 2) {
+	/* complain and throw an error on failure */
 	p->err = 1;
 	gretl_errmsg_sprintf(_("Assertion '%s' failed"), r->v.str);
 	ret->v.xval = l->v.xval;
+    } else {
+	/* abort execution altogether */
+	fprintf(stderr, "Assertion '%s' failed\n", r->v.str);
+	abort();
     }
 
     return ret;
