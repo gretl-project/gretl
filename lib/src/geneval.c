@@ -10528,6 +10528,17 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *if_indent_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	ret->v.xval = gretl_if_state_record();
+    }
+
+    return ret;
+}
+
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -16815,6 +16826,9 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, BUNDLE, l, p);
         }
         break;
+    case HF_INDENT:
+	ret = if_indent_node(l, p);
+	break;
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;

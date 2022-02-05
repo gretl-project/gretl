@@ -119,7 +119,7 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 	val = generate_boolean(s, dset, prn, err);
     }
 
-#if IFDEBUG
+#if IFDEBUG > 1
     fprintf(stderr, "if_eval: generate returned %d\n", *err);
 #endif
 
@@ -146,7 +146,7 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     return ret;
 }
 
-#if IFDEBUG
+#if IFDEBUG > 1
 static const char *ifstr (int c)
 {
     if (c == SET_FALSE) return "SET_FALSE";
@@ -206,7 +206,7 @@ static int ifstate (int code, int val, int *err)
     static unsigned short indent;
     int i, ret = 0;
 
-#if IFDEBUG
+#if IFDEBUG > 1
     if (code != IS_FALSE) {
 	fprintf(stderr, "ifstate: code = %s\n", ifstr(code));
     }
@@ -262,7 +262,7 @@ static int ifstate (int code, int val, int *err)
 	}
     }
 
-#if IFDEBUG
+#if IFDEBUG > 1
     fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n",
 	    ret, indent, (err == NULL)? 0 : *err);
 #endif
