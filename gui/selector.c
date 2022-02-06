@@ -51,12 +51,24 @@
 #define LDEBUG 0
 #define VLDEBUG 0
 
+/* codes for window components */
 enum {
     SR_LVARS  = 1,
     SR_RVARS1,
     SR_RVARS2,
     SR_LVARS2
 };
+
+/* state flags */
+enum {
+    SR_BLOCKING     = 1 << 0,
+    SR_STATE_PUSHED = 1 << 1,
+    SR_LAGS_HIDDEN  = 1 << 2
+};
+
+#define blocking(s)     (s->flags & SR_BLOCKING)
+#define state_pushed(s) (s->flags & SR_STATE_PUSHED)
+#define lags_hidden(s)  (s->flags & SR_LAGS_HIDDEN)
 
 #define N_EXTRA 8
 
@@ -81,11 +93,10 @@ struct _selector {
     GtkWidget *hccme_button;
     GtkWidget *extra[N_EXTRA];
     int ci;
-    int blocking;
+    int flags;
     int active_var;
     int error;
     int n_left;
-    int state_pushed;
     int row;
     int n_rows;
     gretlopt opts;
@@ -262,7 +273,6 @@ static int want_seasonals = 0;
 static int default_order;
 static int vartrend = 0;
 static int varconst = 1;
-static int lags_hidden;
 static int arma_p = 1;
 static int arma_P = 0;
 static int arima_d = 0;
@@ -331,7 +341,7 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
 				   gpointer data);
 static gint listvar_midas_click (GtkWidget *widget, GdkEventButton *event,
 				 selector *sr);
-static int list_show_var (int v, int ci, int show_lags);
+static int list_show_var (selector *sr, int v, int show_lags);
 static void available_functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
@@ -411,7 +421,7 @@ static void selector_set_blocking (selector *sr, int modal)
     if (modal) {
 	gretl_set_window_modal(sr->dlg);
     }
-    sr->blocking = 1;
+    sr->flags |= SR_BLOCKING;
     gtk_main();
 }
 
@@ -4283,11 +4293,11 @@ static void cancel_selector (GtkWidget *widget, selector *sr)
 
 static void destroy_selector (GtkWidget *w, selector *sr)
 {
-    if (sr->blocking) {
+    if (blocking(sr)) {
 	gtk_main_quit();
     }
 
-    if (sr->state_pushed) {
+    if (state_pushed(sr)) {
 	pop_program_state();
     }
 
@@ -5426,8 +5436,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->row = 0;
     sr->n_rows = 1;
 
-    sr->blocking = 0;
     sr->ci = ci;
+    sr->flags = 0;
     sr->opts = OPT_NONE;
     sr->parent = parent;
     sr->data = data;
@@ -5527,13 +5537,12 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->active_var = 0;
     sr->error = 0;
     sr->n_left = 0;
-    sr->state_pushed = 0;
 
     if (ci == ARMA && push_program_state() == 0) {
 	if (model_opt & OPT_L) {
 	    libset_set_bool(USE_LBFGS, 1);
 	}
-	sr->state_pushed = 1;
+	sr->flags |= SR_STATE_PUSHED;
     }
 
     if (selcode == SELECTOR_SIMPLE) {
@@ -6311,7 +6320,7 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
     show_lags = button_is_active(w);
 
     for (i=imin; i<dataset->v; i++) {
-	if (list_show_var(i, sr->ci, show_lags)) {
+	if (list_show_var(sr, i, show_lags)) {
 	    list_append_var_simple(store, &iter, i);
 	}
     }
@@ -7302,8 +7311,9 @@ static void build_selector_buttons (selector *sr)
     gtk_widget_grab_default(tmp);
 }
 
-static int list_show_var (int v, int ci, int show_lags)
+static int list_show_var (selector *sr, int v, int show_lags)
 {
+    int ci = sr->ci;
     int ret = 1;
 
     if (ci == LOESS || ci == NADARWAT) {
@@ -7312,8 +7322,6 @@ static int list_show_var (int v, int ci, int show_lags)
 	   lag-selection mechanism */
 	show_lags = 1;
     }
-
-    lags_hidden = 0;
 
     if (v == 0 && (ci == DEFINE_LIST || ci == DEFINE_MATRIX)) {
 	;
@@ -7326,7 +7334,7 @@ static int list_show_var (int v, int ci, int show_lags)
     } else if (is_panel_group_names_series(dataset, v)) {
 	ret = 0;
     } else if (!show_lags && series_get_lag(dataset, v)) {
-	lags_hidden = 1;
+	sr->flags |= SR_LAGS_HIDDEN;
 	ret = 0;
     } else if (ci == XTAB) {
 	ret = accept_as_discrete(dataset, v, 0);
@@ -7353,7 +7361,7 @@ void selector_register_genr (int newvars, gpointer p)
 
     for (i=0; i<newvars; i++) {
 	v = dataset->v - newvars + i;
-	if (list_show_var(v, sr->ci, 0)) {
+	if (list_show_var(sr, v, 0)) {
 	    list_append_var_simple(store, &iter, v);
 	}
     }
@@ -7551,7 +7559,7 @@ static void selector_set_focus (selector *sr)
 	gtk_widget_grab_focus(sr->lvars);
 	do_sel = gtk_tree_model_get_iter_first(mod, &iter);
 	if (do_sel) {
-	    if (!FNPKG_CODE(sr->ci) && list_show_var(0, sr->ci, 0)) {
+	    if (!FNPKG_CODE(sr->ci) && list_show_var(sr, 0, 0)) {
 		/* don't select the constant: skip a row */
 		do_sel = gtk_tree_model_iter_next(mod, &iter);
 	    }
@@ -7687,7 +7695,7 @@ selector *selection_dialog (int ci, const char *title,
 	    if (i == 1 && (MODEL_CODE(ci) || VEC_CODE(ci))) {
 		list_append_named_lists(store, &iter);
 	    }
-	    if (list_show_var(i, ci, 0)) {
+	    if (list_show_var(sr, i, 0)) {
 		list_append_var_simple(store, &iter, i);
 	    }
 	}
@@ -8216,7 +8224,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 	    if (i == 1 && SHOW_LISTS_CODE(ci)) {
 		list_append_named_lists(store, &iter);
 	    }
-	    if (list_show_var(i, ci, 0)) {
+	    if (list_show_var(sr, i, 0)) {
 		list_append_var_simple(store, &iter, i);
 		nleft++;
 	    }
@@ -8261,7 +8269,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
 
     /* unhide lags check box? */
     if ((sr->ci == DEFINE_LIST || sr->ci == EXPORT || SAVE_DATA_ACTION(sr->ci))
-	&& lags_hidden) {
+	&& lags_hidden(sr)) {
 	unhide_lags_switch(sr);
     }
 
