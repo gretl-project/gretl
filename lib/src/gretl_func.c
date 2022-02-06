@@ -9614,14 +9614,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	dset->t2 = orig_t2;
     }
 
-    if (err) {
-	if (gretl_function_depth() == 1) {
-	    gretl_if_state_clear();
-	} else {
-	    gretl_if_state_reset(indent0);
-	}
-    } else if (retline >= 0) {
-	/* we returned prior to the end of the function */
+    if (err || (retline >= 0)) {
+	/* hit an error, or returned prior to the end of the function */
 	gretl_if_state_reset(indent0);
     } else {
 	err = gretl_if_state_check(indent0);

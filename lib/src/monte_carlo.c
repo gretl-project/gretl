@@ -3951,9 +3951,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 	} /* end execution of commands within loop */
 
-	if (err) {
-	    gretl_if_state_clear();
-	} else if (loop->brk) {
+	if (err || loop->brk) {
+	    /* 2022-02-06: gretl_if_state_clear() was called if @err */
 	    gretl_if_state_reset(indent0);
 	} else {
 	    err = gretl_if_state_check(indent0);
