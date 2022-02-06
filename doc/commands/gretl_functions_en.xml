@@ -1694,14 +1694,25 @@
 	  <lit>assert</lit> failing other than the return value being
 	  zero. However, the <cmdref targ="set"/> command can be used
 	  to make failure of an assertion more consequential. There
-	  are two levels:
+	  are three levels:
 	</para>
 	<code>
 	  # print a warning message but continue execution
 	  set assert warn
-	  # print an error message and stop execution
+	  # print an error message and stop script execution
 	  set assert stop
+	  # print a message to stderr and abort the program
+	  set assert fatal
 	</code>
+	<para>
+	  In most cases <lit>stop</lit> is sufficient to terminate a
+	  script but in certain special cases (such as within a
+	  function called from a command block such as <cmdref
+	  targ="mle"/>) it may be necessary to use the
+	  <lit>fatal</lit> setting to get a clear indication of the
+	  failing assertion. Note, however, that in this case the
+	  message will go to standard error output.
+	</para>
 	<para>
 	  The default behavior can be restored via
 	</para>
@@ -3704,6 +3715,11 @@
 	      <lit>"irreg"</lit> for the irregular component.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      <lit>save_spc</lit>: boolean flag, default 0; see below.
+	    </para>
+	  </li>
 	</ilist>
 	<subhead>Augmented results</subhead>
 	<para>
@@ -3724,6 +3740,24 @@
 	  series y_dseas = b.results[,1]
 	  series y_trend = b.results[,2]
 	  series y_irreg = b.results[,3]
+	</code>
+	<subhead>Saving the X-13ARIMA specification</subhead>
+	<para>
+	  The <lit>save_spc</lit> flag can be used to save the content
+	  of the X-13ARIMA input file written by gretl. The options
+	  bundle should be passed in pointer form and the
+	  specification (as a string) can be found under the key
+	  <lit>x13a_spc</lit>. The following code illustrates saving
+	  this to file under the name <lit>myspec.spc</lit> in the
+	  user's working directory. (Note that the <lit>.spc</lit>
+	  extension is required by X-13ARIMA.)
+	</para>
+	<code>
+	  bundle b = _(save_spc=1)
+	  deseas(y, &amp;b)
+	  outfile myspec.spc
+	     print b.x13a_spc
+	  end outfile
 	</code>
       </description>
     </function>
