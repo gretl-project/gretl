@@ -1,5 +1,8 @@
 version 2022b, in progress
 - delete unused file, addons.txt
+- Fix bug: det() should not flag an error when returning NA
+- Fix GUI bug: option of showing lagged series not always
+  available when it should be
 
 2022-02-02 version 2022a
 - Copy/Paste of data in the GUI: make this facility more
