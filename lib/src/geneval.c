@@ -10555,17 +10555,6 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *if_indent_node (NODE *n, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL) {
-	ret->v.xval = gretl_if_state_record();
-    }
-
-    return ret;
-}
-
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -16315,7 +16304,7 @@ static NODE *eval (NODE *t, parser *p)
             /* pseudo-bundle: name of model */
             ret = t;
         } else {
-            /* built-in bundle indentifed by idnum */
+            /* built-in bundle identifed by idnum */
             ret = dollar_bundle_node(t, p);
         }
         break;
@@ -16854,9 +16843,6 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, BUNDLE, l, p);
         }
         break;
-    case HF_INDENT:
-	ret = if_indent_node(l, p);
-	break;
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;
@@ -18346,7 +18332,7 @@ static void parser_try_print (parser *p, const char *s, int *done)
 
 /* Here we try to parse out the LHS of the statement
    and also the operator. If we find a unitary LHS
-   (simply an indentifier) we write it into p->lh.name,
+   (simply an identifier) we write it into p->lh.name,
    but if we find a compound LHS (such as a sub-matrix
    specification) we save it as p->lh.expr. The
    content of @ps is advanced to the first position
