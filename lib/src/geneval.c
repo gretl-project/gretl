@@ -1191,6 +1191,26 @@ static void eval_warning (parser *p, int op, int errnum)
     }
 }
 
+/* 2020-02-07: just proof of concept for now */
+
+static double bitop (double x, double y, int op, parser *p)
+{
+    gint64 ix, iy, iz = 0;
+
+    ix = gretl_int64_from_double(x, &p->err);
+    if (!p->err) {
+	iy = gretl_int64_from_double(y, &p->err);
+    }
+    if (!p->err) {
+	if (op == F_BITAND) {
+	    iz = ix & iy;
+	}
+	return (double) iz;
+    } else {
+	return NADBL;
+    }
+}
+
 /* evaluation of binary operators (yielding x op y) for
    scalar operands (also increment/decrement operators)
 */
@@ -1274,6 +1294,8 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	    eval_warning(p, op, errno);
 	}
 	return z;
+    case F_BITAND:
+	return bitop(x, y, op, p);
     default:
 	return z;
     }
@@ -16348,6 +16370,7 @@ static NODE *eval (NODE *t, parser *p)
     case B_LT:
     case B_GTE:
     case B_LTE:
+    case F_BITAND:
         /* arithmetic and logical binary operators: be as
            flexible as possible with regard to argument types
         */

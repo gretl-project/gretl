@@ -1649,11 +1649,12 @@ int gretl_int_from_double (double x, int *err)
  * @x: double-precision floating point value
  * @err: location to receive error code.
  *
- * Returns: the value of @x converted to an integer, if
- * possible. Otherwise returns -1 with @err set to a
- * non-zero value. Note that it is considered an
- * error if @x is "too far" from the nearest integer;
- * it must be "almost integral", with tolerance 0.001.
+ * Returns: the value of @x converted to an unsigned
+ * 32-bit integer, if possible. Otherwise returns -1
+ * with @err set to a non-zero value. Note that it is
+ * considered an error if @x is "too far" from the
+ * nearest integer; it must be "almost integral", with
+ * tolerance 1.0e-6.
  */
 
 guint32 gretl_unsigned_from_double (double x, int *err)
@@ -1676,6 +1677,39 @@ guint32 gretl_unsigned_from_double (double x, int *err)
     }
 
     return u;
+}
+
+/**
+ * gretl_int64_from_double:
+ * @x: double-precision floating point value
+ * @err: location to receive error code.
+ *
+ * Returns: the value of @x converted to a signed 64-bit
+ * integer, if possible. Otherwise returns -1 with @err set
+ * to a non-zero value. It is considered an error if @x is
+ * not "almost integral", with tolerance 1.0e-6.
+ */
+
+gint64 gretl_int64_from_double (double x, int *err)
+{
+    gint64 k = 0;
+
+    if (na(x) || x > G_MAXINT64 || x < G_MININT64) {
+	*err = E_INVARG;
+    } else {
+	double f = floor(x);
+	double c = ceil(x);
+
+	if (x - f < 1e-6) {
+	    k = f;
+	} else if (c - x < 1e-6) {
+	    k = c;
+	} else {
+	    *err = E_INVARG;
+	}
+    }
+
+    return k;
 }
 
 /**
