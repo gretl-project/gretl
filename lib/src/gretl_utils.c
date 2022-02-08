@@ -1694,7 +1694,7 @@ gint64 gretl_int64_from_double (double x, int *err)
 {
     gint64 k = 0;
 
-    if (na(x) || x > G_MAXINT64 || x < G_MININT64) {
+    if (na(x) || x > (double) G_MAXINT64 || x < G_MININT64) {
 	*err = E_INVARG;
     } else {
 	double f = floor(x);
