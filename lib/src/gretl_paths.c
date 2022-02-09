@@ -541,6 +541,7 @@ int gretl_rename (const char *oldpath, const char *newpath)
 int gretl_remove (const char *path)
 {
 #ifdef WIN32
+    /* should convert to utf-16 and apply DeleteFileW */
     return g_remove(path);
 #else
     return remove(path);
