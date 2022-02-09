@@ -43,7 +43,7 @@ void set_windebug (int s)
     windebug = s;
 }
 
-void win_print_last_error (void)
+static void win32_print_last_error (void)
 {
     DWORD dw = GetLastError();
     LPVOID buf = NULL;
@@ -64,6 +64,27 @@ void win_print_last_error (void)
 	} else {
 	    fprintf(stderr, "Windows says: %s\n", (char *) buf);
 	}
+	LocalFree(buf);
+    }
+}
+
+static void win32_record_last_error (void)
+{
+    DWORD dw = GetLastError();
+    LPVOID buf = NULL;
+
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		  FORMAT_MESSAGE_FROM_SYSTEM |
+		  FORMAT_MESSAGE_IGNORE_INSERTS,
+		  NULL,
+		  dw,
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPTSTR) &buf,
+		  0,
+		  NULL);
+
+    if (buf != NULL) {
+	gretl_errmsg_set(buf);
 	LocalFree(buf);
     }
 }
@@ -126,7 +147,7 @@ int read_reg_val (HKEY tree, const char *base,
 
     if (ret != ERROR_SUCCESS || enc_err) {
 	if (ret != ERROR_SUCCESS) {
-	    win_print_last_error();
+	    win32_print_last_error();
 	}
 	*keyval = '\0';
 	return 1;
@@ -1080,7 +1101,7 @@ int win32_remove (const char *path)
     } else {
 	ok = DeleteFileW(wpath);
 	if (!ok) {
-	    win_print_last_error();
+	    win32_record_last_error();
 	    err = -1;
 	}
     }
@@ -1867,7 +1888,7 @@ int try_for_CP_65001 (void)
 	    gotinfo = 1;
 	} else if (windebug) {
 	    fprintf(fdb, "GetCurrentConsoleFontEx failed\n");
-	    win_print_last_error();
+	    win32_print_last_error();
 	}
     }
 
@@ -1883,7 +1904,7 @@ int try_for_CP_65001 (void)
 	    }
 	} else if (windebug) {
 	    fprintf(fdb, "GetCurrentConsoleFont failed\n");
-	    win_print_last_error();
+	    win32_print_last_error();
 	}
     }
 

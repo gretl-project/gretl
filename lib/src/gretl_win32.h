@@ -50,8 +50,6 @@ void win32_cli_read_rc (void);
 
 void win_show_last_error (void);
 
-void win_print_last_error (void);
-
 int win_run_sync (const char *cmdline, const char *currdir);
 
 int win_run_async (const char *cmdline, const char *currdir);
