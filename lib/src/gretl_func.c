@@ -10164,7 +10164,6 @@ int delete_function_package (const char *gfnpath)
 	/* just delete the .gfn file itself */
 	err = gretl_remove(gfnpath);
 
-        fprintf(stderr, "HERE, gretl_remove(): err = %d\n", err);
 	if (err) {
 	    gretl_errmsg_sprintf("Couldn't delete %s", gfnpath);
 	}
@@ -10173,9 +10172,6 @@ int delete_function_package (const char *gfnpath)
     if (err) {
 	fprintf(stderr, "failure in delete_function_package: gfnpath '%s'\n",
 		gfnpath);
-        if (errno) {
-            fprintf(stderr, "errno %d, strerror: %s\n", errno, strerror(errno));
-        }
 	fprintf(stderr, " pkgname '%s', pkgdir '%s', pkgsub '%s'\n",
 		pkgname, pkgdir, pkgsub);
     }

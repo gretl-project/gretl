@@ -1065,6 +1065,29 @@ int win32_write_access (const char *path)
     return ok ? 0 : -1;
 }
 
+int win32_remove (const char *path)
+{
+    gunichar2 *wpath;
+    GError *gerr = NULL;
+    int ok, err = 0;
+
+    wpath = g_utf8_to_utf16(path, -1, NULL, NULL, &gerr);
+
+    if (gerr != NULL) {
+        gretl_errmsg_set(gerr->message);
+        g_error_free(gerr);
+	err = -1;
+    } else {
+	ok = DeleteFileW(wpath);
+	if (!ok) {
+	    win_print_last_error();
+	    err = -1;
+	}
+    }
+
+    return err;
+}
+
 char *slash_convert (char *str, int which)
 {
     char *p;
