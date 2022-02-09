@@ -1707,14 +1707,25 @@
 	  fallisce, a parte il fatto che il valore restituito è
 	  zero. Tuttavia, si può usare il comando <cmdref targ="set"/>
 	  per far sì che succeda qualcosa in caso di insuccesso. Ci
-	  sono due livelli:
+	  sono tre livelli:
 	</para>
 	<code>
 	  # stampa un messaggio di avvertimento ma l'esecuzione continua
 	  set assert warn
-	  # stampa un messaggio e interrompe l'esecuzione
+	  # stampa un messaggio e interrompe l'esecuzione dello script
 	  set assert stop
+	  # stampa un messaggio su stderr e chiude il programma
+	  set assert fatal
 	</code>
+	<para>
+	  Nella maggior parte dei casi, <lit>stop</lit> è sufficiente
+	  per fermare lo script, ma in alcuni casi particolari (come la
+	  chiamata in una funzione contenuta in un blocco tipo <cmdref
+	  targ="mle"/>) potrebbe essere necessario usare
+	  <lit>fatal</lit> per avere una chiara indicazione
+	  dell'asserzione fallita. Si noti che in questo caso il
+	  messaggio sarà scritto sul device "standard error".
+       </para>
 	<para>
 	  Il comportamento standard viene ripristinato col comando
 	</para>
@@ -3714,10 +3725,15 @@
 	      di output desiderato: <lit>"sa"</lit> per la serie
 	      aggiustata (il default), <lit>"trend"</lit> per il trend
 	      stimato, o <lit>"irreg"</lit> per la componente
-	      irregolare.
+	      irregolare.'
 	    </para>
 	  </li>
-	</ilist>
+	  <li>
+	    <para>
+	      <lit>save_spc</lit>: flag vero/falso, default 0; vedi sotto.
+	     </para>
+	   </li>
+	 </ilist>
 	<subhead>Risultati "completi"</subhead>
 	<para>
 	  In certi casi, potrebbe essere necessario ottenere tutti e
@@ -3741,6 +3757,24 @@
 	<para>
 	  si noti che il risultato della funzione non viene salvato.
         </para>
+       <subhead>Salvare la specificazione X-13ARIMA</subhead>
+       <para>
+	 L'opzione <lit>save_spc</lit> serve a salvare il contenuto
+	 del file passato da gretl in input a X-13ARIMA. Il bundle
+	 delle opzioni dev'essere passato come puntatore: la
+	 specificazione sarà contenuta nella chiave
+	 <lit>x13a_spc</lit> sotto forma di stringa. Il codice
+	 seguente illustra come salvare questa in un file di nome
+	 <lit>myspec.spc</lit> nella directory di lavoro. (Si noti che
+	 l'estensione <lit>.spc</lit> è richiesta da X-13ARIMA.)
+       </para>
+       <code>
+	 bundle b = _(save_spc=1)
+	 deseas(y, &amp;b)
+	 outfile myspec.spc
+	    print b.x13a_spc
+	 end outfile
+       </code>
       </description>
     </function>
 
