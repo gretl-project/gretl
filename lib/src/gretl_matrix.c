@@ -4249,7 +4249,6 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet,
 
     if (info > 0) {
 	if (logdet) {
-	    *err = E_SINGULAR;
 	    return NADBL;
 	} else {
 	    return 0;
