@@ -143,10 +143,10 @@ const char *errmsg_get_with_default (int err)
 	    gretl_errmsg);
 #endif
 
-    if ((err > 0 || err == -1) && err < E_MAX) {
+    if ((err > 0 && err < E_MAX) || err == -1) {
 	if (*gretl_errmsg != '\0') {
 	    ret = gretl_errmsg;
-	} else {
+	} else if (err > 0) {
 	    const char *deflt = look_up_errmsg(err);
 
 	    if (deflt != NULL) {
