@@ -3653,6 +3653,17 @@
 	  </li>
 	  <li>
 	    <para>
+	      <lit>arima</lit>: can be used to impose a chosen ARIMA
+	      specification, in the form of a 6-vector holding small
+	      non-negative integers. The first three terms represent
+	      the non-seasonal AR, Integration and MA orders, and the
+	      last three the seasonal counterparts. If both
+	      <lit>airline</lit> and <lit>arima</lit> are given,
+	      <lit>arima</lit> takes precedence.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <lit>outliers</lit>: enable detection and correction for
 	      outliers (choices 1 through 7), or 0 (the default) to
 	      omit this feature. The three available outlier types
