@@ -1680,21 +1680,21 @@ guint32 gretl_unsigned_from_double (double x, int *err)
 }
 
 /**
- * gretl_int64_from_double:
+ * gretl_uint64_from_double:
  * @x: double-precision floating point value
  * @err: location to receive error code.
  *
- * Returns: the value of @x converted to a signed 64-bit
+ * Returns: the value of @x converted to an unsigned 64-bit
  * integer, if possible. Otherwise returns -1 with @err set
  * to a non-zero value. It is considered an error if @x is
  * not "almost integral", with tolerance 1.0e-6.
  */
 
-gint64 gretl_int64_from_double (double x, int *err)
+guint64 gretl_uint64_from_double (double x, int *err)
 {
-    gint64 k = 0;
+    guint64 k = 0;
 
-    if (na(x) || x > (double) G_MAXINT64 || x < G_MININT64) {
+    if (na(x) || x > (double) G_MAXUINT64) {
 	*err = E_INVARG;
     } else {
 	double f = floor(x);
