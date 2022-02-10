@@ -1387,6 +1387,13 @@ static void x13_outlier_type_string (char *s, int otypes)
     }
 }
 
+static void arima_spec_string (char *s, const guint8 *a)
+{
+    *s = '\0';
+    sprintf(s, "(%d %d %d)(%d %d %d)", a[0], a[1], a[2],
+	    a[3], a[4], a[5]);
+}
+
 static int write_spc_file (const char *fname,
                            const double *y,
                            const char *vname,
@@ -1500,6 +1507,11 @@ static int write_spc_file (const char *fname,
 
     if (xopt->airline) {
         fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
+    } else if (xopt->aspec != NULL) {
+	char astr[32];
+
+	arima_spec_string(astr, xopt->aspec);
+	fprintf(fp, "arima {model=%s}\n", astr);
     } else {
         fputs("automdl{}\n", fp);
     }
@@ -1995,6 +2007,33 @@ int write_tx_data (char *fname,
     return err;
 }
 
+/* check that a user-supplied ARIMA spec doesn't exceed the
+   bounds imposed by X-13ARIMA */
+
+static int validate_arima_spec (x13a_opts *xopt,
+				const gretl_vector *v)
+{
+    if (gretl_vector_get_length(v) != 6) {
+	return E_INVARG;
+    } else {
+	int vmax[] = {4, 2, 4, 2, 1, 2};
+	int i, k, err = 0;
+
+	xopt->aspec = calloc(6, sizeof *xopt->aspec);
+
+	for (i=0; i<6; i++) {
+	    k = gretl_int_from_double(v->val[i], &err);
+	    if (err || k < 0 || k > vmax[i]) {
+		return E_INVARG;
+	    } else {
+		xopt->aspec[i] = k;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
                                 PRN *prn)
 {
@@ -2045,6 +2084,17 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
                 err = E_INVARG;
             }
         }
+    }
+
+    if (gretl_bundle_has_key(b, "arima")) {
+        gretl_vector *v = gretl_bundle_get_matrix(b, "arima", &err);
+
+	if (!err) {
+	    err = validate_arima_spec(xopt, v);
+	}
+	if (!err && xopt->airline) {
+	    xopt->airline = 0;
+	}
     }
 
     if (gretl_bundle_has_key(b, "trading_days")) {
@@ -2116,13 +2166,13 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
 
     if (xopt->verbose > 0) {
         /* FIXME translations */
+	char tmp[32];
+
         pprintf(prn, "x13as options:\n");
         pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
         if (xopt->outliers) {
-	    char otypes[16];
-
-	    x13_outlier_type_string(otypes, xopt->outliers);
-	    pprintf(prn, "  outlier correction:      %s", otypes);
+	    x13_outlier_type_string(tmp, xopt->outliers);
+	    pprintf(prn, "  outlier correction:      %s", tmp);
             if (!na(xopt->critical)) {
 		pprintf(prn, ", critical = %g", xopt->critical);
             }
@@ -2134,7 +2184,14 @@ static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
         pprintf(prn, "  working days correction: %s\n", trival_strs[wd]);
         pprintf(prn, "  easter effect:           %s\n", xopt->easter ? "yes" : "no");
         pprintf(prn, "  log transformation:      %s\n", trival_strs[lt]);
-        pprintf(prn, "  force 'airline' model:   %s\n", xopt->airline ? "yes" : "no");
+	if (xopt->aspec != NULL) {
+	    arima_spec_string(tmp, xopt->aspec);
+	    pprintf(prn, "  arima specification:     %s\n", tmp);
+	} else if (xopt->airline) {
+	    pprintf(prn, "  arima specification:     %s\n", "airline");
+	} else {
+	    pprintf(prn, "  arima specification:     %s\n", "auto");
+	}
         pprintf(prn, "  output series:           %s\n", output_strs[xopt->output]);
 	pprintf(prn, "  save spc content:        %s\n", xopt->save_spc ? "yes" : "no");
         pputc(prn, '\n');
@@ -2202,7 +2259,8 @@ int adjust_series (const double *x, double *y,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[4] = {0};
-    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, 0, NADBL, savelist};
+    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	NADBL, savelist, NULL};
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
@@ -2273,6 +2331,10 @@ int adjust_series (const double *x, double *y,
 
     if (!err && xopt.verbose > 1) {
         display_x13a_output(fname, 0, prn);
+    }
+
+    if (xopt.aspec != NULL) {
+	free(xopt.aspec);
     }
 
     return err;

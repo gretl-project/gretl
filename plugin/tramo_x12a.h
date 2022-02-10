@@ -51,6 +51,7 @@ struct _x13a_opts {
     int save_spc; /* option to save spc file content */
     double critical; /* critical value for outliers (vs auto) */
     int *savelist;   /* spec for series to save */
+    guint8 *aspec;   /* arima spec, as array of int */
 };
 
 struct _tx_request {
