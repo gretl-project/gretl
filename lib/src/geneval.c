@@ -1201,11 +1201,11 @@ enum {
 
 static double bitop (double x, double y, int op, parser *p)
 {
-    guint64 ix, iy, iz = 0;
+    guint32 ix, iy, iz = 0;
 
-    ix = gretl_uint64_from_double(x, &p->err);
+    ix = gretl_unsigned_from_double(x, &p->err);
     if (!p->err) {
-	iy = gretl_uint64_from_double(y, &p->err);
+	iy = gretl_unsigned_from_double(y, &p->err);
     }
     if (!p->err) {
 	if (op == B_BITAND) {
@@ -1227,13 +1227,13 @@ static double bitop (double x, double y, int op, parser *p)
 
 static double bitnot (double x)
 {
-    guint64 ix;
+    guint32 ix;
     int err = 0;
 
-    ix = gretl_uint64_from_double(x, &err);
+    ix = gretl_unsigned_from_double(x, &err);
 
     if (!err) {
-	guint64 iy = ~ix;
+	guint32 iy = ~ix;
 
 	return (double) iy;
     } else {
@@ -1248,15 +1248,15 @@ static int bitop_preprocess (NODE *n, NODE *m)
     } else if (m->t != STR) {
 	return E_INVARG;
     } else {
-	if (!strcmp(m->v.str, "&") || !strcmp(m->v.str, "AND")) {
+	if (!strcmp(m->v.str, "&")) {
 	    n->t = B_BITAND;
-	} else if (!strcmp(m->v.str, "|") || !strcmp(m->v.str, "OR")) {
+	} else if (!strcmp(m->v.str, "|")) {
 	    n->t = B_BITOR;
-	} else if (!strcmp(m->v.str, "^") || !strcmp(m->v.str, "XOR")) {
+	} else if (!strcmp(m->v.str, "^")) {
 	    n->t = B_BITXOR;
-	} else if (!strcmp(m->v.str, "<<") || !strcmp(m->v.str, "LSHIFT")) {
+	} else if (!strcmp(m->v.str, "<<")) {
 	    n->t = B_LSHIFT;
-	} else if (!strcmp(m->v.str, ">>") || !strcmp(m->v.str, "RSHIFT")) {
+	} else if (!strcmp(m->v.str, ">>")) {
 	    n->t = B_RSHIFT;
 	} else {
 	    return E_INVARG;
