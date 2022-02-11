@@ -137,7 +137,7 @@ int gretl_int_from_double (double x, int *err);
 
 guint32 gretl_unsigned_from_double (double x, int *err);
 
-guint64 gretl_uint64_from_double (double x, int *err);
+guint64 gretl_uint53_from_double (double x, int *err);
 
 GretlType gretl_type_from_name (const char *s, const DATASET *dset);
 

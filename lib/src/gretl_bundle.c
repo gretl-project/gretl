@@ -281,13 +281,13 @@ static void bundled_item_free_data (GretlType type, void *data)
     }
 }
 
-/* note: we come here only if the replacement type is the
+/* Note: we come here only if the replacement type is the
    same as the original type, apart from the case of
-   inter-conversion of scalar types
+   inter-conversion of the various scalar types.
 */
 
 static int bundled_item_replace_data (bundled_item *item,
-				      void *ptr, GretlType type,
+				      void *ptr, GretlType src_t,
 				      int size, int copy)
 {
     int err = 0;
@@ -301,35 +301,32 @@ static int bundled_item_replace_data (bundled_item *item,
 	if (item->type == GRETL_TYPE_DOUBLE) {
 	    double *dp = item->data;
 
-	    if (type == GRETL_TYPE_INT ||
-		type == GRETL_TYPE_BOOL) {
-		*dp = (double) *(int *) ptr;
-	    } else if (type == GRETL_TYPE_UNSIGNED) {
-		*dp = (double) *(guint32 *) ptr;
-	    } else {
+	    if (src_t == GRETL_TYPE_DOUBLE) {
 		*dp = *(double *) ptr;
+	    } else if (src_t == GRETL_TYPE_INT) {
+		*dp = (double) *(int *) ptr;
+	    } else {
+		*dp = (double) *(guint32 *) ptr;
 	    }
-	} else if (item->type == GRETL_TYPE_INT ||
-		   item->type == GRETL_TYPE_BOOL) {
+	} else if (item->type == GRETL_TYPE_INT) {
 	    int *ip = item->data;
 
-	    if (type == GRETL_TYPE_DOUBLE) {
-		*ip = gretl_int_from_double(*(double *) ptr, &err);
-	    } else if (type == GRETL_TYPE_UNSIGNED) {
-		*ip = (int) *(guint32 *) ptr;
-	    } else {
+	    if (src_t == GRETL_TYPE_INT) {
 		*ip = *(int *) ptr;
+	    } else if (src_t == GRETL_TYPE_DOUBLE) {
+		*ip = gretl_int_from_double(*(double *) ptr, &err);
+	    } else {
+		*ip = (int) *(guint32 *) ptr;
 	    }
 	} else if (item->type == GRETL_TYPE_UNSIGNED) {
 	    guint32 *up = item->data;
 
-	    if (type == GRETL_TYPE_DOUBLE) {
-		*up = gretl_unsigned_from_double(*(double *) ptr, &err);
-	    } else if (type == GRETL_TYPE_INT ||
-		       type == GRETL_TYPE_BOOL) {
-		*up = (guint32) *(int *) ptr;
-	    } else {
+	    if (src_t == GRETL_TYPE_UNSIGNED) {
 		*up = *(guint32 *) ptr;
+	    } else if (src_t == GRETL_TYPE_DOUBLE) {
+		*up = gretl_unsigned_from_double(*(double *) ptr, &err);
+	    } else {
+		*up = (guint32) *(int *) ptr;
 	    }
 	}
     } else {
@@ -1745,7 +1742,7 @@ struct bchecker {
 };
 
 /* Check for mismatched types in @targ vs @src, allowing for
-   convertibility between the various scalar types.
+   convertibility between scalar types.
 */
 
 static int bundled_types_mismatch (bundled_item *targ,
@@ -1754,23 +1751,26 @@ static int bundled_types_mismatch (bundled_item *targ,
     int err = 0;
 
     if (src->type == targ->type) {
-	; /* OK */
+	return 0; /* OK */
     } else if (gretl_is_scalar_type(targ->type) &&
 	       gretl_is_scalar_type(src->type)) {
-	/* may be inter-convertible */
-	double *px = NULL;
-
+	/* may be inter-convertible: the main potential
+	   problem, diagnosed here, lies in conversion
+	   from double to integer types
+	*/
 	if (src->type == GRETL_TYPE_DOUBLE) {
-	    px = (double *) src->data;
-	}
-	if (targ->type == GRETL_TYPE_BOOL && px != NULL) {
-	    err = na(*px);
-	} else if (targ->type == GRETL_TYPE_INT && px != NULL) {
-	    gretl_int_from_double(*px, &err);
-	} else if (targ->type == GRETL_TYPE_UNSIGNED && px != NULL) {
-	    gretl_unsigned_from_double(*px, &err);
+	    double *px = (double *) src->data;
+
+	    if (targ->type == GRETL_TYPE_BOOL) {
+		err = na(*px);
+	    } else if (targ->type == GRETL_TYPE_INT) {
+		gretl_int_from_double(*px, &err);
+	    } else if (targ->type == GRETL_TYPE_UNSIGNED) {
+		gretl_unsigned_from_double(*px, &err);
+	    }
 	}
     } else {
+	/* other mismatches will not work */
 	err = 1;
     }
 

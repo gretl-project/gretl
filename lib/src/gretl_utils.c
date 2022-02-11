@@ -1680,7 +1680,7 @@ guint32 gretl_unsigned_from_double (double x, int *err)
 }
 
 /**
- * gretl_uint64_from_double:
+ * gretl_uint53_from_double:
  * @x: double-precision floating point value
  * @err: location to receive error code.
  *
@@ -1690,7 +1690,7 @@ guint32 gretl_unsigned_from_double (double x, int *err)
  * not "almost integral", with tolerance 1.0e-6.
  */
 
-guint64 gretl_uint64_from_double (double x, int *err)
+guint64 gretl_uint53_from_double (double x, int *err)
 {
     guint64 k = 0;
 
