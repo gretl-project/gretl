@@ -12635,7 +12635,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
 	if (!p->err) {
 	    ret->v.xval = gretl_bundle_extract_args(l->L->v.b, m->v.b,
-						    reqd, p->prn, &p->err);
+						    reqd, NULL, p->prn,
+						    &p->err);
         }
     }
 

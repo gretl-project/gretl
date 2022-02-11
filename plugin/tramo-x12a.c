@@ -2219,10 +2219,6 @@ static gretl_bundle *deseas_options_template (void)
     gretl_bundle_set_string(b, "output", "sa");
     gretl_bundle_set_matrix(b, "arima", NULL);
 
-    /* acceptable non-option extra members */
-    gretl_bundle_set_matrix(b, "results", NULL);
-    gretl_bundle_set_string(b, "x13a_spc", NULL);
-
     return b;
 }
 
@@ -2317,13 +2313,18 @@ int adjust_series (const double *x, double *y,
 
     if (prog == X13A) {
         if (opts != NULL) {
+	    char *ignores[] = {"results", "x13a_spc"};
 	    gretl_bundle *b = deseas_options_template();
+	    gretl_array *a;
 	    int berr = 0;
 
-	    err = gretl_bundle_extract_args(b, opts, NULL, prn, &berr);
+	    a = gretl_array_from_strings(ignores, 2, 0, &err);
+	    err = gretl_bundle_extract_args(b, opts, NULL, a, prn, &berr);
 	    if (!err && !berr) {
 		err = deseas_options_transcribe(&xopt, b, prn);
 	    }
+	    gretl_array_nullify_content(a);
+	    gretl_array_destroy(a);
 	    gretl_bundle_destroy(b);
         }
         if (!err) {

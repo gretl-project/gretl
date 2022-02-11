@@ -1739,6 +1739,8 @@ struct bchecker {
     int *ret;
     int *err;
     PRN *prn;
+    char **ignore;
+    int ni;
 };
 
 /* Check for mismatched types in @targ vs @src, allowing for
@@ -1785,6 +1787,16 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
     if (*bchk->ret || *bchk->err) {
 	/* don't waste time if we already hit an error */
 	return;
+    }
+
+    if (bchk->ignore != NULL) {
+	int i;
+
+	for (i=0; i<bchk->ni; i++) {
+	    if (!strcmp((const char *) key, bchk->ignore[i])) {
+		return;
+	    }
+	}
     }
 
     /* look up @key (from input) in the template bundle */
@@ -1836,6 +1848,9 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
  * @input: bundle supplied by caller.
  * @reqd: array of strings identifying required keys, if any
  * (or NULL).
+ * @ignore: array of strings identifying keys that are not
+ * associated with options but whose presence should not
+ * provoke an error.
  * @prn: pointer to printing struct for display of error
  * messages.
  * @err:location to receive error code.
@@ -1859,6 +1874,7 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
+			       gretl_array *ignore,
 			       PRN *prn, int *err)
 {
     int ret = 0;
@@ -1883,8 +1899,18 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
     }
 
     if (ret == 0) {
-	struct bchecker bchk = {defaults, &ret, err, prn};
+	struct bchecker bchk = {defaults, &ret, err, prn, NULL, 0};
 
+	if (ignore != NULL) {
+	    char **S = NULL;
+	    int ns = 0;
+
+	    S = gretl_array_get_strings(ignore, &ns);
+	    if (S != NULL) {
+		bchk.ignore = S;
+		bchk.ni = ns;
+	    }
+	}
 	g_hash_table_foreach(input->ht, check_bundled_item, &bchk);
     }
 
