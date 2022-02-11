@@ -597,7 +597,8 @@ struct gretl_option gretl_opts[] = {
     { SETOBS,   OPT_G, "panel-groups", 0 },
     { SETOBS,   OPT_I, "panel-time", 0 },
     { SMPL,     OPT_A, "no-all-missing", 0 },
-    { SMPL,     OPT_B, "balanced", 0 },
+    { SMPL,     OPT_B, "preserve-panel", 0 },
+    { SMPL,     OPT_B, "balanced", 0 }, /* alias */
     { SMPL,     OPT_C, "contiguous", 0 },
     { SMPL,     OPT_F, "full", 0 },
     { SMPL,     OPT_O, "dummy", 0 },
