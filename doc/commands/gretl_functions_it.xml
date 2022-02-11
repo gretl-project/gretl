@@ -3659,6 +3659,19 @@
 	  </li>
 	  <li>
 	    <para>
+	      <lit>arima</lit>: usato per imporre una specificazione
+	      ARIMA data, sotto forma di un vettore a 6 elementi
+	      contentente piccoli interi non negativi. Questi sono
+	      interpretati come (p,d,q,P,D,Q) nella notazione
+	      standard: i primi tre termini rappresentano gli ordini
+	      AR, di integrazione e MA non stagionali. Gli ultimi tre,
+	      le loro controparti stagionali. Se sono presenti ambedue
+	      le chiavi <lit>airline</lit> e <lit>arima</lit>, la
+	      precedenza viene data alla seconda.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	    <lit>outliers</lit>: usato per abilitare la correzione
 	    automatica degli outlier. Le scelte vanno da 0 a 7. Il
 	    valore 0 disattiva questa operazione. Per quanto riguarda
