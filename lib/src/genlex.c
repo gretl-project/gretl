@@ -732,7 +732,7 @@ static ufunc *get_function_override (const char *sf,
     return uf;
 }
 
-/* Attention: this function is called from function_loopkup()
+/* Attention: this function may be called from function_loopkup()
    below, and in that context @p will be NULL -- so don't
    dereference @p without checking it for nullity first!
 */
@@ -765,6 +765,14 @@ static int real_function_lookup (const char *s, int aliases,
 
 	    p->data = sx->ptr;
 	}
+#if 1
+	/* note: point d'appui for deprecation of built-in function */
+	if (st->id == F_FFT) {
+	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
+		    "fft2() instead ***\n",
+		    st->str);
+	}
+#endif
 	return st->id;
     }
 
@@ -773,7 +781,7 @@ static int real_function_lookup (const char *s, int aliases,
 
 	for (i=0; func_alias[i].id != 0; i++) {
 	    if (!strcmp(s, func_alias[i].str)) {
-#if 1 /* not just yet? */
+#if 1
 		if (!strcmp(s, "isnull")) {
 		    gretl_warnmsg_set(_("obsolete function isnull(): "
 					"please use !exists() instead"));
