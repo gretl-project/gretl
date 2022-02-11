@@ -2,11 +2,12 @@ version 2022b, in progress
 - assert() function: add a "fatal" switch to abort program
   execution when an assertion fails
 - deseas() function: add the option of saving the X-13ARIMA
-  specification created by gretl
-- delete unused file, addons.txt
+  specification created by gretl; add option to specify the
+  ARIMA model; document the verbose option
 - Fix bug: det() should not flag an error when returning NA
 - Fix GUI bug: the option of showing lagged series in a
   selection dialog not always available when it should be
+- distribution: remove unused file, addons.txt
 
 2022-02-02 version 2022a
 - Copy/Paste of data in the GUI: make this facility more
