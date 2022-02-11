@@ -303,16 +303,16 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
                      G_CALLBACK(set_logtrans), request);
-    g_object_set_data(G_OBJECT(b[1]), "transval", GINT_TO_POINTER(2));
+    g_object_set_data(G_OBJECT(b[1]), "transval", GINT_TO_POINTER(0));
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[1]));
     b[2] = gtk_radio_button_new_with_label(group, _("Automatic"));
     gtk_box_pack_start(vbox, b[2], FALSE, FALSE, 0);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[2]), "toggled",
                      G_CALLBACK(set_logtrans), request);
-    g_object_set_data(G_OBJECT(b[2]), "transval", GINT_TO_POINTER(3));
+    g_object_set_data(G_OBJECT(b[2]), "transval", GINT_TO_POINTER(2));
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->xopt.logtrans - 1]),
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->xopt.logtrans]),
                                  TRUE);
 
     tmp = gtk_hseparator_new();
@@ -1223,7 +1223,7 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
 
     strcpy(request->yname, dset->varname[varnum]);
 
-    request->xopt.logtrans = 3; /* x13a: automatic logs or not */
+    request->xopt.logtrans = 2; /* x13a: log: no, yes or automatic */
     request->xopt.outliers = 3; /* x13a: detect outliers (3 encodes x13's default ao+ls) */
     request->xopt.trdays = 0;   /* x13a: trading days correction */
     request->xopt.wdays = 0;    /* x13a: working days correction */
@@ -1451,11 +1451,11 @@ static int write_spc_file (const char *fname,
     }
     fputs(" )\n}\n", fp);
 
-    if (xopt->logtrans == 1) {
+    if (xopt->logtrans == 0) {
+	fputs("transform{function=none}\n", fp);
+    } else if (xopt->logtrans == 1) {
         fputs("transform{function=log}\n", fp);
     } else if (xopt->logtrans == 2) {
-        fputs("transform{function=none}\n", fp);
-    } else {
         fputs("transform{function=auto}\n", fp);
     }
     if (xopt->trdays) {
@@ -2034,170 +2034,196 @@ static int validate_arima_spec (x13a_opts *xopt,
     return 0;
 }
 
-static int parse_deseas_bundle (x13a_opts *xopt, gretl_bundle *b,
-                                PRN *prn)
+static const char *output_strs[] = {
+    "sa", "trend", "irreg", "all"
+};
+
+static int deseas_select_output (x13a_opts *xopt,
+				 const char *s)
+{
+    int i, otype = -1;
+
+    for (i=0; i<4; i++) {
+	if (!strcmp(s, output_strs[i])) {
+	    otype = i;
+	    break;
+	}
+    }
+    if (otype == -1) {
+	return E_INVARG;
+    } else if (otype == 3) {
+	/* let the series return value be "sa" */
+	xopt->output = 0;
+	/* but save all to matrix */
+	xopt->savelist[0] = 3;
+	xopt->savelist[1] = 0;
+	xopt->savelist[2] = 1;
+	xopt->savelist[3] = 2;
+    } else {
+	xopt->output = otype;
+	xopt->savelist[1] = xopt->output;
+    }
+
+    return 0;
+}
+
+static void deseas_options_report (x13a_opts *xopt, PRN *prn)
 {
     const char *trival_strs[] = {
         "no", "yes", "auto"
     };
-    const char *output_strs[] = {
-        "sa", "trend", "irreg", "all"
-    };
-    int lt = 2;   /* log transformation */
-    int td = 2;   /* trading days */
-    int wd = 0;   /* working days */
-    int outl = 0; /* outliers choice */
-    int got_td_spec = 0;
-    int err = 0;
+    char tmp[32];
 
+    /* FIXME translations */
+
+    pprintf(prn, "x13as options:\n");
+    pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
+    if (xopt->outliers) {
+	x13_outlier_type_string(tmp, xopt->outliers);
+	pprintf(prn, "  outlier correction:      %s", tmp);
+	if (!na(xopt->critical)) {
+	    pprintf(prn, ", critical = %g", xopt->critical);
+	}
+	pputc(prn, '\n');
+    } else {
+	pprintf(prn, "  outlier correction:      %s\n", "no");
+    }
+    pprintf(prn, "  trading days correction: %s\n", trival_strs[xopt->trdays]);
+    pprintf(prn, "  working days correction: %s\n", trival_strs[xopt->wdays]);
+    pprintf(prn, "  easter effect:           %s\n", xopt->easter ? "yes" : "no");
+    pprintf(prn, "  log transformation:      %s\n", trival_strs[xopt->logtrans]);
+    if (xopt->aspec != NULL) {
+	arima_spec_string(tmp, xopt->aspec);
+	pprintf(prn, "  arima specification:     %s\n", tmp);
+    } else if (xopt->airline) {
+	pprintf(prn, "  arima specification:     %s\n", "airline");
+    } else {
+	pprintf(prn, "  arima specification:     %s\n", "auto");
+    }
+    pprintf(prn, "  output series:           %s\n", output_strs[xopt->output]);
+    pprintf(prn, "  save spc content:        %s\n", xopt->save_spc ? "yes" : "no");
+    pputc(prn, '\n');
+}
+
+static int k_out_of_bounds (int k, const char *s, PRN *prn)
+{
+    pprintf(prn, "%s: the value %d is out of bounds\n", s, k);
+    return E_INVARG;
+}
+
+static int deseas_options_transcribe (x13a_opts *xopt,
+				      gretl_bundle *b,
+				      PRN *prn)
+{
+    const char *s = NULL;
+    int k, err = 0;
+
+    /* booleans */
     xopt->seats    = gretl_bundle_get_bool(b, "seats", 0);
     xopt->airline  = gretl_bundle_get_bool(b, "airline", 0);
     xopt->easter   = gretl_bundle_get_bool(b, "easter", 0);
     xopt->save_spc = gretl_bundle_get_bool(b, "save_spc", 0);
 
-    if (gretl_bundle_has_key(b, "outliers")) {
-        /* the outliers user choice can be between 0 and 7 for x13
-	   (bit flags: 1 - ao, 2 - ls, 4 - tc; x13's default is 3 = ao+ls)
-	*/
-        outl = gretl_bundle_get_int(b, "outliers", &err);
-        if (!err) {
-            if (outl >= 0 && outl <= 7) {
-                xopt->outliers = outl;
-            } else {
-                err = E_INVARG;
-            }
-        }
+    /* verbosity */
+    xopt->verbose = gretl_bundle_get_int(b, "verbose", NULL);
+
+    /* logtrans */
+    k = gretl_bundle_get_int(b, "logtrans", NULL);
+    if (k >= 0 && k <= 2) {
+	xopt->logtrans = k;
     } else {
-        xopt->outliers = 0;
+	return k_out_of_bounds(k, "logtrans", prn);
     }
 
-    if (gretl_bundle_has_key(b, "logtrans")) {
-        lt = gretl_bundle_get_int(b, "logtrans", &err);
-        if (!err) {
-            if (lt == 0) {
-                xopt->logtrans = 2; /* no log */
-            } else if (lt == 1) {
-                xopt->logtrans = 1; /* force log */
-            } else if (lt == 2) {
-                xopt->logtrans = 3; /* automatic */
-            } else {
-                err = E_INVARG;
-            }
-        }
+    /* outliers */
+    k = gretl_bundle_get_int(b, "outliers", NULL);
+    if (k >= 0 && k <= 7) {
+	xopt->outliers = k;
+    } else {
+	return k_out_of_bounds(k, "outliers", prn);
     }
 
-    if (gretl_bundle_has_key(b, "arima")) {
-        gretl_vector *v = gretl_bundle_get_matrix(b, "arima", &err);
+    /* trading_days */
+    k = gretl_bundle_get_int(b, "trading_days", NULL);
+    if (k >= 0 && k <= 2) {
+	xopt->trdays = k;
+    } else {
+	return k_out_of_bounds(k, "trading_days", prn);
+    }
 
-	if (!err) {
-	    err = validate_arima_spec(xopt, v);
+    /* working_days */
+    k = gretl_bundle_get_int(b, "working_days", NULL);
+    if (k >= 0 && k <= 2) {
+	xopt->wdays = k;
+	if (k > 0) {
+	    xopt->trdays = 0;
 	}
-	if (!err && xopt->airline) {
-	    xopt->airline = 0;
-	}
+    } else {
+	return k_out_of_bounds(k, "working_days", prn);
     }
 
-    if (gretl_bundle_has_key(b, "trading_days")) {
-        got_td_spec = 1;
-        td = gretl_bundle_get_int(b, "trading_days", &err);
-        if (!err && (td < 0 || td > 2)) {
-            err = E_INVARG;
-        }
-        if (!err) {
-            xopt->trdays = td;
-        }
+    /* critical */
+    xopt->critical = gretl_bundle_get_scalar(b, "critical", NULL);
+    if (xopt->critical < 2 || xopt->critical > 10) {
+	return E_INVARG;
     }
 
-    if (gretl_bundle_has_key(b, "working_days") && (!td || !got_td_spec)) {
-        /* cannot kick in if trading days explicitly set to non-zero */
-        wd = gretl_bundle_get_int(b, "working_days", &err);
-        if (!err && (wd < 0 || wd > 2)) {
-            err = E_INVARG;
-        }
-        if (!err) {
-            /* working days and trading days should not coexist */
-            xopt->wdays = wd;
-            xopt->trdays = 0;
-        }
-    }
-
-    if (gretl_bundle_has_key(b, "critical")) {
-        double crit = gretl_bundle_get_scalar(b, "critical", &err);
-
-        if (!err && (crit < 2 || crit > 10)) {
-            err = E_INVARG;
-        }
-        if (!err) {
-            xopt->critical = crit;
-        }
-    }
-
-    if (gretl_bundle_has_key(b, "output")) {
-        const char *s = gretl_bundle_get_string(b, "output", &err);
-        int i, otype = -1;
-
-        if (!err) {
-            for (i=0; i<4; i++) {
-                if (!strcmp(s, output_strs[i])) {
-                    otype = i;
-                    break;
-                }
-            }
-            if (otype == -1) {
-                err = E_INVARG;
-            } else if (otype == 3) {
-                /* let the series return value be "sa" */
-                xopt->output = 0;
-                /* but save all to matrix */
-                xopt->savelist[0] = 3;
-                xopt->savelist[1] = 0;
-                xopt->savelist[2] = 1;
-                xopt->savelist[3] = 2;
-            } else {
-                xopt->output = otype;
-                xopt->savelist[1] = xopt->output;
-            }
-        }
-    }
+    /* output */
+    s = gretl_bundle_get_string(b, "output", NULL);
+    err = deseas_select_output(xopt, s);
 
     if (!err) {
-        xopt->verbose = gretl_bundle_get_int(b, "verbose", NULL);
+	/* arima */
+	gretl_vector *v = gretl_bundle_get_matrix(b, "arima", NULL);
+
+	if (v != NULL) {
+	    err = validate_arima_spec(xopt, v);
+	    if (!err && xopt->airline) {
+		xopt->airline = 0;
+	    }
+	}
     }
 
-    if (xopt->verbose > 0) {
-        /* FIXME translations */
-	char tmp[32];
-
-        pprintf(prn, "x13as options:\n");
-        pprintf(prn, "  adjustment algorithm:    %s\n", xopt->seats ? "SEATS" : "X11");
-        if (xopt->outliers) {
-	    x13_outlier_type_string(tmp, xopt->outliers);
-	    pprintf(prn, "  outlier correction:      %s", tmp);
-            if (!na(xopt->critical)) {
-		pprintf(prn, ", critical = %g", xopt->critical);
-            }
-	    pputc(prn, '\n');
-        } else {
-            pprintf(prn, "  outlier correction:      %s\n", "no");
-        }
-        pprintf(prn, "  trading days correction: %s\n", trival_strs[td]);
-        pprintf(prn, "  working days correction: %s\n", trival_strs[wd]);
-        pprintf(prn, "  easter effect:           %s\n", xopt->easter ? "yes" : "no");
-        pprintf(prn, "  log transformation:      %s\n", trival_strs[lt]);
-	if (xopt->aspec != NULL) {
-	    arima_spec_string(tmp, xopt->aspec);
-	    pprintf(prn, "  arima specification:     %s\n", tmp);
-	} else if (xopt->airline) {
-	    pprintf(prn, "  arima specification:     %s\n", "airline");
-	} else {
-	    pprintf(prn, "  arima specification:     %s\n", "auto");
-	}
-        pprintf(prn, "  output series:           %s\n", output_strs[xopt->output]);
-	pprintf(prn, "  save spc content:        %s\n", xopt->save_spc ? "yes" : "no");
-        pputc(prn, '\n');
+    if (!err && xopt->verbose) {
+	deseas_options_report(xopt, prn);
     }
 
     return err;
+}
+
+static gretl_bundle *deseas_options_template (void)
+{
+    gretl_bundle *b = gretl_bundle_new();
+
+    if (b == NULL) {
+	return NULL;
+    }
+
+    /* booleans */
+    gretl_bundle_set_int(b, "seats", 0);
+    gretl_bundle_set_int(b, "airline", 0);
+    gretl_bundle_set_int(b, "easter", 0);
+    gretl_bundle_set_int(b, "save_spc", 0);
+
+    /* verbosity */
+    gretl_bundle_set_int(b, "verbose", 0);
+
+    /* integer codes */
+    gretl_bundle_set_int(b, "logtrans", 2);
+    gretl_bundle_set_int(b, "outliers", 0);
+    gretl_bundle_set_int(b, "trading_days", 2);
+    gretl_bundle_set_int(b, "working_days", 0);
+
+    /* miscellaneous */
+    gretl_bundle_set_scalar(b, "critical", NADBL);
+    gretl_bundle_set_string(b, "output", "sa");
+    gretl_bundle_set_matrix(b, "arima", NULL);
+
+    /* acceptable non-option extra members */
+    gretl_bundle_set_matrix(b, "results", NULL);
+    gretl_bundle_set_string(b, "x13a_spc", NULL);
+
+    return b;
 }
 
 static void display_x13a_output (char *fname, int err, PRN *prn)
@@ -2291,7 +2317,14 @@ int adjust_series (const double *x, double *y,
 
     if (prog == X13A) {
         if (opts != NULL) {
-            err = parse_deseas_bundle(&xopt, opts, prn);
+	    gretl_bundle *b = deseas_options_template();
+	    int berr = 0;
+
+	    err = gretl_bundle_extract_args(b, opts, NULL, prn, &berr);
+	    if (!err && !berr) {
+		err = deseas_options_transcribe(&xopt, b, prn);
+	    }
+	    gretl_bundle_destroy(b);
         }
         if (!err) {
             gretl_build_path(fname, workdir, vname, NULL);

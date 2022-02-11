@@ -190,11 +190,11 @@ static int bundled_item_copy_in_data (bundled_item *item,
 	}
 	break;
     case GRETL_TYPE_UNSIGNED:
-	item->data = malloc(sizeof(unsigned int));
+	item->data = malloc(sizeof(guint32));
 	if (item->data != NULL) {
-	    unsigned int *up = item->data;
+	    guint32 *up = item->data;
 
-	    *up = *(unsigned int *) ptr;
+	    *up = *(guint32 *) ptr;
 	}
 	break;
     case GRETL_TYPE_STRING:
@@ -282,12 +282,13 @@ static void bundled_item_free_data (GretlType type, void *data)
 }
 
 /* note: we come here only if the replacement type is the
-   same as the original type
+   same as the original type, apart from the case of
+   inter-conversion of scalar types
 */
 
 static int bundled_item_replace_data (bundled_item *item,
-				      void *ptr, int size,
-				      int copy)
+				      void *ptr, GretlType type,
+				      int size, int copy)
 {
     int err = 0;
 
@@ -300,15 +301,36 @@ static int bundled_item_replace_data (bundled_item *item,
 	if (item->type == GRETL_TYPE_DOUBLE) {
 	    double *dp = item->data;
 
-	    *dp = *(double *) ptr;
-	} else if (item->type == GRETL_TYPE_INT) {
+	    if (type == GRETL_TYPE_INT ||
+		type == GRETL_TYPE_BOOL) {
+		*dp = (double) *(int *) ptr;
+	    } else if (type == GRETL_TYPE_UNSIGNED) {
+		*dp = (double) *(guint32 *) ptr;
+	    } else {
+		*dp = *(double *) ptr;
+	    }
+	} else if (item->type == GRETL_TYPE_INT ||
+		   item->type == GRETL_TYPE_BOOL) {
 	    int *ip = item->data;
 
-	    *ip = *(int *) ptr;
+	    if (type == GRETL_TYPE_DOUBLE) {
+		*ip = gretl_int_from_double(*(double *) ptr, &err);
+	    } else if (type == GRETL_TYPE_UNSIGNED) {
+		*ip = (int) *(guint32 *) ptr;
+	    } else {
+		*ip = *(int *) ptr;
+	    }
 	} else if (item->type == GRETL_TYPE_UNSIGNED) {
-	    unsigned int *up = item->data;
+	    guint32 *up = item->data;
 
-	    *up = *(unsigned int *) ptr;
+	    if (type == GRETL_TYPE_DOUBLE) {
+		*up = gretl_unsigned_from_double(*(double *) ptr, &err);
+	    } else if (type == GRETL_TYPE_INT ||
+		       type == GRETL_TYPE_BOOL) {
+		*up = (guint32) *(int *) ptr;
+	    } else {
+		*up = *(guint32 *) ptr;
+	    }
 	}
     } else {
 	/* free then copy or donate */
@@ -895,7 +917,7 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 
 	    x = (double) *pi;
 	} else if (type == GRETL_TYPE_UNSIGNED) {
-	    unsigned int *pu = (unsigned int *) ptr;
+	    guint32 *pu = (guint32 *) ptr;
 
 	    x = (double) *pu;
 	} else {
@@ -944,7 +966,7 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
 
 	    i = *pi;
 	} else if (type == GRETL_TYPE_UNSIGNED) {
-	    unsigned int u, *pu = (unsigned int *) ptr;
+	    guint32 u, *pu = (guint32 *) ptr;
 
 	    u = *pu;
 	    if (u <= INT_MAX) {
@@ -999,7 +1021,7 @@ int gretl_bundle_get_int_deflt (gretl_bundle *bundle,
 
 	    val = *pi;
 	} else if (type == GRETL_TYPE_UNSIGNED) {
-	    unsigned int *pu = (unsigned int *) ptr;
+	    guint32 *pu = (guint32 *) ptr;
 
 	    val = (int) *pu;
 	} else if (type == GRETL_TYPE_DOUBLE) {
@@ -1038,7 +1060,7 @@ int gretl_bundle_get_bool (gretl_bundle *bundle,
 
 	    val = (*pi != 0);
 	} else if (type == GRETL_TYPE_UNSIGNED) {
-	    unsigned int *pu = (unsigned int *) ptr;
+	    guint32 *pu = (guint32 *) ptr;
 
 	    val = (*pu != 0);
 	} else if (type == GRETL_TYPE_DOUBLE) {
@@ -1061,11 +1083,11 @@ int gretl_bundle_get_bool (gretl_bundle *bundle,
  * specified @bundle, if any; otherwise 0.
  */
 
-unsigned int gretl_bundle_get_unsigned (gretl_bundle *bundle,
-					const char *key,
-					int *err)
+guint32 gretl_bundle_get_unsigned (gretl_bundle *bundle,
+				   const char *key,
+				   int *err)
 {
-    unsigned int u = 0;
+    guint32 u = 0;
     GretlType type;
     void *ptr;
     int myerr = 0;
@@ -1074,7 +1096,7 @@ unsigned int gretl_bundle_get_unsigned (gretl_bundle *bundle,
 
     if (ptr != NULL) {
 	if (type == GRETL_TYPE_UNSIGNED) {
-	    unsigned int *pu = (unsigned int *) ptr;
+	    guint32 *pu = (guint32 *) ptr;
 
 	    u = *pu;
 	} else if (type == GRETL_TYPE_INT) {
@@ -1082,7 +1104,7 @@ unsigned int gretl_bundle_get_unsigned (gretl_bundle *bundle,
 
 	    i = *pi;
 	    if (i >= 0) {
-		u = (unsigned int) i;
+		u = (guint32) i;
 	    } else {
 		myerr = E_TYPES;
 	    }
@@ -1091,7 +1113,7 @@ unsigned int gretl_bundle_get_unsigned (gretl_bundle *bundle,
 
 	    x = *px;
 	    if (x >= 0 && x <= UINT_MAX && x == floor(x)) {
-		u = (unsigned int) x;
+		u = (guint32) x;
 	    } else {
 		myerr = E_TYPES;
 	    }
@@ -1293,7 +1315,7 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 	    replace = 1;
 	    if (item->type == type) {
 		/* we can take a shortcut */
-		return bundled_item_replace_data(item, ptr, size, copy);
+		return bundled_item_replace_data(item, ptr, type, size, copy);
 	    }
 	}
 
@@ -1449,7 +1471,7 @@ int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
  */
 
 int gretl_bundle_set_unsigned (gretl_bundle *bundle, const char *key,
-			       unsigned int val)
+			       guint32 val)
 {
     return gretl_bundle_set_data(bundle, key, &val,
 				 GRETL_TYPE_UNSIGNED, 0);
@@ -1722,6 +1744,39 @@ struct bchecker {
     PRN *prn;
 };
 
+/* Check for mismatched types in @targ vs @src, allowing for
+   convertibility between the various scalar types.
+*/
+
+static int bundled_types_mismatch (bundled_item *targ,
+				   bundled_item *src)
+{
+    int err = 0;
+
+    if (src->type == targ->type) {
+	; /* OK */
+    } else if (gretl_is_scalar_type(targ->type) &&
+	       gretl_is_scalar_type(src->type)) {
+	/* may be inter-convertible */
+	double *px = NULL;
+
+	if (src->type == GRETL_TYPE_DOUBLE) {
+	    px = (double *) src->data;
+	}
+	if (targ->type == GRETL_TYPE_BOOL && px != NULL) {
+	    err = na(*px);
+	} else if (targ->type == GRETL_TYPE_INT && px != NULL) {
+	    gretl_int_from_double(*px, &err);
+	} else if (targ->type == GRETL_TYPE_UNSIGNED && px != NULL) {
+	    gretl_unsigned_from_double(*px, &err);
+	}
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
 static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *targ, *src = (bundled_item *) value;
@@ -1744,21 +1799,24 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 	double x = *(double *) src->data;
 	gretl_matrix *m = gretl_matrix_from_scalar(x);
 
-	*bchk->err = bundled_item_replace_data(targ, m, 0, 0);
+	*bchk->err = bundled_item_replace_data(targ, m, GRETL_TYPE_MATRIX,
+					       0, 0);
     } else if (targ->type == GRETL_TYPE_DOUBLE &&
 	       src->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = src->data;
 
 	if (gretl_matrix_is_scalar(m)) {
-	    *bchk->err = bundled_item_replace_data(targ, &m->val[0], 0, 0);
+	    *bchk->err = bundled_item_replace_data(targ, &m->val[0],
+						   GRETL_TYPE_DOUBLE,
+						   0, 0);
 	} else {
 	    *bchk->ret = 3;
 	}
-    } else if (src->type != targ->type) {
+    } else if (bundled_types_mismatch(targ, src)) {
 	*bchk->ret = 3;
     } else {
 	/* transcribe input value -> template */
-	*bchk->err = bundled_item_replace_data(targ, src->data, 0, 1);
+	*bchk->err = bundled_item_replace_data(targ, src->data, src->type, 0, 1);
 	if (*bchk->err) {
 	    pprintf(bchk->prn, "bcheck: failed to copy '%s'\n", key);
 	}
@@ -1968,7 +2026,7 @@ static void print_bundled_item (gpointer value, gpointer p)
 
 	pprintf(prn, "%s = %d", kstr, i);
     } else if (t == GRETL_TYPE_UNSIGNED) {
-	unsigned int u = *(unsigned int *) item->data;
+	guint32 u = *(guint32 *) item->data;
 
 	pprintf(prn, "%s = %u", kstr, u);
     } else if (t == GRETL_TYPE_STRING) {
@@ -2282,7 +2340,7 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 
 	pprintf(prn, "%d", i);
     } else if (item->type == GRETL_TYPE_UNSIGNED) {
-	unsigned int u = *(unsigned int *) item->data;
+	guint32 u = *(guint32 *) item->data;
 
 	pprintf(prn, "%u", u);
     } else if (item->type == GRETL_TYPE_SERIES) {
@@ -2378,7 +2436,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 			err = gretl_bundle_set_data(b, key, &i, type, size);
 		    }
 		} else if (type == GRETL_TYPE_UNSIGNED) {
-		    unsigned int u;
+		    guint32 u;
 
 		    if (!gretl_xml_node_get_unsigned(cur, doc, &u)) {
 			err = E_DATA;
