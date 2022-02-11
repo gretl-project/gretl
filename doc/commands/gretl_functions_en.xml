@@ -3639,6 +3639,14 @@
 	<ilist>
 	  <li>
 	    <para>
+	      <lit>verbose</lit>: what to print? 0 = nothing (the
+	      default); 1 = confirmation of the options selected;
+	      2 = confirmation of options plus the output from
+	      X-13ARIMA.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <lit>seats</lit>: 1 to use the SEATS algorithm in place
 	      of the default X11 algorithm for seasonal adjustment, or
 	      0.
