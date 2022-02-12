@@ -3037,6 +3037,52 @@ static int exact_initial_smooth (kalman *K,
     return err;
 }
 
+/* This iteration is in common between the state smoother
+   (Anderson-Moore) and the disturbance smoother (Koopman).
+*/
+
+static void LrN_iteration (kalman *K,
+			   gretl_matrix *L,
+			   gretl_matrix *n1,
+			   gretl_matrix *r0,
+			   gretl_matrix *r1,
+			   gretl_matrix *N0,
+			   gretl_matrix *N1,
+			   int t)
+{
+    if (t < K->N - 1) {
+	/* L_t = T_t - K_t Z_t */
+	fast_copy_values(L, K->T);
+	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+				  K->ZT, GRETL_MOD_TRANSPOSE,
+				  L, GRETL_MOD_DECREMENT);
+    }
+
+    /* r_{t-1} = Z_t' F_t^{-1} v_t + L_t' r_t */
+    gretl_matrix_multiply(K->iFt, K->vt, n1);
+    if (t == K->N - 1) {
+	gretl_matrix_multiply(K->ZT, n1, r0);
+    } else {
+	gretl_matrix_multiply(K->ZT, n1, r1);
+	gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
+				  r0, GRETL_MOD_NONE,
+				  r1, GRETL_MOD_CUMULATE);
+	fast_copy_values(r0, r1);
+    }
+
+    /* N_{t-1} = Z_t' F_t^{-1} Z_t + L_t' N_t L_t */
+    if (t == K->N - 1) {
+	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
+			   K->iFt, N0, GRETL_MOD_NONE);
+    } else {
+	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
+			   K->iFt, N1, GRETL_MOD_NONE);
+	gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
+			   N0, N1, GRETL_MOD_CUMULATE);
+	fast_copy_values(N0, N1);
+    }
+}
+
 /* Disturbance smoothing -- see Koopman, Shephard and Doornik (SsfPack
    doc), section 4.4; also Durbin and Koopman, 2012.
 
@@ -3113,7 +3159,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     gretl_matrix_zero(r0);
     gretl_matrix_zero(N0);
 
-    /* The backward recursion, per Koopman */
+    /* The backward recursion */
 
     for (t=K->N-1; t>=0 && !err; t--) {
         err = load_filter_data(K, t, NULL, SM_DIST_BKWD);
@@ -3130,9 +3176,10 @@ static int koopman_smooth (kalman *K, int DKstyle)
         }
         /* Store u_t values in K->V: these are needed in
            the forward pass to compute the smoothed
-           disturbances, below.
+           disturbances, below. Also save r_t in R.
         */
         load_to_row(K->V, u, t);
+	load_to_row(R, r0, t);
 
 	/* compute variance of disturbances */
 	err = dist_variance(K, D, Vvt, Vwt, N0, BX, t, DKstyle);
@@ -3140,38 +3187,13 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	    break;
 	}
 
-        /* L_t = T_t - K_t Z_t */
-        fast_copy_values(L, K->T);
-        gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-                                  K->ZT, GRETL_MOD_TRANSPOSE,
-                                  L, GRETL_MOD_DECREMENT);
-
-        /* save r_t values in R */
-        load_to_row(R, r0, t);
-
-        /* r_{t-1} = Z_t' F_t^{-1} v_t + L_t' r_t */
-        gretl_matrix_multiply(K->ZT, K->iFt, tr);
-        gretl_matrix_multiply(tr, K->vt, r1);
-        if (t < K->N - 1) {
-            gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
-                                      r0, GRETL_MOD_NONE,
-                                      r1, GRETL_MOD_CUMULATE);
-        }
-        fast_copy_values(r0, r1);
-
-        if (t == 0) {
+	if (t == 0) {
 	    /* compute initial smoothed state */
 	    koopman_calc_a0(K, r0);
         }
 
-        /* N_{t-1} = Z_t' F_t^{-1} Z_t + L_t' N_t L_t */
-        gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
-                           K->iFt, N1, GRETL_MOD_NONE);
-        if (t < K->N - 1) {
-            gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
-                               N0, N1, GRETL_MOD_CUMULATE);
-        }
-        fast_copy_values(N0, N1);
+	/* compute r_{t-1}, N_{t-1} */
+	LrN_iteration(K, L, n1, r0, r1, N0, N1, t);
     }
 
     /* Smoothed disturbances, all time steps, plus smoothed
@@ -3241,7 +3263,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
 static int anderson_moore_smooth (kalman *K)
 {
     gretl_matrix_block *B;
-    gretl_matrix *r0, *r1, *N0, *N1, *iFv, *L;
+    gretl_matrix *r0, *r1, *N0, *N1, *n1, *L;
     int nt = K->n;
     int t, err = 0;
 
@@ -3249,7 +3271,7 @@ static int anderson_moore_smooth (kalman *K)
                                &r1,  K->r, 1,
                                &N0,  K->r, K->r,
                                &N1,  K->r, K->r,
-                               &iFv, K->n, 1,
+                               &n1,  K->n, 1,
                                &L,   K->r, K->r,
                                NULL);
     if (B == NULL) {
@@ -3269,40 +3291,11 @@ static int anderson_moore_smooth (kalman *K)
         if (err) {
             break;
         } else if (nt < K->n) {
-            gretl_matrix_reuse(iFv, nt, 1);
+            gretl_matrix_reuse(n1, nt, 1);
         }
 
-        if (t < K->N - 1) {
-            /* L_t = T_t - K_t Z_t */
-            fast_copy_values(L, K->T);
-            gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-                                      K->ZT, GRETL_MOD_TRANSPOSE,
-                                      L, GRETL_MOD_DECREMENT);
-        }
-
-        /* r_{t-1} = Z_t' F^{-1}_t v_t + L_t' r_t */
-        gretl_matrix_multiply(K->iFt, K->vt, iFv);
-        if (t == K->N - 1) {
-            gretl_matrix_multiply(K->ZT, iFv, r0);
-        } else {
-            gretl_matrix_multiply(K->ZT, iFv, r1);
-            gretl_matrix_multiply_mod(L, GRETL_MOD_TRANSPOSE,
-                                      r0, GRETL_MOD_NONE,
-                                      r1, GRETL_MOD_CUMULATE);
-            fast_copy_values(r0, r1);
-        }
-
-        /* N_{t-1} = Z_t' F^{-1}_t Z_t + L_t' N_t L_t */
-        if (t == K->N - 1) {
-            gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
-                               K->iFt, N0, GRETL_MOD_NONE);
-        } else {
-            gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
-                               K->iFt, N1, GRETL_MOD_NONE);
-            gretl_matrix_qform(L, GRETL_MOD_TRANSPOSE,
-                               N0, N1, GRETL_MOD_CUMULATE);
-            fast_copy_values(N0, N1);
-        }
+	/* compute r_{t-1}, N_{t-1} */
+	LrN_iteration(K, L, n1, r0, r1, N0, N1, t);
 
         /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
         fast_copy_values(K->a1, K->a0);
@@ -3319,7 +3312,7 @@ static int anderson_moore_smooth (kalman *K)
 
         if (nt < K->n) {
             unshrink_vt(K, SM_STATE_STD);
-            gretl_matrix_reuse(iFv, K->n, 1);
+            gretl_matrix_reuse(n1, K->n, 1);
         }
     }
 
