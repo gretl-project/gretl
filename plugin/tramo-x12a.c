@@ -2115,7 +2115,6 @@ static int deseas_options_transcribe (x13a_opts *xopt,
 				      gretl_bundle *b,
 				      PRN *prn)
 {
-    const char *s = NULL;
     int k, err = 0;
 
     /* booleans */
@@ -2165,12 +2164,15 @@ static int deseas_options_transcribe (x13a_opts *xopt,
     /* critical */
     xopt->critical = gretl_bundle_get_scalar(b, "critical", NULL);
     if (xopt->critical < 2 || xopt->critical > 10) {
-	return E_INVARG;
+	err = E_INVARG;
     }
 
-    /* output */
-    s = gretl_bundle_get_string(b, "output", NULL);
-    err = deseas_select_output(xopt, s);
+    if (!err) {
+	/* output */
+	const char *s = gretl_bundle_get_string(b, "output", NULL);
+
+	err = deseas_select_output(xopt, s);
+    }
 
     if (!err) {
 	/* arima */
@@ -2272,6 +2274,28 @@ static int save_spc_to_bundle (const char *fname,
     return err;
 }
 
+static int process_options_bundle (x13a_opts *xopt,
+				   gretl_bundle *opts,
+				   PRN *prn)
+{
+    char *ignores[] = {"results", "x13a_spc"};
+    gretl_bundle *b = deseas_options_template();
+    gretl_array *a;
+    int berr = 0;
+    int err = 0;
+
+    a = gretl_array_from_strings(ignores, 2, 0, &err);
+    err = gretl_bundle_extract_args(b, opts, NULL, a, prn, &berr);
+    if (!err && !berr) {
+	err = deseas_options_transcribe(xopt, b, prn);
+    }
+    gretl_array_nullify_content(a);
+    gretl_array_destroy(a);
+    gretl_bundle_destroy(b);
+
+    return err;
+}
+
 /* implements the deseas() function */
 
 int adjust_series (const double *x, double *y,
@@ -2313,19 +2337,7 @@ int adjust_series (const double *x, double *y,
 
     if (prog == X13A) {
         if (opts != NULL) {
-	    char *ignores[] = {"results", "x13a_spc"};
-	    gretl_bundle *b = deseas_options_template();
-	    gretl_array *a;
-	    int berr = 0;
-
-	    a = gretl_array_from_strings(ignores, 2, 0, &err);
-	    err = gretl_bundle_extract_args(b, opts, NULL, a, prn, &berr);
-	    if (!err && !berr) {
-		err = deseas_options_transcribe(&xopt, b, prn);
-	    }
-	    gretl_array_nullify_content(a);
-	    gretl_array_destroy(a);
-	    gretl_bundle_destroy(b);
+	    err = process_options_bundle(&xopt, opts, prn);
         }
         if (!err) {
             gretl_build_path(fname, workdir, vname, NULL);
