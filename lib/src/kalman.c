@@ -37,7 +37,7 @@
 
 #define KDEBUG 0
 #define EXACT_DEBUG 0
-#define EXACT_SMDIST 0
+#define EXACT_SMDIST 1
 
 /* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 1
@@ -2938,10 +2938,11 @@ static int exact_initial_smooth (kalman *K,
     gretl_matrix_inscribe_matrix(Ndag, N0, 0, 0, GRETL_MOD_NONE);
     gretl_matrix_zero(Ndag_);
 
-    for (t=K->d-1; t>=0; t--) {
 #if EXACT_DEBUG
-        fprintf(stderr, "*** exact_initial_smooth: t=%d ***\n\n", t);
+    fprintf(stderr, "*** exact_initial_smooth ***\n");
 #endif
+
+    for (t=K->d-1; t>=0; t--) {
         err = load_filter_data(K, t, &nt, SM_STATE_INI);
         if (err) {
             break;
@@ -3003,6 +3004,7 @@ static int exact_initial_smooth (kalman *K,
 		gretl_matrix_multiply_by_scalar(dsi->u, -1.0);
 		load_to_row_offset(K->U, dsi->u, t, K->r);
 	    }
+	    load_to_row(K->Kt, K0, t);
 	    dist_variance(K, dsi->D, dsi->Vwt, dsi->Vut, N0,
 			  NULL, t, dsi->DKstyle);
 	}
@@ -3227,7 +3229,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     }
 
     if (K->exact) {
-	/* wrap up some matrices we'll need */
+	/* wrap up matrices, etc that we'll need */
 	dsi.R = R;
 	dsi.D = D;
 	dsi.u = u;
@@ -3324,16 +3326,12 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	if (t >= K->d) {
 	    /* state: a_{t+1} = T a_t + w_t (or + H*eps_t) */
 	    load_from_row(K->a0, K->A, t-1, GRETL_MOD_NONE);
-	    if (0 && t < 3) {
-		fprintf(stderr, "load state[%d]: %g\n", t-1, K->a0->val[0]);
-	    }
 	    gretl_matrix_multiply(K->T, K->a0, K->a1);
-	    if (0 && t < 3) {
-		fprintf(stderr, " mult by %g -> %g\n", K->T->val[0], K->a1->val[0]);
-	    }
-	    load_from_row(K->a1, R, t-1, GRETL_MOD_CUMULATE);
-	    if (0 && t < 3) {
-		fprintf(stderr, " add R[%d] value -> %g\n", t-1, K->a1->val[0]);
+	    if (K->exact && t == K->d) {
+		/* pick up prior smoothed state disturbance */
+		load_from_row(K->a1, K->U, t-1, GRETL_MOD_CUMULATE);
+	    } else {
+		load_from_row(K->a1, R, t-1, GRETL_MOD_CUMULATE);
 	    }
 	    if (K->mu != NULL) {
 		gretl_matrix_add_to(K->a1, K->mu);
