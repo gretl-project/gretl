@@ -1813,26 +1813,20 @@ static int get_signif (const double *x, int n)
     decpoint = get_local_decpoint();
 
     for (i=0; i<n; i++) {
-
 	if (na(x[i])) {
 	    continue;
 	}
-
 	xx = fabs(x[i]);
-
 	if (xx > 0 && (xx < 1.0e-6 || xx > 1.0e+8)) {
 	    return PMAX_NOT_AVAILABLE;
 	}
-
 	if (xx >= 1.0) {
 	    allfrac = 0;
 	}
-
 	sprintf(numstr, "%.*f", TEST_PLACES, xx);
 	s = strlen(numstr) - 1;
 	trail = TEST_PLACES;
 	gotdec = 0;
-
 	for (j=s; j>0; j--) {
 	    if (numstr[j] == '0') {
 		s--;
@@ -1850,23 +1844,18 @@ static int get_signif (const double *x, int n)
 		break;
 	    }
 	}
-
 	if (trail > trailmax) {
 	    trailmax = trail;
 	}
-
 	if (xx < 1.0) {
 	    s--; /* don't count leading zero */
 	}
-
 	if (s > smax) {
 	    smax = s;
 	}
-
 #if PDEBUG
 	fprintf(stderr, "get_signif: set smax = %d\n", smax);
 #endif
-
 	lead = 0;
 	for (j=0; j<=s; j++) {
 	    if (xx >= 1.0 && numstr[j] != decpoint) {
@@ -1875,7 +1864,6 @@ static int get_signif (const double *x, int n)
 		break;
 	    }
 	}
-
 	if (lead > leadmax) {
 	    leadmax = lead;
 	}
