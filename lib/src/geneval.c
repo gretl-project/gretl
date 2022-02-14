@@ -14555,7 +14555,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
             ret = aux_scalar_node(p);
         }
         if (!p->err) {
-            ret->v.xval = kalman_bundle_run(b, p->prn, &p->err);
+            ret->v.xval = p->err = kalman_bundle_run(b, p->prn, &p->err);
         }
     } else if (t->t == F_KDSMOOTH) {
         gretl_bundle *b = get_kalman_bundle_arg(n, p);
@@ -14574,7 +14574,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
             param += dkstyle != 0;
             ret = aux_scalar_node(p);
             if (!p->err) {
-                ret->v.xval = kalman_bundle_smooth(b, param, p->prn);
+                ret->v.xval = p->err = kalman_bundle_smooth(b, param, p->prn);
             }
         }
     } else if (t->t == F_KSMOOTH) {
@@ -14586,7 +14586,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             ret = aux_scalar_node(p);
             if (!p->err) {
-                ret->v.xval = kalman_bundle_smooth(b, 0, p->prn);
+                ret->v.xval = p->err = kalman_bundle_smooth(b, 0, p->prn);
             }
         }
     } else if (t->t == F_KSIMUL) {

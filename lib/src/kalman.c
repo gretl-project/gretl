@@ -2942,6 +2942,20 @@ static int exact_initial_smooth (kalman *K,
     fprintf(stderr, "*** exact_initial_smooth ***\n");
 #endif
 
+    /* Two cases must be handled below:
+
+       Case 1: F∞ is nonsingular (the only case discussed in
+               Durbin and Koopman, 2012)
+       Case 2: F∞ is singular (see Koopman and Durbin, 2003)
+
+       D and K describe the second case as one in which F∞ = 0,
+       but it may be that F∞ is singular without being a zero
+       matrix, for example if the observable is of higher
+       dimension than the state.
+
+       As of 2022-02-14, only Case 1 is handled.
+    */
+
     for (t=K->d-1; t>=0; t--) {
         err = load_filter_data(K, t, &nt, SM_STATE_INI);
         if (err) {
@@ -2963,6 +2977,13 @@ static int exact_initial_smooth (kalman *K,
         /* F∞ = Z * P∞ * Z' */
         gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->Pk0,
                            F1, GRETL_MOD_NONE);
+	/* check for singularity: F1 = inv(F∞) */
+	if (gretl_invert_symmetric_matrix(F1) != 0) {
+	    fprintf(stderr, "F_infty is singular: not handled yet\n");
+	    err = E_NOTPD;
+	    break;
+	}
+
         /* M∞ = P∞ * Z' */
         gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
 
@@ -2978,9 +2999,6 @@ static int exact_initial_smooth (kalman *K,
 
         /* M★ = P★ * Z' */
         gretl_matrix_multiply(K->P0, K->ZT, K->Mt);
-
-        /* F1 = inv(F∞) */
-        gretl_invert_symmetric_matrix(F1);
 
         /* F2 = -iF∞ * F★ * iF∞ */
         gretl_matrix_zero(F2);
@@ -3248,7 +3266,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
 
     for (t=K->N-1; t>=0 && !err; t--) {
         if (K->exact && t == K->d - 1) {
-            exact_initial_smooth(K, r0, L, N0, N1, &dsi);
+            err = exact_initial_smooth(K, r0, L, N0, N1, &dsi);
             break;
         }
 
@@ -3379,7 +3397,7 @@ static int anderson_moore_smooth (kalman *K)
 
     for (t=K->N-1; t>=0 && !err; t--) {
         if (K->exact && t == K->d - 1) {
-            exact_initial_smooth(K, r0, L, N0, N1, NULL);
+            err = exact_initial_smooth(K, r0, L, N0, N1, NULL);
             break;
         }
 
