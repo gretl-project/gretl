@@ -84,11 +84,11 @@ struct kalman_ {
     gretl_matrix *vt;  /* n x 1: one-step forecast error(s), time t */
 
     /* for the exact diffuse case */
-    gretl_matrix *Pk0;
-    gretl_matrix *Pk1;
-    gretl_matrix *Fk;
-    gretl_matrix *Ck;
-    gretl_matrix *PK; /* for smoothing, not actually used yet */
+    gretl_matrix *Pk0; /* P∞,t */
+    gretl_matrix *Pk1; /* P∞,t update */
+    gretl_matrix *Fk;  /* F∞,t */
+    gretl_matrix *Ck;  /* C∞,t */
+    gretl_matrix *PK;  /* P∞, all t */
 
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
@@ -2904,8 +2904,9 @@ static int exact_initial_smooth (kalman *K,
     gretl_matrix *rdag, *rdag_;
     gretl_matrix *Ndag, *Ndag_;
     gretl_matrix *tmp = K->PZ;
-    gretl_matrix *rbot;
+    gretl_matrix *rbit;
     int dist = (dsi != NULL);
+    int offset;
     int rr = 2 * K->r;
     int nt = K->n;
     int i, t, err = 0;
@@ -2921,7 +2922,7 @@ static int exact_initial_smooth (kalman *K,
                                &Ldag, rr, rr,
                                &rdag, rr, 1,
                                &rdag_, rr, 1,
-                               &rbot, K->r, 1,
+                               &rbit, K->r, 1,
                                &Ndag, rr, rr,
                                &Ndag_, rr, rr,
                                NULL);
@@ -2952,11 +2953,11 @@ static int exact_initial_smooth (kalman *K,
        but it may be that F∞ is singular without being a zero
        matrix, for example if the observable is of higher
        dimension than the state.
-
-       As of 2022-02-14, only Case 1 is handled.
     */
 
     for (t=K->d-1; t>=0; t--) {
+	int singular = 0;
+
         err = load_filter_data(K, t, &nt, SM_STATE_INI);
         if (err) {
             break;
@@ -2977,17 +2978,13 @@ static int exact_initial_smooth (kalman *K,
         /* F∞ = Z * P∞ * Z' */
         gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->Pk0,
                            F1, GRETL_MOD_NONE);
-	/* check for singularity: F1 = inv(F∞) */
+	/* F1 = inv(F∞), if possible */
 	if (gretl_invert_symmetric_matrix(F1) != 0) {
-	    fprintf(stderr, "F_infty is singular: not handled yet\n");
-	    err = E_NOTPD;
-	    break;
+	    singular = 1;
 	}
 
-        /* M∞ = P∞ * Z' */
-        gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
-
         /* F★ = Z * P★ * Z' [+ GG'] */
+	//gretl_matrix_print(K->Ft, "initial K->Ft");
         if (K->GG != NULL) {
             fast_copy_values(K->Ft, K->GG);
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
@@ -2996,18 +2993,41 @@ static int exact_initial_smooth (kalman *K,
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
                                K->Ft, GRETL_MOD_NONE);
         }
+	//gretl_matrix_print(K->Ft, "calc'ed K->Ft");
 
-        /* M★ = P★ * Z' */
-        gretl_matrix_multiply(K->P0, K->ZT, K->Mt);
+	if (singular) {
+	    /* we need inv(F★) under the name F1 */
+	    fast_copy_values(F1, K->Ft);
+	    if (gretl_invert_symmetric_matrix(F1)) {
+		fprintf(stderr, "F_star is singular: can't continue\n");
+		err = E_NOTPD;
+		break;
+	    }
+	    //gretl_matrix_print(F1, "F*,t^{-1}");
+	}
 
-        /* F2 = -iF∞ * F★ * iF∞ */
-        gretl_matrix_zero(F2);
-        gretl_matrix_qform(F1, GRETL_MOD_TRANSPOSE, K->Ft,
-                           F2, GRETL_MOD_DECREMENT);
+	/* M★ = P★ * Z' */
+	gretl_matrix_multiply(K->P0, K->ZT, K->Mt);
 
-        /* K0 = T * M∞ * F1 */
-        gretl_matrix_multiply(K->T, Mk, tmp);
-        gretl_matrix_multiply(tmp, F1, K0);
+	if (singular) {
+	    /* K0 = T * M★ * F1 */
+	    //gretl_matrix_print(K->Kt, "initial Kt");
+	    gretl_matrix_multiply(K->T, K->Mt, tmp);
+	    gretl_matrix_multiply(tmp, F1, K0);
+	    //gretl_matrix_print(K0, "K0");
+	} else {
+	    /* M∞ = P∞ * Z' */
+	    gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
+
+	    /* F2 = -iF∞ * F★ * iF∞ */
+	    gretl_matrix_zero(F2);
+	    gretl_matrix_qform(F1, GRETL_MOD_TRANSPOSE, K->Ft,
+			       F2, GRETL_MOD_DECREMENT);
+
+	    /* K0 = T * M∞ * F1 */
+	    gretl_matrix_multiply(K->T, Mk, tmp);
+	    gretl_matrix_multiply(tmp, F1, K0);
+	}
 
 	if (dist) {
 	    /* state disturbance: HH' r0_t */
@@ -3027,29 +3047,39 @@ static int exact_initial_smooth (kalman *K,
 			  NULL, t, dsi->DKstyle);
 	}
 
-        /* K1 = T * M★ * F1 + T * M∞ * F2 */
-        gretl_matrix_multiply(K->T, K->Mt, tmp);
-        gretl_matrix_multiply(tmp, F1, K1);
-        gretl_matrix_multiply(K->T, Mk, tmp);
-        gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-                                  F2, GRETL_MOD_NONE,
-                                  K1, GRETL_MOD_CUMULATE);
+	/* L0 = T - K0 * Z */
+	fast_copy_values(L0, K->T);
+	gretl_matrix_multiply_mod(K0, GRETL_MOD_NONE,
+				  K->ZT, GRETL_MOD_TRANSPOSE,
+				  L0, GRETL_MOD_DECREMENT);
 
-        /* L0 = T - K0 * Z */
-        fast_copy_values(L0, K->T);
-        gretl_matrix_multiply_mod(K0, GRETL_MOD_NONE,
-                                  K->ZT, GRETL_MOD_TRANSPOSE,
-                                  L0, GRETL_MOD_DECREMENT);
-        /* L1 = -K1 * Z */
-        gretl_matrix_zero(L1);
-        gretl_matrix_multiply_mod(K1, GRETL_MOD_NONE,
-                                  K->ZT, GRETL_MOD_TRANSPOSE,
-                                  L1, GRETL_MOD_DECREMENT);
-        /* L† = (L0 ~ L1) | (0 ~ L0) */
-        gretl_matrix_zero(Ldag);
-        gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
-        gretl_matrix_inscribe_matrix(Ldag, L1, 0, K->r, GRETL_MOD_NONE);
-        gretl_matrix_inscribe_matrix(Ldag, L0, K->r, K->r, GRETL_MOD_NONE);
+	if (singular) {
+	    /* the relevant L matrix is fairly simple */
+	    gretl_matrix_zero(Ldag);
+	    gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Ldag, K->T, K->r, K->r, GRETL_MOD_NONE);
+	} else {
+	    /* K1 = T * M★ * F1 + T * M∞ * F2 */
+	    gretl_matrix_multiply(K->T, K->Mt, tmp);
+	    gretl_matrix_multiply(tmp, F1, K1);
+	    gretl_matrix_multiply(K->T, Mk, tmp);
+	    gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+				      F2, GRETL_MOD_NONE,
+				      K1, GRETL_MOD_CUMULATE);
+	    /* L1 = -K1 * Z */
+	    gretl_matrix_zero(L1);
+	    gretl_matrix_multiply_mod(K1, GRETL_MOD_NONE,
+				      K->ZT, GRETL_MOD_TRANSPOSE,
+				      L1, GRETL_MOD_DECREMENT);
+	    /* L† = (L0 ~ L1) | (0 ~ L0) */
+	    gretl_matrix_zero(Ldag);
+	    gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Ldag, L1, 0, K->r, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Ldag, L0, K->r, K->r, GRETL_MOD_NONE);
+	}
+#if EXACT_DEBUG
+	gretl_matrix_print(Ldag, "Ldag");
+#endif
 
 	/* P† = P★ ~ P∞ */
 	gretl_matrix_inscribe_matrix(Pdag, K->P0, 0, 0,
@@ -3057,16 +3087,18 @@ static int exact_initial_smooth (kalman *K,
 	gretl_matrix_inscribe_matrix(Pdag, K->Pk0, 0, K->r,
 				     GRETL_MOD_NONE);
 
-        /* r†_{t-1} = (0 | rbot) + L†_t * r†_t */
+        /* r†_{t-1} = rPart1 + L†_t * r†_t */
         gretl_matrix_zero(rdag_);
         gretl_matrix_multiply(K->ZT, F1, tmp);
-        gretl_matrix_multiply(tmp, K->vt, rbot);
-        gretl_matrix_inscribe_matrix(rdag_, rbot, K->r, 0,
-                                     GRETL_MOD_NONE);
+        gretl_matrix_multiply(tmp, K->vt, rbit);
+	offset = singular ? 0 : K->r;
+	gretl_matrix_inscribe_matrix(rdag_, rbit, offset, 0,
+				     GRETL_MOD_NONE);
         gretl_matrix_multiply_mod(Ldag, GRETL_MOD_TRANSPOSE,
                                   rdag, GRETL_MOD_NONE,
                                   rdag_, GRETL_MOD_CUMULATE);
 #if EXACT_DEBUG
+	gretl_matrix_print(Pdag, "Pdag");
         gretl_matrix_print(rdag, "rdag");
         gretl_matrix_print(rdag_, "rdag_minus");
 #endif
@@ -3077,20 +3109,31 @@ static int exact_initial_smooth (kalman *K,
 				  rdag_, GRETL_MOD_NONE,
 				  K->a1, GRETL_MOD_CUMULATE);
 	load_to_row(K->A, K->a1, t);
+#if EXACT_DEBUG
+        gretl_matrix_print(K->a1, "ahat");
+#endif
 
         fast_copy_values(rdag, rdag_);
 
-        /* N†_{t-1} = (0 ~ Z'*F1*Z) | (Z'*F1*Z ~ Z'*F2*Z) + L†'*N†*L† */
+	/* using P1 as workspace */
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F1,
                            K->P1, GRETL_MOD_NONE);
-        gretl_matrix_inscribe_matrix(Ndag_, K->P1, 0, K->r,
-                                     GRETL_MOD_NONE);
-        gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, 0,
-                                     GRETL_MOD_NONE);
-        gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F2,
-                           K->P1, GRETL_MOD_NONE);
-        gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, K->r,
-                                     GRETL_MOD_NONE);
+
+	if (singular) {
+	    /* N†_{t-1} = (Z'*F1*Z ~ 0) | 0 + L†'*N†*L† */
+	    gretl_matrix_inscribe_matrix(Ndag_, K->P1, 0, 0,
+					 GRETL_MOD_NONE);
+	} else {
+	    /* N†_{t-1} = (0 ~ Z'*F1*Z) | (Z'*F1*Z ~ Z'*F2*Z) + L†'*N†*L† */
+	    gretl_matrix_inscribe_matrix(Ndag_, K->P1, 0, K->r,
+					 GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, 0,
+					 GRETL_MOD_NONE);
+	    gretl_matrix_qform(K->ZT, GRETL_MOD_NONE, F2,
+			       K->P1, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(Ndag_, K->P1, K->r, K->r,
+					 GRETL_MOD_NONE);
+	}
         gretl_matrix_qform(Ldag, GRETL_MOD_TRANSPOSE, Ndag,
                            Ndag_, GRETL_MOD_CUMULATE);
 
@@ -3110,7 +3153,7 @@ static int exact_initial_smooth (kalman *K,
         fast_copy_values(Ndag, Ndag_);
 
 	if (dist && t > 0) {
-	    /* transcribe for text step */
+	    /* transcribe for next step */
 	    transcribe_r0_N0(K, r0, rdag, N0, Ndag);
 	}
 
@@ -3558,7 +3601,7 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         if (dist == 0) {
             /* Anderson-Moore */
             K->flags |= KALMAN_SM_AM;
-        } else if (!K->exact) {
+        } else if (0 /* !K->exact */) {
 	    /* don't overwrite P (not needed for the disturbance
 	       smoother, other than in the exact initial case)
 	    */
