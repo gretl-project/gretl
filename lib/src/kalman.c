@@ -1889,10 +1889,16 @@ static int koopman_exact_general (kalman *K,
                               K->Kt, GRETL_MOD_TRANSPOSE,
                               K->Ct, GRETL_MOD_NONE);
 
-    /* Mt <- M★ - M∞ *F∞ * Fmt (Wrong? Should be F★?) */
+    /* Mt <- M★ - M∞ * F∞ * Fmt (Wrong? Should be F★?) */
+#if 0
     gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
                               Fmt, GRETL_MOD_NONE,
                               K->Mt, GRETL_MOD_DECREMENT);
+#else
+    gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
+                              K->Ft, GRETL_MOD_NONE,
+                              K->Mt, GRETL_MOD_DECREMENT);
+#endif
 
     /* Ct += M∞ * F∞ * (M★ - M∞ * F∞ * Fmt)' (second component) */
     gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
@@ -2950,6 +2956,8 @@ static int exact_initial_smooth (kalman *K,
 
 #if EXACT_DEBUG
     fprintf(stderr, "*** exact_initial_smooth ***\n");
+    gretl_matrix_print(r0, "rd");
+    gretl_matrix_print(N0, "Nd");
 #endif
 
     /* Two cases must be handled below:
