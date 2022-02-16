@@ -8611,11 +8611,7 @@ static NODE *ymd_node (NODE *l, parser *p)
     guint32 ed;
     int y, m, d;
 
-    if (!scalar_node(l) && l->t != SERIES) {
-        node_type_error(F_YMD, 1, NUM, l, p);
-    }
-
-    if (!p->err && scalar_node(l)) {
+    if (scalar_node(l)) {
 	/* the scalar case */
 	ed = node_get_guint32(l, p);
 	if (!p->err) {
@@ -8625,7 +8621,7 @@ static NODE *ymd_node (NODE *l, parser *p)
 	    ymd = gretl_vector_alloc(3);
 	    ymd->val[0] = y; ymd->val[1] = m; ymd->val[2] = d;
 	}
-    } else if (!p->err) {
+    } else if (!null_node(l) && l->t == SERIES) {
 	/* the series case */
 	int t, T = sample_size(p->dset);
 
@@ -8644,6 +8640,8 @@ static NODE *ymd_node (NODE *l, parser *p)
 		gretl_matrix_set(ymd, t, 2, d);
 	    }
 	}
+    } else {
+	node_type_error(F_YMD, 1, NUM, l, p);
     }
 
     if (!p->err) {
