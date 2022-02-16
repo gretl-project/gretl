@@ -587,6 +587,7 @@ struct str_table funcs[] = {
     { F_MAT2LIST,  "mat2list" },
     { F_BITOP,     "bitop" },
     { F_BITNOT,    "bitnot" },
+    { F_YMD,       "ymd" },
     { 0,           NULL }
 };
 

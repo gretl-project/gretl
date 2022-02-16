@@ -8604,6 +8604,63 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *ymd_node (NODE *l, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (!scalar_node(l) && l->t != SERIES) {
+        node_type_error(F_YMD, 1, NUM, l, p);
+    }
+
+    if (!p->err && scalar_node(l)) {
+	/* the scalar case */
+	guint32 ed = node_get_guint32(l, p);
+	int y, m, d;
+
+	if (!p->err) {
+	    p->err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+	}
+	if (!p->err) {
+	    gretl_vector *v3 = gretl_vector_alloc(3);
+
+	    v3->val[0] = y; v3->val[1] = m; v3->val[2] = d;
+	    ret->v.m = v3;
+	}
+    } else if (!p->err) {
+	/* the series case */
+	gretl_matrix *ymd;
+	guint32 ed;
+	int t, T = sample_size(p->dset);
+	int y, m, d;
+
+	ymd = gretl_matrix_alloc(T, 3);
+	if (ymd == NULL) {
+	    p->err = E_ALLOC;
+	}
+
+	for (t=p->dset->t1; t<=p->dset->t2 && !p->err; t++) {
+	    ed = gretl_unsigned_from_double(l->v.xvec[t], &p->err);
+	    if (p->err) break;
+	    p->err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+	    if (p->err) break;
+	    gretl_matrix_set(ymd, t, 0, y);
+	    gretl_matrix_set(ymd, t, 1, m);
+	    gretl_matrix_set(ymd, t, 2, d);
+	}
+
+	if (!p->err) {
+	    char *S[] = {"year", "month", "day"};
+
+	    gretl_matrix_set_colnames(ymd, strings_array_dup(S, 3));
+	    ret->v.m = ymd;
+	} else {
+	    gretl_matrix_free(ymd);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -17858,6 +17915,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_JULDATE:
         ret = isodate_node(l, r, t->t, p);
         break;
+    case F_YMD:
+	ret = ymd_node(l, p);
+	break;
     case F_STRFTIME:
         if (scalar_node(l)) {
             ret = strftime_node(l, r, p);
