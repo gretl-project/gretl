@@ -20,20 +20,6 @@
 #ifndef KALMAN_H_
 #define KALMAN_H_
 
-enum {
-    KALMAN_USER    = 1 << 0, /* user-defined filter? */
-    KALMAN_DIFFUSE = 1 << 1, /* using diffuse P_{1|0} */
-    KALMAN_FORWARD = 1 << 2, /* running forward filtering pass */
-    KALMAN_SMOOTH  = 1 << 3, /* preparing for smoothing pass */
-    KALMAN_SIM     = 1 << 4, /* running simulation */
-    KALMAN_CROSS   = 1 << 5, /* cross-correlated disturbances */
-    KALMAN_CHECK   = 1 << 6, /* checking user-defined matrices */
-    KALMAN_BUNDLE  = 1 << 7, /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 8, /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 9, /* filtering for ARMA estimation */
-    KALMAN_SM_AM   = 1 << 10 /* Anderson-Moore smoothing */
-};
-
 typedef struct kalman_ kalman;
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
@@ -65,9 +51,7 @@ int kalman_set_initial_state_vector (kalman *K, const gretl_vector *a);
 
 int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
 
-void kalman_set_options (kalman *K, int opts);
-
-int kalman_get_options (kalman *K);
+void kalman_set_arma_ll (kalman *K);
 
 void kalman_attach_data (kalman *K, void *data);
 

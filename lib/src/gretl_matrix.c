@@ -9225,8 +9225,10 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 	dpotri_(&uplo, &n, a->val, &n, &info);
 	if (info != 0) {
 	    err = E_NOTPD;
-	    fprintf(stderr, "real_invert_symmetric_matrix:\n"
-		    " dpotri failed with info = %d\n", (int) info);
+	    if (verbose) {
+		fprintf(stderr, "real_invert_symmetric_matrix:\n"
+			" dpotri failed with info = %d\n", (int) info);
+	    }
 	} else {
 	    gretl_matrix_mirror(a, uplo);
 	}
@@ -9257,7 +9259,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 
 int gretl_invert_symmetric_matrix (gretl_matrix *a)
 {
-    return real_invert_symmetric_matrix(a, 0, 1);
+    return real_invert_symmetric_matrix(a, 0, 0);
 }
 
 /**

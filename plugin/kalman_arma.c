@@ -778,7 +778,7 @@ static int kalman_arma (const double *coeff,
 
         kalman_attach_printer(K, ainfo->prn);
         kalman_attach_data(K, kh);
-	kalman_set_options(K, KALMAN_ARMA_LL);
+	kalman_set_arma_ll(K);
 
         BFGS_defaults(&maxit, &toler, ARMA);
 
