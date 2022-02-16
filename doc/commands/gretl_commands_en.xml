@@ -14461,8 +14461,8 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--balanced</flag>
-	  <effect>panel data: try to retain balanced panel</effect>
+	  <flag>--preserve-panel</flag>
+	  <effect>panel data: see below</effect>
         </option>
         <option>
 	  <flag>--unit</flag>
@@ -14520,38 +14520,35 @@
 	and no <repl>varlist</repl>, the generic variables
 	<lit>index</lit> and <lit>time</lit> are ignored.
       </para>
-
       <para>
-	The <opt>contiguous</opt> form of <lit>smpl</lit> is intended for
-	use with time series data.  The effect is to trim any observations
-	at the start and end of the current sample range that contain
-	missing values (either for the variables in <repl>varlist</repl>, or
-	for all data series if no <repl>varlist</repl> is given).  Then a
-	check is performed to see if there are any missing values in the
-	remaining range; if so, an error is flagged.
+	The <opt>contiguous</opt> form of <lit>smpl</lit> is intended
+	for use with time series data.  The effect is to trim any
+	observations at the start and end of the current sample range
+	that contain missing values (either for the variables in
+	<repl>varlist</repl>, or for all data series if no
+	<repl>varlist</repl> is given).  Then a check is performed to
+	see if there are any missing values in the remaining range; if
+	so, an error is flagged.
       </para>
-
       <para>
 	With the <opt>random</opt> flag, the specified number of cases
 	are selected from the current dataset at random (without
-	replacement).  If you wish to be able to replicate this selection
-	you should set the seed for the random number generator first (see
-	the <cmdref targ="set"/> command).
+	replacement).  If you wish to be able to replicate this
+	selection you should set the seed for the random number
+	generator first (see the <cmdref targ="set"/> command).
       </para>
-
       <para>
-	The final form, <lit>smpl full</lit>, restores the full data range.
+	The final form, <lit>smpl full</lit>, restores the full data
+	range.
       </para>
-
       <para>
 	Note that sample restrictions are, by default, cumulative: the
-	baseline for any <lit>smpl</lit> command is the current sample. If you
-	wish the command to act so as to replace any existing restriction you
-	can add the option flag <opt>replace</opt> to the end of the
-	command. (But this option is not compatible with the
-	<opt>contiguous</opt> option.)
+	baseline for any <lit>smpl</lit> command is the current
+	sample. If you wish the command to act so as to replace any
+	existing restriction you can add the option flag
+	<opt>replace</opt> to the end of the command. (But this option
+	is not compatible with the <opt>contiguous</opt> option.)
       </para>
-
       <para>
 	The internal variable <lit>obs</lit> may be used with the
 	<opt>restrict</opt> form of <lit>smpl</lit> to exclude particular
@@ -14569,27 +14566,22 @@
       </code>
       <para>will drop the observation with label <quote>USA</quote>.
       </para>
-
       <para>
 	One point should be noted about the <opt>dummy</opt>,
 	<opt>restrict</opt> and <opt>no-missing</opt> forms of
-	<lit>smpl</lit>: <quote>structural</quote> information in the data
-	file (regarding the time series or panel nature of the data) is likely
-	to be lost when this command is issued.  You may reimpose structure
-	with the <cmdref targ="setobs"/> command.  A related option, for use
-	with panel data, is the <opt>balanced</opt> flag: this requests that
-	a balanced panel is reconstituted after sub-sampling, via the
-	insertion of <quote>missing rows</quote> if need be.  But note that it
-	is not always possible to comply with this request.
+	<lit>smpl</lit>: <quote>structural</quote> information in the
+	data file (regarding the time series or panel nature of the
+	data) is likely to be lost when this command is issued.  You
+	may reimpose structure with the <cmdref targ="setobs"/>
+	command, but also see the <opt>preserve-panel</opt> option
+	below.
       </para>
 
       <subhead>Panel-specific options</subhead>
-
       <para>
 	The <opt>unit</opt> and <opt>time</opt> options are specific
 	to panel data. They allow you to specify, respectively, a
-	range of <quote>units</quote> or time-periods. For
-	example:
+	range of <quote>units</quote> or time-periods. For example:
       </para>
       <code>
 	# limit the sample to the first 50 units
@@ -14610,9 +14602,18 @@
 	# limit the sample to 2000:1 to 2007:1
 	smpl 2000:1 2007:1 --time
       </code>
+      <para>
+	In gretl, a panel dataset must always be <quote>nominally
+	balanced</quote>&mdash;that is, each unit must have the same
+	number of data rows, even if some rows contain nothing but
+	<lit>NA</lit>s. Sub-sampling via the <opt>restrict</opt> or
+	<opt>dummy</opt> options may destroy this structure. In that
+	case the <opt>preserve-panel</opt> flag can be added to
+	request that a nominally balanced panel is reconstituted, via
+	the insertion of <quote>missing rows</quote> if needed.
+      </para>
 
       <subhead>Permanent versus temporary sampling</subhead>
-
       <para>
 	By default, restrictions on the current sample range can be
 	undone: you can restore the full dataset via <lit>smpl
