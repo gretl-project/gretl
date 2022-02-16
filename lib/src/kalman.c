@@ -70,7 +70,7 @@ struct kalman_ {
     int t;   /* current time step, when filtering */
     int d;   /* time-step at which standard iterations start */
 
-   int ifc; /* boolean: obs equation includes an implicit constant? */
+    int ifc; /* boolean: obs equation includes an implicit constant? */
 
     double SSRw;    /* \sum_{t=1}^N v_t^{\prime} F_t^{-1} v_t */
     double loglik;  /* log-likelihood */
@@ -1843,7 +1843,7 @@ static int koopman_exact_general (kalman *K,
     gretl_matrix_reuse(J, n, ns);
     sz = n * ns * sizeof(double);
     memcpy(J->val, V->val, sz);
-    /* Fmt = J*J' */
+    /* Fmt = F_{*,t}^{-} = J*J' */
     gretl_matrix_multiply_mod(J, GRETL_MOD_NONE,
                               J, GRETL_MOD_TRANSPOSE,
                               Fmt, GRETL_MOD_NONE);
@@ -1859,38 +1859,38 @@ static int koopman_exact_general (kalman *K,
             gretl_matrix_set(J, i, j, xij / rlj);
         }
     }
-    /* Fm∞ = J*J' */
+    /* Fmk = F_{∞,t}^{-} = J*J' */
     gretl_matrix_multiply_mod(J, GRETL_MOD_NONE,
                               J, GRETL_MOD_TRANSPOSE,
                               Fmk, GRETL_MOD_NONE);
-    /* copy to iFt for recording */
+    /* copy to iFt for recording (?) */
     fast_copy_values(K->iFt, Fmk);
 
-    /* MF∞ = M∞ * Fm∞ */
+    /* MFk = M∞ * Fm∞ */
     gretl_matrix_multiply(Mk, Fmk, MFk);
 
-    /* Kt = Mt * Fmt + MF∞ */
+    /* K★ = M★ * Fmt + M∞ * F∞ */
     fast_copy_values(K->Kt, MFk);
     gretl_matrix_multiply_mod(K->Mt, GRETL_MOD_NONE,
                               Fmt, GRETL_MOD_NONE,
                               K->Kt, GRETL_MOD_CUMULATE);
 
-    /* Ct = Mt * Kt' */
+    /* C★ = M★ Kt' (first component) */
     gretl_matrix_multiply_mod(K->Mt, GRETL_MOD_NONE,
                               K->Kt, GRETL_MOD_TRANSPOSE,
                               K->Ct, GRETL_MOD_NONE);
 
-    /* Mt <- Mt - MF∞ * Fmt */
+    /* Mt <- M★ - M∞ *F∞ * Fmt (Wrong? Should be F★?) */
     gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
                               Fmt, GRETL_MOD_NONE,
                               K->Mt, GRETL_MOD_DECREMENT);
 
-    /* Ct += MF∞ * (Mt - MF∞ * Fmt)' */
+    /* Ct += M∞ * F∞ * (M★ - M∞ * F∞ * Fmt)' (second component) */
     gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
                               K->Mt, GRETL_MOD_TRANSPOSE,
                               K->Ct, GRETL_MOD_CUMULATE);
 
-    /* C∞ = MF∞ * M∞' */
+    /* C∞ = M∞ * F∞ * M∞' */
     gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
                               Mk,  GRETL_MOD_TRANSPOSE,
                               K->Ck, GRETL_MOD_NONE);
@@ -3003,7 +3003,9 @@ static int exact_initial_smooth (kalman *K,
 		err = E_NOTPD;
 		break;
 	    }
-	    //gretl_matrix_print(F1, "F*,t^{-1}");
+	    //gretl_matrix_print(F1, "1: F*,t^{-1}");
+	    //load_from_vech(F1, K->F, nt, t, GRETL_MOD_NONE);
+	    //gretl_matrix_print(F1, "2: F*,t^{-1}");
 	}
 
 	/* M★ = P★ * Z' */
@@ -3015,6 +3017,7 @@ static int exact_initial_smooth (kalman *K,
 	    gretl_matrix_multiply(K->T, K->Mt, tmp);
 	    gretl_matrix_multiply(tmp, F1, K0);
 	    //gretl_matrix_print(K0, "K0");
+	    //load_from_vec(K0, K->K, t);
 	} else {
 	    /* M∞ = P∞ * Z' */
 	    gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
