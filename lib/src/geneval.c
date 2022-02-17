@@ -3691,7 +3691,7 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
         if (ret != NULL) {
 	    int export = node_get_bool(r, p, 0);
 
-	    ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
+	    p->err = ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
         }
     } else {
         ret = aux_scalar_node(p);
@@ -3709,11 +3709,11 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
         int control = 0;
 
         if (!null_node(r)) {
-            control = (int) r->v.xval;
+            control = node_get_int(r, p);
         }
         ret = aux_scalar_node(p);
         if (ret != NULL) {
-            ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, control);
+            p->err = ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, control);
         }
     } else {
         ret = aux_scalar_node(p);
@@ -4147,7 +4147,8 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
             if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
                 p->err = E_TYPES;
             } else {
-                ret->v.xval = umatrix_set_names_from_array(m, r->v.a, byrow);
+                p->err = ret->v.xval = umatrix_set_names_from_array(m, r->v.a,
+								    byrow);
             }
         } else {
             /* some sort of list-bearing node */
@@ -4156,8 +4157,8 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
             if (p->err) {
                 ret->v.xval = 1;
             } else {
-                ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
-                                                          byrow);
+                p->err = ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
+								   byrow);
             }
             free(list);
         }

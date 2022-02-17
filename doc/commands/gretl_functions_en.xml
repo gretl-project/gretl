@@ -2373,9 +2373,8 @@
 	  <lit>.json</lit> or <lit>.geojson</lit>, as JSON. See
 	  <fncref targ="bread"/> for a description of the format when
 	  XML is used. If <argname>fname</argname> already exists, it
-	  will be overwritten. The return value is 0 on successful
-	  completion; if an error occurs, such as the file being
-	  unwritable, the return value will be non-zero.
+	  will be overwritten. The nominal return value is 0 on
+	  successful completion; if writing fails an error is flagged.
 	</para>
 	<para>
 	  The output file will be written in the currently set <cmdref
@@ -2903,14 +2902,14 @@
 	  named list, the names are taken from the names of the listed
 	  series; the list must have <math>k</math> members. If
 	  <argname>S</argname> is an array of strings, it should
-	  contain <math>k</math> elements. For backward
-	  compatibility, a single string may also be given as the
-	  second argument; in that case it should contain
-	  <math>k</math> space-separated substrings.
+	  contain <math>k</math> elements.  A single string is also
+	  acceptable as the second argument; in that case it should
+	  contain <math>k</math> space-separated substrings.
 	</para>
 	<para>
-	  The return value is 0 on successful completion, non-zero on
-	  error. See also <fncref targ="rnameset"/>.
+	  The nominal return value is 0 on successful completion; in
+	  case of failure an error is flagged.  See also <fncref
+	  targ="rnameset"/>.
 	</para>
 	<para>
 	  Example:
@@ -3369,7 +3368,7 @@
       </description>
     </function>
 
-    <function name="curl" section="data-utils" output="scalar">
+    <function name="curl" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;b</fnarg>
       </fnargs>
@@ -6464,7 +6463,7 @@
       </description>
     </function>
 
-    <function name="isoconv" section="calendar" output="scalar">
+    <function name="isoconv" section="calendar" output="int">
       <fnargs>
 	<fnarg type="series">date</fnarg>
 	<fnarg type="seriesref">&amp;year</fnarg>
@@ -6485,8 +6484,8 @@
 	  isoconv(dates, &amp;y, &amp;m, &amp;d)
 	</code>
 	<para>
-	  The return value from this function is 0 on successful
-	  completion, non-zero on error.
+	  The nominal return value is 0 on successful completion;
+	  in case of failure an error is flagged.
 	</para>
       </description>
     </function>
@@ -6864,7 +6863,7 @@
       </description>
     </function>
 
-    <function name="kdsmooth" section="sspace" output="scalar">
+    <function name="kdsmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
 	<fnarg type="bool" optional="true">MSE</fnarg>
@@ -6872,9 +6871,10 @@
       <description>
 	<para>
 	  Performs disturbance smoothing for a Kalman bundle
-	  previously set up by means of <fncref targ="ksetup"/>
-	  and returns 0 on successful completion or 1 if numerical
-	  problems are encountered.
+	  previously set up by means of <fncref targ="ksetup"/> and
+	  returns 0 on successful completion or non-zero if numerical
+	  problems are encountered. The return value should be checked
+	  before making using of results.
 	</para>
 	<para>
 	  On successful completion, the smoothed disturbances will be
@@ -7069,16 +7069,17 @@
       </description>
     </function>
 
-    <function name="ksmooth" section="sspace" output="matrix">
+    <function name="ksmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Performs a fixed-point smoothing (backward) pass on a
-	  Kalman bundle previously set up by means of <fncref
-	  targ="ksetup"/> and returns 0 on successful completion or 1
-	  if numerical problems are encountered.
+	  Performs a fixed-point smoothing (backward) pass on a Kalman
+	  bundle previously set up by means of <fncref targ="ksetup"/>
+	  and returns 0 on successful completion or non-zero if
+	  numerical problems are encountered.  The return value should
+	  be checked before making using of results.
 	</para>
 	<para>
 	  On successful completion, the smoothed states will be
@@ -9132,10 +9133,9 @@
 	  formats.
 	</para>
 	<para>
-	  If a file <argname>fname</argname> already exists, it will be
-	  overwritten. The return value is 0 on successful completion;
-	  if an error occurs, such as the file being unwritable, the
-	  return value will be non-zero.
+	  If a file <argname>fname</argname> already exists, it will
+	  be overwritten.  The nominal return value is 0 on successful
+	  completion; if writing fails an error is flagged.
 	</para>
 	<para>
 	  The output file will be written in the currently set <cmdref
@@ -11406,14 +11406,14 @@
 	  list, the names are taken from the names of the listed
 	  series; the list must have <math>m</math> members. If
 	  <argname>S</argname> is an array of strings, it should
-	  contain <math>m</math> elements. For backward
-	  compatibility, a single string may also be given as the
-	  second argument; in that case it should contain
-	  <math>m</math> space-separated substrings.
+	  contain <math>m</math> elements. A single string is also
+	  acceptable as the second argument; in that case it should
+	  contain <math>m</math> space-separated substrings.
 	</para>
 	<para>
-	  The return value is 0 on successful completion, non-zero on
-	  error. See also <fncref targ="cnameset"/>.
+	  The nominal return value is 0 on successful completion; in
+	  case of failure an error is flagged.  See also <fncref
+	  targ="cnameset"/>.
 	</para>
 	<para>
 	  Example:
