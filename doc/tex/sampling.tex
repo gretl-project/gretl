@@ -289,19 +289,19 @@ gretl (because the specific time-series length, $T_i$, would differ
 across individuals). In some contexts it might be OK that gretl
 doesn't take your sub-sample to be a panel, but if you want to apply
 panel-specific methods this is a problem. You can solve it by giving
-the \option{balanced} option with \cmd{smpl}. For example, supposing
+the \option{preserve-panel} option with \cmd{smpl}. For example, supposing
 your dataset contained dummy variables \texttt{gender} (with the value
 1 coding for women) and \texttt{employed}, you could do
 %
 \begin{code}
-smpl gender==1 && employed==1 --restrict --balanced
+smpl gender==1 && employed==1 --restrict --preserve-panel
 \end{code}
 %
 What exactly does this do? Well, let's say the years of your data are
 2000, 2005 and 2010, and that some women were employed in all of those
 years, giving a maximum $T_i$ value of 3. But individual 526 is a
-women who was employed only in the year 2000 ($T_i = 1$). The effect
-of the \option{balanced} option is then to insert ``padding rows'' of
+woman who was employed only in the year 2000 ($T_i = 1$). The effect
+of the \option{preserve-panel} option is then to insert ``padding rows'' of
 \texttt{NA}s for the years 2005 and 2010 for individual 526, and
 similarly for all individuals with $0 < T_i < 3$. Your sub-sample
 then qualifies as a panel.
