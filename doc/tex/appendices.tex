@@ -216,7 +216,7 @@ derivatives (Ubuntu, Knoppix and other distributions). The command
 
 will download and install all the necessary packages for building the
 version of gretl that is currently present in your APT
-sources. Techincally, this does not guarantee that all the software
+sources. Technically, this does not guarantee that all the software
 necessary to build the git version is included, because the version of
 gretl on your repository may be quite old and build requirements
 may have changed in the meantime. However, the chances of a mismatch
@@ -243,7 +243,7 @@ To work with the released source:
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
-  (e.g.\ \verb+gretl-1.10.2+).
+  (e.g.\ \verb+gretl-2020a+).
 \item Proceed to the next section, ``Configure and make''.
 \end{enumerate}
 
@@ -293,7 +293,20 @@ tweak is \cmd{--prefix}.  By default the installation goes under
 \begin{code}
 ./configure --prefix=/usr
 \end{code}
-will put everything under the \verb+/usr+ tree.  
+will put everything under the \verb+/usr+ tree.
+
+Note that the recommended location to build gretl is \emph{not} in
+the source directory. The way to achieve that is quite simple: the
+invocation of the configure script has to take into account the
+relative path to the source tree. So if your build directory is
+inside (underneath) the source tree it is
+\begin{code}
+../configure 
+\end{code}
+while if it is in a parallel tree it would be (something like):
+\begin{code}
+../gretl-git/configure   
+\end{code}
 
 If you have a multi-core machine you may want to activate support
 for OpenMP, which permits the parallelization of matrix
