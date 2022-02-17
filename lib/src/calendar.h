@@ -33,6 +33,8 @@ guint32 epoch_day_from_ymd (int y, int m, int d);
 
 guint32 epoch_day_from_ymd_basic (double ymd);
 
+guint32 epoch_day_from_ymd_checked (double ymd, int *err);
+
 guint32 epoch_day_from_julian_ymd (int y, int m, int d);
 
 guint32 nearby_epoch_day (int y, int m, int d, int wkdays);

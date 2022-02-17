@@ -8604,16 +8604,25 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *ymd_node (NODE *l, parser *p)
+static NODE *ymd_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
     gretl_matrix *ymd = NULL;
     guint32 ed;
-    int y, m, d;
+    int y, m, d, iso;
+
+    iso = node_get_bool(r, p, 0);
+    if (p->err) {
+	return ret;
+    }
 
     if (scalar_node(l)) {
 	/* the scalar case */
-	ed = node_get_guint32(l, p);
+	if (iso) {
+	    ed = epoch_day_from_ymd_checked(l->v.xval, &p->err);
+	} else {
+	    ed = node_get_guint32(l, p);
+	}
 	if (!p->err) {
 	    p->err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
 	}
@@ -8630,7 +8639,11 @@ static NODE *ymd_node (NODE *l, parser *p)
 	    p->err = E_ALLOC;
 	}
 	for (t=p->dset->t1; t<=p->dset->t2 && !p->err; t++) {
-	    ed = gretl_unsigned_from_double(l->v.xvec[t], &p->err);
+	    if (iso) {
+		ed = epoch_day_from_ymd_checked(l->v.xvec[t], &p->err);
+	    } else {
+		ed = gretl_unsigned_from_double(l->v.xvec[t], &p->err);
+	    }
 	    if (!p->err) {
 		p->err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
 	    }
@@ -14607,7 +14620,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
             ret = aux_scalar_node(p);
         }
         if (!p->err) {
-            ret->v.xval = p->err = kalman_bundle_run(b, p->prn, &p->err);
+            ret->v.xval = kalman_bundle_run(b, p->prn, &p->err);
         }
     } else if (t->t == F_KDSMOOTH) {
         gretl_bundle *b = get_kalman_bundle_arg(n, p);
@@ -14626,7 +14639,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
             param += dkstyle != 0;
             ret = aux_scalar_node(p);
             if (!p->err) {
-                ret->v.xval = p->err = kalman_bundle_smooth(b, param, p->prn);
+                ret->v.xval = kalman_bundle_smooth(b, param, p->prn);
             }
         }
     } else if (t->t == F_KSMOOTH) {
@@ -14638,7 +14651,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             ret = aux_scalar_node(p);
             if (!p->err) {
-                ret->v.xval = p->err = kalman_bundle_smooth(b, 0, p->prn);
+                ret->v.xval = kalman_bundle_smooth(b, 0, p->prn);
             }
         }
     } else if (t->t == F_KSIMUL) {
@@ -17911,7 +17924,7 @@ static NODE *eval (NODE *t, parser *p)
         ret = isodate_node(l, r, t->t, p);
         break;
     case F_YMD:
-	ret = ymd_node(l, p);
+	ret = ymd_node(l, r, p);
 	break;
     case F_STRFTIME:
         if (scalar_node(l)) {

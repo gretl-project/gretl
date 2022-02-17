@@ -352,6 +352,39 @@ guint32 epoch_day_from_ymd_basic (double ymd)
 }
 
 /**
+ * epoch_day_from_ymd_checked:
+ * @ymd: number that is supposed to represent YYYYMMDD.
+ * @err: location to receive error code.
+ *
+ * Returns: the epoch day number corresponding to @ymd, interpreted
+ * as YYYYMMDD (ISO 8601 "basic") if possible.
+ */
+
+guint32 epoch_day_from_ymd_checked (double ymd, int *err)
+{
+    guint32 u;
+
+    u = gretl_unsigned_from_double(ymd, err);
+    if (u > 99991231) {
+	u = 0;
+    } else {
+	int y, m, d;
+
+	y = u / 10000;
+	u -= y * 10000;
+	m = u / 100;
+	d = u - m * 100;
+	u = epoch_day_from_ymd(y, m, d);
+    }
+
+    if (u == 0) {
+	*err = E_INVARG;
+    }
+
+    return u;
+}
+
+/**
  * weekday_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  *
