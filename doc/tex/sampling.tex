@@ -254,10 +254,10 @@ or to exclude one country,
 smpl country!="Ireland" --restrict
 \end{code}
 
-To sub-sample in the time dimension, use of \option{restrict} is
-required. For example, the Arellano--Bond dataset contains a variable
-named \texttt{YEAR} that records the year of the observations and if
-one wanted to omit the first two years of data one could do
+Sub-sampling a panel in the time dimension can be done via
+\option{restrict}.  For example, the Arellano--Bond dataset contains a
+variable named \texttt{YEAR} that records the year of the observations
+and if one wanted to omit the first two years of data one could do
 %
 \begin{code}
 smpl YEAR >= 1978 --restrict
@@ -267,12 +267,23 @@ If a dataset does not already incude a suitable variable for this
 purpose one can use the command \texttt{genr time} to create a simple
 1-based time index.
 
+Another way to sub-sample in the time dimension of a panel starts with
+a specification of time via the \texttt{setobs} command, as in
+\begin{code}
+setobs 1 1976 --panel-time
+\end{code}
+This tells gretl that panel-time is annual (frequency 1), starting in
+1976. (In fact this is already done for \texttt{abdata.gdt}.) Then
+to restrict the sample range to 1979--1982 you can do
+\begin{code}
+smpl 1979 1982 --time
+\end{code}
+
 Note that if you apply a sample restriction that just selects certain
 units (firms, countries or whatever), or selects certain contiguous
 time-periods---such that $n>1$, $T>1$ and the time-series length is
 still the same across all included units---your sub-sample will still
 be interpreted by gretl as a panel.
-
 
 \subsection{Unbalancing restrictions}
 
@@ -305,7 +316,6 @@ of the \option{preserve-panel} option is then to insert ``padding rows'' of
 \texttt{NA}s for the years 2005 and 2010 for individual 526, and
 similarly for all individuals with $0 < T_i < 3$. Your sub-sample
 then qualifies as a panel.
-
 
 \section{Resampling and bootstrapping}
 \label{sec:resampling}
