@@ -2261,15 +2261,14 @@
       </fnargs>
       <description>
 	<para>
-	  Legge un bundle da un file di testo. la stringa
-	  <argname>nomefile</argname> deve contenere il nome del file da
-	  cui deve essere letta il bundle. Se questo nome ha estensione
-	  <quote><lit>.gz</lit></quote>, si assume che il file sia stato
-	  creato con compressione gzip.
+	  Legge un bundle dal file <argname>nomefile</argname>. Per
+	  default, il bundle deve essere un file XML (opzionalmente
+	  compresso se ha estensione<lit>.gz</lit>). Se però
+	  l'estensione è <lit>.json</lit> oppure <lit>.geojson</lit>
+	  allora si intende che il file è di tipo JSON.  
 	</para>
 	<para>
-	  Il file in questione dev'essere un file XML appropriatamente
-	  definito: esso deve contenere un elemento
+	  Se il file è XML, esso deve contenere un elemento
 	  <lit>gretl-bundle</lit>, usato a sua volta per contenere zero o
 	  più elementi <lit>bundled-item</lit>. Ad esempio:
 	</para>
@@ -2285,11 +2284,15 @@
 	  automaticamente dalla funzione complementare <fncref targ="bwrite"/>.
 	</para>
 	<para>
-	  Se viene indicato un valore non nullo per l'argomento opzionale
-	  <argname>import</argname>, la ricerca del file di input avviene
-	  all'interno della directory <quote>dot</quote> dell'utente. In
-	  questo caso l'argomento <argname>fname</argname> dovrebbe essere
-	  semplicemente un nome di file, senza indicazione del percorso.
+	  Se il nome di file non contiene un percorso, il file sarà
+	  cercato in una o più directory <quote>papabili</quote>,
+	  cominciando con la directory settata come <cmdref
+	  targ="workdir"/>.  Se viene però indicato un valore non nullo per
+	  l'argomento opzionale <argname>import</argname>, la ricerca
+	  del file di input avviene all'interno della directory
+	  <quote>dot</quote> dell'utente. In questo caso l'argomento
+	  <argname>fname</argname> dovrebbe essere semplicemente un
+	  nome di file, senza indicazione del percorso.
 	</para>
 	<para>
 	  Se dovesse verificarsi un errore (per esempio dovuto al fatto
@@ -2386,25 +2389,30 @@
       </fnargs>
       <description>
 	<para>
-	  Copia il bundle <argname>B</argname> in un file XML di nome 
-	  <argname>fname</argname>. Per una sommaria descrizione del suo
-	  formato, si veda la funzione <fncref targ="bread"/>.
-	  Se il file <argname>fname</argname> esiste già verrà sovrascritto.
-	  Il valore restituito è 0 in caso l'esecuzione venga portata a termine
-	  correttamente; se si verifica un errore, per esempio dovuto al
-	  fatto che il file non può essere sovrascritto, il valore restituito 
-	  sarà non nullo.
+	  Salva il bundle <argname>B</argname> in un file di nome
+	  <argname>fname</argname> in formato XML oppure, se
+	  l'estensione è <lit>.json</lit> o <lit>.geojson</lit>, in
+	  formato JSON. Per una sommaria descrizione del formato XML,
+	  si veda la funzione <fncref targ="bread"/>.  Se il file
+	  <argname>fname</argname> esiste già verrà sovrascritto.  Il
+	  valore restituito è 0 in caso l'esecuzione venga portata a
+	  termine correttamente; se la scrittura fallisce, sarà
+	  generato un errore.
 	</para>
 	<para>
-	  Se viene indicato un valore non nullo per l'argomento
-	  <argname>export</argname>, il file di output sarà salvato nella
-	  directory <quote>dot</quote> dell'utente. In questo caso è
-	  necessario indicare come secondo argomento il nome del file
-	  privo del percorso.
+	  Se il nome di file non contiene un percorso, il file sarà
+	  scritto nella directory settata come <cmdref
+	  targ="workdir"/>.  Se viene però indicato un valore non
+	  nullo per l'argomento opzionale <argname>export</argname>,
+	  il file di output sarà salvato nella directory
+	  <quote>dot</quote> dell'utente. In questo caso è necessario
+	  indicare come secondo argomento il nome del file privo del
+	  percorso.
 	</para>
 	<para>
-	  Il file XML vene scritto, di default, senza compressione; se
-	  però <argname>fname</argname> ha l'estensione <lit>.gz</lit>,
+	  Quando il formato di output è XML il file viene scritto, di
+	  default, senza compressione; se però
+	  <argname>fname</argname> ha l'estensione <lit>.gz</lit>,
 	  allora verrà applicata la compressione gzip.
 	</para>
 	<para>
@@ -2909,8 +2917,9 @@
 	  sub-stringhe separate da spazi.
 	</para>
 	<para>
-	  Restituisce 0 se la funzione è andata a buon fine, non-zero
-	  altrimenti. Si veda anche <fncref targ="rnameset"/>.
+	  Restituisce 0 se la funzione è andata a buon fine; in caso
+	  contrario, viene generato un errore. Si veda anche <fncref
+	  targ="rnameset"/>.
 	</para>
 	<para>
 	  Esempio:
@@ -3373,7 +3382,7 @@
       </description>
     </function>
 
-    <function name="curl" section="data-utils" output="scalar">
+    <function name="curl" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;b</fnarg>
       </fnargs>
@@ -6477,7 +6486,7 @@
       </description>
     </function>
 
-    <function name="isoconv" section="calendar" output="scalar">
+    <function name="isoconv" section="calendar" output="int">
       <fnargs>
 	<fnarg type="series">date</fnarg>
 	<fnarg type="seriesref">&amp;year</fnarg>
@@ -6498,8 +6507,8 @@
 	  isoconv(dates, &amp;y, &amp;m, &amp;d)
 	</code>
 	<para>
-	  Il valore prodotto da questa funzione è 0 se completata con successo,
-	  non-zero nel caso di errori.
+	  Il valore prodotto da questa funzione è 0 se completata con
+	  successo; altrimenti, sarà generato un errore.
 	</para>
       </description>
     </function>
@@ -6885,7 +6894,7 @@
       </description>
     </function>
     
-    <function name="kdsmooth" section="sspace" output="scalar">
+    <function name="kdsmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
 	<fnarg type="bool" optional="true">MSE</fnarg>
@@ -6893,9 +6902,11 @@
       <description>
 	<para>
 	  Effettua il <quote>disturbance smoothing</quote> per un
-	  bundle tipo Kalman inizializzato in precedenza con la funzione
-	  <fncref targ="ksetup"/>; restituisce 0 se il comando va a
-	  buon fine e 1 se ci sono stati problemi numerici.
+	  bundle tipo Kalman inizializzato in precedenza con la
+	  funzione <fncref targ="ksetup"/>; restituisce 0 se il
+	  comando va a buon fine e 1 se ci sono stati problemi
+	  numerici. È consigliabile controllare l'output della
+	  funzione prima di utilizzarne i risultati.
 	</para>
 	<para>
 	  Se l'esecuzione va a buon fine, i disturbi stimati
@@ -7080,7 +7091,7 @@
 	  <fncref targ="ksetup"/> per simulare dei dati.
 	</para>
 	<para>
-	  Per maggiori dettagliu, vedi <guideref targ="chap:kalman"/>.
+	  Per maggiori dettagli, vedi <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -7092,16 +7103,18 @@
       </description>
     </function> 
 
-    <function name="ksmooth" section="sspace" output="matrix">
+    <function name="ksmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Effettua un passaggio di filtraggio all'indietro su un bundle
-	  di tipo Kalman, creato in precedenza per mezzo della
+	  Effettua un passaggio di filtraggio all'indietro su un
+	  bundle di tipo Kalman, creato in precedenza per mezzo della
 	  funzione <fncref targ="ksetup"/>; ritorna 0 se l'esecuzione
-	  va a buon fine o 1 quando si incontrino problemi numerici.
+	  va a buon fine o 1 quando si incontrino problemi numerici. È
+	  consigliabile controllare l'output della funzione prima di
+	  utilizzarne i risultati.
 	</para>
 	<para>
 	  Se l'esecuzione va a buon fine, l'elemento
@@ -9169,9 +9182,9 @@
 	<para>
 	  Se il file <argname>fname</argname> esiste già, verrà
 	  sovrascritto.  Il valore restituito è 0 in caso l'esecuzione
-	  venga portata a termine correttamente; se si verifica un errore,
-	  per esempio dovuto al fatto che il file non può essere
-	  sovrascritto, il valore restituito sarà non nullo.
+	  venga portata a termine correttamente; altrimenti, per
+	  esempio quando il file non può essere sovrascritto, verrà
+	  generato un errore.
 	</para>
 	<para>
 	  Il file verrà scritto nella directory corrispondente a <cmdref
@@ -11460,8 +11473,9 @@
 	  sub-stringhe separate da spazi.
 	</para>
 	<para>
-	  Restituisce 0 se la funzione è andata a buon fine, non-zero
-	  altrimenti. Si veda anche <fncref targ="cnameset"/>.
+	  Restituisce 0 se la funzione è andata a buon fine;
+	  altrimenti, sarà generato un errore. Si veda anche <fncref
+	  targ="cnameset"/>.
 	</para>
 	<para>
 	  Esempio:
