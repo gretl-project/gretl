@@ -1874,7 +1874,7 @@ static int get_int_limits (SetKey key, int *min, int *max)
 	{ BFGS_VERBSKIP, 0, 1000 },
 	{ BOOTREP, 1, 99999 },
 	{ HORIZON, 1, 1000 },
-	{ LOOP_MAXITER, 1, INT_MAX - 1 },
+	{ LOOP_MAXITER, 0, INT_MAX - 1 },
 	{ GMP_BITS, 256, 8192 }
     };
     int i;
