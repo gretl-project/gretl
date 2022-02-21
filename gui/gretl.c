@@ -640,6 +640,9 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 
 	if (!optsingle) {
 	    resp = no_yes_dialog("gretl", _("Start a new gretl instance?"));
+#ifdef G_OS_WIN32
+	    fprintf(stderr, "hand_off dialog: resp = %d\n", resp);
+#endif
 	}
 
 	if (resp != GRETL_YES) {
@@ -655,6 +658,10 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	    g_free(abspath);
 	}
     }
+
+#ifdef G_OS_WIN32
+    fprintf(stderr, "maybe_hand_off: returning %d\n", ret);
+#endif
 
     return ret;
 }
