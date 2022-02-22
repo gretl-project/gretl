@@ -2997,6 +2997,7 @@ static int exact_initial_smooth (kalman *K,
                            F1, GRETL_MOD_NONE);
 	/* F1 = inv(F∞), if possible */
 	if (gretl_invert_symmetric_matrix(F1) != 0) {
+	    /* use Fmk?? */
 	    singular = 1;
 	}
 
@@ -3020,6 +3021,7 @@ static int exact_initial_smooth (kalman *K,
 		err = E_NOTPD;
 		break;
 	    }
+	    /* try "Fmt" here? */
 	    //gretl_matrix_print(F1, "1: F*,t^{-1}");
 	    //load_from_vech(F1, K->F, nt, t, GRETL_MOD_NONE);
 	    //gretl_matrix_print(F1, "2: F*,t^{-1}");
@@ -3074,7 +3076,7 @@ static int exact_initial_smooth (kalman *K,
 				  L0, GRETL_MOD_DECREMENT);
 
 	if (singular) {
-	    /* the relevant L matrix is fairly simple */
+	    /* the relevant big-L matrix is fairly simple */
 	    gretl_matrix_zero(Ldag);
 	    gretl_matrix_inscribe_matrix(Ldag, L0, 0, 0, GRETL_MOD_NONE);
 	    gretl_matrix_inscribe_matrix(Ldag, K->T, K->r, K->r, GRETL_MOD_NONE);
