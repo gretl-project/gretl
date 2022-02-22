@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-14 11:14-0400\n"
-"PO-Revision-Date: 2022-02-03 16:24+0100\n"
+"PO-Revision-Date: 2022-02-22 18:36+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -2797,12 +2797,12 @@ msgstr "Caractère '%c' incorrect\n"
 #: lib/src/genmain.c:43
 #, c-format
 msgid "Replaced scalar %s"
-msgstr "Scalaire %s remplacé"
+msgstr "Scalaire remplacé %s"
 
 #: lib/src/genmain.c:45
 #, c-format
 msgid "Generated scalar %s"
-msgstr "Scalaire %s généré"
+msgstr "Scalaire généré %s"
 
 #: lib/src/genmain.c:93
 #, c-format
