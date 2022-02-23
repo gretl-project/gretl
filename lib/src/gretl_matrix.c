@@ -8413,8 +8413,10 @@ int gretl_matrix_psd_root (gretl_matrix *a, int check)
     gretl_matrix *a0 = NULL;
     int err = 0;
 
-    if (gretl_is_null_matrix(a) || a->rows != a->cols) {
-	return E_DATA;
+    if (gretl_is_null_matrix(a)) {
+        return E_DATA;
+    } else if ( a->rows != a->cols ) {
+        return E_NONCONF;
     }
 
     if (check) {
