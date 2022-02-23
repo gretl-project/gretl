@@ -98,6 +98,7 @@ struct str_table dvars[] = {
     { R_NOBS,      "$nobs" },
     { R_NVARS,     "$nvars" },
     { R_PD,        "$pd" },
+    { R_PANEL_PD,  "$panelpd" },
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
     { R_TMAX,      "$tmax" },

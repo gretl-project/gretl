@@ -15423,6 +15423,8 @@ double dvar_get_scalar (int i, const DATASET *dset)
         return (dset == NULL)? NADBL : dset->v;
     case R_PD:
         return (no_data(dset))? NADBL : dset->pd;
+    case R_PANEL_PD:
+	return (dataset_is_panel(dset))? dset->panel_pd : NADBL;
     case R_T1:
         return (no_data(dset))? NADBL : dset->t1 + 1;
     case R_T2:

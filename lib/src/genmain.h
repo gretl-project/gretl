@@ -26,6 +26,7 @@ typedef enum {
     R_NOBS = 1,   /* number of observations in current sample range */
     R_NVARS,      /* number of variables in dataset (including the constant) */
     R_PD,         /* periodicity of dataset */
+    R_PANEL_PD,   /* pd in time dimension of panel */
     R_T1,         /* start of current sample range */
     R_T2,         /* end of current sample range */
     R_TMAX,       /* maximum value for t2 */
