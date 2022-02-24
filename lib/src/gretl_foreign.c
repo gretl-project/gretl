@@ -3131,12 +3131,16 @@ static int run_R_lib (const char *buf,
     /* we don't want gretl.Rprofile in the way */
     gretl_remove(gretl_Rprofile);
 
+    gretl_push_c_numeric_locale();
+
     /* by passing OPT_L below we indicate that we're
        using the library */
     err = write_R_source_file(buf, dset, opt | OPT_L);
     if (!err) {
 	err = lib_run_Rlib_sync(opt, prn);
     }
+
+    gretl_pop_c_numeric_locale();
 
     return err;
 }
@@ -3233,7 +3237,10 @@ static int run_R_binary (const char *buf,
 			 gretlopt opt,
 			 PRN *prn)
 {
-    int err = write_gretl_R_files(buf, dset, opt);
+    int err;
+
+    gretl_push_c_numeric_locale();
+    err = write_gretl_R_files(buf, dset, opt);
 
     if (err) {
 	delete_gretl_R_files();
@@ -3244,6 +3251,8 @@ static int run_R_binary (const char *buf,
 	err = lib_run_R_sync(opt, prn);
 #endif
     }
+
+    gretl_pop_c_numeric_locale();
 
     return err;
 }
