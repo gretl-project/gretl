@@ -695,7 +695,26 @@
 	</para>
       </description>
     </function>
-
+    
+    <function name="$panelpd" section="access" output="int">
+      <description>
+      <para>
+      Returns the time-series periodicity of the data (e.g. 4 for
+	  quarterly data) for a panel dataset. If the periodicity is not 
+	  set in the active panel dataset, returns 1 in analogy to 
+	  <fncref targ="$pd"/> for cross-sectional or undated data, 
+	  whereas for other dataset types it returns NA.	  
+      </para>
+      <para>
+       <seelist>
+            <fncref targ="$pd"/>
+            <fncref targ="$datatype"/>
+            <cmdref targ="setobs"/>
+       </seelist>
+      </para>
+     </description>
+    </function>
+	
     <function name="$parnames" section="access" output="strings">
       <description>
 	<para>
@@ -725,8 +744,13 @@
 	<para>
 	  Returns the frequency or periodicity of the data (e.g. 4 for
 	  quarterly data).  In the case of panel data the value returned
-	  is the time-series length.
+	  is the total time-series length.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="$panelpd"/>
+	  </seelist>
+	  </para>
       </description>
     </function>
 
@@ -11527,8 +11551,8 @@
 	  Computes seasonal differences: <equation status="inline"
 	  ascii="y(t) - y(t-k)"  tex="$y_t - y_{t-k}$"/>, where
 	  <math>k</math> is the periodicity of the current dataset (see
-	  <fncref targ="$pd"/>). Starting values are set to
-	  <lit>NA</lit>.
+	  <fncref targ="$pd"/> or <fncref targ="$panelpd"/>). Starting
+	  values are set to <lit>NA</lit>.
 	</para>
 	<para>
 	  When a list is returned, the individual variables are
