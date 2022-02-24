@@ -12266,14 +12266,16 @@
 	  <argname>S</argname> must have at least <math>n</math>
 	  elements where <math>n</math> is the largest value in
 	  <argname>y</argname>.  In addition each element of
-	  <argname>S</argname> must be valid UTF-8.
+	  <argname>S</argname> must be valid UTF-8. If any of these
+	  conditions is not met, an error is flagged.
+	</para>
+	<para>
+	  The nominal return value is 0 on successful completion.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="strvals"/>
 	  </seelist>
-	</para>
-	<para>
-	  The value returned is zero on success or a positive error
-	  code on error.
 	</para>
       </description>
     </function>
