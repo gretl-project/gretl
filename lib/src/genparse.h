@@ -286,6 +286,8 @@ enum {
     F_LPSOLVE,
     F_INTERPOL,
     F_BITNOT,
+    F_DEC2BIN,
+    F_BIN2DEC,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,

@@ -1811,6 +1811,29 @@ static int node_get_bool (NODE *n, parser *p, int deflt)
     return ret;
 }
 
+static NODE *dec2bin_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+    guint32 x = node_get_guint32(n, p);
+
+    if (!p->err) {
+	ret->v.m = dec2bin(x);
+    }
+
+    return ret;
+}
+
+static NODE *bin2dec_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (!p->err) {
+	ret->v.xval = bin2dec(n->v.m, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *DW_node (NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -17996,6 +18019,20 @@ static NODE *eval (NODE *t, parser *p)
             ret = stringify_series(l, r, p);
         }
         break;
+    case F_DEC2BIN:
+	if (scalar_node(l)) {
+	    ret = dec2bin_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
+	}
+	break;
+    case F_BIN2DEC:
+	if (l->t == MAT) {
+	    ret = bin2dec_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, MAT, l, p);
+	}
+	break;
     default:
         fprintf(stderr, "eval: weird node %s (t->t = %d)\n",
                 getsymb(t->t), t->t);

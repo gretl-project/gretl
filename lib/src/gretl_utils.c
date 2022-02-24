@@ -1964,7 +1964,7 @@ int gretl_spawn (char *cmdline)
     gchar *sout = NULL;
     int ok, status;
     int ret = 0;
-    
+
     gretl_error_clear();
 
     ok = g_spawn_command_line_sync(cmdline,
@@ -3223,6 +3223,45 @@ int auto_mpi_ok (void)
 	ret = check_for_mpiexec();
     }
 #endif
+
+    return ret;
+}
+
+gretl_matrix *dec2bin (guint32 x)
+{
+    gretl_matrix *m = gretl_zero_matrix_new(1, 32);
+    int i = 0;
+
+    while (x > 0) {
+        m->val[i++] = x % 2;
+        x = x >> 1;
+    }
+
+    return m;
+}
+
+guint32 bin2dec (const gretl_matrix *m, int *err)
+{
+    int n = gretl_vector_get_length(m);
+    guint32 ret = 0;
+
+    if (n == 0 || n > 32) {
+	*err = E_INVARG;
+    } else {
+	guint32 k = 0x01;
+	int i;
+
+	for (i=0; i<n; i++) {
+	    if (isnan(m->val[i])) {
+		*err = E_INVARG;
+		ret = 0;
+		break;
+	    } else if (m->val[i] != 0) {
+		ret += k;
+	    }
+	    k = k << 1;
+	}
+    }
 
     return ret;
 }
