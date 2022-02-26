@@ -628,6 +628,21 @@ static int combo_list_index (const gchar *s, GList *list)
     return -1;
 }
 
+static int list_pos_from_name (GList *L, const char *s)
+{
+    int pos = 0;
+
+    while (L) {
+	if (!strcmp(s, (const char *) L->data)) {
+	    return pos;
+	}
+	pos++;
+	L = L->next;
+    }
+
+    return 0;
+}
+
 /* Update the combo argument selector(s) for series, matrices
    lists or scalars after defining a new variable of one of
    these types.
@@ -635,7 +650,8 @@ static int combo_list_index (const gchar *s, GList *list)
 
 static void update_combo_selectors (call_info *cinfo,
 				    GtkWidget *refsel,
-				    int ptype)
+				    int ptype,
+				    const char *newname)
 {
     GList *sellist, *newlist;
     int llen;
@@ -666,7 +682,7 @@ static void update_combo_selectors (call_info *cinfo,
 	/* iterate over the affected selectors */
 	GtkComboBox *sel = GTK_COMBO_BOX(sellist->data);
 	int target = GTK_WIDGET(sel) == refsel;
-	int null_OK, selpos;
+	int selpos;
 	gchar *saved = NULL;
 
 	/* target == 1 means that we're looking at the
@@ -684,17 +700,20 @@ static void update_combo_selectors (call_info *cinfo,
 
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(GTK_WIDGET(sel), newlist);
-	null_OK = widget_get_int(sel, "null_OK");
-	if (null_OK) {
+	if (widget_get_int(sel, "null_OK")) {
 	    combo_box_append_text(sel, "null");
 	}
 
 	if (target) {
-	    /* select the newly added var, which will be at the
-	       end, or thereabouts */
-	    selpos = llen - 1;
-	    if (series_arg(ptype)) {
-		selpos--; /* the const is always in last place */
+	    /* try to select the newly added object */
+	    if (newname != NULL) {
+		selpos = list_pos_from_name(g_list_first(newlist), newname);
+	    } else {
+		/* should be at the end, or thereabouts */
+		selpos = llen - 1;
+		if (series_arg(ptype)) {
+		    selpos--; /* the const is always in last place */
+		}
 	    }
 	    gtk_combo_box_set_active(sel, selpos);
 	} else if (saved != NULL) {
@@ -805,7 +824,7 @@ static int do_make_list (selector *sr)
 	gtk_widget_hide(selector_get_window(sr));
 	if (cinfo != NULL) {
 	    if (n_user_lists() > nl) {
-		update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
+		update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST, lname);
 	    }
 	} else {
 	    infobox(msg);
@@ -853,7 +872,7 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
     if (n_user_matrices() > n) {
 	GtkWidget *sel = g_object_get_data(G_OBJECT(button), "combo");
 
-	update_combo_selectors(cinfo, sel, GRETL_TYPE_MATRIX);
+	update_combo_selectors(cinfo, sel, GRETL_TYPE_MATRIX, NULL);
     }
 
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
@@ -870,7 +889,7 @@ void fncall_register_genr (int addv, gpointer p)
     int ptype = widget_get_int(combo, "ptype");
 
     if (addv > 0) {
-	update_combo_selectors(cinfo, combo, ptype);
+	update_combo_selectors(cinfo, combo, ptype, NULL);
     }
 
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
@@ -4719,7 +4738,7 @@ int real_do_regls (const char *buf)
     bufopen(&prn);
     orig_v = dataset->v;
 
-    X = generate_list(buf, dataset, &err);
+    X = generate_list(buf, dataset, 0, &err);
     if (!err) {
 	int yno = X[1];
 
