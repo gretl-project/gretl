@@ -386,7 +386,7 @@ int *command_list_from_string (const char *s, int *err)
 {
     int *list = NULL;
 
-    list = generate_list(s, dataset, err);
+    list = generate_list(s, dataset, 0, err);
 
     if (*err) {
         gui_errmsg(*err);

@@ -2970,7 +2970,7 @@ static int process_command_list (CMD *c, DATASET *dset)
     }
 
     if (!c->err && dset != NULL && *lstr != '\0') {
-	vlist = generate_list(lstr, dset, &c->err);
+	vlist = generate_list(lstr, dset, c->ci, &c->err);
 	if (c->err && (c->ci == DELEET || c->ci == PRINT)) {
 	    /* we got something that looked like a list string,
 	       but list generation failed: again, maybe the

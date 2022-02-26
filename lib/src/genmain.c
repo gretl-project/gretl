@@ -1056,7 +1056,7 @@ char *generate_string (const char *s, DATASET *dset, int *err)
 
 /* retrieve a list result directly */
 
-int *generate_list (const char *s, DATASET *dset, int *err)
+int *generate_list (const char *s, DATASET *dset, int ci, int *err)
 {
     int *ret = NULL;
     parser p;

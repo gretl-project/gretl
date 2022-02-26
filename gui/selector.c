@@ -8096,6 +8096,10 @@ static void selector_add_list_name_entry (selector *sr)
 	/* called from function call dialog */
 	src = GTK_WIDGET(sr->data);
 	lname = gtk_entry_get_text(GTK_ENTRY(src));
+	if (current_series_index(dataset, lname) > 0) {
+	    /* @lname is actually the name of a series */
+	    lname = NULL;
+	}
     } else {
 	lnames = user_var_names_for_type(GRETL_TYPE_LIST);
     }

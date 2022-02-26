@@ -2944,7 +2944,7 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
 
     line += strspn(line, " ");
 
-    list = generate_list(line, dset, &err);
+    list = generate_list(line, dset, SYSTEM, &err);
 
     if (!err) {
         if (which == ENDOG_LIST) {
