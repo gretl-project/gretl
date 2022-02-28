@@ -702,6 +702,25 @@
       </description>
     </function>
     
+    <function name="$panelpd" section="access" output="int">
+      <description>
+	<para>
+	  Restituisce la periodicità di un dataset panel lungo l'asse
+	  temporale (p. es. 4 per dati trimestrali). Se tale
+	  periodicità non è impostata, il risultato è 1 in analogia
+	  con <fncref targ="$pd"/> per dati cross-sezionali o senza
+	  data; per altri tipi di dataset, la funzione restituisce NA.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="$pd"/>
+	    <fncref targ="$datatype"/>
+	    <cmdref targ="setobs"/>
+	  </seelist>
+	</para>
+     </description>
+    </function>
+    
     <function name="$parnames" section="access" output="strings">
       <description>
 	<para>
