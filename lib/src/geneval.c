@@ -13522,7 +13522,6 @@ static int check_argc (int f, int k, parser *p)
 	{ F_QLRPVAL,   4, 4 },
 	{ F_BOOTCI,    1, 5 },
 	{ F_BOOTPVAL,  1, 3 },
-	{ HF_CLOGFI,   3, 4 },
 	{ F_NADARWAT,  2, 5 },
 	{ F_HYP2F1,    4, 4 },
 	{ F_CHOWLIN,   2, 3 },
@@ -14049,49 +14048,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             } else {
                 p->err = movavg_series(x, ret->v.xvec, p->dset, len, ctrl);
             }
-        }
-    } else if (t->t == HF_CLOGFI) {
-        gretl_matrix *z = NULL;
-        gretl_matrix *df = NULL;
-        int T = 0, K = 0;
-
-        for (i=0; i<k && !p->err; i++) {
-            e = n->v.bn.n[i];
-            if (i == 0) {
-                if (scalar_node(e)) {
-                    T = node_get_int(e, p);
-                } else {
-                    node_type_error(t->t, 1, NUM, e, p);
-                }
-            } else if (i == 1) {
-                if (scalar_node(e)) {
-                    K = node_get_int(e, p);
-                } else {
-                    node_type_error(t->t, 2, NUM, e, p);
-                }
-            } else if (i == 2) {
-                if (e->t == MAT) {
-                    z = mat_node_get_real_matrix(e, p);
-                } else {
-                    node_type_error(t->t, 3, MAT, e, p);
-                }
-            } else if (i == 3) {
-                /* optional matrix-pointer for storing the
-                   derivative wrt z */
-                if (null_node(e)) {
-                    ; /* OK */
-                } else if (e->t != U_ADDR) {
-                    node_type_error(t->t, 4, U_ADDR, e, p);
-                } else {
-                    df = ptr_node_get_matrix(e, p);
-                }
-            }
-        }
-        if (!p->err) {
-            ret = aux_scalar_node(p);
-        }
-        if (!p->err) {
-            ret->v.xval = clogit_fi(T, K, z, df, &p->err);
         }
     } else if (t->t == F_NADARWAT) {
         const double *x = NULL;
@@ -17640,7 +17596,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_CHOWLIN:
     case F_HYP2F1:
     case F_TDISAGG:
-    case HF_CLOGFI:
     case F_MIDASMULT:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {

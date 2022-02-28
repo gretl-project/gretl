@@ -247,9 +247,6 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err);
 int sample_span (const char *stobs, const char *endobs,
 		 int pd, int *err);
 
-double clogit_fi (int T, int k, gretl_matrix *z,
-		  gretl_matrix *df, int *err);
-
 gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 					GretlVecStat vs, int rowwise,
 					int *err);

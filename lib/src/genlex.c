@@ -616,7 +616,6 @@ struct str_table func_alias[] = {
 };
 
 struct str_table hidden_funcs[] = {
-    { HF_CLOGFI,   "_clogitfi" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
