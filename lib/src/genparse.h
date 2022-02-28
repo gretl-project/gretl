@@ -650,7 +650,7 @@ struct node {
     int refcount;    /* reference counter, used by aux nodes */
 };
 
-enum parser_flags {
+typedef enum {
     P_DISCARD = 1 <<  0, /* compute and print, don't save */
     P_START   = 1 <<  1, /* first round of evaluation */
     P_AUTOREG = 1 <<  2, /* expression is autoregressive */
@@ -680,8 +680,9 @@ enum parser_flags {
     P_STACK   = 1 << 26, /* executing stack() */
     P_ALTINP  = 1 << 27, /* the input string has been substituted */
     P_OBJQRY  = 1 << 28, /* querying the existence of an object */
-    P_STRVEC  = 1 << 29  /* "complex" calc with string-valued series */
-};
+    P_STRVEC  = 1 << 29, /* "complex" calc with string-valued series */
+    P_PRNLIST = 1 << 30  /* defining a list for "print" */
+} genflags;
 
 struct lhinfo {
     int t;                 /* type of pre-existing LHS variable, if any */
@@ -704,7 +705,7 @@ struct parser_ {
     DATASET *dset;     /* convenience pointer to dataset */
     PRN *prn;          /* for printing messages */
     PRN *errprn;       /* for storing error message in case @prn is NULL */
-    int flags;         /* various attributes (see @parser_flags above) */
+    genflags flags;    /* various attributes (see @genflags above) */
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
     struct lhinfo lh;  /* left-hand side info */

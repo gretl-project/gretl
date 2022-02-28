@@ -698,21 +698,21 @@
     
     <function name="$panelpd" section="access" output="int">
       <description>
-      <para>
-      Returns the time-series periodicity of the data (e.g. 4 for
-	  quarterly data) for a panel dataset. If the periodicity is not 
-	  set in the active panel dataset, returns 1 in analogy to 
-	  <fncref targ="$pd"/> for cross-sectional or undated data, 
-	  whereas for other dataset types it returns NA.	  
-      </para>
-      <para>
-       <seelist>
+	<para>
+	  Specific to panel data, returns the time-series periodicity
+	  (e.g. 4 for quarterly data).  If the periodicity is not set
+	  in the active panel dataset, returns 1 in analogy to <fncref
+	  targ="$pd"/> for cross-sectional or undated data. If the
+	  dataset is not a panel NA is returned.
+	</para>
+	<para>
+	  <seelist>
             <fncref targ="$pd"/>
             <fncref targ="$datatype"/>
             <cmdref targ="setobs"/>
-       </seelist>
-      </para>
-     </description>
+	  </seelist>
+	</para>
+      </description>
     </function>
 	
     <function name="$parnames" section="access" output="strings">

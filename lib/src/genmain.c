@@ -764,8 +764,8 @@ int generate (const char *line, DATASET *dset,
 {
     char vname[VNAMELEN] = {0};
     const char *subline = NULL;
-    int oldv, flags = 0;
-    int targtype = UNK;
+    int oldv, targtype = UNK;
+    genflags flags = 0;
     parser p;
 
     if (line == NULL) {
@@ -1056,9 +1056,10 @@ char *generate_string (const char *s, DATASET *dset, int *err)
 
 /* retrieve a list result directly */
 
-int *generate_list (const char *s, DATASET *dset, int *err)
+int *generate_list (const char *s, DATASET *dset, int ci, int *err)
 {
     int *ret = NULL;
+    genflags flags = P_PRIV | P_ANON;
     parser p;
 
     if (dset == NULL) {
@@ -1066,7 +1067,11 @@ int *generate_list (const char *s, DATASET *dset, int *err)
 	return NULL;
     }
 
-    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, LIST);
+    if (ci == PRINT) {
+	flags |= P_PRNLIST;
+    }
+
+    *err = realgen(s, &p, dset, NULL, flags, LIST);
 
     if (!*err) {
 	ret = node_get_list(p.ret, &p);
@@ -1086,7 +1091,7 @@ parser *genr_compile (const char *s, DATASET *dset,
 		      PRN *prn, int *err)
 {
     parser *p;
-    int flags = P_COMPILE;
+    genflags flags = P_COMPILE;
     int targtype = UNK;
 
 #if GDEBUG

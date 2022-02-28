@@ -5,8 +5,11 @@ version 2022b, in progress
   specification created by gretl; add option to specify the
   ARIMA model; document the verbose option
 - Fix bug: det() should not flag an error when returning NA
+- Fix bug: make "set loop_maxiter 0" behave as advertised
 - Fix GUI bug: the option of showing lagged series in a
   selection dialog not always available when it should be
+- Fix GUI bug: incorrect behavior of function-call dialog
+  when defining a new list
 - distribution: remove unused file, addons.txt
 
 2022-02-02 version 2022a

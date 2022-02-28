@@ -17997,6 +17997,15 @@ static NODE *eval (NODE *t, parser *p)
 
  finish:
 
+#if 1 /* experimental */
+    if (p->flags & P_PRNLIST && ret != NULL &&
+	ret->t == NUM && is_aux_node(ret)) {
+	/* don't try to interpret this as a series ID */
+	fprintf(stderr, "P_PRNLIST: got NUM aux node\n");
+	p->err = E_DATA;
+    }
+#endif
+
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
         if (t->t == F_FEVAL && ret->refcount > 0) {
             ; /* don't attach, it belongs elsewhere! */

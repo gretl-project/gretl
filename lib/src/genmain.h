@@ -206,7 +206,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
 
 char *generate_string (const char *s, DATASET *dset, int *err);
 
-int *generate_list (const char *s, DATASET *dset, int *err);
+int *generate_list (const char *s, DATASET *dset, int ci, int *err);
 
 int gretl_is_series (const char *name, const DATASET *dset);
 
