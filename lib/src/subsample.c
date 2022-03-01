@@ -692,6 +692,11 @@ static char *make_current_sample_mask (DATASET *dset, int *err)
 
     range_set = (dset->t1 > 0 || dset->t2 < dset->n - 1);
 
+#if PANDEBUG
+    fprintf(stderr, "  dset->submask = %p, range_set=%d\n",
+	    (void *) dset->submask, range_set);
+#endif
+
     if (dset->submask == NULL) {
 	/* no pre-existing mask, so not subsampled, but
 	   we should restrict currmask to observations
@@ -1942,12 +1947,13 @@ static char *expand_mask (char *tmpmask, const char *oldmask,
 
 /* Below: we do this "precompute" thing if the dataset is already
    subsampled and the user wants to compound the restriction with a
-   boolean restriction. One reason for this is that "obs" references
-   in the new restriction may get out of whack if we restore the full
-   dataset first.  For example, say the spec is "obs!=50" to exclude
-   observation 50: presumably the user means to exclude the 50th
-   observation in the current, subsampled dataset, which may not be
-   the same as the 50th observation in the full dataset.
+   boolean restriction. One reason for this is that any "obs"
+   references in the new restriction may get out of whack if we
+   restore the full dataset first.  For example, say the spec is
+   "obs!=50" to exclude observation 50: presumably the user means to
+   exclude the 50th observation in the current, subsampled dataset,
+   which may not be the same as the 50th observation in the full
+   dataset.
 */
 
 static char *precompute_mask (const char *s, const char *oldmask,
@@ -1983,12 +1989,11 @@ static char *precompute_mask (const char *s, const char *oldmask,
     return newmask;
 }
 
-/* Intended for time series data: trim any missing values
-   at the start and end of the current sample range, then
-   check the remaining range for missing values and flag
-   an error if any are found. If opt contains OPT_T (for
-   permanence) and no error is encountered, we shrink the
-   dataset to the contiguous range.
+/* Intended for time series data: trim any missing values at the start
+   and end of the current sample range, then check the remaining range
+   for missing values and flag an error if any are found. If opt
+   contains OPT_T (for permanence) and no error is encountered, we
+   shrink the dataset to the contiguous range.
 */
 
 static int set_contiguous_sample (const int *list,
@@ -2030,10 +2035,10 @@ static int set_contiguous_sample (const int *list,
     return err;
 }
 
-/* Make a string representing the sample restriction. This is
-   for reporting purposes. Note that in some cases the
-   incoming @restr string may be NULL, for instance if the
-   no-missing option is chosen via the gretl GUI.
+/* Make a string representing the sample restriction. This is for
+   reporting purposes. Note that in some cases the incoming @restr
+   string may be NULL, for instance if the no-missing option is chosen
+   via the gretl GUI.
 */
 
 static int make_restriction_string (DATASET *dset, char *old,
@@ -2264,8 +2269,10 @@ int restrict_sample (const char *param, const int *list,
     fprintf(stderr, "\nrestrict_sample: param='%s'\n", param);
     fprintf(stderr, " dset=%p, state=%p, fullset=%p\n", (void *) dset,
 	    (void *) state, (void *) fullset);
-    printlist(list, "list param");
-    fprintf(stderr, "%s\n", print_flags(opt, SMPL));
+    if (list != NULL && list[0] > 0) {
+	printlist(list, "list param");
+    }
+    fprintf(stderr, "options:%s\n", print_flags(opt, SMPL));
 #endif
 
     if (opt & OPT_C) {
@@ -2282,6 +2289,10 @@ int restrict_sample (const char *param, const int *list,
     if (!(opt & OPT_P)) {
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(dset, &err);
+#if SUBDEBUG
+	fprintf(stderr, "make_current_sample_mask: oldmask = %p\n",
+		(void *) oldmask);
+#endif
 	if (err) {
 	    return err;
 	}
@@ -2818,6 +2829,11 @@ int set_panel_sample (const char *start, const char *stop,
 	s2 = smpl_get_int(stop, dset, &err);
     }
 
+#if PANDEBUG
+    fprintf(stderr, "\nset_panel_sample:%s\n", print_flags(opt, SMPL));
+    fprintf(stderr, "first pass: s1=%d, s2=%d\n", s1, s2);
+#endif
+
     if (opt & OPT_X) {
 	return panel_time_sample(start, stop, s1-1, s2-1, opt, dset);
     }
@@ -2845,6 +2861,10 @@ int set_panel_sample (const char *start, const char *stop,
 	    gretl_errmsg_set("sample range out of bounds");
 	    err = E_DATA;
 	} else {
+#if PANDEBUG
+	    fprintf(stderr, "setting dset->t1=%d, dset->t2=%d (n=%d)\n",
+		    t1, t2, t2 - t1 + 1);
+#endif
 	    dset->t1 = t1;
 	    dset->t2 = t2;
 	}
