@@ -1732,7 +1732,7 @@ static int shrink_dataset_to_size (DATASET *dset, int nv, int drop)
     double **newZ;
 
 #if DDEBUG
-    fprintf(stderr, "shrink_dataset_to_size: dset at %p, dset->v=%d, nv=%d\n"
+    fprintf(stderr, "\nshrink_dataset_to_size: dset at %p, dset->v=%d, nv=%d\n"
 	    " drop = %s\n", (void *) dset, dset->v, nv,
 	    (drop == DROP_NORMAL)? "DROP_NORMAL" : "DROP_SPECIAL");
 #endif
@@ -1988,9 +1988,9 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
     }
 
 #if DDEBUG
-    fprintf(stderr, "real_drop_listed_variables: ");
+    fprintf(stderr, "\nreal_drop_listed_variables: ");
     if (d1 == 1) {
-	fprintf(stderr, "dropping var %d:\n", list[1]);
+	fprintf(stderr, "dropping var %d (%s):\n", list[1], dset->varname[list[1]]);
     } else {
 	fprintf(stderr, "dropping %d vars:\n", d1);
     }
@@ -2179,6 +2179,10 @@ int dataset_drop_listed_variables (int *list,
 	return E_DATA;
     }
 
+#if DDEBUG
+    fprintf(stderr, "\n** dataset_drop_listed_variables (1): "
+	    "call real_drop (NORMAL)\n");
+#endif
     err = real_drop_listed_vars(dlist, dset, renumber,
 				DROP_NORMAL, prn);
 
@@ -2189,6 +2193,10 @@ int dataset_drop_listed_variables (int *list,
 	if (!err && complex_subsampled()) {
 	    DATASET *fdset = fetch_full_dataset();
 
+#if DDEBUG
+	    fprintf(stderr, "\n** dataset_drop_listed_variables (2): "
+		    "call real_drop (SPECIAL)\n");
+#endif
 	    err = real_drop_listed_vars(dlist, fdset, NULL,
 					DROP_SPECIAL, NULL);
 	}
@@ -2845,8 +2853,8 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
     }
 #endif
 
-#if 0
-    fprintf(stderr, "dataset_drop_last_variables: origv=%d, newv=%d\n",
+#if DDEBUG
+    fprintf(stderr, "\ndataset_drop_last_variables: origv=%d, newv=%d\n",
 	    dset->v, newv);
     for (i=1; i<dset->v; i++) {
 	fprintf(stderr, "before: var[%d] = '%s'\n", i, dset->varname[i]);
