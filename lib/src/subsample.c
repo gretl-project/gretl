@@ -1393,11 +1393,13 @@ copy_data_to_subsample (DATASET *subset, const DATASET *dset,
     }
 }
 
-int get_restriction_mode (gretlopt opt)
+int get_restriction_mode (gretlopt opt, const char *inmask)
 {
     int mode = SUBSAMPLE_UNKNOWN;
 
-    if (opt & (OPT_M | OPT_C)) {
+    if (inmask != NULL) {
+	mode = SUBSAMPLE_BOOLEAN;
+    } else if (opt & (OPT_M | OPT_C)) {
 	mode = SUBSAMPLE_DROP_MISSING;
     } else if (opt & OPT_R) {
 	mode = SUBSAMPLE_BOOLEAN;
@@ -1924,7 +1926,8 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     return err;
 }
 
-static char *expand_mask (char *tmpmask, const char *oldmask,
+static char *expand_mask (const char *tmpmask,
+			  const char *oldmask,
 			  int *err)
 {
     char *newmask = make_submask(fullset->n);
@@ -1956,32 +1959,40 @@ static char *expand_mask (char *tmpmask, const char *oldmask,
    dataset.
 */
 
-static char *precompute_mask (const char *s, const char *oldmask,
-			      DATASET *dset, PRN *prn, int *err)
+static char *precompute_mask (const char *s,
+			      const char *inmask,
+			      const char *oldmask,
+			      DATASET *dset,
+			      PRN *prn,
+			      int *err)
 {
-    char *tmpmask = make_submask(dset->n);
+    char *tmpmask = NULL;
     char *newmask = NULL;
 
 #if SUBDEBUG
     fprintf(stderr, "restrict_sample: precomputing new mask\n");
 #endif
 
-    if (tmpmask == NULL) {
-	*err = E_ALLOC;
-    }
-
-    if (!*err) {
-	/* fill out mask relative to current, restricted dataset */
-	*err = mask_from_temp_dummy(s, dset, tmpmask, prn);
-    }
-
-    if (!*err) {
-	if (fullset != NULL) {
-	    newmask = expand_mask(tmpmask, oldmask, err);
+    if (inmask == NULL) {
+	tmpmask = make_submask(dset->n);
+	if (tmpmask == NULL) {
+	    *err = E_ALLOC;
 	} else {
-	    newmask = tmpmask;
-	    tmpmask = NULL;
+	    /* fill out mask relative to current, restricted dataset */
+	    *err = mask_from_temp_dummy(s, dset, tmpmask, prn);
 	}
+	if (!*err) {
+	    if (fullset != NULL) {
+		newmask = expand_mask(tmpmask, oldmask, err);
+	    } else {
+		newmask = tmpmask;
+		tmpmask = NULL;
+	    }
+	}
+    } else if (fullset != NULL) {
+	newmask = expand_mask(inmask, oldmask, err);
+    } else {
+	newmask = copy_subsample_mask(inmask, err);
     }
 
     free(tmpmask);
@@ -2194,44 +2205,18 @@ static int do_precompute (int mode, char *oldmask, const char *param)
     return oldmask != NULL && mode == SUBSAMPLE_BOOLEAN;
 }
 
-/* restrict_sample:
- * @param: restriction string (or %NULL).
- * @list: list of variables in case of OPT_M (or %NULL).
- * @dset: dataset struct.
- * @state: structure representing program state (or %NULL).
- * @opt: option flags.
- * @prn: printing apparatus.
- * @n_dropped: location to receive count of dropped
- * observations, or NULL.
- *
- * Sub-sample the data set, based on the criterion of skipping all
- * observations with missing data values (OPT_M); or using as mask a
- * specified dummy variable (OPT_O); or masking with a specified
- * boolean condition (OPT_R); or selecting at random (OPT_N).
- *
- * In case OPT_M or OPT_C a @list of variables may be supplied; in
- * cases OPT_O, OPT_R and OPT_N, @param must contain specifics.
- *
- * In case OPT_P is included, the restriction will rePlace any
- * existing sample restriction, otherwise the resulting restriction
- * will be the logical product of the new restriction and any
- * existing restriction.
- *
- * In case the original dataset was a panel and OPT_B was given,
- * we'll pad with missing values if necessary, to try to reconstitute
- * a balanced panel.
- *
- * In case OPT_T is included, the sample restriction will be
- * permanent (the dataset is shrunk to the sample), otherwise the
- * restriction can be undone via the command "smpl full".
- *
- * Returns: 0 on success, non-zero error code on failure.
- */
+/* Internal version of restrict_sample(), with the extra
+   argument @inmask.
+*/
 
-int restrict_sample (const char *param, const int *list,
-		     DATASET *dset, ExecState *state,
-		     gretlopt opt, PRN *prn,
-		     int *n_dropped)
+static int real_restrict_sample (const char *param,
+				 const int *list,
+				 const char *inmask,
+				 DATASET *dset,
+				 ExecState *state,
+				 gretlopt opt,
+				 PRN *prn,
+				 int *n_dropped)
 {
     char *oldrestr = NULL;
     char *oldmask = NULL;
@@ -2280,7 +2265,7 @@ int restrict_sample (const char *param, const int *list,
 	return set_contiguous_sample(list, dset, opt);
     }
 
-    mode = get_restriction_mode(opt);
+    mode = get_restriction_mode(opt, inmask);
     if (mode == SUBSAMPLE_UNKNOWN) {
 	gretl_errmsg_set("Unrecognized sample command");
 	return 1;
@@ -2289,16 +2274,11 @@ int restrict_sample (const char *param, const int *list,
     if (!(opt & OPT_P)) {
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(dset, &err);
-#if SUBDEBUG
-	fprintf(stderr, "make_current_sample_mask: oldmask = %p\n",
-		(void *) oldmask);
-#endif
-	if (err) {
-	    return err;
-	}
-	free_oldmask = 1;
-	if (dset->restriction != NULL) {
-	    oldrestr = gretl_strdup(dset->restriction);
+	if (!err) {
+	    free_oldmask = 1;
+	    if (dset->restriction != NULL) {
+		oldrestr = gretl_strdup(dset->restriction);
+	    }
 	}
     } else if (state != NULL && state->submask != NULL) {
 	/* subsampling within a function: this necessarily
@@ -2315,9 +2295,15 @@ int restrict_sample (const char *param, const int *list,
 	;
     }
 
+    if (err) {
+	return err;
+    }
+
     if (!(opt & OPT_P) && do_precompute(mode, oldmask, param)) {
 	/* we come here only if cumulating restrictions */
-	mask = precompute_mask(param, oldmask, dset, prn, &err);
+	mask = precompute_mask(param, inmask, oldmask, dset, prn, &err);
+    } else if (inmask != NULL) {
+	mask = copy_subsample_mask(inmask, &err);
     }
 
     if (!err && !full_sample(dset)) {
@@ -2335,7 +2321,7 @@ int restrict_sample (const char *param, const int *list,
     }
 
     if (mask == NULL) {
-	/* not already handled by "precompute" above */
+	/* no @inmask, and not already handled by "precompute" above */
 	err = make_restriction_mask(mode, param, list, dset,
 				    oldmask, &mask, prn);
     }
@@ -2363,12 +2349,10 @@ int restrict_sample (const char *param, const int *list,
 	    /* don't bother with this for the --random case */
 	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
 	}
-
 #if SUBDEBUG
 	fprintf(stderr, "restrict sample: contiguous range? %s\n",
 		contiguous ? "yes" : "no");
 #endif
-
 	if (contiguous) {
 	    if (permanent && dataset_is_time_series(dset)) {
 		/* apply the restriction, but then re-establish the
@@ -2410,6 +2394,49 @@ int restrict_sample (const char *param, const int *list,
     free(oldrestr);
 
     return err;
+}
+
+/* restrict_sample:
+ * @param: restriction string (or %NULL).
+ * @list: list of variables in case of OPT_M (or %NULL).
+ * @dset: dataset struct.
+ * @state: structure representing program state (or %NULL).
+ * @opt: option flags.
+ * @prn: printing apparatus.
+ * @n_dropped: location to receive count of dropped
+ * observations, or NULL.
+ *
+ * Sub-sample the data set, based on the criterion of skipping all
+ * observations with missing data values (OPT_M); or using as mask a
+ * specified dummy variable (OPT_O); or masking with a specified
+ * boolean condition (OPT_R); or selecting at random (OPT_N).
+ *
+ * In case OPT_M or OPT_C a @list of variables may be supplied; in
+ * cases OPT_O, OPT_R and OPT_N, @param must contain specifics.
+ *
+ * In case OPT_P is included, the restriction will rePlace any
+ * existing sample restriction, otherwise the resulting restriction
+ * will be the logical product of the new restriction and any
+ * existing restriction.
+ *
+ * In case the original dataset was a panel and OPT_B was given,
+ * we'll pad with missing values if necessary, to try to reconstitute
+ * a balanced panel.
+ *
+ * In case OPT_T is included, the sample restriction will be
+ * permanent (the dataset is shrunk to the sample), otherwise the
+ * restriction can be undone via the command "smpl full".
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int restrict_sample (const char *param, const int *list,
+		     DATASET *dset, ExecState *state,
+		     gretlopt opt, PRN *prn,
+		     int *n_dropped)
+{
+    return real_restrict_sample(param, list, NULL, dset, state,
+				opt, prn, n_dropped);
 }
 
 /* perma_sample:
@@ -2741,7 +2768,8 @@ static int t_from_verified_aqm (const char *s, int pd)
 
 static int panel_time_sample (const char *start, const char *stop,
 			      int t1, int t2, gretlopt opt,
-			      DATASET *dset)
+			      DATASET *dset, ExecState *s,
+			      PRN *prn)
 {
     int T = dset->pd;
     int pd = dset->panel_pd;
@@ -2779,24 +2807,25 @@ static int panel_time_sample (const char *start, const char *stop,
 			     start, stop);
 	err = E_DATA;
     } else {
-	err = dataset_add_series(dset, 1);
-	if (!err) {
-	    int dnum = dset->v - 1;
-	    int N = dset->n / T;
-	    int i, t, s = 0;
+	char *mask = make_submask(dset->n);
 
-	    strcpy(dset->varname[dnum], "panel_time__");
+	if (mask == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int N = dset->n / T;
+	    int i, t, k = 0;
+
 	    for (i=0; i<N; i++) {
 		for (t=0; t<T; t++) {
 		    if (t >= t1 && t <= t2) {
-			dset->Z[dnum][s] = 1;
+			mask[k] = 1;
 		    }
-		    s++;
+		    k++;
 		}
 	    }
-	    err = restrict_sample(dset->varname[dnum], NULL, dset,
-				  NULL, opt | OPT_O, NULL, NULL);
-	    dataset_drop_variable(dnum, dset);
+	    err = real_restrict_sample(NULL, NULL, mask, dset, s,
+				       opt, prn, NULL);
+	    free(mask);
 	}
 	if (!err) {
 	    /* should perhaps be redundant? */
@@ -2808,8 +2837,12 @@ static int panel_time_sample (const char *start, const char *stop,
     return err;
 }
 
-int set_panel_sample (const char *start, const char *stop,
-		      gretlopt opt, DATASET *dset)
+int set_panel_sample (const char *start,
+		      const char *stop,
+		      gretlopt opt,
+		      DATASET *dset,
+		      ExecState *s,
+		      PRN *prn)
 {
     int s1 = -1, s2 = -1;
     int err = 0;
@@ -2835,7 +2868,8 @@ int set_panel_sample (const char *start, const char *stop,
 #endif
 
     if (opt & OPT_X) {
-	return panel_time_sample(start, stop, s1-1, s2-1, opt, dset);
+	return panel_time_sample(start, stop, s1-1, s2-1, opt,
+				 dset, s, prn);
     }
 
     if (!err) {

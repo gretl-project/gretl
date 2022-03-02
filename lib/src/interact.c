@@ -3620,7 +3620,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             err = perma_sample(dset, cmd->opt, prn, NULL);
         } else if (panel_smpl_special(cmd->opt)) {
             /* panel data: --unit or --time option */
-            err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset);
+            err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset,
+				   s, prn);
         } else if (smpl_restrict(cmd->opt)) {
             /* --restrict, --dummy, etc. */
             err = restrict_sample(cmd->param, cmd->list, dset,

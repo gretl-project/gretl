@@ -78,7 +78,8 @@ int set_sample (const char *start, const char *stop,
 		DATASET *dset, gretlopt opt);
 
 int set_panel_sample (const char *start, const char *stop,
-		      gretlopt opt, DATASET *dset);
+		      gretlopt opt, DATASET *dset,
+		      ExecState *s, PRN *prn);
 
 int restore_full_sample (DATASET *dset, ExecState *state);
 

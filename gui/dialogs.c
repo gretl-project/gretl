@@ -1926,7 +1926,7 @@ static void gui_set_panel_sample (GtkWidget *w, panel_setting *pset)
 	    sprintf(s1, "%d", pset->t1);
 	    sprintf(s2, "%d", pset->t2);
 	}
-	err = set_panel_sample(s1, s2, OPT_X, dataset);
+	err = set_panel_sample(s1, s2, OPT_X, dataset, NULL, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -1939,7 +1939,7 @@ static void gui_set_panel_sample (GtkWidget *w, panel_setting *pset)
     if (!err && (pset->u1 != orig_u1 || pset->u2 != orig_u2)) {
 	sprintf(s1, "%d", pset->u1);
 	sprintf(s2, "%d", pset->u2);
-	err = set_panel_sample(s1, s2, OPT_U, dataset);
+	err = set_panel_sample(s1, s2, OPT_U, dataset, NULL, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
