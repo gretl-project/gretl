@@ -2347,24 +2347,32 @@ static void set_path_for_Rlib (const char *Rhome)
 
 #else /* !WIN32 */
 
-/* non-Windows: attempt to remedy the absence of the
-   R_HOME environment variable. We try to infer the
-   required directory from take the path to libR.so and
-   push it into the environment.
+/* non-Windows: attempt to remedy the absence of the R_HOME
+   environment variable. We try to infer the required directory from
+   the path to libR.so and push it into the environment.
 */
 
-static void try_set_R_home (void)
+static int try_set_R_home (void)
 {
     const char *libpath = gretl_rlib_path();
-    char *s, *tmp;
+    char buf[2048];
+    ssize_t n;
+    int err = 0;
 
-    tmp = gretl_strdup(libpath);
-    s = strstr(tmp, "/lib/libR");
-    if (s != NULL) {
-	*s = '\0';
-	gretl_setenv("R_HOME", tmp);
+    n = readlink(libpath, buf, sizeof buf);
+
+    if (n > 0 && n < sizeof buf) {
+	char *s = strstr(buf, "/lib/libR");
+
+	if (s != NULL) {
+	    *s = '\0';
+	    gretl_setenv("R_HOME", buf);
+	}
+    } else {
+	err = E_EXTERNAL;
     }
-    free(tmp);
+
+    return err;
 }
 
 #endif /* WIN32 or not */
@@ -2386,8 +2394,11 @@ static int gretl_Rlib_init (void)
 
 #ifndef WIN32
     Rhome = getenv("R_HOME");
-    if (Rhome == NULL) {
-	try_set_R_home();
+    if (Rhome == NULL || *Rhome == '\0') {
+	err = try_set_R_home();
+	if (err) {
+	    return err;
+	}
     }
 #endif
 
