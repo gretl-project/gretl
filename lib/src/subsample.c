@@ -671,6 +671,24 @@ static int sync_data_to_full (DATASET *dset)
     return err;
 }
 
+#if SUBDEBUG
+static void print_mask (const char *mask, const char *s)
+{
+    if (s != NULL) {
+	fprintf(stderr, "%s: ", s);
+    }
+    if (mask == NULL) {
+	fputs("null\n", stderr);
+    } else {
+	while (*mask != SUBMASK_SENTINEL) {
+	    fprintf(stderr, "%d", *mask ? 1 : 0);
+	    mask++;
+	}
+	fputc('\n', stderr);
+    }
+}
+#endif
+
 /* Here we make a mask representing the "complete" sample
    restriction currently in force, for use in cumulating
    restrictions. "Complete" means that we take into account
@@ -991,6 +1009,10 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
 	    err = 1;
 	}
     }
+
+#if SUBDEBUG
+    print_mask(mask, NULL);
+#endif
 
     if (!err && nsel == 0) {
 	err = E_ZERO;
@@ -1983,6 +2005,8 @@ static char *precompute_mask (const char *s,
 	}
 	if (!*err) {
 	    if (fullset != NULL) {
+		fprintf(stderr, " expand_mask: oldmask=%p, fullset->n=%d\n",
+			(void *) oldmask, fullset->n);
 		newmask = expand_mask(tmpmask, oldmask, err);
 	    } else {
 		newmask = tmpmask;
@@ -1996,6 +2020,13 @@ static char *precompute_mask (const char *s,
     }
 
     free(tmpmask);
+
+    if (!*err && newmask != NULL) {
+	if (count_selected_cases(newmask, dset) == 0) {
+	    gretl_errmsg_set(_("No observations would be left!"));
+	    *err = E_DATA;
+	}
+    }
 
     return newmask;
 }
@@ -2193,16 +2224,28 @@ static int check_permanent_option (gretlopt opt,
     return 0;
 }
 
-/* "Precomputing" a mask means computing a mask based on a
-   current subsampled dataset (before restoring the full dataset,
-   which is a part of the subsampling process). We do this if
-   we're cumulating a boolean restriction on top of an existing
-   restriction.
+/* "Precomputing" a mask means computing a mask based on a currently
+   subsampled dataset (before restoring the full dataset, which is a
+   part of the subsampling process). We do this if we're cumulating a
+   boolean restriction on top of an existing restriction, but not
+   (because serious complications can arise) if the current dataset is
+   a panel.
 */
 
-static int do_precompute (int mode, char *oldmask, const char *param)
+static int do_precompute (int mode,
+			  const char *inmask,
+			  const char *oldmask,
+			  DATASET *dset)
 {
-    return oldmask != NULL && mode == SUBSAMPLE_BOOLEAN;
+    if (oldmask == NULL || mode != SUBSAMPLE_BOOLEAN) {
+	/* not required */
+	return 0;
+    }
+    if (inmask != NULL) {
+	/* @inmask will need expanding */
+	return 1;
+    }
+    return dataset_is_panel(dset) ? 0 : 1;
 }
 
 /* Internal version of restrict_sample(), with the extra
@@ -2299,7 +2342,7 @@ static int real_restrict_sample (const char *param,
 	return err;
     }
 
-    if (!(opt & OPT_P) && do_precompute(mode, oldmask, param)) {
+    if (!(opt & OPT_P) && do_precompute(mode, inmask, oldmask, dset)) {
 	/* we come here only if cumulating restrictions */
 	mask = precompute_mask(param, inmask, oldmask, dset, prn, &err);
     } else if (inmask != NULL) {
@@ -2764,7 +2807,7 @@ static int t_from_verified_aqm (const char *s, int pd)
     }
 }
 
-#define panel_range_ok(t1,t2,T) (t1>=0 && t1<T && t2>=t1 && t2<T)
+#define panel_range_ok(t1,t2,T) (t1>=0 && t2<T && t1<=t2)
 
 static int panel_time_sample (const char *start, const char *stop,
 			      int t1, int t2, gretlopt opt,
