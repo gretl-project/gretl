@@ -6,6 +6,13 @@ version 2022b, in progress
   ARIMA model; document the verbose option
 - Fix bug: det() should not flag an error when returning NA
 - Fix bug: make "set loop_maxiter 0" behave as advertised
+- Fix bug: misbehavior when subsampling within a function a
+  panel dataset that was subsampled prior to calling the
+  function in question
+- Fix obscure issue: ensure that libR gets a correct value
+  for R_HOME when the user has specified the location of
+  libR.so as a symlink (probably specific to Linux, and
+  confined to the context of gretl's "foreign language=R")
 - Fix GUI bug: the option of showing lagged series in a
   selection dialog not always available when it should be
 - Fix GUI bug: incorrect behavior of function-call dialog
