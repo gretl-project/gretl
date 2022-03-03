@@ -1,3 +1,8 @@
+version 2022b, in progress
+
+Add an explicit deprecation message for use of the legacy fft
+function. This will be redefined in the next release.
+
 2022-02-02 version 2022a
 
 The identifying string for macOS in the $sysinfo bundle (under
