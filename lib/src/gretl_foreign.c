@@ -2354,22 +2354,38 @@ static void set_path_for_Rlib (const char *Rhome)
 
 static int try_set_R_home (void)
 {
-    const char *libpath = gretl_rlib_path();
-    char buf[2048];
-    ssize_t n;
+    const char *path = gretl_rlib_path();
+    struct stat buf;
+    char tmp[2048];
     int err = 0;
 
-    n = readlink(libpath, buf, sizeof buf);
+    if (gretl_stat(path, &buf) != 0) {
+	err = E_EXTERNAL;
+    } else if (buf.st_mode & S_IFLNK) {
+	/* the given path is a symlink */
+	ssize_t n = readlink(path, tmp, sizeof tmp);
 
-    if (n > 0 && n < sizeof buf) {
-	char *s = strstr(buf, "/lib/libR");
+	if (n < 0 || n >= sizeof tmp) {
+	    err = E_EXTERNAL;
+	}
+    } else if (buf.st_mode & S_IFREG) {
+	/* the given path is a regular file */
+	strcpy(tmp, path);
+    }
+
+    if (!err) {
+	char *s = strstr(tmp, "/lib/libR");
 
 	if (s != NULL) {
 	    *s = '\0';
-	    gretl_setenv("R_HOME", buf);
+	    gretl_setenv("R_HOME", tmp);
+	} else {
+	    err = E_EXTERNAL;
 	}
-    } else {
-	err = E_EXTERNAL;
+    }
+
+    if (err) {
+	gretl_errmsg_set("Can't determine R_HOME");
     }
 
     return err;
