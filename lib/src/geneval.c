@@ -5808,7 +5808,11 @@ static NODE *misc_scalar_node (NODE *n, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-        int s = node_get_int(n, p);
+        double s = node_get_scalar(n, p);
+
+	if (s<0) {
+	    s = 0;
+	}
 
 	if (f == F_SLEEP) {
 	    g_usleep(G_USEC_PER_SEC * s);
