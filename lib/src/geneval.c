@@ -5803,19 +5803,17 @@ static NODE *apply_scalar_func (NODE *n, NODE *f, parser *p)
     return ret;
 }
 
-static NODE *misc_scalar_node (NODE *n, int f, parser *p)
+static NODE *sleep_node (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-        double s = node_get_scalar(n, p);
+        double secs = node_get_scalar(n, p);
 
-	if (s<0) {
-	    s = 0;
-	}
-
-	if (f == F_SLEEP) {
-	    g_usleep(G_USEC_PER_SEC * s);
+	if (secs < 0 || secs * G_USEC_PER_SEC > G_MAXULONG) {
+	    p->err = E_INVARG;
+	} else {
+	    g_usleep(G_USEC_PER_SEC * secs);
 	    ret->v.xval = 0;
 	}
     }
@@ -15313,7 +15311,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     if (!p->err) {
 	int need_z = mret->is_complex;
 	double complex z;
-        double x, y;
+        double x, y = 0;
         int j, i;
 
         for (j=0; j<m->cols; j++) {
@@ -16864,7 +16862,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_SLEEP:
         if (scalar_node(l)) {
-            ret = misc_scalar_node(l, t->t, p);
+            ret = sleep_node(l, t->t, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }

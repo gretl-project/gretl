@@ -11810,15 +11810,16 @@
 
     <function name="sleep" section="programming" output="scalar">
       <fnargs>
-	<fnarg type="int">ns</fnarg>
+	<fnarg type="scalar">ns</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Not of any direct use for econometrics, but can be useful
 	  for testing parallelization methods. This function simply
 	  causes the current thread to <quote>sleep</quote>&mdash;that
-	  is, do nothing&mdash;for <argname>ns</argname> seconds. On
-	  wake-up, the function returns 0.
+	  is, do nothing&mdash;for <argname>ns</argname> seconds. The
+	  argument must be non-negative. On wake-up, the function
+	  returns 0.
 	</para>
       </description>
     </function>
