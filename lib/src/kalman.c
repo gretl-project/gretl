@@ -2900,7 +2900,8 @@ static void transcribe_r0_N0 (kalman *K,
 
 /* Implement exact initial state smoothing for t <= d:
    if @dsi is non-zero we're doing disturbance smoothing,
-   otherwise it's state smoothing.
+   otherwise it's state smoothing. Note: this approach
+   does not work for a multivariate observable.
 */
 
 static int exact_initial_smooth (kalman *K,
@@ -2997,12 +2998,10 @@ static int exact_initial_smooth (kalman *K,
                            F1, GRETL_MOD_NONE);
 	/* F1 = inv(F∞), if possible */
 	if (gretl_invert_symmetric_matrix(F1) != 0) {
-	    /* use Fmk?? */
 	    singular = 1;
 	}
 
         /* F★ = Z * P★ * Z' [+ GG'] */
-	//gretl_matrix_print(K->Ft, "initial K->Ft");
         if (K->GG != NULL) {
             fast_copy_values(K->Ft, K->GG);
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
@@ -3011,7 +3010,6 @@ static int exact_initial_smooth (kalman *K,
             gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE, K->P0,
                                K->Ft, GRETL_MOD_NONE);
         }
-	//gretl_matrix_print(K->Ft, "calc'ed K->Ft");
 
 	if (singular) {
 	    /* we need inv(F★) under the name F1 */
@@ -3021,10 +3019,6 @@ static int exact_initial_smooth (kalman *K,
 		err = E_NOTPD;
 		break;
 	    }
-	    /* try "Fmt" here? */
-	    //gretl_matrix_print(F1, "1: F*,t^{-1}");
-	    //load_from_vech(F1, K->F, nt, t, GRETL_MOD_NONE);
-	    //gretl_matrix_print(F1, "2: F*,t^{-1}");
 	}
 
 	/* M★ = P★ * Z' */
@@ -3032,11 +3026,8 @@ static int exact_initial_smooth (kalman *K,
 
 	if (singular) {
 	    /* K0 = T * M★ * F1 */
-	    //gretl_matrix_print(K->Kt, "initial Kt");
 	    gretl_matrix_multiply(K->T, K->Mt, tmp);
 	    gretl_matrix_multiply(tmp, F1, K0);
-	    //gretl_matrix_print(K0, "K0");
-	    //load_from_vec(K0, K->K, t);
 	} else {
 	    /* M∞ = P∞ * Z' */
 	    gretl_matrix_multiply(K->Pk0, K->ZT, Mk);
