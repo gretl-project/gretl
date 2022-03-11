@@ -43,6 +43,8 @@
 #ifdef G_OS_WIN32
 # include "gretl_win32.h"
 #else
+# include <sys/types.h>
+# include <sys/stat.h>
 # include <signal.h>
 #endif
 
@@ -2355,20 +2357,26 @@ static void set_path_for_Rlib (const char *Rhome)
 static int try_set_R_home (void)
 {
     const char *path = gretl_rlib_path();
-    struct stat buf;
+    struct stat buf = {0};
     char tmp[2048];
     int err = 0;
 
-    if (gretl_stat(path, &buf) != 0) {
+    tmp[0] = '\0';
+
+    if (lstat(path, &buf) != 0) {
 	err = E_EXTERNAL;
-    } else if (buf.st_mode & S_IFLNK) {
-	/* the given path is a symlink */
+    } else if (S_ISLNK(buf.st_mode)) {
+	/* the path is a symlink */
 	ssize_t n = readlink(path, tmp, sizeof tmp);
 
+	fprintf(stderr, "The R library path '%s' seems to be a symlink\n", path);
 	if (n < 0 || n >= sizeof tmp) {
+	    fprintf(stderr, " couldn't resolve it (n=%d, tmp='%s'\n", (int) n, tmp);
 	    err = E_EXTERNAL;
+	} else {
+	    fprintf(stderr, " resolved to '%s'\n", tmp);
 	}
-    } else if (buf.st_mode & S_IFREG) {
+    } else if (S_ISREG(buf.st_mode)) {
 	/* the given path is a regular file */
 	strcpy(tmp, path);
     }
@@ -2415,6 +2423,8 @@ static int gretl_Rlib_init (void)
 	if (err) {
 	    return err;
 	}
+    } else {
+	fprintf(stderr, "Got R_HOME = '%s'\n", Rhome);
     }
 #endif
 
