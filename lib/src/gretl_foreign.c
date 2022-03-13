@@ -2358,16 +2358,14 @@ static int try_set_R_home (void)
 {
     const char *path = gretl_rlib_path();
     struct stat buf = {0};
-    char tmp[2048];
+    char tmp[2048] = {0};
     int err = 0;
-
-    tmp[0] = '\0';
 
     if (lstat(path, &buf) != 0) {
 	err = E_EXTERNAL;
     } else if (S_ISLNK(buf.st_mode)) {
 	/* the path is a symlink */
-	ssize_t n = readlink(path, tmp, sizeof tmp);
+	ssize_t n = readlink(path, tmp, sizeof(tmp) - 1);
 
 	fprintf(stderr, "The R library path '%s' seems to be a symlink\n", path);
 	if (n < 0 || n >= sizeof tmp) {
