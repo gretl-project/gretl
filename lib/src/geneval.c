@@ -5810,7 +5810,7 @@ static NODE *sleep_node (NODE *n, int f, parser *p)
     if (ret != NULL) {
         double secs = node_get_scalar(n, p);
 
-	if (secs < 0 || secs * G_USEC_PER_SEC > G_MAXULONG) {
+	if (secs < 0 || secs * G_USEC_PER_SEC >= (double) G_MAXULONG) {
 	    p->err = E_INVARG;
 	} else {
 	    g_usleep(G_USEC_PER_SEC * secs);
