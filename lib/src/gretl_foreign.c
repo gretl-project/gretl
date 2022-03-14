@@ -2349,6 +2349,29 @@ static void set_path_for_Rlib (const char *Rhome)
 
 #else /* !WIN32 */
 
+static int absolutize_R_path (char *targ, const char *path)
+{
+    gchar *s = g_strdup(path);
+    gchar *p = strstr(s, "/libR.so");
+    int err = 0;
+
+    if (p != NULL) {
+	gchar *abspath;
+
+	*p = '\0';
+	abspath = g_strdup_printf("%s/%s", s, targ);
+	strcpy(targ, abspath);
+	g_free(abspath);
+	fprintf(stderr, " absolute path '%s'\n", tmp);
+    } else {
+	err = E_EXTERNAL;
+    }
+
+    g_free(s);
+
+    return err;
+}
+
 /* non-Windows: attempt to remedy the absence of the R_HOME
    environment variable. We try to infer the required directory from
    the path to libR.so and push it into the environment.
@@ -2373,6 +2396,9 @@ static int try_set_R_home (void)
 	    err = E_EXTERNAL;
 	} else {
 	    fprintf(stderr, " resolved to '%s'\n", tmp);
+	    if (!g_path_is_absolute(tmp)) {
+		err = absolutize_R_path(tmp, path);
+	    }
 	}
     } else if (S_ISREG(buf.st_mode)) {
 	/* the given path is a regular file */
