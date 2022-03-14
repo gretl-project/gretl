@@ -2362,7 +2362,7 @@ static int absolutize_R_path (char *targ, const char *path)
 	abspath = g_strdup_printf("%s/%s", s, targ);
 	strcpy(targ, abspath);
 	g_free(abspath);
-	fprintf(stderr, " absolute path '%s'\n", tmp);
+	fprintf(stderr, " absolute path '%s'\n", targ);
     } else {
 	err = E_EXTERNAL;
     }
