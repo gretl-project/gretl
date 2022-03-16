@@ -695,6 +695,25 @@
 	</para>
       </description>
     </function>
+    
+    <function name="$panelpd" section="access" output="int">
+      <description>
+	<para>
+	  Específico para datos de panel, devuelve un entero con la periodicidad
+	  temporal (por ejemplo: 4 para datos trimestrales). Cuando no estableces
+	  la periodicidad en el conjunto de datos de panel activo, devuelve 1 de
+	  forma similar a <fncref targ="$pd"/> para datos de tipo atemporal o
+	  sin fecha. Si el conjunto de datos no es de panel, se devuelve NA.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="$pd"/>
+            <fncref targ="$datatype"/>
+            <cmdref targ="setobs"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
 
     <function name="$parnames" section="access" output="strings">
       <description>
@@ -727,6 +746,11 @@
 	  (por ejemplo: 4 para datos trimestrales). En caso de datos de panel, el
 	  valor devuelto es la cantidad de períodos de tiempo del conjunto de datos.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="$panelpd"/>
+	  </seelist>
+	  </para>
       </description>
     </function>
 
@@ -1694,14 +1718,25 @@
 	  a <lit>assert</lit>, más que el hecho de que el valor que se
 	  devuelve es cero. Sin embargo, puedes utilizar la instrucción
 	  <cmdref targ="set"/> para hacer que el fallo de una afirmación
-	  tenga más consecuencias. Hay dos niveles:
+	  tenga más consecuencias. Hay tres niveles:
 	</para>
 	<code>
 	  # Presentar un mensaje de aviso, pero continuar con la ejecución
 	  set assert warn
-	  # Presentar un mensaje de aviso y detener la ejecución
+	  # Presentar un mensaje de aviso y detener la ejecución de un guion
 	  set assert stop
+	  # Presentar un mensaje a 'stderr' y abortar el programa
+	  set assert fatal
 	</code>
+	<para>
+	  En la mayoría de los casos <lit>stop</lit> es suficiente para detener
+	  la ejecución de un guion, pero en ciertos casos especiales (como
+	  dentro de una función invocada desde un bloque de instrucciones tal
+	  como en <cmdref targ="mle"/>), puede resultar necesario utilizar la
+	  opción <lit>fatal</lit> para alcanzar una indicación clara de la
+	  afirmación que falla. Sin embargo, observa que en este caso el mensaje
+	  va a dirigirse a la salida de resultados del error típico.
+	</para>
 	<para>
 	  Puedes restablecer el funcionamiento por defecto mediante
 	</para>
@@ -2362,9 +2397,8 @@
 	  <lit>.json</lit> o <lit>.geojson</lit>. Consulta <fncref targ="bread"/>
 	  para obtener una descripción del formato cuando se usa XML. Si ya existe
 	  un archivo denominado <argname>nombrearchivo</argname>, este va a
-	  sobrescribirse. Esta función devuelve el valor 0 en caso de que concluya
-	  con éxito; si ocurren fallos, tales como la imposibilidad de sobrescribir
-	  el archivo, la función devuelve un valor no nulo.
+	  sobrescribirse. Esta función devuelve el valor nominal 0 en caso de
+	  que concluya con éxito; si fracasa la escritura se muestra un fallo.
 	</para>
 	<para>
 	  El archivo de salida se guarda en el directorio <cmdref targ="workdir"/>
@@ -2891,15 +2925,15 @@
 	  <argname>M</argname>. Cuando <argname>S</argname> es una lista,
 	  los nombres son los de las series listadas (es necesario que esa lista tenga
 	  <math>k</math>elementos). Cuando <argname>S</argname> es un 'array'
-	  de cadenas de texto, deberá tener <math>k</math> elementos. Para
-	  mantener la compatibilidad con versiones anteriores de GRETL, puedes
-	  también utilizar una única cadena de texto como segundo argumento.
-	  En ese caso, esta cadena necesita tener <math>k</math> subcadenas separadas
+	  de cadenas de texto, deberá tener <math>k</math> elementos. Como
+	  segundo argumento también se acepta una única cadea de texto; en ese
+	  caso, esta cadena necesita tener <math>k</math> subcadenas separadas
 	  por espacios.
 	</para>
 	<para>
-	  Devuelve el valor 0 si las columnas son nombradas con éxito; en caso contrario,
-	  devuelve un valor no nulo. Consulta también <fncref targ="rnameset"/>.
+	  Devuelve el valor nominal 0 si las columnas son nombradas con éxito;
+	  en caso de que no funcione se muestra un fallo. Consulta también
+	  <fncref targ="rnameset"/>.
 	</para>
 	<para>
 	  Ejemplo:
@@ -3358,7 +3392,7 @@
       </description>
     </function>
 
-    <function name="curl" section="data-utils" output="scalar">
+    <function name="curl" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;b</fnarg>
       </fnargs>
@@ -3628,6 +3662,14 @@
 	<ilist>
 	  <li>
 	    <para>
+	      <lit>verbose</lit>: ¿Qué presentar? 0 = nada (por defecto);
+	      1 = confirmación de las opciones que están seleccionadas;
+	      2 = confirmación de las opciones más el resultado de
+	      X-13ARIMA.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <lit>seats</lit>: 1 para utilizar el algoritmo SEATS en lugar
 	      del algoritmo predeterminado X11 para el ajuste estacional, o
 	      0.
@@ -3642,7 +3684,20 @@
 	  </li>
 	  <li>
 	    <para>
-	    <lit>outliers</lit>: Permite la detección y corrección de valores
+	      <lit>arima</lit>: Puede utilizarse para imponer una especificación
+	      ARIMA escogida, en formato de un vector de 6 elementos que contenga
+	      números enteros pequeños y no negativos. Estos se indican con la
+	      simbología (p,d,q,P,D,Q) de la notación tradicional de las series
+	      de tiempo: los primeros tres términos representan los órdenes AR,
+	      de Integración y MA no estacionales; y los tres últimos indican
+	      las contrapartidas estacionales. Cuando se indican tanto la opción
+	      <lit>airline</lit> como la <lit>arima</lit>, tiene prioridad la
+	      <lit>arima</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>outliers</lit>: Permite la detección y corrección de valores
 	      atípicos (elecciones de 1 hasta 7), o 0 (predeterminado) para
 	      omitir esta característica. Los tres tipos de valores atípicos
 	      disponibles con sus códigos numéricos son: 1 = valor atípico
@@ -3704,6 +3759,11 @@
 	      <lit>"irreg"</lit> para la componente irregular.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      <lit>save_spc</lit>: Indicador booleano, 0 por defecto; mira abajo.
+	    </para>
+	  </li>
 	</ilist>
 	<subhead>Resultados ampliados</subhead>
 	<para>
@@ -3724,6 +3784,24 @@
 	  series y_dseas = b.results[,1]
 	  series y_trend = b.results[,2]
 	  series y_irreg = b.results[,3]
+	</code>
+	<subhead>Guardando la especificación de X-13ARIMA</subhead>
+	<para>
+	  Puedes utilizar el indicador <lit>save_spc</lit> para guardar el
+	  contenido del archivo de entrada X-13ARIMA que escribe GRETL. El
+	  'bundle' con las opciones debe pasarse en formato de puntero, y la
+	  especificación (como cadena de texto) puede encontrarse bajo la
+	  clave <lit>x13a_spc</lit>. El siguiente código ilustra como se guarda
+	  esta en un archivo bajo el nombre <lit>especif.spc</lit> en el
+	  directorio de trabajo del usuario. (Observa que la extensión
+	  <lit>.spc</lit> es requerida por X-13ARIMA.)
+	</para>
+	<code>
+	  bundle b = _(save_spc=1)
+	  deseas(y, &amp;b)
+	  outfile especif.spc
+	     print b.x13a_spc
+	  end outfile
 	</code>
       </description>
     </function>
@@ -6409,7 +6487,7 @@
       </description>
     </function>
 
-    <function name="isoconv" section="calendar" output="scalar">
+    <function name="isoconv" section="calendar" output="int">
       <fnargs>
 	<fnarg type="series">fecha</fnarg>
 	<fnarg type="seriesref">&amp;año</fnarg>
@@ -6430,8 +6508,8 @@
 	  isoconv(fechas, &amp;y, &amp;m, &amp;d)
 	</code>
 	<para>
-	  Esta función devuelve el escalar 0 en caso de completarse con éxito,
-	  y un escalar no nulo en caso de fallo.
+	  Esta función devuelve el valor nominal 0 en caso de completarse con
+	  éxito; en caso de que no funcione, se muestra un fallo.
 	</para>
       </description>
     </function>
@@ -6809,7 +6887,7 @@
       </description>
     </function>
 
-    <function name="kdsmooth" section="sspace" output="scalar">
+    <function name="kdsmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
 	<fnarg type="bool" optional="true">MSE</fnarg>
@@ -6818,8 +6896,9 @@
 	<para>
 	  Realiza el suavizado de las perturbaciones de un 'bundle' de Kalman,
 	  configurado previamente mediante la instrucción <fncref targ="ksetup"/>;
-	  y devuelve el escalar 0 cuando se completa con éxito, o el escalar 1
-	  cuando se encuentran problemas numéricos.
+	  y devuelve el entero 0 cuando se completa con éxito, o un número no
+	  nulo cuando se encuentran problemas numéricos. Y deberías comprobar
+	  el valor que se devuelve, antes de hacer uso de los resultados.
 	</para>
 	<para>
 	  Cuando se completa con éxito la operación, las perturbaciones suavizadas
@@ -7014,7 +7093,7 @@
       </description>
     </function>
 
-    <function name="ksmooth" section="sspace" output="matrix">
+    <function name="ksmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
@@ -7022,8 +7101,9 @@
 	<para>
 	  Realiza un suavizado de punto fijo (hacia atrás) de un 'bundle' de
 	  Kalman previamente configurado mediante <fncref targ="ksetup"/>;
-	  y devuelve un 0 cuando se ejecuta con éxito, o un 1 cuando se encuentran
-	  problemas de tipo numérico.
+	  y devuelve un 0 cuando se ejecuta con éxito, o un número no nulo
+	  cuando se encuentran problemas numéricos. Y deberías comprobar
+	  el valor que se devuelve, antes de hacer uso de los resultados.
 	</para>
 	<para>
 	  Cuando se completa con éxito, vas a tener a tu disposición el estado ya
@@ -9077,10 +9157,9 @@
 	  Para formatos alternativos, mira más abajo.
 	</para>
 	<para>
-	  Cuando ya existe un archivo llamado <argname>nombrearchivo</argname>, se va a
-	  sobrescribir. La ejecución de la función devuelve un entero igual a 0 si
-	  no se completa con éxito; y devuelve un entero que no es cero cuando
-	  sucede un fallo (por ejemplo si no se puede sobrescribir el archivo).
+	  Cuando ya existe un archivo llamado <argname>nombrearchivo</argname>,
+	  se va a sobrescribir. La ejecución de la función devuelve un valor nominal
+	  de 0 si se completa con éxito; si fracasa la escritura, se muestra un fallo.
 	</para>
 	<para>
 	  El archivo con los resultados va a escribirse en el directorio establecido
@@ -11348,17 +11427,17 @@
 	<para>
 	  Permite añadir nombres a las filas de una matriz <argname>M</argname>
 	  de orden <by r="m" c="n"/>. Cuando el argumento <argname>S</argname>
-	  se refiere a una lista, los nombres se toman de las series de la lista (que
-	  deberá tener <math>m</math> elementos). Cuando <argname>S</argname>
+	  se refiere a una lista, los nombres se toman de las series de la lista
+	  (que deberá tener <math>m</math> elementos). Cuando <argname>S</argname>
 	  es un 'array' de cadenas de texto, deberá tener <math>m</math>
-	  elementos. Para mantener la compatibilidad con versiones anteriores
-	  de GRETL, también puedes utilizar una única cadena de texto como
-	  segundo argumento; en este caso esta deberá tener <math>m</math>
+	  elementos. Se admite también que indiques una única cadena de texto
+	  como segundo argumento; en este caso esta deberá tener <math>m</math>
 	  subcadenas de texto separadas por espacios.
 	</para>
 	<para>
-	  Devuelve el valor entero 0 si las filas se nombran con éxito, y un valor
-	  no nulo en caso de fallo. Consulta también <fncref targ="cnameset"/>.
+	  Se devuelve el valor nominal 0 cuando las filas se nombran con éxito;
+	  en caso de fracaso, se muestra un fallo. Consulta también
+	  <fncref targ="cnameset"/>.
 	</para>
 	<para>
 	  Ejemplo:
@@ -11472,8 +11551,8 @@
 	  Devuelve un resultado con el cálculo de las diferencias estacionales:
 	  <equation status="inline" ascii="y(t) - y(t-k)"  tex="$y_t - y_{t-k}$"/>,
 	  donde <math>k</math> indica la periodicidad del conjunto vigente de
-	  datos (consulta <fncref targ="$pd"/>). Los valores iniciales se definen
-	  como <lit>NA</lit>.
+	  datos (consulta <fncref targ="$pd"/> o <fncref targ="$panelpd"/>).
+	  Los valores iniciales se definen como <lit>NA</lit>.
 	</para>
 	<para>
 	  Cuando se devuelve una lista, cada variable individual de esta se nombra de
@@ -11731,15 +11810,16 @@
 
     <function name="sleep" section="programming" output="scalar">
       <fnargs>
-	<fnarg type="int">ns</fnarg>
+	<fnarg type="scalar">ns</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Esta función no tiene ningún uso directo en Econometría, pero puede
 	  ser de utilidad para comprobar métodos de computación en paralelo.
 	  Simplemente provoca que se <quote>duerma</quote> la línea de cómputo
-	  vigente (es decir, que se pare) durante <argname>ns</argname> segundos.
-	  Al <quote>despertar</quote>, la función devuelve el escalar 0.
+	  vigente (es decir, que se pare) durante <argname>ns</argname>
+	  segundos. El argumento debe ser un escalar no negativo. Al
+	  <quote>despertar</quote>, la función devuelve el escalar 0.
 	</para>
       </description>
     </function>
@@ -12187,14 +12267,16 @@
 	  que 1); y el 'array' <argname>S</argname> debe tener por lo menos
 	   <math>n</math> elementos, siendo <math>n</math> el mayor valor de
 	   <argname>y</argname>. Además, cada elemento de <argname>S</argname>
-	   debe tener un formato UTF-8 válido.
+	   debe tener un formato UTF-8 válido. Si no se cumple alguna de estas
+	   condiciones, se presenta un fallo.
+	</para>
+	<para>
+	  El valor nominal que devuelve esta función es cero, al completarse con éxito.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="strvals"/>
 	  </seelist>
-	</para>
-	<para>
-	  El valor que devuelve esta función es cero en caso de completarse con
-	  éxito, o un código de fallo positivo en caso de fallar.
 	</para>
       </description>
     </function>

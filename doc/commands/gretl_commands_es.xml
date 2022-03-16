@@ -14461,8 +14461,8 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
-	  <flag>--balanced</flag>
-	  <effect>Datos de panel: trata de mantener el panel equilibrado</effect>
+	  <flag>--preserve-panel</flag>
+	  <effect>Datos de panel: mira abajo</effect>
         </option>
         <option>
 	  <flag>--unit</flag>
@@ -14520,17 +14520,16 @@
 	las variables genéricas <lit>index</lit> y <lit>time</lit>
 	se ignoran).
       </para>
-
       <para>
-	La opción <opt>contiguous</opt> de <lit>smpl</lit> está pensada para usar
-	con datos de series temporales. Su efecto consiste en recortar cualquier
-	observación al comienzo y al final del rango de la muestra vigente que contenga
-	valores ausentes (bien para las variables de <repl>listavariables</repl>, o
-	bien para todas las series de datos si no indicas <repl>listavariables</repl>).
-	Entonces se realiza una verificación para comprobar si hay algún valor ausente
-	en el rango que queda; y si es así, se muestra un fallo.
+	La opción <opt>contiguous</opt> de <lit>smpl</lit> está pensada para
+	usar con datos de series temporales. Su efecto consiste en recortar
+	cualquier observación al comienzo y al final del rango de la muestra
+	vigente que contenga valores ausentes (bien para las variables de
+	<repl>listavariables</repl>, o bien para todas las series de datos si
+	no indicas <repl>listavariables</repl>). Entonces se realiza una
+	verificación para comprobar si hay algún valor ausente en el rango
+	que queda; y si es así, se muestra un fallo.
       </para>
-
       <para>
 	Con la opción <opt>random</opt>, el número de casos especificado
 	se escoge aleatoriamente del conjunto vigente de datos (sin
@@ -14538,11 +14537,10 @@
 	debes establecer primero la semilla para el generador de números
 	aleatorios (consulta la instrucción <cmdref targ="set"/>).
       </para>
-
       <para>
-	La forma final (<lit>smpl full</lit>) restablece el rango completo de datos.
+	La forma final (<lit>smpl full</lit>) restablece el rango completo de
+	datos.
       </para>
-
       <para>
 	Ten en cuenta que las restricciones muestrales son, por defecto, acumulativas;
 	es decir, el punto de partida de cualquier instrucción <lit>smpl</lit>
@@ -14551,7 +14549,6 @@
 	<opt>replace</opt> al final de la instrucción. (Pero esta opción no es
 	compatible con la opción <opt>contiguous</opt>.)
       </para>
-
       <para>
 	Puedes utilizar la variable interna <lit>obs</lit> junto con la opción
 	<opt>restrict</opt> de <lit>smpl</lit> para excluir observaciones
@@ -14569,27 +14566,22 @@
       </code>
       <para>va a prescindir de la observación con la etiqueta <quote>USA</quote>.
       </para>
-
       <para>
-	Debe apuntarse una cuestión en relación a las opciones <opt>dummy</opt>,
-	<opt>restrict</opt> y <opt>no-missing</opt> de la instrucción <lit>smpl</lit>:
-	la información <quote>estructural</quote> del archivo de datos (relacionada
-	con la naturaleza de series de tiempo o de panel, de los datos) probablemente
-	se va a perder cuando se ejecute esta instrucción; pero puedes volver a imponer
-	la estructura con la instrucción <cmdref targ="setobs"/>. Para utilizar con
-	datos de panel, una opción relacionada es <opt>balanced</opt>, que pide
-	que se reconstruya un panel equilibrado luego de extraer una submuestra,
-	mediante la inserción de <quote>filas ausentes</quote>, si es necesario.
-	Pero ten en cuenta que no siempre es posible cumplir esta petición.
+	Debe apuntarse una cuestión relacionada con las opciones
+	<opt>dummy</opt>, <opt>restrict</opt> y <opt>no-missing</opt> de la
+	instrucción <lit>smpl</lit>: la información <quote>estructural</quote>
+	del archivo de datos (relacionada con la naturaleza de series de
+	tiempo o de panel, de los datos) probablemente se va a perder cuando
+	se ejecute esta instrucción; pero puedes volver a imponer la estructura
+	con la instrucción <cmdref targ="setobs"/> (consulta también la opción
+	<opt>preserve-panel</opt> más abajo).
       </para>
 
       <subhead>Opciones específicas para datos de panel</subhead>
-
       <para>
 	Las opciones <opt>unit</opt> y <opt>time</opt> son específicas para
 	datos de panel. Te permiten indicar, respectivamente, un rango de
-	<quote>unidades</quote> o de períodos de tiempo.
-	Por ejemplo:
+	<quote>unidades</quote> o de períodos de tiempo. Por ejemplo:
       </para>
       <code>
 	# Limita la muestra a las primeras 50 unidades
@@ -14610,9 +14602,18 @@
 	# Limitar la muestra desde 2000:1 hasta 2007:1
 	smpl 2000:1 2007:1 --time
       </code>
+      <para>
+	En GRETL, un conjunto de datos de panel debe estar siempre
+	<quote>teóricamente equilibrado </quote>&mdash;es decir, cada unidad
+	debe tener el mismo número de filas de datos, aunque algunas filas
+	no contengan más que <lit>NA</lit>s. Extraer una submuestra mediante
+	las opciones <opt>restrict</opt> o <opt>dummy</opt> puede destruir esta
+	estructura. En tal caso, puedes añadir la opción <opt>preserve-panel</opt>
+	para solicitar que se reconstituya un panel teóricamente equilibrado, por
+	medio de la inserción de las <quote>filas ausentes</quote> que hagan falta.
+      </para>
 
       <subhead>Establecer la muestra como permanente o provisional</subhead>
-
       <para>
 	Por defecto, puedes deshacer las limitaciones que establezcas sobre el
 	rango de la muestra vigente, pues ejecutando <lit>smpl full</lit> puedes

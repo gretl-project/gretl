@@ -3291,11 +3291,11 @@
 	Por defecto, preséntanse os resultados da estimación en 1 etapa (coas
 	desviacións padrón robustas) pero tes a opción de escoller a estimación
 	en 2 etapas. En ambos casos, preséntanse as probas de autocorrelación
-	de orde 1 e 2 , así como as probas de Sargan e/ou Hansen de
+	de nivel 1 e 2 , así como as probas de Sargan e/ou Hansen de
 	sobreidentificación, e o estatístico da proba de Wald para a significación
 	conxunta dos regresores. Ten en conta que neste modelo en diferenzas,
-	a autocorrelación de primeira orde non é unha ameaza para a validez do
-	modelo, pero a autocorrelación de segunda orde infrinxe os supostos
+	a autocorrelación de primeiro nivel non é unha ameaza para a validez do
+	modelo, pero a autocorrelación de segundo nivel infrinxe os supostos
 	estatísticos vixentes.
       </para>
       <para context="cli">
@@ -14461,8 +14461,8 @@
 	  <effect>Mira abaixo</effect>
         </option>
         <option>
-	  <flag>--balanced</flag>
-	  <effect>Datos de panel: trata de manter o panel equilibrado</effect>
+	  <flag>--preserve-panel</flag>
+	  <effect>Datos de panel: mira abaixo</effect>
         </option>
         <option>
 	  <flag>--unit</flag>
@@ -14520,17 +14520,16 @@
 	as variables xenéricas <lit>index</lit> e <lit>time</lit>
 	ignóranse).
       </para>
-
       <para>
-	A opción <opt>contiguous</opt> de <lit>smpl</lit> está pensada para usar
-	con datos de series temporais. O seu efecto consiste en recortar calquera
-	observación ao comezo e ao final do rango da mostra vixente que conteña
-	valores ausentes (ben para as variables de <repl>listavariables</repl>, ou
-	ben para todas as series de datos se non indicas <repl>listavariables</repl>).
-	Entón realízase unha verificación para comprobar se hai algún valor ausente
-	no rango que queda; e se é así, amósase un fallo.
+	A opción <opt>contiguous</opt> de <lit>smpl</lit> está pensada para
+	usar con datos de series temporais. O seu efecto consiste en recortar
+	calquera observación ao comezo e ao final do rango da mostra vixente
+	que conteña valores ausentes (ben para as variables de
+	<repl>listavariables</repl>, ou ben para todas as series de datos se
+	non indicas <repl>listavariables</repl>). Entón realízase unha
+	verificación para comprobar se hai algún valor ausente no rango que
+	queda; e se é así, amósase un fallo.
       </para>
-
       <para>
 	Coa opción <opt>random</opt>, o número de casos especificado
 	escóllese aleatoriamente do conxunto vixente de datos (sen
@@ -14538,11 +14537,10 @@
 	debes de establecer primeiro a semente para o xerador de números
 	aleatorios (consulta a instrución <cmdref targ="set"/>).
       </para>
-
       <para>
-	A forma final (<lit>smpl full</lit>) restablece o rango completo de datos.
+	A forma final (<lit>smpl full</lit>) restablece o rango completo de
+	datos.
       </para>
-
       <para>
 	Ten en conta que as restricións mostrais son, por defecto, acumulativas;
 	é dicir, o punto de partida de calquera instrución <lit>smpl</lit>
@@ -14551,7 +14549,6 @@
 	<opt>replace</opt> ao final da instrución. (Pero esta opción non é
 	compatible coa opción <opt>contiguous</opt>.)
       </para>
-
       <para>
 	Podes utilizar a variable interna <lit>obs</lit> xunto coa opción
 	<opt>restrict</opt> de <lit>smpl</lit> para excluír observacións
@@ -14569,27 +14566,22 @@
       </code>
       <para>vai prescindir da observación coa etiqueta <quote>USA</quote>.
       </para>
-
       <para>
-	Debe de apuntarse unha cuestión en relación ás opcións <opt>dummy</opt>,
-	<opt>restrict</opt> e <opt>no-missing</opt> da instrución <lit>smpl</lit>:
-	a información <quote>estrutural</quote> do ficheiro de datos (relacionada
-	coa natureza de series de tempo ou de panel, dos datos) probablemente
-	vaise perder cando se execute esta instrución; pero podes volver impoñer
-	a estrutura coa instrución <cmdref targ="setobs"/>. Para utilizar con
-	datos de panel, unha opción relacionada é <opt>balanced</opt>, que pide
-	que se reconstrúa un panel equilibrado logo de extraer unha submostra,
-	mediante a inserción de <quote>filas ausentes</quote>, se é necesario.
-	Pero ten en conta que non sempre é posible cumprir esta petición.
+	Debe de apuntarse unha cuestión en relación ás opcións
+	<opt>dummy</opt>, <opt>restrict</opt> e <opt>no-missing</opt> da
+	instrución <lit>smpl</lit>: a información <quote>estrutural</quote>
+	do ficheiro de datos (relacionada coa natureza de series de tempo
+	ou de panel, dos datos) probablemente vaise perder cando se execute
+	esta instrución; pero podes volver impoñer a estrutura coa instrución
+	<cmdref targ="setobs"/> (consulta tamén a opción <opt>preserve-panel</opt>
+	máis abaixo).
       </para>
 
       <subhead>Opcións específicas para datos de panel</subhead>
-
       <para>
 	As opcións <opt>unit</opt> e <opt>time</opt> son específicas para
 	datos de panel. Te permiten indicar, respectivamente, un rango de
-	<quote>unidades</quote> ou de períodos de tempo.
-	Por exemplo:
+	<quote>unidades</quote> ou de períodos de tempo. Por exemplo:
       </para>
       <code>
 	# Limita a mostra ás primeiras 50 unidades
@@ -14610,9 +14602,18 @@
 	# Limitar a mostra desde 2000:1 ata 2007:1
 	smpl 2000:1 2007:1 --time
       </code>
+      <para>
+	En GRETL, un conxunto de datos de panel debe estar sempre
+	<quote>teoricamente equilibrado </quote>&mdash;é dicir, cada unidade
+	debe ter o mesmo número de filas de datos, aínda que algunhas filas
+	non conteñan máis que <lit>NA</lit>s. Extraer unha submostra mediante
+	as opcións <opt>restrict</opt> ou <opt>dummy</opt> pode rachar esta
+	estrutura. Nese caso, podes engadir a opción <opt>preserve-panel</opt>
+	para solicitar que se reconstitúa un panel teoricamente equilibrado, por
+	medio da inserción das <quote>filas ausentes</quote> que fagan falta.
+      </para>
 
       <subhead>Establecer a mostra como permanente ou provisional</subhead>
-
       <para>
 	Por defecto, podes desfacer as limitacións que establezas sobre o
 	rango da mostra vixente, pois executando <lit>smpl full</lit> podes

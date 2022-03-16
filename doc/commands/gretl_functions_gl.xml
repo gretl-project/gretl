@@ -168,7 +168,7 @@
       <description>
 	<para>
 	  Devolve (se é posible) un escalar co valor do estatístico de Durbin&ndash;Watson
-	  para probar autocorrelación de primeira orde no derradeiro modelo estimado.
+	  para probar autocorrelación de primeiro nivel no derradeiro modelo estimado.
 	</para>
       </description>
     </function>
@@ -181,7 +181,7 @@
 	  de DW para o derradeiro modelo estimado; para isto úsase o procedemento
 	  de cálculo <cite key="imhof61">Imhof</cite>. Este é o valor p (probabilidade
 	  asociada) para unha proba dunha cola na que a hipótese alternativa
-	  é que existe autocorrelación positiva de primeira orde. Se queres o
+	  é que existe autocorrelación positiva de primeiro nivel. Se queres o
 	  valor p para unha proba de dúas colas, colle 2<math>P</math> cando
 	  DW &lt; 2, ou 2(1 &minus; <math>P</math>) cando DW &gt; 2, onde
 	  <math>P</math> é o valor que devolve este accesorio.
@@ -695,6 +695,25 @@
 	</para>
       </description>
     </function>
+    
+    <function name="$panelpd" section="access" output="int">
+      <description>
+	<para>
+	  Específico para datos de panel, devolve un enteiro coa periodicidade
+	  temporal (por exemplo: 4 para datos trimestrais). Cando non estableces
+	  a periodicidade no conxunto de datos de panel activo, devolve 1 de
+	  xeito similar a <fncref targ="$pd"/> para datos de tipo atemporal ou
+	  sen data. Se o conxunto de datos non é de panel, devólvese NA.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="$pd"/>
+            <fncref targ="$datatype"/>
+            <cmdref targ="setobs"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
 
     <function name="$parnames" section="access" output="strings">
       <description>
@@ -727,6 +746,11 @@
 	  (por exemplo: 4 para datos trimestrais). No caso de datos de panel, o
 	  valor devolto é a cantidade de períodos de tempo do conxunto de datos.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="$panelpd"/>
+	  </seelist>
+	  </para>
       </description>
     </function>
 
@@ -815,7 +839,7 @@
       <description>
 	<para>
 	  Sen argumentos, este accesorio devolve o coeficiente de autocorrelación
-	  de primeira orde para os erros do último modelo estimado. Agora ben,
+	  de primeiro nivel para os erros do último modelo estimado. Agora ben,
 	  coa sintaxe <lit>$rho(n)</lit> logo da estimación dun modelo por medio
 	  da instrución <lit>ar</lit>, devolve o valor estimado correspondente
 	  ao coeficiente &rgr;(<math>n</math>).
@@ -1694,14 +1718,25 @@
 	  chamada a <lit>assert</lit>, máis que o feito de que o valor
 	  que se devolve é cero. Porén, podes utilizar a instrución
 	  <cmdref targ="set"/> para facer que o fallo dunha afirmación
-	  teña máis consecuencias. Hai dous niveles:
+	  teña máis consecuencias. Hai tres niveis:
 	</para>
 	<code>
 	  # Amosar unha mensaxe de aviso, mais continuar coa execución
 	  set assert warn
-	  # Amosar unha mensaxe de aviso e deter a execución
+	  # Amosar unha mensaxe de aviso e deter a execución dun guión
 	  set assert stop
+	  # Amosar unha mensaxe a 'stderr' e deter o programa
+	  set assert fatal
 	</code>
+	<para>
+	  Na maioría dos casos <lit>stop</lit> é suficiente para deter a
+	  execución dun guión, pero en certos casos especiais (como dentro
+	  dunha función invocada desde un bloque de instrucións tal como
+	  en <cmdref targ="mle"/>), pode resultar necesario utilizar a opción
+	  <lit>fatal</lit> para acadar unha indicación clara da afirmación
+	  que falla. Porén, observa que neste caso a mensaxe vai dirixirse
+	  á saída de resultados do erro padrón.
+	</para>
 	<para>
 	  Podes restablecer o funcionamento por defecto mediante
 	</para>
@@ -2362,9 +2397,8 @@
 	  <lit>.json</lit> ou <lit>.geojson</lit>. Consulta <fncref targ="bread"/>
 	  para ter unha descrición do formato cando se usa XML. Se xa existe un
 	  ficheiro denominado <argname>nomeficheiro</argname>, vaise sobrescribir.
-	  Esta función devolve o valor 0 no caso de que conclúa con éxito; se
-	  ocorren fallos, tales como a imposibilidade de sobrescribir o ficheiro,
-	  a función devolve un valor non nulo.
+	  Esta función devolve o valor nominal 0 no caso de que conclúa con éxito;
+	  se fracasa a escritura se amosa un fallo.
 	</para>
 	<para>
 	  O ficheiro de saída gárdase no cartafol <cmdref targ="workdir"/>
@@ -2891,15 +2925,15 @@
 	  <argname>M</argname>. Cando <argname>S</argname> é unha lista,
 	  os nomes son os das series listadas (é preciso que esa lista teña
 	  <math>k</math>elementos). Cando <argname>S</argname> é un arranxo
-	  de cadeas de texto, deberá de ter <math>k</math> elementos. Para
-	  manter a compatibilidade con versións anteriores de GRETL, podes
-	  tamén utilizar unha única cadea de texto como segundo argumento.
-	  Nese caso, esta cadea precisa ter <math>k</math> subcadeas separadas
+	  de cadeas de texto, deberá de ter <math>k</math> elementos. Como
+	  segundo argumento tamén se acepta unha única cadea de texto; nese
+	  caso, esta cadea precisa ter <math>k</math> subcadeas separadas
 	  por espazos.
 	</para>
 	<para>
-	  Devolve o valor 0 se as columnas son nomeadas con éxito; noutro caso,
-	  devolve un valor non nulo. Consulta tamén <fncref targ="rnameset"/>.
+	  Devolve o valor nominal 0 se as columnas son nomeadas con éxito;
+	  no caso de que non funcione, amósase un fallo. Consulta tamén
+	  <fncref targ="rnameset"/>.
 	</para>
 	<para>
 	  Exemplo:
@@ -3358,7 +3392,7 @@
       </description>
     </function>
 
-    <function name="curl" section="data-utils" output="scalar">
+    <function name="curl" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;b</fnarg>
       </fnargs>
@@ -3628,6 +3662,14 @@
 	<ilist>
 	  <li>
 	    <para>
+	      <lit>verbose</lit>: Que presentar? 0 = nada (por defecto);
+	      1 = confirmación das opcións que están seleccionadas;
+	      2 = confirmación das opcións máis o resultado de
+	      X-13ARIMA.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <lit>seats</lit>: 1 para utilizar o algoritmo SEATS en troques
 	      do algoritmo predeterminado X11 para o axuste estacional, ou
 	      0.
@@ -3642,7 +3684,20 @@
 	  </li>
 	  <li>
 	    <para>
-	    <lit>outliers</lit>: Permite a detección e corrección de valores
+	      <lit>arima</lit>: Pode utilizarse para impoñer unha especificación
+	      ARIMA escollida, en formato dun vector de 6 elementos que conteña
+	      números enteiros baixos e non negativos. Estes se indican coa
+	      simboloxía (p,d,q,P,D,Q) da notación tradicional das series de
+	      tempo: os primeiros tres termos representan as ordes AR, de
+	      Integración e MA non estacionais; e os tres derradeiros indican
+	      as contrapartidas estacionais. Cando se indican tanto a opción
+	      <lit>airline</lit> como a <lit>arima</lit>, ten prioridade a
+	      <lit>arima</lit>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>outliers</lit>: Permite a detección e corrección de valores
 	      atípicos (eleccións de 1 ata 7), ou 0 (o predeterminado) para
 	      omitir esta característica. Os tres tipos de valores atípicos
 	      dispoñibles cos seus códigos numéricos son: 1 = valor atípico
@@ -3704,6 +3759,11 @@
 	      ou <lit>"irreg"</lit> para a compoñente irregular.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      <lit>save_spc</lit>: Indicador booleano, 0 por defecto; mira abaixo.
+	    </para>
+	  </li>
 	</ilist>
 	<subhead>Resultados ampliados</subhead>
 	<para>
@@ -3724,6 +3784,24 @@
 	  series y_dseas = b.results[,1]
 	  series y_trend = b.results[,2]
 	  series y_irreg = b.results[,3]
+	</code>
+	<subhead>Gardando a especificación de X-13ARIMA</subhead>
+	<para>
+	  Podes utilizar o indicador <lit>save_spc</lit> para gardar o contido
+	  do ficheiro de entrada X-13ARIMA que escribe GRETL. O feixe coas
+	  opcións debe pasarse en formato de punteiro, e a especificación
+	  (como cadea de texto) pode atoparse baixo a chave <lit>x13a_spc</lit>.
+	  O seguinte código ilustra como se garda esta nun ficheiro baixo o
+	  nome <lit>especif.spc</lit> no directorio de traballo do usuario.
+	  (Cae na conta de que a extensión <lit>.spc</lit> é requirida polo
+	  X-13ARIMA.)
+	</para>
+	<code>
+	  bundle b = _(save_spc=1)
+	  deseas(y, &amp;b)
+	  outfile especif.spc
+	     print b.x13a_spc
+	  end outfile
 	</code>
       </description>
     </function>
@@ -6409,7 +6487,7 @@
       </description>
     </function>
 
-    <function name="isoconv" section="calendar" output="scalar">
+    <function name="isoconv" section="calendar" output="int">
       <fnargs>
 	<fnarg type="series">data</fnarg>
 	<fnarg type="seriesref">&amp;ano</fnarg>
@@ -6430,8 +6508,8 @@
 	  isoconv(datas, &amp;y, &amp;m, &amp;d)
 	</code>
 	<para>
-	  Esta función devolve o escalar 0 no caso de completarse con éxito,
-	  e un escalar non nulo en caso de fallo.
+	  Esta función devolve o valor nominal 0 no caso de completarse con
+	  éxito; no caso de que non funcione, amósase un fallo.
 	</para>
       </description>
     </function>
@@ -6809,17 +6887,18 @@
       </description>
     </function>
 
-    <function name="kdsmooth" section="sspace" output="scalar">
+    <function name="kdsmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
 	<fnarg type="bool" optional="true">MSE</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Realiza o suavizado das perturbacións dun feixe de Kalman,
-	  configurado previamente mediante a instrución <fncref targ="ksetup"/>;
-	  e devolve o escalar 0 cando se completa con éxito, ou o escalar 1
-	  cando se atopan problemas numéricos.
+	  Realiza o suavizado das perturbacións dun feixe de Kalman, configurado
+	  previamente mediante a instrución <fncref targ="ksetup"/>; e devolve
+	  o enteiro 0 cando se completa con éxito, ou un número non nulo cando
+	  se atopan problemas numéricos. E deberías comprobar o valor que se
+	  devolve, antes de facer uso dos resultados.
 	</para>
 	<para>
 	  Cando se completa con éxito a operación, as perturbacións suavizadas
@@ -7014,16 +7093,17 @@
       </description>
     </function>
 
-    <function name="ksmooth" section="sspace" output="matrix">
+    <function name="ksmooth" section="sspace" output="int">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Realiza un suavizado de punto fixo (cara atrás) dun feixe de
-	  Kalman previamente configurado mediante <fncref targ="ksetup"/>;
-	  e devolve un 0 cando se executa con éxito, ou un 1 cando se atopan
-	  problemas de tipo numérico.
+	  Realiza un suavizado de punto fixo (cara atrás) dun feixe de Kalman
+	  previamente configurado mediante <fncref targ="ksetup"/>; e devolve
+	  un 0 cando se executa con éxito, ou un número non nulo cando se
+	  atopan problemas numéricos. E deberías comprobar o valor que se
+	  devolve, antes de facer uso dos resultados.
 	</para>
 	<para>
 	  Cando se completa con éxito, vas ter á túa disposición o estado xa
@@ -9077,10 +9157,9 @@
 	  alternativos, mira máis abaixo.
 	</para>
 	<para>
-	  Cando xa existe un ficheiro chamado <argname>nomeficheiro</argname>, vaise
-	  sobrescribir. A execución da función devolve un enteiro igual a 0 se
-	  non se completa con éxito; e devolve un enteiro que non é cero cando
-	  acontece un fallo (por exemplo, se non pode sobrescribirse o ficheiro).
+	  Cando xa existe un ficheiro chamado <argname>nomeficheiro</argname>,
+	  vaise sobrescribir. A execución da función devolve un valor nominal de 0
+	  cando se completa con éxito; se fracasa a escritura, amósase un fallo.
 	</para>
 	<para>
 	  O ficheiro cos resultados vai escribirse no cartafol establecido
@@ -11351,14 +11430,14 @@
 	  se refire a unha lista, os nomes tómanse das series da lista (que
 	  deberá de ter <math>m</math> elementos). Cando <argname>S</argname>
 	  é un arranxo de cadeas de texto, deberá de ter <math>m</math>
-	  elementos. Para manter a compatibilidade con versións anteriores
-	  de GRETL, tamén podes utilizar unha única cadea de texto como
-	  segundo argumento; neste caso esta deberá de ter <math>m</math>
+	  elementos. Admítese tamén que indiques unha única cadea de texto
+	  como segundo argumento; neste caso esta deberá de ter <math>m</math>
 	  subcadeas de texto separadas por espazos.
 	</para>
 	<para>
-	  Devolve o valor enteiro 0 se as filas se nomean con éxito, e un valor
-	  non nulo en caso de fallo. Consulta tamén <fncref targ="cnameset"/>.
+	  Se devolve o valor nominal 0 cando as filas se nomean con éxito;
+	  en caso de fracaso, amósase un fallo. Consulta tamén
+	  <fncref targ="cnameset"/>.
 	</para>
 	<para>
 	  Exemplo:
@@ -11472,8 +11551,8 @@
 	  Devolve un resultado co cálculo das diferenzas estacionais:
 	  <equation status="inline" ascii="y(t) - y(t-k)"  tex="$y_t - y_{t-k}$"/>,
 	  onde <math>k</math> indica a periodicidade do conxunto vixente de
-	  datos (consulta <fncref targ="$pd"/>). Os valores iniciais defínense
-	  como <lit>NA</lit>.
+	  datos (consulta <fncref targ="$pd"/> ou <fncref targ="$panelpd"/>).
+	  Os valores iniciais defínense como <lit>NA</lit>.
 	</para>
 	<para>
 	  Cando se devolve unha lista, cada variable individual desta noméase de
@@ -11731,15 +11810,16 @@
 
     <function name="sleep" section="programming" output="scalar">
       <fnargs>
-	<fnarg type="int">ns</fnarg>
+	<fnarg type="scalar">ns</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Esta función non ten ningún uso directo en Econometría, mais pode
 	  ser de utilidade para comprobar métodos de computación en paralelo.
 	  Simplemente provoca que se <quote>durma</quote> a liña de cómputo
-	  vixente (é dicir, que se pare) durante <argname>ns</argname> segundos.
-	  Ao <quote>espertar</quote>, a función devolve o escalar 0.
+	  vixente (é dicir, que se pare) durante <argname>ns</argname>
+	  segundos. O argumento debe ser un escalar non negativo. Ao
+	  <quote>espertar</quote>, a función devolve o escalar 0.
 	</para>
       </description>
     </function>
@@ -12187,14 +12267,16 @@
 	  ca 1); e o arranxo <argname>S</argname> debe de ter polo menos
 	   <math>n</math> elementos, sendo <math>n</math> o maior valor de
 	   <argname>y</argname>. Amais, cada elemento de <argname>S</argname>
-	   debe de ter un formato UTF-8 válido.
+	   debe de ter un formato UTF-8 válido. Se non se cumpre algunha destas
+	   condicións, amósase un fallo.
+	</para>
+	<para>
+	  O valor nominal que devolve esta función é cero, cando se completa con éxito.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="strvals"/>
 	  </seelist>
-	</para>
-	<para>
-	  O valor que devolve esta función é cero no caso de completarse con
-	  éxito, ou un código de fallo positivo no caso de fallar.
 	</para>
       </description>
     </function>
