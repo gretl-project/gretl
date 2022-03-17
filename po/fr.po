@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:14-0400\n"
+"POT-Creation-Date: 2022-03-17 14:52-0400\n"
 "PO-Revision-Date: 2022-02-22 18:36+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
@@ -19518,7 +19518,7 @@ msgstr "Options pour X-12-ARIMA"
 # c.v.s. - corrigée des variations saisonnières
 #: plugin/tramo-x12a.c:263
 #, fuzzy
-msgid "Seasonal adjustment algrithm:"
+msgid "Seasonal adjustment algorithm:"
 msgstr "Séries c.v.s."
 
 #: plugin/tramo-x12a.c:286

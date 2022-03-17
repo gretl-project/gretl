@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:14-0400\n"
+"POT-Creation-Date: 2022-03-17 14:52-0400\n"
 "PO-Revision-Date: 2021-08-15 13:33+0200\n"
 "Last-Translator: Vitalie Ciubotaru <vitalie@ciubotaru.tk>\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
@@ -19529,7 +19529,7 @@ msgstr "Настройки для X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:263
 #, fuzzy
-msgid "Seasonal adjustment algrithm:"
+msgid "Seasonal adjustment algorithm:"
 msgstr "Скорректированные на сезонность ряды"
 
 #: plugin/tramo-x12a.c:286

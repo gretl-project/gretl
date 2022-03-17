@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:14-0400\n"
+"POT-Creation-Date: 2022-03-17 14:52-0400\n"
 "PO-Revision-Date: 2021-08-25 15:36-0400\n"
 "Last-Translator: Ioannis Venetis &lt;ivenetis@upatras.gr&gt;\n"
 "Language-Team: Greek\n"
@@ -19506,7 +19506,7 @@ msgstr "X-12-ARIMA επιλογές"
 
 #: plugin/tramo-x12a.c:263
 #, fuzzy
-msgid "Seasonal adjustment algrithm:"
+msgid "Seasonal adjustment algorithm:"
 msgstr "Προσαρμοσμένη (εποχ.) σειρά"
 
 #: plugin/tramo-x12a.c:286

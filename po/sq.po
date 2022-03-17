@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:14-0400\n"
+"POT-Creation-Date: 2022-03-17 14:52-0400\n"
 "PO-Revision-Date: 2021-05-09 13:47+0100\n"
 "Last-Translator: Artur Bala <artur.bala.fr@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -19521,7 +19521,7 @@ msgstr "Opsjone për X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:263
 #, fuzzy
-msgid "Seasonal adjustment algrithm:"
+msgid "Seasonal adjustment algorithm:"
 msgstr "Seri të korrigjuara për luhatjet stinore"
 
 #: plugin/tramo-x12a.c:286

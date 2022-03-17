@@ -260,7 +260,7 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     gtk_box_pack_start(vbox, tmp, TRUE, TRUE, 5);
 
     hb = gtk_hbox_new(FALSE, 0);
-    tmp = gtk_label_new(_("Seasonal adjustment algrithm:"));
+    tmp = gtk_label_new(_("Seasonal adjustment algorithm:"));
     gtk_box_pack_start(GTK_BOX(hb), tmp, 0, 0, 0);
     gtk_box_pack_start(vbox, hb, FALSE, FALSE, 0);
 

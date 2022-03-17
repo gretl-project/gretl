@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-16 17:14-0400\n"
+"POT-Creation-Date: 2022-03-17 14:52-0400\n"
 "PO-Revision-Date: 2015-07-30 11:50+0100\n"
 "Last-Translator: Mihaela Nicolau <m.nicolau@univ-danubius.ro>\n"
 "Language-Team: Romanian\n"
@@ -19425,7 +19425,7 @@ msgid "X-13ARIMA options"
 msgstr "Opțiuni X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:263
-msgid "Seasonal adjustment algrithm:"
+msgid "Seasonal adjustment algorithm:"
 msgstr ""
 
 #: plugin/tramo-x12a.c:286
