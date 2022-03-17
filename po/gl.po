@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-17 14:52-0400\n"
-"PO-Revision-Date: 2022-03-17 16:54+0100\n"
+"PO-Revision-Date: 2022-03-17 20:31+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1058,7 +1058,7 @@ msgstr "   ... pero a fila %d ten %d campos. Cancelando\n"
 #: lib/src/csvdata.c:2626
 #, c-format
 msgid "Warning: row %d has %d fields: %d entries set to missing\n"
-msgstr "Aviso: a fila %d ten %d campos: %d entradas postas como ausentes\n"
+msgstr "Aviso: a fila %d ten %d campos: %d entradas indicadas como ausentes\n"
 
 #: lib/src/csvdata.c:2703
 #, c-format
@@ -11484,7 +11484,7 @@ msgstr "Falta o argumento %d (%s)"
 
 #: gui/fncall.c:337 gui/gretl.c:2032
 msgid "State space model"
-msgstr "Modelo do espazo dos estados"
+msgstr "Modelo de espazo dos estados"
 
 #: gui/fncall.c:338
 msgid "see Help for more"
@@ -19464,9 +19464,8 @@ msgid "X-13ARIMA options"
 msgstr "Opcións de ARIMA-X-13"
 
 #: plugin/tramo-x12a.c:263
-#, fuzzy
 msgid "Seasonal adjustment algorithm:"
-msgstr "Algoritmo de axuste da estacionalidade"
+msgstr "Algoritmo de axuste da estacionalidade:"
 
 #: plugin/tramo-x12a.c:286
 msgid "Correct for trading days effect"
