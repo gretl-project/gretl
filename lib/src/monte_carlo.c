@@ -117,8 +117,7 @@ typedef enum {
     LOOP_RENAMING    = 1 << 4,
     LOOP_ERR_CAUGHT  = 1 << 5,
     LOOP_CONDITIONAL = 1 << 6,
-    LOOP_ALLOW_DECR  = 1 << 7,
-    LOOP_DECREMENT   = 1 << 8
+    LOOP_DECREMENT   = 1 << 7
 } LoopFlags;
 
 struct controller_ {
@@ -217,8 +216,8 @@ struct LOOPSET_ {
 #define loop_err_caught(l)      (l->flags |= LOOP_ERR_CAUGHT)
 #define loop_has_cond(l)        (l->flags & LOOP_CONDITIONAL)
 #define loop_set_has_cond(l)    (l->flags |= LOOP_CONDITIONAL)
-#define loop_allow_decr(l)      (l->flags & LOOP_ALLOW_DECR)
-#define loop_set_allow_decr(l)  (l->flags |= LOOP_ALLOW_DECR)
+#define loop_decrement(l)       (l->flags & LOOP_DECREMENT)
+#define loop_set_decrement(l)   (l->flags |= LOOP_DECREMENT)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -496,7 +495,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 	loop_set_verbose(loop);
     }
     if (opt & OPT_D) {
-	loop_set_allow_decr(loop);
+	loop_set_decrement(loop);
     }
 }
 
@@ -3042,10 +3041,8 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    fprintf(stderr, "loop: got NA for init and/or final value\n");
 	    err = E_DATA;
 	} else if ((loop->type == INDEX_LOOP || loop->type == DATED_LOOP) &&
-		   (loop->final.val < loop->init.val) &&
-		   loop_allow_decr(loop)) {
+		   loop_decrement(loop)) {
 	    loop->itermax = loop->init.val - loop->final.val + 1;
-	    loop->flags |= LOOP_DECREMENT;
 	} else {
 	    loop->itermax = loop->final.val - loop->init.val + 1;
 	    loop->flags &= ~LOOP_DECREMENT;
