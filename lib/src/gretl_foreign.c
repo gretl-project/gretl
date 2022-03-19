@@ -2447,8 +2447,6 @@ static int gretl_Rlib_init (void)
 	if (err) {
 	    return err;
 	}
-    } else {
-	fprintf(stderr, "Got R_HOME = '%s'\n", Rhome);
     }
 #endif
 
