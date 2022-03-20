@@ -1040,20 +1040,24 @@ static void write_png_font_string (char *fstr,
 
 static gchar *write_other_font_string (int stdsize)
 {
+    gchar *fstr;
+
     if (ad_hoc_font[0] != '\0') {
 	char fname[128];
 	int nf, fsize = 0;
 
 	nf = split_graph_fontspec(ad_hoc_font, fname, &fsize);
 	if (nf == 2) {
-	    return g_strdup_printf("%s,%d", fname, fsize);
+	    fstr = g_strdup_printf("%s,%d", fname, fsize);
 	} else if (nf == 1) {
-	    return g_strdup_printf("%s,%d", fname, stdsize);
+	    fstr = g_strdup_printf("%s,%d", fname, stdsize);
 	}
 	ad_hoc_font[0] = '\0';
     } else {
-	return g_strdup_printf("sans,%d", stdsize);
+	fstr = g_strdup_printf("sans,%d", stdsize);
     }
+
+    return fstr;
 }
 
 /* gnuplot styles apparatus */
