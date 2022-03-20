@@ -172,8 +172,9 @@ struct LOOPSET_ {
     char eachname[VNAMELEN];
     GretlType eachtype;
 
-    /* break signal */
+    /* break, continue signals */
     char brk;
+    char cont;
 
     /* control structures */
     controller init;
@@ -573,7 +574,7 @@ static void gretl_loop_init (LOOPSET *loop)
     *loop->idxname = '\0';
     loop->idxvar = NULL;
     loop->idxval = 0;
-    loop->brk = 0;
+    loop->brk = loop->cont = 0;
     *loop->eachname = '\0';
     loop->eachtype = 0;
     loop->eachstrs = NULL;
@@ -3751,11 +3752,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	    if (ci == BREAK || ci == LOOP) {
+	    if (ci == BREAK || ci == CONTINUE || ci == LOOP) {
 		/* no parsing needed */
 		cmd->ci = ci;
 		if (ci == BREAK) {
 		    loop->brk = 1;
+		    break;
+		} else if (ci == CONTINUE) {
+		    loop->cont = 1;
 		    break;
 		} else if (ci == LOOP) {
 		    goto child_loop;
@@ -3961,9 +3965,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 	} /* end execution of commands within loop */
 
-	if (err || loop->brk) {
+	if (err || loop->brk || loop->cont) {
 	    /* 2022-02-06: gretl_if_state_clear() was called if @err */
 	    gretl_if_state_reset(indent0);
+	    if (loop->cont) {
+		loop->cont = 0;
+	    }
 	} else {
 	    err = gretl_if_state_check(indent0);
 	}

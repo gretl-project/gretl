@@ -3323,6 +3323,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case BREAK:
+    case CONTINUE:
     case ENDLOOP:
         pprintf(prn, _("You can't end a loop here, "
                        "you haven't started one\n"));

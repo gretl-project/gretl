@@ -92,6 +92,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { COEFFSUM, "coeffsum", CI_LIST  },
     { COINT,    "coint",    CI_ORD1 | CI_LIST },
     { COINT2,   "johansen", CI_ORD1 | CI_LIST },
+    { CONTINUE, "continue", CI_NOOPT | CI_FCMIN },
     { CORR,     "corr",     CI_LIST | CI_DOALL },
     { CORRGM,   "corrgm",   CI_LIST | CI_LLEN1 | CI_ORD2 },
     { CUSUM,    "cusum",    0 },

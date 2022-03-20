@@ -50,6 +50,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { COEFFSUM, "coeffsum" },
     { COINT,    "coint" },
     { COINT2,   "johansen" },
+    { CONTINUE, "continue" },
     { CORR,     "corr" },
     { CORRGM,   "corrgm" },
     { CUSUM,    "cusum" },

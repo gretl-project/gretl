@@ -39,6 +39,7 @@ typedef enum {
     COEFFSUM,
     COINT,
     COINT2,
+    CONTINUE,
     CORR,     
     CORRGM,   
     CUSUM,
