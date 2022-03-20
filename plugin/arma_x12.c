@@ -731,17 +731,19 @@ static int *arma_info_get_x_list (arma_info *ainfo)
     return xlist;
 }
 
-static void
-make_x12a_date_string (int t, const DATASET *dset, char *str)
+static gchar *make_x12a_date_string (int t, const DATASET *dset)
 {
     if (non_yearly_frequency(dset->pd)) {
 	int maj = t / dset->pd + 1;
 	int min = t % dset->pd + 1;
 
-	sprintf(str, "%d.%d", maj, min);
+	return g_strdup_printf("%d.%d", maj, min);
     } else {
-	ntolabel(str, t, dset);
-	gretl_charsub(str, ':', '.');
+	char label[OBSLEN];
+
+	ntolabel(label, t, dset);
+	gretl_charsub(label, ':', '.');
+	return g_strdup(label);
     }
 }
 
@@ -797,8 +799,8 @@ static int write_arma_spc_file (const char *fname,
     int maxfcast = pdmax * 5;
     int ylist[2];
     int *xlist = NULL;
+    gchar *datestr = NULL;
     FILE *fp;
-    char datestr[12];
     int nfcast = 0;
     int t1 = ainfo->t1;
     int tmax;
@@ -824,8 +826,9 @@ static int write_arma_spc_file (const char *fname,
 
     t1 -= ainfo->maxlag;
 
-    make_x12a_date_string(t1, dset, datestr);
+    datestr = make_x12a_date_string(t1, dset);
     fprintf(fp, " start=%s\n", datestr);
+    g_free(datestr);
 
     ylist[0] = 1;
     ylist[1] = ainfo->yno;
@@ -853,8 +856,9 @@ static int write_arma_spc_file (const char *fname,
     output_series_to_spc(ylist, dset, t1, tmax, fp);
 
     if (tmax > ainfo->t2) {
-	make_x12a_date_string(ainfo->t2, dset, datestr);
+	datestr = make_x12a_date_string(ainfo->t2, dset);
 	fprintf(fp, " span = ( , %s)\n", datestr);
+	g_free(datestr);
     }
 
     fputs("}\n", fp);

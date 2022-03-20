@@ -3624,8 +3624,8 @@ static DATASET *compact_daily_spread (const DATASET *dset,
     int oldpd = dset->pd;
     int compfac;
     int v, i, j, k, t, T;
-    int startyr, startper;
-    int endyr, endper;
+    int startyr, startper = 0;
+    int endyr, endper = 0;
     int startday;
 
     fprintf(stderr, "*** compact_daily_spread (newpd=%d) ***\n", newpd);

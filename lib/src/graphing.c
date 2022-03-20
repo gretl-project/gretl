@@ -1038,7 +1038,7 @@ static void write_png_font_string (char *fstr,
 
 /* for gnuplot pdfcairo, epscairo output */
 
-static void write_other_font_string (char *fstr, int stdsize)
+static gchar *write_other_font_string (int stdsize)
 {
     if (ad_hoc_font[0] != '\0') {
 	char fname[128];
@@ -1046,13 +1046,13 @@ static void write_other_font_string (char *fstr, int stdsize)
 
 	nf = split_graph_fontspec(ad_hoc_font, fname, &fsize);
 	if (nf == 2) {
-	    sprintf(fstr, "%s,%d", fname, fsize);
+	    return g_strdup_printf("%s,%d", fname, fsize);
 	} else if (nf == 1) {
-	    sprintf(fstr, "%s,%d", fname, stdsize);
+	    return g_strdup_printf("%s,%d", fname, stdsize);
 	}
 	ad_hoc_font[0] = '\0';
     } else {
-	sprintf(fstr, "sans,%d", stdsize);
+	return g_strdup_printf("sans,%d", stdsize);
     }
 }
 
@@ -1406,24 +1406,26 @@ static void append_gp_encoding (char *s)
     strcat(s, "\nset encoding utf8");
 }
 
-/* In @pdf_term_line and @eps_term_line: should "dashed" be
-   appended when "mono" is specified? Try experimenting?
+/* In pdf and eps term lines: should "dashed" be appended when
+   "mono" is specified? Try experimenting?
 */
 
-static char *gretl_pdf_term_line (char *term_line,
-				  PlotType ptype,
-				  GptFlags flags)
+static char *eps_pdf_term_line (char *term_line,
+				PlotType ptype,
+				GptFlags flags,
+				TermType ttype)
 {
-    char font_string[128];
+    gchar *font_string;
+    const char *tname;
     int ptsize;
 
     ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
+    tname = (ttype == GP_TERM_EPS)? "epscairo" : "pdfcairo";
 
-    *font_string = '\0';
-    write_other_font_string(font_string, ptsize);
-
-    sprintf(term_line, "set term pdfcairo noenhanced font \"%s\"",
-	    font_string);
+    font_string = write_other_font_string(ptsize);
+    sprintf(term_line, "set term %s noenhanced font \"%s\"",
+	    tname, font_string);
+    g_free(font_string);
 
     maybe_set_eps_pdf_dims(term_line, ptype, flags);
     append_gp_encoding(term_line);
@@ -1431,30 +1433,9 @@ static char *gretl_pdf_term_line (char *term_line,
     return term_line;
 }
 
-static char *gretl_eps_term_line (char *term_line,
-				  PlotType ptype,
-				  GptFlags flags)
-{
-    char font_string[128];
-    int ptsize;
-
-    ptsize = (ptype == PLOT_MULTI_SCATTER)? 6 : 12;
-
-    *font_string = '\0';
-    write_other_font_string(font_string, ptsize);
-
-    sprintf(term_line, "set term epscairo noenhanced font \"%s\"",
-	    font_string);
-
-    maybe_set_eps_pdf_dims(term_line, ptype, flags);
-    append_gp_encoding(term_line);
-
-    return term_line;
-}
-
-static char *gretl_tex_term_line (char *term_line,
-				  PlotType ptype,
-				  GptFlags flags)
+static char *tex_term_line (char *term_line,
+			    PlotType ptype,
+			    GptFlags flags)
 {
     if (gnuplot_has_tikz()) {
 	strcpy(term_line, "set term tikz");
@@ -1624,10 +1605,8 @@ const char *gretl_gnuplot_term_line (TermType ttype,
 	double s = default_png_scale;
 
 	real_png_term_line(term_line, ptype, flags, NULL, s);
-    } else if (ttype == GP_TERM_PDF) {
-	gretl_pdf_term_line(term_line, ptype, flags);
-    } else if (ttype == GP_TERM_EPS) {
-	gretl_eps_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF) {
+	eps_pdf_term_line(term_line, ptype, flags, ttype);
     } else if (ttype == GP_TERM_EMF) {
 	gretl_emf_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_SVG) {
@@ -1637,7 +1616,7 @@ const char *gretl_gnuplot_term_line (TermType ttype,
 	strcpy(term_line, "set term fig");
 	append_gp_encoding(term_line);
     } else if (ttype == GP_TERM_TEX) {
-	gretl_tex_term_line(term_line, ptype, flags);
+	tex_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_VAR) {
 	var_term_line(term_line, ptype);
     }
@@ -1802,10 +1781,8 @@ static void print_term_string (int ttype, PlotType ptype,
 
     *term_line = '\0';
 
-    if (ttype == GP_TERM_EPS) {
-	gretl_eps_term_line(term_line, ptype, flags);
-    } else if (ttype == GP_TERM_PDF) {
-	gretl_pdf_term_line(term_line, ptype, flags);
+    if (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF) {
+	eps_pdf_term_line(term_line, ptype, flags, ttype);
     } else if (ttype == GP_TERM_PNG) {
 	gretl_png_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_EMF) {
@@ -1815,7 +1792,7 @@ static void print_term_string (int ttype, PlotType ptype,
     } else if (ttype == GP_TERM_SVG) {
 	strcpy(term_line, "set term svg noenhanced\nset encoding utf8");
     } else if (ttype == GP_TERM_TEX) {
-	gretl_tex_term_line(term_line, ptype, flags);
+	tex_term_line(term_line, ptype, flags);
     }
 
     if (*term_line != '\0') {
