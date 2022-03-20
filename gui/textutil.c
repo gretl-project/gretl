@@ -41,6 +41,7 @@ struct search_replace {
     GtkWidget *r_button;   /* Replace button */
     gchar *find;           /* the Find string */
     gchar *replace;        /* the Replace string */
+    gboolean match_case;
     GtkTextBuffer *buf;
     GtkTextView *view;
     GtkTextMark *mark;
@@ -64,11 +65,16 @@ static gboolean destroy_replacer (GtkWidget *widget,
     return FALSE;
 }
 
-/* here we simply find (or not) the given string */
+/* Here we simply find (or not) the given string */
 
 static void replace_find_callback (GtkWidget *widget,
 				   struct search_replace *s)
 {
+#if GTKSOURCEVIEW_VERSION == 2
+    GtkSourceSearchFlags search_flags = 0;
+#else
+    GtkTextSearchFlags search_flags = 0;
+#endif
     GtkTextIter f_start, f_end;
     gboolean found;
 
@@ -82,16 +88,22 @@ static void replace_find_callback (GtkWidget *widget,
     gtk_text_buffer_get_iter_at_mark(s->buf, &s->iter, s->mark);
 
 #if GTKSOURCEVIEW_VERSION == 2
+    if (!s->match_case) {
+	search_flags = GTK_SOURCE_SEARCH_CASE_INSENSITIVE;
+    }
     found = gtk_source_iter_forward_search(&s->iter,
 					   s->find,
-					   0,
+					   search_flags,
 					   &f_start,
 					   &f_end,
 					   NULL);
 #else /* GTK 3 */
+    if (!s->match_case) {
+	search_flags = GTK_TEXT_SEARCH_CASE_INSENSITIVE;
+    }
     found = gtk_text_iter_forward_search(&s->iter,
 					 s->find,
-					 0,
+					 search_flags,
 					 &f_start,
 					 &f_end,
 					 NULL);
@@ -100,7 +112,7 @@ static void replace_find_callback (GtkWidget *widget,
     if (found) {
 	gtk_text_buffer_select_range(s->buf, &f_start, &f_end);
 	gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
-	if (gtk_text_iter_forward_line(&f_end)) {
+	if (gtk_text_iter_forward_char(&f_end)) {
 	    /* go one line further on, if possible */
 	    gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
 	}
@@ -154,8 +166,8 @@ static void replace_single_callback (GtkWidget *button,
     g_free(text);
 }
 
-/* replace all occurrences of the Find string in the text
-   buffer, or in the current selection if there is one
+/* Replace all occurrences of the Find string, in the text
+   buffer as a whole or in the current selection.
 */
 
 static void replace_all_callback (GtkWidget *button,
@@ -188,9 +200,9 @@ static void replace_all_callback (GtkWidget *button,
     init_pos[0] = gtk_text_iter_get_line(&s->iter);
     init_pos[1] = gtk_text_iter_get_line_index(&s->iter);
 
-    /* if there's a selection in place, respect it, otherwise work
-       on the whole buffer */
-    if (gtk_text_buffer_get_selection_bounds(s->buf, &start, &end)) {
+    /* whole window or selection? */
+    if (widget_get_int(button, "selected-only")  &&
+	gtk_text_buffer_get_selection_bounds(s->buf, &start, &end)) {
 	selected = TRUE;
     } else {
 	gtk_text_buffer_get_start_iter(s->buf, &start);
@@ -199,8 +211,14 @@ static void replace_all_callback (GtkWidget *button,
 
 #if GTKSOURCEVIEW_VERSION == 2
     search_flags = GTK_SOURCE_SEARCH_VISIBLE_ONLY | GTK_SOURCE_SEARCH_TEXT_ONLY;
+    if (!s->match_case) {
+	search_flags |= GTK_SOURCE_SEARCH_CASE_INSENSITIVE;
+    }
 #else
     search_flags = GTK_TEXT_SEARCH_VISIBLE_ONLY | GTK_TEXT_SEARCH_TEXT_ONLY;
+    if (!s->match_case) {
+	search_flags |= GTK_TEXT_SEARCH_CASE_INSENSITIVE;
+    }
 #endif
     replace_len = strlen(s->replace);
 
@@ -258,15 +276,22 @@ static void replace_all_callback (GtkWidget *button,
     gtk_text_buffer_move_mark(s->buf, s->mark, &s->iter);
 }
 
+static void toggle_match_case (GtkToggleButton *button,
+			       struct search_replace *s)
+{
+    s->match_case = gtk_toggle_button_get_active(button);
+}
+
 static void replace_string_dialog (windata_t *vwin)
 {
     GtkWidget *label, *button;
-    GtkWidget *vbox, *abox;
+    GtkWidget *vbox, *hbox, *abox;
     GtkWidget *table;
     struct search_replace sr_t;
     struct search_replace *s = &sr_t;
 
     s->find = s->replace = NULL;
+    s->match_case = 1;
 
     s->view = GTK_TEXT_VIEW(vwin->text);
     s->buf = gtk_text_view_get_buffer(s->view);
@@ -303,25 +328,48 @@ static void replace_string_dialog (windata_t *vwin)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
     gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 5);
 
-    abox = gtk_dialog_get_action_area(GTK_DIALOG(s->w));
+    /* "Match case" check-button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    button = gtk_check_button_new_with_label(_("Match case"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+				 s->match_case);
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(toggle_match_case), s);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
+    /* "Replace all" options, as applicable */
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("Replace all in:"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    button = gtk_button_new_with_mnemonic(_("Window"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(replace_all_callback), s);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    button = gtk_button_new_with_mnemonic(_("Selection"));
+    widget_set_int(button, "selected-only", 1);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(replace_all_callback), s);
+    gtk_widget_set_sensitive(button,
+			     gtk_text_buffer_get_has_selection(s->buf));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 2);
+
+    /* set up the regular "action area" */
+    abox = gtk_dialog_get_action_area(GTK_DIALOG(s->w));
     gtk_box_set_spacing(GTK_BOX(abox), 15);
     gtk_box_set_homogeneous(GTK_BOX(abox), TRUE);
     gtk_window_set_position(GTK_WINDOW(s->w), GTK_WIN_POS_MOUSE);
 
-    /* Close button */
-    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    /* Find button -- make this the default */
+    button = gtk_button_new_from_stock(GTK_STOCK_FIND);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), s->w);
-
-    /* Replace All button */
-    button = gtk_button_new_with_mnemonic(_("Replace _All"));
-    gtk_widget_set_can_default(button, TRUE);
-    gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(replace_all_callback), s);
+		     G_CALLBACK(replace_find_callback), s);
+    gtk_widget_grab_default(button);
 
     /* Replace button */
     button = gtk_button_new_with_mnemonic(_("_Replace"));
@@ -332,13 +380,12 @@ static void replace_string_dialog (windata_t *vwin)
     gtk_widget_set_sensitive(button, FALSE);
     s->r_button = button;
 
-    /* Find button -- make this the default */
-    button = gtk_button_new_from_stock(GTK_STOCK_FIND);
+    /* Cancel button */
+    button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(replace_find_callback), s);
-    gtk_widget_grab_default(button);
+		     G_CALLBACK(delete_widget), s->w);
 
     gtk_widget_grab_focus(s->f_entry);
     gtk_widget_show_all(s->w);
