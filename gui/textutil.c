@@ -113,7 +113,7 @@ static void replace_find_callback (GtkWidget *widget,
 	gtk_text_buffer_select_range(s->buf, &f_start, &f_end);
 	gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
 	if (gtk_text_iter_forward_char(&f_end)) {
-	    /* go one line further on, if possible */
+	    /* go one character further on, if possible */
 	    gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
 	}
 	gtk_text_view_scroll_mark_onscreen(s->view, s->mark);
