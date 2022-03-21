@@ -42,6 +42,7 @@ struct search_replace {
     gchar *find;           /* the Find string */
     gchar *replace;        /* the Replace string */
     gboolean match_case;
+    gboolean backward;
     GtkTextBuffer *buf;
     GtkTextView *view;
     GtkTextMark *mark;
@@ -91,34 +92,60 @@ static void replace_find_callback (GtkWidget *widget,
     if (!s->match_case) {
 	search_flags = GTK_SOURCE_SEARCH_CASE_INSENSITIVE;
     }
-    found = gtk_source_iter_forward_search(&s->iter,
-					   s->find,
-					   search_flags,
-					   &f_start,
-					   &f_end,
-					   NULL);
+    if (s->backward) {
+	found = gtk_source_iter_backward_search(&s->iter,
+						s->find,
+						search_flags,
+						&f_start,
+						&f_end,
+						NULL);
+    } else {
+	found = gtk_source_iter_forward_search(&s->iter,
+					       s->find,
+					       search_flags,
+					       &f_start,
+					       &f_end,
+					       NULL);
+    }
 #else /* GTK 3 */
     if (!s->match_case) {
 	search_flags = GTK_TEXT_SEARCH_CASE_INSENSITIVE;
     }
-    found = gtk_text_iter_forward_search(&s->iter,
-					 s->find,
-					 search_flags,
-					 &f_start,
-					 &f_end,
-					 NULL);
+    if (s->backward) {
+	found = gtk_text_iter_backward_search(&s->iter,
+					      s->find,
+					      search_flags,
+					      &f_start,
+					      &f_end,
+					      NULL);
+    } else {
+	found = gtk_text_iter_forward_search(&s->iter,
+					     s->find,
+					     search_flags,
+					     &f_start,
+					     &f_end,
+					     NULL);
+    }
 #endif
 
     if (found) {
 	gtk_text_buffer_select_range(s->buf, &f_start, &f_end);
-	gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
-	if (gtk_text_iter_forward_char(&f_end)) {
-	    /* go one character further on, if possible */
+	if (s->backward) {
+	    gtk_text_buffer_move_mark(s->buf, s->mark, &f_start);
+	    if (gtk_text_iter_backward_char(&f_start)) {
+		/* go one character back, if possible */
+		gtk_text_buffer_move_mark(s->buf, s->mark, &f_start);
+	    }
+	} else {
 	    gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
+	    if (gtk_text_iter_forward_char(&f_end)) {
+		/* go one character further on, if possible */
+		gtk_text_buffer_move_mark(s->buf, s->mark, &f_end);
+	    }
 	}
-	gtk_text_view_scroll_mark_onscreen(s->view, s->mark);
+        gtk_text_view_scroll_mark_onscreen(s->view, s->mark);
     } else {
-	notify_string_not_found(s->f_entry);
+        notify_string_not_found(s->f_entry);
     }
 
     gtk_widget_set_sensitive(s->r_button, found);
@@ -133,7 +160,7 @@ static void update_search_strings (struct search_replace *s)
     s->replace = gtk_editable_get_chars(GTK_EDITABLE(s->r_entry), 0, -1);
 }
 
-/* replace an occurrence of the Find string that has just been
+/* Replace an occurrence of the Find string that has just been
    found, and selected */
 
 static void replace_single_callback (GtkWidget *button,
@@ -282,6 +309,12 @@ static void toggle_match_case (GtkToggleButton *button,
     s->match_case = gtk_toggle_button_get_active(button);
 }
 
+static void toggle_backward_search (GtkToggleButton *button,
+				    struct search_replace *s)
+{
+    s->backward = gtk_toggle_button_get_active(button);
+}
+
 static void replace_string_dialog (windata_t *vwin)
 {
     GtkWidget *label, *button;
@@ -289,13 +322,17 @@ static void replace_string_dialog (windata_t *vwin)
     GtkWidget *table;
     struct search_replace sr_t;
     struct search_replace *s = &sr_t;
+    GtkTextMark *mark;
 
     s->find = s->replace = NULL;
     s->match_case = 1;
+    s->backward = 0;
 
     s->view = GTK_TEXT_VIEW(vwin->text);
     s->buf = gtk_text_view_get_buffer(s->view);
-    gtk_text_buffer_get_start_iter(s->buf, &s->iter);
+
+    mark = gtk_text_buffer_get_insert(s->buf);
+    gtk_text_buffer_get_iter_at_mark(s->buf, &s->iter, mark);
     s->mark = gtk_text_buffer_create_mark(s->buf, "srmark",
 					  &s->iter, FALSE);
 
@@ -328,7 +365,7 @@ static void replace_string_dialog (windata_t *vwin)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
     gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 5);
 
-    /* "Match case" check-button */
+    /* "Match case" and "Backward" check-buttons */
     hbox = gtk_hbox_new(FALSE, 5);
     button = gtk_check_button_new_with_label(_("Match case"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -336,6 +373,12 @@ static void replace_string_dialog (windata_t *vwin)
 				 s->match_case);
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(toggle_match_case), s);
+    button = gtk_check_button_new_with_label(_("Backward search"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+				 s->backward);
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(toggle_backward_search), s);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* "Replace all" options, as applicable */
