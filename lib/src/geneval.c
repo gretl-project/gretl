@@ -17999,14 +17999,11 @@ static NODE *eval (NODE *t, parser *p)
 
  finish:
 
-#if 1 /* experimental */
-    if (p->flags & P_PRNLIST && ret != NULL &&
+    if ((p->flags & P_PRNLIST) && ret != NULL &&
 	scalar_node(ret) && is_aux_node(ret)) {
-	/* don't try to interpret this as a series ID */
-	fprintf(stderr, "P_PRNLIST: got scalar aux node\n");
+	/* don't try to interpret this scalar as a series ID */
 	p->err = E_DATA;
     }
-#endif
 
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
         if (t->t == F_FEVAL && ret->refcount > 0) {

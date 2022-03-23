@@ -3870,15 +3870,17 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 
     m = (*model_leverage)(pmod, dset, opt, prn, &err);
 
-    if (!err && (opt & OPT_S)) {
-	/* we got the --save option */
-	err = add_leverage_values_to_dataset(dset, m, opt,
-					     SAVE_LEVERAGE |
-					     SAVE_INFLUENCE|
-					     SAVE_DFFITS);
+    if (!err) {
+	/* set the $results accessor */
+	set_last_result_data(m, GRETL_TYPE_MATRIX);
+	if (opt & OPT_S) {
+	    /* and respond to the --save option */
+	    err = add_leverage_values_to_dataset(dset, m, opt,
+						 SAVE_LEVERAGE |
+						 SAVE_INFLUENCE |
+						 SAVE_DFFITS);
+	}
     }
-
-    gretl_matrix_free(m);
 
     return err;
 }

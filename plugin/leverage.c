@@ -355,6 +355,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     integer info, lwork;
     integer m, n, lda;
     gretl_matrix *Q, *S = NULL;
+    char **cnames = NULL;
     double *tau, *work;
     double Xvalcrit, df_adj = 0;
     int xvc_only = 0;
@@ -421,21 +422,22 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	goto qr_cleanup;
     }
 
-    /* If we're neither printing anything nor saving leverage
-       et al as series, then we just need the cross-validation
-       criterion. FIXME storing $result.
-    */
-    if ((opt & OPT_Q) && !(opt & OPT_S)) {
-	xvc_only = 1; /* the S matrix is not needed */
-    } else {
-	S = gretl_matrix_alloc(modn, 3);
-	if (S == NULL) {
-	    *err = E_ALLOC;
-	    goto qr_cleanup;
-	}
-	gretl_matrix_set_t1(S, pmod->t1);
-	df_adj = sqrt(pmod->dfd - 1.0);
+    /* allocate the results matrix */
+    S = gretl_matrix_alloc(modn, 3);
+    if (S == NULL) {
+	*err = E_ALLOC;
+	goto qr_cleanup;
     }
+
+    cnames = malloc(3 * sizeof *cnames);
+    /* mark cnames as translatable? */
+    cnames[0] = gretl_strdup("leverage");
+    cnames[1] = gretl_strdup("influence");
+    cnames[2] = gretl_strdup("studres");
+    gretl_matrix_set_colnames(S, cnames);
+    gretl_matrix_set_t1(S, pmod->t1);
+
+    df_adj = sqrt(pmod->dfd - 1.0);
 
     /* initialize cross-validation criterion */
     Xvalcrit = 0.0;
