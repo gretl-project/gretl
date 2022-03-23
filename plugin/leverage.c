@@ -422,8 +422,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     }
 
     /* If we're neither printing anything nor saving leverage
-       at al as series, then we just need the cross-validation
-       criterion.
+       et al as series, then we just need the cross-validation
+       criterion. FIXME storing $result.
     */
     if ((opt & OPT_Q) && !(opt & OPT_S)) {
 	xvc_only = 1; /* the S matrix is not needed */

@@ -4,6 +4,7 @@ version 2022b, in progress
 - deseas() function: add the option of saving the X-13ARIMA
   specification created by gretl; add option to specify the
   ARIMA model; document the verbose option
+- script editor: enhancements for Find/Replace dialog
 - Fix bug: det() should not flag an error when returning NA
 - Fix bug: make "set loop_maxiter 0" behave as advertised
 - Fix bug: misbehavior when subsampling within a function a

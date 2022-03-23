@@ -18001,9 +18001,9 @@ static NODE *eval (NODE *t, parser *p)
 
 #if 1 /* experimental */
     if (p->flags & P_PRNLIST && ret != NULL &&
-	ret->t == NUM && is_aux_node(ret)) {
+	scalar_node(ret) && is_aux_node(ret)) {
 	/* don't try to interpret this as a series ID */
-	fprintf(stderr, "P_PRNLIST: got NUM aux node\n");
+	fprintf(stderr, "P_PRNLIST: got scalar aux node\n");
 	p->err = E_DATA;
     }
 #endif
