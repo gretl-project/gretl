@@ -11641,7 +11641,7 @@
 	The format string itself must be enclosed in double quotes.
 	The values to be printed must follow the format string,
 	separated by commas.  These values should take the form of
-	either (a) the names of variables, (b) expressions that are
+	either (a) the names of variables, (b) expressions that
 	yield some sort of printable result, or (c) the special
 	functions <lit>varname()</lit> or <lit>date()</lit>.  The
 	following example prints the values of two variables plus that
