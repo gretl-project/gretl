@@ -357,8 +357,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     gretl_matrix *Q, *S = NULL;
     char **cnames = NULL;
     double *tau, *work;
-    double Xvalcrit, df_adj = 0;
-    int i, j, s, t, vi;
+    double Xvalcrit;
+    int i, j, s, t, vi, df_adj;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
 
