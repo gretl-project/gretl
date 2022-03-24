@@ -366,11 +366,19 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 
     if (s != NULL) {
         /* note: with strptime, a NULL return means that an error
-           occurred while a non-NULL and non-empty return string
+           occurred, while a non-NULL and non-empty return string
            means a trailing portion of the input was not
            processed.
         */
         test = strptime(s, tfmt, &t);
+	if (test == NULL && s_src == 3 && strchr(tfmt, '-') &&
+	    strlen(s) == 4 && integer_string(s)) {
+	    /* annual data from CSV? */
+	    if (j == 0) {
+		set_time_format(jr->auto_keys, "%Y");
+	    }
+	    goto finish;
+	}
     }
 
     if (test == NULL || *test != '\0') {
@@ -395,6 +403,8 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
                     s_src < 3 ? "specified time column" : "first-column strings");
         }
     }
+
+ finish:
 
     if (!err) {
         err = real_set_outer_auto_keys(jr, s, j, &t);
