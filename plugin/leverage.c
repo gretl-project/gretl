@@ -358,7 +358,6 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     char **cnames = NULL;
     double *tau, *work;
     double Xvalcrit, df_adj = 0;
-    int xvc_only = 0;
     int i, j, s, t, vi;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
@@ -437,7 +436,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     gretl_matrix_set_colnames(S, cnames);
     gretl_matrix_set_t1(S, pmod->t1);
 
-    df_adj = sqrt(pmod->dfd - 1.0);
+    df_adj = pmod->dfd - 1.0;
 
     /* initialize cross-validation criterion */
     Xvalcrit = 0.0;
@@ -445,8 +444,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     /* do the "h" calculations, etc. */
     s = 0;
     for (t=pmod->t1, i=0; t<=pmod->t2; t++, i++) {
-	double den, f = NADBL, d = NADBL;
+	double f = NADBL, d = NADBL;
 	double q, h, et = pmod->uhat[t];
+	double sigma2;
 
 	if (na(et)) {
 	    h = NADBL;
@@ -460,19 +460,15 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 		f = et / (1 - h);
 		Xvalcrit += f * f;
 		f -= et;
-		if (!xvc_only) {
-		    /* studentized residual */
-		    den = sqrt((1 - h) * pmod->ess - et * et);
-		    d = df_adj / den * et;
-		}
+		/* studentized residual */
+		sigma2 = (pmod->ess - et * et) / df_adj;
+		d = et / sqrt(sigma2 * (1 - h));
 	    }
 	    s++;
 	}
-	if (S != NULL) {
-	    gretl_matrix_set(S, i, 0, h);
-	    gretl_matrix_set(S, i, 1, f);
-	    gretl_matrix_set(S, i, 2, d);
-	}
+	gretl_matrix_set(S, i, 0, h);
+	gretl_matrix_set(S, i, 1, f);
+	gretl_matrix_set(S, i, 2, d);
     }
 
     record_test_result(Xvalcrit, NADBL);
