@@ -2421,7 +2421,11 @@ static int real_write_gdt (const char *fname,
 	pprintf(prn, "<variables count=\"%d\">\n", nvars);
     }
 
-    ntabs = string_table_count(dset, list, nvars);
+    if (dset->varinfo == NULL) {
+	ntabs = 0;
+    } else {
+	ntabs = string_table_count(dset, list, nvars);
+    }
 
     if (ntabs > 0 && !(opt & OPT_P)) {
 	/* trimming strvals */
@@ -2436,6 +2440,11 @@ static int real_write_gdt (const char *fname,
 	v = savenum(list, i);
 	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
 	pprintf(prn, "<variable name=\"%s\"", xmlbuf);
+
+	if (dset->varinfo == NULL) {
+	    pputs(prn, "\n/>\n");
+	    continue;
+	}
 
 	vstr = series_get_label(dset, v);
 	if (vstr != NULL && *vstr != '\0') {
