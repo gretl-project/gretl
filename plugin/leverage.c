@@ -459,7 +459,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 		f = et / (1 - h);
 		Xvalcrit += f * f;
 		f -= et;
-		/* studentized residual */
+		/* studentized residual (note: agrees with R) */
 		den = sqrt((1 - h) * pmod->ess - et * et);
 		d = df_adj * et / den;
 	    }
