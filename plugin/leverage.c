@@ -357,8 +357,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     gretl_matrix *Q, *S = NULL;
     char **cnames = NULL;
     double *tau, *work;
-    double Xvalcrit, df_adj;
-    int i, j, s, t, vi;
+    double Xvalcrit, s21;
+    int i, j, s, t, vi, df;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
 
@@ -429,14 +429,16 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     }
 
     cnames = malloc(3 * sizeof *cnames);
-    /* mark cnames as translatable? */
+    /* maybe mark cnames as translatable? */
     cnames[0] = gretl_strdup("leverage");
     cnames[1] = gretl_strdup("influence");
     cnames[2] = gretl_strdup("studres");
     gretl_matrix_set_colnames(S, cnames);
     gretl_matrix_set_t1(S, pmod->t1);
 
-    df_adj = sqrt(pmod->dfd - 1.0);
+    /* revised df and first component of variance */
+    df = pmod->dfd - 1;
+    s21 = pmod->ess / df;
 
     /* initialize cross-validation criterion */
     Xvalcrit = 0.0;
@@ -444,7 +446,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     /* do the "h" calculations, etc. */
     s = 0;
     for (t=pmod->t1, i=0; t<=pmod->t2; t++, i++) {
-	double den, f = NADBL, d = NADBL;
+	double s22, f = NADBL, d = NADBL;
 	double q, h, et = pmod->uhat[t];
 
 	if (na(et)) {
@@ -459,9 +461,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 		f = et / (1 - h);
 		Xvalcrit += f * f;
 		f -= et;
-		/* studentized residual (note: agrees with R) */
-		den = sqrt((1 - h) * pmod->ess - et * et);
-		d = df_adj * et / den;
+		/* studentized residual (note: agrees with R, Stata) */
+		s22 = et * et / (df * (1 - h));
+		d = et / sqrt((s21 - s22) * (1-h));
 	    }
 	    s++;
 	}
