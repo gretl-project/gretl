@@ -7327,27 +7327,17 @@
 	MacKinnon (1993)</cite>, Chapter 2.
       </para>
       <para>
-	DFFITS values are also computed: these are <quote>studentized
-	  residuals</quote> (predicted residuals divided by their
-	standard errors) multiplied by
-	  <equation status="inline"
-	  tex="$\sqrt{h/(1 - h)}$"
-	  ascii="sqrt[h/(1 - h)]"
-	  graphic="dffit"/>.
-	  For discussions of studentized residuals and DFFITS see chapter
-	  12 of Maddala's <cite key="maddala92">Introduction to
-	  Econometrics</cite> or <cite key="belsley-etal80">Belsley,
-	  Kuh and Welsch (1980)</cite>.
-      </para>
-      <para>
-	Briefly, a <quote>predicted residual</quote> is the difference
-	between the observed value of the dependent variable at
-	observation <math>t</math>, and the fitted value for
-	observation <math>t</math> obtained from a regression in
-	which that observation is omitted (or a dummy variable with
-	value 1 for observation <math>t</math> alone has been
-	added); the studentized residual is obtained by dividing the
-	predicted residual by its standard error.
+	DFFITS values are also computed: these are Studentized
+	residuals (residuals divided by their standard errors)
+	multiplied by
+	<equation status="inline"
+	tex="$\sqrt{h/(1 - h)}$" ascii="sqrt[h/(1 - h)]"
+	graphic="dffit"/>.
+	For discussions of Studentized residuals and DFFITS see
+	chapter 12 of Maddala's <cite key="maddala92">Introduction to
+	Econometrics</cite> or <cite key="belsley-etal80">Belsley, Kuh
+	and Welsch (1980)</cite>; also see the comments under the
+	<emphasis>Accessor matrix</emphasis> heading below.
       </para>
       <para context="cli">
 	If the <opt>save</opt> flag is given with this command, the
@@ -7405,6 +7395,39 @@
 	name is as described for the <opt>output</opt> option of the
 	<cmdref targ="gnuplot"/> command.
       </para>
+      <subhead context="cli">Accessor matrix</subhead>
+      <para context="cli">
+	Besides the <opt>save</opt> option noted above, results from
+	this command can be retrieved in the form of a three-column
+	matrix via the <fncref targ="$result"/> accessor. The first
+	two columns of this matrix contain leverage and influence
+	values (as with <opt>save</opt>) but the third column holds
+	Studentized residuals rather than DFFITS values. These are
+	<quote>externally Studentized</quote> or
+	<quote>jackknifed</quote> residuals&mdash;that is, the
+	standard error in the divisor for observation <math>i</math>
+	uses the residual mean square with that observation
+	omitted. Such a residual can be interpreted as a
+	<math>t</math> statistic for the hypothesis that a 0/1 dummy
+	variable coding specifically for observation <math>i</math>
+	would have a true coefficient of zero.
+      </para>
+      <para>
+	DFFITS values may be obtained from the <lit>$result</lit>
+	matrix as follows:
+      </para>
+      <code>
+	R = $result
+	dffits2 = R[,3] .* sqrt(R[,1] ./ (1-R[,1]))
+      </code>
+      <para>
+	Or using series:
+      </para>
+      <code>
+	series h = $result[,1]  # leverage
+	series sr = $result[,3] # Studentized residual
+	series dffits = sr * sqrt(h/(1-h))
+      </code>
     </description>
 
     <gui-access>

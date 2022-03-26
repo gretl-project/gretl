@@ -1,4 +1,6 @@
 version 2022b, in progress
+- "leverage" command: add $result accessor to obtain 
+  leverage, influence and Studentized residuals as matrix
 - assert() function: add a "fatal" switch to abort program
   execution when an assertion fails
 - deseas() function: add the option of saving the X-13ARIMA
