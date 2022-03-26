@@ -7326,18 +7326,30 @@
 	influence see <cite key="davidson-mackinnon93">Davidson and
 	MacKinnon (1993)</cite>, Chapter 2.
       </para>
-      <para>
+      <para context="tex">
 	DFFITS values are also computed: these are Studentized
 	residuals (residuals divided by their standard errors)
-	multiplied by
-	<equation status="inline"
-	tex="$\sqrt{h/(1 - h)}$" ascii="sqrt[h/(1 - h)]"
-	graphic="dffit"/>.
-	For discussions of Studentized residuals and DFFITS see
-	chapter 12 of Maddala's <cite key="maddala92">Introduction to
-	Econometrics</cite> or <cite key="belsley-etal80">Belsley, Kuh
-	and Welsch (1980)</cite>; also see the comments under the
-	<emphasis>Accessor matrix</emphasis> heading below.
+	multiplied by $\sqrt{h/(1 - h)}$. They give a measure of the
+	difference in fit for observation <math>i</math> depending on
+	whether or not that observation is included in the sample for
+	estimation. For more on this point see chapter 12 of Maddala's
+	<cite key="maddala92">Introduction to Econometrics</cite> or
+	<cite key="belsley-etal80">Belsley, Kuh and Welsch
+	(1980)</cite>.  For more on Studentized residuals see the
+	section headed <emphasis>Accessor matrix</emphasis> below.
+      </para>
+      <para context="notex">
+	DFFITS values are also computed: these are Studentized
+	residuals (residuals divided by their standard errors)
+	multiplied by the square root of <math>h</math>(1 &minus;
+	<math>h</math>). They give a measure of the difference in fit
+	for observation <math>i</math> depending on whether or not
+	that observation is included in the sample for estimation.
+	For more on this point see chapter 12 of Maddala's <cite
+	key="maddala92">Introduction to Econometrics</cite> or <cite
+	key="belsley-etal80">Belsley, Kuh and Welsch
+	(1980)</cite>. For more on Studentized residuals see the
+	section headed <emphasis>Accessor matrix</emphasis> below.
       </para>
       <para context="cli">
 	If the <opt>save</opt> flag is given with this command, the
@@ -7410,7 +7422,9 @@
 	omitted. Such a residual can be interpreted as a
 	<math>t</math> statistic for the hypothesis that a 0/1 dummy
 	variable coding specifically for observation <math>i</math>
-	would have a true coefficient of zero.
+	would have a true coefficient of zero. For further discussion
+	of Studentized residuals see <cite
+	key="chatterjee-hadi86">Chatterjee and Hadi (1986)</cite>.
       </para>
       <para>
 	DFFITS values may be obtained from the <lit>$result</lit>
@@ -7418,7 +7432,7 @@
       </para>
       <code>
 	R = $result
-	dffits2 = R[,3] .* sqrt(R[,1] ./ (1-R[,1]))
+	dffits = R[,3] .* sqrt(R[,1] ./ (1-R[,1]))
       </code>
       <para>
 	Or using series:
