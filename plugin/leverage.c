@@ -21,9 +21,6 @@
 #include "version.h"
 #include "gretl_matrix.h"
 
-#include "gretl_f2c.h"
-#include "clapack_double.h"
-
 #include <gtk/gtk.h>
 
 struct flag_info {
@@ -349,35 +346,23 @@ static void leverage_print (const MODEL *pmod,
 }
 
 gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
-			      gretlopt opt, PRN *prn,
-			      int *err)
+			      gretlopt opt, PRN *prn, int *err)
 {
-    integer info, lwork;
-    integer m, n, lda;
     gretl_matrix *Q, *S = NULL;
     char **cnames = NULL;
-    double *tau, *work;
     double Xvalcrit, s21;
     int i, j, s, t, vi, df;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
+    int k = pmod->list[0] - 1;
 
-    m = pmod->nobs;              /* # of rows = # of observations */
-    lda = m;                     /* leading dimension of Q */
-    n = pmod->list[0] - 1;       /* # of cols = # of variables */
-
-    Q = gretl_matrix_alloc(m, n);
-
-    /* dim of tau is min (m, n) */
-    tau = malloc(n * sizeof *tau);
-    work = malloc(sizeof *work);
-
-    if (Q == NULL || tau == NULL || work == NULL) {
+    Q = gretl_matrix_alloc(pmod->nobs, k);
+    if (Q == NULL) {
 	*err = E_ALLOC;
-	goto qr_cleanup;
+	return NULL;
     }
 
-    /* copy independent var values into Q, skipping missing obs */
+    /* copy regressors into Q, skipping missing obs */
     j = 0;
     for (i=2; i<=pmod->list[0]; i++) {
 	vi = pmod->list[i];
@@ -388,36 +373,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	}
     }
 
-    /* do a workspace size query */
-    lwork = -1;
-    info = 0;
-    dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	*err = 1;
-	goto qr_cleanup;
-    }
-
-    /* set up optimally sized work array */
-    lwork = (integer) work[0];
-    work = realloc(work, (size_t) lwork * sizeof *work);
-    if (work == NULL) {
-	*err = E_ALLOC;
-	goto qr_cleanup;
-    }
-
-    /* run actual QR factorization */
-    dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	*err = 1;
-	goto qr_cleanup;
-    }
-
-    /* obtain the real "Q" matrix */
-    dorgqr_(&m, &n, &n, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	*err = 1;
+    *err = gretl_matrix_QR_decomp(Q, NULL);
+    if (*err) {
 	goto qr_cleanup;
     }
 
@@ -436,7 +393,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     gretl_matrix_set_colnames(S, cnames);
     gretl_matrix_set_t1(S, pmod->t1);
 
-    /* revised df and first component of variance */
+    /* revised df and first component of variance for the
+       studentized residuals
+    */
     df = pmod->dfd - 1;
     s21 = pmod->ess / df;
 
@@ -453,7 +412,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	    h = NADBL;
 	} else {
 	    h = 0.0;
-	    for (j=0; j<n; j++) {
+	    for (j=0; j<k; j++) {
 		q = gretl_matrix_get(Q, s, j);
 		h += q * q;
 	    }
@@ -463,7 +422,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 		f -= et;
 		/* studentized residual (note: agrees with R, Stata) */
 		s22 = et * et / (df * (1 - h));
-		d = et / sqrt((s21 - s22) * (1-h));
+		d = et / sqrt((s21 - s22) * (1 - h));
 	    }
 	    s++;
 	}
@@ -485,8 +444,6 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
  qr_cleanup:
 
     gretl_matrix_free(Q);
-    free(tau);
-    free(work);
 
     return S;
 }
