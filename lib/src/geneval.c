@@ -6403,8 +6403,8 @@ static int object_end_index (NODE *t, parser *p)
 	if (pa->t == SLRAW) {
 	    if (t == pa->R || (last != NULL && last == pa->R)) {
 		idx2 = 1;
-	    } else if (t == pa->L && pa->R != NULL) {
-		/* node under SLRAW? */
+	    } else if ((t == pa->L && pa->R != NULL) ||
+		       (last != NULL && last == pa->L)) {
 		idx1 = 1;
 	    }
 	}
