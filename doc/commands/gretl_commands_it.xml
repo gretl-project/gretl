@@ -7414,6 +7414,10 @@ contenga un percorso completo.
 	<effect>salva le variabili risultato</effect>
       </option>
       <option>
+	<flag>--overwrite</flag>
+	<effect>sovrascrive le serie eventualmente già esistenti</effect>
+      </option>
+      <option>
 	<flag>--quiet</flag>
 	<effect>non mostra i risultati</effect>
       </option>
@@ -7433,101 +7437,138 @@ contenga un percorso completo.
   <description>
     <para>
       Deve seguire immediatamente un comando <cmd>ols</cmd>. Calcola
-      il <quote>leverage</quote> (<math>h</math>, compreso tra 0 e
-      1) di ogni osservazione nel campione su cui è stato stimato il
-      precedente modello. Mostra il residuo (<math>u</math>) per
-      ogni osservazione assieme al leverage corrispondente e a una
-      misura della sua influenza sulla stima: <equation
-      status="inline" tex="$uh/(1 - h)$" ascii="u*h/(1-h)"
-      graphic="influence"/>. I <quote>punti di leverage</quote> per
-      cui il valore di <math>h</math> supera
-      2<math>k</math>/<math>n</math> (dove <math>k</math> è il
-      numero dei parametri stimati e <math>n</math> è l'ampiezza del
-      campione) sono indicati con un asterisco. Per i dettagli sui
-      concetti di leverage e influenza, si veda <cite
-      key="davidson-mackinnon93">Davidson e MacKinnon
+      il <quote>leverage</quote> (<math>h</math>, compreso tra 0 e 1)
+      di ogni osservazione nel campione su cui è stato stimato il
+      precedente modello. Mostra il residuo (<math>u</math>) per ogni
+      osservazione assieme al leverage corrispondente e a una misura
+      della sua influenza sulla stima: <math>uh</math>/(1 &minus;
+      <math>h</math>). I <quote>punti di leverage</quote> per cui il
+      valore di <math>h</math> supera 2<math>k</math>/<math>n</math>
+      (dove <math>k</math> è il numero dei parametri stimati e
+      <math>n</math> è l'ampiezza del campione) sono indicati con un
+      asterisco. Per i dettagli sui concetti di leverage e influenza,
+      si veda <cite key="davidson-mackinnon93">Davidson e MacKinnon
       (1993)</cite>, capitolo 2.
     </para>
-    <para>
-      Vengono mostrati anche i valori DFFITS: questi sono
-      <quote>residui studentizzati</quote> (ossia i residui
-      previsti, divisi per i propri errori standard) moltiplicati
-      per <equation status="inline"
-      tex="$\sqrt{h/(1 - h)}$"
-      ascii="sqrt[h/(1 - h)]"
-      graphic="dffit"/>. Per una discussione dei residui studentizzati
-      e dei valori DFFITS si veda Maddala,<cite key="maddala92">Introduction
-      to Econometrics</cite>, cap. 12, oppure <cite key="belsley-etal80">Belsley,
-      Kuh e	Welsch (1980)</cite>.
-</para>
-<para>
-  In breve, i <quote>residui previsti</quote> sono la differenza
-  tra il valore osservato e il valore stimato della variabile
-  dipendente all'osservazione <math>t</math>, ottenuti da una
-  regressione in cui quell'osservazione è stata omessa (oppure
-  in cui è stata aggiunta una variabile dummy che vale 1 solo
-  per l'osservazione <math>t</math>); il residuo studentizzato
-  si ottiene dividendo il residuo previsto per il proprio errore
-  standard.
-</para>
-<para context="cli">
-  Se si usa l'opzione <opt>save</opt>, il leverage, il valore di
-  influenza e il valore DFFITS vengono aggiunti al dataset in
-  uso. In questo contesto, l'opzione <opt>quiet</opt> evita che
-  i risultati vengano stampati. I nomi di default delle serie
-  prodotte sono rispettivamente <lit>lever</lit>,
-  <lit>influ</lit> e <lit>dffits</lit>.  Se però serie con
-  questo nome già esistono, i nomi delle serie prodotte sarano
-  ritoccati per assicurarne l'unicità; se così avvenisse,
-  occuperanno i tre numeri di serie più alti nel dataset.
-</para>
-<para context="gui">
-  L'icona "+" in cima alla finestra del test di leverage apre una
-  finestra di dialogo che permette di salvare nel dataset in uso
-una o più delle variabili del test.</para>
-<para context="tex">
-  Dopo l'esecuzione l'accessore <fncref targ="$test"/>
-  restituisce il criterio di validazione incrociata, definito
-  come 
-  \[
-  \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
-  \]
-  dove $\hat{y}_{-i}$ è l'errore di previsione per la $i$-esima
-  osservazione, dopo che quest'ultima è stata esclusa dal
-  campione. Di conseguenza, il criterio è la somma dei quadrati
-  degli errori di previsione nella quale per prevedere la
-  $i$-esima osservazione vengono usate tutte le altre $n-1$
-  osservazioni (il cosiddetto stimatore
-  <emphasis>leave-one-out</emphasis>). Per una discussione più
-  approfondita del criterio di validazione incrociata,
-  v. Davidson e MacKinnon's <book>Econometric Theory and
-  Methods</book>, pag. 685--686, e i riferimenti bibliografici
-  ivi citati.
-</para>
-<para context="notex">
-  Dopo l'esecuzione, l'accessore <fncref targ="$test"/>
-  restituisce il criterio di validazione incrociata, definito
-  come la somma dei quadrati degli scarti fra la variabile
-  dipendente e il suo valore previsto, calcolato a partire da un
-  campione dal quale quell'osservazione è stata esclusa.
-  (Questo stimatore è chiamato <emphasis>leave-one-out</emphasis>).
-  Per una discussione più approfondita del criterio di validazione
-  incrociata, v. Davidson e MacKinnon's <book>Econometric Theory and
-  Methods</book>, pag. 685&ndash;686, e i riferimenti bibliografici ivi citati.
-</para>
-<para context="cli">
-  Per impostazione predefinita, se questo comando viene invocato
-  verrà mostrata una versione interattiva del grafico del
-  leverage e dei valori d'influenza. Questo può essere
-  aggiustato tramite l'opzione <opt>plot</opt>. I parametri
-  accettabili per quest'opzione sono <lit>none</lit> per
-  sopprimere il grafico, <lit>display</lit> per mostrare il
-  grafico anche in modalità script, oppure il nome del file.
-  L'effetto di dare un nome di file al comando è descritto
-  all'interno dell'opzione <opt>output</opt> del comando <cmdref
-  targ="gnuplot"/>.
-</para>
-</description>
+    <para context="tex">
+      Vengono mostrati anche i valori DFFITS: questi sono i
+      <quote>residui studentizzati</quote> (ossia i residui divisi
+      per i propri errori standard) moltiplicati per $\sqrt{h/(1 -
+      h)}$. Essi forniscono una misura della differenza di
+      <emphasis>fit</emphasis> a seconda che quell'osservazione sia o no inclusa
+      nel campione. Per una discussione dei residui studentizzati e dei
+      valori DFFITS si veda Maddala,<cite
+      key="maddala92">Introduction to Econometrics</cite>, cap. 12,
+      oppure <cite key="belsley-etal80">Belsley, Kuh e Welsch
+      (1980)</cite>. Per ulteriori dettagli sui residui
+      studentizzati si veda la sezione <emphasis>Matrice
+      risltato</emphasis> più avanti.
+    </para>
+    <para context="notex">
+      Vengono mostrati anche i valori DFFITS: questi sono i
+      <quote>residui studentizzati</quote> (ossia i residui divisi
+      per i propri errori standard) moltiplicati per la radice
+      quadrata di <math>h</math>(1 &minus; <math>h</math>). Essi
+      forniscono una misura della differenza di
+      <emphasis>fit</emphasis> a seconda che quell'osservazione sia
+      o no inclusa nel campione. Per una discussione dei residui
+      studentizzati e dei valori DFFITS si veda Maddala,<cite
+      key="maddala92">Introduction to Econometrics</cite>, cap. 12,
+      oppure <cite key="belsley-etal80">Belsley, Kuh e Welsch
+      (1980)</cite>. Per ulteriori dettagli sui residui
+      studentizzati si veda la sezione <emphasis>Matrice
+      risultato</emphasis> più avanti.
+    </para>
+    <para context="cli">
+      Se si usa l'opzione <opt>save</opt>, il leverage, il valore di
+      influenza e il valore DFFITS vengono aggiunti al dataset in
+      uso. In questo contesto, l'opzione <opt>quiet</opt> evita che
+      i risultati vengano stampati. I nomi di default delle serie
+      prodotte sono rispettivamente <lit>lever</lit>,
+      <lit>influ</lit> e <lit>dffits</lit>.  Se però serie con
+      questo nome già esistono, entra in gioco l'opzione
+      <opt>overwrite</opt>: se essa viene specificata, le serie
+      preesistenti vengono sovrascritte. Se no, i nomi delle serie
+      prodotte sarano ritoccati per assicurarne l'unicità; in tal
+      caso, occuperanno i tre numeri di serie più alti nel dataset.
+    </para>
+    <para context="gui">
+      L'icona "+" in cima alla finestra del test di leverage apre
+      una finestra di dialogo che permette di salvare nel dataset in
+    uso una o più delle variabili del test.</para>
+    <para context="tex">
+      Dopo l'esecuzione l'accessore <fncref targ="$test"/> restituisce
+      il criterio di validazione incrociata, definito come \[
+      \sum_{i=1}^n (y_i - \hat{y}_{-i})^2 \] dove $\hat{y}_{-i}$ è
+      l'errore di previsione per la $i$-esima osservazione, dopo che
+      quest'ultima è stata esclusa dal campione. Di conseguenza, il
+      criterio è la somma dei quadrati degli errori di previsione
+      nella quale per prevedere la $i$-esima osservazione vengono
+      usate tutte le altre $n-1$ osservazioni (il cosiddetto stimatore
+      <emphasis>leave-one-out</emphasis>). Per una discussione più
+      approfondita del criterio di validazione incrociata, v. Davidson
+      e MacKinnon's <book>Econometric Theory and Methods</book>,
+      pag. 685--686, e i riferimenti bibliografici ivi citati.
+    </para>
+    <para context="notex">
+      Dopo l'esecuzione, l'accessore <fncref targ="$test"/>
+      restituisce il criterio di validazione incrociata, definito come
+      la somma dei quadrati degli scarti fra la variabile dipendente e
+      il suo valore previsto, calcolato a partire da un campione dal
+      quale quell'osservazione è stata esclusa.  (Questo stimatore è
+      chiamato <emphasis>leave-one-out</emphasis>).  Per una
+      discussione più approfondita del criterio di validazione
+      incrociata, v. Davidson e MacKinnon's <book>Econometric Theory
+      and Methods</book>, pag. 685&ndash;686, e i riferimenti
+      bibliografici ivi citati.
+    </para>
+    <para context="cli">
+      Per impostazione predefinita, se questo comando viene invocato
+      verrà mostrata una versione interattiva del grafico del leverage
+      e dei valori d'influenza. Questo può essere aggiustato tramite
+      l'opzione <opt>plot</opt>. I parametri accettabili per
+      quest'opzione sono <lit>none</lit> per sopprimere il grafico,
+      <lit>display</lit> per mostrare il grafico anche in modalità
+      script, oppure il nome del file.  L'effetto di dare un nome di
+      file al comando è descritto all'interno dell'opzione
+      <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
+    </para>
+    <subhead context="cli">Matrice risultato</subhead>
+    <para context="cli">
+      Oltre all'opzione <opt>save</opt> descritta sopra, i risultati
+      di questo comando possono essere salvati sotto forma di una
+      matrice a tre colonne usando l'accessore <fncref
+      targ="$result"/>. Le prime due colonne contengono i valori di
+      leverage e di influenza (come con <opt>save</opt>) ma la terza
+      colonna contiene i residui studentizzati anziché i valori
+      DFFITS. I residui sono <quote>studentizzati
+      esternamente</quote>, ovvero residui <quote>jackknife</quote>:
+      l'errore standard nel divisore dell'osservazione <math>i</math>
+      usa la somma dei quadrati dei residui calcolata omettendo
+      l'osservazione stessa. Questa grandezza può essere interpretata
+      come un test <math>t</math> per l'ipotesi di azzeramento del
+      coefficiente di una dummy pari a 0 ovunque tranne che per
+      l'osservazione <math>i</math>. Per una discussione più ampia dei
+      residui studentizzati si veda <cite
+      key="chatterjee-hadi86">Chatterjee and Hadi (1986)</cite>.
+      </para>
+      <para>
+	I valori DFFITS possono essere ottenuti dalla matrice <lit>$result</lit>
+	come segue:
+      </para>
+      <code>
+	R = $result
+	dffits = R[,3] .* sqrt(R[,1] ./ (1-R[,1]))
+      </code>
+      <para>
+	Oppure, usando le serie:
+      </para>
+      <code>
+	series h = $result[,1]  # leverage
+	series sr = $result[,3] # Studentized residual
+	series dffits = sr * sqrt(h/(1-h))
+      </code>
+    </description>
 
 <gui-access>
   <menu-path>Finestra del modello, /Test/LEVERAGE - Osservazioni influenti</menu-path>
