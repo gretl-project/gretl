@@ -71,6 +71,9 @@ static int printf_escape (int c, PRN *prn)
     case 'n':
 	pputc(prn, '\n');
 	break;
+    case 'r':
+	pputc(prn, '\r');
+	break;
     case 't':
 	pputc(prn, '\t');
 	break;
