@@ -1,6 +1,7 @@
 version 2022b, in progress
 - "leverage" command: add $result accessor to obtain 
   leverage, influence and Studentized residuals as matrix
+- "printf" command: add "\r" as a recognized escape sequence
 - assert() function: add a "fatal" switch to abort program
   execution when an assertion fails
 - deseas() function: add the option of saving the X-13ARIMA
@@ -12,6 +13,8 @@ version 2022b, in progress
 - Fix bug: misbehavior when subsampling within a function a
   panel dataset that was subsampled prior to calling the
   function in question
+- Fix bug: the 'end' keyword for indexing into matrices
+  could fail when the index [end,end] was given for a vector
 - Fix obscure issue: ensure that libR gets a correct value
   for R_HOME when the user has specified the location of
   libR.so as a symlink (probably specific to Linux, and
