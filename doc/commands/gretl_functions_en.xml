@@ -822,12 +822,12 @@
 	<para>
 	  Provides stored information following certain commands that
 	  do not have specific accessors. The commands in question
-	  include <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
-	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref
-	  targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
-	  targ="vif"/>, <cmdref targ="bds"/> and <cmdref targ="bkw"/>
-	  (in which cases the result is a matrix), plus <cmdref
-	  targ="pkg"/> (which optionally stores a bundle result).
+	  include <cmdref targ="bds"/>, <cmdref targ="bkw"/>, 
+	  <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
+	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref targ="leverage"/>,
+	  <cmdref targ="summary"/>, <cmdref targ="vif"/> and <cmdref targ="xtab"/> 
+	  (in which cases the result is a matrix), plus <cmdref targ="pkg"/> 
+	  (which optionally stores a bundle result).
 	</para>
       </description>
     </function>
