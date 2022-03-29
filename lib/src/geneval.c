@@ -6394,13 +6394,19 @@ static int object_end_index (NODE *t, parser *p)
     NODE *pa = t->parent;
     NODE *last = NULL;
     NODE *obj = NULL;
+    int idx1 = 0;
     int idx2 = 0;
     int ret = -1;
 
     while (pa != NULL) {
 	/* examine the parentage of @t */
 	if (pa->t == SLRAW) {
-	    idx2 = (t == pa->R || (last != NULL && last == pa->R));
+	    if (t == pa->R || (last != NULL && last == pa->R)) {
+		idx2 = 1;
+	    } else if (t == pa->L && pa->R != NULL) {
+		/* node under SLRAW? */
+		idx1 = 1;
+	    }
 	}
 	if (pa->t == OSL) {
 	    obj = (pa->L->aux != NULL)? pa->L->aux : pa->L;
@@ -6412,7 +6418,7 @@ static int object_end_index (NODE *t, parser *p)
 	pa = pa->parent;
     }
 #if 0
-    fprintf(stderr, "HERE objtype = %s, idx2 = %d\n",
+    fprintf(stderr, "object_end_index: objtype = %s, idx2 = %d\n",
 	    obj == NULL ? "none" : getsymb(obj->t), idx2);
 #endif
     if (obj == NULL || (idx2 && obj->t != MAT)) {
@@ -6422,8 +6428,11 @@ static int object_end_index (NODE *t, parser *p)
 	p->err = E_INVARG;
     } else if (obj->t == MAT) {
 	if (idx2) {
-	    /* must refer to column */
+	    /* index must refer to column */
 	    ret = obj->v.m->cols;
+	} else if (idx1) {
+	    /* index should refer to row? */
+	    ret = obj->v.m->rows;
 	} else {
 	    /* may refer to row or column */
 	    ret = gretl_vector_get_length(obj->v.m);
