@@ -2900,6 +2900,8 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    gretl_bundle_set_scalar(b, "nproc", (double) ival);
 	    ival = gretl_n_physical_cores();
 	    gretl_bundle_set_scalar(b, "ncores", (double) ival);
+	    ival = gretl_in_gui_mode();
+	    gretl_bundle_set_scalar(b, "gui_mode", (double) ival);
 	    ival = 0;
 #ifdef _OPENMP
 	    ival = 1;
