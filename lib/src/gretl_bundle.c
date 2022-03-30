@@ -32,6 +32,7 @@
 #include "system.h"
 #include "matrix_extra.h"
 #include "gretl_array.h"
+#include "libset.h"
 #include "gretl_bundle.h"
 
 #define BDEBUG 0
