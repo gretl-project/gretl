@@ -8309,12 +8309,12 @@ static void handle_flush_callback (gretlopt opt)
     if (oh.vwin != NULL) {
         /* we have a "flushable" window in place */
         char *buf = gretl_print_get_chunk(oh.prn);
-	char c = buf[strlen(buf)-1];
+	int ctrlr = buf[strlen(buf)-1] == '\r';
 
-	if (c == '\r') {
+	if (ctrlr) {
 	    buf[strlen(buf)-1] = '\0';
 	}
-	if (c == '\r' && oh.flushing) {
+	if (ctrlr && oh.flushing) {
 	    handle_carriage_return(buf);
 	} else {
 	    textview_delete_processing_message(oh.vwin->text);
@@ -8329,7 +8329,7 @@ static void handle_flush_callback (gretlopt opt)
             gretl_print_destroy(oh.prn);
         } else {
             /* prepare for another chunk of output */
-            if (c != '\r' && !(opt & OPT_Q)) {
+            if (!ctrlr && !(opt & OPT_Q)) {
 		textview_add_processing_message(oh.vwin->text);
 	    }
 	    gretl_print_set_save_position(oh.prn);
