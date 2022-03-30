@@ -5068,13 +5068,19 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "ecm", var->ci == VECM);
     gretl_bundle_set_int(b, "neqns", var->neqns);
     gretl_bundle_set_int(b, "ncoeff", var->ncoeff);
-    gretl_bundle_set_int(b, "order", var->order);
     gretl_bundle_set_int(b, "robust", var->robust);
     gretl_bundle_set_int(b, "t1", var->t1 + 1);
     gretl_bundle_set_int(b, "t2", var->t2 + 1);
     gretl_bundle_set_int(b, "df", var->df);
     gretl_bundle_set_int(b, "T", var->T);
     gretl_bundle_set_int(b, "ifc", var->ifc);
+
+    if (var->ci == VECM) {
+	/* regularize to order in levels */
+	gretl_bundle_set_int(b, "order", var->order + 1);
+    } else {
+	gretl_bundle_set_int(b, "order", var->order);
+    }
 
     if (var->models != NULL && var->models[0] != NULL) {
 	gretl_bundle_set_int(b, "sample_t1", var->models[0]->smpl.t1 + 1);
