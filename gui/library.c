@@ -8287,14 +8287,39 @@ static void output_handler_block_deletion (void)
                          NULL);
 }
 
+/* Handle the case where a string passed to "flush" ends
+   with '\r', so that it should be overwritten on each call.
+*/
+
+static void handle_carriage_return (char *buf)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(oh.vwin->text));
+    gtk_text_buffer_get_end_iter(tbuf, &end);
+    start = end;
+    gtk_text_iter_set_line_index(&start, 0);
+    gtk_text_buffer_delete(tbuf, &start, &end);
+    gtk_text_buffer_insert(tbuf, &start, buf, -1);
+}
+
 static void handle_flush_callback (gretlopt opt)
 {
     if (oh.vwin != NULL) {
         /* we have a "flushable" window in place */
         char *buf = gretl_print_get_chunk(oh.prn);
+	char c = buf[strlen(buf)-1];
 
-        textview_delete_processing_message(oh.vwin->text);
-        textview_append_text_colorized(oh.vwin->text, buf, 0);
+	if (c == '\r') {
+	    buf[strlen(buf)-1] = '\0';
+	}
+	if (c == '\r' && oh.flushing) {
+	    handle_carriage_return(buf);
+	} else {
+	    textview_delete_processing_message(oh.vwin->text);
+	    textview_append_text_colorized(oh.vwin->text, buf, 0);
+	}
         free(buf);
         if (opt & OPT_F) {
             /* finalize */
@@ -8304,10 +8329,10 @@ static void handle_flush_callback (gretlopt opt)
             gretl_print_destroy(oh.prn);
         } else {
             /* prepare for another chunk of output */
-            if (!(opt & OPT_Q)) {
-                textview_add_processing_message(oh.vwin->text);
-            }
-            gretl_print_set_save_position(oh.prn);
+            if (c != '\r' && !(opt & OPT_Q)) {
+		textview_add_processing_message(oh.vwin->text);
+	    }
+	    gretl_print_set_save_position(oh.prn);
             oh.flushing = 1;
         }
         /* ensure that the GUI gets updated */
