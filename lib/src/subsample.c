@@ -2578,7 +2578,46 @@ static int smpl_get_int (const char *s, DATASET *dset, int *err)
     return k;
 }
 
-/* take integer_string(s) as given here */
+/* On receiving OPT_D to force interpretation of integer @t
+   as representing a date, check that this works, and if so
+   return the corresponding observation index. This is
+   available only for annual data or calendar data, where
+   @t is supplied as ISO 8601 basic, YYYYMMDD.
+*/
+
+static int verify_integer_date (int t, DATASET *dset, int *err)
+{
+    int ret = -1;
+
+    if (annual_data(dset)) {
+	if (t >= dset->sd0 && t < dset->sd0 + dset->n) {
+	    ret = t - dset->sd0;
+	} else {
+	    *err = E_PDWRONG;
+	}
+    } else if (calendar_data(dset)) {
+	guint32 ed = epoch_day_from_ymd_basic(t);
+	char *date = NULL;
+
+	if (ed <= 0) {
+	    *err = E_PDWRONG;
+	} else {
+	    date = ymd_extended_from_epoch_day(ed, 0, err);
+	}
+	if (!*err) {
+	    ret = dateton(date, dset);
+	}
+	free(date);
+    } else {
+	*err = E_PDWRONG;
+    }
+
+    return ret;
+}
+
+/* Heuristic for interpreting @s as a year rather than a
+   1-based observation index.
+*/
 
 static int probably_year (const char *s, DATASET *dset)
 {
@@ -2601,7 +2640,8 @@ static int got_two_ints (const char *s, int *pi, int *pt)
     return n == 2;
 }
 
-static int get_sample_limit (const char *s, DATASET *dset, int code)
+static int get_sample_limit (const char *s, DATASET *dset,
+			     int code, gretlopt opt)
 {
     int ret = -1;
     int i, t;
@@ -2643,14 +2683,23 @@ static int get_sample_limit (const char *s, DATASET *dset, int code)
 	}
     } else {
 	/* absolute form */
-	if (!integer_string(s) || probably_year(s, dset)) {
-	    ret = get_t_from_obs_string(s, dset);
-	}
-	if (ret < 0) {
-	    gretl_error_clear();
-	    ret = smpl_get_int(s, dset, &err);
-	    /* convert to base 0 */
-	    if (!err) ret--;
+	if (opt & OPT_D) {
+	    /* force interpretation of integers as dates */
+	    int k = smpl_get_int(s, dset, &err);
+
+	    if (!err) {
+		ret = verify_integer_date(k, dset, &err);
+	    }
+	} else {
+	    if (!integer_string(s) || probably_year(s, dset)) {
+		ret = get_t_from_obs_string(s, dset);
+	    }
+	    if (ret < 0) {
+		gretl_error_clear();
+		ret = smpl_get_int(s, dset, &err);
+		/* convert to base 0 */
+		if (!err) ret--;
+	    }
 	}
     }
 
@@ -2692,6 +2741,7 @@ int set_sample (const char *start,
 		DATASET *dset,
 		gretlopt opt)
 {
+    gretlopt opt_in = opt;
     int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
     int err = 0;
@@ -2700,11 +2750,13 @@ int set_sample (const char *start,
 	return E_NODATA;
     }
 
-    /* currently --quiet (OPT_Q) and --permanent (OPT_T)
+    /* --quiet (OPT_Q), --permanent (OPT_T) and --dates (OPT_D)
        are the only acceptable options here
     */
-    opt &= ~OPT_Q;
-    if (opt != OPT_NONE && opt != OPT_T) {
+    opt_in &= ~OPT_Q;
+    opt_in &= ~OPT_T;
+    opt_in &= ~OPT_D;
+    if (opt_in != OPT_NONE) {
 	return E_BADOPT;
     }
 
@@ -2740,7 +2792,7 @@ int set_sample (const char *start,
 	if (start == NULL) {
 	    return E_ARGS;
 	}
-	new_t1 = get_sample_limit(start, dset, SMPL_T1);
+	new_t1 = get_sample_limit(start, dset, SMPL_T1, opt);
 	if (new_t1 < tmin || new_t1 > tmax) {
 	    maybe_clear_range_error(new_t1, dset);
 	    gretl_errmsg_set(_("error in new starting obs"));
@@ -2752,7 +2804,7 @@ int set_sample (const char *start,
     /* now we're looking at the 2 fields case */
 
     if (strcmp(start, ";")) {
-	new_t1 = get_sample_limit(start, dset, SMPL_T1);
+	new_t1 = get_sample_limit(start, dset, SMPL_T1, opt);
 	if (new_t1 < tmin || new_t1 > tmax) {
 	    maybe_clear_range_error(new_t1, dset);
 	    gretl_errmsg_set(_("error in new starting obs"));
@@ -2761,7 +2813,7 @@ int set_sample (const char *start,
     }
 
     if (!err && strcmp(stop, ";")) {
-	new_t2 = get_sample_limit(stop, dset, SMPL_T2);
+	new_t2 = get_sample_limit(stop, dset, SMPL_T2, opt);
 	if (new_t2 < tmin || new_t2 > tmax) {
 	    maybe_clear_range_error(new_t2, dset);
 	    gretl_errmsg_set(_("error in new ending obs"));

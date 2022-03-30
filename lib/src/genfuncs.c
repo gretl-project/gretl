@@ -4165,7 +4165,6 @@ int get_t_from_obs_string (const char *s, const DATASET *dset)
             if (gretl_is_scalar(s)) {
                 t = gretl_scalar_get_value(s, NULL);
             }
-
             if (t > dset->n) {
                 /* e.g. annual dates */
                 char try[16];

@@ -3131,6 +3131,7 @@ static int smpl_restrict (gretlopt opt)
 {
     opt &= ~OPT_Q;
     opt &= ~OPT_T;
+    opt &= ~OPT_D;
     return opt != OPT_NONE;
 }
 
