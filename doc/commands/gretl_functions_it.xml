@@ -822,14 +822,14 @@
     <function name="$result" section="access" output="matrix-or-bundle">
       <description>
 	<para>
-	  Fornisce le informazioni immagazzinate da alcuni comandi che
-	  non hanno specifici accessori. Tali comandi includono
-	  <cmdref targ="corr"/>, <cmdref targ="fractint"/>, <cmdref
-	  targ="freq"/>, <cmdref targ="summary"/>, <cmdref
-	  targ="xtab"/>, <cmdref targ="vif"/> e <cmdref targ="bkw"/>
-	  ; in questi casi il risultato è una matrice. In più <cmdref
-	  targ="pkg"/>, che opzionalmente registra come risultato un
-	  bundle.
+	  Fornisce le informazioni immagazzinate da alcuni comandi che non hanno
+	  specifici accessori. Tali comandi includono <cmdref targ="bds"/>,
+	  <cmdref targ="bkw"/>, <cmdref targ="corr"/>, <cmdref
+	  targ="fractint"/>, <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
+	  <cmdref targ="leverage"/>, <cmdref targ="summary"/>, <cmdref
+	  targ="vif"/> e <cmdref targ="xtab"/> ; in questi casi il risultato è
+	  una matrice. In più <cmdref targ="pkg"/>, che opzionalmente registra
+	  come risultato un bundle.
 	</para>
       </description>
     </function>
