@@ -4755,6 +4755,12 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
     /* get sorted vector of unique values */
     vals = gretl_matrix_values(dset->Z[i], dset->n, OPT_S, &err);
 
+    if (!err && gretl_is_null_matrix(vals)) {
+	gretl_errmsg_set("The target series has no valid values");
+	gretl_matrix_free(vals);
+	return E_DATA;
+    }
+
     if (!err) {
 	int i, nvals = gretl_vector_get_length(vals);
 	double x0 = gretl_vector_get(vals, 0);

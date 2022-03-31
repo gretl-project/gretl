@@ -3854,13 +3854,22 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
     char *envstr;
     int i, j;
 
-    if (m == NULL || m->val == NULL) {
+    if (m == NULL) {
         if (msg != NULL && *msg != '\0') {
             fprintf(stderr, "%s: matrix is NULL\n", msg);
         } else {
             fputs("matrix is NULL\n", stderr);
         }
         return;
+    } else if (m->val == NULL) {
+        if (msg != NULL && *msg != '\0') {
+            fprintf(stderr, "%s: matrix is empty, %d x %d\n", msg,
+		    m->rows, m->cols);
+        } else {
+            fprintf(stderr, "matrix is empty: %d x %d\n",
+		    m->rows, m->cols);
+        }
+	return;
     }
 
     if (m->is_complex) {
@@ -13866,7 +13875,9 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 
     if (k == 0) {
         v = gretl_null_matrix_new();
-        *err = v == NULL ? E_ALLOC : 0;
+	if (v == NULL) {
+	    *err = E_ALLOC;
+	}
         goto bailout;
     }
 
