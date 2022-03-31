@@ -6100,8 +6100,29 @@ void vbox_add_hwedge (GtkWidget *vbox)
     gtk_widget_show(h);
 }
 
+static int seasonals_ok (void)
+{
+    int ret = 0;
+
+    if (dataset_is_time_series(dataset)) {
+	if (dataset->pd == 4 || dataset->pd == 12) {
+	    ret = 1;
+	} else if (dataset_is_daily(dataset)) {
+	    if (dataset->markers == DAILY_DATE_STRINGS ||
+		dataset->sd0 < 100000) {
+		; /* no, incomplete data */
+	    } else {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static void build_selector_switches (selector *sr)
 {
+    int seas_ok = seasonals_ok();
     GtkWidget *hbox, *tmp;
 
     if (sr->ci == REPROBIT) {
@@ -6217,12 +6238,8 @@ static void build_selector_switches (selector *sr)
 	    pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
 	}
 	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
-	pack_switch(tmp, sr,
-		    want_seasonals && (dataset->pd == 4 || dataset->pd == 12),
-		    FALSE, OPT_D, 0);
-	if (dataset->pd != 4 && dataset->pd != 12) {
-	    gtk_widget_set_sensitive(tmp, FALSE);
-	}
+	pack_switch(tmp, sr, want_seasonals && seas_ok, FALSE, OPT_D, 0);
+	gtk_widget_set_sensitive(tmp, seas_ok);
     } else if (sr->ci == COINT) {
 	GtkWidget *combo;
 
@@ -6238,12 +6255,8 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
 	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
-	pack_switch(tmp, sr,
-		    want_seasonals && (dataset->pd == 4 || dataset->pd == 12),
-		    FALSE, OPT_D, 0);
-	if (dataset->pd != 4 && dataset->pd != 12) {
-	    gtk_widget_set_sensitive(tmp, FALSE);
-	}
+	pack_switch(tmp, sr, want_seasonals && seas_ok, FALSE, OPT_D, 0);
+	gtk_widget_set_sensitive(tmp, seas_ok);
     } else if (sr->ci == PANEL_WLS) {
 	tmp = gtk_check_button_new_with_label(_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_I, 0);
