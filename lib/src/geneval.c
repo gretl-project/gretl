@@ -6380,6 +6380,11 @@ static int object_get_size (NODE *n, parser *p)
     return ret;
 }
 
+#define END_DEBUG 0
+
+#define is_index2(i) (i==1 || i==3)
+#define is_index1(i) (i==2 || i==4)
+
 /* Cash out 'end' where it is legit, namely indicating the last
    element of a matrix row or column, or an array, list or string. We
    need to find the object to which 'end' is supposed to refer (@obj),
@@ -6394,19 +6399,38 @@ static int object_end_index (NODE *t, parser *p)
     NODE *pa = t->parent;
     NODE *last = NULL;
     NODE *obj = NULL;
-    int idx1 = 0;
-    int idx2 = 0;
+    int idx = 0;
     int ret = -1;
+
+#if END_DEBUG
+    fprintf(stderr, "\nobject_end_index: t=%p\n", (void *) t);
+#endif
 
     while (pa != NULL) {
 	/* examine the parentage of @t */
+#if END_DEBUG
+	fprintf(stderr, "parent %p, type '%s', L=%p, R=%p\n",
+		(void *) pa, getsymb(pa->t), (void *) pa->L, (void *) pa->R);
+	fprintf(stderr, "  Ltype %s%s, Rtype %s%s\n",
+		pa->L == NULL ? "null" : getsymb(pa->L->t), pa->L==t ? "*" : "",
+		pa->R == NULL ? "null" : getsymb(pa->R->t), pa->R==t ? "*" : "");
+#endif
 	if (pa->t == SLRAW) {
-	    if (t == pa->R || (last != NULL && last == pa->R)) {
-		idx2 = 1;
-	    } else if ((t == pa->L && pa->R != NULL) ||
-		       (last != NULL && last == pa->L)) {
-		idx1 = 1;
+	    if (t == pa->R) {
+		idx = 1;
+	    } else if (t == pa->L && pa->R != NULL) {
+		idx = 2;
+	    } else if (last != NULL && last->t > OP_MAX && last == pa->R) {
+		idx = 3;
+	    } else if (last != NULL && last->t > OP_MAX && last == pa->L) {
+		idx = 4;
 	    }
+#if END_DEBUG
+	    if (idx > 0) {
+		fprintf(stderr, "  set idx = %d based on %s\n", idx,
+			idx < 3 ? "SLRAW" : getsymb(last->t));
+	    }
+#endif
 	}
 	if (pa->t == OSL) {
 	    obj = (pa->L->aux != NULL)? pa->L->aux : pa->L;
@@ -6417,20 +6441,22 @@ static int object_end_index (NODE *t, parser *p)
 	}
 	pa = pa->parent;
     }
-#if 0
-    fprintf(stderr, "object_end_index: objtype = %s, idx2 = %d\n",
-	    obj == NULL ? "none" : getsymb(obj->t), idx2);
+
+#if END_DEBUG
+    fprintf(stderr, "objtype = %s, idx = %d\n",
+	    obj == NULL ? "none" : getsymb(obj->t), idx);
 #endif
-    if (obj == NULL || (idx2 && obj->t != MAT)) {
+
+    if (obj == NULL || (is_index2(idx) && obj->t != MAT)) {
 	/* either we didn't find a referent, or it's a
 	   case of an invalid second index
 	*/
 	p->err = E_INVARG;
     } else if (obj->t == MAT) {
-	if (idx2) {
+	if (is_index2(idx)) {
 	    /* index must refer to column */
 	    ret = obj->v.m->cols;
-	} else if (idx1) {
+	} else if (is_index1(idx)) {
 	    /* index should refer to row? */
 	    ret = obj->v.m->rows;
 	} else {
