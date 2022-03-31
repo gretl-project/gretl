@@ -249,6 +249,33 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
     memset(spec, 0, sizeof(*spec));
 }
 
+/* return 1 if @n equals or is found under @t, otherwise 0 */
+
+int find_in_tree (NODE *t, NODE *n)
+{
+    if (t == n) {
+	return 1;
+    } else if (t == NULL) {
+	return 0;
+    } else if (t->L != NULL && find_in_tree(t->L, n)) {
+	return 1;
+    } else if (t->R != NULL && find_in_tree(t->R, n)) {
+	return 1;
+    } else if (t->M != NULL && find_in_tree(t->M, n)) {
+	return 1;
+    } else if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    if (find_in_tree(t->v.bn.n[i], n)) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 #if EDEBUG || LHDEBUG
 
 static char *flagstr (guint8 flags)
@@ -328,7 +355,7 @@ static void print_tree (NODE *t, parser *p, int level, char pos)
     }
 }
 
-#endif /* EDEBUG */
+#endif /* EDEBUG || LHDEBUG */
 
 #if EDEBUG
 
@@ -6382,23 +6409,18 @@ static int object_get_size (NODE *n, parser *p)
 
 #define END_DEBUG 0
 
-#define is_index2(i) (i==1 || i==3)
-#define is_index1(i) (i==2 || i==4)
-#define LRtype(t) (t > OP_MAX && t != SUBSL)
-
 /* Cash out 'end' where it is legit, namely indicating the last
    element of a matrix row or column, or an array, list or string. We
    need to find the object to which 'end' is supposed to refer (@obj),
    and we also need to determine whether 'end' occurs in the first or
    second of the two possible indexation slots under the SLRAW node in
-   its parentage. The second slot (@idx2) is valid only as the column
+   its parentage. The second slot (idx = 2) is valid only as the column
    index for a matrix.
 */
 
 static int object_end_index (NODE *t, parser *p)
 {
     NODE *pa = t->parent;
-    NODE *last = NULL;
     NODE *obj = NULL;
     int idx = 0;
     int ret = -1;
@@ -6409,63 +6431,41 @@ static int object_end_index (NODE *t, parser *p)
 
     while (pa != NULL) {
 	/* examine the parentage of @t */
-#if END_DEBUG
-	fprintf(stderr, "parent %p, type '%s', L=%p, R=%p\n",
-		(void *) pa, getsymb(pa->t), (void *) pa->L, (void *) pa->R);
-	fprintf(stderr, "  Ltype %s%s, Rtype %s%s\n",
-		pa->L == NULL ? "null" : getsymb(pa->L->t), pa->L==t ? "*" : "",
-		pa->R == NULL ? "null" : getsymb(pa->R->t), pa->R==t ? "*" : "");
-#endif
 	if (pa->t == SLRAW) {
-	    if (t == pa->R) {
-		idx = 1;
-	    } else if (t == pa->L && pa->R != NULL) {
+	    if (find_in_tree(pa->R, t)) {
 		idx = 2;
-	    } else if (pa->L != NULL && pa->L->t == EMPTY) {
+	    } else if (find_in_tree(pa->L, t) && pa->R != NULL) {
 		idx = 1;
-	    } else if (pa->R != NULL && pa->R->t == EMPTY) {
-		idx = 2;
-	    } else if (last != NULL && LRtype(last->t) && last == pa->R) {
-		idx = 3;
-	    } else if (last != NULL && LRtype(last->t) && last == pa->L) {
-		idx = 4;
 	    }
-#if END_DEBUG
-	    if (idx > 0) {
-		fprintf(stderr, "  set idx = %d based on %s\n", idx,
-			idx < 3 ? "SLRAW" : getsymb(last->t));
-	    }
-#endif
-	}
-	if (pa->t == OSL) {
+	} else if (pa->t == OSL) {
 	    obj = (pa->L->aux != NULL)? pa->L->aux : pa->L;
 	    break;
-	} else {
-	    /* the node immediately under SLRAW? */
-	    last = pa;
 	}
 	pa = pa->parent;
     }
 
 #if END_DEBUG
-    fprintf(stderr, "objtype = %s, idx = %d\n",
+    fprintf(stderr, " objtype = %s, idx = %d\n",
 	    obj == NULL ? "none" : getsymb(obj->t), idx);
 #endif
 
-    if (obj == NULL || (is_index2(idx) && obj->t != MAT)) {
+    if (obj == NULL || (idx == 2 && obj->t != MAT)) {
 	/* either we didn't find a referent, or it's a
 	   case of an invalid second index
 	*/
 	p->err = E_INVARG;
     } else if (obj->t == MAT) {
-	if (is_index2(idx)) {
+	if (idx == 2) {
 	    /* index must refer to column */
 	    ret = obj->v.m->cols;
-	} else if (is_index1(idx)) {
-	    /* index should refer to row? */
+	} else if (idx == 1) {
+	    /* index must refer to row */
 	    ret = obj->v.m->rows;
 	} else {
-	    /* may refer to row or column */
+	    /* singleton index: may refer to row or column
+	       if the MAT is a vector; otherwise the error
+	       will be caught later
+	    */
 	    ret = gretl_vector_get_length(obj->v.m);
 	    if (ret == 0) {
 		ret = obj->v.m->rows;
