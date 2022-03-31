@@ -4957,9 +4957,19 @@ static GRETL_VAR *build_VAR_from_bundle (gretl_bundle *b,
 	    /* matrix @A from the bundle must be converted into
 	       the full companion matrix
 	    */
-	    gretl_matrix *A = companionize(var->A, err);
+	    gretl_matrix *CA;
 
-	    var->A = A;
+	    if (var->ci == VECM) {
+		/* Backward compatibility for VECM order: before
+		   March 2022 this was recorded as the order in
+		   differences, and we need to reconstitute that
+		   value here -- unless and until we revise the
+		   internal definition of var->order for VECMs.
+		*/
+		var->order = var->A->cols / var->neqns - 1;
+	    }
+	    CA = companionize(var->A, err);
+	    var->A = CA;
 	}
         if (!*err && var->ci == VECM && boot) {
             /* not fully ready, won't be reached at present? */
@@ -5075,7 +5085,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "T", var->T);
     gretl_bundle_set_int(b, "ifc", var->ifc);
 
-    if (0 /* var->ci == VECM */) {
+    if (var->ci == VECM) {
 	/* regularize to order in levels (not yet) */
 	gretl_bundle_set_int(b, "order", var->order + 1);
     } else {
