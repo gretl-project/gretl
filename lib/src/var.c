@@ -5086,7 +5086,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "ifc", var->ifc);
 
     if (var->ci == VECM) {
-	/* regularize to order in levels (not yet) */
+	/* regularize to order in levels */
 	gretl_bundle_set_int(b, "order", var->order + 1);
     } else {
 	gretl_bundle_set_int(b, "order", var->order);
