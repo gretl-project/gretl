@@ -82,7 +82,7 @@ static void irf_boot_free (irfboot *b)
 static int boot_allocate (irfboot *b, const GRETL_VAR *v)
 {
     int n = v->neqns;
-    int np = n * effective_order(v);
+    int np = n * levels_order(v);
     int err = 0;
 
     if (b->nresp > 1) {

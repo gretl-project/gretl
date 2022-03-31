@@ -63,8 +63,6 @@ struct JohansenInfo_ {
 
 #define jrank(v) ((v->jinfo == NULL)? 0 : v->jinfo->rank)
 
-#define effective_order(v) (v->order+(v->ci==VECM))
-
 /* vecm contains an "automatic" restricted term */
 #define auto_restr(v) (v->jinfo != NULL && \
                        (v->jinfo->code == J_REST_CONST || \

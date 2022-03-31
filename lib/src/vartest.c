@@ -594,7 +594,7 @@ int VAR_portmanteau_test (GRETL_VAR *var)
     s = var->T / 4;
     if (s > 48) s = 48;
 
-    k = var->order + (var->ci == VECM);
+    k = levels_order(var);
     if (s - k <= 0) {
 	/* no degrees of freedom */
 	return 0;

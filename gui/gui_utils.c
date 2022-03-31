@@ -4451,7 +4451,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	dyn_ok = !static_model;
     } else {
 	if (var != NULL) {
-	    t1 = effective_order(var);
+	    t1 = levels_order(var);
 	} else {
 	    t1 = sys->order;
 	}

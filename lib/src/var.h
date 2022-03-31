@@ -84,6 +84,7 @@ struct GRETL_VAR_ {
 
 #define var_n_lags(v) ((v->lags != NULL)? v->lags[0] : v->order)
 #define var_max_lag(v) ((v->lags != NULL)? v->lags[v->lags[0]] : v->order)
+#define levels_order(v) (v->order+(v->ci==VECM))
 
 int var_max_order (const int *list, const DATASET *dset);
 

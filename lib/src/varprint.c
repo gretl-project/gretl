@@ -249,7 +249,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 {
     gretl_matrix *rtmp = NULL, *ctmp = NULL;
     gretl_matrix *C = var->C;
-    int rows = var->neqns * effective_order(var);
+    int rows = var->neqns * levels_order(var);
     int block, blockmax;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
@@ -928,7 +928,7 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 
 static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
 {
-    int k = var->order + (var->ci == VECM);
+    int k = levels_order(var);
     int df = var->neqns * var->neqns * (var->LBs - k);
     double pv = chisq_cdf_comp(df, var->LB);
 
@@ -1043,7 +1043,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
     }
 
     if (vecm) {
-	label = g_strdup_printf(_("VECM system, lag order %d"), var->order + 1);
+	label = g_strdup_printf(_("VECM system, lag order %d"), levels_order(var));
     } else {
 	label = g_strdup_printf(_("VAR system, lag order %d"), var->order);
     }

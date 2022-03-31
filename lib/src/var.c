@@ -88,7 +88,7 @@ static int VAR_allocate_companion_matrix (GRETL_VAR *var)
     }
 
     n = var->neqns;
-    dim = n * effective_order(var);
+    dim = n * levels_order(var);
     var->A = gretl_zero_matrix_new(dim, dim);
 
     if (var->A == NULL) {
@@ -308,7 +308,6 @@ void gretl_VAR_clear (GRETL_VAR *var)
 void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 {
     const double *x;
-    int diff = (v->ci == VECM);
     int i, j, s, t, vi;
     int k = 0; /* X column index */
 
@@ -331,7 +330,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
             x = dset->Z[vi];
             s = 0;
             for (t=v->t1; t<=v->t2; t++) {
-                if (diff) {
+                if (v->ci == VECM) {
                     gretl_matrix_set(v->X, s++, k, x[t-j] - x[t-j-1]);
                 } else {
                     gretl_matrix_set(v->X, s++, k, x[t-j]);
@@ -366,7 +365,6 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
             s1 = 1;
             s0 = 0;
         }
-
         for (t=0; t<v->T; t++) {
             for (i=0; i<pd1; i++) {
                 gretl_matrix_set(v->X, t, k+i, (per == i)? s1 : s0);
@@ -542,13 +540,12 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 
 static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
 {
-    int diff = (v->ci == VECM)? 1 : 0;
     int i, vi, t, err = 0;
 
     /* advance t1 if needed */
 
     for (t=dset->t1; t<=dset->t2; t++) {
-        int miss = 0, p, s = t - (v->order + diff);
+        int miss = 0, p, s = t - levels_order(v);
 
         for (i=1; i<=v->ylist[0] && !miss; i++) {
             vi = v->ylist[i];
@@ -563,7 +560,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
                 }
             }
         }
-
         if (v->xlist != NULL && !miss) {
             for (i=1; i<=v->xlist[0] && !miss; i++) {
                 vi = v->xlist[i];
@@ -579,7 +575,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
            variable in one of the initial OLS equations. See also
            VECM_fill_Y().
         */
-
         if (v->rlist != NULL && !miss) {
             for (i=1; i<=v->rlist[0] && !miss; i++) {
                 vi = v->rlist[i];
@@ -589,7 +584,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
                 }
             }
         }
-
         if (!miss) {
             break;
         }
@@ -607,7 +601,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
                 miss = 1;
             }
         }
-
         if (v->xlist != NULL && !miss) {
             for (i=1; i<=v->xlist[0] && !miss; i++) {
                 vi = v->xlist[i];
@@ -617,7 +610,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
                 }
             }
         }
-
         if (v->rlist != NULL && !miss) {
             for (i=1; i<=v->rlist[0] && !miss; i++) {
                 vi = v->rlist[i];
@@ -627,7 +619,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
                 }
             }
         }
-
         if (!miss) {
             break;
         }
@@ -636,14 +627,12 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
     /* reject sample in case of internal missing values */
 
     for (t=v->t1; t<=v->t2 && !err; t++) {
-
         for (i=1; i<=v->ylist[0] && !err; i++) {
             vi = v->ylist[i];
             if (na(dset->Z[vi][t])) {
                 err = E_MISSDATA;
             }
         }
-
         if (v->xlist != NULL && !err) {
             for (i=1; i<=v->xlist[0] && !err; i++) {
                 vi = v->xlist[i];
@@ -652,7 +641,6 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
                 }
             }
         }
-
         if (v->rlist != NULL && !err) {
             for (i=1; i<=v->rlist[0] && !err; i++) {
                 vi = v->rlist[i];
@@ -1181,7 +1169,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
 {
     gretl_matrix *B = NULL;
     double s0 = 0, s1 = 1;
-    int order = effective_order(var);
+    int order = levels_order(var);
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int nseas = var->jinfo->seasonals;
     int tdyn, nf = t2 - t1 + 1;
@@ -1582,7 +1570,7 @@ gretl_VAR_get_portmanteau_test (const GRETL_VAR *var, int *err)
         if (m == NULL) {
             *err = E_ALLOC;
         } else {
-            int k = var->order + (var->ci == VECM);
+            int k = levels_order(var);
             int df = var->neqns * var->neqns * (var->LBs - k);
             double pv = chisq_cdf_comp(df, var->LB);
 
@@ -2004,7 +1992,7 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 static gretl_matrix *
 gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
 {
-    int k = var->neqns * effective_order(var);
+    int k = var->neqns * levels_order(var);
     gretl_matrix *vtmp = NULL;
     gretl_matrix *vt = NULL;
     gretl_matrix *se = NULL;
@@ -2056,7 +2044,7 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
                             int *err)
 {
     int n = var->neqns;
-    int k = n * effective_order(var);
+    int k = n * levels_order(var);
     gretl_matrix_block *B;
     gretl_matrix *idx, *vtmp;
     gretl_matrix *cic, *vt;
@@ -5084,13 +5072,8 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "df", var->df);
     gretl_bundle_set_int(b, "T", var->T);
     gretl_bundle_set_int(b, "ifc", var->ifc);
-
-    if (var->ci == VECM) {
-	/* regularize to order in levels */
-	gretl_bundle_set_int(b, "order", var->order + 1);
-    } else {
-	gretl_bundle_set_int(b, "order", var->order);
-    }
+    /* changed 2022-03-31 */
+    gretl_bundle_set_int(b, "order", levels_order(var));
 
     if (var->models != NULL && var->models[0] != NULL) {
 	gretl_bundle_set_int(b, "sample_t1", var->models[0]->smpl.t1 + 1);
