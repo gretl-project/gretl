@@ -253,15 +253,15 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
 
 int find_in_tree (NODE *t, NODE *n)
 {
-    if (t == n) {
-	return 1;
-    } else if (t == NULL) {
+    if (t == NULL) {
 	return 0;
-    } else if (t->L != NULL && find_in_tree(t->L, n)) {
+    } else if (t == n) {
 	return 1;
-    } else if (t->R != NULL && find_in_tree(t->R, n)) {
+    } else if (find_in_tree(t->L, n)) {
 	return 1;
-    } else if (t->M != NULL && find_in_tree(t->M, n)) {
+    } else if (find_in_tree(t->R, n)) {
+	return 1;
+    } else if (find_in_tree(t->M, n)) {
 	return 1;
     } else if (bnsym(t->t)) {
 	int i;
@@ -6434,7 +6434,7 @@ static int object_end_index (NODE *t, parser *p)
 	if (pa->t == SLRAW) {
 	    if (find_in_tree(pa->R, t)) {
 		idx = 2;
-	    } else if (find_in_tree(pa->L, t) && pa->R != NULL) {
+	    } else if (pa->R != NULL && find_in_tree(pa->L, t)) {
 		idx = 1;
 	    }
 	} else if (pa->t == OSL) {
@@ -6449,9 +6449,9 @@ static int object_end_index (NODE *t, parser *p)
 	    obj == NULL ? "none" : getsymb(obj->t), idx);
 #endif
 
-    if (obj == NULL || (idx == 2 && obj->t != MAT)) {
+    if (obj == NULL || (idx != 0 && obj->t != MAT)) {
 	/* either we didn't find a referent, or it's a
-	   case of an invalid second index
+	   case of invalid double indexation
 	*/
 	p->err = E_INVARG;
     } else if (obj->t == MAT) {
