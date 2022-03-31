@@ -6384,6 +6384,7 @@ static int object_get_size (NODE *n, parser *p)
 
 #define is_index2(i) (i==1 || i==3)
 #define is_index1(i) (i==2 || i==4)
+#define LRtype(t) (t > OP_MAX && t != SUBSL)
 
 /* Cash out 'end' where it is legit, namely indicating the last
    element of a matrix row or column, or an array, list or string. We
@@ -6420,9 +6421,13 @@ static int object_end_index (NODE *t, parser *p)
 		idx = 1;
 	    } else if (t == pa->L && pa->R != NULL) {
 		idx = 2;
-	    } else if (last != NULL && last->t > OP_MAX && last == pa->R) {
+	    } else if (pa->L != NULL && pa->L->t == EMPTY) {
+		idx = 1;
+	    } else if (pa->R != NULL && pa->R->t == EMPTY) {
+		idx = 2;
+	    } else if (last != NULL && LRtype(last->t) && last == pa->R) {
 		idx = 3;
-	    } else if (last != NULL && last->t > OP_MAX && last == pa->L) {
+	    } else if (last != NULL && LRtype(last->t) && last == pa->L) {
 		idx = 4;
 	    }
 #if END_DEBUG
