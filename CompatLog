@@ -1,5 +1,10 @@
 version 2022b, in progress
 
+The "order" member of the $system bundle made available by the
+"vecm" command has been redfined to equal the lag order in levels
+for consistency with the documentation of vecm and its printed
+output. (Before, "order" gave the lag order in differences.)
+
 Add an explicit deprecation message for use of the legacy fft
 function. This will be redefined in the next release.
 
