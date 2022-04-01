@@ -298,6 +298,60 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->name = NULL;
 }
 
+static int VAR_add_regular_seasonals (GRETL_VAR *v,
+				      const DATASET *dset,
+				      int *pk)
+{
+    int pd1 = dset->pd - 1;
+    int i, t, k = *pk;
+    double s0, s1;
+    int err = 0;
+
+    if (v->ci == VECM) {
+	s1 = 1 - 1.0 / dset->pd;
+	s0 = s1 - 1;
+    } else {
+	s1 = 1;
+	s0 = 0;
+    }
+
+    if (dataset_is_incomplete_daily(dset)) {
+	/* we have to read the date of each observation,
+	   since there will be holes in the time series
+	*/
+	int dow;
+
+	for (t=0; t<v->T; t++) {
+	    dow = weekday_from_date(dset->S[t + v->t1]);
+	    for (i=0; i<pd1; i++) {
+		gretl_matrix_set(v->X, t, k+i, (dow == i+1)? s1 : s0);
+	    }
+	}
+    } else {
+	/* we can proceed mostly algorithmically */
+	int per, offset = dated_daily_data(dset) ? 1 : 0;
+
+	if (dated_daily_data(dset)) {
+	    char obs[OBSLEN];
+
+	    ntolabel(obs, v->t1, dset);
+	    per = weekday_from_date(obs);
+	} else {
+	    per = get_subperiod(v->t1, dset, NULL);
+	}
+	for (t=0; t<v->T; t++) {
+	    for (i=0; i<pd1; i++) {
+		gretl_matrix_set(v->X, t, k+i, (per == i+offset)? s1 : s0);
+	    }
+	    per = (per < pd1)? per + 1 : 0;
+	}
+    }
+
+    *pk += pd1;
+
+    return err;
+}
+
 #define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
 
 /* Construct the common X matrix (composed of lags of the core
@@ -352,28 +406,12 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
         }
     }
 
-    /* add other deterministic terms */
+    /* add seasonals if wanted */
     if (v->detflags & DET_SEAS) {
-        int per = get_subperiod(v->t1, dset, NULL);
-        int pd1 = dset->pd - 1;
-        double s0, s1;
-
-        if (v->ci == VECM) {
-            s1 = 1 - 1.0 / dset->pd;
-            s0 = s1 - 1;
-        } else {
-            s1 = 1;
-            s0 = 0;
-        }
-        for (t=0; t<v->T; t++) {
-            for (i=0; i<pd1; i++) {
-                gretl_matrix_set(v->X, t, k+i, (per == i)? s1 : s0);
-            }
-            per = (per < pd1)? per + 1 : 0;
-        }
-        k += pd1;
+	VAR_add_regular_seasonals(v, dset, &k);
     }
 
+    /* add trend if wanted */
     if (v->detflags & DET_TREND) {
         s = 0;
         for (t=v->t1; t<=v->t2; t++) {
