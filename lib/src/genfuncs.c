@@ -7530,19 +7530,31 @@ int fill_day_of_week_array (double *dow,
                             const double *d,
                             const DATASET *dset)
 {
-    int yt, mt, dt;
+    char tstr[16];
+    int n, yt, mt, dt;
     int julian;
     int t, err = 0;
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
         julian = 0;
-        yt = (int) y[t];
-        if (yt < 0) {
-            yt = -yt;
-            julian = 1;
-        }
-        mt = (int) m[t];
-        dt = (int) d[t];
+	if (m == NULL && d == NULL) {
+	    /* ISO 8601 basic input */
+	    sprintf(tstr, "%d", (int) y[t]);
+	    n = sscanf(tstr, "%4d%2d%2d", &yt, &mt, &dt);
+	    if (n != 3) {
+		err = E_INVARG;
+		break;
+	    }
+	} else {
+	    /* full broken-down input */
+	    yt = (int) y[t];
+	    mt = (int) m[t];
+	    dt = (int) d[t];
+	}
+	if (yt < 0) {
+	    yt = -yt;
+	    julian = 1;
+	}
         dow[t] = day_of_week(yt, mt, dt, julian, &err);
     }
 
@@ -7555,13 +7567,23 @@ int fill_isoweek_array (double *wknum,
                         const double *d,
                         const DATASET *dset)
 {
-    int yt, mt, dt;
+    char tstr[16];
+    int n, yt, mt, dt;
     int t, err = 0;
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
-        yt = (int) y[t];
-        mt = (int) m[t];
-        dt = (int) d[t];
+	if (m == NULL && d == NULL) {
+	    sprintf(tstr, "%d", (int) y[t]);
+	    n = sscanf(tstr, "%4d%2d%2d", &yt, &mt, &dt);
+	    if (n != 3) {
+		err = E_INVARG;
+		break;
+	    }
+	} else {
+	    yt = (int) y[t];
+	    mt = (int) m[t];
+	    dt = (int) d[t];
+	}
         wknum[t] = iso_week_number(yt, mt, dt, &err);
     }
 

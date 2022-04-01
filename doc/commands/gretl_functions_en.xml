@@ -6641,6 +6641,17 @@
 	  account see
 	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
+	<para>
+	  An alternative call is also supported: if a single argument
+	  is given, it is taken to be a date (or series of dates) in
+	  ISO 8601 <quote>basic</quote> numeric format,
+	  <lit>YYYYMMDD</lit>. So the following two calls produce the
+	  same result, namely 13.
+	</para>
+	<code>
+	  eval isoweek(2022, 4, 1)
+	  eval isoweek(20220401)
+	</code>
       </description>
     </function>
 
@@ -13425,6 +13436,17 @@
 	  arguments must be of the same type, either scalars
 	  (integers) or series.
 	</para>
+	<para>
+	  An alternative call is also supported: if a single argument
+	  is given, it is taken to be a date (or series of dates) in
+	  ISO 8601 <quote>basic</quote> numeric format,
+	  <lit>YYYYMMDD</lit>. So the following two calls produce the
+	  same result, namely 2 (Tuesday).
+	</para>
+	<code>
+	  eval weekday(1990, 5, 1)
+	  eval epochday(19900501)
+	</code>
       </description>
     </function>
 

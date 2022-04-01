@@ -1,4 +1,5 @@
 version 2022b, in progress
+- new command/keyword "continue" for use in loops
 - "leverage" command: add $result accessor to obtain 
   leverage, influence and Studentized residuals as matrix
 - "printf" command: add "\r" as a recognized escape sequence
@@ -10,6 +11,8 @@ version 2022b, in progress
 - deseas() function: add the option of saving the X-13ARIMA
   specification created by gretl; add option to specify the
   ARIMA model; document the verbose option
+- weekday() and isoweek() functions: generalize to accept
+  dates in ISO 8601 "basic" format
 - script editor: enhancements for Find/Replace dialog
 - Fix bug: crash on trying to stringify() an empty series
 - Fix bug: det() should not flag an error when returning NA

@@ -249,7 +249,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
     memset(spec, 0, sizeof(*spec));
 }
 
-/* return 1 if @n equals or is found under @t, otherwise 0 */
+/* return 1 if @n equals @t or is found under @t, otherwise 0 */
 
 int find_in_tree (NODE *t, NODE *n)
 {
@@ -12298,14 +12298,57 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
         }
     } else if (f == F_WEEKDAY || f == F_ISOWEEK) {
-        post_process = 0;
-        if (scalar_node(l) && scalar_node(m) && scalar_node(r)) {
+	int series_mode = 0;
+	int basic_mode = 0;
+
+	post_process = 0;
+
+	if (null_node(m) && null_node(r)) {
+	    /* got a single argument */
+	    if (l->t == SERIES) {
+		basic_mode = series_mode = 1;
+	    } else if (scalar_node(l)) {
+		basic_mode = 1;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else if (l->t == SERIES && m->t == SERIES && r->t == SERIES) {
+	    series_mode = 1;
+	} else if (!(scalar_node(l) && scalar_node(m) && scalar_node(r))) {
+	    p->err = E_TYPES;
+	}
+
+	if (!p->err && series_mode) {
+	    const double *mx = basic_mode ? NULL : m->v.xvec;
+	    const double *rx = basic_mode ? NULL : r->v.xvec;
+
+            reset_p_aux(p, save_aux);
+            ret = aux_series_node(p);
+            if (ret != NULL && f == F_WEEKDAY) {
+                p->err = fill_day_of_week_array(ret->v.xvec, l->v.xvec,
+                                                mx, rx, p->dset);
+            } else if (ret != NULL) {
+                p->err = fill_isoweek_array(ret->v.xvec, l->v.xvec,
+					    mx, rx, p->dset);
+            }
+        } else if (!p->err) {
             ret = aux_scalar_node(p);
             if (ret != NULL) {
-                int yr = node_get_int(l, p);
-                int mo = node_get_int(m, p);
-                int day = node_get_int(r, p);
+		int mo, day, yr = node_get_int(l, p);
 
+		if (!p->err && basic_mode) {
+		    char tstr[16];
+		    int n;
+
+		    sprintf(tstr, "%d", yr);
+		    n = sscanf(tstr, "%4d%2d%2d", &yr, &mo, &day);
+		    if (n != 3) {
+			p->err = E_INVARG;
+		    }
+		} else if (!p->err) {
+		    mo = node_get_int(m, p);
+		    day = node_get_int(r, p);
+		}
                 if (!p->err && f == F_WEEKDAY) {
                     int julian = 0;
 
@@ -12318,24 +12361,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                     ret->v.xval = iso_week_number(yr, mo, day, &p->err);
                 }
             }
-        } else if (l->t == SERIES && m->t == SERIES && r->t == SERIES) {
-            reset_p_aux(p, save_aux);
-            ret = aux_series_node(p);
-            if (ret != NULL && f == F_WEEKDAY) {
-                p->err = fill_day_of_week_array(ret->v.xvec,
-                                                l->v.xvec,
-                                                m->v.xvec,
-                                                r->v.xvec,
-                                                p->dset);
-            } else if (ret != NULL) {
-                p->err = fill_isoweek_array(ret->v.xvec,
-                                            l->v.xvec,
-                                            m->v.xvec,
-                                            r->v.xvec,
-                                            p->dset);
-            }
-        } else {
-            p->err = E_TYPES;
         }
     } else if (f == F_DAYSPAN) {
 	guint32 ed1 = node_get_guint32(l, p);
