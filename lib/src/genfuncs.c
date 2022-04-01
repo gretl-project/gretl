@@ -3062,7 +3062,21 @@ static int n_new_dummies (const DATASET *dset,
     return nnew;
 }
 
-static gchar *seas_name_and_label (int k, const DATASET *dset,
+static const char *dayname (int i)
+{
+    const char *days[] = {
+	"Monday", "Tuesday", "Wednesday",
+	"Thursday", "Friday", "Saturday", "Sunday"
+    };
+
+    if (i >= 1 && i <= 7) {
+	return days[i-1];
+    } else {
+	return "??";
+    }
+}
+
+static gchar *seas_name_and_label (int i, const DATASET *dset,
                                    gretlopt opt, char *vname)
 {
     int pd = dataset_is_panel(dset) ? dset->panel_pd : dset->pd;
@@ -3070,27 +3084,30 @@ static gchar *seas_name_and_label (int k, const DATASET *dset,
     gchar *ret = NULL;
 
     if (opt & OPT_C) {
-        sprintf(vname, "S%d", k);
+        sprintf(vname, "S%d", i);
         ret = g_strdup(_("centered periodic dummy"));
     } else if (opt & OPT_S) {
-        sprintf(vname, "S%d", k);
+        sprintf(vname, "S%d", i);
         ret = g_strdup(_("uncentered periodic dummy"));
     } else if (pd == 4 && ts) {
-        sprintf(vname, "dq%d", k);
-        ret = g_strdup_printf(_("= 1 if quarter = %d, 0 otherwise"), k);
+        sprintf(vname, "dq%d", i);
+        ret = g_strdup_printf(_("= 1 if quarter = %d, 0 otherwise"), i);
     } else if (pd == 12 && ts) {
-        sprintf(vname, "dm%d", k);
-        ret = g_strdup_printf(_("= 1 if month = %d, 0 otherwise"), k);
+        sprintf(vname, "dm%d", i);
+        ret = g_strdup_printf(_("= 1 if month = %d, 0 otherwise"), i);
+    } else if (dated_daily_data(dset)) {
+	sprintf(vname, "dd%d", i);
+	ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
     } else {
         char dumstr[8] = "dummy_";
         char numstr[12];
         int len;
 
-        sprintf(numstr, "%d", k);
+        sprintf(numstr, "%d", i);
         len = strlen(numstr);
         dumstr[8 - len] = '\0';
-        sprintf(vname, "%s%d", dumstr, k);
-        ret = g_strdup_printf(_("%s = 1 if period is %d, 0 otherwise"), vname, k);
+        sprintf(vname, "%s%d", dumstr, i);
+        ret = g_strdup_printf(_("%s = 1 if period is %d, 0 otherwise"), vname, i);
     }
 
     return ret;
