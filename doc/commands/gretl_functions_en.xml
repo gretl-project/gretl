@@ -13445,7 +13445,7 @@
 	</para>
 	<code>
 	  eval weekday(1990, 5, 1)
-	  eval epochday(19900501)
+	  eval weekday(19900501)
 	</code>
       </description>
     </function>

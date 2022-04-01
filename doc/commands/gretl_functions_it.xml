@@ -6662,6 +6662,17 @@
 	  calendario gregoriano. Per maggiori dettagli, si veda
 	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
+	<para>
+	  Un modo alternativo di usare questa funzione è darle un solo
+	  argomento, che è inteso come una data (o una serie di date)
+	  in formato ISO 8601 <quote>basico</quote>, cioè
+	  <lit>YYYYMMDD</lit>. Le due espressioni seguenti
+	  restituiscono lo stesso risultato, cioè 13.
+       </para>
+       <code>
+	 eval isoweek(2022, 4, 1)
+	 eval isoweek(20220401)
+       </code>
       </description>
     </function>
 
@@ -13510,6 +13521,17 @@
 	  che i tre argomenti devono essere dello stesso tipo: o
 	  scalari (interi), oppure serie.
 	</para>
+	<para>
+	  Un modo alternativo di usare questa funzione è darle un solo
+	  argomento, che è inteso come una data (o una serie di date)
+	  in formato ISO 8601 <quote>basico</quote>, cioè
+	  <lit>YYYYMMDD</lit>. Le due espressioni seguenti
+	  restituiscono lo stesso risultato, cioè 2.
+       </para>
+	<code>
+	  eval weekday(1990, 5, 1)
+	  eval weekday(19900501)
+	</code>
       </description>
     </function>
 

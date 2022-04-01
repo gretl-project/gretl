@@ -2028,6 +2028,18 @@
     </description>
   </command>
 
+  <command name="continue" section="Programming"
+    label="Salta alla fine di un loop" context="cli">
+    <description>
+      <para>
+       Questo comando può essere usato solo in un loop; ha l'effetto
+       di saltare tutte le istruzioni seguenti nella iterazione
+       corrente (più interna) del loop.  Vedi anche <cmdref
+       targ="loop"/>, <cmdref targ="break"/>
+      </para>
+    </description>
+  </command>
+
   <command name="controlled" section="Graphs" context="gui"
 	   label="Grafici a dispersione con controllo">
 
