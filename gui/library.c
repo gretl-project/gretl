@@ -6361,7 +6361,16 @@ void add_dummies (GtkAction *action)
 {
     gretlopt opt = OPT_NONE;
     int u = dummies_code(action);
+    int center = 0;
     gint err;
+
+    if (u == TS_DUMMIES) {
+	int resp = no_yes_dialog(NULL, _("Center the periodic dummies?"));
+
+	if (resp == GRETL_YES) {
+	    center = 1;
+	}
+    }
 
     if (u == DISCRETE_DUMMIES) {
         int selvar = 0;
@@ -6374,8 +6383,12 @@ void add_dummies (GtkAction *action)
         }
         return;
     } else if (u == TS_DUMMIES) {
-        lib_command_strcpy("genr dummy");
-        err = gen_seasonal_dummies(dataset, 0);
+	if (center) {
+	    lib_command_strcpy("genr cdummy");
+	} else {
+	    lib_command_strcpy("genr dummy");
+	}
+        err = gen_seasonal_dummies(dataset, center);
     } else if (dataset_is_panel(dataset)) {
         if (u == PANEL_UNIT_DUMMIES) {
             lib_command_strcpy("genr unitdum");

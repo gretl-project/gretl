@@ -559,6 +559,7 @@ int gretl_is_series (const char *name, const DATASET *dset)
 int genr_special_word (const char *s)
 {
     if (!strcmp(s, "dummy") ||
+	!strcmp(s, "cdummy") ||
 	!strcmp(s, "timedum") ||
 	!strcmp(s, "unitdum") ||
 	!strcmp(s, "time") ||
@@ -597,6 +598,11 @@ static int gen_special (const char *s, const char *line,
 	err = gen_seasonal_dummies(dset, 0);
 	if (!err) {
 	    msg = N_("Periodic dummy variables generated.\n");
+	}
+    } else if (!strcmp(s, "cdummy")) {
+	err = gen_seasonal_dummies(dset, 1);
+	if (!err) {
+	    msg = N_("Centered periodic dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "timedum")) {
 	err = gen_panel_dummies(dset, OPT_T, prn);
