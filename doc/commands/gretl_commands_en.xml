@@ -1549,7 +1549,7 @@
       <para>
 	Break out of a loop.  This command can be used only within a loop; it
 	causes command execution to break out of the current (innermost) loop.
-	See also <cmdref targ="loop"/>.
+	See also <cmdref targ="loop"/>, <cmdref targ="continue"/>.
       </para>
     </description>
   </command>
@@ -1985,6 +1985,18 @@
 	compaction method is not presented.
       </para>
 
+    </description>
+  </command>
+
+  <command name="continue" section="Programming"
+    label="Skip forward in loop" context="cli">
+    <description>
+      <para>
+	This command can be used only within a loop; it has the effect
+	of skipping the subsequent statements within the current
+	iteration of the current (innermost) loop.  See also <cmdref
+	targ="loop"/>, <cmdref targ="break"/>
+      </para>
     </description>
   </command>
 

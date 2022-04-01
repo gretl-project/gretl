@@ -19,7 +19,7 @@ endloop
 Five forms of control-expression are available, as explained in
 section~\ref{loop-control}.
 
-Not all gretl commands are available within loops.  The commands
+Not all gretl commands are available within loops; the commands
 that are not presently accepted in this context are shown in
 Table~\ref{tab:nonloopcmds}.
 
@@ -34,8 +34,8 @@ Table~\ref{tab:nonloopcmds}.
 
 By default, the \cmd{genr} command operates quietly in the context of
 a loop (without printing information on the variable generated).  To
-force the printing of feedback from \cmd{genr} you may specify the
-\option{verbose} option to \cmd{loop}.
+force the printing of feedback you may specify the \option{verbose}
+option to \cmd{loop}.
 
 The \option{progressive} option to \cmd{loop} modifies the behavior of
 the commands \cmd{print} and \cmd{store}, and certain estimation
@@ -261,13 +261,25 @@ Any or all of the three expressions governing a \texttt{for} loop may
 be omitted---the minimal form is \texttt{(;;)}.  If the continuation
 test is omitted it is implicitly true, so you have an infinite loop
 unless you arrange for some other way out, such as a \cmd{break}
-statement.
+statement (see section~\ref{loop-specials} below).
 
 If the initialization expression in a \texttt{for} loop takes the
 common form of setting a scalar variable to a given value, the string
 representation of that scalar's value is made available within
-the loop via the accessor \dollar{\emph{varname}}.  
+the loop via the accessor \dollar{\emph{varname}}.
 
+\section{Special controls}
+\label{loop-specials}
+
+Besides the control afforded by the governing expression at the top of
+a loop, the flow of execution can be adjusted via the keywords
+\texttt{break} and \texttt{continue}.
+
+The \texttt{break} keyword terminates execution of the current loop
+immediately, while \texttt{continue} has the effect of skipping any
+subsequent statements within the loop on the current iteration;
+execution will proceed to the next iteration if the condition for
+continuation is still satisfied.
 
 \section{Progressive mode}
 \label{loop-progressive}
