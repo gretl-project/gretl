@@ -2887,6 +2887,57 @@ static int real_poly_trend (const double *x, double *fx, double *w,
     return 0;
 }
 
+/* Special case of poly_trend() for panel data. */
+
+static int panel_poly_trend (const double *x, double *fx,
+			     const DATASET *dset,
+			     int order)
+{
+    int i1 = dset->t1 / dset->pd;
+    int i2 = dset->t2 / dset->pd;
+    int t0, t1, t2, T;
+    int i, t, err = 0;
+
+    for (i=i1; i<=i2 && !err; i++) {
+        /* process the data for unit @i */
+        t0 = i * dset->pd;
+        t1 = 0;
+        t2 = dset->pd - 1;
+        for (t=0; t<=t2; t++) {
+            if (na(x[t0 + t])) {
+                t1++;
+            } else {
+                break;
+            }
+        }
+        for (t=t2; t>=t1; t--) {
+            if (na(x[t0 + t])) {
+                t2--;
+            } else {
+                break;
+            }
+        }
+	for (t=t1; t<=t2; t++) {
+	    if (na(x[t0 + t])) {
+		err = E_MISSDATA;
+		break;
+	    }
+	}
+        /* having found the first and last non-missing
+           observations, perform the fitting if possible
+        */
+	T = t2 - t1 + 1;
+	if (order < T) {
+	    t1 = t0 + t1;
+	    err = real_poly_trend(x + t1, fx + t1, NULL, T, order);
+	} else {
+	    err = E_DF;
+	}
+    }
+
+    return err;
+}
+
 /**
  * poly_trend:
  * @x: array of original data.
@@ -2906,8 +2957,7 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
     int T, err;
 
     if (dataset_is_panel(dset)) {
-        gretl_errmsg_set("polyfit: panel data not supported");
-        return E_PDWRONG;
+	return panel_poly_trend(x, fx, dset, order);
     }
 
     err = series_adjust_sample(x, &t1, &t2);
