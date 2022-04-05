@@ -82,14 +82,14 @@ All gretl abbrevs start with a grave accent (`).")
 
 (defvar gretl-begin-keywords
   '("if" "loop" "nls" "mle" "gmm" "foreign"
-    "restrict" "kalman" "function" "system" "plot"))
+    "restrict" "function" "system" "plot"))
 
 (defvar gretl-else-keywords
   '("else" "elif"))
 
 (defvar gretl-end-keywords
   '("endif" "endloop" "end nls" "end mle" "end gmm" "end foreign" "end restrict"
-    "end kalman" "end function" "end system" "end plot"))
+    "end function" "end system" "end plot"))
 
 (defvar gretl-keywords
   (append gretl-begin-keywords
