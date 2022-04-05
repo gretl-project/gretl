@@ -18586,13 +18586,16 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 
         if (s[n] == '=') {
             /* we actually reached an '=' */
-            if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
+	    if (s[n+1] == '=') {
+		/* 2022-04-05: should this be an error? */
+		goto done;
+	    } else if (strspn(s + n - 1, "+-*/%^~|.") == 1) {
                 /* preceded by a modifier: inflected assignment */
                 lhlen--;
                 opstr[0] = s[n-1];
                 opstr[1] = '=';
             } else {
-                /* no: straight assignment */
+                /* straight assignment */
                 opstr[0] = '=';
             }
             n++; /* plus 1 for '=' */
@@ -18654,7 +18657,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
             p->lh.name, p->lh.expr ? p->lh.expr : "NULL", opstr, err, *ps);
 #endif
 
-    if (!(p->flags & P_DECL) && p->lh.name[0] == '\0' && p->op == 0) {
+    if (!p->err && !(p->flags & P_DECL) && p->lh.name[0] == '\0' && p->op == 0) {
 	/* added 2021-05-29 */
 	p->flags |= P_DISCARD;
     }
