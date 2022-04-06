@@ -3,6 +3,8 @@ version 2022b, in progress
 - "leverage" command: add $result accessor to obtain 
   leverage, influence and Studentized residuals as matrix
 - "printf" command: add "\r" as a recognized escape sequence
+- "smpl" command: add --dates option to resolve potential
+  ambiguity of obs limits in case of annual and daily data
 - "vecm" command: redefine the "order" member of the $system
   accessor to give the lag order in levels, consistent with
   the vecm documentation
