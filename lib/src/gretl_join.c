@@ -370,14 +370,24 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
            means a trailing portion of the input was not
            processed.
         */
+#if 0
+	fprintf(stderr, "HERE right-hand pd = %d, tmft='%s', s='%s'\n", jr->r_dset->pd, tfmt, s);
+#endif
         test = strptime(s, tfmt, &t);
-	if (test == NULL && s_src == 3 && strchr(tfmt, '-') &&
-	    strlen(s) == 4 && integer_string(s)) {
-	    /* annual data from CSV? */
-	    if (j == 0) {
+	if (test == NULL && s_src == 3 && j == 0) {
+	    if (strchr(tfmt, '-') && strlen(s) == 4 &&
+		jr->r_dset->pd == 1 && integer_string(s)) {
+		/* annual data from CSV? */
 		set_time_format(jr->auto_keys, "%Y");
+		goto finish;
 	    }
-	    goto finish;
+#if 0
+	    else if (strchr(tfmt, '-') && strlen(s) == 6) {
+		/* quarterly data from CSV? */
+		set_time_format(jr->auto_keys, "%YQ%q");
+		goto finish;
+	    }
+#endif
 	}
     }
 
