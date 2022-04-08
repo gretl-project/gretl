@@ -9909,9 +9909,20 @@ static void *get_complex_counterpart (void *func)
 
 static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 {
-    const gretl_matrix *m = t->v.m;
-    int ret_complex = m->is_complex;
+    gretl_matrix *m = NULL;
+    gretl_matrix tmp = {0};
+    int ret_complex = 0;
     NODE *ret;
+
+    if (t->t == NUM) {
+	m = &tmp;
+	gretl_matrix_init(m);
+	m->rows = m->cols = 1;
+	m->val = &t->v.xval;
+    } else {
+	m = t->v.m;
+	ret_complex = m->is_complex;
+    }
 
     if (m->is_complex && cmplx_to_double(f->t)) {
         ret_complex = 0;
@@ -16834,7 +16845,11 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_REAL:
     case F_IMAG:
-        ret = apply_matrix_func(l, t, p);
+	if (l->t == MAT || l->t == NUM) {
+	    ret = apply_matrix_func(l, t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
         break;
     case F_CARG:
     case F_CONJ:
