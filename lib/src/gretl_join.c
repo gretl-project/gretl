@@ -2554,6 +2554,7 @@ static int determine_csv_matches (const char *fname,
 
 static int join_import_csv (const char *fname,
                             joinspec *jspec,
+			    DATASET *ldset,
                             gretlopt opt,
                             PRN *prn)
 {
@@ -2569,16 +2570,20 @@ static int join_import_csv (const char *fname,
     if (!err) {
         err = real_import_csv(fname, NULL, NULL, NULL, jspec,
                               NULL, NULL, opt, prn);
-        if (0 && !err) {
-            /* question, 2021-01-09: this is zeroed out: why? */
-            DATASET *dset = csvdata_get_dataset(jspec->c);
-            int pd, reversed = 0;
+    }
 
-            fprintf(stderr, "join_import_csv: n=%d, v=%d, pd=%d, markers=%d\n",
-                    dset->n, dset->v, dset->pd, dset->markers);
-            pd = test_markers_for_dates(dset, &reversed, NULL, prn);
-            fprintf(stderr, "pd from markers: %d\n", pd);
-        }
+    if (!err && dataset_is_time_series(ldset)) {
+	/* If we have time series data on the left, check on
+	   the imported CSV side for a clear time series
+	   interpretation.
+	*/
+	DATASET *rdset = csvdata_get_dataset(jspec->c);
+	int pd, reversed = 0;
+
+	pd = test_markers_for_dates(rdset, &reversed, NULL, prn);
+	if (pd > 0 && !reversed) {
+	    rdset->structure = TIME_SERIES;
+	}
     }
 
     return err;
@@ -3198,7 +3203,7 @@ int gretl_join_data (const char *fname,
             }
             err = join_import_gdt(fname, &jspec, gdt_opt, vprn);
         } else {
-            err = join_import_csv(fname, &jspec, opt, vprn);
+            err = join_import_csv(fname, &jspec, dset, opt, vprn);
         }
         if (!err) {
             outer_dset = outer_dataset(&jspec);
