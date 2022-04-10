@@ -200,7 +200,7 @@ The other browser shows all the packages available from the gretl
 server. It can be opened via the menu item ``File, Function packages,
 On server.'' The same listing can be accessed via a web
 interface,\footnote{See
-  \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.}
+  \url{http://gretl.sourceforge.net/cgi-bin/gretldata.cgi?opt=SHOW_FUNCS}.}
 but for most purposes it will be more convenient to work from within
 gretl.
 
@@ -1974,7 +1974,7 @@ pkg=/path/to/your_package.gfn
 savename=`basename $pkg`
 curl -F login="${user}" -F pass="${password}" \
 -F "pkg=@${pkg};filename=${savename};type=text/plain;charset=utf-8" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+http://gretl.sourceforge.net/cgi-bin/gretldata.cgi
 
 
 # (2) zip file variant
@@ -1988,7 +1988,7 @@ echo "Uploading $pkg ($bytes bytes) as $savename ..."
 
 curl -F login="${user}" -F pass="${password}" -F datasize="${bytes}" \
 -F "pkg=@${pkg};filename=${savename};type=application/x-zip-compressed" \
-http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi
+http://gretl.sourceforge.net/cgi-bin/gretldata.cgi
 \end{scode}
 \end{script}
 %$
@@ -2455,7 +2455,7 @@ Figure~\ref{fig:package_editor}).
   that will perform some specific function. If you supply more than
   one tag, the tags should be separated by spaces. You can find a
   listing of the available tags at
-  \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/tags.cgi}.
+  \url{http://gretl.sourceforge.net/cgi-bin/gretldata.cgi?opt=SHOW_TAGS}.
 
   \ttusage{tags = C13}
 
