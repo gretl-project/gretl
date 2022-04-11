@@ -14524,6 +14524,10 @@
 	  <flag>--time</flag>
 	  <effect>panel data: sample in time-series dimension</effect>
         </option>
+        <option>
+	  <flag>--dates</flag>
+	  <effect>interpret observation numbers as dates</effect>
+        </option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't report sample range</effect>
@@ -14546,18 +14550,18 @@
 	examples) above, <repl>startobs</repl> and <repl>endobs</repl>
 	must be consistent with the periodicity of the data.  Either
 	one may be replaced by a semicolon to leave the value
-	unchanged.  In the second form, the integers <repl>i</repl>
-	and <repl>j</repl> (which may be positive or negative, and
-	should be signed) are taken as offsets relative to the
-	existing sample range. In the third form <repl>dummyvar</repl>
-	must be an indicator variable with values 0 or 1 at each
-	observation; the sample will be restricted to observations
-	where the value is 1. The fourth form, using
-	<opt>restrict</opt>, restricts the sample to observations
-	that satisfy the given Boolean condition (which is specified
-	according to the syntax of the <cmdref targ="genr"/> command).
+	unchanged. (For more on <repl>startobs</repl> and
+	<repl>endobs</repl> see the section titled <quote>Dates versus
+	sequential indices</quote> below.)  In the second form, the
+	integers <repl>i</repl> and <repl>j</repl> (which may be
+	positive or negative, and must be signed) are taken as offsets
+	relative to the existing sample range. In the third form
+	<repl>dummyvar</repl> must be an indicator variable with
+	values 0 or 1 at each observation; the sample will be
+	restricted to observations where the value is 1. The fourth
+	form, using <opt>restrict</opt>, restricts the sample to
+	observations that satisfy the given Boolean condition.
       </para>
-
       <para>
 	The options <opt>no-missing</opt> and
 	<opt>no-all-missing</opt> may be used to exclude from the
@@ -14627,6 +14631,24 @@
 	may reimpose structure with the <cmdref targ="setobs"/>
 	command, but also see the <opt>preserve-panel</opt> option
 	below.
+      </para>
+
+      <subhead>Dates versus sequential indices</subhead>
+      <para>
+	The <opt>dates</opt> option can be used to resolve a potential
+	ambiguity in the interpretation of <repl>startobs</repl> and
+	<repl>endobs</repl> in the case of annual time-series data.
+	For example, should <lit>2010</lit> be taken to refer to the
+	year 2010, or to the two-thousand-and-tenth observation?  In
+	most cases this should come out right automatically but you
+	can force the date interpretation if needed. This option can
+	also be used with dated daily data, to get <lit>smpl</lit> to
+	interpret, for example, 20100301 as the first of March 2010
+	rather than a plain sequential index.  Note that this
+	ambiguity does not arise with time series frequencies other
+	than annual and daily; dates such as 1980:3 (third quarter of
+	1980) and 2020:03 (March 2020) cannot be confused with
+	plain indices.
       </para>
 
       <subhead>Panel-specific options</subhead>
