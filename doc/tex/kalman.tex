@@ -2,20 +2,23 @@
 \newcommand{\obsymat}{Z}
 \newcommand{\obsx}{x}
 \newcommand{\obsxmat}{B}
-\newcommand{\obsdist}{u}
+\newcommand{\obsdist}{\varepsilon}
 \newcommand{\obsvar}{R}
+\newcommand{\obsdim}{n}
 
 \newcommand{\statevec}{\alpha}
 \newcommand{\statecvar}{P}
 \newcommand{\statemat}{T}
-\newcommand{\strdist}{w}
+\newcommand{\strdist}{\eta}
 \newcommand{\statevar}{Q}
 \newcommand{\gain}{K}
 \newcommand{\statemu}{\mu}
+\newcommand{\stdim}{r}
 
 \newcommand{\altstatevar}{H}
 \newcommand{\altobsvar}{G}
 \newcommand{\alldist}{\varepsilon}
+\newcommand{\alldim}{p}
 
 \newcommand{\prederr}{v}
 \newcommand{\predvar}{F}
@@ -61,12 +64,12 @@ given by the following pair of equations:
 \end{align}
 %
 where (\ref{eq:obs}) is the observation or measurement equation and
-(\ref{eq:state}) is the state transition equation.  The state
-vector, $\statevec_{t}$, is ($r \times 1$) and the vector of
-observables, $\obsvec_t$, is ($n \times 1$); $\obsx_t$ is a ($k
-\times 1$) vector of exogenous variables.  The ($n \times 1$) vector
-$\obsdist_t$ and the ($r \times 1$) vector $\strdist_t$ are assumed to
-be vector white noise:
+(\ref{eq:state}) is the state transition equation.  The state vector,
+$\statevec_{t}$, is ($\stdim \times 1$) and the vector of observables,
+$\obsvec_t$, is ($obsdim \times 1$); $\obsx_t$ is a ($k \times 1$)
+vector of exogenous variables.  The ($\obsdim \times 1$) vector
+$\obsdist_t$ and the ($\stdim \times 1$) vector $\strdist_t$ are
+assumed to be vector white noise:
 %
 \begin{align*}
 E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s,
@@ -101,10 +104,10 @@ corresponding bundle keys are as follows:
 \begin{center}
 \begin{tabular}{ccl}
 Symbol & Dimensions & Reserved key \\[6pt]
-$\obsvec$    & $N \times n$ & \texttt{obsy}\\
-$\obsymat$   & $n \times r$ & \texttt{obsymat}\\
-$\statemat$  & $r \times r$ & \texttt{statemat}\\
-$\statevar$  & $r \times r$ & \texttt{statevar}\\
+$\obsvec$    & $N \times \obsdim$ & \texttt{obsy}\\
+$\obsymat$   & $\obsdim \times \stdim$ & \texttt{obsymat}\\
+$\statemat$  & $\stdim \times \stdim$ & \texttt{statemat}\\
+$\statevar$  & $\stdim \times \stdim$ & \texttt{statevar}\\
 \end{tabular}
 \end{center}
 
@@ -137,13 +140,13 @@ section~\ref{sec:stconst} below.}
 Symbol & Dimensions & Key & If omitted\dots \\[6pt]
 $\obsx$ & $N \times k$ & \texttt{obsx} &
  no exogenous terms in observation equation\\
-$\obsxmat$ & $n \times k$ & \texttt{obsxmat} &
+$\obsxmat$ & $\obsdim \times k$ & \texttt{obsxmat} &
  no exogenous terms in observation equation\\
-$\obsvar$ & $n \times n$ & \texttt{obsvar} &
+$\obsvar$ & $\obsdim \times \obsdim$ & \texttt{obsvar} &
  no disturbance term in observation equation \\
-$\hat{\statevec}_0$ & $r \times 1$ & \texttt{inistate} &
+$\hat{\statevec}_0$ & $\stdim \times 1$ & \texttt{inistate} &
  $\hat{\statevec}_0$ is a zero vector\\
-$\statecvar_0$ & $r \times r$ & \texttt{inivar} &
+$\statecvar_0$ & $\stdim \times \stdim$ & \texttt{inivar} &
  $\statecvar_0$ is set automatically
 \end{tabular}
 \end{center}
@@ -159,14 +162,15 @@ SSmod.obsxmat = B'
 Naturally, the arguments you pass to \cmd{ksetup} must have coherent
 dimensions: for example, \texttt{statemat} and \texttt{statevar} must
 be of the same size; otherwise, an error is returned. Once setup is
-complete the dimensions of the model, $r$, $n$, $k$ and $N$, become
-available as scalar members of the bundle (under their own names).
+complete the dimensions of the model, $\stdim$, $\obsdim$, $k$ and
+$N$, become available as scalar members of the bundle (under their own
+names).
 
 It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
 ($\obsxmat$) matrices must go together---either both are given or
 neither is given.  But an exception is granted for convenience.  If
 the observation equation includes a constant but no additional
-exogenous variables, you can give a ($n \times 1$) value for
+exogenous variables, you can give a ($\obsdim \times 1$) value for
 $\obsxmat$ without having to specify \texttt{obsx}.  More generally,
 if the column dimension of $\obsxmat$ is 1 greater than $k$ it is
 assumed that the first element of $\obsxmat$ is associated with an
@@ -195,11 +199,11 @@ problems. It may then be helpful to specifying a diffuse initializer
 via \texttt{inivar} using a somewhat smaller value of $\kappa$, as in
 %
 \begin{code}
-SSmod.inivar = 1.0e5 * I(r)
+SSmod.inivar = 1.0e5 * I(stdim)
 \end{code}
-where $r$ is the dimension of the state.\footnote{Exact diffuse
-  initialization in the manner of \cite{koopman97} is in the works,
-  and should be available in a future version of gretl.}
+where \texttt{stdim} is the dimension of the state.\footnote{Exact
+  diffuse initialization in the manner of \cite{koopman97} is in the
+  works, and should be available in a future version of gretl.}
 
 % The automatic initialization of $\statecvar_{1|0}$ (in case
 % \texttt{inivar} is not specified) is applicable only if all the
@@ -249,12 +253,12 @@ bundle there are certain constraints.
   \texttt{statemat}, \texttt{statevar} and (if applicable)
   \texttt{obsvar} and/or \texttt{obsxmat} in a given bundle if you
   wish---but only on condition that the replacement matrix has the
-  same dimensions as the original. In other words, the dimensions $r$,
-  $n$ and $k$ are set once and for all by the \texttt{ksetup} call
-  (section~\ref{sec:setup}).
+  same dimensions as the original. In other words, the dimensions
+  $\stdim$, $\obsdim$ and $k$ are set once and for all by the
+  \texttt{ksetup} call (section~\ref{sec:setup}).
 \item You can replace the data matrices \texttt{obsy} and (if
   applicable) \texttt{obsx} subject to the condition that the number
-  of columns is unchanged ($n$ and $k$ respectively); the time-series
+  of columns is unchanged ($\obsdim$ and $k$ respectively); the time-series
   length, $N$, is mutable. But if \texttt{obsx} is present it must
   have at least as many rows as \texttt{obsy} (which defines $N$ for
   the bundle).
@@ -308,7 +312,7 @@ key \texttt{lnl} gives the overall loglikelihood under the joint
 normality assumption,
 %
 \[
-  \ell = -\frac{1}{2} \left[nN \log(2 \pi) + \sum_{t=1}^N\log \left|\predvar_t\right| +
+  \ell = -\frac{1}{2} \left[\obsdim N \log(2 \pi) + \sum_{t=1}^N\log \left|\predvar_t\right| +
     \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
@@ -317,14 +321,14 @@ while the key \texttt{llt} gives access to a $N$-vector, element $t$ of
 which is
 %
 \[
-  \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \log \left|\predvar_t\right| +
+  \ell_t = -\frac{1}{2} \left[\obsdim \log(2 \pi) + \log \left|\predvar_t\right| +
     \prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
 In addition the scalar \texttt{s2} holds the scale factor,
 %
 \[
-\hat{\sigma}^2 = \frac{1}{nN-d}
+\hat{\sigma}^2 = \frac{1}{\obsdim N-d}
    \sum_{t=1}^N\prederr_t'\predvar_t^{-1} \prederr_t
  \]
 where $d$ denotes the number of elements in the state vector subject
@@ -336,15 +340,16 @@ rows, one for each time-step; the contents of the rows are shown in
 the following listing.
 %
 \begin{enumerate}
-\item Forecast errors for the observable variables, $\prederr_t'$, $n$
-  columns: key \texttt{prederr}.
+\item Forecast errors for the observable variables, $\prederr_t'$,
+  $\obsdim$ columns: key \texttt{prederr}.
 \item Variance matrix for the forecast errors, $\myvech(\predvar_t)'$,
-  $n(n+1)/2$ columns: key \texttt{pevar}.
-\item Estimate of the state vector, $\hat{\statevec}_{t|t-1}'$, $r$
-  columns: key \texttt{state}.
+  $\obsdim(\obsdim + 1)/2$ columns: key \texttt{pevar}.
+\item Estimate of the state vector, $\hat{\statevec}_{t|t-1}'$,
+  $\stdim$ columns: key \texttt{state}.
 \item MSE of estimate of the state vector,
-  $\myvech(\statecvar_{t|t-1})'$, $r(r+1)/2$ columns: key \texttt{stvar}.
-\item Kalman gain, $\myvec(\gain_t)'$, $rn$ columns: key
+  $\myvech(\statecvar_{t|t-1})'$, $\stdim(\stdim + 1)/2$ columns: key
+  \texttt{stvar}.
+\item Kalman gain, $\myvec(\gain_t)'$, $\stdim \obsdim$ columns: key
   \texttt{gain}.
 \end{enumerate}
 
@@ -406,7 +411,7 @@ section~\ref{sec:kfilter}), but the keys \texttt{state} and
 \texttt{stvar} now give the smoothed estimates.  That is, row $t$ of
 the \texttt{state} matrix holds $\hat{\statevec}_{t|T}'$ and row $t$
 of \texttt{stvar} holds $\statecvar_{t|T}$, in transposed vech form
-with $r(r+1)/2$ elements.
+with $\stdim(\stdim +1)/2$ elements.
 
 \section{The \cmd{kdsmooth} function}
 \label{sec:kdsmooth}
@@ -418,16 +423,16 @@ estimate of the disturbances along with a dispersion measure, using
 the methods described in \cite{koopman93} and \cite{koopman-etal99}.
 
 Upon successful execution of the function, the bundle will contain
-under the key \texttt{smdist} an $N \times (r+n)$ matrix holding
-smoothed estimates of $\strdist_t$ and $\obsdist_t$. That is, a matrix
-whose $t$-th row contains
+under the key \texttt{smdist} an $N \times (\stdim + \obsdim)$ matrix
+holding smoothed estimates of $\strdist_t$ and $\obsdist_t$. That is,
+a matrix whose $t$-th row contains
 \[
 (\hat{\strdist}_t' , \hat{\obsdist}_t')
  = E\left[ (\strdist_t' , \obsdist_t') \,| \,
    \obsvec_1, \ldots, \obsvec_T \right]
 \]
 (This assumes the observation equation has a stochastic component; if
-it does not, then \texttt{smdist} is just $N \times r$.) Once the
+it does not, then \texttt{smdist} is just $N \times \stdim$.) Once the
 smoothed disturbances are obtained the smoothed state can be
 calculated quickly and easily, so a call to \texttt{kdsmooth} updates
 the \texttt{state} member of the bundle passed as argument. However,
@@ -473,13 +478,14 @@ We are now ready to state what gretl provides under the key
 non-zero the results are based on $V^{(2)}_t$, otherwise (that is, by
 default) they are based on $V^{(1)}_t$. In either case row $t$ of
 \texttt{smdisterr} contains the square roots of the diagonal elements
-of the matrix in question: the first $r$ elements pertain to the state
-disturbances and the following $n$ elements to the observation
-equation (if applicable). Like \texttt{smdist}, \texttt{smdisterr} has
-$N$ rows and either $r+n$ or $r$ columns depending on whether or not
-there's a disturbance term in the observation equation. We return
-standard deviations rather than variances since most of the time
-it's the former that users will actually want.
+of the matrix in question: the first $\stdim$ elements pertain to the
+state disturbances and the following $\obsdim$ elements to the
+observation equation (if applicable). Like \texttt{smdist},
+\texttt{smdisterr} has $N$ rows and either $\stdim + \obsdim$ or just
+$\stdim$ columns depending on whether or not there's a disturbance
+term in the observation equation. We return standard deviations rather
+than variances since most of the time it's the former that users will
+actually want.
 
 Section~\ref{sec:example_dsmooth} presents a script which exercises
 the disturbance smoother and illustrates the difference between
@@ -494,15 +500,15 @@ returns a matrix of simulation results. An optional trailing Boolean
 argument is supported, the purpose of which is explained below.
 
 If the disturbances are not cross-correlated, the matrix argument must
-be either $N \times r$, if there is no disturbance in the observation
-equation, or $N \times (r+n)$ if the $\obsvar$ (\texttt{obsvar})
-matrix is specified. Row $t$ holds either $\strdist_t'$ or
-$(\strdist_t', \obsdist_t')$. Note that if $\statevar$
-(\texttt{statevar}) is not simply an identity matrix you will have to
-scale the artificial state disturbances appropriately; the same goes
-for $\obsvar$ and the observation disturbances, if present. Given a
-matrix $U$ containing standard normal variates, in the general case
-this requires finding a matrix $A$ such that
+be either $N \times \stdim$, if there is no disturbance in the
+observation equation, or $N \times (\stdim + \obsdim)$ if the
+$\obsvar$ (\texttt{obsvar}) matrix is specified. Row $t$ holds either
+$\strdist_t'$ or $(\strdist_t', \obsdist_t')$. Note that if
+$\statevar$ (\texttt{statevar}) is not simply an identity matrix you
+will have to scale the artificial state disturbances appropriately;
+the same goes for $\obsvar$ and the observation disturbances, if
+present. Given a matrix $U$ containing standard normal variates, in
+the general case this requires finding a matrix $A$ such that
 \[
 AA' = \Omega \equiv \left(
 \begin{array}{ll}
@@ -538,7 +544,7 @@ disturbances are scaled to the variances specified by $Q_t$ and $R_t$.
 
 If the disturbances are cross-correlated (see
 section~\ref{sec:crossd}) then the matrix argument to \cmd{ksimul}
-should be $N \times p$, each row holding $\alldist_t'$. In this case
+should be $N \times \alldim$, each row holding $\alldist_t'$. In this case
 no prior scaling is required since it is assumed that
 $\alldist_t \sim N(0, I)$ and the disturbances for the respective
 equations, $\altstatevar_t \alldist_t$ and $\altobsvar_t \alldist_t$,
@@ -558,13 +564,14 @@ preference to \texttt{obsx} for simulation. Or if you don't mind
 over-writing the original \texttt{obsx} you can substitute another
 matrix with the required number of rows under that key.
 
-By default, the value returned by \cmd{ksimul} is a ($N \times n$)
-matrix holding simulated values for the vector of observables at each
-time step; that is, row $t$ holds $\tilde{\obsvec}_t'$, where the tilde
-indicates a simulated quantity.  To obtain a record of the simulated
-state, supply a non-zero value for the final, optional argument. In
-that case the returned matrix is $N \times (r+n)$ and contains both
-the simulated state and the simulated observable; row $t$ holds
+By default, the value returned by \cmd{ksimul} is a
+($N \times \obsdim$) matrix holding simulated values for the vector of
+observables at each time step; that is, row $t$ holds
+$\tilde{\obsvec}_t'$, where the tilde indicates a simulated quantity.
+To obtain a record of the simulated state, supply a non-zero value for
+the final, optional argument. In that case the returned matrix is
+$N \times (\stdim + \obsdim)$ and contains both the simulated state
+and the simulated observable; row $t$ holds
 $(\tilde{\statevec}_t', \tilde{\obsvec}_t')$.
 
 Note that the original \texttt{obsy} member of the bundle is not
@@ -645,9 +652,10 @@ formulation allows for cross-correlation.  In place of
      \altstatevar_t \alldist_t
 \end{align*}
 %
-where $\alldist_t$ is a ($p \times 1$) disturbance vector which is
-assumed to satisfy $\alldist_t \sim N(0, I_p)$, $\altstatevar_t$ is
-($r \times p$) and $\altobsvar_t$ is ($n \times p$).
+where $\alldist_t$ is redefined as a ($\alldim \times 1$) disturbance
+vector which is assumed to satisfy $\alldist_t \sim N(0, I_{\alldim})$,
+$\altstatevar_t$ is ($\stdim \times \alldim$) and $\altobsvar_t$ is
+($\obsdim \times \alldim$).
 
 For example, the special case where $\altobsvar = I$ is referred to as
 ``innovations representation'' in \cite{hansen-sargent2013} and is a
@@ -687,7 +695,7 @@ awkward to formulate and forecasts more expensive to
 compute. Therefore, we adopt the convention above on practical
 grounds.
 
-The ($r \times 1$) vector $\statemu$ can be specified as a bundle
+The ($\stdim \times 1$) vector $\statemu$ can be specified as a bundle
 member by the name \texttt{stconst}. Despite its name, this matrix can
 be stipulated as time varying, as explained in the next section.
 
@@ -736,8 +744,8 @@ end function
 \end{code}
 %
 where \texttt{b.Zvals} is a bundled $N$-vector. An updater that
-operates on both $\obsymat$ ($n \times r$) and $\statemat$ ($r \times
-r$) might be
+operates on both $\obsymat$ ($\obsdim \times \stdim$) and $\statemat$
+($\stdim \times \stdim$) might be
 %
 \begin{code}
 function void update_2 (bundle *b)
@@ -746,13 +754,13 @@ function void update_2 (bundle *b)
 end function
 \end{code}
 %
-where in this case we assume that \texttt{b.Zvals} is $N \times rn$,
-with row $t$ holding the (transposed) vec of $\obsymat_t$, and
-\texttt{b.Tvals} is $N \times r(r+1)/2$, with row $t$ holding the vech
-of $\statemat_t$. Simpler variants (e.g.\ just one element of a
-relevant matrix in question is changed) and more complex
-variants---say, involving some sort of conditionality---are also
-possible in this framework.
+where in this case we assume that \texttt{b.Zvals} is
+$N \times \stdim\obsdim$, with row $t$ holding the (transposed) vec of
+$\obsymat_t$, and \texttt{b.Tvals} is $N \times \stdim(\stdim +1)/2$,
+with row $t$ holding the vech of $\statemat_t$. Simpler variants
+(e.g.\ just one element of a relevant matrix in question is changed)
+and more complex variants---say, involving some sort of
+conditionality---are also possible in this framework.
 
 It is worth noting that this setup lends itself to a much wider scope
 than time-varying system matrices. In fact, this syntax allows for the
@@ -1185,9 +1193,7 @@ smoothed disturbances, depending on the the value of the (optional)
 trailing Boolean parameter. Here we show what these two measures are
 good for, using the famous Nile flow data that have been much analysed
 in the state-space literature. We focus on the state equation; that
-is, the random-walk component of the observed series.  For consistency
-with the literature let us call the $t$-dated disturbance to the state
-$\eta_t$.
+is, the random-walk component of the observed series.
 
 \begin{script}[htbp]
   \scriptcaption{Working with smoothed disturbances -- Nile data}
