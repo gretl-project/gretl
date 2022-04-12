@@ -2931,7 +2931,7 @@
 	<cite key="silverman96">Silverman (1986)</cite>, namely
 	<equation status="display"
 	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
-	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
+	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
 	  graphic="kernel2"/>
 	where <math>s</math> denotes the standard deviation
 	of the data and IQR denotes the inter-quartile range.  You can
