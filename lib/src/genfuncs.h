@@ -267,4 +267,9 @@ int *list_from_matrix (const gretl_matrix *m,
 		       const char *prefix,
 		       DATASET *dset, int *err);
 
+gretl_matrix *omega_from_R(gretl_matrix *R, int *err);
+
+gretl_matrix *R_from_omega(gretl_matrix *omega, int *err);
+
+
 #endif /* GENFUNCS_H */

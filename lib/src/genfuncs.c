@@ -8317,3 +8317,135 @@ int *list_from_matrix (const gretl_matrix *m,
 
     return list;
 }
+
+#define DBG 0
+
+/**
+ * omega_from_R:
+ * @R: correlation matrix.
+ * @err: location to receive error code.
+ *
+ * Expresses the (n x n) correlation matrix R in spherical coordinates,
+ * via m angles, where m = n*(n-1)/2.
+ *
+ * Returns: an m-element vector if successful, NULL on failure.
+ */
+
+gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
+{
+    int n = R->rows;
+    int m = n * (n-1) / 2;
+    gretl_matrix *omega = NULL;
+    
+    if (R->cols != n) {
+	*err = E_NONCONF;
+	return omega;
+    }
+
+    gretl_matrix *K = gretl_matrix_copy(R);
+
+    *err = gretl_matrix_psd_root(K, 0);
+#if DBG
+    gretl_matrix_print(K, "L factor");
+#endif
+    if (*err) {
+	return NULL;
+    }
+    
+    *err = gretl_matrix_transpose_in_place(K);
+    if (!*err) {
+	omega = gretl_matrix_alloc(m, 1);
+    } else {
+	return NULL;
+    }
+    
+    int i, j, k, l = 0;
+    double theta=0, c=0, s=0, sinprod;
+    int rank_deficiency;
+    
+    for (i=1; i<n; i++) {
+	k = i * n;
+	sinprod = 1.0;
+	rank_deficiency = 0;
+	for (j=0; j<i; j++) {
+	    
+	    if (sinprod < 1.0e-16) {
+		rank_deficiency = 1;
+	    } else {
+		c = K->val[k++] / sinprod;
+	        if (1.0 - fabs(c) < 1.0e-12) {
+		    rank_deficiency = c > 0 ? 1 : 2;
+		}
+	    }
+
+	    if (rank_deficiency) {
+		omega->val[l++] = rank_deficiency == 2 ? M_PI : 0 ;
+	    } else {
+		theta = acos(c);
+		omega->val[l++] = theta;
+		s = sin(theta);
+		sinprod *= s;
+	    }
+#if DBG
+	    printf("c(%d,%d) = %20.18f -> theta = %16.14f, s = %16.14f, sinprod = %16.14f\n",
+		   i, j, c, theta, s, sinprod);
+#endif
+	    
+	}
+    }
+
+    gretl_matrix_free(K);
+    
+    return omega;
+}
+
+/**
+ * R_from_omega:
+ * @omega: angle vector.
+ * @err: location to receive error code.
+ *
+ * Returns an (n x n) correlation matrix R given its
+ * spherical-coordinates representation omega, which should contain
+ * m numbers between 0 and M_PI, where m = n*(n-1)/2.
+ *
+ * Returns: an nxn symmetric matrix if successful, NULL on failure.
+ */
+
+gretl_matrix *R_from_omega(gretl_matrix *omega, int *err)
+{
+    gretl_matrix *R = NULL, *K;
+    int m = omega->rows;
+    double tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
+    int n = nearbyint(tmp);
+
+    if (fabs(tmp - n) > 1.0e-12) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    K = gretl_zero_matrix_new(n, n);
+    gretl_matrix_set(K, 0, 0, 1.0);
+    
+    int i, j, k, l = 0;
+    double c, sinprod;
+    
+    for (i=1; i<n; i++) {
+	sinprod = 1.0;
+	k = i * n;
+	for (j=0; j<i; j++) {
+	    c = cos(omega->val[l]);
+	    K->val[k++] = c * sinprod;
+	    sinprod *= sin(omega->val[l++]);
+	}
+	K->val[k] = sinprod;
+    }
+    
+#if 0
+    gretl_matrix_print(K, "reconstructed cholesky");
+#endif
+
+    R = gretl_matrix_XTX_new(K);
+    gretl_matrix_free(K);
+    
+    return R;
+}
