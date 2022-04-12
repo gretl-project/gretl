@@ -2918,8 +2918,8 @@
 	Por defecto, o largo de banda é o suxerido como norma xeral por
 	<cite key="silverman96">Silverman (1986)</cite>, concretamente
 	<equation status="display"
-	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
-	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
+	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
 	  graphic="kernel2"/>
 	onde <math>s</math> representa a desviación padrón dos datos e IQR
 	denota o rango intercuartil. Podes ampliar ou reducir o largo de

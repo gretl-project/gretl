@@ -2553,8 +2553,8 @@
 	a sugerida pela regra de ouro de 
 	<cite key="silverman96">Silverman (1986)</cite>, nomeadamente
 	<equation status="display"
-	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
-	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
+	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
 	  graphic="kernel2"/>
 	onde <math>s</math> designa o desvio padrão dos dados
 	e IQR é a amplitude inter-quartil.  Você pode alargar

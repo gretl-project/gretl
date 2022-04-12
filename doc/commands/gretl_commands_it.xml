@@ -2999,8 +2999,8 @@
 	banda predefinita è quella suggerita da <cite key="silverman96">Silverman (1986)</cite>,
 	ossia
 	<equation status="display"
-		  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
-		  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
+		  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
+		  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
 		  graphic="kernel2"/>
 	dove <math>s</math> denota lo scarto quadratico medio dei dati e
 	IQR denota il range interquartile. È possibile allargare o
