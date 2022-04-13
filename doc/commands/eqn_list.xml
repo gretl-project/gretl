@@ -18,7 +18,7 @@ $\ell$
 \[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]
 </texequation>
 <texequation fileref="kernel2">
-\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]
+\[h=0.9\, {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]
 </texequation>
 <texequation fileref="syssigma1">
 \[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]
