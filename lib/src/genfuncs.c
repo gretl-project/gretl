@@ -8318,7 +8318,7 @@ int *list_from_matrix (const gretl_matrix *m,
     return list;
 }
 
-#define DBG 0
+#define USE_SINES 1
 
 /**
  * omega_from_R:
@@ -8360,37 +8360,38 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
     }
     
     int i, j, k, l = 0;
-    double theta=0, c=0, s=0, sinprod;
+    double theta, x, y, prod;
     int rank_deficiency;
     
     for (i=1; i<n; i++) {
 	k = i * n;
-	sinprod = 1.0;
+	prod = 1.0;
 	rank_deficiency = 0;
 	for (j=0; j<i; j++) {
 	    
-	    if (sinprod < 1.0e-16) {
+	    if (prod < 1.0e-16) {
 		rank_deficiency = 1;
 	    } else {
-		c = K->val[k++] / sinprod;
-	        if (1.0 - fabs(c) < 1.0e-12) {
-		    rank_deficiency = c > 0 ? 1 : 2;
+		x = K->val[k++] / prod;
+	        if (1.0 - fabs(x) < 1.0e-12) {
+		    rank_deficiency = x > 0 ? 1 : 2;
 		}
 	    }
 
 	    if (rank_deficiency) {
 		omega->val[l++] = rank_deficiency == 2 ? M_PI : 0 ;
 	    } else {
-		theta = acos(c);
+#if USE_SINES
+		theta = acos(x);
 		omega->val[l++] = theta;
-		s = sin(theta);
-		sinprod *= s;
-	    }
-#if DBG
-	    printf("c(%d,%d) = %20.18f -> theta = %16.14f, s = %16.14f, sinprod = %16.14f\n",
-		   i, j, c, theta, s, sinprod);
+		y = sin(theta);
+#else
+		theta = asin(x);
+		omega->val[l++] = theta;
+		y = cos(theta);
 #endif
-	    
+		prod *= y;
+	    }
 	}
     }
 
@@ -8427,17 +8428,23 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int *err)
     gretl_matrix_set(K, 0, 0, 1.0);
     
     int i, j, k, l = 0;
-    double c, sinprod;
+    double x, prod;
     
     for (i=1; i<n; i++) {
-	sinprod = 1.0;
+	prod = 1.0;
 	k = i * n;
 	for (j=0; j<i; j++) {
-	    c = cos(omega->val[l]);
-	    K->val[k++] = c * sinprod;
-	    sinprod *= sin(omega->val[l++]);
+#if USE_SINES
+	    x = cos(omega->val[l]);
+	    K->val[k++] = x * prod;
+	    prod *= sin(omega->val[l++]);
+#else
+	    x = sin(omega->val[l]);
+	    K->val[k++] = x * prod;
+	    prod *= cos(omega->val[l++]);
+#endif
 	}
-	K->val[k] = sinprod;
+	K->val[k] = prod;
     }
     
 #if 0
