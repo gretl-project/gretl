@@ -8458,11 +8458,12 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 #endif
 
     if (cholesky) {
+	*err = gretl_matrix_transpose_in_place(K);
 	return K;
     } else {
 	R = gretl_matrix_XTX_new(K);
 	gretl_matrix_free(K);
+	return R;
     }
     
-    return R;
 }
