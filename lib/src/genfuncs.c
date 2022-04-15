@@ -8409,7 +8409,8 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
  * Returns: an nxn symmetric matrix if successful, NULL on failure.
  */
 
-gretl_matrix *R_from_omega(gretl_matrix *omega, int *err, double *ldet)
+gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
+			   int *err, double *ldet)
 {
     gretl_matrix *R = NULL, *K;
     int m = omega->rows;
@@ -8456,8 +8457,12 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int *err, double *ldet)
     gretl_matrix_print(K, "reconstructed cholesky");
 #endif
 
-    R = gretl_matrix_XTX_new(K);
-    gretl_matrix_free(K);
+    if (cholesky) {
+	return K;
+    } else {
+	R = gretl_matrix_XTX_new(K);
+	gretl_matrix_free(K);
+    }
     
     return R;
 }
