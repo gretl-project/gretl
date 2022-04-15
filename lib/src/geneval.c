@@ -4634,7 +4634,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             break;
         case F_SPHCORR:
 	    if (gotopt && parm) {
-		ret->v.m = R_from_omega(m, &p->err);
+		double ldet = 0;
+		ret->v.m = R_from_omega(m, &p->err, &ldet);
+		fprintf(stderr, "ldet = %20.18f\n", ldet);
 	    } else {
 		ret->v.m = omega_from_R(m, &p->err);
 	    }		

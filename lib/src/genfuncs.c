@@ -8345,9 +8345,6 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
     gretl_matrix *K = gretl_matrix_copy(R);
 
     *err = gretl_matrix_psd_root(K, 0);
-#if DBG
-    gretl_matrix_print(K, "L factor");
-#endif
     if (*err) {
 	return NULL;
     }
@@ -8369,11 +8366,11 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
 	rank_deficiency = 0;
 	for (j=0; j<i; j++) {
 	    
-	    if (prod < 1.0e-16) {
+	    if (prod < 1.0e-20) {
 		rank_deficiency = 1;
 	    } else {
 		x = K->val[k++] / prod;
-	        if (1.0 - fabs(x) < 1.0e-12) {
+	        if (1.0 - fabs(x) < 1.0e-20) {
 		    rank_deficiency = x > 0 ? 1 : 2;
 		}
 	    }
@@ -8412,13 +8409,14 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
  * Returns: an nxn symmetric matrix if successful, NULL on failure.
  */
 
-gretl_matrix *R_from_omega(gretl_matrix *omega, int *err)
+gretl_matrix *R_from_omega(gretl_matrix *omega, int *err, double *ldet)
 {
     gretl_matrix *R = NULL, *K;
     int m = omega->rows;
     double tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
     int n = nearbyint(tmp);
-
+    int do_det = (ldet != NULL);
+	
     if (fabs(tmp - n) > 1.0e-12) {
 	*err = E_NONCONF;
 	return NULL;
@@ -8429,6 +8427,10 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int *err)
     
     int i, j, k, l = 0;
     double x, prod;
+
+    if (do_det) {
+	*ldet = 0.0;
+    }
     
     for (i=1; i<n; i++) {
 	prod = 1.0;
@@ -8445,6 +8447,9 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int *err)
 #endif
 	}
 	K->val[k] = prod;
+	if (do_det) {
+	    *ldet += 2 * log(prod);
+	}
     }
     
 #if 0
