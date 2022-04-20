@@ -3444,11 +3444,74 @@ static char *get_previous_line_start_word (char *word,
     return word;
 }
 
+static int is_end_word (const char *s)
+{
+    const char *left_words[] = {
+	"endif", "endloop", "else", "elif"
+    };
+    int i;
+
+    for (i=0; i<4; i++) {
+	if (!strcmp(s, left_words[i])) {
+	    return 1;
+	}
+    }
+    if (strlen(s) > 4 && !strncmp(s, "end ", 4) &&
+	gretl_command_number(s+4) > 0) {
+	return 1;
+    }
+
+    return 0;
+}
+
+/* Try to determine if the line @s should have its indentation
+   adjusted downward/leftward, as with an "endif" which is currently
+   at the same indentation level as the content of an if-block.  If
+   so, we'll make this adjustment in response to Tab at the end of the
+   line.
+*/
+
+static int left_shift_ok (const char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>0; i--) {
+	if (isspace(s[i])) {
+	    if (is_end_word(s+i+1)) {
+		return 1;
+	    }
+	    break;
+	}
+    }
+
+    return 0;
+}
+
+static void adjust_line_indent (GtkTextBuffer *tbuf,
+				const char *line,
+				int indent0,
+				GtkTextIter *start,
+				GtkTextIter *end)
+{
+    int i, n = indent0 - tabwidth;
+
+    gtk_text_buffer_delete(tbuf, start, end);
+    gtk_text_iter_set_line_offset(start, 0);
+    for (i=0; i<n; i++) {
+	gtk_text_buffer_insert(tbuf, start, " ", -1);
+    }
+    gtk_text_buffer_insert(tbuf, start, line + indent0, -1);
+}
+
 /* Is the insertion point at the start of a line, or in a white-space
    field to the left of any non-space characters?  If so, we'll trying
    inserting a "smart" soft tab in response to the Tab key. If not,
    and @comp_ok is non-NULL, we'll check whether gtksourceview
    completion seems possible at the current insertion point.
+
+   Plus a special case (a la emacs): if we're at the end of line which
+   should end preceding indentation (such as "endif" or "endloop"),
+   let Tab at the end of the line adjust its indentation.
 */
 
 static int maybe_insert_smart_tab (windata_t *vwin,
@@ -3485,6 +3548,16 @@ static int maybe_insert_smart_tab (windata_t *vwin,
 	if (strspn(chunk, " \t") == pos) {
 	    /* set @ret if this chunk is just white space */
 	    ret = 1;
+	} else if (isspace(chunk[0]) && left_shift_ok(chunk)) {
+	    /* special case of smart tab, as in emacs */
+	    int indent0 = (int) strspn(chunk, " ");
+
+	    if (indent0 >= tabwidth) {
+		adjust_line_indent(tbuf, chunk, indent0, &start, &end);
+		g_free(chunk);
+		/* we're done */
+		return 1;
+	    }
 	} else if (comp_ok != NULL && pos > 1) {
 	    /* follow-up: is the context OK for completion? */
 	    *comp_ok = !isspace(chunk[pos-1]) && !isspace(chunk[pos-2]);
