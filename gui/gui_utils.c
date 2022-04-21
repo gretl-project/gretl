@@ -2649,6 +2649,7 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	    /* cancel -> don't save, but also don't close */
 	    return TRUE;
 	} else if (resp == GRETL_YES) {
+	    /* save, but allow close to proceed */
 	    vwin_save_callback(NULL, vwin);
 	}
     }

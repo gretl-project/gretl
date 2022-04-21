@@ -720,13 +720,17 @@ static gint script_key_handler (GtkWidget *w,
 
     if (state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
+	    /* Ctrl-Shift-r */
 	    run_script_silent(w, vwin);
 	    ret = TRUE;
 	} else if (keyval == GDK_r) {
-	    do_run_script(w, vwin);
-	    ret = TRUE;
-	} else if (keyval == GDK_e) {
-	    run_script_via_cli(w, vwin);
+	    if (state & GDK_MOD1_MASK) {
+		/* Ctrl-Alt-r */
+		run_script_via_cli(w, vwin);
+	    } else {
+		/* plain Ctrl-r */
+		do_run_script(w, vwin);
+	    }
 	    ret = TRUE;
 	} else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);
@@ -3447,12 +3451,21 @@ static char *get_previous_line_start_word (char *word,
     return word;
 }
 
-static int is_end_word (const char *s)
+/* Try to determine if the line @s should have its indentation
+   adjusted downward/leftward, as with an "endif" which is currently
+   at the same indentation level as the content of the if-block that
+   it terminates.  If so, we'll make this adjustment in response to
+   Tab at the end of the line.
+*/
+
+static int left_shift_ok (const char *s)
 {
     const char *left_words[] = {
 	"endif", "endloop", "else", "elif"
     };
     int i;
+
+    s += strspn(s, " ");
 
     for (i=0; i<4; i++) {
 	if (!strcmp(s, left_words[i])) {
@@ -3462,29 +3475,6 @@ static int is_end_word (const char *s)
     if (strlen(s) > 4 && !strncmp(s, "end ", 4) &&
 	gretl_command_number(s+4) > 0) {
 	return 1;
-    }
-
-    return 0;
-}
-
-/* Try to determine if the line @s should have its indentation
-   adjusted downward/leftward, as with an "endif" which is currently
-   at the same indentation level as the content of an if-block.  If
-   so, we'll make this adjustment in response to Tab at the end of the
-   line.
-*/
-
-static int left_shift_ok (const char *s)
-{
-    int i, n = strlen(s);
-
-    for (i=n-1; i>0; i--) {
-	if (isspace(s[i])) {
-	    if (is_end_word(s+i+1)) {
-		return 1;
-	    }
-	    break;
-	}
     }
 
     return 0;
