@@ -1377,12 +1377,15 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
-/* right-click action for exec button */
+/* right-click and middle-click actions for Run (exec) button */
 
 static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
 {
     if (eb->button == 3) {
 	run_script_silent(NULL, vwin);
+	return TRUE;
+    } else if (eb->button == 2) {
+	run_script_via_cli(NULL, vwin);
 	return TRUE;
     } else {
 	return FALSE;
