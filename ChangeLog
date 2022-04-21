@@ -1,5 +1,6 @@
 version 2022b, in progress
 - new command/keyword "continue" for use in loops
+- new option --decr for use with index loops
 - "leverage" command: add $result accessor to obtain 
   leverage, influence and Studentized residuals as matrix
 - "printf" command: add "\r" as a recognized escape sequence
