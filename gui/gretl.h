@@ -156,6 +156,7 @@ gchar *user_friendly_menu_path (const char *mpath,
 
 int mainwin_get_vwin_insertion (void);
 int mainwin_insert_vwin (windata_t *vwin);
+void query_exit_main (void);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

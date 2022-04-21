@@ -2653,6 +2653,10 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	}
     }
 
+    if (!gtk_widget_get_visible(mdata->main)) {
+	query_exit_main();
+    }
+
     return FALSE;
 }
 
@@ -5874,7 +5878,40 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
     }
 }
 
-/* win32 version */
+void win32_execute_script (gchar *cmd, int lang)
+{
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (lang == LANG_STATA) {
+	gchar *buf = NULL;
+
+	gretl_chdir(gretl_workdir());
+	remove("gretltmp.log");
+	err = gretl_spawn(cmd);
+
+	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	    pputs(prn, buf);
+	    g_free(buf);
+	    pputc(prn, '\n');
+	}
+    } else {
+	err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
+    }
+
+    if (got_printable_output(prn)) {
+	/* note: this check destroys @prn on failure */
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+    } else if (err) {
+	gui_errmsg(err);
+    }
+
+    g_free(cmd);
+}
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
@@ -5888,7 +5925,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
        encoding, ready to pass on the Windows command line
        as in "foreign.exe fname"; this composite string is
        given to gretl_spawn() or gretl_win32_pipe_output()
-       below.
+       below. 2022-04-21: this comment is outdated, no?
     */
 
     err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
@@ -5896,12 +5933,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
     if (err) {
 	gui_errmsg(err);
     } else {
-	PRN *prn = NULL;
 	gchar *cmd = NULL;
-
-	if (bufopen(&prn)) {
-	    return;
-	}
 
 	if (lang == LANG_OX) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
@@ -5915,29 +5947,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
 
-	if (lang == LANG_STATA) {
-	    gchar *buf = NULL;
-
-	    gretl_chdir(gretl_workdir());
-	    remove("gretltmp.log");
-	    err = gretl_spawn(cmd);
-
-	    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-		pputs(prn, buf);
-		g_free(buf);
-		pputc(prn, '\n');
-	    }
-	} else {
-	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
-	}
-
-	if (got_printable_output(prn)) {
-	    /* note: this check destroys @prn on failure */
-	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-	} else if (err) {
-	    gui_errmsg(err);
-	}
-
+	win32_execute_script(cmd, lang);
 	g_free(cmd);
     }
 }
@@ -6021,7 +6031,7 @@ static void start_R_async (void)
    results in a gretl window: non-Windows variant
 */
 
-static void run_prog_sync (char **argv, int lang)
+void run_prog_sync (char **argv, int lang)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
@@ -6079,7 +6089,12 @@ static void run_prog_sync (char **argv, int lang)
     }
 
     if (got_printable_output(prn)) {
-	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+	if (lang == 0) {
+	    /* hansl output */
+	    view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, NULL);
+	} else {
+	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+	}
     }
 
     g_free(sout);

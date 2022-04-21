@@ -725,6 +725,9 @@ static gint script_key_handler (GtkWidget *w,
 	} else if (keyval == GDK_r) {
 	    do_run_script(w, vwin);
 	    ret = TRUE;
+	} else if (keyval == GDK_e) {
+	    run_script_via_cli(w, vwin);
+	    ret = TRUE;
 	} else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);
 

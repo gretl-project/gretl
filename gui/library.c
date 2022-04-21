@@ -8464,6 +8464,45 @@ static int already_running_script (void)
     }
 }
 
+static int gretlcli_exec_script (gchar *buf)
+{
+    gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
+    gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
+    FILE *fp = gretl_fopen(inpname, "wb");
+    int err = 0;
+
+    if (fp == NULL) {
+	file_read_errbox(inpname);
+	err = E_FOPEN;
+    } else {
+	fputs(buf, fp);
+	fclose(fp);
+    }
+
+    if (!err) {
+#ifdef G_OS_WIN32
+	gchar *cmd;
+
+	cmd = g_strdup_printf("\"%s\" \"%s\"", clipath, inpname);
+	win32_execute_script(cmd, 0);
+#else
+	gchar *argv[4];
+
+	argv[0] = (gchar *) clipath;
+	argv[1] = (gchar *) "-b";
+	argv[2] = (gchar *) inpname;
+	argv[3] = NULL;
+	run_prog_sync(argv, 0);
+#endif
+	gretl_remove(inpname);
+    }
+
+    g_free(clipath);
+    g_free(inpname);
+
+    return err;
+}
+
 /* Execute a script from the buffer in viewer window @vwin */
 
 static void run_native_script (windata_t *vwin, gchar *buf,
@@ -8530,7 +8569,6 @@ static void run_native_script (windata_t *vwin, gchar *buf,
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC, parent);
     gui_main_exec = 0;
     gretl_set_batch_mode(save_batch);
-
     refresh_data();
 
     if (silent) {
@@ -8727,7 +8765,7 @@ static void call_lpsolve_function (gchar *buf, const char *fname,
 }
 
 static void real_run_script (GtkWidget *w, windata_t *vwin,
-			     int silent)
+			     int silent, int cli)
 {
     gretlopt opt = OPT_NONE;
     gboolean selection = FALSE;
@@ -8813,6 +8851,8 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
         run_x12a_script(buf);
     } else if (selection) {
         run_script_fragment(vwin, buf);
+    } else if (cli) {
+	gretlcli_exec_script(buf);
     } else {
         run_native_script(vwin, buf, silent);
     }
@@ -8831,12 +8871,17 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    real_run_script(w, vwin, 0);
+    real_run_script(w, vwin, 0, 0);
 }
 
 void run_script_silent (GtkWidget *w, windata_t *vwin)
 {
-    real_run_script(w, vwin, 1);
+    real_run_script(w, vwin, 1, 0);
+}
+
+void run_script_via_cli (GtkWidget *w, windata_t *vwin)
+{
+    real_run_script(w, vwin, 0, 1);
 }
 
 gboolean do_open_script (int action)

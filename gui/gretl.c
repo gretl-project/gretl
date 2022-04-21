@@ -118,7 +118,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 static char *optdb, *optwebdb, *optpkg;
-static int optrun, opteng, optbasque, optdump, optver;
+static int optrun, opteng, optbasque, optdump, optver, opted;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
@@ -157,6 +157,8 @@ static GOptionEntry options[] = {
     { "single", 's', 0, G_OPTION_ARG_NONE, &optsingle,
       N_("reuse an existing gretl instance unconditionally"), NULL },
 #endif
+    { "editor", 't', 0, G_OPTION_ARG_NONE, &opted,
+      N_("show script editor, hide main window"), NULL },
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -924,6 +926,8 @@ int main (int argc, char **argv)
 
     if (tryfile_is_set()) {
 	open_tryfile();
+    } else if (opted) {
+	do_new_script(EDIT_HANSL, NULL);
     }
 
     /* try opening specified database or package */
@@ -1726,6 +1730,9 @@ static void make_main_window (void)
     }
 
     gtk_widget_show_all(mdata->main);
+    if (opted) {
+	gtk_widget_hide(mdata->main);
+    }
 
 #ifdef MAC_INTEGRATION
     if (mac_mgr != NULL) {
@@ -2808,4 +2815,21 @@ static int gui_query_stop (void)
 void do_stop_script (GtkWidget *w, windata_t *vwin)
 {
     script_stopper(1);
+}
+
+/* callback in case gretl is running in 'editor' mode,
+   and the script editor window is closed
+*/
+
+void query_exit_main (void)
+{
+    if (opted) {
+	int resp = yes_no_dialog(NULL, _("Quit gretl?"), NULL);
+
+	if (resp == GRETL_YES) {
+	    gtk_widget_destroy(mdata->main);
+	} else {
+	    gtk_window_present(GTK_WINDOW(mdata->main));
+	}
+    }
 }

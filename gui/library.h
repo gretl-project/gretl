@@ -81,6 +81,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin);
 
 void run_script_silent (GtkWidget *w, windata_t *vwin);
 
+void run_script_via_cli (GtkWidget *w, windata_t *vwin);
+
 void run_script_fragment (windata_t *vwin, gchar *buf);
 
 void gui_errmsg (int errcode);

@@ -101,6 +101,10 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	}
     }
 
+    if (!ret && !gtk_widget_get_visible(mdata->main)) {
+	query_exit_main();
+    }
+
     return ret;
 }
 
