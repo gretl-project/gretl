@@ -721,16 +721,15 @@ static gint script_key_handler (GtkWidget *w,
     if (state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
 	    /* Ctrl-Shift-r */
-	    run_script_silent(w, vwin);
+	    if (gui_editor_mode()) {
+		do_run_script(w, vwin);
+	    } else {
+		run_script_silent(w, vwin);
+	    }
 	    ret = TRUE;
 	} else if (keyval == GDK_r) {
-	    if (state & GDK_MOD1_MASK) {
-		/* Ctrl-Alt-r */
-		run_script_via_cli(w, vwin);
-	    } else {
-		/* plain Ctrl-r */
-		do_run_script(w, vwin);
-	    }
+	    /* plain Ctrl-r */
+	    do_run_script(w, vwin);
 	    ret = TRUE;
 	} else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);

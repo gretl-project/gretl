@@ -347,8 +347,10 @@ static gint sort_window_list (gconstpointer a, gconstpointer b)
     /* sort main window first, otherwise by time when the
        window was created */
 
-    if (wa == mdata->main) return -1;
-    if (wb == mdata->main) return 1;
+    if (mdata != NULL) {
+	if (wa == mdata->main) return -1;
+	if (wb == mdata->main) return 1;
+    }
 
     /* bullet-proofing */
     if (wa == NULL || wb == NULL) {
@@ -455,7 +457,7 @@ static gboolean winlist_popup_done (GtkMenuShell *mshell,
 	    vwin->role == VAR ||
 	    vwin->role == VECM) {
 	    gtk_widget_grab_focus(vwin->text);
-	} else if (vwin == mdata) {
+	} else if (mdata != NULL && vwin == mdata) {
 	    gtk_widget_grab_focus(vwin->listbox);
 	}
     }
@@ -570,15 +572,17 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 	add_cascade_item(menu, item);
     }
 
-    if (!log_up || !icons_up) {
-	item = gtk_separator_menu_item_new();
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	if (!log_up) {
-	    add_log_item(menu, item);
-	}
-	if (!icons_up) {
-	    add_iconview_item(menu, item);
+    if (!gui_editor_mode()) {
+	if (!log_up || !icons_up) {
+	    item = gtk_separator_menu_item_new();
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    if (!log_up) {
+		add_log_item(menu, item);
+	    }
+	    if (!icons_up) {
+		add_iconview_item(menu, item);
+	    }
 	}
     }
 

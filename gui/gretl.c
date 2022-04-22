@@ -158,7 +158,7 @@ static GOptionEntry options[] = {
       N_("reuse an existing gretl instance unconditionally"), NULL },
 #endif
     { "editor", 't', 0, G_OPTION_ARG_NONE, &opted,
-      N_("show script editor, hide main window"), NULL },
+      N_("script editor mode"), NULL },
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -901,24 +901,18 @@ int main (int argc, char **argv)
     /* create the GUI */
     set_fixed_font(NULL, 1);
     gretl_stock_icons_init();
+
 #if GUI_DEBUG
     fprintf(stderr, " done gretl_stock_icons_init\n");
 #endif
-    make_main_window();
 
-#if GUI_DEBUG
-    fprintf(stderr, " done make_main_window\n");
-#endif
-
-    add_files_to_menus();
-
-#if GUI_DEBUG
-    fprintf(stderr, " done add_files_to_menus\n");
-#endif
-
-    session_menu_state(FALSE);
-    restore_sample_state(FALSE);
-    dataset_menubar_state(FALSE);
+    if (!opted) {
+	make_main_window();
+	add_files_to_menus();
+	session_menu_state(FALSE);
+	restore_sample_state(FALSE);
+	dataset_menubar_state(FALSE);
+    }
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");
@@ -930,18 +924,22 @@ int main (int argc, char **argv)
 	do_new_script(EDIT_HANSL, NULL);
     }
 
-    /* try opening specified database or package */
-    if (optdb != NULL) {
-	open_named_db_index(auxname);
-    } else if (optwebdb != NULL) {
-	open_named_remote_db_index(auxname);
-    } else if (optpkg != NULL) {
-	edit_specified_package(auxname);
+    if (!opted) {
+	/* try opening specified database or package */
+	if (optdb != NULL) {
+	    open_named_db_index(auxname);
+	} else if (optwebdb != NULL) {
+	    open_named_remote_db_index(auxname);
+	} else if (optpkg != NULL) {
+	    edit_specified_package(auxname);
+	}
     }
 
 #ifdef GRETL_OPEN_HANDLER
-    install_open_handler();
-    record_gretl_binary_path(argv[0]);
+    if (!opted) {
+	install_open_handler();
+	record_gretl_binary_path(argv[0]);
+    }
 #endif
 
 #if GUI_DEBUG
@@ -1730,9 +1728,6 @@ static void make_main_window (void)
     }
 
     gtk_widget_show_all(mdata->main);
-    if (opted) {
-	gtk_widget_hide(mdata->main);
-    }
 
 #ifdef MAC_INTEGRATION
     if (mac_mgr != NULL) {
@@ -2817,19 +2812,9 @@ void do_stop_script (GtkWidget *w, windata_t *vwin)
     script_stopper(1);
 }
 
-/* callback in case gretl is running in 'editor' mode,
-   and the script editor window is closed
-*/
+/* test whether GUI is running in script editor mode */
 
-void query_exit_main (void)
+int gui_editor_mode (void)
 {
-    if (opted) {
-	int resp = yes_no_dialog(NULL, _("Quit gretl?"), NULL);
-
-	if (resp == GRETL_YES) {
-	    gtk_widget_destroy(mdata->main);
-	} else {
-	    gtk_window_present(GTK_WINDOW(mdata->main));
-	}
-    }
+    return opted != 0;
 }

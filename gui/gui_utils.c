@@ -2654,8 +2654,8 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	}
     }
 
-    if (!gtk_widget_get_visible(mdata->main)) {
-	query_exit_main();
+    if (gui_editor_mode()) {
+	gtk_main_quit();
     }
 
     return FALSE;

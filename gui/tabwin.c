@@ -103,9 +103,9 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	}
     }
 
-    if (!ret && !save_query_done &&
-	!gtk_widget_get_visible(mdata->main)) {
-	query_exit_main();
+    if (!save_query_done && gui_editor_mode()) {
+	/* FIXME */
+	gtk_main_quit();
     }
 
     return ret;
@@ -488,6 +488,22 @@ static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
     return catch_viewer_key(w, key, vwin);
 }
 
+/* Not sure why this is required, but without this callback
+   attached, the "drag-data-received" is triggered twice for
+   each drag-and-drop action. Seems like a GTK quirk.
+*/
+
+static gboolean
+tabwin_handle_drop (GtkWidget *widget,
+		    GdkDragContext *context,
+		    int x,
+		    int y,
+		    guint time,
+		    gpointer user_data)
+{
+    return TRUE;
+}
+
 static void
 tabwin_handle_drag  (GtkWidget *widget,
 		     GdkDragContext *context,
@@ -499,7 +515,8 @@ tabwin_handle_drag  (GtkWidget *widget,
 		     gpointer p)
 {
     const guchar *seldata = NULL;
-    gchar *dfname;
+    gboolean success = 0;
+    gchar *dfname = NULL;
     char tmp[MAXLEN];
     int pos, skip = 5;
 
@@ -508,13 +525,13 @@ tabwin_handle_drag  (GtkWidget *widget,
     }
 
     if (info != GRETL_FILENAME) {
-	return;
+	goto drag_finish;
     }
 
     /* ignore the wrong sort of data */
     if (data == NULL || (dfname = (gchar *) seldata) == NULL ||
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
-	return;
+	goto drag_finish;
     }
 
     if (strncmp(dfname, "file://", 7) == 0) skip = 7;
@@ -523,7 +540,7 @@ tabwin_handle_drag  (GtkWidget *widget,
 #endif
 
     /* there may be multiple files: we ignore all but the first */
-    *tmp = 0;
+    *tmp = '\0';
     if ((pos = gretl_charpos('\r', dfname)) > 0 ||
 	(pos = gretl_charpos('\n', dfname) > 0)) {
 	strncat(tmp, dfname + skip, pos - skip);
@@ -537,8 +554,12 @@ tabwin_handle_drag  (GtkWidget *widget,
     if (has_suffix(tmp, ".inp")) {
 	/* FIXME generalize? */
 	set_tryfile(tmp);
-	do_open_script(EDIT_HANSL);
+	success = do_open_script(EDIT_HANSL);
     }
+
+ drag_finish:
+
+    gtk_drag_finish(context, success, FALSE, time);
 }
 
 /* build a tabbed viewer/editor */
@@ -811,21 +832,18 @@ void show_tabbed_viewer (windata_t *vwin)
 	gtk_notebook_set_current_page(notebook, pgnum);
     }
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MAJOR_VERSION < 18
-    if (!GTK_WIDGET_VISIBLE(tabwin->main)) {
-	gtk_widget_show_all(tabwin->main);
-    }
-#else
     if (!gtk_widget_get_visible(tabwin->main)) {
 	gtk_widget_show_all(tabwin->main);
     }
-#endif
 
     if (vwin->role == EDIT_HANSL) {
 	gtk_drag_dest_set(vwin->text,
 			  GTK_DEST_DEFAULT_ALL,
 			  tabwin_drag_targets, 1,
 			  GDK_ACTION_COPY);
+	g_signal_connect(G_OBJECT(vwin->text), "drag-drop",
+			 G_CALLBACK(tabwin_handle_drop),
+			 tabwin);
 	g_signal_connect(G_OBJECT(vwin->text), "drag-data-received",
 			 G_CALLBACK(tabwin_handle_drag),
 			 tabwin);

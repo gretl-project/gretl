@@ -8483,15 +8483,16 @@ static int gretlcli_exec_script (gchar *buf)
 #ifdef G_OS_WIN32
 	gchar *cmd;
 
-	cmd = g_strdup_printf("\"%s\" \"%s\"", clipath, inpname);
+	cmd = g_strdup_printf("\"%s\" -b -q \"%s\"", clipath, inpname);
 	win32_execute_script(cmd, 0);
 #else
-	gchar *argv[4];
+	gchar *argv[5];
 
 	argv[0] = (gchar *) clipath;
 	argv[1] = (gchar *) "-b";
-	argv[2] = (gchar *) inpname;
-	argv[3] = NULL;
+	argv[2] = (gchar *) "-q";
+	argv[3] = (gchar *) inpname;
+	argv[4] = NULL;
 	run_prog_sync(argv, 0);
 #endif
 	gretl_remove(inpname);
@@ -8849,10 +8850,10 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
         run_foreign_script(buf, LANG_STATA, opt);
     } else if (vwin->role == EDIT_X12A) {
         run_x12a_script(buf);
-    } else if (selection) {
-        run_script_fragment(vwin, buf);
     } else if (cli) {
 	gretlcli_exec_script(buf);
+    } else if (selection) {
+	run_script_fragment(vwin, buf);
     } else {
         run_native_script(vwin, buf, silent);
     }
@@ -8871,17 +8872,16 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    real_run_script(w, vwin, 0, 0);
+    if (gui_editor_mode()) {
+	real_run_script(w, vwin, 0, 1);
+    } else {
+	real_run_script(w, vwin, 0, 0);
+    }
 }
 
 void run_script_silent (GtkWidget *w, windata_t *vwin)
 {
     real_run_script(w, vwin, 1, 0);
-}
-
-void run_script_via_cli (GtkWidget *w, windata_t *vwin)
-{
-    real_run_script(w, vwin, 0, 1);
 }
 
 gboolean do_open_script (int action)
@@ -8900,8 +8900,10 @@ gboolean do_open_script (int action)
 
     if (action == EDIT_HANSL) {
         strcpy(scriptfile, fname);
-        mkfilelist(FILE_LIST_SCRIPT, scriptfile, 1);
-        gretl_set_script_dir(scriptfile);
+	if (!gui_editor_mode()) {
+	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 1);
+	    gretl_set_script_dir(scriptfile);
+	}
         if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
             view_script(scriptfile, 0, VIEW_SCRIPT);
         } else {

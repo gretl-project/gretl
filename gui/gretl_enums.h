@@ -304,7 +304,7 @@ enum register_data_flags {
 };
 
 enum drag_types {
-    GRETL_FILENAME,
+    GRETL_FILENAME = 80,
     GRETL_DBSERIES_PTR,
     GRETL_MODEL_PTR,
     GRETL_REMOTE_DB_PTR,

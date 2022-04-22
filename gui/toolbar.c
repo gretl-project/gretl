@@ -1381,11 +1381,8 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 
 static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
 {
-    if (eb->button == 3) {
+    if (eb->button == 3 && !gui_editor_mode()) {
 	run_script_silent(NULL, vwin);
-	return TRUE;
-    } else if (eb->button == 2) {
-	run_script_via_cli(NULL, vwin);
 	return TRUE;
     } else {
 	return FALSE;
