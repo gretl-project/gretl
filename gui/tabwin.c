@@ -76,7 +76,6 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 {
     GtkNotebook *notebook = GTK_NOTEBOOK(tabwin->tabs);
     int np = gtk_notebook_get_n_pages(notebook);
-    int save_query_done = 0;
     gboolean ret = FALSE;
 
     if (np > 1) {
@@ -98,13 +97,11 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	    if (vwin_content_changed(vwin)) {
 		gtk_window_present(GTK_WINDOW(parent));
 		ret = query_save_text(NULL, NULL, vwin);
-		save_query_done = 1;
 	    }
 	}
     }
 
-    if (!save_query_done && gui_editor_mode()) {
-	/* FIXME */
+    if (gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
 	gtk_main_quit();
     }
 

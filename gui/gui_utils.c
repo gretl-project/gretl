@@ -2064,8 +2064,16 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     int width = 0, nlines = 0;
     windata_t *vwin;
 
-    if (role == SCRIPT_OUT && script_out_viewer != NULL) {
-	return reuse_script_out(script_out_viewer, prn);
+    if (role == SCRIPT_OUT) {
+	if (gui_editor_mode() && data != NULL) {
+	    vwin = vwin_first_child((windata_t *) data);
+	    if (vwin != NULL) {
+		return reuse_script_out(vwin, prn);
+	    }
+	}
+	if (script_out_viewer != NULL) {
+	    return reuse_script_out(script_out_viewer, prn);
+	}
     }
 
     if (title != NULL) {
@@ -2140,14 +2148,16 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
     if (role == SCRIPT_OUT) {
 	if (data != NULL) {
-	    /* partial output window for script */
+	    /* partial output window (or gretlcli output) for script */
 	    vwin_add_child((windata_t *) data, vwin);
 	    /* define "top-hbox" here? */
 	}
-	g_signal_connect(G_OBJECT(vwin->main), "destroy",
-			 G_CALLBACK(nullify_script_out),
-			 &script_out_viewer);
-	script_out_viewer = vwin;
+	if (!gui_editor_mode()) {
+	    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			     G_CALLBACK(nullify_script_out),
+			     &script_out_viewer);
+	    script_out_viewer = vwin;
+	}
     }
 
     /* insert and then free the text buffer */
@@ -2655,7 +2665,9 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
     }
 
     if (gui_editor_mode()) {
-	gtk_main_quit();
+	if (get_n_hansl_editor_windows() <= 1) {
+	    gtk_main_quit();
+	}
     }
 
     return FALSE;
@@ -5879,7 +5891,7 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
     }
 }
 
-void win32_execute_script (gchar *cmd, int lang)
+void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
 {
     PRN *prn = NULL;
     int err = 0;
@@ -5906,7 +5918,12 @@ void win32_execute_script (gchar *cmd, int lang)
 
     if (got_printable_output(prn)) {
 	/* note: this check destroys @prn on failure */
-	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+	if (lang == 0) {
+	    /* gretlcli output */
+	    view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, scriptwin);
+	} else {
+	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+	}
     } else if (err) {
 	gui_errmsg(err);
     }
@@ -5948,7 +5965,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
 
-	win32_execute_script(cmd, lang);
+	win32_execute_script(cmd, lang, NULL);
 	g_free(cmd);
     }
 }
@@ -6032,7 +6049,7 @@ static void start_R_async (void)
    results in a gretl window: non-Windows variant
 */
 
-void run_prog_sync (char **argv, int lang)
+void run_prog_sync (char **argv, int lang, windata_t *scriptwin)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
@@ -6091,8 +6108,8 @@ void run_prog_sync (char **argv, int lang)
 
     if (got_printable_output(prn)) {
 	if (lang == 0) {
-	    /* hansl output */
-	    view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, NULL);
+	    /* gretlcli output */
+	    view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, scriptwin);
 	} else {
 	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
 	}
@@ -6113,7 +6130,7 @@ static void run_R_sync (void)
 	NULL
     };
 
-    run_prog_sync(argv, LANG_R);
+    run_prog_sync(argv, LANG_R, NULL);
 }
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
@@ -6160,7 +6177,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    argv[3] = NULL;
 	}
 
-	run_prog_sync(argv, lang);
+	run_prog_sync(argv, lang, NULL);
     }
 }
 

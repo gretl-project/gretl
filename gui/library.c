@@ -8464,7 +8464,7 @@ static int already_running_script (void)
     }
 }
 
-static int gretlcli_exec_script (gchar *buf)
+static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
     gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
     gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
@@ -8484,7 +8484,7 @@ static int gretlcli_exec_script (gchar *buf)
 	gchar *cmd;
 
 	cmd = g_strdup_printf("\"%s\" -b -q \"%s\"", clipath, inpname);
-	win32_execute_script(cmd, 0);
+	win32_execute_script(cmd, 0, vwin);
 #else
 	gchar *argv[5];
 
@@ -8493,7 +8493,7 @@ static int gretlcli_exec_script (gchar *buf)
 	argv[2] = (gchar *) "-q";
 	argv[3] = (gchar *) inpname;
 	argv[4] = NULL;
-	run_prog_sync(argv, 0);
+	run_prog_sync(argv, 0, vwin);
 #endif
 	gretl_remove(inpname);
     }
@@ -8851,7 +8851,7 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
     } else if (vwin->role == EDIT_X12A) {
         run_x12a_script(buf);
     } else if (cli) {
-	gretlcli_exec_script(buf);
+	gretlcli_exec_script(vwin, buf);
     } else if (selection) {
 	run_script_fragment(vwin, buf);
     } else {
