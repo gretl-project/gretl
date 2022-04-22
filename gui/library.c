@@ -8783,7 +8783,8 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
         vwin->role == EDIT_DYNARE ||
 	vwin->role == EDIT_LPSOLVE ||
         vwin->role == EDIT_STATA ||
-        vwin->role == EDIT_X12A) {
+        vwin->role == EDIT_X12A ||
+	cli) {
         buf = textview_get_text(vwin->text);
     } else if (vwin->role == EDIT_PKG_SAMPLE) {
         buf = package_sample_get_script(vwin);
