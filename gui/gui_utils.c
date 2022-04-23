@@ -1856,10 +1856,29 @@ void vwin_set_filename (windata_t *vwin, const char *fname)
     strcpy(vwin->fname, fname);
 }
 
-static gchar *script_output_title (void)
+static gchar *script_output_title (gpointer data)
 {
-    int n = get_script_output_number();
+    int n;
 
+    if (gui_editor_mode() && data != NULL) {
+	windata_t *vwin = (windata_t *) data;
+	const gchar *s;
+
+	if (GTK_IS_WINDOW(vwin->main)) {
+	    s = gtk_window_get_title(GTK_WINDOW(vwin->main));
+	    if (s != NULL) {
+		return g_strdup_printf(_("%s output"), s);
+	    }
+	} else if (GTK_IS_WINDOW(vwin->topmain)) {
+	    s = tabwin_tab_get_title(vwin);
+	    if (s != NULL) {
+		return g_strdup_printf(_("gretl: %s output"), s);
+	    }
+	}
+    }
+
+    /* fallback */
+    n = get_script_output_number();
     if (n > 0) {
 	return g_strdup_printf(_("gretl: script output %d"), n+1);
     } else {
@@ -1867,7 +1886,7 @@ static gchar *script_output_title (void)
     }
 }
 
-static gchar *title_from_data (gpointer data)
+static gchar *title_from_bundle (gpointer data)
 {
     gretl_bundle *b = data;
     const char *s = gretl_bundle_get_creator(b);
@@ -1920,12 +1939,12 @@ static gchar *make_viewer_title (int role, const char *fname,
 	title = g_strdup(_("gretl: session notes")); break;
     case SCRIPT_OUT:
     case FNCALL_OUT:
-	title = script_output_title();
+	title = script_output_title(data);
 	break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
     case VIEW_BUNDLE:
-	title = title_from_data(data);
+	title = title_from_bundle(data);
 	break;
     default:
 	break;

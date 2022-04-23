@@ -1147,7 +1147,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;
-    } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
+    } else if (f == STICKIFY_ITEM && (r != SCRIPT_OUT || gui_editor_mode())) {
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;

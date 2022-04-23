@@ -778,6 +778,23 @@ void tabwin_tab_set_title (windata_t *vwin, const char *title)
     }
 }
 
+const gchar *tabwin_tab_get_title (windata_t *vwin)
+{
+    tabwin_t *tabwin = vwin_get_tabwin(vwin);
+    GtkWidget *tab, *label;
+
+    tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabwin->tabs),
+				     vwin->main);
+    if (tab != NULL) {
+	label = g_object_get_data(G_OBJECT(tab), "label");
+	if (label != NULL) {
+	    return gtk_label_get_text(GTK_LABEL(label));
+	}
+    }
+
+    return NULL;
+}
+
 /* set or unset the "modified flag" (trailing asterisk on
    the filename) for the tab label for a page in tabbed
    editor

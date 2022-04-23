@@ -8483,16 +8483,15 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 #ifdef G_OS_WIN32
 	gchar *cmd;
 
-	cmd = g_strdup_printf("\"%s\" -b -q \"%s\"", clipath, inpname);
+	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
 	win32_execute_script(cmd, 0, vwin);
 #else
-	gchar *argv[5];
+	gchar *argv[4];
 
 	argv[0] = (gchar *) clipath;
-	argv[1] = (gchar *) "-b";
-	argv[2] = (gchar *) "-q";
-	argv[3] = (gchar *) inpname;
-	argv[4] = NULL;
+	argv[1] = (gchar *) "-x";
+	argv[2] = (gchar *) inpname;
+	argv[3] = NULL;
 	run_prog_sync(argv, 0, vwin);
 #endif
 	gretl_remove(inpname);
