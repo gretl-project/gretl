@@ -101,7 +101,7 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	}
     }
 
-    if (gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
+    if (!ret && gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
 	gtk_main_quit();
     }
 

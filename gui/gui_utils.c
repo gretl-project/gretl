@@ -2683,10 +2683,8 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	}
     }
 
-    if (gui_editor_mode()) {
-	if (get_n_hansl_editor_windows() <= 1) {
-	    gtk_main_quit();
-	}
+    if (gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
+	gtk_main_quit();
     }
 
     return FALSE;
