@@ -3735,13 +3735,16 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        const char *fname = m->v.str;
+	gretl_matrix *a = node_get_matrix(l, p, 0, 1);
+	const char *fname = m->v.str;
+	int export = node_get_bool(r, p, 0);
 
-        ret = aux_scalar_node(p);
-        if (ret != NULL) {
-	    int export = node_get_bool(r, p, 0);
-
-	    p->err = ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+        if (!p->err) {
+	    p->err = gretl_matrix_write_to_file(a, fname, export);
+	    ret->v.xval = p->err;
         }
     } else {
         ret = aux_scalar_node(p);
@@ -17478,7 +17481,8 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MWRITE:
         /* matrix, with string as second arg */
-        if (l->t == MAT && m->t == STR && null_or_scalar(r)) {
+        if ((l->t == MAT || l->t == NUM) &&
+	    m->t == STR && null_or_scalar(r)) {
             ret = matrix_file_write(l, m, r, p);
         } else {
             p->err = E_TYPES;
