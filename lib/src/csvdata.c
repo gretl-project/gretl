@@ -1357,17 +1357,19 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
                             char *skipstr, PRN *prn)
 {
     char endobs[OBSLEN];
+    char *lbl1, *lbl2;
+    int len1, len2;
+    int pd = -1;
     int n = dset->n;
 
     if (dset->S == NULL) {
-	return -1;
+	return pd;
     }
 
-    char *lbl1 = dset->S[0];
-    char *lbl2 = dset->S[n - 1];
-    int len1 = strlen(lbl1);
-    int len2 = strlen(lbl2);
-    int pd = -1;
+    lbl1 = dset->S[0];
+    lbl2 = dset->S[n - 1];
+    len1 = strlen(lbl1);
+    len2 = strlen(lbl2);
 
     if (skipstr != NULL && *skipstr != '\0') {
         return time_series_label_check(dset, *reversed, skipstr, 0, prn);

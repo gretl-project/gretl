@@ -2578,11 +2578,14 @@ static int join_import_csv (const char *fname,
 	   interpretation.
 	*/
 	DATASET *rdset = csvdata_get_dataset(jspec->c);
-	int pd, reversed = 0;
 
-	pd = test_markers_for_dates(rdset, &reversed, NULL, prn);
-	if (pd > 0 && !reversed) {
-	    rdset->structure = TIME_SERIES;
+	if (rdset->S != NULL) {
+	    int pd, reversed = 0;
+
+	    pd = test_markers_for_dates(rdset, &reversed, NULL, prn);
+	    if (pd > 0 && !reversed) {
+		rdset->structure = TIME_SERIES;
+	    }
 	}
     }
 
