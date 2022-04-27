@@ -894,8 +894,10 @@ int main (int argc, char **argv)
 #endif
 
 #ifdef GRETL_PID_FILE
-    write_pid_to_file();
-    atexit(delete_pid_from_file);
+    if (!opted) {
+	write_pid_to_file();
+	atexit(delete_pid_from_file);
+    }
 #endif
 
     /* create the GUI */
