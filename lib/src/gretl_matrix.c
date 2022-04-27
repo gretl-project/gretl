@@ -3920,7 +3920,7 @@ static void real_gretl_matrix_print (const gretl_matrix *m,
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 {
-    gretl_matrix_print(m, msg, stderr);
+    real_gretl_matrix_print(m, msg, stderr);
 }
 
 /**
@@ -3933,7 +3933,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 
 void gretl_matrix_print2 (const gretl_matrix *m, const char *msg)
 {
-    gretl_matrix_print(m, msg, stdout);
+    real_gretl_matrix_print(m, msg, stdout);
 }
 
 #define DEFAULT_EQTOL 1.0e-9 /* 2014-08-05: was 1.5e-12 */
