@@ -1358,6 +1358,11 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
 {
     char endobs[OBSLEN];
     int n = dset->n;
+
+    if (dset->S == NULL) {
+	return -1;
+    }
+
     char *lbl1 = dset->S[0];
     char *lbl2 = dset->S[n - 1];
     int len1 = strlen(lbl1);
