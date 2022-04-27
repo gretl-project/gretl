@@ -7782,19 +7782,21 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 	    ret = aux_string_node(p);
 	}
 
-        if (f == F_OBSLABEL && v != NULL) {
-	    ret->v.a = retrieve_date_strings(v, p->dset, &p->err);
-	} else if (f == F_OBSLABEL) {
-            ret->v.str = retrieve_date_string(i, p->dset, &p->err);
-        } else if (f == F_VARNAME) {
-            if (i >= 0 && i < p->dset->v) {
-                ret->v.str = gretl_strdup(p->dset->varname[i]);
-            } else {
-                p->err = E_INVARG;
-            }
-        } else {
-            p->err = E_DATA;
-        }
+	if (!p->err) {
+	    if (f == F_OBSLABEL && v != NULL) {
+		ret->v.a = retrieve_date_strings(v, p->dset, &p->err);
+	    } else if (f == F_OBSLABEL) {
+		ret->v.str = retrieve_date_string(i, p->dset, &p->err);
+	    } else if (f == F_VARNAME) {
+		if (i >= 0 && i < p->dset->v) {
+		    ret->v.str = gretl_strdup(p->dset->varname[i]);
+		} else {
+		    p->err = E_INVARG;
+		}
+	    } else {
+		p->err = E_DATA;
+	    }
+	}
 
         if (!p->err && v == NULL && ret->v.str == NULL) {
             p->err = E_ALLOC;
