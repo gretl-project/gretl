@@ -1849,9 +1849,21 @@ static void write_R_io_file (FILE *fp, const char *ddir)
 	"    write.csv(x, file=fname, row.names=F)\n"
 	"    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n"
 	"  } else if (is.matrix(x)) {\n"
-	"    fname <- paste(prefix, sx, \".mat\", sep=\"\")\n"
-	"    write(dim(x), fname)\n"
-	"    write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n"
+	"    len = nchar(sx)\n"
+	"    if (substr(sx, len-3, len) == \".bin\") {\n"
+	"      fname <- paste(prefix, sx, sep=\"\")\n"
+	"      mout = file(fname, \"wb\")\n"
+	"      b <- charToRaw(\"gretl_binary_matrix\")\n"
+	"      writeBin(as.integer(b), mout, size=1)\n"
+	"      writeBin(nrow(x), mout, size=4)\n"
+	"      writeBin(ncol(x), mout, size=4)\n"
+	"      writeBin(c(x), mout)\n"
+	"      close(mout)\n"
+	"    } else {\n"
+	"      fname <- paste(prefix, sx, \".mat\", sep=\"\")\n"
+	"      write(dim(x), fname)\n"
+	"      write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n"
+	"    }\n"
 	"    gretlmsg <- paste(\"wrote matrix\", fname, \"\\n\")\n"
 	"  } else {\n"
 	"    gretlmsg <- paste(\"gretl.export: don't know how to write object\", objname, "
@@ -1860,6 +1872,27 @@ static void write_R_io_file (FILE *fp, const char *ddir)
 	"  if (!quiet) {\n"
 	"    cat(gretlmsg)\n"
 	"  }\n"
+	"}\n";
+    const char *loadmat_body =
+	"  len <- nchar(mname)\n"
+	"  binfile <- substr(mname, len-3, len) == \".bin\"\n"
+	"  fname <- paste(prefix, mname, sep=\"\")\n"
+	"  if (binfile) {\n"
+	"    mfile = file(fname, \"rb\")\n"
+	"    hdr = readBin(mfile, integer(), size=1, n=19)\n"
+	"    s <- rawToChar(as.raw(hdr))\n"
+	"    if (s != \"gretl_binary_matrix\") {\n"
+	"      stop('Not a gretl binary matrix')\n"
+	"    } else {\n"
+	"      nr <- readBin(mfile, integer(), size=4, endian = \"little\")\n"
+	"      nc <- readBin(mfile, integer(), size=4, endian = \"little\")\n"
+	"      matvals <- readBin(mfile, double(), nr*nc, endian = \"little\")\n"
+	"      m <- matrix(matvals, nr, nc)\n"
+	"    }\n"
+	"  } else {\n"
+	"    m <- as.matrix(read.table(fname, skip=1))\n"
+	"  }\n"
+	"  return(m)\n"
 	"}\n";
 
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", ddir);
@@ -1876,10 +1909,7 @@ static void write_R_io_file (FILE *fp, const char *ddir)
 
     fputs("gretl.loadmat <- function(mname) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
-    fputs("  fname <- paste(prefix, mname, sep=\"\")\n", fp);
-    fputs("  m <- as.matrix(read.table(fname, skip=1))\n", fp);
-    fputs("  return(m)\n", fp);
-    fputs("}\n", fp);
+    fputs(loadmat_body, fp);
 }
 
 /* basic content which can either go into gretl.Rsetup or into
