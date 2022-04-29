@@ -693,6 +693,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 {
     int Ctrl = (event->state & GDK_CONTROL_MASK);
     int Alt = (event->state & GDK_MOD1_MASK);
+    guint key = event->keyval;
     guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
     int console = vwin->role == CONSOLE;
@@ -704,12 +705,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 #if 0
     fprintf(stderr, "HERE catch_viewer_key\n"
 	    " editing=%d, console=%d, Ctrl=%d, Alt=%d, key=%s\n",
-	    editing, console, Ctrl, Alt, gdk_keyval_name(upkey));
+	    editing, console, Ctrl, Alt, gdk_keyval_name(key));
 #endif
 
     if (editing && Alt && !Ctrl) {
 	/* "Alt" specials for editor */
-	if (maybe_insert_greek(upkey, vwin)) {
+	if (maybe_insert_greek(key, vwin)) {
 	    return TRUE;
 	} else if (upkey == GDK_minus) {
 	    textview_insert_text(vwin->text, "~");
@@ -721,8 +722,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	return FALSE;
     }
 
-    if (!gdk_keyval_is_upper(event->keyval)) {
-	upkey = gdk_keyval_to_upper(event->keyval);
+    if (!gdk_keyval_is_upper(key)) {
+	upkey = gdk_keyval_to_upper(key);
     }
 
 #ifdef OS_OSX
@@ -742,6 +743,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    return vwin_copy_callback(NULL, vwin);
+	} else if (key == GDK_plus) {
+	    text_larger(w, vwin);
+	    return TRUE;
+	} else if (key == GDK_minus) {
+	    text_smaller(w, vwin);
+	    return TRUE;
 	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own

@@ -17,6 +17,8 @@ version 2022b, in progress
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
 - script editor: enhancements for Find/Replace dialog
+- GUI viewer windows: support Ctrl-plus and Ctrl-minus to
+  increase/reduce font size
 - R support: enable exchange of matrices in binary format
 - Fix bug: crash on trying to stringify() an empty series
 - Fix bug: det() should not flag an error when returning NA
