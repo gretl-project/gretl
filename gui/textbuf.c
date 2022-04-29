@@ -90,7 +90,7 @@ int smarttab = 1;
 int script_line_numbers = 0;
 int script_auto_bracket = 0;
 
-static gboolean script_electric_enter (windata_t *vwin);
+static gboolean script_electric_enter (windata_t *vwin, int alt);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
 static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
@@ -100,6 +100,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
+static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -751,7 +752,7 @@ static gint script_key_handler (GtkWidget *w,
 	ret = TRUE;
     } else if (editing_hansl(vwin->role)) {
 	if (keyval == GDK_Return) {
-	    ret = script_electric_enter(vwin);
+	    ret = script_electric_enter(vwin, state & GDK_MOD1_MASK);
 	} else if (tabkey(keyval)) {
 #if TABDEBUG
 	    fprintf(stderr, "*** calling script_tab_handler ***\n");
@@ -3450,51 +3451,6 @@ static char *get_previous_line_start_word (char *word,
     return word;
 }
 
-/* Try to determine if the line @s should have its indentation
-   adjusted downward/leftward, as with an "endif" which is currently
-   at the same indentation level as the content of the if-block that
-   it terminates.  If so, we'll make this adjustment in response to
-   Tab at the end of the line.
-*/
-
-static int left_shift_ok (const char *s)
-{
-    const char *left_words[] = {
-	"endif", "endloop", "else", "elif"
-    };
-    int i;
-
-    s += strspn(s, " ");
-
-    for (i=0; i<4; i++) {
-	if (!strcmp(s, left_words[i])) {
-	    return 1;
-	}
-    }
-    if (strlen(s) > 4 && !strncmp(s, "end ", 4) &&
-	gretl_command_number(s+4) > 0) {
-	return 1;
-    }
-
-    return 0;
-}
-
-static void adjust_line_indent (GtkTextBuffer *tbuf,
-				const char *line,
-				int indent0,
-				GtkTextIter *start,
-				GtkTextIter *end)
-{
-    int i, n = indent0 - tabwidth;
-
-    gtk_text_buffer_delete(tbuf, start, end);
-    gtk_text_iter_set_line_offset(start, 0);
-    for (i=0; i<n; i++) {
-	gtk_text_buffer_insert(tbuf, start, " ", -1);
-    }
-    gtk_text_buffer_insert(tbuf, start, line + indent0, -1);
-}
-
 /* Is the insertion point at the start of a line, or in a white-space
    field to the left of any non-space characters?  If so, we'll trying
    inserting a "smart" soft tab in response to the Tab key. If not,
@@ -3506,8 +3462,7 @@ static void adjust_line_indent (GtkTextBuffer *tbuf,
    let Tab at the end of the line adjust its indentation.
 */
 
-static int maybe_insert_smart_tab (windata_t *vwin,
-				   int *comp_ok)
+static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
@@ -3540,16 +3495,6 @@ static int maybe_insert_smart_tab (windata_t *vwin,
 	if (strspn(chunk, " \t") == pos) {
 	    /* set @ret if this chunk is just white space */
 	    ret = 1;
-	} else if (isspace(chunk[0]) && left_shift_ok(chunk)) {
-	    /* special case of smart tab, as in emacs */
-	    int indent0 = (int) strspn(chunk, " ");
-
-	    if (indent0 >= tabwidth) {
-		adjust_line_indent(tbuf, chunk, indent0, &start, &end);
-		g_free(chunk);
-		/* we're done */
-		return 1;
-	    }
 	} else if (comp_ok != NULL && pos > 1) {
 	    /* follow-up: is the context OK for completion? */
 	    *comp_ok = !isspace(chunk[pos-1]) && !isspace(chunk[pos-2]);
@@ -3718,10 +3663,11 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
 /* On "Enter" in script editing, try to compute the correct indent
    level for the current line, and make an adjustment if it's not
    already right. We also attempt to place the cursor at the
-   appropriate indent on the next, new line.
+   appropriate indent on the next, new line -- unless @alt is
+   non-zero, in which case we don't insert a newline.
 */
 
-static gboolean script_electric_enter (windata_t *vwin)
+static gboolean script_electric_enter (windata_t *vwin, int alt)
 {
     char *s = NULL;
     int targsp = 0;
@@ -3732,13 +3678,12 @@ static gboolean script_electric_enter (windata_t *vwin)
     }
 
 #if TABDEBUG
-    fprintf(stderr, "*** script_electric_enter\n");
+    fprintf(stderr, "*** script_electric_enter: alt = %d\n", alt);
 #endif
 
     s = textview_get_current_line(vwin->text, 0);
 
     if (s != NULL && *s != '\0') {
-	/* work on the line that starts with @thisword */
 	GtkTextBuffer *tbuf;
 	GtkTextMark *mark;
 	GtkTextIter start, end;
@@ -3804,25 +3749,27 @@ static gboolean script_electric_enter (windata_t *vwin)
 	    }
 	}
 
-	/* try to arrange correct indent on the new line? */
-	if (ipos == 0) {
-	    k = targsp + incremental_leading_spaces(prevword, "");
-	} else {
-	    k = targsp + incremental_leading_spaces(thisword, "");
-	}
+	if (!alt) {
+	    /* try to arrange correct indent on the new line? */
+	    if (ipos == 0) {
+		k = targsp + incremental_leading_spaces(prevword, "");
+	    } else {
+		k = targsp + incremental_leading_spaces(thisword, "");
+	    }
 #if TABDEBUG
-	fprintf(stderr, "new line indent: k = %d\n", k);
+	    fprintf(stderr, "new line indent: k = %d\n", k);
 #endif
-	gtk_text_buffer_begin_user_action(tbuf);
-	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
-	gtk_text_buffer_insert(tbuf, &start, "\n", -1);
-	for (i=0; i<k; i++) {
-	    gtk_text_buffer_insert(tbuf, &start, " ", -1);
+	    gtk_text_buffer_begin_user_action(tbuf);
+	    gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
+	    gtk_text_buffer_insert(tbuf, &start, "\n", -1);
+	    for (i=0; i<k; i++) {
+		gtk_text_buffer_insert(tbuf, &start, " ", -1);
+	    }
+	    gtk_text_buffer_place_cursor(tbuf, &start);
+	    gtk_text_buffer_end_user_action(tbuf);
+	    mark = gtk_text_buffer_get_insert(tbuf);
+	    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(vwin->text), mark);
 	}
-	gtk_text_buffer_place_cursor(tbuf, &start);
-	gtk_text_buffer_end_user_action(tbuf);
-	mark = gtk_text_buffer_get_insert(tbuf);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(vwin->text), mark);
 	ret = TRUE;
     }
 
