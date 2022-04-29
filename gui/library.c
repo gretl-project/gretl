@@ -8485,6 +8485,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
 	win32_execute_script(cmd, 0, vwin);
+	gretl_remove(inpname);
 #else
 	gchar *argv[4];
 
@@ -8492,9 +8493,8 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	argv[1] = (gchar *) "-x";
 	argv[2] = (gchar *) inpname;
 	argv[3] = NULL;
-	run_prog_sync(argv, 0, vwin);
+	run_gretlcli_async(argv, vwin);
 #endif
-	gretl_remove(inpname);
     }
 
     g_free(clipath);

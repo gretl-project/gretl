@@ -6066,7 +6066,7 @@ static void start_R_async (void)
    results in a gretl window: non-Windows variant
 */
 
-void run_prog_sync (char **argv, int lang, windata_t *scriptwin)
+static void run_prog_sync (char **argv, int lang)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
@@ -6124,16 +6124,84 @@ void run_prog_sync (char **argv, int lang, windata_t *scriptwin)
     }
 
     if (got_printable_output(prn)) {
-	if (lang == 0) {
-	    /* gretlcli output */
-	    view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, scriptwin);
-	} else {
-	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-	}
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
 
     g_free(sout);
     g_free(errout);
+}
+
+struct cli_info {
+    windata_t *scriptwin;
+    gint fout;
+    gint ferr;
+    gchar *fname;
+};
+
+static void gretlcli_done (GPid pid, gint status, gpointer p)
+{
+    struct cli_info *ci = p;
+
+    if (ci != NULL) {
+	char buf[4096];
+	size_t bs = sizeof buf - 1;
+	ssize_t got;
+	PRN *prn;
+
+	bufopen(&prn);
+
+	if (ci->fout > 0) {
+	    while ((got = read(ci->fout, buf, bs)) > 0) {
+		buf[got] = '\0';
+		pputs(prn, buf);
+	    }
+	    close(ci->fout);
+	}
+	if (ci->ferr > 0) {
+	    if (status != 0 && (got = read(ci->ferr, buf, bs)) > 0) {
+		buf[got] = '\0';
+		pputs(prn, buf);
+	    }
+	    close(ci->ferr);
+	}
+	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ci->scriptwin);
+	gretl_remove(ci->fname);
+	g_free(ci->fname);
+	free(ci);
+    }
+
+    g_spawn_close_pid(pid);
+}
+
+void run_gretlcli_async (char **argv, windata_t *scriptwin)
+{
+    gboolean run;
+    gint ferr = -1;
+    gint fout = -1;
+    GPid pid = 0;
+    GError *gerr = NULL;
+
+    run = g_spawn_async_with_pipes(NULL, argv, NULL,
+				   G_SPAWN_SEARCH_PATH |
+				   G_SPAWN_DO_NOT_REAP_CHILD,
+				   NULL, NULL, &pid, NULL,
+				   &fout, &ferr,
+				   &gerr);
+
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else if (!run) {
+	errbox(_("gretlcli command failed"));
+    } else if (pid > 0) {
+	struct cli_info *ci = calloc(1, sizeof *ci);
+
+	ci->scriptwin = scriptwin;
+	ci->fout = fout;
+	ci->ferr = ferr;
+	ci->fname = g_strdup(argv[2]);
+	g_child_watch_add(pid, gretlcli_done, ci);
+    }
 }
 
 static void run_R_sync (void)
@@ -6147,7 +6215,7 @@ static void run_R_sync (void)
 	NULL
     };
 
-    run_prog_sync(argv, LANG_R, NULL);
+    run_prog_sync(argv, LANG_R);
 }
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
@@ -6194,7 +6262,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    argv[3] = NULL;
 	}
 
-	run_prog_sync(argv, lang, NULL);
+	run_prog_sync(argv, lang);
     }
 }
 
