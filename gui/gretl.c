@@ -2653,6 +2653,16 @@ gboolean open_tryfile (void)
     gboolean ret = FALSE;
     int ftype = 0;
 
+    if (opted) {
+	if ((ftype = script_type(tryfile))) {
+	    return do_open_script(ftype);
+	} else {
+	    do_new_script(EDIT_HANSL, NULL);
+	    warnbox_printf(_("%s: not a recognized script file"), tryfile);
+	    return TRUE;
+	}
+    }
+
     if (has_db_suffix(tryfile)) {
 	ret = open_named_db_index(tryfile);
     } else if (has_suffix(tryfile, ".gretl") &&
