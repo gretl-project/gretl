@@ -57,11 +57,12 @@ enum {
     KALMAN_SMOOTH  = 1 << 3, /* preparing for smoothing pass */
     KALMAN_SIM     = 1 << 4, /* running simulation */
     KALMAN_CROSS   = 1 << 5, /* cross-correlated disturbances */
-    KALMAN_CHECK   = 1 << 6, /* checking user-defined matrices */
-    KALMAN_BUNDLE  = 1 << 7, /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 8, /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 9, /* filtering for ARMA estimation */
-    KALMAN_SM_AM   = 1 << 10 /* Anderson-Moore smoothing */
+    KALMAN_DKVAR   = 1 << 6, /* Durbin-Koopman style RQR' statevar */
+    KALMAN_CHECK   = 1 << 7, /* checking user-defined matrices */
+    KALMAN_BUNDLE  = 1 << 8, /* kalman is inside a bundle */
+    KALMAN_SSFSIM  = 1 << 9, /* on simulation, emulate SsfPack */
+    KALMAN_ARMA_LL = 1 << 10, /* filtering for ARMA estimation */
+    KALMAN_SM_AM   = 1 << 11 /* Anderson-Moore smoothing */
 };
 
 typedef struct stepinfo_ stepinfo;
@@ -79,6 +80,7 @@ struct kalman_ {
     int n;   /* columns of y = number of observables */
     int k;   /* columns of B = number of exogenous vars in obs eqn */
     int p;   /* length of combined disturbance vector */
+    int q;   /* length of state disturbance vector */
     int N;   /* rows of y = number of observations */
     int okN; /* N - number of missing observations */
     int t;   /* current time step, when filtering */
@@ -104,6 +106,20 @@ struct kalman_ {
     gretl_matrix *Ck;  /* C∞,t */
     gretl_matrix *PK;  /* P∞, all t */
 
+enum {
+    K_T = 0,
+    K_BT,
+    K_ZT,
+    K_Q, /* HH */
+    K_R, /* GG */
+    K_m,
+    K_y,
+    K_x,
+    K_a,
+    K_P,
+    K_MMAX /* sentinel */
+};    
+
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
     */
@@ -123,6 +139,10 @@ struct kalman_ {
     gretl_matrix *G;  /* n x p: GG' ("R") */
     /* and the cross-matrix itself */
     gretl_matrix *HG; /* r x n */
+
+    /* Durbin-Koopman R and Q (as in statevar = RQR') */
+    gretl_matrix *Q;  /* q x q, symmetric */
+    gretl_matrix *R;  /* r x q, selection matrix */
 
     /* apparatus for registering time-variation of matrices */
     char *matcall;
@@ -184,6 +204,7 @@ enum {
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
+#define kalman_dkvar(K)       (K->flags & KALMAN_DKVAR)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 #define kalman_smoothing(K)   (K->flags & KALMAN_SMOOTH)
@@ -386,6 +407,13 @@ static int check_matrix_dims (kalman *K, const gretl_matrix *m, int i)
         c = 1;
     }
 
+    if (i == K_Q && m->rows < r) {
+	if (m->cols == m->rows) {
+	    /* could be OK if we get a selection matrix */
+	    ;
+	}
+    }
+
     if (m->rows != r || m->cols != c) {
         gretl_errmsg_sprintf("kalman: %s is %d x %d, should be %d x %d\n",
                              kalman_matrix_name(i), m->rows, m->cols, r, c);
@@ -462,6 +490,13 @@ static int kalman_check_dimensions (kalman *K)
                     K->p, K->r, K->n);
             err = E_NONCONF;
         }
+    } else if (K->R != NULL) {
+	if (K->R->rows != K->r || K->R->cols != K->q)
+            fprintf(stderr, "R is %d x %d, Q is %d x %d, r=%d, q=%d\n",
+                    K->R->rows, K->R->cols, K->Q->rows, K->Q->cols,
+                    K->r, K->q);
+            err = E_NONCONF;
+        }	
     } else {
         /* "Q" = HH' is mandatory, should be r x r and symmetric */
         if (!err) {
@@ -1061,7 +1096,7 @@ static void set_row_to_value (gretl_matrix *targ, int t, double x)
 /* supports hansl function for creating a named Kalman bundle */
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
-                            int nmat, int *err)
+                            int nmat, int DKstyle, int *err)
 {
     gretl_matrix **targ[5];
     kalman *K;
@@ -1087,9 +1122,15 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     targ[2] = &K->T;
 
     if (nmat == 5) {
-        K->flags |= KALMAN_CROSS;
-        targ[3] = &K->H;
-        targ[4] = &K->G;
+	if (DKstyle) {
+	    K->flags |= KALMAN_DKVAR;
+	    targ[3] = &K->Q;
+	    targ[4] = &K->R;
+	} else {
+	    K->flags |= KALMAN_CROSS;
+	    targ[3] = &K->H;
+	    targ[4] = &K->G;
+	}
     } else {
         targ[3] = &K->HH; /* aka "Q" */
     }
@@ -4474,12 +4515,13 @@ static int output_matrix_slot (const char *s)
     return -1;
 }
 
-#define K_N_SCALARS 10
+#define K_N_SCALARS 11
 
 enum {
     Ks_t = 0,
     Ks_DIFFUSE,
     Ks_CROSS,
+    Ks_DKVAR,
     Ks_S2,
     Ks_LNL,
     Ks_r,
@@ -4493,6 +4535,7 @@ static const char *kalman_output_scalar_names[K_N_SCALARS] = {
     "t",
     "diffuse",
     "cross",
+    "dkvar",
     "s2",
     "lnl",
     "r",
@@ -4539,6 +4582,9 @@ static double *kalman_output_scalar (kalman *K,
     case Ks_CROSS:
         retval[idx] = (K->flags & KALMAN_CROSS)? 1 : 0;
         break;
+    case Ks_DKVAR:
+        retval[idx] = (K->flags & KALMAN_DKVAR)? 1 : 0;
+        break;	
     case Ks_S2:
         retval[idx] = K->s2;
         break;
@@ -5041,6 +5087,8 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
                             Kflags |= KALMAN_DIFFUSE;
                         } else if (!strcmp(key, "cross") && x > 0) {
                             Kflags |= KALMAN_CROSS;
+			} else if (!strcmp(key, "dkvar") && x > 0) {
+			    Fflags |= KALMAN_DKVAR;
                         } else if (!strcmp(key, "s2")) {
                             s2 = x;
                         } else if (!strcmp(key, "lnl")) {
@@ -5062,7 +5110,7 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
         node = node->next;
     }
 
-    if (nmats == 5 && !(Kflags & KALMAN_CROSS)) {
+    if (nmats == 5 && !(Kflags & (KALMAN_CROSS | KALMAN_DKVAR))) {
         /* drop obsvar from initialization */
         Mopt[K_R] = Mreq[4];
         Mreq[4] = NULL;
@@ -5149,6 +5197,10 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
         M[3] = K->H;
         M[4] = K->G;
         k = 5;
+    } else if (kalman_dkvar(K)) {
+        M[3] = K->Q;
+        M[4] = K->R;
+        k = 5;	
     } else {
         M[3] = K->HH;
     }
@@ -5242,6 +5294,7 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
 
         /* flags */
         S[i++] = gretl_strdup("cross");
+	S[i++] = gretl_strdup("dkvar");
         S[i++] = gretl_strdup("diffuse");
 
         /* actual numerical outputs */

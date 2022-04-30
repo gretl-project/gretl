@@ -14640,11 +14640,18 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
     if (t->t == F_KSETUP) {
         gretl_matrix *M[5] = {NULL};
         int copy[5] = {0};
+	int DKstyle = 0;
+	int nmats = 0;
 
         if (k < 4) {
             n_args_error(k, 4, 4, t->t, p);
-        }
-        for (i=0; i<k && !p->err; i++) {
+        } else if (k > 5) {
+	    DKstyle = node_get_bool(n->v.bn.n[5], p, 0);
+	    nmats = 5;
+	} else {
+	    nmats = 4;
+	}
+        for (i=0; i<nmats && !p->err; i++) {
             e = n->v.bn.n[i];
 	    if (e->t == MAT) {
 		M[i] = mat_node_get_real_matrix(e, p);
@@ -14664,7 +14671,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
 	    }
 	}
         if (!p->err) {
-            gretl_bundle *b = kalman_bundle_new(M, copy, k, &p->err);
+            gretl_bundle *b = kalman_bundle_new(M, copy, k, DKstyle, &p->err);
 
             if (!p->err) {
                 ret = aux_bundle_node(p);

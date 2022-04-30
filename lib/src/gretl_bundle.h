@@ -235,7 +235,7 @@ gretl_bundle *bundle_from_system (void *ptr,
 
 gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 				 int copy[], int nmat,
-				 int *err);
+				 int DKstyle, int *err);
 
 int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,

@@ -3164,7 +3164,7 @@ gretl_bundle *bundle_from_system (void *ptr,
 
 gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 				 int copy[], int nmat,
-				 int *err)
+				 int DKstyle, int *err)
 {
     gretl_bundle *b = gretl_bundle_new();
 
@@ -3172,7 +3172,7 @@ gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 	*err = E_ALLOC;
     } else {
 	b->type = BUNDLE_KALMAN;
-	b->data = kalman_new_minimal(M, copy, nmat, err);
+	b->data = kalman_new_minimal(M, copy, nmat, DKstyle, err);
     }
 
     /* don't return a broken bundle */
