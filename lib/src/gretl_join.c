@@ -272,6 +272,13 @@ static void timeconv_map_set (int ncols, char **colnames,
     tconv_map.tname = tname;
     tconv_map.fmt = fmt;
 
+#if TDEBUG
+    if (fmt != NULL) {
+	fprintf(stderr, "timeconv_map_set: tname '%s' tconv_fmt '%s' tkey_fmt '%s'\n",
+	    tname, fmt[TCONV_FMT], fmt[TKEY_FMT]);
+    }
+#endif
+
     if (fmt != NULL) {
         if (fmt[TCONV_FMT] != NULL) {
             tconv_map.m_means_q[TCONV_FMT] =
@@ -370,8 +377,11 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
            means a trailing portion of the input was not
            processed.
         */
-#if 0
-	fprintf(stderr, "HERE right-hand pd = %d, tmft='%s', s='%s'\n", jr->r_dset->pd, tfmt, s);
+#if TDEBUG
+	if (i < 6) {
+	    fprintf(stderr, "i=%d, src=%d, right-hand pd=%d, tmft='%s', s='%s'\n",
+		    i, s_src, jr->r_dset->pd, tfmt, s);
+	}
 #endif
         test = strptime(s, tfmt, &t);
 	if (test == NULL && s_src == 3 && j == 0) {
@@ -381,13 +391,6 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 		set_time_format(jr->auto_keys, "%Y");
 		goto finish;
 	    }
-#if 0
-	    else if (strchr(tfmt, '-') && strlen(s) == 6) {
-		/* quarterly data from CSV? */
-		set_time_format(jr->auto_keys, "%YQ%q");
-		goto finish;
-	    }
-#endif
 	}
     }
 
@@ -1862,7 +1865,7 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
     char *s = auto_keys->timefmt;
     int i, err = 0;
 
-#if JDEBUG
+#if TDEBUG
     fprintf(stderr, "check_for_quarterly_format: '%s'\n", s);
 #endif
 
@@ -2572,10 +2575,11 @@ static int join_import_csv (const char *fname,
                               NULL, NULL, opt, prn);
     }
 
-    if (!err && dataset_is_time_series(ldset)) {
+    if (!err && !jspec->user_tkey && dataset_is_time_series(ldset)) {
 	/* If we have time series data on the left, check on
 	   the imported CSV side for a clear time series
-	   interpretation.
+	   interpretation -- unless the caller has specified an
+	   outer key.
 	*/
 	DATASET *rdset = csvdata_get_dataset(jspec->c);
 
@@ -3071,6 +3075,10 @@ int gretl_join_data (const char *fname,
 
     obskey_init(&auto_keys);
     timeconv_map_init();
+
+    if (okey != NULL || tconvstr != NULL || tconvfmt != NULL) {
+	jspec.user_tkey = 1;
+    }
 
 #if JDEBUG
     fputs("*** gretl_join_data:\n", stderr);

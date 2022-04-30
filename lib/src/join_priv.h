@@ -35,6 +35,7 @@ struct joinspec_ {
     int wildcard;
     int auto_midas;
     int midas_pd;
+    int user_tkey;
     char **wildnames;
     char **mdsnames;
     char **tmpnames;
