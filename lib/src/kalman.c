@@ -106,20 +106,6 @@ struct kalman_ {
     gretl_matrix *Ck;  /* C∞,t */
     gretl_matrix *PK;  /* P∞, all t */
 
-enum {
-    K_T = 0,
-    K_BT,
-    K_ZT,
-    K_Q, /* HH */
-    K_R, /* GG */
-    K_m,
-    K_y,
-    K_x,
-    K_a,
-    K_P,
-    K_MMAX /* sentinel */
-};    
-
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
     */
@@ -491,12 +477,12 @@ static int kalman_check_dimensions (kalman *K)
             err = E_NONCONF;
         }
     } else if (K->R != NULL) {
-	if (K->R->rows != K->r || K->R->cols != K->q)
+	if (K->R->rows != K->r || K->R->cols != K->q) {
             fprintf(stderr, "R is %d x %d, Q is %d x %d, r=%d, q=%d\n",
                     K->R->rows, K->R->cols, K->Q->rows, K->Q->cols,
                     K->r, K->q);
             err = E_NONCONF;
-        }	
+        }
     } else {
         /* "Q" = HH' is mandatory, should be r x r and symmetric */
         if (!err) {
@@ -4584,7 +4570,7 @@ static double *kalman_output_scalar (kalman *K,
         break;
     case Ks_DKVAR:
         retval[idx] = (K->flags & KALMAN_DKVAR)? 1 : 0;
-        break;	
+        break;
     case Ks_S2:
         retval[idx] = K->s2;
         break;
@@ -5059,6 +5045,7 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
     int copy[5] = {0};
     int i, nmats = 0;
     int Kflags = 0;
+    int dkopt = 0;
     gretl_matrix *m;
     double x;
     char *key, *strv;
@@ -5088,7 +5075,8 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
                         } else if (!strcmp(key, "cross") && x > 0) {
                             Kflags |= KALMAN_CROSS;
 			} else if (!strcmp(key, "dkvar") && x > 0) {
-			    Fflags |= KALMAN_DKVAR;
+			    Kflags |= KALMAN_DKVAR;
+			    dkopt = 1;
                         } else if (!strcmp(key, "s2")) {
                             s2 = x;
                         } else if (!strcmp(key, "lnl")) {
@@ -5121,7 +5109,7 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
         (!(Kflags & KALMAN_CROSS) && nmats != 4)) {
         *err = E_DATA;
     } else {
-        b = kalman_bundle_new(Mreq, copy, nmats, err);
+        b = kalman_bundle_new(Mreq, copy, nmats, dkopt, err);
         if (b != NULL) {
             kalman *K = gretl_bundle_get_private_data(b);
             gretl_matrix **pm;
@@ -5178,6 +5166,7 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     int copy[5] = {1, 1, 1, 1, 1};
     gretl_matrix *m, **pm, **pm1;
     const char *name;
+    int dkopt = 0;
     int i, id, k = 4;
 
     K = gretl_bundle_get_private_data((gretl_bundle *) src);
@@ -5200,12 +5189,13 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     } else if (kalman_dkvar(K)) {
         M[3] = K->Q;
         M[4] = K->R;
-        k = 5;	
+        k = 5;
+	dkopt = 1;
     } else {
         M[3] = K->HH;
     }
 
-    b = kalman_bundle_new(M, copy, k, err);
+    b = kalman_bundle_new(M, copy, k, dkopt, err);
 
     if (*err) {
         return b;

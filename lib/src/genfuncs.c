@@ -2006,7 +2006,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     M[3] = gretl_zero_matrix_new(2, 2);
     gretl_matrix_set(M[3], 0, 0, 1/sqrt_lam);
 
-    b = kalman_bundle_new(M, copy, 4, &err);
+    b = kalman_bundle_new(M, copy, 4, 0, &err);
     if (err) {
         goto bailout;
     }
