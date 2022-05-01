@@ -23,7 +23,7 @@
 typedef struct kalman_ kalman;
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
-			    int nmat, int DKstyle, int *err);
+			    int nmat, int dkvar, int *err);
 
 void kalman_free (kalman *K);
 

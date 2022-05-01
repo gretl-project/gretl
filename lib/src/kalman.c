@@ -50,13 +50,17 @@ enum {
     KALMAN_FORWARD = 1 << 2, /* running forward filtering pass */
     KALMAN_SMOOTH  = 1 << 3, /* preparing for smoothing pass */
     KALMAN_SIM     = 1 << 4, /* running simulation */
-    KALMAN_CROSS   = 1 << 5, /* cross-correlated disturbances */
-    KALMAN_DKVAR   = 1 << 6, /* Durbin-Koopman style RQR' statevar */
-    KALMAN_CHECK   = 1 << 7, /* checking user-defined matrices */
-    KALMAN_BUNDLE  = 1 << 8, /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 9, /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 10, /* filtering for ARMA estimation */
-    KALMAN_SM_AM   = 1 << 11 /* Anderson-Moore smoothing */
+    KALMAN_CHECK   = 1 << 5, /* checking user-defined matrices */
+    KALMAN_BUNDLE  = 1 << 6, /* kalman is inside a bundle */
+    KALMAN_SSFSIM  = 1 << 7, /* on simulation, emulate SsfPack */
+    KALMAN_ARMA_LL = 1 << 8, /* filtering for ARMA estimation */
+    KALMAN_SM_AM   = 1 << 9  /* Anderson-Moore smoothing */
+};
+
+enum {
+    STD_VAR, /* standard, basic variance representation */
+    DJ_VAR,  /* as per DeJong, supporting cross correlation */
+    DK_VAR   /* as per Durbin and Koopman */
 };
 
 typedef struct stepinfo_ stepinfo;
@@ -69,6 +73,7 @@ struct stepinfo_ {
 struct kalman_ {
     int flags;  /* for recording any options */
     int exact;  /* exact initial iterations? */
+    int vartype; /* STD_VAR, DJ_VAR or DK_VAR */
 
     int r;   /* rows of a = number of elements in state */
     int n;   /* columns of y = number of observables */
@@ -176,7 +181,7 @@ enum {
     K_LL,
 };
 
-/* max number of time-varying matrices: T, B, Z, Q, R, mu */
+/* max number of time-varying matrices: T, B, Z, VS, VY, mu */
 #define K_N_MATCALLS 6
 
 #define set_kalman_running(K) (K->flags |= KALMAN_FORWARD)
@@ -184,13 +189,14 @@ enum {
 #define kalman_is_running(K)  (K->flags & KALMAN_FORWARD)
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
-#define kalman_xcorr(K)       (K->flags & KALMAN_CROSS)
-#define kalman_dkvar(K)       (K->flags & KALMAN_DKVAR)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 #define kalman_smoothing(K)   (K->flags & KALMAN_SMOOTH)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
 #define basic_smoothing(K)    (K->flags & KALMAN_SM_AM)
+
+#define kalman_xcorr(K)       (K->vartype == DJ_VAR)
+#define kalman_dkvar(K)       (K->vartype == DK_VAR)
 
 #define filter_is_varying(K) (K->matcall != NULL)
 
@@ -309,6 +315,7 @@ static kalman *kalman_new_empty (int flags)
 
     if (K != NULL) {
         K->exact = 0;
+	K->vartype = STD_VAR;
         K->aini = K->Pini = NULL;
         K->a0 = K->a1 = NULL;
         K->P0 = K->P1 = NULL;
@@ -319,8 +326,9 @@ static kalman *kalman_new_empty (int flags)
         K->vt = NULL;
         K->Blk = NULL;
         K->T = K->BT = K->ZT = NULL;
-        K->VS = K->VY = K->HG = NULL;
-        K->H = K->G = NULL;
+        K->VS = K->VY = NULL;
+        K->H = K->G = K->HG = NULL;  /* DeJong variance */
+	K->Q = K->R = K->QRT = NULL; /* Durbin-Koopman variance */
         K->V = K->F = K->A = K->K = K->P = NULL;
         K->y = K->x = NULL;
         K->mu = NULL;
@@ -396,13 +404,6 @@ static int check_matrix_dims (kalman *K, const gretl_matrix *m, int i)
     } else if (i == K_a || i == K_m) {
         r = K->r;
         c = 1;
-    }
-
-    if (i == K_VS && m->rows < r) {
-	if (m->cols == m->rows) {
-	    /* could be OK if we get a selection matrix */
-	    ;
-	}
     }
 
     if (m->rows != r || m->cols != c) {
@@ -483,10 +484,12 @@ static int kalman_check_dimensions (kalman *K)
         }
     } else if (K->R != NULL) {
 	/* state disturbances as per Durbin-Koopman */
-	if (K->R->rows != K->r || K->R->cols != K->q) {
-            fprintf(stderr, "R is %d x %d, Q is %d x %d, r=%d, q=%d\n",
+	if (K->Q == NULL) {
+	    err = missing_matrix_error("statevar");
+	} else if (K->R->rows != K->r || K->R->cols != K->Q->rows) {
+            fprintf(stderr, "R is %d x %d, Q is %d x %d, r=%d\n",
                     K->R->rows, K->R->cols, K->Q->rows, K->Q->cols,
-                    K->r, K->q);
+                    K->r);
             err = E_NONCONF;
         }
     } else {
@@ -1088,7 +1091,7 @@ static void set_row_to_value (gretl_matrix *targ, int t, double x)
 /* supports hansl function for creating a named Kalman bundle */
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
-                            int nmat, int DKstyle, int *err)
+                            int nmat, int dkvar, int *err)
 {
     gretl_matrix **targ[5];
     kalman *K;
@@ -1114,12 +1117,12 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     targ[2] = &K->T;
 
     if (nmat == 5) {
-	if (DKstyle) {
-	    K->flags |= KALMAN_DKVAR;
+	if (dkvar) {
+	    K->vartype = DK_VAR;
 	    targ[3] = &K->Q;
 	    targ[4] = &K->R;
 	} else {
-	    K->flags |= KALMAN_CROSS;
+	    K->vartype = DJ_VAR;
 	    targ[3] = &K->H;
 	    targ[4] = &K->G;
 	}
@@ -1137,7 +1140,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 
     kalman_set_dimensions(K);
 
-    if (K->p > 0) {
+    if (K->vartype != STD_VAR) {
         *err = kalman_revise_variance(K);
     }
     if (!*err) {
@@ -1180,7 +1183,7 @@ enum {
    VS, VY and HG'
 */
 
-static int ensure_covariance_matrices (kalman *K)
+static int ensure_cross_covariance_matrices (kalman *K)
 {
     int r[] = {K->H->rows, K->G->rows, K->H->rows};
     int c[] = {K->H->rows, K->G->rows, K->G->rows};
@@ -1207,13 +1210,40 @@ static int ensure_covariance_matrices (kalman *K)
     return err;
 }
 
-/* After reading 'Q' = H and 'R' = G from the user, either at
-   (re-)initialization or at a given time-step in the case where
-   either of these matrices is time-varying, record the user input in
-   K->H and K->G and form the 'real' Q and R.  But note that in the
-   time-step case it may be that only one of Q, R needs to be treated
-   in this way (if only one is time-varying, only one will have been
-   redefined via a function call).
+static int ensure_DK_covariance_matrices (kalman *K)
+{
+    int r[] = {K->r, K->q};
+    int c[] = {K->r, K->r};
+    gretl_matrix **V[] = {&K->VS, &K->QRT};
+    gretl_matrix **targ;
+    int i, err = 0;
+
+    for (i=0; i<2 && !err; i++) {
+        targ = V[i];
+        if (*targ == NULL) {
+            *targ = gretl_matrix_alloc(r[i], c[i]);
+        } else {
+            gretl_matrix *Vi = *targ;
+
+            if (Vi->rows != r[i] || Vi->cols != c[i]) {
+                gretl_matrix_realloc(Vi, r[i], c[i]);
+            }
+        }
+        if (*targ == NULL) {
+            err = E_ALLOC;
+        }
+    }
+
+    return err;
+}
+
+/* After reading H and G from the user, either at (re-)initialization
+   or at a given time-step in the case where either of these matrices
+   is time-varying, record the user input in K->H and K->G and form
+   the 'real' VS and VY.  But note that in the time-step case it may be
+   that only one of VS, VY needs to be treated in this way (if only one
+   is time-varying, only one will have been redefined via a function
+   call).
 */
 
 static int kalman_update_crossinfo (kalman *K, int mode)
@@ -1223,7 +1253,7 @@ static int kalman_update_crossinfo (kalman *K, int mode)
     /* Note that H and G may be needed as such for simulation */
 
     if (mode == UPDATE_INIT) {
-        err = ensure_covariance_matrices(K);
+        err = ensure_cross_covariance_matrices(K);
         if (err) {
             return err;
         }
@@ -1259,25 +1289,27 @@ static int kalman_update_dkvar (kalman *K, int mode)
     int err = 0;
 
     if (mode == UPDATE_INIT) {
-        err = ensure_covariance_matrices(K);
+        err = ensure_DK_covariance_matrices(K);
         if (err) {
             return err;
         }
     }
 
-    /* FIXME */
     if (mode == UPDATE_INIT || matrix_is_varying(K, K_VS)) {
-        /* (re)create QR' using modified Q */
-        err = gretl_matrix_multiply_mod(K->R, GRETL_MOD_NONE,
-                                        K->Q, GRETL_MOD_NONE,
-                                        K->VS, GRETL_MOD_NONE);
-    }
+        /* (re)create VS and QR' using modified Q */
+	// fprintf(stderr, "*** kalman_update_dkvar\n");
+	gretl_matrix_qform(K->R, GRETL_MOD_NONE, K->Q,
+			   K->VS, GRETL_MOD_NONE);
+        err = gretl_matrix_multiply_mod(K->Q, GRETL_MOD_NONE,
+                                        K->R, GRETL_MOD_TRANSPOSE,
+                                        K->QRT, GRETL_MOD_NONE);
+     }
 
     return err;
 }
 
-/* kalman_revise_variance: the user has actually given H in place of VS
-   and G in place of VY; so we have to form VS, VY, and HG'
+/* kalman_revise_DJ_variance: the user has actually given H in place
+   of VS and G in place of VY; so we have to form VS, VY, and HG'
    (cross-correlated disturbances).
 
    This function is called in the course of initial set-up of a
@@ -1285,21 +1317,48 @@ static int kalman_update_dkvar (kalman *K, int mode)
    the start of filtering, smoothing or simulation.
 */
 
-static int kalman_revise_variance (kalman *K)
+static int kalman_revise_DJ_variance (kalman *K)
 {
     int err = 0;
 
     if (K->H == NULL || K->G == NULL) {
+	fprintf(stderr, "K->H %p, K->G %p\n", (void *) K->H, (void *) K->G);
         return missing_matrix_error("'statevar' or 'obsvar'");
     }
 
     err = kalman_update_crossinfo(K, UPDATE_INIT);
 
     if (err) {
-        fprintf(stderr, "kalman_revise_variance: err = %d\n", err);
+        fprintf(stderr, "kalman_revise_cross_variance: err = %d\n", err);
     }
 
     return err;
+}
+
+static int kalman_revise_DK_variance (kalman *K)
+{
+    int err = 0;
+
+    if (K->Q == NULL || K->R == NULL) {
+        return missing_matrix_error("'statevar' or 'statsel'");
+    }
+
+    err = kalman_update_dkvar(K, UPDATE_INIT);
+
+    if (err) {
+        fprintf(stderr, "kalman_revise_DK_variance: err = %d\n", err);
+    }
+
+    return err;
+}
+
+static int kalman_revise_variance (kalman *K)
+{
+    if (K->vartype == DJ_VAR) {
+	return kalman_revise_DJ_variance(K);
+    } else {
+	return kalman_revise_DK_variance(K);
+    }
 }
 
 #if KDEBUG > 1
@@ -1766,8 +1825,8 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
         mptr[3] = &K->H;
         mptr[4] = &K->G;
     } else if (kalman_dkvar(K)) {
-	/* FIXME K->R */
 	mptr[3] = &K->Q;
+	mptr[4] = &K->R;
     }
 
     if (K->matcall != NULL) {
@@ -1779,7 +1838,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
             if (kalman_xcorr(K) && (i == K_VS || i == K_VY)) {
                 /* handle revised H and/or G */
                 cross_update = 1;
-	    } else if (kalman_dkvar(K)) {
+	    } else if (kalman_dkvar(K) && i == K_VS) {
 		/* handle revised Q and/or R */
 		dkvar_update = 1;
             } else {
@@ -1825,15 +1884,16 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     int idx[] = {
         K_VS, K_VY
     };
-    int cross_update = 0;
+    int var_update = 0;
     int i, ii, err = 0;
 
     if (kalman_xcorr(K)) {
         mptr[0] = &K->H;
         mptr[1] = &K->G;
+    } else if (kalman_dkvar(K)) {
+        mptr[0] = &K->Q;
+        mptr[1] = &K->R;
     }
-
-    /* FIXME Durbin-Koopman */
 
     if (K->matcall != NULL) {
         err = kalman_update_matrices(K, prn);
@@ -1844,7 +1904,9 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
         if (matrix_is_varying(K, ii)) {
             if (kalman_xcorr(K) && (ii == K_VS || ii == K_VY)) {
                 /* handle revised H and/or G */
-                cross_update = 1;
+                var_update = 1;
+	    } else if (kalman_dkvar(K) && ii == K_VS) {
+		var_update = 1;
             } else {
                 err = check_matrix_dims(K, *mptr[i], ii);
             }
@@ -1855,9 +1917,12 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
         }
     }
 
-    if (!err && cross_update) {
-        /* cross-correlated case */
-        err = kalman_update_crossinfo(K, UPDATE_STEP);
+    if (!err && var_update) {
+	if (K->vartype == DJ_VAR) {
+	    err = kalman_update_crossinfo(K, UPDATE_STEP);
+	} else {
+	    err = kalman_update_dkvar(K, UPDATE_STEP);
+	}
     }
 
     return err;
@@ -2353,9 +2418,9 @@ struct K_input_mat K_input_mats[] = {
     { K_ZT, "obsymat" },
     { K_x,  "obsx" },
     { K_BT, "obsxmat" },
-    { K_VY,  "obsvar" },
+    { K_VY, "obsvar" },
     { K_T,  "statemat" },
-    { K_VS,  "statevar" },
+    { K_VS, "statevar" },
     { K_m,  "stconst" },
     { K_a,  "inistate" },
     { K_P,  "inivar" }
@@ -2418,7 +2483,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
         err = obsy_check(K);
     }
 
-    if (!err && K->p > 0) {
+    if (!err && K->vartype != STD_VAR) {
         err = kalman_revise_variance(K);
     }
 
@@ -4402,7 +4467,7 @@ static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
         if (kalman_xcorr(K)) {
             targ = &K->H;
 	} else if (kalman_dkvar(K)) {
-	    targ = &K->Q; 
+	    targ = &K->Q;
         } else {
             targ = &K->VS;
         }
@@ -4609,10 +4674,10 @@ static double *kalman_output_scalar (kalman *K,
         retval[idx] = (K->flags & KALMAN_DIFFUSE)? 1 : 0;
         break;
     case Ks_CROSS:
-        retval[idx] = (K->flags & KALMAN_CROSS)? 1 : 0;
+        retval[idx] = (K->vartype == DJ_VAR);
         break;
     case Ks_DKVAR:
-        retval[idx] = (K->flags & KALMAN_DKVAR)? 1 : 0;
+        retval[idx] = (K->vartype == DK_VAR);
         break;
     case Ks_S2:
         retval[idx] = K->s2;
@@ -5090,7 +5155,7 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
     int copy[5] = {0};
     int i, nmats = 0;
     int Kflags = 0;
-    int dkopt = 0;
+    int vtype = 0;
     gretl_matrix *m;
     double x;
     char *key, *strv;
@@ -5118,10 +5183,9 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
                         if (!strcmp(key, "diffuse") && x > 0) {
                             Kflags |= KALMAN_DIFFUSE;
                         } else if (!strcmp(key, "cross") && x > 0) {
-                            Kflags |= KALMAN_CROSS;
+			    vtype = DJ_VAR;
 			} else if (!strcmp(key, "dkvar") && x > 0) {
-			    Kflags |= KALMAN_DKVAR;
-			    dkopt = 1;
+			    vtype = DK_VAR;
                         } else if (!strcmp(key, "s2")) {
                             s2 = x;
                         } else if (!strcmp(key, "lnl")) {
@@ -5143,24 +5207,24 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
         node = node->next;
     }
 
-    if (nmats == 5 && !(Kflags & (KALMAN_CROSS | KALMAN_DKVAR))) {
+    if (nmats == 5 && vtype == STD_VAR) {
         /* drop obsvar from initialization */
         Mopt[K_VY] = Mreq[4];
         Mreq[4] = NULL;
         nmats--;
     }
 
-    if (((Kflags & KALMAN_CROSS) && nmats != 5) ||
-        (!(Kflags & KALMAN_CROSS) && nmats != 4)) {
+    if ((vtype > 0 && nmats != 5) || (vtype == 0 && nmats != 4)) {
         *err = E_DATA;
     } else {
-        b = kalman_bundle_new(Mreq, copy, nmats, dkopt, err);
+        b = kalman_bundle_new(Mreq, copy, nmats, vtype == DK_VAR, err);
         if (b != NULL) {
             kalman *K = gretl_bundle_get_private_data(b);
             gretl_matrix **pm;
             const char *name;
 
             K->flags = Kflags;
+	    K->vartype = vtype;
             K->s2 = s2;
             K->loglik = lnl;
 
@@ -5270,10 +5334,7 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     Knew->ifc = K->ifc;
     Knew->s2 = K->s2;
     Knew->loglik = K->loglik;
-
-    if (K->flags & KALMAN_CROSS) {
-        Knew->flags |= KALMAN_CROSS;
-    }
+    Knew->vartype = K->vartype;
 
     if (K->flags & KALMAN_DIFFUSE) {
         Knew->flags |= KALMAN_DIFFUSE;
@@ -5322,7 +5383,7 @@ char **kalman_bundle_get_scalar_names (kalman *K, int *ns)
     char **S;
 
     *ns = K_N_SCALARS - 1 - na(K->s2) - na(K->loglik);
-     S = strings_array_new(*ns);
+    S = strings_array_new(*ns);
 
     if (S != NULL) {
         int i = 0;
