@@ -6138,6 +6138,70 @@ static void run_prog_sync (char **argv, int lang)
     g_free(errout);
 }
 
+static void run_R_sync (void)
+{
+    gchar *argv[] = {
+	"R",
+	"--no-save",
+	"--no-init-file",
+	"--no-restore-data",
+	"--slave",
+	NULL
+    };
+
+    run_prog_sync(argv, LANG_R);
+}
+
+void run_foreign_script (gchar *buf, int lang, gretlopt opt)
+{
+    const char *fname = NULL;
+    int err;
+
+    opt |= OPT_G;
+
+    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	gchar *argv[6];
+
+	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
+	    gretl_chdir(gretl_workdir());
+	}
+
+	if (lang == LANG_OX) {
+	    argv[0] = (gchar *) gretl_oxl_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_PYTHON) {
+	    argv[0] = (gchar *) gretl_python_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_JULIA) {
+	    argv[0] = (gchar *) gretl_julia_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_STATA) {
+	    argv[0] = (gchar *) gretl_stata_path();
+	    argv[1] = (gchar *) "-q";
+	    argv[2] = (gchar *) "-b";
+	    argv[3] = (gchar *) "do";
+	    argv[4] = (gchar *) fname;
+	    argv[5] = NULL;
+	} else if (lang == LANG_OCTAVE) {
+	    argv[0] = (gchar *) gretl_octave_path();
+	    argv[1] = (gchar *) "-q";
+	    argv[2] = (gchar *) fname;
+	    argv[3] = NULL;
+	}
+
+	run_prog_sync(argv, lang);
+    }
+}
+
+#endif /* !G_OS_WIN32 */
+
 struct cli_info {
     windata_t *scriptwin;
     gint fout;
@@ -6210,70 +6274,6 @@ void run_gretlcli_async (char **argv, windata_t *scriptwin)
 	g_child_watch_add(pid, gretlcli_done, ci);
     }
 }
-
-static void run_R_sync (void)
-{
-    gchar *argv[] = {
-	"R",
-	"--no-save",
-	"--no-init-file",
-	"--no-restore-data",
-	"--slave",
-	NULL
-    };
-
-    run_prog_sync(argv, LANG_R);
-}
-
-void run_foreign_script (gchar *buf, int lang, gretlopt opt)
-{
-    const char *fname = NULL;
-    int err;
-
-    opt |= OPT_G;
-
-    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	gchar *argv[6];
-
-	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
-	    gretl_chdir(gretl_workdir());
-	}
-
-	if (lang == LANG_OX) {
-	    argv[0] = (gchar *) gretl_oxl_path();
-	    argv[1] = (gchar *) fname;
-	    argv[2] = NULL;
-	} else if (lang == LANG_PYTHON) {
-	    argv[0] = (gchar *) gretl_python_path();
-	    argv[1] = (gchar *) fname;
-	    argv[2] = NULL;
-	} else if (lang == LANG_JULIA) {
-	    argv[0] = (gchar *) gretl_julia_path();
-	    argv[1] = (gchar *) fname;
-	    argv[2] = NULL;
-	} else if (lang == LANG_STATA) {
-	    argv[0] = (gchar *) gretl_stata_path();
-	    argv[1] = (gchar *) "-q";
-	    argv[2] = (gchar *) "-b";
-	    argv[3] = (gchar *) "do";
-	    argv[4] = (gchar *) fname;
-	    argv[5] = NULL;
-	} else if (lang == LANG_OCTAVE) {
-	    argv[0] = (gchar *) gretl_octave_path();
-	    argv[1] = (gchar *) "-q";
-	    argv[2] = (gchar *) fname;
-	    argv[3] = NULL;
-	}
-
-	run_prog_sync(argv, lang);
-    }
-}
-
-#endif /* !G_OS_WIN32 */
 
 /* driver for starting R, either interactive or in batch mode */
 

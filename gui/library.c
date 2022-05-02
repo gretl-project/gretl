@@ -8480,7 +8480,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
     }
 
     if (!err) {
-#ifdef G_OS_WIN32
+#if 0 // ifdef G_OS_WIN32
 	gchar *cmd;
 
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);

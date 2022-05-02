@@ -196,11 +196,12 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt);
 
 const char *print_today (void);
 
+void run_gretlcli_async (char **argv, windata_t *scriptwin);
+
 #ifdef G_OS_WIN32
 void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin);
 #else
 int browser_open (const char *url);
-void run_gretlcli_async (char **argv, windata_t *scriptwin);
 #endif
 
 #endif /* GUI_UTILS_H */
