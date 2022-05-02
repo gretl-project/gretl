@@ -5649,6 +5649,9 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     gretl_matrix *a0 = K->aini;
     gretl_matrix *P0 = K->Pini;
     gretl_matrix *Kkt = K->Mt;
+    gretl_matrix *at = K->a1;
+    gretl_matrix *Pt = K->P1;
+    gretl_matrix *Pk = K->P1;
 
     int N = y->rows; /* # of observations */
     int p = K->n; /* # of observables */
@@ -5681,14 +5684,14 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     /* workspace matrices */
     gretl_matrix_block *B;
-    gretl_matrix *at, *ati, *Zi;
-    gretl_matrix *Pt, *Pti, *Pk, *Pki;
+    gretl_matrix *ati, *Zi;
+    gretl_matrix *Pti, *Pki;
     gretl_matrix *Kti, *Kki;
     gretl_matrix *m1, *mm;
 
-    B = gretl_matrix_block_new(&at, m, 1, &ati, m, 1,
-			       &Pt, m, m, &Pti, m, m,
-			       &Pk, m, m, &Pki, m, m,
+    B = gretl_matrix_block_new(&ati, m, 1,
+			       &Pti, m, m,
+			       &Pki, m, m,
 			       &Zi, 1, m,
 			       &Kti, m, 1,
 			       &Kki, m, 1,
