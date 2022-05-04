@@ -12414,12 +12414,13 @@
 	  comma as separator.
 	</para>
 	<para>
-	  The backslash-escape sequences <quote><lit>\n</lit></quote>
-	  and <quote><lit>\t</lit></quote> are taken to represent
-	  newline and tab in the optional <argname>sep</argname>
-	  argument. If you wish to include a literal backslash as a
-	  separator character you should double it, as in
-	  <quote><lit>\\</lit></quote>. Example:
+	  The backslash-escape sequences <quote><lit>\n</lit></quote>,
+	  <quote><lit>\r</lit></quote> and
+	  <quote><lit>\t</lit></quote> are taken to represent newline,
+	  carriage return and tab, respectively, in the optional
+	  <argname>sep</argname> argument. If you wish to include a
+	  literal backslash as a separator character you should double
+	  it, as in <quote><lit>\\</lit></quote>. Example:
 	</para>
 	<code>
 	  string s = "c:\fiddle\sticks"
