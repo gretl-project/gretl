@@ -5942,12 +5942,7 @@ void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
 
     if (got_printable_output(prn)) {
 	/* note: this check destroys @prn on failure */
-	if (lang == 0) {
-	    /* gretlcli output */
-	    view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, scriptwin);
-	} else {
-	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-	}
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     } else if (err) {
 	gui_errmsg(err);
     }
