@@ -1370,6 +1370,10 @@ char *gretl_addpath (char *fname, int script)
     int found = 0;
     int err;
 
+    if (fname == NULL || strlen(fname) >= MAXLEN) {
+	return NULL;
+    }
+
     /* keep a backup of the original input */
     strcpy(orig, fname);
 
