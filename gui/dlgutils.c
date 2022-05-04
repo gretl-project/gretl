@@ -1282,7 +1282,7 @@ static void edit_dialog_add_note (int ci, const char *s,
     GtkWidget *w;
     gchar *lbl;
 
-    if (ci == GMM) {
+    if (ci == GMM || ci == RESTRICT) {
 	lbl = g_strdup_printf("%s\n%s", s,
 			      _("(Please refer to Help for guidance)"));
     } else {
