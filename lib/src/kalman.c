@@ -4233,13 +4233,15 @@ gretl_matrix *kalman_bundle_simulate (gretl_bundle *b,
 
 static int matrix_is_diagonal (const gretl_matrix *m)
 {
-    double x;
     int i, j;
 
     for (j=0; j<m->cols; j++) {
         for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j);
-            if (i != j && x != 0.0) return 0;
+            if (i != j) {
+		if (gretl_matrix_get(m, i, j) != 0.0) {
+		    return 0;
+		}
+	    }
         }
     }
 
@@ -5641,6 +5643,102 @@ static int allocate_smo_recorders (struct smo_recorder *smr,
     return 0;
 }
 
+static gretl_matrix *kalman_ldl (const gretl_matrix *V,
+				 gretl_matrix **pLinv,
+				 int *err)
+{
+    gretl_matrix *d, *L;
+    double dj, lij;
+    int n = V->rows;
+    int i, j;
+
+    L = gretl_matrix_copy(V);
+    *err = gretl_matrix_cholesky_decomp(L);
+    if (*err) {
+	return NULL;
+    }
+
+    d = gretl_matrix_alloc(n, 1);
+    for (j=0; j<n; j++) {
+	dj = gretl_matrix_get(L, j, j);
+	d->val[j] = dj * dj;
+	for (i=j; i<n; i++) {
+	    lij = gretl_matrix_get(L, i, j);
+	    gretl_matrix_set(L, i, j, lij / dj);
+	}
+    }
+
+    *err = gretl_invert_triangular_matrix(L, 'L');
+    if (*err) {
+	gretl_matrix_free(d);
+	gretl_matrix_free(L);
+	d = *pLinv = NULL;
+    } else {
+	*pLinv = L;
+    }
+
+    return d;
+}
+
+static gretl_vector *kalman_diagonalize (kalman *K,
+					 gretl_matrix *Z,
+					 int *err)
+{
+    gretl_matrix *d, *Linv = NULL;
+    int p = Z->rows;
+    int m = Z->cols;
+
+    d = kalman_ldl(K->VY, &Linv, err);
+
+    if (!*err) {
+	gretl_matrix *tmp = gretl_matrix_alloc(p, m);
+	gretl_matrix *yt = gretl_matrix_alloc(p, 1);
+	int t;
+
+	gretl_matrix_zero(K->VY);
+	gretl_matrix_set_diagonal(K->VY, d, 0);
+	gretl_matrix_multiply(Linv, Z, tmp);
+	gretl_matrix_copy_values(Z, tmp);
+	gretl_matrix_reuse(tmp, p, 1);
+
+	for (t=0; t<K->N; t++) {
+	    mat_from_row(tmp, K->y, t);
+	    gretl_matrix_multiply(Linv, tmp, yt);
+	    row_from_mat(K->y, yt, t);
+	}
+
+	bundle_add_matrix(K->b, "Linv", Linv);
+
+	gretl_matrix_free(tmp);
+	gretl_matrix_free(yt);
+    }
+
+    return d;
+}
+
+static gretl_vector *get_obs_variance_vector (kalman *K, gretl_matrix *Z)
+{
+    gretl_matrix *d;
+    int err = 0;
+
+    if (K->VY->cols > 1) {
+	if (matrix_is_diagonal(K->VY)) {
+	    d = gretl_matrix_get_diagonal(K->VY, &err);
+	} else {
+	    d = kalman_diagonalize(K, Z, &err);
+	}
+    } else {
+	d = gretl_matrix_copy(K->VY);
+    }
+
+    if (err && d != NULL) {
+	gretl_matrix_free(d);
+	d = NULL;
+    }
+
+    return d;
+}
+
 static int kfilter_univariate (kalman *K, PRN *prn)
 {
     struct smo_recorder sm = {0};
@@ -5696,7 +5794,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	    err = E_ALLOC;
 	}
     }
-
     if (err) {
 	return err;
     }
@@ -5704,11 +5801,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     gretl_matrix_transpose(Z, K->ZT);
 
     if (K->VY != NULL) {
-	if (K->VY->cols > 1) {
-	    g = gretl_matrix_get_diagonal(K->VY, &err);
-	} else {
-	    g = gretl_matrix_copy(K->VY);
-	}
+	g = get_obs_variance_vector(K, Z);
     }
 
     if (smo) {
@@ -6616,4 +6709,4 @@ static int ksmooth_univariate (kalman *K, int dist)
     return 0;
 }
 
-/* end of smoother functions */
+/* end of univariate smoother functions */
