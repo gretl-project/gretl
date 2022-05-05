@@ -4611,9 +4611,7 @@ static gretl_matrix **kalman_output_matrix (kalman *K,
     return pm;
 }
 
-#define K_N_OUTPUTS 9
-
-static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
+static const char *kalman_output_matrix_names[] = {
     "prederr",
     "pevar",
     "state",
@@ -4624,6 +4622,8 @@ static const char *kalman_output_matrix_names[K_N_OUTPUTS] = {
     "smdisterr",
     "uhat"
 };
+
+#define K_N_OUTPUTS G_N_ELEMENTS(kalman_output_matrix_names)
 
 static int output_matrix_slot (const char *s)
 {
