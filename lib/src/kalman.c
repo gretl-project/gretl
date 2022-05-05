@@ -72,8 +72,8 @@ struct stepinfo_ {
 };
 
 struct kalman_ {
-    int flags;  /* for recording any options */
-    int exact;  /* exact initial iterations? */
+    int flags;   /* for recording any options */
+    int exact;   /* exact initial iterations? */
     int vartype; /* STD_VAR, DJ_VAR or DK_VAR */
 
     int r;   /* rows of a = number of elements in state */
@@ -228,6 +228,7 @@ enum {
     K_x,
     K_a,
     K_P,
+    K_R,
     K_MMAX /* sentinel */
 };
 
@@ -273,7 +274,8 @@ void kalman_free (kalman *K)
     if (K->flags & KALMAN_BUNDLE) {
         gretl_matrix **mptr[] = {
             &K->T, &K->BT, &K->ZT, &K->VS, &K->VY,
-            &K->mu, &K->y, &K->x, &K->aini, &K->Pini
+            &K->mu, &K->y, &K->x, &K->aini, &K->Pini,
+	    &K->R
         };
         int i;
 
@@ -303,7 +305,6 @@ void kalman_free (kalman *K)
     } else if (kalman_dkvar(K)) {
 	/* Durbin-Koopman errors info */
 	gretl_matrix_free(K->Q);
-	gretl_matrix_free(K->R);
 	gretl_matrix_free(K->QRT);
     }
 
@@ -1307,7 +1308,7 @@ static int kalman_update_dkvar (kalman *K, int mode)
 
     if (mode == UPDATE_INIT || matrix_is_varying(K, K_VS)) {
         /* (re)create VS and QR' using modified Q */
-	// fprintf(stderr, "*** kalman_update_dkvar\n");
+	//fprintf(stderr, "*** kalman_update_dkvar, mode %d\n", mode);
 	gretl_matrix_qform(K->R, GRETL_MOD_NONE, K->Q,
 			   K->VS, GRETL_MOD_NONE);
         err = gretl_matrix_multiply_mod(K->Q, GRETL_MOD_NONE,
@@ -2433,7 +2434,8 @@ struct K_input_mat K_input_mats[] = {
     { K_VS, "statevar" },
     { K_m,  "stconst" },
     { K_a,  "inistate" },
-    { K_P,  "inivar" }
+    { K_P,  "inivar" },
+    { K_R,  "statesel" }
 };
 
 int extra_mats[] = {
@@ -2443,6 +2445,7 @@ int extra_mats[] = {
     K_x,
     K_a,
     K_P,
+    K_R
 };
 
 static int n_extra_mats = G_N_ELEMENTS(extra_mats);
@@ -4419,7 +4422,7 @@ static int check_replacement_dims (const gretl_matrix *orig,
     int err = 0;
 
     if (id == K_ZT || id == K_VY || id == K_T || id == K_VS ||
-        id == K_BT || id == K_m || id == K_a || id == K_P) {
+        id == K_BT || id == K_m || id == K_a || id == K_P || id == K_R) {
         if (repl->rows != orig->rows || repl->cols != orig->cols) {
             err = E_DATA;
         }
@@ -4484,6 +4487,7 @@ static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
     } else if (i == K_ZT) {
         targ = &K->ZT;
     } else if (i == K_VS) {
+	/* variance of state */
         if (kalman_xcorr(K)) {
             targ = &K->H;
 	} else if (kalman_dkvar(K)) {
@@ -4492,6 +4496,7 @@ static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
             targ = &K->VS;
         }
     } else if (i == K_VY) {
+	/* variance of observable */
         if (kalman_xcorr(K)) {
             targ = &K->G;
         } else {
@@ -4507,6 +4512,8 @@ static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
         targ = &K->aini;
     } else if (i == K_P) {
         targ = &K->Pini;
+    } else if (i == K_R) {
+	targ = &K->R;
     }
 
     return targ;
@@ -4776,6 +4783,8 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
         m = K->aini;
     } else if (i == K_P) {
         m = K->Pini;
+    } else if (i == K_R) {
+	m = K->R;
     }
 
     return m;
@@ -5264,7 +5273,16 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
         node = node->next;
     }
 
-    if (nmats == 5 && vtype == STD_VAR) {
+    if (vtype == DK_VAR) {
+	if (Mreq[K_VS] == NULL || Mopt[K_R] == NULL) {
+	    *err = E_DATA;
+	    goto bailout;
+	} else {
+	    Mopt[K_VY] = Mreq[4];
+	    Mreq[4] = Mopt[K_R];
+	    Mopt[K_R] = NULL;
+	}
+    } else if (vtype == STD_VAR && nmats == 5) {
         /* drop obsvar from initialization */
         Mopt[K_VY] = Mreq[4];
         Mreq[4] = NULL;
@@ -5300,6 +5318,8 @@ gretl_bundle *kalman_deserialize (void *p1, void *p2, int *err)
             K->matcall = tvcall;
         }
     }
+
+ bailout:
 
     if (*err) {
         /* clean up */
@@ -5764,7 +5784,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int m = K->r; /* # length of state vector */
     int t, i, err = 0;
 
-    int smo = 0;       /* FIXME conditionality */
+    int smo = kalman_smoothing(K);
     int all_kappa = 0; /* FIXME conditionality */
     int TI = gretl_is_identity_matrix(T);
 
