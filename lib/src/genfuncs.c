@@ -8320,6 +8320,78 @@ int *list_from_matrix (const gretl_matrix *m,
 
 #define USE_SINES 1
 
+static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
+{
+
+    int i, j, do_deriv = 1;         /* analytical Jacobian required? */
+    double *s, *k, *c, *f;
+    double x, ki = 1.0;
+
+    s = malloc(h * sizeof *s);
+    k = malloc((h+1) * sizeof *k);
+    c = malloc((h+1) * sizeof *c);
+    f = malloc((h+1) * sizeof *f);
+    
+    if (s == NULL || k == NULL || c == NULL || f == NULL) {
+	*err = E_ALLOC;
+	free(s);
+	free(k);
+	free(c);
+	free(f);
+	return NULL;
+    }
+
+    for (i=0; i<h; i++) {
+	s[i] = sin(omega[i]);
+	k[i] = ki;
+	ki *= s[i];
+	c[i] = cos(omega[i]);
+    }
+
+    k[h] = ki;
+    c[h] = 1.0;
+    
+    for (i=0; i<=h; i++) {
+	f[i] = c[i] * k[i];
+	fprintf(stderr, "f[%d] = %g\n", i, f[i]);
+	fprintf(stderr, "c[%d] = %g\n", i, c[i]);
+    }
+
+    
+    if (do_deriv) {
+	gretl_matrix_zero(J);
+	/* we re-use s for the tangents */
+	for (i=0; i<h; i++) {
+	    s[i] = tan(omega[i]);
+	}
+	
+	for (i=1; i<=h; i++) {
+	    for (j=0; j<i; j++) {
+		gretl_matrix_set(J, i, j, k[i] / s[j]);
+	    }
+	}
+
+	gretl_matrix_print(J, "DK");
+	
+	for (i=0; i<h; i++) {
+	    for (j=0; j<i-1; j++) {
+		x = gretl_matrix_get(J, i, j);
+		gretl_matrix_set(J, i, j, c[i+1] * x);
+	    }
+	    gretl_matrix_set(J, i, i, -k[i+1]);
+	}
+    }
+	
+    
+    free(c);
+    free(k);
+    free(s);
+
+    return f;
+    
+}
+
+
 /**
  * omega_from_R:
  * @R: correlation matrix.
@@ -8432,6 +8504,20 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
     if (do_det) {
 	*ldet = 0.0;
     }
+
+    gretl_matrix *tmpmat = gretl_matrix_alloc(n+1, n);
+    double *om = omega->val;
+    double *f = malloc(m * sizeof *f);
+    
+    
+    for (i=0; i<n; i++) {
+	f = sphc_unitvec(om, i+1, tmpmat, err);
+	gretl_matrix_print(tmpmat, "J");
+	om += (i+1);
+    }
+
+    gretl_matrix_free(tmpmat);
+
     
     for (i=1; i<n; i++) {
 	prod = 1.0;
