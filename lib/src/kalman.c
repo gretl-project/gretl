@@ -5782,9 +5782,6 @@ static int handle_matrix_transforms (kalman *K,
 static int kfilter_univariate (kalman *K, PRN *prn)
 {
     struct smo_recorder sm = {0};
-    gretl_matrix *y = K->y;
-    gretl_matrix *T = K->T;
-    gretl_matrix *VS = K->VS;
     gretl_matrix *Kkt = K->Mt;
     gretl_matrix *at = K->a0;
     gretl_matrix *Pt = K->P0;
@@ -5807,13 +5804,15 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     int smo = kalman_smoothing(K);
     int all_kappa = 0; /* FIXME conditionality */
-    int TI = gretl_is_identity_matrix(T);
+    int TI = gretl_is_identity_matrix(K->T);
 
     double yti, vti, Fti, llct;
     double Ftinv, Fkinv, Fki = 0;
     double qt, ldt;
     double l2pi = log(M_2PI);
-    int rankPk = m;
+    int rankPk = kalman_diffuse(K)? m : 0;
+    int d = K->exact ? 0 : -1;
+    int j = K->exact ? 0 : -1;
     int gtrans = 0;
     int Ztrans = 0;
     int Nd = 0;
@@ -5856,29 +5855,28 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     K->SSRw = 0;
     K->loglik = 0;
-    K->d = K->exact ? 0 : -1;
-    K->j = K->exact ? 0 : -1;
 
     printf("\nCCC kfilt, m=%d, p=%d CCC\n", m, p);
 
     for (t=0; t<K->N; t++) {
-	// printf("t = %d, d = %d\n", t, d);
 	load_to_vec(K->A, at, t);
 	row_from_mat(P, Pt, t);
 	fast_copy_values(ati, at);
 	fast_copy_values(Pti, Pt);
-	fast_copy_values(Pki, Pk);
+	if (Pki != NULL) {
+	    fast_copy_values(Pki, Pk);
+	}
 	qt = 0;
 	ldt = 0;
 	llct = 0;
-	if (smo && K->d == 0 && t < Nd) {
+	if (smo && d == 0 && t < Nd) {
 	    row_from_mat(sm.PK, Pk, t);
 	}
 	for (i=0; i<p; i++) {
-	    if (t < 2) {
+	    if (t < 2 && K->exact) {
 		printf("t,i = %d,%d, rankPk = %d\n", t, i, rankPk);
 	    }
-	    yti = gretl_matrix_get(y, t, i);
+	    yti = gretl_matrix_get(K->y, t, i);
 	    mat_from_row(Zi, Z, i);
 	    gretl_matrix_multiply_mod(Pti, GRETL_MOD_NONE,
 	    			      Zi, GRETL_MOD_TRANSPOSE,
@@ -5891,7 +5889,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 		gretl_matrix_set(K->F, t, i, Fti);
 		col_from_vec(K->Kt, Kti, i);
 	    }
-	    if (K->d == 0) {
+	    if (d == 0) {
 		/* still initial */
 		gretl_matrix_multiply_mod(Pki, GRETL_MOD_NONE,
 					  Zi, GRETL_MOD_TRANSPOSE,
@@ -5912,7 +5910,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	    }
 
 	    if (rankPk > 0) {
-		// printf("rankPk = %d, Fki = %g\n", rankPk, Fki);
 		if (Fki > 0) {
 		    Fkinv = 1.0 / Fki;
 		    ldt += log(Fki);
@@ -5930,9 +5927,9 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 		}
 	    } else {
 		/* rankPk = 0 */
-		if (K->j == 0) {
-		    K->j = (p == 1)? 1 : i;
-		    printf("*** filter: got j = %d (i=%d)\n", K->j, i);
+		if (j == 0) {
+		    j = (p == 1)? 1 : i;
+		    printf("*** filter: got j = %d (i=%d)\n", j, i);
 		}
 		Ftinv = 1/Fti;
 		qt += vti * vti * Ftinv;
@@ -5945,13 +5942,13 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
 	if (smo) {
 	    row_from_mat(K->K, K->Kt, t);
-	    if (K->d == 0 && t < Nd) {
+	    if (d == 0 && t < Nd) {
 		row_from_mat(sm.Kinf, Kkt, t);
 	    }
 	}
-	if (K->j > 0 && K->d == 0) {
-	    K->d = t + 1; /* note: 1-based */
-	    printf("*** filter: got d = %d\n", K->d);
+	if (j > 0 && d == 0) {
+	    d = t + 1; /* note: 1-based */
+	    printf("*** filter: got d = %d\n", d);
 	}
 
 	/* update for t+1 */
@@ -5959,14 +5956,14 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	    /* shortcut in case T = I_m */
 	    gretl_matrix_copy_values(at, ati);
 	    gretl_matrix_copy_values(Pt, Pti);
-	    gretl_matrix_add_to(Pt, VS);
+	    gretl_matrix_add_to(Pt, K->VS);
 	    gretl_matrix_copy_values(Pk, Pki);
 	} else {
-	    gretl_matrix_multiply(T, ati, at);
-	    fast_copy_values(Pt, VS);
-	    gretl_matrix_qform(T, GRETL_MOD_NONE, Pti,
+	    gretl_matrix_multiply(K->T, ati, at);
+	    fast_copy_values(Pt, K->VS);
+	    gretl_matrix_qform(K->T, GRETL_MOD_NONE, Pti,
 			       Pt, GRETL_MOD_CUMULATE);
-	    gretl_matrix_qform(T, GRETL_MOD_NONE, Pki,
+	    gretl_matrix_qform(K->T, GRETL_MOD_NONE, Pki,
 			       Pk, GRETL_MOD_NONE);
 	}
 
@@ -5985,17 +5982,19 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	}
     } /* end of time loop */
 
-    if (0) { /* Hmm */
+    if (0) { /* Hmm, conditionality? */
 	K->d = K->N;
 	K->j = p;
     } else if (smo && K->exact) {
-	dj_from_Finf(sm.Fk, &K->d, &K->j);
-	printf("after filtering: d=%d, j=%d\n", K->d, K->j);
-	if (K->d > 0 && K->d < sm.PK->rows) {
-	    sm.PK = first_n_rows(sm.PK, K->d);
-	    sm.Fk = first_n_rows(sm.Fk, K->d);
-	    sm.Kinf = first_n_rows(sm.Kinf, K->d);
+	dj_from_Finf(sm.Fk, &d, &j);
+	printf("after filtering: d=%d, j=%d\n", d, j);
+	if (d > 0 && d < sm.PK->rows) {
+	    sm.PK = first_n_rows(sm.PK, d);
+	    sm.Fk = first_n_rows(sm.Fk, d);
+	    sm.Kinf = first_n_rows(sm.Kinf, d);
 	}
+	K->d = d > 0 ? d : 0;
+	K->j = j > 0 ? j : 0;
     }
 
     printf("univariate: loglik = %#.8g\n", K->loglik);
