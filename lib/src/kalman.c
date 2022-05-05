@@ -2603,6 +2603,10 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 {
     kalman *K = gretl_bundle_get_private_data(b);
 
+    if (getenv("KALMAN_UNI") != NULL) {
+	K->flags |= KALMAN_UNI;
+    }
+
     K->b = b; /* attach bundle pointer */
 
     return kalman_run(K, prn, errp);
