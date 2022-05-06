@@ -5164,34 +5164,26 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 
 /* Check a list that has been stored in a bundle or array to see
    if it can be interpreted as a list given the characteristics
-   of the current dataset (or lack thereof).
+   of the current dataset (or lack thereof). Return 1 if this
+   is so, otherwise 0;
 */
 
-static int stored_list_check (const int *list, const DATASET *dset)
+static int stored_list_ok (const int *list, const DATASET *dset)
 {
-    int badv = 0;
-    int err = 0;
+    int i;
 
     if (dset == NULL || dset->n == 0) {
-        err = E_NODATA;
-    } else {
-        int i;
-
-        for (i=1; i<=list[0] && !err; i++) {
-            if (list[i] >= dset->v ||
-                (list[i] < 0 && list[i] != LISTSEP)) {
-                badv = list[i];
-                err = E_DATA;
-            }
-        }
+	return 0;
     }
 
-    if (badv != 0) {
-        gretl_errmsg_sprintf("list check: series ID %d "
-                             "is out of bounds", badv);
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] >= dset->v ||
+	    (list[i] < 0 && list[i] != LISTSEP)) {
+	    return 0;
+	}
     }
 
-    return err;
+    return 1;
 }
 
 static NODE *array_element_node (gretl_array *a, int i,
@@ -5199,6 +5191,7 @@ static NODE *array_element_node (gretl_array *a, int i,
 {
     NODE *ret = NULL;
     GretlType type = 0;
+    int gen_t;
     void *data;
 
     data = gretl_array_get_element(a, i-1, &type, &p->err);
@@ -5207,50 +5200,31 @@ static NODE *array_element_node (gretl_array *a, int i,
         gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
     }
 
+    gen_t = gen_type_from_gretl_type(type);
+    ret = get_aux_node(p, gen_t, 0, 0);
+
     if (!p->err) {
         if (type == GRETL_TYPE_STRING) {
-            /* revised 2017-05-21 */
-            ret = string_pointer_node(p);
-            if (ret != NULL) {
-                ret->v.str = data;
-            }
-        } else if (type == GRETL_TYPE_MATRIX) {
-            ret = matrix_pointer_node(p);
-            if (ret != NULL) {
-                ret->v.m = data;
-            }
+	    ret->v.str = data;
+         } else if (type == GRETL_TYPE_MATRIX) {
+	    ret->v.m = data;
         } else if (type == GRETL_TYPE_BUNDLE) {
-            ret = bundle_pointer_node(p);
-            if (ret != NULL) {
-                ret->v.b = data;
-            }
+	    ret->v.b = data;
         } else if (type == GRETL_TYPE_ARRAY) {
-            ret = array_pointer_node(p);
-            if (ret != NULL) {
-                ret->v.a = data;
-            }
+	    ret->v.a = data;
         } else if (type == GRETL_TYPE_DOUBLE) {
-            ret = aux_scalar_node(p);
-            if (ret != NULL) {
-                ret->v.xval = *(double *) data;
-            }
+	    /* FIXME not reached? */
+	    ret->v.xval = *(double *) data;
         } else if (type == GRETL_TYPE_LIST) {
-            /* last revised 2018-08-04 */
-            p->err = stored_list_check((const int *) data, p->dset);
-            if (!p->err) {
-                ret = list_pointer_node(p);
-                if (ret != NULL) {
-                    ret->v.ivec = data;
-                }
+            /* last revised 2022-05-06 */
+            if (stored_list_ok((const int *) data, p->dset)) {
+		ret->v.ivec = data;
             } else {
                 /* fallback: extract list as row vector */
-                gretl_error_clear();
-                p->err = 0;
-                ret = aux_matrix_node(p);
-                if (!p->err) {
-                    ret->v.m = gretl_list_to_vector((const int *) data,
-                                                    &p->err);
-                }
+		ret->t = MAT;
+		ret->flags |= TMP_NODE;
+		ret->v.m = gretl_list_to_vector((const int *) data,
+						&p->err);
             }
         }
     }
@@ -10518,6 +10492,39 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 
 #endif /* USE_RLIB or not */
 
+/* Extracting series data @x of length @n from a bundle: whether
+   we can get it as a series depends on the current state of the
+   dataset. Failing that, we'll get it as a vector.
+*/
+
+static NODE *bundled_series_node (parser *p, const double *x, int n)
+{
+    NODE *ret = NULL;
+
+    if (n <= p->dset->n) {
+	int t;
+
+	ret = aux_series_node(p);
+	if (!p->err) {
+	    for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
+		ret->v.xvec[t] = x[t];
+	    }
+	}
+    } else if (n > 0) {
+	ret = aux_matrix_node(p);
+	if (!p->err) {
+	    ret->v.m = gretl_vector_from_array(x, n, GRETL_MOD_NONE);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    } else {
+	p->err = E_DATA;
+    }
+
+    return ret;
+}
+
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content.
@@ -10528,7 +10535,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     char *key = r->v.str;
     GretlType type;
     int size = 0;
-    int tmp = 0;
+    int is_tmp = 0;
     int gen_t;
     void *val = NULL;
     NODE *ret = NULL;
@@ -10539,19 +10546,25 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 #endif
 
     if (p->flags & P_OBJQRY) {
-        val = gretl_bundle_get_element(l->v.b, key, &type, &size, &tmp, NULL);
-        if (val == NULL) {
-            return newempty();
-        }
+	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
+	if (type == GRETL_TYPE_NONE) {
+	    return get_aux_node(p, 0, 0, 0);
+	} else {
+	    gen_t = gen_type_from_gretl_type(type);
+	    return get_aux_node(p, gen_t, 0, 0);
+	}
     } else {
-        val = gretl_bundle_get_element(l->v.b, key, &type, &size, &tmp, &p->err);
+        val = gretl_bundle_get_element(l->v.b, key, &type, &size,
+				       &is_tmp, &p->err);
         if (p->err) {
             return ret;
         }
     }
 
     gen_t = gen_type_from_gretl_type(type);
-    ret = get_aux_node(p, gen_t, 0, tmp ? TMP_NODE : 0);
+    if (type != GRETL_TYPE_SERIES) {
+	ret = get_aux_node(p, gen_t, 0, 0);
+    }
 
     if (type == GRETL_TYPE_INT) {
 	ret->v.xval = *(int *) val;
@@ -10566,41 +10579,26 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_ARRAY) {
 	ret->v.a = (gretl_array *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-        const double *x = val;
-
-        if (size <= p->dset->n) {
-	    int t;
-
-	    for (t=p->dset->t1; t<=p->dset->t2 && t<size; t++) {
-		ret->v.xvec[t] = x[t];
-	    }
-        } else if (size > 0) {
-	    ret->t = MAT;
-	    ret->v.m = gretl_vector_from_array(x, size,
-					       GRETL_MOD_NONE);
-	    if (ret->v.m == NULL) {
-		p->err = E_ALLOC;
-	    }
-        } else {
-            p->err = E_DATA;
-        }
+	ret = bundled_series_node(p, (const double *) val, size);
     } else if (type == GRETL_TYPE_LIST) {
-        p->err = stored_list_check((const int *) val, p->dset);
-        if (!p->err) {
-            /* OK, extract list as such */
+        if (stored_list_ok((const int *) val, p->dset)) {
+	    /* extract as list */
 	    ret->v.ivec = (int *) val;
+	    is_tmp = 0;
         } else {
             /* fallback: extract list as row vector */
-            gretl_error_clear();
-            p->err = 0;
 	    ret->t = MAT;
 	    ret->v.m = gretl_list_to_vector((const int *) val, &p->err);
+	    is_tmp = 1;
         }
     } else {
         p->err = E_DATA;
     }
 
     if (ret != NULL) {
+	if (is_tmp) {
+	    ret->flags |= TMP_NODE;
+	}
         ret->flags |= MUT_NODE;
     }
 
