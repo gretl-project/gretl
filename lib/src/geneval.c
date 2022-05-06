@@ -965,16 +965,6 @@ static NODE *aux_list_node (parser *p)
     }
 }
 
-static NODE *list_pointer_node (parser *p)
-{
-    if (p->dset == NULL || p->dset->n == 0) {
-	no_data_error(p);
-	return NULL;
-    } else {
-	return get_aux_node(p, LIST, 0, 0);
-    }
-}
-
 #define aux_scalar_node(p) get_aux_node(p,NUM,0,0)
 #define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
 #define aux_matrix_node(p) get_aux_node(p,MAT,0,TMP_NODE)
@@ -10548,7 +10538,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     if (p->flags & P_OBJQRY) {
 	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
 	if (type == GRETL_TYPE_NONE) {
-	    return get_aux_node(p, 0, 0, 0);
+	    return get_aux_node(p, EMPTY, 0, 0);
 	} else {
 	    gen_t = gen_type_from_gretl_type(type);
 	    return get_aux_node(p, gen_t, 0, 0);
