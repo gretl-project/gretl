@@ -4999,6 +4999,25 @@ int maybe_delete_kalman_element (void *kptr,
     return done;
 }
 
+static gretl_matrix *fill_stvar (kalman *K)
+{
+    gretl_matrix *P = gretl_bundle_get_matrix(K->b, "P", NULL);
+
+    if (P != NULL) {
+	int j, t, n = K->r * K->r;
+
+	for (t=0; t<K->N; t++) {
+	    for (j=0; j<n; j++) {
+		K->P0->val[j] = gretl_matrix_get(P, t, j);
+	    }
+	    load_to_vech(K->P, K->P0, K->r, t);
+	}
+	return K->P;
+    }
+
+    return NULL;
+}
+
 void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
                                      GretlType *type,
@@ -5015,19 +5034,28 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	*ownit = 0;
     }
 
-    /* 2022-05-06: we'll want to set *ownit to 1 if the
-       element in question is newly allocated, and will be
-       'owned' by the caller, rather than just being a
-       pointer to something inside the kalman struct.
-       If @ownit is NULL we'll take it that this call is
-       on behalf of gretl_bundle_get_member_type(), in
-       which case there's no need to construct a
-       constructable element.
+    /* 2022-05-06: we'll want to set *ownit to 1 if the element in
+       question is newly allocated, and will be 'owned' by the caller,
+       rather than just being a pointer to something inside the kalman
+       struct.  If @ownit is NULL we'll take it that this call is on
+       behalf of gretl_bundle_get_member_type(), in which case there's
+       no need to construct a 'constructable' element.
     */
 
     if (K == NULL) {
         *err = E_DATA;
         return NULL;
+    }
+
+    /* This entry is just a temporary hack and test */
+    if (!strcmp(key, "stvar") && kalman_univariate(K) && K->b != NULL) {
+	gretl_matrix *P = fill_stvar(K);
+
+	if (P != NULL) {
+	    *type = GRETL_TYPE_MATRIX;
+	    *reserved = 1;
+	    return P;
+	}
     }
 
     if (!strcmp(key, "timevar_call")) {
