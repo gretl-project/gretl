@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_BUNDLE_H_
@@ -50,8 +50,15 @@ void *gretl_bundle_get_content (gretl_bundle *bundle);
 
 int gretl_bundles_swap_content (gretl_bundle *b1, gretl_bundle *b2);
 
+void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
+				GretlType *type, int *size,
+				int *ownit, int *err);
+
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size, int *err);
+
+void *gretl_bundle_get_target (gretl_bundle *bundle, const char *key,
+			       GretlType *type, int *size, int *err);
 
 void *gretl_bundle_steal_data (gretl_bundle *bundle, const char *key,
 			       GretlType *type, int *size, int *err);
@@ -191,13 +198,13 @@ void gretl_bundle_destroy (gretl_bundle *bundle);
 
 void gretl_bundle_void_content (gretl_bundle *bundle);
 
-void gretl_bundle_serialize (gretl_bundle *b, const char *name, 
+void gretl_bundle_serialize (gretl_bundle *b, const char *name,
 			     PRN *prn);
 
-gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2, 
+gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2,
 					int *err);
 
-int gretl_bundle_write_to_file (gretl_bundle *b, 
+int gretl_bundle_write_to_file (gretl_bundle *b,
 				const char *fname,
 				int to_dotdir);
 
@@ -206,11 +213,11 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
 				    int *bytes,
 				    int *err);
 
-gretl_bundle *gretl_bundle_read_from_file (const char *fname, 
+gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 					   int from_dotdir,
 					   int *err);
 
-gretl_bundle *gretl_bundle_read_from_buffer (const char *buf, 
+gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 					     int len,
 					     int *err);
 
@@ -221,7 +228,7 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns);
 gretl_bundle *get_sysinfo_bundle (int *err);
 
 void *sysinfo_bundle_get_data (const char *key,
-			       GretlType *type, 
+			       GretlType *type,
 			       int *err);
 
 gretl_bundle *bundle_from_model (MODEL *pmod,
@@ -248,6 +255,3 @@ GList *gretl_bundle_get_sorted_items (gretl_bundle *b);
 void gretl_bundle_cleanup (void);
 
 #endif /* GRETL_BUNDLE_H_ */
-
-
-

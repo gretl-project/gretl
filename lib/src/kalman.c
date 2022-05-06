@@ -141,9 +141,9 @@ struct kalman_ {
 
     /* optional run-time export matrices */
     gretl_matrix *V;   /* N x n: forecast errors, all time-steps */
-    gretl_matrix *F;   /* N x nn: MSE for observables, all time-steps */
+    gretl_matrix *F;   /* N x n(n+1)/2: MSE for observables, all time-steps */
     gretl_matrix *A;   /* N x r: state vector, all time-steps */
-    gretl_matrix *P;   /* N x rr: MSE for state, all time-steps */
+    gretl_matrix *P;   /* N x r(r+1)/2: MSE for state, all time-steps */
     gretl_matrix *K;   /* N x rn: gain matrix, all time-steps */
     gretl_matrix *U;   /* N x ??: smoothed disturbances */
     gretl_matrix *Vsd; /* Variance of smoothed disturbance */
@@ -5003,6 +5003,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
                                      GretlType *type,
                                      int *reserved,
+				     int *ownit,
                                      int *err)
 {
     kalman *K = kptr;
@@ -5010,6 +5011,19 @@ void *maybe_retrieve_kalman_element (void *kptr,
     int i, id = -1;
 
     *type = GRETL_TYPE_NONE;
+    if (ownit != NULL) {
+	*ownit = 0;
+    }
+
+    /* 2022-05-06: we'll want to set *ownit to 1 if the
+       element in question is newly allocated, and will be
+       'owned' by the caller, rather than just being a
+       pointer to something inside the kalman struct.
+       If @ownit is NULL we'll take it that this call is
+       on behalf of gretl_bundle_get_member_type(), in
+       which case there's no need to construct a
+       constructable element.
+    */
 
     if (K == NULL) {
         *err = E_DATA;
