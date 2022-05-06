@@ -5889,10 +5889,8 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	    if (g != NULL) {
 		Fti += g->val[i];
 	    }
-	    if (smo) {
-		gretl_matrix_set(K->F, t, i, Fti);
-		col_from_vec(K->Kt, Kti, i);
-	    }
+	    gretl_matrix_set(K->F, t, i, Fti);
+	    col_from_vec(K->Kt, Kti, i);
 	    if (d == 0) {
 		/* still initial */
 		gretl_matrix_multiply_mod(Pki, GRETL_MOD_NONE,
