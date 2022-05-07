@@ -1301,7 +1301,7 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	attach_child(t, child, 0, -1, i++, p);
 	while (p->ch == ' ') parser_getc(p);
 	if (p->ch == '=') {
-	    /* parse the folowing expresssion */
+	    /* parse the folowing expression */
 	    parser_getc(p);
 	    while (p->ch == ' ') parser_getc(p);
 	    lex(p);

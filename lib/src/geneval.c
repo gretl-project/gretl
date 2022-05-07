@@ -1024,7 +1024,6 @@ struct typeconv {
 };
 
 struct typeconv conversions[] = {
-    { GRETL_TYPE_INT,    NUM },
     { GRETL_TYPE_DOUBLE, NUM },
     { GRETL_TYPE_SERIES, SERIES },
     { GRETL_TYPE_MATRIX, MAT },
@@ -1042,6 +1041,10 @@ static int gen_type_from_gretl_type (GretlType t)
 	if (t == conversions[i].t) {
 	    return conversions[i].gen_t;
 	}
+    }
+
+    if (t == GRETL_TYPE_INT) {
+	return NUM;
     }
 
     return UNDEF;
