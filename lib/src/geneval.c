@@ -10591,6 +10591,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     if (ret != NULL) {
 	if (is_tmp) {
 	    ret->flags |= TMP_NODE;
+	} else {
+	    ret->flags &= ~TMP_NODE;
 	}
         ret->flags |= MUT_NODE;
     }
