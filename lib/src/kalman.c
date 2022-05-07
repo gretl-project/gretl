@@ -4999,6 +4999,10 @@ int maybe_delete_kalman_element (void *kptr,
     return done;
 }
 
+#define VMATS 1
+
+#if VMATS
+
 /* Take the vec representation of the variance of the state
    from the matrix named "P" in K->b (constructed by the
    univariate filter) and write it into K->P in vech form.
@@ -5071,6 +5075,34 @@ static gretl_matrix *fill_smdist (kalman *K, int *ownit)
     return NULL;
 }
 
+static gretl_matrix *fill_pevar (kalman *K)
+{
+    gretl_matrix *F = gretl_matrix_alloc(K->N, K->n*(K->n+1)/2);
+
+    if (F != NULL) {
+	gretl_matrix *Ft = gretl_zero_matrix_new(K->n, K->n);
+	double ftj;
+	int t, j;
+
+	for (t=0; t<K->N; t++) {
+	    for (j=0; j<K->n; j++) {
+		ftj = gretl_matrix_get(K->F, t, j);
+		gretl_matrix_set(Ft, j, j, ftj);
+		if (t < 5) {
+		    gretl_matrix_print(Ft, "Ft");
+		}
+	    }
+	    load_to_vech(F, Ft, K->n, t);
+	}
+	gretl_matrix_free(Ft);
+	return F;
+    }
+
+    return NULL;
+}
+
+#endif /* VMATS */
+
 void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
                                      GretlType *type,
@@ -5100,7 +5132,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
         return NULL;
     }
 
-    /* This entry is a temporary hack and test */
+#if VMATS
     if (kalman_univariate(K) && K->b != NULL) {
 	gretl_matrix *ret = NULL;
 
@@ -5125,8 +5157,17 @@ void *maybe_retrieve_kalman_element (void *kptr,
 		*reserved = 1;
 		return ret;
 	    }
+	} else if (!strcmp(key, "pevar") && K->n > 1) {
+	    ret = fill_pevar(K);
+	    if (ret != NULL) {
+		*type = GRETL_TYPE_MATRIX;
+		*reserved = 1;
+		*ownit = 1;
+		return ret;
+	    }
 	}
     }
+#endif
 
     if (!strcmp(key, "timevar_call")) {
         /* function call specifier? */
