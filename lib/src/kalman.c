@@ -4999,20 +4999,73 @@ int maybe_delete_kalman_element (void *kptr,
     return done;
 }
 
+/* Take the vec representation of the variance of the state
+   from the matrix named "P" in K->b (constructed by the
+   univariate filter) and write it into K->P in vech form.
+*/
+
 static gretl_matrix *fill_stvar (kalman *K)
 {
-    gretl_matrix *P = gretl_bundle_get_matrix(K->b, "P", NULL);
+    gretl_matrix *V;
 
-    if (P != NULL) {
+    /* get snoothed version if available */
+    V = gretl_bundle_get_matrix(K->b, "Vhat", NULL);
+    if (V == NULL) {
+	/* otherwise get @P from filtering */
+	V = gretl_bundle_get_matrix(K->b, "P", NULL);
+    }
+
+    if (V != NULL) {
 	int j, t, n = K->r * K->r;
 
 	for (t=0; t<K->N; t++) {
 	    for (j=0; j<n; j++) {
-		K->P0->val[j] = gretl_matrix_get(P, t, j);
+		K->P0->val[j] = gretl_matrix_get(V, t, j);
 	    }
 	    load_to_vech(K->P, K->P0, K->r, t);
 	}
 	return K->P;
+    }
+
+    return NULL;
+}
+
+/* Take the vec representations of the smoothed disturbances
+   K->b.etahat and K->b.epshat (if present) and write them into
+   K->U in the format documented in the Guide.
+*/
+
+static gretl_matrix *fill_smdist (kalman *K, int *ownit)
+{
+    gretl_matrix *U1 = gretl_bundle_get_matrix(K->b, "etahat", NULL);
+    gretl_matrix *U2 = gretl_bundle_get_matrix(K->b, "epshat", NULL);
+    gretl_matrix *U = K->U;
+
+    if (U1 != NULL) {
+	int j, t, q = U1->cols;
+	int n = (U2 != NULL)? U2->cols : 0;
+	double utj;
+
+	if (U == NULL || U->rows != K->N || U->cols != q + n) {
+	    /* we need new storage */
+	    U = gretl_matrix_alloc(K->N, q + n);
+	    if (U == NULL) {
+		return NULL;
+	    } else {
+		*ownit = 1;
+	    }
+	}
+	for (t=0; t<K->N; t++) {
+	    for (j=0; j<q; j++) {
+		utj = gretl_matrix_get(U1, t, j);
+		gretl_matrix_set(U, t, j, utj);
+	    }
+	    for (j=0; j<n; j++) {
+		utj = gretl_matrix_get(U2, t, j);
+		gretl_matrix_set(U, t, j+q, utj);
+	    }
+	}
+	return U;
     }
 
     return NULL;
@@ -5047,14 +5100,31 @@ void *maybe_retrieve_kalman_element (void *kptr,
         return NULL;
     }
 
-    /* This entry is just a temporary hack and test */
-    if (!strcmp(key, "stvar") && kalman_univariate(K) && K->b != NULL) {
-	gretl_matrix *P = fill_stvar(K);
+    /* This entry is a temporary hack and test */
+    if (kalman_univariate(K) && K->b != NULL) {
+	gretl_matrix *ret = NULL;
 
-	if (P != NULL) {
-	    *type = GRETL_TYPE_MATRIX;
-	    *reserved = 1;
-	    return P;
+	if (!strcmp(key, "state")) {
+	    ret = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
+	    if (ret != NULL) {
+		*type = GRETL_TYPE_MATRIX;
+		*reserved = 1;
+		return ret;
+	    }
+	} else if (!strcmp(key, "stvar")) {
+	    ret = fill_stvar(K);
+	    if (ret != NULL) {
+		*type = GRETL_TYPE_MATRIX;
+		*reserved = 1;
+		return ret;
+	    }
+	} else if (!strcmp(key, "smdist")) {
+	    ret = fill_smdist(K, ownit);
+	    if (ret != NULL) {
+		*type = GRETL_TYPE_MATRIX;
+		*reserved = 1;
+		return ret;
+	    }
 	}
     }
 
@@ -5849,7 +5919,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int t, i, err = 0;
 
     int smo = kalman_smoothing(K);
-    int all_kappa = 0; /* FIXME conditionality */
     int TI = gretl_is_identity_matrix(K->T);
 
     double yti, vti, Fti, llct;
@@ -5895,7 +5964,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     }
 
     if (smo && K->exact) {
-	Nd = all_kappa ? K->N : 4*m;
+	Nd = matrix_is_varying(K, K_ZT) ? K->N : 4*m;
 	allocate_smo_recorders(&sm, m, p, K->N, Nd);
     }
 
