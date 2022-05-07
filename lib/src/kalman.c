@@ -5075,7 +5075,7 @@ static gretl_matrix *fill_smdist (kalman *K, int *ownit)
     return NULL;
 }
 
-static gretl_matrix *fill_pevar (kalman *K)
+static gretl_matrix *fill_pevar (kalman *K, int *ownit)
 {
     gretl_matrix *F = gretl_matrix_alloc(K->N, K->n*(K->n+1)/2);
 
@@ -5088,13 +5088,11 @@ static gretl_matrix *fill_pevar (kalman *K)
 	    for (j=0; j<K->n; j++) {
 		ftj = gretl_matrix_get(K->F, t, j);
 		gretl_matrix_set(Ft, j, j, ftj);
-		if (t < 5) {
-		    gretl_matrix_print(Ft, "Ft");
-		}
 	    }
 	    load_to_vech(F, Ft, K->n, t);
 	}
 	gretl_matrix_free(Ft);
+	*ownit = 1;
 	return F;
     }
 
@@ -5138,33 +5136,17 @@ void *maybe_retrieve_kalman_element (void *kptr,
 
 	if (!strcmp(key, "state")) {
 	    ret = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
-	    if (ret != NULL) {
-		*type = GRETL_TYPE_MATRIX;
-		*reserved = 1;
-		return ret;
-	    }
 	} else if (!strcmp(key, "stvar")) {
 	    ret = fill_stvar(K);
-	    if (ret != NULL) {
-		*type = GRETL_TYPE_MATRIX;
-		*reserved = 1;
-		return ret;
-	    }
 	} else if (!strcmp(key, "smdist")) {
 	    ret = fill_smdist(K, ownit);
-	    if (ret != NULL) {
-		*type = GRETL_TYPE_MATRIX;
-		*reserved = 1;
-		return ret;
-	    }
 	} else if (!strcmp(key, "pevar") && K->n > 1) {
-	    ret = fill_pevar(K);
-	    if (ret != NULL) {
-		*type = GRETL_TYPE_MATRIX;
-		*reserved = 1;
-		*ownit = 1;
-		return ret;
-	    }
+	    ret = fill_pevar(K, ownit);
+	}
+	if (ret != NULL) {
+	    *type = GRETL_TYPE_MATRIX;
+	    *reserved = 1;
+	    return ret;
 	}
     }
 #endif
