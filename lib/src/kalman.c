@@ -2758,10 +2758,11 @@ static int maybe_resize_dist_mse (kalman *K,
     } else if (K->Vsd->rows != K->N || K->Vsd->cols != k) {
         err = gretl_matrix_realloc(K->Vsd, K->N, k);
     }
+    gretl_matrix_zero(K->Vsd);
 
     if (!err) {
         /* step-t square state matrix */
-        *Vwt = gretl_matrix_alloc(K->r, K->r);
+        *Vwt = gretl_zero_matrix_new(K->r, K->r);
         if (*Vwt == NULL) {
             err = E_ALLOC;
         }
@@ -2769,7 +2770,7 @@ static int maybe_resize_dist_mse (kalman *K,
 
     if (!err && n > 0) {
         /* step-t square obs matrix */
-        *Vut = gretl_matrix_alloc(K->n, K->n);
+        *Vut = gretl_zero_matrix_new(K->n, K->n);
         if (*Vut == NULL) {
             err = E_ALLOC;
         }
