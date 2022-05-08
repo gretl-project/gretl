@@ -442,7 +442,13 @@ static int maybe_resize_export_matrix (kalman *K, gretl_matrix *m, int i)
     } else if (i == K_A) {
         cols = K->r;
     } else if (i == K_BIG_P) {
-        cols = (K->r * K->r + K->r) / 2;
+	if (kalman_univariate(K)) {
+	    /* vec(P) per row */
+	    cols = K->r * K->r;
+	} else {
+	    /* vech(P) per row */
+	    cols = (K->r * K->r + K->r) / 2;
+	}
     } else if (i == K_LL) {
         cols = 1;
     } else if (i == K_K) {
@@ -593,7 +599,7 @@ static int kalman_check_dimensions (kalman *K)
         err = maybe_resize_export_matrix(K, K->A, K_A);
     }
 
-    /* big P should be N x nr */
+    /* big P should be N x nr, or N x r*r */
     if (!err && K->P != NULL) {
         err = maybe_resize_export_matrix(K, K->P, K_BIG_P);
     }
@@ -5004,35 +5010,40 @@ int maybe_delete_kalman_element (void *kptr,
 
 #if VMATS
 
-/* Take the vec representation of the variance of the state
-   from the matrix named "P" in K->b (constructed by the
-   univariate filter) and write it into K->P in vech form.
+/* Take the stacked vec-tanspose representation of P and
+   convert to the documented vech form.
 */
 
-static gretl_matrix *fill_stvar (kalman *K)
+static gretl_matrix *fill_stvar (kalman *K, int *ownit)
 {
-    gretl_matrix *V;
+    gretl_matrix *P, *V = NULL;
 
-    /* get snoothed version if available */
-    V = gretl_bundle_get_matrix(K->b, "Vhat", NULL);
-    if (V == NULL) {
+    /* get smoothed version if available */
+    P = gretl_bundle_get_matrix(K->b, "Vhat", NULL);
+    if (P == NULL) {
 	/* otherwise get @P from filtering */
-	V = gretl_bundle_get_matrix(K->b, "P", NULL);
+	P = K->P;
+    }
+
+    if (P != NULL) {
+	int cols = K->r * (K->r + 1) / 2;
+
+	V = gretl_matrix_alloc(K->N, cols);
     }
 
     if (V != NULL) {
-	int j, t, n = K->r * K->r;
+	int j, t;
 
 	for (t=0; t<K->N; t++) {
-	    for (j=0; j<n; j++) {
-		K->P0->val[j] = gretl_matrix_get(V, t, j);
+	    for (j=0; j<P->cols; j++) {
+		K->P0->val[j] = gretl_matrix_get(P, t, j);
 	    }
-	    load_to_vech(K->P, K->P0, K->r, t);
+	    load_to_vech(V, K->P0, K->r, t);
 	}
-	return K->P;
+	*ownit = 1;
     }
 
-    return NULL;
+    return V;
 }
 
 /* Take the vec representations of the smoothed disturbances
@@ -5177,7 +5188,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	if (!strcmp(key, "state")) {
 	    ret = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
 	} else if (!strcmp(key, "stvar")) {
-	    ret = fill_stvar(K);
+	    ret = fill_stvar(K, ownit);
 	} else if (!strcmp(key, "smdist")) {
 	    ret = fill_smdist(K, ownit);
 	} else if (!strcmp(key, "smdisterr")) {
@@ -5969,9 +5980,10 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     gretl_matrix *ati = K->a1;
     gretl_matrix *Pti = K->P1;
     gretl_matrix *Pk = K->Pk0;
+    gretl_matrix *P = K->P;
+
     gretl_matrix *g = NULL;
     gretl_matrix *Z = NULL;
-
     /* workspace matrices */
     gretl_matrix_block *B;
     gretl_matrix *Zi, *Kti;
@@ -5997,14 +6009,13 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int Ztrans = 0;
     int Nd = 0;
 
-    /* extra matrices to be returned via k->b */
-    gretl_matrix *P = gretl_zero_matrix_new(K->N, m*m);
+    /* extra matrices to be returned via k->b
+       FIXME: make these optional?
+    */
     gretl_matrix *att = gretl_matrix_alloc(K->N, m);
     gretl_matrix *Ptt = gretl_matrix_alloc(K->N, m*m);
 
-    if (P == NULL) {
-	err = E_ALLOC;
-    } else if (K->exact) {
+    if (K->exact) {
 	B = gretl_matrix_block_new(&Pki, m, m,
 				   &Zi, 1, m,
 				   &Kti, m, 1,
@@ -6035,10 +6046,12 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     K->SSRw = 0;
     K->loglik = 0;
+    set_kalman_running(K);
 
     printf("\nCCC kfilt, m=%d, p=%d CCC\n", m, p);
 
     for (t=0; t<K->N; t++) {
+	K->t = t;
 	load_to_vec(K->A, at, t);
 	row_from_mat(P, Pt, t);
 	fast_copy_values(ati, at);
@@ -6175,11 +6188,16 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	K->j = j > 0 ? j : 0;
     }
 
+    set_kalman_stopped(K);
+
     printf("univariate: loglik = %#.8g\n", K->loglik);
 
-    bundle_add_matrix(K->b, "P", P);
-    bundle_add_matrix(K->b, "att", att);
-    bundle_add_matrix(K->b, "Ptt", Ptt);
+    if (att != NULL) {
+	bundle_add_matrix(K->b, "att", att);
+    }
+    if (Ptt != NULL) {
+	bundle_add_matrix(K->b, "Ptt", Ptt);
+    }
     if (gtrans) {
 	bundle_add_matrix(K->b, "g", g);
     }
@@ -6660,18 +6678,20 @@ static void load_filter_matrices (struct filter_mats *fm,
 				  kalman *K)
 {
     fm->Z = gretl_bundle_get_matrix(K->b, "Z", NULL);
-    fm->P = gretl_bundle_get_matrix(K->b, "P", NULL);
     fm->g = gretl_bundle_get_matrix(K->b, "g", NULL);
+
     if (K->exact) {
 	fm->FK = gretl_bundle_get_matrix(K->b, "Fk", NULL);
 	fm->KK = gretl_bundle_get_matrix(K->b, "Kk", NULL);
 	fm->PK = gretl_bundle_get_matrix(K->b, "PK", NULL);
     }
+
     /* these two may be untransformed */
     if (fm->Z == NULL) fm->Z = K->ZT;
     if (fm->g == NULL) fm->g = K->VY;
 
     fm->A = K->A;
+    fm->P = K->P;
 }
 
 static int state_dist_setup (kalman *K,
