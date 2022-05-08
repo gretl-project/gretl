@@ -6033,14 +6033,13 @@ static double uni_get_vti (kalman *K, const gretl_matrix *Zi,
 {
     double vti = gretl_matrix_get(K->y, K->t, i);
 
-    if (na(vti)) {
-	return NADBL;
-    } else if (K->BT != NULL) {
-	vti -= kalman_Bx_uni(K, i);
-    }
-
     if (!na(vti)) {
-	vti -= dotprod(Zi, ati);
+	if (K->BT != NULL) {
+	    vti -= kalman_Bx_uni(K, i);
+	}
+	if (!na(vti)) {
+	    vti -= dotprod(Zi, ati);
+	}
     }
 
     return vti;
@@ -6236,7 +6235,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 			       Pk, GRETL_MOD_NONE);
 	}
 	if (K->mu != NULL) {
-	    gretl_matrix_add_to(K->at, K->mu);
+	    gretl_matrix_add_to(at, K->mu);
 	}
 
 	if (K->LL != NULL) {
