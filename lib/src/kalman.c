@@ -1437,6 +1437,15 @@ static int kalman_record_state (kalman *K)
     return err;
 }
 
+static double get_xjt (kalman *K, int j)
+{
+    if (K->ifc) {
+	return (j == 0)? 1.0 : gretl_matrix_get(K->x, K->t, j-1);
+    } else {
+	return gretl_matrix_get(K->x, K->t, j);
+    }
+}
+
 /* Read from the appropriate row of x (N x k) and multiply by B' to
    form B'x_t.  Note: the flag K->ifc is used to indicate that the
    observation equation has an implicit constant, with an entry in
@@ -1449,37 +1458,23 @@ static int kalman_record_state (kalman *K)
    or subtract it from, the n-vector @targ (the operator being
    indicated by the @mod argument).
 
-   When the univariate method is employed, the argument @idx indicates
-   which observable to work on; in the multivariate case it is
-   ignored.
-
    Returns: the number of missing values encountered.
 */
 
 static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
-                         GretlMatrixMod mod, int idx)
+                         GretlMatrixMod mod)
 {
     double xjt, bji, bxi;
-    int imin = 0, imax = K->n;
     int i, j, missvals = 0;
 
-    if (kalman_univariate(K)) {
-	imin = idx;
-	imax = idx + 1;
-    }
-
-    for (i=imin; i<imax; i++) {
+    for (i=0; i<K->n; i++) {
         if (K->x == NULL) {
             /* the implicit constant case */
             bxi = K->BT->val[i];
         } else {
             bxi = 0;
             for (j=0; j<K->k; j++) {
-                if (K->ifc) {
-                    xjt = (j == 0)? 1.0 : gretl_matrix_get(K->x, K->t, j-1);
-                } else {
-                    xjt = gretl_matrix_get(K->x, K->t, j);
-                }
+		xjt = get_xjt(K, j);
                 bji = gretl_matrix_get(K->BT, j, i);
                 if (bji != 0) {
                     /* here we'll implicitly take 0 * NA as 0 */
@@ -1499,6 +1494,31 @@ static int kalman_do_Bx (kalman *K, gretl_matrix *targ,
     }
 
     return missvals;
+}
+
+/* version of the above for use with the univariate approach */
+
+static double kalman_Bx_uni (kalman *K, int i)
+{
+    double xjt, bji, bxi;
+    int j;
+
+    if (K->x == NULL) {
+	bxi = K->BT->val[i];
+    } else {
+	bxi = 0;
+	for (j=0; j<K->k; j++) {
+	    xjt = get_xjt(K, j);
+	    bji = gretl_matrix_get(K->BT, j, i);
+	    if (bji != 0 && na(xjt)) {
+		return NADBL;
+	    } else {
+		bxi += xjt * bji;
+	    }
+	}
+    }
+
+    return bxi;
 }
 
 /* Apparatus for handling the case where the number of observables,
@@ -1725,7 +1745,7 @@ static int compute_forecast_error (kalman *K, char *missmap)
 
     if (K->BT != NULL) {
         /* subtract effect of exogenous terms, if any */
-        kalman_do_Bx(K, K->vt, GRETL_MOD_DECREMENT, 0);
+        kalman_do_Bx(K, K->vt, GRETL_MOD_DECREMENT);
     }
 
     /* check for any missing values in v_t */
@@ -4095,7 +4115,7 @@ static int kalman_simulate (kalman *K,
                                   yt, GRETL_MOD_NONE);
         if (K->BT != NULL) {
             /* handle missing values? */
-            kalman_do_Bx(K, yt, GRETL_MOD_CUMULATE, 0);
+            kalman_do_Bx(K, yt, GRETL_MOD_CUMULATE);
         }
         if (K->p > 0) {
             /* G \varepsilon_t */
@@ -6008,6 +6028,24 @@ static int handle_matrix_transforms (kalman *K,
     return err;
 }
 
+static double uni_get_vti (kalman *K, const gretl_matrix *Zi,
+			   const gretl_matrix *ati, int i)
+{
+    double vti = gretl_matrix_get(K->y, K->t, i);
+
+    if (na(vti)) {
+	return NADBL;
+    } else if (K->BT != NULL) {
+	vti -= kalman_Bx_uni(K, i);
+    }
+
+    if (!na(vti)) {
+	vti -= dotprod(Zi, ati);
+    }
+
+    return vti;
+}
+
 static int kfilter_univariate (kalman *K, PRN *prn)
 {
     struct smo_recorder sm = {0};
@@ -6035,7 +6073,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int smo = kalman_smoothing(K);
     int TI = gretl_is_identity_matrix(K->T);
 
-    double yti, vti, Fti, llct;
+    double vti, Fti, llct;
     double Ftinv, Fkinv, Fki = 0;
     double qt, ldt;
     int rankPk = kalman_diffuse(K)? m : 0;
@@ -6108,7 +6146,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	    if (kdebug && t < 2 && K->exact) {
 		fprintf(stderr, "t,i = %d,%d, rankPk = %d\n", t, i, rankPk);
 	    }
-	    yti = gretl_matrix_get(K->y, t, i);
 	    mat_from_row(Zi, Z, i);
 	    gretl_matrix_multiply_mod(Pti, GRETL_MOD_NONE,
 	    			      Zi, GRETL_MOD_TRANSPOSE,
@@ -6131,12 +6168,10 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 		}
 	    }
 
-	    if (na(yti)) {
-		gretl_matrix_set(K->V, t, i, NADBL);
+	    vti = uni_get_vti(K, Zi, ati, i);
+	    gretl_matrix_set(K->V, t, i, vti);
+	    if (na(vti)) {
 		continue;
-	    } else {
-		vti = yti - dotprod(Zi, ati);
-		gretl_matrix_set(K->V, t, i, vti);
 	    }
 
 	    if (rankPk > 0) {
@@ -6199,6 +6234,9 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 			       Pt, GRETL_MOD_CUMULATE);
 	    gretl_matrix_qform(K->T, GRETL_MOD_NONE, Pki,
 			       Pk, GRETL_MOD_NONE);
+	}
+	if (K->mu != NULL) {
+	    gretl_matrix_add_to(K->at, K->mu);
 	}
 
 	if (K->LL != NULL) {
