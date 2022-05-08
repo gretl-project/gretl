@@ -5075,6 +5075,45 @@ static gretl_matrix *fill_smdist (kalman *K, int *ownit)
     return NULL;
 }
 
+static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
+{
+    gretl_matrix *V1 = gretl_bundle_get_matrix(K->b, "veta", NULL);
+    gretl_matrix *V2 = gretl_bundle_get_matrix(K->b, "veps", NULL);
+    gretl_matrix *V = K->Vsd;
+
+    if (V1 != NULL) {
+	int q = kalman_dkvar(K) ? K->q : K->r;
+	int n = (V2 != NULL)? K->n : 0;
+	int j, k, t;
+	double vtj;
+
+	if (V == NULL || V->rows != K->N || V->cols != q + n) {
+	    /* we need new storage */
+	    V = gretl_matrix_alloc(K->N, q + n);
+	    if (V == NULL) {
+		return NULL;
+	    } else {
+		*ownit = 1;
+	    }
+	}
+	for (t=0; t<K->N; t++) {
+	    for (j=0, k=0; j<q; j++) {
+		vtj = gretl_matrix_get(V1, t, k);
+		gretl_matrix_set(V, t, j, sqrt(vtj));
+		k += q + 1;
+	    }
+	    for (j=0, k=0; j<n; j++) {
+		vtj = gretl_matrix_get(V2, t, k);
+		gretl_matrix_set(V, t, j+q, sqrt(vtj));
+		k += n + 1;
+	    }
+	}
+	return V;
+    }
+
+    return NULL;
+}
+
 static gretl_matrix *fill_pevar (kalman *K, int *ownit)
 {
     gretl_matrix *F = gretl_matrix_alloc(K->N, K->n*(K->n+1)/2);
@@ -5140,6 +5179,8 @@ void *maybe_retrieve_kalman_element (void *kptr,
 	    ret = fill_stvar(K);
 	} else if (!strcmp(key, "smdist")) {
 	    ret = fill_smdist(K, ownit);
+	} else if (!strcmp(key, "smdisterr")) {
+	    ret = fill_smdisterr(K, ownit);
 	} else if (!strcmp(key, "pevar") && K->n > 1) {
 	    ret = fill_pevar(K, ownit);
 	}
@@ -6451,7 +6492,7 @@ static void eps_smooth_Ft (double ftinv, double gi,
 			   struct cumulants *c,
 			   gretl_matrix *epshat,
 			   gretl_matrix *veps,
-			   int t, int i)
+			   int t, int i, int dist)
 {
     gretl_matrix *tmp = gretl_matrix_alloc(Kti->rows, 1);
     double x;
@@ -6461,7 +6502,11 @@ static void eps_smooth_Ft (double ftinv, double gi,
 
     gretl_matrix_multiply(c->N0, Kti, tmp);
     gretl_matrix_multiply_by_scalar(tmp, ftinv * ftinv);
-    x = gi - gi*gi * (ftinv + dotprod(Kti, tmp));
+    if (dist == 2) {
+	x = gi - gi*gi * (ftinv + dotprod(Kti, tmp));
+    } else {
+	x = gi*gi * (ftinv + dotprod(Kti, tmp));
+    }
     gretl_matrix_set(veps, t, i, x);
 
     gretl_matrix_free(tmp);
@@ -6472,7 +6517,7 @@ static void eps_smooth_Fk (double fkinv, double gi,
 			   struct cumulants *c,
 			   gretl_matrix *epshat,
 			   gretl_matrix *veps,
-			   int t, int i)
+			   int t, int i, int dist)
 {
     gretl_matrix *tmp = gretl_matrix_alloc(Kki->rows, 1);
     double x;
@@ -6481,7 +6526,11 @@ static void eps_smooth_Fk (double fkinv, double gi,
     gretl_matrix_set(epshat, t, i, -gi * x * fkinv);
 
     gretl_matrix_multiply(c->N0, Kki, tmp);
-    x = gi - gi*gi * fkinv * fkinv * dotprod(Kki, tmp);
+    if (dist == 2) {
+	x = gi - gi*gi * fkinv * fkinv * dotprod(Kki, tmp);
+    } else {
+	x = gi*gi * fkinv * fkinv * dotprod(Kki, tmp);
+    }
     gretl_matrix_set(veps, t, i, x);
 
     gretl_matrix_free(tmp);
@@ -6493,15 +6542,24 @@ static void eta_smooth (const gretl_matrix *Q,
 			const gretl_matrix *N,
 			gretl_matrix *etahat,
 			gretl_matrix *veta,
-			int t)
+			int t, int dist)
 {
-    gretl_matrix *tmp = gretl_matrix_copy(Q);
+    gretl_matrix *tmp;
 
     /* FIXME is qform safe here? */
 
-    /* Q - QRT * N * QRT' */
-    gretl_matrix_qform(QRT, GRETL_MOD_NONE,
-		       N, tmp, GRETL_MOD_DECREMENT);
+    if (dist == 2) {
+	/* Q - QRT * N * QRT' */
+	tmp = gretl_matrix_copy(Q);
+	gretl_matrix_qform(QRT, GRETL_MOD_NONE,
+			   N, tmp, GRETL_MOD_DECREMENT);
+    } else {
+	/* QRT * N * QRT' */
+	tmp = gretl_matrix_alloc(Q->rows, Q->rows);
+	gretl_matrix_qform(QRT, GRETL_MOD_NONE,
+			   N, tmp, GRETL_MOD_NONE);
+    }
+
     row_from_mat(veta, tmp, t);
 
     if (t > 0) {
@@ -6708,6 +6766,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     }
 
     printf("\nCCC ksmo: d = %d, j = %d CCC\n\n", d, j);
+    printf("dist = %d\n", dist);
 
     for (t=K->N-1; t>=d; t--) {
 	mat_from_row(vt, K->V, t);
@@ -6731,13 +6790,13 @@ static int ksmooth_univariate (kalman *K, int dist)
 	    vec_from_col(Kti, Kt, i);
 	    if (eps_smo) {
 		eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
-			      epshat, veps, t, i);
+			      epshat, veps, t, i, dist);
 	    }
 	    fkzero(ftinv, vti, Kti, Zti, &c);
 	}
 
 	if (eta_smo) {
-	    eta_smooth(Q, QRT, c.r0, Nt, etahat, veta, t);
+	    eta_smooth(Q, QRT, c.r0, Nt, etahat, veta, t, dist);
 	}
 
 	/* smoothed state and its variance */
@@ -6773,7 +6832,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 	    vec_from_col(Kti, Kt, i);
 	    if (eps_smo) {
 		eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
-			      epshat, veps, t, i);
+			      epshat, veps, t, i, dist);
 	    }
 	    fkzero(ftinv, vti, Kti, Zti, &c);
 	}
@@ -6802,7 +6861,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 		vec_from_col(Kti, Kt, i);
 		if (eps_smo) {
 		    eps_smooth_Fk(fkinv, g->val[i], Kki, &c,
-				  epshat, veps, t, i);
+				  epshat, veps, t, i, dist);
 		}
 		fkpos(fkinv, Fti, vti, Kki, Kti, Zti, &c);
 	    } else if (Fti > 0) {
@@ -6811,14 +6870,14 @@ static int ksmooth_univariate (kalman *K, int dist)
 		vec_from_col(Kti, Kt, i);
 		if (eps_smo) {
 		    eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
-				  epshat, veps, t, i);
+				  epshat, veps, t, i, dist);
 		}
 		fkzero(ftinv, vti, Kti, Zti, &c);
 	    }
 	}
 
 	if (eta_smo) {
-	    eta_smooth(Q, QRT, c.r0, Nt, etahat, veta, t);
+	    eta_smooth(Q, QRT, c.r0, Nt, etahat, veta, t, dist);
 	}
 
 	printf("dagger calc, call 1 (t=%d)\n", t);
@@ -6858,7 +6917,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 		    vec_from_col(Kti, Kt, i);
 		    if (eps_smo) {
 			eps_smooth_Fk(fkinv, g->val[i], Kki, &c,
-				      epshat, veps, t, i);
+				      epshat, veps, t, i, dist);
 		    }
 		    fkpos(fkinv, Fti, vti, Kki, Kti, Zti, &c);
 		} else if (Fti > 0) {
@@ -6868,7 +6927,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 		    vec_from_col(Kti, Kt, i);
 		    if (eps_smo) {
 			eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
-				      epshat, veps, t, i);
+				      epshat, veps, t, i, dist);
 		    }
 		    fkzero(ftinv, vti, Kti, Zti, &c);
 		}
@@ -6878,7 +6937,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 	    dagger_calc(&f, &c, Pt, Pk, Ahat, Vhat, t);
 
 	    if (eta_smo) {
-		eta_smooth(Q, QRT, c.r0, Nt, etahat, veta, t);
+		eta_smooth(Q, QRT, c.r0, Nt, etahat, veta, t, dist);
 	    }
 
 	    if (t > 0) {
