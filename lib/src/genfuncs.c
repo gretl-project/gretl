@@ -8353,6 +8353,9 @@ static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
     
     for (i=0; i<=h; i++) {
 	f[i] = c[i] * k[i];
+#if 1
+	    fprintf(stderr, "f[%d] = %g\n", i, f[i]);
+#endif
     }
     
     gretl_matrix_zero(J);
@@ -8464,6 +8467,33 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
     return omega;
 }
 
+static int *funky_index(int n, int m)
+{
+    /* 
+       Build a vector holding the indeces for the vech Jacob
+    */ 
+    int i, j, l = 0;
+    int sum;
+    int *index;
+    
+    index = malloc( (n + m) * sizeof *index);
+    
+    for (i = 0; i < n; i++){
+	index[l] = i+1;
+	//printf("The value is %f\n", index[l]);
+	l++;
+	sum = 0;
+	for (j = 1; j < i; j++ ){
+	    sum += n-j+2;
+	    index[l] = i + 1 + sum;
+	    //printf("The value is %f\n", index[l]);
+	    l++;
+	}
+    }
+    
+    return index;
+}
+
 /**
  * R_from_omega:
  * @omega: angle vector.
@@ -8479,12 +8509,12 @@ gretl_matrix *omega_from_R(gretl_matrix *R, int *err)
 gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 			   int *err, double *ldet)
 {
-    gretl_matrix *R = NULL, *K;
+    gretl_matrix *R = NULL, *K, *J;
     int m = omega->rows;
     double tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
     int n = nearbyint(tmp);
     int do_det = (ldet != NULL);
-	
+
     if (fabs(tmp - n) > 1.0e-12) {
 	*err = E_NONCONF;
 	return NULL;
@@ -8492,27 +8522,58 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 
     K = gretl_zero_matrix_new(n, n);
     gretl_matrix_set(K, 0, 0, 1.0);
-    
+
+    J = gretl_zero_matrix_new(m + n, m); //Jacobian
+    int *Jindex = malloc((m + n) * sizeof *Jindex);
+    Jindex = funky_index(m, n);
+
     int i, j, k, l = 0;
     double x, prod;
 
     if (do_det) {
 	*ldet = 0.0;
     }
+    
+    for (i=0; i<m+n; i++) {
+	fprintf(stderr, "Jindex[%d] = %d\n", i, Jindex[i]);
+    }
+    
 
-    gretl_matrix *tmpmat = gretl_matrix_alloc(n+1, n);
+    gretl_matrix *tmpJac = gretl_matrix_alloc(n+1, n);//temporary Jacobian
     double *om = omega->val;
     double *f = malloc(m * sizeof *f);
-    
-    
+
+    int ii, jj, r_i = 1, c_i = 0;
+    double der;
+
     for (i=0; i<n; i++) {
-	f = sphc_unitvec(om, i+1, tmpmat, err);
-	gretl_matrix_print(tmpmat, "J");
+	f = sphc_unitvec(om, i+1, tmpJac, err);
+#if 1
+	for(j=0; j<i; j++) {
+	    gretl_matrix_set(K, j, i, f[j]);
+	}
+#endif
+	gretl_matrix_print(tmpJac, "tmpJac");
 	om += (i+1);
+	//Derivatives part
+	for (ii=0; ii<i+1; ii++){
+	    for (jj = 0; jj<=i; jj++){
+		der = gretl_matrix_get(tmpJac, ii, jj);
+		gretl_matrix_set(J, Jindex[r_i], c_i + jj, der);
+	    }
+	    r_i++;}
+	c_i+=i;
     }
 
-    gretl_matrix_free(tmpmat);
+#if 1
+    gretl_matrix_print(K, "K via f");
+#endif
 
+    #if 0
+    gretl_matrix_free(tmpJac);
+    free(f);
+    free(Jindex);
+#endif
     
     for (i=1; i<n; i++) {
 	prod = 1.0;
@@ -8533,9 +8594,10 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 	    *ldet += 2 * log(prod);
 	}
     }
-    
-#if 0
+
+#if 1
     gretl_matrix_print(K, "reconstructed cholesky");
+    gretl_matrix_print(J, "Jacobian");
 #endif
 
     if (cholesky) {
@@ -8546,5 +8608,5 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 	gretl_matrix_free(K);
 	return R;
     }
-    
+
 }
