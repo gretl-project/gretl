@@ -7270,6 +7270,24 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     return c;
 }
 
+#ifdef __ARM_ARCH_ISA_A64
+
+static double complex complex_divide (double complex *zn,
+				      double complex *zd)
+{
+    double a = creal(zn);
+    double b = cimag(zn);
+    double c = creal(zd);
+    double d = cimag(zd);
+    double den = c*c + d*d;
+    double nr = a*c + b*d;
+    double ni = b*c - a*d;
+
+    return nr/den + ni/den * I;
+}
+
+#endif
+
 /* Multiplication or division for complex matrices in the old
    gretl representation, with real parts in the first column
    and imaginary parts (if present) in the second.
@@ -7336,7 +7354,15 @@ gretl_matrix_complex_muldiv (const gretl_matrix *a,
     for (i=0; i<m; i++) {
         az = ai == NULL ? ar[i] : ar[i] + ai[i] * I;
         bz = bi == NULL ? br[i] : br[i] + bi[i] * I;
-        cz = multiply ? az * bz : az / bz;
+	if (multiply) {
+	    cz = az * bz;
+	} else {
+#ifdef __ARM_ARCH_ISA_A64
+	    cz = complex_divide(az, bz);
+#else
+	    cz = az / bz;
+#endif
+	}
         cr[i] = creal(cz);
         if (ci != NULL) {
             ci[i] = cimag(cz);
