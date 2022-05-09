@@ -7357,7 +7357,7 @@ gretl_matrix_complex_muldiv (const gretl_matrix *a,
 	if (multiply) {
 	    cz = az * bz;
 	} else {
-#ifdef __ARM_ARCH_ISA_A64
+#ifdef __ARM_ARCH_ISA_A64 /* missing symbol divdc3 */
 	    cz = complex_divide(az, bz);
 #else
 	    cz = az / bz;
