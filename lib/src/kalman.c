@@ -5169,10 +5169,9 @@ static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
 		gretl_matrix_set(V, t, j, sqrt(vtj));
 		k += q + 1;
 	    }
-	    for (j=0, k=0; j<n; j++) {
-		vtj = gretl_matrix_get(V2, t, k);
+	    for (j=0; j<n; j++) {
+		vtj = gretl_matrix_get(V2, t, j);
 		gretl_matrix_set(V, t, j+q, sqrt(vtj));
-		k += n + 1;
 	    }
 	}
 	return V;
