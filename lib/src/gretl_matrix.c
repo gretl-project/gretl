@@ -7272,8 +7272,8 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
 #ifdef __ARM_ARCH_ISA_A64
 
-static double complex complex_divide (double complex *zn,
-				      double complex *zd)
+static double complex complex_divide (double complex zn,
+				      double complex zd)
 {
     double a = creal(zn);
     double b = cimag(zn);
