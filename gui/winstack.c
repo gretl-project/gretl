@@ -1067,6 +1067,30 @@ int get_n_hansl_editor_windows (void)
     return n;
 }
 
+GtkWidget *get_primary_hansl_window (void)
+{
+    GList *wlist = gtk_action_group_list_actions(window_group);
+    GList *list = wlist;
+    GtkWidget *w;
+    windata_t *vwin;
+    GtkWidget *ret = NULL;
+
+    while (list != NULL) {
+	w = window_from_action((GtkAction *) list->data);
+	if (w != NULL) {
+	    vwin = window_get_active_vwin(w);
+	    if (vwin != NULL && vwin->role == EDIT_HANSL) {
+		ret = vwin->topmain;
+		break;
+	    }
+	}
+	list = list->next;
+    }
+    g_list_free(wlist);
+
+    return ret;
+}
+
 GtkWidget *get_window_for_data (const gpointer data)
 {
     GtkWidget *ret = NULL;
