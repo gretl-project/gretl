@@ -3003,6 +3003,8 @@ static int retrieve_Zt (kalman *K, int t)
 {
     if (K->step == NULL || K->step->ZT == NULL) {
         return E_DATA;
+    } else if (K->uinfo != NULL) {
+	return load_from_col((gretl_matrix *) K->uinfo->Z, K->step->ZT, t);
     } else {
         return load_from_col((gretl_matrix *) K->ZT, K->step->ZT, t);
     }
