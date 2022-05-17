@@ -8479,13 +8479,12 @@ static int *funky_index(int n, int m)
     index = malloc( (n + m) * sizeof *index);
     
     for (i = 0; i < n; i++){
-	index[l] = i+1;
-	//printf("The value is %f\n", index[l]);
+	index[l] = i;
 	l++;
 	sum = 0;
-	for (j = 1; j < i; j++ ){
-	    sum += n-j+2;
-	    index[l] = i + 1 + sum;
+	for (j = 1; j <= i; j++ ){
+	    sum += n-j;
+	    index[l] = i + sum;
 	    //printf("The value is %f\n", index[l]);
 	    l++;
 	}
@@ -8525,7 +8524,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 
     J = gretl_zero_matrix_new(m + n, m); //Jacobian
     int *Jindex = malloc((m + n) * sizeof *Jindex);
-    Jindex = funky_index(m, n);
+    Jindex = funky_index(n, m);
 
     int i, j, k, l = 0;
     double x, prod;
@@ -8546,35 +8545,38 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
     int ii, jj, r_i = 1, c_i = 0;
     double der;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<n-1; i++) {
 	f = sphc_unitvec(om, i+1, tmpJac, err);
+	om += i+1;
 #if 1
-	for(j=0; j<i; j++) {
-	    gretl_matrix_set(K, j, i, f[j]);
+	for(j=0; j<=i+1; j++) {
+	    gretl_matrix_set(K, i+1, j, f[j]);
 	}
 #endif
 	gretl_matrix_print(tmpJac, "tmpJac");
-	om += (i+1);
 	//Derivatives part
-	for (ii=0; ii<i+1; ii++){
+	for (ii=0; ii<=i+1; ii++){
 	    for (jj = 0; jj<=i; jj++){
 		der = gretl_matrix_get(tmpJac, ii, jj);
+#if 0
+		printf("d[%d,%d] = %f\n", ii, jj,der);
+		printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
+#endif
 		gretl_matrix_set(J, Jindex[r_i], c_i + jj, der);
 	    }
 	    r_i++;}
-	c_i+=i;
+	c_i += i+1;
     }
 
 #if 1
     gretl_matrix_print(K, "K via f");
 #endif
 
-    #if 0
+
     gretl_matrix_free(tmpJac);
     free(f);
     free(Jindex);
-#endif
-    
+#if 0    
     for (i=1; i<n; i++) {
 	prod = 1.0;
 	k = i * n;
@@ -8594,6 +8596,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 	    *ldet += 2 * log(prod);
 	}
     }
+#endif
 
 #if 1
     gretl_matrix_print(K, "reconstructed cholesky");
@@ -8601,7 +8604,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 #endif
 
     if (cholesky) {
-	*err = gretl_matrix_transpose_in_place(K);
+	// *err = gretl_matrix_transpose_in_place(K);
 	return K;
     } else {
 	R = gretl_matrix_XTX_new(K);
