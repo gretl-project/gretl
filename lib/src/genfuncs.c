@@ -8318,6 +8318,8 @@ int *list_from_matrix (const gretl_matrix *m,
     return list;
 }
 
+#define SPHCORR_DBG 1
+
 static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
 {
 
@@ -8351,7 +8353,7 @@ static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
     
     for (i=0; i<=h; i++) {
 	f[i] = c[i] * k[i];
-#if 1
+#if SPHCORR_DBG
 	    fprintf(stderr, "f[%d] = %g\n", i, f[i]);
 #endif
     }
@@ -8386,8 +8388,6 @@ static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
     return f;
     
 }
-
-#define SPHCORR_DBG 0
 
 /**
  * omega_from_R:
@@ -8501,13 +8501,12 @@ static int *funky_index(int n, int m)
  */
 
 gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
-			   int *err, double *ldet)
+			   gretl_matrix **J, int *err)
 {
-    gretl_matrix *R = NULL, *K, *J;
+    gretl_matrix *R = NULL, *K;
     int m = omega->rows;
     double tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
     int n = nearbyint(tmp);
-    int do_det = (ldet != NULL);
 
     if (fabs(tmp - n) > 1.0e-12) {
 	*err = E_NONCONF;
@@ -8518,16 +8517,12 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
     gretl_matrix_set(K, 0, 0, 1.0);
 
     /* pre-allocate Jacobian matrix */
-    J = gretl_zero_matrix_new(m + n, m); 
+    *J = gretl_zero_matrix_new(m + n, m); 
     int *Jindex = malloc((m + n) * sizeof *Jindex);
     Jindex = funky_index(n, m);
 
     int i, j, k, l = 0;
     double x, prod;
-
-    if (do_det) {
-	*ldet = 0.0;
-    }
 
 #if SPHCORR_DBG
     for (i=0; i<m+n; i++) {
@@ -8559,7 +8554,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 		printf("d[%d,%d] = %f\n", ii, jj,der);
 		printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
 #endif
-		gretl_matrix_set(J, Jindex[r_i], c_i + jj, der);
+		gretl_matrix_set(*J, Jindex[r_i], c_i + jj, der);
 	    }
 	    r_i++;}
 	c_i += i+1;
@@ -8582,15 +8577,12 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 	    prod *= sin(omega->val[l++]);
 	}
 	K->val[k] = prod;
-	if (do_det) {
-	    *ldet += 2 * log(prod);
-	}
     }
 #endif
 
 #if SPHCORR_DBG
     gretl_matrix_print(K, "reconstructed cholesky");
-    gretl_matrix_print(J, "Jacobian");
+    gretl_matrix_print(*J, "Jacobian");
 #endif
 
     if (cholesky) {

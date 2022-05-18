@@ -4634,9 +4634,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             break;
         case F_SPHCORR:
 	    if (gotopt && parm) {
-		double ldet = 0;
-		ret->v.m = R_from_omega(m, (parm == 2), &p->err, &ldet);
-		fprintf(stderr, "ldet = %20.18f\n", ldet);
+		gretl_matrix *J = NULL;
+		ret->v.m = R_from_omega(m, (parm == 2), &J, &p->err);
+		gretl_matrix_print(J, "Jacobian");
+		gretl_matrix_free(J);
 	    } else {
 		ret->v.m = omega_from_R(m, &p->err);
 	    }		
