@@ -104,9 +104,10 @@ function void training_R2 (bundle *b, series y, list X)
 end function
 
 function list outer_series_id (const string arg)
-   list L
+   list L = null
    loop i=1..$nvars
-      if varname(i) == arg
+      catch string vname = varname(i)
+      if !$error && varname(i) == arg
          L = {i}
          break
       endif
