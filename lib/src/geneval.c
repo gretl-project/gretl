@@ -13619,6 +13619,7 @@ static int check_argc (int f, int k, parser *p)
 	{ F_CHOWLIN,   2, 3 },
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
+	{ F_MCOMMUTE,  2, 5 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -14339,14 +14340,47 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             } else if (!null_node(e)) {
                 p->err = E_TYPES;
             }
+	}
+    } else if (t->t == F_MCOMMUTE) {
+	gretl_matrix *A = NULL;
+	int rowdim, coldim, post = 0, add_id = 0;
+
+	for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
+                /* A: matrix */
+                if (e->t == MAT) {
+                    A = e->v.m;
+		} else {
+                    p->err = E_TYPES;
+                }
+            } else if (i == 1) {
+		/* row dimension */
+                rowdim = node_get_int(e, p);
+		coldim = rowdim;
+            } else if (i == 2) {
+                /* column dimension */
+		coldim = node_get_int(e, p);
+            } else if (i == 3) {
+                /* postmultiply instead of premultiply ? */
+		post = node_get_bool(e, p, 0);
+            } else if (i == 4) {
+                /* add identity matrix ? */
+		add_id = node_get_bool(e, p, 0);
+            }
         }
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-	    tdi.targ = gretl_type_from_gen_type(p->targ);
-	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
-					  p->prn, &p->err);
+	    if (!post) {
+		ret->v.m = gretl_matrix_commute(A, rowdim, coldim, add_id, &p->err);
+	    } else {
+		gretl_matrix *B = gretl_matrix_copy_transpose(A);
+		A = gretl_matrix_commute(B, coldim, rowdim, add_id, &p->err);
+		ret->v.m = gretl_matrix_copy_transpose(A);
+		gretl_matrix_free(B);
+	    }
         }
     }
 
@@ -17695,6 +17729,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case F_TDISAGG:
     case F_MIDASMULT:
+    case F_MCOMMUTE:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
