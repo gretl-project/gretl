@@ -61,68 +61,68 @@ function void fix_parametrization(matrix *coeff,
                                   matrix *vcv,
                                   scalar type)
 
-   if type == 1   # variance
-      coeff = sqrt(abs(coeff))
-      vcv = 0.25 * vcv ./ (coeff * coeff')
-   elif type == 2 # std. dev
-      coeff = abs(coeff)
-   elif type == 3 # exp
-      coeff = exp(coeff)
-      vcv = vcv .* (coeff * coeff')
-   endif
+    if type == 1   # variance
+        coeff = sqrt(abs(coeff))
+        vcv = 0.25 * vcv ./ (coeff * coeff')
+    elif type == 2 # std. dev
+        coeff = abs(coeff)
+    elif type == 3 # exp
+        coeff = exp(coeff)
+        vcv = vcv .* (coeff * coeff')
+    endif
 end function
 
 function void KFgui_print (bundle *b)
-   n = b.n
-   k = b.act_k
-   ini = 1
-   fin = k
-   if b.has_obsvar
-       printf "\nObservation equation\n"
-       strings pnames = array(n)
-       loop i = 1..n
-           pnames[i] = sprintf("stdev[%d]", i)
-       endloop
-       cs = b.coeff[1:n] ~ sqrt(diag(b.vcv)[1:n])
-       modprint cs pnames
-       printf "\n"
-       ini += n
-       fin += n
-   endif
+    n = b.n
+    k = b.act_k
+    ini = 1
+    fin = k
+    if b.has_obsvar
+        printf "\nObservation equation\n"
+        strings pnames = array(n)
+        loop i = 1..n
+            pnames[i] = sprintf("stdev[%d]", i)
+        endloop
+        cs = b.coeff[1:n] ~ sqrt(diag(b.vcv)[1:n])
+        modprint cs pnames
+        printf "\n"
+        ini += n
+        fin += n
+    endif
 
-   printf "State transition equation\n"
-   strings pnames = array(k)
-   loop i = 1..k
-       pnames[i] = sprintf("stdev[%d]", i)
-   endloop
-   pnames += defarray("Log-likelihood")
-   cs = b.coeff[ini:fin] ~ sqrt(diag(b.vcv)[ini:fin])
-   matrix addstats = b.kmod.lnl
-   modprint cs pnames addstats
+    printf "State transition equation\n"
+    strings pnames = array(k)
+    loop i = 1..k
+        pnames[i] = sprintf("stdev[%d]", i)
+    endloop
+    pnames += defarray("Log-likelihood")
+    cs = b.coeff[ini:fin] ~ sqrt(diag(b.vcv)[ini:fin])
+    matrix addstats = b.kmod.lnl
+    modprint cs pnames addstats
 end function
 
 function scalar check_sizes(scalar n, scalar k, matrix T, matrix Z, matrix R)
     err = 0
     if cols(T) != k
-	printf "ERROR: The state transition matrix isn't square\n"
-	printf "%6.1f\n", T
-	err = 37
+        printf "ERROR: The state transition matrix isn't square\n"
+        printf "%6.1f\n", T
+        err = 37
     elif rows(R) != k
-	printf "ERROR: The rows of the R matrix don't match the number of states (%d)", k
-	printf "%6.1f\n", R
-	err = 37
+        printf "ERROR: The rows of the R matrix don't match the number of states (%d)", k
+        printf "%6.1f\n", R
+        err = 37
     elif rows(R) < cols(R)
-	printf "ERROR: R can't have more columns than rows"
-	printf "%6.1f\n", R
-	err = 37
+        printf "ERROR: R can't have more columns than rows"
+        printf "%6.1f\n", R
+        err = 37
     elif rows(Z) != k
-	printf "ERROR: The rows of the Z matrix don't match the number of states (%d)", k
-	printf "%6.1f\n", Z
-	err = 37
+        printf "ERROR: The rows of the Z matrix don't match the number of states (%d)", k
+        printf "%6.1f\n", Z
+        err = 37
     elif cols(Z) != n
-	printf "ERROR: The columns of the Z matrix don't match the number of series (%d)", n
-	printf "%6.1f\n", Z
-	err = 37
+        printf "ERROR: The columns of the Z matrix don't match the number of series (%d)", n
+        printf "%6.1f\n", Z
+        err = 37
     endif
 
     return err
@@ -136,7 +136,7 @@ end function
 function bundle KFgui (list y "observables",
                        matrix Z "Observation matrix (Z)",
                        matrix T "State transition matrix (T)",
-		       matrix R_in[null] "State variance factor matrix (R)",
+                       matrix R_in[null] "State variance factor matrix (R)",
                        bool has_obsvar[1] "Disturbance in obs. equation?",
                        int param_type[1:3:2] "Parametrization" {"Absolute value", "Square", "Exponential"},
                        int verbosity[0:2:1] "verbosity" {"Quiet", "Normal", "Verbose"},
@@ -181,45 +181,45 @@ function bundle KFgui (list y "observables",
         params param
     end mle --hessian --quiet
 
-   ret.err = $error
-   if !ret.err
-      if smooth
-         ksmooth(&kmod)
-      endif
-      ret.kmod = kmod
-      matrix coeff = $coeff
-      matrix vcv = $vcv
-      fix_parametrization(&coeff, &vcv, param_type)
-      ret.coeff = coeff
-      ret.vcv = vcv
-      ret.state = kmod.state
-      if verbosity > 0
-         KFgui_print(&ret)
-      endif
-   else
-      printf "Filtering failed:\n%s\n", errmsg(ret.err)
-   endif
+    ret.err = $error
+    if !ret.err
+        if smooth
+            ksmooth(&kmod)
+        endif
+        ret.kmod = kmod
+        matrix coeff = $coeff
+        matrix vcv = $vcv
+        fix_parametrization(&coeff, &vcv, param_type)
+        ret.coeff = coeff
+        ret.vcv = vcv
+        ret.state = kmod.state
+        if verbosity > 0
+            KFgui_print(&ret)
+        endif
+    else
+        printf "Filtering failed:\n%s\n", errmsg(ret.err)
+    endif
 
-   return ret
+    return ret
 end function
 
 function void KFgui_plot (bundle *b)
-   matrix P = b.kmod.obsy ~ b.kmod.state
+    matrix P = b.kmod.obsy ~ b.kmod.state
 
-   if cols(b.kmod.obsy) == 1 && cols(b.kmod.state) == 1
-      cnameset(P, "y state")
-  else
-      n = b.n
-      k = b.k
-      strings S = array(n + k)
-      loop i = 1 .. n
-         S[i] = sprintf("y%d", i)
-      endloop
-      loop i = 1 .. k
-         S[n+i] = sprintf("state%d", i)
-      endloop
-      cnameset(P, S)
-   endif
+    if cols(b.kmod.obsy) == 1 && cols(b.kmod.state) == 1
+        cnameset(P, "y state")
+    else
+        n = b.n
+        k = b.k
+        strings S = array(n + k)
+        loop i = 1 .. n
+            S[i] = sprintf("y%d", i)
+        endloop
+        loop i = 1 .. k
+            S[n+i] = sprintf("state%d", i)
+        endloop
+        cnameset(P, S)
+    endif
 
-   gnuplot --matrix=P --time-series --with-lines --output=display
+    gnuplot --matrix=P --time-series --with-lines --output=display
 end function

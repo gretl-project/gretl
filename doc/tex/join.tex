@@ -992,12 +992,12 @@ rewriting the sequence of joins as a loop, as in
 
 \begin{footnotesize}
 \begin{verbatim}
-string countries = sprintf("France Germany Italy \"United Kingdom\"")
-string vnames = "FRA GER ITA UK"
+strings countries = defarray("France", "Germany", "Italy", "United Kingdom")
+strings vnames = defarray("FRA", "GER", "ITA", "UK")
 setopt join persist --tkey="Period,Q%q-%Y" --data=Value
 
-loop foreach i @countries
-  string vname = strsplit(vnames, i)
+loop foreach i countries
+  vname = vnames[i]
   join oecd.csv @vname --filter="Country==\"$i\""
 endloop
 setopt join clear
@@ -1152,9 +1152,9 @@ on importing (see section~\ref{sec:join-syntax}) so we'll need a
 slightly different set of country strings.
 %
 \begin{code}
-string cstrs = "France Germany Italy United_Kingdom"
+strings cstrs = defarray("France", "Germany", "Italy", "United_Kingdom")
 setobs country cstrs --panel-groups
-loop foreach i @cstrs
+loop foreach i cstrs
   smpl country=="$i" --restrict --replace
   join side_by_side.csv GDP --data=$i \
   --ikey=quarter --okey=Period \

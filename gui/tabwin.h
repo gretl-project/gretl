@@ -29,6 +29,8 @@ void tabwin_register_toolbar (windata_t *vwin);
 
 void tabwin_tab_set_title (windata_t *vwin, const char *title);
 
+const gchar *tabwin_tab_get_title (windata_t *vwin);
+
 void tabwin_tab_set_status (windata_t *vwin);
 
 void show_tabbed_viewer (windata_t *vwin);

@@ -69,6 +69,7 @@ int runit;
 int indent0;
 int batch_stdin;
 int data_status;
+int gui_exec;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
@@ -119,6 +120,9 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
             opt |= OPT_INSTPKG;
         } else if (!strcmp(s, "-t") || !strcmp(s, "--tool")) {
             opt |= (OPT_TOOL | OPT_BATCH);
+	} else if (!strcmp(s, "-x") || !strcmp(s, "--exec")) {
+	    gui_exec = 1;
+	    opt |= OPT_BATCH;
         } else if (!strncmp(s, "--scriptopt=", 12)) {
             *scriptval = atof(s + 12);
         } else if (*s == '-' && *(s+1) != '\0') {
@@ -715,7 +719,11 @@ int main (int argc, char *argv[])
 
     libgretl_init();
 
-    if (!tool) {
+    if (gui_exec) {
+	char tstr[64];
+
+	printf("gretl %s %s\n\n", GRETL_VERSION, print_time(tstr));
+    } else if (!tool) {
         logo(quiet);
         if (!quiet) {
             session_time(NULL);
@@ -796,16 +804,19 @@ int main (int argc, char *argv[])
     if (batch || runit) {
         /* re-initialize: will be incremented by "run" cmd */
         runit = 0;
-        if (tool) {
-            set_gretl_echo(0);
-        }
         if (*runfile != '\0' && pkgmode != OPT_INSTPKG) {
             if (strchr(runfile, ' ')) {
                 sprintf(line, "run \"%s\"", runfile);
             } else {
                 sprintf(line, "run %s", runfile);
             }
+	    if (gui_exec) {
+		state.flags |= INIT_EXEC;
+	    }
             err = cli_exec_line(&state, dset, cmdprn);
+	    if (gui_exec) {
+		state.flags ^= INIT_EXEC;
+	    }
             if (err && fb == NULL) {
                 exit(EXIT_FAILURE);
             }
@@ -1198,7 +1209,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
         goto cmd_finish;
     }
 
-    if (gretl_echo_on()) {
+    if (gretl_echo_on()&& !(s->flags & INIT_EXEC)) {
         /* visual feedback, not recording */
         if (cmd->ci == FUNC && runit > 1) {
             ; /* don't echo */
@@ -1272,7 +1283,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
             err = run_include_error(s, cmd->param, err, prn);
             break;
         }
-        if (gretl_messages_on()) {
+        if (gretl_messages_on() && !(s->flags & INIT_EXEC)) {
             pprintf(prn, " %s\n", runfile);
         }
         if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {

@@ -1548,8 +1548,8 @@
     <description>
       <para>
 	Fuxida dun bucle. Podes utilizar esta instrución só dentro dun bucle; iso
-	provoca que a execución de instrucións fuxa do bucle actual (do máis
-	interior, se hai varios aniñados). Consulta tamén <cmdref targ="loop"/>.
+	provoca que a execución de instrucións fuxa do bucle actual (do máis interior,
+	se hai varios aniñados). Consulta tamén <cmdref targ="loop"/>, <cmdref targ="continue"/>.
       </para>
     </description>
   </command>
@@ -1985,6 +1985,18 @@
 	a posibilidade de elixir un método por defecto para compactar.
       </para>
 
+    </description>
+  </command>
+
+  <command name="continue" section="Programming"
+    label="Saltar cara adiante nun bucle" context="cli">
+    <description>
+      <para>
+	Podes usar esta instrución só dentro dun bucle; o seu efecto consiste
+	en saltarse os enunciados posteriores que haxa dentro da iteración
+	vixente do bucle (máis interno) vixente. Consulta tamén
+	<cmdref targ="loop"/>, <cmdref targ="break"/>.
+      </para>
     </description>
   </command>
 
@@ -4799,14 +4811,16 @@
 	</li>
 	<li>
 	    <para>
-	    <cmd>genr dummy</cmd> xera tantas variables ficticias como a
-	    periodicidade dos datos. No caso de ter datos trimestrais
-	    (periodicidade 4), o programa xera <lit>dq1</lit> = 1 para o
-	    primeiro trimestre e 0 para os outros trimestres, <lit>dq2</lit> = 1
-	    para o segundo trimestre e 0 para os outros trimestres, etcétera.
-	    Con datos mensuais, as variables ficticias noméanse <lit>dm1</lit>,
-	    <lit>dm2</lit>, etcétera. Con outras frecuencias, os nomes son
-	    <lit>dummy_1</lit>, <lit>dummy_2</lit>, etc.
+	    <cmd>genr dummy</cmd> xera tantas variables ficticias como
+	    sexa a periodicidade dos datos. No caso de dispoñer datos
+	    trimestrais (periodicidade 4), o programa xera <lit>dq1</lit> = 1
+	    para o primeiro trimestre e 0 para os outros trimestres,
+	    <lit>dq2</lit> = 1 para o segundo trimestre e 0 para os outros
+	    trimestres, etcétera. Con datos mensuais, as variables ficticias
+	    noméanse <lit>dm1</lit>, <lit>dm2</lit>, etcétera; con datos
+	    diarios, noméanse <lit>dd1</lit>, <lit>dd2</lit>, etcétera;
+	    e con outras frecuencias, os nomes son <lit>dummy_1</lit>,
+	    <lit>dummy_2</lit>, etc.
 	    </para>
 	</li>
 	<li>
@@ -7326,28 +7340,30 @@
 	de pancamento e influencia, consulta o capítulo 2 do libro de
 	<cite key="davidson-mackinnon93">Davidson e MacKinnon (1993)</cite>.
       </para>
-      <para>
-	Tamén se calculan os valores DFFITS: estes son iguais aos
-	<quote>erros tipificados</quote> (erros de predición divididos
-	polas súas desviacións padrón) multiplicados por
-	  <equation status="inline"
-	  tex="$\sqrt{h/(1 - h)}$"
-	  ascii="sqrt[h/(1 - h)]"
-	  graphic="dffit"/>.
-	Para unha discusión sobre erros tipificados e DFFITS consulta
-	o capítulo 12 do libro de Maddala
+      <para context="tex">
+	Tamén se calculan os valores DFFITS: estes son iguais aos Erros
+	tipificados (erros divididos polos seus desvíos padrón) multiplicados
+	por $\sqrt{h/(1 - h)}$. Proporcionan unha medida da diferenza no
+	axuste da observación <math>i</math> dependendo de se esa observación
+	está incluída ou non na mostra da estimación. Para máis información
+	sobre este apartado, consulta o capítulo 12 do libro de Maddala
 	<cite key="maddala92">Introduction to Econometrics</cite>
 	ou <cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>.
+	Para máis detalles sobre os Erros tipificados consulta máis abaixo,
+	a sección titulada <emphasis>Matriz mediante accesorio</emphasis>.
       </para>
-      <para>
-	Abreviadamente, un <quote>erro de predición</quote> é a
-	diferenza entre o valor observado da variable dependente na
-	observación <math>t</math>, e o valor axustado para esa
-	observación <math>t</math> que se obtén da regresión na que
-	se omite esa observación (ou na que se engade unha variable
-	ficticia cun valor 1 só na observación <math>t</math>); o
-	erro tipificado obtense dividindo o erro de predición pola súa
-	desviación padrón.
+      <para context="notex">
+	Tamén se calculan os valores DFFITS: estes son iguais aos Erros
+	tipificados (erros divididos polos seus desvíos padrón) multiplicados
+	pola raíz cadrada de <math>h</math>(1 &minus; <math>h</math>).
+	Proporcionan unha medida da diferenza no axuste da observación
+	<math>i</math> dependendo de se esa observación está incluída
+	ou non na mostra da estimación. Para máis información
+	sobre este apartado, consulta o capítulo 12 do libro de Maddala
+	<cite key="maddala92">Introduction to Econometrics</cite>
+	ou <cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>.
+	Para máis detalles sobre os Erros tipificados consulta máis abaixo,
+	a sección titulada <emphasis>Matriz mediante accesorio</emphasis>.
       </para>
       <para context="cli">
 	Cando especificas a opción <opt>save</opt> xunto con esta instrución,
@@ -7405,6 +7421,41 @@
 	ficheiro é como o descrito para a opción <opt>output</opt> da instrución
 	<cmdref targ="gnuplot"/>.
       </para>
+      <subhead context="cli">Matriz mediante accesorio</subhead>
+      <para context="cli">
+	Amais da opción <opt>save</opt> sinalada  antes, podes recuperar
+	os resultados desta instrución en formato dunha matriz de tres
+	columnas por medio do accesorio <fncref targ="$result"/>. As dúas
+	primeiras columnas da mencionada matriz conteñen os valores de
+	pancamento e de influencia (como con <opt>save</opt>), pero a
+	terceira columna contén os Erros tipificados, en troques dos valores
+	DFFITS. Estes son erros <quote>Tipificados externamente</quote>
+	ou <quote>anavallados (jackknifed)</quote> &mdash;isto é, o desvío
+	padrón que está no divisor para a observación <math>i</math> utiliza
+	a media dos cadrados dos erros, omitindo esa observación. Ese tipo de erro
+	pode interpretarse como un estatístico de proba <math>t</math> para
+	a hipótese de que unha variable ficticia 0/1 que codifica de xeito
+	especial a observación <math>i</math>, tería un coeficiente real nulo.
+	Para obter máis detalles sobre a discusión adicional arredor dos
+	Erros tipificados, consulta
+	<cite key="chatterjee-hadi86">Chatterjee e Hadi (1986)</cite>.
+      </para>
+      <para>
+	Os valores DFFITS tamén poden obterse a partir da matriz de
+	<lit>$result</lit> do seguinte xeito:
+      </para>
+      <code>
+	R = $result
+	dffits = R[,3] .* sqrt(R[,1] ./ (1-R[,1]))
+      </code>
+      <para>
+	Ou utilizando series:
+      </para>
+      <code>
+	series h = $result[,1]  # Pancamento
+	series sr = $result[,3] # Erro tipificado
+	series dffits = sr * sqrt(h/(1-h))
+      </code>
     </description>
 
     <gui-access>
@@ -11641,8 +11692,8 @@
 	A propia cadea de formato debe de estar contornada entre comiñas,
 	e os valores que se van presentar deben de ir despois desa cadea
 	de formato, separados por comas. Estes valores deben de ter a forma
-	de, ou ben (a) os nomes das variables, ou ben (b) unhas expresións que xeran
-	algunha clase de resultado que é presentable, ou ben (c) as funcións
+	de, ou ben (a) os nomes das variables, ou ben (b) expresións que xeren
+	algunha clase de resultado que sexa presentable, ou ben (c) as funcións
 	especiais <lit>varname()</lit> ou <lit>date()</lit>. O seguinte
 	exemplo presenta os valores de dúas variables, máis o dunha expresión
 	que se calcula:
@@ -11674,9 +11725,10 @@
       <para>
 	A lonxitude máxima dunha cadea de formato é de 127 caracteres.
 	Recoñécense as secuencias de escape <lit>\n</lit> (nova liña),
-	<lit>\t</lit> (tabulación), <lit>\v</lit> (tabulación vertical) e
-	<lit>\\</lit> (barra inclinada á esquerda literal). Para presentar
-	un signo por cento literal, utiliza <lit>%%</lit>.
+	<lit>\r</lit> (salto de liña), <lit>\t</lit> (tabulación), <lit>\v</lit>
+	(tabulación vertical) e <lit>\\</lit> (barra inclinada á esquerda
+	literal). Para presentar un signo por cento literal, utiliza
+	<lit>%%</lit>.
       </para>
       <para>
 	Como en C, podes indicar os valores numéricos que forman parte
@@ -14472,6 +14524,10 @@
 	  <flag>--time</flag>
 	  <effect>Datos de panel: mostra na dimensión temporal</effect>
         </option>
+        <option>
+	  <flag>--dates</flag>
+	  <effect>Interpreta os números de observación como datas</effect>
+        </option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>Non amosa o rango mostral</effect>
@@ -14489,23 +14545,23 @@
 
     <description>
       <para>
-	Restablece o rango da mostra. Podes definir o novo rango de
-	varios xeitos. Na primeira alternativa (e nos dous primeiros
-	exemplos) de arriba, <repl>obsinicio</repl> e <repl>obsfin</repl>
-	deben de ser consistentes coa periodicidade dos datos. Podes
-	substituír calquera dos dous mediante un punto e coma para deixar
-	ese valor sen cambiar. Na segunda forma, os números enteiros
-	<repl>i</repl> e <repl>j</repl> (poden ser positivos ou negativos,
-	e deben de ter o seu signo) considéranse como variacións en
-	relación ao rango da mostra existente. Na terceira forma,
-	<repl>varficticia</repl> debe de ser unha variable de sinalización
-	con valores 0 ou 1 en cada observación; así a mostra vaise
-	restrinxir ás observacións nas que o valor é 1. A cuarta forma,
-	que utiliza <opt>restrict</opt>, restrinxe a mostra ás observacións
-	que cumpren a condición booleana que se indica (e que se
-	especifica de acordo coa sintaxe da instrución <cmdref targ="genr"/>).
+	Restablece o rango da mostra. Podes definir o novo rango de varios
+	xeitos. Na primeira alternativa (e nos dous primeiros exemplos) de
+	arriba, <repl>obsinicio</repl> e <repl>obsfin</repl> deben de ser
+	consistentes coa periodicidade dos datos. Podes substituír calquera
+	dos dous mediante un punto e coma para deixar ese valor sen cambiar.
+	(Para máis detalles sobre <repl>obsinicio</repl> e <repl>obsfin</repl>,
+	consulta a sección titulada <quote>Datas versus Índices secuenciais</quote>
+	máis abaixo.) Na segunda forma, os números enteiros <repl>i</repl>
+	e <repl>j</repl> (poden ser positivos ou negativos, e deben de ter
+	o seu signo) considéranse como variacións en relación ao rango da
+	mostra existente. Na terceira forma, <repl>varficticia</repl> debe
+	de ser unha variable de sinalización con valores 0 ou 1 en cada
+	observación; así a mostra vaise restrinxir ás observacións nas que
+	o valor é 1. A cuarta forma, que utiliza <opt>restrict</opt>, restrinxe
+	a mostra ás observacións que cumpren a condición booleana que se
+	indica.
       </para>
-
       <para>
 	Podes empregar as opcións <opt>no-missing</opt> e <opt>no-all-missing</opt>
 	para excluír da mostra aquelas observacións para as que hai ausencia
@@ -14575,6 +14631,24 @@
 	esta instrución; pero podes volver impoñer a estrutura coa instrución
 	<cmdref targ="setobs"/> (consulta tamén a opción <opt>preserve-panel</opt>
 	máis abaixo).
+      </para>
+
+      <subhead>Datas versus Índices secuenciais</subhead>
+      <para>
+	Podes utilizar a opción <opt>dates</opt> para solucionar algunha posible
+	ambigüidade ao interpretar <repl>obsinicio</repl> e <repl>obsfin</repl>
+	no caso de usar datos de series de tempo anuais. Por exemplo,
+	debería considerarse que <lit>2010</lit> se refire ao ano 2010, ou
+	á dous mil décima observación? Na maioría dos casos, isto debera
+	saír ben automaticamente, pero podes forzar a interpretación en
+	forma de data se o precisas. Esta opción tamén se pode utilizar con
+	datos que estean datados diariamente para lograr que <lit>smpl</lit>
+	interprete, por exemplo, 20100301 como o primeiro de marzo de 2010
+	en troques dun índice secuencial corrente. Cae na conta de que esta
+	ambigüidade non xurde coas frecuencias de series de tempo que sexan
+	distintas á anual e á diaria; datas como 1980:3 (terceiro trimestre
+	de 1980) e 2020:03 (marzo de 2020) non poden confundirse con índices
+	correntes.
       </para>
 
       <subhead>Opcións específicas para datos de panel</subhead>

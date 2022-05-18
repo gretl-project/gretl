@@ -822,12 +822,12 @@
 	<para>
 	  Proporciona información reservada, a continuación dalgunhas
 	  instrucións que non teñen accesorios específicos. As instrucións
-	  en cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
-	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
-	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
-	  <cmdref targ="vif"/>, <cmdref targ="bds"/> e <cmdref targ="bkw"/> (en
-	  cuxos casos, o resultado é unha matriz), ademais de <cmdref targ="pkg"/>
-	  (en cuxo caso, gárdase opcionalmente un feixe).
+	  en cuestión inclúen <cmdref targ="bds"/>, <cmdref targ="bkw"/>
+    <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
+	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref targ="leverage"/>,
+	  <cmdref targ="summary"/>, <cmdref targ="vif"/> e <cmdref targ="xtab"/>
+	  (en cuxos casos, o resultado é unha matriz), ademais de
+	  <cmdref targ="pkg"/> (en cuxo caso, gárdase opcionalmente un feixe).
 	</para>
       </description>
     </function>
@@ -6641,6 +6641,17 @@
 	  Para obter unha explicación completa, consulta
 	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
+	<para>
+	  Admítese tamén unha solicitude alternativa: cando se indica un
+	  único argumento, considérase que é unha data (ou unha serie de
+	  datas) en formato numérico <quote>básico</quote> ISO 8601,
+	  <lit>YYYYMMDD</lit>. Deste xeito, as seguintes dúas solicitudes
+	  xeran o mesmo resultado, concretamente 13.
+	</para>
+	<code>
+	  eval isoweek(2022, 4, 1)
+	  eval isoweek(20220401)
+	</code>
       </description>
     </function>
 
@@ -13425,6 +13436,17 @@
 	  do mesmo tipo; ou sexa, deben de ser todos de tipo escalar (enteiro)
 	  ou todos de tipo serie.
 	</para>
+	<para>
+	  Admítese tamén unha solicitude alternativa: cando se indica un
+	  único argumento, considérase que é unha data (ou unha serie de
+	  datas) en formato numérico <quote>básico</quote> ISO 8601,
+	  <lit>YYYYMMDD</lit>. Deste xeito, as seguintes dúas solicitudes
+	  xeran o mesmo resultado, concretamente 2 (martes).
+	</para>
+	<code>
+	  eval weekday(1990, 5, 1)
+	  eval weekday(19900501)
+	</code>
       </description>
     </function>
 

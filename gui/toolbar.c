@@ -1147,7 +1147,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;
-    } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
+    } else if (f == STICKIFY_ITEM && (r != SCRIPT_OUT || gui_editor_mode())) {
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
@@ -1377,11 +1377,11 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
-/* right-click action for exec button */
+/* right-click and middle-click actions for Run (exec) button */
 
 static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
 {
-    if (eb->button == 3) {
+    if (eb->button == 3 && !gui_editor_mode()) {
 	run_script_silent(NULL, vwin);
 	return TRUE;
     } else {

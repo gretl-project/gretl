@@ -3795,10 +3795,10 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 	{ GRETL_SAS,      "SAS" },
 	{ GRETL_JMULTI,   "JMulTi" }
     };
-    int i, nt = sizeof ftypes / sizeof ftypes[0];
+    int i, nt = G_N_ELEMENTS(ftypes);
     const char *src = NULL;
     gchar *note = NULL;
-    char tstr[48];
+    char tstr[128];
 
     for (i=0; i<nt; i++) {
 	if (type == ftypes[i].type) {
