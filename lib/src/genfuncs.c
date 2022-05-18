@@ -8596,7 +8596,10 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
     if (cholesky) {
 	return K;
     } else {
-	R = gretl_matrix_XTX_new(K);
+	R = gretl_matrix_alloc(n, n);
+	gretl_matrix_multiply_mod(K, GRETL_MOD_NONE,
+				  K, GRETL_MOD_TRANSPOSE,
+				  R, GRETL_MOD_NONE);
 	gretl_matrix_free(K);
 	return R;
     }
