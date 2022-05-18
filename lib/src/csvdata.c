@@ -1891,7 +1891,7 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
     if (c->delim != ' ' && *s == c->delim) {
         csv_set_blank_column(c);
     } else {
-        char field1[OBSLEN];
+        char field1[VNAMELEN];
         int i = 0;
 
         if (c->delim == ' ' && *s == ' ') {
@@ -3771,7 +3771,6 @@ int real_import_csv (const char *fname,
             dset->descrip = c->descrip;
             c->descrip = NULL;
         }
-
         if (!err && newdata) {
             dataset_add_import_info(dset, fname, GRETL_CSV);
         }
