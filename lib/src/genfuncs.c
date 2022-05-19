@@ -3146,7 +3146,11 @@ static gchar *seas_name_and_label (int i, const DATASET *dset,
         sprintf(vname, "dm%d", i);
         ret = g_strdup_printf(_("= 1 if month = %d, 0 otherwise"), i);
     } else if (dated_daily_data(dset)) {
+#if 0 /* wait: backward-incompatible */
 	sprintf(vname, "dd%d", i);
+#else
+	sprintf(vname, "dummy_%d", i);
+#endif
 	ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
     } else {
         char dumstr[8] = "dummy_";
