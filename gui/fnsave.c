@@ -2243,7 +2243,7 @@ static char *make_local_tags_buf (void)
     s = calloc(len, 1);
 
     if (s != NULL) {
-	char s0[6];
+	char s0[16];
 
 	for (i=0; tag_lookups[i].code > 0; i++) {
 	    sprintf(s0, "C%02d: ", tag_lookups[i].code);

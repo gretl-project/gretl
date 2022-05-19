@@ -2005,8 +2005,10 @@ static char *precompute_mask (const char *s,
 	}
 	if (!*err) {
 	    if (fullset != NULL) {
+#if 0
 		fprintf(stderr, " expand_mask: oldmask=%p, fullset->n=%d\n",
 			(void *) oldmask, fullset->n);
+#endif
 		newmask = expand_mask(tmpmask, oldmask, err);
 	    } else {
 		newmask = tmpmask;
@@ -2021,12 +2023,14 @@ static char *precompute_mask (const char *s,
 
     free(tmpmask);
 
+#if 0 /* 2022-05-19: it seems this can trigger a spurious error, why? */
     if (!*err && newmask != NULL) {
 	if (count_selected_cases(newmask, dset) == 0) {
 	    gretl_errmsg_set(_("No observations would be left!"));
 	    *err = E_DATA;
 	}
     }
+#endif
 
     return newmask;
 }

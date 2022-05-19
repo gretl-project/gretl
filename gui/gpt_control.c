@@ -3793,16 +3793,14 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 {
     GdkRectangle r = {x, y, 0, 0};
     const gchar *label = plot->spec->markers[i];
+    gchar alt_label[16] = {0};
     PangoContext *context;
     PangoLayout *pl;
 
     if (plot_is_roots(plot)) {
-	gchar alt_label[12];
-
 	if (make_alt_label(alt_label, label)) {
 	    return;
 	}
-
 	label = alt_label;
     }
 

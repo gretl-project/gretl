@@ -7204,7 +7204,7 @@ void tdisagg_dialog (int v)
 	return;
     }
 
-    dialog = gretl_dialog_new("gretl: temporal disaggregation",
+    dialog = gretl_dialog_new(_("gretl: temporal disaggregation"),
                               NULL, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -7433,7 +7433,7 @@ void bdstest_dialog (int v, GtkWidget *parent)
         return;
     }
 
-    dialog = gretl_dialog_new("gretl: BDS test", parent, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: BDS test"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     bi.vnum = v;
@@ -7557,7 +7557,7 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
 #endif
     int i;
 
-    dialog = gretl_dialog_new("gretl: regls options", parent, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: regls options"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     ro.dlg = dialog;

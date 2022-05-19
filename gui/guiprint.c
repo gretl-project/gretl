@@ -343,13 +343,12 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
 
 void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 {
+    char tmp[OBSLEN] = {0};
     const char *obs;
 
     if (pdinfo->markers) {
 	obs = pdinfo->S[t];
     } else {
-	char tmp[OBSLEN];
-
 	ntolabel(tmp, t, pdinfo);
 	obs = tmp;
     }

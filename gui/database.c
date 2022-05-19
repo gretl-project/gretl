@@ -2146,7 +2146,7 @@ static int dbn_dataset_search_results (const char *key,
     return n_ok;
 }
 
-#define SEARCH_CHUNK 80
+#define SEARCH_CHUNK 100
 
 static gchar *dbnomics_search_string;
 
@@ -3578,8 +3578,8 @@ struct dbn_pager {
     int chunk;   /* limit to number of items to grab */
 };
 
-#define DBN_DSETS_CHUNK 40
-#define DBN_SERIES_CHUNK 100
+#define DBN_DSETS_CHUNK 80
+#define DBN_SERIES_CHUNK 200
 
 static struct dbn_pager *dbn_pager_new (windata_t *vwin)
 {

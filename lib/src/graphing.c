@@ -1040,7 +1040,7 @@ static void write_png_font_string (char *fstr,
 
 static gchar *write_other_font_string (int stdsize)
 {
-    gchar *fstr;
+    gchar *fstr = NULL;
 
     if (ad_hoc_font[0] != '\0') {
 	char fname[128];
