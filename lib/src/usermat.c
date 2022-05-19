@@ -1201,36 +1201,29 @@ static char **expand_names (const char *s, int n, int *err)
     return S;
 }
 
-int umatrix_set_names_from_string (gretl_matrix *M,
-				   const char *s,
+static int real_umatrix_set_names (gretl_matrix *M,
+				   char **S,
 				   int byrow)
 {
-    int n, err = 0;
+    int n = byrow ? M->rows : M->cols;
+    int err = 0;
 
-    n = (byrow)? M->rows : M->cols;
-
-    if (s == NULL || *s == '\0') {
+    if (S == NULL) {
 	if (byrow) {
 	    gretl_matrix_set_rownames(M, NULL);
 	} else {
 	    gretl_matrix_set_colnames(M, NULL);
 	}
     } else {
-	char **S;
-	int ns;
+	int i;
 
-	S = gretl_string_split(s, &ns, " \n\t");
-
-	if (S == NULL) {
-	    err = E_ALLOC;
-	} else if (ns == 1 && n > 1) {
-	    strings_array_free(S, ns);
-	    S = expand_names(s, n, &err);
-	} else if (ns != n) {
-	    err = E_NONCONF;
-	    strings_array_free(S, ns);
+	for (i=0; i<n && !err; i++) {
+	    if (S[i] == NULL || S[i][0] == '\0') {
+		gretl_errmsg_sprintf("Missing string in %s",
+				     byrow? "rnameset" : "cnameset");
+		err = E_INVARG;
+	    }
 	}
-
 	if (!err) {
 	    if (byrow) {
 		gretl_matrix_set_rownames(M, S);
@@ -1238,6 +1231,55 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 		gretl_matrix_set_colnames(M, S);
 	    }
 	}
+    }
+
+    if (err) {
+	strings_array_free(S, n);
+    }
+
+    return err;
+}
+
+static int n_names_check (int n, int ns, int byrow)
+{
+    if (ns != n) {
+	gretl_errmsg_sprintf("%s: got %d names but matrix has %d %s",
+			     byrow ? "rnameset" : "cnameset",
+			     ns, n, byrow ? "rows" : "columns");
+	return E_INVARG;
+    } else {
+	return 0;
+    }
+}
+
+int umatrix_set_names_from_string (gretl_matrix *M,
+				   const char *s,
+				   int byrow)
+{
+    char **S = NULL;
+    int n, ns = 0;
+    int err = 0;
+
+    n = byrow ? M->rows : M->cols;
+
+    if (s != NULL && *s != '\0') {
+	S = gretl_string_split(s, &ns, " \n\t");
+
+	if (S == NULL) {
+	    err = E_ALLOC;
+	} else if (ns == 1 && n > 1) {
+	    strings_array_free(S, ns);
+	    S = expand_names(s, n, &err);
+	} else {
+	    err = n_names_check(n, ns, byrow);
+	    if (err) {
+		strings_array_free(S, ns);
+	    }
+	}
+    }
+
+    if (!err) {
+	err = real_umatrix_set_names(M, S, byrow);
     }
 
     return err;
@@ -1248,44 +1290,26 @@ int umatrix_set_names_from_array (gretl_matrix *M,
 				  int byrow)
 {
     gretl_array *A = data;
-    int n, err = 0;
+    char **S = NULL;
+    int n, ns = 0;
+    int err = 0;
 
-    n = (byrow)? M->rows : M->cols;
+    n = byrow ? M->rows : M->cols;
 
-    if (A == NULL || gretl_array_get_length(A) == 0) {
-	if (byrow) {
-	    gretl_matrix_set_rownames(M, NULL);
-	} else {
-	    gretl_matrix_set_colnames(M, NULL);
-	}
-    } else {
-	char **AS;
-	int i, ns;
+    if (A != NULL && gretl_array_get_length(A) > 0) {
+	char **AS = gretl_array_get_strings(A, &ns);
 
-	AS = gretl_array_get_strings(A, &ns);
-
-	if (ns != n) {
-	    err = E_NONCONF;
-	} else {
-	    for (i=0; i<ns && !err; i++) {
-		if (AS[i] == NULL || AS[i][0] == '\0') {
-		    fprintf(stderr, "Missing string in colnames/rownames\n");
-		    err = E_INVARG;
-		}
-	    }
-	}
-
+	err = n_names_check(n, ns, byrow);
 	if (!err) {
-	    char **S = strings_array_dup(AS, ns);
-
+	    S = strings_array_dup(AS, n);
 	    if (S == NULL) {
 		err = E_ALLOC;
-	    } else if (byrow) {
-		gretl_matrix_set_rownames(M, S);
-	    } else {
-		gretl_matrix_set_colnames(M, S);
 	    }
 	}
+    }
+
+    if (!err) {
+	err = real_umatrix_set_names(M, S, byrow);
     }
 
     return err;
@@ -1296,39 +1320,34 @@ int umatrix_set_names_from_list (gretl_matrix *M,
 				 const DATASET *dset,
 				 int byrow)
 {
-    int i, n, err = 0;
+    char **S = NULL;
+    int n, err = 0;
 
-    n = (byrow)? M->rows : M->cols;
+    n = byrow ? M->rows : M->cols;
 
-    if (list == NULL || list[0] == 0) {
-	if (byrow) {
-	    gretl_matrix_set_rownames(M, NULL);
-	} else {
-	    gretl_matrix_set_colnames(M, NULL);
+    if (list != NULL && list[0] > 0) {
+	int i;
+
+	err = n_names_check(n, list[0], byrow);
+	if (!err) {
+	    S = strings_array_new(n);
+	    if (S == NULL) {
+		err = E_ALLOC;
+	    }
 	}
-    } else if (list[0] != n) {
-	err = E_NONCONF;
-    } else {
-	char **S = strings_array_new(n);
-
-	if (S == NULL) {
-	    err = E_ALLOC;
-	}
-
 	for (i=0; i<n && !err; i++) {
 	    S[i] = gretl_strndup(dset->varname[list[i+1]], 12);
 	    if (S[i] == NULL) {
 		err = E_ALLOC;
 	    }
 	}
-
 	if (err) {
 	    strings_array_free(S, n);
-	} else if (byrow) {
-	    gretl_matrix_set_rownames(M, S);
-	} else {
-	    gretl_matrix_set_colnames(M, S);
 	}
+    }
+
+    if (!err) {
+	err = real_umatrix_set_names(M, S, byrow);
     }
 
     return err;
