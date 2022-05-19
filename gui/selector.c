@@ -6596,7 +6596,7 @@ static void build_regls_controls (selector *sr)
 
     /* choice of estimator */
     hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new("Estimator");
+    w = gtk_label_new(_("Estimator"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     sr->extra[REGLS_EST] = w = gtk_combo_box_text_new();
     combo_box_append_text(w, _("LASSO"));
@@ -6678,7 +6678,7 @@ static void build_regls_controls (selector *sr)
 
     /* "advanced" controls */
     hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_button_new_with_label("Advanced...");
+    w = gtk_button_new_with_label(_("Advanced..."));
     g_signal_connect(G_OBJECT(w), "clicked",
                      G_CALLBACK(call_regls_advanced), sr);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -9327,7 +9327,7 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 
     if (ynum < 0 && nv[0] == 0 && nv[1] == 0) {
         /* nothing relevant was found */
-        errbox("Please add some variables to the model first");
+        errbox(_("Please add some variables to the model first"));
         return NULL;
     }
 
