@@ -17,7 +17,7 @@
 
 \newcommand{\altstatevar}{H}
 \newcommand{\altobsvar}{G}
-\newcommand{\alldist}{\varepsilon}
+\newcommand{\alldist}{\nu}
 \newcommand{\alldim}{p}
 
 \newcommand{\prederr}{v}
@@ -144,8 +144,8 @@ $\obsxmat$ & $\obsdim \times k$ & \texttt{obsxmat} &
  no exogenous terms in observation equation\\
 $\obsvar$ & $\obsdim \times \obsdim$ & \texttt{obsvar} &
  no disturbance term in observation equation \\
-$\hat{\statevec}_0$ & $\stdim \times 1$ & \texttt{inistate} &
- $\hat{\statevec}_0$ is a zero vector\\
+$\statevec_0$ & $\stdim \times 1$ & \texttt{inistate} &
+ $\statevec_0$ is a zero vector\\
 $\statecvar_0$ & $\stdim \times \stdim$ & \texttt{inivar} &
  $\statecvar_0$ is set automatically
 \end{tabular}
@@ -652,8 +652,8 @@ formulation allows for cross-correlation.  In place of
      \altstatevar_t \alldist_t
 \end{align*}
 %
-where $\alldist_t$ is redefined as a ($\alldim \times 1$) disturbance
-vector which is assumed to satisfy $\alldist_t \sim N(0, I_{\alldim})$,
+where $\alldist_t$ is a ($\alldim \times 1$) disturbance vector which
+is assumed to satisfy $\alldist_t \sim N(0, I_{\alldim})$,
 $\altstatevar_t$ is ($\stdim \times \alldim$) and $\altobsvar_t$ is
 ($\obsdim \times \alldim$).
 
@@ -1419,8 +1419,9 @@ The model here is
 \[
   y_t = \mu_t + s_t + \obsdist_t,
 \]
-where $\mu_t = \mu_{t-1} + \steta_{1,t}$, is a random walklike in the previous example
-and $s_t$ is a seasonal component, implicitly defined by the property
+where $\mu_t = \mu_{t-1} + \steta_{1,t}$ is a random walk, as in the
+previous example, and $s_t$ is a seasonal component, implicitly
+defined by the property
 \[
   s_t = -\sum_{j=1}^{S-1} s_{t-i} + \steta_{2,t},
 \]

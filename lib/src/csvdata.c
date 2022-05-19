@@ -1357,12 +1357,19 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
                             char *skipstr, PRN *prn)
 {
     char endobs[OBSLEN];
-    int n = dset->n;
-    char *lbl1 = dset->S[0];
-    char *lbl2 = dset->S[n - 1];
-    int len1 = strlen(lbl1);
-    int len2 = strlen(lbl2);
+    char *lbl1, *lbl2;
+    int len1, len2;
     int pd = -1;
+    int n = dset->n;
+
+    if (dset->S == NULL) {
+	return pd;
+    }
+
+    lbl1 = dset->S[0];
+    lbl2 = dset->S[n - 1];
+    len1 = strlen(lbl1);
+    len2 = strlen(lbl2);
 
     if (skipstr != NULL && *skipstr != '\0') {
         return time_series_label_check(dset, *reversed, skipstr, 0, prn);
@@ -1884,7 +1891,7 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
     if (c->delim != ' ' && *s == c->delim) {
         csv_set_blank_column(c);
     } else {
-        char field1[OBSLEN];
+        char field1[VNAMELEN];
         int i = 0;
 
         if (c->delim == ' ' && *s == ' ') {
@@ -3764,7 +3771,6 @@ int real_import_csv (const char *fname,
             dset->descrip = c->descrip;
             c->descrip = NULL;
         }
-
         if (!err && newdata) {
             dataset_add_import_info(dset, fname, GRETL_CSV);
         }

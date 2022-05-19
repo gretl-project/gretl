@@ -90,7 +90,7 @@ int smarttab = 1;
 int script_line_numbers = 0;
 int script_auto_bracket = 0;
 
-static gboolean script_electric_enter (windata_t *vwin);
+static gboolean script_electric_enter (windata_t *vwin, int alt);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
 static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
@@ -100,6 +100,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
+static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -720,9 +721,15 @@ static gint script_key_handler (GtkWidget *w,
 
     if (state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
-	    run_script_silent(w, vwin);
+	    /* Ctrl-Shift-r */
+	    if (gui_editor_mode()) {
+		do_run_script(w, vwin);
+	    } else {
+		run_script_silent(w, vwin);
+	    }
 	    ret = TRUE;
 	} else if (keyval == GDK_r) {
+	    /* plain Ctrl-r */
 	    do_run_script(w, vwin);
 	    ret = TRUE;
 	} else if (keyval == GDK_Return) {
@@ -745,7 +752,7 @@ static gint script_key_handler (GtkWidget *w,
 	ret = TRUE;
     } else if (editing_hansl(vwin->role)) {
 	if (keyval == GDK_Return) {
-	    ret = script_electric_enter(vwin);
+	    ret = script_electric_enter(vwin, state & GDK_MOD1_MASK);
 	} else if (tabkey(keyval)) {
 #if TABDEBUG
 	    fprintf(stderr, "*** calling script_tab_handler ***\n");
@@ -3449,10 +3456,13 @@ static char *get_previous_line_start_word (char *word,
    inserting a "smart" soft tab in response to the Tab key. If not,
    and @comp_ok is non-NULL, we'll check whether gtksourceview
    completion seems possible at the current insertion point.
+
+   Plus a special case (a la emacs): if we're at the end of line which
+   should end preceding indentation (such as "endif" or "endloop"),
+   let Tab at the end of the line adjust its indentation.
 */
 
-static int maybe_insert_smart_tab (windata_t *vwin,
-				   int *comp_ok)
+static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
@@ -3653,10 +3663,11 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
 /* On "Enter" in script editing, try to compute the correct indent
    level for the current line, and make an adjustment if it's not
    already right. We also attempt to place the cursor at the
-   appropriate indent on the next, new line.
+   appropriate indent on the next, new line -- unless @alt is
+   non-zero, in which case we don't insert a newline.
 */
 
-static gboolean script_electric_enter (windata_t *vwin)
+static gboolean script_electric_enter (windata_t *vwin, int alt)
 {
     char *s = NULL;
     int targsp = 0;
@@ -3667,13 +3678,12 @@ static gboolean script_electric_enter (windata_t *vwin)
     }
 
 #if TABDEBUG
-    fprintf(stderr, "*** script_electric_enter\n");
+    fprintf(stderr, "*** script_electric_enter: alt = %d\n", alt);
 #endif
 
     s = textview_get_current_line(vwin->text, 0);
 
     if (s != NULL && *s != '\0') {
-	/* work on the line that starts with @thisword */
 	GtkTextBuffer *tbuf;
 	GtkTextMark *mark;
 	GtkTextIter start, end;
@@ -3739,25 +3749,27 @@ static gboolean script_electric_enter (windata_t *vwin)
 	    }
 	}
 
-	/* try to arrange correct indent on the new line? */
-	if (ipos == 0) {
-	    k = targsp + incremental_leading_spaces(prevword, "");
-	} else {
-	    k = targsp + incremental_leading_spaces(thisword, "");
-	}
+	if (!alt) {
+	    /* try to arrange correct indent on the new line? */
+	    if (ipos == 0) {
+		k = targsp + incremental_leading_spaces(prevword, "");
+	    } else {
+		k = targsp + incremental_leading_spaces(thisword, "");
+	    }
 #if TABDEBUG
-	fprintf(stderr, "new line indent: k = %d\n", k);
+	    fprintf(stderr, "new line indent: k = %d\n", k);
 #endif
-	gtk_text_buffer_begin_user_action(tbuf);
-	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
-	gtk_text_buffer_insert(tbuf, &start, "\n", -1);
-	for (i=0; i<k; i++) {
-	    gtk_text_buffer_insert(tbuf, &start, " ", -1);
+	    gtk_text_buffer_begin_user_action(tbuf);
+	    gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
+	    gtk_text_buffer_insert(tbuf, &start, "\n", -1);
+	    for (i=0; i<k; i++) {
+		gtk_text_buffer_insert(tbuf, &start, " ", -1);
+	    }
+	    gtk_text_buffer_place_cursor(tbuf, &start);
+	    gtk_text_buffer_end_user_action(tbuf);
+	    mark = gtk_text_buffer_get_insert(tbuf);
+	    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(vwin->text), mark);
 	}
-	gtk_text_buffer_place_cursor(tbuf, &start);
-	gtk_text_buffer_end_user_action(tbuf);
-	mark = gtk_text_buffer_get_insert(tbuf);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(vwin->text), mark);
 	ret = TRUE;
     }
 

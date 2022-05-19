@@ -459,7 +459,7 @@ void mkfilelist (int filetype, char *fname, int get_full)
     add_files_to_menu(filetype);
 }
 
-/* return 0 if this is a np-op, 1 if we actually deleted
+/* return 0 if this is a no-op, 1 if we actually deleted
    an entry */
 
 int delete_from_filelist (int filetype, const char *fname)

@@ -592,6 +592,7 @@ struct str_table funcs[] = {
     { F_DEC2BIN,   "dec2bin" },
     { F_BIN2DEC,   "bin2dec" },
     { F_SPHCORR,   "sphericorr" },
+    { F_MCOMMUTE,  "mcommute" },
     { 0,           NULL }
 };
 

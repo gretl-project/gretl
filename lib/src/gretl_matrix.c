@@ -3840,15 +3840,9 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
     return vals;
 }
 
-/**
- * gretl_matrix_print:
- * @m: matrix.
- * @msg: message to print with matrix, or NULL.
- *
- * Prints the given matrix to stderr.
- */
-
-void gretl_matrix_print (const gretl_matrix *m, const char *msg)
+static void real_gretl_matrix_print (const gretl_matrix *m,
+				     const char *msg,
+				     FILE *fp)
 {
     char *fmt = "%#12.5g ";
     char *envstr;
@@ -3856,24 +3850,24 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 
     if (m == NULL) {
         if (msg != NULL && *msg != '\0') {
-            fprintf(stderr, "%s: matrix is NULL\n", msg);
+            fprintf(fp, "%s: matrix is NULL\n", msg);
         } else {
-            fputs("matrix is NULL\n", stderr);
+            fputs("matrix is NULL\n", fp);
         }
         return;
     } else if (m->val == NULL) {
         if (msg != NULL && *msg != '\0') {
-            fprintf(stderr, "%s: matrix is empty, %d x %d\n", msg,
+            fprintf(fp, "%s: matrix is empty, %d x %d\n", msg,
 		    m->rows, m->cols);
         } else {
-            fprintf(stderr, "matrix is empty: %d x %d\n",
+            fprintf(fp, "matrix is empty: %d x %d\n",
 		    m->rows, m->cols);
         }
 	return;
     }
 
     if (m->is_complex) {
-        PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+        PRN *prn = gretl_print_new_with_stream(fp);
 
         if (prn != NULL) {
             gretl_cmatrix_print(m, msg, prn);
@@ -3893,27 +3887,53 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
     }
 
     if (msg != NULL && *msg != '\0') {
-        fprintf(stderr, "%s (%d x %d)", msg, m->rows, m->cols);
+        fprintf(fp, "%s (%d x %d)", msg, m->rows, m->cols);
         if (is_block_matrix(m)) {
-            fprintf(stderr, " (part of matrix block)\n\n");
+            fprintf(fp, " (part of matrix block)\n\n");
         } else if (gretl_matrix_is_dated(m)) {
             int mt1 = gretl_matrix_get_t1(m);
             int mt2 = gretl_matrix_get_t2(m);
 
-            fprintf(stderr, " [t1 = %d, t2 = %d]\n\n", mt1 + 1, mt2 + 1);
+            fprintf(fp, " [t1 = %d, t2 = %d]\n\n", mt1 + 1, mt2 + 1);
         } else {
-            fputs("\n\n", stderr);
+            fputs("\n\n", fp);
         }
     }
 
     for (i=0; i<m->rows; i++) {
         for (j=0; j<m->cols; j++) {
-            fprintf(stderr, fmt, gretl_matrix_get(m, i, j));
+            fprintf(fp, fmt, gretl_matrix_get(m, i, j));
         }
-        fputc('\n', stderr);
+        fputc('\n', fp);
     }
 
-    fputc('\n', stderr);
+    fputc('\n', fp);
+}
+
+/**
+ * gretl_matrix_print:
+ * @m: matrix.
+ * @msg: message to print with matrix, or NULL.
+ *
+ * Prints the given matrix to stderr.
+ */
+
+void gretl_matrix_print (const gretl_matrix *m, const char *msg)
+{
+    real_gretl_matrix_print(m, msg, stderr);
+}
+
+/**
+ * gretl_matrix_print2:
+ * @m: matrix.
+ * @msg: message to print with matrix, or NULL.
+ *
+ * Prints the given matrix to stdout.
+ */
+
+void gretl_matrix_print2 (const gretl_matrix *m, const char *msg)
+{
+    real_gretl_matrix_print(m, msg, stdout);
 }
 
 #define DEFAULT_EQTOL 1.0e-9 /* 2014-08-05: was 1.5e-12 */
@@ -7250,6 +7270,24 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     return c;
 }
 
+#ifdef __ARM_ARCH_ISA_A64
+
+static double complex complex_divide (double complex zn,
+				      double complex zd)
+{
+    double a = creal(zn);
+    double b = cimag(zn);
+    double c = creal(zd);
+    double d = cimag(zd);
+    double den = c*c + d*d;
+    double nr = a*c + b*d;
+    double ni = b*c - a*d;
+
+    return nr/den + ni/den * I;
+}
+
+#endif
+
 /* Multiplication or division for complex matrices in the old
    gretl representation, with real parts in the first column
    and imaginary parts (if present) in the second.
@@ -7316,7 +7354,15 @@ gretl_matrix_complex_muldiv (const gretl_matrix *a,
     for (i=0; i<m; i++) {
         az = ai == NULL ? ar[i] : ar[i] + ai[i] * I;
         bz = bi == NULL ? br[i] : br[i] + bi[i] * I;
-        cz = multiply ? az * bz : az / bz;
+	if (multiply) {
+	    cz = az * bz;
+	} else {
+#ifdef __ARM_ARCH_ISA_A64 /* missing symbol divdc3 */
+	    cz = complex_divide(az, bz);
+#else
+	    cz = az / bz;
+#endif
+	}
         cr[i] = creal(cz);
         if (ci != NULL) {
             ci[i] = cimag(cz);
@@ -15024,6 +15070,78 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
 
     return H;
 }
+
+/**
+ * gretl_matrix_commute:
+ * @A: source matrix.
+ * @r: row dimension.
+ * @c: column dimension.
+ * @add_id: add identity matrix (Boolean flag).
+ * @err: location to receive error code.
+ *
+ * It is assumed that @A is a matrix with (@r*@c) rows, so each of its
+ * columns can be seen as the vectorization of an (@r x @c)
+ * matrix. Each column of the output matrix contains the vectorization
+ * of the transpose of the corresponding column of @A. This is
+ * equivalent to premultiplying @A by the so-called "commutation
+ * matrix" $K_{r,c}$. If the @add_id flag is non-zero, then @A is
+ * added to the output matrix, so that @A is premultiplied by (I +
+ * K_{r,c}).  
+ *
+ * See eg Magnus and Neudecker (1988), "Matrix Differential Calculus
+ * with Applications in Statistics and Econometrics"
+ */
+
+gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
+				   int add_id, int *err)
+{
+    int i, j, k, h, rows = r*c, cols = A->cols;
+    double x;
+    gretl_matrix *ret;
+    
+    if (rows != A->rows) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+    
+    int *indices = malloc(rows * sizeof *indices);
+    if (indices == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (add_id) {
+	ret = gretl_matrix_copy(A);
+    } else {
+	ret = gretl_zero_matrix_new(rows, cols);
+    }
+    
+    if (ret == NULL) {
+	free(indices);
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    k = 0;
+    for(i=0; i<r; i++) {
+	for (j=0; j<c; j++) {
+	    indices[k++] = j*r + i;
+	}
+    }
+
+    k = 0;
+    for (j=0; j<cols; j++) {
+	for(i=0; i<rows; i++) {
+	    h = indices[i];
+	    x = gretl_matrix_get(A, h, j);
+	    ret->val[k++] += x;
+	}
+    }
+    
+    free(indices);
+    return ret;
+}
+
 
 /**
  * gretl_matrix_transcribe_obs_info:

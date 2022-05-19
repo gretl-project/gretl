@@ -16,7 +16,6 @@ const char *special_keyword[] = {
     "while",
     "elif",
     "eval",
-    "const",
     "3sls",
     "liml",
     "fiml",

@@ -453,7 +453,17 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
      "Mean Percentage Error", "Mean Absolute Percentage Error",
      "Theil's U", "Bias proportion", "Regression proportion",
      "Disturbance proportion")
+   # public but undocumented: this function serves in the
+   # bundle-fcast role for a bundle returned by regls()
    bundle ret
+   catch series y = b.ylist[1]
+   if $error
+      funcerr "Can't find the dependent variable"
+   endif
+   catch series yhat = regls_yhat(b, b.xlist)
+   if $error
+      funcerr "Can't find the regressors"
+   endif
    if t1 > b.sample_t2
       string os = "Out-of-sample "
    elif t1 == b.sample_t2 && t2 == b.sample_t2
@@ -464,8 +474,6 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
    endif
    smpl t1 t2
    smpl # to get the info printed
-   series y = b.ylist[1]
-   series yhat = regls_yhat(b, b.xlist)
    scalar ret.R2 = 1 - sst(y-yhat) / sst(y)
    matrix stats = fcstats(y, yhat)
    printf "%sforecast evaluation statistics for %s\n\n", os, b.depvar

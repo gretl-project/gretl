@@ -347,8 +347,10 @@ static gint sort_window_list (gconstpointer a, gconstpointer b)
     /* sort main window first, otherwise by time when the
        window was created */
 
-    if (wa == mdata->main) return -1;
-    if (wb == mdata->main) return 1;
+    if (mdata != NULL) {
+	if (wa == mdata->main) return -1;
+	if (wb == mdata->main) return 1;
+    }
 
     /* bullet-proofing */
     if (wa == NULL || wb == NULL) {
@@ -455,7 +457,7 @@ static gboolean winlist_popup_done (GtkMenuShell *mshell,
 	    vwin->role == VAR ||
 	    vwin->role == VECM) {
 	    gtk_widget_grab_focus(vwin->text);
-	} else if (vwin == mdata) {
+	} else if (mdata != NULL && vwin == mdata) {
 	    gtk_widget_grab_focus(vwin->listbox);
 	}
     }
@@ -570,15 +572,17 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 	add_cascade_item(menu, item);
     }
 
-    if (!log_up || !icons_up) {
-	item = gtk_separator_menu_item_new();
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	if (!log_up) {
-	    add_log_item(menu, item);
-	}
-	if (!icons_up) {
-	    add_iconview_item(menu, item);
+    if (!gui_editor_mode()) {
+	if (!log_up || !icons_up) {
+	    item = gtk_separator_menu_item_new();
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    if (!log_up) {
+		add_log_item(menu, item);
+	    }
+	    if (!icons_up) {
+		add_iconview_item(menu, item);
+	    }
 	}
     }
 
@@ -1033,6 +1037,56 @@ windata_t *get_unique_output_viewer (void)
 	}
 	g_list_free(wlist);
     }
+
+    return ret;
+}
+
+int get_n_hansl_editor_windows (void)
+{
+    int n = 0;
+
+    if (n_listed_windows > 1) {
+	GList *wlist = gtk_action_group_list_actions(window_group);
+	GList *list = wlist;
+	GtkWidget *w;
+	windata_t *vwin;
+
+	while (list != NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    if (w != NULL) {
+		vwin = window_get_active_vwin(w);
+		if (vwin != NULL && vwin->role == EDIT_HANSL) {
+		    n++;
+		}
+	    }
+	    list = list->next;
+	}
+	g_list_free(wlist);
+    }
+
+    return n;
+}
+
+GtkWidget *get_primary_hansl_window (void)
+{
+    GList *wlist = gtk_action_group_list_actions(window_group);
+    GList *list = wlist;
+    GtkWidget *w;
+    windata_t *vwin;
+    GtkWidget *ret = NULL;
+
+    while (list != NULL) {
+	w = window_from_action((GtkAction *) list->data);
+	if (w != NULL) {
+	    vwin = window_get_active_vwin(w);
+	    if (vwin != NULL && vwin->role == EDIT_HANSL) {
+		ret = vwin->topmain;
+		break;
+	    }
+	}
+	list = list->next;
+    }
+    g_list_free(wlist);
 
     return ret;
 }

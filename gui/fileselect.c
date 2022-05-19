@@ -1036,10 +1036,15 @@ static void save_filter_changed (GtkComboBox *cb, GtkWidget *w)
 {
     GtkFileChooser *fc = GTK_FILE_CHOOSER(w);
     GtkFileFilter *ff = gtk_file_chooser_get_filter(fc);
-    GtkWidget *ew = gtk_file_chooser_get_extra_widget(fc);
-    const char *s = gtk_file_filter_get_name(ff);
 
-    gtk_widget_set_sensitive(ew, strstr(s, ".gdtb") == NULL);
+    if (ff != NULL) {
+	GtkWidget *ew = gtk_file_chooser_get_extra_widget(fc);
+	const char *s = gtk_file_filter_get_name(ff);
+
+	if (ew != NULL && s != NULL) {
+	    gtk_widget_set_sensitive(ew, strstr(s, ".gdtb") == NULL);
+	}
+    }
 }
 
 void find_filter_combo (GtkWidget *w, gpointer p)

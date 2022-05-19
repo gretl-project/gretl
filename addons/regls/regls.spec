@@ -1,7 +1,7 @@
 author = Allin Cottrell
 email = cottrell@wfu.edu
-version = 0.3
-date = 2021-04-17
+version = 0.31
+date = 2022-05-18
 description = Regularized least squares
 tags = C20 C52
 public = regls lambda_sequence regls_get_stats regls_pc_correct \

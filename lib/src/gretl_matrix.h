@@ -230,6 +230,8 @@ void clear_gretl_matrix_err (void);
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg);
 
+void gretl_matrix_print2 (const gretl_matrix *m, const char *msg);    
+
 int gretl_matrix_na_check (const gretl_matrix *m);
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
@@ -875,6 +877,10 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 					const gretl_matrix *u,
 					const gretl_matrix *w,
 					int p, int *err);
+
+
+gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
+				   int add_id, int *err);
 
 void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 				       const gretl_matrix *src);

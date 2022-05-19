@@ -34,7 +34,7 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls 0.3: regularized least squares for gretl}
+\title{regls 0.31: regularized least squares for gretl}
 \author{Allin Cottrell}
 
 \begin{document}
@@ -402,9 +402,9 @@ desired term set to a positive value.
 
 Besides the sample script supplied with the package, more examples can
 be found in the directories \texttt{murder}, \texttt{wine} and
-\texttt{fat} at \url{http://ricardo.ecn.wfu.edu/pub/gretl/lasso/}.
-Some of these scripts incorporate comparison with \textsf{glmnet}.
-The murder-rate and wine quality examples use real-world data; the
+\texttt{fat} at \url{http://gretl.sourceforge.net/lasso/}.  Some of
+these scripts incorporate comparison with \textsf{glmnet}.  The
+murder-rate and wine quality examples use real-world data; the
 \texttt{fat} example is an artificial case with more regressors than
 observations.
 
@@ -515,7 +515,7 @@ showing standard errors, $z$ statistics and $P$-values.
 \label{sec:ccd}
 
 As stated above, the default algorithms used by \textsf{regls} for
-LSSO and Ridge are ADMM and SVD, respectively. However, you have the
+LASSO and Ridge are ADMM and SVD, respectively. However, you have the
 option---for both LASSO and Ridge---of using the Cyclical Coordinate
 Descent (CCD) algorithm, as employed by \textsf{glmnet}. This is
 governed by two additional keys in the \texttt{parms} bundle:
@@ -700,6 +700,7 @@ series glmnet_pred (matrix *Rb, list X)
 \section{Change log}
 \label{sec:changes}
 
+Version 0.31, 2022-05-18: update URL; revise fragile list-saving code
 Version 0.3, 2021-04-17: fix bug with Ridge verbose printout, and
 replace some tables with figures in the doc for ease of comprehension
 of comparative experiments.\\

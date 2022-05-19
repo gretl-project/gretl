@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef WINSTACK_H_
@@ -22,7 +22,7 @@
 
 void window_list_add (GtkWidget *w, int role);
 
-void window_list_popup (GtkWidget *src, GdkEvent *event, 
+void window_list_popup (GtkWidget *src, GdkEvent *event,
 			gpointer data);
 
 void window_list_revise_label (GtkWidget *targ,
@@ -65,6 +65,10 @@ int get_script_output_number (void);
 
 windata_t *get_unique_output_viewer (void);
 
+int get_n_hansl_editor_windows (void);
+
+GtkWidget *get_primary_hansl_window (void);
+
 void maybe_close_window_for_user_var (const gpointer data,
 				      GretlObjType otype);
 
@@ -82,12 +86,12 @@ int highest_numbered_variable_in_winstack (void);
 
 GList *windowed_model_list (void);
 
-windata_t *gretl_viewer_new (int role, const gchar *title, 
+windata_t *gretl_viewer_new (int role, const gchar *title,
 			     gpointer data);
 
 windata_t *
-gretl_viewer_new_with_parent (windata_t *parent, int role, 
-			      const gchar *title, 
+gretl_viewer_new_with_parent (windata_t *parent, int role,
+			      const gchar *title,
 			      gpointer data);
 
 windata_t *gretl_browser_new (int role, const gchar *title);
@@ -115,4 +119,3 @@ void vwin_action_set_sensitive (windata_t *vwin,
 void set_main_winpos (int pos);
 
 #endif
-

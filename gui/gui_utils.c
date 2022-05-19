@@ -693,6 +693,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 {
     int Ctrl = (event->state & GDK_CONTROL_MASK);
     int Alt = (event->state & GDK_MOD1_MASK);
+    guint key = event->keyval;
     guint upkey = event->keyval;
     int editing = vwin_is_editing(vwin);
     int console = vwin->role == CONSOLE;
@@ -704,12 +705,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 #if 0
     fprintf(stderr, "HERE catch_viewer_key\n"
 	    " editing=%d, console=%d, Ctrl=%d, Alt=%d, key=%s\n",
-	    editing, console, Ctrl, Alt, gdk_keyval_name(upkey));
+	    editing, console, Ctrl, Alt, gdk_keyval_name(key));
 #endif
 
     if (editing && Alt && !Ctrl) {
 	/* "Alt" specials for editor */
-	if (maybe_insert_greek(upkey, vwin)) {
+	if (maybe_insert_greek(key, vwin)) {
 	    return TRUE;
 	} else if (upkey == GDK_minus) {
 	    textview_insert_text(vwin->text, "~");
@@ -721,8 +722,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	return FALSE;
     }
 
-    if (!gdk_keyval_is_upper(event->keyval)) {
-	upkey = gdk_keyval_to_upper(event->keyval);
+    if (!gdk_keyval_is_upper(key)) {
+	upkey = gdk_keyval_to_upper(key);
     }
 
 #ifdef OS_OSX
@@ -742,6 +743,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    return vwin_copy_callback(NULL, vwin);
+	} else if (key == GDK_plus) {
+	    text_larger(w, vwin);
+	    return TRUE;
+	} else if (key == GDK_minus) {
+	    text_smaller(w, vwin);
+	    return TRUE;
 	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own
@@ -1856,10 +1863,29 @@ void vwin_set_filename (windata_t *vwin, const char *fname)
     strcpy(vwin->fname, fname);
 }
 
-static gchar *script_output_title (void)
+static gchar *script_output_title (gpointer data)
 {
-    int n = get_script_output_number();
+    int n;
 
+    if (gui_editor_mode() && data != NULL) {
+	windata_t *vwin = (windata_t *) data;
+	const gchar *s;
+
+	if (GTK_IS_WINDOW(vwin->main)) {
+	    s = gtk_window_get_title(GTK_WINDOW(vwin->main));
+	    if (s != NULL) {
+		return g_strdup_printf(_("%s output"), s);
+	    }
+	} else if (GTK_IS_WINDOW(vwin->topmain)) {
+	    s = tabwin_tab_get_title(vwin);
+	    if (s != NULL) {
+		return g_strdup_printf(_("gretl: %s output"), s);
+	    }
+	}
+    }
+
+    /* fallback */
+    n = get_script_output_number();
     if (n > 0) {
 	return g_strdup_printf(_("gretl: script output %d"), n+1);
     } else {
@@ -1867,7 +1893,7 @@ static gchar *script_output_title (void)
     }
 }
 
-static gchar *title_from_data (gpointer data)
+static gchar *title_from_bundle (gpointer data)
 {
     gretl_bundle *b = data;
     const char *s = gretl_bundle_get_creator(b);
@@ -1920,12 +1946,12 @@ static gchar *make_viewer_title (int role, const char *fname,
 	title = g_strdup(_("gretl: session notes")); break;
     case SCRIPT_OUT:
     case FNCALL_OUT:
-	title = script_output_title();
+	title = script_output_title(data);
 	break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
     case VIEW_BUNDLE:
-	title = title_from_data(data);
+	title = title_from_bundle(data);
 	break;
     default:
 	break;
@@ -2064,8 +2090,16 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     int width = 0, nlines = 0;
     windata_t *vwin;
 
-    if (role == SCRIPT_OUT && script_out_viewer != NULL) {
-	return reuse_script_out(script_out_viewer, prn);
+    if (role == SCRIPT_OUT) {
+	if (gui_editor_mode() && data != NULL) {
+	    vwin = vwin_first_child((windata_t *) data);
+	    if (vwin != NULL) {
+		return reuse_script_out(vwin, prn);
+	    }
+	}
+	if (script_out_viewer != NULL) {
+	    return reuse_script_out(script_out_viewer, prn);
+	}
     }
 
     if (title != NULL) {
@@ -2140,14 +2174,16 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
     if (role == SCRIPT_OUT) {
 	if (data != NULL) {
-	    /* partial output window for script */
+	    /* partial output window (or gretlcli output) for script */
 	    vwin_add_child((windata_t *) data, vwin);
 	    /* define "top-hbox" here? */
 	}
-	g_signal_connect(G_OBJECT(vwin->main), "destroy",
-			 G_CALLBACK(nullify_script_out),
-			 &script_out_viewer);
-	script_out_viewer = vwin;
+	if (!gui_editor_mode()) {
+	    g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			     G_CALLBACK(nullify_script_out),
+			     &script_out_viewer);
+	    script_out_viewer = vwin;
+	}
     }
 
     /* insert and then free the text buffer */
@@ -2649,8 +2685,13 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	    /* cancel -> don't save, but also don't close */
 	    return TRUE;
 	} else if (resp == GRETL_YES) {
+	    /* save, but allow close to proceed */
 	    vwin_save_callback(NULL, vwin);
 	}
+    }
+
+    if (gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
+	gtk_main_quit();
     }
 
     return FALSE;
@@ -5874,7 +5915,40 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
     }
 }
 
-/* win32 version */
+void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
+{
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (lang == LANG_STATA) {
+	gchar *buf = NULL;
+
+	gretl_chdir(gretl_workdir());
+	remove("gretltmp.log");
+	err = gretl_spawn(cmd);
+
+	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	    pputs(prn, buf);
+	    g_free(buf);
+	    pputc(prn, '\n');
+	}
+    } else {
+	err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
+    }
+
+    if (got_printable_output(prn)) {
+	/* note: this check destroys @prn on failure */
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+    } else if (err) {
+	gui_errmsg(err);
+    }
+
+    g_free(cmd);
+}
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
@@ -5888,7 +5962,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
        encoding, ready to pass on the Windows command line
        as in "foreign.exe fname"; this composite string is
        given to gretl_spawn() or gretl_win32_pipe_output()
-       below.
+       below. 2022-04-21: this comment is outdated, no?
     */
 
     err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
@@ -5896,12 +5970,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
     if (err) {
 	gui_errmsg(err);
     } else {
-	PRN *prn = NULL;
 	gchar *cmd = NULL;
-
-	if (bufopen(&prn)) {
-	    return;
-	}
 
 	if (lang == LANG_OX) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
@@ -5915,29 +5984,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
 
-	if (lang == LANG_STATA) {
-	    gchar *buf = NULL;
-
-	    gretl_chdir(gretl_workdir());
-	    remove("gretltmp.log");
-	    err = gretl_spawn(cmd);
-
-	    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-		pputs(prn, buf);
-		g_free(buf);
-		pputc(prn, '\n');
-	    }
-	} else {
-	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
-	}
-
-	if (got_printable_output(prn)) {
-	    /* note: this check destroys @prn on failure */
-	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-	} else if (err) {
-	    gui_errmsg(err);
-	}
-
+	win32_execute_script(cmd, lang, NULL);
 	g_free(cmd);
     }
 }
@@ -6149,6 +6196,145 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 }
 
 #endif /* !G_OS_WIN32 */
+
+
+#ifdef G_OS_WIN32 /* back to Windows-specific */
+
+typedef struct {
+    gchar *cmd;
+    gchar *fname;
+    windata_t *vwin;
+    PRN *prn;
+    int err;
+} exec_info;
+
+static void gretlcli_done (GObject *obj,
+			   GAsyncResult *res,
+			   gpointer data)
+{
+    exec_info *ei = data;
+
+    if (ei->err == 0 /* got_printable_output(ei->prn) */) {
+	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->vwin);
+	ei->prn = NULL;
+    } else if (ei->err) {
+	gui_errmsg(ei->err);
+    }
+
+    gretl_remove(ei->fname);
+    g_free(ei->fname);
+    g_free(ei->cmd);
+    gretl_print_destroy(ei->prn);
+    free(ei);
+}
+
+static void exec_script_thread (GTask *task,
+				gpointer obj,
+				gpointer task_data,
+				GCancellable *c)
+{
+    exec_info *ei = g_task_get_task_data(task);
+
+    ei->err = gretl_win32_pipe_output(ei->cmd, gretl_dotdir(), ei->prn);
+}
+
+void win32_run_gretlcli_async (gchar *cmd,
+			       gchar *fname,
+			       windata_t *vwin)
+{
+    exec_info *ei = malloc(sizeof *ei);
+    GTask *task;
+    PRN *prn;
+
+    bufopen(&prn);
+
+    ei->cmd = cmd;
+    ei->fname = g_strdup(fname);
+    ei->vwin = vwin;
+    ei->prn = prn;
+    ei->err = 0;
+
+    task = g_task_new(NULL, NULL, gretlcli_done, ei);
+    g_task_set_task_data(task, ei, NULL);
+    g_task_run_in_thread(task, exec_script_thread);
+}
+
+#else /* non-Windows variant */
+
+typedef struct {
+    windata_t *scriptwin;
+    gint fout;
+    gint ferr;
+    gchar *fname;
+} exec_info;
+
+static void gretlcli_done (GPid pid, gint status, gpointer p)
+{
+    exec_info *ei = p;
+
+    if (ei != NULL) {
+	char buf[4096];
+	size_t bs = sizeof buf - 1;
+	ssize_t got;
+	PRN *prn;
+
+	bufopen(&prn);
+
+	if (ei->fout > 0) {
+	    while ((got = read(ei->fout, buf, bs)) > 0) {
+		buf[got] = '\0';
+		pputs(prn, buf);
+	    }
+	    close(ei->fout);
+	}
+	if (ei->ferr > 0) {
+	    if (status != 0 && (got = read(ei->ferr, buf, bs)) > 0) {
+		buf[got] = '\0';
+		pputs(prn, buf);
+	    }
+	    close(ei->ferr);
+	}
+	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
+	gretl_remove(ei->fname);
+	g_free(ei->fname);
+	free(ei);
+    }
+
+    g_spawn_close_pid(pid);
+}
+
+void run_gretlcli_async (char **argv, windata_t *scriptwin)
+{
+    gboolean run;
+    gint ferr = -1;
+    gint fout = -1;
+    GPid pid = 0;
+    GError *gerr = NULL;
+
+    run = g_spawn_async_with_pipes(NULL, argv, NULL,
+				   G_SPAWN_SEARCH_PATH |
+				   G_SPAWN_DO_NOT_REAP_CHILD,
+				   NULL, NULL, &pid, NULL,
+				   &fout, &ferr,
+				   &gerr);
+
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else if (!run) {
+	errbox(_("gretlcli command failed"));
+    } else if (pid > 0) {
+	exec_info *ei = calloc(1, sizeof *ei);
+
+	ei->scriptwin = scriptwin;
+	ei->fout = fout;
+	ei->ferr = ferr;
+	ei->fname = g_strdup(argv[2]);
+	g_child_watch_add(pid, gretlcli_done, ei);
+    }
+}
+
+#endif /* run_gretlcli_async variants */
 
 /* driver for starting R, either interactive or in batch mode */
 

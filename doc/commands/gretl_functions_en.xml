@@ -7035,10 +7035,10 @@
     <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
 	<fnarg type="smlist">Y</fnarg>
-	<fnarg type="scalar-or-matrix">H</fnarg>
-	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Z</fnarg>
+	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
-	<fnarg optional="true" type="matrix">C</fnarg>
+	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7046,15 +7046,16 @@
 	  all the information needed to define a linear state space
 	  model of the form
 	  <equation status="display"
-		    tex="\[y_t=Z\alpha_t\]"
-		    ascii="y(t) = Za(t)"
+		    tex="\[y_t=Z\alpha_t + u_t\]"
+		    ascii="y(t) = Za(t) + u(t)"
 		    graphic="kalman1"/>
-	  and state transition equation
+	  where Var<math>(u) = R</math>, and state
+	  transition equation
 	  <equation status="display"
-		    tex="\[\alpha_{t+1}=T \alpha_t + u_t\]"
-		    ascii="a(t+1) = T a(t) + u(t)"
+		    tex="\[\alpha_{t+1}=T \alpha_t + v_t\]"
+		    ascii="a(t+1) = T a(t) + v(t)"
 		    graphic="kalman2"/>
-	  where Var<math>(u) = Q</math>.
+	  where Var<math>(v) = Q</math>.
 	</para>
 	<para>
 	  Objects created via this function can be later used via the
@@ -12413,12 +12414,13 @@
 	  comma as separator.
 	</para>
 	<para>
-	  The backslash-escape sequences <quote><lit>\n</lit></quote>
-	  and <quote><lit>\t</lit></quote> are taken to represent
-	  newline and tab in the optional <argname>sep</argname>
-	  argument. If you wish to include a literal backslash as a
-	  separator character you should double it, as in
-	  <quote><lit>\\</lit></quote>. Example:
+	  The backslash-escape sequences <quote><lit>\n</lit></quote>,
+	  <quote><lit>\r</lit></quote> and
+	  <quote><lit>\t</lit></quote> are taken to represent newline,
+	  carriage return and tab, respectively, in the optional
+	  <argname>sep</argname> argument. If you wish to include a
+	  literal backslash as a separator character you should double
+	  it, as in <quote><lit>\\</lit></quote>. Example:
 	</para>
 	<code>
 	  string s = "c:\fiddle\sticks"

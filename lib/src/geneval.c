@@ -3735,13 +3735,16 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        const char *fname = m->v.str;
+	gretl_matrix *a = node_get_matrix(l, p, 0, 1);
+	const char *fname = m->v.str;
+	int export = node_get_bool(r, p, 0);
 
-        ret = aux_scalar_node(p);
-        if (ret != NULL) {
-	    int export = node_get_bool(r, p, 0);
-
-	    p->err = ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+        if (!p->err) {
+	    p->err = gretl_matrix_write_to_file(a, fname, export);
+	    ret->v.xval = p->err;
         }
     } else {
         ret = aux_scalar_node(p);
@@ -7792,19 +7795,21 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 	    ret = aux_string_node(p);
 	}
 
-        if (f == F_OBSLABEL && v != NULL) {
-	    ret->v.a = retrieve_date_strings(v, p->dset, &p->err);
-	} else if (f == F_OBSLABEL) {
-            ret->v.str = retrieve_date_string(i, p->dset, &p->err);
-        } else if (f == F_VARNAME) {
-            if (i >= 0 && i < p->dset->v) {
-                ret->v.str = gretl_strdup(p->dset->varname[i]);
-            } else {
-                p->err = E_INVARG;
-            }
-        } else {
-            p->err = E_DATA;
-        }
+	if (!p->err) {
+	    if (f == F_OBSLABEL && v != NULL) {
+		ret->v.a = retrieve_date_strings(v, p->dset, &p->err);
+	    } else if (f == F_OBSLABEL) {
+		ret->v.str = retrieve_date_string(i, p->dset, &p->err);
+	    } else if (f == F_VARNAME) {
+		if (i >= 0 && i < p->dset->v) {
+		    ret->v.str = gretl_strdup(p->dset->varname[i]);
+		} else {
+		    p->err = E_INVARG;
+		}
+	    } else {
+		p->err = E_DATA;
+	    }
+	}
 
         if (!p->err && v == NULL && ret->v.str == NULL) {
             p->err = E_ALLOC;
@@ -13615,6 +13620,7 @@ static int check_argc (int f, int k, parser *p)
 	{ F_CHOWLIN,   2, 3 },
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
+	{ F_MCOMMUTE,  2, 5 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -14335,14 +14341,47 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             } else if (!null_node(e)) {
                 p->err = E_TYPES;
             }
+	}
+    } else if (t->t == F_MCOMMUTE) {
+	gretl_matrix *A = NULL;
+	int rowdim, coldim, post = 0, add_id = 0;
+
+	for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
+                /* A: matrix */
+                if (e->t == MAT) {
+                    A = e->v.m;
+		} else {
+                    p->err = E_TYPES;
+                }
+            } else if (i == 1) {
+		/* row dimension */
+                rowdim = node_get_int(e, p);
+		coldim = rowdim;
+            } else if (i == 2) {
+                /* column dimension */
+		coldim = node_get_int(e, p);
+            } else if (i == 3) {
+                /* postmultiply instead of premultiply ? */
+		post = node_get_bool(e, p, 0);
+            } else if (i == 4) {
+                /* add identity matrix ? */
+		add_id = node_get_bool(e, p, 0);
+            }
         }
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-	    tdi.targ = gretl_type_from_gen_type(p->targ);
-	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
-					  p->prn, &p->err);
+	    if (!post) {
+		ret->v.m = gretl_matrix_commute(A, rowdim, coldim, add_id, &p->err);
+	    } else {
+		gretl_matrix *B = gretl_matrix_copy_transpose(A);
+		A = gretl_matrix_commute(B, coldim, rowdim, add_id, &p->err);
+		ret->v.m = gretl_matrix_copy_transpose(A);
+		gretl_matrix_free(B);
+	    }
         }
     }
 
@@ -17487,7 +17526,8 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MWRITE:
         /* matrix, with string as second arg */
-        if (l->t == MAT && m->t == STR && null_or_scalar(r)) {
+        if ((l->t == MAT || l->t == NUM) &&
+	    m->t == STR && null_or_scalar(r)) {
             ret = matrix_file_write(l, m, r, p);
         } else {
             p->err = E_TYPES;
@@ -17690,6 +17730,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case F_TDISAGG:
     case F_MIDASMULT:
+    case F_MCOMMUTE:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");

@@ -1,8 +1,8 @@
 <equation-set latexopt="12pt" density="96x96" usepackage="mathptmx">
 <texequation fileref="kalman1">
-\[y_t=Z\alpha_t\]
+\[y_t=Z\alpha_t + u_t\]
 </texequation>
 <texequation fileref="kalman2">
-\[\alpha_{t+1}=T \alpha_t + u_t\]
+\[\alpha_{t+1}=T \alpha_t + v_t\]
 </texequation>
 </equation-set>
