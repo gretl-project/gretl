@@ -15101,7 +15101,6 @@ gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
     
     if (rows != A->rows) {
 	*err = E_NONCONF;
-	fprintf(stderr, "rows = %d, r = %d, c = %d\n", A->rows, r, c);
 	return NULL;
     }
     
