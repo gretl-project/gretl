@@ -335,7 +335,8 @@ gboolean do_open_script (int action);
 
 void dataset_info (void);
 
-void do_new_script (int code, const char *buf);
+void do_new_script (int code, const char *buf,
+		    const char *scriptname);
 
 void new_script_callback (GtkAction *action);
 

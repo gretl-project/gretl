@@ -139,7 +139,7 @@ void set_tryfile (const char *fname);
 char *get_tryfile (void);
 void clear_tryfile (void);
 int tryfile_is_set (void);
-gboolean open_tryfile (void);
+gboolean open_tryfile (gboolean startup);
 
 int mdata_selection_count (void);
 int mdata_active_var (void);

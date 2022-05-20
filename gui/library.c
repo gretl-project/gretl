@@ -8889,7 +8889,7 @@ gboolean do_open_script (int action)
     int err = gretl_test_fopen(fname, "r");
 
     if (err) {
-        file_read_errbox(fname);
+	file_read_errbox(fname);
         if (action == EDIT_HANSL) {
             delete_from_filelist(FILE_LIST_SESSION, fname);
             delete_from_filelist(FILE_LIST_SCRIPT, fname);
@@ -8915,16 +8915,25 @@ gboolean do_open_script (int action)
     return TRUE;
 }
 
-void do_new_script (int code, const char *buf)
+void do_new_script (int code, const char *buf,
+		    const char *scriptname)
 {
     int action = (code == FUNC)? EDIT_HANSL : code;
+    int tempfile = (scriptname == NULL);
     windata_t *vwin;
-    char temp[MAXLEN];
+    gchar *fname;
     FILE *fp;
 
-    sprintf(temp, "%sscript_tmp", gretl_dotdir());
-    fp = gretl_tempfile_open(temp);
+    if (tempfile) {
+	fname = gretl_make_dotpath("script_tmp");
+	fp = gretl_tempfile_open(fname);
+    } else {
+	fname = g_strdup(scriptname);
+	fp = gretl_fopen(fname, "w");
+    }
+
     if (fp == NULL) {
+	g_free(fname);
         return;
     }
 
@@ -8940,10 +8949,11 @@ void do_new_script (int code, const char *buf)
     fclose(fp);
 
     if (action == EDIT_HANSL) {
-        strcpy(scriptfile, temp);
+        strcpy(scriptfile, fname);
     }
 
-    vwin = view_file(temp, 1, 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    vwin = view_file(fname, 1, tempfile, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    g_free(fname);
 
     if (buf != NULL && *buf != '\0') {
         mark_vwin_content_changed(vwin);
@@ -8975,7 +8985,7 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_LPSOLVE;
     }
 
-    do_new_script(etype, NULL);
+    do_new_script(etype, NULL, NULL);
 }
 
 void maybe_display_string_table (void)

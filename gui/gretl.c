@@ -545,7 +545,7 @@ static gboolean app_open_file_cb (GtkosxApplication *app,
 	    return TRUE;
 	}
 	set_tryfile(path);
-	return open_tryfile();
+	return open_tryfile(FALSE);
     } else {
 	clear_tryfile();
 	return TRUE;
@@ -921,9 +921,9 @@ int main (int argc, char **argv)
 #endif
 
     if (tryfile_is_set()) {
-	open_tryfile();
+	open_tryfile(TRUE);
     } else if (opted) {
-	do_new_script(EDIT_HANSL, NULL);
+	do_new_script(EDIT_HANSL, NULL, NULL);
     }
 
     if (!opted) {
@@ -2645,19 +2645,74 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
     set_tryfile(tmp);
 
-    open_tryfile();
+    open_tryfile(FALSE);
 }
 
-gboolean open_tryfile (void)
+/* At start-up only: if we can't open a specified script file,
+   give the user three choices: create a new file of the
+   given name and start editing it; start an untitled
+   script edit (if the given name is writable), or exit the
+   program.
+*/
+
+static gboolean maybe_open_script (int ftype)
+{
+    if ((ftype = script_type(tryfile))) {
+	int err = gretl_test_fopen(tryfile, "r");
+
+	if (!err) {
+	    return do_open_script(ftype);
+	}
+	/* otherwise, see if the given filename is writable */
+	err = gretl_test_fopen(tryfile, "w");
+	if (err) {
+	    file_write_errbox(tryfile);
+	} else {
+	    gchar *msg;
+	    gint ret;
+
+	    msg = g_strdup_printf(_("Couldn't open %s"), tryfile);
+	    ret = script_start_dialog(msg);
+	    g_free(msg);
+	    if (ret == GTK_RESPONSE_OK) {
+		/* "New file" */
+		do_new_script(EDIT_HANSL, NULL, tryfile);
+		return TRUE;
+	    } else if (ret == GTK_RESPONSE_CANCEL) {
+		/* Untitled script */
+		do_new_script(EDIT_HANSL, NULL, NULL);
+		return TRUE;
+	    } else {
+		/* Exit */
+		err = 1;
+	    }
+	}
+	if (err) {
+	    exit(EXIT_FAILURE);
+	}
+    } else if (opted) {
+	do_new_script(EDIT_HANSL, NULL, NULL);
+	warnbox_printf(_("%s: not a recognized script file"), tryfile);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+gboolean open_tryfile (gboolean startup)
 {
     gboolean ret = FALSE;
     int ftype = 0;
+
+    if (startup && maybe_open_script(ftype)) {
+	return TRUE;
+    }
 
     if (opted) {
 	if ((ftype = script_type(tryfile))) {
 	    return do_open_script(ftype);
 	} else {
-	    do_new_script(EDIT_HANSL, NULL);
+	    do_new_script(EDIT_HANSL, NULL, NULL);
 	    warnbox_printf(_("%s: not a recognized script file"), tryfile);
 	    return TRUE;
 	}
