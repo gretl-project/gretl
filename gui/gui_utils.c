@@ -2285,16 +2285,18 @@ view_file_with_title (const char *filename, int editable, int del_file,
 		      const char *given_title)
 {
     windata_t *vwin;
-    FILE *fp;
+    int have_content = 1;
     int ins = 0;
 
-    /* first check that we can open the specified file */
-    fp = gretl_fopen(filename, "r");
-    if (fp == NULL) {
-	errbox_printf(_("Can't open %s for reading"), filename);
-	return NULL;
+    if (role == NEW_HANSL) {
+	have_content = 0;
+	role = EDIT_HANSL;
     } else {
-	fclose(fp);
+	/* first check that we can open the specified file */
+	if (gretl_test_fopen(filename, "r") != 0) {
+	    errbox_printf(_("Can't open %s for reading"), filename);
+	    return NULL;
+	}
     }
 
 #if 0
@@ -2349,8 +2351,12 @@ view_file_with_title (const char *filename, int editable, int del_file,
     text_table_setup(vwin->vbox, vwin->text);
 
     if (textview_use_highlighting(role) || editable) {
-	sourceview_insert_file(vwin, filename);
-    } else {
+	if (have_content) {
+	    sourceview_insert_file(vwin, filename);
+	} else {
+	    sourceview_insert_file(vwin, NULL);
+	}
+    } else if (have_content) {
 	textview_insert_file(vwin, filename);
     }
 

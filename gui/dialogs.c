@@ -7648,11 +7648,9 @@ gint script_start_dialog (const char *msg)
     dlg = gtk_dialog_new_with_buttons("gretl",
                                       NULL,
                                       GTK_DIALOG_MODAL,
-                                      "New file",
+                                      _("New script"),
                                       GTK_RESPONSE_OK,
-                                      "Cancel",
-                                      GTK_RESPONSE_CANCEL,
-				      "Exit",
+				      _("Quit"),
 				      GTK_RESPONSE_CLOSE,
                                       NULL);
 

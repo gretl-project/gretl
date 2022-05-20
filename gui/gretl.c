@@ -2648,52 +2648,38 @@ mdata_handle_drag  (GtkWidget *widget,
     open_tryfile(FALSE);
 }
 
-/* At start-up only: if we can't open a specified script file,
-   give the user three choices: create a new file of the
-   given name and start editing it; start an untitled
-   script edit (if the given name is writable), or exit the
-   program.
+/* At start-up only: if we can't open a script file specified on the
+   command line, give the user a choice between creating a new file
+   (of the given name, if writable) and quitting the program.
 */
 
-static gboolean maybe_open_script (int ftype)
+static gboolean maybe_open_script (int stype)
 {
-    if ((ftype = script_type(tryfile))) {
-	int err = gretl_test_fopen(tryfile, "r");
+    if (gretl_test_fopen(tryfile, "r") == 0) {
+	/* file can be opened OK */
+	return do_open_script(stype);
+    } else {
+	int noname = 0;
+	gchar *msg;
+	gint resp;
 
-	if (!err) {
-	    return do_open_script(ftype);
-	}
-	/* otherwise, see if the given filename is writable */
-	err = gretl_test_fopen(tryfile, "w");
-	if (err) {
-	    file_write_errbox(tryfile);
-	} else {
-	    gchar *msg;
-	    gint ret;
-
+	if (gretl_test_fopen(tryfile, "w") == 0) {
+	    /* OK, @tryfile is at least writable */
 	    msg = g_strdup_printf(_("Couldn't open %s"), tryfile);
-	    ret = script_start_dialog(msg);
-	    g_free(msg);
-	    if (ret == GTK_RESPONSE_OK) {
-		/* "New file" */
-		do_new_script(EDIT_HANSL, NULL, tryfile);
-		return TRUE;
-	    } else if (ret == GTK_RESPONSE_CANCEL) {
-		/* Untitled script */
-		do_new_script(EDIT_HANSL, NULL, NULL);
-		return TRUE;
-	    } else {
-		/* Exit */
-		err = 1;
-	    }
+	} else {
+	    msg = g_strdup_printf(_("Couldn't write to %s"), tryfile);
+	    noname = 1;
 	}
-	if (err) {
+	resp = script_start_dialog(msg);
+	g_free(msg);
+	if (resp == GTK_RESPONSE_OK) {
+	    /* "New script" */
+	    do_new_script(NEW_HANSL, NULL, noname ? NULL : tryfile);
+	    return TRUE;
+	} else {
+	    /* "Quit" */
 	    exit(EXIT_FAILURE);
 	}
-    } else if (opted) {
-	do_new_script(EDIT_HANSL, NULL, NULL);
-	warnbox_printf(_("%s: not a recognized script file"), tryfile);
-	return TRUE;
     }
 
     return FALSE;
@@ -2701,21 +2687,23 @@ static gboolean maybe_open_script (int ftype)
 
 gboolean open_tryfile (gboolean startup)
 {
+    int stype = script_type(tryfile);
     gboolean ret = FALSE;
-    int ftype = 0;
 
-    if (startup && maybe_open_script(ftype)) {
-	return TRUE;
+    if (stype > 0) {
+	/* We're looking at some sort of script */
+	if (startup) {
+	    return maybe_open_script(stype);
+	} else {
+	    return do_open_script(stype);
+	}
     }
 
     if (opted) {
-	if ((ftype = script_type(tryfile))) {
-	    return do_open_script(ftype);
-	} else {
-	    do_new_script(EDIT_HANSL, NULL, NULL);
-	    warnbox_printf(_("%s: not a recognized script file"), tryfile);
-	    return TRUE;
-	}
+	/* only script files are acceptable */
+	do_new_script(EDIT_HANSL, NULL, NULL);
+	warnbox_printf(_("%s: not a recognized script file"), tryfile);
+	return TRUE;
     }
 
     if (has_db_suffix(tryfile)) {
@@ -2723,8 +2711,6 @@ gboolean open_tryfile (gboolean startup)
     } else if (has_suffix(tryfile, ".gretl") &&
 	       gretl_is_pkzip_file(tryfile)) {
 	ret = verify_open_session();
-    } else if ((ftype = script_type(tryfile))) {
-	ret = do_open_script(ftype);
     } else if (has_suffix(tryfile, ".gfn") &&
 	       gretl_is_xml_file(tryfile)) {
 	ret = edit_specified_package(tryfile);

@@ -8919,12 +8919,12 @@ void do_new_script (int code, const char *buf,
 		    const char *scriptname)
 {
     int action = (code == FUNC)? EDIT_HANSL : code;
-    int tempfile = (scriptname == NULL);
+    int istemp = (scriptname == NULL);
     windata_t *vwin;
     gchar *fname;
     FILE *fp;
 
-    if (tempfile) {
+    if (istemp) {
 	fname = gretl_make_dotpath("script_tmp");
 	fp = gretl_tempfile_open(fname);
     } else {
@@ -8948,11 +8948,16 @@ void do_new_script (int code, const char *buf,
 
     fclose(fp);
 
-    if (action == EDIT_HANSL) {
+    if (action == EDIT_HANSL || action == NEW_HANSL) {
         strcpy(scriptfile, fname);
     }
 
-    vwin = view_file(fname, 1, tempfile, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    if (!istemp && buf == NULL) {
+	/* prefer not to create an empty file by default? */
+	gretl_remove(fname);
+    }
+
+    vwin = view_file(fname, 1, istemp, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
     g_free(fname);
 
     if (buf != NULL && *buf != '\0') {
