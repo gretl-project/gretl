@@ -2385,7 +2385,7 @@ int kalman_forecast (kalman *K, PRN *prn)
     char *missmap = NULL;
     int err = 0;
 
-    if (kdebug) {
+    if (kdebug > 1) {
         fprintf(stderr, "\n*** kalman_forecast: N=%d, n=%d, exact=%d ***\n",
                 K->N, K->n, K->exact);
     }
@@ -3331,7 +3331,7 @@ static int exact_initial_smooth (kalman *K,
 
     if (kdebug) {
         fprintf(stderr, "*** exact_initial_smooth, old code ***\n");
-        if (1 || kdebug > 1) {
+        if (kdebug > 1) {
             gretl_matrix_print(r0, "rd");
             gretl_matrix_print(N0, "Nd");
         }
@@ -6235,7 +6235,7 @@ static int handle_univariate_transforms (kalman *K)
                 K->uinfo->g->val[i] = gretl_matrix_get(K->VY, i, i);
             }
         } else {
-            if (1 || kdebug) {
+            if (kdebug) {
                 fprintf(stderr, "kfilter: diagonalizing\n");
             }
             err = kalman_diagonalize(K);
@@ -6497,7 +6497,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     return 0;
 }
 
-/* univariate smoothing */
+/* univariate smoothing follows */
 
 /* cumulant matrices */
 
