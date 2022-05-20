@@ -1049,7 +1049,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     int r = vwin->role;
 
     if (mail_ok < 0) {
-	mail_ok = curl_does_smtp();
+	mail_ok = curl_does_smtp() && !gui_editor_mode();
     }
 
     if (r == EDIT_SPEC) {

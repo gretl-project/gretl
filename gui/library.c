@@ -8915,6 +8915,13 @@ gboolean do_open_script (int action)
     return TRUE;
 }
 
+/* do_new_script(): passing a non-NULL @scriptname is a means
+   of creating a new script with a name pre-given by the user;
+   this applies only when we get the name of a non-existent
+   script on the command line. Otherwise the new script gets
+   a temporary name in the user's dotdir.
+*/
+
 void do_new_script (int code, const char *buf,
 		    const char *scriptname)
 {
@@ -8922,39 +8929,35 @@ void do_new_script (int code, const char *buf,
     int istemp = (scriptname == NULL);
     windata_t *vwin;
     gchar *fname;
-    FILE *fp;
 
     if (istemp) {
+	/* the usual case */
+	FILE *fp;
+
 	fname = gretl_make_dotpath("script_tmp");
 	fp = gretl_tempfile_open(fname);
+	if (fp == NULL) {
+	    g_free(fname);
+	    return;
+	} else {
+	    if (buf != NULL) {
+		fputs(buf, fp);
+	    } else if (code == FUNC) {
+		fputs("function \n\nend function\n", fp);
+	    } else if (code == EDIT_OX) {
+		fputs("#include <oxstd.h>\n\n", fp);
+		fputs("main()\n{\n\n}\n", fp);
+	    }
+	    fclose(fp);
+	}
     } else {
+	/* special startup case */
 	fname = g_strdup(scriptname);
-	fp = gretl_fopen(fname, "w");
+	action = NEW_HANSL;
     }
-
-    if (fp == NULL) {
-	g_free(fname);
-        return;
-    }
-
-    if (buf != NULL) {
-        fputs(buf, fp);
-    } else if (code == FUNC) {
-        fputs("function \n\nend function\n", fp);
-    } else if (code == EDIT_OX) {
-        fputs("#include <oxstd.h>\n\n", fp);
-        fputs("main()\n{\n\n}\n", fp);
-    }
-
-    fclose(fp);
 
     if (action == EDIT_HANSL || action == NEW_HANSL) {
         strcpy(scriptfile, fname);
-    }
-
-    if (!istemp && buf == NULL) {
-	/* prefer not to create an empty file by default? */
-	gretl_remove(fname);
     }
 
     vwin = view_file(fname, 1, istemp, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);

@@ -2674,7 +2674,7 @@ static gboolean maybe_open_script (int stype)
 	g_free(msg);
 	if (resp == GTK_RESPONSE_OK) {
 	    /* "New script" */
-	    do_new_script(NEW_HANSL, NULL, noname ? NULL : tryfile);
+	    do_new_script(EDIT_HANSL, NULL, noname ? NULL : tryfile);
 	    return TRUE;
 	} else {
 	    /* "Quit" */
@@ -2697,9 +2697,7 @@ gboolean open_tryfile (gboolean startup)
 	} else {
 	    return do_open_script(stype);
 	}
-    }
-
-    if (opted) {
+    } else if (opted) {
 	/* only script files are acceptable */
 	do_new_script(EDIT_HANSL, NULL, NULL);
 	warnbox_printf(_("%s: not a recognized script file"), tryfile);

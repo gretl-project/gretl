@@ -2289,6 +2289,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     int ins = 0;
 
     if (role == NEW_HANSL) {
+	/* new script with pre-given name */
 	have_content = 0;
 	role = EDIT_HANSL;
     } else {
@@ -2413,6 +2414,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 windata_t *view_script (const char *filename, int editable,
 			int role)
 {
+    int vsize = SCRIPT_HEIGHT;
+
     if (editable) {
 	windata_t *vwin = get_editor_for_file(filename);
 
@@ -2422,8 +2425,12 @@ windata_t *view_script (const char *filename, int editable,
 	}
     }
 
+    if (gui_editor_mode()) {
+	vsize *= 1.5;
+    }
+
     return view_file_with_title(filename, editable, 0,
-				SCRIPT_WIDTH, SCRIPT_HEIGHT,
+				SCRIPT_WIDTH, vsize,
 				role, NULL);
 }
 
