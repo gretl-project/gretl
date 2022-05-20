@@ -2280,7 +2280,7 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
 windata_t *
-view_file_with_title (const char *filename, int editable, int del_file,
+view_file_with_title (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role,
 		      const char *given_title)
 {
@@ -2288,10 +2288,9 @@ view_file_with_title (const char *filename, int editable, int del_file,
     int have_content = 1;
     int ins = 0;
 
-    if (role == NEW_HANSL) {
+    if (mode & NULL_FILE) {
 	/* new script with pre-given name */
 	have_content = 0;
-	role = EDIT_HANSL;
     } else {
 	/* first check that we can open the specified file */
 	if (gretl_test_fopen(filename, "r") != 0) {
@@ -2374,7 +2373,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     /* clean up when dialog is destroyed */
-    if (del_file) {
+    if (mode & TMP_FILE) {
 	gchar *fname = g_strdup(filename);
 
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
@@ -2404,10 +2403,10 @@ view_file_with_title (const char *filename, int editable, int del_file,
     return vwin;
 }
 
-windata_t *view_file (const char *filename, int editable, int del_file,
+windata_t *view_file (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role)
 {
-    return view_file_with_title(filename, editable, del_file,
+    return view_file_with_title(filename, editable, mode,
 				hsize, vsize, role, NULL);
 }
 

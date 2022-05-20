@@ -2674,7 +2674,7 @@ static gboolean maybe_open_script (int stype)
 	g_free(msg);
 	if (resp == GTK_RESPONSE_OK) {
 	    /* "New script" */
-	    do_new_script(EDIT_HANSL, NULL, noname ? NULL : tryfile);
+	    do_new_script(stype, NULL, noname ? NULL : tryfile);
 	    return TRUE;
 	} else {
 	    /* "Quit" */

@@ -74,7 +74,6 @@ enum extra_cmds {
     EDIT_X12A,
     EDIT_SPEC,
     EDIT_MAX,
-    NEW_HANSL,
     CMD_HELP,
     GUI_HELP,
     FUNC_HELP,

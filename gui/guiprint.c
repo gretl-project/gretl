@@ -2395,7 +2395,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 
     gretl_path_compose(tmp, MAXLEN, texbase, ".log");
     if (err == LATEX_ERROR) {
-	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
+	view_file(tmp, 0, TMP_FILE, 78, 350, VIEW_FILE);
     } else {
 	fprintf(stderr, "wrote '%s'\n", texfile);
 	/* gretl_remove(texfile); */

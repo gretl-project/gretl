@@ -8926,11 +8926,11 @@ void do_new_script (int code, const char *buf,
 		    const char *scriptname)
 {
     int action = (code == FUNC)? EDIT_HANSL : code;
-    int istemp = (scriptname == NULL);
+    fmode mode = 0;
     windata_t *vwin;
     gchar *fname;
 
-    if (istemp) {
+    if (scriptname == NULL) {
 	/* the usual case */
 	FILE *fp;
 
@@ -8950,17 +8950,18 @@ void do_new_script (int code, const char *buf,
 	    }
 	    fclose(fp);
 	}
+	mode = TMP_FILE;
     } else {
 	/* special startup case */
 	fname = g_strdup(scriptname);
-	action = NEW_HANSL;
+	mode = NULL_FILE;
     }
 
-    if (action == EDIT_HANSL || action == NEW_HANSL) {
+    if (action == EDIT_HANSL) {
         strcpy(scriptfile, fname);
     }
 
-    vwin = view_file(fname, 1, istemp, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    vwin = view_file(fname, 1, mode, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
     g_free(fname);
 
     if (buf != NULL && *buf != '\0') {
