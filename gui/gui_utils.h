@@ -46,6 +46,8 @@
 
 enum { ADD_COMMA, DROP_COMMA };
 
+typedef enum { TMP_FILE = 1, NULL_FILE = 2 } fmode;
+
 int vwin_is_editing (windata_t *vwin);
 
 int copyfile (const char *src, const char *dest);
@@ -105,11 +107,11 @@ windata_t *view_buffer_with_parent (windata_t *parent, PRN *prn,
 				    const char *title, int role,
 				    gpointer data);
 
-windata_t *view_file (const char *filename, int editable, int del_file,
+windata_t *view_file (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role);
 
 windata_t *
-view_file_with_title (const char *filename, int editable, int del_file,
+view_file_with_title (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role,
 		      const char *given_title);
 

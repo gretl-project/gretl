@@ -559,7 +559,7 @@ static int latex_compile_graph_page (void)
     if (err == LATEX_ERROR) {
 	char *fname = gpage_fname(".log", 0);
 
-	view_file(fname, 0, 1, 78, 350, VIEW_FILE);
+	view_file(fname, 0, TMP_FILE, 78, 350, VIEW_FILE);
     }
 
     if (gpage.term == GP_TERM_EPS && !err) {

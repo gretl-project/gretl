@@ -777,7 +777,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		}
 	    } else if (upkey == GDK_T && window_is_tab(vwin)) {
 		/* Ctrl-T: open new tab */
-		do_new_script(vwin->role, NULL);
+		do_new_script(vwin->role, NULL, NULL);
 		return TRUE;
 	    }
 	}
@@ -2280,21 +2280,23 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
 windata_t *
-view_file_with_title (const char *filename, int editable, int del_file,
+view_file_with_title (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role,
 		      const char *given_title)
 {
     windata_t *vwin;
-    FILE *fp;
+    int have_content = 1;
     int ins = 0;
 
-    /* first check that we can open the specified file */
-    fp = gretl_fopen(filename, "r");
-    if (fp == NULL) {
-	errbox_printf(_("Can't open %s for reading"), filename);
-	return NULL;
+    if (mode & NULL_FILE) {
+	/* new script with pre-given name */
+	have_content = 0;
     } else {
-	fclose(fp);
+	/* first check that we can open the specified file */
+	if (gretl_test_fopen(filename, "r") != 0) {
+	    errbox_printf(_("Can't open %s for reading"), filename);
+	    return NULL;
+	}
     }
 
 #if 0
@@ -2349,8 +2351,12 @@ view_file_with_title (const char *filename, int editable, int del_file,
     text_table_setup(vwin->vbox, vwin->text);
 
     if (textview_use_highlighting(role) || editable) {
-	sourceview_insert_file(vwin, filename);
-    } else {
+	if (have_content) {
+	    sourceview_insert_file(vwin, filename);
+	} else {
+	    sourceview_insert_file(vwin, NULL);
+	}
+    } else if (have_content) {
 	textview_insert_file(vwin, filename);
     }
 
@@ -2367,7 +2373,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     /* clean up when dialog is destroyed */
-    if (del_file) {
+    if (mode & TMP_FILE) {
 	gchar *fname = g_strdup(filename);
 
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
@@ -2397,16 +2403,18 @@ view_file_with_title (const char *filename, int editable, int del_file,
     return vwin;
 }
 
-windata_t *view_file (const char *filename, int editable, int del_file,
+windata_t *view_file (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role)
 {
-    return view_file_with_title(filename, editable, del_file,
+    return view_file_with_title(filename, editable, mode,
 				hsize, vsize, role, NULL);
 }
 
 windata_t *view_script (const char *filename, int editable,
 			int role)
 {
+    int vsize = SCRIPT_HEIGHT;
+
     if (editable) {
 	windata_t *vwin = get_editor_for_file(filename);
 
@@ -2416,8 +2424,12 @@ windata_t *view_script (const char *filename, int editable,
 	}
     }
 
+    if (gui_editor_mode()) {
+	vsize *= 1.5;
+    }
+
     return view_file_with_title(filename, editable, 0,
-				SCRIPT_WIDTH, SCRIPT_HEIGHT,
+				SCRIPT_WIDTH, vsize,
 				role, NULL);
 }
 

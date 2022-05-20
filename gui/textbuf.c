@@ -669,7 +669,9 @@ void sourceview_print (windata_t *vwin)
 void sourceview_insert_file (windata_t *vwin, const char *fname)
 {
     sourceview_apply_language(vwin);
-    source_buffer_load_file(vwin->sbuf, vwin->role, fname);
+    if (fname != NULL) {
+	source_buffer_load_file(vwin->sbuf, vwin->role, fname);
+    }
 }
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf)

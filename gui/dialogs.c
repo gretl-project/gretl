@@ -7639,3 +7639,31 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
 
     gtk_widget_show_all(dialog);
 }
+
+gint script_start_dialog (const char *msg)
+{
+    GtkWidget *dlg;
+    gint ret;
+
+    dlg = gtk_dialog_new_with_buttons("gretl",
+                                      NULL,
+                                      GTK_DIALOG_MODAL,
+                                      _("New script"),
+                                      GTK_RESPONSE_OK,
+				      _("Quit"),
+				      GTK_RESPONSE_CLOSE,
+                                      NULL);
+
+    gtk_dialog_set_default_response(GTK_DIALOG(dlg), GTK_RESPONSE_OK);
+    gretl_dialog_add_message(dlg, msg);
+
+#if GTK_MAJOR_VERSION < 3
+    gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
+#endif
+    gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
+    ret = gtk_dialog_run(GTK_DIALOG(dlg));
+
+    gtk_widget_destroy(dlg);
+
+    return ret;
+}
