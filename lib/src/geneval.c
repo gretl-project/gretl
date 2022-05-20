@@ -10541,10 +10541,10 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     if (p->flags & P_OBJQRY) {
 	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
 	if (type == GRETL_TYPE_NONE) {
-	    return get_aux_node(p, EMPTY, 0, 0);
+	    return get_aux_node(p, EMPTY, 0, MUT_NODE);
 	} else {
 	    gen_t = gen_type_from_gretl_type(type);
-	    return get_aux_node(p, gen_t, 0, 0);
+	    return get_aux_node(p, gen_t, 0, MUT_NODE);
 	}
     } else {
         val = gretl_bundle_get_element(l->v.b, key, &type, &size,
