@@ -1757,9 +1757,14 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		param->type = param_field_to_type(field, fun->name, &err);
 		free(field);
 		if (gretl_scalar_type(param->type)) {
+		    char *pstr = NULL;
 		    double x;
 
-		    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
+		    if (gretl_xml_get_prop_as_string(cur, "default", &pstr) &&
+			(strstr(pstr, "$mylist") || strstr(pstr, "$xlist"))) {
+			param->deflt = strstr(pstr, "$mylist")? INT_USE_MYLIST :
+			    INT_USE_XLIST;
+		    } else if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
 			param->deflt = x;
 		    } else {
 			param->deflt = UNSET_VALUE;
