@@ -5340,7 +5340,7 @@ gretl_bundle *series_info_bundle (const DATASET *dset,
 	gretl_bundle_set_int(b, "coded", vinfo->flags & VAR_CODED ?
 			     1 : 0);
 	gretl_bundle_set_string(b, "parent", vinfo->parent);
-	if ((vnum = get_parent_id(dset, vinfo->parent))) {
+	if ((vnum = get_parent_id(dset, vinfo->parent)) > 0) {
 	    gretl_bundle_set_int(b, "parent_id", vnum);
 	}
 	if (vinfo->transform > 0) {
