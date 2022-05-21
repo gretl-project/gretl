@@ -2351,6 +2351,10 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    if (!default_unset(param)) {
 		if (na(param->deflt)) {
 		    pputs(prn, " default=\"NA\"");
+		} else if (param->deflt == INT_USE_MYLIST) {
+		    pputs(prn, " default=\"$mylist\"");
+		} else if (param->deflt == INT_USE_XLIST) {
+		    pputs(prn, " default=\"$xlist\"");
 		} else {
 		    pprintf(prn, " default=\"%g\"", param->deflt);
 		}
