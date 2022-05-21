@@ -6319,6 +6319,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     }
 
     ui->TI = gretl_is_identity_matrix(K->T);
+    K->okN = K->n * K->N;
     K->SSRw = 0;
     K->loglik = 0;
     set_kalman_running(K);
@@ -6380,11 +6381,13 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             vti = uni_get_vti(K, Zi, ati, i);
             gretl_matrix_set(K->V, t, i, vti);
             if (na(vti)) {
+		K->okN -= 1;
                 continue;
             }
 
             if (rankPk > 0) {
                 if (Fki > K_TINY) {
+		    K->okN -= 1;
                     Fkinv = 1.0 / Fki;
                     ldt += log(Fki);
                     increment_state(ati, Kki, m1, Fkinv * vti);
@@ -6472,15 +6475,19 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         K->j = p;
     } else if (smo && K->exact) {
         dj_from_Finf(ui->Finf, &d, &j);
+#if 0 /* not sure about this, causes trouble? */
         if (d > 0 && d < ui->Finf->cols) {
-            //gretl_matrix_realloc(ui->Finf, ui->Finf->rows, d);
-            //gretl_matrix_realloc(ui->Kinf, ui->Kinf->rows, d);
+            gretl_matrix_realloc(ui->Finf, ui->Finf->rows, d);
+            gretl_matrix_realloc(ui->Kinf, ui->Kinf->rows, d);
         }
+#endif
         K->d = d > 0 ? d : 0;
         K->j = j > 0 ? j : 0;
     }
 
     set_kalman_stopped(K);
+
+    K->s2 = K->SSRw / K->okN;
 
     if (kdebug) {
         fprintf(stderr, "*** after filtering: d=%d, j=%d ***\n", d, j);
