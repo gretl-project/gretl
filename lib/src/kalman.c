@@ -5183,6 +5183,10 @@ static int kalman_set_univariate (kalman *K, int u)
 
     if (u) {
         K->flags |= KALMAN_UNI;
+	if (kalman_diffuse(K) && !K->exact) {
+	    K->exact = 1;
+	    diffuse_Pini(K);
+	}
     } else {
         K->flags &= ~KALMAN_UNI;
     }
