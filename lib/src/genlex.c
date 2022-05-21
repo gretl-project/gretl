@@ -1325,7 +1325,7 @@ static char *get_quoted_string (parser *p, int prevsym)
 
 	free(s);
 	gs = g_strdup_printf("\"");
-	s = gretl_strdup(s);
+	s = gretl_strdup(gs);
 	free(gs);
     }
 

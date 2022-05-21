@@ -1102,8 +1102,8 @@ gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A,
     }
 
     Y = gretl_matrix_alloc(r, c);
-    a = malloc(r * sizeof *a);
-    b = malloc(r * sizeof *b);
+    a = calloc(r, sizeof *a);
+    b = calloc(r, sizeof *b);
 
     if (Y == NULL || a == NULL || b == NULL) {
         *err = E_ALLOC;
