@@ -1713,6 +1713,23 @@ static GretlType param_field_to_type (const char *s,
     return t;
 }
 
+static gboolean special_int_default (fn_param *param,
+				     xmlNodePtr np)
+{
+    if (param->type == GRETL_TYPE_INT) {
+	char *s = NULL;
+
+	if (gretl_xml_get_prop_as_string(np, "default", &s) &&
+	    (strstr(s, "$mylist") || strstr(s, "$xlist"))) {
+	    param->deflt = strstr(s, "$mylist")? INT_USE_MYLIST :
+		INT_USE_XLIST;
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
 /* read the parameter info for a function from XML file */
 
 static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
@@ -1756,15 +1773,12 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
 		param->type = param_field_to_type(field, fun->name, &err);
 		free(field);
-		if (gretl_scalar_type(param->type)) {
-		    char *pstr = NULL;
+		if (special_int_default(param, cur)) {
+		    ; /* handled */
+		} else if (gretl_scalar_type(param->type)) {
 		    double x;
 
-		    if (gretl_xml_get_prop_as_string(cur, "default", &pstr) &&
-			(strstr(pstr, "$mylist") || strstr(pstr, "$xlist"))) {
-			param->deflt = strstr(pstr, "$mylist")? INT_USE_MYLIST :
-			    INT_USE_XLIST;
-		    } else if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
+		    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
 			param->deflt = x;
 		    } else {
 			param->deflt = UNSET_VALUE;
