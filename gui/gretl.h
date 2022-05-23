@@ -130,8 +130,6 @@ extern PangoFontDescription *fixed_font;
 /* functions follow */
 
 #ifndef WIN32
-int gretl_fork (const char *progvar, const char *arg,
-		const char *opt);
 void set_wm_icon (GtkWidget *w);
 #endif
 

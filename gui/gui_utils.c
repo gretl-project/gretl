@@ -6451,3 +6451,118 @@ const char *print_today (void)
 
     return timestr;
 }
+
+/* We mostly use this for checking whether the font described by @desc
+   has the Unicode minus sign (0x2212), which looks better than a
+   simple dash if it's available.
+*/
+
+int font_has_symbol (PangoFontDescription *desc, int symbol)
+{
+    GtkWidget *widget;
+    PangoContext *context = NULL;
+    PangoLayout *layout = NULL;
+    PangoLanguage *lang = NULL;
+    PangoCoverage *coverage = NULL;
+    int ret = 0;
+
+    if (desc == NULL) {
+	return 0;
+    }
+
+    widget = gtk_label_new("");
+    if (g_object_is_floating(widget)) {
+	g_object_ref_sink(widget);
+    }
+
+    context = gtk_widget_get_pango_context(widget);
+    if (context == NULL) {
+	gtk_widget_destroy(widget);
+	return 0;
+    }
+
+    layout = pango_layout_new(context);
+    lang = pango_language_from_string("eng");
+
+    if (layout != NULL && lang != NULL) {
+	PangoFont *font = pango_context_load_font(context, desc);
+
+	if (font != NULL) {
+	    coverage = pango_font_get_coverage(font, lang);
+	    if (coverage != NULL) {
+		ret = (pango_coverage_get(coverage, symbol) == PANGO_COVERAGE_EXACT);
+		pango_coverage_unref(coverage);
+	    }
+	    g_object_unref(font);
+	}
+    }
+
+    g_object_unref(G_OBJECT(layout));
+    g_object_unref(G_OBJECT(context));
+    gtk_widget_destroy(widget);
+
+    return ret;
+}
+
+#ifndef G_OS_WIN32
+
+int gretl_fork (const char *progvar, const char *arg,
+		const char *opt)
+{
+    const char *prog = NULL;
+    gchar *argv[4] = {NULL, NULL, NULL, NULL};
+    GError *err = NULL;
+    gboolean run;
+
+#ifdef OS_OSX
+    if (!strcmp(progvar, "calculator")) {
+	prog = calculator;
+    }
+#else
+    if (!strcmp(progvar, "Browser")) {
+	prog = Browser;
+    } else if (!strcmp(progvar, "calculator")) {
+	prog = calculator;
+    } else if (!strcmp(progvar, "viewpdf")) {
+	prog = viewpdf;
+    } else if (!strcmp(progvar, "viewps")) {
+	prog = viewps;
+    } else {
+	prog = progvar;
+    }
+#endif
+
+    if (prog == NULL) {
+	errbox_printf("Internal error: variable %s is undefined", progvar);
+	return 1;
+    }
+
+    argv[0] = g_strdup(prog);
+
+    if (opt != NULL) {
+	argv[1] = g_strdup(arg);
+	argv[2] = g_strdup(opt);
+    } else if (arg != NULL) {
+	argv[1] = g_strdup(arg);
+    }
+
+    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+			NULL, NULL, NULL, &err);
+
+    if (err != NULL) {
+	errbox(err->message);
+	if (err->domain == G_SPAWN_ERROR &&
+	    err->code == G_SPAWN_ERROR_NOENT) {
+	    preferences_dialog(TAB_PROGS, progvar, mdata->main);
+	}
+	g_error_free(err);
+    }
+
+    g_free(argv[0]);
+    g_free(argv[1]);
+    g_free(argv[2]);
+
+    return !run;
+}
+
+#endif

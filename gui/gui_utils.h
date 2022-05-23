@@ -198,6 +198,8 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt);
 
 const char *print_today (void);
 
+int font_has_symbol (PangoFontDescription *desc, int symbol);
+
 #ifdef G_OS_WIN32
 void win32_run_gretlcli_async (gchar *cmd,
 			       gchar *fname,
@@ -205,6 +207,8 @@ void win32_run_gretlcli_async (gchar *cmd,
 #else
 int browser_open (const char *url);
 void run_gretlcli_async (char **argv, windata_t *scriptwin);
+int gretl_fork (const char *progvar, const char *arg,
+		const char *opt);
 #endif
 
 #endif /* GUI_UTILS_H */
