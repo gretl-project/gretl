@@ -2484,6 +2484,7 @@ int *augment_regression_list (const int *orig, int aux,
 {
     int *list;
     int listlen;
+    int v_prev = dset->v;
     int cnum = 0;
     int i, k;
 
@@ -2537,8 +2538,10 @@ int *augment_regression_list (const int *orig, int aux,
 		    }
 		    vnew = xpxgenr(vi, vj, dset);
 		    if (vnew > 0) {
-			/* ensure uniqueness of generated varnames */
-			sprintf(dset->varname[vnew], "X%d_X%d", i-1, j-1);
+			if (vnew >= v_prev) {
+			    /* ensure uniqueness of generated varnames */
+			    sprintf(dset->varname[vnew], "X%d_X%d", i-1, j-1);
+			}
 			list[++k] = vnew;
 		    }
 		}

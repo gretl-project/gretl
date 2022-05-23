@@ -848,6 +848,7 @@ int add_tramo_options (tx_request *request, GtkWidget *vbox)
 int print_tramo_options (tx_request *request, FILE *fp)
 {
     tramo_options *opts;
+    int run_seats;
 
     if (request->gui == NULL) {
 	return 0;
@@ -901,9 +902,11 @@ int print_tramo_options (tx_request *request, FILE *fp)
 
     fputs("$END\n", fp);
 
+    run_seats = (opts->seats > 0);
+
     free(opts);
     request->gui = NULL;
 
-    return (opts->seats > 0);
+    return run_seats;
 }
 
