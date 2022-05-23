@@ -12826,7 +12826,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    } else if (mode == 1 || mode == 2) {
 		/* mode can be 1 or 2 */
 		gretl_matrix *J = NULL;
-		A = R_from_omega(l->v.m, (mode == 2), has_jacobian, &J, &p->err);
+		if (has_jacobian) {
+		    J = ptr_node_get_matrix(r,p);
+		}
+		
+		A = R_from_omega(l->v.m, (mode == 2), has_jacobian,
+				 &J, &p->err);
+		gretl_matrix_print(J, "J");
 	    }
 	}    
     }

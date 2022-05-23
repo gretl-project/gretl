@@ -8322,7 +8322,7 @@ int *list_from_matrix (const gretl_matrix *m,
     return list;
 }
 
-#define SPHCORR_DBG 1
+#define SPHCORR_DBG 0
 
 static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
 {
@@ -8330,7 +8330,8 @@ static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
     int i, j;
     double *s, *k, *c, *f;
     double x, ki = 1.0;
-
+    int do_jac = (J != NULL);
+    
     s = malloc(h * sizeof *s);
     k = malloc((h+1) * sizeof *k);
     c = malloc((h+1) * sizeof *c);
@@ -8361,28 +8362,31 @@ static double *sphc_unitvec(double *omega, int h, gretl_matrix *J, int *err)
 	    fprintf(stderr, "f[%d] = %g\n", i, f[i]);
 #endif
     }
+
+    if (do_jac) {
+	gretl_matrix_zero(J);
     
-    gretl_matrix_zero(J);
-    /* we re-use s for the tangents */
-    for (i=0; i<h; i++) {
-	s[i] = tan(omega[i]);
-    }
-    
-    for (i=1; i<=h; i++) {
-	for (j=0; j<i; j++) {
-	    gretl_matrix_set(J, i, j, k[i] / s[j]);
+	/* we re-use s for the tangents */
+	for (i=0; i<h; i++) {
+	    s[i] = tan(omega[i]);
 	}
-    }
     
-    for (i=0; i<h; i++) {
-	for (j=0; j<i; j++) {
-	    x = gretl_matrix_get(J, i, j);
-	    gretl_matrix_set(J, i, j, c[i] * x);
+	for (i=1; i<=h; i++) {
+	    for (j=0; j<i; j++) {
+		gretl_matrix_set(J, i, j, k[i] / s[j]);
+	    }
+	}
+    
+	for (i=0; i<h; i++) {
+	    for (j=0; j<i; j++) {
+		x = gretl_matrix_get(J, i, j);
+		gretl_matrix_set(J, i, j, c[i] * x);
 #if 0
-	    fprintf(stderr, "J[%d,%d] = c[%d]*x\n", i, j, i);
+		fprintf(stderr, "J[%d,%d] = c[%d]*x\n", i, j, i);
 #endif
+	    }
+	    gretl_matrix_set(J, i, i, -k[i+1]);
 	}
-	gretl_matrix_set(J, i, i, -k[i+1]);
     }
 
     free(c);
@@ -8519,13 +8523,11 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
     gretl_matrix *tmpJac =  NULL;
     double der;
     
-    if (fabs(tmp - n) > 1.0e-12) {
+    if (fabs(tmp - n) > 1.0e-3) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    gretl_matrix_print(omega, "omega");
-    
     K = gretl_zero_matrix_new(n, n);
     gretl_matrix_set(K, 0, 0, 1.0);
 
