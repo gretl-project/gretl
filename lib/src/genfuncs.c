@@ -8495,6 +8495,9 @@ static int *funky_index(int n, int m)
 /**
  * R_from_omega:
  * @omega: angle vector.
+ * @cholesky: boolean, compute cholesky factor instead if correlation matrix.
+ * @do_jacobian: boolean, compute analytical Jacobian.
+ * @J: location to receive Jacobian matrix.
  * @err: location to receive error code.
  *
  * Returns an (n x n) correlation matrix R given its
@@ -8505,41 +8508,51 @@ static int *funky_index(int n, int m)
  */
 
 gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
+			   int do_jacobian,
 			   gretl_matrix **J, int *err)
 {
     gretl_matrix *R = NULL, *K;
     int m = omega->rows;
     double tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
     int n = nearbyint(tmp);
-
+    int *Jindex;
+    gretl_matrix *tmpJac =  NULL;
+    double der;
+    
     if (fabs(tmp - n) > 1.0e-12) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
+    gretl_matrix_print(omega, "omega");
+    
     K = gretl_zero_matrix_new(n, n);
     gretl_matrix_set(K, 0, 0, 1.0);
 
-    /* pre-allocate Jacobian matrix */
-    *J = gretl_zero_matrix_new(m + n, m); 
-    int *Jindex = malloc((m + n) * sizeof *Jindex);
-    Jindex = funky_index(n, m);
-
+    if (do_jacobian) {
+	/* pre-allocate Jacobian matrix */
+	*J = gretl_zero_matrix_new(m + n, m); 
+	Jindex = malloc((m + n) * sizeof *Jindex);
+	Jindex = funky_index(n, m);
+	
+	tmpJac = gretl_matrix_alloc(n+1, n);
+    }
+    
     int i, j, k, l = 0;
     double x, prod;
 
 #if SPHCORR_DBG
-    for (i=0; i<m+n; i++) {
-	fprintf(stderr, "Jindex[%d] = %d\n", i, Jindex[i]);
+    if (do_jacobian) {
+	for (i=0; i<m+n; i++) {
+	    fprintf(stderr, "Jindex[%d] = %d\n", i, Jindex[i]);
+	}
     }
 #endif
 
-    gretl_matrix *tmpJac = gretl_matrix_alloc(n+1, n);
     double *om = omega->val;
     double *f = malloc(m * sizeof *f);
 
     int ii, jj, r_i = 1, c_i = 0;
-    double der;
 
     for (i=0; i<n-1; i++) {
 	f = sphc_unitvec(om, i+1, tmpJac, err);
@@ -8547,46 +8560,38 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 	for(j=0; j<=i+1; j++) {
 	    gretl_matrix_set(K, i+1, j, f[j]);
 	}
+	if (do_jacobian) {
+	    /* Jacobian */ 
+	    for (ii=0; ii<=i+1; ii++){
+		for (jj = 0; jj<=i; jj++){
+		    der = gretl_matrix_get(tmpJac, ii, jj);
 #if SPHCORR_DBG
-	gretl_matrix_print(tmpJac, "tmpJac");
+		    printf("d[%d,%d] = %f\n", ii, jj,der);
+		    printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
 #endif
-	/* Jacobian */ 
-	for (ii=0; ii<=i+1; ii++){
-	    for (jj = 0; jj<=i; jj++){
-		der = gretl_matrix_get(tmpJac, ii, jj);
-#if SPHCORR_DBG
-		printf("d[%d,%d] = %f\n", ii, jj,der);
-		printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
-#endif
-		gretl_matrix_set(*J, Jindex[r_i], c_i + jj, der);
+		    gretl_matrix_set(*J, Jindex[r_i], c_i + jj, der);
+		}
 	    }
-	    r_i++;}
-	c_i += i+1;
+	    r_i++;
+    	    c_i += i+1;
+	}
     }
 
 #if SPHCORR_DBG
     gretl_matrix_print(K, "K via f");
 #endif
 
-    gretl_matrix_free(tmpJac);
     free(f);
-    free(Jindex);
-#if 0    
-    for (i=1; i<n; i++) {
-	prod = 1.0;
-	k = i * n;
-	for (j=0; j<i; j++) {
-	    x = cos(omega->val[l]);
-	    K->val[k++] = x * prod;
-	    prod *= sin(omega->val[l++]);
-	}
-	K->val[k] = prod;
+    if (do_jacobian) {
+	gretl_matrix_free(tmpJac);
+	free(Jindex);
     }
-#endif
 
 #if SPHCORR_DBG
     gretl_matrix_print(K, "reconstructed cholesky");
-    gretl_matrix_print(*J, "Jacobian");
+    if (do_jacobian) {
+	gretl_matrix_print(*J, "Jacobian");
+    }
 #endif
 
     if (cholesky) {

@@ -405,7 +405,6 @@ enum {
     F_DESEAS,
     F_MAT2LIST,
     F_YMD,
-    F_SPHCORR,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -477,6 +476,7 @@ enum {
     F_MSPLITBY,
     F_DISTANCE,
     F_BITOP,
+    F_SPHCORR,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

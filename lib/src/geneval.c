@@ -4448,7 +4448,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
         if (f == F_MREV || f == F_SDC || f == F_MCOV ||
             f == F_CDEMEAN || f == F_STDIZE ||
-	    f == F_PSDROOT || f == F_VECH || f == F_SPHCORR) {
+	    f == F_PSDROOT || f == F_VECH) {
             /* if present, the @r node should hold an integer */
             if (!null_or_scalar(r)) {
                 node_type_error(f, 2, NUM, r, p);
@@ -4634,16 +4634,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             break;
         case F_CTRANS:
             ret->v.m = gretl_ctrans(m, 1, &p->err);
-            break;
-        case F_SPHCORR:
-	    if (gotopt && parm) {
-		gretl_matrix *J = NULL;
-		ret->v.m = R_from_omega(m, (parm == 2), &J, &p->err);
-		gretl_matrix_print(J, "Jacobian");
-		gretl_matrix_free(J);
-	    } else {
-		ret->v.m = omega_from_R(m, &p->err);
-	    }		
             break;
         default:
             break;
@@ -12803,8 +12793,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	gretl_array *reqd = NULL;
 
 	post_process = 0;
-	if (l->t != U_ADDR || l->L->t != BUNDLE) {
-	    node_type_error(f, 1, BUNDLE, l, p);
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
 	} else if (m->t != BUNDLE) {
 	    node_type_error(f, 2, BUNDLE, m, p);
 	} else if (!null_node(r) && r->t != ARRAY) {
@@ -12820,6 +12810,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 						    reqd, NULL, p->prn,
 						    &p->err);
         }
+    } else if (f == F_SPHCORR) {
+	int has_jacobian = !null_node(r);
+	
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (!null_or_scalar(m)) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else {
+	    ret = aux_scalar_node(p);
+	    int mode = null_node(m) ? 0 : node_get_int(m, p);
+	
+	    if (mode == 0) {
+		A = omega_from_R(l->v.m, &p->err);
+	    } else if (mode == 1 || mode == 2) {
+		/* mode can be 1 or 2 */
+		gretl_matrix *J = NULL;
+		A = R_from_omega(l->v.m, (mode == 2), has_jacobian, &J, &p->err);
+	    }
+	}    
     }
 
     if (post_process) {
@@ -17455,7 +17464,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFTI:
     case F_POLROOTS:
     case F_CTRANS:
-    case F_SPHCORR:
         /* matrix -> matrix functions */
         if (l->t == MAT || l->t == NUM) {
             ret = matrix_to_matrix_func(l, r, t->t, p);
@@ -17664,6 +17672,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case F_VMA:
     case F_BCHECK:
+    case F_SPHCORR:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
