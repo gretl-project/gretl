@@ -6209,7 +6209,6 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 
 #endif /* !G_OS_WIN32 */
 
-
 #ifdef G_OS_WIN32 /* back to Windows-specific */
 
 typedef struct {

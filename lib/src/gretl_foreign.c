@@ -32,7 +32,7 @@
 # include "gretl_mpi.h"
 # include "gretl_xml.h"
 # ifndef G_OS_WIN32
-#  define MPI_REALTIME 1 /* somewhat experimental */
+#  define MPI_REALTIME 1 /* won't work on Windows */
 # endif
 #endif
 
@@ -49,6 +49,7 @@
 #endif
 
 #define FDEBUG 0
+#define MPI_VGRIND 0 /* define for debugging MPI via valgrind */
 
 static char **foreign_lines;
 static int foreign_started;
@@ -390,21 +391,98 @@ static const gchar *get_mpi_scriptname (void)
     return gretl_mpi_script;
 }
 
-/* The following should probably be redundant on Linux but may
-   be needed for the OS X package, where the gretl bin
-   directory may not be in PATH, and in general will be needed
-   on Windows.
+static const char *get_mpi_hostfile (void)
+{
+    const char *hfile = gretl_mpi_hosts();
+
+    if (*hfile == '\0') {
+	hfile = getenv("GRETL_MPI_HOSTS");
+    }
+
+    return hfile;
+}
+
+/* handle the number-of-processes MPI option */
+
+static int get_user_mpi_procs (int *err)
+{
+    int np = get_optval_int(MPI, OPT_N, err);
+
+    if (!*err && (np <= 0 || np > 9999999)) {
+	*err = E_DATA;
+    }
+
+    return np;
+}
+
+# ifdef G_OS_WIN32
+
+static int win32_run_mpi_sync (gretlopt opt, PRN *prn)
+{
+    const char *hostfile = get_mpi_hostfile();
+    char np = 0;
+    int err = 0;
+
+    if (opt & OPT_N) {
+	np = get_user_mpi_procs(&err);
+    }
+
+    if (!err) {
+	GString *cmd = g_string_new(NULL);
+
+	g_string_append_printf(cmd, "\"%s\"", gretl_mpiexec());
+
+	if (!(opt & OPT_L) && hostfile != NULL && *hostfile != '\0') {
+	    /* note: OPT_L corresponds to --local, meaning that we
+	       should not use a hosts file even if one is present
+	    */
+	    g_string_append(cmd, " /machinefile ");
+	    g_string_append(cmd, hostfile);
+	} else if (np == 0) {
+	    /* no user spec, so supply a default np value */
+	    if (libset_get_bool(MPI_USE_SMT)) {
+		/* use max number of processes */
+		np = gretl_n_processors();
+	    } else {
+		/* don't use hyper-threads */
+		np = gretl_n_physical_cores();
+	    }
+	}
+	if (np > 0) {
+	    g_string_append_printf(cmd, " /np %d", np);
+	}
+	g_string_append_printf(cmd, " \"%sgretlmpi\"", gretl_bindir());
+	if (opt & OPT_S) {
+	    g_string_append(cmd, " --single-rng");
+	}
+	if (opt & OPT_Q) {
+	    g_string_append(cmd, " --quiet");
+	}
+	g_string_append_printf(cmd, " \"%s\"", get_mpi_scriptname());
+
+	if (opt & OPT_V) {
+	    pprintf(prn, "gretl mpi command:\n %s\n", cmd->str);
+	}
+
+	err = gretl_win32_pipe_output(cmd->str, gretl_workdir(), prn);
+	g_string_free(cmd, TRUE);
+    }
+
+    return err;
+}
+
+# else /* non-Windows MPI-calling variant */
+
+/* The following should probably be redundant on Linux but
+   may be needed for the macOS package, where the gretl bin
+   directory may not be in PATH.
 */
 
 static gchar *gretl_mpi_binary (void)
 {
-    gchar *ret = NULL;
-
-#ifdef WIN32
-    ret = g_strdup_printf("%sgretlmpi", gretl_bindir());
-#else
     gchar *tmp = g_strdup(gretl_home());
     gchar *p = strstr(tmp, "/share/gretl");
+    gchar *ret = NULL;
 
     if (p != NULL) {
 	*p = '\0';
@@ -414,12 +492,11 @@ static gchar *gretl_mpi_binary (void)
     }
 
     g_free(tmp);
-#endif
 
     return ret;
 }
 
-/* used when gretlmpi is run with the --verbose flag */
+/* called when gretlmpi is run with the --verbose flag */
 
 static void print_mpi_command (char **argv, PRN *prn)
 {
@@ -432,28 +509,14 @@ static void print_mpi_command (char **argv, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define MPI_VGRIND 0 /* define for debugging via valgrind */
-
 static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 {
-    const char *hostfile = gretl_mpi_hosts();
+    const char *hostfile = get_mpi_hostfile();
     char np = 0;
     int err = 0;
 
-    if (*hostfile == '\0') {
-	hostfile = getenv("GRETL_MPI_HOSTS");
-    }
-
     if (opt & OPT_N) {
-	/* handle the number-of-processes option */
-	int opt_np = get_optval_int(MPI, OPT_N, &err);
-
-	if (!err && (opt_np <= 0 || opt_np > 9999999)) {
-	    err = E_DATA;
-	}
-	if (!err) {
-	    np = opt_np;
-	}
+	np = get_user_mpi_procs(&err);
     }
 
     if (!err) {
@@ -472,8 +535,6 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 	    */
 	    if (mpi_variant == MPI_MPICH) {
 		hostsopt = "-machinefile";
-	    } else if (mpi_variant == MPI_MSMPI) {
-		hostsopt = "/machinefile";
 	    } else {
 		hostsopt = "--hostfile";
 	    }
@@ -495,7 +556,7 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 	}
 	if (np > 0) {
 	    sprintf(npnum, "%d", np);
-	    argv[i++] = (mpi_variant == MPI_MSMPI)? "/np" : "-np";
+	    argv[i++] = "-np";
 	    argv[i++] = npnum;
 	    if (mpi_variant == MPI_OPENMPI && np > nproc/2) {
 		argv[i++] = "--oversubscribe";
@@ -518,7 +579,7 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-#ifdef MPI_REALTIME /* note: does not seem to work on Windows */
+#ifdef MPI_REALTIME
 	err = run_mpi_with_pipes(argv, ptr, opt, prn);
 #else
 	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
@@ -528,6 +589,8 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 
     return err;
 }
+
+# endif /* Windows vs not */
 
 # ifdef MPI_REALTIME
 
@@ -791,7 +854,7 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
     } else if (foreign_lang == LANG_JULIA) {
 	exe = gretl_julia_path();
 	if (opt & OPT_N) {
-	    cmd = g_strdup_printf("\"%s\" --compile=no \"%s\"", exe, fname);;
+	    cmd = g_strdup_printf("\"%s\" --compile=no \"%s\"", exe, fname);
 	} else {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
 	}
@@ -3430,7 +3493,11 @@ int foreign_execute (const DATASET *dset,
 	if (err) {
 	    delete_mpi_script();
 	} else {
+# ifdef G_OS_WIN32
+	    err = win32_run_mpi_sync(foreign_opt, prn);
+# else
 	    err = lib_run_mpi_sync(foreign_opt, ptr, prn);
+# endif
 	    if (err) {
 		try_for_mpi_errmsg(prn);
 	    }
