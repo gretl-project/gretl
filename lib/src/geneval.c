@@ -6402,7 +6402,7 @@ static int object_get_size (NODE *n, parser *p)
     } else if (n->t == LIST) {
 	ret = n->v.ivec[0];
     } else if (n->t == STR) {
-	ret = strlen(n->v.str);
+	ret = g_utf8_strlen(n->v.str, -1);
     } else {
 	p->err = E_TYPES;
     }
