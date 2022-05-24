@@ -1,0 +1,217 @@
+topsrc = @top_srcdir@
+datarootdir = @datarootdir@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+CC = @CC@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+SSE2_CFLAGS = @SSE2_CFLAGS@
+AVX_CFLAGS = @AVX_CFLAGS@
+OMP_OPT = @OPENMP_CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+EXEEXT = @EXEEXT@
+LN = @LN_S@
+have_readline = @have_readline@
+have_sourceview = @have_sourceview@
+gtksv_completion = @gtksv_completion@
+have_zlib = @have_zlib@
+quiet_build = @quiet_build@
+pkg_build = @pkg_build@
+win32_build = @win32_build@
+win32pkg = @win32pkg@
+gtk_version = @gtk_version@
+mac_native = @mac_native@
+
+sharesrc = $(topsrc)/share
+
+ifeq ($(AVX_CFLAGS),)
+  SIMD_OPT = $(SSE2_CFLAGS)
+else
+  SIMD_OPT = $(AVX_CFLAGS)
+endif
+
+GTK_CFLAGS = @GTK_CFLAGS@
+GTK_LIBS = @GTK_LIBS@
+GTK_HUSH = @GTK_HUSH@
+GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
+GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
+GTKSOURCEVIEW_CFLAGS = @GTKSOURCEVIEW_CFLAGS@
+GTKSOURCEVIEW_LIBS = @GTKSOURCEVIEW_LIBS@
+GTKSOURCEVIEW_PREFIX = @GTKSOURCEVIEW_PREFIX@
+GTK_PREFIX = @GTK_PREFIX@
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
+USE_NLS = @USE_NLS@
+MACLIB = @MACLIB@
+GTKMAC_CFLAGS = @GTKMAC_CFLAGS@
+GTKMAC_LIBS = @GTKMAC_LIBS@
+
+ifeq ($(win32pkg),yes)
+  svdir = $(prefix)/gtksourceview
+else
+  svdir = $(prefix)/share/gretl/gtksourceview
+endif
+
+ifeq ($(pkg_build),no)
+  SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
+  sv2dir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-2.0/language-specs
+  sv3dir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-3.0/language-specs
+  sv4dir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-4/language-specs
+endif
+
+ifneq ($(strip $(GTK_PREFIX)),)
+  GTKDEF = -DGTK_PREFIX=\"$(GTK_PREFIX)\"
+endif
+
+ifeq ($(CC),)
+  CC = gcc
+endif
+ifeq ($(INSTALL_PROGRAM),)
+  INSTALL_PROGRAM = $(INSTALL) -m 755
+endif
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+ifeq ($(LN),)
+  LN = ln -sf
+endif
+
+GRETLLIB = ../lib/libgretl-1.0.la
+LIBS = $(GTKSOURCEVIEW_LIBS) $(GTK_LIBS) $(GTKMAC_LIBS) $(GRETLLIB)
+GUI_CFLAGS = $(GTK_CFLAGS) $(GTKSOURCEVIEW_CFLAGS) $(GTKMAC_CFLAGS) $(GTK_HUSH)
+
+ifeq ($(USE_NLS),yes)
+  datadir = @datadir@
+  localedir = $(datadir)/locale
+  NLSDEF = -DLOCALEDIR=\"$(localedir)\"
+endif
+
+ifeq ($(quiet_build),yes)
+  AMP = @
+  CCECHO = @echo "  CC    $@"
+  LDECHO = @echo "  LD    $@" 
+  CCV = $(CC) -DGRETL_EDIT $(SIMD_OPT) $(OMP_OPT) > /dev/null
+else
+  CCV = $(CC) -DGRETL_EDIT $(SIMD_OPT) $(OMP_OPT)
+endif
+
+DEFS = $(NLSDEF) $(SVDEF) $(GTKDEF)
+
+# Directories
+ifeq ($(win32pkg),yes)
+  gretldir = $(prefix)
+else
+  gretldir = $(datarootdir)/gretl
+endif
+
+tooldir = $(topsrc)/tools
+libsrc = $(topsrc)/lib/src
+
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) \
+	$(GDK_PIXBUF_CFLAGS) $(XML_CFLAGS) $(DEFS)
+override LIBS += $(GDK_PIXBUF_LIBS)
+
+#### End of system configuration section. ####
+
+SHELL = /bin/sh
+LIBTOOL = ../libtool
+
+ifeq ($(mac_native),yes)
+  PROG = gretl_edit
+else ifeq ($(win32_build),yes)
+  PROG = gretl_edit$(EXEEXT)
+else
+  PROG = gretl_edit$(EXEEXT)
+endif
+
+vpath %.c $(topsrc)/gui
+vpath %.h $(topsrc)/gui
+
+SRCS = gretl_edit.c \
+	base_utils.c \
+	dialogs.c \
+	dlgutils.c \
+	focus.c \
+	fontfilter.c \
+	fileselect.c \
+	gretl_ipc.c \
+	gui_recode.c \
+	viewers.c \
+	helpfiles.c \
+	settings.c \
+	tabwin.c \
+	textbuf.c \
+	textutil.c \
+	editbar.c \
+	winstack.c
+
+ifeq ($(gtk_version),2.0)
+  HACK_SRC = gtkfontselhack.c
+  HACK_HDR = gtkfontselhack.h
+  HACK_OBJ = gtkfontselhack.o
+endif
+
+ifeq ($(win32_build),yes)
+  SRCS += gretlwin32.c
+  WINLIBS = -lwsock32 -lole32 -lshlwapi -ladvapi32 -lcomdlg32
+  WINOBJ = gretlres.o
+  WINGUI = -mwindows
+  WINDRES = @WINDRES@
+  # FIXME rc file
+  GRETLRC = $(topsrc)/win32/gretl.rc 
+  RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
+	--define __GNUWIN32__
+else
+  SRCS += clipboard.c
+endif
+
+ifeq ($(gtksv_completion),yes)
+  SRCS += completions.c
+endif
+
+OBJS = $(SRCS:.c=.o)
+
+all: $(PROG)
+
+%.o: %.c
+	$(CCECHO)
+	$(AMP)$(CC) -c $(CFLAGS) $<
+	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
+
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(WINOBJ)
+	$(LDECHO)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(WINGUI) $(LDFLAGS) -o $@ $(OBJS) \
+	$(HACK_OBJ) $(WINOBJ) $(LIBS) $(MACLIB) $(WINLIBS)
+
+$(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
+
+gretlres.o: $(GRETLRC)
+	$(WINDRES) $(RCFLAGS) $< $@
+
+.deps:
+	$(AMP)mkdir $@
+
+-include .deps/*.d
+
+.PHONY:
+
+install: $(PROG) installdirs 
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
+
+install-strip: $(PROG) install-data
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
+
+clean:
+	rm -f *.o $(PROG)
+	rm -rf .libs .deps
+
+distclean: clean
+	rm -f Makefile
+

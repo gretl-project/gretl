@@ -992,6 +992,7 @@ gretl_sh
 gretl.pc
 gui/Makefile
 gui/debug
+editor/Makefile
 xdg/gretl.desktop
 xdg/Makefile
 cli/Makefile
