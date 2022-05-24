@@ -12811,12 +12811,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 						    &p->err);
         }
     } else if (f == F_SPHCORR) {
-	int has_jacobian = !null_node(r);
 	
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (!null_or_scalar(m)) {
 	    node_type_error(f, 2, NUM, m, p);
+	} else if ((r->t != U_ADDR) && (r->t != EMPTY)) {
+	    node_type_error(f, 3, U_ADDR, r, p);
 	} else {
 	    ret = aux_scalar_node(p);
 	    int mode = null_node(m) ? 0 : node_get_int(m, p);
@@ -12825,6 +12826,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = omega_from_R(l->v.m, &p->err);
 	    } else if (mode == 1 || mode == 2) {
 		/* mode can be 1 or 2 */
+		int has_jacobian = (r->t == U_ADDR);
 		gretl_matrix *J = NULL;
 		if (has_jacobian) {
 		    J = ptr_node_get_matrix(r,p);
