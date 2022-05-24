@@ -73,8 +73,6 @@ int scalars_to_clipboard_as_csv (GtkWidget *parent);
 int matrix_to_clipboard_as_csv (const gretl_matrix *m,
 				GtkWidget *parent);
 
-int font_has_symbol (PangoFontDescription *desc, int symbol);
-
 int latex_compile (char *texshort);
 
 void view_latex (PRN *prn);

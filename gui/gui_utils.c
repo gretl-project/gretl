@@ -777,7 +777,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		}
 	    } else if (upkey == GDK_T && window_is_tab(vwin)) {
 		/* Ctrl-T: open new tab */
-		do_new_script(vwin->role, NULL);
+		do_new_script(vwin->role, NULL, NULL);
 		return TRUE;
 	    }
 	}
@@ -2280,21 +2280,23 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
 windata_t *
-view_file_with_title (const char *filename, int editable, int del_file,
+view_file_with_title (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role,
 		      const char *given_title)
 {
     windata_t *vwin;
-    FILE *fp;
+    int have_content = 1;
     int ins = 0;
 
-    /* first check that we can open the specified file */
-    fp = gretl_fopen(filename, "r");
-    if (fp == NULL) {
-	errbox_printf(_("Can't open %s for reading"), filename);
-	return NULL;
+    if (mode & NULL_FILE) {
+	/* new script with pre-given name */
+	have_content = 0;
     } else {
-	fclose(fp);
+	/* first check that we can open the specified file */
+	if (gretl_test_fopen(filename, "r") != 0) {
+	    errbox_printf(_("Can't open %s for reading"), filename);
+	    return NULL;
+	}
     }
 
 #if 0
@@ -2349,8 +2351,12 @@ view_file_with_title (const char *filename, int editable, int del_file,
     text_table_setup(vwin->vbox, vwin->text);
 
     if (textview_use_highlighting(role) || editable) {
-	sourceview_insert_file(vwin, filename);
-    } else {
+	if (have_content) {
+	    sourceview_insert_file(vwin, filename);
+	} else {
+	    sourceview_insert_file(vwin, NULL);
+	}
+    } else if (have_content) {
 	textview_insert_file(vwin, filename);
     }
 
@@ -2367,7 +2373,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     }
 
     /* clean up when dialog is destroyed */
-    if (del_file) {
+    if (mode & TMP_FILE) {
 	gchar *fname = g_strdup(filename);
 
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
@@ -2397,16 +2403,18 @@ view_file_with_title (const char *filename, int editable, int del_file,
     return vwin;
 }
 
-windata_t *view_file (const char *filename, int editable, int del_file,
+windata_t *view_file (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role)
 {
-    return view_file_with_title(filename, editable, del_file,
+    return view_file_with_title(filename, editable, mode,
 				hsize, vsize, role, NULL);
 }
 
 windata_t *view_script (const char *filename, int editable,
 			int role)
 {
+    int vsize = SCRIPT_HEIGHT;
+
     if (editable) {
 	windata_t *vwin = get_editor_for_file(filename);
 
@@ -2416,8 +2424,12 @@ windata_t *view_script (const char *filename, int editable,
 	}
     }
 
+    if (gui_editor_mode()) {
+	vsize *= 1.5;
+    }
+
     return view_file_with_title(filename, editable, 0,
-				SCRIPT_WIDTH, SCRIPT_HEIGHT,
+				SCRIPT_WIDTH, vsize,
 				role, NULL);
 }
 
@@ -6197,7 +6209,6 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 
 #endif /* !G_OS_WIN32 */
 
-
 #ifdef G_OS_WIN32 /* back to Windows-specific */
 
 typedef struct {
@@ -6440,3 +6451,118 @@ const char *print_today (void)
 
     return timestr;
 }
+
+/* We mostly use this for checking whether the font described by @desc
+   has the Unicode minus sign (0x2212), which looks better than a
+   simple dash if it's available.
+*/
+
+int font_has_symbol (PangoFontDescription *desc, int symbol)
+{
+    GtkWidget *widget;
+    PangoContext *context = NULL;
+    PangoLayout *layout = NULL;
+    PangoLanguage *lang = NULL;
+    PangoCoverage *coverage = NULL;
+    int ret = 0;
+
+    if (desc == NULL) {
+	return 0;
+    }
+
+    widget = gtk_label_new("");
+    if (g_object_is_floating(widget)) {
+	g_object_ref_sink(widget);
+    }
+
+    context = gtk_widget_get_pango_context(widget);
+    if (context == NULL) {
+	gtk_widget_destroy(widget);
+	return 0;
+    }
+
+    layout = pango_layout_new(context);
+    lang = pango_language_from_string("eng");
+
+    if (layout != NULL && lang != NULL) {
+	PangoFont *font = pango_context_load_font(context, desc);
+
+	if (font != NULL) {
+	    coverage = pango_font_get_coverage(font, lang);
+	    if (coverage != NULL) {
+		ret = (pango_coverage_get(coverage, symbol) == PANGO_COVERAGE_EXACT);
+		pango_coverage_unref(coverage);
+	    }
+	    g_object_unref(font);
+	}
+    }
+
+    g_object_unref(G_OBJECT(layout));
+    g_object_unref(G_OBJECT(context));
+    gtk_widget_destroy(widget);
+
+    return ret;
+}
+
+#ifndef G_OS_WIN32
+
+int gretl_fork (const char *progvar, const char *arg,
+		const char *opt)
+{
+    const char *prog = NULL;
+    gchar *argv[4] = {NULL, NULL, NULL, NULL};
+    GError *err = NULL;
+    gboolean run;
+
+#ifdef OS_OSX
+    if (!strcmp(progvar, "calculator")) {
+	prog = calculator;
+    }
+#else
+    if (!strcmp(progvar, "Browser")) {
+	prog = Browser;
+    } else if (!strcmp(progvar, "calculator")) {
+	prog = calculator;
+    } else if (!strcmp(progvar, "viewpdf")) {
+	prog = viewpdf;
+    } else if (!strcmp(progvar, "viewps")) {
+	prog = viewps;
+    } else {
+	prog = progvar;
+    }
+#endif
+
+    if (prog == NULL) {
+	errbox_printf("Internal error: variable %s is undefined", progvar);
+	return 1;
+    }
+
+    argv[0] = g_strdup(prog);
+
+    if (opt != NULL) {
+	argv[1] = g_strdup(arg);
+	argv[2] = g_strdup(opt);
+    } else if (arg != NULL) {
+	argv[1] = g_strdup(arg);
+    }
+
+    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+			NULL, NULL, NULL, &err);
+
+    if (err != NULL) {
+	errbox(err->message);
+	if (err->domain == G_SPAWN_ERROR &&
+	    err->code == G_SPAWN_ERROR_NOENT) {
+	    preferences_dialog(TAB_PROGS, progvar, mdata->main);
+	}
+	g_error_free(err);
+    }
+
+    g_free(argv[0]);
+    g_free(argv[1]);
+    g_free(argv[2]);
+
+    return !run;
+}
+
+#endif

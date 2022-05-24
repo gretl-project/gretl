@@ -890,6 +890,17 @@ int gretl_win32_pipe_output (const char *cmdline,
 			      prn, OPT_NONE);
 }
 
+/* execute @cmdline and return its stdout in *sout,
+   non-shell variant */
+
+int gretl_win32_grab_stdout (const char *cmdline,
+			     const char *currdir,
+			     char **sout)
+{
+    return run_cmd_with_pipes(cmdline, currdir, sout,
+			      NULL, OPT_NONE);
+}
+
 /* note: gretl_shell_grab() is declared in interact.h,
    and the non-Windows implementation is defined in
    interact.c

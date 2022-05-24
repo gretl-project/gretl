@@ -204,11 +204,13 @@ function void nz_print (const bundle b, int nlam)
       return
    endif
    strings S = varnames(b.nzX)
-   len = max(strlen(S))
-   loop i=1..nelem(S)
-      printf "%*s %#12.6g\n", len, S[i], b.nzb[i]
-   endloop
-   printf "\n"
+   if nelem(S) > 0
+      len = max(strlen(S))
+      loop i=1..nelem(S)
+         printf "%*s %#12.6g\n", len, S[i], b.nzb[i]
+      endloop
+      printf "\n"
+   endif
 end function
 
 function bundle regls (series depvar, list indeps,

@@ -955,7 +955,7 @@ void do_nistcheck (GtkAction *action)
 
     (*run_nist_tests)(datadir, fname, nist_verbosity(action));
 
-    view_file(fname, 0, 1, 78, 400, VIEW_CODEBOOK);
+    view_file(fname, 0, TMP_FILE, 78, 400, VIEW_CODEBOOK);
 
     g_free(datadir);
     g_free(fname);
@@ -987,4 +987,3 @@ void kalman_callback (GtkAction *action, gpointer data)
 {
     open_function_package("KFgui", NULL, mdata);
 }
-

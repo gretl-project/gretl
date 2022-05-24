@@ -5320,7 +5320,7 @@ int no_user_functions_check (GtkWidget *parent)
 	resp = yes_no_dialog(_("gretl: function packages"),
 			     _(query), parent);
 	if (resp == GRETL_YES) {
-	    do_new_script(FUNC, NULL);
+	    do_new_script(FUNC, NULL, NULL);
 	}
     }
 

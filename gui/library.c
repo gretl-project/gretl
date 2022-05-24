@@ -8889,7 +8889,7 @@ gboolean do_open_script (int action)
     int err = gretl_test_fopen(fname, "r");
 
     if (err) {
-        file_read_errbox(fname);
+	file_read_errbox(fname);
         if (action == EDIT_HANSL) {
             delete_from_filelist(FILE_LIST_SESSION, fname);
             delete_from_filelist(FILE_LIST_SCRIPT, fname);
@@ -8915,35 +8915,54 @@ gboolean do_open_script (int action)
     return TRUE;
 }
 
-void do_new_script (int code, const char *buf)
+/* do_new_script(): passing a non-NULL @scriptname is a means
+   of creating a new script with a name pre-given by the user;
+   this applies only when we get the name of a non-existent
+   script on the command line. Otherwise the new script gets
+   a temporary name in the user's dotdir.
+*/
+
+void do_new_script (int code, const char *buf,
+		    const char *scriptname)
 {
     int action = (code == FUNC)? EDIT_HANSL : code;
+    fmode mode = 0;
     windata_t *vwin;
-    char temp[MAXLEN];
-    FILE *fp;
+    gchar *fname;
 
-    sprintf(temp, "%sscript_tmp", gretl_dotdir());
-    fp = gretl_tempfile_open(temp);
-    if (fp == NULL) {
-        return;
+    if (scriptname == NULL) {
+	/* the usual case */
+	FILE *fp;
+
+	fname = gretl_make_dotpath("script_tmp");
+	fp = gretl_tempfile_open(fname);
+	if (fp == NULL) {
+	    g_free(fname);
+	    return;
+	} else {
+	    if (buf != NULL) {
+		fputs(buf, fp);
+	    } else if (code == FUNC) {
+		fputs("function \n\nend function\n", fp);
+	    } else if (code == EDIT_OX) {
+		fputs("#include <oxstd.h>\n\n", fp);
+		fputs("main()\n{\n\n}\n", fp);
+	    }
+	    fclose(fp);
+	}
+	mode = TMP_FILE;
+    } else {
+	/* special startup case */
+	fname = g_strdup(scriptname);
+	mode = NULL_FILE;
     }
-
-    if (buf != NULL) {
-        fputs(buf, fp);
-    } else if (code == FUNC) {
-        fputs("function \n\nend function\n", fp);
-    } else if (code == EDIT_OX) {
-        fputs("#include <oxstd.h>\n\n", fp);
-        fputs("main()\n{\n\n}\n", fp);
-    }
-
-    fclose(fp);
 
     if (action == EDIT_HANSL) {
-        strcpy(scriptfile, temp);
+        strcpy(scriptfile, fname);
     }
 
-    vwin = view_file(temp, 1, 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    vwin = view_file(fname, 1, mode, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
+    g_free(fname);
 
     if (buf != NULL && *buf != '\0') {
         mark_vwin_content_changed(vwin);
@@ -8975,7 +8994,7 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_LPSOLVE;
     }
 
-    do_new_script(etype, NULL);
+    do_new_script(etype, NULL, NULL);
 }
 
 void maybe_display_string_table (void)

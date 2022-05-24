@@ -304,13 +304,13 @@ static void copy_to_editor (GtkWidget *w, windata_t *vwin)
 	    gchar *modbuf;
 
 	    modbuf = g_strdup_printf("# logged commands\n%s", s);
-	    do_new_script(EDIT_HANSL, modbuf);
+	    do_new_script(EDIT_HANSL, modbuf, NULL);
 	    g_free(modbuf);
 	} else {
-	    do_new_script(EDIT_HANSL, buf);
+	    do_new_script(EDIT_HANSL, buf, NULL);
 	}
     } else {
-	do_new_script(EDIT_HANSL, buf);
+	do_new_script(EDIT_HANSL, buf, NULL);
     }
 
     g_free(buf);
@@ -468,7 +468,7 @@ static void open_pkg_sample (GtkWidget *w, windata_t *vwin)
 
 static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 {
-    do_new_script(vwin->role, NULL);
+    do_new_script(vwin->role, NULL, NULL);
 }
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
@@ -1049,7 +1049,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     int r = vwin->role;
 
     if (mail_ok < 0) {
-	mail_ok = curl_does_smtp();
+	mail_ok = curl_does_smtp() && !gui_editor_mode();
     }
 
     if (r == EDIT_SPEC) {
@@ -1610,7 +1610,7 @@ static void tbar_model (void)
 
 static void tbar_new_script (void)
 {
-    do_new_script(EDIT_HANSL, NULL);
+    do_new_script(EDIT_HANSL, NULL, NULL);
 }
 
 static void tbar_show_funcs (GtkWidget *w, gpointer p)

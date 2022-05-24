@@ -46,6 +46,8 @@
 
 enum { ADD_COMMA, DROP_COMMA };
 
+typedef enum { TMP_FILE = 1, NULL_FILE = 2 } fmode;
+
 int vwin_is_editing (windata_t *vwin);
 
 int copyfile (const char *src, const char *dest);
@@ -105,11 +107,11 @@ windata_t *view_buffer_with_parent (windata_t *parent, PRN *prn,
 				    const char *title, int role,
 				    gpointer data);
 
-windata_t *view_file (const char *filename, int editable, int del_file,
+windata_t *view_file (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role);
 
 windata_t *
-view_file_with_title (const char *filename, int editable, int del_file,
+view_file_with_title (const char *filename, int editable, fmode mode,
 		      int hsize, int vsize, int role,
 		      const char *given_title);
 
@@ -196,6 +198,8 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt);
 
 const char *print_today (void);
 
+int font_has_symbol (PangoFontDescription *desc, int symbol);
+
 #ifdef G_OS_WIN32
 void win32_run_gretlcli_async (gchar *cmd,
 			       gchar *fname,
@@ -203,6 +207,8 @@ void win32_run_gretlcli_async (gchar *cmd,
 #else
 int browser_open (const char *url);
 void run_gretlcli_async (char **argv, windata_t *scriptwin);
+int gretl_fork (const char *progvar, const char *arg,
+		const char *opt);
 #endif
 
 #endif /* GUI_UTILS_H */

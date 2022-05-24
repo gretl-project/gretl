@@ -545,7 +545,7 @@ static gboolean app_open_file_cb (GtkosxApplication *app,
 	    return TRUE;
 	}
 	set_tryfile(path);
-	return open_tryfile();
+	return open_tryfile(FALSE);
     } else {
 	clear_tryfile();
 	return TRUE;
@@ -921,9 +921,9 @@ int main (int argc, char **argv)
 #endif
 
     if (tryfile_is_set()) {
-	open_tryfile();
+	open_tryfile(TRUE);
     } else if (opted) {
-	do_new_script(EDIT_HANSL, NULL);
+	do_new_script(EDIT_HANSL, NULL, NULL);
     }
 
     if (!opted) {
@@ -2496,69 +2496,6 @@ static void start_R_callback (void)
     start_R(NULL, 1, 1);
 }
 
-#ifndef G_OS_WIN32
-
-int gretl_fork (const char *progvar, const char *arg,
-		const char *opt)
-{
-    const char *prog = NULL;
-    gchar *argv[4] = {NULL, NULL, NULL, NULL};
-    GError *err = NULL;
-    gboolean run;
-
-#ifdef OS_OSX
-    if (!strcmp(progvar, "calculator")) {
-	prog = calculator;
-    }
-#else
-    if (!strcmp(progvar, "Browser")) {
-	prog = Browser;
-    } else if (!strcmp(progvar, "calculator")) {
-	prog = calculator;
-    } else if (!strcmp(progvar, "viewpdf")) {
-	prog = viewpdf;
-    } else if (!strcmp(progvar, "viewps")) {
-	prog = viewps;
-    } else {
-	prog = progvar;
-    }
-#endif
-
-    if (prog == NULL) {
-	errbox_printf("Internal error: variable %s is undefined", progvar);
-	return 1;
-    }
-
-    argv[0] = g_strdup(prog);
-
-    if (opt != NULL) {
-	argv[1] = g_strdup(arg);
-	argv[2] = g_strdup(opt);
-    } else if (arg != NULL) {
-	argv[1] = g_strdup(arg);
-    }
-
-    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-			NULL, NULL, NULL, &err);
-
-    if (err != NULL) {
-	errbox(err->message);
-	if (err->domain == G_SPAWN_ERROR &&
-	    err->code == G_SPAWN_ERROR_NOENT) {
-	    preferences_dialog(TAB_PROGS, progvar, mdata->main);
-	}
-	g_error_free(err);
-    }
-
-    g_free(argv[0]);
-    g_free(argv[1]);
-    g_free(argv[2]);
-
-    return !run;
-}
-
-#endif
-
 /* Icon handling for X11 */
 
 #ifndef G_OS_WIN32
@@ -2645,22 +2582,63 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
     set_tryfile(tmp);
 
-    open_tryfile();
+    open_tryfile(FALSE);
 }
 
-gboolean open_tryfile (void)
-{
-    gboolean ret = FALSE;
-    int ftype = 0;
+/* At start-up only: if we can't open a script file specified on the
+   command line, give the user a choice between creating a new file
+   (of the given name, if writable) and quitting the program.
+*/
 
-    if (opted) {
-	if ((ftype = script_type(tryfile))) {
-	    return do_open_script(ftype);
+static gboolean maybe_open_script (int stype)
+{
+    if (gretl_test_fopen(tryfile, "r") == 0) {
+	/* file can be opened OK */
+	return do_open_script(stype);
+    } else {
+	int noname = 0;
+	gchar *msg;
+	gint resp;
+
+	if (gretl_test_fopen(tryfile, "w") == 0) {
+	    /* OK, @tryfile is at least writable */
+	    msg = g_strdup_printf(_("Couldn't open %s"), tryfile);
 	} else {
-	    do_new_script(EDIT_HANSL, NULL);
-	    warnbox_printf(_("%s: not a recognized script file"), tryfile);
-	    return TRUE;
+	    msg = g_strdup_printf(_("Couldn't write to %s"), tryfile);
+	    noname = 1;
 	}
+	resp = script_start_dialog(msg);
+	g_free(msg);
+	if (resp == GTK_RESPONSE_OK) {
+	    /* "New script" */
+	    do_new_script(stype, NULL, noname ? NULL : tryfile);
+	    return TRUE;
+	} else {
+	    /* "Quit" */
+	    exit(EXIT_FAILURE);
+	}
+    }
+
+    return FALSE;
+}
+
+gboolean open_tryfile (gboolean startup)
+{
+    int stype = script_type(tryfile);
+    gboolean ret = FALSE;
+
+    if (stype > 0) {
+	/* We're looking at some sort of script */
+	if (startup) {
+	    return maybe_open_script(stype);
+	} else {
+	    return do_open_script(stype);
+	}
+    } else if (opted) {
+	/* only script files are acceptable */
+	do_new_script(EDIT_HANSL, NULL, NULL);
+	warnbox_printf(_("%s: not a recognized script file"), tryfile);
+	return TRUE;
     }
 
     if (has_db_suffix(tryfile)) {
@@ -2668,8 +2646,6 @@ gboolean open_tryfile (void)
     } else if (has_suffix(tryfile, ".gretl") &&
 	       gretl_is_pkzip_file(tryfile)) {
 	ret = verify_open_session();
-    } else if ((ftype = script_type(tryfile))) {
-	ret = do_open_script(ftype);
     } else if (has_suffix(tryfile, ".gfn") &&
 	       gretl_is_xml_file(tryfile)) {
 	ret = edit_specified_package(tryfile);
