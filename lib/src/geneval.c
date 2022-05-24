@@ -12831,7 +12831,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 		
 		A = R_from_omega(l->v.m, (mode == 2), has_jacobian,
-				 &J, &p->err);
+				 J, &p->err);
 		gretl_matrix_print(J, "J");
 	    }
 	}    

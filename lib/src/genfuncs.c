@@ -8513,14 +8513,15 @@ static int *funky_index(int n, int m)
 
 gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 			   int do_jacobian,
-			   gretl_matrix **J, int *err)
+			   gretl_matrix *J, int *err)
 {
     gretl_matrix *R = NULL, *K;
     int m = omega->rows;
     double tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
     int n = nearbyint(tmp);
     int *Jindex;
-    gretl_matrix *tmpJac =  NULL;
+    gretl_matrix *localJ;
+    gretl_matrix *tmpJac = NULL;
     double der;
     
     if (fabs(tmp - n) > 1.0e-3) {
@@ -8533,7 +8534,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 
     if (do_jacobian) {
 	/* pre-allocate Jacobian matrix */
-	*J = gretl_zero_matrix_new(m + n, m); 
+	localJ = gretl_zero_matrix_new(m + n, m); 
 	Jindex = malloc((m + n) * sizeof *Jindex);
 	Jindex = funky_index(n, m);
 	
@@ -8571,7 +8572,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 		    printf("d[%d,%d] = %f\n", ii, jj,der);
 		    printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
 #endif
-		    gretl_matrix_set(*J, Jindex[r_i], c_i + jj, der);
+		    gretl_matrix_set(localJ, Jindex[r_i], c_i + jj, der);
 		}
 	    }
 	    r_i++;
@@ -8585,6 +8586,7 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 
     free(f);
     if (do_jacobian) {
+	gretl_matrix_replace_content(J, localJ);
 	gretl_matrix_free(tmpJac);
 	free(Jindex);
     }
