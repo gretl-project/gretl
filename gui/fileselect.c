@@ -18,21 +18,26 @@
  */
 
 #include "gretl.h"
+#include "textbuf.h"
+#include "textutil.h"
+#include "fileselect.h"
+#include "winstack.h"
+#include "tabwin.h"
+#include "base_utils.h"
+
+#ifndef GRETL_EDIT
+#include "gui_utils.h"
+#include "filelists.h"
 #include "gpt_control.h"
 #include "gpt_dialog.h"
 #include "session.h"
-#include "textbuf.h"
-#include "textutil.h"
-#include "filelists.h"
-#include "fileselect.h"
 #include "fnsave.h"
 #include "database.h"
 #include "datafiles.h"
 #include "guiprint.h"
 #include "graphics.h"
-#include "winstack.h"
-#include "tabwin.h"
 #include "bootstrap.h"
+#endif
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -105,6 +110,23 @@ static struct extmap action_map[] = {
 static int gdtb_save;
 static char alt_gfndir[FILENAME_MAX];
 
+#if GRETL_EDIT
+
+static const char *get_extension_for_action (int action, gpointer data)
+{
+    int i;
+
+    for (i=0; i < G_N_ELEMENTS(action_map); i++) {
+	if (action == action_map[i].action) {
+	    return action_map[i].ext;
+	}
+    }
+
+    return NULL;
+}
+
+#else
+
 static const char *get_extension_for_action (int action, gpointer data)
 {
     const char *s = NULL;
@@ -142,6 +164,8 @@ static const char *get_extension_for_action (int action, gpointer data)
 
     return s;
 }
+
+#endif /* GRETL_EDIT or not */
 
 static int fname_has_extension (const char *fname)
 {
@@ -246,6 +270,8 @@ static void script_window_update (windata_t *vwin,
     mark_vwin_content_saved(vwin);
 }
 
+#ifndef GRETL_EDIT
+
 static void handle_geoplot_save (const char *buf,
 				 const char *fname,
 				 windata_t *vwin)
@@ -282,6 +308,8 @@ static void handle_geoplot_save (const char *buf,
     g_free(datname);
 }
 
+#endif /* not GRETL_EDIT */
+
 static void
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
@@ -293,11 +321,13 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
+#ifndef GRETL_EDIT
     if (vwin->flags & VWIN_SESSION_GRAPH && vwin->data != NULL) {
 	handle_geoplot_save(buf, fname, vwin);
 	g_free(buf);
 	return;
     }
+#endif
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
@@ -312,7 +342,9 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 
     if (action == SAVE_SCRIPT) {
 	strcpy(scriptfile, fname);
+#ifndef GRETL_EDIT
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
+#endif
 	script_window_update(vwin, fname);
     } else if (action == SAVE_GP_CMDS ||
 	       action == SAVE_R_CMDS ||
@@ -389,7 +421,9 @@ static void script_open_choice (const char *fname, windata_t *vwin,
 	} else {
 	    if (view_script(fname, 1, EDIT_HANSL) != NULL) {
 		strcpy(scriptfile, fname);
+#ifndef GRETL_EDIT
 		mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
+#endif
 	    }
 	}
     } else if (resp == 1) {
@@ -452,9 +486,13 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	view_script(fname, 1, role);
     } else if (view_script(fname, 1, EDIT_HANSL) != NULL) {
 	strcpy(scriptfile, fname);
+#ifndef GRETL_EDIT
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
+#endif
     }
 }
+
+#ifndef GRETL_EDIT
 
 static void filesel_open_session (const char *fname)
 {
@@ -580,17 +618,6 @@ static void bootstrap_save_callback (const char *fname)
     }
 }
 
-static void maybe_set_fsel_status (int action, FselDataSrc src,
-				   gpointer p, int val)
-{
-    if (src == FSEL_DATA_STATUS && p != NULL) {
-	* (int *) p = val;
-    } else if (action == OPEN_BARS && val) {
-	/* error or cancel */
-	set_plotbars_filename(NULL, p);
-    }
-}
-
 static void os_open_other (const char *fname)
 {
 #if defined(G_OS_WIN32)
@@ -599,6 +626,22 @@ static void os_open_other (const char *fname)
     osx_open_file(fname);
 #else
     gretl_fork("xdg-open", fname, NULL);
+#endif
+}
+
+#endif /* not GRETL_EDIT */
+
+static void maybe_set_fsel_status (int action, FselDataSrc src,
+				   gpointer p, int val)
+{
+    if (src == FSEL_DATA_STATUS && p != NULL) {
+	* (int *) p = val;
+    }
+#ifndef GRETL_EDIT
+    else if (action == OPEN_BARS && val) {
+	/* error or cancel */
+	set_plotbars_filename(NULL, p);
+    }
 #endif
 }
 
@@ -622,6 +665,7 @@ file_selector_process_result (const char *in_fname, int action,
 	}
     }
 
+#ifndef GRETL_EDIT
     if (action == OPEN_ANY) {
 	/* designed for browsing an addon's "examples" directory */
 	if (has_suffix(fname, ".inp")) {
@@ -642,8 +686,17 @@ file_selector_process_result (const char *in_fname, int action,
 	    return;
 	}
     }
+#endif
 
-    if (action == OPEN_DATA) {
+    if (action == OPEN_SCRIPT) {
+	if (src == FSEL_DATA_VWIN) {
+	    filesel_open_script(fname, data);
+	} else {
+	    filesel_open_script(fname, NULL);
+	}
+    }
+#ifndef GRETL_EDIT
+    else if (action == OPEN_DATA) {
 	set_tryfile(fname);
 	verify_open_data(NULL, action);
     } else if (action == APPEND_DATA) {
@@ -674,6 +727,7 @@ file_selector_process_result (const char *in_fname, int action,
     } else if (action == UPLOAD_PKG) {
 	upload_specified_package(fname);
     }
+#endif /* not GRETL_EDIT */
 
     if (action < END_OPEN) {
 	return;
@@ -685,6 +739,19 @@ file_selector_process_result (const char *in_fname, int action,
 	return;
     }
 
+#ifdef GRETL_EDIT
+    if (src == FSEL_DATA_PRN) {
+	filesel_save_prn_buffer((PRN *) data, fname);
+    } else if (action == SET_PROG ||
+	       action == SET_DIR ||
+	       action == SET_OTHER) {
+	set_path_callback(data, fname);
+    } else {
+	windata_t *vwin = (windata_t *) data;
+
+	save_editable_content(action, fname, vwin);
+    }
+#else
     if (action == SAVE_TEX) {
 	if (src == FSEL_DATA_PRN) {
 	    save_latex((PRN *) data, fname);
@@ -736,6 +803,7 @@ file_selector_process_result (const char *in_fname, int action,
 
 	save_editable_content(action, fname, vwin);
     }
+#endif /* GRETL_EDIT or not */
 
     maybe_set_fsel_status(action, src, data, err);
 }
@@ -820,6 +888,18 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 {
     gchar *currname;
 
+#ifdef GRETL_EDIT
+    if (action == SET_PROG || action == SET_DIR || action == SET_OTHER) {
+	currname = (gchar *) data;
+	if (currname != NULL && g_path_is_absolute(currname)) {
+	    gtk_file_chooser_set_filename(filesel, currname);
+	} else if (action == SET_PROG) {
+	    set_default_progs_path(filesel);
+	} else if (action == SET_OTHER) {
+	    set_default_other_path(filesel);
+	}
+    }
+#else
     if (action == SAVE_DATA && *datafile != '\0') {
 	currname = suggested_savename(datafile);
 	gtk_file_chooser_set_current_name(filesel, currname);
@@ -871,6 +951,7 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
     } else if (action == SAVE_LABELS) {
 	gtk_file_chooser_set_current_name(filesel, "labels.txt");
     }
+#endif /* GRETL_EDIT or not */
 }
 
 /* local extension of enum GretlFileType in dataio.h */
@@ -1278,6 +1359,15 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	}
     }
 
+#ifdef GRETL_EDIT
+    if (dirname != NULL) {
+	strcpy(startdir, dirname);
+    } else if (remember && *savedir != '\0') {
+	strcpy(startdir, savedir);
+    } else {
+	get_default_dir_for_action(startdir, action);
+    }
+#else
     if (dirname != NULL) {
 	strcpy(startdir, dirname);
     } else if (remember && *savedir != '\0') {
@@ -1297,6 +1387,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     } else {
 	get_default_dir_for_action(startdir, action);
     }
+#endif
 
     if (parent == NULL) {
 	/* by default the file selector is parented by the

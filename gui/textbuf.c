@@ -23,13 +23,16 @@
 #include "dlgutils.h"
 #include "winstack.h"
 #include "tabwin.h"
-#include "guiprint.h"
 #include "gui_recode.h"
 #include "gretl_func.h"
 #include "addons_utils.h"
+
+#ifndef GRETL_EDIT
+#include "guiprint.h"
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
+#endif
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h" /* for browser_open() */
@@ -1943,7 +1946,7 @@ static void open_dbs_link (GtkTextTag *tag)
     }
 }
 
-/* opening next "page" pf dbnomics search results */
+/* opening next "page" of dbnomics search results */
 
 static void open_next_link (GtkTextTag *tag, GtkWidget *tview)
 {

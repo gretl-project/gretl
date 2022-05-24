@@ -26,6 +26,7 @@
 #include "lib_private.h"
 #include "cmdstack.h"
 #include "winstack.h"
+#include "gui_utils.h"
 
 #define NTESTS 6
 #define NPTESTS 3

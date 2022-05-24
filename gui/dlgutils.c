@@ -21,13 +21,16 @@
 
 #include "gretl.h"
 #include "textbuf.h"
-#include "menustate.h"
 #include "tabwin.h"
+#include "base_utils.h"
 #include "dlgutils.h"
 
+#ifndef GRETL_EDIT
+#include "menustate.h"
 #include "libset.h"
 #include "system.h"
 #include "gretl_bfgs.h"
+#endif
 
 dialog_opts *dialog_opts_new (int n, int type,
 			      gretlopt *optp,
@@ -399,6 +402,8 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
 
     return button;
 }
+
+#ifndef GRETL_EDIT
 
 /* "edit dialog" apparatus */
 
@@ -931,6 +936,8 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     return b;
 }
 
+#endif /* not GRETL_EDIT */
+
 static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
 {
     gchar *s = combo_box_get_active_text(box);
@@ -995,6 +1002,8 @@ void depopulate_combo_box (GtkComboBox *box)
 	combo_box_remove(box, 0);
     }
 }
+
+#ifndef GRETL_EDIT
 
 static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
 {
@@ -1472,6 +1481,8 @@ void edit_dialog_reset (dialog_t *dlg)
 	*dlg->cancel = 1;
     }
 }
+
+#endif /* not GRETL_EDIT */
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w)
 {

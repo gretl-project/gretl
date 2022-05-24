@@ -482,6 +482,8 @@ static void add_cascade_item (GtkWidget *menu,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 }
 
+#ifndef GRETL_EDIT
+
 static void add_log_item (GtkWidget *menu,
 			  GtkWidget *item)
 {
@@ -516,6 +518,8 @@ static void add_iconview_item (GtkWidget *menu,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 }
 
+#endif
+
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
@@ -529,8 +533,10 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     GtkWidget *item, *lwin;
     GtkWidget *thiswin = NULL;
     GtkAction *action;
+#ifndef GRETL_EDIT
     int log_up = 0;
     int icons_up = 0;
+#endif
 
     if (menu != NULL) {
 	/* we need to make sure this is up to date */
@@ -552,11 +558,13 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     while (list != NULL) {
 	action = (GtkAction *) list->data;
 	lwin = window_from_action(action);
+#ifndef GRETL_EDIT
 	if (is_command_log_viewer(lwin)) {
 	    log_up = 1;
 	} else if (widget_is_iconview(lwin)) {
 	    icons_up = 1;
 	}
+#endif
 	if (n_listed_windows > 1 && thiswin != NULL) {
 	    maybe_revise_action_label(action, thiswin);
 	}
@@ -572,19 +580,19 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 	add_cascade_item(menu, item);
     }
 
-    if (!gui_editor_mode()) {
-	if (!log_up || !icons_up) {
-	    item = gtk_separator_menu_item_new();
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	    if (!log_up) {
-		add_log_item(menu, item);
-	    }
-	    if (!icons_up) {
-		add_iconview_item(menu, item);
-	    }
+#ifndef GRETL_EDIT
+    if (!log_up || !icons_up) {
+	item = gtk_separator_menu_item_new();
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	if (!log_up) {
+	    add_log_item(menu, item);
+	}
+	if (!icons_up) {
+	    add_iconview_item(menu, item);
 	}
     }
+#endif
 
     if (thiswin != NULL) {
 	g_signal_connect(G_OBJECT(menu), "deactivate",

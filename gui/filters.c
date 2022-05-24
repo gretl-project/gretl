@@ -20,6 +20,7 @@
 /* filters.c : for gretl */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "dlgutils.h"
 #include "filters.h"
 #include "libset.h"

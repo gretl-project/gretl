@@ -40,6 +40,7 @@
 #include "dbread.h"
 #include "fncall.h"
 #include "varinfo.h"
+#include "gui_utils.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -22,13 +22,17 @@
 #include "varprint.h"
 #include "textutil.h"
 #include "textbuf.h"
-#include "guiprint.h"
-#include "model_table.h"
 #include "clipboard.h"
 #include "fileselect.h"
 #include "texprint.h"
 #include "system.h"
 #include "winstack.h"
+
+#ifndef GRETL_EDIT
+#include "gui_utils.h"
+#include "guiprint.h"
+#include "model_table.h"
+#endif
 
 #if GTKSOURCEVIEW_VERSION == 2
 # include <gtksourceview/gtksourceiter.h>
@@ -427,8 +431,8 @@ static void replace_string_dialog (windata_t *vwin)
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), s->w);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy), s->w);
 
     gtk_widget_grab_focus(s->f_entry);
     gtk_widget_show_all(s->w);
@@ -457,6 +461,8 @@ static int prep_prn_for_file_save (PRN *prn, int fmt)
 
     return err;
 }
+
+#ifndef GRETL_EDIT
 
 static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
@@ -643,6 +649,8 @@ void model_tex_copy (GtkAction *action, gpointer data)
 
     special_text_handler(vwin, fmt, W_COPY);
 }
+
+#endif /* not GRETL_EDIT */
 
 static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {

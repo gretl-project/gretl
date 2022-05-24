@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "dlgutils.h"
 #include "arrows.h"
 #include "gretl_string_table.h"

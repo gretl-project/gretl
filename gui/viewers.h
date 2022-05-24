@@ -106,8 +106,6 @@ windata_t *view_script (const char *filename, int editable,
 gint catch_viewer_key (GtkWidget *w, GdkEventKey *key,
 		       windata_t *vwin);
 
-void set_model_save_state (windata_t *vwin, gboolean s);
-
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 			 gpointer data);
 
@@ -116,5 +114,11 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 
 gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event,
 			     gpointer p);
+
+#ifndef GRETL_EDIT
+
+void set_model_save_state (windata_t *vwin, gboolean s);
+
+#endif
 
 #endif /* VIEWERS_H */

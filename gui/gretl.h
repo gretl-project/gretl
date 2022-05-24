@@ -64,7 +64,8 @@
 #endif
 
 #include "gretltypes.h"
-#include "gui_utils.h"
+#include "base_utils.h"
+#include "viewers.h"
 #include "callbacks.h"
 #include "dialogs.h"
 #include "library.h"

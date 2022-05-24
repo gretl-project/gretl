@@ -20,6 +20,7 @@
 /* library.c for gretl -- main interface to libgretl functions */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "var.h"
 #include "johansen.h"
 #include "textbuf.h"

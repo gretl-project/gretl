@@ -20,6 +20,7 @@
 /* toolbar.c: main-window toolbar, viewer window toolbars, etc. */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "console.h"
 #include "session.h"
 #include "datafiles.h"

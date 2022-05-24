@@ -20,18 +20,22 @@
 /* dialogs.c for gretl */
 
 #include "gretl.h"
-#include "cmdstack.h"
-#include "session.h"
 #include "obsbutton.h"
 #include "textutil.h"
-#include "menustate.h"
 #include "dlgutils.h"
+#include "winstack.h"
+#include "base_utils.h"
+
+#ifndef GRETL_EDIT
+#include "gui_utils.h"
 #include "treeutils.h"
+#include "cmdstack.h"
+#include "session.h"
+#include "menustate.h"
 #include "ssheet.h"
 #include "database.h"
 #include "selector.h"
 #include "fileselect.h"
-#include "winstack.h"
 #include "gretl_panel.h"
 #include "gretl_midas.h"
 #include "texprint.h"
@@ -41,6 +45,7 @@
 #include "uservar.h"
 #include "gretl_bfgs.h"
 #include "libglue.h"
+#endif
 
 #include <errno.h>
 
@@ -50,6 +55,8 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 static GtkWidget *option_checkbox (int *checkvar, const char *checktxt);
 static void set_radio_opt (GtkWidget *w, int *opt);
 static GtkWidget *dialog_blurb_box (const char *text);
+
+#ifndef GRETL_EDIT
 
 void menu_exit_check (void)
 {
@@ -72,6 +79,8 @@ static void save_data_callback (void)
     }
     /* FIXME: need to do more here? */
 }
+
+#endif /* not GRETL_EDIT */
 
 static void gretl_dialog_keep_above (GtkWidget *w)
 {
@@ -172,6 +181,8 @@ gint no_yes_dialog (const char *title, const char *msg)
     return real_yes_no_dialog(title, msg, 0, NULL,
                               GTK_RESPONSE_NO);
 }
+
+#ifndef GRETL_EDIT
 
 static void toggle_session_prompt (GtkToggleButton *b)
 {
@@ -342,6 +353,8 @@ gboolean exit_check (void)
     return FALSE;
 }
 
+#endif /* not GRETL_EDIT */
+
 double gui_double_from_string (const char *str, int *err)
 {
     double x = 0;
@@ -392,6 +405,8 @@ static GtkWidget *hboxit (GtkWidget *w, GtkWidget *vbox)
 
     return hbox;
 }
+
+#ifndef GRETL_EDIT
 
 static void csv_na_callback (GtkComboBox *box, gpointer p)
 {
@@ -632,6 +647,8 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     return ret;
 }
 
+#endif /* not GRETL_EDIT */
+
 /* selection of format in which to copy material to clipboard,
    or save to file */
 
@@ -864,6 +881,8 @@ void copy_format_dialog (windata_t *vwin, int action)
     gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 }
+
+#ifndef GRETL_EDIT
 
 enum {
     SET_CI = 1,
@@ -4160,6 +4179,8 @@ void data_expand_dialog (int *newpd, GtkWidget *parent)
     gtk_widget_show_all(d);
 }
 
+#endif /* not GRETL_EDIT */
+
 static void set_radio_opt (GtkWidget *w, int *opt)
 {
     *opt = widget_get_int(w, "action");
@@ -5578,6 +5599,8 @@ void file_write_errbox (const char *fname)
     }
 }
 
+#ifndef GRETL_EDIT
+
 static void
 name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
 {
@@ -5996,6 +6019,8 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
     return opts.retval;
 }
 
+#endif /* not GRETL_EDIT */
+
 #ifndef G_OS_WIN32
 
 static gint dont_delete (void)
@@ -6120,6 +6145,8 @@ int output_policy_dialog (windata_t *source,
 
     return policy;
 }
+
+#ifndef GRETL_EDIT
 
 static gchar *auto_pc_name (const char *vname, int idxvals)
 {
@@ -7639,6 +7666,8 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
 
     gtk_widget_show_all(dialog);
 }
+
+#endif /* not GRETL_EDIT */
 
 gint script_start_dialog (const char *msg)
 {

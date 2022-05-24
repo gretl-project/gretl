@@ -23,6 +23,7 @@
 #define GFN_DEBUG 0
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "datafiles.h"
 #include "database.h"
 #include "filelists.h"

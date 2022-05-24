@@ -94,12 +94,12 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) -DGRETL_EDIT $(SIMD_OPT) $(OMP_OPT) > /dev/null
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC) -DGRETL_EDIT $(SIMD_OPT) $(OMP_OPT)
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
 endif
 
-DEFS = $(NLSDEF) $(SVDEF) $(GTKDEF)
+DEFS = -DGRETL_EDIT $(NLSDEF) $(SVDEF) $(GTKDEF)
 
 # Directories
 ifeq ($(win32pkg),yes)

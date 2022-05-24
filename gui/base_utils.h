@@ -66,7 +66,11 @@ int font_has_symbol (PangoFontDescription *desc, int symbol);
 
 const char *print_today (void);
 
+void *gui_get_plugin_function (const char *funcname);
+
 void run_foreign_script (gchar *buf, int lang, gretlopt opt);
+
+void start_R (const char *buf, int send_data, int interactive);
 
 #ifdef G_OS_WIN32
 

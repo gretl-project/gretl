@@ -19,19 +19,22 @@
 
 #include "gretl.h"
 #include "version.h"
-#include "filelists.h"
+#include "fileselect.h"
 #include "gretl_www.h"
 #include "dlgutils.h"
-#include "fileselect.h"
-#include "menustate.h"
-#include "session.h"
 #include "textbuf.h"
-#include "ssheet.h"
-#include "selector.h"
-#include "gpt_control.h"
 #include "tabwin.h"
 #include "build.h"
 #include "addons_utils.h"
+
+#ifndef GRETL_EDIT
+#include "filelists.h"
+#include "menustate.h"
+#include "session.h"
+#include "ssheet.h"
+#include "selector.h"
+#include "gpt_control.h"
+#endif
 
 #ifdef HAVE_GTKSV_COMPLETION
 # include "completions.h"
@@ -890,9 +893,11 @@ static void set_tramo_status (void)
 
     tramo_ok = ok;
 
+#ifndef GRETL_EDIT
     if (gui_up) {
 	flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
     }
+#endif
 }
 
 #endif /* HAVE_TRAMO */
@@ -932,10 +937,12 @@ static void set_x12a_status (void)
 
     x12a_ok = ok;
 
+#ifndef GRETL_EDIT
     if (gui_up) {
 	flip(mdata->ui, "/menubar/Variable/X12A",
 	     get_x12a_ok());
     }
+#endif    
 }
 
 #endif /* HAVE_X12A */
@@ -1092,17 +1099,17 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(preferences_dialog_canceled),
 		     &canceled);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(apply_prefs_changes), parent);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* Help button */
     button = context_help_button(hbox, -1);
@@ -1178,17 +1185,17 @@ int console_prefs_dialog (GtkWidget *caller)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(preferences_dialog_canceled),
 		     &canceled);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(apply_prefs_changes), caller);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     gtk_widget_show_all(dialog);
 
@@ -2205,7 +2212,9 @@ int write_rc (gretlopt opt)
 	}
     }
 
+#ifndef GRETL_EDIT    
     rc_save_file_lists(fp);
+#endif    
     fclose(fp);
 
     if (!(opt & OPT_N)) {
@@ -2675,9 +2684,11 @@ static int read_gretlrc (void)
 	    }
 	}
 
+#ifndef GRETL_EDIT	
 	if (got_recent) {
 	    rc_read_file_lists(fp, line);
 	}
+#endif	
 
 	fclose(fp);
     }
@@ -2934,9 +2945,9 @@ static void gtk2_font_selector (GtkAction *action)
     g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_ok_button(fontsel)),
 		     "clicked", G_CALLBACK(font_selection_ok),
 		     fontsel);
-    g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_cancel_button(fontsel)),
-		     "clicked", G_CALLBACK(delete_widget),
-		     fontsel);
+    g_signal_connect_swapped(G_OBJECT(gtk_fontsel_hack_dialog_cancel_button(fontsel)),
+			     "clicked", G_CALLBACK(gtk_widget_destroy),
+			     fontsel);
 
     gtk_widget_show(fontsel);
 }
@@ -3090,6 +3101,7 @@ int gui_set_working_dir (char *dirname)
 {
     int err = gretl_set_path_by_name("workdir", dirname);
 
+#ifndef GRETL_EDIT    
     if (err) {
 	gui_errmsg(err);
 	delete_from_filelist(FILE_LIST_WDIR, dirname);
@@ -3097,6 +3109,7 @@ int gui_set_working_dir (char *dirname)
 	mkfilelist(FILE_LIST_WDIR, dirname, 0);
 	set_workdir_label();
     }
+#endif    
 
     return err;
 }
@@ -3298,9 +3311,9 @@ static void workdir_dialog (int from_wlabel)
 		     G_CALLBACK(apply_wdir_changes), &wset);
 
     button = cancel_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     wset.ok_button = button = ok_button(hbox);
     gtk_widget_grab_default(button);

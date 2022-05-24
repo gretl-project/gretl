@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "treeutils.h"
 #include "ssheet.h"
 #include "dlgutils.h"

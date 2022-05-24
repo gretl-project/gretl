@@ -27,6 +27,75 @@
 #include "toolbar.h"
 #include "fileselect.h"
 
+#ifndef GRETL_EDIT
+#include "gui_utils.h"
+#include "menustate.h"
+#include "fnsave.h"
+#include "gpt_control.h"
+#include "session.h"
+#include "series_view.h"
+#include "uservar.h"
+#include "forecast.h"
+#include "var.h"
+#endif
+
+static gboolean not_space (gunichar c, gpointer p)
+{
+    return !g_unichar_isspace(c);
+}
+
+int vwin_subselection_present (windata_t *vwin)
+{
+    GtkTextIter selstart, selend;
+    GtkTextBuffer *buf;
+    int ret = 0;
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+    if (gtk_text_buffer_get_selection_bounds(buf, &selstart, &selend)) {
+	GtkTextIter start, end;
+
+	gtk_text_buffer_get_bounds(buf, &start, &end);
+	if (gtk_text_iter_equal(&selstart, &start) &&
+	    gtk_text_iter_equal(&selend, &end)) {
+	    ret = 0;
+	} else {
+	    gtk_text_iter_forward_find_char(&start, not_space,
+					    NULL, &selstart);
+	    gtk_text_iter_backward_find_char(&end, not_space,
+					     NULL, &selend);
+	    if (!gtk_text_iter_equal(&selstart, &start) ||
+		!gtk_text_iter_equal(&selend, &end)) {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+int vwin_is_editing (windata_t *vwin)
+{
+    if (vwin != NULL && vwin->text != NULL) {
+	return gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text));
+    } else {
+	return 0;
+    }
+}
+
+gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin_subselection_present(vwin)) {
+	window_copy(vwin, GRETL_FORMAT_SELECTION);
+    } else if (vwin_is_editing(vwin)) {
+	window_copy(vwin, GRETL_FORMAT_TXT);
+    } else {
+	copy_format_dialog(vwin, W_COPY);
+    }
+
+    return TRUE;
+}
+
 void mark_vwin_content_changed (windata_t *vwin)
 {
     if (vwin->active_var == 0) {
@@ -83,7 +152,7 @@ static void buf_edit_save (GtkWidget *w, windata_t *vwin)
     free(*pbuf);
     *pbuf = text;
 
-#ifndef GRET_EDIT
+#ifndef GRETL_EDIT
     if (vwin->role == EDIT_HEADER) {
 	mark_vwin_content_saved(vwin);
 	mark_dataset_as_modified();
@@ -460,9 +529,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    if (w == vwin->main) {
 		gtk_widget_destroy(w);
 	    }
-	} else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
+	}
+#ifndef GRETL_EDIT	
+	else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
 	    model_add_as_icon(NULL, vwin);
 	}
+#endif	
     }
 
     return FALSE;
@@ -657,6 +729,50 @@ void vwin_set_filename (windata_t *vwin, const char *fname)
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);
     strcpy(vwin->fname, fname);
+}
+
+gchar *title_from_filename (const char *fname,
+			    int role,
+			    gboolean prepend)
+{
+    gchar *base, *title = NULL;
+
+    base = g_path_get_basename(fname);
+
+    if (!strcmp(base, "session.inp") || !strncmp(base, "script_tmp.", 11)) {
+	if (role == EDIT_GP) {
+	    title = g_strdup(_("gretl: edit plot commands"));
+	} else if (role == EDIT_R) {
+	    title = g_strdup(_("gretl: edit R script"));
+	} else if (role == EDIT_OX) {
+	    title = g_strdup(_("gretl: edit Ox program"));
+	} else if (role == EDIT_OCTAVE) {
+	    title = g_strdup(_("gretl: edit Octave script"));
+	} else if (role == EDIT_PYTHON) {
+	    title = g_strdup(_("gretl: edit Python script"));
+	} else if (role == EDIT_JULIA) {
+	    title = g_strdup(_("gretl: edit Julia program"));
+	} else if (role == EDIT_STATA) {
+	    title = g_strdup(_("gretl: edit Stata program"));
+	} else if (role == EDIT_DYNARE) {
+	    title = g_strdup(_("gretl: edit Dynare script"));
+	} else if (role == EDIT_LPSOLVE) {
+	    title = g_strdup(_("gretl: edit lpsolve script"));
+	} else if (role == EDIT_SPEC) {
+	    title = g_strdup(_("gretl: edit package spec file"));
+	} else {
+	    title = g_strdup(_("gretl: untitled"));
+	}
+    } else if (prepend) {
+	title = g_strdup_printf("gretl: %s", base);
+    } else {
+	title = base;
+	base = NULL; /* don't free */
+    }
+
+    g_free(base);
+
+    return title;
 }
 
 static gchar *script_output_title (gpointer data)
@@ -860,6 +976,8 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     return vwin;
 }
 
+#ifndef GRETL_EDIT
+
 static void vwin_add_closer (windata_t *vwin)
 {
     GtkWidget *b;
@@ -876,6 +994,8 @@ void set_model_save_state (windata_t *vwin, gboolean s)
     flip(vwin->ui, "/menubar/File/SaveAsIcon", s);
     flip(vwin->ui, "/menubar/File/SaveAndClose", s);
 }
+
+#endif
 
 windata_t *
 view_buffer_with_parent (windata_t *parent, PRN *prn,
@@ -918,15 +1038,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 #else    
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
-	vwin_add_ui(vwin, system_items, n_system_items, sys_ui);
-	set_model_save_state(vwin, !is_session_model(vwin->data));
-	add_system_menu_items(vwin, role);
-	vwin_pack_toolbar(vwin);
-	if (role == VAR || role == VECM) {
-	    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event",
-			     G_CALLBACK(check_VAR_menu), vwin);
-	}
-	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
+	add_system_ui_to_vwin(vwin);
     } else if (role == VIEW_PKG_CODE ||
 	       role == VIEW_PKG_SAMPLE ||
 	       role == VIEW_LOG ||

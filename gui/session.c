@@ -20,6 +20,7 @@
 /* session.c for gretl */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "session.h"
 #include "selector.h"
 #include "ssheet.h"

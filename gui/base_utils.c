@@ -289,6 +289,18 @@ char *adjust_fontspec_string (char *targ, const char *src,
     return targ;
 }
 
+void *gui_get_plugin_function (const char *funcname)
+{
+    void *func;
+
+    func = get_plugin_function(funcname);
+    if (func == NULL) {
+	errbox(gretl_errmsg_get());
+    }
+
+    return func;
+}
+
 static int got_printable_output (PRN *prn)
 {
     int ret = 0;
