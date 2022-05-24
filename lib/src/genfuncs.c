@@ -8574,8 +8574,9 @@ gretl_matrix *R_from_omega(gretl_matrix *omega, int cholesky,
 #endif
 		    gretl_matrix_set(localJ, Jindex[r_i], c_i + jj, der);
 		}
-	    }
+	    
 	    r_i++;
+	    }
     	    c_i += i+1;
 	}
     }
