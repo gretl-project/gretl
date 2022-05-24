@@ -12793,8 +12793,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	gretl_array *reqd = NULL;
 
 	post_process = 0;
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
+	if (l->t != U_ADDR || l->L->t != BUNDLE) {
+	    node_type_error(f, 1, BUNDLE, l, p);
 	} else if (m->t != BUNDLE) {
 	    node_type_error(f, 2, BUNDLE, m, p);
 	} else if (!null_node(r) && r->t != ARRAY) {
