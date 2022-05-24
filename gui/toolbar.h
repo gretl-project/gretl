@@ -40,8 +40,6 @@ void gretl_stock_icons_init (void);
 
 void add_mainwin_toolbar (GtkWidget *vbox);
 
-void gretl_pdf_manual (void);
-
 void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags);
 
 GtkWidget *build_text_popup (windata_t *vwin);
