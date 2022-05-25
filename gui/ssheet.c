@@ -4236,8 +4236,9 @@ static void sheet_number_format_dialog (Spreadsheet *sheet)
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(reformat_sheet_callback), &fa);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dlg);

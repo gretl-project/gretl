@@ -795,8 +795,9 @@ static void real_view_format_dialog (windata_t *vwin, series_view *sview)
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(reformat_callback), &vt);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dlg);

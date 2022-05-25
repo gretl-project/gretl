@@ -84,9 +84,9 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ)
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     targ);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     targ);
 
     return button;
 }

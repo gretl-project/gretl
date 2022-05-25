@@ -223,9 +223,9 @@ void about_dialog (void)
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(button);
 
 #if GTK_MAJOR_VERSION == 3

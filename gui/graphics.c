@@ -411,8 +411,9 @@ void pdf_ps_dialog (GPT_SPEC *spec, GtkWidget *parent)
 
     b = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(b), "clicked", 
-		     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(b), "clicked", 
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     
     gtk_widget_show_all(dialog);
 

@@ -87,15 +87,15 @@ void font_scale_selector (GtkAction *action);
 
 void set_fixed_font (const char *fontname, int remember);
 
-void update_persistent_graph_colors (void);
-
-void update_persistent_graph_font (void);
-
 void set_app_font (const char *fontname, int remember);
 
 const char *get_app_fontname (void);
 
 const char *get_fixed_fontname (void);
+
+void update_persistent_graph_colors (void);
+
+void update_persistent_graph_font (void);
 
 void get_default_dir_for_action (char *s, int action);
 

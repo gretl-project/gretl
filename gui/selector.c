@@ -2399,9 +2399,9 @@ static void create_flag_item (GtkWidget *popup, int i, GtkWidget *view)
     g_signal_connect(G_OBJECT(item), "activate",
                      G_CALLBACK(flag_popup_activated),
                      view);
-    g_signal_connect(G_OBJECT(item), "destroy",
-                     G_CALLBACK(delete_widget),
-                     popup);
+    g_signal_connect_swapped(G_OBJECT(item), "destroy",
+			     G_CALLBACK(gtk_widget_destroy),
+			     popup);
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
 }
@@ -2637,8 +2637,9 @@ static gint listvar_reorder_click (GtkWidget *widget, GdkEventButton *event,
                                   GINT_TO_POINTER(i));
                 g_signal_connect(G_OBJECT(item), "activate",
                                  G_CALLBACK(move_selected_rows), view);
-                g_signal_connect(G_OBJECT(item), "destroy",
-                                 G_CALLBACK(delete_widget), popup);
+                g_signal_connect_swapped(G_OBJECT(item), "destroy",
+					 G_CALLBACK(gtk_widget_destroy),
+					 popup);
                 gtk_widget_show_all(item);
                 gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
             }
@@ -9182,15 +9183,14 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 
     /* "Cancel" button */
     tmp = cancel_delete_button(hbox, dialog);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
 
     /* "OK" button */
     tmp = ok_validate_button(hbox, &ret, NULL);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(lag_toggle_register), &vlinfo[0]);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
 
     /* "Help" button */

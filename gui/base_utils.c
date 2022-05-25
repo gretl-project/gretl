@@ -87,11 +87,6 @@ FILE *gretl_tempfile_open (char *fname)
     return fp;
 }
 
-void delete_widget (GtkWidget *widget, gpointer data)
-{
-    gtk_widget_destroy(GTK_WIDGET(data));
-}
-
 void set_wait_cursor (GdkWindow **pcwin)
 {
     GdkDisplay *disp = gdk_display_get_default();

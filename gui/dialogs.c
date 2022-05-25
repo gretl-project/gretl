@@ -237,9 +237,9 @@ static int save_session_prompt (int gui_session)
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(b), "clicked",
                      G_CALLBACK(set_ret_yes), &ret);
-    g_signal_connect(G_OBJECT(b), "clicked",
-                     G_CALLBACK(delete_widget),
-                     dialog);
+    g_signal_connect_swapped(G_OBJECT(b), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     gtk_widget_set_can_default(b, TRUE);
     gtk_widget_grab_default(b);
@@ -250,9 +250,9 @@ static int save_session_prompt (int gui_session)
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(b), "clicked",
                      G_CALLBACK(set_ret_no), &ret);
-    g_signal_connect(G_OBJECT(b), "clicked",
-                     G_CALLBACK(delete_widget),
-                     dialog);
+    g_signal_connect_swapped(G_OBJECT(b), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* Cancel button */
     cancel_delete_button(hbox, dialog);
@@ -637,8 +637,9 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     tmp = ok_validate_button(hbox, &ret, NULL);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(really_set_csv_stuff), csvp);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
 
     gretl_dialog_keep_above(dialog);
@@ -1294,8 +1295,9 @@ void rand_seed_dialog (void)
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_rand_seed), adj);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, SEED_RANDOM);
 
@@ -1352,8 +1354,9 @@ int select_list_dialog (char *listname)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     cancel_delete_button(hbox, dlg);
     tmp = ok_validate_button(hbox, &ret, NULL);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dlg);
@@ -1398,8 +1401,9 @@ int combo_selector_dialog (GList *list, const char *msg,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     cancel_delete_button(hbox, dlg);
     tmp = ok_validate_button(hbox, &ret, &selval);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dlg);
@@ -1530,8 +1534,9 @@ int iter_control_dialog (int *optim, int *pmaxit, double *ptol,
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(iter_control_callback), &ic);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
     if (*optim == BFGS_MAX) {
         context_help_button(hbox, BFGS_CONFIG);
@@ -3533,8 +3538,9 @@ int add_obs_dialog (const char *blurb, int addmin,
     g_object_set_data(G_OBJECT(tmp), "spinner", spin);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_add_obs), &n_add);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dlg);
@@ -3652,8 +3658,9 @@ int select_var_from_list_with_opt (const int *list,
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_var_from_combo), dlg);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
     if (hcode) {
         context_help_button(hbox, hcode);
@@ -4093,13 +4100,13 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
     tmp = cancel_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(abort_compact), method);
-    g_signal_connect (G_OBJECT(tmp), "clicked",
-                      G_CALLBACK(delete_widget),
-                      G_OBJECT(dlg));
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget),
-                     G_OBJECT(dlg));
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, COMPACT);
 
@@ -4166,13 +4173,13 @@ void data_expand_dialog (int *newpd, GtkWidget *parent)
     tmp = cancel_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(abort_expand), newpd);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget),
-                     G_OBJECT(d));
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     d);
     tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget),
-                     G_OBJECT(d));
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     d );
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, EXPAND); /* FIXME! */
 
@@ -4244,8 +4251,9 @@ int real_radio_dialog (const char *title, const char *label,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     cancel_delete_button(hbox, dialog);
     tmp = ok_validate_button(hbox, &ret, &radio_val);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
     if (hcode) {
         context_help_button(hbox, hcode);
@@ -4352,9 +4360,9 @@ int density_dialog (int vnum, double *bw)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     cancel_delete_button(hbox, dialog);
     tmp = ok_validate_button(hbox, &ret, &radio_val);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget),
-                     dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, KERNEL_DENSITY);
 
@@ -4411,9 +4419,9 @@ int paste_data_dialog (int *append)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     cancel_delete_button(hbox, dialog);
     tmp = ok_validate_button(hbox, &ret, NULL);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget),
-                     dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(dialog);
@@ -4918,9 +4926,9 @@ int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     cancel_delete_button(hbox, dialog);
     button = ok_validate_button(hbox, &ret, NULL);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(delete_widget),
-                     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(button);
     context_help_button(hbox, PERGM);
 
@@ -4957,8 +4965,9 @@ int yes_no_help_dialog (const char *msg, int hcode, int deflt)
     button = gtk_button_new_from_stock(GTK_STOCK_YES);
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(set_response_yes), &ret);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_widget_set_can_default(button, TRUE);
@@ -4971,8 +4980,9 @@ int yes_no_help_dialog (const char *msg, int hcode, int deflt)
     /* No button */
     button = gtk_button_new_from_stock(GTK_STOCK_NO);
     gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     if (deflt == GRETL_NO) {
 	gtk_widget_set_can_default(button, TRUE);
 	gtk_widget_grab_default(button);
@@ -5215,8 +5225,9 @@ int freq_dialog (const char *title, const char *blurb,
         g_signal_connect(G_OBJECT(okb), "clicked",
 			 G_CALLBACK(revise_finfo), &finfo);
     }
-    g_signal_connect(G_OBJECT(okb), "clicked",
-		     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(okb), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(okb);
     if (nbins != NULL) {
         context_help_button(hbox, FREQ);
@@ -5414,8 +5425,9 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
                      G_CALLBACK(mtab_reset_callback), &mti);
     cancel_delete_button(hbox, dialog);
     tmp = ok_validate_button(hbox, &ret, NULL);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
 
     gretl_dialog_keep_above(dialog);
@@ -5910,8 +5922,9 @@ void tex_format_dialog (GtkAction *action, gpointer data)
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(record_tex_format), &tf);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dlg);
     gtk_widget_grab_default(tmp);
 
     gtk_widget_show_all(hbox);
@@ -6093,8 +6106,9 @@ static int real_output_policy_dlg (const char **opts,
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     tmp = ok_validate_button(hbox, &ret, &radio_val);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
     if (hcode) {
         context_help_button(hbox, hcode);
@@ -6703,8 +6717,9 @@ int midas_term_dialog (const char *name, int m,
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     cancel_delete_button(hbox, dialog);
     tmp = ok_validate_button(hbox, &ret, NULL);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(delete_widget), dialog);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
     gtk_widget_grab_default(tmp);
     if (hcode) {
         context_help_button(hbox, hcode);

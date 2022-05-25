@@ -34,8 +34,6 @@ int gretl_file_get_contents (const gchar *fname,
 
 FILE *gretl_tempfile_open (char *fname);
 
-void delete_widget (GtkWidget *widget, gpointer data);
-
 void set_wait_cursor (GdkWindow **pcwin);
 
 void unset_wait_cursor (GdkWindow *cwin);

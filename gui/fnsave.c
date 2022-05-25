@@ -4033,8 +4033,9 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 
     /* Cancel */
     button = cancel_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), linfo->dlg);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     linfo->dlg);
 
     /* OK */
     button = ok_validate_button(hbox, &linfo->canceled, NULL);

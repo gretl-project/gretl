@@ -1245,9 +1245,9 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
     b = gtk_dialog_get_widget_for_response(GTK_DIALOG(fontsel),
 					   GTK_RESPONSE_CANCEL);
     if (b != NULL) {
-	g_signal_connect(G_OBJECT(b), "clicked",
-			 G_CALLBACK(delete_widget),
-			 fontsel);
+	g_signal_connect_swapped(G_OBJECT(b), "clicked",
+				 G_CALLBACK(gtk_widget_destroy),
+				 fontsel);
     }
 
     gtk_widget_show(fontsel);
@@ -1331,8 +1331,9 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
     g_signal_connect(G_OBJECT(b), "clicked", G_CALLBACK(graph_font_selection_ok),
 		     fontsel);
     b = gtk_font_selection_dialog_get_cancel_button(GTK_FONT_SELECTION_DIALOG(fontsel));
-    g_signal_connect(G_OBJECT(b), "clicked", G_CALLBACK(delete_widget),
-		     fontsel);
+    g_signal_connect_swapped(G_OBJECT(b), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     fontsel);
 
     gtk_widget_show(fontsel);
 
@@ -2214,8 +2215,9 @@ static void add_line_callback (GtkWidget *w, plot_editor *ed)
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(nlinfo->dlg));
 
     button = cancel_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), nlinfo->dlg);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     nlinfo->dlg);
 
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
