@@ -530,10 +530,11 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     GdkEventType evtype;
     GList *wlist = gtk_action_group_list_actions(window_group);
     GList *list;
-    GtkWidget *item, *lwin;
+    GtkWidget *item;
     GtkWidget *thiswin = NULL;
     GtkAction *action;
 #ifndef GRETL_EDIT
+    GtkWidget *lwin;
     int log_up = 0;
     int icons_up = 0;
 #endif
@@ -557,8 +558,8 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 
     while (list != NULL) {
 	action = (GtkAction *) list->data;
-	lwin = window_from_action(action);
 #ifndef GRETL_EDIT
+	lwin = window_from_action(action);
 	if (is_command_log_viewer(lwin)) {
 	    log_up = 1;
 	} else if (widget_is_iconview(lwin)) {

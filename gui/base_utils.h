@@ -62,6 +62,8 @@ gchar *double_underscores_new (const char *src);
 char *adjust_fontspec_string (char *targ, const char *src,
 			      int mod);
 
+int get_string_width (const gchar *str);
+
 int font_has_symbol (PangoFontDescription *desc, int symbol);
 
 const char *print_today (void);

@@ -727,6 +727,14 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 {
     gchar *buf = NULL;
 
+#ifndef GRETL_EDIT
+    if (fmt == GRETL_FORMAT_TXT) {
+	buf = text_window_get_copy_buf(vwin, 0);
+    } else if (fmt == GRETL_FORMAT_SELECTION) {
+	buf = text_window_get_copy_buf(vwin, 1);
+	fmt = GRETL_FORMAT_TXT;
+    }
+#else
     if (vwin->role == VIEW_MODEL && fmt == GRETL_FORMAT_CSV) {
 	special_text_handler(vwin, fmt, action);
     } else if (multiple_formats_ok(vwin) && SPECIAL_FORMAT(fmt)) {
@@ -740,6 +748,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	buf = text_window_get_copy_buf(vwin, 1);
 	fmt = GRETL_FORMAT_TXT;
     }
+#endif
 
     if (buf != NULL) {
 	/* handle the last two cases above */

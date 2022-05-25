@@ -289,6 +289,26 @@ char *adjust_fontspec_string (char *targ, const char *src,
     return targ;
 }
 
+int get_string_width (const gchar *str)
+{
+    GtkWidget *w;
+    PangoLayout *pl;
+    PangoContext *pc;
+    gint width;
+
+    w = gtk_label_new(NULL);
+    pc = gtk_widget_get_pango_context(w);
+
+    pl = pango_layout_new(pc);
+    pango_layout_set_text(pl, str, -1);
+    pango_layout_get_pixel_size(pl, &width, NULL);
+
+    gtk_widget_destroy(w);
+    g_object_unref(G_OBJECT(pl));
+
+    return width;
+}
+
 void *gui_get_plugin_function (const char *funcname)
 {
     void *func;
