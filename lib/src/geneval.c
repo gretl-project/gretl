@@ -12811,32 +12811,29 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 						    &p->err);
         }
     } else if (f == F_SPHCORR) {
-	
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
-	} else if (!null_or_scalar(m)) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if ((r->t != U_ADDR) && (r->t != EMPTY)) {
-	    node_type_error(f, 3, U_ADDR, r, p);
-	} else {
-	    ret = aux_scalar_node(p);
-	    int mode = null_node(m) ? 0 : node_get_int(m, p);
-	
+	int mode = null_node(m) ? 0 : node_get_int(m, p);
+	gretl_matrix *J = NULL;
+
+	if (!p->err) {
+	    if (mode < 0 || mode > 2) {
+		p->err = E_INVARG;
+	    } else if (l->t != MAT) {
+		node_type_error(f, 1, MAT, l, p);
+	    } else if (!null_node(r) && r->t != U_ADDR) {
+		node_type_error(f, 3, U_ADDR, r, p);
+	    } else if (!null_node(r)) {
+		J = ptr_node_get_matrix(r, p);
+	    }
+	}
+	if (!p->err) {
 	    if (mode == 0) {
 		A = omega_from_R(l->v.m, &p->err);
-	    } else if (mode == 1 || mode == 2) {
-		/* mode can be 1 or 2 */
-		int has_jacobian = (r->t == U_ADDR);
-		gretl_matrix *J = NULL;
-		if (has_jacobian) {
-		    J = ptr_node_get_matrix(r,p);
-		}
-		
-		A = R_from_omega(l->v.m, (mode == 2), has_jacobian,
-				 J, &p->err);
-		gretl_matrix_print(J, "J");
+	    } else {
+		int cholesky = (mode == 2);
+
+		A = R_from_omega(l->v.m, cholesky, J, &p->err);
 	    }
-	}    
+	}
     }
 
     if (post_process) {
@@ -14359,14 +14356,22 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 p->err = E_TYPES;
             }
 	}
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+        }
+        if (!p->err) {
+	    tdi.targ = gretl_type_from_gen_type(p->targ);
+	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
+					  p->prn, &p->err);
+	}
     } else if (t->t == F_MCOMMUTE) {
+	int rowdim = 0, coldim = 0;
+	int post = 0, add_id = 0;
 	gretl_matrix *A = NULL;
-	int rowdim, coldim, post = 0, add_id = 0;
 
 	for (i=0; i<k && !p->err; i++) {
             e = n->v.bn.n[i];
             if (i == 0) {
-                /* A: matrix */
                 if (e->t == MAT) {
                     A = e->v.m;
 		} else {
@@ -14380,7 +14385,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 /* column dimension */
 		coldim = node_get_int(e, p);
             } else if (i == 3) {
-                /* postmultiply instead of premultiply ? */
+                /* postmultiply instead of premultiply? */
 		post = node_get_bool(e, p, 0);
             } else if (i == 4) {
                 /* add identity matrix ? */
@@ -14395,6 +14400,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 		ret->v.m = gretl_matrix_commute(A, rowdim, coldim, add_id, &p->err);
 	    } else {
 		gretl_matrix *B = gretl_matrix_copy_transpose(A);
+
 		A = gretl_matrix_commute(B, coldim, rowdim, add_id, &p->err);
 		ret->v.m = gretl_matrix_copy_transpose(A);
 		gretl_matrix_free(B);

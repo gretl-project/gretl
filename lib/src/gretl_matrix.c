@@ -15086,25 +15086,26 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
  * equivalent to premultiplying @A by the so-called "commutation
  * matrix" $K_{r,c}$. If the @add_id flag is non-zero, then @A is
  * added to the output matrix, so that @A is premultiplied by (I +
- * K_{r,c}).  
+ * K_{r,c}).
  *
  * See eg Magnus and Neudecker (1988), "Matrix Differential Calculus
  * with Applications in Statistics and Econometrics"
  */
 
-gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
-				   int add_id, int *err)
+gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
+				    int add_id, int *err)
 {
-    int i, j, k, h, rows = r*c, cols = A->cols;
-    double x;
+    int rows = r * c;
+    int cols = A->cols;
+    int *indices;
     gretl_matrix *ret;
-    
+
     if (rows != A->rows) {
 	*err = E_NONCONF;
 	return NULL;
     }
-    
-    int *indices = malloc(rows * sizeof *indices);
+
+    indices = malloc(rows * sizeof *indices);
     if (indices == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -15115,33 +15116,32 @@ gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
     } else {
 	ret = gretl_zero_matrix_new(rows, cols);
     }
-    
+
     if (ret == NULL) {
-	free(indices);
 	*err = E_ALLOC;
-	return NULL;
-    }
-    
-    k = 0;
-    for(i=0; i<r; i++) {
-	for (j=0; j<c; j++) {
-	    indices[k++] = j*r + i;
+    } else {
+	int i, j, h, k = 0;
+	double x;
+
+	for (i=0; i<r; i++) {
+	    for (j=0; j<c; j++) {
+		indices[k++] = j*r + i;
+	    }
+	}
+	k = 0;
+	for (j=0; j<cols; j++) {
+	    for (i=0; i<rows; i++) {
+		h = indices[i];
+		x = gretl_matrix_get(A, h, j);
+		ret->val[k++] += x;
+	    }
 	}
     }
 
-    k = 0;
-    for (j=0; j<cols; j++) {
-	for(i=0; i<rows; i++) {
-	    h = indices[i];
-	    x = gretl_matrix_get(A, h, j);
-	    ret->val[k++] += x;
-	}
-    }
-    
     free(indices);
+
     return ret;
 }
-
 
 /**
  * gretl_matrix_transcribe_obs_info:
