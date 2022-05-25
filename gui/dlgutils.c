@@ -403,6 +403,17 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
     return button;
 }
 
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
+			   gpointer p)
+{
+    if (key->keyval == GDK_Escape) {
+        gtk_widget_destroy(w);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
 #ifndef GRETL_EDIT
 
 /* "edit dialog" apparatus */
@@ -460,17 +471,6 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
     if (active_edit_text) active_edit_text = NULL;
-}
-
-gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
-			   gpointer p)
-{
-    if (key->keyval == GDK_Escape) {
-        gtk_widget_destroy(w);
-	return TRUE;
-    } else {
-	return FALSE;
-    }
 }
 
 static dialog_t *edit_dialog_new (int ci, const char *title,

@@ -28,6 +28,7 @@
 #include "fileselect.h"
 
 #ifndef GRETL_EDIT
+#include "library.h"
 #include "gui_utils.h"
 #include "menustate.h"
 #include "fnsave.h"
@@ -90,7 +91,11 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
     } else if (vwin_is_editing(vwin)) {
 	window_copy(vwin, GRETL_FORMAT_TXT);
     } else {
+#ifdef GRETL_EDIT
+	window_copy(vwin, GRETL_FORMAT_TXT);
+#else
 	copy_format_dialog(vwin, W_COPY);
+#endif
     }
 
     return TRUE;
@@ -383,6 +388,25 @@ static int numeric_keyval (guint key)
     }
 }
 
+#ifdef GRETL_EDIT
+
+static int is_control_key (guint k)
+{
+    if (k == GDK_Control_L || k == GDK_Control_R) {
+	return 1;
+    } else if (k == GDK_Meta_L || k == GDK_Meta_R) {
+	return 1;
+    } else if (k == GDK_Alt_L || k == GDK_Alt_R) {
+	return 1;
+    } else if (k == GDK_Escape) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+#endif
+
 /* Signal attached to editor/viewer windows. Note that @w is
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -399,14 +423,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     int editing = vwin_is_editing(vwin);
     int console = vwin->role == CONSOLE;
 
+#ifndef GRETL_EDIT
     if (vwin_is_busy(vwin)) {
 	return TRUE;
     }
-
-#if 0
-    fprintf(stderr, "HERE catch_viewer_key\n"
-	    " editing=%d, console=%d, Ctrl=%d, Alt=%d, key=%s\n",
-	    editing, console, Ctrl, Alt, gdk_keyval_name(key));
 #endif
 
     if (editing && Alt && !Ctrl) {
@@ -698,8 +718,6 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
 	} else if (vwin->flags & VWIN_MULTI_SERIES) {
 	    free_series_view(vwin->data);
-	} else if (help_role(vwin->role)) {
-	    g_free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE ||
 		   vwin->role == VIEW_DBNOMICS) {
 	    if (!get_user_var_by_data(vwin->data)) {
@@ -1171,7 +1189,9 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 	return NULL;
     }
 
+#ifndef GRETL_EDIT
     vwin_add_tmpbar(vwin);
+#endif
     create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
@@ -1618,4 +1638,30 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     cursor_to_top(vwin);
 
     return vwin;
+}
+
+gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
+{
+    if (right_click(event)) {
+	windata_t *vwin = (windata_t *) p;
+
+	if (vwin->popup != NULL) {
+	    gtk_widget_destroy(vwin->popup);
+	    vwin->popup = NULL;
+	}
+
+	vwin->popup = build_text_popup(vwin);
+
+	if (vwin->popup != NULL) {
+	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
+			     G_CALLBACK(gtk_widget_destroyed),
+			     &vwin->popup);
+	}
+
+	return TRUE;
+    }
+
+    return FALSE;
 }

@@ -17,7 +17,7 @@
  *
  */
 
-/* editbar.c: cut-dowm variant of toolbar.c for editor mode */
+/* editbar.c: cut-down variant of toolbar.c specifically for editor mode */
 
 #include "gretl.h"
 #include "textbuf.h"
@@ -410,7 +410,8 @@ static GretlToolItem viewbar_items[] = {
     { N_("Auto-indent script"), GTK_STOCK_INDENT, G_CALLBACK(indent_hansl), EDIT_HANSL_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
-    { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM }
+    //{ N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM }
+    { N_("Help..."), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM }
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -420,18 +421,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define new_ok(r)  (vwin_editing_script(r))
 #define edit_ok(r) (vwin_editing_script(r))
 
-#define save_as_ok(r) (r != EDIT_HEADER && \
-	               r != EDIT_NOTES && \
-	               r != EDIT_PKG_CODE && \
-		       r != EDIT_PKG_SAMPLE && \
-		       r != CONSOLE && \
-		       r != VIEW_BUNDLE && \
-		       r != VIEW_DBNOMICS)
-
 #define cmd_help_ok(r) (r == EDIT_HANSL)
-
 #define split_h_ok(r) (r == SCRIPT_OUT || vwin_editing_script(r))
-
 #define split_v_ok(r) (r == SCRIPT_OUT)
 
 /* Screen out unwanted menu items depending on the context; also
@@ -468,12 +459,6 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != EDIT_HANSL && f == EDIT_HANSL_ITEM) {
 	return NULL;
-    } else if (f == SAVE_ITEM && !save_ok) {
-	return NULL;
-    } else if (f == SAVE_AS_ITEM) {
-	if (!save_as_ok(r) || (vwin->flags & VWIN_NO_SAVE)) {
-	    return NULL;
-	}
     }
 
     return func;
@@ -634,6 +619,61 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
     return GTK_WIDGET(item);
 }
 
+static void editbar_help_call (GtkAction *action, gpointer p)
+{
+    const char *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "ContextHelp")) {
+	windata_t *vwin = (windata_t *) p;
+
+	text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
+	set_window_help_active(vwin);
+    } else {
+	display_text_help(action);
+    }
+}
+
+static GtkWidget *make_help_item_menu (windata_t *vwin)
+{
+    const char *action_names[] = {
+	"ContextHelp", "TextCmdRef", "FuncRef"
+    };
+    const char *action_labels[] = {
+	N_("Context help (click on a command or function)"),
+	N_("_Command Reference"),
+	N_("_Function Reference")
+    };
+    GtkWidget *menu = gtk_menu_new();
+    GtkAction *action;
+    GtkWidget *item;
+    int i;
+
+    for (i=0; i<3; i++) {
+	action = gtk_action_new(action_names[i], _(action_labels[i]),
+				NULL, NULL);
+	g_signal_connect(G_OBJECT(action), "activate",
+			 G_CALLBACK(editbar_help_call), vwin);
+	item = gtk_action_create_menu_item(action);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
+
+    return menu;
+}
+
+static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
+{
+    GtkWidget *menu = NULL;
+
+    if (vwin->role == EDIT_HANSL && item->flag == CMD_HELP_ITEM) {
+	menu = make_help_item_menu(vwin);
+    }
+    if (menu != NULL) {
+	vwin_record_toolbar_popup(vwin, menu);
+    }
+
+    return menu;
+}
+
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 {
     int save_ok = (flags & VIEWBAR_EDITABLE);
@@ -654,7 +694,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	   button; failing that we test for a "direct"
 	   callback function.
 	*/
-	//menu = tool_item_get_menu(item, vwin);
+	menu = tool_item_get_menu(item, vwin);
 	if (menu == NULL && item->func != NULL) {
 	    func = tool_item_get_callback(item, vwin, save_ok);
 	}
@@ -672,7 +712,6 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 		vpane = button;
 	    }
 	}
-
 	if (item->flag == SAVE_ITEM) {
 	    /* nothing to save just yet */
 	    g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button);
@@ -747,55 +786,4 @@ GtkWidget *build_text_popup (windata_t *vwin)
     }
 
     return pmenu;
-}
-
-/* Add a temporary menubar for use in a script output
-   window, while we're waiting for the output. If the
-   output window is being reused this is a bit more
-   complicated; we have to "hide" the regular menubar
-   before inserting the temporary one.
- */
-
-void vwin_add_tmpbar (windata_t *vwin)
-{
-    GretlToolItem item = {
-	N_("Stop"),
-	GTK_STOCK_STOP,
-	G_CALLBACK(do_stop_script),
-	0
-    };
-    GtkWidget *hbox, *tmp;
-
-    hbox = g_object_get_data(G_OBJECT(vwin->main), "top-hbox");
-
-    if (hbox != NULL) {
-	/* We're replacing a "real" menubar temporarily: ref. the
-	   widgets in @hbox before removing them so we can put
-	   them back later.
-	*/
-	GtkWidget *winlist = g_object_get_data(G_OBJECT(hbox), "winlist");
-
-	g_object_ref(G_OBJECT(vwin->mbar));
-	gtk_container_remove(GTK_CONTAINER(hbox), vwin->mbar);
-	if (vwin->finder != NULL) {
-	    g_object_ref(G_OBJECT(vwin->finder));
-	    gtk_container_remove(GTK_CONTAINER(hbox), vwin->finder);
-	}
-	if (winlist != NULL) {
-	    g_object_ref(G_OBJECT(winlist));
-	    gtk_container_remove(GTK_CONTAINER(hbox), winlist);
-	}
-    } else {
-	/* starting from scratch */
-	hbox = gtk_hbox_new(FALSE, 0);
-	g_object_set_data(G_OBJECT(vwin->main), "top-hbox", hbox);
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-    }
-
-    tmp = gretl_toolbar_new(NULL);
-    gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-
-    start_wait_for_output(vwin, hbox);
-    gtk_widget_show_all(hbox);
 }

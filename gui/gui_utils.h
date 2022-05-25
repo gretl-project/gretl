@@ -56,9 +56,6 @@ gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 void add_popup_item (const gchar *label, GtkWidget *menu,
 		     GCallback callback, gpointer data);
 
-gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event,
-			     gpointer p);
-
 void add_system_ui_to_vwin (windata_t *vwin);
 
 GtkWidget *make_bundle_content_menu (windata_t *vwin);

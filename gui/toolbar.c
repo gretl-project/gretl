@@ -1665,7 +1665,7 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 
 void vwin_add_tmpbar (windata_t *vwin)
 {
-    GretlToolItem item = {
+    GretlToolItem stop_item = {
 	N_("Stop"),
 	GTK_STOCK_STOP,
 	G_CALLBACK(do_stop_script),
@@ -1700,7 +1700,7 @@ void vwin_add_tmpbar (windata_t *vwin)
     }
 
     tmp = gretl_toolbar_new(NULL);
-    gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
+    gretl_toolbar_insert(tmp, &stop_item, stop_item.func, NULL, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     start_wait_for_output(vwin, hbox);

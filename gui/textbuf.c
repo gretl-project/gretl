@@ -28,6 +28,7 @@
 #include "addons_utils.h"
 
 #ifndef GRETL_EDIT
+#include "library.h"
 #include "guiprint.h"
 #include "datafiles.h"
 #include "database.h"
@@ -97,13 +98,15 @@ static gboolean script_electric_enter (windata_t *vwin, int alt);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
 static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
-static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok);
+#ifndef GRETL_EDIT
+static gchar *textview_get_current_line_with_newline (GtkWidget *view);
+#endif
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -737,7 +740,9 @@ static gint script_key_handler (GtkWidget *w,
 	    /* plain Ctrl-r */
 	    do_run_script(w, vwin);
 	    ret = TRUE;
-	} else if (keyval == GDK_Return) {
+	}
+#ifndef GRETL_EDIT
+	else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);
 
 	    if (str != NULL) {
@@ -747,7 +752,9 @@ static gint script_key_handler (GtkWidget *w,
 		g_free(str);
 	    }
 	    ret = TRUE;
-	} else if (keyval == GDK_i) {
+	}
+#endif
+	else if (keyval == GDK_i) {
 	    auto_indent_script(w, vwin);
 	    ret = TRUE;
 	}
@@ -2732,6 +2739,8 @@ static gchar *textview_get_current_line (GtkWidget *view, int allow_blank)
     return ret;
 }
 
+#ifndef GRETL_EDIT
+
 static gchar *textview_get_current_line_with_newline (GtkWidget *view)
 {
     gchar *s = textview_get_current_line(view, 0);
@@ -2745,6 +2754,8 @@ static gchar *textview_get_current_line_with_newline (GtkWidget *view)
 
     return s;
 }
+
+#endif
 
 /* Determine whether or not any of the lines in a chunk of text
    are indented, via spaces or tabs.
@@ -3226,6 +3237,8 @@ static void unindent_region (GtkWidget *w, gpointer p)
     bufgets_finalize(tb->chunk);
 }
 
+#ifndef GRETL_EDIT
+
 static void exec_script_text (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
@@ -3233,6 +3246,8 @@ static void exec_script_text (GtkWidget *w, gpointer p)
     run_script_fragment(tb->vwin, tb->chunk);
     tb->chunk = NULL; /* will be freed already */
 }
+
+#endif
 
 enum {
     AUTO_SELECT_NONE,
@@ -3998,6 +4013,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     *ptb = tb;
 
+#ifndef GRETL_EDIT
     if (tb->commented <= 0 && vwin->role != EDIT_PKG_CODE) {
 	/* we have some uncommented material: allow exec option */
 	if (tb->selected) {
@@ -4011,6 +4027,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
+#endif
 
     if (editing_hansl(vwin->role) && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:

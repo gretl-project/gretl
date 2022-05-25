@@ -77,6 +77,10 @@ gboolean do_open_script (int action);
 void do_new_script (int code, const char *buf,
 		    const char *scriptname);
 
+void do_run_script (GtkWidget *w, windata_t *vwin);
+
+void run_script_silent (GtkWidget *w, windata_t *vwin);
+
 void new_script_callback (GtkAction *action);
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt);

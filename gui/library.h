@@ -75,11 +75,16 @@ void menu_op_action (GtkAction *action, gpointer data);
 void do_menu_op (int ci, const char *liststr, gretlopt opt,
 		 GtkWidget *parent);
 
-void do_run_script (GtkWidget *w, windata_t *vwin);
-
-void run_script_silent (GtkWidget *w, windata_t *vwin);
-
 void run_script_fragment (windata_t *vwin, gchar *buf);
+
+void run_native_script (windata_t *vwin, gchar *buf, int silent);
+
+void run_R_script (gchar *buf, windata_t *vwin);
+
+void run_x12a_script (const gchar *buf);
+
+void call_lpsolve_function (gchar *buf, const char *fname,
+			    gretlopt opt);
 
 void errmsg_plus (int err, const char *plus);
 

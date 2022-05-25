@@ -447,6 +447,8 @@ void text_replace (GtkWidget *w, windata_t *vwin)
     replace_string_dialog(vwin);
 }
 
+#ifndef GRETL_EDIT
+
 static int prep_prn_for_file_save (PRN *prn, int fmt)
 {
     const char *orig = gretl_print_get_buffer(prn);
@@ -461,8 +463,6 @@ static int prep_prn_for_file_save (PRN *prn, int fmt)
 
     return err;
 }
-
-#ifndef GRETL_EDIT
 
 static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
@@ -727,7 +727,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 {
     gchar *buf = NULL;
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
     if (fmt == GRETL_FORMAT_TXT) {
 	buf = text_window_get_copy_buf(vwin, 0);
     } else if (fmt == GRETL_FORMAT_SELECTION) {
@@ -784,6 +784,204 @@ void window_save (windata_t *vwin, guint fmt)
 }
 
 /* "native" printing from gretl windows */
+
+static const gchar *user_string (void)
+{
+    const gchar *ret = g_get_real_name();
+
+    if (ret == NULL || *ret == '\0') {
+	ret = g_get_user_name();
+    }
+
+    return ret;
+}
+
+static char *header_string (const char *fname)
+{
+    char tmstr[48];
+    gchar *hdr;
+
+    print_time(tmstr);
+
+    if (fname != NULL && *fname != '\0' && !strstr(fname, "tmp")) {
+	hdr = g_strdup_printf("%s %s", fname, tmstr);
+    } else {
+	const gchar *ustr = user_string();
+
+	if (ustr != NULL && *ustr != '\0') {
+	    hdr = g_strdup_printf("%s %s %s %s", _("gretl output"), _("for"), ustr, tmstr);
+	} else {
+	    hdr = g_strdup_printf("%s %s", _("gretl output"), tmstr);
+	}
+    }
+
+    return hdr;
+}
+
+struct print_info {
+    int n_pages;
+    int pagelines;
+    gdouble x, y;
+    const char *buf;
+    const char *p;
+    char *hdr;
+    cairo_t *cr;
+    PangoLayout *layout;
+};
+
+static void begin_text_print (GtkPrintOperation *op,
+			      GtkPrintContext *context,
+			      struct print_info *pinfo)
+{
+    PangoFontDescription *fdesc;
+    gchar *fstring;
+    GtkPageSetup *setup;
+    gdouble x, y;
+
+    setup = gtk_print_context_get_page_setup(context);
+
+    x = gtk_page_setup_get_left_margin(setup, GTK_UNIT_POINTS);
+    pinfo->x = 72 - x; /* pad left to 72 points */
+    if (pinfo->x < 0) {
+	pinfo->x = 0;
+    }
+
+    y = gtk_page_setup_get_top_margin(setup, GTK_UNIT_POINTS);
+    pinfo->y = 26 - y; /* pad top to 26 points */
+    if (pinfo->y < 0) {
+	pinfo->y = 0;
+    }
+
+    pinfo->cr = gtk_print_context_get_cairo_context(context);
+    cairo_set_source_rgb(pinfo->cr, 0, 0, 0);
+
+    /* for printing purposes we'll respect the user's choice
+       of monospaced font, but coerce the size to 10-point
+    */
+    fstring = pango_font_description_to_string(fixed_font);
+    fdesc = pango_font_description_from_string(fstring);
+    pango_font_description_set_size(fdesc, 10 * PANGO_SCALE);
+    g_free(fstring);
+
+    pinfo->layout = gtk_print_context_create_pango_layout(context);
+    pango_layout_set_font_description(pinfo->layout, fdesc);
+    pango_layout_set_width(pinfo->layout, -1);
+    pango_layout_set_alignment(pinfo->layout, PANGO_ALIGN_LEFT);
+    pango_font_description_free(fdesc);
+}
+
+static void
+draw_text_page (GtkPrintOperation *op, GtkPrintContext *context,
+		gint pagenum, struct print_info *pinfo)
+{
+    gchar *hdr;
+    gdouble y = pinfo->y;
+    gint lheight;
+
+    hdr = g_strdup_printf(_("%s page %d of %d"), pinfo->hdr,
+			  pagenum + 1, pinfo->n_pages);
+    pango_layout_set_text(pinfo->layout, hdr, -1);
+    g_free(hdr);
+
+    cairo_move_to(pinfo->cr, pinfo->x, y);
+    pango_cairo_show_layout(pinfo->cr, pinfo->layout);
+
+    pango_layout_get_size(pinfo->layout, NULL, &lheight);
+    y += 8 + (gdouble) lheight / PANGO_SCALE;
+
+    if (pinfo->n_pages - pagenum > 1) {
+	/* carve out the current page */
+	const char *p = pinfo->p;
+	int nc = 0, nl = 0;
+
+	while (*p && nl <= pinfo->pagelines) {
+	    if (*p == '\n') {
+		nl++;
+	    }
+	    nc++;
+	    p++;
+	}
+	pango_layout_set_text(pinfo->layout, pinfo->p, nc);
+	pinfo->p += nc;
+    } else {
+	/* print all that's left */
+	pango_layout_set_text(pinfo->layout, pinfo->p, -1);
+    }
+
+    cairo_move_to(pinfo->cr, pinfo->x, y);
+    pango_cairo_show_layout(pinfo->cr, pinfo->layout);
+}
+
+static void job_set_n_pages (GtkPrintOperation *op,
+			     struct print_info *pinfo)
+{
+    const char *s = pinfo->buf;
+    int lines = 0;
+
+    while (*s) {
+	if (*s == '\n') {
+	    lines++;
+	}
+	s++;
+    }
+
+    pinfo->n_pages = lines / pinfo->pagelines +
+	(lines % pinfo->pagelines != 0);
+    gtk_print_operation_set_n_pages(op, pinfo->n_pages);
+}
+
+static GtkPrintSettings *settings = NULL;
+
+static void print_window_content (gchar *fullbuf, gchar *selbuf,
+				  const char *fname,
+				  windata_t *vwin)
+{
+    GtkPrintOperation *op;
+    GtkPrintOperationResult res;
+    GError *err = NULL;
+    struct print_info pinfo;
+
+    op = gtk_print_operation_new();
+
+    if (settings != NULL) {
+	gtk_print_operation_set_print_settings(op, settings);
+    }
+
+    gtk_print_operation_set_use_full_page(op, FALSE);
+    gtk_print_operation_set_unit(op, GTK_UNIT_POINTS);
+    gtk_print_operation_set_n_pages(op, 1); /* FIXME */
+
+    pinfo.buf = (selbuf != NULL)? selbuf : fullbuf;
+    pinfo.p = pinfo.buf;
+    pinfo.hdr = header_string(fname);
+    pinfo.layout = NULL;
+    pinfo.pagelines = 54; /* FIXME */
+
+    job_set_n_pages(op, &pinfo);
+
+    g_signal_connect(op, "begin-print", G_CALLBACK(begin_text_print), &pinfo);
+    g_signal_connect(op, "draw-page", G_CALLBACK(draw_text_page), &pinfo);
+
+    res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+				  GTK_WINDOW(vwin_toplevel(vwin)),
+				  &err);
+
+    if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
+	errbox_printf("Error printing:\n%s", err->message);
+	g_error_free(err);
+    } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
+	if (settings != NULL) {
+	    g_object_unref(settings);
+	}
+	settings = g_object_ref(gtk_print_operation_get_print_settings(op));
+    }
+
+    free(pinfo.hdr);
+    if (pinfo.layout != NULL) {
+	g_object_unref(G_OBJECT(pinfo.layout));
+    }
+    g_object_unref(G_OBJECT(op));
+}
 
 void window_print (GtkAction *action, windata_t *vwin)
 {

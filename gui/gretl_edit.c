@@ -91,11 +91,14 @@ int mainwin_width = 520;
 int mainwin_height = 420;
 
 #if defined(G_OS_WIN32)
+char calculator[MAXSTR] = "calc.exe";
 char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OS_OSX)
+char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
 #else
 char Browser[MAXSTR] = "mozilla";
+char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "pdflatex";
 char viewpdf[MAXSTR] = "acroread";
 char viewps[MAXSTR] = "gv";

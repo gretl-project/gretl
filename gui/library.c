@@ -5735,7 +5735,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     real_do_tramo_x12a(v, tramo);
 }
 
-static void run_x12a_script (const gchar *buf)
+void run_x12a_script (const gchar *buf)
 {
     int (*func) (char *, const gchar *);
     char outfile[MAXLEN] = {0};
@@ -8410,48 +8410,9 @@ static int already_running_script (void)
     }
 }
 
-static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
-{
-    gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
-    gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
-    FILE *fp = gretl_fopen(inpname, "wb");
-    int err = 0;
-
-    if (fp == NULL) {
-	file_read_errbox(inpname);
-	err = E_FOPEN;
-    } else {
-	fputs(buf, fp);
-	fclose(fp);
-    }
-
-    if (!err) {
-#ifdef G_OS_WIN32
-	gchar *cmd;
-
-	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
-	win32_run_gretlcli_async(cmd, inpname, vwin);
-#else
-	gchar *argv[4];
-
-	argv[0] = (gchar *) clipath;
-	argv[1] = (gchar *) "-x";
-	argv[2] = (gchar *) inpname;
-	argv[3] = NULL;
-	run_gretlcli_async(argv, vwin);
-#endif
-    }
-
-    g_free(clipath);
-    g_free(inpname);
-
-    return err;
-}
-
 /* Execute a script from the buffer in viewer window @vwin */
 
-static void run_native_script (windata_t *vwin, gchar *buf,
-			       int silent)
+void run_native_script (windata_t *vwin, gchar *buf, int silent)
 {
     int policy = get_script_output_policy();
     GtkWidget *parent;
@@ -8612,8 +8573,9 @@ int exec_line_with_output_handler (ExecState *s,
     return err;
 }
 
-static void run_R_script (gchar *buf, GtkWidget *parent)
+void run_R_script (gchar *buf, windata_t *vwin)
 {
+    GtkWidget *parent = vwin_toplevel(vwin);
     const char *opts[] = {
         N_("Non-interactive (just get output)"),
         N_("Interactive R session")
@@ -8638,18 +8600,6 @@ static void run_R_script (gchar *buf, GtkWidget *parent)
     }
 }
 
-static void ensure_newline_termination (gchar **ps)
-{
-    gchar *s = *ps;
-
-    if (s[strlen(s)-1] != '\n') {
-        gchar *tmp = g_strdup_printf("%s\n", s);
-
-        g_free(s);
-        *ps = tmp;
-    }
-}
-
 /* Call the lpsolve library to solve the linear program in @buf.  If
    successful, put the lpsolve output into a window and attach the
    output bundle: this will contain various key results that can be
@@ -8659,8 +8609,8 @@ static void ensure_newline_termination (gchar **ps)
    any valid/interesting use for it.
 */
 
-static void call_lpsolve_function (gchar *buf, const char *fname,
-				   gretlopt opt)
+void call_lpsolve_function (gchar *buf, const char *fname,
+			    gretlopt opt)
 {
     gretl_bundle *(*lpf) (gretl_bundle *, PRN *, int *);
     gretl_bundle *b_inp, *b_out;
@@ -8707,126 +8657,6 @@ static void call_lpsolve_function (gchar *buf, const char *fname,
     }
 
     gretl_bundle_destroy(b_inp);
-}
-
-static void real_run_script (GtkWidget *w, windata_t *vwin,
-			     int silent, int cli)
-{
-    gretlopt opt = OPT_NONE;
-    gboolean selection = FALSE;
-    gchar *prev_workdir = NULL;
-    gchar *currdir = NULL;
-    gchar *buf = NULL;
-
-    if (vwin->role == EDIT_GP ||
-        vwin->role == EDIT_R ||
-        vwin->role == EDIT_OX ||
-        vwin->role == EDIT_OCTAVE ||
-        vwin->role == EDIT_PYTHON ||
-        vwin->role == EDIT_JULIA ||
-        vwin->role == EDIT_DYNARE ||
-	vwin->role == EDIT_LPSOLVE ||
-        vwin->role == EDIT_STATA ||
-        vwin->role == EDIT_X12A ||
-	cli) {
-        buf = textview_get_text(vwin->text);
-    } else if (vwin->role == EDIT_PKG_SAMPLE) {
-        buf = package_sample_get_script(vwin);
-    } else {
-        buf = textview_get_selection_or_all(vwin->text, &selection);
-    }
-
-    if (buf == NULL || *buf == '\0') {
-        warnbox("No commands to execute");
-        if (buf != NULL) {
-            g_free(buf);
-        }
-        return;
-    }
-
-    if (vwin->fname[0] != '\0' &&
-        strstr(vwin->fname, "script_tmp") == NULL &&
-        g_path_is_absolute(vwin->fname)) {
-        /* There's a "real" full filename in place */
-        if (editing_alt_script(vwin->role)) {
-            /* For an "alt" script we'll temporarily reset
-               workdir to its location so we're able to pick up
-               any data files it may reference. We'll also arrange
-               to revert the working directory once we're done.
-            */
-            gchar *dname = g_path_get_dirname(vwin->fname);
-
-            currdir = g_get_current_dir();
-            prev_workdir = g_strdup(gretl_workdir());
-            gretl_set_path_by_name("workdir", dname);
-            gretl_chdir(dname);
-            g_free(dname);
-        } else if (vwin->role != EDIT_GP && vwin->role != EDIT_PKG_SAMPLE) {
-            /* native script */
-            gretl_set_script_dir(vwin->fname);
-        }
-    }
-
-    if (vwin->role != EDIT_PKG_SAMPLE) {
-        ensure_newline_termination(&buf);
-    }
-
-    if (vwin->role == EDIT_DYNARE) {
-        opt = OPT_Y;
-    }
-
-    if (vwin->role == EDIT_GP) {
-        run_gnuplot_script(buf, vwin);
-    } else if (vwin->role == EDIT_R) {
-        run_R_script(buf, vwin_toplevel(vwin));
-    } else if (vwin->role == EDIT_OX) {
-        run_foreign_script(buf, LANG_OX, opt);
-    } else if (vwin->role == EDIT_OCTAVE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_PYTHON) {
-        run_foreign_script(buf, LANG_PYTHON, opt);
-    } else if (vwin->role == EDIT_JULIA) {
-        run_foreign_script(buf, LANG_JULIA, opt);
-    } else if (vwin->role == EDIT_DYNARE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_LPSOLVE) {
-	call_lpsolve_function(buf, vwin->fname, opt);
-    } else if (vwin->role == EDIT_STATA) {
-        run_foreign_script(buf, LANG_STATA, opt);
-    } else if (vwin->role == EDIT_X12A) {
-        run_x12a_script(buf);
-    } else if (cli) {
-	gretlcli_exec_script(vwin, buf);
-    } else if (selection) {
-	run_script_fragment(vwin, buf);
-    } else {
-        run_native_script(vwin, buf, silent);
-    }
-
-    g_free(buf);
-
-    if (prev_workdir != NULL) {
-        gretl_set_path_by_name("workdir", prev_workdir);
-        g_free(prev_workdir);
-    }
-    if (currdir != NULL) {
-        gretl_chdir(currdir);
-        g_free(currdir);
-    }
-}
-
-void do_run_script (GtkWidget *w, windata_t *vwin)
-{
-    if (gui_editor_mode()) {
-	real_run_script(w, vwin, 0, 1);
-    } else {
-	real_run_script(w, vwin, 0, 0);
-    }
-}
-
-void run_script_silent (GtkWidget *w, windata_t *vwin)
-{
-    real_run_script(w, vwin, 1, 0);
 }
 
 void maybe_display_string_table (void)

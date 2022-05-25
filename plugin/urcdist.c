@@ -431,11 +431,9 @@ static void urc_swap_endianness (double *beta,
     for (i=1; i<=URCLEN; i++) {
 	reverse_double(wght[i]);
     }
-
     for (i=1; i<=URCLEN; i++) {
 	reverse_double(prob[i]);
     }
-
     for (i=1; i<=URCLEN; i++) {
 	reverse_double(cnorm[i]);
     }

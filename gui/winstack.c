@@ -678,9 +678,12 @@ gboolean window_list_exit_check (void)
 		    /* vwin is NULL */
 		    if (g_object_get_data(G_OBJECT(w), "tabwin")) {
 			ret = tabwin_exit_check(w);
-		    } else if (window_is_package_editor(w)) {
+		    }
+#ifndef GRETL_EDIT
+		    else if (window_is_package_editor(w)) {
 			ret = package_editor_exit_check(w);
 		    }
+#endif
 		}
 	    }
 	    list = list->next;
@@ -851,6 +854,8 @@ windata_t *get_editor_for_file (const char *filename)
     return ret;
 }
 
+#ifndef GRETL_EDIT
+
 GtkWidget *get_viewer_for_plot (const char *filename)
 {
     GtkWidget *ret = NULL;
@@ -958,6 +963,8 @@ windata_t *get_viewer_for_data (const gpointer data)
 
     return ret;
 }
+
+#endif /* not GRETL_EDIT */
 
 static int paths_match (const char *path, windata_t *vwin)
 {
@@ -1105,6 +1112,8 @@ GtkWidget *get_primary_hansl_window (void)
     return ret;
 }
 
+#ifndef GRETL_EDIT
+
 GtkWidget *get_window_for_data (const gpointer data)
 {
     GtkWidget *ret = NULL;
@@ -1212,8 +1221,6 @@ gboolean package_being_edited (const char *pkgname, GtkWidget **pw)
 
     return ret;
 }
-
-#ifndef GRETL_EDIT
 
 int highest_numbered_variable_in_winstack (void)
 {

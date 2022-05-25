@@ -967,32 +967,6 @@ gboolean verify_open_session (void)
     return do_open_session();
 }
 
-gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
-{
-    if (right_click(event)) {
-	windata_t *vwin = (windata_t *) p;
-
-	if (vwin->popup != NULL) {
-	    gtk_widget_destroy(vwin->popup);
-	    vwin->popup = NULL;
-	}
-
-	vwin->popup = build_text_popup(vwin);
-
-	if (vwin->popup != NULL) {
-	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
-			   event->button, event->time);
-	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed),
-			     &vwin->popup);
-	}
-
-	return TRUE;
-    }
-
-    return FALSE;
-}
-
 windata_t *console_window (int hsize, int vsize)
 {
     windata_t *vwin;
