@@ -8439,7 +8439,7 @@ gretl_matrix *omega_from_R (const gretl_matrix *R, int *err)
 		    }
 		}
 		if (rank_def) {
-		    omega->val[l++] = rank_def == 2 ? M_PI : 0 ;
+		    omega->val[l++] = rank_def == 2 ? M_PI : 0;
 		} else {
 		    theta = acos(x);
 		    omega->val[l++] = theta;
@@ -8519,7 +8519,7 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
     K = gretl_zero_matrix_new(n, n);
     gretl_matrix_set(K, 0, 0, 1.0);
 
-    if (do_jacobian) {
+    if (J != NULL) {
 	/* pre-allocate Jacobian matrix */
 	localJ = gretl_zero_matrix_new(m + n, m);
 	Jindex = funky_index(n, m);
@@ -8527,7 +8527,7 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
     }
 
 #if SPHCORR_DBG
-    if (do_jacobian) {
+    if (J != NULL) {
 	for (i=0; i<m+n; i++) {
 	    fprintf(stderr, "Jindex[%d] = %d\n", i, Jindex[i]);
 	}
@@ -8538,7 +8538,8 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
     work = malloc((n + 2*(n+1)) * sizeof *work);
     f = malloc(m * sizeof *f);
 
-    r_i = 1, c_i = 0;
+    r_i = 1;
+    c_i = 0;
 
     for (i=0; i<n-1; i++) {
 	h = i + 1;
@@ -8572,6 +8573,7 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 
     if (J != NULL) {
 	gretl_matrix_replace_content(J, localJ);
+	gretl_matrix_free(localJ);
 	gretl_matrix_free(tmpJac);
 	free(Jindex);
     }
