@@ -198,29 +198,6 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
     return err;
 }
 
-gint bufopen (PRN **pprn)
-{
-    static int has_minus = -1;
-    int err = 0;
-
-    *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-
-    if (err) {
-        gui_errmsg(err);
-    } else {
-        if (has_minus < 0) {
-            /* check for Unicode minus sign, U+2212 */
-            has_minus = font_has_symbol(fixed_font, 0x2212);
-        }
-
-        if (has_minus > 0) {
-            gretl_print_set_has_minus(*pprn);
-        }
-    }
-
-    return err;
-}
-
 static char *cmd_to_buf (CMD *cmd, const char *line)
 {
     PRN *cmdprn = NULL;
@@ -1481,38 +1458,6 @@ void dataset_info (void)
     } else {
         edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
                     EDIT_HEADER);
-    }
-}
-
-void gui_errmsg (int errcode)
-{
-    if (errcode == E_STOP) {
-        gui_warnmsg(errcode);
-    } else {
-        const char *msg = errmsg_get_with_default(errcode);
-
-        if (msg != NULL && *msg != '\0') {
-            errbox(msg);
-            /* avoid duplicating this error message */
-            gretl_error_clear();
-        } else {
-            errbox(_("Unspecified error"));
-        }
-    }
-}
-
-void gui_warnmsg (int errcode)
-{
-    const char *msg = NULL;
-
-    if (errcode > 0) {
-        msg = errmsg_get_with_default(errcode);
-    } else {
-        msg = gretl_warnmsg_get();
-    }
-
-    if (msg != NULL && *msg != '\0') {
-        warnbox(msg);
     }
 }
 
@@ -8882,120 +8827,6 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 void run_script_silent (GtkWidget *w, windata_t *vwin)
 {
     real_run_script(w, vwin, 1, 0);
-}
-
-gboolean do_open_script (int action)
-{
-    char *fname = get_tryfile();
-    int err = gretl_test_fopen(fname, "r");
-
-    if (err) {
-	file_read_errbox(fname);
-        if (action == EDIT_HANSL) {
-            delete_from_filelist(FILE_LIST_SESSION, fname);
-            delete_from_filelist(FILE_LIST_SCRIPT, fname);
-        }
-        return FALSE;
-    }
-
-    if (action == EDIT_HANSL) {
-        strcpy(scriptfile, fname);
-	if (!gui_editor_mode()) {
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 1);
-	    gretl_set_script_dir(scriptfile);
-	}
-        if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
-            view_script(scriptfile, 0, VIEW_SCRIPT);
-        } else {
-            view_script(scriptfile, 1, EDIT_HANSL);
-        }
-    } else {
-        view_script(fname, 1, action);
-    }
-
-    return TRUE;
-}
-
-/* do_new_script(): passing a non-NULL @scriptname is a means
-   of creating a new script with a name pre-given by the user;
-   this applies only when we get the name of a non-existent
-   script on the command line. Otherwise the new script gets
-   a temporary name in the user's dotdir.
-*/
-
-void do_new_script (int code, const char *buf,
-		    const char *scriptname)
-{
-    int action = (code == FUNC)? EDIT_HANSL : code;
-    fmode mode = 0;
-    windata_t *vwin;
-    gchar *fname;
-
-    if (scriptname == NULL) {
-	/* the usual case */
-	FILE *fp;
-
-	fname = gretl_make_dotpath("script_tmp");
-	fp = gretl_tempfile_open(fname);
-	if (fp == NULL) {
-	    g_free(fname);
-	    return;
-	} else {
-	    if (buf != NULL) {
-		fputs(buf, fp);
-	    } else if (code == FUNC) {
-		fputs("function \n\nend function\n", fp);
-	    } else if (code == EDIT_OX) {
-		fputs("#include <oxstd.h>\n\n", fp);
-		fputs("main()\n{\n\n}\n", fp);
-	    }
-	    fclose(fp);
-	}
-	mode = TMP_FILE;
-    } else {
-	/* special startup case */
-	fname = g_strdup(scriptname);
-	mode = NULL_FILE;
-    }
-
-    if (action == EDIT_HANSL) {
-        strcpy(scriptfile, fname);
-    }
-
-    vwin = view_file(fname, 1, mode, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
-    g_free(fname);
-
-    if (buf != NULL && *buf != '\0') {
-        mark_vwin_content_changed(vwin);
-    }
-}
-
-void new_script_callback (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-    int etype = EDIT_HANSL;
-
-    if (!strcmp(s, "GnuplotScript")) {
-        etype = EDIT_GP;
-    } else if (!strcmp(s, "RScript")) {
-        etype = EDIT_R;
-    } else if (!strcmp(s, "OxScript")) {
-        etype = EDIT_OX;
-    } else if (!strcmp(s, "OctaveScript")) {
-        etype = EDIT_OCTAVE;
-    } else if (!strcmp(s, "PyScript")) {
-        etype = EDIT_PYTHON;
-    } else if (!strcmp(s, "StataScript")) {
-        etype = EDIT_STATA;
-    } else if (!strcmp(s, "JuliaScript")) {
-        etype = EDIT_JULIA;
-    } else if (!strcmp(s, "DynareScript")) {
-        etype = EDIT_DYNARE; /* FIXME not reached */
-    } else if (!strcmp(s, "lpsolveScript")) {
-	etype = EDIT_LPSOLVE;
-    }
-
-    do_new_script(etype, NULL, NULL);
 }
 
 void maybe_display_string_table (void)

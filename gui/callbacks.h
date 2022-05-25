@@ -19,8 +19,6 @@ void file_save (windata_t *vwin, int ci);
 
 void fsave_callback (GtkAction *action, gpointer p);
 
-void dummy_call (void);
-
 void fit_resid_callback (GtkAction *action, gpointer data);
 
 void model_stat_callback (GtkAction *action, gpointer data);

@@ -727,11 +727,11 @@ static gint script_key_handler (GtkWidget *w,
     if (state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
 	    /* Ctrl-Shift-r */
-	    if (gui_editor_mode()) {
-		do_run_script(w, vwin);
-	    } else {
-		run_script_silent(w, vwin);
-	    }
+#ifdef GRETL_EDIT
+	    do_run_script(w, vwin);
+#else
+	    run_script_silent(w, vwin);
+#endif
 	    ret = TRUE;
 	} else if (keyval == GDK_r) {
 	    /* plain Ctrl-r */
@@ -1886,6 +1886,28 @@ static void open_external_link (GtkTextTag *tag)
     }
 }
 
+#ifdef GRETL_EDIT
+
+static void open_menu_item (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	/* should be a PDF help file */
+	static GtkAction *action;
+
+	if (action == NULL) {
+	    action = gtk_action_new(name, NULL, NULL, NULL);
+	}
+	display_pdf_help(action);
+	g_free(name);
+    }
+}
+
+#else
+
 static void open_menu_item (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -1958,6 +1980,8 @@ static void open_next_link (GtkTextTag *tag, GtkWidget *tview)
     }
 }
 
+#endif /* GRETL_EDIT or not */
+
 static void open_pdf_file (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -2028,13 +2052,17 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_pdf_file(tag);
 	    } else if (page == MNU_PAGE) {
 		open_menu_item(tag);
-	    } else if (page == DBN_PAGE) {
+	    }
+#ifndef GRETL_EDIT
+	    else if (page == DBN_PAGE) {
 		open_dbn_link(tag);
 	    } else if (page == DBS_PAGE) {
 		open_dbs_link(tag);
 	    } else if (page == NEXT_PAGE) {
 		open_next_link(tag, tview);
-	    } else {
+	    }
+#endif
+	    else {
 		int role = object_get_int(tview, "role");
 
 		if (function_help(role)) {

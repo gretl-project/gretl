@@ -227,45 +227,46 @@ void gretl_stock_icons_init (void)
 static void save_as_callback (GtkWidget *w, windata_t *vwin)
 {
     GtkWidget *vmain = vwin_toplevel(vwin);
-    guint u = 0;
+    int ci = 0;
 
     if (g_object_get_data(G_OBJECT(vmain), "text_out")) {
-	u = SAVE_OUTPUT;
+	ci = SAVE_OUTPUT;
     } else if (vwin->role == EDIT_HANSL) {
-	u = SAVE_SCRIPT;
+	ci = SAVE_SCRIPT;
     } else if (vwin->role == EDIT_GP) {
-	u = SAVE_GP_CMDS;
+	ci = SAVE_GP_CMDS;
     } else if (vwin->role == EDIT_R) {
-	u = SAVE_R_CMDS;
+	ci = SAVE_R_CMDS;
     } else if (vwin->role == EDIT_OX) {
-	u = SAVE_OX_CMDS;
+	ci = SAVE_OX_CMDS;
     } else if (vwin->role == EDIT_OCTAVE) {
-	u = SAVE_OCTAVE_CMDS;
+	ci = SAVE_OCTAVE_CMDS;
     } else if (vwin->role == EDIT_PYTHON) {
-        u = SAVE_PYTHON_CMDS;
+        ci = SAVE_PYTHON_CMDS;
     } else if (vwin->role == EDIT_JULIA) {
-	u = SAVE_JULIA_CODE;
+	ci = SAVE_JULIA_CODE;
     } else if (vwin->role == EDIT_DYNARE) {
-	u = SAVE_DYNARE_CODE;
+	ci = SAVE_DYNARE_CODE;
     } else if (vwin->role == EDIT_LPSOLVE) {
-	u = SAVE_LPSOLVE_CODE;
+	ci = SAVE_LPSOLVE_CODE;
     } else if (vwin->role == EDIT_STATA) {
-	u = SAVE_STATA_CMDS;
+	ci = SAVE_STATA_CMDS;
     } else if (vwin->role == EDIT_SPEC) {
-	u = SAVE_SPEC_FILE;
+	ci = SAVE_SPEC_FILE;
     } else if (vwin->role == VIEW_FILE) {
-	u = SAVE_TEXT;
-    } else if (vwin->role == EDIT_PKG_HELP ||
-	       vwin->role == EDIT_PKG_GHLP) {
-	u = SAVE_HELP_TEXT;
+	ci = SAVE_TEXT;
     } else if (vwin->role == EDIT_X12A) {
-	u = SAVE_X13_SPC;
+	ci = SAVE_X13_SPC;
     } else {
 	dummy_call();
 	return;
     }
 
-    file_save(vwin, u);
+    if (ci == SAVE_TEXT) {
+	file_selector(ci, FSEL_DATA_MISC, vwin->data);
+    } else {
+	file_selector(ci, FSEL_DATA_VWIN, vwin);
+    }
 }
 
 /* callback for the "Open" icon in a script editing window,
@@ -602,18 +603,6 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
-/* right-click and middle-click actions for Run (exec) button */
-
-static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
-{
-    if (eb->button == 3 && !gui_editor_mode()) {
-	run_script_silent(NULL, vwin);
-	return TRUE;
-    } else {
-	return FALSE;
-    }
-}
-
 GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 				GCallback func,
 				GtkWidget *menu,
@@ -637,10 +626,6 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
 	} else {
 	    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
-	    if (tool->flag == EXEC_ITEM) {
-		g_signal_connect(G_OBJECT(item), "button-press-event",
-				 G_CALLBACK(exec_press), vwin);
-	    }
 	}
     }
 

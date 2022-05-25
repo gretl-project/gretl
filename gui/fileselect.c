@@ -1217,6 +1217,8 @@ static void remember_folder (GtkFileChooser *chooser, char *savedir)
     }
 }
 
+#ifndef GRETL_EDIT
+
 static void record_compress_level (GtkWidget *b, gpointer p)
 {
     int level;
@@ -1252,6 +1254,8 @@ static void add_compression_level_option (GtkWidget *filesel)
     gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(filesel),
 				      hbox);
 }
+
+#endif /* not GRETL_EDIT */
 
 static void check_native_data_save_filter (GtkWidget *filesel)
 {
@@ -1403,13 +1407,14 @@ static void gtk_file_selector (int action, FselDataSrc src,
 					  okstr,
 					  GTK_RESPONSE_ACCEPT,
 					  NULL);
-
+#ifndef GRETL_EDIT
     if (action == SAVE_DATA ||
 	action == SAVE_DATA_AS ||
 	action == SAVE_BOOT_DATA ||
 	action == EXPORT_GDT) {
 	add_compression_level_option(filesel);
     }
+#endif
 
     if (fsel_action == GTK_FILE_CHOOSER_ACTION_SAVE) {
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(filesel),

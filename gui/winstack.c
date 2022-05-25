@@ -18,8 +18,13 @@
  */
 
 #include "gretl.h"
-#include "var.h"
 #include "dlgutils.h"
+#include "tabwin.h"
+#include "winstack.h"
+#include "gretl_ipc.h"
+
+#ifndef GRET_EDIT
+#include "var.h"
 #include "guiprint.h"
 #include "session.h"
 #include "tabwin.h"
@@ -28,8 +33,8 @@
 #include "cmdstack.h"
 #include "winstack.h"
 #include "gretl_ipc.h"
-
 #include "uservar.h"
+#endif
 
 #define WDEBUG 0
 
@@ -1208,6 +1213,8 @@ gboolean package_being_edited (const char *pkgname, GtkWidget **pw)
     return ret;
 }
 
+#ifndef GRETL_EDIT
+
 int highest_numbered_variable_in_winstack (void)
 {
     int m_vmax, vmax = 0;
@@ -1291,6 +1298,8 @@ GList *windowed_model_list (void)
 
     return ret;
 }
+
+#endif /* not GRETL_EDIT */
 
 /* end of window-list apparatus */
 

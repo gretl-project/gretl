@@ -530,11 +530,11 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		gtk_widget_destroy(w);
 	    }
 	}
-#ifndef GRETL_EDIT	
+#ifndef GRETL_EDIT
 	else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
 	    model_add_as_icon(NULL, vwin);
 	}
-#endif	
+#endif
     }
 
     return FALSE;
@@ -779,7 +779,8 @@ static gchar *script_output_title (gpointer data)
 {
     int n;
 
-    if (gui_editor_mode() && data != NULL) {
+#ifdef GRETL_EDIT
+    if (data != NULL) {
 	windata_t *vwin = (windata_t *) data;
 	const gchar *s;
 
@@ -795,6 +796,7 @@ static gchar *script_output_title (gpointer data)
 	    }
 	}
     }
+#endif
 
     /* fallback */
     n = get_script_output_number();
@@ -1007,12 +1009,14 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     windata_t *vwin;
 
     if (role == SCRIPT_OUT) {
-	if (gui_editor_mode() && data != NULL) {
+#ifdef GRETL_EDIT
+	if (data != NULL) {
 	    vwin = vwin_first_child((windata_t *) data);
 	    if (vwin != NULL) {
 		return reuse_script_out(vwin, prn);
 	    }
 	}
+#endif
 	if (script_out_viewer != NULL) {
 	    return reuse_script_out(script_out_viewer, prn);
 	}
@@ -1035,7 +1039,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
 #ifdef GRETL_EDIT
     vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
-#else    
+#else
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
 	add_system_ui_to_vwin(vwin);
@@ -1055,7 +1059,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else {
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
-#endif    
+#endif
 
     if (role != VIEW_PKG_CODE &&
 	role != EDIT_PKG_CODE &&
@@ -1090,12 +1094,12 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	    vwin_add_child((windata_t *) data, vwin);
 	    /* define "top-hbox" here? */
 	}
-	if (!gui_editor_mode()) {
-	    g_signal_connect(G_OBJECT(vwin->main), "destroy",
-			     G_CALLBACK(nullify_script_out),
-			     &script_out_viewer);
-	    script_out_viewer = vwin;
-	}
+#ifndef GRETL_EDIT
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			 G_CALLBACK(nullify_script_out),
+			 &script_out_viewer);
+	script_out_viewer = vwin;
+#endif
     }
 
     /* insert and then free the text buffer */
@@ -1336,9 +1340,9 @@ windata_t *view_script (const char *filename, int editable,
 	}
     }
 
-    if (gui_editor_mode()) {
-	vsize *= 1.5;
-    }
+#ifdef GRETL_EDIT
+    vsize *= 1.5;
+#endif
 
     return view_file_with_title(filename, editable, 0,
 				SCRIPT_WIDTH, vsize,
@@ -1567,9 +1571,11 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	}
     }
 
-    if (gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
+#ifdef GRETL_EDIT
+    if (get_n_hansl_editor_windows() <= 1) {
 	gtk_main_quit();
     }
+#endif
 
     return FALSE;
 }

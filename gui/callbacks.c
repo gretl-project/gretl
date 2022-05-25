@@ -246,11 +246,6 @@ void fsave_callback (GtkAction *action, gpointer p)
     file_save(p, ci);
 }
 
-void dummy_call (void)
-{
-    errbox(_("Sorry, this item not yet implemented!"));
-}
-
 static int model_action_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);

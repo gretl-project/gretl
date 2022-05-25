@@ -95,6 +95,7 @@ char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OS_OSX)
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
 #else
+char Browser[MAXSTR] = "mozilla";
 char latex[MAXSTR] = "pdflatex";
 char viewpdf[MAXSTR] = "acroread";
 char viewps[MAXSTR] = "gv";
@@ -402,7 +403,6 @@ int main (int argc, char **argv)
 
     *tryfile = '\0';
     *scriptfile = '\0';
-    *datafile = '\0';
     *auxname = '\0';
     *filearg = '\0';
 

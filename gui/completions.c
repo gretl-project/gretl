@@ -392,6 +392,8 @@ static GtkSourceCompletionItem *comp_item_new (const gchar *label,
     return item;
 }
 
+#ifndef GRETL_EDIT
+
 static void
 series_provider_populate (GtkSourceCompletionProvider *provider,
 			  GtkSourceCompletionContext *context)
@@ -426,6 +428,8 @@ series_provider_populate (GtkSourceCompletionProvider *provider,
     g_list_free(ret);
 }
 
+#endif
+
 static void
 gretl_provider_populate (GtkSourceCompletionProvider *provider,
 			 GtkSourceCompletionContext *context)
@@ -434,9 +438,12 @@ gretl_provider_populate (GtkSourceCompletionProvider *provider,
 
     if (id == PROV_SNIPPETS) {
 	snippet_provider_populate(provider, context);
-    } else if (id == PROV_SERIES) {
+    }
+#ifndef GRETL_EDIT
+    else if (id == PROV_SERIES) {
 	series_provider_populate(provider, context);
     }
+#endif
 }
 
 static void

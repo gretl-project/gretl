@@ -33,6 +33,10 @@ typedef struct dialog_t_ dialog_t;
 void copy_format_dialog (windata_t *vwin, int action);
 #endif
 
+void gui_errmsg (int errcode);
+
+void gui_warnmsg (int errcode);
+
 void msgbox (const char *msg, int msgtype, GtkWidget *parent);
 
 void errbox (const char *err);

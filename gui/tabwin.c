@@ -101,9 +101,11 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	}
     }
 
-    if (!ret && gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
+#ifdef GRETL_EDIT
+    if (!ret && get_n_hansl_editor_windows() <= 1) {
 	gtk_main_quit();
     }
+#endif
 
     return ret;
 }

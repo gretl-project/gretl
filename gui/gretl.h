@@ -87,9 +87,11 @@
 #define MODEL_WIDTH 72
 #define MODEL_HEIGHT 420
 
+#ifndef GRETL_EDIT
 /* basic global program vars */
 extern DATASET *dataset;
 extern MODEL *model;
+#endif
 
 /* global counters */
 extern int orig_vars;
@@ -155,8 +157,6 @@ gchar *user_friendly_menu_path (const char *mpath,
 
 int mainwin_get_vwin_insertion (void);
 int mainwin_insert_vwin (windata_t *vwin);
-
-int gui_editor_mode (void);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (void);

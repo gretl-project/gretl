@@ -4373,22 +4373,6 @@ static GList *plot_get_siblings (png_plot *plot)
     }
 }
 
-static double graph_scales[] = {
-    0.8, 1.0, 1.1, 1.2, 1.4
-};
-
-int get_graph_scale (int i, double *s)
-{
-    int n = G_N_ELEMENTS(graph_scales);
-
-    if (i >= 0 && i < n) {
-	*s = graph_scales[i];
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 static int real_plot_rescale (png_plot *plot, double scale)
 {
     FILE *fp = NULL;
@@ -4459,14 +4443,10 @@ static int rescale_siblings (png_plot *plot, double scale)
 
 static void plot_do_rescale (png_plot *plot, int mod)
 {
-    int n = G_N_ELEMENTS(graph_scales);
     double scale = 1.0;
     int err = 0;
 
     plot = plot_get_current(plot);
-#if 0
-    fprintf(stderr, "plot_do_rescale: %p\n", (void *) plot);
-#endif
 
     if (mod == 0) {
 	/* reset to default */
@@ -4475,41 +4455,25 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	    return;
 	}
     } else {
-	/* enlarge or shrink */
-	int i;
-
-	for (i=0; i<n; i++) {
-	    if (plot->spec->scale == graph_scales[i]) {
-		break;
-	    }
-	}
-	if (mod == 1 && i < n - 1) {
-	    scale = graph_scales[i+1];
-	} else if (mod == -1 && i > 0) {
-	    scale = graph_scales[i-1];
-	} else {
+	/* enlarge (mod = 1) or shrink (mod = -1) */
+	scale = next_graph_scale(plot->spec->scale, mod);
+	if (na(scale)) {
 	    gdk_window_beep(plot->window);
 	    return;
 	}
     }
 
-#if 0
-    fprintf(stderr, "call real_plot_scale on current\n");
-#endif
     err = real_plot_rescale(plot, scale);
 
     if (!err) {
-#if 0
-	fprintf(stderr, "repaint current\n");
-#endif
 	repaint_png(plot, PNG_REDISPLAY);
 	if (in_collection(plot)) {
 	    rescale_siblings(plot, scale);
 	}
     }
 
-    gtk_widget_set_sensitive(plot->up_icon, scale != graph_scales[n-1]);
-    gtk_widget_set_sensitive(plot->down_icon, scale != graph_scales[0]);
+    gtk_widget_set_sensitive(plot->up_icon, scale < max_graph_scale());
+    gtk_widget_set_sensitive(plot->down_icon, scale > min_graph_scale());
 }
 
 static void show_all_labels (png_plot *plot)

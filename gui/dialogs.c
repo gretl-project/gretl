@@ -648,8 +648,6 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
     return ret;
 }
 
-#endif /* not GRETL_EDIT */
-
 /* selection of format in which to copy material to clipboard,
    or save to file */
 
@@ -882,8 +880,6 @@ void copy_format_dialog (windata_t *vwin, int action)
     gretl_dialog_keep_above(dialog);
     gtk_widget_show_all(dialog);
 }
-
-#ifndef GRETL_EDIT
 
 enum {
     SET_CI = 1,
@@ -4293,6 +4289,8 @@ int radio_dialog_with_check (const char *title, const char *label,
                              checkvar, checktxt, 0, 0, parent);
 }
 
+#ifndef GRETL_EDIT
+
 /* selections in relation to kernel density estimation */
 
 static void bw_set (GtkWidget *w, gpointer p)
@@ -4428,6 +4426,8 @@ int paste_data_dialog (int *append)
 
     return ret;
 }
+
+#endif /* not GRETL_EDIT */
 
 static void option_spin_set (GtkWidget *w, int *ivar)
 {
@@ -5526,6 +5526,38 @@ void errbox_printf (const char *template, ...)
     msgbox(msg, GTK_MESSAGE_ERROR, NULL);
 }
 
+void gui_warnmsg (int errcode)
+{
+    const char *msg = NULL;
+
+    if (errcode > 0) {
+        msg = errmsg_get_with_default(errcode);
+    } else {
+        msg = gretl_warnmsg_get();
+    }
+
+    if (msg != NULL && *msg != '\0') {
+        warnbox(msg);
+    }
+}
+
+void gui_errmsg (int errcode)
+{
+    if (errcode == E_STOP) {
+        gui_warnmsg(errcode);
+    } else {
+        const char *msg = errmsg_get_with_default(errcode);
+
+        if (msg != NULL && *msg != '\0') {
+            errbox(msg);
+            /* avoid duplicating this error message */
+            gretl_error_clear();
+        } else {
+            errbox(_("Unspecified error"));
+        }
+    }
+}
+
 void infobox (const char *info)
 {
     char msg[MAXLEN];
@@ -6032,8 +6064,6 @@ int hc_config_dialog (char *vname, gretlopt opt, gboolean robust_conf,
     return opts.retval;
 }
 
-#endif /* not GRETL_EDIT */
-
 #ifndef G_OS_WIN32
 
 static gint dont_delete (void)
@@ -6159,8 +6189,6 @@ int output_policy_dialog (windata_t *source,
 
     return policy;
 }
-
-#ifndef GRETL_EDIT
 
 static gchar *auto_pc_name (const char *vname, int idxvals)
 {

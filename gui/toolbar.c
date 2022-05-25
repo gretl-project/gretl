@@ -1050,7 +1050,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     int r = vwin->role;
 
     if (mail_ok < 0) {
-	mail_ok = curl_does_smtp() && !gui_editor_mode();
+	mail_ok = curl_does_smtp();
     }
 
     if (r == EDIT_SPEC) {
@@ -1148,7 +1148,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;
-    } else if (f == STICKIFY_ITEM && (r != SCRIPT_OUT || gui_editor_mode())) {
+    } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
@@ -1382,7 +1382,7 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 
 static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
 {
-    if (eb->button == 3 && !gui_editor_mode()) {
+    if (eb->button == 3) {
 	run_script_silent(NULL, vwin);
 	return TRUE;
     } else {

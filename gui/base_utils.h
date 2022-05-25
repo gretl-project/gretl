@@ -34,6 +34,8 @@ int gretl_file_get_contents (const gchar *fname,
 
 FILE *gretl_tempfile_open (char *fname);
 
+int bufopen (PRN **pprn);
+
 void set_wait_cursor (GdkWindow **pcwin);
 
 void unset_wait_cursor (GdkWindow *cwin);
@@ -41,6 +43,8 @@ void unset_wait_cursor (GdkWindow *cwin);
 void gretl_set_window_modal (GtkWidget *w);
 
 void gretl_set_window_quasi_modal (GtkWidget *w);
+
+void dummy_call (void);
 
 void nomem (void);
 
@@ -67,6 +71,13 @@ int font_has_symbol (PangoFontDescription *desc, int symbol);
 const char *print_today (void);
 
 void *gui_get_plugin_function (const char *funcname);
+
+gboolean do_open_script (int action);
+
+void do_new_script (int code, const char *buf,
+		    const char *scriptname);
+
+void new_script_callback (GtkAction *action);
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt);
 

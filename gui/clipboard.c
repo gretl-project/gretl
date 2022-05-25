@@ -20,8 +20,11 @@
 #include "gretl.h"
 #include "textutil.h"
 #include "clipboard.h"
-#include "gpt_control.h"
 #include "winstack.h"
+
+#ifndef GRETL_EDIT
+#include "gpt_control.h"
+#endif
 
 #define CLIPDEBUG 1
 
@@ -158,10 +161,14 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 #endif
 
     if (image_type(info)) {
+#ifdef GRETL_EDIT
+	return;
+#else
 	write_plot_for_copy(info);
 	if (clipboard_buf == NULL) {
 	    return;
 	}
+#endif
     } else {
 	if (clipboard_buf == NULL || *clipboard_buf == '\0') {
 	    return;
