@@ -591,6 +591,7 @@ struct str_table funcs[] = {
     { F_YMD,       "ymd" },
     { F_DEC2BIN,   "dec2bin" },
     { F_BIN2DEC,   "bin2dec" },
+    { F_ACCESS,    "access" },
     { 0,           NULL }
 };
 

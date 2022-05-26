@@ -8259,7 +8259,8 @@ static int unlocalize_list (fncall *call, const char *lname,
     int i, vi;
 
 #if UDEBUG
-    fprintf(stderr, "\n*** unlocalize_list: '%s', function depth = %d\n", lname, d);
+    fprintf(stderr, "\n*** unlocalize_list '%s', function %s depth = %d\n",
+	    lname, call->fun->name, d);
     printlist(list, lname);
     fprintf(stderr, " dset = %p, dset->v = %d\n", (void *) dset, dset->v);
     fprintf(stderr, " list is direct return value? %s\n", arg == NULL ? "yes" : "no");

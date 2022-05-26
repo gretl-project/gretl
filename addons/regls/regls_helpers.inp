@@ -102,15 +102,3 @@ function void training_R2 (bundle *b, series y, list X)
    printf "training data R-squared = %.3f\n\n", m[2]
    b.training_R2 = m[2]
 end function
-
-function list outer_series_id (const string arg)
-   list L = null
-   loop i=1..$nvars
-      catch string vname = varname(i)
-      if !$error && varname(i) == arg
-         L = {i}
-         break
-      endif
-   endloop
-   return L
-end function

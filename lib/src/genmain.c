@@ -454,6 +454,32 @@ int series_index (const DATASET *dset, const char *varname)
 }
 
 /**
+ * caller_series_index:
+ * @dset: data information struct.
+ * @varname: name of series to test.
+ *
+ * Returns: the ID number of the series whose name is given,
+ * at the caller's level of function execution, or -1 if there's
+ * no matching series.
+ */
+
+int caller_series_index (const DATASET *dset, const char *vname)
+{
+    int i, targ = gretl_function_depth() - 1;
+
+    if (dset != NULL && targ >= 0) {
+	for (i=0; i<dset->v; i++) {
+	    if (series_get_stack_level(dset, i) == targ &&
+		!strcmp(dset->varname[i], vname)) {
+		return i;
+	    }
+	}
+    }
+
+    return -1;
+}
+
+/**
  * series_greatest_index:
  * @dset: data information struct.
  * @varname: name of variable to test.
