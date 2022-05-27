@@ -1245,7 +1245,7 @@ static int n_names_check (int n, int ns, int byrow)
     if (ns != n) {
 	gretl_errmsg_sprintf("%s: got %d names but matrix has %d %s",
 			     byrow ? "rnameset" : "cnameset",
-			     ns, n, byrow ? "rows" : "columns");
+			     ns, n, byrow ? "row(s)" : "column(s)");
 	return E_INVARG;
     } else {
 	return 0;
