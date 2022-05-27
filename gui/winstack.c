@@ -21,9 +21,10 @@
 #include "dlgutils.h"
 #include "tabwin.h"
 #include "winstack.h"
-#include "gretl_ipc.h"
 
-#ifndef GRET_EDIT
+#ifdef GRETL_EDIT
+#include "editbar.h"
+#else
 #include "var.h"
 #include "guiprint.h"
 #include "session.h"
@@ -34,6 +35,7 @@
 #include "winstack.h"
 #include "gretl_ipc.h"
 #include "uservar.h"
+#include "gretl_ipc.h"
 #endif
 
 #define WDEBUG 0

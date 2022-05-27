@@ -26,7 +26,6 @@
 #include "winstack.h"
 #include "dlgutils.h"
 #include "tabwin.h"
-#include "gretl_ipc.h"
 
 #ifndef G_OS_WIN32
 # include <unistd.h>
@@ -55,11 +54,6 @@
 
 /* update.c */
 extern int update_query (void);
-
-#ifdef MAC_INTEGRATION
-static GtkUIManager *add_mac_menu (void);
-static void finish_mac_ui (GtkUIManager *mgr);
-#endif
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME }
@@ -483,23 +477,11 @@ int main (int argc, char **argv)
     set_fixed_font(NULL, 1);
     gretl_stock_icons_init();
 
-#if GUI_DEBUG
-    fprintf(stderr, " done gretl_stock_icons_init\n");
-#endif
-
-#if GUI_DEBUG
-    fprintf(stderr, "done setting GUI state\n");
-#endif
-
     if (tryfile_is_set()) {
 	open_tryfile(TRUE);
     } else {
 	do_new_script(EDIT_HANSL, NULL, NULL);
     }
-
-#if GUI_DEBUG
-    fprintf(stderr, "calling gtk_main()\n");
-#endif
 
     /* Enter the event loop */
     gtk_main();

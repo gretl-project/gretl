@@ -138,7 +138,6 @@ SRCS = gretl_edit.c \
 	focus.c \
 	fontfilter.c \
 	fileselect.c \
-	gretl_ipc.c \
 	gui_recode.c \
 	viewers.c \
 	helpfiles.c \
