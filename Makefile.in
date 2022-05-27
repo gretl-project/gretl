@@ -126,6 +126,7 @@ lib: buildstamp
 cli: lib
 share: lib
 $(GUIDIR): lib
+$(EDDIR): lib
 plugin: lib
 tests: lib
 addons: cli
