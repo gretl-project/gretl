@@ -1002,7 +1002,7 @@ static void editor_run_R_script (const char *buf, gretlopt opt)
 	return;
     }
 
-    execute_R_buffer(buf, NULL, OPT_G, prn);
+    execute_R_buffer(buf, NULL, OPT_G | OPT_T, prn);
     if (got_printable_output(prn)) {
 	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
