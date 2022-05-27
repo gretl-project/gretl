@@ -3572,6 +3572,5 @@ int execute_R_buffer (const char *buf,
     err = run_R_binary(buf, dset, opt, prn);
 #endif
 
-
     return err;
 }

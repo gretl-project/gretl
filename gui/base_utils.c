@@ -488,7 +488,8 @@ int browser_open (const char *url)
 
 /* Start an R session in asynchronous (interactive) mode.
    Note that there's a separate win32 function for this
-   in gretlwin32.c.
+   in gretlwin32.c. We don't do interactive when in editor
+   mode.
 */
 
 static void start_R_async (void)
@@ -552,8 +553,8 @@ static void start_R_async (void)
 
 #endif /* not GRETL_EDIT */
 
-/* run R, Ox, etc., in synchronous (batch) mode and display the
-   results in a gretl window: non-Windows variant
+/* Run R, Ox, etc., in synchronous (batch) mode and display the
+   results in a gretl window: non-Windows variant.
 */
 
 static void run_prog_sync (char **argv, int lang)
@@ -832,7 +833,9 @@ void run_gretlcli_async (char **argv, windata_t *scriptwin)
 
 #ifndef GRETL_EDIT
 
-/* driver for starting R, either interactive or in batch mode */
+/* driver for starting R, either interactive or in batch mode,
+   not used when in editor mode
+*/
 
 void start_R (const char *buf, int send_data, int interactive)
 {
@@ -904,10 +907,6 @@ static void verbose_gerror_report (GError *gerr, const char *src)
 	    " message: '%s'\n domain = %d, code = %d\n",
 	    src, gerr->message, gerr->domain, gerr->code);
 }
-
-/* Note: simplified 2020-12-08 on the assumption that filenames
-   within gretl will be in UTF-8 on all platforms.
-*/
 
 int gretl_file_get_contents (const gchar *fname, gchar **contents,
 			     gsize *size)
@@ -991,7 +990,27 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     return ret;
 }
 
-#ifndef G_OS_WIN32
+#ifdef GRETL_EDIT
+
+/* code specific to editor mode but in common between Windows and others */
+
+static void editor_run_R_script (const char *buf, gretlopt opt)
+{
+    PRN *prn = NULL;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    execute_R_buffer(buf, NULL, OPT_G, prn);
+    if (got_printable_output(prn)) {
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+    }
+}
+
+#endif
+
+#ifndef G_OS_WIN32 /* non-Windows variants */
 
 int gretl_fork (const char *progvar, const char *arg,
 		const char *opt)
@@ -1056,7 +1075,7 @@ int gretl_fork (const char *progvar, const char *arg,
     return !run;
 }
 
-#endif
+#endif /* end Windows vs non-Windows */
 
 /* do_new_script(): passing a non-NULL @scriptname is a means
    of creating a new script with a name pre-given by the user;
@@ -1181,6 +1200,10 @@ gboolean do_open_script (int action)
 
 #ifdef GRETL_EDIT
 
+/* edit mode special: execute a script (which may be entirely native
+   or may contain "foreign" code) via gretlcli
+*/
+
 static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
     gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
@@ -1234,7 +1257,7 @@ static void ensure_newline_termination (gchar **ps)
 }
 
 static void real_run_script (GtkWidget *w, windata_t *vwin,
-			     int silent, int cli)
+			     int silent)
 {
 #ifndef GRETL_EDIT
     gboolean selection = FALSE;
@@ -1267,9 +1290,7 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
 
     if (buf == NULL || *buf == '\0') {
         warnbox("No commands to execute");
-        if (buf != NULL) {
-            g_free(buf);
-        }
+	g_free(buf);
         return;
     }
 
@@ -1305,7 +1326,9 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
     }
 
 #ifdef GRETL_EDIT
-    if (vwin->role == EDIT_OX) {
+    if (vwin->role == EDIT_R) {
+	editor_run_R_script(buf, opt);
+    } else if (vwin->role == EDIT_OX) {
         run_foreign_script(buf, LANG_OX, opt);
     } else if (vwin->role == EDIT_OCTAVE) {
         run_foreign_script(buf, LANG_OCTAVE, opt);
@@ -1362,14 +1385,10 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-#ifdef GRETL_EDIT
-    real_run_script(w, vwin, 0, 1);
-#else
-    real_run_script(w, vwin, 0, 0);
-#endif
+    real_run_script(w, vwin, 0);
 }
 
 void run_script_silent (GtkWidget *w, windata_t *vwin)
 {
-    real_run_script(w, vwin, 1, 0);
+    real_run_script(w, vwin, 1);
 }
