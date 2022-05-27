@@ -511,7 +511,7 @@ static GtkToolItem *gretl_menu_button (const char *icon,
 
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _(tip));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(icon, toolbar_icon_size /* GTK_ICON_SIZE_MENU */);
+    img = gtk_image_new_from_stock(icon, toolbar_icon_size);
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_container_add(GTK_CONTAINER(item), button);
     *pw = button;
