@@ -41,6 +41,10 @@
 # include "gretlwin32.h"
 #endif
 
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 #include <errno.h>

@@ -141,7 +141,9 @@ char *get_tryfile (void);
 void clear_tryfile (void);
 int tryfile_is_set (void);
 gboolean open_tryfile (gboolean startup);
+void about_dialog (GtkWidget *w);
 
+#ifndef GRETL_EDIT
 int mdata_selection_count (void);
 int mdata_active_var (void);
 void populate_varlist (void);
@@ -151,14 +153,12 @@ int gui_restore_sample (DATASET *dset);
 void make_list_from_main (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
 void show_link_cursor (GtkWidget *w, gpointer p);
-
-#ifndef GRETL_EDIT
+void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
 int is_control_key (guint k);
 int mainwin_get_vwin_insertion (void);
 int mainwin_insert_vwin (windata_t *vwin);
-void about_dialog (void);
 #endif
 
 #endif /* GRETL_H */

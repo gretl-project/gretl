@@ -22,8 +22,6 @@
 
 enum { ADD_COMMA, DROP_COMMA };
 
-int latex_is_ok (void);
-
 gchar *gretl_window_title (const char *s);
 
 int copyfile (const char *src, const char *dest);

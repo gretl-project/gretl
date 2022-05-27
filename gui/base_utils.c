@@ -30,16 +30,13 @@
 # include "gpt_control.h"
 #endif
 
-int latex_is_ok (void)
-{
-    static int latex_ok = -1;
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
 
-    if (latex_ok == -1) {
-	latex_ok = check_for_program(latex);
-    }
-
-    return latex_ok;
-}
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
 
 gchar *gretl_window_title (const char *s)
 {
@@ -376,6 +373,8 @@ static int got_printable_output (PRN *prn)
 /* MS Windows variants of functions to exec some third-party
    programs */
 
+# ifndef GRETL_EDIT
+
 static void win32_run_R_sync (const char *buf, gretlopt opt)
 {
     PRN *prn = NULL;
@@ -394,6 +393,8 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
 		    PRINT, NULL);
     }
 }
+
+# endif
 
 void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
 {

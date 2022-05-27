@@ -42,6 +42,10 @@
 # include "clipboard.h"
 #endif
 
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
+
 #define PAGE_LINES 47
 
 #ifdef G_OS_WIN32

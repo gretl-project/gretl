@@ -1897,6 +1897,17 @@ static gchar *get_model_ui (void)
     return err ? NULL : ui;
 }
 
+int latex_is_ok (void)
+{
+    static int latex_ok = -1;
+
+    if (latex_ok == -1) {
+	latex_ok = check_for_program(latex);
+    }
+
+    return latex_ok;
+}
+
 static void set_up_model_view_menu (windata_t *vwin)
 {
     static gchar *model_ui;

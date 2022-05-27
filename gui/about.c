@@ -87,6 +87,21 @@ static void license_callback (GtkWidget *w, gpointer p)
     g_free(fname);
 }
 
+#ifdef GRETL_EDIT
+
+static void show_link_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
+
+    if (c != NULL) {
+	gdk_window_set_cursor(window, c);
+	gdk_cursor_unref(c);
+    }
+}
+
+#else
+
 static void relnotes_callback (GtkWidget *w, gpointer p)
 {
     gchar *fname;
@@ -95,6 +110,8 @@ static void relnotes_callback (GtkWidget *w, gpointer p)
     view_file(fname, 0, 0, 78, 350, VIEW_DOC);
     g_free(fname);
 }
+
+#endif
 
 static void show_website (GtkWidget *w, gpointer p)
 {
@@ -112,17 +129,22 @@ static void revert_cursor (GtkWidget *w, gpointer p)
     }
 }
 
-void about_dialog (void)
+void about_dialog (GtkWidget *parent)
 {
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *dialog, *image, *button;
     GtkWidget *ebox, *abox;
     gchar *buf;
 
+#ifdef GRETL_EDIT
+    const char *prog = "gretl_edit";
+#else
+    const char *prog = "gretl";
+#endif
+
     dialog = gretl_gtk_dialog();
     gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl"));
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),
-				 GTK_WINDOW(mdata->main));
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     abox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -148,14 +170,14 @@ void about_dialog (void)
 
 #ifdef SYSINFO
     buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
-				  "gretl %s</span>\n"
-				  "%s%s)\n%s %s\n\n%s", GRETL_VERSION,
+				  "%s %s</span>\n"
+				  "%s%s)\n%s %s\n\n%s", prog, GRETL_VERSION,
 				  SYSINFO, GTKV, _("build date"), BUILD_DATE,
 				  _(bonmot));
 #else
     buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
-				  "gretl %s</span>\n"
-				  "%s %s\n\n%s", GRETL_VERSION,
+				  "%s %s</span>\n"
+				  "%s %s\n\n%s", prog, GRETL_VERSION,
 				  _("build date"), BUILD_DATE,
 				  _(bonmot));
 #endif
@@ -205,12 +227,14 @@ void about_dialog (void)
 	gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
     }
 
+#ifndef GRETL_EDIT
     /* NEWS button */
     button = gtk_button_new_with_label(_("News"));
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(relnotes_callback),
 		     NULL);
+#endif
 
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));

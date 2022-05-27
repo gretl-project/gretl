@@ -32,6 +32,10 @@
 # include <sys/stat.h>
 #endif
 
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
+
 #define GRAPHS_MAX 8
 
 typedef struct _graphpage graphpage;

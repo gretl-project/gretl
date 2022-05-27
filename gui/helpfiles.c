@@ -44,6 +44,10 @@
 # include <dirent.h>
 #endif
 
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
+
 #define HDEBUG 0
 
 #define cmdref_role(r)  (r == CMD_HELP || r == CMD_HELP_EN)

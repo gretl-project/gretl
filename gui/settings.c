@@ -60,6 +60,10 @@
 # include "gretlwin32.h"
 #endif
 
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
+
 #if HAVE_GTK_FONT_CHOOSER
 # include "fontfilter.h"
 #else
@@ -2527,7 +2531,6 @@ static int maybe_get_network_settings (void)
 static void win32_read_gretlrc (int *updated)
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
-    int got_recent = 0;
     FILE *fp;
 
     if (*rcfile == '\0') {
@@ -2537,7 +2540,7 @@ static void win32_read_gretlrc (int *updated)
 
     fp = gretl_fopen(rcfile, "r");
 
-#if 1
+#if 0
     fprintf(stderr, "rcfile: '%s' (%s)\n", rcfile,
 	    fp == NULL ? "not found" : "found");
 #endif
@@ -2552,7 +2555,6 @@ static void win32_read_gretlrc (int *updated)
 	    continue;
 	}
 	if (!strncmp(line, "recent", 6)) {
-	    got_recent = 1;
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
@@ -2574,9 +2576,11 @@ static void win32_read_gretlrc (int *updated)
 	}
     }
 
-    if (got_recent) {
+#ifndef GRETL_EDIT
+    if (!strncmp(line, "recent", 6)) {
 	rc_read_file_lists(fp, line);
     }
+#endif
 
     fclose(fp);
 }

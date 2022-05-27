@@ -270,6 +270,11 @@ static void new_matrix_callback (GtkAction *action, gpointer p)
     gui_new_matrix(mdata->main);
 }
 
+static void about_callback (GtkAction *action, gpointer p)
+{
+    about_dialog(mdata->main);
+}
+
 static void pc_change_callback (GtkAction *action, gpointer p)
 {
     const char *s = gtk_action_get_name(action);
@@ -2053,7 +2058,7 @@ GtkActionEntry main_entries[] = {
     { "gretlLpsolve", GRETL_STOCK_PDF, N_("_gretl + lpsolve"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
-    { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
+    { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_callback) }
 };
 
 static int count_substrings (gchar **S)

@@ -619,26 +619,33 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
     return GTK_WIDGET(item);
 }
 
-static void editbar_help_call (GtkAction *action, gpointer p)
+static void editbar_help_call (GtkAction *action, windata_t *vwin)
 {
-    display_text_help(action);
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "About")) {
+	about_dialog(vwin_toplevel(vwin));
+    } else {
+	display_text_help(action);
+    }
 }
 
 static GtkWidget *make_help_item_menu (windata_t *vwin)
 {
     const char *action_names[] = {
-	"TextCmdRef", "FuncRef"
+	"TextCmdRef", "FuncRef", "About"
     };
     const char *action_labels[] = {
 	N_("_Command Reference"),
-	N_("_Function Reference")
+	N_("_Function Reference"),
+	N_("About gretl__edit")
     };
     GtkWidget *menu = gtk_menu_new();
     GtkAction *action;
     GtkWidget *item;
     int i;
 
-    for (i=0; i<2; i++) {
+    for (i=0; i<3; i++) {
 	action = gtk_action_new(action_names[i], _(action_labels[i]),
 				NULL, NULL);
 	g_signal_connect(G_OBJECT(action), "activate",

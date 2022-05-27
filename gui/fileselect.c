@@ -46,6 +46,10 @@
 # include "gretlwin32.h"
 #endif
 
+#ifdef OS_OSX
+# include "osx_open.h"
+#endif
+
 #define EXPORT_OTHER(a) (a == EXPORT_OCTAVE ||	\
 			 a == EXPORT_R ||	\
 			 a == EXPORT_CSV ||	\

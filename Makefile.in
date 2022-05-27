@@ -32,6 +32,7 @@ endif
 
 ifeq ($(build_gui),yes)
   GUIDIR = gui
+  EDDIR = editor
 endif
 
 ifeq ($(build_po),yes)
@@ -57,8 +58,8 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share $(XDGDIR) $(ADDONSDIR)
-ALLSUBDIRS = lib cli gui plugin po share tests doc xdg addons
+SUBDIRS = lib cli $(GUIDIR) $(EDDIR) plugin $(PODIR) share $(XDGDIR) $(ADDONSDIR)
+ALLSUBDIRS = lib cli gui editor plugin po share tests doc xdg addons
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
 install-man tags dist distclean check buildstamp

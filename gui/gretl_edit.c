@@ -86,9 +86,11 @@ int mainwin_height = 420;
 
 #if defined(G_OS_WIN32)
 char calculator[MAXSTR] = "calc.exe";
+char latex[MAXSTR] = "pdflatex.exe";
 char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OS_OSX)
 char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
+char latex[MAXSTR] = "pdflatex";
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
 #else
 char Browser[MAXSTR] = "mozilla";
@@ -291,6 +293,49 @@ static void quell_glib_spew (void)
 
 #endif
 
+#ifdef MAC_INTEGRATION
+
+static GtkosxApplication *MacApp;
+
+static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
+{
+    /* return exit_check(); */
+    return FALSE;
+}
+
+static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
+{
+    gtk_main_quit();
+}
+
+static gboolean app_open_file_cb (GtkosxApplication *app,
+				  gchar *path, gpointer p)
+{
+    if (path != NULL) {
+	if (!strcmp(tryfile, path)) {
+	    /* we're already on it? */
+	    return TRUE;
+	}
+	set_tryfile(path);
+	return open_tryfile(FALSE);
+    } else {
+	clear_tryfile();
+	return TRUE;
+    }
+}
+
+static void install_mac_signals (GtkosxApplication *App)
+{
+    g_signal_connect(App, "NSApplicationBlockTermination",
+		     G_CALLBACK(app_should_quit_cb), NULL);
+    g_signal_connect(App, "NSApplicationWillTerminate",
+		     G_CALLBACK(app_will_quit_cb), NULL);
+    g_signal_connect(App, "NSApplicationOpenFile",
+		     G_CALLBACK(app_open_file_cb), NULL);
+}
+
+#endif /* MAC_INTEGRATION */
+
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
 
 static void protect_against_ubuntu (void)
@@ -491,6 +536,8 @@ int main (int argc, char **argv)
     return EXIT_SUCCESS;
 }
 
+#ifndef G_OS_WIN32
+
 void set_wm_icon (GtkWidget *w)
 {
     GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data(gretl_xpm);
@@ -508,6 +555,8 @@ void set_wm_icon (GtkWidget *w)
     }
 # endif
 }
+
+#endif
 
 /* At start-up only: if we can't open a script file specified on the
    command line, give the user a choice between creating a new file

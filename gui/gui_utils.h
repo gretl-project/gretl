@@ -26,6 +26,8 @@
 #define IS_SLASH(c) (c == '/')
 #endif
 
+int latex_is_ok (void);
+
 void mark_dataset_as_modified (void);
 
 void register_data (int flags);
