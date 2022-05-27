@@ -110,11 +110,17 @@ static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
+    static GdkCursor *question_cursor;
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
                                               GTK_TEXT_WINDOW_TEXT);
 
     if (cspec == 0) {
 	gdk_window_set_cursor(win, NULL);
+    } else if (cspec == GDK_QUESTION_ARROW) {
+	if (question_cursor == NULL) {
+	    question_cursor = gdk_cursor_new(GDK_QUESTION_ARROW);
+	}
+	gdk_window_set_cursor(win, question_cursor);
     } else {
 	GdkCursor *cursor = gdk_cursor_new(cspec);
 

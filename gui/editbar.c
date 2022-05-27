@@ -410,8 +410,8 @@ static GretlToolItem viewbar_items[] = {
     { N_("Auto-indent script"), GTK_STOCK_INDENT, G_CALLBACK(indent_hansl), EDIT_HANSL_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
-    //{ N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM }
-    { N_("Help..."), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM }
+    { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
+    { N_("Help..."), GTK_STOCK_HELP, GNULL, HELP_ITEM }
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -421,7 +421,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define new_ok(r)  (vwin_editing_script(r))
 #define edit_ok(r) (vwin_editing_script(r))
 
-#define cmd_help_ok(r) (r == EDIT_HANSL)
+#define help_ok(r) (r == EDIT_HANSL)
 #define split_h_ok(r) (r == SCRIPT_OUT || vwin_editing_script(r))
 #define split_v_ok(r) (r == SCRIPT_OUT)
 
@@ -451,7 +451,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!exec_ok(r) && f == EXEC_ITEM) {
 	return NULL;
-    } else if (!cmd_help_ok(r) && f == CMD_HELP_ITEM) {
+    } else if (!help_ok(r) && (f == CMD_HELP_ITEM || f == HELP_ITEM)) {
 	return NULL;
     } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
 	return NULL;
@@ -621,25 +621,15 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 
 static void editbar_help_call (GtkAction *action, gpointer p)
 {
-    const char *s = gtk_action_get_name(action);
-
-    if (!strcmp(s, "ContextHelp")) {
-	windata_t *vwin = (windata_t *) p;
-
-	text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
-	set_window_help_active(vwin);
-    } else {
-	display_text_help(action);
-    }
+    display_text_help(action);
 }
 
 static GtkWidget *make_help_item_menu (windata_t *vwin)
 {
     const char *action_names[] = {
-	"ContextHelp", "TextCmdRef", "FuncRef"
+	"TextCmdRef", "FuncRef"
     };
     const char *action_labels[] = {
-	N_("Context help (click on a command or function)"),
 	N_("_Command Reference"),
 	N_("_Function Reference")
     };
@@ -648,7 +638,7 @@ static GtkWidget *make_help_item_menu (windata_t *vwin)
     GtkWidget *item;
     int i;
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<2; i++) {
 	action = gtk_action_new(action_names[i], _(action_labels[i]),
 				NULL, NULL);
 	g_signal_connect(G_OBJECT(action), "activate",
@@ -664,7 +654,7 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 {
     GtkWidget *menu = NULL;
 
-    if (vwin->role == EDIT_HANSL && item->flag == CMD_HELP_ITEM) {
+    if (vwin->role == EDIT_HANSL && item->flag == HELP_ITEM) {
 	menu = make_help_item_menu(vwin);
     }
     if (menu != NULL) {
