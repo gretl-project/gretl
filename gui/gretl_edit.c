@@ -30,7 +30,7 @@
 #ifndef G_OS_WIN32
 # include <unistd.h>
 # include <sys/types.h>
-# include "../pixmaps/gretl.xpm"  /* program icon for X */
+# include "../pixmaps/gretl_edit.xpm"  /* program icon for X */
 #else
 # include <windows.h>
 # include "gretlwin32.h"
@@ -540,7 +540,7 @@ int main (int argc, char **argv)
 
 void set_wm_icon (GtkWidget *w)
 {
-    GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data(gretl_xpm);
+    GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data(gretl_edit_xpm);
 
 # ifdef MAC_INTEGRATION
     if (icon != NULL) {

@@ -810,7 +810,7 @@ static gchar *script_output_title (gpointer data)
 	} else if (GTK_IS_WINDOW(vwin->topmain)) {
 	    s = tabwin_tab_get_title(vwin);
 	    if (s != NULL) {
-		return g_strdup_printf(_("gretl: %s output"), s);
+		return g_strdup_printf(_("gretl_edit: %s output"), s);
 	    }
 	}
     }
@@ -1222,6 +1222,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 {
     windata_t *vwin;
     int have_content = 1;
+    int use_tab = 1;
     int ins = 0;
 
     if (mode & NULL_FILE) {
@@ -1235,6 +1236,10 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	}
     }
 
+#ifndef GRETL_EDIT
+    use_tab = use_tabbed_editor();
+#endif
+
 #if 0
     /* experimental, not yet */
     if (swallow && role == EDIT_HANSL) {
@@ -1246,9 +1251,9 @@ view_file_with_title (const char *filename, int editable, fmode mode,
     }
 #endif
 
-    if (!ins && role == EDIT_HANSL && use_tabbed_editor()) {
+    if (!ins && role == EDIT_HANSL && use_tab) {
 	vwin = viewer_tab_new(role, filename, NULL);
-    } else if (editing_alt_script(role) && use_tabbed_editor()) {
+    } else if (editing_alt_script(role) && use_tab) {
 	vwin = viewer_tab_new(role, filename, NULL);
     } else if (given_title != NULL) {
 	vwin = gretl_viewer_new(role, given_title, NULL);

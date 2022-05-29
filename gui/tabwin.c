@@ -51,6 +51,14 @@ static tabwin_t *tabhansl;
 static tabwin_t *tabalt;
 static tabwin_t *tabmod;
 
+#ifdef GRETL_EDIT
+static const char *hansl_title = N_("gretl_edit");
+static const char *alt_title = N_("gretl_edit: foreign scripts");
+#else
+static const char *hansl_title = N_("gretl: script editor");
+static const char *alt_title = N_("gretl: foreign script editor");
+#endif
+
 static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
 
 static void tabwin_destroy (GtkWidget *w, tabwin_t *tabwin)
@@ -83,7 +91,7 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	gint resp;
 
 	gtk_window_present(GTK_WINDOW(parent));
-	resp = yes_no_dialog(_("gretl: script editor"), msg, parent);
+	resp = yes_no_dialog(_(hansl_title), msg, parent);
 	if (resp != GRETL_YES) {
 	    ret = TRUE;
 	}
@@ -581,13 +589,11 @@ static tabwin_t *make_tabbed_viewer (int role)
     /* top-level window */
     tabwin->main = gretl_gtk_window();
     if (role == EDIT_HANSL) {
-	gtk_window_set_title(GTK_WINDOW(tabwin->main),
-			     _("gretl: script editor"));
+	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else if (editing_alt_script(role)) {
-	gtk_window_set_title(GTK_WINDOW(tabwin->main),
-			     _("gretl: foreign script editor"));
+	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(alt_title));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else {
@@ -633,6 +639,14 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 {
     tabwin_t *tabwin = NULL;
 
+#ifdef GRETL_EDIT /* experiment? */
+    if (tabhansl != NULL) {
+	tabwin = tabhansl;
+    } else {
+	*starting = 1;
+	tabhansl = tabwin = make_tabbed_viewer(role);
+    }
+#else
     if (role == EDIT_HANSL) {
 	if (tabhansl != NULL) {
 	    tabwin = tabhansl;
@@ -655,6 +669,7 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 	    tabmod = tabwin = make_tabbed_viewer(role);
 	}
     }
+#endif
 
     return tabwin;
 }
