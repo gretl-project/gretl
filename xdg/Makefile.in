@@ -60,6 +60,9 @@ xdg-install: gretl.desktop gretl_edit.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gret
 	xdg-icon-resource install --context apps --size 32 $(xdgsrc)/32/gretl.png --novendor
 	xdg-icon-resource install --context apps --size 48 $(xdgsrc)/48/gretl.png --novendor
 	xdg-icon-resource install --context apps --size 64 $(xdgsrc)/64/gretl.png --novendor
+	xdg-icon-resource install --context apps --size 32 $(xdgsrc)/32/gretl_edit.png --novendor
+	xdg-icon-resource install --context apps --size 48 $(xdgsrc)/48/gretl_edit.png --novendor
+	xdg-icon-resource install --context apps --size 64 $(xdgsrc)/64/gretl_edit.png --novendor
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(datadir)/applications
