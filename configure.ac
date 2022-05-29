@@ -994,6 +994,7 @@ gui/Makefile
 gui/debug
 editor/Makefile
 xdg/gretl.desktop
+xdg/gretl_edit.desktop
 xdg/Makefile
 cli/Makefile
 cli/debug

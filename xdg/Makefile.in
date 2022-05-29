@@ -30,9 +30,10 @@ all:
 install: $(query_install)
 
 # for system use, or package-building
-sh-install: gretl.desktop installdirs $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
+sh-install: gretl.desktop gretl_edit.desktop installdirs $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	$(xdgsrc)/gretl-session-icon.png $(xdgsrc)/gretl-script-icon.png
 	$(INSTALL_DATA) gretl.desktop $(DESTDIR)$(datadir)/applications
+	$(INSTALL_DATA) gretl_edit.desktop $(DESTDIR)$(datadir)/applications
 	$(INSTALL_DATA) $(xdgsrc)/gretl.xml $(DESTDIR)$(datadir)/mime/packages
 	$(INSTALL_DATA) $(xdgsrc)/gretl-data-icon.png \
 	  $(DESTDIR)$(datadir)/icons/hicolor/32x32/mimetypes/application-gretl.data.png
@@ -47,9 +48,10 @@ sh-install: gretl.desktop installdirs $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-i
 	done
 
 # suitable for individual users
-xdg-install: gretl.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
+xdg-install: gretl.desktop gretl_edit.desktop $(xdgsrc)/gretl.xml $(xdgsrc)/gretl-data-icon.png \
 	$(xdgsrc)/gretl-session-icon.png $(xdgsrc)/gretl-script-icon.png
 	xdg-desktop-menu install gretl.desktop --novendor
+	xdg-desktop-menu install gretl_edit.desktop --novendor
 	xdg-mime install $(xdgsrc)/gretl.xml --novendor
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-data-icon.png application-gretl.data
 	xdg-icon-resource install --context mimetypes --size 32 $(xdgsrc)/gretl-bindata-icon.png application-gretl.bindata
@@ -70,4 +72,4 @@ installdirs:
 clean:
 
 distclean: clean
-	rm -f Makefile gretl.desktop
+	rm -f Makefile gretl.desktop gretl_edit_desktop
