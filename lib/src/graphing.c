@@ -1502,7 +1502,7 @@ static void write_png_size_string (char *s, PlotType ptype,
 
 /* platform-specific on-screen term string */
 
-static char *var_term_line (char *term_line, int ptype)
+static char *var_term_line (char *term_line, int ptype, GptFlags flags)
 {
     char font_string[140];
     char size_string[16];
@@ -1522,7 +1522,7 @@ static char *var_term_line (char *term_line, int ptype)
 
     *font_string = *size_string = '\0';
     write_png_font_string(font_string, "", ptype, NULL, 1.0);
-    write_png_size_string(size_string, ptype, 0, 1.0);
+    write_png_size_string(size_string, ptype, flags, 1.0);
 
     sprintf(term_line, "set term %s%s%s noenhanced",
 	    varterm, font_string, size_string);
@@ -1622,7 +1622,7 @@ const char *gretl_gnuplot_term_line (TermType ttype,
     } else if (ttype == GP_TERM_TEX) {
 	tex_term_line(term_line, ptype, flags);
     } else if (ttype == GP_TERM_VAR) {
-	var_term_line(term_line, ptype);
+	var_term_line(term_line, ptype, flags);
     }
 
     return term_line;
@@ -1939,12 +1939,14 @@ static FILE *gp_set_up_batch (char *fname,
 
 static char *iact_gpfile;
 
+#define IACT_SPECIFY_TERM 1 /* experiment 2022-05-30 */
+
 /* Set-up for an "interactive" plot: we open a file in the user's
    dotdir into which gnuplot commands will be written.  If we're
    running the GUI program this command file will eventually be used
    to create a PNG file for display in a gretl window; otherwise
    (gretlcli) the commands will eventually be sent to gnuplot for
-   "direct" display (e.g. using the x11 or windows terminal).
+   "direct" display (e.g. using the wxt or windows terminal).
 
    In this function we just open the file for writing; if in GUI
    mode insert a suitable PNG terminal line and output spec line;
@@ -1991,7 +1993,12 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_VAR, ptype,
 							flags, NULL));
 	} else {
+#if IACT_SPECIFY_TERM
+	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_VAR, ptype,
+							flags, NULL));
+#else
 	    fputs("set termoption noenhanced\n", fp);
+#endif
 	}
 	write_plot_type_string(ptype, flags, fp);
 	write_plot_line_styles(ptype, fp);
