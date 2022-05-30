@@ -155,13 +155,24 @@ static GtkActionGroup *window_group;
 
 static const gchar *get_window_title (GtkWidget *w)
 {
+#ifdef GRETL_EDIT
+    const char *skip = "gretl_edit";
+#else
+    const char *skip = "gretl";
+#endif    
     const gchar *s = NULL;
 
     if (GTK_IS_WINDOW(w)) {
+	int n = strlen(skip);
+	
 	s = gtk_window_get_title(GTK_WINDOW(w));
-
-	if (s != NULL && !strncmp(s, "gretl", 5)) {
-	    s += 5;
+	if (s != NULL && !strncmp(s, skip, n)) {
+#ifdef GRETL_EDIT
+	    if (strlen(s) == n) {
+		return _("Script editor");
+	    }
+#endif	    
+	    s += n;
 	    s += strspn(s, " ");
 	    if (*s == ':') {
 		s++;
