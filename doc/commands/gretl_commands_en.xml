@@ -5699,6 +5699,53 @@
 
   </command>
 
+  <command name="gretl_edit" section="Utilities" context="gui"
+    label="gretl_edit">
+
+    <description>
+      <para>
+	gretl_edit is a lightweight, special-purpose variant of the
+	gretl GUI. It comprises a tabbed script editor and the means
+	to execute scripts and view their output. It lacks many of the
+	features of the main gretl GUI but may be useful on the basis
+	that, sometimes, <quote>less is more</quote>.
+      </para>
+      <para>
+	Here's the context for which gretl_edit is designed: You're
+	working on some relatively complex code and wish to carry out
+	the following cycle.
+      </para>
+      <code>
+	edit code
+	execute the code, inspect results, check for bugs
+	revise code
+	execute again...
+      </code>
+      <para>
+	If that's something you do from time to time, give gretl_edit a
+	try. If it's not, then you can safely ignore this program.
+      </para>
+      <para>
+	Note that gretl_edit is <quote>stateless</quote>. Unlike the
+	main gretl GUI, there are no saved models, matrices, bundles
+	and whatnot. The only state preserved is that of the script,
+	or scripts, being edited. In the context described above
+	that's probably what you want: each time a script is executed
+	it starts with a <quote>blank slate</quote>. That means that if
+	a script uses a dataset, it must include a command to open the
+	dataset.
+      </para>
+      <para>
+	Obviously, gretl_edit supports hansl, gretl's own scripting
+	language. Less obviously, it also supports languages that are
+	covered by gretl's <quote>foreign</quote> apparatus: R,
+	Octave, Julia, Ox, Stata. In the foreign case the script
+	editor is not as full-featured as for hansl: it offers syntax
+	highlighting but not automatic indentation or auto-completion.
+      </para>
+    </description>
+  </command>  
+
   <command name="3-D" section="Graphs" context="gui"
     label="3-dimensional plots">
 

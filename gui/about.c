@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "version.h"
 #include "dlgutils.h"
+#include "helpfiles.h"
 #include "build.h"
 
 #ifdef G_OS_WIN32
@@ -227,7 +228,14 @@ void about_dialog (GtkWidget *parent)
         gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
     }
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+    /* Rationale button */
+    button = gtk_button_new_with_label(_("Rationale"));
+    gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+                     G_CALLBACK(context_help),
+                     GINT_TO_POINTER(EDITOR));
+#else    
     /* NEWS button */
     button = gtk_button_new_with_label(_("News"));
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);

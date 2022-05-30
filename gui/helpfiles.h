@@ -74,4 +74,6 @@ void set_up_helpview_menu (windata_t *hwin);
 
 void notify_string_not_found (GtkWidget *entry);
 
+void context_help (GtkWidget *widget, gpointer data);
+
 #endif /* HELPFILES_H */

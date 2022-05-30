@@ -173,6 +173,7 @@ static struct gui_help_item gui_help_items[] = {
     { DBNHELP,        "dbnomics" },
     { MAPHELP,        "maps" },
     { KALMAN,         "kalman" },
+    { EDITOR,         "gretl_edit" },
     { -1,             NULL },
 };
 
@@ -1241,7 +1242,7 @@ void show_gui_help (int helpcode)
     }
 }
 
-static void context_help (GtkWidget *widget, gpointer data)
+void context_help (GtkWidget *widget, gpointer data)
 {
     int helpcode = GPOINTER_TO_INT(data);
 
