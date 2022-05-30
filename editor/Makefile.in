@@ -161,8 +161,7 @@ ifeq ($(win32_build),yes)
   WINOBJ = gretlres.o
   WINGUI = -mwindows
   WINDRES = @WINDRES@
-  # FIXME rc file
-  GRETLRC = $(topsrc)/win32/gretl.rc 
+  GRETLRC = $(topsrc)/win32/gretl_edit.rc
   RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
 else
