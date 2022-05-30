@@ -693,6 +693,29 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 
 #endif /* !G_OS_WIN32 */
 
+static void modify_exec_button (windata_t *vwin, int to_spinner)
+{
+    GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_button");
+    GtkToolItem *si = g_object_get_data(G_OBJECT(vwin->mbar), "spin_item");
+    GtkWidget *sp = gtk_tool_button_get_icon_widget(GTK_TOOL_BUTTON(si));
+    int idx;
+
+    if (to_spinner) {
+	/* replace exit button with "wait" spinner */
+	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), eb);
+	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(eb));
+	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), si, idx);
+	gtk_widget_show_all(GTK_WIDGET(si));
+	gtk_spinner_start(GTK_SPINNER(sp));
+    } else {
+	/* reinstate the exec button */
+	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), si);
+	gtk_spinner_stop(GTK_SPINNER(sp));
+	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(si));
+	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), eb, idx);
+    }
+}
+
 #ifdef G_OS_WIN32 /* back to Windows-specific */
 
 typedef struct {
@@ -709,6 +732,7 @@ static void gretlcli_done (GObject *obj,
 {
     exec_info *ei = data;
 
+    modify_exec_button(ei->scriptwin, 0);
     if (ei->err == 0 /* got_printable_output(ei->prn) */) {
 	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->vwin);
 	ei->prn = NULL;
@@ -751,6 +775,7 @@ void win32_run_gretlcli_async (gchar *cmd,
 
     task = g_task_new(NULL, NULL, gretlcli_done, ei);
     g_task_set_task_data(task, ei, NULL);
+    modify_exec_button(vwin, 1);
     g_task_run_in_thread(task, exec_script_thread);
 }
 
@@ -766,6 +791,8 @@ typedef struct {
 static void gretlcli_done (GPid pid, gint status, gpointer p)
 {
     exec_info *ei = p;
+
+    modify_exec_button(ei->scriptwin, 0);
 
     if (ei != NULL) {
 	char buf[4096];
@@ -1218,6 +1245,8 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	fputs(buf, fp);
 	fclose(fp);
     }
+
+    modify_exec_button(vwin, 1);
 
     if (!err) {
 #ifdef G_OS_WIN32
