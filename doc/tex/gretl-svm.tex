@@ -66,8 +66,8 @@ The signature of \texttt{svm} is as follows:
 series svm(list L, bundle bparms, bundle *bmod[null], bundle *bprob[null])
 \end{code}
 That is, this function returns a series (predictions) and it has two
-required arguments, a list (of series) and a bundle (containing zero
-or more parameter specifications). The third and fourth arguments take
+required arguments, a list (of series) and a bundle containing zero
+or more parameter specifications. The third and fourth arguments take
 the form of ``pointers to bundle''; they are optional, and may be set
 to \texttt{null} or omitted altogether; we illustrate their use below
 but for now we just note that they offer means of ferrying additional
@@ -100,7 +100,7 @@ data.
 
 Gretl's \texttt{svm} is set up to perform steps 2 and 3 above with
 ease (though it can also do other things). We'll walk through this
-sort of basic usage in Scenario 1.
+sort of basic usage in the first scenario below.
 
 \subsection{First scenario}
 \label{sec:s1}
@@ -136,13 +136,13 @@ Here's what happens by default.
   the count and percentage of correct predictions; for regression the
   MSE and $R^2$).
 \item If all has gone OK, gretl checks if you have enough observations
-  for a testing phase (that is, somewhat arbitrarily, there are at
+  for a testing phase---that is, somewhat arbitrarily, there are at
   least 10 observations between \texttt{n\_train} and the end of the
-  current sample range).\footnote{One would generally expect there to
-    be a good deal more testing observations.} If so, the independent
-  variables in the test set are scaled using the ranges saved from the
-  training data, a second prediction call is made, and the
-  out-of-sample fit is shown.
+  current sample range. (One would generally expect there to be a good
+  deal more testing observations.) If so, the independent variables in
+  the test set are scaled using the ranges saved from the training
+  data, a second prediction call is made, and the out-of-sample fit is
+  shown.
 \end{enumerate}
 
 For anyone familiar with the \textsf{libsvm} executables, the above is
