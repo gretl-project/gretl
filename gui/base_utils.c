@@ -348,593 +348,6 @@ void *gui_get_plugin_function (const char *funcname)
     return func;
 }
 
-static int got_printable_output (PRN *prn)
-{
-    int ret = 0;
-
-    if (prn == NULL) {
-	warnbox(_("No output was produced"));
-    } else {
-	const char *buf = gretl_print_get_buffer(prn);
-
-	if (string_is_blank(buf)) {
-	    warnbox(_("No output was produced"));
-	    gretl_print_destroy(prn);
-	} else {
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
-#ifdef G_OS_WIN32
-
-/* MS Windows variants of functions to exec some third-party
-   programs */
-
-# ifndef GRETL_EDIT
-
-static void win32_run_R_sync (const char *buf, gretlopt opt)
-{
-    PRN *prn = NULL;
-    int err;
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    err = execute_R_buffer(buf, dataset, opt, prn);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	view_buffer(prn, 78, 350, _("gretl: script output"),
-		    PRINT, NULL);
-    }
-}
-
-# endif
-
-void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
-{
-    PRN *prn = NULL;
-    int err = 0;
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    if (lang == LANG_STATA) {
-	gchar *buf = NULL;
-
-	gretl_chdir(gretl_workdir());
-	remove("gretltmp.log");
-	err = gretl_spawn(cmd);
-
-	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-	    pputs(prn, buf);
-	    g_free(buf);
-	    pputc(prn, '\n');
-	}
-    } else {
-	err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
-    }
-
-    if (got_printable_output(prn)) {
-	/* note: this check destroys @prn on failure */
-	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-    } else if (err) {
-	gui_errmsg(err);
-    }
-
-    g_free(cmd);
-}
-
-void run_foreign_script (gchar *buf, int lang, gretlopt opt)
-{
-#ifdef GRETL_EDIT
-    DATASET *dataset = NULL;
-#endif
-    const char *fname = NULL;
-    int err;
-
-    opt |= OPT_G;
-
-    /* note: as things stand, the @fname we obtain here
-       (composed in gretl_foreign.c) will be in the locale
-       encoding, ready to pass on the Windows command line
-       as in "foreign.exe fname"; this composite string is
-       given to gretl_spawn() or gretl_win32_pipe_output()
-       below. 2022-04-21: this comment is outdated, no?
-    */
-
-    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	gchar *cmd = NULL;
-
-	if (lang == LANG_OX) {
-	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
-	} else if (lang == LANG_PYTHON) {
-	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_python_path(), fname);
-	} else if (lang == LANG_JULIA) {
-	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_julia_path(), fname);
-	} else if (lang == LANG_STATA) {
-	    cmd = g_strdup_printf("\"%s\" /e do \"%s\"", gretl_stata_path(), fname);
-	} else if (lang == LANG_OCTAVE) {
-	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
-	}
-
-	win32_execute_script(cmd, lang, NULL);
-	g_free(cmd);
-    }
-}
-
-#else /* some non-Windows functions follow */
-
-int browser_open (const char *url)
-{
-# if defined(OS_OSX)
-    return osx_open_url(url);
-# else
-    return gretl_fork("Browser", url, NULL);
-# endif
-}
-
-#ifndef GRETL_EDIT
-
-/* Start an R session in asynchronous (interactive) mode.
-   Note that there's a separate win32 function for this
-   in gretlwin32.c. We don't do interactive when in editor
-   mode.
-*/
-
-static void start_R_async (void)
-{
-    char *s0 = NULL, *s1 = NULL, *s2 = NULL;
-    int n = -1;
-
-    s0 = mymalloc(64);
-    s1 = mymalloc(32);
-    s2 = mymalloc(32);
-
-    if (s0 != NULL && s1 != NULL && s2 != NULL) {
-	*s0 = *s1 = *s2 = '\0';
-	/* probably "xterm -e R" or similar */
-	n = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
-    }
-
-    if (n == 0) {
-	errbox(_("No command was supplied to start R"));
-    } else if (n > 0) {
-	char *supp1 = "--no-init-file";
-	char *supp2 = "--no-restore-data";
-	gchar *argv[6];
-	GError *error = NULL;
-	gboolean ok;
-	int i = 0;
-
-	argv[i++] = s0;
-	if (n > 1) {
-	    argv[i++] = s1;
-	}
-	if (n > 2) {
-	    argv[i++] = s2;
-	}
-	argv[i++] = supp1;
-	argv[i++] = supp2;
-	argv[i++] = NULL;
-
-	ok = g_spawn_async(NULL,
-			   argv,
-			   NULL,
-			   G_SPAWN_SEARCH_PATH,
-			   NULL,
-			   NULL,
-			   NULL,
-			   &error);
-
-	if (error != NULL) {
-	    errbox(error->message);
-	    g_error_free(error);
-	} else if (!ok) {
-	    gui_errmsg(E_EXTERNAL);
-	    g_error_free(error);
-	}
-    }
-
-    free(s0);
-    free(s1);
-    free(s2);
-}
-
-#endif /* not GRETL_EDIT */
-
-/* Run R, Ox, etc., in synchronous (batch) mode and display the
-   results in a gretl window: non-Windows variant.
-*/
-
-static void run_prog_sync (char **argv, int lang)
-{
-    gchar *sout = NULL;
-    gchar *errout = NULL;
-    gint status = 0;
-    GError *gerr = NULL;
-    PRN *prn = NULL;
-
-    if (lang == LANG_STATA) {
-	/* control location of Stata log file */
-	gretl_chdir(gretl_workdir());
-	remove("gretltmp.log");
-    }
-
-    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &sout, &errout,
-		 &status, &gerr);
-
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    } else if (status != 0) {
-	if (errout != NULL && *errout != '\0') {
-	    if (strlen(errout) < MAXLEN) {
-		errbox(errout);
-	    } else {
-		bufopen(&prn);
-		pputs(prn, errout);
-	    }
-	} else if (sout != NULL && *sout != '\0') {
-	    if (strlen(sout) < MAXLEN) {
-		errbox(sout);
-	    } else {
-		bufopen(&prn);
-		pputs(prn, sout);
-	    }
-	} else {
-	    errbox_printf("%s exited with status %d", argv[0], status);
-	}
-    } else if (lang == LANG_STATA) {
-	/* read log file */
-	gchar *buf = NULL;
-
-	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-	    bufopen(&prn);
-	    pputs(prn, buf);
-	    g_free(buf);
-	    pputc(prn, '\n');
-	}
-    } else {
-	/* read good old stdout */
-	if (!string_is_blank(sout)) {
-	    bufopen(&prn);
-	    pputs(prn, sout);
-	}
-    }
-
-    if (got_printable_output(prn)) {
-	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-    }
-
-    g_free(sout);
-    g_free(errout);
-}
-
-#ifndef GRETL_EDIT
-
-static void run_R_sync (void)
-{
-    gchar *argv[] = {
-	"R",
-	"--no-save",
-	"--no-init-file",
-	"--no-restore-data",
-	"--slave",
-	NULL
-    };
-
-    run_prog_sync(argv, LANG_R);
-}
-
-#endif
-
-void run_foreign_script (gchar *buf, int lang, gretlopt opt)
-{
-#ifdef GRETL_EDIT
-    DATASET *dataset = NULL;
-#endif
-    const char *fname = NULL;
-    int err;
-
-    opt |= OPT_G;
-
-    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	gchar *argv[6];
-
-	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
-	    gretl_chdir(gretl_workdir());
-	}
-
-	if (lang == LANG_OX) {
-	    argv[0] = (gchar *) gretl_oxl_path();
-	    argv[1] = (gchar *) fname;
-	    argv[2] = NULL;
-	} else if (lang == LANG_PYTHON) {
-	    argv[0] = (gchar *) gretl_python_path();
-	    argv[1] = (gchar *) fname;
-	    argv[2] = NULL;
-	} else if (lang == LANG_JULIA) {
-	    argv[0] = (gchar *) gretl_julia_path();
-	    argv[1] = (gchar *) fname;
-	    argv[2] = NULL;
-	} else if (lang == LANG_STATA) {
-	    argv[0] = (gchar *) gretl_stata_path();
-	    argv[1] = (gchar *) "-q";
-	    argv[2] = (gchar *) "-b";
-	    argv[3] = (gchar *) "do";
-	    argv[4] = (gchar *) fname;
-	    argv[5] = NULL;
-	} else if (lang == LANG_OCTAVE) {
-	    argv[0] = (gchar *) gretl_octave_path();
-	    argv[1] = (gchar *) "-q";
-	    argv[2] = (gchar *) fname;
-	    argv[3] = NULL;
-	}
-
-	run_prog_sync(argv, lang);
-    }
-}
-
-#endif /* !G_OS_WIN32 */
-
-static void modify_exec_button (windata_t *vwin, int to_spinner)
-{
-    GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_button");
-    GtkToolItem *si = g_object_get_data(G_OBJECT(vwin->mbar), "spin_item");
-    GtkWidget *sp = gtk_tool_button_get_icon_widget(GTK_TOOL_BUTTON(si));
-    int idx;
-
-    if (to_spinner) {
-	/* replace exit button with "wait" spinner */
-	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), eb);
-	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(eb));
-	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), si, idx);
-	gtk_widget_show_all(GTK_WIDGET(si));
-	gtk_spinner_start(GTK_SPINNER(sp));
-    } else {
-	/* reinstate the exec button */
-	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), si);
-	gtk_spinner_stop(GTK_SPINNER(sp));
-	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(si));
-	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), eb, idx);
-    }
-}
-
-#ifdef G_OS_WIN32 /* back to Windows-specific */
-
-typedef struct {
-    gchar *cmd;
-    gchar *fname;
-    windata_t *vwin;
-    PRN *prn;
-    int err;
-} exec_info;
-
-static void gretlcli_done (GObject *obj,
-			   GAsyncResult *res,
-			   gpointer data)
-{
-    exec_info *ei = data;
-
-    modify_exec_button(ei->scriptwin, 0);
-    if (ei->err == 0 /* got_printable_output(ei->prn) */) {
-	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->vwin);
-	ei->prn = NULL;
-    } else if (ei->err) {
-	gui_errmsg(ei->err);
-    }
-
-    gretl_remove(ei->fname);
-    g_free(ei->fname);
-    g_free(ei->cmd);
-    gretl_print_destroy(ei->prn);
-    free(ei);
-}
-
-static void exec_script_thread (GTask *task,
-				gpointer obj,
-				gpointer task_data,
-				GCancellable *c)
-{
-    exec_info *ei = g_task_get_task_data(task);
-
-    ei->err = gretl_win32_pipe_output(ei->cmd, gretl_dotdir(), ei->prn);
-}
-
-void win32_run_gretlcli_async (gchar *cmd,
-			       gchar *fname,
-			       windata_t *vwin)
-{
-    exec_info *ei = malloc(sizeof *ei);
-    GTask *task;
-    PRN *prn;
-
-    bufopen(&prn);
-
-    ei->cmd = cmd;
-    ei->fname = g_strdup(fname);
-    ei->vwin = vwin;
-    ei->prn = prn;
-    ei->err = 0;
-
-    task = g_task_new(NULL, NULL, gretlcli_done, ei);
-    g_task_set_task_data(task, ei, NULL);
-    modify_exec_button(vwin, 1);
-    g_task_run_in_thread(task, exec_script_thread);
-}
-
-#else /* non-Windows variant */
-
-typedef struct {
-    windata_t *scriptwin;
-    gint fout;
-    gint ferr;
-    gchar *fname;
-} exec_info;
-
-static void gretlcli_done (GPid pid, gint status, gpointer p)
-{
-    exec_info *ei = p;
-
-    modify_exec_button(ei->scriptwin, 0);
-
-    if (ei != NULL) {
-	char buf[4096];
-	size_t bs = sizeof buf - 1;
-	ssize_t got;
-	PRN *prn;
-
-	bufopen(&prn);
-
-	if (ei->fout > 0) {
-	    while ((got = read(ei->fout, buf, bs)) > 0) {
-		buf[got] = '\0';
-		pputs(prn, buf);
-	    }
-	    close(ei->fout);
-	}
-	if (ei->ferr > 0) {
-	    if (status != 0 && (got = read(ei->ferr, buf, bs)) > 0) {
-		buf[got] = '\0';
-		pputs(prn, buf);
-	    }
-	    close(ei->ferr);
-	}
-	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
-	gretl_remove(ei->fname);
-	g_free(ei->fname);
-	free(ei);
-    }
-
-    g_spawn_close_pid(pid);
-}
-
-void run_gretlcli_async (char **argv, windata_t *scriptwin)
-{
-    gboolean run;
-    gint ferr = -1;
-    gint fout = -1;
-    GPid pid = 0;
-    GError *gerr = NULL;
-
-    run = g_spawn_async_with_pipes(NULL, argv, NULL,
-				   G_SPAWN_SEARCH_PATH |
-				   G_SPAWN_DO_NOT_REAP_CHILD,
-				   NULL, NULL, &pid, NULL,
-				   &fout, &ferr,
-				   &gerr);
-
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    } else if (!run) {
-	errbox(_("gretlcli command failed"));
-    } else if (pid > 0) {
-	exec_info *ei = calloc(1, sizeof *ei);
-
-	ei->scriptwin = scriptwin;
-	ei->fout = fout;
-	ei->ferr = ferr;
-	ei->fname = g_strdup(argv[2]);
-	g_child_watch_add(pid, gretlcli_done, ei);
-    }
-}
-
-#endif /* run_gretlcli_async variants */
-
-#ifndef GRETL_EDIT
-
-/* driver for starting R, either interactive or in batch mode,
-   not used when in editor mode
-*/
-
-void start_R (const char *buf, int send_data, int interactive)
-{
-    gretlopt Ropt = OPT_G;
-    int err = 0;
-
-    if (send_data && !data_status) {
-	warnbox(_("Please open a data file first"));
-	return;
-    }
-
-    if (interactive) {
-	Ropt |= OPT_I;
-    }
-
-    if (send_data) {
-	Ropt |= OPT_D;
-	if (annual_data(dataset) || quarterly_or_monthly(dataset)) {
-	    const char *opts[] = {
-		N_("multiple time series object"),
-		N_("data frame")
-	    };
-	    int resp;
-
-	    resp = radio_dialog(NULL, _("Send data as"), opts, 2, 0, 0, NULL);
-	    if (resp < 0) {
-		return;
-	    } else if (resp == 1) {
-		Ropt |= OPT_F;
-	    }
-	}
-    }
-
-    /* On Windows in non-interactive mode, don't write
-       these files here; that will be handled later
-    */
-#ifdef G_OS_WIN32
-    if (interactive) {
-	err = write_gretl_R_files(buf, dataset, Ropt);
-    }
-#else
-    err = write_gretl_R_files(buf, dataset, Ropt);
-#endif
-
-    if (err) {
-	gui_errmsg(err);
-	delete_gretl_R_files();
-    } else if (interactive) {
-#ifdef G_OS_WIN32
-	win32_start_R_async();
-#else
-	start_R_async();
-#endif
-    } else {
-	/* non-interactive */
-#ifdef G_OS_WIN32
-	win32_run_R_sync(buf, Ropt);
-#else
-	run_R_sync();
-#endif
-    }
-}
-
-#endif /* not GRETL_EDIT */
-
-static void verbose_gerror_report (GError *gerr, const char *src)
-{
-    fprintf(stderr, "GError details from %s\n"
-	    " message: '%s'\n domain = %d, code = %d\n",
-	    src, gerr->message, gerr->domain, gerr->code);
-}
-
 int gretl_file_get_contents (const gchar *fname, gchar **contents,
 			     gsize *size)
 {
@@ -944,7 +357,6 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents,
     ok = g_file_get_contents(fname, contents, size, &gerr);
 
     if (gerr != NULL) {
-	verbose_gerror_report(gerr, "g_file_get_contents");
 	errbox(gerr->message);
 	g_error_free(gerr);
     }
@@ -1017,27 +429,229 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
     return ret;
 }
 
-#ifdef GRETL_EDIT
+static int got_printable_output (PRN *prn)
+{
+    int ret = 0;
 
-/* code specific to editor mode but in common between Windows and others */
+    if (prn == NULL) {
+	warnbox(_("No output was produced"));
+    } else {
+	const char *buf = gretl_print_get_buffer(prn);
 
-static void editor_run_R_script (const char *buf, gretlopt opt)
+	if (string_is_blank(buf)) {
+	    warnbox(_("No output was produced"));
+	    gretl_print_destroy(prn);
+	} else {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+#ifdef G_OS_WIN32
+
+/* MS Windows variants of functions to exec some third-party
+   programs */
+
+static void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
 {
     PRN *prn = NULL;
+    int err = 0;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    execute_R_buffer(buf, NULL, OPT_G | OPT_T, prn);
+    if (lang == LANG_STATA) {
+	gchar *buf = NULL;
+
+	gretl_chdir(gretl_workdir());
+	remove("gretltmp.log");
+	err = gretl_spawn(cmd);
+
+	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	    pputs(prn, buf);
+	    g_free(buf);
+	    pputc(prn, '\n');
+	}
+    } else {
+	err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
+    }
+
     if (got_printable_output(prn)) {
+	/* note: this check destroys @prn on failure */
 	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+    } else if (err) {
+	gui_errmsg(err);
+    }
+
+    g_free(cmd);
+}
+
+static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
+{
+#ifdef GRETL_EDIT
+    DATASET *dataset = NULL;
+#endif
+    const char *fname = NULL;
+    int err;
+
+    opt |= OPT_G;
+
+    /* note: as things stand, the @fname we obtain here
+       (composed in gretl_foreign.c) will be in the locale
+       encoding, ready to pass on the Windows command line
+       as in "foreign.exe fname"; this composite string is
+       given to gretl_spawn() or gretl_win32_pipe_output()
+       below. 2022-04-21: this comment is outdated, no?
+    */
+
+    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	gchar *cmd = NULL;
+
+	if (lang == LANG_OX) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
+	} else if (lang == LANG_PYTHON) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_python_path(), fname);
+	} else if (lang == LANG_JULIA) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_julia_path(), fname);
+	} else if (lang == LANG_STATA) {
+	    cmd = g_strdup_printf("\"%s\" /e do \"%s\"", gretl_stata_path(), fname);
+	} else if (lang == LANG_OCTAVE) {
+	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
+	}
+
+	win32_execute_script(cmd, lang, NULL);
+	g_free(cmd);
     }
 }
 
-#endif
+#else /* some non-Windows functions follow */
 
-#ifndef G_OS_WIN32 /* non-Windows variants */
+/* Run R, Ox, etc., in synchronous (batch) mode and display the
+   results in a gretl window: non-Windows variant.
+*/
+
+static void run_prog_sync (char **argv, int lang)
+{
+    gchar *sout = NULL;
+    gchar *errout = NULL;
+    gint status = 0;
+    GError *gerr = NULL;
+    PRN *prn = NULL;
+
+    if (lang == LANG_STATA) {
+	/* control location of Stata log file */
+	gretl_chdir(gretl_workdir());
+	remove("gretltmp.log");
+    }
+
+    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		 NULL, NULL, &sout, &errout,
+		 &status, &gerr);
+
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else if (status != 0) {
+	if (errout != NULL && *errout != '\0') {
+	    if (strlen(errout) < MAXLEN) {
+		errbox(errout);
+	    } else {
+		bufopen(&prn);
+		pputs(prn, errout);
+	    }
+	} else if (sout != NULL && *sout != '\0') {
+	    if (strlen(sout) < MAXLEN) {
+		errbox(sout);
+	    } else {
+		bufopen(&prn);
+		pputs(prn, sout);
+	    }
+	} else {
+	    errbox_printf("%s exited with status %d", argv[0], status);
+	}
+    } else if (lang == LANG_STATA) {
+	/* read log file */
+	gchar *buf = NULL;
+
+	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	    bufopen(&prn);
+	    pputs(prn, buf);
+	    g_free(buf);
+	    pputc(prn, '\n');
+	}
+    } else {
+	/* read good old stdout */
+	if (!string_is_blank(sout)) {
+	    bufopen(&prn);
+	    pputs(prn, sout);
+	}
+    }
+
+    if (got_printable_output(prn)) {
+	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
+    }
+
+    g_free(sout);
+    g_free(errout);
+}
+
+static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
+{
+#ifdef GRETL_EDIT
+    DATASET *dataset = NULL;
+#endif
+    const char *fname = NULL;
+    int err;
+
+    opt |= OPT_G;
+
+    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	gchar *argv[6];
+
+	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
+	    gretl_chdir(gretl_workdir());
+	}
+
+	if (lang == LANG_OX) {
+	    argv[0] = (gchar *) gretl_oxl_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_PYTHON) {
+	    argv[0] = (gchar *) gretl_python_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_JULIA) {
+	    argv[0] = (gchar *) gretl_julia_path();
+	    argv[1] = (gchar *) fname;
+	    argv[2] = NULL;
+	} else if (lang == LANG_STATA) {
+	    argv[0] = (gchar *) gretl_stata_path();
+	    argv[1] = (gchar *) "-q";
+	    argv[2] = (gchar *) "-b";
+	    argv[3] = (gchar *) "do";
+	    argv[4] = (gchar *) fname;
+	    argv[5] = NULL;
+	} else if (lang == LANG_OCTAVE) {
+	    argv[0] = (gchar *) gretl_octave_path();
+	    argv[1] = (gchar *) "-q";
+	    argv[2] = (gchar *) fname;
+	    argv[3] = NULL;
+	}
+
+	run_prog_sync(argv, lang);
+    }
+}
 
 int gretl_fork (const char *progvar, const char *arg,
 		const char *opt)
@@ -1102,7 +716,22 @@ int gretl_fork (const char *progvar, const char *arg,
     return !run;
 }
 
-#endif /* end Windows vs non-Windows */
+int browser_open (const char *url)
+{
+# if defined(OS_OSX)
+    return osx_open_url(url);
+# else
+    return gretl_fork("Browser", url, NULL);
+# endif
+}
+
+#endif /* !G_OS_WIN32 */
+
+#ifdef GRETL_EDIT
+# include "cli_exec.c"
+#else
+# include "R_exec.c"
+#endif
 
 /* do_new_script(): passing a non-NULL @scriptname is a means
    of creating a new script with a name pre-given by the user;
@@ -1224,54 +853,6 @@ gboolean do_open_script (int action)
 
     return TRUE;
 }
-
-#ifdef GRETL_EDIT
-
-/* edit mode special: execute a script (which may be entirely native
-   or may contain "foreign" code) via gretlcli
-*/
-
-static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
-{
-    gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
-    gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
-    FILE *fp = gretl_fopen(inpname, "wb");
-    int err = 0;
-
-    if (fp == NULL) {
-	file_read_errbox(inpname);
-	err = E_FOPEN;
-    } else {
-	fputs(buf, fp);
-	fclose(fp);
-    }
-
-    modify_exec_button(vwin, 1);
-
-    if (!err) {
-#ifdef G_OS_WIN32
-	gchar *cmd;
-
-	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
-	win32_run_gretlcli_async(cmd, inpname, vwin);
-#else
-	gchar *argv[4];
-
-	argv[0] = (gchar *) clipath;
-	argv[1] = (gchar *) "-x";
-	argv[2] = (gchar *) inpname;
-	argv[3] = NULL;
-	run_gretlcli_async(argv, vwin);
-#endif
-    }
-
-    g_free(clipath);
-    g_free(inpname);
-
-    return err;
-}
-
-#endif
 
 static void ensure_newline_termination (gchar **ps)
 {

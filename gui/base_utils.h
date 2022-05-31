@@ -81,30 +81,15 @@ void run_script_silent (GtkWidget *w, windata_t *vwin);
 
 void new_script_callback (GtkAction *action);
 
-void run_foreign_script (gchar *buf, int lang, gretlopt opt);
-
 void start_R (const char *buf, int send_data, int interactive);
 
-#ifdef G_OS_WIN32
-
-void win32_execute_script (gchar *cmd, int lang,
-			   windata_t *scriptwin);
-
-void win32_run_gretlcli_async (gchar *cmd,
-			       gchar *fname,
-			       windata_t *vwin);
-
-#else
+#ifndef G_OS_WIN32
 
 int browser_open (const char *url);
-
-void run_gretlcli_async (char **argv, windata_t *scriptwin);
 
 int gretl_fork (const char *progvar, const char *arg,
 		const char *opt);
 
 #endif
-
-
 
 #endif /* BASE_UTILS_H */
