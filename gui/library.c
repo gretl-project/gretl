@@ -10441,6 +10441,32 @@ static int script_open_session_file (CMD *cmd)
     return err;
 }
 
+static int is_save_session_call (CMD *cmd)
+{
+    if (cmd->param != NULL &&
+	cmd->param[0] != '\0' &&
+	cmd->list == NULL) {
+	return has_suffix(cmd->param, ".gretl");
+    } else {
+	return 0;
+    }
+}
+
+static int cli_save_session (const char *fname, PRN *prn)
+{
+    char fullname[FILENAME_MAX] = {0};
+    int err;
+
+    strcpy(fullname, fname);
+    gretl_maybe_prepend_dir(fullname);
+    err = save_session(fullname);
+    if (!err) {
+	pprintf(prn, _("wrote %s\n"), fullname);
+    }
+
+    return err;
+}
+
 static int try_run_include (ExecState *s, char *runfile,
                             PRN *prn, GtkWidget *parent)
 {
@@ -10850,13 +10876,20 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         break;
 
     case DATAMOD:
-        if (cmd->auxint == DS_CLEAR) {
-            close_session(cmd->opt);
-            break;
-        } else if (cmd->auxint == DS_RENUMBER) {
-            err = script_renumber_series(cmd->list, cmd->parm2, dset, prn);
-            break;
-        }
+    case STORE:
+	if (cmd->ci == DATAMOD) {
+	    if (cmd->auxint == DS_CLEAR) {
+		close_session(cmd->opt);
+		break;
+	    } else if (cmd->auxint == DS_RENUMBER) {
+		err = script_renumber_series(cmd->list, cmd->parm2, dset, prn);
+		break;
+	    }
+        } else if (is_save_session_call(cmd)) {
+	    /* GUI special for "store" */
+	    cli_save_session(cmd->param, prn);
+	    break;
+	}
         /* Falls through. */
 
     default:

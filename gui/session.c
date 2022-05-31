@@ -2054,7 +2054,6 @@ int save_session (char *fname)
 	} else {
 	    strcpy(datname, "none");
 	}
-
 	err = write_session_xml(datname);
 #if SAVE_DEBUG
 	fprintf(stderr, " write_session_xml: err = %d\n", err);
@@ -2078,7 +2077,6 @@ int save_session (char *fname)
     if (!err) {
 	/* make zipfile containing session files */
 	err = gretl_make_zipfile(fname, dirname);
-
 	if (err) {
 	    fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
 	    gui_errmsg(err);
