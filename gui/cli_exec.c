@@ -21,7 +21,7 @@
 
 static void modify_exec_button (windata_t *vwin, int to_spinner)
 {
-    GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_button");
+    GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
     GtkToolItem *si = g_object_get_data(G_OBJECT(vwin->mbar), "spin_item");
     GtkWidget *sp = gtk_tool_button_get_icon_widget(GTK_TOOL_BUTTON(si));
     int idx;
@@ -225,7 +225,8 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
     return err;
 }
 
-static void editor_run_R_script (const char *buf, gretlopt opt)
+static void editor_run_R_script (windata_t *vwin, const char *buf,
+				 gretlopt opt)
 {
     PRN *prn = NULL;
 
@@ -233,8 +234,10 @@ static void editor_run_R_script (const char *buf, gretlopt opt)
 	return;
     }
 
+    modify_exec_button(vwin, 1);
     execute_R_buffer(buf, NULL, OPT_G | OPT_T, prn);
     if (got_printable_output(prn)) {
 	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
+    modify_exec_button(vwin, 0);
 }

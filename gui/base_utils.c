@@ -454,7 +454,7 @@ static int got_printable_output (PRN *prn)
 /* MS Windows variants of functions to exec some third-party
    programs */
 
-static void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
+static void win32_execute_script (gchar *cmd, int lang)
 {
     PRN *prn = NULL;
     int err = 0;
@@ -489,6 +489,8 @@ static void win32_execute_script (gchar *cmd, int lang, windata_t *scriptwin)
     g_free(cmd);
 }
 
+/* Windows version of run_foreign_script() */
+
 static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
 #ifdef GRETL_EDIT
@@ -498,14 +500,6 @@ static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
     int err;
 
     opt |= OPT_G;
-
-    /* note: as things stand, the @fname we obtain here
-       (composed in gretl_foreign.c) will be in the locale
-       encoding, ready to pass on the Windows command line
-       as in "foreign.exe fname"; this composite string is
-       given to gretl_spawn() or gretl_win32_pipe_output()
-       below. 2022-04-21: this comment is outdated, no?
-    */
 
     err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
 
@@ -526,7 +520,7 @@ static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
 
-	win32_execute_script(cmd, lang, NULL);
+	win32_execute_script(cmd, lang);
 	g_free(cmd);
     }
 }
@@ -601,6 +595,8 @@ static void run_prog_sync (char **argv, int lang)
     g_free(sout);
     g_free(errout);
 }
+
+/* non-Windows version of run_foreign_script() */
 
 static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
@@ -937,7 +933,7 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
 
 #ifdef GRETL_EDIT
     if (vwin->role == EDIT_R) {
-	editor_run_R_script(buf, opt);
+	editor_run_R_script(vwin, buf, opt);
     } else if (vwin->role == EDIT_OX) {
         run_foreign_script(buf, LANG_OX, opt);
     } else if (vwin->role == EDIT_OCTAVE) {

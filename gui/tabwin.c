@@ -300,10 +300,6 @@ void tabwin_tab_destroy (windata_t *vwin)
 	if (tabwin->mbar != NULL && tabwin->mbar == vwin->mbar) {
 	    tabwin_remove_toolbar(tabwin);
 	}
-#if 0
-	/* 2020-11-27: this seems to be erroneous */
-	g_object_unref(vwin->mbar);
-#endif
 	vwin->mbar = NULL;
 	gtk_notebook_remove_page(notebook, pg);
     } else {

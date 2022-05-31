@@ -680,6 +680,20 @@ static void toolbar_attach_hidden_spinner (windata_t *vwin)
     g_object_ref(si);
 }
 
+static void catch_mbar_destroy (GtkWidget *w, gpointer p)
+{
+    GtkToolItem *item;
+
+    if ((item = g_object_get_data(G_OBJECT(w), "spin_item"))) {
+	g_object_unref(item);
+    }
+    if ((item = g_object_get_data(G_OBJECT(w), "exec_item"))) {
+	g_object_unref(item);
+    }
+}
+
+#define ASYNC_EXEC(r) (r == EDIT_HANSL || r == EDIT_R)
+
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 {
     int save_ok = (flags & VIEWBAR_EDITABLE);
@@ -727,10 +741,12 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    if (strstr(vwin->fname, "script_tmp")) {
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
-	} else if (item->flag == EXEC_ITEM) {
-	    g_object_set_data(G_OBJECT(vwin->mbar), "exec_button", button);
+	} else if (item->flag == EXEC_ITEM && ASYNC_EXEC(vwin->role)) {
+	    g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
 	    g_object_ref(button);
 	    toolbar_attach_hidden_spinner(vwin);
+	    g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
+			     G_CALLBACK(catch_mbar_destroy), NULL);
 	}
     }
 
