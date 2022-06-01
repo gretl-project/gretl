@@ -336,7 +336,6 @@ struct str_table funcs[] = {
     { F_IMINR,    "iminr" },
     { F_IMAXR,    "imaxr" },
     { F_FFT,      "fft" },
-    { F_FFT2,     "fft2" },
     { F_FFTI,     "ffti" },
     { F_CMULT,    "cmult" },
     { F_HDPROD,   "hdprod" },
@@ -597,6 +596,7 @@ struct str_table funcs[] = {
 
 struct str_table func_alias[] = {
     { F_EIGEN,    "eiggen2" },
+    { F_FFT,      "fft2" },
     { F_NMMAX,    "NMmin" },
     { F_NRMAX,    "NRmin" },
     { F_BFGSMAX,  "BFGSmin" },
@@ -769,7 +769,7 @@ static int real_function_lookup (const char *s, int aliases,
 
 	    p->data = sx->ptr;
 	}
-#if 1
+#if 0
 	/* note: point d'appui for deprecation of built-in function */
 	if (st->id == F_FFT) {
 	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "

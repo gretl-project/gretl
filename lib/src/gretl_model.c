@@ -1807,7 +1807,7 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
     y = get_arma_yvec(pmod, dset, err);
 
     if (!*err) {
-	pergm = gretl_matrix_fft(y, 0, err);
+	pergm = gretl_matrix_fft(y, err);
     }
 
     if (!*err) {
@@ -1815,11 +1815,14 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
 	if (pdata == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    double complex z;
+
 	    for (i=0; i<grid; i++) {
 		gretl_matrix_set(pdata, i, 0, gretl_matrix_get(spec, i, 0));
 		gretl_matrix_set(pdata, i, 1, gretl_matrix_get(spec, i, 1));
-		gretl_matrix_set(pdata, i, 2, gretl_matrix_get(pergm, i+1, 0));
-		gretl_matrix_set(pdata, i, 3, gretl_matrix_get(pergm, i+1, 1));
+		z = gretl_cmatrix_get(pergm, i+1, 0);
+		gretl_matrix_set(pdata, i, 2, creal(z));
+		gretl_matrix_set(pdata, i, 3, cimag(z));
 	    }
 	}
     }

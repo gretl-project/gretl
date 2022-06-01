@@ -37,7 +37,7 @@
 
 static int fft_allocate (double **ffx, double complex **ffz,
 			 gretl_matrix **ret, int r, int c,
-			 int inverse, int newstyle)
+			 int inverse)
 {
     /* real workspace, per series */
     *ffx = fftw_malloc(r * sizeof **ffx);
@@ -53,7 +53,7 @@ static int fft_allocate (double **ffx, double complex **ffz,
     }
 
     /* matrix to hold output */
-    if (newstyle && !inverse) {
+    if (!inverse) {
 	*ret = gretl_cmatrix_new(r, c);
     } else {
 	*ret = gretl_matrix_alloc(r, c);
@@ -73,17 +73,14 @@ static int fft_allocate (double **ffx, double complex **ffz,
    are supported.
 */
 
-static gretl_matrix *
-real_matrix_fft (const gretl_matrix *y, int inverse,
-		 int newstyle, int *err)
+static gretl_matrix *real_matrix_fft (const gretl_matrix *y,
+				      int inverse, int *err)
 {
     gretl_matrix *ret = NULL;
     fftw_plan p = NULL;
     double *ffx = NULL;
     double complex *ffz = NULL;
-    double xr, xi;
-    int r, c, m, odd, cr, ci;
-    int incols, outcols;
+    int r, c, m, odd;
     int i, j;
 
     if (y->rows < 2) {
@@ -92,40 +89,20 @@ real_matrix_fft (const gretl_matrix *y, int inverse,
     }
 
     r = y->rows;
+    c = y->cols;
     m = r / 2;
     odd = r % 2;
 
-    incols = y->cols;
-    if (newstyle) {
-	/* the number of columns is invariant wrt real vs complex */
-	outcols = incols;
-    } else {
-	/* the number of columns is double for complex what it is
-	   for real */
-	outcols = inverse ? incols / 2 : incols * 2;
-    }
-
-    *err = fft_allocate(&ffx, &ffz, &ret, r, outcols,
-			inverse, newstyle);
+    *err = fft_allocate(&ffx, &ffz, &ret, r, c, inverse);
     if (*err) {
 	return NULL;
     }
 
-    c = MIN(incols, outcols);
-    cr = 0;
-    ci = 1;
-
     for (j=0; j<c; j++) {
 	/* load the data */
-	if (newstyle && inverse) {
+	if (inverse) {
 	    for (i=0; i<=m+odd; i++) {
 		ffz[i] = gretl_cmatrix_get(y, i, j);
-	    }
-	} else if (inverse) {
-	    for (i=0; i<=m+odd; i++) {
-		xr = gretl_matrix_get(y, i, cr);
-		xi = gretl_matrix_get(y, i, ci);
-		ffz[i] = xr + xi * I;
 	    }
 	} else {
 	    /* going in the real -> complex direction */
@@ -151,25 +128,14 @@ real_matrix_fft (const gretl_matrix *y, int inverse,
 	    for (i=0; i<r; i++) {
 		gretl_matrix_set(ret, i, j, ffx[i] / r);
 	    }
-	} else if (newstyle) {
+	} else {
 	    for (i=0; i<=m+odd; i++) {
 		gretl_cmatrix_set(ret, i, j, ffz[i]);
 	    }
 	    for (i=m; i>0; i--) {
 		gretl_cmatrix_set(ret, r-i, j, conj(ffz[i]));
 	    }
-	} else {
-	    for (i=0; i<=m+odd; i++) {
-		gretl_matrix_set(ret, i, cr, creal(ffz[i]));
-		gretl_matrix_set(ret, i, ci, cimag(ffz[i]));
-	    }
-	    for (i=m; i>0; i--) {
-		gretl_matrix_set(ret, r-i, cr,  creal(ffz[i]));
-		gretl_matrix_set(ret, r-i, ci, -cimag(ffz[i]));
-	    }
 	}
-	cr += 2;
-	ci += 2;
     }
 
     fftw_destroy_plan(p);
@@ -235,24 +201,21 @@ static int fft_is_hermitian (const gretl_matrix *y)
     return 1;
 }
 
-gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int cmat, int *err)
+gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 {
-    return real_matrix_fft(y, 0, cmat, err);
+    return real_matrix_fft(y, 0, err);
 }
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 {
-    if (y->is_complex) {
-	/* new-style */
-	if (fft_is_hermitian(y)) {
-	    /* its inverse should be real */
-	    return real_matrix_fft(y, 1, 1, err);
-	} else {
-	    return gretl_cmatrix_fft(y, 1, err);
-	}
+    if (!y->is_complex) {
+	*err = E_TYPES;
+	return NULL;
+    } else if (fft_is_hermitian(y)) {
+	/* its inverse should be real */
+	return real_matrix_fft(y, 1, err);
     } else {
-	/* old-style */
-	return real_matrix_fft(y, 1, 0, err);
+	return gretl_cmatrix_fft(y, 1, err);
     }
 }
 

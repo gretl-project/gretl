@@ -242,7 +242,6 @@ enum {
     F_IMINR,
     F_IMAXR,
     F_FFT,
-    F_FFT2,
     F_FFTI,
     F_UPPER,
     F_LOWER,

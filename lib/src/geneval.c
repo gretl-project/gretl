@@ -4432,7 +4432,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 #define mmf_does_complex(f) (f==F_INV || f==F_UPPER || f==F_LOWER || \
                              f==F_DIAG || f==F_TRANSP || f==F_CTRANS || \
                              f==F_VEC || f==F_VECH || f==F_UNVECH || \
-                             f==F_MREV || f== F_FFT2 || f==F_FFTI || \
+                             f==F_MREV || f== F_FFT || f==F_FFTI || \
                              f==F_CUM || f==F_DIFF || f==F_SUMC || \
                              f==F_SUMR || f==F_PRODC || f==F_PRODR || \
                              f==F_MEANC || f==F_MEANR || f==F_GINV || \
@@ -4630,13 +4630,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = gretl_matrix_log(m, &p->err);
             break;
         case F_FFT:
-            ret->v.m = gretl_matrix_fft(m, 0, &p->err);
-            break;
-        case F_FFT2:
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_fft(m, 0, &p->err);
             } else {
-                ret->v.m = gretl_matrix_fft(m, 1, &p->err);
+                ret->v.m = gretl_matrix_fft(m, &p->err);
             }
             break;
         case F_FFTI:
@@ -17434,7 +17431,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_IMINR:
     case F_IMAXR:
     case F_FFT:
-    case F_FFT2:
     case F_FFTI:
     case F_POLROOTS:
     case F_CTRANS:

@@ -9,8 +9,11 @@ The --compat option for the "store" command (which enabled
 saving a gretl binary datafile in the format used prior to gretl
 2020b) has been removed.
 
-Add an explicit deprecation message for use of the legacy fft
-function. This will be redefined in the next release.
+The deprecated legacy function fft() has been replaced by a
+version that assumes the native representation of complex
+matrices introduced in 2019d. The transitional name assigned to
+the new-style function, "fft2", remains in place as an alias to
+the revised fft().
 
 2022-02-02 version 2022a
 
