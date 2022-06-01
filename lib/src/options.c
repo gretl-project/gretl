@@ -617,7 +617,6 @@ struct gretl_option gretl_opts[] = {
     { STDIZE,   OPT_C, "center-only", 0 },
     { STDIZE,   OPT_N, "no-df-corr", 0 },
     { STORE,    OPT_A, "matrix", 2 },
-    { STORE,    OPT_C, "compat", 1 },
     { STORE,    OPT_D, "database", 0 },
     { STORE,    OPT_E, "comment", 2 },
     { STORE,    OPT_F, "overwrite", 0 },

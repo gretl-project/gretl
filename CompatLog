@@ -5,6 +5,10 @@ The "order" member of the $system bundle made available by the
 for consistency with the documentation of vecm and its printed
 output. (Before, "order" gave the lag order in differences.)
 
+The --compat option for the "store" command (which enabled
+saving a gretl binary datafile in the format used prior to gretl
+2020b) has been removed.
+
 Add an explicit deprecation message for use of the legacy fft
 function. This will be redefined in the next release.
 
