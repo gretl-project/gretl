@@ -2496,69 +2496,6 @@ static void start_R_callback (void)
     start_R(NULL, 1, 1);
 }
 
-#ifndef G_OS_WIN32
-
-int gretl_fork (const char *progvar, const char *arg,
-		const char *opt)
-{
-    const char *prog = NULL;
-    gchar *argv[4] = {NULL, NULL, NULL, NULL};
-    GError *err = NULL;
-    gboolean run;
-
-#ifdef OS_OSX
-    if (!strcmp(progvar, "calculator")) {
-	prog = calculator;
-    }
-#else
-    if (!strcmp(progvar, "Browser")) {
-	prog = Browser;
-    } else if (!strcmp(progvar, "calculator")) {
-	prog = calculator;
-    } else if (!strcmp(progvar, "viewpdf")) {
-	prog = viewpdf;
-    } else if (!strcmp(progvar, "viewps")) {
-	prog = viewps;
-    } else {
-	prog = progvar;
-    }
-#endif
-
-    if (prog == NULL) {
-	errbox_printf("Internal error: variable %s is undefined", progvar);
-	return 1;
-    }
-
-    argv[0] = g_strdup(prog);
-
-    if (opt != NULL) {
-	argv[1] = g_strdup(arg);
-	argv[2] = g_strdup(opt);
-    } else if (arg != NULL) {
-	argv[1] = g_strdup(arg);
-    }
-
-    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-			NULL, NULL, NULL, &err);
-
-    if (err != NULL) {
-	errbox(err->message);
-	if (err->domain == G_SPAWN_ERROR &&
-	    err->code == G_SPAWN_ERROR_NOENT) {
-	    preferences_dialog(TAB_PROGS, progvar, mdata->main);
-	}
-	g_error_free(err);
-    }
-
-    g_free(argv[0]);
-    g_free(argv[1]);
-    g_free(argv[2]);
-
-    return !run;
-}
-
-#endif
-
 /* Icon handling for X11 */
 
 #ifndef G_OS_WIN32

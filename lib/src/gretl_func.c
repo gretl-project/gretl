@@ -1713,6 +1713,23 @@ static GretlType param_field_to_type (const char *s,
     return t;
 }
 
+static gboolean special_int_default (fn_param *param,
+				     xmlNodePtr np)
+{
+    if (param->type == GRETL_TYPE_INT) {
+	char *s = NULL;
+
+	if (gretl_xml_get_prop_as_string(np, "default", &s) &&
+	    (strstr(s, "$mylist") || strstr(s, "$xlist"))) {
+	    param->deflt = strstr(s, "$mylist")? INT_USE_MYLIST :
+		INT_USE_XLIST;
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
 /* read the parameter info for a function from XML file */
 
 static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
@@ -1756,7 +1773,9 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
 		param->type = param_field_to_type(field, fun->name, &err);
 		free(field);
-		if (gretl_scalar_type(param->type)) {
+		if (special_int_default(param, cur)) {
+		    ; /* handled */
+		} else if (gretl_scalar_type(param->type)) {
 		    double x;
 
 		    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
@@ -2346,6 +2365,10 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    if (!default_unset(param)) {
 		if (na(param->deflt)) {
 		    pputs(prn, " default=\"NA\"");
+		} else if (param->deflt == INT_USE_MYLIST) {
+		    pputs(prn, " default=\"$mylist\"");
+		} else if (param->deflt == INT_USE_XLIST) {
+		    pputs(prn, " default=\"$xlist\"");
 		} else {
 		    pprintf(prn, " default=\"%g\"", param->deflt);
 		}
@@ -8236,7 +8259,8 @@ static int unlocalize_list (fncall *call, const char *lname,
     int i, vi;
 
 #if UDEBUG
-    fprintf(stderr, "\n*** unlocalize_list: '%s', function depth = %d\n", lname, d);
+    fprintf(stderr, "\n*** unlocalize_list '%s', function %s depth = %d\n",
+	    lname, call->fun->name, d);
     printlist(list, lname);
     fprintf(stderr, " dset = %p, dset->v = %d\n", (void *) dset, dset->v);
     fprintf(stderr, " list is direct return value? %s\n", arg == NULL ? "yes" : "no");

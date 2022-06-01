@@ -178,6 +178,8 @@ int series_greatest_index (const DATASET *dset, const char *varname);
 
 int current_series_index (const DATASET *dset, const char *vname);
 
+int caller_series_index (const DATASET *dset, const char *vname);
+
 int extract_varname (char *targ, const char *src, int *len);
 
 int genr_fit_resid (const MODEL *pmod, DATASET *dset,

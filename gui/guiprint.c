@@ -2147,58 +2147,6 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
     return err;
 }
 
-/* We mostly use this for checking whether the font described by @desc
-   has the Unicode minus sign (0x2212), which looks better than a
-   simple dash if it's available.
-*/
-
-int font_has_symbol (PangoFontDescription *desc, int symbol)
-{
-    GtkWidget *widget;
-    PangoContext *context = NULL;
-    PangoLayout *layout = NULL;
-    PangoLanguage *lang = NULL;
-    PangoCoverage *coverage = NULL;
-    int ret = 0;
-
-    if (desc == NULL) {
-	return 0;
-    }
-
-    widget = gtk_label_new("");
-    if (g_object_is_floating(widget)) {
-	g_object_ref_sink(widget);
-    }
-
-    context = gtk_widget_get_pango_context(widget);
-    if (context == NULL) {
-	gtk_widget_destroy(widget);
-	return 0;
-    }
-
-    layout = pango_layout_new(context);
-    lang = pango_language_from_string("eng");
-
-    if (layout != NULL && lang != NULL) {
-	PangoFont *font = pango_context_load_font(context, desc);
-
-	if (font != NULL) {
-	    coverage = pango_font_get_coverage(font, lang);
-	    if (coverage != NULL) {
-		ret = (pango_coverage_get(coverage, symbol) == PANGO_COVERAGE_EXACT);
-		pango_coverage_unref(coverage);
-	    }
-	    g_object_unref(font);
-	}
-    }
-
-    g_object_unref(G_OBJECT(layout));
-    g_object_unref(G_OBJECT(context));
-    gtk_widget_destroy(widget);
-
-    return ret;
-}
-
 #ifdef G_OS_WIN32
 
 static int get_latex_path (char *latex_path)

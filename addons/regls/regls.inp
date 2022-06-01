@@ -428,7 +428,6 @@ function bundle regls (series depvar, list indeps,
       delete ret.verbosity
    endif
    string ret.depvar = argname(depvar, "y")
-   list ret.ylist = outer_series_id(ret.depvar)
    list ret.xlist = indeps
    string xname = argname(indeps, "X")
    regls_set_notes(&ret)
@@ -458,14 +457,15 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
    # public but undocumented: this function serves in the
    # bundle-fcast role for a bundle returned by regls()
    bundle ret
-   catch series y = b.ylist[1]
-   if $error
+   smpl t1 t2
+   smpl # to get the info printed
+   list ylist = access(b.depvar)
+   if nelem(ylist) == 0
       funcerr "Can't find the dependent variable"
+   else
+      series y = ylist[1]
    endif
-   catch series yhat = regls_yhat(b, b.xlist)
-   if $error
-      funcerr "Can't find the regressors"
-   endif
+   series yhat = regls_yhat(b, b.xlist)
    if t1 > b.sample_t2
       string os = "Out-of-sample "
    elif t1 == b.sample_t2 && t2 == b.sample_t2
@@ -474,8 +474,6 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
       # mixed?
       string os = ""
    endif
-   smpl t1 t2
-   smpl # to get the info printed
    scalar ret.R2 = 1 - sst(y-yhat) / sst(y)
    matrix stats = fcstats(y, yhat)
    printf "%sforecast evaluation statistics for %s\n\n", os, b.depvar

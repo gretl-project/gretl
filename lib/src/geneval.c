@@ -1855,6 +1855,33 @@ static NODE *bin2dec_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *access_series_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_list_node(p);
+
+    if (!p->err) {
+	int v0 = caller_series_index(p->dset, n->v.str);
+
+	if (v0 > 0) {
+	    int t, v1 = p->dset->v;
+
+	    p->err = dataset_add_series(p->dset, 1);
+	    if (!p->err) {
+		for (t=0; t<p->dset->n; t++) {
+		    p->dset->Z[v1][t] = p->dset->Z[v0][t];
+		}
+		strcpy(p->dset->varname[v1], n->v.str);
+		ret->v.ivec = gretl_list_new(1);
+		ret->v.ivec[1] = v1;
+	    }
+	} else {
+	    ret->v.ivec = gretl_list_new(0);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *DW_node (NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -6372,7 +6399,7 @@ static int object_get_size (NODE *n, parser *p)
     } else if (n->t == LIST) {
 	ret = n->v.ivec[0];
     } else if (n->t == STR) {
-	ret = strlen(n->v.str);
+	ret = g_utf8_strlen(n->v.str, -1);
     } else {
 	p->err = E_TYPES;
     }
@@ -18050,6 +18077,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = bin2dec_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, MAT, l, p);
+	}
+	break;
+    case F_ACCESS:
+	if (l->t == STR) {
+	    ret = access_series_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
     default:

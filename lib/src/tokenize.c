@@ -854,27 +854,25 @@ static int closing_quote_pos (const char *s, int ci)
     return -1;
 }
 
-static int matching_delim (int ltype)
-{
-    if (ltype == '(') {
-	return ')';
-    } else if (ltype == '{') {
-	return '}';
-    } else {
-	return ']';
-    }
-}
-
 static int closing_delimiter_pos (const char *s)
 {
+    const char *ldelims = "({[";
+    const char *rdelims = ")}]";
     int ltype = *s;
-    int targ = matching_delim(ltype);
+    int targ = 0;
     int quoted = 0;
-    int net = 1, n = 0;
+    int i, net = 1, n = 0;
+
+    for (i=0; i<3; i++) {
+	if (ldelims[i] == ltype) {
+	    targ = rdelims[i];
+	    break;
+	}
+    }
 
     s++;
     while (*s) {
-	if (*s == '"') {
+	if (*s == '"' && *(s-1) != '\\') {
 	    quoted = !quoted;
 	} else if (!quoted) {
 	    if (*s == ltype) {
