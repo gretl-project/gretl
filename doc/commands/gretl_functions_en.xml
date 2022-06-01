@@ -12290,6 +12290,15 @@
             <fncref targ="strvals"/>
 	  </seelist>
 	</para>
+	<para>
+	  An alternative to <lit>stringify</lit> that may be useful in
+	  some contexts is direct assignment from an array of strings
+	  to a series: this creates a series whose values are taken
+	  from the array in sequence; the number of elements in the
+	  array must equal either the full length of the dataset or
+	  the length of the current sample range, and values may be
+	  repeated as required.
+	</para>
       </description>
     </function>
 
@@ -12539,6 +12548,13 @@
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
+	</para>
+	<para>
+	  An alternative to <lit>strvals</lit> that may be useful in
+	  some contexts is direct assignment of a string-valued series
+	  to an array of strings: this provides not just the distinct
+	  values, but all values of the series in the current sample
+	  range.
 	</para>
       </description>
     </function>
