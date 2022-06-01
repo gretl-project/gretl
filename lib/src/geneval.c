@@ -19622,6 +19622,11 @@ static int create_or_edit_string (parser *p)
     return p->err;
 }
 
+static int has_strvals (NODE *n, parser *p)
+{
+    return (useries_node(n) && is_string_valued(p->dset, n->vnum));
+}
+
 static int create_or_edit_list (parser *p)
 {
     int *list = NULL;
@@ -19768,10 +19773,14 @@ static int gen_check_return_type (parser *p)
         }
     } else if (p->targ == ARRAY) {
         if (p->op == B_ASN) {
-            /* plain assignment: array or null */
-            if (!gen_type_is_arrayable(r->t) && r->t != EMPTY) {
-                err = E_TYPES;
-            }
+            /* plain assignment: array, null, or suitable series */
+            if (gen_type_is_arrayable(r->t) || r->t == EMPTY) {
+		; /* OK */
+	    } else if (has_strvals(r, p)) {
+		; /* possibly OK */
+            } else {
+		err = E_TYPES;
+	    }
         } else {
             /* arrays: the only other assignment possibility is "+=",
                in which case we'll only accept an array or an
@@ -20471,6 +20480,20 @@ static int save_generated_var (parser *p, PRN *prn)
 		if (!p->err && a == r->v.a) {
 		    /* avoid destroying the assigned array */
 		    r->v.a = NULL;
+		}
+	    }
+	} else if (r->t == SERIES) {
+	    /* verified in advance as string-valued */
+	    GretlType atype = GRETL_TYPE_STRINGS;
+
+	    if (p->lh.gtype > 0 && p->lh.gtype != atype) {
+		p->err = E_TYPES;
+	    } else {
+		gretl_array *a =
+		    get_strings_array_from_series(p->dset, r->vnum, &p->err);
+
+		if (!p->err) {
+		    p->err = gen_add_or_replace(p, atype, a);
 		}
 	    }
 	} else {

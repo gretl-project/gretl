@@ -2,10 +2,13 @@ version 2022b, in progress
 - new command/keyword "continue" for use in loops
 - new option --decr for use with index loops
 - "leverage" command: add $result accessor to obtain 
-  leverage, influence and Studentized residuals as matrix
+  leverage, influence and studentized residuals as matrix
 - "printf" command: add "\r" as a recognized escape sequence
 - "smpl" command: add --dates option to resolve potential
   ambiguity of obs limits in case of annual and daily data
+- "markers" command: add --from-series option
+- "store" command: support saving a gretl session file (only
+  in the GUI program)
 - "vecm" command: redefine the "order" member of the $system
   accessor to give the lag order in levels, consistent with
   the vecm documentation
@@ -16,6 +19,8 @@ version 2022b, in progress
   ARIMA model; document the verbose option
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
+- Support direct assignment from string-values series to
+  array of strings
 - script editor: enhancements for Find/Replace dialog
 - GUI viewer windows: support Ctrl-plus and Ctrl-minus to
   increase/reduce font size
