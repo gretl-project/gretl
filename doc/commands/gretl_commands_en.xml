@@ -8269,6 +8269,7 @@
 	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --to-array=</lit><repl>name</repl></altform>
 	<altform><lit>markers --from-array=</lit><repl>name</repl></altform>
+	<altform><lit>markers --from-series=</lit><repl>name</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
     </usage>
@@ -8297,6 +8298,12 @@
 	case the markers are repeated for each time period.) The
 	<opt>from-array</opt> option works similarly, reading from
 	a named array of strings.
+      </para>
+      <para>
+	The option <opt>from-series</opt> offers a convenient way of
+	creating observation markers by copying from a string-valued
+	series. An error is flagged if the specified series does not
+	have string values.
       </para>
       <para>
 	The <opt>delete</opt> option does what you'd expect: it
@@ -15024,6 +15031,14 @@
 	compression (from 0 to 9): higher levels produce a smaller
 	file, but compression takes longer. The default level is 1; a
 	level of 0 means that no compression is applied.
+      </para>
+      <para>
+	A special sort of <quote>native</quote> save is supported in
+	the GUI program: if <repl>filename</repl> has extension
+	<lit>.gretl</lit> and the <repl>varlist</repl> argument is
+	omitted, then a gretl session file is written. Such files
+	include the current dataset along with any named objects such
+	as models, graphs and matrices.
       </para>
       <subhead>Other formats</subhead>
       <para>
