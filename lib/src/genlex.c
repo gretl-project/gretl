@@ -337,9 +337,7 @@ struct str_table funcs[] = {
     { F_IMAXR,    "imaxr" },
     { F_FFT,      "fft" },
     { F_FFTI,     "ffti" },
-    { F_CMULT,    "cmult" },
     { F_HDPROD,   "hdprod" },
-    { F_CDIV,     "cdiv" },
     { F_MCOV,     "mcov" },
     { F_MCORR,    "mcorr" },
     { F_MXTAB,    "mxtab" },
@@ -371,7 +369,6 @@ struct str_table funcs[] = {
     { F_MLAG,     "mlag" },
     { F_QR,       "qrdecomp" },
     { F_EIGSYM,   "eigensym" },
-    { F_EIGGEN,   "eigengen" }, /* legacy */
     { F_EIGEN,    "eigen" },
     { F_SCHUR,    "schur" },
     { F_EIGSOLVE, "eigsolve" },

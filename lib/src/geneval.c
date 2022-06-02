@@ -2894,7 +2894,6 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
                           (o >= B_DOTLT && o <= B_DOTGTE))
 
 #define fn_no_complex(f) (f == F_QFORM || f == F_LSOLVE || \
-                          f == F_CMULT || f == F_CDIV || \
                           f == F_CONV2D || f == F_SGN)
 
 /* return allocated result of binary operation performed on
@@ -3091,12 +3090,6 @@ static int real_matrix_calc (const gretl_matrix *A,
         } else {
             C = gretl_matrix_hdproduct_new(A, B, &err);
         }
-        break;
-    case F_CMULT:
-        C = gretl_matrix_complex_multiply(A, B, 0, &err);
-        break;
-    case F_CDIV:
-        C = gretl_matrix_complex_divide(A, B, 0, &err);
         break;
     case F_MRSEL:
         C = gretl_matrix_bool_sel(A, B, 1, &err);
@@ -12242,7 +12235,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
             }
         }
-    } else if (f == F_EIGEN || f == F_EIGGEN) {
+    } else if (f == F_EIGEN) {
         gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
         gretl_matrix *v1 = NULL, *v2 = NULL;
 
@@ -12257,20 +12250,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
         }
         if (!p->err) {
-            if (f == F_EIGEN) {
-                if (lm->is_complex) {
-                    A = gretl_zgeev(lm, v1, v2, &p->err);
-                } else {
-                    A = gretl_dgeev(lm, v1, v2, &p->err);
-                }
-            } else {
-                /* legacy eigengen: real input only */
-                if (lm->is_complex) {
-                    p->err = E_CMPLX;
-                } else {
-                    A = old_eigengen(lm, v1, v2, &p->err);
-                }
-            }
+	    if (lm->is_complex) {
+		A = gretl_zgeev(lm, v1, v2, &p->err);
+	    } else {
+		A = gretl_dgeev(lm, v1, v2, &p->err);
+	    }
         }
     } else if (f == F_SCHUR) {
         gretl_matrix *Z = NULL;
@@ -16696,8 +16680,6 @@ static NODE *eval (NODE *t, parser *p)
     case B_VCAT:
     case F_QFORM:
     case F_HDPROD:
-    case F_CMULT:
-    case F_CDIV:
     case F_LSOLVE:
     case F_MRSEL:
     case F_MCSEL:
@@ -17607,7 +17589,6 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MSHAPE:
     case F_SVD:
-    case F_EIGGEN:
     case F_EIGEN:
     case F_SCHUR:
     case F_TRIMR:

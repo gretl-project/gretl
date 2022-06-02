@@ -9878,14 +9878,6 @@ gretl_general_matrix_eigenvals (const gretl_matrix *m, int *err)
     return real_gretl_dgeev(m, NULL, NULL, 1, err);
 }
 
-gretl_matrix *old_eigengen (const gretl_matrix *m,
-                            gretl_matrix *VR,
-                            gretl_matrix *VL,
-                            int *err)
-{
-    return real_gretl_dgeev(m, VR, VL, 1, err);
-}
-
 /**
  * gretl_symmetric_eigen_sort:
  * @evals: array of real eigenvalues from symmetric matrix.

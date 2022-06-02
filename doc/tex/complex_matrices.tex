@@ -5,9 +5,12 @@
 \label{sec:cmplx-intro}
 
 Native support for complex matrices was added to gretl in version
-2019d. Not all of hansl's matrix functions accept complex input, but
-we have enabled a sizable subset of these functions which should
-suffice for most econometric purposes.
+2019d.\footnote{Prior to that release gretl offered improvised support
+  for some complex functionality. This was removed in gretl 2022b; see
+  section~\ref{sec:cmplx-compat} for details.} Not all of hansl's
+matrix functions accept complex input, but we have enabled a sizable
+subset of these functions which should suffice for most econometric
+purposes.
 
 Complex numbers are not used in most areas of econometrics, but there
 are a few notable exceptions: among these, complex numbers allow for
@@ -47,8 +50,6 @@ quantity $|z|$ is known as the modulus of $z$, and $\theta$ as its
 complex ``argument'' (or sometimes ``phase''). The notation $\bar{z}$
 is used for the complex conjugate of $z$: if $z = a + b\,i$, then
 $\bar{z} = a - b\,i$.
-
-
 
 \section{Creating a complex matrix}
 \label{sec:cmplx-create}
@@ -185,20 +186,17 @@ categories employed in gretl's online ``Function reference'' (under the
 \subsection{Linear algebra}
 
 The functions that accept complex arguments are: \cmd{cholesky},
-\cmd{det}, \cmd{ldet}, \cmd{eigensym} (for Hermitian matrices),
-\cmd{ffti}, \cmd{inv}, \cmd{ginv}, \cmd{hdprod}, \cmd{mexp},
-\cmd{mlog}, \cmd{qrdecomp}, \cmd{rank}, \cmd{svd}, \cmd{tr}, and
-\cmd{transp}. Note, however, that \cmd{mexp} and \cmd{mlog} require
-that the input matrix be diagonalizable, and \cmd{cholesky} requires a
-positive definite Hermitian matrix.
+\cmd{det}, \cmd{ldet}, \cmd{eigen}, \cmd{eigensym} (for Hermitian
+matrices), \cmd{fft}, \cmd{ffti}, \cmd{inv}, \cmd{ginv}, \cmd{hdprod},
+\cmd{mexp}, \cmd{mlog}, \cmd{qrdecomp}, \cmd{rank}, \cmd{svd},
+\cmd{tr}, and \cmd{transp}. Note, however, that \cmd{mexp} and
+\cmd{mlog} require that the input matrix be diagonalizable, and
+\cmd{cholesky} requires a positive definite Hermitian matrix.
 
-In addition the new functions \cmd{eigen} and \cmd{fft2} are
-complex-supporting versions of \cmd{eigengen} and \cmd{fft},
-respectively (see section~\ref{sec:cmplx-compat} for details). And
-there are the complex-only functions \cmd{ctrans}, which gives the
-conjugate transpose,\footnote{The \cmd{transp} function gives the
-  straight (non-conjugated) transpose of a complex matrix.} and
-\cmd{schur} for the Schur factorization.
+In addition there are the complex-only functions \cmd{ctrans}, which
+gives the conjugate transpose,\footnote{The \cmd{transp} function
+  gives the straight (non-conjugated) transpose of a complex matrix.}
+and \cmd{schur} for the Schur factorization.
 
 \subsection{Matrix building}
 
@@ -374,63 +372,22 @@ eval D - jl_D
 \end{scode}
 \end{script}
 
-\section{Backward compatibility}
+\section{Backward incompatibility}
 \label{sec:cmplx-compat}
 
-Compatibility issues arise in two contexts, both related to the fact
-that gretl offered some degree of support for complex matrices before
-they became full citizens of the hansl polity.
+Prior to version 2019d gretl did not provide native support for
+complex matrices. It did, however, offer an improvised representation
+of such matrices for certain restricted purposes, taking the form of
+an expanded regular gretl matrix with real values in its odd-numbered
+columns and imaginary parts in even-numbered columns.  The functions
+\cmd{fft} and \cmd{eigengen} returned matrices in this special form,
+and the functions \cmd{cmult} and \cmd{cdiv} performed complex
+multiplication and division, taking such matrices as arguments.
 
-\begin{enumerate}
-\item The functions \cmd{fft} (fast Fourier transform for real
-  input) and \cmd{eigengen} (eigenvalues and/or eigenvectors of a
-  non-symmetric real matrix) returned complex matrices in what we may
-  call the ``legacy'' representation. In the case of \cmd{fft} and
-  the eigenvalues from \cmd{eigengen} this took the form of a
-  regular gretl matrix with real values in the first (or odd-numbered)
-  column(s) and imaginary parts in the second (or even-numbered)
-  column(s). Since calculating with such matrices using the standard
-  matrix operators would result in nonsense, we provided the tailored
-  functions \cmd{cmult} and \cmd{cdiv}.
-
-  In the case of complex eigenvectors from \cmd{eigengen}---well,
-  you probably don't want to know, but if you do, consult the help text
-  for \cmd{eigengen}; they were not easy for a user to handle!
-\item The function packages \texttt{cmatrix} and
-  \texttt{ghosts}. These were developed to support frequency-domain
-  analysis via gretl in the absence of built-in complex matrix
-  functionality. The \texttt{cmatrix} package was needed as an
-  dependency for \texttt{ghosts} (multivariate spectral analysis).
-\end{enumerate}
-
-So what happens with these functions and function packages under the
-new regime? The resolution on the two built-in functions is this:
-\begin{itemize}
-\item \cmd{fft} and \cmd{eigengen} continue to behave exactly as
-  before. They do not accept complex input and they produce old-style
-  output. In the documentation they are marked as legacy functions,
-  not for use in newly written hansl code.
-\item We have added new counterpart functions, \cmd{fft2} and
-  \cmd{eigen}. These accept either real or complex input and they
-  produce new-style complex output in both cases.
-\end{itemize}
-
-On the affected packages: \texttt{cmatrix} is no longer required and
-is not supported any more. But an updated version of
-\texttt{ghosts}, which uses gretl's native complex functionality, is
-available.
-
-We might mention that the \cmd{ffti} function (inverse Fourier
-transform) is backward compatible: the new functionality is just a
-superset of the old. The input must be complex, and is accepted by
-\cmd{ffti} in either the legacy or the new format. The output is
-real if the input is Hermitian, which in this case means that the
-first (zero-frequency) row is real and the remaining rows are
-conjugate symmetrical about their mid-point. That's the only case that
-can arise when \cmd{ffti} is used on output from the old
-\cmd{fft} (which only accepted real input).  Otherwise
-(non-Hermitian complex input, which can arise only under the new
-scheme) the output will be complex, and in the new format.
+After a transitional phase in which we continued to support these
+legacy functions, they are all either removed (\cmd{eigengen},
+\cmd{cmult}, \cmd{cdiv}) or redefined to work with ``proper'' complex
+matrices as described above (\cmd{fft}).
 
 %%% Local Variables:
 %%% mode: latex

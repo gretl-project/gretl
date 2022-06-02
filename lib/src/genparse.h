@@ -316,9 +316,7 @@ enum {
     F_QR,
     F_EIGSYM,
     F_QUANTILE,
-    F_CMULT,	  /* complex multiplication */
     F_HDPROD,     /* horizontal direct product */
-    F_CDIV,	  /* complex division */
     F_MXTAB,
     F_MRSEL,
     F_MCSEL,
@@ -464,7 +462,6 @@ enum {
     F_ISOWEEK,
     F_BKW,
     F_FZERO,
-    F_EIGGEN,
     F_EIGEN,
     F_SCHUR,
     F_RESAMPLE,
@@ -597,8 +594,7 @@ enum {
 /* functions where the right-hand argument is actually a return
    location */
 #define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGEN || \
-                     s == F_MOLS || s == F_MPOLS || s == F_SVD || \
-		     s == F_EIGGEN)
+                     s == F_MOLS || s == F_MPOLS || s == F_SVD)
 
 /* functions where the middle argument is actually a return
    location */
