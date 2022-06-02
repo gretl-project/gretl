@@ -152,7 +152,7 @@ static void copy_row (gretl_matrix *targ, int it,
    to be n x 2 (complex)
 */
 
-static gretl_matrix *polfromroots (const gretl_matrix *r)
+static gretl_matrix *pol_from_roots (const gretl_matrix *r)
 {
     gretl_matrix *tmp, *ret = NULL;
     int n = r->rows;
@@ -190,7 +190,7 @@ static gretl_matrix *polfromroots (const gretl_matrix *r)
 		    copy_row(rslice, i, r, i, 0);
 		}
 		gretl_matrix_free(tmp);
-                tmp = polfromroots(rslice);
+                tmp = pol_from_roots(rslice);
 		/* hansl: ret = tmp | {0,0} */
 		ret = gretl_zero_matrix_new(tmp->rows + 1, 2);
 		for (i=0; i<tmp->rows; i++) {
@@ -199,7 +199,7 @@ static gretl_matrix *polfromroots (const gretl_matrix *r)
 		/* hansl: ix = transp(mshape(ix, 2, n)) */
 		tmp1 = gretl_matrix_shape(ix, 2, n, &err);
 		gretl_matrix_transpose_in_place(tmp1);
-		/* hansl: tmp = cmult(tmp , -ix) */
+		/* hansl: tmp = cmult(tmp1, -ix) */
 		gretl_matrix_multiply_by_scalar(tmp1, -1.0);
 		tmp2 = gretl_matrix_complex_multiply(tmp, tmp1, 1, &err);
 		/* hansl: ret[2:,] += tmp */
@@ -323,7 +323,7 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	    }
 	}
 	gretl_matrix_free(tmp);
-        tmp = polfromroots(r);
+        tmp = pol_from_roots(r);
 	if (mask != NULL) {
 	    /* shrink to coeff */
 	    k = 0;
