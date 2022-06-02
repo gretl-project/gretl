@@ -4740,35 +4740,6 @@
       </fnargs>
       <description>
 	<para>
-	  <emphasis>Esta é unha función herdada, anterior ao soporte
-	  orixinal de GRETL para matrices complexas. Non debes usala nos
-	  novos guións que escribas en linguaxe HANSL. Utiliza </emphasis>
-	  <fncref targ="fft2"/> <emphasis>en troques.</emphasis>
-	</para>
-	<para>
-	  Devolve unha matriz coa transformación de Fourier real discreta. Se a
-	  matriz <argname>X</argname> do argumento ten <math>n</math> columnas,
-	  a que se devolve ten 2<math>n</math> columnas, onde as partes reais
-	  gárdanse nas columnas impares e as partes complexas nas pares.
-	</para>
-	<para>
-	  Cando necesites aplicar a transformación de Fourier sobre varios
-	  vectores co mesmo número de elementos, resulta numericamente máis
-	  eficiente agrupar os vectores nunha matriz ca executar <lit>fft</lit>
-	  para cada un por separado.
-	  <seelist>
-            <fncref targ="ffti"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="fft2" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
 	  Devolve unha matriz co resultado da transformación discreta de
 	  Fourier. A matriz <argname>X</argname> do argumento pode ser
 	  real ou complexa. O resultado é unha matriz complexa que ten
@@ -4776,9 +4747,9 @@
 	</para>
 	<para>
 	  Se fora necesario calcular a transformación de Fourier sobre
-	  varios vectores co mesmo número de elementos, é numericamente
-	  máis eficiente agrupalos nunha matriz, en troques de executar
-	  <lit>fft2</lit> para cada vector por separado.
+	  varios vectores co mesmo número de elementos, é máis eficiente
+	  agrupalos nunha matriz, en troques de executar <lit>fft</lit>
+	  para cada vector por separado.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -4794,18 +4765,16 @@
 	<para>
 	  Devolve unha matriz con <math>n</math> columnas, co resultado da
 	  transformación inversa de Fourier discreta. Asúmese que a matriz
-	  <argname>X</argname> consta de <math>n</math> vectores columna
-	  complexos. Por compatibilidade anterior, o argumento podes indicalo
-	  como unha matriz real con 2<math>n</math> columnas, nas que as columnas
-	  impares conteñen a parte real, e as pares conteñen a parte imaxinaria.
+	  <argname>X</argname> consta de <math>n</math> vectores columna complexos.
 	</para>
 	<para>
-	  Cando necesites aplicar a transformación inversa de Fourier sobre
-	  varios vectores co mesmo número de elementos, resulta numericamente máis
-	  eficiente agrupar os vectores nunha matriz ca executar <lit>ffti</lit>
-	  para cada un por separado.
+	  Cando necesites aplicar a transformación inversa de Fourier
+	  sobre varios vectores co mesmo número de elementos, resulta
+	  máis eficiente agrupar os vectores nunha matriz ca executar
+	  <lit>ffti</lit> para cada un
+	  por separado.
 	  <seelist>
-            <fncref targ="fft2"/>
+            <fncref targ="fft"/>
 	  </seelist>
 	</para>
       </description>
