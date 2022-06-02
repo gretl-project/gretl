@@ -7035,10 +7035,10 @@
     <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
 	<fnarg type="smlist">Y</fnarg>
-	<fnarg type="scalar-or-matrix">H</fnarg>
-	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Z</fnarg>
+	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
-	<fnarg optional="true" type="matrix">C</fnarg>
+	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7046,15 +7046,16 @@
 	  la información necesaria para definir un modelo de espacio de los estados
 	  lineal, de la forma
 	  <equation status="display"
-		    tex="\[y_t=Z\alpha_t\]"
-		    ascii="y(t) = Za(t)"
+		    tex="\[y_t=Z\alpha_t + u_t\]"
+		    ascii="y(t) = Za(t) + u(t)"
 		    graphic="kalman1"/>
-	  y con la ecuación de transición de estado
+	  en la que Var<math>(u) = R</math>, y con la ecuación de transición
+	  de estado
 	  <equation status="display"
-		    tex="\[\alpha_{t+1}=T \alpha_t + u_t\]"
-		    ascii="a(t+1) = T a(t) + u(t)"
+		    tex="\[\alpha_{t+1}=T \alpha_t + v_t\]"
+		    ascii="a(t+1) = T a(t) + v(t)"
 		    graphic="kalman2"/>
-	  en la que Var<math>(u) = Q</math>.
+	  en la que Var<math>(v) = Q</math>.
 	</para>
 	<para>
 	  Los objetos que creas mediante esta función puedes utilizalos más
@@ -12289,6 +12290,15 @@
             <fncref targ="strvals"/>
 	  </seelist>
 	</para>
+	<para>
+	  Una alternativa a <lit>stringify</lit> que puede ser de utilidad en
+	  algunos contextos es la asignación directa de un 'array' de cadenas
+	  de texto a una serie: esto genera una serie cuyos valores se toman
+	  de la serie de forma secuencial; el número de elementos del 'array'
+	  debe ser igual a la longitud total del conjunto de datos o a la
+	  longitud del rango de la muestra vigente, y los valores se pueden
+	  repetir como sea necesario.
+	</para>
       </description>
     </function>
 
@@ -12414,9 +12424,10 @@
 	</para>
 	<para>
 	  Las secuencias de barra diagonal izquierda para escapar, indicadas
-	  mediante <quote><lit>\n</lit></quote> y <quote><lit>\t</lit></quote>,
-	  se considera que representan una línea nueva y una tabulación cuando se
-	  indican en el argumento opcional <argname>sep</argname>. Si quieres incluir
+	  mediante <quote><lit>\n</lit></quote>, <quote><lit>\r</lit></quote>
+	  y <quote><lit>\t</lit></quote>, se considera que representan una
+	  línea nueva, un salto de línea y una tabulación cuando se indican
+	  en el argumento opcional <argname>sep</argname>. Si quieres incluir
 	  una barra diagonal izquierda literal como carácter separador, debes
 	  duplicarla como en <quote><lit>\\</lit></quote>. Ejemplo:
 	</para>
@@ -12537,6 +12548,13 @@
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
+	</para>
+	<para>
+	  Una alternativa a <lit>strvals</lit> que puede ser de utilidad en
+	  algunos contextos es la asignación directa de una serie con valores
+	  de cadenas de texto a un 'array' de cadenas de texto: esto no solo
+	  proporciona los valores que sean diferentes, sino todos los valores
+	  de la serie en el rango de la muestra vigente.
 	</para>
       </description>
     </function>

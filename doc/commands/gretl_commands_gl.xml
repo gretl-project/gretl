@@ -5699,6 +5699,53 @@
 
   </command>
 
+  <command name="gretl_edit" section="Utilities" context="gui"
+    label="gretl_edit">
+
+    <description>
+      <para>
+	gretl_edit é unha variante livián, cun propósito especial, da Interface
+	Gráfica de Usuario (GUI) de GRETL. Inclúe un editor tabulado de guións,
+	xunto cos medios para executar guións e ver os seus resultados. Carece
+	de moitas das funcionalidades da GUI principal de GRETL, pero pode ser
+	útil en base a que, ás veces, <quote>menos é máis</quote>.
+      </para>
+      <para>
+	Este é o contexto para o que está deseñado gretl_edit.
+	Estás traballando nalgún código relativamente complexo, e queres
+	efectuar o seguinte ciclo:
+      </para>
+      <code>
+	    editar un código
+	    executar o código, revisar os resultados, procurar fallos
+	    revisar o código
+	    executar de novo...
+      </code>
+      <para>
+	Se isto é algo que fas de cando en vez, inténtao con gretl_edit.
+	Se non o fas, entón podes ignorar este programa de xeito seguro.
+      </para>
+      <para>
+	Cae na conta de que gretl_edit <quote>non ten estado</quote>.
+	A diferenza da GUI principal de GRETL, os modelos, as matrices, os
+	feixes e todo o demais, non están gardados. O único estado que se
+	preserva é o do guión (ou guións) que se estean editando. No contexto
+	descrito antes, isto probablemente é o que queres: que cada vez que
+	se execute un guión, comece cun <quote>encerado en branco</quote>.
+	Isto quere dicir que, se un guión utiliza un conxunto de datos, debe
+	incluír unha instrución para abrir ese conxunto de datos.
+      </para>
+      <para>
+	Obviamente, gretl_edit admite HANSL, a linguaxe propia de GRETL para
+	facer guións. De xeito menos obvio, tamén admite linguaxes que están
+	cubertos polo instrumental <quote>externo</quote> a GRETL: R, Octave,
+	Julia, Ox, Stata. Nestes casos externos, o editor de guións non ten unha
+	funcionalidade tan completa como para HANSL: ofrece a sintaxe con resalte,
+	pero non o sangrado automático nin o autorecheo.
+      </para>
+    </description>
+  </command> 
+
   <command name="3-D" section="Graphs" context="gui"
     label="Gráficas en 3 dimensións">
 
@@ -8222,6 +8269,7 @@
 	<altform><lit>markers --from-file=</lit><repl>nomeficheiro</repl></altform>
 	<altform><lit>markers --to-array=</lit><repl>nome</repl></altform>
 	<altform><lit>markers --from-array=</lit><repl>nome</repl></altform>
+	<altform><lit>markers --from-series=</lit><repl>nome</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
     </usage>
@@ -8250,6 +8298,12 @@
 	caso os marcadores repítense para cada período de tempo.) A opción
 	<opt>from-array</opt> funciona de xeito similar, facendo a lectura a
 	partir dun arranxo de cadeas de texto determinado.
+      </para>
+      <para>
+	A opción <opt>from-series</opt> ofrece un xeito apropiado de crear
+	marcadores de observación, copiándoos dunha serie con valores en
+	forma de cadeas de texto. Amósase un fallo cando a serie indicada
+	non ten valores de cadea de texto.
       </para>
       <para>
 	A opción <opt>delete</opt> fai o que xa agardarías, é dicir, eliminar
@@ -14926,10 +14980,6 @@
 	  <optparm>nomematriz</optparm>
 	  <effect>Mira abaixo</effect>
         </option>
-        <option>
-	  <flag>--compat</flag>
-	  <effect>Compatibilidade gdtb, mira abaixo</effect>
-        </option>
       </options>
     </usage>
 
@@ -14964,19 +15014,20 @@
 	binario é moito maior a velocidade con conxuntos de datos moi grandes.
       </para>
       <para>
-	O formato <lit>gdtb</lit> foi revisado no GRETL 2021a (provocando
-	unha enorme aceleración na escritura/lectura de conxuntos de datos
-	súper grandes). Pero se queres escribir un ficheiro de datos binarios
-	que sexa lexible por unha versión previa de GRETL (da 2018c en diante),
-	debes de engadir a opción <opt>compat</opt>.
-      </para>
-      <para>
 	Cando gardas os datos en formato <lit>gdt</lit>, podes utilizar a
 	opción <opt>gzipped</opt> para comprimilos. O parámetro (optativo)
 	desta opción controla o nivel de compresión (de 0 a 9): os valores
 	maiores xeran un ficheiro máis pequeno, pero a compresión leva
 	máis tempo. O nivel por defecto é o 1; e un nivel de 0 significa
 	que non se aplica ningunha compresión.
+      </para>
+      <para>
+	Admítese un tipo especial de gardado <quote>propio</quote> no
+	programa de interface GUI: se <repl>nomeficheiro</repl> ten extensión
+	<lit>.gretl</lit> e omites o argumento <repl>listavariables</repl>,
+	entón grávase un ficheiro de sesión de GRETL. Este tipo de ficheiros
+	inclúen o conxunto de datos vixente xunto con calquera obxecto que
+	teña un nome, como modelos, gráficas e matrices.
       </para>
       <subhead>Outros formatos</subhead>
       <para>

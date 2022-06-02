@@ -7035,10 +7035,10 @@
     <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
 	<fnarg type="smlist">Y</fnarg>
-	<fnarg type="scalar-or-matrix">H</fnarg>
-	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Z</fnarg>
+	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
-	<fnarg optional="true" type="matrix">C</fnarg>
+	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7046,15 +7046,16 @@
 	  a información necesaria para definir un modelo de espazo dos estados
 	  linear, da forma
 	  <equation status="display"
-		    tex="\[y_t=Z\alpha_t\]"
-		    ascii="y(t) = Za(t)"
+		    tex="\[y_t=Z\alpha_t + u_t\]"
+		    ascii="y(t) = Za(t) + u(t)"
 		    graphic="kalman1"/>
-	  e coa ecuación de transición de estado
+	  na que Var<math>(u) = R</math>, e coa ecuación de transición de
+	  estado
 	  <equation status="display"
-		    tex="\[\alpha_{t+1}=T \alpha_t + u_t\]"
-		    ascii="a(t+1) = T a(t) + u(t)"
+		    tex="\[\alpha_{t+1}=T \alpha_t + v_t\]"
+		    ascii="a(t+1) = T a(t) + v(t)"
 		    graphic="kalman2"/>
-	  na que Var<math>(u) = Q</math>.
+	  na que Var<math>(v) = Q</math>.
 	</para>
 	<para>
 	  Os obxectos que creas mediante esta función podes utilizalos máis
@@ -12289,6 +12290,15 @@
             <fncref targ="strvals"/>
 	  </seelist>
 	</para>
+	<para>
+	  Unha alternativa a <lit>stringify</lit> que te pode ser de utilidade
+	  nalgúns contextos é a asignación directa dun arranxo de cadeas de
+	  texto a unha serie: isto xera unha serie cuxos valores se toman da
+	  serie de forma secuencial; o número de elementos do arranxo debe
+	  ser igual, ben á longura total do conxunto de datos ou ben á longura
+	  do rango da mostra vixente, e os valores pódense repetir como sexa
+	  necesario.
+	</para>
       </description>
     </function>
 
@@ -12414,10 +12424,11 @@
 	</para>
 	<para>
 	  As secuencias de barra diagonal esquerda para escapar, indicadas
-	  mediante <quote><lit>\n</lit></quote> e <quote><lit>\t</lit></quote>,
-	  considérase que representan unha liña nova e unha tabulación cando se
-	  indican no argumento opcional <argname>sep</argname>. Se queres incluír
-	  unha barra diagonal esquerda literal como carácter separador, debes de
+	  mediante <quote><lit>\n</lit></quote>, <quote><lit>\r</lit></quote>
+	  e <quote><lit>\t</lit></quote>, considérase que representan unha
+	  liña nova, un salto de liña e unha tabulación cando se indican no
+	  argumento opcional <argname>sep</argname>. Se queres incluír unha
+	  barra diagonal esquerda literal como carácter separador, debes de
 	  duplicala como en <quote><lit>\\</lit></quote>. Exemplo:
 	</para>
 	<code>
@@ -12537,6 +12548,13 @@
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
+	</para>
+	<para>
+	  Unha alternativa a <lit>strvals</lit> que te pode ser de utilidade
+	  nalgúns contextos é a asignación directa dunha serie con valores
+	  de cadeas de texto a un arranxo de cadeas de texto: isto non só
+	  proporciona os valores que sexan diferentes, senón tódolos valores
+	  da serie no rango da mostra vixente.
 	</para>
       </description>
     </function>
