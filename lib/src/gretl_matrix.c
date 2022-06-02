@@ -2666,6 +2666,96 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 }
 
 /**
+ * gretl_matrix_polroots2:
+ * @a: vector of coefficients.
+ * @force_complex: see below.
+ * @err: location to receive error code.
+ *
+ * Calculates the roots of the polynomial with coefficients
+ * given by @a.  If the degree of the polynomial is p, then
+ * @a should contain p + 1 coefficients in ascending order,
+ * i.e. starting with the constant and ending with the
+ * coefficient on x^p.
+ *
+ * Returns: by default, a regular p-vector if all the roots are real,
+ * otherwise a p x 1 complex matrix. The @force_complex flag can
+ * be used to produce a complex return value even if the imaginary
+ * parts are all zero.
+ */
+
+gretl_matrix *gretl_matrix_polroots2 (const gretl_matrix *a,
+				      int force_complex,
+				      int *err)
+{
+    gretl_matrix *r = NULL;
+    double *work = NULL;
+    cmplx *roots = NULL;
+    double *xcof, *cof;
+    int i, m, order, polerr;
+
+    m = gretl_vector_get_length(a);
+    if (m < 2) {
+        *err = E_DATA;
+        return NULL;
+    }
+
+    order = m - 1;
+    work = malloc(2 * m * sizeof *work);
+    roots = malloc(order * sizeof *roots);
+
+    if (work == NULL || roots == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    }
+
+    xcof = work;
+    cof = xcof + m;
+
+    for (i=0; i<m; i++) {
+        xcof[i] = a->val[i];
+    }
+
+    polerr = polrt(xcof, cof, order, roots);
+
+    if (polerr) {
+        *err = E_DATA;
+    } else {
+        int allreal = !force_complex;
+	double complex z;
+
+        for (i=0; i<order && allreal; i++) {
+            if (roots[i].i != 0) {
+                allreal = 0;
+            }
+        }
+        if (allreal) {
+            r = gretl_matrix_alloc(order, 1);
+        } else {
+            r = gretl_cmatrix_new(order, 1);
+        }
+        if (r == NULL) {
+            *err = E_ALLOC;
+	} else {
+	    for (i=0; i<order; i++) {
+		if (allreal) {
+		    gretl_matrix_set(r, i, 0, roots[i].r);
+		} else {
+		    z = roots[i].r + roots[i].r * I;
+		    gretl_cmatrix_set(r, i, 0, z);
+		}
+	    }
+	}
+    }
+
+ bailout:
+
+    free(work);
+    free(roots);
+
+    return r;
+}
+
+/**
  * gretl_vector_copy_values:
  * @targ: target vector.
  * @src: source vector.

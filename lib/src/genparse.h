@@ -403,6 +403,7 @@ enum {
     F_DESEAS,
     F_MAT2LIST,
     F_YMD,
+    F_POLROOTS2,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
