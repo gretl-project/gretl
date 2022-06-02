@@ -1232,6 +1232,8 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
     request->xopt.airline = 0;  /* x13a: force "airline" ARIMA spec */
     request->xopt.save_spc = 0; /* x13a: add record of spc content */
     request->xopt.critical = NADBL; /* for use with outliers */
+    request->xopt.savelist = NULL;
+    request->xopt.aspec = NULL;
 
     for (i=0; i<TX_MAXOPT; i++) {
         request->opts[i].save = 0;
@@ -1812,7 +1814,7 @@ int write_tx_data (char *fname,
     const char *workdir;
     char vname[VNAMELEN];
     int savelist[5];
-    tx_request request;
+    tx_request request = {0};
     DATASET *tmpset = NULL;
     int savescript = 0;
     int i, doit;
@@ -2306,7 +2308,7 @@ int adjust_series (const double *x, double *y,
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[4] = {0};
     x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	NADBL, savelist, NULL};
+       NADBL, savelist, NULL};
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
@@ -2317,8 +2319,8 @@ int adjust_series (const double *x, double *y,
     }
 
     /* by default, save only the seasonally adjusted series */
-    savelist[0] = 1;
-    savelist[1] = TX_SA;
+    xopt.savelist[0] = 1;
+    xopt.savelist[1] = TX_SA;
 
     if (prog == X13A) {
         exepath = gretl_x12_arima();
