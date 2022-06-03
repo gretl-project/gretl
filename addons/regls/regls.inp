@@ -50,7 +50,7 @@ end function
 function scalar check_params (const bundle b, matrix *lfrac,
                               scalar *nlam, bundle *ret)
    matrix m = {}
-   scalar scl = 1
+   scalar scl = -1
    if inbundle(b, "lambda_scale") == 1
       scl = b.lambda_scale
       if scl < 0 || scl > 2 || floor(scl) != scl
@@ -63,6 +63,14 @@ function scalar check_params (const bundle b, matrix *lfrac,
    if inbundle(b, "lfrac") == 1 || inbundle(b, "lfrac") == 3
       m = b.lfrac
       nlam = nelem(m)
+   elif inbundle(b, "lambda") == 1 || inbundle(b, "lambda") == 3
+      m = b.lambda
+      nlam = nelem(m)
+      if scl < 0
+         # not already specified above
+         ret.lambda_scale = 0
+         scl = 0
+      endif
    endif
    if nelem(m) == 0 && inbundle(b, "nlambda") == 1
       # got a number of lambda values
