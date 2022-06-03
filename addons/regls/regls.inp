@@ -69,7 +69,6 @@ function scalar check_params (const bundle b, matrix *lfrac,
       if scl < 0
          # not already specified above
          ret.lambda_scale = 0
-         scl = 0
       endif
    endif
    if nelem(m) == 0 && inbundle(b, "nlambda") == 1
@@ -89,7 +88,8 @@ function scalar check_params (const bundle b, matrix *lfrac,
       return 0
    endif
    lfrac = m
-   if scl == 0 # treat the lambdas as is, not as fractions
+   if ret.lambda_scale == 0
+      # treat the lambdas as is, not as fractions
       if min(m) < 0
          print "missing or invalid lambda specification"
          return 2
