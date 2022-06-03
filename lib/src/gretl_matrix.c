@@ -2740,7 +2740,7 @@ gretl_matrix *gretl_matrix_polroots2 (const gretl_matrix *a,
 		if (allreal) {
 		    gretl_matrix_set(r, i, 0, roots[i].r);
 		} else {
-		    z = roots[i].r + roots[i].r * I;
+		    z = roots[i].r + roots[i].i * I;
 		    gretl_cmatrix_set(r, i, 0, z);
 		}
 	    }
