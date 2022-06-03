@@ -412,7 +412,11 @@ function bundle regls (series depvar, list indeps,
    endif
 
    if inbundle(ret, "vcv") && ret.verbosity > 1
-      matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
+      if ret.stdize
+         matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
+      else
+         matrix bse = ret.B ~ sqrt(diag(ret.vcv))
+      endif
       matrix addstats = {ret.edf, ret.BIC, ret.R2}
       strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
       modprint bse pnames addstats
