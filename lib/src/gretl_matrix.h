@@ -648,6 +648,11 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
 			   gretl_matrix *VL,
 			   int *err);
 
+gretl_matrix *old_eigengen (const gretl_matrix *m,
+                            gretl_matrix *VR,
+                            gretl_matrix *VL,
+                            int *err);
+
 double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err);
 
 double gretl_symm_matrix_lambda_max (const gretl_matrix *m, int *err);

@@ -370,6 +370,9 @@ struct str_table funcs[] = {
     { F_QR,       "qrdecomp" },
     { F_EIGSYM,   "eigensym" },
     { F_EIGEN,    "eigen" },
+    { F_EIGGEN,   "eigengen" }, /* legacy */
+    { F_CMULT,    "cmult" },    /* legacy */
+    { F_CDIV,     "cdiv" },     /* legacy */
     { F_SCHUR,    "schur" },
     { F_EIGSOLVE, "eigsolve" },
     { F_NULLSPC,  "nullspace" },
@@ -767,11 +770,11 @@ static int real_function_lookup (const char *s, int aliases,
 
 	    p->data = sx->ptr;
 	}
-#if 0
+#if 1
 	/* note: point d'appui for deprecation of built-in function */
-	if (st->id == F_FFT) {
+	if (st->id == F_EIGGEN) {
 	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
-		    "fft2() instead ***\n",
+		    "eigen() instead ***\n",
 		    st->str);
 	}
 #endif
