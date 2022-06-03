@@ -8,7 +8,7 @@ version 2022b, in progress
   ambiguity of obs limits in case of annual and daily data
 - "markers" command: add --from-series option
 - "store" command: support saving a gretl session file (only
-  in the GUI program)
+  in the GUI program), given the ".gretl" suffix
 - "vecm" command: redefine the "order" member of the $system
   accessor to give the lag order in levels, consistent with
   the vecm documentation
@@ -25,6 +25,7 @@ version 2022b, in progress
 - GUI viewer windows: support Ctrl-plus and Ctrl-minus to
   increase/reduce font size
 - R support: enable exchange of matrices in binary format
+- Fix bug: breakage in GUI item "X-13ARIMA analysis"
 - Fix bug: crash on trying to stringify() an empty series
 - Fix bug: det() should not flag an error when returning NA
 - Fix bug: make "set loop_maxiter 0" behave as advertised
