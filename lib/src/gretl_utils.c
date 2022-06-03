@@ -2005,6 +2005,59 @@ int gretl_spawn (char *cmdline)
     return ret;
 }
 
+int gretl_pipe_output (char **argv, const char *currdir, PRN *prn)
+{
+    GError *error = NULL;
+    gchar *errout = NULL;
+    gchar *sout = NULL;
+    int ok, status;
+    int err = 0;
+
+    gretl_error_clear();
+
+    ok = g_spawn_sync(currdir,
+		      argv,
+		      NULL,    /* envp */
+		      G_SPAWN_SEARCH_PATH, /* ? */
+		      NULL,    /* child_setup */
+		      NULL,    /* user_data */
+		      &sout,   /* standard output */
+		      &errout, /* standard error */
+		      &status, /* exit status */
+		      &error);
+
+    if (!ok) {
+	gretl_errmsg_set(error->message);
+	fprintf(stderr, "gretl_pipe_output: '%s'\n", error->message);
+	g_error_free(error);
+	if (errout != NULL) {
+	    fprintf(stderr, " stderr = '%s'\n", errout);
+	}
+	err = 1;
+    } else if (status != 0) {
+	if (errout != NULL && *errout) {
+	    gretl_errmsg_set(errout);
+	    fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, errout);
+	} else if (sout != NULL && *sout) {
+	    gretl_errmsg_set(sout);
+	    fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, sout);
+	} else {
+	    gretl_errmsg_set(_("Command failed"));
+	    fprintf(stderr, "gretl_pipe_output: status = %d\n", status);
+	}
+	err = 1;
+    }
+
+    if (!err && sout != NULL) {
+	pputs(prn, sout);
+    }
+
+    if (errout != NULL) g_free(errout);
+    if (sout != NULL) g_free(sout);
+
+    return err;
+}
+
 #endif /* !WIN32 */
 
 /* file copying */

@@ -164,7 +164,11 @@ int gretl_copy_file (const char *src, const char *dest);
 int gretl_delete_var_by_name (const char *s, PRN *prn);
 
 #ifndef WIN32
+
 int gretl_spawn (char *cmdline);
+
+int gretl_pipe_output (char **argv, const char *currdir, PRN *prn);
+
 #endif
 
 /* model selection criteria */

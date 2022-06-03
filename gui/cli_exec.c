@@ -19,6 +19,22 @@
 
 /* code specific to gretl_edit: execute a hansl script via gretlcli */
 
+#ifndef G_OS_WIN32
+
+static void argv_free (gchar **argv)
+{
+    if (argv != NULL) {
+	int i;
+
+	for (i=0; argv[i] != NULL; i++) {
+	    g_free(argv[i]);
+	}
+	g_free(argv);
+    }
+}
+
+#endif
+
 static void modify_exec_button (windata_t *vwin, int to_spinner)
 {
     GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
@@ -42,10 +58,9 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
     }
 }
 
-#ifdef G_OS_WIN32 /* Windows-specific variant */
-
 typedef struct {
     gchar *cmd;
+    gchar **argv;
     gchar *fname;
     windata_t *scriptwin;
     PRN *prn;
@@ -67,8 +82,12 @@ static void gretlcli_done (GObject *obj,
     }
 
     gretl_remove(ei->fname);
-    g_free(ei->fname);
+#ifdef G_OS_WIN32
     g_free(ei->cmd);
+    g_free(ei->fname);
+#else
+    argv_free(ei->argv); /* ei->fname is part of this! */
+#endif
     gretl_print_destroy(ei->prn);
     free(ei);
 }
@@ -80,21 +99,30 @@ static void exec_script_thread (GTask *task,
 {
     exec_info *ei = g_task_get_task_data(task);
 
+#ifdef G_OS_WIN32
     ei->err = gretl_win32_pipe_output(ei->cmd, gretl_dotdir(), ei->prn);
+#else
+    ei->err = gretl_pipe_output(ei->argv, gretl_dotdir(), ei->prn);
+#endif
 }
 
-static void win32_run_gretlcli_async (gchar *cmd,
-				      gchar *fname,
-				      windata_t *vwin)
+static void run_gretlcli_async (gchar *cmd,
+				gchar **argv,
+				gchar *fname,
+				windata_t *vwin)
 {
-    exec_info *ei = malloc(sizeof *ei);
+    exec_info *ei = calloc(1, sizeof *ei);
     GTask *task;
     PRN *prn;
 
     bufopen(&prn);
 
+#ifdef G_OS_WIN32
     ei->cmd = cmd;
-    ei->fname = g_strdup(fname);
+#else
+    ei->argv = argv;
+#endif
+    ei->fname = fname;
     ei->scriptwin = vwin;
     ei->prn = prn;
     ei->err = 0;
@@ -103,87 +131,6 @@ static void win32_run_gretlcli_async (gchar *cmd,
     g_task_set_task_data(task, ei, NULL);
     g_task_run_in_thread(task, exec_script_thread);
 }
-
-#else /* non-Windows variant */
-
-typedef struct {
-    gchar *fname;
-    windata_t *scriptwin;
-    gint fout;
-    gint ferr;
-} exec_info;
-
-static void gretlcli_done (GPid pid, gint status, gpointer p)
-{
-    exec_info *ei = p;
-
-    modify_exec_button(ei->scriptwin, 0);
-
-    if (ei != NULL) {
-	char buf[4096];
-	size_t bs = sizeof buf - 1;
-	ssize_t got;
-	PRN *prn;
-
-	bufopen(&prn);
-
-	if (ei->fout > 0) {
-	    while ((got = read(ei->fout, buf, bs)) > 0) {
-		buf[got] = '\0';
-		pputs(prn, buf);
-	    }
-	    close(ei->fout);
-	}
-	if (ei->ferr > 0) {
-	    if (status != 0 && (got = read(ei->ferr, buf, bs)) > 0) {
-		buf[got] = '\0';
-		pputs(prn, buf);
-	    }
-	    close(ei->ferr);
-	}
-	view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
-	gretl_remove(ei->fname);
-	g_free(ei->fname);
-	free(ei);
-    }
-
-    g_spawn_close_pid(pid);
-}
-
-static void run_gretlcli_async (char **argv, windata_t *scriptwin)
-{
-    gboolean run;
-    gint ferr = -1;
-    gint fout = -1;
-    GPid pid = 0;
-    GError *gerr = NULL;
-
-    run = g_spawn_async_with_pipes(NULL, argv, NULL,
-				   G_SPAWN_SEARCH_PATH |
-				   G_SPAWN_DO_NOT_REAP_CHILD,
-				   NULL, NULL, &pid, NULL,
-				   &fout, &ferr,
-				   &gerr);
-
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    } else if (!run) {
-	errbox(_("gretlcli command failed"));
-    } else if (pid > 0) {
-	exec_info *ei = calloc(1, sizeof *ei);
-
-	ei->scriptwin = scriptwin;
-	ei->fout = fout;
-	ei->ferr = ferr;
-	ei->fname = g_strdup(argv[2]);
-	g_child_watch_add(pid, gretlcli_done, ei);
-    }
-}
-
-#endif /* run_gretlcli_async variants */
-
-/* OS-invariant driver code */
 
 static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
@@ -206,21 +153,18 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
 	modify_exec_button(vwin, 1);
-	win32_run_gretlcli_async(cmd, inpname, vwin);
+	run_gretlcli_async(cmd, NULL, inpname, vwin);
 #else
-	gchar *argv[4];
+	gchar **argv = malloc(4 * sizeof *argv);
 
-	argv[0] = (gchar *) clipath;
-	argv[1] = (gchar *) "-x";
-	argv[2] = (gchar *) inpname;
+	argv[0] = clipath;
+	argv[1] = g_strdup("-x");
+	argv[2] = inpname;
 	argv[3] = NULL;
 	modify_exec_button(vwin, 1);
-	run_gretlcli_async(argv, vwin);
+	run_gretlcli_async(NULL, argv, inpname, vwin);
 #endif
     }
-
-    g_free(clipath);
-    g_free(inpname);
 
     return err;
 }
@@ -234,10 +178,12 @@ static void editor_run_R_script (windata_t *vwin, const char *buf,
 	return;
     }
 
+    fprintf(stderr, "call modify_exec_button(1)\n");
     modify_exec_button(vwin, 1);
     execute_R_buffer(buf, NULL, OPT_G | OPT_T, prn);
     if (got_printable_output(prn)) {
 	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
     }
+    fprintf(stderr, "call modify_exec_button(0)\n");
     modify_exec_button(vwin, 0);
 }
