@@ -933,8 +933,9 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
 
 #ifdef GRETL_EDIT
     if (vwin->role == EDIT_R) {
-	fprintf(stderr, "call editor_run_R_script\n");
-	editor_run_R_script(vwin, buf, opt);
+	editor_run_R_script(vwin, buf);
+	/* editor_run... takes ownership of @buf */
+	buf = NULL;
     } else if (vwin->role == EDIT_OX) {
         run_foreign_script(buf, LANG_OX, opt);
     } else if (vwin->role == EDIT_OCTAVE) {

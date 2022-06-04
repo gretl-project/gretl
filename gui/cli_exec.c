@@ -59,17 +59,36 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
 }
 
 typedef struct {
-    gchar *cmd;
-    gchar **argv;
-    gchar *fname;
-    windata_t *scriptwin;
-    PRN *prn;
-    int err;
+    gchar *cmd;           /* command-line (for Windows) */
+    gchar **argv;         /* argument vector (non-Windows */
+    gchar *fname;         /* input filename */
+    gchar *buf;           /* script buffer (for R usage) */
+    windata_t *scriptwin; /* source script-editor */
+    PRN *prn;             /* for grabbing output */
+    int lang;             /* language of script */
+    int err;              /* error flag */
 } exec_info;
 
-static void gretlcli_done (GObject *obj,
-			   GAsyncResult *res,
-			   gpointer data)
+static void exec_info_init (exec_info *ei,
+			    gchar *cmd,
+			    gchar **argv,
+			    gchar *fname,
+			    gchar *buf,
+			    windata_t *vwin)
+{
+    ei->cmd = cmd;
+    ei->argv = argv;
+    ei->fname = fname;
+    ei->buf = buf;
+    ei->scriptwin = vwin;
+    bufopen(&ei->prn);
+}
+
+/* callback on completion of script execution */
+
+static void exec_script_done (GObject *obj,
+			      GAsyncResult *res,
+			      gpointer data)
 {
     exec_info *ei = data;
 
@@ -81,13 +100,16 @@ static void gretlcli_done (GObject *obj,
 	gui_errmsg(ei->err);
     }
 
-    gretl_remove(ei->fname);
+    if (ei->fname != NULL) {
+	gretl_remove(ei->fname);
+    }
 #ifdef G_OS_WIN32
     g_free(ei->cmd);
     g_free(ei->fname);
 #else
     argv_free(ei->argv); /* ei->fname is part of this! */
 #endif
+    g_free(ei->buf);
     gretl_print_destroy(ei->prn);
     free(ei);
 }
@@ -99,36 +121,32 @@ static void exec_script_thread (GTask *task,
 {
     exec_info *ei = g_task_get_task_data(task);
 
+    if (ei->lang == LANG_R) {
+	ei->err = execute_R_buffer(ei->buf, NULL, OPT_G | OPT_T, ei->prn);
+    } else {
 #ifdef G_OS_WIN32
-    ei->err = gretl_win32_pipe_output(ei->cmd, gretl_dotdir(), ei->prn);
+	ei->err = gretl_win32_pipe_output(ei->cmd, gretl_dotdir(), ei->prn);
 #else
-    ei->err = gretl_pipe_output(ei->argv, gretl_dotdir(), ei->prn);
+	ei->err = gretl_pipe_output(ei->argv, gretl_dotdir(), ei->prn);
 #endif
+    }
 }
 
-static void run_gretlcli_async (gchar *cmd,
-				gchar **argv,
-				gchar *fname,
-				windata_t *vwin)
+static void run_script_async (gchar *cmd,
+			      gchar **argv,
+			      gchar *fname,
+			      windata_t *vwin)
 {
     exec_info *ei = calloc(1, sizeof *ei);
     GTask *task;
-    PRN *prn;
 
-    bufopen(&prn);
-
-#ifdef G_OS_WIN32
-    ei->cmd = cmd;
-#else
-    ei->argv = argv;
-#endif
-    ei->fname = fname;
-    ei->scriptwin = vwin;
-    ei->prn = prn;
+    exec_info_init(ei, cmd, argv, fname, NULL, vwin);
+    ei->lang = 0; /* hansl */
     ei->err = 0;
 
-    task = g_task_new(NULL, NULL, gretlcli_done, ei);
+    task = g_task_new(NULL, NULL, exec_script_done, ei);
     g_task_set_task_data(task, ei, NULL);
+    modify_exec_button(vwin, 1);
     g_task_run_in_thread(task, exec_script_thread);
 }
 
@@ -152,8 +170,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	gchar *cmd;
 
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
-	modify_exec_button(vwin, 1);
-	run_gretlcli_async(cmd, NULL, inpname, vwin);
+	run_script_async(cmd, NULL, inpname, vwin);
 #else
 	gchar **argv = malloc(4 * sizeof *argv);
 
@@ -161,29 +178,24 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	argv[1] = g_strdup("-x");
 	argv[2] = inpname;
 	argv[3] = NULL;
-	modify_exec_button(vwin, 1);
-	run_gretlcli_async(NULL, argv, inpname, vwin);
+	run_script_async(NULL, argv, inpname, vwin);
 #endif
     }
 
     return err;
 }
 
-static void editor_run_R_script (windata_t *vwin, const char *buf,
-				 gretlopt opt)
+static void editor_run_R_script (windata_t *vwin, gchar *buf)
 {
-    PRN *prn = NULL;
+    exec_info *ei = calloc(1, sizeof *ei);
+    GTask *task;
 
-    if (bufopen(&prn)) {
-	return;
-    }
+    exec_info_init(ei, NULL, NULL, NULL, buf, vwin);
+    ei->lang = LANG_R;
+    ei->err = 0;
 
-    fprintf(stderr, "call modify_exec_button(1)\n");
+    task = g_task_new(NULL, NULL, exec_script_done, ei);
+    g_task_set_task_data(task, ei, NULL);
     modify_exec_button(vwin, 1);
-    execute_R_buffer(buf, NULL, OPT_G | OPT_T, prn);
-    if (got_printable_output(prn)) {
-	view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
-    }
-    fprintf(stderr, "call modify_exec_button(0)\n");
-    modify_exec_button(vwin, 0);
+    g_task_run_in_thread(task, exec_script_thread);
 }
