@@ -199,3 +199,21 @@ static void editor_run_R_script (windata_t *vwin, gchar *buf)
     modify_exec_button(vwin, 1);
     g_task_run_in_thread(task, exec_script_thread);
 }
+
+static void editor_run_other_script (windata_t *vwin,
+				     gchar *cmd,
+				     gchar **argv,
+				     int lang)
+{
+    exec_info *ei = calloc(1, sizeof *ei);
+    GTask *task;
+
+    exec_info_init(ei, cmd, argv, NULL, NULL, vwin);
+    ei->lang = lang;
+    ei->err = 0;
+
+    task = g_task_new(NULL, NULL, exec_script_done, ei);
+    g_task_set_task_data(task, ei, NULL);
+    modify_exec_button(vwin, 1);
+    g_task_run_in_thread(task, exec_script_thread);
+}

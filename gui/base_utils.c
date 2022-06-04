@@ -486,7 +486,7 @@ static void win32_execute_script (gchar *cmd, int lang)
 	gui_errmsg(err);
     }
 
-    g_free(cmd);
+    g_free(cmd); /* FIXME: isn't this wrong? */
 }
 
 /* Windows version of run_foreign_script() */
@@ -648,6 +648,7 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
 	}
 
 	run_prog_sync(argv, lang);
+	/* try: editor_run_other_script(vwin, NULL, argv, lang) */
     }
 }
 
@@ -1004,10 +1005,10 @@ static void real_run_script (windata_t *vwin, int silent)
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    real_run_script(w, vwin, 0);
+    real_run_script(vwin, 0);
 }
 
 void run_script_silent (GtkWidget *w, windata_t *vwin)
 {
-    real_run_script(w, vwin, 1);
+    real_run_script(vwin, 1);
 }
