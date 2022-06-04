@@ -491,7 +491,8 @@ static void win32_execute_script (gchar *cmd, int lang)
 
 /* Windows version of run_foreign_script() */
 
-static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
+static void run_foreign_script (windata_t *vwin, gchar *buf,
+				int lang, gretlopt opt)
 {
 #ifdef GRETL_EDIT
     DATASET *dataset = NULL;
@@ -598,7 +599,8 @@ static void run_prog_sync (char **argv, int lang)
 
 /* non-Windows version of run_foreign_script() */
 
-static void run_foreign_script (gchar *buf, int lang, gretlopt opt)
+static void run_foreign_script (windata_t *vwin, gchar *buf,
+				int lang, gretlopt opt)
 {
 #ifdef GRETL_EDIT
     DATASET *dataset = NULL;
@@ -862,8 +864,32 @@ static void ensure_newline_termination (gchar **ps)
     }
 }
 
-static void real_run_script (GtkWidget *w, windata_t *vwin,
-			     int silent)
+static int lang_from_role (int role)
+{
+    struct {
+	int role;
+	int lang;
+    } langmap[] = {
+	{EDIT_R, LANG_R},
+	{EDIT_OX, LANG_OX},
+	{EDIT_OCTAVE, LANG_OCTAVE},
+	{EDIT_PYTHON, LANG_PYTHON},
+	{EDIT_JULIA, LANG_JULIA},
+	{EDIT_STATA, LANG_STATA},
+	{EDIT_DYNARE, LANG_OCTAVE}
+    };
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(langmap); i++) {
+	if (role == langmap[i].role) {
+	    return langmap[i].lang;
+	}
+    }
+
+    return 0;
+}
+
+static void real_run_script (windata_t *vwin, int silent)
 {
 #ifndef GRETL_EDIT
     gboolean selection = FALSE;
@@ -872,6 +898,7 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
     gchar *prev_workdir = NULL;
     gchar *currdir = NULL;
     gchar *buf = NULL;
+    int lang;
 
 #ifdef GRETL_EDIT
     buf = textview_get_text(vwin->text);
@@ -931,45 +958,29 @@ static void real_run_script (GtkWidget *w, windata_t *vwin,
         opt = OPT_Y;
     }
 
+    lang = lang_from_role(vwin->role);
+
 #ifdef GRETL_EDIT
-    if (vwin->role == EDIT_R) {
+    if (vwin->role == EDIT_HANSL) {
+	gretlcli_exec_script(vwin, buf);
+    } else if (vwin->role == EDIT_R) {
 	editor_run_R_script(vwin, buf);
 	/* editor_run... takes ownership of @buf */
 	buf = NULL;
-    } else if (vwin->role == EDIT_OX) {
-        run_foreign_script(buf, LANG_OX, opt);
-    } else if (vwin->role == EDIT_OCTAVE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_PYTHON) {
-        run_foreign_script(buf, LANG_PYTHON, opt);
-    } else if (vwin->role == EDIT_JULIA) {
-        run_foreign_script(buf, LANG_JULIA, opt);
-    } else if (vwin->role == EDIT_DYNARE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_STATA) {
-        run_foreign_script(buf, LANG_STATA, opt);
     } else {
-	gretlcli_exec_script(vwin, buf);
+	run_foreign_script(vwin, buf, lang, opt);
     }
 #else
-    if (vwin->role == EDIT_GP) {
+    if (editing_hansl(vwin->role)) {
+	run_native_script(vwin, buf, silent);
+    } else if (vwin->role == EDIT_GP) {
         run_gnuplot_script(buf, vwin);
     } else if (vwin->role == EDIT_R) {
         run_R_script(buf, vwin);
-    } else if (vwin->role == EDIT_OX) {
-        run_foreign_script(buf, LANG_OX, opt);
-    } else if (vwin->role == EDIT_OCTAVE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_PYTHON) {
-        run_foreign_script(buf, LANG_PYTHON, opt);
-    } else if (vwin->role == EDIT_JULIA) {
-        run_foreign_script(buf, LANG_JULIA, opt);
-    } else if (vwin->role == EDIT_DYNARE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
+    } else if (lang > 0) {
+	run_foreign_script(vwin, buf, lang, opt);
     } else if (vwin->role == EDIT_LPSOLVE) {
 	call_lpsolve_function(buf, vwin->fname, opt);
-    } else if (vwin->role == EDIT_STATA) {
-        run_foreign_script(buf, LANG_STATA, opt);
     } else if (vwin->role == EDIT_X12A) {
         run_x12a_script(buf);
     } else if (selection) {
