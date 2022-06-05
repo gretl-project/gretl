@@ -599,6 +599,13 @@ static void run_prog_sync (char **argv, int lang)
 
 /* non-Windows version of run_foreign_script() */
 
+#ifdef GRETL_EDIT
+static void editor_run_other_script (windata_t *vwin,
+				     gchar *cmd,
+				     gchar **argv,
+				     int lang);
+#endif
+
 static void run_foreign_script (windata_t *vwin, gchar *buf,
 				int lang, gretlopt opt)
 {
@@ -615,7 +622,7 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *argv[6];
+	gchar *argv[6] = {0};
 
 	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
 	    gretl_chdir(gretl_workdir());
@@ -647,8 +654,11 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
 	    argv[3] = NULL;
 	}
 
+#ifdef GRETL_EDIT /* experimental */
+	editor_run_other_script(vwin, NULL, argv, lang);
+#else
 	run_prog_sync(argv, lang);
-	/* try: editor_run_other_script(vwin, NULL, argv, lang) */
+#endif
     }
 }
 

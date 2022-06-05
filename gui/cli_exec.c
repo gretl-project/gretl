@@ -33,6 +33,25 @@ static void argv_free (gchar **argv)
     }
 }
 
+static gchar **argv_copy (gchar **argv)
+{
+    gchar **cpy = NULL;
+
+    if (argv != NULL) {
+	int i, n = 0;
+
+	for (i=0; argv[i] != NULL; i++) {
+	    n++;
+	}
+	cpy = g_malloc0((n + 1) * sizeof *cpy);
+	for (i=0; i<n; i++) {
+	    cpy[i] = g_strdup(argv[i]);
+	}
+    }
+
+    return cpy;
+}
+
 #endif
 
 static void modify_exec_button (windata_t *vwin, int to_spinner)
@@ -172,7 +191,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
 	run_script_async(cmd, NULL, inpname, vwin);
 #else
-	gchar **argv = malloc(4 * sizeof *argv);
+	gchar **argv = g_malloc(4 * sizeof *argv);
 
 	argv[0] = clipath;
 	argv[1] = g_strdup("-x");
@@ -206,9 +225,14 @@ static void editor_run_other_script (windata_t *vwin,
 				     int lang)
 {
     exec_info *ei = calloc(1, sizeof *ei);
+    gchar **my_argv = NULL;
     GTask *task;
 
-    exec_info_init(ei, cmd, argv, NULL, NULL, vwin);
+#ifndef G_OS_WIN32
+    my_argv = argv_copy(argv);
+#endif
+
+    exec_info_init(ei, cmd, my_argv, NULL, NULL, vwin);
     ei->lang = lang;
     ei->err = 0;
 
