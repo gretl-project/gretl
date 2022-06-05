@@ -8594,7 +8594,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     int moved = 0;
     int err = 0;
 
-    if (R == NULL || R->rows != n || R->cols != n) {
+    if (R != NULL && (R->rows != n || R->cols != n)) {
         return E_NONCONF;
     }
 
@@ -8645,16 +8645,18 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
         goto bailout;
     }
 
-    /* copy the upper triangular R out of M */
-    for (i=0; i<n; i++) {
-        for (j=0; j<n; j++) {
-            if (i <= j) {
-                gretl_matrix_set(R, i, j,
-                                 gretl_matrix_get(M, i, j));
-            } else {
-                gretl_matrix_set(R, i, j, 0.0);
-            }
-        }
+    if (R != NULL) {
+	/* copy the upper triangular R out of M */
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i <= j) {
+		    gretl_matrix_set(R, i, j,
+				     gretl_matrix_get(M, i, j));
+		} else {
+		    gretl_matrix_set(R, i, j, 0.0);
+		}
+	    }
+	}
     }
 
     /* obtain the real "Q" matrix (in M) */
