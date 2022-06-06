@@ -4846,13 +4846,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
         }
 
         if (!p->err) {
-            if (f == F_QR) {
-                if (m1->is_complex) {
-                    ret->v.m = gretl_cmatrix_QR_decomp(m1, m2, &p->err);
-                } else {
-                    ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
-                }
-            } else if (f == F_EIGSYM) {
+            if (f == F_EIGSYM) {
                 ret->v.m = user_matrix_eigensym(m1, m2, &p->err);
             } else if (f == F_HDPROD) {
 		if (m1->is_complex) {
@@ -12236,6 +12230,32 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         if (!p->err) {
             A = user_matrix_SVD(lm, U, V, &p->err);
         }
+    } else if (f == F_QR) {
+	gretl_matrix *X = node_get_matrix(l, p, 0, 1);
+	gretl_matrix *R = NULL;
+	gretl_matrix *P = NULL;
+
+        if (!p->err) {
+            if (m->t == U_ADDR) {
+                R = ptr_node_get_matrix(m, p);
+            } else if (m->t != EMPTY) {
+                node_type_error(f, 2, U_ADDR, m, p);
+            }
+        }
+        if (!p->err) {
+            if (r->t == U_ADDR) {
+                P = ptr_node_get_matrix(r, p);
+            } else if (r->t != EMPTY) {
+                node_type_error(f, 3, U_ADDR, r, p);
+            }
+        }
+	if (!p->err) {
+	    if (X->is_complex) {
+		A = gretl_cmatrix_QR_decomp(X, R, &p->err);
+	    } else {
+		A = user_matrix_QR_decomp(X, R, P, &p->err);
+	    }
+	}
     } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
         gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
         gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
@@ -17494,9 +17514,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = read_object_func(l, r, t->t, p);
         }
         break;
-    case F_QR:
     case F_EIGSYM:
-        /* matrix -> matrix functions, with indirect return */
+        /* matrix -> matrix functions, with single indirect return */
         if (l->t != MAT && l->t != NUM) {
             node_type_error(t->t, 1, MAT, l, p);
         } else if (r->t != U_ADDR && r->t != EMPTY) {
@@ -17627,6 +17646,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MSHAPE:
     case F_SVD:
+    case F_QR:
     case F_EIGEN:
     case F_EIGGEN:
     case F_SCHUR:

@@ -8578,8 +8578,9 @@ int gretl_matrix_psd_root (gretl_matrix *a, int check)
     return err;
 }
 
-int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
-                                  int **order)
+int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
+				  gretl_matrix *R,
+                                  gretl_matrix *P)
 {
     integer m = M->rows;
     integer n = M->cols;
@@ -8595,6 +8596,9 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     int err = 0;
 
     if (R != NULL && (R->rows != n || R->cols != n)) {
+        return E_NONCONF;
+    }
+    if (P != NULL && (P->rows != 1 || P->cols != n)) {
         return E_NONCONF;
     }
 
@@ -8679,15 +8683,17 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
         }
     }
 
-    if (moved && order != NULL) {
-        *order = malloc(n * sizeof **order);
-        if (*order == NULL) {
-            err = E_ALLOC;
-        } else {
-            for (i=0; i<n; i++) {
-                (*order)[i] = jpvt[i] - 1;
-            }
-        }
+    if (P != NULL) {
+	if (moved) {
+	    fprintf(stderr, "QR pivot: moved\n");
+	    for (i=0; i<n; i++) {
+		P->val[i] = jpvt[i];
+	    }
+	} else {
+	    for (i=0; i<n; i++) {
+		P->val[i] = i + 1;
+	    }
+	}
     }
 
     free(jpvt);

@@ -313,7 +313,6 @@ enum {
     F_MUNIF,
     F_MNORM,
     F_QFORM,
-    F_QR,
     F_EIGSYM,
     F_QUANTILE,
     F_HDPROD,     /* horizontal direct product */
@@ -416,6 +415,7 @@ enum {
     F_BFGSMAX,
     F_MSHAPE,
     F_SVD,
+    F_QR,
     F_TRIMR,
     F_TOEPSOLV,
     F_CORRGM,
@@ -603,7 +603,7 @@ enum {
 
 /* functions where the middle argument is actually a return
    location */
-#define m_return(s) (s == F_SVD || s == F_EIGEN)
+#define m_return(s) (s == F_SVD || s == F_EIGEN || s == F_QR)
 
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 
