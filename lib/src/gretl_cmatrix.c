@@ -542,6 +542,32 @@ static int ensure_aux_cmatrix (gretl_matrix *m,
     return 0;
 }
 
+static int ensure_aux_matrix (gretl_matrix *m,
+			      gretl_matrix **paux,
+			      int r, int c)
+{
+    gretl_matrix *aux = NULL;
+    int mrc, dim = r * c;
+
+    mrc = (m == NULL)? 0 : m->rows * m->cols;
+
+    if (mrc == dim && !m->is_complex) {
+	/* OK, reusable real matrix */
+	m->rows = r;
+	m->cols = c;
+    } else {
+	/* have to allocate anew */
+	aux = gretl_matrix_alloc(r, c);
+	if (aux == NULL) {
+	    return E_ALLOC;
+	} else {
+	    *paux = aux;
+	}
+    }
+
+    return 0;
+}
+
 /* Eigen decomposition of complex (non-Hermitian) matrix using
    LAPACK's zgeev() */
 
@@ -2692,6 +2718,150 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     }
 
     return C;
+}
+
+gretl_matrix *gretl_cmatrix_QR_pivot_decomp (const gretl_matrix *A,
+					     gretl_matrix *R,
+					     gretl_matrix *P,
+					     int *err)
+{
+    gretl_matrix *Q = NULL;
+    gretl_matrix *Rtmp = NULL;
+    gretl_matrix *Ptmp = NULL;
+    integer m, n, lda;
+    integer info = 0;
+    integer lwork = -1;
+    integer *jpvt = NULL;
+    cmplx *tau = NULL;
+    cmplx *work = NULL;
+    double *rwork = NULL;
+    int i, j;
+
+    if (!cmatrix_validate(A, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    lda = m = A->rows;
+    n = A->cols;
+    if (n > m) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    Q = gretl_matrix_copy(A);
+    if (Q == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (R != NULL) {
+	*err = ensure_aux_cmatrix(R, &Rtmp, NULL, n, n);
+	if (*err) {
+	    goto bailout;
+	} else if (Rtmp != NULL) {
+	    gretl_matrix_replace_content(R, Rtmp);
+	}
+    }
+    if (P != NULL) {
+	*err = ensure_aux_matrix(P, &Ptmp, 1, n);
+	if (*err) {
+	    goto bailout;
+	} else if (Ptmp != NULL) {
+	    gretl_matrix_replace_content(P, Ptmp);
+	}
+    }
+
+    /* dim of tau is min (m, n) */
+    tau = malloc(n * sizeof *tau);
+    work = malloc(sizeof *work);
+    rwork = malloc(2 * n * sizeof *rwork);
+    if (tau == NULL || work == NULL || rwork == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* pivot array */
+    jpvt = malloc(n * sizeof *jpvt);
+    if (jpvt == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    } else {
+	for (i=0; i<n; i++) {
+	    jpvt[i] = 0;
+	}
+    }
+
+    /* workspace size query */
+    zgeqp3_(&m, &n, (cmplx *) Q->val, &lda, jpvt, tau, work, &lwork, rwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeqp3: info = %d\n", (int) info);
+	*err = E_DATA;
+    } else {
+	/* optimally sized work array */
+	lwork = (integer) work[0].r;
+	work = realloc(work, (size_t) lwork * sizeof *work);
+	if (work == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	goto bailout;
+    }
+
+    /* run actual QR factorization */
+    zgeqp3_(&m, &n, (cmplx *) Q->val, &lda, jpvt, tau, work, &lwork, rwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeqp3: info = %d\n", (int) info);
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    if (R != NULL) {
+	/* copy the upper triangular R out of Q */
+	double complex z;
+
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i <= j) {
+		    z = gretl_cmatrix_get(Q, i, j);
+		    gretl_cmatrix_set(R, i, j, z);
+		} else {
+		    gretl_cmatrix_set(R, i, j, 0.0);
+		}
+	    }
+	}
+    }
+
+    /* turn Q into "the real" Q, with the help of tau */
+    zungqr_(&m, &n, &n, (cmplx *) Q->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zungqr: info = %d\n", (int) info);
+	*err = E_DATA;
+    }
+
+    if (P != NULL) {
+	for (i=0; i<n; i++) {
+	    P->val[i] = jpvt[i];
+	}
+    }
+
+ bailout:
+
+    free(tau);
+    free(work);
+    free(rwork);
+    free(jpvt);
+    gretl_matrix_free(Rtmp);
+    gretl_matrix_free(Ptmp);
+
+    if (*err) {
+	gretl_matrix_free(Q);
+	Q = NULL;
+    }
+
+    return Q;
 }
 
 /* QR decomposition of complex matrix using LAPACK functions

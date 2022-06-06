@@ -426,6 +426,8 @@ static int matrix_set_complex (gretl_matrix *m, int c, int full)
         if (full) {
             m->rows *= 2;
         }
+    } else if (c && m->is_complex) {
+	m->z = (double complex *) m->val;
     }
 
     return 0;
@@ -8592,7 +8594,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
     double *work = NULL;
     integer *jpvt = NULL;
     int i, j;
-    int moved = 0;
     int err = 0;
 
     if (R != NULL && (R->rows != n || R->cols != n)) {
@@ -8617,10 +8618,10 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
     if (jpvt == NULL) {
         err = E_ALLOC;
         goto bailout;
-    }
-
-    for (i=0; i<n; i++) {
-        jpvt[i] = 0;
+    } else {
+	for (i=0; i<n; i++) {
+	    jpvt[i] = 0;
+	}
     }
 
     /* workspace size query */
@@ -8675,21 +8676,9 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
     lapack_free(work);
     free(iwork);
 
-    for (i=0; i<n; i++) {
-        if (jpvt[i] != i + 1) {
-            moved = 1;
-        }
-    }
-
     if (P != NULL) {
-	if (moved) {
-	    for (i=0; i<n; i++) {
-		P->val[i] = jpvt[i];
-	    }
-	} else {
-	    for (i=0; i<n; i++) {
-		P->val[i] = i + 1;
-	    }
+	for (i=0; i<n; i++) {
+	    P->val[i] = jpvt[i];
 	}
     }
 

@@ -12251,7 +12251,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         }
 	if (!p->err) {
 	    if (X->is_complex) {
-		A = gretl_cmatrix_QR_decomp(X, R, &p->err);
+		if (P != NULL) {
+		    A = gretl_cmatrix_QR_pivot_decomp(X, R, P, &p->err);
+		} else {
+		    A = gretl_cmatrix_QR_decomp(X, R, &p->err);
+		}
 	    } else {
 		A = user_matrix_QR_decomp(X, R, P, &p->err);
 	    }
