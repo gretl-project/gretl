@@ -2011,7 +2011,9 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 {
     gretl_matrix *R = NULL;
     gretl_matrix *X = NULL;
-    int T, k, err = 0;
+    const double *x;
+    int i, t, T, k;
+    int ok, err = 0;
 
     if (list == NULL) {
 	return E_DATA;
@@ -2024,6 +2026,20 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 	return E_DATA;
     } else if (na(eps)) {
 	eps = R_DIAG_MIN;
+    }
+
+    for (i=list[0]; i>0; i--) {
+	ok = 0;
+	x = dset->Z[list[i]];
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (!na(x[t]) && x[t] != 0) {
+		ok = 1;
+		break;
+	    }
+	}
+	if (!ok) {
+	    err = gretl_list_delete_at_pos(list, i);
+	}
     }
 
     X = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
@@ -2049,7 +2065,7 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 
     if (!err) {
 	double rii;
-	int i, j = 1;
+	int j = 1;
 
 	for (i=0; i<k && !err; i++, j++) {
 	    rii = gretl_matrix_get(R, i, i);
