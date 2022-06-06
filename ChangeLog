@@ -17,6 +17,8 @@ version 2022b, in progress
 - deseas() function: add the option of saving the X-13ARIMA
   specification created by gretl; add option to specify the
   ARIMA model; document the verbose option
+- qrdecomp() function: support column pivoting, via new
+  optional third argument
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
 - Support direct assignment from string-values series to
