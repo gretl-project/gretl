@@ -203,24 +203,24 @@ int gretl_isdummy (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation.
  *
- * Check whether series @x has only zero values over the
- * given sample range (or possibly missing values).
+ * Check whether series @x has only zero (or missing) values
+ * over the given sample range.
  *
- * Returns: 1 if the variable is all zeros, otherwise 0.
+ * Returns: 0 if the series contains any valid non-zero values,
+ * otherwise 1.
  */
 
 int gretl_iszero (int t1, int t2, const double *x)
 {
-    double sum = 0.0;
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    sum += x[t] * x[t];
+	if (!na(x[t]) && x[t] != 0) {
+	    return 0;
 	}
     }
 
-    return floateq(sum, 0.0);
+    return 1;
 }
 
 /**

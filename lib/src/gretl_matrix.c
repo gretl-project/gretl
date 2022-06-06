@@ -8602,8 +8602,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
         return E_NONCONF;
     }
 
-    fprintf(stderr, "QR decomp: allowing for pivoting\n");
-
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
     work = lapack_malloc(sizeof *work);
@@ -8685,7 +8683,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
 
     if (P != NULL) {
 	if (moved) {
-	    fprintf(stderr, "QR pivot: moved\n");
 	    for (i=0; i<n; i++) {
 		P->val[i] = jpvt[i];
 	    }

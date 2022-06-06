@@ -2012,8 +2012,8 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
     gretl_matrix *R = NULL;
     gretl_matrix *X = NULL;
     const double *x;
-    int i, t, T, k;
-    int ok, err = 0;
+    int i, T, k;
+    int err = 0;
 
     if (list == NULL) {
 	return E_DATA;
@@ -2029,15 +2029,8 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
     }
 
     for (i=list[0]; i>0; i--) {
-	ok = 0;
 	x = dset->Z[list[i]];
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (!na(x[t]) && x[t] != 0) {
-		ok = 1;
-		break;
-	    }
-	}
-	if (!ok) {
+	if (gretl_iszero(dset->t1, dset->t2, x)) {
 	    err = gretl_list_delete_at_pos(list, i);
 	}
     }
