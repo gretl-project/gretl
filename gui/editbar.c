@@ -692,8 +692,6 @@ static void catch_mbar_destroy (GtkWidget *w, gpointer p)
     }
 }
 
-#define ASYNC_EXEC(r) (r == EDIT_HANSL || r == EDIT_R)
-
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 {
     int save_ok = (flags & VIEWBAR_EDITABLE);
@@ -741,7 +739,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    if (strstr(vwin->fname, "script_tmp")) {
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
-	} else if (item->flag == EXEC_ITEM && ASYNC_EXEC(vwin->role)) {
+	} else if (item->flag == EXEC_ITEM) {
 	    g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
 	    g_object_ref(button);
 	    toolbar_attach_hidden_spinner(vwin);

@@ -485,8 +485,6 @@ static void win32_execute_script (gchar *cmd, int lang)
     } else if (err) {
 	gui_errmsg(err);
     }
-
-    g_free(cmd); /* FIXME: isn't this wrong? */
 }
 
 /* Windows version of run_foreign_script() */
@@ -527,6 +525,15 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
 }
 
 #else /* some non-Windows functions follow */
+
+# ifdef GRETL_EDIT
+
+static void editor_run_other_script (windata_t *vwin,
+				     gchar *cmd,
+				     gchar **argv,
+				     int lang);
+
+# else
 
 /* Run R, Ox, etc., in synchronous (batch) mode and display the
    results in a gretl window: non-Windows variant.
@@ -597,14 +604,7 @@ static void run_prog_sync (char **argv, int lang)
     g_free(errout);
 }
 
-/* non-Windows version of run_foreign_script() */
-
-#ifdef GRETL_EDIT
-static void editor_run_other_script (windata_t *vwin,
-				     gchar *cmd,
-				     gchar **argv,
-				     int lang);
-#endif
+# endif /* GRETL_EDIT or not */
 
 static void run_foreign_script (windata_t *vwin, gchar *buf,
 				int lang, gretlopt opt)

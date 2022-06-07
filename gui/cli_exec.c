@@ -103,6 +103,21 @@ static void exec_info_init (exec_info *ei,
     bufopen(&ei->prn);
 }
 
+static int grab_stata_log (PRN *prn)
+{
+    gchar *buf = NULL;
+
+    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
+	pputs(prn, buf);
+	g_free(buf);
+	pputc(prn, '\n');
+	return 1;
+    } else {
+	file_read_errbox("gretltmp.log");
+	return 0;
+    }
+}
+
 /* callback on completion of script execution */
 
 static void exec_script_done (GObject *obj,
@@ -112,12 +127,19 @@ static void exec_script_done (GObject *obj,
     exec_info *ei = data;
 
     modify_exec_button(ei->scriptwin, 0);
-    if (ei->err == 0 /* got_printable_output(ei->prn) */) {
+
+    if (ei->lang == LANG_STATA && !grab_stata_log(ei->prn)) {
+	goto no_output;
+    }
+
+    if (ei->err == 0) {
 	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
 	ei->prn = NULL;
     } else if (ei->err) {
 	gui_errmsg(ei->err);
     }
+
+ no_output:
 
     if (ei->fname != NULL) {
 	gretl_remove(ei->fname);
@@ -144,9 +166,9 @@ static void exec_script_thread (GTask *task,
 	ei->err = execute_R_buffer(ei->buf, NULL, OPT_G | OPT_T, ei->prn);
     } else {
 #ifdef G_OS_WIN32
-	ei->err = gretl_win32_pipe_output(ei->cmd, gretl_dotdir(), ei->prn);
+	ei->err = gretl_win32_pipe_output(ei->cmd, gretl_workdir(), ei->prn);
 #else
-	ei->err = gretl_pipe_output(ei->argv, gretl_dotdir(), ei->prn);
+	ei->err = gretl_pipe_output(ei->argv, gretl_workdir(), ei->prn);
 #endif
     }
 }
