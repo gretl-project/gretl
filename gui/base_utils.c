@@ -449,6 +449,19 @@ static int got_printable_output (PRN *prn)
     return ret;
 }
 
+#ifdef GRETL_EDIT
+
+/* 2022-06-07: at present this is specific to gretl_edit,
+   but it may be good to use it in the main gretl GUI.
+*/
+
+static void editor_run_other_script (windata_t *vwin,
+				     gchar *cmd,
+				     gchar **argv,
+				     int lang);
+
+#endif
+
 #ifdef G_OS_WIN32
 
 /* MS Windows variants of functions to exec some third-party
@@ -499,7 +512,6 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
     int err;
 
     opt |= OPT_G;
-
     err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
 
     if (err) {
@@ -519,21 +531,19 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
 	    cmd = g_strdup_printf("\"%s\" -q \"%s\"", gretl_octave_path(), fname);
 	}
 
+#ifdef GRETL_EDIT /* experimental */
+	editor_run_other_script(vwin, cmd, NULL, lang);
+#else
 	win32_execute_script(cmd, lang);
+	g_free(cmd);
+#endif	
 	g_free(cmd);
     }
 }
 
 #else /* some non-Windows functions follow */
 
-# ifdef GRETL_EDIT
-
-static void editor_run_other_script (windata_t *vwin,
-				     gchar *cmd,
-				     gchar **argv,
-				     int lang);
-
-# else
+# ifndef GRETL_EDIT
 
 /* Run R, Ox, etc., in synchronous (batch) mode and display the
    results in a gretl window: non-Windows variant.
@@ -604,7 +614,7 @@ static void run_prog_sync (char **argv, int lang)
     g_free(errout);
 }
 
-# endif /* GRETL_EDIT or not */
+# endif /* not GRETL_EDIT */
 
 static void run_foreign_script (windata_t *vwin, gchar *buf,
 				int lang, gretlopt opt)
@@ -616,7 +626,6 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
     int err;
 
     opt |= OPT_G;
-
     err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
 
     if (err) {

@@ -103,19 +103,29 @@ static void exec_info_init (exec_info *ei,
     bufopen(&ei->prn);
 }
 
-static int grab_stata_log (PRN *prn)
+static int grab_stata_log (exec_info *ei)
 {
     gchar *buf = NULL;
 
     if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-	pputs(prn, buf);
+	pputs(ei->prn, buf);
 	g_free(buf);
-	pputc(prn, '\n');
+	pputc(ei->prn, '\n');
 	return 1;
     } else {
 	file_read_errbox("gretltmp.log");
+	gretl_print_destroy(ei->prn);
 	return 0;
     }
+}
+
+static void trash_stata_log (void)
+{
+    const char *wdir = gretl_workdir();
+    char *logname = gretl_build_path((char *) wdir, "gretltmp.log");
+
+    gretl_remove(logname);
+    free(logname);
 }
 
 /* callback on completion of script execution */
@@ -128,11 +138,11 @@ static void exec_script_done (GObject *obj,
 
     modify_exec_button(ei->scriptwin, 0);
 
-    if (ei->lang == LANG_STATA && !grab_stata_log(ei->prn)) {
+    if (ei->lang == LANG_STATA && !grab_stata_log(ei)) {
 	goto no_output;
     }
 
-    if (ei->err == 0) {
+    if (got_printable_output(ei->prn)) {
 	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
 	ei->prn = NULL;
     } else if (ei->err) {
@@ -148,10 +158,9 @@ static void exec_script_done (GObject *obj,
     g_free(ei->cmd);
     g_free(ei->fname);
 #else
-    argv_free(ei->argv); /* ei->fname is part of this! */
+    argv_free(ei->argv); /* note: ei->fname is part of this! */
 #endif
     g_free(ei->buf);
-    gretl_print_destroy(ei->prn);
     free(ei);
 }
 
@@ -253,6 +262,11 @@ static void editor_run_other_script (windata_t *vwin,
 #ifndef G_OS_WIN32
     my_argv = argv_copy(argv);
 #endif
+
+    if (lang == LANG_STATA) {
+	/* ensure we don't get stale output */
+	trash_stata_log();
+    }
 
     exec_info_init(ei, cmd, my_argv, NULL, NULL, vwin);
     ei->lang = lang;
