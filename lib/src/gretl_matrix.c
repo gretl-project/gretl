@@ -8596,6 +8596,11 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
     int i, j;
     int err = 0;
 
+    if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
+        return E_NONCONF;
+    }
+
     if (R != NULL && (R->rows != n || R->cols != n)) {
         return E_NONCONF;
     }
@@ -8719,6 +8724,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     n = M->cols;
 
     if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
         return E_NONCONF;
     }
 

@@ -1658,6 +1658,12 @@ gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
 	return NULL;
     }
 
+    if (m->cols > m->rows) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
+	*err = E_NONCONF;
+	return NULL;
+    }
+
     pR = (R != NULL)? &Rtmp : NULL;
     pP = (P != NULL)? &Ptmp : NULL;
 

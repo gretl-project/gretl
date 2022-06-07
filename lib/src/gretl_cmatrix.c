@@ -2744,7 +2744,9 @@ gretl_matrix *gretl_cmatrix_QR_pivot_decomp (const gretl_matrix *A,
 
     lda = m = A->rows;
     n = A->cols;
+
     if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
 	*err = E_NONCONF;
 	return NULL;
     }
@@ -2888,7 +2890,9 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 
     lda = m = A->rows;
     n = A->cols;
+
     if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
 	*err = E_NONCONF;
 	return NULL;
     }
