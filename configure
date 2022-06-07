@@ -649,6 +649,7 @@ use_gsf
 swap_ends
 pkg_build
 quiet_build
+build_editor
 build_addons
 build_docs
 GSF_LIBS
@@ -858,6 +859,7 @@ enable_gui
 enable_gtk2
 enable_build_doc
 enable_build_addons
+enable_build_editor
 enable_quiet_build
 enable_swap_ends
 enable_xdg
@@ -1573,6 +1575,7 @@ Optional Features:
   --enable-gtk2           Use GTK 2.0 in preference to GTK 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [git only]
   --enable-build-addons   Enable building of gretl addons [default=no]
+  --enable-build-editor   Enable building of gretl_edit [default=no]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
   --disable-xdg           Don't Install XDG files
@@ -2883,6 +2886,7 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="no"
+build_editor="no"
 use_lucida="no"
 build_po="no"
 have_readline="no"
@@ -7046,6 +7050,17 @@ then
   build_addons=yes
 else
   build_addons=no
+fi
+fi
+
+
+# Check whether --enable-build-editor was given.
+if test "${enable_build_editor+set}" = set; then :
+  enableval=$enable_build_editor; if test "$enableval" = "yes"
+then
+  build_editor=yes
+else
+  build_editor=no
 fi
 fi
 
@@ -23372,6 +23387,7 @@ fi
 
 
 
+
 GTK_HUSH=""
 CFLAGS=-Wno-deprecated-declarations
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether CC supports -Wno-deprecated-declarations" >&5
@@ -23433,7 +23449,7 @@ fi
 
 CFLAGS="$orig_CFLAGS"
 
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/debug editor/Makefile xdg/gretl.desktop xdg/gretl_edit.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile apidemo/Makefile redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/debug xdg/gretl.desktop xdg/gretl_edit.desktop xdg/Makefile cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile apidemo/Makefile redhat/gretl.spec utils/emacs/Makefile doc/gretl.sty doc/gretl-lite.sty"
 
 
 if test "${darwin_build}" = "yes" ; then
@@ -23586,6 +23602,11 @@ fi
 
 if test "${build_addons}" = "yes" ; then
   ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/pkg.inp addons/geoplot/Makefile addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/pkg.inp addons/regls/Makefile addons/regls/doc/Makefile addons/logging/pkg.inp addons/logging/Makefile addons/logging/doc/Makefile addons/KFgui/pkg.inp addons/KFgui/Makefile"
+
+fi
+
+if test "${build_editor}" = "yes" ; then
+  ac_config_files="$ac_config_files editor/Makefile"
 
 fi
 
@@ -24685,7 +24706,6 @@ do
     "gretl.pc") CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
     "gui/Makefile") CONFIG_FILES="$CONFIG_FILES gui/Makefile" ;;
     "gui/debug") CONFIG_FILES="$CONFIG_FILES gui/debug" ;;
-    "editor/Makefile") CONFIG_FILES="$CONFIG_FILES editor/Makefile" ;;
     "xdg/gretl.desktop") CONFIG_FILES="$CONFIG_FILES xdg/gretl.desktop" ;;
     "xdg/gretl_edit.desktop") CONFIG_FILES="$CONFIG_FILES xdg/gretl_edit.desktop" ;;
     "xdg/Makefile") CONFIG_FILES="$CONFIG_FILES xdg/Makefile" ;;
@@ -24751,6 +24771,7 @@ do
     "addons/logging/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/logging/doc/Makefile" ;;
     "addons/KFgui/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/KFgui/pkg.inp" ;;
     "addons/KFgui/Makefile") CONFIG_FILES="$CONFIG_FILES addons/KFgui/Makefile" ;;
+    "editor/Makefile") CONFIG_FILES="$CONFIG_FILES editor/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -26266,6 +26287,7 @@ Configuration:
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Build gretl addons:                     ${build_addons}
+  Build gretl_edit:                       ${build_editor}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}

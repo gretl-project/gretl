@@ -16,6 +16,7 @@ gtk_version = @gtk_version@
 build_po = @build_po@
 build_doc = @build_docs@
 build_addons = @build_addons@
+build_editor = @build_editor@
 use_xdg = @use_xdg@
 
 ifeq ($(CC),)
@@ -32,7 +33,6 @@ endif
 
 ifeq ($(build_gui),yes)
   GUIDIR = gui
-  EDDIR = editor
 endif
 
 ifeq ($(build_po),yes)
@@ -45,6 +45,10 @@ endif
 
 ifeq ($(build_addons),yes)
   ADDONSDIR = addons
+endif
+
+ifeq ($(build_editor),yes)
+  EDDIR = editor
 endif
 
 ifeq ($(use_xdg),yes)
@@ -129,6 +133,6 @@ $(GUIDIR): lib
 $(EDDIR): lib
 plugin: lib
 tests: lib
-addons: cli
+$(ADDONSDIR): cli
 
 
