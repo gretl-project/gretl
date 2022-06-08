@@ -6,11 +6,10 @@
 
 Native support for complex matrices was added to gretl in version
 2019d.\footnote{Prior to that release gretl offered improvised support
-  for some complex functionality. This was removed in gretl 2022b; see
-  section~\ref{sec:cmplx-compat} for details.} Not all of hansl's
-matrix functions accept complex input, but we have enabled a sizable
-subset of these functions which should suffice for most econometric
-purposes.
+  for some complex functionality; see section~\ref{sec:cmplx-compat}
+  for details.} Not all of hansl's matrix functions accept complex
+input, but we have enabled a sizable subset of these functions which
+should suffice for most econometric purposes.
 
 Complex numbers are not used in most areas of econometrics, but there
 are a few notable exceptions: among these, complex numbers allow for
@@ -378,16 +377,17 @@ eval D - jl_D
 Prior to version 2019d gretl did not provide native support for
 complex matrices. It did, however, offer an improvised representation
 of such matrices for certain restricted purposes, taking the form of
-an expanded regular gretl matrix with real values in its odd-numbered
-columns and imaginary parts in even-numbered columns.  The functions
-\cmd{fft} and \cmd{eigengen} returned matrices in this special form,
-and the functions \cmd{cmult} and \cmd{cdiv} performed complex
-multiplication and division, taking such matrices as arguments.
+an expanded regular gretl matrix with real values and imaginary parts
+in odd-numbered and even-numbered columns, respectively.  The
+functions \cmd{fft}, \cmd{eigengen} and \cmd{polroots} returned
+matrices in this special form, and the functions \cmd{cmult} and
+\cmd{cdiv} (complex multiplication and division) operated on such
+matrices.
 
-After a transitional phase in which we continued to support these
-legacy functions, they are all either removed (\cmd{eigengen},
-\cmd{cmult}, \cmd{cdiv}) or redefined to work with ``proper'' complex
-matrices as described above (\cmd{fft}).
+As of version 2022b, \cmd{fft} has been redefined to work with
+``proper'' complex matrices as described above. The other affected
+functions are deprecated and will be removed or redefined in a
+subsequent release.
 
 %%% Local Variables:
 %%% mode: latex
