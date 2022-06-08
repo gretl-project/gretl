@@ -4418,7 +4418,6 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 		pprintf(prn, "  %.8g\n", evals->val[i]);
 	    }
 	}
-
 	gretl_matrix_free(evals);
     }
 
