@@ -586,8 +586,6 @@ struct str_table funcs[] = {
     { F_DISTANCE,  "distance" },
     { F_INTERPOL,  "interpol" },
     { F_MAT2LIST,  "mat2list" },
-    { F_BITOP,     "bitop" },
-    { F_BITNOT,    "bitnot" },
     { F_YMD,       "ymd" },
     { F_DEC2BIN,   "dec2bin" },
     { F_BIN2DEC,   "bin2dec" },

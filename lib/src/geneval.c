@@ -1218,81 +1218,6 @@ static void eval_warning (parser *p, int op, int errnum)
     }
 }
 
-enum {
-    B_BITAND = OP_MAX + 1,
-    B_BITOR,
-    B_BITXOR,
-    B_LSHIFT,
-    B_RSHIFT
-};
-
-static double bitop (double x, double y, int op, parser *p)
-{
-    guint32 ix, iy, iz = 0;
-
-    ix = gretl_unsigned_from_double(x, &p->err);
-    if (!p->err) {
-	iy = gretl_unsigned_from_double(y, &p->err);
-    }
-    if (!p->err) {
-	if (op == B_BITAND) {
-	    iz = ix & iy;
-	} else if (op == B_BITOR) {
-	    iz = ix | iy;
-	} else if (op == B_BITXOR) {
-	    iz = ix ^ iy;
-	} else if (op == B_LSHIFT) {
-	    iz = ix << iy;
-	} else if (op == B_RSHIFT) {
-	    iz = ix >> iy;
-	}
-	return (double) iz;
-    } else {
-	return NADBL;
-    }
-}
-
-static double bitnot (double x)
-{
-    guint32 ix;
-    int err = 0;
-
-    ix = gretl_unsigned_from_double(x, &err);
-
-    if (!err) {
-	guint32 iy = ~ix;
-
-	return (double) iy;
-    } else {
-	return NADBL;
-    }
-}
-
-static int bitop_preprocess (NODE *n, NODE *m)
-{
-    if (null_node(n->L) || null_node(m) || null_node(n->R)) {
-	return E_ARGS;
-    } else if (m->t != STR) {
-	return E_INVARG;
-    } else {
-	if (!strcmp(m->v.str, "&")) {
-	    n->t = B_BITAND;
-	} else if (!strcmp(m->v.str, "|")) {
-	    n->t = B_BITOR;
-	} else if (!strcmp(m->v.str, "^")) {
-	    n->t = B_BITXOR;
-	} else if (!strcmp(m->v.str, "<<")) {
-	    n->t = B_LSHIFT;
-	} else if (!strcmp(m->v.str, ">>")) {
-	    n->t = B_RSHIFT;
-	} else {
-	    return E_INVARG;
-	}
-    }
-
-    return 0;
-}
-
 /* evaluation of binary operators (yielding x op y) for
    scalar operands (also increment/decrement operators)
 */
@@ -1340,10 +1265,6 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 
     errno = 0;
-
-    if (op >= B_BITAND) {
-	return bitop(x, y, op, p);
-    }
 
     switch (op) {
     case B_ADD:
@@ -5698,8 +5619,6 @@ static double real_apply_func (double x, int f, parser *p)
         return x;
     case U_NOT:
         return x == 0;
-    case F_BITNOT:
-	return bitnot(x);
     case F_TOINT:
         return (double) (int) x;
     case F_MISSING:
@@ -16602,12 +16521,6 @@ static NODE *eval (NODE *t, parser *p)
 	fprintf(stderr, "eval: FARGS: parent %s\n", getsymb(t->parent->t));
         ret = t;
         break;
-    case F_BITOP:
-	p->err = bitop_preprocess(t, m);
-	if (p->err) {
-	    break;
-	}
-	/* Falls through. */
     case B_ADD:
     case B_SUB:
     case B_MUL:
@@ -16681,10 +16594,6 @@ static NODE *eval (NODE *t, parser *p)
         } else {
             p->err = E_TYPES;
         }
-	if (t->t >= B_BITAND) {
-	    /* restore original node-type */
-	    t->t = F_BITOP;
-	}
         break;
     case B_TRMUL:
         /* matrix on left, otherwise be flexible */
@@ -16864,7 +16773,6 @@ static NODE *eval (NODE *t, parser *p)
     case U_NEG:
     case U_POS:
     case U_NOT:
-    case F_BITNOT:
     case F_ABS:
     case F_SGN:
     case F_TOINT:

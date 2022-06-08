@@ -284,7 +284,6 @@ enum {
     F_BARRIER,
     F_LPSOLVE,
     F_INTERPOL,
-    F_BITNOT,
     F_DEC2BIN,
     F_BIN2DEC,
     F_ACCESS,
@@ -476,7 +475,6 @@ enum {
     F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
-    F_BITOP,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
