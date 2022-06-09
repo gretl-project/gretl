@@ -54,6 +54,8 @@ static gchar **argv_copy (gchar **argv)
 
 #endif
 
+#if GTK_MAJOR_VERSION > 2
+
 static void modify_exec_button (windata_t *vwin, int to_spinner)
 {
     GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
@@ -76,6 +78,23 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
 	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), eb, idx);
     }
 }
+
+#else
+
+static void modify_exec_button (windata_t *vwin, int to_spinner)
+{
+    GtkWidget *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
+
+    if (to_spinner) {
+	/* GTK2, just show the exec button as insensitive */
+	gtk_widget_set_sensitive(eb, FALSE);
+    } else {
+	/* make the exec button sensitive again */
+	gtk_widget_set_sensitive(eb, TRUE);
+    }
+}
+
+#endif
 
 typedef struct {
     gchar *cmd;           /* command-line (for Windows) */

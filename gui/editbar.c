@@ -671,6 +671,8 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
     return menu;
 }
 
+#if GTK_MAJOR_VERSION > 2
+
 static void toolbar_attach_hidden_spinner (windata_t *vwin)
 {
     GtkWidget *sp = gtk_spinner_new();
@@ -691,6 +693,8 @@ static void catch_mbar_destroy (GtkWidget *w, gpointer p)
 	g_object_unref(item);
     }
 }
+
+#endif
 
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 {
@@ -741,10 +745,12 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    }
 	} else if (item->flag == EXEC_ITEM) {
 	    g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
+#if GTK_MAJOR_VERSION > 2
 	    g_object_ref(button);
 	    toolbar_attach_hidden_spinner(vwin);
 	    g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
 			     G_CALLBACK(catch_mbar_destroy), NULL);
+#endif
 	}
     }
 
