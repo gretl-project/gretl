@@ -8982,6 +8982,7 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
     dtrtri_(&uplo, &diag, &n, a->val, &n, &info);
 
     if (info < 0) {
+	fprintf(stderr, "dtrtri: info = %d\n", (int) info);
         err = E_DATA;
     } else if (info > 0) {
         err = E_SINGULAR;

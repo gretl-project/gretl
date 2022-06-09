@@ -1385,19 +1385,7 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
 	err = E_SINGULAR;
     } else {
 	/* then invert the triangular R */
-	char uplo = 'U';
-	char diag = 'N';
-	integer info = 0;
-
-	dtrtri_(&uplo, &diag, &k, R->val, &k, &info);
-	if (info != 0) {
-	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
-	    err = 1;
-	} else if (0 && rcond < RCOND_WARN && warn != NULL) {
-	    /* 2020-02-19: not sure we want this! */
-	    fprintf(stderr, "QR_decomp_plus: rcond = %g\n", rcond);
-	    *warn = 1;
-	}
+	err = gretl_invert_triangular_matrix(R, 'U');
     }
 
     if (rank != NULL) {
