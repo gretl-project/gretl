@@ -511,6 +511,7 @@ enum {
     F_TDISAGG,
     F_HYP2F1,
     F_MIDASMULT,
+    F_MCOMMUTE,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
