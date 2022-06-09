@@ -2423,6 +2423,46 @@
       </description>
     </function>
 
+    <function name="commute" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="pdmat">A</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
+	<fnarg optional="true" type="int">post</fnarg>
+	<fnarg optional="true" type="int">add_id</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the  matrix <argname>A</argname> premultiplied
+	  by the commutation matrix (more efficient than explicit
+	  multiplication).  Each column of <argname>A</argname> is
+	  assumed to come from a <math>vec</math> operation on a
+	  <math> m x n </math> matrix. In particular,
+	</para>
+	<code>
+	  commute(vec(B), rows(B), cols(B))
+	</code>
+	<para>
+	  gives <math>vec(B')</math>. In order to compute the
+	  commutation matrix proper, just apply the function to an
+	  appropriately sized identity matrix. For example:
+	</para>
+	<code>
+	  K_32 = commute(I(6), 3, 2)
+	</code>
+	<para>
+	  The optional argument <argname>n</argname> defaults to
+	  <argname>m</argname>.  If the optional argument
+	  <argname>post</argname> is non-zero, then
+	  post-multiplication is performed instead of
+	  pre-multiplication; the optional boolean switch
+	  <argname>add_id</argname> will instead premultiply
+	  <argname>A</argname> by the sum between the commutation
+	  matrix and the identity matrix.
+	</para>
+      </description>
+    </function>
+
     <function name="carg" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="cmatrix">C</fnarg>
