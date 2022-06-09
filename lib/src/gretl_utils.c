@@ -3280,39 +3280,85 @@ int auto_mpi_ok (void)
     return ret;
 }
 
-gretl_matrix *dec2bin (guint32 x)
+gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err)
 {
-    gretl_matrix *m = gretl_zero_matrix_new(1, 32);
-    int i = 0;
+    gretl_matrix *ret = NULL;
+    double *val;
+    guint32 ui;
+    int n = 1;
+    int i, j;
 
-    while (x > 0) {
-        m->val[i++] = x % 2;
-        x = x >> 1;
+    if (v != NULL) {
+	n = gretl_vector_get_length(v);
+	if (n == 0) {
+	    *err = E_INVARG;
+	    return NULL;
+	}
+	val = v->val;
+    } else {
+	val = &x;
     }
 
-    return m;
+    ret = gretl_zero_matrix_new(n, 32);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	ui = gretl_unsigned_from_double(val[i], err);
+	if (*err) {
+	    break;
+	}
+	j = 0;
+	while (ui > 0) {
+	    gretl_matrix_set(ret, i, j++, ui % 2);
+	    ui = ui >> 1;
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
 }
 
-guint32 bin2dec (const gretl_matrix *m, int *err)
+gretl_matrix *bin2dec (const gretl_matrix *m, int *err)
 {
-    int n = gretl_vector_get_length(m);
-    guint32 ret = 0;
+    int r = gretl_matrix_rows(m); /* must be 1 or more */
+    int c = gretl_matrix_cols(m); /* must be >= 1 && <= 32 */
+    gretl_matrix *ret = NULL;
 
-    if (n == 0 || n > 32) {
+    if (r == 0 || c == 0 || c > 32) {
 	*err = E_INVARG;
     } else {
-	guint32 k = 0x01;
-	int i;
+	/* allocate column vector for return */
+	ret = gretl_zero_matrix_new(r, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
 
-	for (i=0; i<n; i++) {
-	    if (isnan(m->val[i])) {
-		*err = E_INVARG;
-		ret = 0;
-		break;
-	    } else if (m->val[i] != 0) {
-		ret += k;
+    if (!*err) {
+	guint32 ui, k;
+	double mij;
+	int i, j;
+
+	for (i=0; i<r && !*err; i++) {
+	    ui = 0;
+	    k = 0x01;
+	    for (j=0; j<c && !*err; j++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (mij == 1) {
+		    ui += k;
+		} else if (mij != 0) {
+		    *err = E_INVARG;
+		    break;
+		}
+		k = k << 1;
 	    }
-	    k = k << 1;
+	    ret->val[i] = (double) ui;
 	}
     }
 

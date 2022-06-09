@@ -1762,10 +1762,19 @@ static int node_get_bool (NODE *n, parser *p, int deflt)
 static NODE *dec2bin_node (NODE *n, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
-    guint32 x = node_get_guint32(n, p);
 
     if (!p->err) {
-	ret->v.m = dec2bin(x);
+	gretl_matrix *v = NULL;
+	double x = NADBL;
+
+	if (n->t == NUM) {
+	    x = n->v.xval;
+	} else {
+	    v = n->v.m;
+	}
+	if (!p->err) {
+	    ret->v.m = dec2bin(x, v, &p->err);
+	}
     }
 
     return ret;
@@ -1773,10 +1782,10 @@ static NODE *dec2bin_node (NODE *n, parser *p)
 
 static NODE *bin2dec_node (NODE *n, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = aux_matrix_node(p);
 
     if (!p->err) {
-	ret->v.xval = bin2dec(n->v.m, &p->err);
+	ret->v.m = bin2dec(n->v.m, &p->err);
     }
 
     return ret;
@@ -18074,7 +18083,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_DEC2BIN:
-	if (scalar_node(l)) {
+	if (l->t == NUM || l->t == MAT) {
 	    ret = dec2bin_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);

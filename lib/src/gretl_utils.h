@@ -236,8 +236,8 @@ int gretl_gunzip (char *zname, char *fname);
 
 /* binary conversions */
 
-gretl_matrix *dec2bin (guint32 x);
+gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err);
 
-guint32 bin2dec (const gretl_matrix *m, int *err);
+gretl_matrix *bin2dec (const gretl_matrix *m, int *err);
 
 #endif /* GRETL_UTILS_H */
