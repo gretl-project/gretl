@@ -6,16 +6,6 @@ set verbose off
 
 ######## Examples for functions not needing a dataset ##########
 
-print "---- commute -----" ##
-# vec application
-eval commute( vec( I(2) ~ ones(2,1) ), 2, 3)
-# commutation of the Kronecker product
-matrix A = mnormal(4,1)
-matrix B = mnormal(1,5)
-eval B**A
-matrix temp = commute(A**B, rows(B), rows(A))
-eval commute(temp, cols(B), cols(A), 1) # post-multipl.; should give B**A
-
 print "---- eliminate -----"
 eval eliminate(vec(I(3)))
 
