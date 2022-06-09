@@ -2433,11 +2433,12 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the  matrix <argname>A</argname> premultiplied
-	  by the commutation matrix (more efficient than explicit
-	  multiplication).  Each column of <argname>A</argname> is
-	  assumed to come from a <math>vec</math> operation on a
-	  <math> m x n </math> matrix. In particular,
+	  Returns the matrix <argname>A</argname> premultiplied by the
+	  commutation matrix <math>K</math><sub>m,n</sub> (more
+	  efficient than explicit multiplication).  Each column of
+	  <argname>A</argname> is assumed to come from a
+	  <math>vec</math> operation on a <math>m x n</math>
+	  matrix. In particular,
 	</para>
 	<code>
 	  commute(vec(B), rows(B), cols(B))
@@ -2455,10 +2456,10 @@
 	  <argname>m</argname>.  If the optional argument
 	  <argname>post</argname> is non-zero, then
 	  post-multiplication is performed instead of
-	  pre-multiplication; the optional boolean switch
-	  <argname>add_id</argname> will instead premultiply
-	  <argname>A</argname> by the sum between the commutation
-	  matrix and the identity matrix.
+	  pre-multiplication; the optional Boolean switch
+	  <argname>add_id</argname> will premultiply
+	  <argname>A</argname> by <math>I + K</math><sub>m,n</sub>
+	  instead of <math>K</math><sub>m,n</sub>.
 	</para>
       </description>
     </function>

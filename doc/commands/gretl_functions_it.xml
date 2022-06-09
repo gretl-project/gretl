@@ -2443,6 +2443,47 @@
       </description>
     </function>
 
+    <function name="commute" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="pdmat">A</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
+	<fnarg optional="true" type="int">post</fnarg>
+	<fnarg optional="true" type="int">add_id</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce la matrice <argname>A</argname> premoltiplicata
+	  per la matrice di commutazione <math>K</math><sub>m,n</sub>
+	  (più efficiente che la moltiplicazione esplicita). Ogni
+	  colonna di <argname>A</argname> è pensata come la
+	  vettorizzazione di una matrice <math>m x n</math>. In
+	  particolare,
+	</para>
+	<code>
+	  commute(vec(B), rows(B), cols(B))
+	</code>
+	<para>
+	  produce <math>vec(B')</math>. Per ottenere la matrice di
+	  commutazione vera e propria,basta applicare la funzione ad
+	  una matrice identità di dimensione appropriata. Ad esempio:
+	</para>
+	<code>
+	  K_32 = commute(I(6), 3, 2)
+	</code>
+	<para>
+	  L'argomento opzionale <argname>n</argname> ha
+	  <argname>m</argname> come default.  Se l'argomento opzionale
+	  <argname>post</argname> è non-zero, allora viene eseguita la
+	  postmoltiplicazione anziché la premoltiplicazione;
+	  se l'argomento 
+	  <argname>add_id</argname> è non-zero, la moltiplicazione
+	  sarà eseguita usando <math>I + K</math><sub>m,n</sub>
+	  invece di <math>K</math><sub>m,n</sub>.
+	</para>
+      </description>
+    </function>
+
     <function name="carg" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="cmatrix">C</fnarg>
