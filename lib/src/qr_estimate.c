@@ -30,6 +30,9 @@
 
 #define ESSZERO 1e-22 /* SSR less than this counts as zero */
 
+#define QR_PIVOT 0
+#define RCOND_WARN 1.0e-07
+
 enum {
     VCV_SIMPLE,
     VCV_ROBUST,
@@ -1354,8 +1357,6 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
     return 0;
 }
 
-#define RCOND_WARN 1.0e-07
-
 /* perform QR decomposition plus some additional tasks */
 
 static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
@@ -1395,20 +1396,278 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
     return err;
 }
 
-#define REDEBUG 0
+#if QR_PIVOT
+
+static void
+drop_redundant_vars (MODEL *pmod, DATASET *dset, const int *D)
+{
+    int ndrop = D[0];
+    int *droplist = gretl_list_new(ndrop);
+    int i, vi;
+    int err = 0;
+
+    for (i=1; i<=ndrop; i++) {
+	vi = pmod->list[D[i] + 1];
+	droplist[i] = vi;
+	fprintf(stderr, "dropping redundant variable %d (%s)\n",
+		vi, dset->varname[vi]);
+    }
+
+    pmod->list = gretl_list_drop(pmod->list, droplist, &err);
+    pmod->ncoeff -= ndrop;
+    pmod->dfd = pmod->nobs - pmod->ncoeff;
+    pmod->dfn = pmod->ncoeff - pmod->ifc;
+
+    gretl_model_set_list_as_data(pmod, "droplist", droplist);
+}
+
+static int trim_R (gretl_matrix *R, int r)
+{
+    gretl_matrix *tmp = gretl_zero_matrix_new(r, r);
+    double rij;
+    int i, j;
+
+    for (j=0; j<r; j++) {
+	for (i=0; i<=j; i++) {
+	    rij = gretl_matrix_get(R, i, j);
+	    gretl_matrix_set(tmp, i, j, rij);
+	}
+    }
+
+    gretl_matrix_replace_content(R, tmp);
+
+    return 0;
+}
+
+static int QR_decomp_pivot_plus (gretl_matrix *Q,
+				 gretl_matrix *R,
+				 int **pP, int **pD,
+				 int *rank,
+				 int *reordered)
+{
+    gretl_matrix *tmp;
+    int k = gretl_matrix_rows(R);
+    int i, r, err;
+
+    tmp = gretl_zero_matrix_new(1, k);
+
+    err = gretl_matrix_QR_pivot_decomp(Q, R, tmp);
+    if (err) {
+	return err;
+    }
+
+    r = 0;
+    for (i=0; i<k; i++) {
+	if (fabs(gretl_matrix_get(R, i, i)) > 1.0e-8) {
+	    r++;
+	    if (i > 0 && tmp->val[i] < tmp->val[i]) {
+		*reordered = 1;
+	    }
+	} else {
+	    break;
+	}
+    }
+    *rank = r;
+
+#if 0
+    gretl_matrix_print(tmp, "tmp (P)");
+    gretl_matrix_print(R, "R");
+    fprintf(stderr, "reordered = %d\n", reordered);
+#endif
+
+    if (r < k) {
+	if (r == 0 || pD == NULL) {
+	    /* not dropping collinear terms */
+	    err = E_SINGULAR;
+	} else {
+	    int *P = calloc(r, sizeof *P);
+	    int *D = gretl_list_new(k-r);
+	    int j, skip;
+
+	    Q->cols = r;
+	    trim_R(R, r);
+	    for (i=r; i<k; i++) {
+		D[i-r+1] = tmp->val[i];
+	    }
+	    for (i=0; i<r; i++) {
+		P[i] = tmp->val[i];
+		skip = 0;
+		for (j=1; j<=k-r; j++) {
+		    skip += D[j] < P[i];
+		}
+		P[i] -= skip;
+	    }
+	    *pP = P;
+	    if (pD != NULL) {
+		*pD = D;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* invert the triangular R */
+	err = gretl_invert_triangular_matrix(R, 'U');
+    }
+
+    return err;
+}
+
+int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
+{
+    integer T, k;
+    gretl_matrix *y = NULL;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    gretl_matrix *g = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *V = NULL;
+    int *P = NULL;
+    int *D = NULL;
+    int rank, warn = 0, err = 0;
+    int reordered = 0;
+
+    T = pmod->nobs;        /* # of rows (observations) */
+    k = pmod->list[0] - 1; /* # of cols (variables) */
+
+    y = gretl_matrix_alloc(T, 1);
+    Q = gretl_matrix_alloc(T, k);
+    R = gretl_matrix_alloc(k, k);
+    V = gretl_matrix_alloc(k, k);
+
+    if (y == NULL || Q == NULL || R == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto qr_cleanup;
+    }
+
+    get_model_data(pmod, dset, Q, y);
+    if (opt & OPT_Z) {
+	err = QR_decomp_pivot_plus(Q, R, &P, NULL, &rank, &reordered);
+    } else {
+	err = QR_decomp_pivot_plus(Q, R, &P, &D, &rank, &reordered);
+    }
+
+    if (!err && rank < k) {
+	drop_redundant_vars(pmod, dset, D);
+	maybe_shift_ldepvar(pmod, dset);
+	k = rank;
+	gretl_matrix_reuse(V, k, k);
+    }
+
+    if (err) {
+	goto qr_cleanup;
+    }
+
+    /* allocate temporary arrays */
+    g = gretl_matrix_alloc(k, 1);
+    b = gretl_matrix_alloc(k, 1);
+
+    if (g == NULL || b == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = allocate_model_arrays(pmod, k, dset->n);
+    }
+
+    if (err) {
+	goto qr_cleanup;
+    }
+
+    /* make "g" into gamma-hat */
+    gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE,
+			      g, GRETL_MOD_NONE);
+
+    /* OLS coefficients */
+    gretl_matrix_multiply(R, g, b);
+    if (reordered) {
+	; /* FIXME */
+    } else {
+	pmod->coeff = gretl_matrix_steal_data(b);
+    }
+
+    /* write vector of fitted values into y */
+    gretl_matrix_multiply(Q, g, y);
+
+    /* get vector of residuals and SSR */
+    get_resids_and_SSR(pmod, dset, y, dset->n);
+
+    /* standard error of regression */
+    if (T - k > 0) {
+	if (pmod->opt & OPT_N) {
+	    /* no-df-corr */
+	    pmod->sigma = sqrt(pmod->ess / T);
+	} else {
+	    pmod->sigma = sqrt(pmod->ess / (T - k));
+	}
+    } else {
+	pmod->sigma = 0.0;
+    }
+
+    /* create (X'X)^{-1} */
+    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+			      R, GRETL_MOD_TRANSPOSE,
+			      V, GRETL_MOD_NONE);
+
+    /* VCV and standard errors */
+    if (opt & OPT_R) {
+	pmod->opt |= OPT_R;
+	if (opt & OPT_C) {
+	    err = qr_make_cluster_vcv(pmod, pmod->ci, dset, V, opt);
+	} else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
+	    err = qr_make_hac(pmod, dset, V);
+	} else {
+	    err = qr_make_hccme(pmod, dset, Q, V);
+	}
+    } else {
+	err = qr_make_regular_vcv(pmod, V, opt);
+    }
+
+    if ((opt & OPT_R) && err == E_JACOBIAN) {
+	/* try fallback? */
+	err = qr_make_regular_vcv(pmod, V, opt);
+	if (!err) {
+	    gretl_model_set_int(pmod, "non-robust", 1);
+	}
+    }
+
+    if (!err) {
+	/* get R^2, F-stat */
+	qr_compute_stats(pmod, dset, T, opt);
+
+	/* D-W stat and p-value */
+	if ((opt & OPT_I) && pmod->missmask == NULL) {
+	    qr_dw_stats(pmod, dset, Q, y);
+	}
+
+	/* near-singularity? */
+	if (warn) {
+	    gretl_model_set_int(pmod, "near-singular", 1);
+	}
+    }
+
+ qr_cleanup:
+
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
+    gretl_matrix_free(y);
+
+    gretl_matrix_free(g);
+    gretl_matrix_free(b);
+    gretl_matrix_free(V);
+
+    pmod->errcode = err;
+
+    return err;
+}
+
+#else /* not QR_PIVOT */
 
 static void
 drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
-		     int rank, gretlopt opt)
+		     int rank)
 {
     int *droplist = NULL;
     int i, vi, pos, nd;
     double d;
-
-#if REDEBUG
-    printlist(pmod->list, "pmod->list, into drop_redundant_vars");
-    fprintf(stderr, "rank = %d\n", rank);
-#endif
 
     pos = 2;
     nd = 0;
@@ -1463,7 +1722,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     /* handling of near-perfect collinearity */
     if (err == E_SINGULAR && !(opt & OPT_Z)) {
-	drop_redundant_vars(pmod, dset, R, rank, opt);
+	drop_redundant_vars(pmod, dset, R, rank);
 	k = pmod->list[0] - 1;
 	gretl_matrix_reuse(Q, T, k);
 	gretl_matrix_reuse(R, k, k);
@@ -1576,6 +1835,8 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     return err;
 }
+
+#endif /* QR_PIVOT or not */
 
 int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
 			     gretlopt opt)
