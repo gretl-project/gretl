@@ -463,6 +463,12 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
+#ifdef MAC_INTEGRATION
+    MacApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+    install_mac_signals(MacApp);
+    gtkosx_application_set_use_quartz_accelerators(MacApp, FALSE);
+#endif
+
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
 # if WIN32_DEBUG
@@ -520,6 +526,7 @@ int main (int argc, char **argv)
 
     /* create the GUI */
     set_fixed_font(NULL, 1);
+    set_app_font(NULL, 1);
     gretl_stock_icons_init();
 
     if (tryfile_is_set()) {
@@ -616,4 +623,3 @@ gboolean open_tryfile (gboolean startup)
 
     return ret;
 }
-

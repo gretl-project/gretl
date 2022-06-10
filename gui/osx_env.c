@@ -17,14 +17,26 @@ void osx_setup_paths (void)
     getcwd(respath, sizeof respath);
     setenv("GRETL_STARTDIR", respath, 1);
 
+    /* get the full path to the active executable */
     _NSGetExecutablePath(execpath, &pathsz);
 
+    /* trim off the name of the executable itself */
     c = strrchr(execpath, '/');
     *c = '\0';
 
+    /* In the case of the regular GUI program, the executable
+       lives in Contents/MacOS under Gretl.app, but gretl_edit
+       lives in Contents/Resources/bin. In both cases we need
+       to obtain the Contents/Resources path.
+    */
+#ifdef GRETL_EDIT
+    c = strrchr(execpath, '/');
+    *c = '\0';
+#else
     strcat(execpath, "/../Resources");
-    chdir(execpath);
+#endif
 
+    chdir(execpath);
     getcwd(respath, sizeof respath);
 
     tmp = g_strdup_printf("%s/share/gretl/", respath);
