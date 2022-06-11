@@ -140,6 +140,7 @@ PUBLIC_HDRS = \
 	gretl_intl.h \
 	gretl_list.h \
 	gretl_matrix.h \
+	gretl_cmatrix.h \
 	gretl_midas.h \
 	gretl_model.h \
 	gretl_normal.h \
