@@ -705,6 +705,9 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
 				  gretl_matrix *R,
 				  gretl_matrix *P);
 
+double gretl_triangular_matrix_rcond (const gretl_matrix *A,
+				      char uplo, char diag);
+
 int gretl_check_QR_rank (const gretl_matrix *R,
 			 int *err,
 			 double *rcnd);

@@ -8808,12 +8808,50 @@ static int get_R_rank (const gretl_matrix *R)
 
     for (i=0; i<R->rows; i++) {
         d = gretl_matrix_get(R, i, i);
-        if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
+        if (fabs(d) < R_DIAG_MIN || na(d)) {
             rank--;
         }
     }
 
     return rank;
+}
+
+/**
+ * gretl_triangular_matrix_rcond:
+ * @A: triangular matrix.
+ * @uplo: 'U' for upper triangular input, 'L' for lower.
+ * @diag: 'N' for non-unit triangular, 'U' for unit triangular.
+ *
+ * Returns: the reciprocal condition number of @R, or NADBL on
+ * failure.
+ */
+
+double gretl_triangular_matrix_rcond (const gretl_matrix *A,
+				      char uplo, char diag)
+{
+    integer *iwork = NULL;
+    double *work = NULL;
+    integer n, info = 0;
+    double rcond = NADBL;
+    char norm = '1';
+
+    n = A->rows;
+    work = lapack_malloc(3 * n * sizeof *work);
+    iwork = malloc(n * sizeof *iwork);
+
+    if (work != NULL && iwork != NULL) {
+	dtrcon_(&norm, &uplo, &diag, &n, A->val, &n, &rcond, work,
+		iwork, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dtrcon: info = %d\n", (int) info);
+	    rcond = NADBL;
+	}
+    }
+
+    lapack_free(work);
+    free(iwork);
+
+    return rcond;
 }
 
 /**
@@ -15178,7 +15216,7 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
  * equivalent to premultiplying @A by the so-called "commutation
  * matrix" $K_{r,c}$. If the @add_id flag is non-zero, then @A is
  * added to the output matrix, so that @A is premultiplied by (I +
- * K_{r,c}) if @pre is nonzero, postmultiplied if @pre is 0. 
+ * K_{r,c}) if @pre is nonzero, postmultiplied if @pre is 0.
  *
  * See eg Magnus and Neudecker (1988), "Matrix Differential Calculus
  * with Applications in Statistics and Econometrics"
@@ -15190,7 +15228,7 @@ gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
 
     /* dim0 is the dimension on which the swapping has to happen; dim1
        is the other one */
-    
+
     int dim0 = r * c;
     int dim1 = pre ? A->cols : A->rows;
     int *indices;

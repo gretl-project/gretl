@@ -31,6 +31,7 @@
 #define ESSZERO 1e-22 /* SSR less than this counts as zero */
 
 #define QR_PIVOT 0
+#define RCOND_MIN  1.0e-14
 #define RCOND_WARN 1.0e-07
 
 enum {
@@ -1450,6 +1451,7 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
 				 int *reordered)
 {
     gretl_matrix *tmp;
+    double rcond;
     int k = gretl_matrix_rows(R);
     int *P = NULL;
     int *D = NULL;
@@ -1462,17 +1464,31 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
 	return err;
     }
 
-    r = 0;
-    for (i=0; i<k; i++) {
-	if (fabs(gretl_matrix_get(R, i, i)) > 1.0e-8) {
-	    r++;
+    rcond = gretl_triangular_matrix_rcond(R, 'U', 'N');
+
+    if (rcond < RCOND_MIN) {
+	r = 0;
+	for (i=0; i<k; i++) {
+	    if (fabs(gretl_matrix_get(R, i, i)) > 1.0e-9) {
+		r++;
+		if (i > 0 && tmp->val[i] < tmp->val[i-1]) {
+		    *reordered = 1;
+		}
+	    } else {
+		fprintf(stderr, "QR pivot: break on d = %g\n",
+			gretl_matrix_get(R, i, i));
+		break;
+	    }
+	}
+    } else {
+	r = k;
+	for (i=0; i<k; i++) {
 	    if (i > 0 && tmp->val[i] < tmp->val[i-1]) {
 		*reordered = 1;
 	    }
-	} else {
-	    break;
 	}
     }
+
     *rank = r;
 
     /* We need to record @P if rank is less than k or if
