@@ -1482,13 +1482,16 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
     if (r == k && *reordered == 0) {
 	; /* OK, nothing special required */
     } else if (r == k) {
+	/* handle reordering */
 	P = calloc(k, sizeof *P);
 	for (i=0; i<k; i++) {
 	    P[i] = tmp->val[i];
 	}
     } else if (r == 0 || pD == NULL) {
+	/* not handling rank deficiency */
 	err = E_SINGULAR;
     } else {
+	/* handle rank deficiency */
 	int j, skip;
 	
 	P = calloc(r, sizeof *P);
@@ -1516,9 +1519,9 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
     }    
 
 #if 1
-    fprintf(stderr, "QR_decomp_pivot_plus: rank=%d, reordered=%d\n",
-	    *rank, *reordered);
-    gretl_matrix_print(tmp, "P");
+    fprintf(stderr, "QR_decomp_pivot_plus: k=%d, rank=%d, reordered=%d\n",
+	    k, *rank, *reordered);
+    // gretl_matrix_print(tmp, "P");
 #endif
 
     gretl_matrix_free(tmp);
