@@ -8822,8 +8822,8 @@ static int get_R_rank (const gretl_matrix *R)
  * @uplo: 'U' for upper triangular input, 'L' for lower.
  * @diag: 'N' for non-unit triangular, 'U' for unit triangular.
  *
- * Returns: the reciprocal condition number of @R, or NADBL on
- * failure.
+ * Returns: the reciprocal condition number of @R in the 1-norm,
+ * or NADBL on failure.
  */
 
 double gretl_triangular_matrix_rcond (const gretl_matrix *A,
