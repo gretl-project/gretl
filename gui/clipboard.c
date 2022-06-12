@@ -248,11 +248,11 @@ static void gretl_clipboard_set (int fmt, int imgtype)
 	    fmt, imgtype, n_targs);
 #endif
 
-    if (mdata != NULL) {
-	main = mdata->main;
-    } else {
-	main = get_primary_hansl_window();
-    }
+#ifdef GRETL_EDIT
+    main = tabwin_get_main(editor);
+#else
+    main = mdata->main;
+#endif
 
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
 				      gretl_clipboard_get,

@@ -1596,12 +1596,6 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	}
     }
 
-#ifdef GRETL_EDIT
-    if (get_n_hansl_editor_windows() <= 1) {
-	gtk_main_quit();
-    }
-#endif
-
     return FALSE;
 }
 

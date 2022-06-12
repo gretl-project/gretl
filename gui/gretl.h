@@ -72,6 +72,7 @@
 #include "settings.h"
 #include "helpfiles.h"
 #include "focus.h"
+#include "tabwin.h"
 
 #ifdef ENABLE_NLS
 # include "locale.h"
@@ -127,6 +128,9 @@ extern char Rcommand[MAXSTR];
 extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];
 extern PangoFontDescription *fixed_font;
+#ifdef GRETL_EDIT
+extern tabwin_t *editor;
+#endif
 
 #include "gretl_enums.h"
 
@@ -143,7 +147,9 @@ int tryfile_is_set (void);
 gboolean open_tryfile (gboolean startup);
 void about_dialog (GtkWidget *w);
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+void set_editor (tabwin_t *tabwin);
+#else
 int mdata_selection_count (void);
 int mdata_active_var (void);
 void populate_varlist (void);

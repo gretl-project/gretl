@@ -65,10 +65,6 @@ int get_script_output_number (void);
 
 windata_t *get_unique_output_viewer (void);
 
-int get_n_hansl_editor_windows (void);
-
-GtkWidget *get_primary_hansl_window (void);
-
 void maybe_close_window_for_user_var (const gpointer data,
 				      GretlObjType otype);
 

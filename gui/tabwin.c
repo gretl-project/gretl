@@ -44,7 +44,8 @@ GtkTargetEntry tabwin_drag_targets[] = {
 
 /* We support a tabbed editor for hansl scripts, one for
    "alt" (foreign) scripts, and also a tabbed viewer for
-   gretl models.
+   gretl models -- unless we're gretl_edit, in which case
+   there's a single integrated tabbed script editor.
 */
 
 static tabwin_t *tabhansl;
@@ -53,7 +54,6 @@ static tabwin_t *tabmod;
 
 #ifdef GRETL_EDIT
 static const char *hansl_title = N_("gretl_edit");
-static const char *alt_title = N_("gretl_edit: foreign scripts");
 #else
 static const char *hansl_title = N_("gretl: script editor");
 static const char *alt_title = N_("gretl: foreign script editor");
@@ -70,8 +70,11 @@ static void tabwin_destroy (GtkWidget *w, tabwin_t *tabwin)
     } else if (tabwin == tabmod) {
 	tabmod = NULL;
     }
-
     free(tabwin);
+
+#ifdef GRETL_EDIT
+    gtk_main_quit();
+#endif
 }
 
 static tabwin_t *vwin_get_tabwin (windata_t *vwin)
@@ -109,13 +112,12 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	}
     }
 
-#ifdef GRETL_EDIT
-    if (!ret && get_n_hansl_editor_windows() <= 1) {
-	gtk_main_quit();
-    }
-#endif
-
     return ret;
+}
+
+GtkWidget *tabwin_get_main (tabwin_t *tabwin)
+{
+    return tabwin == NULL ? NULL : tabwin->main;
 }
 
 /* called from winstack.c on program exit: @w will
@@ -584,6 +586,11 @@ static tabwin_t *make_tabbed_viewer (int role)
 
     /* top-level window */
     tabwin->main = gretl_gtk_window();
+#ifdef GRETL_EDIT
+    gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
+    g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
+		     G_CALLBACK(tabedit_quit_check), tabwin);
+#else
     if (role == EDIT_HANSL) {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
@@ -595,6 +602,7 @@ static tabwin_t *make_tabbed_viewer (int role)
     } else {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _("gretl: models"));
     }
+#endif
     g_signal_connect(G_OBJECT(tabwin->main), "destroy",
 		     G_CALLBACK(tabwin_destroy), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
@@ -687,6 +695,12 @@ windata_t *viewer_tab_new (int role, const char *info,
     if (tabwin == NULL) {
 	return NULL;
     }
+
+#ifdef GRETL_EDIT
+    if (editor == NULL) {
+	set_editor(tabwin);
+    }
+#endif
 
     vwin = vwin_new(role, data);
     if (vwin == NULL) {
