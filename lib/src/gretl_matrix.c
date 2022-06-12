@@ -8624,7 +8624,10 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
         err = E_ALLOC;
         goto bailout;
     } else {
-	for (i=0; i<n; i++) {
+	/* pin the first column in place */
+	jpvt[0] = 1;
+	/* but allow permutation of the others */
+	for (i=1; i<n; i++) {
 	    jpvt[i] = 0;
 	}
     }
