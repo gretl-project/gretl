@@ -1667,6 +1667,14 @@ gretl_matrix *gretl_cmatrix_add_sub (const gretl_matrix *A,
     return C;
 }
 
+double gretl_cquad (double complex z)
+{
+    double complex zr = creal(z);
+    double complex zi = cimag(z);
+
+    return zr*zr + zi*zi;
+}
+
 /* Apply a function which maps from complex to real:
    creal, cimag, carg, cmod.
 */

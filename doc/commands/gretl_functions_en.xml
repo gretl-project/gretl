@@ -3140,6 +3140,27 @@
       </description>
     </function>
 
+    <function name="cquad" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Z</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given an <by r="m" c="n"/> complex matrix
+	  <argname>Z</argname>, returns an <by r="m" c="n"/> real
+	  matrix holding the quadrance of the elements of
+	  <argname>Z</argname>. The quadrance of the complex number
+	  <math>z</math> = <math>a</math> + <math>bi</math> is
+	  <math>a</math><sup>2</sup> + <math>b</math><sup>2</sup>. It
+	  therefore equals the squared modulus of <math>z</math> and
+	  also equals <math>z</math> multiplied by its complex
+	  conjugate, but the direct calculation carried out by
+	  <lit>cquad</lit> is considerably faster than either of the
+	  alternative approaches.
+	</para>
+      </description>
+    </function>
+
     <function name="corr" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y1</fnarg>

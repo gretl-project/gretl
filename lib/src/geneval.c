@@ -9860,7 +9860,7 @@ static void *get_complex_counterpart (void *func)
 
 #define cmplx_to_double(f) (f == F_CARG || f == F_CMOD || \
                             f == F_REAL || f == F_IMAG || \
-                            f == F_ABS)
+                            f == F_CQUAD || f == F_ABS)
 
 /* application of scalar function to each element of matrix */
 
@@ -16878,6 +16878,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CARG:
     case F_CONJ:
     case F_CMOD:
+    case F_CQUAD:
         if (complex_node(l)) {
             ret = apply_matrix_func(l, t, p);
         } else {

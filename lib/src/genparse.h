@@ -168,6 +168,7 @@ enum {
     F_IMAG,
     F_CARG,
     F_CMOD,
+    F_CQUAD,
     FP_MAX,      /* separator: end of pointerized functions */
     F_CONJ,
     F_TOINT,

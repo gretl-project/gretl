@@ -26,6 +26,7 @@
 #include "gretl_normal.h"
 #include "gretl_bundle.h"
 #include "uservar_priv.h"
+#include "gretl_cmatrix.h"
 
 #define NUMLEN 32
 #define MAXQUOTE 64
@@ -251,6 +252,7 @@ struct str_table_ex ptrfuncs[] = {
     { F_IMAG,  "Im",    cimag },
     { F_CARG,  "carg",  carg },
     { F_CMOD,  "cmod",  cabs },
+    { F_CQUAD, "cquad", gretl_cquad },
     { 0, NULL, NULL }
 };
 
