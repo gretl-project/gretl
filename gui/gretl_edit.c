@@ -448,11 +448,6 @@ int main (int argc, char **argv)
     *auxname = '\0';
     *filearg = '\0';
 
-#if GUI_DEBUG
-    fprintf(stderr, "starting gretl %s, build date %s\n", GRETL_VERSION,
-	    BUILD_DATE);
-#endif
-
 #ifdef G_OS_WIN32
     alt_gtk_init(&argc, &argv, filearg, &opterr);
 #else
@@ -503,20 +498,12 @@ int main (int argc, char **argv)
 	strncat(filearg, argv[1], MAXLEN - 1);
     }
 
-#if GUI_DEBUG
-    fprintf(stderr, "finished miscellaneous init functions\n");
-#endif
-
     if (*filearg != '\0') {
 	/* Record what is presumably a filename argument
 	   given on the command line.
 	*/
 	record_filearg(tryfile, filearg);
     }
-
-#if GUI_DEBUG
-    fprintf(stderr, "about to build GUI...\n");
-#endif
 
 #if defined(G_OS_WIN32)
     set_up_windows_look();
