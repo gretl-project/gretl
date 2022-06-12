@@ -129,7 +129,7 @@ extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];
 extern PangoFontDescription *fixed_font;
 #ifdef GRETL_EDIT
-extern tabwin_t *editor;
+extern GtkWidget *editor;
 #endif
 
 #include "gretl_enums.h"
@@ -148,7 +148,7 @@ gboolean open_tryfile (gboolean startup);
 void about_dialog (GtkWidget *w);
 
 #ifdef GRETL_EDIT
-void set_editor (tabwin_t *tabwin);
+void set_editor (GtkWidget *w);
 #else
 int mdata_selection_count (void);
 int mdata_active_var (void);

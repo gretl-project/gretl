@@ -74,7 +74,7 @@ static GOptionEntry options[] = {
 };
 
 windata_t *mdata;
-tabwin_t *editor;
+GtkWidget *editor;
 char scriptfile[MAXLEN];
 float gui_scale;
 
@@ -300,8 +300,8 @@ static GtkosxApplication *MacApp;
 
 static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
 {
-    //return tabwin_exit_check();
-    return FALSE;
+    return tabwin_exit_check(editor);
+    // return FALSE;
 }
 
 static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
@@ -612,7 +612,7 @@ gboolean open_tryfile (gboolean startup)
     return ret;
 }
 
-void set_editor (tabwin_t *tabwin)
+void set_editor (GtkWidget *w)
 {
-    editor = tabwin;
+    editor = w;
 }

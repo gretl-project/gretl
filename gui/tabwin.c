@@ -115,11 +115,6 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
     return ret;
 }
 
-GtkWidget *tabwin_get_main (tabwin_t *tabwin)
-{
-    return tabwin == NULL ? NULL : tabwin->main;
-}
-
 /* called from winstack.c on program exit: @w will
    be the top-level of a tabbed window */
 
@@ -698,7 +693,7 @@ windata_t *viewer_tab_new (int role, const char *info,
 
 #ifdef GRETL_EDIT
     if (editor == NULL) {
-	set_editor(tabwin);
+	set_editor(tabwin->main);
     }
 #endif
 
@@ -1175,6 +1170,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 
 gboolean window_is_undockable (windata_t *vwin)
 {
+#ifndef GRETL_EDIT
     if (vwin->topmain != NULL) {
 	tabwin_t *tabwin = vwin_get_tabwin(vwin);
 
@@ -1182,12 +1178,14 @@ gboolean window_is_undockable (windata_t *vwin)
 	    return TRUE;
 	}
     }
+#endif
 
     return FALSE;
 }
 
 gboolean window_is_dockable (windata_t *vwin)
 {
+#ifndef GRETL_EDIT
     if (vwin->topmain == NULL) {
 	if (vwin->role == EDIT_HANSL && tabhansl != NULL) {
 	    return TRUE;
@@ -1197,6 +1195,7 @@ gboolean window_is_dockable (windata_t *vwin)
 	    return TRUE;
 	}
     }
+#endif
 
     return FALSE;
 }

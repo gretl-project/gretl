@@ -22,8 +22,6 @@
 
 typedef struct tabwin_t_  tabwin_t;
 
-GtkWidget *tabwin_get_main (tabwin_t *tabwin);
-
 windata_t *viewer_tab_new (int role, const char *info,
 			   gpointer data);
 

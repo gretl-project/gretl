@@ -509,6 +509,11 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		tabwin_navigate(vwin, upkey);
 		return TRUE;
 	    }
+#ifdef GRETL_EDIT
+	    if (upkey == GDK_Q && !tabwin_exit_check(editor)) {
+		gtk_widget_destroy(editor);
+	    }
+#endif
 	} else if (upkey == GDK_Q || upkey == GDK_W) {
 	    gtk_widget_destroy(vwin->main);
 	    return TRUE;

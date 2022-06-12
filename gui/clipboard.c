@@ -249,7 +249,7 @@ static void gretl_clipboard_set (int fmt, int imgtype)
 #endif
 
 #ifdef GRETL_EDIT
-    main = tabwin_get_main(editor);
+    main = editor;
 #else
     main = mdata->main;
 #endif
