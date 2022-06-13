@@ -300,8 +300,12 @@ static GtkosxApplication *MacApp;
 
 static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
 {
-    return tabwin_exit_check(editor);
-    // return FALSE;
+    gboolean ret;
+
+    fprintf(stderr, "app_should_quit_cb (editor %p)...\n", (void *) editor);
+    ret = tabwin_exit_check(editor);
+    fprintf(stderr, "  ret = %d\n", ret);
+    return ret;
 }
 
 static void app_will_quit_cb (GtkosxApplication *App, gpointer p)

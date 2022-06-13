@@ -71,7 +71,7 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
 	gtk_widget_show_all(GTK_WIDGET(si));
 	gtk_spinner_start(GTK_SPINNER(sp));
     } else {
-	/* reinstate the exec button */
+	/* remove spinner and reinstate the exec button */
 	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), si);
 	gtk_spinner_stop(GTK_SPINNER(sp));
 	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(si));
@@ -81,15 +81,15 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
 
 #else
 
+/* GTK2: just toggle the sensitivity of the exec button */
+
 static void modify_exec_button (windata_t *vwin, int to_spinner)
 {
     GtkWidget *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
 
     if (to_spinner) {
-	/* GTK2, just show the exec button as insensitive */
 	gtk_widget_set_sensitive(eb, FALSE);
     } else {
-	/* make the exec button sensitive again */
 	gtk_widget_set_sensitive(eb, TRUE);
     }
 }

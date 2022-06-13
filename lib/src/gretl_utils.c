@@ -2038,9 +2038,6 @@ int gretl_pipe_output (char **argv, const char *currdir, PRN *prn)
 	if (errout != NULL && *errout) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, errout);
-	} else if (sout != NULL && *sout) {
-	    gretl_errmsg_set(sout);
-	    fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, sout);
 	} else {
 	    gretl_errmsg_set(_("Command failed"));
 	    fprintf(stderr, "gretl_pipe_output: status = %d\n", status);
@@ -2048,7 +2045,7 @@ int gretl_pipe_output (char **argv, const char *currdir, PRN *prn)
 	err = 1;
     }
 
-    if (!err && sout != NULL) {
+    if (sout != NULL && *sout) {
 	pputs(prn, sout);
     }
 
