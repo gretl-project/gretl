@@ -416,7 +416,6 @@ struct str_table funcs[] = {
     { F_MCSEL,    "selifc" },
     { F_MRSEL,    "selifr" },
     { F_POLROOTS, "polroots" },
-    { F_POLROOTS2, "polroots2" },
     { F_DUMIFY,   "dummify" },
     { F_WMEAN,    "wmean" },
     { F_WVAR,     "wvar" },

@@ -53,9 +53,9 @@ $\bar{z} = a - b\,i$.
 \section{Creating a complex matrix}
 \label{sec:cmplx-create}
 
-The unique explicit constructor for complex matrices is the
-\cmd{complex()} function. This takes two arguments, giving the real
-and imaginary parts respectively, and sticks them together, as in
+The standard constructor for complex matrices is the \cmd{complex()}
+function. This takes two arguments, giving the real and imaginary
+parts respectively, and sticks them together, as in
 \begin{code}
 C = complex(A, B)
 \end{code}
@@ -310,8 +310,8 @@ matrices, namely \cmd{cum} and \cmd{diff}.
 
 \section{File input/output}
 
-Complex matrices should be stored and retrieved correctly in the
-XML serialization used for gretl session files (\texttt{*.gretl}).
+Complex matrices are stored and retrieved correctly in the XML
+serialization used for gretl session files (\texttt{*.gretl}).
 
 The functions \cmd{mwrite} and \cmd{mread} work in two modes:
 binary mode if the filename ends with ``\texttt{.bin}'' and text mode
@@ -371,7 +371,7 @@ eval D - jl_D
 \end{scode}
 \end{script}
 
-\section{Backward incompatibility}
+\section{Backward (in)compatibility}
 \label{sec:cmplx-compat}
 
 Prior to version 2019d gretl did not provide native support for
@@ -384,10 +384,64 @@ matrices in this special form, and the functions \cmd{cmult} and
 \cmd{cdiv} (complex multiplication and division) operated on such
 matrices.
 
-As of version 2022b, \cmd{fft} has been redefined to work with
-``proper'' complex matrices as described above. The other affected
-functions are deprecated and will be removed or redefined in a
-subsequent release.
+As of version 2022b, \cmd{fft} and \cmd{polroots} have been redefined
+to work with ``proper'' complex matrices as described above. The other
+affected functions are deprecated and will be removed or redefined in
+a subsequent release. If you have any hansl code using the legacy
+representation the following brief porting guide may be helpful.
+
+\subsection{Porting old complex code}
+
+\texttt{cmult} and \texttt{cdiv}: These functions performed
+element-wise multiplication and division of complex column vectors in
+the old two-column form. The statements
+\begin{code}
+# old element-wise operations
+c1 = cmult(a1, b1)
+d1 = cdiv(a1, b1)
+\end{code}
+can be updated as
+\begin{code}
+# new element-wise operations
+c2 = a2 .* b2
+d2 = a2 ./ b2
+\end{code}
+(where \texttt{a2} and \texttt{b2} are new-style complex vectors or
+matrices). The following statements
+\begin{code}
+c3 = a2 * b2
+d3 = a2 / b2
+\end{code}
+are also valid but have different effects, the first performing
+standard (rather than element-wise) multiplication of matrices
+(complex or real) and the second performing ``right division'',
+equivalent to \texttt{a2 * inv(b2)}. Note that while the return value
+from \texttt{cmult} and \texttt{cdiv} could be either a real vector or
+a (two column) complex vector, the new-style operations yield a
+nominally complex result if at least one of the operands is complex,
+even if the result has an all-zero imaginary part.
+
+\texttt{eigengen}: Most uses of this legacy function simply retrieve
+the eigenvalues of a general (that is, not symmetric) matrix, and do
+not exploit the option of retrieving eigenvectors. In that context it
+is straightforward to substitute a call to the new function
+\texttt{eigen}. The only point to note is that \texttt{eigen} returns
+a new-style complex vector; if you have need to convert this to the
+legacy representation you can use the \texttt{cswitch} function, which
+is documented in the \GCR. In brief, the following code gives you the
+legacy equivalent of a new-style complex vector \texttt{v}:
+\texttt{newvec}.
+\begin{code}
+if v[imag] == 0
+   oldv = v[real]
+else
+   oldv = cswitch(v, 2)
+endif
+\end{code}
+
+\texttt{polroots}: This function now returns a new-style complex
+vector. As with \texttt{eigengen}, you can use \texttt{cswitch} to
+convert the vector if necessary.
 
 %%% Local Variables:
 %%% mode: latex

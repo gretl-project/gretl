@@ -388,11 +388,8 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 				     int force_complex,
+				     int legacy,
 				     int *err);
-
-gretl_matrix *gretl_matrix_polroots2 (const gretl_matrix *a,
-				      int force_complex,
-				      int *err);
 
 void gretl_matrix_raise (gretl_matrix *m, double x);
 

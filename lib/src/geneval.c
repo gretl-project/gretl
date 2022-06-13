@@ -4425,7 +4425,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
                 /* m must be a vector */
                 p->err = E_TYPES;
             }
-        } else if (f == F_POLROOTS2) {
+        } else if (f == F_POLROOTS) {
 	    /* if present, the @r node should hold a boolean */
 	    parm = node_get_bool(r, p, 0);
 	}
@@ -4573,10 +4573,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = gretl_matrix_ffti(m, &p->err);
             break;
         case F_POLROOTS:
-            ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
-            break;
-        case F_POLROOTS2:
-            ret->v.m = gretl_matrix_polroots2(m, parm, &p->err);
+            ret->v.m = gretl_matrix_polroots(m, parm, 0, &p->err);
             break;
         case F_RANKING:
             ret->v.m = rank_vector(m, F_SORT, &p->err);
@@ -17429,7 +17426,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFT:
     case F_FFTI:
     case F_POLROOTS:
-    case F_POLROOTS2:
     case F_CTRANS:
         /* matrix -> matrix functions */
         if (l->t == MAT || l->t == NUM) {

@@ -284,7 +284,8 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	tmp = poly_from_coeff(coeff, mask, n, ar);
     }
 
-    r = gretl_matrix_polroots(tmp, 1, &err);
+    /* force legacy form of complex output, for now */
+    r = gretl_matrix_polroots(tmp, 1, 1, &err);
 
     if (err) {
 	goto bailout;

@@ -10228,6 +10228,7 @@
     <function name="polroots" section="math" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
+	<fnarg type="bool" optional="true">ensure_complex</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10238,10 +10239,10 @@
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  If all the roots are real they are returned in a column vector of
-	  length <math>p</math>, otherwise a <by r="p" c="2"/> matrix
-	  is returned, the real parts in the first column and the imaginary
-	  parts in the second.
+	  The return value is a <math>p</math>-vector. By default this
+	  is a real vector if no root has a non-zero imaginary part,
+	  otherwise a complex vector. The optional second argument can
+	  be used to produce a complex vector in all cases.
 	</para>
       </description>
     </function>

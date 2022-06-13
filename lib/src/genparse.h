@@ -246,7 +246,6 @@ enum {
     F_FFTI,
     F_UPPER,
     F_LOWER,
-    F_POLROOTS,
     F_OBSLABEL,
     F_BACKTICK,
     F_STRLEN,
@@ -404,7 +403,7 @@ enum {
     F_YMD,
     F_CMULT,
     F_CDIV,
-    F_POLROOTS2,
+    F_POLROOTS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,

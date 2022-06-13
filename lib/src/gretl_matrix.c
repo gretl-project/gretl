@@ -2581,6 +2581,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
  * gretl_matrix_polroots:
  * @a: vector of coefficients.
  * @force_complex: see below.
+ * @legacy: see below.
  * @err: location to receive error code.
  *
  * Calculates the roots of the polynomial with coefficients
@@ -2589,95 +2590,10 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
  * i.e. starting with the constant and ending with the
  * coefficient on x^p.
  *
- * Returns: by default, a p-vector if all the roots are real,
- * otherwise a p x 2 matrix with the real parts in the first
- * column and the imaginary parts in the second. The @force_complex
- * flag can be used to enforce a p x 2 return even if the
- * imaginary parts are all zero.
- */
-
-gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
-                                     int force_complex,
-                                     int *err)
-{
-    gretl_matrix *r = NULL;
-    double *xcof = NULL, *cof = NULL;
-    cmplx *roots = NULL;
-    int i, m, order, polerr;
-
-    *err = 0;
-
-    m = gretl_vector_get_length(a);
-
-    if (m < 2) {
-        *err = E_DATA;
-        return NULL;
-    }
-
-    order = m - 1;
-
-    xcof = malloc(m * sizeof *xcof);
-    cof = malloc(m * sizeof *cof);
-    roots = malloc(order * sizeof *roots);
-
-    if (xcof == NULL || cof == NULL || roots == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    for (i=0; i<m; i++) {
-        xcof[i] = a->val[i];
-    }
-
-    polerr = polrt(xcof, cof, order, roots);
-
-    if (polerr) {
-        *err = E_DATA;
-    } else {
-        int allreal = !force_complex;
-
-        for (i=0; i<order && allreal; i++) {
-            if (roots[i].i != 0) {
-                allreal = 0;
-            }
-        }
-        if (allreal) {
-            r = gretl_matrix_alloc(order, 1);
-        } else {
-            r = gretl_matrix_alloc(order, 2);
-        }
-        if (r == NULL) {
-            *err = E_ALLOC;
-            goto bailout;
-        }
-        for (i=0; i<order; i++) {
-            gretl_matrix_set(r, i, 0, roots[i].r);
-            if (!allreal) {
-                gretl_matrix_set(r, i, 1, roots[i].i);
-            }
-        }
-    }
-
- bailout:
-
-    free(xcof);
-    free(cof);
-    free(roots);
-
-    return r;
-}
-
-/**
- * gretl_matrix_polroots2:
- * @a: vector of coefficients.
- * @force_complex: see below.
- * @err: location to receive error code.
- *
- * Calculates the roots of the polynomial with coefficients
- * given by @a.  If the degree of the polynomial is p, then
- * @a should contain p + 1 coefficients in ascending order,
- * i.e. starting with the constant and ending with the
- * coefficient on x^p.
+ * As a transitional measure, if @legacy is non-zero, in the
+ * case of complex roots the return vector is in old-style
+ * format: real values in column 0 and imaginary parts in
+ * column 1.
  *
  * Returns: by default, a regular p-vector if all the roots are real,
  * otherwise a p x 1 complex matrix. The @force_complex flag can
@@ -2685,9 +2601,10 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
  * parts are all zero.
  */
 
-gretl_matrix *gretl_matrix_polroots2 (const gretl_matrix *a,
-				      int force_complex,
-				      int *err)
+gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
+				     int force_complex,
+				     int legacy,
+				     int *err)
 {
     gretl_matrix *r = NULL;
     double *work = NULL;
@@ -2732,6 +2649,8 @@ gretl_matrix *gretl_matrix_polroots2 (const gretl_matrix *a,
         }
         if (allreal) {
             r = gretl_matrix_alloc(order, 1);
+	} else if (legacy) {
+	    r = gretl_matrix_alloc(order, 2);
         } else {
             r = gretl_cmatrix_new(order, 1);
         }
@@ -2741,6 +2660,9 @@ gretl_matrix *gretl_matrix_polroots2 (const gretl_matrix *a,
 	    for (i=0; i<order; i++) {
 		if (allreal) {
 		    gretl_matrix_set(r, i, 0, roots[i].r);
+		} else if (legacy) {
+		    gretl_matrix_set(r, i, 0, roots[i].r);
+		    gretl_matrix_set(r, i, 1, roots[i].i);
 		} else {
 		    z = roots[i].r + roots[i].i * I;
 		    gretl_cmatrix_set(r, i, 0, z);
