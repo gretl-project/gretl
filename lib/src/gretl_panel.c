@@ -2494,12 +2494,12 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 	lsqopt |= OPT_Z;
     }
 
-    save_qr = libset_get_bool(USE_QR);
-    libset_set_bool(USE_QR, 1);
+    save_qr = libset_get_int(USE_QR);
+    libset_set_int(USE_QR, 1);
 
     femod = lsq(felist, wset, OLS, lsqopt);
 
-    libset_set_bool(USE_QR, save_qr);
+    libset_set_int(USE_QR, save_qr);
 
     if (femod.errcode) {
 	fprintf(stderr, "femod.errcode = %d\n", femod.errcode);

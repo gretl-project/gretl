@@ -42,18 +42,17 @@ typedef enum {
     FORCE_DECPOINT  = 1 << 3,  /* override locale decimal character */
     USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
     USE_SVD         = 1 << 5,  /* SVD decomposition is matrix OLS default */
-    USE_QR          = 1 << 6,  /* QR decomp is least-squares command default */
-    PREWHITEN       = 1 << 7,  /* HAC pre-whitening? */
-    FORCE_HC        = 1 << 8,  /* don't use HAC for time series */
-    USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
-    SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
-    WARNINGS        = 1 << 11, /* print numerical warning messages */
-    SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
-    BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
-    ROBUST_Z        = 1 << 14, /* use z- not t-score with HCCM/HAC */
-    MWRITE_G        = 1 << 15, /* use %g format with mwrite() */
-    MPI_USE_SMT     = 1 << 16, /* MPI: use hyperthreads by default */
-    STATE_FLAG_MAX  = 1 << 17, /* separator */
+    PREWHITEN       = 1 << 6,  /* HAC pre-whitening? */
+    FORCE_HC        = 1 << 7,  /* don't use HAC for time series */
+    USE_LBFGS       = 1 << 8,  /* prefer LBFGS to BFGS? */
+    SHELL_OK        = 1 << 9, /* "shell" facility is approved? */
+    WARNINGS        = 1 << 10, /* print numerical warning messages */
+    SKIP_MISSING    = 1 << 11, /* skip NAs when building matrix from series */
+    BFGS_RSTEP      = 1 << 12, /* use Richardson in BFGS numerical gradient */
+    ROBUST_Z        = 1 << 13, /* use z- not t-score with HCCM/HAC */
+    MWRITE_G        = 1 << 14, /* use %g format with mwrite() */
+    MPI_USE_SMT     = 1 << 15, /* MPI: use hyperthreads by default */
+    STATE_FLAG_MAX  = 1 << 16, /* separator */
     /* state small int (but non-boolean) vars */
     GRETL_OPTIM,
     VECM_NORM,
@@ -62,6 +61,7 @@ typedef enum {
     ARMA_VCV,
     WILDBOOT_DIST,
     FDJAC_QUAL,
+    USE_QR,
     MAX_VERBOSE,
     HC_VERSION,
     HAC_KERNEL,

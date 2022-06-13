@@ -30,7 +30,6 @@
 
 #define ESSZERO 1e-22 /* SSR less than this counts as zero */
 
-#define QR_PIVOT 0
 #define RCOND_MIN  1.0e-14
 #define RCOND_WARN 1.0e-07
 
@@ -1397,10 +1396,11 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
     return err;
 }
 
-#if QR_PIVOT
+/* variant of drop_redundant_vars used in association with
+   column pivoting */
 
 static void
-drop_redundant_vars (MODEL *pmod, DATASET *dset, const int *D)
+pivot_drop_redundant (MODEL *pmod, DATASET *dset, const int *D)
 {
     int ndrop = D[0];
     int *droplist = gretl_list_new(ndrop);
@@ -1423,6 +1423,41 @@ drop_redundant_vars (MODEL *pmod, DATASET *dset, const int *D)
     pmod->dfn = pmod->ncoeff - pmod->ifc;
 
     gretl_model_set_list_as_data(pmod, "droplist", droplist);
+}
+
+/* original variant, used when QR decomposition does not use
+   column pivoting */
+
+static void
+drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
+		     int rank)
+{
+    int *droplist = NULL;
+    int i, vi, pos, nd;
+    double d;
+
+    pos = 2;
+    nd = 0;
+    for (i=0; i<R->rows; i++) {
+	d = gretl_matrix_get(R, i, i);
+	if (fabs(d) < R_DIAG_MIN) {
+	    vi = pmod->list[pos];
+	    gretl_list_append_term(&droplist, vi);
+	    fprintf(stderr, "dropping redundant variable %d (%s): d = %g\n",
+		    vi, dset->varname[vi], d);
+	    gretl_list_delete_at_pos(pmod->list, pos--);
+	    nd++;
+	}
+	pos++;
+    }
+
+    pmod->ncoeff -= nd;
+    pmod->dfd = pmod->nobs - pmod->ncoeff;
+    pmod->dfn = pmod->ncoeff - pmod->ifc;
+
+    if (droplist != NULL) {
+	gretl_model_set_list_as_data(pmod, "droplist", droplist);
+    }
 }
 
 static int trim_R (gretl_matrix *R, int r)
@@ -1452,7 +1487,7 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
 {
     gretl_matrix *tmp;
     double rcond;
-    int k = gretl_matrix_rows(R);
+    int k = R->rows;
     int *P = NULL;
     int *D = NULL;
     int i, r, err;
@@ -1498,8 +1533,8 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
     if (r == k && *reordered == 0) {
 	; /* OK, nothing special required */
     } else if (r == k) {
-	/* handle reordering */
-	P = calloc(k, sizeof *P);
+	/* handle reordering (only) */
+	P = calloc(R->rows, sizeof *P);
 	for (i=0; i<k; i++) {
 	    P[i] = tmp->val[i];
 	}
@@ -1509,7 +1544,7 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
     } else {
 	/* handle rank deficiency */
 	int j, skip;
-	
+
 	P = calloc(r, sizeof *P);
 	D = gretl_list_new(k-r);
 	Q->cols = r;
@@ -1532,7 +1567,7 @@ static int QR_decomp_pivot_plus (gretl_matrix *Q,
 	*pD = D;
     } else {
 	free(D);
-    }    
+    }
 
 #if 1
     fprintf(stderr, "QR_decomp_pivot_plus: k=%d, rank=%d, reordered=%d\n",
@@ -1587,7 +1622,8 @@ static int qr_transcribe_vcv (gretl_matrix *V, int *P)
     }
 }
 
-int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
+static int
+gretl_qr_pivot_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
     integer T, k;
     gretl_matrix *y = NULL;
@@ -1614,6 +1650,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     }
 
     get_model_data(pmod, dset, Q, y);
+
     if (opt & OPT_Z) {
 	err = QR_decomp_pivot_plus(Q, R, &P, NULL, &rank, &reordered);
     } else {
@@ -1621,7 +1658,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     }
 
     if (!err && rank < k) {
-	drop_redundant_vars(pmod, dset, D);
+	pivot_drop_redundant(pmod, dset, D);
 	maybe_shift_ldepvar(pmod, dset);
 	k = rank;
     }
@@ -1740,41 +1777,8 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     return err;
 }
 
-#else /* not QR_PIVOT */
-
-static void
-drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
-		     int rank)
-{
-    int *droplist = NULL;
-    int i, vi, pos, nd;
-    double d;
-
-    pos = 2;
-    nd = 0;
-    for (i=0; i<R->rows; i++) {
-	d = gretl_matrix_get(R, i, i);
-	if (fabs(d) < R_DIAG_MIN) {
-	    vi = pmod->list[pos];
-	    gretl_list_append_term(&droplist, vi);
-	    fprintf(stderr, "dropping redundant variable %d (%s): d = %g\n",
-		    vi, dset->varname[vi], d);
-	    gretl_list_delete_at_pos(pmod->list, pos--);
-	    nd++;
-	}
-	pos++;
-    }
-
-    pmod->ncoeff -= nd;
-    pmod->dfd = pmod->nobs - pmod->ncoeff;
-    pmod->dfn = pmod->ncoeff - pmod->ifc;
-
-    if (droplist != NULL) {
-	gretl_model_set_list_as_data(pmod, "droplist", droplist);
-    }
-}
-
-int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
+static int
+gretl_qr_plain_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
     integer T, k;
     gretl_matrix *y = NULL;
@@ -1791,9 +1795,8 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     y = gretl_matrix_alloc(T, 1);
     Q = gretl_matrix_alloc(T, k);
     R = gretl_matrix_alloc(k, k);
-    V = gretl_matrix_alloc(k, k);
 
-    if (y == NULL || Q == NULL || R == NULL || V == NULL) {
+    if (y == NULL || Q == NULL || R == NULL) {
 	err = E_ALLOC;
 	goto qr_cleanup;
     }
@@ -1807,7 +1810,6 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 	k = pmod->list[0] - 1;
 	gretl_matrix_reuse(Q, T, k);
 	gretl_matrix_reuse(R, k, k);
-	gretl_matrix_reuse(V, k, k);
 	get_model_data(pmod, dset, Q, y);
 	err = QR_decomp_plus(Q, R, NULL, &warn);
 	if (!err) {
@@ -1819,11 +1821,12 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 	goto qr_cleanup;
     }
 
-    /* allocate temporary arrays */
+    /* allocate temporary matrices */
     g = gretl_matrix_alloc(k, 1);
     b = gretl_matrix_alloc(k, 1);
+    V = gretl_matrix_alloc(k, k);
 
-    if (g == NULL || b == NULL) {
+    if (g == NULL || b == NULL || V == NULL) {
 	err = E_ALLOC;
     } else {
 	err = allocate_model_arrays(pmod, k, dset->n);
@@ -1917,7 +1920,14 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     return err;
 }
 
-#endif /* QR_PIVOT or not */
+int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
+{
+    if (libset_get_int(USE_QR) > 1) {
+	return gretl_qr_pivot_regress(pmod, dset, opt);
+    } else {
+	return gretl_qr_plain_regress(pmod, dset, opt);
+    }
+}
 
 int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
 			     gretlopt opt)
