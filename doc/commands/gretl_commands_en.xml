@@ -13819,6 +13819,18 @@
 	  default is 0.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>gmp_bits</lit>: one integer, which should be an
+	  integral power of 2 (default and minimum value 256, maximum
+	  8192). Controls the number of bits used to represent a
+	  floating point number when GMP (the GNU Multiple Precision
+	  Arithmetic Library) is called, primarily via the
+	  <lit>mpols</lit> command. Larger values give greater
+	  precision at the cost of longer compute time. This setting
+	  can also be controlled by the environment variable
+	  <lit>GRETL_MP_BITS</lit>.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Random number generation</subhead>
