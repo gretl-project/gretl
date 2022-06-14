@@ -4270,12 +4270,29 @@ static int is_idempotent (const gretl_matrix *m,
     double tol = 1.0e-12;
 
     if (evals != NULL) {
-	int i;
 	double x;
-	for (i=0; i<m->rows; i++) {
-	    x = fabs(evals->val[i] * (1.0 - evals->val[i])) > tol;
-	    if (x > tol) {
-		return 0;
+	int i;
+
+	if (gretl_is_complex(evals)) {
+	    double complex z;
+
+	    for (i=0; i<m->rows; i++) {
+		z = gretl_cmatrix_get(evals, i, 0);
+		if (fabs(cimag(z)) > tol) {
+		    return 0;
+		} else {
+		    x = creal(z);
+		    if (fabs(x * (1.0 - x)) > tol) {
+			return 0;
+		    }
+		}
+	    }
+	} else {
+	    for (i=0; i<m->rows; i++) {
+		x = evals->val[i];
+		if (fabs(x * (1.0 - x)) > tol) {
+		    return 0;
+		}
 	    }
 	}
     }
@@ -4372,7 +4389,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     }
 
     if (s > 0 && (s != GRETL_MATRIX_SYMMETRIC || evals == NULL)) {
-	evals = gretl_general_matrix_eigenvals(m, &err);
+	evals = gretl_dgeev(m, NULL, NULL, &err);
     }
 
     if (s > 0) {
@@ -4406,14 +4423,15 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     }
 
     if (evals != NULL) {
+	double complex z;
 	int i;
 
 	pprintf(prn, "\n%s:\n", _("Eigenvalues"));
 
 	for (i=0; i<m->rows; i++) {
-	    if (s != GRETL_MATRIX_SYMMETRIC) {
-		pprintf(prn, "  (%.8g, %.8g)\n", gretl_matrix_get(evals, i, 0),
-			gretl_matrix_get(evals, i, 1));
+	    if (gretl_is_complex(evals)) {
+		z = gretl_cmatrix_get(evals, i, 0);
+		pprintf(prn, "  (%.8g, %.8g)\n", creal(z), cimag(z));
 	    } else {
 		pprintf(prn, "  %.8g\n", evals->val[i]);
 	    }
