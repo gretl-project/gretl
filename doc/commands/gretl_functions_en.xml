@@ -6442,10 +6442,31 @@
       </fnargs>
       <description>
 	<para>
-	  Returns 1 if <argname>name</argname> is the name of a
-	  complex matrix, 0 if it is the name of a real matrix, or
-	  <lit>NA</lit> otherwise.
+	  Tests whether <argname>name</argname> is the identifier for
+	  a complex matrix. The return value is one of the following:
 	</para>
+	<li>
+	  <para>
+	    <lit>NA</lit>: <argname>name</argname> does not identify a
+	    matrix.
+	  </para>
+	  <para>
+	    <lit>0</lit>: <argname>name</argname> identifies a real
+	    matrix, composed entirely of regular floating-point
+	    numbers (<quote>doubles</quote>, in C parlance).
+	  </para>
+	  <para>
+	    <lit>1</lit>: <argname>name</argname> identifies a
+	    <quote>nominally</quote> complex matrix, composed of
+	    numbers with both a real and an imaginary part, but
+	    in which all imaginary parts are zero.
+	  </para>
+	  <para>
+	    <lit>2</lit>: the matrix in question holds at least one
+	    <quote>genuinely</quote> complex value, with a non-zero
+	    imaginary part.
+	  </para>
+	</li>
       </description>
     </function>
 
@@ -10228,7 +10249,6 @@
     <function name="polroots" section="math" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
-	<fnarg type="bool" optional="true">ensure_complex</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10239,10 +10259,8 @@
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  The return value is a <math>p</math>-vector. By default this
-	  is a real vector if no root has a non-zero imaginary part,
-	  otherwise a complex vector. The optional second argument can
-	  be used to produce a complex vector in all cases.
+	  The return value is a complex column vector of length
+	  <math>p</math>-vector.
 	</para>
       </description>
     </function>
