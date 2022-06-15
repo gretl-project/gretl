@@ -25,6 +25,7 @@
 #include "obsbutton.h"
 #include "session.h"
 #include "toolbar.h"
+#include "gui_utils.h"
 #include "datawiz.h"
 
 #include "gretl_panel.h"

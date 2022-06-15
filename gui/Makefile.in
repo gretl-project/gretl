@@ -174,6 +174,7 @@ vpath %.c $(topsrc)/gui
 vpath %.h $(topsrc)/gui
 
 SRCS = about.c \
+	base_utils.c \
 	calculator.c \
 	callbacks.c \
 	cmdstack.c \
@@ -220,6 +221,7 @@ SRCS = about.c \
 	treeutils.c \
 	update.c \
 	varinfo.c \
+	viewers.c \
 	winstack.c
 
 ifeq ($(gtk_version),2.0)
@@ -241,6 +243,12 @@ else
   SRCS += clipboard.c
 endif
 
+ifeq ($(mac_native),yes)
+  MAC_SRC = osx_open.c
+  MAC_HDR = osx_open.h
+  MAC_OBJ = osx_open.o
+endif
+
 ifeq ($(gtksv_completion),yes)
   SRCS += completions.c
 endif
@@ -257,12 +265,14 @@ all: $(PROG) gretl.lang NEWS gretl-icons.xml
 	$(AMP)$(CC) -c $(CFLAGS) $<
 	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(OBJS) $(HACK_OBJ) $(WINOBJ)
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(WINOBJ) $(MAC_OBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(WINGUI) $(LDFLAGS) -o $@ $(OBJS) \
-	$(HACK_OBJ) $(WINOBJ) $(LIBS) $(MACLIB) $(WINLIBS)
+	$(HACK_OBJ) $(WINOBJ) $(MAC_OBJ) $(LIBS) $(MACLIB) $(WINLIBS)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
+
+$(MAC_OBJ): $(MAC_SRC) $(MAC_HDR)
 
 gretlres.o: $(GRETLRC)
 	$(WINDRES) $(RCFLAGS) $< $@

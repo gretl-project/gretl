@@ -18,8 +18,14 @@
  */
 
 #include "gretl.h"
-#include "var.h"
 #include "dlgutils.h"
+#include "tabwin.h"
+#include "winstack.h"
+
+#ifdef GRETL_EDIT
+#include "editbar.h"
+#else
+#include "var.h"
 #include "guiprint.h"
 #include "session.h"
 #include "tabwin.h"
@@ -28,8 +34,9 @@
 #include "cmdstack.h"
 #include "winstack.h"
 #include "gretl_ipc.h"
-
 #include "uservar.h"
+#include "gretl_ipc.h"
+#endif
 
 #define WDEBUG 0
 
@@ -148,13 +155,24 @@ static GtkActionGroup *window_group;
 
 static const gchar *get_window_title (GtkWidget *w)
 {
+#ifdef GRETL_EDIT
+    const char *skip = "gretl_edit";
+#else
+    const char *skip = "gretl";
+#endif    
     const gchar *s = NULL;
 
     if (GTK_IS_WINDOW(w)) {
+	int n = strlen(skip);
+	
 	s = gtk_window_get_title(GTK_WINDOW(w));
-
-	if (s != NULL && !strncmp(s, "gretl", 5)) {
-	    s += 5;
+	if (s != NULL && !strncmp(s, skip, n)) {
+#ifdef GRETL_EDIT
+	    if (strlen(s) == n) {
+		return _("Script editor");
+	    }
+#endif	    
+	    s += n;
 	    s += strspn(s, " ");
 	    if (*s == ':') {
 		s++;
@@ -482,6 +500,8 @@ static void add_cascade_item (GtkWidget *menu,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 }
 
+#ifndef GRETL_EDIT
+
 static void add_log_item (GtkWidget *menu,
 			  GtkWidget *item)
 {
@@ -516,6 +536,8 @@ static void add_iconview_item (GtkWidget *menu,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 }
 
+#endif
+
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
@@ -526,11 +548,14 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     GdkEventType evtype;
     GList *wlist = gtk_action_group_list_actions(window_group);
     GList *list;
-    GtkWidget *item, *lwin;
+    GtkWidget *item;
     GtkWidget *thiswin = NULL;
     GtkAction *action;
+#ifndef GRETL_EDIT
+    GtkWidget *lwin;
     int log_up = 0;
     int icons_up = 0;
+#endif
 
     if (menu != NULL) {
 	/* we need to make sure this is up to date */
@@ -551,12 +576,14 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 
     while (list != NULL) {
 	action = (GtkAction *) list->data;
+#ifndef GRETL_EDIT
 	lwin = window_from_action(action);
 	if (is_command_log_viewer(lwin)) {
 	    log_up = 1;
 	} else if (widget_is_iconview(lwin)) {
 	    icons_up = 1;
 	}
+#endif
 	if (n_listed_windows > 1 && thiswin != NULL) {
 	    maybe_revise_action_label(action, thiswin);
 	}
@@ -572,19 +599,19 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 	add_cascade_item(menu, item);
     }
 
-    if (!gui_editor_mode()) {
-	if (!log_up || !icons_up) {
-	    item = gtk_separator_menu_item_new();
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	    if (!log_up) {
-		add_log_item(menu, item);
-	    }
-	    if (!icons_up) {
-		add_iconview_item(menu, item);
-	    }
+#ifndef GRETL_EDIT
+    if (!log_up || !icons_up) {
+	item = gtk_separator_menu_item_new();
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	if (!log_up) {
+	    add_log_item(menu, item);
+	}
+	if (!icons_up) {
+	    add_iconview_item(menu, item);
 	}
     }
+#endif
 
     if (thiswin != NULL) {
 	g_signal_connect(G_OBJECT(menu), "deactivate",
@@ -664,9 +691,12 @@ gboolean window_list_exit_check (void)
 		    /* vwin is NULL */
 		    if (g_object_get_data(G_OBJECT(w), "tabwin")) {
 			ret = tabwin_exit_check(w);
-		    } else if (window_is_package_editor(w)) {
+		    }
+#ifndef GRETL_EDIT
+		    else if (window_is_package_editor(w)) {
 			ret = package_editor_exit_check(w);
 		    }
+#endif
 		}
 	    }
 	    list = list->next;
@@ -837,6 +867,8 @@ windata_t *get_editor_for_file (const char *filename)
     return ret;
 }
 
+#ifndef GRETL_EDIT
+
 GtkWidget *get_viewer_for_plot (const char *filename)
 {
     GtkWidget *ret = NULL;
@@ -945,6 +977,8 @@ windata_t *get_viewer_for_data (const gpointer data)
     return ret;
 }
 
+#endif /* not GRETL_EDIT */
+
 static int paths_match (const char *path, windata_t *vwin)
 {
     const char *wstr = NULL;
@@ -1041,55 +1075,7 @@ windata_t *get_unique_output_viewer (void)
     return ret;
 }
 
-int get_n_hansl_editor_windows (void)
-{
-    int n = 0;
-
-    if (n_listed_windows > 1) {
-	GList *wlist = gtk_action_group_list_actions(window_group);
-	GList *list = wlist;
-	GtkWidget *w;
-	windata_t *vwin;
-
-	while (list != NULL) {
-	    w = window_from_action((GtkAction *) list->data);
-	    if (w != NULL) {
-		vwin = window_get_active_vwin(w);
-		if (vwin != NULL && vwin->role == EDIT_HANSL) {
-		    n++;
-		}
-	    }
-	    list = list->next;
-	}
-	g_list_free(wlist);
-    }
-
-    return n;
-}
-
-GtkWidget *get_primary_hansl_window (void)
-{
-    GList *wlist = gtk_action_group_list_actions(window_group);
-    GList *list = wlist;
-    GtkWidget *w;
-    windata_t *vwin;
-    GtkWidget *ret = NULL;
-
-    while (list != NULL) {
-	w = window_from_action((GtkAction *) list->data);
-	if (w != NULL) {
-	    vwin = window_get_active_vwin(w);
-	    if (vwin != NULL && vwin->role == EDIT_HANSL) {
-		ret = vwin->topmain;
-		break;
-	    }
-	}
-	list = list->next;
-    }
-    g_list_free(wlist);
-
-    return ret;
-}
+#ifndef GRETL_EDIT
 
 GtkWidget *get_window_for_data (const gpointer data)
 {
@@ -1282,6 +1268,8 @@ GList *windowed_model_list (void)
 
     return ret;
 }
+
+#endif /* not GRETL_EDIT */
 
 /* end of window-list apparatus */
 

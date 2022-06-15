@@ -44,12 +44,20 @@ GtkTargetEntry tabwin_drag_targets[] = {
 
 /* We support a tabbed editor for hansl scripts, one for
    "alt" (foreign) scripts, and also a tabbed viewer for
-   gretl models.
+   gretl models -- unless we're gretl_edit, in which case
+   there's a single integrated tabbed script editor.
 */
 
 static tabwin_t *tabhansl;
 static tabwin_t *tabalt;
 static tabwin_t *tabmod;
+
+#ifdef GRETL_EDIT
+static const char *hansl_title = N_("gretl_edit");
+#else
+static const char *hansl_title = N_("gretl: script editor");
+static const char *alt_title = N_("gretl: foreign script editor");
+#endif
 
 static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin);
 
@@ -62,8 +70,11 @@ static void tabwin_destroy (GtkWidget *w, tabwin_t *tabwin)
     } else if (tabwin == tabmod) {
 	tabmod = NULL;
     }
-
     free(tabwin);
+
+#ifdef GRETL_EDIT
+    gtk_main_quit();
+#endif
 }
 
 static tabwin_t *vwin_get_tabwin (windata_t *vwin)
@@ -83,7 +94,7 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 	gint resp;
 
 	gtk_window_present(GTK_WINDOW(parent));
-	resp = yes_no_dialog(_("gretl: script editor"), msg, parent);
+	resp = yes_no_dialog(_(hansl_title), msg, parent);
 	if (resp != GRETL_YES) {
 	    ret = TRUE;
 	}
@@ -99,10 +110,6 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
 		ret = query_save_text(NULL, NULL, vwin);
 	    }
 	}
-    }
-
-    if (!ret && gui_editor_mode() && get_n_hansl_editor_windows() <= 1) {
-	gtk_main_quit();
     }
 
     return ret;
@@ -290,10 +297,6 @@ void tabwin_tab_destroy (windata_t *vwin)
 	if (tabwin->mbar != NULL && tabwin->mbar == vwin->mbar) {
 	    tabwin_remove_toolbar(tabwin);
 	}
-#if 0
-	/* 2020-11-27: this seems to be erroneous */
-	g_object_unref(vwin->mbar);
-#endif
 	vwin->mbar = NULL;
 	gtk_notebook_remove_page(notebook, pg);
     } else {
@@ -578,19 +581,23 @@ static tabwin_t *make_tabbed_viewer (int role)
 
     /* top-level window */
     tabwin->main = gretl_gtk_window();
+#ifdef GRETL_EDIT
+    gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
+    g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
+		     G_CALLBACK(tabedit_quit_check), tabwin);
+#else
     if (role == EDIT_HANSL) {
-	gtk_window_set_title(GTK_WINDOW(tabwin->main),
-			     _("gretl: script editor"));
+	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else if (editing_alt_script(role)) {
-	gtk_window_set_title(GTK_WINDOW(tabwin->main),
-			     _("gretl: foreign script editor"));
+	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(alt_title));
  	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
 			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _("gretl: models"));
     }
+#endif
     g_signal_connect(G_OBJECT(tabwin->main), "destroy",
 		     G_CALLBACK(tabwin_destroy), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
@@ -631,6 +638,14 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 {
     tabwin_t *tabwin = NULL;
 
+#ifdef GRETL_EDIT /* experiment? */
+    if (tabhansl != NULL) {
+	tabwin = tabhansl;
+    } else {
+	*starting = 1;
+	tabhansl = tabwin = make_tabbed_viewer(role);
+    }
+#else
     if (role == EDIT_HANSL) {
 	if (tabhansl != NULL) {
 	    tabwin = tabhansl;
@@ -653,6 +668,7 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 	    tabmod = tabwin = make_tabbed_viewer(role);
 	}
     }
+#endif
 
     return tabwin;
 }
@@ -674,6 +690,12 @@ windata_t *viewer_tab_new (int role, const char *info,
     if (tabwin == NULL) {
 	return NULL;
     }
+
+#ifdef GRETL_EDIT
+    if (editor == NULL) {
+	set_editor(tabwin->main);
+    }
+#endif
 
     vwin = vwin_new(role, data);
     if (vwin == NULL) {
@@ -1148,6 +1170,7 @@ static void dock_viewer (GtkWidget *w, windata_t *vwin)
 
 gboolean window_is_undockable (windata_t *vwin)
 {
+#ifndef GRETL_EDIT
     if (vwin->topmain != NULL) {
 	tabwin_t *tabwin = vwin_get_tabwin(vwin);
 
@@ -1155,12 +1178,14 @@ gboolean window_is_undockable (windata_t *vwin)
 	    return TRUE;
 	}
     }
+#endif
 
     return FALSE;
 }
 
 gboolean window_is_dockable (windata_t *vwin)
 {
+#ifndef GRETL_EDIT
     if (vwin->topmain == NULL) {
 	if (vwin->role == EDIT_HANSL && tabhansl != NULL) {
 	    return TRUE;
@@ -1170,6 +1195,7 @@ gboolean window_is_dockable (windata_t *vwin)
 	    return TRUE;
 	}
     }
+#endif
 
     return FALSE;
 }

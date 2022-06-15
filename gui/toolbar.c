@@ -20,6 +20,7 @@
 /* toolbar.c: main-window toolbar, viewer window toolbars, etc. */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "console.h"
 #include "session.h"
 #include "datafiles.h"
@@ -1049,7 +1050,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     int r = vwin->role;
 
     if (mail_ok < 0) {
-	mail_ok = curl_does_smtp() && !gui_editor_mode();
+	mail_ok = curl_does_smtp();
     }
 
     if (r == EDIT_SPEC) {
@@ -1147,7 +1148,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;
-    } else if (f == STICKIFY_ITEM && (r != SCRIPT_OUT || gui_editor_mode())) {
+    } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
@@ -1381,7 +1382,7 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 
 static gint exec_press (GtkWidget *w, GdkEventButton *eb, windata_t *vwin)
 {
-    if (eb->button == 3 && !gui_editor_mode()) {
+    if (eb->button == 3) {
 	run_script_silent(NULL, vwin);
 	return TRUE;
     } else {
@@ -1664,7 +1665,7 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 
 void vwin_add_tmpbar (windata_t *vwin)
 {
-    GretlToolItem item = {
+    GretlToolItem stop_item = {
 	N_("Stop"),
 	GTK_STOCK_STOP,
 	G_CALLBACK(do_stop_script),
@@ -1699,7 +1700,7 @@ void vwin_add_tmpbar (windata_t *vwin)
     }
 
     tmp = gretl_toolbar_new(NULL);
-    gretl_toolbar_insert(tmp, &item, item.func, NULL, 0);
+    gretl_toolbar_insert(tmp, &stop_item, stop_item.func, NULL, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     start_wait_for_output(vwin, hbox);

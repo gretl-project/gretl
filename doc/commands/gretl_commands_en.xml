@@ -5699,6 +5699,53 @@
 
   </command>
 
+  <command name="gretl_edit" section="Utilities" context="gui"
+    label="gretl_edit">
+
+    <description>
+      <para>
+	gretl_edit is a lightweight, special-purpose variant of the
+	gretl GUI. It comprises a tabbed script editor and the means
+	to execute scripts and view their output. It lacks many of the
+	features of the main gretl GUI but may be useful on the basis
+	that, sometimes, <quote>less is more</quote>.
+      </para>
+      <para>
+	Here's the context for which gretl_edit is designed: You're
+	working on some relatively complex code and wish to carry out
+	the following cycle.
+      </para>
+      <code>
+	edit code
+	execute the code, inspect results, check for bugs
+	revise code
+	execute again...
+      </code>
+      <para>
+	If that's something you do from time to time, give gretl_edit a
+	try. If it's not, then you can safely ignore this program.
+      </para>
+      <para>
+	Note that gretl_edit is <quote>stateless</quote>. Unlike the
+	main gretl GUI, there are no saved models, matrices, bundles
+	and whatnot. The only state preserved is that of the script,
+	or scripts, being edited. In the context described above
+	that's probably what you want: each time a script is executed
+	it starts with a <quote>blank slate</quote>. That means that if
+	a script uses a dataset, it must include a command to open the
+	dataset.
+      </para>
+      <para>
+	Obviously, gretl_edit supports hansl, gretl's own scripting
+	language. Less obviously, it also supports languages that are
+	covered by gretl's <quote>foreign</quote> apparatus: R,
+	Octave, Julia, Ox, Stata. In the foreign case the script
+	editor is not as full-featured as for hansl: it offers syntax
+	highlighting but not automatic indentation or auto-completion.
+      </para>
+    </description>
+  </command>  
+
   <command name="3-D" section="Graphs" context="gui"
     label="3-dimensional plots">
 
@@ -8222,6 +8269,7 @@
 	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --to-array=</lit><repl>name</repl></altform>
 	<altform><lit>markers --from-array=</lit><repl>name</repl></altform>
+	<altform><lit>markers --from-series=</lit><repl>name</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
     </usage>
@@ -8250,6 +8298,12 @@
 	case the markers are repeated for each time period.) The
 	<opt>from-array</opt> option works similarly, reading from
 	a named array of strings.
+      </para>
+      <para>
+	The option <opt>from-series</opt> offers a convenient way of
+	creating observation markers by copying from a string-valued
+	series. An error is flagged if the specified series does not
+	have string values.
       </para>
       <para>
 	The <opt>delete</opt> option does what you'd expect: it
@@ -13765,6 +13819,18 @@
 	  default is 0.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>gmp_bits</lit>: one integer, which should be an
+	  integral power of 2 (default and minimum value 256, maximum
+	  8192). Controls the number of bits used to represent a
+	  floating point number when GMP (the GNU Multiple Precision
+	  Arithmetic Library) is called, primarily via the
+	  <lit>mpols</lit> command. Larger values give greater
+	  precision at the cost of longer compute time. This setting
+	  can also be controlled by the environment variable
+	  <lit>GRETL_MP_BITS</lit>.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Random number generation</subhead>
@@ -14926,10 +14992,6 @@
 	  <optparm>matrix-name</optparm>
 	  <effect>see below</effect>
         </option>
-        <option>
-	  <flag>--compat</flag>
-	  <effect>gdtb compatibility, see below</effect>
-        </option>
       </options>
     </usage>
 
@@ -14964,19 +15026,20 @@
 	binary format is much faster for very large datasets.
       </para>
       <para>
-	The <lit>gdtb</lit> format was revised in gretl 2021a
-	(producing a huge write/read speed-up for super-large
-	datasets). But if you wish to write a binary data file
-	readable by earlier gretl (2018c or higher) you should append
-	the <opt>compat</opt> option.
-      </para>
-      <para>
 	When data are saved in <lit>gdt</lit> format the
 	<opt>gzipped</opt> option may be used for data compression.
 	The optional parameter for this flag controls the level of
 	compression (from 0 to 9): higher levels produce a smaller
 	file, but compression takes longer. The default level is 1; a
 	level of 0 means that no compression is applied.
+      </para>
+      <para>
+	A special sort of <quote>native</quote> save is supported in
+	the GUI program: if <repl>filename</repl> has extension
+	<lit>.gretl</lit> and the <repl>varlist</repl> argument is
+	omitted, then a gretl session file is written. Such files
+	include the current dataset along with any named objects such
+	as models, graphs and matrices.
       </para>
       <subhead>Other formats</subhead>
       <para>

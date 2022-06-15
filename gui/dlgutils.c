@@ -21,13 +21,16 @@
 
 #include "gretl.h"
 #include "textbuf.h"
-#include "menustate.h"
 #include "tabwin.h"
+#include "base_utils.h"
 #include "dlgutils.h"
 
+#ifndef GRETL_EDIT
+#include "menustate.h"
 #include "libset.h"
 #include "system.h"
 #include "gretl_bfgs.h"
+#endif
 
 dialog_opts *dialog_opts_new (int n, int type,
 			      gretlopt *optp,
@@ -81,9 +84,9 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ)
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     targ);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     targ);
 
     return button;
 }
@@ -400,6 +403,19 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
     return button;
 }
 
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
+			   gpointer p)
+{
+    if (key->keyval == GDK_Escape) {
+        gtk_widget_destroy(w);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+#ifndef GRETL_EDIT
+
 /* "edit dialog" apparatus */
 
 static GtkWidget *active_edit_id;
@@ -455,17 +471,6 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
     if (active_edit_text) active_edit_text = NULL;
-}
-
-gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
-			   gpointer p)
-{
-    if (key->keyval == GDK_Escape) {
-        gtk_widget_destroy(w);
-	return TRUE;
-    } else {
-	return FALSE;
-    }
 }
 
 static dialog_t *edit_dialog_new (int ci, const char *title,
@@ -931,6 +936,8 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     return b;
 }
 
+#endif /* not GRETL_EDIT */
+
 static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
 {
     gchar *s = combo_box_get_active_text(box);
@@ -995,6 +1002,8 @@ void depopulate_combo_box (GtkComboBox *box)
 	combo_box_remove(box, 0);
     }
 }
+
+#ifndef GRETL_EDIT
 
 static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
 {
@@ -1472,6 +1481,8 @@ void edit_dialog_reset (dialog_t *dlg)
 	*dlg->cancel = 1;
     }
 }
+
+#endif /* not GRETL_EDIT */
 
 gchar *entry_box_get_trimmed_text (GtkWidget *w)
 {

@@ -168,6 +168,7 @@ enum {
     F_IMAG,
     F_CARG,
     F_CMOD,
+    F_CQUAD,
     FP_MAX,      /* separator: end of pointerized functions */
     F_CONJ,
     F_TOINT,
@@ -242,11 +243,9 @@ enum {
     F_IMINR,
     F_IMAXR,
     F_FFT,
-    F_FFT2,
     F_FFTI,
     F_UPPER,
     F_LOWER,
-    F_POLROOTS,
     F_OBSLABEL,
     F_BACKTICK,
     F_STRLEN,
@@ -285,7 +284,6 @@ enum {
     F_BARRIER,
     F_LPSOLVE,
     F_INTERPOL,
-    F_BITNOT,
     F_DEC2BIN,
     F_BIN2DEC,
     F_ACCESS,
@@ -314,12 +312,9 @@ enum {
     F_MUNIF,
     F_MNORM,
     F_QFORM,
-    F_QR,
     F_EIGSYM,
     F_QUANTILE,
-    F_CMULT,	  /* complex multiplication */
     F_HDPROD,     /* horizontal direct product */
-    F_CDIV,	  /* complex division */
     F_MXTAB,
     F_MRSEL,
     F_MCSEL,
@@ -406,6 +401,9 @@ enum {
     F_DESEAS,
     F_MAT2LIST,
     F_YMD,
+    F_CMULT,
+    F_CDIV,
+    F_POLROOTS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -416,6 +414,7 @@ enum {
     F_BFGSMAX,
     F_MSHAPE,
     F_SVD,
+    F_QR,
     F_TRIMR,
     F_TOEPSOLV,
     F_CORRGM,
@@ -465,8 +464,8 @@ enum {
     F_ISOWEEK,
     F_BKW,
     F_FZERO,
-    F_EIGGEN,
     F_EIGEN,
+    F_EIGGEN, /* legacy */
     F_SCHUR,
     F_RESAMPLE,
     F_STACK,
@@ -476,7 +475,6 @@ enum {
     F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
-    F_BITOP,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -513,6 +511,7 @@ enum {
     F_TDISAGG,
     F_HYP2F1,
     F_MIDASMULT,
+    F_MCOMMUTE,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
@@ -603,7 +602,7 @@ enum {
 
 /* functions where the middle argument is actually a return
    location */
-#define m_return(s) (s == F_SVD || s == F_EIGEN)
+#define m_return(s) (s == F_SVD || s == F_EIGEN || s == F_QR)
 
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 

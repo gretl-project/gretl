@@ -19,19 +19,22 @@
 
 #include "gretl.h"
 #include "version.h"
-#include "filelists.h"
+#include "fileselect.h"
 #include "gretl_www.h"
 #include "dlgutils.h"
-#include "fileselect.h"
-#include "menustate.h"
-#include "session.h"
 #include "textbuf.h"
-#include "ssheet.h"
-#include "selector.h"
-#include "gpt_control.h"
 #include "tabwin.h"
 #include "build.h"
 #include "addons_utils.h"
+
+#ifndef GRETL_EDIT
+#include "filelists.h"
+#include "menustate.h"
+#include "session.h"
+#include "ssheet.h"
+#include "selector.h"
+#include "gpt_control.h"
+#endif
 
 #ifdef HAVE_GTKSV_COMPLETION
 # include "completions.h"
@@ -55,6 +58,10 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
+#endif
+
+#ifdef OS_OSX
+# include "osx_open.h"
 #endif
 
 #if HAVE_GTK_FONT_CHOOSER
@@ -145,8 +152,13 @@ static char mpi_pref[8] = "OpenMPI";
 #endif
 
 static int lcnumeric = 1;
-static double graph_scale = 1.0;
 static int icon_sizing = ICON_SIZE_AUTO;
+
+static double graph_scale = 1.0;
+static double graph_scales[] = {
+    0.8, 1.0, 1.1, 1.2, 1.4
+};
+static int n_graph_scales = G_N_ELEMENTS(graph_scales);
 
 #if defined(MAC_THEMING)
 static char themepref[12] = "Adwaita";
@@ -424,6 +436,8 @@ const char *get_sourceview_style (void)
     return sview_style;
 }
 
+#ifndef GRETL_EDIT
+
 int autoicon_on (void)
 {
     if (dataset != NULL && dataset->v > 0) {
@@ -436,6 +450,8 @@ int autoicon_on (void)
 	return 0;
     }
 }
+
+#endif
 
 int get_icon_sizing (void)
 {
@@ -855,7 +871,7 @@ static int alt_ok (const char *prog)
 
 #endif
 
-#ifdef HAVE_TRAMO
+#if defined(HAVE_TRAMO) && !defined(GRETL_EDIT)
 
 #define tramo_ts(d) ((d)->structure == TIME_SERIES && \
                      (d->pd == 1 || d->pd == 4 || d->pd == 12))
@@ -890,14 +906,16 @@ static void set_tramo_status (void)
 
     tramo_ok = ok;
 
+#ifndef GRETL_EDIT
     if (gui_up) {
 	flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
     }
+#endif
 }
 
 #endif /* HAVE_TRAMO */
 
-#ifdef HAVE_X12A
+#if defined(HAVE_X12A) && !defined(GRETL_EDIT)
 
 #define x12_ts(d) ((d)->structure == TIME_SERIES && \
                    (d->pd == 4 || d->pd == 12))
@@ -932,10 +950,12 @@ static void set_x12a_status (void)
 
     x12a_ok = ok;
 
+#ifndef GRETL_EDIT
     if (gui_up) {
 	flip(mdata->ui, "/menubar/Variable/X12A",
 	     get_x12a_ok());
     }
+#endif
 }
 
 #endif /* HAVE_X12A */
@@ -1074,7 +1094,9 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     make_prefs_tab(notebook, TAB_PROGS, 0);
     make_prefs_tab(notebook, TAB_EDITOR, 0);
     make_prefs_tab(notebook, TAB_NET, 0);
+#ifndef GRETL_EDIT
     make_prefs_tab(notebook, TAB_VCV, 0);
+#endif
 #ifdef HAVE_MPI
     make_prefs_tab(notebook, TAB_MPI, 0);
 #endif
@@ -1092,17 +1114,17 @@ int preferences_dialog (int page, const char *varname, GtkWidget *parent)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(preferences_dialog_canceled),
 		     &canceled);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(apply_prefs_changes), parent);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* Help button */
     button = context_help_button(hbox, -1);
@@ -1178,17 +1200,17 @@ int console_prefs_dialog (GtkWidget *caller)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(preferences_dialog_canceled),
 		     &canceled);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     /* OK button */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(apply_prefs_changes), caller);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     gtk_widget_show_all(dialog);
 
@@ -1415,6 +1437,8 @@ static const char **get_radio_setting_strings (void *var, int *n)
     return NULL;
 }
 
+#ifndef GRETL_EDIT
+
 const char *get_default_hc_string (int ci)
 {
     if (ci == GARCH) {
@@ -1444,6 +1468,8 @@ const char *get_default_hc_string (int ci)
 	}
     }
 }
+
+#endif /* not GRETL_EDIT */
 
 static int non_console_var (void *ptr)
 {
@@ -1817,17 +1843,15 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 	    if (rc->flags & FLOATSET) {
 		/* special: graph scale */
-		double scale, *xvar = (double *) rc->var;
-		char numstr[4];
+		double *xvar = (double *) rc->var;
+		char numstr[8];
 
-		j = 0;
-		while (get_graph_scale(j, &scale)) {
-		    sprintf(numstr, "%.1f", scale);
+		for (j=0; j<n_graph_scales; j++) {
+		    sprintf(numstr, "%.1f", graph_scales[j]);
 		    combo_box_append_text(rc->widget, numstr);
-		    if (scale == *xvar) {
+		    if (graph_scales[j] == *xvar) {
 			active = j;
 		    }
-		    j++;
 		}
 	    } else if (langs) {
 		char *strvar = (char *) rc->var;
@@ -1955,7 +1979,34 @@ static void set_gp_theme (void)
     set_plotstyle(graph_theme);
 }
 
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+double next_graph_scale (double s, int mod)
+{
+    int i;
+
+    for (i=0; i<n_graph_scales; i++) {
+	if (s == graph_scales[i]) {
+	    if (mod > 0) {
+		return i < n_graph_scales - 1 ? graph_scales[i+1] : NADBL;
+	    } else {
+		return i > 0 ? graph_scales[i-1] : NADBL;
+	    }
+	}
+    }
+
+    return NADBL;
+}
+
+double min_graph_scale (void)
+{
+    return graph_scales[0];
+}
+
+double max_graph_scale (void)
+{
+    return graph_scales[n_graph_scales-1];
+}
+
+#if (defined(HAVE_TRAMO) || defined(HAVE_X12A)) && !defined(GRETL_EDIT)
 
 static void maybe_revise_tramo_x12a_status (void)
 {
@@ -2102,7 +2153,7 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 	restart_message();
     }
 
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+#if (defined(HAVE_TRAMO) || defined(HAVE_X12A)) && !defined(GRETL_EDIT)
     maybe_revise_tramo_x12a_status();
 #endif
 
@@ -2126,12 +2177,14 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
     */
     libset_set_bool(SHELL_OK, shellok);
     libset_set_bool(ROBUST_Z, robust_z);
+
+#ifndef GRETL_EDIT
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
     set_garch_alt_vcv(hc_garch);
-
     selector_register_hc_choice();
+#endif
 
     if (parent != NULL) {
 	windata_t *vwin = window_get_active_vwin(parent);
@@ -2205,7 +2258,9 @@ int write_rc (gretlopt opt)
 	}
     }
 
+#ifndef GRETL_EDIT
     rc_save_file_lists(fp);
+#endif
     fclose(fp);
 
     if (!(opt & OPT_N)) {
@@ -2341,13 +2396,14 @@ static int common_read_rc_setup (int updated)
     maybe_fix_viewpdf();
 #endif
 
-#ifdef HAVE_TRAMO
+#ifndef GRETL_EDIT
+# ifdef HAVE_TRAMO
     set_tramo_status();
-#endif
-
-#ifdef HAVE_X12A
+# endif
+# ifdef HAVE_X12A
     set_x12a_status();
 # endif
+#endif
 
     langid = lang_id_from_name(langpref);
 #ifdef G_OS_WIN32
@@ -2475,7 +2531,6 @@ static int maybe_get_network_settings (void)
 static void win32_read_gretlrc (int *updated)
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
-    int got_recent = 0;
     FILE *fp;
 
     if (*rcfile == '\0') {
@@ -2485,7 +2540,7 @@ static void win32_read_gretlrc (int *updated)
 
     fp = gretl_fopen(rcfile, "r");
 
-#if 1
+#if 0
     fprintf(stderr, "rcfile: '%s' (%s)\n", rcfile,
 	    fp == NULL ? "not found" : "found");
 #endif
@@ -2500,7 +2555,6 @@ static void win32_read_gretlrc (int *updated)
 	    continue;
 	}
 	if (!strncmp(line, "recent", 6)) {
-	    got_recent = 1;
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
@@ -2522,9 +2576,11 @@ static void win32_read_gretlrc (int *updated)
 	}
     }
 
-    if (got_recent) {
+#ifndef GRETL_EDIT
+    if (!strncmp(line, "recent", 6)) {
 	rc_read_file_lists(fp, line);
     }
+#endif
 
     fclose(fp);
 }
@@ -2649,14 +2705,12 @@ static int read_gretlrc (void)
 	fprintf(stderr, "Couldn't read %s\n", rcfile);
     } else {
 	char line[MAXLEN], key[32], linevar[MAXLEN];
-	int got_recent = 0;
 
 	while (fgets(line, sizeof line, fp)) {
 	    if (*line == '#') {
 		continue;
 	    }
 	    if (!strncmp(line, "recent", 6)) {
-		got_recent = 1;
 		break;
 	    }
 	    if (sscanf(line, "%31s", key) == 1) {
@@ -2675,9 +2729,11 @@ static int read_gretlrc (void)
 	    }
 	}
 
-	if (got_recent) {
+#ifndef GRETL_EDIT
+	if (!strncmp(line, "recent", 6)) {
 	    rc_read_file_lists(fp, line);
 	}
+#endif
 
 	fclose(fp);
     }
@@ -2934,9 +2990,9 @@ static void gtk2_font_selector (GtkAction *action)
     g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_ok_button(fontsel)),
 		     "clicked", G_CALLBACK(font_selection_ok),
 		     fontsel);
-    g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_cancel_button(fontsel)),
-		     "clicked", G_CALLBACK(delete_widget),
-		     fontsel);
+    g_signal_connect_swapped(G_OBJECT(gtk_fontsel_hack_dialog_cancel_button(fontsel)),
+			     "clicked", G_CALLBACK(gtk_widget_destroy),
+			     fontsel);
 
     gtk_widget_show(fontsel);
 }
@@ -3085,6 +3141,8 @@ void dump_rc (void)
 
     fclose(fp);
 }
+
+#ifndef GRETL_EDIT
 
 int gui_set_working_dir (char *dirname)
 {
@@ -3298,9 +3356,9 @@ static void workdir_dialog (int from_wlabel)
 		     G_CALLBACK(apply_wdir_changes), &wset);
 
     button = cancel_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget),
-		     dialog);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
 
     wset.ok_button = button = ok_button(hbox);
     gtk_widget_grab_default(button);
@@ -3321,6 +3379,8 @@ void workdir_dialog1 (void)
 {
     workdir_dialog(1);
 }
+
+#endif /* not GRETL_EDIT */
 
 #if defined(MAC_THEMING)
 

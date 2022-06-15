@@ -22,13 +22,17 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "gretl_www.h"
-#include "treeutils.h"
 #include "dlgutils.h"
-#include "menustate.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "base_utils.h"
+
+#ifndef GRETL_EDIT
+#include "treeutils.h"
+#include "menustate.h"
 #include "database.h"
 #include "fncall.h"
+#endif
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -38,6 +42,10 @@
 # include <fcntl.h>
 # include <unistd.h>
 # include <dirent.h>
+#endif
+
+#ifdef OS_OSX
+# include "osx_open.h"
 #endif
 
 #define HDEBUG 0
@@ -54,16 +62,18 @@ static void helpwin_set_topic_index (windata_t *hwin, int idx);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *button, GtkWidget *dialog);
-static void find_in_listbox (GtkWidget *button, GtkWidget *dialog);
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
 static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 				   gboolean sensitive,
 				   gboolean from_cursor,
 				   gboolean search_all);
+static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin);
+#ifndef GRETL_EDIT
+static void find_in_listbox (GtkWidget *button, GtkWidget *dialog);
 static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s,
 				      gboolean sensitive,
 				      gboolean vnames);
-static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin);
+#endif
 
 static GtkWidget *find_dialog = NULL;
 static GtkWidget *find_entry;
@@ -163,6 +173,7 @@ static struct gui_help_item gui_help_items[] = {
     { DBNHELP,        "dbnomics" },
     { MAPHELP,        "maps" },
     { KALMAN,         "kalman" },
+    { EDITOR,         "gretl_edit" },
     { -1,             NULL },
 };
 
@@ -907,8 +918,8 @@ static int maybe_go_to_page (windata_t *vwin)
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 {
     gboolean search_all = FALSE;
+    gboolean found = FALSE;
     gboolean sensitive;
-    gboolean found;
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
     if (needle == NULL || *needle == '\0') {
@@ -917,6 +928,11 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 
     sensitive = !all_lower_case(needle);
 
+#ifdef GRETL_EDIT
+    if (g_object_get_data(G_OBJECT(entry), "search-all")) {
+	search_all = TRUE;
+    }
+#else
     if (g_object_get_data(G_OBJECT(entry), "search-all")) {
 	if (vwin->role == DBNOMICS_TOP ||
 	    vwin->role == DBNOMICS_DB ||
@@ -927,15 +943,19 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	    search_all = TRUE;
 	}
     }
+#endif
 
     if (vwin->text != NULL) {
 	gboolean from_cursor = TRUE;
 
 	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
 				  sensitive, from_cursor, search_all);
-    } else {
+    }
+#ifndef GRETL_EDIT    
+    else {
 	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
+#endif    
 
     if (!found && (vwin->role == CMD_HELP ||
 		   vwin->role == CMD_HELP_EN ||
@@ -1063,12 +1083,14 @@ void vwin_add_finder (windata_t *vwin)
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     add_finder_icon(vwin, entry);
 
+#ifndef GRETL_EDIT    
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
 	vwin->role == DBNOMICS_SERIES ||
 	vwin->role == DBNOMICS_DB) {
 	maybe_fill_dbn_finder(vwin->finder);
     }
+#endif    
 
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
@@ -1220,7 +1242,7 @@ void show_gui_help (int helpcode)
     }
 }
 
-static void context_help (GtkWidget *widget, gpointer data)
+void context_help (GtkWidget *widget, gpointer data)
 {
     int helpcode = GPOINTER_TO_INT(data);
 
@@ -1618,6 +1640,8 @@ void text_find_again (gpointer unused, gpointer data)
     }
 }
 
+#ifndef GRETL_EDIT
+
 void listbox_find (gpointer unused, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1644,12 +1668,6 @@ void listbox_find_again (gpointer unused, gpointer data)
     }
 }
 
-static gint close_find_dialog (GtkWidget *widget, gpointer data)
-{
-    find_dialog = NULL;
-    return FALSE;
-}
-
 static int string_match_pos (const char *haystack, const char *needle,
 			     gboolean sensitive, int start)
 {
@@ -1669,6 +1687,14 @@ static int string_match_pos (const char *haystack, const char *needle,
     }
 
     return -1;
+}
+
+#endif /* not GRETL_EDIT */
+
+static gint close_find_dialog (GtkWidget *widget, gpointer data)
+{
+    find_dialog = NULL;
+    return FALSE;
 }
 
 /* search for string @s in text buffer associated with @view */
@@ -1763,6 +1789,8 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 	notify_string_not_found(find_entry);
     }
 }
+
+#ifndef GRETL_EDIT
 
 static gboolean real_find_in_listbox (windata_t *vwin,
 				      const gchar *s,
@@ -1959,6 +1987,8 @@ static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
 	notify_string_not_found(find_entry);
     }
 }
+
+#endif /* not GRETL_EDIT */
 
 static void cancel_find (GtkWidget *button, GtkWidget *dialog)
 {
@@ -2433,32 +2463,34 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	}
     }
 
-    if (!gotit) {
-	if (code == GRETL_DBN) {
-	    /* try installing the dbnomics package */
-	    char *dlpath = NULL;
+#ifndef GRETL_EDIT
+    if (!gotit && code == GRETL_DBN) {
+	/* try installing the dbnomics package */
+	char *dlpath = NULL;
 
-	    err = download_addon("dbnomics", &dlpath);
-	    if (!err) {
-		/* .gfn -> .pdf */
-		switch_ext(fullpath, dlpath, "pdf");
-		free(dlpath);
-	    }
-	} else {
-	    /* try downloading the manual file */
-	    err = get_writable_doc_path(fullpath, fname);
-	    if (!err) {
-		err = retrieve_manfile(fname, fullpath);
-	    }
+	err = download_addon("dbnomics", &dlpath);
+	if (!err) {
+	    /* .gfn -> .pdf */
+	    switch_ext(fullpath, dlpath, "pdf");
+	    free(dlpath);
 	}
-	if (err) {
-	    const char *buf = gretl_errmsg_get();
+    }
+#endif    
+    if (!gotit && code != GRETL_DBN) {
+	/* try downloading the manual file */
+	err = get_writable_doc_path(fullpath, fname);
+	if (!err) {
+	    err = retrieve_manfile(fname, fullpath);
+	}
+    }
+    
+    if (err) {
+	const char *buf = gretl_errmsg_get();
 
-	    if (*buf) {
-		errbox(buf);
-	    } else {
-		errbox(_("Failed to download file"));
-	    }
+	if (*buf) {
+	    errbox(buf);
+	} else {
+	    errbox(_("Failed to download file"));
 	}
     }
 

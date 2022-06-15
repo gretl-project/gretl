@@ -26,6 +26,7 @@
 #include "gretl_normal.h"
 #include "gretl_bundle.h"
 #include "uservar_priv.h"
+#include "gretl_cmatrix.h"
 
 #define NUMLEN 32
 #define MAXQUOTE 64
@@ -251,6 +252,7 @@ struct str_table_ex ptrfuncs[] = {
     { F_IMAG,  "Im",    cimag },
     { F_CARG,  "carg",  carg },
     { F_CMOD,  "cmod",  cabs },
+    { F_CQUAD, "cquad", gretl_cquad },
     { 0, NULL, NULL }
 };
 
@@ -336,11 +338,8 @@ struct str_table funcs[] = {
     { F_IMINR,    "iminr" },
     { F_IMAXR,    "imaxr" },
     { F_FFT,      "fft" },
-    { F_FFT2,     "fft2" },
     { F_FFTI,     "ffti" },
-    { F_CMULT,    "cmult" },
     { F_HDPROD,   "hdprod" },
-    { F_CDIV,     "cdiv" },
     { F_MCOV,     "mcov" },
     { F_MCORR,    "mcorr" },
     { F_MXTAB,    "mxtab" },
@@ -372,8 +371,10 @@ struct str_table funcs[] = {
     { F_MLAG,     "mlag" },
     { F_QR,       "qrdecomp" },
     { F_EIGSYM,   "eigensym" },
-    { F_EIGGEN,   "eigengen" }, /* legacy */
     { F_EIGEN,    "eigen" },
+    { F_EIGGEN,   "eigengen" }, /* legacy */
+    { F_CMULT,    "cmult" },    /* legacy */
+    { F_CDIV,     "cdiv" },     /* legacy */
     { F_SCHUR,    "schur" },
     { F_EIGSOLVE, "eigsolve" },
     { F_NULLSPC,  "nullspace" },
@@ -586,17 +587,17 @@ struct str_table funcs[] = {
     { F_DISTANCE,  "distance" },
     { F_INTERPOL,  "interpol" },
     { F_MAT2LIST,  "mat2list" },
-    { F_BITOP,     "bitop" },
-    { F_BITNOT,    "bitnot" },
     { F_YMD,       "ymd" },
     { F_DEC2BIN,   "dec2bin" },
     { F_BIN2DEC,   "bin2dec" },
+    { F_MCOMMUTE,  "commute" },
     { F_ACCESS,    "access" },
     { 0,           NULL }
 };
 
 struct str_table func_alias[] = {
     { F_EIGEN,    "eiggen2" },
+    { F_FFT,      "fft2" },
     { F_NMMAX,    "NMmin" },
     { F_NRMAX,    "NRmin" },
     { F_BFGSMAX,  "BFGSmin" },
@@ -771,9 +772,9 @@ static int real_function_lookup (const char *s, int aliases,
 	}
 #if 1
 	/* note: point d'appui for deprecation of built-in function */
-	if (st->id == F_FFT) {
+	if (st->id == F_EIGGEN) {
 	    pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
-		    "fft2() instead ***\n",
+		    "eigen() instead ***\n",
 		    st->str);
 	}
 #endif

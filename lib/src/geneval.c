@@ -1212,81 +1212,6 @@ static void eval_warning (parser *p, int op, int errnum)
     }
 }
 
-enum {
-    B_BITAND = OP_MAX + 1,
-    B_BITOR,
-    B_BITXOR,
-    B_LSHIFT,
-    B_RSHIFT
-};
-
-static double bitop (double x, double y, int op, parser *p)
-{
-    guint32 ix, iy, iz = 0;
-
-    ix = gretl_unsigned_from_double(x, &p->err);
-    if (!p->err) {
-	iy = gretl_unsigned_from_double(y, &p->err);
-    }
-    if (!p->err) {
-	if (op == B_BITAND) {
-	    iz = ix & iy;
-	} else if (op == B_BITOR) {
-	    iz = ix | iy;
-	} else if (op == B_BITXOR) {
-	    iz = ix ^ iy;
-	} else if (op == B_LSHIFT) {
-	    iz = ix << iy;
-	} else if (op == B_RSHIFT) {
-	    iz = ix >> iy;
-	}
-	return (double) iz;
-    } else {
-	return NADBL;
-    }
-}
-
-static double bitnot (double x)
-{
-    guint32 ix;
-    int err = 0;
-
-    ix = gretl_unsigned_from_double(x, &err);
-
-    if (!err) {
-	guint32 iy = ~ix;
-
-	return (double) iy;
-    } else {
-	return NADBL;
-    }
-}
-
-static int bitop_preprocess (NODE *n, NODE *m)
-{
-    if (null_node(n->L) || null_node(m) || null_node(n->R)) {
-	return E_ARGS;
-    } else if (m->t != STR) {
-	return E_INVARG;
-    } else {
-	if (!strcmp(m->v.str, "&")) {
-	    n->t = B_BITAND;
-	} else if (!strcmp(m->v.str, "|")) {
-	    n->t = B_BITOR;
-	} else if (!strcmp(m->v.str, "^")) {
-	    n->t = B_BITXOR;
-	} else if (!strcmp(m->v.str, "<<")) {
-	    n->t = B_LSHIFT;
-	} else if (!strcmp(m->v.str, ">>")) {
-	    n->t = B_RSHIFT;
-	} else {
-	    return E_INVARG;
-	}
-    }
-
-    return 0;
-}
-
 /* evaluation of binary operators (yielding x op y) for
    scalar operands (also increment/decrement operators)
 */
@@ -1334,10 +1259,6 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 
     errno = 0;
-
-    if (op >= B_BITAND) {
-	return bitop(x, y, op, p);
-    }
 
     switch (op) {
     case B_ADD:
@@ -1835,10 +1756,19 @@ static int node_get_bool (NODE *n, parser *p, int deflt)
 static NODE *dec2bin_node (NODE *n, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
-    guint32 x = node_get_guint32(n, p);
 
     if (!p->err) {
-	ret->v.m = dec2bin(x);
+	gretl_matrix *v = NULL;
+	double x = NADBL;
+
+	if (n->t == NUM) {
+	    x = n->v.xval;
+	} else {
+	    v = n->v.m;
+	}
+	if (!p->err) {
+	    ret->v.m = dec2bin(x, v, &p->err);
+	}
     }
 
     return ret;
@@ -1846,10 +1776,10 @@ static NODE *dec2bin_node (NODE *n, parser *p)
 
 static NODE *bin2dec_node (NODE *n, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = aux_matrix_node(p);
 
     if (!p->err) {
-	ret->v.xval = bin2dec(n->v.m, &p->err);
+	ret->v.m = bin2dec(n->v.m, &p->err);
     }
 
     return ret;
@@ -2888,7 +2818,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
                           (o >= B_DOTLT && o <= B_DOTGTE))
 
 #define fn_no_complex(f) (f == F_QFORM || f == F_LSOLVE || \
-                          f == F_CMULT || f == F_CDIV || \
+			  f == F_CMULT || f == F_CDIV ||   \
                           f == F_CONV2D || f == F_SGN)
 
 /* return allocated result of binary operation performed on
@@ -4426,7 +4356,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 #define mmf_does_complex(f) (f==F_INV || f==F_UPPER || f==F_LOWER || \
                              f==F_DIAG || f==F_TRANSP || f==F_CTRANS || \
                              f==F_VEC || f==F_VECH || f==F_UNVECH || \
-                             f==F_MREV || f== F_FFT2 || f==F_FFTI || \
+                             f==F_MREV || f== F_FFT || f==F_FFTI || \
                              f==F_CUM || f==F_DIFF || f==F_SUMC || \
                              f==F_SUMR || f==F_PRODC || f==F_PRODR || \
                              f==F_MEANC || f==F_MEANR || f==F_GINV || \
@@ -4489,7 +4419,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
                 /* m must be a vector */
                 p->err = E_TYPES;
             }
-        }
+        } else if (f == F_POLROOTS) {
+	    /* if present, the @r node should hold a boolean */
+	    parm = node_get_bool(r, p, 0);
+	}
 
         if (!p->err && gretl_is_null_matrix(m) && !emptymat_ok(f)) {
             p->err = E_DATA;
@@ -4624,20 +4557,17 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = gretl_matrix_log(m, &p->err);
             break;
         case F_FFT:
-            ret->v.m = gretl_matrix_fft(m, 0, &p->err);
-            break;
-        case F_FFT2:
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_fft(m, 0, &p->err);
             } else {
-                ret->v.m = gretl_matrix_fft(m, 1, &p->err);
+                ret->v.m = gretl_matrix_fft(m, &p->err);
             }
             break;
         case F_FFTI:
             ret->v.m = gretl_matrix_ffti(m, &p->err);
             break;
         case F_POLROOTS:
-            ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
+            ret->v.m = gretl_matrix_polroots(m, parm, 0, &p->err);
             break;
         case F_RANKING:
             ret->v.m = rank_vector(m, F_SORT, &p->err);
@@ -4837,13 +4767,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
         }
 
         if (!p->err) {
-            if (f == F_QR) {
-                if (m1->is_complex) {
-                    ret->v.m = gretl_cmatrix_QR_decomp(m1, m2, &p->err);
-                } else {
-                    ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
-                }
-            } else if (f == F_EIGSYM) {
+            if (f == F_EIGSYM) {
                 ret->v.m = user_matrix_eigensym(m1, m2, &p->err);
             } else if (f == F_HDPROD) {
 		if (m1->is_complex) {
@@ -5671,8 +5595,6 @@ static double real_apply_func (double x, int f, parser *p)
         return x;
     case U_NOT:
         return x == 0;
-    case F_BITNOT:
-	return bitnot(x);
     case F_TOINT:
         return (double) (int) x;
     case F_MISSING:
@@ -9905,7 +9827,7 @@ static void *get_complex_counterpart (void *func)
 
 #define cmplx_to_double(f) (f == F_CARG || f == F_CMOD || \
                             f == F_REAL || f == F_IMAG || \
-                            f == F_ABS)
+                            f == F_CQUAD || f == F_ABS)
 
 /* application of scalar function to each element of matrix */
 
@@ -12200,6 +12122,36 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         if (!p->err) {
             A = user_matrix_SVD(lm, U, V, &p->err);
         }
+    } else if (f == F_QR) {
+	gretl_matrix *X = node_get_matrix(l, p, 0, 1);
+	gretl_matrix *R = NULL;
+	gretl_matrix *P = NULL;
+
+        if (!p->err) {
+            if (m->t == U_ADDR) {
+                R = ptr_node_get_matrix(m, p);
+            } else if (m->t != EMPTY) {
+                node_type_error(f, 2, U_ADDR, m, p);
+            }
+        }
+        if (!p->err) {
+            if (r->t == U_ADDR) {
+                P = ptr_node_get_matrix(r, p);
+            } else if (r->t != EMPTY) {
+                node_type_error(f, 3, U_ADDR, r, p);
+            }
+        }
+	if (!p->err) {
+	    if (X->is_complex) {
+		if (P != NULL) {
+		    A = gretl_cmatrix_QR_pivot_decomp(X, R, P, &p->err);
+		} else {
+		    A = gretl_cmatrix_QR_decomp(X, R, &p->err);
+		}
+	    } else {
+		A = user_matrix_QR_decomp(X, R, P, &p->err);
+	    }
+	}
     } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
         gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
         gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
@@ -12212,7 +12164,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
             }
         }
-    } else if (f == F_EIGEN || f == F_EIGGEN) {
+    } else if (f == F_EIGEN) {
         gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
         gretl_matrix *v1 = NULL, *v2 = NULL;
 
@@ -12227,20 +12179,33 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
         }
         if (!p->err) {
-            if (f == F_EIGEN) {
-                if (lm->is_complex) {
-                    A = gretl_zgeev(lm, v1, v2, &p->err);
-                } else {
-                    A = gretl_dgeev(lm, v1, v2, &p->err);
-                }
-            } else {
-                /* legacy eigengen: real input only */
-                if (lm->is_complex) {
-                    p->err = E_CMPLX;
-                } else {
-                    A = old_eigengen(lm, v1, v2, &p->err);
-                }
+	    if (lm->is_complex) {
+		A = gretl_zgeev(lm, v1, v2, &p->err);
+	    } else {
+		A = gretl_dgeev(lm, v1, v2, &p->err);
+	    }
+        }
+    } else if (f == F_EIGGEN) {
+	/* legacy: get rid of this asap */
+        gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
+        gretl_matrix *v1 = NULL, *v2 = NULL;
+
+        if (l->t != MAT) {
+            node_type_error(f, 1, MAT, l, p);
+        } else {
+            if (!null_node(m)) {
+                v1 = ptr_node_get_matrix(m, p);
             }
+            if (!null_node(r)) {
+                v2 = ptr_node_get_matrix(r, p);
+            }
+        }
+        if (!p->err) {
+	    if (lm->is_complex) {
+		p->err = E_CMPLX;
+	    } else {
+		A = old_eigengen(lm, v1, v2, &p->err);
+	    }
         }
     } else if (f == F_SCHUR) {
         gretl_matrix *Z = NULL;
@@ -13604,6 +13569,7 @@ static int check_argc (int f, int k, parser *p)
 	{ F_CHOWLIN,   2, 3 },
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
+	{ F_MCOMMUTE,  2, 5 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -14332,6 +14298,40 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 	    tdi.targ = gretl_type_from_gen_type(p->targ);
 	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
 					  p->prn, &p->err);
+	}
+    } else if (t->t == F_MCOMMUTE) {
+	int rowdim = 0, coldim = 0;
+	int post = 0, add_id = 0;
+	gretl_matrix *A = NULL;
+
+	for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
+                if (e->t == MAT) {
+                    A = e->v.m;
+		} else {
+                    p->err = E_TYPES;
+                }
+            } else if (i == 1) {
+		/* row dimension */
+                rowdim = node_get_int(e, p);
+		coldim = rowdim;
+            } else if (i == 2) {
+                /* column dimension */
+		coldim = node_get_int(e, p);
+            } else if (i == 3) {
+                /* postmultiply instead of premultiply? */
+		post = node_get_bool(e, p, 0);
+            } else if (i == 4) {
+                /* add identity matrix ? */
+		add_id = node_get_bool(e, p, 0);
+            }
+        }
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+        }
+        if (!p->err) {
+	    ret->v.m = gretl_matrix_commute(A, rowdim, coldim, !post, add_id, &p->err);
         }
     }
 
@@ -16538,12 +16538,6 @@ static NODE *eval (NODE *t, parser *p)
 	fprintf(stderr, "eval: FARGS: parent %s\n", getsymb(t->parent->t));
         ret = t;
         break;
-    case F_BITOP:
-	p->err = bitop_preprocess(t, m);
-	if (p->err) {
-	    break;
-	}
-	/* Falls through. */
     case B_ADD:
     case B_SUB:
     case B_MUL:
@@ -16617,10 +16611,6 @@ static NODE *eval (NODE *t, parser *p)
         } else {
             p->err = E_TYPES;
         }
-	if (t->t >= B_BITAND) {
-	    /* restore original node-type */
-	    t->t = F_BITOP;
-	}
         break;
     case B_TRMUL:
         /* matrix on left, otherwise be flexible */
@@ -16800,7 +16790,6 @@ static NODE *eval (NODE *t, parser *p)
     case U_NEG:
     case U_POS:
     case U_NOT:
-    case F_BITNOT:
     case F_ABS:
     case F_SGN:
     case F_TOINT:
@@ -16862,6 +16851,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CARG:
     case F_CONJ:
     case F_CMOD:
+    case F_CQUAD:
         if (complex_node(l)) {
             ret = apply_matrix_func(l, t, p);
         } else {
@@ -17410,7 +17400,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_IMINR:
     case F_IMAXR:
     case F_FFT:
-    case F_FFT2:
     case F_FFTI:
     case F_POLROOTS:
     case F_CTRANS:
@@ -17454,9 +17443,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = read_object_func(l, r, t->t, p);
         }
         break;
-    case F_QR:
     case F_EIGSYM:
-        /* matrix -> matrix functions, with indirect return */
+        /* matrix -> matrix functions, with single indirect return */
         if (l->t != MAT && l->t != NUM) {
             node_type_error(t->t, 1, MAT, l, p);
         } else if (r->t != U_ADDR && r->t != EMPTY) {
@@ -17587,8 +17575,9 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_MSHAPE:
     case F_SVD:
-    case F_EIGGEN:
+    case F_QR:
     case F_EIGEN:
+    case F_EIGGEN:
     case F_SCHUR:
     case F_TRIMR:
     case F_TOEPSOLV:
@@ -17688,6 +17677,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case F_TDISAGG:
     case F_MIDASMULT:
+    case F_MCOMMUTE:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
@@ -18066,7 +18056,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_DEC2BIN:
-	if (scalar_node(l)) {
+	if (l->t == NUM || l->t == MAT) {
 	    ret = dec2bin_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
@@ -19598,6 +19588,11 @@ static int create_or_edit_string (parser *p)
     return p->err;
 }
 
+static int has_strvals (NODE *n, parser *p)
+{
+    return (useries_node(n) && is_string_valued(p->dset, n->vnum));
+}
+
 static int create_or_edit_list (parser *p)
 {
     int *list = NULL;
@@ -19744,10 +19739,14 @@ static int gen_check_return_type (parser *p)
         }
     } else if (p->targ == ARRAY) {
         if (p->op == B_ASN) {
-            /* plain assignment: array or null */
-            if (!gen_type_is_arrayable(r->t) && r->t != EMPTY) {
-                err = E_TYPES;
-            }
+            /* plain assignment: array, null, or suitable series */
+            if (gen_type_is_arrayable(r->t) || r->t == EMPTY) {
+		; /* OK */
+	    } else if (has_strvals(r, p)) {
+		; /* possibly OK */
+            } else {
+		err = E_TYPES;
+	    }
         } else {
             /* arrays: the only other assignment possibility is "+=",
                in which case we'll only accept an array or an
@@ -20447,6 +20446,20 @@ static int save_generated_var (parser *p, PRN *prn)
 		if (!p->err && a == r->v.a) {
 		    /* avoid destroying the assigned array */
 		    r->v.a = NULL;
+		}
+	    }
+	} else if (r->t == SERIES) {
+	    /* verified in advance as string-valued */
+	    GretlType atype = GRETL_TYPE_STRINGS;
+
+	    if (p->lh.gtype > 0 && p->lh.gtype != atype) {
+		p->err = E_TYPES;
+	    } else {
+		gretl_array *a =
+		    get_strings_array_from_series(p->dset, r->vnum, &p->err);
+
+		if (!p->err) {
+		    p->err = gen_add_or_replace(p, atype, a);
 		}
 	    }
 	} else {

@@ -5408,7 +5408,7 @@ int *vector_to_midas_list (const gretl_matrix *v,
    Press.
 */
 
-static double imhof_bound (const double *lambda, int k, int *err)
+static double imhof_bound (const gretl_matrix *lambda, int *err)
 {
     double e1 = 0.0001; /* Max truncation error due to finite
                            upper bound on domain */
@@ -5418,8 +5418,8 @@ static double imhof_bound (const double *lambda, int k, int *err)
     double nl = 0.0, sum = 0.0;
     int i;
 
-    for (i=0; i<k; i++) {
-        absl = fabs(lambda[i]);
+    for (i=0; i<lambda->rows; i++) {
+        absl = fabs(lambda->val[i]);
         if (absl > e2) {
             nl += 1.0;
             sum += log(absl);
@@ -5452,33 +5452,26 @@ static double imhof_bound (const double *lambda, int k, int *err)
     return bound;
 }
 
-static double vecsum (const double *x, int k)
-{
-    double sum = 0.0;
-    int i;
-
-    for (i=0; i<k; i++) {
-        sum += x[i];
-    }
-
-    return sum;
-}
-
-static double imhof_f (double u, const double *lambda, int k, double arg)
+static double imhof_f (double u, const gretl_matrix *lambda, double arg)
 {
     double ul, rho = 0.0;
     double theta = -u * arg;
-    int i;
+    int i, k = lambda->rows;
 
     /* The value at zero isn't directly computable as
        it produces 0/0. The limit is computed below.
     */
     if (u == 0.0) {
-        return 0.5 * (-arg + vecsum(lambda, k));
+	double lsum = 0;
+
+	for (i=0; i<k; i++) {
+	    lsum += lambda->val[i];
+	}
+        return 0.5 * (-arg + lsum);
     }
 
     for (i=0; i<k; i++) {
-        ul = u * lambda[i];
+        ul = u * lambda->val[i];
         theta += atan(ul);
         rho += log(1.0 + ul * ul);
     }
@@ -5497,7 +5490,7 @@ static double imhof_f (double u, const double *lambda, int k, double arg)
   get reduced to x 2 on the next iteration.
 */
 
-static double imhof_integral (double arg, const double *lambda, int k,
+static double imhof_integral (double arg, const gretl_matrix *lambda,
                               double bound, int *err)
 {
     double e3 = 0.0001;
@@ -5508,8 +5501,8 @@ static double imhof_integral (double arg, const double *lambda, int k,
     double ret = NADBL;
     int j, n = 2;
 
-    base = imhof_f(0, lambda, k, arg);
-    base += imhof_f(bound, lambda, k, arg);
+    base = imhof_f(0, lambda, arg);
+    base += imhof_f(bound, lambda, arg);
 
     while (n < gridlimit) {
         step = bound / n;
@@ -5517,7 +5510,7 @@ static double imhof_integral (double arg, const double *lambda, int k,
         base = sum1;
         sum4 = 0.0;
         for (j=1; j<=n; j+=2) {
-            sum4 += imhof_f(j * step, lambda, k, arg);
+            sum4 += imhof_f(j * step, lambda, arg);
         }
         int1 = (sum1 + 4 * sum4) * step;
         if (n > 8 && fabs(int1 - int0) < eps4) {
@@ -5540,24 +5533,6 @@ static double imhof_integral (double arg, const double *lambda, int k,
     return ret;
 }
 
-static int imhof_get_eigenvals (const gretl_matrix *m,
-                                double **plam, int *pk)
-{
-    gretl_matrix *E;
-    int err = 0;
-
-    E = gretl_general_matrix_eigenvals(m, &err);
-
-    if (!err) {
-        *pk = E->rows;
-        *plam = gretl_matrix_steal_data(E);
-    }
-
-    gretl_matrix_free(E);
-
-    return err;
-}
-
 /* Implements the "imhof" function in genr: computes the probability
    P(u'Au < arg) for a quadratic form in Normal(0,1) variables.  The
    argument @m may be either the square matrix A or a vector
@@ -5566,31 +5541,30 @@ static int imhof_get_eigenvals (const gretl_matrix *m,
 
 double imhof (const gretl_matrix *m, double arg, int *err)
 {
-    double *lambda = NULL;
+    gretl_matrix *lambda = NULL;
     double bound, ret = NADBL;
-    int k = 0, free_lambda = 0;
+    int free_lambda = 0;
 
     errno = 0;
 
     if (m->cols == 1 || m->rows == 1) {
         /* we'll assume m is a vector of eigenvalues */
-        lambda = m->val;
-        k = gretl_vector_get_length(m);
+        lambda = (gretl_matrix *) m;
     } else if (m->rows == m->cols) {
         /* we'll assume m is the 'A' matrix */
-        *err = imhof_get_eigenvals(m, &lambda, &k);
+	lambda = gretl_general_matrix_eigenvals(m, err);
         free_lambda = 1;
     } else {
         /* huh? */
-        *err = E_DATA;
+        *err = E_INVARG;
     }
 
     if (!*err) {
-        bound = imhof_bound(lambda, k, err);
+        bound = imhof_bound(lambda, err);
     }
 
     if (!*err) {
-        ret = imhof_integral(arg, lambda, k, bound, err);
+        ret = imhof_integral(arg, lambda, bound, err);
     }
 
     if (errno != 0) {
@@ -5606,7 +5580,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
     }
 
     if (free_lambda) {
-        free(lambda);
+        gretl_matrix_free(lambda);
     }
 
     return ret;
@@ -5666,10 +5640,11 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     }
     if (!err) {
         DW /= uu;
-#if 0
-        fprintf(stderr, "DW = %g\n", DW);
-#endif
         E = gretl_general_matrix_eigenvals(MA, &err);
+#if 0
+	fprintf(stderr, "DW = %g\n", DW);
+	gretl_matrix_print(E, "eigenvals of M*A");
+#endif
     }
 
     if (!err) {

@@ -97,6 +97,23 @@ const char *get_tramo_save_string (int i)
     return tramo_save_strings[i];
 }
 
+static void x13a_opts_init (x13a_opts *xopt)
+{
+    xopt->logtrans = 2;     /* log: 0 = no, 1 = yes, 2 = auto */
+    xopt->outliers = 0;     /* detect outliers (3 encodes x13's default ao+ls) */
+    xopt->trdays = 0;       /* trading days correction */
+    xopt->wdays = 0;        /* working days correction */
+    xopt->easter = 0;       /* Easter effect */
+    xopt->seats = 0;        /* use SEATS rather than X11 */
+    xopt->airline = 0;      /* force "airline" ARIMA spec */
+    xopt->output = 0;       /* type of deseas() return series */
+    xopt->verbose = 0;      /* deseas() verbosity level (0, 1 or 2) */
+    xopt->save_spc = 0;     /* add record of spc content */
+    xopt->critical = NADBL; /* for use with outliers */
+    xopt->savelist = NULL;  /* ?? */
+    xopt->aspec = NULL;     /* optional user arima spec */
+}
+
 #ifndef WIN32
 
 #define SP_DEBUG 0
@@ -1213,6 +1230,8 @@ static int grab_linearized_series (double *y, const double *x,
     return err;
 }
 
+/* used by the GUI */
+
 static void request_opts_init (tx_request *request, const DATASET *dset,
                                int varnum, void (*helpfunc))
 {
@@ -1220,25 +1239,16 @@ static void request_opts_init (tx_request *request, const DATASET *dset,
 
     request->savevars = 0;
     request->helpfunc = helpfunc;
-
+    request->seasonal_ok = 1;
     strcpy(request->yname, dset->varname[varnum]);
 
-    request->xopt.logtrans = 2; /* x13a: log: no, yes or automatic */
-    request->xopt.outliers = 3; /* x13a: detect outliers (3 encodes x13's default ao+ls) */
-    request->xopt.trdays = 0;   /* x13a: trading days correction */
-    request->xopt.wdays = 0;    /* x13a: working days correction */
-    request->xopt.easter = 0;   /* x13a: Easter effect */
-    request->xopt.seats = 0;    /* x13a: use SEATS rather than X11 */
-    request->xopt.airline = 0;  /* x13a: force "airline" ARIMA spec */
-    request->xopt.save_spc = 0; /* x13a: add record of spc content */
-    request->xopt.critical = NADBL; /* for use with outliers */
+    x13a_opts_init(&request->xopt);
+    request->xopt.outliers = 3; /* the X13-ARIMA default */
 
     for (i=0; i<TX_MAXOPT; i++) {
         request->opts[i].save = 0;
         request->opts[i].savename[0] = '\0';
     }
-
-    request->seasonal_ok = 1;
 }
 
 static void set_opts (tx_request *request)
@@ -1812,7 +1822,7 @@ int write_tx_data (char *fname,
     const char *workdir;
     char vname[VNAMELEN];
     int savelist[5];
-    tx_request request;
+    tx_request request = {0};
     DATASET *tmpset = NULL;
     int savescript = 0;
     int i, doit;
@@ -2305,8 +2315,7 @@ int adjust_series (const double *x, double *y,
 {
     int prog = (tramo)? TRAMO_SEATS : X13A;
     int savelist[4] = {0};
-    x13a_opts xopt = {3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	NADBL, savelist, NULL};
+    x13a_opts xopt = {0};
     const char *exepath;
     const char *workdir;
     char fname[MAXLEN];
@@ -2317,8 +2326,10 @@ int adjust_series (const double *x, double *y,
     }
 
     /* by default, save only the seasonally adjusted series */
-    savelist[0] = 1;
-    savelist[1] = TX_SA;
+    x13a_opts_init(&xopt);
+    xopt.savelist = savelist;
+    xopt.savelist[0] = 1;
+    xopt.savelist[1] = TX_SA;
 
     if (prog == X13A) {
         exepath = gretl_x12_arima();

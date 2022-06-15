@@ -2423,6 +2423,47 @@
       </description>
     </function>
 
+    <function name="commute" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="pdmat">A</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
+	<fnarg optional="true" type="int">post</fnarg>
+	<fnarg optional="true" type="int">add_id</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the matrix <argname>A</argname> premultiplied by the
+	  commutation matrix <math>K</math><sub>m,n</sub> (more
+	  efficient than explicit multiplication).  Each column of
+	  <argname>A</argname> is assumed to come from a
+	  <math>vec</math> operation on a <math>m x n</math>
+	  matrix. In particular,
+	</para>
+	<code>
+	  commute(vec(B), rows(B), cols(B))
+	</code>
+	<para>
+	  gives <math>vec(B')</math>. In order to compute the
+	  commutation matrix proper, just apply the function to an
+	  appropriately sized identity matrix. For example:
+	</para>
+	<code>
+	  K_32 = commute(I(6), 3, 2)
+	</code>
+	<para>
+	  The optional argument <argname>n</argname> defaults to
+	  <argname>m</argname>.  If the optional argument
+	  <argname>post</argname> is non-zero, then
+	  post-multiplication is performed instead of
+	  pre-multiplication; the optional Boolean switch
+	  <argname>add_id</argname> will premultiply
+	  <argname>A</argname> by <math>I + K</math><sub>m,n</sub>
+	  instead of <math>K</math><sub>m,n</sub>.
+	</para>
+      </description>
+    </function>
+
     <function name="carg" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="cmatrix">C</fnarg>
@@ -3095,6 +3136,27 @@
             <fncref targ="fft"/>
             <fncref targ="filter"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="cquad" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Z</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given an <by r="m" c="n"/> complex matrix
+	  <argname>Z</argname>, returns an <by r="m" c="n"/> real
+	  matrix holding the quadrance of the elements of
+	  <argname>Z</argname>. The quadrance of the complex number
+	  <math>z</math> = <math>a</math> + <math>bi</math> is
+	  <math>a</math><sup>2</sup> + <math>b</math><sup>2</sup>. It
+	  therefore equals the squared modulus of <math>z</math> and
+	  also equals <math>z</math> multiplied by its complex
+	  conjugate, but the direct calculation carried out by
+	  <lit>cquad</lit> is considerably faster than either of the
+	  alternative approaches.
 	</para>
       </description>
     </function>
@@ -4740,45 +4802,16 @@
       </fnargs>
       <description>
 	<para>
-	  <emphasis>This is a legacy function, predating gretl's
-	  native support for complex matrices. It should not be used
-	  in newly written hansl scripts. Use</emphasis> <fncref targ="fft2"/>
-	  <emphasis>instead.</emphasis>
-	</para>
-	<para>
-	  Discrete real Fourier transform. If the input matrix
-	  <argname>X</argname> has <math>n</math> columns, the output has
-	  2<math>n</math> columns, where the real parts are stored in the
-	  odd columns and the complex parts in the even ones.
-	</para>
-	<para>
-	  Should it be necessary to compute the Fourier transform on several
-	  vectors with the same number of elements, it is numerically more
-	  efficient to group them into a matrix rather than invoking
-	  <lit>fft</lit> for each vector separately.
-	  <seelist>
-            <fncref targ="ffti"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="fft2" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
 	  Discrete Fourier transform. The input matrix
 	  <argname>X</argname> may be real or complex. The output is a
 	  complex matrix of the same dimensions as
 	  <argname>X</argname>.
 	</para>
 	<para>
-	  Should it be necessary to compute the Fourier transform on several
-	  vectors with the same number of elements, it is numerically more
+	  Should it be necessary to compute the Fourier transform on
+	  several vectors with the same number of elements, it is more
 	  efficient to group them into a matrix rather than invoking
-	  <lit>fft2</lit> for each vector separately.
+	  <lit>fft</lit> for each vector separately.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -4794,18 +4827,16 @@
 	<para>
 	  Inverse discrete Fourier transform. It is assumed that
 	  <argname>X</argname> contains <math>n</math> complex column
-	  vectors. For backward compatibility the input may be given
-	  as a real matrix with 2<math>n</math> columns, the odd columns
-	  holding the real part and the even ones the imaginary part.
-	  A matrix with <math>n</math> columns is returned.
+	  vectors. A matrix with <math>n</math> columns is returned.
 	</para>
 	<para>
-	  Should it be necessary to compute the inverse Fourier transform on
-	  several vectors with the same number of elements, it is
-	  numerically more efficient to group them into a matrix rather
-	  than invoking <lit>ffti</lit> for each vector separately.
+	  Should it be necessary to compute the inverse Fourier
+	  transform on several vectors with the same number of
+	  elements, it is more efficient to group them into a matrix
+	  rather than invoking <lit>ffti</lit> for each vector
+	  separately.
 	  <seelist>
-            <fncref targ="fft2"/>
+            <fncref targ="fft"/>
 	  </seelist>
 	</para>
       </description>
@@ -10197,6 +10228,7 @@
     <function name="polroots" section="math" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
+	<fnarg type="bool" optional="true">ensure_complex</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10207,10 +10239,10 @@
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  If all the roots are real they are returned in a column vector of
-	  length <math>p</math>, otherwise a <by r="p" c="2"/> matrix
-	  is returned, the real parts in the first column and the imaginary
-	  parts in the second.
+	  The return value is a <math>p</math>-vector. By default this
+	  is a real vector if no root has a non-zero imaginary part,
+	  otherwise a complex vector. The optional second argument can
+	  be used to produce a complex vector in all cases.
 	</para>
       </description>
     </function>
@@ -10651,15 +10683,26 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;R</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;P</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Computes the QR decomposition of an <by r="m" c="n"/> matrix
-	  <argname>X</argname>, that is <math>X = QR</math> where
-	  <math>Q</math> is an <by r="m" c="n"/> orthogonal matrix and
-	  <math>R</math> is an <by r="n" c="n"/> upper triangular matrix. The
-	  matrix <math>Q</math> is returned directly, while <math>R</math> can
-	  be retrieved via the optional second argument.
+	  Computes the <quote>thin</quote> QR decomposition of an <by
+	  r="m" c="n"/> matrix <argname>X</argname> with
+	  <math>m</math> &ge; <math>n</math>, such that <math>X =
+	  QR</math> where <math>Q</math> is an <by r="m" c="n"/>
+	  orthogonal matrix and <math>R</math> is an <by r="n" c="n"/>
+	  upper triangular matrix. The matrix <math>Q</math> is
+	  returned directly, while <math>R</math> can be retrieved via
+	  the optional second argument.
+	</para>
+	<para>
+	  If the optional third argument is supplied the decomposition
+	  employs column pivoting, and on successful completion
+	  <argname>P</argname> holds the final ordering of the columns
+	  in the form of a row vector. If the columns are not in fact
+	  reordered <argname>P</argname> will compare equal to
+	  <fncref targ="seq"/><lit>(1, n)</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -12290,6 +12333,15 @@
             <fncref targ="strvals"/>
 	  </seelist>
 	</para>
+	<para>
+	  An alternative to <lit>stringify</lit> that may be useful in
+	  some contexts is direct assignment from an array of strings
+	  to a series: this creates a series whose values are taken
+	  from the array in sequence; the number of elements in the
+	  array must equal either the full length of the dataset or
+	  the length of the current sample range, and values may be
+	  repeated as required.
+	</para>
       </description>
     </function>
 
@@ -12539,6 +12591,13 @@
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
+	</para>
+	<para>
+	  An alternative to <lit>strvals</lit> that may be useful in
+	  some contexts is direct assignment of a string-valued series
+	  to an array of strings: this provides not just the distinct
+	  values, but all values of the series in the current sample
+	  range.
 	</para>
       </description>
     </function>

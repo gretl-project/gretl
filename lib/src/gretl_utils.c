@@ -203,24 +203,24 @@ int gretl_isdummy (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation.
  *
- * Check whether series @x has only zero values over the
- * given sample range (or possibly missing values).
+ * Check whether series @x has only zero (or missing) values
+ * over the given sample range.
  *
- * Returns: 1 if the variable is all zeros, otherwise 0.
+ * Returns: 0 if the series contains any valid non-zero values,
+ * otherwise 1.
  */
 
 int gretl_iszero (int t1, int t2, const double *x)
 {
-    double sum = 0.0;
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    sum += x[t] * x[t];
+	if (!na(x[t]) && x[t] != 0) {
+	    return 0;
 	}
     }
 
-    return floateq(sum, 0.0);
+    return 1;
 }
 
 /**
@@ -2005,6 +2005,56 @@ int gretl_spawn (char *cmdline)
     return ret;
 }
 
+int gretl_pipe_output (char **argv, const char *currdir, PRN *prn)
+{
+    GError *error = NULL;
+    gchar *errout = NULL;
+    gchar *sout = NULL;
+    int ok, status;
+    int err = 0;
+
+    gretl_error_clear();
+
+    ok = g_spawn_sync(currdir,
+		      argv,
+		      NULL,    /* envp */
+		      G_SPAWN_SEARCH_PATH, /* ? */
+		      NULL,    /* child_setup */
+		      NULL,    /* user_data */
+		      &sout,   /* standard output */
+		      &errout, /* standard error */
+		      &status, /* exit status */
+		      &error);
+
+    if (!ok) {
+	gretl_errmsg_set(error->message);
+	fprintf(stderr, "gretl_pipe_output: '%s'\n", error->message);
+	g_error_free(error);
+	if (errout != NULL) {
+	    fprintf(stderr, " stderr = '%s'\n", errout);
+	}
+	err = 1;
+    } else if (status != 0) {
+	if (errout != NULL && *errout) {
+	    gretl_errmsg_set(errout);
+	    fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, errout);
+	} else {
+	    gretl_errmsg_set(_("Command failed"));
+	    fprintf(stderr, "gretl_pipe_output: status = %d\n", status);
+	}
+	err = 1;
+    }
+
+    if (sout != NULL && *sout) {
+	pputs(prn, sout);
+    }
+
+    if (errout != NULL) g_free(errout);
+    if (sout != NULL) g_free(sout);
+
+    return err;
+}
+
 #endif /* !WIN32 */
 
 /* file copying */
@@ -3227,39 +3277,85 @@ int auto_mpi_ok (void)
     return ret;
 }
 
-gretl_matrix *dec2bin (guint32 x)
+gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err)
 {
-    gretl_matrix *m = gretl_zero_matrix_new(1, 32);
-    int i = 0;
+    gretl_matrix *ret = NULL;
+    double *val;
+    guint32 ui;
+    int n = 1;
+    int i, j;
 
-    while (x > 0) {
-        m->val[i++] = x % 2;
-        x = x >> 1;
+    if (v != NULL) {
+	n = gretl_vector_get_length(v);
+	if (n == 0) {
+	    *err = E_INVARG;
+	    return NULL;
+	}
+	val = v->val;
+    } else {
+	val = &x;
     }
 
-    return m;
+    ret = gretl_zero_matrix_new(n, 32);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	ui = gretl_unsigned_from_double(val[i], err);
+	if (*err) {
+	    break;
+	}
+	j = 0;
+	while (ui > 0) {
+	    gretl_matrix_set(ret, i, j++, ui % 2);
+	    ui = ui >> 1;
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
 }
 
-guint32 bin2dec (const gretl_matrix *m, int *err)
+gretl_matrix *bin2dec (const gretl_matrix *m, int *err)
 {
-    int n = gretl_vector_get_length(m);
-    guint32 ret = 0;
+    int r = gretl_matrix_rows(m); /* must be 1 or more */
+    int c = gretl_matrix_cols(m); /* must be >= 1 && <= 32 */
+    gretl_matrix *ret = NULL;
 
-    if (n == 0 || n > 32) {
+    if (r == 0 || c == 0 || c > 32) {
 	*err = E_INVARG;
     } else {
-	guint32 k = 0x01;
-	int i;
+	/* allocate column vector for return */
+	ret = gretl_zero_matrix_new(r, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
 
-	for (i=0; i<n; i++) {
-	    if (isnan(m->val[i])) {
-		*err = E_INVARG;
-		ret = 0;
-		break;
-	    } else if (m->val[i] != 0) {
-		ret += k;
+    if (!*err) {
+	guint32 ui, k;
+	double mij;
+	int i, j;
+
+	for (i=0; i<r && !*err; i++) {
+	    ui = 0;
+	    k = 0x01;
+	    for (j=0; j<c && !*err; j++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (mij == 1) {
+		    ui += k;
+		} else if (mij != 0) {
+		    *err = E_INVARG;
+		    break;
+		}
+		k = k << 1;
 	    }
-	    k = k << 1;
+	    ret->val[i] = (double) ui;
 	}
     }
 

@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "filelists.h"
 #include "menustate.h"
 #include "toolbar.h"

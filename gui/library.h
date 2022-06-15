@@ -31,14 +31,6 @@ int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 #endif
 
-#ifdef OS_OSX
-int osx_open_file (const char *path);
-
-int osx_open_url (const char *url);
-
-int osx_open_pdf (const char *path, const char *dest);
-#endif
-
 typedef struct _selector selector;
 
 void gui_exec_callback_init (void);
@@ -70,22 +62,21 @@ int execute_script (char *runfile, const char *buf,
 
 int user_fopen (const char *fname, char *fullname, PRN **pprn);
 
-gint bufopen (PRN **pprn);
-
 void menu_op_action (GtkAction *action, gpointer data);
 
 void do_menu_op (int ci, const char *liststr, gretlopt opt,
 		 GtkWidget *parent);
 
-void do_run_script (GtkWidget *w, windata_t *vwin);
-
-void run_script_silent (GtkWidget *w, windata_t *vwin);
-
 void run_script_fragment (windata_t *vwin, gchar *buf);
 
-void gui_errmsg (int errcode);
+void run_native_script (windata_t *vwin, gchar *buf, int silent);
 
-void gui_warnmsg (int errcode);
+void run_R_script (gchar *buf, windata_t *vwin);
+
+void run_x12a_script (const gchar *buf);
+
+void call_lpsolve_function (gchar *buf, const char *fname,
+			    gretlopt opt);
 
 void errmsg_plus (int err, const char *plus);
 
@@ -331,14 +322,7 @@ void midas_list_callback (const int *list,
 
 /* script- and file-related functions */
 
-gboolean do_open_script (int action);
-
 void dataset_info (void);
-
-void do_new_script (int code, const char *buf,
-		    const char *scriptname);
-
-void new_script_callback (GtkAction *action);
 
 int do_store (char *filename, int action, gpointer data);
 

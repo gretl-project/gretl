@@ -26,6 +26,7 @@
 #include "lib_private.h"
 #include "cmdstack.h"
 #include "winstack.h"
+#include "gui_utils.h"
 
 #define NTESTS 6
 #define NPTESTS 3
@@ -3135,9 +3136,9 @@ static void real_stats_calculator (int code, gpointer data)
     tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(tmp, TRUE);
     gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(delete_widget),
-		     child->dlg);
+    g_signal_connect_swapped(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     child->dlg);
 
     /* OK button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);

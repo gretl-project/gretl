@@ -121,6 +121,7 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m,
 
 gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
 				     gretl_matrix *R,
+				     gretl_matrix *P,
 				     int *err);
 
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m,

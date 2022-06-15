@@ -3,9 +3,6 @@
 
 void refresh_data (void);
 
-void gretl_set_window_modal (GtkWidget *w);
-void gretl_set_window_quasi_modal (GtkWidget *w);
-
 void flip (GtkUIManager *ui, const char *path, gboolean s);
 void menu_item_set_tooltip (GtkUIManager *ui, const char *path,
 			    const char *tip);

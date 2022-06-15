@@ -2443,6 +2443,47 @@
       </description>
     </function>
 
+    <function name="commute" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="pdmat">A</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
+	<fnarg optional="true" type="int">post</fnarg>
+	<fnarg optional="true" type="int">add_id</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce la matrice <argname>A</argname> premoltiplicata
+	  per la matrice di commutazione <math>K</math><sub>m,n</sub>
+	  (più efficiente che la moltiplicazione esplicita). Ogni
+	  colonna di <argname>A</argname> è pensata come la
+	  vettorizzazione di una matrice <math>m x n</math>. In
+	  particolare,
+	</para>
+	<code>
+	  commute(vec(B), rows(B), cols(B))
+	</code>
+	<para>
+	  produce <math>vec(B')</math>. Per ottenere la matrice di
+	  commutazione vera e propria,basta applicare la funzione ad
+	  una matrice identità di dimensione appropriata. Ad esempio:
+	</para>
+	<code>
+	  K_32 = commute(I(6), 3, 2)
+	</code>
+	<para>
+	  L'argomento opzionale <argname>n</argname> ha
+	  <argname>m</argname> come default.  Se l'argomento opzionale
+	  <argname>post</argname> è non-zero, allora viene eseguita la
+	  postmoltiplicazione anziché la premoltiplicazione;
+	  se l'argomento 
+	  <argname>add_id</argname> è non-zero, la moltiplicazione
+	  sarà eseguita usando <math>I + K</math><sub>m,n</sub>
+	  invece di <math>K</math><sub>m,n</sub>.
+	</para>
+      </description>
+    </function>
+
     <function name="carg" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="cmatrix">C</fnarg>
@@ -4750,46 +4791,16 @@
       </fnargs>
       <description>
 	<para>
-	  <emphasis>Questa è una vecchia funzione, scritta prima che gretl
-	  supportasse matrici complesse. Non dovrebbe essere usata in nuovi
-	  script hansl. Si usi invece</emphasis> <fncref targ="fft2"/>
-	  <emphasis>.</emphasis>
-	</para>
-	<para>
-	  Trasformata discreta reale di Fourier. Se la matrice di input
-	  <argname>X</argname> ha <math>n</math> colonne, l'output
-	  avrà 2<math>n</math> colonne, dove le parti reali sono
-	  salvate nelle colonne dispari e le parti complesse nelle
-	  colonne pari.
-	</para>
-	<para>
-	  Se fosse necessario calcolare la trasformata di Fourier su
-	  diversi vettori con lo stesso numero di elementi, è
-	  numericamente più efficiente raggrupparli in una matrice
-	  piuttosto che invocare <lit>fft</lit> separatamente per
-	  ciascuno di essi.
-	  <seelist>
-            <fncref targ="ffti"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-    
-    <function name="fft2" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
 	  Trasformata discreta di Fourier. La matrice di input
 	  <argname>X</argname> può essere reale o complessa. L'output è
 	  una matrice complessa della stessa dimensione di <argname>X</argname>.
 	</para>
 	<para>
-	  Qualora dovesse essere necessario calcolare la trasformata di Fourier di
-	  diversi vettori con lo stesso numero di elementi, risulta numericamente più
-	  efficiente raggruppare i vettori in una matrice invece di utilizzare
-	  <lit>fft2</lit> per ogni vettore separatamente.
+	  Qualora dovesse essere necessario calcolare la trasformata
+	  di Fourier di diversi vettori con lo stesso numero di
+	  elementi, risulta numericamente più efficiente raggruppare i
+	  vettori in una matrice invece di utilizzare <lit>fft</lit>
+	  per ogni vettore separatamente.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -4805,10 +4816,8 @@
 	<para>
 	  Trasformata discreta reale di Fourier inversa. Si assume che
 	  <argname>X</argname> contenga <math>n</math> vettori colonna
-	  complessi, con la parte reale nelle colonne pari e la parte
-	  immaginaria nelle colonne dispari: il numero totale di
-	  colonne sarà quindi pari a 2<math>n</math>. Il risultato è
-	  una matrice con <math>n</math> colonne.
+	  complessi. Il risultato è una matrice con <math>n</math>
+	  colonne.
 	</para>
 	<para>
 	  Se si desidera calcolare la trasformata di Fourier inversa
@@ -7062,10 +7071,11 @@
     <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
 	<fnarg type="smlist">Y</fnarg>
-	<fnarg type="scalar-or-matrix">H</fnarg>
-	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Z</fnarg>
+	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
 	<fnarg optional="true" type="matrix">C</fnarg>
+	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7073,15 +7083,15 @@
 	  contenente le informazioni necessarie a definire un modello
 	  lineare in spazio degli stati della seguente forma:
 	  <equation status="display" 
-		    tex="\[y_t= Z \alpha_t\]"
-		    ascii="y(t) = Z a(t)"
+		    tex="\[y_t= Z \alpha_t + u_t\]"
+		    ascii="y(t) = Z a(t) + u(t)"
 		    graphic="kalman1"/> 
           con equazione di transizione
 	  <equation status="display" 
-		    tex="\[\alpha_{t+1} = T \alpha_t + u_t\]"
-		    ascii="a(t+1) = T a(t) + u(t)"
+		    tex="\[\alpha_{t+1} = T \alpha_t + v_t\]"
+		    ascii="a(t+1) = T a(t) + v(t)"
 		    graphic="kalman2"/> 
-		    dove <math>V(u) = Q</math>.
+		    dove var<math>v = Q</math>.
         </para>
 	<para>
 	  Gli oggetti così creati possono poi essere usati con le
@@ -12352,6 +12362,16 @@
 	  Ritorna 0 se l'operazione ha avuto successo, o un codice di errore
 	  positivo.
 	</para>
+       <para>
+	 In certi contesti può essere utile un'alternativa a
+	 <lit>stringify</lit>, che consiste nell'assegnazione diretta
+	 di un array di stringhe a una serie: il risultato conterrà le
+	 stringhe presenti nell'array, in sequenza, ripetute se
+	 serve. Il numero di elementi dell'array deve essere pari alla
+	 dimensione complessiva del dataset o al numero di
+	 osservazioni del sottocampione corrente.
+       </para>
+
       </description>
     </function>
 
@@ -12504,11 +12524,11 @@
 	  è altrettanto corretto.
 	</para>
 	<para>
-	  Le sequenze di escape <quote><lit>\n</lit></quote> e
-	  <quote><lit>\t</lit></quote> rappresentano l'a capo e la
-	  tabulazione nell'argomento
-	  <argname>sep</argname>. Per usare la barra rovesciata come
-	  separatore bisogna raddoppiarla, così:
+	  Le sequenze di escape <quote><lit>\n</lit></quote>,
+	  <quote><lit>\r</lit></quote> e <quote><lit>\t</lit></quote>
+	  rappresentano rispettivamente l'a capo, CR e la tabulazione
+	  nell'argomento <argname>sep</argname>. Per usare la barra
+	  rovesciata come separatore bisogna raddoppiarla, così:
 	  <quote><lit>\\</lit></quote>. Per esempio:
 	</para>
 	<code>
@@ -12615,6 +12635,13 @@
 	    <fncref targ="stringify"/>
 	  </seelist>
 	</para>
+       <para>
+	 In certi contesti può essere utile un'alternativa a
+	 <lit>strvals</lit>, che consiste nell'assegnazione diretta di
+	 una serie con valori stringa a un array: in questo caso,
+	 il risultato conterrà non solo i valori distinti, ma tutte le
+	 stringhe nel campione corrente.
+       </para>
       </description>
     </function>
 

@@ -2661,39 +2661,6 @@ static int write_purebin (const char *fname, const int *list,
     return err;
 }
 
-/* zipfile with gdt XML + binary */
-
-static int write_old_gdtb (const char *fname, const int *list,
-			   const DATASET *dset, gretlopt opt)
-{
-    gchar *zdir;
-    int err;
-
-    zdir = g_strdup_printf("%stmp-zip", gretl_dotdir());
-    err = gretl_mkdir(zdir);
-
-    if (!err) {
-	char xmlfile[FILENAME_MAX];
-
-	gretl_build_path(xmlfile, zdir, "data.xml", NULL);
-	err = real_write_gdt(xmlfile, NULL, list, dset, opt | OPT_B, 0);
-
-	if (!err) {
-	    int level = get_compression_option(STORE);
-
-	    err = gretl_zip_datafile(fname, zdir, level);
-	    if (err) {
-		gretl_errmsg_ensure("Problem writing data file");
-	    }
-	}
-	gretl_deltree(zdir);
-    }
-
-    g_free(zdir);
-
-    return err;
-}
-
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -2714,13 +2681,9 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     int progress)
 {
     int gdtb = has_suffix(fname, ".gdtb");
-    int compat = (opt & OPT_C);
     int err = 0;
 
-    if (gdtb && compat) {
-	/* backward-compatible gdtb */
-	err = write_old_gdtb(fname, list, dset, opt);
-    } else if (gdtb) {
+    if (gdtb) {
 	/* default binary format for gretl >= 2020b */
 	err = write_purebin(fname, list, dset, opt);
     } else {

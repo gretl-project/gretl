@@ -4189,7 +4189,7 @@ static gretl_matrix *gretl_matrix_pergm (const gretl_matrix *x, int m,
     gretl_matrix *p = NULL;
     gretl_matrix *f = NULL;
 
-    f = gretl_matrix_fft(x, 0, err);
+    f = gretl_matrix_fft(x, err);
     if (*err) {
 	return NULL;
     }
@@ -4201,11 +4201,13 @@ static gretl_matrix *gretl_matrix_pergm (const gretl_matrix *x, int m,
     } else {
 	int T = gretl_vector_get_length(x);
 	double re, im, scale = M_2PI * T;
+	double complex z;
 	int i;
 
 	for (i=0; i<m; i++) {
-	    re = gretl_matrix_get(f, i+1, 0);
-	    im = gretl_matrix_get(f, i+1, 1);
+	    z = gretl_cmatrix_get(f, i+1, 0);
+	    re = creal(z);
+	    im = cimag(z);
 	    p->val[i] = (re*re + im*im) / scale;
 	}
     }

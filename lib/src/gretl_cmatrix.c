@@ -37,7 +37,7 @@
 
 static int fft_allocate (double **ffx, double complex **ffz,
 			 gretl_matrix **ret, int r, int c,
-			 int inverse, int newstyle)
+			 int inverse)
 {
     /* real workspace, per series */
     *ffx = fftw_malloc(r * sizeof **ffx);
@@ -53,7 +53,7 @@ static int fft_allocate (double **ffx, double complex **ffz,
     }
 
     /* matrix to hold output */
-    if (newstyle && !inverse) {
+    if (!inverse) {
 	*ret = gretl_cmatrix_new(r, c);
     } else {
 	*ret = gretl_matrix_alloc(r, c);
@@ -73,17 +73,14 @@ static int fft_allocate (double **ffx, double complex **ffz,
    are supported.
 */
 
-static gretl_matrix *
-real_matrix_fft (const gretl_matrix *y, int inverse,
-		 int newstyle, int *err)
+static gretl_matrix *real_matrix_fft (const gretl_matrix *y,
+				      int inverse, int *err)
 {
     gretl_matrix *ret = NULL;
     fftw_plan p = NULL;
     double *ffx = NULL;
     double complex *ffz = NULL;
-    double xr, xi;
-    int r, c, m, odd, cr, ci;
-    int incols, outcols;
+    int r, c, m, odd;
     int i, j;
 
     if (y->rows < 2) {
@@ -92,40 +89,20 @@ real_matrix_fft (const gretl_matrix *y, int inverse,
     }
 
     r = y->rows;
+    c = y->cols;
     m = r / 2;
     odd = r % 2;
 
-    incols = y->cols;
-    if (newstyle) {
-	/* the number of columns is invariant wrt real vs complex */
-	outcols = incols;
-    } else {
-	/* the number of columns is double for complex what it is
-	   for real */
-	outcols = inverse ? incols / 2 : incols * 2;
-    }
-
-    *err = fft_allocate(&ffx, &ffz, &ret, r, outcols,
-			inverse, newstyle);
+    *err = fft_allocate(&ffx, &ffz, &ret, r, c, inverse);
     if (*err) {
 	return NULL;
     }
 
-    c = MIN(incols, outcols);
-    cr = 0;
-    ci = 1;
-
     for (j=0; j<c; j++) {
 	/* load the data */
-	if (newstyle && inverse) {
+	if (inverse) {
 	    for (i=0; i<=m+odd; i++) {
 		ffz[i] = gretl_cmatrix_get(y, i, j);
-	    }
-	} else if (inverse) {
-	    for (i=0; i<=m+odd; i++) {
-		xr = gretl_matrix_get(y, i, cr);
-		xi = gretl_matrix_get(y, i, ci);
-		ffz[i] = xr + xi * I;
 	    }
 	} else {
 	    /* going in the real -> complex direction */
@@ -151,25 +128,14 @@ real_matrix_fft (const gretl_matrix *y, int inverse,
 	    for (i=0; i<r; i++) {
 		gretl_matrix_set(ret, i, j, ffx[i] / r);
 	    }
-	} else if (newstyle) {
+	} else {
 	    for (i=0; i<=m+odd; i++) {
 		gretl_cmatrix_set(ret, i, j, ffz[i]);
 	    }
 	    for (i=m; i>0; i--) {
 		gretl_cmatrix_set(ret, r-i, j, conj(ffz[i]));
 	    }
-	} else {
-	    for (i=0; i<=m+odd; i++) {
-		gretl_matrix_set(ret, i, cr, creal(ffz[i]));
-		gretl_matrix_set(ret, i, ci, cimag(ffz[i]));
-	    }
-	    for (i=m; i>0; i--) {
-		gretl_matrix_set(ret, r-i, cr,  creal(ffz[i]));
-		gretl_matrix_set(ret, r-i, ci, -cimag(ffz[i]));
-	    }
 	}
-	cr += 2;
-	ci += 2;
     }
 
     fftw_destroy_plan(p);
@@ -235,24 +201,21 @@ static int fft_is_hermitian (const gretl_matrix *y)
     return 1;
 }
 
-gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int cmat, int *err)
+gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 {
-    return real_matrix_fft(y, 0, cmat, err);
+    return real_matrix_fft(y, 0, err);
 }
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 {
-    if (y->is_complex) {
-	/* new-style */
-	if (fft_is_hermitian(y)) {
-	    /* its inverse should be real */
-	    return real_matrix_fft(y, 1, 1, err);
-	} else {
-	    return gretl_cmatrix_fft(y, 1, err);
-	}
+    if (!y->is_complex) {
+	*err = E_TYPES;
+	return NULL;
+    } else if (fft_is_hermitian(y)) {
+	/* its inverse should be real */
+	return real_matrix_fft(y, 1, err);
     } else {
-	/* old-style */
-	return real_matrix_fft(y, 1, 0, err);
+	return gretl_cmatrix_fft(y, 1, err);
     }
 }
 
@@ -573,6 +536,32 @@ static int ensure_aux_cmatrix (gretl_matrix *m,
 	    if (ppz != NULL) {
 		*ppz = (cmplx *) aux->val;
 	    }
+	}
+    }
+
+    return 0;
+}
+
+static int ensure_aux_matrix (gretl_matrix *m,
+			      gretl_matrix **paux,
+			      int r, int c)
+{
+    gretl_matrix *aux = NULL;
+    int mrc, dim = r * c;
+
+    mrc = (m == NULL)? 0 : m->rows * m->cols;
+
+    if (mrc == dim && !m->is_complex) {
+	/* OK, reusable real matrix */
+	m->rows = r;
+	m->cols = c;
+    } else {
+	/* have to allocate anew */
+	aux = gretl_matrix_alloc(r, c);
+	if (aux == NULL) {
+	    return E_ALLOC;
+	} else {
+	    *paux = aux;
 	}
     }
 
@@ -1678,6 +1667,14 @@ gretl_matrix *gretl_cmatrix_add_sub (const gretl_matrix *A,
     return C;
 }
 
+double gretl_cquad (double complex z)
+{
+    double complex zr = creal(z);
+    double complex zi = cimag(z);
+
+    return zr*zr + zi*zi;
+}
+
 /* Apply a function which maps from complex to real:
    creal, cimag, carg, cmod.
 */
@@ -2731,6 +2728,152 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     return C;
 }
 
+gretl_matrix *gretl_cmatrix_QR_pivot_decomp (const gretl_matrix *A,
+					     gretl_matrix *R,
+					     gretl_matrix *P,
+					     int *err)
+{
+    gretl_matrix *Q = NULL;
+    gretl_matrix *Rtmp = NULL;
+    gretl_matrix *Ptmp = NULL;
+    integer m, n, lda;
+    integer info = 0;
+    integer lwork = -1;
+    integer *jpvt = NULL;
+    cmplx *tau = NULL;
+    cmplx *work = NULL;
+    double *rwork = NULL;
+    int i, j;
+
+    if (!cmatrix_validate(A, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    lda = m = A->rows;
+    n = A->cols;
+
+    if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    Q = gretl_matrix_copy(A);
+    if (Q == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (R != NULL) {
+	*err = ensure_aux_cmatrix(R, &Rtmp, NULL, n, n);
+	if (*err) {
+	    goto bailout;
+	} else if (Rtmp != NULL) {
+	    gretl_matrix_replace_content(R, Rtmp);
+	}
+    }
+    if (P != NULL) {
+	*err = ensure_aux_matrix(P, &Ptmp, 1, n);
+	if (*err) {
+	    goto bailout;
+	} else if (Ptmp != NULL) {
+	    gretl_matrix_replace_content(P, Ptmp);
+	}
+    }
+
+    /* dim of tau is min (m, n) */
+    tau = malloc(n * sizeof *tau);
+    work = malloc(sizeof *work);
+    rwork = malloc(2 * n * sizeof *rwork);
+    if (tau == NULL || work == NULL || rwork == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* pivot array */
+    jpvt = malloc(n * sizeof *jpvt);
+    if (jpvt == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    } else {
+	for (i=0; i<n; i++) {
+	    jpvt[i] = 0;
+	}
+    }
+
+    /* workspace size query */
+    zgeqp3_(&m, &n, (cmplx *) Q->val, &lda, jpvt, tau, work, &lwork, rwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeqp3: info = %d\n", (int) info);
+	*err = E_DATA;
+    } else {
+	/* optimally sized work array */
+	lwork = (integer) work[0].r;
+	work = realloc(work, (size_t) lwork * sizeof *work);
+	if (work == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	goto bailout;
+    }
+
+    /* run actual QR factorization */
+    zgeqp3_(&m, &n, (cmplx *) Q->val, &lda, jpvt, tau, work, &lwork, rwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeqp3: info = %d\n", (int) info);
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    if (R != NULL) {
+	/* copy the upper triangular R out of Q */
+	double complex z;
+
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i <= j) {
+		    z = gretl_cmatrix_get(Q, i, j);
+		    gretl_cmatrix_set(R, i, j, z);
+		} else {
+		    gretl_cmatrix_set(R, i, j, 0.0);
+		}
+	    }
+	}
+    }
+
+    /* turn Q into "the real" Q, with the help of tau */
+    zungqr_(&m, &n, &n, (cmplx *) Q->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zungqr: info = %d\n", (int) info);
+	*err = E_DATA;
+    }
+
+    if (P != NULL) {
+	for (i=0; i<n; i++) {
+	    P->val[i] = jpvt[i];
+	}
+    }
+
+ bailout:
+
+    free(tau);
+    free(work);
+    free(rwork);
+    free(jpvt);
+    gretl_matrix_free(Rtmp);
+    gretl_matrix_free(Ptmp);
+
+    if (*err) {
+	gretl_matrix_free(Q);
+	Q = NULL;
+    }
+
+    return Q;
+}
+
 /* QR decomposition of complex matrix using LAPACK functions
    zgeqrf() and zungqr().
 */
@@ -2755,7 +2898,9 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 
     lda = m = A->rows;
     n = A->cols;
+
     if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
 	*err = E_NONCONF;
 	return NULL;
     }

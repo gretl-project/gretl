@@ -4740,35 +4740,6 @@
       </fnargs>
       <description>
 	<para>
-	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de GRETL para matrices complejas. No debes usarla en los
-	  guiones nuevos que escribas en lenguaje HANSL. Utiliza </emphasis>
-	  <fncref targ="fft2"/> <emphasis> en su lugar.</emphasis>
-	</para>
-	<para>
-	  Devuelve una matriz con la transformación de Fourier real discreta. Si la
-	  matriz <argname>X</argname> del argumento tiene <math>n</math> columnas,
-	  la que se devuelve tiene 2<math>n</math> columnas, donde las partes reales
-	  se guardan en las columnas impares y las partes complejas en las pares.
-	</para>
-	<para>
-	  Cuando necesites aplicar la transformación de Fourier sobre varios
-	  vectores con el mismo número de elementos, resulta numéricamente más
-	  eficiente agrupar los vectores en una matriz que ejecutar <lit>fft</lit>
-	  para cada uno por separado.
-	  <seelist>
-            <fncref targ="ffti"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="fft2" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
 	  Devuelve una matriz con el resultado de la transformación discreta
 	  de Fourier. La matriz <argname>X</argname> del argumento puede ser
 	  real o compleja. El resultado es una matriz compleja que tiene la
@@ -4776,9 +4747,9 @@
 	</para>
 	<para>
 	  Si fuese necesario calcular la transformación de Fourier sobre
-	  varios vectores con el mismo número de elementos, es numéricamente
-	  más eficiente agruparlos en una matriz, en lugar de ejecutar
-	  <lit>fft2</lit> para cada vector por separado.
+	  varios vectores con el mismo número de elementos, es más eficiente
+	  agruparlos en una matriz, en lugar de ejecutar <lit>fft</lit> para
+	  cada vector por separado.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -4794,18 +4765,16 @@
 	<para>
 	  Devuelve una matriz con <math>n</math> columnas, con el resultado de la
 	  transformación inversa de Fourier discreta. Se asume que la matriz
-	  <argname>X</argname> consta de <math>n</math> vectores columna
-	  complejos. Por compatibilidad anterior, el argumento puedes indicarlo
-	  como una matriz real con 2<math>n</math> columnas, en las que las columnas
-	  impares contienen la parte real, y las pares contienen la parte imaginaria.
+	  <argname>X</argname> consta de <math>n</math> vectores columna complejos.
 	</para>
 	<para>
-	  Cuando necesites aplicar la transformación inversa de Fourier sobre
-	  varios vectores con el mismo número de elementos, resulta numéricamente más
-	  eficiente agrupar los vectores en una matriz que ejecutar <lit>ffti</lit>
-	  para cada uno por separado.
+	  Cuando necesites aplicar la transformación inversa de Fourier
+	  sobre varios vectores con el mismo número de elementos, resulta
+	  más eficiente agrupar los vectores en una matriz que ejecutar
+	  <lit>ffti</lit> para cada uno
+	  por separado.
 	  <seelist>
-            <fncref targ="fft2"/>
+            <fncref targ="fft"/>
 	  </seelist>
 	</para>
       </description>
@@ -7035,10 +7004,10 @@
     <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
 	<fnarg type="smlist">Y</fnarg>
-	<fnarg type="scalar-or-matrix">H</fnarg>
-	<fnarg type="scalar-or-matrix">F</fnarg>
+	<fnarg type="scalar-or-matrix">Z</fnarg>
+	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
-	<fnarg optional="true" type="matrix">C</fnarg>
+	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7046,15 +7015,16 @@
 	  la información necesaria para definir un modelo de espacio de los estados
 	  lineal, de la forma
 	  <equation status="display"
-		    tex="\[y_t=Z\alpha_t\]"
-		    ascii="y(t) = Za(t)"
+		    tex="\[y_t=Z\alpha_t + u_t\]"
+		    ascii="y(t) = Za(t) + u(t)"
 		    graphic="kalman1"/>
-	  y con la ecuación de transición de estado
+	  en la que Var<math>(u) = R</math>, y con la ecuación de transición
+	  de estado
 	  <equation status="display"
-		    tex="\[\alpha_{t+1}=T \alpha_t + u_t\]"
-		    ascii="a(t+1) = T a(t) + u(t)"
+		    tex="\[\alpha_{t+1}=T \alpha_t + v_t\]"
+		    ascii="a(t+1) = T a(t) + v(t)"
 		    graphic="kalman2"/>
-	  en la que Var<math>(u) = Q</math>.
+	  en la que Var<math>(v) = Q</math>.
 	</para>
 	<para>
 	  Los objetos que creas mediante esta función puedes utilizalos más
@@ -12289,6 +12259,15 @@
             <fncref targ="strvals"/>
 	  </seelist>
 	</para>
+	<para>
+	  Una alternativa a <lit>stringify</lit> que puede ser de utilidad en
+	  algunos contextos es la asignación directa de un 'array' de cadenas
+	  de texto a una serie: esto genera una serie cuyos valores se toman
+	  de la serie de forma secuencial; el número de elementos del 'array'
+	  debe ser igual a la longitud total del conjunto de datos o a la
+	  longitud del rango de la muestra vigente, y los valores se pueden
+	  repetir como sea necesario.
+	</para>
       </description>
     </function>
 
@@ -12414,9 +12393,10 @@
 	</para>
 	<para>
 	  Las secuencias de barra diagonal izquierda para escapar, indicadas
-	  mediante <quote><lit>\n</lit></quote> y <quote><lit>\t</lit></quote>,
-	  se considera que representan una línea nueva y una tabulación cuando se
-	  indican en el argumento opcional <argname>sep</argname>. Si quieres incluir
+	  mediante <quote><lit>\n</lit></quote>, <quote><lit>\r</lit></quote>
+	  y <quote><lit>\t</lit></quote>, se considera que representan una
+	  línea nueva, un salto de línea y una tabulación cuando se indican
+	  en el argumento opcional <argname>sep</argname>. Si quieres incluir
 	  una barra diagonal izquierda literal como carácter separador, debes
 	  duplicarla como en <quote><lit>\\</lit></quote>. Ejemplo:
 	</para>
@@ -12537,6 +12517,13 @@
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
+	</para>
+	<para>
+	  Una alternativa a <lit>strvals</lit> que puede ser de utilidad en
+	  algunos contextos es la asignación directa de una serie con valores
+	  de cadenas de texto a un 'array' de cadenas de texto: esto no solo
+	  proporciona los valores que sean diferentes, sino todos los valores
+	  de la serie en el rango de la muestra vigente.
 	</para>
       </description>
     </function>

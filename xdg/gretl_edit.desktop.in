@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=gretl_edit
+Comment=gretl script editor
+Keywords=econometrics;statistics;data;analysis;
+Exec=@prefix@/bin/gretl_edit %f
+Icon=gretl_edit
+Terminal=false
+Type=Application
+Categories=GTK;Education;Science;Economy;Math;
+

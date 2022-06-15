@@ -60,33 +60,6 @@ function scalar zeroifclose (matrix *m,
     return ret
 end function
 
-
-function matrix commute (const matrix A,
-                         int m[1::],
-                         int n[0::0],
-                         bool post[0])
-    # returns A premultiplied by K_mn,
-    # K_mn being the commutation matrix, see Magnus/Neudecker
-    # (more efficient than explicit pre-multiplication,
-    # just reshuffles stuff)
-    # If post != 0, does post-multiplication:
-    # if n == 0 (default), then it's understood to be equal to m,
-    # as per Magnus/Neudecker convention: K_nn = K_n
-
-    n = n ? n : m
-
-    if !post && (rows(A) != n * m)
-        funcerr "m*n doesn't match row dim of input"
-    elif post && (cols(A) != n * m)
-        funcerr "m*n doesn't match column dimension of input"
-    endif
-
-    matrix e = vec(mshape(seq(1, m*n), m, n)')
-
-    return post ? A[,e] : A[e,]
-end function
-
-
 function matrix eliminate (const matrix vecA)
     # Each column of the input vecA is assumed to
     # come from the operation vec(A) on a square

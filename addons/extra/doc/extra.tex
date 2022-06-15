@@ -61,17 +61,6 @@ functions do not live here, but would go into the
 
 \section{Matrix-related functions}
 
-\subsection{commute}
-
-\ArgRet{\texttt{matrix A, int m, int n} (optional), \texttt{bool
-post} (optional)}{matrix}
-
-Returns $A$ premultiplied by $K_{mn}$ (the commutation matrix; more
-efficient than explicit multiplication). In particular, \cmd{commute(vec(B),
-rows(B), cols(B))} gives $vec(B')$. The optional argument $n$ defaults to
-$m$ (giving $K_{mm}=K_{m}$). If the optional arg \texttt{post} is
-non-zero, then does post-multiplication ($A\times K_{mn}$).
-
 \subsection{eliminate}
 
 \ArgRet{\texttt{matrix vecA}}{matrix}
@@ -456,7 +445,7 @@ $-0.5$ and $0.5$.
 
 \section{Authors}
 \begin{itemize}
-\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset,
+\item gap\_filler, eliminate, duplicate, truncnorm, powerset,
   drill, correspondence, combinations, qformvech: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
@@ -472,6 +461,9 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
+\item June 2022: 1.4, retire the commute function (now in libgretl)
+\item January 2022: 1.3, retire the mat2list function (now in
+  libgretl), update gap\_filler
 \item October 2021: 1.2, add qformvech  
 \item June 2021: 1.1, add combinations, and increase gretl version requirement to 2020c
 \item November 2020: 1.0, add mat2list

@@ -23,13 +23,17 @@
 #include "dlgutils.h"
 #include "winstack.h"
 #include "tabwin.h"
-#include "guiprint.h"
 #include "gui_recode.h"
 #include "gretl_func.h"
 #include "addons_utils.h"
+
+#ifndef GRETL_EDIT
+#include "library.h"
+#include "guiprint.h"
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
+#endif
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h" /* for browser_open() */
@@ -94,21 +98,29 @@ static gboolean script_electric_enter (windata_t *vwin, int alt);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
 static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
-static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok);
+#ifndef GRETL_EDIT
+static gchar *textview_get_current_line_with_newline (GtkWidget *view);
+#endif
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
+    static GdkCursor *question_cursor;
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
                                               GTK_TEXT_WINDOW_TEXT);
 
     if (cspec == 0) {
 	gdk_window_set_cursor(win, NULL);
+    } else if (cspec == GDK_QUESTION_ARROW) {
+	if (question_cursor == NULL) {
+	    question_cursor = gdk_cursor_new(GDK_QUESTION_ARROW);
+	}
+	gdk_window_set_cursor(win, question_cursor);
     } else {
 	GdkCursor *cursor = gdk_cursor_new(cspec);
 
@@ -724,17 +736,19 @@ static gint script_key_handler (GtkWidget *w,
     if (state & GDK_CONTROL_MASK) {
 	if (keyval == GDK_R) {
 	    /* Ctrl-Shift-r */
-	    if (gui_editor_mode()) {
-		do_run_script(w, vwin);
-	    } else {
-		run_script_silent(w, vwin);
-	    }
+#ifdef GRETL_EDIT
+	    do_run_script(w, vwin);
+#else
+	    run_script_silent(w, vwin);
+#endif
 	    ret = TRUE;
 	} else if (keyval == GDK_r) {
 	    /* plain Ctrl-r */
 	    do_run_script(w, vwin);
 	    ret = TRUE;
-	} else if (keyval == GDK_Return) {
+	}
+#ifndef GRETL_EDIT
+	else if (keyval == GDK_Return) {
 	    gchar *str = textview_get_current_line_with_newline(w);
 
 	    if (str != NULL) {
@@ -744,7 +758,9 @@ static gint script_key_handler (GtkWidget *w,
 		g_free(str);
 	    }
 	    ret = TRUE;
-	} else if (keyval == GDK_i) {
+	}
+#endif
+	else if (keyval == GDK_i) {
 	    auto_indent_script(w, vwin);
 	    ret = TRUE;
 	}
@@ -1883,6 +1899,28 @@ static void open_external_link (GtkTextTag *tag)
     }
 }
 
+#ifdef GRETL_EDIT
+
+static void open_menu_item (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	/* should be a PDF help file */
+	static GtkAction *action;
+
+	if (action == NULL) {
+	    action = gtk_action_new(name, NULL, NULL, NULL);
+	}
+	display_pdf_help(action);
+	g_free(name);
+    }
+}
+
+#else
+
 static void open_menu_item (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -1943,7 +1981,7 @@ static void open_dbs_link (GtkTextTag *tag)
     }
 }
 
-/* opening next "page" pf dbnomics search results */
+/* opening next "page" of dbnomics search results */
 
 static void open_next_link (GtkTextTag *tag, GtkWidget *tview)
 {
@@ -1954,6 +1992,8 @@ static void open_next_link (GtkTextTag *tag, GtkWidget *tview)
 	dbnomics_search(NULL, vwin);
     }
 }
+
+#endif /* GRETL_EDIT or not */
 
 static void open_pdf_file (GtkTextTag *tag)
 {
@@ -2025,13 +2065,17 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_pdf_file(tag);
 	    } else if (page == MNU_PAGE) {
 		open_menu_item(tag);
-	    } else if (page == DBN_PAGE) {
+	    }
+#ifndef GRETL_EDIT
+	    else if (page == DBN_PAGE) {
 		open_dbn_link(tag);
 	    } else if (page == DBS_PAGE) {
 		open_dbs_link(tag);
 	    } else if (page == NEXT_PAGE) {
 		open_next_link(tag, tview);
-	    } else {
+	    }
+#endif
+	    else {
 		int role = object_get_int(tview, "role");
 
 		if (function_help(role)) {
@@ -2701,6 +2745,8 @@ static gchar *textview_get_current_line (GtkWidget *view, int allow_blank)
     return ret;
 }
 
+#ifndef GRETL_EDIT
+
 static gchar *textview_get_current_line_with_newline (GtkWidget *view)
 {
     gchar *s = textview_get_current_line(view, 0);
@@ -2714,6 +2760,8 @@ static gchar *textview_get_current_line_with_newline (GtkWidget *view)
 
     return s;
 }
+
+#endif
 
 /* Determine whether or not any of the lines in a chunk of text
    are indented, via spaces or tabs.
@@ -3195,6 +3243,8 @@ static void unindent_region (GtkWidget *w, gpointer p)
     bufgets_finalize(tb->chunk);
 }
 
+#ifndef GRETL_EDIT
+
 static void exec_script_text (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
@@ -3202,6 +3252,8 @@ static void exec_script_text (GtkWidget *w, gpointer p)
     run_script_fragment(tb->vwin, tb->chunk);
     tb->chunk = NULL; /* will be freed already */
 }
+
+#endif
 
 enum {
     AUTO_SELECT_NONE,
@@ -3967,6 +4019,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     *ptb = tb;
 
+#ifndef GRETL_EDIT
     if (tb->commented <= 0 && vwin->role != EDIT_PKG_CODE) {
 	/* we have some uncommented material: allow exec option */
 	if (tb->selected) {
@@ -3980,6 +4033,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
+#endif
 
     if (editing_hansl(vwin->role) && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:

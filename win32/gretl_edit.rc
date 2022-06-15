@@ -1,0 +1,8 @@
+#include <windows.h>
+
+/* icon for the program itself */
+icon_0 ICON "icons/icon5.ico"
+
+/* embedded manifest file (is this a good idea?) */
+1 RT_MANIFEST "gretl.exe.manifest"
+

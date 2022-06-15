@@ -36,6 +36,7 @@
 
 \title{regls 0.31: regularized least squares for gretl}
 \author{Allin Cottrell}
+\date{Last revised June 3, 2022}
 
 \begin{document}
 \maketitle
@@ -491,6 +492,13 @@ effective_lambda = {lam1, 0.5*lam1, 0.25*lam1, 0.125*lam1}
 Note that the relevant matrix norms are computed after
 standardization.
 
+One further point on the scaling of $\lambda$: since the key
+\texttt{lfrac} doesn't look right when \texttt{lambda\_scale} = 0, we
+accept \texttt{lambda} as an alternative key. In fact, if
+\texttt{lambda} rather than \texttt{lfrac} is found in the input
+bundle, the default for \texttt{lambda\_scale} switches to 0 (but an
+explicit setting will override this).
+
 In addition to \texttt{BIC} and \texttt{R2} the return bundle from
 Ridge regression contains \texttt{edf} (a scalar if a single $\lambda$
 is specified, otherwise a column vector). This is the ``effective''
@@ -700,7 +708,8 @@ series glmnet_pred (matrix *Rb, list X)
 \section{Change log}
 \label{sec:changes}
 
-Version 0.31, 2022-05-18: update URL; revise fragile list-saving code
+Version 0.31, 2022-06-03: update URL; revise fragile list-saving code;
+allow ``lambda'' as alternative to ``lfrac'' on input.
 Version 0.3, 2021-04-17: fix bug with Ridge verbose printout, and
 replace some tables with figures in the doc for ease of comprehension
 of comparative experiments.\\

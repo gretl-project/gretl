@@ -1930,6 +1930,43 @@ gretl_array *get_strings_array_by_name (const char *name)
     return ret;
 }
 
+/**
+ * get_strings_array_from_series:
+ * @dset: gretl dataset.
+ * @v: series ID number.
+ * @err: location to receive error code.
+ *
+ * Returns: a newly allocated array of strings holding the string
+ * values of series @v over the current sample range, or NULL on
+ * failure.
+ */
+
+gretl_array *get_strings_array_from_series (DATASET *dset,
+					    int v, int *err)
+{
+    gretl_array *ret = NULL;
+    const char *st;
+    int i, t, n;
+
+    if (!is_string_valued(dset, v)) {
+	*err = E_TYPES;
+	return NULL;
+    }
+
+    n = dset->t2 - dset->t1 + 1;
+    ret = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    for (t=dset->t1, i=0; t<=dset->t2; t++, i++) {
+	st = series_get_string_for_obs(dset, v, t);
+	ret->data[i] = gretl_strdup(st);
+    }
+
+    return ret;
+}
+
 gretl_array *gretl_array_pull_from_stack (const char *name,
 					  int *err)
 {

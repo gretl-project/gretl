@@ -1590,9 +1590,10 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m,
     return R;
 }
 
-static int
-real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
-			    gretl_matrix **R)
+static int real_user_matrix_QR_decomp (const gretl_matrix *m,
+				       gretl_matrix **Q,
+				       gretl_matrix **R,
+				       gretl_matrix **P)
 {
     int mc = gretl_matrix_cols(m);
     int err = 0;
@@ -1601,15 +1602,27 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
 
     if (*Q == NULL) {
 	err = E_ALLOC;
-    } else if (R != NULL) {
-	*R = gretl_matrix_alloc(mc, mc);
-	if (*R == NULL) {
-	    err = E_ALLOC;
+    } else {
+	if (R != NULL) {
+	    *R = gretl_matrix_alloc(mc, mc);
+	    if (*R == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (!err && P != NULL) {
+	    *P = gretl_matrix_alloc(1, mc);
+	    if (*P == NULL) {
+		err = E_ALLOC;
+	    }
 	}
     }
 
     if (!err) {
-	err = gretl_matrix_QR_decomp(*Q, (R == NULL)? NULL : *R);
+	if (P != NULL) {
+	    err = gretl_matrix_QR_pivot_decomp(*Q, (R == NULL)? NULL : *R, *P);
+	} else {
+	    err = gretl_matrix_QR_decomp(*Q, (R == NULL)? NULL : *R);
+	}
     }
 
     if (err) {
@@ -1620,6 +1633,10 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
 	    gretl_matrix_free(*R);
 	    *R = NULL;
 	}
+	if (P != NULL) {
+	    gretl_matrix_free(*P);
+	    *P = NULL;
+	}
     }
 
     return err;
@@ -1627,22 +1644,36 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
 
 gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
 				     gretl_matrix *R,
+				     gretl_matrix *P,
 				     int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *Rtmp = NULL;
+    gretl_matrix *Ptmp = NULL;
     gretl_matrix **pR;
+    gretl_matrix **pP;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    pR = (R != NULL)? &Rtmp : NULL;
+    if (m->cols > m->rows) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
+	*err = E_NONCONF;
+	return NULL;
+    }
 
-    *err = real_user_matrix_QR_decomp(m, &Q, pR);
+    pR = (R != NULL)? &Rtmp : NULL;
+    pP = (P != NULL)? &Ptmp : NULL;
+
+    *err = real_user_matrix_QR_decomp(m, &Q, pR, pP);
+
     if (Rtmp != NULL) {
 	maybe_replace_content(R, Rtmp, *err);
+    }
+    if (Ptmp != NULL) {
+	maybe_replace_content(P, Ptmp, *err);
     }
 
     return Q;

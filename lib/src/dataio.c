@@ -2683,6 +2683,41 @@ static int add_obs_markers_from_array (DATASET *dset, const char *aname)
     return err;
 }
 
+static int add_obs_markers_from_series (DATASET *dset, const char *vname)
+{
+    char **S = NULL;
+    const char *s;
+    const char *white = " \t\r\n";
+    char marker[32];
+    int v, t, err = 0;
+
+    v = current_series_index(dset, vname);
+    if (v <= 0) {
+	return E_UNKVAR;
+    } else if (!is_string_valued(dset, v)) {
+	return E_INVARG;
+    }
+
+    S = strings_array_new_with_length(dset->n, OBSLEN);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<dset->n; t++) {
+	s = series_get_string_for_obs(dset, v, t);
+	s += strspn(s, white);
+	*marker = '\0';
+	strncat(marker, s, 31);
+	g_strstrip(marker);
+	gretl_utf8_truncate_b(marker, OBSLEN-1);
+	strcpy(S[t], marker);
+    }
+
+    finalize_add_markers(dset, S, err);
+
+    return err;
+}
+
 /**
  * dataset_has_var_labels:
  * @dset: data information struct.
@@ -3037,7 +3072,12 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	/* from-array */
 	const char *aname = get_optval_string(MARKERS, OPT_R);
 
-	add_obs_markers_from_array(dset, aname);
+	err = add_obs_markers_from_array(dset, aname);
+    } else if (opt & OPT_S) {
+	/* from-series */
+	const char *vname = get_optval_string(MARKERS, OPT_S);
+
+	err = add_obs_markers_from_series(dset, vname);
     }
 
     return err;

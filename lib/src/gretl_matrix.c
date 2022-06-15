@@ -426,6 +426,8 @@ static int matrix_set_complex (gretl_matrix *m, int c, int full)
         if (full) {
             m->rows *= 2;
         }
+    } else if (c && m->is_complex) {
+	m->z = (double complex *) m->val;
     }
 
     return 0;
@@ -2579,6 +2581,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
  * gretl_matrix_polroots:
  * @a: vector of coefficients.
  * @force_complex: see below.
+ * @legacy: see below.
  * @err: location to receive error code.
  *
  * Calculates the roots of the polynomial with coefficients
@@ -2587,41 +2590,45 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
  * i.e. starting with the constant and ending with the
  * coefficient on x^p.
  *
- * Returns: by default, a p-vector if all the roots are real,
- * otherwise a p x 2 matrix with the real parts in the first
- * column and the imaginary parts in the second. The @force_complex
- * flag can be used to enforce a p x 2 return even if the
- * imaginary parts are all zero.
+ * As a transitional measure, if @legacy is non-zero, in the
+ * case of complex roots the return vector is in old-style
+ * format: real values in column 0 and imaginary parts in
+ * column 1.
+ *
+ * Returns: by default, a regular p-vector if all the roots are real,
+ * otherwise a p x 1 complex matrix. The @force_complex flag can
+ * be used to produce a complex return value even if the imaginary
+ * parts are all zero.
  */
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
-                                     int force_complex,
-                                     int *err)
+				     int force_complex,
+				     int legacy,
+				     int *err)
 {
     gretl_matrix *r = NULL;
-    double *xcof = NULL, *cof = NULL;
+    double *work = NULL;
     cmplx *roots = NULL;
+    double *xcof, *cof;
     int i, m, order, polerr;
 
-    *err = 0;
-
     m = gretl_vector_get_length(a);
-
     if (m < 2) {
         *err = E_DATA;
         return NULL;
     }
 
     order = m - 1;
-
-    xcof = malloc(m * sizeof *xcof);
-    cof = malloc(m * sizeof *cof);
+    work = malloc(2 * m * sizeof *work);
     roots = malloc(order * sizeof *roots);
 
-    if (xcof == NULL || cof == NULL || roots == NULL) {
+    if (work == NULL || roots == NULL) {
         *err = E_ALLOC;
         goto bailout;
     }
+
+    xcof = work;
+    cof = xcof + m;
 
     for (i=0; i<m; i++) {
         xcof[i] = a->val[i];
@@ -2633,6 +2640,7 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
         *err = E_DATA;
     } else {
         int allreal = !force_complex;
+	double complex z;
 
         for (i=0; i<order && allreal; i++) {
             if (roots[i].i != 0) {
@@ -2641,25 +2649,31 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
         }
         if (allreal) {
             r = gretl_matrix_alloc(order, 1);
+	} else if (legacy) {
+	    r = gretl_matrix_alloc(order, 2);
         } else {
-            r = gretl_matrix_alloc(order, 2);
+            r = gretl_cmatrix_new(order, 1);
         }
         if (r == NULL) {
             *err = E_ALLOC;
-            goto bailout;
-        }
-        for (i=0; i<order; i++) {
-            gretl_matrix_set(r, i, 0, roots[i].r);
-            if (!allreal) {
-                gretl_matrix_set(r, i, 1, roots[i].i);
-            }
-        }
+	} else {
+	    for (i=0; i<order; i++) {
+		if (allreal) {
+		    gretl_matrix_set(r, i, 0, roots[i].r);
+		} else if (legacy) {
+		    gretl_matrix_set(r, i, 0, roots[i].r);
+		    gretl_matrix_set(r, i, 1, roots[i].i);
+		} else {
+		    z = roots[i].r + roots[i].i * I;
+		    gretl_cmatrix_set(r, i, 0, z);
+		}
+	    }
+	}
     }
 
  bailout:
 
-    free(xcof);
-    free(cof);
+    free(work);
     free(roots);
 
     return r;
@@ -8488,8 +8502,9 @@ int gretl_matrix_psd_root (gretl_matrix *a, int check)
     return err;
 }
 
-int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
-                                  int **order)
+int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
+				  gretl_matrix *R,
+                                  gretl_matrix *P)
 {
     integer m = M->rows;
     integer n = M->cols;
@@ -8501,14 +8516,19 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     double *work = NULL;
     integer *jpvt = NULL;
     int i, j;
-    int moved = 0;
     int err = 0;
 
-    if (R == NULL || R->rows != n || R->cols != n) {
+    if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
         return E_NONCONF;
     }
 
-    fprintf(stderr, "QR decomp: allowing for pivoting\n");
+    if (R != NULL && (R->rows != n || R->cols != n)) {
+        return E_NONCONF;
+    }
+    if (P != NULL && (P->rows != 1 || P->cols != n)) {
+        return E_NONCONF;
+    }
 
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
@@ -8525,10 +8545,13 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     if (jpvt == NULL) {
         err = E_ALLOC;
         goto bailout;
-    }
-
-    for (i=0; i<n; i++) {
-        jpvt[i] = 0;
+    } else {
+	/* pin the first column in place */
+	jpvt[0] = 1;
+	/* but allow permutation of the others */
+	for (i=1; i<n; i++) {
+	    jpvt[i] = 0;
+	}
     }
 
     /* workspace size query */
@@ -8555,16 +8578,18 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
         goto bailout;
     }
 
-    /* copy the upper triangular R out of M */
-    for (i=0; i<n; i++) {
-        for (j=0; j<n; j++) {
-            if (i <= j) {
-                gretl_matrix_set(R, i, j,
-                                 gretl_matrix_get(M, i, j));
-            } else {
-                gretl_matrix_set(R, i, j, 0.0);
-            }
-        }
+    if (R != NULL) {
+	/* copy the upper triangular R out of M */
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i <= j) {
+		    gretl_matrix_set(R, i, j,
+				     gretl_matrix_get(M, i, j));
+		} else {
+		    gretl_matrix_set(R, i, j, 0.0);
+		}
+	    }
+	}
     }
 
     /* obtain the real "Q" matrix (in M) */
@@ -8581,21 +8606,10 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     lapack_free(work);
     free(iwork);
 
-    for (i=0; i<n; i++) {
-        if (jpvt[i] != i + 1) {
-            moved = 1;
-        }
-    }
-
-    if (moved && order != NULL) {
-        *order = malloc(n * sizeof **order);
-        if (*order == NULL) {
-            err = E_ALLOC;
-        } else {
-            for (i=0; i<n; i++) {
-                (*order)[i] = jpvt[i] - 1;
-            }
-        }
+    if (P != NULL) {
+	for (i=0; i<n; i++) {
+	    P->val[i] = jpvt[i];
+	}
     }
 
     free(jpvt);
@@ -8635,6 +8649,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     n = M->cols;
 
     if (n > m) {
+	gretl_errmsg_set(_("qrdecomp: the input must have rows >= columns"));
         return E_NONCONF;
     }
 
@@ -8718,12 +8733,50 @@ static int get_R_rank (const gretl_matrix *R)
 
     for (i=0; i<R->rows; i++) {
         d = gretl_matrix_get(R, i, i);
-        if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
+        if (fabs(d) < R_DIAG_MIN || na(d)) {
             rank--;
         }
     }
 
     return rank;
+}
+
+/**
+ * gretl_triangular_matrix_rcond:
+ * @A: triangular matrix.
+ * @uplo: 'U' for upper triangular input, 'L' for lower.
+ * @diag: 'N' for non-unit triangular, 'U' for unit triangular.
+ *
+ * Returns: the reciprocal condition number of @R in the 1-norm,
+ * or NADBL on failure.
+ */
+
+double gretl_triangular_matrix_rcond (const gretl_matrix *A,
+				      char uplo, char diag)
+{
+    integer *iwork = NULL;
+    double *work = NULL;
+    integer n, info = 0;
+    double rcond = NADBL;
+    char norm = '1';
+
+    n = A->rows;
+    work = lapack_malloc(3 * n * sizeof *work);
+    iwork = malloc(n * sizeof *iwork);
+
+    if (work != NULL && iwork != NULL) {
+	dtrcon_(&norm, &uplo, &diag, &n, A->val, &n, &rcond, work,
+		iwork, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dtrcon: info = %d\n", (int) info);
+	    rcond = NADBL;
+	}
+    }
+
+    lapack_free(work);
+    free(iwork);
+
+    return rcond;
 }
 
 /**
@@ -8892,6 +8945,7 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
     dtrtri_(&uplo, &diag, &n, a->val, &n, &info);
 
     if (info < 0) {
+	fprintf(stderr, "dtrtri: info = %d\n", (int) info);
         err = E_DATA;
     } else if (info > 0) {
         err = E_SINGULAR;
@@ -15069,6 +15123,96 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
     }
 
     return H;
+}
+
+/**
+ * gretl_matrix_commute:
+ * @A: source matrix.
+ * @r: row dimension.
+ * @c: column dimension.
+ * @pre: premultiply (Boolean flag).
+ * @add_id: add identity matrix (Boolean flag).
+ * @err: location to receive error code.
+ *
+ * It is assumed that @A is a matrix with (@r*@c) rows, so each of its
+ * columns can be seen as the vectorization of an (@r x @c)
+ * matrix. Each column of the output matrix contains the vectorization
+ * of the transpose of the corresponding column of @A. This is
+ * equivalent to premultiplying @A by the so-called "commutation
+ * matrix" $K_{r,c}$. If the @add_id flag is non-zero, then @A is
+ * added to the output matrix, so that @A is premultiplied by (I +
+ * K_{r,c}) if @pre is nonzero, postmultiplied if @pre is 0.
+ *
+ * See eg Magnus and Neudecker (1988), "Matrix Differential Calculus
+ * with Applications in Statistics and Econometrics"
+ */
+
+gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
+				    int pre, int add_id, int *err)
+{
+
+    /* dim0 is the dimension on which the swapping has to happen; dim1
+       is the other one */
+
+    int dim0 = r * c;
+    int dim1 = pre ? A->cols : A->rows;
+    int *indices;
+    gretl_matrix *ret;
+
+    /* dimension check */
+    int dim_ok = pre ? (dim0 == A->rows) : (dim0 == A->cols);
+    if (!dim_ok) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    indices = malloc(dim0 * sizeof *indices);
+    if (indices == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (add_id) {
+	ret = gretl_matrix_copy(A);
+    } else {
+	ret = gretl_zero_matrix_new(A->rows, A->cols);
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int i, j, h, k = 0;
+	double x;
+
+	for (i=0; i<r; i++) {
+	    for (j=0; j<c; j++) {
+		indices[k++] = j*r + i;
+	    }
+	}
+
+	k = 0;
+	if (pre) {
+	    for (j=0; j<dim1; j++) {
+		for (i=0; i<dim0; i++) {
+		    h = indices[i];
+		    x = gretl_matrix_get(A, h, j);
+		    ret->val[k++] += x;
+		}
+	    }
+	} else {
+	    for (j=0; j<dim0; j++) {
+		h = indices[j];
+		for (i=0; i<dim1; i++) {
+		    x = gretl_matrix_get(A, i, h);
+		    ret->val[k++] += x;
+		}
+	    }
+	}
+    }
+
+    free(indices);
+
+    return ret;
 }
 
 /**

@@ -54,4 +54,8 @@ void zgeqrf_ (integer *m, integer *n, cmplx *a, integer *lda,
 void zungqr_ (integer *m, integer *n, integer *k, cmplx *a, integer *lda,
 	      cmplx *tau, cmplx *work, integer *lwork, integer *info);
 
+void zgeqp3_ (integer *m, integer *n, cmplx *a, integer *lda, integer *jpvt,
+	      cmplx *tau, cmplx *work, integer *lwork, double *rwork,
+	      integer *info);
+
 #endif /* CLAPACK_COMPLEX_H */

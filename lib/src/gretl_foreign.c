@@ -3543,7 +3543,8 @@ int foreign_execute (const DATASET *dset,
  * execute_R_buffer:
  * @buf: buffer containing commands.
  * @dset: dataset struct.
- * @opt: may include %OPT_D to send data from gretl.
+ * @opt: may include %OPT_D to send data from gretl, %OPT_T
+ * when called from gretl_edit.
  * @prn: struct for printing output.
  *
  * This is used only for MS Windows, working around
@@ -3563,7 +3564,7 @@ int execute_R_buffer (const char *buf,
     make_gretl_R_names();
 
 #ifdef USE_RLIB
-    if (gretl_use_Rlib()) {
+    if (!(opt & OPT_T) && gretl_use_Rlib()) {
 	err = run_R_lib(buf, dset, opt, prn);
     } else {
 	err = run_R_binary(buf, dset, opt, prn);
@@ -3571,7 +3572,6 @@ int execute_R_buffer (const char *buf,
 #else
     err = run_R_binary(buf, dset, opt, prn);
 #endif
-
 
     return err;
 }

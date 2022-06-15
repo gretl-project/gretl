@@ -28,7 +28,7 @@
    employed by R's glmnet for the Gaussian case and the "covariance"
    algorithm.
 
-   SVD for Ridge.
+   SVD: for Ridge.
 */
 
 #include "libgretl.h"
@@ -1846,9 +1846,9 @@ static int svd_ridge_vcv (regls_info *ri,
 /* Variant of SVD ridge that just computes the
    parameter vector */
 
-static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
-		       gretl_matrix *y, gretl_matrix *B,
-		       gretl_matrix *R2, gretl_matrix *edf)
+static int svd_ridge_bhat (double *lam, int nlam, gretl_matrix *X,
+			   gretl_matrix *y, gretl_matrix *B,
+			   gretl_matrix *R2, gretl_matrix *edf)
 {
     gretl_matrix_block *MB = NULL;
     gretl_matrix *U = NULL;
@@ -1869,7 +1869,7 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     int err;
 
 #if RIDGE_DEBUG
-    fprintf(stderr, "*** ridge_bhat ***\n");
+    fprintf(stderr, "*** svd_ridge_bhat ***\n");
 #endif
 
     err = gretl_matrix_SVD(X, &U, &sv, &Vt, 0);
@@ -2021,7 +2021,8 @@ static int svd_ridge (regls_info *ri)
 	err = svd_ridge_vcv(ri, lam0, B, &V);
     } else {
 	/* just calculate the parameters */
-	err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, ri->R2, ri->edf);
+	err = svd_ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B,
+			     ri->R2, ri->edf);
     }
     if (err) {
 	goto bailout;
@@ -2387,7 +2388,7 @@ static int svd_do_fold (gretl_matrix *X,
 	ccd_scale(X, y->val, NULL, NULL);
     }
 
-    err = ridge_bhat(lam->val, nlam, X, y, B, NULL, NULL);
+    err = svd_ridge_bhat(lam->val, nlam, X, y, B, NULL, NULL);
 
 #if 0
     fprintf(stderr, "svd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);

@@ -1259,7 +1259,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, dset);
-    } else if (libset_get_bool(USE_QR)) {
+    } else if (libset_get_int(USE_QR) > 0) {
 	gretl_qr_regress(&mdl, dset, opt);
     } else if (opt & (OPT_R | OPT_I)) {
 	gretl_qr_regress(&mdl, dset, opt);

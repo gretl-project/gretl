@@ -87,17 +87,19 @@ void font_scale_selector (GtkAction *action);
 
 void set_fixed_font (const char *fontname, int remember);
 
-void update_persistent_graph_colors (void);
-
-void update_persistent_graph_font (void);
-
 void set_app_font (const char *fontname, int remember);
 
 const char *get_app_fontname (void);
 
 const char *get_fixed_fontname (void);
 
+void update_persistent_graph_colors (void);
+
+void update_persistent_graph_font (void);
+
 void get_default_dir_for_action (char *s, int action);
+
+#ifndef GRETL_EDIT
 
 void workdir_dialog0 (void);
 
@@ -106,6 +108,14 @@ void workdir_dialog1 (void);
 int gui_set_working_dir (char *dirname);
 
 void set_working_dir_callback (GtkWidget *w, char *path);
+
+double next_graph_scale (double s, int mod);
+
+double min_graph_scale (void);
+
+double max_graph_scale (void);
+
+#endif
 
 void set_path_callback (char *setvar, char *setting);
 

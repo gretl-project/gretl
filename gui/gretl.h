@@ -64,13 +64,15 @@
 #endif
 
 #include "gretltypes.h"
-#include "gui_utils.h"
+#include "base_utils.h"
+#include "viewers.h"
 #include "callbacks.h"
 #include "dialogs.h"
 #include "library.h"
 #include "settings.h"
 #include "helpfiles.h"
 #include "focus.h"
+#include "tabwin.h"
 
 #ifdef ENABLE_NLS
 # include "locale.h"
@@ -86,9 +88,11 @@
 #define MODEL_WIDTH 72
 #define MODEL_HEIGHT 420
 
+#ifndef GRETL_EDIT
 /* basic global program vars */
 extern DATASET *dataset;
 extern MODEL *model;
+#endif
 
 /* global counters */
 extern int orig_vars;
@@ -124,6 +128,9 @@ extern char Rcommand[MAXSTR];
 extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];
 extern PangoFontDescription *fixed_font;
+#ifdef GRETL_EDIT
+extern GtkWidget *editor;
+#endif
 
 #include "gretl_enums.h"
 
@@ -138,7 +145,11 @@ char *get_tryfile (void);
 void clear_tryfile (void);
 int tryfile_is_set (void);
 gboolean open_tryfile (gboolean startup);
+void about_dialog (GtkWidget *w);
 
+#ifdef GRETL_EDIT
+void set_editor (GtkWidget *w);
+#else
 int mdata_selection_count (void);
 int mdata_active_var (void);
 void populate_varlist (void);
@@ -147,17 +158,13 @@ void mdata_select_last_var (void);
 int gui_restore_sample (DATASET *dset);
 void make_list_from_main (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
-int is_control_key (guint k);
+void show_link_cursor (GtkWidget *w, gpointer p);
 void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
-
+int is_control_key (guint k);
 int mainwin_get_vwin_insertion (void);
 int mainwin_insert_vwin (windata_t *vwin);
-
-int gui_editor_mode (void);
-
-/* functions defined in files other than gretl.c */
-void about_dialog (void);
+#endif
 
 #endif /* GRETL_H */

@@ -26,7 +26,7 @@ enum {
     W_SAVE
 };
 
-int multiple_formats_ok (windata_t *vwin);
+#ifndef GRETL_EDIT
 
 void window_tex_callback (GtkWidget *w, windata_t *vwin);
 
@@ -35,6 +35,10 @@ void model_tex_view (GtkAction *action, gpointer data);
 void model_tex_save (GtkAction *action, gpointer data);
 
 void model_tex_copy (GtkAction *action, gpointer data);
+
+#endif
+
+int multiple_formats_ok (windata_t *vwin);
 
 void window_copy (windata_t *vwin, guint fmt);
 

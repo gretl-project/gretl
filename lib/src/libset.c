@@ -78,6 +78,7 @@ struct set_state_ {
     gint8 arma_vcv;             /* ARMA vcv variant */
     gint8 wildboot_d;           /* distribution for wild bootstrap */
     gint8 fdjac_qual;           /* quality of "fdjac" function */
+    gint8 use_qr;               /* off, on or pivot */
     gint8 max_verbose;          /* optimizer verbosity level */
     gint8 hc_version;           /* HCCME version */
     gint8 hac_kernel;           /* HAC kernel type */
@@ -151,7 +152,6 @@ setvar setvars[] = {
     { FORCE_DECPOINT, "force_decpoint", CAT_BEHAVE },
     { USE_PCSE,     "pcse",      CAT_ROBUST },
     { USE_SVD,      "svd",       CAT_NUMERIC },
-    { USE_QR,       "force_qr",  CAT_NUMERIC },
     { PREWHITEN,    "hac_prewhiten", CAT_ROBUST },
     { FORCE_HC,     "force_hc",      CAT_ROBUST },
     { USE_LBFGS,    "lbfgs",        CAT_NUMERIC },
@@ -171,6 +171,7 @@ setvar setvars[] = {
     { ARMA_VCV,      "arma_vcv", CAT_ROBUST, offsetof(set_state,arma_vcv) },
     { WILDBOOT_DIST, "wildboot", CAT_BEHAVE, offsetof(set_state,wildboot_d) },
     { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC, offsetof(set_state,fdjac_qual) },
+    { USE_QR,        "force_qr", CAT_NUMERIC, offsetof(set_state,use_qr) },
     { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE, offsetof(set_state,max_verbose) },
     { HC_VERSION,    "hc_version",  CAT_ROBUST, offsetof(set_state,hc_version) },
     { HAC_KERNEL,    "hac_kernel",  CAT_ROBUST, offsetof(set_state,hac_kernel) },
@@ -253,6 +254,7 @@ setvar setvars[] = {
 			 k == HAC_LAG || \
 			 k == HAC_KERNEL || \
                          k == HC_VERSION || \
+			 k == USE_QR || \
 			 k == VECM_NORM || \
 			 k == GRETL_OPTIM || \
 			 k == MAX_VERBOSE || \
@@ -387,6 +389,7 @@ static const char *plc_strs[] = {"off", "auto", "on", NULL};
 static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", "pipe", NULL};
 static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
 static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
+static const char *qrp_strs[] = {"off", "on", "pivot", NULL};
 
 struct codevar_info {
     SetKey key;
@@ -410,7 +413,8 @@ struct codevar_info coded[] = {
     { GRETL_ASSERT,  ast_strs },
     { PLOT_COLLECT,  plc_strs },
     { HAC_LAG,       ahl_strs },
-    { LOGLEVEL,      llv_strs }
+    { LOGLEVEL,      llv_strs },
+    { USE_QR,        qrp_strs }
 };
 
 static const char **libset_option_strings (SetKey key)
@@ -545,6 +549,7 @@ static set_state default_state = {
     ML_HESSIAN,     /* .arma_vcv */
     0,              /* .wildboot_dist */
     0,              /* .fdjac_qual */
+    0,              /* .use_qr */
     0,              /* .max_verbose */
     0,              /* .hc_version */
     KERNEL_BARTLETT,       /* .hac_kernel */
@@ -1865,6 +1870,7 @@ static int get_int_limits (SetKey key, int *min, int *max)
     static struct int_limits ilims[] = {
 	{ HC_VERSION, 0, 4 },
 	{ FDJAC_QUAL, 0, 2 },
+	{ USE_QR, 0, 2 },
 	{ LBFGS_MEM,  3, 20 },
 	{ GRETL_DEBUG, 0, 4 },
 	{ DATACOLS,    1, 15 },
@@ -1944,34 +1950,40 @@ int libset_set_int (SetKey key, int val)
     return err;
 }
 
-static void set_flag_from_env (SetKey flag, const char *s, int neg)
+static void set_flag_from_env (SetKey flag, const char *s)
 {
     char *e = getenv(s);
-    int action = 0;
 
     if (e != NULL) {
-	if (*e != '\0' && *e != '0') {
-	    action = (neg)? -1 : 1;
+	if (*e == '\0' || *e == '0') {
+	    state->flags &= ~flag;
 	} else {
-	    action = (neg)? 1 : -1;
+	    state->flags |= flag;
 	}
     }
+}
 
-    if (action > 0) {
-	state->flags |= flag;
-    } else if (action < 0) {
-	state->flags &= ~flag;
+static void set_int_from_env (SetKey key, const char *s)
+{
+    char *e = getenv(s);
+
+    if (e != NULL) {
+	if (*e == '\0' || *e == '0') {
+	    libset_set_int(key, 0);
+	} else {
+	    libset_set_int(key, atoi(e));
+	}
     }
 }
 
 static void maybe_check_env (SetKey key)
 {
     if (key == USE_SVD) {
-	set_flag_from_env(USE_SVD, "GRETL_USE_SVD", 0);
-    } else if (key == USE_QR) {
-        set_flag_from_env(USE_QR, "GRETL_USE_QR", 0);
+	set_flag_from_env(USE_SVD, "GRETL_USE_SVD");
     } else if (key == USE_LBFGS) {
-	set_flag_from_env(USE_LBFGS, "GRETL_USE_LBFGS", 0);
+	set_flag_from_env(USE_LBFGS, "GRETL_USE_LBFGS");
+    } else if (key == USE_QR) {
+	set_int_from_env(USE_QR, "GRETL_USE_QR");
     }
 }
 

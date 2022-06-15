@@ -3,36 +3,25 @@
 
 \section{Introduction}
 
-Gretl's support for data series with string values has gone through
-three phases:
-\begin{enumerate}
-\item No support: we simply rejected non-numerical values when reading
-  data from file.
-\item Numeric encoding only: we would read a string-valued series from
-  a delimited text data file (provided the series didn't mix numerical
-  values and strings) but the representation of the data within gretl
-  was purely numerical. We printed a ``string table'' showing the
-  mapping between the original strings and gretl's encoding and it was
-  up to the user to keep track of this mapping.
-\item Preservation of string values: the string table that we
-  construct in reading a string-valued series is now stored as a
-  component of the dataset so it's possible to display and manipulate
-  these values within gretl.
-\end{enumerate}
-
-The third phase has now been in effect for several years, with a
-series of gradual refinements. This chapter gives an account of the
-status quo. It explains how to create string-valued series and
-describes the operations that are supported for such series.
+By a string-valued series we mean a series whose primary values are
+strings (though internally such series comprise an integer coding plus
+a ``dictionary'' mapping from the integer values to strings). This
+chapter explains how to create such series and describes the
+operations that are supported for them.
 
 \section{Creating a string-valued series}
 
-This can be done in three ways: first, by reading such a series from a
-suitable source file; second, by taking a suitable numerical series
-within gretl and adding string values using the \cmd{stringify()}
-function; and third, by direct assignment to a series from an array of
-strings.  In each case string values will be preserved when such a
-series is saved in a gretl-native data file.
+This can be done in three ways:
+\begin{itemize}
+\item by reading such a series from a suitable source file;
+\item by taking a suitable numerical series within gretl and adding
+  string values using the \cmd{stringify()} function; and
+\item by direct assignment to a series from an array of
+strings.
+\end{itemize}
+
+In each case string values will be preserved when such a series is
+saved in a gretl-native data file.
 
 \subsection{Reading string-valued series}
 \label{sec:reading}
@@ -52,18 +41,22 @@ city,year
 "Naples",2019
 \end{code}
 %
-and here's a script:
-%
-\begin{code}
+A script to read this file and its output are shown in
+Listing~\ref{listing:cities}, from which we can see a few things.
+
+\begin{script}[htbp]
+  \caption{Working with a string-valued series}
+  \label{listing:cities}
+ Input:
+\begin{scodebit}
 open gc.csv --quiet
 print --byobs
 print city --byobs --numeric
 printf "The third gretl conference took place in %s.\n", city[3]
-\end{code}
+\end{scodebit}
 
-The output from the script is:
-%
-\begin{code}
+Output:
+\begin{outbit}
 ? print --byobs
 
           city         year
@@ -87,18 +80,18 @@ The output from the script is:
 6            6
 
 The third gretl conference took place in Oklahoma City.
-\end{code}
+\end{outbit}
+\end{script}
 
-From this we can see a few things. 
 \begin{itemize}
 \item By default the \cmd{print} command shows us the string values
   of the series \texttt{city}, and it handles non-ASCII characters
   provided they're in UTF-8 (but it doesn't handle longer strings
   very elegantly).
 \item The \verb|--numeric| option to \cmd{print} exposes the
-  numeric codes for a string-valued series.
-\item The syntax \texttt{seriesname[obs]} gives a string when a series
-  is string-valued.
+  integer codes for a string-valued series.
+\item The syntax \texttt{seriesname[obs]} yields a string when a
+  series is string-valued.
 \end{itemize}
 
 Suppose you want to access the numeric code for a particular
@@ -165,8 +158,8 @@ stringify(grade,defarray("F","D","C","B","A"))
 \end{code}
 
 The inverse operation of \cmd{stringify()} can be performed by the
-\cmd{strvals()} function: this retrieves the array of string values
-from a series (or returns an empty array if the series is not
+\cmd{strvals()} function: this retrieves the array of distinct string
+values from a series (or returns an empty array if the series is not
 string-valued).
 
 \subsection{Assigning from an array of strings}
@@ -181,21 +174,36 @@ strings S = defarray("a", "b", "c", "b", "a", "d")
 series sx = S
 print sx --byobs
 \end{code}
-And here's a second example where we create a string-valued series
+Here's a second example where we create a string-valued series
 using the ``observation markers'' from the current dataset, after
-grabbing them as an array via the \texttt{markers} command.
+grabbing them as an array via the \texttt{markers} command:
 \begin{code}
 open data4-10
 markers --to-array=S
 series state = S
 print state --byobs
 \end{code}
+And here's a third example where we construct the array of strings by
+reading from a text file:
+\begin{code}
+nulldata 8
+series sv = strsplit(readfile("ABCD.txt"))
+print sv --byobs
+\end{code}
+This will work fine if the content of \texttt{ABCD.txt} is something
+like
+\begin{code}
+A B C D D C B A
+\end{code}
+(containing 8 space-separated values, with or without line breaks). If
+the strings in question contain embedded spaces you would have to make
+use of the optional second argument to \texttt{strsplit}.
 
 \section{Permitted operations}
 
 One question that arises with string-valued series is, what are you
-allowed to do with them and what is banned? This is a debatable point,
-but here we set out the current state of things.
+allowed to do with them and what is banned? The optimal policy may be
+debatable, but here we set out the current state of things.
 
 \subsection{Setting values per observation}
 
@@ -219,7 +227,7 @@ grade[31] += 1
 What you're \textit{not} allowed to do here is make a numerical
 adjustment that would put the value out of bounds in relation to the
 set of string values. For example, if we tried \texttt{grade[31] = 6}
-we'd get an error. 
+we'd get an error.
 
 On the other hand, you \textit{can} implicitly extend the set of
 string values. This wouldn't make sense for the letter grades example
@@ -340,9 +348,26 @@ smpl race == "Black" --restrict
 \end{code}
 (although \texttt{race == 2} would also be acceptable).
 
-There may be other contexts that we haven't yet thought of where it
-would be good to have string values displayed and/or accepted on
-input; suggestions are welcome.
+\subsection{Accessing string values}
+
+We have mentioned above two ways of accessing string values from a
+given series: via the syntax
+\begin{code}
+seriesname[obs]
+\end{code}
+to obtain a single such value; and via the \texttt{strvals()} function
+to obtain an array holding all its distinct values. Here we note a
+third option: direct assignment from a string-valued series to an
+array of strings, as in
+%
+\begin{code}
+strings S = sv
+\end{code}
+%
+where \texttt{sv} is a suitable series. In this case you get an array
+holding \textit{all} the \texttt{sv} strings for observations in the
+current sample range, not just the distinct values as with
+\texttt{strvals}.
 
 \section{String-valued series and functions}
 
@@ -469,4 +494,3 @@ Stata variables of string type.
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
 %%% End:
-

@@ -20,6 +20,7 @@
 /* library.c for gretl -- main interface to libgretl functions */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "var.h"
 #include "johansen.h"
 #include "textbuf.h"
@@ -192,29 +193,6 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
 
     if (err) {
         gui_errmsg(err);
-    }
-
-    return err;
-}
-
-gint bufopen (PRN **pprn)
-{
-    static int has_minus = -1;
-    int err = 0;
-
-    *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-
-    if (err) {
-        gui_errmsg(err);
-    } else {
-        if (has_minus < 0) {
-            /* check for Unicode minus sign, U+2212 */
-            has_minus = font_has_symbol(fixed_font, 0x2212);
-        }
-
-        if (has_minus > 0) {
-            gretl_print_set_has_minus(*pprn);
-        }
     }
 
     return err;
@@ -1480,38 +1458,6 @@ void dataset_info (void)
     } else {
         edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
                     EDIT_HEADER);
-    }
-}
-
-void gui_errmsg (int errcode)
-{
-    if (errcode == E_STOP) {
-        gui_warnmsg(errcode);
-    } else {
-        const char *msg = errmsg_get_with_default(errcode);
-
-        if (msg != NULL && *msg != '\0') {
-            errbox(msg);
-            /* avoid duplicating this error message */
-            gretl_error_clear();
-        } else {
-            errbox(_("Unspecified error"));
-        }
-    }
-}
-
-void gui_warnmsg (int errcode)
-{
-    const char *msg = NULL;
-
-    if (errcode > 0) {
-        msg = errmsg_get_with_default(errcode);
-    } else {
-        msg = gretl_warnmsg_get();
-    }
-
-    if (msg != NULL && *msg != '\0') {
-        warnbox(msg);
     }
 }
 
@@ -5789,7 +5735,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     real_do_tramo_x12a(v, tramo);
 }
 
-static void run_x12a_script (const gchar *buf)
+void run_x12a_script (const gchar *buf)
 {
     int (*func) (char *, const gchar *);
     char outfile[MAXLEN] = {0};
@@ -8464,48 +8410,9 @@ static int already_running_script (void)
     }
 }
 
-static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
-{
-    gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
-    gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
-    FILE *fp = gretl_fopen(inpname, "wb");
-    int err = 0;
-
-    if (fp == NULL) {
-	file_read_errbox(inpname);
-	err = E_FOPEN;
-    } else {
-	fputs(buf, fp);
-	fclose(fp);
-    }
-
-    if (!err) {
-#ifdef G_OS_WIN32
-	gchar *cmd;
-
-	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
-	win32_run_gretlcli_async(cmd, inpname, vwin);
-#else
-	gchar *argv[4];
-
-	argv[0] = (gchar *) clipath;
-	argv[1] = (gchar *) "-x";
-	argv[2] = (gchar *) inpname;
-	argv[3] = NULL;
-	run_gretlcli_async(argv, vwin);
-#endif
-    }
-
-    g_free(clipath);
-    g_free(inpname);
-
-    return err;
-}
-
 /* Execute a script from the buffer in viewer window @vwin */
 
-static void run_native_script (windata_t *vwin, gchar *buf,
-			       int silent)
+void run_native_script (windata_t *vwin, gchar *buf, int silent)
 {
     int policy = get_script_output_policy();
     GtkWidget *parent;
@@ -8666,8 +8573,9 @@ int exec_line_with_output_handler (ExecState *s,
     return err;
 }
 
-static void run_R_script (gchar *buf, GtkWidget *parent)
+void run_R_script (gchar *buf, windata_t *vwin)
 {
+    GtkWidget *parent = vwin_toplevel(vwin);
     const char *opts[] = {
         N_("Non-interactive (just get output)"),
         N_("Interactive R session")
@@ -8692,18 +8600,6 @@ static void run_R_script (gchar *buf, GtkWidget *parent)
     }
 }
 
-static void ensure_newline_termination (gchar **ps)
-{
-    gchar *s = *ps;
-
-    if (s[strlen(s)-1] != '\n') {
-        gchar *tmp = g_strdup_printf("%s\n", s);
-
-        g_free(s);
-        *ps = tmp;
-    }
-}
-
 /* Call the lpsolve library to solve the linear program in @buf.  If
    successful, put the lpsolve output into a window and attach the
    output bundle: this will contain various key results that can be
@@ -8713,8 +8609,8 @@ static void ensure_newline_termination (gchar **ps)
    any valid/interesting use for it.
 */
 
-static void call_lpsolve_function (gchar *buf, const char *fname,
-				   gretlopt opt)
+void call_lpsolve_function (gchar *buf, const char *fname,
+			    gretlopt opt)
 {
     gretl_bundle *(*lpf) (gretl_bundle *, PRN *, int *);
     gretl_bundle *b_inp, *b_out;
@@ -8761,240 +8657,6 @@ static void call_lpsolve_function (gchar *buf, const char *fname,
     }
 
     gretl_bundle_destroy(b_inp);
-}
-
-static void real_run_script (GtkWidget *w, windata_t *vwin,
-			     int silent, int cli)
-{
-    gretlopt opt = OPT_NONE;
-    gboolean selection = FALSE;
-    gchar *prev_workdir = NULL;
-    gchar *currdir = NULL;
-    gchar *buf = NULL;
-
-    if (vwin->role == EDIT_GP ||
-        vwin->role == EDIT_R ||
-        vwin->role == EDIT_OX ||
-        vwin->role == EDIT_OCTAVE ||
-        vwin->role == EDIT_PYTHON ||
-        vwin->role == EDIT_JULIA ||
-        vwin->role == EDIT_DYNARE ||
-	vwin->role == EDIT_LPSOLVE ||
-        vwin->role == EDIT_STATA ||
-        vwin->role == EDIT_X12A ||
-	cli) {
-        buf = textview_get_text(vwin->text);
-    } else if (vwin->role == EDIT_PKG_SAMPLE) {
-        buf = package_sample_get_script(vwin);
-    } else {
-        buf = textview_get_selection_or_all(vwin->text, &selection);
-    }
-
-    if (buf == NULL || *buf == '\0') {
-        warnbox("No commands to execute");
-        if (buf != NULL) {
-            g_free(buf);
-        }
-        return;
-    }
-
-    if (vwin->fname[0] != '\0' &&
-        strstr(vwin->fname, "script_tmp") == NULL &&
-        g_path_is_absolute(vwin->fname)) {
-        /* There's a "real" full filename in place */
-        if (editing_alt_script(vwin->role)) {
-            /* For an "alt" script we'll temporarily reset
-               workdir to its location so we're able to pick up
-               any data files it may reference. We'll also arrange
-               to revert the working directory once we're done.
-            */
-            gchar *dname = g_path_get_dirname(vwin->fname);
-
-            currdir = g_get_current_dir();
-            prev_workdir = g_strdup(gretl_workdir());
-            gretl_set_path_by_name("workdir", dname);
-            gretl_chdir(dname);
-            g_free(dname);
-        } else if (vwin->role != EDIT_GP && vwin->role != EDIT_PKG_SAMPLE) {
-            /* native script */
-            gretl_set_script_dir(vwin->fname);
-        }
-    }
-
-    if (vwin->role != EDIT_PKG_SAMPLE) {
-        ensure_newline_termination(&buf);
-    }
-
-    if (vwin->role == EDIT_DYNARE) {
-        opt = OPT_Y;
-    }
-
-    if (vwin->role == EDIT_GP) {
-        run_gnuplot_script(buf, vwin);
-    } else if (vwin->role == EDIT_R) {
-        run_R_script(buf, vwin_toplevel(vwin));
-    } else if (vwin->role == EDIT_OX) {
-        run_foreign_script(buf, LANG_OX, opt);
-    } else if (vwin->role == EDIT_OCTAVE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_PYTHON) {
-        run_foreign_script(buf, LANG_PYTHON, opt);
-    } else if (vwin->role == EDIT_JULIA) {
-        run_foreign_script(buf, LANG_JULIA, opt);
-    } else if (vwin->role == EDIT_DYNARE) {
-        run_foreign_script(buf, LANG_OCTAVE, opt);
-    } else if (vwin->role == EDIT_LPSOLVE) {
-	call_lpsolve_function(buf, vwin->fname, opt);
-    } else if (vwin->role == EDIT_STATA) {
-        run_foreign_script(buf, LANG_STATA, opt);
-    } else if (vwin->role == EDIT_X12A) {
-        run_x12a_script(buf);
-    } else if (cli) {
-	gretlcli_exec_script(vwin, buf);
-    } else if (selection) {
-	run_script_fragment(vwin, buf);
-    } else {
-        run_native_script(vwin, buf, silent);
-    }
-
-    g_free(buf);
-
-    if (prev_workdir != NULL) {
-        gretl_set_path_by_name("workdir", prev_workdir);
-        g_free(prev_workdir);
-    }
-    if (currdir != NULL) {
-        gretl_chdir(currdir);
-        g_free(currdir);
-    }
-}
-
-void do_run_script (GtkWidget *w, windata_t *vwin)
-{
-    if (gui_editor_mode()) {
-	real_run_script(w, vwin, 0, 1);
-    } else {
-	real_run_script(w, vwin, 0, 0);
-    }
-}
-
-void run_script_silent (GtkWidget *w, windata_t *vwin)
-{
-    real_run_script(w, vwin, 1, 0);
-}
-
-gboolean do_open_script (int action)
-{
-    char *fname = get_tryfile();
-    int err = gretl_test_fopen(fname, "r");
-
-    if (err) {
-	file_read_errbox(fname);
-        if (action == EDIT_HANSL) {
-            delete_from_filelist(FILE_LIST_SESSION, fname);
-            delete_from_filelist(FILE_LIST_SCRIPT, fname);
-        }
-        return FALSE;
-    }
-
-    if (action == EDIT_HANSL) {
-        strcpy(scriptfile, fname);
-	if (!gui_editor_mode()) {
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 1);
-	    gretl_set_script_dir(scriptfile);
-	}
-        if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
-            view_script(scriptfile, 0, VIEW_SCRIPT);
-        } else {
-            view_script(scriptfile, 1, EDIT_HANSL);
-        }
-    } else {
-        view_script(fname, 1, action);
-    }
-
-    return TRUE;
-}
-
-/* do_new_script(): passing a non-NULL @scriptname is a means
-   of creating a new script with a name pre-given by the user;
-   this applies only when we get the name of a non-existent
-   script on the command line. Otherwise the new script gets
-   a temporary name in the user's dotdir.
-*/
-
-void do_new_script (int code, const char *buf,
-		    const char *scriptname)
-{
-    int action = (code == FUNC)? EDIT_HANSL : code;
-    fmode mode = 0;
-    windata_t *vwin;
-    gchar *fname;
-
-    if (scriptname == NULL) {
-	/* the usual case */
-	FILE *fp;
-
-	fname = gretl_make_dotpath("script_tmp");
-	fp = gretl_tempfile_open(fname);
-	if (fp == NULL) {
-	    g_free(fname);
-	    return;
-	} else {
-	    if (buf != NULL) {
-		fputs(buf, fp);
-	    } else if (code == FUNC) {
-		fputs("function \n\nend function\n", fp);
-	    } else if (code == EDIT_OX) {
-		fputs("#include <oxstd.h>\n\n", fp);
-		fputs("main()\n{\n\n}\n", fp);
-	    }
-	    fclose(fp);
-	}
-	mode = TMP_FILE;
-    } else {
-	/* special startup case */
-	fname = g_strdup(scriptname);
-	mode = NULL_FILE;
-    }
-
-    if (action == EDIT_HANSL) {
-        strcpy(scriptfile, fname);
-    }
-
-    vwin = view_file(fname, 1, mode, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
-    g_free(fname);
-
-    if (buf != NULL && *buf != '\0') {
-        mark_vwin_content_changed(vwin);
-    }
-}
-
-void new_script_callback (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-    int etype = EDIT_HANSL;
-
-    if (!strcmp(s, "GnuplotScript")) {
-        etype = EDIT_GP;
-    } else if (!strcmp(s, "RScript")) {
-        etype = EDIT_R;
-    } else if (!strcmp(s, "OxScript")) {
-        etype = EDIT_OX;
-    } else if (!strcmp(s, "OctaveScript")) {
-        etype = EDIT_OCTAVE;
-    } else if (!strcmp(s, "PyScript")) {
-        etype = EDIT_PYTHON;
-    } else if (!strcmp(s, "StataScript")) {
-        etype = EDIT_STATA;
-    } else if (!strcmp(s, "JuliaScript")) {
-        etype = EDIT_JULIA;
-    } else if (!strcmp(s, "DynareScript")) {
-        etype = EDIT_DYNARE; /* FIXME not reached */
-    } else if (!strcmp(s, "lpsolveScript")) {
-	etype = EDIT_LPSOLVE;
-    }
-
-    do_new_script(etype, NULL, NULL);
 }
 
 void maybe_display_string_table (void)
@@ -9466,256 +9128,6 @@ int do_store (char *filename, int action, gpointer data)
 
     return err;
 }
-
-#ifdef OS_OSX
-
-# ifdef USE_CARBON
-
-# include <Carbon/Carbon.h>
-
-/* deprecated in macOS >= 10.10, removed in macOS 11 */
-
-int osx_open_file (const char *path)
-{
-    FSRef ref;
-    int err;
-
-    err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
-    if (!err) {
-        err = LSOpenFSRef(&ref, NULL);
-    }
-
-    return err;
-}
-
-int osx_open_pdf (const char *path, const char *dest)
-{
-    FSRef ref;
-    int done = 0;
-    int err;
-
-    err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
-
-    if (!err) {
-        guint8 exe[PATH_MAX] = {0};
-        FSRef appref;
-
-        err = LSGetApplicationForItem(&ref, kLSRolesViewer | kLSRolesEditor,
-                                      &appref, NULL);
-
-        if (!err) {
-            FSRefMakePath(&appref, exe, PATH_MAX);
-        }
-
-        if (!err && strstr((const char *) exe, "Adobe") != NULL) {
-            /* Adobe Acrobat or Acrobat Reader: try passing an
-               option to open at the specified chapter.
-            */
-            LSLaunchFSRefSpec rspec;
-            AEDesc desc;
-            gchar *opt;
-            int lserr;
-
-            opt = g_strdup_printf("nameddest=%s", dest);
-            AECreateDesc(typeChar, opt, strlen(opt), &desc);
-
-            rspec.appRef = &appref;
-            rspec.numDocs = 1;
-            rspec.itemRefs = &ref;
-            rspec.passThruParams = &desc;
-            rspec.launchFlags = kLSLaunchAsync;
-            rspec.asyncRefCon = NULL;
-
-            lserr = LSOpenFromRefSpec(&rspec, NULL);
-            if (lserr) {
-                fprintf(stderr, "LSOpenFromRefSpec, err = %d\n", lserr);
-            } else {
-                done = 1;
-            }
-
-            AEDisposeDesc(&desc);
-            g_free(opt);
-        } else if (!err && strstr((const char *) exe, "Preview") != NULL) {
-            /* The default Apple Preview.app: there's no option
-               as per Adobe, but we can at least try to open the
-               Table-of-Contents pane (Option-Control-3).
-            */
-            err = LSOpenFSRef(&ref, NULL);
-            if (!err) {
-                FILE *fp = popen("/usr/bin/osascript", "w");
-
-                if (fp != NULL) {
-                    /* try to get the table of contents shown */
-                    fputs("activate application \"Preview\"\n", fp);
-                    fputs("tell application \"System Events\"\n", fp);
-                    fputs(" keystroke \"3\" using {option down, command down}\n", fp);
-                    fputs("end tell\n", fp);
-                    pclose(fp);
-                }
-                done = 1;
-            }
-        }
-    }
-
-    if (!err && !done) {
-        err = LSOpenFSRef(&ref, NULL);
-    }
-
-    return err;
-}
-
-# else /* macOS >= 10.10, no Carbon */
-
-# include <CoreFoundation/CoreFoundation.h>
-# include <CoreServices/CoreServices.h>
-
-int osx_open_file (const char *path)
-{
-    CFURLRef u;
-    int err = 0;
-
-    u = CFURLCreateFromFileSystemRepresentation(NULL,
-                                                (const UInt8 *) path,
-                                                strlen(path),
-                                                false);
-    if (u != NULL) {
-        err = LSOpenCFURLRef(u, NULL);
-        CFRelease(u);
-    } else {
-        err = 1;
-    }
-
-    return err;
-}
-
-int osx_open_pdf (const char *path, const char *dest)
-{
-    CFURLRef ref;
-    int done = 0;
-    int err;
-
-    ref = CFURLCreateFromFileSystemRepresentation(NULL,
-						  (const UInt8 *) path,
-						  strlen(path),
-						  false);
-
-    if (!err) {
-        CFURLRef appref;
-	int viewer = 0;
-
-	appref = LSCopyDefaultApplicationURLForURL(ref, kLSRolesAll, NULL);
-
-	if (appref == NULL) {
-	    err = 1;
-	} else {
-	    CFStringRef exe = CFURLGetString(appref);
-	    const char *s[] = {"Adobe", "Preview"};
-	    CFStringRef v[2];
-	    CFRange cfr;
-	    int i;
-
-	    v[0] = CFStringCreateWithCString(NULL, s[0], kCFStringEncodingASCII);
-	    v[1] = CFStringCreateWithCString(NULL, s[1], kCFStringEncodingASCII);
-
-	    for (i=0; i<2; i++) {
-		cfr = CFStringFind(exe, v[i], 0);
-		if (cfr.length > 0) {
-		    viewer = i+1;
-		}
-	    }
-
-	    CFRelease(v[0]);
-	    CFRelease(v[1]);
-        }
-
-        if (!err && viewer == 1) {
-            /* Adobe Acrobat or Acrobat Reader: try passing an
-               option to open at the specified chapter.
-            */
-	    const void *vals = {ref};
-	    CFArrayRef refs;
-            LSLaunchURLSpec uspec;
-            AEDesc desc;
-            gchar *opt;
-            int lserr;
-
-            opt = g_strdup_printf("nameddest=%s", dest);
-            AECreateDesc(typeChar, opt, strlen(opt), &desc);
-	    refs = CFArrayCreate(NULL, &vals, 1, &kCFTypeArrayCallBacks);
-
-            uspec.appURL = appref;
-            uspec.itemURLs = refs;
-            uspec.passThruParams = &desc;
-            uspec.launchFlags = kLSLaunchAsync;
-            uspec.asyncRefCon = NULL;
-
-            lserr = LSOpenFromURLSpec(&uspec, NULL);
-            if (lserr) {
-                fprintf(stderr, "LSOpenFromURLSpec, err = %d\n", lserr);
-            } else {
-                done = 1;
-            }
-            AEDisposeDesc(&desc);
-            g_free(opt);
-        } else if (!err && viewer == 2) {
-            /* The default Apple Preview.app: there's no option
-               as per Adobe, but we can at least try to open the
-               Table-of-Contents pane (Option-Control-3).
-            */
-            err = LSOpenCFURLRef(ref, NULL);
-            if (!err) {
-                FILE *fp = popen("/usr/bin/osascript", "w");
-
-                if (fp != NULL) {
-                    /* try to get the table of contents shown */
-                    fputs("activate application \"Preview\"\n", fp);
-                    fputs("tell application \"System Events\"\n", fp);
-                    fputs(" keystroke \"3\" using {option down, command down}\n", fp);
-                    fputs("end tell\n", fp);
-                    pclose(fp);
-                }
-                done = 1;
-            }
-        }
-    }
-
-    if (!err && !done) {
-        err = LSOpenCFURLRef(ref, NULL);
-    }
-
-    CFRelease(ref);
-
-    return err;
-}
-
-# endif /* Carbon-free variant */
-
-int osx_open_url (const char *url)
-{
-    CFStringRef s;
-    CFURLRef u;
-    int err;
-
-    s = CFStringCreateWithBytes(NULL, (const UInt8 *) url, strlen(url),
-                                kCFStringEncodingASCII,
-                                0);
-    if (s == NULL) {
-        err = 1;
-    } else {
-        u = CFURLCreateWithString(NULL, s, NULL);
-        if (u == NULL) {
-            err = 1;
-        } else {
-            err = LSOpenCFURLRef(u, NULL);
-            CFRelease(u);
-        }
-        CFRelease(s);
-    }
-
-    return err;
-}
-
-#endif /* OS_OSX */
 
 static void clean_up_varlabels (DATASET *dset)
 {

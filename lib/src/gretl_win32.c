@@ -718,6 +718,8 @@ static int run_cmd_with_pipes (const char *cmdline,
 {
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sattr;
+    int run_err = 0;
+    int read_err = 0;
     int ok, err = 0;
 
 #if CPDEBUG
@@ -740,11 +742,10 @@ static int run_cmd_with_pipes (const char *cmdline,
 	/* ensure that the read handle to the child process's pipe for
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	err = run_child_with_pipe(cmdline, currdir, hwrite, hread, opt);
-	if (!err) {
-	    /* read from child's output pipe on termination */
-	    err = read_from_pipe(hwrite, hread, sout, prn);
-	}
+	run_err = run_child_with_pipe(cmdline, currdir, hwrite, hread, opt);
+	/* read from child's output pipe on termination */
+	read_err = read_from_pipe(hwrite, hread, sout, prn);
+	err = run_err ? run_err : read_err;
     }
 
 #if CPDEBUG

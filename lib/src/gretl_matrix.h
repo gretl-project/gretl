@@ -388,6 +388,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 				     int force_complex,
+				     int legacy,
 				     int *err);
 
 void gretl_matrix_raise (gretl_matrix *m, double x);
@@ -645,9 +646,9 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
 			   int *err);
 
 gretl_matrix *old_eigengen (const gretl_matrix *m,
-			    gretl_matrix *VR,
-			    gretl_matrix *VL,
-			    int *err);
+                            gretl_matrix *VR,
+                            gretl_matrix *VL,
+                            int *err);
 
 double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err);
 
@@ -699,7 +700,10 @@ int gretl_matrix_QR_decomp (gretl_matrix *M,
 
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
 				  gretl_matrix *R,
-				  int **order);
+				  gretl_matrix *P);
+
+double gretl_triangular_matrix_rcond (const gretl_matrix *A,
+				      char uplo, char diag);
 
 int gretl_check_QR_rank (const gretl_matrix *R,
 			 int *err,
@@ -877,6 +881,9 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 					const gretl_matrix *u,
 					const gretl_matrix *w,
 					int p, int *err);
+
+gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
+				   int pre, int add_id, int *err);
 
 void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 				       const gretl_matrix *src);

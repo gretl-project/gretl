@@ -44,6 +44,7 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="no"
+build_editor="no"
 use_lucida="no"
 build_po="no"
 have_readline="no"
@@ -150,6 +151,15 @@ then
   build_addons=yes
 else
   build_addons=no
+fi])
+
+AC_ARG_ENABLE(build-editor,
+[  --enable-build-editor   Enable building of gretl_edit [[default=no]]],
+[if test "$enableval" = "yes"
+then
+  build_editor=yes
+else
+  build_editor=no
 fi])
 
 AC_ARG_ENABLE(quiet-build,
@@ -939,6 +949,7 @@ fi
 
 AC_SUBST(build_docs)
 AC_SUBST(build_addons)
+AC_SUBST(build_editor)
 AC_SUBST(quiet_build)
 AC_SUBST(pkg_build)
 AC_SUBST(swap_ends)
@@ -993,6 +1004,7 @@ gretl.pc
 gui/Makefile
 gui/debug
 xdg/gretl.desktop
+xdg/gretl_edit.desktop
 xdg/Makefile
 cli/Makefile
 cli/debug
@@ -1107,6 +1119,12 @@ if test "${build_addons}" = "yes" ; then
   ])
 fi
 
+if test "${build_editor}" = "yes" ; then
+  AC_CONFIG_FILES([
+    editor/Makefile
+  ])
+fi
+
 AC_OUTPUT
 
 if test "${have_zlib}" = "no" ; then
@@ -1203,6 +1221,7 @@ Configuration:
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Build gretl addons:                     ${build_addons}
+  Build gretl_edit:                       ${build_editor}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}

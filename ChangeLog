@@ -1,11 +1,16 @@
 version 2022b, in progress
 - new command/keyword "continue" for use in loops
+- new function commute(): pre/post multiplication by the
+  commutation operator
 - new option --decr for use with index loops
 - "leverage" command: add $result accessor to obtain 
-  leverage, influence and Studentized residuals as matrix
+  leverage, influence and studentized residuals as matrix
 - "printf" command: add "\r" as a recognized escape sequence
 - "smpl" command: add --dates option to resolve potential
   ambiguity of obs limits in case of annual and daily data
+- "markers" command: add --from-series option
+- "store" command: support saving a gretl session file (only
+  in the GUI program), given the ".gretl" suffix
 - "vecm" command: redefine the "order" member of the $system
   accessor to give the lag order in levels, consistent with
   the vecm documentation
@@ -14,12 +19,17 @@ version 2022b, in progress
 - deseas() function: add the option of saving the X-13ARIMA
   specification created by gretl; add option to specify the
   ARIMA model; document the verbose option
+- qrdecomp() function: support column pivoting, via new
+  optional third argument
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
+- Support direct assignment from string-values series to
+  array of strings
 - script editor: enhancements for Find/Replace dialog
 - GUI viewer windows: support Ctrl-plus and Ctrl-minus to
   increase/reduce font size
 - R support: enable exchange of matrices in binary format
+- Fix bug: breakage in GUI item "X-13ARIMA analysis"
 - Fix bug: crash on trying to stringify() an empty series
 - Fix bug: det() should not flag an error when returning NA
 - Fix bug: make "set loop_maxiter 0" behave as advertised

@@ -20,6 +20,7 @@
 /* varinfo.c for gretl : edit attributes of data series */
 
 #include "gretl.h"
+#include "gui_utils.h"
 #include "dlgutils.h"
 #include "ssheet.h"
 #include "toolbar.h"
