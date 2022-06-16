@@ -475,6 +475,7 @@ enum {
     F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
+    F_SPHCORR,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -511,7 +512,7 @@ enum {
     F_TDISAGG,
     F_HYP2F1,
     F_MIDASMULT,
-    F_MCOMMUTE,
+    F_COMMUTE,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

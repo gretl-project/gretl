@@ -15112,7 +15112,6 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
  * @A: source matrix.
  * @r: row dimension.
  * @c: column dimension.
- * @pre: premultiply (Boolean flag).
  * @add_id: add identity matrix (Boolean flag).
  * @err: location to receive error code.
  *
@@ -15130,25 +15129,19 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
  */
 
 gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
-				    int pre, int add_id, int *err)
+				    int add_id, int *err)
 {
-
-    /* dim0 is the dimension on which the swapping has to happen; dim1
-       is the other one */
-
-    int dim0 = r * c;
-    int dim1 = pre ? A->cols : A->rows;
+    int rows = r * c;
+    int cols = A->cols;
     int *indices;
     gretl_matrix *ret;
 
-    /* dimension check */
-    int dim_ok = pre ? (dim0 == A->rows) : (dim0 == A->cols);
-    if (!dim_ok) {
+    if (rows != A->rows) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    indices = malloc(dim0 * sizeof *indices);
+    indices = malloc(rows * sizeof *indices);
     if (indices == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -15157,7 +15150,7 @@ gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
     if (add_id) {
 	ret = gretl_matrix_copy(A);
     } else {
-	ret = gretl_zero_matrix_new(A->rows, A->cols);
+	ret = gretl_zero_matrix_new(rows, cols);
     }
 
     if (ret == NULL) {
@@ -15171,23 +15164,12 @@ gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
 		indices[k++] = j*r + i;
 	    }
 	}
-
 	k = 0;
-	if (pre) {
-	    for (j=0; j<dim1; j++) {
-		for (i=0; i<dim0; i++) {
-		    h = indices[i];
-		    x = gretl_matrix_get(A, h, j);
-		    ret->val[k++] += x;
-		}
-	    }
-	} else {
-	    for (j=0; j<dim0; j++) {
-		h = indices[j];
-		for (i=0; i<dim1; i++) {
-		    x = gretl_matrix_get(A, i, h);
-		    ret->val[k++] += x;
-		}
+	for (j=0; j<cols; j++) {
+	    for (i=0; i<rows; i++) {
+		h = indices[i];
+		x = gretl_matrix_get(A, h, j);
+		ret->val[k++] += x;
 	    }
 	}
     }

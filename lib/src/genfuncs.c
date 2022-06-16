@@ -8296,3 +8296,281 @@ int *list_from_matrix (const gretl_matrix *m,
 
     return list;
 }
+
+#define SPHCORR_DBG 0
+
+static int sphc_unitvec (double *f,
+			 const double *omega, int h,
+			 gretl_matrix *J,
+			 double *work)
+{
+    double *s, *k, *c;
+    double x, ki = 1.0;
+    int i, j;
+
+    s = work;
+    k = s + h;
+    c = k + h + 1;
+
+    for (i=0; i<h; i++) {
+	s[i] = sin(omega[i]);
+	k[i] = ki;
+	ki *= s[i];
+	c[i] = cos(omega[i]);
+    }
+
+    k[h] = ki;
+    c[h] = 1.0;
+
+    for (i=0; i<=h; i++) {
+	f[i] = c[i] * k[i];
+#if SPHCORR_DBG
+	    fprintf(stderr, "f[%d] = %g\n", i, f[i]);
+#endif
+    }
+
+    if (J != NULL) {
+	gretl_matrix_zero(J);
+	/* we reuse @s for the tangents */
+	for (i=0; i<h; i++) {
+	    s[i] = tan(omega[i]);
+	}
+	for (i=1; i<=h; i++) {
+	    for (j=0; j<i; j++) {
+		gretl_matrix_set(J, i, j, k[i] / s[j]);
+	    }
+	}
+	for (i=0; i<h; i++) {
+	    for (j=0; j<i; j++) {
+		x = gretl_matrix_get(J, i, j);
+		gretl_matrix_set(J, i, j, c[i] * x);
+#if 0
+		fprintf(stderr, "J[%d,%d] = c[%d]*x\n", i, j, i);
+#endif
+	    }
+	    gretl_matrix_set(J, i, i, -k[i+1]);
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * omega_from_R:
+ * @R: correlation matrix.
+ * @err: location to receive error code.
+ *
+ * Expresses the (n x n) correlation matrix R in spherical coordinates,
+ * via m angles, where m = n*(n-1)/2.
+ *
+ * Returns: an m-element vector if successful, NULL on failure.
+ */
+
+gretl_matrix *omega_from_R (const gretl_matrix *R, int *err)
+{
+    gretl_matrix *K, *omega = NULL;
+    int n = R->rows;
+    int m = n * (n-1) / 2;
+
+    if (R->cols != n) {
+	*err = E_NONCONF;
+	return omega;
+    }
+
+    K = gretl_matrix_copy(R);
+    if (K == NULL) {
+	*err = E_ALLOC;
+	return omega;
+    }
+
+    *err = gretl_matrix_psd_root(K, 0);
+    if (!*err) {
+	*err = gretl_matrix_transpose_in_place(K);
+    }
+
+    if (!*err) {
+	omega = gretl_matrix_alloc(m, 1);
+	if (omega == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	int i, j, k, l = 0;
+	double theta, x, y, prod;
+	int rank_def;
+
+	for (i=1; i<n; i++) {
+	    k = i * n;
+	    prod = 1.0;
+	    rank_def = 0;
+	    for (j=0; j<i; j++) {
+		if (prod < 1.0e-20) {
+		    rank_def = 1;
+		} else {
+		    x = K->val[k++] / prod;
+		    if (1.0 - fabs(x) < 1.0e-20) {
+			rank_def = x > 0 ? 1 : 2;
+		    }
+		}
+		if (rank_def) {
+		    omega->val[l++] = rank_def == 2 ? M_PI : 0;
+		} else {
+		    theta = acos(x);
+		    omega->val[l++] = theta;
+		    y = sin(theta);
+		    prod *= y;
+		}
+	    }
+	}
+    }
+
+    gretl_matrix_free(K);
+
+    return omega;
+}
+
+/* build a vector holding the indices for the vech Jacobian */
+
+static int *funky_index (int n, int m)
+{
+    int i, j, l = 0;
+    int sum;
+    int *index;
+
+    index = malloc((n + m) * sizeof *index);
+
+    for (i=0; i<n; i++){
+	index[l] = i;
+	l++;
+	sum = 0;
+	for (j=1; j<=i; j++) {
+	    sum += n-j;
+	    index[l] = i + sum;
+#if SPHCORR_DBG
+	    printf("funky_index: %d\n", index[l]);
+#endif
+	    l++;
+	}
+    }
+
+    return index;
+}
+
+/**
+ * R_from_omega:
+ * @omega: angle vector.
+ * @cholesky: boolean, compute cholesky factor instead of correlation matrix.
+ * @J: location to receive Jacobian matrix if wanted, or NULL.
+ * @err: location to receive error code.
+ *
+ * Returns an (n x n) correlation matrix R given its
+ * spherical-coordinates representation omega, which should contain
+ * m numbers between 0 and M_PI, where m = n*(n-1)/2.
+ *
+ * Returns: an n x n symmetric matrix if successful, NULL on failure.
+ */
+
+gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
+			    gretl_matrix *J, int *err)
+{
+    gretl_matrix *K, *R = NULL;
+    int m = omega->rows;
+    double der, tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
+    int n = nearbyint(tmp);
+    int *Jindex = NULL;
+    gretl_matrix *localJ = NULL;
+    gretl_matrix *tmpJac = NULL;
+    double *om, *f = NULL;
+    double *work = NULL;
+    int ii, jj, r_i, c_i;
+    int i, j, h;
+
+    if (fabs(tmp - n) > 1.0e-3) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    K = gretl_zero_matrix_new(n, n);
+    gretl_matrix_set(K, 0, 0, 1.0);
+
+    if (J != NULL) {
+	/* pre-allocate Jacobian matrix */
+	localJ = gretl_zero_matrix_new(m + n, m);
+	Jindex = funky_index(n, m);
+	tmpJac = gretl_matrix_alloc(n+1, n);
+    }
+
+#if SPHCORR_DBG
+    if (J != NULL) {
+	for (i=0; i<m+n; i++) {
+	    fprintf(stderr, "Jindex[%d] = %d\n", i, Jindex[i]);
+	}
+    }
+#endif
+
+    om = omega->val;
+    work = malloc((n + 2*(n+1)) * sizeof *work);
+    f = malloc(m * sizeof *f);
+
+    r_i = 1;
+    c_i = 0;
+
+    for (i=0; i<n-1; i++) {
+	h = i + 1;
+	*err = sphc_unitvec(f, om, h, tmpJac, work);
+	om += h;
+	for (j=0; j<=h; j++) {
+	    gretl_matrix_set(K, h, j, f[j]);
+	}
+	if (J != NULL) {
+	    for (ii=0; ii<=h; ii++) {
+		for (jj=0; jj<=i; jj++) {
+		    der = gretl_matrix_get(tmpJac, ii, jj);
+#if SPHCORR_DBG
+		    printf("d[%d,%d] = %f\n", ii, jj, der);
+		    printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
+#endif
+		    gretl_matrix_set(localJ, Jindex[r_i], c_i + jj, der);
+		}
+		r_i++;
+	    }
+	    c_i += h;
+	}
+    }
+
+#if SPHCORR_DBG
+    gretl_matrix_print(K, "K via f");
+#endif
+
+    free(work);
+    free(f);
+
+    if (J != NULL) {
+	gretl_matrix_replace_content(J, localJ);
+	gretl_matrix_free(localJ);
+	gretl_matrix_free(tmpJac);
+	free(Jindex);
+    }
+
+#if SPHCORR_DBG
+    gretl_matrix_print(K, "reconstructed cholesky");
+    if (do_jacobian) {
+	gretl_matrix_print(*J, "Jacobian");
+    }
+#endif
+
+    if (!cholesky) {
+	R = gretl_matrix_alloc(n, n);
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_multiply_mod(K, GRETL_MOD_NONE,
+				      K, GRETL_MOD_TRANSPOSE,
+				      R, GRETL_MOD_NONE);
+	}
+	gretl_matrix_free(K);
+    }
+
+    return cholesky ? K : R;
+}

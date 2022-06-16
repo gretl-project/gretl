@@ -12799,6 +12799,30 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 						    reqd, NULL, p->prn,
 						    &p->err);
         }
+    } else if (f == F_SPHCORR) {
+	int mode = null_node(m) ? 0 : node_get_int(m, p);
+	gretl_matrix *J = NULL;
+
+	if (!p->err) {
+	    if (mode < 0 || mode > 2) {
+		p->err = E_INVARG;
+	    } else if (l->t != MAT) {
+		node_type_error(f, 1, MAT, l, p);
+	    } else if (!null_node(r) && r->t != U_ADDR) {
+		node_type_error(f, 3, U_ADDR, r, p);
+	    } else if (!null_node(r)) {
+		J = ptr_node_get_matrix(r, p);
+	    }
+	}
+	if (!p->err) {
+	    if (mode == 0) {
+		A = omega_from_R(l->v.m, &p->err);
+	    } else {
+		int cholesky = (mode == 2);
+
+		A = R_from_omega(l->v.m, cholesky, J, &p->err);
+	    }
+	}
     }
 
     if (post_process) {
@@ -14320,7 +14344,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             } else if (!null_node(e)) {
                 p->err = E_TYPES;
             }
-        }
+	}
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
@@ -14329,7 +14353,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
 					  p->prn, &p->err);
 	}
-    } else if (t->t == F_MCOMMUTE) {
+    } else if (t->t == F_COMMUTE) {
 	int rowdim = 0, coldim = 0;
 	int post = 0, add_id = 0;
 	gretl_matrix *A = NULL;
@@ -14361,7 +14385,15 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-	    ret->v.m = gretl_matrix_commute(A, rowdim, coldim, !post, add_id, &p->err);
+	    if (!post) {
+		ret->v.m = gretl_matrix_commute(A, rowdim, coldim, add_id, &p->err);
+	    } else {
+		gretl_matrix *B = gretl_matrix_copy_transpose(A);
+
+		A = gretl_matrix_commute(B, coldim, rowdim, add_id, &p->err);
+		ret->v.m = gretl_matrix_copy_transpose(A);
+		gretl_matrix_free(B);
+	    }
         }
     }
 
@@ -17632,6 +17664,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case F_VMA:
     case F_BCHECK:
+    case F_SPHCORR:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
@@ -17698,7 +17731,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case F_TDISAGG:
     case F_MIDASMULT:
-    case F_MCOMMUTE:
+    case F_COMMUTE:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");
