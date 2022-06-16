@@ -13623,7 +13623,7 @@ static int check_argc (int f, int k, parser *p)
 	{ F_CHOWLIN,   2, 3 },
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
-	{ F_MCOMMUTE,  2, 5 }
+	{ F_COMMUTE,   2, 5 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -14370,14 +14370,14 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 		/* row dimension */
                 rowdim = node_get_int(e, p);
 		coldim = rowdim;
-            } else if (i == 2) {
+            } else if (i == 2 && !null_node(e)) {
                 /* column dimension */
 		coldim = node_get_int(e, p);
             } else if (i == 3) {
                 /* postmultiply instead of premultiply? */
 		post = node_get_bool(e, p, 0);
             } else if (i == 4) {
-                /* add identity matrix ? */
+                /* add identity matrix? */
 		add_id = node_get_bool(e, p, 0);
             }
         }
