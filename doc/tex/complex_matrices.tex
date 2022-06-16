@@ -79,27 +79,29 @@ certain computations.
 
 With both real and complex matrices in circulation, one may wish to
 determine whether a particular matrix is complex. The function
-\cmd{iscomplex()} can tell you. Passed an identifier, it returns 1
-if it names a complex matrix, 0 if it names a real matrix, or
-\texttt{NA} otherwise.
-
-Note, however, that the \cmd{iscomplex()} function only tells you if a
-certain matrix is endowed with an imaginary part, which may be
-zero. The following code snippet should clarify the point:
+\cmd{iscomplex()} can tell you. Passed an identifier, it returns
+non-zero if it names a complex matrix, 0 if it names a real matrix, or
+\texttt{NA} otherwise. The non-zero return value is either 1 or 2,
+with the following interpretation:
+\begin{itemize}
+\item 1 indicates that the matrix is ``nominally complex'' (each
+  element is represented as having a real part and an imaginary part)
+  but all imaginary parts are zero.
+\item 2 indicates that at least one element has a non-zero imaginary
+  part.
+\end{itemize}
+The following code snippet illustrates the point.
 \begin{code}
-matrix z = complex(1,0)
-scalar a = iscomplex(z)
-scalar b = z[imag] == 0
-printf "a = %g, b = %g\n", a, b
+matrix z1 = complex(1,0)
+scalar a = iscomplex(z1)
+matrix z2 = complex(1,1)
+scalar b = iscomplex(z2)
+printf "a = %d, b = %d\n", a, b
 \end{code}
 The code above gives
 \begin{code}
-a = 1, b = 1
+a = 1, b = 2
 \end{code}
-The test \texttt{a} is non-zero (or ``true'') because the matrix
-\texttt{z} is defined as complex, but \texttt{b}, which tests for an
-all-zero imaginary part of \texttt{z}, is also true. In mathematical
-terms, then, \texttt{z} is effectively a real matrix.
 
 \section{Indexation}
 
