@@ -7423,7 +7423,7 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
             gretl_matrix *m = get_matrix_by_name(s);
 
             if (m != NULL) {
-                ret->v.xval = m->is_complex;
+                ret->v.xval = matrix_is_complex(m);
             }
         } else if (f == F_EXISTS) {
             GretlType type = user_var_get_type_by_name(s);
