@@ -23,6 +23,7 @@
 #include "gretl_string_table.h"
 
 #include <glib.h>
+#include <locale.h>
 
 #ifdef ENABLE_NLS
 
