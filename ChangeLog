@@ -1,7 +1,10 @@
 version 2022b, in progress
 - new command/keyword "continue" for use in loops
 - new function commute(): pre/post multiplication by the
-  commutation operator
+  commutation operator (replaces analogous function in the
+  extra addon)
+- new function sphericorr(): spherical coordinates
+  representation for correlation matrices
 - new option --decr for use with index loops
 - "leverage" command: add $result accessor to obtain 
   leverage, influence and studentized residuals as matrix
