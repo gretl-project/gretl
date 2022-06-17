@@ -8472,30 +8472,28 @@ static gretl_matrix *JR_from_Jk (gretl_matrix *Jk,
       where JJ is an appropriate subset of the rows and columns of
 
       (I + K_nn) (I \otimes K)
-     */
-
+    */
+    gretl_matrix *IkronK = NULL, *tmp = NULL;
+    gretl_matrix *JJ = NULL, *ret = NULL;
     int i, j, n = K->rows;
     int h = n * (n+1)/2, m = n * (n-1)/2, k, l;
     int *ndxc = NULL, *ndxr = NULL;
+    int ndxi;
+    double x;
 
     /* allocate stuff */
-    ndxc = malloc(h * sizeof *ndxc);
+    ndxc = malloc(2 * h * sizeof *ndxc);
     if (ndxc == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
-
-    ndxr = malloc(h * sizeof *ndxr);
-    if (ndxr == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
+    ndxr = ndxc + h;
 
     l = 0;
     k = 0;
-    for(i=0; i<n; i++) {
-	for(j=0; j<n; j++) {
-	    if (i<=j) {
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    if (i <= j) {
 		ndxr[l] = k;
 		ndxc[l++] = i + j*n;
 	    }
@@ -8504,9 +8502,7 @@ static gretl_matrix *JR_from_Jk (gretl_matrix *Jk,
     }
 
     *err = 0;
-    gretl_matrix *IkronK = NULL, *tmp = NULL, *JJ = NULL, *ret = NULL;
-    IkronK = gretl_matrix_I_kronecker_new (n, K, err);
-
+    IkronK = gretl_matrix_I_kronecker_new(n, K, err);
     if (*err) {
 	goto bailout;
     }
@@ -8517,24 +8513,21 @@ static gretl_matrix *JR_from_Jk (gretl_matrix *Jk,
     }
 
     tmp = gretl_matrix_alloc(h, h);
-    double x;
-    int ndxi;
 
-    for(i=0; i<h; i++) {
+    for (i=0; i<h; i++) {
 	ndxi = ndxr[i];
-	for(j=0; j<h; j++) {
+	for (j=0; j<h; j++) {
 	    x = gretl_matrix_get(JJ, ndxi, ndxc[j]);
 	    gretl_matrix_set(tmp, i, j, x);
 	}
     }
 
     ret = gretl_matrix_alloc(h, m);
-    gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE, Jk, GRETL_MOD_NONE, ret, GRETL_MOD_NONE);
+    gretl_matrix_multiply(tmp, Jk, ret);
 
  bailout:
 
     free(ndxc);
-    free(ndxr);
     gretl_matrix_free(IkronK);
     gretl_matrix_free(JJ);
     gretl_matrix_free(tmp);
@@ -8646,6 +8639,9 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 #endif
 
     if (!cholesky) {
+	gretl_matrix *foo;
+	int err2;
+
 	R = gretl_matrix_alloc(n, n);
 	if (R == NULL) {
 	    *err = E_ALLOC;
@@ -8654,16 +8650,11 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 				      K, GRETL_MOD_TRANSPOSE,
 				      R, GRETL_MOD_NONE);
 	}
-
-	int err2;
-	gretl_matrix *foo = NULL;
-	foo = JR_from_Jk(J, K, &err2);
-
 	if (J != NULL) {
+	    foo = JR_from_Jk(J, K, &err2);
 	    gretl_matrix_replace_content(J, foo);
 	    gretl_matrix_free(foo);
 	}
-
 	gretl_matrix_free(K);
     }
 
