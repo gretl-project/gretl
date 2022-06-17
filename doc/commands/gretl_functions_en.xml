@@ -12016,21 +12016,19 @@
 	 When <argname>mode</argname> is 0 or omitted,
 	 <argname>X</argname> is assumed to be an <by r="n" c="n"/>
 	 correlation matrix. The returned value will be a vector with
-	 <math>n(n-1)/2</math> elements between 0 and &pi; if
-	 present, parameter <argname>&amp;J</argname> will not be used.
+	 <math>n(n-1)/2</math> elements between 0 and &pi;. In this
+	 mode the parameter <argname>&amp;J</argname> is ignored.
        </para>
        <para>
 	 When <argname>mode</argname> is 1 or 2 the inverse
 	 transformation is performed, so <argname>X</argname> must be
 	 a vector with <math>n(n-1)/2</math> elements between 0 and
-	 &pi;. The returned value depends on the
-	 <argname>mode</argname> argument. If <argname>mode</argname>
-	 equals 1, the returned value will be the correlation matrix
-	 <math>R</math>; if <argname>mode</argname> equals 2, its
-	 Cholesky factor <math>K</math>. The optional parameter
-	 <argname>&amp;J</argname>, if present, will contain the Jacobian
-	 of <math>vech(R)</math> or <math>vech(K)</math> (depending on
-	 <argname>mode</argname>) with respect to <math>X</math>.
+	 &pi;. The return value is the correlation matrix
+	 <math>R</math> if <argname>mode</argname> equals 1, or its
+	 Cholesky factor <math>K</math> if <argname>mode</argname>
+	 equals 2.  The optional parameter <argname>&amp;J</argname>,
+	 if present, retrieves the Jacobian of <math>vech(R)</math> or
+	 <math>vech(K)</math> with respect to <math>X</math>.
        </para>
        <para>
 	 Note that the spherical coordinates representation makes it
