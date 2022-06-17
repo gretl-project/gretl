@@ -2425,7 +2425,7 @@
 
     <function name="commute" section="linalg" output="matrix">
       <fnargs>
-	<fnarg type="pdmat">A</fnarg>
+	<fnarg type="matrix">A</fnarg>
 	<fnarg type="int">m</fnarg>
 	<fnarg optional="true" type="int">n</fnarg>
 	<fnarg optional="true" type="int">post</fnarg>
