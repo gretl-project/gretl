@@ -7283,7 +7283,7 @@ int gretl_start_compiling_function (const char *line,
 
 #if GLOBAL_TRACE
     fprintf(stderr, "started compiling function %s (err = %d)\n",
-	    fname, err);
+	    name, err);
 #endif
 
     if (!err) {
