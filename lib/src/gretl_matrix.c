@@ -15126,16 +15126,14 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
  * K_{r,c}) if @pre is nonzero, postmultiplied if @pre is 0.
  *
  * See eg Magnus and Neudecker (1988), "Matrix Differential Calculus
- * with Applications in Statistics and Econometrics"
+ * with Applications in Statistics and Econometrics".
  */
 
 gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
 				    int pre, int add_id, int *err)
 {
-
     /* dim0 is the dimension on which the swapping has to happen; dim1
        is the other one */
-
     int dim0 = r * c;
     int dim1 = pre ? A->cols : A->rows;
     int *indices;
