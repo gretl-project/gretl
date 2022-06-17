@@ -6532,7 +6532,7 @@ static int allocate_cumulants (struct cumulants *c,
     c->r0 = gretl_zero_matrix_new(m, 1);
     c->N0 = gretl_zero_matrix_new(m, m);
     c->L0 = gretl_matrix_alloc(m, m);
-    c->Nt = gretl_matrix_alloc(m, m);
+    c->Nt = gretl_zero_matrix_new(m, m);
     c->mm = gretl_matrix_alloc(m, m);
     c->m1 = gretl_matrix_alloc(m, 1);
     if (K->exact) {
@@ -6977,6 +6977,8 @@ static int state_dist_setup (kalman *K,
     return 1;
 }
 
+#define KSMO_DEBUG 0
+
 static int ksmooth_univariate (kalman *K, int dist)
 {
     gretl_matrix_block *B = NULL;
@@ -7017,6 +7019,9 @@ static int ksmooth_univariate (kalman *K, int dist)
     load_filter_matrices(&f, K);
     g = f.g; /* convenience pointer */
 
+#if KSMO_DEBUG
+    fprintf(stderr, "HERE ksmooth_univariate, dist=%d\n", dist);
+#endif
 
     if (K->exact) {
         B = gretl_matrix_block_new(&Kt, m, p, &Pt, m, m,
