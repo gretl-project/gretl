@@ -882,8 +882,8 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 					const gretl_matrix *w,
 					int p, int *err);
 
-gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
-				    int add_id, int *err);
+gretl_matrix *gretl_matrix_commute(gretl_matrix *A, int r, int c,
+				   int pre, int add_id, int *err);
 
 void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 				       const gretl_matrix *src);

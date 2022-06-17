@@ -14386,15 +14386,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-	    if (!post) {
-		ret->v.m = gretl_matrix_commute(A, rowdim, coldim, add_id, &p->err);
-	    } else {
-		gretl_matrix *B = gretl_matrix_copy_transpose(A);
-
-		A = gretl_matrix_commute(B, coldim, rowdim, add_id, &p->err);
-		ret->v.m = gretl_matrix_copy_transpose(A);
-		gretl_matrix_free(B);
-	    }
+	    ret->v.m = gretl_matrix_commute(A, rowdim, coldim, !post, add_id, &p->err);
         }
     }
 

@@ -8457,6 +8457,90 @@ static int *funky_index (int n, int m)
     return index;
 }
 
+static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
+{
+    /*
+      This function computes the Jacobian of vech(R) wrt the spherical
+      coordinates omega. Surprisingly, omega does not feature as an
+      argument; the reason is that we use K instead (the Cholesky
+      factor of R).
+
+      Since we have the Jacobian of vech(K) wrt omega Jk, we use the
+      relationship R = KK' to define the full Jacobian as JJ * Jk,
+      where JJ is an appropriate subset of the rows and columns of
+
+      (I + K_nn) (I \otimes K) 
+     */
+
+    int i, j, n = K->rows;
+    
+    int h = n * (n+1)/2, m = n * (n-1)/2, k, l;
+    int *ndxc = NULL, *ndxr = NULL;
+
+    /* allocate stuff */
+    ndxc = malloc(h * sizeof *ndxc);
+    if (ndxc == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    ndxr = malloc(h * sizeof *ndxr);
+    if (ndxr == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    l = 0;
+    k = 0;
+    for(i=0; i<n; i++) {
+	for(j=0; j<n; j++) {
+	    if (i<=j) {
+		ndxr[l] = k;
+		ndxc[l++] = i + j*n;
+	    }
+	    k++;
+	}
+    }
+
+    *err = 0;
+    gretl_matrix *IkronK = NULL, *tmp = NULL, *JJ = NULL, *ret = NULL;
+    IkronK = gretl_matrix_I_kronecker_new (n, K, err);
+    
+    if (*err) {
+	goto bailout;
+    }
+
+    JJ = gretl_matrix_commute(IkronK, n, n, 1, 1, err);
+    if (*err) {
+	goto bailout;
+    }
+
+    tmp = gretl_matrix_alloc(h, h);
+    double x;
+    int ndxi;
+    
+    for(i=0; i<h; i++) {
+	ndxi = ndxr[i];
+	for(j=0; j<h; j++) {
+	    x = gretl_matrix_get(JJ, ndxi, ndxc[j]);
+	    gretl_matrix_set(tmp, i, j, x);
+	}
+    }
+
+    ret = gretl_matrix_alloc(h, m);
+    gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE, Jk, GRETL_MOD_NONE, ret, GRETL_MOD_NONE);
+
+ bailout:
+	 
+    free(ndxc);
+    free(ndxr);
+    gretl_matrix_free(IkronK);
+    gretl_matrix_free(JJ);
+    gretl_matrix_free(tmp);
+
+    return ret;
+}
+
 /**
  * R_from_omega:
  * @omega: angle vector.
@@ -8569,6 +8653,16 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 				      K, GRETL_MOD_TRANSPOSE,
 				      R, GRETL_MOD_NONE);
 	}
+	
+	int err2;
+	gretl_matrix *foo = NULL;
+	foo = JR_from_Jk(J, K, &err2);
+
+	if (J != NULL) {
+	    gretl_matrix_replace_content(J, foo);
+	    gretl_matrix_free(foo);
+	}
+	
 	gretl_matrix_free(K);
     }
 
