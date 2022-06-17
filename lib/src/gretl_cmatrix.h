@@ -177,4 +177,13 @@ void real_to_complex_fill (gretl_matrix *targ,
 
 double gretl_cquad (double complex z);
 
+int matrix_is_complex (const gretl_matrix *M);
+
+# ifdef __ARM_ARCH_ISA_A64
+
+double complex arm_complex_divide (double complex zn,
+				   double complex zd);
+
+# endif
+
 #endif /* GRETL_CMATRIX_H */

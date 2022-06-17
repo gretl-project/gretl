@@ -2177,7 +2177,11 @@ static void vec_x_op_y (double complex *z,
 	break;
     case '/':
 	for (i=0; i<n; i++) {
+#ifdef __ARM_ARCH_ISA_A64
+	    z[i] = arm_complex_divide(x[i], y);
+#else
 	    z[i] = x[i] / y;
+#endif
 	}
 	break;
     case '+':
@@ -2225,7 +2229,11 @@ static void x_op_vec_y (double complex *z,
 	break;
     case '/':
 	for (i=0; i<n; i++) {
+#ifdef __ARM_ARCH_ISA_A64
+	    z[i] = arm_complex_divide(x, y[i]);
+#else
 	    z[i] = x / y[i];
+#endif
 	}
 	break;
     case '+':
@@ -2266,7 +2274,11 @@ static double complex x_op_y (double complex x,
     case '*':
 	return x * y;
     case '/':
+#ifdef __ARM_ARCH_ISA_A64
+	return arm_complex_divide(x, y);
+#else
 	return x / y;
+#endif
     case '+':
 	return x + y;
     case '-':
@@ -3010,3 +3022,55 @@ void real_to_complex_fill (gretl_matrix *targ,
 	}
     }
 }
+
+/* Tests whether a matrix has the is_complex flag set, and also
+   whether it's "really complex" (has a non-zero imaginary part).
+*/
+
+int matrix_is_complex (const gretl_matrix *M)
+{
+    if (M == NULL || !M->is_complex) {
+	return 0;
+    } else {
+	int i, n = M->rows * M->cols;
+	int ret = 1;
+
+	for (i=0; i<n; i++) {
+	    if (cimag(M->z[i]) != 0) {
+		ret = 2;
+		break;
+	    }
+	}
+	return ret;
+    }
+}
+
+#ifdef __ARM_ARCH_ISA_A64
+
+/* work around missing divdc3 */
+
+double complex arm_complex_divide (double complex zn,
+				   double complex zd)
+{
+    double a = creal(zn);
+    double b = cimag(zn);
+    double c = creal(zd);
+    double d = cimag(zd);
+    double r, den, e, f;
+
+    if (fabs(c) < fabs(d)) {
+	r = c/d;
+	den = (c*r) + d;
+	e = (a*r + b) / den;
+	f = (b*r - a) / den;
+    } else {
+	r = d/c;
+	den = c + (d*r);
+	e = (a + b*r) / den;
+	f = (b - a*r) / den;
+    }
+
+    return e + f*I;
+}
+
+#endif

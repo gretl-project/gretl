@@ -2425,7 +2425,7 @@
 
     <function name="commute" section="linalg" output="matrix">
       <fnargs>
-	<fnarg type="pdmat">A</fnarg>
+	<fnarg type="matrix">A</fnarg>
 	<fnarg type="int">m</fnarg>
 	<fnarg optional="true" type="int">n</fnarg>
 	<fnarg optional="true" type="int">post</fnarg>
@@ -6442,10 +6442,31 @@
       </fnargs>
       <description>
 	<para>
-	  Returns 1 if <argname>name</argname> is the name of a
-	  complex matrix, 0 if it is the name of a real matrix, or
-	  <lit>NA</lit> otherwise.
+	  Tests whether <argname>name</argname> is the identifier for
+	  a complex matrix. The return value is one of the following:
 	</para>
+	<li>
+	  <para>
+	    <lit>NA</lit>: <argname>name</argname> does not identify a
+	    matrix.
+	  </para>
+	  <para>
+	    <lit>0</lit>: <argname>name</argname> identifies a real
+	    matrix, composed entirely of regular floating-point
+	    numbers (<quote>doubles</quote>, in C parlance).
+	  </para>
+	  <para>
+	    <lit>1</lit>: <argname>name</argname> identifies a
+	    <quote>nominally</quote> complex matrix, composed of
+	    numbers with both a real and an imaginary part, but
+	    in which all imaginary parts are zero.
+	  </para>
+	  <para>
+	    <lit>2</lit>: the matrix in question holds at least one
+	    <quote>genuinely</quote> complex value, with a non-zero
+	    imaginary part.
+	  </para>
+	</li>
       </description>
     </function>
 
@@ -10228,7 +10249,6 @@
     <function name="polroots" section="math" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
-	<fnarg type="bool" optional="true">ensure_complex</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10239,10 +10259,8 @@
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  The return value is a <math>p</math>-vector. By default this
-	  is a real vector if no root has a non-zero imaginary part,
-	  otherwise a complex vector. The optional second argument can
-	  be used to produce a complex vector in all cases.
+	  The return value is a complex column vector of length
+	  <math>p</math>-vector.
 	</para>
       </description>
     </function>
@@ -11979,6 +11997,48 @@
             <fncref targ="ranking"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="sphericorr" section="stats" output="matrix">
+      <fnargs>
+       <fnarg type="matrix">X</fnarg>
+       <fnarg type="int">mode</fnarg>
+       <fnarg type="matrixref" optional="true">&amp;J</fnarg>
+      </fnargs>
+      <description>
+       <para>
+	 Calculates the spherical coordinates representation of a
+	 correlation matrix, or its inverse, depending on the value
+	 of the <argname>mode</argname> parameter.
+       </para>
+       <para>
+	 When <argname>mode</argname> is 0 or omitted,
+	 <argname>X</argname> is assumed to be an <by r="n" c="n"/>
+	 correlation matrix. The returned value will be a vector with
+	 <math>n(n-1)/2</math> elements between 0 and &pi;. In this
+	 mode the parameter <argname>&amp;J</argname> is ignored.
+       </para>
+       <para>
+	 When <argname>mode</argname> is 1 or 2 the inverse
+	 transformation is performed, so <argname>X</argname> must be
+	 a vector with <math>n(n-1)/2</math> elements between 0 and
+	 &pi;. The return value is the correlation matrix
+	 <math>R</math> if <argname>mode</argname> equals 1, or its
+	 Cholesky factor <math>K</math> if <argname>mode</argname>
+	 equals 2.  The optional parameter <argname>&amp;J</argname>,
+	 if present, retrieves the Jacobian of <math>vech(R)</math> or
+	 <math>vech(K)</math> with respect to <math>X</math>.
+       </para>
+       <para>
+	 Note that the spherical coordinates representation makes it
+	 very easy to compute the log-determinant of the correlation
+	 matrix <math>R</math>:
+	</para>
+       <code>
+	 omega = sphericorr(X)
+	 log_det = 2 * sum(log(sin(omega)))
+	</code>
       </description>
     </function>
 

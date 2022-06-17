@@ -287,6 +287,7 @@ enum {
     F_DEC2BIN,
     F_BIN2DEC,
     F_ACCESS,
+    F_POLROOTS,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
@@ -403,7 +404,6 @@ enum {
     F_YMD,
     F_CMULT,
     F_CDIV,
-    F_POLROOTS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
@@ -475,6 +475,7 @@ enum {
     F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
+    F_SPHCORR,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -511,7 +512,7 @@ enum {
     F_TDISAGG,
     F_HYP2F1,
     F_MIDASMULT,
-    F_MCOMMUTE,
+    F_COMMUTE,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

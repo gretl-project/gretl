@@ -7284,24 +7284,6 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     return c;
 }
 
-#ifdef __ARM_ARCH_ISA_A64
-
-static double complex complex_divide (double complex zn,
-				      double complex zd)
-{
-    double a = creal(zn);
-    double b = cimag(zn);
-    double c = creal(zd);
-    double d = cimag(zd);
-    double den = c*c + d*d;
-    double nr = a*c + b*d;
-    double ni = b*c - a*d;
-
-    return nr/den + ni/den * I;
-}
-
-#endif
-
 /* Multiplication or division for complex matrices in the old
    gretl representation, with real parts in the first column
    and imaginary parts (if present) in the second.
@@ -7371,8 +7353,8 @@ gretl_matrix_complex_muldiv (const gretl_matrix *a,
 	if (multiply) {
 	    cz = az * bz;
 	} else {
-#ifdef __ARM_ARCH_ISA_A64 /* missing symbol divdc3 */
-	    cz = complex_divide(az, bz);
+#ifdef __ARM_ARCH_ISA_A64
+	    cz = arm_complex_divide(az, bz);
 #else
 	    cz = az / bz;
 #endif
@@ -15144,16 +15126,14 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
  * K_{r,c}) if @pre is nonzero, postmultiplied if @pre is 0.
  *
  * See eg Magnus and Neudecker (1988), "Matrix Differential Calculus
- * with Applications in Statistics and Econometrics"
+ * with Applications in Statistics and Econometrics".
  */
 
 gretl_matrix *gretl_matrix_commute (gretl_matrix *A, int r, int c,
 				    int pre, int add_id, int *err)
 {
-
     /* dim0 is the dimension on which the swapping has to happen; dim1
        is the other one */
-
     int dim0 = r * c;
     int dim1 = pre ? A->cols : A->rows;
     int *indices;

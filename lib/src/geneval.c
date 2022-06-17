@@ -4419,10 +4419,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
                 /* m must be a vector */
                 p->err = E_TYPES;
             }
-        } else if (f == F_POLROOTS) {
-	    /* if present, the @r node should hold a boolean */
-	    parm = node_get_bool(r, p, 0);
-	}
+        }
 
         if (!p->err && gretl_is_null_matrix(m) && !emptymat_ok(f)) {
             p->err = E_DATA;
@@ -4567,7 +4564,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = gretl_matrix_ffti(m, &p->err);
             break;
         case F_POLROOTS:
-            ret->v.m = gretl_matrix_polroots(m, parm, 0, &p->err);
+            ret->v.m = gretl_matrix_polroots(m, 1, 0, &p->err);
             break;
         case F_RANKING:
             ret->v.m = rank_vector(m, F_SORT, &p->err);
@@ -7396,7 +7393,7 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
             gretl_matrix *m = get_matrix_by_name(s);
 
             if (m != NULL) {
-                ret->v.xval = m->is_complex;
+                ret->v.xval = matrix_is_complex(m);
             }
         } else if (f == F_EXISTS) {
             GretlType type = user_var_get_type_by_name(s);
@@ -12769,6 +12766,31 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 						    reqd, NULL, p->prn,
 						    &p->err);
         }
+    } else if (f == F_SPHCORR) {
+	int mode = null_node(m) ? 0 : node_get_int(m, p);
+	gretl_matrix *J = NULL;
+
+	if (!p->err) {
+	    if (mode < 0 || mode > 2) {
+		p->err = E_INVARG;
+	    } else if (l->t != MAT) {
+		node_type_error(f, 1, MAT, l, p);
+	    } else if (!null_node(r) && r->t != U_ADDR) {
+		node_type_error(f, 3, U_ADDR, r, p);
+	    } else if (!null_node(r)) {
+		if (null_node(m)) {
+		    mode = 1;
+		}
+		J = ptr_node_get_matrix(r, p);
+	    }
+	}
+	if (!p->err) {
+	    if (mode == 0) {
+		A = omega_from_R(l->v.m, &p->err);
+	    } else {
+		A = R_from_omega(l->v.m, mode == 2, J, &p->err);
+	    }
+	}
     }
 
     if (post_process) {
@@ -13569,7 +13591,7 @@ static int check_argc (int f, int k, parser *p)
 	{ F_CHOWLIN,   2, 3 },
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
-	{ F_MCOMMUTE,  2, 5 }
+	{ F_COMMUTE,   2, 5 }
     };
     int argc_min = 2;
     int argc_max = 4;
@@ -14290,7 +14312,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             } else if (!null_node(e)) {
                 p->err = E_TYPES;
             }
-        }
+	}
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
@@ -14299,7 +14321,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 	    ret->v.m = get_tdisagg_matrix(&tdi, p->dset, b, r,
 					  p->prn, &p->err);
 	}
-    } else if (t->t == F_MCOMMUTE) {
+    } else if (t->t == F_COMMUTE) {
 	int rowdim = 0, coldim = 0;
 	int post = 0, add_id = 0;
 	gretl_matrix *A = NULL;
@@ -14316,14 +14338,14 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 		/* row dimension */
                 rowdim = node_get_int(e, p);
 		coldim = rowdim;
-            } else if (i == 2) {
+            } else if (i == 2 && !null_node(e)) {
                 /* column dimension */
 		coldim = node_get_int(e, p);
             } else if (i == 3) {
                 /* postmultiply instead of premultiply? */
 		post = node_get_bool(e, p, 0);
             } else if (i == 4) {
-                /* add identity matrix ? */
+                /* add identity matrix? */
 		add_id = node_get_bool(e, p, 0);
             }
         }
@@ -17611,6 +17633,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case F_VMA:
     case F_BCHECK:
+    case F_SPHCORR:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
@@ -17677,7 +17700,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case F_TDISAGG:
     case F_MIDASMULT:
-    case F_MCOMMUTE:
+    case F_COMMUTE:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");

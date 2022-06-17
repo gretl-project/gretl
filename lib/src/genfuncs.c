@@ -377,8 +377,8 @@ int interpolate_series (const double *x, double *y,
     if (dataset_is_panel(dset)) {
         return panel_interpolate(x, y, dset);
     } else if (!dataset_is_time_series(dset)) {
-	gretl_errmsg_set(_("This function requires time-series or panel data"));
-	return E_PDWRONG;
+        gretl_errmsg_set(_("This function requires time-series or panel data"));
+        return E_PDWRONG;
     }
 
     /* first determine the first and last non-missing values */
@@ -2890,8 +2890,8 @@ static int real_poly_trend (const double *x, double *fx, double *w,
 /* Special case of poly_trend() for panel data. */
 
 static int panel_poly_trend (const double *x, double *fx,
-			     const DATASET *dset,
-			     int order)
+                             const DATASET *dset,
+                             int order)
 {
     int i1 = dset->t1 / dset->pd;
     int i2 = dset->t2 / dset->pd;
@@ -2917,22 +2917,22 @@ static int panel_poly_trend (const double *x, double *fx,
                 break;
             }
         }
-	for (t=t1; t<=t2; t++) {
-	    if (na(x[t0 + t])) {
-		err = E_MISSDATA;
-		break;
-	    }
-	}
+        for (t=t1; t<=t2; t++) {
+            if (na(x[t0 + t])) {
+                err = E_MISSDATA;
+                break;
+            }
+        }
         /* having found the first and last non-missing
            observations, perform the fitting if possible
         */
-	T = t2 - t1 + 1;
-	if (order < T) {
-	    t1 = t0 + t1;
-	    err = real_poly_trend(x + t1, fx + t1, NULL, T, order);
-	} else {
-	    err = E_DF;
-	}
+        T = t2 - t1 + 1;
+        if (order < T) {
+            t1 = t0 + t1;
+            err = real_poly_trend(x + t1, fx + t1, NULL, T, order);
+        } else {
+            err = E_DF;
+        }
     }
 
     return err;
@@ -2957,7 +2957,7 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
     int T, err;
 
     if (dataset_is_panel(dset)) {
-	return panel_poly_trend(x, fx, dset, order);
+        return panel_poly_trend(x, fx, dset, order);
     }
 
     err = series_adjust_sample(x, &t1, &t2);
@@ -3115,14 +3115,14 @@ static int n_new_dummies (const DATASET *dset,
 static const char *dayname (int i)
 {
     const char *days[] = {
-	"Monday", "Tuesday", "Wednesday",
-	"Thursday", "Friday", "Saturday", "Sunday"
+        "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday", "Saturday", "Sunday"
     };
 
     if (i >= 1 && i <= 7) {
-	return days[i-1];
+        return days[i-1];
     } else {
-	return "??";
+        return "??";
     }
 }
 
@@ -3147,11 +3147,11 @@ static gchar *seas_name_and_label (int i, const DATASET *dset,
         ret = g_strdup_printf(_("= 1 if month = %d, 0 otherwise"), i);
     } else if (dated_daily_data(dset)) {
 #if 0 /* wait: backward-incompatible */
-	sprintf(vname, "dd%d", i);
+        sprintf(vname, "dd%d", i);
 #else
-	sprintf(vname, "dummy_%d", i);
+        sprintf(vname, "dummy_%d", i);
 #endif
-	ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
+        ret = g_strdup_printf(_("= 1 if day = %s, 0 otherwise"), dayname(i));
     } else {
         char dumstr[8] = "dummy_";
         char numstr[12];
@@ -5462,11 +5462,11 @@ static double imhof_f (double u, const gretl_matrix *lambda, double arg)
        it produces 0/0. The limit is computed below.
     */
     if (u == 0.0) {
-	double lsum = 0;
+        double lsum = 0;
 
-	for (i=0; i<k; i++) {
-	    lsum += lambda->val[i];
-	}
+        for (i=0; i<k; i++) {
+            lsum += lambda->val[i];
+        }
         return 0.5 * (-arg + lsum);
     }
 
@@ -5552,7 +5552,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
         lambda = (gretl_matrix *) m;
     } else if (m->rows == m->cols) {
         /* we'll assume m is the 'A' matrix */
-	lambda = gretl_general_matrix_eigenvals(m, err);
+        lambda = gretl_general_matrix_eigenvals(m, err);
         free_lambda = 1;
     } else {
         /* huh? */
@@ -5642,8 +5642,8 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
         DW /= uu;
         E = gretl_general_matrix_eigenvals(MA, &err);
 #if 0
-	fprintf(stderr, "DW = %g\n", DW);
-	gretl_matrix_print(E, "eigenvals of M*A");
+        fprintf(stderr, "DW = %g\n", DW);
+        gretl_matrix_print(E, "eigenvals of M*A");
 #endif
     }
 
@@ -7583,24 +7583,24 @@ int fill_day_of_week_array (double *dow,
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
         julian = 0;
-	if (m == NULL && d == NULL) {
-	    /* ISO 8601 basic input */
-	    sprintf(tstr, "%d", (int) y[t]);
-	    n = sscanf(tstr, "%4d%2d%2d", &yt, &mt, &dt);
-	    if (n != 3) {
-		err = E_INVARG;
-		break;
-	    }
-	} else {
-	    /* full broken-down input */
-	    yt = (int) y[t];
-	    mt = (int) m[t];
-	    dt = (int) d[t];
-	}
-	if (yt < 0) {
-	    yt = -yt;
-	    julian = 1;
-	}
+        if (m == NULL && d == NULL) {
+            /* ISO 8601 basic input */
+            sprintf(tstr, "%d", (int) y[t]);
+            n = sscanf(tstr, "%4d%2d%2d", &yt, &mt, &dt);
+            if (n != 3) {
+                err = E_INVARG;
+                break;
+            }
+        } else {
+            /* full broken-down input */
+            yt = (int) y[t];
+            mt = (int) m[t];
+            dt = (int) d[t];
+        }
+        if (yt < 0) {
+            yt = -yt;
+            julian = 1;
+        }
         dow[t] = day_of_week(yt, mt, dt, julian, &err);
     }
 
@@ -7618,18 +7618,18 @@ int fill_isoweek_array (double *wknum,
     int t, err = 0;
 
     for (t=dset->t1; t<=dset->t2 && !err; t++) {
-	if (m == NULL && d == NULL) {
-	    sprintf(tstr, "%d", (int) y[t]);
-	    n = sscanf(tstr, "%4d%2d%2d", &yt, &mt, &dt);
-	    if (n != 3) {
-		err = E_INVARG;
-		break;
-	    }
-	} else {
-	    yt = (int) y[t];
-	    mt = (int) m[t];
-	    dt = (int) d[t];
-	}
+        if (m == NULL && d == NULL) {
+            sprintf(tstr, "%d", (int) y[t]);
+            n = sscanf(tstr, "%4d%2d%2d", &yt, &mt, &dt);
+            if (n != 3) {
+                err = E_INVARG;
+                break;
+            }
+        } else {
+            yt = (int) y[t];
+            mt = (int) m[t];
+            dt = (int) d[t];
+        }
         wknum[t] = iso_week_number(yt, mt, dt, &err);
     }
 
@@ -8166,30 +8166,30 @@ int substitute_values (double *dest, const double *src, int n,
 */
 
 static int get_column_name (char *vname, int i,
-			    const char *prefix,
-			    int numlen,
-			    const char **S)
+                            const char *prefix,
+                            int numlen,
+                            const char **S)
 {
     int done = 0;
     int err = 0;
 
     if (prefix != NULL) {
-	if (numlen + strlen(prefix) >= VNAMELEN) {
-	    err = E_INVARG;
-	} else {
-	    err = check_varname(prefix);
-	}
-	if (!err) {
-	    sprintf(vname, "%s%d", prefix, i+1);
-	    done = 1;
-	}
+        if (numlen + strlen(prefix) >= VNAMELEN) {
+            err = E_INVARG;
+        } else {
+            err = check_varname(prefix);
+        }
+        if (!err) {
+            sprintf(vname, "%s%d", prefix, i+1);
+            done = 1;
+        }
     } else if (S != NULL && check_varname(S[i]) == 0) {
-	strcpy(vname, S[i]);
-	done = 1;
+        strcpy(vname, S[i]);
+        done = 1;
     }
 
     if (!err && !done) {
-	sprintf(vname, "column%d", i+1);
+        sprintf(vname, "column%d", i+1);
     }
 
     return err;
@@ -8220,79 +8220,443 @@ static int name_collision (const char *vname)
  */
 
 int *list_from_matrix (const gretl_matrix *m,
-		       const char *prefix,
-		       DATASET *dset, int *err)
+                       const char *prefix,
+                       DATASET *dset, int *err)
 {
     int *list = NULL;
     int n, k;
 
     if (m != NULL && m->is_complex) {
-	*err = E_CMPLX;
-	return NULL;
+        *err = E_CMPLX;
+        return NULL;
     } else if (gretl_is_null_matrix(m)) {
-	return gretl_null_list();
+        return gretl_null_list();
     }
 
     n = m->rows;
     k = m->cols;
 
     if (n != dset->n && n != sample_size(dset)) {
-	*err = E_NONCONF;
+        *err = E_NONCONF;
     } else {
-	const char **S = gretl_matrix_get_colnames(m);
-	char vname[VNAMELEN];
-	int numlen = ceil(log10(k));
-	int orig_v = dset->v;
-	int i, vi, nadd = 0;
+        const char **S = gretl_matrix_get_colnames(m);
+        char vname[VNAMELEN];
+        int numlen = ceil(log10(k));
+        int orig_v = dset->v;
+        int i, vi, nadd = 0;
 
-	list = gretl_list_new(k);
+        list = gretl_list_new(k);
 
-	/* check the names to be assigned to series */
-	for (i=0; i<k && !*err; i++) {
-	    *err = get_column_name(vname, i, prefix, numlen, S);
-	    vi = current_series_index(dset, vname);
-	    if (vi > 0) {
-		list[i+1] = vi;
-	    } else if (gretl_is_user_var(vname)) {
-		*err = name_collision(vname);
-	    } else {
-		nadd++;
-	    }
-	}
+        /* check the names to be assigned to series */
+        for (i=0; i<k && !*err; i++) {
+            *err = get_column_name(vname, i, prefix, numlen, S);
+            vi = current_series_index(dset, vname);
+            if (vi > 0) {
+                list[i+1] = vi;
+            } else if (gretl_is_user_var(vname)) {
+                *err = name_collision(vname);
+            } else {
+                nadd++;
+            }
+        }
 
-	if (!*err && nadd > 0) {
-	    *err = dataset_add_NA_series(dset, nadd);
-	}
+        if (!*err && nadd > 0) {
+            *err = dataset_add_NA_series(dset, nadd);
+        }
 
-	if (!*err) {
-	    double *dest, *src = m->val;
-	    size_t csize = n * sizeof *src;
-	    int vnew = orig_v;
+        if (!*err) {
+            double *dest, *src = m->val;
+            size_t csize = n * sizeof *src;
+            int vnew = orig_v;
 
-	    if (n == dset->n) {
-		src += dset->t1;
-	    }
+            if (n == dset->n) {
+                src += dset->t1;
+            }
 
-	    for (i=0; i<k; i++) {
-		vi = list[i+1];
-		if (vi == 0) {
-		    /* a new series */
-		    get_column_name(vname, i, prefix, numlen, S);
-		    vi = vnew++;
-		    list[i+1] = vi;
-		    strcpy(dset->varname[vi], vname);
-		}
-		dest = dset->Z[vi] + dset->t1;
-		memcpy(dest, src, csize);
-		src += n;
-	    }
-	}
+            for (i=0; i<k; i++) {
+                vi = list[i+1];
+                if (vi == 0) {
+                    /* a new series */
+                    get_column_name(vname, i, prefix, numlen, S);
+                    vi = vnew++;
+                    list[i+1] = vi;
+                    strcpy(dset->varname[vi], vname);
+                }
+                dest = dset->Z[vi] + dset->t1;
+                memcpy(dest, src, csize);
+                src += n;
+            }
+        }
 
-	if (*err && list != NULL) {
-	    free(list);
-	    list = NULL;
-	}
+        if (*err && list != NULL) {
+            free(list);
+            list = NULL;
+        }
     }
 
     return list;
+}
+
+#define SPHCORR_DBG 0
+
+static int sphc_unitvec (double *f,
+                         const double *omega, int h,
+                         gretl_matrix *J,
+                         double *work)
+{
+    double *s, *k, *c;
+    double x, ki = 1.0;
+    int i, j;
+
+    s = work;
+    k = s + h;
+    c = k + h + 1;
+
+    for (i=0; i<h; i++) {
+        s[i] = sin(omega[i]);
+        k[i] = ki;
+        ki *= s[i];
+        c[i] = cos(omega[i]);
+    }
+
+    k[h] = ki;
+    c[h] = 1.0;
+
+    for (i=0; i<=h; i++) {
+        f[i] = c[i] * k[i];
+#if SPHCORR_DBG
+        fprintf(stderr, "f[%d] = %g\n", i, f[i]);
+#endif
+    }
+
+    if (J != NULL) {
+        gretl_matrix_zero(J);
+        /* we reuse @s for the tangents */
+        for (i=0; i<h; i++) {
+            s[i] = tan(omega[i]);
+        }
+        for (i=1; i<=h; i++) {
+            for (j=0; j<i; j++) {
+                gretl_matrix_set(J, i, j, k[i] / s[j]);
+            }
+        }
+        for (i=0; i<h; i++) {
+            for (j=0; j<i; j++) {
+                x = gretl_matrix_get(J, i, j);
+                gretl_matrix_set(J, i, j, c[i] * x);
+#if 0
+                fprintf(stderr, "J[%d,%d] = c[%d]*x\n", i, j, i);
+#endif
+            }
+            gretl_matrix_set(J, i, i, -k[i+1]);
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * omega_from_R:
+ * @R: correlation matrix.
+ * @err: location to receive error code.
+ *
+ * Expresses the (n x n) correlation matrix R in spherical coordinates,
+ * via m angles, where m = n*(n-1)/2.
+ *
+ * Returns: an m-element vector if successful, NULL on failure.
+ */
+
+gretl_matrix *omega_from_R (const gretl_matrix *R, int *err)
+{
+    gretl_matrix *K, *omega = NULL;
+    int n = R->rows;
+    int m = n * (n-1) / 2;
+
+    if (R->cols != n) {
+        *err = E_NONCONF;
+        return omega;
+    }
+
+    K = gretl_matrix_copy(R);
+    if (K == NULL) {
+        *err = E_ALLOC;
+        return omega;
+    }
+
+    *err = gretl_matrix_psd_root(K, 0);
+    if (!*err) {
+        *err = gretl_matrix_transpose_in_place(K);
+    }
+
+    if (!*err) {
+        omega = gretl_matrix_alloc(m, 1);
+        if (omega == NULL) {
+            *err = E_ALLOC;
+        }
+    }
+
+    if (!*err) {
+        int i, j, k, l = 0;
+        double theta, x, y, prod;
+        int rank_def;
+
+        for (i=1; i<n; i++) {
+            k = i * n;
+            prod = 1.0;
+            rank_def = 0;
+            for (j=0; j<i; j++) {
+                if (prod < 1.0e-20) {
+                    rank_def = 1;
+                } else {
+                    x = K->val[k++] / prod;
+                    if (1.0 - fabs(x) < 1.0e-20) {
+                        rank_def = x > 0 ? 1 : 2;
+                    }
+                }
+                if (rank_def) {
+                    omega->val[l++] = rank_def == 2 ? M_PI : 0;
+                } else {
+                    theta = acos(x);
+                    omega->val[l++] = theta;
+                    y = sin(theta);
+                    prod *= y;
+                }
+            }
+        }
+    }
+
+    gretl_matrix_free(K);
+
+    return omega;
+}
+
+/* build a vector holding the indices for the vech Jacobian */
+
+static int *funky_index (int n, int m)
+{
+    int i, j, l = 0;
+    int sum;
+    int *index;
+
+    index = malloc((n + m) * sizeof *index);
+
+    for (i=0; i<n; i++){
+        index[l] = i;
+        l++;
+        sum = 0;
+        for (j=1; j<=i; j++) {
+            sum += n-j;
+            index[l] = i + sum;
+#if SPHCORR_DBG
+            printf("funky_index: %d\n", index[l]);
+#endif
+            l++;
+        }
+    }
+
+    return index;
+}
+
+static gretl_matrix *JR_from_Jk (gretl_matrix *Jk,
+                                 gretl_matrix *K,
+                                 int *err)
+{
+    /*
+      This function computes the Jacobian of vech(R) wrt the spherical
+      coordinates omega. Surprisingly, omega does not feature as an
+      argument; the reason is that we use K instead (the Cholesky
+      factor of R).
+
+      Since we have the Jacobian of vech(K) wrt omega Jk, we use the
+      relationship R = KK' to define the full Jacobian as JJ * Jk,
+      where JJ is an appropriate subset of the rows and columns of
+
+      (I + K_nn) (I \otimes K)
+    */
+    gretl_matrix *IkronK = NULL, *tmp = NULL;
+    gretl_matrix *JJ = NULL, *ret = NULL;
+    int i, j, n = K->rows;
+    int h = n * (n+1)/2, m = n * (n-1)/2, k, l;
+    int *ndxc = NULL, *ndxr = NULL;
+    int ndxi;
+    double x;
+
+    /* allocate stuff */
+    ndxc = malloc(2 * h * sizeof *ndxc);
+    if (ndxc == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+    ndxr = ndxc + h;
+
+    l = 0;
+    k = 0;
+    for (i=0; i<n; i++) {
+        for (j=0; j<n; j++) {
+            if (i <= j) {
+                ndxr[l] = k;
+                ndxc[l++] = i + j*n;
+            }
+            k++;
+        }
+    }
+
+    *err = 0;
+    IkronK = gretl_matrix_I_kronecker_new(n, K, err);
+    if (*err) {
+        goto bailout;
+    }
+
+    JJ = gretl_matrix_commute(IkronK, n, n, 1, 1, err);
+    if (*err) {
+        goto bailout;
+    }
+
+    tmp = gretl_matrix_alloc(h, h);
+
+    for (i=0; i<h; i++) {
+        ndxi = ndxr[i];
+        for (j=0; j<h; j++) {
+            x = gretl_matrix_get(JJ, ndxi, ndxc[j]);
+            gretl_matrix_set(tmp, i, j, x);
+        }
+    }
+
+    ret = gretl_matrix_alloc(h, m);
+    gretl_matrix_multiply(tmp, Jk, ret);
+
+ bailout:
+
+    free(ndxc);
+    gretl_matrix_free(IkronK);
+    gretl_matrix_free(JJ);
+    gretl_matrix_free(tmp);
+
+    return ret;
+}
+
+/**
+ * R_from_omega:
+ * @omega: angle vector.
+ * @cholesky: boolean, compute cholesky factor instead of correlation matrix.
+ * @J: location to receive Jacobian matrix if wanted, or NULL.
+ * @err: location to receive error code.
+ *
+ * Returns an (n x n) correlation matrix R given its
+ * spherical-coordinates representation omega, which should contain
+ * m numbers between 0 and M_PI, where m = n*(n-1)/2.
+ *
+ * Returns: an n x n symmetric matrix if successful, NULL on failure.
+ */
+
+gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
+                            gretl_matrix *J, int *err)
+{
+    gretl_matrix *K, *R = NULL;
+    int m = omega->rows;
+    double der, tmp = 0.5 * (1.0 + sqrt(1 + 8*m));
+    int n = nearbyint(tmp);
+    int *Jindex = NULL;
+    gretl_matrix *localJ = NULL;
+    gretl_matrix *tmpJac = NULL;
+    double *om, *f = NULL;
+    double *work = NULL;
+    int ii, jj, r_i, c_i;
+    int i, j, h;
+
+    if (fabs(tmp - n) > 1.0e-3) {
+        *err = E_NONCONF;
+        return NULL;
+    }
+
+    K = gretl_zero_matrix_new(n, n);
+    gretl_matrix_set(K, 0, 0, 1.0);
+
+    if (J != NULL) {
+        /* pre-allocate Jacobian matrix */
+        localJ = gretl_zero_matrix_new(m + n, m);
+        Jindex = funky_index(n, m);
+        tmpJac = gretl_matrix_alloc(n+1, n);
+    }
+
+#if SPHCORR_DBG
+    if (J != NULL) {
+        for (i=0; i<m+n; i++) {
+            fprintf(stderr, "Jindex[%d] = %d\n", i, Jindex[i]);
+        }
+    }
+#endif
+
+    om = omega->val;
+    work = malloc((n + 2*(n+1)) * sizeof *work);
+    f = malloc(m * sizeof *f);
+
+    r_i = 1;
+    c_i = 0;
+
+    for (i=0; i<n-1; i++) {
+        h = i + 1;
+        *err = sphc_unitvec(f, om, h, tmpJac, work);
+        om += h;
+        for (j=0; j<=h; j++) {
+            gretl_matrix_set(K, h, j, f[j]);
+        }
+        if (J != NULL) {
+            for (ii=0; ii<=h; ii++) {
+                for (jj=0; jj<=i; jj++) {
+                    der = gretl_matrix_get(tmpJac, ii, jj);
+#if SPHCORR_DBG
+                    printf("d[%d,%d] = %f\n", ii, jj, der);
+                    printf("The place is [%d, %d]\n", Jindex[r_i], c_i + jj);
+#endif
+                    gretl_matrix_set(localJ, Jindex[r_i], c_i + jj, der);
+                }
+                r_i++;
+            }
+            c_i += h;
+        }
+    }
+
+#if SPHCORR_DBG
+    gretl_matrix_print(K, "K via f");
+#endif
+
+    free(work);
+    free(f);
+
+    if (J != NULL) {
+        gretl_matrix_replace_content(J, localJ);
+        gretl_matrix_free(localJ);
+        gretl_matrix_free(tmpJac);
+        free(Jindex);
+    }
+
+#if SPHCORR_DBG
+    gretl_matrix_print(K, "reconstructed cholesky");
+    if (do_jacobian) {
+        gretl_matrix_print(*J, "Jacobian");
+    }
+#endif
+
+    if (!cholesky) {
+        gretl_matrix *foo;
+        int err2;
+
+        R = gretl_matrix_alloc(n, n);
+        if (R == NULL) {
+            *err = E_ALLOC;
+        } else {
+            gretl_matrix_multiply_mod(K, GRETL_MOD_NONE,
+                                      K, GRETL_MOD_TRANSPOSE,
+                                      R, GRETL_MOD_NONE);
+        }
+        if (J != NULL) {
+            foo = JR_from_Jk(J, K, &err2);
+            gretl_matrix_replace_content(J, foo);
+            gretl_matrix_free(foo);
+        }
+        gretl_matrix_free(K);
+    }
+
+    return cholesky ? K : R;
 }
