@@ -664,8 +664,16 @@ static int write_session_xml (const char *datname)
     gretl_xml_header(prn);
 
     if (*datname != '\0') {
-	pprintf(prn, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
-		datname, print_today());
+	if (gretl_xml_validate(datname)) {
+	    pprintf(prn, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
+		    datname, print_today());
+	} else {
+	    char *xstr = gretl_xml_encode(datname);
+
+	    pprintf(prn, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
+		    xstr, print_today());
+	    free(xstr);
+	}
     } else {
 	pprintf(prn, "<gretl-session date=\"%s\">\n", print_today());
     }
