@@ -8325,7 +8325,7 @@ static int sphc_unitvec (double *f,
     for (i=0; i<=h; i++) {
 	f[i] = c[i] * k[i];
 #if SPHCORR_DBG
-	    fprintf(stderr, "f[%d] = %g\n", i, f[i]);
+	fprintf(stderr, "f[%d] = %g\n", i, f[i]);
 #endif
     }
 
@@ -8457,7 +8457,9 @@ static int *funky_index (int n, int m)
     return index;
 }
 
-static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
+static gretl_matrix *JR_from_Jk (gretl_matrix *Jk,
+				 gretl_matrix *K,
+				 int *err)
 {
     /*
       This function computes the Jacobian of vech(R) wrt the spherical
@@ -8469,11 +8471,10 @@ static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
       relationship R = KK' to define the full Jacobian as JJ * Jk,
       where JJ is an appropriate subset of the rows and columns of
 
-      (I + K_nn) (I \otimes K) 
+      (I + K_nn) (I \otimes K)
      */
 
     int i, j, n = K->rows;
-    
     int h = n * (n+1)/2, m = n * (n-1)/2, k, l;
     int *ndxc = NULL, *ndxr = NULL;
 
@@ -8483,7 +8484,7 @@ static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
 	*err = E_ALLOC;
 	return NULL;
     }
-    
+
     ndxr = malloc(h * sizeof *ndxr);
     if (ndxr == NULL) {
 	*err = E_ALLOC;
@@ -8505,7 +8506,7 @@ static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
     *err = 0;
     gretl_matrix *IkronK = NULL, *tmp = NULL, *JJ = NULL, *ret = NULL;
     IkronK = gretl_matrix_I_kronecker_new (n, K, err);
-    
+
     if (*err) {
 	goto bailout;
     }
@@ -8518,7 +8519,7 @@ static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
     tmp = gretl_matrix_alloc(h, h);
     double x;
     int ndxi;
-    
+
     for(i=0; i<h; i++) {
 	ndxi = ndxr[i];
 	for(j=0; j<h; j++) {
@@ -8531,7 +8532,7 @@ static gretl_matrix *JR_from_Jk(gretl_matrix *Jk, gretl_matrix *K, int *err)
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE, Jk, GRETL_MOD_NONE, ret, GRETL_MOD_NONE);
 
  bailout:
-	 
+
     free(ndxc);
     free(ndxr);
     gretl_matrix_free(IkronK);
@@ -8653,7 +8654,7 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 				      K, GRETL_MOD_TRANSPOSE,
 				      R, GRETL_MOD_NONE);
 	}
-	
+
 	int err2;
 	gretl_matrix *foo = NULL;
 	foo = JR_from_Jk(J, K, &err2);
@@ -8662,7 +8663,7 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 	    gretl_matrix_replace_content(J, foo);
 	    gretl_matrix_free(foo);
 	}
-	
+
 	gretl_matrix_free(K);
     }
 
