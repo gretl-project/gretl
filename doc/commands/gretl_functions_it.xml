@@ -12012,6 +12012,49 @@
       </description>
     </function>
 
+    <function name="sphericorr" section="stats" output="matrix">
+      <fnargs>
+       <fnarg type="matrix">X</fnarg>
+       <fnarg type="int">mode</fnarg>
+       <fnarg type="matrixref" optional="true">&amp;J</fnarg>
+      </fnargs>
+      <description>
+       <para>
+	 Calcola la rappresentazione in coordinate sferiche di una
+	 matrice di correlazione o la sua inversa, a seconda del
+	 parametro <argname>mode</argname>.
+       </para>
+       <para>
+	 Quando <argname>mode</argname> è 0 oppure omesso,
+	 <argname>X</argname> deve essere una matrice di correlazione
+	 <by r="n" c="n"/>. In quetso caso, la funzione restituisce un
+	 vettore di <math>n(n-1)/2</math> tra 0 e &pi; L'argomento
+	 <argname>&amp;J</argname>, se presente, viene ignorato.
+       </para>
+       <para>
+	 L'operazione inversa si ha quando <argname>mode</argname> è 1
+	 o 2, e quindi <argname>X</argname> deve essere un vettore di
+	 <math>n(n-1)/2</math> elementi fra 0 e &pi;. La matrice
+	 risultato dipende dall'argomento <argname>mode</argname>. Se
+	 <argname>mode</argname> è 1, il risultato sarà la matrice di
+	 correlazione <math>R</math>; se <argname>mode</argname> è 2,
+	 la sua scomposizione di Cholesky <math>K</math>. Il parametro
+	 <argname>&amp;J</argname>, se presente, conterrà la jacobiana
+	 di <math>vech(R)</math> o <math>vech(K)</math> (a seconda del
+	 valore di <argname>mode</argname>) rispetto a <math>X</math>.
+       </para>
+       <para>
+	 Si noti che la  rappresentazione in coordinate sferiche rende
+	 molto semplice ed efficiente il calcolo del log-determinante
+	 di <math>R</math>:
+	</para>
+       <code>
+	 omega = sphericorr(R)
+	 log_det = 2 * sum(log(sin(omega)))
+	</code>
+      </description>
+    </function>
+    
     <function name="sprintf" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">formato</fnarg>
