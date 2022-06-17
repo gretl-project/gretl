@@ -12811,6 +12811,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    } else if (!null_node(r) && r->t != U_ADDR) {
 		node_type_error(f, 3, U_ADDR, r, p);
 	    } else if (!null_node(r)) {
+		if (null_node(m)) {
+		    mode = 1;
+		}
 		J = ptr_node_get_matrix(r, p);
 	    }
 	}
@@ -12818,9 +12821,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    if (mode == 0) {
 		A = omega_from_R(l->v.m, &p->err);
 	    } else {
-		int cholesky = (mode == 2);
-
-		A = R_from_omega(l->v.m, cholesky, J, &p->err);
+		A = R_from_omega(l->v.m, mode == 2, J, &p->err);
 	    }
 	}
     }
