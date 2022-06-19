@@ -2002,6 +2002,11 @@ static int open_append_stage_1 (CMD *cmd,
 	}
     }
 
+    if (op->ftype == GRETL_SESSION) {
+	gretl_errmsg_set("gretl session files can only be opened via the GUI program");
+	err = E_DATA;
+    }
+
     if (err) {
         errmsg(err, prn);
         return err;
