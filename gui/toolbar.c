@@ -1309,7 +1309,7 @@ static GtkToolItem *gretl_menu_button (const char *icon,
     return item;
 }
 
-static void gretl_tool_item_set_tip (GtkWidget *item,
+static void gretl_tool_item_set_tip (GtkToolItem *item,
 				     GretlToolItem *tool)
 {
     const char *accel = NULL;
@@ -1329,10 +1329,10 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
     if (accel != NULL) {
 	gchar *s = g_strdup_printf("%s (%s)", _(tool->tip), accel);
 
-	gtk_widget_set_tooltip_text(item, s);
+	gtk_tool_item_set_tooltip_text(item, s);
 	g_free(s);
     } else {
-	gtk_widget_set_tooltip_text(item, _(tool->tip));
+	gtk_tool_item_set_tooltip_text(item, _(tool->tip));
     }
 }
 
@@ -1345,7 +1345,7 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
     GtkToolItem *item;
 
     item = gtk_tool_button_new_from_stock(tool->icon);
-    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
+    gretl_tool_item_set_tip(item, tool);
     g_signal_connect(G_OBJECT(item), "clicked", func, data);
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, pos);
@@ -1412,7 +1412,7 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 	if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
 	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
 	} else {
-	    gretl_tool_item_set_tip(GTK_WIDGET(item), tool);
+	    gretl_tool_item_set_tip(item, tool);
 	    if (tool->flag == EXEC_ITEM) {
 		g_signal_connect(G_OBJECT(item), "button-press-event",
 				 G_CALLBACK(exec_press), vwin);
