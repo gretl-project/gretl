@@ -26,7 +26,7 @@
 #include "gpt_control.h"
 #endif
 
-#define CLIPDEBUG 1
+#define CLIPDEBUG 0
 
 static gchar *clipboard_buf;
 static gsize clipboard_bytes;
