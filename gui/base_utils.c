@@ -763,18 +763,17 @@ void do_new_script (int code, const char *buf,
 {
     int action = (code == FUNC)? EDIT_HANSL : code;
     int vsize = SCRIPT_HEIGHT;
+    char fname[MAXLEN];
     fmode mode = 0;
     windata_t *vwin;
-    gchar *fname;
 
     if (scriptname == NULL) {
 	/* the usual case */
 	FILE *fp;
 
-	fname = gretl_make_dotpath("script_tmp");
+	sprintf(fname, "%sscript_tmp", gretl_dotdir());
 	fp = gretl_tempfile_open(fname);
 	if (fp == NULL) {
-	    g_free(fname);
 	    return;
 	} else {
 	    if (buf != NULL) {
@@ -790,7 +789,7 @@ void do_new_script (int code, const char *buf,
 	mode = TMP_FILE;
     } else {
 	/* special startup case */
-	fname = g_strdup(scriptname);
+	strcpy(fname, scriptname);
 	mode = NULL_FILE;
     }
 
@@ -803,7 +802,6 @@ void do_new_script (int code, const char *buf,
 #endif
 
     vwin = view_file(fname, 1, mode, SCRIPT_WIDTH, vsize, action);
-    g_free(fname);
 
     if (buf != NULL && *buf != '\0') {
         mark_vwin_content_changed(vwin);
