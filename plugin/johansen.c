@@ -932,29 +932,49 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 
 /* In the case where the EC coefficients were not estimated via
    OLS but precomputed in v->jinfo->Alpha, augment the B matrix
-   with the alpha values.
+   with the alpha values. We need to add a number of rows equal
+   to v->ncoeff minus the current B->rows, then transcribe the
+   transpose of v->jinfo->Alpha into the new rows.
 */
 
-static void var_B_insert_alpha (GRETL_VAR *v)
+static int var_B_insert_alpha (GRETL_VAR *v)
 {
     gretl_matrix *A = v->jinfo->Alpha;
-    double *bval = v->B->val;
-    int r = v->B->rows;
-    int c = v->B->cols;
-    int j, n = (r - 1) * c;
-    int mv = v->ncoeff - r;
-    size_t csize = r * sizeof *bval;
-    size_t rem = n * sizeof *bval;
+    gretl_matrix *B = v->B;
+    gretl_matrix *fullB;
+    double bij, aji;
+    int add_rows;
+    int i, j;
 
-    for (j=0; j<c-1; j++) {
-	bval += r;
-	memmove(bval+mv, bval, rem);
-	rem -= csize;
-	bval += mv;
+    /* sanity check */
+    add_rows = v->ncoeff - B->rows;
+    if (add_rows <= 0 || A->rows != B->cols) {
+	fprintf(stderr, "var_B_insert_alpha: add_rows %d, A->rows %d, B->cols %d\n",
+		add_rows, A->rows, B->cols);
+	return E_DATA;
     }
 
-    gretl_matrix_reuse(v->B, v->ncoeff, -1);
-    gretl_matrix_inscribe_matrix(v->B, A, r, 0, GRETL_MOD_TRANSPOSE);
+    fullB = gretl_matrix_alloc(v->ncoeff, B->cols);
+    if (fullB == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=0; j<B->cols; j++) {
+	for (i=0; i<B->rows; i++) {
+	    bij = gretl_matrix_get(B, i, j);
+	    gretl_matrix_set(fullB, i, j, bij);
+	}
+	for (i=0; i<A->cols; i++) {
+	    aji = gretl_matrix_get(A, j, i);
+	    gretl_matrix_set(fullB, i + B->rows, j, aji);
+	}
+    }
+
+    /* replace the original v->B */
+    gretl_matrix_free(v->B);
+    v->B = fullB;
+
+    return 0;
 }
 
 /* The following is designed to accommodate the case where alpha is
@@ -1079,7 +1099,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	    }
 	} else if (xc < v->ncoeff) {
 	    /* transcribe EC terms to v->B */
-	    var_B_insert_alpha(v);
+	    err = var_B_insert_alpha(v);
 	}
     }
 
