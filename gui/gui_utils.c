@@ -4034,7 +4034,9 @@ static int real_gui_validate_varname (const char *name,
 	    /* there's already a variable of this name */
 	    if (t == t0 && allow_overwrite) {
 		/* the types agree: overwrite? */
-		err = !object_overwrite_ok(name, t, parent);
+		if (allow_overwrite < 2) {
+		    err = !object_overwrite_ok(name, t, parent);
+		}
 	    } else {
 		/* the types disgree: won't work */
 		gchar *msg = name_conflict_message(name, t0);
@@ -4049,7 +4051,7 @@ static int real_gui_validate_varname (const char *name,
     return err;
 }
 
-/* The "gui_validate_varname" family: both functions below check the
+/* The "gui_validate_varname" family: the functions below check the
    putative @name for legality as a gretl variable name and return
    non-zero if it's not legal. In addition, both return non-zero if
    the name is valid but belongs to an existing variable of a type
@@ -4065,6 +4067,9 @@ static int real_gui_validate_varname (const char *name,
    OK in the case where a variable of type @type already exists; if
    so, it's assumed that the distinction between redefining a variable
    and adding a new variable is handled by the caller.
+
+   gui_validate_varname_easy: assumes that overwriting an existing
+   variable of suitable type is OK.
 */
 
 int gui_validate_varname_strict (const char *name, GretlType type,
@@ -4077,6 +4082,11 @@ int gui_validate_varname (const char *name, GretlType type,
 			  GtkWidget *parent)
 {
     return real_gui_validate_varname(name, type, 1, parent);
+}
+
+int gui_validate_varname_easy (const char *name, GretlType type)
+{
+    return real_gui_validate_varname(name, type, 2, NULL);
 }
 
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,

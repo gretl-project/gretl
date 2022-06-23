@@ -93,6 +93,8 @@ static char libline[MAXLINE];
 static int original_n;
 static int gui_main_exec;
 
+static int script_open_session_file (CMD *cmd);
+
 char *get_lib_cmdline (void)
 {
     return libline;
@@ -9541,6 +9543,8 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
 	    }
         }
         close_session(opt);
+    } else if (type == GRETL_OBJ_SESSION) {
+	script_open_session_file(cmd);
     } else if (type == GRETL_OBJ_ANY) {
         /* do GUI housekeeping on successful "open" */
         OpenOp *op = (OpenOp *) ptr;
@@ -9841,7 +9845,21 @@ static int script_open_session_file (CMD *cmd)
 	if (cmd->ci == APPEND) {
 	    errbox("Can't append a gretl session file");
 	    return E_DATA;
+	} else if (cmd->opt & OPT_U) {
+	    /* the --bundle=name option */
+	    const char *bname = get_optval_string(cmd->ci, OPT_U);
+	    gretl_bundle *b = NULL;
+
+	    err = gui_validate_varname_easy(bname, GRETL_TYPE_BUNDLE);
+	    if (!err) {
+		set_tryfile(myfile);
+		b = open_session_as_bundle();
+		if (b != NULL) {
+		    user_var_add_or_replace(bname, GRETL_TYPE_BUNDLE, b);
+		}
+	    }
 	} else {
+	    /* regular treatment of session file */
 	    set_tryfile(myfile);
 	    verify_open_session();
 	}

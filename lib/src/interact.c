@@ -2003,8 +2003,12 @@ static int open_append_stage_1 (CMD *cmd,
     }
 
     if (op->ftype == GRETL_SESSION) {
-	gretl_errmsg_set("gretl session files can only be opened via the GUI program");
-	err = E_DATA;
+	if (gretl_in_gui_mode() && (cmd->opt & OPT_U)) {
+	    ; /* experimental, could be OK */
+	} else {
+	    gretl_errmsg_set(_("gretl session files can only be opened via the GUI program"));
+	    err = E_DATA;
+	}
     }
 
     if (err) {
@@ -2114,6 +2118,12 @@ static int lib_open_append (ExecState *s,
     } else if (err) {
         /* error at stage 1, don't proceed */
         return err;
+    }
+
+    if (cmd->ci == OPEN && op.ftype == GRETL_SESSION) {
+	/* open session as bundle in GUI */
+	s->callback(s, NULL, GRETL_OBJ_SESSION);
+	return 0;
     }
 
     if (cmd->ci == OPEN && !op.dbdata) {

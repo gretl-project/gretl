@@ -44,6 +44,7 @@ typedef enum {
     GRETL_OBJ_MATRIX,
     GRETL_OBJ_SCALARS,
     GRETL_OBJ_BUNDLE,
+    GRETL_OBJ_SESSION,
     GRETL_OBJ_ANY,
     GRETL_OBJ_MAX
 } GretlObjType;

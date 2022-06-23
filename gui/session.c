@@ -76,6 +76,7 @@
 #include "../pixmaps/bundle.xpm"
 
 #define SESSION_DEBUG 0
+#define SESSION_BUNDLE 1
 
 #define SHOWNAMELEN 15
 #define ICONVIEW_MIN_COLS 4
@@ -514,25 +515,31 @@ char *session_graph_make_path (char *path, const char *fname)
 
 /* first arg should be a MAXLEN string */
 
-static char *session_file_make_path (char *path, const char *fname)
+static char *session_file_make_path (char *path,
+				     const char *fname,
+				     const char *sdir)
 {
 #if SESSION_DEBUG
-    fprintf(stderr, "session_file_make_path: fname arg = '%s'\n", fname);
+    if (sdir != NULL) {
+	fprintf(stderr, "session_file_make_path: fname '%s', sdir '%s'\n",
+		fname, sdir);
+    } else {
+	fprintf(stderr, "session_file_make_path: fname '%s', session.dirname '%s'\n",
+		fname, session.dirname);
+    }
 #endif
 
     if (g_path_is_absolute(fname)) {
 	strcpy(path, fname);
+    } else if (sdir != NULL) {
+	gretl_build_path(path, gretl_dotdir(), sdir, fname, NULL);
     } else {
-#if 1 /* modified 2020-01-23: build absolute path */
 	gretl_build_path(path, gretl_dotdir(), session.dirname,
 			 fname, NULL);
-#else
-	sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
-#endif
     }
 
 #if SESSION_DEBUG
-    fprintf(stderr, "session_file_make_path: outgoing path = '%s'\n", path);
+    fprintf(stderr, "session_file_make_path: outgoing path '%s'\n", path);
 #endif
 
     return path;
@@ -925,7 +932,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 	gui_errmsg(err);
     } else {
 	make_graph_name(shortname, graphname);
-	session_file_make_path(fullname, shortname);
+	session_file_make_path(fullname, shortname, NULL);
 
 	/* copy temporary plot file to session directory */
 	err = copyfile(fname, fullname);
@@ -1002,12 +1009,12 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 
     if (graph != NULL) {
 	/* replacing */
-	session_file_make_path(grpath, graph->fname);
+	session_file_make_path(grpath, graph->fname, NULL);
 	replace = 1;
     } else {
 	/* ensure unique filename */
 	make_graph_filename(shortname);
-	session_file_make_path(grpath, shortname);
+	session_file_make_path(grpath, shortname, NULL);
     }
 
     if (copyfile(fname, grpath)) {
@@ -1304,13 +1311,15 @@ session_name_from_session_file (char *sname, const char *fname)
 	*q = '\0';
     }
 
+#if SESSION_DEBUG
     fprintf(stderr, "session_name_from_session_file: %s -> %s\n",
 	    fname, sname);
+#endif
 }
 
 /* remedial action in case of mis-coded filename */
 
-static int get_session_dataname (char *fname, struct sample_info *sinfo)
+static int get_session_dataname (char *fname, const char *sdir)
 {
     const gchar *dname;
     GDir *dir;
@@ -1318,7 +1327,11 @@ static int get_session_dataname (char *fname, struct sample_info *sinfo)
     gchar *tmp;
     int n, err = E_FOPEN;
 
-    tmp = g_strdup(session.dirname);
+    if (sdir != NULL) {
+	tmp = g_strdup(sdir);
+    } else {
+	tmp = g_strdup(session.dirname);
+    }
     n = strlen(tmp);
 
     if (tmp[n-1] == '/' || tmp[n-1] == '\\') {
@@ -1330,7 +1343,7 @@ static int get_session_dataname (char *fname, struct sample_info *sinfo)
     if (dir != NULL) {
 	while ((dname = g_dir_read_name(dir)) != NULL) {
 	    if (has_suffix(dname, ".gdt")) {
-		session_file_make_path(fname, dname);
+		session_file_make_path(fname, dname, sdir);
 		fp = gretl_fopen(fname, "r");
 		if (fp != NULL) {
 		    fclose(fp);
@@ -1368,25 +1381,19 @@ static void sinfo_free_data (struct sample_info *sinfo)
     }
 }
 
-static int set_session_dirname (const char *zdirname)
+static int test_session_dirname (const char *zdirname)
 {
     char test[2*MAXLEN];
-    FILE *fp;
-    int err = 0;
 
     g_return_val_if_fail(zdirname != NULL, 1);
 
-    strcpy(session.dirname, zdirname);
-    sprintf(test, "%s%csession.xml", session.dirname, SLASH);
-    fp = gretl_fopen(test, "r");
+    sprintf(test, "%s%csession.xml", zdirname, SLASH);
 
-    if (fp == NULL) {
-	err = E_FOPEN;
+    if (gretl_test_fopen(test, "r") != 0) {
+	return E_FOPEN;
     } else {
-	fclose(fp);
+	return 0;
     }
-
-    return err;
 }
 
 static char *maybe_absolutize_tryfile (void)
@@ -1411,7 +1418,7 @@ static char *maybe_absolutize_tryfile (void)
 /* note: the name of the file to be opened is in the gretl.c var
    'tryfile' */
 
-gboolean do_open_session (void)
+static gboolean real_open_session (gretl_bundle **pb)
 {
     struct sample_info sinfo;
     char xmlname[MAXLEN]; /* path to master session XML file */
@@ -1419,7 +1426,9 @@ gboolean do_open_session (void)
     char fname[MAXLEN];   /* multi-purpose temp variable */
     char *tryname = get_tryfile();
     gchar *zdirname = NULL;
+    DATASET *sdset = NULL;
     FILE *fp;
+    int as_bundle = 0;
     int nodata = 0;
     int err = 0;
 
@@ -1434,10 +1443,19 @@ gboolean do_open_session (void)
 	return FALSE;
     }
 
-    /* close existing session, if any, and initialize */
-    close_session(OPT_NONE);
+    as_bundle = (pb != NULL);
 
+    if (as_bundle) {
+	sdset = datainfo_new();
+    } else {
+	/* close existing session, if any, and initialize */
+	close_session(OPT_NONE);
+	sdset = dataset;
+    }
+
+#if SESSION_DEBUG
     fprintf(stderr, "\nReading session file %s\n", tryname);
+#endif
 
     /* we're about to change directory: if tryfile is not
        an absolute path we'll lose track of it
@@ -1448,52 +1466,54 @@ gboolean do_open_session (void)
 
     if (err) {
 	gui_errmsg(err);
-	g_free(zdirname);
 	goto bailout;
     }
 
-    session_name_from_session_file(session.name, tryname);
+    if (!as_bundle) {
+	session_name_from_session_file(session.name, tryname);
+    }
 
-    err = set_session_dirname(zdirname);
+    err = test_session_dirname(zdirname);
+
     if (err) {
-	g_free(zdirname);
-	fprintf(stderr, "Failed on set_session_dirname\n");
+	fprintf(stderr, "Failed on test_session_dirname\n");
 	file_read_errbox("session.xml");
 	goto bailout;
     } else {
-	fprintf(stderr, "set_session_dirname: '%s', OK\n", zdirname);
+	fprintf(stderr, "zdirname: '%s', OK\n", zdirname);
     }
 
-    g_free(zdirname);
-    session_file_make_path(xmlname, "session.xml");
+    session_file_make_path(xmlname, "session.xml", zdirname);
 
     /* try getting the name of the session data file first */
     err = get_session_datafile_name(xmlname, &sinfo, &nodata);
 
     if (err) {
-	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
+	fprintf(stderr, "get_session_datafile_name: err = %d\n", err);
 	file_read_errbox("session.xml");
 	goto bailout;
     }
 
     if (!nodata) {
 	/* construct path to session data file */
-	session_file_make_path(datafile, sinfo.datafile);
+	session_file_make_path(datafile, sinfo.datafile, zdirname);
 	fp = gretl_fopen(datafile, "r");
 
 	if (fp != NULL) {
 	    /* OK, write good name into gdtname */
+#if SESSION_DEBUG
 	    fprintf(stderr, "got datafile name '%s'\n", datafile);
+#endif
 	    strcpy(gdtname, datafile);
 	    fclose(fp);
 	} else {
 	    /* try remedial action, transform filename? */
 	    fprintf(stderr, "'%s' : not found, trying to fix\n", datafile);
-	    err = get_session_dataname(gdtname, &sinfo);
+	    err = get_session_dataname(gdtname, zdirname);
 	}
 
 	if (!err) {
-	    err = gretl_read_gdt(gdtname, dataset, OPT_B, NULL);
+	    err = gretl_read_gdt(gdtname, sdset, OPT_B, NULL);
 	}
 
 	if (err) {
@@ -1501,14 +1521,25 @@ gboolean do_open_session (void)
 	    file_read_errbox(sinfo.datafile);
 	    goto bailout;
 	} else {
+#if SESSION_DEBUG
 	    fprintf(stderr, "Opened session datafile '%s'\n", gdtname);
-	    data_status = USER_DATA;
+#endif
+	    if (!as_bundle) {
+		data_status = USER_DATA;
+	    }
 	}
+    }
+
+    if (as_bundle) {
+	*pb = session_xml_to_bundle(xmlname, zdirname, sdset, &err);
+	fprintf(stderr, "session_xml_to_bundle: err = %d\n", err);
+	goto bailout;
     }
 
     /* having opened the data file (or not, if there's none), get the
        rest of the info from session.xml
     */
+    strcpy(session.dirname, zdirname);
     err = read_session_xml(xmlname, &sinfo);
     if (err) {
 	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
@@ -1518,10 +1549,10 @@ gboolean do_open_session (void)
 
     err = deserialize_user_vars(session.dirname);
 
-    session_file_make_path(fname, "functions.xml");
+    session_file_make_path(fname, "functions.xml", NULL);
     err = maybe_read_functions_file(fname);
 
-    session_file_make_path(fname, "settings.inp");
+    session_file_make_path(fname, "settings.inp", NULL);
     err = maybe_read_settings_file(fname);
 
     if (!nodata) {
@@ -1534,49 +1565,65 @@ gboolean do_open_session (void)
 		sinfo.restriction = NULL;
 	    }
 	}
-
 	if (err) {
 	    errbox(_("Couldn't set sample"));
 	    goto bailout;
+	} else {
+	    dataset->t1 = sinfo.t1;
+	    dataset->t2 = sinfo.t2;
+	    register_data(OPENED_VIA_SESSION);
+	    if (sinfo.mask != NULL) {
+		set_sample_label(dataset);
+	    }
+	    sinfo_free_data(&sinfo);
 	}
-
-	dataset->t1 = sinfo.t1;
-	dataset->t2 = sinfo.t2;
-
-	register_data(OPENED_VIA_SESSION);
-
-	if (sinfo.mask != NULL) {
-	    set_sample_label(dataset);
-	}
-
-	sinfo_free_data(&sinfo);
     }
 
     set_main_window_title(session.name, FALSE);
 
  bailout:
 
+    g_free(zdirname);
+
     if (err) {
 	delete_from_filelist(FILE_LIST_SESSION, tryname);
-    } else {
+    } else if (!as_bundle) {
 	strcpy(sessionfile, tryname);
 	mkfilelist(FILE_LIST_SESSION, sessionfile, 0);
 
 	session.status = SESSION_OPEN;
-
 	/* sync gui with session */
 	session_menu_state(TRUE);
-
 	view_session();
 	mark_session_saved();
 	session_switch_log_location(LOG_OPEN);
-
 	if (session.show_notes) {
 	    edit_session_notes();
 	}
     }
 
+    if (as_bundle) {
+	destroy_dataset(sdset);
+    }
+
+#if SESSION_DEBUG
+    fprintf(stderr, "do_open_session: returning %d\n", !err);
+#endif
+
     return !err;
+}
+
+gboolean do_open_session (void)
+{
+    return real_open_session(NULL);
+}
+
+gretl_bundle *open_session_as_bundle (void)
+{
+    gretl_bundle *ret = NULL;
+
+    real_open_session(&ret);
+    return ret;
 }
 
 void verify_clear_data (void)
@@ -1876,7 +1923,7 @@ static int real_save_session_dataset (const char *dname)
     }
 
     if (!err) {
-	session_file_make_path(tmpname, dname);
+	session_file_make_path(tmpname, dname, NULL);
 	write_err = gretl_write_gdt(tmpname, NULL, dataset,
 				    OPT_NONE, 1);
     }
@@ -2201,7 +2248,7 @@ static gchar *graph_str (SESSION_GRAPH *graph)
     FILE *fp;
     gchar *buf = NULL;
 
-    session_file_make_path(tmp, graph->fname);
+    session_file_make_path(tmp, graph->fname, NULL);
     fp = gretl_fopen(tmp, "r");
 
     /* FIXME boxplots */
@@ -2446,7 +2493,7 @@ static void remove_session_graph_file (SESSION_GRAPH *graph)
     char fname[MAXLEN];
 
     gretl_chdir(gretl_dotdir());
-    session_file_make_path(fname, graph->fname);
+    session_file_make_path(fname, graph->fname, NULL);
     gretl_remove(fname);
 
     if (graph->has_datafile) {
@@ -2530,7 +2577,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 	if (busywin == NULL) {
 	    char fullname[MAXLEN];
 
-	    session_file_make_path(fullname, graph->fname);
+	    session_file_make_path(fullname, graph->fname, NULL);
 	    busywin = vwin_toplevel(get_editor_for_file(fullname));
 	    if (busywin == NULL) {
 		busywin = get_viewer_for_plot(fullname);
@@ -2746,8 +2793,8 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
 	    err = gretl_chdir(gretl_dotdir());
 	    if (!err) {
 		make_graph_filename(fname1);
-		session_file_make_path(path0, g0->fname);
-		session_file_make_path(path1, fname1);
+		session_file_make_path(path0, g0->fname, NULL);
+		session_file_make_path(path1, fname1, NULL);
 		err = copyfile(path0, path1);
 	    }
 	    if (!err) {
@@ -3554,7 +3601,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
-		session_file_make_path(fullname, graph->fname);
+		session_file_make_path(fullname, graph->fname, NULL);
 		/* the following handles error message if needed */
 		err = remove_png_term_from_plot_by_name(fullname);
 	    }
@@ -4236,7 +4283,7 @@ static void real_open_session_graph (SESSION_GRAPH *graph)
     } else {
 	char tmp[MAXLEN];
 
-	session_file_make_path(tmp, graph->fname);
+	session_file_make_path(tmp, graph->fname, NULL);
 	display_session_graph(tmp, graph->name, graph);
     }
 }
@@ -4257,7 +4304,7 @@ gchar *session_graph_get_filename (void *p)
 	SESSION_GRAPH *graph = p;
 	char tmp[MAXLEN];
 
-	session_file_make_path(tmp, graph->fname);
+	session_file_make_path(tmp, graph->fname, NULL);
 	return g_strdup(tmp);
     } else {
 	return NULL;

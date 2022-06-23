@@ -13,7 +13,7 @@ static int check_graph_file (const char *fname, int type)
     FILE *fp;
     int err = 0;
 
-    session_file_make_path(fullname, fname);
+    session_file_make_path(fullname, fname, NULL);
     fp = gretl_fopen(fullname, "r");
 
     if (fp == NULL) {
@@ -62,9 +62,9 @@ static void normalize_graph_filename (char *fname, int gnum)
 	gchar *tmp = NULL;
 
 	if (i != gnum && (!strcmp(s, "graph") || !strcmp(s, "plot"))) {
-	    session_file_make_path(oldname, fname);
+	    session_file_make_path(oldname, fname, NULL);
 	    tmp = g_strdup_printf("graph.%d", gnum);
-	    session_file_make_path(newname, tmp);
+	    session_file_make_path(newname, tmp, NULL);
 	}
 
 	if (tmp != NULL) {
@@ -248,7 +248,7 @@ static int rebuild_session_model (const char *fname,
     xmlFreeDoc(doc);
 
     if (!err && ptr != NULL) {
-#if 1
+#if SESSION_DEBUG
 	fprintf(stderr, "rebuild_session_model: IN_GUI_SESSION %s, IN_MODEL_TABLE %s\n"
 		" IN_NAMED_STACK %s, IS_LAST_MODEL %s\n",
 		(flags & IN_GUI_SESSION)? "yes" : "no",
@@ -317,7 +317,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	}
 
 	if (!err) {
-	    session_file_make_path(fullname, (const char *) fname);
+	    session_file_make_path(fullname, (const char *) fname, NULL);
 	    gretl_xml_get_prop_as_int(cur, "type", &type);
 	    if (type == GRETL_OBJ_EQN) {
 		gretl_xml_get_prop_as_int(cur, "tablepos", &tablepos);
@@ -347,6 +347,184 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 
     return errs;
 }
+
+#if SESSION_BUNDLE
+
+static gretl_bundle *session_model_to_bundle (const char *fname,
+					      const char *name,
+					      GretlObjType otype,
+					      DATASET *dset,
+					      int *err)
+{
+    gretl_bundle *mb = NULL;
+    void *ptr = NULL;
+    xmlDocPtr doc;
+    xmlNodePtr node;
+
+    *err = gretl_xml_open_doc_root(fname,
+				   (otype == GRETL_OBJ_EQN)? "gretl-model" :
+				   (otype == GRETL_OBJ_VAR)? "gretl-VAR" :
+				   "gretl-equation-system", &doc, &node);
+    if (*err) {
+	return NULL;
+    }
+
+    if (otype == GRETL_OBJ_EQN) {
+	ptr = gretl_model_from_XML(node, doc, dset, err);
+    } else if (otype == GRETL_OBJ_VAR) {
+	ptr = gretl_VAR_from_XML(node, doc, dset, err);
+    } else {
+	ptr = equation_system_from_XML(node, doc, err);
+    }
+
+    xmlFreeDoc(doc);
+
+    if (!*err && ptr != NULL) {
+	if (otype == GRETL_OBJ_EQN) {
+	    mb = bundle_from_model(ptr, dset, err);
+	} else {
+	    mb = bundle_from_system(ptr, otype, dset, err);
+	}
+	/* add the model's name to its bundle */
+	gretl_bundle_set_data(mb, "name", (char *) name, GRETL_TYPE_STRING, 0);
+    }
+
+    if (ptr != NULL) {
+	/* the structs obtained above are disposable */
+	if (otype == GRETL_OBJ_EQN) {
+	    gretl_model_free(ptr);
+	} else if (otype == GRETL_OBJ_VAR) {
+	    gretl_VAR_free(ptr);
+	} else {
+	    equation_system_destroy(ptr);
+	}
+    }
+
+    return mb;
+}
+
+static int session_models_to_bundles (xmlNodePtr node,
+				      xmlDocPtr doc,
+				      gretl_array *am,
+				      DATASET *dset,
+				      const char *sdir)
+{
+    char fullname[MAXLEN];
+    xmlNodePtr cur;
+    int i = 0;
+    int errs = 0;
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL) {
+	gretl_bundle *mb;
+	xmlChar *fname = NULL;
+	xmlChar *name = NULL;
+	int type = GRETL_OBJ_EQN;
+	int err = 0;
+
+	fname = xmlGetProp(cur, (XUC) "fname");
+	name = xmlGetProp(cur, (XUC) "name");
+	if (fname == NULL || name == NULL) {
+	    err = 1;
+	} else {
+	    session_file_make_path(fullname, (const char *) fname, sdir);
+	    gretl_xml_get_prop_as_int(cur, "type", &type);
+#if SESSION_DEBUG
+	    fprintf(stderr, "model file: fname='%s', name='%s', type=%d\n",
+		    fname, name, type);
+#endif
+	    mb = session_model_to_bundle(fullname, (const char *) name,
+					 type, dset, &err);
+	}
+	if (!err) {
+	    gretl_array_set_data(am, i++, mb);
+	}
+	if (err) {
+	    fprintf(stderr, "session_model_to_bundle: failed on %s (err = %d)\n",
+		    fullname, err);
+	    errs++;
+	}
+
+	free(fname);
+	free(name);
+
+	cur = cur->next;
+    }
+
+#if SESSION_DEBUG
+    fprintf(stderr, "session_models_to_bundles: %d errors\n", errs);
+#endif
+
+    return errs;
+}
+
+static gretl_bundle *session_xml_to_bundle (const char *fname,
+					    const char *sdir,
+					    DATASET *dset,
+					    int *err)
+{
+    gretl_bundle *sb = NULL;
+    gretl_array *am = NULL;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    xmlChar *tmp;
+    int obj_errs = 0;
+
+    *err = gretl_xml_open_doc_root(fname, "gretl-session", &doc, &cur);
+    if (*err) {
+	gui_errmsg(*err);
+	return NULL;
+    }
+
+    sb = gretl_bundle_new();
+    if (sb == NULL) {
+	*err = E_ALLOC;
+    }
+
+    /* FIXME add some dataset info? */
+
+    if (!*err) {
+	/* Now walk the tree */
+	cur = cur->xmlChildrenNode;
+	while (cur != NULL && !*err) {
+	    if (!xmlStrcmp(cur->name, (XUC) "models")) {
+		int n_models = 0;
+
+		tmp = xmlGetProp(cur, (XUC) "count");
+		if (tmp != NULL) {
+		    n_models = atoi((const char *) tmp);
+		    free(tmp);
+		}
+#if SESSION_DEBUG
+		fprintf(stderr, "session_xml_to_bundle: n_models = %d\n", n_models);
+#endif
+		if (n_models > 0) {
+		    am = gretl_array_new(GRETL_TYPE_BUNDLES, n_models, err);
+		    if (!*err) {
+			obj_errs += session_models_to_bundles(cur, doc, am, dset, sdir);
+			*err = gretl_bundle_donate_data(sb, "models", am,
+							GRETL_TYPE_ARRAY, 0);
+		    }
+		}
+		break;
+	    }
+	    cur = cur->next;
+	}
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+    }
+
+    if (!*err && obj_errs > 0) {
+	errbox_printf("%d session object(s) could not be rebuilt", obj_errs);
+    }
+
+    return sb;
+}
+
+#endif /* SESSION_BUNDLE */
 
 /* peek inside the session file and retrieve the name of the
    data file, only */
@@ -563,13 +741,13 @@ static SavedObjectFlags model_save_flags (const void *ptr,
 
 static int maybe_write_function_file (char *fullname)
 {
-    session_file_make_path(fullname, "functions.xml");
+    session_file_make_path(fullname, "functions.xml", NULL);
     return write_loaded_functions_file(fullname, 0);
 }
 
 static int write_settings_file (char *fullname)
 {
-    session_file_make_path(fullname, "settings.inp");
+    session_file_make_path(fullname, "settings.inp", NULL);
     return libset_write_script(fullname);
 }
 
