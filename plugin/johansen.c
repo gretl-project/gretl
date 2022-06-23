@@ -941,38 +941,34 @@ static int var_B_insert_alpha (GRETL_VAR *v)
 {
     gretl_matrix *A = v->jinfo->Alpha;
     gretl_matrix *B = v->B;
-    gretl_matrix *fullB;
-    double bij, aji;
-    int add_rows;
+    double aji, *dest, *src;
+    int r_orig = B->rows;
+    int r_full = v->ncoeff;
+    size_t sz;
     int i, j;
 
     /* sanity check */
-    add_rows = v->ncoeff - B->rows;
-    if (add_rows <= 0 || A->rows != B->cols) {
-        fprintf(stderr, "var_B_insert_alpha: add_rows %d, A->rows %d, B->cols %d\n",
-                add_rows, A->rows, B->cols);
-        return E_DATA;
+    if (r_full - r_orig <= 0 || A->rows != B->cols) {
+        fprintf(stderr, "var_B_insert_alpha: matrix sizes wrong!\n");
+	return E_DATA;
     }
 
-    fullB = gretl_matrix_alloc(v->ncoeff, B->cols);
-    if (fullB == NULL) {
-        return E_ALLOC;
+    sz = r_orig * sizeof *B->val;
+
+    for (j=B->cols-1; j>0; j--) {
+	dest = B->val + r_full * j;
+	src = B->val + r_orig * j;
+	memmove(dest, src, sz);
     }
+
+    gretl_matrix_reuse(B, r_full, B->cols);
 
     for (j=0; j<B->cols; j++) {
-        for (i=0; i<B->rows; i++) {
-            bij = gretl_matrix_get(B, i, j);
-            gretl_matrix_set(fullB, i, j, bij);
-        }
-        for (i=0; i<A->cols; i++) {
-            aji = gretl_matrix_get(A, j, i);
-            gretl_matrix_set(fullB, i + B->rows, j, aji);
-        }
+	for (i=0; i<A->cols; i++) {
+	    aji = gretl_matrix_get(A, j, i);
+	    gretl_matrix_set(B, r_orig + i, j, aji);
+	}
     }
-
-    /* replace the original v->B */
-    gretl_matrix_free(v->B);
-    v->B = fullB;
 
     return 0;
 }
@@ -1099,7 +1095,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
             }
         } else if (xc < v->ncoeff) {
             /* transcribe EC terms to v->B */
-            err = var_B_insert_alpha(v);
+            var_B_insert_alpha(v);
         }
     }
 
