@@ -1436,7 +1436,6 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
 static int prn_pop_stream (PRN *prn)
 {
     FILE *prev = NULL;
-    char *strvar = NULL;
     int err = 0;
 
     if (prn->fplist != NULL) {
@@ -1447,8 +1446,11 @@ static int prn_pop_stream (PRN *prn)
 	    fi = &g_array_index(prn->fplist, fpinfo, n-1);
 	    prev = fi->fp;
 	    if (fi->strvar != NULL) {
-		strvar = fi->strvar;
+		/* the --buffer case */
 		err = handle_outbuf_content(prn->fp, fi);
+		gretl_remove(fi->fname);
+		g_free(fi->strvar);
+		fi->strvar = NULL;
 	    }
 	    if (fi->fname != NULL) {
 		g_free(fi->fname);
@@ -1460,15 +1462,6 @@ static int prn_pop_stream (PRN *prn)
 
     if (prn->fp != NULL && prn->fp != stdout && prn->fp != stderr) {
 	fclose(prn->fp);
-    }
-
-    if (strvar != NULL) {
-	gchar *fname = g_strdup_printf("%s%s.prntmp",
-				       gretl_dotdir(),
-				       strvar);
-	gretl_remove(fname);
-	g_free(fname);
-	g_free(strvar);
     }
 
     prn->fp = prev;

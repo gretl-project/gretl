@@ -1009,13 +1009,17 @@ static int outname_check (const char *name, int backward,
 
 /* We come here in the --tempfile and --buffer cases of
    "outfile". The @strvar argument, which names a string
-   variable, plays a different role in each case: with
-   --tempfile (OPT_T) the variable should get as its
-   value the _name_ of the temporary file, but with --buffer
-   (OPT_B) it should get the _content_ of that file when
-   redirection ends. We accomplish the former effect here,
-   but arrange for the latter effect by passing @strvar
-   to outfile_redirect().
+   variable, plays a different role in each case:
+
+   * With --tempfile (OPT_T) @strvar should hold the name of
+   the temporary file to be created.
+
+   * With --buffer (OPT_B) @strvar should hold the name of
+   the string variable that gets the _content_ of the tempfile
+   when the restriction ends.
+
+   We accomplish the former effect here, but arrange for the
+   latter effect by passing @strvar to outfile_redirect().
 */
 
 static int redirect_to_tempfile (const char *strvar, PRN *prn,
@@ -1035,8 +1039,10 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     if (fp == NULL) {
         err = E_FOPEN;
     } else if (opt & OPT_B) {
+	/* the buffer variant */
         err = outfile_redirect(prn, fp, strvar, tempname, opt, vparms);
     } else {
+	/* the 'true' tempfile variant */
         err = outfile_redirect(prn, fp, NULL, tempname, opt, vparms);
     }
     if (!err && (opt & OPT_T)) {
