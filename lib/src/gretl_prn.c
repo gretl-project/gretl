@@ -1396,11 +1396,15 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
     user_var *uv;
     int err = 0;
 
+    /* get hold of the string variable specified in the
+       initial call to "outfile"
+    */
     uv = get_user_var_of_type_by_name(fi->strvar,
 				      GRETL_TYPE_STRING);
     if (uv == NULL) {
 	err = E_DATA;
     } else {
+	/* grab the content of the tempfile */
 	char *buf = NULL;
 	long pos;
 	size_t len;
@@ -1426,6 +1430,7 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
 	}
 
 	if (!err) {
+	    /* stick the content into the string variable */
 	    err = user_var_replace_value(uv, buf, GRETL_TYPE_STRING);
 	}
     }
@@ -1448,6 +1453,8 @@ static int prn_pop_stream (PRN *prn)
 	    if (fi->strvar != NULL) {
 		/* the --buffer case */
 		err = handle_outbuf_content(prn->fp, fi);
+		fclose(prn->fp);
+		prn->fp = NULL;
 		gretl_remove(fi->fname);
 		g_free(fi->strvar);
 		fi->strvar = NULL;
