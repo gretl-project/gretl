@@ -1031,10 +1031,20 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     int err = 0;
 
 #if TMPFILE_DEBUG
-    fprintf(stderr, "\nHERE redirect_to_tempfile, strvar '%s'\n", strvar);
+    fprintf(stderr, "redirect_to_tempfile, strvar '%s'\n", strvar);
 #endif
 
-    tempname = gretl_make_dotpath("outfile.XXXXXX");
+    if (opt & OPT_T) {
+	const char *s = get_string_by_name(strvar);
+
+	if (s != NULL && strstr(s, "XXXXXX")) {
+	    tempname = gretl_make_dotpath(s);
+	}
+    }
+    if (tempname == NULL) {
+	tempname = gretl_make_dotpath("outfile.XXXXXX");
+    }
+
     if (opt & OPT_B) {
         fp = gretl_mktemp(tempname, "wb+");
     } else {
@@ -2954,8 +2964,12 @@ static int install_function_package (const char *pkgname,
             }
         }
 
-        if (!err && !addon) {
-            package_check_dependencies(fullname, s, prn);
+        if (!err) {
+	    if (addon) {
+		update_addons_index((opt & OPT_V)? prn : NULL);
+	    } else {
+		package_check_dependencies(fullname, s, prn);
+	    }
         }
 
         if (!err && gretl_messages_on()) {
