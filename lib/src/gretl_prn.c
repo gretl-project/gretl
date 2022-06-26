@@ -70,7 +70,7 @@ struct PRN_ {
 
 struct fpinfo_ {
     FILE *fp;      /* stream to which we're printing */
-    int level;     /* level of depth of redicrection */
+    int level;     /* level of redirection */
     gchar *fname;  /* name of file or NULL */
     gchar *strvar; /* associated string variable or NULL */
 };
