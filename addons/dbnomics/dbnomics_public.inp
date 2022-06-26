@@ -113,15 +113,25 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
       funcerr "frequency does not match!"
    endif
 
-   tmpfile = sprintf("%s/tmp%06d.csv", $dotdir, randgen1(i, 0, 999999))
-   # n = b.totobs
-   outfile @tmpfile --quiet
-      printf "obs\tdbseries\n"
-      set warnings off
-      loop i=1 .. b.T -q
-         printf "%s\t%.15g\n", b.period[i], b.value[i]
-      endloop
-   end outfile
+   if $version >= 20221 # 2022b or higher
+      string tmpfile = "tmpXXXXXX.csv"
+      outfile --tempfile=tmpfile
+         printf "obs\tdbseries\n"
+         set warnings off
+         loop i=1 .. b.T -q
+            printf "%s\t%.15g\n", b.period[i], b.value[i]
+         endloop
+      end outfile
+   else
+      string tmpfile = sprintf("%s/tmp%06d.csv", $dotdir, randgen1(i, 0, 999999))
+      outfile @tmpfile --quiet
+         printf "obs\tdbseries\n"
+         set warnings off
+         loop i=1 .. b.T -q
+            printf "%s\t%.15g\n", b.period[i], b.value[i]
+         endloop
+      end outfile
+   endif
 
    if daily
       setopt join --tkey="obs,%Y-%m-%d"

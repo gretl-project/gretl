@@ -320,11 +320,7 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
 
     gretl_error_clear();
 
-#ifdef WIN32
     fd = g_mkstemp(pattern);
-#else
-    fd = mkstemp(pattern);
-#endif
 
     if (errno != 0) {
         gretl_errmsg_set_from_errno(NULL, errno);
