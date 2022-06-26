@@ -926,20 +926,19 @@ static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
     int err;
 
     err = print_start_redirection(prn, fp, fname, strvar);
-    if (err) {
-        return err;
+
+    if (!err) {
+	if (opt & OPT_Q) {
+	    parms[0] = gretl_echo_on();
+	    parms[1] = gretl_messages_on();
+	    set_gretl_echo(0);
+	    set_gretl_messages(0);
+	} else {
+	    parms[0] = parms[1] = -1;
+	}
     }
 
-    if (opt & OPT_Q) {
-        parms[0] = gretl_echo_on();
-        parms[1] = gretl_messages_on();
-        set_gretl_echo(0);
-        set_gretl_messages(0);
-    } else {
-        parms[0] = parms[1] = -1;
-    }
-
-    return 0;
+    return err;
 }
 
 static void maybe_restore_vparms (int *parms)
@@ -1007,6 +1006,8 @@ static int outname_check (const char *name, int backward,
     return err;
 }
 
+#define TMPFILE_DEBUG 0
+
 /* We come here in the --tempfile and --buffer cases of
    "outfile". The @strvar argument, which names a string
    variable, plays a different role in each case:
@@ -1029,6 +1030,10 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     FILE *fp = NULL;
     int err = 0;
 
+#if TMPFILE_DEBUG
+    fprintf(stderr, "\nHERE redirect_to_tempfile, strvar '%s'\n", strvar);
+#endif
+
     tempname = gretl_make_dotpath("outfile.XXXXXX");
     if (opt & OPT_B) {
         fp = gretl_mktemp(tempname, "wb+");
@@ -1036,17 +1041,21 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
         fp = gretl_mktemp(tempname, "wb");
     }
 
+#if TMPFILE_DEBUG
+    fprintf(stderr, " tempname = '%s', fp %p\n", tempname, (void *) fp);
+#endif
+
     if (fp == NULL) {
         err = E_FOPEN;
     } else if (opt & OPT_B) {
 	/* the buffer variant */
         err = outfile_redirect(prn, fp, strvar, tempname, opt, vparms);
     } else {
-	/* the 'true' tempfile variant */
+	/* the explicit tempfile variant */
         err = outfile_redirect(prn, fp, NULL, tempname, opt, vparms);
     }
     if (!err && (opt & OPT_T)) {
-        /* write the tempfile name into strvar */
+        /* write @tempname into @strvar */
         user_string_reset(strvar, tempname, &err);
         if (err) {
             fclose(fp);
