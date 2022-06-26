@@ -1006,7 +1006,7 @@ static int outname_check (const char *name, int backward,
     return err;
 }
 
-#define TMPFILE_DEBUG 1
+#define TMPFILE_DEBUG 0
 
 /* We come here in the --tempfile and --buffer cases of
    "outfile". The @strvar argument, which names a string
