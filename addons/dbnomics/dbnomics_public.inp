@@ -113,7 +113,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
       funcerr "frequency does not match!"
    endif
 
-   tmpfile = sprintf("%s/tmp%04d.csv", $dotdir, randgen1(i, 0, 9999))
+   tmpfile = sprintf("%s/tmp%06d.csv", $dotdir, randgen1(i, 0, 999999))
    # n = b.totobs
    outfile @tmpfile --quiet
       printf "obs\tdbseries\n"
@@ -157,6 +157,8 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
          endif
       endif
    end outfile
+
+   remove(tmpfile)
 
    if inbundle(b, "series_name")
       d = b.series_name
