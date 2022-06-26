@@ -1596,6 +1596,7 @@ static int get_gfn_special (char *fname)
     int ok = 0;
 
     if (!strchr(fname, '/') && !strchr(fname, '\\')) {
+	/* no extra path elements */
         char *p, pkgname[64];
         char *pkgpath;
 
