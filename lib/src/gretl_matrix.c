@@ -14128,8 +14128,8 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 /**
  * gretl_matrix_minmax:
  * @A: m x n matrix to examine.
- * @mm: 0 for minimum, 1 for maximum.
- * @rc: 0 for row, 1 for column.
+ * @mm: 0 for minima, 1 for maxima.
+ * @rc: 0 for row-wise, 1 for column-wise.
  * @idx: 0 for values, 1 for indices.
  * @err: location to receive error code.
  *
@@ -14156,9 +14156,9 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     }
 
     if (rc == 0) {
-        B = gretl_matrix_alloc(A->rows, 1);
+        B = gretl_zero_matrix_new(A->rows, 1);
     } else {
-        B = gretl_matrix_alloc(1, A->cols);
+        B = gretl_zero_matrix_new(1, A->cols);
     }
 
     if (B == NULL) {
@@ -14170,10 +14170,17 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
         /* going by rows */
         for (i=0; i<A->rows; i++) {
             d = gretl_matrix_get(A, i, 0);
+	    if (na(d)) {
+		B->val[i] = NADBL;
+		continue;
+	    }
             k = 0;
             for (j=1; j<A->cols; j++) {
                 x = gretl_matrix_get(A, i, j);
-                if (mm > 0) {
+		if (na(x)) {
+		    B->val[i] = NADBL;
+		    break;
+		} else if (mm > 0) {
                     /* looking for max */
                     if (x > d) {
                         d = x;
@@ -14187,16 +14194,25 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                     }
                 }
             }
-            B->val[i] = idx ? (double) k + 1 : d;
+	    if (!na(B->val[i])) {
+		B->val[i] = idx ? (double) k + 1 : d;
+	    }
         }
     } else {
         /* going by columns */
         for (j=0; j<A->cols; j++) {
             d = gretl_matrix_get(A, 0, j);
+	    if (na(d)) {
+		B->val[j] = NADBL;
+		continue;
+	    }
             k = 0;
             for (i=1; i<A->rows; i++) {
                 x = gretl_matrix_get(A, i, j);
-                if (mm > 0) {
+		if (na(x)) {
+		    B->val[j] = NADBL;
+		    break;
+                } else if (mm > 0) {
                     /* looking for max */
                     if (x > d) {
                         d = x;
@@ -14210,7 +14226,9 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                     }
                 }
             }
-            B->val[j] = idx ? (double) k + 1 : d;
+	    if (!na(B->val[j])) {
+		B->val[j] = idx ? (double) k + 1 : d;
+	    }
         }
     }
 
