@@ -2114,6 +2114,181 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
+/* exact initial iteration for multivariate y_t */
+
+static int koopman_exact_general (kalman *K,
+                                  double *ldet,
+                                  double *qt)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *Mk;
+    gretl_matrix *Fmk;
+    gretl_matrix *Fmt;
+    gretl_matrix *MFk;
+    gretl_matrix *PkZ;
+    gretl_matrix *V, *J;
+    gretl_matrix *l = NULL;
+    double xij, rlj;
+    int i, j, n, ns;
+    size_t sz;
+    int err = 0;
+
+    n = K->vt->rows; /* may be < K->n */
+
+    B = gretl_matrix_block_new(&Mk,  K->r, n,
+                               &Fmk, n, n,
+                               &Fmt, n, n,
+                               &MFk, K->r, n,
+                               &PkZ, K->r, n,
+                               &V,   n, n,
+                               &J,   n, n,
+                               NULL);
+
+    if (B == NULL) {
+        err = E_ALLOC;
+    } else {
+        /* Mk = T * P∞ * Z' */
+        gretl_matrix_multiply(K->Pk0, K->ZT, PkZ);
+        gretl_matrix_multiply(K->T, PkZ, Mk);
+        /* eigenanalysis */
+        l = gretl_gensymm_eigenvals(K->Fk, K->Ft, V, &err);
+    }
+
+    if (err) {
+        goto bailout;
+    }
+
+    /* @ns counts the "zero" eigenvalues */
+    ns = 0;
+    for (i=0; i<n; i++) {
+        if (l->val[i] < 1.0e-12) {
+            ns++;
+        } else {
+            break;
+        }
+    }
+
+    /* J = V[,1:ns] */
+    gretl_matrix_reuse(J, n, ns);
+    sz = n * ns * sizeof(double);
+    memcpy(J->val, V->val, sz);
+    /* Fmt = F_{*,t}^{-} = J*J' */
+    gretl_matrix_multiply_mod(J, GRETL_MOD_NONE,
+                              J, GRETL_MOD_TRANSPOSE,
+                              Fmt, GRETL_MOD_NONE);
+
+    /* J = V[,ns+1:] ./ sqrt(l[ns+1:]') */
+    gretl_matrix_reuse(J, n, n - ns);
+    sz = K->n * J->cols * sizeof(double);
+    memcpy(J->val, V->val + n*ns, sz);
+    for (j=0; j<J->cols; j++) {
+        rlj = sqrt(l->val[ns+j]);
+        for (i=0; i<n; i++) {
+            xij = gretl_matrix_get(J, i, j);
+            gretl_matrix_set(J, i, j, xij / rlj);
+        }
+    }
+    /* Fmk = F_{∞,t}^{-} = J*J' */
+    gretl_matrix_multiply_mod(J, GRETL_MOD_NONE,
+                              J, GRETL_MOD_TRANSPOSE,
+                              Fmk, GRETL_MOD_NONE);
+    /* copy to iFt for recording (?) */
+    fast_copy_values(K->iFt, Fmk);
+
+    /* MFk = M∞ * Fm∞ */
+    gretl_matrix_multiply(Mk, Fmk, MFk);
+
+    /* K★ = M★ * Fmt + M∞ * F∞ */
+    fast_copy_values(K->Kt, MFk);
+    gretl_matrix_multiply_mod(K->Mt, GRETL_MOD_NONE,
+                              Fmt, GRETL_MOD_NONE,
+                              K->Kt, GRETL_MOD_CUMULATE);
+
+    /* C★ = M★ Kt' (first component) */
+    gretl_matrix_multiply_mod(K->Mt, GRETL_MOD_NONE,
+                              K->Kt, GRETL_MOD_TRANSPOSE,
+                              K->Ct, GRETL_MOD_NONE);
+
+    /* Mt <- M★ - M∞ * F∞ * Fmt (Wrong? Should be F★?) */
+#if 0
+    gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
+                              Fmt, GRETL_MOD_NONE,
+                              K->Mt, GRETL_MOD_DECREMENT);
+#else
+    gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
+                              K->Ft, GRETL_MOD_NONE,
+                              K->Mt, GRETL_MOD_DECREMENT);
+#endif
+
+    /* Ct += M∞ * F∞ * (M★ - M∞ * F∞ * Fmt)' (second component) */
+    gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
+                              K->Mt, GRETL_MOD_TRANSPOSE,
+                              K->Ct, GRETL_MOD_CUMULATE);
+
+    /* C∞ = M∞ * F∞ * M∞' */
+    gretl_matrix_multiply_mod(MFk, GRETL_MOD_NONE,
+                              Mk,  GRETL_MOD_TRANSPOSE,
+                              K->Ck, GRETL_MOD_NONE);
+
+    gretl_matrix_add_to(Fmk, Fmt);
+    *ldet = gretl_matrix_log_determinant(Fmk, &err);
+    *qt = gretl_scalar_qform(K->vt, Fmt, &err);
+
+ bailout:
+
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
+/* exact initial iteration for univariate y_t,
+   when F_\infty ("Fk") > 0
+*/
+
+static int koopman_exact_nonsingular (kalman *K)
+{
+    gretl_matrix *Mk;
+    gretl_matrix *PkZ;
+    int n, err = 0;
+
+    n = K->vt->rows; /* may be < K->n */
+    Mk  = gretl_matrix_alloc(K->r, n);
+    PkZ = gretl_matrix_alloc(K->r, n);
+
+    /* M∞ = T * P∞ * Z' */
+    gretl_matrix_multiply(K->Pk0, K->ZT, PkZ);
+    gretl_matrix_multiply(K->T, PkZ, Mk);
+
+    /* Kt = M∞ ./ F∞[1] */
+    fast_copy_values(K->Kt, Mk);
+    gretl_matrix_divide_by_scalar(K->Kt, K->Fk->val[0]);
+
+    /* Ct = Mt * Kt' */
+    gretl_matrix_multiply_mod(K->Mt, GRETL_MOD_NONE,
+                              K->Kt, GRETL_MOD_TRANSPOSE,
+                              K->Ct, GRETL_MOD_NONE);
+
+    /* Mt <- Mt - Kt * Ft */
+    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+                              K->Ft, GRETL_MOD_NONE,
+                              K->Mt, GRETL_MOD_DECREMENT);
+
+    /* Ct += Kt * (Mt - Kt * Ft)' */
+    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+                              K->Mt, GRETL_MOD_TRANSPOSE,
+                              K->Ct, GRETL_MOD_CUMULATE);
+
+    /* Ck = Kt * M∞' */
+    gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+                              Mk, GRETL_MOD_TRANSPOSE,
+                              K->Ck, GRETL_MOD_NONE);
+
+    gretl_matrix_free(Mk);
+    gretl_matrix_free(PkZ);
+
+    return err;
+}
+
 static double max_val (const gretl_matrix *m)
 {
     int i, n = m->rows * m->cols;
@@ -2126,6 +2301,20 @@ static double max_val (const gretl_matrix *m)
     }
 
     return ret;
+}
+
+static void P_infty_update (kalman *K, int C_zero)
+{
+    gretl_matrix_qform(K->T, GRETL_MOD_NONE, K->Pk0,
+                       K->Pk1, GRETL_MOD_NONE);
+    if (!C_zero) {
+        gretl_matrix_subtract_from(K->Pk1, K->Ck);
+    }
+    fast_copy_values(K->Pk0, K->Pk1);
+
+    if (K->d == 0 && max_val(K->Pk0) < K_TINY) {
+        K->d = K->t + 1;
+    }
 }
 
 /* Handling of missing y_t or x_t, for the case of
@@ -2267,14 +2456,39 @@ int kalman_forecast (kalman *K, PRN *prn)
             gretl_matrix_add_to(K->Mt, K->HG);
         }
 
-	/* standard (not exact initial) Kalman procedure */
-	fast_copy_values(K->iFt, K->Ft);
-	err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
-	if (err) {
-	    fprintf(stderr, "kalman_forecast: failed to invert Ft\n");
-	} else {
-	    qt = gretl_scalar_qform(K->vt, K->iFt, &err);
-	}
+        if (K->exact && max_val(K->Pk0) > K_TINY) {
+            /* handle initial exact iterations */
+            int C_zero = 0;
+
+            gretl_matrix_qform(K->ZT, GRETL_MOD_TRANSPOSE,
+                               K->Pk0, K->Fk, GRETL_MOD_NONE);
+            if (K->n == 1 && K->Fk->val[0] < K_TINY) {
+                /* univariate F∞ = 0 */
+                ldet = log(K->Ft->val[0]);
+                K->iFt->val[0] = 1.0 / K->Ft->val[0];
+                qt = K->vt->val[0] * K->vt->val[0] * K->iFt->val[0];
+                C_zero = 1;
+            } else if (K->n == 1) {
+                /* univariate F∞ nonsingular */
+                K->iFt->val[0] = 0;
+                err = koopman_exact_nonsingular(K);
+                Kt_done = 1;
+            } else {
+                /* multivariate case */
+                err = koopman_exact_general(K, &ldet, &qt);
+                Kt_done = 2;
+            }
+            P_infty_update(K, C_zero);
+        } else {
+            /* standard Kalman procedure */
+            fast_copy_values(K->iFt, K->Ft);
+            err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
+            if (err) {
+                fprintf(stderr, "kalman_forecast: failed to invert Ft\n");
+            } else {
+                qt = gretl_scalar_qform(K->vt, K->iFt, &err);
+            }
+        }
 
         if (K->F != NULL) {
             /* we're recording F_t for all t */
@@ -2309,11 +2523,16 @@ int kalman_forecast (kalman *K, PRN *prn)
             gretl_vector_set(K->LL, K->t, llt);
         }
 
-	/* Calculate gain K_t = M_t F_t^{-1}, and C matrix */
-	gretl_matrix_multiply(K->Mt, K->iFt, K->Kt);
-	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
-				  K->Mt, GRETL_MOD_TRANSPOSE,
-				  K->Ct, GRETL_MOD_NONE);
+        if (!Kt_done) {
+            /* Calculate gain K_t = M_t F_t^{-1}, and C matrix.
+               Note that this will have been done correctly already
+               in two of the "exact initial" cases above.
+            */
+            gretl_matrix_multiply(K->Mt, K->iFt, K->Kt);
+            gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
+                                      K->Mt, GRETL_MOD_TRANSPOSE,
+                                      K->Ct, GRETL_MOD_NONE);
+        }
 
         if (!err && K->K != NULL) {
             /* record the gain */
