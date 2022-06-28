@@ -32,6 +32,10 @@ version 2022b, in progress
 - GUI viewer windows: support Ctrl-plus and Ctrl-minus to
   increase/reduce font size
 - R support: enable exchange of matrices in binary format
+- Fix bug: failure of dbnomics download on Windows when
+  a very large number of series is specified
+- Fix bug: crash on use of the --full option with "restrict"
+  when applied to the alpha terms in a vecm
 - Fix bug: breakage in GUI item "X-13ARIMA analysis"
 - Fix bug: crash on trying to stringify() an empty series
 - Fix bug: det() should not flag an error when returning NA
