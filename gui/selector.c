@@ -4705,7 +4705,8 @@ static GtkWidget *pix_button (const guint8 *src, gchar *tip)
     img = gtk_image_new_from_pixbuf(pbuf);
     button = gtk_button_new();
     gtk_widget_set_size_request(button, BUTTON_WIDTH, -1);
-    gtk_container_add(GTK_CONTAINER(button), img);
+    // gtk_container_add(GTK_CONTAINER(button), img);
+    gtk_button_set_image(GTK_BUTTON(button), img);
     gretl_tooltips_add(button, tip);
     g_object_unref(pbuf);
 
