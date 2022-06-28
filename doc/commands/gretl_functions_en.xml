@@ -10260,7 +10260,7 @@
 	</para>
 	<para>
 	  The return value is a complex column vector of length
-	  <math>p</math>-vector.
+	  <math>p</math>.
 	</para>
       </description>
     </function>
