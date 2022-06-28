@@ -320,11 +320,7 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
 
     gretl_error_clear();
 
-#ifdef WIN32
     fd = g_mkstemp(pattern);
-#else
-    fd = mkstemp(pattern);
-#endif
 
     if (errno != 0) {
         gretl_errmsg_set_from_errno(NULL, errno);
@@ -1596,6 +1592,7 @@ static int get_gfn_special (char *fname)
     int ok = 0;
 
     if (!strchr(fname, '/') && !strchr(fname, '\\')) {
+	/* no extra path elements */
         char *p, pkgname[64];
         char *pkgpath;
 

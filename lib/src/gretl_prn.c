@@ -70,7 +70,7 @@ struct PRN_ {
 
 struct fpinfo_ {
     FILE *fp;      /* stream to which we're printing */
-    int level;     /* level of depth of redicrection */
+    int level;     /* level of redirection */
     gchar *fname;  /* name of file or NULL */
     gchar *strvar; /* associated string variable or NULL */
 };
@@ -1396,11 +1396,15 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
     user_var *uv;
     int err = 0;
 
+    /* get hold of the string variable specified in the
+       initial call to "outfile"
+    */
     uv = get_user_var_of_type_by_name(fi->strvar,
 				      GRETL_TYPE_STRING);
     if (uv == NULL) {
 	err = E_DATA;
     } else {
+	/* grab the content of the tempfile */
 	char *buf = NULL;
 	long pos;
 	size_t len;
@@ -1426,6 +1430,7 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
 	}
 
 	if (!err) {
+	    /* stick the content into the string variable */
 	    err = user_var_replace_value(uv, buf, GRETL_TYPE_STRING);
 	}
     }
@@ -1436,7 +1441,6 @@ static int handle_outbuf_content (FILE *fp, fpinfo *fi)
 static int prn_pop_stream (PRN *prn)
 {
     FILE *prev = NULL;
-    char *strvar = NULL;
     int err = 0;
 
     if (prn->fplist != NULL) {
@@ -1447,8 +1451,13 @@ static int prn_pop_stream (PRN *prn)
 	    fi = &g_array_index(prn->fplist, fpinfo, n-1);
 	    prev = fi->fp;
 	    if (fi->strvar != NULL) {
-		strvar = fi->strvar;
+		/* the --buffer case */
 		err = handle_outbuf_content(prn->fp, fi);
+		fclose(prn->fp);
+		prn->fp = NULL;
+		gretl_remove(fi->fname);
+		g_free(fi->strvar);
+		fi->strvar = NULL;
 	    }
 	    if (fi->fname != NULL) {
 		g_free(fi->fname);
@@ -1460,15 +1469,6 @@ static int prn_pop_stream (PRN *prn)
 
     if (prn->fp != NULL && prn->fp != stdout && prn->fp != stderr) {
 	fclose(prn->fp);
-    }
-
-    if (strvar != NULL) {
-	gchar *fname = g_strdup_printf("%s%s.prntmp",
-				       gretl_dotdir(),
-				       strvar);
-	gretl_remove(fname);
-	g_free(fname);
-	g_free(strvar);
     }
 
     prn->fp = prev;

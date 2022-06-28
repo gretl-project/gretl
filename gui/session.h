@@ -103,6 +103,8 @@ void session_init (void);
 
 gboolean do_open_session (void);
 
+gretl_bundle *open_session_as_bundle (void);
+
 void gui_clear_dataset (void);
 
 void verify_clear_data (void);

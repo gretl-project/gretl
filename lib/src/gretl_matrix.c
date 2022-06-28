@@ -3983,7 +3983,7 @@ void gretl_matrix_unset_equals_tolerance (void)
     eq_tol = DEFAULT_EQTOL;
 }
 
-static double sneq_reldiff (double x, double y)
+static double sneq_reldiff (double x, double y, double ad)
 {
     double rd;
 
@@ -3992,9 +3992,9 @@ static double sneq_reldiff (double x, double y)
     } else if (y == 0.0) {
         rd = fabs(x);
     } else if (x > y) {
-        rd = fabs((x - y) / y);
+        rd = ad / y;
     } else {
-        rd = fabs((y - x) / x);
+        rd = ad / x;
     }
 
     return rd;
@@ -4003,18 +4003,25 @@ static double sneq_reldiff (double x, double y)
 static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
                                            int verbose)
 {
-    double x, y, rd;
+    double x, y, ad, rd;
     int i, j;
 
     if (gretl_is_null_matrix(m)) {
         return 0;
     }
 
+    const char *envstr = getenv("USE_FABS_DIFF");
+    int debug = envstr != NULL;
+    
     for (i=1; i<m->rows; i++) {
         for (j=0; j<i; j++) {
             x = gretl_matrix_get(m, i, j);
             y = gretl_matrix_get(m, j, i);
-            if ((rd = sneq_reldiff(x, y)) > eq_tol) {
+	    ad = fabs(y - x);
+	    if (debug && ad < 1.0e-12) {
+		continue;
+	    }
+            if ((rd = sneq_reldiff(x, y, ad)) > eq_tol) {
                 if (verbose) {
                     fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n"
                             " reldiff = %g\n", i, j, x, j, i, y, rd);
@@ -14128,8 +14135,8 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 /**
  * gretl_matrix_minmax:
  * @A: m x n matrix to examine.
- * @mm: 0 for minimum, 1 for maximum.
- * @rc: 0 for row, 1 for column.
+ * @mm: 0 for minima, 1 for maxima.
+ * @rc: 0 for row-wise, 1 for column-wise.
  * @idx: 0 for values, 1 for indices.
  * @err: location to receive error code.
  *
@@ -14156,9 +14163,9 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     }
 
     if (rc == 0) {
-        B = gretl_matrix_alloc(A->rows, 1);
+        B = gretl_zero_matrix_new(A->rows, 1);
     } else {
-        B = gretl_matrix_alloc(1, A->cols);
+        B = gretl_zero_matrix_new(1, A->cols);
     }
 
     if (B == NULL) {
@@ -14170,10 +14177,17 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
         /* going by rows */
         for (i=0; i<A->rows; i++) {
             d = gretl_matrix_get(A, i, 0);
+	    if (na(d)) {
+		B->val[i] = NADBL;
+		continue;
+	    }
             k = 0;
             for (j=1; j<A->cols; j++) {
                 x = gretl_matrix_get(A, i, j);
-                if (mm > 0) {
+		if (na(x)) {
+		    B->val[i] = NADBL;
+		    break;
+		} else if (mm > 0) {
                     /* looking for max */
                     if (x > d) {
                         d = x;
@@ -14187,16 +14201,25 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                     }
                 }
             }
-            B->val[i] = idx ? (double) k + 1 : d;
+	    if (!na(B->val[i])) {
+		B->val[i] = idx ? (double) k + 1 : d;
+	    }
         }
     } else {
         /* going by columns */
         for (j=0; j<A->cols; j++) {
             d = gretl_matrix_get(A, 0, j);
+	    if (na(d)) {
+		B->val[j] = NADBL;
+		continue;
+	    }
             k = 0;
             for (i=1; i<A->rows; i++) {
                 x = gretl_matrix_get(A, i, j);
-                if (mm > 0) {
+		if (na(x)) {
+		    B->val[j] = NADBL;
+		    break;
+                } else if (mm > 0) {
                     /* looking for max */
                     if (x > d) {
                         d = x;
@@ -14210,7 +14233,9 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                     }
                 }
             }
-            B->val[j] = idx ? (double) k + 1 : d;
+	    if (!na(B->val[j])) {
+		B->val[j] = idx ? (double) k + 1 : d;
+	    }
         }
     }
 

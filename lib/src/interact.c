@@ -926,20 +926,19 @@ static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
     int err;
 
     err = print_start_redirection(prn, fp, fname, strvar);
-    if (err) {
-        return err;
+
+    if (!err) {
+	if (opt & OPT_Q) {
+	    parms[0] = gretl_echo_on();
+	    parms[1] = gretl_messages_on();
+	    set_gretl_echo(0);
+	    set_gretl_messages(0);
+	} else {
+	    parms[0] = parms[1] = -1;
+	}
     }
 
-    if (opt & OPT_Q) {
-        parms[0] = gretl_echo_on();
-        parms[1] = gretl_messages_on();
-        set_gretl_echo(0);
-        set_gretl_messages(0);
-    } else {
-        parms[0] = parms[1] = -1;
-    }
-
-    return 0;
+    return err;
 }
 
 static void maybe_restore_vparms (int *parms)
@@ -1007,15 +1006,21 @@ static int outname_check (const char *name, int backward,
     return err;
 }
 
+#define TMPFILE_DEBUG 0
+
 /* We come here in the --tempfile and --buffer cases of
    "outfile". The @strvar argument, which names a string
-   variable, plays a different role in each case: with
-   --tempfile (OPT_T) the variable should get as its
-   value the _name_ of the temporary file, but with --buffer
-   (OPT_B) it should get the _content_ of that file when
-   redirection ends. We accomplish the former effect here,
-   but arrange for the latter effect by passing @strvar
-   to outfile_redirect().
+   variable, plays a different role in each case:
+
+   * With --tempfile (OPT_T) @strvar should hold the name of
+   the temporary file to be created.
+
+   * With --buffer (OPT_B) @strvar should hold the name of
+   the string variable that gets the _content_ of the tempfile
+   when the restriction ends.
+
+   We accomplish the former effect here, but arrange for the
+   latter effect by passing @strvar to outfile_redirect().
 */
 
 static int redirect_to_tempfile (const char *strvar, PRN *prn,
@@ -1025,22 +1030,42 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     FILE *fp = NULL;
     int err = 0;
 
-    tempname = gretl_make_dotpath("outfile.XXXXXX");
+#if TMPFILE_DEBUG
+    fprintf(stderr, "redirect_to_tempfile, strvar '%s'\n", strvar);
+#endif
+
+    if (opt & OPT_T) {
+	const char *s = get_string_by_name(strvar);
+
+	if (s != NULL && strstr(s, "XXXXXX")) {
+	    tempname = gretl_make_dotpath(s);
+	}
+    }
+    if (tempname == NULL) {
+	tempname = gretl_make_dotpath("outfile.XXXXXX");
+    }
+
     if (opt & OPT_B) {
         fp = gretl_mktemp(tempname, "wb+");
     } else {
         fp = gretl_mktemp(tempname, "wb");
     }
 
+#if TMPFILE_DEBUG
+    fprintf(stderr, " tempname = '%s', fp %p\n", tempname, (void *) fp);
+#endif
+
     if (fp == NULL) {
         err = E_FOPEN;
     } else if (opt & OPT_B) {
+	/* the buffer variant */
         err = outfile_redirect(prn, fp, strvar, tempname, opt, vparms);
     } else {
+	/* the explicit tempfile variant */
         err = outfile_redirect(prn, fp, NULL, tempname, opt, vparms);
     }
     if (!err && (opt & OPT_T)) {
-        /* write the tempfile name into strvar */
+        /* write @tempname into @strvar */
         user_string_reset(strvar, tempname, &err);
         if (err) {
             fclose(fp);
@@ -2002,6 +2027,15 @@ static int open_append_stage_1 (CMD *cmd,
 	}
     }
 
+    if (op->ftype == GRETL_SESSION) {
+	if (gretl_in_gui_mode() && (cmd->opt & OPT_U)) {
+	    ; /* experimental, could be OK */
+	} else {
+	    gretl_errmsg_set(_("gretl session files can only be opened via the GUI program"));
+	    err = E_DATA;
+	}
+    }
+
     if (err) {
         errmsg(err, prn);
         return err;
@@ -2109,6 +2143,12 @@ static int lib_open_append (ExecState *s,
     } else if (err) {
         /* error at stage 1, don't proceed */
         return err;
+    }
+
+    if (cmd->ci == OPEN && op.ftype == GRETL_SESSION) {
+	/* open session as bundle in GUI */
+	s->callback(s, NULL, GRETL_OBJ_SESSION);
+	return 0;
     }
 
     if (cmd->ci == OPEN && !op.dbdata) {
@@ -2924,8 +2964,12 @@ static int install_function_package (const char *pkgname,
             }
         }
 
-        if (!err && !addon) {
-            package_check_dependencies(fullname, s, prn);
+        if (!err) {
+	    if (addon) {
+		update_addons_index((opt & OPT_V)? prn : NULL);
+	    } else {
+		package_check_dependencies(fullname, s, prn);
+	    }
         }
 
         if (!err && gretl_messages_on()) {

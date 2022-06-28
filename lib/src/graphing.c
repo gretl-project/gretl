@@ -6580,7 +6580,7 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	}
 	/* then the confidence band */
 	if (style == BAND_BARS) {
-	    fprintf(fp, "'-' using 1:2:(%g*$3) w errorbars %s%s\n",
+	    fprintf(fp, "'-' using 1:2:(%g*$3) notitle w errorbars %s%s\n",
 		    pm.factor, lspec, dspec);
 	} else {
 	    char *wstr = style == BAND_STEP ? "steps" : "lines";

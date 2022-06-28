@@ -10449,7 +10449,29 @@
 	end outfile
 	printf "Output went to %s\n", mytemp
 	printf "The output was:\n%s\n", readfile(mytemp)
+	# clean up if the file is no longer needed
+	remove(mytemp)
       </code>
+      <para>
+	In some cases you may wish to exercise some control over the
+	name of the temporary file. You can do this by supplying a
+	string variable which contains six consecutive <lit>X</lit>s,
+	as in
+      </para>
+      <code>
+	string mytemp = "tmpXXXXXX.csv"
+	outfile --tempfile=mytemp
+	...
+      </code>
+      <para>
+	In this case <lit>XXXXXX</lit> will be replaced by random
+	characters that ensure uniqueness of the filename, but the
+	<quote><lit>.csv</lit></quote> suffix will be preserved. As in
+	the simpler case above, the file is automatically written into
+	the user's <quote>dot</quote> directory and the content of the
+	string variable passed via the option flag is modified to hold
+	the full path to the temporary file.
+      </para>
 
       <subhead>Quietness</subhead>
       <para>

@@ -4348,8 +4348,11 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
 
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
+    /* mm: 1 for maximum functions, 0 for minimum */
     *mm = (f == F_MAXR || f == F_MAXC || f == F_IMAXR || f == F_IMAXC);
+    /* rc: 1 for column-wise functions, 0 for row-wise */
     *rc = (f == F_MINC || f == F_MAXC || f == F_IMINC || f == F_IMAXC);
+    /* idx: 1 for index functions, 0 for values */
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 

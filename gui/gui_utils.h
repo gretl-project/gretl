@@ -50,6 +50,8 @@ int gui_validate_varname_strict (const char *name, GretlType type,
 int gui_validate_varname (const char *varname, GretlType type,
 			  GtkWidget *parent);
 
+int gui_validate_varname_easy (const char *varname, GretlType type);
+
 gretlopt get_tex_eqn_opt (void);
 
 gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,

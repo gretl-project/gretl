@@ -1114,6 +1114,7 @@ int win32_remove (const char *path)
 	ok = DeleteFileW(wpath);
 	if (!ok) {
 	    win32_record_last_error();
+	    fprintf(stderr, "win32_remove '%s': '%s'\n", path, gretl_errmsg_get());
 	    err = -1;
 	}
     }

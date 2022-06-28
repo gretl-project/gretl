@@ -3071,6 +3071,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     for (i=M_ESS; i<M_SCALAR_MAX && !*err; i++) {
+	/* model scalars */
 	berr = 0;
 	if (i == M_DWPVAL) {
 	    /* Durbin-Watson p-value: don't include this unless
@@ -3091,6 +3092,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     for (i=M_SCALAR_MAX+1; i<M_SERIES_MAX && !*err; i++) {
+	/* model series */
 	for (t=0; t<dset->n; t++) {
 	    x[t] = NADBL;
 	}
@@ -3102,6 +3104,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     for (i=M_SERIES_MAX+1; i<M_MATRIX_MAX && !*err; i++) {
+	/* model matrices */
 	berr = 0;
 	m = gretl_model_get_matrix(pmod, i, &berr);
 	if (!berr) {
@@ -3113,6 +3116,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     for (i=M_MBUILD_MAX+1; i<M_LIST_MAX && !*err; i++) {
+	/* model lists */
 	list = NULL;
 	if (i == M_XLIST) {
 	    list = gretl_model_get_x_list(pmod);
@@ -3128,6 +3132,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     for (i=M_LIST_MAX+1; i<M_PARNAMES && !*err; i++) {
+	/* model strings */
 	s = NULL;
 	if (i == M_DEPVAR) {
 	    s = gretl_model_get_depvar_name(pmod, dset);
@@ -3141,6 +3146,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     for (i=M_PARNAMES; i<M_MAX && !*err; i++) {
+	/* model arrays */
 	a = NULL;
 	if (i == M_PARNAMES) {
 	    a = gretl_model_get_param_names(pmod, dset, err);
@@ -3154,6 +3160,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     if (!*err) {
+	/* miscellaneous data items */
 	*err = bundlize_model_data_items(pmod, b);
     }
 
