@@ -6800,9 +6800,10 @@ static int ksmooth_univariate (kalman *K, int dist)
     load_filter_matrices(&f, K);
     g = f.g; /* convenience pointer */
 
-#if KSMO_DEBUG
-    fprintf(stderr, "HERE ksmooth_univariate, dist=%d\n", dist);
-#endif
+    if (kdebug) {
+	fprintf(stderr, "ksmooth_univariate: dist=%d, d=%d, j=%d\n",
+		dist, K->d, K->j);
+    }
 
     if (K->exact) {
         B = gretl_matrix_block_new(&Kt, m, p, &Pt, m, m,
