@@ -10935,6 +10935,10 @@ static int lhs_type_check (GretlType spec, GretlType rhs, int t)
         err = E_TYPES;
     }
 
+#if LHDEBUG
+    fprintf(stderr, "lhs_type_check: spec=%d, rhs=%d: err = %d\n", spec, rhs, err);
+#endif
+
     return err;
 }
 
@@ -11237,7 +11241,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
                 if (!p->err) {
                     type = GRETL_TYPE_SERIES;
                     size = p->dset->n;
-                }
+                } else {
+		    err = E_TYPES;
+		}
             } else {
                 ptr = rhs->v.m;
                 type = GRETL_TYPE_MATRIX;
