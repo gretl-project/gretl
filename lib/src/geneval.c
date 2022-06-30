@@ -160,6 +160,7 @@ static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
 static gretl_bundle *node_get_bundle (NODE *n, parser *p);
+static int gen_type_is_arrayable (int gen_t);
 
 /* ok_list_node: This is a first-pass assessment of whether
    a given node _may_ be interpretable as holding a LIST.
@@ -789,6 +790,9 @@ static void maybe_switch_node_type (NODE *n, int type,
 	n->flags = flags;
     } else if (type == EMPTY) {
 	; /* LHS mechanism: OK */
+    } else if (gen_type_is_arrayable(n->t) && type == ARRAY) {
+	n->t = ARRAY;
+	n->flags = flags;
     } else {
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
