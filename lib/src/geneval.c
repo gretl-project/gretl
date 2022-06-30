@@ -5430,6 +5430,9 @@ static int want_singleton_array (NODE *n, parser *p)
 	   array of arrays.
 	*/
 	return t != GRETL_TYPE_ARRAYS;
+    } else if (p->aux == NULL && p->targ == ARRAY &&
+	       p->tree == n->parent) {
+	return 1;
     }
 
     return 0;
