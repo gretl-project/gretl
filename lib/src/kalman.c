@@ -5959,6 +5959,7 @@ static int kalman_ldl (kalman *K)
                 gretl_matrix_set(L, i, j, lij / gj);
             }
         }
+	gretl_bundle_set_matrix(K->b, "L", L);
         err = gretl_invert_triangular_matrix(L, 'L');
     }
 
