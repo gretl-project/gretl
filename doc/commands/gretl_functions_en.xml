@@ -2423,47 +2423,6 @@
       </description>
     </function>
 
-    <function name="commute" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">A</fnarg>
-	<fnarg type="int">m</fnarg>
-	<fnarg optional="true" type="int">n</fnarg>
-	<fnarg optional="true" type="int">post</fnarg>
-	<fnarg optional="true" type="int">add_id</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the matrix <argname>A</argname> premultiplied by the
-	  commutation matrix <math>K</math><sub>m,n</sub> (more
-	  efficient than explicit multiplication).  Each column of
-	  <argname>A</argname> is assumed to come from a
-	  <math>vec</math> operation on a <math>m x n</math>
-	  matrix. In particular,
-	</para>
-	<code>
-	  commute(vec(B), rows(B), cols(B))
-	</code>
-	<para>
-	  gives <math>vec(B')</math>. In order to compute the
-	  commutation matrix proper, just apply the function to an
-	  appropriately sized identity matrix. For example:
-	</para>
-	<code>
-	  K_32 = commute(I(6), 3, 2)
-	</code>
-	<para>
-	  The optional argument <argname>n</argname> defaults to
-	  <argname>m</argname>.  If the optional argument
-	  <argname>post</argname> is non-zero, then
-	  post-multiplication is performed instead of
-	  pre-multiplication; the optional Boolean switch
-	  <argname>add_id</argname> will premultiply
-	  <argname>A</argname> by <math>I + K</math><sub>m,n</sub>
-	  instead of <math>K</math><sub>m,n</sub>.
-	</para>
-      </description>
-    </function>
-
     <function name="carg" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="cmatrix">C</fnarg>
@@ -3004,6 +2963,46 @@
             <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="commute" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
+	<fnarg optional="true" type="int">post</fnarg>
+	<fnarg optional="true" type="int">add_id</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the matrix <argname>A</argname> premultiplied by the
+	  commutation matrix <math>K</math><sub>m,n</sub> (more
+	  efficient than explicit multiplication).  Each column of
+	  <argname>A</argname> is assumed to come from a vec operation
+	  on a <math>m x n</math> matrix. In particular,
+	</para>
+	<code>
+	  commute(vec(B), rows(B), cols(B))
+	</code>
+	<para>
+	  gives vec(<math>B'</math>). In order to compute the
+	  commutation matrix proper, just apply the function to an
+	  appropriately sized identity matrix. For example:
+	</para>
+	<code>
+	  K_32 = commute(I(6), 3, 2)
+	</code>
+	<para>
+	  The optional argument <argname>n</argname> defaults to
+	  <argname>m</argname>.  If the optional argument
+	  <argname>post</argname> is non-zero, then
+	  post-multiplication is performed instead of
+	  pre-multiplication; the optional Boolean switch
+	  <argname>add_id</argname> will premultiply
+	  <argname>A</argname> by <math>I + K</math><sub>m,n</sub>
+	  instead of <math>K</math><sub>m,n</sub>.
 	</para>
       </description>
     </function>
@@ -6445,28 +6444,26 @@
 	  Tests whether <argname>name</argname> is the identifier for
 	  a complex matrix. The return value is one of the following:
 	</para>
-	<li>
-	  <para>
-	    <lit>NA</lit>: <argname>name</argname> does not identify a
-	    matrix.
-	  </para>
-	  <para>
-	    <lit>0</lit>: <argname>name</argname> identifies a real
-	    matrix, composed entirely of regular floating-point
-	    numbers (<quote>doubles</quote>, in C parlance).
-	  </para>
-	  <para>
-	    <lit>1</lit>: <argname>name</argname> identifies a
-	    <quote>nominally</quote> complex matrix, composed of
-	    numbers with both a real and an imaginary part, but
-	    in which all imaginary parts are zero.
-	  </para>
-	  <para>
-	    <lit>2</lit>: the matrix in question holds at least one
-	    <quote>genuinely</quote> complex value, with a non-zero
-	    imaginary part.
-	  </para>
-	</li>
+	<para>
+	  <lit>NA</lit>: <argname>name</argname> does not identify a
+	  matrix.
+	</para>
+	<para>
+	  <lit>0</lit>: <argname>name</argname> identifies a real
+	  matrix, composed entirely of regular floating-point numbers
+	  (<quote>doubles</quote>, in C parlance).
+	</para>
+	<para>
+	  <lit>1</lit>: <argname>name</argname> identifies a
+	  <quote>nominally</quote> complex matrix, composed of numbers
+	  with both a real and an imaginary part, but in which all
+	  imaginary parts are zero.
+	</para>
+	<para>
+	  <lit>2</lit>: the matrix in question holds at least one
+	  <quote>genuinely</quote> complex value, with a non-zero
+	  imaginary part.
+	</para>
       </description>
     </function>
 
@@ -12017,7 +12014,7 @@
 	 <argname>X</argname> is assumed to be an <by r="n" c="n"/>
 	 correlation matrix. The returned value will be a vector with
 	 <math>n(n-1)/2</math> elements between 0 and &pi;. In this
-	 mode the parameter <argname>&amp;J</argname> is ignored.
+	 mode the reference to <argname>J</argname> is ignored.
        </para>
        <para>
 	 When <argname>mode</argname> is 1 or 2 the inverse
@@ -12026,9 +12023,10 @@
 	 &pi;. The return value is the correlation matrix
 	 <math>R</math> if <argname>mode</argname> equals 1, or its
 	 Cholesky factor <math>K</math> if <argname>mode</argname>
-	 equals 2.  The optional parameter <argname>&amp;J</argname>,
-	 if present, retrieves the Jacobian of <math>vech(R)</math> or
-	 <math>vech(K)</math> with respect to <math>X</math>.
+	 equals 2.  The optional pointer to matrix
+	 <argname>J</argname>, if present, retrieves the Jacobian of
+	 vech(<math>R</math>) or vech(<math>K</math>) with respect to
+	 <math>X</math>.
        </para>
        <para>
 	 Note that the spherical coordinates representation makes it
