@@ -5959,6 +5959,7 @@ static int kalman_ldl (kalman *K)
                 gretl_matrix_set(L, i, j, lij / gj);
             }
         }
+	/* record L so we can undo the transformation */
 	gretl_bundle_set_matrix(K->b, "L", L);
         err = gretl_invert_triangular_matrix(L, 'L');
     }
@@ -6267,6 +6268,9 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             gretl_matrix_realloc(ui->Kinf, ui->Kinf->rows, d);
         }
 #endif
+}
+
+    if (kalman_diffuse(K) && K->exact) {
         K->d = d > 0 ? d : 0;
         K->j = j > 0 ? j : 0;
     }
@@ -6724,6 +6728,50 @@ static void diffuse_backdate (struct cumulants *c,
     fast_copy_values(c->r1, c->m1);
 }
 
+static void kalman_bundle_add_epshat (kalman *K, gretl_matrix *epshat)
+{
+    gretl_matrix *L;
+
+    /* add epshat "as is" */
+    bundle_add_matrix(K->b, "epshat", epshat);
+
+    L = gretl_bundle_get_matrix(K->b, "L", NULL);
+
+    if (L != NULL) {
+	/* The triangular matrix L will be present only when the
+	   variance matrix of eps is not diagonal. In that case
+	   we'll try adding estimates of the untransformed
+	   disturbances.
+	*/
+	gretl_matrix *real_epshat;
+	int T = epshat->rows;
+	int k = epshat->cols;
+
+	real_epshat = gretl_matrix_alloc(T, k);
+
+	if (real_epshat != NULL) {
+	    double eti, lij, etj;
+	    int i, j, jmax, t;
+
+	    /* real_epshat[t,] = (L * epshat[t,]')' */
+	    for (t=0; t<T; t++) {
+		jmax = 1;
+		for (i=0; i<k; i++) {
+		    eti = 0.0;
+		    for (j=0; j<jmax; j++) {
+			lij = gretl_matrix_get(L, i, j);
+			etj = gretl_matrix_get(epshat, t, j);
+			eti += lij * etj;
+		    }
+		    gretl_matrix_set(real_epshat, t, i, eti);
+		    jmax++;
+		}
+	    }
+	    bundle_add_matrix(K->b, "real_epshat", real_epshat);
+	}
+    }
+}
+
 static void load_filter_matrices (struct filter_mats *fm,
                                   kalman *K)
 {
@@ -7049,7 +7097,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     bundle_add_matrix(K->b, "Ahat", Ahat);
     bundle_add_matrix(K->b, "Vhat", Vhat);
     if (eps_smo) {
-        bundle_add_matrix(K->b, "epshat", epshat);
+	kalman_bundle_add_epshat(K, epshat);
         bundle_add_matrix(K->b, "veps",  veps);
     }
     if (eta_smo) {
