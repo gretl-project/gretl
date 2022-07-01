@@ -3105,19 +3105,53 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 
 const double *get_colvec_as_series (NODE *n, int f, parser *p)
 {
+    double *ret = NULL;
+
     if (n->t != MAT) {
         node_type_error(f, 1, SERIES, n, p);
-        return NULL;
     } else {
         const gretl_matrix *m = n->v.m;
 
-        if (m->rows == p->dset->n && m->cols == 1) {
-            return m->val;
-        } else {
+	if (m->rows == p->dset->n && m->cols == 1) {
+            ret = m->val;
+	} else {
             node_type_error(f, 1, SERIES, n, p);
-            return NULL;
         }
     }
+
+    return ret;
+}
+
+/* As get_colvec_as_series(), above, except that we'll tolerate
+   a column vector shorter than the length of the current dataset,
+   provided it equals the length of the current sample range.
+*/
+
+const double *get_colvec_as_series_with_size (NODE *n,
+					      int *size,
+					      parser *p)
+{
+    double *ret = NULL;
+
+    if (n->t != MAT) {
+        p->err = E_TYPES;
+    } else {
+        const gretl_matrix *m = n->v.m;
+
+	if (m->cols != 1) {
+	    p->err = E_TYPES;
+	} else if (m->rows == p->dset->n) {
+	    *size = p->dset->n;
+            ret = m->val;
+	} else if (m->rows == sample_size(p->dset)) {
+	    *size = sample_size(p->dset);
+	    ret = m->val;
+	} else {
+            p->err = E_TYPES;
+        }
+    }
+
+    return ret;
 }
 
 /* One of the operands is a matrix (or scalar), the other
@@ -11244,10 +11278,9 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
                 ptr = &rhs->v.m->val[0];
                 type = GRETL_TYPE_DOUBLE;
             } else if (targ == GRETL_TYPE_SERIES) {
-                ptr = (double *) get_colvec_as_series(rhs, 0, p);
+                ptr = (double *) get_colvec_as_series_with_size(rhs, &size, p);
                 if (!p->err) {
                     type = GRETL_TYPE_SERIES;
-                    size = p->dset->n;
                 } else {
 		    err = E_TYPES;
 		}
