@@ -1508,12 +1508,23 @@ static NODE *powterm (parser *p, NODE *l)
 	t = listvar_node(p);
 	if (t != NULL && (p->sym == G_LPR || p->sym == G_LBR)) {
 	    /* list.series node may be "inflected" as lag or obs */
-	    p->sym = (p->sym == G_LPR)? LAG : OBS;
+	    int lag = 0;
+
+	    if (p->sym == G_LPR) {
+		p->sym = LAG;
+		set_lag_parse_on(p);
+		lag = 1;
+	    } else {
+		p->sym = OBS;
+	    }
 	    t = newb2(p->sym, t, NULL);
 	    if (t != NULL) {
 		parser_ungetc(p);
 		lex(p);
 		t->R = base(p, t);
+	    }
+	    if (lag) {
+		set_lag_parse_off(p);
 	    }
 	}
     } else if (sym == G_LPR) {
