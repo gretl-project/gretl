@@ -202,7 +202,6 @@ enum {
     F_CHOL,
     F_INV,
     F_INVPD,
-    F_GINV,
     F_DIAG,
     F_TRANSP,
     F_VEC,
@@ -291,6 +290,7 @@ enum {
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
+    F_GINV,
     F_SUM,
     F_MEAN,
     F_VCE,

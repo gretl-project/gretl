@@ -12340,7 +12340,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_matrix_moore_penrose (gretl_matrix *A)
+int gretl_matrix_moore_penrose (gretl_matrix *A, double tol)
 {
     gretl_matrix *U = NULL;
     gretl_matrix *S = NULL;
@@ -12349,6 +12349,10 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 
     if (gretl_is_null_matrix(A)) {
         return E_DATA;
+    }
+
+    if (tol <= 0 || na(tol)) {
+	tol = SVD_SMIN;
     }
 
     err = real_gretl_matrix_SVD(A, &U, &S, &VT, 0);
@@ -12360,7 +12364,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
         double x;
 
         for (i=0; i<nsv; i++) {
-            if (S->val[i] > SVD_SMIN) {
+            if (S->val[i] > tol) {
                 k++;
             }
         }
