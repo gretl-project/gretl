@@ -4284,6 +4284,7 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
 
 static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
                                          int f, int parm,
+					 double xparm,
                                          int tmpmat,
                                          int *err)
 {
@@ -4327,7 +4328,7 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
         } else if (f == F_INVPD) {
             *err = gretl_invpd(R);
         } else if (f == F_GINV) {
-            *err = gretl_matrix_moore_penrose(R);
+            *err = gretl_matrix_moore_penrose(R, xparm);
         } else if (f == F_INV) {
             *err = gretl_invert_matrix(R);
         } else if (f == F_UPPER) {
@@ -4410,7 +4411,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
                 parm = node_get_int(r, p);
                 gotopt = 1;
             }
-	} else if (f == F_UNVECH) {
+	} else if (f == F_UNVECH || f == F_GINV) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
 		node_type_error(f, 2, NUM, r, p);
@@ -4492,21 +4493,21 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_inverse(m, &p->err);
             } else {
-                ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
+                ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
         case F_GINV:
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_ginv(m, &p->err);
             } else {
-                ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
+                ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
         case F_CHOL:
             if (m->is_complex) {
                 ret->v.m = gretl_cmatrix_cholesky(m, &p->err);
             } else {
-                ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
+                ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
         case F_CDEMEAN:
@@ -4515,7 +4516,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         case F_INVPD:
         case F_UPPER:
         case F_LOWER:
-            ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
+            ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
             break;
         case F_DIAG:
             ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
