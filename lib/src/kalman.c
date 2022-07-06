@@ -42,7 +42,7 @@ static int kdebug;
 /* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 1
 
-#define K_TINY 1.0e-13
+#define K_TINY 1.0e-9
 
 enum {
     KALMAN_USER    = 1 << 0, /* user-defined filter? */
@@ -6079,7 +6079,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int p = K->n; /* # of observables */
     int m = K->r; /* length of state vector */
     int smo = kalman_smoothing(K);
-    int rankPk = kalman_diffuse(K)? m : 0;
+    int rankPk = kalman_diffuse(K) ? m : 0;
     int d = K->exact ? 0 : -1;
     int j = K->exact ? 0 : -1;
     int Nd = 0;
