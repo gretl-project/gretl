@@ -42,7 +42,7 @@ static int kdebug;
 /* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 1
 
-#define K_TINY 1.0e-9
+#define K_TINY 1.0e-7
 
 enum {
     KALMAN_USER    = 1 << 0, /* user-defined filter? */
@@ -5917,7 +5917,7 @@ static void state_cross_update (gretl_matrix *Pti,
     gretl_matrix_multiply_mod(Kki, GRETL_MOD_NONE,
                               Kki, GRETL_MOD_TRANSPOSE,
                               tmp, GRETL_MOD_NONE);
-    gretl_matrix_multiply_by_scalar(tmp, Fti * Fkinv * Fkinv);
+    gretl_matrix_multiply_by_scalar(tmp, Fkinv * Fti * Fkinv);
     gretl_matrix_add_to(Pti, tmp);
     gretl_matrix_multiply_mod(Kti, GRETL_MOD_NONE,
                               Kki, GRETL_MOD_TRANSPOSE,
