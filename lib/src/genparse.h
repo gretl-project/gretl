@@ -213,7 +213,6 @@ enum {
     F_NORM1,
     F_INFNORM,
     F_RCOND,
-    F_RANK,
     F_OBSNUM,
     F_ISDISCR,
     F_ISDUMMY,
@@ -290,6 +289,7 @@ enum {
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
+    F_RANK,
     F_GINV,
     F_SUM,
     F_MEAN,

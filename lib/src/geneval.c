@@ -4044,12 +4044,12 @@ static void matrix_error (parser *p)
 /* functions taking a matrix argument and returning a
    scalar result */
 
-static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
+static NODE *matrix_to_scalar_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-        gretl_matrix *m = node_get_matrix(n, p, 0, 0);
+        gretl_matrix *m = node_get_matrix(l, p, 0, 0);
 
         if (m->is_complex && f != F_ROWS && f != F_COLS && f != F_RANK) {
             /* gatekeeper for complex */
@@ -4080,7 +4080,13 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
             if (m->is_complex) {
                 ret->v.xval = gretl_cmatrix_rank(m, &p->err);
             } else {
-                ret->v.xval = gretl_matrix_rank(m, NADBL, &p->err);
+		double eps = NADBL;
+		if (!null_node(r)) {
+		    eps = node_get_scalar(r, p);
+		}
+		if (!p->err) {
+		    ret->v.xval = gretl_matrix_rank(m, eps, &p->err);
+		}
             }
             break;
         default:
@@ -17447,7 +17453,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_RANK:
         /* matrix -> scalar functions */
         if (l->t == MAT || l->t == NUM) {
-            ret = matrix_to_scalar_func(l, t->t, p);
+            ret = matrix_to_scalar_func(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, MAT, l, p);
         }
