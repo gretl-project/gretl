@@ -12354,11 +12354,11 @@ int gretl_matrix_moore_penrose (gretl_matrix *A, double tol)
         return E_DATA;
     }
 
-    if (tol <= 0 || na(tol)) {
-	tol = SVD_SMIN;
-    }
-
     err = real_gretl_matrix_SVD(A, &U, &S, &VT, 0);
+
+    if (tol <= 0 || na(tol)) {
+        tol = svd_smin(A, S->val[0]);
+    }
 
     if (!err) {
         gretl_matrix *Vsel = NULL;
