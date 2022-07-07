@@ -36,13 +36,12 @@
  */
 
 #define EXACT_DEBUG 0
+#define K_TINY 1.0e-12
 
 static int kdebug;
 
 /* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 1
-
-#define K_TINY 1.0e-7
 
 enum {
     KALMAN_USER    = 1 << 0, /* user-defined filter? */
@@ -6049,6 +6048,26 @@ static double uni_get_vti (kalman *K, const gretl_matrix *Zi,
     return vti;
 }
 
+static double tiny_value (const gretl_matrix *Z)
+{
+    int i, n = Z->rows * Z->cols;
+    double x, zmin = 1.0e+30;
+    double macheps = 2.20e-16;
+
+    for (i=0; i<n; i++) {
+	x = fabs(Z->val[i]);
+	if (x > 0 && x < zmin) {
+	    zmin = x;
+	}
+    }
+
+    x = sqrt(macheps) * zmin * zmin;
+    fprintf(stderr, "Computed tiny value: %g\n", x);
+
+    // return x;
+    return K_TINY;
+}
+
 static int kfilter_univariate (kalman *K, PRN *prn)
 {
     univar_info *ui = K->uinfo;
@@ -6075,6 +6094,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     double vti, Fti, llct;
     double Ftinv, Fkinv, Fki = 0;
     double qt, ldt;
+    double k_tiny = 0;
 
     int p = K->n; /* # of observables */
     int m = K->r; /* length of state vector */
@@ -6089,6 +6109,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     if (K->exact) {
         Pki = ui->Pki;
         Kki = ui->Kki;
+	k_tiny = tiny_value(Z);
     }
 
     if (K->n > 1 || K->r > 1) {
@@ -6173,7 +6194,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             }
 
             if (rankPk > 0) {
-                if (Fki > K_TINY) {
+                if (Fki > k_tiny) {
 		    K->okN -= 1;
                     Fkinv = 1.0 / Fki;
                     ldt += log(Fki);
@@ -6845,6 +6866,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     /* workspace scalars */
     double vti, Fti, Fki;
     double ftinv, fkinv;
+    double k_tiny = 0;
 
     load_filter_matrices(&f, K);
     g = f.g; /* convenience pointer */
@@ -7053,7 +7075,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                     }
                     continue;
                 }
-                if (Fki > K_TINY) {
+                if (Fki > k_tiny) {
                     fkinv = 1.0 / Fki;
                     mat_from_row(Zti, f.Z, i);
                     vec_from_col(Kki, Kk, i);
