@@ -8839,13 +8839,17 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
     return rank;
 }
 
-static double svd_smin (const gretl_matrix *a, double smax)
+static double svd_smin (const gretl_matrix *a, double smax, double eps)
 {
-    const double macheps = 2.20e-16;
+    
     int dmax = (a->rows > a->cols)? a->rows : a->cols;
+    double actual_eps = na(eps) ? 2.20e-16 : eps;
 
-    /* as per numpy, Matlab (2015-09-28) */
-    return dmax * macheps * smax;
+    /* numpy and Matlab use the "Numerical recipes" convention by 
+       which eps should be machine epsilon (for 8-byte reals, 
+       typically 2.20e-16)*/
+    
+    return dmax * actual_eps * smax;
 }
 
 static int real_gretl_matrix_SVD (const gretl_matrix *x,
@@ -8864,7 +8868,8 @@ static int real_gretl_matrix_SVD (const gretl_matrix *x,
  * Returns: the rank of @a, or 0 on failure.
  */
 
-int gretl_matrix_rank (const gretl_matrix *a, int *err)
+int gretl_matrix_rank (const gretl_matrix *a, double eps,
+		       int *err)
 {
     gretl_matrix *s = NULL;
     int i, k, rank = 0;
@@ -8889,7 +8894,7 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
     }
 
     if (!*err) {
-        double smin = svd_smin(a, s->val[0]);
+        double smin = svd_smin(a, s->val[0], eps);
 
         for (i=0; i<k; i++) {
             if (s->val[i] > smin) {
@@ -12355,10 +12360,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A, double tol)
     }
 
     err = real_gretl_matrix_SVD(A, &U, &S, &VT, 0);
-
-    if (tol <= 0 || na(tol)) {
-        tol = svd_smin(A, S->val[0]);
-    }
+    tol = svd_smin(A, S->val[0], tol);
 
     if (!err) {
         gretl_matrix *Vsel = NULL;
@@ -12456,7 +12458,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     err = real_gretl_matrix_SVD(a, &u, &s, &vt, 0);
 
     if (!err) {
-        double smin = svd_smin(a, s->val[0]);
+        double smin = svd_smin(a, s->val[0], NADBL);
 
         for (i=0; i<n; i++) {
             if (s->val[i] > smin) {

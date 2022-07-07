@@ -879,7 +879,7 @@ void cond_number_callback (void)
 	    if (err == E_NOTPD && chk != NULL) {
 		int r, sverr = 0;
 
-		r = gretl_matrix_rank(chk, &sverr);
+		r = gretl_matrix_rank(chk, NADBL, &sverr);
 		if (!sverr && r < XX->cols) {
 		    infobox_printf(_("X'X is singular to machine precision:\n"
 				     "it is of dimension %d but rank %d."),
