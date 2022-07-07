@@ -6062,10 +6062,12 @@ static double tiny_value (const gretl_matrix *Z)
     }
 
     x = sqrt(macheps) * zmin * zmin;
-    fprintf(stderr, "Computed tiny value: %g\n", x);
-
-    // return x;
+#if 0    
+    fprintf(stderr, "Computed tiny value: %g (zmin = %g)\n", x, zmin);
     return K_TINY;
+#else    
+    return x;
+#endif    
 }
 
 static int kfilter_univariate (kalman *K, PRN *prn)
@@ -6109,7 +6111,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     if (K->exact) {
         Pki = ui->Pki;
         Kki = ui->Kki;
-	k_tiny = tiny_value(Z);
     }
 
     if (K->n > 1 || K->r > 1) {
@@ -6135,6 +6136,10 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     if (kdebug) {
         fprintf(stderr, "\n*** univariate filter: m=%d, p=%d, exact=%d ***\n",
                 m, p, K->exact);
+    }
+
+    if (K->exact) {
+	k_tiny = tiny_value(Z);
     }
 
     for (t=0; t<K->N; t++) {
