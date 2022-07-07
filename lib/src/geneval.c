@@ -4124,7 +4124,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
             if (m->is_complex) {
                 ret->v.xval = gretl_cmatrix_rank(m, &p->err);
             } else {
-                ret->v.xval = gretl_matrix_rank(m, &p->err);
+                ret->v.xval = gretl_matrix_rank(m, NADBL, &p->err);
             }
             break;
         default:

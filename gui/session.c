@@ -4405,7 +4405,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
     print_int_formatted(_("Rows"), m->rows, prn);
     print_int_formatted(_("Columns"), m->cols, prn);
-    print_int_formatted(_("Rank"), gretl_matrix_rank(m, &err), prn);
+    print_int_formatted(_("Rank"), gretl_matrix_rank(m, NADBL, &err), prn);
 
     s = gretl_matrix_get_structure(m);
 

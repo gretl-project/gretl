@@ -1820,7 +1820,7 @@ static int check_jacobian (Jwrap *J)
     }
 
     if (!err) {
-	J->jr = gretl_matrix_rank(Jac, &err);
+	J->jr = gretl_matrix_rank(Jac, NADBL, &err);
 #if JDEBUG
 	gretl_matrix_print(Jac, "Jacobian");
 #endif

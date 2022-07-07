@@ -709,8 +709,9 @@ int gretl_check_QR_rank (const gretl_matrix *R,
 			 int *err,
 			 double *rcnd);
 
-int gretl_matrix_rank (const gretl_matrix *a, int *err);
-
+int gretl_matrix_rank (const gretl_matrix *a, double eps,
+		       int *err);
+    
 int gretl_matrix_ols (const gretl_vector *y,
 		      const gretl_matrix *X,
 		      gretl_vector *b,
