@@ -26,6 +26,7 @@ version 2022b, in progress
   optional third argument
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
+- rank() and ginv() function: add optional tolerance	
 - Support direct assignment from string-values series to
   array of strings
 - script editor: enhancements for Find/Replace dialog

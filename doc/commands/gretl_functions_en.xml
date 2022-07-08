@@ -5472,12 +5472,25 @@
     <function name="ginv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar" optional="true">tol</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns <math>A</math><sup>+</sup>, the Moore&ndash;Penrose
-	  or generalized inverse of <argname>A</argname>, computed via
-	  the singular value decomposition.
+	  or generalized inverse of the <by r="r" c="c"/>
+	  matrix <argname>A</argname>, computed via the singular value
+	  decomposition.
+	</para>
+	<para>
+	  The result of this operation depends on the number of
+	  singular values of <argname>A</argname> that are found to be
+	  numerically 0. The <argname>tol</argname> optional parameter
+	  can be used for tweaking this aspect. Singular values are
+	  considered to be 0 if they are less than <math>m * tol *
+	  s</math>, where <math>m</math> is the greater of
+	  <math>r</math> and <math>c</math> and <math>s</math> is the
+	  largest singular value. If omitted, <argname>tol</argname>
+	  will be set to <fncref targ="$macheps"/>.
 	</para>
 	<para context="notex">
 	  This matrix has the properties <math>A</math>
@@ -11141,11 +11154,26 @@
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar" optional="true">tol</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the rank of <argname>X</argname>, numerically computed
-	  via the singular value decomposition.
+	  Returns the rank of the <by r="r" c="c"/> matrix
+	  <argname>X</argname>, numerically computed via the singular
+	  value decomposition.
+	</para>
+	<para>
+	  The result of this operation depends on the number of
+	  singular values of <argname>X</argname> that are found to be
+	  numerically 0. The <argname>tol</argname> optional parameter
+	  can be used for tweaking this aspect. Singular values are
+	  considered to be 0 if they are less than <math>m * tol *
+	  s</math>, where <math>m</math> is the greater of
+	  <math>r</math> and <math>c</math> and <math>s</math> is the
+	  largest singular value. If omitted, <argname>tol</argname>
+	  will be set to <fncref targ="$macheps"/>.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="svd"/>
 	  </seelist>
