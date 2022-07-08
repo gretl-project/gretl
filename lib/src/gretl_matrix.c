@@ -8838,14 +8838,15 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 
 static double svd_smin (const gretl_matrix *a, double smax, double eps)
 {
-    
-    int dmax = (a->rows > a->cols)? a->rows : a->cols;
-    double actual_eps = na(eps) ? 2.20e-16 : eps;
 
-    /* numpy and Matlab use the "Numerical recipes" convention by 
-       which eps should be machine epsilon (for 8-byte reals, 
-       typically 2.20e-16)*/
-    
+    int dmax = (a->rows > a->cols)? a->rows : a->cols;
+    double actual_eps = (na(eps) || eps <= 0) ? 2.20e-16 : eps;
+
+    /* numpy and Matlab use the "Numerical Recipes" convention
+       by which eps should be machine epsilon (for 8-byte reals,
+       2.20e-16).
+    */
+
     return dmax * actual_eps * smax;
 }
 

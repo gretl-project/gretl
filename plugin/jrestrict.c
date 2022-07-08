@@ -2301,7 +2301,7 @@ static int phi_init_nonhomog (Jwrap *J)
     }
 
     if (!err) {
-	err = gretl_matrix_moore_penrose(IBPH, 0);
+	err = gretl_matrix_moore_penrose(IBPH, NADBL);
 #if JDEBUG
 	fprintf(stderr, "moore-penrose on IBPH, err = %d\n", err);
 	gretl_matrix_print(IBPH, "IBPH (pseudo)inverse");
