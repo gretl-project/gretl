@@ -4012,7 +4012,7 @@ static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
 
     const char *envstr = getenv("USE_FABS_DIFF");
     int debug = envstr != NULL;
-    
+
     for (i=1; i<m->rows; i++) {
         for (j=0; j<i; j++) {
             x = gretl_matrix_get(m, i, j);
@@ -8841,14 +8841,15 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 
 static double svd_smin (const gretl_matrix *a, double smax, double eps)
 {
-    
+
     int dmax = (a->rows > a->cols)? a->rows : a->cols;
     double actual_eps = na(eps) ? 2.20e-16 : eps;
 
-    /* numpy and Matlab use the "Numerical recipes" convention by 
-       which eps should be machine epsilon (for 8-byte reals, 
-       typically 2.20e-16)*/
-    
+    /* numpy and Matlab use the "Numerical recipes" convention
+       by which eps should be machine epsilon (for 8-byte reals,
+       2.20e-16)
+    */
+
     return dmax * actual_eps * smax;
 }
 
