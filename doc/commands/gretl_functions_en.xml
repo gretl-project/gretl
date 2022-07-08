@@ -5486,11 +5486,12 @@
 	  singular values of <argname>A</argname> that are found to be
 	  numerically 0. The <argname>tol</argname> optional parameter
 	  can be used for tweaking this aspect. Singular values are
-	  considered to be 0 if they are less than <math>m * tol *
-	  s</math>, where <math>m</math> is the greater of
+	  considered to be 0 if they are less than <math>m &times; tol
+	  &times; s</math>, where <math>m</math> is the greater of
 	  <math>r</math> and <math>c</math> and <math>s</math> is the
-	  largest singular value. If omitted, <argname>tol</argname>
-	  will be set to <fncref targ="$macheps"/>.
+	  largest singular value. If the second argument is omitted
+	  <argname>tol</argname> is set to machine epsilon (see
+	  <fncref targ="$macheps"/>).
 	</para>
 	<para context="notex">
 	  This matrix has the properties <math>A</math>
@@ -11163,15 +11164,17 @@
 	  value decomposition.
 	</para>
 	<para>
-	  The result of this operation depends on the number of
-	  singular values of <argname>X</argname> that are found to be
-	  numerically 0. The <argname>tol</argname> optional parameter
-	  can be used for tweaking this aspect. Singular values are
-	  considered to be 0 if they are less than <math>m * tol *
-	  s</math>, where <math>m</math> is the greater of
-	  <math>r</math> and <math>c</math> and <math>s</math> is the
-	  largest singular value. If omitted, <argname>tol</argname>
-	  will be set to <fncref targ="$macheps"/>.
+	  The result of this operation is the number of singular
+	  values of <argname>X</argname> that are found to be
+	  numerically greater than 0. The <argname>tol</argname>
+	  optional parameter can be used for tweaking this
+	  aspect. Singular values are considered to be non-zero if
+	  they are greater than <math>m &times; tol &times; s</math>,
+	  where <math>m</math> is the greater of <math>r</math> and
+	  <math>c</math> and <math>s</math> is the largest singular
+	  value. If the second argument is omitted
+	  <argname>tol</argname> is set to machine epsilon (see
+	  <fncref targ="$macheps"/>).
 	</para>
 	<para>
 	  <seelist>
