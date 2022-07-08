@@ -4010,15 +4010,12 @@ static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
         return 0;
     }
 
-    const char *envstr = getenv("USE_FABS_DIFF");
-    int debug = envstr != NULL;
-
     for (i=1; i<m->rows; i++) {
         for (j=0; j<i; j++) {
             x = gretl_matrix_get(m, i, j);
             y = gretl_matrix_get(m, j, i);
 	    ad = fabs(y - x);
-	    if (debug && ad < 1.0e-12) {
+	    if (ad < 1.0e-12) {
 		continue;
 	    }
             if ((rd = sneq_reldiff(x, y, ad)) > eq_tol) {

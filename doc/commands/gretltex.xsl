@@ -222,9 +222,9 @@
     <xsl:value-of select="@flag"/>
     <xsl:text>}</xsl:text>
   </xsl:if> 
-  <xsl:text>\textsl{</xsl:text>
-  <xsl:value-of select="translate(., '_', '-')"/>
-  <xsl:text>} </xsl:text>
+  <xsl:text>\textsl{\detokenize{</xsl:text>
+  <xsl:value-of select="."/>
+  <xsl:text>}} </xsl:text>
   <xsl:if test="(@separated and not(preceding-sibling::argument or preceding-sibling::argblock))">
     <xsl:text>\texttt{;} </xsl:text>
   </xsl:if>
@@ -434,12 +434,9 @@
       <xsl:text>. . .</xsl:text>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:text>\textsl{</xsl:text>
-      <xsl:if test="substring(., 1, 1) = '&amp;'">
-        <xsl:text>\</xsl:text>
-      </xsl:if>
+      <xsl:text>\textsl{\detokenize{</xsl:text>
       <xsl:apply-templates/>
-      <xsl:text>}</xsl:text>
+      <xsl:text>}}</xsl:text>
     </xsl:otherwise>
   </xsl:choose>
   <xsl:text> (</xsl:text>
@@ -579,9 +576,9 @@
 </xsl:template>
 
 <xsl:template match="argname">
-  <xsl:text>\textsl{</xsl:text>
-  <xsl:value-of select="translate(., '_', '-')"/>
-  <xsl:text>}</xsl:text>
+  <xsl:text>\textsl{\detokenize{</xsl:text>
+  <xsl:value-of select="."/>
+  <xsl:text>}}</xsl:text>
 </xsl:template>
 
 <xsl:template match="sup">

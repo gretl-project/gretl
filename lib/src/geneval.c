@@ -160,6 +160,7 @@ static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
 static gretl_bundle *node_get_bundle (NODE *n, parser *p);
+static int gen_type_is_arrayable (int gen_t);
 
 /* ok_list_node: This is a first-pass assessment of whether
    a given node _may_ be interpretable as holding a LIST.
@@ -789,6 +790,9 @@ static void maybe_switch_node_type (NODE *n, int type,
 	n->flags = flags;
     } else if (type == EMPTY) {
 	; /* LHS mechanism: OK */
+    } else if (gen_type_is_arrayable(n->t) && type == ARRAY) {
+	n->t = ARRAY;
+	n->flags = flags;
     } else {
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
@@ -3095,19 +3099,53 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 
 const double *get_colvec_as_series (NODE *n, int f, parser *p)
 {
+    double *ret = NULL;
+
     if (n->t != MAT) {
         node_type_error(f, 1, SERIES, n, p);
-        return NULL;
     } else {
         const gretl_matrix *m = n->v.m;
 
-        if (m->rows == p->dset->n && m->cols == 1) {
-            return m->val;
-        } else {
+	if (m->rows == p->dset->n && m->cols == 1) {
+            ret = m->val;
+	} else {
             node_type_error(f, 1, SERIES, n, p);
-            return NULL;
         }
     }
+
+    return ret;
+}
+
+/* As get_colvec_as_series(), above, except that we'll tolerate
+   a column vector shorter than the length of the current dataset,
+   provided it equals the length of the current sample range.
+*/
+
+const double *get_colvec_as_series_with_size (NODE *n,
+					      int *size,
+					      parser *p)
+{
+    double *ret = NULL;
+
+    if (n->t != MAT) {
+        p->err = E_TYPES;
+    } else {
+        const gretl_matrix *m = n->v.m;
+
+	if (m->cols != 1) {
+	    p->err = E_TYPES;
+	} else if (m->rows == p->dset->n) {
+	    *size = p->dset->n;
+            ret = m->val;
+	} else if (m->rows == sample_size(p->dset)) {
+	    *size = sample_size(p->dset);
+	    ret = m->val;
+	} else {
+            p->err = E_TYPES;
+        }
+    }
+
+    return ret;
 }
 
 /* One of the operands is a matrix (or scalar), the other
@@ -5405,6 +5443,9 @@ static int want_singleton_array (NODE *n, parser *p)
 	   array of arrays.
 	*/
 	return t != GRETL_TYPE_ARRAYS;
+    } else if (p->aux == NULL && p->targ == ARRAY &&
+	       p->tree == n->parent) {
+	return 1;
     }
 
     return 0;
@@ -10909,6 +10950,10 @@ static int lhs_type_check (GretlType spec, GretlType rhs, int t)
         err = E_TYPES;
     }
 
+#if LHDEBUG
+    fprintf(stderr, "lhs_type_check: spec=%d, rhs=%d: err = %d\n", spec, rhs, err);
+#endif
+
     return err;
 }
 
@@ -11207,11 +11252,12 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
                 ptr = &rhs->v.m->val[0];
                 type = GRETL_TYPE_DOUBLE;
             } else if (targ == GRETL_TYPE_SERIES) {
-                ptr = (double *) get_colvec_as_series(rhs, 0, p);
+                ptr = (double *) get_colvec_as_series_with_size(rhs, &size, p);
                 if (!p->err) {
                     type = GRETL_TYPE_SERIES;
-                    size = p->dset->n;
-                }
+                } else {
+		    err = E_TYPES;
+		}
             } else {
                 ptr = rhs->v.m;
                 type = GRETL_TYPE_MATRIX;
