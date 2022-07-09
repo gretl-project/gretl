@@ -4638,8 +4638,6 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
     int whittle_only = 0;
     int t, T, L = 0;
     int err = 0;
-    int free_dens = 1;
-    gretl_matrix *pg = NULL;
 
     gretl_error_clear();
 
@@ -4686,15 +4684,19 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 	if (bartlett) {
 	    dens = pergm_bartlett_density(x, t1, t2, L, &err);
 	} else {
+	    gretl_matrix *pg;
 	    gretl_vector vt;
+
 	    gretl_matrix_init(&vt);
 	    vt.rows = t2 - t1 + 1;
 	    vt.cols = 1;
-	    vt.val = (double*) x + t1;
+	    vt.val = (double *) x + t1;
 
-	    pg = gretl_matrix_pergm (&vt, T/2, &err);
-	    dens = pg->val;
-	    free_dens = 0;
+	    pg = gretl_matrix_pergm(&vt, T/2, &err);
+	    if (!err) {
+		dens = gretl_matrix_steal_data(pg);
+	    }
+	    gretl_matrix_free(pg);
 	}
 	if (err) {
 	    return err;
@@ -4710,9 +4712,7 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 
 	if (pm == NULL) {
 	    err = E_ALLOC;
-	}
-
-	if (!err) {
+	} else {
 	    for (t=0; t<T2; t++) {
 		gretl_matrix_set(pm, t, 0, M_2PI * (t+1) / (double) T);
 		gretl_matrix_set(pm, t, 1, dens[t]);
@@ -4727,11 +4727,7 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 	pergm_print(vname, dens, T, L, opt, prn);
     }
 
-    if (free_dens) {
-	free(dens);
-    } else {
-	gretl_matrix_free(pg);
-    }
+    free(dens);
 
     return err;
 }
