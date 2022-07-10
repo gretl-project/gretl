@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-17 14:52-0400\n"
-"PO-Revision-Date: 2022-01-05 16:28+0100\n"
+"PO-Revision-Date: 2022-07-10 09:56+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1063,7 +1063,7 @@ msgstr "   ...ma la riga %d ha %d campi: abbandono\n"
 #: lib/src/csvdata.c:2626
 #, c-format
 msgid "Warning: row %d has %d fields: %d entries set to missing\n"
-msgstr ""
+msgstr "Attenzione: la riga %d ha %d campi: %d elementi settati a mancanti\n"
 
 #: lib/src/csvdata.c:2703
 #, c-format
@@ -2274,12 +2274,12 @@ msgid "Invalid lag order for arch (%d)"
 msgstr "Ordine di ritardo non valido per arch (%d)"
 
 #: lib/src/estimate.c:4193 lib/src/genfuncs.c:1348 plugin/tramo-x12a.c:1731
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "X-13ARIMA can't handle more than %d observations.\n"
 "Please select a smaller sample."
 msgstr ""
-"X-12-ARIMA non può gestire più di %d osservazioni.\n"
+"X-13ARIMA non può gestire più di %d osservazioni.\n"
 "Selezionare un campione più piccolo."
 
 #: lib/src/flow_control.c:136
@@ -2351,13 +2351,13 @@ msgstr ""
 "parametri per la funzione %s (%d)"
 
 #: lib/src/geneval.c:1469
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
 "parameters for function %s (%d to %d)"
 msgstr ""
 "Il numero di argomenti (%d) non corrisponde al numero di\n"
-"parametri per la funzione %s (%d)"
+"parametri per la funzione %s (da %d a %d)"
 
 #: lib/src/geneval.c:1723
 #, c-format
@@ -2446,9 +2446,8 @@ msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr "\"catch\" non può essere usato su funzioni definite dall'utente"
 
 #: lib/src/geneval.c:10455
-#, fuzzy
 msgid "R functions cannot be called via this gretl build"
-msgstr "MPI non è supportato su questo sistema"
+msgstr "Le funzioni R non sono supportate da questa installazione di gretl"
 
 #: lib/src/geneval.c:10922
 #, c-format
@@ -2484,9 +2483,9 @@ msgid "Bandwidth must be non-negative"
 msgstr "L'ampiezza di banda non può essere negativa"
 
 #: lib/src/geneval.c:14275
-#, fuzzy, c-format
+#, c-format
 msgid "%s: requires an even number of arguments"
-msgstr "richiede un numero di variabile e un nuovo nome"
+msgstr "%s: richiede un numero pari di argomenti"
 
 #: lib/src/geneval.c:15020
 msgid "array: no type was specified"
@@ -2596,9 +2595,8 @@ msgid "Bare declarations are not allowed here"
 msgstr "Le pure dichiarazioni non sono consentite qui"
 
 #: lib/src/genfuncs.c:380
-#, fuzzy
 msgid "This function requires time-series or panel data"
-msgstr "Questo stimatore richiede dati panel"
+msgstr "Questo stimatore richiede dati in serie storiche o panel"
 
 #: lib/src/genfuncs.c:1331 gui/library.c:5731
 msgid "Input must be a monthly or quarterly time series"
@@ -3335,9 +3333,8 @@ msgid "no such item"
 msgstr "nessun elemento di questo tipo"
 
 #: lib/src/gretl_bundle.c:2779
-#, fuzzy
 msgid "xmlReadMemory failed"
-msgstr "xmlParseMemory fallito"
+msgstr "xmlReadMemory fallito"
 
 #: lib/src/gretl_bundle.c:2785
 msgid "xmlDocGetRootElement failed"
@@ -3623,12 +3620,15 @@ msgid "'%s' is the name of a built-in function"
 msgstr "'%s' è il nome di una funzione interna"
 
 #: lib/src/gretl_func.c:5150
-#, c-format
+#, c-format, fuzzy
 msgid ""
 "Package loading error:\n"
 "%s %s defines a function %s(), which conflicts with a built-in\n"
 "function in gretl %s. Please check for an updated version of %s."
 msgstr ""
+"Errore nel caricamento del pacchetto:\n"
+"%s %s definisce la funzione %s(), che è in conflitto con una funzione\n"
+"nativa di gretl %s. Probabilmente serve una versione aggiornata di %s"
 
 #: lib/src/gretl_func.c:5276 gui/fnsave.c:1759
 msgid "Time-series data"
@@ -4653,9 +4653,9 @@ msgid "Couldn't find %s for gretl %s"
 msgstr "Impossibile trovare %s per la versione di gretl %s"
 
 #: lib/src/gretl_xml.c:72 lib/src/gretl_xml.c:4652
-#, fuzzy, c-format
+#, c-format
 msgid "xmlReadFile failed on %s"
-msgstr "xmlParseFile fallito su %s"
+msgstr "xmlReadFile fallito su %s"
 
 #: lib/src/gretl_xml.c:79 lib/src/gretl_xml.c:4657
 #, c-format
@@ -5134,9 +5134,8 @@ msgid "Test for AR(%d) errors:"
 msgstr "Test per errori AR(%d):"
 
 #: lib/src/modelprint.c:451
-#, fuzzy
 msgid "Hansen over-identification test"
-msgstr "Test di sovra-identificazione di Hansen-Sargan"
+msgstr "Test di sovra-identificazione di Hansen"
 
 #: lib/src/modelprint.c:452 lib/src/modelprint.c:460
 msgid "Wald (joint) test"
@@ -5159,9 +5158,8 @@ msgid "Sargan test"
 msgstr "Test di Sargan"
 
 #: lib/src/modelprint.c:459
-#, fuzzy
 msgid "Hansen test"
-msgstr "Test di Johansen"
+msgstr "Test di Hansen"
 
 #: lib/src/modelprint.c:536 lib/src/modelprint.c:539 lib/src/modelprint.c:547
 #: lib/src/modelprint.c:549 lib/src/printout.c:3442
@@ -9999,6 +9997,17 @@ msgid ""
 "\n"
 "Do you want to continue?"
 msgstr ""
+"Il dataset corrente contiene dati giornalieri con dei buchi\n"
+"(i valori mancanti sono saltati anziché essere mostrati come tali).\n"
+"\n"
+"Volendo, gretl può riempire i buchi inserendo NA per creare un\n"
+"calendario completo. Si noti che però questo potrebbe rendere\n"
+"difficile l'applicazione di tecniche di serie storiche che non sono\n"
+"in grado di gestire valori mancanti. Se si procede, si può scegliere\n"
+"il numero di giorni nella settimana (5, 6 o 7) per il calendario\n"
+"completo.\n"
+"\n"
+"Continuo?"
 
 #: gui/dialogs.c:194
 msgid "Do you want to save this gretl session?"
@@ -11466,13 +11475,12 @@ msgid "Argument %d (%s) is missing"
 msgstr "L'argomento %d (%s) è mancante"
 
 #: gui/fncall.c:337 gui/gretl.c:2032
-#, fuzzy
 msgid "State space model"
-msgstr "Spazio degli stati"
+msgstr "Modello in spazio degli stati"
 
 #: gui/fncall.c:338
 msgid "see Help for more"
-msgstr ""
+msgstr "Vedi lo Help in linea"
 
 #: gui/fncall.c:555
 #, c-format
@@ -11956,7 +11964,6 @@ msgid "Password"
 msgstr "Password"
 
 #: gui/fnsave.c:4026
-#, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.sourceforge.net/apply/.\n"
@@ -11964,7 +11971,7 @@ msgid ""
 "in your web browser."
 msgstr ""
 "Se non si ha un login sul server di gretl\n"
-"si veda http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
+"si veda http://gretl.sourceforge.net/apply/.\n"
 "Il pulsante 'Sito web' dovrebbe aprire la pagina\n"
 "nel vostro browser web."
 
@@ -12625,9 +12632,8 @@ msgid "C_lear data set"
 msgstr "A_bbandona dataset"
 
 #: gui/gretl.c:1773
-#, fuzzy
 msgid "New gretl instance"
-msgstr "Aprire una nuova istanza di gretl?"
+msgstr "Nuova istanza di gretl"
 
 #: gui/gretl.c:1775
 msgid "_Working directory..."
@@ -12898,9 +12904,8 @@ msgid "_Sort data..."
 msgstr "_Ordina dati..."
 
 #: gui/gretl.c:1861
-#, fuzzy
 msgid "Paste from clipboard..."
-msgstr "incolla dati dagli appunti"
+msgstr "Incolla dati dagli appunti..."
 
 #: gui/gretl.c:1862 gui/gretl.c:1972
 msgid "Set missing _value code..."
@@ -13220,9 +13225,8 @@ msgid "_Fractional difference"
 msgstr "Differenza _frazionale"
 
 #: gui/gretl.c:1963
-#, fuzzy
 msgid "_X-13ARIMA analysis"
-msgstr "Analisi _X-12-ARIMA"
+msgstr "Analisi _X-13ARIMA"
 
 #: gui/gretl.c:1966 gui/gretl.c:2190
 msgid "_TRAMO analysis"
@@ -13530,9 +13534,8 @@ msgid "_X-12-ARIMA analysis"
 msgstr "Analisi _X-12-ARIMA"
 
 #: gui/gretl.c:2199
-#, fuzzy
 msgid "_New gretl instance"
-msgstr "Aprire una nuova istanza di gretl?"
+msgstr "_Nuova istanza di gretl"
 
 #: gui/gretl.c:2362
 msgid "International data access"
@@ -13805,18 +13808,16 @@ msgstr ""
 "punto decimale"
 
 #: gui/guiprint.c:1962
-#, fuzzy
 msgid "Delimited text"
-msgstr "Anteprima testo"
+msgstr "Testo delimitato"
 
 #: gui/guiprint.c:1963
 msgid "XML (gdt)"
-msgstr ""
+msgstr "XML (gdt)"
 
 #: gui/guiprint.c:1966
-#, fuzzy
 msgid "Format:"
-msgstr "Formula:"
+msgstr "Formato:"
 
 #: gui/guiprint.c:2065
 msgid "No scalar variables are currently defined"
@@ -15288,9 +15289,8 @@ msgid "gretl: TRAMO analysis"
 msgstr "gretl: analisi TRAMO"
 
 #: gui/library.c:5695
-#, fuzzy
 msgid "gretl: X-13ARIMA analysis"
-msgstr "gretl: analisi X-12-ARIMA"
+msgstr "gretl: analisi X-13ARIMA"
 
 #: gui/library.c:5822
 msgid "Trim maximum and minimum in sub-samples"
@@ -15395,14 +15395,12 @@ msgid "There are no extra observations to drop"
 msgstr "Non ci sono osservazioni in più da eliminare"
 
 #: gui/library.c:6503
-#, fuzzy
 msgid "Pad incomplete daily data"
-msgstr "Compatta dati, da frequenza giornaliera a:"
+msgstr "Riempi dati giornalieri incompleti"
 
 #: gui/library.c:6504
-#, fuzzy
 msgid "Days per week"
-msgstr "Numero di giorni in una settimana"
+msgstr "Giorni in una settimana"
 
 #: gui/library.c:6531
 msgid "Divide by sample standard deviation"
@@ -15837,19 +15835,16 @@ msgid "Delete components"
 msgstr "Elimina componenti"
 
 #: gui/menustate.c:1037
-#, fuzzy
 msgid "Daily (5 days, incomplete)"
-msgstr "Giornaliero (5 giorni)"
+msgstr "Giornaliero (5 giorni, incompleto)"
 
 #: gui/menustate.c:1044
-#, fuzzy
 msgid "Daily (6 days, incomplete)"
-msgstr "Giornaliero (6 giorni)"
+msgstr "Giornaliero (6 giorni, incompleto)"
 
 #: gui/menustate.c:1051
-#, fuzzy
 msgid "Daily (7 days, incomplete)"
-msgstr "Giornaliero (7 giorni)"
+msgstr "Giornaliero (7 giorni, incompleto)"
 
 #: gui/menustate.c:1059
 msgid "Unknown"
@@ -16534,9 +16529,8 @@ msgid "Include levels equations (GMM-SYS)"
 msgstr "Includi le equazioni nei livelli (GMM-SYS)"
 
 #: gui/selector.c:6258
-#, fuzzy
 msgid "Collapse instruments"
-msgstr "strumenti"
+msgstr "Collassa gli strumenti"
 
 #: gui/selector.c:6262
 msgid "DPD-style initial covariance matrix"
@@ -19475,14 +19469,12 @@ msgid "linearized %s"
 msgstr "%s linearizzata"
 
 #: plugin/tramo-x12a.c:259
-#, fuzzy
 msgid "X-13ARIMA options"
-msgstr "opzioni X-12-ARIMA"
+msgstr "opzioni X-13ARIMA"
 
 #: plugin/tramo-x12a.c:263
-#, fuzzy
 msgid "Seasonal adjustment algorithm:"
-msgstr "Serie corretta per la stagionalità"
+msgstr "Algoritmo di correzione stagionalità:"
 
 #: plugin/tramo-x12a.c:286
 msgid "Correct for trading days effect"
@@ -19497,14 +19489,12 @@ msgid "Show full output"
 msgstr "Mostra risultati completi"
 
 #: plugin/tramo-x12a.c:375
-#, fuzzy
 msgid "Execute X-13ARIMA directly"
-msgstr "Esegui X-12-ARIMA direttamente"
+msgstr "Esegui X-13ARIMA direttamente"
 
 #: plugin/tramo-x12a.c:379
-#, fuzzy
 msgid "Make X-13ARIMA command file"
-msgstr "Scrivi file di comandi X-12-ARIMA"
+msgstr "Scrivi file di comandi X-13ARIMA"
 
 #: plugin/tramo-x12a.c:642 plugin/tramo-x12a.c:644
 msgid "irregular"
