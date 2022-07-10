@@ -5488,7 +5488,11 @@
 	  <math>r</math> e <math>c</math>, mentre <math>s</math> il
 	  valore singolare più grande. Se omesso,
 	  <argname>tol</argname> sarà pari a <fncref
-	  targ="$macheps"/>.
+	  targ="$macheps"/>. In certi casi, può essere necessario
+	  impostare <argname>tol</argname> a un valore più grande
+	  (p. es. 1.0e-9) per evitare di sovrastimare il rango di
+	  <argname>A</argname>, ciò che può portare a risultati
+	  numericamente instabili.
 	</para>
 	<para context="notex">
 	  Questa matrice gode delle proprietà seguenti:
@@ -11178,7 +11182,11 @@
   	  <math>r</math> e <math>c</math>, mentre <math>s</math> il
   	  valore singolare più grande. Se omesso,
   	  <argname>tol</argname> sarà pari a <fncref
-  	  targ="$macheps"/>.
+  	  targ="$macheps"/>. In certi casi, può essere necessario impostare
+  	  <argname>tol</argname> a un valore più grande
+  	  (p. es. 1.0e-9) per evitare di sovrastimare il rango di
+  	  <argname>X</argname>, ciò che può portare a risultati
+  	  numericamente instabili.
   	</para>
 	<para>
 	  <seelist>

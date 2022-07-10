@@ -5491,7 +5491,11 @@
 	  <math>r</math> and <math>c</math> and <math>s</math> is the
 	  largest singular value. If the second argument is omitted
 	  <argname>tol</argname> is set to machine epsilon (see
-	  <fncref targ="$macheps"/>).
+	  <fncref targ="$macheps"/>). In some cases, you may want to
+	  set <argname>tol</argname> to a larger value (eg 1.0e-9) in
+	  order to avoid overestimating the rank of
+	  <argname>A</argname>, which may lead to numerically unstable
+	  results.
 	</para>
 	<para context="notex">
 	  This matrix has the properties <math>A</math>
@@ -11174,7 +11178,11 @@
 	  <math>c</math> and <math>s</math> is the largest singular
 	  value. If the second argument is omitted
 	  <argname>tol</argname> is set to machine epsilon (see
-	  <fncref targ="$macheps"/>).
+	  <fncref targ="$macheps"/>). In some cases, you may want to
+	  set <argname>tol</argname> to a larger value (eg 1.0e-9) in
+	  order to avoid overestimating the rank of
+	  <argname>X</argname>, which may lead to numerically unstable
+	  results.
 	</para>
 	<para>
 	  <seelist>
