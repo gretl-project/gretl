@@ -2546,6 +2546,11 @@
 	  </li>
 	  <li>
             <para>
+              Beta (beta): 2 parametri di forma
+            </para>
+	  </li>
+	  <li>
+            <para>
               Binomiale (b o B): probabilità; numero di prove
             </para>
 	  </li>
@@ -2562,6 +2567,11 @@
 	  <li>
             <para>
               Weibull (w o W): forma; scala
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Laplace (l o L): media; scala
             </para>
 	  </li>
 	  <li>
@@ -2594,6 +2604,8 @@
 	  -- &amp; -- \\
 	  Normale bivariata &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- \\
+	  Logistica &amp; \texttt{lgt} &amp;
+	  -- &amp; -- &amp; --\\
 	  $t$ di Student (centrale) &amp; \texttt{t} &amp;
 	  gradi di libertà &amp; -- \\
 	  Chi quadro &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp;
@@ -2606,8 +2618,12 @@
 	  probabilit\`a &amp; prove \\
 	  Poisson &amp; \texttt{p} o \texttt{P} &amp;
 	  media &amp; -- \\
+	  Esponenziale &amp; \texttt{exp} &amp;
+	  scala &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp;
 	  forma &amp; scala &amp; --\\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
+	  media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{E} &amp;
 	  forma &amp; -- &amp; --\\
 	  $\chi^2$ non centrale &amp; \texttt{ncX} &amp;
@@ -3138,6 +3154,27 @@
             <fncref targ="fft"/>
             <fncref targ="filter"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="cquad" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Z</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Data una matrice complessa <by r="m" c="n"/>
+	  <argname>Z</argname>, restituisce una matrice reale <by
+	  r="m" c="n"/> contenente le quadranze degli elementi di
+	  <argname>Z</argname>. La quadranza del numero complesso
+	  <math>z</math> = <math>a</math> + <math>bi</math> è definita
+	  come <math>a</math><sup>2</sup> +
+	  <math>b</math><sup>2</sup>, ed è quindi pari al modulo di
+	  <math>z</math> al quadrato. È anche uguale al prodotto di
+	  <math>z</math> per il suo coniugato, ma l'algoritmo
+	  impiegato in <lit>cquad</lit> è considerevolmente più
+	  efficiente degli altri due approcci.
 	</para>
       </description>
     </function>
@@ -6238,6 +6275,11 @@
 	  </li>
 	  <li>
             <para>
+              Laplace (l o L): media; scala
+            </para>
+	  </li>
+	  <li>
+            <para>
               GED standardizzata (E): forma
             </para>
 	  </li>
@@ -6276,6 +6318,8 @@
 	  $p$ &amp; $n$ &amp; -- \\
 	  Poisson &amp; \texttt{p} o \texttt{P} &amp;
           $\lambda$ &amp; -- &amp; -- \\
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
+          media &amp; scala  &amp; -- \\
 	  GED standardizzata &amp; \texttt{E} &amp; forma &amp; -- &amp; -- \\
 	  $\chi^2$ non centrale &amp; \texttt{ncX} &amp;
 	  gdl &amp; non centralit{\`a} &amp; -- \\
@@ -6450,13 +6494,29 @@
 
     <function name="iscomplex" section="data-utils" output="scalar">
       <fnargs>
-	<fnarg type="string">name</fnarg>
+	<fnarg type="string">nome</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Ritorna 1 se <argname>name</argname> è il nome di una
-	  matrice complessa, 0 se è il nome di una matrice reale, o
-	  <lit>NA</lit> altrimenti.
+	  Controlla se <argname>nome</argname> è il nome di una
+	  matrice complessa. Ritorna uno dei seguenti valori:
+	</para>
+	<para>
+	  <lit>NA</lit>: <argname>nome</argname> non è una matrice.
+	</para>
+	<para>
+	  <lit>0</lit>: <argname>nome</argname> è una matrice composta
+	  interamente di numeri reali in doppia precisione.
+	</para>
+	<para>
+	  <lit>1</lit>: <argname>nome</argname> è una matrice solo
+	  <quote>nominalmente</quote> complessa, che contiene solo
+	  numeri in cui la parte immaginaria è zero.
+	</para>
+	<para>
+	  <lit>2</lit>: la matrice in questione contiene almeno un
+	  elemento complesso <quote>per davvero</quote>, in cui la
+	  parte immaginaria è non-zero.
 	</para>
       </description>
     </function>
@@ -9230,11 +9290,14 @@
 	<para>
 	  Copia la matrice <argname>X</argname> in un file di nome
 	  <argname>fname</argname>, di regola un file di testo. Nella
-	  prima riga il file contiene due interi, separati da un tabulatore,
-	  corrispondenti ai numeri di righe e di colonne; nelle linee
-	  seguenti sono indicati gli elementi della matrice in notazione
-	  scientifica, separati da tabulatori (una riga per ciascuna
-	  linea). Per formati alternativi, vedi più avanti.
+	  prima riga il file contiene due interi, separati da un
+	  tabulatore, corrispondenti ai numeri di righe e di colonne;
+	  nelle linee seguenti sono indicati gli elementi della
+	  matrice in notazione scientifica, separati da tabulatori
+	  (una riga per ciascuna linea). Al fine di evitare confusione
+	  in lettura, è consigliabile dare al file il suffisso
+	  <quote><lit>.mat</lit></quote>. Per formati alternativi,
+	  vedi più avanti.
 	</para>
 	<para>
 	  Se il file <argname>fname</argname> esiste già, verrà
@@ -9256,8 +9319,8 @@
 	  privo del percorso.
 	</para>
 	<para>
-	  Le matrici memorizzate usando il comando <lit>mwrite</lit> possono
-	  essere facilmente lette da altri programmi; v.
+	  Le matrici memorizzate usando il comando <lit>mwrite</lit>
+	  possono essere facilmente lette da altri programmi; v.
 	  <guideref targ="chap:matrices"/> per ulteriori dettagli.
 	</para>
 	<para>
@@ -9287,6 +9350,17 @@
 	      e scrittura.
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      Se <argname>fname</argname> ha il suffisso
+	      <quote><lit>.csv</lit></quote> la matrice sarà scritta in
+	      valori separati da virgole, senza una linea iniziale che
+	      specifichi il numero di righe e colonne. Questo formato
+	      può rendere più semplice la lettura del file da parte di
+	      altri programmi, ma non se il file deve poi essere
+	      riletto da gretl.
+	    </para>
+	  </li>
 	</ilist>
 	<para>
 	  Si noti che se il file dev'essere letto da un altro
@@ -9301,6 +9375,8 @@
 	  <seelist>
 	    <fncref targ="mread"/>
 	  </seelist>
+	  Per salvare una matrice come dataset, si veda anche <cmdref
+	  targ="store"/>.
 	</para>
       </description>
     </function>
