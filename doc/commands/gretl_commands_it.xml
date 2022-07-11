@@ -5821,6 +5821,48 @@
 
     <description>
       <para>
+	gretl_edit è una variante leggera del client grafico di
+	gretl. Essa comprende un editor per gli script (anche più
+	d'uno, via dei tab) e la possibilità di eseguirli e
+	visualizzare il loro output. Molte delle caratteristiche
+	dell'interfaccia standard di gretl sono assenti, ma questa
+	variante può rivelarsi utile grazie al principio che, a volte,
+	<quote>piccolo è bello</quote>.
+      </para>
+      <para>
+	Il contesto per cui gretl_edit è progettato è più o meno il
+	seguente: mettiamo di star lavoando su del codice
+	relativamente complesso, usando questa sequenza di operazioni.
+      </para>
+      <code>
+	scrivo del codice
+	lo eseguo, guardo i risultati, controlle se ci sono errori
+	correggo il codice
+	lo rieseguo di nuovo...
+      </code>
+      <para>
+	Se questo descrive ciò che fate, almeno a volte, date
+	un'occhiata a gretl_edit. Se no, potete tranquillamente
+	ignorarne l'esistenza.
+      </para>
+      <para>
+	Si noti che gretl_edit è <quote>privo di
+	stato</quote>. Contrariamente all'applicazione principale, non
+	ci sono modelli, serie, matrici, bundle eccetera. L'unica cosa
+	che c'è in memoria è lo script, o gli script, editati. Nel
+	contesto descritto sopra, è tutto quel che serve: ogni volta
+	che uno script viene eseguito, riparte <quote>da zero</quote>,
+	per così dire. Quindi, se lo script usa un dataset, deve
+	includere un comando per aprirlo.
+      </para>
+      <para>
+	Ovviamente, gretl_edit gestisce hansl, il linguaggio di
+	gretl. Tuttovia, può anche gestire linguaggi coperti da gretl
+	attraverso il comando <quote>foreign</quote>: R, Octave,
+	Julia, Ox, Stata. In questi casi, l'editor non ha tutte le
+	potenzialità che in hansl: la colorazione della sintassi è
+	prevista, ma non l'indentazione automatica o
+	l'autocompletamento.
       </para>
     </description>
   </command>
@@ -12473,10 +12515,62 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 </command>
 
 <command name="regls-advanced" section="Estimation"
-	 label="Further regls options" context="gui">
+	 label="Opzioni regls avanzate" context="gui">
   <description>
     <para>
-    </para>
+      Ciò che si seleziona in questa finestra viene applicato solo
+      quando è pertinente, a seconda delle scelte fatte nella finestra
+      principale di regls. Le scelte vengono ricordate per tutta la
+      sessione di gretl.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Scelta dell'algoritmo: si possono scegliere il metodo CCD
+	    (Cyclical Coordinate Descent) sia per il LASSO che per la
+	    regressione Ridge, invece dei metodi di default cioè lo
+	    ADMM (Alternating Direction Method of Multipliers) per il
+	    e la scompozizione in valori singolari (SVD) per il Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Il criterio di default per la <quote>migliore</quote>
+	    performance nella cross validation è la minimizzazione
+	    dell'errore quadratico medio (MSE), ma si può optare per
+	    la regola alternativa <quote>dello standard
+	    error</quote>. Questa alternativa, che privilegia la
+	    parsimonia, sceglie la penalità più grande tale per cui lo
+	    MSE è a non più di un errore standard dal minimo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Seme per randomizzare i <quote>fold</quote>: per ottenere
+	    risultati replicabili quando si usa la cross-validation
+	    con fold casuali, è necessario specificare un seme per la
+	    generazione dei numeri casuali.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Per accelerare la cross-validation, regls usa di default
+	    la parallelizzazione MPI, se disponibile. La casella MPI
+	    (che appare solo se gretl è compliato col supporto per
+	    MPI) permette di disattivare quest'opzione, cosa che può
+	    rivelarsi vantaggiosa per dataset piccoli.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    L'opzione di mostrare il tempo di esecuzione può essere
+	    utile per confrontare le prestazioni di algoritmi diversi,
+	    o per controllare se c'è un vantaggio nell'uso di MPI. Il
+	    tempo mostrato è relativo all'esecuzione del codice C
+	    sottostante.
+	  </para>
+	</li>
+      </ilist>
   </description>
 </command>
 
