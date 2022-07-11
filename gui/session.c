@@ -2508,6 +2508,10 @@ static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 {
     int ng = session.ngraphs;
 
+    if (in_graph_page(junk->fname)) {
+	graph_page_delete_file(junk->fname);
+    }
+
     if (ng == 1) {
 	remove_session_graph_file(session.graphs[0]);
 	free(session.graphs[0]);
@@ -2611,8 +2615,19 @@ static void maybe_delete_session_object (gui_obj *obj)
 	warnbox_printf(_("%s: please close this object's window first"),
 		       obj->name);
     } else {
-	gchar *msg = g_strdup_printf(_("Really delete %s?"), obj->name);
+	gchar *msg = NULL;
 
+	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
+
+	    if (in_graph_page(graph->fname)) {
+		msg = g_strdup_printf(_("Really delete %s?\n(This will remove it from "
+					"the Graph page.)"), obj->name);
+	    }
+	}
+	if (msg == NULL) {
+	    msg = g_strdup_printf(_("Really delete %s?"), obj->name);
+	}
 	if (yes_no_dialog(_("gretl: delete"), msg, iconview) == GRETL_YES) {
 	    delete_session_object(obj);
 	}
