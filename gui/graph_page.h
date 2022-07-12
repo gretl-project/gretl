@@ -7,6 +7,8 @@ void clear_graph_page (int on_exit);
 
 int graph_page_add_file (const char *fname);
 
+int graph_page_delete_file (const char *fname);
+
 int graph_page_get_n_graphs (void);
 
 int in_graph_page (const char *fname);

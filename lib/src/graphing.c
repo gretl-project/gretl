@@ -8762,7 +8762,7 @@ static int roundup_mod (int i, double x)
 
 static int real_pergm_plot (const char *vname,
 			    int T, int L,
-			    const double *x,
+			    const double *dens,
 			    gretlopt opt,
 			    FILE *fp)
 {
@@ -8833,7 +8833,7 @@ static int real_pergm_plot (const char *vname,
     }
 
     if (!(opt & OPT_L)) {
-	fprintf(fp, "set yrange [0:%g]\n", 1.2 * gretl_max(0, T/2, x));
+	fprintf(fp, "set yrange [0:%g]\n", 1.2 * gretl_max(0, T/2 - 1, dens));
     }
 
     if (opt & OPT_R) {
@@ -8851,7 +8851,7 @@ static int real_pergm_plot (const char *vname,
 	} else {
 	    ft = t;
 	}
-	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x[t]) : x[t]);
+	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(dens[t-1]) : dens[t-1]);
     }
     fputs("e\n", fp);
 

@@ -119,7 +119,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 static char *optdb, *optwebdb, *optpkg;
-static int optrun, opteng, optbasque, optdump, optver, opted;
+static int optrun, opteng, optbasque, optdump, optver;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
@@ -158,8 +158,6 @@ static GOptionEntry options[] = {
     { "single", 's', 0, G_OPTION_ARG_NONE, &optsingle,
       N_("reuse an existing gretl instance unconditionally"), NULL },
 #endif
-    { "editor", 't', 0, G_OPTION_ARG_NONE, &opted,
-      N_("script editor mode"), NULL },
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -900,10 +898,8 @@ int main (int argc, char **argv)
 #endif
 
 #ifdef GRETL_PID_FILE
-    if (!opted) {
-	write_pid_to_file();
-	atexit(delete_pid_from_file);
-    }
+    write_pid_to_file();
+    atexit(delete_pid_from_file);
 #endif
 
     /* create the GUI */
@@ -914,13 +910,11 @@ int main (int argc, char **argv)
     fprintf(stderr, " done gretl_stock_icons_init\n");
 #endif
 
-    if (!opted) {
-	make_main_window();
-	add_files_to_menus();
-	session_menu_state(FALSE);
-	restore_sample_state(FALSE);
-	dataset_menubar_state(FALSE);
-    }
+    make_main_window();
+    add_files_to_menus();
+    session_menu_state(FALSE);
+    restore_sample_state(FALSE);
+    dataset_menubar_state(FALSE);
 
 #if GUI_DEBUG
     fprintf(stderr, "done setting GUI state\n");
@@ -928,26 +922,20 @@ int main (int argc, char **argv)
 
     if (tryfile_is_set()) {
 	open_tryfile(TRUE);
-    } else if (opted) {
-	do_new_script(EDIT_HANSL, NULL, NULL);
     }
 
-    if (!opted) {
-	/* try opening specified database or package */
-	if (optdb != NULL) {
-	    open_named_db_index(auxname);
-	} else if (optwebdb != NULL) {
-	    open_named_remote_db_index(auxname);
-	} else if (optpkg != NULL) {
-	    edit_specified_package(auxname);
-	}
+    /* try opening specified database or package */
+    if (optdb != NULL) {
+	open_named_db_index(auxname);
+    } else if (optwebdb != NULL) {
+	open_named_remote_db_index(auxname);
+    } else if (optpkg != NULL) {
+	edit_specified_package(auxname);
     }
 
 #ifdef GRETL_OPEN_HANDLER
-    if (!opted) {
-	install_open_handler();
-	record_gretl_binary_path(argv[0]);
-    }
+    install_open_handler();
+    record_gretl_binary_path(argv[0]);
 #endif
 
 #if GUI_DEBUG
@@ -2640,11 +2628,6 @@ gboolean open_tryfile (gboolean startup)
 	} else {
 	    return do_open_script(stype);
 	}
-    } else if (opted) {
-	/* only script files are acceptable */
-	do_new_script(EDIT_HANSL, NULL, NULL);
-	warnbox_printf(_("%s: not a recognized script file"), tryfile);
-	return TRUE;
     }
 
     if (has_db_suffix(tryfile)) {
@@ -2806,9 +2789,3 @@ void do_stop_script (GtkWidget *w, windata_t *vwin)
     script_stopper(1);
 }
 
-/* test whether GUI is running in script editor mode */
-
-int gui_editor_mode (void)
-{
-    return opted != 0;
-}

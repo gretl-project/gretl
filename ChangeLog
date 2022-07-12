@@ -6,8 +6,10 @@ version 2022b, in progress
 - new function sphericorr(): spherical coordinates
   representation for correlation matrices
 - new option --decr for use with index loops
-- "leverage" command: add $result accessor to obtain 
+- "leverage" command: add $result accessor to obtain
   leverage, influence and studentized residuals as matrix
+- "pergm" and "fractint" commands: use FFT for computing the
+  spectrum
 - "printf" command: add "\r" as a recognized escape sequence
 - "smpl" command: add --dates option to resolve potential
   ambiguity of obs limits in case of annual and daily data
@@ -26,6 +28,7 @@ version 2022b, in progress
   optional third argument
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
+- rank() and ginv() function: add optional tolerance
 - Support direct assignment from string-values series to
   array of strings
 - script editor: enhancements for Find/Replace dialog

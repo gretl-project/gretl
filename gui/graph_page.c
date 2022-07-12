@@ -44,6 +44,7 @@ struct _graphpage {
     int term;
     int mono;
     int ngraphs;
+    int nslots;
     char **fnames;
 };
 
@@ -120,6 +121,7 @@ static void graph_page_init (void)
 {
     gpage.mono = 0;
     gpage.ngraphs = 0;
+    gpage.nslots = 0;
     gpage.fnames = NULL;
 }
 
@@ -285,7 +287,6 @@ static int make_graphpage_tex (void)
 
 int graph_page_add_file (const char *fname)
 {
-    char **fnames;
     int ng = gpage.ngraphs + 1;
 
     if (ng > GRAPHS_MAX) {
@@ -293,16 +294,42 @@ int graph_page_add_file (const char *fname)
 	return 1;
     }
 
-    fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
-    if (fnames == NULL) {
-	return E_ALLOC;
+    if (gpage.nslots < ng) {
+	char **fnames;
+
+	fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
+	if (fnames == NULL) {
+	    return E_ALLOC;
+	} else {
+	    gpage.fnames = fnames;
+	    gpage.nslots = ng;
+	}
     }
 
-    fnames[ng - 1] = g_strdup(fname);
-    gpage.fnames = fnames;
+    gpage.fnames[ng-1] = g_strdup(fname);
     gpage.ngraphs = ng;
 
     mark_session_changed();
+
+    return 0;
+}
+
+int graph_page_delete_file (const char *fname)
+{
+    int i;
+
+    for (i=0; i<gpage.ngraphs; i++) {
+	if (!strcmp(fname, gpage.fnames[i])) {
+	    g_free(gpage.fnames[i]);
+	    while (i < gpage.ngraphs - 1) {
+		gpage.fnames[i] = gpage.fnames[i+1];
+		i++;
+	    }
+	    gpage.ngraphs -= 1;
+	    mark_session_changed();
+	    break;
+	}
+    }
 
     return 0;
 }
@@ -429,9 +456,9 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     }
 
     if (scale != 1.0) {
-	fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.5);
+	fprintf(fq, " size %g,%g noenhanced\n", scale * 5.0, scale * 3.5);
     } else {
-	fputc('\n', fq);
+	fputs(" noenhanced\n", fq);
     }
 
     gretl_pop_c_numeric_locale();
@@ -779,7 +806,7 @@ void clear_graph_page (int on_exit)
     }
 
     for (i=0; i<gpage.ngraphs; i++) {
-	free(gpage.fnames[i]);
+	g_free(gpage.fnames[i]);
     }
     free(gpage.fnames);
 

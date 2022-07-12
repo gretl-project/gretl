@@ -4134,7 +4134,7 @@ struct fractint_test {
     double se;   /* standard error of the above */
 };
 
-static int fract_int_GPH (int T, int m, const double *xvec,
+static int fract_int_GPH (int T, int m, const double *dens,
 			  struct fractint_test *ft)
 {
     gretl_matrix *y = NULL;
@@ -4160,7 +4160,7 @@ static int fract_int_GPH (int T, int m, const double *xvec,
        Greene, Econometric Analysis 4e, p. 787 */
 
     for (t=0; t<m; t++) {
-	y->val[t] = log(xvec[t+1]);
+	y->val[t] = log(dens[t]);
 	w = M_2PI * (t + 1) / (double) T;
 	x = sin(w / 2);
 	gretl_matrix_set(X, t, 1, log(4 * x * x));
@@ -4429,7 +4429,7 @@ static void pergm_print (const char *vname, const double *d,
     }
 
     for (t=1; t<=T/2; t++) {
-	dt = (opt & OPT_L)? log(d[t]) : d[t];
+	dt = (opt & OPT_L)? log(d[t-1]) : d[t-1];
 	if (opt & OPT_R) {
 	    yt = 2 * M_PI * (double) t / T;
 	    pprintf(prn, " %.5f%8d%16.2f", yt, t, (double) T / t);
@@ -4440,7 +4440,7 @@ static void pergm_print (const char *vname, const double *d,
 	    yt = M_2PI * t / (double) T;
 	    pprintf(prn, " %.5f%8d%16.2f", yt, t, (double) T / t);
 	}
-	dt = (opt & OPT_L)? log(d[t]) : d[t];
+	dt = (opt & OPT_L)? log(d[t-1]) : d[t-1];
 	sprintf(xstr, "%#.5g", dt);
 	gretl_fix_exponent(xstr);
 	pprintf(prn, "%16s\n", xstr);
@@ -4550,8 +4550,8 @@ static int finalize_fractint (const double *x,
     return err;
 }
 
-static double *pergm_compute_density (const double *x, int t1, int t2,
-				      int L, int bartlett, int *err)
+static double *pergm_bartlett_density (const double *x, int t1, int t2,
+				       int L, int *err)
 {
     double *sdy, *acov, *dens;
     double xx, yy, vx, sx, w;
@@ -4559,7 +4559,7 @@ static double *pergm_compute_density (const double *x, int t1, int t2,
 
     sdy = malloc(T * sizeof *sdy);
     acov = malloc((L + 1) * sizeof *acov);
-    dens = malloc((1 + T/2) * sizeof *dens);
+    dens = malloc(T/2 * sizeof *dens);
 
     if (sdy == NULL || acov == NULL || dens == NULL) {
 	*err = E_ALLOC;
@@ -4588,16 +4588,12 @@ static double *pergm_compute_density (const double *x, int t1, int t2,
 
     vx /= M_2PI;
 
-    for (t=1; t<=T/2; t++) {
-	yy = M_2PI * t / (double) T;
+    for (t=0; t<T/2; t++) {
+	yy = M_2PI * (t+1) / (double) T;
 	xx = 1.0;
 	for (k=1; k<=L; k++) {
-	    if (bartlett) {
-		w = 1.0 - (double) k/(L + 1);
-		xx += 2.0 * w * acov[k] * cos(yy * k);
-	    } else {
-		xx += 2.0 * acov[k] * cos(yy * k);
-	    }
+	    w = 1.0 - (double) k/(L + 1);
+	    xx += 2.0 * w * acov[k] * cos(yy * k);
 	}
 	dens[t] = xx * vx;
     }
@@ -4685,7 +4681,23 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 	    L = T - 1;
 	}
 
-	dens = pergm_compute_density(x, t1, t2, L, bartlett, &err);
+	if (bartlett) {
+	    dens = pergm_bartlett_density(x, t1, t2, L, &err);
+	} else {
+	    gretl_matrix *pg;
+	    gretl_vector vt;
+
+	    gretl_matrix_init(&vt);
+	    vt.rows = t2 - t1 + 1;
+	    vt.cols = 1;
+	    vt.val = (double *) x + t1;
+
+	    pg = gretl_matrix_pergm(&vt, T/2, &err);
+	    if (!err) {
+		dens = gretl_matrix_steal_data(pg);
+	    }
+	    gretl_matrix_free(pg);
+	}
 	if (err) {
 	    return err;
 	}
@@ -4701,9 +4713,9 @@ pergm_or_fractint (int usage, const double *x, int t1, int t2,
 	if (pm == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (t=1; t<=T2; t++) {
-		gretl_matrix_set(pm, t-1, 0, M_2PI * t / (double) T);
-		gretl_matrix_set(pm, t-1, 1, dens[t]);
+	    for (t=0; t<T2; t++) {
+		gretl_matrix_set(pm, t, 0, M_2PI * (t+1) / (double) T);
+		gretl_matrix_set(pm, t, 1, dens[t]);
 	    }
 	}
     } else if (usage == FRACTINT_CMD) {
@@ -7028,7 +7040,7 @@ gretl_matrix *distance (const gretl_matrix *X,
     int r1, r2, c, jmin;
     int i, j, k;
     int nothirdarg = (Y == NULL);
-    
+
     if (gretl_is_null_matrix(X) || gretl_is_complex(X)) {
 	*err = E_INVARG;
 	return NULL;

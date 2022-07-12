@@ -1892,20 +1892,27 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
         csv_set_blank_column(c);
     } else {
         char field1[VNAMELEN];
+	int quoted = 0;
         int i = 0;
 
         if (c->delim == ' ' && *s == ' ') {
             s++;
         }
 
+	if (*s == c->qchar) {
+	    quoted = 1;
+	}
+
         while (*s && i < sizeof field1) {
-            if (*s == c->delim) {
+            if (!quoted && *s == c->delim) {
                 break;
-            } else if (*s == '\t') {
+            } else if (!quoted && *s == '\t') {
                 /* presence of a tab must indicate tab-separation? */
                 c->delim = '\t';
                 goto tryagain;
-            }
+            } else if (i > 0 && *s == c->qchar) {
+		quoted = 0;
+	    }
             field1[i++] = *s++;
         }
 
@@ -2905,11 +2912,16 @@ static int csv_varname_scan (csvdata *c, gzFile fp, PRN *prn, PRN *mprn)
     j = 1; /* for the constant */
 
     for (k=0; k<c->ncols && !err; k++) {
+	int quoted = (*p == c->qchar);
+
         i = 0;
-        while (*p && *p != c->delim) {
+        while (*p && (*p != c->delim || quoted)) {
             if (i < CSVSTRLEN - 1) {
                 c->str[i++] = *p;
             }
+	    if (i > 1 && *p == c->qchar) {
+		quoted = 0;
+	    }
             p++;
         }
         c->str[i] = '\0';
