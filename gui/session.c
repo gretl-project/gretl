@@ -4052,6 +4052,12 @@ static void session_build_popups (void)
     }
 }
 
+#if 0
+
+/* The reorganization of icons carried out by the following callback
+   is not at all intuitive -- 2022-07-12
+*/
+
 static gboolean
 iconview_resize_callback (GtkWidget *w, GdkEventConfigure *e, gpointer p)
 {
@@ -4070,12 +4076,14 @@ iconview_resize_callback (GtkWidget *w, GdkEventConfigure *e, gpointer p)
     return FALSE;
 }
 
+#endif
+
 void view_session (void)
 {
     GtkWidget *ebox, *scroller;
     gchar *title;
     int hmax = get_screen_height() / 2;
-    int hmin = 280;
+    int hmin = 360;
     int height;
 
     if (iconview != NULL) {
@@ -4119,13 +4127,15 @@ void view_session (void)
     } else if (height > hmax) {
 	height = hmax;
     }
-    gtk_window_set_default_size(GTK_WINDOW(iconview), 440, height);
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 640, height);
 
     window_list_add(iconview, OPEN_SESSION);
     g_signal_connect(G_OBJECT(iconview), "key-press-event",
 		     G_CALLBACK(catch_iconview_key), NULL);
+#if 0 /* scrubbed 2022-07-12 */
     g_signal_connect(G_OBJECT(iconview), "configure-event",
 		     G_CALLBACK(iconview_resize_callback), NULL);
+#endif
 
     gtk_widget_show_all(iconview);
 
