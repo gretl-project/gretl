@@ -44,6 +44,7 @@ struct _graphpage {
     int term;
     int mono;
     int ngraphs;
+    int nslots;
     char **fnames;
 };
 
@@ -120,6 +121,7 @@ static void graph_page_init (void)
 {
     gpage.mono = 0;
     gpage.ngraphs = 0;
+    gpage.nslots = 0;
     gpage.fnames = NULL;
 }
 
@@ -285,7 +287,6 @@ static int make_graphpage_tex (void)
 
 int graph_page_add_file (const char *fname)
 {
-    char **fnames;
     int ng = gpage.ngraphs + 1;
 
     if (ng > GRAPHS_MAX) {
@@ -293,13 +294,19 @@ int graph_page_add_file (const char *fname)
 	return 1;
     }
 
-    fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
-    if (fnames == NULL) {
-	return E_ALLOC;
+    if (gpage.nslots < ng) {
+	char **fnames;
+
+	fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
+	if (fnames == NULL) {
+	    return E_ALLOC;
+	} else {
+	    gpage.fnames = fnames;
+	    gpage.nslots = ng;
+	}
     }
 
-    fnames[ng-1] = g_strdup(fname);
-    gpage.fnames = fnames;
+    gpage.fnames[ng-1] = g_strdup(fname);
     gpage.ngraphs = ng;
 
     mark_session_changed();
