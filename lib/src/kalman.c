@@ -91,7 +91,6 @@ struct univar_info_ {
     int free_g;
     int free_Z;
     int Nd;
-    int TI;
 };
 
 typedef struct dejong_info_ dejong_info;
@@ -102,10 +101,10 @@ struct dejong_info_ {
     gretl_matrix *At;   /* ditto */
     gretl_matrix *Vv;   /* ditto */
     gretl_matrix *Qt;   /* ditto */
-    gretl_matrix *Si;   /* north-west block of Qt */
-    gretl_matrix *S;    /* @Si, inverted */
+    gretl_matrix *S;    /* north-west block of Qt */
     gretl_matrix *s;    /* vector embedded in Qt */
-    int TI;
+    double qm;          /* scalar embedded in Qt */
+    double ldS;         /* log determinant of S-inverse */
 };
 
 struct kalman_ {
@@ -123,6 +122,7 @@ struct kalman_ {
     int t;   /* current time step, when filtering */
     int d;   /* (diffuse) time-step at which standard iterations start */
     int j;   /* (univariate) observable at which standard iters start */
+    int TI;  /* flag for K->T is identity matrix */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
 
@@ -145,7 +145,7 @@ struct kalman_ {
     /* for the de Jong variant */
     gretl_matrix *Lt; /* r x r */
     gretl_matrix *Jt; /* r x p */
-    gretl_matrix *PL; /* r x r */
+    gretl_matrix *rr; /* r x r */
 
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
@@ -371,7 +371,6 @@ static void free_dejong_info (kalman *K)
         gretl_matrix_free(K->djinfo->At);
         gretl_matrix_free(K->djinfo->Vv);
         gretl_matrix_free(K->djinfo->Qt);
-        gretl_matrix_free(K->djinfo->Si);
         gretl_matrix_free(K->djinfo->S);
         gretl_matrix_free(K->djinfo->s);
 
@@ -425,13 +424,14 @@ void kalman_free (kalman *K)
     free(K->matcall);
     free(K->varying);
 
-    if (kalman_xcorr(K)) {
-        /* correlated errors info */
+    if (!kalman_univariate(K)) {
         gretl_matrix_free(K->H);
         gretl_matrix_free(K->G);
         gretl_matrix_free(K->HG);
 	gretl_matrix_free(K->Jt);
-    } else if (kalman_dkvar(K)) {
+    }
+
+    if (kalman_dkvar(K)) {
         /* Durbin-Koopman errors info */
         gretl_matrix_free(K->Q);
         gretl_matrix_free(K->QRT);
@@ -800,7 +800,7 @@ static int kalman_init (kalman *K)
                                     &K->Mt,  K->r, K->n, /* intermediate term */
                                     &K->Ct,  K->r, K->r, /* intermediate term */
 				    &K->Lt,  K->r, K->r, /* ditto */
-				    &K->PL,  K->r, K->r, /* ditto */
+				    &K->rr,  K->r, K->r, /* ditto */
                                     NULL);
 
     if (K->Blk == NULL) {
@@ -2064,8 +2064,8 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
                         err, K->t);
             } else if (i == K_ZT && kalman_univariate(K)) {
                 err = adjust_univariate_Z(K);
-            } else if (i == K_T && kalman_univariate(K)) {
-                K->uinfo->TI = gretl_is_identity_matrix(K->T);
+            } else if (i == K_T) {
+                K->TI = gretl_is_identity_matrix(K->T);
             }
         }
     }
@@ -2605,7 +2605,7 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
         if (kalman_univariate(K)) {
             err = kfilter_univariate(K, prn);
         } else {
-	    if (getenv("KFILT_DEJONG") != NULL) {
+	    if (1 || getenv("KFILT_DEJONG") != NULL) {
 		err = kfilter_dejong(K, prn);
 	    } else {
 		err = kalman_forecast(K, prn);
@@ -3442,7 +3442,6 @@ static int kalman_add_univar_info (kalman *K)
     K->uinfo->Finf = NULL;
     K->uinfo->Kinf = NULL;
     K->uinfo->Nd = 0;
-    K->uinfo->TI = 0;
 
     /* FIXME proper error checking above */
 
@@ -3462,11 +3461,8 @@ static int kalman_add_dejong_info (kalman *K)
     K->djinfo->At = gretl_zero_matrix_new(K->r, K->r);
     K->djinfo->Vv = gretl_matrix_alloc(K->n, K->r + 1);
     K->djinfo->Qt = gretl_zero_matrix_new(K->r + 1, K->r + 1);
-    K->djinfo->Si = gretl_matrix_alloc(K->r, K->r);
     K->djinfo->S  = gretl_matrix_alloc(K->r, K->r);
     K->djinfo->s  = gretl_matrix_alloc(K->r, 1);
-
-    K->djinfo->TI = 0;
 
     return err;
 }
@@ -5852,7 +5848,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         Ptt = gretl_matrix_alloc(K->N, m*m);
     }
 
-    ui->TI = gretl_is_identity_matrix(K->T);
+    K->TI = gretl_is_identity_matrix(K->T);
     K->okN = K->n * K->N;
     K->SSRw = 0;
     K->loglik = 0;
@@ -5971,7 +5967,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         }
 
         /* update for t+1 */
-        if (ui->TI) {
+        if (K->TI) {
             /* shortcut in case T = I_m */
             fast_copy_values(at, ati);
             fast_copy_values(Pt, Pti);
@@ -6565,7 +6561,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     gretl_matrix_block *B = NULL;
     struct filter_mats f = {0};
     struct cumulants c = {0};
-    univar_info *ui = K->uinfo;
+    // univar_info *ui = K->uinfo;
     gretl_matrix *Q = NULL;
     gretl_matrix *QRT = NULL;
     gretl_matrix *g = NULL;
@@ -6681,7 +6677,7 @@ static int ksmooth_univariate (kalman *K, int dist)
         /* regular backdate for t-1 */
         if (t > 0) {
             fast_copy_values(c.Nt, c.N0);
-            if (!ui->TI) {
+            if (!K->TI) {
                 regular_backdate(&c, K->T);
             }
         }
@@ -6773,7 +6769,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 fprintf(stderr, "call diffuse_backdate\n");
             }
             fast_copy_values(c.Nt, c.N0);
-            if (!ui->TI) {
+            if (!K->TI) {
                 diffuse_backdate(&c, K->T);
             }
         }
@@ -6838,7 +6834,7 @@ static int ksmooth_univariate (kalman *K, int dist)
 
             if (t > 0) {
                 fast_copy_values(c.Nt, c.N0);
-                if (!ui->TI) {
+                if (!K->TI) {
                     diffuse_backdate(&c, K->T);
                 }
             }
@@ -6930,6 +6926,85 @@ static int ensure_dj_variance_matrices (kalman *K)
     return err;
 }
 
+static int dejong_diffuse_filter_step (kalman *K)
+{
+    dejong_info *dj = K->djinfo;
+    double lmin = 0;
+    int err = 0;
+
+    /* Vt = -Zt * At */
+    gretl_matrix_zero(dj->Vt);
+    gretl_matrix_multiply_mod(K->ZT, GRETL_MOD_TRANSPOSE,
+			      dj->At, GRETL_MOD_NONE,
+			      dj->Vt, GRETL_MOD_DECREMENT);
+    /* FIXME record: V[t,] = vec(Vt)' */
+    gretl_matrix_print(dj->Vt, "Vt");
+
+    /* Vv = Vt ~ vt */
+    gretl_matrix_inscribe_matrix(dj->Vv, dj->Vt,
+				 0, 0, GRETL_MOD_NONE);
+    gretl_matrix_inscribe_matrix(dj->Vv, K->vt,
+				 0, K->r, GRETL_MOD_NONE);
+    gretl_matrix_print(dj->Vv, "Vv");
+
+    /* Q[t+1] : Qt += Vv' * iFt * Vv */
+    gretl_matrix_qform(dj->Vv, GRETL_MOD_TRANSPOSE,
+		       K->iFt, dj->Qt, GRETL_MOD_CUMULATE);
+    gretl_matrix_print(dj->Qt, "Qt");
+
+    /* A[t+1]: At = T*At + Kt*Vt */
+    gretl_matrix_multiply(K->Kt, dj->Vt, K->rr);
+    if (K->TI) {
+	gretl_matrix_add_to(dj->At, K->rr);
+    } else {
+	gretl_matrix_multiply_mod(K->T, GRETL_MOD_NONE,
+				  dj->At, GRETL_MOD_NONE,
+				  K->rr, GRETL_MOD_CUMULATE);
+	fast_copy_values(dj->At, K->rr);
+    }
+    gretl_matrix_print(dj->At, "A[t+1]");
+
+    /* Sinv = Qt[1:r,1:r] */
+    gretl_matrix_extract_matrix(dj->S, dj->Qt, 0, 0, GRETL_MOD_NONE);
+    lmin = gretl_symmetric_matrix_min_eigenvalue(dj->S);
+
+    if (lmin > 1.0e-7) {
+	/* handle the collapse */
+	K->d = K->t + 1;
+	fprintf(stderr, "*** determined m = %d ***\n", K->d);
+	/* Sinv = Qt[1:p,1:p] */
+	gretl_matrix_extract_matrix(dj->S, dj->Qt, 0, 0, GRETL_MOD_NONE);
+
+	/* s = -Qt[1:r,r+1] */
+	gretl_matrix_extract_matrix(dj->s, dj->Qt, 0, K->r, GRETL_MOD_NONE);
+	gretl_matrix_multiply_by_scalar(dj->s, -1.0);
+
+	/* S = invpd(Sinv) */
+	gretl_invert_symmetric_matrix2(dj->S, &dj->ldS);
+
+	/* at += At*S*s */
+	gretl_matrix_multiply(dj->At, dj->S, K->rr);
+	gretl_matrix_multiply_mod(K->rr, GRETL_MOD_NONE,
+				  dj->s, GRETL_MOD_NONE,
+				  K->a0, GRETL_MOD_CUMULATE);
+
+	/* Pt += At*S*At' */
+	gretl_matrix_qform(dj->At, GRETL_MOD_NONE,
+			   dj->S, K->P0, GRETL_MOD_CUMULATE);
+
+	/* qm = Qt[p+1,p+1] - s'*S*s */
+	dj->qm = gretl_matrix_get(dj->Qt, K->r, K->r);
+	dj->qm += gretl_scalar_qform(dj->s, dj->S, &err);
+
+	fprintf(stderr, "dejong: qm = %g\n", dj->qm);
+
+	/* record */
+	// dj->Am = dj->At;
+    }
+
+    return err;
+}
+
 static int kfilter_dejong (kalman *K, PRN *prn)
 {
     double nl2pi = K->n * LN_2_PI;
@@ -6944,9 +7019,11 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	return err;
     }
 
-    if (kdebug > 1) {
+    if (1 || kdebug > 1) {
         fprintf(stderr, "\n*** kfilter_dejong: N=%d, n=%d, exact=%d ***\n",
                 K->N, K->n, K->exact);
+	gretl_matrix_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
+	gretl_matrix_inscribe_I(K->djinfo->At, 0, 0, K->r);
     }
 
 #if USE_INCOMPLETE_OBS
@@ -6967,6 +7044,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
+    K->TI = gretl_is_identity_matrix(K->T);
     K->okN = K->N;
     set_kalman_running(K);
 
@@ -7022,7 +7100,11 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         /* calculate M_t = TPZ' [+ HG'] */
         gretl_matrix_multiply(K->P0, K->ZT, K->PZ);
-        gretl_matrix_multiply(K->T, K->PZ, K->Mt);
+	if (K->TI) {
+	    fast_copy_values(K->Mt, K->PZ);
+	} else {
+	    gretl_matrix_multiply(K->T, K->PZ, K->Mt);
+	}
         if (K->HG != NULL) {
             gretl_matrix_add_to(K->Mt, K->HG);
         }
@@ -7080,44 +7162,18 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 				  K->P1, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
 				  K->Lt, GRETL_MOD_TRANSPOSE,
-				  K->PL, GRETL_MOD_NONE);
-	/* if T not identity matrix */
-	gretl_matrix_multiply_mod(K->T,  GRETL_MOD_NONE,
-				  K->PL, GRETL_MOD_NONE,
-				  K->P1, GRETL_MOD_CUMULATE);
-	/* else... */
-	/* then */
+				  K->rr, GRETL_MOD_NONE);
+	if (K->TI) {
+	    gretl_matrix_add_to(K->P1, K->rr);
+	} else {
+	    gretl_matrix_multiply_mod(K->T,  GRETL_MOD_NONE,
+				      K->rr, GRETL_MOD_NONE,
+				      K->P1, GRETL_MOD_CUMULATE);
+	}
         fast_copy_values(K->P0, K->P1);
 
-	if (K->t < K->d) {
-	    double lmin = 0;
-
-	    /* initial diffuse phase */
-	    /* Vt = -Z*At */
-	    /* b.V[t,] = vec(Vt)' */
-	    /* Vv = Vt ~ vt */
-	    /* calculate Q[t+1], A[t+1] */
-	    /* Qt += Vv' * iFt * Vv */
-	    /* At = T*At + Kt*Vt */
-	    /* Sinv = Qt[1:p,1:p] */
-	    /* lam = eigensym(Sinv) */
-	    /* lmin = gretl_symmetric_matrix_min_eigenvalue(Sinv); */
-	    if (lmin > 1.0e-7) {
-		/* handle the collapse */
-		K->d = K->t + 1;
-		fprintf(stderr, "*** determined m = %d ***\n", K->d);
-		/* matrix S = inv(Sinv) */
-		/* ldSinv = ldet(Sinv) # de Jong 1991 */
-		/* ldsum += ldSinv */
-		/* s = -Qt[1:p,p+1] */
-		/* at += At*S*s */
-		/* Pt += At*S*At' */
-		/* qm = Qt[p+1,p+1] - s'*S*s */
-		/* qsum += qm */
-		/* b.S = S */
-		/* b.s = s */
-		/* b.Am = At */
-	    }
+	if (K->exact && K->t < K->d) {
+	    dejong_diffuse_filter_step(K);
 	} else {
 	    /* standard Kalman phase */
 	    qt = gretl_scalar_qform(K->vt, K->iFt, &err);
