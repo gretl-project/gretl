@@ -95,8 +95,8 @@ static void rescale_results (double *theta, gretl_matrix *V,
 
 static int
 write_garch_stats (MODEL *pmod, const int *list, const DATASET *dset,
-		   double *theta, gretl_matrix *V, double scale,
-		   const double *e, const double *h,
+		   double *theta, gretl_matrix *V, int p, int q,
+		   double scale, const double *e, const double *h,
 		   int npar, int nc, int pad, int ifc, PRN *prn)
 {
     double *garch_h;
@@ -106,6 +106,16 @@ write_garch_stats (MODEL *pmod, const int *list, const DATASET *dset,
     int nvp = list[1] + list[2];
     int xvars = list[0] - 4;
     int i, err;
+
+    err = gretl_model_set_int(pmod, "garch_p", p);
+    if (err) {
+	return err;
+    }
+
+    err = gretl_model_set_int(pmod, "garch_q", q);
+    if (err) {
+	return err;
+    }
 
     if (scale != 1.0) {
 	rescale_results(theta, V, scale, npar, nc);
@@ -436,8 +446,8 @@ garch_driver (const int *list, double scale,
 
     if (!err) {
 	pmod->lnL = ll;
-	write_garch_stats(pmod, list, dset, theta, V, scale,
-			  e, h, npar, nc, pad, ifc, prn);
+	write_garch_stats(pmod, list, dset, theta, V, p, q,
+			  scale, e, h, npar, nc, pad, ifc, prn);
 	if (iters > 0) {
 	    gretl_model_set_int(pmod, "iters", iters);
 	} else if (grc > 0) {
