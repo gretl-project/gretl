@@ -32,6 +32,9 @@
 #include "gretl_string_table.h"
 #include "swap_bytes.h"
 
+#define STRDEBUG 0
+#define HDR_DEBUG 0
+
 #ifdef WORDS_BIGENDIAN
 # define HOST_ENDIAN G_BIG_ENDIAN
 #else
@@ -88,8 +91,6 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 # endif /* SAFETY_FIRST */
 
 #endif /* 32-bit Windows */
-
-#define STRDEBUG 0
 
 /* extra error code for new dta version not yet supported */
 #define E_NOTYET E_MAX+1
@@ -456,6 +457,11 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
     default:
         err = 1;
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "stata_version = %d, vnamelen %d\n",
+	    stata_version, *vnamelen);
+#endif
 
     stata_OLD = !stata_SE;
 
@@ -1076,6 +1082,11 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 
     stata_read_string(fp, namelen + 1, buf, &err);
 
+#if HDR_DEBUG
+    fprintf(stderr, "varname %d: read length %d, '%s'\n",
+	    v, namelen + 1, buf);
+#endif
+
     if (!err) {
 	if (gretl_namechar_spn(buf) == strlen(buf)) {
 	    pprintf(vprn, "variable %d: name = '%s'\n", v, buf);
@@ -1383,8 +1394,8 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     int nvar = dset->v - 1;
     int nsv = 0;
     int pd = 0, tvar = -1;
-    char label[321]; /* dataset label */
-    char aname[129]; /* variable names */
+    char label[322]; /* dataset label */
+    char aname[130]; /* variable names */
     char c60[60];    /* misc strings */
     int *types = NULL;
     int *lvars = NULL;
@@ -1399,6 +1410,11 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	namelen = 128;
 	vlabellen = 321;
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "fmtlen %d, namelen %d, vlabellen %d, dlabellen %d\n",
+	    fmtlen, namelen, vlabellen, dtab->dlabellen);
+#endif
 
     *label = *c60 = '\0';
 
@@ -1465,6 +1481,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 				    dset, i+1, vprn);
     }
 
+#if HDR_DEBUG
+    fprintf(stderr, "dtab->vfmt_pos = %d\n", (int) dtab->vfmt_pos);
+#endif
+
     if (!err && dtab->vfmt_pos > 0) {
 	/* format list (use it to extract time-series info?) */
 	err = stata_seek(fp, dtab->vfmt_pos, SEEK_SET);
@@ -1480,6 +1500,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	free(types);
 	return err;
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "dtab->vallblnam_pos = %d\n", (int) dtab->vallblnam_pos);
+#endif
 
     err = stata_seek(fp, dtab->vallblnam_pos, SEEK_SET);
 
@@ -1498,6 +1522,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	/* work around bug in some Stata files */
 	maybe_fix_varlabel_pos(fp, dtab);
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "dtab->varlabel_pos = %d\n", (int) dtab->varlabel_pos);
+#endif
 
     if (!err && dtab->varlabel_pos > 0) {
 	/* variable descriptive labels */
@@ -1557,6 +1585,11 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     if (!err && tvar > 0) {
 	set_time_info(dset, tvar, pd);
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "dtab->vallabel_pos = %d, lvars = %p\n",
+	    (int) dtab->vallabel_pos, (void *) lvars);
+#endif
 
     if (!err) {
 	err = stata_seek(fp, dtab->vallabel_pos, SEEK_SET);
@@ -1888,8 +1921,6 @@ static int stata_get_nobs (FILE *fp, int *err)
     return n;
 }
 
-#define HDR_DEBUG 0
-
 /* dta header (format 117, Stata 13):
 
   file format id     <release>...</release>
@@ -1904,8 +1935,8 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 				 PRN *prn, PRN *vprn)
 {
     int clen = 0;
-    char order[4];
-    char buf[96];
+    char order[8];
+    char buf[128];
     size_t b;
     int i, err = 0;
 
@@ -1913,7 +1944,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     buf[b] = '\0';
 
     if (sscanf(buf, "<header><release>%d</release>"
-	       "<byteorder>%3s</byteorder>",
+	       "<byteorder>%3[^<]</byteorder>",
 	       &dtab->version, order) != 2) {
 	err = 1;
     } else {
@@ -1974,12 +2005,10 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 	    } else {
 		clen = stata_read_byte(fp, &err);
 	    }
-	    if (!err) {
-		if (clen > 0) {
-		    dtab->dlabellen = clen;
-		    dtab->dlabelpos = ftell64(fp);
-		    err = stata_seek(fp, clen, SEEK_CUR);
-		}
+	    if (!err && clen > 0) {
+		dtab->dlabellen = clen;
+		dtab->dlabelpos = ftell64(fp);
+		err = stata_seek(fp, clen, SEEK_CUR);
 	    }
 	}
     }
@@ -2009,22 +2038,23 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     if (!err) {
 	/* skip "</timestamp></header>" */
 	err = stata_seek(fp, 21, SEEK_CUR);
-	if (!err) {
-	    if (fread(buf, 1, 5, fp) != 5) {
-		err = 1;
-	    } else {
-		buf[5] = '\0';
-		if (strcmp(buf, "<map>")) {
-		    err = 1;
-		} else {
-		    goffset offset;
+	/* and read 5 bytes */
+	if (!err && fread(buf, 1, 5, fp) != 5) {
+	    err = 1;
+	}
+    }
 
-		    for (i=0; i<14 && !err; i++) {
-			offset = stata_read_int64(fp, &err);
-			if (i > 0 && !err) {
-			    err = dtab_save_offset(dtab, i, offset);
-			}
-		    }
+    if (!err) {
+	buf[5] = '\0';
+	if (strcmp(buf, "<map>")) {
+	    err = 1;
+	} else {
+	    goffset offset;
+
+	    for (i=0; i<14 && !err; i++) {
+		offset = stata_read_int64(fp, &err);
+		if (i > 0 && !err) {
+		    err = dtab_save_offset(dtab, i, offset);
 		}
 	    }
 	}
