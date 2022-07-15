@@ -33,7 +33,7 @@
 #include "swap_bytes.h"
 
 #define STRDEBUG 0
-#define HDR_DEBUG 0
+#define HDR_DEBUG 1
 
 #ifdef WORDS_BIGENDIAN
 # define HOST_ENDIAN G_BIG_ENDIAN
@@ -1111,6 +1111,7 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
     }
 
     if (!err) {
+	dset->varname[v][0] = '\0';
         strncat(dset->varname[v], buf, VNAMELEN - 1);
     }
 
@@ -1543,6 +1544,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
         return err;
     }
 
+#if HDR_DEBUG
+    fprintf(stderr, "dtab->data_pos = %d\n", (int) dtab->data_pos);
+#endif
+
     err = stata_seek(fp, dtab->data_pos, SEEK_SET);
 
     /* actual data values */
@@ -1608,15 +1613,12 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
                 pprintf(vprn, "breaking on end of value labels\n");
                 break;
             }
-
             /* otherwise it's supposed to be "<lbl>" */
             st_err = stata_seek(fp, -10, SEEK_CUR);
-
             if (!st_err) {
                 st_err = process_value_labels(fp, dset, j, lvars, lnames,
                                               namelen, pst, &st_prn, vprn);
             }
-
             if (!st_err) {
                 /* skip pseudo-XML for next read */
                 st_err = stata_seek(fp, strlen("</lbl>"), SEEK_CUR);
@@ -1641,6 +1643,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
         strings_array_free(lnames, lvars[0]);
         free(lvars);
     }
+
+#if HDR_DEBUG
+    fprintf(stderr, "read_dta_117_data: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -1975,7 +1981,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
         return E_NOTYET;
     }
 
-#if HDR_DEBUG
+#if HDR_DEBUG > 1
     fprintf(stderr, "header step 1: err = %d\n", err);
 #endif
 
@@ -1992,7 +1998,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
         }
     }
 
-#if HDR_DEBUG
+#if HDR_DEBUG > 1
     fprintf(stderr, "header step 2: err = %d\n", err);
 #endif
 
@@ -2013,7 +2019,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
         }
     }
 
-#if HDR_DEBUG
+#if HDR_DEBUG > 1
     fprintf(stderr, "header step 3: err = %d\n", err);
 #endif
 
@@ -2031,7 +2037,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
         }
     }
 
-#if HDR_DEBUG
+#if HDR_DEBUG > 1
     fprintf(stderr, "header step 4: err = %d\n", err);
 #endif
 
@@ -2060,7 +2066,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
         }
     }
 
-#if HDR_DEBUG
+#if HDR_DEBUG > 1
     fprintf(stderr, "header step 5: err = %d\n", err);
 #endif
 
@@ -2068,7 +2074,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
         err = 1;
     }
 
-#if HDR_DEBUG
+#if HDR_DEBUG > 1
     fprintf(stderr, "header step 6: err = %d (nvar = %d, nobs = %d)\n",
             err, dtab->nvar, dtab->nobs);
 #endif
