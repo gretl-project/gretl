@@ -108,28 +108,22 @@ write_garch_stats (MODEL *pmod, const int *list, const DATASET *dset,
     int i, err;
 
     err = gretl_model_set_int(pmod, "garch_p", p);
-    if (err) {
-	return err;
+    if (!err) {
+	err = gretl_model_set_int(pmod, "garch_q", q);
     }
-
-    err = gretl_model_set_int(pmod, "garch_q", q);
-    if (err) {
-	return err;
-    }
-
-    if (scale != 1.0) {
-	rescale_results(theta, V, scale, npar, nc);
-    }
-
-    err = gretl_model_write_coeffs(pmod, theta, npar);
 
     if (!err) {
-	gretl_model_write_vcv(pmod, V);
+	if (scale != 1.0) {
+	    rescale_results(theta, V, scale, npar, nc);
+	}
+	err = gretl_model_write_coeffs(pmod, theta, npar);
     }
 
     if (err) {
 	return err;
     }
+
+    gretl_model_write_vcv(pmod, V);
 
     /* verbose? */
     if (prn != NULL) {
