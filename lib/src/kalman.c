@@ -7271,10 +7271,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
 /* r_{t-1} = Z_t' F_t^{-1} v_t + L_t' r_t */
 
-static void state_rt_recursion (kalman *K,
-				gretl_matrix *n1,
-				gretl_matrix *r0,
-				gretl_matrix *r1)
+static void rt_recursion (kalman *K,
+			  gretl_matrix *n1,
+			  gretl_matrix *r0,
+			  gretl_matrix *r1)
 {
     gretl_matrix_multiply(K->iFt, K->vt, n1);
     if (K->t == K->N - 1) {
@@ -7290,9 +7290,9 @@ static void state_rt_recursion (kalman *K,
 
 /* N_{t-1} = Z_t' F_t^{-1} Z_t + L_t' N_t L_t */
 
-static void state_Nt_recursion (kalman *K,
-				gretl_matrix *N0,
-				gretl_matrix *N1)
+static void Nt_recursion (kalman *K,
+			  gretl_matrix *N0,
+			  gretl_matrix *N1)
 {
     if (K->t == K->N - 1) {
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
@@ -7335,9 +7335,6 @@ static int record_dhat_and_Psi (kalman *K,
 		       Nt, K->rr, GRETL_MOD_NONE);
     gretl_matrix_qform(dj->S, GRETL_MOD_NONE, K->rr,
 		       Psi, GRETL_MOD_DECREMENT);
-
-    //gretl_matrix_print(dhat, "dhat");
-    //gretl_matrix_print(Psi, "Psi");
 
     return err;
 }
@@ -7500,11 +7497,11 @@ static int state_smooth_dejong (kalman *K)
         }
 
 	/* compute N_{t-1} */
-	state_Nt_recursion(K, N0, N1);
+	Nt_recursion(K, N0, N1);
 
 	if (t >= K->d) {
 	    /* regular recursion: compute r_{t-1} */
-	    state_rt_recursion(K, n1, r0, r1);
+	    rt_recursion(K, n1, r0, r1);
 	    /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
 	    fast_copy_values(K->a1, K->a0);
 	    gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
@@ -7541,10 +7538,53 @@ static int state_smooth_dejong (kalman *K)
 
 static int dist_smooth_dejong (kalman *K)
 {
+    gretl_matrix_block *B, *B2 = NULL;
     gretl_matrix *nu_t, *Vnu_t;
+    gretl_matrix *r0, *r1, *N0, *N1, *n1;
+    gretl_matrix *Bt, *Ct, *Rt;
+    gretl_matrix *dhat, *Psi;
+    int no_collapse = 0;
+    int nt = K->n;
     int t, err = 0;
 
-    /* allocate rt, Nt, Rt, nu_t, Vnu_t */
+    B = gretl_matrix_block_new(&r0,  K->r, 1,
+                               &r1,  K->r, 1,
+                               &N0,  K->r, K->r,
+                               &N1,  K->r, K->r,
+                               &n1,  K->n, 1,
+			       &nu_t,  K->p, 1,
+			       &Vnu_t, K->p, K->p,
+                               NULL);
+    if (B == NULL) {
+	err = E_ALLOC;
+    }
+
+    /* FIXME conditionality? */
+    if (!err && K->exact) {
+	B2 = gretl_matrix_block_new(&Bt,   K->r, K->r,
+				    &Ct,   K->r, K->r,
+				    &Rt,   K->r, K->r,
+				    &dhat, K->r, 1,
+				    &Psi,  K->r, K->r,
+				    NULL);
+	if (B2 == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+        return err;
+    }
+
+    if (kdebug) {
+        fprintf(stderr, "dist_smooth_dejong\n");
+    }
+
+    gretl_matrix_zero(r0);
+    gretl_matrix_zero(N0);
+    if (B2 != NULL) {
+	gretl_matrix_zero(Rt);
+    }
 
     /* allocate (for export) nu, Vnu */
 
@@ -7556,43 +7596,54 @@ static int dist_smooth_dejong (kalman *K)
 	gretl_matrix_multiply_mod(Jt, GRETL_MOD_TRANSPOSE,
 				  rt, GRETL_MOD_NONE,
 				  nu_t, GRETL_MOD_NONE);
-	gretl_matrix_multiply(K->iFt, K->vt, XX);
+	gretl_matrix_multiply(K->iFt, K->vt, tmp);
 	gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
-				  XX, GRETL_MOD_NONE,
+				  tmp, GRETL_MOD_NONE,
 				  nu_t, GRETL_MOD_INCREMENT);
 
 	if (dkstyle) {
 	    /* Vnu = I(r) - (G' * iFt * G + Jt' * Nt * Jt) */
-	    ;
+	    gretl_matrix_inscribe_I(Vnu_t, 0, 0, K->p);
+	    gretl_matrix_qform(dj->Jt, GRETL_MOD_TRANSPOSE,
+			       Nt, Vnu_t, GRETL_MOD_DECREMENT);
+	    gretl_matrix_qform(K->G, GRETL_MOD_TRANSPOSE,
+			       K->iFt, Vnu_t, GRETL_MOD_DECREMENT);
 	} else {
 	    /* Vnu = G' * iFt * G + Jt' * Nt * Jt */
-	    ;
+	    gretl_matrix_qform(dj->Jt, GRETL_MOD_TRANSPOSE,
+			       Nt, Vnu_t, GRETL_MOD_NONE);
+	    gretl_matrix_qform(K->G, GRETL_MOD_TRANSPOSE,
+			       K->iFt, Vnu_t, GRETL_MOD_CUMULATE);
 	}
 
 	if (t == K->d) {
 	    /* rm1 = Z' * iFt * vt + Lt' * rt */
+	    rt_recursion(K, n1, r0, r1);
 	    /* Nm1 = Z' * iFt * Z + Lt' * Nt * Lt */
-	    /* record stuff */
-	    /* dhat = S * (s + Am' * rm1) */
-	    /* Psi = S - S * Am' * Nm1 * Am * S */
+	    Nt_recursion(K, N0, N1);
+	    record_dhat_and_Psi(K, dhat, Psi, rt, Nt);
 	} else if (t < K->d) {
-	    /* load Vt */
-	    /* At = (t == m-1)? Am : mshape(b.A[t+1,], p, p) */
+	    load_from_col(dj->Vt, dj->V, t);
+	    if (t == K->d - 1) {
+		fast_copy_values(dj->At, dj->Am);
+	    } else {
+		load_from_col(dj->At, dj->A, t);
+	    }
 	    /* Bt = G' * iFt * Vt + Jt' * Rt */
 	    /* Ct = Jt' * (Rt + Nt * At) # note: "At" = A_{t+1} */
 	    /* nu_t += Bt * dhat */
 	    /* BSC = Bt * S * Ct' */
 	    /* Vnu_adj = Bt * Psi * Bt' - BSC - BSC' */
 	    if (dkstyle) {
-		Vnu_t += Vnu_adj;
+		gretl_matrix_add_to(Vnu_t, Vnu_adj);
 	    } else {
-		Vnu_t -= Vnu_adj;
+		gretl_matrix_subtract_from(Vnu_t, Vnu_adj);
 	    }
 	}
 
 	/* record t-dated results */
-	/* nu[t,] = nu_t' */
-	/* Vnu[t,] = vec(Vnu_t)' */
+	load_to_row(nu, nu_t, t);
+	load_to_vec(Vnu, Vnu_t, t);
 
 	if (t > 1) {
 	    /* t-1 dated quantities */
@@ -7600,11 +7651,19 @@ static int dist_smooth_dejong (kalman *K)
 		rt = rm1;
 		Nt = Nm1;
 	    } else {
-		/* rt = Z' * iFt * vt + Lt' * rt */
-		/* Nt = Z' * iFt * Z + Lt' * Nt * Lt */
+		rt_recursion(K, n1, r0, r1);
+		Nt_recursion(K, N0, N1);
 	    }
 	    if (t < m) {
 		/* Rt = Z' * iFt * Vt + Lt' * Rt */
+		gretl_matrix_multiply_mod(dj->Lt, GRETL_MOD_TRANSPOSE,
+					  Rt, GRETL_MOD_NONE,
+					  XX, GRETL_MOD_NONE);
+		gretl_matrix_multiply(K->iFt, dj->Vt, YY);
+		gretl_matrix_multiply_mod(K->ZT, GRETL_MOD_NONE,
+					  YY, GRETL_MOD_NONE,
+					  XX, GRETL_MOD_CUMULATE);
+		fast_copy_values(Rt, XX);
 	    }
 	}
     }
