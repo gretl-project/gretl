@@ -38,7 +38,7 @@
 #define EXACT_DEBUG 0
 #define K_TINY 1.0e-12
 
-static int kdebug;
+static int kdebug = 1;
 
 /* try using incomplete observations? */
 #define USE_INCOMPLETE_OBS 1
@@ -105,7 +105,6 @@ struct dejong_info_ {
     gretl_matrix *s;   /* vector embedded in Qt */
     gretl_matrix *A;   /* recorder for smoother */
     gretl_matrix *V;   /* ditto */
-    gretl_matrix *L;   /* ditto */
     gretl_matrix *J;   /* ditto */
     gretl_matrix *Am;  /* ditto (redundant?) */
     double qm;         /* scalar embedded in Qt */
@@ -152,6 +151,7 @@ struct kalman_ {
     gretl_matrix *Lt; /* r x r */
     gretl_matrix *Jt; /* r x p */
     gretl_matrix *rr; /* r x r */
+    gretl_matrix *L;  /* recorder */
 
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
@@ -383,7 +383,6 @@ static void free_dejong_info (kalman *K)
 
 	gretl_matrix_free(K->djinfo->A);
 	gretl_matrix_free(K->djinfo->V);
-	gretl_matrix_free(K->djinfo->L);
 	gretl_matrix_free(K->djinfo->J);
 	gretl_matrix_free(K->djinfo->Am);
 
@@ -407,6 +406,7 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->LL);
     gretl_matrix_free(K->Pk0);
     gretl_matrix_free(K->Pk1);
+    gretl_matrix_free(K->L);
 
     /* internally allocated workspace */
     gretl_matrix_block_destroy(K->Blk);
@@ -482,6 +482,7 @@ static kalman *kalman_new_empty (int flags)
         K->H = K->G = K->HG = K->Jt = NULL;  /* de Jong variance */
         K->Q = K->R = K->QRT = NULL; /* Durbin-Koopman variance */
         K->V = K->F = K->A = K->K = K->P = NULL;
+	K->L = NULL;
         K->y = K->x = NULL;
         K->mu = NULL;
         K->U = NULL;
@@ -2592,6 +2593,8 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 {
     int err = kalman_ensure_output_matrices(K);
 
+    fprintf(stderr, "HERE kalman_run\n");
+
     if (!err) {
         gretl_matrix_zero(K->vt);
         err = kalman_bundle_recheck_matrices(K, prn);
@@ -2623,7 +2626,7 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
         if (kalman_univariate(K)) {
             err = kfilter_univariate(K, prn);
         } else {
-	    if (1 || getenv("KFILT_DEJONG") != NULL) {
+	    if (1) {
 		err = kfilter_dejong(K, prn);
 	    } else {
 		err = kalman_forecast(K, prn);
@@ -2917,10 +2920,6 @@ static int load_filter_data (kalman *K, int *pnt, int smtype)
         /* load the gain and F^{-1} */
         load_from_vec(K->Kt, K->K, K->t);
         load_from_vech(K->iFt, K->F, nt, K->t, GRETL_MOD_NONE);
-	if (!kalman_univariate(K)) {
-	    /* de Jong */
-	    load_from_col(K->Lt, K->djinfo->L, K->t);
-	}
     }
 
     return err;
@@ -3489,7 +3488,6 @@ static int kalman_add_dejong_info (kalman *K)
     K->djinfo->s  = gretl_matrix_alloc(K->r, 1);
     K->djinfo->A  = NULL;
     K->djinfo->V  = NULL;
-    K->djinfo->L  = NULL;
     K->djinfo->J  = NULL;
     K->djinfo->Am = NULL;
 
@@ -3523,8 +3521,6 @@ static int ensure_U_matrix (kalman *K)
 static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
     int err = kalman_ensure_output_matrices(K);
-    int save_exact = K->exact;
-    gretl_matrix *save_P = NULL;
 
     if (!err && dist && !kalman_univariate(K)) {
         err = ensure_U_matrix(K);
@@ -3542,38 +3538,23 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         }
     }
 
-    if (dist > 0 && K->exact) {
-        /* exact initial disturbance smoothing */
-        if (K->p > 0) {
-            pputs(prn, "Warning: exact initial disturbance smoothing is not "
-                  "supported for cross-correlated errors\n\n");
-            kalman_set_diffuse(K, 1);
-        } else if (!kalman_univariate(K)) {
-            pputs(prn, "Warning: exact initial disturbance smoothing is dodgy!\n\n");
-            // kalman_set_diffuse(K, 1);
-        }
-    }
+    if (K->exact && kalman_univariate(K)) {
+	int Nd = matrix_is_varying(K, K_ZT) ? K->N : 4 * K->r;
+	int rows = K->r * K->r;
 
-    if (K->exact) {
-        if (kalman_univariate(K)) {
-            int Nd = matrix_is_varying(K, K_ZT) ? K->N : 4 * K->r;
-            int rows = K->r * K->r;
-
-            K->PK = gretl_zero_matrix_new(rows, Nd);
-        } else {
-            int rr = (K->r * K->r + K->r) / 2;
-
-            /* Note: PK will need more than K->r cols if d > K->r */
-            K->PK = gretl_zero_matrix_new(rr, K->r);
-        }
+	K->PK = gretl_zero_matrix_new(rows, Nd);
     }
 
     if (!err) {
         err = kalman_bundle_recheck_matrices(K, prn);
     }
 
-    if (!err && kalman_univariate(K)) {
-        err = ensure_univariate_info(K);
+    if (!err) {
+	if (kalman_univariate(K)) {
+	    err = ensure_univariate_info(K);
+	} else if (K->exact) {
+	    err = ensure_dejong_info(K);
+	}
     }
 
     /* recorder for partially missing observations */
@@ -3582,23 +3563,12 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     if (!err) {
         /* prior forward pass */
         K->flags |= KALMAN_SMOOTH;
-        if (dist == 0) {
-            /* Anderson-Moore */
-            K->flags |= KALMAN_SM_AM;
-        } else if (0 /* !K->exact */) {
-            /* don't overwrite P (not needed for the disturbance
-               smoother, other than in the exact initial case)
-            */
-            save_P = K->P;
-            K->P = NULL;
-        }
         if (kalman_univariate(K)) {
             err = kfilter_univariate(K, NULL);
         } else {
-            err = kalman_forecast(K, NULL);
+            err = kfilter_dejong(K, NULL);
         }
         K->flags &= ~KALMAN_SMOOTH;
-        K->flags &= ~KALMAN_SM_AM;
     }
 
     K->t = 0;
@@ -3607,21 +3577,12 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         if (kalman_univariate(K)) {
             err = ksmooth_univariate(K, dist);
         } else if (dist > 1) {
-            err = koopman_smooth(K, 1);
+            err = koopman_smooth(K, 1); /* FIXME */
         } else if (dist == 1) {
-            err = koopman_smooth(K, 0);
+            err = koopman_smooth(K, 0); /* FIXME */
         } else {
-            err = anderson_moore_smooth(K);
-	    // not yet err = state_smooth_dejong(K);
+	    err = state_smooth_dejong(K);
         }
-    }
-
-    if (save_exact) {
-        /* re-establish 'exact' status */
-        kalman_set_diffuse(K, 2);
-    }
-    if (save_P != NULL) {
-        K->P = save_P;
     }
 
     /* free "special case" storage */
@@ -6897,12 +6858,21 @@ static int ksmooth_univariate (kalman *K, int dist)
 
 static int ensure_dj_smo_recorders (kalman *K, int Nd)
 {
-    if (K->djinfo->L == NULL) {
+    if (K->exact && K->djinfo->A == NULL) {
 	K->djinfo->A = gretl_zero_matrix_new(K->r * K->r, Nd);
 	K->djinfo->V = gretl_zero_matrix_new(K->n * K->r, Nd);
-        K->djinfo->L = gretl_zero_matrix_new(K->r * K->r, Nd);
-        K->djinfo->J = gretl_zero_matrix_new(K->r * K->p, Nd);
-        K->djinfo->Nd = Nd;
+	K->djinfo->J = gretl_zero_matrix_new(K->r * K->p, Nd);
+    }
+
+    K->djinfo->Nd = Nd;
+
+    return 0;
+}
+
+static int ensure_basic_smo_recorder (kalman *K)
+{
+    if (K->L == NULL) {
+	K->L = gretl_zero_matrix_new(K->r * K->r, K->N);
     }
 
     return 0;
@@ -6983,7 +6953,9 @@ static int dejong_diffuse_filter_step (kalman *K)
 			      dj->At, GRETL_MOD_NONE,
 			      dj->Vt, GRETL_MOD_DECREMENT);
     if (dj->V != NULL) {
-	load_to_vec(dj->V, dj->Vt, K->t);
+	fprintf(stderr, "HERE V is %d x %d, Vt %d x %d; t=%d\n",
+		dj->V->rows, dj->V->cols, dj->Vt->rows, dj->Vt->cols, K->t);
+	load_to_col(dj->V, dj->Vt, K->t);
     }
 
     /* Vv = Vt ~ vt */
@@ -7056,7 +7028,8 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     double llt, llct, ldt, qt;
     int smo = kalman_smoothing(K);
     char *missmap = NULL;
-    int Nd, err = 0;
+    int Nd = K->N;
+    int err = 0;
 
     /* FIXME placement of this? */
     err = ensure_dj_variance_matrices(K);
@@ -7064,14 +7037,19 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	return err;
     }
 
-    if (smo && K->exact) {
-        Nd = matrix_is_varying(K, K_ZT) ? K->N : 4*K->r;
-        ensure_dj_smo_recorders(K, Nd);
+    if (smo) {
+	ensure_basic_smo_recorder(K);
+	if (K->exact) {
+	    Nd = K->N; // matrix_is_varying(K, K_ZT) ? K->N : 4*K->r;
+	    ensure_dj_smo_recorders(K, Nd);
+	}
     }
 
     /* initialize */
     fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
-    fast_write_I(K->djinfo->At);
+    if (K->exact) {
+	fast_write_I(K->djinfo->At);
+    }
 
     if (kdebug > 1) {
         fprintf(stderr, "\n*** kfilter_dejong: N=%d, n=%d, exact=%d ***\n",
@@ -7085,14 +7063,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
 #endif
 
-    if (kalman_diffuse(K)) {
-	if (K->exact) {
-	    K->d = K->N + 1;
-	} else {
-	    K->d = K->r;
-	}
+    if (kalman_diffuse(K) && K->exact) {
+	K->d = K->N + 1;
     } else {
-        K->d = 0;
+        K->d = -1;
     }
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
@@ -7196,10 +7170,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	}
 
 	/* record matrices for the smoother */
-	if (K->djinfo->L != NULL) {
-	    load_to_col(K->djinfo->L, K->Lt, K->t);
+	if (K->L != NULL) {
+	    load_to_col(K->L, K->Lt, K->t);
 	}
-	if (K->djinfo->J != NULL) {
+	if (K->djinfo != NULL && K->djinfo->J != NULL) {
 	    load_to_col(K->djinfo->J, K->Jt, K->t);
 	}
 
@@ -7279,8 +7253,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         K->loglik = -0.5 * (K->okN * ll1 + sumldet);
     } else {
-	/* ?? */
-        K->s2 = K->SSRw / (K->n * K->okN - K->d);
+	int d = (kalman_diffuse(K) && !K->exact)? K->r : 0;
+
+	/* as per old kalman_forecast() code */
+        K->s2 = K->SSRw / (K->n * K->okN - d);
     }
 
     if (kdebug) {
@@ -7320,7 +7296,11 @@ static void state_Nt_recursion (kalman *K,
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
                            K->iFt, N0, GRETL_MOD_NONE);
     } else {
-	load_from_col(K->Lt, K->djinfo->L, K->t);
+	if (K->L == NULL) {
+	    fprintf(stderr, "Nt recursion, L is NULL\n");
+	    abort();
+	}
+	load_from_col(K->Lt, K->L, K->t);
         gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
                            K->iFt, N1, GRETL_MOD_NONE);
         gretl_matrix_qform(K->Lt, GRETL_MOD_TRANSPOSE,
@@ -7348,13 +7328,11 @@ static int record_dhat_and_Psi (kalman *K,
     gretl_matrix_free(tmp);
 
     /* Psi = S - S * Am' * Nt * Am * S */
-    tmp = gretl_matrix_alloc(K->r, K->r);
     fast_copy_values(Psi, dj->S);
     gretl_matrix_qform(dj->Am, GRETL_MOD_TRANSPOSE,
-		       Nt, tmp, GRETL_MOD_NONE);
-    gretl_matrix_qform(dj->S, GRETL_MOD_NONE, tmp,
+		       Nt, K->rr, GRETL_MOD_NONE);
+    gretl_matrix_qform(dj->S, GRETL_MOD_NONE, K->rr,
 		       Psi, GRETL_MOD_DECREMENT);
-    gretl_matrix_free(tmp);
 
     return err;
 }
@@ -7377,7 +7355,7 @@ static int dejong_diffuse_smoother_step (kalman *K,
 
     load_from_col(dj->Vt, dj->V, K->t);
     load_from_col(dj->At, dj->A, K->t);
-    load_from_col(K->Lt, dj->L, K->t);
+    load_from_col(K->Lt, K->L, K->t);
 
     tmp = gretl_matrix_alloc(K->r, K->r + 1);
     tmp2 = gretl_matrix_alloc(K->n, K->r + 1);
@@ -7477,19 +7455,25 @@ static int state_smooth_dejong (kalman *K)
                                &N1,  K->r, K->r,
                                &n1,  K->n, 1,
                                NULL);
+    if (B == NULL) {
+	err = E_ALLOC;
+    }
 
     /* FIXME conditionality? */
-    if (B != NULL && K->exact) {
+    if (!err && K->exact) {
 	B2 = gretl_matrix_block_new(&Bt,   K->r, K->r,
 				    &Ct,   K->r, K->r,
 				    &Rt,   K->r, K->r,
 				    &dhat, K->r, 1,
 				    &Psi,  K->r, K->r,
 				    NULL);
+	if (B2 == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    if (B == NULL || B2 == NULL) {
-        return E_ALLOC;
+    if (err) {
+        return err;
     }
 
     if (kdebug) {
@@ -7543,8 +7527,8 @@ static int state_smooth_dejong (kalman *K)
         }
     }
 
-    gretl_matrix_block_destroy(B);
     gretl_matrix_block_destroy(B2);
+    gretl_matrix_block_destroy(B);
 
     return err;
 }
