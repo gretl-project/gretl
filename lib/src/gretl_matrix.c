@@ -10190,6 +10190,8 @@ static gretl_matrix *eigensym_standard (gretl_matrix *m,
     return evals;
 }
 
+/* the following function seems to be broken, but why is a mystery */
+
 double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
 {
     double *mval = NULL;
@@ -10208,7 +10210,17 @@ double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
     if (mval == NULL || w == NULL) {
 	lmin = NADBL;
     } else {
+	int save_nt = 0;
+
 	memcpy(mval, m->val, n * sizeof *mval);
+
+	if (blas_is_openblas()) {
+	    save_nt = blas_get_num_threads();
+	    if (save_nt > 1) {
+		blas_set_num_threads(1);
+	    }
+	}
+
 	err = basic_eigensym_work(mval, w, n, 0);
 	if (err) {
 	    lmin = NADBL;
@@ -10218,6 +10230,9 @@ double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
 		    lmin = w[i];
 		}
 	    }
+	}
+	if (blas_is_openblas() && save_nt > 1) {
+	    blas_set_num_threads(save_nt);
 	}
     }
 

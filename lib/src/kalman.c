@@ -6960,6 +6960,7 @@ static int ensure_dj_variance_matrices (kalman *K)
 static int dejong_diffuse_filter_step (kalman *K)
 {
     dejong_info *dj = K->djinfo;
+    gretl_matrix *lam;
     double lmin = 0;
     int err = 0;
 
@@ -6981,7 +6982,7 @@ static int dejong_diffuse_filter_step (kalman *K)
     /* Q[t+1] : Qt += Vv' * iFt * Vv */
     gretl_matrix_qform(dj->Vv, GRETL_MOD_TRANSPOSE,
 		       K->iFt, dj->Qt, GRETL_MOD_CUMULATE);
-    gretl_matrix_print(dj->Qt, "Qt");
+    // gretl_matrix_print(dj->Qt, "Qt");
 
     /* A[t+1]: At = T*At + Kt*Vt */
     gretl_matrix_multiply(K->Kt, dj->Vt, K->rr);
@@ -6994,15 +6995,25 @@ static int dejong_diffuse_filter_step (kalman *K)
 	fast_copy_values(dj->At, K->rr);
     }
 
+    fprintf(stderr, "dejong_diffuse_filter_step: t = %d\n", K->t);
+
     /* Sinv = Qt[1:r,1:r] */
     gretl_matrix_extract_matrix(dj->S, dj->Qt, 0, 0, GRETL_MOD_NONE);
+#if 1
+    lam = gretl_symmetric_matrix_eigenvals(dj->S, 0, &err);
+    lmin = lam->val[0];
+    gretl_matrix_free(lam);
+#else
     lmin = gretl_symmetric_matrix_min_eigenvalue(dj->S);
+#endif
+    fprintf(stderr, "lmin = %g\n", lmin);
 
     if (lmin > 1.0e-7) {
 	/* handle the collapse */
 	K->d = K->t + 1;
 	fprintf(stderr, "*** determined m = %d ***\n", K->d);
-	/* Sinv = Qt[1:p,1:p] */
+
+	/* Sinv = Qt[1:r,1:r] */
 	gretl_matrix_extract_matrix(dj->S, dj->Qt, 0, 0, GRETL_MOD_NONE);
 
 	/* s = -Qt[1:r,r+1] */
@@ -7058,14 +7069,20 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
 
     /* initialize */
-    fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
+    if (kalman_diffuse(K) && !K->exact) {
+	fast_write_I(K->P0);
+	gretl_matrix_multiply_by_scalar(K->P0, kappa);
+    } else {
+	fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
+	// gretl_matrix_zero(K->P0);
+    }
     if (K->exact) {
 	fast_write_I(K->djinfo->At);
     }
 
-    if (kdebug > 1) {
-        fprintf(stderr, "\n*** kfilter_dejong: N=%d, n=%d, exact=%d ***\n",
-                K->N, K->n, K->exact);
+    if (1 /* kdebug > 1 */) {
+        fprintf(stderr, "\n*** kfilter_dejong: N=%d, n=%d, exact=%d, smo=%d ***\n",
+                K->N, K->n, K->exact, smo);
     }
 
 #if USE_INCOMPLETE_OBS
@@ -7424,7 +7441,9 @@ static int dejong_diffuse_smoother_step (kalman *K,
 	gretl_matrix_multiply(K->P0, K->rr, Ct);
 
 	/* BSC = Bt * S * Ct' */
-	gretl_matrix_multiply(dj->S, Ct, K->rr);
+	gretl_matrix_multiply_mod(dj->S, GRETL_MOD_NONE,
+				  Ct, GRETL_MOD_TRANSPOSE,
+				  K->rr, GRETL_MOD_NONE);
 	gretl_matrix_multiply(Bt, K->rr, BSC);
 
 	/* vht += Bt * Psi * Bt' - BSC - BSC' */
@@ -7617,7 +7636,7 @@ static int diffuse_dist_smooth_step (kalman *K,
 	gretl_matrix_free(BSC);
 	gretl_matrix_free(rp);
     }
-    gretl_matrix_free(rp);
+    gretl_matrix_free(pp);
 
     return err;
 }
