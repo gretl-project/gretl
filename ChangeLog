@@ -6,6 +6,8 @@ version 2022b, in progress
 - new function sphericorr(): spherical coordinates
   representation for correlation matrices
 - new option --decr for use with index loops
+- "garch" command: add the model order scalars (p and q) to
+  the $model bundle
 - "leverage" command: add $result accessor to obtain
   leverage, influence and studentized residuals as matrix
 - "pergm" and "fractint" commands: use FFT for computing the
