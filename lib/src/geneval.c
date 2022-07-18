@@ -20086,9 +20086,9 @@ static int set_nested_matrix_value (NODE *lhs,
 {
 #if LHDEBUG
     int err;
-    gretl_matrix_print(lhs->L->v.m, "LVM, before set matrix chunk");
+    gretl_matrix_print(lhs->L->v.m, "L->v.m, before set matrix chunk");
     err = set_matrix_chunk(lhs, rhs, p);
-    gretl_matrix_print(lhs->L->v.m, "LVM, after set matrix chunk");
+    gretl_matrix_print(lhs->L->v.m, "L->v.m, after set matrix chunk");
 #else
     int err = set_matrix_chunk(lhs, rhs, p);
 #endif
@@ -20198,6 +20198,30 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
     }
 }
 
+static void check_for_kalman_bundle_mod (parser *p,
+					 gretl_bundle **kb,
+					 const char **ks)
+{
+    NODE *n = p->lhtree;
+
+    while (n != NULL) {
+	if (n->t == BMEMB) {
+	    char *s = n->R->v.str;
+
+	    if (is_kalman_bundle(n->L->v.b) && s != NULL &&
+		(!strcmp(s, "statevar") || !strcmp(s, "obsvar"))) {
+		*kb = n->L->v.b;
+		*ks = s;
+	    }
+	    break;
+	} else if (n->L != NULL) {
+	    n = n->L;
+	} else {
+	    break;
+	}
+    }
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -20230,8 +20254,13 @@ static int save_generated_var (parser *p, PRN *prn)
 
     if (p->lhtree != NULL) {
 	/* handle compound target first */
+	gretl_bundle *kbundle = NULL;
+	const char *kkey = NULL;
 	int compound_t;
 
+	if (gretl_iteration_depth() > 0) {
+	    check_for_kalman_bundle_mod(p, &kbundle, &kkey);
+	}
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
 #if LHDEBUG
@@ -20285,6 +20314,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else {
 	    gretl_errmsg_set(_("Invalid left-hand side expression"));
 	    p->err = E_TYPES;
+	}
+	if (!p->err && kbundle != NULL && kkey != NULL) {
+	    kalman_notify_var_changed(kbundle, kkey);
 	}
 	return p->err; /* done */
     } /* end of compound target business */

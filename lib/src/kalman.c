@@ -271,6 +271,13 @@ static int bundle_add_matrix (gretl_bundle *b,
                               const char *key,
                               gretl_matrix *m);
 
+int is_kalman_bundle (gretl_bundle *b)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+
+    return K != NULL;
+}
+
 /* symbolic identifiers for input matrices: note that potentially
    time-varying matrices must appear first in the enumeration, and
    the order must match the order of the "input data matrices" in
@@ -640,15 +647,18 @@ static int kalman_check_dimensions (kalman *K)
     }
 
     if (K->H != NULL) {
-        /* cross-correlated disturbances */
-        if (K->G == NULL) {
-            err = missing_matrix_error("obsymat");
-        } else if (K->H->rows != K->r || K->H->cols != K->p ||
-                   K->G->rows != K->n || K->G->cols != K->p) {
-            fprintf(stderr, "H is %d x %d, G is %d x %d, p=%d, r=%d, n=%d\n",
-                    K->H->rows, K->H->cols, K->G->rows, K->G->cols,
-                    K->p, K->r, K->n);
+        /* de Jong variance representation */
+	if (K->H->rows != K->r || K->H->cols != K->p) {
+	    fprintf(stderr, "H is %d x %d, p=%d, r=%d, n=%d\n",
+                    K->H->rows, K->H->cols, K->p, K->r, K->n);
             err = E_NONCONF;
+	}
+	if (!err && K->G != NULL) {
+	    if (K->G->rows != K->n || K->G->cols != K->p) {
+		fprintf(stderr, "G is %d x %d, p=%d, r=%d, n=%d\n",
+			K->G->rows, K->G->cols, K->p, K->r, K->n);
+		err = E_NONCONF;
+	    }
         }
     } else if (K->R != NULL) {
         /* state disturbances as per Durbin-Koopman */
@@ -740,7 +750,7 @@ static int kalman_check_dimensions (kalman *K)
         err = maybe_resize_export_matrix(K, K->V, K_V);
     }
 
-    /* big F should be N x nn */
+    /* big F should be N x n*n */
     if (!err && K->F != NULL) {
         err = maybe_resize_export_matrix(K, K->F, K_F);
     }
@@ -2068,6 +2078,8 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
         mptr[4] = &K->R;
     }
 
+    fprintf(stderr, "HERE kalman_refresh_matrices\n");
+
     if (K->matcall != NULL) {
         err = kalman_update_matrices(K, prn);
     }
@@ -2597,8 +2609,6 @@ static int ensure_dejong_info (kalman *K)
 int kalman_run (kalman *K, PRN *prn, int *errp)
 {
     int err = kalman_ensure_output_matrices(K);
-
-    fprintf(stderr, "HERE kalman_run\n");
 
     if (!err) {
         gretl_matrix_zero(K->vt);
@@ -6908,13 +6918,16 @@ static int ensure_dj_variance_matrices (kalman *K)
     if (K->H == NULL) {
 	/* create H from K->VS */
 	gretl_matrix *tmp = gretl_matrix_copy(K->VS);
+	int offset = K->VY != NULL ? K->n : 0;
 
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    gretl_matrix_cholesky_decomp(tmp);
+	    err = gretl_matrix_psd_root(tmp, 0);
+	}
+	if (!err) {
 	    K->H = gretl_zero_matrix_new(K->r, K->p);
-	    gretl_matrix_inscribe_matrix(K->H, tmp, 0, K->n, GRETL_MOD_NONE);
+	    err = gretl_matrix_inscribe_matrix(K->H, tmp, 0, offset, GRETL_MOD_NONE);
 	    gretl_matrix_free(tmp);
 	}
     }
@@ -6926,9 +6939,11 @@ static int ensure_dj_variance_matrices (kalman *K)
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    gretl_matrix_cholesky_decomp(tmp);
+	    err = gretl_matrix_psd_root(tmp, 0);
+	}
+	if (!err) {
 	    K->G = gretl_zero_matrix_new(K->n, K->p);
-	    gretl_matrix_inscribe_matrix(K->G, tmp, 0, 0, GRETL_MOD_NONE);
+	    err = gretl_matrix_inscribe_matrix(K->G, tmp, 0, 0, GRETL_MOD_NONE);
 	    gretl_matrix_free(tmp);
 	}
     }
@@ -7077,7 +7092,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	fast_write_I(K->P0);
 	gretl_matrix_multiply_by_scalar(K->P0, kappa);
     } else {
-	fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
+	// fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
 	// gretl_matrix_zero(K->P0);
     }
     if (K->exact) {
@@ -7835,4 +7850,32 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     gretl_matrix_block_destroy(B2);
 
     return err;
+}
+
+/* Under the de Jong approach, try to handle changes to statevar
+   and/or obsvar that are produced by "genr" statements within
+   an mle block or similar. Note that this is a different issue
+   from time-varying matrices: the changes will not be made
+   within a filtering run, but between the filtering runs called
+   for by the likelihood maximizer.
+*/
+
+void kalman_notify_var_changed (gretl_bundle *b, const char *key)
+{
+    kalman *K = gretl_bundle_get_private_data(b);
+
+    if (K == NULL || kalman_univariate(K)) {
+	/* this applies only under the de Jong approach */
+	return;
+    }
+
+    if (!strcmp(key, "statevar")) {
+	gretl_matrix_free(K->H);
+	K->H = gretl_matrix_copy(K->VS);
+	gretl_matrix_psd_root(K->H, 0);
+    } else if (!strcmp(key, "obsvar")) {
+	gretl_matrix_free(K->G);
+	K->G = gretl_matrix_copy(K->VY);
+	gretl_matrix_psd_root(K->G, 0);
+    }
 }

@@ -40,6 +40,10 @@ int kalman_forecast (kalman *K, PRN *prn);
 
 int kalman_run (kalman *K, PRN *prn, int *errp);
 
+int is_kalman_bundle (gretl_bundle *b);
+
+void kalman_notify_var_changed (gretl_bundle *b, const char *key);
+
 gretl_matrix *kalman_smooth (kalman *K, gretlopt opt,
 			     PRN *prn, int *err);
 
