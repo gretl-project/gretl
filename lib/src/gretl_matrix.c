@@ -10190,6 +10190,8 @@ static gretl_matrix *eigensym_standard (gretl_matrix *m,
     return evals;
 }
 
+#if 0
+
 /* the following function seems to be broken, but why is a mystery */
 
 double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
@@ -10241,6 +10243,8 @@ double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
 
     return lmin;
 }
+
+#endif
 
 /**
  * gretl_symmetric_matrix_eigenvals:

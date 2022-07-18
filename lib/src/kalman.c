@@ -7000,9 +7000,13 @@ static int dejong_diffuse_filter_step (kalman *K)
     /* Sinv = Qt[1:r,1:r] */
     gretl_matrix_extract_matrix(dj->S, dj->Qt, 0, 0, GRETL_MOD_NONE);
 #if 1
-    lam = gretl_symmetric_matrix_eigenvals(dj->S, 0, &err);
-    lmin = lam->val[0];
-    gretl_matrix_free(lam);
+    if (K->r == 1) {
+	lmin = dj->S->val[0];
+    } else {
+	lam = gretl_symmetric_matrix_eigenvals(dj->S, 0, &err);
+	lmin = lam->val[0];
+	gretl_matrix_free(lam);
+    }
 #else
     lmin = gretl_symmetric_matrix_min_eigenvalue(dj->S);
 #endif
