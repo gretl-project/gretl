@@ -7864,8 +7864,11 @@ void kalman_notify_var_changed (gretl_bundle *b, const char *key)
 {
     kalman *K = gretl_bundle_get_private_data(b);
 
-    if (K == NULL || kalman_univariate(K)) {
-	/* this applies only under the de Jong approach */
+    if (K == NULL || kalman_univariate(K) || kalman_xcorr(K)) {
+	/* this applies only under the de Jong approach,
+	   when the caller has NOT given the variances in
+	   the manner of de Jong
+	*/
 	return;
     }
 
