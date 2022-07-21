@@ -20659,9 +20659,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
        set at compile time, or in previous execution
     */
     int saveflags[] = {
-	P_NATEST, P_AUTOREG, P_SLAVE,
-	P_DISCARD, P_NODECL, P_LISTDEF,
-	0
+	P_NATEST, P_AUTOREG, P_DISCARD, P_NODECL, P_LISTDEF, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
