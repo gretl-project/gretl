@@ -33,7 +33,7 @@
 #include "swap_bytes.h"
 
 #define STRDEBUG 0
-#define HDR_DEBUG 1
+#define HDR_DEBUG 0
 
 #ifdef WORDS_BIGENDIAN
 # define HOST_ENDIAN G_BIG_ENDIAN
