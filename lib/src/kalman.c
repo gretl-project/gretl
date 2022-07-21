@@ -6957,7 +6957,7 @@ static int ensure_dj_variance_matrices (kalman *K)
         }
     }
 
-    if (!err && K->HG == NULL && K->H != NULL && K->G != NULL) {
+    if (kalman_xcorr(K) && !err && K->HG == NULL && K->H != NULL && K->G != NULL) {
         gretl_matrix *tmp = gretl_matrix_alloc(K->r, K->n);
 
         if (tmp == NULL) {
@@ -6976,6 +6976,50 @@ static int ensure_dj_variance_matrices (kalman *K)
 
     if (!err && K->Jt == NULL) {
         K->Jt = gretl_zero_matrix_new(K->r, K->p);
+    }
+
+    return err;
+}
+
+/* the following variant assumes that K->H (and K->G) are
+   already allocated at appropriate sizes */
+
+static int update_dj_variance_matrices (kalman *K)
+{
+    gretl_matrix *tmp;
+    int offset;
+    int err = 0;
+
+    gretl_matrix_print(K->H, "K->H, before\n");
+
+    /* update H from K->VS */
+    tmp = gretl_matrix_copy(K->VS);
+    if (tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_psd_root(tmp, 0);
+    }
+    if (!err) {
+	offset = K->VY != NULL ? K->n : 0;
+	err = gretl_matrix_inscribe_matrix(K->H, tmp, 0, offset, GRETL_MOD_NONE);
+	gretl_matrix_print(K->H, "K->H, after\n");
+    }
+    gretl_matrix_free(tmp);
+
+    if (!err && K->VY != NULL) {
+        /* update G from K->VY */
+	gretl_matrix_print(K->G, "K->G, before\n");
+        tmp = gretl_matrix_copy(K->VY);
+        if (tmp == NULL) {
+            err = E_ALLOC;
+        } else {
+            err = gretl_matrix_psd_root(tmp, 0);
+        }
+        if (!err) {
+            err = gretl_matrix_inscribe_matrix(K->G, tmp, 0, 0, GRETL_MOD_NONE);
+	    gretl_matrix_print(K->G, "K->G, after\n");
+        }
+	gretl_matrix_free(tmp);
     }
 
     return err;
@@ -7072,6 +7116,10 @@ static int dejong_diffuse_filter_step (kalman *K)
     return err;
 }
 
+#define ALWAYS_UPDATE 1
+
+#if !ALWAYS_UPDATE
+
 static void update_dejong_factors (kalman *K)
 {
     if (K->grad_update & H_UPDATE) {
@@ -7085,6 +7133,8 @@ static void update_dejong_factors (kalman *K)
         gretl_matrix_psd_root(K->G, 0);
     }
 }
+
+#endif
 
 static int kfilter_dejong (kalman *K, PRN *prn)
 {
@@ -7146,9 +7196,15 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     set_kalman_running(K);
 
     /* guard against changes in dist. variance parameters under mle */
+#if ALWAYS_UPDATE
+    if (!kalman_xcorr(K)) {
+        update_dj_variance_matrices(K);
+    }
+#else
     if (numgrad_in_progress() && K->grad_update) {
         update_dejong_factors(K);
     }
+#endif
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
         int nt = K->n;
