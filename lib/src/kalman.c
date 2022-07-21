@@ -25,6 +25,7 @@
 #include "gretl_xml.h"
 #include "matrix_extra.h"
 #include "libset.h"
+#include "gretl_bfgs.h"
 #include "kalman.h"
 
 /**
@@ -62,6 +63,11 @@ enum {
     STD_VAR, /* standard, basic variance representation */
     DJ_VAR,  /* as per DeJong, supporting cross correlation */
     DK_VAR   /* as per Durbin and Koopman */
+};
+
+enum {
+    H_UPDATE = 1 << 0, /* be sure to update K->H from K->VS */
+    G_UPDATE = 1 << 1  /* be sure to update K->G from K->VY */
 };
 
 typedef struct stepinfo_ stepinfo;
@@ -129,6 +135,8 @@ struct kalman_ {
     int TI;  /* flag for K->T is identity matrix */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
+    int grad_update; /* update of H and/or G needed when numerical gradient
+			calculation is in progress */
 
     double SSRw;    /* \sum_{t=1}^N v_t^{\prime} F_t^{-1} v_t */
     double loglik;  /* log-likelihood */
@@ -507,6 +515,7 @@ static kalman *kalman_new_empty (int flags)
         K->b = NULL;
         K->d = 0;
         K->j = 0;
+	K->grad_update = 0;
     }
 
     return K;
@@ -7063,6 +7072,20 @@ static int dejong_diffuse_filter_step (kalman *K)
     return err;
 }
 
+static void update_dejong_factors (kalman *K)
+{
+    if (K->grad_update & H_UPDATE) {
+	gretl_matrix_free(K->H);
+	K->H = gretl_matrix_copy(K->VS);
+	gretl_matrix_psd_root(K->H, 0);
+    }
+    if (K->grad_update & G_UPDATE) {
+	gretl_matrix_free(K->G);
+	K->G = gretl_matrix_copy(K->VY);
+	gretl_matrix_psd_root(K->G, 0);
+    }
+}
+
 static int kfilter_dejong (kalman *K, PRN *prn)
 {
     double nl2pi = K->n * LN_2_PI;
@@ -7099,7 +7122,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	fast_write_I(K->djinfo->At);
     }
 
-    if (1 /* kdebug > 1 */) {
+    if (1 /* kdebug */) {
         fprintf(stderr, "\n*** kfilter_dejong: N=%d, n=%d, exact=%d, smo=%d ***\n",
                 K->N, K->n, K->exact, smo);
     }
@@ -7121,6 +7144,11 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     K->TI = gretl_is_identity_matrix(K->T);
     K->okN = K->N;
     set_kalman_running(K);
+
+    /* guard against changes in dist. variance parameters under mle */
+    if (numgrad_in_progress() && K->grad_update) {
+	update_dejong_factors(K);
+    }
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
         int nt = K->n;
@@ -7865,18 +7893,20 @@ void kalman_notify_var_changed (gretl_bundle *b, const char *key)
     kalman *K = gretl_bundle_get_private_data(b);
 
     if (K == NULL || kalman_univariate(K) || kalman_xcorr(K)) {
-	/* this applies only under the de Jong approach,
-	   when the caller has NOT given the variances in
-	   the manner of de Jong
+	/* This applies only when de Jong's algorithm is in use but
+	   the caller of kfilter() has NOT specified the disturbance
+	   variances in the manner of de Jong.
 	*/
 	return;
     }
 
     if (!strcmp(key, "statevar")) {
+	K->grad_update |= H_UPDATE;
 	gretl_matrix_free(K->H);
 	K->H = gretl_matrix_copy(K->VS);
 	gretl_matrix_psd_root(K->H, 0);
     } else if (!strcmp(key, "obsvar")) {
+	K->grad_update |= G_UPDATE;
 	gretl_matrix_free(K->G);
 	K->G = gretl_matrix_copy(K->VY);
 	gretl_matrix_psd_root(K->G, 0);
