@@ -65,11 +65,6 @@ enum {
     DK_VAR   /* as per Durbin and Koopman */
 };
 
-enum {
-    H_UPDATE = 1 << 0, /* be sure to update K->H from K->VS */
-    G_UPDATE = 1 << 1  /* be sure to update K->G from K->VY */
-};
-
 typedef struct stepinfo_ stepinfo;
 
 /* recorder for time-varying T and/or Z */
@@ -2087,7 +2082,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
         mptr[4] = &K->R;
     }
 
-    fprintf(stderr, "HERE kalman_refresh_matrices\n");
+    //fprintf(stderr, "HERE kalman_refresh_matrices\n");
 
     if (K->matcall != NULL) {
         err = kalman_update_matrices(K, prn);
@@ -7001,7 +6996,11 @@ static int update_dj_variance_matrices (kalman *K)
     }
     if (!err) {
 	offset = K->VY != NULL ? K->n : 0;
-	err = gretl_matrix_inscribe_matrix(K->H, tmp, 0, offset, GRETL_MOD_NONE);
+	if (1 || offset > 0) {
+	    err = gretl_matrix_inscribe_matrix(K->H, tmp, 0, offset, GRETL_MOD_NONE);
+	} else {
+	    fast_copy_values(K->H, tmp);
+	}
 	gretl_matrix_print(K->H, "K->H, after\n");
     }
     gretl_matrix_free(tmp);
@@ -7116,26 +7115,6 @@ static int dejong_diffuse_filter_step (kalman *K)
     return err;
 }
 
-#define ALWAYS_UPDATE 1
-
-#if !ALWAYS_UPDATE
-
-static void update_dejong_factors (kalman *K)
-{
-    if (K->grad_update & H_UPDATE) {
-        gretl_matrix_free(K->H);
-        K->H = gretl_matrix_copy(K->VS);
-        gretl_matrix_psd_root(K->H, 0);
-    }
-    if (K->grad_update & G_UPDATE) {
-        gretl_matrix_free(K->G);
-        K->G = gretl_matrix_copy(K->VY);
-        gretl_matrix_psd_root(K->G, 0);
-    }
-}
-
-#endif
-
 static int kfilter_dejong (kalman *K, PRN *prn)
 {
     double nl2pi = K->n * LN_2_PI;
@@ -7164,7 +7143,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     if (kalman_diffuse(K) && !K->exact) {
         fast_write_I(K->P0);
         gretl_matrix_multiply_by_scalar(K->P0, kappa);
+    } else if (kalman_diffuse(K) && K->exact) {
+	fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
     } else {
+	/* what if anything should we do here? */
         // fast_copy_values(K->P0, K->VS); /* note: as per dJ hansl */
         // gretl_matrix_zero(K->P0);
     }
@@ -7173,8 +7155,8 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
 
     if (1 /* kdebug */) {
-        fprintf(stderr, "\n*** kfilter_dejong: N=%d, n=%d, exact=%d, smo=%d ***\n",
-                K->N, K->n, K->exact, smo);
+        fprintf(stderr, "\n*** kfilter_dejong: diffuse %d, exact %d, smo %d, xcorr %d\n",
+                kalman_diffuse(K) ? 1 : 0, K->exact, smo ? 1 : 0, kalman_xcorr(K));
     }
 
 #if USE_INCOMPLETE_OBS
@@ -7195,16 +7177,16 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     K->okN = K->N;
     set_kalman_running(K);
 
-    /* guard against changes in dist. variance parameters under mle */
-#if ALWAYS_UPDATE
-    if (!kalman_xcorr(K)) {
-        update_dj_variance_matrices(K);
+    /* guard against "back door" changes in dist. variance parameters under mle */
+    if (!kalman_xcorr(K) && (gretl_iteration_depth() > 0 || numgrad_in_progress())) {
+        err = update_dj_variance_matrices(K);
+	if (kalman_diffuse(K) && K->exact) {
+	    /* ??? */
+	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
+				      K->H, GRETL_MOD_TRANSPOSE,
+				      K->P0, GRETL_MOD_NONE);
+	}
     }
-#else
-    if (numgrad_in_progress() && K->grad_update) {
-        update_dejong_factors(K);
-    }
-#endif
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
         int nt = K->n;
@@ -7934,37 +7916,4 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     gretl_matrix_block_destroy(B2);
 
     return err;
-}
-
-/* Under the de Jong approach, try to handle changes to statevar
-   and/or obsvar that are produced by "genr" statements within
-   an mle block or similar. Note that this is a different issue
-   from time-varying matrices: the changes will not be made
-   within a filtering run, but between the filtering runs called
-   for by the likelihood maximizer.
-*/
-
-void kalman_notify_var_changed (gretl_bundle *b, const char *key)
-{
-    kalman *K = gretl_bundle_get_private_data(b);
-
-    if (K == NULL || kalman_univariate(K) || kalman_xcorr(K)) {
-        /* This applies only when de Jong's algorithm is in use but
-           the caller of kfilter() has NOT specified the disturbance
-           variances in the manner of de Jong.
-        */
-        return;
-    }
-
-    if (!strcmp(key, "statevar")) {
-        K->grad_update |= H_UPDATE;
-        gretl_matrix_free(K->H);
-        K->H = gretl_matrix_copy(K->VS);
-        gretl_matrix_psd_root(K->H, 0);
-    } else if (!strcmp(key, "obsvar")) {
-        K->grad_update |= G_UPDATE;
-        gretl_matrix_free(K->G);
-        K->G = gretl_matrix_copy(K->VY);
-        gretl_matrix_psd_root(K->G, 0);
-    }
 }
