@@ -643,6 +643,13 @@ static int *get_garch_list (const int *list, const DATASET *dset,
 
     *err = 0;
 
+    /* negative orders don't make sense */
+    if (p < 0 || q < 0) {
+	gretl_errmsg_set(_("GARCH: negative p or q don't make sense"));
+	*err = E_DATA;
+	return NULL;
+    }
+
     /* rule out pure AR in variance: the model is unidentified */
     if (p > 0 && q == 0) {
 	gretl_errmsg_set(_("GARCH: p > 0 and q = 0: the model is unidentified"));
