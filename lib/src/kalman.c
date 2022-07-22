@@ -130,8 +130,6 @@ struct kalman_ {
     int TI;  /* flag for K->T is identity matrix */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
-    int grad_update; /* update of H and/or G needed when numerical gradient
-                        calculation is in progress */
 
     double SSRw;    /* \sum_{t=1}^N v_t^{\prime} F_t^{-1} v_t */
     double loglik;  /* log-likelihood */
@@ -155,6 +153,8 @@ struct kalman_ {
     gretl_matrix *rr; /* r x r */
     gretl_matrix *L;  /* recorder */
     gretl_matrix *J;  /* recorder */
+    gretl_matrix *VS0; /* baseline for detecting change */
+    gretl_matrix *VY0; /* ditto */
 
     /* input data matrices: note that the order matters for various
        functions, including matrix_is_varying()
@@ -330,6 +330,19 @@ static void fast_write_I (gretl_matrix *A)
     }
 }
 
+static int matrix_changed (const gretl_matrix *A, const gretl_matrix *B)
+{
+    int i, n = A->rows * A->cols;
+
+    for (i=0; i<n; i++) {
+	if (A->val[i] != B->val[i]) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void set_kalman_stopped (kalman *K)
 {
     K->flags &= ~KALMAN_FORWARD;
@@ -453,6 +466,8 @@ void kalman_free (kalman *K)
         gretl_matrix_free(K->G);
         gretl_matrix_free(K->HG);
         gretl_matrix_free(K->Jt);
+	gretl_matrix_free(K->VS0);
+	gretl_matrix_free(K->VY0);
     }
 
     if (kalman_dkvar(K)) {
@@ -493,6 +508,7 @@ static kalman *kalman_new_empty (int flags)
         K->H = K->G = K->HG = K->Jt = NULL;  /* de Jong variance */
         K->Q = K->R = K->QRT = NULL; /* Durbin-Koopman variance */
         K->V = K->F = K->A = K->K = K->P = NULL;
+	K->VS0 = K->VY0 = NULL;
         K->L = K->J = NULL;
         K->y = K->x = NULL;
         K->mu = NULL;
@@ -510,7 +526,6 @@ static kalman *kalman_new_empty (int flags)
         K->b = NULL;
         K->d = 0;
         K->j = 0;
-        K->grad_update = 0;
     }
 
     return K;
@@ -6977,6 +6992,15 @@ static int ensure_dj_variance_matrices (kalman *K)
         K->Jt = gretl_zero_matrix_new(K->r, K->p);
     }
 
+    if (!err && K->VS0 == NULL && !kalman_xcorr(K) &&
+	(gretl_iteration_depth() > 0 || numgrad_in_progress())) {
+	/* establish baseline for detecting changes */
+	K->VS0 = gretl_matrix_copy(K->VS);
+	if (K->VY != NULL) {
+	    K->VY0 = gretl_matrix_copy(K->VY);
+	}
+    }
+
     return err;
 }
 
@@ -6990,35 +7014,32 @@ static int ensure_dj_variance_matrices (kalman *K)
 
 static int update_dj_variance_matrices (kalman *K)
 {
-    gretl_matrix *tmp;
     int err = 0;
 
-    /* update H from K->VS */
-    tmp = gretl_matrix_copy(K->VS);
-    if (tmp == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = gretl_matrix_psd_root(tmp, 0);
-    }
-    if (!err) {
-	int offset = K->VY != NULL ? K->n : 0;
+    if (matrix_changed(K->VS, K->VS0)) {
+	/* update H from K->VS */
+	fast_copy_values(K->VS0, K->VS);
+	err = gretl_matrix_psd_root(K->VS0, 0);
+	if (!err) {
+	    int offset = K->VY != NULL ? K->n : 0;
 
-	err = gretl_matrix_inscribe_matrix(K->H, tmp, 0, offset, GRETL_MOD_NONE);
+	    err = gretl_matrix_inscribe_matrix(K->H, K->VS0, 0, offset, GRETL_MOD_NONE);
+	}
+	fast_copy_values(K->VS0, K->VS);
     }
-    gretl_matrix_free(tmp);
 
-    if (!err && K->VY != NULL) {
+    if (err || K->VY == NULL) {
+	return err;
+    }
+
+    if (matrix_changed(K->VY, K->VY0)) {
         /* update G from K->VY */
-        tmp = gretl_matrix_copy(K->VY);
-        if (tmp == NULL) {
-            err = E_ALLOC;
-        } else {
-            err = gretl_matrix_psd_root(tmp, 0);
-        }
+	fast_copy_values(K->VY0, K->VY);
+	err = gretl_matrix_psd_root(K->VY0, 0);
         if (!err) {
-            err = gretl_matrix_inscribe_matrix(K->G, tmp, 0, 0, GRETL_MOD_NONE);
+            err = gretl_matrix_inscribe_matrix(K->G, K->VY0, 0, 0, GRETL_MOD_NONE);
         }
-	gretl_matrix_free(tmp);
+	fast_copy_values(K->VY0, K->VY);
     }
 
     return err;
