@@ -645,7 +645,7 @@ static int *get_garch_list (const int *list, const DATASET *dset,
 
     /* negative orders don't make sense */
     if (p < 0 || q < 0) {
-	gretl_errmsg_set(_("GARCH: negative p or q don't make sense"));
+	gretl_errmsg_set(_("GARCH: neither p nor q can be negative"));
 	*err = E_DATA;
 	return NULL;
     }
