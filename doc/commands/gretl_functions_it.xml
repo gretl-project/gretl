@@ -12607,8 +12607,7 @@
 	  questa funzione si comporta in modo diverso su sistemi
 	  Windows e Unix-like per date precedenti al 1 gennaio
 	  1970. Su sistemi Unix-like (Linux, Mac) saranno generate
-	  cifre negative in secondi; su windows, ogni data precedente
-	  al 1970 genera -1.
+	  cifre negative in secondi; su windows, il risultato sarà NA.
 	</para>
 	<para>
 	  Le opzioni per il <argname>formato</argname> sono elencate sulla
