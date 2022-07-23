@@ -7017,7 +7017,7 @@ static int update_dj_variance_matrices (kalman *K)
     int err = 0;
 
     if (matrix_changed(K->VS, K->VS0)) {
-	/* update H from K->VS */
+	/* update H from new K->VS */
 	fast_copy_values(K->VS0, K->VS);
 	err = gretl_matrix_psd_root(K->VS0, 0);
 	if (!err) {
@@ -7033,7 +7033,7 @@ static int update_dj_variance_matrices (kalman *K)
     }
 
     if (matrix_changed(K->VY, K->VY0)) {
-        /* update G from K->VY */
+        /* update G from new K->VY */
 	fast_copy_values(K->VY0, K->VY);
 	err = gretl_matrix_psd_root(K->VY0, 0);
         if (!err) {
