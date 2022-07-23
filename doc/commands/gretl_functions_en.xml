@@ -12511,11 +12511,11 @@
 	 according to Coordinated Universal Time (UTC).
 	</para>
 	<para>
-	  Warning: due to implementation differences, this function
-	  behaves differently on Windows and Unix-like operating
-	  systems for dates prior to Jan 1, 1970. On unix-like systems
-	  (Linux, Mac) negative offsets in seconds will be returned;
-	  on windows, any date before 1970 returns -1.
+	  Warning: this function behaves differently on Windows and
+	  Unix-like operating systems for dates prior to January 1,
+	  1970. On unix-like systems (Linux, macOS) negative offsets
+	  in seconds are returned; on Windows, such dates are not
+	  supported and the return value is NA.
 	</para>
 	<para>
 	  The <argname>format</argname> options may be found by
