@@ -5364,7 +5364,11 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     }
 
 #if !P0_ZERO
-    fast_copy_values(Pt, K->VS);
+    if (K->Pini != NULL) {
+        fast_copy_values(Pt, K->Pini);
+    } else {
+        fast_copy_values(Pt, K->VS);
+    }
 #endif
 
     for (t=0; t<K->N; t++) {
