@@ -12481,6 +12481,16 @@
 	  stringa appropriata.
 	</para>
 	<para>
+	  Attenzione: a causa di differenze nell'implementazione,
+	  questa funzione si comporta in modo diverso su sistemi
+	  Windows e Unix-like per date precedenti al 1 gennaio
+	  1970. Su sistemi Unix-like (Linux, Mac) queste date sono
+	  rappresentati con numeri negativi, cosicché se
+	  <argname>t</argname> è negativo l'output sarà comunque una
+	  stringa contenente una data; su windows, questa convenzione
+	  non è supportata e il risultato sarà una stringa vuota.
+	</para>
+	<para>
 	  Valori di <argname>tm</argname> adatti per questa funzione
 	  possono venir prodotti tramite l'accessore <fncref targ="$now"/>
 	  o la funzione <fncref targ="strptime"/>.
