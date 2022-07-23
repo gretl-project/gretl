@@ -6616,6 +6616,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     double llt, llct, ldt, qt;
     int smo = kalman_smoothing(K);
     int exact_diffuse;
+    int loglik_1991 = 0;
     char *missmap = NULL;
     int Nd = K->N;
     int err = 0;
@@ -6755,8 +6756,8 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         /* calculate F_t and its inverse */
         fast_copy_values(K->iFt, K->Ft);
-	if (K->t < K->d) {
-	    /* do we want this conditionality? */
+	if (K->t < K->d && !loglik_1991) {
+	    /* conditionality regarding the log-determinant? */
 	    err = gretl_invert_symmetric_matrix2(K->iFt, NULL);
 	} else {
 	    err = gretl_invert_symmetric_matrix2(K->iFt, &ldt);
@@ -6880,6 +6881,13 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         /* as per old kalman_forecast() code */
         K->s2 = K->SSRw / (K->n * K->okN - d);
+    }
+
+    if (exact_diffuse && loglik_1991) {
+        /* deal with extra terms set out in De Jong (1991) */
+        double ll_adj = K->djinfo->qm + K->djinfo->ldS;
+
+        K->loglik -= 0.5 * ll_adj;
     }
 
     if (kdebug || djdebug) {

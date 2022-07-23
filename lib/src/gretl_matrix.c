@@ -8432,7 +8432,7 @@ static int real_psd_root (gretl_matrix *a, const gretl_matrix *a0)
                    reject a matrix that has a "significantly" negative
                    diagonal element.
                 */
-                fprintf(stderr, "psdroot: diag[%d] = %g\n", k+1, d);
+                /* fprintf(stderr, "psdroot: diag[%d] = %g\n", k+1, d); */
                 err = E_DATA;
             }
             for (i=k; i<n; i++) {
