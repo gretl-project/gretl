@@ -8816,9 +8816,15 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
             /* strptime() failed */
             p->err = E_INVARG;
         } else {
-            time_t t = mktime(&tm);
+	    double retval = (double) mktime(&tm);
 
-            ret->v.xval = (double) t;
+#ifdef WIN32
+	    /* dates prior to 1970-01-01 not supported */
+	    if (retval == -1) {
+		retval = NADBL;
+	    }
+#endif
+            ret->v.xval = retval;
         }
     }
 

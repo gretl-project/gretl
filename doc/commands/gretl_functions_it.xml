@@ -12603,6 +12603,13 @@
 	  numero di secondi dall'inizio del 1970 (UTC).
 	</para>
 	<para>
+	  Attenzione: a causa di differenze nell'implementazione,
+	  questa funzione si comporta in modo diverso su sistemi
+	  Windows e Unix-like per date precedenti al 1 gennaio
+	  1970. Su sistemi Unix-like (Linux, Mac) saranno generate
+	  cifre negative in secondi; su windows, il risultato sarà NA.
+	</para>
+	<para>
 	  Le opzioni per il <argname>formato</argname> sono elencate sulla
 	  pagina di manuale per <lit>strptime</lit>, sui sistemi che
 	  la offrono, oppure su uno dei tanti siti che contengono tale

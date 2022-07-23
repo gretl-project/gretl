@@ -997,7 +997,7 @@ static int nl_coeff_check (nlspec *s)
 
     for (i=0; i<s->ncoeff; i++) {
 	if (na(s->coeff[i])) {
-	    gretl_errmsg_set("Unitialized parameter");
+	    gretl_errmsg_set("Uninitialized parameter");
 	    return E_DATA;
 	}
     }
