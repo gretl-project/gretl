@@ -130,6 +130,7 @@ struct kalman_ {
     int TI;  /* flag for K->T is identity matrix */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
+    int dj_initted; /* flag for basic de Jong initialization done */
 
     double SSRw;    /* \sum_{t=1}^N v_t^{\prime} F_t^{-1} v_t */
     double loglik;  /* log-likelihood */
@@ -526,6 +527,7 @@ static kalman *kalman_new_empty (int flags)
         K->b = NULL;
         K->d = 0;
         K->j = 0;
+	K->dj_initted = 0;
     }
 
     return K;
@@ -2096,8 +2098,6 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
         mptr[3] = &K->Q;
         mptr[4] = &K->R;
     }
-
-    //fprintf(stderr, "HERE kalman_refresh_matrices\n");
 
     if (K->matcall != NULL) {
         err = kalman_update_matrices(K, prn);
@@ -6929,6 +6929,7 @@ static int ensure_basic_smo_recorder (kalman *K)
 
 static int ensure_dj_variance_matrices (kalman *K)
 {
+    gretl_matrix *tmp;
     int err = 0;
 
     if (K->p == 0) {
@@ -6940,25 +6941,24 @@ static int ensure_dj_variance_matrices (kalman *K)
 
     if (K->H == NULL) {
         /* create H from K->VS */
-        gretl_matrix *tmp = gretl_matrix_copy(K->VS);
-        int offset = K->VY != NULL ? K->n : 0;
-
+        tmp = gretl_matrix_copy(K->VS);
         if (tmp == NULL) {
             err = E_ALLOC;
         } else {
             err = gretl_matrix_psd_root(tmp, 0);
         }
         if (!err) {
+	    int offset = K->VY != NULL ? K->n : 0;
+
             K->H = gretl_zero_matrix_new(K->r, K->p);
             err = gretl_matrix_inscribe_matrix(K->H, tmp, 0, offset, GRETL_MOD_NONE);
-            gretl_matrix_free(tmp);
         }
+	gretl_matrix_free(tmp);
     }
 
     if (!err && K->G == NULL && K->VY != NULL) {
         /* create G from K->VY */
-        gretl_matrix *tmp = gretl_matrix_copy(K->VY);
-
+        tmp = gretl_matrix_copy(K->VY);
         if (tmp == NULL) {
             err = E_ALLOC;
         } else {
@@ -6967,13 +6967,12 @@ static int ensure_dj_variance_matrices (kalman *K)
         if (!err) {
             K->G = gretl_zero_matrix_new(K->n, K->p);
             err = gretl_matrix_inscribe_matrix(K->G, tmp, 0, 0, GRETL_MOD_NONE);
-            gretl_matrix_free(tmp);
         }
+	gretl_matrix_free(tmp);
     }
 
     if (kalman_xcorr(K) && !err && K->HG == NULL && K->H != NULL && K->G != NULL) {
-        gretl_matrix *tmp = gretl_matrix_alloc(K->r, K->n);
-
+        tmp = gretl_matrix_alloc(K->r, K->n);
         if (tmp == NULL) {
             err = E_ALLOC;
         } else {
@@ -6992,8 +6991,8 @@ static int ensure_dj_variance_matrices (kalman *K)
         K->Jt = gretl_zero_matrix_new(K->r, K->p);
     }
 
-    if (!err && K->VS0 == NULL && !kalman_xcorr(K) &&
-	(gretl_iteration_depth() > 0 || numgrad_in_progress())) {
+    if (!err && K->VS0 == NULL && !kalman_xcorr(K)) {
+	// (gretl_iteration_depth() > 0 || numgrad_in_progress())) {
 	/* establish baseline for detecting changes */
 	K->VS0 = gretl_matrix_copy(K->VS);
 	if (K->VY != NULL) {
@@ -7126,7 +7125,11 @@ static int dejong_diffuse_filter_step (kalman *K)
         dj->qm += gretl_scalar_qform(dj->s, dj->S, &err);
 
         /* record */
-        dj->Am = gretl_matrix_copy(dj->At);
+	if (dj->Am == NULL) {
+	    dj->Am = gretl_matrix_copy(dj->At);
+	} else {
+	    fast_copy_values(dj->Am, dj->At);
+	}
     }
 
     return err;
@@ -7142,16 +7145,18 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     int Nd = K->N;
     int err = 0;
 
-    /* FIXME placement of this? */
-    err = ensure_dj_variance_matrices(K);
-    if (err) {
-        return err;
+    if (K->dj_initted == 0) {
+	err = ensure_dj_variance_matrices(K);
+	if (err) {
+	    return err;
+	}
+	K->dj_initted = 1;
     }
 
     if (smo) {
         ensure_basic_smo_recorder(K);
         if (K->exact) {
-            Nd = K->N; // matrix_is_varying(K, K_ZT) ? K->N : 4*K->r;
+            Nd = K->N; // ? matrix_is_varying(K, K_ZT) ? K->N : 4*K->r;
             ensure_dj_smo_recorders(K, Nd);
         }
     }
@@ -7168,8 +7173,12 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         // fast_copy_values(K->P0, K->VS);
         // gretl_matrix_zero(K->P0);
     }
+
     if (K->exact) {
+	/* (re-)initialize */
         fast_write_I(K->djinfo->At);
+	gretl_matrix_zero(K->djinfo->Qt);
+	gretl_matrix_zero(K->djinfo->Vt);
     }
 
     if (1 /* kdebug */) {
@@ -7195,11 +7204,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     K->okN = K->N;
     set_kalman_running(K);
 
-    /* guard against "back door" changes in dist. variance parameters under mle */
     if (!kalman_xcorr(K) && (gretl_iteration_depth() > 0 || numgrad_in_progress())) {
+	/* guard against "back door" changes in dist. variance parameters under mle */
         err = update_dj_variance_matrices(K);
 	if (kalman_diffuse(K) && K->exact) {
-	    /* ?? */
 	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
 				      K->H, GRETL_MOD_TRANSPOSE,
 				      K->P0, GRETL_MOD_NONE);
