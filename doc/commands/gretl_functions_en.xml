@@ -12511,6 +12511,13 @@
 	 according to Coordinated Universal Time (UTC).
 	</para>
 	<para>
+	  Warning: due to implementation differences, this function
+	  behaves differently on Windows and Unix-like operating
+	  systems for dates prior to Jan 1, 1970. On unix-like systems
+	  (Linux, Mac) negative offsets in seconds will be returned;
+	  on windows, any date before 1970 returns -1.
+	</para>
+	<para>
 	  The <argname>format</argname> options may be found by
 	  consulting the <lit>strptime</lit> manual page, on systems
 	  which have such pages, or via one of the many websites which
