@@ -42,22 +42,18 @@
 static int kdebug;
 static int djdebug;
 
-/* try using incomplete observations? */
-#define USE_INCOMPLETE_OBS 1
-
 enum {
-    KALMAN_USER    = 1 << 0, /* user-defined filter? */
-    KALMAN_DIFFUSE = 1 << 1, /* using diffuse P_{1|0} */
-    KALMAN_FORWARD = 1 << 2, /* running forward filtering pass */
-    KALMAN_SMOOTH  = 1 << 3, /* preparing for smoothing pass */
-    KALMAN_SIM     = 1 << 4, /* running simulation */
-    KALMAN_CHECK   = 1 << 5, /* checking user-defined matrices */
-    KALMAN_BUNDLE  = 1 << 6, /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 7, /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 8, /* filtering for ARMA estimation */
-    KALMAN_SM_AM   = 1 << 9,  /* Anderson-Moore smoothing */
-    KALMAN_UNI     = 1 << 10, /* using univariate representation */
-    KALMAN_EXTRA   = 1 << 11  /* recording extra info (att, Ptt) */
+    KALMAN_USER    = 1 << 0,  /* user-defined filter? */
+    KALMAN_DIFFUSE = 1 << 1,  /* using diffuse P_{1|0} */
+    KALMAN_FORWARD = 1 << 2,  /* running forward filtering pass */
+    KALMAN_SMOOTH  = 1 << 3,  /* preparing for smoothing pass */
+    KALMAN_SIM     = 1 << 4,  /* running simulation */
+    KALMAN_CHECK   = 1 << 5,  /* checking user-defined matrices */
+    KALMAN_BUNDLE  = 1 << 6,  /* kalman is inside a bundle */
+    KALMAN_SSFSIM  = 1 << 7,  /* on simulation, emulate SsfPack */
+    KALMAN_ARMA_LL = 1 << 8,  /* filtering for ARMA estimation */
+    KALMAN_UNI     = 1 << 9,  /* using univariate representation */
+    KALMAN_EXTRA   = 1 << 10  /* recording extra info (att, Ptt) */
 };
 
 enum {
@@ -199,13 +195,13 @@ struct kalman_ {
     gretl_matrix *U;   /* N x r+n: smoothed disturbances */
     gretl_matrix *Vsd; /* Variance of smoothed disturbance */
 
-    /* structure needed only when smoothing in the time-varying case */
+    /* struct needed only when smoothing in the time-varying case */
     stepinfo *step;
 
-    /* structure needed for univariate approach */
+    /* struct needed for univariate approach */
     univar_info *uinfo;
 
-    /* structure needed for de Jong exact approach */
+    /* struct needed for de Jong exact approach */
     dejong_info *djinfo;
 
     /* workspace matrices */
@@ -216,15 +212,6 @@ struct kalman_ {
     gretl_matrix *Kt;
     gretl_matrix *Mt;
     gretl_matrix *Ct;
-
-    /* backups for matrices that are shrunk in case of
-       incomplete observations, plus recorder array for
-       use with the smoother (if needed)
-    */
-    gretl_matrix *saveZT;
-    gretl_matrix *saveVY;
-    gretl_matrix *saveG;
-    guint16 *nt;
 
     gretl_bundle *b; /* the bundle of which this struct is a member */
     void *data;      /* handle for attaching additional info */
@@ -251,7 +238,6 @@ enum {
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 #define kalman_smoothing(K)   (K->flags & KALMAN_SMOOTH)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
-#define basic_smoothing(K)    (K->flags & KALMAN_SM_AM)
 #define kalman_univariate(K)  (K->flags & KALMAN_UNI)
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
 
@@ -1217,25 +1203,6 @@ static void load_to_row (gretl_matrix *targ,
 }
 
 /* copy from vector @src into row @t of @targ,
-   allowing for insertion of missing values
-*/
-
-static void load_to_row_special (gretl_matrix *targ,
-                                 const gretl_vector *src,
-                                 int t, char *missmap)
-{
-    int i, k;
-
-    for (i=0, k=0; i<targ->cols; i++) {
-        if (missmap[i]) {
-            gretl_matrix_set(targ, t, i, NADBL);
-        } else {
-            gretl_matrix_set(targ, t, i, src->val[k++]);
-        }
-    }
-}
-
-/* copy from vector @src into row @t of @targ,
    starting at column offset @j in @targ */
 
 static void load_to_row_offset (gretl_matrix *targ,
@@ -1669,204 +1636,18 @@ static double kalman_Bx_uni (kalman *K, int i)
     return bxi;
 }
 
-/* Apparatus for handling the case where the number of observables,
-   K->n, is > 1 and we hit a partially missing obs at time t. Instead
-   of discarding the entire observation it's optimal to make use of
-   the components of y_t for which we have valid values. This requires
-   shrinking the observation-related matrices ZT and VY, plus the
-   vector v_t and all other matrices whose dimensions involve K->n.
-   (See the brief discussion in Koopman's 1997 JASA paper.)
-
-   In addition, these matrices must be restored to their original sizes
-   when we've finished dealing with period t.
-*/
-
-/* For use in the smoother: retrieve the effective number of
-   observables at time t (recorded in the forward pass).
-*/
-
-static int get_effective_n (kalman *K)
-{
-    if (K->nt == NULL || K->nt[K->t] == 0) {
-        /* no missing values */
-        return K->n;
-    } else {
-        return K->nt[K->t];
-    }
-}
-
-/* We have two cases to handle here, the more complex one being when
-   the disturbances are correlated across the observation and
-   state-transition equations.
-*/
-
-static void shrink_obsvar (kalman *K, int nt)
-{
-    double gij;
-    int i, j, k;
-
-    if (K->G == NULL) {
-        /* the relatively simple case */
-        K->saveVY = K->VY;
-        K->VY = gretl_matrix_alloc(nt, nt);
-
-        for (j=0, k=0; j<K->n; j++) {
-            if (!na(K->vt->val[j])) {
-                for (i=0; i<K->n; i++) {
-                    if (!na(K->vt->val[i])) {
-                        gij = gretl_matrix_get(K->saveVY, i, j);
-                        K->VY->val[k++] = gij;
-                    }
-                }
-            }
-        }
-    } else {
-        /* the more complex case */
-        K->saveG = K->G;
-        K->G = gretl_matrix_alloc(nt, K->p);
-
-        for (i=0, k=0; i<K->n; i++) {
-            if (!na(K->vt->val[i])) {
-                for (j=0; j<K->p; j++) {
-                    gij = gretl_matrix_get(K->saveG, i, j);
-                    gretl_matrix_set(K->G, k, j, gij);
-                }
-                k++;
-            }
-        }
-        gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
-                                  K->G, GRETL_MOD_TRANSPOSE,
-                                  K->VY, GRETL_MOD_NONE);
-        if (K->HG != NULL) {
-            gretl_matrix_reuse(K->HG, K->r, nt);
-            gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
-                                      K->G, GRETL_MOD_TRANSPOSE,
-                                      K->HG, GRETL_MOD_NONE);
-        }
-    }
-}
-
-/* The inverse operation of shrink_obsvar() above */
-
-static void unshrink_obsvar (kalman *K)
-{
-    if (K->G == NULL) {
-        gretl_matrix_free(K->VY);
-        K->VY = K->saveVY;
-        K->saveVY = NULL;
-    } else {
-        gretl_matrix_free(K->G);
-        K->G = K->saveG;
-        K->saveG = NULL;
-        gretl_matrix_reuse(K->VY, K->n, K->n);
-        gretl_matrix_multiply_mod(K->G, GRETL_MOD_NONE,
-                                  K->G, GRETL_MOD_TRANSPOSE,
-                                  K->VY, GRETL_MOD_NONE);
-        if (K->HG != NULL) {
-            gretl_matrix_reuse(K->HG, K->r, K->n);
-            gretl_matrix_multiply_mod(K->H, GRETL_MOD_NONE,
-                                      K->G, GRETL_MOD_TRANSPOSE,
-                                      K->HG, GRETL_MOD_NONE);
-        }
-    }
-}
-
-static void shrink_vt (kalman *K, int nt)
-{
-    double *tmp = malloc(nt * sizeof *tmp);
-    int i, j, k;
-
-    K->saveZT = K->ZT; /* save the original matrix */
-    K->ZT = gretl_matrix_alloc(K->r, nt);
-
-    for (j=0, k=0; j<K->n; j++) {
-        if (!na(K->vt->val[j])) {
-            for (i=0; i<K->r; i++) {
-                K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
-            }
-        }
-    }
-
-    if (K->VY != NULL) {
-        shrink_obsvar(K, nt);
-    }
-
-    /* K-member workspace matrices */
-    gretl_matrix_reuse(K->Ft, nt, nt);
-    gretl_matrix_reuse(K->iFt, nt, nt);
-    gretl_matrix_reuse(K->Mt, K->r, nt);
-    gretl_matrix_reuse(K->Kt, K->r, nt);
-    gretl_matrix_reuse(K->PZ, K->r, nt);
-
-    /* remove missing rows of vt */
-    for (i=0, k=0; i<K->n; i++) {
-        if (!na(K->vt->val[i])) {
-            tmp[k++] = K->vt->val[i];
-        }
-    }
-    memcpy(K->vt->val, tmp, nt * sizeof(double));
-    gretl_matrix_reuse(K->vt, nt, 1);
-    free(tmp);
-}
-
-static void unshrink_vt (kalman *K)
-{
-    /* Restore ZT */
-    gretl_matrix_free(K->ZT);
-    K->ZT = K->saveZT;
-    K->saveZT = NULL;
-
-    gretl_matrix_reuse(K->vt, K->n, 1);
-
-    /* K-member workspace matrices */
-    gretl_matrix_reuse(K->Ft, K->n, K->n);
-    gretl_matrix_reuse(K->iFt, K->n, K->n);
-    gretl_matrix_reuse(K->Mt, K->r, K->n);
-    gretl_matrix_reuse(K->Kt, K->r, K->n);
-    gretl_matrix_reuse(K->PZ, K->r, K->n);
-
-    if (K->VY != NULL) {
-        unshrink_obsvar(K);
-    }
-}
-
-/* Shrink the observation vector and associated matrices in the case
-   where we encounter a partially missing observation. Used only on a
-   filtering pass, and not under the univariate approach.
-*/
-
-static void shrink_obs_to_ok (kalman *K, int nt)
-{
-    /* includes back up and replacement of ZT */
-    shrink_vt(K, nt);
-
-    if (basic_smoothing(K)) {
-        /* make a record for the smoother */
-        if (K->nt == NULL) {
-            K->nt = calloc(K->N, sizeof *K->nt);
-        }
-        if (K->nt != NULL) {
-            K->nt[K->t] = nt;
-        }
-    }
-}
-
 /* Compute the one-step ahead forecast error:
 
    v_t = y_t - B_t*x_t - Z_t*a_t
 
-   if @missmap is non-NULL, return the number of observables for which
-   there's a valid observation at time t; otherwise return 0 if any
-   elements of y_t are missing.
+   Returns the number of valid observables at time step t,
+   or 0 if the forecast error cannot be computed due to
+   missing values.
 */
 
-static int compute_forecast_error (kalman *K, char *missmap)
+static int compute_forecast_error (kalman *K)
 {
-    int i, nt = K->n;
-
-    if (missmap != NULL) {
-        memset(missmap, 0, K->n);
-    }
+    int i;
 
     /* initialize v_t to y_t */
     for (i=0; i<K->n; i++) {
@@ -1881,29 +1662,16 @@ static int compute_forecast_error (kalman *K, char *missmap)
     /* check for any missing values in v_t */
     for (i=0; i<K->n; i++) {
         if (na(K->vt->val[i])) {
-            if (missmap != NULL) {
-                missmap[i] = 1;
-            }
-            nt--;
+            return 0;
         }
     }
 
-    if (nt > 0 && nt < K->n) {
-        if (missmap != NULL) {
-            shrink_obs_to_ok(K, nt);
-        } else {
-            nt = 0; /* skip this observation */
-        }
-    }
+    /* subtract contribution from state */
+    gretl_matrix_multiply_mod(K->ZT,  GRETL_MOD_TRANSPOSE,
+                              K->a0, GRETL_MOD_NONE,
+                              K->vt, GRETL_MOD_DECREMENT);
 
-    if (nt > 0) {
-        /* subtract contribution from state */
-        gretl_matrix_multiply_mod(K->ZT,  GRETL_MOD_TRANSPOSE,
-                                  K->a0, GRETL_MOD_NONE,
-                                  K->vt, GRETL_MOD_DECREMENT);
-    }
-
-    return nt;
+    return K->n;
 }
 
 /* Given a unified function to update one or more of the potentially
@@ -2180,20 +1948,12 @@ int kalman_forecast (kalman *K, PRN *prn)
 {
     double ll0 = K->n * LN_2_PI;
     double sumldet = 0;
-    char *missmap = NULL;
-    int err = 0;
+    int nt, err = 0;
 
     if (kdebug > 1) {
         fprintf(stderr, "\n*** kalman_forecast: N=%d, n=%d, exact=%d ***\n",
                 K->N, K->n, K->exact);
     }
-
-#if USE_INCOMPLETE_OBS
-    if (!kalman_smoothing(K) || basic_smoothing(K)) {
-        /* we won't do this for disturbance smoothing, yet */
-        missmap = calloc(K->n, 1);
-    }
-#endif
 
     if (kalman_diffuse(K) && !K->exact) {
         K->d = K->r;
@@ -2206,7 +1966,6 @@ int kalman_forecast (kalman *K, PRN *prn)
     set_kalman_running(K);
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
-        int nt = K->n;
         double llt = NADBL;
         double ldet = 0, qt = 0;
 
@@ -2228,7 +1987,7 @@ int kalman_forecast (kalman *K, PRN *prn)
         }
 
         /* calculate v_t, checking for missing values */
-        nt = compute_forecast_error(K, missmap);
+        nt = compute_forecast_error(K);
         if (nt == 0) {
             /* skip this observation */
             K->okN -= 1;
@@ -2320,24 +2079,11 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         /* record forecast errors if wanted */
         if (!err && K->V != NULL) {
-            if (missmap != NULL) {
-                load_to_row_special(K->V, K->vt, K->t, missmap);
-            } else {
-                load_to_row(K->V, K->vt, K->t);
-            }
-        }
-
-        if (nt > 0 && nt < K->n) {
-            /* restore certain matrices to full size */
-            unshrink_vt(K);
+            load_to_row(K->V, K->vt, K->t);
         }
     }
 
     set_kalman_stopped(K);
-
-    if (missmap != NULL) {
-        free(missmap);
-    }
 
     if (na(K->loglik)) {
         err = E_NAN;
@@ -2676,32 +2422,6 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
     }
 }
 
-#if 0 /* unused at present */
-
-/* Column @t of @src represents the vech of an n x n matrix: extract the
-   the column and apply the inverse operation of vech to reconstitute the
-   matrix in @targ.
-*/
-
-static void load_from_vechT (gretl_matrix *targ, const gretl_matrix *src,
-                             int n, int t)
-{
-    int i, j, m = 0;
-    double x;
-
-    for (i=0; i<n; i++) {
-        for (j=i; j<n; j++) {
-            x = gretl_matrix_get(src, m++, t);
-            gretl_matrix_set(targ, i, j, x);
-            if (i != j) {
-                gretl_matrix_set(targ, j, i, x);
-            }
-        }
-    }
-}
-
-#endif
-
 /* Row @t of @src represents the vec of a certain matrix: extract the
    row and reconstitute the matrix in @targ.
 */
@@ -2759,15 +2479,18 @@ static int retrieve_Zt (kalman *K)
    de Jong smoothers (state and dist). The univariate smoother uses
    its own mechanism.
 
-   The return value is the number of non-missing observables at step
-   t. A non-zero value of @allow_incomplete flags the acceptability
-   of an incomplete observation. As of July 2022 this is unused.
+   The return value is the number of usable observables at step t.
 */
 
 static int load_filter_data (kalman *K, int no_collapse, int *err)
 {
-    int allow_incomplete = 0;
-    int nt = 0;
+    int missing = 0;
+
+    /* FIXME maybe we should have a byte array of length K->N
+       to identify missing observations (constructed on the
+       filtering step if needed). This could speed things
+       up below,
+    */
 
     /* load the forecast error into K->vt */
     load_from_row(K->vt, K->V, K->t, GRETL_MOD_NONE);
@@ -2780,23 +2503,13 @@ static int load_filter_data (kalman *K, int no_collapse, int *err)
         *err = retrieve_Zt(K);
     }
     if (err) {
-        return nt;
-    }
-
-    /* check for an incomplete observation */
-    nt = get_effective_n(K);
-    if (nt < K->n) {
-        if (nt > 0 && allow_incomplete) {
-            shrink_vt(K, nt);
-        } else {
-            nt = 0;
-        }
+        return 0;
     }
 
     /* load the state and its MSE */
     load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
     if (no_collapse) {
-        /* FIXME? */
+        /* FIXME? looks kinda weird but seems to help */
         if (K->t == 0) {
             gretl_matrix_zero(K->P0);
         } else {
@@ -2806,13 +2519,14 @@ static int load_filter_data (kalman *K, int no_collapse, int *err)
         load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
     }
 
-    if (nt > 0) {
-        /* load the gain and F^{-1} */
-        load_from_vec(K->Kt, K->K, K->t);
-        load_from_vech(K->iFt, K->F, nt, K->t, GRETL_MOD_NONE);
-    }
+    /* load the gain and F^{-1} */
+    load_from_vec(K->Kt, K->K, K->t);
+    load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
 
-    return nt;
+    /* heuristic for missing observable (see note above) */
+    missing = gretl_is_zero_matrix(K->Kt);
+
+    return missing ? 0 : K->n;
 }
 
 /* If we're doing smoothing for a system that has time-varying
@@ -2989,9 +2703,6 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         }
     }
 
-    /* recorder for partially missing observations */
-    K->nt = NULL;
-
     if (!err) {
         /* prior forward pass */
         K->flags |= KALMAN_SMOOTH;
@@ -3018,10 +2729,6 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
     }
 
     /* free "special case" storage */
-    if (K->nt != NULL) {
-        free(K->nt);
-        K->nt = NULL;
-    }
     if (K->PK != NULL) {
         gretl_matrix_free(K->PK);
         K->PK = NULL;
@@ -6544,8 +6251,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     int smo = kalman_smoothing(K);
     int exact_diffuse;
     int loglik_1991 = 0;
-    char *missmap = NULL;
-    int Nd = K->N;
+    int nt, Nd = K->N;
     int err = 0;
 
     exact_diffuse = kalman_diffuse(K) && K->exact;
@@ -6596,13 +6302,6 @@ static int kfilter_dejong (kalman *K, PRN *prn)
                 kalman_diffuse(K) ? 1 : 0, K->exact, smo ? 1 : 0, kalman_xcorr(K));
     }
 
-#if USE_INCOMPLETE_OBS
-    if (!kalman_smoothing(K) || basic_smoothing(K)) {
-        /* we won't do this for disturbance smoothing, yet (?) */
-        missmap = calloc(K->n, 1);
-    }
-#endif
-
     if (exact_diffuse) {
         K->d = K->N + 1;
     } else {
@@ -6621,8 +6320,6 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     set_kalman_running(K);
 
     for (K->t = 0; K->t < K->N && !err; K->t += 1) {
-        int nt = K->n;
-
         llct = ldt = qt = 0;
         llt = NADBL;
 
@@ -6644,7 +6341,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         }
 
         /* calculate v_t, checking for missing values */
-        nt = compute_forecast_error(K, missmap);
+        nt = compute_forecast_error(K);
         if (nt == 0) {
             /* skip this observation */
             K->okN -= 1;
@@ -6653,11 +6350,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         }
         /* and record forecast errors if wanted */
         if (K->V != NULL) {
-            if (missmap != NULL) {
-                load_to_row_special(K->V, K->vt, K->t, missmap);
-            } else {
-                load_to_row(K->V, K->vt, K->t);
-            }
+            load_to_row(K->V, K->vt, K->t);
         }
 
         /* calculate F_t = ZPZ' [+ VY] (where VY = GG') */
@@ -6784,18 +6477,9 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         if (K->LL != NULL) {
             gretl_vector_set(K->LL, K->t, llt);
         }
-
-        if (nt > 0 && nt < K->n) {
-            /* restore certain matrices to full size */
-            unshrink_vt(K);
-        }
     }
 
     set_kalman_stopped(K);
-
-    if (missmap != NULL) {
-        free(missmap);
-    }
 
     if (na(K->loglik)) {
         err = E_NAN;
@@ -7084,11 +6768,6 @@ static int state_smooth_dejong (kalman *K)
             /* t < K->d: diffuse phase */
             dejong_diffuse_smoother_step(K, r1, Rt, Bt, Ct, N1,
                                          dhat, Psi, no_collapse);
-        }
-
-        if (nt < K->n) {
-            unshrink_vt(K);
-            gretl_matrix_reuse(n1, K->n, 1);
         }
     }
 
