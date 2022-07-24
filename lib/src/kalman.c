@@ -55,7 +55,7 @@ enum {
     KALMAN_BUNDLE  = 1 << 6, /* kalman is inside a bundle */
     KALMAN_SSFSIM  = 1 << 7, /* on simulation, emulate SsfPack */
     KALMAN_ARMA_LL = 1 << 8, /* filtering for ARMA estimation */
-    KALMAN_SM_AM   = 1 << 9, /* Anderson-Moore smoothing */
+    KALMAN_SM_AM   = 1 << 9,  /* Anderson-Moore smoothing */
     KALMAN_UNI     = 1 << 10, /* using univariate representation */
     KALMAN_EXTRA   = 1 << 11  /* recording extra info (att, Ptt) */
 };
@@ -2764,8 +2764,9 @@ static int retrieve_Zt (kalman *K)
    of an incomplete observation. As of July 2022 this is unused.
 */
 
-static int load_filter_data (kalman *K, int allow_incomplete, int *err)
+static int load_filter_data (kalman *K, int no_collapse, int *err)
 {
+    int allow_incomplete = 0;
     int nt = 0;
 
     /* load the forecast error into K->vt */
@@ -2794,7 +2795,16 @@ static int load_filter_data (kalman *K, int allow_incomplete, int *err)
 
     /* load the state and its MSE */
     load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
-    load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+    if (no_collapse) {
+        /* FIXME? */
+        if (K->t == 0) {
+            gretl_matrix_zero(K->P0);
+        } else {
+            load_from_vech(K->P0, K->P, K->r, K->t-1, GRETL_MOD_NONE);
+        }
+    } else {
+        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+    }
 
     if (nt > 0) {
         /* load the gain and F^{-1} */
@@ -6807,6 +6817,14 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         K->loglik -= 0.5 * ll_adj;
     }
 
+    if (exact_diffuse && K->d == K->N + 1) {
+        /* no collapse occurred */
+        // b.S = gretl_matrix_moore_penrose(Sinv, 1.0e-7);
+        // eval Sinv ~ b.S
+        // b.s = -Qt[1:p, p+1]
+        // b.Am = {}
+    }
+
     if (kdebug || djdebug) {
         fprintf(stderr, "kalman_forecast: err=%d, ll=%#.8g, d=%d\n",
                 err, K->loglik, K->d);
@@ -7008,7 +7026,6 @@ static int state_smooth_dejong (kalman *K)
         err = E_ALLOC;
     }
 
-    /* FIXME conditionality? */
     if (!err && K->exact) {
         B2 = gretl_matrix_block_new(&Bt,   K->r, K->r,
                                     &Ct,   K->r, K->r,
@@ -7030,10 +7047,11 @@ static int state_smooth_dejong (kalman *K)
     if (B2 != NULL) {
         gretl_matrix_zero(Rt);
     }
+    no_collapse = (K->d == K->N + 1);
 
     for (t=K->N-1; t>=0 && !err; t--) {
         K->t = t;
-        nt = load_filter_data(K, 0, &err);
+        nt = load_filter_data(K, no_collapse, &err);
         if (err) {
             break;
         } else if (nt == 0) {
@@ -7182,6 +7200,8 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     if (kdebug || djdebug) {
         fprintf(stderr, "dist_smooth_dejong\n");
     }
+
+    no_collapse = (K->d == K->N + 1);
 
     if (1 /* K->HG != NULL */) {
         nu  = gretl_zero_matrix_new(K->p, K->N);
