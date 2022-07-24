@@ -304,14 +304,6 @@ enum {
     K_MMAX /* sentinel */
 };
 
-enum {
-    SM_TYPE_NONE, /* not doing smoothing */
-    SM_STATE_STD, /* regular state smoother */
-    SM_STATE_INI, /* exact initial state smoother */
-    SM_DIST_BKWD, /* disturbance smoother, backward pass */
-    SM_DIST_FRWD, /* disturbance smoother, forward pass */
-};
-
 /* variant of gretl_matrix_copy_values for us when we already
    know that the matrices are non-NULL and conformable
 */
@@ -1754,18 +1746,6 @@ static void shrink_obsvar (kalman *K, int nt)
     }
 }
 
-static int obsvar_resize_needed (kalman *K, int smtype)
-{
-    if (K->VY != NULL) {
-        return smtype == SM_TYPE_NONE ||
-            smtype == SM_DIST_BKWD ||
-            smtype == SM_DIST_FRWD ||
-            smtype == SM_STATE_INI;
-    } else {
-        return 0;
-    }
-}
-
 /* The inverse operation of shrink_obsvar() above */
 
 static void unshrink_obsvar (kalman *K)
@@ -1791,28 +1771,23 @@ static void unshrink_obsvar (kalman *K)
     }
 }
 
-static void shrink_vt (kalman *K, int nt, int smtype)
+static void shrink_vt (kalman *K, int nt)
 {
     double *tmp = malloc(nt * sizeof *tmp);
-    int i, k;
+    int i, j, k;
 
-    if (smtype < SM_DIST_BKWD) {
-        /* We need to shrink ZT too */
-        int j;
+    K->saveZT = K->ZT; /* save the original matrix */
+    K->ZT = gretl_matrix_alloc(K->r, nt);
 
-        K->saveZT = K->ZT; /* save the original matrix */
-        K->ZT = gretl_matrix_alloc(K->r, nt);
-
-        for (j=0, k=0; j<K->n; j++) {
-            if (!na(K->vt->val[j])) {
-                for (i=0; i<K->r; i++) {
-                    K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
-                }
+    for (j=0, k=0; j<K->n; j++) {
+        if (!na(K->vt->val[j])) {
+            for (i=0; i<K->r; i++) {
+                K->ZT->val[k++] = gretl_matrix_get(K->saveZT, i, j);
             }
         }
     }
 
-    if (obsvar_resize_needed(K, smtype)) {
+    if (K->VY != NULL) {
         shrink_obsvar(K, nt);
     }
 
@@ -1834,14 +1809,13 @@ static void shrink_vt (kalman *K, int nt, int smtype)
     free(tmp);
 }
 
-static void unshrink_vt (kalman *K, int smtype)
+static void unshrink_vt (kalman *K)
 {
-    if (smtype < SM_DIST_BKWD) {
-        /* We need to restore ZT too */
-        gretl_matrix_free(K->ZT);
-        K->ZT = K->saveZT;
-        K->saveZT = NULL;
-    }
+    /* Restore ZT */
+    gretl_matrix_free(K->ZT);
+    K->ZT = K->saveZT;
+    K->saveZT = NULL;
+
     gretl_matrix_reuse(K->vt, K->n, 1);
 
     /* K-member workspace matrices */
@@ -1851,7 +1825,7 @@ static void unshrink_vt (kalman *K, int smtype)
     gretl_matrix_reuse(K->Kt, K->r, K->n);
     gretl_matrix_reuse(K->PZ, K->r, K->n);
 
-    if (obsvar_resize_needed(K, smtype)) {
+    if (K->VY != NULL) {
         unshrink_obsvar(K);
     }
 }
@@ -1864,7 +1838,7 @@ static void unshrink_vt (kalman *K, int smtype)
 static void shrink_obs_to_ok (kalman *K, int nt)
 {
     /* includes back up and replacement of ZT */
-    shrink_vt(K, nt, SM_TYPE_NONE);
+    shrink_vt(K, nt);
 
     if (basic_smoothing(K)) {
         /* make a record for the smoother */
@@ -2126,60 +2100,6 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
-/* Variant of the above for use when Koopman-smoothing */
-
-static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
-{
-    gretl_matrix **mptr[] = {
-        &K->VS, &K->VY
-    };
-    int idx[] = {
-        K_VS, K_VY
-    };
-    int var_update = 0;
-    int i, ii, err = 0;
-
-    if (kalman_xcorr(K)) {
-        mptr[0] = &K->H;
-        mptr[1] = &K->G;
-    } else if (kalman_dkvar(K)) {
-        mptr[0] = &K->Q;
-        mptr[1] = &K->R;
-    }
-
-    if (K->matcall != NULL) {
-        err = kalman_update_matrices(K, prn);
-    }
-
-    for (i=0; i<2 && !err; i++) {
-        ii = idx[i];
-        if (matrix_is_varying(K, ii)) {
-            if (kalman_xcorr(K) && (ii == K_VS || ii == K_VY)) {
-                /* handle revised H and/or G */
-                var_update = 1;
-            } else if (kalman_dkvar(K) && ii == K_VS) {
-                var_update = 1;
-            } else {
-                err = check_matrix_dims(K, *mptr[i], ii);
-            }
-            if (err) {
-                fprintf(stderr, "ksmooth_refresh_matrices: err = %d at t = %d\n",
-                        err, K->t);
-            }
-        }
-    }
-
-    if (!err && var_update) {
-        if (K->vartype == DJ_VAR) {
-            err = kalman_update_crossinfo(K, UPDATE_STEP);
-        } else {
-            err = kalman_update_dkvar(K, UPDATE_STEP);
-        }
-    }
-
-    return err;
-}
-
 static double max_val (const gretl_matrix *m)
 {
     int i, n = m->rows * m->cols;
@@ -2196,6 +2116,7 @@ static double max_val (const gretl_matrix *m)
 
 /* Handling of missing y_t or x_t, for the case of
    univariate y_t (or all y_t values missing).
+   FIXME updates required for use with de Jong code?
 */
 
 static void handle_missing_obs (kalman *K)
@@ -2408,7 +2329,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         if (nt > 0 && nt < K->n) {
             /* restore certain matrices to full size */
-            unshrink_vt(K, SM_TYPE_NONE);
+            unshrink_vt(K);
         }
     }
 
@@ -2755,6 +2676,8 @@ static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
     }
 }
 
+#if 0 /* unused at present */
+
 /* Column @t of @src represents the vech of an n x n matrix: extract the
    the column and apply the inverse operation of vech to reconstitute the
    matrix in @targ.
@@ -2776,6 +2699,8 @@ static void load_from_vechT (gretl_matrix *targ, const gretl_matrix *src,
         }
     }
 }
+
+#endif
 
 /* Row @t of @src represents the vec of a certain matrix: extract the
    row and reconstitute the matrix in @targ.
@@ -2828,68 +2753,56 @@ static int retrieve_Zt (kalman *K)
     }
 }
 
-/* For use with smoothing: load what we need for step @t, from the
-   record that was kept on the prior forecasting pass. What we need
-   from the forward pass depends on what exactly we're computing,
-   which is conveyed by @smtype. If @pnt is non-NULL, use it to pass
-   back the effective size of the observables vector.
+/* For use with smoothing: load what we need for step t, from the
+   record that was kept on the prior forecasting pass. We allow for
+   the possibility of time-varying matrices. This is called by the
+   de Jong smoothers (state and dist). The univariate smoother uses
+   its own mechanism.
 
-   We need to handle some complications here. In particular we must
-   update anything that's time-varying, and (unless we're doing
-   disturbance smoothing) deal with any incomplete observations, which
-   have implications for the dimensions of various matrices.
+   The return value is the number of non-missing observables at step
+   t. A non-zero value of @allow_incomplete flags the acceptability
+   of an incomplete observation. As of July 2022 this is unused.
 */
 
-static int load_filter_data (kalman *K, int *pnt, int smtype)
+static int load_filter_data (kalman *K, int allow_incomplete, int *err)
 {
-    int nt, err = 0;
+    int nt = 0;
 
-    /* load the forecast error */
+    /* load the forecast error into K->vt */
     load_from_row(K->vt, K->V, K->t, GRETL_MOD_NONE);
 
-    if (smtype == SM_DIST_BKWD) {
-        /* disturbances */
-        if (filter_is_varying(K)) {
-            ksmooth_refresh_matrices(K, NULL);
-        }
-    } else {
-        /* state: get T_t and/or Z_t if need be */
-        if (matrix_is_varying(K, K_T)) {
-            err = retrieve_Tt(K);
-        }
-        if (!err && matrix_is_varying(K, K_ZT)) {
-            err = retrieve_Zt(K);
-        }
-        if (err) {
-            return err;
-        }
+    /* state: get T_t and/or Z_t if need be */
+    if (matrix_is_varying(K, K_T)) {
+        *err = retrieve_Tt(K);
+    }
+    if (!*err && matrix_is_varying(K, K_ZT)) {
+        *err = retrieve_Zt(K);
+    }
+    if (err) {
+        return nt;
     }
 
     /* check for an incomplete observation */
     nt = get_effective_n(K);
     if (nt < K->n) {
-        shrink_vt(K, nt, smtype);
-    }
-    if (pnt != NULL) {
-        *pnt = nt;
-    }
-
-    if (smtype < SM_DIST_BKWD) {
-        /* load the state and its MSE */
-        load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
-        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+        if (nt > 0 && allow_incomplete) {
+            shrink_vt(K, nt);
+        } else {
+            nt = 0;
+        }
     }
 
-    if (smtype == SM_STATE_INI) {
-        /* load P∞ */
-        load_from_vechT(K->Pk0, K->PK, K->r, K->t);
-    } else if (smtype == SM_STATE_STD || smtype == SM_DIST_BKWD) {
+    /* load the state and its MSE */
+    load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
+    load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+
+    if (nt > 0) {
         /* load the gain and F^{-1} */
         load_from_vec(K->Kt, K->K, K->t);
         load_from_vech(K->iFt, K->F, nt, K->t, GRETL_MOD_NONE);
     }
 
-    return err;
+    return nt;
 }
 
 /* If we're doing smoothing for a system that has time-varying
@@ -6864,7 +6777,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         if (nt > 0 && nt < K->n) {
             /* restore certain matrices to full size */
-            unshrink_vt(K, SM_TYPE_NONE);
+            unshrink_vt(K);
         }
     }
 
@@ -7120,9 +7033,11 @@ static int state_smooth_dejong (kalman *K)
 
     for (t=K->N-1; t>=0 && !err; t--) {
         K->t = t;
-        err = load_filter_data(K, &nt, SM_STATE_STD);
+        nt = load_filter_data(K, 0, &err);
         if (err) {
             break;
+        } else if (nt == 0) {
+            ; /* FIXME! */
         } else if (nt < K->n) {
             gretl_matrix_reuse(n1, nt, 1);
         }
@@ -7154,7 +7069,7 @@ static int state_smooth_dejong (kalman *K)
         }
 
         if (nt < K->n) {
-            unshrink_vt(K, SM_STATE_STD);
+            unshrink_vt(K);
             gretl_matrix_reuse(n1, K->n, 1);
         }
     }
@@ -7321,9 +7236,11 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
 
     for (t=K->N-1; t>=0 && !err; t--) {
         K->t = t;
-        err = load_filter_data(K, &nt, SM_STATE_STD);
+        nt = load_filter_data(K, 0, &err);
         if (err) {
             break;
+        } else if (nt == 0) {
+            ; /* FIXME */
         } else if (nt < K->n) {
             gretl_matrix_reuse(n1, nt, 1);
         }
