@@ -2502,7 +2502,7 @@ static int load_filter_data (kalman *K, int no_collapse, int *err)
     if (!*err && matrix_is_varying(K, K_ZT)) {
         *err = retrieve_Zt(K);
     }
-    if (err) {
+    if (*err) {
         return 0;
     }
 
@@ -4645,7 +4645,7 @@ int kalman_bundle_n_members (gretl_bundle *b)
     return n;
 }
 
-/* not great placement, but for now... here comes some univariate code */
+/* start of univariate Kalman code */
 
 static void dj_from_Finf (const gretl_matrix *Finf, int *d, int *j)
 {
@@ -5520,8 +5520,6 @@ static void eta_smooth (const gretl_matrix *Q,
 
     tmp = gretl_matrix_reuse(c->mm, q, q);
 
-    /* FIXME is qform safe here? */
-
     if (dist == 2) {
         /* Q - QRT * Nt * (QRT)' */
         fast_copy_values(tmp, Q);
@@ -6094,7 +6092,6 @@ static int ensure_dj_variance_matrices (kalman *K)
     }
 
     if (!err && K->VS0 == NULL && !kalman_xcorr(K)) {
-	// (gretl_iteration_depth() > 0 || numgrad_in_progress())) {
 	/* establish baseline for detecting changes */
 	K->VS0 = gretl_matrix_copy(K->VS);
 	if (K->VY != NULL) {
@@ -6285,7 +6282,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	fast_copy_values(K->P0, K->VS);
 #endif
     } else {
-	/* what if anything should we do here? */
+	/* what, if anything, should we do here? */
         // fast_copy_values(K->P0, K->VS);
         // gretl_matrix_zero(K->P0);
     }
@@ -6303,7 +6300,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
 
     if (exact_diffuse) {
-        K->d = K->N + 1;
+        K->d = K->N;
     } else {
         K->d = -1;
     }
@@ -6501,12 +6498,17 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         K->loglik -= 0.5 * ll_adj;
     }
 
-    if (exact_diffuse && K->d == K->N + 1) {
+    if (exact_diffuse && K->d == K->N) {
         /* no collapse occurred */
-        // b.S = gretl_matrix_moore_penrose(Sinv, 1.0e-7);
-        // eval Sinv ~ b.S
-        // b.s = -Qt[1:p, p+1]
-        // b.Am = {}
+        dejong_info *dj = K->djinfo;
+
+        err = gretl_matrix_moore_penrose(dj->S, 1.0e-7);
+        gretl_matrix_extract_matrix(dj->s, dj->Qt, 0, K->r, GRETL_MOD_NONE);
+        gretl_matrix_multiply_by_scalar(dj->s, -1.0);
+        if (dj->Am != NULL) {
+            gretl_matrix_free(dj->Am);
+        }
+        dj->Am = NULL;
     }
 
     if (kdebug || djdebug) {
@@ -6639,6 +6641,7 @@ static int dejong_diffuse_smoother_step (kalman *K,
     gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                               rt, GRETL_MOD_NONE,
                               K->a0, GRETL_MOD_CUMULATE);
+
     /* aht += Bt * dhat */
     gretl_matrix_multiply_mod(Bt, GRETL_MOD_NONE,
                               dhat, GRETL_MOD_NONE,
@@ -6696,8 +6699,10 @@ static int state_smooth_dejong (kalman *K)
     int nt = K->n;
     int t, err = 0;
 
-    if (kdebug || djdebug) {
-        fprintf(stderr, "dejong_state_smooth\n");
+    no_collapse = (K->d == K->N);
+
+    if (1 || kdebug || djdebug) {
+        fprintf(stderr, "dejong_state_smooth: no_collapse = %d\n", no_collapse);
     }
 
     B = gretl_matrix_block_new(&r0,  K->r, 1,
@@ -6731,7 +6736,11 @@ static int state_smooth_dejong (kalman *K)
     if (B2 != NULL) {
         gretl_matrix_zero(Rt);
     }
-    no_collapse = (K->d == K->N + 1);
+
+    if (no_collapse) {
+        gretl_matrix_multiply(K->djinfo->S, K->djinfo->s, dhat);
+        gretl_matrix_copy_values(Psi, K->djinfo->S);
+    }
 
     for (t=K->N-1; t>=0 && !err; t--) {
         K->t = t;
@@ -6740,8 +6749,6 @@ static int state_smooth_dejong (kalman *K)
             break;
         } else if (nt == 0) {
             ; /* FIXME! */
-        } else if (nt < K->n) {
-            gretl_matrix_reuse(n1, nt, 1);
         }
 
         /* compute N_{t-1} */
@@ -6880,7 +6887,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
         fprintf(stderr, "dist_smooth_dejong\n");
     }
 
-    no_collapse = (K->d == K->N + 1);
+    no_collapse = (K->d == K->N);
 
     if (1 /* K->HG != NULL */) {
         nu  = gretl_zero_matrix_new(K->p, K->N);
