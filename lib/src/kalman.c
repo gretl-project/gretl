@@ -6225,7 +6225,7 @@ static int dejong_diffuse_filter_step (kalman *K)
         gretl_matrix_qform(dj->At, GRETL_MOD_NONE,
                            dj->S, K->P0, GRETL_MOD_CUMULATE);
 
-        /* qm = Qt[p+1,p+1] - s'*S*s */
+        /* qm = Qt[r+1,r+1] - s'*S*s */
         dj->qm = gretl_matrix_get(dj->Qt, K->r, K->r);
         dj->qm += gretl_scalar_qform(dj->s, dj->S, &err);
 
@@ -6240,11 +6240,45 @@ static int dejong_diffuse_filter_step (kalman *K)
     return err;
 }
 
+/* Carry out some calculations that are required when the
+   diffuse initial recursion never collapsed to the regular
+   Kalman filter. @sum_preldet is the sum of log determinants
+   of F_t, t = 1 to N, all of which observations were in the
+   diffuse phase.
+*/
+
+static int handle_no_collapse_case (kalman *K, double nl2pi,
+                                    double sum_preldet)
+{
+    dejong_info *dj = K->djinfo;
+    double cterm = K->okN * nl2pi;
+    double qm, qadj;
+    int err = 0;
+
+    qm = gretl_matrix_get(dj->Qt, K->r, K->r);
+    gretl_matrix_extract_matrix(dj->s, dj->Qt, 0, K->r, GRETL_MOD_NONE);
+    gretl_matrix_multiply_by_scalar(dj->s, -1.0);
+    err = gretl_matrix_moore_penrose(dj->S, 1.0e-7);
+    if (!err) {
+        qadj = gretl_scalar_qform(dj->s, dj->S, &err);
+    }
+    if (!err) {
+        K->loglik = -0.5 * (sum_preldet + qm - qadj + cterm);
+    }
+    if (dj->Am != NULL) {
+        gretl_matrix_free(dj->Am);
+    }
+    dj->Am = NULL;
+
+    return err;
+}
+
 static int kfilter_dejong (kalman *K, PRN *prn)
 {
     double nl2pi = K->n * LN_2_PI;
     double sumldet = 0;
-    double llt, llct, ldt, qt;
+    double sum_preldet = 0;
+    double llt, llct, ldt, qt, pldt;
     int smo = kalman_smoothing(K);
     int exact_diffuse;
     int loglik_1991 = 0;
@@ -6375,7 +6409,8 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         fast_copy_values(K->iFt, K->Ft);
 	if (K->t < K->d && !loglik_1991) {
 	    /* conditionality regarding the log-determinant? */
-	    err = gretl_invert_symmetric_matrix2(K->iFt, NULL);
+	    err = gretl_invert_symmetric_matrix2(K->iFt, &pldt);
+            sum_preldet += pldt;
 	} else {
 	    err = gretl_invert_symmetric_matrix2(K->iFt, &ldt);
 	}
@@ -6480,6 +6515,15 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
     if (na(K->loglik)) {
         err = E_NAN;
+    } else if (exact_diffuse) {
+        if (K->d == K->N) {
+            err = handle_no_collapse_case(K, nl2pi, sum_preldet);
+        } else if (loglik_1991) {
+            /* deal with extra terms set out in De Jong (1991) */
+            double ll_adj = K->djinfo->qm + K->djinfo->ldS;
+
+            K->loglik -= 0.5 * ll_adj;
+        }
     } else if (kalman_arma_ll(K)) {
         double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okN);
 
@@ -6487,28 +6531,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     } else {
         int d = (kalman_diffuse(K) && !K->exact)? K->r : 0;
 
-        /* as per old kalman_forecast() code */
+        /* as per old kalman_forecast() code:
+           do we want this at all?
+        */
         K->s2 = K->SSRw / (K->n * K->okN - d);
-    }
-
-    if (exact_diffuse && loglik_1991) {
-        /* deal with extra terms set out in De Jong (1991) */
-        double ll_adj = K->djinfo->qm + K->djinfo->ldS;
-
-        K->loglik -= 0.5 * ll_adj;
-    }
-
-    if (exact_diffuse && K->d == K->N) {
-        /* no collapse occurred */
-        dejong_info *dj = K->djinfo;
-
-        err = gretl_matrix_moore_penrose(dj->S, 1.0e-7);
-        gretl_matrix_extract_matrix(dj->s, dj->Qt, 0, K->r, GRETL_MOD_NONE);
-        gretl_matrix_multiply_by_scalar(dj->s, -1.0);
-        if (dj->Am != NULL) {
-            gretl_matrix_free(dj->Am);
-        }
-        dj->Am = NULL;
     }
 
     if (kdebug || djdebug) {
