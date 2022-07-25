@@ -228,6 +228,25 @@ static void gretl_abort (char *line)
     exit(EXIT_FAILURE);
 }
 
+static void write_my_pid (void)
+{
+    gchar *fname = gretl_make_dotpath("exec.pid");
+    FILE *fp = fopen(fname, "w");
+
+    if (fp != NULL) {
+        long mypid;
+#ifdef WIN32
+        mypid = (long) GetCurrentProcessId();
+#else
+        mypid = (long) getpid();
+#endif
+        fprintf(fp, "%ld\n", mypid);
+        fclose(fp);
+    }
+
+    g_free(fname);
+}
+
 static void noalloc (void)
 {
     fputs(_("Out of memory!\n"), stderr);
@@ -784,8 +803,8 @@ int main (int argc, char *argv[])
         gretl_scalar_add("scriptopt", scriptval);
     }
 
-    /* misc. interactive-mode setup */
     if (!batch) {
+        /* misc. interactive-mode setup */
         check_help_file();
         fb = stdin;
         push_input_file(fb);
@@ -795,6 +814,10 @@ int main (int argc, char *argv[])
     } else if (batch_stdin) {
         fb = stdin;
         push_input_file(fb);
+    }
+
+    if (gui_exec) {
+        write_my_pid();
     }
 
 #ifdef HAVE_READLINE

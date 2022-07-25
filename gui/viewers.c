@@ -536,6 +536,13 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
     }
 
+#ifdef GRETL_EDIT
+    if (upkey == GDK_K && Ctrl && Alt) {
+        /* temporary hack */
+        cancel_run_script();
+    }
+#endif
+
     if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {
 	/* we set up "special" responses to some plain keystrokes
 	   below: this won't do if we're in editing/typing mode

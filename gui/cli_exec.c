@@ -201,19 +201,64 @@ static void exec_script_thread (GTask *task,
     }
 }
 
+static void task_cancel_callback (void)
+{
+    gchar *fname = gretl_make_dotpath("exec.pid");
+    FILE *fp = fopen(fname, "r");
+
+    if (fp != NULL) {
+        long pid;
+
+        if (fscanf(fp, "%ld", &pid) == 1) {
+#ifdef G_OS_WIN32
+            DWORD dw = (DWORD) pid;
+            HANDLE h;
+
+            h = OpenProcess(PROCESS_TERMINATE, FALSE, dw);
+            if (h != NULL) {
+                TerminateProcess(h, ERROR_SUCCESS);
+            }
+#else
+            kill(pid, SIGKILL);
+#endif
+        }
+        fclose(fp);
+        gretl_remove(fname);
+    }
+
+    g_free(fname);
+}
+
+void cancel_run_script (void)
+{
+    GCancellable *stopper = g_cancellable_get_current();
+
+    if (stopper != NULL) {
+        g_cancellable_cancel(stopper);
+        g_cancellable_pop_current(stopper);
+    }
+}
+
 static void run_script_async (gchar *cmd,
 			      gchar **argv,
 			      gchar *fname,
 			      windata_t *vwin)
 {
     exec_info *ei = calloc(1, sizeof *ei);
+    GCancellable *stopper;
     GTask *task;
+
+    stopper = g_cancellable_new();
+    g_cancellable_connect(stopper, G_CALLBACK(task_cancel_callback),
+                          NULL, NULL);
+    g_cancellable_push_current(stopper);
 
     exec_info_init(ei, cmd, argv, fname, NULL, vwin);
     ei->lang = 0; /* hansl */
     ei->err = 0;
 
-    task = g_task_new(NULL, NULL, exec_script_done, ei);
+    task = g_task_new(NULL, stopper, exec_script_done, ei);
+    g_task_set_check_cancellable(task, TRUE);
     g_task_set_task_data(task, ei, NULL);
     modify_exec_button(vwin, 1);
     g_task_run_in_thread(task, exec_script_thread);

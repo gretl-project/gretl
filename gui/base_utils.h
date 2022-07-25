@@ -79,6 +79,12 @@ void do_run_script (GtkWidget *w, windata_t *vwin);
 
 void run_script_silent (GtkWidget *w, windata_t *vwin);
 
+#ifdef GRETL_EDIT
+
+void cancel_run_script (void);
+
+#endif
+
 void new_script_callback (GtkAction *action);
 
 void start_R (const char *buf, int send_data, int interactive);
