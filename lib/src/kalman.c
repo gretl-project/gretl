@@ -6208,7 +6208,7 @@ static int dejong_diffuse_filter_step (kalman *K)
         /* Sinv = Qt[1:r,1:r] */
         gretl_matrix_extract_matrix(dj->S, dj->Qt, 0, 0, GRETL_MOD_NONE);
 
-        /* s = -Qt[1:r,r+1] */
+        /* -s = Qt[1:r,r+1] */
         gretl_matrix_extract_matrix(dj->s, dj->Qt, 0, K->r, GRETL_MOD_NONE);
         gretl_matrix_multiply_by_scalar(dj->s, -1.0);
 
@@ -6227,7 +6227,7 @@ static int dejong_diffuse_filter_step (kalman *K)
 
         /* qm = Qt[r+1,r+1] - s'*S*s */
         dj->qm = gretl_matrix_get(dj->Qt, K->r, K->r);
-        dj->qm += gretl_scalar_qform(dj->s, dj->S, &err);
+        dj->qm -= gretl_scalar_qform(dj->s, dj->S, &err); /* FIXME? */
 
         /* record */
 	if (dj->Am == NULL) {
