@@ -1899,7 +1899,6 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 
 /* Handling of missing y_t or x_t, for the case of
    univariate y_t (or all y_t values missing).
-   FIXME updates required for use with de Jong code?
 */
 
 static void handle_missing_obs (kalman *K)
@@ -3405,8 +3404,7 @@ static int check_replacement_dims (const gretl_matrix *orig,
     }
 
     if (err) {
-        gretl_errmsg_set("You cannot resize a state-space "
-                         "system matrix");
+        gretl_errmsg_set("You cannot resize a state-space system matrix");
     }
 
     return err;
@@ -3419,42 +3417,6 @@ static int check_replacement_dims (const gretl_matrix *orig,
    matrix.
 */
 
-#if 0
-
-static int add_or_replace_k_matrix (kalman *K,
-                                    gretl_matrix **targ,
-                                    gretl_matrix *src,
-                                    int id, int copy)
-{
-    int err = 0;
-
-    fprintf(stderr, "add_or_replace_k_matrix: id=%d, *targ %p, src %p, copy %d\n",
-            id, (void *) *targ, (void *) src, copy);
-
-    if (*targ != src) {
-        if (*targ != NULL) {
-            err = check_replacement_dims(*targ, src, id);
-            if (err) {
-                return err;
-            }
-            /* destroy old Kalman-owned matrix */
-            gretl_matrix_free(*targ);
-        }
-        if (copy) {
-            *targ = gretl_matrix_copy(src);
-            if (*targ == NULL) {
-                err = E_ALLOC;
-            }
-        } else {
-            *targ = src;
-        }
-    }
-
-    return err;
-}
-
-#else
-
 static int add_or_replace_k_matrix (kalman *K,
                                     gretl_matrix **targ,
                                     gretl_matrix *src,
@@ -3466,7 +3428,7 @@ static int add_or_replace_k_matrix (kalman *K,
         if (*targ != NULL) {
             err = check_replacement_dims(*targ, src, id);
             if (err) {
-                fprintf(stderr, " bad replacement!\n");
+                fprintf(stderr, " bad kalman matrix replacement!\n");
                 return err;
             }
             fast_copy_values(*targ, src);
@@ -3485,8 +3447,6 @@ static int add_or_replace_k_matrix (kalman *K,
 
     return err;
 }
-
-#endif
 
 static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
 {
