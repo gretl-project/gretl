@@ -2967,6 +2967,46 @@
       </description>
     </function>
 
+    <function name="commute" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="int">m</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
+	<fnarg optional="true" type="int">post</fnarg>
+	<fnarg optional="true" type="int">add_id</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve o resultado de premultiplicar a matriz <argname>A</argname>
+	  pola matriz <math>K</math><sub>m,n</sub> de conmutación (isto é máis
+	  eficiente que a propia multiplicación explícita). Asúmese que cada
+	  columna de <argname>A</argname> procede dunha operación de
+	  vectorización sobre unha matriz <math>m x n</math>. En particular,
+	</para>
+	<code>
+	  commute(vec(B), rows(B), cols(B))
+	</code>
+	<para>
+	  proporciona vec(<math>B'</math>). Co obxecto de calcular a matriz
+	  de conmutación apropiada, aplica simplemente a función a unha matriz
+	  identidade co tamaño axeitado. Por exemplo:
+	</para>
+	<code>
+	  K_32 = commute(I(6), 3, 2)
+	</code>
+	<para>
+	  Por defecto, o argumento opcional <argname>n</argname> está
+	  establecido que sexa igual a <argname>m</argname>. Cando
+	  o argumento opcional <argname>post</argname> non é cero,
+	  lévase a cabo a multiplicación posterior en troques da multiplicación
+	  anterior; e a opción Booleana <argname>add_id</argname> vai
+	  premultiplicar a matriz <argname>A</argname> por
+	  <math>I + K</math><sub>m,n</sub> en troques de
+	  <math>K</math><sub>m,n</sub>.
+	</para>
+      </description>
+    </function>
+
     <function name="complex" section="complex" output="cmatrix">
       <fnargs>
 	<fnarg type="scalar-or-matrix">A</fnarg>
@@ -3095,6 +3135,27 @@
             <fncref targ="fft"/>
             <fncref targ="filter"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="cquad" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Z</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dada unha matriz complexa <argname>Z</argname> de orde
+	  <by r="m" c="n"/>, esta instrución devolve unha matriz real de
+	  orde <by r="m" c="n"/> que contén as "cuadranzas" de cada un dos
+	  elementos de <argname>Z</argname>. A cuadranza dun número complexo
+	  <math>z</math> = <math>a</math> + <math>bi</math> se define
+	  como <math>a</math><sup>2</sup> + <math>b</math><sup>2</sup>.
+	  Polo tanto, é igual ao cadrado do módulo de <math>z</math>, e
+	  tamén é igual a <math>z</math> multiplicado polo seu conxugado
+	  complexo; pero o cálculo directo que realiza <lit>cquad</lit> é
+	  considerablemente máis rápido que calquera das outras propostas
+	  alternativas.
 	</para>
       </description>
     </function>
@@ -5411,12 +5472,30 @@
     <function name="ginv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar" optional="true">tol</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve a matriz <math>A</math><sup>+</sup>, a matriz pseudoinversa
-	  de Moore&ndash;Penrose ou inversa xeneralizada de <argname>A</argname>,
-	  calculada por medio da descomposición en valores singulares.
+	  de Moore&ndash;Penrose ou inversa xeneralizada dunha matriz
+	  <argname>A</argname> de orde <by r="r" c="c"/>, calculada por medio
+	  da descomposición en valores singulares.
+	</para>
+	<para>
+	  O resultado desta operación depende do número de valores singulares
+	  da matriz <argname>A</argname> que numericamente se consideran
+	  iguais a 0. Podes usar o parámetro opcional <argname>tol</argname>
+	  para retocar este aspecto. Se consideran os valores singulares iguais
+	  a 0 cando son menores que <math>m &times; tol &times; s</math>,
+	  onde <math>m</math> é o maior valor de entre <math>r</math> e
+	  <math>c</math>, e sendo <math>s</math> o que expresa o valor
+	  singular máis grande. Cando omites o segundo argumento, establécese
+	  que <argname>tol</argname> sexa igual ao épsilon da máquina
+	  (consulta <fncref targ="$macheps"/>). Nalgúns casos, podes desexar
+	  establecer que <argname>tol</argname> sexa un valor máis grande
+	  (p.e. 1.0e-9) co obxecto de evitar que se sobreestime o rango da
+	  matriz <argname>A</argname> (o que podería dar lugar a resultados
+	  numericamente inestables).
 	</para>
 	<para context="notex">
 	  Esta matriz posúe as seguintes propiedades: <math>A</math>
@@ -6380,10 +6459,29 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve 1 cando <argname>nome</argname> é a denominación dunha
-	  matriz complexa, 0 se é a denominación dunha matriz real, ou
-	  <lit>NA</lit> noutro caso.
+	  Comproba se <argname>nome</argname> é o identificador dunha matriz
+	  complexa. O valor que se devolve é algún dos seguintes:
 	</para>
+  <para>
+    <lit>NA</lit>: <argname>nome</argname> non identifica a unha
+    matriz.
+  </para>
+  <para>
+    <lit>0</lit>: <argname>nome</argname> identifica unha matriz real,
+    na súa totalidade formada por números normais de punto flotante
+    (<quote>dobres</quote>, na terminoloxía de C).
+  </para>
+  <para>
+    <lit>1</lit>: <argname>nome</argname> identifica unha matriz
+    <quote>en principio</quote> complexa, formada por números que
+    teñen tanto unha parte real como outra imaxinaria, pero nos que
+    as partes imaxinarias son nulas.
+  </para>
+  <para>
+    <lit>2</lit>: a matriz en cuestión contén, cando menos, un valor
+    <quote>autenticamente</quote> complexo, con unha parte imaxinaria
+    que non é nula.
+  </para>
       </description>
     </function>
 
@@ -10169,17 +10267,15 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve unha matriz coas raíces dun polinomio. Se o polinomio é
-	  de grao <math>p</math>, o vector <argname>a</argname> debe de
-	  conter <math>p</math> + 1 coeficientes en orde ascendente; é
-	  dicir, comezando coa constante e finalizando co coeficiente de
+	  Devolve as raíces dun polinomio. Se o polinomio é de grao
+	  <math>p</math>, o vector <argname>a</argname> debe de conter
+	  <math>p</math> + 1 coeficientes en orde ascendente; é dicir,
+	  comezando coa constante e finalizando co coeficiente de
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  Se todas as raíces son reais, vanse devolver nun vector columna de
-	  dimensión <math>p</math>; noutro caso, devólvese unha matriz de orde
-	  <by r="p" c="2"/>, coas partes reais na primeira columna e as partes
-	  imaxinarias na segunda.
+	  O valor que se devolve é un vector columna complexo con
+	  longura igual a <math>p</math>.
 	</para>
       </description>
     </function>
@@ -10620,15 +10716,26 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;R</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;P</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve unha matriz co cálculo da descomposición QR dunha matriz
-	  <argname>X</argname> de orde <by r="m" c="n"/>; é dicir,
-	  <math>X = QR</math> onde <math>Q</math> é unha matriz <by r="m" c="n"/>
-	  ortogonal, e <math>R</math> é unha matriz <by r="n" c="n"/> triangular
-	  superior. A matriz <math>Q</math> devólvese directamente, mentres que
-	  podes obter <math>R</math> mediante o segundo argumento (opcional).
+	  Devolve unha matriz co cálculo dunha <quote>tenue</quote>
+	  descomposición QR dunha matriz <argname>X</argname> de orde
+	  <by r="m" c="n"/> sendo <math>m</math> &ge; <math>n</math>,
+	  de xeito que <math>X = QR</math> onde <math>Q</math> é unha
+	  matriz <by r="m" c="n"/> ortogonal, e <math>R</math> é unha
+	  matriz <by r="n" c="n"/> triangular superior. A matriz <math>Q</math>
+	  devólvese directamente, mentres que podes obter <math>R</math>
+	  mediante o segundo argumento (opcional).
+	</para>
+	<para>
+	  Se indicas o terceiro argumento (opcional), a descomposición
+	  utiliza o pivotado de columnas e, cando se completa con éxito,
+	  <argname>P</argname> contén a ordenación final das columnas
+	  en forma dun vector fila. Se as columnas non están realmente
+	  reordenadas, <argname>P</argname> vaise equipar a
+	  <fncref targ="seq"/><lit>(1, n)</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -11052,11 +11159,32 @@
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar" optional="true">tol</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un enteiro co rango da matriz <argname>X</argname>, calculado
-	  numericamente mediante a descomposición en valores singulares.
+	  Devolve un enteiro co rango da matriz <argname>X</argname> de orde
+	  <by r="r" c="c"/>, calculado numericamente mediante a descomposición
+	  en valores singulares.
+	</para>
+	<para>
+	  O resultado desta operación é o número de valores singulares
+	  da matriz <argname>X</argname> que numericamente se consideran
+	  maiores que 0. O parámetro opcional <argname>tol</argname> podes
+	  usalo para retocar este aspecto. Vaise considerar que os valores
+	  singulares non son nulos cando resultan ser maiores que
+	  <math>m &times; tol &times; s</math>, onde <math>m</math> é o
+	  maior valor de entre <math>r</math> e <math>c</math>, sendo
+	  <math>s</math> o que expresa o valor singular máis grande. Cando
+	  omites o segundo argumento, establécese que <argname>tol</argname>
+	  sexa igual ao épsilon da máquina (consulta <fncref targ="$macheps"/>).
+	  Nalgúns casos, podes desexar establecer que <argname>tol</argname>
+	  sexa un valor máis grande (p.e. 1.0e-9) co obxecto de evitar que
+	  se sobreestime o rango da matriz <argname>X</argname> (o que
+	  podería dar lugar a resultados numericamente
+	  inestables).
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="svd"/>
 	  </seelist>
@@ -11908,6 +12036,49 @@
       </description>
     </function>
 
+    <function name="sphericorr" section="stats" output="matrix">
+      <fnargs>
+       <fnarg type="matrix">X</fnarg>
+       <fnarg type="int">modo</fnarg>
+       <fnarg type="matrixref" optional="true">&amp;J</fnarg>
+      </fnargs>
+      <description>
+       <para>
+	 Permite facer a representación en coordenadas esféricas dunha
+	 matriz de correlacións, ou a operación inversa, dependendo do
+	 valor do parámetro <argname>modo</argname>.
+       </para>
+       <para>
+	 Cando se omite <argname>modo</argname>, ou é igual a 0, asúmese
+	 que <argname>X</argname> é unha matriz de correlacións de orde
+	 <by r="n" c="n"/>. O valor que se devolve é un vector que ten
+	 <math>n(n-1)/2</math> elementos entre 0 e &pi;. Neste modo, ignórase
+	 a referencia a <argname>J</argname>.
+       </para>
+       <para>
+	 Cando <argname>modo</argname> é igual a 1 ou a 2, realízase a
+	 transformación inversa, polo que <argname>X</argname> debe ser un
+	 vector que teña <math>n(n-1)/2</math> elementos entre 0 e &pi;.
+	 O valor que se devolve agora é a matriz <math>R</math> de correlacións
+	 cando a opción <argname>modo</argname> é igual a 1; ou o seu factor
+	 <math>K</math> de Cholesky cando <argname>modo</argname> é igual a 2.
+	 Nestes casos, cando se indica, o punteiro opcional á matriz
+	 <argname>J</argname> permite recuperar o Xacobiano de
+	 vech(<math>R</math>) ou de vech(<math>K</math>) con respecto a
+	 <math>X</math>.
+       </para>
+       <para>
+	 Cae na conta de que a representación en coordenadas esféricas
+	 fai moi sinxelo o cálculo do log-determinante da matriz de
+	 correlacións <math>R</math>:
+	</para>
+       <code>
+	 omega = sphericorr(X)
+	 log_det = 2 * sum(log(sin(omega)))
+	</code>
+      </description>
+    </function>
+
     <function name="sprintf" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">formato</fnarg>
@@ -12220,6 +12391,14 @@
 	  tal como determinaría a biblioteca do sistema C.
 	</para>
 	<para>
+	  Aviso: Esta función compórtase de xeito distinto en sistemas operativos
+	  de Windows e de tipo Unix para as datas anteriores ao 1 de xaneiro de
+	  1970. Nos sistemas de tipo Unix (Linux, macOS), podes usar argumentos
+	  negativos para representar esas datas, de modo que os valores negativos
+	  dan como resultado cadeas de texto coas datas normais; en Windows, non
+	  se admiten esas datas, polo que o valor do resultado é unha cadea nula.
+	</para>
+	<para>
 	  Podes obter valores axeitados de <argname>tm</argname> para
 	  utilizar con esta función mediante o accesorio <fncref targ="$now"/>
 	  ou a función <fncref targ="strptime"/>.
@@ -12338,6 +12517,13 @@
 	 utilizando o <argname>formato</argname> especificado; e devolve un
 	 escalar que proporciona o número de segundos transcorridos dende o
 	 inicio de 1970 segundo o Tempo Universal Coordinado (UTC).
+	</para>
+	<para>
+	  Aviso: Esta función compórtase de xeito distinto en sistemas operativos
+	  de Windows e de tipo Unix para as datas anteriores ao 1 de xaneiro de
+	  1970. Nos sistemas de tipo Unix (Linux, macOS), devólvense intervalos
+	  negativos de tempo en segundos; en Windows, non se admiten esas datas,
+	  polo que o valor que se devolve é NA.
 	</para>
 	<para>
 	  Podes atopar as opcións de <argname>formato</argname> consultando
