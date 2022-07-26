@@ -47,13 +47,12 @@ enum {
     KALMAN_BUNDLE  = 1 << 0,  /* user-defined filter, inside bundle */
     KALMAN_DIFFUSE = 1 << 1,  /* using diffuse P_{1|0} */
     KALMAN_FORWARD = 1 << 2,  /* running forward filtering pass */
-    KALMAN_SMOOTH  = 1 << 3,  /* preparing for smoothing pass */
-    KALMAN_SIM     = 1 << 4,  /* running simulation */
-    KALMAN_CHECK   = 1 << 5,  /* checking user-defined matrices */
-    KALMAN_SSFSIM  = 1 << 6,  /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 7,  /* filtering for ARMA estimation */
-    KALMAN_UNI     = 1 << 8,  /* using univariate representation */
-    KALMAN_EXTRA   = 1 << 9   /* recording extra info (att, Ptt) */
+    KALMAN_SIM     = 1 << 3,  /* running simulation */
+    KALMAN_CHECK   = 1 << 4,  /* checking user-defined matrices */
+    KALMAN_SSFSIM  = 1 << 5,  /* on simulation, emulate SsfPack */
+    KALMAN_ARMA_LL = 1 << 6,  /* filtering for ARMA estimation */
+    KALMAN_UNI     = 1 << 7,  /* using univariate representation */
+    KALMAN_EXTRA   = 1 << 8   /* recording extra info (att, Ptt) */
 };
 
 enum {
@@ -128,6 +127,7 @@ struct kalman_ {
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
     int dj_initted; /* flag for basic de Jong initialization done */
+    int smo_prep;   /* preparing for smoothing (of type) */
 
     double SSRw;    /* \sum_{t=1}^N v_t^{\prime} F_t^{-1} v_t */
     double loglik;  /* log-likelihood */
@@ -219,6 +219,12 @@ struct kalman_ {
 };
 
 enum {
+    SM_NONE = 0,
+    SM_STATE,
+    SM_DIST
+};
+
+enum {
     K_V,
     K_F,
     K_A,
@@ -236,7 +242,6 @@ enum {
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
-#define kalman_smoothing(K)   (K->flags & KALMAN_SMOOTH)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
 #define kalman_univariate(K)  (K->flags & KALMAN_UNI)
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
@@ -506,6 +511,7 @@ static kalman *kalman_new_empty (int flags)
         K->b = NULL;
         K->d = 0;
         K->j = 0;
+	K->smo_prep = 0;
 	K->dj_initted = 0;
     }
 
@@ -1914,7 +1920,7 @@ static void handle_missing_obs (kalman *K)
 
     /* record stuff if wanted */
     if (K->F != NULL) {
-        if (kalman_smoothing(K)) {
+        if (K->smo_prep) {
             set_row_to_value(K->F, K->t, 0.0);
         } else {
             set_row_to_value(K->F, K->t, NADBL); /* 0 ? */
@@ -1927,7 +1933,7 @@ static void handle_missing_obs (kalman *K)
         set_row_to_value(K->K, K->t, 0.0);
     }
     if (K->V != NULL) {
-        if (kalman_smoothing(K)) {
+        if (K->smo_prep) {
             set_row_to_value(K->V, K->t, 0.0);
         } else {
             set_row_to_value(K->V, K->t, NADBL); /* 0 ? */
@@ -2032,7 +2038,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         if (K->F != NULL) {
             /* we're recording F_t for all t */
-            if (kalman_smoothing(K)) {
+            if (K->smo_prep) {
                 /* record inverse */
                 load_to_vech(K->F, K->iFt, nt, K->t);
             } else {
@@ -2734,7 +2740,7 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 
     if (!err) {
         /* prior forward pass */
-        K->flags |= KALMAN_SMOOTH;
+	K->smo_prep = dist ? SM_DIST : SM_STATE;
         if (kalman_univariate(K)) {
             if (trace) {
                 printf("call kfilter_univariate()\n");
@@ -2746,7 +2752,7 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
             }
             err = kfilter_dejong(K, NULL);
         }
-        K->flags &= ~KALMAN_SMOOTH;
+        K->smo_prep = SM_NONE;
     }
 
     K->t = 0;
@@ -4997,7 +5003,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     int p = K->n; /* # of observables */
     int m = K->r; /* length of state vector */
-    int smo = kalman_smoothing(K);
     int rankPk = kalman_diffuse(K) ? m : 0;
     int d = K->exact ? 0 : -1;
     int j = K->exact ? 0 : -1;
@@ -5014,7 +5019,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         handle_univariate_transforms(K);
     }
 
-    if (smo && K->exact) {
+    if (K->smo_prep && K->exact) {
         Nd = matrix_is_varying(K, K_ZT) ? K->N : 4*m;
         ensure_DK_smo_recorders(K, Nd);
     }
@@ -5067,7 +5072,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         qt = 0;
         ldt = 0;
         llct = 0;
-        if (smo && d == 0 && t < Nd) {
+        if (K->smo_prep && d == 0 && t < Nd) {
             col_from_vec(K->PK, Pk, t);
         }
         for (i=0; i<p; i++) {
@@ -5090,7 +5095,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
                                           Zi, GRETL_MOD_TRANSPOSE,
                                           Kki, GRETL_MOD_NONE);
                 Fki = dotprod(Zi, Kki);
-                if (smo && t < Nd) {
+                if (K->smo_prep && t < Nd) {
                     gretl_matrix_set(ui->Finf, i, t, Fki);
                     col_from_vec(Kkt, Kki, i);
                 }
@@ -5137,7 +5142,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             }
         } /* observables at time t */
 
-        if (smo) {
+        if (K->smo_prep) {
             row_from_mat(K->K, K->Kt, t);
             if (d == 0 && t < Nd) {
                 col_from_vec(ui->Kinf, Kkt, t);
@@ -5191,7 +5196,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     if (0) { /* Hmm, conditionality? */
         K->d = K->N;
         K->j = p;
-    } else if (smo && K->exact) {
+    } else if (K->smo_prep && K->exact) {
         dj_from_Finf(ui->Finf, &d, &j);
 #if 0 /* not sure about this, causes trouble? */
         if (d > 0 && d < ui->Finf->cols) {
@@ -6065,8 +6070,7 @@ static int ensure_basic_smo_recorder (kalman *K)
     if (K->L == NULL) {
         K->L = gretl_zero_matrix_new(K->r * K->r, K->N);
     }
-    if (K->J == NULL) {
-        /* FIXME only needed for disturbance smoothing */
+    if (K->J == NULL && K->smo_prep == SM_DIST) {
         K->J = gretl_zero_matrix_new(K->r * K->r, K->N);
     }
 
@@ -6325,7 +6329,6 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     double sumldet = 0;
     double sum_preldet = 0;
     double llt, llct, ldt, qt, pldt;
-    int smo = kalman_smoothing(K);
     int exact_diffuse;
     int loglik_1991 = 0;
     int nt, Nd = K->N;
@@ -6341,7 +6344,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	K->dj_initted = 1;
     }
 
-    if (smo) {
+    if (K->smo_prep) {
         ensure_basic_smo_recorder(K);
         if (K->exact) {
             Nd = K->N; // ? matrix_is_varying(K, K_ZT) ? K->N : 4*K->r;
@@ -6376,7 +6379,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
     if (djdebug) {
         fprintf(stderr, "\n*** kfilter_dejong: diffuse %d, exact %d, smo %d, xcorr %d\n",
-                kalman_diffuse(K) ? 1 : 0, K->exact, smo ? 1 : 0, kalman_xcorr(K));
+                kalman_diffuse(K) ? 1 : 0, K->exact, K->smo_prep ? 1 : 0, kalman_xcorr(K));
     }
 
     if (exact_diffuse) {
@@ -6470,7 +6473,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         if (K->F != NULL) {
             /* we're recording F_t for all t */
-            if (kalman_smoothing(K)) {
+            if (K->smo_prep) {
                 /* record inverse */
                 load_to_vech(K->F, K->iFt, nt, K->t);
             } else {
