@@ -12391,6 +12391,14 @@
 	  library.
 	</para>
 	<para>
+	  Warning: this function behaves differently on Windows and
+	  Unix-like operating systems for dates prior to January 1,
+	  1970. On unix-like systems (Linux, macOS) negative arguments
+	  can be used to represent such dates, so negative values
+	  result in regular date strings; on Windows, such dates are not
+	  supported and the return value is a null string.
+	</para>
+	<para>
 	  Values of <argname>tm</argname> suitable for use with this
 	  function may be obtained via the <fncref targ="$now"/>
 	  accessor or the <fncref targ="strptime"/> function.

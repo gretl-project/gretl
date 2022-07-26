@@ -470,6 +470,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	} else if (key == GDK_minus) {
 	    text_smaller(w, vwin);
 	    return TRUE;
+#ifdef GRETL_EDIT
+        } else if (upkey == GDK_O) {
+            file_selector(OPEN_SCRIPT, FSEL_DATA_VWIN, vwin);
+#endif
 	} else if (editing && !console) {
 	    /* note that the standard Ctrl-key sequences for editing
 	       are handled by GTK, so we only need to put our own
@@ -531,6 +535,13 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    }
 	}
     }
+
+#ifdef GRETL_EDIT
+    if (upkey == GDK_K && Ctrl && Alt) {
+        /* temporary hack */
+        cancel_run_script();
+    }
+#endif
 
     if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {
 	/* we set up "special" responses to some plain keystrokes

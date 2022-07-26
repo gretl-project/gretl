@@ -10443,13 +10443,35 @@
       </para>
       <code>
 	open data4-10
-	string mytemp
-	outfile --tempfile=mytemp
+	string mitemp
+	outfile --tempfile=mitemp
 	  ols ENROLL 0 CATHOL INCOME COLLEGE
 	end outfile
-	printf "Los resultados se han dirigido a %s\n", mytemp
-	printf "Los resultados fueron:\n%s\n", readfile(mytemp)
+	printf "Los resultados se han dirigido a %s\n", mitemp
+	printf "Los resultados fueron:\n%s\n", readfile(mitemp)
+	# Limpiar cuando el archivo no se necesita más
+	remove(mitemp)
       </code>
+      <para>
+	En algunos casos, puedes querer ejercer un cierto control sobre el
+	nombre del archivo temporal. Esto puedes hacerlo indicando una
+	variable de cadena de texto que contenga seis <lit>X</lit> consecutivas,
+	como en
+      </para>
+      <code>
+	string mitemp = "tmpXXXXXX.csv"
+	outfile --tempfile=mitemp
+	...
+      </code>
+      <para>
+	En este caso, se va a sustituir <lit>XXXXXX</lit> por una cadena de
+	caracteres aleatorios que aseguren que el nombre del archivo es único,
+	pero se preservará el sufijo <quote><lit>.csv</lit></quote>. Al igual
+	que en el caso más simple de arriba, el archivo se escribe de forma
+	automática en el directorio <quote>dot</quote> del usuario, y se modifica
+	el contenido de la variable de cadena expresada mediante el indicador
+	opcional, para mantener la ruta completa al archivo temporal.
+      </para>
 
       <subhead>Discreción</subhead>
       <para>
@@ -13817,6 +13839,18 @@
 	  <para><lit>fdjac_quality</lit>: Un entero (0, 1 o 2) que indica
 	  el algoritmo utilizado por la función <fncref targ="fdjac"/>; por
 	  defecto es 0.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>gmp_bits</lit>: Un entero, que debe ser una potencia de
+	  2 con exponente entero (el valor predeterminado y mínimo es 256,
+	  y el máximo es 8192). Esto controla el número de bits que se utilizan
+	  para representar un número de punto flotante cuando se invoca la GMP
+	  (la Biblioteca de la Aritmética de Precisión Múltiple de GNU), sobre
+	  todo mediante la instrucción <lit>mpols</lit>. Los valores más grandes
+	  de ese entero proporcionan mayor precisión al coste de un mayor
+	  tiempo de cálculo. Esta configuración también se puede controlar por
+	  medio de la variable de entorno <lit>GRETL_MP_BITS</lit>.
 	  </para>
 	</li>
       </ilist>

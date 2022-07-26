@@ -185,7 +185,7 @@ static int pid_is_valid (long test, long mypid)
 	char state;
 	long pid;
 
-	if ((fscanf(fp, "%ld (%31[^)]) %c", &pid, pname, &state)) != 3) {
+	if (fscanf(fp, "%ld (%31[^)]) %c", &pid, pname, &state) != 3) {
 	    /* huh? */
 	    err = 1;
 	} else if (strcmp(pname, "gretl_x11") && strcmp(pname, "lt-gretl_x11")) {

@@ -3301,6 +3301,21 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 	}
     }
 
+    if (method != COMPACT_SOP && method != COMPACT_EOP) {
+	int i, nsv = 0;
+
+	for (i=1; i<dset->v; i++) {
+	    if (is_string_valued(dset, i)) {
+		nsv++;
+	    }
+	}
+	if (nsv > 0) {
+	    gretl_errmsg_sprintf("The dataset contains %d string-valued series. Such series cannot "
+				 "be compacted\nother than via the 'first' or 'last' method.", nsv);
+	    return E_DATA;
+	}
+    }
+
     return compact_data_set(dset, k, method, 0, 0);
 }
 
