@@ -2041,7 +2041,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     gretl_matrix_print(a0, "inistate");
 #endif
 
-    kerr = kalman_bundle_run(b, NULL, &err);
+    kerr = kalman_bundle_filter(b, NULL, &err);
     if (err || kerr) {
         goto bailout;
     }

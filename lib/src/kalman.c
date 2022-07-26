@@ -41,19 +41,19 @@
 
 static int kdebug;
 static int djdebug;
+static int trace;
 
 enum {
-    KALMAN_USER    = 1 << 0,  /* user-defined filter? */
+    KALMAN_BUNDLE  = 1 << 0,  /* user-defined filter, inside bundle */
     KALMAN_DIFFUSE = 1 << 1,  /* using diffuse P_{1|0} */
     KALMAN_FORWARD = 1 << 2,  /* running forward filtering pass */
     KALMAN_SMOOTH  = 1 << 3,  /* preparing for smoothing pass */
     KALMAN_SIM     = 1 << 4,  /* running simulation */
     KALMAN_CHECK   = 1 << 5,  /* checking user-defined matrices */
-    KALMAN_BUNDLE  = 1 << 6,  /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 7,  /* on simulation, emulate SsfPack */
-    KALMAN_ARMA_LL = 1 << 8,  /* filtering for ARMA estimation */
-    KALMAN_UNI     = 1 << 9,  /* using univariate representation */
-    KALMAN_EXTRA   = 1 << 10  /* recording extra info (att, Ptt) */
+    KALMAN_SSFSIM  = 1 << 6,  /* on simulation, emulate SsfPack */
+    KALMAN_ARMA_LL = 1 << 7,  /* filtering for ARMA estimation */
+    KALMAN_UNI     = 1 << 8,  /* using univariate representation */
+    KALMAN_EXTRA   = 1 << 9   /* recording extra info (att, Ptt) */
 };
 
 enum {
@@ -333,9 +333,11 @@ static void maybe_set_debugging (kalman *K)
 {
     char *s1 = getenv("KALMAN_DEBUG");
     char *s2 = getenv("DEJONG_DEBUG");
+    char *s3 = getenv("TRACING");
 
     kdebug  = (s1 != NULL)? atoi(s1) : 0;
     djdebug = (s2 != NULL)? atoi(s2) : 0;
+    trace   = (s3 != NULL)? atoi(s3) : 0;
 }
 
 static void free_stepinfo (kalman *K)
@@ -786,6 +788,11 @@ static int kalman_init (kalman *K)
 {
     int err = 0;
 
+    if (trace) {
+        printf("kalman_init: aini %p, Pini %p\n",
+               (void *) K->aini, (void *) K->Pini);
+    }
+
     K->SSRw = NADBL;
     K->loglik = NADBL;
     K->s2 = NADBL;
@@ -830,7 +837,7 @@ static int kalman_init (kalman *K)
         err = E_ALLOC;
     }
 
-    if (!err && K->Pini == NULL && !(K->flags & KALMAN_USER)) {
+    if (!err && K->Pini == NULL && !(K->flags & KALMAN_BUNDLE)) {
         /* in the "user" case we do this later */
         err = construct_Pini(K);
     }
@@ -1036,6 +1043,14 @@ static int diffuse_Pini (kalman *K)
 {
     gretl_matrix_zero(K->P0);
 
+    if (K->exact && !kalman_univariate(K)) {
+        return 0;
+    }
+
+    if (trace) {
+        printf("diffuse_Pini(), exact = %d\n", K->exact);
+    }
+
     if (K->exact) {
         if (K->Pk0 == NULL) {
             K->Pk0 = gretl_identity_matrix_new(K->r);
@@ -1093,6 +1108,10 @@ static int construct_Pini (kalman *K)
     gretl_matrix *Svar;
     gretl_matrix *vQ;
     int r2, err = 0;
+
+    if (trace) {
+        printf("construct_Pini()\n");
+    }
 
     if (K->flags & KALMAN_DIFFUSE) {
         return diffuse_Pini(K);
@@ -1243,13 +1262,17 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
         return NULL;
     }
 
-    K = kalman_new_empty(KALMAN_USER | KALMAN_BUNDLE);
+    K = kalman_new_empty(KALMAN_BUNDLE);
     if (K == NULL) {
         *err = E_ALLOC;
         return NULL;
     }
 
     maybe_set_debugging(K);
+
+    if (trace) {
+        printf("kalman_new_minimal()\n");
+    }
 
     targ[0] = &K->y;
     targ[1] = &K->ZT;
@@ -1910,7 +1933,7 @@ static void handle_missing_obs (kalman *K)
             set_row_to_value(K->V, K->t, NADBL); /* 0 ? */
         }
     }
-    /* more to be done if we're in the de Jong diffuse phase */
+    /* more to be done if we're in the de Jong diffuse phase? */
 }
 
 /**
@@ -2177,7 +2200,9 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
             gretl_matrix_zero(K->a0);
         }
         if (K->Pini != NULL) {
-            gretl_matrix_copy_values(K->P0, K->Pini);
+            fast_copy_values(K->P0, K->Pini);
+        } else if (K->exact && !kalman_univariate(K)) {
+            ; /* skip it, handled by dejong code */
         } else {
             err = construct_Pini(K);
         }
@@ -2250,6 +2275,10 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 {
     int err = kalman_ensure_output_matrices(K);
 
+    if (trace) {
+        printf("kalman_run()\n");
+    }
+
     if (!err) {
         gretl_matrix_zero(K->vt);
         err = kalman_bundle_recheck_matrices(K, prn);
@@ -2279,6 +2308,9 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 
     if (!err) {
         if (kalman_univariate(K)) {
+            if (trace) {
+                printf("call kfilter_univariate()\n");
+            }
             err = kfilter_univariate(K, prn);
         } else {
 	    /* note: could make use of dejong conditional on
@@ -2286,6 +2318,9 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 	       we're using it regardless
 	    */
             if (1) {
+                if (trace) {
+                    printf("call kfilter_dejong()\n");
+                }
                 err = kfilter_dejong(K, prn);
             } else {
                 err = kalman_forecast(K, prn);
@@ -2306,12 +2341,16 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 
 /* Implements the userland kfilter() function */
 
-int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
+int kalman_bundle_filter (gretl_bundle *b, PRN *prn, int *errp)
 {
     kalman *K = gretl_bundle_get_private_data(b);
 
     if (getenv("KALMAN_UNI") != NULL) {
         K->flags |= KALMAN_UNI;
+    }
+
+    if (trace) {
+        printf("kalman_bundle_filter()\n");
     }
 
     K->b = b; /* attach bundle pointer */
@@ -2648,6 +2687,10 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
     int err = kalman_ensure_output_matrices(K);
 
+    if (trace) {
+        printf("real_kalman_smooth()\n");
+    }
+
     if (!err && dist && !kalman_univariate(K)) {
         err = ensure_U_matrix(K);
     }
@@ -2687,8 +2730,14 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         /* prior forward pass */
         K->flags |= KALMAN_SMOOTH;
         if (kalman_univariate(K)) {
+            if (trace) {
+                printf("call kfilter_univariate()\n");
+            }
             err = kfilter_univariate(K, NULL);
         } else {
+            if (trace) {
+                printf("call kfilter_dejong()\n");
+            }
             err = kfilter_dejong(K, NULL);
         }
         K->flags &= ~KALMAN_SMOOTH;
@@ -2698,12 +2747,24 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 
     if (!err) {
         if (kalman_univariate(K)) {
+            if (trace) {
+                printf("call ksmooth_univariate()\n");
+            }
             err = ksmooth_univariate(K, dist);
         } else if (dist > 1) {
+            if (trace) {
+                printf("call dist_smooth_dejong(1)\n");
+            }
             err = dist_smooth_dejong(K, 1);
         } else if (dist == 1) {
+            if (trace) {
+                printf("call dist_smooth_dejong(0)\n");
+            }
             err = dist_smooth_dejong(K, 0);
         } else {
+            if (trace) {
+                printf("call state_smooth_dejong()\n");
+            }
             err = state_smooth_dejong(K);
         }
     }
@@ -2728,9 +2789,8 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
 {
     kalman *K = gretl_bundle_get_private_data(b);
 
-    if (K == NULL) {
-        fprintf(stderr, "kalman_bundle_smooth: K is NULL\n");
-        return E_DATA;
+    if (trace) {
+        printf("kalman_bundle_smooth(), dist=%d\n", dist);
     }
 
     K->b = b; /* attach bundle pointer */
@@ -6779,12 +6839,12 @@ static int state_smooth_dejong (kalman *K)
             break;
         } else if (nt == 0) {
             fprintf(stderr, "dejong state filter: nt=0 at t=%d\n", K->t);
-            continue;
+            //continue;
         }
 
         /* compute N_{t-1} */
         if (nt == 0) {
-            Nt_missval_recursion(K, N0, N1);
+            //Nt_missval_recursion(K, N0, N1);
         } else {
             Nt_recursion(K, N0, N1);
         }
@@ -6792,7 +6852,7 @@ static int state_smooth_dejong (kalman *K)
         if (t >= K->d) {
             /* regular recursion: compute r_{t-1} */
             if (nt == 0) {
-                rt_missval_recursion(K, r0, r1);
+                //rt_missval_recursion(K, r0, r1);
             } else {
                 rt_recursion(K, n1, r0, r1);
             }

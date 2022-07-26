@@ -67,7 +67,7 @@ PRN *kalman_get_printer (const kalman *K);
 
 #ifndef __GTK_DOC_IGNORE__
 
-int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp);
+int kalman_bundle_filter (gretl_bundle *b, PRN *prn, int *errp);
 
 int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn);
 

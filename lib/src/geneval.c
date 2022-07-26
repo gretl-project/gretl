@@ -14770,7 +14770,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
             ret = aux_scalar_node(p);
         }
         if (!p->err) {
-            ret->v.xval = kalman_bundle_run(b, p->prn, &p->err);
+            ret->v.xval = kalman_bundle_filter(b, p->prn, &p->err);
         }
     } else if (t->t == F_KDSMOOTH) {
         gretl_bundle *b = get_kalman_bundle_arg(n, p);
