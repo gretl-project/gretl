@@ -61,6 +61,12 @@ enum {
     DK_VAR   /* as per Durbin and Koopman */
 };
 
+enum {
+    SM_NONE = 0,
+    SM_STATE,
+    SM_DIST
+};
+
 typedef struct stepinfo_ stepinfo;
 
 /* recorder for time-varying T and/or Z */
@@ -216,12 +222,6 @@ struct kalman_ {
     gretl_bundle *b; /* the bundle of which this struct is a member */
     void *data;      /* handle for attaching additional info */
     PRN *prn;        /* verbose printer */
-};
-
-enum {
-    SM_NONE = 0,
-    SM_STATE,
-    SM_DIST
 };
 
 enum {
