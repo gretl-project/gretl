@@ -6779,21 +6779,23 @@ static int state_smooth_dejong (kalman *K)
             break;
         } else if (nt == 0) {
             fprintf(stderr, "dejong state filter: nt=0 at t=%d\n", K->t);
-#if 0 /* maybe needed if K->T != I_r ? */
-            Nt_missval_recursion(K, N0, N1);
-            if (t >= K->d) {
-                rt_missval_recursion(K, r0, r1); /* ?? */
-            }
-#endif
-            continue; /* FIXME! */
+            continue;
         }
 
         /* compute N_{t-1} */
-        Nt_recursion(K, N0, N1);
+        if (nt == 0) {
+            Nt_missval_recursion(K, N0, N1);
+        } else {
+            Nt_recursion(K, N0, N1);
+        }
 
         if (t >= K->d) {
             /* regular recursion: compute r_{t-1} */
-            rt_recursion(K, n1, r0, r1);
+            if (nt == 0) {
+                rt_missval_recursion(K, r0, r1);
+            } else {
+                rt_recursion(K, n1, r0, r1);
+            }
             /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
             fast_copy_values(K->a1, K->a0);
             gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
@@ -6809,7 +6811,7 @@ static int state_smooth_dejong (kalman *K)
                 record_dhat_and_Psi(K, dhat, Psi, r1, N1);
             }
         } else {
-            /* t < K->d: diffuse phase */
+            /* t < K->d: diffuse phase (FIXME nt == 0?) */
             dejong_diffuse_smoother_step(K, r1, Rt, Bt, Ct, N1,
                                          dhat, Psi, no_collapse);
         }
