@@ -5701,8 +5701,6 @@ static int state_dist_setup (kalman *K,
     return 1;
 }
 
-#define KSMO_DEBUG 0
-
 static int ksmooth_univariate (kalman *K, int dist)
 {
     gretl_matrix_block *B = NULL;
