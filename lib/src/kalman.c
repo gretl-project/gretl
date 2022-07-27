@@ -2676,7 +2676,9 @@ static int kalman_add_dejong_info (kalman *K)
     return err;
 }
 
-/* optional matrix to hold smoothed disturbances a la Koopman */
+#if 0 /* revive this is we add in old-style code */
+
+/* optional matrix to hold smoothed disturbances */
 
 static int ensure_U_matrix (kalman *K)
 {
@@ -2700,6 +2702,8 @@ static int ensure_U_matrix (kalman *K)
     return err;
 }
 
+#endif
+
 static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
     int err = kalman_ensure_output_matrices(K);
@@ -2708,9 +2712,11 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         printf("real_kalman_smooth()\n");
     }
 
+#if 0 /* revive this is we add in old-style code */
     if (!err && dist && !kalman_univariate(K)) {
         err = ensure_U_matrix(K);
     }
+#endif
 
     if (err) {
         return err;
@@ -4166,9 +4172,9 @@ void *maybe_retrieve_kalman_element (void *kptr,
                 (void *) ownit, (void *) K->b, kalman_univariate(K));
     }
 
-    if (ownit != NULL && kalman_univariate(K) && K->b != NULL) {
-        gretl_matrix *ret = NULL;
+    /* FIXME clean up the following messy code! */
 
+    if (ownit != NULL && kalman_univariate(K) && K->b != NULL) {
         if (!strcmp(key, "state")) {
             ret = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
         } else if (!strcmp(key, "stvar")) {
@@ -4179,6 +4185,17 @@ void *maybe_retrieve_kalman_element (void *kptr,
             ret = fill_smdisterr(K, ownit);
         } else if (!strcmp(key, "pevar") && K->n > 1) {
             ret = fill_pevar(K, ownit);
+        }
+        if (ret != NULL) {
+            *type = GRETL_TYPE_MATRIX;
+            *reserved = 1;
+            return ret;
+        }
+    } else if (ownit != NULL && K->b != NULL) {
+        if (!strcmp(key, "smdist") && K->U == NULL) {
+            ret = fill_smdist(K, ownit);
+        } else if (!strcmp(key, "smdisterr") && K->Vsd == NULL) {
+            ret = fill_smdisterr(K, ownit);
         }
         if (ret != NULL) {
             *type = GRETL_TYPE_MATRIX;
