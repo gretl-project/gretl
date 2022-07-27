@@ -39,6 +39,7 @@
 
 #define K_TINY 1.0e-12
 #define P0_ZERO 0
+#define SUPPORT_LEGACY 1
 
 static int kdebug;
 static int djdebug;
@@ -267,6 +268,10 @@ static int kalman_add_dejong_info (kalman *K);
 static int bundle_add_matrix (gretl_bundle *b,
                               const char *key,
                               gretl_matrix *m);
+#if SUPPORT_LEGACY
+static int anderson_moore_smooth (kalman *K);
+static int koopman_smooth (kalman *K, int DKstyle);
+#endif
 
 int is_kalman_bundle (gretl_bundle *b)
 {
@@ -1975,15 +1980,10 @@ int kalman_forecast (kalman *K, PRN *prn)
     int nt, err = 0;
 
     if (kdebug > 1) {
-        fprintf(stderr, "\n*** kalman_forecast: N=%d, n=%d, exact=%d ***\n",
-                K->N, K->n, K->exact);
+        fprintf(stderr, "\n*** kalman_forecast: N=%d, n=%d ***\n",
+                K->N, K->n);
     }
 
-    if (kalman_diffuse(K) && !K->exact) {
-        K->d = K->r;
-    } else {
-        K->d = 0;
-    }
     K->SSRw = K->loglik = 0.0;
     K->s2 = NADBL;
     K->okN = K->N;
@@ -2036,7 +2036,7 @@ int kalman_forecast (kalman *K, PRN *prn)
             gretl_matrix_add_to(K->Mt, K->HG);
         }
 
-        /* standard (not exact initial) Kalman procedure */
+        /* standard Kalman procedure */
         fast_copy_values(K->iFt, K->Ft);
         err = gretl_invert_symmetric_matrix2(K->iFt, &ldet);
         if (err) {
@@ -2116,12 +2116,14 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         K->loglik = -0.5 * (K->okN * ll1 + sumldet);
     } else {
-        K->s2 = K->SSRw / (K->n * K->okN - K->d);
+	int d = kalman_diffuse(K) ? K->r : 0;
+
+        K->s2 = K->SSRw / (K->n * K->okN - d);
     }
 
     if (kdebug) {
-        fprintf(stderr, "kalman_forecast: err=%d, ll=%#.8g, d=%d\n",
-                err, K->loglik, K->d);
+        fprintf(stderr, "kalman_forecast: err=%d, ll=%#.8g\n",
+		err, K->loglik);
     }
 
     return err;
@@ -7142,3 +7144,14 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
 
     return err;
 }
+
+#if SUPPORT_LEGACY
+
+/* Below: legacy smoothing functions. These can be removed if/when
+   we're confident that the new code is fully OK.
+*/
+
+#include "kalman_legacy.c"
+
+#endif
+
