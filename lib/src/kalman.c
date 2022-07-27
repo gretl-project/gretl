@@ -4259,17 +4259,15 @@ void *maybe_retrieve_kalman_element (void *kptr,
             gretl_matrix **pm = kalman_output_matrix(K, key);
 	    gretl_matrix *m = NULL;
 
-	    if (pm != NULL) {
-		if (*pm != NULL) {
-		    m = *pm;
-		} else if (ownit != NULL) {
-		    m = construct_kalman_matrix(K, key, ownit);
-		}
-		if (m != NULL) {
-		    *reserved = 1;
-		    ret = m;
-		    *type = GRETL_TYPE_MATRIX;
-		}
+	    if (pm != NULL && *pm != NULL) {
+		m = *pm;
+	    } else if (pm != NULL && ownit != NULL) {
+		m = construct_kalman_matrix(K, key, ownit);
+	    }
+	    if (m != NULL) {
+		*reserved = 1;
+		ret = m;
+		*type = GRETL_TYPE_MATRIX;
             }
         }
         if (id < 0 && *reserved == 0) {
