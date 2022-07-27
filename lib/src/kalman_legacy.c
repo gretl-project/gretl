@@ -331,8 +331,8 @@ static int koopman_smooth (kalman *K, int DKstyle)
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
-	
-        load_filter_data(K, 0, &err); /* SM_DIST_BKWD */
+
+        load_filter_data(K, LOAD_KOOPMAN_BACKWARD, &err);
         if (err) {
             break;
         }
@@ -371,8 +371,8 @@ static int koopman_smooth (kalman *K, int DKstyle)
     */
     for (t=ft_min; t<K->N; t++) {
 	K->t = t;
-	
-        load_filter_data(K, 0, &err); /* SM_DIST_FRWD */
+
+        load_filter_data(K, LOAD_KOOPMAN_FORWARD, &err);
         if (err) {
             break;
         }
@@ -452,8 +452,8 @@ static int anderson_moore_smooth (kalman *K)
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
-	
-        load_filter_data(K, 0, &err); /* SM_STATE_STD */
+
+        load_filter_data(K, 0, &err);
         if (err) {
             break;
         }

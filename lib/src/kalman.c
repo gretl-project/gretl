@@ -53,8 +53,7 @@ enum {
     KALMAN_CHECK   = 1 << 4,  /* checking user-defined matrices */
     KALMAN_SSFSIM  = 1 << 5,  /* on simulation, emulate SsfPack */
     KALMAN_ARMA_LL = 1 << 6,  /* filtering for ARMA estimation */
-    KALMAN_UNI     = 1 << 7,  /* using univariate representation */
-    KALMAN_EXTRA   = 1 << 8   /* recording extra info (att, Ptt) */
+    KALMAN_EXTRA   = 1 << 7   /* recording extra info (att, Ptt) */
 };
 
 enum {
@@ -67,6 +66,12 @@ enum {
     SM_NONE = 0,
     SM_STATE,
     SM_DIST
+};
+
+enum {
+    K_LEGACY,
+    K_UNIVAR,
+    K_DEJONG
 };
 
 typedef struct stepinfo_ stepinfo;
@@ -118,6 +123,7 @@ struct dejong_info_ {
 
 struct kalman_ {
     int flags;   /* for recording any options */
+    int code;    /* code collection used: K_LEGACY, K_UNIVAR or K_DEJONG */
     int exact;   /* exact initial iterations? */
     int vartype; /* STD_VAR, DJ_VAR or DK_VAR */
 
@@ -245,8 +251,10 @@ enum {
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
-#define kalman_univariate(K)  (K->flags & KALMAN_UNI)
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
+
+#define kalman_univariate(K)  (K->code == K_UNIVAR)
+#define kalman_dejong(K)      (K->code == K_DEJONG)
 
 #define kalman_xcorr(K)       (K->vartype == DJ_VAR)
 #define kalman_dkvar(K)       (K->vartype == DK_VAR)
@@ -485,6 +493,7 @@ static kalman *kalman_new_empty (int flags)
 
     if (K != NULL) {
         K->exact = 0;
+	K->code = K_LEGACY;
         K->vartype = STD_VAR;
         K->aini = K->Pini = NULL;
         K->a0 = K->a1 = NULL;
@@ -1318,7 +1327,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     }
 
     if (K->vartype != DJ_VAR && getenv("KALMAN_UNI") != NULL) {
-        K->flags |= KALMAN_UNI;
+        K->code = K_UNIVAR;
     }
 
     kalman_set_dimensions(K);
@@ -2335,20 +2344,17 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
                 printf("call kfilter_univariate()\n");
             }
             err = kfilter_univariate(K, prn);
-        } else {
-	    /* note: could make use of dejong conditional on
-	       (kalman_xcorr(K) || K->exact), though at present
-	       we're using it regardless
-	    */
-            if (1) {
-                if (trace) {
-                    printf("call kfilter_dejong()\n");
-                }
-                err = kfilter_dejong(K, prn);
-            } else {
-                err = kalman_forecast(K, prn);
-            }
-        }
+        } else if (kalman_dejong(K)) {
+	    if (trace) {
+		printf("call kfilter_dejong()\n");
+	    }
+	    err = kfilter_dejong(K, prn);
+	} else {
+	    if (trace) {
+		printf("call kalman_forecast()\n");
+	    }
+	    err = kalman_forecast(K, prn);
+	}
     }
 
     if (err != E_NAN) {
@@ -2511,6 +2517,13 @@ static int retrieve_Zt (kalman *K)
     }
 }
 
+enum {
+    LOAD_STANDARD,
+    LOAD_NO_COLLAPSE,
+    LOAD_KOOPMAN_BACKWARD,
+    LOAD_KOOPMAN_FORWARD
+};
+
 /* For use with smoothing: load what we need for step t, from the
    record that was kept on the prior forecasting pass. We allow for
    the possibility of time-varying matrices. This is called by the
@@ -2520,46 +2533,52 @@ static int retrieve_Zt (kalman *K)
    The return value is the number of usable observables at step t.
 */
 
-static int load_filter_data (kalman *K, int no_collapse, int *err)
+static int load_filter_data (kalman *K, int mod, int *err)
 {
     int missing = 0;
-
-    /* FIXME maybe we should have a byte array of length K->N
-       to identify missing observations (constructed on the
-       filtering step if needed). This could speed things
-       up below,
-    */
 
     /* load the forecast error into K->vt */
     load_from_row(K->vt, K->V, K->t, GRETL_MOD_NONE);
 
-    /* state: get T_t and/or Z_t if need be */
-    if (matrix_is_varying(K, K_T)) {
-        *err = retrieve_Tt(K);
-    }
-    if (!*err && matrix_is_varying(K, K_ZT)) {
-        *err = retrieve_Zt(K);
-    }
-    if (*err) {
-        return 0;
-    }
-
-    /* load the state and its MSE */
-    load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
-    if (no_collapse) {
-        /* FIXME? looks weird but seems to help */
-        if (K->t == 0) {
-            gretl_matrix_zero(K->P0);
-        } else {
-            load_from_vech(K->P0, K->P, K->r, K->t-1, GRETL_MOD_NONE);
+    if (mod == LOAD_KOOPMAN_BACKWARD) {
+        /* disturbances */
+        if (filter_is_varying(K)) {
+            // ksmooth_refresh_matrices(K, NULL);
+	    kalman_refresh_matrices(K, NULL);
         }
     } else {
-        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+        /* state: get T_t and/or Z_t if need be */
+        if (matrix_is_varying(K, K_T)) {
+            *err = retrieve_Tt(K);
+        }
+        if (!err && matrix_is_varying(K, K_ZT)) {
+            *err = retrieve_Zt(K);
+        }
+        if (*err) {
+            return 0;
+        }
     }
 
-    /* load the gain and F^{-1} */
-    load_from_vec(K->Kt, K->K, K->t);
-    load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
+    if (mod != LOAD_KOOPMAN_BACKWARD) {
+        /* load the state and its MSE */
+        load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
+	if (mod == LOAD_NO_COLLAPSE) {
+	    /* FIXME? looks weird but seems to help */
+	    if (K->t == 0) {
+		gretl_matrix_zero(K->P0);
+	    } else {
+		load_from_vech(K->P0, K->P, K->r, K->t-1, GRETL_MOD_NONE);
+	    }
+	} else {
+	    load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+	}
+    }
+
+    if (mod != LOAD_KOOPMAN_FORWARD) {
+        /* load the gain and F^{-1} */
+        load_from_vec(K->Kt, K->K, K->t);
+        load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
+    }
 
     /* heuristic for missing observable (see note above) */
     missing = gretl_is_zero_matrix(K->Kt);
@@ -2678,9 +2697,7 @@ static int kalman_add_dejong_info (kalman *K)
     return err;
 }
 
-#if 0 /* revive this is we add in old-style code */
-
-/* optional matrix to hold smoothed disturbances */
+/* optional matrix (old-style) to hold smoothed disturbances */
 
 static int ensure_U_matrix (kalman *K)
 {
@@ -2704,8 +2721,6 @@ static int ensure_U_matrix (kalman *K)
     return err;
 }
 
-#endif
-
 static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
     int err = kalman_ensure_output_matrices(K);
@@ -2714,11 +2729,9 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         printf("real_kalman_smooth()\n");
     }
 
-#if 0 /* revive this is we add in old-style code */
-    if (!err && dist && !kalman_univariate(K)) {
+    if (!err && dist && K->code == K_LEGACY) {
         err = ensure_U_matrix(K);
     }
-#endif
 
     if (err) {
         return err;
@@ -2759,12 +2772,17 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
                 printf("call kfilter_univariate()\n");
             }
             err = kfilter_univariate(K, NULL);
-        } else {
+        } else if (kalman_dejong(K)) {
             if (trace) {
                 printf("call kfilter_dejong()\n");
             }
             err = kfilter_dejong(K, NULL);
-        }
+        } else {
+            if (trace) {
+                printf("call kalman_forecast()\n");
+            }
+	    err = kalman_forecast(K, NULL);
+	}
         K->smo_prep = SM_NONE;
     }
 
@@ -2776,21 +2794,40 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
                 printf("call ksmooth_univariate()\n");
             }
             err = ksmooth_univariate(K, dist);
-        } else if (dist > 1) {
-            if (trace) {
-                printf("call dist_smooth_dejong(1)\n");
-            }
-            err = dist_smooth_dejong(K, 1);
-        } else if (dist == 1) {
-            if (trace) {
-                printf("call dist_smooth_dejong(0)\n");
-            }
-            err = dist_smooth_dejong(K, 0);
-        } else {
-            if (trace) {
-                printf("call state_smooth_dejong()\n");
-            }
-            err = state_smooth_dejong(K);
+	} else if (kalman_dejong(K)) {
+	    if (dist > 1) {
+		if (trace) {
+		    printf("call dist_smooth_dejong(1)\n");
+		}
+		err = dist_smooth_dejong(K, 1);
+	    } else if (dist == 1) {
+		if (trace) {
+		    printf("call dist_smooth_dejong(0)\n");
+		}
+		err = dist_smooth_dejong(K, 0);
+	    } else {
+		if (trace) {
+		    printf("call state_smooth_dejong()\n");
+		}
+		err = state_smooth_dejong(K);
+	    }
+	} else {
+	    if (dist > 1) {
+		if (trace) {
+		    printf("call koopman_smooth(1)\n");
+		}
+		err = koopman_smooth(K, 1);
+	    } else if (dist == 1) {
+		if (trace) {
+		    printf("call koopman_smooth(0)\n");
+		}
+		err = koopman_smooth(K, 0);
+	    } else {
+		if (trace) {
+		    printf("call anderson_moore_smooth()\n");
+		}
+		err = anderson_moore_smooth(K);
+	    }
         }
     }
 
@@ -3704,7 +3741,7 @@ static double *kalman_output_scalar (kalman *K,
         retval[idx] = (K->vartype == DK_VAR);
         break;
     case Ks_UNI:
-        retval[idx] = (K->flags & KALMAN_UNI)? 1 : 0;
+        retval[idx] = (K->code == K_UNIVAR)? 1 : 0;
         break;
     case Ks_S2:
         retval[idx] = K->s2;
@@ -3828,23 +3865,18 @@ static int kalman_set_diffuse (kalman *K, int d)
     }
 }
 
-/* respond to "univariate" setting */
+/* respond to "univariate" or "dejong" setting */
 
-static int kalman_set_univariate (kalman *K, int u)
+static int kalman_set_code (kalman *K, int code, int s)
 {
-    if (u && K->vartype == DJ_VAR) {
+    if (s && code == K_UNIVAR && K->vartype == DJ_VAR) {
         gretl_errmsg_set("kalman: the 'univariate' setting is not compatible with\n"
                          "cross-correlated disturbances");
         return E_INVARG;
-    }
-
-    if (u) {
-        K->flags |= KALMAN_UNI;
     } else {
-        K->flags &= ~KALMAN_UNI;
+        K->code = code;
+	return 0;
     }
-
-    return 0;
 }
 
 /* Called by real_bundle_set_data() in gretl_bundle.c.  The return
@@ -3892,7 +3924,7 @@ int maybe_set_kalman_element (void *kptr,
     }
 
     if (!strcmp(key, "diffuse") || !strcmp(key, "univariate") ||
-        !strcmp(key, "extra")) {
+        !strcmp(key, "dejong") || !strcmp(key, "extra")) {
         /* scalar config settings */
         if (vtype == GRETL_TYPE_DOUBLE) {
             double v = *(double *) vptr;
@@ -3900,7 +3932,9 @@ int maybe_set_kalman_element (void *kptr,
             if (!strcmp(key, "diffuse")) {
                 *err = kalman_set_diffuse(K, (int) v);
             } else if (!strcmp(key, "univariate")) {
-                *err = kalman_set_univariate(K, (int) v);
+                *err = kalman_set_code(K, K_UNIVAR, (int) v);
+	    } else if (!strcmp(key, "dejong")) {
+		*err = kalman_set_code(K, K_DEJONG, (int) v);
             } else {
                 K->flags |= KALMAN_EXTRA;
             }
@@ -4136,6 +4170,33 @@ static gretl_matrix *fill_pevar (kalman *K, int *ownit)
     return NULL;
 }
 
+static gretl_matrix *construct_kalman_matrix (kalman *K,
+					      const char *key,
+					      int *ownit)
+{
+    gretl_matrix *m = NULL;
+
+    if (K->code == K_UNIVAR) {
+	if (!strcmp(key, "state")) {
+	    m = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
+	} else if (!strcmp(key, "pevar") && K->n > 1) {
+	    m = fill_pevar(K, ownit);
+	} else if (!strcmp(key, "stvar")) {
+	    m = fill_stvar(K, ownit);
+	}
+    }
+
+    if (m == NULL && K->code != K_LEGACY) {
+	if (!strcmp(key, "smdist")) {
+	    m = fill_smdist(K, ownit);
+	} else if (!strcmp(key, "smdisterr")) {
+	    m = fill_smdisterr(K, ownit);
+	}
+    }
+
+    return m;
+}
+
 void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
                                      GretlType *type,
@@ -4146,6 +4207,11 @@ void *maybe_retrieve_kalman_element (void *kptr,
     kalman *K = kptr;
     void *ret = NULL;
     int i, id = -1;
+
+    if (K == NULL) {
+        *err = E_DATA;
+        return NULL;
+    }
 
     *type = GRETL_TYPE_NONE;
     if (ownit != NULL) {
@@ -4164,46 +4230,9 @@ void *maybe_retrieve_kalman_element (void *kptr,
        no need to construct a 'constructable' element.
     */
 
-    if (K == NULL) {
-        *err = E_DATA;
-        return NULL;
-    }
-
     if (kdebug) {
 	fprintf(stderr, " ownit %p, K->b %p, univariate %d\n",
                 (void *) ownit, (void *) K->b, kalman_univariate(K));
-    }
-
-    /* FIXME clean up the following messy code! */
-
-    if (ownit != NULL && kalman_univariate(K) && K->b != NULL) {
-        if (!strcmp(key, "state")) {
-            ret = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
-        } else if (!strcmp(key, "stvar")) {
-            ret = fill_stvar(K, ownit);
-        } else if (!strcmp(key, "smdist")) {
-            ret = fill_smdist(K, ownit);
-        } else if (!strcmp(key, "smdisterr")) {
-            ret = fill_smdisterr(K, ownit);
-        } else if (!strcmp(key, "pevar") && K->n > 1) {
-            ret = fill_pevar(K, ownit);
-        }
-        if (ret != NULL) {
-            *type = GRETL_TYPE_MATRIX;
-            *reserved = 1;
-            return ret;
-        }
-    } else if (ownit != NULL && K->b != NULL) {
-        if (!strcmp(key, "smdist") && K->U == NULL) {
-            ret = fill_smdist(K, ownit);
-        } else if (!strcmp(key, "smdisterr") && K->Vsd == NULL) {
-            ret = fill_smdisterr(K, ownit);
-        }
-        if (ret != NULL) {
-            *type = GRETL_TYPE_MATRIX;
-            *reserved = 1;
-            return ret;
-        }
     }
 
     if (!strcmp(key, "timevar_call")) {
@@ -4228,13 +4257,19 @@ void *maybe_retrieve_kalman_element (void *kptr,
         if (id < 0) {
             /* try for an output matrix */
             gretl_matrix **pm = kalman_output_matrix(K, key);
+	    gretl_matrix *m = NULL;
 
-            if (pm != NULL) {
-                *reserved = 1;
-                if (*pm != NULL) {
-                    ret = *pm;
-                    *type = GRETL_TYPE_MATRIX;
-                }
+	    if (pm != NULL) {
+		if (*pm != NULL) {
+		    m = *pm;
+		} else if (ownit != NULL) {
+		    m = construct_kalman_matrix(K, key, ownit);
+		}
+		if (m != NULL) {
+		    *reserved = 1;
+		    ret = m;
+		    *type = GRETL_TYPE_MATRIX;
+		}
             }
         }
         if (id < 0 && *reserved == 0) {
@@ -6774,6 +6809,7 @@ static int state_smooth_dejong (kalman *K)
     gretl_matrix *Bt, *Ct, *Rt;
     gretl_matrix *dhat, *Psi;
     int no_collapse = 0;
+    int load_mod = 0;
     int nt = K->n;
     int t, err = 0;
 
@@ -6822,11 +6858,12 @@ static int state_smooth_dejong (kalman *K)
     if (no_collapse) {
         gretl_matrix_multiply(K->djinfo->S, K->djinfo->s, dhat);
         gretl_matrix_copy_values(Psi, K->djinfo->S);
+	load_mod = LOAD_NO_COLLAPSE;
     }
 
     for (t=K->N-1; t>=0 && !err; t--) {
         K->t = t;
-        nt = load_filter_data(K, no_collapse, &err);
+        nt = load_filter_data(K, load_mod, &err);
         if (err) {
             break;
         } else if (djdebug && nt == 0) {
@@ -7154,4 +7191,3 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
 #include "kalman_legacy.c"
 
 #endif
-
