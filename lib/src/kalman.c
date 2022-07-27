@@ -255,7 +255,7 @@ enum {
 static const char *kalman_matrix_name (int sym);
 static int kalman_revise_variance (kalman *K);
 static int check_for_matrix_updates (kalman *K, ufunc *uf);
-static int construct_Pini (kalman *K);
+static int set_Pini (kalman *K);
 static int kalman_set_diffuse (kalman *K, int d);
 static int kfilter_univariate (kalman *K, PRN *prn);
 static int kfilter_dejong (kalman *K, PRN *prn);
@@ -341,9 +341,9 @@ static void maybe_set_debugging (kalman *K)
     char *s2 = getenv("DEJONG_DEBUG");
     char *s3 = getenv("TRACING");
 
-    kdebug  = (s1 != NULL)? atoi(s1) : 0;
-    djdebug = (s2 != NULL)? atoi(s2) : 0;
-    trace   = (s3 != NULL)? atoi(s3) : 0;
+    if (s1 != NULL) kdebug  = atoi(s1);
+    if (s2 != NULL) djdebug = atoi(s2);
+    if (s3 != NULL) trace   = atoi(s3);
 }
 
 static void free_stepinfo (kalman *K)
@@ -599,7 +599,7 @@ static int maybe_resize_export_matrix (kalman *K, gretl_matrix *m, int i)
     if (i == K_V) {
         cols = K->n;
     } else if (i == K_F) {
-        if (K->flags & KALMAN_UNI) {
+        if (kalman_univariate(K)) {
             cols = K->n; /* diagonal only */
         } else {
             cols = (K->n * K->n + K->n) / 2;
@@ -846,7 +846,7 @@ static int kalman_init (kalman *K)
 
     if (!err && K->Pini == NULL && !(K->flags & KALMAN_BUNDLE)) {
         /* in the "user" case we do this later */
-        err = construct_Pini(K);
+        err = set_Pini(K);
     }
 
     return err;
@@ -1044,6 +1044,29 @@ void kalman_set_arma_ll (kalman *K)
 
 /* end of functions dedicated to non-bundle C API */
 
+static int statemat_out_of_bounds (kalman *K)
+{
+    gretl_matrix *evals;
+    double r, c, x;
+    int i, err = 0;
+
+    evals = gretl_general_matrix_eigenvals(K->T, &err);
+
+    for (i=0; i<evals->rows && !err; i++) {
+        r = gretl_matrix_get(evals, i, 0);
+        c = gretl_matrix_get(evals, i, 1);
+        x = sqrt(r*r + c*c);
+        if (x >= 1.0) {
+            fprintf(stderr, "T: modulus of eigenvalue %d = %g\n", i+1, x);
+            err = E_SINGULAR;
+        }
+    }
+
+    gretl_matrix_free(evals);
+
+    return err;
+}
+
 #define kappa 1.0e7 /* 1.0e6? */
 
 static int diffuse_Pini (kalman *K)
@@ -1051,6 +1074,7 @@ static int diffuse_Pini (kalman *K)
     gretl_matrix_zero(K->P0);
 
     if (K->exact && !kalman_univariate(K)) {
+        /* the de Jong case: incorporate here? */
         return 0;
     }
 
@@ -1080,51 +1104,16 @@ static int diffuse_Pini (kalman *K)
     return 0;
 }
 
-static int statemat_out_of_bounds (kalman *K)
-{
-    gretl_matrix *evals;
-    double r, c, x;
-    int i, err = 0;
-
-    evals = gretl_general_matrix_eigenvals(K->T, &err);
-
-    for (i=0; i<evals->rows && !err; i++) {
-        r = gretl_matrix_get(evals, i, 0);
-        c = gretl_matrix_get(evals, i, 1);
-        x = sqrt(r*r + c*c);
-        if (x >= 1.0) {
-            fprintf(stderr, "T: modulus of eigenvalue %d = %g\n", i+1, x);
-            err = E_SINGULAR;
-        }
-    }
-
-    gretl_matrix_free(evals);
-
-    return err;
-}
-
-/* If the user has not given an initial value for P_{1|0}, compute
-   this automatically as per Hamilton, ch 13, p. 378.  This works only
-   if the eigenvalues of K->T lie inside the unit circle.  Failing
-   that, or if the --diffuse option is given for the user Kalman
-   filter, we apply a diffuse initialization.
-*/
-
-static int construct_Pini (kalman *K)
+static int hamilton_Pini (kalman *K)
 {
     gretl_matrix *Svar;
     gretl_matrix *vQ;
-    int r2, err = 0;
+    int r2 = K->r * K->r;
+    int err = 0;
 
     if (trace) {
-        printf("construct_Pini()\n");
+        printf("hamilton_Pini()\n");
     }
-
-    if (K->flags & KALMAN_DIFFUSE) {
-        return diffuse_Pini(K);
-    }
-
-    r2 = K->r * K->r;
 
     Svar = gretl_matrix_alloc(r2, r2);
     vQ = gretl_column_vector_alloc(r2);
@@ -1155,6 +1144,22 @@ static int construct_Pini (kalman *K)
     gretl_matrix_free(vQ);
 
     return err;
+}
+
+/* If the user has not given an initial value for P_{1|0}, compute
+   this automatically as per Hamilton, ch 13, p. 378.  This works only
+   if the eigenvalues of K->T lie inside the unit circle.  Failing
+   that, or if the --diffuse option is given for the user Kalman
+   filter, we apply a diffuse initialization.
+*/
+
+static int set_Pini (kalman *K)
+{
+    if (K->flags & KALMAN_DIFFUSE) {
+        return diffuse_Pini(K);
+    } else {
+        return hamilton_Pini(K);
+    }
 }
 
 /* Write the vech of @src into row @t of @targ */
@@ -1305,6 +1310,10 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
         } else {
             *targ[i] = M[i];
         }
+    }
+
+    if (K->vartype != DJ_VAR && getenv("KALMAN_UNI") != NULL) {
+        K->flags |= KALMAN_UNI;
     }
 
     kalman_set_dimensions(K);
@@ -2214,9 +2223,9 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
         if (K->Pini != NULL) {
             fast_copy_values(K->P0, K->Pini);
         } else if (K->exact && !kalman_univariate(K)) {
-            ; /* skip it, handled by dejong code */
+            ; /* skip it, handled by dejong code (FIXME?) */
         } else {
-            err = construct_Pini(K);
+            err = set_Pini(K);
         }
     }
 
@@ -2356,10 +2365,6 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 int kalman_bundle_filter (gretl_bundle *b, PRN *prn, int *errp)
 {
     kalman *K = gretl_bundle_get_private_data(b);
-
-    if (getenv("KALMAN_UNI") != NULL) {
-        K->flags |= KALMAN_UNI;
-    }
 
     if (trace) {
         printf("kalman_bundle_filter()\n");
@@ -3827,10 +3832,6 @@ static int kalman_set_univariate (kalman *K, int u)
 
     if (u) {
         K->flags |= KALMAN_UNI;
-        if (kalman_diffuse(K) && !K->exact) {
-            K->exact = 1;
-            diffuse_Pini(K);
-        }
     } else {
         K->flags &= ~KALMAN_UNI;
     }
@@ -4071,7 +4072,9 @@ static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
     gretl_matrix *V2 = gretl_bundle_get_matrix(K->b, "veps", NULL);
     gretl_matrix *V = K->Vsd;
 
-    if (V1 != NULL) {
+    if (V1 == NULL) {
+        return NULL;
+    } else {
         int q = kalman_dkvar(K) ? K->q : K->r;
         int n = (V2 != NULL)? K->n : 0;
         int j, k, t;
@@ -4099,8 +4102,6 @@ static gretl_matrix *fill_smdisterr (kalman *K, int *ownit)
         }
         return V;
     }
-
-    return NULL;
 }
 
 static gretl_matrix *fill_pevar (kalman *K, int *ownit)
@@ -4158,6 +4159,11 @@ void *maybe_retrieve_kalman_element (void *kptr,
     if (K == NULL) {
         *err = E_DATA;
         return NULL;
+    }
+
+    if (kdebug) {
+	fprintf(stderr, " ownit %p, K->b %p, univariate %d\n",
+                (void *) ownit, (void *) K->b, kalman_univariate(K));
     }
 
     if (ownit != NULL && kalman_univariate(K) && K->b != NULL) {
@@ -5007,8 +5013,11 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     K->loglik = 0;
     set_kalman_running(K);
 
+    if (trace) {
+        printf("kfilter_univariate, exact = %d\n", K->exact);
+    }
     if (kdebug) {
-        fprintf(stderr, "\n*** univariate filter: m=%d, p=%d, exact=%d ***\n",
+        fprintf(stderr, "\n*** kfilter_univariate: m=%d, p=%d, exact=%d ***\n",
                 m, p, K->exact);
     }
 
@@ -5019,6 +5028,8 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 #if !P0_ZERO
     if (K->Pini != NULL) {
         fast_copy_values(Pt, K->Pini);
+    } else if (kalman_diffuse(K) && !K->exact) {
+        ; /* leave P0 alone */
     } else {
         fast_copy_values(Pt, K->VS);
     }
@@ -6304,6 +6315,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     int nt, Nd = K->N;
     int err = 0;
 
+    if (trace) {
+        printf("kfilter_dejong\n");
+    }
+
     exact_diffuse = kalman_diffuse(K) && K->exact;
 
     if (K->dj_initted == 0) {
@@ -6334,10 +6349,6 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 	/* as per de Jong/Lin 2003 */
 	fast_copy_values(K->P0, K->VS);
 #endif
-    } else {
-	/* what, if anything, should we do here? */
-        // fast_copy_values(K->P0, K->VS);
-        // gretl_matrix_zero(K->P0);
     }
 
     if (exact_diffuse) {
@@ -6560,7 +6571,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
 
     if (kdebug || djdebug) {
-        fprintf(stderr, "kalman_forecast: err=%d, ll=%#.8g, d=%d\n",
+        fprintf(stderr, "kfilter_dejong: err=%d, ll=%#.8g, d=%d\n",
                 err, K->loglik, K->d);
     }
 
@@ -6749,8 +6760,12 @@ static int state_smooth_dejong (kalman *K)
 
     no_collapse = (K->d == K->N);
 
-    if (1 || kdebug || djdebug) {
-        fprintf(stderr, "dejong_state_smooth: no_collapse = %d\n", no_collapse);
+    if (trace) {
+        printf("state_smooth_dejong\n");
+    }
+
+    if (djdebug) {
+        fprintf(stderr, "state_smooth_dejong: no_collapse = %d\n", no_collapse);
     }
 
     B = gretl_matrix_block_new(&r0,  K->r, 1,
@@ -6931,8 +6946,8 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     int nt = K->n;
     int t, err = 0;
 
-    if (kdebug || djdebug) {
-        fprintf(stderr, "dist_smooth_dejong\n");
+    if (trace) {
+        printf("dist_smooth_dejong\n");
     }
 
     no_collapse = (K->d == K->N);
