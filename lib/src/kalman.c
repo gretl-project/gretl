@@ -26,6 +26,7 @@
 #include "matrix_extra.h"
 #include "libset.h"
 #include "gretl_bfgs.h"
+#include "gretl_typemap.h"
 #include "kalman.h"
 
 /**
@@ -3865,6 +3866,11 @@ int maybe_set_kalman_element (void *kptr,
         return 0;
     }
 
+    if (kdebug) {
+	fprintf(stderr, "maybe_set_kalman_element: key '%s', type %s\n",
+		key, gretl_type_get_name(vtype));
+    }
+
     /* Check for optional "extra" kalman items that
        live outside of the kalman struct itself.
     */
@@ -3910,6 +3916,8 @@ int maybe_set_kalman_element (void *kptr,
                 vtype == GRETL_TYPE_DOUBLE) {
                 id = i;
             } else {
+		gretl_errmsg_sprintf(_("%s: expected matrix but got %s"),
+				     key, gretl_type_get_name(vtype));
                 *err = E_TYPES;
             }
         }
@@ -4135,6 +4143,10 @@ void *maybe_retrieve_kalman_element (void *kptr,
         *ownit = 0;
     }
 
+    if (kdebug) {
+	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s'\n", key);
+    }
+
     /* 2022-05-06: we'll want to set *ownit to 1 if the element in
        question is newly allocated, and will be 'owned' by the caller,
        rather than just being a pointer to something inside the kalman
@@ -4148,7 +4160,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
         return NULL;
     }
 
-    if (kalman_univariate(K) && K->b != NULL) {
+    if (ownit != NULL && kalman_univariate(K) && K->b != NULL) {
         gretl_matrix *ret = NULL;
 
         if (!strcmp(key, "state")) {
@@ -4215,7 +4227,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
         *reserved = 1;
     }
 
-    if (*reserved && ret == NULL) {
+    if (*reserved && ret == NULL && ownit != NULL) {
         gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
         *err = E_DATA;
     }
