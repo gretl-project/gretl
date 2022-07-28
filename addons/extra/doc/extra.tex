@@ -146,9 +146,9 @@ This function relies on the relation
 $vech(X'AX) = P (X \otimes X)' Q \; vech(A) = G \; vech(A)$,
 where $P$ and $Q$ are certain interim results.
 It takes the matrix $X'$ and returns the matrix $G$ such that the right-hand
-side of the equalities becomes feasible, which should be 
+side of the equalities becomes feasible, which should be
 numerically more efficient than the direct application
-of the left-hand side. 
+of the left-hand side.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -348,6 +348,69 @@ Returns in a column vector the positions (indices) in `lookinhere' where any of 
 strings from `tofind' occur. If there are duplicates in `tofind' then the output
 may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed.
 
+\subsection{mat2latex}
+
+\ArgRet{\texttt{matrix X}, \texttt{bundle opts} (optional)}{string}
+
+Produces a string containing the representation of matrix \texttt{X}
+as a \LaTeX\ \texttt{tabular} environment. For example,
+\begin{code}
+eval mat2latex(mshape(seq(1,6), 2, 3))
+\end{code}
+produces
+\begin{code}
+\begin{tabular}{lccc}
+\hline
+ &	  &	 Col 1  &	 Col 2  &	 Col 3 \\ \hline
+Row 1 & 1.000	 & 3.000	 & 5.000 \\
+Row 2 & 2.000	 & 4.000	 & 6.000 \\
+\hline
+\end{tabular}
+\end{code}
+Note that, if a matrix possesses row or column names, they will be
+automatically used as labels. Some features of the results can be
+tweaked by setting appropriate keys in the \texttt{opts} bundle:
+\begin{description}
+\item[format]: a string, to be used for aligning columns. The default
+  is to have the first column left-aligned, and the subsequent ones
+  centered, as in \texttt{"lccc"}.
+\item[decimals] The number of decimals to use (default=3).
+\item[nacode] The string to use for missing entries (default: empty).
+\item[rnames] A string array for row headings.
+\item[cnames] A string array for column headings.
+\end{description}
+
+For example, the code
+\begin{code}
+  open credscore.gdt
+  xtab OwnRent Selfempl --quiet
+  s = mat2latex($result, _(decimals=0))
+  print s
+\end{code}
+% $
+produces
+\begin{code}
+\begin{tabular}{lccc}
+\hline
+ &	   0  &	    1  &	 TOTAL \\ \hline
+   0 & 60	 & 4	 & 64 \\
+   1 & 35	 & 1	 & 36 \\
+TOTAL & 95	 & 5	 & 100 \\
+\hline
+\end{tabular}
+\end{code}
+which looks, when compiled, as
+\begin{center}
+\begin{tabular}{lccc}
+\hline
+ &	   0  &	    1  &	 TOTAL \\ \hline
+   0 & 60	 & 4	 & 64 \\
+   1 & 35	 & 1	 & 36 \\
+TOTAL & 95	 & 5	 & 100 \\
+\hline
+\end{tabular}
+\end{center}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Functions requiring a dataset}
@@ -460,10 +523,11 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
+\item July 2022: 1.5, introduce the mat2latex function
 \item June 2022: 1.4, retire the commute function (now in libgretl)
 \item January 2022: 1.3, retire the mat2list function (now in
   libgretl), update gap\_filler
-\item October 2021: 1.2, add qformvech  
+\item October 2021: 1.2, add qformvech
 \item June 2021: 1.1, add combinations, and increase gretl version requirement to 2020c
 \item November 2020: 1.0, add mat2list
 \item September 2020: 0.8, add fracorder, remove bwritejson

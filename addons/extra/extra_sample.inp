@@ -108,7 +108,15 @@ strings AA = defarray("an","apple","and","an","egg")
 strings BB = defarray("an","dog","egg")
 eval multi_instrings(AA, BB)
 
- 
+print "---- mat2latex -----"  ##
+
+open mroz87.gdt
+summary 2 3 4 5 --simple
+X = $result
+eval mat2latex(X)
+X[2,4] = NA
+eval mat2latex(X, _(nacode="NA", decimals=1))
+
 ######## Examples that require a dataset ############
 
 open denmark	# get some data

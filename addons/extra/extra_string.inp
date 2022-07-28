@@ -50,7 +50,7 @@ function strings powerset (strings S)
     matrix s = seq(0, N-1)'
     strings PS = array(N)
 
-    loop i = 1..l 
+    loop i = 1..l
         matrix a = s % 2
         P[,i] = a
         s = (s - a) / 2
@@ -134,4 +134,98 @@ function strings splitfname (const string fn)
     endif
 
 	return out
+end function
+
+###
+### Auxiliary functions for mat2latex
+###
+
+function strings auto_names(int n, string prefix)
+    strings ret = array(n)
+    loop i = 1 .. n
+        ret[i] = sprintf("%s %d", prefix, i)
+    endloop
+    return ret
+end function
+
+function bundle default_opts(scalar r, scalar c)
+    bundle ret = null
+    scalar ret.decimals = 3
+    string ret.nacode = ""
+    strings ret.rnames = auto_names(r, "Row")
+    strings ret.cnames = defarray("") + auto_names(c, "Col")
+
+    string s = "l"
+    loop i = 1 .. c
+        s = s ~ "c"
+    endloop
+    ret.format = s
+    return ret
+end function
+
+### the mat2latex function proper
+
+function string mat2latex (matrix mprint, bundle useropts[null])
+
+    scalar nc = cols(mprint)
+    scalar nr = rows(mprint)
+    opts = default_opts(nr, nc)
+
+    strings labs = rnameget(mprint)
+    if nelem(labs)
+	opts.rnames = labs
+    endif
+
+    strings labs = cnameget(mprint)
+    if nelem(labs)
+	opts.cnames = labs
+    endif
+
+    if exists(useropts)
+        # override defaults
+        opts = useropts + opts
+    endif
+
+    fmtstr = sprintf("%%.%df", opts.decimals)
+
+    outfile buf --buffer --quiet
+
+        printf "\begin{tabular}{%s}\n", opts.format
+        printf "\\hline\n &\t"
+
+        # Print column names
+        n = nelem(opts.cnames)
+        loop i = 1 .. n
+            printf "%s ", opts.cnames[i]
+            if i<n
+                printf " &\t "
+            else
+                printf "\\\ \hline\n"
+            endif
+        endloop
+
+        # Printf Rows
+        loop i = 1 .. nr
+            printf "%s", opts.rnames[i]
+            loop j = 1 .. nc
+                scalar x = mprint[i,j]
+                if isnan(x)
+                    printf " & %s\t", opts.nacode
+                else
+                    printf " & @fmtstr", x
+                endif
+                if j < nc
+                    printf "\t"
+                else
+                    printf " \\\ \n"
+                endif
+            endloop
+        endloop
+
+        printf "\\hline\n"
+        printf "\end{tabular}\n"
+
+    outfile --close
+
+    return buf
 end function
