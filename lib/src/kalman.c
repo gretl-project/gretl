@@ -3832,7 +3832,7 @@ static int kalman_set_code (kalman *K, int code, int s)
         return E_INVARG;
     } else {
         K->code = code;
-#if 0 /* this shouldn't be required: univariate oughtt to handle kappa */
+#if 0 /* this shouldn't be required: univariate ought to non-exact */
 	if (code == K_UNIVAR && kalman_diffuse(K) && !K->exact) {
 	    K->exact = 1;
             diffuse_Pini(K);
@@ -4167,9 +4167,15 @@ static gretl_matrix *construct_kalman_matrix (kalman *K,
    doc (the vech).
 */
 
-static int is_univar_special (const char *key)
+static int is_univar_special (kalman *K, const char *key)
 {
-    return !strcmp(key, "pevar") || !strcmp(key, "stvar");
+    if (K->n > 1 && !strcmp(key, "pevar")) {
+	return 1;
+    } else if (!strcmp(key, "stvar")) {
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 void *maybe_retrieve_kalman_element (void *kptr,
@@ -4234,7 +4240,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
             gretl_matrix **pm = NULL;
 	    gretl_matrix *m = NULL;
 
-	    if (is_univar_special(key)) {
+	    if (is_univar_special(K, key)) {
 		m = construct_kalman_matrix(K, key, ownit);
 	    } else {
 		pm = kalman_output_matrix(K, key);
