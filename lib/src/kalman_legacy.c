@@ -247,7 +247,7 @@ static int dist_variance (kalman *K,
 			  gretl_matrix *Vut,
 			  gretl_matrix *Nt,
 			  gretl_matrix_block *BX,
-			  int t, int DKstyle)
+			  int DKstyle)
 {
     int err = 0;
 
@@ -255,7 +255,7 @@ static int dist_variance (kalman *K,
 	/* needed only in presence of obs disturbance */
 	/* D_t = F_t^{-1} + K_t' N_t K_t */
 	fast_copy_values(D, K->iFt);
-	if (t < K->N - 1) {
+	if (K->t < K->N - 1) {
 	    gretl_matrix_qform(K->Kt, GRETL_MOD_TRANSPOSE,
 			       Nt, D, GRETL_MOD_CUMULATE);
 	}
@@ -273,7 +273,7 @@ static int dist_variance (kalman *K,
 	    gretl_matrix_qform(K->VS, GRETL_MOD_TRANSPOSE,
 			       Nt, Vwt, GRETL_MOD_NONE);
 	}
-	load_to_diag(K->Vsd, Vwt, t, 0);
+	load_to_diag(K->Vsd, Vwt, K->t, 0);
 
         /* variance of obs disturbance */
         if (DKstyle) {
@@ -286,14 +286,14 @@ static int dist_variance (kalman *K,
             gretl_matrix_qform(K->VY, GRETL_MOD_TRANSPOSE,
                                D, Vut, GRETL_MOD_NONE);
         }
-        load_to_diag(K->Vsd, Vut, t, K->r);
+        load_to_diag(K->Vsd, Vut, K->t, K->r);
     } else {
         /* cross-correlated disturbance variance */
         err = combined_dist_variance(K, D, Nt, Vwt, Vut, BX,
                                      DKstyle);
         if (!err) {
-            load_to_diag(K->Vsd, Vwt, t, 0);
-            load_to_diag(K->Vsd, Vut, t, K->r);
+            load_to_diag(K->Vsd, Vwt, K->t, 0);
+            load_to_diag(K->Vsd, Vut, K->t, K->r);
         }
     }
 
@@ -310,10 +310,9 @@ static void LrN_iteration (kalman *K,
 			   gretl_matrix *r0,
 			   gretl_matrix *r1,
 			   gretl_matrix *N0,
-			   gretl_matrix *N1,
-			   int t)
+			   gretl_matrix *N1)
 {
-    if (t < K->N - 1) {
+    if (K->t < K->N - 1) {
 	/* L_t = T_t - K_t Z_t */
 	fast_copy_values(L, K->T);
 	gretl_matrix_multiply_mod(K->Kt, GRETL_MOD_NONE,
@@ -323,7 +322,7 @@ static void LrN_iteration (kalman *K,
 
     /* r_{t-1} = Z_t' F_t^{-1} v_t + L_t' r_t */
     gretl_matrix_multiply(K->iFt, K->vt, n1);
-    if (t == K->N - 1) {
+    if (K->t == K->N - 1) {
 	gretl_matrix_multiply(K->ZT, n1, r0);
     } else {
 	gretl_matrix_multiply(K->ZT, n1, r1);
@@ -334,7 +333,7 @@ static void LrN_iteration (kalman *K,
     }
 
     /* N_{t-1} = Z_t' F_t^{-1} Z_t + L_t' N_t L_t */
-    if (t == K->N - 1) {
+    if (K->t == K->N - 1) {
 	gretl_matrix_qform(K->ZT, GRETL_MOD_NONE,
 			   K->iFt, N0, GRETL_MOD_NONE);
     } else {
@@ -362,8 +361,8 @@ static void koopman_calc_a0 (kalman *K, gretl_matrix *r0)
     load_to_row(K->A, K->a0, 0);
 }
 
-/* Disturbance smoothing -- see Koopman, Shephard and Doornik (SsfPack
-   doc), section 4.4; also Durbin and Koopman, 2012.
+/* Disturbance smoothing -- see Koopman, Shephard and Doornik
+   (SsfPack doc), section 4.4.
 */
 
 static int koopman_smooth (kalman *K, int DKstyle)
@@ -434,7 +433,6 @@ static int koopman_smooth (kalman *K, int DKstyle)
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
-
 	err = old_load_filter_data(K, SM_DIST_BKWD);
         if (err) {
             break;
@@ -455,13 +453,13 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	load_to_row(R, r0, t);
 
 	/* compute variance of disturbances */
-	err = dist_variance(K, D, Vwt, Vut, N0, BX, t, DKstyle);
+	err = dist_variance(K, D, Vwt, Vut, N0, BX, DKstyle);
 	if (err) {
 	    break;
 	}
 
 	/* compute r_{t-1}, N_{t-1} */
-	LrN_iteration(K, L, n1, r0, r1, N0, N1, t);
+	LrN_iteration(K, L, n1, r0, r1, N0, N1);
 
 	if (t == 0) {
 	    /* compute initial smoothed state */
@@ -474,7 +472,6 @@ static int koopman_smooth (kalman *K, int DKstyle)
     */
     for (t=ft_min; t<K->N; t++) {
 	K->t = t;
-
         err = old_load_filter_data(K, SM_DIST_FRWD);
         if (err) {
             break;
@@ -526,12 +523,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     return err;
 }
 
-/* Anderson-Moore Kalman smoothing.  This method uses a_{t|t-1} and
-   P_{t|t-1} for all t, but we overwrite these with the smoothed
-   values as we go. We also need stored values for the prediction
-   error, its MSE, and the gain at each time step.  Note that r_t and
-   N_t are set to zero for t = N - 1.
-*/
+/* Anderson-Moore state smoothing */
 
 static int anderson_moore_smooth (kalman *K)
 {
@@ -561,7 +553,7 @@ static int anderson_moore_smooth (kalman *K)
         }
 
 	/* compute r_{t-1}, N_{t-1} */
-	LrN_iteration(K, L, n1, r0, r1, N0, N1, t);
+	LrN_iteration(K, L, n1, r0, r1, N0, N1);
 
         /* a_{t|T} = a_{t|t-1} + P_{t|t-1} r_{t-1} */
         fast_copy_values(K->a1, K->a0);
