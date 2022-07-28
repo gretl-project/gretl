@@ -42,7 +42,6 @@
 #define SUPPORT_LEGACY 1
 
 static int kdebug;
-static int djdebug;
 static int trace;
 
 enum {
@@ -266,7 +265,7 @@ enum {
 static const char *kalman_matrix_name (int sym);
 static int kalman_revise_variance (kalman *K);
 static int check_for_matrix_updates (kalman *K, ufunc *uf);
-static int set_Pini (kalman *K);
+static int set_initial_statevar (kalman *K);
 static int kalman_set_diffuse (kalman *K, int d);
 static int kfilter_univariate (kalman *K, PRN *prn);
 static int kfilter_dejong (kalman *K, PRN *prn);
@@ -350,15 +349,27 @@ static void set_kalman_stopped (kalman *K)
     K->t = 0;
 }
 
-static void maybe_set_debugging (kalman *K)
+static void kalman_check_env (kalman *K)
 {
     char *s1 = getenv("KALMAN_DEBUG");
-    char *s2 = getenv("DEJONG_DEBUG");
-    char *s3 = getenv("TRACING");
+    char *s2 = getenv("TRACING");
 
     if (s1 != NULL) kdebug  = atoi(s1);
-    if (s2 != NULL) djdebug = atoi(s2);
-    if (s3 != NULL) trace   = atoi(s3);
+    if (s2 != NULL) trace   = atoi(s2);
+
+    s1 = getenv("KALMAN_UNI");
+    if (s1 != NULL) {
+        if (K->vartype == DJ_VAR) {
+            fprintf(stderr, "KALMAN_UNI not applicable!\n");
+        } else {
+            K->code = K_UNIVAR;
+        }
+    } else {
+        s2 = getenv("KALMAN_DEJONG");
+        if (s2 != NULL) {
+            K->code = K_DEJONG;
+        }
+    }
 }
 
 static void free_stepinfo (kalman *K)
@@ -811,7 +822,7 @@ static int kalman_init (kalman *K)
     int err = 0;
 
     if (trace) {
-        printf("kalman_init: aini %p, Pini %p\n",
+        printf("kalman_init(): aini %p, Pini %p\n",
                (void *) K->aini, (void *) K->Pini);
     }
 
@@ -859,9 +870,9 @@ static int kalman_init (kalman *K)
         err = E_ALLOC;
     }
 
-    if (!err && K->Pini == NULL && !(K->flags & KALMAN_BUNDLE)) {
+    if (!err && (K->flags & KALMAN_BUNDLE)) {
         /* in the "user" case we do this later */
-        err = set_Pini(K);
+        err = set_initial_statevar(K);
     }
 
     return err;
@@ -1086,30 +1097,35 @@ static int statemat_out_of_bounds (kalman *K)
 
 static int diffuse_Pini (kalman *K)
 {
-    gretl_matrix_zero(K->P0);
-
-    if (K->exact && !kalman_univariate(K)) {
-        /* the de Jong case: incorporate here? */
-        return 0;
-    }
-
     if (trace) {
         printf("diffuse_Pini(), exact = %d\n", K->exact);
     }
 
     if (K->exact) {
-        if (K->Pk0 == NULL) {
-            K->Pk0 = gretl_identity_matrix_new(K->r);
-            if (K->Pk0 == NULL) {
-                return E_ALLOC;
-            }
+        if (kalman_dejong(K)) {
+            fast_copy_values(K->P0, K->VS); /* H*H' */
         } else {
-            fast_write_I(K->Pk0);
+            /* univariate case */
+#if P0_ZERO
+            gretl_matrix_zero(K->P0);
+#else
+            fast_copy_values(K->P0, K->VS);
+#endif
+            /* initialize P_\infty */
+            if (K->Pk0 == NULL) {
+                K->Pk0 = gretl_identity_matrix_new(K->r);
+                if (K->Pk0 == NULL) {
+                    return E_ALLOC;
+                }
+            } else {
+                fast_write_I(K->Pk0);
+            }
         }
     } else {
-        /* old-style */
+        /* old-style, using big kappa */
         int i;
 
+        gretl_matrix_zero(K->P0);
         for (i=0; i<K->r; i++) {
             gretl_matrix_set(K->P0, i, i, kappa);
         }
@@ -1167,9 +1183,12 @@ static int hamilton_Pini (kalman *K)
    filter, we apply a diffuse initialization.
 */
 
-static int set_Pini (kalman *K)
+static int set_initial_statevar (kalman *K)
 {
-    if (K->flags & KALMAN_DIFFUSE) {
+    if (K->Pini != NULL) {
+        fast_copy_values(K->P0, K->Pini);
+        return 0;
+    } else if (K->flags & KALMAN_DIFFUSE) {
         return diffuse_Pini(K);
     } else {
         return hamilton_Pini(K);
@@ -1279,6 +1298,10 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     kalman *K;
     int i;
 
+    if (trace) {
+        printf("kalman_new_minimal()\n");
+    }
+
     *err = 0;
 
     if (M[0] == NULL || M[1] == NULL || M[2] == NULL || M[3] == NULL) {
@@ -1294,11 +1317,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
         return NULL;
     }
 
-    maybe_set_debugging(K);
-
-    if (trace) {
-        printf("kalman_new_minimal()\n");
-    }
+    kalman_check_env(K);
 
     targ[0] = &K->y;
     targ[1] = &K->ZT;
@@ -1324,10 +1343,6 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
         } else {
             *targ[i] = M[i];
         }
-    }
-
-    if (K->vartype != DJ_VAR && getenv("KALMAN_UNI") != NULL) {
-        K->code = K_UNIVAR;
     }
 
     kalman_set_dimensions(K);
@@ -1988,6 +2003,9 @@ int kalman_forecast (kalman *K, PRN *prn)
     double sumldet = 0;
     int nt, err = 0;
 
+    if (trace) {
+        printf("kalman_forecast()\n");
+    }
     if (kdebug > 1) {
         fprintf(stderr, "\n*** kalman_forecast: N=%d, n=%d ***\n",
                 K->N, K->n);
@@ -2207,7 +2225,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
         return err;
     }
 
-    /* redundant? */
+    /* maybe redundant? */
     kalman_set_dimensions(K);
 
     if (gretl_matrix_rows(K->T) != K->r ||
@@ -2231,13 +2249,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
         } else {
             gretl_matrix_zero(K->a0);
         }
-        if (K->Pini != NULL) {
-            fast_copy_values(K->P0, K->Pini);
-        } else if (K->exact && !kalman_univariate(K)) {
-            ; /* skip it, handled by dejong code (FIXME?) */
-        } else {
-            err = set_Pini(K);
-        }
+        err = set_initial_statevar(K);
     }
 
     return err;
@@ -2313,6 +2325,7 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 
     if (!err) {
         gretl_matrix_zero(K->vt);
+        /* includes setting of K->P0 */
         err = kalman_bundle_recheck_matrices(K, prn);
     }
 
@@ -2339,19 +2352,10 @@ int kalman_run (kalman *K, PRN *prn, int *errp)
 
     if (!err) {
         if (kalman_univariate(K)) {
-            if (trace) {
-                printf("call kfilter_univariate()\n");
-            }
             err = kfilter_univariate(K, prn);
         } else if (kalman_dejong(K)) {
-	    if (trace) {
-		printf("call kfilter_dejong()\n");
-	    }
 	    err = kfilter_dejong(K, prn);
 	} else {
-	    if (trace) {
-		printf("call kalman_forecast()\n");
-	    }
 	    err = kalman_forecast(K, prn);
 	}
     }
@@ -2745,19 +2749,10 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
         /* prior forward pass */
 	K->smo_prep = dist ? SM_DIST : SM_STATE;
         if (kalman_univariate(K)) {
-            if (trace) {
-                printf("call kfilter_univariate()\n");
-            }
             err = kfilter_univariate(K, NULL);
         } else if (kalman_dejong(K)) {
-            if (trace) {
-                printf("call kfilter_dejong()\n");
-            }
             err = kfilter_dejong(K, NULL);
         } else {
-            if (trace) {
-                printf("call kalman_forecast()\n");
-            }
 	    err = kalman_forecast(K, NULL);
 	}
         K->smo_prep = SM_NONE;
@@ -2767,42 +2762,17 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 
     if (!err) {
         if (kalman_univariate(K)) {
-            if (trace) {
-                printf("call ksmooth_univariate()\n");
-            }
             err = ksmooth_univariate(K, dist);
 	} else if (kalman_dejong(K)) {
-	    if (dist > 1) {
-		if (trace) {
-		    printf("call dist_smooth_dejong(1)\n");
-		}
-		err = dist_smooth_dejong(K, 1);
-	    } else if (dist == 1) {
-		if (trace) {
-		    printf("call dist_smooth_dejong(0)\n");
-		}
-		err = dist_smooth_dejong(K, 0);
+            if (dist) {
+                err = dist_smooth_dejong(K, dist > 1);
 	    } else {
-		if (trace) {
-		    printf("call state_smooth_dejong()\n");
-		}
 		err = state_smooth_dejong(K);
 	    }
 	} else {
-	    if (dist > 1) {
-		if (trace) {
-		    printf("call koopman_smooth(1)\n");
-		}
-		err = koopman_smooth(K, 1);
-	    } else if (dist == 1) {
-		if (trace) {
-		    printf("call koopman_smooth(0)\n");
-		}
-		err = koopman_smooth(K, 0);
+            if (dist) {
+		err = koopman_smooth(K, dist > 1);
 	    } else {
-		if (trace) {
-		    printf("call anderson_moore_smooth()\n");
-		}
 		err = anderson_moore_smooth(K);
 	    }
         }
@@ -5055,7 +5025,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     set_kalman_running(K);
 
     if (trace) {
-        printf("kfilter_univariate, exact = %d\n", K->exact);
+        printf("kfilter_univariate(), exact = %d\n", K->exact);
     }
     if (kdebug) {
         fprintf(stderr, "\n*** kfilter_univariate: r=%d, n=%d, exact=%d ***\n",
@@ -5065,16 +5035,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     if (K->exact) {
         k_tiny = tiny_value(Z);
     }
-
-#if !P0_ZERO
-    if (K->Pini != NULL) {
-        fast_copy_values(Pt, K->Pini);
-    } else if (kalman_diffuse(K) && !K->exact) {
-        ; /* leave P0 alone */
-    } else {
-        fast_copy_values(Pt, K->VS);
-    }
-#endif
 
     for (t=0; t<K->N; t++) {
         K->t = t;
@@ -5770,7 +5730,6 @@ static int ksmooth_univariate (kalman *K, int dist)
     gretl_matrix_block *B = NULL;
     struct filter_mats f = {0};
     struct cumulants c = {0};
-    // univar_info *ui = K->uinfo;
     gretl_matrix *Q = NULL;
     gretl_matrix *QRT = NULL;
     gretl_matrix *g = NULL;
@@ -5804,6 +5763,9 @@ static int ksmooth_univariate (kalman *K, int dist)
     load_filter_matrices(&f, K);
     g = f.g; /* convenience pointer */
 
+    if (trace) {
+        printf("ksmooth_univariate(), dist=%d\n", dist);
+    }
     if (kdebug) {
         fprintf(stderr, "ksmooth_univariate: dist=%d, d=%d, j=%d\n",
                 dist, K->d, K->j);
@@ -6251,7 +6213,7 @@ static int dejong_diffuse_filter_step (kalman *K)
     /* Q[t+1] : Qt += Vv' * iFt * Vv */
     gretl_matrix_qform(dj->Vv, GRETL_MOD_TRANSPOSE,
                        K->iFt, dj->Qt, GRETL_MOD_CUMULATE);
-    if (djdebug > 1) {
+    if (kdebug > 1) {
 	gretl_matrix_print(dj->Qt, "Qt");
     }
 
@@ -6275,7 +6237,7 @@ static int dejong_diffuse_filter_step (kalman *K)
         lmin = lam->val[0];
         gretl_matrix_free(lam);
     }
-    if (djdebug > 1) {
+    if (kdebug > 1) {
 	fprintf(stderr, "dejong_diffuse_filter_step: t=%d, lmin=%g\n", K->t, lmin);
     }
 
@@ -6284,7 +6246,7 @@ static int dejong_diffuse_filter_step (kalman *K)
     } else if (lmin > 1.0e-7) {
         /* handle the collapse */
         K->d = K->t + 1;
-	if (djdebug) {
+	if (kdebug) {
 	    fprintf(stderr, "*** determined m = %d ***\n", K->d);
 	}
 
@@ -6368,7 +6330,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     int err = 0;
 
     if (trace) {
-        printf("kfilter_dejong\n");
+        printf("kfilter_dejong()\n");
     }
 
     exact_diffuse = kalman_diffuse(K) && K->exact;
@@ -6389,28 +6351,14 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         }
     }
 
-    /* initialize state variance */
-    if (kalman_diffuse(K) && !K->exact) {
-        fast_write_I(K->P0);
-        gretl_matrix_multiply_by_scalar(K->P0, kappa);
-    } else if (exact_diffuse) {
-#if P0_ZERO
-	/* seems to be the KFAS default? */
-	gretl_matrix_zero(K->P0);
-#else
-	/* as per de Jong/Lin 2003 */
-	fast_copy_values(K->P0, K->VS);
-#endif
-    }
-
     if (exact_diffuse) {
-	/* (re-)initialize */
+	/* (re-)initialize djinfo */
         fast_write_I(K->djinfo->At);
 	gretl_matrix_zero(K->djinfo->Qt);
 	gretl_matrix_zero(K->djinfo->Vt);
     }
 
-    if (djdebug) {
+    if (kdebug) {
         fprintf(stderr, "\n*** kfilter_dejong: diffuse %d, exact %d, smo %d, xcorr %d\n",
                 kalman_diffuse(K) ? 1 : 0, K->exact, K->smo_prep ? 1 : 0, kalman_xcorr(K));
     }
@@ -6459,7 +6407,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
             /* skip this observation */
             K->okN -= 1;
             handle_missing_obs(K);
-	    if (djdebug) {
+	    if (kdebug) {
 		fprintf(stderr, "dejong filter: NA at t=%d\n", K->t);
 	    }
             continue;
@@ -6622,7 +6570,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         K->s2 = K->SSRw / (K->n * K->okN - d);
     }
 
-    if (kdebug || djdebug) {
+    if (kdebug) {
         fprintf(stderr, "kfilter_dejong: err=%d, ll=%#.8g, d=%d\n",
                 err, K->loglik, K->d);
     }
@@ -6812,10 +6760,9 @@ static int state_smooth_dejong (kalman *K)
     no_collapse = (K->d == K->N);
 
     if (trace) {
-        printf("state_smooth_dejong\n");
+        printf("state_smooth_dejong()\n");
     }
-
-    if (djdebug) {
+    if (kdebug) {
         fprintf(stderr, "state_smooth_dejong: no_collapse = %d\n", no_collapse);
     }
 
@@ -6860,7 +6807,7 @@ static int state_smooth_dejong (kalman *K)
 	nt = load_filter_data(K, no_collapse, &err);
         if (err) {
             break;
-        } else if (djdebug && nt == 0) {
+        } else if (kdebug && nt == 0) {
             fprintf(stderr, "state_smooth_dejong: nt=0 at t=%d\n", K->t);
         }
 
@@ -6997,7 +6944,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
     int t, err = 0;
 
     if (trace) {
-        printf("dist_smooth_dejong\n");
+        printf("dist_smooth_dejong(), DKstyle = %d\n", DKstyle);
     }
 
     no_collapse = (K->d == K->N);
@@ -7057,7 +7004,7 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
         nt = load_filter_data(K, 0, &err);
         if (err) {
             break;
-        } else if (djdebug && nt == 0) {
+        } else if (kdebug && nt == 0) {
 	    fprintf(stderr, "dist_smooth_dejong: nt=0 at t=%d\n", K->t);
         }
 

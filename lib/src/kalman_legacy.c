@@ -352,7 +352,7 @@ static void koopman_calc_a0 (kalman *K, gretl_matrix *r0)
     if (K->Pini != NULL) {
         gretl_matrix_multiply(K->Pini, r0, K->a0);
     } else {
-        set_Pini(K);
+        set_initial_statevar(K);
         gretl_matrix_multiply(K->P0, r0, K->a0);
     }
     if (K->aini != NULL) {
@@ -380,6 +380,10 @@ static int koopman_smooth (kalman *K, int DKstyle)
     gretl_matrix *Ut = NULL;
     int ft_min = 0;
     int t, err = 0;
+
+    if (trace) {
+        printf("koopman_smooth(), DKstyle = %d\n", DKstyle);
+    }
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
                                &L,  K->r, K->r,
@@ -530,6 +534,10 @@ static int anderson_moore_smooth (kalman *K)
     gretl_matrix_block *B;
     gretl_matrix *r0, *r1, *N0, *N1, *n1, *L;
     int t, err = 0;
+
+    if (trace) {
+        printf("anderson_moore_smooth()\n");
+    }
 
     B = gretl_matrix_block_new(&r0,  K->r, 1,
                                &r1,  K->r, 1,
