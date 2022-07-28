@@ -3832,6 +3832,12 @@ static int kalman_set_code (kalman *K, int code, int s)
         return E_INVARG;
     } else {
         K->code = code;
+#if 0 /* this shouldn't be required: univariate oughtt to handle kappa */
+	if (code == K_UNIVAR && kalman_diffuse(K) && !K->exact) {
+	    K->exact = 1;
+            diffuse_Pini(K);
+	}
+#endif
 	return 0;
     }
 }
@@ -4154,6 +4160,18 @@ static gretl_matrix *construct_kalman_matrix (kalman *K,
     return m;
 }
 
+/* FIXME: at present these two elements are defined within
+   the libgretl univariate code for compatibility with KFAS,
+   (i.e. the vec of the variances) which means they must be
+   transformed to correspond to what's stated in gretl's Kalman
+   doc (the vech).
+*/
+
+static int is_univar_special (const char *key)
+{
+    return !strcmp(key, "pevar") || !strcmp(key, "stvar");
+}
+
 void *maybe_retrieve_kalman_element (void *kptr,
                                      const char *key,
                                      GretlType *type,
@@ -4213,13 +4231,18 @@ void *maybe_retrieve_kalman_element (void *kptr,
         }
         if (id < 0) {
             /* try for an output matrix */
-            gretl_matrix **pm = kalman_output_matrix(K, key);
+            gretl_matrix **pm = NULL;
 	    gretl_matrix *m = NULL;
 
-	    if (pm != NULL && *pm != NULL) {
-		m = *pm;
-	    } else if (pm != NULL && ownit != NULL) {
+	    if (is_univar_special(key)) {
 		m = construct_kalman_matrix(K, key, ownit);
+	    } else {
+		pm = kalman_output_matrix(K, key);
+		if (pm != NULL && *pm != NULL) {
+		    m = *pm;
+		} else if (pm != NULL && ownit != NULL) {
+		    m = construct_kalman_matrix(K, key, ownit);
+		}
 	    }
 	    if (m != NULL) {
 		*reserved = 1;
@@ -4993,7 +5016,8 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     double qt, ldt;
     double k_tiny = 0;
 
-    int rankPk = kalman_diffuse(K) ? K->r : 0;
+    int exact_diffuse = kalman_diffuse(K) && K->exact;
+    int rankPk = exact_diffuse ? K->r : 0;
     int d = K->exact ? 0 : -1;
     int j = K->exact ? 0 : -1;
     int Nd = 0;
