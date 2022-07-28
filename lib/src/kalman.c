@@ -2517,68 +2517,46 @@ static int retrieve_Zt (kalman *K)
     }
 }
 
-enum {
-    LOAD_STANDARD,
-    LOAD_NO_COLLAPSE,
-    LOAD_KOOPMAN_BACKWARD,
-    LOAD_KOOPMAN_FORWARD
-};
-
-/* For use with smoothing: load what we need for step t, from the
-   record that was kept on the prior forecasting pass. We allow for
-   the possibility of time-varying matrices. This is called by the
-   de Jong smoothers (state and dist). The univariate smoother uses
-   its own mechanism.
-
-   The return value is the number of usable observables at step t.
-*/
-
-static int load_filter_data (kalman *K, int mod, int *err)
+static int load_filter_data (kalman *K, int no_collapse, int *err)
 {
     int missing = 0;
+
+    /* FIXME maybe we should have a byte array of length K->N
+       to identify missing observations (constructed on the
+       filtering step if needed). This could speed things
+       up below,
+    */
 
     /* load the forecast error into K->vt */
     load_from_row(K->vt, K->V, K->t, GRETL_MOD_NONE);
 
-    if (mod == LOAD_KOOPMAN_BACKWARD) {
-        /* disturbances */
-        if (filter_is_varying(K)) {
-            // ksmooth_refresh_matrices(K, NULL);
-	    kalman_refresh_matrices(K, NULL);
+    /* state: get T_t and/or Z_t if need be */
+    if (matrix_is_varying(K, K_T)) {
+        *err = retrieve_Tt(K);
+    }
+    if (!*err && matrix_is_varying(K, K_ZT)) {
+        *err = retrieve_Zt(K);
+    }
+    if (*err) {
+        return 0;
+    }
+
+    /* load the state and its MSE */
+    load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
+    if (no_collapse) {
+        /* FIXME? looks weird but seems to help */
+        if (K->t == 0) {
+            gretl_matrix_zero(K->P0);
+        } else {
+            load_from_vech(K->P0, K->P, K->r, K->t-1, GRETL_MOD_NONE);
         }
     } else {
-        /* state: get T_t and/or Z_t if need be */
-        if (matrix_is_varying(K, K_T)) {
-            *err = retrieve_Tt(K);
-        }
-        if (!err && matrix_is_varying(K, K_ZT)) {
-            *err = retrieve_Zt(K);
-        }
-        if (*err) {
-            return 0;
-        }
+        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
     }
 
-    if (mod != LOAD_KOOPMAN_BACKWARD) {
-        /* load the state and its MSE */
-        load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
-	if (mod == LOAD_NO_COLLAPSE) {
-	    /* FIXME? looks weird but seems to help */
-	    if (K->t == 0) {
-		gretl_matrix_zero(K->P0);
-	    } else {
-		load_from_vech(K->P0, K->P, K->r, K->t-1, GRETL_MOD_NONE);
-	    }
-	} else {
-	    load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
-	}
-    }
-
-    if (mod != LOAD_KOOPMAN_FORWARD) {
-        /* load the gain and F^{-1} */
-        load_from_vec(K->Kt, K->K, K->t);
-        load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
-    }
+    /* load the gain and F^{-1} */
+    load_from_vec(K->Kt, K->K, K->t);
+    load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
 
     /* heuristic for missing observable (see note above) */
     missing = gretl_is_zero_matrix(K->Kt);
@@ -6807,7 +6785,6 @@ static int state_smooth_dejong (kalman *K)
     gretl_matrix *Bt, *Ct, *Rt;
     gretl_matrix *dhat, *Psi;
     int no_collapse = 0;
-    int load_mod = 0;
     int nt = K->n;
     int t, err = 0;
 
@@ -6856,12 +6833,11 @@ static int state_smooth_dejong (kalman *K)
     if (no_collapse) {
         gretl_matrix_multiply(K->djinfo->S, K->djinfo->s, dhat);
         gretl_matrix_copy_values(Psi, K->djinfo->S);
-	load_mod = LOAD_NO_COLLAPSE;
     }
 
     for (t=K->N-1; t>=0 && !err; t--) {
         K->t = t;
-        nt = load_filter_data(K, load_mod, &err);
+	nt = load_filter_data(K, no_collapse, &err);
         if (err) {
             break;
         } else if (djdebug && nt == 0) {

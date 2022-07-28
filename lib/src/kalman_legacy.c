@@ -19,6 +19,109 @@ static void load_to_diag (gretl_matrix *targ,
     }
 }
 
+enum {
+    SM_TYPE_NONE, /* not doing smoothing */
+    SM_STATE_STD, /* regular state smoother */
+    SM_DIST_BKWD, /* disturbance smoother, backward pass */
+    SM_DIST_FRWD, /* disturbance smoother, forward pass */
+};
+
+static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
+{
+    gretl_matrix **mptr[] = {
+        &K->VS, &K->VY
+    };
+    int idx[] = {
+        K_VS, K_VY
+    };
+    int cross_update = 0;
+    int i, j, err = 0;
+
+    if (kalman_xcorr(K)) {
+        mptr[0] = &K->H;
+        mptr[1] = &K->G;
+    }
+
+    if (K->matcall != NULL) {
+        err = kalman_update_matrices(K, prn);
+    }
+
+    for (i=0; i<2 && !err; i++) {
+        j = idx[i];
+        if (matrix_is_varying(K, j)) {
+            if (kalman_xcorr(K) && (j == K_VS || j == K_VY)) {
+                /* handle revised H and/or G */
+                cross_update = 1;
+            } else {
+                err = check_matrix_dims(K, *mptr[i], j);
+            }
+            if (err) {
+                fprintf(stderr, "ksmooth_refresh_matrices: err = %d at t = %d\n",
+                        err, K->t);
+            }
+        }
+    }
+
+    if (!err && cross_update) {
+        /* cross-correlated case */
+        err = kalman_update_crossinfo(K, UPDATE_STEP);
+    }
+
+    return err;
+}
+
+/* For use with smoothing: load what we need for step @t, from the
+   record that was kept on the prior forecasting pass. What we need
+   from the forward pass depends on what exactly we're computing,
+   which is conveyed by @smtype. If @pnt is non-NULL, use it to pass
+   back the effective size of the observables vector.
+
+   We need to handle some complications here. In particular we must
+   update anything that's time-varying, and (unless we're doing
+   disturbance smoothing) deal with any incomplete observations, which
+   have implications for the dimensions of various matrices.
+*/
+
+static int old_load_filter_data (kalman *K, int smtype)
+{
+    int err = 0;
+
+    /* load the forecast error */
+    load_from_row(K->vt, K->V, K->t, GRETL_MOD_NONE);
+
+    if (smtype == SM_DIST_BKWD) {
+        /* disturbances */
+        if (filter_is_varying(K)) {
+            ksmooth_refresh_matrices(K, NULL);
+        }
+    } else {
+        /* state: get T_t and/or Z_t if need be */
+        if (matrix_is_varying(K, K_T)) {
+            err = retrieve_Tt(K);
+        }
+        if (!err && matrix_is_varying(K, K_ZT)) {
+            err = retrieve_Zt(K);
+        }
+        if (err) {
+            return err;
+        }
+    }
+
+    if (smtype < SM_DIST_BKWD) {
+        /* load the state and its MSE */
+        load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
+        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+    }
+
+    if (smtype == SM_STATE_STD || smtype == SM_DIST_BKWD) {
+        /* load the gain and F^{-1} */
+        load_from_vec(K->Kt, K->K, K->t);
+        load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
+    }
+
+    return err;
+}
+
 /* For disturbance smoothing: ensure we have on hand matrices that are
    correctly sized to hold estimates of the variance of the
    disturbance(s) in the state and (if applicable) observation
@@ -332,7 +435,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
 
-        load_filter_data(K, LOAD_KOOPMAN_BACKWARD, &err);
+	err = old_load_filter_data(K, SM_DIST_BKWD);
         if (err) {
             break;
         }
@@ -372,7 +475,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     for (t=ft_min; t<K->N; t++) {
 	K->t = t;
 
-        load_filter_data(K, LOAD_KOOPMAN_FORWARD, &err);
+        err = old_load_filter_data(K, SM_DIST_FRWD);
         if (err) {
             break;
         }
@@ -452,8 +555,7 @@ static int anderson_moore_smooth (kalman *K)
 
     for (t=K->N-1; t>=0 && !err; t--) {
 	K->t = t;
-
-        load_filter_data(K, 0, &err);
+        err = old_load_filter_data(K, SM_STATE_STD);
         if (err) {
             break;
         }
