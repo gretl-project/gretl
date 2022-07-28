@@ -3830,9 +3830,9 @@ static int kalman_set_code (kalman *K, int code, int s)
         gretl_errmsg_set("kalman: the 'univariate' setting is not compatible with\n"
                          "cross-correlated disturbances");
         return E_INVARG;
-    } else if (s && code != K->code) {
+    } else if (s && (code != K->code)) {
         K->code = code;
-#if 0 /* this shouldn't be required: univariate ought to non-exact */
+#if 0 /* this should not be required */
 	if (code == K_UNIVAR && kalman_diffuse(K) && !K->exact) {
 	    K->exact = 1;
 	}
