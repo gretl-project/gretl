@@ -4240,7 +4240,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
             gretl_matrix **pm = NULL;
 	    gretl_matrix *m = NULL;
 
-	    if (is_univar_special(K, key)) {
+	    if (kalman_univariate(K) && is_univar_special(K, key)) {
 		m = construct_kalman_matrix(K, key, ownit);
 	    } else {
 		pm = kalman_output_matrix(K, key);
