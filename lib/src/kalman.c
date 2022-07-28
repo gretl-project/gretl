@@ -3830,16 +3830,22 @@ static int kalman_set_code (kalman *K, int code, int s)
         gretl_errmsg_set("kalman: the 'univariate' setting is not compatible with\n"
                          "cross-correlated disturbances");
         return E_INVARG;
-    } else {
+    } else if (s && code != K->code) {
         K->code = code;
 #if 0 /* this shouldn't be required: univariate ought to non-exact */
 	if (code == K_UNIVAR && kalman_diffuse(K) && !K->exact) {
 	    K->exact = 1;
-            diffuse_Pini(K);
 	}
 #endif
-	return 0;
+	if (code == K_UNIVAR && kalman_diffuse(K) && K->Pk0 == NULL) {
+	    K->Pk0 = gretl_identity_matrix_new(K->r);
+	    if (K->Pk0 == NULL) {
+		return E_ALLOC;
+	    }
+	}
     }
+
+    return 0;
 }
 
 /* Called by real_bundle_set_data() in gretl_bundle.c.  The return
