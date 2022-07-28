@@ -253,6 +253,7 @@ enum {
 #define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
+#define kalman_is_bundle(K)   (K->flags & KALMAN_BUNDLE)
 
 #define kalman_univariate(K)  (K->code == K_UNIVAR)
 #define kalman_dejong(K)      (K->code == K_DEJONG)
@@ -446,7 +447,7 @@ void kalman_free (kalman *K)
     /* internally allocated workspace */
     gretl_matrix_block_destroy(K->Blk);
 
-    if (K->flags & KALMAN_BUNDLE) {
+    if (kalman_is_bundle(K)) {
         gretl_matrix **mptr[] = {
             &K->T, &K->BT, &K->ZT, &K->VS, &K->VY,
             &K->mu, &K->y, &K->x, &K->aini, &K->Pini,
@@ -870,8 +871,8 @@ static int kalman_init (kalman *K)
         err = E_ALLOC;
     }
 
-    if (!err && (K->flags & KALMAN_BUNDLE)) {
-        /* in the "user" case we do this later */
+    if (!err && !kalman_is_bundle(K)) {
+        /* in the "user-bundle" case we do this later */
         err = set_initial_statevar(K);
     }
 
