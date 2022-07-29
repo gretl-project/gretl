@@ -634,13 +634,8 @@ static int maybe_resize_export_matrix (kalman *K, gretl_matrix *m, int i)
     } else if (i == K_A) {
         cols = K->r;
     } else if (i == K_BIG_P) {
-        if (kalman_univariate(K)) {
-            /* vec(P) per row */
-            cols = K->r * K->r;
-        } else {
-            /* vech(P) per row */
-            cols = (K->r * K->r + K->r) / 2;
-        }
+	/* vech(P) per row */
+	cols = (K->r * K->r + K->r) / 2;
     } else if (i == K_LL) {
         cols = 1;
     } else if (i == K_K) {
@@ -4000,42 +3995,6 @@ int maybe_delete_kalman_element (void *kptr,
     return done;
 }
 
-/* Take the stacked vec-transpose representation of P and
-   convert to the documented vech form.
-*/
-
-static gretl_matrix *fill_stvar (kalman *K, int *ownit)
-{
-    gretl_matrix *P, *V = NULL;
-
-    /* get smoothed version if available */
-    P = gretl_bundle_get_matrix(K->b, "Vhat", NULL);
-    if (P == NULL) {
-        /* otherwise get @P from filtering */
-        P = K->P;
-    }
-
-    if (P != NULL) {
-        int cols = K->r * (K->r + 1) / 2;
-
-        V = gretl_matrix_alloc(K->N, cols);
-    }
-
-    if (V != NULL) {
-        int j, t;
-
-        for (t=0; t<K->N; t++) {
-            for (j=0; j<P->cols; j++) {
-                K->P0->val[j] = gretl_matrix_get(P, t, j);
-            }
-            load_to_vech(V, K->P0, K->r, t);
-        }
-        *ownit = 1;
-    }
-
-    return V;
-}
-
 /* Take the vec representations of the smoothed disturbances
    K->b.etahat and K->b.epshat (if present) and write them into
    K->U in the format documented in the Guide.
@@ -4146,12 +4105,8 @@ static gretl_matrix *construct_kalman_matrix (kalman *K,
     gretl_matrix *m = NULL;
 
     if (K->code == K_UNIVAR) {
-	if (!strcmp(key, "state")) {
-	    m = gretl_bundle_get_matrix(K->b, "Ahat", NULL);
-	} else if (!strcmp(key, "pevar") && K->n > 1) {
+	if (!strcmp(key, "pevar") && K->n > 1) {
 	    m = fill_pevar(K, ownit);
-	} else if (!strcmp(key, "stvar")) {
-	    m = fill_stvar(K, ownit);
 	}
     }
 
@@ -4166,22 +4121,16 @@ static gretl_matrix *construct_kalman_matrix (kalman *K,
     return m;
 }
 
-/* FIXME: at present these two elements are defined within
-   the libgretl univariate code for compatibility with KFAS,
-   (i.e. the vec of the variances) which means they must be
-   transformed to correspond to what's stated in gretl's Kalman
-   doc (the vech).
+/* Under the univariate approach it makes sense for K->F to
+   be a vector of length K->n as calculation proceeds, since
+   the matrix is strictly diagonal. Here we signal that we'll
+   have to transform it for compatibility with gretl's Kalman
+   doc (the vech is wanted).
 */
 
 static int is_univar_special (kalman *K, const char *key)
 {
-    if (K->n > 1 && !strcmp(key, "pevar")) {
-	return 1;
-    } else if (!strcmp(key, "stvar")) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return K->n > 1 && !strcmp(key, "pevar");
 }
 
 void *maybe_retrieve_kalman_element (void *kptr,
@@ -5009,7 +4958,6 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     gretl_matrix *ati = K->a1;
     gretl_matrix *Pti = K->P1;
     gretl_matrix *Pk = K->Pk0;
-    gretl_matrix *P = K->P;
 
     gretl_matrix *Z   = ui->Z;
     gretl_matrix *g   = ui->g;
@@ -5076,7 +5024,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     for (t=0; t<K->N; t++) {
         K->t = t;
         load_to_vec(K->A, at, t);
-        row_from_mat(P, Pt, t);
+        row_from_mat(K->P, Pt, t);
         fast_copy_values(ati, at);
         fast_copy_values(Pti, Pt);
         if (Pki != NULL) {
@@ -5463,25 +5411,12 @@ static void fkzero (double ftinv,
     }
 }
 
-struct filter_mats {
-    gretl_matrix *Z;
-    gretl_matrix *A;
-    gretl_matrix *P;
-    gretl_matrix *g;
-    gretl_matrix *Finf;
-    gretl_matrix *Kinf;
-    gretl_matrix *PK;
-};
+/* smoothing update of state and its variance */
 
-/* smoothing update of Ahat and Vhat */
-
-static int dagger_calc (struct filter_mats *f,
-                        struct cumulants *c,
+static int dagger_calc (struct cumulants *c,
                         gretl_matrix *Pt,
                         gretl_matrix *Pk,
-                        gretl_matrix *Ahat,
-                        gretl_matrix *Vhat,
-                        int t)
+			kalman *K)
 {
     gretl_matrix_block *B;
     gretl_matrix *rdag, *Ndag, *Pdag;
@@ -5511,26 +5446,26 @@ static int dagger_calc (struct filter_mats *f,
     gretl_matrix_inscribe_matrix(Ndag, c->N1, m, 0, GRETL_MOD_NONE);
     gretl_matrix_inscribe_matrix(Ndag, c->N2, m, m, GRETL_MOD_NONE);
 
-    mat_from_row(at, f->A, t);
-    mat_from_row(Pt, f->P, t);
-    mat_from_col(Pk, f->PK, t);
+    mat_from_row(at, K->A, K->t);
+    mat_from_row(Pt, K->P, K->t);
+    mat_from_col(Pk, K->PK, K->t);
 
     /* Pdag = Pt ~ Pk */
     memcpy(Pdag->val, Pt->val, Nsize);
     memcpy(Pdag->val + mm, Pk->val, Nsize);
 
-    /* Ahat[t,] = (at + Pdag * rdag)' */
+    /* ahat[t,] = (at + Pdag * rdag)' */
     gretl_matrix_multiply_mod(Pdag, GRETL_MOD_NONE,
                               rdag, GRETL_MOD_NONE,
                               at, GRETL_MOD_CUMULATE);
-    row_from_mat(Ahat, at, t);
+    row_from_mat(K->A, at, K->t);
 
     /* Vhat[t,] = vec(Pt - Pdag * Ndag * Pdag')' */
     gretl_matrix_multiply(Pdag, Ndag, tmp);
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
                               Pdag, GRETL_MOD_TRANSPOSE,
                               Pt, GRETL_MOD_DECREMENT);
-    row_from_mat(Vhat, Pt, t);
+    load_to_vech(K->P, Pt, K->r, K->t);
 
     gretl_matrix_block_destroy(B);
 
@@ -5618,20 +5553,18 @@ static void eta_smooth (const gretl_matrix *Q,
 static void state_smooth (const gretl_matrix *at,
                           const gretl_matrix *Pt,
                           struct cumulants *c,
-                          gretl_matrix *Ahat,
-                          gretl_matrix *Vhat,
-                          int t)
+			  kalman *K)
 {
     /* Pt - Pt * N0 * Pt' */
     fast_copy_values(c->mm, Pt);
     gretl_matrix_qform(Pt, GRETL_MOD_NONE, c->N0,
                        c->mm, GRETL_MOD_DECREMENT);
-    row_from_mat(Vhat, c->mm, t);
+    load_to_vech(K->P, c->mm, K->r, K->t);
 
     /* at + Pt * r0 */
     gretl_matrix_multiply(Pt, c->r0, c->m1);
     gretl_matrix_add_to(c->m1, at);
-    row_from_mat(Ahat, c->m1, t);
+    row_from_mat(K->A, c->m1, K->t);
 }
 
 static void regular_backdate (struct cumulants *c,
@@ -5727,18 +5660,6 @@ static void kalman_bundle_add_epshat (kalman *K, gretl_matrix *epshat)
     }
 }
 
-static void load_filter_matrices (struct filter_mats *fm,
-                                  kalman *K)
-{
-    fm->Z = K->uinfo->Z;
-    fm->g = K->uinfo->g;
-    fm->Finf = K->uinfo->Finf;
-    fm->Kinf = K->uinfo->Kinf;
-    fm->A = K->A;
-    fm->P = K->P;
-    fm->PK = K->PK;
-}
-
 static int state_dist_setup (kalman *K,
                              gretl_matrix **Q,
                              gretl_matrix **QRT,
@@ -5765,7 +5686,7 @@ static int state_dist_setup (kalman *K,
 static int ksmooth_univariate (kalman *K, int dist)
 {
     gretl_matrix_block *B = NULL;
-    struct filter_mats f = {0};
+    univar_info *ui = K->uinfo;
     struct cumulants c = {0};
     gretl_matrix *Q = NULL;
     gretl_matrix *QRT = NULL;
@@ -5779,8 +5700,6 @@ static int ksmooth_univariate (kalman *K, int dist)
     int err = 0;
 
     /* matrices to be returned in bundle */
-    gretl_matrix *Ahat = gretl_zero_matrix_new(N, K->r);
-    gretl_matrix *Vhat = gretl_zero_matrix_new(N, K->r * K->r);
     gretl_matrix *epshat = NULL;
     gretl_matrix *veps = NULL;
     gretl_matrix *etahat = NULL;
@@ -5797,8 +5716,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     double ftinv, fkinv;
     double k_tiny = 0;
 
-    load_filter_matrices(&f, K);
-    g = f.g; /* convenience pointer */
+    g = ui->g; /* convenience pointer */
 
     if (trace) {
         printf("ksmooth_univariate(), dist=%d\n", dist);
@@ -5859,7 +5777,7 @@ static int ksmooth_univariate (kalman *K, int dist)
         mat_from_row(vt, K->V, t);
         mat_from_row(Ft, K->F, t);
         mat_from_row(Kt, K->K, t);
-        mat_from_row(Pt, f.P, t);
+        mat_from_row(Pt, K->P, t);
         mat_from_row(at, K->A, t);
 
         /* loop across observables */
@@ -5873,7 +5791,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 continue;
             }
             ftinv = 1.0 / Fti;
-            mat_from_row(Zti, f.Z, i);
+            mat_from_row(Zti, ui->Z, i);
             vec_from_col(Kti, Kt, i);
             if (eps_smo) {
                 eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -5887,7 +5805,7 @@ static int ksmooth_univariate (kalman *K, int dist)
         }
 
         /* smoothed state and its variance */
-        state_smooth(at, Pt, &c, Ahat, Vhat, t);
+        state_smooth(at, Pt, &c, K);
 
         /* regular backdate for t-1 */
         if (t > 0) {
@@ -5921,7 +5839,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 continue;
             }
             ftinv = 1.0 / Fti;
-            mat_from_row(Zti, f.Z, i);
+            mat_from_row(Zti, ui->Z, i);
             vec_from_col(Kti, Kt, i);
             if (eps_smo) {
                 eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -5931,9 +5849,9 @@ static int ksmooth_univariate (kalman *K, int dist)
         }
 
         /* retrieve the diffuse values */
-        mat_from_col(Fk, f.Finf, t);
-        mat_from_col(Kk, f.Kinf, t);
-        mat_from_col(Pk, f.PK, t);
+        mat_from_col(Fk, ui->Finf, t);
+        mat_from_col(Kk, ui->Kinf, t);
+        mat_from_col(Pk, K->PK, t);
 
         /* further countdown to first observable */
         for (i=j-1; i>=0; i--) {
@@ -5952,7 +5870,7 @@ static int ksmooth_univariate (kalman *K, int dist)
             }
             if (Fki > K_TINY) {
                 fkinv = 1.0 / Fki;
-                mat_from_row(Zti, f.Z, i);
+                mat_from_row(Zti, ui->Z, i);
                 vec_from_col(Kki, Kk, i);
                 vec_from_col(Kti, Kt, i);
                 if (eps_smo) {
@@ -5962,7 +5880,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 fkpos(fkinv, Fti, vti, Kki, Kti, Zti, &c);
             } else if (Fti > 0) {
                 ftinv = 1.0 / Fti;
-                mat_from_row(Zti, f.Z, i);
+                mat_from_row(Zti, ui->Z, i);
                 vec_from_col(Kti, Kt, i);
                 if (eps_smo) {
                     eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -5978,7 +5896,7 @@ static int ksmooth_univariate (kalman *K, int dist)
         if (kdebug) {
             fprintf(stderr, "dagger calc, call 1 (t=%d)\n", t);
         }
-        dagger_calc(&f, &c, Pt, Pk, Ahat, Vhat, t);
+        dagger_calc(&c, Pt, Pk, K);
 
         if (t > 0) {
             if (kdebug) {
@@ -6002,8 +5920,8 @@ static int ksmooth_univariate (kalman *K, int dist)
             mat_from_row(vt, K->V, t);
             mat_from_row(Ft, K->F, t);
             mat_from_row(Kt, K->K, t);
-            mat_from_col(Fk, f.Finf, t);
-            mat_from_col(Kk, f.Kinf, t);
+            mat_from_col(Fk, ui->Finf, t);
+            mat_from_col(Kk, ui->Kinf, t);
 
             for (i=K->n-1; i>=0; i--) {
                 if (kdebug) {
@@ -6020,7 +5938,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 }
                 if (Fki > k_tiny) {
                     fkinv = 1.0 / Fki;
-                    mat_from_row(Zti, f.Z, i);
+                    mat_from_row(Zti, ui->Z, i);
                     vec_from_col(Kki, Kk, i);
                     vec_from_col(Kti, Kt, i);
                     if (eps_smo) {
@@ -6030,7 +5948,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                     fkpos(fkinv, Fti, vti, Kki, Kti, Zti, &c);
                 } else if (Fti > 0) {
                     ftinv = 1.0 / Fti;
-                    mat_from_row(Zti, f.Z, i);
+                    mat_from_row(Zti, ui->Z, i);
                     vec_from_col(Kti, Kt, i);
                     if (eps_smo) {
                         eps_smooth_Ft(ftinv, g->val[i], vti, Kti, &c,
@@ -6043,7 +5961,7 @@ static int ksmooth_univariate (kalman *K, int dist)
             if (kdebug) {
                 fprintf(stderr, "dagger calc, call 2 (t=%d)\n", t);
             }
-            dagger_calc(&f, &c, Pt, Pk, Ahat, Vhat, t);
+            dagger_calc(&c, Pt, Pk, K);
 
             if (eta_smo) {
                 eta_smooth(Q, QRT, &c, etahat, veta, t, dist);
@@ -6059,8 +5977,6 @@ static int ksmooth_univariate (kalman *K, int dist)
     }
 
     /* add smoothed quantities to @b */
-    bundle_add_matrix(K->b, "Ahat", Ahat);
-    bundle_add_matrix(K->b, "Vhat", Vhat);
     if (eps_smo) {
         kalman_bundle_add_epshat(K, epshat);
         bundle_add_matrix(K->b, "veps",  veps);
