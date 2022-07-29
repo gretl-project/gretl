@@ -2,9 +2,9 @@
    into row @t of @targ, starting at column offset @j
 */
 
-static void load_to_diag (gretl_matrix *targ,
-                          const gretl_matrix *src,
-                          int t, int j)
+static void record_to_diag (gretl_matrix *targ,
+                            const gretl_matrix *src,
+                            int t, int j)
 {
     int i, n = gretl_vector_get_length(src);
     double x;
@@ -273,7 +273,7 @@ static int dist_variance (kalman *K,
 	    gretl_matrix_qform(K->VS, GRETL_MOD_TRANSPOSE,
 			       Nt, Vwt, GRETL_MOD_NONE);
 	}
-	load_to_diag(K->Vsd, Vwt, K->t, 0);
+	record_to_diag(K->Vsd, Vwt, K->t, 0);
 
         /* variance of obs disturbance */
         if (DKstyle) {
@@ -286,14 +286,14 @@ static int dist_variance (kalman *K,
             gretl_matrix_qform(K->VY, GRETL_MOD_TRANSPOSE,
                                D, Vut, GRETL_MOD_NONE);
         }
-        load_to_diag(K->Vsd, Vut, K->t, K->r);
+        record_to_diag(K->Vsd, Vut, K->t, K->r);
     } else {
         /* cross-correlated disturbance variance */
         err = combined_dist_variance(K, D, Nt, Vwt, Vut, BX,
                                      DKstyle);
         if (!err) {
-            load_to_diag(K->Vsd, Vwt, K->t, 0);
-            load_to_diag(K->Vsd, Vut, K->t, K->r);
+            record_to_diag(K->Vsd, Vwt, K->t, 0);
+            record_to_diag(K->Vsd, Vut, K->t, K->r);
         }
     }
 
@@ -358,7 +358,7 @@ static void koopman_calc_a0 (kalman *K, gretl_matrix *r0)
     if (K->aini != NULL) {
         gretl_matrix_add_to(K->a0, K->aini);
     }
-    load_to_row(K->A, K->a0, 0);
+    record_to_row(K->A, K->a0, 0);
 }
 
 /* Disturbance smoothing -- see Koopman, Shephard and Doornik
@@ -453,8 +453,8 @@ static int koopman_smooth (kalman *K, int DKstyle)
            the forward pass to compute the smoothed
            disturbances. Also save r_t in R.
         */
-        load_to_row(K->V, u, t);
-	load_to_row(R, r0, t);
+        record_to_row(K->V, u, t);
+	record_to_row(R, r0, t);
 
 	/* compute variance of disturbances */
 	err = dist_variance(K, D, Vwt, Vut, N0, BX, DKstyle);
@@ -495,8 +495,8 @@ static int koopman_smooth (kalman *K, int DKstyle)
         } else {
             gretl_matrix_multiply(K->VS, r0, r1);
         }
-        load_to_row(R, r1, t);
-	load_to_row_offset(K->U, r1, t, 0);
+        record_to_row(R, r1, t);
+	record_to_row_offset(K->U, r1, t, 0);
 
 	/* observation disturbance */
 	if (K->VY != NULL) {
@@ -505,7 +505,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	    } else {
 		gretl_matrix_multiply(K->VY, K->vt, n1);
 	    }
-	    load_to_row_offset(K->U, n1, t, K->r);
+	    record_to_row_offset(K->U, n1, t, K->r);
 	}
 
 	/* state: a_{t+1} = T a_t + w_t (or + H*eps_t) */
@@ -515,7 +515,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	if (K->mu != NULL) {
 	    gretl_matrix_add_to(K->a1, K->mu);
 	}
-	load_to_row(K->A, K->a1, t);
+	record_to_row(K->A, K->a1, t);
     }
 
     gretl_matrix_block_destroy(B);
@@ -568,13 +568,13 @@ static int anderson_moore_smooth (kalman *K)
         gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                   r0, GRETL_MOD_NONE,
                                   K->a1, GRETL_MOD_CUMULATE);
-        load_to_row(K->A, K->a1, t);
+        record_to_row(K->A, K->a1, t);
 
         /* P_{t|T} = P_{t|t-1} - P_{t|t-1} N_{t-1} P_{t|t-1} */
         fast_copy_values(K->P1, K->P0);
         gretl_matrix_qform(K->P0, GRETL_MOD_NONE, N0,
                            K->P1, GRETL_MOD_DECREMENT);
-        load_to_vech(K->P, K->P1, K->r, t);
+        record_to_vech(K->P, K->P1, K->r, t);
     }
 
     gretl_matrix_block_destroy(B);

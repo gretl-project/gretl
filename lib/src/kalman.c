@@ -1193,7 +1193,7 @@ static int set_initial_statevar (kalman *K)
 
 /* Write the vech of @src into row @t of @targ */
 
-static void load_to_vech (gretl_matrix *targ,
+static void record_to_vech (gretl_matrix *targ,
                           const gretl_matrix *src,
                           int n, int t)
 {
@@ -1210,7 +1210,7 @@ static void load_to_vech (gretl_matrix *targ,
 
 /* Write the vech of @src into column @t of @targ */
 
-static void load_to_vechT (gretl_matrix *targ,
+static void record_to_vechT (gretl_matrix *targ,
                            const gretl_matrix *src,
                            int n, int t)
 {
@@ -1227,7 +1227,7 @@ static void load_to_vechT (gretl_matrix *targ,
 
 /* Write the vec of @src into row @t of @targ */
 
-static void load_to_vec (gretl_matrix *targ,
+static void record_to_vec (gretl_matrix *targ,
                          const gretl_matrix *src,
                          int t)
 {
@@ -1240,7 +1240,7 @@ static void load_to_vec (gretl_matrix *targ,
 
 /* Write the vec of @src into column @t of @targ */
 
-static void load_to_col (gretl_matrix *targ,
+static void record_to_col (gretl_matrix *targ,
                          const gretl_matrix *src,
                          int t)
 {
@@ -1251,7 +1251,7 @@ static void load_to_col (gretl_matrix *targ,
 
 /* copy from vector @src into row @t of @targ */
 
-static void load_to_row (gretl_matrix *targ,
+static void record_to_row (gretl_matrix *targ,
                          const gretl_vector *src,
                          int t)
 {
@@ -1265,7 +1265,7 @@ static void load_to_row (gretl_matrix *targ,
 /* copy from vector @src into row @t of @targ,
    starting at column offset @j in @targ */
 
-static void load_to_row_offset (gretl_matrix *targ,
+static void record_to_row_offset (gretl_matrix *targ,
                                 const gretl_vector *src,
                                 int t, int j)
 {
@@ -1593,10 +1593,10 @@ static int kalman_record_state (kalman *K)
     int err = 0;
 
     if (K->A != NULL) {
-        load_to_row(K->A, K->a0, K->t);
+        record_to_row(K->A, K->a0, K->t);
     }
     if (K->P != NULL) {
-        load_to_vech(K->P, K->P0, K->r, K->t);
+        record_to_vech(K->P, K->P0, K->r, K->t);
     }
 
     if (K->exact && K->PK != NULL) {
@@ -1604,13 +1604,13 @@ static int kalman_record_state (kalman *K)
             err = gretl_matrix_realloc(K->PK, K->PK->rows, K->t + 1);
         }
         if (!err) {
-            load_to_vechT(K->PK, K->Pk0, K->r, K->t);
+            record_to_vechT(K->PK, K->Pk0, K->r, K->t);
         }
     }
 
     if (K->exact && K->djinfo != NULL && K->djinfo->A != NULL) {
-        load_to_col(K->djinfo->A, K->djinfo->At, K->t);
-        load_to_col(K->djinfo->V, K->djinfo->Vt, K->t);
+        record_to_col(K->djinfo->A, K->djinfo->At, K->t);
+        record_to_col(K->djinfo->V, K->djinfo->Vt, K->t);
     }
 
     return err;
@@ -1908,13 +1908,13 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     if (!err && K->step != NULL) {
         /* keep a record of T and/or Z' at the given time step */
         if (K->step->T != NULL) {
-            load_to_col(K->step->T, K->T, K->t);
+            record_to_col(K->step->T, K->T, K->t);
         }
         if (K->step->ZT != NULL) {
             if (K->uinfo != NULL) {
-                load_to_col(K->step->ZT, K->uinfo->Z, K->t);
+                record_to_col(K->step->ZT, K->uinfo->Z, K->t);
             } else {
-                load_to_col(K->step->ZT, K->ZT, K->t);
+                record_to_col(K->step->ZT, K->ZT, K->t);
             }
         }
     }
@@ -1974,10 +1974,10 @@ static void handle_missing_obs (kalman *K)
         }
     }
     if (K->L != NULL) {
-	load_to_col(K->L, K->T, K->t);
+	record_to_col(K->L, K->T, K->t);
     }
     if (K->J != NULL) {
-	load_to_col(K->J, K->H, K->t);
+	record_to_col(K->J, K->H, K->t);
     }
     /* more to be done if we're in the de Jong diffuse phase? */
 }
@@ -2072,10 +2072,10 @@ int kalman_forecast (kalman *K, PRN *prn)
             /* we're recording F_t for all t */
             if (K->smo_prep) {
                 /* record inverse */
-                load_to_vech(K->F, K->iFt, nt, K->t);
+                record_to_vech(K->F, K->iFt, nt, K->t);
             } else {
                 /* record F_t itself */
-                load_to_vech(K->F, K->Ft, nt, K->t);
+                record_to_vech(K->F, K->Ft, nt, K->t);
             }
         }
 
@@ -2104,7 +2104,7 @@ int kalman_forecast (kalman *K, PRN *prn)
                                   K->Ct, GRETL_MOD_NONE);
         if (!err && K->K != NULL) {
             /* record the gain */
-            load_to_vec(K->K, K->Kt, K->t);
+            record_to_vec(K->K, K->Kt, K->t);
         }
 
         /* update state: a1 = T a0 + K_t v_t [+ mu] */
@@ -2126,7 +2126,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
         /* record forecast errors if wanted */
         if (!err && K->V != NULL) {
-            load_to_row(K->V, K->vt, K->t);
+            record_to_row(K->V, K->vt, K->t);
         }
     }
 
@@ -2991,9 +2991,9 @@ static int kalman_simulate (kalman *K,
 
     if (!err && kalman_ssfsim(K)) {
         if (S != NULL) {
-            load_to_row_offset(S, K->a0, 0, 0);
+            record_to_row_offset(S, K->a0, 0, 0);
         }
-        load_to_row_offset(Y, yt, 0, obs_offset);
+        record_to_row_offset(Y, yt, 0, obs_offset);
         /* the first row of output is handled */
         tmin = 1;
     }
@@ -3029,11 +3029,11 @@ static int kalman_simulate (kalman *K,
         gretl_matrix_add_to(yt, K->vt);
 
         /* record the t-dated observables */
-        load_to_row_offset(Y, yt, K->t, obs_offset);
+        record_to_row_offset(Y, yt, K->t, obs_offset);
 
         /* record the t-dated state? */
         if (S != NULL && tmin == 0) {
-            load_to_row_offset(S, K->a0, K->t, 0);
+            record_to_row_offset(S, K->a0, K->t, 0);
         }
 
         /* a_{t+1} = T*a_t + v_t */
@@ -3053,7 +3053,7 @@ static int kalman_simulate (kalman *K,
 
         /* record the (t+1)-dated state? */
         if (S != NULL && tmin == 1) {
-            load_to_row_offset(S, K->a1, K->t, 0);
+            record_to_row_offset(S, K->a1, K->t, 0);
         }
 
         fast_copy_values(K->a0, K->a1);
@@ -3333,7 +3333,7 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
                             gretl_matrix_multiply_mod(Ut, GRETL_MOD_NONE,
                                                       V, GRETL_MOD_TRANSPOSE,
                                                       Et, GRETL_MOD_NONE);
-                            load_to_row(E, Et, t);
+                            record_to_row(E, Et, t);
                         }
                     }
                 }
@@ -4088,7 +4088,7 @@ static gretl_matrix *fill_pevar (kalman *K, int *ownit)
                 ftj = gretl_matrix_get(K->F, t, j);
                 gretl_matrix_set(Ft, j, j, ftj);
             }
-            load_to_vech(F, Ft, K->n, t);
+            record_to_vech(F, Ft, K->n, t);
         }
         gretl_matrix_free(Ft);
         *ownit = 1;
@@ -5023,8 +5023,8 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 
     for (t=0; t<K->N; t++) {
         K->t = t;
-        load_to_vec(K->A, at, t);
-        row_from_mat(K->P, Pt, t);
+        record_to_vec(K->A, at, t);
+        record_to_vech(K->P, Pt, K->r, t);
         fast_copy_values(ati, at);
         fast_copy_values(Pti, Pt);
         if (Pki != NULL) {
@@ -5155,7 +5155,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         }
         K->SSRw += qt;
         if (att != NULL) {
-            load_to_vec(att, ati, t);
+            record_to_vec(att, ati, t);
         }
         if (Ptt != NULL) {
             row_from_mat(Ptt, Pti, t);
@@ -5465,7 +5465,7 @@ static int dagger_calc (struct cumulants *c,
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
                               Pdag, GRETL_MOD_TRANSPOSE,
                               Pt, GRETL_MOD_DECREMENT);
-    load_to_vech(K->P, Pt, K->r, K->t);
+    record_to_vech(K->P, Pt, K->r, K->t);
 
     gretl_matrix_block_destroy(B);
 
@@ -5559,7 +5559,7 @@ static void state_smooth (const gretl_matrix *at,
     fast_copy_values(c->mm, Pt);
     gretl_matrix_qform(Pt, GRETL_MOD_NONE, c->N0,
                        c->mm, GRETL_MOD_DECREMENT);
-    load_to_vech(K->P, c->mm, K->r, K->t);
+    record_to_vech(K->P, c->mm, K->r, K->t);
 
     /* at + Pt * r0 */
     gretl_matrix_multiply(Pt, c->r0, c->m1);
@@ -5777,8 +5777,8 @@ static int ksmooth_univariate (kalman *K, int dist)
         mat_from_row(vt, K->V, t);
         mat_from_row(Ft, K->F, t);
         mat_from_row(Kt, K->K, t);
-        mat_from_row(Pt, K->P, t);
         mat_from_row(at, K->A, t);
+        load_from_vech(Pt, K->P, K->r, K->t, GRETL_MOD_NONE);
 
         /* loop across observables */
         for (i=K->n-1; i>=0; i--) {
@@ -6154,7 +6154,7 @@ static int dejong_diffuse_filter_step (kalman *K)
                               dj->At, GRETL_MOD_NONE,
                               dj->Vt, GRETL_MOD_DECREMENT);
     if (dj->V != NULL) {
-        load_to_col(dj->V, dj->Vt, K->t);
+        record_to_col(dj->V, dj->Vt, K->t);
     }
 
     /* Vv = Vt ~ vt */
@@ -6367,7 +6367,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         }
         /* and record forecast errors if wanted */
         if (K->V != NULL) {
-            load_to_row(K->V, K->vt, K->t);
+            record_to_row(K->V, K->vt, K->t);
         }
 
         /* calculate F_t = ZPZ' [+ VY] (where VY = GG') */
@@ -6409,10 +6409,10 @@ static int kfilter_dejong (kalman *K, PRN *prn)
             /* we're recording F_t for all t */
             if (K->smo_prep) {
                 /* record inverse */
-                load_to_vech(K->F, K->iFt, nt, K->t);
+                record_to_vech(K->F, K->iFt, nt, K->t);
             } else {
                 /* record F_t itself */
-                load_to_vech(K->F, K->Ft, nt, K->t);
+                record_to_vech(K->F, K->Ft, nt, K->t);
             }
         }
 
@@ -6434,13 +6434,13 @@ static int kfilter_dejong (kalman *K, PRN *prn)
 
         /* record matrices for the smoother */
         if (K->L != NULL) {
-            load_to_col(K->L, K->Lt, K->t);
+            record_to_col(K->L, K->Lt, K->t);
         }
         if (K->J != NULL) {
-            load_to_col(K->J, K->Jt, K->t);
+            record_to_col(K->J, K->Jt, K->t);
         }
         if (K->K != NULL) {
-            load_to_vec(K->K, K->Kt, K->t);
+            record_to_vec(K->K, K->Kt, K->t);
         }
 
         /* update state: a1 = T a0 + K_t v_t [+ mu] */
@@ -6690,8 +6690,8 @@ static int dejong_diffuse_smoother_step (kalman *K,
         gretl_matrix_add_to(K->P1, K->rr);
     }
 
-    load_to_row(K->A, K->a0, K->t);
-    load_to_vech(K->P, K->P1, K->r, K->t);
+    record_to_row(K->A, K->a0, K->t);
+    record_to_vech(K->P, K->P1, K->r, K->t);
 
     gretl_matrix_free(tmp);
     gretl_matrix_free(tmp2);
@@ -6775,12 +6775,12 @@ static int state_smooth_dejong (kalman *K)
             gretl_matrix_multiply_mod(K->P0, GRETL_MOD_NONE,
                                       r0, GRETL_MOD_NONE,
                                       K->a1, GRETL_MOD_CUMULATE);
-            load_to_row(K->A, K->a1, t);
+            record_to_row(K->A, K->a1, t);
             /* P_{t|T} = P_{t|t-1} - P_{t|t-1} N_{t-1} P_{t|t-1} */
             fast_copy_values(K->P1, K->P0);
             gretl_matrix_qform(K->P0, GRETL_MOD_NONE, N0,
                                K->P1, GRETL_MOD_DECREMENT);
-            load_to_vech(K->P, K->P1, K->r, t);
+            record_to_vech(K->P, K->P1, K->r, t);
             if (t == K->d) {
                 record_dhat_and_Psi(K, dhat, Psi, r1, N1);
             }
@@ -7014,23 +7014,23 @@ static int dist_smooth_dejong (kalman *K, int DKstyle)
 
         /* record t-dated results */
         if (nu != NULL) {
-            load_to_col(nu, nu_t, t);
-            load_to_col(vnu, vnu_t, t);
+            record_to_col(nu, nu_t, t);
+            record_to_col(vnu, vnu_t, t);
         }
         gretl_matrix_multiply(K->H, nu_t, H_nu);
-        load_to_row(etahat, H_nu, t);
+        record_to_row(etahat, H_nu, t);
         gretl_matrix_qform(K->H, GRETL_MOD_NONE, vnu_t,
                            K->rr, GRETL_MOD_NONE);
-        load_to_vec(veta, K->rr, t);
+        record_to_vec(veta, K->rr, t);
         if (K->G != NULL) {
             gretl_matrix_multiply(K->G, nu_t, G_nu);
-            load_to_row(epshat, G_nu, t);
+            record_to_row(epshat, G_nu, t);
 	    if (nt == 0) {
-		load_to_vec(veps, K->VY, t);
+		record_to_vec(veps, K->VY, t);
 	    } else {
 		gretl_matrix_qform(K->G, GRETL_MOD_NONE, vnu_t,
 				   nn, GRETL_MOD_NONE);
-		load_to_vec(veps, nn, t);
+		record_to_vec(veps, nn, t);
 	    }
         }
 
