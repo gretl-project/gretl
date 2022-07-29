@@ -87,7 +87,7 @@ static int old_load_filter_data (kalman *K, int smtype)
     int err = 0;
 
     /* load the forecast error */
-    load_from_row(K->vt, K->V, K->t, GRETL_MOD_NONE);
+    load_from_row(K->vt, K->V, K->t);
 
     if (smtype == SM_DIST_BKWD) {
         /* disturbances */
@@ -109,7 +109,7 @@ static int old_load_filter_data (kalman *K, int smtype)
 
     if (smtype < SM_DIST_BKWD) {
         /* load the state and its MSE */
-        load_from_row(K->a0, K->A, K->t, GRETL_MOD_NONE);
+        load_from_row(K->a0, K->A, K->t);
         load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
     }
 
@@ -482,12 +482,12 @@ static int koopman_smooth (kalman *K, int DKstyle)
         }
 
 	/* state disturbance */
-        load_from_row(r0, R, t, GRETL_MOD_NONE);
+        load_from_row(r0, R, t);
         if (K->p > 0) {
             gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
                                       r0, GRETL_MOD_NONE,
                                       Ut, GRETL_MOD_NONE);
-            load_from_row(K->vt, K->V, t, GRETL_MOD_NONE);
+            load_from_row(K->vt, K->V, t);
             gretl_matrix_multiply_mod(K->G, GRETL_MOD_TRANSPOSE,
                                       K->vt, GRETL_MOD_NONE,
                                       Ut, GRETL_MOD_CUMULATE);
@@ -509,9 +509,9 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	}
 
 	/* state: a_{t+1} = T a_t + w_t (or + H*eps_t) */
-	load_from_row(K->a0, K->A, t-1, GRETL_MOD_NONE);
+	load_from_row(K->a0, K->A, t-1);
 	gretl_matrix_multiply(K->T, K->a0, K->a1);
-	load_from_row(K->a1, R, t-1, GRETL_MOD_CUMULATE);
+	vector_from_row_mod(K->a1, R, t-1, GRETL_MOD_CUMULATE);
 	if (K->mu != NULL) {
 	    gretl_matrix_add_to(K->a1, K->mu);
 	}
