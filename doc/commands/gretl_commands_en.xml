@@ -5744,7 +5744,7 @@
 	highlighting but not automatic indentation or auto-completion.
       </para>
     </description>
-  </command>  
+  </command>
 
   <command name="3-D" section="Graphs" context="gui"
     label="3-dimensional plots">
@@ -7266,6 +7266,10 @@
 	on. But if <opt>bylag</opt> is given, the ordering is by lags:
 	first lag 1 of all the listed series, then lag 2 of all the
 	list series, and so on.
+      </para>
+      <para>
+        This facility is also available as a function: see <fncref
+	targ="lags"/>.
       </para>
     </description>
 

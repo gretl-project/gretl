@@ -7390,6 +7390,11 @@ contenga un percorso completo.
       primo ritardo di tutte le variabili, poi si passa al secondo e
       così via.
     </para>
+    <para>
+       Questo comando è anche disponibile sotto forma di funzione: si
+       veda <fncref targ="lags"/>.
+    </para>
+
   </description>
 
   <gui-access>
