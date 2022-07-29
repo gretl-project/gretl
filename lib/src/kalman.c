@@ -5067,12 +5067,15 @@ static int kfilter_univariate (kalman *K, PRN *prn)
             }
         } /* observables at time t */
 
-        if (K->smo_prep) {
-            record_to_vec(K->K, K->Kt, t);
-            if (d == 0 && t < Nd) {
-                record_to_col(ui->Kinf, Kkt, t);
-            }
+	if (K->K != NULL) {
+	    /* record the gain */
+	    record_to_vec(K->K, K->Kt, t);
+	}
+        if (K->smo_prep && d == 0 && t < Nd) {
+	    /* record K_\infty */
+	    record_to_col(ui->Kinf, Kkt, t);
         }
+
         if (j > 0 && d == 0) {
             d = t + 1; /* note: 1-based */
             if (kdebug) {
