@@ -44,6 +44,9 @@
 static int kdebug;
 static int trace;
 
+/* temporary testing thing */
+static int exact_set;
+
 enum {
     KALMAN_BUNDLE  = 1 << 0,  /* user-defined filter, inside bundle */
     KALMAN_DIFFUSE = 1 << 1,  /* using diffuse P_{1|0} */
@@ -357,6 +360,10 @@ static void kalman_check_env (kalman *K)
 
     if (s1 != NULL) kdebug  = atoi(s1);
     if (s2 != NULL) trace   = atoi(s2);
+
+    if (getenv("KALMAN_EXACT")) {
+	exact_set = 1;
+    }
 
     s1 = getenv("KALMAN_UNI");
     if (s1 != NULL) {
@@ -3806,6 +3813,11 @@ static GretlType kalman_extra_type (const char *key)
 
 static int kalman_set_diffuse (kalman *K, int d)
 {
+    /* temporary testing thing */
+    if (exact_set && d > 0) {
+	d = 2;
+    }
+
     if (d != 0 && d != 1 && d != 2) {
         return E_INVARG;
     } else if (d > 0) {
