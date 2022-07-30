@@ -19,13 +19,6 @@ static void record_to_diag (gretl_matrix *targ,
     }
 }
 
-enum {
-    SM_TYPE_NONE, /* not doing smoothing */
-    SM_STATE_STD, /* regular state smoother */
-    SM_DIST_BKWD, /* disturbance smoother, backward pass */
-    SM_DIST_FRWD, /* disturbance smoother, forward pass */
-};
-
 static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
 {
     gretl_matrix **mptr[] = {
@@ -37,7 +30,7 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     int cross_update = 0;
     int i, j, err = 0;
 
-    if (kalman_xcorr(K)) {
+    if (kalman_djvar(K)) {
         mptr[0] = &K->H;
         mptr[1] = &K->G;
     }
@@ -49,7 +42,7 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     for (i=0; i<2 && !err; i++) {
         j = idx[i];
         if (matrix_is_varying(K, j)) {
-            if (kalman_xcorr(K) && (j == K_VS || j == K_VY)) {
+            if (kalman_djvar(K) && (j == K_VS || j == K_VY)) {
                 /* handle revised H and/or G */
                 cross_update = 1;
             } else {
@@ -70,16 +63,18 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
     return err;
 }
 
+enum {
+    SM_TYPE_NONE, /* not doing smoothing */
+    SM_STATE_STD, /* regular state smoother */
+    SM_DIST_BKWD, /* disturbance smoother, backward pass */
+    SM_DIST_FRWD, /* disturbance smoother, forward pass */
+};
+
 /* For use with smoothing: load what we need for step @t, from the
    record that was kept on the prior forecasting pass. What we need
    from the forward pass depends on what exactly we're computing,
-   which is conveyed by @smtype. If @pnt is non-NULL, use it to pass
-   back the effective size of the observables vector.
-
-   We need to handle some complications here. In particular we must
-   update anything that's time-varying, and (unless we're doing
-   disturbance smoothing) deal with any incomplete observations, which
-   have implications for the dimensions of various matrices.
+   which is conveyed by @smtype. We must handle time-variation in
+   anything for which that is relevant to the smoother.
 */
 
 static int old_load_filter_data (kalman *K, int smtype)
@@ -128,9 +123,9 @@ static int old_load_filter_data (kalman *K, int smtype)
    equations.
 */
 
-static int maybe_resize_dist_mse (kalman *K,
-                                  gretl_matrix **Vwt,
-                                  gretl_matrix **Vut)
+static int ensure_dist_mse_matrices (kalman *K,
+				     gretl_matrix **Vwt,
+				     gretl_matrix **Vut)
 {
     int n = K->VY == NULL ? 0 : K->n;
     int k, err = 0;
@@ -401,7 +396,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     }
 
     /* for variance of smoothed disturbances */
-    err = maybe_resize_dist_mse(K, &Vwt, &Vut);
+    err = ensure_dist_mse_matrices(K, &Vwt, &Vut);
 
     if (K->VY != NULL) {
 	/* for variance of observable */

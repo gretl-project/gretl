@@ -261,7 +261,7 @@ enum {
 #define kalman_univariate(K)  (K->code == K_UNIVAR)
 #define kalman_dejong(K)      (K->code == K_DEJONG)
 
-#define kalman_xcorr(K)       (K->vartype == DJ_VAR)
+#define kalman_djvar(K)       (K->vartype == DJ_VAR)
 #define kalman_dkvar(K)       (K->vartype == DK_VAR)
 
 #define filter_is_varying(K) (K->matcall != NULL)
@@ -1878,7 +1878,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
     int dkvar_update = 0;
     int i, err = 0;
 
-    if (kalman_xcorr(K)) {
+    if (kalman_djvar(K)) {
         mptr[3] = &K->H;
         mptr[4] = &K->G;
     } else if (kalman_dkvar(K)) {
@@ -1892,7 +1892,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 
     for (i=0; i<K_N_MATCALLS && !err; i++) {
         if (matrix_is_varying(K, i)) {
-            if (kalman_xcorr(K) && (i == K_VS || i == K_VY)) {
+            if (kalman_djvar(K) && (i == K_VS || i == K_VY)) {
                 /* handle revised H and/or G */
                 cross_update = 1;
             } else if (kalman_dkvar(K) && i == K_VS) {
@@ -3477,7 +3477,7 @@ static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
         targ = &K->ZT;
     } else if (i == K_VS) {
         /* variance of state */
-        if (kalman_xcorr(K)) {
+        if (kalman_djvar(K)) {
             targ = &K->H;
         } else if (kalman_dkvar(K)) {
             targ = &K->Q;
@@ -3486,7 +3486,7 @@ static gretl_matrix **get_input_matrix_target_by_id (kalman *K, int i)
         }
     } else if (i == K_VY) {
         /* variance of observable */
-        if (kalman_xcorr(K)) {
+        if (kalman_djvar(K)) {
             targ = &K->G;
         } else {
             targ = &K->VY;
@@ -3754,7 +3754,7 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
     } else if (i == K_ZT) {
         m = K->ZT;
     } else if (i == K_VS) {
-        if (kalman_xcorr(K)) {
+        if (kalman_djvar(K)) {
             m = K->H;
         } else if (kalman_dkvar(K)) {
             m = K->Q;
@@ -3762,7 +3762,7 @@ static const gretl_matrix *k_input_matrix_by_id (kalman *K, int i)
             m = K->VS;
         }
     } else if (i == K_VY) {
-        if (kalman_xcorr(K)) {
+        if (kalman_djvar(K)) {
             m = K->G;
         } else {
             m = K->VY;
@@ -3827,7 +3827,7 @@ static int kalman_set_diffuse (kalman *K, int d)
 	    K->exact = 1;
 	    if (K->code == K_LEGACY) {
 		/* the legacy code doesn't handle this */
-		K->code = kalman_xcorr(K) ? K_DEJONG : K_UNIVAR;
+		K->code = kalman_djvar(K) ? K_DEJONG : K_UNIVAR;
 	    }
 	} else {
 	    /* traditional "kappa" mode */
@@ -4551,7 +4551,7 @@ gretl_bundle *kalman_bundle_copy (const gretl_bundle *src, int *err)
     M[2] = K->T;
 
     /* variants dependent on presence/absence of cross-correlation */
-    if (kalman_xcorr(K)) {
+    if (kalman_djvar(K)) {
         M[3] = K->H;
         M[4] = K->G;
         k = 5;
@@ -6040,7 +6040,7 @@ static int ensure_dj_variance_matrices (kalman *K)
 	gretl_matrix_free(tmp);
     }
 
-    if (kalman_xcorr(K) && !err && K->HG == NULL && K->H != NULL && K->G != NULL) {
+    if (kalman_djvar(K) && !err && K->HG == NULL && K->H != NULL && K->G != NULL) {
         tmp = gretl_matrix_alloc(K->r, K->n);
         if (tmp == NULL) {
             err = E_ALLOC;
@@ -6060,7 +6060,7 @@ static int ensure_dj_variance_matrices (kalman *K)
         K->Jt = gretl_zero_matrix_new(K->r, K->p);
     }
 
-    if (!err && K->VS0 == NULL && !kalman_xcorr(K)) {
+    if (!err && K->VS0 == NULL && !kalman_djvar(K)) {
 	/* establish baseline for detecting changes */
 	K->VS0 = gretl_matrix_copy(K->VS);
 	if (K->VY != NULL) {
@@ -6283,8 +6283,8 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     }
 
     if (kdebug) {
-        fprintf(stderr, "\n*** kfilter_dejong: diffuse %d, exact %d, smo %d, xcorr %d\n",
-                kalman_diffuse(K) ? 1 : 0, K->exact, K->smo_prep ? 1 : 0, kalman_xcorr(K));
+        fprintf(stderr, "\n*** kfilter_dejong: diffuse %d, exact %d, smo %d, djvar %d\n",
+                kalman_diffuse(K) ? 1 : 0, K->exact, K->smo_prep ? 1 : 0, kalman_djvar(K));
     }
 
     if (exact_diffuse) {
@@ -6297,7 +6297,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     K->TI = gretl_is_identity_matrix(K->T);
     K->okN = K->N;
 
-    if (!kalman_xcorr(K) && (gretl_iteration_depth() > 0 || numgrad_in_progress())) {
+    if (!kalman_djvar(K) && (gretl_iteration_depth() > 0 || numgrad_in_progress())) {
 	/* guard against "back door" changes in dist. variance parameters under mle */
         err = update_dj_variance_matrices(K);
     }
@@ -6578,7 +6578,7 @@ static int dejong_diffuse_smoother_step (kalman *K,
                                          int no_collapse)
 {
     dejong_info *dj = K->djinfo;
-    gretl_matrix *tmp = NULL;
+    gretl_matrix *tmp1 = NULL;
     gretl_matrix *tmp2 = NULL;
     gretl_matrix *Rr = NULL;
     int err = 0;
@@ -6587,7 +6587,7 @@ static int dejong_diffuse_smoother_step (kalman *K,
     load_from_col(dj->At, dj->A, K->t);
     load_from_col(K->Lt, K->L, K->t);
 
-    tmp = gretl_matrix_alloc(K->r, K->r + 1);
+    tmp1 = gretl_matrix_alloc(K->r, K->r + 1);
     tmp2 = gretl_matrix_alloc(K->n, K->r + 1);
 
     /* Rr = Rt ~ rt */
@@ -6602,8 +6602,8 @@ static int dejong_diffuse_smoother_step (kalman *K,
     /* Rr = Z'*iFt*Vv + Lt'*Rr */
     gretl_matrix_multiply_mod(K->Lt, GRETL_MOD_TRANSPOSE,
                               Rr, GRETL_MOD_NONE,
-                              tmp, GRETL_MOD_NONE);
-    fast_copy_values(Rr, tmp);
+                              tmp1, GRETL_MOD_NONE);
+    fast_copy_values(Rr, tmp1);
     gretl_matrix_multiply(K->iFt, dj->Vv, tmp2);
     gretl_matrix_multiply_mod(K->ZT, GRETL_MOD_NONE,
                               tmp2, GRETL_MOD_NONE,
@@ -6639,7 +6639,7 @@ static int dejong_diffuse_smoother_step (kalman *K,
         gretl_matrix_qform(Bt, GRETL_MOD_NONE,
                            Psi, K->P1, GRETL_MOD_CUMULATE);
     } else {
-        gretl_matrix *BSC = gretl_matrix_reuse(tmp, K->r, K->r);
+        gretl_matrix *BSC = gretl_matrix_reuse(tmp1, K->r, K->r);
 
         /* Ct = Pt * (Rt + Nt * At) */
         gretl_matrix_multiply(Nt, dj->At, K->rr);
@@ -6664,7 +6664,7 @@ static int dejong_diffuse_smoother_step (kalman *K,
     record_to_row(K->A, K->a0, K->t);
     record_to_vech(K->P, K->P1, K->r, K->t);
 
-    gretl_matrix_free(tmp);
+    gretl_matrix_free(tmp1);
     gretl_matrix_free(tmp2);
     gretl_matrix_free(Rr); /* FIXME make reusable? */
 
