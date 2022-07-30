@@ -382,7 +382,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
     int t, err = 0;
 
     if (trace) {
-        printf("koopman_smooth(), DKstyle = %d\n", DKstyle);
+        printf("koopman_smooth(), legacy, DKstyle = %d\n", DKstyle);
     }
 
     B = gretl_matrix_block_new(&u,  K->n, 1,
@@ -536,7 +536,7 @@ static int anderson_moore_smooth (kalman *K)
     int t, err = 0;
 
     if (trace) {
-        printf("anderson_moore_smooth()\n");
+        printf("anderson_moore_smooth(), legacy\n");
     }
 
     B = gretl_matrix_block_new(&r0,  K->r, 1,

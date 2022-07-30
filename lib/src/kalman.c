@@ -356,10 +356,10 @@ static void set_kalman_stopped (kalman *K)
 static void kalman_check_env (kalman *K)
 {
     char *s1 = getenv("KALMAN_DEBUG");
-    char *s2 = getenv("TRACING");
+    char *s2 = getenv("KALMAN_TRACE");
 
-    if (s1 != NULL) kdebug  = atoi(s1);
-    if (s2 != NULL) trace   = atoi(s2);
+    if (s1 != NULL) kdebug = atoi(s1);
+    if (s2 != NULL) trace  = atoi(s2);
 
     if (getenv("KALMAN_EXACT")) {
 	exact_set = 1;
@@ -1302,7 +1302,7 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     int i;
 
     if (trace) {
-        printf("kalman_new_minimal()\n");
+        printf("kalman_new_minimal (dkvar = %d)\n", dkvar);
     }
 
     *err = 0;
@@ -2007,7 +2007,7 @@ int kalman_forecast (kalman *K, PRN *prn)
     int nt, err = 0;
 
     if (trace) {
-        printf("kalman_forecast()\n");
+        printf("kalman_forecast (legacy)\n");
     }
     if (kdebug > 1) {
         fprintf(stderr, "\n*** kalman_forecast: N=%d, n=%d ***\n",
@@ -2818,7 +2818,7 @@ int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
     kalman *K = gretl_bundle_get_private_data(b);
 
     if (trace) {
-        printf("kalman_bundle_smooth(), dist=%d\n", dist);
+        printf("kalman_bundle_smooth(), dist = %d\n", dist);
     }
 
     K->b = b; /* attach bundle pointer */
@@ -5690,7 +5690,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     g = ui->g; /* convenience pointer */
 
     if (trace) {
-        printf("ksmooth_univariate(), dist=%d\n", dist);
+        printf("ksmooth_univariate(), dist = %d\n", dist);
     }
     if (kdebug) {
         fprintf(stderr, "ksmooth_univariate: dist=%d, d=%d, j=%d\n",
@@ -6254,7 +6254,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     int err = 0;
 
     if (trace) {
-        printf("kfilter_dejong()\n");
+        printf("kfilter_dejong() exact = %d\n", K->exact);
     }
 
     exact_diffuse = kalman_diffuse(K) && K->exact;
