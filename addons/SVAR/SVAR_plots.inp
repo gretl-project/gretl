@@ -2,6 +2,8 @@
 
 #### 
 
+/* v 1.97, check_bounds not needed anymore, do the separate checks inline 
+
 function scalar check_bounds(int s, int v, int n)
     # negative s is allowed and means to flip the shock
 
@@ -15,6 +17,7 @@ function scalar check_bounds(int s, int v, int n)
 
     return ret
 end function
+*/
 
 /* ---------------------------------------------------------------------- */
 /* --- IRF core graphing function --------------------------------------- */
@@ -169,10 +172,9 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     # cycle through all (selected) shocks and variables
     loop snum = sfrom..sto 
         # do checks
-        err = check_bounds(snum, 1, n)
-        if err == 1
+        # err = check_bounds(snum, 1, n)
+        if snum == 0 || abs(snum) > n # was err == 1, negative snum is allowed
             printf "Shock number %d out of bounds\n", abs(snum)
-            # (abs because of flipping)
             return
         endif
 
@@ -184,8 +186,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
         loop vnum = vfrom..vto 
             # do checks
-            err = check_bounds(1, vnum, n)
-            if err == 2
+            if vnum < 1 || vnum > n
                 printf "Variable number %d out of bounds\n", vnum
                 return
             endif
@@ -331,15 +332,23 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
         titletail = sprintf(" (draw %d)", whichdraw)
     endif
 
+    if outfilename == "display"
+        string tmpout = "display"
+    else
+        strings be = splitfname(outfilename)[2:3]
+        string tmpout = sprintf("%s.%s", be[1], be[2]) # might be overriden
+    endif 
+    
     loop vnum = vfrom..vto 
-        err = check_bounds(1, vnum, n)
-        if err == 2
+        if vnum < 1 || vnum > n
             printf "Variable number %d out of bounds\n", vnum
             return
         endif
-
-        string tmpout = outfilename=="display" ? "display" : \
-          sprintf("%s_%d", outfilename, vnum)
+        
+        if exists(be) && vfrom != vto
+            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2]) 
+        endif
+    
         string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, \
           keypos, titletail)
         gnuplot --input="@tmpfile" --output="@tmpout"
@@ -367,10 +376,16 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
     scalar n = obj.n
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
-
+    
+    if outfilename == "display"
+        string tmpout = "display"
+    else
+        strings be = splitfname(outfilename)[2:3]
+        string tmpout = sprintf("%s.%s", be[1], be[2]) # might be overriden
+    endif 
+    
     loop vnum = vfrom..vto 
-        err = check_bounds(1, vnum, n)
-        if err == 2
+        if vnum < 1 || vnum > n
             printf "Variable number %d out of bounds\n", vnum
             return
         endif
@@ -394,8 +409,10 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         # (put the line with the target var (stoch.comp) _last_
         # such that the shock colors match those in FEVD
 
-        string tmpout = (outfilename == "display") ? "display" : \
-          sprintf("%s_%d", outfilename, vnum)
+        if exists(be) && vfrom != vto	# no display, multiple plots
+            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2]) 
+        endif
+        
         plot tmp
             option time-series
             option single-yaxis
