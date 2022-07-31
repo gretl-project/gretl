@@ -1,0 +1,27 @@
+# Test script for the bugs with HDsave() and FEVDsave() discovered by Artur
+
+set verbose off
+
+# open the data and do some preliminary transformations
+open sw_ch14.gdt
+genr infl = 400*ldiff(PUNEW)
+rename LHUR unemp
+list X = unemp infl
+list Z = const
+
+# load the SVAR package
+include SVAR.gfn
+# set up the SVAR
+Mod = SVAR_setup("C", X, Z, 3)
+# Specify the constraints on C
+SVAR_restrict(&Mod, "C", 1, 2, 0)
+# Estimate
+SVAR_estimate(&Mod)
+
+# Save the historical decomposition as a list of series
+list HD_infl = SVAR_HD(&Mod, "infl")
+
+# Now the stuff that was failing before:
+# plot the historical decomposition for inflation
+HDsave("foo.pdf", &Mod, 2) 
+FEVDsave("bar.pdf", &Mod, 2)
