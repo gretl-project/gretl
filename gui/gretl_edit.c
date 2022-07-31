@@ -36,6 +36,8 @@
 # include "gretlwin32.h"
 #endif
 
+#undef MAC_INTEGRATION
+
 #ifdef MAC_INTEGRATION
 # include <gtkosxapplication.h>
 #endif
