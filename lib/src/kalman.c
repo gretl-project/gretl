@@ -365,10 +365,10 @@ static void kalman_check_env (kalman *K)
 	exact_set = 1;
     }
 
-    s1 = getenv("KALMAN_UNI");
+    s1 = getenv("KALMAN_UNIVAR");
     if (s1 != NULL) {
         if (K->vartype == DJ_VAR) {
-            fprintf(stderr, "KALMAN_UNI not applicable!\n");
+            fprintf(stderr, "KALMAN_UNIVAR not applicable!\n");
         } else {
             K->code = K_UNIVAR;
         }
