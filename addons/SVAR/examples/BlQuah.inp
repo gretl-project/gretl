@@ -32,7 +32,7 @@ set stopwatch
 
 # bootstrap (set 'quiet' off with trailing zero arg)
 bfail = SVAR_boot(&BQModel, 1024, 0.9, 0)
-printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
+printf "Number of failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
 
 
 /*

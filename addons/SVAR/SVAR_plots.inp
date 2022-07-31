@@ -29,9 +29,12 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
                         int bc[0:2:0], int whichdraw[0::0])
 
     # bc: bias correction choice
-    # FIXME: We should link the sname/vname args and snum/vnum args,
-    # also to avoid accidental input mismatch.
-    # (the number of args here is horrible...)
+    # (snum and sname belong together, as do vnum and vname, so it's a bit 
+    #  unfortunate that the scale arg is positioned in-between. But we need to
+    #  have both the number and the string because [i] the number can be negative
+    #  to signal flipping, and [ii] we avoid passing the whole bundle around here.)
+    # (The number of args here is horrible, but fortunately this is a private
+    #  function.)
 
     errorif( whichdraw && (exists(boot) || bc), \
         "cannot have SR/whichdraw and bootstrap options together")
@@ -172,11 +175,17 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     # cycle through all (selected) shocks and variables
     loop snum = sfrom..sto 
         # do checks
-        # err = check_bounds(snum, 1, n)
+        
+        # was: 
+        /*
+        err = check_bounds(snum, 1, n)
         if snum == 0 || abs(snum) > n # was err == 1, negative snum is allowed
             printf "Shock number %d out of bounds\n", abs(snum)
             return
         endif
+        */
+        errorif(snum == 0 || abs(snum) > n, \
+          sprintf("Shock number %d out of bounds\n", abs(snum)))
 
         string sn = obj.snames[abs(snum)]
         # normalization / scaling
@@ -186,11 +195,16 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
         loop vnum = vfrom..vto 
             # do checks
+            # was:
+            /*
             if vnum < 1 || vnum > n
                 printf "Variable number %d out of bounds\n", vnum
                 return
             endif
-
+            */
+            errorif(vnum < 1 || vnum > n, \
+              sprintf("Variable number %d out of bounds\n", vnum))
+              
             string yn = obj.Ynames[vnum]
 
             # produce plots
@@ -340,11 +354,16 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
     endif 
     
     loop vnum = vfrom..vto 
+        # was:
+        /*
         if vnum < 1 || vnum > n
             printf "Variable number %d out of bounds\n", vnum
             return
         endif
-        
+        */
+        errorif(vnum < 1 || vnum > n, \
+          sprintf("Variable number %d out of bounds\n", vnum))
+          
         if exists(be) && vfrom != vto
             tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2]) 
         endif
@@ -385,11 +404,16 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
     endif 
     
     loop vnum = vfrom..vto 
+        # was:
+        /*
         if vnum < 1 || vnum > n
             printf "Variable number %d out of bounds\n", vnum
             return
         endif
-
+        */
+        errorif(vnum < 1 || vnum > n, \
+          sprintf("Variable number %d out of bounds\n", vnum))
+        
         list tmp = SVAR_hd(&obj, vnum, drawix)
 
         # prepare extended plot title, only for SR
