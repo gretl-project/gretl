@@ -23,7 +23,7 @@
 typedef struct kalman_ kalman;
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
-			    int nmat, int *err);
+			    int nmat, int dkvar, int *err);
 
 void kalman_free (kalman *K);
 
@@ -39,6 +39,8 @@ kalman *kalman_new (gretl_matrix *a, gretl_matrix *P,
 int kalman_forecast (kalman *K, PRN *prn);
 
 int kalman_run (kalman *K, PRN *prn, int *errp);
+
+int is_kalman_bundle (gretl_bundle *b);
 
 gretl_matrix *kalman_smooth (kalman *K, gretlopt opt,
 			     PRN *prn, int *err);
@@ -65,7 +67,7 @@ PRN *kalman_get_printer (const kalman *K);
 
 #ifndef __GTK_DOC_IGNORE__
 
-int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp);
+int kalman_bundle_filter (gretl_bundle *b, PRN *prn, int *errp);
 
 int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn);
 
@@ -89,6 +91,7 @@ void *maybe_retrieve_kalman_element (void *kptr,
 				     const char *key,
 				     GretlType *type,
 				     int *reserved,
+				     int *ownit,
 				     int *err);
 
 int maybe_delete_kalman_element (void *kptr,
