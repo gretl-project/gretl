@@ -33,11 +33,10 @@ the following points:
   ``\texttt{;}'' character in the C language family (C++, Java, C\#,
   \ldots) or GAUSS; instead it uses the newline character as an
   implicit terminator. So at the end of a command, you \emph{must}
-  insert a newline; conversely, you \emph{can't} put a newline in the
-  middle of a command---or not without taking special measures. If you
-  need to break a command over more than one line for the sake of
-  legibility you can use the ``\textbackslash'' (backslash) character,
-  which causes gretl to ignore the following line break.
+  insert a newline. Conversely, you can't split a single command
+  over more than one line unless (a) the line to be continued ends
+  with a comma or (b) you insert a ``\textbackslash'' (backslash)
+  character, which causes gretl to ignore the following line break.
 \end{enumerate}
 
 Note also that the \cmd{print} command automatically appends a line
