@@ -28,6 +28,7 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
         K_VS, K_VY
     };
     int cross_update = 0;
+    int dkvar_update = 0;
     int i, j, err = 0;
 
     if (kalman_djvar(K)) {
@@ -45,6 +46,9 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
             if (kalman_djvar(K) && (j == K_VS || j == K_VY)) {
                 /* handle revised H and/or G */
                 cross_update = 1;
+            } else if (kalman_dkvar(K) && j == K_VS) {
+                /* handle revised Q and/or R */
+                dkvar_update = 1;
             } else {
                 err = check_matrix_dims(K, *mptr[i], j);
             }
@@ -55,9 +59,14 @@ static int ksmooth_refresh_matrices (kalman *K, PRN *prn)
         }
     }
 
-    if (!err && cross_update) {
-        /* cross-correlated case */
-        err = kalman_update_crossinfo(K, UPDATE_STEP);
+    if (!err) {
+        if (cross_update) {
+            /* cross-correlated case */
+            err = kalman_update_crossinfo(K, UPDATE_STEP);
+        } else if (dkvar_update) {
+            /* Durbin-Koopman case */
+            err = kalman_update_dkvar(K, UPDATE_STEP);
+        }
     }
 
     return err;
