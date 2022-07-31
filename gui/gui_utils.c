@@ -3089,7 +3089,10 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     cmdword = gretl_command_word(ci);
     action_entry_init(&item);
 
-    /* FIXME: the following two tests should really be multivariate */
+    /* FIXME: the following two tests should really be multivariate.
+       At present the autocorrelation test for VARs is multivariate
+       but the other cases are not.
+    */
 
     if (dataset_is_time_series(dataset)) {
 	/* univariate autocorrelation tests */
