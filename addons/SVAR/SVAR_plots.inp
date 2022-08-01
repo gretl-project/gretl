@@ -1,23 +1,24 @@
-# (function splitfname comes from the extra addon) 
+# (function splitfname comes from the extra addon)
 
-#### 
-
-/* v 1.97, check_bounds not needed anymore, do the separate checks inline 
+####
 
 function scalar check_bounds(int s, int v, int n)
-    # negative s is allowed and means to flip the shock
+    # s is the shock number, m is the variable number, n is the
+    # system size
 
-    ret = 0
+    scalar ret = 0
     if abs(s)>n || s==0
+	# the number of the shock is greater than the system size
+	# however, negative s is allowed and means "flip the shock"
         ret = 1
 
     elif v>n || v<1
+	# non-existent variable
         ret = 2
     endif
 
     return ret
 end function
-*/
 
 /* ---------------------------------------------------------------------- */
 /* --- IRF core graphing function --------------------------------------- */
@@ -29,7 +30,7 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
                         int bc[0:2:0], int whichdraw[0::0])
 
     # bc: bias correction choice
-    # (snum and sname belong together, as do vnum and vname, so it's a bit 
+    # (snum and sname belong together, as do vnum and vname, so it's a bit
     #  unfortunate that the scale arg is positioned in-between. But we need to
     #  have both the number and the string because [i] the number can be negative
     #  to signal flipping, and [ii] we avoid passing the whole bundle around here.)
@@ -114,11 +115,11 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "'Bstrap %d%% CI', \\\n", floor(100 * boot.alpha)
             printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
             printf "'-' w l lw 2 lc -1 t 'IRF'\n"
-            loop i = 1..h 
+            loop i = 1..h
                 printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
             endloop
             printf "e\n"
-            loop i = 1..h 
+            loop i = 1..h
                 printf "%d\t%g\n", i-1, mdn[i,]
             endloop
             printf "e\n"
@@ -126,7 +127,7 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "plot '-' w l lw 2\n"
         endif
 
-        loop i = 1..h 
+        loop i = 1..h
             printf "%d\t%g\n", i-1, x[i]
         endloop
         printf "e\n"
@@ -172,20 +173,21 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     is_srange = range(snum, n, &sfrom, &sto)
     is_vrange = range(vnum, n, &vfrom, &vto)
 
+    # do checks
+    loop snum = sfrom .. sto
+        loop vnum = vfrom .. vto
+            err = check_bounds(snum, vnum, n)
+	    if err
+		break
+	    endif
+	endloop
+    endloop
+
+    errorif(err == 1, sprintf("Shock number %d out of bounds\n", abs(snum)))
+    errorif(err == 2, sprintf("Variable number %d out of bounds\n", abs(vnum)))
+
     # cycle through all (selected) shocks and variables
-    loop snum = sfrom..sto 
-        # do checks
-        
-        # was: 
-        /*
-        err = check_bounds(snum, 1, n)
-        if snum == 0 || abs(snum) > n # was err == 1, negative snum is allowed
-            printf "Shock number %d out of bounds\n", abs(snum)
-            return
-        endif
-        */
-        errorif(snum == 0 || abs(snum) > n, \
-          sprintf("Shock number %d out of bounds\n", abs(snum)))
+    loop snum = sfrom..sto
 
         string sn = obj.snames[abs(snum)]
         # normalization / scaling
@@ -193,18 +195,7 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             scale = tmp[abs(snum), abs(snum)]
         endif
 
-        loop vnum = vfrom..vto 
-            # do checks
-            # was:
-            /*
-            if vnum < 1 || vnum > n
-                printf "Variable number %d out of bounds\n", vnum
-                return
-            endif
-            */
-            errorif(vnum < 1 || vnum > n, \
-              sprintf("Variable number %d out of bounds\n", vnum))
-              
+        loop vnum = vfrom .. vto
             string yn = obj.Ynames[vnum]
 
             # produce plots
@@ -304,7 +295,7 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
         printf "set style histogram rowstacked\n"
         printf "set style data histogram\n"
 
-        loop i = 1..n 
+        loop i = 1..n
             string sname = snames[i]
 
             if i == 1
@@ -351,9 +342,9 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
     else
         strings be = splitfname(outfilename)[2:3]
         string tmpout = sprintf("%s.%s", be[1], be[2]) # might be overriden
-    endif 
-    
-    loop vnum = vfrom..vto 
+    endif
+
+    loop vnum = vfrom..vto
         # was:
         /*
         if vnum < 1 || vnum > n
@@ -363,11 +354,11 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
         */
         errorif(vnum < 1 || vnum > n, \
           sprintf("Variable number %d out of bounds\n", vnum))
-          
+
         if exists(be) && vfrom != vto
-            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2]) 
+            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
         endif
-    
+
         string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, \
           keypos, titletail)
         gnuplot --input="@tmpfile" --output="@tmpout"
@@ -395,25 +386,18 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
     scalar n = obj.n
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
-    
+
     if outfilename == "display"
         string tmpout = "display"
     else
         strings be = splitfname(outfilename)[2:3]
         string tmpout = sprintf("%s.%s", be[1], be[2]) # might be overriden
-    endif 
-    
-    loop vnum = vfrom..vto 
-        # was:
-        /*
-        if vnum < 1 || vnum > n
-            printf "Variable number %d out of bounds\n", vnum
-            return
-        endif
-        */
+    endif
+
+    loop vnum = vfrom..vto
         errorif(vnum < 1 || vnum > n, \
           sprintf("Variable number %d out of bounds\n", vnum))
-        
+
         list tmp = SVAR_hd(&obj, vnum, drawix)
 
         # prepare extended plot title, only for SR
@@ -421,7 +405,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
 
         tmp -= tmp[1] # take away deterministic component
-        loop i = 1..nelem(tmp) 
+        loop i = 1..nelem(tmp)
             string sn = obj.snames[i]
             setinfo tmp[i] --graph-name="@sn"
         endloop
@@ -434,9 +418,9 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0],
         # such that the shock colors match those in FEVD
 
         if exists(be) && vfrom != vto	# no display, multiple plots
-            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2]) 
+            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
         endif
-        
+
         plot tmp
             option time-series
             option single-yaxis
