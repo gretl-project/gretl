@@ -117,6 +117,9 @@ static void gfn_menuitems_state (void)
             dreq = pkg_get_data_requirement(ag);
             err = check_function_needs(dataset, dreq, 0);
             gtk_action_group_set_sensitive(ag, !err);
+	    if (err) {
+		gretl_error_clear();
+	    }
         }
         aglist = aglist->next;
     }

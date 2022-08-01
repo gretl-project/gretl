@@ -8432,7 +8432,7 @@ static int real_psd_root (gretl_matrix *a, const gretl_matrix *a0)
                    reject a matrix that has a "significantly" negative
                    diagonal element.
                 */
-                fprintf(stderr, "psdroot: diag[%d] = %g\n", k+1, d);
+                /* fprintf(stderr, "psdroot: diag[%d] = %g\n", k+1, d); */
                 err = E_DATA;
             }
             for (i=k; i<n; i++) {
@@ -10130,60 +10130,57 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     return evals;
 }
 
-static gretl_matrix *eigensym_standard (gretl_matrix *m,
-                                        int eigenvecs,
-                                        int *err)
+static int basic_eigensym_work (double *mval, double *w,
+				int dim, int eigvecs)
 {
-    integer n, info, lwork;
-    gretl_matrix *evals = NULL;
     double *work = NULL;
-    double *w = NULL;
-    char jobz = eigenvecs ? 'V' : 'N';
+    integer lwork = -1;
+    integer info = 0;
+    integer n = dim;
+    char jobz = eigvecs ? 'V' : 'N';
     char uplo = 'U';
-
-    n = m->rows;
+    int err = 0;
 
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
-        *err = E_ALLOC;
-        return NULL;
+        return E_ALLOC;
     }
 
-    evals = gretl_column_vector_alloc(n);
-    if (evals == NULL) {
-        *err = E_ALLOC;
-        goto bailout;
-    }
-
-    w = evals->val;
-
-    lwork = -1; /* find optimal workspace size */
-    dsyev_(&jobz, &uplo, &n, m->val, &n,
-           w, work, &lwork, &info);
-
+    dsyev_(&jobz, &uplo, &n, mval, &n, w, work, &lwork, &info);
     if (info != 0 || work[0] <= 0.0) {
-        *err = wspace_fail(info, work[0]);
-        goto bailout;
+        return wspace_fail(info, work[0]);
     }
 
     lwork = (integer) work[0];
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-        *err = E_ALLOC;
+        return E_ALLOC;
     }
 
-    if (!*err) {
-        dsyev_(&jobz, &uplo, &n, m->val, &n,
-               w, work, &lwork, &info);
-        if (info != 0) {
-            fprintf(stderr, "dsyev: info = %d\n", info);
-            *err = E_DATA;
-        }
+    dsyev_(&jobz, &uplo, &n, mval, &n, w, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dsyev: info = %d\n", info);
+	err = E_DATA;
     }
-
- bailout:
 
     lapack_free(work);
+
+    return err;
+}
+
+static gretl_matrix *eigensym_standard (gretl_matrix *m,
+                                        int eigenvecs,
+                                        int *err)
+{
+    gretl_matrix *evals = NULL;
+
+    evals = gretl_column_vector_alloc(m->rows);
+    if (evals == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = basic_eigensym_work(m->val, evals->val, m->rows,
+				   eigenvecs);
+    }
 
     if (*err && evals != NULL) {
         gretl_matrix_free(evals);
@@ -10192,6 +10189,62 @@ static gretl_matrix *eigensym_standard (gretl_matrix *m,
 
     return evals;
 }
+
+#if 0
+
+/* the following function seems to be broken, but why is a mystery */
+
+double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
+{
+    double *mval = NULL;
+    double *w = NULL;
+    double lmin = 1.0e20;
+    int i, n, err = 0;
+
+    if (gretl_is_null_matrix(m) || m->rows != m->cols) {
+        return NADBL;
+    }
+
+    n = m->rows * m->cols;
+    mval = malloc(n * sizeof *mval);
+    w = malloc(m->rows * sizeof *w);
+
+    if (mval == NULL || w == NULL) {
+	lmin = NADBL;
+    } else {
+	int save_nt = 0;
+
+	memcpy(mval, m->val, n * sizeof *mval);
+
+	if (blas_is_openblas()) {
+	    save_nt = blas_get_num_threads();
+	    if (save_nt > 1) {
+		blas_set_num_threads(1);
+	    }
+	}
+
+	err = basic_eigensym_work(mval, w, n, 0);
+	if (err) {
+	    lmin = NADBL;
+	} else {
+	    for (i=0; i<m->rows; i++) {
+		if (w[i] < lmin) {
+		    lmin = w[i];
+		}
+	    }
+	}
+	if (blas_is_openblas() && save_nt > 1) {
+	    blas_set_num_threads(save_nt);
+	}
+    }
+
+    free(mval);
+    free(w);
+
+    return lmin;
+}
+
+#endif
 
 /**
  * gretl_symmetric_matrix_eigenvals:

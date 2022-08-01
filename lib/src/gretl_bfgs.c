@@ -104,6 +104,8 @@ static double **triangular_array_new (int n)
     return m;
 }
 
+#if 0 /* unused as of 2022-07-21: any case for reviving it? */
+
 /* State variable set when doing hessian_from_score(), to alert
    the gradient function to the fact that the parameters will
    be changing and in general NOT the same as in the last call
@@ -116,6 +118,8 @@ int hess_score_on (void)
 {
     return doing_hess_score;
 }
+
+#endif
 
 /**
  * hessian_from_score:
@@ -178,7 +182,9 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	return E_ALLOC;
     }
 
+#if 0
     doing_hess_score = 1;
+#endif
 
     for (i=0; i<n; i++) {
 	b0 = b[i];
@@ -223,7 +229,9 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	}
     }
 
+#if 0
     doing_hess_score = 0;
+#endif
 
     if (!err) {
 	gretl_matrix_xtr_symmetric(H);
@@ -318,6 +326,18 @@ static void hess_h_reduce (double *h, double v, int n)
     }
 }
 
+static int numgrad_status;
+
+int numgrad_in_progress (void)
+{
+    return numgrad_status;
+}
+
+static void set_numgrad_status (int s)
+{
+    numgrad_status = s;
+}
+
 /* number of Richardson steps */
 #define RSTEPS 4
 
@@ -376,6 +396,8 @@ int numerical_hessian (double *b, gretl_matrix *H,
 #else
     ztol = 0.01;
 #endif
+
+    set_numgrad_status(1);
 
  try_again:
 
@@ -537,6 +559,8 @@ int numerical_hessian (double *b, gretl_matrix *H,
 	gretl_errmsg_set(_("Failed to compute numerical Hessian"));
     }
 
+    set_numgrad_status(0);
+
     free(wspace);
 
     return err;
@@ -671,6 +695,8 @@ gretl_matrix *numerical_score_matrix (double *b, int T, int k,
 	return NULL;
     }
 
+    set_numgrad_status(1);
+
     for (i=0; i<k; i++) {
 	bi0 = b[i];
 #if ALT_OPG
@@ -700,6 +726,8 @@ gretl_matrix *numerical_score_matrix (double *b, int T, int k,
 	fprintf(stderr, "b[%d]: using %#.12g and %#.12g\n", i, bi0 - h, bi0 + h);
 #endif
     }
+
+    set_numgrad_status(0);
 
     /* trim missing values? */
     G = maybe_trim_score(G);

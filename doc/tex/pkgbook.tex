@@ -172,11 +172,6 @@ Chapters~\ref{chap:specfile} and \ref{chap:zipfile} provide reference
 material on the details of package specification and structure, along
 with some tips on usage.
 
-Please note that many of the statements and illustrations in this
-\textit{Guide} reflect refinements made to gretl's package management
-facilities over recent months. If you plan to follow along you should
-update to gretl 2015d or higher.
-
 %%%%%%%%%%%%%%%% chapter break %%%%%%%%%%%%%%%%%
 
 \chapter{For package users}
@@ -2054,7 +2049,7 @@ File, so that on the next revision it doesn't matter where you start.
 If you would like to use the command-line approach under MS Windows
 you must make a preliminary choice: you can either
 \begin{itemize}
-\item Stick to the native Windows way of doing things, or
+\item stick to the native Windows way of doing things, or
 \item install software which mimics a unix environment on Windows.
 \end{itemize}
 
@@ -2118,10 +2113,10 @@ A couple of other things are needed to get a usable shell: the
 programs we'll be using have to be in the \texttt{PATH}, and we need a
 decent text editor.
 
-As regards the \texttt{PATH}, recent versions of the gretl installer
-will ensure that the directory holding \textsf{gretl} and
-\textsf{gretlcli} is included, but that leaves the \textsf{GnuWin32}
-utilities. In \textsf{cmd.exe} you can do something like
+As regards the \texttt{PATH}, the gretl installer gives you the option
+of adding the directory holding \textsf{gretl} and \textsf{gretlcli},
+but that leaves the \textsf{GnuWin32} utilities. In \textsf{cmd.exe}
+you can do something like
 \begin{code}
 PATH %PATH%;c:\program files\gnuwin32\bin
 \end{code}
@@ -2130,7 +2125,7 @@ or on a 64-bit system
 PATH %PATH%;c:\program files (x86)\gnuwin32\bin
 \end{code}
 (with any adjustment needed for the specifics of your system). That
-will work OK, but only for the duration of your current shell session.
+will work, but only for the duration of your current shell session.
 You can add directories to the \texttt{PATH} permanently by diving
 into ``Advanced system settings'' under Control Panel's ``System''
 item, but there's another approach that may be preferable, namely
@@ -2143,7 +2138,7 @@ DOSKEY edit="C:\Program Files (x86)\Notepad++\notepad++.exe" $*
 DOSKEY profile=notepad %USERPROFILE%\profile.cmd
 PATH %PATH%;c:\program files (x86)\gnuwin32\bin
 \end{code}
-%$
+%
 To activate this you would type the above (or a variant that works for
 you) into \textsf{Notepad} and save it as \texttt{profile.cmd} in the
 directory that corresponds to \texttt{\%USERPROFILE\%} for
@@ -2199,7 +2194,7 @@ directory where \texttt{mypkg.gfn} is located.
   \label{fig:cmd-exe}
 \end{figure}
 
-\subsection*{A unix-type shell}
+\subsection*{Alternative: a unix-type shell}
 
 There are two main packages which provide a unix-type shell on
 Windows, \textsf{CygWin} and \textsf{MSYS}. Both are likely to take
@@ -2614,7 +2609,7 @@ function list exogtest_listmaker (void)
   return L
 end function
 \end{code}
-  %$
+  %
   This function constructs a list of endogenous regressors from a
   model estimated via gretl's \texttt{tsls} command (details of which
   are presumed to be available as members of the \texttt{\$model}
@@ -2767,17 +2762,19 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
 
   \ttusage{R-depends = R 3.5.3 glmnet 2.0-18}
 
-\item \texttt{wants-data-access} (optional): In some cases your package
-  may need to read data outside of the active sample range. This could
-  be past initial values in a dynamic model, or it could be future values
-  of exogenous regressors used for out-of-sample (conditional) forecasting.
-  But since a user-written hansl function is normally restricted to the
-  incoming sample specified by the caller of the function, this would not
-  be possible. In such situations, your package should specify this switch,
-  and if upon execution the gretl user agrees, your relevant packaged function
-  may use the \texttt{smpl} command to reset the active sample inside the
-  function even beyond the incoming limits. (Of course, the original sample
-  will be restored when exiting the function, as always.)
+\item \texttt{wants-data-access} (optional): In some cases your
+  package may need to read data outside of the active sample
+  range. This could be past initial values in a dynamic model, or it
+  could be future values of exogenous regressors used for
+  out-of-sample (conditional) forecasting.  But since a user-written
+  hansl function is normally restricted to the incoming sample
+  specified by the caller of the function, this would not be
+  possible. In such situations, your package should specify this
+  switch, and if upon execution the gretl user agrees, your relevant
+  packaged function may use the \texttt{smpl} command to reset the
+  active sample inside the function even beyond the incoming
+  limits. (The original sample will be restored when exiting the
+  function, as always.)
 
   \ttusage{wants-data-access = true}
 
@@ -2785,35 +2782,22 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
 
 In each case multiple elements should be separated by spaces.
 
-
 \section{A note on gretl versioning}
 \label{sec:versioning}
 
-For some years now gretl version identifiers have taken the form
-``year of release plus sequential letter'', as in \texttt{2018a}, \texttt{2018b} and so
-on.  Prior to October 2015, however, a different scheme was in use:
-version identifiers took the form \texttt{M.N.P}: three integers with
-the interpretation \texttt{M} = ``major version'', \texttt{N} =
-``minor version'', \texttt{P} = ``patch-level''.  For authors of
-function packages the question arises: given this change, how should
-you identify the minimal gretl version with which your function
-package is compatible?
-
-In a package \textsf{spec} file the best policy is to use the
-``historical'' identifiers for gretl releases up to \texttt{1.10.2},
-and the new style for gretl \texttt{2015d} onward. In the GUI package
-editor only the new style is supported. The gretl ChangeLog
-(\url{http://gretl.sourceforge.net/ChangeLog.html}) can be used to map
-from historical identifiers to their new-style equivalents. For
-example, the old-style version number \texttt{1.9.8} maps to
-\texttt{2012a} (being the first release in 2012).
+Since 2015 gretl version identifiers have taken the form ``year of
+release plus sequential letter''---as in \texttt{2018a},
+\texttt{2018b} and so on---and this form should be used when
+specifying the minimum gretl version required by a package via its
+\texttt{spec} file. Note that you can consult the gretl ChangeLog
+(\url{http://gretl.sourceforge.net/ChangeLog.html}) to determine when
+commands or functions of interest were introduced. A reasonable policy
+would be to specify a minimum gretl version dating from, say, two or
+three years prior to the writing of your package, unless the package
+depends on more recently added functionality.
 
 \chapter{Zip package details}
 \label{chap:zipfile}
-
-The zip format was originally supported only for officially recognized
-``addons'' such as \textsf{gig} and \textsf{SVAR}, but since 2015 it
-is also supported for contributed function packages.
 
 \section{Basic specification}
 

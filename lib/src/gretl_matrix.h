@@ -629,6 +629,8 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 				  int eigenvecs,
 				  int *err);
 
+double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m);
+
 gretl_matrix *
 gretl_symm_matrix_eigenvals_descending (gretl_matrix *m,
 					int eigenvecs,

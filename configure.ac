@@ -1194,7 +1194,7 @@ Building for macOS requires gtk+-quartz-2.0 or gtk+-quartz-3.0
 
 elif test "${darwin_build}" = "yes" && test "${mac_integration}" = "no" ; then
 echo "
-Building for macOS requires gtk-mac-integration version 2.0.1 or higher
+Building for macOS requires gtk-mac-integration version 2.0.5 or higher
 "
 
 else

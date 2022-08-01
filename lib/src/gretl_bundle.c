@@ -481,31 +481,17 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
     return (p != NULL);
 }
 
-/**
- * gretl_bundle_get_data:
- * @bundle: bundle to access.
- * @key: name of key to access.
- * @type: location to receive data type, or NULL.
- * @size: location to receive size of data (= series
- * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
- * @err: location to receive error code, or NULL.
- *
- * Returns: the item pointer associated with @key in the
- * specified @bundle, or NULL if there is no such item.
- * If @err is non-NULL, its content is set to a non-zero
- * value if @bundle contains no item with key @key. If
- * the intent is simply to determine whether @bundle contains
- * an item under the specified @key, @err should generally be
- * left NULL.
- *
- * Note that the value returned is the actual data pointer from
- * within the bundle, not a copy of the data; so the pointer
- * must not be freed, and in general its content should not
- * be modified.
- */
+/* Supports gretl_bundle_get_data(), gretl_bundle_get_element()
+   and gretl_bundle_get_target.
+*/
 
-void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
-			     GretlType *type, int *size, int *err)
+static void *real_gretl_bundle_get_data (gretl_bundle *bundle,
+					 const char *key,
+					 GretlType *type,
+					 int *size,
+					 int *ownit,
+					 int get_target,
+					 int *err)
 {
     void *ret = NULL;
     int reserved = 0;
@@ -516,10 +502,10 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 	goto finish;
     }
 
-    if (bundle->type == BUNDLE_KALMAN) {
+    if (!get_target && bundle->type == BUNDLE_KALMAN) {
 	ret = maybe_retrieve_kalman_element(bundle->data, key,
 					    type, &reserved,
-					    &myerr);
+					    ownit, &myerr);
     }
 
     if (!myerr && ret == NULL && !reserved) {
@@ -550,6 +536,82 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
     }
 
     return ret;
+}
+
+/**
+ * gretl_bundle_get_element:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @type: location to receive data type, or NULL.
+ * @size: location to receive size of data (= series
+ * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
+ * @ownit: location to receive indication that the
+ * element in question is newly allocated, not just a
+ * pointer to something in the bundle.
+ * @err: location to receive error code, or NULL.
+ *
+ * Returns: the item pointer associated with @key in the
+ * specified @bundle, or NULL if there is no such item.
+ * If @err is non-NULL, its content is set to a non-zero
+ * value if @bundle contains no item with key @key. If
+ * the intent is simply to determine whether @bundle contains
+ * an item under the specified @key, @err should generally be
+ * left NULL.
+ *
+ * If the content of @ownit is non-zero on return, the caller
+ * has ownership of the retuned data; otherwise the return
+ * value is the actual data pointer from within the bundle.
+ */
+
+void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
+				GretlType *type, int *size,
+				int *ownit, int *err)
+{
+    return real_gretl_bundle_get_data(bundle, key, type,
+				      size, ownit, 0, err);
+}
+
+/**
+ * gretl_bundle_get_data:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @type: location to receive data type, or NULL.
+ * @size: location to receive size of data (= series
+ * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
+ * @err: location to receive error code, or NULL.
+ *
+ * Returns: the item pointer associated with @key in the
+ * specified @bundle, or NULL if there is no such item.
+ * If @err is non-NULL, its content is set to a non-zero
+ * value if @bundle contains no item with key @key. If
+ * the intent is simply to determine whether @bundle contains
+ * an item under the specified @key, @err should generally be
+ * left NULL.
+ *
+ * Note that the value returned is the actual data pointer from
+ * within the bundle, not a copy of the data; so the pointer
+ * must not be freed, and in general its content should not
+ * be modified.
+ */
+
+void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
+			     GretlType *type, int *size, int *err)
+{
+    return real_gretl_bundle_get_data(bundle, key, type,
+				      size, NULL, 0, err);
+}
+
+/* As gretl_bundle_get_data() except that the caller is looking
+   for a "target" object within @bundle with a view to modifying
+   it. Called only from geneval.c, in response to, for example,
+   b.X = Y.
+*/
+
+void *gretl_bundle_get_target (gretl_bundle *bundle, const char *key,
+			       GretlType *type, int *size, int *err)
+{
+    return real_gretl_bundle_get_data(bundle, key, type,
+				      size, NULL, 1, err);
 }
 
 /**
@@ -652,7 +714,7 @@ GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
     } else if (bundle->type == BUNDLE_KALMAN) {
 	maybe_retrieve_kalman_element(bundle->data, key,
 				      &ret, &reserved,
-				      &myerr);
+				      NULL, &myerr);
     }
 
     if (!myerr && ret == GRETL_TYPE_NONE && !reserved) {
@@ -3171,7 +3233,7 @@ gretl_bundle *bundle_from_system (void *ptr,
 
 gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 				 int copy[], int nmat,
-				 int *err)
+				 int dkvar, int *err)
 {
     gretl_bundle *b = gretl_bundle_new();
 
@@ -3179,7 +3241,7 @@ gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 	*err = E_ALLOC;
     } else {
 	b->type = BUNDLE_KALMAN;
-	b->data = kalman_new_minimal(M, copy, nmat, err);
+	b->data = kalman_new_minimal(M, copy, nmat, dkvar, err);
     }
 
     /* don't return a broken bundle */
