@@ -18,9 +18,6 @@ function scalar range(int a, int n, scalar *n0, scalar *n1)
     # The flipping of the shock by passing a negative number
     # is then not possible to specify; users have to do it explicitly
     # in their own loop then.
-    #
-    # (n0 and n1 are integers, too, but gretl doesn't accept 
-    #   pointerized integers)
 
     if a != 0
         ret = 0
@@ -89,11 +86,8 @@ end function
 #################
 
 function matrix N2_ify(const matrix A)
-    n2 = rows(A)
-    n = int(sqrt(n2))
-    k = cols(A)
-    matrix e = vec(transp(mshape(seq(1,n2),n,n)))
-    return A + A[e, 1:k]
+    n = int(sqrt(rows(A)))
+    return commute(A, n, n, 0, 1)
 end function
 
 function scalar has_unit_diag(const matrix Rd)

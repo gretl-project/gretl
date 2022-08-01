@@ -3414,7 +3414,8 @@ typically be called before \texttt{SVAR\_SRirf}.
 
 \subsection*{Version 1.97, July 2022}
 \begin{itemize}
-\item Fix fatal bug preventing the output of plots with HDsave() and FEVDsave(). 
+\item Fix fatal bug preventing the output of plots with HDsave() and
+  FEVDsave(). Use the new commute() function internally.
 \end{itemize}
 
 \subsection*{Version 1.96, December 2021}
@@ -3424,8 +3425,8 @@ typically be called before \texttt{SVAR\_SRirf}.
 
 \subsection*{Version 1.95, June 2021}
 \begin{itemize}
-\item Start cleaning up and modernizing the internals, and big jump making 2021a the
- required gretl version because of that.
+\item Start cleaning up and modernizing the internals, and big jump
+  making 2021a the required gretl version because of that.
 \item Swap notation to stay in line with most of the literature, $\varepsilon$ are now the structural shocks and $u$ become the prediction errors (reduced form). For SVAR scripting
 this means that the residual matrix \texttt{E} in the bundle is now called \texttt{U}.  
 \end{itemize}
