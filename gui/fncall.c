@@ -3916,6 +3916,9 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	}
 	if (!skip) {
 	    skip = check_function_needs(dataset, dreq, minver);
+	    if (skip) {
+		gretl_error_clear();
+	    }
 	}
 	if (!skip && precheck != NULL) {
 	    ufunc *func = get_function_from_package(precheck, pkg);
