@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-17 14:52-0400\n"
-"PO-Revision-Date: 2022-07-10 09:56+0200\n"
+"PO-Revision-Date: 2022-08-01 15:26+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2629,9 +2629,9 @@ msgid "= 1 if month = %d, 0 otherwise"
 msgstr "= 1 se mese è %d, altrimenti 0"
 
 #: lib/src/genfuncs.c:3154
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if day = %s, 0 otherwise"
-msgstr "= 1 se trimestre è %d, altrimenti 0"
+msgstr "= 1 se il giorno è = %s, altrimenti 0"
 
 #: lib/src/genfuncs.c:3164
 #, c-format
@@ -2875,9 +2875,8 @@ msgid "Periodic dummy variables generated.\n"
 msgstr "Variabili dummy periodiche generate.\n"
 
 #: lib/src/genmain.c:605
-#, fuzzy
 msgid "Centered periodic dummy variables generated.\n"
-msgstr "Variabili dummy periodiche generate.\n"
+msgstr "Variabili dummy periodiche centrate generate.\n"
 
 #: lib/src/genmain.c:610 lib/src/genmain.c:615
 msgid "Panel dummy variables generated.\n"
@@ -3630,7 +3629,7 @@ msgid "'%s' is the name of a built-in function"
 msgstr "'%s' è il nome di una funzione interna"
 
 #: lib/src/gretl_func.c:5150
-#, c-format, fuzzy
+#, c-format
 msgid ""
 "Package loading error:\n"
 "%s %s defines a function %s(), which conflicts with a built-in\n"
@@ -10866,9 +10865,8 @@ msgid "The series %s seems to be of the same frequency as the current dataset"
 msgstr "Sembra che la serie %s sia della stessa frequenza del dataset"
 
 #: gui/dialogs.c:7207
-#, fuzzy
 msgid "gretl: temporal disaggregation"
-msgstr "Disaggregazione temporale"
+msgstr "gretl: disaggregazione temporale"
 
 #: gui/dialogs.c:7219
 msgid "Output name:"
@@ -10911,9 +10909,8 @@ msgid "show regression results"
 msgstr "Mostra i risultati della regressione"
 
 #: gui/dialogs.c:7436
-#, fuzzy
 msgid "gretl: BDS test"
-msgstr "gretl: test ADF"
+msgstr "gretl: test BDS"
 
 #: gui/dialogs.c:7445
 msgid "Maximum dimension:"
@@ -10948,9 +10945,8 @@ msgid "RIDGE algorithm:"
 msgstr "Algoritmo RIDGE:"
 
 #: gui/dialogs.c:7560
-#, fuzzy
 msgid "gretl: regls options"
-msgstr "gretl: opzioni"
+msgstr "gretl: opzioni regls"
 
 #: gui/dialogs.c:7592
 msgid "cross validation criterion"
@@ -12592,9 +12588,8 @@ msgid "reuse an existing gretl instance unconditionally"
 msgstr "riutilizzare un'istanza esistente di gretl comunque"
 
 #: gui/gretl.c:161
-#, fuzzy
 msgid "script editor mode"
-msgstr "gretl: editor di script"
+msgstr "gretl: modo editor"
 
 #: gui/gretl.c:644
 msgid "Start a new gretl instance?"
@@ -13596,9 +13591,9 @@ msgid "sample status"
 msgstr "stato del campione"
 
 #: gui/gretl.c:2661
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not a recognized script file"
-msgstr "'%s': nome non riconosciuto"
+msgstr "'%s': script di tipo non riconosciuto"
 
 #: gui/gretlwin32.c:300
 msgid "Copy buffer was empty"
@@ -14228,14 +14223,14 @@ msgid "gretl: untitled"
 msgstr "gretl: senza titolo"
 
 #: gui/gui_utils.c:1877
-#, fuzzy, c-format
+#, c-format
 msgid "%s output"
-msgstr "Risultati R"
+msgstr "Risultati %s"
 
 #: gui/gui_utils.c:1882
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: %s output"
-msgstr "Risultati di gretl"
+msgstr "gretl: risultati di %s"
 
 #: gui/gui_utils.c:1890
 #, c-format
@@ -14618,9 +14613,8 @@ msgid "No command was supplied to start R"
 msgstr "Non è stato indicato alcun comando per avviare R"
 
 #: gui/gui_utils.c:6325
-#, fuzzy
 msgid "gretlcli command failed"
-msgstr "comando gnuplot fallito"
+msgstr "comando gretlcli fallito"
 
 #: gui/gui_utils.c:6359
 msgid "multiple time series object"
@@ -15424,9 +15418,8 @@ msgid "No discrete series are available"
 msgstr "Non sono disponibili serie discrete"
 
 #: gui/library.c:6368
-#, fuzzy
 msgid "Center the periodic dummies?"
-msgstr "Dummy _periodiche centrate"
+msgstr "Dummy periodiche centrate?"
 
 #: gui/library.c:6451
 msgid "in the cross-sectional dimension"
@@ -16685,9 +16678,8 @@ msgid "Show criterion plot"
 msgstr "Motra il grafico dei criteri"
 
 #: gui/selector.c:6681
-#, fuzzy
 msgid "Advanced..."
-msgstr "Aggiungi..."
+msgstr "Opzioni avanzate..."
 
 #: gui/selector.c:6698 gui/toolbar.c:715
 msgid "Confidence level"
@@ -17022,9 +17014,8 @@ msgid "default"
 msgstr "predefinito"
 
 #: gui/selector.c:9330
-#, fuzzy
 msgid "Please add some variables to the model first"
-msgstr "Aggiungere una variabile nel dataset per prima cosa"
+msgstr "Aggiungere una variabile al modello per prima cosa"
 
 #: gui/series_view.c:391 gui/series_view.c:438
 msgid "Original order"
@@ -17989,21 +17980,19 @@ msgstr "Sostituisci con:"
 
 #: gui/textutil.c:370
 msgid "Match case"
-msgstr ""
+msgstr "Maiusc/minusc"
 
 #: gui/textutil.c:376
 msgid "Backward search"
-msgstr ""
+msgstr "All'indietro"
 
 #: gui/textutil.c:386
-#, fuzzy
 msgid "Replace all in:"
-msgstr "Sostituisci la vista completa"
+msgstr "Sostituisci tutto in:"
 
 #: gui/textutil.c:392
-#, fuzzy
 msgid "Selection"
-msgstr "Seleziona"
+msgstr "Selezione"
 
 #: gui/textutil.c:418
 msgid "_Replace"
