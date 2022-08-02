@@ -114,13 +114,13 @@ static int old_load_filter_data (kalman *K, int smtype)
     if (smtype < SM_DIST_BKWD) {
         /* load the state and its MSE */
         load_from_row(K->a0, K->A, K->t);
-        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+        load_from_vech(K->P0, K->P, K->r, K->t);
     }
 
     if (smtype == SM_STATE_STD || smtype == SM_DIST_BKWD) {
         /* load the gain and F^{-1} */
         load_from_vec(K->Kt, K->K, K->t);
-        load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
+        load_from_vech(K->iFt, K->F, K->n, K->t);
     }
 
     return err;

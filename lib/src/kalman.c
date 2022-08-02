@@ -1204,33 +1204,33 @@ static int set_initial_statevar (kalman *K)
 /* Write the vech of @src into row @t of @targ */
 
 static void record_to_vech (gretl_matrix *targ,
-                            const gretl_matrix *src,
-                            int n, int t)
+			    const gretl_matrix *src,
+			    int n, int t)
 {
-    int i, j, m = 0;
+    int i, j, k = 0;
     double x;
 
-    for (i=0; i<n; i++) {
-        for (j=i; j<n; j++) {
+    for (j=0; j<n; j++) {
+        for (i=j; i<n; i++) {
             x = gretl_matrix_get(src, i, j);
-            gretl_matrix_set(targ, t, m++, x);
+            gretl_matrix_set(targ, t, k++, x);
         }
     }
 }
 
 /* Write the vech of @src into column @t of @targ */
 
-static void record_to_vechT (gretl_matrix *targ,
-                             const gretl_matrix *src,
-                             int n, int t)
+static void record_to_vech_as_col (gretl_matrix *targ,
+				   const gretl_matrix *src,
+				   int n, int t)
 {
-    int i, j, m = 0;
+    int i, j, k = 0;
     double x;
 
-    for (i=0; i<n; i++) {
-        for (j=i; j<n; j++) {
+    for (j=0; j<n; j++) {
+        for (i=j; i<n; i++) {
             x = gretl_matrix_get(src, i, j);
-            gretl_matrix_set(targ, m++, t, x);
+            gretl_matrix_set(targ, k++, t, x);
         }
     }
 }
@@ -1614,7 +1614,7 @@ static int kalman_record_state (kalman *K)
             err = gretl_matrix_realloc(K->PK, K->PK->rows, K->t + 1);
         }
         if (!err) {
-            record_to_vechT(K->PK, K->Pk0, K->r, K->t);
+            record_to_vech_as_col(K->PK, K->Pk0, K->r, K->t);
         }
     }
 
@@ -2469,17 +2469,14 @@ static int vector_from_row_offset (gretl_vector *targ,
 */
 
 static void load_from_vech (gretl_matrix *targ, const gretl_matrix *src,
-                            int n, int t, int mod)
+                            int n, int t)
 {
-    int i, j, m = 0;
+    int i, j, k = 0;
     double x;
 
-    for (i=0; i<n; i++) {
-        for (j=i; j<n; j++) {
-            x = gretl_matrix_get(src, t, m++);
-            if (mod == GRETL_MOD_DECREMENT) {
-                x = gretl_matrix_get(targ, i, j) - x;
-            }
+    for (j=0; j<n; j++) {
+        for (i=j; i<n; i++) {
+            x = gretl_matrix_get(src, t, k++);
             gretl_matrix_set(targ, i, j, x);
             if (i != j) {
                 gretl_matrix_set(targ, j, i, x);
@@ -2573,15 +2570,15 @@ static int load_filter_data (kalman *K, int no_collapse, int *err)
         if (K->t == 0) {
             gretl_matrix_zero(K->P0);
         } else {
-            load_from_vech(K->P0, K->P, K->r, K->t-1, GRETL_MOD_NONE);
+            load_from_vech(K->P0, K->P, K->r, K->t-1);
         }
     } else {
-        load_from_vech(K->P0, K->P, K->r, K->t, GRETL_MOD_NONE);
+        load_from_vech(K->P0, K->P, K->r, K->t);
     }
 
     /* load the gain and F^{-1} */
     load_from_vec(K->Kt, K->K, K->t);
-    load_from_vech(K->iFt, K->F, K->n, K->t, GRETL_MOD_NONE);
+    load_from_vech(K->iFt, K->F, K->n, K->t);
 
     /* heuristic for missing observable (see note above) */
     missing = gretl_is_zero_matrix(K->Kt);
@@ -4692,7 +4689,8 @@ int kalman_bundle_n_members (gretl_bundle *b)
    for R (see kfilter2.f90). Some helper functions come first.
 */
 
-static void dj_from_Finf (const gretl_matrix *Finf, int *d, int *j)
+static void dj_from_Finf (const gretl_matrix *Finf, int *d, int *j,
+			  double tiny)
 {
     int cmax = Finf->cols - 1;
     int rmax = Finf->rows - 1;
@@ -4702,7 +4700,7 @@ static void dj_from_Finf (const gretl_matrix *Finf, int *d, int *j)
 
     for (k=cmax; k >= 0 && *d == 0; k--) {
         for (i=rmax; i>=0; i--) {
-            if (gretl_matrix_get(Finf, i, k) > 0) {
+            if (gretl_matrix_get(Finf, i, k) > tiny) {
                 *d = k + 1;
                 *j = i + 1;
                 break;
@@ -5142,7 +5140,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         K->d = K->N;
         K->j = K->n;
     } else if (K->smo_prep && K->exact) {
-        dj_from_Finf(ui->Finf, &d, &j);
+        dj_from_Finf(ui->Finf, &d, &j, 0 /* k_tiny */);
 #if 0 /* not sure about this, causes trouble? */
         if (d > 0 && d < ui->Finf->cols) {
             gretl_matrix_realloc(ui->Finf, ui->Finf->rows, d);
@@ -5423,21 +5421,24 @@ static int dagger_calc (struct cumulants *c,
     gretl_matrix_inscribe_matrix(Ndag, c->N2, m, m, GRETL_MOD_NONE);
 
     load_from_row(at, K->A, K->t);
-    load_from_row(Pt, K->P, K->t);
+    load_from_vech(Pt, K->P, K->r, K->t);
     load_from_col(Pk, K->PK, K->t);
 
     /* Pdag = Pt ~ Pk */
     memcpy(Pdag->val, Pt->val, Nsize);
     memcpy(Pdag->val + mm, Pk->val, Nsize);
 
+#if 0
+    fprintf(stderr, "dagger calc, t=%d\n", K->t);
+    gretl_matrix_print(Pt, "Pt");
+    gretl_matrix_print(Pdag, "Pdag");
+#endif
+
     /* ahat[t,] = (at + Pdag * rdag)' */
     gretl_matrix_multiply_mod(Pdag, GRETL_MOD_NONE,
                               rdag, GRETL_MOD_NONE,
                               at, GRETL_MOD_CUMULATE);
     record_to_vec(K->A, at, K->t);
-#if 0  
-    gretl_matrix_print(at, "at");
-#endif    
 
     /* Vhat[t,] = vec(Pt - Pdag * Ndag * Pdag')' */
     gretl_matrix_multiply(Pdag, Ndag, tmp);
@@ -5700,7 +5701,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     if (trace) {
         printf("ksmooth_univariate(), dist = %d\n", dist);
     }
-    if (kdebug) {
+    if (1 || kdebug) {
         fprintf(stderr, "ksmooth_univariate: dist=%d, d=%d, j=%d\n",
                 dist, K->d, K->j);
     }
@@ -5740,6 +5741,10 @@ static int ksmooth_univariate (kalman *K, int dist)
         eta_smo = state_dist_setup(K, &Q, &QRT, &etahat, &veta);
     }
 
+    if (K->exact) {
+	k_tiny = tiny_value(ui->Z); /* ? */
+    }
+
     if (kdebug) {
         fprintf(stderr, "\n*** univariate smoother: d=%d, j=%d, dist=%d ***\n",
                 d, j, dist);
@@ -5757,7 +5762,7 @@ static int ksmooth_univariate (kalman *K, int dist)
         load_from_row(Ft, K->F, t);
         load_from_row(Kt, K->K, t);
         load_from_row(at, K->A, t);
-        load_from_vech(Pt, K->P, K->r, K->t, GRETL_MOD_NONE);
+        load_from_vech(Pt, K->P, K->r, K->t);
 
         /* loop across observables */
         for (i=K->n-1; i>=0; i--) {
@@ -5847,7 +5852,7 @@ static int ksmooth_univariate (kalman *K, int dist)
                 }
                 continue;
             }
-            if (Fki > K_TINY) {
+            if (Fki > k_tiny) { /* was K_TINY */
                 fkinv = 1.0 / Fki;
                 load_from_row(Zti, ui->Z, i);
                 load_from_col(Kki, Kk, i);
