@@ -561,14 +561,18 @@ int gretl_plot_start (const char *param, const DATASET *dset)
 int gretl_plot_finalize (const char *s, const DATASET *dset,
 			 gretlopt opt)
 {
-    int err;
+    int err = 0;
 
 #if PDEBUG
     fprintf(stderr, "gretl_plot_finalize: '%s'\n", s);
     debug_print_option_flags("end plot", opt);
 #endif
 
-    err = execute_plot(dset, opt);
+    if (!gretl_in_gui_mode() && getenv("CLI_NO_PLOTS")) {
+	; /* skip it */
+    } else {
+	err = execute_plot(dset, opt);
+    }
     clear_plot();
 
     return err;
