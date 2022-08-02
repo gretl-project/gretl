@@ -38,11 +38,12 @@
  */
 
 #define K_TINY 1.0e-12
-#define P0_ZERO 0
+#define P0_ZERO 1
 #define SUPPORT_LEGACY 1
 
 static int kdebug;
 static int trace;
+static int identify;
 
 /* temporary testing thing */
 static int exact_set;
@@ -253,10 +254,10 @@ enum {
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
 #define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 #define kalman_ssfsim(K)      (K->flags & KALMAN_SSFSIM)
-#define kalman_diffuse(K)     (K->flags & KALMAN_DIFFUSE)
+#define kalman_diffuse(K)     ((K->flags & KALMAN_DIFFUSE)? 1 : 0)
 #define kalman_arma_ll(K)     (K->flags & KALMAN_ARMA_LL)
 #define kalman_extra(K)       (K->flags & KALMAN_EXTRA)
-#define kalman_is_bundle(K)   (K->flags & KALMAN_BUNDLE)
+#define kalman_is_bundle(K)   ((K->flags & KALMAN_BUNDLE)? 1 : 0)
 
 #define kalman_univariate(K)  (K->code == K_UNIVAR)
 #define kalman_dejong(K)      (K->code == K_DEJONG)
@@ -1169,7 +1170,9 @@ static int hamilton_Pini (kalman *K)
             err = diffuse_Pini(K);
             K->flags |= KALMAN_DIFFUSE;
         }
+	printf("Hamilton-style P0 failed, set KALMAN_DIFFUSE\n");
     } else {
+	printf("Hamilton-style P0 succeeded\n");
         gretl_matrix_unvectorize(K->P0, vQ);
     }
 
@@ -4164,10 +4167,6 @@ void *maybe_retrieve_kalman_element (void *kptr,
         *ownit = 0;
     }
 
-    if (kdebug) {
-	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s'\n", key);
-    }
-
     /* 2022-05-06: we'll want to set *ownit to 1 if the element in
        question is newly allocated, and will be 'owned' by the caller,
        rather than just being a pointer to something inside the kalman
@@ -4176,7 +4175,8 @@ void *maybe_retrieve_kalman_element (void *kptr,
        no need to construct a 'constructable' element.
     */
 
-    if (kdebug) {
+    if (kdebug > 1) {
+	fprintf(stderr, "maybe_retrieve_kalman_element: key '%s'\n", key);
 	fprintf(stderr, " ownit %p, K->b %p, univariate %d\n",
                 (void *) ownit, (void *) K->b, kalman_univariate(K));
     }
@@ -4952,6 +4952,11 @@ static int kfilter_univariate (kalman *K, PRN *prn)
     int t, i;
     int err = 0;
 
+    if (identify || trace) {
+        printf("kfilter_univariate(), diffuse = %d, exact = %d\n",
+	       kalman_diffuse(K), K->exact);
+    }
+
     if (K->exact) {
         Pki = ui->Pki;
         Kki = ui->Kki;
@@ -5430,6 +5435,9 @@ static int dagger_calc (struct cumulants *c,
                               rdag, GRETL_MOD_NONE,
                               at, GRETL_MOD_CUMULATE);
     record_to_vec(K->A, at, K->t);
+#if 0  
+    gretl_matrix_print(at, "at");
+#endif    
 
     /* Vhat[t,] = vec(Pt - Pdag * Ndag * Pdag')' */
     gretl_matrix_multiply(Pdag, Ndag, tmp);
@@ -6253,11 +6261,11 @@ static int kfilter_dejong (kalman *K, PRN *prn)
     int nt, Nd = K->N;
     int err = 0;
 
-    if (trace) {
-        printf("kfilter_dejong() exact = %d\n", K->exact);
-    }
-
     exact_diffuse = kalman_diffuse(K) && K->exact;
+
+    if (identify || trace) {
+	printf("kfilter_dejong() exact_diffuse = %d\n", exact_diffuse);
+    }
 
     if (K->dj_initted == 0) {
 	err = ensure_dj_variance_matrices(K);
