@@ -1170,9 +1170,13 @@ static int hamilton_Pini (kalman *K)
             err = diffuse_Pini(K);
             K->flags |= KALMAN_DIFFUSE;
         }
-	printf("Hamilton-style P0 failed, set KALMAN_DIFFUSE\n");
+	if (kdebug) {
+	    printf("Hamilton-style P0 failed, set KALMAN_DIFFUSE\n");
+	}
     } else {
-	printf("Hamilton-style P0 succeeded\n");
+	if (kdebug) {
+	    printf("Hamilton-style P0 succeeded\n");
+	}
         gretl_matrix_unvectorize(K->P0, vQ);
     }
 
@@ -1788,7 +1792,9 @@ static int check_for_matrix_updates (kalman *K, ufunc *uf)
                 for (j=K_T; j<=K_m; j++) {
                     s = kalman_matrix_name(j);
                     if (!strncmp(lines[i] + n, s, strlen(s))) {
-                        fprintf(stderr, "matrix %s is varying\n", s);
+			if (kdebug) {
+			    fprintf(stderr, "matrix %s is varying\n", s);
+			}
                         K->varying[j] = 1;
                         break;
                     }
@@ -5140,7 +5146,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
         K->d = K->N;
         K->j = K->n;
     } else if (K->smo_prep && K->exact) {
-        dj_from_Finf(ui->Finf, &d, &j, 0 /* k_tiny */);
+        dj_from_Finf(ui->Finf, &d, &j, k_tiny);
 #if 0 /* not sure about this, causes trouble? */
         if (d > 0 && d < ui->Finf->cols) {
             gretl_matrix_realloc(ui->Finf, ui->Finf->rows, d);
@@ -5701,7 +5707,7 @@ static int ksmooth_univariate (kalman *K, int dist)
     if (trace) {
         printf("ksmooth_univariate(), dist = %d\n", dist);
     }
-    if (1 || kdebug) {
+    if (kdebug) {
         fprintf(stderr, "ksmooth_univariate: dist=%d, d=%d, j=%d\n",
                 dist, K->d, K->j);
     }
