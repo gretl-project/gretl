@@ -394,8 +394,8 @@ guint32 epoch_day_from_ymd_checked (double ymd, int *err)
 
 int weekday_from_epoch_day (guint32 ed)
 {
+    GDateWeekday gwd;
     GDate date;
-    int wd;
 
     if (!g_date_valid_julian(ed)) {
 	return -1;
@@ -403,9 +403,9 @@ int weekday_from_epoch_day (guint32 ed)
 
     g_date_clear(&date, 1);
     g_date_set_julian(&date, ed);
-    wd = g_date_get_weekday(&date);
+    gwd = g_date_get_weekday(&date);
 
-    return wd == G_DATE_SUNDAY ? 0 : wd;
+    return gwd == G_DATE_SUNDAY ? 0 : (int) gwd;
 }
 
 /**
@@ -465,6 +465,7 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 {
     guint32 ed0 = (guint32) dset->sd0;
     guint32 t = get_epoch_day(datestr);
+    guint32 t0 = t;
 
 #ifdef CAL_DEBUG
     fprintf(stderr, "calendar_obs_number: '%s' gave epoch day = %u\n",
@@ -488,13 +489,24 @@ int calendar_obs_number (const char *datestr, const DATASET *dset)
 	/* weekly data */
 	t /= 7;
     } else if (dset->pd == 5 || dset->pd == 6) {
-	/* daily, 5- or 6-day week: subtract number of irrelevant days */
-	int startday = (ed0 - 1 + DAY1) % 7;
-	int wkends = (t + startday - 1) / 7;
+	/* daily, 5- or 6-day week */
+	int wd = weekday_from_epoch_day(t0);
+	int startday, wkends;
+
+	/* check for out-of-calendar days */
+	if (dset->pd == 5 && (wd == 6 || wd == 0)) {
+	    return -1;
+	} else if (dset->pd == 6 && wd == 0) {
+	    return -1;
+	}
+
+	/* subtract number of irrelevant days */
+	startday = (ed0 - 1 + DAY1) % 7;
+	wkends = (t + startday - 1) / 7;
 
 #ifdef CAL_DEBUG
-	printf("calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n",
-	       (int) ed0, date, (int) t, startday, wkends);
+	fprintf(stderr, "calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n",
+		(int) ed0, datestr, (int) t, startday, wkends);
 #endif
 
 	if (dset->pd == 5) {

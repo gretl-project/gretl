@@ -4162,6 +4162,7 @@ int get_observation_number (const char *s, const DATASET *dset)
     }
 
     if (calendar_data(dset)) {
+	/* never reached? */
         char datestr[OBSLEN];
 
         for (t=0; t<dset->n; t++) {
@@ -4171,6 +4172,7 @@ int get_observation_number (const char *s, const DATASET *dset)
                 return t + 1;
             }
         }
+	return 0;
     }
 
     return 0;
