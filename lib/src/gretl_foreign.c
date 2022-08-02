@@ -1939,7 +1939,6 @@ static void write_R_io_file (FILE *fp, const char *ddir)
     const char *loadmat_body =
 	"  len <- nchar(mname)\n"
 	"  binfile <- substr(mname, len-3, len) == \".bin\"\n"
-	"  fname <- paste(prefix, mname, sep=\"\")\n"
 	"  if (binfile) {\n"
 	"    mfile = file(fname, \"rb\")\n"
 	"    hdr = readBin(mfile, integer(), size=1, n=19)\n"
@@ -1970,8 +1969,13 @@ static void write_R_io_file (FILE *fp, const char *ddir)
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
     fputs(export_body, fp);
 
-    fputs("gretl.loadmat <- function(mname) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", ddir);
+    fputs("gretl.loadmat <- function(mname, dotpath=1) {\n", fp);
+    fputs("  if (dotpath) {\n", fp);
+    fprintf(fp, "    prefix <- \"%s\"\n", ddir);
+    fputs("    fname <- paste(prefix, mname, sep=\"\")\n", fp);
+    fputs("  } else {\n", fp);
+    fputs("    fname <- mname\n", fp);
+    fputs("  }\n", fp);
     fputs(loadmat_body, fp);
 }
 
