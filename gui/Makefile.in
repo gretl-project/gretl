@@ -23,6 +23,7 @@ quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
+win32bit = @win32bit@
 gtk_version = @gtk_version@
 mac_native = @mac_native@
 
@@ -236,7 +237,11 @@ ifeq ($(win32_build),yes)
   WINOBJ = gretlres.o
   WINGUI = -mwindows
   WINDRES = @WINDRES@
-  GRETLRC = $(topsrc)/win32/gretl.rc
+  ifeq ($(win32bit),yes)
+    GRETLRC = $(topsrc)/win32/gretl.rc
+  else
+    GRETLRC = $(topsrc)/win32/gretl.rc.win64
+  endif
   RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
 else

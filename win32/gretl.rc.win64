@@ -1,0 +1,20 @@
+#include <windows.h>
+
+/* icon for the program itself -- color picture of Gretel */
+icon_0 ICON "icons/icon0.ico"
+
+/* icon for data files */
+icon_1 ICON "icons/icon1.ico"
+
+/* icon for script files -- two-tone version of Gretel */
+icon_2 ICON "icons/icon2.ico"
+
+/* icon for session files -- alternate two-tone Gretel */
+icon_3 ICON "icons/icon3.ico"
+
+/* icon for binary data files */
+icon_4 ICON "icons/icon4.ico"
+
+/* embedded manifest file (is this a good idea?) */
+1 RT_MANIFEST "gretl.exe.manifest.win64"
+

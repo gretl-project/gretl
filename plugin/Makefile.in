@@ -22,7 +22,6 @@ gtk_version = @gtk_version@
 use_gsf = @use_gsf@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
-win32bit = @win32bit@
 macpkg = @macpkg@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
