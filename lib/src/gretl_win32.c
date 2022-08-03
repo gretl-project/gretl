@@ -1843,20 +1843,17 @@ double win32_get_time (void)
     return xt;
 }
 
-static int vista_or_higher (void)
+int windows_major_version (void)
 {
     OSVERSIONINFO osv = {0};
-    int ret = 0;
+    int maj = 0;
 
     osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
     if (GetVersionEx(&osv)) {
-	if (osv.dwMajorVersion >= 6) {
-	    ret = 1;
-	}
+        maj = osv.dwMajorVersion;
     }
 
-    return ret;
+    return maj;
 }
 
 /* Try to ensure that UTF-8 will be handled correctly in the
@@ -1867,22 +1864,23 @@ int try_for_CP_65001 (void)
 {
     int ttfont = 0;
     int gotinfo = 0;
+    int wver = 0;
     HANDLE h;
     int h_ok;
     int ret = -1;
 
     h = GetStdHandle(STD_OUTPUT_HANDLE);
     h_ok = (h != NULL && h != INVALID_HANDLE_VALUE);
+    wver = windows_major_version();
 
     if (windebug) {
 	fprintf(fdb, "STD_OUTPUT_HANDLE: h = %s\n",
 		h == NULL ? "NULL" : h == INVALID_HANDLE_VALUE ?
 		"INVALID_HANDLE_VALUE" : "OK?");
-	fprintf(fdb, "vista or higher ? %s\n", vista_or_higher() ?
-		"yes" : "no");
+	fprintf(fdb, "vista or higher ? %s\n", wver >= 6 ? "yes" : "no");
     }
 
-    if (h_ok && vista_or_higher()) {
+    if (h_ok && wver >= 6) {
 	CONSOLE_FONT_INFOEX finfo = {0};
 
 	finfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
@@ -1930,22 +1928,6 @@ int try_for_CP_65001 (void)
 	ret = 0; /* OK signal */
 	if (windebug) {
 	    fprintf(fdb, "set console to UTF-8\n");
-	}
-    }
-
-    return ret;
-}
-
-int windows_is_xp (void)
-{
-    OSVERSIONINFO osv = {0};
-    int ret = 0;
-
-    osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-    if (GetVersionEx(&osv)) {
-	if (osv.dwMajorVersion == 5 && osv.dwMinorVersion == 1) {
-	    ret = 1;
 	}
     }
 
