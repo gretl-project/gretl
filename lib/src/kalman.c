@@ -97,7 +97,7 @@ struct univar_info_ {
     gretl_matrix *Zi;   /* row i of Z */
     gretl_matrix *Kti;  /* column i of Kt */
     gretl_matrix *Pki;  /* P at step i */
-    gretl_matrix *Kki;  /* K_\infty at i */
+    gretl_matrix *Kki;  /* K∞ at i */
     gretl_matrix *m1;   /* workspace */
     gretl_matrix *mm;   /* workspace */
     gretl_matrix *Linv; /* for diagonalization */
@@ -1115,7 +1115,7 @@ static int diffuse_Pini (kalman *K)
 #else
             fast_copy_values(K->P0, K->VS);
 #endif
-            /* initialize P_\infty */
+            /* initialize P∞ */
             if (K->Pk0 == NULL) {
                 K->Pk0 = gretl_identity_matrix_new(K->r);
                 if (K->Pk0 == NULL) {
@@ -1218,23 +1218,6 @@ static void record_to_vech (gretl_matrix *targ,
         for (i=j; i<n; i++) {
             x = gretl_matrix_get(src, i, j);
             gretl_matrix_set(targ, t, k++, x);
-        }
-    }
-}
-
-/* Write the vech of @src into column @t of @targ */
-
-static void record_to_vech_as_col (gretl_matrix *targ,
-				   const gretl_matrix *src,
-				   int n, int t)
-{
-    int i, j, k = 0;
-    double x;
-
-    for (j=0; j<n; j++) {
-        for (i=j; i<n; i++) {
-            x = gretl_matrix_get(src, i, j);
-            gretl_matrix_set(targ, k++, t, x);
         }
     }
 }
@@ -1598,8 +1581,7 @@ static void kalman_print_state (kalman *K)
 }
 
 /* On filtering: record the state and/or its variance, as
-   wanted. Plus in the "exact initial" case record P∞,t
-   in K->PK.
+   wanted.
 */
 
 static int kalman_record_state (kalman *K)
@@ -1612,17 +1594,8 @@ static int kalman_record_state (kalman *K)
     if (K->P != NULL) {
         record_to_vech(K->P, K->P0, K->r, K->t);
     }
-
-    if (K->exact && K->PK != NULL) {
-        if (K->t >= K->PK->cols) {
-            err = gretl_matrix_realloc(K->PK, K->PK->rows, K->t + 1);
-        }
-        if (!err) {
-            record_to_vech_as_col(K->PK, K->Pk0, K->r, K->t);
-        }
-    }
-
     if (K->exact && K->djinfo != NULL && K->djinfo->A != NULL) {
+	/* record "augmented" quantities */
         record_to_col(K->djinfo->A, K->djinfo->At, K->t);
         record_to_col(K->djinfo->V, K->djinfo->Vt, K->t);
     }
@@ -5093,7 +5066,7 @@ static int kfilter_univariate (kalman *K, PRN *prn)
 	    record_to_vec(K->K, K->Kt, t);
 	}
         if (K->smo_prep && d == 0 && t < Nd) {
-	    /* record K_\infty */
+	    /* record K∞ */
 	    record_to_col(ui->Kinf, Kkt, t);
         }
 
@@ -5231,7 +5204,7 @@ static void clear_cumulants (struct cumulants *c,
     }
 }
 
-/* complex smoothing iteration when F_\infty > 0 */
+/* complex smoothing iteration when F∞ > 0 */
 
 static void fkpos (double fkinv,
                    double Fti,
@@ -5339,7 +5312,7 @@ static void fkpos (double fkinv,
     gretl_matrix_free(Lmid);
 }
 
-/* relatively simple smoothing iteration when F_\infty = 0 */
+/* relatively simple smoothing iteration when F∞ = 0 */
 
 static void fkzero (double ftinv,
                     double vti,
