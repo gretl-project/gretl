@@ -257,7 +257,6 @@ void gretl_win32_debug_init (int debug)
 	    redirect_io_to_console();
 	}
 	set_windebug(1);
-	fprintf(stderr, "Windows major version = %d\n", windows_major_version());
 	fprintf(stderr, "Windows locale = %s\n",
 		winlocale == NULL ? "NULL" : winlocale);
 	g_get_charset(&charset);

@@ -1843,7 +1843,7 @@ double win32_get_time (void)
     return xt;
 }
 
-int windows_major_version (void)
+static int windows_major_version (void)
 {
     OSVERSIONINFO osv = {0};
     int maj = 0;

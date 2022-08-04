@@ -99,8 +99,6 @@ double win32_get_time (void);
 
 int try_for_CP_65001 (void);
 
-int windows_major_version (void);
-
 int win32_get_core_count (void);
 
 #endif /* WIN32 */
