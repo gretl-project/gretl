@@ -34,9 +34,9 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls 0.31: regularized least squares for gretl}
+\title{regls 0.32: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{Last revised June 3, 2022}
+\date{Last revised August 5, 2022}
 
 \begin{document}
 \maketitle
@@ -311,7 +311,7 @@ select the desired set of coefficients and obtain fitted values using
 the full input list \texttt{X}---with \texttt{const} prepended unless
 your data are pre-standardized.
 \begin{code}
-matrix optimal_b = lb.B[,idxmin] # or idx1se, or other column
+matrix optimal_b = lb.B[,lb.idxmin] # or lb.idx1se, or other column
 list All = const X
 series fitted = lincomb(All, optimal_b)
 \end{code}
@@ -708,8 +708,9 @@ series glmnet_pred (matrix *Rb, list X)
 \section{Change log}
 \label{sec:changes}
 
+Version 0.32, 2022-08-05: fix breakage for single-lambda case.\\
 Version 0.31, 2022-06-03: update URL; revise fragile list-saving code;
-allow ``lambda'' as alternative to ``lfrac'' on input.
+allow ``lambda'' as alternative to ``lfrac'' on input.\\
 Version 0.3, 2021-04-17: fix bug with Ridge verbose printout, and
 replace some tables with figures in the doc for ease of comprehension
 of comparative experiments.\\

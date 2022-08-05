@@ -2556,9 +2556,10 @@ static int post_xvalidation_task (regls_info *ri,
     }
 
     if (prn != NULL) {
-	pprintf(prn, "\nAverage out-of-sample %s minimized at %#g for s=%#g\n",
+	pputs(prn, "\nNote: s = lambda/lambda-max\n");
+	pprintf(prn, "Average out-of-sample %s minimized at %#g for s=%#g (\"*\")\n",
 		"MSE", gretl_matrix_get(metrics, imin, 0), ri->lfrac->val[imin]);
-	pprintf(prn, "Largest s within one s.e. of best criterion: %#g\n",
+	pprintf(prn, "Largest s within one s.e. of best criterion: %#g (\"+\")\n",
 		ri->lfrac->val[i1se]);
     }
 

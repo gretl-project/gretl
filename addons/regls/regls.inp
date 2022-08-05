@@ -88,7 +88,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
       return 0
    endif
    lfrac = m
-   if ret.lambda_scale == 0
+   if unscaled_lambda(b)
       # treat the lambdas as is, not as fractions
       if min(m) < 0
          print "missing or invalid lambda specification"
