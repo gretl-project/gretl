@@ -482,22 +482,22 @@ the same goes for $\obsvar$ and the observation disturbances, if
 present. Given a matrix $U$ containing standard normal variates, in
 the general case this requires finding a matrix $A$ such that
 \[
-AA' = \Omega \equiv \left(
+AA' = \Lambda \equiv \left(
 \begin{array}{ll}
-Q & 0_{r \times n} \\
-0_{n\times r} & R
+\statevar & 0_{r \times n} \\
+0_{n\times r} & \obsvar
 \end{array}
 \right)
 \]
 and post-multiplying $U$ by $A'$ (although it's not necessary to form
 $A$ explicitly if the disturbance variance matrices are
-diagonal). This is not particularly onerous if $\Omega$ is
+diagonal). This is not particularly onerous if $\Lambda$ is
 time-invariant; gretl's \cmd{psdroot} function can be used to form $A$
-if it's needed. If $Q$ and/or $R$ are time-varying, however, this
-scaling can become quite burdensome. As a convenience, the ancillary
-function \cmd{ksimdata} can be used to pre-process the $U$ matrix
-automatically. Here's an example (we assume that a bundle named
-\texttt{b} has been obtained via \cmd{ksetup}):
+if it's needed. If $\statevar$ and/or $\obsvar$ are time-varying,
+however, this scaling can become quite burdensome. As a convenience,
+the ancillary function \cmd{ksimdata} can be used to pre-process the
+$U$ matrix automatically. Here's an example (we assume that a bundle
+named \texttt{b} has been obtained via \cmd{ksetup}):
 %
 \begin{code}
 matrix N = mnormal(500, b.r + b.n)
@@ -511,8 +511,9 @@ or if you have no need to store the disturbances:
 matrix sim = ksimul(&b, ksimdata(&b, mnormal(500, b.r + b.n)))
 \end{code}
 %
-Time-variation or no, \cmd{ksimdata} will ensure that the
-disturbances are scaled to the variances specified by $Q_t$ and $R_t$.
+Time-variation or no, \cmd{ksimdata} will ensure that the disturbances
+are scaled to the variances specified by $\statevar_t$ and
+$\obsvar_t$.
 
 If the disturbances are cross-correlated (see
 section~\ref{sec:crossd}) then the matrix argument to \cmd{ksimul}
@@ -555,8 +556,7 @@ The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$
 is as follows: for $t=1,\dots,N$
 %
 \begin{align*}
-  \tilde{\obsvec}_t &= \obsxmat_t\obsx_t +
-   \obsymat_t \tilde{\statevec}_t + \obsdist_t  \\
+  \tilde{\obsvec}_t &= \obsymat_t \tilde{\statevec}_t + \obsdist_t  \\
   \tilde{\statevec}_{t+1} &= \statemat_t \tilde{\statevec}_t + \stdist_t
 \end{align*}
 %
