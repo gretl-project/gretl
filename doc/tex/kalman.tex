@@ -3,14 +3,14 @@
 \newcommand{\obsx}{x}
 \newcommand{\obsxmat}{B}
 \newcommand{\obsdist}{\varepsilon}
-\newcommand{\obsvar}{R}
+\newcommand{\obsvar}{\Sigma}
 \newcommand{\obsdim}{n}
 
 \newcommand{\statevec}{\alpha}
 \newcommand{\statecvar}{P}
 \newcommand{\statemat}{T}
-\newcommand{\strdist}{\eta}
-\newcommand{\statevar}{Q}
+\newcommand{\stdist}{\eta}
+\newcommand{\statevar}{\Omega}
 \newcommand{\gain}{K}
 \newcommand{\statemu}{\mu}
 \newcommand{\stdim}{r}
@@ -51,42 +51,39 @@ a brief high-level overview of gretl's Kalman apparatus.
 \end{itemize}
 
 \section{Notation}
+\label{sec:notation}
 
 In this document our basic representation of a state space model is
 given by the following pair of equations:
 %
 \begin{align}
   \label{eq:obs}
-  \obsvec_t &= \obsxmat_t\obsx_t + \obsymat_t \statevec_t +
-  \obsdist_t \\
+  \obsvec_t &= \obsymat_t \statevec_t + \obsdist_t \\
   \label{eq:state}
-  \statevec_{t+1} &= \statemat_t \statevec_t + \strdist_t
+  \statevec_{t+1} &= \statemat_t \statevec_t + \stdist_t
 \end{align}
 %
 where (\ref{eq:obs}) is the observation or measurement equation and
 (\ref{eq:state}) is the state transition equation.  The state vector,
 $\statevec_{t}$, is ($\stdim \times 1$) and the vector of observables,
-$\obsvec_t$, is ($\obsdim \times 1$); $\obsx_t$ is a ($k \times 1$)
-vector of exogenous variables.  The ($\obsdim \times 1$) vector
-$\obsdist_t$ and the ($\stdim \times 1$) vector $\strdist_t$ are
-assumed to be vector white noise:
+$\obsvec_t$, is ($\obsdim \times 1$).  The ($\obsdim \times 1$) vector
+$\obsdist_t$ and the ($\stdim \times 1$) vector $\stdist_t$ are
+assumed to be vector Gaussian white noise:
 %
 \begin{align*}
 E(\obsdist_t \obsdist_s') &= \obsvar_t \mbox{ for } t = s,
     \mbox{ otherwise } \mathbf{0} \\
-E(\strdist_t \strdist_s') &= \statevar_t \mbox{ for } t = s,
+E(\stdist_t \stdist_s') &= \statevar_t \mbox{ for } t = s,
     \mbox{ otherwise } \mathbf{0}
 \end{align*}
 
 The number of time-series observations is denoted by $N$.  In the case
-when $\obsymat_t = \obsymat$, $\statemat_t = \statemat$,
-$\obsxmat_t = \obsxmat$, $\obsvar_t = \obsvar$ and
-$\statevar_t = \statevar$ and for all $t$, the model is said to be
-\emph{time-invariant}. We assume time-invariance in most of what
-follows but discuss the time-varying case in
-section~\ref{sec:tvarying}. That section also covers the case where
-the disturbances are correlated across the observation and state
-transition equations.
+where $\obsymat_t = \obsymat$, $\statemat_t = \statemat$,
+$\obsvar_t = \obsvar$ and $\statevar_t = \statevar$ for all $t$
+the model is said to be \emph{time-invariant}. We assume
+time-invariance in much of what follows but discuss the time-varying
+case---along with other extensions of the basic model---in
+section~\ref{sec:extensions}.
 
 \section{Defining the model as a bundle}
 \label{sec:setup}
@@ -95,11 +92,8 @@ The \cmd{ksetup} function is used to initialize a state space model,
 by specifying only its indispensable elements: the observables and
 their link to the unobserved state vector, plus the law of motion for
 the latter and the covariance matrix of its innovations. Therefore,
-the function takes a minimum of four arguments.\footnote{An optional,
-  fifth argument is used for initializing a state space model in which
-  there is some non-zero correlation between the disturbances
-  $\strdist_t$ and $\obsdist_t$. See section \ref{sec:crossd}.} The
-corresponding bundle keys are as follows:
+the function takes a minimum of four arguments. The corresponding
+bundle keys are as follows:
 
 \begin{center}
 \begin{tabular}{ccl}
@@ -111,12 +105,11 @@ $\statevar$  & $\stdim \times \stdim$ & \texttt{statevar}\\
 \end{tabular}
 \end{center}
 
-\tip{Please note that the matrices $\obsymat$ and (if applicable)
-  $\obsxmat$ in the observation equation must be given in
-  \textsl{transposed} form. This is required to preserve compatibility
-  with gretl versions prior to 2022a. Correspondingly, if you retrieve
-  either of these matrices using their keys, \texttt{obsymat} and
-  \texttt{obsxmat}, it's the transpose you actually obtain.}
+\tip{Please note that the matrix $\obsymat$ in the observation
+  equation must be given in \textsl{transposed} form. This is required
+  to preserve compatibility with gretl versions prior to
+  2022a. Correspondingly, if you retrieve this matrix using its key,
+  \texttt{obsymat}, it's the transpose you actually obtain.}
 
 The names of these input matrices don't matter; in fact they may be
 anonymous matrices constructed on the fly. But if and when you wish to
@@ -132,16 +125,12 @@ other arguments can be given as scalars if in context they are
 $1 \times 1$.
 
 If applicable you may specify any of the following optional input
-matrices:\footnote{An additional optional matrix is described in
-section~\ref{sec:stconst} below.}
+matrices:\footnote{Additional optional matrices are described in
+section~\ref{sec:extensions} below.}
 
 \begin{center}
-\begin{tabular}{ccll}
+  \begin{tabular}{ccll}
 Symbol & Dimensions & Key & If omitted\dots \\[6pt]
-$\obsx$ & $N \times k$ & \texttt{obsx} &
- no exogenous terms in observation equation\\
-$\obsxmat$ & $\obsdim \times k$ & \texttt{obsxmat} &
- no exogenous terms in observation equation\\
 $\obsvar$ & $\obsdim \times \obsdim$ & \texttt{obsvar} &
  no disturbance term in observation equation \\
 $\statevec_0$ & $\stdim \times 1$ & \texttt{inistate} &
@@ -151,30 +140,18 @@ $\statecvar_0$ & $\stdim \times \stdim$ & \texttt{inivar} &
 \end{tabular}
 \end{center}
 
-However, these optional matrices are not passed to \cmd{ksetup},
-rather you add them to the bundle returned by \cmd{ksetup} (under
-their reserved keys) as you usually add elements to a bundle, for
-example:
+These matrices are not passed to \cmd{ksetup}, rather you add them to
+the bundle returned by \cmd{ksetup} (under their reserved keys) as you
+usually add elements to a bundle, for example:
 \begin{code}
-SSmod.obsxmat = B'
+SSmod.obsvar = Veps
 \end{code}
 
-Naturally, the arguments you pass to \cmd{ksetup} must have coherent
-dimensions: for example, \texttt{statemat} and \texttt{statevar} must
-be of the same size; otherwise, an error is returned. Once setup is
-complete the dimensions of the model, $\stdim$, $\obsdim$, $k$ and
-$N$, become available as scalar members of the bundle (under their own
+Naturally, the arguments you pass to \cmd{ksetup} must have mutually
+compatible dimensions, otherwise an error is returned. Once setup is
+complete the dimensions of the model, $\stdim$, $\obsdim$ and $N$,
+become available as scalar members of the bundle (under their own
 names).
-
-It might appear that the \texttt{obsx} ($\obsx$) and \texttt{obsxmat}
-($\obsxmat$) matrices must go together---either both are given or
-neither is given.  But an exception is granted for convenience.  If
-the observation equation includes a constant but no additional
-exogenous variables, you can give a ($\obsdim \times 1$) value for
-$\obsxmat$ without having to specify \texttt{obsx}.  More generally,
-if the column dimension of $\obsxmat$ is 1 greater than $k$ it is
-assumed that the first element of $\obsxmat$ is associated with an
-implicit column of ones.
 
 The automatic initialization of $\statecvar_{1|0}$ (in case
 \texttt{inivar} is not specified) is applicable only if all the
@@ -201,9 +178,7 @@ via \texttt{inivar} using a somewhat smaller value of $\kappa$, as in
 \begin{code}
 SSmod.inivar = 1.0e5 * I(stdim)
 \end{code}
-where \texttt{stdim} is the dimension of the state.\footnote{Exact
-  diffuse initialization in the manner of \cite{koopman97} is in the
-  works, and should be available in a future version of gretl.}
+where \texttt{stdim} is the dimension of the state.
 
 % The automatic initialization of $\statecvar_{1|0}$ (in case
 % \texttt{inivar} is not specified) is applicable only if all the
@@ -251,17 +226,14 @@ bundle there are certain constraints.
 \begin{itemize}
 \item You can replace the coefficient matrices \texttt{obsymat},
   \texttt{statemat}, \texttt{statevar} and (if applicable)
-  \texttt{obsvar} and/or \texttt{obsxmat} in a given bundle if you
-  wish---but only on condition that the replacement matrix has the
-  same dimensions as the original. In other words, the dimensions
-  $\stdim$, $\obsdim$ and $k$ are set once and for all by the
-  \texttt{ksetup} call (section~\ref{sec:setup}).
-\item You can replace the data matrices \texttt{obsy} and (if
-  applicable) \texttt{obsx} subject to the condition that the number
-  of columns is unchanged ($\obsdim$ and $k$ respectively); the time-series
-  length, $N$, is mutable. But if \texttt{obsx} is present it must
-  have at least as many rows as \texttt{obsy} (which defines $N$ for
-  the bundle).
+  \texttt{obsvar} in a given bundle if you wish---but only on
+  condition that the replacement matrix has the same dimensions as the
+  original. In other words, the dimensions $\stdim$ and $\obsdim$ are
+  set once and for all by the \texttt{ksetup} call
+  (section~\ref{sec:setup}).
+\item You can replace the data matrix \texttt{obsy} subject to the
+  condition that the number of columns, $\obsdim$, is unchanged; the
+  time-series length, $N$, is mutable.
 \item None of the input matrices just mentioned can be deleted from
   the bundle.
 \item Output matrices that are automatically added to the bundle by
@@ -296,7 +268,7 @@ numerical problems were encountered. The forward iteration is as
 follows.
 %
 \begin{align*}
-  \prederr_t &= \obsvec_t - \obsxmat_t\obsx_t - \obsymat_t \statevec_t \\
+  \prederr_t &= \obsvec_t - \obsymat_t \statevec_t \\
   F_t &= \obsymat_t \statecvar_t \obsymat_t' + R_t \\
   M_t &= \statemat_t \statecvar_t \obsymat_t'\\
   \statevec_{t+1} &= \statemat_t \statevec_t + K_t \prederr_t \\
@@ -424,11 +396,11 @@ the methods described in \cite{koopman93} and \cite{koopman-etal99}.
 
 Upon successful execution of the function, the bundle will contain
 under the key \texttt{smdist} an $N \times (\stdim + \obsdim)$ matrix
-holding smoothed estimates of $\strdist_t$ and $\obsdist_t$. That is,
+holding smoothed estimates of $\stdist_t$ and $\obsdist_t$. That is,
 a matrix whose $t$-th row contains
 \[
-(\hat{\strdist}_t' , \hat{\obsdist}_t')
- = E\left[ (\strdist_t' , \obsdist_t') \,| \,
+(\hat{\stdist}_t' , \hat{\obsdist}_t')
+ = E\left[ (\stdist_t' , \obsdist_t') \,| \,
    \obsvec_1, \ldots, \obsvec_T \right]
 \]
 (This assumes the observation equation has a stochastic component; if
@@ -445,19 +417,19 @@ second, optional Boolean parameter. Before describing the action of
 this parameter we need to give a brief account of the two variance
 measures that are found in the literature on disturbance
 smoothing. Our account runs in terms of the state disturbance,
-$\strdist_t$, but it applies equally to the observation disturbance,
+$\stdist_t$, but it applies equally to the observation disturbance,
 $\obsdist_t$, if present.
 
 One measure of variance is the mean square distance of the inferred
 disturbances from zero (that is, from their unconditional
 expectation). Let us call this $V^{(1)}_t$:
 \[
-V^{(1)}_t = E\left(\hat{\strdist}_t\hat{\strdist}_t'\right)
+V^{(1)}_t = E\left(\hat{\stdist}_t\hat{\stdist}_t'\right)
 \]
 This measure is used in computing the so-called \emph{auxiliary
   residuals}, which are advocated in \cite{durbin-koopman12} as useful
 diagnostic tools. Auxiliary residuals for the state equation are
-obtained by dividing $\hat{\strdist}_t$ by the square roots of the
+obtained by dividing $\hat{\stdist}_t$ by the square roots of the
 associated diagonal elements of $V^{(1)}_t$. In computing this matrix
 we use the formulae given in \citet[section 4.4]{koopman-etal99}.
 
@@ -465,8 +437,8 @@ A second measure of variance is the mean squared distance of the
 inferred disturbances around their true values, or in other words the
 mean squared error, which we'll write as $V^{(2)}_t$.
 \[
-V^{(2)}_t = E\left[\left(\hat{\strdist}_t - \strdist_t\right)
-  \left(\hat{\strdist}_t - \strdist_t\right)'
+V^{(2)}_t = E\left[\left(\hat{\stdist}_t - \stdist_t\right)
+  \left(\hat{\stdist}_t - \stdist_t\right)'
   | \,\obsvec_1, \ldots, \obsvec_T \right]
 \]
 We calculate this matrix using the formulae given in \citet[section
@@ -503,7 +475,7 @@ If the disturbances are not cross-correlated, the matrix argument must
 be either $N \times \stdim$, if there is no disturbance in the
 observation equation, or $N \times (\stdim + \obsdim)$ if the
 $\obsvar$ (\texttt{obsvar}) matrix is specified. Row $t$ holds either
-$\strdist_t'$ or $(\strdist_t', \obsdist_t')$. Note that if
+$\stdist_t'$ or $(\stdist_t', \obsdist_t')$. Note that if
 $\statevar$ (\texttt{statevar}) is not simply an identity matrix you
 will have to scale the artificial state disturbances appropriately;
 the same goes for $\obsvar$ and the observation disturbances, if
@@ -585,7 +557,7 @@ is as follows: for $t=1,\dots,N$
 \begin{align*}
   \tilde{\obsvec}_t &= \obsxmat_t\obsx_t +
    \obsymat_t \tilde{\statevec}_t + \obsdist_t  \\
-  \tilde{\statevec}_{t+1} &= \statemat_t \tilde{\statevec}_t + \strdist_t
+  \tilde{\statevec}_{t+1} &= \statemat_t \tilde{\statevec}_t + \stdist_t
 \end{align*}
 %
 This implies that a value for $\tilde{\statevec}_1$ is required to get
@@ -600,81 +572,34 @@ section~\ref{sec:simstart}.
 % exemplify this in a bootstrap context, along the lines of
 % \cite{stoffer-wall91}.
 
-\section{Some finer points}
-\label{sec:finer}
+\section{Extensions and refinements}
+\label{sec:extensions}
 
-\subsection{Numerical optimization}
-\label{sec:ssopt}
+\subsection{Regressors in the observation equation}
+\label{sec:obsx}
 
-If the object of using a state space model is to produce maximum
-likelihood estimates of some parameters of interest, note that the
-loglikelihood surface may be quite awkward (far from globally
-concave), posing a challenge for numerical methods such as BFGS, the
-default maximizer under gretl's \texttt{mle} command. Symptoms may
-include failure of convergence---typically due to an excessive
-computed gradient even as the maximizer cannot find an improvement in
-the objective function---or an excessive number of iterations. In such
-cases it is worth considering the following points.
-\begin{itemize}
-\item In some cases, scaling the observables may help: if the order of
-  magnitude of $y_t$ is too small or too large, floating-point
-  precision may become an issue for estimating variances.
-\item If you can obtain plausible initial values for the parameters,
-  things are likely to go better than starting with arbitrary values.
-\item The limited-memory version of BFGS (L-BFGS) may work better than
-  the standard version. To engage this, issue the command
-\begin{code}
-set lbfgs on
-\end{code}
-  prior to ML estimation.
-\item It may be helpful to employ a more computationally expensive
-  but more accurate method for computing the gradient, namely
-  Richardson extrapolation. Here the command is
-\begin{code}
-set bfgs_richardson on
-\end{code}
-\end{itemize}
+The observation equation (\ref{eq:obs}) can be augmented to allow for
+the effect of a $k$-vector of observable exogenous variables,
+$\obsx_t$, in addition to that of the unobserved state, as in
+\[
+  \obsvec_t = \obsxmat_t\obsx_t + \obsymat_t \statevec_t +
+  \obsdist_t
+\]
+This specification can be added to a bundle previously obtained via
+\cmd{ksetup} by use of the keys \texttt{obsx} (for $\obsx$) and
+\texttt{obsxmat} (for $\obsxmat'$). In that case \texttt{obsx} must be
+an $N \times k$ matrix and $\obsxmat$ must be $n \times k$. (But
+please note: as with the case of $\obsymat$ described above, backward
+compatibility dictates that \texttt{obsxmat} be given in transposed
+form.)
 
-\subsection{Cross-correlated disturbances}
-\label{sec:crossd}
-
-The formulation given in equations (\ref{eq:obs}) and (\ref{eq:state})
-assumes mutual independence of the disturbances in the state and
-observation equations, $\obsdist_t$ and $\strdist_t$.  This assumption
-holds good in many practical applications, but a more general
-formulation allows for cross-correlation.  In place of
-(\ref{eq:obs})--(\ref{eq:state}) we may write
-%
-\begin{align*}
-  \obsvec_t &= \obsxmat_t\obsx_t + \obsymat_t \statevec_t +
-     \altobsvar_t \alldist_t \\
-  \statevec_{t+1} &= \statemat_t \statevec_t +
-     \altstatevar_t \alldist_t
-\end{align*}
-%
-where $\alldist_t$ is a ($\alldim \times 1$) disturbance vector which
-is assumed to satisfy $\alldist_t \sim N(0, I_{\alldim})$,
-$\altstatevar_t$ is ($\stdim \times \alldim$) and $\altobsvar_t$ is
-($\obsdim \times \alldim$).
-
-For example, the special case where $\altobsvar = I$ is referred to as
-``innovations representation'' in \cite{hansen-sargent2013} and is a
-cornerstone of a sizeable strand of literature in contemporary
-macroeconomics.
-
-In terms of input syntax, if the state and observation disturbances
-are cross-correlated five arguments should be given to the
-\cmd{ksetup} function (see section~\ref{sec:setup}): in place of
-giving $\statevar$ you should give the two matrices identified above as
-$\altstatevar$ and $\altobsvar$, as in
-\begin{code}
-bundle SSxmod = ksetup(y, Z, T, H, G)
-\end{code}
-
-In case you wish to retrieve or update information on the variance of
-the disturbances, note that in the cross-correlated case the bundle
-keys \texttt{statevar} and \texttt{obsvar} are taken to designate the
-factors $\altstatevar$ and $\altobsvar$ respectively.
+An exception to this dimensionality rule is granted for convenience.
+If the observation equation includes a constant but no additional
+exogenous variables, you can give $\obsxmat$ as $\obsdim \times 1$
+without having to specify \texttt{obsx}.  More generally, if the
+column dimension of $\obsxmat$ is 1 greater than $k$ it is assumed
+that the first element of $\obsxmat$ is associated with an implicit
+column of ones.
 
 \subsection{Intercept in the state equation}
 \label{sec:stconst}
@@ -683,21 +608,19 @@ In some applications it may be useful to have an ``intercept'' in the
 state transition equation, thus generalizing equation \eqref{eq:state}
 to
 \[
-  \statevec_{t+1} = \statemu_t + \statemat_t \statevec_t + \strdist_t \\
+  \statevec_{t+1} = \statemu_t + \statemat_t \statevec_t + \stdist_t \\
 \]
 The term $\statemu$ is never strictly necessary: the system
-(\ref{eq:obs}) and (\ref{eq:state}) is general enough to accommodate
-such a term, by absorbing it as an extra (non time-varying) element in
-the state vector.  However, this comes at the cost of expanding all
-the matrices that touch the state ($\statevec$, $\statemat$,
-$\strdist$, $\statevar$, $\obsymat$), making the model relatively
-awkward to formulate and forecasts more expensive to
-compute. Therefore, we adopt the convention above on practical
-grounds.
+(\ref{eq:obs}) and (\ref{eq:state}) can absorb it as an extra (non
+time-varying) element in the state vector.  However, this comes at the
+cost of expanding all the matrices that touch the state ($\statevec$,
+$\statemat$, $\stdist$, $\statevar$, $\obsymat$), making the model
+relatively awkward to formulate and forecasts more expensive to
+compute. We therefore adopt the convention above on practical grounds.
 
 The ($\stdim \times 1$) vector $\statemu$ can be specified as a bundle
 member by the name \texttt{stconst}. Despite its name, this matrix can
-be stipulated as time varying, as explained in the next section.
+be stipulated as time-varying, as explained in the next section.
 
 \subsection{Time-varying matrices}
 \label{sec:tvarying}
@@ -773,6 +696,50 @@ the user-defined elements.
 An extended example of use of the time-variation facility is presented
 in section~\ref{sec:ss-examples}.
 
+\subsection{Cross-correlated disturbances}
+\label{sec:crossd}
+
+The formulation given in equations (\ref{eq:obs}) and (\ref{eq:state})
+assumes mutual independence of the disturbances in the state and
+observation equations, $\obsdist_t$ and $\stdist_t$.  This assumption
+holds good in many practical applications, but a more general
+formulation allows for cross-correlation.  In place of
+(\ref{eq:obs})--(\ref{eq:state}) we may write
+%
+\begin{align*}
+  \obsvec_t &= \obsymat_t \statevec_t +
+     \altobsvar_t \alldist_t \\
+  \statevec_{t+1} &= \statemat_t \statevec_t +
+     \altstatevar_t \alldist_t
+\end{align*}
+%
+where $\alldist_t$ is a ($\alldim \times 1$) disturbance vector which
+is assumed to satisfy $\alldist_t \sim N(0, I_{\alldim})$,
+$\altstatevar_t$ is ($\stdim \times \alldim$) and $\altobsvar_t$ is
+($\obsdim \times \alldim$).  In that case we may re-express the
+variance matrices from section~\ref{sec:notation} above as
+\begin{align*}
+  \obsvar_t &= \altobsvar_t \altobsvar_t' \\
+  \statevar_t &= \altstatevar_t \altstatevar_t'
+\end{align*}
+with the addition of
+\[
+  \mbox{Cov}(\stdist_t,\obsdist_t) = \altstatevar_t \altobsvar_t'
+\]
+In terms of input syntax, if the state and observation disturbances
+are cross-correlated five arguments should be given to the
+\cmd{ksetup} function (see section~\ref{sec:setup}): in place of
+giving $\statevar$ you should give the two matrices identified above as
+$\altstatevar$ and $\altobsvar$, as in
+\begin{code}
+bundle SSxmod = ksetup(y, Z, T, H, G)
+\end{code}
+
+In case you wish to retrieve or update information on the variance of
+the disturbances, note that in the cross-correlated case the bundle
+keys \texttt{statevar} and \texttt{obsvar} are taken to designate the
+factors $\altstatevar$ and $\altobsvar$ respectively.
+
 \subsection{The initial state under simulation}
 \label{sec:simstart}
 
@@ -798,6 +765,39 @@ could set $\alpha_1$ thus:
 matrix A = psdroot(B.inivar)
 B.simstart = B.inistate + A * mnormal(B.r, 1)
 \end{code}
+
+\section{Numerical optimization}
+\label{sec:ssopt}
+
+If the object of using a state space model is to produce maximum
+likelihood estimates of some parameters of interest, note that the
+loglikelihood surface may be quite awkward (far from globally
+concave), posing a challenge for numerical methods such as BFGS, the
+default maximizer under gretl's \texttt{mle} command. Symptoms may
+include failure of convergence---typically due to an excessive
+computed gradient even as the maximizer cannot find an improvement in
+the objective function---or an excessive number of iterations. In such
+cases it is worth considering the following points.
+\begin{itemize}
+\item In some cases, scaling the observables may help: if the order of
+  magnitude of $y_t$ is too small or too large, floating-point
+  precision may become an issue for estimating variances.
+\item If you can obtain plausible initial values for the parameters,
+  things are likely to go better than starting with arbitrary values.
+\item The limited-memory version of BFGS (L-BFGS) may work better than
+  the standard version in some cases. To engage this, issue the
+  command
+\begin{code}
+set lbfgs on
+\end{code}
+  prior to ML estimation.
+\item It may be helpful to employ a more accurate (but computationally
+  more expensive) method for computing the gradient, namely Richardson
+  extrapolation. Here the command is
+\begin{code}
+set bfgs_richardson on
+\end{code}
+\end{itemize}
 
 \section{Example scripts}
 \label{sec:ss-examples}
@@ -1022,7 +1022,7 @@ is a random walk with normal increments of variance $\sigma^2_1$ and
 $\varepsilon_t$ is normal white noise with variance $\sigma^2_2$,
 independent of $\mu_t$. This is known as the ``local level'' model,
 and it can be cast in state-space form as equations
-(\ref{eq:obs})--(\ref{eq:state}) with $\statemat = 1$, $\strdist_t \sim
+(\ref{eq:obs})--(\ref{eq:state}) with $\statemat = 1$, $\stdist_t \sim
 N(0,\, \sigma^2_1)$, $\obsymat = 1$ and $\obsdist_t \sim N(0,\,
 \sigma^2_2)$.\footnote{Note that the local level model, plus other
   common ``Structural Time Series'' models are implemented in the
@@ -1044,7 +1044,7 @@ commands, we don't use \cmd{ksimul} in this context.\footnote{Warning:
   the script is written as if equation \eqref{eq:state} was modified
   into the equivalent formulation
   \[
-  \statevec_{t} = \statemat \statevec_{t-1} + \strdist_t
+  \statevec_{t} = \statemat \statevec_{t-1} + \stdist_t
   \]
   We kept the script as simple as possible so that the reader can
   focus on the interesting aspects.}
@@ -1399,14 +1399,14 @@ shown in Figure \ref{fig:GUIrwstate} should be produced.
 \begin{code}
 Observation equation
 
-             coefficient   std. error     z     p-value 
+             coefficient   std. error     z     p-value
   ------------------------------------------------------
   stdev[1]    0.939311     0.0496287    18.93   6.86e-80 ***
 
 
 State transition equation
 
-             coefficient   std. error     z     p-value 
+             coefficient   std. error     z     p-value
   ------------------------------------------------------
   stdev[1]    0.274650     0.0488920    5.617   1.94e-08 ***
 
@@ -1473,7 +1473,7 @@ Observation equation
 
 State transition equation
 
-             coefficient   std. error     z     p-value 
+             coefficient   std. error     z     p-value
   ------------------------------------------------------
   stdev[1]   0.0269790     0.00409457   6.589   4.43e-11 ***
   stdev[2]   0.00648082    0.00202576   3.199   0.0014   ***
