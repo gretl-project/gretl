@@ -4,6 +4,7 @@
 AppName=gretl
 AppVerName=gretl version VERSION (x86_64)
 AppVersion=VERSION
+MinVersion=10.0
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 AppPublisher=The gretl team
