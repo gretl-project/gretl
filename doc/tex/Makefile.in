@@ -25,6 +25,7 @@ SVMDOC = gretl-svm.pdf
 LPDOC = gretl-lpsolve.pdf
 KBD = gretl-keys.pdf
 US = $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(LPDOC) $(KBD)
+USBASE = $(GUIDE) $(REF)
 
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
@@ -37,6 +38,7 @@ ALTLPDOC = gretl-lpsolve-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
 A4 = $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) \
  $(ALTLPDOC) $(ALTKBD)
+A4BASE = $(ALTGUIDE) $(ALTREF)
 
 GUIDETEX = gretl-guide.tex \
 	introduction.tex \
@@ -139,6 +141,8 @@ GENTEX2 = tabinternals.tex tabfunctions.tex tabloopcmds.tex \
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
 all: $(US) $(A4)
+
+base: $(USBASE) $(A4BASE)
 
 $(GUIDE): $(GUIDETEX) $(GENTEX1) date.tex $(STYSRC) $(BIBSRC) | figlink
 	pdflatex $<
