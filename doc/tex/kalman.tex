@@ -157,15 +157,15 @@ The automatic initialization of $\statecvar_{1|0}$ (in case
 \texttt{inivar} is not specified) is applicable only if all the
 eigenvalues of $\statemat$ lie inside the unit circle. In this case,
 the variance for the marginal distribution of $\statevec_t$ is well
-defined and equals
+defined and the initializer is computed using
 \[
 \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
-\right]^{-1} \myvec(\statevar) ,
+\right]^{-1} \myvec(\statevar)
 \]
-which is the formula used internally. Otherwise, we apply a diffuse
-prior, setting $\statecvar_{1|0} = \kappa I_r$ with $\kappa = 10^7$.
-You can impose this diffuse prior from the outset by setting a value
-of 1 on the bundle under the (reserved) key \texttt{diffuse}:
+Otherwise, we apply a diffuse prior, setting
+$\statecvar_{1|0} = \kappa I_r$ with $\kappa = 10^7$.  You can impose
+this diffuse prior from the outset by setting a value of 1 on the
+bundle under the (reserved) key \texttt{diffuse}:
 %
 \begin{code}
 SSmod.diffuse = 1
@@ -179,41 +179,6 @@ via \texttt{inivar} using a somewhat smaller value of $\kappa$, as in
 SSmod.inivar = 1.0e5 * I(stdim)
 \end{code}
 where \texttt{stdim} is the dimension of the state.
-
-% The automatic initialization of $\statecvar_{1|0}$ (in case
-% \texttt{inivar} is not specified) is applicable only if all the
-% eigenvalues of $\statemat$ lie inside the unit circle. In this case,
-% the variance for the marginal distribution of $\statevec_t$ is well
-% defined and equals
-% \[
-% \myvec(\statecvar_{1|0}) = \left[ I - \statemat \otimes \statemat
-% \right]^{-1} \myvec(\statevar) ,
-% \]
-% which is the formula used internally. Otherwise, we apply a ``diffuse
-% prior'', setting $\statecvar_{1|0} = \kappa I_r$ with
-% $\kappa \rightarrow \infty$ and using the exact initial iterations for
-% this case as set out in \cite{koopman97}. You can impose this diffuse
-% prior from the outset by setting a non-zero scalar value on the bundle
-% under the (reserved) key \texttt{diffuse}:
-% %
-% \begin{code}
-% SSmod.diffuse = 1
-% \end{code}
-% The advantage of this setting is that it cuts out some unnecessary
-% computation when you know in advance that the automatic initialization
-% described above is bound to fail.
-
-% The ``traditional'' alternative to Koopman's procedure when
-% $\statecvar_{1|0}$ is unknown is to specify a large finite variance,
-% as in
-% %
-% \begin{code}
-% SSmod.inivar = 1.0e7 * I(r)
-% \end{code}
-% %
-% This may lead to numerical problems, but in some cases it may be worth
-% trying if the Koopman method fails.
-
 
 \section{Special features of state-space bundles}
 \label{sec:ss-special}
@@ -269,10 +234,10 @@ follows.
 %
 \begin{align*}
   \prederr_t &= \obsvec_t - \obsymat_t \statevec_t \\
-  F_t &= \obsymat_t \statecvar_t \obsymat_t' + R_t \\
+  F_t &= \obsymat_t \statecvar_t \obsymat_t' + \obsvar_t \\
   M_t &= \statemat_t \statecvar_t \obsymat_t'\\
   \statevec_{t+1} &= \statemat_t \statevec_t + K_t \prederr_t \\
-  \statecvar_{t+1} &= \statemat_t \statecvar_t \statemat_t' + Q_t - C_t\\
+  \statecvar_{t+1} &= \statemat_t \statecvar_t \statemat_t' + \statevar_t - C_t\\
 \end{align*}
 %
 where $K_t = M_t\predvar^{-1}_t$ is the Kalman gain, and
@@ -463,110 +428,7 @@ Section~\ref{sec:example_dsmooth} presents a script which exercises
 the disturbance smoother and illustrates the difference between
 $V^{(1)}_t$ and $V^{(2)}_t$.
 
-\section{The \cmd{ksimul} function}
-\label{sec:ksimul}
 
-This simulation function has as its required arguments a pointer to a
-Kalman bundle and a matrix containing artificial disturbances, and it
-returns a matrix of simulation results. An optional trailing Boolean
-argument is supported, the purpose of which is explained below.
-
-If the disturbances are not cross-correlated, the matrix argument must
-be either $N \times \stdim$, if there is no disturbance in the
-observation equation, or $N \times (\stdim + \obsdim)$ if the
-$\obsvar$ (\texttt{obsvar}) matrix is specified. Row $t$ holds either
-$\stdist_t'$ or $(\stdist_t', \obsdist_t')$. Note that if
-$\statevar$ (\texttt{statevar}) is not simply an identity matrix you
-will have to scale the artificial state disturbances appropriately;
-the same goes for $\obsvar$ and the observation disturbances, if
-present. Given a matrix $U$ containing standard normal variates, in
-the general case this requires finding a matrix $A$ such that
-\[
-AA' = \Lambda \equiv \left(
-\begin{array}{ll}
-\statevar & 0_{r \times n} \\
-0_{n\times r} & \obsvar
-\end{array}
-\right)
-\]
-and post-multiplying $U$ by $A'$ (although it's not necessary to form
-$A$ explicitly if the disturbance variance matrices are
-diagonal). This is not particularly onerous if $\Lambda$ is
-time-invariant; gretl's \cmd{psdroot} function can be used to form $A$
-if it's needed. If $\statevar$ and/or $\obsvar$ are time-varying,
-however, this scaling can become quite burdensome. As a convenience,
-the ancillary function \cmd{ksimdata} can be used to pre-process the
-$U$ matrix automatically. Here's an example (we assume that a bundle
-named \texttt{b} has been obtained via \cmd{ksetup}):
-%
-\begin{code}
-matrix N = mnormal(500, b.r + b.n)
-matrix E = ksimdata(&b, N)
-matrix sim = ksimul(&b, E)
-\end{code}
-%
-or if you have no need to store the disturbances:
-%
-\begin{code}
-matrix sim = ksimul(&b, ksimdata(&b, mnormal(500, b.r + b.n)))
-\end{code}
-%
-Time-variation or no, \cmd{ksimdata} will ensure that the disturbances
-are scaled to the variances specified by $\statevar_t$ and
-$\obsvar_t$.
-
-If the disturbances are cross-correlated (see
-section~\ref{sec:crossd}) then the matrix argument to \cmd{ksimul}
-should be $N \times \alldim$, each row holding $\alldist_t'$. In this case
-no prior scaling is required since it is assumed that
-$\alldist_t \sim N(0, I)$ and the disturbances for the respective
-equations, $\altstatevar_t \alldist_t$ and $\altobsvar_t \alldist_t$,
-are computed internally, with regard to time-variation if applicable.
-
-For the purposes of \texttt{ksimul} the time-series length, $N$, is
-defined by the number of rows of the supplied disturbance matrix. This
-need not equal the original $N$ value (set from \texttt{obsy} in the
-initial call to \cmd{ksetup}), since \texttt{obsy} is ignored under
-simulation. However, if the model includes exogenous variables in the
-observation equation (\texttt{obsx}) and the simulation length is
-greater than the original $N$, the simulation will run out of data and
-fail unless you supply a larger $x$ matrix.  This can be done in
-either of two ways. You can add a suitably sized matrix to the Kalman
-bundle under the key \texttt{simx}; if present, this will be used in
-preference to \texttt{obsx} for simulation. Or if you don't mind
-over-writing the original \texttt{obsx} you can substitute another
-matrix with the required number of rows under that key.
-
-By default, the value returned by \cmd{ksimul} is a
-($N \times \obsdim$) matrix holding simulated values for the vector of
-observables at each time step; that is, row $t$ holds
-$\tilde{\obsvec}_t'$, where the tilde indicates a simulated quantity.
-To obtain a record of the simulated state, supply a non-zero value for
-the final, optional argument. In that case the returned matrix is
-$N \times (\stdim + \obsdim)$ and contains both the simulated state
-and the simulated observable; row $t$ holds
-$(\tilde{\statevec}_t', \tilde{\obsvec}_t')$.
-
-Note that the original \texttt{obsy} member of the bundle is not
-overwritten by \texttt{ksimul}, nor is \texttt{state} or any other
-user-accessible output matrix. On exit from \texttt{ksimul} the prior
-value of $N$ is restored.
-
-The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$
-is as follows: for $t=1,\dots,N$
-%
-\begin{align*}
-  \tilde{\obsvec}_t &= \obsymat_t \tilde{\statevec}_t + \obsdist_t  \\
-  \tilde{\statevec}_{t+1} &= \statemat_t \tilde{\statevec}_t + \stdist_t
-\end{align*}
-%
-This implies that a value for $\tilde{\statevec}_1$ is required to get
-things started. You can add such a value to a Kalman bundle under the
-reserved key \texttt{simstart}. If this member is not present in the
-bundle, $\tilde{\statevec}_1$ defaults to the value given under the
-key \texttt{inistate}, or if that in turn is not present, to a zero
-vector. A further note on initializing the state can be found in
-section~\ref{sec:simstart}.
 
 % \textbf{IDEA}: it would be very nice to find a simple case to
 % exemplify this in a bootstrap context, along the lines of
@@ -740,14 +602,115 @@ the disturbances, note that in the cross-correlated case the bundle
 keys \texttt{statevar} and \texttt{obsvar} are taken to designate the
 factors $\altstatevar$ and $\altobsvar$ respectively.
 
-\subsection{The initial state under simulation}
-\label{sec:simstart}
+\section{The \cmd{ksimul} function}
+\label{sec:ksimul}
 
-We pointed out in section~\ref{sec:ksimul} above that you can specify
-the initial state, $\statevec_1$, from which recursion starts under
-simulation via the bundle key \texttt{simstart}. If you wish to make
-this starting point stochastic, you can emulate the procedure followed
-by \textsf{SsfPack}, namely setting
+This simulation function has as its required arguments a pointer to a
+Kalman bundle and a matrix containing artificial disturbances, and it
+returns a matrix of simulation results. An optional trailing Boolean
+argument is supported, the purpose of which is explained below.
+
+If the disturbances are not cross-correlated, the matrix argument must
+be either $N \times \stdim$, if there is no disturbance in the
+observation equation, or $N \times (\stdim + \obsdim)$ if the
+$\obsvar$ (\texttt{obsvar}) matrix is specified. Row $t$ holds either
+$\stdist_t'$ or $(\stdist_t', \obsdist_t')$. Note that if
+$\statevar$ (\texttt{statevar}) is not simply an identity matrix you
+will have to scale the artificial state disturbances appropriately;
+the same goes for $\obsvar$ and the observation disturbances, if
+present. Given a matrix $U$ containing standard normal variates, in
+the general case this requires finding a matrix $A$ such that
+\[
+AA' = \Lambda \equiv \left(
+\begin{array}{ll}
+\statevar & 0_{r \times n} \\
+0_{n\times r} & \obsvar
+\end{array}
+\right)
+\]
+and post-multiplying $U$ by $A'$ (although it's not necessary to form
+$A$ explicitly if the disturbance variance matrices are
+diagonal). This is not particularly onerous if $\Lambda$ is
+time-invariant; gretl's \cmd{psdroot} function can be used to form $A$
+if it's needed. If $\statevar$ and/or $\obsvar$ are time-varying,
+however, this scaling can become quite burdensome. As a convenience,
+the ancillary function \cmd{ksimdata} can be used to pre-process the
+$U$ matrix automatically. Here's an example (we assume that a bundle
+named \texttt{b} has been obtained via \cmd{ksetup}):
+%
+\begin{code}
+matrix N = mnormal(500, b.r + b.n)
+matrix E = ksimdata(&b, N)
+matrix sim = ksimul(&b, E)
+\end{code}
+%
+or if you have no need to store the disturbances:
+%
+\begin{code}
+matrix sim = ksimul(&b, ksimdata(&b, mnormal(500, b.r + b.n)))
+\end{code}
+%
+Time-variation or no, \cmd{ksimdata} will ensure that the disturbances
+are scaled to the variances specified by $\statevar_t$ and
+$\obsvar_t$.
+
+If the disturbances are cross-correlated (see
+section~\ref{sec:crossd}) then the matrix argument to \cmd{ksimul}
+should be $N \times \alldim$, each row holding $\alldist_t'$. In this case
+no prior scaling is required since it is assumed that
+$\alldist_t \sim N(0, I)$ and the disturbances for the respective
+equations, $\altstatevar_t \alldist_t$ and $\altobsvar_t \alldist_t$,
+are computed internally, with regard to time-variation if applicable.
+
+For the purposes of \texttt{ksimul} the time-series length, $N$, is
+defined by the number of rows of the supplied disturbance matrix. This
+need not equal the original $N$ value (set from \texttt{obsy} in the
+initial call to \cmd{ksetup}), since \texttt{obsy} is ignored under
+simulation. However, if the model includes exogenous variables in the
+observation equation (\texttt{obsx}) and the simulation length is
+greater than the original $N$, the simulation will run out of data and
+fail unless you supply a larger $x$ matrix.  This can be done in
+either of two ways. You can add a suitably sized matrix to the Kalman
+bundle under the key \texttt{simx}; if present, this will be used in
+preference to \texttt{obsx} for simulation. Or if you don't mind
+over-writing the original \texttt{obsx} you can substitute another
+matrix with the required number of rows under that key.
+
+By default, the value returned by \cmd{ksimul} is a
+($N \times \obsdim$) matrix holding simulated values for the vector of
+observables at each time step; that is, row $t$ holds
+$\tilde{\obsvec}_t'$, where the tilde indicates a simulated quantity.
+To obtain a record of the simulated state, supply a non-zero value for
+the final, optional argument. In that case the returned matrix is
+$N \times (\stdim + \obsdim)$ and contains both the simulated state
+and the simulated observable; row $t$ holds
+$(\tilde{\statevec}_t', \tilde{\obsvec}_t')$.
+
+Note that the original \texttt{obsy} member of the bundle is not
+overwritten by \texttt{ksimul}, nor is \texttt{state} or any other
+user-accessible output matrix. On exit from \texttt{ksimul} the prior
+value of $N$ is restored.
+
+\subsection{The initial state under simulation}
+
+The recursion that yields $\tilde{\obsvec}$ and $\tilde{\statevec}$
+is as follows: for $t=1,\dots,N$
+%
+\begin{align*}
+  \tilde{\obsvec}_t &= \obsymat_t \tilde{\statevec}_t + \obsdist_t  \\
+  \tilde{\statevec}_{t+1} &= \statemat_t \tilde{\statevec}_t + \stdist_t
+\end{align*}
+%
+This implies that a value for $\tilde{\statevec}_1$ is required to get
+things started. You can add such a value to a Kalman bundle under the
+reserved key \texttt{simstart}. If this member is not present in the
+bundle, $\tilde{\statevec}_1$ defaults to the value given under the
+key \texttt{inistate}, or if that in turn is not present, to a zero
+vector.
+
+Alternatively, the starting point can be made stochastic. To do this
+you can emulate the procedure followed by \textsf{SsfPack}, namely
+setting
 \[
 \alpha_1 = a + A v_0
 \]
@@ -755,15 +718,14 @@ where $a$ is a non-stochastic $r$-vector, $v_0$ is an $r$-vector
 of standard normal random numbers, and $A$ is a matrix such
 that $AA' = \statecvar_0$.
 
-Let's say we have a state-space bundle \texttt{B}, on which we have
+Let's say we have a state-space bundle \texttt{b}, on which we have
 already set suitable values of \texttt{inistate} (corresponding to $a$
-above) and \texttt{inivar} ($\statecvar_0$).  Now we want to
-perform a simulation with a stochastic starting point. In hansl we
-could set $\alpha_1$ thus:
+above) and \texttt{inivar} ($\statecvar_0$).  To perform a simulation
+with a stochastic starting point we can set $\alpha_1$ thus:
 %
 \begin{code}
-matrix A = psdroot(B.inivar)
-B.simstart = B.inistate + A * mnormal(B.r, 1)
+matrix A = psdroot(b.inivar)
+b.simstart = b.inistate + A * mnormal(b.r, 1)
 \end{code}
 
 \section{Numerical optimization}
