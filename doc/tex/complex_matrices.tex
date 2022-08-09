@@ -29,7 +29,7 @@ values (as is the \texttt{series} type). A $1 \times 1$ complex matrix
 should do any work you might require of a complex scalar.
 
 Before we proceed to the details of complex matrices in gretl, here's
-a brief reminder of the revelant concepts and notation. Complex
+a brief reminder of the relevant concepts and notation. Complex
 numbers are pairs of the form $a + b\,i$ where $a$ and $b$ are real
 numbers and $i$ is defined as the square root of $-1$: $a$ is the real
 part and $b$ the imaginary part. One can specify a complex number
@@ -380,11 +380,10 @@ Prior to version 2019d gretl did not provide native support for
 complex matrices. It did, however, offer an improvised representation
 of such matrices for certain restricted purposes, taking the form of
 an expanded regular gretl matrix with real values and imaginary parts
-in odd-numbered and even-numbered columns, respectively.  The
-functions \cmd{fft}, \cmd{eigengen} and \cmd{polroots} returned
-matrices in this special form, and the functions \cmd{cmult} and
-\cmd{cdiv} (complex multiplication and division) operated on such
-matrices.
+in odd- and even-numbered columns, respectively.  The functions
+\cmd{fft}, \cmd{eigengen} and \cmd{polroots} returned matrices in this
+special form, and the functions \cmd{cmult} and \cmd{cdiv} operated on
+such matrices.
 
 As of version 2022b, \cmd{fft} and \cmd{polroots} have been redefined
 to work with ``proper'' complex matrices as described above. The other
@@ -422,6 +421,21 @@ from \texttt{cmult} and \texttt{cdiv} could be either a real vector or
 a (two column) complex vector, the new-style operations yield a
 nominally complex result if at least one of the operands is complex,
 even if the result has an all-zero imaginary part.
+
+A piece of code that appears in some contexts (such as calculation of
+a periodogram) is as follows: given a complex vector, \texttt{v},
+compute a vector \texttt{w} holding the squared moduli of the elements
+of \texttt{v}. The old-style code to accomplish this was
+\begin{code}
+# legacy: v has two columns
+w = sumr(v.^2)
+\end{code}
+and the new replacement is
+\begin{code}
+# current: v has a single complex column
+w = abs(v).^2
+\end{code}
+where \texttt{abs} gives the complex modulus.
 
 \texttt{eigengen}: Most uses of this legacy function simply retrieve
 the eigenvalues of a general (that is, not symmetric) matrix, and do
