@@ -105,11 +105,11 @@ a MIDAS-style file named \texttt{gdp\_payroll\_midas.gdt} is shown in
 Listing~\ref{lst:ghysels-data}.
 
 \begin{script}[htbp]
-  \scriptcaption{Building a gretl MIDAS dataset via merger}
+  \fragcaption{Building a gretl MIDAS dataset via merger}
   \label{lst:ghysels-data}
 \begin{scode}
 # sheet 2 contains monthly employment data
-open MIDASv2.0/mydata.xlsx --sheet=2
+open MIDASv2.2/mydata.xlsx --sheet=2
 rename VALUE payems
 dataset compact 4 spread
 # limit to the sample range of the GDP data
@@ -120,7 +120,7 @@ setinfo payems_m1 --description="Non-farm payroll employment, month 1 of quarter
 store payroll_midas.gdt
 
 # sheet 1 contains quarterly GDP data
-open MIDASv2.0/mydata.xlsx --sheet=1
+open MIDASv2.2/mydata.xlsx --sheet=1
 rename VALUE qgdp
 setinfo qgdp --description="Real quarterly US GDP"
 append payroll_midas.gdt
