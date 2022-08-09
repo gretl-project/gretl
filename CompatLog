@@ -1,4 +1,10 @@
-version 2022b, in progress
+2022-08-09 version 2022b
+
+The deprecated legacy function fft() has been replaced by a
+version that assumes the native representation of complex
+matrices introduced in 2019d. The transitional name assigned to
+the new-style function, "fft2", remains in place as an alias to
+the revised fft().
 
 The "order" member of the $system bundle made available by the
 "vecm" command has been redfined to equal the lag order in levels
@@ -8,12 +14,6 @@ output. (Before, "order" gave the lag order in differences.)
 The --compat option for the "store" command (which enabled
 saving a gretl binary datafile in the format used prior to gretl
 2020b) has been removed.
-
-The deprecated legacy function fft() has been replaced by a
-version that assumes the native representation of complex
-matrices introduced in 2019d. The transitional name assigned to
-the new-style function, "fft2", remains in place as an alias to
-the revised fft().
 
 2022-02-02 version 2022a
 
