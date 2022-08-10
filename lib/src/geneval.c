@@ -299,6 +299,19 @@ static char *flagstr (guint8 flags)
     return ret;
 }
 
+static void print_node_details (NODE *t)
+{
+    fprintf(stderr, "node at %p (type %03d, %s, flags %s",
+	    (void *) t, t->t, getsymb(t->t), flagstr(t->flags));
+    if (t->t == STR) {
+	fprintf(stderr, ", val '%s')\n", t->v.str);
+    } else if (t->t == NUM) {
+	fprintf(stderr, ", val %g)\n", t->v.xval);
+    } else {
+	fputs(")\n", stderr);
+    }
+}
+
 static void print_tree (NODE *t, parser *p, int level, char pos)
 {
     if (t == NULL) {
@@ -338,15 +351,8 @@ static void print_tree (NODE *t, parser *p, int level, char pos)
 	} else {
 	    fputc('\n', stderr);
 	}
-    } else if (t->t == STR) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %s, val '%s')\n",
-		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->v.str);
-    } else if (t->t == NUM) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %s, val %g)\n",
-		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->v.xval);
     } else {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %s)\n",
-		(void *) t, t->t, getsymb(t->t), flagstr(t->flags));
+	print_node_details(t);
     }
 
     if (t->aux != NULL) {
@@ -19511,6 +19517,26 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
     return m2;
 }
 
+static int should_copy_into_array (NODE *n, parser *p)
+{
+    int cpy = !is_tmp_node(n);
+
+    /* In general if @n is a tmp node we can 'donate' its content
+       to an array rather than copying it in, but there's a tricky
+       case: we're compiling a "genr", or running a compiled one,
+       and @n holds a string literal. If we don't copy this, it
+       will have disappeared by the next call to the genr. There
+       may be a simpler and more elegant way of identifying this
+       case, but for now the following works (2022-08-10).
+    */
+    if (!cpy && !is_aux_node(n) && n->t == STR &&
+	n->vname == NULL && (p->flags & (P_COMPILE | P_EXEC))) {
+	cpy = 1; /* we _should_ copy! */
+    }
+
+    return cpy;
+}
+
 static void do_array_append (parser *p)
 {
     gretl_array *A = NULL;
@@ -19545,8 +19571,13 @@ static void do_array_append (parser *p)
         p->err = E_TYPES;
     }
 
+#if EDEBUG
+    fprintf(stderr, "do_array_append: node to append\n");
+    print_node_details(rhs);
+#endif
+
     if (!p->err && ptr != NULL) {
-        int copy = !is_tmp_node(rhs);
+        int copy = should_copy_into_array(rhs, p);
 
         p->err = gretl_array_append_object(A, ptr, copy);
         if (!copy && !p->err) {
@@ -20213,12 +20244,12 @@ static int save_generated_var (parser *p, PRN *prn)
     int t, v = 0;
 
 #if EDEBUG
-    fprintf(stderr, "save (%s): lhname='%s'\n  callcount=%d\n"
-            "lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
+    fprintf(stderr, "\nsave (%s): lhname='%s', callcount %d\n"
+            "  lh.t=%s, targ=%s, no_decl=%d, r->t=%s, r=%p\n",
             p->lhtree != NULL ? "compound" : "unitary",
             p->lh.name, p->callcount, getsymb(p->lh.t),
             getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
-            (r == NULL)? "none" : getsymb(r->t));
+            (r == NULL)? "none" : getsymb(r->t), (void *) r);
 #endif
 
     if (p->flags & P_STRVEC) {
@@ -20672,7 +20703,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
 	    "callcount=%d, compiled=%d\n",
 	    getsymb(p->targ), p->lh.name, getsymb(p->op),
-	    p->callcount, compiled(p));
+	    p->callcount, compiled(p) ? 1 : 0);
 #endif
 
     if (*p->lh.name != '\0') {
