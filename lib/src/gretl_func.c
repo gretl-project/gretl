@@ -274,7 +274,6 @@ static char mpi_caller[FN_NAMELEN];
 #endif
 
 #define function_is_private(f)   (f->flags & UFUN_PRIVATE)
-#define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
 
@@ -2168,12 +2167,12 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
-	    " private = %d, plugin = %d\n", fun->name, fun->rettype,
-	    function_is_private(fun), function_is_plugin(fun));
+	    " private = %d\n", fun->name, fun->rettype,
+	    function_is_private(fun));
 #endif
 
-    if (pkg == NULL && (function_is_private(fun) || function_is_plugin(fun))) {
-	fprintf(stderr, "unpackaged function: can't be private or plugin\n");
+    if (pkg == NULL && function_is_private(fun)) {
+	fprintf(stderr, "unpackaged function: can't be private\n");
 	ufunc_free(fun);
 	return E_DATA;
     }
@@ -2329,9 +2328,6 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 
     if (function_is_private(fun)) {
 	pputs(prn, " private=\"1\"");
-    }
-    if (function_is_plugin(fun)) {
-	pputs(prn, " plugin-wrapper=\"1\"");
     }
     if (function_is_noprint(fun)) {
 	pputs(prn, " no-print=\"1\"");
@@ -9172,149 +9168,6 @@ static int do_debugging (ExecState *s)
 	!gretl_compiling_loop();
 }
 
-#define CDEBUG 1
-
-/* Construct bundle of arguments to send to C function;
-   load plugin; send arguments; and try to retrieve
-   return value, if any.
-*/
-
-static int handle_plugin_call (fncall *call,
-			       DATASET *dset,
-			       void *retval,
-			       PRN *prn)
-{
-    ufunc *u = call->fun;
-    int (*cfunc) (gretl_bundle *, PRN *);
-    void *handle;
-    gretl_bundle *argb;
-    int i, err = 0;
-
-#if CDEBUG
-    fprintf(stderr, "handle_plugin_call: function '%s'\n", u->name);
-#endif
-
-    if (u->pkg == NULL) {
-	return E_DATA;
-    }
-
-    cfunc = get_packaged_C_function(u->pkg->name, u->name, &handle);
-
-    if (cfunc == NULL) {
-	return E_FOPEN;
-    }
-
-    /* bundle to serve as wrapper for arguments */
-    argb = gretl_bundle_new();
-
-    if (argb == NULL) {
-	close_plugin(handle);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<call->argc && !err; i++) {
-	fn_param *fp = &u->params[i];
-	fn_arg *arg = &call->args[i];
-	const char *key = fp->name;
-
-	if (!type_can_be_bundled(fp->type)) {
-	    fprintf(stderr, "type %d: cannot be bundled\n", fp->type);
-	    err = E_TYPES;
-	    break;
-	}
-
-	if (gretl_scalar_type(fp->type)) {
-	    double x;
-
-	    if (arg->type == GRETL_TYPE_NONE) {
-		x = fp->deflt;
-	    } else if (arg->type == GRETL_TYPE_MATRIX) {
-		x = arg->val.m->val[0];
-	    } else {
-		x = arg->val.x;
-	    }
-	    if (fp->type == GRETL_TYPE_INT || fp->type == GRETL_TYPE_OBS) {
-		x = (int) x;
-	    } else if (fp->type == GRETL_TYPE_BOOL) {
-		x = (x != 0.0);
-	    }
-	    err = gretl_bundle_set_data(argb, key, &x, GRETL_TYPE_DOUBLE, 0);
-	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    gretl_matrix *m = arg->val.m;
-
-	    err = gretl_bundle_set_data(argb, key, m, fp->type, 0);
-	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    int size = sample_size(dset);
-	    double *px;
-
-	    if (arg->type == GRETL_TYPE_USERIES) {
-		px = dset->Z[arg->val.idnum];
-	    } else {
-		px = arg->val.px;
-	    }
-	    err = gretl_bundle_set_data(argb, key, px + dset->t1,
-					GRETL_TYPE_SERIES, size);
-	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    gretl_bundle *b = arg->val.b;
-
-	    err = gretl_bundle_set_data(argb, key, b,
-					GRETL_TYPE_BUNDLE, 0);
-	} else {
-	    /* FIXME strings and maybe other types */
-	    err = E_TYPES;
-	}
-#if CDEBUG
-	fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n",
-		i, key, fp->type, err);
-#endif
-    }
-
-    if (!err) {
-	/* call the plugin function */
-	err = (*cfunc) (argb, prn);
-    }
-
-    close_plugin(handle);
-
-    if (!err && u->rettype != GRETL_TYPE_VOID && retval != NULL) {
-	GretlType type;
-	int size;
-	void *ptr;
-
-	ptr = gretl_bundle_steal_data(argb, "retval", &type, &size, &err);
-
-	if (!err) {
-#if CDEBUG
-	    fprintf(stderr, "%s: stole return value of type %d\n",
-		    u->name, type);
-#endif
-	    if (type != u->rettype) {
-		fprintf(stderr, "handle_plugin_call: type doesn't match u->rettype\n");
-		err = E_TYPES;
-	    }
-	}
-	if (!err) {
-	    if (type == GRETL_TYPE_DOUBLE) {
-		double *px = ptr;
-
-		*(double *) retval = *px;
-		free(ptr);
-	    } else if (type == GRETL_TYPE_MATRIX) {
-		*(gretl_matrix **) retval = ptr;
-	    } else if (type == GRETL_TYPE_BUNDLE) {
-		*(gretl_bundle **) retval = ptr;
-	    } else if (gretl_array_type(type)) {
-		*(gretl_array **) retval = ptr;
-	    }
-	}
-    }
-
-    /* free the arguments wrapper */
-    gretl_bundle_destroy(argb);
-
-    return err;
-}
-
 int current_function_size (void)
 {
     ufunc *u = currently_called_function();
@@ -9455,20 +9308,10 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	call->orig_v = 0;
     }
 
-    if (!function_is_plugin(u)) {
-	/* precaution */
-	function_state_init(&cmd, &state, &indent0);
-    }
+    /* precaution */
+    function_state_init(&cmd, &state, &indent0);
 
     err = check_function_args(call, prn);
-
-    if (function_is_plugin(u)) {
-	if (!err) {
-	    err = handle_plugin_call(call, dset, ret, prn);
-	}
-	maybe_destroy_fncall(call);
-	return err;
-    }
 
     if (!err) {
 	err = allocate_function_args(call, dset);

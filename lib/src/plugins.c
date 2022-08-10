@@ -558,28 +558,6 @@ static void *get_plugin_handle_by_name (const char *name)
     return gretl_dlopen(pluginpath, 0);
 }
 
-void *get_packaged_C_function (const char *pkgname,
-			       const char *funcname,
-			       void **handle)
-{
-    void *funp;
-
-    *handle = get_plugin_handle_by_name(pkgname);
-    if (*handle == NULL) {
-	return NULL;
-    }
-
-    funp = get_function_address(*handle, funcname);
-
-    if (funp == NULL) {
-	gretl_errmsg_set(_("Couldn't load plugin function"));
-	close_plugin(*handle);
-	*handle = NULL;
-    }
-
-    return funp;
-}
-
 /* For use with valgrind: if you want to trace memory
    leaks into plugin code you have to keep the plugins
    open at program termination. So you can define this
