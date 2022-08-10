@@ -9312,11 +9312,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_state_init(&cmd, &state, &indent0);
 
     err = check_function_args(call, prn);
-
     if (!err) {
 	err = allocate_function_args(call, dset);
     }
-
     if (err) {
 	/* get out before allocating further storage */
 	maybe_destroy_fncall(call);
@@ -9326,9 +9324,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     model = allocate_working_model();
     if (model == NULL) {
 	err = E_ALLOC;
-    }
-
-    if (!err) {
+    } else {
 	err = gretl_cmd_init(&cmd);
     }
 
