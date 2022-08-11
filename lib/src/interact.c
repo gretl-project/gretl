@@ -1535,7 +1535,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
         err = get_line_continuation(s->line, fp, prn);
         if (!err) {
-            err = maybe_exec_line(s, dset, NULL);
+            err = maybe_exec_line(s, dset, NULL, NULL);
         }
     }
 
@@ -4150,8 +4150,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 /* called by functions, and by scripts executed from within
    functions */
 
-int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
+int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
+                     void *ptr)
 {
+    int done = 0;
     int err = 0;
 
     if (string_is_blank(s->line)) {
@@ -4163,8 +4165,18 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
     } else {
         /* FIXME last arg to parse_command_line() ? */
         err = parse_command_line(s, dset, NULL);
-        if (!err && loopstart != NULL && s->cmd->ci == LOOP) {
-            *loopstart = 1;
+        if (!err) {
+            if (s->cmd->ci == LOOP && loopstart != NULL) {
+                *loopstart = 1;
+            } else if (s->cmd->ci == GENR && ptr != NULL) {
+                GENERATOR **pgen = ptr;
+                GretlType gtype = s->cmd->gtype;
+                const char *line = s->cmd->vstart;
+
+                *pgen = genr_compile(line, dset, gtype, OPT_NONE,
+                                     s->prn, &err);
+                done = 1;
+            }
         }
     }
 
@@ -4198,7 +4210,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 
     if (s->cmd->ci == FUNCERR) {
         err = E_FUNCERR;
-    } else {
+    } else if (!done) {
         /* note: error messages may be printed to s->prn */
         err = gretl_cmd_exec(s, dset);
     }

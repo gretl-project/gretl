@@ -48,8 +48,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define STRICT_CONST 1    /* activated 2021-04-08 */
-
 #define LSDEBUG 0       /* debug handling of saved loops */
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
@@ -87,15 +85,25 @@ struct fn_param_ {
     char immut;     /* state: immutable (const) at run-time */
 };
 
+typedef enum {
+    LINE_IGNORE = 1 << 0,
+    LINE_LOOP   = 1 << 1,
+    LINE_GENR   = 1 << 2
+} ln_flags;
+
 /* structure representing a line of a user-defined function */
 
 struct fn_line_ {
-    int idx;        /* 1-based line index (allowing for blanks) */
-    char *s;        /* text of command line */
-    LOOPSET *loop;  /* attached "compiled" loop */
-    int next_idx;   /* line index to skip to after loop */
-    int ignore;     /* flag for comment lines */
+    gint16 idx;      /* 1-based line index (allowing for blanks) */
+    gint16 next_idx; /* line index to skip to after loop */
+    char *s;         /* text of command line */
+    void *ptr;       /* attachment for LOOPSET or GENERATOR */
+    ln_flags flags;  /* see above */
 };
+
+#define line_has_loop(l) (l->flags & LINE_LOOP)
+#define line_has_genr(l) (l->flags & LINE_GENR)
+#define ignore_line(l)   (l->flags & LINE_IGNORE)
 
 #define UNSET_VALUE (-1.0e200)
 #define default_unset(p) (p->deflt == UNSET_VALUE)
@@ -455,14 +463,7 @@ static int fncall_add_args_array (fncall *fc)
 
 static void maybe_set_param_const (fn_param *fp)
 {
-#if STRICT_CONST
     fp->flags |= FP_CONST;
-#else
-    if (fp->type != GRETL_TYPE_LIST &&
-	!gretl_is_scalar_type(fp->type)) {
-	fp->flags |= FP_CONST;
-    }
-#endif
 }
 
 /**
@@ -1528,15 +1529,19 @@ static ufunc *ufunc_new (void)
 
 static void free_lines_array (fn_line *lines, int n)
 {
+    fn_line *line;
     int i;
 
     if (lines == NULL) return;
 
     for (i=0; i<n; i++) {
-	free(lines[i].s);
-	if (lines[i].loop != NULL) {
-	    gretl_loop_destroy(lines[i].loop);
-	}
+        line = &(lines[i]);
+	free(line->s);
+	if (line_has_loop(line)) {
+	    gretl_loop_destroy(line->ptr);
+	} else if (line_has_genr(line)) {
+            destroy_genr(line->ptr);
+        }
     }
 
     free(lines);
@@ -1844,9 +1849,9 @@ static int push_function_line (ufunc *fun, char *s, int donate)
 		}
 	    }
 	    if (!err) {
-		lines[i].loop = NULL;
+		lines[i].ptr = NULL;
 		lines[i].next_idx = -1;
-		lines[i].ignore = 0;
+		lines[i].flags = 0;
 		fun->n_lines = n;
 		fun->line_idx += 1;
 	    }
@@ -2528,10 +2533,12 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 {
     char **S = NULL;
+    fn_line *line;
     int i, j = 0;
 
     for (i=0; i<u->n_lines; i++) {
-	if (!u->lines[i].ignore) {
+        line = &(u->lines[i]);
+	if (!ignore_line(line)) {
 	    j++;
 	}
     }
@@ -2544,8 +2551,9 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 	*nlines = j;
 	j = 0;
 	for (i=0; i<u->n_lines; i++) {
-	    if (!u->lines[i].ignore) {
-		S[j++] = u->lines[i].s;
+            line = &(u->lines[i]);
+	    if (!ignore_line(line)) {
+		S[j++] = line->s;
 	    }
 	}
     }
@@ -7395,7 +7403,7 @@ int gretl_function_append_line (ExecState *s)
 		origline = NULL; /* successfully donated */
 	    }
 	    if (ignore) {
-		fun->lines[i].ignore = 1;
+		fun->lines[i].flags |= LINE_IGNORE;
 	    } else if (!blank) {
 		python_check(line);
 	    }
@@ -7852,18 +7860,12 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		i, gretl_type_get_name(fp->type), fp->name,
 		gretl_type_get_name(arg->type), arg->upname);
 #endif
-#if STRICT_CONST
 	/* extra conditions needed to avoid "const poisoning" */
 	if (!fp->immut && arg->upname != NULL &&
 	    fp->type != GRETL_TYPE_LIST &&
 	    !gretl_is_scalar_type(fp->type)) {
 	    fp->immut = object_is_const(arg->upname, -1);
 	}
-#else
-	if (!fp->immut && arg->upname != NULL) {
-	    fp->immut = object_is_const(arg->upname, -1);
-	}
-#endif
 
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
@@ -8711,20 +8713,25 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     return err;
 }
 
-/* reset any saved uservar addresses in context of saved loops */
+/* reset any saved uservar addresses in context of loops or
+   genrs attached to @u */
 
-static void reset_saved_loops (ufunc *u)
+static void reset_saved_uservars (ufunc *u)
 {
+    fn_line *line;
     int i;
 
     for (i=0; i<u->n_lines; i++) {
-	if (u->lines[i].loop != NULL) {
+        line = &(u->lines[i]);
+	if (line_has_loop(line)) {
 # if GLOBAL_TRACE
 	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
-		    u->name, (void *) u->lines[i].loop);
+		    u->name, (void *) line->ptr);
 # endif
-	    loop_reset_uvars(u->lines[i].loop);
-	}
+	    loop_reset_uvars(line->ptr);
+	} else if (line_has_genr(line)) {
+            genr_reset_uvars(line->ptr);
+        }
     }
 }
 
@@ -9188,12 +9195,15 @@ int attach_loop_to_function (void *ptr)
     if (u == NULL) {
 	return E_DATA;
     } else {
-	if (u->lines[u->line_idx].loop != NULL) {
+        fn_line *line = &(u->lines[u->line_idx]);
+
+	if (line->ptr != NULL) {
 	    /* there should not already be a loop attached */
 	    err = E_DATA;
 	} else {
 	    /* OK, attach it */
-	    u->lines[u->line_idx].loop = ptr;
+	    line->ptr = ptr;
+            line->flags |= LINE_LOOP;
 #if LSDEBUG || GLOBAL_TRACE
 	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
 		    ptr, u->name, u->line_idx);
@@ -9217,15 +9227,18 @@ int detach_loop_from_function (void *ptr)
     if (u == NULL) {
 	return E_DATA;
     } else {
+        fn_line *line;
 	int i;
 
 	for (i=0; i<u->n_lines; i++) {
-	    if (u->lines[i].loop == ptr) {
+            line = &(u->lines[i]);
+	    if (line->ptr == ptr) {
 #if LSDEBUG || GLOBAL_TRACE
 		fprintf(stderr, "detaching loop at %p from function %s\n",
 			ptr, u->name);
 #endif
-		u->lines[i].loop = NULL;
+		line->ptr = NULL;
+                line->flags &= ~LINE_LOOP;
 		break;
 	    }
 	}
@@ -9281,6 +9294,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int debugging = u->debug;
+    int looping = 0;
     int loopstart = 0;
     int i, err = 0;
 
@@ -9294,9 +9308,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
+    looping = gretl_looping(); /* FIXME also iteration */
+
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
-    fprintf(stderr, "u->n_params = %d\n", u->n_params);
+    fprintf(stderr, "u->n_params = %d, looping = %d\n", u->n_params, looping);
 #endif
 
     if (dset != NULL) {
@@ -9364,9 +9380,10 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
-	int lineno = u->lines[i].idx;
+        fn_line *fline = &u->lines[i];
+	int lineno = fline->idx;
 
-	strcpy(line, u->lines[i].s);
+	strcpy(line, fline->s);
 
 	if (debugging) {
 	    pprintf(prn, "%s> %s\n", u->name, line);
@@ -9374,18 +9391,18 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    pprintf(prn, "? %s\n", line);
 	}
 
-	if (u->lines[i].ignore) {
+	if (ignore_line(fline)) {
 	    continue;
 	}
 
-	if (u->lines[i].loop != NULL && !is_recursing(call)) {
+	if (line_has_loop(fline) && !is_recursing(call)) {
 #if LSDEBUG
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
-		    (void *) u->lines[i].loop, i, line);
+		    (void *) fline->ptr, i, line);
 #endif
 	    if (!gretl_if_state_false()) {
 		/* not blocked, so execute the loop code */
-		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
+		err = gretl_loop_exec(&state, dset, fline->ptr);
 		if (err) {
 		    set_func_error_message(err, u, &state, state.line, -1);
 		    break;
@@ -9396,10 +9413,20 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		}
 	    }
 	    /* skip to the matching 'endloop' */
-	    i = u->lines[i].next_idx;
+	    i = fline->next_idx;
 	    continue;
+        } else if (line_has_genr(fline) && !is_recursing(call)) {
+            /* do we need to rule out the recursing case? */
+            err = execute_genr(fline->ptr, dset, prn);
 	} else {
-	    err = maybe_exec_line(&state, dset, &loopstart);
+            if (looping) {
+                err = maybe_exec_line(&state, dset, &loopstart, &fline->ptr);
+                if (!err && fline->ptr != NULL) {
+                    fline->flags |= LINE_GENR;
+                }
+            } else {
+                err = maybe_exec_line(&state, dset, &loopstart, NULL);
+            }
 	    if (loopstart) {
 		u->line_idx = i;
 		loopstart = 0;
@@ -9488,7 +9515,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			    descrip, prn, &err);
 
     if (!err && !is_recursing(call)) {
-	reset_saved_loops(call->fun);
+	reset_saved_uservars(call->fun);
     }
 
     gretl_exec_state_clear(&state);
