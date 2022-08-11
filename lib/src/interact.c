@@ -4147,8 +4147,39 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     return err;
 }
 
-/* called by functions, and by scripts executed from within
-   functions */
+static int try_compile_func_genr (ExecState *s,
+                                  DATASET *dset,
+                                  void *ptr,
+                                  int *done)
+{
+    GENERATOR **pgen = ptr;
+    GretlType gtype = s->cmd->gtype;
+    const char *line = s->cmd->vstart;
+    gretlopt gopt = OPT_NONE;
+    int err = 0;
+
+    if (s->cmd->opt & OPT_O) {
+	gopt |= OPT_O;
+    }
+
+    *pgen = genr_compile(line, dset, gtype, gopt,
+                         s->prn, &err);
+    if (!err && *pgen != NULL) {
+        *done = 1;
+    } else if (err == E_EQN) {
+	/* may be a non-compilable special such as "genr time" */
+	err = 0;
+    }
+
+    return err;
+}
+
+/* Called by functions, and by scripts executed from within
+   functions. Augmented 2022-08-11 to support a 4th argument,
+   for use in a function that is being called from a loop:
+   we'll attempt to "compile" GENR statements in this
+   context, for reuse when the function is next called.
+*/
 
 int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
                      void *ptr)
@@ -4168,14 +4199,9 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
         if (!err) {
             if (s->cmd->ci == LOOP && loopstart != NULL) {
                 *loopstart = 1;
-            } else if (s->cmd->ci == GENR && ptr != NULL) {
-                GENERATOR **pgen = ptr;
-                GretlType gtype = s->cmd->gtype;
-                const char *line = s->cmd->vstart;
-
-                *pgen = genr_compile(line, dset, gtype, OPT_NONE,
-                                     s->prn, &err);
-                done = 1;
+            } else if (s->cmd->ci == GENR && ptr != NULL &&
+                       !(s->cmd->flags & CMD_SUBST)) {
+                err = try_compile_func_genr(s, dset, ptr, &done);
             }
         }
     }
