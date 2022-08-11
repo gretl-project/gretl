@@ -547,17 +547,6 @@ void *get_plugin_function (const char *funcname)
     return funp;
 }
 
-static void *get_plugin_handle_by_name (const char *name)
-{
-    char pluginpath[MAXLEN];
-
-    strcpy(pluginpath, gretl_plugin_path());
-    strcat(pluginpath, name);
-    strcat(pluginpath, PLUGIN_EXT);
-
-    return gretl_dlopen(pluginpath, 0);
-}
-
 /* For use with valgrind: if you want to trace memory
    leaks into plugin code you have to keep the plugins
    open at program termination. So you can define this
