@@ -88,7 +88,8 @@ struct fn_param_ {
 typedef enum {
     LINE_IGNORE = 1 << 0,
     LINE_LOOP   = 1 << 1,
-    LINE_GENR   = 1 << 2
+    LINE_GENR   = 1 << 2,
+    LINE_RET    = 1 << 3
 } ln_flags;
 
 /* structure representing a line of a user-defined function */
@@ -101,9 +102,10 @@ struct fn_line_ {
     ln_flags flags;  /* see above */
 };
 
-#define line_has_loop(l) (l->flags & LINE_LOOP)
-#define line_has_genr(l) (l->flags & LINE_GENR)
-#define ignore_line(l)   (l->flags & LINE_IGNORE)
+#define line_has_loop(l)  (l->flags & LINE_LOOP)
+#define line_has_genr(l)  (l->flags & LINE_GENR)
+#define ignore_line(l)    (l->flags & LINE_IGNORE)
+#define is_return_line(l) (l->flags & LINE_RET)
 
 #define UNSET_VALUE (-1.0e200)
 #define default_unset(p) (p->deflt == UNSET_VALUE)
@@ -160,6 +162,7 @@ struct fncall_ {
 struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
+    fncall *call;          /* pointer to current call, or NULL */
     int pkg_role;          /* printer, plotter, etc. */
     UfunAttrs flags;       /* private, plugin, etc. */
     int line_idx;          /* current line index (compiling) */
@@ -461,6 +464,21 @@ static int fncall_add_args_array (fncall *fc)
     return err;
 }
 
+static void fncall_clear_args_array (fncall *fc)
+{
+    int i;
+
+    for (i=0; i<fc->fun->n_params; i++) {
+	fc->args[i].type = 0;
+	fc->args[i].shifted = 0;
+	fc->args[i].upname = NULL;
+	fc->args[i].uvar = NULL;
+	fc->args[i].val.px = NULL;
+    }
+
+    fc->argc = 0;
+}
+
 static void maybe_set_param_const (fn_param *fp)
 {
     fp->flags |= FP_CONST;
@@ -516,27 +534,9 @@ int push_function_arg (fncall *fc, const char *name,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_anon_function_arg (fncall *fc, GretlType type,
-			    void *value)
+int push_anon_function_arg (fncall *fc, GretlType type, void *value)
 {
-    int err = 0;
-
-    if (fc == NULL || fc->fun == NULL) {
-	err = E_DATA;
-    } else if (fc->argc >= fc->fun->n_params) {
-	fprintf(stderr, "function %s has %d parameters but argc = %d\n",
-		fc->fun->name, fc->fun->n_params, fc->argc);
-	err = E_DATA;
-    } else if (fc->args == NULL) {
-	err = fncall_add_args_array(fc);
-    }
-
-    if (!err) {
-	err = fn_arg_set_data(&fc->args[fc->argc], NULL, NULL, type, value);
-	fc->argc += 1;
-    }
-
-    return err;
+    return push_function_arg(fc, NULL, NULL, type, value);
 }
 
 /**
@@ -596,6 +596,33 @@ fncall *fncall_new (ufunc *fun, int preserve)
     }
 
     return call;
+}
+
+fncall *user_func_get_fncall (ufunc *fun)
+{
+    if (fun->call == NULL) {
+	fun->call = fncall_new(fun, 1);
+    } else {
+	fncall *fc = fun->call;
+
+	fncall_clear_args_array(fc);
+	if (fc->ptrvars != NULL) {
+	    free(fc->ptrvars);
+	    fc->ptrvars = NULL;
+	}
+	if (fc->listvars != NULL) {
+	    free(fc->listvars);
+	    fc->listvars = NULL;
+	}
+	if (fc->lists != NULL) {
+	    g_list_free(fc->lists);
+	    fc->lists = NULL;
+	}
+	free(fc->retname);
+	fc->retname = NULL;
+    }
+
+    return fun->call;
 }
 
 void fncall_destroy (fncall *call)
@@ -1510,6 +1537,7 @@ static ufunc *ufunc_new (void)
 
     fun->name[0] = '\0';
     fun->pkg = NULL;
+    fun->call = NULL;
     fun->flags = 0;
     fun->pkg_role = 0;
 
@@ -1580,6 +1608,9 @@ static void ufunc_free (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
+    if (fun->call != NULL) {
+	fncall_destroy(fun->call);
+    }
     free(fun);
 }
 
@@ -8061,8 +8092,12 @@ static int handle_scalar_return (fncall *call, void *ptr, int rtype)
 	if (gretl_matrix_is_scalar(m)) {
 	    xret = m->val[0];
 	} else {
+	    user_var *uv = get_user_var_by_name(vname);
+	    GretlType t = user_var_get_type(uv);
+
 	    gretl_errmsg_sprintf("Function %s did not provide the specified return value\n"
-				 "(expected %s)", call->fun->name, gretl_type_get_name(rtype));
+				 "(expected %s, got %s)", call->fun->name,
+				 gretl_type_get_name(rtype), gretl_type_get_name(t));
 	    err = E_TYPES;
 	    xret = NADBL;
 	}
@@ -9084,19 +9119,51 @@ static void set_func_error_message (int err, ufunc *u,
     }
 }
 
+static int generate_return_value (fncall *call,
+				  ExecState *state,
+				  DATASET *dset,
+				  int looping,
+				  const char *s,
+				  fn_line *line)
+{
+    ufunc *fun = call->fun;
+    gchar *formula = NULL;
+    int err = 0;
+
+    if (line != NULL && looping) {
+	if (line->ptr == NULL) {
+	    formula = g_strdup_printf("$retval=%s", s);
+	    line->ptr = genr_compile(formula, dset, fun->rettype,
+				     OPT_P, state->prn, &err);
+	    if (line->ptr != NULL) {
+		line->flags |= LINE_GENR;
+	    }
+	} else {
+	    err = execute_genr(line->ptr, dset, state->prn);
+	}
+    } else {
+	formula = g_strdup_printf("$retval=%s", s);
+	err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+    }
+
+    g_free(formula);
+
+    return err;
+}
+
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
 				    DATASET *dset,
+				    int looping,
 				    fn_line *line)
 {
-    const char *s = state->line + 6; /* skip "return" */
+    const char *s = state->cmd->vstart;
     ufunc *fun = call->fun;
     int err = 0;
 
-    s += strspn(s, " ");
-
 #if EXEC_DEBUG
-    fprintf(stderr, "%s: return: s = '%s'\n", fun->name, s);
+    fprintf(stderr, "%s: handle_return_statement (%s), line = %p\n",
+	    fun->name, s, (void *) line);
 #endif
 
     if (fun->rettype == GRETL_TYPE_VOID) {
@@ -9123,21 +9190,19 @@ static int handle_return_statement (fncall *call,
 	}
 	err = E_TYPES;
     } else {
-	int len = gretl_namechar_spn(s);
-
-	if (len == strlen(s)) {
+	if (gretl_namechar_spn(s) == strlen(s)) {
 	    /* returning a named variable */
-	    call->retname = gretl_strndup(s, len);
+	    call->retname = gretl_strdup(s);
 	} else {
-	    char formula[MAXLINE];
-
-	    sprintf(formula, "$retval=%s", s);
-            /* FIXME support compilation here? */
-            err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+	    err = generate_return_value(call, state, dset, looping,
+					s, line);
 	    if (err) {
 		set_func_error_message(err, fun, state, s, line);
 	    } else {
 		call->retname = gretl_strdup("$retval");
+		if (line != NULL) {
+		    line->flags |= LINE_RET;
+		}
 	    }
 	}
     }
@@ -9388,16 +9453,18 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		    break;
 		} else if (get_return_line(&state)) {
 		    /* a "return" statement was encountered in the loop */
-		    err = handle_return_statement(call, &state, dset, NULL);
+		    err = handle_return_statement(call, &state, dset,
+						  looping, NULL);
 		    break;
 		}
 	    }
 	    /* skip to the matching 'endloop' */
 	    i = fline->next_idx;
 	    continue;
-        } else if (line_has_genr(fline) && !is_recursing(call)) {
+        } else if (line_has_genr(fline) && !is_recursing(call) &&
+		   !is_return_line(fline)) {
             /* do we need to rule out the recursing case? */
-            err = execute_genr(fline->ptr, dset, prn);
+	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
             if (looping) {
                 err = maybe_exec_line(&state, dset, &loopstart, &fline->ptr);
@@ -9414,7 +9481,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	}
 
 	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(call, &state, dset, fline);
+	    err = handle_return_statement(call, &state, dset, looping, fline);
 	    if (i < u->n_lines - 1) {
 		retline = i;
 	    }
@@ -9448,7 +9515,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    }
 	    if (get_return_line(&state)) {
 		/* a "return" statement was encountered in the loop */
-		err = handle_return_statement(call, &state, dset, NULL);
+		err = handle_return_statement(call, &state, dset, looping, NULL);
 		break;
 	    }
 	}

@@ -1138,7 +1138,6 @@ parser *genr_compile (const char *s, DATASET *dset,
     }
 
     p = malloc(sizeof *p);
-
     if (p == NULL) {
 	*err = E_ALLOC;
 	return NULL;

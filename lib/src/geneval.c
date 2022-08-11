@@ -10180,6 +10180,8 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
+#define SAVE_FNCALL 1 /* experimental */
+
 static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -10226,7 +10228,11 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
                             "user-defined functions"));
     }
 
+#if SAVE_FNCALL
+    fc = user_func_get_fncall(uf);
+#else
     fc = fncall_new(uf, 1);
+#endif
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
@@ -10359,8 +10365,10 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
         }
     }
 
+#if !SAVE_FNCALL
     /* avoid leaking memory */
     fncall_destroy(fc);
+#endif
 
 #if EDEBUG
     fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n",
