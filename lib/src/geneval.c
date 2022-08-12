@@ -16326,7 +16326,7 @@ static void node_reattach_data (NODE *n, parser *p)
         GretlType type = 0;
         void *data = NULL;
 
-        if (n->uv == NULL || (n->t == LIST && gretl_looping())) {
+        if (n->uv == NULL || (n->t == LIST && gretl_iterating())) {
             n->uv = get_user_var_by_name(n->vname);
         }
 
@@ -20893,7 +20893,7 @@ void gen_cleanup (parser *p)
 
 static void real_reset_uvars (parser *p)
 {
-    if (p->err) {
+    if (0 && p->err) {
 	return;
     }
 

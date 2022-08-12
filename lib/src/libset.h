@@ -186,6 +186,8 @@ void gretl_iteration_push (void);
 void gretl_iteration_pop (void);
 int gretl_iteration_depth (void);
 
+int gretl_iterating (void);
+
 void gretl_set_batch_mode (int b);
 int gretl_in_batch_mode (void);
 

@@ -9360,9 +9360,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
     if (getenv("TRY_GENCOMP") != NULL) {
-        /* There's a problem with including gretl_iteration_depth here, why? */
-        // gencomp = gretl_looping() || gretl_iteration_depth() > 0;
-        gencomp = gretl_looping();
+        gencomp = gretl_iterating();
     }
 
 #if EXEC_DEBUG
@@ -9472,7 +9470,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    i = fline->next_idx;
 	    continue;
         } else if (line_has_genr(fline) && !is_recursing(call) &&
-		   !is_return_line(fline)) {
+		   !is_return_line(fline) && !gretl_if_state_false()) {
             /* do we need to rule out the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
@@ -9571,7 +9569,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
-    if (!err && !is_recursing(call)) {
+    if (!is_recursing(call)) { /* condition included !err */
 	reset_saved_uservars(call->fun);
     }
 
@@ -9667,10 +9665,6 @@ int object_is_const (const char *name, int vnum)
 	       unless it was given in pointer form.
 	       Note: this check added 2018-10-18.
 	    */
-#if 0 /* debugging */
-	    fprintf(stderr, "*** object_is_const: name '%s', vnum %d, call->orig_v %d\n",
-		    name, vnum, call->orig_v);
-#endif
 	    if (!in_gretl_list(call->ptrvars, vnum)) {
 		ret = 1;
 	    }
