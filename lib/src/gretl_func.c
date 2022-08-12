@@ -466,9 +466,9 @@ static int fncall_add_args_array (fncall *fc)
 
 static void fncall_clear_args_array (fncall *fc)
 {
-    int i;
+    int i, np = fc->fun->n_params;
 
-    for (i=0; i<fc->fun->n_params; i++) {
+    for (i=0; i<np; i++) {
 	fc->args[i].type = 0;
 	fc->args[i].shifted = 0;
 	fc->args[i].upname = NULL;
@@ -1601,6 +1601,11 @@ static void clear_ufunc_data (ufunc *fun)
     fun->line_idx = 1;
     fun->n_params = 0;
 
+    if (fun->call != NULL) {
+	fncall_destroy(fun->call);
+        fun->call = NULL;
+    }
+
     fun->rettype = GRETL_TYPE_NONE;
 }
 
@@ -1610,6 +1615,7 @@ static void ufunc_free (ufunc *fun)
     free_params_array(fun->params, fun->n_params);
     if (fun->call != NULL) {
 	fncall_destroy(fun->call);
+        fun->call = NULL;
     }
     free(fun);
 }
@@ -9122,7 +9128,7 @@ static void set_func_error_message (int err, ufunc *u,
 static int generate_return_value (fncall *call,
 				  ExecState *state,
 				  DATASET *dset,
-				  int looping,
+				  int gencomp,
 				  const char *s,
 				  fn_line *line)
 {
@@ -9130,7 +9136,7 @@ static int generate_return_value (fncall *call,
     gchar *formula = NULL;
     int err = 0;
 
-    if (line != NULL && looping) {
+    if (line != NULL && gencomp) {
 	if (line->ptr == NULL) {
 	    formula = g_strdup_printf("$retval=%s", s);
 	    line->ptr = genr_compile(formula, dset, fun->rettype,
@@ -9154,7 +9160,7 @@ static int generate_return_value (fncall *call,
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
 				    DATASET *dset,
-				    int looping,
+				    int gencomp,
 				    fn_line *line)
 {
     const char *s = state->cmd->vstart;
@@ -9194,7 +9200,7 @@ static int handle_return_statement (fncall *call,
 	    /* returning a named variable */
 	    call->retname = gretl_strdup(s);
 	} else {
-	    err = generate_return_value(call, state, dset, looping,
+	    err = generate_return_value(call, state, dset, gencomp,
 					s, line);
 	    if (err) {
 		set_func_error_message(err, fun, state, s, line);
@@ -9339,7 +9345,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int debugging = u->debug;
-    int looping = 0;
+    int gencomp = 0;
     int loopstart = 0;
     int i, err = 0;
 
@@ -9353,11 +9359,15 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
-    looping = gretl_looping(); /* FIXME also iteration */
+    if (getenv("TRY_GENCOMP") != NULL) {
+        /* There's a problem with including gretl_iteration_depth here, why? */
+        // gencomp = gretl_looping() || gretl_iteration_depth() > 0;
+        gencomp = gretl_looping();
+    }
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
-    fprintf(stderr, "u->n_params = %d, looping = %d\n", u->n_params, looping);
+    fprintf(stderr, "u->n_params = %d, gencomp = %d\n", u->n_params, gencomp);
 #endif
 
     if (dset != NULL) {
@@ -9454,7 +9464,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		} else if (get_return_line(&state)) {
 		    /* a "return" statement was encountered in the loop */
 		    err = handle_return_statement(call, &state, dset,
-						  looping, NULL);
+						  gencomp, NULL);
 		    break;
 		}
 	    }
@@ -9466,7 +9476,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
             /* do we need to rule out the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
-            if (looping) {
+            if (gencomp) {
                 err = maybe_exec_line(&state, dset, &loopstart, &fline->ptr);
                 if (!err && fline->ptr != NULL) {
                     fline->flags |= LINE_GENR;
@@ -9481,7 +9491,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	}
 
 	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(call, &state, dset, looping, fline);
+	    err = handle_return_statement(call, &state, dset, gencomp, fline);
 	    if (i < u->n_lines - 1) {
 		retline = i;
 	    }
@@ -9515,7 +9525,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    }
 	    if (get_return_line(&state)) {
 		/* a "return" statement was encountered in the loop */
-		err = handle_return_statement(call, &state, dset, looping, NULL);
+		err = handle_return_statement(call, &state, dset, gencomp, NULL);
 		break;
 	    }
 	}

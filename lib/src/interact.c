@@ -4162,12 +4162,13 @@ static int try_compile_func_genr (ExecState *s,
 	gopt |= OPT_O;
     }
 
-    *pgen = genr_compile(line, dset, gtype, gopt,
-                         s->prn, &err);
+    *pgen = genr_compile(line, dset, gtype, gopt, s->prn, &err);
     if (!err && *pgen != NULL) {
         *done = 1;
     } else if (err == E_EQN) {
-	/* may be a non-compilable special such as "genr time" */
+	/* may be a non-compilable special such as "genr time",
+           or perhaps a bare declaration */
+        gretl_error_clear();
 	err = 0;
     }
 

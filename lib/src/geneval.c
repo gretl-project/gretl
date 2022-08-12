@@ -10180,7 +10180,7 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
-#define SAVE_FNCALL 1 /* experimental */
+#define SAVE_FNCALL 1 /* 2022-08-12 */
 
 static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 {
@@ -19527,7 +19527,7 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 
 static int should_copy_into_array (NODE *n, parser *p)
 {
-    int cpy = !is_tmp_node(n);
+    int donate = is_tmp_node(n);
 
     /* In general if @n is a tmp node we can 'donate' its content
        to an array rather than copying it in, but there's a tricky
@@ -19537,12 +19537,12 @@ static int should_copy_into_array (NODE *n, parser *p)
        may be a simpler and more elegant way of identifying this
        case, but for now the following works (2022-08-10).
     */
-    if (!cpy && !is_aux_node(n) && n->t == STR &&
-	n->vname == NULL && (p->flags & (P_COMPILE | P_EXEC))) {
-	cpy = 1; /* we _should_ copy! */
+    if (donate && !is_aux_node(n) && n->t == STR &&
+	(p->flags & (P_COMPILE | P_EXEC))) {
+	donate = 0; /* we _should_ copy! */
     }
 
-    return cpy;
+    return !donate;
 }
 
 static void do_array_append (parser *p)
@@ -20929,7 +20929,7 @@ static void maybe_set_return_flags (parser *p)
 static int decl_check (parser *p, int flags)
 {
     if (flags & P_COMPILE) {
-	p->err = E_PARSE;
+	p->err = E_EQN;
 	gretl_errmsg_sprintf("%s:\n> '%s'",
 			     _("Bare declarations are not allowed here"),
 			     p->input);
