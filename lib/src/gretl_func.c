@@ -7363,6 +7363,10 @@ static void python_check (const char *line)
     }
 }
 
+#if 0
+#include "fncond.c"
+#endif
+
 /**
  * gretl_function_append_line:
  * @s: pointer to execution state.
@@ -7395,43 +7399,46 @@ int gretl_function_append_line (ExecState *s)
 
     /* note: avoid losing comment lines */
     origline = gretl_strdup(line);
-    blank = string_is_blank(line);
 
-    /* below: append line to function, carrying out some
-       basic structural checks as we go
-    */
-    if (!blank) {
+    if (string_is_blank(line)) {
+	blank = 1;
+    } else {
 	err = get_command_index(s, FUNC);
-	if (!err) {
-	    if (cmd->ci == QUIT) {
-		gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
-				     fun->name);
-		err = E_PARSE;
-		cmd->ci = 0;
-	    } else if (cmd->flags & CMD_ENDFUN) {
-		if (fun->n_lines == 0) {
-		    gretl_errmsg_sprintf("%s: empty function", fun->name);
-		    err = 1;
-		}
-		set_compiling_off();
-	    } else if (cmd->ci == SET) {
-		if (!(fun->flags & UFUN_USES_SET)) {
-		    fun->flags |= UFUN_USES_SET;
-		}
-	    } else if (cmd->ci == FUNC) {
-		err = E_FNEST;
-	    } else if (cmd->ci == IF) {
-		ifdepth++;
-	    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
-		gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-		err = E_PARSE;
-	    } else if (cmd->ci == ENDIF) {
-		ifdepth--;
-	    } else if (cmd->ci < 0) {
-		ignore = 1;
-	    }
-	}
     }
+    if (blank || err) {
+	goto next_step;
+    }
+
+    /* carry out some basic structural checks */
+    if (cmd->ci == QUIT) {
+	gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
+			     fun->name);
+	err = E_PARSE;
+	cmd->ci = 0;
+    } else if (cmd->flags & CMD_ENDFUN) {
+	if (fun->n_lines == 0) {
+	    gretl_errmsg_sprintf("%s: empty function", fun->name);
+	    err = 1;
+	}
+	set_compiling_off();
+    } else if (cmd->ci == SET) {
+	if (!(fun->flags & UFUN_USES_SET)) {
+	    fun->flags |= UFUN_USES_SET;
+	}
+    } else if (cmd->ci == FUNC) {
+	err = E_FNEST;
+    } else if (cmd->ci == IF) {
+	ifdepth++;
+    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
+	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	err = E_PARSE;
+    } else if (cmd->ci == ENDIF) {
+	ifdepth--;
+    } else if (cmd->ci < 0) {
+	ignore = 1;
+    }
+
+  next_step:
 
     if (err) {
 	set_compiling_off();
@@ -7464,6 +7471,12 @@ int gretl_function_append_line (ExecState *s)
 	/* reset static var */
 	ifdepth = 0;
     }
+
+#if 0
+    if (!err && !compiling) {
+	func_get_conditional_structure(fun);
+    }
+#endif
 
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
