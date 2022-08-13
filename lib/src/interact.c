@@ -251,10 +251,9 @@ static int ends_foreign_block (const char *s)
 /**
  * parse_command_line:
  * @s: pointer to execution-state struct.
- * @cmd: pointer to command struct.
  * @dset: dataset struct.
  * @ptr: pointer for use with "compilation" of
- * conditionals in loops.
+ * conditionals.
  *
  * Parses @line and fills out @cmd accordingly.
  *
