@@ -8827,8 +8827,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     callstack = g_list_append(callstack, call);
 
 #if EXEC_DEBUG
-    fprintf(stderr, "start_fncall: added call to %s, depth now %d\n",
-	    call->fun->name, g_list_length(callstack));
+    fprintf(stderr, "start_fncall: %s, depth now %d, recursing %d\n",
+	    call->fun->name, g_list_length(callstack), is_recursing(call));
 #endif
 
     switch_uservar_hash(fn_executing);
