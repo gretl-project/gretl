@@ -1715,18 +1715,25 @@ static GretlType param_field_to_type (const char *s,
 static gboolean special_int_default (fn_param *param,
 				     xmlNodePtr np)
 {
+    gboolean ret = FALSE;
+    
     if (param->type == GRETL_TYPE_INT) {
 	char *s = NULL;
 
-	if (gretl_xml_get_prop_as_string(np, "default", &s) &&
-	    (strstr(s, "$mylist") || strstr(s, "$xlist"))) {
-	    param->deflt = strstr(s, "$mylist")? INT_USE_MYLIST :
-		INT_USE_XLIST;
-	    return TRUE;
+	gretl_xml_get_prop_as_string(np, "default", &s);
+	if (s != NULL) {
+	    if (strstr(s, "$mylist")) {
+		param->deflt = INT_USE_MYLIST;
+		ret = TRUE;
+	    } else if (strstr(s, "$xlist")) {
+		param->deflt = INT_USE_XLIST;
+		ret = TRUE;
+	    }
+	    free(s);
 	}
     }
 
-    return FALSE;
+    return ret;
 }
 
 /* read the parameter info for a function from XML file */

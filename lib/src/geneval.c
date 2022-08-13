@@ -10499,7 +10499,8 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
    dataset. Failing that, we'll get it as a vector.
 */
 
-static NODE *bundled_series_node (parser *p, const double *x, int n)
+static NODE *bundled_series_node (parser *p, const double *x,
+				  int n, int *is_tmp)
 {
     NODE *ret = NULL;
     int t;
@@ -10510,6 +10511,7 @@ static NODE *bundled_series_node (parser *p, const double *x, int n)
 	    for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
 		ret->v.xvec[t] = x[t];
 	    }
+	    *is_tmp = 1;
 	}
     } else if (n > 0) {
 	ret = aux_matrix_node(p);
@@ -10521,6 +10523,7 @@ static NODE *bundled_series_node (parser *p, const double *x, int n)
 		for (t=0; t<n; t++) {
 		    ret->v.m->val[t] = x[t];
 		}
+		*is_tmp = 1;
 	    }
 	}
     } else {
@@ -10584,7 +10587,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_ARRAY) {
 	ret->v.a = (gretl_array *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-	ret = bundled_series_node(p, (const double *) val, size);
+	ret = bundled_series_node(p, (const double *) val, size, &is_tmp);
     } else if (type == GRETL_TYPE_LIST) {
         if (stored_list_ok((const int *) val, p->dset)) {
 	    /* extract as list */
