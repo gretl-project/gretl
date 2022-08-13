@@ -10502,10 +10502,9 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 static NODE *bundled_series_node (parser *p, const double *x, int n)
 {
     NODE *ret = NULL;
+    int t;
 
     if (n <= p->dset->n) {
-	int t;
-
 	ret = aux_series_node(p);
 	if (!p->err) {
 	    for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
@@ -10515,9 +10514,13 @@ static NODE *bundled_series_node (parser *p, const double *x, int n)
     } else if (n > 0) {
 	ret = aux_matrix_node(p);
 	if (!p->err) {
-	    ret->v.m = gretl_vector_from_array(x, n, GRETL_MOD_NONE);
+	    ret->v.m = gretl_matrix_alloc(n, 1);
 	    if (ret->v.m == NULL) {
 		p->err = E_ALLOC;
+	    } else {
+		for (t=0; t<n; t++) {
+		    ret->v.m->val[t] = x[t];
+		}
 	    }
 	}
     } else {
