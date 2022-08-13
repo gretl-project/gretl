@@ -1758,7 +1758,7 @@ static gboolean special_int_default (fn_param *param,
 				     xmlNodePtr np)
 {
     gboolean ret = FALSE;
-    
+
     if (param->type == GRETL_TYPE_INT) {
 	char *s = NULL;
 
@@ -8602,6 +8602,12 @@ function_assign_returns (fncall *call, int rtype,
 	if (ierr) {
 	    *perr = err = ierr;
 	}
+    }
+
+    if (call->retname != NULL) {
+	/* we're done with this now */
+	free(call->retname);
+	call->retname = NULL;
     }
 
 #if UDEBUG
