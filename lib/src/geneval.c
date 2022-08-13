@@ -5529,6 +5529,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                     ret = string_range_node(l->v.str, r1, r2, p);
                 }
 	    }
+	    free(vlist);
         } else if (l->t == SERIES) {
             int t = mspec_get_series_index(r->v.mspec, p);
 
