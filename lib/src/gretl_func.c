@@ -9466,7 +9466,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) fline->ptr, i, line);
 #endif
-	    if (!gretl_if_state_false()) {
+	    if (gretl_if_state_true()) {
 		/* not blocked, so execute the loop code */
 		err = gretl_loop_exec(&state, dset, fline->ptr);
 		if (err) {
@@ -9483,7 +9483,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    i = fline->next_idx;
 	    continue;
         } else if (line_has_genr(fline) && !is_recursing(call) &&
-		   !is_return_line(fline) && !gretl_if_state_false()) {
+		   !is_return_line(fline) && gretl_if_state_true()) {
             /* do we need to rule out the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {

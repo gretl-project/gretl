@@ -10069,7 +10069,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 
     if (!gretl_compiling_loop() && !s->in_comment &&
-        !cmd->context && !gretl_if_state_false()) {
+        !cmd->context && gretl_if_state_true()) {
         /* catch requests relating to saved objects, which are not
            really "commands" as such */
         int action = gui_saved_object_action(line, prn);
