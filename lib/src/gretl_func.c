@@ -7363,10 +7363,6 @@ static void python_check (const char *line)
     }
 }
 
-#if 0
-#include "fncond.c"
-#endif
-
 /**
  * gretl_function_append_line:
  * @s: pointer to execution state.
@@ -7471,12 +7467,6 @@ int gretl_function_append_line (ExecState *s)
 	/* reset static var */
 	ifdepth = 0;
     }
-
-#if 0
-    if (!err && !compiling) {
-	func_get_conditional_structure(fun);
-    }
-#endif
 
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
