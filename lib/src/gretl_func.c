@@ -95,6 +95,7 @@ typedef enum {
 /* structure representing a line of a user-defined function */
 
 struct fn_line_ {
+    gint16 ci;       /* command index */
     gint16 idx;      /* 1-based line index (allowing for blanks) */
     gint16 next_idx; /* line index to skip to after loop */
     char *s;         /* text of command line */
@@ -1865,7 +1866,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static int push_function_line (ufunc *fun, char *s, int donate)
+static int push_function_line (ufunc *fun, char *s, int ci, int donate)
 {
     int err = 0;
 
@@ -1885,8 +1886,10 @@ static int push_function_line (ufunc *fun, char *s, int donate)
 	    fun->lines = lines;
 	    lines[i].idx = fun->line_idx;
 	    if (donate) {
+                /* take ownership of @s */
 		lines[i].s = s;
 	    } else {
+                /* make a copy of @s */
 		lines[i].s = gretl_strdup(s);
 		if (lines[i].s == NULL) {
 		    err = E_ALLOC;
@@ -1894,6 +1897,7 @@ static int push_function_line (ufunc *fun, char *s, int donate)
 	    }
 	    if (!err) {
 		lines[i].ptr = NULL;
+                lines[i].ci = ci;
 		lines[i].next_idx = -1;
 		lines[i].flags = 0;
 		fun->n_lines = n;
@@ -1910,6 +1914,8 @@ static int push_function_line (ufunc *fun, char *s, int donate)
 
 static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 {
+    ExecState state = {0};
+    CMD cmd = {0};
     char line[MAXLINE];
     char *buf, *s;
     gint8 uses_set = 0;
@@ -1921,23 +1927,28 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     }
 
     bufgets_init(buf);
+    state.cmd = &cmd;
 
-    while (bufgets(line, sizeof line, buf) && !err) {
+    while (bufgets(line, sizeof line, buf)) {
 	s = line;
 	while (isspace(*s)) s++;
-	if (uses_set == 0 && !strncmp(s, "set ", 4)) {
+        state.line = s;
+        err = get_command_index(&state, FUNC);
+        if (err) {
+            break;
+        }
+	if (uses_set == 0 && cmd.ci == SET) {
 	    uses_set = 1;
 	}
 	tailstrip(s);
-	err = push_function_line(fun, s, 0);
+	err = push_function_line(fun, s, cmd.ci, 0);
     }
 
-    if (uses_set) {
+    if (!uses_set) {
 	fun->flags |= UFUN_USES_SET;
     }
 
     bufgets_finalize(buf);
-
     free(buf);
 
     return err;
@@ -7363,9 +7374,90 @@ static void python_check (const char *line)
     }
 }
 
-#if 0
-#include "fncond.c"
-#endif
+/* === begin experimental === */
+
+static int ufunc_get_structure (ufunc *u)
+{
+    int i, j, ci, if_depth = 0;
+    int *skip_from = NULL;
+    int last_ci = 0;
+    int max_depth = 0;
+    int err = 0;
+
+    /* first pass: determine the maximum if-depth */
+    for (i=0; i<u->n_lines && !err; i++) {
+	ci = u->lines[i].ci;
+	if (ci == IF) {
+	    if (last_ci == 0 || last_ci == IF) {
+		max_depth++;
+	    }
+	} else if (ci == ENDIF) {
+	    last_ci = ci;
+	}
+    }
+
+    fprintf(stderr, "max_depth = %d\n", max_depth);
+    if (max_depth == 0) {
+	return 0;
+    }
+
+    skip_from = gretl_list_new(max_depth);
+
+    /* second pass */
+    for (i=0; i<u->n_lines && !err; i++) {
+	fn_line *line = &u->lines[i];
+
+	if (line->ci == IF) {
+	    if_depth++;
+	    skip_from[if_depth] = i;
+	    //fprintf(stderr, "IF on line %d, depth %d\n", i, if_depth);
+	} else if (line->ci == ELIF) {
+	    if (if_depth == 0) {
+		err = 1;
+	    } else {
+		j = skip_from[if_depth];
+		//fprintf(stderr, "ELIF on line %d (false %d skips here)\n", i, j);
+		u->lines[j].next_idx = i;
+		skip_from[if_depth] = i;
+	    }
+	} else if (line->ci == ELSE) {
+	    if (if_depth == 0) {
+		err = 1;
+	    } else {
+		j = skip_from[if_depth];
+		u->lines[j].next_idx = i + 1;
+		//fprintf(stderr, "ELSE on line %d (false %d skips here)\n", i, j);
+		skip_from[if_depth] = i;
+	    }
+	} else if (line->ci == ENDIF) {
+	    if (if_depth == 0) {
+		err = 1;
+	    } else {
+		j = skip_from[if_depth];
+		u->lines[j].next_idx = i + 1;
+		//fprintf(stderr, "ENDIF on line %d (false %d skips here)\n", i, j);
+	    }
+	    if_depth--;
+	}
+    }
+
+    free(skip_from);
+
+    /* third pass (verification) */
+    for (i=0; i<u->n_lines && !err; i++) {
+	fn_line *line = &u->lines[i];
+        int j = line->next_idx;
+
+	if (j > 0 && j < u->n_lines) {
+	    fprintf(stderr, "line %d idx %d (%s): next on false = %d (%s)\n",
+		    i, line->idx, line->s, j, u->lines[j].s);
+	}
+    }
+
+    return err;
+}
+
+/* === end experimental === */
 
 /**
  * gretl_function_append_line:
@@ -7448,7 +7540,7 @@ int gretl_function_append_line (ExecState *s)
 	/* actually add the line? */
 	int i = fun->n_lines;
 
-	err = push_function_line(fun, origline, 1);
+	err = push_function_line(fun, origline, cmd->ci, 1);
 	if (!err) {
 	    if (!blank) {
 		origline = NULL; /* successfully donated */
@@ -7472,11 +7564,9 @@ int gretl_function_append_line (ExecState *s)
 	ifdepth = 0;
     }
 
-#if 0
-    if (!err && !compiling) {
-	func_get_conditional_structure(fun);
+    if (!err && !compiling && getenv("FNCOND") != NULL) {
+	ufunc_get_structure(fun);
     }
-#endif
 
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
@@ -9354,6 +9444,8 @@ static int get_return_line (ExecState *state)
     }
 }
 
+#define IF_CHECK 1
+
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn)
 {
@@ -9473,6 +9565,19 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (ignore_line(fline)) {
 	    continue;
 	}
+
+#if IF_CHECK
+        fprintf(stderr, "fn line %d: ci %s, next %d\n", i,
+                gretl_command_word(fline->ci), fline->next_idx);
+        if (0 && fline->ci == IF && gretl_if_state_true()) {
+            maybe_exec_line(&state, dset, &loopstart, NULL);
+            flow_control(&state, dset, NULL);
+            if (gretl_if_state_false()) {
+                i = fline->next_idx-1;
+                continue;
+            }
+        }
+#endif        
 
 	if (line_has_loop(fline) && !is_recursing(call)) {
 #if LSDEBUG

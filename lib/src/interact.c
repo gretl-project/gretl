@@ -4283,7 +4283,7 @@ int get_command_index (ExecState *s, int cmode)
     err = real_parse_command(s, NULL, cmode, NULL);
 
     if (!err && cmd->ci == 0) {
-        /* maybe genr via series name? */
+        /* maybe genr? */
         const char *s = cmd->toks[0].s;
 
         if (s != NULL) {
