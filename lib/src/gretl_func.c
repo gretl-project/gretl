@@ -7376,85 +7376,118 @@ static void python_check (const char *line)
 
 /* === begin experimental === */
 
+#define FNCOND_DEBUG 1
+
+/* If a function contains flow-control statements or loops,
+   record the line numbers on which these start, along with
+   the line numbers to which execution should skip, in case
+   of a false IF or a completed loop.
+*/
+
 static int ufunc_get_structure (ufunc *u)
 {
-    int i, j, ci, if_depth = 0;
-    int *skip_from = NULL;
-    int last_ci = 0;
-    int max_depth = 0;
+    int *next_from_if = NULL;
+    int *next_from_loop = NULL;
+    int id_max = 0, ld_max = 0;
+    int id = 0, ld = 0;
+    int i, j, ci;
     int err = 0;
 
-    /* first pass: determine the maximum if-depth */
+    /* first pass: determine the maximum depth of
+       conditionality and looping
+    */
     for (i=0; i<u->n_lines && !err; i++) {
 	ci = u->lines[i].ci;
 	if (ci == IF) {
-	    if (last_ci == 0 || last_ci == IF) {
-		max_depth++;
-	    }
+            if (++id > id_max) {
+                id_max = id;
+            }
 	} else if (ci == ENDIF) {
-	    last_ci = ci;
-	}
+            id--;
+	} else if (ci == LOOP) {
+            if (++ld > ld_max) {
+                ld_max = ld;
+            }
+        } else if (ci == ENDLOOP) {
+            ld--;
+        }
     }
 
-    // fprintf(stderr, "max_depth = %d\n", max_depth);
-    if (max_depth == 0) {
+#if FNCOND_DEBUG
+    fprintf(stderr, "max if-depth %d, max loop-depth %d\n", id_max, ld_max);
+#endif
+
+    if (id_max == 0 && ld_max == 0) {
+        /* OK, nothing to record */
 	return 0;
     }
-
-    skip_from = gretl_list_new(max_depth);
+    if (id_max > 0) {
+        next_from_if = gretl_list_new(id_max);
+    }
+    if (ld_max > 0) {
+        next_from_loop = gretl_list_new(ld_max);
+    }
 
     /* second pass */
     for (i=0; i<u->n_lines && !err; i++) {
 	fn_line *line = &u->lines[i];
 
 	if (line->ci == IF) {
-	    if_depth++;
-	    skip_from[if_depth] = i;
-	    //fprintf(stderr, "IF on line %d, depth %d\n", i, if_depth);
+	    id++;
+	    next_from_if[id] = i;
 	} else if (line->ci == ELIF) {
-	    if (if_depth == 0) {
+	    if (id == 0) {
 		err = 1;
 	    } else {
-		j = skip_from[if_depth];
-		//fprintf(stderr, "ELIF on line %d (false %d skips here)\n", i, j);
+		j = next_from_if[id];
 		u->lines[j].next_idx = i;
-		skip_from[if_depth] = i;
+		next_from_if[id] = i;
 	    }
 	} else if (line->ci == ELSE) {
-	    if (if_depth == 0) {
+	    if (id == 0) {
 		err = 1;
 	    } else {
-		j = skip_from[if_depth];
+		j = next_from_if[id];
 		u->lines[j].next_idx = i;
-		//fprintf(stderr, "ELSE on line %d (false %d skips here)\n", i, j);
-		skip_from[if_depth] = i;
+		next_from_if[id] = i;
 	    }
 	} else if (line->ci == ENDIF) {
-	    if (if_depth == 0) {
+	    if (id == 0) {
 		err = 1;
 	    } else {
-		j = skip_from[if_depth];
+		j = next_from_if[id];
 		u->lines[j].next_idx = i;
-		//fprintf(stderr, "ENDIF on line %d (false %d skips here)\n", i, j);
+                id--;
 	    }
-	    if_depth--;
-	}
+	} else if (line->ci == LOOP) {
+            ld++;
+            next_from_loop[ld] = i;
+         } else if (line->ci == ENDLOOP) {
+            if (ld == 0) {
+                err = 1;
+            } else {
+                j = next_from_loop[ld];
+                u->lines[j].next_idx = i;
+                ld--;
+            }
+        }
     }
 
-    free(skip_from);
+    free(next_from_if);
+    free(next_from_loop);
 
-#if 0    
-    /* third pass (verification) */
+#if FNCOND_DEBUG
+    /* show what we found */
     for (i=0; i<u->n_lines && !err; i++) {
 	fn_line *line = &u->lines[i];
         int j = line->next_idx;
 
 	if (j > 0 && j < u->n_lines) {
-	    fprintf(stderr, "line %d idx %d (%s): next on false = %d (%s)\n",
+	    fprintf(stderr, "line %d idx %d (%s): next on skip = %d (%s)\n",
 		    i, line->idx, line->s, j, u->lines[j].s);
 	}
     }
-#endif    
+#endif
 
     return err;
 }
@@ -9446,7 +9479,36 @@ static int get_return_line (ExecState *state)
     }
 }
 
-#define IF_CHECK 1
+static int prepare_func_exec_state (ExecState *s,
+                                    char *line,
+                                    DATASET *dset,
+                                    PRN *prn)
+{
+    MODEL *model;
+    CMD cmd = {0};
+    int err;
+
+    model = allocate_working_model();
+    if (model == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_cmd_init(&cmd);
+    }
+
+    if (!err) {
+        *line = '\0';
+        gretl_exec_state_init(s, FUNCTION_EXEC, line, &cmd, model, prn);
+        if (dset != NULL) {
+            if (dset->submask != NULL) {
+                s->submask = copy_dataset_submask(dset, &err);
+            }
+            s->padded = dset->padmask != NULL;
+        }
+        s->callback = func_exec_callback;
+    }
+
+    return err;
+}
 
 #define do_if_check(c) (c == IF || c == ELIF || c == ELSE || c == ENDIF)
 
@@ -9456,10 +9518,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     DEBUG_READLINE get_line = NULL;
     DEBUG_OUTPUT put_func = NULL;
     ufunc *u = call->fun;
-    ExecState state;
-    MODEL *model = NULL;
+    ExecState state = {0};
     char line[MAXLINE];
-    CMD cmd;
     int orig_n = 0;
     int orig_t1 = 0;
     int orig_t2 = 0;
@@ -9499,8 +9559,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	call->orig_v = 0;
     }
 
-    /* precaution */
-    function_state_init(&cmd, &state, &indent0);
+    /* precaution aganst early error */
+    indent0 = gretl_if_state_record();
 
     err = check_function_args(call, prn);
     if (!err) {
@@ -9512,25 +9572,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
-    model = allocate_working_model();
-    if (model == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = gretl_cmd_init(&cmd);
-    }
-
-    if (!err) {
-	*line = '\0';
-	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd,
-			      model, prn);
-	if (dset != NULL) {
-	    if (dset->submask != NULL) {
-		state.submask = copy_dataset_submask(dset, &err);
-	    }
-	    state.padded = dset->padmask != NULL;
-	}
-	state.callback = func_exec_callback;
-    }
+    err = prepare_func_exec_state(&state, line, dset, prn);
 
     if (!err) {
 	err = start_fncall(call, dset, prn);
@@ -9570,17 +9612,13 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
 
-#if IF_CHECK
-	//fprintf(stderr, "fn line %d: ci %s\n", i, gretl_command_word(fline->ci));
 	if (do_if_check(fline->ci)) {
-	    //fprintf(stderr, " '%s', next %d\n", fline->s, fline->next_idx);
 	    err = maybe_exec_line(&state, dset, NULL, NULL);
 	    if (gretl_if_state_false() && fline->next_idx > 0) {
 		i = fline->next_idx - 1;
 	    }
 	    continue;
         }
-#endif        
 
 	if (line_has_loop(fline) && !is_recursing(call)) {
 #if LSDEBUG
