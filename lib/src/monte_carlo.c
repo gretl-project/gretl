@@ -605,7 +605,7 @@ static void gretl_loop_init (LOOPSET *loop)
 #endif
 }
 
-static LOOPSET *gretl_loop_new (LOOPSET *parent)
+static LOOPSET *gretl_loop_allocate (LOOPSET *parent)
 {
     LOOPSET *loop = malloc(sizeof *loop);
 
@@ -1603,9 +1603,9 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 #endif
 
     if (inloop == NULL || compile_level <= inloop->level) {
-	loop = gretl_loop_new(NULL);
+	loop = gretl_loop_allocate(NULL);
     } else {
-	loop = gretl_loop_new(inloop);
+	loop = gretl_loop_allocate(inloop);
 	*nested = 1;
     }
 
@@ -1630,6 +1630,32 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 #if LOOP_DEBUG
 	fprintf(stderr, "start_new_loop: aborting on error\n");
 #endif
+	destroy_loop_stack(loop);
+	loop = NULL;
+    }
+
+    return loop;
+}
+
+LOOPSET *gretl_loop_new (char *s, DATASET *dset, int *err)
+{
+    LOOPSET *loop = gretl_loop_allocate(NULL);
+
+#if LOOP_DEBUG
+    fprintf(stderr, "gretl_loop_new: line='%s'\n", s);
+#endif
+
+    if (loop == NULL) {
+	*err = E_ALLOC;
+    } else {
+        *err = parse_first_loopline(s, loop, dset);
+    }
+
+    if (!*err) {
+	*err = gretl_loop_prepare(loop);
+    }
+
+    if (*err && loop != NULL) {
 	destroy_loop_stack(loop);
 	loop = NULL;
     }

@@ -7380,8 +7380,8 @@ static void python_check (const char *line)
 
 /* If a function contains flow-control statements or loops,
    record the line numbers on which these start, along with
-   the line numbers to which execution should skip, in case
-   of a false IF or a completed loop.
+   the line numbers to which execution should skip in case
+   of a false IF-condition or a completed loop.
 */
 
 static int ufunc_get_structure (ufunc *u)
@@ -7428,7 +7428,7 @@ static int ufunc_get_structure (ufunc *u)
         next_from_loop = gretl_list_new(ld_max);
     }
 
-    /* second pass */
+    /* second pass: analysis */
     for (i=0; i<u->n_lines && !err; i++) {
 	fn_line *line = &u->lines[i];
 
@@ -7477,7 +7477,7 @@ static int ufunc_get_structure (ufunc *u)
     free(next_from_loop);
 
 #if FNCOND_DEBUG
-    /* show what we found */
+    /* display what we figured out */
     for (i=0; i<u->n_lines && !err; i++) {
 	fn_line *line = &u->lines[i];
         int j = line->next_idx;
@@ -9550,6 +9550,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     fprintf(stderr, "u->n_params = %d, gencomp = %d\n", u->n_params, gencomp);
 #endif
 
+    /* record incoming dataset dimensions */
     if (dset != NULL) {
 	call->orig_v = dset->v;
 	orig_n = dset->n;
@@ -9612,9 +9613,12 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
 
+        fprintf(stderr, "line %d: %s\n", i, fline->s);
+
 	if (do_if_check(fline->ci)) {
 	    err = maybe_exec_line(&state, dset, NULL, NULL);
 	    if (gretl_if_state_false() && fline->next_idx > 0) {
+                /* skip to next relevant statement */
 		i = fline->next_idx - 1;
 	    }
 	    continue;
@@ -9625,24 +9629,21 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) fline->ptr, i, line);
 #endif
-	    if (gretl_if_state_true()) {
-		/* not blocked, so execute the loop code */
-		err = gretl_loop_exec(&state, dset, fline->ptr);
-		if (err) {
-		    set_func_error_message(err, u, &state, state.line, NULL);
-		    break;
-		} else if (get_return_line(&state)) {
-		    /* a "return" statement was encountered in the loop */
-		    err = handle_return_statement(call, &state, dset,
-						  gencomp, NULL);
-		    break;
-		}
-	    }
+            err = gretl_loop_exec(&state, dset, fline->ptr);
+            if (err) {
+                set_func_error_message(err, u, &state, state.line, NULL);
+                break;
+            } else if (get_return_line(&state)) {
+                /* a "return" statement was encountered in the loop */
+                err = handle_return_statement(call, &state, dset,
+                                              gencomp, NULL);
+                break;
+            }
 	    /* skip to the matching 'endloop' */
 	    i = fline->next_idx;
 	    continue;
         } else if (line_has_genr(fline) && !is_recursing(call) &&
-		   !is_return_line(fline) && gretl_if_state_true()) {
+		   !is_return_line(fline)) {
             /* do we need to rule out the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
@@ -9659,6 +9660,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		loopstart = 0;
 	    }
 	}
+
+        fprintf(stderr, "func exec: loopstart=%d, compiling_loop %d\n",
+                loopstart, gretl_compiling_loop());
 
 	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
 	    err = handle_return_statement(call, &state, dset, gencomp, fline);
@@ -9685,9 +9689,12 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    break;
 	}
 
+        fprintf(stderr, "func exec: gretl_execute_loop %d\n", gretl_execute_loop());
+
 	if (gretl_execute_loop()) {
 	    /* mark the ending point of an (outer) loop */
 	    u->lines[u->line_idx].next_idx = i;
+            fprintf(stderr, "set next_idx = %d on line %d\n", i, u->line_idx);
 	    err = gretl_loop_exec(&state, dset, NULL);
 	    if (err) {
 		/* note that @lineno will point at the end of a loop here */
