@@ -7396,7 +7396,7 @@ static int ufunc_get_structure (ufunc *u)
 	}
     }
 
-    fprintf(stderr, "max_depth = %d\n", max_depth);
+    // fprintf(stderr, "max_depth = %d\n", max_depth);
     if (max_depth == 0) {
 	return 0;
     }
@@ -7425,7 +7425,7 @@ static int ufunc_get_structure (ufunc *u)
 		err = 1;
 	    } else {
 		j = skip_from[if_depth];
-		u->lines[j].next_idx = i + 1;
+		u->lines[j].next_idx = i;
 		//fprintf(stderr, "ELSE on line %d (false %d skips here)\n", i, j);
 		skip_from[if_depth] = i;
 	    }
@@ -7434,7 +7434,7 @@ static int ufunc_get_structure (ufunc *u)
 		err = 1;
 	    } else {
 		j = skip_from[if_depth];
-		u->lines[j].next_idx = i + 1;
+		u->lines[j].next_idx = i;
 		//fprintf(stderr, "ENDIF on line %d (false %d skips here)\n", i, j);
 	    }
 	    if_depth--;
@@ -7443,6 +7443,7 @@ static int ufunc_get_structure (ufunc *u)
 
     free(skip_from);
 
+#if 0    
     /* third pass (verification) */
     for (i=0; i<u->n_lines && !err; i++) {
 	fn_line *line = &u->lines[i];
@@ -7453,6 +7454,7 @@ static int ufunc_get_structure (ufunc *u)
 		    i, line->idx, line->s, j, u->lines[j].s);
 	}
     }
+#endif    
 
     return err;
 }
@@ -9446,6 +9448,8 @@ static int get_return_line (ExecState *state)
 
 #define IF_CHECK 1
 
+#define do_if_check(c) (c == IF || c == ELIF || c == ELSE || c == ENDIF)
+
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn)
 {
@@ -9551,7 +9555,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
-        fn_line *fline = &u->lines[i];
+        fn_line *fline = &(u->lines[i]);
 	int lineno = fline->idx;
 
 	strcpy(line, fline->s);
@@ -9567,15 +9571,14 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	}
 
 #if IF_CHECK
-        fprintf(stderr, "fn line %d: ci %s, next %d\n", i,
-                gretl_command_word(fline->ci), fline->next_idx);
-        if (0 && fline->ci == IF && gretl_if_state_true()) {
-            maybe_exec_line(&state, dset, &loopstart, NULL);
-            flow_control(&state, dset, NULL);
-            if (gretl_if_state_false()) {
-                i = fline->next_idx-1;
-                continue;
-            }
+	//fprintf(stderr, "fn line %d: ci %s\n", i, gretl_command_word(fline->ci));
+	if (do_if_check(fline->ci)) {
+	    //fprintf(stderr, " '%s', next %d\n", fline->s, fline->next_idx);
+	    err = maybe_exec_line(&state, dset, NULL, NULL);
+	    if (gretl_if_state_false() && fline->next_idx > 0) {
+		i = fline->next_idx - 1;
+	    }
+	    continue;
         }
 #endif        
 
