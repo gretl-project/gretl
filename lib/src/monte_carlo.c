@@ -153,6 +153,15 @@ struct loop_command_ {
 
 typedef struct loop_command_ loop_command;
 
+/* IDs for loop controller elements */
+enum {
+    C_INIT = 0,
+    C_TEST,
+    C_DELTA,
+    C_FINAL,
+    N_CTRL /* sentinel */
+};
+
 struct LOOPSET_ {
     /* basic characteristics */
     char type;
@@ -177,10 +186,7 @@ struct LOOPSET_ {
     char cont;
 
     /* control structures */
-    controller init;
-    controller test;
-    controller delta;
-    controller final;
+    controller ctrl[N_CTRL];
 
     /* numbers of various subsidiary objects */
     int n_cmds;
@@ -387,8 +393,8 @@ static double controller_get_val (controller *clr,
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "controller_get_val: loop %p, vname='%s', uv=%p, val=%g, err=%d\n",
-            (void *) loop, clr->vname, (void *) clr->uv, clr->val, *err);
+    fprintf(stderr, "clr->val: loop %p, vname='%s', uv=%p, expr='%s' val=%g, err=%d\n",
+            (void *) loop, clr->vname, (void *) clr->uv, clr->expr, clr->val, *err);
 #endif
 
     return clr->val;
@@ -399,7 +405,7 @@ static double controller_get_val (controller *clr,
 static void
 forloop_init (LOOPSET *loop, DATASET *dset, int *err)
 {
-    const char *expr = loop->init.expr;
+    const char *expr = loop->ctrl[C_INIT].expr;
 
     if (expr != NULL) {
         *err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
@@ -412,29 +418,29 @@ forloop_init (LOOPSET *loop, DATASET *dset, int *err)
 
 /* evaluate boolean condition in for-loop or while-loop */
 
-static int
-loop_testval (LOOPSET *loop, DATASET *dset, int *err)
+static int loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 {
-    const char *expr = loop->test.expr;
+    controller *clr = &loop->ctrl[C_TEST];
+    const char *expr = clr->expr;
     int ret = 1;
 
     if (expr != NULL) {
         double x = NADBL;
 
-        if (loop->test.subst < 0) {
+        if (clr->subst < 0) {
             /* not checked yet */
-            loop->test.subst = does_string_sub(expr, loop, dset);
+            clr->subst = does_string_sub(expr, loop, dset);
         }
 
-        if (!loop->test.subst && loop->test.genr == NULL) {
-            loop->test.genr = genr_compile(expr, dset,
-                                           GRETL_TYPE_BOOL,
-                                           OPT_P | OPT_N,
-                                           NULL, err);
+        if (!clr->subst && clr->genr == NULL) {
+            clr->genr = genr_compile(expr, dset,
+				     GRETL_TYPE_BOOL,
+				     OPT_P | OPT_N,
+				     NULL, err);
         }
 
-        if (loop->test.genr != NULL) {
-            x = evaluate_if_cond(loop->test.genr, dset, NULL, err);
+        if (clr->genr != NULL) {
+            x = evaluate_if_cond(clr->genr, dset, NULL, err);
         } else if (!*err) {
             x = generate_scalar(expr, dset, err);
         }
@@ -456,26 +462,26 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 
 /* evaluate third expression in for-loop, if any */
 
-static void
-loop_delta (LOOPSET *loop, DATASET *dset, int *err)
+static void loop_delta (LOOPSET *loop, DATASET *dset, int *err)
 {
-    const char *expr = loop->delta.expr;
+    controller *clr = &loop->ctrl[C_DELTA];
+    const char *expr = clr->expr;
 
     if (expr != NULL) {
-        if (loop->delta.subst < 0) {
+        if (clr->subst < 0) {
             /* not checked yet */
-            loop->delta.subst = does_string_sub(expr, loop, dset);
+            clr->subst = does_string_sub(expr, loop, dset);
         }
 
-        if (!loop->delta.subst && loop->delta.genr == NULL) {
-            loop->delta.genr = genr_compile(expr, dset,
-                                            GRETL_TYPE_ANY,
-                                            OPT_N,
-                                            NULL, err);
+        if (!clr->subst && clr->genr == NULL) {
+            clr->genr = genr_compile(expr, dset,
+				     GRETL_TYPE_ANY,
+				     OPT_N,
+				     NULL, err);
         }
 
-        if (loop->delta.genr != NULL) {
-            *err = execute_genr(loop->delta.genr, dset, NULL);
+        if (clr->genr != NULL) {
+            *err = execute_genr(clr->genr, dset, NULL);
         } else if (!*err) {
             *err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
         }
@@ -560,6 +566,8 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
 
 static void gretl_loop_init (LOOPSET *loop)
 {
+    int i;
+
 #if LOOP_DEBUG > 1
     fprintf(stderr, "gretl_loop_init: initing loop at %p\n", (void *) loop);
 #endif
@@ -578,10 +586,9 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->eachtype = 0;
     loop->eachstrs = NULL;
 
-    controller_init(&loop->init);
-    controller_init(&loop->test);
-    controller_init(&loop->delta);
-    controller_init(&loop->final);
+    for (i=0; i<N_CTRL; i++) {
+	controller_init(&loop->ctrl[i]);
+    }
 
     loop->n_cmds = 0;
     loop->cmds = NULL;
@@ -647,10 +654,9 @@ void gretl_loop_destroy (LOOPSET *loop)
         loop->children[i] = NULL;
     }
 
-    controller_free(&loop->init);
-    controller_free(&loop->test);
-    controller_free(&loop->delta);
-    controller_free(&loop->final);
+    for (i=0; i<N_CTRL; i++) {
+	controller_free(&loop->ctrl[i]);
+    }
 
     if (loop->cmds != NULL) {
         for (i=0; i<loop->n_cmds; i++) {
@@ -728,8 +734,8 @@ static int parse_as_while_loop (LOOPSET *loop, const char *s)
         err = E_PARSE;
     } else {
         loop->type = WHILE_LOOP;
-        loop->test.expr = gretl_strdup(s);
-        if (loop->test.expr == NULL) {
+        loop->ctrl[C_TEST].expr = gretl_strdup(s);
+        if (loop->ctrl[C_TEST].expr == NULL) {
             err = E_ALLOC;
         }
     }
@@ -777,6 +783,7 @@ static int loop_attach_index_var (LOOPSET *loop,
                                   const char *vname,
                                   DATASET *dset)
 {
+    controller *clr = &loop->ctrl[C_INIT];
     int err = 0;
 
     if (loop->parent != NULL) {
@@ -790,16 +797,16 @@ static int loop_attach_index_var (LOOPSET *loop,
 
     if (loop->idxvar != NULL) {
         strcpy(loop->idxname, vname);
-        uvar_set_scalar_fast(loop->idxvar, loop->init.val);
+        uvar_set_scalar_fast(loop->idxvar, clr->val);
     } else if (!err) {
         /* create index var from scratch */
         char genline[64];
 
-        if (na(loop->init.val)) {
+        if (na(clr->val)) {
             sprintf(genline, "%s=NA", vname);
         } else {
             gretl_push_c_numeric_locale();
-            sprintf(genline, "%s=%g", vname, loop->init.val);
+            sprintf(genline, "%s=%g", vname, clr->val);
             gretl_pop_c_numeric_locale();
         }
 
@@ -866,6 +873,8 @@ static int parse_as_indexed_loop (LOOPSET *loop,
                                   const char *start,
                                   const char *end)
 {
+    controller *cini = &loop->ctrl[C_INIT];
+    controller *cfin = &loop->ctrl[C_FINAL];
     int err = 0;
 
     /* starting and ending values: the order in which we try
@@ -878,23 +887,23 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 #endif
 
     if (maybe_date(start)) {
-        loop->init.val = dateton(start, dset);
-        if (loop->init.val < 0) {
+        cini->val = dateton(start, dset);
+        if (cini->val < 0) {
             err = E_DATA;
         } else {
-            loop->init.val += 1;
-            loop->final.val = dateton(end, dset);
-            if (loop->final.val < 0) {
+            cini->val += 1;
+            cfin->val = dateton(end, dset);
+            if (cfin->val < 0) {
                 err = E_DATA;
             } else {
-                loop->final.val += 1;
+                cfin->val += 1;
                 loop->type = DATED_LOOP;
             }
         }
     } else {
-        err = index_get_limit(loop, &loop->init, start, dset);
+        err = index_get_limit(loop, cini, start, dset);
         if (!err) {
-            err = index_get_limit(loop, &loop->final, end, dset);
+            err = index_get_limit(loop, cfin, end, dset);
         }
         if (!err) {
             loop->type = INDEX_LOOP;
@@ -907,7 +916,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, "indexed_loop: init.val=%g, final.val=%g, err=%d\n",
-            loop->init.val, loop->final.val, err);
+            cini->val, cfin->val, err);
 #endif
 
     return err;
@@ -919,18 +928,20 @@ static int parse_as_count_loop (LOOPSET *loop,
                                 DATASET *dset,
                                 const char *s)
 {
+    controller *cini = &loop->ctrl[C_INIT];
+    controller *cfin = &loop->ctrl[C_FINAL];
     int err;
 
-    err = index_get_limit(loop, &loop->final, s, dset);
+    err = index_get_limit(loop, cfin, s, dset);
 
     if (!err) {
-        loop->init.val = 1;
+        cini->val = 1;
         loop->type = COUNT_LOOP;
     }
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_count_loop: init.val=%g, final.val=%g\n",
-            loop->init.val, loop->final.val);
+            cini->val, cfin->val);
 #endif
 
     return err;
@@ -938,8 +949,8 @@ static int parse_as_count_loop (LOOPSET *loop,
 
 static int set_forloop_element (char *s, LOOPSET *loop, int i)
 {
-    controller *clr = (i == 0)? &loop->init :
-        (i == 1)? &loop->test : &loop->delta;
+    controller *clr = (i == 0)? &loop->ctrl[C_INIT] :
+        (i == 1)? &loop->ctrl[C_TEST] : &loop->ctrl[C_DELTA];
     int len, err = 0;
 
 #if LOOP_DEBUG > 1
@@ -1041,6 +1052,7 @@ static void *get_eachvar_by_name (const char *s, GretlType *t)
 
 static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 {
+    controller *cfin = &loop->ctrl[C_FINAL];
     void *eachvar = NULL;
     const char *strval = NULL;
     int err = 0;
@@ -1076,7 +1088,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
         loop->eachstrs = NULL;
     }
 
-    loop->itermax = loop->final.val = 0;
+    loop->itermax = loop->ctrl[C_FINAL].val = 0;
 
     if (loop->eachtype != GRETL_TYPE_NONE && eachvar == NULL) {
         /* foreach variable has disappeared? */
@@ -1087,7 +1099,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
         if (list[0] > 0) {
             err = list_vars_to_strings(loop, list, dset);
             if (!err) {
-                loop->final.val = list[0];
+                cfin->val = list[0];
             }
         }
     } else if (loop->eachtype == GRETL_TYPE_STRINGS) {
@@ -1096,7 +1108,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
         if (n > 0) {
             loop->eachstrs = gretl_array_get_strings(a, &n);
-            loop->final.val = n;
+            cfin->val = n;
         }
     } else if (loop->eachtype == GRETL_TYPE_BUNDLE) {
         gretl_bundle *b = eachvar;
@@ -1104,7 +1116,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
         if (n > 0) {
             loop->eachstrs = gretl_bundle_get_keys_raw(b, &n);
-            loop->final.val = n;
+            cfin->val = n;
         }
     } else if (!err) {
         /* FIXME do/should we ever come here? */
@@ -1114,7 +1126,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 
             loop->eachstrs = gretl_string_split_quoted(strval, &nf, NULL, &err);
             if (!err) {
-                loop->final.val = nf;
+                cfin->val = nf;
             }
         } else {
             err = E_UNKVAR;
@@ -1333,8 +1345,8 @@ static int set_alt_each_loop (LOOPSET *loop, DATASET *dset,
                               const char *ivar, int len)
 {
     loop->type = INDEX_LOOP;
-    loop->init.val = 1;
-    loop->final.val = len;
+    loop->ctrl[C_INIT].val = 1;
+    loop->ctrl[C_FINAL].val = len;
     return loop_attach_index_var(loop, ivar, dset);
 }
 
@@ -1402,14 +1414,14 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 
     if (!err) {
         loop->type = EACH_LOOP;
-        loop->init.val = 1;
-        loop->final.val = nf;
+        loop->ctrl[C_INIT].val = 1;
+        loop->ctrl[C_FINAL].val = nf;
         loop->itermax = nf;
         err = loop_attach_index_var(loop, ivar, dset);
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "parse_as_each_loop: final.val=%g\n", loop->final.val);
+    fprintf(stderr, "parse_as_each_loop: final.val=%g\n", loop->ctrl[C_FINAL].val);
 #endif
 
     return err;
@@ -2909,6 +2921,7 @@ static int substitute_dollar_targ (char *str, int maxlen,
                                    const DATASET *dset,
                                    int *subst)
 {
+    const controller *cini = &loop->ctrl[C_INIT];
     char insert[32], targ[VNAMELEN + 3] = {0};
     char *p, *ins, *q, *s;
     int targlen, inslen, idx = 0;
@@ -2922,16 +2935,16 @@ static int substitute_dollar_targ (char *str, int maxlen,
     /* construct the target for substitution */
 
     if (loop->type == FOR_LOOP) {
-        if (!gretl_is_scalar(loop->init.vname)) {
+        if (!gretl_is_scalar(cini->vname)) {
             /* nothing to substitute */
             return 0;
         }
-        sprintf(targ, "$%s", loop->init.vname);
+        sprintf(targ, "$%s", cini->vname);
         targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
         sprintf(targ, "$%s", loop->idxname);
         targlen = strlen(targ);
-        idx = loop->init.val + loop->iter;
+        idx = cini->val + loop->iter;
     } else {
         /* shouldn't be here! */
         return 1;
@@ -2951,7 +2964,7 @@ static int substitute_dollar_targ (char *str, int maxlen,
     /* prepare the substitute string */
 
     if (loop->type == FOR_LOOP) {
-        double x = gretl_scalar_get_value(loop->init.vname, NULL);
+        double x = gretl_scalar_get_value(cini->vname, NULL);
 
         if (na(x)) {
             strcpy(insert, "NA");
@@ -3023,11 +3036,11 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
     char genline[64];
     int err = 0;
 
-    if (na(loop->init.val)) {
+    if (na(loop->ctrl[C_INIT].val)) {
         sprintf(genline, "%s=NA", loop->idxname);
     } else {
         gretl_push_c_numeric_locale();
-        sprintf(genline, "%s=%g", loop->idxname, loop->init.val);
+        sprintf(genline, "%s=%g", loop->idxname, loop->ctrl[C_INIT].val);
         gretl_pop_c_numeric_locale();
     }
 
@@ -3044,6 +3057,8 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
 
 static int top_of_loop (LOOPSET *loop, DATASET *dset)
 {
+    controller *cini = &loop->ctrl[C_INIT];
+    controller *cfin = &loop->ctrl[C_FINAL];
     int err = 0;
 
     loop->iter = 0;
@@ -3051,7 +3066,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     if (loop->eachname[0] != '\0') {
         err = loop_list_refresh(loop, dset);
     } else if (loop->type == INDEX_LOOP) {
-        loop->init.val = controller_get_val(&loop->init, loop, dset, &err);
+        loop->ctrl[C_INIT].val = controller_get_val(cini, loop, dset, &err);
     } else if (loop->type == FOR_LOOP) {
         forloop_init(loop, dset, &err);
     }
@@ -3061,23 +3076,23 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     }
 
     if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
-        loop->final.val = controller_get_val(&loop->final, loop, dset, &err);
-        if (na(loop->init.val) || na(loop->final.val)) {
+        cfin->val = controller_get_val(cfin, loop, dset, &err);
+        if (na(cini->val) || na(cfin->val)) {
             gretl_errmsg_set(_("error evaluating loop condition"));
             fprintf(stderr, "loop: got NA for init and/or final value\n");
             err = E_DATA;
         } else if ((loop->type == INDEX_LOOP || loop->type == DATED_LOOP) &&
                    loop_decrement(loop)) {
-            loop->itermax = loop->init.val - loop->final.val + 1;
+            loop->itermax = cini->val - cfin->val + 1;
         } else {
-            loop->itermax = loop->final.val - loop->init.val + 1;
+            loop->itermax = cfin->val - cini->val + 1;
             loop->flags &= ~LOOP_DECREMENT;
         }
     }
 
     if (!err) {
         if (indexed_loop(loop)) {
-            loop->idxval = loop->init.val;
+            loop->idxval = cini->val;
             uvar_set_scalar_fast(loop->idxvar, loop->idxval);
         }
         /* initialization, in case this loop is being run more than
@@ -3587,17 +3602,15 @@ void loop_reset_uvars (LOOPSET *loop)
     }
 
     /* stored refs in controllers? */
-    if (loop->test.genr != NULL) {
-        genr_reset_uvars(loop->test.genr);
-    }
-    if (loop->delta.genr != NULL) {
-        genr_reset_uvars(loop->delta.genr);
+    for (i=0; i<N_CTRL; i++) {
+	if (loop->ctrl[i].genr != NULL) {
+	    genr_reset_uvars(loop->ctrl[i].genr);
+	}
+	loop->ctrl[i].uv = NULL;
     }
 
-    /* other (possibly) stored references */
+    /* another (possibly) stored reference */
     loop->idxvar = NULL;
-    loop->init.uv = NULL;
-    loop->final.uv = NULL;
 }
 
 static void abort_loop_execution (ExecState *s)

@@ -9394,7 +9394,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
     /* will we try to compile genrs, loops? */
-    gencomp = gretl_iterating();
+    gencomp = gretl_iterating() && !is_recursing(call);
+    // fprintf(stderr, "gencomp = %d, recursing = %d\n", gencomp, is_recursing(call));
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
@@ -9440,6 +9441,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &(u->lines[i]);
+
+	// fprintf(stderr, "line %d: '%s'\n", i, fline->s);
 
 	if (gretl_echo_on()) {
 	    pprintf(prn, "? %s\n", fline->s); /* ? */
@@ -9551,18 +9554,16 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(call, rtype, dset, ret,
-			    descrip, prn, &err);
+    function_assign_returns(call, rtype, dset, ret, descrip, prn, &err);
 
-    if (gencomp && !is_recursing(call)) { /* condition included !err */
+    if (gencomp) {
 	reset_saved_uservars(call->fun);
     }
 
     gretl_exec_state_clear(&state);
 
     if (started) {
-	int stoperr = stop_fncall(call, rtype, ret, dset, prn,
-				  redir_level);
+	int stoperr = stop_fncall(call, rtype, ret, dset, prn, redir_level);
 
 	if (stoperr && !err) {
 	    err = stoperr;
