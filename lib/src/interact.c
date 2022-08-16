@@ -2374,30 +2374,6 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int do_debug_command (ExecState *state, const char *param,
-                             gretlopt opt)
-{
-    int err = incompatible_options(opt, OPT_C | OPT_N | OPT_Q);
-
-    if (err) {
-        return err;
-    }
-
-    if (opt & (OPT_C | OPT_N)) {
-        /* continue, next */
-        if (!(state->flags & DEBUG_EXEC)) {
-            gretl_errmsg_set("Debugging is not in progress");
-            return E_DATA;
-        } else {
-            /* handled in debug_command_loop */
-            return 0;
-        }
-    } else {
-        /* OPT_Q quits debugging of the given function */
-        return user_function_set_debug(param, !(opt & OPT_Q));
-    }
-}
-
 /* Given the name of a discrete variable, perform a command for each
    value of the discrete variable. Note that at present the only
    command supported in this way is SUMMARY.
@@ -3358,10 +3334,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case FRACTINT:
         err = fractint(cmd->list[1], cmd->order, dset,
                        cmd->opt, prn);
-        break;
-
-    case FUNDEBUG:
-        err = do_debug_command(s, cmd->param, cmd->opt);
         break;
 
     case BREAK:

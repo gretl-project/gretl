@@ -44,11 +44,11 @@ typedef enum {
 } UfunRole;
 
 typedef enum {
-    UFUN_PRIVATE   = 1 << 0,
-    UFUN_PLUGIN    = 1 << 1,
-    UFUN_NOPRINT   = 1 << 2,
-    UFUN_MENU_ONLY = 1 << 3,
-    UFUN_USES_SET  = 1 << 4
+    UFUN_PRIVATE   = 1 << 0, /* is private to a package */
+    UFUN_NOPRINT   = 1 << 1, /* offers no printed output */
+    UFUN_MENU_ONLY = 1 << 2, /* is GUI-only */
+    UFUN_USES_SET  = 1 << 3, /* includes the "set" command */
+    UFUN_HAS_FLOW  = 1 << 4  /* includes flow-control (ifs, loops) */
 } UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"
@@ -133,8 +133,6 @@ const char *user_function_name_by_index (int i);
 
 int user_function_index_by_name (const char *name, 
 				 fnpkg *pkg);
-
-int user_function_set_debug (const char *name, int debug);
 
 void function_names_init (void);
 

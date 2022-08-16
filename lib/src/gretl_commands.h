@@ -164,7 +164,6 @@ typedef enum {
     WLS,
     XCORRGM,
     XTAB,
-    FUNDEBUG,
     FUNCRET,
     CATCH,
     PKG,

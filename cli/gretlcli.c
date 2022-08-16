@@ -791,7 +791,6 @@ int main (int argc, char *argv[])
 
     gretl_cmd_init(&cmd);
     gretl_exec_state_init(&state, 0, line, &cmd, model, prn);
-    set_debug_read_func(get_interactive_line);
 
     /* print list of variables */
     if (data_status) {

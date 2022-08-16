@@ -53,7 +53,6 @@
 #define UDEBUG 0        /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
 #define FN_DEBUG 0      /* miscellaneous debugging */
-#define DDEBUG 0        /* debug the debugger */
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
@@ -169,7 +168,6 @@ struct ufunc_ {
     int n_params;          /* number of parameters */
     fn_param *params;      /* parameter info array */
     int rettype;           /* return type (if any) */
-    int debug;             /* are we debugging this function? */
 };
 
 /* structure representing a function package */
@@ -272,6 +270,7 @@ static int load_function_package (const char *fname,
 				  gretlopt opt,
 				  GArray *pstack,
 				  PRN *prn);
+static int ufunc_get_structure (ufunc *u);
 
 /* record of state, and communication of state with outside world */
 
@@ -1548,8 +1547,6 @@ static ufunc *ufunc_new (void)
 
     fun->rettype = GRETL_TYPE_NONE;
 
-    fun->debug = 0;
-
     return fun;
 }
 
@@ -1916,6 +1913,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     char line[MAXLINE];
     char *buf, *s;
     gint8 uses_set = 0;
+    gint8 has_flow = 0;
     int err = 0;
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -1924,6 +1922,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     }
 
     bufgets_init(buf);
+    gretl_cmd_init(&cmd);
     state.cmd = &cmd;
 
     while (bufgets(line, sizeof line, buf)) {
@@ -1934,19 +1933,29 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
         if (err) {
             break;
         }
-	if (uses_set == 0 && cmd.ci == SET) {
+	if (cmd.ci == SET) {
 	    uses_set = 1;
+	}
+	if (cmd.ci == IF || cmd.ci == LOOP) {
+	    has_flow = 1;
 	}
 	tailstrip(s);
 	err = push_function_line(fun, s, cmd.ci, 0);
     }
 
-    if (!uses_set) {
+    if (uses_set) {
 	fun->flags |= UFUN_USES_SET;
+    }
+    if (has_flow) {
+	fun->flags |= UFUN_HAS_FLOW;
     }
 
     bufgets_finalize(buf);
     free(buf);
+
+    if (!err && has_flow) {
+        err = ufunc_get_structure(fun);
+    }
 
     return err;
 }
@@ -2199,10 +2208,6 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
     if (gretl_xml_get_prop_as_bool(node, "private")) {
 	fun->flags |= UFUN_PRIVATE;
-    }
-
-    if (gretl_xml_get_prop_as_bool(node, "plugin-wrapper")) {
-	fun->flags |= UFUN_PLUGIN;
     }
 
     if (gretl_xml_get_prop_as_bool(node, "no-print")) {
@@ -2670,9 +2675,7 @@ static void check_special_comments (ufunc *fun)
     int i;
 
     for (i=0; i<fun->n_lines; i++) {
-	if (strstr(fun->lines[i].s, "## plugin-wrapper ##")) {
-	    fun->flags |= UFUN_PLUGIN;
-	} else if (strstr(fun->lines[i].s, "## no-print ##")) {
+	if (strstr(fun->lines[i].s, "## no-print ##")) {
 	    fun->flags |= UFUN_NOPRINT;
 	} else if (strstr(fun->lines[i].s, "## menu-only ##")) {
 	    fun->flags |= UFUN_MENU_ONLY;
@@ -4341,8 +4344,8 @@ static int maybe_replace_optional_string_var (char **svar, const char *src)
 }
 
 /* Called (indirectly) from GUI function packager. Note that we're
-   careful not to touch UFUN_PRIVATE or UFUN_PLUGIN on the uf->flags
-   side, since these flags are not represented in @attrs.
+   careful not to touch UFUN_PRIVATE on the uf->flags side, since
+   this flag is not represented in @attrs.
 */
 
 static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
@@ -4374,9 +4377,8 @@ static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
 }
 
 /* Called (indirectly) from GUI function packager. Note that we scrub
-   UFUN_PRIVATE and UFUN_PLUGIN from the user function flags passed to
-   the packager: UFUN_PLUGIN is irrelevant and UFUN_PRIVATE is handled
-   by a different mechanism.
+   UFUN_PRIVATE from the user function flags passed to the packager:
+   this flag is handled by a different mechanism.
 */
 
 static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
@@ -4395,7 +4397,7 @@ static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
 	if (uf == NULL) {
 	    attrs[r-1] = 0;
 	} else {
-	    attrs[r-1] = uf->flags & ~(UFUN_PRIVATE | UFUN_PLUGIN);
+	    attrs[r-1] = (uf->flags & ~UFUN_PRIVATE);
 	}
     }
 }
@@ -7381,6 +7383,7 @@ static void python_check (const char *line)
 
 static int ufunc_get_structure (ufunc *u)
 {
+    fn_line *line;
     int *next_from_if = NULL;
     int *next_from_loop = NULL;
     int id_max = 0, ld_max = 0;
@@ -7409,13 +7412,10 @@ static int ufunc_get_structure (ufunc *u)
     }
 
 #if FNCOND_DEBUG
-    fprintf(stderr, "max if-depth %d, max loop-depth %d\n", id_max, ld_max);
+    fprintf(stderr, "%s: max if-depth %d, max loop-depth %d\n",
+            u->name, id_max, ld_max);
 #endif
 
-    if (id_max == 0 && ld_max == 0) {
-        /* OK, nothing to record */
-	return 0;
-    }
     if (id_max > 0) {
         next_from_if = gretl_list_new(id_max);
     }
@@ -7425,8 +7425,7 @@ static int ufunc_get_structure (ufunc *u)
 
     /* second pass: analysis */
     for (i=0; i<u->n_lines && !err; i++) {
-	fn_line *line = &u->lines[i];
-
+	line = &(u->lines[i]);
 	if (line->ci == IF) {
 	    id++;
 	    next_from_if[id] = i;
@@ -7474,12 +7473,11 @@ static int ufunc_get_structure (ufunc *u)
 #if FNCOND_DEBUG
     /* display what we figured out */
     for (i=0; i<u->n_lines && !err; i++) {
-	fn_line *line = &u->lines[i];
-        int j = line->next_idx;
-
+	line = &(u->lines[i]);
+        j = line->next_idx;
 	if (j > 0 && j < u->n_lines) {
-	    fprintf(stderr, "line %d idx %d (%s): next on skip = %d (%s)\n",
-		    i, line->idx, line->s, j, u->lines[j].s);
+	    fprintf(stderr, "line %d ('%s'): next on skip = %d ('%s')\n",
+		    i, line->s, j, u->lines[j].s);
 	}
     }
 #endif
@@ -7542,18 +7540,19 @@ int gretl_function_append_line (ExecState *s)
 	}
 	set_compiling_off();
     } else if (cmd->ci == SET) {
-	if (!(fun->flags & UFUN_USES_SET)) {
-	    fun->flags |= UFUN_USES_SET;
-	}
+        fun->flags |= UFUN_USES_SET;
     } else if (cmd->ci == FUNC) {
 	err = E_FNEST;
     } else if (cmd->ci == IF) {
+        fun->flags |= UFUN_HAS_FLOW;
 	ifdepth++;
     } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
 	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
 	err = E_PARSE;
     } else if (cmd->ci == ENDIF) {
 	ifdepth--;
+    } else if (cmd->ci == LOOP) {
+        fun->flags |= UFUN_HAS_FLOW;
     } else if (cmd->ci < 0) {
 	ignore = 1;
     }
@@ -7592,7 +7591,7 @@ int gretl_function_append_line (ExecState *s)
 	ifdepth = 0;
     }
 
-    if (!err && !compiling) {
+    if (!err && !compiling && (fun->flags & UFUN_HAS_FLOW)) {
 	ufunc_get_structure(fun);
     }
 
@@ -8968,7 +8967,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	record_obs_info(&call->obs, dset);
     }
 
-    if (gretl_debugging_on() || call->fun->debug) {
+    if (gretl_debugging_on()) {
 	set_gretl_echo(1);
 	set_gretl_messages(1);
 	pputs(prn, "*** ");
@@ -9086,101 +9085,6 @@ static int check_function_args (fncall *call, PRN *prn)
 #endif
 
     return err;
-}
-
-/**
- * user_function_set_debug:
- * @name: the name of the function.
- * @debug: boolean, if 1 then start debugging function, if
- * 0 then stop debugging.
- *
- * Enables or disables debugging for a user-defined function.
- *
- * Returns: 0 on success, non-zero if no function is specified
- * or if the function is not found.
- */
-
-int user_function_set_debug (const char *name, int debug)
-{
-    ufunc *fun;
-
-    if (name == NULL || *name == '\0') {
-	return E_ARGS;
-    }
-
-    fun = get_user_function_by_name(name);
-
-    if (fun == NULL) {
-	return E_UNKVAR;
-    } else {
-	fun->debug = debug;
-	return 0;
-    }
-}
-
-#define debug_cont(c) (c->ci == FUNDEBUG && (c->opt & OPT_C))
-#define debug_next(c) (c->ci == FUNDEBUG && (c->opt & OPT_N))
-
-#define set_debug_cont(c) (c->ci = FUNDEBUG, c->opt = OPT_C)
-#define set_debug_next(c) (c->ci = FUNDEBUG, c->opt = OPT_N)
-
-/* loop for stepping through function commands; returns
-   1 if we're debugging, otherwise 0
-*/
-
-static int debug_command_loop (ExecState *state,
-			       DATASET *dset,
-			       DEBUG_READLINE get_line,
-			       DEBUG_OUTPUT put_func,
-			       int *errp)
-{
-    int brk = 0, err = 0;
-
-    state->flags |= DEBUG_EXEC;
-
-    while (!brk) {
-#if DDEBUG
-	fprintf(stderr, "--- debug_command_loop calling get_line\n");
-#endif
-	*errp = (*get_line)(state);
-	if (*errp) {
-	    /* the debugger failed: get out right away */
-	    state->flags &= ~DEBUG_EXEC;
-	    return 0;
-	}
-
-	err = parse_command_line(state, dset, NULL);
-	if (err) {
-	    if (!strcmp(state->line, "c")) {
-		/* short for 'continue' */
-		set_debug_cont(state->cmd);
-		err = 0;
-	    } else if (!strcmp(state->line, "n")) {
-		/* short for 'next' */
-		set_debug_next(state->cmd);
-		err = 0;
-	    }
-	}
-
-	if (err || debug_cont(state->cmd) || debug_next(state->cmd)) {
-	    brk = 1;
-	} else {
-	    /* execute interpolated command */
-	    err = gretl_cmd_exec(state, dset);
-	    if (put_func != NULL) {
-#if DDEBUG
-		fprintf(stderr, "--- debug_command_loop calling put_func\n");
-#endif
-		(*put_func)(state);
-	    }
-	}
-    }
-
-    if (!debug_next(state->cmd)) {
-	state->flags &= ~DEBUG_EXEC;
-    }
-
-    return 1 + debug_next(state->cmd);
 }
 
 static const char *get_funcerr_message (ExecState *state)
@@ -9361,12 +9265,6 @@ static int handle_return_statement (fncall *call,
     return err;
 }
 
-static int do_debugging (ExecState *s)
-{
-    return s->cmd->ci > 0 && !s->cmd->context &&
-	!gretl_compiling_loop();
-}
-
 int current_function_size (void)
 {
     ufunc *u = currently_called_function();
@@ -9472,8 +9370,6 @@ static int prepare_func_exec_state (ExecState *s,
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn)
 {
-    DEBUG_READLINE get_line = NULL;
-    DEBUG_OUTPUT put_func = NULL;
     ufunc *u = call->fun;
     ExecState state = {0};
     void *ptr;
@@ -9484,7 +9380,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int indent0 = 0, started = 0;
     int redir_level = 0;
     int retline = -1;
-    int debugging = u->debug;
     int gencomp = 0;
     int i, j, err = 0;
 
@@ -9498,6 +9393,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
+    /* will we try to compile genrs, loops? */
     gencomp = gretl_iterating();
 
 #if EXEC_DEBUG
@@ -9530,43 +9426,28 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     err = prepare_func_exec_state(&state, line, dset, prn);
 
-    if (!err) {
-	err = start_fncall(call, dset, prn);
-	if (!err) {
-	    started = 1;
-	    redir_level = print_redirection_level(prn);
-	}
-    }
-
 #if EXEC_DEBUG
-    fprintf(stderr, "start_fncall: err = %d\n", err);
+    fprintf(stderr, "after prepare_func_exec_state: err = %d\n", err);
 #endif
 
-    if (debugging) {
-	get_line = get_debug_read_func();
-	put_func = get_debug_output_func();
-	if (get_line != NULL) {
-	    debugging = 2;
-	}
+    if (!err) {
+	start_fncall(call, dset, prn);
+        started = 1;
+        redir_level = print_redirection_level(prn);
     }
 
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &(u->lines[i]);
-	int lineno = fline->idx;
 
-	strcpy(line, fline->s);
-
-	if (debugging) {
-	    pprintf(prn, "%s> %s\n", u->name, line);
-	} else if (gretl_echo_on()) {
-	    pprintf(prn, "? %s\n", line);
+	if (gretl_echo_on()) {
+	    pprintf(prn, "? %s\n", fline->s); /* ? */
 	}
-
 	if (ignore_line(fline)) {
 	    continue;
 	}
+        strcpy(line, fline->s); /* needed? */
 
 	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {
@@ -9625,18 +9506,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		retline = i;
 	    }
 	    break;
-	}
-
-	if (debugging > 1 && do_debugging(&state)) {
-	    if (put_func != NULL) {
-		pprintf(prn, "-- debugging %s, line %d --\n", u->name, lineno);
-		(*put_func)(&state);
-	    } else {
-		pprintf(prn, "-- debugging %s, line %d --\n", u->name, lineno);
-	    }
-	    debugging = debug_command_loop(&state, dset,
-					   get_line, put_func,
-					   &err);
 	}
 
 	if (err) {

@@ -2470,32 +2470,6 @@ void show_activity_callback (void)
     }
 }
 
-/* mechanism for interactive debugging */
-
-static DEBUG_READLINE dbg_readline;
-
-void set_debug_read_func (DEBUG_READLINE dfunc)
-{
-    dbg_readline = dfunc;
-}
-
-DEBUG_READLINE get_debug_read_func (void)
-{
-    return dbg_readline;
-}
-
-static DEBUG_OUTPUT dbg_output;
-
-void set_debug_output_func (DEBUG_OUTPUT dout)
-{
-    dbg_output = dout;
-}
-
-DEBUG_OUTPUT get_debug_output_func (void)
-{
-    return dbg_output;
-}
-
 /* support for GUI "Stop" button */
 
 static QUERY_STOP query_stop;
