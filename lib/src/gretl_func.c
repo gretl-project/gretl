@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define LSDEBUG 0       /* debug handling of saved loops */
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
 #define UDEBUG 0        /* debug handling of args */
@@ -87,9 +86,7 @@ struct fn_param_ {
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
-    LINE_LOOP   = 1 << 1,
-    LINE_GENR   = 1 << 2,
-    LINE_RET    = 1 << 3
+    LINE_RET    = 1 << 1
 } ln_flags;
 
 /* structure representing a line of a user-defined function */
@@ -97,14 +94,14 @@ typedef enum {
 struct fn_line_ {
     gint16 ci;       /* command index */
     gint16 idx;      /* 1-based line index (allowing for blanks) */
-    gint16 next_idx; /* line index to skip to after loop */
+    gint16 next_idx; /* line index to skip to after loop or conditional */
     char *s;         /* text of command line */
     void *ptr;       /* attachment for LOOPSET or GENERATOR */
     ln_flags flags;  /* see above */
 };
 
-#define line_has_loop(l)  (l->flags & LINE_LOOP)
-#define line_has_genr(l)  (l->flags & LINE_GENR)
+#define line_has_loop(l)  (l->ci == LOOP && l->ptr != NULL)
+#define line_has_genr(l)  (l->ci != LOOP && l->ptr != NULL)
 #define ignore_line(l)    (l->flags & LINE_IGNORE)
 #define is_return_line(l) (l->flags & LINE_RET)
 
@@ -7374,9 +7371,7 @@ static void python_check (const char *line)
     }
 }
 
-/* === begin experimental === */
-
-#define FNCOND_DEBUG 1
+#define FNCOND_DEBUG 0
 
 /* If a function contains flow-control statements or loops,
    record the line numbers on which these start, along with
@@ -7492,8 +7487,6 @@ static int ufunc_get_structure (ufunc *u)
     return err;
 }
 
-/* === end experimental === */
-
 /**
  * gretl_function_append_line:
  * @s: pointer to execution state.
@@ -7599,7 +7592,7 @@ int gretl_function_append_line (ExecState *s)
 	ifdepth = 0;
     }
 
-    if (!err && !compiling && getenv("FNCOND") != NULL) {
+    if (!err && !compiling) {
 	ufunc_get_structure(fun);
     }
 
@@ -8916,10 +8909,10 @@ static void reset_saved_uservars (ufunc *u)
     for (i=0; i<u->n_lines; i++) {
         line = &(u->lines[i]);
 	if (line_has_loop(line)) {
-# if GLOBAL_TRACE
+#if GLOBAL_TRACE
 	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
 		    u->name, (void *) line->ptr);
-# endif
+#endif
 	    loop_reset_uvars(line->ptr);
 	} else if (line_has_genr(line)) {
             genr_reset_uvars(line->ptr);
@@ -9292,9 +9285,6 @@ static int generate_return_value (fncall *call,
 	    formula = g_strdup_printf("$retval=%s", s);
 	    line->ptr = genr_compile(formula, dset, fun->rettype,
 				     OPT_P, state->prn, &err);
-	    if (line->ptr != NULL) {
-		line->flags |= LINE_GENR;
-	    }
 	} else {
 	    err = execute_genr(line->ptr, dset, state->prn);
 	}
@@ -9319,7 +9309,7 @@ static int handle_return_statement (fncall *call,
     int err = 0;
 
 #if EXEC_DEBUG
-    fprintf(stderr, "%s: handle_return_statement (%s), line = %p\n",
+    fprintf(stderr, "%s: handle_return_statement ('%s'), line = %p\n",
 	    fun->name, s, (void *) line);
 #endif
 
@@ -9384,38 +9374,6 @@ int current_function_size (void)
     return (u != NULL)? u->n_lines : 0;
 }
 
-int attach_loop_to_function (void *ptr)
-{
-    fncall *call = current_function_call();
-    ufunc *u = NULL;
-    int err = 0;
-
-    if (call != NULL && !is_recursing(call)) {
-	u = call->fun;
-    }
-
-    if (u == NULL) {
-	return E_DATA;
-    } else {
-        fn_line *line = &(u->lines[u->line_idx]);
-
-	if (line->ptr != NULL) {
-	    /* there should not already be a loop attached */
-	    err = E_DATA;
-	} else {
-	    /* OK, attach it */
-	    line->ptr = ptr;
-            line->flags |= LINE_LOOP;
-#if LSDEBUG || GLOBAL_TRACE
-	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
-		    ptr, u->name, u->line_idx);
-#endif
-	}
-    }
-
-    return err;
-}
-
 int detach_loop_from_function (void *ptr)
 {
     fncall *call = current_function_call();
@@ -9435,12 +9393,11 @@ int detach_loop_from_function (void *ptr)
 	for (i=0; i<u->n_lines; i++) {
             line = &(u->lines[i]);
 	    if (line->ptr == ptr) {
-#if LSDEBUG || GLOBAL_TRACE
+#if GLOBAL_TRACE
 		fprintf(stderr, "detaching loop at %p from function %s\n",
 			ptr, u->name);
 #endif
 		line->ptr = NULL;
-                line->flags &= ~LINE_LOOP;
 		break;
 	    }
 	}
@@ -9519,6 +9476,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     DEBUG_OUTPUT put_func = NULL;
     ufunc *u = call->fun;
     ExecState state = {0};
+    void *ptr;
     char line[MAXLINE];
     int orig_n = 0;
     int orig_t1 = 0;
@@ -9528,8 +9486,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int retline = -1;
     int debugging = u->debug;
     int gencomp = 0;
-    int loopstart = 0;
-    int i, err = 0;
+    int i, j, err = 0;
 
 #if EXEC_DEBUG || GLOBAL_TRACE
     fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
@@ -9541,9 +9498,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
-    if (getenv("TRY_GENCOMP") != NULL) {
-        gencomp = gretl_iterating();
-    }
+    gencomp = gretl_iterating();
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
@@ -9613,9 +9568,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
 
-        fprintf(stderr, "line %d: %s\n", i, fline->s);
-
+	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {
+	    // ptr = gencomp ? &fline->ptr : NULL;
 	    err = maybe_exec_line(&state, dset, NULL, NULL);
 	    if (gretl_if_state_false() && fline->next_idx > 0) {
                 /* skip to next relevant statement */
@@ -9624,12 +9579,25 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
         }
 
-	if (line_has_loop(fline) && !is_recursing(call)) {
-#if LSDEBUG
-	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
-		    (void *) fline->ptr, i, line);
+	if (fline->ci == LOOP && !is_recursing(call)) {
+	    /* Q: do we have to skip the recursing case? */
+	    if (fline->ptr != NULL) {
+#if EXEC_DEBUG
+		fprintf(stderr, "got compiled loop %p on line %d\n",
+			(void *) fline->ptr, i);
 #endif
-            err = gretl_loop_exec(&state, dset, fline->ptr);
+		err = gretl_loop_exec(&state, dset, &fline->ptr);
+	    } else {
+		/* assemble then execute the loop */
+		ptr = gencomp ? &fline->ptr : NULL;
+		for (j=i; j<=fline->next_idx && !err; j++) {
+		    strcpy(line, u->lines[j].s);
+		    err = maybe_exec_line(&state, dset, NULL, NULL);
+		}
+		if (!err) {
+		    err = gretl_loop_exec(&state, dset, ptr);
+		}
+	    }
             if (err) {
                 set_func_error_message(err, u, &state, state.line, NULL);
                 break;
@@ -9639,7 +9607,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
                                               gencomp, NULL);
                 break;
             }
-	    /* skip to the matching 'endloop' */
+	    /* skip past the loop lines */
 	    i = fline->next_idx;
 	    continue;
         } else if (line_has_genr(fline) && !is_recursing(call) &&
@@ -9647,24 +9615,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
             /* do we need to rule out the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
-            if (gencomp) {
-                err = maybe_exec_line(&state, dset, &loopstart, &fline->ptr);
-                if (!err && fline->ptr != NULL) {
-                    fline->flags |= LINE_GENR;
-                }
-            } else {
-                err = maybe_exec_line(&state, dset, &loopstart, NULL);
-            }
-	    if (loopstart) {
-		u->line_idx = i;
-		loopstart = 0;
-	    }
-	}
+	    ptr = gencomp ? &fline->ptr : NULL;
+	    err = maybe_exec_line(&state, dset, NULL, ptr);
+ 	}
 
-        fprintf(stderr, "func exec: loopstart=%d, compiling_loop %d\n",
-                loopstart, gretl_compiling_loop());
-
-	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
+	if (!err && state.cmd->ci == FUNCRET) {
 	    err = handle_return_statement(call, &state, dset, gencomp, fline);
 	    if (i < u->n_lines - 1) {
 		retline = i;
@@ -9687,24 +9642,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (err) {
 	    set_func_error_message(err, u, &state, line, fline);
 	    break;
-	}
-
-        fprintf(stderr, "func exec: gretl_execute_loop %d\n", gretl_execute_loop());
-
-	if (gretl_execute_loop()) {
-	    /* mark the ending point of an (outer) loop */
-	    u->lines[u->line_idx].next_idx = i;
-            fprintf(stderr, "set next_idx = %d on line %d\n", i, u->line_idx);
-	    err = gretl_loop_exec(&state, dset, NULL);
-	    if (err) {
-		/* note that @lineno will point at the end of a loop here */
-		set_func_error_message(err, u, &state, state.line, NULL);
-	    }
-	    if (get_return_line(&state)) {
-		/* a "return" statement was encountered in the loop */
-		err = handle_return_statement(call, &state, dset, gencomp, NULL);
-		break;
-	    }
 	}
     }
 
@@ -9748,7 +9685,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
-    if (!is_recursing(call)) { /* condition included !err */
+    if (gencomp && !is_recursing(call)) { /* condition included !err */
 	reset_saved_uservars(call->fun);
     }
 
