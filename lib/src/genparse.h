@@ -124,7 +124,7 @@ enum {
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */
-	      PTR,        /* miscellaneous pointer */
+	      UFPTR,      /* pointer to user-defined function */
 	      EOT,	  /* end of transmission */
 	      UNK
 };

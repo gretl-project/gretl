@@ -8909,11 +8909,15 @@ static void reset_saved_uservars (ufunc *u)
         line = &(u->lines[i]);
 	if (line_has_loop(line)) {
 #if GLOBAL_TRACE
-	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
+	    fprintf(stderr, "at exit from %s, loop_reset_uvars %p\n",
 		    u->name, (void *) line->ptr);
 #endif
 	    loop_reset_uvars(line->ptr);
 	} else if (line_has_genr(line)) {
+#if GLOBAL_TRACE
+	    fprintf(stderr, "at exit from %s, genr_reset_uvars %p\n",
+		    u->name, (void *) line->ptr);
+#endif
             genr_reset_uvars(line->ptr);
         }
     }
@@ -9381,6 +9385,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int gencomp = 0;
+    int n_saved = 0;
     int i, j, err = 0;
 
 #if EXEC_DEBUG || GLOBAL_TRACE
@@ -9395,12 +9400,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     /* will we try to compile genrs, loops? */
     gencomp = gretl_iterating() && !is_recursing(call);
-    //gencomp = gretl_looping() && !is_recursing(call);
-    // fprintf(stderr, "gencomp = %d, recursing = %d\n", gencomp, is_recursing(call));
 
 #if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
-    fprintf(stderr, "u->n_params = %d, gencomp = %d\n", u->n_params, gencomp);
+    fprintf(stderr, "gretl_function_exec: %s, gencomp = %d\n", u->name, gencomp);
 #endif
 
     /* record incoming dataset dimensions */
@@ -9472,6 +9474,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			(void *) fline->ptr, i);
 #endif
 		err = gretl_loop_exec(&state, dset, &fline->ptr);
+		n_saved++;
 	    } else {
 		/* assemble then execute the loop */
 		ptr = gencomp ? &fline->ptr : NULL;
@@ -9498,6 +9501,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         } else if (line_has_genr(fline) && !is_recursing(call) &&
 		   !is_return_line(fline)) {
             /* do we need to rule out the recursing case? */
+	    n_saved++;
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
 	    ptr = gencomp ? &fline->ptr : NULL;
@@ -9505,8 +9509,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
  	}
 
 	if (!err && state.cmd->ci == FUNCRET) {
+	    if (fline->ptr != NULL) n_saved++;
 	    err = handle_return_statement(call, &state, dset, gencomp, fline);
-	    if (i < u->n_lines - 1) {
+	    if (i < u->n_lines) {
 		retline = i;
 	    }
 	    break;
@@ -9557,7 +9562,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     function_assign_returns(call, rtype, dset, ret, descrip, prn, &err);
 
-    if (gencomp) {
+    if (gencomp || n_saved > 0) {
 	reset_saved_uservars(call->fun);
     }
 

@@ -467,7 +467,9 @@ static int nls_auto_genr (nlspec *s, int i)
 #if NLS_DEBUG
 	fprintf(stderr, " calling nls_genr_setup\n");
 #endif
+	gretl_iteration_push();
 	s->generr = nls_genr_setup(s);
+	gretl_iteration_pop();
 	if (s->generr) {
 	    fprintf(stderr, " nls_genr_setup failed\n");
 	}
@@ -479,7 +481,9 @@ static int nls_auto_genr (nlspec *s, int i)
 	fprintf(stderr, " generating aux var %d (%p):\n %s\n",
 		j, (void *) s->genrs[j], s->aux[j]);
 #endif
+	gretl_iteration_push();
 	s->generr = execute_genr(s->genrs[j], s->dset, s->prn);
+	gretl_iteration_pop();
 	if (s->generr) {
 	    return s->generr;
 	}

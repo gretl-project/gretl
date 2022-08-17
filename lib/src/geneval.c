@@ -16281,7 +16281,7 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
 
 static void reattach_series (NODE *n, parser *p)
 {
-    if (n->v.xvec == NULL || get_loop_renaming()) {
+    if (1 || n->v.xvec == NULL || get_loop_renaming()) {
         /* do a full reset */
         n->vnum = current_series_index(p->dset, n->vname);
         if (n->vnum < 0) {
@@ -16325,19 +16325,28 @@ static void reattach_data_error (NODE *n, parser *p)
     }
 }
 
+#define UVDEBUG 0
+
 static void node_reattach_data (NODE *n, parser *p)
 {
     if (n->t == SERIES) {
         reattach_series(n, p);
     } else {
+#if UVDEBUG
+	void *p0 = n->uv;
+#endif
         GretlType type = 0;
         void *data = NULL;
 
-#if 0 /* more stringent (too stringent?) */
+#if UVDEBUG
         if (n->uv == NULL || gretl_iterating()) {
             n->uv = get_user_var_by_name(n->vname);
+	    if (p0 != NULL && n->uv != p0) {
+		fprintf(stderr, "node_reattach_data ('%s'): MOVED %p -> %p\n",
+			n->vname, p0, (void *) n->uv);
+	    }
         }
-#else /* perform fewer look-ups */
+#else
         if (n->uv == NULL || (n->t == LIST && gretl_iterating())) {
             n->uv = get_user_var_by_name(n->vname);
         }
@@ -16508,7 +16517,7 @@ static NODE *eval (NODE *t, parser *p)
 #endif
 
     /* handle terminals first */
-    if (t->t == MSPEC || t->t == EMPTY || t->t == PTR) {
+    if (t->t == MSPEC || t->t == EMPTY || t->t == UFPTR) {
         return t;
     } else if (t->t >= NUM && t->t <= STR) {
         if (exestart(p) && uvar_node(t)) {
@@ -18498,7 +18507,7 @@ static void printnode (NODE *t, parser *p, int value)
         pputc(p->prn, ')');
     } else if (t->t == STR) {
         pprintf(p->prn, "%s", t->v.str);
-    } else if (t->t == PTR) {
+    } else if (t->t == UFPTR) {
         pprintf(p->prn, "%s", t->vname);
     } else if (t->t == DMSTR || t->t == UFUN) {
         printnode(t->L, p, 0);
