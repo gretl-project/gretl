@@ -16325,6 +16325,10 @@ static void reattach_data_error (NODE *n, parser *p)
     }
 }
 
+/* Deep debugging to detect any cases where we've failed to NULL-ify
+   uservars (n->uv) that may have been relocated in memory between
+   visits to geneval. Turn this on in case of "weird" genr errors.
+*/
 #define UVDEBUG 0
 
 static void node_reattach_data (NODE *n, parser *p)

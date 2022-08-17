@@ -8734,12 +8734,6 @@ function_assign_returns (fncall *call, int rtype,
 	}
     }
 
-    if (call->retname != NULL) {
-	/* we're done with this now */
-	free(call->retname);
-	call->retname = NULL;
-    }
-
 #if UDEBUG
     fprintf(stderr, "function_assign_returns: returning %d\n", err);
 #endif
@@ -8779,18 +8773,22 @@ static void restore_obs_info (obsinfo *oi, DATASET *dset)
 
 static void push_verbosity (fncall *call)
 {
-    if (gretl_messages_on()) {
-	call->flags |= FC_PREV_MSGS;
-    }
-    if (gretl_echo_on()) {
-	call->flags |= FC_PREV_ECHO;
+    if (!is_recursing(call)) {
+	if (gretl_messages_on()) {
+	    call->flags |= FC_PREV_MSGS;
+	}
+	if (gretl_echo_on()) {
+	    call->flags |= FC_PREV_ECHO;
+	}
     }
 }
 
 static void pop_verbosity (fncall *call)
 {
-    set_gretl_messages(call->flags & FC_PREV_MSGS);
-    set_gretl_echo(call->flags & FC_PREV_ECHO);
+    if (!is_recursing(call)) {
+	set_gretl_messages(call->flags & FC_PREV_MSGS);
+	set_gretl_echo(call->flags & FC_PREV_ECHO);
+    }
 }
 
 /* do the basic housekeeping that is required when a function exits:
@@ -8892,6 +8890,12 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     if (print_redirection_level(prn) > redir_level) {
 	gretl_errmsg_set("Incorrect use of 'outfile' in function");
 	err = 1;
+    }
+
+    if (call->retname != NULL) {
+	/* we're surely done with this now: avoid potential leak */
+	free(call->retname);
+	call->retname = NULL;
     }
 
     return err;
