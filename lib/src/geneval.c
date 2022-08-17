@@ -803,8 +803,8 @@ static void maybe_switch_node_type (NODE *n, int type,
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
 	*/
-	fprintf(stderr, "aux node mismatch: n->t = %d (%s), type = %d (%s), tmp = %d\n",
-		n->t, getsymb(n->t), type, getsymb(type), (flags == TMP_NODE));
+	fprintf(stderr, "aux node mismatch: expected %s but got %s, TMP_NODE=%d\n",
+		getsymb(n->t), getsymb(type), (flags & TMP_NODE)? 1 : 0);
 	gretl_errmsg_set("internal genr error: aux node mismatch");
 	p->err = E_DATA;
     }
@@ -16333,9 +16333,15 @@ static void node_reattach_data (NODE *n, parser *p)
         GretlType type = 0;
         void *data = NULL;
 
+#if 0 /* more stringent (too stringent?) */
+        if (n->uv == NULL || gretl_iterating()) {
+            n->uv = get_user_var_by_name(n->vname);
+        }
+#else /* perform fewer look-ups */
         if (n->uv == NULL || (n->t == LIST && gretl_iterating())) {
             n->uv = get_user_var_by_name(n->vname);
         }
+#endif
 
         if (n->uv != NULL) {
             data = n->uv->ptr;

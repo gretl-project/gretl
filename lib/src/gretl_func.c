@@ -9395,6 +9395,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     /* will we try to compile genrs, loops? */
     gencomp = gretl_iterating() && !is_recursing(call);
+    //gencomp = gretl_looping() && !is_recursing(call);
     // fprintf(stderr, "gencomp = %d, recursing = %d\n", gencomp, is_recursing(call));
 
 #if EXEC_DEBUG
