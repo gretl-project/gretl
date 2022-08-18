@@ -1534,7 +1534,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
         err = get_line_continuation(s->line, fp, prn);
         if (!err) {
-            err = maybe_exec_line(s, dset, NULL, NULL);
+            err = maybe_exec_line(s, dset, NULL);
         }
     }
 
@@ -4147,14 +4147,13 @@ static int try_compile_func_genr (ExecState *s,
 }
 
 /* Called by functions, and by scripts executed from within
-   functions. Augmented 2022-08-11 to support a 4th argument,
+   functions. Augmented 2022-08-11 to support a 3rd argument,
    for use in a function that is being called from a loop:
    we'll attempt to "compile" GENR statements in this
    context, for reuse when the function is next called.
 */
 
-int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
-                     void *ptr)
+int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
 {
     int done = 0;
     int err = 0;
@@ -4166,13 +4165,10 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
     if (gretl_compiling_loop()) {
         err = get_command_index(s, LOOP);
     } else {
-        /* FIXME last arg to parse_command_line() ? */
-        err = parse_command_line(s, dset, NULL);
+        err = parse_command_line(s, dset, ptr);
         if (!err) {
-            if (s->cmd->ci == LOOP && loopstart != NULL) {
-                *loopstart = 1;
-            } else if (s->cmd->ci == GENR && ptr != NULL &&
-                       !(s->cmd->flags & CMD_SUBST)) {
+            if (s->cmd->ci == GENR && ptr != NULL &&
+                !(s->cmd->flags & CMD_SUBST)) {
                 err = try_compile_func_genr(s, dset, ptr, &done);
             }
         }

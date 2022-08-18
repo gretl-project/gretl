@@ -9461,8 +9461,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
 	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {
-	    // ptr = gencomp ? &fline->ptr : NULL;
-	    err = maybe_exec_line(&state, dset, NULL, NULL);
+	    ptr = gencomp ? &fline->ptr : NULL;
+	    err = maybe_exec_line(&state, dset, ptr);
 	    if (gretl_if_state_false() && fline->next_idx > 0) {
                 /* skip to next relevant statement */
 		i = fline->next_idx - 1;
@@ -9484,7 +9484,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		ptr = gencomp ? &fline->ptr : NULL;
 		for (j=i; j<=fline->next_idx && !err; j++) {
 		    strcpy(line, u->lines[j].s);
-		    err = maybe_exec_line(&state, dset, NULL, NULL);
+		    err = maybe_exec_line(&state, dset, NULL);
 		}
 		if (!err) {
 		    err = gretl_loop_exec(&state, dset, ptr);
@@ -9509,7 +9509,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
 	    ptr = gencomp ? &fline->ptr : NULL;
-	    err = maybe_exec_line(&state, dset, NULL, ptr);
+	    err = maybe_exec_line(&state, dset, ptr);
  	}
 
 	if (!err && state.cmd->ci == FUNCRET) {
