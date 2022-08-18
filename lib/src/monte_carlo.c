@@ -1524,8 +1524,7 @@ static int is_indexed_loop (const char *s,
                 s += strspn(s, " ");
                 *start = gretl_strndup(s, p - s);
                 g_strchomp(*start);
-                /* skip ".. " */
-                p += 2;
+		p += 2; /* skip ".." */
                 p += strspn(p, " ");
                 *stop = gretl_strdup(p);
                 g_strchomp(*stop);
@@ -3832,7 +3831,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, void *ptr)
                     line_is_compiled(lcmd));
 #endif
 
-            /* check and adjust the if-state */
+            /* check and possibly adjust the if-state */
             if (do_if_check(ci)) {
                 err = maybe_exec_line(s, dset, &lcmd->genr);
                 if (gretl_if_state_false() && lcmd->next_idx > 0) {
@@ -3879,10 +3878,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, void *ptr)
             }
 
             if (!loop_cmd_nodol(lcmd)) {
+		/* check for $-string substitution */
                 if (strchr(line, '$')) {
-                    /* handle loop-specific $-string substitution */
-                    err = make_dollar_substitutions(line, MAXLINE, loop,
-                                                    dset, &subst, OPT_NONE);
+                     err = make_dollar_substitutions(line, MAXLINE, loop,
+						     dset, &subst, OPT_NONE);
                     if (err) {
                         break;
                     } else if (!subst) {
