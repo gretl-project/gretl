@@ -3522,14 +3522,12 @@ static int maybe_preserve_loop (LOOPSET *loop, LOOPSET **ploop)
 
     if (ploop != NULL) {
         if (*ploop == NULL) {
+#if GLOBAL_TRACE
             fprintf(stderr, "attaching loop %p to function\n", (void *) loop);
+#endif
             *ploop = loop;
         }
         loop_set_attached(loop);
-#if GLOBAL_TRACE
-        fprintf(stderr, "loop %p attached to function\n",
-                (void *) loop);
-#endif
     }
 
     return loop_is_attached(loop);
