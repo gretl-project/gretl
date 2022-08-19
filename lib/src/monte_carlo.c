@@ -41,12 +41,6 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#if HAVE_GMP
-# include <gmp.h>
-
-typedef mpf_t bigval;
-#endif
-
 enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
@@ -63,6 +57,8 @@ enum loop_types {
                          l->type == EACH_LOOP)
 
 #if HAVE_GMP
+# include <gmp.h>
+typedef mpf_t bigval;
 # include "prog_loop.h"
 #endif
 
