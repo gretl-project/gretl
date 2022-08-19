@@ -4162,13 +4162,14 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
         return 0;
     }
 
+    // fprintf(stderr, "'%s': compiling loop = %d\n", s->line, gretl_compiling_loop());
+
     if (gretl_compiling_loop()) {
         err = get_command_index(s, LOOP);
     } else {
         err = parse_command_line(s, dset, ptr);
-        if (!err) {
-            if (s->cmd->ci == GENR && ptr != NULL &&
-                !(s->cmd->flags & CMD_SUBST)) {
+        if (s->cmd->ci == GENR && !err && ptr != NULL) {
+            if (!(s->cmd->flags & CMD_SUBST)) {
                 err = try_compile_func_genr(s, dset, ptr, &done);
             }
         }
