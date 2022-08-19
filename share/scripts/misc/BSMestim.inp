@@ -305,7 +305,7 @@ function list BSMestim (series y,
   scalar logLc=0
   matrix pstar = { null }
   matrix bT = { null }
-  set bfgs_toler 1.E-02
+  set bfgs_toler 1.E-07
   M = BFGSmax(theta, "BSM(&theta, y, &bT, &at, &pstar, &V, &F, &logLc, sigmatol, 1, fijos)")
   scalar sstart = int(min(t))
   scalar send = int(max(t))
