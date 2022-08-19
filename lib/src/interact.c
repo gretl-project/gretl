@@ -4162,8 +4162,6 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
         return 0;
     }
 
-    // fprintf(stderr, "'%s': compiling loop = %d\n", s->line, gretl_compiling_loop());
-
     if (gretl_compiling_loop()) {
         err = get_command_index(s, LOOP);
     } else {

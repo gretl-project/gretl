@@ -9402,7 +9402,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
-    /* will we try to compile genrs, loops? */
+    /* should we try to compile genrs, loops? */
     gencomp = gretl_iterating() && !is_recursing(call);
 
 #if EXEC_DEBUG
@@ -9473,10 +9473,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (fline->ci == LOOP && !is_recursing(call)) {
 	    /* Q: do we have to skip the recursing case? */
 	    if (fline->ptr != NULL) {
-#if EXEC_DEBUG
-		fprintf(stderr, "got compiled loop %p on line %d\n",
-			(void *) fline->ptr, i);
-#endif
 		err = gretl_loop_exec(&state, dset, (LOOPSET **) &fline->ptr);
 		n_saved++;
 	    } else {
@@ -9505,8 +9501,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         } else if (line_has_genr(fline) && !is_recursing(call) &&
 		   !is_return_line(fline)) {
             /* do we need to rule out the recursing case? */
-	    n_saved++;
 	    err = execute_genr(fline->ptr, dset, prn);
+            n_saved++;
 	} else {
 	    ptr = gencomp ? &fline->ptr : NULL;
 	    err = maybe_exec_line(&state, dset, ptr);
