@@ -3515,7 +3515,7 @@ static int model_command_post_process (ExecState *s,
 
 static int maybe_preserve_loop (LOOPSET *loop)
 {
-    if (loop_err_caught(loop)) {
+    if (loop->flags & LOOP_ERR_CAUGHT) {
 	return 0;
     }
 
