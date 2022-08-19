@@ -291,7 +291,6 @@ function list BSMestim (series y,
                         bool slope[1],
                         bool seas[1],
                         scalar sigmatol[0.0001])
-  set verbose off
   if (irreg!=1&&irreg!=0) || (level!=1&&level!=0) || (slope!=1&&slope!=0) || (seas!=1&&seas!=0)
     funcerr "irreg, level, slope and seas must be 0 or 1"
   endif
