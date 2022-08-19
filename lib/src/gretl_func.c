@@ -9477,7 +9477,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		fprintf(stderr, "got compiled loop %p on line %d\n",
 			(void *) fline->ptr, i);
 #endif
-		err = gretl_loop_exec(&state, dset, &fline->ptr);
+		err = gretl_loop_exec(&state, dset, (LOOPSET **) &fline->ptr);
 		n_saved++;
 	    } else {
 		/* assemble then execute the loop */
