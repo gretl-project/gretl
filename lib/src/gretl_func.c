@@ -9448,8 +9448,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &(u->lines[i]);
-
-	// fprintf(stderr, "line %d: '%s'\n", i, fline->s);
+#if 0
+	fprintf(stderr, "line %d: '%s'\n", i, fline->s);
+#endif
 
 	if (gretl_echo_on()) {
 	    pprintf(prn, "? %s\n", fline->s); /* ? */
@@ -9461,8 +9462,13 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
 	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {
-	    ptr = gencomp ? &fline->ptr : NULL;
-	    err = maybe_exec_line(&state, dset, ptr);
+	    if (fline->ci == ELSE || fline->ci == ENDIF) {
+		state.cmd->ci = fline->ci;
+		flow_control(&state, NULL, NULL);
+	    } else {
+		ptr = gencomp ? &fline->ptr : NULL;
+		err = maybe_exec_line(&state, dset, ptr);
+	    }
 	    if (gretl_if_state_false() && fline->next_idx > 0) {
                 /* skip to next relevant statement */
 		i = fline->next_idx - 1;
