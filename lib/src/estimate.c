@@ -1103,6 +1103,12 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
         return mdl;
     }
 
+    if (ci == OLS && incompatible_options(opt, OPT_C | OPT_J)) {
+	/* at present --cluster and --jackknife can't be combined */
+	mdl.errcode = E_BADOPT;
+        return mdl;
+    }
+
     if (opt & OPT_C) {
 	/* cluster option implies robust */
 	opt |= OPT_R;
@@ -4355,6 +4361,10 @@ static int check_panel_options (gretlopt opt)
 	return E_BADOPT;
     } else if (incompatible_options(opt, OPT_B | OPT_U | OPT_P)) {
 	/* mutually exclusive estimator requests */
+	return E_BADOPT;
+    } else if (opt & OPT_J) {
+	/* jackknife option not OK for panel data, at present */
+	gretl_errmsg_set("The --jackknife option is not supported for panel data");
 	return E_BADOPT;
     }
 
