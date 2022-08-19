@@ -1648,32 +1648,6 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
     return loop;
 }
 
-LOOPSET *gretl_loop_new (char *s, DATASET *dset, int *err)
-{
-    LOOPSET *loop = gretl_loop_allocate(NULL);
-
-#if LOOP_DEBUG
-    fprintf(stderr, "gretl_loop_new: line='%s'\n", s);
-#endif
-
-    if (loop == NULL) {
-        *err = E_ALLOC;
-    } else {
-        *err = parse_first_loopline(s, loop, dset);
-    }
-
-    if (!*err) {
-        *err = gretl_loop_prepare(loop);
-    }
-
-    if (*err && loop != NULL) {
-        destroy_loop_stack(loop);
-        loop = NULL;
-    }
-
-    return loop;
-}
-
 #if LOOP_DEBUG
 # define MAX_FOR_TIMES  10
 #else
@@ -2471,7 +2445,7 @@ static int loop_get_structure (LOOPSET *loop)
     }
 
 #if LS_DEBUG
-    fprintf(stderr, "loop: max if-depth %d\n", id_max);
+    fprintf(stderr, "loop_get_structure: max if-depth %d\n", id_max);
 #endif
 
     if (id_max == 0) {
