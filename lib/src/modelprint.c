@@ -1509,7 +1509,7 @@ static void hc_vcv_line (const VCVInfo *vi, PRN *prn)
 	    _("Heteroskedasticity-robust standard errors"),
 	    (jack)? "" : _("variant"),
 	    (jack)? "" : " ",
-	    hcv, (jack)? " (jackknife)" : "");
+	    hcv, (jack)? "a (jackknife)" : "");
 
     if (rtf_format(prn)) {
 	pputs(prn, "\\par\n");
