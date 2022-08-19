@@ -8607,12 +8607,6 @@ function_assign_returns (fncall *call, int rtype,
 	}
     }
 
-    if (call->retname != NULL) {
-	/* we're done with this now */
-	free(call->retname);
-	call->retname = NULL;
-    }
-
 #if UDEBUG
     fprintf(stderr, "function_assign_returns: returning %d\n", err);
 #endif
@@ -8765,6 +8759,12 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     if (print_redirection_level(prn) > redir_level) {
 	gretl_errmsg_set("Incorrect use of 'outfile' in function");
 	err = 1;
+    }
+
+    if (call->retname != NULL) {
+	/* we're surely done with this now: avoid potential leak */
+	free(call->retname);
+	call->retname = NULL;
     }
 
     return err;
