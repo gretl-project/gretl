@@ -8646,18 +8646,22 @@ static void restore_obs_info (obsinfo *oi, DATASET *dset)
 
 static void push_verbosity (fncall *call)
 {
-    if (gretl_messages_on()) {
-	call->flags |= FC_PREV_MSGS;
-    }
-    if (gretl_echo_on()) {
-	call->flags |= FC_PREV_ECHO;
+    if (!is_recursing(call)) {
+        if (gretl_messages_on()) {
+            call->flags |= FC_PREV_MSGS;
+        }
+        if (gretl_echo_on()) {
+            call->flags |= FC_PREV_ECHO;
+        }
     }
 }
 
 static void pop_verbosity (fncall *call)
 {
-    set_gretl_messages(call->flags & FC_PREV_MSGS);
-    set_gretl_echo(call->flags & FC_PREV_ECHO);
+    if (!is_recursing(call)) {
+        set_gretl_messages(call->flags & FC_PREV_MSGS);
+        set_gretl_echo(call->flags & FC_PREV_ECHO);
+    }
 }
 
 /* do the basic housekeeping that is required when a function exits:
