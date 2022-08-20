@@ -41,6 +41,8 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
+#define IF_NEXT 0
+
 enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
@@ -99,6 +101,9 @@ typedef enum {
 struct loop_command_ {
     char *line;
     int ci;
+#if IF_NEXT
+    int next_idx;
+#endif
     gretlopt opt;
     LoopCmdFlags flags;
     GENERATOR *genr;
@@ -1687,6 +1692,9 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
     for (i=i1; i<i2; i++) {
         loop->cmds[i].line = NULL;
         loop->cmds[i].ci = 0;
+#if IF_NEXT
+        loop->cmds[i].next_idx = 0;
+#endif
         loop->cmds[i].opt = 0;
         loop->cmds[i].genr = NULL;
         loop->cmds[i].flags = 0;
@@ -1786,6 +1794,101 @@ int model_is_in_loop (const MODEL *pmod)
 
     return 0;
 }
+
+#if IF_NEXT
+
+#define LS_DEBUG 1
+
+static int loop_get_structure (LOOPSET *loop)
+{
+    loop_command *lc;
+    int *next_from_if = NULL;
+    int id = 0, id_max = 0;
+#if LS_DEBUG
+    int step, max_step = 0;
+#endif
+    int i, j, ci;
+    int err = 0;
+
+    /* first pass: determine the maximum depth of conditionality */
+    for (i=0; i<loop->n_cmds && !err; i++) {
+	ci = loop->cmds[i].ci;
+	if (ci == IF) {
+            if (++id > id_max) {
+                id_max = id;
+            }
+	} else if (ci == ENDIF) {
+            id--;
+	}
+    }
+
+#if LS_DEBUG
+    fprintf(stderr, "loop_get_structure: max if-depth %d\n", id_max);
+#endif
+
+    if (id_max == 0) {
+        /* OK, nothing to record */
+	return 0;
+    }
+
+    next_from_if = gretl_list_new(id_max);
+
+    /* second pass: analysis */
+    for (i=0; i<loop->n_cmds && !err; i++) {
+        lc = &(loop->cmds[i]);
+	if (lc->ci == IF) {
+	    id++;
+	    next_from_if[id] = i;
+	} else if (lc->ci == ELIF) {
+	    if (id == 0) {
+		err = 1;
+	    } else {
+		j = next_from_if[id];
+		loop->cmds[j].next_idx = i;
+		next_from_if[id] = i;
+	    }
+	} else if (lc->ci == ELSE) {
+	    if (id == 0) {
+		err = 1;
+	    } else {
+		j = next_from_if[id];
+		loop->cmds[j].next_idx = i;
+		next_from_if[id] = i;
+	    }
+	} else if (lc->ci == ENDIF) {
+	    if (id == 0) {
+		err = 1;
+	    } else {
+		j = next_from_if[id];
+		loop->cmds[j].next_idx = i;
+                id--;
+	    }
+        }
+    }
+
+    free(next_from_if);
+
+#if LS_DEBUG
+    /* display what we figured out */
+    for (i=0; i<loop->n_cmds && !err; i++) {
+	lc = &(loop->cmds[i]);
+        j = lc->next_idx;
+	if (j > 0 && j < loop->n_cmds) {
+	    fprintf(stderr, "cmd %d ('%s'): next on skip = %d ('%s')\n",
+		    i, lc->line, j, loop->cmds[j].line);
+            step = j - i;
+            if (step > max_step) {
+                max_step = step;
+            }
+	}
+    }
+    fprintf(stderr, "max if-step = %d\n\n", max_step);
+#endif
+
+    return err;
+}
+
+#endif /* IF_NEXT */
 
 static int add_more_loop_commands (LOOPSET *loop)
 {
@@ -1923,6 +2026,11 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 #if GLOBAL_TRACE || LOOP_DEBUG
         fprintf(stderr, "got ENDLOOP, compile_level now %d\n",
                 compile_level);
+#endif
+#if IF_NEXT
+        if (loop_has_cond(loop)) {
+            loop_get_structure(loop);
+        }
 #endif
         if (compile_level == 0) {
             /* set flag to run the loop */
@@ -2857,7 +2965,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     parse = 0;
                 }
             }
-
+#if IF_NEXT
+            if (!err && gretl_if_state_false() && lcmd->next_idx > 0) {
+                // fprintf(stderr, "HERE skipping forward: %d -> %d\n", j, lcmd->next_idx);
+                j = lcmd->next_idx - 1;
+                continue;
+            }
+#endif
             if (parse && !err) {
                 err = parse_command_line(s, dset, NULL);
 #if LOOP_DEBUG > 1
