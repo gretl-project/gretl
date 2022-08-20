@@ -865,3 +865,66 @@ static int model_command_post_process (ExecState *s,
 
     return err;
 }
+
+#define loop_literal(lc) (lc->flags & LOOP_CMD_LIT)
+
+static void progressive_loop_finalize (LOOPSET *loop,
+                                       const DATASET *dset,
+                                       PRN *prn)
+{
+    int i, j = 0, k = 0;
+
+    for (i=0; i<loop->n_cmds; i++) {
+	loop_command *lc = &loop->cmds[i];
+
+        if (plain_model_ci(lc->ci) && !(lc->opt & OPT_Q)) {
+            loop_model_print(&loop->lmodels[j], dset, prn);
+            loop_model_zero(&loop->lmodels[j], 1);
+            j++;
+        } else if (lc->ci == PRINT && !loop_literal(lc)) {
+            loop_print_print(&loop->prns[k], prn);
+            loop_print_zero(&loop->prns[k], 1);
+            k++;
+        } else if (lc->ci == STORE) {
+            loop_store_save(&loop->store, prn);
+        }
+    }
+}
+
+#define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
+
+#define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
+                               c == NLS ||  \
+                               c == MLE ||  \
+                               c == GMM)
+
+static int handle_prog_command (LOOPSET *loop, int j,
+                                CMD *cmd, int *err)
+{
+    loop_command *lc = &loop->cmds[j];
+    int handled = 0;
+
+    if (cmd->ci == PRINT && !loop_literal(lc)) {
+        if (prog_cmd_started(loop, j)) {
+            *err = loop_print_update(loop, j, NULL);
+        } else {
+            *err = loop_print_update(loop, j, cmd->parm2);
+        }
+        handled = 1;
+    } else if (cmd->ci == STORE) {
+        if (prog_cmd_started(loop, j)) {
+            *err = loop_store_update(loop, j, NULL, NULL, 0);
+        } else {
+            *err = loop_store_update(loop, j, cmd->parm2, cmd->param,
+                                     cmd->opt);
+        }
+        handled = 1;
+    } else if (not_ok_in_progloop(cmd->ci)) {
+        gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
+                             gretl_command_word(cmd->ci));
+        *err = 1;
+        handled = 1;
+    }
+
+    return handled;
+}

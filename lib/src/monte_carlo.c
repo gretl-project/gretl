@@ -1949,8 +1949,6 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     return err;
 }
 
-#define loop_literal(lc) (lc->flags & LOOP_CMD_LIT)
-
 /**
  * print_loop_results:
  * @loop: pointer to loop struct.
@@ -1958,25 +1956,18 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
  * @prn: gretl printing struct.
  *
  * Print out the results after completion of the loop @loop.
+ * This function is not called for progressive loops.
  */
 
 static void print_loop_results (LOOPSET *loop, const DATASET *dset,
                                 PRN *prn)
 {
-#if HAVE_GMP
-    int k = 0;
-#endif
     int i, j = 0;
 
     for (i=0; i<loop->n_cmds; i++) {
 	loop_command *lc = &loop->cmds[i];
 
-#if LOOP_DEBUG > 1
-        fprintf(stderr, "print_loop_results: loop command %d: %s\n",
-                i, lc->line);
-#endif
-
-        if (lc->ci == OLS && !loop_is_progressive(loop)) {
+        if (lc->ci == OLS) {
             if (model_print_deferred(lc->opt)) {
                 MODEL *pmod = loop->models[j++];
                 gretlopt popt;
@@ -1986,22 +1977,6 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
                 printmodel(pmod, dset, popt, prn);
             }
         }
-
-#if HAVE_GMP
-        if (loop_is_progressive(loop)) {
-            if (plain_model_ci(lc->ci) && !(lc->opt & OPT_Q)) {
-                loop_model_print(&loop->lmodels[j], dset, prn);
-                loop_model_zero(&loop->lmodels[j], 1);
-                j++;
-            } else if (lc->ci == PRINT && !loop_literal(lc)) {
-                loop_print_print(&loop->prns[k], prn);
-                loop_print_zero(&loop->prns[k], 1);
-                k++;
-            } else if (lc->ci == STORE) {
-                loop_store_save(&loop->store, prn);
-            }
-        }
-#endif
     }
 }
 
@@ -2326,7 +2301,6 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 #define loop_cmd_nodol(lc) (lc->flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(lc) (lc->flags & LOOP_CMD_NOSUB)
 #define loop_cmd_catch(lc) (lc->flags & LOOP_CMD_CATCH)
-#define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
 
 #define line_is_compiled(lc) (lc->genr != NULL || lc->ci == ELSE || lc->ci == ENDIF)
 
@@ -2676,46 +2650,6 @@ static int block_model (CMD *cmd)
          !strcmp(cmd->param, "nls") ||
          !strcmp(cmd->param, "gmm"));
 }
-
-#if HAVE_GMP
-
-#define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
-                               c == NLS ||  \
-                               c == MLE ||  \
-                               c == GMM)
-
-static int handle_prog_command (LOOPSET *loop, int j,
-                                CMD *cmd, int *err)
-{
-    loop_command *lc = &loop->cmds[j];
-    int handled = 0;
-
-    if (cmd->ci == PRINT && !loop_literal(lc)) {
-        if (prog_cmd_started(loop, j)) {
-            *err = loop_print_update(loop, j, NULL);
-        } else {
-            *err = loop_print_update(loop, j, cmd->parm2);
-        }
-        handled = 1;
-    } else if (cmd->ci == STORE) {
-        if (prog_cmd_started(loop, j)) {
-            *err = loop_store_update(loop, j, NULL, NULL, 0);
-        } else {
-            *err = loop_store_update(loop, j, cmd->parm2, cmd->param,
-                                     cmd->opt);
-        }
-        handled = 1;
-    } else if (not_ok_in_progloop(cmd->ci)) {
-        gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
-                             gretl_command_word(cmd->ci));
-        *err = 1;
-        handled = 1;
-    }
-
-    return handled;
-}
-
-#endif /* HAVE_GMP */
 
 #define LTRACE 0
 
@@ -3080,7 +3014,15 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
     }
 
     if (!err && loop->iter > 0) {
+#if HAVE_GMP
+        if (progressive) {
+            progressive_loop_finalize(loop, dset, prn);
+        } else {
+            print_loop_results(loop, dset, prn);
+        }
+#else
         print_loop_results(loop, dset, prn);
+#endif
     }
 
     if (loop->n_models > 0) {
