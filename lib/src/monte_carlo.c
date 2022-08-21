@@ -41,7 +41,7 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#define IF_NEXT 0
+#define IF_NEXT 1
 
 enum loop_types {
     COUNT_LOOP,
@@ -90,8 +90,8 @@ typedef struct controller_ controller;
 typedef enum {
     LOOP_CMD_GENR    = 1 << 0, /* compiled "genr" */
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
-    LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
-    LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
+    LOOP_CMD_DOLLAR  = 1 << 2, /* line contains '$' */
+    LOOP_CMD_AT      = 1 << 3, /* line contains '@' */
     LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
     LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
     LOOP_CMD_PDONE   = 1 << 6, /* progressive loop command started */
@@ -223,13 +223,13 @@ int get_loop_renaming (void)
     return loop_renaming;
 }
 
-/* Test for a "while" or "for" expression: if it
-   involves string substitution we can't compile.
+/* Test for a "while" or "for" expression in a loop controller:
+   if it involves string substitution we can't compile it.
 */
 
-static int does_string_sub (const char *s,
-                            LOOPSET *loop,
-                            DATASET *dset)
+static int controller_does_string_sub (const char *s,
+				       LOOPSET *loop,
+				       DATASET *dset)
 {
     int subst = 0;
 
@@ -373,7 +373,7 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 
         if (loop->test.subst < 0) {
             /* not checked yet */
-            loop->test.subst = does_string_sub(expr, loop, dset);
+            loop->test.subst = controller_does_string_sub(expr, loop, dset);
         }
 
         if (!loop->test.subst && loop->test.genr == NULL) {
@@ -414,7 +414,7 @@ loop_delta (LOOPSET *loop, DATASET *dset, int *err)
     if (expr != NULL) {
         if (loop->delta.subst < 0) {
             /* not checked yet */
-            loop->delta.subst = does_string_sub(expr, loop, dset);
+            loop->delta.subst = controller_does_string_sub(expr, loop, dset);
         }
 
         if (!loop->delta.subst && loop->delta.genr == NULL) {
@@ -1929,6 +1929,12 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     if (loop->cmds[n].line == NULL) {
         err = E_ALLOC;
     } else {
+	if (strchr(s->line, '$')) {
+	    loop->cmds[n].flags |= LOOP_CMD_DOLLAR;
+	}
+	if (strchr(s->line, '@')) {
+	    loop->cmds[n].flags |= LOOP_CMD_AT;
+	}
         if (s->cmd->ci == PRINT) {
             if (!loop_is_progressive(loop) || strchr(s->line, '"')) {
                 /* printing a literal string, not a variable's value */
@@ -2404,13 +2410,14 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-#define genr_compiled(lc)  (lc->flags & LOOP_CMD_GENR)
-#define cond_compiled(lc)  (lc->flags & LOOP_CMD_COND)
-#define loop_cmd_nodol(lc) (lc->flags & LOOP_CMD_NODOL)
-#define loop_cmd_nosub(lc) (lc->flags & LOOP_CMD_NOSUB)
-#define loop_cmd_catch(lc) (lc->flags & LOOP_CMD_CATCH)
+#define genr_compiled(lc)   (lc->flags & LOOP_CMD_GENR)
+#define cond_compiled(lc)   (lc->flags & LOOP_CMD_COND)
+#define loop_cmd_catch(lc)  (lc->flags & LOOP_CMD_CATCH)
 
 #define line_is_compiled(lc) (lc->genr != NULL || lc->ci == ELSE || lc->ci == ENDIF)
+#define line_has_dollar(lc)  (lc->flags & LOOP_CMD_DOLLAR)
+#define line_has_at_sign(lc) (lc->flags & LOOP_CMD_AT)
+#define loop_cmd_nosub(lc)   (!(lc->flags & (LOOP_CMD_AT | LOOP_CMD_DOLLAR)))
 
 static int loop_process_error (LOOPSET *loop, loop_command *lc,
                                int err, PRN *prn)
@@ -2455,7 +2462,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
         cmd->flags &= ~CMD_PROG;
     }
 
-    if (loop_cmd_nosub(lc)) {
+    if (!line_has_at_sign(lc)) {
         /* tell parser not to bother trying for @-substitution */
         cmd->flags |= CMD_NOSUB;
     } else {
@@ -2482,8 +2489,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
    the current loop-line record.
 */
 
-static inline void cmd_info_to_loop (LOOPSET *loop, int j,
-                                     CMD *cmd, int *subst)
+static inline void cmd_info_to_loop (LOOPSET *loop, int j, CMD *cmd)
 {
     loop_command *lcmd = &loop->cmds[j];
 
@@ -2492,16 +2498,12 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
             j, lcmd->line);
 #endif
 
-    if (!loop_cmd_nosub(lcmd)) {
-        /* this loop line has not already been marked as
-           free of @-substitution
+    if (line_has_at_sign(lcmd) && !cmd_subst(cmd)) {
+        /* This loop line has not already been marked as
+           free of @-substitution, but has been found to
+	   be such.
         */
-        if (cmd_subst(cmd)) {
-            *subst = 1;
-        } else {
-            /* record: no @-substitution in this line */
-            lcmd->flags |= LOOP_CMD_NOSUB;
-        }
+	lcmd->flags &= ~LOOP_CMD_AT;
     }
 
     if (cmd->ci == IF || cmd->ci == ELIF) {
@@ -2640,7 +2642,7 @@ static int do_compile_conditional (loop_command *lc)
     int ret = 0;
 
     if ((lc->ci == IF || lc->ci == ELIF) &&
-        loop_cmd_nodol(lc) && loop_cmd_nosub(lc)) {
+        !line_has_dollar(lc) && !line_has_at_sign(lc)) {
         ret = 1;
     }
 
@@ -2744,6 +2746,29 @@ void loop_reset_uvars (LOOPSET *loop)
     loop->idxvar = NULL;
 }
 
+/* We come here only if @lc has the LOOP_CMD_DOLLAR flag
+   set. We scrub this flag if '$' turns out not to call
+   string substitution.
+*/
+
+static int check_for_dollar_subst (loop_command *lc,
+				   char *line,
+				   LOOPSET *loop,
+				   DATASET *dset)
+{
+    int err = 0;
+    int subst = 0;
+
+    /* handle loop-specific $-string substitution */
+    err = make_dollar_substitutions(line, MAXLINE, loop,
+				    dset, &subst, OPT_NONE);
+    if (!err && !subst) {
+	lc->flags &= ~LOOP_CMD_DOLLAR;
+    }
+
+    return err;
+}
+
 static void abort_loop_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
@@ -2841,7 +2866,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             int compiled = line_is_compiled(lcmd);
             int ci = lcmd->ci;
             int parse = 1;
-            int subst = 0;
 
             currline = lcmd->line;
             if (compiled) {
@@ -2872,6 +2896,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                         err = cmd->err;
                         goto handle_err;
                     } else {
+#if IF_NEXT
+			if (gretl_if_state_false() && lcmd->next_idx > 0) {
+			    j = lcmd->next_idx - 1;
+			}
+#endif
                         continue;
                     }
                 } else if (ci == IF || ci == ELIF) {
@@ -2910,19 +2939,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 
         cond_next:
 
-            if (!loop_cmd_nodol(lcmd)) {
-                if (strchr(line, '$')) {
-                    /* handle loop-specific $-string substitution */
-                    err = make_dollar_substitutions(line, MAXLINE, loop,
-                                                    dset, &subst, OPT_NONE);
-                    if (err) {
-                        break;
-                    } else if (!subst) {
-                        lcmd->flags |= LOOP_CMD_NODOL;
-                    }
-                } else {
-                    lcmd->flags |= LOOP_CMD_NODOL;
-                }
+            if (line_has_dollar(lcmd)) {
+		err = check_for_dollar_subst(lcmd, line, loop, dset);
             }
 
             /* transcribe saved loop info -> cmd */
@@ -2961,17 +2979,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 parse = 0;
             } else if (prog_cmd_started(loop, j)) {
                 cmd->ci = ci;
-                if (lcmd->flags & LOOP_CMD_NOSUB) {
+                if (loop_cmd_nosub(lcmd)) {
                     parse = 0;
                 }
             }
-#if IF_NEXT
-            if (!err && gretl_if_state_false() && lcmd->next_idx > 0) {
-                // fprintf(stderr, "HERE skipping forward: %d -> %d\n", j, lcmd->next_idx);
-                j = lcmd->next_idx - 1;
-                continue;
-            }
-#endif
+
             if (parse && !err) {
                 err = parse_command_line(s, dset, NULL);
 #if LOOP_DEBUG > 1
@@ -2984,7 +2996,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
         handle_err:
 
             if (err) {
-                cmd_info_to_loop(loop, j, cmd, &subst);
+                cmd_info_to_loop(loop, j, cmd);
                 cmd->err = err = loop_process_error(loop, lcmd, err, prn);
                 if (err) {
                     break;
@@ -2994,12 +3006,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             } else if (cmd->ci < 0) {
                 /* blocked/masked */
                 if (ci == IF || ci == ELIF) {
-                    cmd_info_to_loop(loop, j, cmd, &subst);
+                    cmd_info_to_loop(loop, j, cmd);
                 }
                 continue;
             } else {
                 gretl_exec_state_transcribe_flags(s, cmd);
-                cmd_info_to_loop(loop, j, cmd, &subst);
+                cmd_info_to_loop(loop, j, cmd);
             }
 
             if (echo) {
@@ -3039,7 +3051,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             } else if (cmd->ci == ENDLOOP) {
                 ; /* implicit break */
             } else if (cmd->ci == GENR) {
-                if (subst || (lcmd->flags & LOOP_CMD_NOEQ)) {
+                if (line_has_dollar(lcmd) || (lcmd->flags & LOOP_CMD_NOEQ)) {
                     /* We can't use a "compiled" genr if string substitution
                        has been done, since the genr expression will not
                        be constant; in addition we can't compile if the
