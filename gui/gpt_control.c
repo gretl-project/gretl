@@ -6081,14 +6081,20 @@ void display_session_graph (const char *fname,
 static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 {
     int ret = GRETL_PNG_OK;
+    double bb[4];
 
     bounds->xleft = bounds->xright = 0;
     bounds->ybot = bounds->ytop = 0;
 
-    if (sscanf(str, "pixel_bounds: %d %d %d %d",
-	       &bounds->xleft, &bounds->xright,
-	       &bounds->ybot, &bounds->ytop) != 4) {
+    if (sscanf(str, "pixel_bounds: %lf %lf %lf %lf",
+	       &bb[0], &bb[1], &bb[2], &bb[3]) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
+        fprintf(stderr, "bad bounds string = '%s'\n", str);
+    } else {
+        bounds->xleft  = nearbyint(bb[0]);
+        bounds->xright = nearbyint(bb[1]);
+        bounds->ybot   = nearbyint(bb[2]);
+        bounds->ytop   = nearbyint(bb[3]);
     }
 
     if (ret == GRETL_PNG_OK && bounds->xleft == 0 &&
@@ -6212,7 +6218,8 @@ static int get_png_bounds_info (png_bounds *bounds)
     } else if (plot_ret != GRETL_PNG_OK || data_ret != GRETL_PNG_OK) {
 	/* one or both set of coordinates bad or missing */
 	if (plot_ret >= 0 || data_ret >= 0) {
-	    fprintf(stderr, "bounds file: bad data\n");
+	    fprintf(stderr, "bounds file: bad data: plot_ret %d, data_ret %d\n",
+                    plot_ret, data_ret);
 	    ret = GRETL_PNG_BAD_COMMENTS;
 	} else {
 	    ret = GRETL_PNG_NO_COMMENTS;

@@ -48,8 +48,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define STRICT_CONST 1    /* activated 2021-04-08 */
-
 #define LSDEBUG 0       /* debug handling of saved loops */
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
@@ -87,15 +85,27 @@ struct fn_param_ {
     char immut;     /* state: immutable (const) at run-time */
 };
 
+typedef enum {
+    LINE_IGNORE = 1 << 0,
+    LINE_LOOP   = 1 << 1,
+    LINE_GENR   = 1 << 2,
+    LINE_RET    = 1 << 3
+} ln_flags;
+
 /* structure representing a line of a user-defined function */
 
 struct fn_line_ {
-    int idx;        /* 1-based line index (allowing for blanks) */
-    char *s;        /* text of command line */
-    LOOPSET *loop;  /* attached "compiled" loop */
-    int next_idx;   /* line index to skip to after loop */
-    int ignore;     /* flag for comment lines */
+    gint16 idx;      /* 1-based line index (allowing for blanks) */
+    gint16 next_idx; /* line index to skip to after loop */
+    char *s;         /* text of command line */
+    void *ptr;       /* attachment for LOOPSET or GENERATOR */
+    ln_flags flags;  /* see above */
 };
+
+#define line_has_loop(l)  (l->flags & LINE_LOOP)
+#define line_has_genr(l)  (l->flags & LINE_GENR)
+#define ignore_line(l)    (l->flags & LINE_IGNORE)
+#define is_return_line(l) (l->flags & LINE_RET)
 
 #define UNSET_VALUE (-1.0e200)
 #define default_unset(p) (p->deflt == UNSET_VALUE)
@@ -152,6 +162,7 @@ struct fncall_ {
 struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
+    fncall *call;          /* pointer to current call, or NULL */
     int pkg_role;          /* printer, plotter, etc. */
     UfunAttrs flags;       /* private, plugin, etc. */
     int line_idx;          /* current line index (compiling) */
@@ -274,7 +285,6 @@ static char mpi_caller[FN_NAMELEN];
 #endif
 
 #define function_is_private(f)   (f->flags & UFUN_PRIVATE)
-#define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
 
@@ -454,16 +464,24 @@ static int fncall_add_args_array (fncall *fc)
     return err;
 }
 
+static void fncall_clear_args_array (fncall *fc)
+{
+    int i, np = fc->fun->n_params;
+
+    for (i=0; i<np; i++) {
+	fc->args[i].type = 0;
+	fc->args[i].shifted = 0;
+	fc->args[i].upname = NULL;
+	fc->args[i].uvar = NULL;
+	fc->args[i].val.px = NULL;
+    }
+
+    fc->argc = 0;
+}
+
 static void maybe_set_param_const (fn_param *fp)
 {
-#if STRICT_CONST
     fp->flags |= FP_CONST;
-#else
-    if (fp->type != GRETL_TYPE_LIST &&
-	!gretl_is_scalar_type(fp->type)) {
-	fp->flags |= FP_CONST;
-    }
-#endif
 }
 
 /**
@@ -516,27 +534,9 @@ int push_function_arg (fncall *fc, const char *name,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_anon_function_arg (fncall *fc, GretlType type,
-			    void *value)
+int push_anon_function_arg (fncall *fc, GretlType type, void *value)
 {
-    int err = 0;
-
-    if (fc == NULL || fc->fun == NULL) {
-	err = E_DATA;
-    } else if (fc->argc >= fc->fun->n_params) {
-	fprintf(stderr, "function %s has %d parameters but argc = %d\n",
-		fc->fun->name, fc->fun->n_params, fc->argc);
-	err = E_DATA;
-    } else if (fc->args == NULL) {
-	err = fncall_add_args_array(fc);
-    }
-
-    if (!err) {
-	err = fn_arg_set_data(&fc->args[fc->argc], NULL, NULL, type, value);
-	fc->argc += 1;
-    }
-
-    return err;
+    return push_function_arg(fc, NULL, NULL, type, value);
 }
 
 /**
@@ -596,6 +596,33 @@ fncall *fncall_new (ufunc *fun, int preserve)
     }
 
     return call;
+}
+
+fncall *user_func_get_fncall (ufunc *fun)
+{
+    if (fun->call == NULL) {
+	fun->call = fncall_new(fun, 1);
+    } else {
+	fncall *fc = fun->call;
+
+	fncall_clear_args_array(fc);
+	if (fc->ptrvars != NULL) {
+	    free(fc->ptrvars);
+	    fc->ptrvars = NULL;
+	}
+	if (fc->listvars != NULL) {
+	    free(fc->listvars);
+	    fc->listvars = NULL;
+	}
+	if (fc->lists != NULL) {
+	    g_list_free(fc->lists);
+	    fc->lists = NULL;
+	}
+	free(fc->retname);
+	fc->retname = NULL;
+    }
+
+    return fun->call;
 }
 
 void fncall_destroy (fncall *call)
@@ -1510,6 +1537,7 @@ static ufunc *ufunc_new (void)
 
     fun->name[0] = '\0';
     fun->pkg = NULL;
+    fun->call = NULL;
     fun->flags = 0;
     fun->pkg_role = 0;
 
@@ -1529,15 +1557,19 @@ static ufunc *ufunc_new (void)
 
 static void free_lines_array (fn_line *lines, int n)
 {
+    fn_line *line;
     int i;
 
     if (lines == NULL) return;
 
     for (i=0; i<n; i++) {
-	free(lines[i].s);
-	if (lines[i].loop != NULL) {
-	    gretl_loop_destroy(lines[i].loop);
-	}
+        line = &(lines[i]);
+	free(line->s);
+	if (line_has_loop(line)) {
+	    gretl_loop_destroy(line->ptr);
+	} else if (line_has_genr(line)) {
+            destroy_genr(line->ptr);
+        }
     }
 
     free(lines);
@@ -1569,6 +1601,11 @@ static void clear_ufunc_data (ufunc *fun)
     fun->line_idx = 1;
     fun->n_params = 0;
 
+    if (fun->call != NULL) {
+	fncall_destroy(fun->call);
+        fun->call = NULL;
+    }
+
     fun->rettype = GRETL_TYPE_NONE;
 }
 
@@ -1576,6 +1613,10 @@ static void ufunc_free (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
+    if (fun->call != NULL) {
+	fncall_destroy(fun->call);
+        fun->call = NULL;
+    }
     free(fun);
 }
 
@@ -1716,18 +1757,25 @@ static GretlType param_field_to_type (const char *s,
 static gboolean special_int_default (fn_param *param,
 				     xmlNodePtr np)
 {
+    gboolean ret = FALSE;
+
     if (param->type == GRETL_TYPE_INT) {
 	char *s = NULL;
 
-	if (gretl_xml_get_prop_as_string(np, "default", &s) &&
-	    (strstr(s, "$mylist") || strstr(s, "$xlist"))) {
-	    param->deflt = strstr(s, "$mylist")? INT_USE_MYLIST :
-		INT_USE_XLIST;
-	    return TRUE;
+	gretl_xml_get_prop_as_string(np, "default", &s);
+	if (s != NULL) {
+	    if (strstr(s, "$mylist")) {
+		param->deflt = INT_USE_MYLIST;
+		ret = TRUE;
+	    } else if (strstr(s, "$xlist")) {
+		param->deflt = INT_USE_XLIST;
+		ret = TRUE;
+	    }
+	    free(s);
 	}
     }
 
-    return FALSE;
+    return ret;
 }
 
 /* read the parameter info for a function from XML file */
@@ -1845,9 +1893,9 @@ static int push_function_line (ufunc *fun, char *s, int donate)
 		}
 	    }
 	    if (!err) {
-		lines[i].loop = NULL;
+		lines[i].ptr = NULL;
 		lines[i].next_idx = -1;
-		lines[i].ignore = 0;
+		lines[i].flags = 0;
 		fun->n_lines = n;
 		fun->line_idx += 1;
 	    }
@@ -2168,12 +2216,12 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
-	    " private = %d, plugin = %d\n", fun->name, fun->rettype,
-	    function_is_private(fun), function_is_plugin(fun));
+	    " private = %d\n", fun->name, fun->rettype,
+	    function_is_private(fun));
 #endif
 
-    if (pkg == NULL && (function_is_private(fun) || function_is_plugin(fun))) {
-	fprintf(stderr, "unpackaged function: can't be private or plugin\n");
+    if (pkg == NULL && function_is_private(fun)) {
+	fprintf(stderr, "unpackaged function: can't be private\n");
 	ufunc_free(fun);
 	return E_DATA;
     }
@@ -2329,9 +2377,6 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 
     if (function_is_private(fun)) {
 	pputs(prn, " private=\"1\"");
-    }
-    if (function_is_plugin(fun)) {
-	pputs(prn, " plugin-wrapper=\"1\"");
     }
     if (function_is_noprint(fun)) {
 	pputs(prn, " no-print=\"1\"");
@@ -2532,10 +2577,12 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 {
     char **S = NULL;
+    fn_line *line;
     int i, j = 0;
 
     for (i=0; i<u->n_lines; i++) {
-	if (!u->lines[i].ignore) {
+        line = &(u->lines[i]);
+	if (!ignore_line(line)) {
 	    j++;
 	}
     }
@@ -2548,8 +2595,9 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 	*nlines = j;
 	j = 0;
 	for (i=0; i<u->n_lines; i++) {
-	    if (!u->lines[i].ignore) {
-		S[j++] = u->lines[i].s;
+            line = &(u->lines[i]);
+	    if (!ignore_line(line)) {
+		S[j++] = line->s;
 	    }
 	}
     }
@@ -7347,43 +7395,46 @@ int gretl_function_append_line (ExecState *s)
 
     /* note: avoid losing comment lines */
     origline = gretl_strdup(line);
-    blank = string_is_blank(line);
 
-    /* below: append line to function, carrying out some
-       basic structural checks as we go
-    */
-    if (!blank) {
+    if (string_is_blank(line)) {
+	blank = 1;
+    } else {
 	err = get_command_index(s, FUNC);
-	if (!err) {
-	    if (cmd->ci == QUIT) {
-		gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
-				     fun->name);
-		err = E_PARSE;
-		cmd->ci = 0;
-	    } else if (cmd->flags & CMD_ENDFUN) {
-		if (fun->n_lines == 0) {
-		    gretl_errmsg_sprintf("%s: empty function", fun->name);
-		    err = 1;
-		}
-		set_compiling_off();
-	    } else if (cmd->ci == SET) {
-		if (!(fun->flags & UFUN_USES_SET)) {
-		    fun->flags |= UFUN_USES_SET;
-		}
-	    } else if (cmd->ci == FUNC) {
-		err = E_FNEST;
-	    } else if (cmd->ci == IF) {
-		ifdepth++;
-	    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
-		gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-		err = E_PARSE;
-	    } else if (cmd->ci == ENDIF) {
-		ifdepth--;
-	    } else if (cmd->ci < 0) {
-		ignore = 1;
-	    }
-	}
     }
+    if (blank || err) {
+	goto next_step;
+    }
+
+    /* carry out some basic structural checks */
+    if (cmd->ci == QUIT) {
+	gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
+			     fun->name);
+	err = E_PARSE;
+	cmd->ci = 0;
+    } else if (cmd->flags & CMD_ENDFUN) {
+	if (fun->n_lines == 0) {
+	    gretl_errmsg_sprintf("%s: empty function", fun->name);
+	    err = 1;
+	}
+	set_compiling_off();
+    } else if (cmd->ci == SET) {
+	if (!(fun->flags & UFUN_USES_SET)) {
+	    fun->flags |= UFUN_USES_SET;
+	}
+    } else if (cmd->ci == FUNC) {
+	err = E_FNEST;
+    } else if (cmd->ci == IF) {
+	ifdepth++;
+    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
+	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	err = E_PARSE;
+    } else if (cmd->ci == ENDIF) {
+	ifdepth--;
+    } else if (cmd->ci < 0) {
+	ignore = 1;
+    }
+
+  next_step:
 
     if (err) {
 	set_compiling_off();
@@ -7399,7 +7450,7 @@ int gretl_function_append_line (ExecState *s)
 		origline = NULL; /* successfully donated */
 	    }
 	    if (ignore) {
-		fun->lines[i].ignore = 1;
+		fun->lines[i].flags |= LINE_IGNORE;
 	    } else if (!blank) {
 		python_check(line);
 	    }
@@ -7856,18 +7907,12 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		i, gretl_type_get_name(fp->type), fp->name,
 		gretl_type_get_name(arg->type), arg->upname);
 #endif
-#if STRICT_CONST
 	/* extra conditions needed to avoid "const poisoning" */
 	if (!fp->immut && arg->upname != NULL &&
 	    fp->type != GRETL_TYPE_LIST &&
 	    !gretl_is_scalar_type(fp->type)) {
 	    fp->immut = object_is_const(arg->upname, -1);
 	}
-#else
-	if (!fp->immut && arg->upname != NULL) {
-	    fp->immut = object_is_const(arg->upname, -1);
-	}
-#endif
 
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
@@ -8063,8 +8108,12 @@ static int handle_scalar_return (fncall *call, void *ptr, int rtype)
 	if (gretl_matrix_is_scalar(m)) {
 	    xret = m->val[0];
 	} else {
+	    user_var *uv = get_user_var_by_name(vname);
+	    GretlType t = user_var_get_type(uv);
+
 	    gretl_errmsg_sprintf("Function %s did not provide the specified return value\n"
-				 "(expected %s)", call->fun->name, gretl_type_get_name(rtype));
+				 "(expected %s, got %s)", call->fun->name,
+				 gretl_type_get_name(rtype), gretl_type_get_name(t));
 	    err = E_TYPES;
 	    xret = NADBL;
 	}
@@ -8597,18 +8646,22 @@ static void restore_obs_info (obsinfo *oi, DATASET *dset)
 
 static void push_verbosity (fncall *call)
 {
-    if (gretl_messages_on()) {
-	call->flags |= FC_PREV_MSGS;
-    }
-    if (gretl_echo_on()) {
-	call->flags |= FC_PREV_ECHO;
+    if (!is_recursing(call)) {
+        if (gretl_messages_on()) {
+            call->flags |= FC_PREV_MSGS;
+        }
+        if (gretl_echo_on()) {
+            call->flags |= FC_PREV_ECHO;
+        }
     }
 }
 
 static void pop_verbosity (fncall *call)
 {
-    set_gretl_messages(call->flags & FC_PREV_MSGS);
-    set_gretl_echo(call->flags & FC_PREV_ECHO);
+    if (!is_recursing(call)) {
+        set_gretl_messages(call->flags & FC_PREV_MSGS);
+        set_gretl_echo(call->flags & FC_PREV_ECHO);
+    }
 }
 
 /* do the basic housekeeping that is required when a function exits:
@@ -8712,23 +8765,34 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	err = 1;
     }
 
+    if (call->retname != NULL) {
+	/* we're surely done with this now: avoid potential leak */
+	free(call->retname);
+	call->retname = NULL;
+    }
+
     return err;
 }
 
-/* reset any saved uservar addresses in context of saved loops */
+/* reset any saved uservar addresses in context of loops or
+   genrs attached to @u */
 
-static void reset_saved_loops (ufunc *u)
+static void reset_saved_uservars (ufunc *u)
 {
+    fn_line *line;
     int i;
 
     for (i=0; i<u->n_lines; i++) {
-	if (u->lines[i].loop != NULL) {
+        line = &(u->lines[i]);
+	if (line_has_loop(line)) {
 # if GLOBAL_TRACE
 	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
-		    u->name, (void *) u->lines[i].loop);
+		    u->name, (void *) line->ptr);
 # endif
-	    loop_reset_uvars(u->lines[i].loop);
-	}
+	    loop_reset_uvars(line->ptr);
+	} else if (line_has_genr(line)) {
+            genr_reset_uvars(line->ptr);
+        }
     }
 }
 
@@ -8770,8 +8834,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     callstack = g_list_append(callstack, call);
 
 #if EXEC_DEBUG
-    fprintf(stderr, "start_fncall: added call to %s, depth now %d\n",
-	    call->fun->name, g_list_length(callstack));
+    fprintf(stderr, "start_fncall: %s, depth now %d, recursing %d\n",
+	    call->fun->name, g_list_length(callstack), is_recursing(call));
 #endif
 
     switch_uservar_hash(fn_executing);
@@ -9014,8 +9078,8 @@ static const char *get_funcerr_message (ExecState *state)
 
 static void set_func_error_message (int err, ufunc *u,
 				    ExecState *state,
-				    const char *line,
-				    int lineno)
+				    const char *cmdline,
+				    fn_line *fline)
 {
     if (err == E_FUNCERR) {
 	/* let the function writer set the message? */
@@ -9040,29 +9104,29 @@ static void set_func_error_message (int err, ufunc *u,
 	    gretl_errmsg_set(msg);
 	}
 
-	if (*line == '\0' || strncmp(line, "funcerr(", 8) == 0 ||
-	    strncmp(line, "errorif(", 8) == 0) {
+	if (*cmdline == '\0' || strncmp(cmdline, "funcerr(", 8) == 0 ||
+	    strncmp(cmdline, "errorif(", 8) == 0) {
 	    showline = 0;
 	}
 
-	if (lineno < 0) {
+	if (fline == NULL) {
 	    /* indicates that we don't have a real line number
 	       available (the error occurred inside a loop)
 	    */
 	    if (showline && err != E_FNEST) {
 		gretl_errmsg_sprintf("*** error within loop in function %s\n> %s",
-				     u->name, line);
+				     u->name, cmdline);
 	    } else {
 		gretl_errmsg_sprintf("*** error within loop in function %s\n",
-				     u->name, lineno);
+				     u->name);
 	    }
 	} else {
 	    if (showline && err != E_FNEST) {
 		gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s",
-				     u->name, lineno, line);
+				     u->name, fline->idx, cmdline);
 	    } else {
 		gretl_errmsg_sprintf("*** error in function %s, line %d\n",
-				     u->name, lineno);
+				     u->name, fline->idx);
 	    }
 	}
 
@@ -9081,19 +9145,34 @@ static void set_func_error_message (int err, ufunc *u,
     }
 }
 
-static int determine_numeric_type (char *formula, DATASET *dset,
-				   PRN *prn)
+static int generate_return_value (fncall *call,
+				  ExecState *state,
+				  DATASET *dset,
+				  int gencomp,
+				  const char *s,
+				  fn_line *line)
 {
-    GretlType out_t;
-    int err;
+    ufunc *fun = call->fun;
+    gchar *formula = NULL;
+    int err = 0;
 
-    err = generate(formula, dset, GRETL_TYPE_ANY, OPT_P, prn);
-    if (!err) {
-	out_t = genr_get_last_output_type();
-	if (!NUMERIC_TYPE(out_t)) {
-	    err = E_TYPES;
+    if (line != NULL && gencomp) {
+	if (line->ptr == NULL) {
+	    formula = g_strdup_printf("$retval=%s", s);
+	    line->ptr = genr_compile(formula, dset, fun->rettype,
+				     OPT_P, state->prn, &err);
+	    if (line->ptr != NULL) {
+		line->flags |= LINE_GENR;
+	    }
+	} else {
+	    err = execute_genr(line->ptr, dset, state->prn);
 	}
+    } else {
+	formula = g_strdup_printf("$retval=%s", s);
+	err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
     }
+
+    g_free(formula);
 
     return err;
 }
@@ -9101,60 +9180,55 @@ static int determine_numeric_type (char *formula, DATASET *dset,
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
 				    DATASET *dset,
-				    int lineno)
+				    int gencomp,
+				    fn_line *line)
 {
-    const char *s = state->line + 6; /* skip "return" */
+    const char *s = state->cmd->vstart;
     ufunc *fun = call->fun;
     int err = 0;
 
-    s += strspn(s, " ");
-
 #if EXEC_DEBUG
-    fprintf(stderr, "%s: return: s = '%s'\n", fun->name, s);
+    fprintf(stderr, "%s: handle_return_statement (%s), line = %p\n",
+	    fun->name, s, (void *) line);
 #endif
 
     if (fun->rettype == GRETL_TYPE_VOID) {
 	if (*s == '\0') {
 	    ; /* plain "return" from void function: OK */
-	} else if (lineno < 0) {
+	} else if (line == NULL) {
 	    gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid",
 				 fun->name, s);
 	    err = E_TYPES;
 	} else {
 	    gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid",
-				 fun->name, lineno, s);
+				 fun->name, line->idx, s);
 	    err = E_TYPES;
 	}
 	return err; /* handled */
     }
 
     if (*s == '\0') {
-	if (lineno < 0) {
+	if (line == NULL) {
 	    gretl_errmsg_sprintf("%s: return value is missing", fun->name);
 	} else {
 	    gretl_errmsg_sprintf("%s, line %d: return value is missing",
-				 fun->name, lineno);
+				 fun->name, line->idx);
 	}
 	err = E_TYPES;
     } else {
-	int len = gretl_namechar_spn(s);
-
-	if (len == strlen(s)) {
+	if (gretl_namechar_spn(s) == strlen(s)) {
 	    /* returning a named variable */
-	    call->retname = gretl_strndup(s, len);
+	    call->retname = gretl_strdup(s);
 	} else {
-	    char formula[MAXLINE];
-
-	    sprintf(formula, "$retval=%s", s);
-	    if (fun->rettype == GRETL_TYPE_NUMERIC) {
-		err = determine_numeric_type(formula, dset, state->prn);
-	    } else {
-		err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
-	    }
+	    err = generate_return_value(call, state, dset, gencomp,
+					s, line);
 	    if (err) {
-		set_func_error_message(err, fun, state, s, lineno);
+		set_func_error_message(err, fun, state, s, line);
 	    } else {
 		call->retname = gretl_strdup("$retval");
+		if (line != NULL) {
+		    line->flags |= LINE_RET;
+		}
 	    }
 	}
     }
@@ -9170,149 +9244,6 @@ static int do_debugging (ExecState *s)
 {
     return s->cmd->ci > 0 && !s->cmd->context &&
 	!gretl_compiling_loop();
-}
-
-#define CDEBUG 1
-
-/* Construct bundle of arguments to send to C function;
-   load plugin; send arguments; and try to retrieve
-   return value, if any.
-*/
-
-static int handle_plugin_call (fncall *call,
-			       DATASET *dset,
-			       void *retval,
-			       PRN *prn)
-{
-    ufunc *u = call->fun;
-    int (*cfunc) (gretl_bundle *, PRN *);
-    void *handle;
-    gretl_bundle *argb;
-    int i, err = 0;
-
-#if CDEBUG
-    fprintf(stderr, "handle_plugin_call: function '%s'\n", u->name);
-#endif
-
-    if (u->pkg == NULL) {
-	return E_DATA;
-    }
-
-    cfunc = get_packaged_C_function(u->pkg->name, u->name, &handle);
-
-    if (cfunc == NULL) {
-	return E_FOPEN;
-    }
-
-    /* bundle to serve as wrapper for arguments */
-    argb = gretl_bundle_new();
-
-    if (argb == NULL) {
-	close_plugin(handle);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<call->argc && !err; i++) {
-	fn_param *fp = &u->params[i];
-	fn_arg *arg = &call->args[i];
-	const char *key = fp->name;
-
-	if (!type_can_be_bundled(fp->type)) {
-	    fprintf(stderr, "type %d: cannot be bundled\n", fp->type);
-	    err = E_TYPES;
-	    break;
-	}
-
-	if (gretl_scalar_type(fp->type)) {
-	    double x;
-
-	    if (arg->type == GRETL_TYPE_NONE) {
-		x = fp->deflt;
-	    } else if (arg->type == GRETL_TYPE_MATRIX) {
-		x = arg->val.m->val[0];
-	    } else {
-		x = arg->val.x;
-	    }
-	    if (fp->type == GRETL_TYPE_INT || fp->type == GRETL_TYPE_OBS) {
-		x = (int) x;
-	    } else if (fp->type == GRETL_TYPE_BOOL) {
-		x = (x != 0.0);
-	    }
-	    err = gretl_bundle_set_data(argb, key, &x, GRETL_TYPE_DOUBLE, 0);
-	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    gretl_matrix *m = arg->val.m;
-
-	    err = gretl_bundle_set_data(argb, key, m, fp->type, 0);
-	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    int size = sample_size(dset);
-	    double *px;
-
-	    if (arg->type == GRETL_TYPE_USERIES) {
-		px = dset->Z[arg->val.idnum];
-	    } else {
-		px = arg->val.px;
-	    }
-	    err = gretl_bundle_set_data(argb, key, px + dset->t1,
-					GRETL_TYPE_SERIES, size);
-	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    gretl_bundle *b = arg->val.b;
-
-	    err = gretl_bundle_set_data(argb, key, b,
-					GRETL_TYPE_BUNDLE, 0);
-	} else {
-	    /* FIXME strings and maybe other types */
-	    err = E_TYPES;
-	}
-#if CDEBUG
-	fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n",
-		i, key, fp->type, err);
-#endif
-    }
-
-    if (!err) {
-	/* call the plugin function */
-	err = (*cfunc) (argb, prn);
-    }
-
-    close_plugin(handle);
-
-    if (!err && u->rettype != GRETL_TYPE_VOID && retval != NULL) {
-	GretlType type;
-	int size;
-	void *ptr;
-
-	ptr = gretl_bundle_steal_data(argb, "retval", &type, &size, &err);
-
-	if (!err) {
-#if CDEBUG
-	    fprintf(stderr, "%s: stole return value of type %d\n",
-		    u->name, type);
-#endif
-	    if (type != u->rettype) {
-		fprintf(stderr, "handle_plugin_call: type doesn't match u->rettype\n");
-		err = E_TYPES;
-	    }
-	}
-	if (!err) {
-	    if (type == GRETL_TYPE_DOUBLE) {
-		double *px = ptr;
-
-		*(double *) retval = *px;
-		free(ptr);
-	    } else if (type == GRETL_TYPE_MATRIX) {
-		*(gretl_matrix **) retval = ptr;
-	    } else if (type == GRETL_TYPE_BUNDLE) {
-		*(gretl_bundle **) retval = ptr;
-	    } else if (gretl_array_type(type)) {
-		*(gretl_array **) retval = ptr;
-	    }
-	}
-    }
-
-    /* free the arguments wrapper */
-    gretl_bundle_destroy(argb);
-
-    return err;
 }
 
 int current_function_size (void)
@@ -9335,12 +9266,15 @@ int attach_loop_to_function (void *ptr)
     if (u == NULL) {
 	return E_DATA;
     } else {
-	if (u->lines[u->line_idx].loop != NULL) {
+        fn_line *line = &(u->lines[u->line_idx]);
+
+	if (line->ptr != NULL) {
 	    /* there should not already be a loop attached */
 	    err = E_DATA;
 	} else {
 	    /* OK, attach it */
-	    u->lines[u->line_idx].loop = ptr;
+	    line->ptr = ptr;
+            line->flags |= LINE_LOOP;
 #if LSDEBUG || GLOBAL_TRACE
 	    fprintf(stderr, "attaching loop at %p to function %s, line %d\n",
 		    ptr, u->name, u->line_idx);
@@ -9364,15 +9298,18 @@ int detach_loop_from_function (void *ptr)
     if (u == NULL) {
 	return E_DATA;
     } else {
+        fn_line *line;
 	int i;
 
 	for (i=0; i<u->n_lines; i++) {
-	    if (u->lines[i].loop == ptr) {
+            line = &(u->lines[i]);
+	    if (line->ptr == ptr) {
 #if LSDEBUG || GLOBAL_TRACE
 		fprintf(stderr, "detaching loop at %p from function %s\n",
 			ptr, u->name);
 #endif
-		u->lines[i].loop = NULL;
+		line->ptr = NULL;
+                line->flags &= ~LINE_LOOP;
 		break;
 	    }
 	}
@@ -9428,6 +9365,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int debugging = u->debug;
+    int gencomp = 0;
     int loopstart = 0;
     int i, err = 0;
 
@@ -9441,9 +9379,13 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
+    if (getenv("TRY_GENCOMP") != NULL) {
+        gencomp = gretl_iterating();
+    }
+
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
-    fprintf(stderr, "u->n_params = %d\n", u->n_params);
+    fprintf(stderr, "u->n_params = %d, gencomp = %d\n", u->n_params, gencomp);
 #endif
 
     if (dset != NULL) {
@@ -9455,25 +9397,13 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	call->orig_v = 0;
     }
 
-    if (!function_is_plugin(u)) {
-	/* precaution */
-	function_state_init(&cmd, &state, &indent0);
-    }
+    /* precaution */
+    function_state_init(&cmd, &state, &indent0);
 
     err = check_function_args(call, prn);
-
-    if (function_is_plugin(u)) {
-	if (!err) {
-	    err = handle_plugin_call(call, dset, ret, prn);
-	}
-	maybe_destroy_fncall(call);
-	return err;
-    }
-
     if (!err) {
 	err = allocate_function_args(call, dset);
     }
-
     if (err) {
 	/* get out before allocating further storage */
 	maybe_destroy_fncall(call);
@@ -9483,9 +9413,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     model = allocate_working_model();
     if (model == NULL) {
 	err = E_ALLOC;
-    }
-
-    if (!err) {
+    } else {
 	err = gretl_cmd_init(&cmd);
     }
 
@@ -9525,9 +9453,10 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
-	int lineno = u->lines[i].idx;
+        fn_line *fline = &u->lines[i];
+	int lineno = fline->idx;
 
-	strcpy(line, u->lines[i].s);
+	strcpy(line, fline->s);
 
 	if (debugging) {
 	    pprintf(prn, "%s> %s\n", u->name, line);
@@ -9535,32 +9464,44 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    pprintf(prn, "? %s\n", line);
 	}
 
-	if (u->lines[i].ignore) {
+	if (ignore_line(fline)) {
 	    continue;
 	}
 
-	if (u->lines[i].loop != NULL && !is_recursing(call)) {
+	if (line_has_loop(fline) && !is_recursing(call)) {
 #if LSDEBUG
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
-		    (void *) u->lines[i].loop, i, line);
+		    (void *) fline->ptr, i, line);
 #endif
-	    if (!gretl_if_state_false()) {
+	    if (gretl_if_state_true()) {
 		/* not blocked, so execute the loop code */
-		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
+		err = gretl_loop_exec(&state, dset, fline->ptr);
 		if (err) {
-		    set_func_error_message(err, u, &state, state.line, -1);
+		    set_func_error_message(err, u, &state, state.line, NULL);
 		    break;
 		} else if (get_return_line(&state)) {
 		    /* a "return" statement was encountered in the loop */
-		    err = handle_return_statement(call, &state, dset, -1);
+		    err = handle_return_statement(call, &state, dset,
+						  gencomp, NULL);
 		    break;
 		}
 	    }
 	    /* skip to the matching 'endloop' */
-	    i = u->lines[i].next_idx;
+	    i = fline->next_idx;
 	    continue;
+        } else if (line_has_genr(fline) && !is_recursing(call) &&
+		   !is_return_line(fline) && gretl_if_state_true()) {
+            /* do we need to rule out the recursing case? */
+	    err = execute_genr(fline->ptr, dset, prn);
 	} else {
-	    err = maybe_exec_line(&state, dset, &loopstart);
+            if (gencomp) {
+                err = maybe_exec_line(&state, dset, &loopstart, &fline->ptr);
+                if (!err && fline->ptr != NULL) {
+                    fline->flags |= LINE_GENR;
+                }
+            } else {
+                err = maybe_exec_line(&state, dset, &loopstart, NULL);
+            }
 	    if (loopstart) {
 		u->line_idx = i;
 		loopstart = 0;
@@ -9568,7 +9509,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	}
 
 	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(call, &state, dset, lineno);
+	    err = handle_return_statement(call, &state, dset, gencomp, fline);
 	    if (i < u->n_lines - 1) {
 		retline = i;
 	    }
@@ -9588,7 +9529,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	}
 
 	if (err) {
-	    set_func_error_message(err, u, &state, line, lineno);
+	    set_func_error_message(err, u, &state, line, fline);
 	    break;
 	}
 
@@ -9598,11 +9539,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    err = gretl_loop_exec(&state, dset, NULL);
 	    if (err) {
 		/* note that @lineno will point at the end of a loop here */
-		set_func_error_message(err, u, &state, state.line, -1);
+		set_func_error_message(err, u, &state, state.line, NULL);
 	    }
 	    if (get_return_line(&state)) {
 		/* a "return" statement was encountered in the loop */
-		err = handle_return_statement(call, &state, dset, -1);
+		err = handle_return_statement(call, &state, dset, gencomp, NULL);
 		break;
 	    }
 	}
@@ -9648,8 +9589,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
-    if (!err && !is_recursing(call)) {
-	reset_saved_loops(call->fun);
+    if (!is_recursing(call)) { /* condition included !err */
+	reset_saved_uservars(call->fun);
     }
 
     gretl_exec_state_clear(&state);
@@ -9744,10 +9685,6 @@ int object_is_const (const char *name, int vnum)
 	       unless it was given in pointer form.
 	       Note: this check added 2018-10-18.
 	    */
-#if 0 /* debugging */
-	    fprintf(stderr, "*** object_is_const: name '%s', vnum %d, call->orig_v %d\n",
-		    name, vnum, call->orig_v);
-#endif
 	    if (!in_gretl_list(call->ptrvars, vnum)) {
 		ret = 1;
 	    }

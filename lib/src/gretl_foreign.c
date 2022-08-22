@@ -1080,6 +1080,7 @@ static void write_python_io_file (FILE *fp, const char *ddir)
 {
     fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
     fputs("import os\n", fp);
+
     /* export matrix for reading by gretl */
     fputs("\ndef gretl_export(X, fname, autodot=1):\n", fp);
     fputs("  binwrite = 0\n", fp);
@@ -1126,7 +1127,7 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("  if autodot and not os.path.isabs(fname):\n", fp);
     fputs("    fname = gretl_dotdir + fname\n", fp);
     fputs("  if fname[-4:] == '.bin':\n", fp);
-    fputs("    from numpy import ndarray, asmatrix\n", fp);
+    fputs("    from numpy import fromfile, ndarray\n", fp);
     fputs("    from struct import unpack\n", fp);
     fputs("    f = open(fname, 'rb')\n", fp);
     fputs("    buf = f.read(19)\n", fp);
@@ -1138,14 +1139,18 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("      raise ValueError('Not a gretl binary matrix')\n", fp);
     fputs("    r = unpack('<i', f.read(4))[0]\n", fp);
     fputs("    c = unpack('<i', f.read(4))[0]\n", fp);
-    fputs("    M = ndarray(shape=(r,c), dtype=float, order='F')\n", fp);
-    fputs("    for j in range(0, c):\n", fp);
-    fputs("      for i in range(0, r):\n", fp);
-    fputs("        M[i,j] = unpack('<d', f.read(8))[0]\n", fp);
-    fputs("    f.close()\n", fp);
     fputs("    if cmplx == 1:\n", fp);
-    fputs("      M.dtype = complex\n", fp);
-    fputs("    M = asmatrix(M)\n", fp);
+    fputs("      r = r // 2\n", fp);
+    fputs("      M = ndarray(shape=(r,c), dtype=complex, order='F')\n", fp);
+    fputs("      for j in range(0, c):\n", fp);
+    fputs("        for i in range(0, r):\n", fp);
+    fputs("          M[i,j] = fromfile(f, dtype=complex, count=1)\n", fp);
+    fputs("    else:\n", fp);
+    fputs("      M = ndarray(shape=(r,c), dtype=float, order='F')\n", fp);
+    fputs("      for j in range(0, c):\n", fp);
+    fputs("        for i in range(0, r):\n", fp);
+    fputs("          M[i,j] = fromfile(f, dtype=float, count=1)\n", fp);
+    fputs("    f.close()\n", fp);
     fputs("  else:\n", fp);
     fputs("    from numpy import loadtxt\n", fp);
     fputs("    M = loadtxt(fname, skiprows=1)\n", fp);

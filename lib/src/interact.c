@@ -251,10 +251,9 @@ static int ends_foreign_block (const char *s)
 /**
  * parse_command_line:
  * @s: pointer to execution-state struct.
- * @cmd: pointer to command struct.
  * @dset: dataset struct.
  * @ptr: pointer for use with "compilation" of
- * conditionals in loops.
+ * conditionals.
  *
  * Parses @line and fills out @cmd accordingly.
  *
@@ -1535,7 +1534,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
         err = get_line_continuation(s->line, fp, prn);
         if (!err) {
-            err = maybe_exec_line(s, dset, NULL);
+            err = maybe_exec_line(s, dset, NULL, NULL);
         }
     }
 
@@ -4147,11 +4146,45 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     return err;
 }
 
-/* called by functions, and by scripts executed from within
-   functions */
-
-int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
+static int try_compile_func_genr (ExecState *s,
+                                  DATASET *dset,
+                                  void *ptr,
+                                  int *done)
 {
+    GENERATOR **pgen = ptr;
+    GretlType gtype = s->cmd->gtype;
+    const char *line = s->cmd->vstart;
+    gretlopt gopt = OPT_NONE;
+    int err = 0;
+
+    if (s->cmd->opt & OPT_O) {
+	gopt |= OPT_O;
+    }
+
+    *pgen = genr_compile(line, dset, gtype, gopt, s->prn, &err);
+    if (!err && *pgen != NULL) {
+        *done = 1;
+    } else if (err == E_EQN) {
+	/* may be a non-compilable special such as "genr time",
+           or perhaps a bare declaration */
+        gretl_error_clear();
+	err = 0;
+    }
+
+    return err;
+}
+
+/* Called by functions, and by scripts executed from within
+   functions. Augmented 2022-08-11 to support a 4th argument,
+   for use in a function that is being called from a loop:
+   we'll attempt to "compile" GENR statements in this
+   context, for reuse when the function is next called.
+*/
+
+int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
+                     void *ptr)
+{
+    int done = 0;
     int err = 0;
 
     if (string_is_blank(s->line)) {
@@ -4163,8 +4196,13 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
     } else {
         /* FIXME last arg to parse_command_line() ? */
         err = parse_command_line(s, dset, NULL);
-        if (!err && loopstart != NULL && s->cmd->ci == LOOP) {
-            *loopstart = 1;
+        if (!err) {
+            if (s->cmd->ci == LOOP && loopstart != NULL) {
+                *loopstart = 1;
+            } else if (s->cmd->ci == GENR && ptr != NULL &&
+                       !(s->cmd->flags & CMD_SUBST)) {
+                err = try_compile_func_genr(s, dset, ptr, &done);
+            }
         }
     }
 
@@ -4198,7 +4236,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 
     if (s->cmd->ci == FUNCERR) {
         err = E_FUNCERR;
-    } else {
+    } else if (!done) {
         /* note: error messages may be printed to s->prn */
         err = gretl_cmd_exec(s, dset);
     }

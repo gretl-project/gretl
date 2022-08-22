@@ -26,10 +26,6 @@ void *gretl_dlsym (void *handle, const char *name);
 
 void *get_plugin_function (const char *funcname);
 
-void *get_packaged_C_function (const char *pkgname,
-			       const char *funcname, 
-			       void **handle);
-
 void close_plugin (void *handle);
 
 void plugins_cleanup (void);

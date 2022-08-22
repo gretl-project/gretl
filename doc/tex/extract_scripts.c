@@ -1,5 +1,5 @@
-/* Extract example scripts from the tex file that constitute
-   the Gretl User's Guide, 2020-12-06.
+/* Extract downloadable example scripts from the tex files that constitute
+   the Gretl User's Guide, 2020-12-06, revised 2022-08-09
 */
 
 #include <stdio.h>
@@ -157,6 +157,8 @@ int process_tex_file (const char *fname)
 	    continue;
 	}
 	if (strstr(line, "begin{script}")) {
+            int record = 0;
+
 	    sprintf(outtemp, "script%d", n_scripts + 1);
 	    fs = fopen(outtemp, "w");
 	    if (fs == NULL) {
@@ -165,32 +167,36 @@ int process_tex_file (const char *fname)
 	    }
 	    nlines[n_scripts] = 0;
 	    while (fgets(line, sizeof line, fp)) {
+                if (strstr(line, "scriptcaption")) {
+                    record = 1;
+                }
 		if (get_label(line, NULL)) {
 		    labels[n_scripts] = strdup(label);
 		    n_scripts++;
 		    continue;
 		}
-		if (strstr(line, "begin{code}")) {
-		    ; /* we won't pick this up */
-		} else if (strstr(line, "begin{scodebit}")) {
-		    while (fgets(line, sizeof line, fp)) {
-			if (strstr(line, "end{scodebit}")) {
-			    break;
-			} else {
-			    fputs(line, fs);
-			    nlines[n_scripts-1] += 1;
-			}
-		    }
-		} else if (strstr(line, "begin{scode}")) {
-		    while (fgets(line, sizeof line, fp)) {
-			if (strstr(line, "end{scode}")) {
-			    break;
-			} else {
-			    fputs(line, fs);
-			    nlines[n_scripts-1] += 1;
-			}
-		    }
-		} else if (strstr(line, "end{script}")) {
+                if (record) {
+                    if (strstr(line, "begin{scodebit}")) {
+                        while (fgets(line, sizeof line, fp)) {
+                            if (strstr(line, "end{scodebit}")) {
+                                break;
+                            } else {
+                                fputs(line, fs);
+                                nlines[n_scripts-1] += 1;
+                            }
+                        }
+                    } else if (strstr(line, "begin{scode}")) {
+                        while (fgets(line, sizeof line, fp)) {
+                            if (strstr(line, "end{scode}")) {
+                                break;
+                            } else {
+                                fputs(line, fs);
+                                nlines[n_scripts-1] += 1;
+                            }
+                        }
+                    }
+                }
+		if (strstr(line, "end{script}")) {
 		    fclose(fs);
 		    break;
 		}

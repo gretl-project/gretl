@@ -172,8 +172,8 @@ SSmod.diffuse = 1
 \end{code}
 %
 In some cases this diffuse initialization may lead to numerical
-problems. It may then be helpful to specifying a diffuse initializer
-via \texttt{inivar} using a somewhat smaller value of $\kappa$, as in
+problems. It may then be helpful to specify a diffuse initializer via
+\texttt{inivar} using a somewhat smaller value of $\kappa$, as in
 %
 \begin{code}
 SSmod.inivar = 1.0e5 * I(stdim)
@@ -480,9 +480,9 @@ $\statemat$, $\stdist$, $\statevar$, $\obsymat$), making the model
 relatively awkward to formulate and forecasts more expensive to
 compute. We therefore adopt the convention above on practical grounds.
 
-The ($\stdim \times 1$) vector $\statemu$ can be specified as a bundle
-member by the name \texttt{stconst}. Despite its name, this matrix can
-be stipulated as time-varying, as explained in the next section.
+The ($\stdim \times 1$) vector $\statemu$ can be added to a bundle
+under the key \texttt{stconst}. Despite its name, this matrix can be
+specified as time-varying, as explained in the next section.
 
 \subsection{Time-varying matrices}
 \label{sec:tvarying}

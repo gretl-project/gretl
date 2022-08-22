@@ -299,6 +299,19 @@ static char *flagstr (guint8 flags)
     return ret;
 }
 
+static void print_node_details (NODE *t)
+{
+    fprintf(stderr, "node at %p (type %03d, %s, flags %s",
+	    (void *) t, t->t, getsymb(t->t), flagstr(t->flags));
+    if (t->t == STR) {
+	fprintf(stderr, ", val '%s')\n", t->v.str);
+    } else if (t->t == NUM) {
+	fprintf(stderr, ", val %g)\n", t->v.xval);
+    } else {
+	fputs(")\n", stderr);
+    }
+}
+
 static void print_tree (NODE *t, parser *p, int level, char pos)
 {
     if (t == NULL) {
@@ -338,15 +351,8 @@ static void print_tree (NODE *t, parser *p, int level, char pos)
 	} else {
 	    fputc('\n', stderr);
 	}
-    } else if (t->t == STR) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %s, val '%s')\n",
-		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->v.str);
-    } else if (t->t == NUM) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %s, val %g)\n",
-		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->v.xval);
     } else {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %s)\n",
-		(void *) t, t->t, getsymb(t->t), flagstr(t->flags));
+	print_node_details(t);
     }
 
     if (t->aux != NULL) {
@@ -5523,6 +5529,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                     ret = string_range_node(l->v.str, r1, r2, p);
                 }
 	    }
+	    free(vlist);
         } else if (l->t == SERIES) {
             int t = mspec_get_series_index(r->v.mspec, p);
 
@@ -10174,6 +10181,8 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
+#define SAVE_FNCALL 1 /* 2022-08-12, not just yet */
+
 static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -10220,7 +10229,11 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
                             "user-defined functions"));
     }
 
+#if SAVE_FNCALL
+    fc = user_func_get_fncall(uf);
+#else
     fc = fncall_new(uf, 1);
+#endif
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
@@ -10353,8 +10366,10 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
         }
     }
 
+#if !SAVE_FNCALL
     /* avoid leaking memory */
     fncall_destroy(fc);
+#endif
 
 #if EDEBUG
     fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n",
@@ -10493,25 +10508,31 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
    dataset. Failing that, we'll get it as a vector.
 */
 
-static NODE *bundled_series_node (parser *p, const double *x, int n)
+static NODE *bundled_series_node (parser *p, const double *x,
+				  int n, int *is_tmp)
 {
     NODE *ret = NULL;
+    int t;
 
     if (n <= p->dset->n) {
-	int t;
-
 	ret = aux_series_node(p);
 	if (!p->err) {
 	    for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
 		ret->v.xvec[t] = x[t];
 	    }
+	    *is_tmp = 1;
 	}
     } else if (n > 0) {
 	ret = aux_matrix_node(p);
 	if (!p->err) {
-	    ret->v.m = gretl_vector_from_array(x, n, GRETL_MOD_NONE);
+	    ret->v.m = gretl_matrix_alloc(n, 1);
 	    if (ret->v.m == NULL) {
 		p->err = E_ALLOC;
+	    } else {
+		for (t=0; t<n; t++) {
+		    ret->v.m->val[t] = x[t];
+		}
+		*is_tmp = 1;
 	    }
 	}
     } else {
@@ -10575,7 +10596,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_ARRAY) {
 	ret->v.a = (gretl_array *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-	ret = bundled_series_node(p, (const double *) val, size);
+	ret = bundled_series_node(p, (const double *) val, size, &is_tmp);
     } else if (type == GRETL_TYPE_LIST) {
         if (stored_list_ok((const int *) val, p->dset)) {
 	    /* extract as list */
@@ -16312,7 +16333,7 @@ static void node_reattach_data (NODE *n, parser *p)
         GretlType type = 0;
         void *data = NULL;
 
-        if (n->uv == NULL || (n->t == LIST && gretl_looping())) {
+        if (n->uv == NULL || (n->t == LIST && gretl_iterating())) {
             n->uv = get_user_var_by_name(n->vname);
         }
 
@@ -19511,6 +19532,26 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
     return m2;
 }
 
+static int should_copy_into_array (NODE *n, parser *p)
+{
+    int donate = is_tmp_node(n);
+
+    /* In general if @n is a tmp node we can 'donate' its content
+       to an array rather than copying it in, but there's a tricky
+       case: we're compiling a "genr", or running a compiled one,
+       and @n holds a string literal. If we don't copy this, it
+       will have disappeared by the next call to the genr. There
+       may be a simpler and more elegant way of identifying this
+       case, but for now the following works (2022-08-10).
+    */
+    if (donate && !is_aux_node(n) && n->t == STR &&
+	(p->flags & (P_COMPILE | P_EXEC))) {
+	donate = 0; /* we _should_ copy! */
+    }
+
+    return !donate;
+}
+
 static void do_array_append (parser *p)
 {
     gretl_array *A = NULL;
@@ -19545,8 +19586,13 @@ static void do_array_append (parser *p)
         p->err = E_TYPES;
     }
 
+#if EDEBUG
+    fprintf(stderr, "do_array_append: node to append\n");
+    print_node_details(rhs);
+#endif
+
     if (!p->err && ptr != NULL) {
-        int copy = !is_tmp_node(rhs);
+        int copy = should_copy_into_array(rhs, p);
 
         p->err = gretl_array_append_object(A, ptr, copy);
         if (!copy && !p->err) {
@@ -20213,12 +20259,12 @@ static int save_generated_var (parser *p, PRN *prn)
     int t, v = 0;
 
 #if EDEBUG
-    fprintf(stderr, "save (%s): lhname='%s'\n  callcount=%d\n"
-            "lh.t=%s, targ=%s, no_decl=%d, r->t=%s\n",
+    fprintf(stderr, "\nsave (%s): lhname='%s', callcount %d\n"
+            "  lh.t=%s, targ=%s, no_decl=%d, r->t=%s, r=%p\n",
             p->lhtree != NULL ? "compound" : "unitary",
             p->lh.name, p->callcount, getsymb(p->lh.t),
             getsymb(p->targ), (p->flags & P_NODECL)? 1 : 0,
-            (r == NULL)? "none" : getsymb(r->t));
+            (r == NULL)? "none" : getsymb(r->t), (void *) r);
 #endif
 
     if (p->flags & P_STRVEC) {
@@ -20672,7 +20718,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
 	    "callcount=%d, compiled=%d\n",
 	    getsymb(p->targ), p->lh.name, getsymb(p->op),
-	    p->callcount, compiled(p));
+	    p->callcount, compiled(p) ? 1 : 0);
 #endif
 
     if (*p->lh.name != '\0') {
@@ -20854,7 +20900,7 @@ void gen_cleanup (parser *p)
 
 static void real_reset_uvars (parser *p)
 {
-    if (p->err) {
+    if (0 && p->err) {
 	return;
     }
 
@@ -20890,7 +20936,7 @@ static void maybe_set_return_flags (parser *p)
 static int decl_check (parser *p, int flags)
 {
     if (flags & P_COMPILE) {
-	p->err = E_PARSE;
+	p->err = E_EQN;
 	gretl_errmsg_sprintf("%s:\n> '%s'",
 			     _("Bare declarations are not allowed here"),
 			     p->input);

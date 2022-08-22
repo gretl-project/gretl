@@ -1,11 +1,17 @@
-version 2022b, in progress
+version 2022c, in progress
+- Fix bug: fail after first iteration when adding a string to
+  an array of strings defined within a loop (noted by Luca)
+- Fix bug: corruption on extracting a "series" from a bundle
+  as a matrix when the series contains NAs
+
+2022-08-09 version 2022b
 - new command/keyword "continue" for use in loops
+- new option --decr for use with index loops
 - new function commute(): pre/post multiplication by the
   commutation operator (replaces analogous function in the
   extra addon)
 - new function sphericorr(): spherical coordinates
   representation for correlation matrices
-- new option --decr for use with index loops
 - "garch" command: add the model order scalars (p and q) to
   the $model bundle
 - "leverage" command: add $result accessor to obtain
@@ -31,6 +37,7 @@ version 2022b, in progress
 - weekday() and isoweek() functions: generalize to accept
   dates in ISO 8601 "basic" format
 - rank() and ginv() function: add optional tolerance
+  argument
 - Support direct assignment from string-values series to
   array of strings
 - script editor: enhancements for Find/Replace dialog
@@ -50,6 +57,8 @@ version 2022b, in progress
   function in question
 - Fix bug: the 'end' keyword for indexing into matrices
   could fail under certain conditions
+- Fix bug: obsnum() producing unwanted results in case of
+  5- or 6-day daily data
 - Fix obscure issue: ensure that libR gets a correct value
   for R_HOME when the user has specified the location of
   libR.so as a symlink (probably specific to Linux, and
