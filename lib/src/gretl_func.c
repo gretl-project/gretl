@@ -637,10 +637,16 @@ void fncall_destroy (fncall *call)
     }
 }
 
-static void maybe_destroy_fncall (fncall *call)
+static void maybe_destroy_fncall (fncall **pcall)
 {
+    fncall *call = *pcall;
+
     if (call != NULL && !(call->flags & FC_PRESERVE)) {
+        if (call->fun != NULL && call->fun->call == call) {
+            call->fun->call = NULL;
+        }
 	fncall_destroy(call);
+        *pcall = NULL;
     }
 }
 
@@ -800,16 +806,17 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     }
 }
 
-static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
+static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
 {
     int dbg = gretl_debugging_on();
+    fncall *thiscall = *pcall;
     fncall *popcall = NULL;
 
     destroy_option_params_at_level(fn_executing);
     set_previous_depth(fn_executing);
     fn_executing--;
 
-    callstack = g_list_remove(callstack, call);
+    callstack = g_list_remove(callstack, thiscall);
 
 #if EXEC_DEBUG
     fprintf(stderr, "set_executing_off: removing call to %s, depth now %d\n",
@@ -819,10 +826,10 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
     if (dbg) {
 	pputs(prn, "*** ");
 	bufspace(gretl_function_depth(), prn);
-	pprintf(prn, "exiting function %s, ", call->fun->name);
+	pprintf(prn, "exiting function %s, ", thiscall->fun->name);
     }
 
-    maybe_destroy_fncall(call);
+    maybe_destroy_fncall(pcall);
 
     if (fn_executing > 0) {
 	GList *tmp = g_list_last(callstack);
@@ -8758,14 +8765,14 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	restore_obs_info(&call->obs, dset);
     }
 
-    set_executing_off(call, dset, prn);
+    set_executing_off(&call, dset, prn);
 
     if (print_redirection_level(prn) > redir_level) {
 	gretl_errmsg_set("Incorrect use of 'outfile' in function");
 	err = 1;
     }
 
-    if (call->retname != NULL) {
+    if (call != NULL && call->retname != NULL) {
 	/* we're surely done with this now: avoid potential leak */
 	free(call->retname);
 	call->retname = NULL;
@@ -9233,10 +9240,6 @@ static int handle_return_statement (fncall *call,
 	}
     }
 
-    if (!err && call->retname == NULL) {
-	err = E_ALLOC;
-    }
-
     return err;
 }
 
@@ -9375,7 +9378,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     err = maybe_check_function_needs(dset, u);
     if (err) {
-	maybe_destroy_fncall(call);
+	maybe_destroy_fncall(&call);
 	return err;
     }
 
@@ -9406,7 +9409,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
     if (err) {
 	/* get out before allocating further storage */
-	maybe_destroy_fncall(call);
+	maybe_destroy_fncall(&call);
 	return err;
     }
 
@@ -9603,7 +9606,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    err = stoperr;
 	}
     } else {
-	maybe_destroy_fncall(call);
+	maybe_destroy_fncall(&call);
     }
 
 #if EXEC_DEBUG || GLOBAL_TRACE
