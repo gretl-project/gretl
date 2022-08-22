@@ -41,8 +41,6 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#define IF_NEXT 1
-
 enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
@@ -88,22 +86,18 @@ struct controller_ {
 typedef struct controller_ controller;
 
 typedef enum {
-    LOOP_CMD_GENR    = 1 << 0, /* compiled "genr" */
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
     LOOP_CMD_DOLLAR  = 1 << 2, /* line contains '$' */
     LOOP_CMD_AT      = 1 << 3, /* line contains '@' */
     LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
-    LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
-    LOOP_CMD_PDONE   = 1 << 6, /* progressive loop command started */
-    LOOP_CMD_NOEQ    = 1 << 7  /* "genr" with no formula */
+    LOOP_CMD_PDONE   = 1 << 5, /* progressive loop command started */
+    LOOP_CMD_NOCOMP  = 1 << 6  /* not compilable */
 } LoopCmdFlags;
 
 struct loop_command_ {
     char *line;
     int ci;
-#if IF_NEXT
-    int next_idx;
-#endif
+    int next;
     gretlopt opt;
     LoopCmdFlags flags;
     GENERATOR *genr;
@@ -1692,9 +1686,7 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
     for (i=i1; i<i2; i++) {
         loop->cmds[i].line = NULL;
         loop->cmds[i].ci = 0;
-#if IF_NEXT
-        loop->cmds[i].next_idx = 0;
-#endif
+        loop->cmds[i].next = 0;
         loop->cmds[i].opt = 0;
         loop->cmds[i].genr = NULL;
         loop->cmds[i].flags = 0;
@@ -1795,15 +1787,13 @@ int model_is_in_loop (const MODEL *pmod)
     return 0;
 }
 
-#if IF_NEXT
-
 #define LS_DEBUG 1
 
 static int loop_get_structure (LOOPSET *loop)
 {
     loop_command *lc;
-    int *next_from_if = NULL;
-    int id = 0, id_max = 0;
+    int *match_start = NULL;
+    int d = 0, d_max = 0;
 #if LS_DEBUG
     int step, max_step = 0;
 #endif
@@ -1814,67 +1804,67 @@ static int loop_get_structure (LOOPSET *loop)
     for (i=0; i<loop->n_cmds && !err; i++) {
 	ci = loop->cmds[i].ci;
 	if (ci == IF) {
-            if (++id > id_max) {
-                id_max = id;
+            if (++d > d_max) {
+                d_max = d;
             }
 	} else if (ci == ENDIF) {
-            id--;
+            d--;
 	}
     }
 
 #if LS_DEBUG
-    fprintf(stderr, "loop_get_structure: max if-depth %d\n", id_max);
+    fprintf(stderr, "loop_get_structure: max if-depth %d\n", d_max);
 #endif
 
-    if (id_max == 0) {
+    if (d_max == 0) {
         /* OK, nothing to record */
 	return 0;
     }
 
-    next_from_if = gretl_list_new(id_max);
+    match_start = gretl_list_new(d_max);
 
     /* second pass: analysis */
     for (i=0; i<loop->n_cmds && !err; i++) {
-        lc = &(loop->cmds[i]);
+        lc = &loop->cmds[i];
 	if (lc->ci == IF) {
-	    id++;
-	    next_from_if[id] = i;
+	    d++;
+	    match_start[d] = i;
 	} else if (lc->ci == ELIF) {
-	    if (id == 0) {
+	    if (d == 0) {
 		err = 1;
 	    } else {
-		j = next_from_if[id];
-		loop->cmds[j].next_idx = i;
-		next_from_if[id] = i;
+		j = match_start[d];
+		loop->cmds[j].next = i;
+		match_start[d] = i;
 	    }
 	} else if (lc->ci == ELSE) {
-	    if (id == 0) {
+	    if (d == 0) {
 		err = 1;
 	    } else {
-		j = next_from_if[id];
-		loop->cmds[j].next_idx = i;
-		next_from_if[id] = i;
+		j = match_start[d];
+		loop->cmds[j].next = i;
+		match_start[d] = i;
 	    }
 	} else if (lc->ci == ENDIF) {
-	    if (id == 0) {
+	    if (d == 0) {
 		err = 1;
 	    } else {
-		j = next_from_if[id];
-		loop->cmds[j].next_idx = i;
-                id--;
+		j = match_start[d];
+		loop->cmds[j].next = i;
+                d--;
 	    }
         }
     }
 
-    free(next_from_if);
+    free(match_start);
 
 #if LS_DEBUG
     /* display what we figured out */
     for (i=0; i<loop->n_cmds && !err; i++) {
-	lc = &(loop->cmds[i]);
-        j = lc->next_idx;
+	lc = &loop->cmds[i];
+        j = lc->next;
 	if (j > 0 && j < loop->n_cmds) {
-	    fprintf(stderr, "cmd %d ('%s'): next on skip = %d ('%s')\n",
+	    fprintf(stderr, "line %d ('%s'): on false goto %d ('%s')\n",
 		    i, lc->line, j, loop->cmds[j].line);
             step = j - i;
             if (step > max_step) {
@@ -1887,8 +1877,6 @@ static int loop_get_structure (LOOPSET *loop)
 
     return err;
 }
-
-#endif /* IF_NEXT */
 
 static int add_more_loop_commands (LOOPSET *loop)
 {
@@ -2033,11 +2021,9 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
         fprintf(stderr, "got ENDLOOP, compile_level now %d\n",
                 compile_level);
 #endif
-#if IF_NEXT
         if (loop_has_cond(loop)) {
             loop_get_structure(loop);
         }
-#endif
         if (compile_level == 0) {
             /* set flag to run the loop */
             loop_execute = 1;
@@ -2291,8 +2277,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     return err;
 }
 
-static const LOOPSET *
-subst_loop_in_parentage (const LOOPSET *loop)
+static const LOOPSET *subst_loop_in_parentage (const LOOPSET *loop)
 {
     while ((loop = loop->parent) != NULL) {
         if (indexed_loop(loop) || loop->type == FOR_LOOP) break;
@@ -2373,11 +2358,9 @@ static int try_add_loop_genr (LOOPSET *loop,
 
     loop->cmds[lno].genr = genr_compile(line, dset, gtype,
                                         gopt, prn, &err);
-
-    if (!err) {
-        loop->cmds[lno].flags |= LOOP_CMD_GENR;
-    } else if (err == E_EQN) {
-        /* may be a non-compilable special such as "genr time" */
+    if (err == E_EQN) {
+        /* may be a non-compilable special such as "genr time",
+	   a non-fatal thing */
         err = 0;
     }
 
@@ -2410,8 +2393,6 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-#define genr_compiled(lc)   (lc->flags & LOOP_CMD_GENR)
-#define cond_compiled(lc)   (lc->flags & LOOP_CMD_COND)
 #define loop_cmd_catch(lc)  (lc->flags & LOOP_CMD_CATCH)
 
 #define line_is_compiled(lc) (lc->genr != NULL || lc->ci == ELSE || lc->ci == ENDIF)
@@ -2419,24 +2400,17 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 #define line_has_at_sign(lc) (lc->flags & LOOP_CMD_AT)
 #define loop_cmd_nosub(lc)   (!(lc->flags & (LOOP_CMD_AT | LOOP_CMD_DOLLAR)))
 
+#define may_be_compilable(lc)  (!(lc->flags & LOOP_CMD_NOCOMP))
+#define set_non_compilable(lc) (lc->flags |= LOOP_CMD_NOCOMP)
+
 static int loop_process_error (LOOPSET *loop, loop_command *lc,
                                int err, PRN *prn)
 {
-#if LOOP_DEBUG
-    fprintf(stderr, "loop_process_error: err=%d, catch=%d\n",
-            err, loop_cmd_catch(lc));
-    fprintf(stderr, " line: '%s'\n", lc->line);
-    fprintf(stderr, " errmsg: '%s'\n", gretl_errmsg_get());
-#endif
     if (loop_cmd_catch(lc)) {
         set_gretl_errno(err);
         loop->flags |= LOOP_ERR_CAUGHT;
         err = 0;
     }
-
-#if LOOP_DEBUG
-    fprintf(stderr, " returning err = %d\n", err);
-#endif
 
     return err;
 }
@@ -2451,22 +2425,17 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
                                      loop_command *lc,
                                      CMD *cmd)
 {
-#if LOOP_DEBUG > 1
-    fprintf(stderr, "loop_info_to_cmd: iter=%d, line='%s'\n",
-            loop->iter, lc->line);
-#endif
-
     if (loop_is_progressive(loop)) {
         cmd->flags |= CMD_PROG;
     } else {
         cmd->flags &= ~CMD_PROG;
     }
 
-    if (!line_has_at_sign(lc)) {
-        /* tell parser not to bother trying for @-substitution */
-        cmd->flags |= CMD_NOSUB;
+    if (line_has_at_sign(lc)) {
+	cmd->flags &= ~CMD_NOSUB;
     } else {
-        cmd->flags &= ~CMD_NOSUB;
+	/* tell parser not to bother trying for @-substitution */
+	cmd->flags |= CMD_NOSUB;
     }
 
     /* readjust "catch" for commands that are not being
@@ -2476,13 +2445,6 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
     } else if (!cmd->context) {
         cmd->flags &= ~CMD_CATCH;
     }
-
-#if LOOP_DEBUG > 1
-    fprintf(stderr, " flagged: prog %d, nosub %d, catch %d\n",
-            (cmd->flags & CMD_PROG)? 1 : 0,
-            (cmd->flags & CMD_NOSUB)? 1 : 0,
-            (cmd->flags & CMD_CATCH)? 1 : 0);
-#endif
 }
 
 /* Based on the parsed info in @cmd, maybe modify some flags in
@@ -2493,11 +2455,6 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j, CMD *cmd)
 {
     loop_command *lcmd = &loop->cmds[j];
 
-#if LOOP_DEBUG > 1
-    fprintf(stderr, "cmd_info_to_loop: j=%d: '%s'\n",
-            j, lcmd->line);
-#endif
-
     if (line_has_at_sign(lcmd) && !cmd_subst(cmd)) {
         /* This loop line has not already been marked as
            free of @-substitution, but has been found to
@@ -2506,21 +2463,11 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j, CMD *cmd)
 	lcmd->flags &= ~LOOP_CMD_AT;
     }
 
-    if (cmd->ci == IF || cmd->ci == ELIF) {
-        return;
-    }
-
     lcmd->opt = cmd->opt;
 
     if (cmd->flags & CMD_CATCH) {
         lcmd->flags |= LOOP_CMD_CATCH;
     }
-
-#if LOOP_DEBUG > 1
-    fprintf(stderr, " loop-flagged: nosub %d, catch %d\n",
-            loop_cmd_nosub(loop, j)? 1 : 0,
-            loop_cmd_catch(loop, j)? 1 : 0);
-#endif
 }
 
 /* We come here when the --force option has been applied to
@@ -2630,23 +2577,6 @@ static void loop_reset_error (void)
         free(inner_errline);
         inner_errline = NULL;
     }
-}
-
-static int ends_condition (loop_command *lc)
-{
-    return lc->ci == ELSE || lc->ci == ENDIF;
-}
-
-static int do_compile_conditional (loop_command *lc)
-{
-    int ret = 0;
-
-    if ((lc->ci == IF || lc->ci == ELIF) &&
-        !line_has_dollar(lc) && !line_has_at_sign(lc)) {
-        ret = 1;
-    }
-
-    return ret;
 }
 
 #if !HAVE_GMP
@@ -2764,6 +2694,8 @@ static int check_for_dollar_subst (loop_command *lc,
 				    dset, &subst, OPT_NONE);
     if (!err && !subst) {
 	lc->flags &= ~LOOP_CMD_DOLLAR;
+    } else if (subst) {
+	lc->flags |= LOOP_CMD_NOCOMP;
     }
 
     return err;
@@ -2882,36 +2814,46 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     compiled);
 #endif
 
-            if (loop_has_cond(loop) && gretl_if_state_false()) {
-                /* The only ways out of a blocked state are
-                   via ELSE, ELIF or ENDIF, and the only
-                   commands we need assess are the foregoing
-                   plus IF.
-                */
-                if (ci == ELSE || ci == ENDIF) {
-                    cmd->ci = ci;
-                    cmd->err = 0;
-                    flow_control(s, NULL, NULL);
-                    if (cmd->err) {
-                        err = cmd->err;
-                        goto handle_err;
-                    } else {
-#if IF_NEXT
-			if (gretl_if_state_false() && lcmd->next_idx > 0) {
-			    j = lcmd->next_idx - 1;
-			}
-#endif
-                        continue;
-                    }
-                } else if (ci == IF || ci == ELIF) {
-                    goto cond_next;
-                } else {
-                    continue;
-                }
-            }
+	    if (gretl_if_state_true() && (ci == ELSE || ci == ELIF)) {
+		if (lcmd->next > 0) {
+		    j = lcmd->next - 1;
+		}
+		continue;
+	    }
 
+	    /* deal with compiled cases */
+	    if (ci == GENR && compiled) {
+                if (echo && loop_is_verbose(loop)) {
+                    pprintf(prn, "? %s\n", showline);
+                }
+                err = execute_genr(lcmd->genr, dset, prn);
+	    } else if ((ci == IF || ci == ELIF) && compiled) {
+                cmd->ci = ci;
+                s->cmd->vstart = NULL;
+                flow_control(s, dset, &lcmd->genr);
+                if (cmd->err) {
+                    /* we hit an error evaluating the if state */
+                    err = cmd->err;
+                } else if (gretl_if_state_false() && lcmd->next > 0) {
+		    j = lcmd->next - 1;
+                }
+	    } else if (ci == ELSE || ci == ENDIF) {
+		/* these don't need compilation */
+		cmd->ci = ci;
+		flow_control(s, dset, &lcmd->genr);
+		if (gretl_if_state_false() && lcmd->next > 0) {
+		    j = lcmd->next - 1;
+		}
+	    }
+
+	    if (err) {
+		goto handle_err;
+	    } else if (compiled) {
+		continue;
+	    }
+
+	    /* handle other cases with no parsing required */
             if (ci == BREAK || ci == CONTINUE || ci == LOOP) {
-                /* no parsing needed */
                 cmd->ci = ci;
                 if (ci == BREAK) {
                     loop->brk = 1;
@@ -2924,60 +2866,65 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 }
             }
 
-            if (genr_compiled(lcmd)) {
-                /* no parsing needed */
-                if (echo && loop_is_verbose(loop)) {
-                    pprintf(prn, "? %s\n", showline);
-                }
-                err = execute_genr(lcmd->genr, dset, prn);
-                if (err) {
-                    goto handle_err;
-                } else {
-                    continue;
-                }
-            }
-
-        cond_next:
-
-            if (line_has_dollar(lcmd)) {
+	    /* check for $-substitution? */
+	    if (line_has_dollar(lcmd)) {
 		err = check_for_dollar_subst(lcmd, line, loop, dset);
-            }
+		if (err) {
+		    goto handle_err;
+		}
+	    }
 
             /* transcribe saved loop info -> cmd */
             loop_info_to_cmd(loop, lcmd, cmd);
 
-            if (cond_compiled(lcmd)) {
-                /* compiled IF or ELIF */
-                cmd->ci = ci;
-                s->cmd->vstart = NULL;
-                flow_control(s, dset, &lcmd->genr);
-                if (cmd->err) {
-                    /* we hit an error evaluating the if state */
-                    err = cmd->err;
-                } else {
-                    cmd->ci = CMD_MASKED;
-                }
-                parse = 0;
-            } else if (ends_condition(lcmd)) {
-                /* plain ELSE or ENDIF */
-                cmd->ci = ci;
-                flow_control(s, NULL, NULL);
-                if (cmd->err) {
-                    err = cmd->err;
-                } else {
-                    cmd->ci = CMD_MASKED;
-                }
-                parse = 0;
-            } else if (do_compile_conditional(lcmd)) {
-                GENERATOR *ifgen = NULL;
+	    if (ci == GENR) {
+		/* looking at a genr line that's not yet compiled */
+		if (may_be_compilable(lcmd)) {
+		    err = parse_command_line(s, dset, NULL);
+		    if (s->cmd->flags & CMD_SUBST) {
+			set_non_compilable(lcmd);
+		    }
+		}
+		if (!err && may_be_compilable(lcmd)) {
+		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
+		    if (lcmd->genr == NULL && !err) {
+                        /* fallback */
+			set_non_compilable(lcmd);
+                        err = generate(cmd->vstart, dset, cmd->gtype,
+                                       cmd->opt, prn);
+                    }
+		} else {
+		    /* string substitution or a "genr special" */
+                    if (!loop_is_verbose(loop)) {
+                        cmd->opt |= OPT_Q;
+                    }
+		    err = parse_command_line(s, dset, NULL);
+		    if (!err) {
+			err = generate(cmd->vstart, dset, cmd->gtype, cmd->opt, prn);
+		    }
+		}
+		if (err) {
+		    goto handle_err;
+		} else {
+		    continue;
+		}
+	    } else if (ci == IF || ci == ELIF) {
+		/* looking at a conditional that's not yet compiled */
+		if (may_be_compilable(lcmd)) {
+		    err = parse_command_line(s, dset, &lcmd->genr);
+		    if (s->cmd->flags & CMD_SUBST) {
+			set_non_compilable(lcmd);
+		    }
+		} else {
+		    err = parse_command_line(s, dset, NULL);
+		}
+		if (gretl_if_state_false() && lcmd->next > 0) {
+		    j = lcmd->next - 1;
+		}
+		continue;
+	    }
 
-                err = parse_command_line(s, dset, &ifgen);
-                if (ifgen != NULL) {
-                    lcmd->genr = ifgen;
-                    lcmd->flags |= LOOP_CMD_COND;
-                }
-                parse = 0;
-            } else if (prog_cmd_started(loop, j)) {
+	    if (prog_cmd_started(loop, j)) {
                 cmd->ci = ci;
                 if (loop_cmd_nosub(lcmd)) {
                     parse = 0;
@@ -3003,25 +2950,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 } else {
                     continue;
                 }
-            } else if (cmd->ci < 0) {
-                /* blocked/masked */
-                if (ci == IF || ci == ELIF) {
-                    cmd_info_to_loop(loop, j, cmd);
-                }
-                continue;
             } else {
                 gretl_exec_state_transcribe_flags(s, cmd);
                 cmd_info_to_loop(loop, j, cmd);
             }
 
-            if (echo) {
-                if (s->cmd->ci == ENDLOOP) {
-                    if (indexed_loop(loop)) {
-                        pputc(prn, '\n');
-                    }
-                } else if (loop_is_verbose(loop)) {
-                    gretl_echo_command(cmd, showline, prn);
-                }
+            if (echo && loop_is_verbose(loop)) {
+		gretl_echo_command(cmd, showline, prn);
             }
 
             /* now branch based on the command index: some commands
@@ -3036,9 +2971,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     loop_set_attached(currloop);
                 }
                 err = gretl_loop_exec(s, dset, NULL);
-            } else if (cmd->ci == BREAK) {
-                loop->brk = 1;
-                break;
             } else if (cmd->ci == FUNCRET) {
                 /* The following clause added 2016-11-20: just in case
                    the return value is, or references, an automatic
@@ -3048,29 +2980,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 err = set_function_should_return(line);
                 loop->brk = 1;
                 break;
-            } else if (cmd->ci == ENDLOOP) {
-                ; /* implicit break */
-            } else if (cmd->ci == GENR) {
-                if (line_has_dollar(lcmd) || (lcmd->flags & LOOP_CMD_NOEQ)) {
-                    /* We can't use a "compiled" genr if string substitution
-                       has been done, since the genr expression will not
-                       be constant; in addition we can't compile if the
-                       genr command is a non-equation special such as
-                       "genr time".
-                    */
-                    if (!loop_is_verbose(loop)) {
-                        cmd->opt |= OPT_Q;
-                    }
-                    err = generate(cmd->vstart, dset, cmd->gtype, cmd->opt, prn);
-                } else {
-                    err = try_add_loop_genr(loop, j, cmd, dset, prn);
-                    if (lcmd->genr == NULL && !err) {
-                        /* fallback */
-                        lcmd->flags |= LOOP_CMD_NOEQ;
-                        err = generate(cmd->vstart, dset, cmd->gtype,
-                                       cmd->opt, prn);
-                    }
-                }
             } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
                 err = loop_delete_object(loop, cmd, prn);
 #if HAVE_GMP
