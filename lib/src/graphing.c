@@ -3847,10 +3847,13 @@ static void make_time_tics (gnuplot_info *gi,
 	return;
     }
 
-    if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < 8) {
+    int few = 8;
+    if (dset->pd == 1 && (gi->t2 - gi->t1) < few) {
+	pputs(prn, "set xtics nomirror 1\n");
+    } else if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < few) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
-    } else if (dset->pd == 12 && (gi->t2 - gi->t1) / 12 < 8) {
+    } else if (dset->pd == 12 && (gi->t2 - gi->t1) / 12 < few) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 12\n");
     } else if (dated_daily_data(dset) || dated_weekly_data(dset)) {
