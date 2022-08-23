@@ -2849,42 +2849,7 @@
       </para>
     </description>
   </command>
-
-  <!--
-  <command name="debug" section="Programming" context="cli"
-	   label="Debugging">
-
-    <usage>
-      <arguments>
-        <argument>function</argument>
-      </arguments>
-    </usage>
-
-    <description>
-      <para>
-	Un debugger sperimentale per funzioni definite dall'utente,
-	disponibile con il client a linea di comando, gretlcli.  Il
-	comando <lit>debug</lit> dovrebbe essere utilizzato dopo aver
-	definito la funzione in questione ma prima di chiamarla. Il
-	suo effetto è quello di sospendere l'esecuzione quando la
-	funzione viene chiamata; la sospensione è segnalata dalla
-	presenza di un prompt speciale.
-      </para>
-      <para>
-	Una volta attivato il prompt di debug è possibile digitare
-	<lit>next</lit> per eseguire il comando successivo della
-	funzione, o <lit>continue</lit> per far proseguire
-	l'esecuzione della funzione senza ulteriori arresti.  Questi
-	comandi possono essere rispettivamente abbreviati con
-	<lit>n</lit> e <lit>c</lit>. Al prompt di debug è anche
-	possibile interpolare un'istruzione, per esempio un comando
-	<lit>print</lit> per esaminare il valore corrente di qualche
-	variabile di interesse.
-      </para>
-    </description>
-  </command>
-  -->
-
+  
   <command name="delete" section="Dataset" label="Elimina variabili" context="cli">
 
     <usage>
