@@ -614,9 +614,6 @@ static void maybe_destroy_fncall (fncall **pcall)
     fncall *call = *pcall;
 
     if (call != NULL && !(call->flags & FC_PRESERVE)) {
-        if (call->fun != NULL && call->fun->call == call) {
-            call->fun->call = NULL;
-        }
 	fncall_destroy(call);
         *pcall = NULL;
     }
