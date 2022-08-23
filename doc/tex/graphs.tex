@@ -539,7 +539,11 @@ end plot --output=display
 
 The power of the \cmd{printf} statement in a \cmd{plot} block becomes
 apparent when used jointly with user-defined functions, as exemplified
-in Script \ref{ex:StudentPlot}.
+in Script \ref{ex:StudentPlot}, in which we create a plot showing
+the density functions of Student's $t$ distribution for three
+different settings of the ``degrees of freedom'' parameter (note that
+plotting a $t$ density is very easy to do from the GUI: just go to the
+\emph{Tools $>$ Distribution graphs} menu).
 
 First we define a user function called \texttt{tplot}, which returns a
 string with the ingredients to pass to the gnuplot \texttt{plot}
