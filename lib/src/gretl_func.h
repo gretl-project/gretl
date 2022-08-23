@@ -123,8 +123,6 @@ int fn_param_uses_mylist (const ufunc *fun, int i);
 
 int user_func_get_return_type (const ufunc *fun);
 
-fncall *user_func_get_fncall (ufunc *fun);
-
 int user_func_is_noprint (const ufunc *fun);
 
 int user_func_is_menu_only (const ufunc *fun);

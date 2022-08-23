@@ -104,8 +104,7 @@ void gretl_exec_state_set_model (ExecState *s, MODEL *pmod);
 
 int process_command_error (ExecState *s, int err);
 
-int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart,
-                     void *ptr);
+int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart);
 
 int plausible_genr_start (const char *s, const DATASET *dset);
 

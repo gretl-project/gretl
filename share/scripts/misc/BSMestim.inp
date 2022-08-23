@@ -291,6 +291,7 @@ function list BSMestim (series y,
                         bool slope[1],
                         bool seas[1],
                         scalar sigmatol[0.0001])
+  set verbose off
   if (irreg!=1&&irreg!=0) || (level!=1&&level!=0) || (slope!=1&&slope!=0) || (seas!=1&&seas!=0)
     funcerr "irreg, level, slope and seas must be 0 or 1"
   endif
@@ -305,7 +306,7 @@ function list BSMestim (series y,
   scalar logLc=0
   matrix pstar = { null }
   matrix bT = { null }
-  set bfgs_toler 1.E-07
+  set bfgs_toler 1.E-02
   M = BFGSmax(theta, "BSM(&theta, y, &bT, &at, &pstar, &V, &F, &logLc, sigmatol, 1, fijos)")
   scalar sstart = int(min(t))
   scalar send = int(max(t))

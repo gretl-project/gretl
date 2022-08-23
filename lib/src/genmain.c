@@ -796,7 +796,6 @@ int generate (const char *line, DATASET *dset,
 {
     char vname[VNAMELEN] = {0};
     const char *subline = NULL;
-    GretlType out_t;
     int oldv, targtype = UNK;
     genflags flags = 0;
     parser p;
@@ -873,13 +872,12 @@ int generate (const char *line, DATASET *dset,
 	}
     }
 
-    genr_last_type = out_t = genr_get_output_type(&p);
-    if (out_t == GRETL_TYPE_SERIES) {
+    genr_last_type = genr_get_output_type(&p);
+    if (genr_last_type == GRETL_TYPE_SERIES) {
 	set_dataset_is_changed(dset, 1);
     }
-    if (!p.err && gtype == GRETL_TYPE_NUMERIC && !NUMERIC_TYPE(out_t)) {
-        p.err = E_TYPES;
-    } else if (p.err == 1) {
+
+    if (p.err == 1) {
 	/* a fairly good guess? */
 	p.err = E_PARSE;
     }
@@ -1138,6 +1136,7 @@ parser *genr_compile (const char *s, DATASET *dset,
     }
 
     p = malloc(sizeof *p);
+
     if (p == NULL) {
 	*err = E_ALLOC;
 	return NULL;

@@ -28,8 +28,6 @@ int gretl_if_state_record (void);
 
 int gretl_if_state_false (void);
 
-int gretl_if_state_true (void);
-
 int gretl_if_state_check (int indent0);
 
 void gretl_if_state_reset (int indent);

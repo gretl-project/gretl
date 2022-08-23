@@ -331,11 +331,6 @@ int gretl_if_state_false (void)
     return get_if_state(IS_FALSE);
 }
 
-int gretl_if_state_true (void)
-{
-    return get_if_state(IS_TRUE);
-}
-
 int gretl_if_state_check (int indent0)
 {
     int indent = ifstate(GETINDENT, 0, NULL);
@@ -350,7 +345,7 @@ int gretl_if_state_check (int indent0)
     return err;
 }
 
-/* flow_control: if the ci (command index) member of s->cmd
+/* flow_control: if the ci (command index) member of @cmd
    is something other than one of the flow control symbols
    IF, ELSE, ELIF or ENDIF, this function simply returns
    1 if execution if blocked by a false IF condition or 0
@@ -359,8 +354,9 @@ int gretl_if_state_check (int indent0)
    If we get one of the flow control symbols we operate
    on the program's "if state", pushing a term onto, or
    popping a term off, the existing stack. And in this case
-   we always return 1, which indicates to the caller that
-   execution of the current command is completed.
+   we always return 1, which indicates to the machinery in
+   interact.c that execution of the current command is
+   completed.
 
    We need the @dset argument in case we have to evaluate a
    new IF condition.

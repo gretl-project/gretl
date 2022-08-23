@@ -5529,7 +5529,6 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                     ret = string_range_node(l->v.str, r1, r2, p);
                 }
 	    }
-	    free(vlist);
         } else if (l->t == SERIES) {
             int t = mspec_get_series_index(r->v.mspec, p);
 
@@ -10181,8 +10180,6 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
-#define SAVE_FNCALL 1 /* 2022-08-12, not just yet */
-
 static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -10229,11 +10226,7 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
                             "user-defined functions"));
     }
 
-#if SAVE_FNCALL
-    fc = user_func_get_fncall(uf);
-#else
     fc = fncall_new(uf, 1);
-#endif
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
@@ -10366,10 +10359,8 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
         }
     }
 
-#if !SAVE_FNCALL
     /* avoid leaking memory */
     fncall_destroy(fc);
-#endif
 
 #if EDEBUG
     fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n",
@@ -10508,31 +10499,25 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
    dataset. Failing that, we'll get it as a vector.
 */
 
-static NODE *bundled_series_node (parser *p, const double *x,
-				  int n, int *is_tmp)
+static NODE *bundled_series_node (parser *p, const double *x, int n)
 {
     NODE *ret = NULL;
-    int t;
 
     if (n <= p->dset->n) {
+	int t;
+
 	ret = aux_series_node(p);
 	if (!p->err) {
 	    for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
 		ret->v.xvec[t] = x[t];
 	    }
-	    *is_tmp = 1;
 	}
     } else if (n > 0) {
 	ret = aux_matrix_node(p);
 	if (!p->err) {
-	    ret->v.m = gretl_matrix_alloc(n, 1);
+	    ret->v.m = gretl_vector_from_array(x, n, GRETL_MOD_NONE);
 	    if (ret->v.m == NULL) {
 		p->err = E_ALLOC;
-	    } else {
-		for (t=0; t<n; t++) {
-		    ret->v.m->val[t] = x[t];
-		}
-		*is_tmp = 1;
 	    }
 	}
     } else {
@@ -10596,7 +10581,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_ARRAY) {
 	ret->v.a = (gretl_array *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-	ret = bundled_series_node(p, (const double *) val, size, &is_tmp);
+	ret = bundled_series_node(p, (const double *) val, size);
     } else if (type == GRETL_TYPE_LIST) {
         if (stored_list_ok((const int *) val, p->dset)) {
 	    /* extract as list */
@@ -16333,7 +16318,7 @@ static void node_reattach_data (NODE *n, parser *p)
         GretlType type = 0;
         void *data = NULL;
 
-        if (n->uv == NULL || (n->t == LIST && gretl_iterating())) {
+        if (n->uv == NULL || (n->t == LIST && gretl_looping())) {
             n->uv = get_user_var_by_name(n->vname);
         }
 
@@ -19534,7 +19519,7 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 
 static int should_copy_into_array (NODE *n, parser *p)
 {
-    int donate = is_tmp_node(n);
+    int cpy = !is_tmp_node(n);
 
     /* In general if @n is a tmp node we can 'donate' its content
        to an array rather than copying it in, but there's a tricky
@@ -19544,12 +19529,12 @@ static int should_copy_into_array (NODE *n, parser *p)
        may be a simpler and more elegant way of identifying this
        case, but for now the following works (2022-08-10).
     */
-    if (donate && !is_aux_node(n) && n->t == STR &&
-	(p->flags & (P_COMPILE | P_EXEC))) {
-	donate = 0; /* we _should_ copy! */
+    if (!cpy && !is_aux_node(n) && n->t == STR &&
+	n->vname == NULL && (p->flags & (P_COMPILE | P_EXEC))) {
+	cpy = 1; /* we _should_ copy! */
     }
 
-    return !donate;
+    return cpy;
 }
 
 static void do_array_append (parser *p)
@@ -20900,7 +20885,7 @@ void gen_cleanup (parser *p)
 
 static void real_reset_uvars (parser *p)
 {
-    if (0 && p->err) {
+    if (p->err) {
 	return;
     }
 
@@ -20936,7 +20921,7 @@ static void maybe_set_return_flags (parser *p)
 static int decl_check (parser *p, int flags)
 {
     if (flags & P_COMPILE) {
-	p->err = E_EQN;
+	p->err = E_PARSE;
 	gretl_errmsg_sprintf("%s:\n> '%s'",
 			     _("Bare declarations are not allowed here"),
 			     p->input);

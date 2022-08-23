@@ -2376,15 +2376,6 @@ int gretl_iteration_depth (void)
     return iter_depth;
 }
 
-/* portmanteau: a "loop" is active or (internal)
-   iteration is in progress (e.g. in BFGS)
-*/
-
-int gretl_iterating (void)
-{
-    return gretl_looping() || iter_depth > 0;
-}
-
 static int batch_mode_switch (int set, int val)
 {
     static int bmode;

@@ -422,8 +422,6 @@ note that if you give a matrix to \cmd{plot} it's assumed you want to
 plot all the columns. In addition, if you give a single series and the
 dataset is time series, it's assumed you want a time-series plot.
 
-\subsubsection{Example: Plotting an histogram together with a density}
-
 \begin{script}[htbp]
   \scriptcaption{Plotting the log wage from the Mroz example dataset}
   \label{ex:Mroz-logwage}
@@ -512,52 +510,6 @@ The output from the script is shown in Figure \ref{fig:Mroz-logwage}.
   \caption{Output from listing \ref{ex:Mroz-logwage}}
   \label{fig:Mroz-logwage}
 \end{figure}
-
-\subsubsection{Example: Plotting Student's $t$ densities}
-
-\begin{script}[htbp]
-  \scriptcaption{Plotting $t$ densities for varying degrees of freedom}
-  \label{ex:StudentPlot}
-\begin{scode}
-set verbose off
-
-function string tplot(scalar m)
-    return sprintf("stud(x,%d) title \"t(%d)\"", m, m)
-end function
-
-matrix dfs = {2, 4, 16}
-
-plot
-    literal set xrange [-4.5:4.5]
-    literal set yrange [0:0.45]
-    literal Binv(p,q) = exp(lgamma(p+q)-lgamma(p)-lgamma(q))
-    literal stud(x,m) = Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))
-    printf "plot %s, %s, %s", tplot(dfs[1]), tplot(dfs[2]), tplot(dfs[3])
-end plot --output=display
-\end{scode}
-\end{script}
-
-The power of the \cmd{printf} statement in a \cmd{plot} block becomes
-apparent when used jointly with user-defined functions, as exemplified
-in Script \ref{ex:StudentPlot}.
-
-First we define a user function called \texttt{tplot}, which returns a
-string with the ingredients to pass to the gnuplot \texttt{plot}
-statement, as a function of a scalar parameter (the degrees of freedom
-in our case). Next, this function is used within the \cmd{plot} block
-to plot the appropriate density. Note that most of the 
-statements to mathematically define the function to plot are
-outsourced to gnuplot via the \cmd{literal} command.
-
-The output from the script is shown in Figure \ref{fig:StudentPlot}.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics{figures/StudentPlot}
-  \caption{Output from listing \ref{ex:StudentPlot}}
-  \label{fig:StudentPlot}
-\end{figure}
-
 
 \pagebreak[4]
 

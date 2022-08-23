@@ -1,8 +1,6 @@
 version 2022c, in progress
 - Fix bug: fail after first iteration when adding a string to
   an array of strings defined within a loop (noted by Luca)
-- Fix bug: corruption on extracting a "series" from a bundle
-  as a matrix when the series contains NAs
 
 2022-08-09 version 2022b
 - new command/keyword "continue" for use in loops
