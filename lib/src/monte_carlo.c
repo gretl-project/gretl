@@ -1789,6 +1789,132 @@ int model_is_in_loop (const MODEL *pmod)
 
 #define LS_DEBUG 1
 
+#if 1 /* more ambitious new try */
+
+static int loop_get_structure (LOOPSET *loop)
+{
+    loop_command *lc;
+    int *match_start = NULL;
+    int *match_end = NULL;
+    int d = 0, d_max = 0;
+    int last_endif = 0;
+    int target, src;
+#if LS_DEBUG
+    int step, max_step = 0;
+#endif
+    int i, j, ci;
+    int err = 0;
+
+    /* first pass: determine the maximum depth of conditionality */
+    for (i=0; i<loop->n_cmds && !err; i++) {
+	ci = loop->cmds[i].ci;
+	if (ci == IF) {
+            if (++d > d_max) {
+                d_max = d;
+            }
+	} else if (ci == ENDIF) {
+            d--;
+	}
+    }
+
+#if LS_DEBUG
+    fprintf(stderr, "loop_get_structure: max if-depth %d\n", d_max);
+#endif
+
+    match_start = gretl_list_new(d_max);
+    match_end = gretl_list_new(d_max);
+
+    /* second pass: analysis */
+    for (i=0; i<loop->n_cmds && !err; i++) {
+        lc = &loop->cmds[i];
+	if (lc->ci == IF) {
+	    d++;
+	    match_start[d] = i;
+	} else if (lc->ci == ELIF) {
+	    if (d == 0) {
+		err = 1;
+	    } else {
+                loop->cmds[i-1].next = -d;
+		j = match_start[d];
+		loop->cmds[j].next = i;
+		match_start[d] = i;
+	    }
+	} else if (lc->ci == ELSE) {
+	    if (d == 0) {
+		err = 1;
+	    } else {
+                loop->cmds[i-1].next = -d;
+		j = match_start[d];
+		loop->cmds[j].next = i;
+		match_start[d] = i;
+	    }
+	} else if (lc->ci == ENDIF) {
+            last_endif = i;
+	    if (d == 0) {
+		err = 1;
+	    } else {
+                lc->next = -d;
+		j = match_start[d];
+		loop->cmds[j].next = i;
+                d--;
+	    }
+        }
+    }
+
+    /* third pass: fill in goto's for true-block terminators */
+    d = target = src = 0;
+    for (i=last_endif; i>0; i--) {
+        lc = &loop->cmds[i];
+        if (lc->ci == ENDIF) {
+            d++;
+            target = match_start[d] = lc->next;
+            src = match_end[d] = i;
+            fprintf(stderr, "L%d: ENDIF, d=%d, (target,src) now (%d,%d)\n",
+                    i, d, target, src);
+        } else if (lc->ci == IF) {
+            d--;
+            target = (d == 0)? 0 : match_start[d];
+            src = (d == 0)? 0 : match_end[d];
+            fprintf(stderr, "L%d: IF, d=%d, (target,src) now (%d,%d)\n",
+                    i, d, target, src);
+        } else if (target < 0 && lc->next == target) {
+            fprintf(stderr, "  L%d: target %d matched: next -> %d\n",
+                    i, target, src);
+            lc->next = src;
+        }
+    }
+
+    free(match_start);
+    free(match_end);
+
+#if LS_DEBUG
+    /* display what we figured out */
+    fputc('\n', stderr);
+    for (i=0; i<loop->n_cmds && !err; i++) {
+	lc = &loop->cmds[i];
+        j = lc->next;
+	if (j > 0 && j < loop->n_cmds) {
+            if (lc->ci == IF || lc->ci == ELIF || lc->ci == ELSE) {
+                fprintf(stderr, "L%d ('%s'): on false goto %d ('%s')\n",
+                        i, lc->line, j, loop->cmds[j].line);
+            } else {
+                fprintf(stderr, "L%d ('%s'): goto %d ('%s')\n",
+                        i, lc->line, j, loop->cmds[j].line);
+            }
+            step = j - i;
+            if (step > max_step) {
+                max_step = step;
+            }
+	}
+    }
+    fprintf(stderr, "max if-step = %d\n\n", max_step);
+#endif
+
+    return err;
+}
+
+#else
+
 static int loop_get_structure (LOOPSET *loop)
 {
     loop_command *lc;
@@ -1877,6 +2003,8 @@ static int loop_get_structure (LOOPSET *loop)
 
     return err;
 }
+
+#endif
 
 static int add_more_loop_commands (LOOPSET *loop)
 {
