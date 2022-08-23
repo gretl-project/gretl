@@ -5230,7 +5230,10 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
         }
     }
 
-    fprintf(stderr, "determinant = %16.10f\n", det);
+#if 0
+    fprintf(stderr, "toeplitz determinant = %16.10f\n", det);
+#endif
+
     return y;
 }
 
