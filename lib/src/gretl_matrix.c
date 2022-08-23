@@ -5072,7 +5072,8 @@ int gretl_cholesky_invert (gretl_matrix *a)
 #define TOEPLITZ_SMALL 1.0e-20
 
 static int tsld1 (const double *a1, const double *a2,
-                  const double *b, double *x, int m)
+                  const double *b, double *x, double *dt,
+		  int m)
 {
     double r1, r2, r3, r5, r6;
     int n, i, n1;
@@ -5086,6 +5087,7 @@ static int tsld1 (const double *a1, const double *a2,
     /* solve the system with principal minor of order 1 */
 
     r1 = a1[0];
+    *dt = r1;
 
     x[0] = b[0] / r1;
     if (m == 1) {
@@ -5129,8 +5131,11 @@ static int tsld1 (const double *a1, const double *a2,
         if (fabs(r1) < TOEPLITZ_SMALL) {
             free(c1);
             free(c2);
+	    *dt = NADBL;
             return E_SINGULAR;
-        }
+        } else {
+	    *dt *= r1;
+	}
 
         if (n > 1) {
             r6 = c2[0];
@@ -5150,7 +5155,8 @@ static int tsld1 (const double *a1, const double *a2,
         for (i=0; i<n; i++) {
             r5 += a2[i] * x[n1-i];
         }
-        r6 = (b[n] - r5) / r1;
+
+	r6 = (b[n] - r5) / r1;
         for (i=0; i<n; i++) {
             x[i] += c2[i] * r6;
         }
@@ -5188,6 +5194,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 {
     int m = gretl_vector_get_length(c);
     gretl_matrix *y = NULL;
+    double det = NADBL;
 
     if (gretl_is_complex(c) || gretl_is_complex(r) ||
         gretl_is_complex(b)) {
@@ -5216,13 +5223,14 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
         *err = E_ALLOC;
     } else {
         /* invoke gretlized netlib routine */
-        *err = tsld1(r->val, c->val + 1, b->val, y->val, m);
+        *err = tsld1(r->val, c->val + 1, b->val, y->val, &det, m);
         if (*err) {
             gretl_matrix_free(y);
             y = NULL;
         }
     }
 
+    fprintf(stderr, "determinant = %16.10f\n", det);
     return y;
 }
 
