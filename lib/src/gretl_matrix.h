@@ -579,6 +579,7 @@ int gretl_cholesky_invert (gretl_matrix *a);
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 				    const gretl_vector *r,
 				    const gretl_vector *b,
+				    double *det,
 				    int *err);
 
 gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X);

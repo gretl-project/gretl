@@ -5067,6 +5067,9 @@ int gretl_cholesky_invert (gretl_matrix *a)
    on exit:
 
       x     double precision(m), the solution vector
+
+      dt    pointer to double, determinant
+
 */
 
 #define TOEPLITZ_SMALL 1.0e-20
@@ -5087,7 +5090,9 @@ static int tsld1 (const double *a1, const double *a2,
     /* solve the system with principal minor of order 1 */
 
     r1 = a1[0];
-    *dt = r1;
+    if (dt != NULL) {
+	*dt = r1;
+    }
 
     x[0] = b[0] / r1;
     if (m == 1) {
@@ -5131,10 +5136,14 @@ static int tsld1 (const double *a1, const double *a2,
         if (fabs(r1) < TOEPLITZ_SMALL) {
             free(c1);
             free(c2);
-	    *dt = NADBL;
+	    if (dt != NULL) {
+		*dt = NADBL;
+	    }
             return E_SINGULAR;
         } else {
-	    *dt *= r1;
+	    if (dt != NULL) {
+		*dt *= r1;
+	    }
 	}
 
         if (n > 1) {
@@ -5174,6 +5183,7 @@ static int tsld1 (const double *a1, const double *a2,
  * @c: Toeplitz column.
  * @r: Toeplitz row.
  * @b: right-hand side vector.
+ * @det: determinant (on exit)
  * @err: error code.
  *
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
@@ -5190,11 +5200,15 @@ static int tsld1 (const double *a1, const double *a2,
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
                                     const gretl_vector *r,
                                     const gretl_vector *b,
+				    double *det,
                                     int *err)
 {
     int m = gretl_vector_get_length(c);
     gretl_matrix *y = NULL;
-    double det = NADBL;
+
+    if (det != NULL) {
+	*det = NADBL;
+    }
 
     if (gretl_is_complex(c) || gretl_is_complex(r) ||
         gretl_is_complex(b)) {
@@ -5223,14 +5237,13 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
         *err = E_ALLOC;
     } else {
         /* invoke gretlized netlib routine */
-        *err = tsld1(r->val, c->val + 1, b->val, y->val, &det, m);
+        *err = tsld1(r->val, c->val + 1, b->val, y->val, det, m);
         if (*err) {
             gretl_matrix_free(y);
             y = NULL;
         }
     }
 
-    fprintf(stderr, "determinant = %16.10f\n", det);
     return y;
 }
 

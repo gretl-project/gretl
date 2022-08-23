@@ -12232,17 +12232,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = user_matrix_QR_decomp(X, R, P, &p->err);
 	    }
 	}
-    } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
+    } else if (f == F_VARSIMUL) {
         gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
         gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
         gretl_matrix *m3 = node_get_real_matrix(r, p, 2, 3);
 
         if (!p->err) {
-            if (f == F_TOEPSOLV) {
-                A = gretl_toeplitz_solve(m1, m2, m3, &p->err);
-            } else {
-                A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
-            }
+	    A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
         }
     } else if (f == F_EIGEN) {
         gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
@@ -13674,8 +13670,10 @@ static int check_argc (int f, int k, parser *p)
 	{ F_CHOWLIN,   2, 3 },
 	{ F_MIDASMULT, 1, 3 },
 	{ F_TDISAGG,   3, 5 },
-	{ F_COMMUTE,   2, 5 }
+	{ F_COMMUTE,   2, 5 },
+	{ F_TOEPSOLV,  3, 4 }
     };
+
     int argc_min = 2;
     int argc_max = 4;
     int i;
@@ -14437,6 +14435,33 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
         if (!p->err) {
 	    ret->v.m = gretl_matrix_commute(A, rowdim, coldim, !post, add_id, &p->err);
+        }
+    } else if (t->t == F_TOEPSOLV) {
+        gretl_matrix *m1 = node_get_real_matrix(n->v.bn.n[0], p, 0, 1);
+        gretl_matrix *m2 = node_get_real_matrix(n->v.bn.n[1], p, 1, 2);
+        gretl_matrix *m3 = node_get_real_matrix(n->v.bn.n[2], p, 2, 3);
+
+	user_var *uv = NULL;
+	int det_wanted = k==4;
+
+	if (det_wanted) {
+	    e = n->v.bn.n[3];
+	    if (!null_node(e)) {
+		uv = ptr_node_get_uvar(e, NUM, p);
+	    }
+	}
+
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+        }
+
+        if (!p->err) {
+	    double d;
+	    double *pdet = det_wanted ? &d : NULL;
+	    ret->v.m = gretl_toeplitz_solve(m1, m2, m3, pdet, &p->err);
+	    if (!p->err && det_wanted) {
+		user_var_set_scalar_value(uv, d);
+	    }
         }
     }
 
@@ -17704,7 +17729,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_EIGGEN:
     case F_SCHUR:
     case F_TRIMR:
-    case F_TOEPSOLV:
     case F_CORRGM:
     case F_SEQ:
     case F_REPLACE:
@@ -17803,6 +17827,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_TDISAGG:
     case F_MIDASMULT:
     case F_COMMUTE:
+    case F_TOEPSOLV:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");

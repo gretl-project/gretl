@@ -416,7 +416,6 @@ enum {
     F_SVD,
     F_QR,
     F_TRIMR,
-    F_TOEPSOLV,
     F_CORRGM,
     F_SEQ,
     F_REPLACE,
@@ -513,6 +512,7 @@ enum {
     F_HYP2F1,
     F_MIDASMULT,
     F_COMMUTE,
+    F_TOEPSOLV,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
