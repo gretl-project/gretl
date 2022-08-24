@@ -14432,26 +14432,19 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         gretl_matrix *m1 = node_get_real_matrix(n->v.bn.n[0], p, 0, 1);
         gretl_matrix *m2 = node_get_real_matrix(n->v.bn.n[1], p, 1, 2);
         gretl_matrix *m3 = node_get_real_matrix(n->v.bn.n[2], p, 2, 3);
-
 	user_var *uv = NULL;
-	int det_wanted = k==4;
 
-	if (det_wanted) {
-	    e = n->v.bn.n[3];
-	    if (!null_node(e)) {
-		uv = ptr_node_get_uvar(e, NUM, p);
-	    }
+	if (k == 4) {
+	    uv = ptr_node_get_uvar(n->v.bn.n[3], NUM, p);
 	}
-
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
-
         if (!p->err) {
-	    double d;
-	    double *pdet = det_wanted ? &d : NULL;
+	    double d, *pdet = (uv != NULL)? &d : NULL;
+
 	    ret->v.m = gretl_toeplitz_solve(m1, m2, m3, pdet, &p->err);
-	    if (!p->err && det_wanted) {
+	    if (!p->err && uv != NULL) {
 		user_var_set_scalar_value(uv, d);
 	    }
         }
