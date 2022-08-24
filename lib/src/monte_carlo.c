@@ -214,7 +214,6 @@ struct LOOPSET_ {
 #define loop_set_attached(l)    (l->flags |= LOOP_ATTACHED)
 #define loop_is_renaming(l)     (l->flags & LOOP_RENAMING)
 #define loop_set_renaming(l)    (l->flags |= LOOP_RENAMING)
-#define loop_err_caught(l)      (l->flags |= LOOP_ERR_CAUGHT)
 #define loop_has_cond(l)        (l->flags & LOOP_CONDITIONAL)
 #define loop_set_has_cond(l)    (l->flags |= LOOP_CONDITIONAL)
 #define loop_decrement(l)       (l->flags & LOOP_DECREMENT)
@@ -3515,7 +3514,8 @@ static int model_command_post_process (ExecState *s,
 
 static int maybe_preserve_loop (LOOPSET *loop)
 {
-    if (loop_err_caught(loop)) {
+    if (loop->flags & LOOP_ERR_CAUGHT) {
+        /* don't preserve a "broken" loop? */
 	return 0;
     }
 
@@ -3549,6 +3549,10 @@ static int maybe_preserve_loop (LOOPSET *loop)
 
 void loop_reset_uvars (LOOPSET *loop)
 {
+    controller *clrs[4] = {
+        &loop->init, &loop->test,
+        &loop->delta, &loop->final
+    };
     int i;
 
     for (i=0; i<loop->n_children; i++) {
@@ -3565,17 +3569,15 @@ void loop_reset_uvars (LOOPSET *loop)
     }
 
     /* stored refs in controllers? */
-    if (loop->test.genr != NULL) {
-	genr_reset_uvars(loop->test.genr);
-    }
-    if (loop->delta.genr != NULL) {
-	genr_reset_uvars(loop->delta.genr);
+    for (i=0; i<4; i++) {
+        if (clrs[i]->genr != NULL) {
+            genr_reset_uvars(clrs[i]->genr);
+        }
+        clrs[i]->uv = NULL;
     }
 
-    /* other (possibly) stored references */
+    /* another (possibly) stored reference */
     loop->idxvar = NULL;
-    loop->init.uv = NULL;
-    loop->final.uv = NULL;
 }
 
 static void abort_loop_execution (ExecState *s)
