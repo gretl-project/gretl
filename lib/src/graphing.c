@@ -3825,6 +3825,8 @@ static void make_time_tics (gnuplot_info *gi,
 			    int many, char *xlabel,
 			    PRN *prn)
 {
+    int few = 8;
+
     if (many) {
 	pprintf(prn, "# multiple timeseries %d\n", dset->pd);
     } else {
@@ -3847,7 +3849,6 @@ static void make_time_tics (gnuplot_info *gi,
 	return;
     }
 
-    int few = 8;
     if (dset->pd == 1 && (gi->t2 - gi->t1) < few) {
 	pputs(prn, "set xtics nomirror 1\n");
     } else if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < few) {
