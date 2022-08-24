@@ -1787,9 +1787,7 @@ int model_is_in_loop (const MODEL *pmod)
     return 0;
 }
 
-#define LS_DEBUG 1
-
-#if 1 /* more ambitious new try */
+#define LS_DEBUG 0
 
 static int loop_get_structure (LOOPSET *loop)
 {
@@ -1798,6 +1796,7 @@ static int loop_get_structure (LOOPSET *loop)
     int *match_end = NULL;
     int d = 0, d_max = 0;
     int last_endif = 0;
+    int first_if = -1;
     int target, src;
 #if LS_DEBUG
     int step, max_step = 0;
@@ -1809,6 +1808,9 @@ static int loop_get_structure (LOOPSET *loop)
     for (i=0; i<loop->n_cmds && !err; i++) {
 	ci = loop->cmds[i].ci;
 	if (ci == IF) {
+            if (first_if < 0) {
+                first_if = i;
+            }
             if (++d > d_max) {
                 d_max = d;
             }
@@ -1825,7 +1827,7 @@ static int loop_get_structure (LOOPSET *loop)
     match_end = gretl_list_new(d_max);
 
     /* second pass: analysis */
-    for (i=0; i<loop->n_cmds && !err; i++) {
+    for (i=first_if; i<loop->n_cmds && !err; i++) {
         lc = &loop->cmds[i];
 	if (lc->ci == IF) {
 	    d++;
@@ -1863,23 +1865,17 @@ static int loop_get_structure (LOOPSET *loop)
 
     /* third pass: fill in goto's for true-block terminators */
     d = target = src = 0;
-    for (i=last_endif; i>0; i--) {
+    for (i=last_endif; i>=first_if; i--) {
         lc = &loop->cmds[i];
         if (lc->ci == ENDIF) {
             d++;
             target = match_start[d] = lc->next;
             src = match_end[d] = i;
-            fprintf(stderr, "L%d: ENDIF, d=%d, (target,src) now (%d,%d)\n",
-                    i, d, target, src);
         } else if (lc->ci == IF) {
             d--;
             target = (d == 0)? 0 : match_start[d];
             src = (d == 0)? 0 : match_end[d];
-            fprintf(stderr, "L%d: IF, d=%d, (target,src) now (%d,%d)\n",
-                    i, d, target, src);
         } else if (target < 0 && lc->next == target) {
-            fprintf(stderr, "  L%d: target %d matched: next -> %d\n",
-                    i, target, src);
             lc->next = src;
         }
     }
@@ -1912,99 +1908,6 @@ static int loop_get_structure (LOOPSET *loop)
 
     return err;
 }
-
-#else
-
-static int loop_get_structure (LOOPSET *loop)
-{
-    loop_command *lc;
-    int *match_start = NULL;
-    int d = 0, d_max = 0;
-#if LS_DEBUG
-    int step, max_step = 0;
-#endif
-    int i, j, ci;
-    int err = 0;
-
-    /* first pass: determine the maximum depth of conditionality */
-    for (i=0; i<loop->n_cmds && !err; i++) {
-	ci = loop->cmds[i].ci;
-	if (ci == IF) {
-            if (++d > d_max) {
-                d_max = d;
-            }
-	} else if (ci == ENDIF) {
-            d--;
-	}
-    }
-
-#if LS_DEBUG
-    fprintf(stderr, "loop_get_structure: max if-depth %d\n", d_max);
-#endif
-
-    if (d_max == 0) {
-        /* OK, nothing to record */
-	return 0;
-    }
-
-    match_start = gretl_list_new(d_max);
-
-    /* second pass: analysis */
-    for (i=0; i<loop->n_cmds && !err; i++) {
-        lc = &loop->cmds[i];
-	if (lc->ci == IF) {
-	    d++;
-	    match_start[d] = i;
-	} else if (lc->ci == ELIF) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-		j = match_start[d];
-		loop->cmds[j].next = i;
-		match_start[d] = i;
-	    }
-	} else if (lc->ci == ELSE) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-		j = match_start[d];
-		loop->cmds[j].next = i;
-		match_start[d] = i;
-	    }
-	} else if (lc->ci == ENDIF) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-		j = match_start[d];
-		loop->cmds[j].next = i;
-                d--;
-	    }
-        }
-    }
-
-    free(match_start);
-
-#if LS_DEBUG
-    /* display what we figured out */
-    for (i=0; i<loop->n_cmds && !err; i++) {
-	lc = &loop->cmds[i];
-        j = lc->next;
-	if (j > 0 && j < loop->n_cmds) {
-	    fprintf(stderr, "line %d ('%s'): on false goto %d ('%s')\n",
-		    i, lc->line, j, loop->cmds[j].line);
-            step = j - i;
-            if (step > max_step) {
-                max_step = step;
-            }
-	}
-    }
-    fprintf(stderr, "max if-step = %d\n\n", max_step);
-#endif
-
-    return err;
-}
-
-#endif
 
 static int add_more_loop_commands (LOOPSET *loop)
 {
@@ -2921,7 +2824,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
         }
 
         for (j=0; j<loop->n_cmds && !err; j++) {
-            /* exec commands on this iteration */
+            /* execute commands on this iteration */
             loop_command *lcmd = &loop->cmds[j];
             int compiled = line_is_compiled(lcmd);
             int ci = lcmd->ci;
@@ -2955,6 +2858,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     pprintf(prn, "? %s\n", showline);
                 }
                 err = execute_genr(lcmd->genr, dset, prn);
+                if (lcmd->next > 0) {
+                    j = lcmd->next - 1;
+                }
 	    } else if ((ci == IF || ci == ELIF) && compiled) {
                 cmd->ci = ci;
                 s->cmd->vstart = NULL;
@@ -3034,6 +2940,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 		if (err) {
 		    goto handle_err;
 		} else {
+                    if (lcmd->next > 0) {
+                        j = lcmd->next - 1;
+                    }                    
 		    continue;
 		}
 	    } else if (ci == IF || ci == ELIF) {
@@ -3134,6 +3043,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 } else if (!err && !check_gretl_errno() && block_model(cmd)) {
                     /* NLS, etc. */
                     loop_print_save_model(s->model, dset, prn, s);
+                }
+                if (lcmd->next > 0) {
+                    j = lcmd->next - 1;
                 }
             }
             if (err && (cmd->flags & CMD_CATCH)) {
