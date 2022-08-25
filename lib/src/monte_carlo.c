@@ -2801,12 +2801,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     }
 		} else {
 		    /* string substitution or a "genr special" */
-                    if (!loop_is_verbose(loop)) {
-                        cmd->opt |= OPT_Q;
-                    }
-		    err = parse_command_line(s, dset, NULL);
+ 		    err = parse_command_line(s, dset, NULL);
 		    if (!err) {
-			err = generate(cmd->vstart, dset, cmd->gtype, cmd->opt, prn);
+			if (!loop_is_verbose(loop)) {
+			    cmd->opt |= OPT_Q;
+			}			
+			err = generate(cmd->vstart, dset, cmd->gtype,
+				       cmd->opt, prn);
 		    }
 		}
 		if (err) {
