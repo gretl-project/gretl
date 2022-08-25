@@ -26,6 +26,72 @@
 #include "monte_carlo.h"
 #include "cmd_private.h"
 
+#define PMDEBUG 0
+
+void gretl_exec_state_init (ExecState *s,
+                            ExecFlags flags,
+                            char *line,
+                            CMD *cmd,
+                            MODEL *model,
+                            PRN *prn)
+{
+    s->flags = flags;
+
+    s->line = line;
+    if (s->line != NULL) {
+        *s->line = '\0';
+    }
+    s->more = NULL;
+
+    s->cmd = cmd;
+    if (s->cmd != NULL) {
+        s->cmd->ci = 0;
+    }
+
+    *s->runfile = '\0';
+
+    s->model = model;
+    s->prn = prn;
+
+    s->pmod = NULL;
+    s->sys = NULL;
+    s->rset = NULL;
+    s->var = NULL;
+    s->in_comment = 0;
+    s->padded = 0;
+
+    if (flags == FUNCTION_EXEC) {
+        /* On entry to function execution we check if there's
+           a 'last model' in place. If so, we want to make
+           this invisible within the function, but set things
+           up so that we can restore it as last model on
+           exit from the function -- the idea being that
+           executing a function should not change the 'last
+           model' state at caller level. To achieve this we
+           need to take out a 'private' reference to the
+           model, stored in the ExecState, and then remove
+           it from last model position for the present.
+        */
+        s->prev_model = get_last_model(&s->prev_type);
+        if (s->prev_model != NULL) {
+#if PMDEBUG
+            fprintf(stderr, "ExecState %p: set prev_model %p\n",
+                    (void *) s, s->prev_model);
+#endif
+            gretl_object_ref(s->prev_model, s->prev_type);
+            set_as_last_model(NULL, GRETL_OBJ_NULL);
+        }
+        s->prev_model_count = get_model_count();
+    } else {
+        s->prev_model = NULL;
+        s->prev_type = GRETL_OBJ_NULL;
+        s->prev_model_count = -1;
+    }
+
+    s->submask = NULL;
+    s->callback = NULL;
+}
+
 static int try_compile_func_genr (ExecState *s,
                                   DATASET *dset,
                                   void *ptr,
@@ -120,7 +186,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
     return err;
 }
 
-#define FS_DEBUG 1
+#define STRUCTURE_DEBUG 1
 
 /* Takes an array of "stmt" structs (statements or lines) from a
    function or loop and examines them for structure, in terms of
@@ -186,7 +252,7 @@ int statements_get_structure (stmt *lines,
 
     /* add error check for d != 0, ld != 0 */
 
-#if FS_DEBUG
+#if STRUCTURE_DEBUG
     fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
             name, d_max, ld_max);
 #endif
@@ -273,7 +339,7 @@ int statements_get_structure (stmt *lines,
     free(match_end);
     free(next_from_loop);
 
-#if FS_DEBUG
+#if STRUCTURE_DEBUG
     /* display what we figured out */
     fputc('\n', stderr);
     for (i=0; i<n_lines; i++) {
