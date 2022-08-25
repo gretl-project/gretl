@@ -19,11 +19,13 @@
 
 /* prog_loop.c - code to support "progressive" loops */
 
+#define PROG_DEBUG 0
+
 static void loop_model_free (LOOP_MODEL *lmod)
 {
     int i, n;
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
     fprintf(stderr, "loop_model_free: lmod at %p, model0 at %p\n",
             (void *) lmod, (void *) lmod->model0);
 #endif
@@ -47,7 +49,7 @@ static void loop_model_zero (LOOP_MODEL *lmod, int started)
 {
     int i, bnc = 4 * lmod->nc;
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
     fprintf(stderr, "loop_model_zero: %p\n", (void *) lmod);
 #endif
 
@@ -87,7 +89,7 @@ static int loop_model_start (LOOP_MODEL *lmod, MODEL *pmod)
     int nc = pmod->ncoeff;
     int err = 0;
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
     fprintf(stderr, "init: copying model at %p\n", (void *) pmod);
 #endif
 
@@ -126,7 +128,7 @@ static int loop_model_start (LOOP_MODEL *lmod, MODEL *pmod)
 
     if (!err) {
         loop_model_zero(lmod, 0);
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
         fprintf(stderr, " model copied to %p, returning 0\n",
                 (void *) lmod->model0);
 #endif
@@ -361,7 +363,7 @@ static int loop_store_start (LOOPSET *loop, const char *names,
         return E_ALLOC;
     }
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG > 1
     fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
             lstore->dset->v, lstore->dset->n);
 #endif
@@ -436,7 +438,7 @@ get_loop_model_by_line (LOOPSET *loop, int lno, int *err)
     int n = loop->n_loop_models;
     int i;
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
     fprintf(stderr, "get_loop_model_by_line: loop->n_loop_models = %d\n",
             loop->n_loop_models);
 #endif
@@ -471,7 +473,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
     mpf_t m;
     int j, err = 0;
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
     fprintf(stderr, "loop_model_update: lmod = %p, pmod = %p\n",
             (void *) lmod, (void *) pmod);
 #endif
@@ -518,7 +520,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 
     lmod->n += 1;
 
-#if LOOP_DEBUG > 1
+#if PROG_DEBUG
     fprintf(stderr, "loop_model_update: returning %d\n", err);
 #endif
 
@@ -645,6 +647,11 @@ static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
 {
     char startdate[OBSLEN], enddate[OBSLEN];
     int i;
+
+    if (lmod == NULL || lmod->model0 == NULL) {
+	fprintf(stderr, "loop_model_print, aborting\n");
+	return;
+    }
 
     ntolabel(startdate, lmod->model0->t1, dset);
     ntolabel(enddate, lmod->model0->t2, dset);
@@ -844,13 +851,17 @@ static int model_command_post_process (ExecState *s,
         } else {
             errmsg(moderr, s->prn);
         }
-    } else if (prog && !(opt & OPT_Q)) {
-        LOOP_MODEL *lmod = get_loop_model_by_line(loop, j, &err);
+    } else if (prog) {
+	if (opt & OPT_Q) {
+	    loop->lines[j].flags |= LOOP_LINE_QUIET;
+	} else {
+	    LOOP_MODEL *lmod = get_loop_model_by_line(loop, j, &err);
 
-        if (!err) {
-            err = loop_model_update(lmod, s->model);
-            set_as_last_model(s->model, GRETL_OBJ_EQN);
-        }
+	    if (!err) {
+		err = loop_model_update(lmod, s->model);
+	    }
+	}
+	set_as_last_model(s->model, GRETL_OBJ_EQN);
     } else if (model_print_deferred(s->cmd->opt)) {
         MODEL *pmod = get_model_record_by_line(loop, j, opt, &err);
 
@@ -878,8 +889,7 @@ static void progressive_loop_finalize (LOOPSET *loop,
     for (i=0; i<loop->n_lines; i++) {
 	loop_line *ll = &loop->lines[i];
 
-        /* FIXME OPT_Q ? */
-        if (plain_model_ci(ll->ci) /* && !(ll->opt & OPT_Q) */) {
+        if (plain_model_ci(ll->ci) && !loop_line_quiet(ll)) {
             loop_model_print(&loop->lmodels[j], dset, prn);
             loop_model_zero(&loop->lmodels[j], 1);
             j++;

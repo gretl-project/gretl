@@ -86,12 +86,13 @@ struct controller_ {
 typedef struct controller_ controller;
 
 typedef enum {
-    LOOP_LINE_LIT     = 1 << 1, /* literal printing */
-    LOOP_LINE_DOLLAR  = 1 << 2, /* line contains '$' */
-    LOOP_LINE_AT      = 1 << 3, /* line contains '@' */
-    LOOP_LINE_CATCH   = 1 << 4, /* "catch" flag present */
-    LOOP_LINE_PDONE   = 1 << 5, /* progressive loop command started */
-    LOOP_LINE_NOCOMP  = 1 << 6  /* not compilable */
+    LOOP_LINE_LIT     = 1 << 0, /* literal printing */
+    LOOP_LINE_DOLLAR  = 1 << 1, /* line contains '$' */
+    LOOP_LINE_AT      = 1 << 2, /* line contains '@' */
+    LOOP_LINE_CATCH   = 1 << 3, /* "catch" flag present */
+    LOOP_LINE_PDONE   = 1 << 4, /* progressive loop command started */
+    LOOP_LINE_NOCOMP  = 1 << 5, /* not compilable */
+    LOOP_LINE_QUIET   = 1 << 6, /* non-printing model in progressive loop */
 } LoopLineFlags;
 
 /* local convenience typedef */
@@ -170,6 +171,17 @@ struct LOOPSET_ {
 #define loop_set_has_cond(l)    (l->flags |= LOOP_CONDITIONAL)
 #define loop_decrement(l)       (l->flags & LOOP_DECREMENT)
 #define loop_set_decrement(l)   (l->flags |= LOOP_DECREMENT)
+
+#define loop_line_catch(ll)  (ll->flags & LOOP_LINE_CATCH)
+#define loop_line_nosub(ll)  (!(ll->flags & (LOOP_LINE_AT | LOOP_LINE_DOLLAR)))
+#define loop_line_quiet(ll)  (ll->flags & LOOP_LINE_QUIET)
+
+#define line_is_compiled(ll) (ll->ptr != NULL || ll->ci == ELSE || ll->ci == ENDIF)
+#define line_has_dollar(ll)  (ll->flags & LOOP_LINE_DOLLAR)
+#define line_has_at_sign(ll) (ll->flags & LOOP_LINE_AT)
+
+#define may_be_compilable(ll)  (!(ll->flags & LOOP_LINE_NOCOMP))
+#define set_non_compilable(ll) (ll->flags |= LOOP_LINE_NOCOMP)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -2296,16 +2308,6 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 
     return err;
 }
-
-#define loop_line_catch(ll)  (ll->flags & LOOP_LINE_CATCH)
-#define loop_line_nosub(ll)  (!(ll->flags & (LOOP_LINE_AT | LOOP_LINE_DOLLAR)))
-
-#define line_is_compiled(ll) (ll->ptr != NULL || ll->ci == ELSE || ll->ci == ENDIF)
-#define line_has_dollar(ll)  (ll->flags & LOOP_LINE_DOLLAR)
-#define line_has_at_sign(ll) (ll->flags & LOOP_LINE_AT)
-
-#define may_be_compilable(ll)  (!(ll->flags & LOOP_LINE_NOCOMP))
-#define set_non_compilable(ll) (ll->flags |= LOOP_LINE_NOCOMP)
 
 static int loop_process_error (LOOPSET *loop, loop_line *ll,
                                int err, PRN *prn)
