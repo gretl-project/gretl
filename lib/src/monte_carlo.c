@@ -1687,6 +1687,7 @@ static void loop_lines_init (LOOPSET *loop, int i1, int i2)
         loop->lines[i].s = NULL;
         loop->lines[i].ci = 0;
         loop->lines[i].next = 0;
+	loop->lines[i].idx = 0;
         loop->lines[i].ptr = NULL;
         loop->lines[i].flags = 0;
     }
