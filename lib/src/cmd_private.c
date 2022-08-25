@@ -186,7 +186,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
     return err;
 }
 
-#define STRUCTURE_DEBUG 1
+#define STRUCTURE_DEBUG 0
 
 /* Takes an array of "stmt" structs (statements or lines) from a
    function or loop and examines them for structure, in terms of
