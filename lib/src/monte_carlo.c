@@ -86,24 +86,33 @@ struct controller_ {
 typedef struct controller_ controller;
 
 typedef enum {
-    LOOP_CMD_LIT     = 1 << 1, /* literal printing */
-    LOOP_CMD_DOLLAR  = 1 << 2, /* line contains '$' */
-    LOOP_CMD_AT      = 1 << 3, /* line contains '@' */
-    LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
-    LOOP_CMD_PDONE   = 1 << 5, /* progressive loop command started */
-    LOOP_CMD_NOCOMP  = 1 << 6  /* not compilable */
-} LoopCmdFlags;
+    LOOP_LINE_LIT     = 1 << 1, /* literal printing */
+    LOOP_LINE_DOLLAR  = 1 << 2, /* line contains '$' */
+    LOOP_LINE_AT      = 1 << 3, /* line contains '@' */
+    LOOP_LINE_CATCH   = 1 << 4, /* "catch" flag present */
+    LOOP_LINE_PDONE   = 1 << 5, /* progressive loop command started */
+    LOOP_LINE_NOCOMP  = 1 << 6  /* not compilable */
+} LoopLineFlags;
 
-struct loop_command_ {
-    char *line;
-    int ci;
-    int next;
-    gretlopt opt;
-    LoopCmdFlags flags;
+/* structure reprsenting an individual line of loop */
+struct loop_line_ {
+    char *s;
+    gint16 ci;
+    gint16 next;
+    LoopLineFlags flags;
     GENERATOR *genr;
 };
 
-typedef struct loop_command_ loop_command;
+typedef struct loop_line_ loop_line;
+
+/* information on model estimated within loop */
+struct model_record_ {
+    int lno;
+    MODEL *pmod;
+    gretlopt opt;
+};
+
+typedef struct model_record_ model_record;
 
 struct LOOPSET_ {
     /* basic characteristics */
@@ -135,15 +144,14 @@ struct LOOPSET_ {
     controller final;
 
     /* numbers of various subsidiary objects */
-    int n_cmds;
+    int n_lines;
     int n_models;
     int n_children;
 
     /* subsidiary objects */
-    loop_command *cmds;   /* saved command info */
-    char **eachstrs;      /* for use with "foreach" loop */
-    MODEL **models;       /* regular model pointers */
-    int *model_lines;
+    loop_line *lines;      /* saved command info */
+    char **eachstrs;       /* for use with "foreach" loop */
+    model_record *mrecords;
     LOOPSET *parent;
     LOOPSET **children;
     int parent_line;
@@ -489,7 +497,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     loop->children = children;
     loop->children[nc] = child;
     child->parent = loop;
-    child->parent_line = loop->n_cmds;
+    child->parent_line = loop->n_lines;
     child->level = loop->level + 1;
 
 #if LOOP_DEBUG
@@ -527,11 +535,10 @@ static void gretl_loop_init (LOOPSET *loop)
     controller_init(&loop->delta);
     controller_init(&loop->final);
 
-    loop->n_cmds = 0;
-    loop->cmds = NULL;
+    loop->n_lines = 0;
+    loop->lines = NULL;
     loop->n_models = 0;
-    loop->models = NULL;
-    loop->model_lines = NULL;
+    loop->mrecords = NULL;
 
     loop->parent = NULL;
     loop->children = NULL;
@@ -596,18 +603,19 @@ void gretl_loop_destroy (LOOPSET *loop)
     controller_free(&loop->delta);
     controller_free(&loop->final);
 
-    if (loop->cmds != NULL) {
-        for (i=0; i<loop->n_cmds; i++) {
-            free(loop->cmds[i].line);
-            if (loop->cmds[i].genr != NULL) {
-                destroy_genr(loop->cmds[i].genr);
+    if (loop->lines != NULL) {
+        for (i=0; i<loop->n_lines; i++) {
+            free(loop->lines[i].s);
+            if (loop->lines[i].genr != NULL) {
+                destroy_genr(loop->lines[i].genr);
             }
         }
-        free(loop->cmds);
+        free(loop->lines);
     }
 
-    free(loop->model_lines);
-    free(loop->models);
+    if (loop->mrecords != NULL) {
+        free(loop->mrecords);
+    }
 
     if (loop->eachstrs != NULL && loop->eachtype != GRETL_TYPE_STRINGS) {
         strings_array_free(loop->eachstrs, loop->itermax);
@@ -1078,12 +1086,12 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
     sprintf(afmt, "strings %%%d[^ =]", VNAMELEN-1);
 
     while ((loop = loop->parent) != NULL) {
-        for (i=0; i<loop->n_cmds; i++) {
-            if (sscanf(loop->cmds[i].line, lfmt, vname)) {
+        for (i=0; i<loop->n_lines; i++) {
+            if (sscanf(loop->lines[i].s, lfmt, vname)) {
                 if (!strcmp(vname, s)) {
                     return GRETL_TYPE_LIST;
                 }
-            } else if (sscanf(loop->cmds[i].line, afmt, vname)) {
+            } else if (sscanf(loop->lines[i].s, afmt, vname)) {
                 if (!strcmp(vname, s)) {
                     return GRETL_TYPE_STRINGS;
                 }
@@ -1679,17 +1687,16 @@ static void controller_free (controller *clr)
     }
 }
 
-static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
+static void loop_lines_init (LOOPSET *loop, int i1, int i2)
 {
     int i;
 
     for (i=i1; i<i2; i++) {
-        loop->cmds[i].line = NULL;
-        loop->cmds[i].ci = 0;
-        loop->cmds[i].next = 0;
-        loop->cmds[i].opt = 0;
-        loop->cmds[i].genr = NULL;
-        loop->cmds[i].flags = 0;
+        loop->lines[i].s = NULL;
+        loop->lines[i].ci = 0;
+        loop->lines[i].next = 0;
+        loop->lines[i].genr = NULL;
+        loop->lines[i].flags = 0;
     }
 }
 
@@ -1700,12 +1707,12 @@ static int gretl_loop_prepare (LOOPSET *loop)
 #endif
 
     /* allocate some initial lines/commands for loop */
-    loop->cmds = malloc(LOOP_BLOCK * sizeof *loop->cmds);
+    loop->lines = malloc(LOOP_BLOCK * sizeof *loop->lines);
 
-    if (loop->cmds == NULL) {
+    if (loop->lines == NULL) {
         return E_ALLOC;
     } else {
-        loop_cmds_init(loop, 0, LOOP_BLOCK);
+        loop_lines_init(loop, 0, LOOP_BLOCK);
     }
 
     return 0;
@@ -1716,51 +1723,44 @@ static int gretl_loop_prepare (LOOPSET *loop)
    and return it.
 */
 
-static MODEL *get_model_record_by_line (LOOPSET *loop, int lno, int *err)
+static MODEL *get_model_record_by_line (LOOPSET *loop, int lno,
+                                        gretlopt opt, int *err)
 {
-    MODEL **models, *pmod;
-    int *modlines;
+    model_record *mrec;
+    MODEL *pmod = NULL;
     int n = loop->n_models;
     int i;
 
     for (i=0; i<n; i++) {
-        if (lno == loop->model_lines[i]) {
-            return loop->models[i];
+        if (lno == loop->mrecords[i].lno) {
+            return loop->mrecords[i].pmod;
         }
     }
 
-    modlines = realloc(loop->model_lines, (n + 1) * sizeof *modlines);
-    if (modlines == NULL) {
+    mrec = realloc(loop->mrecords, (n + 1) * sizeof *mrec);
+    if (mrec == NULL) {
         *err = E_ALLOC;
-        return NULL;
     } else {
-        loop->model_lines = modlines;
+        loop->mrecords = mrec;
+        pmod = gretl_model_new();
+        if (pmod == NULL) {
+            *err = E_ALLOC;
+        }
     }
 
-    models = realloc(loop->models, (n + 1) * sizeof *models);
-    if (models == NULL) {
-        *err = E_ALLOC;
-        return NULL;
-    } else {
-        loop->models = models;
+    if (!*err) {
+        /* 2016-10-24: I think this is right, AC. Note
+           that there's a matching "unprotect" when a loop
+           is destroyed.
+        */
+        gretl_model_protect(pmod);
+        mrec = &loop->mrecords[n];
+        mrec->lno = lno;
+        mrec->opt = opt;
+        mrec->pmod = pmod;
+        pmod->ID = n + 1;
+        loop->n_models += 1;
     }
-
-    pmod = gretl_model_new();
-    if (pmod == NULL) {
-        *err = E_ALLOC;
-        return NULL;
-    }
-
-    /* 2016-10-24: I think this is right, AC. Note
-       that there's a matching "unprotect" when a loop
-       is destroyed.
-    */
-    gretl_model_protect(pmod);
-
-    loop->model_lines[n] = lno;
-    pmod->ID = n + 1;
-    loop->models[n] = pmod;
-    loop->n_models += 1;
 
     return pmod;
 }
@@ -1777,7 +1777,7 @@ int model_is_in_loop (const MODEL *pmod)
 
     while (loop != NULL) {
         for (i=0; i<loop->n_models; i++) {
-            if (pmod == loop->models[i]) {
+            if (pmod == loop->mrecords[i].pmod) {
                 return 1;
             }
         }
@@ -1791,7 +1791,7 @@ int model_is_in_loop (const MODEL *pmod)
 
 static int loop_get_structure (LOOPSET *loop)
 {
-    loop_command *lc;
+    loop_line *ll;
     int *match_start = NULL;
     int *match_end = NULL;
     int d = 0, d_max = 0;
@@ -1805,8 +1805,8 @@ static int loop_get_structure (LOOPSET *loop)
     int err = 0;
 
     /* first pass: determine the maximum depth of conditionality */
-    for (i=0; i<loop->n_cmds && !err; i++) {
-	ci = loop->cmds[i].ci;
+    for (i=0; i<loop->n_lines && !err; i++) {
+	ci = loop->lines[i].ci;
 	if (ci == IF) {
             if (first_if < 0) {
                 first_if = i;
@@ -1815,6 +1815,7 @@ static int loop_get_structure (LOOPSET *loop)
                 d_max = d;
             }
 	} else if (ci == ENDIF) {
+            last_endif = i;
             d--;
 	}
     }
@@ -1827,56 +1828,60 @@ static int loop_get_structure (LOOPSET *loop)
     match_end = gretl_list_new(d_max);
 
     /* second pass: analysis */
-    for (i=first_if; i<loop->n_cmds && !err; i++) {
-        lc = &loop->cmds[i];
-	if (lc->ci == IF) {
+    for (i=first_if; i<loop->n_lines && !err; i++) {
+        ll = &loop->lines[i];
+	if (ll->ci == IF) {
 	    d++;
 	    match_start[d] = i;
-	} else if (lc->ci == ELIF) {
+        } else if (ll->ci == ENDIF) {
 	    if (d == 0) {
 		err = 1;
 	    } else {
-                loop->cmds[i-1].next = -d;
+                ll->next = -d;
 		j = match_start[d];
-		loop->cmds[j].next = i;
-		match_start[d] = i;
-	    }
-	} else if (lc->ci == ELSE) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                loop->cmds[i-1].next = -d;
-		j = match_start[d];
-		loop->cmds[j].next = i;
-		match_start[d] = i;
-	    }
-	} else if (lc->ci == ENDIF) {
-            last_endif = i;
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                lc->next = -d;
-		j = match_start[d];
-		loop->cmds[j].next = i;
+		loop->lines[j].next = i;
                 d--;
 	    }
-        }
+	} else if (ll->ci == ELIF) {
+	    if (d == 0) {
+		err = 1;
+	    } else {
+                if (loop->lines[i-1].ci != ENDIF) {
+                    loop->lines[i-1].next = -d;
+                }
+		j = match_start[d];
+		loop->lines[j].next = i;
+		match_start[d] = i;
+	    }
+	} else if (ll->ci == ELSE) {
+	    if (d == 0) {
+		err = 1;
+	    } else {
+                if (loop->lines[i-1].ci != ENDIF) {
+                    loop->lines[i-1].next = -d;
+                }
+                loop->lines[i-1].next = -d;
+		j = match_start[d];
+		loop->lines[j].next = i;
+		match_start[d] = i;
+	    }
+	}
     }
 
     /* third pass: fill in goto's for true-block terminators */
     d = target = src = 0;
     for (i=last_endif; i>=first_if; i--) {
-        lc = &loop->cmds[i];
-        if (lc->ci == ENDIF) {
+        ll = &loop->lines[i];
+        if (ll->ci == ENDIF) {
             d++;
-            target = match_start[d] = lc->next;
+            target = match_start[d] = ll->next;
             src = match_end[d] = i;
-        } else if (lc->ci == IF) {
+        } else if (ll->ci == IF) {
             d--;
             target = (d == 0)? 0 : match_start[d];
             src = (d == 0)? 0 : match_end[d];
-        } else if (target < 0 && lc->next == target) {
-            lc->next = src;
+        } else if (target < 0 && ll->next == target) {
+            ll->next = src;
         }
     }
 
@@ -1886,16 +1891,16 @@ static int loop_get_structure (LOOPSET *loop)
 #if LS_DEBUG
     /* display what we figured out */
     fputc('\n', stderr);
-    for (i=0; i<loop->n_cmds && !err; i++) {
-	lc = &loop->cmds[i];
-        j = lc->next;
-	if (j > 0 && j < loop->n_cmds) {
-            if (lc->ci == IF || lc->ci == ELIF || lc->ci == ELSE) {
+    for (i=0; i<loop->n_lines && !err; i++) {
+	ll = &loop->lines[i];
+        j = ll->next;
+	if (j > 0 && j < loop->n_lines) {
+            if (ll->ci == IF || ll->ci == ELIF || ll->ci == ELSE) {
                 fprintf(stderr, "L%d ('%s'): on false goto %d ('%s')\n",
-                        i, lc->line, j, loop->cmds[j].line);
+                        i, ll->line, j, loop->lines[j].s);
             } else {
                 fprintf(stderr, "L%d ('%s'): goto %d ('%s')\n",
-                        i, lc->line, j, loop->cmds[j].line);
+                        i, ll->line, j, loop->lines[j].s);
             }
             step = j - i;
             if (step > max_step) {
@@ -1909,28 +1914,28 @@ static int loop_get_structure (LOOPSET *loop)
     return err;
 }
 
-static int add_more_loop_commands (LOOPSET *loop)
+static int add_more_loop_lines (LOOPSET *loop)
 {
-    int nb = 1 + (loop->n_cmds + 1) / LOOP_BLOCK;
-    int totcmds = nb * LOOP_BLOCK;
-    loop_command *cmds;
+    int nb = 1 + (loop->n_lines + 1) / LOOP_BLOCK;
+    int totlines = nb * LOOP_BLOCK;
+    loop_line *lines;
 
     /* in case we ran out of space */
-    cmds = realloc(loop->cmds, totcmds * sizeof *cmds);
+    lines = realloc(loop->lines, totlines * sizeof *lines);
 
-    if (cmds == NULL) {
+    if (lines == NULL) {
         return E_ALLOC;
     }
 
-    loop->cmds = cmds;
-    loop_cmds_init(loop, loop->n_cmds, totcmds);
+    loop->lines = lines;
+    loop_lines_init(loop, loop->n_lines, totlines);
 
     return 0;
 }
 
 static int real_append_line (ExecState *s, LOOPSET *loop)
 {
-    int n = loop->n_cmds;
+    int n = loop->n_lines;
     int err = 0;
 
 #if LOOP_DEBUG > 1
@@ -1938,40 +1943,40 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 #endif
 
     if ((n + 1) % LOOP_BLOCK == 0) {
-        if (add_more_loop_commands(loop)) {
+        if (add_more_loop_lines(loop)) {
             return E_ALLOC;
         }
     }
 
-    loop->cmds[n].line = gretl_strdup(s->line);
+    loop->lines[n].s = gretl_strdup(s->line);
 
-    if (loop->cmds[n].line == NULL) {
+    if (loop->lines[n].s == NULL) {
         err = E_ALLOC;
     } else {
 	if (strchr(s->line, '$')) {
-	    loop->cmds[n].flags |= LOOP_CMD_DOLLAR;
+	    loop->lines[n].flags |= LOOP_LINE_DOLLAR;
 	}
 	if (strchr(s->line, '@')) {
-	    loop->cmds[n].flags |= LOOP_CMD_AT;
+	    loop->lines[n].flags |= LOOP_LINE_AT;
 	}
         if (s->cmd->ci == PRINT) {
             if (!loop_is_progressive(loop) || strchr(s->line, '"')) {
                 /* printing a literal string, not a variable's value */
-                loop->cmds[n].flags |= LOOP_CMD_LIT;
+                loop->lines[n].flags |= LOOP_LINE_LIT;
             }
         } else if (s->cmd->ci == RENAME || s->cmd->ci == OPEN) {
             loop_set_renaming(loop);
         } else if (s->cmd->ci == IF) {
             loop_set_has_cond(loop);
         }
-        loop->cmds[n].ci = s->cmd->ci;
-        loop->n_cmds += 1;
+        loop->lines[n].ci = s->cmd->ci;
+        loop->n_lines += 1;
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%d\n",
-            (void *) loop, loop->n_cmds, n, loop->cmds[n].line,
-            loop->cmds[n].ci);
+    fprintf(stderr, "loop %p: n_lines=%d, line[%d]='%s', ci=%d\n",
+            (void *) loop, loop->n_lines, n, loop->lines[n].s,
+            loop->lines[n].ci);
 #endif
 
     return err;
@@ -2093,20 +2098,16 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 static void print_loop_results (LOOPSET *loop, const DATASET *dset,
                                 PRN *prn)
 {
-    int i, j = 0;
+    model_record *mrec;
+    gretlopt popt;
+    int i;
 
-    for (i=0; i<loop->n_cmds; i++) {
-	loop_command *lc = &loop->cmds[i];
-
-        if (lc->ci == OLS) {
-            if (model_print_deferred(lc->opt)) {
-                MODEL *pmod = loop->models[j++];
-                gretlopt popt;
-
-                set_model_id(pmod, OPT_NONE);
-                popt = get_printmodel_opt(pmod, lc->opt);
-                printmodel(pmod, dset, popt, prn);
-            }
+    for (i=0; i<loop->n_models; i++) {
+        mrec = &loop->mrecords[i];
+        if (model_print_deferred(mrec->opt)) {
+            set_model_id(mrec->pmod, OPT_NONE);
+            popt = get_printmodel_opt(mrec->pmod, mrec->opt);
+            printmodel(mrec->pmod, dset, popt, prn);
         }
     }
 }
@@ -2294,13 +2295,13 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
         if (loop_is_progressive(loop)) {
             progressive_loop_zero(loop);
         } else {
-            free(loop->models);
-            loop->models = NULL;
+            free(loop->mrecords);
+            loop->mrecords = NULL;
             loop->n_models = 0;
         }
 #else
-        free(loop->models);
-        loop->models = NULL;
+        free(loop->mrecords);
+        loop->mrecords = NULL;
         loop->n_models = 0;
 #endif /* HAVE_GMP */
     }
@@ -2387,7 +2388,7 @@ static int try_add_loop_genr (LOOPSET *loop,
         gopt |= OPT_O;
     }
 
-    loop->cmds[lno].genr = genr_compile(line, dset, gtype,
+    loop->lines[lno].genr = genr_compile(line, dset, gtype,
                                         gopt, prn, &err);
     if (err == E_EQN) {
         /* may be a non-compilable special such as "genr time",
@@ -2424,20 +2425,20 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-#define loop_cmd_catch(lc)  (lc->flags & LOOP_CMD_CATCH)
+#define loop_line_catch(ll)  (ll->flags & LOOP_LINE_CATCH)
+#define loop_line_nosub(ll)  (!(ll->flags & (LOOP_LINE_AT | LOOP_LINE_DOLLAR)))
 
-#define line_is_compiled(lc) (lc->genr != NULL || lc->ci == ELSE || lc->ci == ENDIF)
-#define line_has_dollar(lc)  (lc->flags & LOOP_CMD_DOLLAR)
-#define line_has_at_sign(lc) (lc->flags & LOOP_CMD_AT)
-#define loop_cmd_nosub(lc)   (!(lc->flags & (LOOP_CMD_AT | LOOP_CMD_DOLLAR)))
+#define line_is_compiled(ll) (ll->genr != NULL || ll->ci == ELSE || ll->ci == ENDIF)
+#define line_has_dollar(ll)  (ll->flags & LOOP_LINE_DOLLAR)
+#define line_has_at_sign(ll) (ll->flags & LOOP_LINE_AT)
 
-#define may_be_compilable(lc)  (!(lc->flags & LOOP_CMD_NOCOMP))
-#define set_non_compilable(lc) (lc->flags |= LOOP_CMD_NOCOMP)
+#define may_be_compilable(ll)  (!(ll->flags & LOOP_LINE_NOCOMP))
+#define set_non_compilable(ll) (ll->flags |= LOOP_LINE_NOCOMP)
 
-static int loop_process_error (LOOPSET *loop, loop_command *lc,
+static int loop_process_error (LOOPSET *loop, loop_line *ll,
                                int err, PRN *prn)
 {
-    if (loop_cmd_catch(lc)) {
+    if (loop_line_catch(ll)) {
         set_gretl_errno(err);
         loop->flags |= LOOP_ERR_CAUGHT;
         err = 0;
@@ -2453,7 +2454,7 @@ static int loop_process_error (LOOPSET *loop, loop_command *lc,
 */
 
 static inline void loop_info_to_cmd (LOOPSET *loop,
-                                     loop_command *lc,
+                                     loop_line *ll,
                                      CMD *cmd)
 {
     if (loop_is_progressive(loop)) {
@@ -2462,7 +2463,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
         cmd->flags &= ~CMD_PROG;
     }
 
-    if (line_has_at_sign(lc)) {
+    if (line_has_at_sign(ll)) {
 	cmd->flags &= ~CMD_NOSUB;
     } else {
 	/* tell parser not to bother trying for @-substitution */
@@ -2471,7 +2472,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
 
     /* readjust "catch" for commands that are not being
        sent through the parser again */
-    if (loop_cmd_catch(lc)) {
+    if (loop_line_catch(ll)) {
         cmd->flags |= CMD_CATCH;
     } else if (!cmd->context) {
         cmd->flags &= ~CMD_CATCH;
@@ -2484,20 +2485,18 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
 
 static inline void cmd_info_to_loop (LOOPSET *loop, int j, CMD *cmd)
 {
-    loop_command *lcmd = &loop->cmds[j];
+    loop_line *ll = &loop->lines[j];
 
-    if (line_has_at_sign(lcmd) && !cmd_subst(cmd)) {
+    if (line_has_at_sign(ll) && !cmd_subst(cmd)) {
         /* This loop line has not already been marked as
            free of @-substitution, but has been found to
 	   be such.
         */
-	lcmd->flags &= ~LOOP_CMD_AT;
+	ll->flags &= ~LOOP_LINE_AT;
     }
 
-    lcmd->opt = cmd->opt;
-
     if (cmd->flags & CMD_CATCH) {
-        lcmd->flags |= LOOP_CMD_CATCH;
+        ll->flags |= LOOP_LINE_CATCH;
     }
 }
 
@@ -2551,8 +2550,8 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
         */
         int i, ok = 1;
 
-        for (i=0; i<loop->n_cmds; i++) {
-            if (loop->cmds[i].genr != NULL) {
+        for (i=0; i<loop->n_lines; i++) {
+            if (loop->lines[i].genr != NULL) {
                 ok = 0;
                 break;
             }
@@ -2618,16 +2617,17 @@ static int model_command_post_process (ExecState *s,
                                        int j)
 {
     int moderr = check_gretl_errno();
+    gretlopt opt = s->cmd->opt;
     int err = 0;
 
     if (moderr) {
-        if (model_print_deferred(s->cmd->opt)) {
+        if (model_print_deferred(opt)) {
             err = moderr;
         } else {
             errmsg(moderr, s->prn);
         }
-    } else if (model_print_deferred(s->cmd->opt)) {
-        MODEL *pmod = get_model_record_by_line(loop, j, &err);
+    } else if (model_print_deferred(opt)) {
+        MODEL *pmod = get_model_record_by_line(loop, j, opt, &err);
 
         if (!err) {
             swap_models(s->model, pmod);
@@ -2687,10 +2687,10 @@ void loop_reset_uvars (LOOPSET *loop)
     }
 
     /* stored references within "genrs" */
-    if (loop->cmds != NULL) {
-        for (i=0; i<loop->n_cmds; i++) {
-            if (loop->cmds[i].genr != NULL) {
-                genr_reset_uvars(loop->cmds[i].genr);
+    if (loop->lines != NULL) {
+        for (i=0; i<loop->n_lines; i++) {
+            if (loop->lines[i].genr != NULL) {
+                genr_reset_uvars(loop->lines[i].genr);
             }
         }
     }
@@ -2707,12 +2707,12 @@ void loop_reset_uvars (LOOPSET *loop)
     loop->idxvar = NULL;
 }
 
-/* We come here only if @lc has the LOOP_CMD_DOLLAR flag
+/* We come here only if @ll has the LOOP_LINE_DOLLAR flag
    set. We scrub this flag if '$' turns out not to call
    string substitution.
 */
 
-static int check_for_dollar_subst (loop_command *lc,
+static int check_for_dollar_subst (loop_line *ll,
 				   char *line,
 				   LOOPSET *loop,
 				   DATASET *dset)
@@ -2724,9 +2724,9 @@ static int check_for_dollar_subst (loop_command *lc,
     err = make_dollar_substitutions(line, MAXLINE, loop,
 				    dset, &subst, OPT_NONE);
     if (!err && !subst) {
-	lc->flags &= ~LOOP_CMD_DOLLAR;
+	ll->flags &= ~LOOP_LINE_DOLLAR;
     } else if (subst) {
-	lc->flags |= LOOP_CMD_NOCOMP;
+	ll->flags |= LOOP_LINE_NOCOMP;
     }
 
     return err;
@@ -2823,14 +2823,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             break;
         }
 
-        for (j=0; j<loop->n_cmds && !err; j++) {
+        for (j=0; j<loop->n_lines && !err; j++) {
             /* execute commands on this iteration */
-            loop_command *lcmd = &loop->cmds[j];
-            int compiled = line_is_compiled(lcmd);
-            int ci = lcmd->ci;
+            loop_line *ll = &loop->lines[j];
+            int compiled = line_is_compiled(ll);
+            int ci = ll->ci;
             int parse = 1;
 
-            currline = lcmd->line;
+            currline = ll->s;
             if (compiled) {
                 /* just for "echo" purposes */
                 showline = currline;
@@ -2846,8 +2846,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 #endif
 
 	    if (gretl_if_state_true() && (ci == ELSE || ci == ELIF)) {
-		if (lcmd->next > 0) {
-		    j = lcmd->next - 1;
+		if (ll->next > 0) {
+		    j = ll->next - 1;
 		}
 		continue;
 	    }
@@ -2857,26 +2857,26 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 if (echo && loop_is_verbose(loop)) {
                     pprintf(prn, "? %s\n", showline);
                 }
-                err = execute_genr(lcmd->genr, dset, prn);
-                if (lcmd->next > 0) {
-                    j = lcmd->next - 1;
+                err = execute_genr(ll->genr, dset, prn);
+                if (ll->next > 0) {
+                    j = ll->next - 1;
                 }
 	    } else if ((ci == IF || ci == ELIF) && compiled) {
                 cmd->ci = ci;
                 s->cmd->vstart = NULL;
-                flow_control(s, dset, &lcmd->genr);
+                flow_control(s, dset, &ll->genr);
                 if (cmd->err) {
                     /* we hit an error evaluating the if state */
                     err = cmd->err;
-                } else if (gretl_if_state_false() && lcmd->next > 0) {
-		    j = lcmd->next - 1;
+                } else if (gretl_if_state_false() && ll->next > 0) {
+		    j = ll->next - 1;
                 }
 	    } else if (ci == ELSE || ci == ENDIF) {
 		/* these don't need compilation */
 		cmd->ci = ci;
-		flow_control(s, dset, &lcmd->genr);
-		if (gretl_if_state_false() && lcmd->next > 0) {
-		    j = lcmd->next - 1;
+		flow_control(s, dset, &ll->genr);
+		if (gretl_if_state_false() && ll->next > 0) {
+		    j = ll->next - 1;
 		}
 	    }
 
@@ -2901,29 +2901,29 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             }
 
 	    /* check for $-substitution? */
-	    if (line_has_dollar(lcmd)) {
-		err = check_for_dollar_subst(lcmd, line, loop, dset);
+	    if (line_has_dollar(ll)) {
+		err = check_for_dollar_subst(ll, line, loop, dset);
 		if (err) {
 		    goto handle_err;
 		}
 	    }
 
             /* transcribe saved loop info -> cmd */
-            loop_info_to_cmd(loop, lcmd, cmd);
+            loop_info_to_cmd(loop, ll, cmd);
 
 	    if (ci == GENR) {
 		/* looking at a genr line that's not yet compiled */
-		if (may_be_compilable(lcmd)) {
+		if (may_be_compilable(ll)) {
 		    err = parse_command_line(s, dset, NULL);
 		    if (s->cmd->flags & CMD_SUBST) {
-			set_non_compilable(lcmd);
+			set_non_compilable(ll);
 		    }
 		}
-		if (!err && may_be_compilable(lcmd)) {
+		if (!err && may_be_compilable(ll)) {
 		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
-		    if (lcmd->genr == NULL && !err) {
+		    if (ll->genr == NULL && !err) {
                         /* fallback */
-			set_non_compilable(lcmd);
+			set_non_compilable(ll);
                         err = generate(cmd->vstart, dset, cmd->gtype,
                                        cmd->opt, prn);
                     }
@@ -2940,30 +2940,30 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 		if (err) {
 		    goto handle_err;
 		} else {
-                    if (lcmd->next > 0) {
-                        j = lcmd->next - 1;
-                    }                    
+                    if (ll->next > 0) {
+                        j = ll->next - 1;
+                    }
 		    continue;
 		}
 	    } else if (ci == IF || ci == ELIF) {
 		/* looking at a conditional that's not yet compiled */
-		if (may_be_compilable(lcmd)) {
-		    err = parse_command_line(s, dset, &lcmd->genr);
+		if (may_be_compilable(ll)) {
+		    err = parse_command_line(s, dset, &ll->genr);
 		    if (s->cmd->flags & CMD_SUBST) {
-			set_non_compilable(lcmd);
+			set_non_compilable(ll);
 		    }
 		} else {
 		    err = parse_command_line(s, dset, NULL);
 		}
-		if (gretl_if_state_false() && lcmd->next > 0) {
-		    j = lcmd->next - 1;
+		if (gretl_if_state_false() && ll->next > 0) {
+		    j = ll->next - 1;
 		}
 		continue;
 	    }
 
 	    if (prog_cmd_started(loop, j)) {
                 cmd->ci = ci;
-                if (loop_cmd_nosub(lcmd)) {
+                if (loop_line_nosub(ll)) {
                     parse = 0;
                 }
             }
@@ -2981,7 +2981,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 
             if (err) {
                 cmd_info_to_loop(loop, j, cmd);
-                cmd->err = err = loop_process_error(loop, lcmd, err, prn);
+                cmd->err = err = loop_process_error(loop, ll, err, prn);
                 if (err) {
                     break;
                 } else {
@@ -3044,8 +3044,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     /* NLS, etc. */
                     loop_print_save_model(s->model, dset, prn, s);
                 }
-                if (lcmd->next > 0) {
-                    j = lcmd->next - 1;
+                if (ll->next > 0) {
+                    j = ll->next - 1;
                 }
             }
             if (err && (cmd->flags & CMD_CATCH)) {
@@ -3092,11 +3092,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 #if HAVE_GMP
         if (progressive) {
             progressive_loop_finalize(loop, dset, prn);
-        } else {
+        } else if (loop->mrecords != NULL) {
             print_loop_results(loop, dset, prn);
         }
 #else
-        print_loop_results(loop, dset, prn);
+        if (loop->mrecords != NULL) {
+            print_loop_results(loop, dset, prn);
+        }
 #endif
     }
 
@@ -3104,15 +3106,18 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
         /* we need to update models[0] */
         GretlObjType type;
         void *ptr = get_last_model(&type);
+        MODEL *pmod;
         int i;
 
         if (type == GRETL_OBJ_EQN && s->model != ptr) {
-            swap_models(s->model, loop->models[loop->n_models - 1]);
+            pmod = loop->mrecords[loop->n_models - 1].pmod;
+            swap_models(s->model, pmod);
             set_as_last_model(s->model, GRETL_OBJ_EQN);
         }
         for (i=0; i<loop->n_models; i++) {
-            gretl_model_unprotect(loop->models[i]);
-            gretl_model_free(loop->models[i]);
+            pmod = loop->mrecords[i].pmod;
+            gretl_model_unprotect(pmod);
+            gretl_model_free(pmod);
         }
     }
 

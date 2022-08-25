@@ -91,12 +91,12 @@ typedef enum {
 /* structure representing a line of a user-defined function */
 
 struct fn_line_ {
-    gint16 ci;       /* command index */
-    gint16 idx;      /* 1-based line index (allowing for blanks) */
-    gint16 next;     /* line index to skip to after loop or conditional */
     char *s;         /* text of command line */
+    gint16 ci;       /* command index */
+    gint16 next;     /* line index to skip to after loop or conditional */
+    gint16 idx;      /* 1-based line index (allowing for blanks) */
+    guint8 flags;    /* see ln_flags above */
     void *ptr;       /* attachment for LOOPSET or GENERATOR */
-    ln_flags flags;  /* see above */
 };
 
 #define line_has_loop(l)  (l->ci == LOOP && l->ptr != NULL)
@@ -7380,7 +7380,7 @@ static void python_check (const char *line)
     }
 }
 
-#define FNCOND_DEBUG 1
+#define FS_DEBUG 1
 
 /* If a function contains flow-control statements or loops,
    record the line numbers on which these start, along with
@@ -7405,9 +7405,17 @@ static int ufunc_get_structure (ufunc *u)
     /* first pass: determine the maximum depth of
        conditionality and looping
     */
-    for (i=0; i<u->n_lines && !err; i++) {
+    for (i=0; i<u->n_lines; i++) {
 	ci = u->lines[i].ci;
-	if (ci == IF) {
+	if (ci == LOOP) {
+            if (++ld > ld_max) {
+                ld_max = ld;
+            }
+        } else if (ci == ENDLOOP) {
+            ld--;
+        } else if (ld > 0) {
+            continue;
+	} else if (ci == IF) {
             if (first_if < 0) {
                 first_if = i;
             }
@@ -7415,18 +7423,15 @@ static int ufunc_get_structure (ufunc *u)
                 d_max = d;
             }
 	} else if (ci == ENDIF) {
+            last_endif = i;
             d--;
-	} else if (ci == LOOP) {
-            if (++ld > ld_max) {
-                ld_max = ld;
-            }
-        } else if (ci == ENDLOOP) {
-            ld--;
-        }
+	}
     }
 
-#if FNCOND_DEBUG
-    fprintf(stderr, "%s: max if-depth %d, max loop-depth %d\n",
+    /* add error check for d != 0, ld != 0 */
+
+#if FS_DEBUG
+    fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
             u->name, d_max, ld_max);
 #endif
 
@@ -7452,11 +7457,12 @@ static int ufunc_get_structure (ufunc *u)
                 u->lines[j].next = i;
                 ld--;
             }
-	} else if (ld == 0 && line->ci == IF) {
+        } else if (ld > 0) {
+            continue;
+	} else if (line->ci == IF) {
 	    d++;
 	    match_start[d] = i;
-	} else if (ld == 0 && line->ci == ENDIF) {
-            last_endif = i;
+	} else if (line->ci == ENDIF) {
 	    if (d == 0) {
 		err = 1;
 	    } else {
@@ -7465,21 +7471,23 @@ static int ufunc_get_structure (ufunc *u)
 		u->lines[j].next = i;
                 d--;
 	    }
-	} else if (ld == 0 && line->ci == ELIF) {
+	} else if (line->ci == ELIF) {
 	    if (d == 0) {
 		err = 1;
 	    } else {
-                u->lines[i-1].next = -d;
+                if (u->lines[i-1].ci != ENDIF) {
+                    u->lines[i-1].next = -d;
+                }
 		j = match_start[d];
 		u->lines[j].next = i;
 		match_start[d] = i;
 	    }
-	} else if (ld == 0 && line->ci == ELSE) {
+	} else if (line->ci == ELSE) {
 	    if (d == 0) {
 		err = 1;
 	    } else {
 		if (u->lines[i-1].ci != ENDIF) {
-		    u->lines[i-1].next = i;
+                    u->lines[i-1].next = -d;
 		}
 		j = match_start[d];
 		u->lines[j].next = i;
@@ -7509,7 +7517,7 @@ static int ufunc_get_structure (ufunc *u)
     free(match_end);
     free(next_from_loop);
 
-#if FNCOND_DEBUG
+#if FS_DEBUG
     /* display what we figured out */
     fputc('\n', stderr);
     for (i=0; i<u->n_lines; i++) {
@@ -7521,6 +7529,8 @@ static int ufunc_get_structure (ufunc *u)
 	if (line->ci == IF || line->ci == ELIF || line->ci == ELSE) {
 	    fprintf(stderr, "L%d ('%s'): next-on-false = %d ('%s')\n",
 		    i, line->s, j, u->lines[j].s);
+        } else if (line->ci == LOOP) {
+	    fprintf(stderr, "L%d ('%s'): end-of-loop = %d\n", i, line->s, j);
 	} else {
 	    fprintf(stderr, "L%d ('%s'): next-on-true = %d ('%s')\n",
 		    i, line->s, j, u->lines[j].s);

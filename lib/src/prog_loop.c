@@ -401,7 +401,7 @@ static int loop_store_update (LOOPSET *loop, int j,
             return err;
         }
         lstore->lineno = j;
-        loop->cmds[j].flags |= LOOP_CMD_PDONE;
+        loop->lines[j].flags |= LOOP_CMD_PDONE;
     }
 
     t = lstore->n;
@@ -541,7 +541,7 @@ static int loop_print_update (LOOPSET *loop, int j, const char *names)
         /* not started yet */
         err = loop_print_start(lprn, names);
         if (!err) {
-            loop->cmds[j].flags |= LOOP_CMD_PDONE;
+            loop->lines[j].flags |= LOOP_CMD_PDONE;
         }
     }
 
@@ -801,12 +801,12 @@ static void progressive_loop_zero (LOOPSET *loop)
        a nested progressive loop.
     */
 
-    if (loop->cmds != NULL) {
-        for (i=0; i<loop->n_cmds; i++) {
-            if (loop->cmds[i].ci == PRINT ||
-                loop->cmds[i].ci == STORE) {
+    if (loop->lines != NULL) {
+        for (i=0; i<loop->n_lines; i++) {
+            if (loop->lines[i].ci == PRINT ||
+                loop->lines[i].ci == STORE) {
                 /* reset */
-                loop->cmds[i].flags &= ~LOOP_CMD_PDONE;
+                loop->lines[i].flags &= ~LOOP_CMD_PDONE;
             }
         }
     }
@@ -835,15 +835,16 @@ static int model_command_post_process (ExecState *s,
 {
     int prog = loop_is_progressive(loop);
     int moderr = check_gretl_errno();
+    gretlopt opt = s->cmd->opt;
     int err = 0;
 
     if (moderr) {
-        if (prog || model_print_deferred(s->cmd->opt)) {
+        if (prog || model_print_deferred(opt)) {
             err = moderr;
         } else {
             errmsg(moderr, s->prn);
         }
-    } else if (prog && !(s->cmd->opt & OPT_Q)) {
+    } else if (prog && !(opt & OPT_Q)) {
         LOOP_MODEL *lmod = get_loop_model_by_line(loop, j, &err);
 
         if (!err) {
@@ -851,7 +852,7 @@ static int model_command_post_process (ExecState *s,
             set_as_last_model(s->model, GRETL_OBJ_EQN);
         }
     } else if (model_print_deferred(s->cmd->opt)) {
-        MODEL *pmod = get_model_record_by_line(loop, j, &err);
+        MODEL *pmod = get_model_record_by_line(loop, j, opt, &err);
 
         if (!err) {
             swap_models(s->model, pmod);
@@ -866,7 +867,7 @@ static int model_command_post_process (ExecState *s,
     return err;
 }
 
-#define loop_literal(lc) (lc->flags & LOOP_CMD_LIT)
+#define loop_literal(ll) (ll->flags & LOOP_CMD_LIT)
 
 static void progressive_loop_finalize (LOOPSET *loop,
                                        const DATASET *dset,
@@ -874,24 +875,25 @@ static void progressive_loop_finalize (LOOPSET *loop,
 {
     int i, j = 0, k = 0;
 
-    for (i=0; i<loop->n_cmds; i++) {
-	loop_command *lc = &loop->cmds[i];
+    for (i=0; i<loop->n_lines; i++) {
+	loop_line *ll = &loop->lines[i];
 
-        if (plain_model_ci(lc->ci) && !(lc->opt & OPT_Q)) {
+        /* FIXME OPT_Q ? */
+        if (plain_model_ci(ll->ci) /* && !(ll->opt & OPT_Q) */) {
             loop_model_print(&loop->lmodels[j], dset, prn);
             loop_model_zero(&loop->lmodels[j], 1);
             j++;
-        } else if (lc->ci == PRINT && !loop_literal(lc)) {
+        } else if (ll->ci == PRINT && !loop_literal(ll)) {
             loop_print_print(&loop->prns[k], prn);
             loop_print_zero(&loop->prns[k], 1);
             k++;
-        } else if (lc->ci == STORE) {
+        } else if (ll->ci == STORE) {
             loop_store_save(&loop->store, prn);
         }
     }
 }
 
-#define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
+#define prog_cmd_started(l,j) (l->lines[j].flags & LOOP_CMD_PDONE)
 
 #define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
                                c == NLS ||  \
@@ -901,10 +903,10 @@ static void progressive_loop_finalize (LOOPSET *loop,
 static int handle_prog_command (LOOPSET *loop, int j,
                                 CMD *cmd, int *err)
 {
-    loop_command *lc = &loop->cmds[j];
+    loop_line *ll = &loop->lines[j];
     int handled = 0;
 
-    if (cmd->ci == PRINT && !loop_literal(lc)) {
+    if (cmd->ci == PRINT && !loop_literal(ll)) {
         if (prog_cmd_started(loop, j)) {
             *err = loop_print_update(loop, j, NULL);
         } else {
