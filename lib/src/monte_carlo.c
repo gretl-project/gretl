@@ -1858,9 +1858,9 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "loop %p: n_lines=%d, line[%d]='%s', ci=%d\n",
+    fprintf(stderr, "loop %p: n_lines=%d, line[%d]='%s', ci=%s\n",
             (void *) loop, loop->n_lines, n, loop->lines[n].s,
-            loop->lines[n].ci);
+            gretl_command_word(loop->lines[n].ci));
 #endif
 
     return err;
@@ -2337,6 +2337,9 @@ static inline void loop_info_to_cmd (LOOPSET *loop,
         cmd->flags &= ~CMD_PROG;
     }
 
+    /* don't carry this over */
+    *cmd->savename = '\0';
+
     if (line_has_at_sign(ll)) {
 	cmd->flags &= ~CMD_NOSUB;
     } else {
@@ -2786,7 +2789,17 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             loop_info_to_cmd(loop, ll, cmd);
 
 	    if (ci == GENR) {
-		/* looking at a genr line that's not yet compiled */
+		/* looking at a genr line that's not yet compiled:
+		   it might not really be a case of genr!
+		*/
+		err = parse_command_line(s, dset, NULL);
+		if (!err && cmd->ci != GENR) {
+		    ci = ll->ci = cmd->ci;
+		}
+		parse = 0;
+	    }
+
+	    if (ci == GENR) {
 		if (may_be_compilable(ll)) {
 		    err = parse_command_line(s, dset, NULL);
 		    if (s->cmd->flags & CMD_SUBST) {
@@ -2803,7 +2816,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                     }
 		} else {
 		    /* string substitution or a "genr special" */
- 		    err = parse_command_line(s, dset, NULL);
 		    if (!err) {
 			if (!loop_is_verbose(loop)) {
 			    cmd->opt |= OPT_Q;
@@ -2846,7 +2858,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             if (parse && !err) {
                 err = parse_command_line(s, dset, NULL);
 #if LOOP_DEBUG > 1
-                fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
+                fprintf(stderr, "    after parse: '%s', ci=%s\n", line,
+			gretl_command_word(cmd->ci));
                 fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
                 fprintf(stderr, "    err from parse_command_line: %d\n", err);
 #endif
