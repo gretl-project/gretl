@@ -59,8 +59,11 @@
 
 typedef struct fn_param_ fn_param;
 typedef struct fn_arg_ fn_arg;
-typedef struct fn_line_ fn_line;
 typedef struct obsinfo_ obsinfo;
+
+/* local symbol for structure representing a line of a
+   user-defined function */
+typedef struct stmt_ fn_line;
 
 enum {
     FP_CONST    = 1 << 0,
@@ -87,17 +90,6 @@ typedef enum {
     LINE_IGNORE = 1 << 0,
     LINE_RET    = 1 << 1
 } ln_flags;
-
-/* structure representing a line of a user-defined function */
-
-struct fn_line_ {
-    char *s;         /* text of command line */
-    gint16 ci;       /* command index */
-    gint16 next;     /* line index to skip to after loop or conditional */
-    gint16 idx;      /* 1-based line index (allowing for blanks) */
-    guint8 flags;    /* see ln_flags above */
-    void *ptr;       /* attachment for LOOPSET or GENERATOR */
-};
 
 #define line_has_loop(l)  (l->ci == LOOP && l->ptr != NULL)
 #define line_has_genr(l)  (l->ci != LOOP && l->ptr != NULL)
@@ -7380,165 +7372,10 @@ static void python_check (const char *line)
     }
 }
 
-#define FS_DEBUG 1
-
-/* If a function contains flow-control statements or loops,
-   record the line numbers on which these start, along with
-   the line numbers to which execution should skip in case
-   of a false IF-condition or a completed loop.
-*/
-
 static int ufunc_get_structure (ufunc *u)
 {
-    fn_line *line;
-    int *match_start = NULL;
-    int *match_end = NULL;
-    int *next_from_loop = NULL;
-    int d_max = 0, ld_max = 0;
-    int d = 0, ld = 0;
-    int last_endif = 0;
-    int first_if = -1;
-    int target, src;
-    int i, j, ci;
-    int err = 0;
-
-    /* first pass: determine the maximum depth of
-       conditionality and looping
-    */
-    for (i=0; i<u->n_lines; i++) {
-	ci = u->lines[i].ci;
-	if (ci == LOOP) {
-            if (++ld > ld_max) {
-                ld_max = ld;
-            }
-        } else if (ci == ENDLOOP) {
-            ld--;
-        } else if (ld > 0) {
-            continue;
-	} else if (ci == IF) {
-            if (first_if < 0) {
-                first_if = i;
-            }
-            if (++d > d_max) {
-                d_max = d;
-            }
-	} else if (ci == ENDIF) {
-            last_endif = i;
-            d--;
-	}
-    }
-
-    /* add error check for d != 0, ld != 0 */
-
-#if FS_DEBUG
-    fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
-            u->name, d_max, ld_max);
-#endif
-
-    if (d_max > 0) {
-        match_start = gretl_list_new(d_max);
-        match_end = gretl_list_new(d_max);
-    }
-    if (ld_max > 0) {
-        next_from_loop = gretl_list_new(ld_max);
-    }
-
-    /* second pass: analysis */
-    for (i=0; i<u->n_lines && !err; i++) {
-	line = &u->lines[i];
-	if (line->ci == LOOP) {
-            ld++;
-            next_from_loop[ld] = i;
-	} else if (line->ci == ENDLOOP) {
-            if (ld == 0) {
-                err = 1;
-            } else {
-                j = next_from_loop[ld];
-                u->lines[j].next = i;
-                ld--;
-            }
-        } else if (ld > 0) {
-            continue;
-	} else if (line->ci == IF) {
-	    d++;
-	    match_start[d] = i;
-	} else if (line->ci == ENDIF) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                line->next = -d;
-		j = match_start[d];
-		u->lines[j].next = i;
-                d--;
-	    }
-	} else if (line->ci == ELIF) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                if (u->lines[i-1].ci != ENDIF) {
-                    u->lines[i-1].next = -d;
-                }
-		j = match_start[d];
-		u->lines[j].next = i;
-		match_start[d] = i;
-	    }
-	} else if (line->ci == ELSE) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-		if (u->lines[i-1].ci != ENDIF) {
-                    u->lines[i-1].next = -d;
-		}
-		j = match_start[d];
-		u->lines[j].next = i;
-		match_start[d] = i;
-	    }
-	}
-    }
-
-    /* third pass: fill in goto's for true-block terminators */
-    d = target = src = 0;
-    for (i=last_endif; i>=first_if; i--) {
-        line = &u->lines[i];
-        if (line->ci == ENDIF) {
-            d++;
-            target = match_start[d] = line->next;
-            src = match_end[d] = i;
-        } else if (line->ci == IF) {
-            target = (d == 0)? 0 : match_start[d];
-            src = (d == 0)? 0 : match_end[d];
-	    d--;
-        } else if (target < 0 && line->next == target) {
-            line->next = src;
-        }
-    }
-
-    free(match_start);
-    free(match_end);
-    free(next_from_loop);
-
-#if FS_DEBUG
-    /* display what we figured out */
-    fputc('\n', stderr);
-    for (i=0; i<u->n_lines; i++) {
-	line = &u->lines[i];
-        j = line->next;
-	if (j <= 0) {
-	    continue;
-	}
-	if (line->ci == IF || line->ci == ELIF || line->ci == ELSE) {
-	    fprintf(stderr, "L%d ('%s'): next-on-false = %d ('%s')\n",
-		    i, line->s, j, u->lines[j].s);
-        } else if (line->ci == LOOP) {
-	    fprintf(stderr, "L%d ('%s'): end-of-loop = %d\n", i, line->s, j);
-	} else {
-	    fprintf(stderr, "L%d ('%s'): next-on-true = %d ('%s')\n",
-		    i, line->s, j, u->lines[j].s);
-	}
-    }
-#endif
-
-    return err;
+    return statements_get_structure(u->lines, u->n_lines,
+				    FUNC, u->name);
 }
 
 /**

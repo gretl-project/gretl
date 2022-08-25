@@ -401,7 +401,7 @@ static int loop_store_update (LOOPSET *loop, int j,
             return err;
         }
         lstore->lineno = j;
-        loop->lines[j].flags |= LOOP_CMD_PDONE;
+        loop->lines[j].flags |= LOOP_LINE_PDONE;
     }
 
     t = lstore->n;
@@ -541,7 +541,7 @@ static int loop_print_update (LOOPSET *loop, int j, const char *names)
         /* not started yet */
         err = loop_print_start(lprn, names);
         if (!err) {
-            loop->lines[j].flags |= LOOP_CMD_PDONE;
+            loop->lines[j].flags |= LOOP_LINE_PDONE;
         }
     }
 
@@ -806,7 +806,7 @@ static void progressive_loop_zero (LOOPSET *loop)
             if (loop->lines[i].ci == PRINT ||
                 loop->lines[i].ci == STORE) {
                 /* reset */
-                loop->lines[i].flags &= ~LOOP_CMD_PDONE;
+                loop->lines[i].flags &= ~LOOP_LINE_PDONE;
             }
         }
     }
@@ -867,7 +867,7 @@ static int model_command_post_process (ExecState *s,
     return err;
 }
 
-#define loop_literal(ll) (ll->flags & LOOP_CMD_LIT)
+#define loop_literal(ll) (ll->flags & LOOP_LINE_LIT)
 
 static void progressive_loop_finalize (LOOPSET *loop,
                                        const DATASET *dset,
@@ -893,7 +893,7 @@ static void progressive_loop_finalize (LOOPSET *loop,
     }
 }
 
-#define prog_cmd_started(l,j) (l->lines[j].flags & LOOP_CMD_PDONE)
+#define prog_cmd_started(l,j) (l->lines[j].flags & LOOP_LINE_PDONE)
 
 #define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
                                c == NLS ||  \

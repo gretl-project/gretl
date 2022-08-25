@@ -94,16 +94,8 @@ typedef enum {
     LOOP_LINE_NOCOMP  = 1 << 6  /* not compilable */
 } LoopLineFlags;
 
-/* structure reprsenting an individual line of loop */
-struct loop_line_ {
-    char *s;
-    gint16 ci;
-    gint16 next;
-    LoopLineFlags flags;
-    GENERATOR *genr;
-};
-
-typedef struct loop_line_ loop_line;
+/* local convenience typedef */
+typedef struct stmt_ loop_line;
 
 /* information on model estimated within loop */
 struct model_record_ {
@@ -606,8 +598,8 @@ void gretl_loop_destroy (LOOPSET *loop)
     if (loop->lines != NULL) {
         for (i=0; i<loop->n_lines; i++) {
             free(loop->lines[i].s);
-            if (loop->lines[i].genr != NULL) {
-                destroy_genr(loop->lines[i].genr);
+            if (loop->lines[i].ptr != NULL) {
+                destroy_genr(loop->lines[i].ptr);
             }
         }
         free(loop->lines);
@@ -1695,7 +1687,7 @@ static void loop_lines_init (LOOPSET *loop, int i1, int i2)
         loop->lines[i].s = NULL;
         loop->lines[i].ci = 0;
         loop->lines[i].next = 0;
-        loop->lines[i].genr = NULL;
+        loop->lines[i].ptr = NULL;
         loop->lines[i].flags = 0;
     }
 }
@@ -1787,131 +1779,10 @@ int model_is_in_loop (const MODEL *pmod)
     return 0;
 }
 
-#define LS_DEBUG 0
-
 static int loop_get_structure (LOOPSET *loop)
 {
-    loop_line *ll;
-    int *match_start = NULL;
-    int *match_end = NULL;
-    int d = 0, d_max = 0;
-    int last_endif = 0;
-    int first_if = -1;
-    int target, src;
-#if LS_DEBUG
-    int step, max_step = 0;
-#endif
-    int i, j, ci;
-    int err = 0;
-
-    /* first pass: determine the maximum depth of conditionality */
-    for (i=0; i<loop->n_lines && !err; i++) {
-	ci = loop->lines[i].ci;
-	if (ci == IF) {
-            if (first_if < 0) {
-                first_if = i;
-            }
-            if (++d > d_max) {
-                d_max = d;
-            }
-	} else if (ci == ENDIF) {
-            last_endif = i;
-            d--;
-	}
-    }
-
-#if LS_DEBUG
-    fprintf(stderr, "loop_get_structure: max if-depth %d\n", d_max);
-#endif
-
-    match_start = gretl_list_new(d_max);
-    match_end = gretl_list_new(d_max);
-
-    /* second pass: analysis */
-    for (i=first_if; i<loop->n_lines && !err; i++) {
-        ll = &loop->lines[i];
-	if (ll->ci == IF) {
-	    d++;
-	    match_start[d] = i;
-        } else if (ll->ci == ENDIF) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                ll->next = -d;
-		j = match_start[d];
-		loop->lines[j].next = i;
-                d--;
-	    }
-	} else if (ll->ci == ELIF) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                if (loop->lines[i-1].ci != ENDIF) {
-                    loop->lines[i-1].next = -d;
-                }
-		j = match_start[d];
-		loop->lines[j].next = i;
-		match_start[d] = i;
-	    }
-	} else if (ll->ci == ELSE) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-                if (loop->lines[i-1].ci != ENDIF) {
-                    loop->lines[i-1].next = -d;
-                }
-                loop->lines[i-1].next = -d;
-		j = match_start[d];
-		loop->lines[j].next = i;
-		match_start[d] = i;
-	    }
-	}
-    }
-
-    /* third pass: fill in goto's for true-block terminators */
-    d = target = src = 0;
-    for (i=last_endif; i>=first_if; i--) {
-        ll = &loop->lines[i];
-        if (ll->ci == ENDIF) {
-            d++;
-            target = match_start[d] = ll->next;
-            src = match_end[d] = i;
-        } else if (ll->ci == IF) {
-            d--;
-            target = (d == 0)? 0 : match_start[d];
-            src = (d == 0)? 0 : match_end[d];
-        } else if (target < 0 && ll->next == target) {
-            ll->next = src;
-        }
-    }
-
-    free(match_start);
-    free(match_end);
-
-#if LS_DEBUG
-    /* display what we figured out */
-    fputc('\n', stderr);
-    for (i=0; i<loop->n_lines && !err; i++) {
-	ll = &loop->lines[i];
-        j = ll->next;
-	if (j > 0 && j < loop->n_lines) {
-            if (ll->ci == IF || ll->ci == ELIF || ll->ci == ELSE) {
-                fprintf(stderr, "L%d ('%s'): on false goto %d ('%s')\n",
-                        i, ll->line, j, loop->lines[j].s);
-            } else {
-                fprintf(stderr, "L%d ('%s'): goto %d ('%s')\n",
-                        i, ll->line, j, loop->lines[j].s);
-            }
-            step = j - i;
-            if (step > max_step) {
-                max_step = step;
-            }
-	}
-    }
-    fprintf(stderr, "max if-step = %d\n\n", max_step);
-#endif
-
-    return err;
+    return statements_get_structure(loop->lines, loop->n_lines,
+				    LOOP, "loop");
 }
 
 static int add_more_loop_lines (LOOPSET *loop)
@@ -2388,7 +2259,7 @@ static int try_add_loop_genr (LOOPSET *loop,
         gopt |= OPT_O;
     }
 
-    loop->lines[lno].genr = genr_compile(line, dset, gtype,
+    loop->lines[lno].ptr = genr_compile(line, dset, gtype,
                                         gopt, prn, &err);
     if (err == E_EQN) {
         /* may be a non-compilable special such as "genr time",
@@ -2428,7 +2299,7 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 #define loop_line_catch(ll)  (ll->flags & LOOP_LINE_CATCH)
 #define loop_line_nosub(ll)  (!(ll->flags & (LOOP_LINE_AT | LOOP_LINE_DOLLAR)))
 
-#define line_is_compiled(ll) (ll->genr != NULL || ll->ci == ELSE || ll->ci == ENDIF)
+#define line_is_compiled(ll) (ll->ptr != NULL || ll->ci == ELSE || ll->ci == ENDIF)
 #define line_has_dollar(ll)  (ll->flags & LOOP_LINE_DOLLAR)
 #define line_has_at_sign(ll) (ll->flags & LOOP_LINE_AT)
 
@@ -2551,7 +2422,7 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
         int i, ok = 1;
 
         for (i=0; i<loop->n_lines; i++) {
-            if (loop->lines[i].genr != NULL) {
+            if (loop->lines[i].ptr != NULL) {
                 ok = 0;
                 break;
             }
@@ -2689,8 +2560,8 @@ void loop_reset_uvars (LOOPSET *loop)
     /* stored references within "genrs" */
     if (loop->lines != NULL) {
         for (i=0; i<loop->n_lines; i++) {
-            if (loop->lines[i].genr != NULL) {
-                genr_reset_uvars(loop->lines[i].genr);
+            if (loop->lines[i].ptr != NULL) {
+                genr_reset_uvars(loop->lines[i].ptr);
             }
         }
     }
@@ -2857,14 +2728,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 if (echo && loop_is_verbose(loop)) {
                     pprintf(prn, "? %s\n", showline);
                 }
-                err = execute_genr(ll->genr, dset, prn);
+                err = execute_genr(ll->ptr, dset, prn);
                 if (ll->next > 0) {
                     j = ll->next - 1;
                 }
 	    } else if ((ci == IF || ci == ELIF) && compiled) {
                 cmd->ci = ci;
                 s->cmd->vstart = NULL;
-                flow_control(s, dset, &ll->genr);
+                flow_control(s, dset, &ll->ptr);
                 if (cmd->err) {
                     /* we hit an error evaluating the if state */
                     err = cmd->err;
@@ -2874,7 +2745,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 	    } else if (ci == ELSE || ci == ENDIF) {
 		/* these don't need compilation */
 		cmd->ci = ci;
-		flow_control(s, dset, &ll->genr);
+		flow_control(s, dset, &ll->ptr);
 		if (gretl_if_state_false() && ll->next > 0) {
 		    j = ll->next - 1;
 		}
@@ -2921,7 +2792,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 		}
 		if (!err && may_be_compilable(ll)) {
 		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
-		    if (ll->genr == NULL && !err) {
+		    if (ll->ptr == NULL && !err) {
                         /* fallback */
 			set_non_compilable(ll);
                         err = generate(cmd->vstart, dset, cmd->gtype,
@@ -2948,7 +2819,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 	    } else if (ci == IF || ci == ELIF) {
 		/* looking at a conditional that's not yet compiled */
 		if (may_be_compilable(ll)) {
-		    err = parse_command_line(s, dset, &ll->genr);
+		    err = parse_command_line(s, dset, &ll->ptr);
 		    if (s->cmd->flags & CMD_SUBST) {
 			set_non_compilable(ll);
 		    }
