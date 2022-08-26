@@ -38,7 +38,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOOP_DEBUG 2
+#define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
 #if HAVE_GMP
