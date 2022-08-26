@@ -250,15 +250,19 @@ int statements_get_structure (stmt *lines,
 	}
     }
 
-    /* add error check for d != 0, ld != 0 */
-
 #if STRUCTURE_DEBUG
     fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
             name, d_max, ld_max);
 #endif
 
+    if (d != 0 || ld != 0) {
+	fprintf(stderr, "broken structure: d = %d, ld = %d at end\n", d, ld);
+	return E_PARSE;
+    }
+
     if (d_max > 0) {
         match_start = gretl_list_new(d_max);
+	fprintf(stderr, "match_start allocated for d_max = %d\n", d_max);
         match_end = gretl_list_new(d_max);
     }
     if (ld_max > 0) {
@@ -318,12 +322,14 @@ int statements_get_structure (stmt *lines,
 	}
     }
 
+#if 0 /* not yet: apparently this can be dodgy (e.g. dbnomics_sample.inp */
     /* third pass: fill in goto's for true-block terminators */
     d = target = src = 0;
     for (i=last_endif; i>=first_if; i--) {
         line = &lines[i];
         if (line->ci == ENDIF) {
             d++;
+	    fprintf(stderr, "match_start: writing to element %d\n", d);
             target = match_start[d] = line->next;
             src = match_end[d] = i;
         } else if (line->ci == IF) {
@@ -334,6 +340,7 @@ int statements_get_structure (stmt *lines,
             line->next = src;
         }
     }
+#endif
 
     free(match_start);
     free(match_end);
