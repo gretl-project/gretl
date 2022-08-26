@@ -1956,6 +1956,8 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
         err = ufunc_get_structure(fun);
     }
 
+    gretl_cmd_free(&cmd);
+
     return err;
 }
 
@@ -9119,7 +9121,7 @@ static int handle_return_statement (fncall *call,
 #endif
 
     if (fun->rettype == GRETL_TYPE_VOID) {
-	if (*s == '\0') {
+	if (s == NULL || *s == '\0') {
 	    ; /* plain "return" from void function: OK */
 	} else if (line == NULL) {
 	    gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid",
