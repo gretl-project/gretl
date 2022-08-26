@@ -2793,20 +2793,19 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 		   it might not really be a case of genr!
 		*/
 		err = parse_command_line(s, dset, NULL);
-		if (!err && cmd->ci != GENR) {
+		if (err) {
+		    goto handle_err;
+		} else if (cmd->ci != GENR) {
+		    /* could be in a "restrict" block */
 		    ci = ll->ci = cmd->ci;
+		} else if (s->cmd->flags & CMD_SUBST) {
+		    set_non_compilable(ll);
 		}
 		parse = 0;
 	    }
 
 	    if (ci == GENR) {
 		if (may_be_compilable(ll)) {
-		    err = parse_command_line(s, dset, NULL);
-		    if (s->cmd->flags & CMD_SUBST) {
-			set_non_compilable(ll);
-		    }
-		}
-		if (!err && may_be_compilable(ll)) {
 		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
 		    if (ll->ptr == NULL && !err) {
                         /* fallback */
@@ -2819,7 +2818,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 		    if (!err) {
 			if (!loop_is_verbose(loop)) {
 			    cmd->opt |= OPT_Q;
-			}			
+			}
 			err = generate(cmd->vstart, dset, cmd->gtype,
 				       cmd->opt, prn);
 		    }
