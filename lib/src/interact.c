@@ -3573,8 +3573,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case PRINTF:
     case SSCANF:
-        err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
+	if (gretl_is_user_var(cmd->param) && user_var_get_type_by_name(cmd->param) == GRETL_TYPE_STRING) {
+	    char *tmp = get_string_by_name(cmd->param);
+	    err = do_printscan_command(cmd->ci, tmp, cmd->parm2,
                                    cmd->vstart, dset, prn);
+	} else {
+	    err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
+				       cmd->vstart, dset, prn);
+	}
         break;
 
     case PVAL:
