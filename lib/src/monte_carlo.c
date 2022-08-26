@@ -1942,9 +1942,9 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
                 compile_level);
 #endif
         if (loop_has_cond(loop)) {
-            loop_get_structure(loop);
+            err = loop_get_structure(loop);
         }
-        if (compile_level == 0) {
+        if (!err && compile_level == 0) {
             /* set flag to run the loop */
             loop_execute = 1;
         } else {
