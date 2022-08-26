@@ -2944,9 +2944,11 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	err = unpack_book_data(targ);
 	gretl_remove(targ);
 	if (err) {
-	    errbox(_("Error unzipping compressed data"));
+	    msgbox(_("Error unzipping compressed data"),
+		   GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
 	} else {
-	    infobox("Restart gretl to access this database");
+	    msgbox(_("Restart gretl to access this database"),
+		   GTK_MESSAGE_INFO, vwin_toplevel(vwin));
 	}
     } else if (vwin->role == REMOTE_DB) {
 	/* gretl-zipped database package */
@@ -2954,7 +2956,8 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	err = ggz_extract(targ);
 	if (err) {
 	    if (err != E_FOPEN) {
-		errbox(_("Error unzipping compressed data"));
+		msgbox(_("Error unzipping compressed data"),
+		       GTK_MESSAGE_ERROR, vwin_toplevel(vwin));
 	    }
 	} else {
 	    windata_t *local = get_local_viewer(vwin->role);

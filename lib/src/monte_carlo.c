@@ -38,7 +38,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOOP_DEBUG 0
+#define LOOP_DEBUG 2
 #define SUBST_DEBUG 0
 
 #if HAVE_GMP
@@ -2463,9 +2463,9 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%d\n",
+    fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%s\n",
 	    (void *) loop, loop->n_cmds, n, loop->cmds[n].line,
-	    loop->cmds[n].ci);
+	    gretl_command_word(loop->cmds[n].ci));
 #endif
 
     return err;
@@ -3726,8 +3726,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 #if LTRACE || (LOOP_DEBUG > 1)
-	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%d (%s), compiled=%d\n",
-		    loop->iter, j, showline, ci, gretl_command_word(ci),
+	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%s, compiled=%d\n",
+		    loop->iter, j, showline, gretl_command_word(ci),
 		    compiled);
 #endif
 
@@ -3842,7 +3842,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    if (parse && !err) {
 		err = parse_command_line(s, dset, NULL);
 #if LOOP_DEBUG > 1
-		fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
+		fprintf(stderr, "    after: '%s', ci=%s\n", line,
+			gretl_command_word(cmd->ci));
 		fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
 		fprintf(stderr, "    err from parse_command_line: %d\n", err);
 #endif
