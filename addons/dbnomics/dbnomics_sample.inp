@@ -7,7 +7,7 @@ setobs 12 1989:1
 strings ToDnld = defarray("AMECO/ZUTN/EA19.1.0.0.0.ZUTN", 
   "ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z", 
   "FED/G17_CAPUTL/CAPUTL.B50001.S",
-  "WB/WDI/SL.UEM.TOTL.ZS-AR")
+  "WB/WDI/A-SL.UEM.TOTL.ZS-ARG")
 
 scalar N = nelem(ToDnld)
 
