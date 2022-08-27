@@ -40,6 +40,7 @@
 
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
+#define COMP_DEBUG 0
 
 enum loop_types {
     COUNT_LOOP,
@@ -1551,7 +1552,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 
     gretl_error_clear();
 
-#if LOOP_DEBUG
+#if COMP_DEBUG || LOOP_DEBUG
     fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n",
             (void *) inloop, s);
 #endif
@@ -1569,7 +1570,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
         return NULL;
     }
 
-#if LOOP_DEBUG
+#if COMP_DEBUG || LOOP_DEBUG
     fprintf(stderr, " added loop at %p (%s)\n", (void *) loop,
             (*nested)? "nested" : "independent");
 #endif
@@ -1885,7 +1886,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     warnmsg(s->prn); /* catch "end loop" if present */
     gretl_error_clear();
 
-#if LOOP_DEBUG > 1
+#if COMP_DEBUG > 1 || LOOP_DEBUG > 1
     fprintf(stderr, "gretl_loop_append_line: currloop = %p, line = '%s'\n",
             (void *) loop, s->line);
 #endif
@@ -2529,8 +2530,11 @@ static int maybe_preserve_loop (LOOPSET *loop, LOOPSET **ploop)
 
     if (ploop != NULL) {
         if (*ploop == NULL) {
-#if GLOBAL_TRACE
-            fprintf(stderr, "attaching loop %p to function\n", (void *) loop);
+#if COMP_DEBUG || GLOBAL_TRACE
+	    const char *name = NULL;
+	    current_function_info(&name, NULL);
+            fprintf(stderr, "*** attaching loop %p to function %s ***\n\n",
+		    (void *) loop, name);
 #endif
             *ploop = loop;
         }
