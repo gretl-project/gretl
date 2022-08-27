@@ -1327,6 +1327,27 @@ fnpkg *gretl_function_get_package (const ufunc *fun)
     return fun == NULL ? NULL : fun->pkg;
 }
 
+#if COMP_DEBUG
+
+static void print_callstack (ufunc *fun)
+{
+    GList *tmp = callstack;
+    fncall *call;
+
+    fputs("callstack:\n", stderr);
+    while (tmp != NULL) {
+	call = tmp->data;
+	if (fun == call->fun) {
+	    fprintf(stderr, "  %s *\n", call->fun->name);
+	} else {
+	    fprintf(stderr, "  %s\n", call->fun->name);
+	}
+	tmp = tmp->next;
+    }
+}
+
+#endif
+
 /* see if a function is currently employed in the call stack */
 
 static int function_in_use (ufunc *fun)
@@ -7407,17 +7428,25 @@ int gretl_function_append_line (ExecState *s)
 	return 1;
     }
 
+    blank = string_is_blank(line);
+
 #if FNPARSE_DEBUG
-    fprintf(stderr, "gretl_function_append_line: '%s' (idx = %d)\n",
-	    line, fun->line_idx);
+    if (fun->line_idx == 1) {
+	fputc('\n', stderr);
+    }
+    if (blank) {
+	fprintf(stderr, "%s: append blank line (idx = %d)\n",
+		fun->name, fun->line_idx);
+    } else {
+	fprintf(stderr, "%s: append line '%s' (idx = %d)\n",
+		fun->name, line, fun->line_idx);
+    }
 #endif
 
     /* note: avoid losing comment lines */
     origline = gretl_strdup(line);
 
-    if (string_is_blank(line)) {
-	blank = 1;
-    } else {
+    if (!blank) {
 	err = get_command_index(s, FUNC);
     }
     if (blank || err) {
@@ -9285,10 +9314,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int gencomp = 0;
+    int blocked = 0;
     int n_saved = 0;
     int i, j, err = 0;
 
-#if EXEC_DEBUG || GLOBAL_TRACE
+#if COMP_DEBUG || EXEC_DEBUG || GLOBAL_TRACE
     fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
 #endif
 
@@ -9339,7 +9369,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     /* should we try to compile genrs, loops? */
     gencomp = 1; //gencomp = gretl_iterating() && !is_recursing(call);
-    int blocked = 0; //!is_recursing(call);
+    blocked = 0; //!is_recursing(call);
 
     /* get function lines in sequence and check, parse, execute */
 
@@ -9374,7 +9404,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         }
 
 	if (fline->ci == LOOP && !blocked) {
-	    /* Q: do we have to skip the recursing case? */
+	    /* Q: do we need to block the recursing case? */
 	    if (fline->ptr != NULL) {
 		err = gretl_loop_exec(&state, dset, (LOOPSET **) &fline->ptr);
 		n_saved++;
@@ -9403,7 +9433,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
         } else if (line_has_genr(fline) && !blocked &&
 		   !is_return_line(fline)) {
-            /* do we need to rule out the recursing case? */
+            /* do we need to block the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
             n_saved++;
 	} else {
