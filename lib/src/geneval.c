@@ -10181,7 +10181,7 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
-#define SAVE_FNCALL 1 /* 2022-08-12, not just yet */
+#define SAVE_FNCALL 1 /* 2022-08-12, still somewhat experimental */
 
 static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 {

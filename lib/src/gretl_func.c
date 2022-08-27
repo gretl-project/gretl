@@ -130,6 +130,8 @@ typedef enum {
    execution terminates (as usual). The caller then takes
    on responsibility for destroying the call. The only
    relevant caller is eval_ufunc(), in geneval.c.
+
+   August 2022: FIXME this comment needs updating.
 */
 
 struct fncall_ {
@@ -593,6 +595,8 @@ fncall *user_func_get_fncall (ufunc *fun)
 	fun->call = fncall_new(fun, 1);
     } else {
 	fncall *fc = fun->call;
+
+	/* FIXME recursive call? */
 
 	fncall_clear_args_array(fc);
 	if (fc->ptrvars != NULL) {
@@ -8869,7 +8873,7 @@ static void set_pkgdir (fnpkg *pkg)
 
 static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 {
-    GList *tmp = callstack;
+    GList *tmp = g_list_last(callstack);
     fncall *prevcall;
 
     while (tmp != NULL) {
@@ -8879,7 +8883,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
             reset_saved_uservars(call->fun); /* 2022-08-27 */
 	    break;
 	}
-	tmp = tmp->next;
+	tmp = tmp->prev;
     }
 
     set_previous_depth(fn_executing);
