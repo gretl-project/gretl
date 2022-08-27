@@ -27,6 +27,7 @@
 #include "cmd_private.h"
 
 #define PMDEBUG 0
+#define COMP_DEBUG 2
 
 void gretl_exec_state_init (ExecState *s,
                             ExecFlags flags,
@@ -186,9 +187,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
     return err;
 }
 
-#define STRUCTURE_DEBUG 0
-
-/* Takes an array of "stmt" structs (statements or lines) from a
+/* Takes an array of "stmt" structs (see cmd_private.h) from a
    function or loop and examines them for structure, in terms of
    conditionality (if/elif/else/endif). The object of the exercise is
    to figure out which line we should skip to in case of a false
@@ -197,11 +196,13 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
    "gotos", which are recorded in the "next" member of each relevant
    line.
 
-   In the case of functions we also determine and record embedded loop
-   structure. (Note the asymmetry: a function may contain one or more
-   loops but a loop cannot contain a function definition.)
+   In the case of functions only we also determine and record embedded
+   loop structure -- and we ignore conditionality within such loops,
+   which will be handled by the specific loop-compilation code. (Note
+   the asymmetry: a function may contain one or more loops but a loop
+   cannot contain a function definition.)
 
-   The @context argument should be FUNC or LOOP to distinguish the
+   The @context argument should be FUNC or LOOP to distinguish the two
    cases. The @name argument is used only in debugging, to identify
    the function we're working on; in the LOOP case we just pass
    "loop".
@@ -218,39 +219,56 @@ int statements_get_structure (stmt *lines,
     int *next_from_loop = NULL;
     int d_max = 0, ld_max = 0;
     int d = 0, ld = 0;
-    int last_endif = 0;
-    int first_if = -1;
+    int lmax = 0;
+    int lmin = -1;
     int target, src;
     int i, j, ci;
     int err = 0;
 
-    /* first pass: determine the maximum depth of
-       conditionality and looping
+    /* first pass: determine the maximum depth of conditionality (and
+       looping, if in a function). Also record the indices of the
+       first and last lines "of interest" (lmin and lmax).
     */
     for (i=0; i<n_lines; i++) {
 	ci = lines[i].ci;
-	if (context == FUNC && ci == LOOP) {
-            if (++ld > ld_max) {
-                ld_max = ld;
+#if COMP_DEBUG > 1
+        if (context == LOOP) {
+            fprintf(stderr, "LOOP L%d: '%s'\n", i, lines[i].s);
+        }
+#endif
+        if (context == FUNC) {
+            if (ci == LOOP) {
+                if (lmin < 0) {
+                    lmin = i;
+                }
+                if (++ld > ld_max) {
+                    ld_max = ld;
+                }
+            } else if (ci == ENDLOOP) {
+                if (i > lmax) {
+                    lmax = i;
+                }
+                ld--;
+            } else if (ld > 0) {
+                continue;
             }
-        } else if (context == FUNC && ci == ENDLOOP) {
-            ld--;
-        } else if (ld > 0) {
-            continue;
-	} else if (ci == IF) {
-            if (first_if < 0) {
-                first_if = i;
+        }
+	if (ci == IF) {
+            if (lmin < 0) {
+                lmin = i;
             }
             if (++d > d_max) {
                 d_max = d;
             }
 	} else if (ci == ENDIF) {
-            last_endif = i;
+            if (i > lmax) {
+                lmax = i;
+            }
             d--;
 	}
     }
 
-#if STRUCTURE_DEBUG
+#if COMP_DEBUG
     fprintf(stderr, "\n%s: max if-depth %d, max loop-depth %d\n",
             name, d_max, ld_max);
 #endif
@@ -262,7 +280,6 @@ int statements_get_structure (stmt *lines,
 
     if (d_max > 0) {
         match_start = gretl_list_new(d_max);
-	fprintf(stderr, "match_start allocated for d_max = %d\n", d_max);
         match_end = gretl_list_new(d_max);
     }
     if (ld_max > 0) {
@@ -270,36 +287,39 @@ int statements_get_structure (stmt *lines,
     }
 
     /* second pass: analysis */
-    for (i=0; i<n_lines && !err; i++) {
+    for (i=lmin; i<=lmax && !err; i++) {
 	line = &lines[i];
-	if (context == FUNC && line->ci == LOOP) {
-            ld++;
-            next_from_loop[ld] = i;
-	} else if (context == FUNC && line->ci == ENDLOOP) {
-            if (ld == 0) {
-                err = 1;
-            } else {
-                j = next_from_loop[ld];
-                lines[j].next = i;
-                ld--;
+	if (context == FUNC) {
+            if (line->ci == LOOP) {
+                ld++;
+                next_from_loop[ld] = i;
+            } else if (line->ci == ENDLOOP) {
+                if (ld == 0) {
+                    err = E_PARSE;
+                } else {
+                    j = next_from_loop[ld];
+                    lines[j].next = i;
+                    ld--;
+                }
+            } else if (ld > 0) {
+                continue;
             }
-        } else if (ld > 0) {
-            continue;
-	} else if (line->ci == IF) {
+        }
+	if (line->ci == IF) {
 	    d++;
 	    match_start[d] = i;
 	} else if (line->ci == ENDIF) {
 	    if (d == 0) {
-		err = 1;
+		err = E_PARSE;
 	    } else {
                 line->next = -d;
 		j = match_start[d];
 		lines[j].next = i;
                 d--;
 	    }
-	} else if (line->ci == ELIF) {
+	} else if (line->ci == ELIF || line->ci == ELSE) {
 	    if (d == 0) {
-		err = 1;
+		err = E_PARSE;
 	    } else {
                 if (lines[i-1].ci != ENDIF) {
                     lines[i-1].next = -d;
@@ -308,45 +328,42 @@ int statements_get_structure (stmt *lines,
 		lines[j].next = i;
 		match_start[d] = i;
 	    }
-	} else if (line->ci == ELSE) {
-	    if (d == 0) {
-		err = 1;
-	    } else {
-		if (lines[i-1].ci != ENDIF) {
-                    lines[i-1].next = -d;
-		}
-		j = match_start[d];
-		lines[j].next = i;
-		match_start[d] = i;
-	    }
 	}
     }
 
-#if 0 /* not yet: apparently this can be dodgy (e.g. dbnomics_sample.inp */
-    /* third pass: fill in goto's for true-block terminators */
-    d = target = src = 0;
-    for (i=last_endif; i>=first_if; i--) {
-        line = &lines[i];
-        if (line->ci == ENDIF) {
-            d++;
-	    fprintf(stderr, "match_start: writing to element %d\n", d);
-            target = match_start[d] = line->next;
-            src = match_end[d] = i;
-        } else if (line->ci == IF) {
-            target = (d == 0)? 0 : match_start[d];
-            src = (d == 0)? 0 : match_end[d];
-	    d--;
-        } else if (target < 0 && line->next == target) {
-            line->next = src;
+    if (!err) {
+        /* third pass: fill in goto's for true-block terminators */
+        ld = d = target = src = 0;
+        for (i=lmax; i>=lmin; i--) {
+            line = &lines[i];
+            if (context == FUNC) {
+                if (line->ci == ENDLOOP) {
+                    ld++;
+                } else if (line->ci == LOOP) {
+                    ld--;
+                } else if (ld > 0) {
+                    continue;
+                }
+            }
+            if (line->ci == ENDIF) {
+                d++;
+                target = match_start[d] = line->next;
+                src = match_end[d] = i;
+            } else if (line->ci == IF) {
+                target = (d == 0)? 0 : match_start[d];
+                src = (d == 0)? 0 : match_end[d];
+                d--;
+            } else if (target < 0 && line->next == target) {
+                line->next = src;
+            }
         }
     }
-#endif
 
     free(match_start);
     free(match_end);
     free(next_from_loop);
 
-#if STRUCTURE_DEBUG
+#if COMP_DEBUG
     /* display what we figured out */
     fputc('\n', stderr);
     for (i=0; i<n_lines; i++) {
