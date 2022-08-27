@@ -1861,42 +1861,40 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 
 static int push_function_line (ufunc *fun, char *s, int ci, int donate)
 {
-    int err = 0;
+    fn_line *lines;
+    int n = fun->n_lines + 1;
+    int i, err = 0;
 
-    if (string_is_blank(s)) {
-	fun->line_idx += 1;
+    /* FIXME realloc'ing for _one_ extra line at a time not
+       very efficient?
+    */
+
+    lines = realloc(fun->lines, n * sizeof *lines);
+
+    if (lines == NULL) {
+        err = E_ALLOC;
     } else {
-	fn_line *lines;
-	int n = fun->n_lines + 1;
-
-	lines = realloc(fun->lines, n * sizeof *lines);
-
-	if (lines == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    int i = n - 1;
-
-	    fun->lines = lines;
-	    lines[i].idx = fun->line_idx;
-	    if (donate) {
-                /* take ownership of @s */
-		lines[i].s = s;
-	    } else {
-                /* make a copy of @s */
-		lines[i].s = gretl_strdup(s);
-		if (lines[i].s == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
-	    if (!err) {
-		lines[i].ptr = NULL;
-                lines[i].ci = ci;
-		lines[i].next = 0;
-		lines[i].flags = 0;
-		fun->n_lines = n;
-		fun->line_idx += 1;
-	    }
-	}
+        i = n - 1;
+        fun->lines = lines;
+        lines[i].idx = fun->line_idx;
+        if (donate) {
+            /* take ownership of @s */
+            lines[i].s = s;
+        } else {
+            /* make a copy of @s */
+            lines[i].s = gretl_strdup(s);
+            if (lines[i].s == NULL) {
+                err = E_ALLOC;
+            }
+        }
+        if (!err) {
+            lines[i].ptr = NULL;
+            lines[i].ci = ci;
+            lines[i].next = 0;
+            lines[i].flags = 0;
+            fun->n_lines = n;
+            fun->line_idx += 1;
+        }
     }
 
     return err;
@@ -1939,7 +1937,11 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 	    has_flow = 1;
 	}
 	tailstrip(s);
-	err = push_function_line(fun, s, cmd.ci, 0);
+        if (string_is_blank(s)) {
+            fun->line_idx += 1;
+        } else {
+            err = push_function_line(fun, s, cmd.ci, 0);
+        }
     }
 
     if (uses_set) {
@@ -7398,7 +7400,7 @@ int gretl_function_append_line (ExecState *s)
     ufunc *fun = current_fdef;
     int blank = 0;
     int ignore = 0;
-    int err = 0;
+    int i, err = 0;
 
     if (fun == NULL) {
 	fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
@@ -7459,20 +7461,22 @@ int gretl_function_append_line (ExecState *s)
     }
 
     if (compiling) {
-	/* actually add the line? */
-	int i = fun->n_lines;
-
-	err = push_function_line(fun, origline, cmd->ci, 1);
-	if (!err) {
-	    if (!blank) {
+        if (blank) {
+            /* just increment the index (placeholder) */
+            fun->line_idx += 1;
+        } else {
+            /* actually add the line */
+            i = fun->n_lines;
+            err = push_function_line(fun, origline, cmd->ci, 1);
+            if (!err) {
 		origline = NULL; /* successfully donated */
-	    }
-	    if (ignore) {
-		fun->lines[i].flags |= LINE_IGNORE;
-	    } else if (!blank) {
-		python_check(line);
-	    }
-	}
+                if (ignore) {
+                    fun->lines[i].flags |= LINE_IGNORE;
+                } else {
+                    python_check(line);
+                }
+            }
+        }
     } else {
 	/* finished compilation */
 	if (!err && ifdepth != 0) {
@@ -8843,6 +8847,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	prevcall = tmp->data;
 	if (prevcall->fun == call->fun) {
 	    set_call_recursing(call);
+            reset_saved_uservars(call->fun); /* 2022-08-27 */
 	    break;
 	}
 	tmp = tmp->next;
@@ -9293,9 +9298,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
-    /* should we try to compile genrs, loops? */
-    gencomp = gretl_iterating() && !is_recursing(call);
-
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: %s, gencomp = %d\n", u->name, gencomp);
 #endif
@@ -9335,6 +9337,10 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         redir_level = print_redirection_level(prn);
     }
 
+    /* should we try to compile genrs, loops? */
+    gencomp = 1; //gencomp = gretl_iterating() && !is_recursing(call);
+    int blocked = 0; //!is_recursing(call);
+
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
@@ -9367,7 +9373,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
         }
 
-	if (fline->ci == LOOP && !is_recursing(call)) {
+	if (fline->ci == LOOP && !blocked) {
 	    /* Q: do we have to skip the recursing case? */
 	    if (fline->ptr != NULL) {
 		err = gretl_loop_exec(&state, dset, (LOOPSET **) &fline->ptr);
@@ -9395,7 +9401,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    /* skip past the loop lines */
 	    i = fline->next;
 	    continue;
-        } else if (line_has_genr(fline) && !is_recursing(call) &&
+        } else if (line_has_genr(fline) && !blocked &&
 		   !is_return_line(fline)) {
             /* do we need to rule out the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
