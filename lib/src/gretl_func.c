@@ -50,9 +50,10 @@
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
 #define EXEC_DEBUG 0    /* debugging of function execution */
-#define UDEBUG 0        /* debug handling of args */
+#define ARGS_DEBUG 0    /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
 #define FN_DEBUG 0      /* miscellaneous debugging */
+#define COMP_DEBUG 1    /* debug "compilation" */
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
@@ -265,6 +266,9 @@ static int load_function_package (const char *fname,
 				  GArray *pstack,
 				  PRN *prn);
 static int ufunc_get_structure (ufunc *u);
+#if COMP_DEBUG
+static void print_callstack (ufunc *fun);
+#endif
 
 /* record of state, and communication of state with outside world */
 
@@ -563,11 +567,10 @@ int push_function_args (fncall *fc, ...)
     return err;
 }
 
-/* fncall_new: if @preserve is non-zero, we don't destroy
-   the fncall struct automatically on completion of
-   function execution -- in which case the caller of this
-   function is responsible for calling fncall_destroy()
-   at a suitable point in the proceedings.
+/* fncall_new: if @preserve is non-zero, we don't destroy the fncall
+   struct automatically on completion of function execution -- in
+   which case the caller of this function is responsible for calling
+   fncall_destroy() at a suitable point in the proceedings.
 */
 
 fncall *fncall_new (ufunc *fun, int preserve)
@@ -589,15 +592,56 @@ fncall *fncall_new (ufunc *fun, int preserve)
     return call;
 }
 
+static int call_is_in_use (fncall *call)
+{
+    if (callstack != NULL) {
+	GList *tmp = g_list_last(callstack);
+
+	while (tmp != NULL) {
+	    if (call == tmp->data) {
+		return 1;
+	    }
+	    tmp = tmp->prev;
+	}
+    }
+
+    return 0;
+}
+
+/* This function is called (only) from geneval.c, in the function
+   eval_ufunc(). The primary role of the fncall struct is to serve as
+   a vehicle for conveying the arguments to the user function in
+   question, but it also carries state information about the call,
+   including whether or not it is subject to recursion.
+*/
+
 fncall *user_func_get_fncall (ufunc *fun)
 {
+#if COMP_DEBUG
+    fprintf(stderr, "user_func_get_fncall\n");
+    print_callstack(fun);
+#endif
+
     if (fun->call == NULL) {
 	fun->call = fncall_new(fun, 1);
+#if COMP_DEBUG
+	fprintf(stderr, "%s: allocated new call %p (was NULL)\n",
+		fun->name, (void *) fun->call);
+#endif
+    } else if (call_is_in_use(fun->call)) {
+	/* recursion is going on */
+	fun->call = fncall_new(fun, 0);
+#if COMP_DEBUG
+	fprintf(stderr, "%s: allocating new call %p (recursion)\n",
+		fun->name, (void *) fun->call);
+#endif
     } else {
 	fncall *fc = fun->call;
 
-	/* FIXME recursive call? */
-
+#if COMP_DEBUG
+	fprintf(stderr, "%s: reusing existing call %p\n",
+		fun->name, (void *) fc);
+#endif
 	fncall_clear_args_array(fc);
 	if (fc->ptrvars != NULL) {
 	    free(fc->ptrvars);
@@ -621,6 +665,9 @@ fncall *user_func_get_fncall (ufunc *fun)
 void fncall_destroy (fncall *call)
 {
     if (call != NULL) {
+#if COMP_DEBUG
+	fprintf(stderr, "destroying fncall at %p\n", (void *) call);
+#endif
 	free(call->args);
 	free(call->ptrvars);
 	free(call->listvars);
@@ -790,7 +837,7 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     if (call != NULL && call->listvars != NULL) {
 	for (i=1; i<=call->listvars[0]; i++) {
 	    vi = call->listvars[i];
-#if UDEBUG
+#if ARGS_DEBUG
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
 		    vi, dset->varname[vi]);
 #endif
@@ -799,27 +846,53 @@ static void set_listargs_from_call (fncall *call, DATASET *dset)
     }
 }
 
+static void get_prior_call_for_function (ufunc *fun)
+{
+    GList *tmp = g_list_last(callstack);
+    fncall *call;
+
+    tmp = tmp->prev;
+    while (tmp != NULL) {
+	call = tmp->data;
+	if (call->fun == fun) {
+	    /* reattach */
+#if COMP_DEBUG
+	    fprintf(stderr, "reattach call at %p to function %s\n",
+		    (void *) call, fun->name);
+#endif
+	    fun->call = call;
+	    break;
+	}
+	tmp = tmp->prev;
+    }
+}
+
 static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
 {
     int dbg = gretl_debugging_on();
     fncall *thiscall = *pcall;
     fncall *popcall = NULL;
+    ufunc *fun = thiscall->fun;
 
     destroy_option_params_at_level(fn_executing);
     set_previous_depth(fn_executing);
     fn_executing--;
 
+    if (is_recursing(thiscall)) {
+	get_prior_call_for_function(fun);
+    }
+
     callstack = g_list_remove(callstack, thiscall);
 
-#if EXEC_DEBUG
+#if COMP_DEBUG || EXEC_DEBUG
     fprintf(stderr, "set_executing_off: removing call to %s, depth now %d\n",
-	    call->fun->name, g_list_length(callstack));
+	    fun->name, g_list_length(callstack));
 #endif
 
     if (dbg) {
 	pputs(prn, "*** ");
 	bufspace(gretl_function_depth(), prn);
-	pprintf(prn, "exiting function %s, ", thiscall->fun->name);
+	pprintf(prn, "exiting function %s, ", fun->name);
     }
 
     maybe_destroy_fncall(pcall);
@@ -1337,15 +1410,19 @@ static void print_callstack (ufunc *fun)
 {
     GList *tmp = callstack;
     fncall *call;
+    char s[16];
 
     fputs("callstack:\n", stderr);
     while (tmp != NULL) {
 	call = tmp->data;
+	*s = '\0';
 	if (fun == call->fun) {
-	    fprintf(stderr, "  %s *\n", call->fun->name);
-	} else {
-	    fprintf(stderr, "  %s\n", call->fun->name);
+	    strcpy(s, " *");
 	}
+	if (call->flags & FC_PRESERVE) {
+	    strcat(s, " preserve");
+	}
+	fprintf(stderr, "  %s %p%s\n", call->fun->name, (void *) call, s);
 	tmp = tmp->next;
     }
 }
@@ -1636,6 +1713,7 @@ static void ufunc_free (ufunc *fun)
 	fncall_destroy(fun->call);
         fun->call = NULL;
     }
+    /* FIXME saved loops, genrs? */
     free(fun);
 }
 
@@ -7616,7 +7694,7 @@ static int localize_list (fncall *call, fn_arg *arg,
 	localize_list_members(call, list, fp->name, dset);
     }
 
-#if UDEBUG
+#if ARGS_DEBUG
     fprintf(stderr, "localize_list (%s): returning %d\n",
 	    fp->name, err);
 #endif
@@ -7961,7 +8039,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	arg = &call->args[i];
 	fp = &fun->params[i];
 
-#if UDEBUG
+#if ARGS_DEBUG
 	fprintf(stderr, "arg[%d], param type %s (%s), arg type %s (%s)\n",
 		i, gretl_type_get_name(fp->type), fp->name,
 		gretl_type_get_name(arg->type), arg->upname);
@@ -8047,7 +8125,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	set_listargs_from_call(call, dset);
     }
 
-#if UDEBUG
+#if ARGS_DEBUG
     fprintf(stderr, "allocate_function args: returning %d\n", err);
 #endif
 
@@ -8366,7 +8444,7 @@ static int unlocalize_list (fncall *call, const char *lname,
     int upd = d - 1;
     int i, vi;
 
-#if UDEBUG
+#if ARGS_DEBUG
     fprintf(stderr, "\n*** unlocalize_list '%s', function %s depth = %d\n",
 	    lname, call->fun->name, d);
     printlist(list, lname);
@@ -8417,7 +8495,7 @@ static int unlocalize_list (fncall *call, const char *lname,
 		    series_set_stack_level(dset, vi, upd);
 		}
 	    }
-#if UDEBUG
+#if ARGS_DEBUG
 	    fprintf(stderr, " list-member var %d, '%s': ", vi, vname);
 	    if (overwrite) {
 		fprintf(stderr, "found match in caller, overwrote var %d\n", j);
@@ -8570,7 +8648,7 @@ function_assign_returns (fncall *call, int rtype,
     ufunc *u = call->fun;
     int i, err = 0;
 
-#if UDEBUG
+#if ARGS_DEBUG
     fprintf(stderr, "function_assign_returns: rtype = %s, call->retname = %s\n",
 	    gretl_type_get_name(rtype), call->retname);
 #endif
@@ -8666,7 +8744,7 @@ function_assign_returns (fncall *call, int rtype,
 	}
     }
 
-#if UDEBUG
+#if ARGS_DEBUG
     fprintf(stderr, "function_assign_returns: returning %d\n", err);
 #endif
 
@@ -9021,7 +9099,7 @@ static int check_function_args (fncall *call, PRN *prn)
 	}
     }
 
-#if UDEBUG
+#if ARGS_DEBUG
     fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
 #endif
 
