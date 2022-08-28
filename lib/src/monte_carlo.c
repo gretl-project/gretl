@@ -40,7 +40,7 @@
 
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
-#define COMP_DEBUG 0
+#define COMP_DEBUG 1
 
 enum loop_types {
     COUNT_LOOP,
@@ -590,17 +590,21 @@ void gretl_loop_destroy (LOOPSET *loop)
         return;
     }
 
-    if (loop_is_attached(loop)) {
+    if (gretl_function_depth() > 0 && loop_is_attached(loop)) {
         detach_loop_from_function(loop);
     }
 
-#if GLOBAL_TRACE || LOOP_DEBUG
+#if 1 || GLOBAL_TRACE || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
 
-    for (i=0; i<loop->n_children; i++) {
-        gretl_loop_destroy(loop->children[i]);
-        loop->children[i] = NULL;
+    if (loop->children != NULL) {
+        for (i=0; i<loop->n_children; i++) {
+            gretl_loop_destroy(loop->children[i]);
+            loop->children[i] = NULL;
+        }
+        free(loop->children);
+        loop->children = NULL;
     }
 
     controller_free(&loop->init);
@@ -641,10 +645,6 @@ void gretl_loop_destroy (LOOPSET *loop)
     }
     loop_store_free(&loop->store);
 #endif
-
-    if (loop->children != NULL) {
-        free(loop->children);
-    }
 
     if (loop->flags & LOOP_DELVAR) {
         user_var_delete_by_name(loop->idxname, NULL);

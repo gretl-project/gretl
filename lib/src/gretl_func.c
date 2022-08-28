@@ -618,7 +618,7 @@ static int call_is_in_use (fncall *call)
 fncall *user_func_get_fncall (ufunc *fun)
 {
 #if COMP_DEBUG
-    fprintf(stderr, "user_func_get_fncall\n");
+    fprintf(stderr, "user_func_get_fncall, starting\n");
     print_callstack(fun);
 #endif
 
@@ -874,6 +874,11 @@ static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
     fncall *popcall = NULL;
     ufunc *fun = thiscall->fun;
 
+#if COMP_DEBUG
+    fprintf(stderr, "set_executing_off, starting\n");
+    print_callstack(fun);
+#endif
+
     destroy_option_params_at_level(fn_executing);
     set_previous_depth(fn_executing);
     fn_executing--;
@@ -885,8 +890,8 @@ static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
     callstack = g_list_remove(callstack, thiscall);
 
 #if COMP_DEBUG || EXEC_DEBUG
-    fprintf(stderr, "set_executing_off: removing call to %s, depth now %d\n",
-	    fun->name, g_list_length(callstack));
+    fprintf(stderr, "set_executing_off: removed call %p to %s, depth now %d\n",
+	    (void *) thiscall, fun->name, g_list_length(callstack));
 #endif
 
     if (dbg) {
@@ -1410,7 +1415,12 @@ static void print_callstack (ufunc *fun)
 {
     GList *tmp = callstack;
     fncall *call;
-    char s[16];
+    char s[32];
+
+    if (tmp == NULL) {
+        fputs("callstack: empty\n", stderr);
+        return;
+    }
 
     fputs("callstack:\n", stderr);
     while (tmp != NULL) {
@@ -1421,6 +1431,9 @@ static void print_callstack (ufunc *fun)
 	}
 	if (call->flags & FC_PRESERVE) {
 	    strcat(s, " preserve");
+	}
+	if (call->flags & FC_RECURSING) {
+	    strcat(s, " recursing");
 	}
 	fprintf(stderr, "  %s %p%s\n", call->fun->name, (void *) call, s);
 	tmp = tmp->next;
@@ -1656,14 +1669,21 @@ static void free_lines_array (fn_line *lines, int n)
     fn_line *line;
     int i;
 
-    if (lines == NULL) return;
+    if (lines == NULL) {
+        return;
+    }
+
+    fprintf(stderr, "free_lines_array (n=%d)\n", n);
 
     for (i=0; i<n; i++) {
-        line = &(lines[i]);
+        line = &lines[i];
+        fprintf(stderr, "L%d: %s\n", i, line->s);
 	free(line->s);
 	if (line_has_loop(line)) {
+            fprintf(stderr, "  line has_loop: %p\n", (void *) line->ptr);
 	    gretl_loop_destroy(line->ptr);
 	} else if (line_has_genr(line)) {
+            fprintf(stderr, "  line has_genr: %p\n", (void *) line->ptr);
             destroy_genr(line->ptr);
         }
     }
@@ -1707,13 +1727,14 @@ static void clear_ufunc_data (ufunc *fun)
 
 static void ufunc_free (ufunc *fun)
 {
+    fprintf(stderr, "ufunc_free: working on %s\n", fun->name);
+    /* note: free_lines_array() handles loops, genrs */
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
     if (fun->call != NULL) {
 	fncall_destroy(fun->call);
         fun->call = NULL;
     }
-    /* FIXME saved loops, genrs? */
     free(fun);
 }
 
@@ -9451,14 +9472,14 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     /* should we try to compile genrs, loops? */
     gencomp = 1; //gencomp = gretl_iterating() && !is_recursing(call);
-    blocked = 0; //!is_recursing(call);
+    blocked = 0; //is_recursing(call);
 
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
-        fn_line *fline = &(u->lines[i]);
+        fn_line *fline = &u->lines[i];
 #if 0
-	fprintf(stderr, "line %d: '%s'\n", i, fline->s);
+        fprintf(stderr, "line %d: '%s' (ptr %p)\n", i, fline->s, (void *) fline->ptr);
 #endif
 
 	if (gretl_echo_on()) {
@@ -9488,6 +9509,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (fline->ci == LOOP && !blocked) {
 	    /* Q: do we need to block the recursing case? */
 	    if (fline->ptr != NULL) {
+                fprintf(stderr, "HERE 1 LOOP prior fline->ptr = %p\n", (void *) fline->ptr);
 		err = gretl_loop_exec(&state, dset, (LOOPSET **) &fline->ptr);
 		n_saved++;
 	    } else {
@@ -9499,6 +9521,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		}
 		if (!err) {
 		    err = gretl_loop_exec(&state, dset, ptr);
+                    fprintf(stderr, "HERE 2 LOOP new fline->ptr = %p\n", (void *) fline->ptr);
 		}
 	    }
             if (err) {
