@@ -53,8 +53,8 @@
 #define ARGS_DEBUG 0    /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
 #define FN_DEBUG 0      /* miscellaneous debugging */
-#define COMP_DEBUG 0    /* debug "compilation" */
-#define CALL_DEBUG 0    /* debug handling of the callstack */
+#define COMP_DEBUG 1    /* debug "compilation" */
+#define CALL_DEBUG 1    /* debug handling of the callstack */
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
@@ -7471,7 +7471,7 @@ int gretl_start_compiling_function (const char *line,
 	}
     }
 
-#if COMP_TRACE
+#if COMP_DEBUG
     fprintf(stderr, "started compiling function %s (err = %d)\n",
 	    name, err);
 #endif
@@ -7620,7 +7620,7 @@ int gretl_function_append_line (ExecState *s)
 	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
 	    err = E_PARSE;
 	}
-#if COMP_TRACE
+#if COMP_DEBUG
 	fprintf(stderr, "finished compiling function %s\n", fun->name);
 #endif
 	/* reset static var */
@@ -8940,24 +8940,24 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 /* reset any saved uservar addresses in context of loops or
    genrs attached to @u */
 
-static void reset_saved_uservars (ufunc *u)
+static void reset_saved_uservars (ufunc *u, int on_recurse)
 {
     fn_line *line;
     int i;
 
+#if COMP_DEBUG
+    if (on_recurse) {
+	fprintf(stderr, "on recursion of %s, reset_saved_uservars\n", u->name);
+    } else {
+	fprintf(stderr, "at exit from %s, reset_saved_uservars\n", u->name);
+    }
+#endif    
+
     for (i=0; i<u->n_lines; i++) {
         line = &(u->lines[i]);
 	if (line_has_loop(line)) {
-#if COMP_TRACE
-	    fprintf(stderr, "at exit from %s, loop_reset_uvars %p\n",
-		    u->name, (void *) line->ptr);
-#endif
 	    loop_reset_uvars(line->ptr);
 	} else if (line_has_genr(line)) {
-#if COMP_TRACE
-	    fprintf(stderr, "at exit from %s, genr_reset_uvars %p\n",
-		    u->name, (void *) line->ptr);
-#endif
             genr_reset_uvars(line->ptr);
         }
     }
@@ -8984,7 +8984,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	prevcall = tmp->data;
 	if (prevcall->fun == call->fun) {
 	    set_call_recursing(call);
-            reset_saved_uservars(call->fun); /* 2022-08-27 */
+            reset_saved_uservars(call->fun, 1); /* 2022-08-27 */
 	    break;
 	}
 	tmp = tmp->prev;
@@ -9575,7 +9575,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret, descrip, prn, &err);
 
     if (gencomp || n_saved > 0) {
-	reset_saved_uservars(call->fun);
+	reset_saved_uservars(call->fun, 0);
     }
 
     gretl_exec_state_clear(&state);
@@ -9594,6 +9594,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     fprintf(stderr, "gretl_function_exec (%s) finished: err = %d\n",
 	    u->name, err);
 #endif
+#if COMP_DEBUG
+    if (err) {
+	fprintf(stderr, "*** %s: exiting with err = %d ***\n", u->name, err);
+    }
+#endif    
 
     return err;
 }

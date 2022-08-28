@@ -507,6 +507,7 @@ static int uvar_index (user_var *u)
 
 static inline int use_uvh1 (void)
 {
+    /* maybe add: && !gretl_function_recursing() */
     return current_function_size() > 40;
 }
 
