@@ -687,6 +687,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     } else if (n->t == MAT) {
 	/* (how) can we avoid doing this? */
 	gretl_matrix_free(n->v.m);
+	n->v.m = NULL;
     } else if (n->t == MSPEC) {
 	if (n->v.mspec != NULL) {
 	    clear_mspec(n->v.mspec, p);
@@ -3923,7 +3924,7 @@ static NODE *matrix_string_func (NODE *l, NODE *m, NODE *r,
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
     gretl_matrix *ml = NULL, *mr = NULL;
-    NODE *ret;
+    NODE *ret = NULL;
 
     if ((op == B_MUL || op == B_TRMUL || op == B_ADD || op == B_SUB) &&
         l->t == MAT && r->t == MAT) {
@@ -16361,7 +16362,7 @@ static void node_reattach_data (NODE *n, parser *p)
         void *data = NULL;
 
 #if UVDEBUG
-        if (n->uv == NULL || gretl_iterating()) {
+        if (n->uv == NULL || gretl_iterating() || gretl_function_recursing()) {
             n->uv = get_user_var_by_name(n->vname);
 	    if (p0 != NULL && n->uv != p0) {
 		fprintf(stderr, "node_reattach_data ('%s'): MOVED %p -> %p\n",

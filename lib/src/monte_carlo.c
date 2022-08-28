@@ -40,7 +40,7 @@
 
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
-#define COMP_DEBUG 1
+#define COMP_DEBUG 0
 
 enum loop_types {
     COUNT_LOOP,
@@ -590,11 +590,7 @@ void gretl_loop_destroy (LOOPSET *loop)
         return;
     }
 
-    if (gretl_function_depth() > 0 && loop_is_attached(loop)) {
-        detach_loop_from_function(loop);
-    }
-
-#if 1 || GLOBAL_TRACE || LOOP_DEBUG
+#if COMP_DEBUG || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
 #endif
 
@@ -1871,13 +1867,15 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
  * gretl_loop_append_line:
  * @s: program execution state.
  * @dset: dataset struct.
+ * @ploop: optional location to receive address of completed loop.
  *
  * Add the command line @s->line to accumulated loop buffer.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_loop_append_line (ExecState *s, DATASET *dset)
+int gretl_loop_append_line_full (ExecState *s, DATASET *dset,
+				 LOOPSET **ploop)
 {
     LOOPSET *loop = currloop;
     LOOPSET *newloop = currloop;
@@ -1947,6 +1945,11 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
         }
         if (!err && compile_level == 0) {
             /* set flag to run the loop */
+	    if (ploop != NULL) {
+		/* signal to caller that a loop is ready */
+		*ploop = loop;
+		loop_set_attached(loop);
+	    }
             loop_execute = 1;
         } else {
             /* back up a level */
@@ -1968,6 +1971,11 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     }
 
     return err;
+}
+
+int gretl_loop_append_line (ExecState *s, DATASET *dset)
+{
+    return gretl_loop_append_line_full(s, dset, NULL);
 }
 
 /**
@@ -2522,28 +2530,6 @@ static int model_command_post_process (ExecState *s,
 
 #endif /* !HAVE_GMP */
 
-static int maybe_preserve_loop (LOOPSET *loop, LOOPSET **ploop)
-{
-    if (loop->flags & LOOP_ERR_CAUGHT) {
-        return 0;
-    }
-
-    if (ploop != NULL) {
-        if (*ploop == NULL) {
-#if COMP_DEBUG || GLOBAL_TRACE
-	    const char *name = NULL;
-	    current_function_info(&name, NULL);
-            fprintf(stderr, "*** attaching loop %p to function %s ***\n\n",
-		    (void *) loop, name);
-#endif
-            *ploop = loop;
-        }
-        loop_set_attached(loop);
-    }
-
-    return loop_is_attached(loop);
-}
-
 /* loop_reset_uvars(): called on exit from a function onto
    which one or more "compiled" loops have been attached.
    The point is to reset to NULL the stored addresses of
@@ -2630,7 +2616,7 @@ static int block_model (CMD *cmd)
 
 #define LTRACE 0
 
-int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
+int gretl_loop_exec (ExecState *s, DATASET *dset)
 {
     LOOPSET *loop = NULL;
     char *line = s->line;
@@ -2647,8 +2633,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 #endif
     int err = 0;
 
-    if (ploop != NULL && *ploop != NULL) {
-        loop = currloop = *ploop;
+    if (s->loop) {
+        loop = s->loop;
+	s->loop = NULL; /* avoid stale data */
     } else {
         loop = currloop;
     }
@@ -2793,14 +2780,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
             loop_info_to_cmd(loop, ll, cmd);
 
 	    if (ci == GENR) {
-		/* looking at a genr line that's not yet compiled:
-		   it might not really be a case of genr!
+		/* Looking at a "genr" line that's not yet compiled:
+		   it might not really be a case of genr, for example
+		   part of a "restrict" block.
 		*/
 		err = parse_command_line(s, dset, NULL);
 		if (err) {
 		    goto handle_err;
 		} else if (cmd->ci != GENR) {
-		    /* could be in a "restrict" block */
 		    ci = ll->ci = cmd->ci;
 		} else if (s->cmd->flags & CMD_SUBST) {
 		    set_non_compilable(ll);
@@ -2809,7 +2796,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
 	    }
 
 	    if (ci == GENR) {
-		if (may_be_compilable(ll)) {
+		if (may_be_compilable(ll) && !gretl_function_recursing()) {
+		    /* note: compilation here under recursion results
+		       in a memory leak
+		    */
 		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
 		    if (ll->ptr == NULL && !err) {
                         /* fallback */
@@ -2818,7 +2808,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                                        cmd->opt, prn);
                     }
 		} else {
-		    /* string substitution or a "genr special" */
+		    /* string substitution, a "genr special", or recursion */
 		    if (!err) {
 			if (!loop_is_verbose(loop)) {
 			    cmd->opt |= OPT_Q;
@@ -2898,7 +2888,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
                 if (loop_is_attached(loop) && currloop != NULL) {
                     loop_set_attached(currloop);
                 }
-                err = gretl_loop_exec(s, dset, NULL);
+                err = gretl_loop_exec(s, dset);
             } else if (cmd->ci == FUNCRET) {
                 /* The following clause added 2016-11-20: just in case
                    the return value is, or references, an automatic
@@ -3033,7 +3023,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET **ploop)
         loop_renaming = 0;
         set_loop_off();
         loop_reset_error();
-        if (!err && maybe_preserve_loop(loop, ploop)) {
+        if (loop_is_attached(loop)) {
             /* prevent destruction of saved loop */
             loop = NULL;
         }

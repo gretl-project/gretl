@@ -53,7 +53,8 @@
 #define ARGS_DEBUG 0    /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
 #define FN_DEBUG 0      /* miscellaneous debugging */
-#define COMP_DEBUG 1    /* debug "compilation" */
+#define COMP_DEBUG 0    /* debug "compilation" */
+#define CALL_DEBUG 0    /* debug handling of the callstack */
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
@@ -266,7 +267,7 @@ static int load_function_package (const char *fname,
 				  GArray *pstack,
 				  PRN *prn);
 static int ufunc_get_structure (ufunc *u);
-#if COMP_DEBUG
+#if CALL_DEBUG
 static void print_callstack (ufunc *fun);
 #endif
 
@@ -617,28 +618,28 @@ static int call_is_in_use (fncall *call)
 
 fncall *user_func_get_fncall (ufunc *fun)
 {
-#if COMP_DEBUG
+#if CALL_DEBUG
     fprintf(stderr, "user_func_get_fncall, starting\n");
     print_callstack(fun);
 #endif
 
     if (fun->call == NULL) {
 	fun->call = fncall_new(fun, 1);
-#if COMP_DEBUG
+#if CALL_DEBUG
 	fprintf(stderr, "%s: allocated new call %p (was NULL)\n",
 		fun->name, (void *) fun->call);
 #endif
     } else if (call_is_in_use(fun->call)) {
 	/* recursion is going on */
 	fun->call = fncall_new(fun, 0);
-#if COMP_DEBUG
+#if CALL_DEBUG
 	fprintf(stderr, "%s: allocating new call %p (recursion)\n",
 		fun->name, (void *) fun->call);
 #endif
     } else {
 	fncall *fc = fun->call;
 
-#if COMP_DEBUG
+#if CALL_DEBUG
 	fprintf(stderr, "%s: reusing existing call %p\n",
 		fun->name, (void *) fc);
 #endif
@@ -665,7 +666,7 @@ fncall *user_func_get_fncall (ufunc *fun)
 void fncall_destroy (fncall *call)
 {
     if (call != NULL) {
-#if COMP_DEBUG
+#if CALL_DEBUG
 	fprintf(stderr, "destroying fncall at %p\n", (void *) call);
 #endif
 	free(call->args);
@@ -856,7 +857,7 @@ static void get_prior_call_for_function (ufunc *fun)
 	call = tmp->data;
 	if (call->fun == fun) {
 	    /* reattach */
-#if COMP_DEBUG
+#if CALL_DEBUG
 	    fprintf(stderr, "reattach call at %p to function %s\n",
 		    (void *) call, fun->name);
 #endif
@@ -874,7 +875,7 @@ static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
     fncall *popcall = NULL;
     ufunc *fun = thiscall->fun;
 
-#if COMP_DEBUG
+#if CALL_DEBUG
     fprintf(stderr, "set_executing_off, starting\n");
     print_callstack(fun);
 #endif
@@ -889,7 +890,7 @@ static void set_executing_off (fncall **pcall, DATASET *dset, PRN *prn)
 
     callstack = g_list_remove(callstack, thiscall);
 
-#if COMP_DEBUG || EXEC_DEBUG
+#if CALL_DEBUG || EXEC_DEBUG
     fprintf(stderr, "set_executing_off: removed call %p to %s, depth now %d\n",
 	    (void *) thiscall, fun->name, g_list_length(callstack));
 #endif
@@ -1409,7 +1410,7 @@ fnpkg *gretl_function_get_package (const ufunc *fun)
     return fun == NULL ? NULL : fun->pkg;
 }
 
-#if COMP_DEBUG
+#if CALL_DEBUG
 
 static void print_callstack (ufunc *fun)
 {
@@ -1673,17 +1674,22 @@ static void free_lines_array (fn_line *lines, int n)
         return;
     }
 
+#if COMP_DEBUG
     fprintf(stderr, "free_lines_array (n=%d)\n", n);
+#endif
 
     for (i=0; i<n; i++) {
         line = &lines[i];
-        fprintf(stderr, "L%d: %s\n", i, line->s);
 	free(line->s);
 	if (line_has_loop(line)) {
-            fprintf(stderr, "  line has_loop: %p\n", (void *) line->ptr);
+#if COMP_DEBUG
+            fprintf(stderr, "  L%d: has_loop at %p\n", i, (void *) line->ptr);
+#endif
 	    gretl_loop_destroy(line->ptr);
 	} else if (line_has_genr(line)) {
-            fprintf(stderr, "  line has_genr: %p\n", (void *) line->ptr);
+#if COMP_DEBUG
+            fprintf(stderr, "  L%d: has_genr at %p\n", i, (void *) line->ptr);
+#endif
             destroy_genr(line->ptr);
         }
     }
@@ -1727,7 +1733,6 @@ static void clear_ufunc_data (ufunc *fun)
 
 static void ufunc_free (ufunc *fun)
 {
-    fprintf(stderr, "ufunc_free: working on %s\n", fun->name);
     /* note: free_lines_array() handles loops, genrs */
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
@@ -7466,7 +7471,7 @@ int gretl_start_compiling_function (const char *line,
 	}
     }
 
-#if GLOBAL_TRACE
+#if COMP_TRACE
     fprintf(stderr, "started compiling function %s (err = %d)\n",
 	    name, err);
 #endif
@@ -7615,7 +7620,7 @@ int gretl_function_append_line (ExecState *s)
 	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
 	    err = E_PARSE;
 	}
-#if GLOBAL_TRACE
+#if COMP_TRACE
 	fprintf(stderr, "finished compiling function %s\n", fun->name);
 #endif
 	/* reset static var */
@@ -8943,13 +8948,13 @@ static void reset_saved_uservars (ufunc *u)
     for (i=0; i<u->n_lines; i++) {
         line = &(u->lines[i]);
 	if (line_has_loop(line)) {
-#if GLOBAL_TRACE
+#if COMP_TRACE
 	    fprintf(stderr, "at exit from %s, loop_reset_uvars %p\n",
 		    u->name, (void *) line->ptr);
 #endif
 	    loop_reset_uvars(line->ptr);
 	} else if (line_has_genr(line)) {
-#if GLOBAL_TRACE
+#if COMP_TRACE
 	    fprintf(stderr, "at exit from %s, genr_reset_uvars %p\n",
 		    u->name, (void *) line->ptr);
 #endif
@@ -9308,38 +9313,6 @@ int current_function_size (void)
     return (u != NULL)? u->n_lines : 0;
 }
 
-int detach_loop_from_function (void *ptr)
-{
-    fncall *call = current_function_call();
-    ufunc *u = NULL;
-    int err = 0;
-
-    if (call != NULL) {
-	u = call->fun;
-    }
-
-    if (u == NULL) {
-	return E_DATA;
-    } else {
-        fn_line *line;
-	int i;
-
-	for (i=0; i<u->n_lines; i++) {
-            line = &(u->lines[i]);
-	    if (line->ptr == ptr) {
-#if GLOBAL_TRACE
-		fprintf(stderr, "detaching loop at %p from function %s\n",
-			ptr, u->name);
-#endif
-		line->ptr = NULL;
-		break;
-	    }
-	}
-    }
-
-    return err;
-}
-
 static gchar *return_line;
 
 /* to be called when a "return" statement occurs within a
@@ -9421,8 +9394,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int n_saved = 0;
     int i, j, err = 0;
 
-#if COMP_DEBUG || EXEC_DEBUG || GLOBAL_TRACE
-    fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
+#if COMP_DEBUG || EXEC_DEBUG
+    fprintf(stderr, "gretl_function_exec: starting %s (depth %d)\n",
+	    u->name, gretl_function_depth());
 #endif
 
     err = maybe_check_function_needs(dset, u);
@@ -9509,19 +9483,19 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (fline->ci == LOOP && !blocked) {
 	    /* Q: do we need to block the recursing case? */
 	    if (fline->ptr != NULL) {
-                fprintf(stderr, "HERE 1 LOOP prior fline->ptr = %p\n", (void *) fline->ptr);
-		err = gretl_loop_exec(&state, dset, (LOOPSET **) &fline->ptr);
+		state.loop = fline->ptr;
+		err = gretl_loop_exec(&state, dset);
 		n_saved++;
 	    } else {
 		/* assemble then execute the loop */
 		ptr = gencomp ? &fline->ptr : NULL;
 		for (j=i; j<=fline->next && !err; j++) {
 		    strcpy(line, u->lines[j].s);
-		    err = maybe_exec_line(&state, dset, NULL);
+		    err = maybe_exec_line(&state, dset, ptr);
 		}
 		if (!err) {
-		    err = gretl_loop_exec(&state, dset, ptr);
-                    fprintf(stderr, "HERE 2 LOOP new fline->ptr = %p\n", (void *) fline->ptr);
+		    state.loop = fline->ptr;
+		    err = gretl_loop_exec(&state, dset);
 		}
 	    }
             if (err) {
@@ -9616,7 +9590,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	maybe_destroy_fncall(&call);
     }
 
-#if EXEC_DEBUG || GLOBAL_TRACE
+#if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec (%s) finished: err = %d\n",
 	    u->name, err);
 #endif

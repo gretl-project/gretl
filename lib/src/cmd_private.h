@@ -5,6 +5,7 @@
 
 #include "gretl_restrict.h"
 #include "gretl_func.h"
+#include "monte_carlo.h"
 
 typedef enum {
     CMD_IGNORE  = 1 << 0, /* line should be ignored */
@@ -54,6 +55,7 @@ struct ExecState_ {
     char runfile[MAXLEN];
     MODEL *model;          /* "workspace" model */
     MODEL *pmod;           /* set if new model is estimated */
+    LOOPSET *loop;
     equation_system *sys;
     gretl_restriction *rset;
     GRETL_VAR *var;

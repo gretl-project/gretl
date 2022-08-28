@@ -165,10 +165,6 @@ int gretl_is_public_user_function (const char *name);
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn);
 
-int attach_loop_to_function (void *ptr);
-
-int detach_loop_from_function (void *ptr);
-
 int set_function_should_return (const char *line);
 
 int current_function_size (void);

@@ -27,7 +27,7 @@
 #include "cmd_private.h"
 
 #define PMDEBUG 0
-#define COMP_DEBUG 2
+#define COMP_DEBUG 0
 
 void gretl_exec_state_init (ExecState *s,
                             ExecFlags flags,
@@ -89,6 +89,7 @@ void gretl_exec_state_init (ExecState *s,
         s->prev_model_count = -1;
     }
 
+    s->loop = NULL;
     s->submask = NULL;
     s->callback = NULL;
 }
@@ -167,12 +168,11 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
 
     if (s->cmd->ci == LOOP || gretl_compiling_loop()) {
         /* accumulating loop commands */
-        err = gretl_loop_append_line(s, dset);
+        err = gretl_loop_append_line_full(s, dset, ptr);
         if (err) {
             errmsg(err, s->prn);
-            return err;
         }
-        return 0;
+        return err;
     }
 
     s->pmod = NULL; /* be on the safe side */

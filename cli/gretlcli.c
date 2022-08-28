@@ -1286,7 +1286,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
         break;
 
     case RUNLOOP:
-        err = gretl_loop_exec(s, dset, NULL);
+        err = gretl_loop_exec(s, dset);
         break;
 
     case QUIT:
