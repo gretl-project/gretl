@@ -803,8 +803,8 @@ static void maybe_switch_node_type (NODE *n, int type,
 	/* any other discrepancy presumably means that
 	   things have gone badly wrong
 	*/
-	fprintf(stderr, "aux node mismatch: n->t = %d (%s), type = %d (%s), tmp = %d\n",
-		n->t, getsymb(n->t), type, getsymb(type), (flags == TMP_NODE));
+	fprintf(stderr, "aux node mismatch: expected %s but got %s, TMP_NODE=%d\n",
+		getsymb(n->t), getsymb(type), (flags & TMP_NODE)? 1 : 0);
 	gretl_errmsg_set("internal genr error: aux node mismatch");
 	p->err = E_DATA;
     }
@@ -3923,7 +3923,7 @@ static NODE *matrix_string_func (NODE *l, NODE *m, NODE *r,
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
     gretl_matrix *ml = NULL, *mr = NULL;
-    NODE *ret;
+    NODE *ret = NULL;
 
     if ((op == B_MUL || op == B_TRMUL || op == B_ADD || op == B_SUB) &&
         l->t == MAT && r->t == MAT) {
@@ -10550,18 +10550,20 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "HERE get_bundle_member: %s[\"%s\"]\n",
-            l->vname, key);
+    fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
+            l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
 #endif
 
     if (p->flags & P_OBJQRY) {
 	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
 	if (type == GRETL_TYPE_NONE) {
-	    return get_aux_node(p, EMPTY, 0, MUT_NODE);
+	    ret = get_aux_node(p, EMPTY, 0, MUT_NODE);
 	} else {
 	    gen_t = gen_type_from_gretl_type(type);
-	    return get_aux_node(p, gen_t, 0, MUT_NODE);
+	    ret = get_aux_node(p, gen_t, 0, MUT_NODE);
 	}
+        ret->flags |= MUT_NODE;
+        return ret;
     } else {
         val = gretl_bundle_get_element(l->v.b, key, &type, &size,
 				       &is_tmp, &p->err);
@@ -19544,7 +19546,7 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 
 static int should_copy_into_array (NODE *n, parser *p)
 {
-    int cpy = !is_tmp_node(n);
+    int donate = is_tmp_node(n);
 
     /* In general if @n is a tmp node we can 'donate' its content
        to an array rather than copying it in, but there's a tricky
@@ -19554,12 +19556,12 @@ static int should_copy_into_array (NODE *n, parser *p)
        may be a simpler and more elegant way of identifying this
        case, but for now the following works (2022-08-10).
     */
-    if (!cpy && !is_aux_node(n) && n->t == STR &&
-	n->vname == NULL && (p->flags & (P_COMPILE | P_EXEC))) {
-	cpy = 1; /* we _should_ copy! */
+    if (donate && !is_aux_node(n) && n->t == STR &&
+	(p->flags & (P_COMPILE | P_EXEC))) {
+	donate = 0; /* we _should_ copy! */
     }
 
-    return cpy;
+    return !donate;
 }
 
 static void do_array_append (parser *p)
