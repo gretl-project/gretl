@@ -53,8 +53,8 @@
 #define ARGS_DEBUG 0    /* debug handling of args */
 #define PKG_DEBUG 0     /* debug handling of function packages */
 #define FN_DEBUG 0      /* miscellaneous debugging */
-#define COMP_DEBUG 1    /* debug "compilation" */
-#define CALL_DEBUG 1    /* debug handling of the callstack */
+#define COMP_DEBUG 0    /* debug "compilation" */
+#define CALL_DEBUG 0    /* debug handling of the callstack */
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
@@ -8951,7 +8951,7 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
     } else {
 	fprintf(stderr, "at exit from %s, reset_saved_uservars\n", u->name);
     }
-#endif    
+#endif
 
     for (i=0; i<u->n_lines; i++) {
         line = &(u->lines[i]);
@@ -9598,7 +9598,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     if (err) {
 	fprintf(stderr, "*** %s: exiting with err = %d ***\n", u->name, err);
     }
-#endif    
+#endif
 
     return err;
 }
