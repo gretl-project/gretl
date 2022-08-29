@@ -196,8 +196,9 @@ static int get_previous_depth (void)
 void switch_uservar_hash (int level)
 {
 #if HDEBUG
-    fprintf(stderr, "switch_uservar_hash: going to %s (level %d)\n",
-            level == 0 ? "uvh0" : "uvh1", level);
+    fprintf(stderr, "switch_uservar_hash: going to %s (level %d, recursing %d)\n",
+            level == 0 ? "uvh0" : "uvh1", level, recursing);
+    fprintf(stderr, " uvh0 = %p, uvh1 = %p\n", (void *) uvh0, (void *) uvh1);
 #endif
 
     if (level == 0) {

@@ -682,6 +682,10 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 {
     int nullify = 1;
 
+    if (get_user_var_by_data(n->v.ptr)) {
+	return;
+    }
+
     if (n->t == LIST) {
 	free(n->v.ivec);
     } else if (n->t == MAT) {
@@ -1660,10 +1664,12 @@ static gretl_matrix *matrix_pdist (int f, int d,
    freed.
 */
 
+#define N_STATIC 8
+
 static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 				      int i, int argnum)
 {
-    static gretl_matrix *mm[4];
+    static gretl_matrix *mm[N_STATIC];
 
     if (p->err) {
 	/* don't compound prior error */
@@ -1677,7 +1683,7 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 	}
 	p->err = E_INVARG;
 	return NULL;
-    } else if (i < 0 || i > 3) {
+    } else if (i < 0 || i >= N_STATIC) {
 	p->err = E_DATA;
 	return NULL;
     } else {
@@ -1687,12 +1693,16 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 	if (mm[0] == NULL) {
 	    int j;
 
-	    for (j=0; j<4; j++) {
+	    for (j=0; j<N_STATIC; j++) {
 		mm[j] = gretl_matrix_alloc(1,1);
 	    }
 	}
 	ret = mm[i];
 	ret->val[0] = x;
+#if 0
+	fprintf(stderr, "* HERE returning static matrix %p (i=%d, argnum=%d) *\n",
+		(void *) ret, i, argnum);
+#endif
 	return ret;
     }
 }
@@ -5119,35 +5129,32 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
         matrix_subspec *spec = r->v.mspec;
         gretl_matrix *m = node_get_matrix(l, p, 0, 0);
 
-        p->err = check_matrix_subspec(spec, m);
+	if (!p->err) {
+	    if (spec->ltype == SEL_STR) {
+		p->err = E_TYPES;
+	    } else {
+		p->err = check_matrix_subspec(spec, m);
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
 
         if (!p->err) {
             if (spec->ltype == SEL_CONTIG) {
-                ret = aux_matrix_node(p);
-                if (!p->err) {
-                    ret->v.m = matrix_get_chunk(m, spec, &p->err);
-                }
+		ret->v.m = matrix_get_chunk(m, spec, &p->err);
             } else if (spec->ltype == SEL_ELEMENT) {
                 int i = mspec_get_element(spec);
 
                 if (m->is_complex) {
-                    ret = aux_matrix_node(p);
-                    if (!p->err) {
-                        ret->v.m = cmatrix_get_element(m, i, &p->err);
-                    }
+		    ret->v.m = cmatrix_get_element(m, i, &p->err);
  		} else {
 		    /* 2020-12-29: don't collapse to scalar here */
-		    ret = aux_matrix_node(p);
 		    ret->v.m = gretl_matrix_alloc(1,1);
 		    ret->v.m->val[0] = m->val[i];
                 }
-            } else if (spec->ltype == SEL_STR) {
-                p->err = E_TYPES;
             } else {
-                ret = aux_matrix_node(p);
-                if (!p->err) {
-                    ret->v.m = matrix_get_submatrix(m, spec, 1, &p->err);
-                }
+		ret->v.m = matrix_get_submatrix(m, spec, 1, &p->err);
             }
         }
     } else {
