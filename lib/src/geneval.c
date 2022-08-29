@@ -687,7 +687,6 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     } else if (n->t == MAT) {
 	/* (how) can we avoid doing this? */
 	gretl_matrix_free(n->v.m);
-	n->v.m = NULL;
     } else if (n->t == MSPEC) {
 	if (n->v.mspec != NULL) {
 	    clear_mspec(n->v.mspec, p);
@@ -10559,8 +10558,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "HERE get_bundle_member: %s[\"%s\"]\n",
-            l->vname, key);
+    fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
+            l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
 #endif
 
     if (p->flags & P_OBJQRY) {
@@ -16300,6 +16299,7 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
 
 static void reattach_series (NODE *n, parser *p)
 {
+    /* FIXME relax the "1" below? */
     if (1 || n->v.xvec == NULL || get_loop_renaming()) {
         /* do a full reset */
         n->vnum = current_series_index(p->dset, n->vname);
