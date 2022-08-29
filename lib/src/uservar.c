@@ -195,9 +195,9 @@ static int get_previous_depth (void)
 
 void switch_uservar_hash (int level)
 {
-#if HDEBUG && defined(_OPENMP)
-    fprintf(stderr, "switch_uservar_hash: level %d, nthreads %d\n",
-	    level, omp_get_num_threads());
+#if HDEBUG
+    fprintf(stderr, "switch_uservar_hash: going to %s (level %d)\n",
+            level == 0 ? "uvh0" : "uvh1", level);
 #endif
 
     if (level == 0) {
@@ -212,14 +212,9 @@ void switch_uservar_hash (int level)
 
 static void uvar_hash_destroy (void)
 {
-#if HDEBUG
-    fprintf(stderr, "uvar_hash_destroy (uvh0=%p, uvh1=%p)\n",
-	    (void *) uvh0, (void *) uvh1);
-#endif
-
     if (uvh0 != NULL) {
 #if HDEBUG
-	fprintf(stderr, " destroying uvh0\n");
+	fprintf(stderr, "uvar_hash_destroy: destroying uvh0\n");
 #endif
 	g_hash_table_destroy(uvh0);
 	uvh0 = NULL;
@@ -227,7 +222,7 @@ static void uvar_hash_destroy (void)
 
     if (uvh1 != NULL) {
 #if HDEBUG
-	fprintf(stderr, " destroying uvh1\n");
+	fprintf(stderr, "uvar_hash_destroy: destroying uvh1\n");
 #endif
 	g_hash_table_destroy(uvh1);
 	uvh1 = NULL;
@@ -241,12 +236,12 @@ static void uvar_hash_destroy (void)
 
 static void user_var_destroy (user_var *u)
 {
-#if HDEBUG
+#if HDEBUG > 1
     fprintf(stderr, "user_var_destroy: '%s' (level %d)\n", u->name, u->level);
 #endif
 
     if (uvars_hash != NULL) {
-# if HDEBUG
+# if HDEBUG > 1
 	if (g_hash_table_remove(uvars_hash, u->name)) {
 	    fprintf(stderr, "removed '%s' from hash table at %p\n",
 		    u->name, (void *) uvars_hash);
