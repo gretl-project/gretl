@@ -1669,8 +1669,6 @@ static gretl_matrix *matrix_pdist (int f, int d,
 static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 				      int i, int argnum)
 {
-    static gretl_matrix *mm[N_STATIC];
-
     if (p->err) {
 	/* don't compound prior error */
 	return NULL;
@@ -1684,25 +1682,33 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 	p->err = E_INVARG;
 	return NULL;
     } else if (i < 0 || i >= N_STATIC) {
+        fprintf(stderr, "node_get_matrix: invalid static matrix index\n");
 	p->err = E_DATA;
 	return NULL;
     } else {
+        /* "fake" a 1 x 1 matrix */
+        static gretl_matrix mm[N_STATIC];
+        static double mval[N_STATIC];
+        static int started;
 	gretl_matrix *ret;
-	double x = n->v.xval;
 
-	if (mm[0] == NULL) {
+	if (!started) {
 	    int j;
 
 	    for (j=0; j<N_STATIC; j++) {
-		mm[j] = gretl_matrix_alloc(1,1);
+                gretl_matrix_init(&mm[j]);
+                mm[j].rows = mm[j].cols = 1;
 	    }
+            started = 1;
 	}
-	ret = mm[i];
-	ret->val[0] = x;
+        mval[i] = n->v.xval;
+	ret = &mm[i];
+	ret->val = &mval[i];
 #if 0
-	fprintf(stderr, "* HERE returning static matrix %p (i=%d, argnum=%d) *\n",
-		(void *) ret, i, argnum);
+	fprintf(stderr, "node_get_matrix: returning static 1x1 matrix (i=%d, argnum=%d)\n",
+		i, argnum);
 #endif
+
 	return ret;
     }
 }
@@ -10248,9 +10254,15 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
     }
 
     if (fc0 != NULL && (p->flags & P_COMPILE)) {
-	fprintf(stderr, "eval_ufunc: %s() is about to call itself\n", funname);
-	fprintf(stderr, " compiling, p->tree = %p\n", p->tree);
-	attach_genr_to_function(fc0, p->tree);
+        /* Here we may be trying to compile a "genr" whereby a certain
+           function calls itself, for attachment to the function. If
+           so, we need to block such compilation, which would result
+           in either memory corruption or a memory leak.
+        */
+	p->err = maybe_block_genr_compile(fc0);
+        if (p->err) {
+            return NULL;
+        }
     }
 
     /* check the function argument nodes */
@@ -18299,8 +18311,11 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
             /* otherwise if we're trying to switch aux node,
                something must have gone wrong
             */
-            fprintf(stderr, "! node %s already has aux node %s attached\n",
-                    getsymb(t->t), getsymb(t->aux->t));
+            fprintf(stderr, "! %s node already has aux node attached\n",
+                    getsymb(t->t));
+            fprintf(stderr, " orig aux %p (%s), incoming %p (%s)\n",
+                    (void *) t->aux, getsymb(t->aux->t),
+                    (void *) ret, getsymb(ret->t));
             return E_DATA;
         }
     }

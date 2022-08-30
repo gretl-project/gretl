@@ -90,13 +90,15 @@ struct fn_param_ {
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
-    LINE_RET    = 1 << 1
+    LINE_RET    = 1 << 1,
+    LINE_NOCOMP = 1 << 2  /* "don't compile genr" */
 } ln_flags;
 
 #define line_has_loop(l)  (l->ci == LOOP && l->ptr != NULL)
 #define line_has_genr(l)  (l->ci != LOOP && l->ptr != NULL)
 #define ignore_line(l)    (l->flags & LINE_IGNORE)
 #define is_return_line(l) (l->flags & LINE_RET)
+#define line_no_comp(l)   (l->flags & LINE_NOCOMP)
 
 #define UNSET_VALUE (-1.0e200)
 #define default_unset(p) (p->deflt == UNSET_VALUE)
@@ -611,23 +613,42 @@ static int call_is_in_use (fncall *call)
     return 0;
 }
 
-int attach_genr_to_function (fncall *call, void *ptr)
+/* Called from eval_ufunc() in geneval.c, to screen out the case
+   where it turns out we're trying to compile for attachment to
+   a given function a "genr" which calls the same function.
+   This would result in memory mischief. Note that the @call0
+   argument we're getting here is the "prior" call to the
+   function in question, not the incipient recursion.
+*/
+
+int maybe_block_genr_compile (fncall *call0)
 {
     int err = 0;
 
-    fprintf(stderr, "%s: attach_genr_to_function?\n", call->fun->name);
+#if 0
+    fprintf(stderr, "%s(): maybe_block_genr_compile\n", call0->fun->name);
+#endif
 
-    if (call->line->ci != GENR) {
-	fprintf(stderr, " No, ci != GENR\n");
-    } else if (call->line->ptr != NULL) {
-	/* there should not already be a pointer attached */
-	fprintf(stderr, " incoming ptr %p, attached ptr %p\n",
-		ptr, call->line->ptr);
-	fprintf(stderr, "  line: '%s'\n",  call->line->s);
-	err = E_DATA;
+    if (call0->line->ci != GENR) {
+        ; /* alright (could be a LOOP case) */
     } else {
-	fprintf(stderr, "  line: '%s'\n",  call->line->s);
-	//call->line->ptr = ptr;
+        /* sorry, we'll have to block */
+        ufunc *fun = call0->fun;
+
+        /* try to avoid wasting time by coming here again
+           for the same function line
+        */
+        call0->line->flags |= LINE_NOCOMP;
+        /* scrub the incipient recursive function call,
+           which is by now attached to the function
+        */
+        fncall_destroy(fun->call);
+        /* and reinstate the prior or "parent" call */
+        fun->call = call0;
+        /* returning E_EQN is not a "hard error"; it flags
+           "this may be OK but it can't be compiled"
+        */
+        err = E_EQN;
     }
 
     return err;
@@ -640,7 +661,7 @@ int attach_genr_to_function (fncall *call, void *ptr)
    including whether or not it is subject to recursion.
 */
 
-fncall *user_func_get_fncall (ufunc *fun, fncall **currcall)
+fncall *user_func_get_fncall (ufunc *fun, fncall **pcall)
 {
 #if CALL_DEBUG
     fprintf(stderr, "user_func_get_fncall, starting\n");
@@ -655,7 +676,7 @@ fncall *user_func_get_fncall (ufunc *fun, fncall **currcall)
 #endif
     } else if (call_is_in_use(fun->call)) {
 	/* recursion is going on */
-	*currcall = fun->call;
+	*pcall = fun->call;
 	fun->call = fncall_new(fun, 0);
 #if CALL_DEBUG
 	fprintf(stderr, "%s: allocating new call %p (recursion)\n",
@@ -683,6 +704,7 @@ fncall *user_func_get_fncall (ufunc *fun, fncall **currcall)
 	}
 	free(fc->retname);
 	fc->retname = NULL;
+        fc->line = NULL;
     }
 
     return fun->call;
@@ -9507,7 +9529,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         }
 
 	if (fline->ci == LOOP && !blocked) {
-	    /* Q: do we need to block the recursing case? */
 	    if (fline->ptr != NULL) {
 		state.loop = fline->ptr;
 		err = gretl_loop_exec(&state, dset);
@@ -9538,11 +9559,10 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
         } else if (line_has_genr(fline) && !blocked &&
 		   !is_return_line(fline)) {
-            /* do we need to block the recursing case? */
 	    err = execute_genr(fline->ptr, dset, prn);
             n_saved++;
 	} else {
-	    ptr = gencomp ? &fline->ptr : NULL;
+	    ptr = (gencomp && !line_no_comp(fline))? &fline->ptr : NULL;
 	    err = maybe_exec_line(&state, dset, ptr);
  	}
 

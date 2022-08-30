@@ -123,9 +123,9 @@ int fn_param_uses_mylist (const ufunc *fun, int i);
 
 int user_func_get_return_type (const ufunc *fun);
 
-int attach_genr_to_function (fncall *call, void *ptr);
+int maybe_block_genr_compile (fncall *call0);
 
-fncall *user_func_get_fncall (ufunc *fun, fncall **currcall);
+fncall *user_func_get_fncall (ufunc *fun, fncall **pcall);
 
 int user_func_is_noprint (const ufunc *fun);
 
