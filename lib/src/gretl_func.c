@@ -148,6 +148,7 @@ struct fncall_ {
     GretlType rtype; /* return type (when not fixed in advance) */
     obsinfo obs;     /* sample info */
     FCFlags flags;   /* indicators for recursive call, etc */
+    fn_line *line;   /* currently executing line */
 };
 
 /* structure representing a user-defined function */
@@ -588,6 +589,7 @@ fncall *fncall_new (ufunc *fun, int preserve)
 	call->argc = 0;
 	call->args = NULL;
 	call->flags = preserve ? FC_PRESERVE : 0;
+	call->line = NULL;
     }
 
     return call;
@@ -609,6 +611,28 @@ static int call_is_in_use (fncall *call)
     return 0;
 }
 
+int attach_genr_to_function (fncall *call, void *ptr)
+{
+    int err = 0;
+
+    fprintf(stderr, "%s: attach_genr_to_function?\n", call->fun->name);
+
+    if (call->line->ci != GENR) {
+	fprintf(stderr, " No, ci != GENR\n");
+    } else if (call->line->ptr != NULL) {
+	/* there should not already be a pointer attached */
+	fprintf(stderr, " incoming ptr %p, attached ptr %p\n",
+		ptr, call->line->ptr);
+	fprintf(stderr, "  line: '%s'\n",  call->line->s);
+	err = E_DATA;
+    } else {
+	fprintf(stderr, "  line: '%s'\n",  call->line->s);
+	//call->line->ptr = ptr;
+    }
+
+    return err;
+}
+
 /* This function is called (only) from geneval.c, in the function
    eval_ufunc(). The primary role of the fncall struct is to serve as
    a vehicle for conveying the arguments to the user function in
@@ -616,7 +640,7 @@ static int call_is_in_use (fncall *call)
    including whether or not it is subject to recursion.
 */
 
-fncall *user_func_get_fncall (ufunc *fun)
+fncall *user_func_get_fncall (ufunc *fun, fncall **currcall)
 {
 #if CALL_DEBUG
     fprintf(stderr, "user_func_get_fncall, starting\n");
@@ -631,6 +655,7 @@ fncall *user_func_get_fncall (ufunc *fun)
 #endif
     } else if (call_is_in_use(fun->call)) {
 	/* recursion is going on */
+	*currcall = fun->call;
 	fun->call = fncall_new(fun, 0);
 #if CALL_DEBUG
 	fprintf(stderr, "%s: allocating new call %p (recursion)\n",
@@ -9463,6 +9488,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
         strcpy(line, fline->s); /* needed? */
+	call->line = fline;
 
 	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {

@@ -111,14 +111,16 @@ static int try_compile_func_genr (ExecState *s,
 
     *pgen = genr_compile(line, dset, gtype, gopt, s->prn, &err);
     if (!err && *pgen != NULL) {
-#if 0
+#if 1
 	const char *funname = NULL;
 
 	current_function_info(&funname, NULL);
-	/* 'rest = correspondence(A[-r, -c])' is getting attached twice */
-	fprintf(stderr, "attached genr %p to function %s, depth %d\n",
-		(void *) *pgen, funname, gretl_function_depth());
-	fprintf(stderr, "  '%s'\n", line);
+	if (!strcmp(funname, "correspondence")) {
+	    /* 'rest = correspondence(A[-r, -c])' is getting attached twice */
+	    fprintf(stderr, "attached genr %p to function %s, depth %d\n",
+		    (void *) *pgen, funname, gretl_function_depth());
+	    fprintf(stderr, "  '%s'\n", line);
+	}
 #endif
         *done = 1;
     } else if (err == E_EQN) {

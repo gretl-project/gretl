@@ -10197,6 +10197,7 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
     const char *funname = l->vname;
     ufunc *uf = l->v.ptr;
     fncall *fc = NULL;
+    fncall *fc0 = NULL;
     GretlType rtype = 0;
     int i, nparam, argc = 0;
 
@@ -10237,13 +10238,19 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
     }
 
 #if SAVE_FNCALL
-    fc = user_func_get_fncall(uf);
+    fc = user_func_get_fncall(uf, &fc0);
 #else
     fc = fncall_new(uf, 1);
 #endif
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
+    }
+
+    if (fc0 != NULL && (p->flags & P_COMPILE)) {
+	fprintf(stderr, "eval_ufunc: %s() is about to call itself\n", funname);
+	fprintf(stderr, " compiling, p->tree = %p\n", p->tree);
+	attach_genr_to_function(fc0, p->tree);
     }
 
     /* check the function argument nodes */
