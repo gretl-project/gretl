@@ -2222,6 +2222,12 @@ void gnuplot_cleanup (void)
 	    gretl_remove(fname);
 	}
     }
+
+    if (alt_sty != NULL) {
+	/* clean up alternative gnuplot stylesheet */
+	g_free(alt_sty);
+	alt_sty = NULL;
+    }
 }
 
 static int graph_file_written;
