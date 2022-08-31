@@ -601,6 +601,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	if (offset < 0 || nelem <= 0) {
 	    fprintf(stderr, "*** offset = %d, nelem = %d (m: %dx%d) ***\n",
 		    offset, nelem, m->rows, m->cols);
+	    return E_DATA;
 	}
     }
 
