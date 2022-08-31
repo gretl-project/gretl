@@ -9492,7 +9492,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
     /* should we try to compile genrs, loops? */
-    gencomp = 1; //gencomp = gretl_iterating() && !is_recursing(call);
+    //gencomp = 1; //gencomp = gretl_iterating() && !is_recursing(call);
+    gencomp = gretl_iterating(); /* 2022-08-30: gets matrix/slicing.inp working again */
     blocked = 0; //is_recursing(call);
 
     /* get function lines in sequence and check, parse, execute */
