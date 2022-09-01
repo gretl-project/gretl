@@ -9277,16 +9277,20 @@ static void set_func_error_message (int err, ufunc *u,
     }
 }
 
-#define COMPILE_FUNCRET 0
+/* 2022-09-01: enabling compilation of a function's return statement
+   can offer a substantial speed-up (if it's more complex than just
+   "return ret"), but as things stand it can fail nastily in case of
+   recursion. Direct recursion can be detected and handled, but
+   indirect recursion is harder. For now I'm ruling out compilation
+   that seems to include a function call, in case it turns out to be
+   a case of indirect recursion.
+*/
 
-#if COMPILE_FUNCRET
-
-static int generate_return_value (fncall *call,
-				  ExecState *state,
-				  DATASET *dset,
-				  int gencomp,
-				  const char *s,
-				  fn_line *line)
+static int generate_return_value2 (fncall *call,
+				   ExecState *state,
+				   DATASET *dset,
+				   const char *s,
+				   fn_line *line)
 {
     int err = 0;
 
@@ -9297,8 +9301,8 @@ static int generate_return_value (fncall *call,
 	ufunc *fun = call->fun;
 	int done = 0;
 
-	if (line != NULL && gencomp) {
-	    /* try compilation (? too dangerous) */
+	if (line != NULL) {
+	    /* try compilation */
 	    line->ptr = genr_compile(formula, dset, fun->rettype,
 				     OPT_P, state->prn, &err);
 	    if (line->ptr != NULL) {
@@ -9318,14 +9322,10 @@ static int generate_return_value (fncall *call,
     return err;
 }
 
-#else
-
 static int generate_return_value (fncall *call,
 				  ExecState *state,
 				  DATASET *dset,
-				  int gencomp,
-				  const char *s,
-				  fn_line *line)
+				  const char *s)
 {
     gchar *formula = g_strdup_printf("$retval=%s", s);
     ufunc *fun = call->fun;
@@ -9336,8 +9336,6 @@ static int generate_return_value (fncall *call,
 
     return err;
 }
-
-#endif /* COMPILE_FUNCRET or not */
 
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
@@ -9382,8 +9380,13 @@ static int handle_return_statement (fncall *call,
 	    /* returning a named variable */
 	    call->retname = gretl_strdup(s);
 	} else {
-	    err = generate_return_value(call, state, dset, gencomp,
-					s, line);
+	    if (gencomp && strchr(s, '(') == NULL) {
+		/* allow trying compilation */
+		err = generate_return_value2(call, state, dset, s, line);
+	    } else {
+		/* play it safe */
+		err = generate_return_value(call, state, dset, s);
+	    }
 	    if (err) {
 		set_func_error_message(err, fun, state, s, line);
 	    } else {
