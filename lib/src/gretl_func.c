@@ -2070,7 +2070,12 @@ static int push_function_line (ufunc *fun, char *s, int ci, int donate)
             lines[i].ptr = NULL;
             lines[i].ci = ci;
             lines[i].next = 0;
-            lines[i].flags = 0;
+            if (strchr(lines[i].s, '$') != NULL) {
+                /* be on the safe side */
+                lines[i].flags = LINE_NOCOMP;
+            } else {
+                lines[i].flags = 0;
+            }
             fun->n_lines = n;
             fun->line_idx += 1;
         }
@@ -9284,7 +9289,7 @@ static int generate_return_value (fncall *call,
 	ufunc *fun = call->fun;
 	int done = 0;
 
-	if (line != NULL && gencomp && !line_no_comp(line)) {
+	if (line != NULL && gencomp) {
 	    /* try compilation */
 	    line->ptr = genr_compile(formula, dset, fun->rettype,
 				     OPT_P, state->prn, &err);
@@ -9503,7 +9508,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
     /* should we try to compile genrs, loops? */
-    //gencomp = 1; //gencomp = gretl_iterating() && !is_recursing(call);
     gencomp = gretl_iterating(); /* 2022-08-30: gets matrix/slicing.inp working again */
     blocked = 0; //is_recursing(call);
 
@@ -9511,8 +9515,10 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &u->lines[i];
+        int this_gencomp = gencomp && !line_no_comp(fline);
 #if 0
-        fprintf(stderr, "line %d: '%s' (ptr %p)\n", i, fline->s, (void *) fline->ptr);
+        fprintf(stderr, "line %d: '%s' (ptr %p, no_comp %d)\n", i, fline->s,
+                (void *) fline->ptr, line_no_comp(fline));
 #endif
 
 	if (gretl_echo_on()) {
@@ -9530,7 +9536,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		state.cmd->ci = fline->ci;
 		flow_control(&state, NULL, NULL);
 	    } else {
-		ptr = gencomp ? &fline->ptr : NULL;
+		ptr = this_gencomp ? &fline->ptr : NULL;
 		err = maybe_exec_line(&state, dset, ptr);
 	    }
 	    if (gretl_if_state_false() && fline->next > 0) {
@@ -9547,7 +9553,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		n_saved++;
 	    } else {
 		/* assemble then execute the loop */
-		ptr = gencomp ? &fline->ptr : NULL;
+		ptr = this_gencomp ? &fline->ptr : NULL;
 		for (j=i; j<=fline->next && !err; j++) {
 		    strcpy(line, u->lines[j].s);
 		    err = maybe_exec_line(&state, dset, ptr);
@@ -9563,7 +9569,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
             } else if (get_return_line(&state)) {
                 /* a "return" statement was encountered in the loop */
                 err = handle_return_statement(call, &state, dset,
-                                              gencomp, NULL);
+                                              this_gencomp, NULL);
                 break;
             }
 	    /* skip past the loop lines */
@@ -9574,13 +9580,13 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    err = execute_genr(fline->ptr, dset, prn);
             n_saved++;
 	} else {
-	    ptr = (gencomp && !line_no_comp(fline))? &fline->ptr : NULL;
+	    ptr = this_gencomp? &fline->ptr : NULL;
 	    err = maybe_exec_line(&state, dset, ptr);
  	}
 
 	if (!err && state.cmd->ci == FUNCRET) {
 	    if (fline->ptr != NULL) n_saved++;
-	    err = handle_return_statement(call, &state, dset, gencomp, fline);
+	    err = handle_return_statement(call, &state, dset, this_gencomp, fline);
 	    if (i < u->n_lines) {
 		retline = i;
 	    }
