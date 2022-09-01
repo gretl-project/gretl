@@ -1832,13 +1832,17 @@ char *get_string_by_name (const char *name)
 {
     user_var *u = NULL;
 
+    fprintf(stderr, "get_string_by_name: name ='%s'\n", name);
+
     if (name != NULL) {
 	u = get_user_var_of_type_by_name(name, GRETL_TYPE_STRING);
     }
 
     if (u != NULL) {
+	fprintf(stderr, " got u=%p: '%s'\n", (void *) u, (char *) u->ptr);
 	return (char *) u->ptr;
     } else {
+	fprintf(stderr, " try for built_in\n");
 	return get_built_in_string_by_name(name);
     }
 }

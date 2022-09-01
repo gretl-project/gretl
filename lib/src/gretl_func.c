@@ -627,9 +627,12 @@ int maybe_block_genr_compile (fncall *call0)
 
 #if 0
     fprintf(stderr, "%s(): maybe_block_genr_compile\n", call0->fun->name);
+    fprintf(stderr, "call0->line->ci = %s ('%s')\n",
+	    gretl_command_word(call0->line->ci), call0->line->s);
+
 #endif
 
-    if (call0->line->ci != GENR) {
+    if (call0->line->ci != GENR && call0->line->ci != FUNCRET) {
         ; /* alright (could be a LOOP case) */
     } else {
         /* sorry, we'll have to block */
@@ -9272,24 +9275,32 @@ static int generate_return_value (fncall *call,
 				  const char *s,
 				  fn_line *line)
 {
-    ufunc *fun = call->fun;
-    gchar *formula = NULL;
     int err = 0;
 
-    if (line != NULL && gencomp) {
-	if (line->ptr == NULL) {
-	    formula = g_strdup_printf("$retval=%s", s);
+    if (line != NULL && line->ptr != NULL) {
+	err = execute_genr(line->ptr, dset, state->prn);
+    } else {
+	gchar *formula = g_strdup_printf("$retval=%s", s);
+	ufunc *fun = call->fun;
+	int done = 0;
+
+	if (line != NULL && gencomp && !line_no_comp(line)) {
+	    /* try compilation */
 	    line->ptr = genr_compile(formula, dset, fun->rettype,
 				     OPT_P, state->prn, &err);
-	} else {
-	    err = execute_genr(line->ptr, dset, state->prn);
+	    if (line->ptr != NULL) {
+		/* succeeded */
+		done = 1;
+	    } else if (err == E_EQN) {
+		/* failed, but not fatally */
+		err = 0;
+	    }
 	}
-    } else {
-	formula = g_strdup_printf("$retval=%s", s);
-	err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+	if (!done && !err) {
+	    err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+	}
+	g_free(formula);
     }
-
-    g_free(formula);
 
     return err;
 }
