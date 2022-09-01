@@ -18316,6 +18316,16 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
             fprintf(stderr, " orig aux %p (%s), incoming %p (%s)\n",
                     (void *) t->aux, getsymb(t->aux->t),
                     (void *) ret, getsymb(ret->t));
+#if 0
+	    if (t->t == UFUN && t->aux->t == ret->t) {
+		fprintf(stderr, "orig val %g, new val %g\n",
+			t->aux->v.xval, ret->v.xval);
+		free_node(t->aux, p);
+		t->aux = ret;
+		ret->refcount += 1;
+		return 0;
+	    }
+#endif
             return E_DATA;
         }
     }

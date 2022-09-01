@@ -625,15 +625,15 @@ int maybe_block_genr_compile (fncall *call0)
 {
     int err = 0;
 
-#if 0
+#if CALL_DEBUG
     fprintf(stderr, "%s(): maybe_block_genr_compile\n", call0->fun->name);
     fprintf(stderr, "call0->line->ci = %s ('%s')\n",
 	    gretl_command_word(call0->line->ci), call0->line->s);
 
 #endif
 
-    if (call0->line->ci != GENR && call0->line->ci != FUNCRET) {
-        ; /* alright (could be a LOOP case) */
+    if (call0->line->ci == LOOP) {
+        ; /* this can be alright */
     } else {
         /* sorry, we'll have to block */
         ufunc *fun = call0->fun;
@@ -653,6 +653,10 @@ int maybe_block_genr_compile (fncall *call0)
         */
         err = E_EQN;
     }
+
+#if CALL_DEBUG
+    fprintf(stderr, "maybe_block_genr_compile, returning %d\n", err);
+#endif
 
     return err;
 }
@@ -9273,6 +9277,10 @@ static void set_func_error_message (int err, ufunc *u,
     }
 }
 
+#define COMPILE_FUNCRET 0
+
+#if COMPILE_FUNCRET
+
 static int generate_return_value (fncall *call,
 				  ExecState *state,
 				  DATASET *dset,
@@ -9290,7 +9298,7 @@ static int generate_return_value (fncall *call,
 	int done = 0;
 
 	if (line != NULL && gencomp) {
-	    /* try compilation */
+	    /* try compilation (? too dangerous) */
 	    line->ptr = genr_compile(formula, dset, fun->rettype,
 				     OPT_P, state->prn, &err);
 	    if (line->ptr != NULL) {
@@ -9309,6 +9317,27 @@ static int generate_return_value (fncall *call,
 
     return err;
 }
+
+#else
+
+static int generate_return_value (fncall *call,
+				  ExecState *state,
+				  DATASET *dset,
+				  int gencomp,
+				  const char *s,
+				  fn_line *line)
+{
+    gchar *formula = g_strdup_printf("$retval=%s", s);
+    ufunc *fun = call->fun;
+    int err;
+
+    err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+    g_free(formula);
+
+    return err;
+}
+
+#endif /* COMPILE_FUNCRET or not */
 
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
@@ -9509,15 +9538,15 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     /* should we try to compile genrs, loops? */
     gencomp = gretl_iterating(); /* 2022-08-30: gets matrix/slicing.inp working again */
-    blocked = 0; //is_recursing(call);
+    blocked = 0; // is_recursing(call);
 
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &u->lines[i];
-        int this_gencomp = gencomp && !line_no_comp(fline);
+        int this_gencomp = gencomp && !line_no_comp(fline) && !blocked;
 #if 0
-        fprintf(stderr, "line %d: '%s' (ptr %p, no_comp %d)\n", i, fline->s,
+        fprintf(stderr, " line %d: '%s' (ptr %p, no_comp %d)\n", i, fline->s,
                 (void *) fline->ptr, line_no_comp(fline));
 #endif
 
