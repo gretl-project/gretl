@@ -153,7 +153,7 @@ function bundle default_opts(scalar r, scalar c)
     scalar ret.decimals = 3
     string ret.nacode = ""
     strings ret.rnames = auto_names(r, "Row")
-    strings ret.cnames = defarray("") + auto_names(c, "Col")
+    strings ret.cnames = auto_names(c, "Col")
 
     string s = "l"
     loop i = 1 .. c
