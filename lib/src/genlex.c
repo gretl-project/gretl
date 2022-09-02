@@ -2445,8 +2445,6 @@ const char *getsymb_full (int t, const parser *p)
 	return "DBMEMB";
     } else if (t == MMEMB) {
 	return "MMEMB";
-    } else if (t == UFPTR) {
-	return "UFPTR";
     }
 
     if (p != NULL) {
