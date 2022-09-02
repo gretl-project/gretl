@@ -10196,16 +10196,23 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 #define SAVE_FNCALL 1 /* 2022-08-12, still somewhat experimental */
 
-static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
+static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
-    NODE *l = t->L;
     const char *funname = l->vname;
     ufunc *uf = l->v.ptr;
     fncall *fc = NULL;
     fncall *fc0 = NULL;
     GretlType rtype = 0;
     int i, nparam, argc = 0;
+
+#if 0
+    fprintf(stderr, "eval_ufunc (%s):\n", funname);
+    fprintf(stderr, "l: %s, r: %s\n", getsymb(l->t), getsymb(r->t));
+    fprintf(stderr, "addrs: %p %p\n", (void *) l, (void *) r);
+    fprintf(stderr, "parser: %p, compile %d exec %d\n", (void *) p,
+            (p->flags & P_COMPILE)? 1 : 0, (p->flags & P_EXEC)? 1 : 0);
+#endif
 
     rtype = user_func_get_return_type(uf);
 
@@ -10238,13 +10245,14 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
         return NULL;
     }
 
-    if (t == p->tree && (p->flags & P_CATCH)) {
+    if (l == p->tree && (p->flags & P_CATCH)) {
         gretl_warnmsg_set(_("\"catch\" should not be used on calls to "
                             "user-defined functions"));
     }
 
 #if SAVE_FNCALL
     fc = user_func_get_fncall(uf, &fc0);
+    fprintf(stderr, "got fc=%p, fc0=%p\n", (void *) fc, (void *) fc0);
 #else
     fc = fncall_new(uf, 1);
 #endif
@@ -10315,14 +10323,14 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 	if (rtype == GRETL_TYPE_VOID) {
 	    retp = NULL;
         } else if (rtype == GRETL_TYPE_MATRIX) {
-            if (p->targ == UNK && p->tree == t) {
+            if (p->targ == UNK && p->tree == l) {
                 /* target type not specified, and function returns
                    a matrix -> set target type to matrix
                 */
                 p->targ = MAT;
             }
 	} else if (rtype == GRETL_TYPE_LIST) {
-            if (p->targ == EMPTY && p->tree == t) {
+            if (p->targ == EMPTY && p->tree == l) {
                 /* this function offers a list return, but the
                    caller hasn't assigned it and it's not being
                    used as an argument to a further function, so
@@ -10409,9 +10417,8 @@ static NODE *eval_ufunc (NODE *t, NODE *r, parser *p)
 
 /* evaluate an R function */
 
-static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
+static NODE *eval_Rfunc (NODE *l, NODE *r, parser *p)
 {
-    NODE *l = t->L;
     int i, argc = r->v.bn.n_nodes;
     const char *funname = l->v.str;
     int rtype = GRETL_TYPE_NONE;
@@ -14690,15 +14697,13 @@ static NODE *eval_feval (NODE *t, NODE *n, parser *p)
         u = get_user_function_by_name(e->v.str);
         if (u != NULL) {
             NODE tmp = {0};
-            NODE l = {0};
             NODE r = {0};
 
             tmp.t = UFUN;
-            l.vname = e->v.str;
-            l.v.ptr = u;
+            tmp.vname = e->v.str;
+            tmp.v.ptr = u;
             r.v.bn.n_nodes = argc;
 	    r.v.bn.n = n->v.bn.n + 1;
-            tmp.L = &l;
             tmp.R = &r;
             ret = eval_ufunc(&tmp, &r, p);
         }
@@ -16566,7 +16571,7 @@ static NODE *eval (NODE *t, parser *p)
 #endif
 
     /* handle terminals first */
-    if (t->t == MSPEC || t->t == EMPTY || t->t == UFPTR) {
+    if (t->t == MSPEC || t->t == EMPTY) {
         return t;
     } else if (t->t >= NUM && t->t <= STR) {
         if (exestart(p) && uvar_node(t)) {
@@ -18569,9 +18574,9 @@ static void printnode (NODE *t, parser *p, int value)
         pputc(p->prn, ')');
     } else if (t->t == STR) {
         pprintf(p->prn, "%s", t->v.str);
-    } else if (t->t == UFPTR) {
+    } else if (t->t == UFUN) {
         pprintf(p->prn, "%s", t->vname);
-    } else if (t->t == DMSTR || t->t == UFUN) {
+    } else if (t->t == DMSTR) {
         printnode(t->L, p, 0);
         pputc(p->prn, '(');
         printnode(t->R, p, 0);
@@ -21067,8 +21072,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	     int flags, int targtype)
 {
 #if LHDEBUG || EDEBUG || AUX_NODES_DEBUG
-    fprintf(stderr, "\n*** realgen: task = %s\n", (flags & P_COMPILE)?
-	    "compile" : (flags & P_EXEC)? "exec" : "normal");
+    fprintf(stderr, "\n*** realgen: task = %s, depth %d\n",
+            (flags & P_COMPILE)? "compile" : (flags & P_EXEC)? "exec" : "normal",
+            gretl_function_depth());
     if (s != NULL) {
 	fprintf(stderr, "targ=%d (%s), input='%s'\n", targtype,
 		(targtype < PUNCT_MAX)? gretl_type_get_name(targtype) :
