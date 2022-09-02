@@ -123,9 +123,7 @@ int fn_param_uses_mylist (const ufunc *fun, int i);
 
 int user_func_get_return_type (const ufunc *fun);
 
-int maybe_block_genr_compile (fncall *call0);
-
-fncall *user_func_get_fncall (ufunc *fun, fncall **pcall);
+fncall *user_func_get_fncall (ufunc *fun);
 
 int user_func_is_noprint (const ufunc *fun);
 
@@ -148,6 +146,8 @@ int gretl_compiling_python (const char *line);
 int gretl_function_depth (void);
 
 int gretl_function_recursing (void);
+
+int function_is_executing (const char *funcname);
 
 void current_function_info (char const **funcname,
 			    char const **pkgname);

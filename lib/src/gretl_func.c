@@ -125,15 +125,14 @@ typedef enum {
     FC_PRESERVE  = 1 << 3
 } FCFlags;
 
-/* Note: the FC_PRESERVE flag is specific to the case of
-   overloaded functions whose return type is 'numeric'.
-   In that case the caller doesn't know in advance what
-   specific type to expect, and needs to be able to access
-   the function-call struct (fncall) to determine the type.
-   Therefore, the fncall must not be destroyed when
-   execution terminates (as usual). The caller then takes
-   on responsibility for destroying the call. The only
-   relevant caller is eval_ufunc(), in geneval.c.
+/* Note: the FC_PRESERVE flag is specific to the case of overloaded
+   functions whose return type is 'numeric'.  In that case the caller
+   doesn't know in advance what specific type to expect, and needs to
+   be able to access the function-call struct (fncall) to determine
+   the type.  Therefore, the fncall must not be destroyed when
+   execution terminates (as usual). The caller then takes on
+   responsibility for destroying the call. The only relevant caller is
+   eval_ufunc(), in geneval.c.
 
    August 2022: FIXME this comment needs updating.
 */
@@ -613,54 +612,6 @@ static int call_is_in_use (fncall *call)
     return 0;
 }
 
-/* Called from eval_ufunc() in geneval.c, to screen out the case
-   where it turns out we're trying to compile for attachment to
-   a given function a "genr" which calls the same function.
-   This would result in memory mischief. Note that the @call0
-   argument we're getting here is the "prior" call to the
-   function in question, not the incipient recursion.
-*/
-
-int maybe_block_genr_compile (fncall *call0)
-{
-    int err = 0;
-
-#if CALL_DEBUG
-    fprintf(stderr, "%s(): maybe_block_genr_compile\n", call0->fun->name);
-    fprintf(stderr, "call0->line->ci = %s ('%s')\n",
-	    gretl_command_word(call0->line->ci), call0->line->s);
-
-#endif
-
-    if (call0->line->ci == LOOP) {
-        ; /* this can be alright */
-    } else {
-        /* sorry, we'll have to block */
-        ufunc *fun = call0->fun;
-
-        /* try to avoid wasting time by coming here again
-           for the same function line
-        */
-        call0->line->flags |= LINE_NOCOMP;
-        /* scrub the incipient recursive function call,
-           which is by now attached to the function
-        */
-        fncall_destroy(fun->call);
-        /* and reinstate the prior or "parent" call */
-        fun->call = call0;
-        /* returning E_EQN is not a "hard error"; it flags
-           "this may be OK but it can't be compiled"
-        */
-        err = E_EQN;
-    }
-
-#if CALL_DEBUG
-    fprintf(stderr, "maybe_block_genr_compile, returning %d\n", err);
-#endif
-
-    return err;
-}
-
 /* This function is called (only) from geneval.c, in the function
    eval_ufunc(). The primary role of the fncall struct is to serve as
    a vehicle for conveying the arguments to the user function in
@@ -668,34 +619,18 @@ int maybe_block_genr_compile (fncall *call0)
    including whether or not it is subject to recursion.
 */
 
-fncall *user_func_get_fncall (ufunc *fun, fncall **pcall)
+fncall *user_func_get_fncall (ufunc *fun)
 {
-#if CALL_DEBUG
-    fprintf(stderr, "user_func_get_fncall, starting\n");
-    print_callstack(fun);
-#endif
-
     if (fun->call == NULL) {
+	/* we need a new fncall struct */
 	fun->call = fncall_new(fun, 1);
-#if CALL_DEBUG
-	fprintf(stderr, "%s: allocated new call %p (was NULL)\n",
-		fun->name, (void *) fun->call);
-#endif
     } else if (call_is_in_use(fun->call)) {
-	/* recursion is going on */
-	*pcall = fun->call;
+	/* recursion is going on: let's get a new call */
 	fun->call = fncall_new(fun, 0);
-#if CALL_DEBUG
-	fprintf(stderr, "%s: allocating new call %p (recursion)\n",
-		fun->name, (void *) fun->call);
-#endif
     } else {
+	/* reuse an existing fncall struct */
 	fncall *fc = fun->call;
 
-#if CALL_DEBUG
-	fprintf(stderr, "%s: reusing existing call %p\n",
-		fun->name, (void *) fc);
-#endif
 	fncall_clear_args_array(fc);
 	if (fc->ptrvars != NULL) {
 	    free(fc->ptrvars);
@@ -1439,6 +1374,27 @@ void current_function_info (char const **funcname,
 	    *pkgname = u->pkg->name;
 	}
     }
+}
+
+int function_is_executing (const char *funcname)
+{
+    int ret = 0;
+
+    if (callstack != NULL) {
+	GList *tmp = g_list_last(callstack);
+	fncall *call;
+
+	while (tmp != NULL) {
+	    call = tmp->data;
+	    if (!strcmp(call->fun->name, funcname)) {
+		ret = 1;
+		break;
+	    }
+	    tmp = tmp->prev;
+	}
+    }
+
+    return ret;
 }
 
 fnpkg *get_active_function_package (gretlopt opt)

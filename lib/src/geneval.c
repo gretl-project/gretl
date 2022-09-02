@@ -383,6 +383,47 @@ static const char *free_tree_tag (int t)
 
 #endif /* EDEBUG */
 
+/* Check a parsed (but not yet eval'd) syntax tree for the presence of
+   a recursive function call. We do this to avoid the mess-up that's
+   likely to ensue (as of 2022-09-01) if we pursue "compilation" of
+   such a tree.
+*/
+
+static int check_tree_for_recursion (NODE *t)
+{
+    int ret = 0;
+
+    if (t == NULL) {
+	return 0;
+    }
+
+    if (t->t == UFUN) {
+	if (function_is_executing(t->vname)) {
+	    return 1;
+	}
+    }
+
+    if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    ret = check_tree_for_recursion(t->v.bn.n[i]);
+	}
+    } else {
+	if (t->L != NULL) {
+	    ret = check_tree_for_recursion(t->L);
+	}
+	if (t->M != NULL) {
+	    ret = check_tree_for_recursion(t->M);
+	}
+	if (t->R != NULL) {
+	    ret = check_tree_for_recursion(t->R);
+	}
+    }
+
+    return ret;
+}
+
 /* used when we know that @t is a terminal node: skip
    the tests for attached tree */
 
@@ -10202,7 +10243,6 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
     const char *funname = l->vname;
     ufunc *uf = l->v.ptr;
     fncall *fc = NULL;
-    fncall *fc0 = NULL;
     GretlType rtype = 0;
     int i, nparam, argc = 0;
 
@@ -10251,26 +10291,13 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
     }
 
 #if SAVE_FNCALL
-    fc = user_func_get_fncall(uf, &fc0);
-    fprintf(stderr, "got fc=%p, fc0=%p\n", (void *) fc, (void *) fc0);
+    fc = user_func_get_fncall(uf);
 #else
     fc = fncall_new(uf, 1);
 #endif
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
-    }
-
-    if (fc0 != NULL && (p->flags & P_COMPILE)) {
-        /* Here we may be trying to compile a "genr" whereby a certain
-           function calls itself, for attachment to the function. If
-           so, we need to block such compilation, which would result
-           in either memory corruption or a memory leak.
-        */
-	p->err = maybe_block_genr_compile(fc0);
-        if (p->err) {
-            return NULL;
-        }
     }
 
     /* check the function argument nodes */
@@ -21174,6 +21201,19 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     if (flags & P_NOEXEC) {
 	/* we're done at this point */
 	goto gen_finish;
+    }
+
+    if ((p->flags & P_COMPILE) && gretl_function_depth() > 0) {
+	/* We're trying to compile a "genr" call within a function,
+	   but as of 2022-09-02 we're not able to compile recursive
+	   function calls properly. So if we find that the genr
+	   involves recursion we'll block here (with a non-fatal
+	   error that allows fallback to a non-compiled call).
+	*/
+	if (check_tree_for_recursion(p->tree)) {
+	    p->err = E_EQN;
+	    goto gen_finish;
+	}
     }
 
     if (!p->err) {
