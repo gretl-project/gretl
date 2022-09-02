@@ -9609,10 +9609,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
         } else if (line_has_genr(fline) && !blocked &&
 		   !is_return_line(fline)) {
+            //fprintf(stderr, "exec compiled genr (%s) %p\n", fline->s, fline->ptr);
 	    err = execute_genr(fline->ptr, dset, prn);
             n_saved++;
 	} else {
-	    ptr = this_gencomp? &fline->ptr : NULL;
+            ptr = this_gencomp? &fline->ptr : NULL;
 	    err = maybe_exec_line(&state, dset, ptr);
  	}
 
