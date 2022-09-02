@@ -94,6 +94,8 @@ void gretl_exec_state_init (ExecState *s,
     s->callback = NULL;
 }
 
+#define GENCOMP_DEBUG 0
+
 static int try_compile_func_genr (ExecState *s,
                                   DATASET *dset,
                                   void *ptr,
@@ -109,18 +111,18 @@ static int try_compile_func_genr (ExecState *s,
 	gopt |= OPT_O;
     }
 
+#if GENCOMP_DEBUG
+    fprintf(stderr, "cmd_private: calling genr_compile on '%s'\n", line);
+#endif
     *pgen = genr_compile(line, dset, gtype, gopt, s->prn, &err);
     if (!err && *pgen != NULL) {
-#if 0
+#if GENCOMP_DEBUG
 	const char *funname = NULL;
 
 	current_function_info(&funname, NULL);
-	if (!strcmp(funname, "correspondence")) {
-	    /* 'rest = correspondence(A[-r, -c])' is getting attached twice */
-	    fprintf(stderr, "cmd_private: attached genr %p to function %s, depth %d\n",
-		    (void *) *pgen, funname, gretl_function_depth());
-	    fprintf(stderr, "  '%s'\n", line);
-	}
+        fprintf(stderr, "cmd_private: attached genr %p to function %s, depth %d\n",
+                (void *) *pgen, funname, gretl_function_depth());
+        fprintf(stderr, "  '%s'\n", line);
 #endif
         *done = 1;
     } else if (err == E_EQN) {
