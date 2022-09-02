@@ -9266,6 +9266,7 @@ static int generate_return_value2 (fncall *call,
 		done = 1;
 	    } else if (err == E_EQN) {
 		/* failed, but not fatally */
+		line->flags |= LINE_NOCOMP;
 		err = 0;
 	    }
 	}
@@ -9526,6 +9527,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    } else {
 		ptr = this_gencomp ? &fline->ptr : NULL;
 		err = maybe_exec_line(&state, dset, ptr);
+		if (ptr != NULL && fline->ptr == NULL) {
+		    fline->flags |= LINE_NOCOMP;
+		}
 	    }
 	    if (gretl_if_state_false() && fline->next > 0) {
                 /* skip to next relevant statement */
@@ -9571,6 +9575,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	} else {
             ptr = this_gencomp? &fline->ptr : NULL;
 	    err = maybe_exec_line(&state, dset, ptr);
+	    if (ptr != NULL && fline->ptr == NULL) {
+		fline->flags |= LINE_NOCOMP;
+	    }
  	}
 
 	if (!err && state.cmd->ci == FUNCRET) {
