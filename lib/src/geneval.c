@@ -18352,11 +18352,11 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
             fprintf(stderr, " orig aux %p (%s), incoming %p (%s)\n",
                     (void *) t->aux, getsymb(t->aux->t),
                     (void *) ret, getsymb(ret->t));
-#if 1
+#if 0
 	    if ((p->flags & P_EXEC) && t->t == UFUN && t->aux->t == ret->t) {
                 fprintf(stderr, " genr at %p\n", (void *) p);
                 if (ret->t == NUM) {
-                    fprintf(stderr, "orig val %g, new val %g\n",
+                    fprintf(stderr, " orig val %g, new val %g\n",
                             t->aux->v.xval, ret->v.xval);
                 }
 		free_node(t->aux, p);
@@ -21210,6 +21210,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	goto gen_finish;
     }
 
+#if 1
     if ((p->flags & P_COMPILE) && gretl_function_depth() > 0) {
 	/* We're trying to compile a "genr" call within a function,
 	   but as of 2022-09-02 we're not able to compile recursive
@@ -21222,6 +21223,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    goto gen_finish;
 	}
     }
+#endif
 
     if (!p->err) {
 	/* set P_UFRET here if relevant */
