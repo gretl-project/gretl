@@ -9262,7 +9262,7 @@ static int generate_return_value2 (fncall *call,
 				 OPT_P, state->prn, &err);
 	if (!err && line->ptr != NULL) {
 	    /* succeeded */
-            fprintf(stderr, "attached genr at %p (%s)\n", line->ptr, line->s);
+            // fprintf(stderr, "attached genr at %p (%s)\n", line->ptr, line->s);
 	    done = 1;
 	} else if (err == E_EQN) {
 	    /* failed, but not fatally */
