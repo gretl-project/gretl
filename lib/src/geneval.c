@@ -398,8 +398,10 @@ static int check_tree_for_recursion (NODE *t)
     }
 
     if (t->t == UFUN) {
-	fprintf(stderr, "check_tree: found %s, executing = %d\n",
+#if 0
+	fprintf(stderr, "check_tree: found function %s, executing = %d\n",
 		t->vname, function_is_executing(t->vname));
+#endif
 	if (function_is_executing(t->vname)) {
 	    return 1;
 	}
@@ -18350,10 +18352,13 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
             fprintf(stderr, " orig aux %p (%s), incoming %p (%s)\n",
                     (void *) t->aux, getsymb(t->aux->t),
                     (void *) ret, getsymb(ret->t));
-#if 0
-	    if (t->t == UFUN && t->aux->t == ret->t) {
-		fprintf(stderr, "orig val %g, new val %g\n",
-			t->aux->v.xval, ret->v.xval);
+#if 1
+	    if ((p->flags & P_EXEC) && t->t == UFUN && t->aux->t == ret->t) {
+                fprintf(stderr, " genr at %p\n", (void *) p);
+                if (ret->t == NUM) {
+                    fprintf(stderr, "orig val %g, new val %g\n",
+                            t->aux->v.xval, ret->v.xval);
+                }
 		free_node(t->aux, p);
 		t->aux = ret;
 		ret->refcount += 1;

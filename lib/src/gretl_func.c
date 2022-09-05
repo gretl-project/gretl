@@ -9256,13 +9256,16 @@ static int generate_return_value2 (fncall *call,
 
     if (line != NULL) {
 	/* try compilation */
+        line->flags |= LINE_NOCOMP;
 	line->ptr = genr_compile(formula, dset, call->fun->rettype,
 				 OPT_P, state->prn, &err);
-	if (line->ptr != NULL) {
+	if (!err && line->ptr != NULL) {
 	    /* succeeded */
+            fprintf(stderr, "attached genr at %p\n", line->ptr);
 	    done = 1;
 	} else if (err == E_EQN) {
 	    /* failed, but not fatally */
+            fprintf(stderr, "did not attach genr at %p\n", line->ptr);
 	    line->flags |= LINE_NOCOMP;
 	    err = 0;
 	}
@@ -9296,59 +9299,78 @@ static int handle_return_statement (fncall *call,
 				    int gencomp,
 				    fn_line *line)
 {
-    const char *s = state->cmd->vstart;
     ufunc *fun = call->fun;
+    const char *s = NULL;
     int err = 0;
 
+    if (line != NULL && line->ptr != NULL) {
+        fprintf(stderr, "%s: handle_return: exec compiled genr %p\n",
+                fun->name, line->ptr);
+        err = execute_genr(line->ptr, dset, state->prn);
+        goto last_step;
+    }
+
+    err = parse_command_line(state, dset, NULL);
+    if (err) {
+        goto last_step;
+    }
+
+    s = state->cmd->vstart;
+
 #if 1 || EXEC_DEBUG
-    fprintf(stderr, "%s: handle_return_statement ('%s'), line = %p\n",
-	    fun->name, s, (void *) line);
+    fprintf(stderr, "%s: handle_return_statement '%s'\n", fun->name, s);
 #endif
 
     if (fun->rettype == GRETL_TYPE_VOID) {
-	if (s == NULL || *s == '\0') {
-	    ; /* plain "return" from void function: OK */
-	} else if (line == NULL) {
-	    gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid",
-				 fun->name, s);
-	    err = E_TYPES;
-	} else {
-	    gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid",
-				 fun->name, line->idx, s);
-	    err = E_TYPES;
-	}
-	return err; /* handled */
+        if (s == NULL || *s == '\0') {
+            ; /* plain "return" from void function: OK */
+        } else if (line == NULL) {
+            gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid",
+                                 fun->name, s);
+            err = E_TYPES;
+        } else {
+            gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid",
+                                 fun->name, line->idx, s);
+            err = E_TYPES;
+        }
+        return err; /* handled */
     }
 
-    if (*s == '\0') {
-	if (line == NULL) {
-	    gretl_errmsg_sprintf("%s: return value is missing", fun->name);
-	} else {
-	    gretl_errmsg_sprintf("%s, line %d: return value is missing",
-				 fun->name, line->idx);
-	}
-	err = E_TYPES;
+    if (s == NULL || *s == '\0') {
+        if (line == NULL) {
+            gretl_errmsg_sprintf("%s: return value is missing", fun->name);
+        } else {
+            gretl_errmsg_sprintf("%s, line %d: return value is missing",
+                                 fun->name, line->idx);
+        }
+        err = E_TYPES;
     } else {
-	if (gretl_namechar_spn(s) == strlen(s)) {
-	    /* returning a named variable, simple */
-	    call->retname = gretl_strdup(s);
-	} else {
-	    if (gencomp && !(state->cmd->flags & CMD_SUBST)) {
-		/* allow trying compilation */
-		err = generate_return_value2(call, state, dset, s, line);
-	    } else {
-		/* play it safe */
-		err = generate_return_value1(call, state, dset, s);
-	    }
-	    if (err) {
-		set_func_error_message(err, fun, state, s, line);
-	    } else {
-		call->retname = gretl_strdup("$retval");
-		if (line != NULL) {
-		    line->flags |= LINE_RET;
-		}
-	    }
-	}
+        if (gretl_namechar_spn(s) == strlen(s)) {
+            /* returning a named variable, simple */
+            call->retname = gretl_strdup(s);
+        } else {
+            if (gencomp && !(state->cmd->flags & CMD_SUBST)) {
+                /* allow trying compilation */
+                fprintf(stderr, "HERE try gencomp\n");
+                err = generate_return_value2(call, state, dset, s, line);
+            } else {
+                /* play it safe */
+                err = generate_return_value1(call, state, dset, s);
+            }
+        }
+    }
+
+ last_step:
+
+    if (err) {
+        /* FIXME case of line == NULL */
+        if (s == NULL && line != NULL) {
+            s = line->s;
+        }
+        set_func_error_message(err, fun, state, s, line);
+    } else if (call->retname == NULL) {
+        call->retname = gretl_strdup("$retval");
+        line->flags |= LINE_RET;
     }
 
     return err;
@@ -9453,8 +9475,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	return err;
     }
 
-#if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: %s, gencomp = %d\n", u->name, gencomp);
+#if 1 || EXEC_DEBUG
+    fprintf(stderr, "gretl_function_exec: %s\n", u->name);
 #endif
 
     /* record incoming dataset dimensions */
@@ -9501,7 +9523,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &u->lines[i];
         int this_gencomp = gencomp && !line_no_comp(fline) && !blocked;
-#if 1
+#if 0
         fprintf(stderr, " line %d: '%s' (ptr %p, no_comp %d)\n", i, fline->s,
                 (void *) fline->ptr, line_no_comp(fline));
 #endif
@@ -9564,20 +9586,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    i = fline->next;
 	    continue;
 	} else if (fline->ci == FUNCRET) {
-	    if (fline->ptr != NULL) {
-		fprintf(stderr, "exec compiled return\n");
-		err = execute_genr(fline->ptr, dset, prn);
-		n_saved++;
-	    } else {
-		fprintf(stderr, "FUNCRET, calling parser\n");
-		err = parse_command_line(&state, dset, NULL);
-		if (!err) {
-		    handle_return_statement(call, &state, dset, this_gencomp, fline);
-		}
-	    }
-	    if (err) {
-		set_func_error_message(err, u, &state, line, fline);
-	    }
+            err = handle_return_statement(call, &state, dset, this_gencomp, fline);
 	    if (i < u->n_lines) {
 		retline = i;
 	    }
