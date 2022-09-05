@@ -398,6 +398,8 @@ static int check_tree_for_recursion (NODE *t)
     }
 
     if (t->t == UFUN) {
+	fprintf(stderr, "check_tree: found %s, executing = %d\n",
+		t->vname, function_is_executing(t->vname));
 	if (function_is_executing(t->vname)) {
 	    return 1;
 	}

@@ -9248,47 +9248,43 @@ static int generate_return_value2 (fncall *call,
 				   const char *s,
 				   fn_line *line)
 {
+    gchar *formula = g_strdup_printf("$retval=%s", s);
+    int done = 0;
     int err = 0;
 
-    if (line != NULL && line->ptr != NULL) {
-	err = execute_genr(line->ptr, dset, state->prn);
-    } else {
-	gchar *formula = g_strdup_printf("$retval=%s", s);
-	ufunc *fun = call->fun;
-	int done = 0;
+    fprintf(stderr, "formula: '%s'\n", formula);
 
-	if (line != NULL) {
-	    /* try compilation */
-	    line->ptr = genr_compile(formula, dset, fun->rettype,
-				     OPT_P, state->prn, &err);
-	    if (line->ptr != NULL) {
-		/* succeeded */
-		done = 1;
-	    } else if (err == E_EQN) {
-		/* failed, but not fatally */
-		line->flags |= LINE_NOCOMP;
-		err = 0;
-	    }
+    if (line != NULL) {
+	/* try compilation */
+	line->ptr = genr_compile(formula, dset, call->fun->rettype,
+				 OPT_P, state->prn, &err);
+	if (line->ptr != NULL) {
+	    /* succeeded */
+	    done = 1;
+	} else if (err == E_EQN) {
+	    /* failed, but not fatally */
+	    line->flags |= LINE_NOCOMP;
+	    err = 0;
 	}
-	if (!done && !err) {
-	    err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
-	}
-	g_free(formula);
     }
+    if (!done && !err) {
+	err = generate(formula, dset, call->fun->rettype,
+		       OPT_P, state->prn);
+    }
+    g_free(formula);
 
     return err;
 }
 
-static int generate_return_value (fncall *call,
-				  ExecState *state,
-				  DATASET *dset,
-				  const char *s)
+static int generate_return_value1 (fncall *call,
+				   ExecState *state,
+				   DATASET *dset,
+				   const char *s)
 {
     gchar *formula = g_strdup_printf("$retval=%s", s);
-    ufunc *fun = call->fun;
     int err;
 
-    err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+    err = generate(formula, dset, call->fun->rettype, OPT_P, state->prn);
     g_free(formula);
 
     return err;
@@ -9304,7 +9300,7 @@ static int handle_return_statement (fncall *call,
     ufunc *fun = call->fun;
     int err = 0;
 
-#if EXEC_DEBUG
+#if 1 || EXEC_DEBUG
     fprintf(stderr, "%s: handle_return_statement ('%s'), line = %p\n",
 	    fun->name, s, (void *) line);
 #endif
@@ -9334,15 +9330,15 @@ static int handle_return_statement (fncall *call,
 	err = E_TYPES;
     } else {
 	if (gretl_namechar_spn(s) == strlen(s)) {
-	    /* returning a named variable */
+	    /* returning a named variable, simple */
 	    call->retname = gretl_strdup(s);
 	} else {
-	    if (gencomp && strchr(s, '(') == NULL) {
+	    if (gencomp && !(state->cmd->flags & CMD_SUBST)) {
 		/* allow trying compilation */
 		err = generate_return_value2(call, state, dset, s, line);
 	    } else {
 		/* play it safe */
-		err = generate_return_value(call, state, dset, s);
+		err = generate_return_value1(call, state, dset, s);
 	    }
 	    if (err) {
 		set_func_error_message(err, fun, state, s, line);
@@ -9505,7 +9501,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &u->lines[i];
         int this_gencomp = gencomp && !line_no_comp(fline) && !blocked;
-#if 0
+#if 1
         fprintf(stderr, " line %d: '%s' (ptr %p, no_comp %d)\n", i, fline->s,
                 (void *) fline->ptr, line_no_comp(fline));
 #endif
@@ -9567,9 +9563,27 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    /* skip past the loop lines */
 	    i = fline->next;
 	    continue;
+	} else if (fline->ci == FUNCRET) {
+	    if (fline->ptr != NULL) {
+		fprintf(stderr, "exec compiled return\n");
+		err = execute_genr(fline->ptr, dset, prn);
+		n_saved++;
+	    } else {
+		fprintf(stderr, "FUNCRET, calling parser\n");
+		err = parse_command_line(&state, dset, NULL);
+		if (!err) {
+		    handle_return_statement(call, &state, dset, this_gencomp, fline);
+		}
+	    }
+	    if (err) {
+		set_func_error_message(err, u, &state, line, fline);
+	    }
+	    if (i < u->n_lines) {
+		retline = i;
+	    }
+	    break;
         } else if (line_has_genr(fline) && !blocked &&
 		   !is_return_line(fline)) {
-            //fprintf(stderr, "exec compiled genr (%s) %p\n", fline->s, fline->ptr);
 	    err = execute_genr(fline->ptr, dset, prn);
             n_saved++;
 	} else {
@@ -9580,6 +9594,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    }
  	}
 
+#if 0
 	if (!err && state.cmd->ci == FUNCRET) {
 	    if (fline->ptr != NULL) n_saved++;
 	    err = handle_return_statement(call, &state, dset, this_gencomp, fline);
@@ -9588,6 +9603,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    }
 	    break;
 	}
+#endif
 
 	if (err) {
 	    set_func_error_message(err, u, &state, line, fline);
