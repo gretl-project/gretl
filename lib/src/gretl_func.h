@@ -86,7 +86,7 @@ const ufunc *get_user_function_by_index (int idx);
 
 fncall *fncall_new (ufunc *fun, int preserve);
 
-void fncall_destroy (fncall *call);
+void fncall_destroy (void *ptr);
 
 GretlType fncall_get_return_type (fncall *fc);
 

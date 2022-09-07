@@ -144,7 +144,6 @@ typedef struct linegen_ linegen;
 
 struct fncall_ {
     ufunc *fun;      /* the function called */
-    int depth;       /* function execution depth */
     int argc;        /* argument count */
     int orig_v;      /* number of series defined on entry */
     fn_arg *args;    /* argument array */
@@ -591,7 +590,6 @@ fncall *fncall_new (ufunc *fun, int preserve)
 
     if (call != NULL) {
 	call->fun = fun;
-	call->depth = gretl_function_depth();
 	call->ptrvars = NULL;
 	call->listvars = NULL;
 	call->lists = NULL;
@@ -680,12 +678,14 @@ fncall *user_func_get_fncall (ufunc *fun)
     return fun->call;
 }
 
-void fncall_destroy (fncall *call)
+void fncall_destroy (void *data)
 {
-    if (call != NULL) {
+    if (data != NULL) {
 #if CALL_DEBUG
-	fprintf(stderr, "destroying fncall at %p\n", (void *) call);
+	fprintf(stderr, "destroying fncall at %p\n", data);
 #endif
+        fncall *call = data;
+
 	free(call->args);
 	free(call->ptrvars);
 	free(call->listvars);
@@ -1756,13 +1756,7 @@ static void free_params_array (fn_param *params, int n)
 static void destroy_ufunc_calls (ufunc *fun)
 {
     if (fun->calls != NULL) {
-	GList *tmp = g_list_first(fun->calls);
-
-	while (tmp) {
-	    fncall_destroy(tmp->data);
-	    tmp = tmp->next;
-	}
-	g_list_free(fun->calls);
+        g_list_free_full(fun->calls, fncall_destroy);
 	fun->calls = NULL;
 	fun->call = NULL;
     }
@@ -9643,7 +9637,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 #if 0
         fprintf(stderr, " line %d: '%s' (no_comp %d, genr %p)\n",
 		i, fline->s, line_no_comp(fline), (void *) genr);
-#endif	
+#endif
 
 	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {
@@ -9666,9 +9660,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		goto err_next;
 	    } else if (gretl_if_state_false() && fline->next > 0) {
                 /* skip to next relevant statement */
-		i = fline->next - 1;
-		continue;
-	    }
+                i = fline->next - 1;
+            }
+            continue;
         }
 
 	if (fline->ci == LOOP) {
