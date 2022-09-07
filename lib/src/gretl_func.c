@@ -9402,6 +9402,8 @@ static int handle_return_statement (fncall *call,
 	    fprintf(stderr, "%s: handle_return: exec compiled genr %p\n",
 		    fun->name, genr);
 #endif
+            /* FIXME: when exactly is this reset required? */
+            genr_reset_uvars(genr);
 	    err = execute_genr(genr, dset, state->prn);
 	    goto last_step;
 	} else {
