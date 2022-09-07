@@ -55,6 +55,7 @@
 #define FN_DEBUG 0      /* miscellaneous debugging */
 #define COMP_DEBUG 0    /* debug "compilation" */
 #define CALL_DEBUG 0    /* debug handling of the callstack */
+#define REC_DEBUG 0     /* debug recursion */
 
 #define INT_USE_XLIST (-999)
 #define INT_USE_MYLIST (-777)
@@ -135,8 +136,16 @@ typedef enum {
    August 2022: FIXME this comment needs updating.
 */
 
+struct linegen_ {
+    int idx;
+    GENERATOR *genr;
+};
+
+typedef struct linegen_ linegen;
+
 struct fncall_ {
     ufunc *fun;      /* the function called */
+    int depth;       /* function execution depth */
     int argc;        /* argument count */
     int orig_v;      /* number of series defined on entry */
     fn_arg *args;    /* argument array */
@@ -148,6 +157,8 @@ struct fncall_ {
     obsinfo obs;     /* sample info */
     FCFlags flags;   /* indicators for recursive call, etc */
     fn_line *line;   /* currently executing line */
+    linegen *lgen;   /* array of per-line genrs */
+    int n_lgen;      /* number of linegens */
 };
 
 /* structure representing a user-defined function */
@@ -156,6 +167,7 @@ struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
     fncall *call;          /* pointer to current call, or NULL */
+    GList *calls;          /* for use in recursion */
     int pkg_role;          /* printer, plotter, etc. */
     UfunAttrs flags;       /* private, plugin, etc. */
     int line_idx;          /* current line index (compiling) */
@@ -580,6 +592,7 @@ fncall *fncall_new (ufunc *fun, int preserve)
 
     if (call != NULL) {
 	call->fun = fun;
+	call->depth = gretl_function_depth();
 	call->ptrvars = NULL;
 	call->listvars = NULL;
 	call->lists = NULL;
@@ -589,18 +602,20 @@ fncall *fncall_new (ufunc *fun, int preserve)
 	call->args = NULL;
 	call->flags = preserve ? FC_PRESERVE : 0;
 	call->line = NULL;
+	call->lgen = NULL;
+	call->n_lgen = 0;
     }
 
     return call;
 }
 
-static int call_is_in_use (fncall *call)
+static int call_is_in_use (fncall *fc)
 {
     if (callstack != NULL) {
 	GList *tmp = g_list_last(callstack);
 
 	while (tmp != NULL) {
-	    if (call == tmp->data) {
+	    if (fc == tmp->data) {
 		return 1;
 	    }
 	    tmp = tmp->prev;
@@ -608,6 +623,26 @@ static int call_is_in_use (fncall *call)
     }
 
     return 0;
+}
+
+static void clear_fncall_data (fncall *fc)
+{
+    fncall_clear_args_array(fc);
+    if (fc->ptrvars != NULL) {
+        free(fc->ptrvars);
+        fc->ptrvars = NULL;
+    }
+    if (fc->listvars != NULL) {
+        free(fc->listvars);
+        fc->listvars = NULL;
+    }
+    if (fc->lists != NULL) {
+        g_list_free(fc->lists);
+        fc->lists = NULL;
+    }
+    free(fc->retname);
+    fc->retname = NULL;
+    fc->line = NULL;
 }
 
 /* This function is called (only) from geneval.c, in the function
@@ -619,33 +654,29 @@ static int call_is_in_use (fncall *call)
 
 fncall *user_func_get_fncall (ufunc *fun)
 {
-    if (fun->call == NULL) {
-	/* we need a new fncall struct */
-	fun->call = fncall_new(fun, 1);
-    } else if (call_is_in_use(fun->call)) {
-	/* recursion is going on: let's get a new call */
-	fun->call = fncall_new(fun, 0);
-    } else {
-	/* reuse an existing fncall struct */
-	fncall *fc = fun->call;
+    GList *tmp = g_list_first(fun->calls);
+    fncall *fc = NULL;
 
-	fncall_clear_args_array(fc);
-	if (fc->ptrvars != NULL) {
-	    free(fc->ptrvars);
-	    fc->ptrvars = NULL;
-	}
-	if (fc->listvars != NULL) {
-	    free(fc->listvars);
-	    fc->listvars = NULL;
-	}
-	if (fc->lists != NULL) {
-	    g_list_free(fc->lists);
-	    fc->lists = NULL;
-	}
-	free(fc->retname);
-	fc->retname = NULL;
-        fc->line = NULL;
+    while (tmp != NULL) {
+        if (!call_is_in_use(tmp->data)) {
+            fc = tmp->data;
+            break;
+        }
+        tmp = tmp->next;
     }
+
+    if (fc != NULL) {
+        clear_fncall_data(fc);
+        fun->call = fc;
+    } else {
+        fun->call = fncall_new(fun, 1);
+        fun->calls = g_list_append(fun->calls, fun->call);
+    }
+
+#if REC_DEBUG
+    fprintf(stderr, "call for %s, depth %d: %p (n_lgen %d)\n", fun->name,
+	    gretl_function_depth(), (void *) fun->call, fun->call->n_lgen);
+#endif
 
     return fun->call;
 }
@@ -661,6 +692,14 @@ void fncall_destroy (fncall *call)
 	free(call->listvars);
 	free(call->retname);
 	g_list_free(call->lists);
+	if (call->n_lgen > 0) {
+	    int i;
+
+	    for (i=0; i<call->n_lgen; i++) {
+		destroy_genr(call->lgen[i].genr);
+	    }
+	    free(call->lgen);
+	}
 	free(call);
     }
 }
@@ -1658,6 +1697,7 @@ static ufunc *ufunc_new (void)
     fun->name[0] = '\0';
     fun->pkg = NULL;
     fun->call = NULL;
+    fun->calls = NULL;
     fun->flags = 0;
     fun->pkg_role = 0;
 
@@ -1719,6 +1759,24 @@ static void free_params_array (fn_param *params, int n)
     free(params);
 }
 
+static void destroy_ufunc_calls (ufunc *fun)
+{
+    if (fun->calls != NULL) {
+	GList *tmp = g_list_first(fun->calls);
+
+	while (tmp) {
+	    fncall_destroy(tmp->data);
+	    tmp = tmp->next;
+	}
+	g_list_free(fun->calls);
+	fun->calls = NULL;
+	fun->call = NULL;
+    } else {
+	fncall_destroy(fun->call);
+	fun->call = NULL;
+    }
+}
+
 static void clear_ufunc_data (ufunc *fun)
 {
     free_lines_array(fun->lines, fun->n_lines);
@@ -1731,10 +1789,7 @@ static void clear_ufunc_data (ufunc *fun)
     fun->line_idx = 1;
     fun->n_params = 0;
 
-    if (fun->call != NULL) {
-	fncall_destroy(fun->call);
-        fun->call = NULL;
-    }
+    destroy_ufunc_calls(fun);
 
     fun->rettype = GRETL_TYPE_NONE;
 }
@@ -1744,10 +1799,7 @@ static void ufunc_free (ufunc *fun)
     /* note: free_lines_array() handles loops, genrs */
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
-    if (fun->call != NULL) {
-	fncall_destroy(fun->call);
-        fun->call = NULL;
-    }
+    destroy_ufunc_calls(fun);
     free(fun);
 }
 
@@ -2031,7 +2083,7 @@ static int push_function_line (ufunc *fun, char *s, int ci, int donate)
             if (strchr(lines[i].s, '$') != NULL) {
                 /* be on the safe side wrt string substitution */
                 lines[i].flags = LINE_NOCOMP;
-	    } else if (strchr(lines[i].s, '(') != NULL) {
+	    } else if (0 && strchr(lines[i].s, '(') != NULL) {
 		/* and also wrt function calls (could be cross-recursive) */
 		lines[i].flags = LINE_NOCOMP;
             } else {
@@ -8973,9 +9025,15 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
         line = &(u->lines[i]);
 	if (line_has_loop(line)) {
 	    loop_reset_uvars(line->ptr);
-	} else if (line_has_genr(line)) {
+	} else if (0 && line_has_genr(line)) {
             genr_reset_uvars(line->ptr);
         }
+    }
+
+    if (u->call->lgen != NULL) {
+	for (i=0; i<u->call->n_lgen; i++) {
+	    genr_reset_uvars(u->call->lgen[i].genr);
+	}
     }
 }
 
@@ -9234,6 +9292,53 @@ static void set_func_error_message (int err, ufunc *u,
     }
 }
 
+static GENERATOR *fnline_get_genr (fncall *call, fn_line *line)
+{
+    GENERATOR *genr = NULL;
+    int i;
+
+    for (i=0; i<call->n_lgen; i++) {
+	if (call->lgen[i].idx == line->idx) {
+	    genr = call->lgen[i].genr;
+	    break;
+	}
+    }
+
+#if REC_DEBUG
+    fprintf(stderr, "?? seek genr for call %p line idx %d: got %p (n_lgen %d)\n",
+	    (void *) call, line->idx, (void *) genr, call->n_lgen);
+#endif
+
+    return genr;
+}
+
+static int fnline_set_genr (fncall *call, fn_line *line, GENERATOR *genr)
+{
+    GENERATOR *g0 = fnline_get_genr(call, line);
+    int err = 0;
+
+    if (genr != g0) {
+	linegen *lgen;
+	int n = call->n_lgen;
+
+	lgen = realloc(call->lgen, (n + 1) * sizeof *lgen);
+	if (lgen == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    call->lgen = lgen;
+	    call->lgen[n].idx = line->idx;
+	    call->lgen[n].genr = genr;
+	    call->n_lgen = n + 1;
+#if REC_DEBUG
+	    fprintf(stderr, "++ adding genr %p for call %p line idx %d (n_lgen %d)\n",
+		    (void *) *pgen, (void *) call, line->idx, call->n_lgen);
+#endif
+	}
+    }
+
+    return err;
+}
+
 /* 2022-09-01: enabling compilation of a function's return statement
    can offer a substantial speed-up (if it's more complex than just
    "return ret"), but as things stand it can fail nastily in case of
@@ -9253,20 +9358,21 @@ static int generate_return_value2 (fncall *call,
     int done = 0;
     int err = 0;
 
-    //fprintf(stderr, "formula: '%s'\n", formula);
-
     if (line != NULL) {
 	/* try compilation */
-        // line->flags |= LINE_NOCOMP;
-	line->ptr = genr_compile(formula, dset, call->fun->rettype,
-				 OPT_P, state->prn, &err);
-	if (!err && line->ptr != NULL) {
+	GENERATOR *genr;
+
+	genr = genr_compile(formula, dset, call->fun->rettype,
+			    OPT_P, state->prn, &err);
+	if (!err && genr != NULL) {
 	    /* succeeded */
-            // fprintf(stderr, "attached genr at %p (%s)\n", line->ptr, line->s);
+	    //fprintf(stderr, "compile: call %p, got genr at %p\n",
+	    //	    (void *) call, (void *) genr);
+	    fnline_set_genr(call, line, genr);
 	    done = 1;
 	} else if (err == E_EQN) {
 	    /* failed, but not fatally */
-            // fprintf(stderr, "did not attach genr at %p\n", line->ptr);
+            fprintf(stderr, "did NOT attach genr at %p\n", line->ptr);
 	    line->flags |= LINE_NOCOMP;
 	    err = 0;
 	}
@@ -9288,8 +9394,6 @@ static int generate_return_value1 (fncall *call,
     gchar *formula = g_strdup_printf("$retval=%s", s);
     int err;
 
-    //fprintf(stderr, "formula: '%s'\n", formula);
-
     err = generate(formula, dset, call->fun->rettype, OPT_P, state->prn);
     g_free(formula);
 
@@ -9306,18 +9410,21 @@ static int handle_return_statement (fncall *call,
     const char *s = NULL;
     int err = 0;
 
-    if (line != NULL && line->ptr != NULL) {
-        //fprintf(stderr, "%s: handle_return: exec compiled genr %p\n",
-        //        fun->name, line->ptr);
-        err = execute_genr(line->ptr, dset, state->prn);
-        goto last_step;
-    }
-
     if (line != NULL) {
-	/* not coming from loop */
-	err = parse_command_line(state, dset, NULL);
-	if (err) {
+	GENERATOR *genr = fnline_get_genr(call, line);
+
+ 	if (genr != NULL) {
+#if REC_DEBUG
+	    fprintf(stderr, "%s: handle_return: exec compiled genr %p\n",
+		    fun->name, genr);
+#endif
+	    err = execute_genr(genr, dset, state->prn);
 	    goto last_step;
+	} else {
+	    err = parse_command_line(state, dset, NULL);
+	    if (err) {
+		goto last_step;
+	    }
 	}
     }
 
@@ -9357,7 +9464,6 @@ static int handle_return_statement (fncall *call,
         } else {
             if (line != NULL && gencomp && !cmd_subst(state->cmd)) {
                 /* allow trying compilation */
-                // fprintf(stderr, "HERE try gencomp\n");
                 err = generate_return_value2(call, state, dset, s, line);
             } else {
                 /* play it safe */
@@ -9450,12 +9556,14 @@ static int prepare_func_exec_state (ExecState *s,
 }
 
 #define do_if_check(c) (c == IF || c == ELIF || c == ELSE || c == ENDIF)
+#define may_have_genr(c) (c == IF || c == ELIF || c == GENR)
 
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn)
 {
     ufunc *u = call->fun;
     ExecState state = {0};
+    GENERATOR *genr = NULL;
     void *ptr;
     char line[MAXLINE];
     int orig_n = 0;
@@ -9465,7 +9573,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int gencomp = 0;
-    int blocked = 0;
     int n_saved = 0;
     int i, j, err = 0;
 
@@ -9521,17 +9628,12 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     /* should we try to compile genrs, loops? */
     gencomp = gretl_iterating(); /* 2022-08-30: gets matrix/slicing.inp working again */
-    blocked = 0; // is_recursing(call);
 
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
         fn_line *fline = &u->lines[i];
-        int this_gencomp = gencomp && !line_no_comp(fline) && !blocked;
-#if 0
-        fprintf(stderr, " line %d: '%s' (ptr %p, no_comp %d)\n", i, fline->s,
-                (void *) fline->ptr, line_no_comp(fline));
-#endif
+        int this_gencomp = gencomp && !line_no_comp(fline);
 
 	if (gretl_echo_on()) {
 	    pprintf(prn, "? %s\n", fline->s); /* ? */
@@ -9542,26 +9644,44 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         strcpy(line, fline->s); /* needed? */
 	call->line = fline;
 
+	if (this_gencomp && may_have_genr(fline->ci)) {
+	    genr = fnline_get_genr(call, fline);
+	} else {
+	    genr = NULL;
+	}
+
+#if 0
+        fprintf(stderr, " line %d: '%s' (no_comp %d, genr %p)\n",
+		i, fline->s, line_no_comp(fline), (void *) genr);
+#endif	
+
 	/* check and adjust the if-state */
 	if (do_if_check(fline->ci)) {
 	    if (fline->ci == ELSE || fline->ci == ENDIF) {
 		state.cmd->ci = fline->ci;
 		flow_control(&state, NULL, NULL);
+	    } else if (genr != NULL) {
+		state.cmd->ci = fline->ci;
+		flow_control(&state, dset, &genr);
 	    } else {
-		ptr = this_gencomp ? &fline->ptr : NULL;
+		ptr = this_gencomp ? &genr : NULL;
 		err = maybe_exec_line(&state, dset, ptr);
-		if (ptr != NULL && fline->ptr == NULL) {
+                if (genr != NULL) {
+                    fnline_set_genr(call, fline, genr);
+                } else if (ptr != NULL) {
 		    fline->flags |= LINE_NOCOMP;
 		}
 	    }
-	    if (gretl_if_state_false() && fline->next > 0) {
+	    if (err) {
+		goto err_next;
+	    } else if (gretl_if_state_false() && fline->next > 0) {
                 /* skip to next relevant statement */
 		i = fline->next - 1;
+		continue;
 	    }
-	    continue;
         }
 
-	if (fline->ci == LOOP && !blocked) {
+	if (fline->ci == LOOP) {
 	    if (fline->ptr != NULL) {
 		state.loop = fline->ptr;
 		err = gretl_loop_exec(&state, dset);
@@ -9599,16 +9719,20 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		retline = i;
 	    }
 	    break;
-        } else if (line_has_genr(fline) && !blocked) {
-	    err = execute_genr(fline->ptr, dset, prn);
+        } else if (genr != NULL) {
+	    err = execute_genr(genr, dset, prn);
             n_saved++;
 	} else {
-            ptr = this_gencomp? &fline->ptr : NULL;
+            ptr = (this_gencomp && may_have_genr(fline->ci))? &genr : NULL;
 	    err = maybe_exec_line(&state, dset, ptr);
-	    if (ptr != NULL && fline->ptr == NULL) {
+            if (genr != NULL) {
+                fnline_set_genr(call, fline, genr);
+            } else if (ptr != NULL) {
 		fline->flags |= LINE_NOCOMP;
 	    }
  	}
+
+    err_next:
 
 	if (err) {
 	    set_func_error_message(err, u, &state, line, fline);

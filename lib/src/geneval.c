@@ -76,6 +76,7 @@
 #endif
 
 #define AUX_NODES_DEBUG 0
+#define RECURSION_CHECK 0
 
 #if AUX_NODES_DEBUG
 # include <stdarg.h>
@@ -383,6 +384,8 @@ static const char *free_tree_tag (int t)
 
 #endif /* EDEBUG */
 
+#if RECURSION_CHECK
+
 /* Check a parsed (but not yet eval'd) syntax tree for the presence of
    a recursive function call. We do this to avoid the mess-up that's
    likely to ensue (as of 2022-09-01) if we pursue "compilation" of
@@ -427,6 +430,8 @@ static int check_tree_for_recursion (NODE *t)
 
     return ret;
 }
+
+#endif /* RECURSION_CHECK */
 
 /* used when we know that @t is a terminal node: skip
    the tests for attached tree */
@@ -10250,12 +10255,10 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
     GretlType rtype = 0;
     int i, nparam, argc = 0;
 
-#if 0
-    fprintf(stderr, "eval_ufunc (%s):\n", funname);
-    fprintf(stderr, "l: %s, r: %s\n", getsymb(l->t), getsymb(r->t));
-    fprintf(stderr, "addrs: %p %p\n", (void *) l, (void *) r);
-    fprintf(stderr, "parser: %p, compile %d exec %d\n", (void *) p,
-            (p->flags & P_COMPILE)? 1 : 0, (p->flags & P_EXEC)? 1 : 0);
+#if EDEBUG
+    fprintf(stderr, "eval_ufunc (%s, depth %d):\n", funname, gretl_function_depth());
+    fprintf(stderr, " compiling %d, exec'ing %d\n", (p->flags & P_COMPILE)? 1 : 0,
+            (p->flags & P_EXEC)? 1 : 0);
 #endif
 
     rtype = user_func_get_return_type(uf);
@@ -10437,8 +10440,8 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
 #endif
 
 #if EDEBUG
-    fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n",
-            p->err, (void *) ret);
+    fprintf(stderr, "return from %s, depth %d, ret = %p\n",
+            funname, gretl_function_depth(), (void *) ret);
 #endif
 
     return ret;
@@ -10451,7 +10454,7 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
 static NODE *eval_Rfunc (NODE *l, NODE *r, parser *p)
 {
     int i, argc = r->v.bn.n_nodes;
-    const char *funname = l->v.str;
+    const char *funname = l->vname;
     int rtype = GRETL_TYPE_NONE;
     NODE *ret = NULL;
 
@@ -10483,7 +10486,6 @@ static NODE *eval_Rfunc (NODE *l, NODE *r, parser *p)
         type = gretl_type_from_gen_type(arg->t);
 
         if (type == GRETL_TYPE_SERIES) {
-            /* revised 2020-02-01 */
             p->err = gretl_R_function_add_series(arg->v.xvec, p->dset, arg->vnum);
         } else if (type == GRETL_TYPE_DOUBLE) {
             p->err = gretl_R_function_add_arg(&arg->v.xval, type);
@@ -21210,7 +21212,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	goto gen_finish;
     }
 
-#if 1
+#if RECURSION_CHECK
     if ((p->flags & P_COMPILE) && gretl_function_depth() > 0) {
 	/* We're trying to compile a "genr" call within a function,
 	   but as of 2022-09-02 we're not able to compile recursive
