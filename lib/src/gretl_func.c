@@ -95,7 +95,6 @@ typedef enum {
 } ln_flags;
 
 #define line_has_loop(l)  (l->ci == LOOP && l->ptr != NULL)
-#define line_has_genr(l)  (l->ci != LOOP && l->ptr != NULL)
 #define ignore_line(l)    (l->flags & LINE_IGNORE)
 #define line_no_comp(l)   (l->flags & LINE_NOCOMP)
 
@@ -1734,12 +1733,7 @@ static void free_lines_array (fn_line *lines, int n)
             fprintf(stderr, "  L%d: has_loop at %p\n", i, (void *) line->ptr);
 #endif
 	    gretl_loop_destroy(line->ptr);
-	} else if (line_has_genr(line)) {
-#if COMP_DEBUG
-            fprintf(stderr, "  L%d: has_genr at %p\n", i, (void *) line->ptr);
-#endif
-            destroy_genr(line->ptr);
-        }
+	}
     }
 
     free(lines);
@@ -1771,9 +1765,6 @@ static void destroy_ufunc_calls (ufunc *fun)
 	g_list_free(fun->calls);
 	fun->calls = NULL;
 	fun->call = NULL;
-    } else {
-	fncall_destroy(fun->call);
-	fun->call = NULL;
     }
 }
 
@@ -1796,9 +1787,10 @@ static void clear_ufunc_data (ufunc *fun)
 
 static void ufunc_free (ufunc *fun)
 {
-    /* note: free_lines_array() handles loops, genrs */
+    /* free_lines_array() handles any attached loops */
     free_lines_array(fun->lines, fun->n_lines);
     free_params_array(fun->params, fun->n_params);
+    /* destroy_ufunc_calls() handles attached genrs */
     destroy_ufunc_calls(fun);
     free(fun);
 }
@@ -9025,9 +9017,7 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
         line = &(u->lines[i]);
 	if (line_has_loop(line)) {
 	    loop_reset_uvars(line->ptr);
-	} else if (0 && line_has_genr(line)) {
-            genr_reset_uvars(line->ptr);
-        }
+	}
     }
 
     if (u->call->lgen != NULL) {
@@ -9627,7 +9617,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
     /* should we try to compile genrs, loops? */
-    gencomp = gretl_iterating(); /* 2022-08-30: gets matrix/slicing.inp working again */
+    gencomp = gretl_iterating();
 
     /* get function lines in sequence and check, parse, execute */
 
@@ -9636,7 +9626,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
         int this_gencomp = gencomp && !line_no_comp(fline);
 
 	if (gretl_echo_on()) {
-	    pprintf(prn, "? %s\n", fline->s); /* ? */
+	    pprintf(prn, "? %s\n", fline->s);
 	}
 	if (ignore_line(fline)) {
 	    continue;

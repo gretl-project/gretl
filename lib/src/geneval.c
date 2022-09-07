@@ -76,7 +76,6 @@
 #endif
 
 #define AUX_NODES_DEBUG 0
-#define RECURSION_CHECK 0
 
 #if AUX_NODES_DEBUG
 # include <stdarg.h>
@@ -383,55 +382,6 @@ static const char *free_tree_tag (int t)
 }
 
 #endif /* EDEBUG */
-
-#if RECURSION_CHECK
-
-/* Check a parsed (but not yet eval'd) syntax tree for the presence of
-   a recursive function call. We do this to avoid the mess-up that's
-   likely to ensue (as of 2022-09-01) if we pursue "compilation" of
-   such a tree.
-*/
-
-static int check_tree_for_recursion (NODE *t)
-{
-    int ret = 0;
-
-    if (t == NULL) {
-	return 0;
-    }
-
-    if (t->t == UFUN) {
-#if 0
-	fprintf(stderr, "check_tree: found function %s, executing = %d\n",
-		t->vname, function_is_executing(t->vname));
-#endif
-	if (function_is_executing(t->vname)) {
-	    return 1;
-	}
-    }
-
-    if (bnsym(t->t)) {
-	int i;
-
-	for (i=0; i<t->v.bn.n_nodes; i++) {
-	    ret = check_tree_for_recursion(t->v.bn.n[i]);
-	}
-    } else {
-	if (t->L != NULL) {
-	    ret = check_tree_for_recursion(t->L);
-	}
-	if (t->M != NULL) {
-	    ret = check_tree_for_recursion(t->M);
-	}
-	if (t->R != NULL) {
-	    ret = check_tree_for_recursion(t->R);
-	}
-    }
-
-    return ret;
-}
-
-#endif /* RECURSION_CHECK */
 
 /* used when we know that @t is a terminal node: skip
    the tests for attached tree */
@@ -1754,10 +1704,6 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p,
         mval[i] = n->v.xval;
 	ret = &mm[i];
 	ret->val = &mval[i];
-#if 0
-	fprintf(stderr, "node_get_matrix: returning static 1x1 matrix (i=%d, argnum=%d)\n",
-		i, argnum);
-#endif
 
 	return ret;
     }
@@ -4773,10 +4719,6 @@ static int check_matrix_file (const char *fname, int *csv)
             break;
         }
     }
-
-#if 0
-    fprintf(stderr, "check_matrix_file : csv = %d\n", *csv);
-#endif
 
     fclose(fp);
 
@@ -10244,8 +10186,6 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
-#define SAVE_FNCALL 1 /* 2022-08-12, still somewhat experimental */
-
 static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -10297,11 +10237,7 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
                             "user-defined functions"));
     }
 
-#if SAVE_FNCALL
     fc = user_func_get_fncall(uf);
-#else
-    fc = fncall_new(uf, 1);
-#endif
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
@@ -10433,11 +10369,6 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
             }
         }
     }
-
-#if !SAVE_FNCALL
-    /* avoid leaking memory */
-    fncall_destroy(fc);
-#endif
 
 #if EDEBUG
     fprintf(stderr, "return from %s, depth %d, ret = %p\n",
@@ -18354,19 +18285,6 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
             fprintf(stderr, " orig aux %p (%s), incoming %p (%s)\n",
                     (void *) t->aux, getsymb(t->aux->t),
                     (void *) ret, getsymb(ret->t));
-#if 0
-	    if ((p->flags & P_EXEC) && t->t == UFUN && t->aux->t == ret->t) {
-                fprintf(stderr, " genr at %p\n", (void *) p);
-                if (ret->t == NUM) {
-                    fprintf(stderr, " orig val %g, new val %g\n",
-                            t->aux->v.xval, ret->v.xval);
-                }
-		free_node(t->aux, p);
-		t->aux = ret;
-		ret->refcount += 1;
-		return 0;
-	    }
-#endif
             return E_DATA;
         }
     }
@@ -21211,21 +21129,6 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	/* we're done at this point */
 	goto gen_finish;
     }
-
-#if RECURSION_CHECK
-    if ((p->flags & P_COMPILE) && gretl_function_depth() > 0) {
-	/* We're trying to compile a "genr" call within a function,
-	   but as of 2022-09-02 we're not able to compile recursive
-	   function calls properly. So if we find that the genr
-	   involves recursion we'll block here (with a non-fatal
-	   error that allows fallback to a non-compiled call).
-	*/
-	if (check_tree_for_recursion(p->tree)) {
-	    p->err = E_EQN;
-	    goto gen_finish;
-	}
-    }
-#endif
 
     if (!p->err) {
 	/* set P_UFRET here if relevant */
