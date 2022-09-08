@@ -2883,9 +2883,8 @@ gretl_array *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 		int i = 0;
 
 		while (L != NULL) {
-		    gretl_array_set_string(A, i, L->data, 1);
-		    i++;
-		    L = g_list_next(L);
+		    gretl_array_set_string(A, i++, L->data, 1);
+		    L = L->next;
 		}
 	    }
 	} else {
