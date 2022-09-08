@@ -708,8 +708,13 @@ static void maybe_destroy_fncall (fncall **pcall)
     fncall *call = *pcall;
 
     if (call != NULL && !(call->flags & FC_PRESERVE)) {
-        if (call->fun != NULL && call->fun->call == call) {
-            call->fun->call = NULL;
+        if (call->fun != NULL) {
+            if (call->fun->calls != NULL) {
+                call->fun->calls = g_list_remove(call->fun->calls, call);
+            }
+            if (call->fun->call == call) {
+                call->fun->call = NULL;
+            }
         }
 	fncall_destroy(call);
         *pcall = NULL;
@@ -1759,6 +1764,9 @@ static void destroy_ufunc_calls (ufunc *fun)
         g_list_free_full(fun->calls, fncall_destroy);
 	fun->calls = NULL;
 	fun->call = NULL;
+    } else if (fun->call != NULL) {
+        fncall_destroy(fun->call);
+        fun->call = NULL;
     }
 }
 
