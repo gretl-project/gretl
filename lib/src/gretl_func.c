@@ -9022,7 +9022,7 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
 	}
     }
 
-    if (u->call->lgen != NULL) {
+    if (u->call != NULL && u->call->lgen != NULL) {
 	for (i=0; i<u->call->n_lgen; i++) {
 	    genr_reset_uvars(u->call->lgen[i].genr);
 	}
@@ -9306,26 +9306,22 @@ static GENERATOR *fnline_get_genr (fncall *call, fn_line *line)
 
 static int fnline_set_genr (fncall *call, fn_line *line, GENERATOR *genr)
 {
-    GENERATOR *g0 = fnline_get_genr(call, line);
+    linegen *lgen;
+    int n = call->n_lgen;
     int err = 0;
 
-    if (genr != g0) {
-	linegen *lgen;
-	int n = call->n_lgen;
-
-	lgen = realloc(call->lgen, (n + 1) * sizeof *lgen);
-	if (lgen == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    call->lgen = lgen;
-	    call->lgen[n].idx = line->idx;
-	    call->lgen[n].genr = genr;
-	    call->n_lgen = n + 1;
+    lgen = realloc(call->lgen, (n + 1) * sizeof *lgen);
+    if (lgen == NULL) {
+        err = E_ALLOC;
+    } else {
+        call->lgen = lgen;
+        call->lgen[n].idx = line->idx;
+        call->lgen[n].genr = genr;
+        call->n_lgen = n + 1;
 #if REC_DEBUG
-	    fprintf(stderr, "++ adding genr %p for call %p line idx %d (n_lgen %d)\n",
-		    (void *) *pgen, (void *) call, line->idx, call->n_lgen);
+        fprintf(stderr, "++ adding genr %p for call %p line idx %d (n_lgen %d)\n",
+                (void *) *pgen, (void *) call, line->idx, call->n_lgen);
 #endif
-	}
     }
 
     return err;
