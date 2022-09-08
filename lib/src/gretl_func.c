@@ -9327,15 +9327,6 @@ static int fnline_set_genr (fncall *call, fn_line *line, GENERATOR *genr)
     return err;
 }
 
-/* 2022-09-01: enabling compilation of a function's return statement
-   can offer a substantial speed-up (if it's more complex than just
-   "return ret"), but as things stand it can fail nastily in case of
-   recursion. Direct recursion can be detected and handled, but
-   indirect recursion is harder. For now I'm ruling out compilation
-   that seems to include a function call, in case it turns out to be
-   a case of indirect recursion.
-*/
-
 static int generate_return_value2 (fncall *call,
 				   ExecState *state,
 				   DATASET *dset,
