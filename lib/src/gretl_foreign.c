@@ -1127,7 +1127,7 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("  if autodot and not os.path.isabs(fname):\n", fp);
     fputs("    fname = gretl_dotdir + fname\n", fp);
     fputs("  if fname[-4:] == '.bin':\n", fp);
-    fputs("    from numpy import fromfile, ndarray\n", fp);
+    fputs("    from numpy import fromfile\n", fp);
     fputs("    from struct import unpack\n", fp);
     fputs("    f = open(fname, 'rb')\n", fp);
     fputs("    buf = f.read(19)\n", fp);
@@ -1141,16 +1141,11 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("    c = unpack('<i', f.read(4))[0]\n", fp);
     fputs("    if cmplx == 1:\n", fp);
     fputs("      r = r // 2\n", fp);
-    fputs("      M = ndarray(shape=(r,c), dtype=complex, order='F')\n", fp);
-    fputs("      for j in range(0, c):\n", fp);
-    fputs("        for i in range(0, r):\n", fp);
-    fputs("          M[i,j] = fromfile(f, dtype=complex, count=1)\n", fp);
+    fputs("      M = fromfile(f, dtype=complex, count=-1)\n", fp);
     fputs("    else:\n", fp);
-    fputs("      M = ndarray(shape=(r,c), dtype=float, order='F')\n", fp);
-    fputs("      for j in range(0, c):\n", fp);
-    fputs("        for i in range(0, r):\n", fp);
-    fputs("          M[i,j] = fromfile(f, dtype=float, count=1)\n", fp);
+    fputs("      M = fromfile(f, dtype=float, count=-1)\n", fp);
     fputs("    f.close()\n", fp);
+    fputs("    M = M.reshape(r, c, order='F')\n", fp);
     fputs("  else:\n", fp);
     fputs("    from numpy import loadtxt\n", fp);
     fputs("    M = loadtxt(fname, skiprows=1)\n", fp);
