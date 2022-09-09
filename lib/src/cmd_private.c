@@ -157,7 +157,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
     } else {
         err = parse_command_line(s, dset, ptr);
         if (s->cmd->ci == GENR && !err && ptr != NULL) {
-            if (!(s->cmd->flags & CMD_SUBST)) {
+            if (!(s->cmd->flags & (CMD_SUBST | CMD_CATCH))) {
                 err = try_compile_func_genr(s, dset, ptr, &done);
             }
         }

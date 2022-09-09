@@ -9972,6 +9972,15 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
         }
     }
 
+#if 0
+    if (f->t == F_SQRT) {
+	fprintf(stderr, "HERE apply_matrix_func, sqrt, ret = %p, ret->v.m = %p\n",
+		(void *) ret, (void *) ret->v.m);
+	fprintf(stderr, " input node %p\n", (void *) t);
+	gretl_matrix_print(ret->v.m, "ret->v.m");
+    }
+#endif
+
     return ret;
 }
 
@@ -15428,24 +15437,36 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
    signalled by @need_z.
 */
 
-static void query_term_get_value (NODE *n, int i, int j,
-				  double *py, double complex *pz,
-				  int need_z)
+static int query_term_get_value (NODE *n, parser *p, int i, int j,
+				 double *py, double complex *pz,
+				 int need_z)
 {
-    if (n->t == MAT && n->v.m->is_complex) {
-	*pz = gretl_cmatrix_get(n->v.m, i, j);
-    } else {
-	if (n->t == NUM) {
-	    *py = n->v.xval;
-	} else {
-	    *py = gretl_matrix_get(n->v.m, i, j);
-	}
-	if (need_z) {
-	    double complex z = *py + 0 * I;
+    gretl_matrix *m = NULL;
 
-	    *pz = z;
+    if (n->t == MAT) {
+	m = node_get_matrix(n, p, 0, 0);
+	if (m == NULL) {
+	    fprintf(stderr, "missing matrix in query_term_get_value: n->v.m = %p\n",
+		    (void *) n->v.m);
+	    fprintf(stderr, "n->v.xval = %g\n", n->v.xval);
+	    return E_DATA;
+	} else if (m->is_complex) {
+	    *pz = gretl_cmatrix_get(m, i, j);
+	} else {
+	    *py = gretl_matrix_get(m, i, j);
 	}
     }
+
+    if (n->t == NUM) {
+	*py = n->v.xval;
+    }
+    if (need_z) {
+	double complex z = *py + 0 * I;
+
+	*pz = z;
+    }
+
+    return 0;
 }
 
 /* the condition in the ternary query operator is a matrix */
@@ -15458,20 +15479,31 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     int lcomplex = 0;
     int rcomplex = 0;
 
+    if (p->flags & P_COMPILE) {
+	/* why can't we handle this? */
+	p->err = E_EQN;
+	return NULL;
+    }
+
     if (gretl_is_null_matrix(m)) {
         p->err = E_TYPES;
         return NULL;
     }
 
     l = eval(n->M, p);
-
     if (!p->err) {
         r = eval(n->R, p);
     }
-
     if (p->err) {
         return NULL;
     }
+
+#if 0
+    fprintf(stderr, " n->M = %p, n->R = %p\n",
+	    (void *) n->M, (void *) n->R);
+    fprintf(stderr, " l = %p, r = %p\n",
+	    (void *) l, (void *) r);
+#endif
 
     if ((l->t != NUM && l->t != MAT) ||
         (r->t != NUM && r->t != MAT)) {
@@ -15512,7 +15544,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 
     if (!p->err) {
 	int need_z = mret->is_complex;
-	double complex z;
+	double complex z = {0};
         double x, y = 0;
         int j, i;
 
@@ -15526,14 +15558,20 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 			gretl_matrix_set(mret, i, j, x);
 		    }
                 } else if (x != 0.0) {
-		    query_term_get_value(l, i, j, &y, &z, need_z);
+		    p->err = query_term_get_value(l, p, i, j, &y, &z, need_z);
+		    if (p->err) {
+			break;
+		    }
 		    if (mret->is_complex) {
 			gretl_cmatrix_set(mret, i, j, z);
 		    } else {
 			gretl_matrix_set(mret, i, j, y);
 		    }
                 } else {
-		    query_term_get_value(r, i, j, &y, &z, need_z);
+		    p->err = query_term_get_value(r, p, i, j, &y, &z, need_z);
+		    if (p->err) {
+			break;
+		    }
 		    if (mret->is_complex) {
 			gretl_cmatrix_set(mret, i, j, z);
 		    } else {
@@ -15544,6 +15582,8 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
         }
         ret->v.m = mret;
     }
+
+    reset_p_aux(p, ret);
 
     return ret;
 }
@@ -15582,7 +15622,7 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "eval_query return: ret = %p\n", (void *) ret);
+    fprintf(stderr, "eval_query return: ret = %p, err %d\n", (void *) ret, p->err);
 #endif
 
     return ret;
@@ -18310,9 +18350,11 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
     } else if (t->aux != ret) {
         if (t->t == QUERY || t->t == B_AND || t->t == B_OR) {
             /* the result node may switch in these cases (only?) */
-            fprintf(stderr, "boolean: freeing %p\n", (void *) t->aux);
+            fprintf(stderr, "boolean: freeing %p (%s)\n",
+		    (void *) t->aux, getsymb(t->aux->t));
             free_node(t->aux, p);
-            fprintf(stderr, "boolean: attaching %p\n", (void *) ret);
+            fprintf(stderr, "boolean: attaching %p (%s)\n",
+		    (void *) ret, getsymb(ret->t));
             t->aux = ret;
             ret->refcount += 1;
         } else if (is_proxy_node(t->aux)) {
