@@ -836,6 +836,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	/* got a pre-existing aux node */
 	if (starting(p)) {
 	    if (ret->t != t) {
+		fprintf(stderr, "p->aux->t (%p) is %s but expected %s\n",
+			(void *) p->aux, getsymb(p->aux->t), getsymb(t));
 		maybe_switch_node_type(ret, t, flags, p);
 	    } else if (is_tmp_node(ret) && !(p->flags & P_MSAVE)) {
 		clear_tmp_node_data(ret, p);
@@ -10563,7 +10565,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     void *val = NULL;
     NODE *ret = NULL;
 
-#if EDEBUG
+#if 1 || EDEBUG
     fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
             l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
 #endif
