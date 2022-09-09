@@ -64,11 +64,13 @@ printf "\n"
 
 
 # Log events in a separate file
+printf "workdir = %s\n", $workdir
 set loglevel info
 string path_logfile = "mylog.txt" # target file where to append
+remove(path_logfile)
 set logfile "@path_logfile"
 
 Info("This message will not be printed but appended to a file.")
 print "File content"
 eval readfile(path_logfile)
-
+remove(path_logfile)

@@ -15570,11 +15570,7 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
     } else if (c->t == SERIES) {
 	ret = query_eval_series(c->v.xvec, t, p);
     } else if (c->t == MAT) {
-	if (gretl_matrix_is_scalar(c->v.m)) {
-	    ret = query_eval_scalar(c->v.m->val[0], t, p);
-	} else {
-	    ret = query_eval_matrix(c->v.m, t, p);
-	}
+	ret = query_eval_matrix(c->v.m, t, p);
     } else {
 	/* invalid type for boolean condition */
 	p->err = E_TYPES;
