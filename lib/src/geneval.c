@@ -133,7 +133,7 @@ enum {
 #define cscalar_node(n) (n->t == MAT && gretl_matrix_is_cscalar(n->v.m))
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
-#define mutable_node(n) (n->flags & MUT_NODE)
+#define mutable_node(n) (n->flags & (MUT_NODE | QRY_NODE))
 
 #define null_node(n) (n == NULL || n->t == EMPTY)
 #define null_or_scalar(n) (null_node(n) || scalar_node(n))
@@ -1040,6 +1040,7 @@ struct typeconv {
 };
 
 struct typeconv conversions[] = {
+    { GRETL_TYPE_NONE,   EMPTY },
     { GRETL_TYPE_DOUBLE, NUM },
     { GRETL_TYPE_SERIES, SERIES },
     { GRETL_TYPE_MATRIX, MAT },
@@ -7552,32 +7553,12 @@ static NODE *multi_str_node (NODE *l, int f, parser *p)
 static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    GretlType t = GRETL_TYPE_NONE;
+    GretlType t;
 
-    switch (n->t) {
-    case NUM:
-        t = GRETL_TYPE_DOUBLE;
-        break;
-    case SERIES:
-        t = GRETL_TYPE_SERIES;
-        break;
-    case MAT:
-        t = GRETL_TYPE_MATRIX;
-        break;
-    case STR:
-        t = GRETL_TYPE_STRING;
-        break;
-    case BUNDLE:
-        t = GRETL_TYPE_BUNDLE;
-        break;
-    case ARRAY:
-        t = GRETL_TYPE_ARRAY;
-        break;
-    case LIST:
-        t = GRETL_TYPE_LIST;
-        break;
-    default:
-        break;
+    if (n->flags & QRY_NODE) {
+        t = n->v.xval;
+    } else {
+        t = gretl_type_from_gen_type(n->t);
     }
 
     if (alias_reversed(func)) {
@@ -10565,19 +10546,19 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     void *val = NULL;
     NODE *ret = NULL;
 
-#if 1 || EDEBUG
+#if EDEBUG
     fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
             l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
 #endif
 
     if (p->flags & P_OBJQRY) {
-	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
-	if (type == GRETL_TYPE_NONE) {
-	    return get_aux_node(p, EMPTY, 0, MUT_NODE);
-	} else {
-	    gen_t = gen_type_from_gretl_type(type);
-	    return get_aux_node(p, gen_t, 0, MUT_NODE);
-	}
+        ret = aux_scalar_node(p);
+        if (!p->err) {
+            type = gretl_bundle_get_member_type(l->v.b, key, NULL);
+            ret->v.xval = type;
+            ret->flags |= QRY_NODE;
+        }
+        return ret;
     } else {
         val = gretl_bundle_get_element(l->v.b, key, &type, &size,
 				       &is_tmp, &p->err);
