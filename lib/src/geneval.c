@@ -133,7 +133,7 @@ enum {
 #define cscalar_node(n) (n->t == MAT && gretl_matrix_is_cscalar(n->v.m))
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
-#define mutable_node(n) (n->flags & (MUT_NODE | QRY_NODE))
+#define mutable_node(n) (n->flags & MUT_NODE)
 
 #define null_node(n) (n == NULL || n->t == EMPTY)
 #define null_or_scalar(n) (null_node(n) || scalar_node(n))
@@ -836,8 +836,6 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 	/* got a pre-existing aux node */
 	if (starting(p)) {
 	    if (ret->t != t) {
-		fprintf(stderr, "p->aux->t (%p) is %s but expected %s\n",
-			(void *) p->aux, getsymb(p->aux->t), getsymb(t));
 		maybe_switch_node_type(ret, t, flags, p);
 	    } else if (is_tmp_node(ret) && !(p->flags & P_MSAVE)) {
 		clear_tmp_node_data(ret, p);
@@ -7555,17 +7553,14 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
     NODE *ret = aux_scalar_node(p);
     GretlType t;
 
-    if (n->flags & QRY_NODE) {
-        t = n->v.xval;
-    } else {
+    if (ret != NULL) {
         t = gretl_type_from_gen_type(n->t);
-    }
-
-    if (alias_reversed(func)) {
-        /* handle the "isnull" alias */
-        ret->v.xval = (t == 0);
-    } else {
-        ret->v.xval = gretl_type_get_order(t);
+        if (alias_reversed(func)) {
+            /* handle the "isnull" alias */
+            ret->v.xval = (t == 0);
+        } else {
+            ret->v.xval = gretl_type_get_order(t);
+        }
     }
 
     return ret;
@@ -10551,20 +10546,10 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
             l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
 #endif
 
-    if (p->flags & P_OBJQRY) {
-        ret = aux_scalar_node(p);
-        if (!p->err) {
-            type = gretl_bundle_get_member_type(l->v.b, key, NULL);
-            ret->v.xval = type;
-            ret->flags |= QRY_NODE;
-        }
+    val = gretl_bundle_get_element(l->v.b, key, &type, &size,
+                                   &is_tmp, &p->err);
+    if (p->err) {
         return ret;
-    } else {
-        val = gretl_bundle_get_element(l->v.b, key, &type, &size,
-				       &is_tmp, &p->err);
-        if (p->err) {
-            return ret;
-        }
     }
 
     gen_t = gen_type_from_gretl_type(type);
@@ -15381,7 +15366,7 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
 {
     NODE *save_aux = p->aux;
     NODE *l = NULL, *r = NULL, *ret = NULL;
-    int branch;
+    int branch, gen_t = 0;
 
     branch = na(x) ? FORK_NONE : (x != 0 ? FORK_L : FORK_R);
 
@@ -15389,6 +15374,8 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
         l = eval(n->M, p);
         if (p->err) {
             return NULL;
+        } else {
+            gen_t = l->t;
         }
     }
 
@@ -15396,14 +15383,21 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
         r = eval(n->R, p);
         if (p->err) {
             return NULL;
+        } else {
+            gen_t = r->t;
         }
     }
 
     if (branch == FORK_NONE) {
-        reset_p_aux(p, save_aux);
-        ret = aux_scalar_node(p);
-        if (ret != NULL) {
-            ret->v.xval = NADBL;
+        if (gen_t == NUM) {
+            reset_p_aux(p, save_aux);
+            ret = aux_scalar_node(p);
+            if (ret != NULL) {
+                ret->v.xval = NADBL;
+            }
+        } else {
+            gretl_errmsg_set(_("indeterminate condition for '?' operator"));
+            p->err = E_DATA;
         }
     } else if (branch == FORK_L) {
         ret = l;
@@ -15457,7 +15451,7 @@ static int query_term_get_value (NODE *n, parser *p, int i, int j,
 static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 {
     NODE *save_aux = p->aux;
-    NODE *ret, *l, *r;
+    NODE *l, *r, *ret = NULL;
     gretl_matrix *mret;
     int lcomplex = 0;
     int rcomplex = 0;
@@ -15484,8 +15478,21 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 
     if ((l->t != NUM && l->t != MAT) ||
         (r->t != NUM && r->t != MAT)) {
-        p->err = E_TYPES;
-        return NULL;
+        if (gretl_matrix_is_scalar(m)) {
+            double x = m->val[0];
+
+            if (na(x)) {
+                gretl_errmsg_set(_("indeterminate condition for '?' operator"));
+                p->err = E_DATA;
+            } else if (x != 0) {
+                ret = l;
+            } else {
+                ret = r;
+            }
+        } else {
+            p->err = E_TYPES;
+        }
+        return ret;
     }
 
     if (l->t == MAT) {
@@ -15560,8 +15567,6 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
         ret->v.m = mret;
     }
 
-    reset_p_aux(p, ret);
-
     return ret;
 }
 
@@ -15588,7 +15593,7 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
     } else if (c->t == SERIES) {
 	ret = query_eval_series(c->v.xvec, t, p);
     } else if (c->t == MAT) {
-	ret = query_eval_matrix(c->v.m, t, p);
+        ret = query_eval_matrix(c->v.m, t, p);
     } else {
 	/* invalid type for boolean condition */
 	p->err = E_TYPES;

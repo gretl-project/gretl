@@ -634,8 +634,7 @@ enum node_flags {
     PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
     LHT_NODE = 1 << 4, /* node holds terminal of LHS */
     MUT_NODE = 1 << 5, /* node is inherently mutable in type */
-    ALS_NODE = 1 << 6, /* function subject to "reversing" alias */
-    QRY_NODE = 1 << 7  /* object-type query */
+    ALS_NODE = 1 << 6  /* function subject to "reversing" alias */
 };
 
 struct node {
