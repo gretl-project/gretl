@@ -15479,12 +15479,6 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     int lcomplex = 0;
     int rcomplex = 0;
 
-    if (p->flags & P_COMPILE) {
-	/* why can't we handle this? */
-	p->err = E_EQN;
-	return NULL;
-    }
-
     if (gretl_is_null_matrix(m)) {
         p->err = E_TYPES;
         return NULL;
@@ -15611,11 +15605,7 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
     } else if (c->t == SERIES) {
 	ret = query_eval_series(c->v.xvec, t, p);
     } else if (c->t == MAT) {
-	if (gretl_matrix_is_scalar(c->v.m)) {
-	    ret = query_eval_scalar(c->v.m->val[0], t, p);
-	} else {
-	    ret = query_eval_matrix(c->v.m, t, p);
-	}
+	ret = query_eval_matrix(c->v.m, t, p);
     } else {
 	/* invalid type for boolean condition */
 	p->err = E_TYPES;
