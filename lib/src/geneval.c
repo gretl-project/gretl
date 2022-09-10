@@ -15483,33 +15483,28 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
    signalled by @need_z.
 */
 
-static int query_term_get_value (NODE *n, parser *p, int i, int j,
+static int query_term_get_value (NODE *n, int i, int j,
 				 double *py, double complex *pz,
 				 int need_z)
 {
-    gretl_matrix *m = NULL;
-
     if (n->t == MAT) {
-	m = node_get_matrix(n, p, 0, 0);
-	if (m == NULL) {
+	if (n->v.m == NULL) {
 	    fprintf(stderr, "missing matrix in query_term_get_value: n->v.m = %p\n",
 		    (void *) n->v.m);
-	    fprintf(stderr, "n->v.xval = %g\n", n->v.xval);
 	    return E_DATA;
-	} else if (m->is_complex) {
-	    *pz = gretl_cmatrix_get(m, i, j);
+	} else if (n->v.m->is_complex) {
+	    *pz = gretl_cmatrix_get(n->v.m, i, j);
 	} else {
-	    *py = gretl_matrix_get(m, i, j);
+	    *py = gretl_matrix_get(n->v.m, i, j);
+	    if (need_z) {
+		*pz = *py + 0 * I;
+	    }
 	}
-    }
-
-    if (n->t == NUM) {
+    } else {
 	*py = n->v.xval;
-    }
-    if (need_z) {
-	double complex z = *py + 0 * I;
-
-	*pz = z;
+	if (need_z) {
+	    *pz = *py + 0 * I;
+	}
     }
 
     return 0;
@@ -15537,13 +15532,6 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     if (p->err) {
         return NULL;
     }
-
-#if 0
-    fprintf(stderr, " n->M = %p, n->R = %p\n",
-	    (void *) n->M, (void *) n->R);
-    fprintf(stderr, " l = %p, r = %p\n",
-	    (void *) l, (void *) r);
-#endif
 
     if ((l->t != NUM && l->t != MAT) ||
         (r->t != NUM && r->t != MAT)) {
@@ -15611,7 +15599,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 			gretl_matrix_set(mret, i, j, x);
 		    }
                 } else if (x != 0.0) {
-		    p->err = query_term_get_value(l, p, i, j, &y, &z, need_z);
+		    p->err = query_term_get_value(l, i, j, &y, &z, need_z);
 		    if (p->err) {
 			break;
 		    }
@@ -15621,7 +15609,7 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 			gretl_matrix_set(mret, i, j, y);
 		    }
                 } else {
-		    p->err = query_term_get_value(r, p, i, j, &y, &z, need_z);
+		    p->err = query_term_get_value(r, i, j, &y, &z, need_z);
 		    if (p->err) {
 			break;
 		    }
