@@ -7607,10 +7607,10 @@ static NODE *multi_str_node (NODE *l, int f, parser *p)
 static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    GretlType t;
 
     if (ret != NULL) {
-        t = gretl_type_from_gen_type(n->t);
+        GretlType t = gretl_type_from_gen_type(n->t);
+
         if (alias_reversed(func)) {
             /* handle the "isnull" alias */
             ret->v.xval = (t == 0);
@@ -10604,25 +10604,11 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
             l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
 #endif
 
-#if 1
-   if (p->flags & P_OBJQRY) {
-	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
-	if (type == GRETL_TYPE_NONE) {
-	    ret = get_aux_node(p, EMPTY, 0, 0);
-	} else {
-	    gen_t = gen_type_from_gretl_type(type);
-	    ret = get_aux_node(p, gen_t, 0, 0);
-	}
-        ret->flags |= MUT_NODE;
-        return ret;
-   }
-#else
     if ((p->flags & P_OBJQRY) && !gretl_bundle_has_key(l->v.b, key)) {
         ret = get_aux_node(p, EMPTY, 0, 0);
         ret->flags |= MUT_NODE;
         return ret;
     }
-#endif
 
     val = gretl_bundle_get_element(l->v.b, key, &type, &size,
                                    &is_tmp, &p->err);
@@ -16620,7 +16606,7 @@ static NODE *eval (NODE *t, parser *p)
         return NULL;
     }
 
-#if 1 || EDEBUG
+#if EDEBUG
     if (t->vname != NULL) {
         fprintf(stderr, "eval: t = %p ('%s', vname=%s)",
                 (void *) t, getsymb(t->t), t->vname);
@@ -17994,11 +17980,10 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_EXISTS:
-        if (0 /* l->t == STR */) {
-            fprintf(stderr, "call object_status\n");
-            ret = object_status(l, t, p);
+	if (l->t == STR && !is_aux_node(l)) {
+	    /* l is direct child of exists(): straight look-up */
+	    ret = object_status(l, t, p);
         } else {
-            fprintf(stderr, "call generic_typeof_node\n");
             ret = generic_typeof_node(l, t, p);
         }
         break;
