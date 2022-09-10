@@ -3455,39 +3455,25 @@ static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *m, NODE *r,
     return ret;
 }
 
-/* note: allows @n to be either a regular matrix node or a
-   matrix-pointer node
-*/
-
-static gretl_matrix *mat_node_get_real_matrix (NODE *n, parser *p)
-{
-    if (n->t == U_ADDR) {
-        n = n->L;
-    }
-    if (n == NULL || n->t != MAT) {
-        p->err = E_TYPES;
-        return NULL;
-    } else if (n->v.m->is_complex) {
-        p->err = E_CMPLX;
-        return NULL;
-    } else {
-        return n->v.m;
-    }
-}
+/* try to get a (named) uservar of type @t from a U_ADDR node */
 
 static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
 {
     user_var *uv = NULL;
 
     if (n->t == U_ADDR) {
-        NODE *nb = n->L;
-
-        if (nb->t == t) {
-            uv = nb->uv;
-        }
-    }
-
-    if (uv == NULL) {
+	if (n->L->t != t) {
+	    p->err = E_TYPES;
+	} else {
+            uv = n->L->uv;
+	    if (uv == NULL && n->L->vname != NULL) {
+		uv = n->L->uv = get_user_var_by_name(n->L->vname);
+	    }
+	    if (uv == NULL) {
+		p->err = E_DATA;
+	    }
+	}
+    } else {
         p->err = E_TYPES;
     }
 
@@ -3499,6 +3485,66 @@ static gretl_matrix *ptr_node_get_matrix (NODE *n, parser *p)
     user_var *uv = ptr_node_get_uvar(n, MAT, p);
 
     return uv != NULL ? uv->ptr : NULL;
+}
+
+static gretl_bundle *ptr_node_get_bundle (NODE *n, parser *p)
+{
+    user_var *uv = ptr_node_get_uvar(n, BUNDLE, p);
+
+    return uv != NULL ? uv->ptr : NULL;
+}
+
+/* To be called ONLY for a node @n whose verified type is U_ADDR */
+
+static NODE *ptr_node_get_referent_node (NODE *n, parser *p)
+{
+    NODE *ret = n->L;
+
+    if (ret == NULL) {
+	p->err = E_DATA;
+    } else {
+	user_var *uv = ret->uv;
+
+	if (uv == NULL && ret->vname != NULL) {
+	    uv = ret->uv = get_user_var_by_name(ret->vname);
+	}
+	if (uv == NULL) {
+	    p->err = E_DATA;
+	    ret = NULL;
+	}
+    }
+
+    return ret;
+}
+
+/* note: allows @n to be either a regular matrix node or a
+   matrix-pointer node
+*/
+
+static gretl_matrix *mat_node_get_real_matrix (NODE *n, parser *p)
+{
+    gretl_matrix *m = NULL;
+
+    if (n == NULL) {
+	p->err = E_DATA;
+    } else if (n->t == MAT) {
+	m = n->v.m;
+    } else if (n->t == U_ADDR) {
+	m = ptr_node_get_matrix(n, p);
+    } else {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err) {
+	if (m == NULL) {
+	    p->err = E_DATA;
+	} else if (m->is_complex) {
+	    p->err = E_CMPLX;
+	    m = NULL;
+	}
+    }
+
+    return m;
 }
 
 static const char *node_get_fncall (NODE *n, parser *p)
@@ -8909,7 +8955,7 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
 	    if (r->t == STR && r->vname != NULL) {
 		rs = r;
 	    } else if (r->t == U_ADDR && r->L->t == STR) {
-		rs = r->L;
+		rs = ptr_node_get_referent_node(r, p);
 	    } else {
 		gretl_errmsg_set("getline: the target must be a named string variable");
 		p->err = E_INVARG;
@@ -10250,8 +10296,10 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
         }
         if (arg->t == U_ADDR) {
             /* address node: switch to the 'content' sub-node */
-            reftype = 1;
-            arg = arg->L;
+	    arg = ptr_node_get_referent_node(arg, p);
+	    if (!p->err) {
+		reftype = 1;
+	    }
         } else if (arg->t == DUM && arg->v.idnum != DUM_NULL) {
             p->err = E_TYPES;
         }
@@ -10681,12 +10729,14 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
             p->err = E_TYPES;
         } else {
             /* switch to 'content' sub-node */
-            n = n->L;
-            if (n->t != BUNDLE) {
-                p->err = E_TYPES;
-            } else {
-                b = n->v.b;
-            }
+	    n = ptr_node_get_referent_node(n, p);
+	    if (!p->err) {
+		if (n->t != BUNDLE) {
+		    p->err = E_TYPES;
+		} else {
+		    b = n->v.b;
+		}
+	    }
         }
 
         if (!p->err) {
@@ -10751,12 +10801,14 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
     if (n->t == BUNDLE) {
         b = n->v.b;
     } else if (n->t == U_ADDR) {
-        n = n->L;
-        if (n->t != BUNDLE) {
-            p->err = E_TYPES;
-        } else {
-            b = n->v.b;
-        }
+        n = ptr_node_get_referent_node(n, p);
+	if (!p->err) {
+	    if (n->t != BUNDLE) {
+		p->err = E_TYPES;
+	    } else {
+		b = n->v.b;
+	    }
+	}
     } else {
         p->err = E_TYPES;
     }
@@ -12799,10 +12851,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
         }
     } else if (f == F_BCHECK) {
+	gretl_bundle *lb = NULL;
 	gretl_array *reqd = NULL;
 
 	post_process = 0;
-	if (l->t != U_ADDR || l->L->t != BUNDLE) {
+	if ((lb = ptr_node_get_bundle(l, p)) == NULL) {
 	    node_type_error(f, 1, BUNDLE, l, p);
 	} else if (m->t != BUNDLE) {
 	    node_type_error(f, 2, BUNDLE, m, p);
@@ -12815,8 +12868,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    reqd = r->v.a;
 	}
 	if (!p->err) {
-	    ret->v.xval = gretl_bundle_extract_args(l->L->v.b, m->v.b,
-						    reqd, NULL, p->prn,
+	    ret->v.xval = gretl_bundle_extract_args(lb, m->v.b, reqd,
+						    NULL, p->prn,
 						    &p->err);
         }
     } else if (f == F_SPHCORR) {
@@ -13462,8 +13515,8 @@ static NODE *isoconv_node (NODE *t, NODE *n, parser *p)
         } else if (e->t != U_ADDR) {
             node_type_error(t->t, i+1, U_ADDR, e, p);
         } else {
-            e = e->L;
-            if (e->t != SERIES) {
+            e = ptr_node_get_referent_node(e, p);
+            if (e == NULL || e->t != SERIES) {
                 node_type_error(t->t, i+1, SERIES, e, p);
             } else {
                 ymd[i-1] = p->dset->Z[e->vnum] + p->dset->t1;
@@ -14698,7 +14751,7 @@ static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
         e = n->v.bn.n[0];
         e = e->L;
     } else if (n->t == U_ADDR) {
-        e = n->L;
+        e = ptr_node_get_referent_node(n, p);
     } else if (n->t == BUNDLE) {
         e = n;
     }
@@ -16539,17 +16592,21 @@ static NODE *eval (NODE *t, parser *p)
 
 #if EDEBUG
     if (t->vname != NULL) {
-        fprintf(stderr, "eval: incoming node %p ('%s', vname=%s)\n",
+        fprintf(stderr, "eval: t = %p ('%s', vname=%s)",
                 (void *) t, getsymb(t->t), t->vname);
     } else {
-        fprintf(stderr, "eval: incoming node %p ('%s')\n",
-                (void *) t, getsymb(t->t));
+        fprintf(stderr, "eval: t = %p ('%s')", (void *) t, getsymb(t->t));
     }
     if (t->parent != NULL) {
-	fprintf(stderr, " parent type %s\n", getsymb(t->parent->t));
-    } else {
-	fprintf(stderr, " parent is NULL\n");
+	fprintf(stderr, ", parent=%s", getsymb(t->parent->t));
     }
+    if (p->flags & P_COMPILE) {
+	fputs(" compile", stderr);
+    }
+    if (p->flags & P_EXEC) {
+	fputs(" exec", stderr);
+    }
+    fputc('\n', stderr);
 #endif
 
     /* handle terminals first */
