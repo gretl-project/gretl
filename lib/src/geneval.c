@@ -3502,13 +3502,23 @@ static NODE *ptr_node_get_referent_node (NODE *n, parser *p)
 
     if (ret == NULL) {
 	p->err = E_DATA;
-    } else {
-	user_var *uv = ret->uv;
+    } else if (ret->t == SERIES) {
+        if (ret->v.xvec == NULL) {
+            int id = current_series_index(p->dset, ret->vname);
 
-	if (uv == NULL && ret->vname != NULL) {
-	    uv = ret->uv = get_user_var_by_name(ret->vname);
+            if (id > 0) {
+                ret->v.xvec = p->dset->Z[id];
+            }
+        }
+        if (ret->v.xvec == NULL) {
+            p->err = E_DATA;
+            ret = NULL;
+        }
+    } else {
+	if (ret->uv == NULL) {
+	    ret->uv = get_user_var_by_name(ret->vname);
 	}
-	if (uv == NULL) {
+	if (ret->uv == NULL) {
 	    p->err = E_DATA;
 	    ret = NULL;
 	}
@@ -10313,7 +10323,7 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
             p->err = push_function_arg(fc, arg->vname, uv, argt, data);
         }
         if (p->err) {
-            fprintf(stderr, "%s: error evaluating arg %d\n", funname, i);
+            fprintf(stderr, "%s: error evaluating arg %d\n", funname, i+1);
         }
     }
 
@@ -10592,6 +10602,26 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 #if EDEBUG
     fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
             l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
+#endif
+
+#if 1
+   if (p->flags & P_OBJQRY) {
+	type = gretl_bundle_get_member_type(l->v.b, key, NULL);
+	if (type == GRETL_TYPE_NONE) {
+	    ret = get_aux_node(p, EMPTY, 0, 0);
+	} else {
+	    gen_t = gen_type_from_gretl_type(type);
+	    ret = get_aux_node(p, gen_t, 0, 0);
+	}
+        ret->flags |= MUT_NODE;
+        return ret;
+   }
+#else
+    if ((p->flags & P_OBJQRY) && !gretl_bundle_has_key(l->v.b, key)) {
+        ret = get_aux_node(p, EMPTY, 0, 0);
+        ret->flags |= MUT_NODE;
+        return ret;
+    }
 #endif
 
     val = gretl_bundle_get_element(l->v.b, key, &type, &size,
@@ -16590,7 +16620,7 @@ static NODE *eval (NODE *t, parser *p)
         return NULL;
     }
 
-#if EDEBUG
+#if 1 || EDEBUG
     if (t->vname != NULL) {
         fprintf(stderr, "eval: t = %p ('%s', vname=%s)",
                 (void *) t, getsymb(t->t), t->vname);
@@ -16598,13 +16628,13 @@ static NODE *eval (NODE *t, parser *p)
         fprintf(stderr, "eval: t = %p ('%s')", (void *) t, getsymb(t->t));
     }
     if (t->parent != NULL) {
-	fprintf(stderr, ", parent=%s", getsymb(t->parent->t));
+	fprintf(stderr, ", parent %s", getsymb(t->parent->t));
     }
     if (p->flags & P_COMPILE) {
-	fputs(" compile", stderr);
+	fputs(", compile", stderr);
     }
     if (p->flags & P_EXEC) {
-	fputs(" exec", stderr);
+	fputs(", exec", stderr);
     }
     fputc('\n', stderr);
 #endif
@@ -17964,9 +17994,11 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_EXISTS:
-        if (l->t == STR) {
+        if (0 /* l->t == STR */) {
+            fprintf(stderr, "call object_status\n");
             ret = object_status(l, t, p);
         } else {
+            fprintf(stderr, "call generic_typeof_node\n");
             ret = generic_typeof_node(l, t, p);
         }
         break;
