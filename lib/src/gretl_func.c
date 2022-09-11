@@ -117,22 +117,17 @@ struct obsinfo_ {
 /* structure representing a call to a user-defined function */
 
 typedef enum {
-    FC_RECURSING = 1 << 0,
-    FC_PREV_MSGS = 1 << 1,
-    FC_PREV_ECHO = 1 << 2,
-    FC_PRESERVE  = 1 << 3
+    FC_RECURSING = 1 << 0, /* call to f() has a call to f() in its ancestry */
+    FC_PREV_MSGS = 1 << 1, /* record of "messages" setting before call */
+    FC_PREV_ECHO = 1 << 2, /* record of "echo" setting before call */
+    FC_PRESERVE  = 1 << 3  /* function call should be preserved */
 } FCFlags;
 
-/* Note: the FC_PRESERVE flag is specific to the case of overloaded
-   functions whose return type is 'numeric'.  In that case the caller
-   doesn't know in advance what specific type to expect, and needs to
-   be able to access the function-call struct (fncall) to determine
-   the type.  Therefore, the fncall must not be destroyed when
-   execution terminates (as usual). The caller then takes on
-   responsibility for destroying the call. The only relevant caller is
-   eval_ufunc(), in geneval.c.
-
-   August 2022: FIXME this comment needs updating.
+/* Note: the FC_PRESERVE flag is set when we want to allow for repeated
+   calls to a given function. In the non-recursive case we just reuse
+   the stored fncall struct. In the recursive case we need to ensure
+   there's a distinct call struct for each depth of function execution,
+   and the function then acquires a GList of fncalls.
 */
 
 struct linegen_ {
@@ -9021,7 +9016,7 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
 	}
     }
 
-#if 0
+#if 1
     /* 2022-09-11: we shouldn't have to do the next thing
        any more, with genrs now attached to fncall rather
        than line of function?
