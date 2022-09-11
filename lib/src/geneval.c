@@ -20110,13 +20110,26 @@ static int assign_null_to_array (parser *p)
     return err;
 }
 
+static double get_lhs_scalar (parser *p)
+{
+    if (p->lh.uv == NULL) {
+	p->lh.uv = get_user_var_by_name(p->lh.name);
+    }
+    if (p->lh.uv != NULL) {
+	return uvar_get_scalar_value(p->lh.uv);
+    } else {
+	p->err = E_DATA;
+	return NADBL;
+    }
+}
+
 /* apply postfix '++' or '--' to LHS scalar, or '++' to
    LHS string (only) */
 
 static int do_incr_decr (parser *p)
 {
     if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_DOUBLE) {
-        double x = uvar_get_scalar_value(p->lh.uv);
+        double x = get_lhs_scalar(p);
 
         if (!na(x)) {
             x += (p->op == INC)? 1 : -1;
@@ -20544,7 +20557,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		p->err = E_TYPES;
 	    }
 	    if (!p->err && p->op != B_ASN) {
-		double x0 = uvar_get_scalar_value(p->lh.uv);
+		double x0 = get_lhs_scalar(p);
 
 		x = xy_calc(x0, x, p->op, NUM, p);
 	    }

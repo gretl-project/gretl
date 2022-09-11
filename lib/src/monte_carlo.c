@@ -2797,8 +2797,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 
 	    if (ci == GENR) {
 		if (may_be_compilable(ll) && !gretl_function_recursing()) {
-		    /* note: compilation here under recursion results
-		       in a memory leak
+		    /* 2022-09-11: the restriction to do with recursion
+		       may not be required any more
 		    */
 		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
 		    if (ll->ptr == NULL && !err) {

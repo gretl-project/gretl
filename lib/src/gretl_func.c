@@ -295,7 +295,6 @@ static char mpi_caller[FN_NAMELEN];
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
 
 #define set_call_recursing(c)   (c->flags |= FC_RECURSING)
-#define unset_call_recursing(c) (c->flags &= ~FC_RECURSING)
 #define is_recursing(c)         (c->flags & FC_RECURSING)
 
 struct flag_and_key {
@@ -9021,6 +9020,14 @@ static void reset_saved_uservars (ufunc *u, int on_recurse)
 	    loop_reset_uvars(line->ptr);
 	}
     }
+
+#if 0
+    /* 2022-09-11: we shouldn't have to do the next thing
+       any more, with genrs now attached to fncall rather
+       than line of function?
+    */
+    if (on_recurse) return;
+#endif
 
     if (u->call != NULL && u->call->lgen != NULL) {
 	for (i=0; i<u->call->n_lgen; i++) {
