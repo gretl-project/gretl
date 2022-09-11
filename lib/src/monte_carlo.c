@@ -2796,10 +2796,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    }
 
 	    if (ci == GENR) {
-		if (may_be_compilable(ll) && !gretl_function_recursing()) {
-		    /* 2022-09-11: the restriction to do with recursion
-		       may not be required any more
-		    */
+		if (may_be_compilable(ll)) {
 		    err = try_add_loop_genr(loop, j, cmd, dset, prn);
 		    if (ll->ptr == NULL && !err) {
                         /* fallback */
@@ -2808,7 +2805,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
                                        cmd->opt, prn);
                     }
 		} else {
-		    /* string substitution, a "genr special", or recursion */
+		    /* string substitution or a "genr special" */
 		    if (!err) {
 			if (!loop_is_verbose(loop)) {
 			    cmd->opt |= OPT_Q;
