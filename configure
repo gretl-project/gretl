@@ -22318,12 +22318,12 @@ if test -n "$GTK3_CFLAGS"; then
     pkg_cv_GTK3_CFLAGS="$GTK3_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.16.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.16.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK3_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.16.0" 2>/dev/null`
+  pkg_cv_GTK3_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22335,12 +22335,12 @@ if test -n "$GTK3_LIBS"; then
     pkg_cv_GTK3_LIBS="$GTK3_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.16.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.16.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK3_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.16.0" 2>/dev/null`
+  pkg_cv_GTK3_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22361,19 +22361,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.16.0" 2>&1`
+	        GTK3_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 3.20.0" 2>&1`
         else
-	        GTK3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.16.0" 2>&1`
+	        GTK3_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 3.20.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK3_PKG_ERRORS" >&5
 
-	echo "GTK 3 >= 3.16.0 not found"
+	echo "GTK 3 >= 3.20.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "GTK 3 >= 3.16.0 not found"
+	echo "GTK 3 >= 3.20.0 not found"
 
 else
 	GTK3_CFLAGS=$pkg_cv_GTK3_CFLAGS

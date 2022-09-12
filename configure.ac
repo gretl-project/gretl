@@ -721,14 +721,14 @@ if test "$prefer_gtk2" = "yes" ; then
       echo "GTK 2 >= 2.20.0 not found"
     )
 elif test "$build_gui" = "yes" ; then
-    PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.16.0,
+    PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.20.0,
       GTK_CFLAGS=$GTK3_CFLAGS
       GTK_LIBS=$GTK3_LIBS
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       AC_DEFINE(USE_GTK3)
       gtk_version="3.0",
-      echo "GTK 3 >= 3.16.0 not found"
+      echo "GTK 3 >= 3.20.0 not found"
     )
 fi
 
