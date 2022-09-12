@@ -1008,6 +1008,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
     gtk_text_view_set_left_margin(view, 4);
     gtk_text_view_set_right_margin(view, 4);
+#if GTK_MAJOR_VERSION > 2
+    gtk_text_view_set_bottom_margin(view, 10);
+#endif
 
     gtk_widget_modify_font(GTK_WIDGET(vwin->text), fixed_font);
 
