@@ -1,4 +1,6 @@
 version 2022c, in progress
+- toepsolv() function: add fourth argument for returning the
+  determinant
 - Fix bug: fail after first iteration when adding a string to
   an array of strings defined within a loop (noted by Luca)
 - Fix bug: corruption on extracting a "series" from a bundle

@@ -12982,11 +12982,12 @@
 	<fnarg type="vector">c</fnarg>
 	<fnarg type="vector">r</fnarg>
 	<fnarg type="vector">b</fnarg>
+	<fnarg optional="true" type="scalarref">det</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Solves a Toeplitz system of linear equations, that is
-	  <math>Tx = b</math> where <math>T </math> is a square matrix
+	  <math>Tx = b</math> where <math>T</math> is a square matrix
 	  whose element <math>T</math><sub>i,j</sub> equals
 	  <math>c</math><sub>i-j</sub> for
 	  <equation status="inline"
@@ -13009,6 +13010,50 @@
 	  problem, however, cannot arise when <math>T</math> is
 	  positive definite.
 	</para>
+	<para>
+	  If the optional argument <argname>det</argname> is supplied
+	  (in pointer form), it will contain on exit the determinant
+	  of <math>T</math>. For example, the code:
+	</para>
+	<code>
+	  A = unvech({3;2;1;3;2;3})    # Build a 3x3 Toeplitz matrix
+	  x = ones(3,1)                # and a 3x1 vector
+	  print A x
+	  eval A\x                     # solution via generic inversion
+	  eval det(A)                  # print the determinant
+	  a = A[1,]
+	  d = 0
+	  eval toepsolv(a, a, x, &amp;d)   # use the dedicated function
+	  print d
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+A (3 x 3)
+
+  3   2   1 
+  2   3   2 
+  1   2   3 
+
+x (3 x 1)
+
+  1 
+  1 
+  1 
+
+     0.25000 
+ -3.3307e-17 
+     0.25000 
+
+8
+     0.25000 
+  2.7756e-17 
+     0.25000 
+
+
+d =  8.0000000
+	</code>
       </description>
     </function>
 
