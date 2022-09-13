@@ -1148,7 +1148,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     }
 
     if (!gretl_compiling_loop() && !s->in_comment &&
-        !cmd->context && !gretl_if_state_false()) {
+        !cmd->context && gretl_if_state_true()) {
         /* catch requests relating to saved objects, which are not
            really "commands" as such */
         int action = cli_saved_object_action(line, dset, prn);
@@ -1190,7 +1190,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 
     /* if in batch mode, echo comments from input */
     if (batch && runit < 2 && cmd->ci == CMD_COMMENT &&
-        !gretl_if_state_false()) {
+        gretl_if_state_true()) {
         if (gretl_echo_on() || gretl_comments_on()) {
             printline(linebak);
         }

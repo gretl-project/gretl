@@ -145,8 +145,7 @@ enum {
 #define compiled(p) (p->flags & P_EXEC)
 #define starting(p) (p->flags & P_START)
 #define autoreg(p)  (p->flags & P_AUTOREG)
-#define DCHECK (P_EXEC | P_START)
-#define exestart(p) ((p->flags & DCHECK) == DCHECK)
+#define exestart(p) ((p->flags & P_EXEC) && (p->flags & P_START))
 
 static void parser_init (parser *p, const char *str, DATASET *dset,
 			 PRN *prn, int flags, int targtype, int *done);
@@ -21031,7 +21030,8 @@ void gen_cleanup (parser *p)
 
 static void real_reset_uvars (parser *p)
 {
-    if (p->err) {
+    if (0 && p->err) {
+        /* 2022-09-13: not sure about this */
 	return;
     }
 
@@ -21067,7 +21067,7 @@ static void maybe_set_return_flags (parser *p)
 static int decl_check (parser *p, int flags)
 {
     if (flags & P_COMPILE) {
-	p->err = E_PARSE;
+	p->err = E_EQN;
 	gretl_errmsg_sprintf("%s:\n> '%s'",
 			     _("Bare declarations are not allowed here"),
 			     p->input);
