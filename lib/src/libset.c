@@ -309,6 +309,14 @@ static GHashTable *libset_hash_init (void)
 
 static GHashTable *svht;
 
+static void libset_hash_cleanup (void)
+{
+    if (svht != NULL) {
+        g_hash_table_destroy(svht);
+        svht = NULL;
+    }
+}
+
 static setvar *get_setvar_by_name (const char *name)
 {
     setvar *ret = NULL;
@@ -2264,6 +2272,8 @@ void libset_cleanup (void)
     n_states = 0;
     state_idx = -1;
 
+    libset_hash_cleanup();
+
     free(looping);
     looping = NULL;
     looplen = 0;
@@ -2459,32 +2469,6 @@ void show_activity_callback (void)
     if (sfunc != NULL) {
 	(*sfunc)();
     }
-}
-
-/* mechanism for interactive debugging */
-
-static DEBUG_READLINE dbg_readline;
-
-void set_debug_read_func (DEBUG_READLINE dfunc)
-{
-    dbg_readline = dfunc;
-}
-
-DEBUG_READLINE get_debug_read_func (void)
-{
-    return dbg_readline;
-}
-
-static DEBUG_OUTPUT dbg_output;
-
-void set_debug_output_func (DEBUG_OUTPUT dout)
-{
-    dbg_output = dout;
-}
-
-DEBUG_OUTPUT get_debug_output_func (void)
-{
-    return dbg_output;
 }
 
 /* support for GUI "Stop" button */

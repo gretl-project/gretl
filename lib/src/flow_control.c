@@ -381,7 +381,7 @@ int flow_control (ExecState *s, DATASET *dset, void *ptr)
 	    /* actually evaluate the condition */
 	    ok = if_eval(ci, cmd->vstart, dset, s->prn, ptr, &err);
 	    if (!err) {
-		err = set_if_state(ok? SET_TRUE : SET_FALSE);
+		err = set_if_state(ok ? SET_TRUE : SET_FALSE);
 	    }
 	}
     } else if (ci == ENDIF) {

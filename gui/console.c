@@ -369,7 +369,7 @@ static int real_console_exec (ExecState *state)
     err = gui_exec_line(state, dataset, console_main);
 
     while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(state, dataset, NULL);
+	err = gretl_loop_exec(state, dataset);
     }
 
 #if CDEBUG

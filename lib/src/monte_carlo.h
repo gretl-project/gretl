@@ -34,7 +34,10 @@ int ok_in_loop (int ci);
 
 int gretl_loop_append_line (ExecState *s, DATASET *dset);
 
-int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop);
+int gretl_loop_append_line_full (ExecState *s, DATASET *dset,
+				 LOOPSET **ploop);
+
+int gretl_loop_exec (ExecState *s, DATASET *dset);
 
 void gretl_loop_destroy (LOOPSET *loop);
 

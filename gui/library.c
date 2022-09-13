@@ -9359,7 +9359,7 @@ int execute_script (char *runfile, const char *buf,
 
     while (libcmd.ci != QUIT) {
         if (gretl_execute_loop()) {
-            exec_err = gretl_loop_exec(&state, dataset, NULL);
+            exec_err = gretl_loop_exec(&state, dataset);
             if (exec_err) {
                 goto endwhile;
             }

@@ -193,6 +193,7 @@ SRCS = adf_kpss.c \
 	bootstrap.c \
 	boxplots.c \
 	calendar.c \
+	cmd_private.c \
 	compare.c \
 	compat.c \
 	csvdata.c \

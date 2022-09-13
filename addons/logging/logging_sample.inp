@@ -62,7 +62,6 @@ loop i=0..4
 endloop
 printf "\n"
 
-
 # Log events in a separate file
 printf "workdir = %s\n", $workdir
 set loglevel info

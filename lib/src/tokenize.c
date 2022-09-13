@@ -6,9 +6,6 @@
 #define CDEBUG 0
 #define TDEBUG 0
 
-/* allow deprecated "addobs" for "dataset addobs"? */
-#define ALLOW_ADDOBS 1
-
 /* experiment: allow statements separated by ';' */
 #define SEMIC_TEST 0
 
@@ -217,7 +214,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { WLS,      "wls",      CI_LIST },
     { XCORRGM,  "xcorrgm",  CI_LIST | CI_LLEN2 | CI_ORD2 },
     { XTAB,     "xtab",     CI_LIST | CI_INFL },
-    { FUNDEBUG, "debug",    CI_PARM1 },
     { FUNCRET,  "return",   CI_EXPR },
     { CATCH,    "catch",    0 },
     { PKG,      "pkg",      CI_PARM1 | CI_PARM2 },
@@ -1614,13 +1610,6 @@ static int get_param (CMD *c, const DATASET *dset)
     int pos = real_arg_index(c, 1);
     cmd_token *tok;
 
-#if ALLOW_ADDOBS /* sigh */
-    if (c->ci == DATAMOD && !strcmp(c->toks[0].s, "addobs")) {
-	c->param = c->toks[0].s;
-	return handle_datamod_param(c);
-    }
-#endif
-
     if (pos < 0) {
 	if (!param_optional(c->ci)) {
 	    c->err = E_ARGS;
@@ -2469,20 +2458,6 @@ static int try_for_command_alias (const char *s, CMD *cmd)
     } else if (!strcmp(s, "install")) {
 	ci = PKG;
 	cmd->opt |= OPT_B; /* back-compat */
-#if ALLOW_ADDOBS
-    } else if (!strcmp(s, "addobs")) {
-	set_deprecation("addobs", "dataset addobs", 0);
-	ci = DATAMOD;
-#endif
-    } else if (!strcmp(s, "continue")) {
-	ci = FUNDEBUG;
-	cmd->opt |= OPT_C;
-    } else if (!strcmp(s, "next")) {
-	ci = FUNDEBUG;
-	cmd->opt |= OPT_N;
-    } else if (!strcmp(s, "undebug")) {
-	ci = FUNDEBUG;
-	cmd->opt |= OPT_Q;
     }
 
     return ci;
@@ -4169,6 +4144,12 @@ static int real_parse_command (ExecState *s,
 	   and perhaps modify the flow control state -- and if we're
 	   blocked, return.
 	*/
+	if (ptr != NULL && (cmd->flags & CMD_SUBST)) {
+	    /* don't attempt to compile if string substitution
+	       is going on
+	    */
+	    ptr = NULL;
+	}
 	if (!err && flow_control(s, dset, ptr)) {
 	    if (cmd->err) {
 		/* we hit an error evaluating the if state */

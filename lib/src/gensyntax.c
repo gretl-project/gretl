@@ -109,9 +109,11 @@ static NODE *newref (parser *p, int t)
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
 	    n->flags |= LHT_NODE;
-	} else if (t == PTR) {
-	    n->vname = p->idstr;
-	    n->v.ptr = p->data;
+	} else if (t == UFUN) {
+	    n->vname = p->idstr; /* function name */
+	    n->v.ptr = p->data;  /* pointer to function */
+        } else if (t == RFUN) {
+            n->vname = p->idstr; /* function name */
 	} else if (t == DBUNDLE) {
 	    n->v.idnum = p->idnum;
 	} else if (t == MMEMB) {
@@ -1540,19 +1542,14 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	}
     } else if (sym == UFUN || sym == RFUN) {
-	t = new_node(sym);
-	if (t != NULL) {
-	    if (sym == UFUN) {
-		t->L = newref(p, PTR);
-	    } else {
-		t->L = newstr(p->idstr);
-	    }
-	    lex(p);
-	    t->R = newbn(FARGS);
+        t = newref(p, sym);
+        if (t != NULL) {
+            lex(p);
+            t->R = newbn(FARGS);
 	    if (t->R != NULL) {
 		get_args(t->R, p, sym, -1, opt, &next);
 	    }
-	}
+        }
     } else if (sym == F_DEFARGS) {
 	t = new_node(sym);
 	if (t != NULL) {

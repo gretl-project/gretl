@@ -5,6 +5,7 @@
 
 #include "gretl_restrict.h"
 #include "gretl_func.h"
+#include "monte_carlo.h"
 
 typedef enum {
     CMD_IGNORE  = 1 << 0, /* line should be ignored */
@@ -54,6 +55,7 @@ struct ExecState_ {
     char runfile[MAXLEN];
     MODEL *model;          /* "workspace" model */
     MODEL *pmod;           /* set if new model is estimated */
+    LOOPSET *loop;
     equation_system *sys;
     gretl_restriction *rset;
     GRETL_VAR *var;
@@ -75,6 +77,18 @@ struct OpenOp_ {
 };
 
 typedef struct OpenOp_ OpenOp;
+
+/* structure representing a line of a function or loop */
+struct stmt_ {
+    char *s;       /* text of command line */
+    gint16 ci;     /* command index */
+    gint16 next;   /* line index to skip to after loop or conditional */
+    gint16 idx;    /* 1-based line index allowing for blanks (functions only) */
+    gint16 flags;  /* state flags */
+    void *ptr;     /* attachment for LOOPSET or GENERATOR */
+};
+
+typedef struct stmt_ stmt;
 
 void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
@@ -107,5 +121,10 @@ int process_command_error (ExecState *s, int err);
 int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart);
 
 int plausible_genr_start (const char *s, const DATASET *dset);
+
+int statements_get_structure (stmt *lines,
+			      int n_lines,
+			      int context,
+			      const char *name);
 
 #endif /* CMD_PRIVATE_H */

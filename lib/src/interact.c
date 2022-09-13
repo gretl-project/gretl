@@ -251,10 +251,9 @@ static int ends_foreign_block (const char *s)
 /**
  * parse_command_line:
  * @s: pointer to execution-state struct.
- * @cmd: pointer to command struct.
  * @dset: dataset struct.
  * @ptr: pointer for use with "compilation" of
- * conditionals in loops.
+ * conditionals.
  *
  * Parses @line and fills out @cmd accordingly.
  *
@@ -2375,30 +2374,6 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int do_debug_command (ExecState *state, const char *param,
-                             gretlopt opt)
-{
-    int err = incompatible_options(opt, OPT_C | OPT_N | OPT_Q);
-
-    if (err) {
-        return err;
-    }
-
-    if (opt & (OPT_C | OPT_N)) {
-        /* continue, next */
-        if (!(state->flags & DEBUG_EXEC)) {
-            gretl_errmsg_set("Debugging is not in progress");
-            return E_DATA;
-        } else {
-            /* handled in debug_command_loop */
-            return 0;
-        }
-    } else {
-        /* OPT_Q quits debugging of the given function */
-        return user_function_set_debug(param, !(opt & OPT_Q));
-    }
-}
-
 /* Given the name of a discrete variable, perform a command for each
    value of the discrete variable. Note that at present the only
    command supported in this way is SUMMARY.
@@ -3361,10 +3336,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
                        cmd->opt, prn);
         break;
 
-    case FUNDEBUG:
-        err = do_debug_command(s, cmd->param, cmd->opt);
-        break;
-
     case BREAK:
     case CONTINUE:
     case ENDLOOP:
@@ -3573,15 +3544,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case PRINTF:
     case SSCANF:
-	if (gretl_is_user_var(cmd->param) && user_var_get_type_by_name(cmd->param) == GRETL_TYPE_STRING) {
-	    const char *tmp = get_string_by_name(cmd->param);
-
-	    err = do_printscan_command(cmd->ci, tmp, cmd->parm2,
-                                       cmd->vstart, dset, prn);
-	} else {
-	    err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
-				       cmd->vstart, dset, prn);
-	}
+        err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
+                                   cmd->vstart, dset, prn);
         break;
 
     case PVAL:
@@ -4154,65 +4118,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     return err;
 }
 
-/* called by functions, and by scripts executed from within
-   functions */
-
-int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
-{
-    int err = 0;
-
-    if (string_is_blank(s->line)) {
-        return 0;
-    }
-
-    if (gretl_compiling_loop()) {
-        err = get_command_index(s, LOOP);
-    } else {
-        /* FIXME last arg to parse_command_line() ? */
-        err = parse_command_line(s, dset, NULL);
-        if (!err && loopstart != NULL && s->cmd->ci == LOOP) {
-            *loopstart = 1;
-        }
-    }
-
-    if (err) {
-	errmsg(err, s->prn);
-	if (s->cmd->flags & CMD_CATCH) {
-	    set_gretl_errno(err);
-	    return 0;
-	} else {
-	    return err;
-	}
-    }
-
-    gretl_exec_state_transcribe_flags(s, s->cmd);
-
-    if (s->cmd->ci < 0) {
-        return 0; /* nothing there, or a comment */
-    }
-
-    if (s->cmd->ci == LOOP || gretl_compiling_loop()) {
-        /* accumulating loop commands */
-        err = gretl_loop_append_line(s, dset);
-        if (err) {
-            errmsg(err, s->prn);
-            return err;
-        }
-        return 0;
-    }
-
-    s->pmod = NULL; /* be on the safe side */
-
-    if (s->cmd->ci == FUNCERR) {
-        err = E_FUNCERR;
-    } else {
-        /* note: error messages may be printed to s->prn */
-        err = gretl_cmd_exec(s, dset);
-    }
-
-    return err;
-}
-
 /**
  * get_command_index:
  * @s: pointer to execution state
@@ -4252,7 +4157,7 @@ int get_command_index (ExecState *s, int cmode)
     err = real_parse_command(s, NULL, cmode, NULL);
 
     if (!err && cmd->ci == 0) {
-        /* maybe genr via series name? */
+        /* maybe genr? */
         const char *s = cmd->toks[0].s;
 
         if (s != NULL) {
@@ -4319,72 +4224,6 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt)
 const char *gretl_cmd_get_savename (CMD *cmd)
 {
     return cmd->savename;
-}
-
-#define PMDEBUG 0
-
-void gretl_exec_state_init (ExecState *s,
-                            ExecFlags flags,
-                            char *line,
-                            CMD *cmd,
-                            MODEL *model,
-                            PRN *prn)
-{
-    s->flags = flags;
-
-    s->line = line;
-    if (s->line != NULL) {
-        *s->line = '\0';
-    }
-    s->more = NULL;
-
-    s->cmd = cmd;
-    if (s->cmd != NULL) {
-        s->cmd->ci = 0;
-    }
-
-    *s->runfile = '\0';
-
-    s->model = model;
-    s->prn = prn;
-
-    s->pmod = NULL;
-    s->sys = NULL;
-    s->rset = NULL;
-    s->var = NULL;
-    s->in_comment = 0;
-    s->padded = 0;
-
-    if (flags == FUNCTION_EXEC) {
-        /* On entry to function execution we check if there's
-           a 'last model' in place. If so, we want to make
-           this invisible within the function, but set things
-           up so that we can restore it as last model on
-           exit from the function -- the idea being that
-           executing a function should not change the 'last
-           model' state at caller level. To achieve this we
-           need to take out a 'private' reference to the
-           model, stored in the ExecState, and then remove
-           it from last model position for the present.
-        */
-        s->prev_model = get_last_model(&s->prev_type);
-        if (s->prev_model != NULL) {
-#if PMDEBUG
-            fprintf(stderr, "ExecState %p: set prev_model %p\n",
-                    (void *) s, s->prev_model);
-#endif
-            gretl_object_ref(s->prev_model, s->prev_type);
-            set_as_last_model(NULL, GRETL_OBJ_NULL);
-        }
-        s->prev_model_count = get_model_count();
-    } else {
-        s->prev_model = NULL;
-        s->prev_type = GRETL_OBJ_NULL;
-        s->prev_model_count = -1;
-    }
-
-    s->submask = NULL;
-    s->callback = NULL;
 }
 
 void function_state_init (CMD *cmd, ExecState *state, int *indent0)

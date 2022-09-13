@@ -44,11 +44,11 @@ typedef enum {
 } UfunRole;
 
 typedef enum {
-    UFUN_PRIVATE   = 1 << 0,
-    UFUN_PLUGIN    = 1 << 1,
-    UFUN_NOPRINT   = 1 << 2,
-    UFUN_MENU_ONLY = 1 << 3,
-    UFUN_USES_SET  = 1 << 4
+    UFUN_PRIVATE   = 1 << 0, /* is private to a package */
+    UFUN_NOPRINT   = 1 << 1, /* offers no printed output */
+    UFUN_MENU_ONLY = 1 << 2, /* is GUI-only */
+    UFUN_USES_SET  = 1 << 3, /* includes the "set" command */
+    UFUN_HAS_FLOW  = 1 << 4  /* includes flow-control (ifs, loops) */
 } UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"
@@ -86,7 +86,7 @@ const ufunc *get_user_function_by_index (int idx);
 
 fncall *fncall_new (ufunc *fun, int preserve);
 
-void fncall_destroy (fncall *call);
+void fncall_destroy (void *ptr);
 
 GretlType fncall_get_return_type (fncall *fc);
 
@@ -132,8 +132,6 @@ const char *user_function_name_by_index (int i);
 int user_function_index_by_name (const char *name, 
 				 fnpkg *pkg);
 
-int user_function_set_debug (const char *name, int debug);
-
 void function_names_init (void);
 
 const char *next_available_function_name (fnpkg *pkg,
@@ -146,6 +144,8 @@ int gretl_compiling_python (const char *line);
 int gretl_function_depth (void);
 
 int gretl_function_recursing (void);
+
+int function_is_executing (const char *funcname);
 
 void current_function_info (char const **funcname,
 			    char const **pkgname);
@@ -164,10 +164,6 @@ int gretl_is_public_user_function (const char *name);
 
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			 void *ret, char **descrip, PRN *prn);
-
-int attach_loop_to_function (void *ptr);
-
-int detach_loop_from_function (void *ptr);
 
 int set_function_should_return (const char *line);
 

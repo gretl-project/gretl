@@ -175,7 +175,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { WLS,      "wls" },
     { XCORRGM,  "xcorrgm" },
     { XTAB,     "xtab" },
-    { FUNDEBUG, "debug" },
     { FUNCRET,  "return" },
     { CATCH,    "catch" },
     { PKG,      "pkg" },
