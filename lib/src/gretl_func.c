@@ -69,8 +69,9 @@ typedef struct obsinfo_ obsinfo;
 typedef struct stmt_ fn_line;
 
 enum {
-    FP_CONST    = 1 << 0,
-    FP_OPTIONAL = 1 << 1
+    FP_CONST    = 1 << 0, /* explicitly marked as "const" */
+    FP_OPTIONAL = 1 << 1, /* marked as optional (has default value) */
+    FP_IMMUT    = 1 << 2  /* either FP_CONST or const by inheritance */
 };
 
 /* structure representing a parameter of a user-defined function */
@@ -86,8 +87,12 @@ struct fn_param_ {
     double min;     /* minimum value (scalar parameters only) */
     double max;     /* maximum value (scalar parameters only) */
     double step;    /* step increment (scalars only) */
-    char immut;     /* state: immutable (const) at run-time */
 };
+
+#define param_is_const(p)      (p->flags & FP_CONST)
+#define param_is_immutable(p)  (p->flags & FP_IMMUT)
+#define param_set_immutable(p) (p->flags |= FP_IMMUT)
+#define param_set_mutable(p)   (p->flags &= ~FP_IMMUT)
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
@@ -8060,7 +8065,7 @@ static int process_series_arg (fncall *call, fn_param *fp,
 {
     if (arg->type == GRETL_TYPE_USERIES) {
 	/* an existing named series */
-	if (fp->immut) {
+	if (param_is_const(fp)) {
 	    /* we can pass it by reference */
 	    return localize_series_ref(call, arg, fp, dset);
 	} else {
@@ -8081,7 +8086,7 @@ static int process_object_arg (fncall *call, int i, fn_param *fp)
 {
     fn_arg *arg = &call->args[i];
 
-    if (fp->immut) {
+    if (param_is_const(fp)) {
 	/* we can pass it by reference */
 	return localize_const_object(call, i, fp);
     } else {
@@ -8125,12 +8130,12 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	fprintf(stderr, "arg[%d], param type %s (%s), arg type %s (%s)\n",
 		i, gretl_type_get_name(fp->type), fp->name,
 		gretl_type_get_name(arg->type), arg->upname);
+        fprintf(stderr, " param_is_const: %d\n", param_is_const(fp));
 #endif
-	/* extra conditions needed to avoid "const poisoning" */
-	if (!fp->immut && arg->upname != NULL &&
-	    fp->type != GRETL_TYPE_LIST &&
-	    !gretl_is_scalar_type(fp->type)) {
-	    fp->immut = object_is_const(arg->upname, -1);
+        if (!param_is_immutable(fp) && arg->upname != NULL &&
+            gretl_ref_type(fp->type) &&
+	    object_is_const(arg->upname, -1)) {
+            param_set_immutable(fp);
 	}
 
 	if (arg->type == GRETL_TYPE_NONE) {
@@ -8689,6 +8694,13 @@ static int is_pointer_arg (fncall *call, int rtype)
     return 0;
 }
 
+/* On completing execution of a function, move a series at the current
+   level up to the level of the caller. This must be done for series
+   that were passed to the function by reference rather than being
+   copied -- that is, series passed in explicit pointer form and also
+   series "loaned" by the caller via the "const" qualifier.
+*/
+
 static void push_series_to_caller (ufunc *u, fn_arg *arg, DATASET *dset)
 {
     int v = arg->val.idnum;
@@ -8805,7 +8817,7 @@ function_assign_returns (fncall *call, int rtype,
 		; /* pure "shell" object: no-op */
 	    }
 	} else if (arg->type == GRETL_TYPE_USERIES &&
-		   fp->type == GRETL_TYPE_SERIES && fp->immut) {
+		   fp->type == GRETL_TYPE_SERIES && param_is_const(fp)) {
 	    push_series_to_caller(u, arg, dset);
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
@@ -9135,7 +9147,11 @@ static int check_function_args (fncall *call, PRN *prn)
     for (i=0; i<u->n_params; i++) {
 	/* initialize "immutability" flags */
 	fp = &u->params[i];
-	fp->immut = fp->flags & FP_CONST;
+        if (param_is_const(fp)) {
+            param_set_immutable(fp);
+        } else {
+            param_set_mutable(fp);
+        }
     }
 
     for (i=0; i<call->argc && !err; i++) {
@@ -9845,12 +9861,13 @@ int object_is_const (const char *name, int vnum)
 
     if (call != NULL) {
 	if (name != NULL) {
-	    fn_param *params = call->fun->params;
+	    fn_param *param;
 	    int i;
 
 	    for (i=0; i<call->fun->n_params; i++) {
-		if (!strcmp(name, params[i].name)) {
-		    ret = params[i].immut;
+                param = &call->fun->params[i];
+		if (!strcmp(name, param->name)) {
+		    ret = param_is_immutable(param);
 		    break;
 		}
 	    }
