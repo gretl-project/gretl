@@ -110,8 +110,10 @@ endif
 
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
+guisrc = $(topsrc)/gui
+editsrc = $(topsrc)/editor
 
-override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) \
+override CFLAGS += -I.. -I$(libsrc) -I$(guisrc) -I$(editsrc) $(GUI_CFLAGS) \
 	$(GDK_PIXBUF_CFLAGS) $(XML_CFLAGS) $(DEFS)
 override LIBS += $(GDK_PIXBUF_LIBS)
 
@@ -128,8 +130,8 @@ else
   PROG = gretl_edit$(EXEEXT)
 endif
 
-vpath %.c $(topsrc)/gui
-vpath %.h $(topsrc)/gui
+vpath %.c $(topsrc)/gui $(topsrc)/editor
+vpath %.h $(topsrc)/gui $(topsrc)/editor
 
 SRCS = gretl_edit.c \
 	about.c \
