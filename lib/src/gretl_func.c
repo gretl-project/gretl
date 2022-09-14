@@ -6805,13 +6805,13 @@ static int skip_private_func (ufunc *ufun)
     return skip;
 }
 
-static int check_func_name (const char *name, ufunc **pfun,
-			    const DATASET *dset, PRN *prn)
+static int check_function_name (const char *name, ufunc **pfun,
+				const DATASET *dset, PRN *prn)
 {
     int i, err = 0;
 
 #if FN_DEBUG
-    fprintf(stderr, "check_func_name: '%s'\n", name);
+    fprintf(stderr, "check_function_name: '%s'\n", name);
 #endif
 
     if (!isalpha((unsigned char) *name)) {
@@ -7502,7 +7502,7 @@ int gretl_start_compiling_function (const char *line,
 
     if (!err) {
 	/* note: this handles a name collision */
-	err = check_func_name(name, &fun, dset, prn);
+	err = check_function_name(name, &fun, dset, prn);
     }
 
     if (!err) {
@@ -8132,11 +8132,26 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		gretl_type_get_name(arg->type), arg->upname);
         fprintf(stderr, " param_is_const: %d\n", param_is_const(fp));
 #endif
+#if 1
+        if (arg->upname != NULL && object_is_const(arg->upname, -1) &&
+	    gretl_ref_type(fp->type) && !param_is_const(fp)) {
+	    const char *caller;
+
+	    current_function_info(&caller, NULL);
+	    gretl_errmsg_sprintf("%s() tries to pass const argument "
+				 "%s to %s() in pointer form with no\n"
+				 "const guarantee\n",
+				 caller, fp->name, call->fun->name);
+	    err = E_INVARG;
+	    break;
+	}
+#else	
         if (!param_is_immutable(fp) && arg->upname != NULL &&
             gretl_ref_type(fp->type) &&
 	    object_is_const(arg->upname, -1)) {
             param_set_immutable(fp);
 	}
+#endif	
 
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
@@ -9210,7 +9225,7 @@ static int check_function_args (fncall *call, PRN *prn)
     }
 
 #if ARGS_DEBUG
-    fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
+    fprintf(stderr, "check_function_args: err = %d\n", err);
 #endif
 
     return err;
