@@ -3711,7 +3711,6 @@ int dataset_purge_missing_rows (DATASET *dset)
     char obs[OBSLEN];
     int markers;
     int i, t, s;
-    int err = 0;
 
     ok = calloc(dset->n, 1);
     if (ok == NULL) {
@@ -3756,7 +3755,7 @@ int dataset_purge_missing_rows (DATASET *dset)
 
     for (t=0, s=0; t<dset->n; t++) {
 	if (ok[t]) {
-	    for (i=0; i<dset->v; i++) {
+	    for (i=1; i<dset->v; i++) {
 		pset->Z[i][s] = dset->Z[i][t];
 	    }
 	    if (pset->S != NULL) {
@@ -3766,8 +3765,6 @@ int dataset_purge_missing_rows (DATASET *dset)
 	    s++;
 	}
     }
-
-    new_n = dset->n - totmiss;
 
     if (dated_daily_data(dset)) {
 	strcpy(pset->stobs, pset->S[0]);
@@ -3783,8 +3780,9 @@ int dataset_purge_missing_rows (DATASET *dset)
     clear_datainfo(dset, CLEAR_FULL);
     *dset = *pset;
     free(pset);
+    free(ok);
 
-    return err;
+    return 0;
 }
 
 /**
