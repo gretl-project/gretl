@@ -1954,6 +1954,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    }
 	}
     }
+
+#ifdef GRETL_EDIT
+    if (tab == TAB_EDITOR) {
+	/* add some specials for the Editor tab if we're making gretl_edit */
+	;
+    }
+#endif
 }
 
 static void set_gp_colors (void)
