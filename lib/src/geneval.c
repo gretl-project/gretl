@@ -12913,9 +12913,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == HF_FELOGITR) {
+	gretl_matrix *m1;
+	int t, T;
 
 	post_process = 0;
-	
 	if (!scalar_node(l)) {
 	    node_type_error(f, 1, NUM, l, p);
 	} else if (!scalar_node(m)) {
@@ -12925,12 +12926,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	} else {
 	    ret = aux_scalar_node(p);
 	}
-
-	int t = node_get_int(l, p);
-	int T = node_get_int(m, p);
-        gretl_matrix *m1 = node_get_real_matrix(r, p, 0, 1);
 	if (!p->err) {
-            ret->v.xval = felogit_rec_loglik(t, T, m1);;
+	    t = node_get_int(l, p);
+	    T = node_get_int(m, p);
+	    m1 = node_get_real_matrix(r, p, 0, 1);
+	}
+	if (!p->err) {
+            ret->v.xval = felogit_rec_loglik(t, T, m1);
 	}
     }
 

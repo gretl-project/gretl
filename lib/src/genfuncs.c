@@ -8684,8 +8684,8 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 
 double felogit_rec_loglik (int t, int T, gretl_matrix *U)
 {
-    int i;
     double ret = 1;
+    int i;
     
     if (t > T) {
         ret = 0;
@@ -8696,15 +8696,15 @@ double felogit_rec_loglik (int t, int T, gretl_matrix *U)
 	    ret *= gretl_vector_get(U, i);
 	}
     } else if (t == 1) {
-	ret = gretl_vector_get(U, T-1) + felogit_rec_loglik (1, T-1, U);
+	ret = gretl_vector_get(U, T-1) + felogit_rec_loglik(1, T-1, U);
     } else if ((T - t) == 1) {
 	for (i=0; i<t; i++) {
 	    ret *= gretl_vector_get(U, i);
 	}
-	ret += gretl_vector_get(U, T-1) * felogit_rec_loglik (t-1, T-1, U);
+	ret += gretl_vector_get(U, T-1) * felogit_rec_loglik(t-1, T-1, U);
     } else {
-	ret = felogit_rec_loglik (t, T-1, U) +
-	    gretl_vector_get(U, T-1) * felogit_rec_loglik (t-1, T-1, U);
+	ret = felogit_rec_loglik(t, T-1, U) +
+	    gretl_vector_get(U, T-1) * felogit_rec_loglik(t-1, T-1, U);
     }
 
     return ret;
