@@ -3704,13 +3704,19 @@ int multi_unit_panel_sample (const DATASET *dset)
 int dataset_purge_missing_rows (DATASET *dset)
 {
     int new_n, missrow, totmiss = 0;
+    DATASET *pset = NULL;
     int t1 = dset->t1;
     int t2 = dset->t2;
-    char **S = NULL;
-    double *Zi = NULL;
-    size_t sz;
+    char *ok = NULL;
+    char obs[OBSLEN];
+    int markers;
     int i, t, s;
     int err = 0;
+
+    ok = calloc(dset->n, 1);
+    if (ok == NULL) {
+	return E_ALLOC;
+    }
 
     for (t=0; t<dset->n; t++) {
 	missrow = 1;
@@ -3728,73 +3734,55 @@ int dataset_purge_missing_rows (DATASET *dset)
 	    if (t < dset->t2) {
 		t2--;
 	    }
+	} else {
+	    ok[t] = 1;
 	}
     }
 
     if (totmiss == 0) {
 	/* no-op */
+	free(ok);
 	return 0;
     }
 
-    if (dated_daily_data(dset) && dset->S == NULL) {
-	err = dataset_allocate_obs_markers(dset);
-	if (!err) {
-	    for (t=0; t<dset->n; t++) {
-		calendar_date_string(dset->S[t], t, dset);
-	    }
-	}
+    new_n = dset->n - totmiss;
+    markers = dated_daily_data(dset);
+    pset = create_new_dataset(dset->v, new_n, markers);
+
+    if (pset == NULL) {
+	free(ok);
+	return E_ALLOC;
     }
 
-    for (t=0; t<dset->n; t++) {
-	missrow = 1;
-	for (i=1; i<dset->v; i++) {
-	    if (!na(dset->Z[i][t])) {
-		missrow = 0;
-		break;
+    for (t=0, s=0; t<dset->n; t++) {
+	if (ok[t]) {
+	    for (i=0; i<dset->v; i++) {
+		pset->Z[i][s] = dset->Z[i][t];
 	    }
-	}
-	if (missrow) {
-	    sz = (dset->n - t) * sizeof **dset->Z;
-	    for (i=1; i<dset->v; i++) {
-		memmove(dset->Z[i] + t, dset->Z[i] + t + 1, sz);
+	    if (pset->S != NULL) {
+		calendar_date_string(obs, t, dset);
+		strcpy(pset->S[s], obs);
 	    }
-	    if (dset->S != NULL) {
-		free(dset->S[t]);
-		for (s=t; s<dset->n - 1; s++) {
-		    dset->S[s] = dset->S[s+1];
-		}
-	    }
+	    s++;
 	}
     }
 
     new_n = dset->n - totmiss;
 
-    for (i=1; i<dset->v; i++) {
-	Zi = realloc(dset->Z[i], new_n * sizeof *Zi);
-	if (Zi == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    dset->Z[i] = Zi;
-	}
+    if (dated_daily_data(dset)) {
+	strcpy(pset->stobs, pset->S[0]);
+	strcpy(pset->endobs, pset->S[new_n-1]);
+	pset->sd0 = get_epoch_day(pset->stobs);
     }
 
-    if (!err && dset->S != NULL) {
-	S = realloc(dset->S, new_n * sizeof *S);
-	if (S == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    dset->S = S;
-	    if (dated_daily_data(dset)) {
-		strcpy(dset->stobs, dset->S[0]);
-		strcpy(dset->endobs, dset->S[new_n-1]);
-		dset->sd0 = get_epoch_day(dset->stobs);
-	    }
-	}
-    }
+    /* FIXME? */
+    pset->t1 = t1;
+    pset->t2 = t2;
 
-    dataset_set_nobs(dset, new_n);
-    dset->t1 = t1;
-    dset->t2 = t2;
+    free_Z(dset);
+    clear_datainfo(dset, CLEAR_FULL);
+    *dset = *pset;
+    free(pset);
 
     return err;
 }
