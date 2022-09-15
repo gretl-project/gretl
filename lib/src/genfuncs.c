@@ -8662,3 +8662,50 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 
     return cholesky ? K : R;
 }
+
+/**
+ * felogit_rec_loglik:
+ * @t: int, number of ones
+ * @T: int, number of observations
+ * @U: matrix
+ *
+ * Computes recursively the denominator of the fixed-effect logit
+ * likelihood for one unit with @T observations and @t ones. The
+ * matrix @U is a vector containing the values of the index function
+ * for each time period.
+ *
+ * The algorithm is described on pp 5--6 of Stammann, A., Heiss,
+ * F. and McFadden, D., 2016. "Estimating fixed effects logit models
+ * with large panel data", available at
+ * https://www.econstor.eu/bitstream/10419/145837/1/VfS_2016_pid_6909.pdf
+ *
+ * Returns: a double.
+ */
+
+double felogit_rec_loglik (int t, int T, gretl_matrix *U)
+{
+    int i;
+    double ret = 1;
+    
+    if (t > T) {
+        ret = 0;
+    } else if (t == 0) {
+        ret = 1;
+    } else if (t == T) {
+	for (i=0; i<T; i++) {
+	    ret *= gretl_vector_get(U, i);
+	}
+    } else if (t == 1) {
+	ret = gretl_vector_get(U, T-1) + felogit_rec_loglik (1, T-1, U);
+    } else if ((T - t) == 1) {
+	for (i=0; i<t; i++) {
+	    ret *= gretl_vector_get(U, i);
+	}
+	ret += gretl_vector_get(U, T-1) * felogit_rec_loglik (t-1, T-1, U);
+    } else {
+	ret = felogit_rec_loglik (t, T-1, U) +
+	    gretl_vector_get(U, T-1) * felogit_rec_loglik (t-1, T-1, U);
+    }
+
+    return ret;
+}
