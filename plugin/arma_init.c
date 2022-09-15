@@ -1600,7 +1600,7 @@ int arma_by_ls (const double *coeff, const DATASET *dset,
     int *arlist = NULL;
     int nonlin = 0;
 
-    aset = create_auxiliary_dataset(av, ainfo->T, 0);
+    aset = create_auxiliary_dataset(av, ainfo->fullT, 0);
     if (aset == NULL) {
 	return E_ALLOC;
     }

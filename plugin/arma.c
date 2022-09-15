@@ -643,12 +643,15 @@ static int arma_standardize_x (arma_info *ainfo,
 }
 
 /* Set flag to allow NAs within the sample range for an
-   ARMA model using native exact ML.
+   ARMA model using native exact ML, or for one that can
+   be estimated via OLS (with no MA term).
 */
 
 static void maybe_allow_missvals (arma_info *ainfo)
 {
     if (arma_exact_ml(ainfo)) {
+	ainfo->pflags |= ARMA_NAOK;
+    } else if (ainfo->q == 0 && ainfo->Q == 0) {
 	ainfo->pflags |= ARMA_NAOK;
     }
 }

@@ -481,7 +481,6 @@ static int arma_adjust_sample (arma_info *ainfo,
     }
 
     /* advance the starting point if need be */
-
     for (t=t1; t<=t2; t++) {
 	missing = 0;
 	for (i=ypos; i<=list[0] && !missing; i++) {
@@ -507,7 +506,6 @@ static int arma_adjust_sample (arma_info *ainfo,
     }
 
     /* retard the ending point if need be */
-
     for (t=t2; t>=t1; t--) {
 	missing = 0;
 	for (i=ypos; i<=list[0] && !missing; i++) {
