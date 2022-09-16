@@ -1546,7 +1546,8 @@ static int handle_datamod_param (CMD *c)
 	       case of 'extra'
 	    */
 	    c->ciflags = CI_PARM1 | CI_EXTRA;
-	} else if (op == DS_TRANSPOSE || op == DS_CLEAR) {
+	} else if (op == DS_TRANSPOSE || op == DS_CLEAR ||
+		   op == DS_UNPAD_DAILY) {
 	    /* no more fields wanted */
 	    c->ciflags = CI_PARM1;
 	} else {
