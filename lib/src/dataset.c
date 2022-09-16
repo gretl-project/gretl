@@ -3696,37 +3696,43 @@ int multi_unit_panel_sample (const DATASET *dset)
  *
  * Removes empty rows from the dataset -- that is, observations
  * at which there are no non-missing values.  This is intended
- * for daily data only.
+ * for dated daily data only.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
 int dataset_purge_missing_rows (DATASET *dset)
 {
-    int new_n, missrow, totmiss = 0;
-    DATASET *pset = NULL;
+    int new_n, emptyrow, n_skip = 0;
+    DATASET *tmpset = NULL;
     int t1 = dset->t1;
     int t2 = dset->t2;
     char *ok = NULL;
     char obs[OBSLEN];
-    int markers;
     int i, t, s;
 
+    if (!dated_daily_data(dset)) {
+        gretl_errmsg_set("Dataset is not dated daily");
+        return E_DATA;
+    }
+
+    /* allocate usable obs recorder */
     ok = calloc(dset->n, 1);
     if (ok == NULL) {
 	return E_ALLOC;
     }
 
+    /* determine which obs are usable */
     for (t=0; t<dset->n; t++) {
-	missrow = 1;
+	emptyrow = 1;
 	for (i=1; i<dset->v; i++) {
 	    if (!na(dset->Z[i][t])) {
-		missrow = 0;
+		emptyrow = 0;
 		break;
 	    }
 	}
-	if (missrow) {
-	    totmiss++;
+	if (emptyrow) {
+	    n_skip++;
 	    if (t < dset->t1) {
 		t1--;
 		t2--;
@@ -3738,49 +3744,60 @@ int dataset_purge_missing_rows (DATASET *dset)
 	}
     }
 
-    if (totmiss == 0) {
+    if (n_skip == 0) {
 	/* no-op */
 	free(ok);
 	return 0;
     }
 
-    new_n = dset->n - totmiss;
-    markers = dated_daily_data(dset);
-    pset = create_new_dataset(dset->v, new_n, markers);
+    /* create temporary dataset */
+    new_n = dset->n - n_skip;
+    tmpset = create_new_dataset(dset->v, new_n, 1);
 
-    if (pset == NULL) {
+    if (tmpset == NULL) {
 	free(ok);
 	return E_ALLOC;
     }
 
-    for (t=0, s=0; t<dset->n; t++) {
+    /* transcribe the usable observations */
+    for (t=0, s=0; t<dset->n && s<new_n; t++) {
 	if (ok[t]) {
 	    for (i=1; i<dset->v; i++) {
-		pset->Z[i][s] = dset->Z[i][t];
+		tmpset->Z[i][s] = dset->Z[i][t];
 	    }
-	    if (markers) {
-		calendar_date_string(obs, t, dset);
-		strcpy(pset->S[s], obs);
-	    }
+            calendar_date_string(obs, t, dset);
+            strcpy(tmpset->S[s], obs);
 	    s++;
 	}
     }
 
-    pset->pd = dset->pd;
-    pset->structure = dset->structure;
-    pset->t1 = t1;
-    pset->t2 = t2;
+    /* transfer reduced data array from @tmpset to @dset */
+    free_Z(dset);
+    dset->Z = tmpset->Z;
+    tmpset->Z = NULL;
 
-    if (markers) {
-	strcpy(pset->stobs, pset->S[0]);
-	strcpy(pset->endobs, pset->S[new_n-1]);
-	pset->sd0 = get_epoch_day(pset->stobs);
+    /* trash original obs markers if present */
+    if (dset->S != NULL) {
+        dataset_destroy_obs_markers(dset);
     }
 
-    free_Z(dset);
-    clear_datainfo(dset, CLEAR_FULL);
-    *dset = *pset;
-    free(pset);
+    /* set reduced length of dataset */
+    dset->n = new_n;
+
+    /* transfer new obs markers to @dset */
+    dset->S = tmpset->S;
+    tmpset->S = NULL;
+    dset->markers = DAILY_DATE_STRINGS;
+    strcpy(dset->stobs, dset->S[0]);
+    strcpy(dset->endobs, dset->S[new_n-1]);
+    dset->sd0 = get_epoch_day(dset->stobs);
+
+    /* set possibly revised sample range */
+    dset->t1 = t1;
+    dset->t2 = t2;
+
+    /* clean up */
+    destroy_dataset(tmpset);
     free(ok);
 
     return 0;
