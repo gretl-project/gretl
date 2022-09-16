@@ -3206,6 +3206,8 @@ int dataset_op_from_string (const char *s)
 	op = DS_INSOBS;
     } else if (!strcmp(s, "pad-daily")) {
 	op = DS_PAD_DAILY;
+    } else if (!strcmp(s, "unpad-daily")) {
+        op = DS_UNPAD_DAILY;
     }
 
     return op;
@@ -3224,7 +3226,8 @@ static int dataset_int_param (const char **ps, int op,
 	return 0;
     }
 
-    if (op == DS_PAD_DAILY && !dated_daily_data(dset)) {
+    if ((op == DS_PAD_DAILY || op == DS_UNPAD_DAILY) &&
+        !dated_daily_data(dset)) {
 	*err = E_PDWRONG;
 	return 0;
     }
@@ -3607,6 +3610,8 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	err = expand_data_set(dset, k);
     } else if (op == DS_PAD_DAILY) {
 	err = pad_daily_data(dset, k, prn);
+    } else if (op == DS_UNPAD_DAILY) {
+        err = dataset_purge_missing_rows(dset);
     } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(dset);
     } else if (op == DS_SORTBY) {
