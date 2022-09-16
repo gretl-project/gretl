@@ -3766,14 +3766,16 @@ int dataset_purge_missing_rows (DATASET *dset)
 	}
     }
 
+    pset->pd = dset->pd;
+    pset->structure = dset->structure;
+    pset->t1 = t1;
+    pset->t2 = t2;
+
     if (markers) {
 	strcpy(pset->stobs, pset->S[0]);
 	strcpy(pset->endobs, pset->S[new_n-1]);
 	pset->sd0 = get_epoch_day(pset->stobs);
     }
-
-    pset->t1 = t1;
-    pset->t2 = t2;
 
     free_Z(dset);
     clear_datainfo(dset, CLEAR_FULL);
