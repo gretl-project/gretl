@@ -3729,8 +3729,8 @@ int dataset_purge_missing_rows (DATASET *dset)
 	    totmiss++;
 	    if (t < dset->t1) {
 		t1--;
-	    }
-	    if (t < dset->t2) {
+		t2--;
+	    } else if (t < dset->t2) {
 		t2--;
 	    }
 	} else {
@@ -3758,7 +3758,7 @@ int dataset_purge_missing_rows (DATASET *dset)
 	    for (i=1; i<dset->v; i++) {
 		pset->Z[i][s] = dset->Z[i][t];
 	    }
-	    if (pset->S != NULL) {
+	    if (markers) {
 		calendar_date_string(obs, t, dset);
 		strcpy(pset->S[s], obs);
 	    }
@@ -3766,13 +3766,12 @@ int dataset_purge_missing_rows (DATASET *dset)
 	}
     }
 
-    if (dated_daily_data(dset)) {
+    if (markers) {
 	strcpy(pset->stobs, pset->S[0]);
 	strcpy(pset->endobs, pset->S[new_n-1]);
 	pset->sd0 = get_epoch_day(pset->stobs);
     }
 
-    /* FIXME? */
     pset->t1 = t1;
     pset->t2 = t2;
 
