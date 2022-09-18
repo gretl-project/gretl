@@ -681,9 +681,23 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 {
     int nullify = 1;
 
-    if (get_user_var_by_data(n->v.ptr)) {
+    /* 2022-09-18: The def'd-out look-up below (added quite recently)
+       slows things down significantly. So, when is it actually
+       necessary (if ever, in the current state of things) and when
+       not?  The context is where n->v.ptr (a pointer to matrix,
+       bundle, array or whatever) turns out not to correspond to the
+       ptr member of a uservar struct (which also holds the name of
+       the variable and the level of function execution at which it
+       resides).
+    */
+#if 1
+    user_var *uv = NULL;
+    if ((uv = get_user_var_by_data(n->v.ptr)) != NULL) {
+	fprintf(stderr, "clear_tmp_node_data: n->v.ptr belongs to uvar %s (%p)\n",
+		uv->name, (void *) uv);
 	return;
     }
+#endif
 
     if (n->t == LIST) {
 	free(n->v.ivec);
