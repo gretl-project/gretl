@@ -148,7 +148,6 @@ struct LOOPSET_ {
     model_record *mrecords;
     LOOPSET *parent;
     LOOPSET **children;
-    int parent_line;
 
 #if HAVE_GMP
     /* "progressive" objects and counts thereof */
@@ -177,9 +176,12 @@ struct LOOPSET_ {
 #define loop_line_nosub(ll)  (!(ll->flags & (LOOP_LINE_AT | LOOP_LINE_DOLLAR)))
 #define loop_line_quiet(ll)  (ll->flags & LOOP_LINE_QUIET)
 
-#define line_is_compiled(ll) (ll->ptr != NULL || ll->ci == ELSE || ll->ci == ENDIF)
+#define line_is_compiled(ll) (ll->ptr != NULL || ll->ci == ELSE || \
+                              ll->ci == ENDIF || ll->ci == BREAK || \
+                              ll->ci == CONTINUE)
 #define line_has_dollar(ll)  (ll->flags & LOOP_LINE_DOLLAR)
 #define line_has_at_sign(ll) (ll->flags & LOOP_LINE_AT)
+#define line_has_genr(l,j) (l->lines[j].ptr != NULL && l->lines[j].ci != LOOP)
 
 #define may_be_compilable(ll)  (!(ll->flags & LOOP_LINE_NOCOMP))
 #define set_non_compilable(ll) (ll->flags |= LOOP_LINE_NOCOMP)
@@ -502,7 +504,6 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     loop->children = children;
     loop->children[nc] = child;
     child->parent = loop;
-    child->parent_line = loop->n_lines;
     child->level = loop->level + 1;
 
 #if LOOP_DEBUG
@@ -548,7 +549,6 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->parent = NULL;
     loop->children = NULL;
     loop->n_children = 0;
-    loop->parent_line = 0;
 
 #if HAVE_GMP
     /* "progressive" apparatus */
@@ -611,7 +611,7 @@ void gretl_loop_destroy (LOOPSET *loop)
     if (loop->lines != NULL) {
         for (i=0; i<loop->n_lines; i++) {
             free(loop->lines[i].s);
-            if (loop->lines[i].ptr != NULL) {
+            if (line_has_genr(loop, i)) {
                 destroy_genr(loop->lines[i].ptr);
             }
         }
@@ -1814,7 +1814,8 @@ static int add_more_loop_lines (LOOPSET *loop)
     return 0;
 }
 
-static int real_append_line (ExecState *s, LOOPSET *loop)
+static int real_append_line (ExecState *s, LOOPSET *loop,
+                             LOOPSET *child)
 {
     int n = loop->n_lines;
     int err = 0;
@@ -1851,6 +1852,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
             loop_set_has_cond(loop);
         }
         loop->lines[n].ci = s->cmd->ci;
+        loop->lines[n].ptr = child;
         loop->n_lines += 1;
     }
 
@@ -1879,6 +1881,7 @@ int gretl_loop_append_line_full (ExecState *s, DATASET *dset,
 {
     LOOPSET *loop = currloop;
     LOOPSET *newloop = currloop;
+    LOOPSET *child = NULL;
     int err = 0;
 
     warnmsg(s->prn); /* catch "end loop" if present */
@@ -1931,6 +1934,7 @@ int gretl_loop_append_line_full (ExecState *s, DATASET *dset,
                     currloop = newloop;
                     return 0; /* done */
                 }
+                child = newloop;
             }
         }
     } else if (s->cmd->ci == ENDLOOP) {
@@ -1958,7 +1962,7 @@ int gretl_loop_append_line_full (ExecState *s, DATASET *dset,
     }
 
     if (!err && loop != NULL && s->cmd->ci != ENDLOOP) {
-        err = real_append_line(s, loop);
+        err = real_append_line(s, loop, child);
     }
 
     if (err) {
@@ -2253,19 +2257,6 @@ int scalar_is_read_only_index (const char *name)
     return 0;
 }
 
-static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
-{
-    int i;
-
-    for (i=0; i<loop->n_children; i++) {
-        if (loop->children[i]->parent_line == lno) {
-            return loop->children[i];
-        }
-    }
-
-    return NULL;
-}
-
 static int try_add_loop_genr (LOOPSET *loop,
                               int lno,
                               CMD *cmd,
@@ -2437,7 +2428,7 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
         int i, ok = 1;
 
         for (i=0; i<loop->n_lines; i++) {
-            if (loop->lines[i].ptr != NULL) {
+            if (line_has_genr(loop, i)) {
                 ok = 0;
                 break;
             }
@@ -2556,7 +2547,7 @@ void loop_reset_uvars (LOOPSET *loop)
     /* stored references within "genrs" */
     if (loop->lines != NULL) {
         for (i=0; i<loop->n_lines; i++) {
-            if (loop->lines[i].ptr != NULL) {
+            if (line_has_genr(loop, i)) {
                 genr_reset_uvars(loop->lines[i].ptr);
             }
         }
@@ -2615,6 +2606,8 @@ static int block_model (CMD *cmd)
 }
 
 #define LTRACE 0
+
+//static int xcount = 0;
 
 int gretl_loop_exec (ExecState *s, DATASET *dset)
 {
@@ -2720,7 +2713,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		continue;
 	    }
 
-	    /* deal with compiled cases */
+	    /* deal with "compiled" cases */
 	    if (ci == GENR && compiled) {
                 if (echo && loop_is_verbose(loop)) {
                     pprintf(prn, "? %s\n", showline);
@@ -2746,7 +2739,17 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		if (gretl_if_state_false() && ll->next > 0) {
 		    j = ll->next - 1;
 		}
-	    }
+            } else if (ci == BREAK || ci == CONTINUE) {
+                if (ci == BREAK) {
+                    loop->brk = 1;
+                } else {
+                    loop->cont = 1;
+                }
+                break;
+	    } else if (ci == LOOP) {
+                cmd->ci = ci;
+                goto child_loop;
+            }
 
 	    if (err) {
 		goto handle_err;
@@ -2754,19 +2757,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		continue;
 	    }
 
-	    /* handle other cases with no parsing required */
-            if (ci == BREAK || ci == CONTINUE || ci == LOOP) {
-                cmd->ci = ci;
-                if (ci == BREAK) {
-                    loop->brk = 1;
-                    break;
-                } else if (ci == CONTINUE) {
-                    loop->cont = 1;
-                    break;
-                } else if (ci == LOOP) {
-                    goto child_loop;
-                }
-            }
+            //xcount++;
 
 	    /* check for $-substitution? */
 	    if (line_has_dollar(ll)) {
@@ -2881,7 +2872,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
         child_loop:
 
             if (cmd->ci == LOOP) {
-                currloop = get_child_loop_by_line(loop, j);
+                currloop = ll->ptr;
                 if (loop_is_attached(loop) && currloop != NULL) {
                     loop_set_attached(currloop);
                 }
@@ -2954,6 +2945,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
             inner_errline = gretl_strdup(currline);
         }
     } /* end iterations of loop */
+
+    //fprintf(stderr, "xcount = %d\n", xcount);
 
     cmd->flags &= ~CMD_NOSUB;
 
