@@ -685,7 +685,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
        things down significantly. So, when is it actually necessary
        (if ever, in the current state of things)? Testing required.
     */
-#if 1
+#if 0
     user_var *uv = NULL;
     if ((uv = get_user_var_by_data(n->v.ptr)) != NULL) {
 	fprintf(stderr, "clear_tmp_node_data: n->v.ptr belongs to uvar %s (%p)\n",
