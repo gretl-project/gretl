@@ -681,14 +681,9 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 {
     int nullify = 1;
 
-    /* 2022-09-18: The def'd-out look-up below (added quite recently)
-       slows things down significantly. So, when is it actually
-       necessary (if ever, in the current state of things) and when
-       not?  The context is where n->v.ptr (a pointer to matrix,
-       bundle, array or whatever) turns out not to correspond to the
-       ptr member of a uservar struct (which also holds the name of
-       the variable and the level of function execution at which it
-       resides).
+    /* 2022-09-18: The look-up below (added quite recently) slows
+       things down significantly. So, when is it actually necessary
+       (if ever, in the current state of things)? Testing required.
     */
 #if 1
     user_var *uv = NULL;
