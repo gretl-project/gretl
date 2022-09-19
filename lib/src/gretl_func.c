@@ -70,8 +70,7 @@ typedef struct stmt_ fn_line;
 
 enum {
     FP_CONST    = 1 << 0, /* explicitly marked as "const" */
-    FP_OPTIONAL = 1 << 1, /* marked as optional (has default value) */
-    FP_IMMUT    = 1 << 2  /* either FP_CONST or const by inheritance */
+    FP_OPTIONAL = 1 << 1  /* marked as optional (has default value) */
 };
 
 /* structure representing a parameter of a user-defined function */
@@ -89,10 +88,7 @@ struct fn_param_ {
     double step;    /* step increment (scalars only) */
 };
 
-#define param_is_const(p)      (p->flags & FP_CONST)
-#define param_is_immutable(p)  (p->flags & FP_IMMUT)
-#define param_set_immutable(p) (p->flags |= FP_IMMUT)
-#define param_set_mutable(p)   (p->flags &= ~FP_IMMUT)
+#define param_is_const(p) (p->flags & FP_CONST)
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
@@ -8132,7 +8128,6 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		gretl_type_get_name(arg->type), arg->upname);
         fprintf(stderr, " param_is_const: %d\n", param_is_const(fp));
 #endif
-#if 1
         if (arg->upname != NULL && object_is_const(arg->upname, -1) &&
 	    gretl_ref_type(fp->type) && !param_is_const(fp)) {
 	    const char *caller;
@@ -8145,13 +8140,6 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    err = E_INVARG;
 	    break;
 	}
-#else	
-        if (!param_is_immutable(fp) && arg->upname != NULL &&
-            gretl_ref_type(fp->type) &&
-	    object_is_const(arg->upname, -1)) {
-            param_set_immutable(fp);
-	}
-#endif	
 
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
@@ -9159,16 +9147,6 @@ static int check_function_args (fncall *call, PRN *prn)
     double x;
     int i, err = 0;
 
-    for (i=0; i<u->n_params; i++) {
-	/* initialize "immutability" flags */
-	fp = &u->params[i];
-        if (param_is_const(fp)) {
-            param_set_immutable(fp);
-        } else {
-            param_set_mutable(fp);
-        }
-    }
-
     for (i=0; i<call->argc && !err; i++) {
 	int scalar_check = 1;
 
@@ -9882,7 +9860,7 @@ int object_is_const (const char *name, int vnum)
 	    for (i=0; i<call->fun->n_params; i++) {
                 param = &call->fun->params[i];
 		if (!strcmp(name, param->name)) {
-		    ret = param_is_immutable(param);
+		    ret = param_is_const(param);
 		    break;
 		}
 	    }
