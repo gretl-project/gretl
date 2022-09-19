@@ -681,13 +681,18 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 {
     int nullify = 1;
 
-    /* 2022-09-18: The look-up below (added quite recently) slows
-       things down significantly. So, when is it actually necessary
-       (if ever, in the current state of things)? Testing required.
-    */
 #if 0
+    /* 2022-09-19: The look-up below (added quite recently) slows
+       things down significantly. But it now seems to be redundant;
+       that is, the current code doesn't make the mistake of putting a
+       named "uservar" into a tmp node (which is supposed to hold only
+       disposable intermediate results). I'm leaving it here, def'd
+       out, just in case that error somehow reappears.
+    */
     user_var *uv = NULL;
+
     if ((uv = get_user_var_by_data(n->v.ptr)) != NULL) {
+	/* should NOT happen */
 	fprintf(stderr, "clear_tmp_node_data: n->v.ptr belongs to uvar %s (%p)\n",
 		uv->name, (void *) uv);
 	return;
