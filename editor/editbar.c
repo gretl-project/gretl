@@ -392,13 +392,22 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 				  TRUE);
 }
 
+static void exec_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (widget_get_int(vwin->mbar, "exec_is_kill") > 0) {
+	cancel_run_script();
+    } else {
+	do_run_script(w, vwin);
+    }
+}
+
 static GretlToolItem viewbar_items[] = {
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), PRINT_ITEM },
-    { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
+    { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(exec_callback), EXEC_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM },
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM },
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
@@ -678,6 +687,8 @@ static void toolbar_attach_hidden_spinner (windata_t *vwin)
     GtkWidget *sp = gtk_spinner_new();
     GtkToolItem *si = gtk_tool_button_new(sp, NULL);
 
+    g_signal_connect(G_OBJECT(si), "clicked",
+		     G_CALLBACK(exec_callback), vwin);
     g_object_set_data(G_OBJECT(vwin->mbar), "spin_item", si);
     g_object_ref(si);
 }

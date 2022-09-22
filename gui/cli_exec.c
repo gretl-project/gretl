@@ -58,15 +58,16 @@ static gchar **argv_copy (gchar **argv)
 
 #if GTK_MAJOR_VERSION > 2
 
-static void modify_exec_button (windata_t *vwin, int to_spinner)
+static void modify_exec_button (windata_t *vwin, int to_killer)
 {
     GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
     GtkToolItem *si = g_object_get_data(G_OBJECT(vwin->mbar), "spin_item");
     GtkWidget *sp = gtk_tool_button_get_icon_widget(GTK_TOOL_BUTTON(si));
     int idx;
 
-    if (to_spinner) {
+    if (to_killer) {
 	/* replace exit button with "wait" spinner */
+	widget_set_int(vwin->mbar, "exec_is_kill", 1);
 	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), eb);
 	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(eb));
 	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), si, idx);
@@ -74,6 +75,7 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
 	gtk_spinner_start(GTK_SPINNER(sp));
     } else {
 	/* remove spinner and reinstate the exec button */
+	widget_set_int(vwin->mbar, "exec_is_kill", 0);
 	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), si);
 	gtk_spinner_stop(GTK_SPINNER(sp));
 	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(si));
@@ -83,16 +85,18 @@ static void modify_exec_button (windata_t *vwin, int to_spinner)
 
 #else
 
-/* GTK2: just toggle the sensitivity of the exec button */
+/* GTK2: switch betwee EXEC and STOP icons */
 
-static void modify_exec_button (windata_t *vwin, int to_spinner)
+static void modify_exec_button (windata_t *vwin, int to_killer)
 {
     GtkWidget *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
 
-    if (to_spinner) {
-	gtk_widget_set_sensitive(eb, FALSE);
+    if (to_killer) {
+	widget_set_int(vwin->mbar, "exec_is_kill", 1);
+	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(eb), GTK_STOCK_STOP);
     } else {
-	gtk_widget_set_sensitive(eb, TRUE);
+	widget_set_int(vwin->mbar, "exec_is_kill", 0);
+	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(eb), GTK_STOCK_EXECUTE);
     }
 }
 
