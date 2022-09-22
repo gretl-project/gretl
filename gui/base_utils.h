@@ -83,6 +83,10 @@ void run_script_silent (GtkWidget *w, windata_t *vwin);
 
 void cancel_run_script (void);
 
+void populate_gretlcli_path_combo (GtkWidget *box);
+
+void set_gretlcli_path (GtkWidget *box);
+
 #endif
 
 void new_script_callback (GtkAction *action);

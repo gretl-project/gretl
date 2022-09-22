@@ -385,6 +385,12 @@ RCVAR rc_vars[] = {
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
+#ifdef GRETL_EDIT
+
+GtkWidget *cli_selector;
+
+#endif
+
 /* accessor functions */
 
 int using_hc_by_default (void)
@@ -1574,8 +1580,9 @@ static GtkWidget *scroller_page (GtkWidget *vbox)
 static void make_prefs_tab (GtkWidget *notebook, int tab,
 			    int console)
 {
-    GtkWidget *b_table = NULL, *s_table = NULL;
-    GtkWidget *l_table = NULL;
+    GtkWidget *b_table = NULL; /* widget table for boolean switches */
+    GtkWidget *s_table = NULL; /* widget table for string variables */
+    GtkWidget *l_table = NULL; /* widget table for list selections */
     GtkWidget *vbox, *w = NULL;
     GtkWidget *page;
     int s_len = 1, b_len = 0, l_len = 1;
@@ -1812,7 +1819,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    int j, active = 0;
 
 	    l_len++;
-
 	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
 	    w = gtk_label_new(_(rc->description));
 	    if (tab == TAB_MAIN) {
@@ -1912,7 +1918,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    int *intvar = (int *) rc->var;
 
 	    l_len++;
-
 	    gtk_table_resize(GTK_TABLE(l_table), l_len, l_cols);
 	    w = gtk_label_new(_(rc->description));
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
@@ -1929,7 +1934,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	    char *strvar = (char *) rc->var;
 
 	    s_len++;
-
 	    gtk_table_resize(GTK_TABLE(s_table), s_len, s_cols);
 	    w = gtk_label_new(_(rc->description));
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
@@ -1957,8 +1961,25 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 
 #ifdef GRETL_EDIT
     if (tab == TAB_EDITOR) {
-	/* add some specials for the Editor tab if we're making gretl_edit */
-	;
+	/* additional material for the Editor tab if we're making gretl_edit */
+        GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+        GtkWidget *label, *e_table;
+
+	e_table = gtk_table_new(1, 2, FALSE);
+	gtk_table_set_row_spacings(GTK_TABLE(e_table), 10);
+	gtk_table_set_col_spacings(GTK_TABLE(e_table), 10);
+	gtk_box_pack_start(GTK_BOX(hbox), e_table, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+        label = gtk_label_new("gretlcli");
+        gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+        gtk_table_attach_defaults(GTK_TABLE(e_table), label,
+                                  0, 1, 0, 1);
+        cli_selector = combo_box_text_new_with_entry();
+        populate_gretlcli_path_combo(cli_selector);
+        gtk_table_attach_defaults(GTK_TABLE(e_table), cli_selector,
+                                  1, 2, 0, 1);
+        gtk_widget_show_all(e_table);
     }
 #endif
 }
@@ -2166,6 +2187,10 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 
 #ifdef HAVE_MPI
     set_mpi_variant(mpi_pref);
+#endif
+
+#ifdef GRETL_EDIT
+    set_gretlcli_path(cli_selector);
 #endif
 
     if (use_proxy && *http_proxy == '\0') {

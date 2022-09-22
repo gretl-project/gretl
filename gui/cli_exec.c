@@ -54,6 +54,8 @@ static gchar **argv_copy (gchar **argv)
 
 #endif
 
+#include "dlgutils.h"
+
 #if GTK_MAJOR_VERSION > 2
 
 static void modify_exec_button (windata_t *vwin, int to_spinner)
@@ -264,12 +266,68 @@ static void run_script_async (gchar *cmd,
     g_task_run_in_thread(task, exec_script_thread);
 }
 
+static GList *gretlcli_paths;
+
+void populate_gretlcli_path_combo (GtkWidget *box)
+{
+    GList *L;
+
+    if (gretlcli_paths == NULL) {
+        gchar *s = g_strdup_printf("%sgretlcli", gretl_bindir());
+
+        gretlcli_paths = g_list_prepend(gretlcli_paths, s);
+    }
+
+    L = gretlcli_paths;
+    while (L != NULL) {
+        combo_box_append_text(box, L->data);
+        L = L->next;
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
+}
+
+void set_gretlcli_path (GtkWidget *box)
+{
+    gchar *path = combo_box_get_active_text(box);
+    GList *L = g_list_first(gretlcli_paths);
+    int i = 0;
+
+    while (L != NULL) {
+        if (!strcmp(path, (gchar *) L->data)) {
+            if (i > 0) {
+                /* move @L to first position */
+                gretlcli_paths = g_list_remove_link(gretlcli_paths, L);
+                gretlcli_paths = g_list_concat(L, gretlcli_paths);
+            }
+            g_free(path);
+            path = NULL;
+            break;
+        }
+        i++;
+        L = L->next;
+    }
+
+    if (path != NULL) {
+        /* @path not yet recorded */
+        gretlcli_paths = g_list_prepend(gretlcli_paths, path);
+    }
+}
+
 static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
-    gchar *clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
     gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
     FILE *fp = gretl_fopen(inpname, "wb");
+    gchar *clipath;
     int err = 0;
+
+    if (gretlcli_paths != NULL) {
+        GList *L = g_list_first(gretlcli_paths);
+
+        clipath = g_strdup(L->data);
+        fprintf(stderr, "HERE clipath = '%s'\n", clipath);
+    } else {
+        clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
+    }
 
     if (fp == NULL) {
 	file_read_errbox(inpname);
