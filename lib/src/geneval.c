@@ -16425,28 +16425,27 @@ static void reattach_series (NODE *n, parser *p)
 
 static void reattach_data_error (NODE *n, parser *p)
 {
-    char msg[256];
+    GString *msg = g_string_new(NULL);
 
-    sprintf(msg, "'%s': expected %s", n->vname, getsymb(n->t));
+    g_string_printf(msg, "'%s': expected %s", n->vname, getsymb(n->t));
 
     if (n->uv == NULL) {
-        strcat(msg, " but name look-up failed");
+        g_string_append(msg, " but name look-up failed");
         p->err = E_DATA;
     } else {
         const char *s = gretl_type_get_name(n->uv->type);
-        gchar *add;
 
         if (n->uv->ptr == NULL) {
-            add = g_strdup_printf(", found %s with NULL data", s);
+            g_string_append_printf(msg, ", found %s with NULL data", s);
             p->err = E_DATA;
         } else {
-            add = g_strdup_printf(" but found %s", s);
+            g_string_append_printf(msg, " but found %s", s);
             p->err = E_TYPES;
         }
-        strcat(msg, add);
-        gretl_errmsg_set(msg);
-        g_free(add);
     }
+
+    gretl_errmsg_set(msg->str);
+    g_string_free(msg, TRUE);
 }
 
 /* Deep debugging to detect any cases where we've failed to NULL-ify
@@ -16490,17 +16489,23 @@ static void node_reattach_data (NODE *n, parser *p)
         } else if (uscalar_node(n)) {
             if (type == GRETL_TYPE_DOUBLE) {
                 n->v.xval = *(double *) data;
-#if ONE_BY_ONE_CAST
             } else if (type == GRETL_TYPE_MATRIX) {
                 /* allow type-mutation */
                 n->t = MAT;
                 n->v.m = (gretl_matrix *) data;
-#endif
             } else {
                 reattach_data_error(n, p);
             }
-        } else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
-            n->v.m = data;
+        } else if (n->t == MAT) {
+            if (type == GRETL_TYPE_MATRIX) {
+                n->v.m = data;
+            } else if (type == GRETL_TYPE_DOUBLE) {
+                /* allow type-mutation */
+                n->t = NUM;
+                n->v.xval = *(double *) data;
+            } else {
+                reattach_data_error(n, p);
+            }
         } else if (n->t == LIST && type == GRETL_TYPE_LIST) {
             n->v.ivec = data;
         } else if (n->t == BUNDLE && type == GRETL_TYPE_BUNDLE) {
