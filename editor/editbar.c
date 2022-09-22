@@ -98,15 +98,15 @@ static void try_auto_icon_sizing (int *bigger)
     GdkScreen *screen = gdk_screen_get_default();
 
     if (monitor != NULL) {
-	int mmw = gdk_monitor_get_width_mm(monitor);
-	int pxw = gdk_screen_get_width(screen);
-	double mm16 = 16 * mmw / (double) pxw;
+        int mmw = gdk_monitor_get_width_mm(monitor);
+        int pxw = gdk_screen_get_width(screen);
+        double mm16 = 16 * mmw / (double) pxw;
 
-	if (mm16 < 2.8) {
-	    /* size of 16 pixels in millimeters */
-	    fprintf(stderr, " auto-setting larger icons\n");
-	    *bigger = 1;
-	}
+        if (mm16 < 2.8) {
+            /* size of 16 pixels in millimeters */
+            fprintf(stderr, " auto-setting larger icons\n");
+            *bigger = 1;
+        }
     }
 }
 
@@ -115,112 +115,112 @@ static void try_auto_icon_sizing (int *bigger)
 void gretl_stock_icons_init (void)
 {
     struct xpm_stock_maker xpm_stocks[] = {
-	{ mini_en_xpm, GRETL_STOCK_EN },
-	{ mini_gretl_xpm, GRETL_STOCK_GRETL},
-	{ mini_table_xpm, GRETL_STOCK_TABLE},
-	{ mini_page_xpm, GRETL_STOCK_PAGE},
-	{ close_16_xpm, GRETL_STOCK_CLOSE}
+        { mini_en_xpm, GRETL_STOCK_EN },
+        { mini_gretl_xpm, GRETL_STOCK_GRETL},
+        { mini_table_xpm, GRETL_STOCK_TABLE},
+        { mini_page_xpm, GRETL_STOCK_PAGE},
+        { close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
     int n1 = G_N_ELEMENTS(png_stocks);
     int n2 = G_N_ELEMENTS(xpm_stocks);
 
     if (gretl_factory == NULL) {
-	int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
-	char icon_path[48], menu_path[48];
-	gchar *p, *pm, *respath;
-	GResource *icons;
-	GtkIconSource *isrc;
-	GtkIconSet *iset;
-	GdkPixbuf *pbuf;
-	int i;
+        int bigger = (get_icon_sizing() == ICON_SIZE_MEDIUM);
+        char icon_path[48], menu_path[48];
+        gchar *p, *pm, *respath;
+        GResource *icons;
+        GtkIconSource *isrc;
+        GtkIconSet *iset;
+        GdkPixbuf *pbuf;
+        int i;
 
 #if GTK_MAJOR_VERSION == 3
-	if (get_icon_sizing() == ICON_SIZE_AUTO) {
-	    try_auto_icon_sizing(&bigger);
-	}
+        if (get_icon_sizing() == ICON_SIZE_AUTO) {
+            try_auto_icon_sizing(&bigger);
+        }
 #endif
 
-	if (bigger) {
+        if (bigger) {
 #if GTK_MAJOR_VERSION == 3
-	    toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
+            toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
 #else
-	    toolbar_icon_size = GTK_ICON_SIZE_SMALL_TOOLBAR;
+            toolbar_icon_size = GTK_ICON_SIZE_SMALL_TOOLBAR;
 #endif
-	}
+        }
 
-	gretl_factory = gtk_icon_factory_new();
+        gretl_factory = gtk_icon_factory_new();
 
-	respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
-	icons = g_resource_load(respath, NULL);
-	if (icons == NULL) {
-	    fprintf(stderr, "g_resource_load: failed to load icons\n");
-	    g_free(respath);
-	    goto do_pixmaps;
-	}
+        respath = g_strdup_printf("%sgretl-icons.gresource", gretl_home());
+        icons = g_resource_load(respath, NULL);
+        if (icons == NULL) {
+            fprintf(stderr, "g_resource_load: failed to load icons\n");
+            g_free(respath);
+            goto do_pixmaps;
+        }
 
-	g_resources_register(icons);
+        g_resources_register(icons);
 
-	if (bigger) {
-	    strcpy(icon_path, "/gretl/icons/24x24/");
-	    strcpy(menu_path, "/gretl/icons/16x16/");
-	    pm = strrchr(menu_path, '/') + 1;
-	} else {
-	    strcpy(icon_path, "/gretl/icons/16x16/");
-	}
-	p = strrchr(icon_path, '/') + 1;
+        if (bigger) {
+            strcpy(icon_path, "/gretl/icons/24x24/");
+            strcpy(menu_path, "/gretl/icons/16x16/");
+            pm = strrchr(menu_path, '/') + 1;
+        } else {
+            strcpy(icon_path, "/gretl/icons/16x16/");
+        }
+        p = strrchr(icon_path, '/') + 1;
 
-	for (i=0; i<n1; i++) {
-	    strcat(icon_path, png_stocks[i].fname);
-	    pbuf = gdk_pixbuf_new_from_resource(icon_path, NULL);
-	    if (pbuf == NULL) {
-		fprintf(stderr, "Failed to load %s\n", icon_path);
-		*p = '\0';
-		continue;
-	    }
-	    if (bigger && png_stocks[i].in_menu) {
-		iset = gtk_icon_set_new();
-		/* for toolbar use */
-		isrc = gtk_icon_source_new();
-		gtk_icon_source_set_pixbuf(isrc, pbuf);
-		gtk_icon_source_set_size(isrc, toolbar_icon_size);
-		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
-		gtk_icon_set_add_source(iset, isrc);
-		g_object_unref(pbuf);
-		/* for menu use */
-		strcat(menu_path, png_stocks[i].fname);
-		pbuf = gdk_pixbuf_new_from_resource(menu_path, NULL);
-		isrc = gtk_icon_source_new();
-		gtk_icon_source_set_pixbuf(isrc, pbuf);
-		gtk_icon_source_set_size(isrc, GTK_ICON_SIZE_MENU);
-		gtk_icon_source_set_size_wildcarded(isrc, FALSE);
-		gtk_icon_set_add_source(iset, isrc);
-		g_object_unref(pbuf);
-		*pm = '\0';
-	    } else {
-		/* we just need a single icon */
-		iset = gtk_icon_set_new_from_pixbuf(pbuf);
-	    }
-	    gtk_icon_factory_add(gretl_factory, png_stocks[i].id, iset);
-	    gtk_icon_set_unref(iset);
-	    *p = '\0';
-	}
+        for (i=0; i<n1; i++) {
+            strcat(icon_path, png_stocks[i].fname);
+            pbuf = gdk_pixbuf_new_from_resource(icon_path, NULL);
+            if (pbuf == NULL) {
+                fprintf(stderr, "Failed to load %s\n", icon_path);
+                *p = '\0';
+                continue;
+            }
+            if (bigger && png_stocks[i].in_menu) {
+                iset = gtk_icon_set_new();
+                /* for toolbar use */
+                isrc = gtk_icon_source_new();
+                gtk_icon_source_set_pixbuf(isrc, pbuf);
+                gtk_icon_source_set_size(isrc, toolbar_icon_size);
+                gtk_icon_source_set_size_wildcarded(isrc, FALSE);
+                gtk_icon_set_add_source(iset, isrc);
+                g_object_unref(pbuf);
+                /* for menu use */
+                strcat(menu_path, png_stocks[i].fname);
+                pbuf = gdk_pixbuf_new_from_resource(menu_path, NULL);
+                isrc = gtk_icon_source_new();
+                gtk_icon_source_set_pixbuf(isrc, pbuf);
+                gtk_icon_source_set_size(isrc, GTK_ICON_SIZE_MENU);
+                gtk_icon_source_set_size_wildcarded(isrc, FALSE);
+                gtk_icon_set_add_source(iset, isrc);
+                g_object_unref(pbuf);
+                *pm = '\0';
+            } else {
+                /* we just need a single icon */
+                iset = gtk_icon_set_new_from_pixbuf(pbuf);
+            }
+            gtk_icon_factory_add(gretl_factory, png_stocks[i].id, iset);
+            gtk_icon_set_unref(iset);
+            *p = '\0';
+        }
 
-	g_free(respath);
-	g_resources_unregister(icons);
-	g_resource_unref(icons);
+        g_free(respath);
+        g_resources_unregister(icons);
+        g_resource_unref(icons);
 
     do_pixmaps:
 
-	for (i=0; i<n2; i++) {
-	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpm_stocks[i].xpm);
-	    iset = gtk_icon_set_new_from_pixbuf(pbuf);
-	    g_object_unref(pbuf);
-	    gtk_icon_factory_add(gretl_factory, xpm_stocks[i].id, iset);
-	    gtk_icon_set_unref(iset);
-	}
+        for (i=0; i<n2; i++) {
+            pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpm_stocks[i].xpm);
+            iset = gtk_icon_set_new_from_pixbuf(pbuf);
+            g_object_unref(pbuf);
+            gtk_icon_factory_add(gretl_factory, xpm_stocks[i].id, iset);
+            gtk_icon_set_unref(iset);
+        }
 
-	gtk_icon_factory_add_default(gretl_factory);
+        gtk_icon_factory_add_default(gretl_factory);
     }
 }
 
@@ -230,42 +230,42 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
     int ci = 0;
 
     if (g_object_get_data(G_OBJECT(vmain), "text_out")) {
-	ci = SAVE_OUTPUT;
+        ci = SAVE_OUTPUT;
     } else if (vwin->role == EDIT_HANSL) {
-	ci = SAVE_SCRIPT;
+        ci = SAVE_SCRIPT;
     } else if (vwin->role == EDIT_GP) {
-	ci = SAVE_GP_CMDS;
+        ci = SAVE_GP_CMDS;
     } else if (vwin->role == EDIT_R) {
-	ci = SAVE_R_CMDS;
+        ci = SAVE_R_CMDS;
     } else if (vwin->role == EDIT_OX) {
-	ci = SAVE_OX_CMDS;
+        ci = SAVE_OX_CMDS;
     } else if (vwin->role == EDIT_OCTAVE) {
-	ci = SAVE_OCTAVE_CMDS;
+        ci = SAVE_OCTAVE_CMDS;
     } else if (vwin->role == EDIT_PYTHON) {
         ci = SAVE_PYTHON_CMDS;
     } else if (vwin->role == EDIT_JULIA) {
-	ci = SAVE_JULIA_CODE;
+        ci = SAVE_JULIA_CODE;
     } else if (vwin->role == EDIT_DYNARE) {
-	ci = SAVE_DYNARE_CODE;
+        ci = SAVE_DYNARE_CODE;
     } else if (vwin->role == EDIT_LPSOLVE) {
-	ci = SAVE_LPSOLVE_CODE;
+        ci = SAVE_LPSOLVE_CODE;
     } else if (vwin->role == EDIT_STATA) {
-	ci = SAVE_STATA_CMDS;
+        ci = SAVE_STATA_CMDS;
     } else if (vwin->role == EDIT_SPEC) {
-	ci = SAVE_SPEC_FILE;
+        ci = SAVE_SPEC_FILE;
     } else if (vwin->role == VIEW_FILE) {
-	ci = SAVE_TEXT;
+        ci = SAVE_TEXT;
     } else if (vwin->role == EDIT_X12A) {
-	ci = SAVE_X13_SPC;
+        ci = SAVE_X13_SPC;
     } else {
-	dummy_call();
-	return;
+        dummy_call();
+        return;
     }
 
     if (ci == SAVE_TEXT) {
-	file_selector(ci, FSEL_DATA_MISC, vwin->data);
+        file_selector(ci, FSEL_DATA_MISC, vwin->data);
     } else {
-	file_selector(ci, FSEL_DATA_VWIN, vwin);
+        file_selector(ci, FSEL_DATA_VWIN, vwin);
     }
 }
 
@@ -287,17 +287,17 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
     if (textview_use_highlighting(vwin->role)) {
-	int resp = yes_no_cancel_dialog(NULL,
-					_("Print with syntax highlighting?"),
-					vwin_toplevel(vwin));
+        int resp = yes_no_cancel_dialog(NULL,
+                                        _("Print with syntax highlighting?"),
+                                        vwin_toplevel(vwin));
 
-	if (resp == GRETL_YES) {
-	    sourceview_print(vwin);
-	} else if (resp == GRETL_NO) {
-	    window_print(NULL, vwin);
-	}
+        if (resp == GRETL_YES) {
+            sourceview_print(vwin);
+        } else if (resp == GRETL_NO) {
+            window_print(NULL, vwin);
+        }
     } else {
-	window_print(NULL, vwin);
+        window_print(NULL, vwin);
     }
 }
 
@@ -308,10 +308,10 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
     int vertical = 0;
 
     if (hb != NULL) {
-	vb = w;
-	vertical = 1;
+        vb = w;
+        vertical = 1;
     } else {
-	hb = w;
+        hb = w;
     }
 
     /* Note: by "vertical" here we mean that the split runs vertically,
@@ -322,49 +322,49 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
     */
 
     if (g_object_get_data(G_OBJECT(vwin->vbox), "sw") != NULL) {
-	/* currently in single-view mode: so split */
-	viewer_split_pane(vwin, vertical);
-	if (vb != NULL) {
-	    gtk_widget_set_sensitive(vb, vertical);
-	}
-	gtk_widget_set_sensitive(hb, !vertical);
-	if (vertical) {
-	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb),
-					 GRETL_STOCK_JOIN_V);
-	} else {
-	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb),
-					 GRETL_STOCK_JOIN_H);
-	}
+        /* currently in single-view mode: so split */
+        viewer_split_pane(vwin, vertical);
+        if (vb != NULL) {
+            gtk_widget_set_sensitive(vb, vertical);
+        }
+        gtk_widget_set_sensitive(hb, !vertical);
+        if (vertical) {
+            gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb),
+                                         GRETL_STOCK_JOIN_V);
+        } else {
+            gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb),
+                                         GRETL_STOCK_JOIN_H);
+        }
     } else {
-	GtkWidget *paned;
+        GtkWidget *paned;
 
-	paned = g_object_get_data(G_OBJECT(vwin->vbox), "paned");
+        paned = g_object_get_data(G_OBJECT(vwin->vbox), "paned");
 
-	if (paned != NULL) {
-	    /* currently in split-view mode: so rejoin */
-	    vertical = GTK_IS_HPANED(paned);
-	    viewer_close_pane(vwin);
-	    gtk_widget_set_sensitive(hb, TRUE);
-	    if (vb != NULL) {
-		gtk_widget_set_sensitive(vb, TRUE);
-	    }
-	    if (vertical) {
-		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb),
-					     GRETL_STOCK_SPLIT_V);
-	    } else {
-		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb),
-					     GRETL_STOCK_SPLIT_H);
-	    }
-	}
+        if (paned != NULL) {
+            /* currently in split-view mode: so rejoin */
+            vertical = GTK_IS_HPANED(paned);
+            viewer_close_pane(vwin);
+            gtk_widget_set_sensitive(hb, TRUE);
+            if (vb != NULL) {
+                gtk_widget_set_sensitive(vb, TRUE);
+            }
+            if (vertical) {
+                gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb),
+                                             GRETL_STOCK_SPLIT_V);
+            } else {
+                gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb),
+                                             GRETL_STOCK_SPLIT_H);
+            }
+        }
     }
 }
 
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == CONSOLE) {
-	console_prefs_dialog(vwin->main);
+        console_prefs_dialog(vwin->main);
     } else {
-	preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
+        preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
     }
 }
 
@@ -379,25 +379,25 @@ static int edit_script_popup_item (GretlToolItem *item)
     if (item->icon == NULL) return 0;
 
     return !strcmp(item->icon, GTK_STOCK_COPY) ||
-	!strcmp(item->icon, GTK_STOCK_PASTE) ||
-	!strcmp(item->icon, GTK_STOCK_FIND) ||
-	!strcmp(item->icon, GTK_STOCK_UNDO) ||
-	!strcmp(item->icon, GTK_STOCK_FIND_AND_REPLACE);
+        !strcmp(item->icon, GTK_STOCK_PASTE) ||
+        !strcmp(item->icon, GTK_STOCK_FIND) ||
+        !strcmp(item->icon, GTK_STOCK_UNDO) ||
+        !strcmp(item->icon, GTK_STOCK_FIND_AND_REPLACE);
 }
 
 static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 {
     gtk_text_buffer_cut_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)),
-				  gtk_clipboard_get(GDK_NONE),
-				  TRUE);
+                                  gtk_clipboard_get(GDK_NONE),
+                                  TRUE);
 }
 
 static void exec_callback (GtkWidget *w, windata_t *vwin)
 {
     if (widget_get_int(vwin->mbar, "exec_is_kill") > 0) {
-	cancel_run_script();
+        cancel_run_script();
     } else {
-	do_run_script(w, vwin);
+        do_run_script(w, vwin);
     }
 }
 
@@ -440,34 +440,34 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 */
 
 static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
-					 int save_ok)
+                                         int save_ok)
 {
     GCallback func = item->func;
     int f = item->flag;
     int r = vwin->role;
 
     if (use_toolbar_search_box(r) && f == FIND_ITEM) {
-	/* using an "inline" search box: skip the
-	   "Find" button */
-	return NULL;
+        /* using an "inline" search box: skip the
+           "Find" button */
+        return NULL;
     }
 
     if (!edit_ok(r) && f == EDIT_ITEM) {
-	return NULL;
+        return NULL;
     } else if (!open_ok(r) && f == OPEN_ITEM) {
-	return NULL;
+        return NULL;
     } else if (!new_ok(r) && f == NEW_ITEM) {
-	return NULL;
+        return NULL;
     } else if (!exec_ok(r) && f == EXEC_ITEM) {
-	return NULL;
+        return NULL;
     } else if (!help_ok(r) && (f == CMD_HELP_ITEM || f == HELP_ITEM)) {
-	return NULL;
+        return NULL;
     } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
-	return NULL;
+        return NULL;
     } else if (!split_v_ok(r) && f == SPLIT_V_ITEM) {
-	return NULL;
+        return NULL;
     } else if (r != EDIT_HANSL && f == EDIT_HANSL_ITEM) {
-	return NULL;
+        return NULL;
     }
 
     return func;
@@ -480,11 +480,11 @@ static void gretl_toolbar_flat (GtkWidget *w)
     gtk_widget_set_name(w, "gretl_toolbar");
 
     if (!style_done) {
-	gtk_rc_parse_string("style \"gretl-tb-style\"\n{\n"
-			    "  GtkToolbar::shadow-type = GTK_SHADOW_NONE\n"
-			    "}\n"
-			    "widget \"*.gretl_toolbar\" style \"gretl-tb-style\"");
-	style_done = 1;
+        gtk_rc_parse_string("style \"gretl-tb-style\"\n{\n"
+                            "  GtkToolbar::shadow-type = GTK_SHADOW_NONE\n"
+                            "}\n"
+                            "widget \"*.gretl_toolbar\" style \"gretl-tb-style\"");
+        style_done = 1;
     }
 }
 
@@ -497,10 +497,10 @@ GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
     gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
 
     if (sibling == NULL) {
-	/* if we're not alongside a menu bar ("sibling"),
-	   show the toolbar without a shadow
-	*/
-	gretl_toolbar_flat(tb);
+        /* if we're not alongside a menu bar ("sibling"),
+           show the toolbar without a shadow
+        */
+        gretl_toolbar_flat(tb);
     }
 
     return tb;
@@ -512,8 +512,8 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 }
 
 static GtkToolItem *gretl_menu_button (const char *icon,
-				       const char *tip,
-				       GtkWidget **pw)
+                                       const char *tip,
+                                       GtkWidget **pw)
 {
     GtkWidget *img, *button = gtk_button_new();
     GtkToolItem *item = gtk_tool_item_new();
@@ -529,37 +529,37 @@ static GtkToolItem *gretl_menu_button (const char *icon,
 }
 
 static void gretl_tool_item_set_tip (GtkToolItem *item,
-				     GretlToolItem *tool)
+                                     GretlToolItem *tool)
 {
     const char *accel = NULL;
 
     if (tool->flag == EXEC_ITEM) {
-	accel = "Ctrl+R";
+        accel = "Ctrl+R";
     } else if (tool->flag == COPY_ITEM) {
-	accel = "Ctrl+C";
+        accel = "Ctrl+C";
     } else if (tool->flag == SAVE_ITEM) {
-	accel = "Ctrl+S";
+        accel = "Ctrl+S";
     } else if (tool->flag == FIND_ITEM) {
-	accel = "Ctrl+F";
+        accel = "Ctrl+F";
     } else if (!strcmp(tool->icon, GTK_STOCK_FIND_AND_REPLACE)) {
-	accel = "Ctrl+H";
+        accel = "Ctrl+H";
     }
 
     if (accel != NULL) {
-	gchar *s = g_strdup_printf("%s (%s)", _(tool->tip), accel);
+        gchar *s = g_strdup_printf("%s (%s)", _(tool->tip), accel);
 
-	gtk_tool_item_set_tooltip_text(item, s);
-	g_free(s);
+        gtk_tool_item_set_tooltip_text(item, s);
+        g_free(s);
     } else {
-	gtk_tool_item_set_tooltip_text(item, _(tool->tip));
+        gtk_tool_item_set_tooltip_text(item, _(tool->tip));
     }
 }
 
 GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
-				 GretlToolItem *tool,
-				 GCallback func,
-				 gpointer data,
-				 gint pos)
+                                 GretlToolItem *tool,
+                                 GCallback func,
+                                 gpointer data,
+                                 gint pos)
 {
     GtkToolItem *item;
 
@@ -573,54 +573,54 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 }
 
 static void button_menu_pos (GtkMenu *menu,
-			     gint *x,
-			     gint *y,
-			     gboolean *push_in,
-			     gpointer data)
+                             gint *x,
+                             gint *y,
+                             gboolean *push_in,
+                             gpointer data)
 {
     GtkWidget *button = data;
     gint wx, wy, tx, ty;
 
     gdk_window_get_origin(gtk_widget_get_window(button), &wx, &wy);
     gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button),
-				     0, 0, &tx, &ty);
+                                     0, 0, &tx, &ty);
     *x = wx + tx;
     *y = wy + ty + 26;
     *push_in = TRUE;
 }
 
 static void tool_item_popup (GtkWidget *button, GdkEvent *event,
-			     GtkWidget *menu)
+                             GtkWidget *menu)
 {
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL,
-		   button_menu_pos, button,
-		   event->button.button, event->button.time);
+                   button_menu_pos, button,
+                   event->button.button, event->button.time);
 }
 
 GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
-				GCallback func,
-				GtkWidget *menu,
-				windata_t *vwin,
-				gint pos)
+                                GCallback func,
+                                GtkWidget *menu,
+                                windata_t *vwin,
+                                gint pos)
 {
     GtkToolItem *item;
 
     if (menu != NULL) {
-	/* make and insert a button that pops down a menu */
-	GtkWidget *button;
+        /* make and insert a button that pops down a menu */
+        GtkWidget *button;
 
-	item = gretl_menu_button(tool->icon, tool->tip, &button);
-	g_signal_connect(G_OBJECT(button), "button-press-event",
-			 G_CALLBACK(tool_item_popup), menu);
+        item = gretl_menu_button(tool->icon, tool->tip, &button);
+        g_signal_connect(G_OBJECT(button), "button-press-event",
+                         G_CALLBACK(tool_item_popup), menu);
     } else {
-	/* make and insert a regular callback button */
-	item = gtk_tool_button_new_from_stock(tool->icon);
-	g_signal_connect(G_OBJECT(item), "clicked", func, vwin);
-	if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
-	    gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
-	} else {
-	    gretl_tool_item_set_tip(item, tool);
-	}
+        /* make and insert a regular callback button */
+        item = gtk_tool_button_new_from_stock(tool->icon);
+        g_signal_connect(G_OBJECT(item), "clicked", func, vwin);
+        if (tool->flag == NEW_ITEM && window_is_tab(vwin)) {
+            gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("New tab"));
+        } else {
+            gretl_tool_item_set_tip(item, tool);
+        }
     }
 
     gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), item, pos);
@@ -633,21 +633,21 @@ static void editbar_help_call (GtkAction *action, windata_t *vwin)
     const gchar *s = gtk_action_get_name(action);
 
     if (!strcmp(s, "About")) {
-	about_dialog(vwin_toplevel(vwin));
+        about_dialog(vwin_toplevel(vwin));
     } else {
-	display_text_help(action);
+        display_text_help(action);
     }
 }
 
 static GtkWidget *make_help_item_menu (windata_t *vwin)
 {
     const char *action_names[] = {
-	"TextCmdRef", "FuncRef", "About"
+        "TextCmdRef", "FuncRef", "About"
     };
     const char *action_labels[] = {
-	N_("_Command Reference"),
-	N_("_Function Reference"),
-	N_("About gretl__edit")
+        N_("_Command Reference"),
+        N_("_Function Reference"),
+        N_("About gretl__edit")
     };
     GtkWidget *menu = gtk_menu_new();
     GtkAction *action;
@@ -655,12 +655,12 @@ static GtkWidget *make_help_item_menu (windata_t *vwin)
     int i;
 
     for (i=0; i<3; i++) {
-	action = gtk_action_new(action_names[i], _(action_labels[i]),
-				NULL, NULL);
-	g_signal_connect(G_OBJECT(action), "activate",
-			 G_CALLBACK(editbar_help_call), vwin);
-	item = gtk_action_create_menu_item(action);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+        action = gtk_action_new(action_names[i], _(action_labels[i]),
+                                NULL, NULL);
+        g_signal_connect(G_OBJECT(action), "activate",
+                         G_CALLBACK(editbar_help_call), vwin);
+        item = gtk_action_create_menu_item(action);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }
 
     return menu;
@@ -671,10 +671,10 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
     GtkWidget *menu = NULL;
 
     if (vwin->role == EDIT_HANSL && item->flag == HELP_ITEM) {
-	menu = make_help_item_menu(vwin);
+        menu = make_help_item_menu(vwin);
     }
     if (menu != NULL) {
-	vwin_record_toolbar_popup(vwin, menu);
+        vwin_record_toolbar_popup(vwin, menu);
     }
 
     return menu;
@@ -688,7 +688,7 @@ static void toolbar_attach_hidden_spinner (windata_t *vwin)
     GtkToolItem *si = gtk_tool_button_new(sp, NULL);
 
     g_signal_connect(G_OBJECT(si), "clicked",
-		     G_CALLBACK(exec_callback), vwin);
+                     G_CALLBACK(exec_callback), vwin);
     g_object_set_data(G_OBJECT(vwin->mbar), "spin_item", si);
     g_object_ref(si);
 }
@@ -698,10 +698,10 @@ static void catch_mbar_destroy (GtkWidget *w, gpointer p)
     GtkToolItem *item;
 
     if ((item = g_object_get_data(G_OBJECT(w), "spin_item"))) {
-	g_object_unref(item);
+        g_object_unref(item);
     }
     if ((item = g_object_get_data(G_OBJECT(w), "exec_item"))) {
-	g_object_unref(item);
+        g_object_unref(item);
     }
 }
 
@@ -718,66 +718,66 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     int i;
 
     for (i=0; i<n_viewbar_items; i++) {
-	func = NULL;
-	menu = NULL;
-	item = &viewbar_items[i];
+        func = NULL;
+        menu = NULL;
+        item = &viewbar_items[i];
 
-	/* Is there anything to hook up, in context? We
-	   try first for a menu to attach to the toolbar
-	   button; failing that we test for a "direct"
-	   callback function.
-	*/
-	menu = tool_item_get_menu(item, vwin);
-	if (menu == NULL && item->func != NULL) {
-	    func = tool_item_get_callback(item, vwin, save_ok);
-	}
-	if (func == NULL && menu == NULL) {
-	    /* nothing to hook up */
-	    continue;
-	}
+        /* Is there anything to hook up, in context? We
+           try first for a menu to attach to the toolbar
+           button; failing that we test for a "direct"
+           callback function.
+        */
+        menu = tool_item_get_menu(item, vwin);
+        if (menu == NULL && item->func != NULL) {
+            func = tool_item_get_callback(item, vwin, save_ok);
+        }
+        if (func == NULL && menu == NULL) {
+            /* nothing to hook up */
+            continue;
+        }
 
-	button = vwin_toolbar_insert(item, func, menu, vwin, -1);
+        button = vwin_toolbar_insert(item, func, menu, vwin, -1);
 
-	if (func == (GCallback) split_pane_callback) {
-	    if (hpane == NULL) {
-		hpane = button;
-	    } else {
-		vpane = button;
-	    }
-	}
-	if (item->flag == SAVE_ITEM) {
-	    /* nothing to save just yet */
-	    g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button);
-	    gtk_widget_set_sensitive(button, FALSE);
-	} else if (item->flag == SAVE_AS_ITEM) {
-	    g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button", button);
-	    if (strstr(vwin->fname, "script_tmp")) {
-		gtk_widget_set_sensitive(button, FALSE);
-	    }
-	} else if (item->flag == EXEC_ITEM) {
-	    g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
+        if (func == (GCallback) split_pane_callback) {
+            if (hpane == NULL) {
+                hpane = button;
+            } else {
+                vpane = button;
+            }
+        }
+        if (item->flag == SAVE_ITEM) {
+            /* nothing to save just yet */
+            g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button);
+            gtk_widget_set_sensitive(button, FALSE);
+        } else if (item->flag == SAVE_AS_ITEM) {
+            g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button", button);
+            if (strstr(vwin->fname, "script_tmp")) {
+                gtk_widget_set_sensitive(button, FALSE);
+            }
+        } else if (item->flag == EXEC_ITEM) {
+            g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
 #if GTK_MAJOR_VERSION > 2
-	    g_object_ref(button);
-	    toolbar_attach_hidden_spinner(vwin);
-	    g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
-			     G_CALLBACK(catch_mbar_destroy), NULL);
+            g_object_ref(button);
+            toolbar_attach_hidden_spinner(vwin);
+            g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
+                             G_CALLBACK(catch_mbar_destroy), NULL);
 #endif
-	}
+        }
     }
 
     if (hpane != NULL) {
-	g_object_set_data(G_OBJECT(hpane), "vpane", vpane);
+        g_object_set_data(G_OBJECT(hpane), "vpane", vpane);
     }
     if (vpane != NULL) {
-	g_object_set_data(G_OBJECT(vpane), "hpane", hpane);
+        g_object_set_data(G_OBJECT(vpane), "hpane", hpane);
     }
 }
 
 void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 {
     if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
-	g_object_set_data(G_OBJECT(vwin->main), "text_out",
-			  GINT_TO_POINTER(1));
+        g_object_set_data(G_OBJECT(vwin->main), "text_out",
+                          GINT_TO_POINTER(1));
     }
 
     vwin->mbar = gretl_toolbar_new(NULL);
@@ -794,36 +794,36 @@ GtkWidget *build_text_popup (windata_t *vwin)
     int i;
 
     for (i=0; i<n_viewbar_items; i++) {
-	item = &viewbar_items[i];
-	func = G_CALLBACK(NULL);
-	if (item->flag == SPLIT_H_ITEM || item->flag == SPLIT_V_ITEM) {
-	    continue;
-	} else if (vwin->role == EDIT_HANSL) {
-	    /* the script editor popup may have some special stuff
-	       added: don't clutter it up */
-	    if (edit_script_popup_item(item)) {
-		func = item->func;
-	    } else {
-		func = NULL;
-	    }
-	} else {
-	    func = tool_item_get_callback(item, vwin, 0);
-	}
-	if (func != G_CALLBACK(NULL)) {
-	    if (func == G_CALLBACK(text_paste)) {
-		GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
+        item = &viewbar_items[i];
+        func = G_CALLBACK(NULL);
+        if (item->flag == SPLIT_H_ITEM || item->flag == SPLIT_V_ITEM) {
+            continue;
+        } else if (vwin->role == EDIT_HANSL) {
+            /* the script editor popup may have some special stuff
+               added: don't clutter it up */
+            if (edit_script_popup_item(item)) {
+                func = item->func;
+            } else {
+                func = NULL;
+            }
+        } else {
+            func = tool_item_get_callback(item, vwin, 0);
+        }
+        if (func != G_CALLBACK(NULL)) {
+            if (func == G_CALLBACK(text_paste)) {
+                GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
 
-		if (!gtk_clipboard_wait_is_text_available(cb)) {
-		    continue;
-		}
-	    } else if (func == G_CALLBACK(text_undo) && !text_can_undo(vwin)) {
-		continue;
-	    }
-	    w = gtk_menu_item_new_with_label(_(item->tip));
-	    g_signal_connect(G_OBJECT(w), "activate", func, vwin);
-	    gtk_widget_show(w);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
-	}
+                if (!gtk_clipboard_wait_is_text_available(cb)) {
+                    continue;
+                }
+            } else if (func == G_CALLBACK(text_undo) && !text_can_undo(vwin)) {
+                continue;
+            }
+            w = gtk_menu_item_new_with_label(_(item->tip));
+            g_signal_connect(G_OBJECT(w), "activate", func, vwin);
+            gtk_widget_show(w);
+            gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
+        }
     }
 
     return pmenu;
