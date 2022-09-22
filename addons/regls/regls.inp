@@ -106,7 +106,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
    return 0
 end function
 
-function void get_xvalidation_parms (bundle *targ, bundle *src)
+function void get_xvalidation_parms (bundle *targ, const bundle src)
    # options specific to cross validation
    targ.xvalidate = src.xvalidate
    if targ.xvalidate
@@ -335,7 +335,7 @@ function bundle regls (series depvar, list indeps,
       matrix ret.admmctrl = parms.admmctrl
    endif
    if inbundle(parms, "xvalidate")
-      get_xvalidation_parms(&ret, &parms)
+      get_xvalidation_parms(&ret, parms)
    endif
    if inbundle(parms, "crit_plot") == 1
       ret.crit_plot = parms.crit_plot

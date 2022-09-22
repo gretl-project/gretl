@@ -34,9 +34,9 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls 0.32: regularized least squares for gretl}
+\title{regls 0.33: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{Last revised August 5, 2022}
+\date{Last revised September 22, 2022}
 
 \begin{document}
 \maketitle
@@ -708,6 +708,8 @@ series glmnet_pred (matrix *Rb, list X)
 \section{Change log}
 \label{sec:changes}
 
+Version 0.33, 2022-09-22: update a function signature to comply with
+new ``const inheriance'' policy.\\
 Version 0.32, 2022-08-05: fix breakage for single-lambda case.\\
 Version 0.31, 2022-06-03: update URL; revise fragile list-saving code;
 allow ``lambda'' as alternative to ``lfrac'' on input.\\
