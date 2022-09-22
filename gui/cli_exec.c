@@ -104,7 +104,8 @@ static void modify_exec_button (windata_t *vwin, int to_killer)
 
 typedef struct {
     gchar *cmd;           /* command-line (for Windows) */
-    gchar **argv;         /* argument vector (non-Windows */
+    gchar **argv;         /* argument vector (non-Windows) */
+    gchar *exepath;       /* path to executable */
     gchar *fname;         /* input filename */
     gchar *buf;           /* script buffer (for R usage) */
     windata_t *scriptwin; /* source script-editor */
@@ -116,12 +117,14 @@ typedef struct {
 static void exec_info_init (exec_info *ei,
 			    gchar *cmd,
 			    gchar **argv,
+			    gchar *exepath,
 			    gchar *fname,
 			    gchar *buf,
 			    windata_t *vwin)
 {
     ei->cmd = cmd;
     ei->argv = argv;
+    ei->exepath = exepath;
     ei->fname = fname;
     ei->buf = buf;
     ei->scriptwin = vwin;
@@ -182,8 +185,9 @@ static void exec_script_done (GObject *obj,
 #ifdef G_OS_WIN32
     g_free(ei->cmd);
     g_free(ei->fname);
+    g_free(ei->exepath);
 #else
-    argv_free(ei->argv); /* note: ei->fname is part of this! */
+    argv_free(ei->argv); /* note: ei->clipath and ei->fname are included */
 #endif
     g_free(ei->buf);
     free(ei);
@@ -199,6 +203,9 @@ static void exec_script_thread (GTask *task,
     if (ei->lang == LANG_R) {
 	ei->err = execute_R_buffer(ei->buf, NULL, OPT_G | OPT_T, ei->prn);
     } else {
+	if (ei->exepath != NULL) {
+	    pprintf(ei->prn, "using %s\n", ei->exepath);
+	}
 #ifdef G_OS_WIN32
 	ei->err = gretl_win32_pipe_output(ei->cmd, gretl_workdir(), ei->prn);
 #else
@@ -247,6 +254,7 @@ void cancel_run_script (void)
 
 static void run_script_async (gchar *cmd,
 			      gchar **argv,
+			      gchar *exepath,
 			      gchar *fname,
 			      windata_t *vwin)
 {
@@ -259,7 +267,7 @@ static void run_script_async (gchar *cmd,
                           NULL, NULL);
     g_cancellable_push_current(stopper);
 
-    exec_info_init(ei, cmd, argv, fname, NULL, vwin);
+    exec_info_init(ei, cmd, argv, exepath, fname, NULL, vwin);
     ei->lang = 0; /* hansl */
     ei->err = 0;
 
@@ -340,7 +348,6 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
         GList *L = g_list_first(gretlcli_paths);
 
         clipath = g_strdup(L->data);
-        fprintf(stderr, "HERE clipath = '%s'\n", clipath);
     } else {
         clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
     }
@@ -358,7 +365,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	gchar *cmd;
 
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
-	run_script_async(cmd, NULL, inpname, vwin);
+	run_script_async(cmd, NULL, clipath, inpname, vwin);
 #else
 	gchar **argv = g_malloc(4 * sizeof *argv);
 
@@ -366,7 +373,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	argv[1] = g_strdup("-x");
 	argv[2] = inpname;
 	argv[3] = NULL;
-	run_script_async(NULL, argv, inpname, vwin);
+	run_script_async(NULL, argv, clipath, inpname, vwin);
 #endif
     }
 
@@ -378,7 +385,7 @@ static void editor_run_R_script (windata_t *vwin, gchar *buf)
     exec_info *ei = calloc(1, sizeof *ei);
     GTask *task;
 
-    exec_info_init(ei, NULL, NULL, NULL, buf, vwin);
+    exec_info_init(ei, NULL, NULL, NULL, NULL, buf, vwin);
     ei->lang = LANG_R;
     ei->err = 0;
 
@@ -406,7 +413,7 @@ static void editor_run_other_script (windata_t *vwin,
 	trash_stata_log();
     }
 
-    exec_info_init(ei, cmd, my_argv, NULL, NULL, vwin);
+    exec_info_init(ei, cmd, my_argv, NULL, NULL, NULL, vwin);
     ei->lang = lang;
     ei->err = 0;
 
