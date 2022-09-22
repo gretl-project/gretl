@@ -9356,8 +9356,6 @@ static int generate_return_value2 (fncall *call,
 			    OPT_P, state->prn, &err);
 	if (!err && genr != NULL) {
 	    /* succeeded */
-	    //fprintf(stderr, "compile: call %p, got genr at %p\n",
-	    //	    (void *) call, (void *) genr);
 	    fnline_set_genr(call, line, genr);
 	    done = 1;
 	} else if (err == E_EQN) {
