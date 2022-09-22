@@ -266,7 +266,14 @@ static void run_script_async (gchar *cmd,
     g_task_run_in_thread(task, exec_script_thread);
 }
 
+/* list to accommodate builds of gretl other than the installed one */
 static GList *gretlcli_paths;
+
+/* For the benefit of settings.c: populate a combo box with
+   the installed gretlcli path plus any others specified in
+   the current session, with the most recently used path
+   in the first position.
+*/
 
 void populate_gretlcli_path_combo (GtkWidget *box)
 {
@@ -285,6 +292,11 @@ void populate_gretlcli_path_combo (GtkWidget *box)
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
 }
+
+/* Called from settings.c: put whatever gretlcli path was
+   selected, via the Editor tab under Preferences/General,
+   into first position in @gretlcli_paths.
+*/
 
 void set_gretlcli_path (GtkWidget *box)
 {
@@ -308,7 +320,7 @@ void set_gretlcli_path (GtkWidget *box)
     }
 
     if (path != NULL) {
-        /* @path not yet recorded */
+        /* @path is not yet recorded in @gretlcli_paths */
         gretlcli_paths = g_list_prepend(gretlcli_paths, path);
     }
 }
