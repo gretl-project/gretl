@@ -159,7 +159,6 @@ int gui_restore_sample (DATASET *dset);
 void make_list_from_main (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
 void show_link_cursor (GtkWidget *w, gpointer p);
-void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
 int is_control_key (guint k);
