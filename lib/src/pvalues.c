@@ -109,7 +109,7 @@ double digamma (double x)
  * See BE Schneider, Algorithm AS 121: Trigamma Function.
  * Applied Statistics, Volume 27, Number 1, pages 97-99, 1978.
  *
- * The main modification with respect to the published version is the 
+ * The main modification with respect to the published version is the
  * addition of three extra terms to the asymptotic expansion for x >= B.
  */
 
@@ -3861,9 +3861,11 @@ void print_pvalue (int dist, const double *parm, double x,
 		parm[0], (int) parm[1], (int) x, pv);
 	pc = binomial_cdf(parm[0], parm[1], x);
 	if (x > 0) {
+            double pm1 = binomial_cdf(parm[0], parm[1], x - 1);
+
 	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) x, pc);
-	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x,
-		    pc - binomial_cdf(parm[0], parm[1], x - 1));
+            pprintf(prn, _(" Prob(x >= %d) = %g\n"), (int) x, 1.0 - pm1);
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc - pm1);
 	} else {
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) x, pc);
 	}
