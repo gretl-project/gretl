@@ -302,7 +302,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
 /**
  * gretl_mktemp:
- * @pattern: template for filename; must end with "XXXXXX".
+ * @pattern: template for filename; must include "XXXXXX".
  * @mode: e.g. "w" for text use or "wb" for binary mode.
  *
  * A wrapper for the combination of mkstemp() and fdopen(),
