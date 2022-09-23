@@ -34,6 +34,10 @@
 #include "ssheet.h"
 #include "selector.h"
 #include "gpt_control.h"
+#else
+# if __linux__
+#  define DEVEL_OPTS 1
+# endif
 #endif
 
 #ifdef HAVE_GTKSV_COMPLETION
@@ -385,9 +389,10 @@ RCVAR rc_vars[] = {
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
-#ifdef GRETL_EDIT
+#ifdef DEVEL_OPTS /* gretl_edit on Linux */
 
 GtkWidget *cli_selector;
+GtkWidget *env_selector;
 
 #endif
 
@@ -1959,13 +1964,18 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 	}
     }
 
-#ifdef GRETL_EDIT
+#ifdef DEVEL_OPTS
     if (tab == TAB_EDITOR) {
 	/* additional material for the Editor tab if we're making gretl_edit */
         GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
         GtkWidget *label, *e_table;
 
-	e_table = gtk_table_new(1, 2, FALSE);
+	label = gtk_label_new("Developer options:");
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	e_table = gtk_table_new(2, 2, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(e_table), 10);
 	gtk_table_set_col_spacings(GTK_TABLE(e_table), 10);
 	gtk_box_pack_start(GTK_BOX(hbox), e_table, TRUE, TRUE, 5);
@@ -1979,6 +1989,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
         populate_gretlcli_path_combo(cli_selector);
         gtk_table_attach_defaults(GTK_TABLE(e_table), cli_selector,
                                   1, 2, 0, 1);
+
+        label = gtk_label_new("environment");
+        gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+        gtk_table_attach_defaults(GTK_TABLE(e_table), label,
+                                  0, 1, 1, 2);
+        env_selector = combo_box_text_new_with_entry();
+        populate_gretlcli_env_combo(env_selector);
+        gtk_table_attach_defaults(GTK_TABLE(e_table), env_selector,
+                                  1, 2, 1, 2);
+
         gtk_widget_show_all(e_table);
     }
 #endif
@@ -2191,6 +2211,7 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
 
 #ifdef GRETL_EDIT
     set_gretlcli_path(cli_selector);
+    set_gretlcli_env(env_selector);
 #endif
 
     if (use_proxy && *http_proxy == '\0') {

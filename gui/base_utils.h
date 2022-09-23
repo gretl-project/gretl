@@ -85,7 +85,11 @@ void cancel_run_script (void);
 
 void populate_gretlcli_path_combo (GtkWidget *box);
 
+void populate_gretlcli_env_combo (GtkWidget *box);
+
 void set_gretlcli_path (GtkWidget *box);
+
+void set_gretlcli_env (GtkWidget *box);
 
 #endif
 

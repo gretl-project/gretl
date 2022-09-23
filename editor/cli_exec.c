@@ -82,6 +82,7 @@ typedef struct {
     gchar *cmd;           /* command-line (for Windows) */
     gchar **argv;         /* argument vector (non-Windows) */
     gchar *exepath;       /* path to executable */
+    gchar **env;          /* environment for executable, or NULL */
     gchar *fname;         /* input filename */
     gchar *buf;           /* script buffer (for R usage) */
     windata_t *scriptwin; /* source script-editor */
@@ -94,6 +95,7 @@ static void exec_info_init (exec_info *ei,
 			    gchar *cmd,
 			    gchar **argv,
 			    gchar *exepath,
+			    gchar **env,
 			    gchar *fname,
 			    gchar *buf,
 			    windata_t *vwin)
@@ -101,10 +103,27 @@ static void exec_info_init (exec_info *ei,
     ei->cmd = cmd;
     ei->argv = argv;
     ei->exepath = exepath;
+    ei->env = env;
     ei->fname = fname;
     ei->buf = buf;
     ei->scriptwin = vwin;
     bufopen(&ei->prn);
+}
+
+static void exec_info_destroy (exec_info *ei)
+{
+#ifdef G_OS_WIN32
+    g_free(ei->cmd);
+    g_free(ei->fname);
+    g_free(ei->exepath);
+#else
+    argv_free(ei->argv); /* note: ei->clipath and ei->fname are included */
+#endif
+    if (ei->env != NULL) {
+	g_strfreev(ei->env);
+    }
+    g_free(ei->buf);
+    free(ei);
 }
 
 static int grab_stata_log (exec_info *ei)
@@ -158,15 +177,7 @@ static void exec_script_done (GObject *obj,
     if (ei->fname != NULL) {
 	gretl_remove(ei->fname);
     }
-#ifdef G_OS_WIN32
-    g_free(ei->cmd);
-    g_free(ei->fname);
-    g_free(ei->exepath);
-#else
-    argv_free(ei->argv); /* note: ei->clipath and ei->fname are included */
-#endif
-    g_free(ei->buf);
-    free(ei);
+    exec_info_destroy(ei);
 }
 
 static void exec_script_thread (GTask *task,
@@ -183,9 +194,10 @@ static void exec_script_thread (GTask *task,
 	    pprintf(ei->prn, "using %s\n", ei->exepath);
 	}
 #ifdef G_OS_WIN32
+	/* note: ei->env is _not_ handled here */
 	ei->err = gretl_win32_pipe_output(ei->cmd, gretl_workdir(), ei->prn);
 #else
-	ei->err = gretl_pipe_output(ei->argv, gretl_workdir(), ei->prn);
+	ei->err = gretl_pipe_output(ei->argv, ei->env, gretl_workdir(), ei->prn);
 #endif
     }
 }
@@ -231,6 +243,7 @@ void cancel_run_script (void)
 static void run_script_async (gchar *cmd,
 			      gchar **argv,
 			      gchar *exepath,
+			      gchar **envp,
 			      gchar *fname,
 			      windata_t *vwin)
 {
@@ -243,7 +256,7 @@ static void run_script_async (gchar *cmd,
                           NULL, NULL);
     g_cancellable_push_current(stopper);
 
-    exec_info_init(ei, cmd, argv, exepath, fname, NULL, vwin);
+    exec_info_init(ei, cmd, argv, exepath, envp, fname, NULL, vwin);
     ei->lang = 0; /* hansl */
     ei->err = 0;
 
@@ -257,6 +270,33 @@ static void run_script_async (gchar *cmd,
 /* list to accommodate builds of gretl other than the installed one */
 static GList *gretlcli_paths;
 
+/* and to accommodate different environment settings */
+static GList *gretlcli_envs;
+
+void populate_gretlcli_combo (GtkWidget *box, GList **pL,
+			      int paths)
+{
+    GList *L = *pL;
+
+    if (L == NULL) {
+        gchar *s;
+
+	if (paths) {
+	    s = g_strdup_printf("%sgretlcli", gretl_bindir());
+	} else {
+	    s = g_strdup("default");
+	}
+        *pL = g_list_prepend(*pL, s);
+    }
+
+    L = *pL;
+    while (L != NULL) {
+        combo_box_append_text(box, L->data);
+        L = L->next;
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
+}
+
 /* For the benefit of settings.c: populate a combo box with
    the installed gretlcli path plus any others specified in
    the current session, with the most recently used path
@@ -265,20 +305,45 @@ static GList *gretlcli_paths;
 
 void populate_gretlcli_path_combo (GtkWidget *box)
 {
-    GList *L;
+    populate_gretlcli_combo(box, &gretlcli_paths, 1);
+}
 
-    if (gretlcli_paths == NULL) {
-        gchar *s = g_strdup_printf("%sgretlcli", gretl_bindir());
+/* Also for settings.c: populate a combo box with "default"
+   plus any other set of environment variable settings
+   specified in the current session, with the most recently
+   used value in first position.
+*/
 
-        gretlcli_paths = g_list_prepend(gretlcli_paths, s);
-    }
+void populate_gretlcli_env_combo (GtkWidget *box)
+{
+    populate_gretlcli_combo(box, &gretlcli_envs, 0);
+}
 
-    L = gretlcli_paths;
+static void set_gretlcli_param (GtkWidget *box, GList **pL)
+{
+    gchar *s = g_strstrip(combo_box_get_active_text(box));
+    GList *L = g_list_first(*pL);
+    int i = 0;
+
     while (L != NULL) {
-        combo_box_append_text(box, L->data);
+        if (!strcmp(s, (gchar *) L->data)) {
+            if (i > 0) {
+                /* move @L to first position */
+                *pL = g_list_remove_link(*pL, L);
+                *pL = g_list_concat(L, *pL);
+            }
+            g_free(s);
+            s = NULL;
+            break;
+        }
+        i++;
         L = L->next;
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
+
+    if (s != NULL) {
+        /* @s is not yet recorded in list */
+        *pL = g_list_prepend(*pL, s);
+    }
 }
 
 /* Called from settings.c: put whatever gretlcli path was
@@ -288,45 +353,104 @@ void populate_gretlcli_path_combo (GtkWidget *box)
 
 void set_gretlcli_path (GtkWidget *box)
 {
-    gchar *path = combo_box_get_active_text(box);
-    GList *L = g_list_first(gretlcli_paths);
-    int i = 0;
+    set_gretlcli_param(box, &gretlcli_paths);
+}
 
-    while (L != NULL) {
-        if (!strcmp(path, (gchar *) L->data)) {
-            if (i > 0) {
-                /* move @L to first position */
-                gretlcli_paths = g_list_remove_link(gretlcli_paths, L);
-                gretlcli_paths = g_list_concat(L, gretlcli_paths);
-            }
-            g_free(path);
-            path = NULL;
-            break;
-        }
-        i++;
-        L = L->next;
+/* Called from settings.c: put whatever gretlcli env was
+   selected, via the Editor tab under Preferences/General,
+   into first position in @gretlcli_envs.
+*/
+
+void set_gretlcli_env (GtkWidget *box)
+{
+    set_gretlcli_param(box, &gretlcli_envs);
+}
+
+static gchar *get_cli_path (void)
+{
+    if (gretlcli_paths != NULL) {
+        GList *L = g_list_first(gretlcli_paths);
+
+        return g_strdup(L->data);
+    } else {
+        return g_strdup_printf("%sgretlcli", gretl_bindir());
+    }
+}
+
+static char *should_add_basic (const char *s, gchar **envp)
+{
+    int i, n = g_strv_length(envp);
+    int k = strlen(s);
+
+    for (i=0; i<n; i++) {
+	if (!strncmp(envp[i], s, k) && envp[i][k] == '=') {
+	    return NULL; /* present already */
+	}
     }
 
-    if (path != NULL) {
-        /* @path is not yet recorded in @gretlcli_paths */
-        gretlcli_paths = g_list_prepend(gretlcli_paths, path);
+    return getenv(s);
+}
+
+static gchar **maybe_append_env_basics (gchar **envp)
+{
+    gchar **ret = envp;
+    gchar *sh = NULL;
+    gchar *sr = NULL;
+
+    /* We'll assume it's safer to carry these two definitions across
+       from the parent environment if they're not specified in the
+       specific-to-gretlcli env.
+    */
+    if ((sh = should_add_basic("HOME", envp)) != NULL) {
+	sh = g_strdup_printf("HOME=%s", sh);
     }
+    if ((sr = should_add_basic("R_HOME", envp)) != NULL) {
+	sr = g_strdup_printf("R_HOME=%s", sr);
+    }
+
+    if (sh != NULL || sr != NULL) {
+	int n = g_strv_length(envp);
+	int m = n + 1 + (sh != NULL) + (sr != NULL);
+
+	ret = g_realloc(envp, m * sizeof *ret);
+	if (sh != NULL) {
+	    ret[n++] = sh;
+	}
+	if (sr != NULL) {
+	    ret[n++] = sr;
+	}
+	ret[n] = NULL;
+    }
+
+    return ret;
+}
+
+static gchar **get_cli_env (void)
+{
+    gchar **ret = NULL;
+
+    if (gretlcli_envs != NULL) {
+        GList *L = g_list_first(gretlcli_envs);
+	gchar *s = L->data;
+
+	if (s != NULL && *s != '\0' && strcmp(s, "default")) {
+	    ret = g_strsplit(s, " ", -1);
+	    if (ret != NULL) {
+		ret = maybe_append_env_basics(ret);
+	    }
+	}
+    }
+
+    return ret;
 }
 
 static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
     gchar *inpname = gretl_make_dotpath("cli_XXXXXX.inp");
     FILE *fp = gretl_mktemp(inpname, "wb");
-    gchar *clipath;
+    gchar *clipath = get_cli_path();
+    gchar **envp = get_cli_env();
     int err = 0;
-
-    if (gretlcli_paths != NULL) {
-        GList *L = g_list_first(gretlcli_paths);
-
-        clipath = g_strdup(L->data);
-    } else {
-        clipath = g_strdup_printf("%sgretlcli", gretl_bindir());
-    }
 
     if (fp == NULL) {
 	file_read_errbox(inpname);
@@ -341,7 +465,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	gchar *cmd;
 
 	cmd = g_strdup_printf("\"%s\" -x \"%s\"", clipath, inpname);
-	run_script_async(cmd, NULL, clipath, inpname, vwin);
+	run_script_async(cmd, NULL, clipath, NULL, inpname, vwin);
 #else
 	gchar **argv = g_malloc(4 * sizeof *argv);
 
@@ -349,7 +473,7 @@ static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	argv[1] = g_strdup("-x");
 	argv[2] = inpname;
 	argv[3] = NULL;
-	run_script_async(NULL, argv, clipath, inpname, vwin);
+	run_script_async(NULL, argv, clipath, envp, inpname, vwin);
 #endif
     }
 
@@ -361,7 +485,7 @@ static void editor_run_R_script (windata_t *vwin, gchar *buf)
     exec_info *ei = calloc(1, sizeof *ei);
     GTask *task;
 
-    exec_info_init(ei, NULL, NULL, NULL, NULL, buf, vwin);
+    exec_info_init(ei, NULL, NULL, NULL, NULL, NULL, buf, vwin);
     ei->lang = LANG_R;
     ei->err = 0;
 
@@ -389,7 +513,7 @@ static void editor_run_other_script (windata_t *vwin,
 	trash_stata_log();
     }
 
-    exec_info_init(ei, cmd, my_argv, NULL, NULL, NULL, vwin);
+    exec_info_init(ei, cmd, my_argv, NULL, NULL, NULL, NULL, vwin);
     ei->lang = lang;
     ei->err = 0;
 

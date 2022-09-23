@@ -646,7 +646,6 @@ void set_sv_completion (windata_t *vwin)
 	    add_words_provider(comp, PROV_WORDS,  1, vwin, pi);
 	} else {
 	    /* context is script editor */
-	    fprintf(stderr, "HERE add providers\n");
 #ifdef GRETL_EDIT
 	    add_gretl_provider(comp, PROV_SNIPPETS, 4, vwin, pi);
 	    add_words_provider(comp, PROV_CMDS,     3, vwin, pi);
