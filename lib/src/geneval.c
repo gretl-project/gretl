@@ -14513,8 +14513,9 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 	    }
         }
     } else if (t->t == HF_FELOGITR) {
-        gretl_matrix *U, *X;
-	int t, T;
+        gretl_matrix *U = NULL;
+        gretl_matrix *X = NULL;
+	int t = 0, T = 0;
 
 	for (i=0; i<k && !p->err; i++) {
             e = n->v.bn.n[i];
@@ -14540,7 +14541,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 }
 	    }
         }
-
         if (!p->err) {
             ret = aux_matrix_node(p);
             ret->v.m = felogit_rec_loglik(t, T, U, X);
