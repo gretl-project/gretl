@@ -646,11 +646,19 @@ void set_sv_completion (windata_t *vwin)
 	    add_words_provider(comp, PROV_WORDS,  1, vwin, pi);
 	} else {
 	    /* context is script editor */
+	    fprintf(stderr, "HERE add providers\n");
+#ifdef GRETL_EDIT
+	    add_gretl_provider(comp, PROV_SNIPPETS, 4, vwin, pi);
+	    add_words_provider(comp, PROV_CMDS,     3, vwin, pi);
+	    add_words_provider(comp, PROV_FUNCS,    2, vwin, pi);
+	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
+#else
 	    add_gretl_provider(comp, PROV_SNIPPETS, 5, vwin, pi);
 	    add_words_provider(comp, PROV_CMDS,     4, vwin, pi);
 	    add_words_provider(comp, PROV_FUNCS,    3, vwin, pi);
 	    add_gretl_provider(comp, PROV_SERIES,   2, vwin, pi);
 	    add_words_provider(comp, PROV_WORDS,    1, vwin, pi);
+#endif
 	}
 	g_signal_connect(G_OBJECT(vwin->text), "destroy",
 			 G_CALLBACK(destroy_words_providers), NULL);
