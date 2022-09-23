@@ -167,7 +167,8 @@ int gretl_delete_var_by_name (const char *s, PRN *prn);
 
 int gretl_spawn (char *cmdline);
 
-int gretl_pipe_output (char **argv, const char *currdir, PRN *prn);
+int gretl_pipe_output (gchar **argv, gchar **envp,
+		       const char *currdir, PRN *prn);
 
 #endif
 

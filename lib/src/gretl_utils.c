@@ -2005,7 +2005,8 @@ int gretl_spawn (char *cmdline)
     return ret;
 }
 
-int gretl_pipe_output (char **argv, const char *currdir, PRN *prn)
+int gretl_pipe_output (gchar **argv, gchar **envp,
+		       const char *currdir, PRN *prn)
 {
     GError *error = NULL;
     gchar *errout = NULL;
@@ -2017,7 +2018,7 @@ int gretl_pipe_output (char **argv, const char *currdir, PRN *prn)
 
     ok = g_spawn_sync(currdir,
 		      argv,
-		      NULL,    /* envp */
+		      envp,    /* may be NULL to inherit env */
 		      G_SPAWN_SEARCH_PATH, /* ? */
 		      NULL,    /* child_setup */
 		      NULL,    /* user_data */
