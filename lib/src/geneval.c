@@ -12926,28 +12926,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = R_from_omega(l->v.m, mode == 2, J, &p->err);
 	    }
 	}
-    } else if (f == HF_FELOGITR) {
-	gretl_matrix *m1;
-	int t, T;
-
-	post_process = 0;
-	if (!scalar_node(l)) {
-	    node_type_error(f, 1, NUM, l, p);
-	} else if (!scalar_node(m)) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != MAT) {
-	    node_type_error(f, 3, MAT, r, p);
-	} else {
-	    ret = aux_scalar_node(p);
-	}
-	if (!p->err) {
-	    t = node_get_int(l, p);
-	    T = node_get_int(m, p);
-	    m1 = node_get_real_matrix(r, p, 0, 1);
-	}
-	if (!p->err) {
-            ret->v.xval = felogit_rec_loglik(t, T, m1);
-	}
     }
 
     if (post_process) {
@@ -14534,6 +14512,39 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
 		user_var_set_scalar_value(uv, d);
 	    }
         }
+    } else if (t->t == HF_FELOGITR) {
+        gretl_matrix *U, *X;
+	int t, T;
+
+	for (i=0; i<k && !p->err; i++) {
+            e = n->v.bn.n[i];
+            if (i == 0) {
+		/* number of ones for unit i */
+		t = node_get_int(e, p);
+            } else if (i == 1) {
+		/* number of observations for unit i */
+		T = node_get_int(e, p);
+            } else if (i == 2) {
+                /* T x 1 index function */
+                if (e->t == MAT) {
+                    U = e->v.m;
+		} else {
+                    p->err = E_TYPES;
+                }
+            } else if (i == 3) {
+                /* T x k matrix of covariates */
+                if (e->t == MAT) {
+                    X = e->v.m;
+		} else {
+                    p->err = E_TYPES;
+                }
+	    }
+        }
+
+        if (!p->err) {
+            ret = aux_matrix_node(p);
+            ret->v.m = felogit_rec_loglik(t, T, U, X);
+	}
     }
 
     return ret;
@@ -17869,7 +17880,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_BCHECK:
     case F_SPHCORR:
     case HF_REGLS:
-    case HF_FELOGITR:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
@@ -17937,6 +17947,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MIDASMULT:
     case F_COMMUTE:
     case F_TOEPSOLV:
+    case HF_FELOGITR:
         /* built-in functions taking more than three args */
 	if (multi == NULL) {
 	    fprintf(stderr, "INTERNAL ERROR: @multi is NULL\n");

@@ -8665,46 +8665,79 @@ gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 
 /**
  * felogit_rec_loglik:
+ *
  * @t: int, number of ones
  * @T: int, number of observations
- * @U: matrix
+ * @U: matrix with the index function
+ * @X: matrix with the covariates
  *
  * Computes recursively the denominator of the fixed-effect logit
- * likelihood for one unit with @T observations and @t ones. The
- * matrix @U is a vector containing the values of the index function
- * for each time period.
+ * likelihood for one unit with @T observations and @t ones, as well
+ * as its first derivative wrt the parameter vector beta. The matrix
+ * @U is a vector containing the values of the index function for each
+ * time period and @X is the corresponding matrix of covariates, so
+ * that U[i] = exp(X[i,]*beta).
  *
- * The algorithm is described on pp 5--6 of Stammann, A., Heiss,
- * F. and McFadden, D., 2016. "Estimating fixed effects logit models
- * with large panel data", available at
- * https://www.econstor.eu/bitstream/10419/145837/1/VfS_2016_pid_6909.pdf
+ * The first element of the output vector is the likelihood
+ * denominator (B in Gail et al's notation) and the subsequent k
+ * elements contain the derivative of B wrt beta.
  *
- * Returns: a double.
+ * The algorithm is described in Gail et al. (1981), "Likelihood
+ * Calculations for Matched Case-Control Studies and Survival Studies
+ * with Tied Death Times", Biometrika, Vol. 68 (3), pp. 703-707
+ *
+ * Returns: a (k+1)-vector if successful, NULL on failure.
+ *
  */
 
-double felogit_rec_loglik (int t, int T, gretl_matrix *U)
+gretl_matrix *felogit_rec_loglik (int t, int T,
+				  const gretl_matrix *U,
+				  const gretl_matrix *xi)
 {
-    double ret = 1;
-    int i;
-    
+    gretl_matrix *ret;
+    int k = xi->cols;
+
+    ret = gretl_zero_matrix_new(1, k+1);
+
     if (t > T) {
-        ret = 0;
+	; /* nothing to be done */
     } else if (t == 0) {
-        ret = 1;
+	ret->val[0] = 1;
     } else if (t == T) {
+	double B, rj;
+	int i, j;
+
+	/* scalar B = prodc(U[1:T]) */
+	B = 1.0;
 	for (i=0; i<T; i++) {
-	    ret *= gretl_vector_get(U, i);
+	    B *= U->val[i];
 	}
-    } else if (t == 1) {
-	ret = gretl_vector_get(U, T-1) + felogit_rec_loglik(1, T-1, U);
-    } else if ((T - t) == 1) {
-	for (i=0; i<t; i++) {
-	    ret *= gretl_vector_get(U, i);
+	/* ret = (1 ~ sumc(xi[1:T,])) .* B */
+	ret->val[0] = B;
+	for (j=0; j<k; j++) {
+	    rj = 0;
+	    for (i=0; i<T; i++) {
+		rj += gretl_matrix_get(xi, i, j);
+	    }
+	    ret->val[j+1] = B * rj;
 	}
-	ret += gretl_vector_get(U, T-1) * felogit_rec_loglik(t-1, T-1, U);
     } else {
-	ret = felogit_rec_loglik(t, T-1, U) +
-	    gretl_vector_get(U, T-1) * felogit_rec_loglik(t-1, T-1, U);
+	gretl_matrix *tmp1 = felogit_rec_loglik(t, T-1, U, xi);
+	gretl_matrix *tmp2 = felogit_rec_loglik(t-1, T-1, U, xi);
+	double xij, UT = U->val[T-1];
+	double tmp20 = tmp2->val[0];
+	int j;
+
+	/* B = tmp[1,1] + UT * tmp[2,1] */
+	ret->val[0] = tmp1->val[0] + UT * tmp20;
+
+	for (j=1; j<=k; j++) {
+	    xij = gretl_matrix_get(xi, T-1, j-1);
+	    ret->val[j] = tmp1->val[j] + UT * (tmp2->val[j] + xij * tmp20);
+	}
+
+	gretl_matrix_free(tmp1);
+	gretl_matrix_free(tmp2);
     }
 
     return ret;

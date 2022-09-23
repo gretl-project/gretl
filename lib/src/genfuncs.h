@@ -272,6 +272,8 @@ gretl_matrix *omega_from_R (const gretl_matrix *R, int *err);
 gretl_matrix *R_from_omega (const gretl_matrix *omega, int cholesky,
 			    gretl_matrix *J, int *err);
 
-double felogit_rec_loglik (int t, int T, gretl_matrix *U);
+gretl_matrix *felogit_rec_loglik (int t, int T,
+				  const gretl_matrix *U,
+				  const gretl_matrix *xi);
 
 #endif /* GENFUNCS_H */
