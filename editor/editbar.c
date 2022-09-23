@@ -394,7 +394,7 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
 
 static void exec_callback (GtkWidget *w, windata_t *vwin)
 {
-    if (widget_get_int(vwin->mbar, "exec_is_kill") > 0) {
+    if (widget_get_int(vwin->mbar, "exec_is_kill")) {
         cancel_run_script();
     } else {
         do_run_script(w, vwin);
@@ -680,33 +680,6 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
     return menu;
 }
 
-#if GTK_MAJOR_VERSION > 2
-
-static void toolbar_attach_hidden_spinner (windata_t *vwin)
-{
-    GtkWidget *sp = gtk_spinner_new();
-    GtkToolItem *si = gtk_tool_button_new(sp, NULL);
-
-    g_signal_connect(G_OBJECT(si), "clicked",
-                     G_CALLBACK(exec_callback), vwin);
-    g_object_set_data(G_OBJECT(vwin->mbar), "spin_item", si);
-    g_object_ref(si);
-}
-
-static void catch_mbar_destroy (GtkWidget *w, gpointer p)
-{
-    GtkToolItem *item;
-
-    if ((item = g_object_get_data(G_OBJECT(w), "spin_item"))) {
-        g_object_unref(item);
-    }
-    if ((item = g_object_get_data(G_OBJECT(w), "exec_item"))) {
-        g_object_unref(item);
-    }
-}
-
-#endif
-
 static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 {
     int save_ok = (flags & VIEWBAR_EDITABLE);
@@ -756,12 +729,6 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
             }
         } else if (item->flag == EXEC_ITEM) {
             g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
-#if GTK_MAJOR_VERSION > 2
-            g_object_ref(button);
-            toolbar_attach_hidden_spinner(vwin);
-            g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
-                             G_CALLBACK(catch_mbar_destroy), NULL);
-#endif
         }
     }
 

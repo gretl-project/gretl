@@ -19,6 +19,8 @@
 
 /* code specific to gretl_edit: execute a hansl script via gretlcli */
 
+#include "dlgutils.h"
+
 #ifndef G_OS_WIN32
 
 static void argv_free (gchar **argv)
@@ -54,53 +56,27 @@ static gchar **argv_copy (gchar **argv)
 
 #endif
 
-#include "dlgutils.h"
-
-#if GTK_MAJOR_VERSION > 2
-
-static void modify_exec_button (windata_t *vwin, int to_killer)
-{
-    GtkToolItem *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
-    GtkToolItem *si = g_object_get_data(G_OBJECT(vwin->mbar), "spin_item");
-    GtkWidget *sp = gtk_tool_button_get_icon_widget(GTK_TOOL_BUTTON(si));
-    int idx;
-
-    if (to_killer) {
-	/* replace exit button with "wait" spinner */
-	widget_set_int(vwin->mbar, "exec_is_kill", 1);
-	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), eb);
-	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(eb));
-	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), si, idx);
-	gtk_widget_show_all(GTK_WIDGET(si));
-	gtk_spinner_start(GTK_SPINNER(sp));
-    } else {
-	/* remove spinner and reinstate the exec button */
-	widget_set_int(vwin->mbar, "exec_is_kill", 0);
-	idx = gtk_toolbar_get_item_index(GTK_TOOLBAR(vwin->mbar), si);
-	gtk_spinner_stop(GTK_SPINNER(sp));
-	gtk_container_remove(GTK_CONTAINER(vwin->mbar), GTK_WIDGET(si));
-	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), eb, idx);
-    }
-}
-
-#else
-
-/* GTK2: switch betwee EXEC and STOP icons */
+/* switch between EXEC and STOP icons */
 
 static void modify_exec_button (windata_t *vwin, int to_killer)
 {
     GtkWidget *eb = g_object_get_data(G_OBJECT(vwin->mbar), "exec_item");
+    gchar *tip = NULL;
 
     if (to_killer) {
 	widget_set_int(vwin->mbar, "exec_is_kill", 1);
 	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(eb), GTK_STOCK_STOP);
+        tip = g_strdup_printf("%s (%s)", _("Stop script"), "Ctrl+Alt+K");
+	gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(eb), tip);
     } else {
 	widget_set_int(vwin->mbar, "exec_is_kill", 0);
 	gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(eb), GTK_STOCK_EXECUTE);
+        tip = g_strdup_printf("%s (%s)", _("Run"), "Ctrl+R");
+        gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(eb), tip);
     }
-}
 
-#endif
+    g_free(tip);
+}
 
 typedef struct {
     gchar *cmd;           /* command-line (for Windows) */
@@ -339,8 +315,8 @@ void set_gretlcli_path (GtkWidget *box)
 
 static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
-    gchar *inpname = gretl_make_dotpath("cli_tmp.inp");
-    FILE *fp = gretl_fopen(inpname, "wb");
+    gchar *inpname = gretl_make_dotpath("cli_XXXXXX.inp");
+    FILE *fp = gretl_mktemp(inpname, "wb");
     gchar *clipath;
     int err = 0;
 

@@ -475,7 +475,6 @@ enum {
     F_DISTANCE,
     F_SPHCORR,
     HF_REGLS,
-    HF_FELOGITR,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -513,6 +512,7 @@ enum {
     F_MIDASMULT,
     F_COMMUTE,
     F_TOEPSOLV,
+    HF_FELOGITR,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
