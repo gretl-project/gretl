@@ -102,7 +102,7 @@ tags:
 	etags $(topsrc)/lib/src/*.[ch] $(topsrc)/cli/*.[ch] \
 	$(topsrc)/$(GUIDIR)/*.[ch] $(topsrc)/plugin/*.[ch] \
 	$(topsrc)/cephes/*.c $(topsrc)/plugin/zipunzip/*.[ch] \
-	$(topsrc)/plugin/rq/*.[ch]
+	$(topsrc)/plugin/rq/*.[ch] $(topsrc)/$(EDDIR)/*.[ch]
 
 builddate: $(topsrc)/builddate.c
 	$(HOSTCC) -o $@ $<
