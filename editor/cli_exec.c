@@ -95,7 +95,7 @@ static void exec_info_init (exec_info *ei,
     bufopen(&ei->prn);
 }
 
-static void exec_info_destroy (exec_info *ei)
+void exec_info_destroy (exec_info *ei)
 {
 #ifdef G_OS_WIN32
     /* @argv is NULL in this case */
@@ -112,8 +112,6 @@ static void exec_info_destroy (exec_info *ei)
     g_free(ei->buf);
     free(ei);
 }
-
-#if 0 /* not ready yet */
 
 static void reuse_editor_output_viewer (windata_t *vwin, PRN *prn)
 {
@@ -169,7 +167,49 @@ static int exec_info_match (exec_info *ei0, exec_info *ei1)
     return match;
 }
 
-#endif /* not ready */
+/* Try for an existing output-viewer child that matches
+   the current exec_info (gretlcli variant and
+   environment setting).
+*/
+
+static windata_t *get_matching_viewer (exec_info *ei)
+{
+    windata_t *parent = ei->scriptwin;
+    windata_t *child = NULL;
+    int i;
+
+    for (i=0; i<parent->n_gretl_children; i++) {
+	child = parent->gretl_children[i];
+	if (child != NULL && child->data != NULL) {
+	    if (exec_info_match(ei, child->data)) {
+		return child;
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+static int view_script_output (exec_info *ei)
+{
+    windata_t *vwin = get_matching_viewer(ei);
+    int ret = 0;
+
+    if (vwin != NULL) {
+	reuse_editor_output_viewer(vwin, ei->prn);
+    } else {
+	/* we need a new viewer */
+	vwin = view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL,
+			   SCRIPT_OUT, ei->scriptwin);
+	if (vwin != NULL) {
+	    /* attach @ei to the viewer */
+	    vwin->data = ei;
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
 
 static int grab_stata_log (exec_info *ei)
 {
@@ -203,24 +243,28 @@ static void exec_script_done (GObject *obj,
 			      gpointer data)
 {
     exec_info *ei = data;
+    int preserve_ei = 0;
 
-    /* switch back to Run icon in editor window */
+    /* restore the "Run" icon in the editor window */
     modify_exec_button(ei->scriptwin, 0);
 
     if (ei->lang == LANG_STATA && !grab_stata_log(ei)) {
 	; /* nothing to show, and error reported */
     } else if (got_printable_output(ei->prn)) {
 	/* maybe skip this if execution was canceled? */
-	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
+	preserve_ei = view_script_output(ei);
 	ei->prn = NULL;
     } else if (ei->err) {
 	gui_errmsg(ei->err);
     }
 
+    /* clean up */
     if (ei->fname != NULL) {
 	gretl_remove(ei->fname);
     }
-    exec_info_destroy(ei);
+    if (!preserve_ei) {
+	exec_info_destroy(ei);
+    }
 }
 
 static void exec_script_thread (GTask *task,

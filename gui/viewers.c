@@ -27,7 +27,9 @@
 #include "toolbar.h"
 #include "fileselect.h"
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+#include "gretl_edit.h"
+#else
 #include "library.h"
 #include "gui_utils.h"
 #include "menustate.h"
@@ -705,7 +707,11 @@ void free_windata (GtkWidget *w, gpointer data)
 	    g_free(vwin->data);
 	}
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+	if (vwin->role == SCRIPT_OUT && vwin->data != NULL) {
+	    exec_info_destroy(vwin->data);
+	}
+#else
 	/* data specific to certain windows */
 	if (vwin->role == SUMMARY) {
 	    free_summary(vwin->data);
@@ -980,6 +986,8 @@ void set_reuseable_output_window (int policy, windata_t *vwin)
     }
 }
 
+#ifndef GRETL_EDIT
+
 static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
 {
     int policy = get_script_output_policy();
@@ -1012,8 +1020,6 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     return vwin;
 }
 
-#ifndef GRETL_EDIT
-
 static void vwin_add_closer (windata_t *vwin)
 {
     GtkWidget *b;
@@ -1042,19 +1048,11 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     int width = 0, nlines = 0;
     windata_t *vwin;
 
-    if (role == SCRIPT_OUT) {
-#ifdef GRETL_EDIT
-	if (data != NULL) {
-	    vwin = vwin_first_child((windata_t *) data);
-	    if (vwin != NULL) {
-		return reuse_script_out(vwin, prn);
-	    }
-	}
-#endif
-	if (script_out_viewer != NULL) {
-	    return reuse_script_out(script_out_viewer, prn);
-	}
+#ifndef GRETL_EDIT
+    if (role == SCRIPT_OUT && script_out_viewer != NULL) {
+	return reuse_script_out(script_out_viewer, prn);
     }
+#endif
 
     if (title != NULL) {
 	vwin = gretl_viewer_new_with_parent(parent, role, title,

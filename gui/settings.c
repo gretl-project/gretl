@@ -37,6 +37,7 @@
 #else
 # if __linux__
 #  define DEVEL_OPTS 1
+#  include "gretl_edit.h"
 # endif
 #endif
 

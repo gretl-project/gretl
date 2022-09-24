@@ -79,20 +79,6 @@ void do_run_script (GtkWidget *w, windata_t *vwin);
 
 void run_script_silent (GtkWidget *w, windata_t *vwin);
 
-#ifdef GRETL_EDIT
-
-void cancel_run_script (void);
-
-void populate_gretlcli_path_combo (GtkWidget *box);
-
-void populate_gretlcli_env_combo (GtkWidget *box);
-
-void set_gretlcli_path (GtkWidget *box);
-
-void set_gretlcli_env (GtkWidget *box);
-
-#endif
-
 void new_script_callback (GtkAction *action);
 
 void start_R (const char *buf, int send_data, int interactive);

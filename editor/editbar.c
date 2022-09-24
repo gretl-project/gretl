@@ -20,6 +20,7 @@
 /* editbar.c: cut-down variant of toolbar.c specifically for editor mode */
 
 #include "gretl.h"
+#include "gretl_edit.h"
 #include "textbuf.h"
 #include "textutil.h"
 #include "dlgutils.h"
