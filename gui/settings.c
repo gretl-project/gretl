@@ -2209,7 +2209,7 @@ static void apply_prefs_changes (GtkWidget *widget, GtkWidget *parent)
     set_mpi_variant(mpi_pref);
 #endif
 
-#ifdef GRETL_EDIT
+#ifdef DEVEL_OPTS
     set_gretlcli_path(cli_selector);
     set_gretlcli_env(env_selector);
 #endif
