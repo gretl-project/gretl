@@ -73,7 +73,8 @@ typedef struct {
     windata_t *scriptwin; /* source script-editor */
     PRN *prn;             /* for grabbing output */
     int lang;             /* language of script */
-    int err;              /* error flag */
+    int err;              /* error code */
+    int cancelled;        /* cancelled flag */
 } exec_info;
 
 static void exec_info_init (exec_info *ei,
@@ -93,10 +94,15 @@ static void exec_info_init (exec_info *ei,
     ei->buf = buf;
     ei->scriptwin = vwin;
     bufopen(&ei->prn);
+    ei->cancelled = 0;
 }
 
 void exec_info_destroy (exec_info *ei)
 {
+    if (ei == NULL) {
+	return;
+    }
+
 #ifdef G_OS_WIN32
     /* @argv is NULL in this case */
     g_free(ei->cmd);
@@ -255,7 +261,9 @@ static void exec_script_done (GObject *obj,
     modify_exec_button(ei->scriptwin, 0);
 
     if (ei->lang == LANG_STATA && !grab_stata_log(ei)) {
-	; /* nothing to show, and error reported */
+	; /* nothing to show, and error already reported */
+    } else if (ei->cancelled) {
+	infobox(_("Execution was cancelled"));
     } else if (got_printable_output(ei->prn)) {
 	/* maybe skip this if execution was canceled? */
 	preserve_ei = view_script_output(ei);
@@ -295,7 +303,8 @@ static void exec_script_thread (GTask *task,
     }
 }
 
-static void task_cancel_callback (void)
+static void task_cancel_callback (GCancellable *stopper,
+				  gpointer data)
 {
     gchar *fname = gretl_make_dotpath("exec.pid");
     FILE *fp = fopen(fname, "r");
@@ -304,6 +313,7 @@ static void task_cancel_callback (void)
         long pid;
 
         if (fscanf(fp, "%ld", &pid) == 1) {
+	    exec_info *ei = data;
 #ifdef G_OS_WIN32
             DWORD dw = (DWORD) pid;
             HANDLE h;
@@ -315,6 +325,7 @@ static void task_cancel_callback (void)
 #else
             kill(pid, SIGKILL);
 #endif
+	    ei->cancelled = 1;
         }
         fclose(fp);
         gretl_remove(fname);
@@ -346,7 +357,7 @@ static void run_script_async (gchar *cmd,
 
     stopper = g_cancellable_new();
     g_cancellable_connect(stopper, G_CALLBACK(task_cancel_callback),
-                          NULL, NULL);
+                          ei, NULL);
     g_cancellable_push_current(stopper);
 
     exec_info_init(ei, cmd, argv, exepath, envp, fname, NULL, vwin);
