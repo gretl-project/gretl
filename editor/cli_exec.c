@@ -157,9 +157,10 @@ static int exec_info_match (exec_info *ei0, exec_info *ei1)
 	int n = (ei0->env != NULL) + (ei1->env != NULL);
 
 	if (n == 1) {
-	    /* one env is special, the other not */
+	    /* one env is special, the other is not */
 	    match = 0;
 	} else if (n == 2 && strvs_differ(ei0->env, ei1->env)) {
+	    /* we have two differing special envs */
 	    match = 0;
 	}
     }
@@ -168,8 +169,8 @@ static int exec_info_match (exec_info *ei0, exec_info *ei1)
 }
 
 /* Try for an existing output-viewer child that matches
-   the current exec_info (gretlcli variant and
-   environment setting).
+   the current exec_info specification (gretlcli variant
+   and environment setting, if any).
 */
 
 static windata_t *get_matching_viewer (exec_info *ei)
@@ -195,14 +196,19 @@ static int view_script_output (exec_info *ei)
     windata_t *vwin = get_matching_viewer(ei);
     int ret = 0;
 
+    /* note: return 1 to protect @ei from destruction, 0 if
+       it's OK to destroy @ei
+    */
+
     if (vwin != NULL) {
+	/* found a specification-matching viewer */
 	reuse_editor_output_viewer(vwin, ei->prn);
     } else {
 	/* we need a new viewer */
 	vwin = view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL,
 			   SCRIPT_OUT, ei->scriptwin);
 	if (vwin != NULL) {
-	    /* attach @ei to the viewer */
+	    /* attach @ei to the viewer, and protect it */
 	    vwin->data = ei;
 	    ret = 1;
 	}
