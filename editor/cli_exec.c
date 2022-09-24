@@ -23,28 +23,13 @@
 
 #ifndef G_OS_WIN32
 
-static void argv_free (gchar **argv)
-{
-    if (argv != NULL) {
-	int i;
-
-	for (i=0; argv[i] != NULL; i++) {
-	    g_free(argv[i]);
-	}
-	g_free(argv);
-    }
-}
-
 static gchar **argv_copy (gchar **argv)
 {
     gchar **cpy = NULL;
 
     if (argv != NULL) {
-	int i, n = 0;
+	int i, n = g_strv_length(argv);
 
-	for (i=0; argv[i] != NULL; i++) {
-	    n++;
-	}
 	cpy = g_malloc0((n + 1) * sizeof *cpy);
 	for (i=0; i<n; i++) {
 	    cpy[i] = g_strdup(argv[i]);
@@ -113,11 +98,13 @@ static void exec_info_init (exec_info *ei,
 static void exec_info_destroy (exec_info *ei)
 {
 #ifdef G_OS_WIN32
+    /* @argv is NULL in this case */
     g_free(ei->cmd);
     g_free(ei->fname);
     g_free(ei->exepath);
 #else
-    argv_free(ei->argv); /* note: ei->clipath and ei->fname are included */
+    /* ei->clipath and ei->fname are included in @argv */
+    g_strfreev(ei->argv);
 #endif
     if (ei->env != NULL) {
 	g_strfreev(ei->env);
@@ -125,6 +112,64 @@ static void exec_info_destroy (exec_info *ei)
     g_free(ei->buf);
     free(ei);
 }
+
+#if 0 /* not ready yet */
+
+static void reuse_editor_output_viewer (windata_t *vwin, PRN *prn)
+{
+    const char *newtext = gretl_print_get_buffer(prn);
+    GtkTextBuffer *buf;
+
+    /* replace previous content */
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    gtk_text_buffer_set_text(buf, "", -1);
+    textview_set_text_colorized(vwin->text, newtext);
+    cursor_to_top(vwin);
+
+    gretl_print_destroy(prn);
+    gtk_window_present(GTK_WINDOW(vwin->main));
+}
+
+static int strvs_differ (gchar **S0, gchar **S1)
+{
+    int i, n = g_strv_length(S0);
+
+    if (g_strv_length(S1) != n) {
+	return 1;
+    } else {
+	for (i=0; i<n; i++) {
+	    if (strcmp(S0[i], S1[i])) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int exec_info_match (exec_info *ei0, exec_info *ei1)
+{
+    int match = 1;
+
+    if (strcmp(ei0->exepath, ei1->exepath)) {
+	/* using different builds of gretlcli */
+	match = 0;
+    } else {
+	/* check for differing environments */
+	int n = (ei0->env != NULL) + (ei1->env != NULL);
+
+	if (n == 1) {
+	    /* one env is special, the other not */
+	    match = 0;
+	} else if (n == 2 && strvs_differ(ei0->env, ei1->env)) {
+	    match = 0;
+	}
+    }
+
+    return match;
+}
+
+#endif /* not ready */
 
 static int grab_stata_log (exec_info *ei)
 {
@@ -151,7 +196,7 @@ static void trash_stata_log (void)
     free(logname);
 }
 
-/* callback on completion of script execution */
+/* function called on completion of script execution */
 
 static void exec_script_done (GObject *obj,
 			      GAsyncResult *res,
@@ -159,20 +204,18 @@ static void exec_script_done (GObject *obj,
 {
     exec_info *ei = data;
 
+    /* switch back to Run icon in editor window */
     modify_exec_button(ei->scriptwin, 0);
 
     if (ei->lang == LANG_STATA && !grab_stata_log(ei)) {
-	goto no_output;
-    }
-
-    if (got_printable_output(ei->prn)) {
+	; /* nothing to show, and error reported */
+    } else if (got_printable_output(ei->prn)) {
+	/* maybe skip this if execution was canceled? */
 	view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, ei->scriptwin);
 	ei->prn = NULL;
     } else if (ei->err) {
 	gui_errmsg(ei->err);
     }
-
- no_output:
 
     if (ei->fname != NULL) {
 	gretl_remove(ei->fname);
@@ -273,8 +316,9 @@ static GList *gretlcli_paths;
 /* and to accommodate different environment settings */
 static GList *gretlcli_envs;
 
-void populate_gretlcli_combo (GtkWidget *box, GList **pL,
-			      int paths)
+static void populate_gretlcli_combo (GtkWidget *box,
+				     GList **pL,
+				     int paths)
 {
     GList *L = *pL;
 
