@@ -63,7 +63,9 @@ char **gretl_array_get_stringify_strings (gretl_array *A,
 					  int nreq, int *ns,
 					  int *err);
 
-char *gretl_strings_array_flatten (gretl_array *A, int space, int *err);
+char *gretl_strings_array_flatten (gretl_array *A,
+                                   const char *sep,
+                                   int *err);
 
 gretl_matrix *gretl_strings_array_pos (gretl_array *A,
 				       const char *s,

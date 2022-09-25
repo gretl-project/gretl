@@ -8593,13 +8593,22 @@ static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
             ret->v.m = gretl_matrix_array_flatten(l->v.a, vcat, &p->err);
         }
     } else if (t == GRETL_TYPE_STRINGS) {
-        int space = node_get_bool(r, p, 0);
+        const char *sep = NULL;
 
+        if (r->t == STR) {
+            sep = r->v.str;
+        } else {
+            int space = node_get_bool(r, p, 0);
+
+            if (!p->err) {
+                sep = space ? " " : "\n";
+            }
+        }
         if (!p->err) {
             ret = aux_string_node(p);
         }
         if (!p->err) {
-            ret->v.str = gretl_strings_array_flatten(l->v.a, space, &p->err);
+            ret->v.str = gretl_strings_array_flatten(l->v.a, sep, &p->err);
         }
     } else {
         p->err = E_TYPES;

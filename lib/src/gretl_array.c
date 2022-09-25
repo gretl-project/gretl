@@ -443,9 +443,10 @@ char **gretl_array_get_stringify_strings (gretl_array *A,
 
 /* note: the return value is newly allocated, and owned by the caller */
 
-char *gretl_strings_array_flatten (gretl_array *A, int space, int *err)
+char *gretl_strings_array_flatten (gretl_array *A,
+                                   const char *sep,
+                                   int *err)
 {
-    const char *sep = space ? " " : "\n";
     char *s = NULL;
 
     if (A == NULL) {
@@ -453,14 +454,18 @@ char *gretl_strings_array_flatten (gretl_array *A, int space, int *err)
     } else if (A->type != GRETL_TYPE_STRINGS) {
 	*err = E_TYPES;
     } else {
-	int i, len = 0;
+        int ns = strlen(sep);
+	int i, len = 1; /* for terminating NUL */
 
 	for (i=0; i<A->n; i++) {
 	    if (A->data[i] == NULL) {
 		*err = E_MISSDATA;
 		break;
 	    } else {
-		len += strlen(A->data[i]) + 1;
+		len += strlen(A->data[i]);
+                if (i < A->n - 1) {
+                    len += ns;
+                }
 	    }
 	}
 

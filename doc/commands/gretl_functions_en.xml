@@ -5042,8 +5042,11 @@
 	<para>
 	  In the string case the result holds the strings in
 	  <argname>A</argname>, arranged one per line by default. If a
-	  non-zero value is given for <argname>alt</argname> the
-	  strings are separated by spaces rather than newlines.
+	  non-zero numerical value is given for <argname>alt</argname>
+	  the strings are separated by spaces rather than newlines,
+	  but an alternative usage of <argname>alt</argname> is
+	  supported: you may give a specific string to use as the
+	  separator.
 	</para>
       </description>
     </function>
