@@ -7085,13 +7085,14 @@ static int panel_ytic_width (double ymin, double ymax)
 */
 
 static int panel_means_ts_plot (const int vnum,
+				const char *literal,
 				const DATASET *dset,
 				gretlopt opt)
 {
     DATASET *gset;
     int nunits, T = dset->pd;
     int list[2] = {1, 1};
-    gchar *literal = NULL;
+    gchar *my_literal = NULL;
     gchar *title = NULL;
     int i, t, s, s0;
     int err = 0;
@@ -7129,12 +7130,20 @@ static int panel_means_ts_plot (const int vnum,
 
     title = g_strdup_printf(_("mean %s"),
 			    series_get_graph_name(dset, vnum));
-    literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;",
-			      title);
-    err = gnuplot(list, literal, gset, opt);
+    my_literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;",
+				 title);
+    if (literal != NULL) {
+	gchar *all_lit;
+
+	all_lit = g_strdup_printf("%s %s", my_literal, literal);
+	err = gnuplot(list, all_lit, gset, opt);
+	g_free(all_lit);
+    } else {
+	err = gnuplot(list, my_literal, gset, opt);
+    }
 
     g_free(title);
-    g_free(literal);
+    g_free(my_literal);
     destroy_dataset(gset);
 
     return err;
@@ -7375,13 +7384,14 @@ static int dataset_has_panel_labels (const DATASET *dset,
 */
 
 static int panel_overlay_ts_plot (const int vnum,
+				  const char *literal,
 				  const DATASET *dset,
 				  gretlopt opt)
 {
     DATASET *gset;
     int u0, nunits, T = dset->pd;
     int *list = NULL;
-    gchar *literal = NULL;
+    gchar *my_literal = NULL;
     gchar *title = NULL;
     series_table *gst = NULL;
     const char *sval;
@@ -7476,7 +7486,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	} else {
 	    title = g_strdup_printf("%s by group", gname);
 	}
-	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
+	my_literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
     }
 
     if (nunits > 80) {
@@ -7484,11 +7494,20 @@ static int panel_overlay_ts_plot (const int vnum,
 	xwide = 1;
     }
 
-    err = gnuplot(list, literal, gset, opt | OPT_T);
+    if (my_literal != NULL && literal != NULL) {
+	gchar *all_lit = g_strdup_printf("%s %s", my_literal, literal);
+
+	err = gnuplot(list, all_lit, gset, opt | OPT_T);
+	g_free(all_lit);
+    } else if (literal != NULL) {
+	err = gnuplot(list, literal, gset, opt | OPT_T);
+    } else {
+	err = gnuplot(list, my_literal, gset, opt | OPT_T);
+    }
 
     xwide = 0;
     g_free(title);
-    g_free(literal);
+    g_free(my_literal);
     destroy_dataset(gset);
     free(list);
 
@@ -7657,9 +7676,9 @@ int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
 	/* group means */
 	opt &= ~OPT_M;
 	opt |= OPT_S;
-	return panel_means_ts_plot(vnum, dset, opt);
+	return panel_means_ts_plot(vnum, NULL, dset, opt);
     } else {
-	return panel_overlay_ts_plot(vnum, dset, opt);
+	return panel_overlay_ts_plot(vnum, NULL, dset, opt);
     }
 }
 
@@ -7728,12 +7747,12 @@ int cli_panel_plot (const int *list, const char *literal,
 	fprintf(stderr, "panplot OPT_M: --means\n");
 	opt &= ~OPT_M;
 	opt |= OPT_S;
-	err = panel_means_ts_plot(vnum, dset, opt);
+	err = panel_means_ts_plot(vnum, literal, dset, opt);
     } else if (opt & OPT_V) {
 	/* --overlay */
 	fprintf(stderr, "panplot OPT_V: --overlay\n");
 	opt &= ~OPT_V;
-	err = panel_overlay_ts_plot(vnum, dset, opt);
+	err = panel_overlay_ts_plot(vnum, literal, dset, opt);
     } else if (opt & OPT_S) {
 	/* --sequence */
 	fprintf(stderr, "panplot OPT_S: --sequence\n");
