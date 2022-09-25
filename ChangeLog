@@ -1,10 +1,31 @@
 version 2022c, in progress
+- substantial speed-up for hansl functions called from loops
+  or other iterative contexts
+- "printf" command: support a named string variable as the
+  "format" argument
+- "ols" command with --jackknife option: make the output more
+  specific, and complain when this option is not applicable
 - toepsolv() function: add fourth argument for returning the
   determinant
+- flatten() function for arrays of strings: add the ability to
+  specify a custom separator
+- gretl_edit: enable auto-completion, add some specialized
+  "developer" options, and add a "kill" button to stop script
+  execution
+- Clarify and properly enforce the case where the "const"
+  property of a hansl function argument must be inherited
+- Fix and speed up reading of gretl's binary matrix files via
+  Python (under gretl's "foreign" apparatus)
 - Fix bug: fail after first iteration when adding a string to
-  an array of strings defined within a loop (noted by Luca)
+  an array of strings defined within a loop
 - Fix bug: corruption on extracting a "series" from a bundle
   as a matrix when the series contains NAs
+- Fix bug: the GUI option to purge all-missing rows from a
+  daily dataset could go wrong; in addition make this option
+  available for scripting use via the "dataset" command
+- Fix bug: some cases where an ARMA model can be estimated
+  most efficiently via OLS were not being recognized
+- Bug fix: fix some actual or potential memory leaks
 
 2022-08-09 version 2022b
 - new command/keyword "continue" for use in loops
