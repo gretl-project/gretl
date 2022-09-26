@@ -2612,6 +2612,7 @@
 	<example>dataset resample 500</example>
 	<example>dataset renumber x 4</example>
 	<example>dataset pad-daily 7</example>
+        <example>dataset unpad-daily</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
@@ -2623,10 +2624,11 @@
 	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
 	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
-	<lit>renumber</lit> or <lit>pad-daily</lit>. Note: with the
-	exception of <lit>clear</lit>, these actions are not available
-	when the dataset is currently subsampled by selection of cases
-	on some Boolean criterion.
+	<lit>renumber</lit>, <lit>pad-daily</lit> or
+	<lit>unpad-daily</lit>. Note: with the exception of
+	<lit>clear</lit>, these actions are not available when the
+	dataset is currently subsampled by selection of cases on some
+	Boolean criterion.
       </para>
       <para>
 	<lit>addobs</lit>: Must be followed by a positive integer,
@@ -2732,6 +2734,14 @@
 	<quote>complete</quote> relative to this value. For example if
 	days-per-week is 5 then all weekdays will be represented,
 	whether or not any data are available for those days.
+      </para>
+      <para>
+	<lit>unpad-daily</lit>: Valid only if the current dataset
+	contains dated daily data, in which case it performs the
+        inverse operation of <lit>pad-daily</lit>. That is, any rows
+        that contain nothing but <lit>NA</lit>s are removed, while
+        the time-series property of the dataset is preserved along
+        with the dates of the individual observations.
       </para>
     </description>
 

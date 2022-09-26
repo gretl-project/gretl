@@ -25,7 +25,9 @@ version 2022c, in progress
   available for scripting use via the "dataset" command
 - Fix bug: some cases where an ARMA model can be estimated
   most efficiently via OLS were not being recognized
-- Bug fix: fix some actual or potential memory leaks
+- Fix bug: crash on trying to extract a submatrix of size
+  zero via indexation
+- Fix some actual or potential memory leaks
 
 2022-08-09 version 2022b
 - new command/keyword "continue" for use in loops
