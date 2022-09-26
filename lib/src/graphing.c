@@ -7149,13 +7149,15 @@ static int panel_means_ts_plot (const int vnum,
     return err;
 }
 
-int panel_means_XY_scatter (const int *list, const DATASET *dset,
+int panel_means_XY_scatter (const int *list,
+                            const char *literal,
+                            const DATASET *dset,
 			    gretlopt opt)
 {
     DATASET *gset;
     int N, T = dset->pd;
     int glist[3] = {2, 1, 2};
-    gchar *literal = NULL;
+    gchar *my_literal = NULL;
     int grpnames = 0;
     int yvar, xvar;
     int i, t, s;
@@ -7216,10 +7218,18 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 	}
     }
 
-    literal = g_strdup_printf("set title \"%s\";", _("Group means"));
-    err = gnuplot(glist, literal, gset, opt);
+    my_literal = g_strdup_printf("set title \"%s\";", _("Group means"));
 
-    g_free(literal);
+    if (literal != NULL) {
+        gchar *all_lit = g_strdup_printf("%s %s", my_literal, literal);
+
+        err = gnuplot(glist, all_lit, gset, opt);
+        g_free(all_lit);
+    } else {
+        err = gnuplot(glist, my_literal, gset, opt);
+    }
+
+    g_free(my_literal);
     destroy_dataset(gset);
 
     return err;

@@ -271,8 +271,8 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 
 int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt);
 
-int panel_means_XY_scatter (const int *list, const DATASET *dset,
-			    gretlopt opt);
+int panel_means_XY_scatter (const int *list, const char *literal,
+                            const DATASET *dset, gretlopt opt);
 
 int cli_panel_plot (const int *list, const char *literal,
 		    const DATASET *dset, gretlopt opt);

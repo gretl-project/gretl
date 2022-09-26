@@ -8004,7 +8004,7 @@ void plot_from_selection (int code)
             if (multiplot) {
                 err = multi_scatters(libcmd.list, dataset, opt);
             } else if (pan_between) {
-                err = panel_means_XY_scatter(libcmd.list, dataset, opt);
+                err = panel_means_XY_scatter(libcmd.list, NULL, dataset, opt);
             } else {
 		if (opt & OPT_F) {
 		    set_optval_string(GNUPLOT, OPT_F, "none");
