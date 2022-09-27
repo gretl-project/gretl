@@ -1449,7 +1449,16 @@ static const char **get_radio_setting_strings (void *var, int *n)
     return NULL;
 }
 
-#ifndef GRETL_EDIT
+#ifdef DEVEL_OPTS
+
+static void sel_entry_focused (GtkWidget *entry)
+{
+    fprintf(stderr, "focus grabbed!!\n");
+    /* FIXME this isn't working, or only fleetingly */
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+}
+
+#else
 
 const char *get_default_hc_string (int ci)
 {
@@ -1969,7 +1978,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
     if (tab == TAB_EDITOR) {
 	/* additional material for the Editor tab if we're making gretl_edit */
         GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-        GtkWidget *label, *e_table;
+        GtkWidget *label, *e_table, *entry;
 
 	label = gtk_label_new("Developer options:");
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -1999,6 +2008,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
         populate_gretlcli_env_combo(env_selector);
         gtk_table_attach_defaults(GTK_TABLE(e_table), env_selector,
                                   1, 2, 1, 2);
+        entry = gtk_bin_get_child(GTK_BIN(env_selector));
+        g_signal_connect(G_OBJECT(entry), "grab-focus",
+                         G_CALLBACK(sel_entry_focused), NULL);
 
         gtk_widget_show_all(e_table);
     }

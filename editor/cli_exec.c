@@ -281,6 +281,19 @@ static void exec_script_done (GObject *obj,
     }
 }
 
+static void print_env (exec_info *ei)
+{
+    int i;
+
+    for (i=0; ei->env[i] != NULL; i++) {
+        if (strncmp(ei->env[i], "HOME=", 5) &&
+            strncmp(ei->env[i], "R_HOME=", 7)) {
+            pprintf(ei->prn, "%s \\\n", ei->env[i]);
+        }
+    }
+    pprintf(ei->prn, "%s\n", ei->exepath);
+}
+
 static void exec_script_thread (GTask *task,
 				gpointer obj,
 				gpointer task_data,
@@ -291,7 +304,9 @@ static void exec_script_thread (GTask *task,
     if (ei->lang == LANG_R) {
 	ei->err = execute_R_buffer(ei->buf, NULL, OPT_G | OPT_T, ei->prn);
     } else {
-	if (ei->exepath != NULL) {
+        if (ei->env != NULL) {
+            print_env(ei);
+        } else if (ei->exepath != NULL) {
 	    pprintf(ei->prn, "using %s\n", ei->exepath);
 	}
 #ifdef G_OS_WIN32

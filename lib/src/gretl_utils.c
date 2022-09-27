@@ -2046,12 +2046,18 @@ int gretl_pipe_output (gchar **argv, gchar **envp,
 	err = 1;
     }
 
-    if (sout != NULL && *sout) {
-	pputs(prn, sout);
+    if (sout != NULL) {
+        if (*sout != '\0') {
+            pputs(prn, sout);
+        }
+        g_free(sout);
     }
-
-    if (errout != NULL) g_free(errout);
-    if (sout != NULL) g_free(sout);
+    if (errout != NULL) {
+        if (*errout != '\0') {
+            fputs(errout, stderr);
+        }
+        g_free(errout);
+    }
 
     return err;
 }
