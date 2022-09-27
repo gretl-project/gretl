@@ -2006,7 +2006,8 @@ int gretl_spawn (char *cmdline)
 }
 
 int gretl_pipe_output (gchar **argv, gchar **envp,
-		       const char *currdir, PRN *prn)
+		       const char *currdir, PRN *prn,
+		       gchar **errp)
 {
     GError *error = NULL;
     gchar *errout = NULL;
@@ -2054,7 +2055,12 @@ int gretl_pipe_output (gchar **argv, gchar **envp,
     }
     if (errout != NULL) {
         if (*errout != '\0') {
-            fputs(errout, stderr);
+	    if (errp != NULL) {
+		*errp = errout;
+		errout = NULL;
+	    } else {
+		fputs(errout, stderr);
+	    }
         }
         g_free(errout);
     }

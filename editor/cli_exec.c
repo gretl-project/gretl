@@ -20,6 +20,7 @@
 /* code specific to gretl_edit: execute a hansl script via gretlcli */
 
 #include "dlgutils.h"
+#include "winstack.h"
 
 #ifndef G_OS_WIN32
 
@@ -72,6 +73,7 @@ typedef struct {
     gchar *buf;           /* script buffer (for R usage) */
     windata_t *scriptwin; /* source script-editor */
     PRN *prn;             /* for grabbing output */
+    gchar *errout;        /* for grabbing stderr */
     int lang;             /* language of script */
     int err;              /* error code */
     int cancelled;        /* cancelled flag */
@@ -95,6 +97,7 @@ static void exec_info_init (exec_info *ei,
     ei->scriptwin = vwin;
     bufopen(&ei->prn);
     ei->cancelled = 0;
+    ei->errout = NULL;
 }
 
 void exec_info_destroy (exec_info *ei)
@@ -117,6 +120,42 @@ void exec_info_destroy (exec_info *ei)
     }
     g_free(ei->buf);
     free(ei);
+}
+
+gboolean viewer_has_stderr (windata_t *vwin)
+{
+    gboolean ret = FALSE;
+
+    fprintf(stderr, "HERE viewer_has_stderr\n");
+    if (vwin != NULL && vwin->data != NULL) {
+	exec_info *ei = vwin->data;
+
+	fprintf(stderr, " HERE ei->errout = %p\n", (void *) ei->errout);
+	ret = (ei->errout != NULL);
+    }
+
+    fprintf(stderr, " HERE ret = %d\n", ret);
+
+    return ret;
+}
+
+void viewer_show_stderr (windata_t *vwin)
+{
+    GtkWidget *parent = vwin_toplevel(vwin);
+    GtkWidget *dialog;
+    exec_info *ei = vwin->data;
+    const gchar *title = "gretl: stderr";
+
+    dialog = gtk_message_dialog_new(GTK_WINDOW(parent),
+                                    GTK_DIALOG_DESTROY_WITH_PARENT,
+                                    GTK_MESSAGE_INFO,
+                                    GTK_BUTTONS_CLOSE,
+                                    "%s", ei->errout);
+
+    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
 }
 
 static void reuse_editor_output_viewer (windata_t *vwin, PRN *prn)
@@ -197,30 +236,27 @@ static windata_t *get_matching_viewer (exec_info *ei)
     return NULL;
 }
 
-static int view_script_output (exec_info *ei)
+static void view_script_output (exec_info *ei)
 {
     windata_t *vwin = get_matching_viewer(ei);
-    int ret = 0;
-
-    /* note: return 1 to protect @ei from destruction, 0 if
-       it's OK to destroy @ei
-    */
+    GtkWidget *b;
 
     if (vwin != NULL) {
 	/* found a specification-matching viewer */
+	exec_info_destroy((exec_info *) vwin->data);
+	vwin->data = ei;
 	reuse_editor_output_viewer(vwin, ei->prn);
     } else {
 	/* we need a new viewer */
 	vwin = view_buffer(ei->prn, SCRIPT_WIDTH, 450, NULL,
 			   SCRIPT_OUT, ei->scriptwin);
 	if (vwin != NULL) {
-	    /* attach @ei to the viewer, and protect it */
 	    vwin->data = ei;
-	    ret = 1;
 	}
     }
 
-    return ret;
+    b = g_object_get_data(G_OBJECT(vwin->mbar), "stderr_item");
+    gtk_widget_set_sensitive(b, ei->errout != NULL);
 }
 
 static int grab_stata_log (exec_info *ei)
@@ -265,8 +301,8 @@ static void exec_script_done (GObject *obj,
     } else if (ei->cancelled) {
 	infobox(_("Execution was cancelled"));
     } else if (got_printable_output(ei->prn)) {
-	/* maybe skip this if execution was canceled? */
-	preserve_ei = view_script_output(ei);
+	view_script_output(ei);
+	preserve_ei = 1;
 	ei->prn = NULL;
     } else if (ei->err) {
 	gui_errmsg(ei->err);
@@ -313,7 +349,8 @@ static void exec_script_thread (GTask *task,
 	/* note: ei->env is _not_ handled here */
 	ei->err = gretl_win32_pipe_output(ei->cmd, gretl_workdir(), ei->prn);
 #else
-	ei->err = gretl_pipe_output(ei->argv, ei->env, gretl_workdir(), ei->prn);
+	ei->err = gretl_pipe_output(ei->argv, ei->env, gretl_workdir(),
+				    ei->prn, &ei->errout);
 #endif
     }
 }
@@ -407,6 +444,7 @@ static void populate_gretlcli_combo (GtkWidget *box,
 	    s = g_strdup("default");
 	}
         *pL = g_list_prepend(*pL, s);
+
     }
 
     L = *pL;

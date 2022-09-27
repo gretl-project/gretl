@@ -63,7 +63,8 @@ enum {
     EDITOR_ITEM,
     NEW_ITEM,
     FIND_ITEM,
-    CLOSE_ITEM
+    CLOSE_ITEM,
+    STDERR_ITEM
 } viewbar_flags;
 
 int toolbar_icon_size = GTK_ICON_SIZE_MENU;
@@ -402,6 +403,11 @@ static void exec_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void show_stderr (GtkWidget *w, windata_t *vwin)
+{
+    viewer_show_stderr(vwin);
+}
+
 static GretlToolItem viewbar_items[] = {
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
@@ -421,7 +427,8 @@ static GretlToolItem viewbar_items[] = {
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_H, G_CALLBACK(split_pane_callback), SPLIT_H_ITEM },
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
     { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
-    { N_("Help..."), GTK_STOCK_HELP, GNULL, HELP_ITEM }
+    { N_("Help..."), GTK_STOCK_HELP, GNULL, HELP_ITEM },
+    { N_("Show stderr"), GTK_STOCK_PRINT_ERROR, G_CALLBACK(show_stderr), STDERR_ITEM },
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -434,6 +441,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 #define help_ok(r) (r == EDIT_HANSL)
 #define split_h_ok(r) (r == SCRIPT_OUT || vwin_editing_script(r))
 #define split_v_ok(r) (r == SCRIPT_OUT)
+#define stderr_ok(r)  (r == SCRIPT_OUT)
 
 /* Screen out unwanted menu items depending on the context; also
    adjust the callbacks associated with some items based on
@@ -469,6 +477,8 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
         return NULL;
     } else if (r != EDIT_HANSL && f == EDIT_HANSL_ITEM) {
         return NULL;
+    } else if (!stderr_ok(r) && f == STDERR_ITEM) {
+	return NULL;
     }
 
     return func;
@@ -729,8 +739,12 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
                 gtk_widget_set_sensitive(button, FALSE);
             }
         } else if (item->flag == EXEC_ITEM) {
+	    /* record by name so we can toggle this item's icon */
             g_object_set_data(G_OBJECT(vwin->mbar), "exec_item", button);
-        }
+        } else if (item->flag == STDERR_ITEM) {
+	    /* record by name so we can toggle this item's sensitivity */
+	    g_object_set_data(G_OBJECT(vwin->mbar), "stderr_item", button);
+	}
     }
 
     if (hpane != NULL) {

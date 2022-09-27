@@ -34,4 +34,8 @@ void set_gretlcli_env (GtkWidget *box);
 
 void exec_info_destroy (exec_info *ei);
 
+gboolean viewer_has_stderr (windata_t *vwin);
+
+void viewer_show_stderr (windata_t *vwin);
+
 #endif /* GRETL_EDIT_H */
