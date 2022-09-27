@@ -2674,6 +2674,7 @@
 	<example>dataset renumber x 4</example>
 	<example>dataset pad-daily 7</example>
 	<example>dataset clear</example>
+        <example>dataset unpad-daily</example>
       </examples>
     </usage>
 
@@ -2684,10 +2685,11 @@
 	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
 	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
-	<lit>renumber</lit> o <lit>pad-daily</lit>. Nota: ad eccezione
-	del comando <lit>clear</lit> questi comandi non sono disponibili
-	quando sul dataset è definito un sotto-campione ottenuto
-	selezionando le osservazioni con un criterio Booleano.
+	<lit>renumber</lit> o <lit>pad-daily</lit> o
+	<lit>unpad-daily</lit> . Nota: ad eccezione del comando
+	<lit>clear</lit> questi comandi non sono disponibili quando
+	sul dataset è definito un sotto-campione ottenuto selezionando
+	le osservazioni con un criterio Booleano.
       </para>
       <para>
 	<lit>addobs</lit>: deve essere seguito da <math>n</math>, un
@@ -2797,6 +2799,14 @@
 	valore del parametro dato. Ad esempio, se i giorni della settimana sono 5
 	allora tutti i giorni della settimana verranno rappresentati, sia che i dati
 	per questi giorni siano disponibili oppure no.
+      </para>
+      <para>
+       <lit>unpad-daily</lit>: opzione valida solo se il dataset
+       corrente contiene dati giornalieri. L'opzione produce l'inverso
+       di <lit>pad-daily</lit>, ossia: ogni riga in cui tutte le
+       osservazioni sono mancanti viene rimossa, anche se le proprietà
+       di serie storiche del dataset sono preservate, assieme alle date
+       delle osservazioni individuali.
       </para>
     </description>
 

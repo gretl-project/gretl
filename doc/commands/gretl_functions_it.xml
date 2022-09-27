@@ -5069,7 +5069,10 @@
 	  Nel caso di un array di stringhe, esse sono contenute in
 	  <argname>A</argname>, e sono sistemate una per riga di default.
 	  Se un valore diverso da 0 è inserito in <argname>alt</argname> le
-	  stringhe verranno separate da spazi anziché da interruzioni di riga.
+	  stringhe verranno separate da spazi anziché da interruzioni
+	  di riga, ma è anche supportata una sintassi alternativa, in
+	  cui <argname>alt</argname> è una specifica stringa da usare
+	  come separatore.
 	</para>
       </description>
     </function>
