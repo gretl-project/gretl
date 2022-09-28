@@ -3117,7 +3117,8 @@ static int handle_command_extra (CMD *c)
     cmd_token *tok;
     int i;
 
-    if (c->ci == GNUPLOT || c->ci == BXPLOT || c->ci == HFPLOT) {
+    if (c->ci == GNUPLOT || c->ci == BXPLOT ||
+	c->ci == HFPLOT || c->ci == PANPLOT) {
 	/* if present, 'extra' goes into param */
 	for (i=c->cstart+1; i<c->ntoks; i++) {
 	    tok = &c->toks[i];

@@ -7754,38 +7754,31 @@ int cli_panel_plot (const int *list, const char *literal,
 
     if (opt & OPT_M) {
 	/* --means */
-	fprintf(stderr, "panplot OPT_M: --means\n");
 	opt &= ~OPT_M;
 	opt |= OPT_S;
 	err = panel_means_ts_plot(vnum, literal, dset, opt);
     } else if (opt & OPT_V) {
 	/* --overlay */
-	fprintf(stderr, "panplot OPT_V: --overlay\n");
 	opt &= ~OPT_V;
 	err = panel_overlay_ts_plot(vnum, literal, dset, opt);
     } else if (opt & OPT_S) {
 	/* --sequence */
-	fprintf(stderr, "panplot OPT_S: --sequence\n");
 	opt &= ~OPT_S;
 	err = gnuplot(list, literal, dset, opt | OPT_O | OPT_T);
     } else if (opt & OPT_D) {
 	/* --grid */
-	fprintf(stderr, "panplot OPT_D: --grid\n");
 	opt &= ~OPT_D;
 	err = panel_grid_ts_plot(vnum, dset, opt);
     } else if (opt & OPT_A) {
 	/* --stack */
-	fprintf(stderr, "panplot OPT_A: --stack\n");
 	opt &= ~OPT_A;
 	err = panel_grid_ts_plot(vnum, dset, opt | OPT_S | OPT_V);
     } else if (opt & OPT_B) {
 	/* --boxplots */
-	fprintf(stderr, "panplot OPT_B: --boxplots\n");
 	opt &= ~OPT_B;
 	err = boxplots(list, literal, dset, opt | OPT_P);
     } else if (opt & OPT_C) {
 	/* --boxplot */
-	fprintf(stderr, "panplot OPT_C: --boxplot\n");
 	opt &= ~OPT_C;
 	err = boxplots(list, literal, dset, opt);
     }
