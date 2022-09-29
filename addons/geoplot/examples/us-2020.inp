@@ -1,6 +1,6 @@
-include geoplot.gfn --quiet --frompkg=geoplot
+include geoplot.gfn
 
-open us-states.geojson
+open us-states.geojson --quiet --frompkg=geoplot
 bundle b = bread($mapfile)
 
 # Shrink Alaska and place underneath the "lower 48"
