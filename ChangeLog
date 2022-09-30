@@ -5,6 +5,9 @@ version 2022c, in progress
   "format" argument
 - "ols" command with --jackknife option: make the output more
   specific, and complain when this option is not applicable
+- "panplot" command: add --single-yaxis option, and support
+  the addition of "literal" supplementary gnuplot commands
+  (but not when the --grid or --stack option is selected)
 - toepsolv() function: add fourth argument for returning the
   determinant
 - flatten() function for arrays of strings: add the ability to
