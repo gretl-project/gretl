@@ -8344,6 +8344,88 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     return sr;
 }
 
+#if 0 /* not used yet */
+
+static void list_append_named_row (GtkListStore *store,
+				   GtkTreeIter *iterp,
+				   const char **names,
+				   int i)
+{
+    gtk_list_store_append(store, iterp);
+    gtk_list_store_set(store, iterp,
+                       COL_ID, i,
+                       COL_LAG, 0,
+                       COL_NAME, names[i],
+                       -1);
+}
+
+selector *
+matrix_selection (const char *title, int (*callback)(),
+		  GtkWidget *parent, const gretl_matrix *m)
+{
+    GtkListStore *store;
+    GtkTreeIter iter;
+    GtkWidget *left_box, *right_box;
+    GtkWidget *tmp;
+    selector *sr;
+    const char **rownames;
+    int i;
+
+    rownames = gretl_matrix_get_rownames(m);
+    if (rownames == NULL) {
+	return NULL;
+    }
+
+    sr = mymalloc(sizeof *sr);
+    if (sr == NULL) {
+        return NULL;
+    }
+
+    selector_init(sr, 0, title, callback, parent, NULL, SELECTOR_SIMPLE);
+
+    tmp = simple_selection_top_label(0, title);
+    if (tmp != NULL) {
+        gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+    }
+
+    sr->table = gtk_table_new(1, 3, FALSE);
+    left_box = gtk_vbox_new(FALSE, 5);
+    sr->lvars = var_list_box_new(GTK_BOX(left_box), sr, SR_LVARS);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    /* add rownames of @m to @left_box */
+    for (i=0; i<m->rows; i++) {
+	list_append_named_row(store, &iter, rownames, i);
+	sr->n_left += 1;
+    }
+
+    right_box = gtk_vbox_new(FALSE, 5);
+    sr->rvars1 = var_list_box_new(GTK_BOX(right_box), sr, SR_RVARS1);
+
+    /* put buttons into mid-section */
+    push_pull_buttons(sr, add_to_rvars1_callback,
+                      remove_from_rvars1_callback,
+                      NULL, OPT_A | OPT_R);
+
+    /* pack RHS and LHS */
+    table_add_right(sr, right_box, 0);
+    table_add_left(sr, left_box, 0, sr->n_rows);
+
+    /* pack the whole central section into the dialog's vbox */
+    gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
+
+    /* buttons: Help, Clear, Cancel, OK */
+    build_selector_buttons(sr);
+
+    gtk_widget_show_all(sr->dlg);
+
+    return sr;
+}
+
+#endif /* not used yet */
+
 selector *simple_selection (int ci, const char *title, int (*callback)(),
                             GtkWidget *parent)
 {
