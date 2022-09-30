@@ -148,7 +148,7 @@ function strings auto_names(int n, string prefix)
     return ret
 end function
 
-function bundle default_opts(scalar r, scalar c)
+function bundle m2ltx_default_opts(scalar r, scalar c)
     bundle ret = null
     scalar ret.decimals = 3
     string ret.nacode = ""
@@ -169,7 +169,7 @@ function string mat2latex (matrix mprint, bundle useropts[null])
 
     scalar nc = cols(mprint)
     scalar nr = rows(mprint)
-    opts = default_opts(nr, nc)
+    opts = m2ltx_default_opts(nr, nc)
 
     strings labs = rnameget(mprint)
     if nelem(labs)
