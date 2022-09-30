@@ -2612,6 +2612,7 @@
 	<example>dataset resample 500</example>
 	<example>dataset renumber x 4</example>
 	<example>dataset pad-daily 7</example>
+        <example>dataset unpad-daily</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
@@ -2623,10 +2624,11 @@
 	ser: <lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
 	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
-	<lit>renumber</lit> o <lit>pad-daily</lit>. Advertencia: Con la
-	excepción de la opción <lit>clear</lit>, estas acciones no están
-	disponibles mientras tengas una submuestra del conjunto de datos,
-	escogida por selección de los casos según algún criterio booleano.
+	<lit>renumber</lit>, <lit>pad-daily</lit> o <lit>unpad-daily</lit>.
+	Advertencia: Con la excepción de la opción <lit>clear</lit>, estas
+	acciones no están disponibles mientras tengas una submuestra del
+	conjunto de datos, escogida por selección de los casos según algún
+	criterio booleano.
       </para>
       <para>
 	<lit>addobs</lit>: Debe estar seguido de un entero positivo, digamos
@@ -2733,6 +2735,14 @@
 	entonces se representan todos los días laborables, haya o no algún dato
 	disponible para esos días.
       </para>
+      <para>
+	<lit>unpad-daily</lit>: Válido solo cuando el conjunto vigente de datos
+	contiene datos con fechas diarias, en cuyo caso esto realiza la operación
+	inversa a <lit>pad-daily</lit>. Es decir, se elimina cualquier fila que
+	no contenga <lit>NA</lit>s, mientras que se conserva la propiedad de
+	series temporales del conjunto de datos junto con las fechas de las
+	observaciones individuales.
+      </para>
     </description>
 
     <gui-access>
@@ -2785,38 +2795,6 @@
       </para>
     </description>
   </command>
-
-  <!--
-  <command name="debug" section="Programming" context="cli"
-    label="Depurar">
-
-    <usage>
-      <arguments>
-        <argument>función</argument>
-      </arguments>
-    </usage>
-
-    <description>
-      <para>
-	Depurador experimental para funciones definidas por el usuario, que
-	está disponible en el programa gretlcli de líneas de instrucciones.
-	Debes invocar esta instrucción <lit>debug</lit> después de que esté
-	definida la función en cuestión, pero antes de invocarla. El efecto
-	de esta instrucción consiste en que la ejecución se detiene cuando
-	se invoca la función y se muestra un indicador especial.
-      </para>
-      <para>
-	Ante el indicador de depuración puedes teclear <lit>next</lit> para
-	ejecutar la siguiente instrucción de la función, o <lit>continue</lit>
-	para permitir que la ejecución de la función continúe sin trabas; y
-	puedes acortar estas instrucciones mediante <lit>n</lit> y <lit>c</lit>,
-	respectivamente. También puedes intercalar una instrucción al aparecer
-	este indicador; por ejemplo, la instrucción <lit>print</lit> para revelar
-	el valor actual de alguna variable de interés.
-      </para>
-    </description>
-  </command>
-  -->
 
   <command name="delete" section="Dataset"
     label="Eliminar variables" context="cli">
@@ -5744,7 +5722,7 @@
 	resalte, pero no el sangrado automático ni el autocompletado.
       </para>
     </description>
-  </command>  
+  </command>
 
   <command name="3-D" section="Graphs" context="gui"
     label="Gráficos en 3 dimensiones">
@@ -7266,6 +7244,10 @@
 	indicas <opt>bylag</opt>, la ordenación se hace por retardos: primero
 	el retardo 1 de todas las series de la lista, después el retardo 2 de todas
 	as series de la lista, etcétera.
+      </para>
+      <para>
+  Esta prestación también está disponible como función: consulta
+  <fncref targ="lags"/>.
       </para>
     </description>
 
@@ -9309,7 +9291,7 @@
 	La instrucción <lit>mpi</lit> comienza un bloque de expresiones (que se
 	deben finalizar con <lit>end mpi</lit>) para ser ejecutadas usando el
 	cómputo en paralelo de MPI (Interfaz de Paso de Mensajes). Consulta
-	<doc>gretl-mpi.pdf</doc> para obtener un informe completo de esta facultad.
+	<doc>gretl-mpi.pdf</doc> para obtener un informe completo de esta prestación.
       </para>
     </description>
   </command>

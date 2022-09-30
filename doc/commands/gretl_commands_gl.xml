@@ -2612,6 +2612,7 @@
 	<example>dataset resample 500</example>
 	<example>dataset renumber x 4</example>
 	<example>dataset pad-daily 7</example>
+        <example>dataset unpad-daily</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
@@ -2623,10 +2624,11 @@
 	ser: <lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
 	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
-	<lit>renumber</lit> ou <lit>pad-daily</lit>. Advertencia: Coa
-	excepción da opción <lit>clear</lit>, estas accións non están
-	dispoñibles mentres teñas unha submostra do conxunto de datos,
-	escollida por selección dos casos segundo algún criterio booleano.
+	<lit>renumber</lit>, <lit>pad-daily</lit> ou <lit>unpad-daily</lit>.
+	Advertencia: Coa excepción da opción <lit>clear</lit>, estas accións
+	non están dispoñibles mentres teñas unha submostra do conxunto de
+	datos, escollida por selección dos casos segundo algún criterio
+	booleano.
       </para>
       <para>
 	<lit>addobs</lit>: Debe de estar seguido dun enteiro positivo, digamos
@@ -2733,6 +2735,14 @@
 	entón represéntanse tódolos días laborables, haxa ou non algún dato
 	dispoñible para eses días.
       </para>
+      <para>
+	<lit>unpad-daily</lit>: Válido só cando o conxunto vixente de datos
+	contén datos con datas diarias, en cuxo caso isto realiza a operación
+	inversa a <lit>pad-daily</lit>. Isto é, elimínase calquera fila que
+	non conteña <lit>NA</lit>s, mentres que se conserva a propiedade de
+	series temporais do conxunto de datos xunto coas datas das observacións
+	individuais.
+      </para>
     </description>
 
     <gui-access>
@@ -2785,38 +2795,6 @@
       </para>
     </description>
   </command>
-
-  <!--
-  <command name="debug" section="Programming" context="cli"
-    label="Depurar">
-
-    <usage>
-      <arguments>
-        <argument>función</argument>
-      </arguments>
-    </usage>
-
-    <description>
-      <para>
-	Depurador experimental para funcións definidas polo usuario, que está
-	dispoñible no programa gretlcli de liñas de instrucións. Debes de
-	invocar esta instrución <lit>debug</lit> despois de que estea definida
-	a función en cuestión, pero antes de chamar por ela. O efecto desta
-	instrución consiste en que a execución detense cando se chama pola
-	función e amósase un indicador especial.
-      </para>
-      <para>
-	Ante o indicador de depuración podes teclear <lit>next</lit> para
-	executar a seguinte instrución da función, ou <lit>continue</lit>
-	para permitir que a execución da función continúe sen trabas; e
-	podes acurtar estas instrucións mediante <lit>n</lit> e <lit>c</lit>,
-	respectivamente. Tamén podes intercalar unha instrución ao aparecer
-	este indicador; por exemplo, a instrución <lit>print</lit> para revelar
-	o valor actual dalgunha variable de interese.
-      </para>
-    </description>
-  </command>
-  -->
 
   <command name="delete" section="Dataset"
     label="Eliminar variables" context="cli">
@@ -5744,7 +5722,7 @@
 	pero non o sangrado automático nin o autorecheo.
       </para>
     </description>
-  </command> 
+  </command>
 
   <command name="3-D" section="Graphs" context="gui"
     label="Gráficas en 3 dimensións">
@@ -7266,6 +7244,10 @@
 	indicas <opt>bylag</opt>, a ordenación faise por retardos: primeiro
 	o retardo 1 de todas as series da lista, despois o retardo 2 de todas
 	as series da lista, etcétera.
+      </para>
+      <para>
+  Esta prestación tamén está dispoñible como función: consulta
+  <fncref targ="lags"/>.
       </para>
     </description>
 
@@ -9309,7 +9291,7 @@
 	A instrución <lit>mpi</lit> empeza un bloque de expresións (que deben
 	rematarse con <lit>end mpi</lit>) para executarse utilizando o cómputo
 	en paralelo da MPI (Interface de Paso de Mensaxes). Consulta
-	<doc>gretl-mpi.pdf</doc> para obter un informe completo desta facultade.
+	<doc>gretl-mpi.pdf</doc> para obter un informe completo desta prestación.
       </para>
     </description>
   </command>

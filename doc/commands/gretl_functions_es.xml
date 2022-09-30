@@ -5042,8 +5042,11 @@
 	<para>
 	  En caso de cadenas de texto, el resultado por defecto mantiene las
 	  cadenas de <argname>A</argname>, ordenadas una en cada línea.
-	  Si indicas un valor no nulo para <argname>alt</argname>, las
-	  cadenas se separan mediante espacios en lugar de nuevas líneas.
+	  Si indicas un valor numérico no nulo para <argname>alt</argname>,
+	  las cadenas se separan mediante espacios en lugar de líneas nuevas,
+	  pero también se admite un uso alternativo de <argname>alt</argname>:
+	  puedes indicar una cadena de texto específica para utilizar como
+	  separador.
 	</para>
       </description>
     </function>
@@ -12982,12 +12985,13 @@
 	<fnarg type="vector">c</fnarg>
 	<fnarg type="vector">r</fnarg>
 	<fnarg type="vector">b</fnarg>
+	<fnarg optional="true" type="scalarref">det</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve un vector columna con la solución de un sistema Toeplitz
 	  de ecuaciones lineales, es decir <math>Tx = b</math>
-	  donde <math>T </math> es una matriz cuadrada cuyo elemento
+	  donde <math>T</math> es una matriz cuadrada cuyo elemento
 	  <math>T</math><sub>i,j</sub> es
 	  igual a <math>c</math><sub>i-j</sub>
 	  cuando <equation status="inline" ascii="i&gt;=j" tex="$i\ge j$"/>, e
@@ -13009,6 +13013,50 @@
 	  podrá surgir cuando la matriz <math>T</math> sea definida
 	  positiva.
 	</para>
+	<para>
+	  Cuando se indica el argumento opcional <argname>det</argname> (en
+	  forma de puntero), al finalizar, este va a contener el determinante de
+	  <math>T</math>. Por ejemplo, el código:
+	</para>
+	<code>
+	  A = unvech({3;2;1;3;2;3})    # Configura una matriz 3x3 de Toeplitz
+	  x = ones(3,1)                # y un vector 3x1
+	  print A x
+	  eval A\x                     # Soluciona mediante la inversión general
+	  eval det(A)                  # Presenta el determinante
+	  a = A[1,]
+	  d = 0
+	  eval toepsolv(a, a, x, &amp;d)   # Utiliza la función específica
+	  print d
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+A (3 x 3)
+
+  3   2   1 
+  2   3   2 
+  1   2   3 
+
+x (3 x 1)
+
+  1 
+  1 
+  1 
+
+     0.25000 
+ -3.3307e-17 
+     0.25000 
+
+8
+     0.25000 
+  2.7756e-17 
+     0.25000 
+
+
+d =  8.0000000
+	</code>
       </description>
     </function>
 
