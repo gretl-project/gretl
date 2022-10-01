@@ -29,6 +29,7 @@
 
 #ifdef GRETL_EDIT
 #include "gretl_edit.h"
+#include "editbar.h"
 #else
 #include "library.h"
 #include "gui_utils.h"
@@ -1070,7 +1071,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     }
 
 #ifdef GRETL_EDIT
-    vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
+    vwin_add_editbar(vwin, EDITBAR_HAS_TEXT);
 #else
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
@@ -1285,6 +1286,19 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 
     strcpy(vwin->fname, filename);
 
+#ifdef GRETL_EDIT
+    if (role != VIEW_DOC) {
+	EditbarFlags vflags = 0;
+
+	if (editable) {
+	    vflags = EDITBAR_EDITABLE;
+	}
+	if (text_out_ok(role)) {
+	    vflags |= EDITBAR_HAS_TEXT;
+	}
+	vwin_add_editbar(vwin, vflags);
+    }
+#else
     if (role != VIEW_DOC) {
 	ViewbarFlags vflags = 0;
 
@@ -1296,6 +1310,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	}
 	vwin_add_viewbar(vwin, vflags);
     }
+#endif
 
     if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);
@@ -1624,7 +1639,11 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     }
 
     /* add a tool bar */
+#ifdef GRETL_EDIT
+    vwin_add_editbar(vwin, EDITBAR_EDITABLE);
+#else
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
+#endif
 
     create_source(vwin, hsize, vsize, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
