@@ -205,6 +205,8 @@ char *gretl_utf8_truncate_b (char *s, size_t bmax);
 
 char *gretl_utf8_replace_char (char *targ, char *src, int pos);
 
+char *gretl_utf8_select (const char *s, const int *list);
+
 int gretl_scan_varname (const char *src, char *targ);
 
 int gretl_normalize_varname (char *targ, const char *src,

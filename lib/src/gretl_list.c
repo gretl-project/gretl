@@ -2088,7 +2088,7 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
  * gretl_list_sublist:
  * @list: the source list.
  * @pos0: the starting position.
- * $pos1: the ending position.
+ * @pos1: the ending position.
  *
  * Returns: a newly allocated sublist containing elements @pos0
  * to @pos1 of the source.
@@ -2105,6 +2105,27 @@ int *gretl_list_sublist (const int *list, int pos0, int pos1)
 	for (i=pos0; i<=pos1; i++) {
 	    ret[j++] = list[i];
 	}
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_list_select:
+ * @list: the source list.
+ * @sel: the selection list.
+ *
+ * Returns: a newly allocated list containing the elements
+ * of @list that are selected by @sel.
+ */
+
+int *gretl_list_select (const int *list, const int *sel)
+{
+    int *ret = gretl_list_new(sel[0]);
+    int i, j = 1;
+
+    for (i=1; i<=sel[0]; i++) {
+        ret[j++] = list[sel[i]];
     }
 
     return ret;

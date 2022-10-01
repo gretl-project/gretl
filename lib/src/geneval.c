@@ -5589,12 +5589,10 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
         } else if (l->t == LIST || l->t == STR) {
 	    int *vlist = array_subspec_list(l, r, p);
 
-	    if (!p->err && !gretl_list_is_consecutive(vlist)) {
-		p->err = E_INVARG;
-	    }
 	    if (!p->err && vlist[0] == 1 && l->t == LIST) {
+                /* singleton list selection */
 		ret = list_member_node(l->v.ivec, vlist[1], p);
-	    } else if (!p->err) {
+	    } else if (!p->err && gretl_list_is_consecutive(vlist)) {
 		int r1 = vlist[1];
 		int r2 = vlist[vlist[0]];
 
@@ -5603,7 +5601,16 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                 } else {
                     ret = string_range_node(l->v.str, r1, r2, p);
                 }
-	    }
+            } else if (!p->err) {
+                /* not consecutive */
+                if (l->t == STR) {
+                    ret = aux_string_node(p);
+                    ret->v.str = gretl_utf8_select(l->v.str, vlist);
+                } else {
+                    ret = aux_list_node(p);
+                    ret->v.ivec = gretl_list_select(l->v.ivec, vlist);
+                }
+            }
 	    free(vlist);
         } else if (l->t == SERIES) {
             int t = mspec_get_series_index(r->v.mspec, p);

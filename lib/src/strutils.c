@@ -3015,6 +3015,46 @@ char *gretl_utf8_truncate_b (char *s, size_t bmax)
 }
 
 /**
+ * gretl_utf8_select:
+ * @s: source string.
+ * @list: list of (1-based) indices of characters to select.
+ *
+ * Constructs a string composed of the selected characters from @s,
+ * which do not have to be contiguous or in order.
+ *
+ * Returns: the constructed string.
+ */
+
+char *gretl_utf8_select (const char *s, const int *list)
+{
+    const char *p = s;
+    char *ret = NULL;
+    GString *gs = g_string_new(NULL);
+    gchar *si;
+    int n = 0;
+    int i = 0;
+
+    while (p && *p) {
+        if (in_gretl_list(list, i+1)) {
+            si = g_utf8_substring(p, 0, 1);
+            g_string_append(gs, si);
+            g_free(si);
+            if (++n == list[0]) {
+                break;
+            }
+        }
+        p = g_utf8_next_char(p);
+        i++;
+    }
+
+    si = g_string_free(gs, FALSE);
+    ret = gretl_strdup(si);
+    g_free(si);
+
+    return ret;
+}
+
+/**
  * gretl_utf8_replace_char:
  * @targ: the target for replacement.
  * @src: the UTF-8 character to insert (NUL terminated).
