@@ -38,10 +38,11 @@ function void regls_mse_plot (const bundle b)
    string lspec1 = "front center point pt 6 ps 2"
    plot M
       literal set termoption enhanced
-      options with-lp band=B band-style=dash
+      options with-lp band=B band-style=dash fit=none
       printf "set yrange [%g:1]", ymin
       literal set xlabel 's = λ/λ_{max}'
       literal set ylabel 'MSE'
+      printf "set xrange [1:%g]", minc(b.lfrac)
       literal set logscale x
       printf "set label \"\" at %g,%g %s", x0, y0, lspec0
       printf "set label \"\" at %g,%g %s", x1, y1, lspec1
@@ -51,7 +52,6 @@ end function
 
 function void regls_bic_plot (const bundle b)
    matrix M = b.BIC ~ b.lfrac
-   scalar xmin = minc(b.lfrac)
    scalar ymin = minc(b.BIC)
    scalar ymax = maxc(b.BIC)
    scalar ymargin = 0.05 * (ymax - ymin)
@@ -62,13 +62,35 @@ function void regls_bic_plot (const bundle b)
    string lspec = "front center point pt 8 ps 2"
    plot M
       literal set termoption enhanced
-      options with-lp
-      printf "set xrange [%g:1]", xmin
+      options with-lp fit=none
+      printf "set xrange [1:%g]", minc(b.lfrac)
       printf "set yrange [%g:%g]", ymin, ymax
       literal set xlabel 's = λ/λ_{max}'
       literal set ylabel 'BIC'
       literal set logscale x
       printf "set label \"\" at %g,%g %s", x0, y0, lspec
       literal set title 'BIC as a function of s'
+   end plot --output=display
+end function
+
+function void regls_knot_plot (const bundle b, const matrix sel[null])
+   matrix B = b.B
+   strings colheads = rnameget(B)
+   if exists(sel)
+      colheads = colheads[sel]
+      matrix B = B[sel,]
+   elif colheads[1] == "const"
+      colheads = colheads[2:]
+      matrix B = B[2:,]
+   endif
+   colheads += "lfrac"
+   matrix Bs = B' ~ b.lfrac
+   cnameset(Bs, colheads)
+   plot Bs
+      literal set termoption enhanced
+      options with-lp fit=none
+      literal set xlabel 's = λ/λ_{max}'
+      printf "set xrange [1:%g]", minc(b.lfrac)
+      literal set logscale x
    end plot --output=display
 end function
