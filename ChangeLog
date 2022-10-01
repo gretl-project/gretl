@@ -1,6 +1,7 @@
 version 2022c, in progress
 - substantial speed-up for hansl functions called from loops
   or other iterative contexts
+- lists and strings: support selection of elements via vector
 - "printf" command: support a named string variable as the
   "format" argument
 - "ols" command with --jackknife option: make the output more
