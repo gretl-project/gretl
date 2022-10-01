@@ -5593,6 +5593,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                 /* singleton list selection */
 		ret = list_member_node(l->v.ivec, vlist[1], p);
 	    } else if (!p->err && gretl_list_is_consecutive(vlist)) {
+                /* selected elements are consecutive */
 		int r1 = vlist[1];
 		int r2 = vlist[vlist[0]];
 
@@ -5602,7 +5603,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                     ret = string_range_node(l->v.str, r1, r2, p);
                 }
             } else if (!p->err) {
-                /* not consecutive */
+                /* selection is not consecutive */
                 if (l->t == STR) {
                     ret = aux_string_node(p);
                     ret->v.str = gretl_utf8_select(l->v.str, vlist);
