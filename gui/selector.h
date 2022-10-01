@@ -65,6 +65,10 @@ selector *
 simple_selection_with_data (int ci, const char *title, int (*callback)(), 
 			    GtkWidget *parent, gpointer data);
 
+selector *
+matrix_selection (int ci, const char *title, int (*callback)(),
+		  GtkWidget *parent, const gretl_matrix *m);
+
 void modelspec_dialog (int ci);
 
 void selector_set_varnum (int v);

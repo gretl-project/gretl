@@ -2680,6 +2680,38 @@ static gchar *compose_pkg_title (ufunc *func,
     return title;
 }
 
+static int regls_plot_from_selector (selector *sr)
+{
+    const char *buf = selector_list(sr);
+    int *list = NULL;
+    int err = 0;
+
+    if (buf == NULL) return 1;
+
+    list = gretl_list_from_string(buf, &err);
+    printlist(list, "plot list");
+    free(list);
+
+    return err;
+}
+
+static int prepare_regls_plot_call (gretl_bundle *b,
+                                    GtkWidget *parent)
+{
+    gretl_matrix *B;
+    int err = 0;
+
+    B = gretl_bundle_get_matrix(b, "B", &err);
+    if (!err) {
+        /* select the coefficients to be plotted */
+        matrix_selection(REGLS_PLOTSEL, "select matrix rows",
+                         regls_plot_from_selector,
+                         parent, B);
+    }
+
+    return err;
+}
+
 /* Execute a special-purpose function made available by the
    package that produced bundle @b, possibly inflected by an
    integer option. If an option is present it's packed into
@@ -2728,6 +2760,10 @@ int exec_bundle_special_function (gretl_bundle *b,
     if (func == NULL) {
 	errbox_printf(_("Couldn't find function %s"), funname);
 	return E_DATA;
+    }
+
+    if (!strcmp(funname, "regls_knot_plot")) {
+        return prepare_regls_plot_call(b, parent);
     }
 
     if (forecast) {
@@ -2834,6 +2870,10 @@ gchar *get_bundle_special_function (gretl_bundle *b,
 
     if (pkgname != NULL && *pkgname != '\0') {
 	fnpkg *pkg = get_function_package_by_name(pkgname);
+
+        if (!strcmp(pkgname, "regls")) {
+            return g_strdup("regls_knot_plot");
+        }
 
 	if (pkg == NULL) {
 	    char *fname =

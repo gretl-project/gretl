@@ -865,6 +865,15 @@ static int bundle_plot_ok (windata_t *vwin)
     if (pf != NULL) {
 	ret = 1;
 	g_free(pf);
+    } else if (0) {
+        /* special: can we offer regls_knot_plot? not just yet */
+        const char *s = gretl_bundle_get_creator(b);
+
+        if (s != NULL && !strcmp(s, "regls") &&
+            gretl_bundle_has_key(b, "B") &&
+            gretl_bundle_has_key(b, "lfrac")) {
+            ret = 1;
+        }
     }
 
     return ret;

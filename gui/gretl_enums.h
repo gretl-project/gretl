@@ -124,6 +124,7 @@ enum extra_cmds {
     COUNTMOD,
     REGLS,
     REGLS_ADV,
+    REGLS_PLOTSEL,
     BWFILTER,
     POLYWEIGHTS,
     EMAFILTER,
