@@ -21,9 +21,9 @@
 #define EDITBAR_H
 
 typedef enum {
-    VIEWBAR_EDITABLE = 1 << 0,
-    VIEWBAR_HAS_TEXT = 1 << 1
-} ViewbarFlags;
+    EDITBAR_EDITABLE = 1 << 0,
+    EDITBAR_HAS_TEXT = 1 << 1
+} EditbarFlags;
 
 #define winlist_item(i) (strcmp(i->icon, GRETL_STOCK_WINLIST) == 0)
 
@@ -38,7 +38,7 @@ extern int toolbar_icon_size;
 
 void gretl_stock_icons_init (void);
 
-void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags);
+void vwin_add_editbar (windata_t *vwin, EditbarFlags flags);
 
 GtkWidget *build_text_popup (windata_t *vwin);
 

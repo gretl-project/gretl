@@ -65,7 +65,7 @@ enum {
     FIND_ITEM,
     CLOSE_ITEM,
     STDERR_ITEM
-} viewbar_flags;
+} editbar_flags;
 
 int toolbar_icon_size = GTK_ICON_SIZE_MENU;
 
@@ -408,7 +408,7 @@ static void show_stderr (GtkWidget *w, windata_t *vwin)
     viewer_show_stderr(vwin);
 }
 
-static GretlToolItem viewbar_items[] = {
+static GretlToolItem editbar_items[] = {
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), NEW_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
@@ -431,7 +431,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Show stderr"), GTK_STOCK_PRINT_ERROR, G_CALLBACK(show_stderr), STDERR_ITEM },
 };
 
-static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
+static int n_editbar_items = G_N_ELEMENTS(editbar_items);
 
 #define exec_ok(r) (vwin_editing_script(r))
 #define open_ok(r) (vwin_editing_script(r))
@@ -691,9 +691,9 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
     return menu;
 }
 
-static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
+static void editbar_add_items (windata_t *vwin, EditbarFlags flags)
 {
-    int save_ok = (flags & VIEWBAR_EDITABLE);
+    int save_ok = (flags & EDITBAR_EDITABLE);
     GtkWidget *hpane = NULL, *vpane = NULL;
     GtkWidget *button;
     GtkWidget *menu;
@@ -701,10 +701,10 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     GCallback func;
     int i;
 
-    for (i=0; i<n_viewbar_items; i++) {
+    for (i=0; i<n_editbar_items; i++) {
         func = NULL;
         menu = NULL;
-        item = &viewbar_items[i];
+        item = &editbar_items[i];
 
         /* Is there anything to hook up, in context? We
            try first for a menu to attach to the toolbar
@@ -755,15 +755,15 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     }
 }
 
-void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
+void vwin_add_editbar (windata_t *vwin, EditbarFlags flags)
 {
-    if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
+    if ((flags & EDITBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
         g_object_set_data(G_OBJECT(vwin->main), "text_out",
                           GINT_TO_POINTER(1));
     }
 
     vwin->mbar = gretl_toolbar_new(NULL);
-    viewbar_add_items(vwin, flags);
+    editbar_add_items(vwin, flags);
     vwin_pack_toolbar(vwin);
 }
 
@@ -775,8 +775,8 @@ GtkWidget *build_text_popup (windata_t *vwin)
     GtkWidget *w;
     int i;
 
-    for (i=0; i<n_viewbar_items; i++) {
-        item = &viewbar_items[i];
+    for (i=0; i<n_editbar_items; i++) {
+        item = &editbar_items[i];
         func = G_CALLBACK(NULL);
         if (item->flag == SPLIT_H_ITEM || item->flag == SPLIT_V_ITEM) {
             continue;
