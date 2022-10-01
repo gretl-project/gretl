@@ -183,7 +183,7 @@ enum {
 
 #define SHOW_LISTS_CODE(c) (c == SUMMARY || c == CORR || c == MAHAL || c == PCA)
 
-#define LIST_USE_INTS(c) (c == ELLIPSE || c == SAVE_FUNCTIONS)
+#define LIST_USE_INTS(c) (c == ELLIPSE || c == SAVE_FUNCTIONS || c == REGLS_PLOTSEL)
 
 #define WANT_TOGGLES(c) (c == DPANEL || \
                          c == ARMA || \
@@ -8344,8 +8344,6 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     return sr;
 }
 
-#if 0 /* not used yet */
-
 static void list_append_named_row (GtkListStore *store,
 				   GtkTreeIter *iterp,
 				   const char **names,
@@ -8360,7 +8358,7 @@ static void list_append_named_row (GtkListStore *store,
 }
 
 selector *
-matrix_selection (const char *title, int (*callback)(),
+matrix_selection (int ci, const char *title, int (*callback)(),
 		  GtkWidget *parent, const gretl_matrix *m)
 {
     GtkListStore *store;
@@ -8381,9 +8379,9 @@ matrix_selection (const char *title, int (*callback)(),
         return NULL;
     }
 
-    selector_init(sr, 0, title, callback, parent, NULL, SELECTOR_SIMPLE);
+    selector_init(sr, ci, title, callback, parent, NULL, SELECTOR_SIMPLE);
 
-    tmp = simple_selection_top_label(0, title);
+    tmp = simple_selection_top_label(ci, title);
     if (tmp != NULL) {
         gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
     }
@@ -8423,8 +8421,6 @@ matrix_selection (const char *title, int (*callback)(),
 
     return sr;
 }
-
-#endif /* not used yet */
 
 selector *simple_selection (int ci, const char *title, int (*callback)(),
                             GtkWidget *parent)
