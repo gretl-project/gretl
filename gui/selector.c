@@ -7853,6 +7853,8 @@ static char *simple_sel_label (int ci)
         return N_("Select variables to test");
     case DEFINE_LIST:
         return N_("Define named list");
+    case REGLS_PLOTSEL:
+	return N_("Select coefficients to track");
     default:
         return NULL;
     }
@@ -8351,7 +8353,7 @@ static void list_append_named_row (GtkListStore *store,
 {
     gtk_list_store_append(store, iterp);
     gtk_list_store_set(store, iterp,
-                       COL_ID, i,
+                       COL_ID, i+1, /* 1-based */
                        COL_LAG, 0,
                        COL_NAME, names[i],
                        -1);
@@ -8359,7 +8361,8 @@ static void list_append_named_row (GtkListStore *store,
 
 selector *
 matrix_selection (int ci, const char *title, int (*callback)(),
-		  GtkWidget *parent, const gretl_matrix *m)
+		  GtkWidget *parent, const gretl_matrix *m,
+		  void *data)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -8379,7 +8382,7 @@ matrix_selection (int ci, const char *title, int (*callback)(),
         return NULL;
     }
 
-    selector_init(sr, ci, title, callback, parent, NULL, SELECTOR_SIMPLE);
+    selector_init(sr, ci, title, callback, parent, data, SELECTOR_SIMPLE);
 
     tmp = simple_selection_top_label(ci, title);
     if (tmp != NULL) {
@@ -8395,6 +8398,9 @@ matrix_selection (int ci, const char *title, int (*callback)(),
 
     /* add rownames of @m to @left_box */
     for (i=0; i<m->rows; i++) {
+	if (ci == REGLS_PLOTSEL && !strcmp(rownames[i], "const")) {
+	    continue;
+	}
 	list_append_named_row(store, &iter, rownames, i);
 	sr->n_left += 1;
     }
@@ -8812,6 +8818,11 @@ int selector_list_hasconst (const selector *sr)
 gpointer selector_get_data (const selector *sr)
 {
     return sr->data;
+}
+
+void selector_set_extra_data (selector *sr, void *data)
+{
+    sr->extra_data = data;
 }
 
 gpointer selector_get_extra_data (const selector *sr)

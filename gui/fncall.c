@@ -2680,127 +2680,40 @@ static gchar *compose_pkg_title (ufunc *func,
     return title;
 }
 
-static int regls_plot_from_selector (selector *sr)
+static int real_exec_bundle_function (gretl_bundle *b,
+				      const char *id,
+				      ufunc *func,
+				      int iopt,
+				      int plotting,
+				      int forecast,
+				      int t1, int t2)
 {
-    const char *buf = selector_list(sr);
-    int *list = NULL;
-    int err = 0;
-
-    if (buf == NULL) return 1;
-
-    list = gretl_list_from_string(buf, &err);
-    printlist(list, "plot list");
-    free(list);
-
-    return err;
-}
-
-static int prepare_regls_plot_call (gretl_bundle *b,
-                                    GtkWidget *parent)
-{
-    gretl_matrix *B;
-    int err = 0;
-
-    B = gretl_bundle_get_matrix(b, "B", &err);
-    if (!err) {
-        /* select the coefficients to be plotted */
-        matrix_selection(REGLS_PLOTSEL, "select matrix rows",
-                         regls_plot_from_selector,
-                         parent, B);
-    }
-
-    return err;
-}
-
-/* Execute a special-purpose function made available by the
-   package that produced bundle @b, possibly inflected by an
-   integer option. If an option is present it's packed into
-   @aname, following a colon.
-*/
-
-int exec_bundle_special_function (gretl_bundle *b,
-				  const char *id,
-				  const char *aname,
-				  GtkWidget *parent)
-{
-    ufunc *func = NULL;
     fncall *fc = NULL;
-    char funname[32];
+    user_var *uv = get_user_var_by_data(b);
+    const char *bname = NULL;
     PRN *prn = NULL;
-    int plotting = 0;
-    int forecast = 0;
-    int t1 = 0, t2 = 0;
-    int iopt = -1;
     int err = 0;
 
-    plotting = strcmp(id, BUNDLE_PLOT) == 0;
-    forecast = strcmp(id, BUNDLE_FCAST) == 0;
-
-    if (aname != NULL) {
-	if (strchr(aname, ':') != NULL) {
-	    /* extract option */
-	    sscanf(aname, "%31[^:]:%d", funname, &iopt);
-	} else {
-	    /* name but no option present */
-	    strcpy(funname, aname);
-	}
+    if (uv != NULL) {
+	bname = user_var_get_name(uv);
+    }
+    fc = fncall_new(func, 0);
+    if (bname != NULL) {
+	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
     } else {
-	gchar *sf = get_bundle_special_function(b, id);
-
-	if (sf == NULL) {
-	    return E_DATA;
-	} else {
-	    strcpy(funname, sf);
-	    g_free(sf);
-	}
+	err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
     }
+    if (!err && forecast) {
+	t1++; t2++; /* convert to 1-based */
+	push_anon_function_arg(fc, GRETL_TYPE_INT, &t1);
+	push_anon_function_arg(fc, GRETL_TYPE_INT, &t2);
+    } else if (!err && iopt >= 0) {
+	/* add the option flag, if any, to args */
+	double minv = fn_param_minval(func, 1);
 
-    func = get_user_function_by_name(funname);
-
-    if (func == NULL) {
-	errbox_printf(_("Couldn't find function %s"), funname);
-	return E_DATA;
-    }
-
-    if (!strcmp(funname, "regls_knot_plot")) {
-        return prepare_regls_plot_call(b, parent);
-    }
-
-    if (forecast) {
-	/* check for feasibility */
-	int resp = simple_forecast_dialog(&t1, &t2, parent);
-
-	if (canceled(resp)) {
-	    return 0;
-	}
-	allow_full_data_access(1);
-    }
-
-    if (!err) {
-	user_var *uv = get_user_var_by_data(b);
-	const char *bname = NULL;
-
-	if (uv != NULL) {
-	    bname = user_var_get_name(uv);
-	}
-	fc = fncall_new(func, 0);
-	if (bname != NULL) {
-	    err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
-	} else {
-	    err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
-	}
-	if (!err && forecast) {
-	    t1++; t2++; /* convert to 1-based */
-	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t1);
-	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t2);
-	} else if (!err && iopt >= 0) {
-	    /* add the option flag, if any, to args */
-	    double minv = fn_param_minval(func, 1);
-
-	    if (!na(minv)) {
-		iopt += (int) minv;
-		err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
-	    }
+	if (!na(minv)) {
+	    iopt += (int) minv;
+	    err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	}
     }
 
@@ -2849,6 +2762,147 @@ int exec_bundle_special_function (gretl_bundle *b,
 
     gretl_print_destroy(prn);
 
+    return err;
+}
+
+struct exec_data {
+    gretl_bundle *b;
+    ufunc *func;
+};
+
+static int regls_plot_from_selector (selector *sr)
+{
+
+    const char *buf = selector_list(sr);
+    struct exec_data *edata;
+    fncall *fc = NULL;
+    gretl_matrix *sel = NULL;
+    int *list = NULL;
+    int zero = 0;
+    int err = 0;
+
+    edata = selector_get_extra_data(sr);
+
+    if (buf == NULL || edata == NULL) {
+	gui_errmsg(E_DATA);
+    }
+
+    list = gretl_list_from_string(buf, &err);
+    if (!err) {
+	sel = gretl_list_to_vector(list, &err);
+    }
+    if (!err) {
+	fc = fncall_new(edata->func, 0);
+    }
+    if (fc != NULL) {
+	push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, edata->b);
+	push_anon_function_arg(fc, GRETL_TYPE_INT, &zero);
+	push_anon_function_arg(fc, GRETL_TYPE_MATRIX, sel);
+	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				  NULL, NULL, NULL);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    free(list);
+    free(sel);
+
+    return err;
+}
+
+static int prepare_regls_plot_call (gretl_bundle *b,
+				    ufunc *func,
+                                    GtkWidget *parent)
+{
+    gretl_matrix *B;
+    int err = 0;
+
+    B = gretl_bundle_get_matrix(b, "B", &err);
+    if (!err) {
+	struct exec_data *edata = malloc(sizeof *edata);
+	selector *sr;
+
+	edata->b = b;
+	edata->func = func;
+        /* select the coefficients to be plotted */
+        sr = matrix_selection(REGLS_PLOTSEL, "gretl: regls",
+			      regls_plot_from_selector,
+			      parent, B, func);
+	selector_set_extra_data(sr, edata);
+    }
+
+    return err;
+}
+
+/* Execute a special-purpose function made available by the
+   package that produced bundle @b, possibly inflected by an
+   integer option. If an option is present it's packed into
+   @aname, following a colon.
+*/
+
+int exec_bundle_special_function (gretl_bundle *b,
+				  const char *id,
+				  const char *aname,
+				  GtkWidget *parent)
+{
+    ufunc *func = NULL;
+    char funname[32];
+    int plotting = 0;
+    int forecast = 0;
+    int t1 = 0, t2 = 0;
+    int iopt = -1;
+    int err = 0;
+
+    plotting = strcmp(id, BUNDLE_PLOT) == 0;
+    forecast = strcmp(id, BUNDLE_FCAST) == 0;
+
+    if (aname != NULL) {
+	if (strchr(aname, ':') != NULL) {
+	    /* extract option */
+	    sscanf(aname, "%31[^:]:%d", funname, &iopt);
+	} else {
+	    /* name but no option present */
+	    strcpy(funname, aname);
+	}
+    } else {
+	gchar *sf = get_bundle_special_function(b, id);
+
+	if (sf == NULL) {
+	    return E_DATA;
+	} else {
+	    strcpy(funname, sf);
+	    g_free(sf);
+	}
+    }
+
+    func = get_user_function_by_name(funname);
+
+    if (func == NULL) {
+	errbox_printf(_("Couldn't find function %s"), funname);
+	return E_DATA;
+    }
+
+    if (!strcmp(funname, "regls_bundle_plot")) {
+        return prepare_regls_plot_call(b, func, parent);
+    }
+
+    if (forecast) {
+	/* check for feasibility */
+	int resp = simple_forecast_dialog(&t1, &t2, parent);
+
+	if (canceled(resp)) {
+	    return 0;
+	}
+	allow_full_data_access(1);
+    }
+
+    if (!err) {
+	real_exec_bundle_function(b, id, func, iopt, plotting,
+				  forecast, t1, t2);
+    }
+
     if (err) {
 	gui_errmsg(err);
     }
@@ -2870,10 +2924,6 @@ gchar *get_bundle_special_function (gretl_bundle *b,
 
     if (pkgname != NULL && *pkgname != '\0') {
 	fnpkg *pkg = get_function_package_by_name(pkgname);
-
-        if (!strcmp(pkgname, "regls")) {
-            return g_strdup("regls_knot_plot");
-        }
 
 	if (pkg == NULL) {
 	    char *fname =

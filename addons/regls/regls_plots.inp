@@ -86,11 +86,21 @@ function void regls_knot_plot (const bundle b, const matrix sel[null])
    colheads += "lfrac"
    matrix Bs = B' ~ b.lfrac
    cnameset(Bs, colheads)
+   scalar x0 = b.lfrac[b.idxmin]
    plot Bs
       literal set termoption enhanced
-      options with-lp fit=none
+      options with-lp single-yaxis fit=none
       literal set xlabel 's = λ/λ_{max}'
+      literal set key outside
       printf "set xrange [1:%g]", minc(b.lfrac)
       literal set logscale x
+      literal set style arrow 1 nohead dt 2
+      printf "set arrow 1 from %g, graph 0 to %g, graph 1", x0, x0
+      literal set arrow 1 as 1
    end plot --output=display
+end function
+
+function void regls_bundle_plot (const bundle *b, int unused[0],
+                                 const matrix sel[null])
+   regls_knot_plot(b, sel)
 end function
