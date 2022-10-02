@@ -34,9 +34,9 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls 0.33: regularized least squares for gretl}
+\title{regls 0.4: regularized least squares for gretl}
 \author{Allin Cottrell}
-\date{Last revised September 22, 2022}
+\date{Last revised October 2, 2022}
 
 \begin{document}
 \maketitle
@@ -582,6 +582,40 @@ only the $\lambda$ value that is optimized. To assess the efficacy of
 various $\alpha$ values one would have to perform several cross
 validation runs.
 
+\section{GUI usage}
+
+You can access \texttt{regls} in the gretl GUI via the menu item
+\textsf{Model/Other linear models/Regularized least squares}. This
+brings up the dialog box shown in Figure~\ref{fig:regls-gui}. Multiple
+$\lambda$ values and cross validation are supported as shown. Clicking
+the \textsf{Advanced} button gives access to most of the additional
+options discussed above (e.g.\ choice of algorithm, seed for
+randomized cross-validation folds). 
+
+\begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[scale=0.5]{regls_gui}
+  \caption{\texttt{regls} dialog}
+  \label{fig:regls-gui}
+  \end{center}
+\end{figure}
+
+The option \texttt{Show criterion plot} (available only if multiple
+$\lambda$s are specified) produces a plot showing the behavior of the
+minimand (MSE if cross validation is selected, BIC otherwise) as
+$\lambda$ is varied. An example of the MSE case can be found in
+Figure~\ref{fig:mse-plot}. The triangle indicates the MSE minimizer
+and the circle indicates the point favored by the ``one standard
+error'' criterion ($s^{\dagger}$, see section~\ref{sec:xvalid}).
+
+\begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[scale=0.5]{mse_plot}
+  \caption{MSE plot, invoked by ``Show criterion plot''}
+  \label{fig:mse-plot}
+  \end{center}
+\end{figure}
+
 \section{Reference: public functions}
 \label{sec:funcref}
 
@@ -705,10 +739,31 @@ series glmnet_pred (matrix *Rb, list X)
   list. This is then comparable with gretl's \texttt{nzb}.
 \end{funcdoc}
 
+\begin{funcdoc}
+\begin{verbatim}
+void regls_coeff_plot (const bundle b, const matrix sel[null])
+\end{verbatim}
+  Produces a plot showing the paths of coefficient estimates as the
+  LASSO or Ridge constraint is progressively relaxed. The bundle
+  argument should be obtained via \texttt{regls} estimation with
+  several \texttt{lfrac} values, as in section~\ref{sec:simple-search}
+  or \ref{sec:xvalid} above. The optional second argument allows you
+  to pass in a selection vector to limit the number of paths shown
+  (the default being to show all). For example, a matrix constructed
+  as folows
+\begin{code}
+   matrix sel = {5,10,15,20,30}
+\end{code}
+  would limit the plot to coefficients 5, 10, 15, 20 and 30. The
+  numbering of the coefficients is 1-based and the order is that of
+  the \texttt{X} list argument to \texttt{regls}.
+\end{funcdoc}
+
 \section{Change log}
 \label{sec:changes}
 
-Version 0.33, 2022-09-22: update a function signature to comply with
+Version 0.4, 2022-10-02: Enhancements for regls plots; document GUI
+usage; update an internal function signature to comply with gretl's
 new ``const inheriance'' policy.\\
 Version 0.32, 2022-08-05: fix breakage for single-lambda case.\\
 Version 0.31, 2022-06-03: update URL; revise fragile list-saving code;

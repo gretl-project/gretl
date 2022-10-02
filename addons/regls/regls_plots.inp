@@ -73,7 +73,7 @@ function void regls_bic_plot (const bundle b)
    end plot --output=display
 end function
 
-function void regls_knot_plot (const bundle b, const matrix sel[null])
+function void regls_coeff_plot (const bundle b, const matrix sel[null])
    matrix B = b.B
    strings colheads = rnameget(B)
    if exists(sel)
@@ -104,5 +104,5 @@ end function
 
 function void regls_bundle_plot (const bundle *b, int unused[0],
                                  const matrix sel[null])
-   regls_knot_plot(b, sel)
+   regls_coeff_plot(b, sel)
 end function
