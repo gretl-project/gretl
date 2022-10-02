@@ -23,6 +23,7 @@
 #define GRETL_STOCK_TEX     "gretl-tex"
 #define GRETL_STOCK_MAIL    "gretl-mail"
 #define GRETL_STOCK_TS      "gretl-tsplot"
+#define GRETL_STOCK_CP      "gretl-coeffplot"
 #define GRETL_STOCK_BOX     "gretl-boxplot"
 #define GRETL_STOCK_PDF     "gretl-pdf"
 #define GRETL_STOCK_BOOK    "gretl-book"

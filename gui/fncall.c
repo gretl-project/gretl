@@ -2827,7 +2827,8 @@ static int prepare_regls_plot_call (gretl_bundle *b,
 	edata->b = b;
 	edata->func = func;
         /* select the coefficients to be plotted */
-        sr = matrix_selection(REGLS_PLOTSEL, "gretl: regls",
+        sr = matrix_selection(REGLS_PLOTSEL,
+			      "gretl: regls coeffient plot",
 			      regls_plot_from_selector,
 			      parent, B, func);
 	selector_set_extra_data(sr, edata);

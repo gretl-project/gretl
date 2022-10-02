@@ -138,6 +138,7 @@ struct png_stock_maker png_stocks[] = {
     { "join_v.png",    GRETL_STOCK_JOIN_V, 0 },
     { "boxplot.png",   GRETL_STOCK_BOX, 0 },
     { "tsplot.png",    GRETL_STOCK_TS, 0 },
+    { "coeffplot.png", GRETL_STOCK_CP, 0 },
     { "book.png",      GRETL_STOCK_BOOK, 0 },
     { "query.png",     GRETL_STOCK_QUERY, 0 },
 };
@@ -916,11 +917,25 @@ static int edit_script_popup_item (GretlToolItem *item)
 	!strcmp(item->icon, GTK_STOCK_FIND_AND_REPLACE);
 }
 
-static void set_plot_icon (GretlToolItem *item, int role)
+static void set_plot_icon (GretlToolItem *item, windata_t *vwin)
 {
-    if (role == LOESS || role == NADARWAT || role == VIEW_BUNDLE) {
-	item->icon = GRETL_STOCK_SCATTER;
-    } else if (role == VIEW_SERIES && dataset_is_cross_section(dataset)) {
+    int r = vwin->role;
+
+    if (r == LOESS || r == NADARWAT || r == VIEW_BUNDLE) {
+	int done = 0;
+
+	if (r == VIEW_BUNDLE) {
+	    const char *s = gretl_bundle_get_creator(vwin->data);
+
+	    if (s != NULL && !strcmp(s, "regls")) {
+		item->icon = GRETL_STOCK_CP;
+		done = 1;
+	    }
+	}
+	if (!done) {
+	    item->icon = GRETL_STOCK_SCATTER;
+	}
+    } else if (r == VIEW_SERIES && dataset_is_cross_section(dataset)) {
 	item->icon = GRETL_STOCK_BOX;
     } /* else stay with the default, a time series plot icon */
 }
@@ -1469,7 +1484,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	}
 
 	if (item->flag == PLOT_ITEM) {
-	    set_plot_icon(item, vwin->role);
+	    set_plot_icon(item, vwin);
 	}
 
 	button = vwin_toolbar_insert(item, func, menu, vwin, -1);
