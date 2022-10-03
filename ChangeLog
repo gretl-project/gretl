@@ -1,7 +1,7 @@
 version 2022c, in progress
 - substantial speed-up for hansl functions called from loops
   or other iterative contexts
-- lists and strings: support selection of elements via vector
+- lists and strings: support vector selection of elements
 - "printf" command: support a named string variable as the
   "format" argument
 - "ols" command with --jackknife option: make the output more
@@ -13,9 +13,12 @@ version 2022c, in progress
   determinant
 - flatten() function for arrays of strings: add the ability to
   specify a custom separator
+- strsub() function help: note that an array of strings can be
+  given as the first argument
 - gretl_edit: enable auto-completion, add some specialized
   "developer" options, and add a "kill" button to stop script
   execution
+- regls addon: plotting enhancements; document GUI usage
 - Clarify and properly enforce the case where the "const"
   property of a hansl function argument must be inherited
 - Fix and speed up reading of gretl's binary matrix files via
