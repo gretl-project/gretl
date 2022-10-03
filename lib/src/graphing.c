@@ -9734,6 +9734,45 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
+/* [example] palette = "set palette maxcolors 4; \
+   set palette defined (0 '#D65E5E', 1 '#8594E1', \
+   2 '#85E1C3', 3 '#E1C385'); unset colorbox"
+*/
+
+static int print_discrete_palette (const char *s, FILE *fp)
+{
+    gretl_array *S;
+    gchar *aname;
+    int n, err = 0;
+
+    s += strspn(s, " ");
+    aname = g_strstrip(g_strdup(s));
+    S = get_array_by_name(aname);
+
+    if (gretl_array_get_type(S) != GRETL_TYPE_STRINGS ||
+        (n = gretl_array_get_length(S)) < 2) {
+        gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", aname);
+        err = E_INVARG;
+    } else {
+        int i;
+
+        fprintf(fp, "set palette maxcolors %d\n", n);
+        fputs("set palette defined (", fp);
+        for (i=0; i<n; i++) {
+            s = gretl_array_get_data(S, i);
+            fprintf(fp, "%d '%s'", i, s);
+            if (i < n-1) {
+                fputs(", ", fp);
+            }
+        }
+        fputs(")\nunset colorbox\n", fp);
+    }
+
+    g_free(aname);
+
+    return err;
+}
+
 static void simple_print_palette (const char *p, FILE *fp)
 {
     if (!strcmp(p, "blues")) {
@@ -9800,25 +9839,29 @@ static void tricky_print_palette (const char *p,
     fprintf(fp, "set cbrange [%.8g:%.8g]\n", zlim[0] - .001, zlim[1]);
 }
 
-static void handle_palette (gretl_bundle *opts,
-			    const gretl_matrix *zrange,
-                            int na_action,
-			    FILE *fp)
+static int handle_palette (gretl_bundle *opts,
+                           const gretl_matrix *zrange,
+                           int na_action,
+                           FILE *fp)
 {
     const double *zlim = zrange->val;
     const char *p;
 
     p = gretl_bundle_get_string(opts, "palette", NULL);
 
-    if (na_action == NA_FILL) {
+    if (!strncmp(p, "discrete,", 9)) {
+        return print_discrete_palette(p + 9, fp);
+    } else if (na_action == NA_FILL) {
 	tricky_print_palette(p, zlim, fp);
 	/* cbrange handled */
-	return;
+	return 0;
     } else if (p != NULL) {
 	simple_print_palette(p, fp);
     }
 
     fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
+
+    return 0;
 }
 
 static void set_plot_limits (gretl_bundle *opts,
@@ -9944,7 +9987,12 @@ int write_map_gp_file (const char *plotfile,
     fputs("unset key\n", fp);
 
     if (have_payload) {
-	handle_palette(opts, zrange, na_action, fp);
+	err = handle_palette(opts, zrange, na_action, fp);
+        if (err) {
+            fclose(fp);
+            gretl_remove(gretl_plotfile());
+            return err;
+        }
     }
 
     fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
