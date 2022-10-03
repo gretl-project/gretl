@@ -7951,10 +7951,8 @@ int fill_permutation_vector (gretl_vector *v, int n)
    of the source file (GeoJSON or Shapefile), via @fname,
    OR the map info in the form of a gretl_bundle, via @mapptr.
 
-   The "payload" (if any) is given as a series, via @plx.
-
-   Options (if any) are provided via @optptr, a pointer to
-   gretl_bundle.
+   The "payload" (if any) is given as a series, via @plx;
+   plotting options (if any) are provided via @opts.
 */
 
 int geoplot_driver (const char *fname,
