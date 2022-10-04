@@ -12009,9 +12009,9 @@
       </fnargs>
       <description>
 	<para>
-	  Sorts <argname>x</argname> in ascending order, skipping
-	  observations with missing values when <math>x</math> is a
-	  series.
+	  Sorts <argname>x</argname> in ascending order. Observations
+	  with missing values are skipped if <math>x</math> is a
+	  series, but sorted to the end if <math>x</math> is a vector.
 	  <seelist>
             <fncref targ="dsort"/>
             <fncref targ="values"/>
@@ -13388,9 +13388,10 @@ d =  8.0000000
       <description>
 	<para>
 	  Returns a vector containing the distinct elements of
-	  <argname>x</argname> sorted in ascending order.  If you wish
-	  to truncate the values to integers before applying this
-	  function, use the expression <lit>values(int(x))</lit>.
+	  <argname>x</argname> sorted in ascending order, ignoring any
+	  missing values.  If you wish to truncate the values to
+	  integers before applying this function, use the expression
+	  <lit>values(int(x))</lit>.
 	</para>
 	<para>
 	  <seelist>
