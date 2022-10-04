@@ -9739,36 +9739,76 @@ static void fputs_literal (const char *s, FILE *fp)
    2 '#85E1C3', 3 '#E1C385'); unset colorbox"
 */
 
-static int print_discrete_palette (const char *s, FILE *fp)
+static int print_discrete_palette (const char *s,
+				   const gretl_matrix *zrange,
+				   FILE *fp)
 {
-    gretl_array *S;
-    gchar *aname;
-    int n, err = 0;
+    gchar **anames = NULL;
+    int n = 0, err = 0;
 
-    s += strspn(s, " ");
-    aname = g_strstrip(g_strdup(s));
-    S = get_array_by_name(aname);
-
-    if (gretl_array_get_type(S) != GRETL_TYPE_STRINGS ||
-        (n = gretl_array_get_length(S)) < 2) {
-        gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", aname);
-        err = E_INVARG;
+    anames = g_strsplit(s, ",", 2);
+    if (anames == NULL) {
+	gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", s);
+	err = E_INVARG;
     } else {
-        int i;
-
-        fprintf(fp, "set palette maxcolors %d\n", n);
-        fputs("set palette defined (", fp);
-        for (i=0; i<n; i++) {
-            s = gretl_array_get_data(S, i);
-            fprintf(fp, "%d '%s'", i, s);
-            if (i < n-1) {
-                fputs(", ", fp);
-            }
-        }
-        fputs(")\nunset colorbox\n", fp);
+	n = g_strv_length(anames);
+	if (n < 1 || n > 2) {
+	    gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", s);
+	    err = E_INVARG;
+	}
     }
 
-    g_free(aname);
+    if (!err) {
+	gretl_array *S[2] = {NULL};
+	int i, j, m[2] = {0};
+
+	for (i=0; i<n; i++) {
+	    S[i] = get_array_by_name(anames[i]);
+	    if (gretl_array_get_type(S[i]) != GRETL_TYPE_STRINGS ||
+		(m[i] = gretl_array_get_length(S[i])) < 2) {
+		gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", anames[i]);
+		err = E_INVARG;
+	    }
+	}
+	if (!err && n == 2 && m[1] != m[0]) {
+	    gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", anames[i]);
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    fprintf(fp, "set palette maxcolors %d\n", m[0]);
+	    fputs("set palette defined (", fp);
+	    for (j=0; j<m[0]; j++) {
+		s = gretl_array_get_data(S[0], j);
+		fprintf(fp, "%d '%s'", j, s);
+		if (j < m[0]-1) {
+		    fputs(", ", fp);
+		}
+	    }
+	    fputs(")\n", fp);
+	    if (n == 2) {
+		double zmin = zrange->val[0];
+		double incr = (m[0] - 1.0) / m[0];
+		double x = zmin + incr / 2.0;
+
+		fputs("set cbtics (", fp);
+		for (j=0; j<m[0]; j++) {
+		    s = gretl_array_get_data(S[1], j);
+		    fprintf(fp, "'%s' %g", s, x);
+		    x += incr;
+		    if (j < m[0]-1) {
+			fputs(", ", fp);
+		    }
+		}
+		fputs(") scale 0\n", fp);
+	    } else {
+		fputs("unset colorbox\n", fp);
+	    }
+	}
+    }
+
+    if (anames != NULL) {
+	g_strfreev(anames);
+    }
 
     return err;
 }
@@ -9850,7 +9890,7 @@ static int handle_palette (gretl_bundle *opts,
     p = gretl_bundle_get_string(opts, "palette", NULL);
 
     if (!strncmp(p, "discrete,", 9)) {
-        return print_discrete_palette(p + 9, fp);
+        return print_discrete_palette(p + 9, zrange, fp);
     } else if (na_action == NA_FILL) {
 	tricky_print_palette(p, zlim, fp);
 	/* cbrange handled */
