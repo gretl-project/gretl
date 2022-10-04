@@ -9889,13 +9889,15 @@ static int handle_palette (gretl_bundle *opts,
 
     p = gretl_bundle_get_string(opts, "palette", NULL);
 
-    if (!strncmp(p, "discrete,", 9)) {
+    if (p == NULL || *p == '\0') {
+	return 0;
+    } else if (!strncmp(p, "discrete,", 9)) {
         return print_discrete_palette(p + 9, zrange, fp);
     } else if (na_action == NA_FILL) {
 	tricky_print_palette(p, zlim, fp);
 	/* cbrange handled */
 	return 0;
-    } else if (p != NULL) {
+    } else {
 	simple_print_palette(p, fp);
     }
 
@@ -10026,7 +10028,7 @@ int write_map_gp_file (const char *plotfile,
 
     fputs("unset key\n", fp);
 
-    if (have_payload) {
+    if (have_payload && opts != NULL) {
 	err = handle_palette(opts, zrange, na_action, fp);
         if (err) {
             fclose(fp);
