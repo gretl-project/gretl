@@ -13256,10 +13256,10 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Returns a vector containing the distinct elements of
-	  <argname>x</argname>, not sorted but in their order of
-	  appearance. See <fncref targ="values"/> for a variant
-	  that sorts the elements.
+	  Returns a vector containing the distinct non-missing
+	  elements of <argname>x</argname>, not sorted but in their
+	  order of appearance. See <fncref targ="values"/> for a
+	  variant that sorts the elements.
 	</para>
       </description>
     </function>
