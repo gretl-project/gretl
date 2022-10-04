@@ -9734,6 +9734,44 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
+#if 0 /* not used yet, coming shortly */
+
+static char **map_autocolors (scalar n)
+{
+    const char *base[] = {"2d", "b4", "6a", "a6", "4b", "d2"};
+    char **colors = NULL;
+    int *sel = NULL;
+    int nb = 6;
+    int nt = nb * nb * nb;
+    double nt_n = nt / (double) n;
+    int r, g, b, i, j, p;
+
+    colors = strings_array_new_with_length(n, 9);
+    seq = malloc(n * sizeof *seq);
+    for (i=0; i<n; i++) {
+        sel[i] = (int) round(nt_n * (i + 0.5));
+    }
+
+    i = j = p = 0;
+    for (r=0; r<nb && p<n; r++) {
+        for (g=0; g<nb && p<n; g++) {
+            for (b=0; b<nb && p<n; b++) {
+                if (j == sel[p]) {
+                    sprintf(colors[i++], "0x%s%s%s", base[r], base[g], base[b]);
+                    p++;
+                }
+                j++;
+            }
+        }
+    }
+
+    free(sel);
+
+    return colors;
+}
+
+#endif
+
 /* [example] palette = "set palette maxcolors 4; \
    set palette defined (0 '#D65E5E', 1 '#8594E1', \
    2 '#85E1C3', 3 '#E1C385'); unset colorbox"
