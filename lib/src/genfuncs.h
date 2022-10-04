@@ -255,6 +255,7 @@ int fill_permutation_vector (gretl_vector *v, int n);
 
 int geoplot_driver (const char *fname,
 		    gretl_bundle *map,
+		    int v,
 		    const double *x,
 		    const DATASET *dset,
 		    gretl_bundle *ops);

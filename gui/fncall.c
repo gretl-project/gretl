@@ -4916,8 +4916,8 @@ void map_plot_callback (void)
     } else {
 	gretl_bundle *opts = NULL;
 	GList *payload_list = NULL;
-	double *payload = NULL;
-	int payload_id = 0;
+	double *plx = NULL;
+	int plv = 0;
 	int resp, selpos = 0;
 	int err = 0;
 
@@ -4927,20 +4927,20 @@ void map_plot_callback (void)
 
 	/* get options from the user */
 	resp = map_options_dialog(payload_list, selpos,
-				  opts, &payload_id);
+				  opts, &plv);
 	if (resp == GRETL_CANCEL) {
 	    return;
 	}
 	if (payload_list != NULL) {
 	    g_list_free(payload_list);
 	}
-	if (payload_id == 0) {
+	if (plv == 0) {
 	    /* just showing outlines */
 	    gretl_bundle_set_int(opts, "tics", 1);
 	} else {
-	    payload = dataset->Z[payload_id];
+	    plx = dataset->Z[plv];
 	}
-	err = geoplot_driver(mapfile, NULL, payload, dataset, opts);
+	err = geoplot_driver(mapfile, NULL, plv, plx, dataset, opts);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

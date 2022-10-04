@@ -12969,7 +12969,8 @@ static NODE *geoplot_node (NODE *l, NODE *m, NODE *r, parser *p)
     if (!p->err) {
         const char *mapfile = NULL;
         gretl_bundle *mapbun = NULL;
-        double *payload = NULL;
+	int plv = -1;       /* payload series ID */
+        double *plx = NULL; /* payload data */
         gretl_bundle *opts = NULL;
 
 	if (l->t == STR || l->t == BUNDLE) {
@@ -12981,7 +12982,8 @@ static NODE *geoplot_node (NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 	    if (!null_node(m)) {
 		if (m->t == SERIES) {
-		    payload = m->v.xvec;
+		    plv = m->vnum;
+		    plx = m->v.xvec;
 		} else if (m->t == BUNDLE) {
 		    opts = m->v.b;
 		} else {
@@ -12997,7 +12999,8 @@ static NODE *geoplot_node (NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 	} else if (l->t == SERIES) {
 	    /* series [,options] (map is implicit) */
-	    payload = l->v.xvec;
+	    plv = l->vnum;
+	    plx = l->v.xvec;
 	    if (!null_node(m)) {
 		if (m->t == BUNDLE) {
 		    opts = m->v.b;
@@ -13015,7 +13018,7 @@ static NODE *geoplot_node (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
         if (!p->err) {
-            p->err = ret->v.xval = geoplot_driver(mapfile, mapbun, payload,
+            p->err = ret->v.xval = geoplot_driver(mapfile, mapbun, plv, plx,
                                                   p->dset, opts);
 	}
     }

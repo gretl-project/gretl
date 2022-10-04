@@ -7949,14 +7949,16 @@ int fill_permutation_vector (gretl_vector *v, int n)
 /* Driver function for calling the geoplot plugin to produce
    a map. To obtain the map polygons we need EITHER the name
    of the source file (GeoJSON or Shapefile), via @fname,
-   OR the map info in the form of a gretl_bundle, via @mapptr.
+   OR the map info in the form of a gretl_bundle, via @map.
 
-   The "payload" (if any) is given as a series, via @plx;
-   plotting options (if any) are provided via @opts.
+   The "payload" (if any) is given as a series, via @plx,
+   and if it's a named series its ID number will be in @plv.
+   Plotting options (if any) are provided via @opts.
 */
 
 int geoplot_driver (const char *fname,
                     gretl_bundle *map,
+		    int plv,
                     const double *plx,
                     const DATASET *dset,
                     gretl_bundle *opts)
@@ -7983,6 +7985,13 @@ int geoplot_driver (const char *fname,
             gretl_errmsg_set("geoplot: no map was specified");
             return E_DATA;
         }
+    }
+
+    if (plv > 0) {
+	/* check the payload series for the discrete property,
+	   and for whether it is string-valued
+	*/
+	; /* TODO */
     }
 
     if (plx != NULL) {

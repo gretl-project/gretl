@@ -9734,7 +9734,7 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
-#if 0 /* not used yet, coming shortly */
+#if 0 /* we're not ready for this just yet */
 
 static char **map_autocolors (scalar n)
 {
@@ -9746,7 +9746,7 @@ static char **map_autocolors (scalar n)
     double nt_n = nt / (double) n;
     int r, g, b, i, j, p;
 
-    colors = strings_array_new_with_length(n, 9);
+    colors = strings_array_new_with_length(n+1, 9);
     seq = malloc(n * sizeof *seq);
     for (i=0; i<n; i++) {
         sel[i] = (int) round(nt_n * (i + 0.5));
@@ -9766,6 +9766,8 @@ static char **map_autocolors (scalar n)
     }
 
     free(sel);
+    free(colors[n]);
+    colors[n] = NULL; /* sentinel */
 
     return colors;
 }
