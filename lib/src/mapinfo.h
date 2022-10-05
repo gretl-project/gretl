@@ -39,7 +39,8 @@ typedef enum {
 typedef enum {
     MAP_NON_STD  = 1 << 0,
     MAP_IS_IMAGE = 1 << 1,
-    MAP_DISPLAY  = 1 << 2
+    MAP_DISPLAY  = 1 << 2,
+    MAP_DISCRETE = 1 << 3
 } MapFlags;
 
 typedef enum {
@@ -58,7 +59,8 @@ struct mapinfo_ {
     char *datfile;         /* auxiliary file: gnuplot data */
     gretl_matrix *bbox;    /* plot bounding box */
     gretl_matrix *zrange;  /* range of the payload data */
-    char **zlabels;        /* labels for values of discrete payload */
+    gretl_matrix *zvals;   /* ordered unique values (discrete data) */
+    char **zlabels;        /* labels for @zvals (discrete data) */
     gretl_bundle *opts;    /* options specified by caller, or NULL */
     MapFlags flags;        /* state flags */
     NaAction na_action;    /* method for handling missing values */
@@ -71,5 +73,12 @@ int geoplot_driver (const char *fname,
                     const double *plx,
                     const DATASET *dset,
                     gretl_bundle *opts);
+
+int print_map_palette (mapinfo *mi, FILE *fp);
+
+void set_map_plot_limits (mapinfo *mi,
+			  double *xlim,
+			  double *ylim,
+			  double margin);
 
 #endif /* MAPINFO_H */

@@ -9631,24 +9631,7 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
     return x;
 }
 
-/* geoplot functions */
-
-/* stretch_limits(): allow a little extra space in the X and Y
-   dimensions so that the map doesn't entirely fill the plot
-   area; the range is scaled by the factor (1 + 2*@margin).
-*/
-
-static void stretch_limits (double *targ, const gretl_matrix *minmax,
-			    int col, double margin)
-{
-    double lo = gretl_matrix_get(minmax, 0, col);
-    double hi = gretl_matrix_get(minmax, 1, col);
-    double mid = 0.5 * (lo + hi);
-    double hlf = 0.5 * (hi - lo) * (1 + 2*margin);
-
-    targ[0] = mid - hlf;
-    targ[1] = mid + hlf;
-}
+/* geoplot-specific functions */
 
 static int inline_map_data (const char *datfile, FILE *fp)
 {
@@ -9775,209 +9758,6 @@ static char **map_autocolors (scalar n)
 
 #endif
 
-/* [example] palette = "set palette maxcolors 4; \
-   set palette defined (0 '#D65E5E', 1 '#8594E1', \
-   2 '#85E1C3', 3 '#E1C385'); unset colorbox"
-*/
-
-static int print_discrete_palette (const char *s,
-				   const gretl_matrix *zrange,
-				   FILE *fp)
-{
-    gchar **anames = NULL;
-    int n = 0, err = 0;
-
-    anames = g_strsplit(s, ",", 2);
-    if (anames == NULL) {
-	gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", s);
-	err = E_INVARG;
-    } else {
-	n = g_strv_length(anames);
-	if (n < 1 || n > 2) {
-	    gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", s);
-	    err = E_INVARG;
-	}
-    }
-
-    if (!err) {
-	gretl_array *S[2] = {NULL};
-	int i, j, m[2] = {0};
-
-	for (i=0; i<n; i++) {
-	    S[i] = get_array_by_name(anames[i]);
-	    if (gretl_array_get_type(S[i]) != GRETL_TYPE_STRINGS ||
-		(m[i] = gretl_array_get_length(S[i])) < 2) {
-		gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", anames[i]);
-		err = E_INVARG;
-	    }
-	}
-	if (!err && n == 2 && m[1] != m[0]) {
-	    gretl_errmsg_sprintf("Invalid discrete palette argument '%s'", anames[i]);
-	    err = E_INVARG;
-	}
-	if (!err) {
-	    fprintf(fp, "set palette maxcolors %d\n", m[0]);
-	    fputs("set palette defined (", fp);
-	    for (j=0; j<m[0]; j++) {
-		s = gretl_array_get_data(S[0], j);
-		fprintf(fp, "%d '%s'", j, s);
-		if (j < m[0]-1) {
-		    fputs(", ", fp);
-		}
-	    }
-	    fputs(")\n", fp);
-	    if (n == 2) {
-		double zmin = zrange->val[0];
-		double incr = (m[0] - 1.0) / m[0];
-		double x = zmin + incr / 2.0;
-
-		fputs("set cbtics (", fp);
-		for (j=0; j<m[0]; j++) {
-		    s = gretl_array_get_data(S[1], j);
-		    fprintf(fp, "'%s' %g", s, x);
-		    x += incr;
-		    if (j < m[0]-1) {
-			fputs(", ", fp);
-		    }
-		}
-		fputs(") scale 0\n", fp);
-	    } else {
-		fputs("unset colorbox\n", fp);
-	    }
-	}
-    }
-
-    if (anames != NULL) {
-	g_strfreev(anames);
-    }
-
-    return err;
-}
-
-static void simple_print_palette (const char *p, FILE *fp)
-{
-    if (!strcmp(p, "blues")) {
-        fputs("set palette defined (0 '#D4E4F2', 1 'steelblue')\n", fp);
-    } else if (!strcmp(p, "oranges")) {
-        fputs("set palette defined (0 '#E9D9B5', 1 'dark-orange')\n", fp);
-    } else if (!strcmp(p, "green-to-red")) {
-	fputs("set palette defined (0 '#58996E', 1 '#E1D99A', 2 '#C0414C')\n", fp);
-    } else {
-	fprintf(fp, "%s\n", p);
-    }
-}
-
-static void tricky_print_palette (const char *p,
-				  const double *zlim,
-				  FILE *fp)
-{
-    const char *colors[3][3] = {
-        { "#D4E4F2", "steelblue", NULL },   /* "blues" */
-        { "#E9D9B5", "dark-orange", NULL }, /* "oranges" */
-        { "#58996E", "#E1D99A", "#C0414C" } /* "green-to-red" */
-    };
-    int i = 3;
-
-    if (p == NULL) {
-	i = 3;
-    } else if (!strcmp(p, "blues")) {
-	i = 0;
-    } else if (!strcmp(p, "oranges")) {
-	i = 1;
-    } else if (!strcmp(p, "green-to-red")) {
-	i = 2;
-    }
-
-    /* FIXME: maybe allow specification of NA fill color? */
-
-    fprintf(fp, "set palette defined (%.8g 'gray', ", zlim[0] - 0.002);
-
-    if (i == 3) {
-	const char *hc[] = {
-            "#000000", "#7202F3", "#A11096",
-            "#C63700", "#E48300", "#FFFF00"
-	};
-	double step = (zlim[1] - zlim[0] + 0.001) / 5;
-	double z = zlim[0] - 0.001;
-	int j;
-
-	for (j=0; j<6; j++) {
-	    fprintf(fp, "%.8g '%s'", z, hc[j]);
-	    fputs(j == 1 ? ", \\\n" : j < 5 ? ", " : ")\n", fp);
-	    z += step;
-	}
-    } else {
-	fprintf(fp, "%.8g '%s', ", zlim[0] - 0.001, colors[i][0]);
-	if (i < 2) {
-	    fprintf(fp, "%.8g '%s')\n", zlim[1], colors[i][1]);
-	} else {
-	    fprintf(fp, "%.8g '%s', %.8g '%s')\n", (zlim[1] - zlim[0]) / 2,
-		    colors[i][1], zlim[1], colors[i][2]);
-	}
-    }
-
-    /* for this to work, cbrange has to be set using zlim */
-    fprintf(fp, "set cbrange [%.8g:%.8g]\n", zlim[0] - .001, zlim[1]);
-}
-
-static int handle_palette (mapinfo *mi, FILE *fp)
-{
-    const double *zlim = mi->zrange->val;
-    const char *p;
-
-    p = gretl_bundle_get_string(mi->opts, "palette", NULL);
-
-    if (p == NULL || *p == '\0') {
-	return 0;
-    } else if (!strncmp(p, "discrete,", 9)) {
-        return print_discrete_palette(p + 9, mi->zrange, fp);
-    } else if (mi->na_action == NA_FILL) {
-	tricky_print_palette(p, zlim, fp);
-	/* cbrange handled */
-	return 0;
-    } else {
-	simple_print_palette(p, fp);
-    }
-
-    fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
-
-    return 0;
-}
-
-static void set_plot_limits (gretl_bundle *opts,
-			     const gretl_matrix *bbox,
-			     double *xlim, double *ylim,
-			     double margin)
-{
-    const gretl_matrix *mxy, *mx, *my;
-
-    mxy = gretl_bundle_get_matrix(opts, "mxy__", NULL);
-    if (mxy != NULL) {
-	xlim[0] = mxy->val[0];
-	xlim[1] = mxy->val[1];
-	ylim[0] = mxy->val[2];
-	ylim[1] = mxy->val[3];
-	gretl_bundle_delete_data(opts, "mxy__");
-	return;
-    }
-
-    mx = gretl_bundle_get_matrix(opts, "xrange", NULL);
-    if (mx != NULL && gretl_vector_get_length(mx) == 2) {
-	xlim[0] = mx->val[0];
-	xlim[1] = mx->val[1];
-    } else {
-	stretch_limits(xlim, bbox, 0, margin);
-    }
-
-    my = gretl_bundle_get_matrix(opts, "yrange", NULL);
-    if (my != NULL && gretl_vector_get_length(my) == 2) {
-	ylim[0] = my->val[0];
-	ylim[1] = my->val[1];
-    } else {
-	stretch_limits(ylim, bbox, 1, margin);
-    }
-}
-
 static const char *map_linecolor (const char *optlc,
 				  int have_payload,
 				  NaAction action)
@@ -10026,12 +9806,7 @@ int write_map_gp_file (void *ptr)
     show = (mi->flags & MAP_DISPLAY) != 0;
     non_standard = (mi->flags & MAP_NON_STD) != 0;
 
-    if (opts != NULL) {
-	set_plot_limits(opts, mi->bbox, xlim, ylim, margin);
-    } else {
-	stretch_limits(xlim, mi->bbox, 0, margin);
-	stretch_limits(ylim, mi->bbox, 1, margin);
-    }
+    set_map_plot_limits(mi, xlim, ylim, margin);
 
     if (gretl_bundle_has_key(opts, "height")) {
 	height = gretl_bundle_get_scalar(opts, "height", &err);
@@ -10065,7 +9840,7 @@ int write_map_gp_file (void *ptr)
     fputs("unset key\n", fp);
 
     if (have_payload && opts != NULL) {
-	err = handle_palette(mi, fp);
+	err = print_map_palette(mi, fp);
         if (err) {
             fclose(fp);
             gretl_remove(gretl_plotfile());
