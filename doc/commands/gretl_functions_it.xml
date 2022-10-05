@@ -5054,16 +5054,17 @@
       </fnargs>
       <description>
 	<para>
-	  Compatta un array di matrici in una singola matrice
-	  oppure un array di stringhe in una singola stringa.
+	  Compatta un array di matrici in una singola matrice oppure
+	  un array di stringhe in una singola stringa.
 	</para>
 	<para>
-	  Nel caso matriciale, le matrici contenute in <argname>A</argname> sono,
-	  di default, concatenate orizzontalmente, ma se un valore diverso
-	  da zero è inserito in <argname>alt</argname> la
-	  concatenazione è verticale. In entrambi i casi viene prodotto un errore.
-	  qualora le matrici non siano conformabili per l'operazione.
-	  Si veda <fncref targ="msplitby"/> per l'operazione inversa.
+	  Nel caso matriciale, le matrici contenute in
+	  <argname>A</argname> sono, di default, concatenate
+	  orizzontalmente, ma se un valore diverso da zero è inserito
+	  in <argname>alt</argname> la concatenazione è verticale. In
+	  entrambi i casi viene prodotto un errore.  qualora le
+	  matrici non siano conformabili per l'operazione.  Si veda
+	  <fncref targ="msplitby"/> per l'operazione inversa.
 	</para>
 	<para>
 	  Nel caso di un array di stringhe, esse sono contenute in
@@ -12098,9 +12099,9 @@
       </fnargs>
       <description>
 	<para>
-	  Ordina <argname>x</argname> in senso crescente, non
-	  considerando le osservazioni mancanti nel caso in cui
-	  <math>x</math> sia una variabile.
+	  Ordina <argname>x</argname> in senso crescente. Se
+	  <math>x</math> è una serie, le osservazioni mancanti sono
+	  saltate. Se invece è un vettore sono poste in fondo.
 	  <seelist>
 	    <fncref targ="dsort"/>
 	    <fncref targ="values"/>
@@ -12766,7 +12767,7 @@
 
     <function name="strsub" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
 	<fnarg type="string">find</fnarg>
 	<fnarg type="string">subst</fnarg>
       </fnargs>
@@ -13365,10 +13366,10 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Restituisce un vettore che contiene gli elementi distinti di
-	  <argname>x</argname>, non ordinati ma nell'ordine in cui
-	  compaiono. Si veda <fncref targ="values"/> per una variante
-	  che ordina gli elementi.
+	  Restituisce un vettore che contiene gli elementi non-missing
+	  distinti di <argname>x</argname>, non ordinati ma
+	  nell'ordine in cui compaiono. Si veda <fncref
+	  targ="values"/> per una variante che ordina gli elementi.
 	</para>
       </description>
     </function>
@@ -13500,8 +13501,9 @@ d =  8.0000000
       <description>
 	<para>
 	  Restituisce un vettore contenente gli elementi distinti di
-	  <argname>x</argname> ordinati in senso crescente. Se si desidera
-	  troncare all'intero i valori prima di applicare questa funzione è
+	  <argname>x</argname> ordinati in senso crescente. I valori
+	  mancanti vengono ignorati. Se si desidera troncare
+	  all'intero i valori prima di applicare questa funzione è
 	  possibile usare l'espressione <lit>values(int(x))</lit>.
 	</para>
 	<para>
