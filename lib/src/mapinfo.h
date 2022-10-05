@@ -19,7 +19,8 @@
 
 /* mapinfo.h for gretl: the role of this file is to facilitate
    communication between the various phases of producing a
-   "geoplot" map.
+   "geoplot" map, the code for which is found in in mapinfo.c,
+   plugin/geoplot.c and graphing.c.
 */
 
 #ifndef MAPINFO_H
