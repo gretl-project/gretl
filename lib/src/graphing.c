@@ -33,6 +33,7 @@
 #include "uservar.h"
 #include "gretl_midas.h"
 #include "boxplots.h"
+#include "mapinfo.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -9919,21 +9920,18 @@ static void tricky_print_palette (const char *p,
     fprintf(fp, "set cbrange [%.8g:%.8g]\n", zlim[0] - .001, zlim[1]);
 }
 
-static int handle_palette (gretl_bundle *opts,
-                           const gretl_matrix *zrange,
-                           int na_action,
-                           FILE *fp)
+static int handle_palette (mapinfo *mi, FILE *fp)
 {
-    const double *zlim = zrange->val;
+    const double *zlim = mi->zrange->val;
     const char *p;
 
-    p = gretl_bundle_get_string(opts, "palette", NULL);
+    p = gretl_bundle_get_string(mi->opts, "palette", NULL);
 
     if (p == NULL || *p == '\0') {
 	return 0;
     } else if (!strncmp(p, "discrete,", 9)) {
-        return print_discrete_palette(p + 9, zrange, fp);
-    } else if (na_action == NA_FILL) {
+        return print_discrete_palette(p + 9, mi->zrange, fp);
+    } else if (mi->na_action == NA_FILL) {
 	tricky_print_palette(p, zlim, fp);
 	/* cbrange handled */
 	return 0;
@@ -9982,13 +9980,13 @@ static void set_plot_limits (gretl_bundle *opts,
 
 static const char *map_linecolor (const char *optlc,
 				  int have_payload,
-				  int na_action)
+				  NaAction action)
 {
     if (optlc != NULL) {
 	/* respect the user's choice */
 	return optlc;
     } else if (have_payload) {
-	return (na_action == NA_OUTLINE)? "gray" : "white";
+	return (action == NA_OUTLINE)? "gray" : "white";
     } else {
 	/* outlines only */
 	return "black";
@@ -9997,16 +9995,10 @@ static const char *map_linecolor (const char *optlc,
 
 /* called from the geoplot plugin to finalize a map */
 
-int write_map_gp_file (const char *plotfile,
-		       int plotfile_is_image,
-		       const char *datfile,
-		       const gretl_matrix *bbox,
-		       const gretl_matrix *zrange,
-		       gretl_bundle *opts,
-		       int non_standard,
-		       int na_action,
-		       int show)
+int write_map_gp_file (void *ptr)
 {
+    mapinfo *mi = ptr;
+    gretl_bundle *opts = mi->opts;
     double xlim[2], ylim[2];
     gretl_matrix *dims = NULL;
     const char *optlc = NULL;
@@ -10015,14 +10007,15 @@ int write_map_gp_file (const char *plotfile,
     gchar *datasrc = NULL;
     double linewidth = 1.0;
     double margin = 0.02;
-    int have_payload = 0;
+    int show, have_payload = 0;
+    int non_standard;
     int use_arg0 = 0;
     int height = 600;
     int border = 1;
     int notics = 1;
     int err = 0;
 
-    if (zrange != NULL) {
+    if (mi->zrange != NULL) {
         have_payload = 1;
     } else if (opts == NULL) {
 	/* the simple outlines case */
@@ -10030,11 +10023,14 @@ int write_map_gp_file (const char *plotfile,
 	notics = 0;
     }
 
+    show = (mi->flags & MAP_DISPLAY) != 0;
+    non_standard = (mi->flags & MAP_NON_STD) != 0;
+
     if (opts != NULL) {
-	set_plot_limits(opts, bbox, xlim, ylim, margin);
+	set_plot_limits(opts, mi->bbox, xlim, ylim, margin);
     } else {
-	stretch_limits(xlim, bbox, 0, margin);
-	stretch_limits(ylim, bbox, 1, margin);
+	stretch_limits(xlim, mi->bbox, 0, margin);
+	stretch_limits(ylim, mi->bbox, 1, margin);
     }
 
     if (gretl_bundle_has_key(opts, "height")) {
@@ -10052,11 +10048,11 @@ int write_map_gp_file (const char *plotfile,
     }
     if (show) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
-	if (plotfile != NULL) {
-	    iact_gpfile = (char *) plotfile;
+	if (mi->plotfile != NULL) {
+	    iact_gpfile = (char *) mi->plotfile;
 	}
-    } else if (plotfile_is_image) {
-	set_optval_string(GNUPLOT, OPT_U, plotfile);
+    } else if (mi->flags & MAP_IS_IMAGE) {
+	set_optval_string(GNUPLOT, OPT_U, mi->plotfile);
     }
 
     fp = open_plot_input_file(PLOT_GEOMAP, 0, &err);
@@ -10069,7 +10065,7 @@ int write_map_gp_file (const char *plotfile,
     fputs("unset key\n", fp);
 
     if (have_payload && opts != NULL) {
-	err = handle_palette(opts, zrange, na_action, fp);
+	err = handle_palette(mi, fp);
         if (err) {
             fclose(fp);
             gretl_remove(gretl_plotfile());
@@ -10133,16 +10129,16 @@ int write_map_gp_file (const char *plotfile,
     gnuplot_missval_string(fp);
 
     if (gretl_bundle_get_int(opts, "inlined", NULL)) {
-	err = inline_map_data(datfile, fp);
+	err = inline_map_data(mi->datfile, fp);
 	if (!err) {
 	    datasrc = g_strdup("$MapData");
 	}
-    } else if (plotfile_is_image) {
+    } else if (mi->flags & MAP_IS_IMAGE) {
 	/* @plotfile and @datfile are both disposable, no need
 	   to bother about name alignment
 	*/
-	datasrc = g_strdup_printf("\"%s\"", datfile);
-    } else if (plotfile != NULL) {
+	datasrc = g_strdup_printf("\"%s\"", mi->datfile);
+    } else if (mi->plotfile != NULL) {
 	/* the names of @plotfile and @datfile will already be
 	   correctly aligned
 	*/
@@ -10151,8 +10147,8 @@ int write_map_gp_file (const char *plotfile,
 	/* rename @datfile to match the auto-named plot file */
 	gchar *tmp = g_strdup_printf("%s.dat", gretl_plotfile());
 
-	gretl_copy_file(datfile, tmp);
-	gretl_remove(datfile);
+	gretl_copy_file(mi->datfile, tmp);
+	gretl_remove(mi->datfile);
 	g_free(tmp);
 	use_arg0 = 1;
     }
@@ -10163,7 +10159,7 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (!err) {
-	const char *lc = map_linecolor(optlc, have_payload, na_action);
+	const char *lc = map_linecolor(optlc, have_payload, mi->na_action);
 	gchar *bline = NULL;
 
 	if (have_payload) {

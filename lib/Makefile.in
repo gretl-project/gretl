@@ -248,6 +248,7 @@ SRCS = adf_kpss.c \
 	kalman.c \
 	libglue.c \
 	libset.c \
+	mapinfo.c \
 	matrix_extra.c \
 	missing.c \
 	modelprint.c \

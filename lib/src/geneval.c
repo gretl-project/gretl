@@ -45,6 +45,7 @@
 #include "var.h"
 #include "vartest.h"
 #include "flow_control.h"
+#include "mapinfo.h"
 
 #include <time.h> /* for the $now accessor */
 

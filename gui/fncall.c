@@ -30,6 +30,7 @@
 #include "gretl_xml.h"
 #include "gretl_typemap.h"
 #include "matrix_extra.h"
+#include "mapinfo.h"
 #include "gretl_zip.h"
 #include "addons_utils.h"
 #include "database.h"

@@ -24,22 +24,15 @@
 #include "libset.h"
 #include "version.h"
 #include "shapefile.h"
+#include "mapinfo.h"
 
 #define GEODEBUG 0
 
 enum { DBF, SHP, GEO };
 
-enum {
-    PRJ0,      /* geoplot default: quasi-Mercator */
-    WGS84,     /* null projection */
-    EPSG3857,  /* "proper" Mercator */
-    EPSG2163,  /* US National Atlas Equal Area */
-    EPSG3035,  /* Europe Equal Area */
-};
-
 int proj;       /* projection to be used */
-int na_action;  /* how to handle payload NAs */
 int n_missing;  /* number of payload NAs */
+int na_action;  /* how to handle payload NAs */
 double zna;     /* value to represent payload NA under NA_FILL */
 
 #define GEOHUGE 1.0e100
@@ -1200,24 +1193,21 @@ static int shapefile_to_csv (const char *fname,
    a shapefile or a GeoJSON file.
 */
 
-static gretl_matrix *map2dat (const char *mapname,
-			      gretl_bundle *map,
-			      const char *datname,
-			      const gretl_matrix *zvec,
-			      const gretl_matrix *mask,
-			      int *non_standard)
+static gretl_matrix *map2dat (mapinfo *mi,
+			      const gretl_matrix *mask)
 {
     gretl_matrix *ret = NULL;
+    int non_std = 0;
     char infile[MAXLEN];
 
-    if (mapname != NULL) {
-	strcpy(infile, mapname);
+    if (mi->mapfile != NULL) {
+	strcpy(infile, mi->mapfile);
 	get_full_read_path(infile);
     } else {
 	infile[0] = '\0';
     }
 
-    if (zvec != NULL && zvec->cols > 1) {
+    if (mi->zvec != NULL && mi->zvec->cols > 1) {
 	gretl_errmsg_set("Invalid payload");
 	return NULL;
     }
@@ -1229,7 +1219,7 @@ static gretl_matrix *map2dat (const char *mapname,
     gretl_push_c_numeric_locale();
 
     if (has_suffix(infile, ".shp")) {
-	ret = shp2dat(infile, datname, zvec, mask);
+	ret = shp2dat(infile, mi->datfile, mi->zvec, mask);
     } else {
 	/* Regular GeoJSON procedure, either reading from
 	   @infile or working from pre-loaded @map bundle.
@@ -1237,20 +1227,24 @@ static gretl_matrix *map2dat (const char *mapname,
 	gretl_array *features;
 	int err = 0;
 
-	if (map != NULL) {
-	    features = features_from_bundle(map, non_standard, &err);
+	if (mi->map != NULL) {
+	    features = features_from_bundle(mi->map, &non_std, &err);
 	} else {
-	    features = geojson_get_features(infile, non_standard, &err);
+	    features = geojson_get_features(infile, &non_std, &err);
 	}
 	if (features != NULL) {
-	    ret = geo2dat(features, datname, zvec, mask, non_standard);
-	    if (map == NULL) {
+	    ret = geo2dat(features, mi->datfile, mi->zvec, mask, &non_std);
+	    if (mi->map == NULL) {
 		gretl_array_destroy(features);
 	    }
 	}
     }
 
     gretl_pop_c_numeric_locale();
+
+    if (non_std) {
+        mi->flags |= MAP_NON_STD;
+    }
 
     return ret;
 }
@@ -1400,7 +1394,7 @@ static int transform_ranges (gretl_bundle *opts, int proj)
 
 #endif
 
-static int set_projection (gretl_bundle *opts, const char *s)
+static int set_projection (mapinfo *mi, const char *s)
 {
     int err = 0;
 
@@ -1420,8 +1414,8 @@ static int set_projection (gretl_bundle *opts, const char *s)
     }
 
 #if TR_RANGES
-    if (proj == EPSG3857 && opts != NULL) {
-	err = transform_ranges(opts, proj);
+    if (mi->proj == EPSG3857 && mi->opts != NULL) {
+	err = transform_ranges(mi->opts, proj);
     }
 #endif
 
@@ -1506,12 +1500,12 @@ static int is_image_filename (const char *s)
     }
 }
 
-static int get_na_action (gretl_bundle *opts)
+static int get_na_action (mapinfo *mi)
 {
     const char *s;
     int err = 0;
 
-    s = gretl_bundle_get_string(opts, "missvals", &err);
+    s = gretl_bundle_get_string(mi->opts, "missvals", &err);
 
     if (!err) {
 	if (!strcmp(s, "skip")) {
@@ -1526,56 +1520,50 @@ static int get_na_action (gretl_bundle *opts)
     return err;
 }
 
-int geoplot (const char *mapfile,
-	     gretl_bundle *map,
-	     gretl_matrix *payload,
-	     gretl_bundle *opts)
+int geoplot (mapinfo *mi)
 {
     const gretl_matrix *mask = NULL;
-    gretl_matrix *bbox = NULL;
-    gretl_matrix *zrange = NULL;
-    gchar *plotfile = NULL;
-    gchar *datfile = NULL;
     const char *sval;
-    int plotfile_is_image = 0;
-    int non_standard = 0;
-    int free_payload = 0;
-    int show = 1;
+    int free_zvec = 0;
     int err = 0;
 
+    /* file-scope globals */
     proj = PRJ0;
     na_action = NA_OUTLINE;
     n_missing = 0;
     zna = 0;
 
-    if (opts != NULL) {
-	if (gretl_bundle_has_key(opts, "show")) {
-	    show = gretl_bundle_get_int(opts, "show", &err);
+    if (mi->opts != NULL) {
+	if (gretl_bundle_has_key(mi->opts, "show")) {
+	    int show = gretl_bundle_get_int(mi->opts, "show", &err);
+
+            if (show == 0) {
+                mi->flags &= MAP_DISPLAY;
+            }
 	}
-	if (gretl_bundle_has_key(opts, "plotfile")) {
-	    sval = gretl_bundle_get_string(opts, "plotfile", &err);
+	if (gretl_bundle_has_key(mi->opts, "plotfile")) {
+	    sval = gretl_bundle_get_string(mi->opts, "plotfile", &err);
 	    if (sval != NULL) {
 		/* note: respect workdir as default output path */
-		plotfile = ensure_full_write_path(sval);
-		if (is_image_filename(plotfile)) {
-		    plotfile_is_image = 1;
-		    show = 0;
+		mi->plotfile = ensure_full_write_path(sval);
+		if (is_image_filename(mi->plotfile)) {
+                    mi->flags |= MAP_IS_IMAGE;
+                    mi->flags &= MAP_DISPLAY;
 		}
 	    }
 	}
-	if (gretl_bundle_has_key(opts, "missvals")) {
-	    err = get_na_action(opts);
+	if (gretl_bundle_has_key(mi->opts, "missvals")) {
+	    err = get_na_action(mi);
 	}
-	if (!err && map != NULL && payload == NULL &&
-	    gretl_bundle_has_key(opts, "payload")) {
+	if (!err && mi->map != NULL && mi->zvec == NULL &&
+	    gretl_bundle_has_key(mi->opts, "payload")) {
 	    /* The payload can be specified as a property, via
-	       the options bundle. TODO: support this when we
-	       get a filename rather than a map bundle?
+	       the options bundle.
 	    */
-	    sval = gretl_bundle_get_string(opts, "payload", &err);
+	    sval = gretl_bundle_get_string(mi->opts, "payload", &err);
 	    if (sval != NULL) {
-		payload = payload_from_prop(map, sval, &err);
-		free_payload = 1;
+		mi->zvec = payload_from_prop(mi->map, sval, &err);
+		free_zvec = 1;
 	    }
 	}
 	if (err) {
@@ -1584,70 +1572,71 @@ int geoplot (const char *mapfile,
     }
 
     /* catch the case of no output */
-    if (!show && plotfile == NULL) {
+    if (mi->plotfile == NULL && !(mi->flags & MAP_DISPLAY)) {
         gretl_errmsg_set("geoplot: no output was specified");
 	err = E_ARGS;
 	goto bailout;
     }
 
     /* if we have a payload, find its range */
-    if (payload != NULL) {
-	zrange = get_zrange(payload, opts, &err);
+    if (mi->zvec != NULL) {
+	mi->zrange = get_zrange(mi->zvec, mi->opts, &err);
     }
 
     /* do we have a sub-sampling mask? (note, 2021-03-18: this
        is not documented, but might be useful in some cases?)
     */
-    if (!err && gretl_bundle_has_key(opts, "mask")) {
-	mask = gretl_bundle_get_matrix(opts, "mask", &err);
+    if (!err && gretl_bundle_has_key(mi->opts, "mask")) {
+	mask = gretl_bundle_get_matrix(mi->opts, "mask", &err);
     }
 
-    if (!err) {
+    if (!err && mi->opts != NULL) {
 	/* specific projection wanted? */
-	sval = gretl_bundle_get_string(opts, "projection", NULL);
+	sval = gretl_bundle_get_string(mi->opts, "projection", NULL);
 	if (sval != NULL) {
-	    err = set_projection(opts, sval);
+	    err = set_projection(mi, sval);
 	}
     }
 
     if (!err) {
 	/* output filenames */
-	if (plotfile != NULL && !plotfile_is_image) {
-	    datfile = g_strdup_printf("%s.dat", plotfile);
+	if (mi->plotfile != NULL && !(mi->flags & MAP_IS_IMAGE)) {
+	    mi->datfile = g_strdup_printf("%s.dat", mi->plotfile);
 	} else {
-	    datfile = gretl_make_dotpath("geoplot_tmp.dat");
+	    mi->datfile = gretl_make_dotpath("geoplot_tmp.dat");
 	}
 #ifdef WIN32
-	geoplot_reslash(datfile);
+	geoplot_reslash(mi->datfile);
 #endif
 	/* write out the polygons data for gnuplot */
-	bbox = map2dat(mapfile, map, datfile, payload, mask, &non_standard);
-	if (bbox == NULL) {
+	mi->bbox = map2dat(mi, mask);
+	if (mi->bbox == NULL) {
 	    err = E_DATA;
 	}
     }
 
     if (!err) {
+        if (n_missing == 0) {
+            na_action = 0;
+        }
 	if (proj > 0) {
-	    non_standard = 1;
+            mi->flags |= MAP_NON_STD;
 	}
-	if (n_missing == 0) {
-	    na_action = 0;
-	}
-	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
-				bbox, zrange, opts, non_standard,
-				na_action, show);
+        mi->proj = proj;
+        mi->na_action = na_action;
+	err = write_map_gp_file(mi);
     }
 
  bailout:
 
-    g_free(plotfile);
-    g_free(datfile);
-    if (free_payload) {
-	gretl_matrix_free(payload);
+    /* FIXME is this the right place for such cleanup? */
+    g_free(mi->plotfile);
+    g_free(mi->datfile);
+    if (free_zvec) {
+	gretl_matrix_free(mi->zvec);
     }
-    gretl_matrix_free(zrange);
-    gretl_matrix_free(bbox);
+    gretl_matrix_free(mi->zrange);
+    gretl_matrix_free(mi->bbox);
 
     return err;
 }

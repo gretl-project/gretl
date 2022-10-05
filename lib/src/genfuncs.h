@@ -253,13 +253,6 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 
 int fill_permutation_vector (gretl_vector *v, int n);
 
-int geoplot_driver (const char *fname,
-		    gretl_bundle *map,
-		    int v,
-		    const double *x,
-		    const DATASET *dset,
-		    gretl_bundle *ops);
-
 int substitute_values (double *dest, const double *src, int n,
 		       const double *v0, int n0,
 		       const double *v1, int n1);
