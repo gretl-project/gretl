@@ -9725,7 +9725,7 @@ static char **map_autocolors (int n)
 	    r = (int) gretl_matrix_get(H, 0, i);
 	    g = (int) gretl_matrix_get(H, 1, i);
 	    b = (int) gretl_matrix_get(H, 2, i);
-	    sprintf(colors[i], "0x%x%x%x", r, g, b);
+	    sprintf(colors[i], "0x%02x%02x%02x", r, g, b);
 	}
     }
 
