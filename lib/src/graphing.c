@@ -273,29 +273,46 @@ int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
-#if defined(OS_OSX) && defined(PKGBUILD)
-# define GP_RETRY 1
-#else
-# define GP_RETRY 0
-#endif
+#endif /* not WIN32 */
 
-static double gnuplot_version (int *msg_done)
+/* variants of gnuplot_version() per platform */
+
+#ifdef G_OS_WIN32
+
+static double gnuplot_version (void)
+{
+    /* As of October 2022, the gretl packages for MS Windows
+       include gnuplot 5.2.6 (32-bit) or 5.4.1 (64-bit).
+    */
+# if defined(_WIN64)
+    return 5.4;
+# else
+    return 5.2;
+# endif
+}
+
+#elif defined(OS_OSX) && defined(PKGBUILD)
+
+static double gnuplot_version (void)
+{
+    /* As of October 2022, the gretl packages for Mac
+       include gnuplot 5.4.1.
+    */
+    return 5.4;
+}
+
+#else /* Linux, or non-packaged build for other OS */
+
+static double gnuplot_version (void)
 {
     static double vnum = 0.0;
 
     if (vnum == 0.0) {
-#if GP_RETRY
-	int retries = 0;
-#endif
 	GError *gerr = NULL;
-	gboolean ok;
 	gchar *sout = NULL;
 	gchar *serr = NULL;
-	gchar *argv[] = {
-	    NULL,
-	    NULL,
-	    NULL
-	};
+	gchar *argv[] = { NULL, NULL, NULL };
+	gboolean ok;
 
 	if (*gnuplot_path == '\0') {
 	    strcpy(gnuplot_path, gretl_gnuplot_path());
@@ -304,9 +321,6 @@ static double gnuplot_version (int *msg_done)
 	argv[0] = gnuplot_path;
 	argv[1] = "--version";
 
-#if GP_RETRY
-    retry:
-#endif
 	ok = g_spawn_sync (NULL,
 			   argv,
 			   NULL,
@@ -331,36 +345,13 @@ static double gnuplot_version (int *msg_done)
 	    }
 	}
 
-#if GP_RETRY
-	if (vnum == 0 && retries == 0) {
-	    /* try substituting default value */
-	    if (gerr != NULL) {
-		g_error_free(gerr);
-		gerr = NULL;
-	    }
-	    fprintf(stderr, "gnuplot: failed on '%s'\n", gnuplot_path);
-	    g_free(sout); sout = NULL;
-	    g_free(serr); serr = NULL;
-	    sprintf(gnuplot_path, "%sgnuplot", gretl_bindir());
-	    fprintf(stderr, "gnuplot: retry with '%s'\n", gnuplot_path);
-	    retries = 1;
-	    goto retry;
-	} else if (vnum > 0 && retries == 1) {
-	    gretl_set_path_by_name("gnuplot", gnuplot_path);
-	}
-#endif
-
 	if (vnum == 0) {
+	    /* didn't get a version number */
 	    if (gerr != NULL) {
-		/* We might see something like:
-		   Failed to execute child process <bad-path>
-		*/
 		gretl_errmsg_set(gerr->message);
 		g_error_free(gerr);
-		*msg_done = 1;
 	    } else if (serr != NULL && *serr != '\0') {
 		gretl_errmsg_set(serr);
-		*msg_done = 1;
 	    }
 	}
 
@@ -371,16 +362,7 @@ static double gnuplot_version (int *msg_done)
     return vnum;
 }
 
-#else /* MS Windows */
-
-static double gnuplot_version (void)
-{
-    /* As of early 2020, the packages for Windows
-       include gnuplot 5.2 */
-    return 5.2;
-}
-
-#endif /* MS Windows or not */
+#endif /* platform variants of gnuplot_version() */
 
 static int gp_list_pos (const char *s, const int *list,
 			const DATASET *dset)
@@ -2017,7 +1999,7 @@ static int gnuplot_too_old (void)
     int ret = 0;
 
     if (gpv == 0.0) {
-	gpv = gnuplot_version(&msg_done);
+	gpv = gnuplot_version();
     }
 
     if (gpv == 0.0) {
@@ -9720,38 +9702,34 @@ static void fputs_literal (const char *s, FILE *fp)
 
 #if 0 /* we're not ready for this just yet */
 
-static char **map_autocolors (scalar n)
+static char **map_autocolors (int n)
 {
-    const char *base[] = {"2d", "b4", "6a", "a6", "4b", "d2"};
+    gretl_matrix *H = NULL;
     char **colors = NULL;
-    int *sel = NULL;
-    int nb = 6;
-    int nt = nb * nb * nb;
-    double nt_n = nt / (double) n;
-    int r, g, b, i, j, p;
+    int i, err = 0;
 
-    colors = strings_array_new_with_length(n+1, 9);
-    seq = malloc(n * sizeof *seq);
-    for (i=0; i<n; i++) {
-        sel[i] = (int) round(nt_n * (i + 0.5));
+    H = halton_matrix(3, n, 0, &err);
+    if (H == NULL) {
+	return NULL;
+    } else {
+	for (i=0; i<3*n; i++) {
+	    H->val[i] = floor(256 * H->val[i]);
+	}
     }
 
-    i = j = p = 0;
-    for (r=0; r<nb && p<n; r++) {
-        for (g=0; g<nb && p<n; g++) {
-            for (b=0; b<nb && p<n; b++) {
-                if (j == sel[p]) {
-                    sprintf(colors[i++], "0x%s%s%s", base[r], base[g], base[b]);
-                    p++;
-                }
-                j++;
-            }
-        }
+    colors = strings_array_new_with_length(n, 9);
+    if (colors != NULL) {
+	int r, g, b;
+
+	for (i=0; i<n; i++) {
+	    r = (int) gretl_matrix_get(H, 0, i);
+	    g = (int) gretl_matrix_get(H, 1, i);
+	    b = (int) gretl_matrix_get(H, 2, i);
+	    sprintf(colors[i], "0x%x%x%x", r, g, b);
+	}
     }
 
-    free(sel);
-    free(colors[n]);
-    colors[n] = NULL; /* sentinel */
+    gretl_matrix_free(H);
 
     return colors;
 }
