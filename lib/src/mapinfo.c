@@ -35,8 +35,8 @@ static void mapinfo_init (mapinfo *mi,
     mi->proj = PRJ0;
 }
 
-/* check for the canonical case, where min = 1 and all values
-   are consecutive
+/* check for the canonical case for a discrete payload:
+   minimum value = 1 and all values are consecutive
 */
 
 static int canonical_discrete (const double *v, int nv)
@@ -93,6 +93,7 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
     if (discrete && !err) {
 	if (canon) {
 	    mi->zvals = vals;
+	    mi->n_discrete = nv;
 	    mi->flags |= MAP_DISCRETE;
 	    if (ns == nv) {
 		mi->zlabels = strvals;
@@ -201,6 +202,38 @@ int geoplot_driver (const char *fname,
     }
 
     return err;
+}
+
+static char **discrete_autocolors (int n)
+{
+    gretl_matrix *H = NULL;
+    char **colors = NULL;
+    int i, err = 0;
+
+    H = halton_matrix(3, n, 0, &err);
+    if (H == NULL) {
+	return NULL;
+    } else {
+	for (i=0; i<3*n; i++) {
+	    H->val[i] = floor(256 * H->val[i]);
+	}
+    }
+
+    colors = strings_array_new_with_length(n, 9);
+    if (colors != NULL) {
+	int r, g, b;
+
+	for (i=0; i<n; i++) {
+	    r = (int) gretl_matrix_get(H, 0, i);
+	    g = (int) gretl_matrix_get(H, 1, i);
+	    b = (int) gretl_matrix_get(H, 2, i);
+	    sprintf(colors[i], "0x%02x%02x%02x", r, g, b);
+	}
+    }
+
+    gretl_matrix_free(H);
+
+    return colors;
 }
 
 /* [example] palette = "set palette maxcolors 4; \
@@ -353,6 +386,7 @@ int print_map_palette (mapinfo *mi, FILE *fp)
     const double *zlim = mi->zrange->val;
     const char *p;
 
+    /* try for a caller-specified palette */
     p = gretl_bundle_get_string(mi->opts, "palette", NULL);
 
     if (p == NULL || *p == '\0') {
@@ -367,6 +401,7 @@ int print_map_palette (mapinfo *mi, FILE *fp)
 	simple_print_map_palette(p, fp);
     }
 
+    /* FIXME is this always right (gnuplot version?) */
     fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
 
     return 0;

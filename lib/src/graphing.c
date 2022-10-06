@@ -9700,42 +9700,6 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
-#if 0 /* we're not ready for this just yet */
-
-static char **map_autocolors (int n)
-{
-    gretl_matrix *H = NULL;
-    char **colors = NULL;
-    int i, err = 0;
-
-    H = halton_matrix(3, n, 0, &err);
-    if (H == NULL) {
-	return NULL;
-    } else {
-	for (i=0; i<3*n; i++) {
-	    H->val[i] = floor(256 * H->val[i]);
-	}
-    }
-
-    colors = strings_array_new_with_length(n, 9);
-    if (colors != NULL) {
-	int r, g, b;
-
-	for (i=0; i<n; i++) {
-	    r = (int) gretl_matrix_get(H, 0, i);
-	    g = (int) gretl_matrix_get(H, 1, i);
-	    b = (int) gretl_matrix_get(H, 2, i);
-	    sprintf(colors[i], "0x%02x%02x%02x", r, g, b);
-	}
-    }
-
-    gretl_matrix_free(H);
-
-    return colors;
-}
-
-#endif
-
 static const char *map_linecolor (const char *optlc,
 				  int have_payload,
 				  NaAction action)
@@ -9751,12 +9715,54 @@ static const char *map_linecolor (const char *optlc,
     }
 }
 
+static void output_map_plot_lines (mapinfo *mi,
+				   const char *datasrc,
+				   const char *optlc,
+				   int have_payload,
+				   double linewidth,
+				   double gpver,
+				   FILE *fp)
+{
+    const char *lc = map_linecolor(optlc, have_payload, mi->na_action);
+    gchar *bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
+
+    if (have_payload) {
+	int do_key = mi->zlabels != NULL && gpver >= 5.4;
+	int do_lines = linewidth > 0;
+	const char *with = "with filledcurves fc palette";
+	const char *cont = ", \\\n";
+	int i, nv = mi->n_discrete;
+
+	/* polygons */
+	fprintf(fp, "plot for [i=0:*] %s index i %s%s", datasrc, with,
+		(do_lines || do_key)? cont : "\n");
+	if (linewidth > 0) {
+	    /* plus feature outlines */
+	    fprintf(fp, "  %s using 1:2 with lines %s notitle%s", datasrc, bline,
+		    do_key ? cont : "\n");
+	}
+	if (do_key) {
+	    /* plus key for discrete payload */
+	    for (i=0; i<nv; i++) {
+		fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
+			i+1, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+	    }
+	}
+    } else {
+	/* just outlines */
+	fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
+    }
+
+    g_free(bline);
+}
+
 /* called from the geoplot plugin to finalize a map */
 
 int write_map_gp_file (void *ptr)
 {
     mapinfo *mi = ptr;
     gretl_bundle *opts = mi->opts;
+    double gpver = gnuplot_version();
     double xlim[2], ylim[2];
     gretl_matrix *dims = NULL;
     const char *optlc = NULL;
@@ -9765,7 +9771,7 @@ int write_map_gp_file (void *ptr)
     gchar *datasrc = NULL;
     double linewidth = 1.0;
     double margin = 0.02;
-    int show, have_payload = 0;
+    int display, have_payload = 0;
     int non_standard;
     int use_arg0 = 0;
     int height = 600;
@@ -9781,14 +9787,14 @@ int write_map_gp_file (void *ptr)
 	notics = 0;
     }
 
-    show = (mi->flags & MAP_DISPLAY) != 0;
+    display = (mi->flags & MAP_DISPLAY) != 0;
     non_standard = (mi->flags & MAP_NON_STD) != 0;
 
     set_map_plot_limits(mi, xlim, ylim, margin);
 
     if (gretl_bundle_has_key(opts, "height")) {
 	height = gretl_bundle_get_scalar(opts, "height", &err);
-	if (show && height <= 0) {
+	if (display && height <= 0) {
 	    height = 600;
 	}
     }
@@ -9799,7 +9805,7 @@ int write_map_gp_file (void *ptr)
 	dims = geoplot_dimensions(xlim, ylim, height, have_payload,
 				  &non_standard);
     }
-    if (show) {
+    if (display) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
 	if (mi->plotfile != NULL) {
 	    iact_gpfile = (char *) mi->plotfile;
@@ -9888,13 +9894,11 @@ int write_map_gp_file (void *ptr)
 	}
     } else if (mi->flags & MAP_IS_IMAGE) {
 	/* @plotfile and @datfile are both disposable, no need
-	   to bother about name alignment
-	*/
+	   to bother about name alignment */
 	datasrc = g_strdup_printf("\"%s\"", mi->datfile);
     } else if (mi->plotfile != NULL) {
 	/* the names of @plotfile and @datfile will already be
-	   correctly aligned
-	*/
+	   correctly aligned */
 	use_arg0 = 1;
     } else {
 	/* rename @datfile to match the auto-named plot file */
@@ -9912,31 +9916,13 @@ int write_map_gp_file (void *ptr)
     }
 
     if (!err) {
-	const char *lc = map_linecolor(optlc, have_payload, mi->na_action);
-	gchar *bline = NULL;
-
-	if (have_payload) {
-	    if (linewidth == 0) {
-		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n",
-			datasrc);
-	    } else {
-		bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
-		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n",
-			datasrc);
-		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
-	    }
-	} else {
-	    bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
-	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
-	}
-	g_free(bline);
+	output_map_plot_lines(mi, datasrc, optlc, have_payload,
+			      linewidth, gpver, fp);
     }
-
-    g_free(datasrc);
 
     err = finalize_plot_input_file(fp);
     if (!err) {
-	if (show && gretl_in_gui_mode()) {
+	if (display && gretl_in_gui_mode()) {
 	    if (gretl_bundle_get_int(opts, "gui_auto", NULL)) {
 		gretl_bundle_set_string(opts, "plotfile", gretl_plotfile());
 		gretl_bundle_set_matrix(opts, "dims", dims);
@@ -9949,6 +9935,7 @@ int write_map_gp_file (void *ptr)
     gretl_pop_c_numeric_locale();
 
     gretl_matrix_free(dims);
+    g_free(datasrc);
 
     return err;
 }
