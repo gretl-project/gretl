@@ -9748,9 +9748,11 @@ static void output_map_plot_lines (mapinfo *mi,
 	}
 	if (do_key) {
 	    /* plus key for discrete payload */
+	    int v0 = mi->zvals->val[0];
+
 	    for (i=0; i<nv; i++) {
 		fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
-			i+1, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+			i+v0, mi->zlabels[i], (i < nv - 1)? cont : "\n");
 	    }
 	}
     } else {

@@ -67,6 +67,7 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
     char **strvals = NULL;
     gretl_matrix *vals = NULL;
     int discrete = 0;
+    int dummy = 0;
     int canon = 0;
     int ns = 0;
     int nv = 0;
@@ -77,6 +78,16 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 	discrete = 1;
     } else if (series_is_discrete(dset, v)) {
 	discrete = 1;
+    } else if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
+	dummy = 1;
+    }
+
+    if (dummy) {
+	mi->zvals = gretl_matrix_alloc(2, 1);
+	mi->zvals->val[0] = 0;
+	mi->zvals->val[1] = 1;
+	mi->n_discrete = 2;
+	return 0;
     }
 
     if (discrete) {
@@ -99,7 +110,7 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 		mi->zlabels = strvals;
 	    }
 	} else {
-	    fprintf(stderr, "discrete not canonical: up to the caller?\n");
+	    fprintf(stderr, "discrete but not canonical: up to the caller?\n");
 	    gretl_matrix_free(vals); /* don't leak memory */
 	}
     }
@@ -215,7 +226,7 @@ static int print_discrete_autocolors (int n, FILE *fp)
     int i, r, g, b;
     int err = 0;
 
-    H = halton_matrix(3, n, 0, &err);
+    H = halton_matrix(3, n, 20, &err);
     if (H == NULL) {
 	return E_ALLOC;
     }
@@ -235,7 +246,8 @@ static int print_discrete_autocolors (int n, FILE *fp)
         fputs((i < n-1)? ", " : ")\n", fp);
     }
 
-    /* cbrange? */
+    /* cbrange, for gnuplot 5.2? */
+    fprintf(fp, "set cbrange [0:%d]\n", n);
 
     gretl_matrix_free(H);
 
@@ -272,8 +284,8 @@ static int discrete_array_error (const char *s)
     return E_INVARG;
 }
 
-static int print_discrete_map_palette (const char *s,
-				       const gretl_matrix *zrange,
+static int print_discrete_map_palette (mapinfo *mi,
+				       const char *s,
                                        double gpver,
 				       FILE *fp)
 {
@@ -317,8 +329,12 @@ static int print_discrete_map_palette (const char *s,
 		fprintf(fp, "%d '%s'", i, colors[i]);
                 fputs((i < nc-1)? ", " : ")\n", fp);
 	    }
-            if (labels != NULL && gpver < 5.4) {
-                print_discrete_colorbox(zrange, labels, nl, fp);
+            if (labels != NULL) {
+		if (gpver < 5.4) {
+		    print_discrete_colorbox(mi->zrange, labels, nl, fp);
+		} else {
+		    mi->zlabels = labels;
+		}
 	    } else {
 		fputs("unset colorbox\n", fp);
 	    }
@@ -414,7 +430,7 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
         }
 	return 0;
     } else if (!strncmp(p, "discrete,", 9)) {
-        return print_discrete_map_palette(p + 9, mi->zrange, gpver, fp);
+        return print_discrete_map_palette(mi, p + 9, gpver, fp);
     } else if (mi->na_action == NA_FILL) {
 	tricky_print_map_palette(p, zlim, fp);
 	/* cbrange handled */
