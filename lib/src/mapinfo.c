@@ -87,6 +87,7 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 	mi->zvals->val[0] = 0;
 	mi->zvals->val[1] = 1;
 	mi->n_discrete = 2;
+	mi->flags |= MAP_DUMMY;
 	return 0;
     }
 
@@ -105,7 +106,6 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 	if (canon) {
 	    mi->zvals = vals;
 	    mi->n_discrete = nv;
-	    mi->flags |= MAP_DISCRETE;
 	    if (ns == nv) {
 		mi->zlabels = strvals;
 	    }
@@ -243,10 +243,11 @@ static void print_discrete_colorbox (const gretl_matrix *zrange,
    colors suitable for representing discrete data
 */
 
-static int print_discrete_autocolors (int n, FILE *fp)
+static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
 {
     gretl_matrix *H = NULL;
     char color[9];
+    int n = mi->n_discrete;
     int i, r, g, b;
     int err = 0;
 
@@ -270,7 +271,11 @@ static int print_discrete_autocolors (int n, FILE *fp)
         fputs((i < n-1)? ", " : ")\n", fp);
     }
 
-    fprintf(fp, "set cbrange [1:%d]\n", n);
+    if (mi->flags & MAP_DUMMY) {
+	fputs("set cbrange [0:1]\n", fp);
+    } else {
+	fprintf(fp, "set cbrange [1:%d]\n", n);
+    }
 
     gretl_matrix_free(H);
 
@@ -322,7 +327,11 @@ static int print_discrete_map_palette (mapinfo *mi,
         }
 
 	if (!err) {
-	    fprintf(fp, "set cbrange [1:%d]\n", nc);
+	    if (mi->flags & MAP_DUMMY) {
+		fputs("set cbrange [0:1]\n", fp);
+	    } else {
+		fprintf(fp, "set cbrange [1:%d]\n", nc);
+	    }
 	    fprintf(fp, "set palette maxcolors %d\n", nc);
 	    fputs("set palette defined (", fp);
 	    for (i=0; i<nc; i++) {
@@ -432,7 +441,7 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
 
     if (p == NULL || *p == '\0') {
         if (mi->n_discrete > 0) {
-            print_discrete_autocolors(mi->n_discrete, fp);
+            print_discrete_autocolors(mi, fp);
 	    if (gpver < 5.4 && mi->zlabels != NULL) {
 		print_discrete_colorbox(mi->zrange, mi->zlabels,
 					mi->n_discrete, fp);
