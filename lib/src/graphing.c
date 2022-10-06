@@ -9719,22 +9719,27 @@ static void output_map_plot_lines (mapinfo *mi,
 				   const char *datasrc,
 				   const char *optlc,
 				   int have_payload,
+                                   int do_key,
 				   double linewidth,
-				   double gpver,
 				   FILE *fp)
 {
     const char *lc = map_linecolor(optlc, have_payload, mi->na_action);
     gchar *bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 
     if (have_payload) {
-	int do_key = mi->zlabels != NULL && gpver >= 5.4;
 	int do_lines = linewidth > 0;
 	const char *with = "with filledcurves fc palette";
 	const char *cont = ", \\\n";
 	int i, nv = mi->n_discrete;
 
+        if (do_key) {
+            /* ensure colorbox is omitted and key boxes are filled */
+            fputs("unset colorbox\n", fp); /* should be handled already? */
+            fputs("set style fill solid\n", fp);
+        }
+
 	/* polygons */
-	fprintf(fp, "plot for [i=0:*] %s index i %s%s", datasrc, with,
+	fprintf(fp, "plot for [i=0:*] %s index i %s notitle%s", datasrc, with,
 		(do_lines || do_key)? cont : "\n");
 	if (linewidth > 0) {
 	    /* plus feature outlines */
@@ -9774,6 +9779,7 @@ int write_map_gp_file (void *ptr)
     int display, have_payload = 0;
     int non_standard;
     int use_arg0 = 0;
+    int do_key = 0;
     int height = 600;
     int border = 1;
     int notics = 1;
@@ -9781,6 +9787,9 @@ int write_map_gp_file (void *ptr)
 
     if (mi->zrange != NULL) {
         have_payload = 1;
+        if (mi->n_discrete > 0 && gpver >= 5.4) {
+            do_key = 1;
+        }
     } else if (opts == NULL) {
 	/* the simple outlines case */
 	border = 1;
@@ -9821,10 +9830,12 @@ int write_map_gp_file (void *ptr)
 
     fprintf(fp, "# geoplot %g %g\n", dims->val[0], dims->val[1]);
 
-    fputs("unset key\n", fp);
+    if (!do_key) {
+        fputs("unset key\n", fp);
+    }
 
-    if (have_payload && opts != NULL) {
-	err = print_map_palette(mi, fp);
+    if (have_payload) {
+	err = print_map_palette(mi, gpver, fp);
         if (err) {
             fclose(fp);
             gretl_remove(gretl_plotfile());
@@ -9917,7 +9928,7 @@ int write_map_gp_file (void *ptr)
 
     if (!err) {
 	output_map_plot_lines(mi, datasrc, optlc, have_payload,
-			      linewidth, gpver, fp);
+			      do_key, linewidth, fp);
     }
 
     err = finalize_plot_input_file(fp);

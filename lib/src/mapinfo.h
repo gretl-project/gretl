@@ -75,7 +75,7 @@ int geoplot_driver (const char *fname,
                     const DATASET *dset,
                     gretl_bundle *opts);
 
-int print_map_palette (mapinfo *mi, FILE *fp);
+int print_map_palette (mapinfo *mi, double gpver, FILE *fp);
 
 void set_map_plot_limits (mapinfo *mi,
 			  double *xlim,
