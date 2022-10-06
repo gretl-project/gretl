@@ -604,7 +604,7 @@ else
 
   if test "$build_gui" = "yes" ; then
     have_gnuplot=no
-    AC_MSG_CHECKING(for gnuplot >= 5.0 with cairo support)
+    AC_MSG_CHECKING(for gnuplot >= 5.2 with cairo support)
     echo "set term pngcairo" | GNUTERM=dumb gnuplot 2>/dev/null && have_gnuplot=yes
     if test "$have_gnuplot" = yes ; then
       GPVERSION=`gnuplot --version | awk '{print $2}'`
@@ -612,8 +612,11 @@ else
         have_gnuplot=no
       else
         GPMAJOR=`echo $GPVERSION | cut -c1 2>/dev/null`
-        if test $GPMAJOR -gt 4 ; then
+	GPMINOR=`echo $GPVERSION | cut -c3 2>/dev/null`
+        if test $GPMAJOR -eq 5 && test $GPMINOR -ge 2; then
           AC_MSG_RESULT(yes)
+	elif test $GPMAJOR -gt 5; then
+	  AC_MSG_RESULT(yes)
         else
           have_gnuplot=no
         fi
@@ -622,7 +625,7 @@ else
     if test "$have_gnuplot" = no ; then
       AC_MSG_RESULT(no)
       echo
-      echo "* gretl needs gnuplot >= 5.0, with cairo support."
+      echo "* gretl needs gnuplot >= 5.2, with cairo support."
       echo "* The current version of gnuplot is available from www.gnuplot.info"
       exit 1
     fi
