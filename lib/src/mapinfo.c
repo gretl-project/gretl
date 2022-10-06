@@ -215,6 +215,30 @@ int geoplot_driver (const char *fname,
     return err;
 }
 
+/* We do this only if the gnuplot version is lower than 5.4;
+   for 5.4 and higher we use the "keyentry" mechanism instead.
+*/
+
+static void print_discrete_colorbox (const gretl_matrix *zrange,
+                                     char **labels,
+                                     int n, FILE *fp)
+{
+    double zmin = zrange->val[0];
+    double incr = (n - 1.0) / n;
+    double x = zmin + incr / 2.0;
+    int i;
+
+    fputs("set cbtics (", fp);
+    for (i=0; i<n; i++) {
+        fprintf(fp, "'%s' %g", labels[i], x);
+        if (i < n-1) {
+            fputs(", ", fp);
+            x += incr;
+        }
+    }
+    fputs(") scale 0\n", fp);
+}
+
 /* print a palette containing @n automatically selected
    colors suitable for representing discrete data
 */
@@ -246,36 +270,11 @@ static int print_discrete_autocolors (int n, FILE *fp)
         fputs((i < n-1)? ", " : ")\n", fp);
     }
 
-    /* cbrange, for gnuplot 5.2? */
-    fprintf(fp, "set cbrange [0:%d]\n", n);
+    fprintf(fp, "set cbrange [1:%d]\n", n);
 
     gretl_matrix_free(H);
 
     return 0;
-}
-
-/* We do this only if the gnuplot version is lower than 5.4;
-   for 5.4 and higher we use the "keyentry" mechanism instead.
-*/
-
-static void print_discrete_colorbox (const gretl_matrix *zrange,
-                                     char **labels,
-                                     int n, FILE *fp)
-{
-    double zmin = zrange->val[0];
-    double incr = (n - 1.0) / n;
-    double x = zmin + incr / 2.0;
-    int i;
-
-    fputs("set cbtics (", fp);
-    for (i=0; i<n; i++) {
-        fprintf(fp, "'%s' %g", labels[i], x);
-        if (i < n-1) {
-            fputs(", ", fp);
-            x += incr;
-        }
-    }
-    fputs(") scale 0\n", fp);
 }
 
 static int discrete_array_error (const char *s)
@@ -323,19 +322,26 @@ static int print_discrete_map_palette (mapinfo *mi,
         }
 
 	if (!err) {
+	    fprintf(fp, "set cbrange [1:%d]\n", nc);
 	    fprintf(fp, "set palette maxcolors %d\n", nc);
 	    fputs("set palette defined (", fp);
 	    for (i=0; i<nc; i++) {
 		fprintf(fp, "%d '%s'", i, colors[i]);
                 fputs((i < nc-1)? ", " : ")\n", fp);
 	    }
-            if (labels != NULL) {
-		if (gpver < 5.4) {
+	    if (gpver < 5.4) {
+		if (labels != NULL) {
 		    print_discrete_colorbox(mi->zrange, labels, nl, fp);
+		} else if (mi->zlabels != NULL) {
+		    print_discrete_colorbox(mi->zrange, mi->zlabels,
+					    mi->n_discrete, fp);
 		} else {
-		    mi->zlabels = labels;
+		    fputs("unset colorbox\n", fp);
 		}
 	    } else {
+		if (labels != NULL) {
+		    mi->zlabels = labels;
+		}
 		fputs("unset colorbox\n", fp);
 	    }
 	}
@@ -427,6 +433,10 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
     if (p == NULL || *p == '\0') {
         if (mi->n_discrete > 0) {
             print_discrete_autocolors(mi->n_discrete, fp);
+	    if (gpver < 5.4 && mi->zlabels != NULL) {
+		print_discrete_colorbox(mi->zrange, mi->zlabels,
+					mi->n_discrete, fp);
+	    }
         }
 	return 0;
     } else if (!strncmp(p, "discrete,", 9)) {
