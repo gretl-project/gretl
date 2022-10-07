@@ -73,6 +73,8 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
     int nv = 0;
     int err = 0;
 
+    mi->zname = dset->varname[v];
+
     if (is_string_valued(dset, v)) {
 	strvals = series_get_string_vals(dset, v, &ns, 1);
 	discrete = 1;
@@ -287,6 +289,8 @@ static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
     } else {
         print_discrete_multicolors(mi, fp);
     }
+
+    return 0;
 }
 
 static int discrete_array_error (const char *s)

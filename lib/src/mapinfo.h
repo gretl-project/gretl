@@ -55,6 +55,7 @@ struct mapinfo_ {
     const char *mapfile;   /* name of file containing polygons */
     gretl_bundle *map;     /* bundle containing polygons */
     gretl_matrix *zvec;    /* "payload" data to plot, or NULL */
+    char *zname;           /* name of payload series */
     char *plotfile;        /* plot filename specified by caller */
     char *datfile;         /* auxiliary file: gnuplot data */
     gretl_matrix *bbox;    /* plot bounding box */
