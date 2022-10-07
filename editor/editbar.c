@@ -428,7 +428,7 @@ static GretlToolItem editbar_items[] = {
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
     { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help..."), GTK_STOCK_HELP, GNULL, HELP_ITEM },
-    { N_("Show stderr"), GTK_STOCK_PRINT_ERROR, G_CALLBACK(show_stderr), STDERR_ITEM },
+    { N_("Show stderr"), GTK_STOCK_INFO, G_CALLBACK(show_stderr), STDERR_ITEM },
 };
 
 static int n_editbar_items = G_N_ELEMENTS(editbar_items);
