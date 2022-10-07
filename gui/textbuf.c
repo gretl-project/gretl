@@ -974,7 +974,8 @@ void set_style_for_textview (GtkWidget *text, const char *id)
 			      r == VIEW_SCRIPT || \
 			      r == EDIT_PKG_CODE || \
 			      r == EDIT_PKG_SAMPLE || \
-			      r == VIEW_PKG_SAMPLE)
+			      r == VIEW_PKG_SAMPLE || \
+                              r == VIEW_PKG_CODE)
 
 void create_source (windata_t *vwin, int hsize, int vsize,
 		    gboolean editable)

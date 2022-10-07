@@ -9672,8 +9672,6 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 	double ymid = (ylim[0] + ylim[1]) / 2;
 
 	xyr *= cos(ymid * M_PI/180);
-    } else {
-	fprintf(stderr, "non-default projection\n");
     }
 
     if (have_payload) {
@@ -9789,7 +9787,7 @@ int write_map_gp_file (void *ptr)
 
     if (mi->zrange != NULL) {
         have_payload = 1;
-        if (mi->n_discrete > 0 && gpver >= 5.4) {
+        if (mi->n_discrete > 0 && mi->zlabels != NULL && gpver >= 5.4) {
             do_key = 1;
         }
     } else if (opts == NULL) {

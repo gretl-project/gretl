@@ -239,11 +239,11 @@ static void print_discrete_colorbox (const gretl_matrix *zrange,
     fputs(") scale 0\n", fp);
 }
 
-/* print a palette containing @n automatically selected
+/* print a palette containing @n > 2 automatically selected
    colors suitable for representing discrete data
 */
 
-static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
+static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
 {
     gretl_matrix *H = NULL;
     char color[9];
@@ -271,15 +271,22 @@ static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
         fputs((i < n-1)? ", " : ")\n", fp);
     }
 
-    if (mi->flags & MAP_DUMMY) {
-	fputs("set cbrange [0:1]\n", fp);
-    } else {
-	fprintf(fp, "set cbrange [1:%d]\n", n);
-    }
+    fprintf(fp, "set cbrange [1:%d]\n", n);
 
     gretl_matrix_free(H);
 
     return 0;
+}
+
+static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
+{
+    if (mi->flags & MAP_DUMMY) {
+        fputs("set palette maxcolors 2\n", fp);
+        fputs("set palette defined (0 '#D22532', 1 '#244999')\n", fp);
+        fputs("set cbrange [0:1]\n", fp);
+    } else {
+        print_discrete_multicolors(mi, fp);
+    }
 }
 
 static int discrete_array_error (const char *s)
@@ -313,12 +320,21 @@ static int print_discrete_map_palette (mapinfo *mi,
         char **labels = NULL;
         gretl_array *a;
         int i, nc = 0, nl = 0;
+        int colors_done = 0;
 
-        a = get_array_by_name(anames[0]);
-        colors = gretl_array_get_strings(a, &nc);
-        if (colors == NULL || nc < 2) {
-            err = discrete_array_error(anames[0]);
-        } else if (n == 2) {
+        if (mi->n_discrete > 0 && !strcmp(anames[0], "auto")) {
+            nc = mi->n_discrete;
+            print_discrete_autocolors(mi, fp);
+            colors_done = 1;
+        } else {
+            a = get_array_by_name(anames[0]);
+            colors = gretl_array_get_strings(a, &nc);
+            if (colors == NULL || nc < 2) {
+                err = discrete_array_error(anames[0]);
+            }
+        }
+
+        if (!err && n == 2) {
             a = get_array_by_name(anames[1]);
             labels = gretl_array_get_strings(a, &nl);
             if (labels == NULL || nl != nc) {
@@ -327,17 +343,19 @@ static int print_discrete_map_palette (mapinfo *mi,
         }
 
 	if (!err) {
-	    if (mi->flags & MAP_DUMMY) {
-		fputs("set cbrange [0:1]\n", fp);
-	    } else {
-		fprintf(fp, "set cbrange [1:%d]\n", nc);
-	    }
-	    fprintf(fp, "set palette maxcolors %d\n", nc);
-	    fputs("set palette defined (", fp);
-	    for (i=0; i<nc; i++) {
-		fprintf(fp, "%d '%s'", i, colors[i]);
-                fputs((i < nc-1)? ", " : ")\n", fp);
-	    }
+            if (!colors_done) {
+                if (mi->flags & MAP_DUMMY) {
+                    fputs("set cbrange [0:1]\n", fp);
+                } else {
+                    fprintf(fp, "set cbrange [1:%d]\n", nc);
+                }
+                fprintf(fp, "set palette maxcolors %d\n", nc);
+                fputs("set palette defined (", fp);
+                for (i=0; i<nc; i++) {
+                    fprintf(fp, "%d '%s'", i, colors[i]);
+                    fputs((i < nc-1)? ", " : ")\n", fp);
+                }
+            }
 	    if (gpver < 5.4) {
 		if (labels != NULL) {
 		    print_discrete_colorbox(mi->zrange, labels, nl, fp);
