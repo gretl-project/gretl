@@ -221,18 +221,22 @@ int geoplot_driver (const char *fname,
    for 5.4 and higher we use the "keyentry" mechanism instead.
 */
 
-static void print_discrete_colorbox (const gretl_matrix *zrange,
+static void print_discrete_colorbox (mapinfo *mi,
                                      char **labels,
                                      int n, FILE *fp)
 {
-    double zmin = zrange->val[0];
+    double zmin = mi->zrange->val[0];
     double incr = (n - 1.0) / n;
     double x = zmin + incr / 2.0;
     int i;
 
     fputs("set cbtics (", fp);
     for (i=0; i<n; i++) {
-        fprintf(fp, "'%s' %g", labels[i], x);
+	if (labels != NULL) {
+	    fprintf(fp, "'%s' %g", labels[i], x);
+	} else {
+	    fprintf(fp, "'%s=%g' %g", mi->zname, zmin + i, x);
+	}
         if (i < n-1) {
             fputs(", ", fp);
             x += incr;
@@ -362,9 +366,9 @@ static int print_discrete_map_palette (mapinfo *mi,
             }
 	    if (gpver < 5.4) {
 		if (labels != NULL) {
-		    print_discrete_colorbox(mi->zrange, labels, nl, fp);
+		    print_discrete_colorbox(mi, labels, nl, fp);
 		} else if (mi->zlabels != NULL) {
-		    print_discrete_colorbox(mi->zrange, mi->zlabels,
+		    print_discrete_colorbox(mi, mi->zlabels,
 					    mi->n_discrete, fp);
 		} else {
 		    fputs("unset colorbox\n", fp);
@@ -464,9 +468,13 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
     if (p == NULL || *p == '\0') {
         if (mi->n_discrete > 0) {
             print_discrete_autocolors(mi, fp);
-	    if (gpver < 5.4 && mi->zlabels != NULL) {
-		print_discrete_colorbox(mi->zrange, mi->zlabels,
-					mi->n_discrete, fp);
+	    if (gpver < 5.4) {
+		if (mi->zlabels != NULL || mi->zname != NULL) {
+		    print_discrete_colorbox(mi, mi->zlabels,
+					    mi->n_discrete, fp);
+		} else {
+		    fputs("unset colorbox\n", fp);
+		}
 	    }
         }
 	return 0;

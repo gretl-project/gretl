@@ -9746,15 +9746,21 @@ static void output_map_plot_lines (mapinfo *mi,
 	}
 	if (do_key) {
 	    /* plus key for discrete payload */
-	    int v0 = mi->zvals->val[0];
+	    int v, v0 = mi->zvals->val[0];
 
 	    for (i=0; i<nv; i++) {
-		fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
-			i+v0, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+		v = i + v0;
+		if (mi->zlabels != NULL) {
+		    fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
+			    v, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+		} else {
+		    fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s=%d\"%s",
+			    v, mi->zname, v, (i < nv - 1)? cont : "\n");
+		}
 	    }
 	}
     } else {
-	/* just outlines */
+	/* just show feature outlines */
 	fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
     }
 
@@ -9787,8 +9793,10 @@ int write_map_gp_file (void *ptr)
 
     if (mi->zrange != NULL) {
         have_payload = 1;
-        if (mi->n_discrete > 0 && mi->zlabels != NULL && gpver >= 5.4) {
-            do_key = 1;
+        if (mi->n_discrete > 0 && gpver >= 5.4) {
+	    if (mi->zlabels != NULL || mi->zname != NULL) {
+		do_key = 1;
+	    }
         }
     } else if (opts == NULL) {
 	/* the simple outlines case */
