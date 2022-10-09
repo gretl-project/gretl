@@ -145,16 +145,6 @@ Here's what happens by default.
   shown.
 \end{enumerate}
 
-For anyone familiar with the \textsf{libsvm} executables, the above is
-basically equivalent to calling \texttt{svm-scale} on the training
-data (saving a data-ranges file and a scaled-data file), then
-\texttt{svm-train} to build a model (loading the scaled-data file and
-saving a model file), then \texttt{svm-predict} (loading the
-scaled-data and model files), then \texttt{svm-scale} on the test data
-(loading the data-ranges file and saving a second scaled-data file),
-then \texttt{svm-predict} again (loading the model file and the second
-scaled-data file). But with a lot less file I/O!
-
 We'll give a real example, replication of the Mullainathan and Spiess
 study referenced in the Introduction. It's not an exact replication
 since the authors used different machine-learning software (a
@@ -178,7 +168,7 @@ set verbose off
 # helper function: get R^2 and MSE
 function matrix get_stats (const series y, const series yhat)
   scalar SSR = sum((y - yhat)^2)
-  return {1 - SSR/sst(y), SSR / $nobs} 
+  return {1 - SSR/sst(y), SSR / $nobs}
 end function
 
 # BLOCK 1: open and arrange data
@@ -361,25 +351,25 @@ svm(L, b)
 \begin{table}[p]
   (a) Values for \texttt{svm\_type} (default automatic):
   \begin{center}
-  \begin{tabular}{cll}
-\textit{value} & \textit{SVM} & \textit{comment} \\[2pt]
-0 & $C$-SVC & multi-class classification \\
-1 & $\nu$-SVC & multi-class classification \\
-2 & one-class SVM & \\
-3 & $\epsilon$-SVR & regression \\
-4 & $\nu$-SVR & regression   
+  \begin{tabular}{clll}
+\textit{code} & \textit{string} & \textit{SVM} & \textit{comment} \\[2pt]
+0 & \verb|C-SVC| & $C$-SVC & multi-class classification \\
+1 & \verb|nu-SVC| & $\nu$-SVC & multi-class classification \\
+2 & \verb|one-class| & one-class SVM & \\
+3 & \verb|eps-SVR| & $\epsilon$-SVR & regression \\
+4 & \verb|nu-SVR| & $\nu$-SVR & regression
   \end{tabular}
   \end{center}
 
   (b) Values for \texttt{kernel\_type} (default 2, RBF):
   \begin{center}
-  \begin{tabular}{cll}
-\textit{value} & \textit{kernel} & \textit{comment} \\[2pt]
-0 & linear & $u'v$ \\
-1 & polynomial & $(\gamma\, u'v + c_0)^d$ \\
-2 & radial basis function (RBF) & $\exp(-\gamma\, \lVert u-v \rVert^2)$ \\
-3 & sigmoid & $\mbox{tanh}(\gamma\, u'v + c_0)$ \\
-4 & precomputed kernel & not supported
+  \begin{tabular}{clll}
+\textit{code} & \texttt{string} & \textit{kernel} & \textit{comment} \\[2pt]
+0 & \verb|linear| & linear & $u'v$ \\
+1 & \verb|polynomial| & polynomial & $(\gamma\, u'v + c_0)^d$ \\
+2 & \verb|RBF| & Radial Basis Function & $\exp(-\gamma\, \lVert u-v \rVert^2)$ \\
+3 & \verb|sigmoid| & sigmoid & $\mbox{tanh}(\gamma\, u'v + c_0)$ \\
+4 & TBA & \texttt{TBA}
   \end{tabular}
   \end{center}
 
@@ -614,7 +604,7 @@ the parameters.\footnote{But see section~\ref{sec:local-search}
 \begin{tabular}{lrrr}
  & \textit{start} & \textit{stop} & \textit{step} \\[2pt]
 $C$ & $-5$ & 9 & 2 \\
-$\gamma$ & 3 & $-15$ & $-2$ 
+$\gamma$ & 3 & $-15$ & $-2$
 \end{tabular}
 \end{center}
 
@@ -911,15 +901,15 @@ obvious use-case for MPI.
 
 MPI is ``Message Passing Interface,'' a standard for running several
 distinct processes that execute the same program using different
-data. Support for MPI in gretl is documented in \cite{gretl-mpi}.  To
-date we have left it up to users of gretl to exploit MPI via scripting
-(which demands a certain proficiency in coding), but in the case of
-cross validation under \texttt{svm} we have implemented MPI support
-internally. All the user has to do is execute a call to \texttt{svm}
-that calls for cross validation, either via the command-line program
-\texttt{gretlmpi} or within an \texttt{mpi} block in a script that's
-run in the gretl GUI. For details of these options, please see
-\cite{gretl-mpi}.
+data. Support for MPI in gretl is documented in
+\cite{gretl-mpi}. Usually we leave it up to users of gretl to exploit
+MPI via scripting (which demands a certain proficiency in coding), but
+in the case of cross validation under \texttt{svm} we have implemented
+MPI support internally. All the user has to do is execute a call to
+\texttt{svm} that calls for cross validation, either via the
+command-line program \texttt{gretlmpi} or within an \texttt{mpi} block
+in a script that's run in the gretl GUI. For details of these options,
+please see \cite{gretl-mpi}.
 
 To make a serious dent in the time taken by a big cross validation
 problem using MPI one would want to exploit a high-performance cluster
@@ -1262,14 +1252,13 @@ outcome 3 (``in work'') for the second observation.
 \label{sec:implement}
 
 SVM support is implemented via a gretl ``plugin'' module. This module
-is supplied in our packages for MS Windows and Mac; it should be
+is supplied in our packages for MS Windows and macOS; it should be
 available in the gretl packages prepared by Linux distributions for
 gretl 2019a and higher.
 
-For anyone building gretl from the git source, all the required files
-are now included. (That is, it is not necessary to have
-\textsf{libsvm} installed in its own right, which was the case up till
-the 2018d release.) The main files are these:
+For anyone building gretl from the git sources, all the required files
+are included. (That is, it is not necessary to have \textsf{libsvm}
+installed in its own right.)  The main files are these:
 \begin{verbatim}
 plugin/svm.c
 plugin/libsvm/svmlib.cpp
