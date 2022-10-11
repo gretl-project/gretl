@@ -20454,6 +20454,15 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
     }
 }
 
+static inline int savegen_retval (int err)
+{
+#if EDEBUG
+    fprintf(stderr, "save_generated_var: returning %d\n",
+	    err);
+#endif
+    return err;
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -20476,12 +20485,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	   return value handled upstream
 	*/
 	set_dataset_is_changed(p->dset, 1);
-	return 0;
+	return savegen_retval(0);
     } else if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum) &&
 	       p->lhtree == NULL) {
 	gretl_errmsg_set("Cannot overwrite entire string-valued series");
 	p->err = E_TYPES;
-	return p->err;
+	return savegen_retval(p->err);
     }
 
     if (p->lhtree != NULL) {
@@ -20490,12 +20499,12 @@ static int save_generated_var (parser *p, PRN *prn)
 
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
-#if LHDEBUG
+#if LHDEBUG > 1
 	fprintf(stderr, "\n*** lhtree before eval ***\n");
 	print_tree(p->lhtree, p, 0, 0);
 #endif
 	p->lhres = eval(p->lhtree, p);
-#if LHDEBUG
+#if LHDEBUG > 1
 	if (p->lhres != NULL) {
 	    fprintf(stderr, "\n*** lhres post-eval ***\n");
 	    print_tree(p->lhres, p, 0, 0);
@@ -20505,7 +20514,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
 #endif
 	if (p->err) {
-	    return p->err;
+	    return savegen_retval(p->err);
 	}
 	compound_t = p->lhres->t;
 #if LHDEBUG
@@ -20542,7 +20551,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    gretl_errmsg_set(_("Invalid left-hand side expression"));
 	    p->err = E_TYPES;
 	}
-	return p->err; /* done */
+	return savegen_retval(p->err); /* done */
     } /* end of compound target business */
 
     if (p->op == INC || p->op == DEC) {
@@ -20553,7 +20562,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	/* first exec: test for type mismatch errors */
 	p->err = gen_check_return_type(p);
 	if (p->err) {
-	    return p->err;
+	    return savegen_retval(p->err);
 	}
     }
 
@@ -20600,14 +20609,14 @@ static int save_generated_var (parser *p, PRN *prn)
 	/* can't allow Greek letters for series names */
 	gretl_errmsg_sprintf("Invalid series name '%s'", p->lh.name);
 	p->err = E_DATA;
-	return p->err;
+	return savegen_retval(p->err);
     }
 
     /* allocate dataset storage, if needed */
     if (p->targ == SERIES) {
 	gen_allocate_storage(p);
 	if (p->err) {
-	    return p->err;
+	    return savegen_retval(p->err);
 	}
     }
 
@@ -20684,7 +20693,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		p->err = series_from_strings(p->dset, v, r->v.a);
 	    }
 	    if (p->err) {
-		return p->err;
+		return savegen_retval(p->err);
 	    }
 	}
 	strcpy(p->dset->varname[v], p->lh.name);
@@ -20818,12 +20827,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     }
 
-#if EDEBUG
-    fprintf(stderr, "save_generated_var: returning p->err = %d\n",
-	    p->err);
-#endif
-
-    return p->err;
+    return savegen_retval(p->err);
 }
 
 static void maybe_update_lhs_uvar (parser *p, GretlType *type)
@@ -20883,7 +20887,8 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
        set at compile time, or in previous execution
     */
     int saveflags[] = {
-	P_NATEST, P_AUTOREG, P_DISCARD, P_NODECL, P_LISTDEF, 0
+	P_NATEST, P_AUTOREG, P_DISCARD, P_NODECL,
+        P_LISTDEF, P_PRIV, 0
     };
     int i, prevflags = p->flags;
     GretlType lhtype = 0;
@@ -20894,7 +20899,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	p->flags |= P_START;
 	p->flags &= ~P_DELTAN;
     } else {
-	p->flags = (P_START | P_PRIV | P_EXEC);
+	p->flags = (P_START | P_EXEC);
 	for (i=0; saveflags[i] > 0; i++) {
 	    if (prevflags & saveflags[i]) {
 		p->flags |= saveflags[i];
@@ -20920,9 +20925,10 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 
 #if EDEBUG
     fprintf(stderr, "parser_reinit: targ=%s, lhname='%s', op='%s', "
-	    "callcount=%d, compiled=%d\n",
+	    "callcount=%d, compiled=%d, priv=%d\n",
 	    getsymb(p->targ), p->lh.name, getsymb(p->op),
-	    p->callcount, compiled(p) ? 1 : 0);
+	    p->callcount, compiled(p) ? 1 : 0,
+            (p->flags & P_PRIV)? 1 : 0);
 #endif
 
     if (*p->lh.name != '\0') {
@@ -21195,9 +21201,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	     int flags, int targtype)
 {
 #if LHDEBUG || EDEBUG || AUX_NODES_DEBUG
-    fprintf(stderr, "\n*** realgen: task = %s, depth %d\n",
+    fprintf(stderr, "\n*** realgen: task = %s, depth %d, priv %d\n",
             (flags & P_COMPILE)? "compile" : (flags & P_EXEC)? "exec" : "normal",
-            gretl_function_depth());
+            gretl_function_depth(), (flags & P_PRIV)? 1 : 0);
     if (s != NULL) {
 	fprintf(stderr, "targ=%d (%s), input='%s'\n", targtype,
 		(targtype < PUNCT_MAX)? gretl_type_get_name(targtype) :
