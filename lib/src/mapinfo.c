@@ -191,7 +191,7 @@ int geoplot_driver (const char *fname,
 #if GEODEBUG
             fprintf(stderr, "geoplot_driver: calling get_current_map()\n");
 #endif
-            map = get_current_map(dset, NULL, &err);
+            mi.map = get_current_map(dset, NULL, &err);
             free_map = 1;
             fname = NULL;
         }

@@ -1538,7 +1538,8 @@ int geoplot (mapinfo *mi)
 	    int show = gretl_bundle_get_int(mi->opts, "show", &err);
 
             if (show == 0) {
-                mi->flags &= MAP_DISPLAY;
+		/* turn off screen display */
+                mi->flags &= ~MAP_DISPLAY;
             }
 	}
 	if (gretl_bundle_has_key(mi->opts, "plotfile")) {
@@ -1548,7 +1549,6 @@ int geoplot (mapinfo *mi)
 		mi->plotfile = ensure_full_write_path(sval);
 		if (is_image_filename(mi->plotfile)) {
                     mi->flags |= MAP_IS_IMAGE;
-                    mi->flags &= MAP_DISPLAY;
 		}
 	    }
 	}
