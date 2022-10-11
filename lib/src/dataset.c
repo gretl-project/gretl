@@ -5909,7 +5909,7 @@ gretl_bundle *get_current_map (const DATASET *dset,
 
 #if MAP_DEBUG
     fprintf(stderr, "get_current_map: fmax %d, ntarg %d\n", fmax, ntarg);
-    printf(stderr, "checking for features to include/drop\n");
+    fprintf(stderr, "checking for features to include/drop\n");
 #endif
 
     /* index into dataset rows */
