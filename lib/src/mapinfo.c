@@ -249,8 +249,6 @@ static void print_discrete_colorbox (mapinfo *mi,
    colors suitable for representing discrete data
 */
 
-#if 1
-
 static void hsv_to_rgb256 (double H, double S, double V, int *RGB)
 {
     double C = V * S;
@@ -278,11 +276,11 @@ static void hsv_to_rgb256 (double H, double S, double V, int *RGB)
     RGB[2] = 256 * b;
 }
 
-/* This variant picks HSV colors that vary by Hue but have common
-   Saturation and Value attributes
+/* This variant picks RGB colors that vary by Hue but have common
+   Saturation and Value attributes.
 */
 
-static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
+static int print_discrete_colors_hsv (mapinfo *mi, FILE *fp)
 {
     char color[9];
     double H, S, V, incr;
@@ -308,9 +306,11 @@ static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
     return 0;
 }
 
-#else
+/* This variant picks RGB colors that vary in all three of the
+   HSV dimensions.
+*/
 
-static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
+static int print_discrete_colors_rgb (mapinfo *mi, FILE *fp)
 {
     gretl_matrix *H = NULL;
     char color[9];
@@ -345,7 +345,14 @@ static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
     return 0;
 }
 
-#endif
+static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
+{
+    if (mi->n_discrete < 25) {
+	return print_discrete_colors_hsv(mi, fp);
+    } else {
+	return print_discrete_colors_rgb(mi, fp);
+    }
+}
 
 static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
 {
