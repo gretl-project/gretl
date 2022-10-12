@@ -249,6 +249,67 @@ static void print_discrete_colorbox (mapinfo *mi,
    colors suitable for representing discrete data
 */
 
+#if 1
+
+static void hsv_to_rgb (double H, double S, double V, double *RGB)
+{
+    double C = V * S;
+    double X = C * (1 - fabs(fmod(H, 2) - 1));
+    double m = V - C;
+
+    RGB[0] = RGB[1] = RGB[2] = m;
+
+    if (H >= 0 && H < 1) {
+        RGB[0] += C; RGB[1] += X;
+    } else if (H >= 1 && H < 2) {
+        RGB[0] += X; RGB[1] += C;
+    } else if (H >= 2 && H < 3) {
+        RGB[1] += C; RGB[2] += X;
+    } else if (H >= 3 && H < 4) {
+        RGB[1] += X; RGB[2] += C;
+    } else if (H >= 4 && H < 5) {
+        RGB[0] += X; RGB[2] += C;
+    } else if (H >= 5 && H < 6) {
+        RGB[0] += C; RGB[2] += X;
+    }
+}
+
+/* This variant picks HSV colors that vary by Hue but have common
+   Saturation and Value attributes
+*/
+
+static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
+{
+    char color[9];
+    double H, S, V, incr;
+    double RGB[3] = {0};
+    int i, R, G, B;
+    int n = mi->n_discrete;
+
+    incr = 360.0 / n;
+    H = 0.5 * incr;
+    S = 0.5; V = 0.7;
+
+    fprintf(fp, "set palette maxcolors %d\n", n);
+    fputs("set palette defined (", fp);
+    for (i=0; i<n; i++) {
+        hsv_to_rgb(H / 60, S, V, RGB);
+        R = RGB[0] * 256;
+        G = RGB[1] * 256;
+        B = RGB[2] * 256;
+        sprintf(color, "0x%02x%02x%02x", R, G, B);
+        fprintf(fp, "%d '%s'", i, color);
+        fputs((i < n-1)? ", " : ")\n", fp);
+        H += incr;
+    }
+
+    fprintf(fp, "set cbrange [1:%d]\n", n);
+
+    return 0;
+}
+
+#else
+
 static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
 {
     gretl_matrix *H = NULL;
@@ -283,6 +344,8 @@ static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
 
     return 0;
 }
+
+#endif
 
 static int print_discrete_autocolors (mapinfo *mi, FILE *fp)
 {
