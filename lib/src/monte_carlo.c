@@ -2607,8 +2607,6 @@ static int block_model (CMD *cmd)
 
 #define LTRACE 0
 
-//static int xcount = 0;
-
 int gretl_loop_exec (ExecState *s, DATASET *dset)
 {
     LOOPSET *loop = NULL;
@@ -2691,6 +2689,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
             int ci = ll->ci;
             int parse = 1;
 
+	    if (loop_is_renaming(loop)) {
+		set_non_compilable(ll);
+	    }
+
             currline = ll->s;
             if (compiled) {
                 /* just for "echo" purposes */
@@ -2756,8 +2758,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	    } else if (compiled) {
 		continue;
 	    }
-
-            //xcount++;
 
 	    /* check for $-substitution? */
 	    if (line_has_dollar(ll)) {

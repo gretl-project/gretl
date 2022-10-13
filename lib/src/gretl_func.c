@@ -9617,7 +9617,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
     /* should we try to compile genrs, loops? */
-    gencomp = gretl_iterating();
+    gencomp = gretl_iterating() && !get_loop_renaming();
 
     /* get function lines in sequence and check, parse, execute */
 
