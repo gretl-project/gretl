@@ -62,7 +62,7 @@ struct mapinfo_ {
     gretl_matrix *zrange;  /* range of the payload data */
     gretl_matrix *zvals;   /* ordered unique values (discrete data) */
     char **zlabels;        /* labels for @zvals (discrete data) */
-    int n_discrete;        /* number of discrete payload values */
+    int n_codes;           /* number of coded payload values */
     gretl_bundle *opts;    /* options specified by caller, or NULL */
     MapFlags flags;        /* state flags */
     NaAction na_action;    /* method for handling missing values */

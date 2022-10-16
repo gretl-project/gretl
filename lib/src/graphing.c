@@ -9728,7 +9728,7 @@ static void output_map_plot_lines (mapinfo *mi,
 	int do_lines = linewidth > 0;
 	const char *with = "with filledcurves fc palette";
 	const char *cont = ", \\\n";
-	int i, nv = mi->n_discrete;
+	int i, nv = mi->n_codes;
 
         if (do_key) {
             /* ensure colorbox is omitted and key boxes are filled */
@@ -9793,7 +9793,7 @@ int write_map_gp_file (void *ptr)
 
     if (mi->zrange != NULL) {
         have_payload = 1;
-        if (mi->n_discrete > 0 && gpver >= 5.4) {
+        if (mi->n_codes > 0 && gpver >= 5.4) {
 	    if (mi->zlabels != NULL || mi->zname != NULL) {
 		do_key = 1;
 	    }

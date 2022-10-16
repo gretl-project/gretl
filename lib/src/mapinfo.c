@@ -57,64 +57,50 @@ static int canonical_discrete (const double *v, int nv)
     return ret;
 }
 
-/* check the payload series for the discrete property, for
+/* check the payload series for the coded property, for
    whether it is string-valued, and for whether it is
    "canonical" in these respects.
 */
 
 static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 {
-    char **strvals = NULL;
-    gretl_matrix *vals = NULL;
-    int discrete = 0;
-    int dummy = 0;
-    int canon = 0;
-    int ns = 0;
-    int nv = 0;
     int err = 0;
 
     mi->zname = dset->varname[v];
 
-    if (is_string_valued(dset, v)) {
-	strvals = series_get_string_vals(dset, v, &ns, 1);
-	discrete = 1;
-    } else if (series_is_discrete(dset, v)) {
-	discrete = 1;
-    } else if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
-	dummy = 1;
-    }
-
-    if (dummy) {
+    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
 	mi->zvals = gretl_matrix_alloc(2, 1);
 	mi->zvals->val[0] = 0;
 	mi->zvals->val[1] = 1;
-	mi->n_discrete = 2;
+	mi->n_codes = 2;
 	mi->flags |= MAP_DUMMY;
 	return 0;
     }
 
-    if (discrete) {
-	int nz = gretl_vector_get_length(mi->zvec);
-	const double *z = mi->zvec->val;
+    if (series_is_coded(dset, v)) {
+        int nz = gretl_vector_get_length(mi->zvec);
+        const double *z = mi->zvec->val;
+        gretl_matrix *vals;
+        char **strvals = NULL;
+        int nv = 0, ns = 0;
 
-	vals = gretl_matrix_values(z, nz, OPT_S, &err);
-	if (!err) {
-	    nv = gretl_vector_get_length(vals);
-	    canon = canonical_discrete(vals->val, nv);
-	}
-    }
-
-    if (discrete && !err) {
-	if (canon) {
-	    mi->zvals = vals;
-	    mi->n_discrete = nv;
-	    if (ns == nv) {
-		mi->zlabels = strvals;
-	    }
-	} else {
-	    fprintf(stderr, "discrete but not canonical: up to the caller?\n");
-	    gretl_matrix_free(vals); /* don't leak memory */
-	}
+        vals = gretl_matrix_values(z, nz, OPT_S, &err);
+        if (err) {
+            return err;
+        }
+        nv = gretl_vector_get_length(vals);
+        if (canonical_discrete(vals->val, nv)) {
+            mi->zvals = vals;
+            mi->n_codes = nv;
+        } else {
+            gretl_matrix_free(vals);
+        }
+        if (is_string_valued(dset, v)) {
+            strvals = series_get_string_vals(dset, v, &ns, 1);
+            if (ns == mi->n_codes) {
+                mi->zlabels = strvals;
+            }
+        }
     }
 
     return err;
@@ -221,9 +207,9 @@ int geoplot_driver (const char *fname,
    for 5.4 and higher we use the "keyentry" mechanism instead.
 */
 
-static void print_discrete_colorbox (mapinfo *mi,
-                                     char **labels,
-                                     int n, FILE *fp)
+static void print_labeled_colorbox (mapinfo *mi,
+                                    char **labels,
+                                    int n, FILE *fp)
 {
     double zmin = mi->zrange->val[0];
     double incr = (n - 1.0) / n;
@@ -285,7 +271,7 @@ static int print_discrete_colors_hsv (mapinfo *mi, FILE *fp)
     char color[9];
     double H, S, V, incr;
     int RGB[3] = {0};
-    int i, n = mi->n_discrete;
+    int i, n = mi->n_codes;
 
     incr = 360.0 / n;
     H = 0.5 * incr;
@@ -314,7 +300,7 @@ static int print_discrete_colors_rgb (mapinfo *mi, FILE *fp)
 {
     gretl_matrix *H = NULL;
     char color[9];
-    int n = mi->n_discrete;
+    int n = mi->n_codes;
     int i, r, g, b;
     int err = 0;
 
@@ -347,7 +333,7 @@ static int print_discrete_colors_rgb (mapinfo *mi, FILE *fp)
 
 static int print_discrete_multicolors (mapinfo *mi, FILE *fp)
 {
-    if (mi->n_discrete < 25) {
+    if (mi->n_codes < 25) {
 	return print_discrete_colors_hsv(mi, fp);
     } else {
 	return print_discrete_colors_rgb(mi, fp);
@@ -400,8 +386,8 @@ static int print_discrete_map_palette (mapinfo *mi,
         int i, nc = 0, nl = 0;
         int colors_done = 0;
 
-        if (mi->n_discrete > 0 && !strcmp(anames[0], "auto")) {
-            nc = mi->n_discrete;
+        if (mi->n_codes > 0 && !strcmp(anames[0], "auto")) {
+            nc = mi->n_codes;
             print_discrete_autocolors(mi, fp);
             colors_done = 1;
         } else {
@@ -436,10 +422,10 @@ static int print_discrete_map_palette (mapinfo *mi,
             }
 	    if (gpver < 5.4) {
 		if (labels != NULL) {
-		    print_discrete_colorbox(mi, labels, nl, fp);
+		    print_labeled_colorbox(mi, labels, nl, fp);
 		} else if (mi->zlabels != NULL) {
-		    print_discrete_colorbox(mi, mi->zlabels,
-					    mi->n_discrete, fp);
+		    print_labeled_colorbox(mi, mi->zlabels,
+                                           mi->n_codes, fp);
 		} else {
 		    fputs("unset colorbox\n", fp);
 		}
@@ -536,20 +522,20 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
     }
 
     if (p == NULL || *p == '\0') {
-        if (mi->n_discrete > 0) {
+        if (mi->n_codes > 0) {
             print_discrete_autocolors(mi, fp);
 	    if (gpver < 5.4) {
 		if (mi->zlabels != NULL || mi->zname != NULL) {
-		    print_discrete_colorbox(mi, mi->zlabels,
-					    mi->n_discrete, fp);
+		    print_labeled_colorbox(mi, mi->zlabels,
+                                           mi->n_codes, fp);
 		} else {
 		    fputs("unset colorbox\n", fp);
 		}
 	    }
         }
 	return 0;
-    } else if (!strncmp(p, "discrete,", 9)) {
-        return print_discrete_map_palette(mi, p + 9, gpver, fp);
+    } else if (!strncmp(p, "coded,", 6)) {
+        return print_discrete_map_palette(mi, p + 6, gpver, fp);
     } else if (mi->na_action == NA_FILL) {
 	tricky_print_map_palette(p, zlim, fp);
 	/* cbrange handled */
