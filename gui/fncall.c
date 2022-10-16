@@ -4878,16 +4878,10 @@ int real_do_regls (const char *buf)
 
 static int unique_string_valued (DATASET *dset, int v)
 {
-    if (is_string_valued(dset, v)) {
-        int ns = 0;
+    int ns = 0;
 
-        series_get_string_vals(dset, v, &ns, 1);
-        if (ns == sample_size(dset)) {
-            return 1;
-        }
-    }
-
-    return 0;
+    series_get_string_vals(dset, v, &ns, 1);
+    return ns == sample_size(dset);
 }
 
 /* See if we can assemble a list of series that could possibly play

@@ -64,6 +64,7 @@ static int canonical_discrete (const double *v, int nv)
 
 static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 {
+    int ns = 0;
     int err = 0;
 
     mi->zname = dset->varname[v];
@@ -75,28 +76,27 @@ static int inspect_payload (mapinfo *mi, const DATASET *dset, int v)
 	mi->n_codes = 2;
 	mi->flags |= MAP_DUMMY;
 	return 0;
-    }
+    } else {
+        char **strvals = series_get_string_vals(dset, v, &ns, 1);
+        int coded = series_is_coded(dset, v);
 
-    if (series_is_coded(dset, v)) {
-        int nz = gretl_vector_get_length(mi->zvec);
-        const double *z = mi->zvec->val;
-        gretl_matrix *vals;
-        char **strvals = NULL;
-        int nv = 0, ns = 0;
+        if (coded || ns > 0) {
+            int nz = gretl_vector_get_length(mi->zvec);
+            const double *z = mi->zvec->val;
+            gretl_matrix *vals;
+            int nv = 0;
 
-        vals = gretl_matrix_values(z, nz, OPT_S, &err);
-        if (err) {
-            return err;
-        }
-        nv = gretl_vector_get_length(vals);
-        if (canonical_discrete(vals->val, nv)) {
-            mi->zvals = vals;
-            mi->n_codes = nv;
-        } else {
-            gretl_matrix_free(vals);
-        }
-        if (is_string_valued(dset, v)) {
-            strvals = series_get_string_vals(dset, v, &ns, 1);
+            vals = gretl_matrix_values(z, nz, OPT_S, &err);
+            if (err) {
+                return err;
+            }
+            nv = gretl_vector_get_length(vals);
+            if (canonical_discrete(vals->val, nv)) {
+                mi->zvals = vals;
+                mi->n_codes = nv;
+            } else {
+                gretl_matrix_free(vals);
+            }
             if (ns == mi->n_codes) {
                 mi->zlabels = strvals;
             }
