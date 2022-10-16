@@ -4876,6 +4876,20 @@ int real_do_regls (const char *buf)
 
 /* geomap related functions */
 
+static int unique_string_valued (DATASET *dset, int v)
+{
+    if (is_string_valued(dset, v)) {
+        int ns = 0;
+
+        series_get_string_vals(dset, v, &ns, 1);
+        if (ns == sample_size(dset)) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /* See if we can assemble a list of series that could possibly play
    the role of "payload" in a map plot. If there's a single series
    currently selected in the main gretl window and it seems suitable,
@@ -4888,7 +4902,7 @@ static GList *plausible_payload_list (int *selpos)
     int i, j = 1;
 
     for (i=dataset->v-1; i>0; i--) {
-	if (!is_string_valued(dataset, i) &&
+	if (!unique_string_valued(dataset, i) &&
 	    !gretl_isconst(dataset->t1, dataset->t2, dataset->Z[i])) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	    if (i == mdata->active_var) {
