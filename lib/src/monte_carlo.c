@@ -2689,7 +2689,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
             int ci = ll->ci;
             int parse = 1;
 
-	    if (loop_is_renaming(loop)) {
+            loop_renaming = loop_is_renaming(loop);
+ 	    if (loop_renaming) {
 		set_non_compilable(ll);
 	    }
 

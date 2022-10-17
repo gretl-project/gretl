@@ -5961,7 +5961,12 @@ static NODE *apply_series_func (NODE *n, NODE *f, parser *p)
         const double *x;
 
         if (n->t == SERIES) {
-            x = n->v.xvec;
+            if (n->v.xvec == NULL) {
+                fprintf(stderr, "apply_series_func: got NULL xvec\n");
+                p->err = E_DATA;
+            } else {
+                x = n->v.xvec;
+            }
         } else {
             x = get_colvec_as_series(n, f->t, p);
         }
