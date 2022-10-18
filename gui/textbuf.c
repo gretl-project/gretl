@@ -54,6 +54,8 @@
 #define TABDEBUG 0
 #define KDEBUG 0
 
+#define HIDE_SHOW 0
+
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
    and built-in functions to avoid collisions.
@@ -990,7 +992,24 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	ensure_sourceview_path(lm);
     }
 
+#if HIDE_SHOW
+    if (editing_hansl(vwin->role)) {
+	GtkTextTagTable *table = gtk_text_tag_table_new();
+	GtkTextTag *htag = gtk_text_tag_new("hidden");
+	GtkTextTag *gtag = gtk_text_tag_new("gray");
+
+	g_object_set(htag, "invisible", 1, NULL);
+	g_object_set(gtag, "foreground", "gray", NULL);
+	gtk_text_tag_table_add(table, htag);
+	gtk_text_tag_table_add(table, gtag);
+	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(table));
+    } else {
+	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
+    }
+#else
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
+#endif
+
     if (lm != NULL) {
 	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
     }
@@ -3219,6 +3238,32 @@ static void indent_region (GtkWidget *w, gpointer p)
     }
 }
 
+#if HIDE_SHOW
+
+static void hide_region (GtkWidget *w, gpointer p)
+{
+    struct textbit *tb = (struct textbit *) p;
+    GtkTextMark *mark1, *mark2;
+    GtkTextTag *htag = NULL;
+    GtkTextTag *gtag = NULL;
+    GtkTextTagTable *tt;
+
+    tt = gtk_text_buffer_get_tag_table(tb->buf);
+    if (tt != NULL) {
+	htag = gtk_text_tag_table_lookup(tt, "hidden");
+	gtag = gtk_text_tag_table_lookup(tt, "gray");
+    }
+    if (htag != NULL && gtag != NULL) {
+	gtk_text_buffer_apply_tag(tb->buf, htag, &tb->start, &tb->end);
+	mark1 = gtk_text_buffer_create_mark(tb->buf, NULL, &tb->start, FALSE);
+	mark2 = gtk_text_buffer_create_mark(tb->buf, NULL, &tb->end, FALSE);
+	gtk_text_buffer_insert_with_tags(tb->buf, &tb->start, "show hidden region",
+					 -1, gtag, NULL);
+    }
+}
+
+#endif
+
 void indent_hansl (GtkWidget *w, windata_t *vwin)
 {
     auto_indent_script(w, vwin);
@@ -4057,6 +4102,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     if (editing_hansl(vwin->role)) {
 	if (tb->selected) {
+	    /* indentation of selection */
 	    item = gtk_menu_item_new_with_label(smarttab?
 						_("Auto-indent region") :
 						_("Indent region"));
@@ -4065,8 +4111,16 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 			     *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+#if HIDE_SHOW
+	    /* visibility of selection */
+	    item = gtk_menu_item_new_with_label(_("Hide region"));
+	    g_signal_connect(G_OBJECT(item), "activate",
+			     G_CALLBACK(hide_region),
+			     *ptb);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+#endif
 	}
-
 	if (!smarttab && tb->selected && text_is_indented(tb->chunk)) {
 	    item = gtk_menu_item_new_with_label(_("Unindent region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
