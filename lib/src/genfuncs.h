@@ -117,7 +117,7 @@ gretl_matrix *hp_gain (double lambda, int hipass);
 
 gretl_matrix *butterworth_gain (int n, double cutoff, int hipass);
 
-int gen_seasonal_dummies (DATASET *dset, int center);
+int gen_seasonal_dummies (DATASET *dset, int ref, int center);
 
 int *seasonals_list (DATASET *dset, int ref, int center, int *err);
 

@@ -3393,6 +3393,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 /**
  * gen_seasonal_dummies:
  * @dset: dataset struct.
+ * @ref: 1-based reference period, or 0 for none.
  * @center: if non-zero subtract the population mean from
  * each of the generated dummies.
  *
@@ -3402,9 +3403,9 @@ static int real_seasonals (DATASET *dset, int ref, int center,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gen_seasonal_dummies (DATASET *dset, int center)
+int gen_seasonal_dummies (DATASET *dset, int ref, int center)
 {
-    return real_seasonals(dset, 0, center, 0, NULL);
+    return real_seasonals(dset, ref, center, 0, NULL);
 }
 
 /**

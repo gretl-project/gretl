@@ -6310,14 +6310,28 @@ void add_dummies (GtkAction *action)
     gretlopt opt = OPT_NONE;
     int u = dummies_code(action);
     int center = 0;
+    int ref = 0;
     gint err;
 
     if (u == TS_DUMMIES) {
-	int resp = no_yes_dialog(NULL, _("Center the periodic dummies?"));
+        const char *opts[] = {
+            N_("All periodic dummies"),
+            N_("Omit the first dummy"),
+            N_("Omit the last dummy"),
+        };
+        int resp;
 
-	if (resp == GRETL_YES) {
-	    center = 1;
-	}
+        resp = radio_dialog_with_check("gretl", _("Add periodic dummies"),
+                                       opts, 3, 1, 0, &center,
+                                       _("Center the periodic dummies?"),
+                                       NULL);
+        if (resp < 0) {
+            return;
+        } else if (resp == 1) {
+            ref = 1;
+        } else if (resp == 2) {
+            ref = dataset->pd;
+        }
     }
 
     if (u == DISCRETE_DUMMIES) {
@@ -6332,11 +6346,19 @@ void add_dummies (GtkAction *action)
         return;
     } else if (u == TS_DUMMIES) {
 	if (center) {
-	    lib_command_strcpy("genr cdummy");
+            if (ref > 0) {
+                lib_command_sprintf("genr cdummy:%d", ref);
+            } else {
+                lib_command_strcpy("genr cdummy");
+            }
 	} else {
-	    lib_command_strcpy("genr dummy");
+            if (ref > 0) {
+                lib_command_sprintf("genr dummy:%d", ref);
+            } else {
+                lib_command_strcpy("genr dummy");
+            }
 	}
-        err = gen_seasonal_dummies(dataset, center);
+        err = gen_seasonal_dummies(dataset, ref, center);
     } else if (dataset_is_panel(dataset)) {
         if (u == PANEL_UNIT_DUMMIES) {
             lib_command_strcpy("genr unitdum");

@@ -556,6 +556,10 @@ int genr_special_word (const char *s)
 	!strcmp(s, "unit") ||
 	!strcmp(s, "weekday")) {
 	return 1;
+    } else if (!strncmp(s, "dummy:", 6) && integer_string(s+6)) {
+        return 1;
+    } else if (!strncmp(s, "cdummy:", 7) && integer_string(s+7)) {
+        return 1;
     } else {
 	return 0;
     }
@@ -584,12 +588,12 @@ static int gen_special (const char *s, const char *line,
     if (!strcmp(s, "markers")) {
 	return generate_obs_markers(line, dset);
     } else if (!strcmp(s, "dummy")) {
-	err = gen_seasonal_dummies(dset, 0);
+	err = gen_seasonal_dummies(dset, 0, 0);
 	if (!err) {
 	    msg = N_("Periodic dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "cdummy")) {
-	err = gen_seasonal_dummies(dset, 1);
+	err = gen_seasonal_dummies(dset, 0, 1);
 	if (!err) {
 	    msg = N_("Centered periodic dummy variables generated.\n");
 	}
@@ -615,6 +619,16 @@ static int gen_special (const char *s, const char *line,
     } else if (!strcmp(s, "weekday")) {
 	err = gen_wkday(dset, &vnum);
 	write_label = 1;
+    } else if (!strncmp(s, "dummy:", 6) && integer_string(s+6)) {
+        err = gen_seasonal_dummies(dset, atoi(s+6), 0);
+	if (!err) {
+	    msg = N_("Periodic dummy variables generated.\n");
+	}
+    } else if (!strncmp(s, "cdummy:", 7) && integer_string(s+7)) {
+        err = gen_seasonal_dummies(dset, atoi(s+7), 1);
+	if (!err) {
+	    msg = N_("Centered periodic dummy variables generated.\n");
+	}
     }
 
     if (msg != NULL && gretl_messages_on()) {
