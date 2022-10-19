@@ -8323,10 +8323,19 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
         if (f == F_STRSTR || f == F_INSTRING) {
             char *sret, *tmp = gretl_strdup(sr);
+	    int case_sensitive = 0;
 
             if (tmp != NULL) {
+		if (!null_node(x)) {
+		    case_sensitive = node_get_bool(x, p, 0);
+		}
+
                 strstr_escape(tmp);
-                sret = strstr(sl, tmp);
+		if (case_sensitive) {
+		    sret = strcasestr(sl, tmp);
+		} else {
+		    sret = strstr(sl, tmp);
+		}
                 if (f == F_INSTRING) {
                     ret->v.xval = sret != NULL;
                 } else {
@@ -12947,6 +12956,18 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = omega_from_R(l->v.m, &p->err);
 	    } else {
 		A = R_from_omega(l->v.m, mode == 2, J, &p->err);
+	    }
+	}
+    } else if (f == F_STRSTR || f == F_INSTRING) {
+	ret = aux_string_node(p);
+
+	post_process = 0;
+	if (!p->err) {
+	    if (l->t == STR && m->t == STR) {
+		ret = two_string_func(l, m, r, f, p);
+	    } else {
+		node_type_error(f, (l->t == STR)? 2 : 1,
+				STR, (l->t == STR)? m: l, p);
 	    }
 	}
     }
@@ -17905,6 +17926,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_VMA:
     case F_BCHECK:
     case F_SPHCORR:
+    case F_STRSTR:
+    case F_INSTRING:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
@@ -18245,15 +18268,6 @@ static NODE *eval (NODE *t, parser *p)
             ret = two_string_func(l, r, NULL, t->t, p);
         } else {
             p->err = E_TYPES;
-        }
-        break;
-    case F_STRSTR:
-    case F_INSTRING:
-        if (l->t == STR && r->t == STR) {
-            ret = two_string_func(l, r, NULL, t->t, p);
-        } else {
-            node_type_error(t->t, (l->t == STR)? 2 : 1,
-                            STR, (l->t == STR)? r : l, p);
         }
         break;
     case F_STRSPLIT:

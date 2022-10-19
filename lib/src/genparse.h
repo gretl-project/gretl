@@ -318,8 +318,6 @@ enum {
     F_MXTAB,
     F_MRSEL,
     F_MCSEL,
-    F_STRSTR,
-    F_INSTRING,
     F_CNAMESET,
     F_RNAMESET,
     F_LJUNGBOX,
@@ -474,6 +472,8 @@ enum {
     F_MSPLITBY,
     F_DISTANCE,
     F_SPHCORR,
+    F_STRSTR,
+    F_INSTRING,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
