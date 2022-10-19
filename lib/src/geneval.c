@@ -12959,7 +12959,12 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == F_STRSTR || f == F_INSTRING) {
-	ret = aux_string_node(p);
+
+	if (f == F_STRSTR) {
+	    ret = aux_string_node(p);
+	} else {
+	    ret = aux_scalar_node(p);
+	}
 
 	post_process = 0;
 	if (!p->err) {
