@@ -2166,7 +2166,7 @@ static void show_hidden_region (GtkTextBuffer *buffer,
     got += gtk_text_iter_ends_tag(&end, tag) ||
 	gtk_text_iter_forward_to_tag_toggle(&end, tag);
     if (got == 2) {
-	/* remove the placeholder and its tag */
+	/* remove the placeholder and its single-use tag */
 	GtkTextTagTable *tt = gtk_text_buffer_get_tag_table(buffer);
 
 	gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
@@ -2190,6 +2190,8 @@ static void show_hidden_region (GtkTextBuffer *buffer,
 	tags = tags->next;
     }
     g_slist_free(list);
+    gtk_text_buffer_delete_mark(buffer, mark1);
+    gtk_text_buffer_delete_mark(buffer, mark2);
 }
 
 /* Clicking: help links can be activated; hidden regions can be shown */
