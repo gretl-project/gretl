@@ -6069,6 +6069,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
+	<fnarg optional="true" type="bool">ign_case</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6086,6 +6087,22 @@
 	<code>
 	  if strlen(strstr("cattle", "cat")) &gt; 0
 	</code>
+	<para>
+	  If the optional argument <argname>ign_case</argname> is nonzero, the
+	  search is case-insensitive. For example,
+	</para>
+	<code>
+	  instring("Cattle", "cat")
+	</code>
+	<para>
+	  returns 0, but
+	</para>
+	<code>
+	  instring("Cattle", "cat", 1)
+	</code>
+	<para>
+	  returns 1.
+	</para>
       </description>
     </function>
 
@@ -12616,6 +12633,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
+	<fnarg optional="true" type="bool">ign_case</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12632,6 +12650,22 @@
           string s2 = strstr(s1, "an")
           print s2
 	</code>
+	<para>
+	  If the optional argument <argname>ign_case</argname> is nonzero, the
+	  search is case-insensitive. For example,
+	</para>
+	<code>
+	  strstr("Chicago", "c")
+	</code>
+	<para>
+	  returns <quote>cago</quote>, but
+	</para>
+	<code>
+	  strstr("Chicago", "c", 1)
+	</code>
+	<para>
+	  returns <quote>Chicago</quote>.
+	</para>
 	<para>
 	  If you just wish to find out if <argname>s1</argname>
 	  contains <argname>s2</argname> (boolean test), see

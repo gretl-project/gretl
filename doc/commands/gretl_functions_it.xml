@@ -1045,9 +1045,13 @@
 	  </li>
 	  <li>
             <para>
-              <lit>os</lit>: stringa contenente il sistema operativo: può
-              essere pari a <lit>linux</lit>, <lit>macos</lit>,
-              <lit>windows</lit> o <lit>other</lit>.
+              <lit>os</lit>: stringa contenente il sistema operativo:
+              può essere pari a <lit>linux</lit>, <lit>macos</lit>,
+              <lit>windows</lit> o <lit>other</lit>. Nota bene:
+              versioni di gretl precedenti alla 2021e restituivano la
+              stringa <lit>osx</lit> per i Mac; un test se si è su un
+              Mac che funziona per tutte le versioni di gretl è
+              <lit>instring($sysinfo.os, "os")</lit>.
             </para>
 	  </li>
 	  <li>
@@ -6106,6 +6110,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
+	<fnarg optional="true" type="bool">ign_case</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6124,6 +6129,22 @@
 	</code>
 	<para>
 	  ma più efficiente.
+	</para>
+	<para>
+	  Se l'argomento opzionale <argname>ign_case</argname> è
+	  nonzero, la ricerca è insensibile a maiuscole/minuscole. Ad esempio,
+	</para>
+	<code>
+	  instring("Cattle", "cat")
+	</code>
+	<para>
+	  ritorna 0, ma
+	</para>
+	<code>
+	  instring("Cattle", "cat", 1)
+	</code>
+	<para>
+	  ritorna 1.
 	</para>
       </description>
     </function>
@@ -12719,6 +12740,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
+	<fnarg optional="true" type="bool">ign_case</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12737,6 +12759,23 @@
 	  string s2 = strstr(s1, "an")
 	  print s2
 	</code>
+	<para>
+	  Se l'argomento opzionale <argname>ign_case</argname> è
+	  nonzero, la ricerca è insensibile a maiuscole/minuscole. Ad
+	  esempio,
+	</para>
+	<code>
+	  strstr("Trieste", "t")
+	</code>
+	<para>
+	  restituisce <quote>te</quote>, ma
+	</para>
+	<code>
+	  strstr("Trieste", "t", 1)
+	</code>
+	<para>
+	  restituisce <quote>Trieste</quote>.
+	</para>
 	<para>
 	  Per un semplice controllo vero/falso se <argname>s1</argname>
 	  contiene <argname>s2</argname>, vedi <fncref targ="instring"/>.
