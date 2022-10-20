@@ -951,11 +951,11 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
 				  sensitive, from_cursor, search_all);
     }
-#ifndef GRETL_EDIT    
+#ifndef GRETL_EDIT
     else {
 	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
-#endif    
+#endif
 
     if (!found && (vwin->role == CMD_HELP ||
 		   vwin->role == CMD_HELP_EN ||
@@ -1083,14 +1083,14 @@ void vwin_add_finder (windata_t *vwin)
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     add_finder_icon(vwin, entry);
 
-#ifndef GRETL_EDIT    
+#ifndef GRETL_EDIT
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
 	vwin->role == DBNOMICS_SERIES ||
 	vwin->role == DBNOMICS_DB) {
 	maybe_fill_dbn_finder(vwin->finder);
     }
-#endif    
+#endif
 
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
@@ -1481,13 +1481,15 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     *word = '\0';
     strncat(word, s, 15);
 
-    *idx = gretl_command_number(word);
-    pos = help_pos_from_index(*idx, *role);
+    if (*role != FUNC_HELP) {
+	*idx = gretl_command_number(word);
+	pos = help_pos_from_index(*idx, *role);
 
-    if (pos <= 0 && translated_cmdref) {
-	pos = help_pos_from_index(*idx, CMD_HELP_EN);
-	if (pos > 0) {
-	    *role = CMD_HELP_EN;
+	if (pos <= 0 && translated_cmdref) {
+	    pos = help_pos_from_index(*idx, CMD_HELP_EN);
+	    if (pos > 0) {
+		*role = CMD_HELP_EN;
+	    }
 	}
     }
 
@@ -1509,6 +1511,47 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     return pos;
 }
 
+static int is_accessor (GtkTextBuffer *buf, GtkTextIter *w_start,
+			gchar **textp)
+{
+    GtkTextIter dstart = *w_start;
+    int ret = 0;
+
+    if (gtk_text_iter_backward_char(&dstart)) {
+	gchar *dtest = gtk_text_buffer_get_text(buf, &dstart,
+						w_start, FALSE);
+
+	if (*dtest == '$') {
+	    gchar *s = g_strdup_printf("$%s", *textp);
+
+	    g_free(*textp);
+	    *textp = s;
+	    ret = 1;
+	}
+	g_free(dtest);
+    }
+
+    return ret;
+}
+
+static int test_for_function (GtkTextBuffer *buf, GtkTextIter *w_end)
+{
+    GtkTextIter p_end = *w_end;
+    int ret = 0;
+
+    if (gtk_text_iter_forward_char(&p_end)) {
+	gchar *ptest = gtk_text_buffer_get_text(buf, w_end,
+						&p_end, FALSE);
+
+	if (*ptest == '(') {
+	    ret = 1;
+	}
+	g_free(ptest);
+    }
+
+    return ret;
+}
+
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin)
 {
@@ -1528,36 +1571,23 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 					 gtk_text_buffer_get_insert(buf));
 
 	if (gtk_text_iter_inside_word(&iter)) {
-	    GtkTextIter w_start, w_end;
-
-	    w_start = iter;
-	    w_end = iter;
+	    GtkTextIter w_start = iter;
+	    GtkTextIter w_end = iter;
 
 	    if (!gtk_text_iter_starts_word(&iter)) {
 		gtk_text_iter_backward_word_start(&w_start);
 	    }
-
 	    if (!gtk_text_iter_ends_word(&iter)) {
 		gtk_text_iter_forward_word_end(&w_end);
 	    }
-
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
 
-	    /* dollar accessors */
 	    if (text != NULL) {
-		GtkTextIter dstart = w_start;
-		gchar *dtest = NULL;
-
-		if (gtk_text_iter_backward_char(&dstart)) {
-		    dtest = gtk_text_buffer_get_text(buf, &dstart,
-						     &w_start, FALSE);
-		    if (*dtest == '$') {
-			gchar *s = g_strdup_printf("$%s", text);
-
-			g_free(text);
-			text = s;
+		/* handle dollar accessors, functions */
+		if (!is_accessor(buf, &w_start, &text)) {
+		    if (test_for_function(buf, &w_end)) {
+			role = FUNC_HELP;
 		    }
-		    g_free(dtest);
 		}
 	    }
 	}
@@ -2475,7 +2505,7 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	    free(dlpath);
 	}
     }
-#endif    
+#endif
     if (!gotit && code != GRETL_DBN) {
 	/* try downloading the manual file */
 	err = get_writable_doc_path(fullpath, fname);
@@ -2483,7 +2513,7 @@ static int find_or_download_pdf (int code, int pref, char *fullpath)
 	    err = retrieve_manfile(fname, fullpath);
 	}
     }
-    
+
     if (err) {
 	const char *buf = gretl_errmsg_get();
 
