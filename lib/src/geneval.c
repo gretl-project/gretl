@@ -8288,6 +8288,24 @@ static void strstr_escape (char *s)
     }
 }
 
+static const char *strstr_insensitive (const gchar *sd1,
+				       const gchar *sd2,
+				       const char *sl)
+{
+    const char *ret = strstr(sd1, sd2);
+
+    if (ret != NULL) {
+	/* preserve case of @sl? */
+	const char *chk = sl + (ret - sd1);
+
+	if (g_utf8_validate(chk, -1, NULL)) {
+	    ret = chk;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
                               int f, parser *p)
 {
@@ -8323,7 +8341,8 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
         if (f == F_STRSTR || f == F_INSTRING) {
             int ignore_case = node_get_bool(x, p, 0);
-            char *sret, *tmp = gretl_strdup(sr);
+            char *tmp = gretl_strdup(sr);
+	    const char *sret = NULL;
 
             if (tmp != NULL) {
                 gchar *sd1 = NULL, *sd2 = NULL;
@@ -8332,7 +8351,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
                 if (ignore_case) {
                     sd1 = g_utf8_strdown(sl, -1);
                     sd2 = g_utf8_strdown(tmp, -1);
-                    sret = strstr(sd1, sd2);
+		    sret = strstr_insensitive(sd1, sd2, sl);
                 } else {
                     sret = strstr(sl, tmp);
                 }
