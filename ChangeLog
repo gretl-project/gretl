@@ -15,6 +15,8 @@ version 2022c, in progress
   specify a custom separator
 - strsub() function help: note that an array of strings can be
   given as the first argument
+- instring() and strstr() functions: add optional parameter
+  for case-insensitive search
 - gretl_edit: enable auto-completion, add some specialized
   "developer" options, and add a "kill" button to stop script
   execution
