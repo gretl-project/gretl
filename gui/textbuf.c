@@ -53,8 +53,7 @@
 
 #define TABDEBUG 0
 #define KDEBUG 0
-
-#define HIDE_SHOW 0
+#define HIDE_SHOW 1
 
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
@@ -996,12 +995,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     if (editing_hansl(vwin->role)) {
 	GtkTextTagTable *table = gtk_text_tag_table_new();
 	GtkTextTag *htag = gtk_text_tag_new("hidden");
-	GtkTextTag *gtag = gtk_text_tag_new("gray");
 
 	g_object_set(htag, "invisible", 1, NULL);
-	g_object_set(gtag, "foreground", "gray", NULL);
 	gtk_text_tag_table_add(table, htag);
-	gtk_text_tag_table_add(table, gtag);
 	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(table));
     } else {
 	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
@@ -1088,6 +1084,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }
+
+#if HIDE_SHOW
+    connect_link_signals(vwin);
+#endif
 }
 
 /* Manufacture a little sampler sourceview for use in the
@@ -2055,9 +2055,10 @@ static void open_pdf_file (GtkTextTag *tag)
 }
 
 static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
-			    gpointer en_ptr)
+			    windata_t *hwin)
 {
     GSList *tags = NULL, *tagp = NULL;
+    int en = english_help_role(hwin->role);
 
     tags = gtk_text_iter_get_tags(iter);
 
@@ -2065,7 +2066,6 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 	GtkTextTag *tag = tagp->data;
 	gint page = object_get_int(tag, "page");
 	gint xref = object_get_int(tag, "xref");
-	gint en = GPOINTER_TO_INT(en_ptr);
 
 	if (page != 0 || xref != 0) {
 	    if (page == GUIDE_PAGE) {
@@ -2148,10 +2148,10 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
     return FALSE;
 }
 
-/* Help links can be activated by clicking */
+/* Clicking: help links can be activated; hidden regions can be shown */
 
-static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
-				    gpointer en_ptr)
+static gboolean textview_event_after (GtkWidget *w, GdkEvent *ev,
+				      windata_t *vwin)
 {
     GtkTextIter start, end, iter;
     GtkTextView *view;
@@ -2174,15 +2174,20 @@ static gboolean cmdref_event_after (GtkWidget *w, GdkEvent *ev,
 
     /* don't follow a link if the user has selected something */
     gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
-    if (gtk_text_iter_get_offset(&start) != gtk_text_iter_get_offset(&end))
+    if (gtk_text_iter_get_offset(&start) != gtk_text_iter_get_offset(&end)) {
 	return FALSE;
+    }
 
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
-
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
 
-    follow_if_link(w, &iter, en_ptr);
+    if (vwin_is_editing(vwin)) {
+	fprintf(stderr, "Should show hidden\n");
+	// show_if_hidden(w, &iter, vwin);
+    } else {
+	follow_if_link(w, &iter, vwin);
+    }
 
     return FALSE;
 }
@@ -2201,7 +2206,8 @@ static void ensure_text_cursors (void)
 }
 
 static void
-set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
+set_cursor_if_appropriate (GtkTextView *view, gint x, gint y,
+			   windata_t *vwin)
 {
     static gboolean hovering_over_link = FALSE;
     GSList *tags = NULL, *tagp = NULL;
@@ -2215,8 +2221,9 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 	GtkTextTag *tag = tagp->data;
 	gint page = object_get_int(tag, "page");
 	gint xref = object_get_int(tag, "xref");
+	gint show = object_get_int(tag, "show");
 
-	if (page != 0 || xref != 0) {
+	if (page || xref || show) {
 	    hovering = TRUE;
 	    break;
         }
@@ -2239,20 +2246,22 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 }
 
 static gboolean
-cmdref_motion_notify (GtkWidget *w, GdkEventMotion *event)
+textview_motion_notify (GtkWidget *w, GdkEventMotion *event,
+			windata_t *vwin)
 {
     GtkTextView *view = GTK_TEXT_VIEW(w);
     gint x, y;
 
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
-    set_cursor_if_appropriate(view, x, y);
+    set_cursor_if_appropriate(view, x, y, vwin);
 
     return FALSE;
 }
 
 static gboolean
-cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
+textview_visibility_notify (GtkWidget *w,  GdkEventVisibility *e,
+			    windata_t *vwin)
 {
     GtkTextView *view = GTK_TEXT_VIEW(w);
     gint wx, wy, bx, by;
@@ -2260,7 +2269,7 @@ cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
     widget_get_pointer_info(w, &wx, &wy, NULL);
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
 					  wx, wy, &bx, &by);
-    set_cursor_if_appropriate(view, bx, by);
+    set_cursor_if_appropriate(view, bx, by, vwin);
 
     return FALSE;
 }
@@ -2268,17 +2277,19 @@ cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
 static void connect_link_signals (windata_t *vwin)
 {
     ensure_text_cursors();
-    g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
-		     G_CALLBACK(cmdref_key_press), NULL);
+    if (!vwin_is_editing(vwin)) {
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
+			 G_CALLBACK(cmdref_key_press), NULL);
+    }
     g_signal_connect(G_OBJECT(vwin->text), "event-after",
-		     G_CALLBACK(cmdref_event_after), NULL);
+		     G_CALLBACK(textview_event_after), vwin);
     g_signal_connect(G_OBJECT(vwin->text), "motion-notify-event",
-		     G_CALLBACK(cmdref_motion_notify), NULL);
+		     G_CALLBACK(textview_motion_notify), vwin);
     g_signal_connect(G_OBJECT(vwin->text), "visibility-notify-event",
-		     G_CALLBACK(cmdref_visibility_notify), NULL);
+		     G_CALLBACK(textview_visibility_notify), vwin);
 }
 
-static void maybe_connect_help_signals (windata_t *hwin, int en)
+static void maybe_connect_help_signals (windata_t *hwin)
 {
     int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text),
 						 "sigs_connected"));
@@ -2286,16 +2297,14 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     ensure_text_cursors();
 
     if (!done) {
-	gpointer en_ptr = GINT_TO_POINTER(en);
-
 	g_signal_connect(G_OBJECT(hwin->text), "key-press-event",
-			 G_CALLBACK(cmdref_key_press), en_ptr);
+			 G_CALLBACK(cmdref_key_press), hwin);
 	g_signal_connect(G_OBJECT(hwin->text), "event-after",
-			 G_CALLBACK(cmdref_event_after), en_ptr);
+			 G_CALLBACK(textview_event_after), hwin);
 	g_signal_connect(G_OBJECT(hwin->text), "motion-notify-event",
-			 G_CALLBACK(cmdref_motion_notify), NULL);
+			 G_CALLBACK(textview_motion_notify), NULL);
 	g_signal_connect(G_OBJECT(hwin->text), "visibility-notify-event",
-			 G_CALLBACK(cmdref_visibility_notify), NULL);
+			 G_CALLBACK(textview_visibility_notify), NULL);
 	g_object_set_data(G_OBJECT(hwin->text), "sigs_connected",
 			  GINT_TO_POINTER(1));
     }
@@ -2322,15 +2331,16 @@ static void maybe_set_help_tabs (windata_t *hwin)
    command word is 8 characters.
 */
 
-static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
+static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf)
 {
     const char *header = N_("Gretl Command Reference");
     const gchar *s = (const gchar *) hwin->data;
     GtkTextIter iter;
     char word[10];
     int llen, llen_max = 6;
-    int idx, j, n;
+    int idx, j, n, en;
 
+    en = english_help_role(hwin->role);
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     (en)? header : _(header), -1,
@@ -2360,13 +2370,13 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), tbuf);
 
-    maybe_connect_help_signals(hwin, en);
+    maybe_connect_help_signals(hwin);
     maybe_set_help_tabs(hwin);
 }
 
 /* construct the index page for the gretl function reference */
 
-static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
+static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf)
 {
     const char *header = N_("Gretl Function Reference");
     const char *heads[] = {
@@ -2379,8 +2389,9 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     GtkTextIter iter;
     char word[12];
     int llen, llen_max = 5;
-    int i, j, k, n;
+    int i, j, k, n, en;
 
+    en = english_help_role(hwin->role);
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     (en)? header : _(header), -1,
@@ -2426,7 +2437,7 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), tbuf);
 
-    maybe_connect_help_signals(hwin, en);
+    maybe_connect_help_signals(hwin);
     maybe_set_help_tabs(hwin);
 }
 
@@ -3251,13 +3262,18 @@ static void hide_region (GtkWidget *w, gpointer p)
     tt = gtk_text_buffer_get_tag_table(tb->buf);
     if (tt != NULL) {
 	htag = gtk_text_tag_table_lookup(tt, "hidden");
-	gtag = gtk_text_tag_table_lookup(tt, "gray");
+	gtag = gtk_text_tag_new(NULL);
+	g_object_set(gtag, "foreground", "gray", "editable", 0, NULL);
+	gtk_text_tag_table_add(tt, gtag);
     }
     if (htag != NULL && gtag != NULL) {
 	gtk_text_buffer_apply_tag(tb->buf, htag, &tb->start, &tb->end);
 	mark1 = gtk_text_buffer_create_mark(tb->buf, NULL, &tb->start, FALSE);
 	mark2 = gtk_text_buffer_create_mark(tb->buf, NULL, &tb->end, FALSE);
-	gtk_text_buffer_insert_with_tags(tb->buf, &tb->start, "show hidden region",
+	g_object_set_data(G_OBJECT(gtag), "mark1", mark1);
+	g_object_set_data(G_OBJECT(gtag), "mark2", mark2);
+	g_object_set_data(G_OBJECT(gtag), "show", GINT_TO_POINTER(1));
+	gtk_text_buffer_insert_with_tags(tb->buf, &tb->start, "show hidden region\n",
 					 -1, gtag, NULL);
     }
 }
@@ -4576,7 +4592,7 @@ static char *grab_topic_buffer (const char *s)
    if we did OK, < 0 on failure.
 */
 
-int set_help_topic_buffer (windata_t *hwin, int pos, int en)
+int set_help_topic_buffer (windata_t *hwin, int pos)
 {
     GtkTextBuffer *textb;
     GtkTextIter iter;
@@ -4591,17 +4607,16 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
     if (pos == 0) {
 	/* no topic selected */
 	if (function_help(hwin->role)) {
-	    funcref_index_page(hwin, textb, en);
+	    funcref_index_page(hwin, textb);
 	} else {
-	    cmdref_index_page(hwin, textb, en);
+	    cmdref_index_page(hwin, textb);
 	}
 	cursor_to_top(hwin);
 	return 0;
     }
 
     /* OK, so pos is non-zero */
-
-    maybe_connect_help_signals(hwin, en);
+    maybe_connect_help_signals(hwin);
     maybe_set_help_tabs(hwin);
 
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
@@ -4651,7 +4666,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
     free(buf);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), textb);
-    maybe_connect_help_signals(hwin, en);
+    maybe_connect_help_signals(hwin);
     cursor_to_top(hwin);
 
     return 1;

@@ -865,9 +865,8 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
     if (ok) {
 	/* text found: move to new position */
 	int idx = help_index_from_pos(newpos, hwin->role);
-	int en = (hwin->role == CMD_HELP_EN || hwin->role == FUNC_HELP_EN);
 
-	set_help_topic_buffer(hwin, newpos, en);
+	set_help_topic_buffer(hwin, newpos);
 	helpwin_set_topic_index(hwin, idx);
     }
 
@@ -1328,7 +1327,6 @@ static windata_t *real_do_help (int idx, int pos, int role)
     static windata_t *en_func_hwin;
     windata_t *hwin = NULL;
     const char *fname = NULL;
-    int en = 0;
 
     if (pos < 0) {
 	dummy_call();
@@ -1358,15 +1356,12 @@ static windata_t *real_do_help (int idx, int pos, int role)
     } else if (role == CMD_HELP_EN) {
 	hwin = en_cmd_hwin;
 	fname = helpfile_path(GRETL_CMDREF, 0, 1);
-	en = 1;
     } else if (role == GUI_HELP_EN) {
 	hwin = en_gui_hwin;
 	fname = helpfile_path(GRETL_GUI_HELP, 0, 1);
-	en = 1;
     } else if (role == FUNC_HELP_EN) {
 	hwin = en_func_hwin;
 	fname = helpfile_path(GRETL_FUNCREF, 0, 1);
-	en = 1;
     }
 
     if (hwin != NULL) {
@@ -1408,7 +1403,7 @@ static windata_t *real_do_help (int idx, int pos, int role)
 #endif
 
     if (hwin != NULL) {
-	int ret = set_help_topic_buffer(hwin, pos, en);
+	int ret = set_help_topic_buffer(hwin, pos);
 
 	if (ret >= 0) {
 	    helpwin_set_topic_index(hwin, idx);
