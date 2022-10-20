@@ -53,7 +53,6 @@
 
 #define TABDEBUG 0
 #define KDEBUG 0
-#define HIDE_SHOW 1
 
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
@@ -991,7 +990,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	ensure_sourceview_path(lm);
     }
 
-#if HIDE_SHOW
     if (editing_hansl(vwin->role)) {
 	GtkTextTagTable *table = gtk_text_tag_table_new();
 	GtkTextTag *htag = gtk_text_tag_new("hidden");
@@ -1002,9 +1000,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     } else {
 	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
     }
-#else
-    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
-#endif
 
     if (lm != NULL) {
 	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
@@ -1085,9 +1080,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 G_CALLBACK(interactive_script_help), vwin);
     }
 
-#if HIDE_SHOW
-    connect_link_signals(vwin);
-#endif
+    if (editing_hansl(vwin->role)) {
+	connect_link_signals(vwin);
+    }
 }
 
 /* Manufacture a little sampler sourceview for use in the
@@ -2128,7 +2123,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 /* Help links can be activated by pressing Enter */
 
 static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
-				  gpointer en_ptr)
+				  windata_t *vwin)
 {
     GtkTextIter iter;
     GtkTextBuffer *tbuf;
@@ -2139,13 +2134,62 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
 	gtk_text_buffer_get_iter_at_mark(tbuf, &iter,
 					 gtk_text_buffer_get_insert(tbuf));
-	follow_if_link(tview, &iter, en_ptr);
+	follow_if_link(tview, &iter, vwin);
 	break;
     default:
 	break;
     }
 
     return FALSE;
+}
+
+static GtkTextTag *active_tag;
+
+static void show_hidden_region (GtkTextBuffer *buffer,
+				GtkTextTag *tag,
+				GtkTextIter *iter)
+{
+    GtkTextMark *mark1 = g_object_get_data(G_OBJECT(tag), "mark1");
+    GtkTextMark *mark2 = g_object_get_data(G_OBJECT(tag), "mark2");
+    GtkTextIter start = *iter;
+    GtkTextIter end = *iter;
+    GSList *tags, *list = NULL;
+    int got = 0, inv = 0;
+
+    if (mark1 == NULL || mark2 == NULL) {
+	return;
+    }
+
+    /* get the bounds of the "show" placeholder */
+    got += gtk_text_iter_begins_tag(&start, tag) ||
+	gtk_text_iter_backward_to_tag_toggle(&start, tag);
+    got += gtk_text_iter_ends_tag(&end, tag) ||
+	gtk_text_iter_forward_to_tag_toggle(&end, tag);
+    if (got == 2) {
+	/* remove the placeholder and its tag */
+	GtkTextTagTable *tt = gtk_text_buffer_get_tag_table(buffer);
+
+	gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
+	gtk_text_buffer_delete(buffer, &start, &end);
+	gtk_text_tag_table_remove(tt, tag);
+    }
+
+    /* get the bounds of the region to restore */
+    gtk_text_buffer_get_iter_at_mark(buffer, &start, mark1);
+    gtk_text_buffer_get_iter_at_mark(buffer, &end, mark2);
+    /* get the list of applied tags */
+    tags = list = gtk_text_iter_get_tags(&start);
+    /* find the "invisible" tag and remove it */
+    while (tags != NULL) {
+	tag = tags->data;
+	g_object_get(tag, "invisible", &inv, NULL);
+	if (inv) {
+	    gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
+	    break;
+	}
+	tags = tags->next;
+    }
+    g_slist_free(list);
 }
 
 /* Clicking: help links can be activated; hidden regions can be shown */
@@ -2182,9 +2226,8 @@ static gboolean textview_event_after (GtkWidget *w, GdkEvent *ev,
 					  event->x, event->y, &x, &y);
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
 
-    if (vwin_is_editing(vwin)) {
-	fprintf(stderr, "Should show hidden\n");
-	// show_if_hidden(w, &iter, vwin);
+    if (active_tag != NULL && object_get_int(active_tag, "show")) {
+	show_hidden_region(buffer, active_tag, &iter);
     } else {
 	follow_if_link(w, &iter, vwin);
     }
@@ -2211,6 +2254,7 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y,
 {
     static gboolean hovering_over_link = FALSE;
     GSList *tags = NULL, *tagp = NULL;
+    GtkTextTag *tag = NULL;
     GtkTextIter iter;
     gboolean hovering = FALSE;
 
@@ -2218,23 +2262,23 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y,
     tags = gtk_text_iter_get_tags(&iter);
 
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
-	GtkTextTag *tag = tagp->data;
-	gint page = object_get_int(tag, "page");
-	gint xref = object_get_int(tag, "xref");
-	gint show = object_get_int(tag, "show");
-
-	if (page || xref || show) {
+	tag = tagp->data;
+	if (object_get_int(tag, "page") ||
+	    object_get_int(tag, "xref") ||
+	    object_get_int(tag, "show")) {
 	    hovering = TRUE;
 	    break;
-        }
+	}
     }
 
     if (hovering != hovering_over_link) {
 	hovering_over_link = hovering;
 	if (hovering_over_link) {
+	    active_tag = tag;
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
 				  hand_cursor);
 	} else {
+	    active_tag = NULL;
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
 				  regular_cursor);
 	}
@@ -2279,7 +2323,7 @@ static void connect_link_signals (windata_t *vwin)
     ensure_text_cursors();
     if (!vwin_is_editing(vwin)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
-			 G_CALLBACK(cmdref_key_press), NULL);
+			 G_CALLBACK(cmdref_key_press), vwin);
     }
     g_signal_connect(G_OBJECT(vwin->text), "event-after",
 		     G_CALLBACK(textview_event_after), vwin);
@@ -3249,8 +3293,6 @@ static void indent_region (GtkWidget *w, gpointer p)
     }
 }
 
-#if HIDE_SHOW
-
 static void hide_region (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
@@ -3277,8 +3319,6 @@ static void hide_region (GtkWidget *w, gpointer p)
 					 -1, gtag, NULL);
     }
 }
-
-#endif
 
 void indent_hansl (GtkWidget *w, windata_t *vwin)
 {
@@ -4127,7 +4167,6 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 			     *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-#if HIDE_SHOW
 	    /* visibility of selection */
 	    item = gtk_menu_item_new_with_label(_("Hide region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
@@ -4135,7 +4174,6 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 			     *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-#endif
 	}
 	if (!smarttab && tb->selected && text_is_indented(tb->chunk)) {
 	    item = gtk_menu_item_new_with_label(_("Unindent region"));
