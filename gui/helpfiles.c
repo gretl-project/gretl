@@ -1511,8 +1511,9 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     return pos;
 }
 
-static int is_accessor (GtkTextBuffer *buf, GtkTextIter *w_start,
-			gchar **textp)
+static int is_dollar_word (GtkTextBuffer *buf,
+			   GtkTextIter *w_start,
+			   gchar **textp)
 {
     GtkTextIter dstart = *w_start;
     int ret = 0;
@@ -1534,7 +1535,13 @@ static int is_accessor (GtkTextBuffer *buf, GtkTextIter *w_start,
     return ret;
 }
 
-static int test_for_function (GtkTextBuffer *buf, GtkTextIter *w_end)
+/* In case a given identifier has both a command and a function
+   form, try to determine if we're looking at the function
+   form, using the heuristic that the identifer should be
+   followed by left parenthesis.
+*/
+
+static int probably_function (GtkTextBuffer *buf, GtkTextIter *w_end)
 {
     GtkTextIter p_end = *w_end;
     int ret = 0;
@@ -1584,8 +1591,8 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	    if (text != NULL) {
 		/* handle dollar accessors, functions */
-		if (!is_accessor(buf, &w_start, &text)) {
-		    if (test_for_function(buf, &w_end)) {
+		if (!is_dollar_word(buf, &w_start, &text)) {
+		    if (probably_function(buf, &w_end)) {
 			role = FUNC_HELP;
 		    }
 		}
