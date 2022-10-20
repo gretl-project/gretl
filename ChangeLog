@@ -20,6 +20,10 @@ version 2022c, in progress
 - gretl_edit: enable auto-completion, add some specialized
   "developer" options, and add a "kill" button to stop script
   execution
+- script editor: add hide/show functionality for selected
+  regions in a hansl script
+- script editor, "Help on command": disambiguate cases where
+  we have a command and a function of the same name
 - regls addon: plotting enhancements; document GUI usage
 - Clarify and properly enforce the case where the "const"
   property of a hansl function argument must be inherited
