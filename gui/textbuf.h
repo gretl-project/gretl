@@ -61,7 +61,7 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf);
 
 gchar *textview_get_text (GtkWidget *view);
 
-gchar *textview_get_hansl (GtkWidget *view);
+gchar *textview_get_hansl (GtkWidget *view, int save);
 
 gchar *textview_get_trimmed_text (GtkWidget *view);
 

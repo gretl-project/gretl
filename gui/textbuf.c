@@ -265,10 +265,20 @@ static gchar *strip_hidden_placeholders (gchar *content)
     return content;
 }
 
-gchar *textview_get_hansl (GtkWidget *view)
+/* Note: a non-zero value for @save means that we're grabbing the
+   GtkTextBuffer content to save it to file; otherwise we want it for
+   the purpose of execution. In the former case we include any
+   currently invisible regions (by passing TRUE as the last argument
+   to gtk_text_buffer_get_text); in the latter we'll exclude them.  In
+   both cases we need to exclude any hidden region placeholders.
+*/
+
+gchar *textview_get_hansl (GtkWidget *view, int save)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
+    gboolean include_invisible;
+    int n_hidden;
     gchar *content;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
@@ -276,20 +286,12 @@ gchar *textview_get_hansl (GtkWidget *view)
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
-    content = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 
-    if (object_get_int(tbuf, "n_hidden") > 0) {
-#if 0 /* experimenting */
-        FILE *fp = fopen("serial.txt", "w");
-        guint8 *serial;
-        GdkAtom fmt;
-        gsize len = 0;
+    n_hidden = object_get_int(tbuf, "n_hidden");
+    include_invisible = (save && n_hidden > 0);
+    content = gtk_text_buffer_get_text(tbuf, &start, &end, include_invisible);
 
-        fmt = gtk_text_buffer_register_deserialize_tagset(tbuf, NULL);
-        serial = gtk_text_buffer_serialize(tbuf, tbuf, fmt, &start, &end, &len);
-        fwrite(serial, 1, len, fp);
-        fclose(fp);
-#endif
+    if (n_hidden > 0) {
         strip_hidden_placeholders(content);
     }
 

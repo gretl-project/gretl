@@ -536,7 +536,7 @@ static void run_foreign_script (windata_t *vwin, gchar *buf,
 #else
 	win32_execute_script(cmd, lang);
 	g_free(cmd);
-#endif	
+#endif
 	g_free(cmd);
     }
 }
@@ -919,7 +919,11 @@ static void real_run_script (windata_t *vwin, int silent)
     int lang;
 
 #ifdef GRETL_EDIT
-    buf = textview_get_text(vwin->text);
+    if (vwin->role == EDIT_HANSL) {
+	buf = textview_get_hansl(vwin->text, 0);
+    } else {
+	buf = textview_get_text(vwin->text);
+    }
 #else
     if (vwin->role == EDIT_GP ||
         vwin->role == EDIT_R ||
