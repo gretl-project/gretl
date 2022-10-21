@@ -94,6 +94,9 @@ int smarttab = 1;
 int script_line_numbers = 0;
 int script_auto_bracket = 0;
 
+/* file-scope constant */
+static const char *hidden_marker = "show hidden region\n";
+
 static gboolean script_electric_enter (windata_t *vwin, int alt);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
 static gboolean
@@ -107,6 +110,16 @@ static int maybe_insert_smart_tab (windata_t *vwin, int *comp_ok);
 #ifndef GRETL_EDIT
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 #endif
+
+static int object_get_int (gpointer p, const char *key)
+{
+    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), key));
+}
+
+static void object_set_int (gpointer p, const char *key, int k)
+{
+    g_object_set_data(G_OBJECT(p), key, GINT_TO_POINTER(k));
+}
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -239,6 +252,50 @@ gchar *textview_get_trimmed_text (GtkWidget *view)
     return g_strchug(g_strchomp(textview_get_text(view)));
 }
 
+static gchar *strip_hidden_placeholders (gchar *content)
+{
+    int len = strlen(hidden_marker);
+    gchar *s = content;
+
+    while ((s = strstr(s, hidden_marker)) != NULL) {
+        shift_string_left(s, len);
+        s += len;
+    }
+
+    return content;
+}
+
+gchar *textview_get_hansl (GtkWidget *view)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+    gchar *content;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    gtk_text_buffer_get_end_iter(tbuf, &end);
+    content = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+
+    if (object_get_int(tbuf, "n_hidden") > 0) {
+#if 0 /* experimenting */
+        FILE *fp = fopen("serial.txt", "w");
+        guint8 *serial;
+        GdkAtom fmt;
+        gsize len = 0;
+
+        fmt = gtk_text_buffer_register_deserialize_tagset(tbuf, NULL);
+        serial = gtk_text_buffer_serialize(tbuf, tbuf, fmt, &start, &end, &len);
+        fwrite(serial, 1, len, fp);
+        fclose(fp);
+#endif
+        strip_hidden_placeholders(content);
+    }
+
+    return content;
+}
+
 static gchar *normalize_line (const char *s)
 {
     int i, j = 0, n = strlen(s);
@@ -330,6 +387,7 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
+    gchar *content;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
 
@@ -346,7 +404,13 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
 	gtk_text_buffer_get_end_iter(tbuf, &end);
     }
 
-    return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    content = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+
+    if (*selection == FALSE && object_get_int(tbuf, "n_hidden") > 0) {
+        strip_hidden_placeholders(content);
+    }
+
+    return content;
 }
 
 static int real_textview_set_text (GtkWidget *view,
@@ -1474,7 +1538,7 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
 	if (tag == NULL) {
 	    tag = gtk_text_buffer_create_tag(tbuf, dsname, "foreground", "blue",
 					     NULL);
-	    g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
+	    object_set_int(tag, "page", page);
 	}
 	gtk_text_buffer_insert_with_tags(tbuf, &iter,
 					 show == NULL ? dsname : show,
@@ -1758,7 +1822,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	} else {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
 	}
-	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
+	object_set_int(tag, "page", page);
     }
 
     if (show != NULL) {
@@ -1801,8 +1865,8 @@ static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	} else {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
 	}
-	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
-	g_object_set_data(G_OBJECT(tag), "xref", GINT_TO_POINTER(1));
+	object_set_int(tag, "page", page);
+	object_set_int(tag, "xref", 1);
     }
 
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
@@ -1890,11 +1954,6 @@ static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
     }
 
     g_free(key);
-}
-
-static int object_get_int (gpointer p, const char *key)
-{
-    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), key));
 }
 
 static void open_external_link (GtkTextTag *tag)
@@ -2151,28 +2210,27 @@ static void show_hidden_region (GtkTextBuffer *buffer,
 {
     GtkTextMark *mark1 = g_object_get_data(G_OBJECT(tag), "mark1");
     GtkTextMark *mark2 = g_object_get_data(G_OBJECT(tag), "mark2");
+    GtkTextTagTable *tt;
     GtkTextIter start = *iter;
     GtkTextIter end = *iter;
     GSList *tags, *list = NULL;
     int got = 0, inv = 0;
+    int n_hidden;
 
-    if (mark1 == NULL || mark2 == NULL) {
-	return;
-    }
+    g_return_if_fail(mark1 != NULL && mark2 != NULL);
 
     /* get the bounds of the "show" placeholder */
     got += gtk_text_iter_begins_tag(&start, tag) ||
 	gtk_text_iter_backward_to_tag_toggle(&start, tag);
     got += gtk_text_iter_ends_tag(&end, tag) ||
 	gtk_text_iter_forward_to_tag_toggle(&end, tag);
-    if (got == 2) {
-	/* remove the placeholder and its single-use tag */
-	GtkTextTagTable *tt = gtk_text_buffer_get_tag_table(buffer);
+    g_return_if_fail(got == 2);
 
-	gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
-	gtk_text_buffer_delete(buffer, &start, &end);
-	gtk_text_tag_table_remove(tt, tag);
-    }
+    /* remove the placeholder and its single-use tag */
+    tt = gtk_text_buffer_get_tag_table(buffer);
+    gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
+    gtk_text_buffer_delete(buffer, &start, &end);
+    gtk_text_tag_table_remove(tt, tag);
 
     /* get the bounds of the region to restore */
     gtk_text_buffer_get_iter_at_mark(buffer, &start, mark1);
@@ -2192,6 +2250,8 @@ static void show_hidden_region (GtkTextBuffer *buffer,
     g_slist_free(list);
     gtk_text_buffer_delete_mark(buffer, mark1);
     gtk_text_buffer_delete_mark(buffer, mark2);
+    n_hidden = object_get_int(buffer, "n_hidden");
+    object_set_int(buffer, "n_hidden", --n_hidden);
 }
 
 /* Clicking: help links can be activated; hidden regions can be shown */
@@ -2351,8 +2411,7 @@ static void maybe_connect_help_signals (windata_t *hwin)
 			 G_CALLBACK(textview_motion_notify), NULL);
 	g_signal_connect(G_OBJECT(hwin->text), "visibility-notify-event",
 			 G_CALLBACK(textview_visibility_notify), NULL);
-	g_object_set_data(G_OBJECT(hwin->text), "sigs_connected",
-			  GINT_TO_POINTER(1));
+        object_set_int(G_OBJECT(hwin->text), "sigs_connected", 1);
     }
 }
 
@@ -2368,7 +2427,7 @@ static void maybe_set_help_tabs (windata_t *hwin)
 	pango_tab_array_set_tab(tabs, 0, PANGO_TAB_LEFT, 50);
 	gtk_text_view_set_tabs(GTK_TEXT_VIEW(hwin->text), tabs);
 	pango_tab_array_free(tabs);
-	g_object_set_data(G_OBJECT(hwin->text), "tabs_set", GINT_TO_POINTER(1));
+	object_set_int(hwin->text, "tabs_set", 1);
     }
 }
 
@@ -2491,16 +2550,12 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf)
 
 static void push_backpage (GtkWidget *w, int pg)
 {
-    gpointer p = GINT_TO_POINTER(pg);
-
-    g_object_set_data(G_OBJECT(w), "backpage", p);
+    object_set_int(w, "backpage", pg);
 }
 
 static int pop_backpage (GtkWidget *w)
 {
-    gpointer p = g_object_get_data(G_OBJECT(w), "backpage");
-
-    return GPOINTER_TO_INT(p);
+    return object_get_int(w, "backpage");
 }
 
 static gint help_popup_click (GtkWidget *w, gpointer p)
@@ -2545,7 +2600,7 @@ static GtkWidget *build_help_popup (windata_t *hwin)
 
     for (i=imin; i<imax; i++) {
 	item = gtk_menu_item_new_with_label(_(items[i]));
-	g_object_set_data(G_OBJECT(item), "action", GINT_TO_POINTER(i+1));
+	object_set_int(item, "action", i+1);
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(help_popup_click),
 			 hwin);
@@ -3311,14 +3366,18 @@ static void hide_region (GtkWidget *w, gpointer p)
 	gtk_text_tag_table_add(tt, gtag);
     }
     if (htag != NULL && gtag != NULL) {
+        int n_hidden = object_get_int(tb->buf, "n_hidden");
+
 	gtk_text_buffer_apply_tag(tb->buf, htag, &tb->start, &tb->end);
 	mark1 = gtk_text_buffer_create_mark(tb->buf, NULL, &tb->start, FALSE);
 	mark2 = gtk_text_buffer_create_mark(tb->buf, NULL, &tb->end, FALSE);
 	g_object_set_data(G_OBJECT(gtag), "mark1", mark1);
 	g_object_set_data(G_OBJECT(gtag), "mark2", mark2);
-	g_object_set_data(G_OBJECT(gtag), "show", GINT_TO_POINTER(1));
-	gtk_text_buffer_insert_with_tags(tb->buf, &tb->start, "show hidden region\n",
+        object_set_int(gtag, "show", 1);
+	gtk_text_buffer_insert_with_tags(tb->buf, &tb->start, hidden_marker,
 					 -1, gtag, NULL);
+        object_set_int(tb->buf, "n_hidden", ++n_hidden);
+
     }
 }
 

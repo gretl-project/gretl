@@ -317,8 +317,14 @@ static void handle_geoplot_save (const char *buf,
 static void
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
-    gchar *buf = textview_get_text(vwin->text);
+    gchar *buf;
     FILE *fp;
+
+    if (editing_hansl(vwin->role)) {
+        buf = textview_get_hansl(vwin->text);
+    } else {
+        buf = textview_get_text(vwin->text);
+    }
 
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
