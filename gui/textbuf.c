@@ -95,7 +95,7 @@ int script_line_numbers = 0;
 int script_auto_bracket = 0;
 
 /* file-scope constant */
-static const char *hidden_marker = "show hidden region\n";
+static const char *hidden_marker = "hidden region\n";
 
 static gboolean script_electric_enter (windata_t *vwin, int alt);
 static gboolean script_tab_handler (windata_t *vwin, GdkEvent *event);
@@ -3379,7 +3379,7 @@ static void hide_region (GtkWidget *w, gpointer p)
 	gtk_text_buffer_insert_with_tags(tb->buf, &tb->start, hidden_marker,
 					 -1, gtag, NULL);
         object_set_int(tb->buf, "n_hidden", ++n_hidden);
-
+	gtk_text_buffer_place_cursor(tb->buf, &tb->start);
     }
 }
 
