@@ -3363,10 +3363,12 @@ static void hide_region (GtkWidget *w, gpointer p)
     tt = gtk_text_buffer_get_tag_table(tb->buf);
     if (tt != NULL) {
 	htag = gtk_text_tag_table_lookup(tt, "hidden");
+	/* make single-use placeholder tag */
 	gtag = gtk_text_tag_new(NULL);
 	g_object_set(gtag, "foreground", "gray", "editable", 0, NULL);
 	gtk_text_tag_table_add(tt, gtag);
     }
+
     if (htag != NULL && gtag != NULL) {
         int n_hidden = object_get_int(tb->buf, "n_hidden");
 
