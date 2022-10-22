@@ -1510,14 +1510,10 @@ int gretl_array_drop_string (gretl_array *A, const char *s)
 	    if (A->data[i] != NULL && !strcmp(A->data[i], s)) {
 		free(A->data[i]);
 		j = i + 1;
-		while (A->data[j] != NULL && !strcmp(A->data[j], s)) {
-		    free(A->data[j++]);
-		}
 		rem = A->n - j;
 		sz = rem * sizeof *A->data;
 		memmove(A->data + i, A->data + j, sz);
-		A->n -= j - i;
-		i = j;
+		A->n -= 1;
 	    } else {
 		i++;
 	    }
@@ -1529,7 +1525,7 @@ int gretl_array_drop_string (gretl_array *A, const char *s)
 	    free(A->data);
 	    A->data = NULL;
 	} else if (A->n < n_orig) {
-	    A->data = realloc(A->data, A->n * sizeof(void *));
+	    A->data = realloc(A->data, A->n * sizeof *A->data);
 	}
     }
 
