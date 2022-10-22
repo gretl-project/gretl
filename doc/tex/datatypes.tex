@@ -575,10 +575,9 @@ printf "\n%#12.5g\n", M[1]
 \subsection{Removing elements}
 
 There's a counterpart to the \texttt{+=} operator mentioned above:
-\texttt{-=} can be used to remove array elements specified by their
-\textit{content}. This is likely to be most useful for arrays of
-strings. Note that \texttt{-=} works on all matching elements, so
-after the following statements
+\texttt{-=} can be used to remove one or more elements specified by
+\textit{content} from an array of strings. Note that \texttt{-=} works
+on all matching elements, so after the following statements
 \begin{code}
 strings S = defarray("a", "a", "b", "a")
 S -= "a"
@@ -586,8 +585,8 @@ S -= "a"
 \texttt{S} becomes a one-element array holding only the original third
 element.
 
-Alternatively, a negative index can be used to remove a specified
-element, as in
+More generally, a negative index can be used to remove a specified
+element from an array of any type, as in
 \begin{code}
 strings S = defarray("a", "a", "b", "a")
 S = S[-1]
