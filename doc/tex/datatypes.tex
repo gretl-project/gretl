@@ -82,8 +82,8 @@ in chapter~\ref{chap:discrete}.
 It is generally expected that series in gretl will be ``properly
 numeric'' (on a ratio or at least an ordinal scale), or the sort of
 numerical indicator variables (0/1 ``dummies'') that are traditional
-in econometrics. However, there is some support for ``string-valued''
-series---see chapter~\ref{chap:strval-series} for details.
+in econometrics. However, ``string-valued'' series are also
+supported---see chapter~\ref{chap:strval-series} for details.
 
 \section{Scalars}
 \label{sec:Scalars}
@@ -572,6 +572,30 @@ string s = S[5]
 printf "\n%#12.5g\n", M[1]
 \end{code}
 
+\subsection{Removing elements}
+
+There's a counterpart to the \texttt{+=} operator mentioned above:
+\texttt{-=} can be used to remove array elements specified by their
+\textit{content}. This is likely to be most useful for arrays of
+strings. Note that \texttt{-=} works on all matching elements, so
+after the following statements
+\begin{code}
+strings S = defarray("a", "a", "b", "a")
+S -= "a"
+\end{code}
+\texttt{S} becomes a one-element array holding only the original third
+element.
+
+Alternatively, a negative index can be used to remove a specified
+element, as in
+\begin{code}
+strings S = defarray("a", "a", "b", "a")
+S = S[-1]
+\end{code}
+where only the first element is removed. See
+chapter~\ref{chap:matrices} for more on the semantics of negative
+indices.
+
 \subsection{Operations on whole arrays}
 
 Three operators are applicable to whole arrays, but only one to
@@ -702,7 +726,7 @@ and so forth. In that case the object in question is given a default
 initialization, as follows: a new scalar has value \texttt{NA}
 (missing); a new series is filled with \texttt{NA}s; a new matrix is
 null (zero rows and columns); a new string is empty; a new list has no
-members, new bundle and new arrays are empty.
+members, new bundles and new arrays are empty.
 
 Declaration can be supplemented by a definite initialization, as in
 
