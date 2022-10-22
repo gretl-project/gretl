@@ -87,12 +87,17 @@ struct urlinfo_ {
 static void urlinfo_init (urlinfo *u,
 			  const char *hostname,
 			  int saveopt,
-			  const char *localfile)
+			  const char *localfile,
+			  CGIOpt opt)
 {
     memset(u->url, 0, URLLEN);
 
     if (hostname != NULL) {
-	sprintf(u->url, "http://%s", hostname);
+	if (opt == UPLOAD) {
+	    sprintf(u->url, "https://%s", hostname);
+	} else {
+	    sprintf(u->url, "http://%s", hostname);
+	}
     }
 
     u->localfile = localfile;
@@ -581,7 +586,7 @@ static int retrieve_url (const char *hostname,
 	saveopt = SAVE_TO_FILE;
     }
 
-    urlinfo_init(&u, hostname, saveopt, localfile);
+    urlinfo_init(&u, hostname, saveopt, localfile, opt);
 
     if (is_db_transaction(opt)) {
 	strcat(u.url, datacgi);
@@ -648,7 +653,7 @@ int get_update_info (char **saver, int verbose)
     urlinfo u;
     int err = 0;
 
-    urlinfo_init(&u, sfweb, SAVE_TO_BUFFER, NULL);
+    urlinfo_init(&u, sfweb, SAVE_TO_BUFFER, NULL, 0);
     strcat(u.url, updatecgi);
 
     if (verbose) {
@@ -688,7 +693,7 @@ int upload_function_package (const char *login, const char *pass,
 	saveopt = SAVE_TO_BUFFER;
     }
 
-    urlinfo_init(&u, gretlhost, saveopt, NULL);
+    urlinfo_init(&u, gretlhost, saveopt, NULL, UPLOAD);
     strcat(u.url, datacgi);
 
     err = common_curl_setup(&curl);
@@ -1235,7 +1240,7 @@ int retrieve_public_file (const char *uri, char *localname)
     if (!err) {
 	urlinfo u;
 
-	urlinfo_init(&u, NULL, SAVE_TO_FILE, localname);
+	urlinfo_init(&u, NULL, SAVE_TO_FILE, localname, 0);
 	urlinfo_set_url(&u, uri);
 	if (gretl_in_gui_mode()) {
 	    urlinfo_set_show_progress(&u);
@@ -1279,7 +1284,7 @@ char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
     } else {
 	urlinfo u;
 
-	urlinfo_init(&u, NULL, SAVE_TO_BUFFER, NULL);
+	urlinfo_init(&u, NULL, SAVE_TO_BUFFER, NULL, 0);
 	urlinfo_set_url(&u, uri);
 	*err = curl_get(&u);
 	urlinfo_finalize(&u, &buf, err);
