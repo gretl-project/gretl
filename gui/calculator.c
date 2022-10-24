@@ -3209,7 +3209,7 @@ struct curve_plotter {
     GtkWidget *entry;
     gchar *formula;
     double xmin;
-    double xrange;
+    double xmax;
 };
 
 static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
@@ -3247,7 +3247,7 @@ static void do_plot_curve (GtkWidget *w, struct curve_plotter *p)
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "set xrange [%g:%g]\n", p->xmin, p->xmin + p->xrange);
+    fprintf(fp, "set xrange [%g:%g]\n", p->xmin, p->xmax);
     fprintf(fp, "plot \\\n");
     if (strstr(p->formula, " with ") ||
 	strstr(p->formula, " w ") ||
@@ -3281,15 +3281,15 @@ static void plot_a_curve (void)
 	return;
     }
 
+    if (plotter.xmin == 0 && plotter.xmax == 0) {
+	plotter.xmax = 10;
+    }
+
     plotter.dlg = dialog =
 	gretl_dialog_new(_("gretl: plot a curve"), mdata->main, 0);
 
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), &plotter.dlg);
-
-    if (plotter.xrange == 0) {
-	plotter.xrange = 10;
-    }
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -3317,12 +3317,12 @@ static void plot_a_curve (void)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     tmp = gtk_label_new("  ");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    tmp = gtk_label_new(_("x range"));
+    tmp = gtk_label_new(_("x maximum"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xrange, 1, 1000, 1, 0, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xmax, -100, 1000, 1, 0, 0);
     tmp = gtk_spin_button_new(adj, 1, 0);
     g_signal_connect(tmp, "value-changed",
-		     G_CALLBACK(set_double_from_spinner), &plotter.xrange);
+		     G_CALLBACK(set_double_from_spinner), &plotter.xmax);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
