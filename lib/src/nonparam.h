@@ -38,6 +38,8 @@ gretl_matrix *kendall_tau_func (const double *x,
 
 double lockes_test (const double *x, int t1, int t2);
 
+double vge_gamma_test (const double *x, int t1, int t2);
+
 int runs_test (int v, const DATASET *dset, 
 	       gretlopt opt, PRN *prn);
 

@@ -1773,7 +1773,11 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
 
     if (freq->n > 7) {
 	if (opt & OPT_O) {
-	    freq->test = lockes_test(x, freq->t1, freq->t2);
+	    if (freq->n > 500) {
+		freq->test = vge_gamma_test(x, freq->t1, freq->t2);
+	    } else {
+		freq->test = lockes_test(x, freq->t1, freq->t2);
+	    }
 	    freq->dist = D_GAMMA;
 	} else if (opt & OPT_Z) {
 	    freq->test = doornik_chisq(skew, kurt, freq->n);

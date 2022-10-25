@@ -801,6 +801,63 @@ double lockes_test (const double *x, int t1, int t2)
 }
 
 /**
+ * vge_gamma_test:
+ * @x: data series.
+ * @t1: start of sample range.
+ * @t2: end of sample range.
+ *
+ * Performs the test described by J. A. Villaseñor and E. González-Estrada
+ * (Statistics and Probability Letters, 96 (2015) pp. 281–286) for the null
+ * hypothesis that @x is gamma-distributed over the range  @t1 to @t2.
+ *
+ * For the sake of compatibility with the gamma_test() function in the R
+ * package named "goft" we divide by n-1 in computing the covariance
+ * term sxz;
+ *
+ * Returns: the z value for the test, or #NADBL on error.
+ */
+
+double vge_gamma_test (const double *x, int t1, int t2)
+{
+    int i, n = t2 - t1 + 1;
+    double xbar = 0, zbar = 0;
+    double xc, zc, sxz, s2;
+    double a, V, Vstar;
+    double *z = NULL;
+
+    z = malloc(n * sizeof *z);
+    if (z == NULL) {
+	return NADBL;
+    }
+
+    for (i=0; i<n; i++) {
+	if (na(x[t1+i])) {
+	    return NADBL;
+	}
+	xbar += x[t1+i];
+	zbar += log(x[t1+i]);
+    }
+    xbar /= n;
+    zbar /= n;
+
+    sxz = s2 = 0;
+    for (i=0; i<n; i++) {
+	xc = x[t1+i] - xbar;
+	zc = log(x[t1+i]) - zbar;
+	sxz += xc * zc;
+	s2 += xc * xc;
+    }
+
+    sxz /= (n-1);
+    s2 /= (n-1);
+    V = s2 / (xbar * sxz);
+    a = xbar / sxz;
+    Vstar = sqrt(n*a) * (V-1);
+
+    return fabs(Vstar) / sqrt(2.0);
+}
+
+/**
  * runs_test:
  * @v: ID number of the variable to process.
  * @dset: dataset struct.
