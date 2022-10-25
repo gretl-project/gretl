@@ -481,11 +481,11 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
     for (t=0; t<n; t++) {
 	if (na(srcvec[t])) {
 	    targvec[t] = NADBL;
-	    continue;
+	} else {
+	    mpf_set_d(src, srcvec[t]);
+	    mpf_pow_ui(targ, src, (unsigned long) pwr);
+	    targvec[t] = mpf_get_d(targ);
 	}
-	mpf_set_d(src, srcvec[t]);
-	mpf_pow_ui(targ, src, (unsigned long) pwr);
-	targvec[t] = mpf_get_d(targ);
     }
 
     mpf_clear(src);
