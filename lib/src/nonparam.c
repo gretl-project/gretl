@@ -812,7 +812,8 @@ double lockes_test (const double *x, int t1, int t2)
  *
  * For the sake of compatibility with the gamma_test() function in the R
  * package named "goft" we divide by n-1 in computing the covariance
- * term sxz;
+ * term @sxz, although this is not recommended by the authors of the above-
+ * noted publication.
  *
  * Returns: the z value for the test, or #NADBL on error.
  */
