@@ -493,7 +493,9 @@ dnl Check for LAPACK
 dnl
 case $host_os in
   *arwin*)
-    LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
+    if test "x$LAPACK_LIBS" = "x" ; then
+       LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
+    fi
     have_lapack="yes"
     darwin_build="yes"
     if test $pkg_build = yes ; then
