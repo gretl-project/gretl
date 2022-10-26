@@ -2568,8 +2568,8 @@ static void blas_init (void)
     void *ptr = NULL;
 
 #if defined(OS_OSX) && defined(PKGBUILD)
-    blas_variant = BLAS_VECLIB;
-    return;
+    blas_variant = BLAS_VECLIB; /* the default */
+    // return;
 #endif
 
     ptr = dlopen(NULL, RTLD_NOW);
@@ -2583,7 +2583,7 @@ static void blas_init (void)
 	}
     }
 
-    if (blas_variant != BLAS_OPENBLAS) {
+    if (blas_variant != BLAS_OPENBLAS && blas_variant != BLAS_VECLIB) {
 #ifdef WIN32
 	blas_variant = BLAS_NETLIB; /* ?? */
 #else
