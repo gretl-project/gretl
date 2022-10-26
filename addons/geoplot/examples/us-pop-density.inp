@@ -1,0 +1,37 @@
+include geoplot.gfn
+
+open us-states.geojson --quiet --frompkg=geoplot
+bundle b = bread($mapfile)
+
+# Shrink Alaska and place underneath the "lower 48"
+matrix shift = {34, -35}
+matrix center = {-150.885, 62.5503}
+matrix scale = {0.3, 0.35}
+geoplot_translate_feature(&b, 48, shift, center, scale)
+
+# Shift Hawaii alongside Alaska
+shift = {51, 5}
+geoplot_translate_feature(&b, 5, shift)
+
+bwrite(b, "us-rearranged.geojson")
+open us-rearranged.geojson
+
+# read in some more data
+join statepop.gdt population pop_density --ikey=postal --okey=Code
+series people_per_sen = population / 2
+# cut out D.C.
+smpl postal != "DC" --restrict
+
+# display map 1
+bundle opts = _(title = "USA, population density", palette = "green-to-red")
+opts.projection = "EPSG2163"
+opts.logscale = 1
+geoplot($mapfile, pop_density, opts)
+
+# display map 2
+bundle opts = _(title = "People per US Senator")
+opts.projection = "EPSG2163"
+opts.palette = "blues"
+geoplot($mapfile, people_per_sen, opts)
+
+
