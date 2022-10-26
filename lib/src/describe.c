@@ -1773,10 +1773,12 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
 
     if (freq->n > 7) {
 	if (opt & OPT_O) {
+            int err = 0;
+
 	    if (freq->n > 500) {
-		freq->test = vge_gamma_test(x, freq->t1, freq->t2);
+		freq->test = vge_gamma_test(x, freq->t1, freq->t2, &err);
 	    } else {
-		freq->test = lockes_test(x, freq->t1, freq->t2);
+		freq->test = lockes_test(x, freq->t1, freq->t2, &err);
 	    }
 	    freq->dist = D_GAMMA;
 	} else if (opt & OPT_Z) {

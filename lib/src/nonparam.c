@@ -721,6 +721,7 @@ static int locke_shuffle_init (const double *x,
  * @x: data series.
  * @t1: start of sample range.
  * @t2: end of sample range.
+ * @err: location to receive error code.
  *
  * Performs Charles Locke's nonparametric test for whether an
  * empirical distribution (namely, that of @x over the range
@@ -733,17 +734,16 @@ static int locke_shuffle_init (const double *x,
  * Returns: the z value for test, or #NADBL on error.
  */
 
-double lockes_test (const double *x, int t1, int t2)
+double lockes_test (const double *x, int t1, int t2, int *err)
 {
     struct xy_pair *uv = NULL;
     double *sx = NULL, *u = NULL, *v = NULL;
     double zj, z;
     int m = t2 - t1 + 1;
     int i, j, t;
-    int err;
 
-    err = locke_shuffle_init(x + t1, &m, &sx);
-    if (err) {
+    *err = locke_shuffle_init(x + t1, &m, &sx);
+    if (*err) {
 	return NADBL;
     }
 
@@ -753,6 +753,7 @@ double lockes_test (const double *x, int t1, int t2)
     uv = malloc(m * sizeof *uv);
 
     if (u == NULL || v == NULL || uv == NULL) {
+        *err = E_ALLOC;
 	z = NADBL;
 	goto bailout;
     }
@@ -766,7 +767,7 @@ double lockes_test (const double *x, int t1, int t2)
     for (j=0; j<NREPEAT; j++) {
 #if LOCKE_DEBUG
 	fprintf(stderr, "locke's test: j = %d\n", j);
-#endif	
+#endif
 	qsort(sx, 2 * m, sizeof *sx, randomize_doubles);
 	t = 0;
 	for (i=0; i<m; i++) {
@@ -805,6 +806,7 @@ double lockes_test (const double *x, int t1, int t2)
  * @x: data series.
  * @t1: start of sample range.
  * @t2: end of sample range.
+ * @err: location to receive error code.
  *
  * Performs the test described by J. A. Villaseñor and E. González-Estrada
  * (Statistics and Probability Letters, 96 (2015) pp. 281–286) for the null
@@ -818,35 +820,43 @@ double lockes_test (const double *x, int t1, int t2)
  * Returns: the z value for the test, or #NADBL on error.
  */
 
-double vge_gamma_test (const double *x, int t1, int t2)
+double vge_gamma_test (const double *x, int t1, int t2, int *err)
 {
-    int i, n = t2 - t1 + 1;
+    int t, n = t2 - t1 + 1;
     double xbar = 0, zbar = 0;
     double xc, zc, sxz, s2;
     double a, V, Vstar;
-    double *z = NULL;
 
-    z = malloc(n * sizeof *z);
-    if (z == NULL) {
-	return NADBL;
+    for (t=t1; t<=t2; t++) {
+        if (x[t] <= 0) {
+            gretl_errmsg_set(_("Non-positive values encountered"));
+            *err = E_DATA;
+            return NADBL;
+        } else if (na(x[t])) {
+	    n--;
+	} else {
+            xbar += x[t];
+            zbar += log(x[t]);
+        }
     }
 
-    for (i=0; i<n; i++) {
-	if (na(x[t1+i])) {
-	    return NADBL;
-	}
-	xbar += x[t1+i];
-	zbar += log(x[t1+i]);
+    if (n < 30) {
+        /* minimum obs? */
+        *err = E_TOOFEW;
+        return NADBL;
     }
+
     xbar /= n;
     zbar /= n;
 
     sxz = s2 = 0;
-    for (i=0; i<n; i++) {
-	xc = x[t1+i] - xbar;
-	zc = log(x[t1+i]) - zbar;
-	sxz += xc * zc;
-	s2 += xc * xc;
+    for (t=t1; t<=t2; t++) {
+        if (!na(x[t])) {
+            xc = x[t] - xbar;
+            zc = log(x[t]) - zbar;
+            sxz += xc * zc;
+            s2 += xc * xc;
+        }
     }
 
     sxz /= (n-1);
@@ -1337,7 +1347,7 @@ static int sign_test (const double *x, const double *y,
 	pv = 1.0;
     } else {
 	pv = binomial_cdf_comp(0.5, n, w - 1);
-    }    
+    }
 
     if (!(opt & OPT_Q)) {
 	diff_test_header(v1, v2, dset, prn);
