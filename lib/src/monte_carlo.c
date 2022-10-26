@@ -1647,6 +1647,11 @@ static int loop_condition (LOOPSET *loop, DATASET *dset, int *err)
                 } else {
                     loop->idxval += 1;
                 }
+#if 0
+		loop->idxvar = get_user_var_by_name(loop->idxname);
+		fprintf(stderr, "idxname = '%s' -> idxvar %p\n",
+			loop->idxname, (void *) loop->idxvar);
+#endif
                 uvar_set_scalar_fast(loop->idxvar, loop->idxval);
             }
         }
