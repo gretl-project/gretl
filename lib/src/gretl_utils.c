@@ -2432,7 +2432,7 @@ static int detect_blas_via_ldd (void)
 
 #ifdef OS_OSX
     gchar *argv[4];
-    prog = g_strdup("gretlcli"); /* ?? */
+    prog = g_strdup_printf("%sgretlcli", gretl_bindir());
     argv[0] = "otool";
     argv[1] = "-L";
     argv[2] = prog;
