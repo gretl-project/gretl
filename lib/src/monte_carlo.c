@@ -1647,12 +1647,16 @@ static int loop_condition (LOOPSET *loop, DATASET *dset, int *err)
                 } else {
                     loop->idxval += 1;
                 }
-#if 0
-		loop->idxvar = get_user_var_by_name(loop->idxname);
-		fprintf(stderr, "idxname = '%s' -> idxvar %p\n",
-			loop->idxname, (void *) loop->idxvar);
-#endif
-                uvar_set_scalar_fast(loop->idxvar, loop->idxval);
+                if (loop->idxvar == NULL) {
+                    loop->idxvar = get_user_var_by_name(loop->idxname);
+                    /* fprintf(stderr, "loop_condition: incoming idxvar was NULL\n"); */
+                }
+                if (loop->idxvar != NULL) {
+                    uvar_set_scalar_fast(loop->idxvar, loop->idxval);
+                } else {
+                    fprintf(stderr, "loop_condition: couldn't find index variable!\n");
+                    ok = 0;
+                }
             }
         }
     } else if (!loop_count_too_high(loop)) {
@@ -2695,9 +2699,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
             int parse = 1;
 
             loop_renaming = loop_is_renaming(loop);
- 	    if (loop_renaming) {
-		set_non_compilable(ll);
-	    }
+            if (loop_renaming || gretl_function_recursing()) {
+                set_non_compilable(ll);
+            }
 
             currline = ll->s;
             if (compiled) {
