@@ -9678,7 +9678,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		n_saved++;
 	    } else {
 		/* assemble then execute the loop */
-		ptr = this_gencomp ? &fline->ptr : NULL;
+		if (this_gencomp && !gretl_function_recursing()) {
+		    ptr = &fline->ptr;
+		} else {
+		    ptr = NULL;
+		}
 		for (j=i; j<=fline->next && !err; j++) {
 		    strcpy(line, u->lines[j].s);
 		    err = maybe_exec_line(&state, dset, ptr);

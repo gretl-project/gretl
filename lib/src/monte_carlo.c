@@ -2699,7 +2699,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
             int parse = 1;
 
             loop_renaming = loop_is_renaming(loop);
-            if (loop_renaming || gretl_function_recursing()) {
+            if (loop_renaming) {
                 set_non_compilable(ll);
             }
 
