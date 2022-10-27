@@ -44,6 +44,7 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="no"
+build_addons_doc="no"
 build_editor="no"
 use_lucida="no"
 build_po="no"
@@ -946,14 +947,18 @@ fi
 
 dnl If building addons was requested, see if we can do it
 if test "${build_addons}" = "yes" ; then
-   if test "$have_latex" = "no" ; then
-      build_addons="no"
-      echo "*** Can't build gretl addons: pdflatex not found"
+   if test "$have_latex" = "yes" ; then
+      build_addons_doc="yes"
+   else
+      echo "*** Can't build documentation for addons: pdflatex not found."
+      echo "*** To install the gretl addons without documentation:"
+      echo "  cd addons ; make install-code"
    fi
 fi
 
 AC_SUBST(build_docs)
 AC_SUBST(build_addons)
+AC_SUBST(build_addons_doc)
 AC_SUBST(build_editor)
 AC_SUBST(quiet_build)
 AC_SUBST(pkg_build)
