@@ -10855,6 +10855,17 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *function_depth_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL) {
+	ret->v.xval = gretl_function_depth();
+    }
+
+    return ret;
+}
+
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -17361,6 +17372,9 @@ static NODE *eval (NODE *t, parser *p)
             node_type_error(t->t, 1, BUNDLE, l, p);
         }
         break;
+    case HF_FDEPTH:
+	ret = function_depth_node(l, p);
+	break;
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;

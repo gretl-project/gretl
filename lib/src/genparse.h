@@ -286,6 +286,7 @@ enum {
     F_ACCESS,
     F_POLROOTS,
     HF_JBTERMS,
+    HF_FDEPTH,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_RANK,
