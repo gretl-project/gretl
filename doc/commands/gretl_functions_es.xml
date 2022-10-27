@@ -6069,6 +6069,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
+	<fnarg optional="true" type="bool">ign_mayus</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6086,6 +6087,22 @@
 	<code>
 	  if strlen(strstr("gatada", "gata")) &gt; 0
 	</code>
+	<para>
+	  Si el argumento opcional <argname>ign_mayus</argname> no es cero,
+	  la búsqueda no es sensible a mayúsculas y minúsculas. Por ejemplo:
+	</para>
+	<code>
+	  instring("Gatada", "gata")
+	</code>
+	<para>
+	  devuelve 0, pero
+	</para>
+	<code>
+	  instring("Gatada", "gata", 1)
+	</code>
+	<para>
+	  devuelve 1.
+	</para>
       </description>
     </function>
 
@@ -12009,9 +12026,9 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve un resultado del mismo tipo que <argname>x</argname> con sus
-	  valores ordenados de forma ascendente, descartando las observaciones
-	  con valores ausentes cuando <math>x</math> es una serie.
+	  Devuelve un resultado del tipo de <argname>x</argname> con los valores ordenados
+	  de forma ascendente. Las observaciones con valores ausentes se descartan cuando
+	  <math>x</math> es una serie, pero se ordenan al final si <math>x</math> es un vector.
 	  <seelist>
             <fncref targ="dsort"/>
             <fncref targ="values"/>
@@ -12616,6 +12633,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
+	<fnarg optional="true" type="bool">ign_mayus</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12632,6 +12650,22 @@
           string s2 = strstr(s1, "un")
           print s2
   </code>
+	<para>
+	  Si el argumento opcional <argname>ign_mayus</argname> no es cero,
+	  la búsqueda no es sensible a mayúsculas y minúsculas. Por ejemplo:
+	</para>
+	<code>
+	  strstr("Bilbao", "b")
+	</code>
+	<para>
+	  devolve <quote>bao</quote>, pero
+	</para>
+	<code>
+	  strstr("Bilbao", "b", 1)
+	</code>
+	<para>
+	  devolve <quote>Bilbao</quote>.
+	</para>
 	<para>
 	  Si únicamente quieres descubrir si <argname>s1</argname>
 	  contiene a <argname>s2</argname> (prueba booleana), consulta
@@ -12662,7 +12696,7 @@
 
     <function name="strsub" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
 	<fnarg type="string">hallada</fnarg>
 	<fnarg type="string">substit</fnarg>
       </fnargs>
@@ -13256,9 +13290,9 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Devuelve un vector que contiene los distintos elementos del argumento
-	  <argname>x</argname> sin ningún orden especial, sino en el que
-	  están en <argname>x</argname>. Consulta <fncref targ="values"/>
+	  Devuelve un vector que contiene los distintos elementos no ausentes
+	  del argumento <argname>x</argname> sin ningún orden especial, sino en
+	  el que están en <argname>x</argname>. Consulta <fncref targ="values"/>
 	  para la variante de esta función que devuelve los valores ordenados.
 	</para>
       </description>
@@ -13388,9 +13422,10 @@ d =  8.0000000
       <description>
 	<para>
 	  Devuelve un vector que contiene los distintos elementos del argumento
-	  <argname>x</argname> ordenados de forma ascendente. Si quieres
-	  descartar la parte decimal antes de aplicar esta función, utiliza la
-	  expresión <lit>values(int(x))</lit>.
+	  <argname>x</argname> ordenados de forma ascendente, ignorando
+	  cualquiera de los valores ausente. Si quieres descartar la parte
+	  decimal antes de aplicar esta función, utiliza la expresión
+	  <lit>values(int(x))</lit>.
 	</para>
 	<para>
 	  <seelist>
