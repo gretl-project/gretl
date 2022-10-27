@@ -2410,7 +2410,8 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 
     if (item->size > 0) {
 	pprintf(prn, " size=\"%d\">\n", item->size);
-    } else if (item->type == GRETL_TYPE_STRING) {
+    } else if (item->type == GRETL_TYPE_STRING ||
+	       gretl_is_scalar_type(item->type)) {
 	pputc(prn, '>');
     } else {
 	pputs(prn, ">\n");

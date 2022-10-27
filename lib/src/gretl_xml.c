@@ -470,7 +470,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     }
 
     if (name == NULL) {
-	pprintf(prn, "<gretl-matrix rows=\"%d\" cols=\"%d\"\n",
+	pprintf(prn, "<gretl-matrix rows=\"%d\" cols=\"%d\"",
 			  m->rows, m->cols);
     } else {
 	pprintf(prn, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"",
@@ -490,7 +490,6 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     }
 
     S = gretl_matrix_get_colnames(m);
-
     if (S != NULL) {
 	pputs(prn, " colnames=\"");
 	for (j=0; j<m->cols; j++) {
@@ -500,7 +499,6 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     }
 
     S = gretl_matrix_get_rownames(m);
-
     if (S != NULL) {
 	pputs(prn, " rownames=\"");
 	for (j=0; j<m->rows; j++) {
