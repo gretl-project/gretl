@@ -56,6 +56,11 @@ install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	for f in examples/* ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
+install-code: $(PKG).gfn installdirs
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	for f in examples/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
