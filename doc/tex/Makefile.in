@@ -251,28 +251,28 @@ $(ALTKBD): $(KBDTEX) gretl-keys-a4.tex $(STYSRC)
 gretl-ref.bbl: $(REF)
 
 matfuncs.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 tabinternals.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 tabfunctions.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 tabloopcmds.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 tabnonloopcmds.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 funcbody.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 refbody.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 cmdtopics.tex: $(XMLSRC)
-	make -C ../commands ../tex/$@
+	$(MAKE) -C ../commands ../tex/$@
 
 letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(LPDOC) $(KBD)
 
