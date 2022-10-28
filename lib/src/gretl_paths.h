@@ -141,7 +141,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs);
 char *gretl_function_package_get_path (const char *name,
 				       PkgType type);
 
-int get_package_data_path (const char *fname, char *fullname);
+int get_package_data_path (int ci, const char *fname, char *fullname);
 
 void set_gretl_plugin_path (const char *path);
 

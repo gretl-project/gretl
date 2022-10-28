@@ -132,6 +132,7 @@ struct gretl_option gretl_opts[] = {
     { APPEND,   OPT_V, "verbose", 0 },
     { APPEND,   OPT_U, "update-overlap", 0 },
     { APPEND,   OPT_X, "fixed-sample", 0 },
+    { APPEND,   OPT_K, "frompkg", 2 },
     { ARMA,     OPT_A, "as154", 0 },
     { ARMA,     OPT_C, "conditional", 0 },
     { ARMA,     OPT_E, "save-ehat", 0 },
@@ -339,6 +340,7 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_H, "no-header", 0 },
     { JOIN,     OPT_V, "verbose", 0 },
     { JOIN,     OPT_P, "pd", 2 }, /* undocumented: is it wanted? */
+    { JOIN,     OPT_R, "frompkg", 2 },
     { KPSS,     OPT_T, "trend", 0 },
     { KPSS,     OPT_D, "seasonals", 0 },
     { KPSS,     OPT_V, "verbose", 0 },

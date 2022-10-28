@@ -1253,6 +1253,7 @@ static int find_file_in_dir (const char *fname,
 
 /**
  * get_package_data_path:
+ * @ci: index of the active command.
  * @fname: the basename of the file whose full path is wanted.
  * @fullname: location to which the full path should be written
  * (should be at least FILENAME_MAX bytes).
@@ -1264,13 +1265,17 @@ static int find_file_in_dir (const char *fname,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int get_package_data_path (const char *fname, char *fullname)
+int get_package_data_path (int ci, const char *fname, char *fullname)
 {
-    const char *pkgname;
+    const char *pkgname = NULL;
     int err = 0;
 
     *fullname = '\0';
-    pkgname = get_optval_string(OPEN, OPT_K);
+    if (ci == OPEN || ci == APPEND) {
+	pkgname = get_optval_string(ci, OPT_K);
+    } else if (ci == JOIN) {
+	pkgname = get_optval_string(ci, OPT_R);
+    }
 
     if (pkgname == NULL) {
         err = E_DATA;

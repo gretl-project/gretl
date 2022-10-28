@@ -1996,8 +1996,11 @@ static int open_append_stage_1 (CMD *cmd,
     } else if (cmd->ci != JOIN && (opt & OPT_O)) {
         op->ftype = GRETL_ODBC;
         op->dbdata = 1;
-    } else if (cmd->ci == OPEN && (opt & OPT_K)) {
+    } else if ((cmd->ci == OPEN && (opt & OPT_K)) ||
+	       (cmd->ci == APPEND && (opt & OPT_K)) ||
+	       (cmd->ci == JOIN && (opt & OPT_R))) {
         /* --frompkg=whatever */
+	fprintf(stderr, " set pkgdata 1 for '%s'\n", cmd->param);
         pkgdata = 1;
     } else if (!strcmp(cmd->param, "dbnomics")) {
 	strcpy(op->fname, "dbnomics");
@@ -2011,7 +2014,8 @@ static int open_append_stage_1 (CMD *cmd,
         if (op->http) {
             err = try_http(cmd->param, op->fname, NULL);
         } else if (pkgdata) {
-            err = get_package_data_path(cmd->param, op->fname);
+            err = get_package_data_path(cmd->ci, cmd->param, op->fname);
+	    fprintf(stderr, " HERE err = %d, op->fname '%s'\n", err, op->fname);
         } else {
             err = get_full_filename(cmd->param, op->fname, OPT_NONE);
         }
