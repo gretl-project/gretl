@@ -699,6 +699,7 @@ use_xdg_utils
 use_xdg
 use_curl
 build_po
+have_latex
 have_mpi
 have_odbc
 have_gnu_regex
@@ -24386,6 +24387,7 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
+
 
 
 

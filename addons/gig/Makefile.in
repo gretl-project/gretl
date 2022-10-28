@@ -2,6 +2,7 @@ topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
 win32pkg = @win32pkg@
+have_latex = @have_latex@
 tooldir = $(topsrc)/tools
 
 MAKE = @MAKE@
@@ -15,6 +16,10 @@ ifeq ($(win32pkg),yes)
   GFNDIR = $(prefix)/functions
 else
   GFNDIR = $(datarootdir)/gretl/functions
+endif
+
+ifeq ($(have_latex),yes)
+  MAKEDOC = $(MAKE) -C doc
 endif
 
 GRETLCLI = ../../cli/gretlcli
@@ -48,8 +53,8 @@ symlinks:
 	@if [ ! -f test.sh ] || [ $(PKGSRC)/test.sh -nt test.sh ] ; then ln -sf $(PKGSRC)/test.sh . ; fi
 	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 
-pdfdoc: $(PKG).gfn
-	$(MAKE) -C doc
+pdfdoc: $(PKG).gfn	
+	$(MAKEDOC)
 
 check: $(PKG).gfn
 	./test.sh $(GRETLCLI)

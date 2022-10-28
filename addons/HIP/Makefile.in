@@ -2,6 +2,7 @@ topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
 win32pkg = @win32pkg@
+have_latex = @have_latex@
 tooldir = $(topsrc)/tools
 
 MAKE = @MAKE@
@@ -18,6 +19,10 @@ else
 endif
 
 GRETLCLI = ../../cli/gretlcli
+
+ifeq ($(have_latex),yes)
+  MAKEDOC = $(MAKE) -C doc
+endif
 
 PKG = HIP
 PKGSRC = $(topsrc)/addons/$(PKG)
@@ -47,7 +52,7 @@ symlinks:
 	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 
 pdfdoc: $(PKG).gfn
-	$(MAKE) -C doc
+	$(MAKEDOC)
 
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
