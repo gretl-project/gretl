@@ -2,7 +2,7 @@ topsrc = @top_srcdir@
 prefix = @prefix@
 datarootdir = @datarootdir@
 win32pkg = @win32pkg@
-have_latex = @have_latex@
+build_addons_doc = @build_addons_doc@
 tooldir = $(topsrc)/tools
 
 MAKE = @MAKE@
@@ -18,8 +18,7 @@ else
   GFNDIR = $(datarootdir)/gretl/functions
 endif
 
-ifeq ($(have_latex),yes)
-  MAKEDOC = $(MAKE) -C doc
+ifeq ($(build_addons_doc),yes)
   INSTDOC = install-doc
 endif
 
@@ -35,22 +34,20 @@ INP = logging.inp
 SPEC = logging.spec
 SMPL = logging_sample.inp
 
-all: $(PKG).gfn pdfdoc
-
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL) $(HELP)
 	$(GRETLCLI) -t pkg.inp
 
-$(PKG).zip: $(PKG).gfn pdfdoc
+doc/$(PKG).pdf: $(PKG).gfn
+	$(MAKE) -C doc
+
+$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
-.PHONY: symlinks pdfdoc check install installdirs clean
+.PHONY: symlinks check install installdirs clean
 
 symlinks:
 	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
-
-pdfdoc: $(PKG).gfn
-	$(MAKEDOC)
 
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)

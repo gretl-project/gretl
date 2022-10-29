@@ -150,8 +150,18 @@ AC_ARG_ENABLE(build-addons,
 [if test "$enableval" = "yes"
 then
   build_addons=yes
+  build_addons_doc=yes
 else
   build_addons=no
+fi])
+
+AC_ARG_ENABLE(addons-doc,
+[  --enable-addons-doc     Enable building addons documentation [[default=auto]]],
+[if test "$enableval" = "yes"
+then
+  build_addons_doc=yes
+else
+  build_addons_doc=no
 fi])
 
 AC_ARG_ENABLE(build-editor,
@@ -861,7 +871,6 @@ AC_SUBST(gtksv_completion)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
-AC_SUBST(have_latex)
 AC_SUBST(build_po)
 AC_SUBST(use_curl)
 AC_SUBST(use_xdg)
@@ -948,12 +957,11 @@ fi
 
 dnl If building addons was requested, see if we can do it
 if test "${build_addons}" = "yes" ; then
-   if test "$have_latex" = "yes" ; then
-      build_addons_doc="yes"
-   else
-      echo "*** Can't build documentation for addons: pdflatex not found."
-      echo "*** To install the gretl addons without documentation:"
-      echo "  cd addons ; make install-code"
+   if test "${build_addons_doc}" = "yes" ; then
+      if test "$have_latex" = "no" ; then
+         echo "*** Can't build documentation for addons: pdflatex not found."
+         build_addons="no"
+      fi
    fi
 fi
 
@@ -1232,6 +1240,7 @@ Configuration:
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Build gretl addons:                     ${build_addons}
+  Build addons documentation:             ${build_addons_doc}
   Build gretl_edit:                       ${build_editor}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}

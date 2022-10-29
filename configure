@@ -699,7 +699,6 @@ use_xdg_utils
 use_xdg
 use_curl
 build_po
-have_latex
 have_mpi
 have_odbc
 have_gnu_regex
@@ -888,6 +887,7 @@ enable_gui
 enable_gtk2
 enable_build_doc
 enable_build_addons
+enable_addons_doc
 enable_build_editor
 enable_quiet_build
 enable_swap_ends
@@ -1602,6 +1602,7 @@ Optional Features:
   --enable-gtk2           Use GTK 2.0 in preference to GTK 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [git only]
   --enable-build-addons   Enable building of gretl addons [default=no]
+  --enable-addons-doc     Enable building addons documentation [default=auto]
   --enable-build-editor   Enable building of gretl_edit [default=no]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
@@ -7802,8 +7803,21 @@ then :
   enableval=$enable_build_addons; if test "$enableval" = "yes"
 then
   build_addons=yes
+  build_addons_doc=yes
 else
   build_addons=no
+fi
+fi
+
+
+# Check whether --enable-addons-doc was given.
+if test ${enable_addons_doc+y}
+then :
+  enableval=$enable_addons_doc; if test "$enableval" = "yes"
+then
+  build_addons_doc=yes
+else
+  build_addons_doc=no
 fi
 fi
 
@@ -18430,11 +18444,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++11 features" >&5
 printf %s "checking for $CXX option to enable C++11 features... " >&6; }
-if test ${ac_cv_prog_cxx_11+y}
+if test ${ac_cv_prog_cxx_cxx11+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_11=no
+  ac_cv_prog_cxx_cxx11=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -18476,11 +18490,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++98 features" >&5
 printf %s "checking for $CXX option to enable C++98 features... " >&6; }
-if test ${ac_cv_prog_cxx_98+y}
+if test ${ac_cv_prog_cxx_cxx98+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_98=no
+  ac_cv_prog_cxx_cxx98=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -24414,7 +24428,6 @@ fi
 
 
 
-
 if test ${build_gui} = "yes" ; then
 
 pkg_failed=no
@@ -24848,12 +24861,11 @@ if test "${build_docs}" = "yes" ; then
 fi
 
 if test "${build_addons}" = "yes" ; then
-   if test "$have_latex" = "yes" ; then
-      build_addons_doc="yes"
-   else
-      echo "*** Can't build documentation for addons: pdflatex not found."
-      echo "*** To install the gretl addons without documentation:"
-      echo "  cd addons ; make install-code"
+   if test "${build_addons_doc}" = "yes" ; then
+      if test "$have_latex" = "no" ; then
+         echo "*** Can't build documentation for addons: pdflatex not found."
+         build_addons="no"
+      fi
    fi
 fi
 
@@ -27771,6 +27783,7 @@ Configuration:
   Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Build gretl addons:                     ${build_addons}
+  Build addons documentation:             ${build_addons_doc}
   Build gretl_edit:                       ${build_editor}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
