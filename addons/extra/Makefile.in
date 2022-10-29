@@ -20,12 +20,13 @@ endif
 
 ifeq ($(have_latex),yes)
   MAKEDOC = $(MAKE) -C doc
+  INSTDOC = install-doc
 endif
 
 GRETLCLI = ../../cli/gretlcli
 
 PKG = extra
-PKGSRC = $(topsrc)/addons/extra
+PKGSRC = $(topsrc)/addons/$(PKG)
 
 vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
@@ -48,18 +49,17 @@ symlinks:
 	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
 
-pdfdoc: 
+pdfdoc: $(PKG).gfn
 	$(MAKEDOC)
 
 check: $(PKG).gfn
 	$(tooldir)/test_addon $(GRETLCLI)
 
-install: $(PKG).gfn doc/$(PKG).pdf installdirs
+install: $(PKG).gfn installdirs $(INSTDOC)
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
-	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
-install-code: $(PKG).gfn installdirs
-	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+install-doc: doc/$(PKG).pdf
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
@@ -68,4 +68,3 @@ clean:
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
 	@rm -f test.out
 	@$(MAKE) -C doc clean
-
