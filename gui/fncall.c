@@ -1561,6 +1561,8 @@ static int function_call_dialog (call_info *cinfo)
 
 	    if (desc != NULL && strstr(desc, astr)) {
 		argtxt = g_strdup_printf("%s", _(desc));
+	    } else if (desc != NULL && strstr(desc, "level")) {
+		argtxt = g_strdup_printf("%s", _(desc));
 	    } else {
 		argtxt = g_strdup_printf("%s (%s)",
 					 (desc != NULL)? _(desc) :
