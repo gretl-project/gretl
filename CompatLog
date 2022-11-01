@@ -1,3 +1,8 @@
+2022-11-01 version 2022c
+
+The deprecated command version of "sprintf" now provokes
+warnings -- use the function version instead
+
 2022-08-09 version 2022b
 
 The deprecated legacy function fft() has been replaced by a
