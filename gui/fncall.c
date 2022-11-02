@@ -1740,8 +1740,10 @@ static int function_call_dialog (call_info *cinfo)
     }
 
     if (cinfo->vwin != NULL) {
+        GtkWidget *parent = vwin_toplevel(cinfo->vwin);
+
 	gtk_window_set_transient_for(GTK_WINDOW(cinfo->dlg),
-				     GTK_WINDOW(cinfo->vwin->main));
+				     GTK_WINDOW(parent));
     }
 
     gtk_widget_show_all(cinfo->dlg);
