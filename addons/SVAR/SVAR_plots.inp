@@ -1,7 +1,3 @@
-# (function splitfname comes from the extra addon)
-
-####
-
 function scalar check_bounds(int s, int v, int n)
     # s is the shock number, m is the variable number, n is the
     # system size
@@ -100,14 +96,7 @@ function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
         endif
 
         printf "\"\n"
-
-        if keypos == 0
-            printf "set key off\n"
-        elif keypos == 1
-            printf "set key outside\n"
-        elif keypos == 2
-            printf "set key below\n"
-        endif
+        printf "%s\n", map_keypos_to_command(keypos)
 
         if bootrep > 0
             printf "set style fill solid 0.125\n"
@@ -279,13 +268,7 @@ function string FEVDgrph(const matrix FEVDmat, scalar v,
     set force_decpoint on
 
     outfile "@tmpfile"
-        if keypos == 0
-            printf "set key off\n"
-        elif keypos == 1
-            printf "set key outside\n"
-        elif keypos == 2
-            printf "set key below\n"
-        endif
+        printf "%s\n", map_keypos_to_command(keypos)
         printf "set yrange [0:100]\n"
         printf "set xrange [%g:%g]\n", 0, h
         printf "set xzeroaxis\n"
@@ -337,6 +320,7 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
         titletail = sprintf(" (draw %d)", whichdraw)
     endif
 
+    # TODO: make use of compact form in HDsave()
     if outfilename == "display"
         string tmpout = "display"
     else
@@ -345,13 +329,6 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
     endif
 
     loop vnum = vfrom..vto
-        # was:
-        /*
-        if vnum < 1 || vnum > n
-            printf "Variable number %d out of bounds\n", vnum
-            return
-        endif
-        */
         errorif(vnum < 1 || vnum > n, \
           sprintf("Variable number %d out of bounds\n", vnum))
 
@@ -377,65 +354,129 @@ end function
 /* --- HD public graphing functions ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void HDsave(string outfilename, bundle *obj, int vnum[0],
-                     int drawix[0::0])
+function void HDsave(string filename "Path for storing plot or display mode",
+                     bundle *obj "Model object",
+                     int vnum[0] "Number of the variable in model, 0 = ALL",
+                     int keypos[0::2] "Key position",
+                     int drawix[0::0] "ONLY for SR-VAR: Select a specific draw, optionally",
+                     bool plot_boxes[FALSE] "If TRUE plot boxes, else rowstacked histograms")
+    /* Saves the Historical Decomposition to a graphic file. The format
+        is identified by the file extension. */
 
-    # more fashionable (=Dynare-like) style
-
-    # Interpret vnum==0 as meaning "all 1..n"
     scalar n = obj.n
     scalar vfrom vto
-    is_vrange = range(vnum, n, &vfrom, &vto)
+    scalar is_vrange = range(vnum, n, &vfrom, &vto)
+    strings filename_details = get_filename_details(filename)
+    string filename = create_filename(filename_details)
 
-    if outfilename == "display"
-        string tmpout = "display"
-    else
-        strings be = splitfname(outfilename)[2:3]
-        string tmpout = sprintf("%s.%s", be[1], be[2]) # might be overriden
-    endif
+    # prepare extended plot title, only for SR
+    scalar whichdraw = drawix ? drawix : obj.bestdraw
+    string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
 
     loop vnum = vfrom..vto
+        list Ltmp = null
+
         errorif(vnum < 1 || vnum > n, \
-          sprintf("Variable number %d out of bounds\n", vnum))
+          sprintf("Variable number %d out of bounds.\n", vnum))
 
-        list tmp = SVAR_hd(&obj, vnum, drawix)
-
-        # prepare extended plot title, only for SR
-        whichdraw = drawix ? drawix : obj.bestdraw
-        string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
-
-        tmp -= tmp[1] # take away deterministic component
-        loop i = 1..nelem(tmp)
+        list Ltmp = SVAR_hd(&obj, vnum, drawix)
+        Ltmp -= Ltmp[1]       # take away deterministic component
+        loop i = 1..nelem(Ltmp)
             string sn = obj.snames[i]
-            setinfo tmp[i] --graph-name="@sn"
+            setinfo Ltmp[i] --graph-name="@sn"
         endloop
 
-        series tmpvar = sum(tmp)
+        series tmpvar = sum(Ltmp)
         string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
         setinfo tmpvar --graph-name="@gnam"
-        tmp = tmp tmpvar
-        # (put the line with the target var (stoch.comp) _last_
-        # such that the shock colors match those in FEVD
+        Ltmp += tmpvar  # put the line with the target var (stoch.comp) _last_
+                        # such that the shock colors match those in FEVD
 
-        if exists(be) && vfrom != vto	# no display, multiple plots
-            tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
+        if nelem(filename_details) && vfrom != vto	# no display, multiple plots
+            filename = sprintf("%s_%d.%s", be[1], vnum, be[2])
         endif
 
-        plot tmp
-            option time-series
-            option single-yaxis
-            option with-boxes
-            option with-lines=tmpvar
-            printf "set title \"HD for %s%s\"", obj.Ynames[vnum], drawinfo
-        end plot --output="@tmpout"
+        if plot_boxes
+            plot tmp
+                option time-series
+                option single-yaxis
+                option with-boxes
+                option with-lines=tmpvar
+                printf "set title \"HD for %s%s\"", obj.Ynames[vnum], drawinfo
+            end plot --output="@filename"
+        else
+            string tmpfile = HDgrph(Ltmp, "foo", keypos)
+            gnuplot --input="@tmpfile" --output="@filename"
+        endif
     endloop
 end function
 
-function void HDplot(bundle *obj, int vnum[0], int drawix[0::0])
 
-    HDsave("display", &obj, vnum, drawix)
+function string HDgrph (const list L,
+                        const string title,
+                        const int keypos)
+    /* Compile the gnuplot commands for plotting the historical decomposition
+        using rowstacked histograms. */
 
+    scalar nvars = nelem(L) # assume that the stochastic series is positioned last
+    strings vnames = varnames(L)
+
+    set force_decpoint on
+
+    string datafile = sprintf("%s/hd.txt", $dotdir)
+    string tmpfile = sprintf("%s/hd.gp", $dotdir)
+
+    series obsdate = $obsdate
+    smpl L --no-missing
+    matrix mat = {obsdate} ~ {L}
+
+    outfile "@tmpfile"
+        printf "%s\n", map_keypos_to_command(keypos)
+        printf "set xzeroaxis\n"
+        printf "set title \"%s\"\n", title
+        printf "set style fill solid 0.25\n"
+        /* Does not work time-dimension on x-axis:
+        https://stackoverflow.com/a/27408978/13028724
+        printf "set style histogram rowstacked\n"
+        printf "set style data histogram\n"
+        */
+        printf "set style data boxes\n"
+        printf "set boxwidth 0.8 relative\n"
+        printf "set xdata time\n"
+
+        printf "set timefmt \"\%Y\%m\%d\"\n"
+        printf "set xrange[\"%d\":\"%d\"]\n", min(obsdate), max(obsdate)
+        printf "set format x \"\%Y-\%m\"\n"  # format to show
+        #printf "set xtics rotate by 45\n"
+
+        loop i=1..nvars
+            colcount = i + 1
+
+            if i == 1
+                printf "plot '%s' using 1:%d t '%s', \\\n",\
+                    datafile, colcount, vnames[i]
+            elif i == nvars # stochastic component of target series
+                printf "\t'' using 1:%d t '%s' with lines lw 2\n", colcount, vnames[i]
+            else
+                printf "\t'' using 1:%d t '%s', \\\n", colcount, vnames[i]
+            endif
+        endloop
+    end outfile
+
+    outfile "@datafile"
+        printf "%12.4f\n", mat
+    end outfile
+
+    set force_decpoint off # not needed in gretl >= 2021b
+
+    return tmpfile
 end function
+
+
+function void HDplot(bundle *obj, int vnum[0], int drawix[0::0])
+    HDsave("display", &obj, vnum, null, drawix)
+end function
+
 
 /* ---------------------------------------------------------------------- */
 /* --- GUI hook --------------------------------------------------------- */
@@ -454,4 +495,66 @@ function void GUI_plot(bundle *b, int ptype[0:2:0] \
         HDplot(&b, 0)
     endif
 
+end function
+
+
+/* ---------------------------------------------------------------------- */
+/* --- Helper   --------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+function string map_keypos_to_command (const int keypos[0::],
+                                       const bool outside[FALSE])
+    /* Map 'keypos' integer to internal gnuplot option string.
+
+        The gnuplot mapping is:
+
+         t/l   t/c   t/r
+
+         c/l    c    c/r
+
+         b/l   b/c   b/r
+    */
+
+    strings opts = defarray(\
+                            "off",
+                            "top left",
+                            "top center",
+                            "top right",
+                            "center left",
+                            "center",
+                            "center right",
+                            "bottom left",
+                            "bottom center",
+                            "bottom right"\
+                           )
+
+    string mode = outside == TRUE ? "outside" : "inside"
+
+    return sprintf("set key %s %s", mode, opts[keypos])
+end function
+
+
+function strings get_filename_details (const string filename)
+    /* Extract filename and file extension if existing in filename.
+    return: strings, first put filename, second file-extension. If no
+            filename exists, return empty array. */
+
+    strings ret = array(0)
+
+    if filename != "display"
+        strings ret = splitfname(filename)[2:3]
+    endif
+
+    return ret
+end function
+
+
+function string create_filename (const strings details)
+    /* Concatenate filename + file-extension if information is available. */
+
+    if nelem(details) == 2
+        return sprintf("%s.%s", details[1], details[2])
+    endif
+
+    return ""
 end function
