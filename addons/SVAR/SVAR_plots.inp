@@ -382,17 +382,6 @@ function void HDsave(string filename "Path for storing plot or display mode",
         list Ltmp = SVAR_hd(&obj, vnum, drawix)
         Ltmp -= Ltmp[1]       # take away deterministic component
 
-        # Add graph name
-        # TODO: outsource this part
-        loop i = 1..nelem(Ltmp)
-            string grph_name = obj.snames[i]
-            bundle Sinfo = getinfo(obj.snames[i])
-            if inbundle(Sinfo, "description")
-                string grph_name = Sinfo.description
-            endif
-            setinfo Ltmp[i] --graph-name="@grph_name"
-        endloop
-
         # TODO: outsource this part
         series target = sum(Ltmp)
         string grph_name = sprintf("%s (stoch. component)", obj.Ynames[vnum])
@@ -431,7 +420,6 @@ function string HDgrph (const list L,
         using rowstacked histograms. */
 
     scalar nvars = nelem(L) # assume that the stochastic series is positioned last
-    strings vnames = varnames(L)
 
     set force_decpoint on
 
@@ -445,7 +433,7 @@ function string HDgrph (const list L,
     outfile "@tmpfile"
         printf "%s\n", map_keypos_to_command(keypos)
         printf "set xzeroaxis\n"
-        printf "set title \"%s\"\n", title
+        printf "set title %s\n", title
         printf "set style fill solid 0.25\n"
         /* Does not work time-dimension on x-axis:
         https://stackoverflow.com/a/27408978/13028724
@@ -461,16 +449,24 @@ function string HDgrph (const list L,
         printf "set format x \"\%Y-\%m\"\n"  # format to show
         #printf "set xtics rotate by 45\n"
 
-        loop i=1..nvars
+        loop foreach i L
             colcount = i + 1
 
+            bundle Sinfo = getinfo(L.$i)
+            if inbundle(Sinfo, "graph_name")
+                string vname = Sinfo.graph_name
+            else
+                string vname = "$i"
+            endif
+
+            # 1st column of mat refers to x-axis (obsdate)
             if i == 1
                 printf "plot '%s' using 1:%d t '%s', \\\n",\
-                    datafile, colcount, vnames[i]
+                    datafile, colcount, vname
             elif i == nvars # stochastic component of target series
-                printf "\t'' using 1:%d t '%s' with lines lw 2\n", colcount, vnames[i]
+                printf "\t'' using 1:%d t '%s' with lines lw 2\n", colcount, vname
             else
-                printf "\t'' using 1:%d t '%s', \\\n", colcount, vnames[i]
+                printf "\t'' using 1:%d t '%s', \\\n", colcount, vname
             endif
         endloop
     end outfile

@@ -287,11 +287,6 @@ function list SVAR_hd(bundle *Mod "Model opbject",
         errorif( cols(C) < Mod.n, "partial id not supported for historical decomp")
     endif
 
-    matrix iC = inv(C)
-    strings Ynames = Mod.Ynames
-    strings snames = Mod.snames
-    string yn = Ynames[nv]
-
     smpl t1 t2
     if cols(m)>0
         Xdet = varsimul(muVARparE[2], m[p+1:,], Mod.Y[1:p,])
@@ -299,12 +294,12 @@ function list SVAR_hd(bundle *Mod "Model opbject",
         Xdet = varsimul(muVARparE[2], zeros(T-p, n), Mod.Y[1:p,])
     endif
 
-    # HD series of deterministics
-    string vname = sprintf("hd_%s_det", yn)
+    string vname = sprintf("hd_%s_det", Mod.Ynames[nv])
     ret += genseries(vname, Xdet[,nv])
     setinfo @vname --graph-name="Deterministics"
 
     # the structural shocks
+    matrix iC = inv(C)
     matrix U = muVARparE[3] * iC'
     rotVARpar = iC * muVARparE[2] * (I(p) ** C)
 
@@ -312,8 +307,8 @@ function list SVAR_hd(bundle *Mod "Model opbject",
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
 
-        string vname_shock = fixname(snames[i])
-        string vname = sprintf("hd_%s_%s", yn, vname_shock)
+        string vname_shock = fixname(Mod.snames[i])
+        string vname = sprintf("hd_%s_%s", Mod.Ynames[nv], vname_shock)
         ret += genseries(vname, W[,nv])
         setinfo @vname --graph-name="@vname_shock"
     endloop
