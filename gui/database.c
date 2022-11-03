@@ -3982,6 +3982,11 @@ static void check_gfn_drag_connection (windata_t *vwin)
     }
 }
 
+/* The function below does not appear to be working, as of
+   2022-11-03: we're not getting a "depends" even from
+   packages that do have dependency info in them.
+*/
+
 static int is_depends_line (const char *fname,
 			    const char *line,
 			    GtkListStore *store,
@@ -3991,7 +3996,7 @@ static int is_depends_line (const char *fname,
 	gchar *s = g_strdup(strchr(line, ')') + 1);
 
 	g_strchomp(g_strchug(s));
-	gtk_list_store_set(store, iter, 7, s, -1);
+	gtk_list_store_set(store, iter, DEPENDS_COLUMN, s, -1);
 	g_free(s);
 	return 1;
     } else {

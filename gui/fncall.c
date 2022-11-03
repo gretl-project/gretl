@@ -259,6 +259,10 @@ static int cinfo_args_init (call_info *cinfo)
 
 static void cinfo_free (call_info *cinfo)
 {
+    if (cinfo == NULL) {
+	return;
+    }
+
     if (cinfo->n_params > 0) {
 	glib_str_array_free(cinfo->args, cinfo->n_params);
     }
@@ -2345,7 +2349,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 
 	if (cinfo->dlg != NULL && close_on_OK) {
 	    gtk_widget_destroy(cinfo->dlg);
-	} else if (cinfo->dlg == NULL) {
+	} else if (cinfo != NULL && cinfo->dlg == NULL) {
 	    cinfo_free(cinfo);
 	}
     }
@@ -2419,7 +2423,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   windata_t *vwin,
 					   int *err)
 {
-    call_info *cinfo;
+    call_info *cinfo = NULL;
     int data_access = 0;
     int gid = -1;
     fnpkg *pkg;
@@ -2602,7 +2606,7 @@ int open_function_package (const char *pkgname,
 			   const char *fname,
 			   windata_t *vwin)
 {
-    call_info *cinfo;
+    call_info *cinfo = NULL;
     char *fname2 = NULL;
     int can_call = 1;
     int free_cinfo = 1;
@@ -4326,12 +4330,12 @@ static int gui_function_pkg_register (const char *fname,
     }
 
     if (pkg == NULL) {
+	/* not already loaded */
 	pkg = get_function_package_by_filename(fname, &err);
-    }
-
-    if (pkg == NULL) {
-	errbox_printf(_("Couldn't read '%s'"), fname);
-	return E_FOPEN;
+	if (err) {
+	    gui_errmsg(err);
+	    return err;
+	}
     }
 
 #if PKG_DEBUG
