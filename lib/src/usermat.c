@@ -275,6 +275,9 @@ int *mspec_make_list (int type, union msel *sel, int n,
 	} else {
 	    ns = gretl_vector_get_length(sel->m);
 	}
+    } else if (type == SEL_STR) {
+        *err = E_TYPES;
+        return NULL;
     } else {
 	/* range or single exclusion */
 	int sr0 = sel->range[0];

@@ -1,3 +1,6 @@
+version 2022d, in progress
+- Fix error message for invalid (string) array index
+
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
   or other iterative contexts
