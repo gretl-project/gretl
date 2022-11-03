@@ -381,31 +381,43 @@ function void HDsave(string filename "Path for storing plot or display mode",
 
         list Ltmp = SVAR_hd(&obj, vnum, drawix)
         Ltmp -= Ltmp[1]       # take away deterministic component
+
+        # Add graph name
+        # TODO: outsource this part
         loop i = 1..nelem(Ltmp)
-            string sn = obj.snames[i]
-            setinfo Ltmp[i] --graph-name="@sn"
+            string grph_name = obj.snames[i]
+            bundle Sinfo = getinfo(obj.snames[i])
+            if inbundle(Sinfo, "description")
+                string grph_name = Sinfo.description
+            endif
+            setinfo Ltmp[i] --graph-name="@grph_name"
         endloop
 
-        series tmpvar = sum(Ltmp)
-        string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
-        setinfo tmpvar --graph-name="@gnam"
-        Ltmp += tmpvar  # put the line with the target var (stoch.comp) _last_
+        # TODO: outsource this part
+        series target = sum(Ltmp)
+        string grph_name = sprintf("%s (stoch. component)", obj.Ynames[vnum])
+        setinfo target --graph-name="@grph_name"
+        Ltmp += target  # put the line with the target var (stoch.comp) _last_
                         # such that the shock colors match those in FEVD
 
+        # FIXME: This does not respect any folder paths!
         if nelem(filename_details) && vfrom != vto	# no display, multiple plots
             filename = sprintf("%s_%d.%s", be[1], vnum, be[2])
         endif
 
+        string title = sprintf("\"HD for %s%s\"", obj.Ynames[vnum], drawinfo)
+
         if plot_boxes
-            plot tmp
+            # TODO: put into sep. function
+            plot Ltmp
                 option time-series
                 option single-yaxis
                 option with-boxes
                 option with-lines=tmpvar
-                printf "set title \"HD for %s%s\"", obj.Ynames[vnum], drawinfo
+                printf "set title %s", title
             end plot --output="@filename"
         else
-            string tmpfile = HDgrph(Ltmp, "foo", keypos)
+            string tmpfile = HDgrph(Ltmp, title, keypos)
             gnuplot --input="@tmpfile" --output="@filename"
         endif
     endloop
