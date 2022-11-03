@@ -210,24 +210,31 @@ end function
 
 #######################
 
-function list SVAR_HD(bundle *mod, string vname[null],
-                      int drawix[0::0])
-    # wrapper around SVAR_hd to use a string interface for the
-    # variable
+function list SVAR_HD(bundle *mod "Model opbject",
+                      string vname[null] "Target name",
+                      int drawix[0::0] "Select specific draw, optionally")
+    /* Wrapper around SVAR_hd() to use a string interface for the
+    variable.
+    (drawix only meant for the set id case (type 10)*/
+
     v_ix = !exists(vname) ? 1 : instrings(mod.Ynames, vname)
     return SVAR_hd(&mod, v_ix, drawix)
 end function
 
 
-function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
-    # historical decomposition
+function list SVAR_hd(bundle *Mod "Model opbject",
+                      int nv[1::1] "Variable ID of target series",
+                      int drawix[0::0] "Select specific draw, optionally")
+    # Historical decomposition
     # (drawix only meant for the set id case (type 10))
 
     list ret = null
+    matrix B10 = {} # to be filled for type 10
+
+    # FIXME: WHY not directly calling the bundle each time? Redundancy!
     loop foreach i n p t1 t2 type T k
         scalar $i = Mod.$i
     endloop
-    matrix B10 = {} # to be filled for type 10
 
     if nv > n
         printf "Hm. There are %d variables in the model. ", n
@@ -240,7 +247,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     if type == 10
         errchkSRhisto(&Mod, drawix)
         # allow drawix to override the setting in the bundle
-        whichdraw = drawix ? drawix : Mod.bestdraw
+        whichdraw = drawix ? drawix : Mod.bestdraw # TODO: appears often in code
         bundle pickdraw = Mod.acc_draws[whichdraw]
         matrix B10 = pickdraw.B
     endif
@@ -287,22 +294,28 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     smpl t1 t2
     if cols(m)>0
-        Xdet = varsimul(muVARparE[2], m[p+1:,], Mod.Y[1:p,]) # was VARpar
+        Xdet = varsimul(muVARparE[2], m[p+1:,], Mod.Y[1:p,])
     else
-        Xdet = varsimul(muVARparE[2], zeros(T-p, n), Mod.Y[1:p,]) # was Mod.T
+        Xdet = varsimul(muVARparE[2], zeros(T-p, n), Mod.Y[1:p,])
     endif
 
-    ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
+    # HD series of deterministics
+    string vname = sprintf("hd_%s_det", yn)
+    ret += genseries(vname, Xdet[,nv])
+    setinfo @vname --graph-name="Deterministics"
 
     # the structural shocks
-    matrix U = muVARparE[3] * iC' # was E
+    matrix U = muVARparE[3] * iC'
     rotVARpar = iC * muVARparE[2] * (I(p) ** C)
 
     loop i = 1..n
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
-        ret += genseries(sprintf("hd_%s_%s", yn,
-          fixname(snames[i])), W[,nv])
+
+        string vname_shock = fixname(snames[i])
+        string vname = sprintf("hd_%s_%s", yn, vname_shock)
+        ret += genseries(vname, W[,nv])
+        setinfo @vname --graph-name="@vname_shock"
     endloop
 
     return ret
