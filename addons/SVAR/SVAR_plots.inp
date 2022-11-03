@@ -394,7 +394,8 @@ function void HDsave(string filename "Path for storing plot or display mode",
             filename = sprintf("%s_%d.%s", be[1], vnum, be[2])
         endif
 
-        string title = sprintf("\"HD for %s%s\"", obj.Ynames[vnum], drawinfo)
+        string title = sprintf("\"Historical decomp. for %s%s\"",
+                               obj.Ynames[vnum], drawinfo)
 
         if plot_boxes
             # TODO: put into sep. function
