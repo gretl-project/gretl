@@ -1,5 +1,6 @@
 version 2022d, in progress
 - Fix error message for invalid (string) array index
+- Fix error message for missing function-package dependency
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
