@@ -3948,7 +3948,9 @@ static int precheck_error (ufunc *func, windata_t *vwin)
     set_genr_model_from_vwin(vwin);
     err = gretl_function_exec(fncall_new(func, 0), GRETL_TYPE_DOUBLE,
 			      dataset, &ptr, NULL, prn);
-    check_err = *(double *) ptr;
+    if (ptr != NULL) {
+	check_err = *(double *) ptr;
+    }
     unset_genr_model();
     gretl_print_destroy(prn);
 
