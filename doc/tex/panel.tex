@@ -308,12 +308,12 @@ are tied to the validity of the additional hypotheses. If, for
 example, there is reason to think that individual effects may be
 correlated with some of the explanatory variables, then the
 random-effects estimator would be inconsistent, while fixed-effects
-estimates would still be valid.  It is precisely on this principle
-that the Hausman test is built (see below): if the fixed- and
-random-effects estimates agree, to within the usual statistical margin
-of error, there is no reason to think the additional hypotheses
-invalid, and as a consequence, no reason \textit{not} to use the more
-efficient RE estimator.
+estimates would still be valid.  The Hausman test is built on this
+principle (see below): if the fixed- and random-effects estimates
+agree, to within the usual statistical margin of error, there is no
+reason to think the additional hypotheses invalid, and as a
+consequence, no reason \textit{not} to use the more efficient RE
+estimator.
 
 \subsection{Testing panel models}
 \label{panel-tests}
@@ -335,13 +335,13 @@ that all the $\alpha_i$s are equal, in which case the pooled model
 (\ref{eq:pooled}), with a column of 1s included in the $X$ matrix, is
 adequate.
 
-When you estimate using \textsl{random effects}, the Breusch--Pagan
-and Hausman tests are presented automatically. To save their results 
-in the context of a script one would copy the \dollar{model.bp\_test} 
-or \dollar{model.hausman\_test} bundles which are nested inside the 
-\dollar{model} bundle. Both of these inner bundles contain the 
-elements \texttt{test}, \texttt{dfn} (degrees of freedom), and 
-\texttt{pvalue}.  
+When you estimate using \textsl{random effects} (RE), the
+Breusch--Pagan and Hausman tests are presented automatically. To save
+their results in the context of a script one would copy the
+\dollar{model.bp\_test} or \dollar{model.hausman\_test} bundles which
+are nested inside the \dollar{model} bundle. Both of these inner
+bundles contain the elements \texttt{test}, \texttt{dfn} (degrees of
+freedom), and \texttt{pvalue}.
 
 The Breusch--Pagan test is the counterpart to the $F$-test mentioned
 above.  The null hypothesis is that the variance of $v_i$ in
@@ -383,24 +383,34 @@ method is this:
 \end{itemize}
 
 Given the relative efficiencies of $\tilde{\beta}$ and $\hat{\beta}$,
-the matrix $\Psi$ ``should be'' positive definite, in which case $H$ is
-positive, but in finite samples this is not guaranteed and of course
-a negative $\chi^2$ value is not admissible.  The regression method
-avoids this potential problem.  The procedure is:
+the matrix $\Psi$ ``should be'' positive definite, in which case $H$
+is positive, but in finite samples this is not guaranteed and of
+course a negative $\chi^2$ value is not admissible.
+
+The regression method avoids this potential problem. The procedure is
+to estimate, via OLS, an augmented regression in which the dependent
+variable is quasi-demeaned $y$ and the regressors include both
+quasi-demeaned $X$ (as in the RE specification) and the de-meaned
+variants of all the time-varying variables (i.e.\ the fixed-effects
+regressors). The Hausman null then implies that the coefficients on
+the latter subset of regressors should be statistically
+indistinguishable from zero.
+
+If the RE specification employs the default covariance-matrix
+estimator (assuming IID errors), $H$ can be obtained as follows:
 \begin{itemize}
 \item Treat the random-effects model as the restricted model, and
   record its sum of squared residuals as SSR$_r$.
-\item Estimate via OLS an unrestricted model in which the dependent
-  variable is quasi-demeaned $y$ and the regressors include both
-  quasi-demeaned $X$ (as in the RE model) and the de-meaned variants
-  of all the time-varying variables (i.e.\ the fixed-effects
-  regressors); record the sum of squared residuals from this model
-  as SSR$_u$.
+\item Estimate the augmented (unrestricted) regression and record its
+  sum of squared residuals as SSR$_u$.
 \item Compute $H = n \left(\mbox{SSR}_r - \mbox{SSR}_u\right) /
   \mbox{SSR}_u$, where $n$ is the total number of observations used.
-  On this variant $H$ cannot be negative, since adding additional
-  regressors to the RE model cannot raise the SSR.
 \end{itemize}
+
+Alternatively, if the \option{robust} option is selected for RE
+estimation, $H$ is calculated as a Wald test based on a robust
+estimate of the covariance matrix of the augmented regression. Either
+way, $H$ cannot be negative.
 
 By default gretl computes the Hausman test via the regression
 method, but it uses the matrix-difference method if you pass the
