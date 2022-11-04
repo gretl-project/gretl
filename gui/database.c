@@ -2905,7 +2905,6 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	if (vwin->role == REMOTE_FUNC_FILES) {
 	    tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox),
 			       vwin->active_var, ZIPFILE_COLUMN, &zipfile);
-	    /* FIXME is this kosher? */
 	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 				 vwin->active_var, DEPENDS_COLUMN, &depends);
 	}
@@ -3982,13 +3981,11 @@ static void check_gfn_drag_connection (windata_t *vwin)
     }
 }
 
-/* The function below does not appear to be working, as of
-   2022-11-03: we're not getting a "depends" even from
-   packages that do have dependency info in them.
+/* Register dependency info for the function package currently
+   under consideration.
 */
 
-static int is_depends_line (const char *fname,
-			    const char *line,
+static int is_depends_line (const char *line,
 			    GtkListStore *store,
 			    GtkTreeIter *iter)
 {
@@ -4047,7 +4044,7 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	char datestr[12];
 	gboolean zipfile;
 
-	if (is_depends_line(fname, line, store, &iter)) {
+	if (is_depends_line(line, store, &iter)) {
 	    continue;
 	}
 
