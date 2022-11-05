@@ -1,3 +1,4 @@
+set verbose off
 include geoplot.gfn
 
 open us-states.geojson --quiet --frompkg=geoplot
@@ -13,6 +14,7 @@ geoplot_translate_feature(&b, 48, shift, center, scale)
 shift = {51, 5}
 geoplot_translate_feature(&b, 5, shift)
 
+# Switch to revised map
 bwrite(b, "us-rearranged.geojson")
 open us-rearranged.geojson
 
@@ -22,14 +24,12 @@ strings dem_states = defarray("WA", "OR", "CA", "NV", "AZ", "NM",
 "ME", "MA", "RI", "CT", "NJ", "DE", "MD", "DC", "HI")
 series D = 0
 loop i=1..$nobs
-   if nelem(instrings(dem_states, iso_3166_2[i] + 3))
-      D[i] = 1
-   endif
+   D[i] = nelem(instrings(dem_states, iso_3166_2[i] + 3))
 endloop
 
 # Display electoral map
-bundle opts = _(plotfile = "us0.plt", title = "USA, 2020")
+bundle opts = _(title = "USA, 2020", projection = "EPSG2163")
+opts.literal = "set key bottom right"
 opts.palette = "set palette maxcolors 2; \
 set palette defined (0 '#D22532', 1 '#244999'); unset colorbox"
-opts.projection = "EPSG2163"
 geoplot($mapfile, D, opts)
