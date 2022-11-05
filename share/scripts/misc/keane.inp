@@ -1,4 +1,6 @@
-function series mlogitlogprobs(series y, matrix X, matrix theta)
+set verbose off
+
+function series mlogitlogprobs (series y, matrix X, matrix theta)
   set warnings off
   scalar n = max(y)
   scalar k = cols(X)
@@ -20,6 +22,7 @@ end function
 # show the result from gretl's built-in logit command
 
 open keane.gdt
+
 # for the manual variant the dep. var. must be 0-based
 status = status - 1
 # and we must exclude NAs
