@@ -1458,24 +1458,40 @@ void clear_varlist (GtkWidget *widget)
     }
 }
 
+static float scale_from_font (const char *font)
+{
+    const char *numstr = strrchr(font, ' ');
+
+    if (numstr != NULL) {
+        double fsize = atof(numstr + 1);
+
+        if (fsize > 10 && fsize < 50) {
+            return (float) fsize / 10.0;
+        }
+    }
+
+    return 1.0;
+}
+
 static float get_gui_scale (void)
 {
-    GtkSettings *settings = gtk_settings_get_default();
+    const char *appfont = get_app_fontname();
     float scale = 1.0;
 
-    if (settings != NULL) {
-	gchar *fontname = NULL;
-	int fsize;
+    if (appfont != NULL && *appfont != '\0') {
+        scale = scale_from_font(appfont);
+    } else {
+        GtkSettings *settings = gtk_settings_get_default();
 
-	g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+        if (settings != NULL) {
+            gchar *fontname = NULL;
 
-	if (fontname != NULL) {
-	    if (sscanf(fontname, "%*s %d", &fsize) == 1) {
-		if (fsize > 10 && fsize < 100) {
-		    scale = fsize / 10.0;
-		}
-	    }
-	    g_free(fontname);
+            g_object_get(G_OBJECT(settings), "gtk-font-name",
+                         &fontname, NULL);
+            if (fontname != NULL) {
+                scale = scale_from_font(fontname);
+                g_free(fontname);
+            }
 	}
     }
 
@@ -2788,4 +2804,3 @@ void do_stop_script (GtkWidget *w, windata_t *vwin)
 {
     script_stopper(1);
 }
-
