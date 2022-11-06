@@ -248,7 +248,7 @@ else
   SRCS += clipboard.c
 endif
 
-ifeq ($(mac_native),yes)
+ifneq ($(MACLIB),)
   MAC_SRC = osx_open.c
   MAC_HDR = osx_open.h
   MAC_OBJ = osx_open.o
