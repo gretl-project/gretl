@@ -348,7 +348,7 @@ static int script_type (const char *fname)
 	return EDIT_PYTHON;
     } else if (has_suffix(fname, ".jl")) {
 	return EDIT_JULIA;
-    } else if (has_suffix(fname, ".do")) {
+    } else if (has_suffix(fname, ".do") || has_suffix(fname, ".ado")) {
 	return EDIT_STATA;
     } else if (has_suffix(fname, ".mod")) {
 	return EDIT_DYNARE;

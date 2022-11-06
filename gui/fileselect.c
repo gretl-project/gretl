@@ -472,7 +472,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	role = EDIT_OCTAVE;
     } else if (has_suffix(fname, ".py")) {
 	role = EDIT_PYTHON;
-    } else if (has_suffix(fname, ".do")) {
+    } else if (has_suffix(fname, ".do") || has_suffix(fname, ".ado")) {
 	role = EDIT_STATA;
     } else if (has_suffix(fname, ".jl")) {
 	role = EDIT_JULIA;
@@ -1004,7 +1004,7 @@ static struct filter_info script_filters[] = {
     { N_("Python files (*.py)"), "*.py", EDIT_PYTHON },
     { N_("Julia files (*.jl)"), "*.jl", EDIT_JULIA },
     { N_("Ox files (*.ox)"), "*.ox", EDIT_OX },
-    { N_("Stata files (*.do)"), "*.do", EDIT_STATA },
+    { N_("Stata files (*.do, *.ado)"), "*.do", EDIT_STATA },
     { N_("Dynare files (*.mod)"), "*.mod", EDIT_DYNARE },
     { N_("lpsolve files (*.lp)"), "*.lp", EDIT_LPSOLVE }
 };
@@ -1039,7 +1039,12 @@ static GtkFileFilter *add_filter_by_index (GtkWidget *filesel,
 	}
 	g_object_set_data(G_OBJECT(filt), "filter-index",
 			  GINT_TO_POINTER(i));
+    } else if (action == OPEN_SCRIPT) {
+	if (fi->id == EDIT_STATA) {
+	    gtk_file_filter_add_pattern(filt, "*.ado");
+	}
     }
+
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 
     return filt;
