@@ -148,11 +148,14 @@ gretl_string_table *gretl_string_table_new (const int *list)
 static int series_table_get_index (const series_table *st,
 				   const char *s)
 {
-    gpointer p = g_hash_table_lookup(st->ht, s);
     int ret = 0;
 
-    if (p != NULL) {
-	ret = GPOINTER_TO_INT(p);
+    if (st != NULL && st->ht != NULL && s != NULL) {
+	gpointer p = g_hash_table_lookup(st->ht, s);
+
+	if (p != NULL) {
+	    ret = GPOINTER_TO_INT(p);
+	}
     }
 
     return ret;
@@ -292,6 +295,10 @@ int series_table_add_string (series_table *st, const char *s)
 {
     char *tmp = NULL;
     int n, err;
+
+    if (s == NULL) {
+	return -1;
+    }
 
     if (*s == '"' || *s == '\'') {
 	tmp = get_unquoted(s);
