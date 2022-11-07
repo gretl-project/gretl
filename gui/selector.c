@@ -1434,7 +1434,9 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 
     gtk_box_pack_start(hbox, scroller, TRUE, TRUE, 0);
 
-    width *= gui_scale;
+    if (gui_scale > 1.0) {
+        width *= 1.0 + 0.4 * (gui_scale - 1);
+    }
     gtk_widget_set_size_request(view, width, height);
     gtk_widget_show(view);
 
@@ -5418,11 +5420,12 @@ static int maybe_increase_vsize (selector *sr, float vsize)
 {
     int ch = get_char_height(sr->dlg);
     float try = (ch / 18.0) * vsize;
+    float adj = 0.5;
     int sh = get_screen_height();
     int ret = vsize;
 
     if (try > vsize) {
-        ret = (try <= 0.6 * sh)? (int) try : (int) (0.6 * sh);
+        ret = (try <= adj * sh)? (int) try : (int) (adj * sh);
     }
 
     return ret;
