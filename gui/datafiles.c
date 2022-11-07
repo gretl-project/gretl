@@ -2537,8 +2537,7 @@ static int ok_gfn_path (const char *fullname,
     }
 
 #if GFN_DEBUG > 1
-    fprintf(stderr, "%s: %s: dups_ok=%d, is_dup=%d\n", dirname,
-	    shortname, dups_ok, is_dup);
+    fprintf(stderr, "%s: %s: is_dup=%d\n", dirname, shortname, is_dup);
 #endif
 
     if (!err && !is_dup) {
