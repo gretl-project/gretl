@@ -4,6 +4,8 @@ version 2022d, in progress
 - Fix bug: crash on doing "pkg install" from the command line
   when the window listing function packages on the server is
   displayed
+- Fix bug: possible false positive when checking for duplicate
+  function packages
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
