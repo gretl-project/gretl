@@ -6500,10 +6500,32 @@ static void maybe_fix_broken_date (char **pdate)
     }
 }
 
+static int get_pdfdoc_status (xmlNodePtr sub,
+                              xmlDocPtr doc)
+{
+    char *tmp = NULL;
+    int ret = 0;
+
+    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
+    if (tmp != NULL) {
+        if (!strncmp(tmp, "pdfdoc", 6) || is_pdf_ref(tmp)) {
+            ret = 1;
+        }
+        free(tmp);
+    }
+
+    return ret;
+}
+
 /* Read the header from a function package file -- this is used when
-   displaying the available packages in the GUI.  We write the
-   description into *pdesc and a string representation of version
-   number into *pver.
+   displaying the available packages in the GUI (see gui/datafiles.c).
+   We write the description into *pdesc, a string representation of
+   version number into *pver, date into *pdate, and author's name into
+   *pauthor.
+
+   The *pdfdoc pointer can be used to collect an int value indicating
+   whether the package contains PDF documentation (1/0), or it can be
+   set to NULL. None of the other arguments can be NULL.
 */
 
 int get_function_file_header (const char *fname, char **pdesc,
@@ -6514,7 +6536,13 @@ int get_function_file_header (const char *fname, char **pdesc,
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
     int docdone = 0;
+    int ndone = 0;
     int err = 0;
+
+    if (pdesc == NULL || pver == NULL || pdate == NULL || pauthor == NULL) {
+        fprintf(stderr, "get_function_file_header: missing parameter\n");
+        return E_DATA;
+    }
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
@@ -6535,34 +6563,30 @@ int get_function_file_header (const char *fname, char **pdesc,
 	    while (sub != NULL) {
 		if (!xmlStrcmp(sub->name, (XUC) "description")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pdesc);
+                    ndone++;
 		} else if (!xmlStrcmp(sub->name, (XUC) "version")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
-		} else if (pdate != NULL && !xmlStrcmp(sub->name, (XUC) "date")) {
+                    ndone++;
+		} else if (!xmlStrcmp(sub->name, (XUC) "date")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pdate);
 		    if (*pdate != NULL) {
 			maybe_fix_broken_date(pdate);
 		    }
-		} else if (pauthor != NULL && !xmlStrcmp(sub->name, (XUC) "author")) {
+                    ndone++;
+		} else if (!xmlStrcmp(sub->name, (XUC) "author")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
-		} else if (pdfdoc != NULL && !xmlStrcmp(sub->name, (XUC) "help")) {
-		    char *tmp = NULL;
-
-		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-		    if (tmp != NULL) {
-			if (!strncmp(tmp, "pdfdoc", 6) || is_pdf_ref(tmp)) {
-			    *pdfdoc = 1;
-			}
-			free(tmp);
-		    }
+                    ndone++;
+		} else if (!docdone && !xmlStrcmp(sub->name, (XUC) "help")) {
+                    *pdfdoc = get_pdfdoc_status(sub, doc);
 		    docdone = 1;
 		}
-		if (*pdesc != NULL && *pver != NULL && docdone) {
+		if (docdone && ndone == 4) {
 		    break;
 		}
 		sub = sub->next;
 	    }
-	    if (*pdesc != NULL && *pver != NULL) {
-		/* already got what we want */
+	    if (docdone && ndone == 4) {
+		/* we've already got what we want */
 		break;
 	    }
 	}
@@ -6576,12 +6600,18 @@ int get_function_file_header (const char *fname, char **pdesc,
     if (*pdesc == NULL) {
 	*pdesc = gretl_strdup(_("No description available"));
     }
-
     if (*pver == NULL) {
 	*pver = gretl_strdup("unknown");
     }
+    if (*pdate == NULL) {
+	*pdate = gretl_strdup("unknown");
+    }
+    if (*pauthor == NULL) {
+	*pauthor = gretl_strdup("unknown");
+    }
 
-    if (*pdesc == NULL || *pver == NULL) {
+    if (*pdesc == NULL || *pver == NULL ||
+        *pdate == NULL || *pauthor == NULL) {
 	err = E_ALLOC;
     }
 

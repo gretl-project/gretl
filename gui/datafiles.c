@@ -2537,7 +2537,7 @@ static int ok_gfn_path (const char *fullname,
     }
 
 #if GFN_DEBUG > 1
-    fprintf(stderr, "%s: %s: is_dup=%d\n", dirname, shortname, is_dup);
+    fprintf(stderr, "%s: %s: err=%d, is_dup=%d\n", dirname, shortname, err, is_dup);
 #endif
 
     if (!err && !is_dup) {
@@ -2681,7 +2681,7 @@ static gint populate_gfn_list (windata_t *vwin)
     dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
 #if GFN_DEBUG
-    show_dirs_list(dnames, n_dirs, "FUNCS_SEARCH");
+    show_dirs_list(dnames, n_dirs, "gfn search");
 #endif
 
     for (i=0; i<n_dirs; i++) {
