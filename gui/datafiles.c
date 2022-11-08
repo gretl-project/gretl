@@ -2362,20 +2362,17 @@ static int fn_file_is_duplicate (const char *fname,
     /* search from the top of @model to position @imax for
        a row that matches on package name and version
     */
-
     if (imax > 0 && gtk_tree_model_get_iter_first(model, &iter)) {
 	gchar *fname_i;
 	gchar *version_i;
-	int i, n;
-
-	n = strlen(fname) - 4;
+	int i;
 
 	for (i=0; i<imax; i++) {
 	    gtk_tree_model_get(model, &iter,
 			       0, &fname_i,
 			       1, &version_i,
 			       -1);
-	    if (strncmp(fname, fname_i, n) == 0 &&
+	    if (*fname == *fname_i && strcmp(fname, fname_i) == 0 &&
 		strcmp(version, version_i) == 0 &&
 		real_duplicate(fname, version, dirname, model, &iter)) {
 		ret = 1;
