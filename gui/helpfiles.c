@@ -1953,7 +1953,7 @@ gboolean find_package_in_viewer (windata_t *vwin,
     }
 
     while (pos < 0) {
-	gtk_tree_model_get(model, &iter, 0, &haystack);
+	gtk_tree_model_get(model, &iter, 0, &haystack, -1);
 	if (haystack != NULL) {
 	    if (*haystack != '\0') {
 		pos = string_match_pos(haystack, targ, TRUE, 0);

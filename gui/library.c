@@ -9517,6 +9517,7 @@ static void handle_gui_pkg_install (gretl_bundle *b)
     int err = 0;
 
     if (b == NULL) {
+	fprintf(stderr, "handle_gui_pkg_install: got a NULL bundle\n");
         return;
     }
 
