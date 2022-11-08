@@ -1,6 +1,9 @@
 version 2022d, in progress
 - Fix error message for invalid (string) array index
 - Fix error message for missing function-package dependency
+- Fix bug: crash on doing "pkg install" from the command line
+  when the window listing function packages on the server is
+  displayed
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
