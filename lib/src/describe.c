@@ -7795,12 +7795,14 @@ static int skew_kurt_test (const double *x, int t1, int t2,
     double skew, xkurt;
     int n, err = 0;
 
+    *test = *pval = NADBL;
+
     err = series_get_moments(t1, t2, x, &skew, &xkurt, &n);
 
     if (!err) {
 	if (opt & OPT_J) {
 	    /* Jarque-Bera */
-	    *test = (n / 6.0) * (skew * skew + xkurt * xkurt/ 4.0);
+	    *test = (n / 6.0) * (skew * skew + xkurt * xkurt/4.0);
 	} else {
 	    /* Doornik-Hansen */
 	    *test = doornik_chisq(skew, xkurt, n);
@@ -7956,6 +7958,7 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
     gretl_matrix *ret = NULL;
     double test = NADBL;
     double pval = NADBL;
+    int do_three = 0;
 
     if (opt & OPT_J) {
 	/* Jarque-Bera */
@@ -7966,9 +7969,49 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
     } else if (opt & OPT_L) {
 	/* Lilliefors */
 	*err = lilliefors_test(y, t1, t2, &test, &pval);
+    } else if (opt & OPT_T) {
+	/* all but Lilliefors */
+	do_three = 1;
     } else {
 	/* Doornik-Hansen */
 	*err = skew_kurt_test(y, t1, t2, &test, &pval, opt);
+    }
+
+    if (do_three) {
+	ret = gretl_matrix_alloc(3, 2);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    char **Sc, **Sr;
+
+	    Sc = strings_array_new(2);
+	    Sr = strings_array_new(3);
+	    if (Sc != NULL) {
+		Sc[0] = gretl_strdup("test");
+		Sc[1] = gretl_strdup("p-value");
+		gretl_matrix_set_colnames(ret, Sc);
+	    }
+	    if (Sr != NULL) {
+		Sr[0] = gretl_strdup("Doornik-Hansen");
+		Sr[1] = gretl_strdup("Shapiro-Wilk");
+		Sr[2] = gretl_strdup("Jarque-Bera");
+		gretl_matrix_set_rownames(ret, Sr);
+	    }
+
+	    /* Doornik-Hansen */
+	    skew_kurt_test(y, t1, t2, &test, &pval, OPT_NONE);
+	    gretl_matrix_set(ret, 0, 0, test);
+	    gretl_matrix_set(ret, 0, 1, pval);
+	    /* Shapiro-Wilk */
+	    shapiro_wilk(y, t1, t2, &test, &pval);
+	    gretl_matrix_set(ret, 1, 0, test);
+	    gretl_matrix_set(ret, 1, 1, pval);
+	    /* Jarque-Bera */
+	    skew_kurt_test(y, t1, t2, &test, &pval, OPT_J);
+	    gretl_matrix_set(ret, 2, 0, test);
+	    gretl_matrix_set(ret, 2, 1, pval);
+	}
+	return ret;
     }
 
     if (!*err) {
