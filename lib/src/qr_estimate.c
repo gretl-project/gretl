@@ -731,12 +731,13 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 	}
     } else {
 	/* @u is non-NULL */
-	double xtj;
+	double xtj, htj;
 
 	for (j=0; j<k; j++) {
 	    for (t=0; t<T; t++) {
-		xtj = gretl_matrix_get(X, t, j);
-		gretl_matrix_set(H, t, j, xtj * u->val[t]);
+                xtj = gretl_matrix_get(X, t, j);
+                htj = na(u->val[t]) ? 0 : xtj * u->val[t];
+                gretl_matrix_set(H, t, j, htj);
 		if (make_w && j == 0 && t > 0 && xtj != x0) {
 		    /* first X column not constant */
 		    make_w = 0;
