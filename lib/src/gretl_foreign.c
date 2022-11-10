@@ -804,7 +804,7 @@ static int win32_lib_run_R_sync (gretlopt opt, PRN *prn)
     err = win_run_sync(cmd, NULL);
 
 #if FDEBUG
-    fprintf(stderr, "lib_run_R_sync: err = %d\n cmd='%s'\n", err, cmd);
+    fprintf(stderr, "win32_lib_run_R_sync: err = %d\n cmd='%s'\n", err, cmd);
 #endif
 
     if (!(opt & OPT_Q)) {
@@ -881,6 +881,32 @@ static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
 
 #else /* non-Windows code follows */
 
+#ifdef OS_OSX
+
+static int lib_run_R_sync (gretlopt opt, PRN *prn)
+{
+    gchar *argv[] = {
+	NULL,
+	"--no-save",
+	"--no-init-file",
+	"--no-restore-data",
+	"--slave",
+	NULL
+    };
+    int ret;
+
+    argv[0] = g_find_program_in_path("R");
+    if (argv[0] == NULL) {
+	argv[0] = g_strdup("/Applications/R.app/Contents/MacOS/R");
+    }
+    ret = lib_run_prog_sync(argv, opt, LANG_R, prn);
+    g_free(argv[0]);
+
+    return ret;
+}
+
+#else
+
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
     char *argv[] = {
@@ -894,6 +920,8 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
     return lib_run_prog_sync(argv, opt, LANG_R, prn);
 }
+
+#endif /* macOS or not */
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
