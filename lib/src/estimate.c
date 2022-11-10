@@ -514,7 +514,6 @@ static int wls_usable_obs (MODEL *pmod, const DATASET *dset)
 }
 
 #define SMPL_DEBUG 0
-#define HAC_ALLOW_MISSING 1
 
 static int
 lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
@@ -544,13 +543,13 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	}
     }
 
-#if !HAC_ALLOW_MISSING
-    /* can't do HAC VCV with missing obs in middle */
-    if ((opts & OPT_R) && dataset_is_time_series(dset) &&
-	!libset_get_bool(FORCE_HC)) {
-	reject_missing = 1;
+    if (getenv("HAC_ALLOW_MISSING") == NULL) {
+	/* can't do HAC VCV with missing obs in middle */
+	if ((opts & OPT_R) && dataset_is_time_series(dset) &&
+	    !libset_get_bool(FORCE_HC)) {
+	    reject_missing = 1;
+	}
     }
-#endif
 
     if (opts & OPT_M) {
 	reject_missing = 1;
