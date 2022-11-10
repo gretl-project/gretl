@@ -449,6 +449,9 @@ static void joiner_add_controls (join_info *jinfo)
     for (i=0; i<2; i++) {
 	/* key slots, 2 x 2 */
 	jinfo->ikey[i] = joiner_entry_box();
+	if (dataset_is_time_series(dataset)) {
+	    set_placeholder_text(jinfo->ikey[i], _("auto-detect"));
+	}
 	joiner_table_insert(jinfo, jinfo->ikey[i], 2, 3, i+3, i+4);
 	jinfo->okey[i] = joiner_entry_box();
 	set_placeholder_text(jinfo->okey[i], _("same as inner"));

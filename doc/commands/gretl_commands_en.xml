@@ -6916,6 +6916,17 @@
 	</para>
       </li>
     </ilist>
+    <subhead>Time-series data</subhead>
+    <para>
+      If the current dataset is time series it's likely that the data
+      to be joined are also time series. In that case gretl may be
+      able to figure out the joining without any help from
+      user-specified keys. This is signaled by the place-holder
+      string <quote>auto-detect</quote> in the inner-key entry boxes.
+      While there's no guarantee that this will do precisely what you
+      want it is probably worth trying before you resort to a more
+      complicated approach.
+    </para>
     </description>
   </command>
 
