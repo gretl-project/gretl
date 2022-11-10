@@ -58,6 +58,10 @@
 # include <libxml/parser.h>
 #endif
 
+#ifdef OS_OSX
+# include <TargetConditionals.h>
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
