@@ -9272,8 +9272,8 @@ static gretlopt get_normtest_option (NODE *n, parser *p)
             opt = OPT_J;
         } else if (!strcmp(s, "dhansen")) {
             opt = OPT_D;
-	} else if (!strcmp(s, "three")) {
-	    opt = OPT_T;
+	} else if (!strcmp(s, "all")) {
+	    opt = OPT_A;
         } else {
             p->err = E_INVARG;
         }

@@ -7958,7 +7958,7 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
     gretl_matrix *ret = NULL;
     double test = NADBL;
     double pval = NADBL;
-    int do_three = 0;
+    int do_all = 0;
 
     if (opt & OPT_J) {
 	/* Jarque-Bera */
@@ -7969,23 +7969,23 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
     } else if (opt & OPT_L) {
 	/* Lilliefors */
 	*err = lilliefors_test(y, t1, t2, &test, &pval);
-    } else if (opt & OPT_T) {
-	/* all but Lilliefors */
-	do_three = 1;
+    } else if (opt & OPT_A) {
+	/* all tests */
+	do_all = 1;
     } else {
-	/* Doornik-Hansen */
+	/* default: Doornik-Hansen */
 	*err = skew_kurt_test(y, t1, t2, &test, &pval, opt);
     }
 
-    if (do_three) {
-	ret = gretl_matrix_alloc(3, 2);
+    if (do_all) {
+	ret = gretl_matrix_alloc(4, 2);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	} else {
 	    char **Sc, **Sr;
 
 	    Sc = strings_array_new(2);
-	    Sr = strings_array_new(3);
+	    Sr = strings_array_new(4);
 	    if (Sc != NULL) {
 		Sc[0] = gretl_strdup("test");
 		Sc[1] = gretl_strdup("p-value");
@@ -7995,6 +7995,7 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
 		Sr[0] = gretl_strdup("Doornik-Hansen");
 		Sr[1] = gretl_strdup("Shapiro-Wilk");
 		Sr[2] = gretl_strdup("Jarque-Bera");
+		Sr[3] = gretl_strdup("Lilliefors");
 		gretl_matrix_set_rownames(ret, Sr);
 	    }
 
@@ -8010,6 +8011,10 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
 	    skew_kurt_test(y, t1, t2, &test, &pval, OPT_J);
 	    gretl_matrix_set(ret, 2, 0, test);
 	    gretl_matrix_set(ret, 2, 1, pval);
+	    /* Lilliefors */
+	    lilliefors_test(y, t1, t2, &test, &pval);
+	    gretl_matrix_set(ret, 3, 0, test);
+	    gretl_matrix_set(ret, 3, 1, pval);
 	}
 	return ret;
     }
