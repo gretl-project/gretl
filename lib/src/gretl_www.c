@@ -1201,6 +1201,36 @@ static int proto_length (const char *s)
     }
 }
 
+static char *regularize_resource_string (const char *s)
+{
+    const char *reject = "'\"<>:\\|?*";
+    char *ret = NULL;
+
+    s += strspn(s, reject);
+
+    if (*s == '\0') {
+	ret = gretl_strdup("download");
+    } else {
+	char *p;
+	int n;
+
+	p = ret = calloc(strlen(s) + 1, 1);
+
+	while (*s) {
+	    n = strspn(s, reject);
+	    if (n > 0) {
+		*p = '_';
+		s += n;
+	    } else {
+		*p = *s++;
+	    }
+	    p++;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * retrieve_public_file:
  * @uri: complete URI for file to grab: protocol, host and path.
@@ -1227,13 +1257,16 @@ int retrieve_public_file (const char *uri, char *localname)
     } else if (*localname == '\0') {
 	/* extract the filename from the uri */
 	const char *s = strrchr(uri + pl, '/');
+	char *tmp;
 
 	if (s == NULL || *(s+1) == '\0') {
 	    err = E_DATA;
 	} else {
+	    tmp = regularize_resource_string(s + 1);
 	    /* save to user's dotdir by default */
 	    strcat(localname, gretl_dotdir());
-	    strcat(localname, s + 1);
+	    strcat(localname, tmp);
+	    free(tmp);
 	}
     }
 
