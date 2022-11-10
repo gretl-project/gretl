@@ -1588,6 +1588,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
     int min_ldquo = 0, min_lsquo = 0;
     int ldquo = 0, lsquo = 0;
     int ndquo = 0, nsquo = 0;
+    int dquoted = 0;
     int crlf = 0, lines = 0;
 
     csv_set_trailing_comma(cdata); /* just provisionally */
@@ -1609,6 +1610,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
             }
         }
         if (c == 0x0a) {
+	    /* LF */
             if (cc > maxlinelen) {
                 maxlinelen = cc;
             }
@@ -1627,7 +1629,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
             } else if (lsquo > 0 && lsquo < max_lsquo) {
                 min_lsquo = lsquo;
             }
-            ldquo = lsquo = 0;
+            ldquo = lsquo = dquoted = 0;
             continue;
         }
         cbak = c;
@@ -1655,9 +1657,10 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
             } else if (c == '|') {
 		csv_set_got_pipe(cdata);
 	    }
-            if (c == cdata->delim) {
+            if (c == cdata->delim && !dquoted) {
                 csv_set_got_delim(cdata);
             } else if (c == '"') {
+		dquoted = !dquoted;
                 ldquo++;
                 ndquo++;
             } else if (c == '\'') {
