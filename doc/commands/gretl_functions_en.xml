@@ -9630,31 +9630,34 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a test for normality of <argname>y</argname>. By
-	  default this is the Doornik&ndash;Hansen test but the
-	  optional <argname>method</argname> argument can be used
-	  to select an alternative: use <lit>swilk</lit> to get
-	  the Shapiro&ndash;Wilk test, <lit>jbera</lit> for
-	  Jarque&ndash;Bera test, or <lit>lillie</lit> for the
-	  Lilliefors test.
+	  Carries out one or more tests for normality of
+	  <argname>y</argname>. By default the Doornik&ndash;Hansen
+	  test is performed but the optional <argname>method</argname>
+	  argument can be used to select an alternative: use
+	  <lit>swilk</lit> to get the Shapiro&ndash;Wilk test,
+	  <lit>jbera</lit> for Jarque&ndash;Bera test, or
+	  <lit>lillie</lit> for the Lilliefors test. Or give
+	  <lit>all</lit> for the <argname>method</argname> argument to
+	  carry out all four tests.
 	</para>
 	<para>
 	  The second argument may be given in either quoted or
 	  unquoted form. In the latter case, however, if the argument
 	  is the name of a string variable the value of the variable
-	  is substituted. The following shows three acceptable ways of
-	  calling for a Shapiro&ndash;Wilk test:
+	  is substituted.
 	</para>
-	<code>
-	  matrix nt = normtest(y, swilk)
-	  matrix nt = normtest(y, "swilk")
-	  string testtype = "swilk"
-	  matrix nt = normtest(y, testtype)
-	</code>
 	<para>
-	  The returned matrix is <by r="1" c="2"/>; it holds the test
-	  statistic and its p-value. See also the <cmdref
-	  targ="normtest"/> command.
+	  The returned matrix is <by r="1" c="2"/> for a single test,
+	  or <by r="4" c="2"/> if all tests are performed. Test
+	  statistics are found in the first column and p-values in the
+	  second. The test statistic does not follow the same
+	  distribution is all cases. For Doornik&ndash;Hansen and
+	  Jarque&ndash;Bera it is chi-square(2); for the other methods
+	  it is an idiosyncratic statistic whose p-value requires
+	  special calculation.
+	</para>
+	<para>
+	  See also the <cmdref targ="normtest"/> command.
 	</para>
       </description>
     </function>
