@@ -48,7 +48,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 0
+#define FDEBUG 1
 #define MPI_VGRIND 0 /* define for debugging MPI via valgrind */
 
 static char **foreign_lines;
@@ -899,6 +899,9 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     if (argv[0] == NULL) {
 	argv[0] = g_strdup("/Applications/R.app/Contents/MacOS/R");
     }
+#if FDEBUG
+    fprintf(stderr, "lib_run_R_sync: argv[0] = '%s'\n", argv[0]);
+#endif
     ret = lib_run_prog_sync(argv, opt, LANG_R, prn);
     g_free(argv[0]);
 
@@ -3542,11 +3545,20 @@ int foreign_execute (const DATASET *dset,
     if (foreign_lang == LANG_R) {
 #ifdef USE_RLIB
 	if (gretl_use_Rlib()) {
+# if FDEBUG
+	    fprintf(stderr, "HERE 1 LANG_R, using Rlib\n");
+# endif
 	    err = run_R_lib(NULL, dset, foreign_opt, prn);
 	} else {
+# if FDEBUG
+	    fprintf(stderr, "HERE 2 LANG_R, using R binary\n");
+# endif
 	    err = run_R_binary(NULL, dset, foreign_opt, prn);
 	}
 #else
+# if FDEBUG
+	fprintf(stderr, "HERE 3 LANG_R, using R binary\n");
+# endif
 	err = run_R_binary(NULL, dset, foreign_opt, prn);
 #endif
 	foreign_destroy();
