@@ -897,7 +897,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
     argv[0] = g_find_program_in_path("R");
     if (argv[0] == NULL) {
-	argv[0] = g_strdup("/Applications/R.app/Contents/MacOS/R");
+	argv[0] = g_strdup("/Library/Frameworks/R.framework/Resources/bin/R");
     }
 #if FDEBUG
     fprintf(stderr, "lib_run_R_sync: argv[0] = '%s'\n", argv[0]);
