@@ -48,7 +48,7 @@
 # include <signal.h>
 #endif
 
-#define FDEBUG 1
+#define FDEBUG 0
 #define MPI_VGRIND 0 /* define for debugging MPI via valgrind */
 
 static char **foreign_lines;
