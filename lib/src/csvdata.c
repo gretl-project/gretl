@@ -1568,6 +1568,54 @@ static int csv_unicode_check (gzFile fp, csvdata *c, PRN *prn)
     return ucode;
 }
 
+static int report_quotation_info (int *qtotal, int *nqmax,
+				  char qchar, PRN *prn)
+{
+    int err = 0;
+
+    if (qtotal[0] > 0) {
+	pprintf(prn, _("Found %d double-quotes, max %d per line\n"),
+		qtotal[0], nqmax[0]);
+    }
+    if (qtotal[1] > 0) {
+	pprintf(prn, _("Found %d single-quotes, max %d per line\n"),
+		qtotal[1], nqmax[1]);
+    }
+    if (qchar == '"') {
+	pputs(prn, _("Assuming double-quote is the relevant "
+		     "quotation character\n"));
+    } else if (qchar == '\'') {
+	pputs(prn, _("Assuming single-quote is the relevant "
+		     "quotation character\n"));
+    } else {
+	pputs(prn, _("Quotation broken: marks not paired\n"));
+#if 0 /* not yet, more testing wanted */
+	err = E_DATA;
+#endif
+    }
+
+    return err;
+}
+
+static int handle_CR (int *crlf, gzFile fp)
+{
+    int c, c1 = gzgetc(fp);
+
+    if (c1 == EOF) {
+        return c1;
+    } else if (c1 == 0x0a) {
+        /* CR + LF -> LF */
+        *crlf = 1;
+        c = c1;
+    } else {
+        /* old Mac-style: CR not followed by LF */
+        c = 0x0a;
+        gzungetc(c1, fp);
+    }
+
+    return c;
+}
+
 /* The function below checks for the maximum line length in the given
    file.  It also checks for extraneous binary data (the file is
    supposed to be plain text), and checks whether the 'delim'
@@ -1578,39 +1626,33 @@ static int csv_unicode_check (gzFile fp, csvdata *c, PRN *prn)
    line, and for the numbers of double- and single-quote characters
    to try to determine which, if either, is used to indicate quoted
    fields in the input.
+
+   We return the maximum line length, or -1 on error.
 */
 
 static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlinelen = 0;
-    int max_ldquo = 0, max_lsquo = 0;
-    int min_ldquo = 0, min_lsquo = 0;
-    int ldquo = 0, lsquo = 0;
-    int ndquo = 0, nsquo = 0;
+    int qcand[2] = {1, 1};
+    int nq[2] = {0};
+    int nqmax[2] = {0};
+    int qtotal[2] = {0};
     int dquoted = 0;
     int crlf = 0, lines = 0;
+    int i, err = 0;
 
     csv_set_trailing_comma(cdata); /* just provisionally */
 
     while ((c = gzgetc(fp)) != EOF) {
         if (c == 0x0d) {
-            /* CR */
-            c1 = gzgetc(fp);
-            if (c1 == EOF) {
+            c = handle_CR(&crlf, fp);
+            if (c == EOF) {
                 break;
-            } else if (c1 == 0x0a) {
-                /* CR + LF -> LF */
-                crlf = 1;
-                c = c1;
-            } else {
-                /* Mac-style: CR not followed by LF */
-                c = 0x0a;
-                gzungetc(c1, fp);
             }
         }
         if (c == 0x0a) {
-	    /* LF */
+	    /* we reached the end of a line */
             if (cc > maxlinelen) {
                 maxlinelen = cc;
             }
@@ -1619,17 +1661,17 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
                 csv_unset_trailing_comma(cdata);
             }
             lines++;
-            if (ldquo > max_ldquo) {
-                max_ldquo = ldquo;
-            } else if (ldquo > 0 && ldquo < max_ldquo) {
-                min_ldquo = ldquo;
-            }
-            if (lsquo > max_lsquo) {
-                max_lsquo = lsquo;
-            } else if (lsquo > 0 && lsquo < max_lsquo) {
-                min_lsquo = lsquo;
-            }
-            ldquo = lsquo = dquoted = 0;
+	    for (i=0; i<2; i++) {
+		if (nq[i] % 2) {
+		    qcand[i] = 0;
+		}
+		if (nq[i] > nqmax[i]) {
+		    nqmax[i] = nq[i];
+		}
+		qtotal[i] += nq[i];
+		nq[i] = 0; /* reset count */
+	    }
+            dquoted = 0;
             continue;
         }
         cbak = c;
@@ -1641,6 +1683,7 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
             return -1;
         }
         if (cc == 0) {
+	    /* line starts with hash mark */
             comment = (c == '#');
         }
         if (!comment) {
@@ -1661,11 +1704,9 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
                 csv_set_got_delim(cdata);
             } else if (c == '"') {
 		dquoted = !dquoted;
-                ldquo++;
-                ndquo++;
+		nq[0] += 1;
             } else if (c == '\'') {
-                lsquo++;
-                nsquo++;
+		nq[1] += 1;
             }
         }
         cc++;
@@ -1677,59 +1718,34 @@ static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
         pputs(prn, _("Data file has trailing commas\n"));
     }
 
-    if (ndquo > 0 || nsquo > 0) {
-        /* candidates for quotation character? */
-        int cands[2] = {0};
-
-        if (ndquo > 0) {
-            pprintf(prn, _("Found %d double-quotes, max %d per line\n"),
-                    ndquo, max_ldquo);
-        }
-        if (nsquo > 0) {
-            pprintf(prn, _("Found %d single-quotes, max %d per line\n"),
-                    nsquo, max_lsquo);
-        }
-        if (max_ldquo > 0 && max_ldquo % 2 == 0) {
-            /* double-quote is a candidate? */
-            if (min_ldquo > 0 && min_ldquo % 2) {
-                ; /* nope */
-            } else {
-                cands[0] = 1;
-            }
-        }
-        if (max_lsquo > 0 && max_lsquo % 2 == 0) {
-            /* single-quote is a candidate? */
-            if (min_lsquo > 0 && min_lsquo % 2) {
-                ; /* nope */
-            } else {
-                cands[1] = 1;
-            }
-        }
-        if (cands[0] && cands[1]) {
-            /* hmm, rule one out: prefer the more numerous */
-            if (nsquo > ndquo) {
-                cands[0] = 0;
-            } else {
-                cands[1] = 0;
-            }
-        }
-        if (cands[0]) {
-            pputs(prn, _("Assuming double-quote is the relevant "
-                         "quotation character\n"));
-            cdata->qchar = '"';
-        } else if (cands[1]) {
-            pputs(prn, _("Assuming single-quote is the relevant "
-                         "quotation character\n"));
-            cdata->qchar = '\'';
-        }
+    for (i=0; i<2; i++) {
+	if (qcand[i] && qtotal[i] == 0) {
+	    qcand[i] = 0;
+	}
     }
 
-    if (maxlinelen > 0) {
+    if (qtotal[0] || qtotal[1]) {
+        if (qcand[0] && qcand[1]) {
+            /* hmm, prefer the more numerous? */
+            if (qtotal[1] > qtotal[0]) {
+		cdata->qchar = '\'';
+            } else {
+		cdata->qchar = '"';
+            }
+        } else if (qcand[0]) {
+	    cdata->qchar = '"';
+	} else if (qcand[1]) {
+	    cdata->qchar = '\'';
+	}
+	err = report_quotation_info(qtotal, nqmax, cdata->qchar, prn);
+    }
+
+    if (!err && maxlinelen > 0) {
         /* allow for newline and null terminator */
         maxlinelen += 2 + crlf;
     }
 
-    return maxlinelen;
+    return err ? -1 : maxlinelen;
 }
 
 #define nonspace_delim(d) (d != ',' && d != ';' && d != '\t' && d != '|')
