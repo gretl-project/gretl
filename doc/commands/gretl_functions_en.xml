@@ -10138,18 +10138,25 @@
     <function name="pexpand" section="panel" output="series">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+        <fnarg type="bool" optional="true">by_individual</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Only applicable if the currently open dataset has a panel
-	  structure. Performs the inverse operation of <fncref
-	  targ="pshrink"/>. That is, given a vector of length
-	  equal to the number of individuals in the current
-	  panel sample, it returns a series in which each value
-	  is repeated <math>T</math> times, for <math>T</math>
-	  the time-series length of the panel. The resulting
-	  series is therefore non-time varying.
+	  structure. By default, performs the inverse operation of
+	  <fncref targ="pshrink"/>. That is, given a vector of length
+	  equal to the number of individuals in the current panel
+	  sample, it returns a series in which each value is repeated
+	  <math>T</math> times, for <math>T</math> the time-series
+	  length of the panel. The resulting series is therefore
+	  non-time varying.
 	</para>
+        <para>
+          If a non-zero value is given for
+          <argname>by_individual</argname>, the length of
+          <argname>v</argname> should equal <math>T</math> and
+          repetition is across the individuals in the panel.
+        </para>
       </description>
     </function>
 

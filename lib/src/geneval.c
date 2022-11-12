@@ -9912,12 +9912,19 @@ static NODE *do_panel_shrink (NODE *l, int noskip, parser *p)
     return ret;
 }
 
-static NODE *do_panel_expand (NODE *l, parser *p)
+static NODE *do_panel_expand (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
-        p->err = panel_expand(l->v.m, ret->v.xvec, OPT_NONE, p->dset);
+        gretlopt opt = OPT_NONE;
+
+        if (node_get_bool(r, p, 0)) {
+            opt = OPT_X; /* expand by unit, not time */
+        }
+        if (!p->err) {
+            p->err = panel_expand(l->v.m, ret->v.xvec, opt, p->dset);
+        }
     }
 
     return ret;
@@ -17468,7 +17475,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_PEXPAND:
         if (l->t == MAT) {
-            ret = do_panel_expand(l, p);
+            ret = do_panel_expand(l, r, p);
         } else {
             node_type_error(t->t, 0, MAT, l, p);
         }

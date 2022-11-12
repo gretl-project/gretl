@@ -255,7 +255,6 @@ enum {
     F_ERRMSG,
     F_GETENV,
     F_NGETENV,
-    F_PEXPAND,
     F_FREQ,
     F_ISNAN,
     F_TYPESTR,
@@ -402,6 +401,7 @@ enum {
     F_YMD,
     F_CMULT,
     F_CDIV,
+    F_PEXPAND,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,
