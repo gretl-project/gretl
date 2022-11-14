@@ -10221,17 +10221,24 @@
     <function name="pexpand" section="panel" output="series">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+        <fnarg type="bool" optional="true">per_unita</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Questa funzione può essere applicata solo se il dataset
-	  corrente ha struttura panel.  Effettua l'operazione inversa
-	  di <fncref targ="pshrink"/>. Vale a dire, dato un vettore di
-	  lunghezza uguale al numero di individui nel campione panel
-	  vigente, restituisce una serie in cui ogni valore è ripetuto
-	  <math>T</math> volte, dove <math>T</math> è la lunghezza
-	  temporale del panel. La serie risultante è, di conseguenza,
-	  invariante nel tempo.
+	  corrente ha struttura panel.  Per default, effettua
+	  l'operazione inversa di <fncref targ="pshrink"/>. Vale a
+	  dire, dato un vettore di lunghezza uguale al numero di
+	  individui nel campione panel vigente, restituisce una serie
+	  in cui ogni valore è ripetuto <math>T</math> volte, dove
+	  <math>T</math> è la lunghezza temporale del panel. La serie
+	  risultante è, di conseguenza, invariante nel tempo.
+	</para>
+	<para>
+	  Se l'argomento
+	  <argname>per_unita</argname> è nonzero, la lunghezza di
+	  <argname>v</argname> deve essere pari a <math>T</math> e la
+	  ripetizione avviene per le unità del panel.
 	</para>
       </description>
     </function>
