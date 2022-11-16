@@ -2207,7 +2207,7 @@ static int lib_open_append (ExecState *s,
         } else if (op.ftype != GRETL_NATIVE_DB_WWW && op.ftype != GRETL_ODBC) {
 #ifdef HAVE_MPI
 	    /* print minimal success message? */
-	    if (!gretl_mpi_initialized() || gretl_mpi_rank() == 0) {
+	    if (!gretl_mpi_initialized()) {
 		pprintf(prn, _("Read datafile %s\n"), op.fname);
 	    }
 #else

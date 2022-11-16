@@ -1162,9 +1162,6 @@ static int check_test_data (const DATASET *dset,
     if (n != k) {
 	fprintf(stderr, "test data: number of usable variables (%d) "
 		"differs from training data (%d)\n", n, k);
-    } else {
-	fprintf(stderr, "test data: number of usable variables "
-		"agrees with training data\n");
     }
 
     return err;
@@ -2716,6 +2713,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
     }
 
+    if (get_optional_int(bparm, "quiet", &ival, &err) && ival != 0) {
+	wrap->flags |= W_QUIET;
+    }
+
     if (get_optional_int(bparm, "n_train", &ival, &err)) {
 	/* number of training observations: this sets a range
 	   starting at the first complete observation in the
@@ -2741,8 +2742,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 		wrap->t2_train = wrap->t1 + ival - 1;
 		get_obs_string(obs1, wrap->t1, dset);
 		get_obs_string(obs2, wrap->t2_train, dset);
-		pprintf(prn, "n_train = %d; use observations %s to %s for training\n",
-			ival, obs1, obs2);
+                if (!(wrap->flags & W_QUIET)) {
+                    pprintf(prn, "n_train = %d; use observations %s to %s for training\n",
+                            ival, obs1, obs2);
+                }
 	    }
 	}
     }
@@ -2762,10 +2765,6 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "refold", &ival, &err) && ival != 0) {
 	wrap->flags |= W_REFOLD;
-    }
-
-    if (get_optional_int(bparm, "quiet", &ival, &err) && ival != 0) {
-	wrap->flags |= W_QUIET;
     }
 
     if (get_optional_int(bparm, "search", &ival, &err) && ival != 0) {
@@ -3388,7 +3387,7 @@ static int forward_to_gretlmpi (const int *list,
 	    foreign_append("if $mpirank < 1", MPI);
 	    foreign_append("  mwrite({yhat_svm}, \"@dotdir/svmtmp.mat\")", MPI);
 	    foreign_append("endif", MPI);
-	    err = foreign_execute(dset, OPT_L, prn); /* note: --local */
+	    err = foreign_execute(dset, OPT_L | OPT_Q, prn); /* note: --local */
 	}
     }
 
