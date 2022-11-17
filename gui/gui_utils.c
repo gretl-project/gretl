@@ -763,14 +763,18 @@ static int get_csv_data (char *fname, int ftype, int append)
     }
 
     if (ftype == GRETL_CSV) {
-	const char *msg =
-	    N_("Usually gretl tries to interpret the first column of a CSV\n"
-	       "data file as containing observation information (for example,\n"
-	       "dates), if the column heading looks suitable.\n\n"
-	       "Do you want to force gretl to treat the first column as just\n"
-	       "an ordinary data series (regardless of the column heading)?");
-
-	if (no_yes_dialog(NULL, _(msg)) == GRETL_YES) {
+	const char *opts[] = {
+	    N_("Try to interpret the first column as containing\n"
+	       "observation information (for example, dates) if\n"
+	       "the column heading looks suitable."),
+	    N_("Treat the first column as an ordinary data series\n"
+	       "regardless of the column heading.")
+	};
+	int resp = radio_dialog(NULL, NULL, opts, 2, 0,
+				0, NULL);
+	if (resp == GRETL_CANCEL) {
+	    return 0;
+	} else if (resp == 1) {
 	    opt = OPT_A;
 	}
     }
