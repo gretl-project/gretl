@@ -634,6 +634,64 @@ static void series_commute_string_table (DATASET *dset, int i,
     }
 }
 
+/* Returns the number of string-valued series found and attached to
+   @dset
+*/
+
+int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset)
+{
+    series_table *st;
+    int i, vi;
+    int ret = 0;
+
+    if (gst == NULL || gst->cols_list == NULL ||
+        dset == NULL || dset->varinfo == NULL) {
+	return 0;
+    }
+
+    for (i=0; i<gst->cols_list[0]; i++) {
+        st = gst->cols[i];
+        if (st != NULL) {
+            vi = gst->cols_list[i+1];
+            if (all_num(st)) {
+                series_commute_string_table(dset, vi, st);
+            } else {
+                series_attach_string_table(dset, vi, st);
+                ret++;
+            }
+            gst->cols[i] = NULL;
+        }
+    }
+
+    return ret;
+}
+
+void series_table_print (DATASET *dset, int i, PRN *prn)
+{
+    series_table *st = series_get_string_table(dset, i);
+    int j;
+
+    if (st != NULL) {
+        pprintf(prn, _("String code table for variable %d (%s):\n"),
+                i, dset->varname[i]);
+        for (j=0; j<st->n_strs; j++) {
+            pprintf(prn, "%3d = '%s'\n", j+1, st->strs[j]);
+        }
+        pputc(prn, '\n');
+    }
+}
+
+void series_tables_print (DATASET *dset, PRN *prn)
+{
+    int i;
+
+    for (i=1; i<dset->v; i++) {
+        if (is_string_valued(dset, i)) {
+            series_table_print(dset, i, prn);
+	}
+    }
+}
+
 /**
  * gretl_string_table_print:
  * @gst: gretl string table.
@@ -654,11 +712,9 @@ static void series_commute_string_table (DATASET *dset, int i,
 int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 			      const char *fname, PRN *prn)
 {
-    series_table *st;
+    PRN *fprn = NULL;
     const char *fshort;
     char stname[MAXLEN];
-    FILE *fp = NULL;
-    int i, j, ncols = 0;
     int n_strvars = 0;
     int err = 0;
 
@@ -666,75 +722,42 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	return E_DATA;
     }
 
-    ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
-    n_strvars = ncols;
-
-    /* first examine the string table for numeric codings */
-    for (i=0; i<ncols; i++) {
-	st = gst->cols[i];
-	if (st == NULL || all_num(st)) {
-	    n_strvars--;
-	}
+    n_strvars = gretl_string_table_finalize(gst, dset);
+    if (n_strvars == 0) {
+        return 0;
     }
 
-    if (n_strvars > 0) {
-	strcpy(stname, "string_table.txt");
-	gretl_path_prepend(stname, gretl_workdir());
-
-	fp = gretl_fopen(stname, "w");
-	if (fp == NULL) {
-	    return E_FOPEN;
-	}
-
-	fshort = strrslash(fname);
-	if (fshort != NULL) {
-	    fprintf(fp, "%s\n", fshort + 1);
-	} else {
-	    fprintf(fp, "%s\n", fname);
-	}
-
-	fputc('\n', fp);
-	fputs(_("One or more non-numeric variables were found.\n"
-		"These variables have been given numeric codes as follows.\n\n"), fp);
-	if (gst->extra != NULL) {
-	    fputs(_("In addition, some mappings from numerical values to string\n"
-		    "labels were found, and are printed below.\n\n"), fp);
-	}
+    strcpy(stname, "string_table.txt");
+    gretl_path_prepend(stname, gretl_workdir());
+    fprn = gretl_print_new_with_filename(stname, &err);
+    if (err) {
+        return err;
     }
 
-    for (i=0; i<ncols; i++) {
-	int vi = gst->cols_list[i+1];
-
-	st = gst->cols[i];
-	if (fp != NULL && st != NULL && !all_num(st)) {
-	    if (i > 0) {
-		fputc('\n', fp);
-	    }
-	    fprintf(fp, _("String code table for variable %d (%s):\n"),
-		    vi, dset->varname[vi]);
-	    for (j=0; j<st->n_strs; j++) {
-		fprintf(fp, "%3d = '%s'\n", j+1, st->strs[j]);
-	    }
-	}
-	if (dset->varinfo != NULL) {
-	    if (all_num(st)) {
-		pputs(prn, "commuting series table\n");
-		series_commute_string_table(dset, vi, st);
-	    } else {
-		series_attach_string_table(dset, vi, st);
-	    }
-	    gst->cols[i] = NULL;
-	}
+    fshort = strrslash(fname);
+    if (fshort != NULL) {
+        pprintf(fprn, "%s\n", fshort + 1);
+    } else {
+        pprintf(fprn, "%s\n", fname);
     }
 
-    if (fp != NULL) {
-	if (gst->extra != NULL) {
-	    fputs(gst->extra, fp);
-	}
-	pprintf(prn, _("String code table written to\n %s\n"), stname);
-	fclose(fp);
-	set_string_table_written();
+    pputc(fprn, '\n');
+    pputs(fprn, _("One or more non-numeric variables were found.\n"
+                  "These variables have been given numeric codes as follows.\n\n"));
+    if (gst->extra != NULL) {
+        pputs(fprn, _("In addition, some mappings from numerical values to string\n"
+                      "labels were found, and are printed below.\n\n"));
     }
+
+    series_tables_print(dset, fprn);
+
+    if (gst->extra != NULL) {
+        pputs(fprn, gst->extra);
+    }
+    pprintf(prn, _("String code table written to\n %s\n"), stname);
+
+    gretl_print_destroy(fprn);
+    set_string_table_written();
 
     return err;
 }
