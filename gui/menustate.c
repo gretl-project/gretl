@@ -481,6 +481,8 @@ static int dataset_could_be_midas (const DATASET *dset)
     }
 }
 
+/* regular context menu items */
+
 enum MenuIdx_ {
     MNU_MPLOT,
     MNU_MSAVE,
@@ -511,6 +513,8 @@ enum MenuIdx_ {
     MNU_TDIS
 };
 
+/* MIDAS-special context menu items */
+
 enum MDSIdx_ {
     MDS_DISP,
     MDS_TPLOT,
@@ -526,9 +530,9 @@ enum MDSIdx_ {
 };
 
 enum MenuTarg_ {
-    T_SINGLE,
-    T_MULTI,
-    T_BOTH,
+    T_SINGLE, /* item applicable only for a single series */
+    T_MULTI,  /* item applicable only for multiple series */
+    T_BOTH,   /* item applicable in both cases */
 };
 
 typedef enum MenuIdx_ MenuIdx;
