@@ -638,7 +638,7 @@ static void series_commute_string_table (DATASET *dset, int i,
    @dset
 */
 
-int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset)
+static int gretl_string_table_attach (gretl_string_table *gst, DATASET *dset)
 {
     series_table *st;
     int i, vi;
@@ -681,7 +681,7 @@ void series_table_print (DATASET *dset, int i, PRN *prn)
     }
 }
 
-void series_tables_print (DATASET *dset, PRN *prn)
+static void series_tables_print (DATASET *dset, PRN *prn)
 {
     int i;
 
@@ -693,10 +693,10 @@ void series_tables_print (DATASET *dset, PRN *prn)
 }
 
 /**
- * gretl_string_table_print:
+ * gretl_string_table_finalize:
  * @gst: gretl string table.
- * @dset: dataset information (for names of variables).
- * @fname: name of the datafile to which the table pertains.
+ * @dset: dataset.
+ * @fname: name of the data file to which the table pertains.
  * @prn: gretl printer (or %NULL).
  *
  * In basic usage, prints table @gst to string_table.txt in
@@ -709,8 +709,8 @@ void series_tables_print (DATASET *dset, PRN *prn)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
-			      const char *fname, PRN *prn)
+int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset,
+				 const char *fname, PRN *prn)
 {
     PRN *fprn = NULL;
     const char *fshort;
@@ -722,7 +722,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	return E_DATA;
     }
 
-    n_strvars = gretl_string_table_finalize(gst, dset);
+    n_strvars = gretl_string_table_attach(gst, dset);
     if (n_strvars == 0) {
         return 0;
     }
@@ -895,7 +895,7 @@ int gretl_string_table_save (gretl_string_table *gst, DATASET *dset)
  *
  * Steals the printing buffer from @prn and adds it to @gst.
  * The buffer will be appended when @gst is printed via
- * gretl_string_table_print().
+ * gretl_string_table_finalize().
  */
 
 void gretl_string_table_add_extra (gretl_string_table *gst, PRN *prn)

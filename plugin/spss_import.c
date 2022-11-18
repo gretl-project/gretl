@@ -2017,7 +2017,7 @@ int sav_get_data (const char *fname, DATASET *dset,
 	    if (sdat.nlabelsets > 0) {
 		add_label_mappings_to_st(&sdat);
 	    }
-	    gretl_string_table_print(sdat.st, newset, fname, prn);
+	    gretl_string_table_finalize(sdat.st, newset, fname, prn);
 	}
 
 	if (sdat.descrip != NULL) {

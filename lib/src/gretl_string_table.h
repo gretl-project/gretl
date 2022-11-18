@@ -25,8 +25,8 @@ gretl_string_table *gretl_string_table_new (const int *list);
 int gretl_string_table_index (gretl_string_table *gst, const char *s, 
 			      int col, int addcol, PRN *prn);
 
-int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
-			      const char *fname, PRN *prn);
+int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset,
+				 const char *fname, PRN *prn);
 
 int gretl_string_table_validate (gretl_string_table *gst,
 				 gretlopt opt);
@@ -67,6 +67,8 @@ char **series_table_get_strings (series_table *st, int *n_strs);
 int series_table_get_n_strings (series_table *st);
 
 int *series_table_map (series_table *st_from, series_table *st_to);
+
+void series_table_print (DATASET *dset, int i, PRN *prn);
 
 void gretl_insert_builtin_string (const char *name, const char *s);
 

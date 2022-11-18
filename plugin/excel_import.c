@@ -1833,7 +1833,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	if (err) {
 	    pputs(prn, _("Failed to interpret the data as numeric\n"));
 	} else {
-	    gretl_string_table_print(xi->st, newset, fname, prn);
+	    gretl_string_table_finalize(xi->st, newset, fname, prn);
 	}
     }
 
