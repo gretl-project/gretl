@@ -6105,7 +6105,7 @@ void do_coeff_intervals (GtkAction *action, gpointer p)
     cf = gretl_model_get_coeff_intervals(pmod, dataset);
 
     if (cf != NULL) {
-        text_print_model_confints(cf, prn);
+        print_coeff_intervals(cf, OPT_NONE, prn);
         view_buffer_with_parent(vwin, prn, 78, 300,
                                 _("gretl: coefficient confidence intervals"),
                                 COEFFINT, cf);

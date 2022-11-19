@@ -167,38 +167,6 @@ void gui_script_logo (PRN *prn)
     pputc(prn, '\n');
 }
 
-/* ----------------------------------------------------- */
-
-static void
-print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
-{
-    int n = strlen(cf->names[i]);
-
-    if (n > 16) {
-	pprintf(prn, "%.15s~ ", cf->names[i]);
-	bufspace(3, prn);
-    } else {
-	pprintf(prn, "%14s ", cf->names[i]);
-	bufspace(5, prn);
-    }
-
-    if (isnan(cf->coeff[i])) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
-    } else {
-	gretl_print_value(cf->coeff[i], prn);
-    }
-
-    if (isnan(cf->maxerr[i])) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
-    } else {
-	pprintf(prn, " %#12.6g %#12.6g",
-		cf->coeff[i] - cf->maxerr[i],
-		cf->coeff[i] + cf->maxerr[i]);
-    }
-
-    pputc(prn, '\n');
-}
-
 /**
  * print_centered:
  * @s: string to print.
@@ -287,37 +255,6 @@ int max_obs_marker_length (const DATASET *dset)
     }
 
     return nmax;
-}
-
-/**
- * text_print_model_confints:
- * @cf: pointer to confidence intervals.
- * @prn: gretl printing struct.
- *
- * Print to @prn the 95 percent confidence intervals for parameter
- * estimates contained in @cf.
- */
-
-void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
-{
-    double tail = cf->alpha / 2;
-    int i;
-
-    if (cf->asy) {
-	pprintf(prn, "z(%g) = %.4f\n\n", tail, cf->t);
-    } else {
-	pprintf(prn, "t(%d, %g) = %.3f\n\n", cf->df, tail, cf->t);
-    }
-
-    /* xgettext:no-c-format */
-    pprintf(prn, _("      VARIABLE         COEFFICIENT      %g%% CONFIDENCE "
-		   "INTERVAL\n\n"), 100 * (1 - cf->alpha));
-
-    for (i=0; i<cf->ncoeff; i++) {
-	print_coeff_interval(cf, i, prn);
-    }
-
-    pputc(prn, '\n');
 }
 
 void print_freq_test (const FreqDist *freq, PRN *prn)

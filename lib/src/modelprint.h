@@ -65,4 +65,7 @@ int print_model_from_matrices (const gretl_matrix *cs,
 gretlopt get_printmodel_opt (const MODEL *pmod,
 			     gretlopt opt);
 
+int print_coeff_intervals (const CoeffIntervals *cf,
+			   gretlopt opt, PRN *prn);
+
 #endif /* MODELPRINT_H */

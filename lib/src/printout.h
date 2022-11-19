@@ -32,8 +32,6 @@ void gui_script_logo (PRN *prn);
 
 void gui_logo (PRN *prn);
 
-void text_print_model_confints (const CoeffIntervals *cf, PRN *prn);
-
 void print_freq (const FreqDist *freq, int varno, const DATASET *dset, 
 		 PRN *prn);
 

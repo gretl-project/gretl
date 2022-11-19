@@ -596,7 +596,7 @@ static void real_coeffint_set_alpha (GtkWidget *w, GtkWidget *dialog)
     }
 
     reset_coeff_intervals(cf, 1.0 - *x);
-    text_print_model_confints(cf, prn);
+    print_coeff_intervals(cf, OPT_NONE, prn);
     newtext = gretl_print_get_buffer(prn);
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_set_text(buf, "", -1);

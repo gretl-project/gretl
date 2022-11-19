@@ -4496,6 +4496,142 @@ static int plain_print_aux_coeffs (const double *b,
     return err;
 }
 
+/* opt: use OPT_O for odds ratios (logit) */
+
+int print_coeff_intervals (const CoeffIntervals *cf,
+			   gretlopt opt, PRN *prn)
+{
+    const double *b = cf->coeff;
+    const double *me = cf->maxerr;
+    char **names = cf->names;
+    struct printval **vals, *vij;
+    const char *headings[] = {
+	N_("coefficient"),
+	N_("low"),
+	N_("high")
+    };
+    const char *head;
+    int lmax[3] = {0};
+    int rmax[3] = {0};
+    int w[3], addoff[3] = {0};
+    int hlen, odds = 0;
+    int nc = cf->ncoeff;
+    double lo, hi, tail;
+    int namelen = 0;
+    int colsep = 2;
+    int n, d, i, j;
+    int err = 0;
+
+    if (opt & OPT_O) {
+	headings[0] = N_("odds ratio");
+	odds = 1;
+	if (cf->ifc) {
+	    b++;
+	    me++;
+	    names++;
+	    nc--;
+	}
+    }
+
+    vals = allocate_printvals(nc, 3);
+    if (vals == NULL) {
+	return E_ALLOC;
+    }
+
+    d = get_gretl_digits();
+    tail = cf->alpha / 2;
+
+    /* xgettext:no-c-format */
+    pprintf(prn, _("%g%% confidence intervals"), 100 * (1 - cf->alpha));
+    if (cf->asy) {
+	pprintf(prn, "\nz(%g) = %.4f\n\n", tail, cf->t);
+    } else {
+	pprintf(prn, "\nt(%d, %g) = %.3f\n\n", cf->df, tail, cf->t);
+    }
+
+    for (i=0; i<nc; i++) {
+	if (na(b[i])) {
+	    err = E_NAN;
+	    goto bailout;
+	}
+	n = char_len(names[i]);
+	if (n > namelen) {
+	    namelen = n;
+	}
+	if (na(me[i])) {
+	    lo = hi = NADBL;
+	} else {
+	    lo = b[i] - me[i];
+	    hi = b[i] + me[i];
+	}
+	for (j=0; j<3; j++) {
+	    if (j == 0) {
+		/* coeff or odds ratio */
+		vals[i][j].x = odds ? exp(b[i]) : b[i];
+	    } else if (j == 1) {
+		/* lower limit */
+		vals[i][j].x = odds ? exp(lo) : lo;
+	    } else {
+		/* upper limit */
+		vals[i][j].x = odds ? exp(hi) : hi;
+	    }
+	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
+	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	}
+    }
+
+    if (namelen < 8) {
+	namelen = 8;
+    }
+
+    /* figure appropriate column separation */
+    for (j=0; j<3; j++) {
+	w[j] = lmax[j] + rmax[j];
+	head = _(headings[j]);
+	hlen = char_len(head);
+	if (hlen > w[j]) {
+	    addoff[j] = (hlen - w[j]) / 2;
+	    w[j] = hlen;
+	}
+    }
+    figure_colsep(namelen, 3, w, &colsep);
+
+    /* print headings */
+    bufspace(namelen + 2 + colsep, prn);
+    for (j=0; j<3; j++) {
+	print_padded_head(_(headings[j]), w[j], prn);
+	if (j < 3) {
+	    bufspace(colsep, prn);
+	}
+    }
+
+    /* separator row */
+    print_sep_row(namelen, 3, w, colsep, prn);
+
+    /* print row values */
+    for (i=0; i<nc; i++) {
+	pprintf(prn, "  %-*s", namelen, names[i]);
+	bufspace(colsep, prn);
+	for (j=0; j<3; j++) {
+	    vij = &vals[i][j];
+	    print_padded_value(vij, w[j], lmax[j], addoff[j], prn);
+	    if (j < 2) {
+		bufspace(colsep, prn);
+	    }
+	}
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    for (i=0; i<nc; i++) {
+	free(vals[i]);
+    }
+    free(vals);
+
+    return err;
+}
+
 /* Called by external functions that want to print a coefficient
    table that does not reside in a MODEL.
 */
