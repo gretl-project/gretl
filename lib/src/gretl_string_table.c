@@ -674,8 +674,9 @@ void series_table_print (DATASET *dset, int i, PRN *prn)
     if (st != NULL) {
         pprintf(prn, _("String code table for variable %d (%s):\n"),
                 i, dset->varname[i]);
+	pputc(prn, '\n');
         for (j=0; j<st->n_strs; j++) {
-            pprintf(prn, "%3d = '%s'\n", j+1, st->strs[j]);
+            pprintf(prn, "%5d \"%s\"\n", j+1, st->strs[j]);
         }
         pputc(prn, '\n');
     }
