@@ -1,4 +1,16 @@
 version 2022d, in progress
+- pexpand() function: add optional boolean switch to expand
+  in the cross-sectional dimension
+- readfile() function: ensure that we construct a legitimate
+  local filename when downloading a web resource
+- normtest() function: add option to include all available
+  tests in the returned matrix
+- CSV data importation: be less hasty in concluding that the
+  column separator is comma
+- CSV importation via GUI: clarify the dialog that governs
+  how the first column is treated
+- "join" via the GUI: make it evident that specifying keys
+  may not be necessary with time-series data
 - Fix error message for invalid (string) array index
 - Fix error message for missing function-package dependency
 - Fix bug: crash on doing "pkg install" from the command line
@@ -6,6 +18,9 @@ version 2022d, in progress
   displayed
 - Fix bug: possible false positive when checking for duplicate
   function packages
+- Fix for detection of the R executable when called via a
+  foreign block on macOS
+- macOS build: include TargetConditionals.h in libgretl.h
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
