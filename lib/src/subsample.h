@@ -64,6 +64,8 @@ int restrict_sample_from_mask (char *mask, DATASET *dset,
 int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
 		  int *n_dropped);
 
+int recode_strvals (DATASET *dset, gretlopt opt);
+
 int complex_subsampled (void);
 
 int dataset_is_subsampled (const DATASET *dset);

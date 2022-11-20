@@ -47,9 +47,7 @@ typedef enum {
 
 #define RECODE_ON_PERMA 1 /* experiment */
 
-#if RECODE_ON_PERMA
-
-static int recode_strvals (DATASET *dset, gretlopt opt)
+int recode_strvals (DATASET *dset, gretlopt opt)
 {
     int i, err = 0;
 
@@ -61,8 +59,6 @@ static int recode_strvals (DATASET *dset, gretlopt opt)
 
     return err;
 }
-
-#endif
 
 /*
   The purpose of the static pointers below: When the user subsamples
@@ -1910,7 +1906,8 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 #endif
 
     /* link (don't copy) varnames and descriptions, since these are
-       not dependent on the series length */
+       not dependent on the series length
+    */
     subset->varname = dset->varname;
     subset->varinfo = dset->varinfo;
     subset->descrip = dset->descrip;

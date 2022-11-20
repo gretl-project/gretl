@@ -167,6 +167,11 @@ static const char *data_structure_string (int s)
     }
 }
 
+/* Retrieve the index number of the i^{th} series to be stored. This
+   function allows for the case of @list = NULL (saving all series)
+   as well as storing of a subset of series specified by @list.
+*/
+
 static int savenum (const int *list, int i)
 {
     if (list != NULL) {
@@ -1877,111 +1882,6 @@ static PRN *open_gdt_write_stream (const char *fname,
 
 #define BIN_HDRLEN 24
 
-static int write_binary_header (FILE *fp)
-{
-    char header[BIN_HDRLEN] = {0};
-    int err = 0;
-
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    strcpy(header, "gretl-bin:little-endian");
-#else
-    strcpy(header, "gretl-bin:big-endian");
-#endif
-
-    if (fwrite(header, 1, BIN_HDRLEN, fp) != BIN_HDRLEN) {
-	err = E_DATA;
-    }
-
-    return err;
-}
-
-static int write_binary_data (const char *fname, const DATASET *dset,
-			      const int *list, int nvars, int nrows,
-			      gretlopt opt)
-{
-    char *bname;
-    FILE *fp;
-    int T = dset->t2 - dset->t1 + 1;
-    size_t wrote;
-    int i, v, err = 0;
-
-    bname = switch_ext_new(fname, "bin");
-    fp = gretl_fopen(bname, "wb");
-    free(bname);
-
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    write_binary_header(fp);
-
-    if (nrows < T) {
-	/* panel data with skip-padding in force */
-	double *tmp = NULL;
-	int uv = 0, tv = 0;
-	int s, t, nv = 0;
-
-	/* add unit and time variables (initialized to zero) */
-	err = dataset_add_series((DATASET *) dset, 2);
-	if (!err) {
-	    tmp = malloc(nrows * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-
-	if (!err) {
-	    uv = dset->v - 2;
-	    tv = dset->v - 1;
-	    nv = dset->v - 2;
-	}
-
-	for (t=dset->t1; t<=dset->t2 && !err; t++) {
-	    if (!row_is_padding(dset, t, nv)) {
-		dset->Z[uv][t] = 1 + t / dset->pd;
-		dset->Z[tv][t] = t % dset->pd + 1;
-	    }
-	}
-
-	nv = nvars + 2;
-	for (i=1; i<=nv && !err; i++) {
-	    if (i <= nvars) {
-		v = savenum(list, i);
-	    } else {
-		v = (i == nvars + 1)? uv : tv;
-	    }
-	    s = 0;
-	    for (t=dset->t1; t<=dset->t2 && !err; t++) {
-		if (dset->Z[uv][t] != 0.0) {
-		    tmp[s++] = dset->Z[v][t];
-		}
-	    }
-	    wrote = fwrite(tmp, sizeof(double), nrows, fp);
-	    if (wrote != nrows) {
-		err = E_DATA;
-	    }
-	}
-
-	free(tmp);
-	if (uv > 0) {
-	    dataset_drop_last_variables((DATASET *) dset, 2);
-	}
-    } else {
-	for (i=1; i<=nvars && !err; i++) {
-	    v = savenum(list, i);
-	    wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double),
-			   T, fp);
-	    if (wrote != T) {
-		err = E_DATA;
-	    }
-	}
-    }
-
-    fclose(fp);
-
-    return err;
-}
-
 static void gdt_swap_endianness (DATASET *dset)
 {
     int i, t;
@@ -2089,15 +1989,6 @@ static int read_binary_data (const char *fname,
     return err;
 }
 
-static void write_binary_order (PRN *prn)
-{
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    pputs(prn, " binary=\"little-endian\" ");
-#else
-    pputs(prn, " binary=\"big-endian\" ");
-#endif
-}
-
 /* Here we're testing a series to see if it can be represented in full
    precision (discarding any artifacts) using the format "%.15g". The
    criterion is that each value must have a least one trailing zero
@@ -2140,10 +2031,9 @@ static int p15_OK (const DATASET *dset, int v)
 */
 
 struct strval_saver_ {
-    int *list;
-    gretl_matrix *X;
-    series_table **st;
-    size_t sz;
+    int *list;         /* list of string-valued series */
+    double *X;         /* matrix of numeric codes */
+    series_table **st; /* array of code -> string mappings */
 };
 
 typedef struct strval_saver_ strval_saver;
@@ -2152,11 +2042,17 @@ static void strval_saver_destroy (strval_saver *ss)
 {
     if (ss != NULL) {
 	free(ss->list);
-	gretl_matrix_free(ss->X);
+	free(ss->X);
 	free(ss->st);
 	free(ss);
     }
 }
+
+/* @dset: the dataset we're storing.
+   @nvars: the number of series to be stored.
+   @nsv: the number of string-valued series.
+   @list: list of series to be stored, or NULL for all.
+*/
 
 static strval_saver *strval_saver_setup (DATASET *dset,
 					 int nvars, int nsv,
@@ -2164,6 +2060,7 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 {
     strval_saver *ss;
     int n_changed = 0;
+    size_t sz;
     int i, n;
 
     ss = calloc(1, sizeof *ss);
@@ -2174,25 +2071,28 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 
     n = sample_size(dset);
     ss->list = gretl_list_new(nsv);
-    ss->X = gretl_matrix_alloc(n, nsv);
+    ss->X = malloc(n * nsv * sizeof *ss->X);
     ss->st = calloc(nsv, sizeof *ss->st);
+    sz = n * sizeof *ss->X;
+
     if (ss->list == NULL || ss->X == NULL || ss->st == NULL) {
 	*err = E_ALLOC;
-    }
-
-    if (!*err) {
-	double *x = ss->X->val;
-	int changed;
+	strval_saver_destroy(ss);
+	ss = NULL;
+    } else {
+	double *xj = ss->X;
+	int changed = 0;
 	int v, j = 0;
-
-	ss->sz = n * sizeof *x;
 
 	for (i=1; i<=nvars && !*err; i++) {
 	    v = savenum(list, i);
 	    if (is_string_valued(dset, v)) {
+		/* add @v to the strvars list */
 		ss->list[j+1] = v;
+		/* and get a pointer to its table */
 		ss->st[j] = series_get_string_table(dset, v);
-		memcpy(x, dset->Z[v] + dset->t1, ss->sz);
+		/* copy its code values into column @j of @X */
+		memcpy(xj, dset->Z[v] + dset->t1, sz);
 		*err = series_recode_strings(dset, v, OPT_P, &changed);
 		if (changed) {
 		    n_changed++;
@@ -2200,16 +2100,13 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 		    ss->st[j] = NULL;
 		}
 		j++;
-		x += n;
+		xj += n;
 	    }
 	}
-    } else {
-	strval_saver_destroy(ss);
-	ss = NULL;
     }
 
     if (ss != NULL && n_changed == 0) {
-	/* we have no need for @ss */
+	/* it turns out we have no need for @ss */
 	strval_saver_destroy(ss);
 	ss = NULL;
     }
@@ -2220,8 +2117,9 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 static void strval_saver_restore (DATASET *dset,
 				  strval_saver *ss)
 {
-    double *x = ss->X->val;
-    int n = ss->X->rows;
+    double *xi = ss->X;
+    int n = sample_size(dset);
+    size_t sz = n * sizeof *ss->X;
     int i, v;
 
     for (i=1; i<=ss->list[0]; i++) {
@@ -2229,64 +2127,257 @@ static void strval_saver_restore (DATASET *dset,
 	if (ss->st[i-1] != NULL) {
 	    series_destroy_string_table(dset, v);
 	    series_attach_string_table(dset, v, ss->st[i-1]);
-	    memcpy(dset->Z[v] + dset->t1, x, ss->sz);
+	    memcpy(dset->Z[v] + dset->t1, xi, sz);
 	}
-	x += n;
+	xi += n;
     }
+
+    strval_saver_destroy(ss);
 }
 
-/* end apparatus from trimming string-values */
+static int gdt_write_observations (const DATASET *dset,
+				   const int *storelist,
+				   int skip_padding, int T,
+				   int (*show_progress)(),
+				   PRN *prn)
+{
+    char buf[32], numstr[32];
+    char *p15 = NULL;
+    int gdt_digits = 17;
+    int i, v, t, nvars;
+    int err = 0;
+
+    nvars = storelist != NULL ? storelist[0] : dset->v - 1;
+
+    p15 = calloc(nvars, 1);
+    if (p15 != NULL) {
+	for (i=0; i<nvars; i++) {
+	    v = savenum(storelist, i+1);
+	    p15[i] = p15_OK(dset, v);
+	}
+    }
+
+    pputs(prn, "<observations ");
+    pprintf(prn, "count=\"%d\" labels=\"%s\"", T,
+	    (dset->S != NULL)? "true" : "false");
+    pputs(prn, ">\n");
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (skip_padding && row_is_padding(dset, t, dset->v)) {
+	    continue;
+	}
+	pputs(prn, "<obs");
+	if (dset->S != NULL) {
+	    err = gretl_xml_encode_to_buf(buf, dset->S[t], sizeof buf);
+	    if (!err) {
+		pprintf(prn, " label=\"%s\"", buf);
+	    }
+	}
+	pputs(prn, ">");
+	for (i=1; i<=nvars; i++) {
+	    v = savenum(storelist, i);
+	    if (na(dset->Z[v][t])) {
+		strcpy(numstr, "NA ");
+	    } else if (p15 == NULL || p15[i-1] == 0) {
+		/* use full default precision if required */
+		sprintf(numstr, "%.*g ", gdt_digits, dset->Z[v][t]);
+	    } else {
+		sprintf(numstr, "%.15g ", dset->Z[v][t]);
+	    }
+	    pputs(prn, numstr);
+	}
+	if (skip_padding) {
+	    int unit = 1 + t / dset->pd;
+	    int time = t % dset->pd + 1;
+
+	    sprintf(numstr, "%d %d ", unit, time);
+	    pputs(prn, numstr);
+	}
+	pputs(prn, "</obs>\n");
+
+	if (show_progress != NULL && t && ((t - dset->t1) % 50 == 0)) {
+	    (*show_progress) (50, sample_size(dset), SP_NONE);
+	}
+    }
+
+    pputs(prn, "</observations>\n");
+
+    free(p15);
+
+    return 0;
+}
+
+static int gdt_write_series_info (const DATASET *dset,
+				  const int *storelist,
+				  int skip_padding,
+				  PRN *prn)
+{
+    int nvars = storelist != NULL ? storelist[0] : dset->v - 1;
+    char xmlbuf[1024];
+    int i, v, err;
+
+    if (skip_padding) {
+	pprintf(prn, "<variables count=\"%d\">\n", nvars + 2);
+    } else {
+	pprintf(prn, "<variables count=\"%d\">\n", nvars);
+    }
+
+    for (i=1; i<=nvars; i++) {
+	const char *vstr;
+	int vprop, mpd;
+
+	v = savenum(storelist, i);
+	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
+	pprintf(prn, "<variable name=\"%s\"", xmlbuf);
+
+	if (dset->varinfo == NULL) {
+	    pputs(prn, "\n/>\n");
+	    continue;
+	}
+
+	/* string properties */
+	vstr = series_get_label(dset, v);
+	if (vstr != NULL && *vstr != '\0') {
+	    err = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
+	    if (!err) {
+		pprintf(prn, "\n label=\"%s\"", xmlbuf);
+	    }
+	}
+	vstr = series_get_display_name(dset, v);
+	if (vstr != NULL && *vstr != '\0') {
+	    err = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
+	    if (!err) {
+		pprintf(prn, "\n displayname=\"%s\"", xmlbuf);
+	    }
+	}
+	vstr = series_get_parent_name(dset, v);
+	if (vstr != NULL) {
+	    err = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
+	    if (!err) {
+		pprintf(prn, "\n parent=\"%s\"", xmlbuf);
+	    }
+	}
+
+	/* integer properties */
+	vprop = series_get_transform(dset, v);
+	if (vprop != 0) {
+	    const char *tr = gretl_command_word(vprop);
+
+	    pprintf(prn, "\n transform=\"%s\"", tr);
+	}
+	vprop = series_get_lag(dset, v);
+	if (vprop != 0) {
+	    pprintf(prn, "\n lag=\"%d\"", vprop);
+	}
+	vprop = series_get_compact_method(dset, v);
+	if (vprop != COMPACT_NONE) {
+	    const char *meth = compact_method_to_string(vprop);
+
+	    pprintf(prn, "\n compact-method=\"%s\"", meth);
+	}
+
+	/* boolean properties */
+	if (series_is_discrete(dset, v)) {
+	    pputs(prn, "\n discrete=\"true\"");
+	}
+	if (series_is_coded(dset, v)) {
+	    pputs(prn, "\n coded=\"true\"");
+	}
+	if (series_is_midas_anchor(dset, v)) {
+	    pputs(prn, "\n hf-anchor=\"true\"");
+	}
+	if ((mpd = series_get_midas_period(dset, v)) > 0) {
+	    pprintf(prn, "\n midas_period=\"%d\"", mpd);
+	}
+	if ((mpd = series_get_midas_freq(dset, v)) > 0) {
+	    pprintf(prn, "\n midas_freq=\"%d\"", mpd);
+	}
+	if ((mpd = series_get_orig_pd(dset, v)) > 0) {
+	    pprintf(prn, "\n orig_pd=\"%d\"", mpd);
+	}
+
+	pputs(prn, "\n/>\n");
+    }
+
+    if (skip_padding) {
+	pputs(prn, "<variable name=\"unit__\"\n/>\n");
+	pputs(prn, "<variable name=\"time__\"\n/>\n");
+    }
+
+    pputs(prn, "</variables>\n");
+
+    return 0;
+}
+
+static int gdt_write_string_tables (const DATASET *dset,
+				    const int *storelist,
+				    int ntabs, PRN *prn)
+{
+    int nvars = storelist != NULL ? storelist[0] : dset->v - 1;
+    char xmlbuf[64];
+    char *sbuf, **strs;
+    int i, j, v, n_strs;
+
+    pprintf(prn, "<string-tables count=\"%d\">\n", ntabs);
+
+    for (i=1; i<=nvars; i++) {
+	v = savenum(storelist, i);
+	if (!is_string_valued(dset, v)) {
+	    continue;
+	}
+	strs = series_get_string_vals(dset, v, &n_strs, 0);
+	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
+	pprintf(prn, "<valstrings owner=\"%s\" count=\"%d\">", xmlbuf, n_strs);
+	for (j=0; j<n_strs; j++) {
+	    sbuf = gretl_xml_encode(strs[j]);
+	    if (sbuf == NULL || *sbuf == '\0') {
+		fprintf(stderr, "string values for var %d: string %d is empty\n",
+			i, j);
+		pputs(prn, "\"empty string\" ");
+	    } else {
+		pprintf(prn, "\"%s\" ", sbuf);
+	    }
+	    free(sbuf);
+	}
+	pputs(prn, "</valstrings>\n");
+    }
+
+    pputs(prn, "</string-tables>\n");
+
+    return 0;
+}
+
+/* end apparatus for trimming string-values */
 
 static int real_write_gdt (const char *fname,
 			   PRN *inprn,
-			   const int *inlist,
+			   const int *storelist,
 			   const DATASET *dset,
 			   gretlopt opt,
 			   int progress)
 {
     PRN *prn = NULL;
-    int tsamp = dset->t2 - dset->t1 + 1;
-    int *list = NULL;
-    char *p15 = NULL;
+    int T = sample_size(dset);
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
-    char numstr[128], xmlbuf[1024];
-    const char *gdtver;
+    char xmlbuf[1024];
     int (*show_progress) (double, double, int) = NULL;
-    strval_saver *ss = NULL;
     double dsize = 0;
-    int i, t, v, ntabs, nvars = 0;
-    int have_markers, in_c_locale = 0;
-    int binary = 0, skip_padding = 0;
-    int gdt_digits = 17;
+    int nvars;
+    int skip_padding = 0;
     int uerr = 0;
     int err = 0;
 
-    /* what are we supposed to be saving? */
-    if (inlist != NULL) {
-	int lzero[] = {1, 0};
-
-	list = gretl_list_drop(inlist, lzero, &err);
-	if (err) {
-	    return err;
-	}
-	nvars = list[0];
-    } else {
-	nvars = dset->v - 1;
-    }
-
+    /* how many series are we storing? */
+    nvars = storelist != NULL ? storelist[0] : dset->v - 1;
     if (nvars <= 0) {
 	gretl_errmsg_set("No data to save!");
-	free(list);
 	return E_DATA;
     }
 
     if (inprn != NULL) {
+	/* for clipboard */
 	prn = inprn;
-    } else if (opt & OPT_B) {
-	binary = G_BYTE_ORDER;
-	progress = 0;
-	prn = open_gdt_write_stream(fname, OPT_NONE);
     } else {
 	const char *path = fname;
 	gchar *fullname = NULL;
@@ -2300,27 +2391,16 @@ static int real_write_gdt (const char *fname,
     }
 
     if (prn == NULL) {
-	free(list);
 	return E_FOPEN;
     }
 
-    dsize = tsamp * nvars * sizeof(double);
+    dsize = T * nvars * sizeof(double);
 
     if (dsize > 100000) {
 	fprintf(stderr, "Writing %.0f Kbytes of data\n", dsize / 1024);
     } else if (progress) {
 	/* suppress progress bar for smaller data */
 	progress = 0;
-    }
-
-    if (!binary) {
-	p15 = calloc(nvars, 1);
-	if (p15 != NULL) {
-	    for (i=0; i<nvars; i++) {
-		v = savenum(list, i+1);
-		p15[i] = p15_OK(dset, v);
-	    }
-	}
     }
 
     if (progress) {
@@ -2347,28 +2427,14 @@ static int real_write_gdt (const char *fname,
 	sprintf(freqstr, "%d", dset->pd);
     }
 
-    gdtver = GRETLDATA_VERSION;
-
-    if (binary) {
-	/* support --compat option */
-	const char *s = get_optval_string(STORE, OPT_C);
-
-	if (s != NULL && !strcmp(s, "2018b")) {
-	    gdtver = GRETLDATA_COMPAT;
-	}
-    }
-
     pprintf(prn, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	    "<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
-	    "startobs=\"%s\" endobs=\"%s\" ",
-	    gdtver, xmlbuf, freqstr, startdate, enddate);
+	    "startobs=\"%s\" endobs=\"%s\" ", GRETLDATA_VERSION,
+	    xmlbuf, freqstr, startdate, enddate);
 
     pprintf(prn, "type=\"%s\"", data_structure_string(dset->structure));
 
-    if (binary) {
-	write_binary_order(prn);
-    }
     if (dset->rseed > 0) {
 	/* record resampling info */
 	pprintf(prn, " rseed=\"%u\"", dset->rseed);
@@ -2383,9 +2449,7 @@ static int real_write_gdt (const char *fname,
 
     pputs(prn, ">\n");
 
-    have_markers = dataset_has_markers(dset);
-
-    if (dataset_is_panel(dset) && !have_markers &&
+    if (dataset_is_panel(dset) && !dataset_has_markers(dset) &&
 	nvars == dset->v - 1 && dsize > 1024 * 1024 * 10) {
 	/* we have more than 10 MB of panel data */
 	int padrows = panel_padding_rows(dset);
@@ -2393,7 +2457,7 @@ static int real_write_gdt (const char *fname,
 	if (padrows > 0.4 * dset->n) {
 	    fprintf(stderr, "skip-padding: dropping %d rows\n", padrows);
 	    skip_padding = 1;
-	    tsamp -= padrows;
+	    T -= padrows;
 	}
     }
 
@@ -2410,230 +2474,34 @@ static int real_write_gdt (const char *fname,
     }
 
     gretl_push_c_numeric_locale();
-    in_c_locale = 1;
 
-    /* then listing of variable names and labels */
-    if (skip_padding) {
-	pprintf(prn, "<variables count=\"%d\">\n", nvars + 2);
-    } else {
-	pprintf(prn, "<variables count=\"%d\">\n", nvars);
-    }
+    /* write listing of series */
+    gdt_write_series_info(dset, storelist, skip_padding, prn);
 
-    if (dset->varinfo == NULL) {
-	ntabs = 0;
-    } else {
-	ntabs = string_table_count(dset, list, nvars);
-    }
+    /* write listing of observations */
+    gdt_write_observations(dset, storelist, skip_padding,
+			   T, show_progress, prn);
 
-    if (ntabs > 0 && !(opt & OPT_P)) {
-	/* trimming strvals */
-	ss = strval_saver_setup((DATASET *) dset, nvars,
-				ntabs, list, &err);
-    }
+    /* maybe write string tables */
+    if (dset->varinfo != NULL) {
+	int ntabs = string_table_count(dset, storelist, nvars);
 
-    for (i=1; i<=nvars; i++) {
-	const char *vstr;
-	int vprop, mpd;
-
-	v = savenum(list, i);
-	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
-	pprintf(prn, "<variable name=\"%s\"", xmlbuf);
-
-	if (dset->varinfo == NULL) {
-	    pputs(prn, "\n/>\n");
-	    continue;
+	if (ntabs > 0) {
+	    gdt_write_string_tables(dset, storelist, ntabs, prn);
 	}
-
-	vstr = series_get_label(dset, v);
-	if (vstr != NULL && *vstr != '\0') {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
-	    if (!uerr) {
-		pprintf(prn, "\n label=\"%s\"", xmlbuf);
-	    }
-	}
-
-	vstr = series_get_display_name(dset, v);
-	if (vstr != NULL && *vstr != '\0') {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
-	    if (!uerr) {
-		pprintf(prn, "\n displayname=\"%s\"", xmlbuf);
-	    }
-	}
-
-	vstr = series_get_parent_name(dset, v);
-	if (vstr != NULL) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
-	    if (!uerr) {
-		pprintf(prn, "\n parent=\"%s\"", xmlbuf);
-	    }
-	}
-
-	vprop = series_get_transform(dset, v);
-	if (vprop != 0) {
-	    const char *tr = gretl_command_word(vprop);
-
-	    pprintf(prn, "\n transform=\"%s\"", tr);
-	}
-
-	vprop = series_get_lag(dset, v);
-	if (vprop != 0) {
-	    pprintf(prn, "\n lag=\"%d\"", vprop);
-	}
-
-	vprop = series_get_compact_method(dset, v);
-	if (vprop != COMPACT_NONE) {
-	    const char *meth = compact_method_to_string(vprop);
-
-	    pprintf(prn, "\n compact-method=\"%s\"", meth);
-	}
-
-	if (series_is_discrete(dset, v)) {
-	    pputs(prn, "\n discrete=\"true\"");
-	}
-
-	if (series_is_coded(dset, v)) {
-	    pputs(prn, "\n coded=\"true\"");
-	}
-
-	if (series_is_midas_anchor(dset, v)) {
-	    pputs(prn, "\n hf-anchor=\"true\"");
-	}
-
-	if ((mpd = series_get_midas_period(dset, v)) > 0) {
-	    pprintf(prn, "\n midas_period=\"%d\"", mpd);
-	}
-
-	if ((mpd = series_get_midas_freq(dset, v)) > 0) {
-	    pprintf(prn, "\n midas_freq=\"%d\"", mpd);
-	}
-
-	if ((mpd = series_get_orig_pd(dset, v)) > 0) {
-	    pprintf(prn, "\n orig_pd=\"%d\"", mpd);
-	}
-
-	pputs(prn, "\n/>\n");
-    }
-
-    if (skip_padding) {
-	pputs(prn, "<variable name=\"unit__\"\n/>\n");
-	pputs(prn, "<variable name=\"time__\"\n/>\n");
-    }
-
-    pputs(prn, "</variables>\n");
-
-    /* then listing of observations */
-    pputs(prn, "<observations ");
-    pprintf(prn, "count=\"%d\" labels=\"%s\"",
-		      tsamp, (have_markers)? "true" : "false");
-    pputs(prn, ">\n");
-
-    if (binary) {
-	err = write_binary_data(fname, dset, list, nvars, tsamp, opt);
-	if (!have_markers) {
-	    goto binary_done;
-	}
-    }
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (skip_padding && row_is_padding(dset, t, dset->v)) {
-	    continue;
-	}
-	pputs(prn, "<obs");
-	if (have_markers) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, dset->S[t], sizeof xmlbuf);
-	    if (!uerr) {
-		pprintf(prn, " label=\"%s\"", xmlbuf);
-	    }
-	}
-	if (binary) {
-	    pputs(prn, " />\n");
-	    continue;
-	}
-	pputs(prn, ">");
-	for (i=1; i<=nvars; i++) {
-	    v = savenum(list, i);
-	    if (na(dset->Z[v][t])) {
-		strcpy(numstr, "NA ");
-	    } else if (p15 == NULL || p15[i-1] == 0) {
-		/* use full default precision if required */
-		sprintf(numstr, "%.*g ", gdt_digits, dset->Z[v][t]);
-	    } else {
-		sprintf(numstr, "%.15g ", dset->Z[v][t]);
-	    }
-	    pputs(prn, numstr);
-	}
-	if (skip_padding) {
-	    int unit = 1 + t / dset->pd;
-	    int time = t % dset->pd + 1;
-
-	    sprintf(numstr, "%d %d ", unit, time);
-	    pputs(prn, numstr);
-	}
-	pputs(prn, "</obs>\n");
-
-	if (progress && t && ((t - dset->t1) % 50 == 0)) {
-	    (*show_progress) (50, tsamp, SP_NONE);
-	}
-    }
-
- binary_done:
-
-    pputs(prn, "</observations>\n");
-
-    if (ntabs > 0) {
-	char *sbuf, **strs;
-	int j, n_strs;
-
-	pprintf(prn, "<string-tables count=\"%d\">\n", ntabs);
-
-	for (i=1; i<=nvars; i++) {
-	    v = savenum(list, i);
-	    if (!is_string_valued(dset, v)) {
-		continue;
-	    }
-	    strs = series_get_string_vals(dset, v, &n_strs, 0);
-	    gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
-	    pprintf(prn, "<valstrings owner=\"%s\" count=\"%d\">", xmlbuf, n_strs);
-	    for (j=0; j<n_strs; j++) {
-		sbuf = gretl_xml_encode(strs[j]);
-		if (sbuf == NULL || *sbuf == '\0') {
-		    fprintf(stderr, "string values for var %d: string %d is empty\n",
-			    i, j);
-		    pputs(prn, "\"empty string\" ");
-		} else {
-		    pprintf(prn, "\"%s\" ", sbuf);
-		}
-		free(sbuf);
-	    }
-	    pputs(prn, "</valstrings>\n");
-	}
-	pputs(prn, "</string-tables>\n");
     }
 
     if (dataset_is_panel(dset)) {
 	maybe_print_panel_info(dset, skip_padding, prn);
     }
 
+    gretl_pop_c_numeric_locale();
+
     pputs(prn, "</gretldata>\n");
-
-    if (ss != NULL) {
-	strval_saver_restore((DATASET *) dset, ss);
-	strval_saver_destroy(ss);
-    }
-
-    if (in_c_locale) {
-	gretl_pop_c_numeric_locale();
-    }
 
     if (progress) {
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
     }
-
-    if (p15 != NULL) {
-	free(p15);
-    }
-    free(list);
-
     if (prn != inprn) {
 	gretl_print_destroy(prn);
     }
@@ -2659,6 +2527,51 @@ static int write_purebin (const char *fname, const int *list,
     return err;
 }
 
+static int gdt_store_prepare (const DATASET *dset,
+			      const int *inlist,
+			      gretlopt opt,
+			      int **plist,
+			      strval_saver **pss)
+{
+    int *list = NULL;
+    int nvars = dset->v - 1;
+    int ntabs = 0;
+    int err = 0;
+
+    /* which series are we saving? */
+    if (inlist != NULL) {
+	int cpos = in_gretl_list(inlist, 0);
+
+	list = gretl_list_copy(inlist);
+	if (cpos > 0) {
+	    gretl_list_delete_at_pos(list, cpos);
+	}
+	nvars = list[0];
+	*plist = list;
+    }
+
+    /* handling of string-valued series when sub-sampled */
+    if (dataset_is_subsampled(dset) && !(opt & OPT_P) &&
+	dset->varinfo != NULL) {
+	ntabs = string_table_count(dset, list, nvars);
+	if (ntabs > 0) {
+	    /* set up for trimming strvals */
+	    strval_saver *ss;
+
+	    ss = strval_saver_setup((DATASET *) dset, nvars,
+				    ntabs, list, &err);
+	    *pss = ss;
+	}
+    }
+
+    if (err && list != NULL) {
+	free(list);
+	*plist = NULL;
+    }
+
+    return err;
+}
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -2679,29 +2592,60 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     int progress)
 {
     int gdtb = has_suffix(fname, ".gdtb");
-    int err = 0;
+    strval_saver *ss = NULL;
+    int *storelist = NULL;
+    int err;
+
+    err = gdt_store_prepare(dset, list, opt, &storelist, &ss);
+    if (err) {
+	return err;
+    }
 
     if (gdtb) {
-	/* default binary format for gretl >= 2020b */
-	err = write_purebin(fname, list, dset, opt);
+	/* binary format for gretl >= 2020b */
+	err = write_purebin(fname, storelist, dset, opt);
     } else {
 	/* plain gdt file */
-	err = real_write_gdt(fname, NULL, list, dset, opt, progress);
+	err = real_write_gdt(fname, NULL, storelist, dset, opt, progress);
     }
+
+    if (ss != NULL) {
+	strval_saver_restore((DATASET *) dset, ss);
+    }
+    free(storelist);
 
     return err;
 }
 
+/* Called from gui/guiprint.c when for copying a dataset
+   to the clipboard.
+*/
+
 int gretl_write_gdt_to_prn (PRN *prn, const int *list,
 			    const DATASET *dset)
 {
-    return real_write_gdt(NULL, prn, list, dset, OPT_NONE, 0);
+    strval_saver *ss = NULL;
+    int *storelist = NULL;
+    int err;
+
+    err = gdt_store_prepare(dset, list, OPT_NONE, &storelist, &ss);
+    if (err) {
+	return err;
+    }
+
+    err = real_write_gdt(NULL, prn, storelist, dset, OPT_NONE, 0);
+
+    if (ss != NULL) {
+	strval_saver_restore((DATASET *) dset, ss);
+    }
+    free(storelist);
+
+    return err;
 }
 
 static void transcribe_string (char *targ, const char *src, int maxlen)
 {
     *targ = '\0';
-
     strncat(targ, src, maxlen - 1);
 }
 
@@ -3187,10 +3131,6 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 
     if (progbar) {
 	(*show_progress)(0, dsize, SP_LOAD_INIT);
-#if GDT_DEBUG
-	fprintf(stderr, "read_observations: inited progess bar (n=%d)\n",
-		dset->n);
-#endif
     }
 
     t = 0;
@@ -3239,9 +3179,6 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
  bailout:
 
     if (progbar) {
-#if GDT_DEBUG
-	fprintf(stderr, "finalizing progress bar (n = %d)\n", dset->n);
-#endif
 	(*show_progress)(0, dset->n, SP_FINISH);
     }
 
