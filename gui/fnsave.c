@@ -4204,7 +4204,6 @@ static void do_pkg_upload (function_info *finfo)
     fname = zipname != NULL ? zipname : finfo->fname;
 
     login_dialog(&linfo, finfo->dlg);
-
     if (linfo.canceled) {
 	linfo_free(&linfo);
 	g_free(zipname);

@@ -41,6 +41,11 @@
 # define CURLOPT_PASSWORD  10174
 #endif
 
+/* use CURLOPT_MIMEPOST rather than CURLOPT_HTTPPOST if available */
+#if 0 // LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+# define USE_MIMEPOST
+#endif
+
 enum {
     SAVE_NONE,
     SAVE_TO_FILE,
@@ -678,13 +683,17 @@ int upload_function_package (const char *login, const char *pass,
 			     const char *fname, const char *buf,
 			     size_t buflen, char **retbuf)
 {
+#ifdef USE_MIMEPOST
+    curl_mime *form = NULL;
+    curl_mimepart *part = NULL;
+#else
     struct curl_httppost *post = NULL;
     struct curl_httppost *last = NULL;
+#endif
     int zipfile = has_suffix(fname, ".zip");
-    char sizestr[32];
+    int saveopt = SAVE_NONE;
     CURL *curl = NULL;
     CURLcode res;
-    int saveopt = SAVE_NONE;
     urlinfo u;
     int err = 0;
 
@@ -713,6 +722,34 @@ int upload_function_package (const char *login, const char *pass,
 	set_curl_proxy(&u, curl);
     }
 
+#ifdef USE_MIMEPOST
+    form = curl_mime_init(curl);
+    part = curl_mime_addpart(form);
+    curl_mime_name(part, "login");
+    curl_mime_data(part, login, CURL_ZERO_TERMINATED);
+    part = curl_mime_addpart(form);
+    curl_mime_name(part, "pass");
+    curl_mime_data(part, pass, CURL_ZERO_TERMINATED);
+    if (zipfile) {
+	char sizestr[32];
+
+	sprintf(sizestr, "%d", (int) buflen);
+	part = curl_mime_addpart(form);
+	curl_mime_name(part, "datasize");
+	curl_mime_data(part, sizestr, CURL_ZERO_TERMINATED);
+	part = curl_mime_addpart(form);
+	curl_mime_name(part, "pkg");
+	curl_mime_filename(part, fname);
+	curl_mime_type(part, "application/x-zip-compressed");
+	curl_mime_data(part, buf, buflen);
+    } else {
+	curl_mime_name(part, "pkg");
+	curl_mime_filename(part, fname);
+	curl_mime_type(part, "text/plain; charset=utf-8");
+	curl_mime_data(part, buf, buflen);
+    }
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+#else
     curl_formadd(&post, &last,
 		 CURLFORM_COPYNAME, "login",
 		 CURLFORM_PTRCONTENTS, login,
@@ -722,6 +759,8 @@ int upload_function_package (const char *login, const char *pass,
 		 CURLFORM_PTRCONTENTS, pass,
 		 CURLFORM_END);
     if (zipfile) {
+	char sizestr[32];
+
 	sprintf(sizestr, "%d", (int) buflen);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "datasize",
@@ -743,17 +782,21 @@ int upload_function_package (const char *login, const char *pass,
 		     CURLFORM_BUFFERLENGTH, strlen(buf),
 		     CURLFORM_END);
     }
-
     curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-    res = curl_easy_perform(curl);
+#endif /* USE_MIMEPOST or not */
 
+    res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
 	gretl_errmsg_sprintf("cURL error %d (%s)", res,
 			     curl_easy_strerror(res));
 	err = u.err ? u.err : 1;
     }
 
+#ifdef USE_MIMEPOST
+    curl_mime_free(form);
+#else
     curl_formfree(post);
+#endif
     curl_easy_cleanup(curl);
 
     if (retbuf != NULL) {
