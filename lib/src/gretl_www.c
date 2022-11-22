@@ -690,6 +690,10 @@ int upload_function_package (const char *login, const char *pass,
     struct curl_httppost *post = NULL;
     struct curl_httppost *last = NULL;
 #endif
+    const char *typestrs[] = {
+	"text/plain; charset=utf-8",
+	"application/x-zip-compressed"
+    };
     int zipfile = has_suffix(fname, ".zip");
     int saveopt = SAVE_NONE;
     CURL *curl = NULL;
@@ -737,17 +741,12 @@ int upload_function_package (const char *login, const char *pass,
 	part = curl_mime_addpart(form);
 	curl_mime_name(part, "datasize");
 	curl_mime_data(part, sizestr, CURL_ZERO_TERMINATED);
-	part = curl_mime_addpart(form);
-	curl_mime_name(part, "pkg");
-	curl_mime_filename(part, fname);
-	curl_mime_type(part, "application/x-zip-compressed");
-	curl_mime_data(part, buf, buflen);
-    } else {
-	curl_mime_name(part, "pkg");
-	curl_mime_filename(part, fname);
-	curl_mime_type(part, "text/plain; charset=utf-8");
-	curl_mime_data(part, buf, buflen);
     }
+    part = curl_mime_addpart(form);
+    curl_mime_name(part, "pkg");
+    curl_mime_filename(part, fname);
+    curl_mime_type(part, typestrs[zipfile]);
+    curl_mime_data(part, buf, buflen);
     curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
 #else
     curl_formadd(&post, &last,
@@ -766,22 +765,14 @@ int upload_function_package (const char *login, const char *pass,
 		     CURLFORM_COPYNAME, "datasize",
 		     CURLFORM_PTRCONTENTS, sizestr,
 		     CURLFORM_END);
-	curl_formadd(&post, &last,
-		     CURLFORM_COPYNAME, "pkg",
-		     CURLFORM_BUFFER, fname,
-		     CURLFORM_CONTENTTYPE, "application/x-zip-compressed",
-		     CURLFORM_BUFFERPTR, buf,
-		     CURLFORM_BUFFERLENGTH, buflen,
-		     CURLFORM_END);
-    } else {
-	curl_formadd(&post, &last,
-		     CURLFORM_COPYNAME, "pkg",
-		     CURLFORM_BUFFER, fname,
-		     CURLFORM_CONTENTTYPE, "text/plain; charset=utf-8",
-		     CURLFORM_BUFFERPTR, buf,
-		     CURLFORM_BUFFERLENGTH, strlen(buf),
-		     CURLFORM_END);
     }
+    curl_formadd(&post, &last,
+		 CURLFORM_COPYNAME, "pkg",
+		 CURLFORM_BUFFER, fname,
+		 CURLFORM_CONTENTTYPE, typestrs[zipfile],
+		 CURLFORM_BUFFERPTR, buf,
+		 CURLFORM_BUFFERLENGTH, buflen,
+		 CURLFORM_END);
     curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
 #endif /* USE_MIMEPOST or not */
 
