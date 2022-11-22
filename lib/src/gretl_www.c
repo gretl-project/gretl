@@ -41,8 +41,8 @@
 # define CURLOPT_PASSWORD  10174
 #endif
 
-/* use CURLOPT_MIMEPOST rather than CURLOPT_HTTPPOST if available */
-#if 0 // LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+/* use MIMEPOST rather than HTTPPOST if available */
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
 # define USE_MIMEPOST
 #endif
 
