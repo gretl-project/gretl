@@ -1152,7 +1152,7 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 				 const DATASET *dset)
 {
     CoeffIntervals *cf;
-    char pname[24];
+    char pname[32];
     int i, err = 0;
 
     cf = malloc(sizeof *cf);
