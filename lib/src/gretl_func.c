@@ -7577,8 +7577,6 @@ int gretl_start_compiling_function (const char *line,
     return err;
 }
 
-#define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
-
 static void python_check (const char *line)
 {
     char s1[8], s2[16];
@@ -7598,6 +7596,10 @@ static int ufunc_get_structure (ufunc *u)
 				    FUNC, u->name);
 }
 
+#define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
+
+#define FLOW_CI(c) (c == IF || c == ELSE || c == ELIF || c == ENDIF)
+
 /**
  * gretl_function_append_line:
  * @s: pointer to execution state.
@@ -7610,6 +7612,7 @@ static int ufunc_get_structure (ufunc *u)
 int gretl_function_append_line (ExecState *s)
 {
     static int ifdepth;
+    static int last_flow;
     CMD *cmd = s->cmd;
     char *line = s->line;
     char *origline = NULL;
@@ -7664,14 +7667,20 @@ int gretl_function_append_line (ExecState *s)
         fun->flags |= UFUN_USES_SET;
     } else if (cmd->ci == FUNC) {
 	err = E_FNEST;
-    } else if (cmd->ci == IF) {
-        fun->flags |= UFUN_HAS_FLOW;
-	ifdepth++;
-    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
-	gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-	err = E_PARSE;
-    } else if (cmd->ci == ENDIF) {
-	ifdepth--;
+    } else if (FLOW_CI(cmd->ci)) {
+	if (cmd->ci == IF) {
+	    fun->flags |= UFUN_HAS_FLOW;
+	    ifdepth++;
+	} else if (ifdepth == 0) {
+	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    err = E_PARSE;
+	} else if (cmd->ci == ELSE && last_flow == ELSE) {
+	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    err = E_PARSE;
+	} else if (cmd->ci == ENDIF) {
+	    ifdepth--;
+	}
+	last_flow = cmd->ci;
     } else if (cmd->ci == LOOP) {
         fun->flags |= UFUN_HAS_FLOW;
     } else if (cmd->ci < 0) {
@@ -7712,6 +7721,7 @@ int gretl_function_append_line (ExecState *s)
 #endif
 	/* reset static var */
 	ifdepth = 0;
+	last_flow = 0;
     }
 
     if (!err && !compiling && (fun->flags & UFUN_HAS_FLOW)) {
