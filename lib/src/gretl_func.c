@@ -8923,9 +8923,13 @@ static void push_verbosity (fncall *call)
     if (!is_recursing(call)) {
 	if (gretl_messages_on()) {
 	    call->flags |= FC_PREV_MSGS;
+	} else {
+	    call->flags &= ~FC_PREV_MSGS;
 	}
 	if (gretl_echo_on()) {
 	    call->flags |= FC_PREV_ECHO;
+	} else {
+	    call->flags &= ~FC_PREV_ECHO;
 	}
     }
 }
