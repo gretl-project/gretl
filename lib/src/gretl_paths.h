@@ -71,10 +71,6 @@ struct ConfigPaths_ {
     int no_dotdir;
 };
 
-void set_string_table_written (void);
-
-int gretl_string_table_written (void);
-
 int gretl_path_prepend (char *file, const char *path);
 
 int gretl_normalize_path (char *path);

@@ -8683,24 +8683,6 @@ void call_lpsolve_function (gchar *buf, const char *fname,
     gretl_bundle_destroy(b_inp);
 }
 
-void maybe_display_string_table (void)
-{
-    static int s_table_waiting;
-
-    if (gretl_string_table_written() || s_table_waiting) {
-        char stname[MAXLEN];
-
-        if (mdata == NULL) {
-            s_table_waiting = 1;
-            return;
-        }
-
-        s_table_waiting = 0;
-        gretl_build_path(stname, gretl_workdir(), "string_table.txt", NULL);
-        view_file(stname, 0, 0, 78, 350, VIEW_FILE);
-    }
-}
-
 void display_string_table (int v)
 {
     PRN *prn = NULL;
@@ -9598,9 +9580,6 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
         if (op->ftype == GRETL_CSV || SPREADSHEET_IMPORT(op->ftype) ||
             OTHER_IMPORT(op->ftype)) {
             data_status |= IMPORT_DATA;
-            if (!(cmd->opt & OPT_Q)) {
-                maybe_display_string_table();
-            }
         }
         if (dataset->v > 0 && !op->dbdata) {
             if (cmd->ci == APPEND) {

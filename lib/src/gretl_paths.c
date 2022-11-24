@@ -77,7 +77,6 @@ struct INTERNAL_PATHS {
     char mpiexec[MAXLEN];
     char mpi_hosts[MAXLEN];
     char pngfont[128];
-    unsigned char status;
 };
 
 static struct INTERNAL_PATHS paths;
@@ -1722,10 +1721,6 @@ int has_system_prefix (const char *fname, SearchType stype)
     return ret;
 }
 
-enum paths_status_flags {
-    STRING_TABLE_WRITTEN = 1 << 0
-};
-
 static void set_gretl_plugpath (const char *path)
 {
     *paths.plugpath = '\0';
@@ -2279,22 +2274,6 @@ const char *gretl_png_font (void)
 void set_gretl_png_font (const char *s)
 {
     strcpy(paths.pngfont, s);
-}
-
-void set_string_table_written (void)
-{
-    paths.status |= STRING_TABLE_WRITTEN;
-}
-
-int gretl_string_table_written (void)
-{
-    int ret = 0;
-
-    if (paths.status & STRING_TABLE_WRITTEN) ret = 1;
-
-    paths.status &= ~STRING_TABLE_WRITTEN;
-
-    return ret;
 }
 
 void show_paths (void)
