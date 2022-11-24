@@ -8701,6 +8701,18 @@ void maybe_display_string_table (void)
     }
 }
 
+void display_string_table (int v)
+{
+    PRN *prn = NULL;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    series_table_print(dataset, v, prn);
+    view_buffer(prn, 84, 480, "string table", PRINT, NULL);
+}
+
 int maybe_restore_full_data (int action)
 {
     if (dataset_is_subsampled(dataset)) {
