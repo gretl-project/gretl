@@ -722,6 +722,8 @@ gboolean window_list_exit_check (void)
 			     r == PS_FILES ||		\
 			     r == NATIVE_DB ||		\
 			     r == REMOTE_DB ||		\
+			     r == DBNOMICS_TOP ||	\
+			     r == DBNOMICS_DB ||	\
 			     r == NATIVE_SERIES ||	\
 			     r == REMOTE_SERIES ||	\
 			     r == FUNC_FILES ||		\
