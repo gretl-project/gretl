@@ -654,8 +654,6 @@ void series_table_print (DATASET *dset, int i, PRN *prn)
  * gretl_string_table_finalize:
  * @gst: gretl string table.
  * @dset: dataset.
- * @fname: now unused.
- * @prn: now unused.
  *
  * Attaches the string-value information in @gst to the dataset
  * @dset. However, if one or more of the series referenced by @gst
@@ -665,8 +663,7 @@ void series_table_print (DATASET *dset, int i, PRN *prn)
  * Returns: the number of series tables actually attached.
  */
 
-int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset,
-				 const char *fname, PRN *prn)
+int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset)
 {
     series_table *st;
     int i, vi, ret = 0;
