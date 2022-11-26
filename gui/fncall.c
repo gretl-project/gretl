@@ -2689,6 +2689,21 @@ static gchar *compose_pkg_title (ufunc *func,
     return title;
 }
 
+static char *maybe_get_bundle_name (user_var *uv)
+{
+    char *ret = NULL;
+
+    if (uv != NULL) {
+	const char *s = user_var_get_name(uv);
+
+	if (s != NULL) {
+	    ret = gretl_strdup(s);
+	}
+    }
+
+    return ret;
+}
+
 static int real_exec_bundle_function (gretl_bundle *b,
 				      const char *id,
 				      ufunc *func,
@@ -2697,16 +2712,12 @@ static int real_exec_bundle_function (gretl_bundle *b,
 				      int forecast,
 				      int t1, int t2)
 {
-    fncall *fc = NULL;
     user_var *uv = get_user_var_by_data(b);
-    const char *bname = NULL;
+    char *bname = maybe_get_bundle_name(uv);
+    fncall *fc = fncall_new(func, 0);
     PRN *prn = NULL;
     int err = 0;
 
-    if (uv != NULL) {
-	bname = user_var_get_name(uv);
-    }
-    fc = fncall_new(func, 0);
     if (bname != NULL) {
 	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
     } else {
@@ -2770,6 +2781,7 @@ static int real_exec_bundle_function (gretl_bundle *b,
     }
 
     gretl_print_destroy(prn);
+    free(bname);
 
     return err;
 }
