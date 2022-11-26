@@ -814,7 +814,7 @@ int user_var_set_name (user_var *uvar, const char *name)
 
     if (uvar == NULL) {
 	err = E_DATA;
-    } else {
+    } else if (name != uvar->name) {
 	*uvar->name = '\0';
 	strncat(uvar->name, name, VNAMELEN - 1);
     }
