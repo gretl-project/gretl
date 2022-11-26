@@ -807,15 +807,12 @@ int generate (const char *line, DATASET *dset,
 	/* internal use of generate() */
 	flags |= P_PRIV;
     }
-
     if (opt & OPT_Q) {
 	flags |= P_QUIET;
     }
-
     if (opt & OPT_C) {
 	flags |= P_CATCH;
     }
-
     if (opt & OPT_O) {
 	/* special for function call, no assignment */
 	if (maybe_unassigned_fncall(line)) {
