@@ -3230,7 +3230,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     }
 
 #if 0
-    fprintf(stderr, "gretl_cmd_exec: '%s' (ci %d) \n", line, cmd->ci);
+    fprintf(stderr, "gretl_cmd_exec: '%s' (ci %d, %s) \n", line,
+	    cmd->ci, gretl_command_word(cmd->ci));
 #endif
 
     switch (cmd->ci) {
