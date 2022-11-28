@@ -40,7 +40,7 @@ int main () { return omp_get_num_threads (); }
 	for brand in clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
 	    clang)
-	      ac_conditional='defined __clang__'
+	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
 	    GCC)
 	      ac_conditional='defined __GNUC__'
