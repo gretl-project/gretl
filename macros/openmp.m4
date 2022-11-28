@@ -36,7 +36,7 @@ int main () { return omp_get_num_threads (); }
 	dnl   SGI C, PGI C	   -mp
 	dnl   Tru64 Compaq C	   -omp
 	dnl   IBM C (AIX, Linux)   -qsmp=omp
-	for brand in clang GCC SunPRO Intel SGI/PGI Compaq IBM; do
+	for brand in clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
 	    clang)
 	      ac_conditional='defined __clang__'
@@ -59,6 +59,9 @@ int main () { return omp_get_num_threads (); }
 	    IBM)
 	      ac_conditional='defined __xlc__ || defined __xlC__'
 	      ac_option='-qsmp=omp' ;;
+       InteloneAPI)
+         ac_conditional='defined __INTEL_LLVM_COMPILER'
+         ac_option='-qopenmp' ;;
 	  esac
 	  if test $brand = GCC; then
 	    if test "$GCC" = yes; then
