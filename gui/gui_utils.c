@@ -1158,6 +1158,18 @@ static void add_multinomial_probs_item (windata_t *vwin)
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
+static void add_odds_ratios_item (windata_t *vwin)
+{
+    const gchar *mpath = "/menubar/Analysis";
+    GtkActionEntry entry;
+
+    action_entry_init(&entry);
+    entry.name = "OddsRatios";
+    entry.label = _("Odds ratios");
+    entry.callback = G_CALLBACK(do_coeff_intervals);
+    vwin_menu_add_item(vwin, mpath, &entry);
+}
+
 static int dw_pval_ok (const MODEL *pmod)
 {
     if (na(pmod->dw)) {
@@ -1245,10 +1257,14 @@ static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 	/* can we relax some of this later? */
 	flip(ui, "/menubar/Analysis/DisplayAFR", FALSE);
 	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
-    } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
-	/* relax this? */
-	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
-	add_multinomial_probs_item(vwin);
+    } else if (pmod->ci == LOGIT) {
+	if (gretl_model_get_int(pmod, "multinom")) {
+	    /* relax this? */
+	    flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+	    add_multinomial_probs_item(vwin);
+	} else if (gretl_model_get_int(pmod, "binary")) {
+	    add_odds_ratios_item(vwin);
+	}
     } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
 	/* random effects probit */
 	flip(ui, "/menubar/Analysis/Forecasts", FALSE);

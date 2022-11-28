@@ -528,31 +528,38 @@ static void set_matrix_name (GtkWidget *widget, dialog_t *dlg)
 
 static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 {
-    if (vwin->role == XTAB) {
-	char mname[VNAMELEN];
-	gretl_matrix *m;
-	int err, cancel = 0;
+    char mname[VNAMELEN];
+    gretl_matrix *m = NULL;
+    int err, cancel = 0;
 
-	blocking_edit_dialog(0, _("gretl: save matrix"),
-			     _("Enter a name"), NULL,
-			     set_matrix_name, mname,
-			     VARCLICK_NONE,
-			     vwin_toplevel(vwin),
-			     &cancel);
-	if (!cancel) {
+    if (vwin->role != XTAB && vwin->role != COEFFINT) {
+	dummy_call();
+	return;
+    }
+
+    blocking_edit_dialog(0, _("gretl: save matrix"),
+			 _("Enter a name"), NULL,
+			 set_matrix_name, mname,
+			 VARCLICK_NONE,
+			 vwin_toplevel(vwin),
+			 &cancel);
+    if (!cancel) {
+	if (vwin->role == XTAB) {
 	    m = xtab_to_matrix(vwin->data);
-	    if (m == NULL) {
-		nomem();
+	} else if (vwin->role == COEFFINT) {
+	    m = conf_intervals_matrix(vwin->data);
+	}
+	if (m == NULL) {
+	    nomem();
+	} else {
+	    err = user_var_add_or_replace(mname,
+					  GRETL_TYPE_MATRIX,
+					  m);
+	    if (err) {
+		gretl_matrix_free(m);
+		gui_errmsg(err);
 	    } else {
-		err = user_var_add_or_replace(mname,
-					      GRETL_TYPE_MATRIX,
-					      m);
-		if (err) {
-		    gretl_matrix_free(m);
-		    gui_errmsg(err);
-		} else {
-		    infobox_printf(_("Saved matrix as %s"), mname);
-		}
+		infobox_printf(_("Saved matrix as %s"), mname);
 	    }
 	}
     }
@@ -596,7 +603,7 @@ static void real_coeffint_set_alpha (GtkWidget *w, GtkWidget *dialog)
     }
 
     reset_coeff_intervals(cf, 1.0 - *x);
-    print_coeff_intervals(cf, OPT_NONE, prn);
+    print_coeff_intervals(cf, prn);
     newtext = gretl_print_get_buffer(prn);
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_set_text(buf, "", -1);
@@ -1140,7 +1147,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!add_data_ok(r) && f == ADD_DATA_ITEM) {
 	return NULL;
-    } else if (r != XTAB && f == ADD_MATRIX_ITEM) {
+    } else if (r != XTAB && r != COEFFINT && f == ADD_MATRIX_ITEM) {
 	return NULL;
     } else if (!sort_ok(r) && f == SORT_ITEM) {
 	return NULL;

@@ -1140,6 +1140,7 @@ int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
  * gretl_model_get_coeff_intervals:
  * @pmod: pointer to gretl model.
  * @dset: dataset information.
+ * @opt: TBA.
  *
  * Save the 95 percent confidence intervals for the parameter
  * estimates in @pmod.
@@ -1149,10 +1150,15 @@ int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
 
 CoeffIntervals *
 gretl_model_get_coeff_intervals (const MODEL *pmod,
-				 const DATASET *dset)
+				 const DATASET *dset,
+				 gretlopt opt)
 {
     CoeffIntervals *cf;
     char pname[32];
+    int nc = pmod->ncoeff;
+    const double *b = pmod->coeff;
+    const double *se = pmod->sderr;
+    int offset = 0;
     int i, err = 0;
 
     cf = malloc(sizeof *cf);
@@ -1160,12 +1166,18 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 	return NULL;
     }
 
-    cf->ncoeff = pmod->ncoeff;
-    cf->df = pmod->dfd;
-    cf->ifc = pmod->ifc;
+    if ((opt & OPT_O) && pmod->ifc) {
+	/* doing odds ratios: skip intercept */
+	offset = 1;
+	b++;
+	se++;
+	nc--;
+    }
 
-    cf->coeff = NULL;
-    cf->maxerr = NULL;
+    cf->ncoeff = nc;
+    cf->df = pmod->dfd;
+    cf->opt = opt;
+    cf->coeff = cf->maxerr = NULL;
     cf->names = NULL;
 
     cf->coeff = malloc(cf->ncoeff * sizeof *cf->coeff);
@@ -1197,9 +1209,9 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     }
 
     for (i=0; i<cf->ncoeff && !err; i++) {
-	cf->coeff[i] = pmod->coeff[i];
-	cf->maxerr[i] = (pmod->sderr[i] > 0)? cf->t * pmod->sderr[i] : 0.0;
-	gretl_model_get_param_name(pmod, dset, i, pname);
+	cf->coeff[i] = b[i];
+	cf->maxerr[i] = (se[i] > 0)? cf->t * se[i] : 0.0;
+	gretl_model_get_param_name(pmod, dset, i+offset, pname);
 	cf->names[i] = gretl_strdup(pname);
 	if (cf->names[i] == NULL) {
 	    int j;
@@ -1221,6 +1233,70 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     }
 
     return cf;
+}
+
+gretl_matrix *conf_intervals_matrix (CoeffIntervals *cf)
+{
+    gretl_matrix *ret;
+    const double *b = cf->coeff;
+    const double *me = cf->maxerr;
+    double se, lo, hi, pc;
+    char **S = NULL;
+    char head[32];
+    int odds = (cf->opt & OPT_O);
+    int nrows = cf->ncoeff;
+    int ncols = 3;
+    int se_col = 0;
+    int lo_col = 1;
+    int hi_col = 2;
+    int i, j;
+
+    if (cf->opt & OPT_E) {
+	se_col = 1;
+	lo_col++;
+	hi_col++;
+	ncols++;
+    }
+
+    ret = gretl_matrix_alloc(nrows, ncols);
+    gretl_matrix_set_rownames(ret, strings_array_dup(cf->names, nrows));
+    S = strings_array_new(ncols);
+    pc = 100 * (1 - cf->alpha);
+
+    for (i=0; i<nrows; i++) {
+	if (na(me[i])) {
+	    lo = hi = NADBL;
+	} else {
+	    lo = b[i] - me[i];
+	    hi = b[i] + me[i];
+	}
+	for (j=0; j<ncols; j++) {
+	    if (j == 0) {
+		/* coeff or odds ratio */
+		gretl_matrix_set(ret, i, j, odds ? exp(b[i]) : b[i]);
+		S[j] = gretl_strdup(odds? "odds ratio" : "coefficient");
+	    } else if (j == se_col) {
+		/* standard error */
+		se = me[i] / cf->t;
+		gretl_matrix_set(ret, i, j, odds ? exp(b[i]) * se : se);
+		S[j] = gretl_strdup("std. error");
+	    } else if (j == lo_col) {
+		/* lower limit */
+		gretl_matrix_set(ret, i, j, odds ? exp(lo) : lo);
+		sprintf(head, "low%g", pc);
+		S[j] = gretl_strdup(head);
+	    } else if (j == hi_col) {
+		/* upper limit */
+		gretl_matrix_set(ret, i, j, odds ? exp(hi) : hi);
+		sprintf(head, "high%g", pc);
+		S[j] = gretl_strdup(head);
+	    }
+	}
+    }
+
+    gretl_matrix_set_colnames(ret, S);
+
+    return ret;
 }
 
 int gretl_is_simple_OLS (const MODEL *pmod)
