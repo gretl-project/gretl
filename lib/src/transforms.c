@@ -1177,7 +1177,7 @@ static char *get_mangled_name_by_id (int v)
 
 static int make_mangled_name (int v, const char *s, int nc)
 {
-    char tmp[16], sfx[16];
+    char tmp[32], sfx[32];
     int n, err;
 
     if (get_mangled_name_by_id(v)) {
@@ -1185,7 +1185,7 @@ static int make_mangled_name (int v, const char *s, int nc)
     }
 
     *tmp = *sfx = '\0';
-    /* we know the bit out here must be distinct? */
+    /* we know the bit out here (+nc) must be distinct? */
     strcat(sfx, s + nc);
     n = strlen(sfx);
     strncat(tmp, s, nc - n);
