@@ -6575,6 +6575,32 @@ static double regls_scalar_default (const char *key)
     }
 }
 
+static GtkWidget *cross_validation_options (selector *sr,
+					    int nfolds,
+					    int randfolds)
+{
+    GtkWidget *w, *hbox;
+    int ids[2] = {
+	REGLS_NFOLDS, REGLS_FTYPE
+    };
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("Folds:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    sr->extra[ids[0]] = w = gtk_spin_button_new_with_range(4, 20, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), nfolds);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    w = gtk_label_new(_("type:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    sr->extra[ids[1]] = w = gtk_combo_box_text_new();
+    combo_box_append_text(w, _("random"));
+    combo_box_append_text(w, _("contiguous"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), randfolds? 0 : 1);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+
+    return hbox;
+}
+
 static void build_regls_controls (selector *sr)
 {
     GtkWidget *w, *hbox, *b1, *b2, *b3;
@@ -6648,19 +6674,7 @@ static void build_regls_controls (selector *sr)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), xvalidate);
     gtk_box_pack_start(GTK_BOX(hbox), b3, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new(_("Folds:"));
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    sr->extra[REGLS_NFOLDS] = w = gtk_spin_button_new_with_range(4, 20, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), nfolds);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    w = gtk_label_new(_("type:"));
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    sr->extra[REGLS_FTYPE] = w = gtk_combo_box_text_new();
-    combo_box_append_text(w, _("random"));
-    combo_box_append_text(w, _("contiguous"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), randfolds? 0 : 1);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    hbox = cross_validation_options(sr, nfolds, randfolds);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_set_sensitive(hbox, xvalidate);
     sensitize_conditional_on(hbox, b3);
