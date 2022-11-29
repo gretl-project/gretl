@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-10-25 14:34-0400\n"
-"PO-Revision-Date: 2022-10-26 10:23+0200\n"
+"PO-Revision-Date: 2022-11-29 11:54+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -5601,7 +5601,7 @@ msgstr "La distorsione relativa è probabilmente minore del %g%%"
 #: lib/src/modelprint.c:1190
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr "La dimensione massimale è probabilmente minore del %g%%"
+msgstr "Il livello di significatività massimale è probabilmente minore del %g%%"
 
 #: lib/src/modelprint.c:1200
 #, c-format
@@ -5611,7 +5611,7 @@ msgstr "La distorsione relativa può eccedere il %g%%"
 #: lib/src/modelprint.c:1202
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr "La dimensione massimale può eccedere il %g%%"
+msgstr "Il livello di significatività massimale può eccedere il %g%%"
 
 #: lib/src/modelprint.c:1211
 msgid "Weak instrument test"
@@ -5631,11 +5631,11 @@ msgstr "Autovalore minimo di Cragg--Donald"
 
 #: lib/src/modelprint.c:1297
 msgid "A value < 10 may indicate weak instruments"
-msgstr "Un valore inferiore a 10 può indicare strumenti deboli"
+msgstr "Un valore < 10 può indicare strumenti deboli"
 
 #: lib/src/modelprint.c:1330
 msgid "Instrumented"
-msgstr "Con strumenti"
+msgstr "Endogene"
 
 #: lib/src/modelprint.c:1331 gui/selector.c:5151 gui/selector.c:9166
 #: plugin/addons-i18n.c:104
