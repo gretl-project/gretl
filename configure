@@ -17598,7 +17598,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
               ac_option='-qopenmp' ;;
 	  esac
 	  if test $brand = GCC; then
-	    if  test $CC = icx  ||  test $CC = icpx ; then
+	    if test $CC = icx || test $CC = icpx; then
 	      ac_openmp_result=no
 	    elif test "$GCC" = yes; then
 	      ac_openmp_result=yes
