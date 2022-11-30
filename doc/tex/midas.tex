@@ -20,39 +20,41 @@ regressor, each with its own parameter to be estimated. A typical case
 can be written as
 \begin{equation}
   \label{eq:UMIDAS}
-  y_t = \beta_0 + \alpha y_{t-1} + \sum_{i=0}^k \delta_i x_{\tau-i} + \varepsilon_t, 
+  y_t = \beta_0 + \alpha y_{t-1} + \sum_{i=1}^p \delta_i x_{\tau-i} + \varepsilon_t
 \end{equation}
-where $\tau$ represents ``high-frequency time''. Obvious
+where $\tau$ represents the reference point of the sequence of
+high-frequency lags in ``high-frequency time''.\footnote{For
+  discussion of the placement of this reference point relative to
+  low-frequency time, see section~\ref{sec:hflags} above.}  Obvious
 generalizations of this specification include a higher AR order for
-$y$ and inclusion of additional low- or high-frequency regressors.
+$y$ and inclusion of additional low- and/or high-frequency regressors.
 
-Estimation of \eqref{eq:UMIDAS} can easily be accomplished via
-OLS. However, it is more common to enforce parsimony by making the
-individual coefficients on lagged high-frequency terms a function of a
-relatively small number of hyperparameters, as in
+Estimation of \eqref{eq:UMIDAS} can be accomplished via OLS. However,
+it is more common to enforce parsimony by making the individual
+coefficients on lagged high-frequency terms a function of a relatively
+small number of hyperparameters, as in
 \begin{equation}
   \label{eq:MIDAS}
-  y_t = \beta_0 + \alpha y_{t-1} + \gamma W(x_{\tau}, x_{\tau-1},\dots,
-  x_{\tau-k}; \theta) + \varepsilon_t
+  y_t = \beta_0 + \alpha y_{t-1} + \gamma W(x_{\tau-1}, x_{\tau-2},\dots,
+  x_{\tau-p}; \theta) + \varepsilon_t
 \end{equation}
-where $W(\cdot)$ is a weighting function associated with a given
-parameterization and $\theta$ is a vector of hyperparameters.
+where $W(\cdot)$ is the weighting function associated with a given
+parameterization and $\theta$ is a $k$-vector of hyperparameters,
+$k<p$.
 
 This presents a couple of computational questions: how to calculate
 the per-lag coefficients given the values of the hyperparameters, and
-how best to estimate the value of the hyperparameters?  Hansl is
-functional enough to allow a savvy user to address these questions
-from scratch, but of course it's helpful to have some built-in
-high-level functionality. At present gretl can handle natively four
-commonly used parameterizations: normalized exponential Almon,
-normalized beta (with or without a zero last coefficient), and plain
-(non-normalized) Almon polynomial. The Almon variants take one or more
-parameters (two being a common choice). The beta variants take either
-two or three parameters. Full details on the forms taken by the
-$W(\cdot)$ function are provided in section \ref{sec:midas-param}.
+how best to estimate the value of the hyperparameters?  Gretl can
+handle natively four commonly used parameterizations: normalized
+exponential Almon, normalized beta (with or without a zero last
+coefficient), and plain (non-normalized) Almon polynomial. The Almon
+variants take one or more parameters (two being a common choice). The
+beta variants take either two or three parameters. Full details on the
+forms taken by the $W(\cdot)$ function are provided in section
+\ref{sec:midas-param}.
 
 All variants are handled by the functions \texttt{mweights} and
-\texttt{mgradient}. These functions work as follows.
+\texttt{mgradient}, which work as follows.
 \begin{itemize}
 \item \texttt{mweights} takes three arguments: the number of lags
   required ($p$), the $k$-vector of hyperparameters ($\theta$), and an
