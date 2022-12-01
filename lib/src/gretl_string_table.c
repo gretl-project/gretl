@@ -634,15 +634,39 @@ static void series_commute_string_table (DATASET *dset, int i,
     }
 }
 
-/* Returns the number of string-valued series found and attached to
-   @dset
-*/
+void series_table_print (DATASET *dset, int i, PRN *prn)
+{
+    series_table *st = series_get_string_table(dset, i);
+    int j;
 
-static int gretl_string_table_attach (gretl_string_table *gst, DATASET *dset)
+    if (st != NULL) {
+        pprintf(prn, _("String code table for variable %d (%s):\n"),
+                i, dset->varname[i]);
+	pputc(prn, '\n');
+        for (j=0; j<st->n_strs; j++) {
+            pprintf(prn, "%5d \"%s\"\n", j+1, st->strs[j]);
+        }
+        pputc(prn, '\n');
+    }
+}
+
+/**
+ * gretl_string_table_finalize:
+ * @gst: gretl string table.
+ * @dset: dataset.
+ *
+ * Attaches the string-value information in @gst to the dataset
+ * @dset. However, if one or more of the series referenced by @gst
+ * are deemed to be integer codes or misclassified numeric data,
+ * their "series tables" are commuted into numeric form.
+ *
+ * Returns: the number of series tables actually attached.
+ */
+
+int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset)
 {
     series_table *st;
-    int i, vi;
-    int ret = 0;
+    int i, vi, ret = 0;
 
     if (gst == NULL || gst->cols_list == NULL ||
         dset == NULL || dset->varinfo == NULL) {
@@ -664,103 +688,6 @@ static int gretl_string_table_attach (gretl_string_table *gst, DATASET *dset)
     }
 
     return ret;
-}
-
-void series_table_print (DATASET *dset, int i, PRN *prn)
-{
-    series_table *st = series_get_string_table(dset, i);
-    int j;
-
-    if (st != NULL) {
-        pprintf(prn, _("String code table for variable %d (%s):\n"),
-                i, dset->varname[i]);
-	pputc(prn, '\n');
-        for (j=0; j<st->n_strs; j++) {
-            pprintf(prn, "%5d \"%s\"\n", j+1, st->strs[j]);
-        }
-        pputc(prn, '\n');
-    }
-}
-
-static void series_tables_print (DATASET *dset, PRN *prn)
-{
-    int i;
-
-    for (i=1; i<dset->v; i++) {
-        if (is_string_valued(dset, i)) {
-            series_table_print(dset, i, prn);
-	}
-    }
-}
-
-/**
- * gretl_string_table_finalize:
- * @gst: gretl string table.
- * @dset: dataset.
- * @fname: name of the data file to which the table pertains.
- * @prn: gretl printer (or %NULL).
- *
- * In basic usage, prints table @gst to string_table.txt in
- * the user's working directory. However, if one or more of
- * the series referenced by @gst are deemed to be integer codes
- * or misclassified numeric data, their "series tables" are
- * commuted into numeric form. If all series are handled in
- * this way, the string_table is not printed.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_string_table_finalize (gretl_string_table *gst, DATASET *dset,
-				 const char *fname, PRN *prn)
-{
-    PRN *fprn = NULL;
-    const char *fshort;
-    char stname[MAXLEN];
-    int n_strvars = 0;
-    int err = 0;
-
-    if (gst == NULL) {
-	return E_DATA;
-    }
-
-    n_strvars = gretl_string_table_attach(gst, dset);
-    if (n_strvars == 0) {
-        return 0;
-    }
-
-    strcpy(stname, "string_table.txt");
-    gretl_path_prepend(stname, gretl_workdir());
-    fprn = gretl_print_new_with_filename(stname, &err);
-    if (err) {
-        return err;
-    }
-
-    fshort = strrslash(fname);
-    if (fshort != NULL) {
-        pprintf(fprn, "%s\n", fshort + 1);
-    } else {
-        pprintf(fprn, "%s\n", fname);
-    }
-
-    pputc(fprn, '\n');
-    pputs(fprn, _("One or more non-numeric variables were found.\n"
-                  "These variables have been given numeric codes as follows.\n\n"));
-    if (gst->extra != NULL) {
-        pputs(fprn, _("In addition, some mappings from numerical values to string\n"
-                      "labels were found, and are printed below.\n\n"));
-    }
-
-    series_tables_print(dset, fprn);
-
-    if (gst->extra != NULL) {
-        pputs(fprn, gst->extra);
-    }
-    pprintf(prn, _("String code table written to\n %s\n"), stname);
-
-    gretl_print_destroy(fprn);
-    set_string_table_written();
-
-    return err;
 }
 
 static int string_is_double (const char *s)

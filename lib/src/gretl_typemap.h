@@ -44,6 +44,8 @@ int gretl_type_get_order (GretlType type);
 
 int gretl_is_array_type (GretlType type);
 
+int gretl_is_array_ref_type (GretlType type);
+
 int gretl_is_arrayable_type (GretlType type);
 
 int gretl_is_scalar_type (GretlType type);

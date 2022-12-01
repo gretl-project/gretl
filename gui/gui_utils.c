@@ -512,7 +512,7 @@ void register_startup_data (const char *fname)
     real_register_data(DATAFILE_OPENED, fname, NULL);
 }
 
-static void maybe_offer_daily_options (void)
+static void maybe_offer_daily_options (GtkWidget *parent)
 {
     gretlopt purge_opt = 0;
     PRN *prn = NULL;
@@ -535,7 +535,7 @@ static void maybe_offer_daily_options (void)
 	    };
 
 	    resp = radio_dialog("gretl", _(buf), opts, 2,
-				1, DAILY_PURGE, NULL);
+				1, DAILY_PURGE, parent);
 	    if (resp == 1) {
 		purge_opt = OPT_W;
 	    }
@@ -547,7 +547,7 @@ static void maybe_offer_daily_options (void)
 	    };
 
 	    resp = radio_dialog("gretl", _(buf), opts, 3,
-				2, DAILY_PURGE, NULL);
+				2, DAILY_PURGE, parent);
 	    if (resp == 1) {
 		purge_opt = OPT_W;
 	    } else if (resp == 2) {
@@ -560,7 +560,7 @@ static void maybe_offer_daily_options (void)
 	    };
 
 	    resp = radio_dialog("gretl", _(buf), opts, 2,
-				1, DAILY_PURGE, NULL);
+				1, DAILY_PURGE, parent);
 	    if (resp == 1) {
 		purge_opt = OPT_A;
 	    }
@@ -577,15 +577,10 @@ static void maybe_offer_daily_options (void)
 
 static void finalize_data_open (const char *fname, int ftype,
 				int import, int append,
-				const int *list)
+				const int *plist,
+				GtkWidget *parent)
 {
     if (import) {
-	if (ftype == GRETL_CSV || ftype == GRETL_DTA ||
-	    ftype == GRETL_SAV || ftype == GRETL_SAS ||
-	    ftype == GRETL_XLSX || ftype == GRETL_ODS ||
-	    ftype == GRETL_GNUMERIC || ftype == GRETL_XLS) {
-	    maybe_display_string_table();
-	}
 	data_status |= IMPORT_DATA;
     }
 
@@ -595,12 +590,12 @@ static void finalize_data_open (const char *fname, int ftype,
     }
 
     if (strstr(fname, CLIPTEMP_TXT) || strstr(fname, CLIPTEMP_GDT)) {
-	real_register_data(DATA_PASTED, NULL, list);
+	real_register_data(DATA_PASTED, NULL, plist);
     } else {
 	if (fname != datafile) {
 	    strcpy(datafile, fname);
 	}
-	real_register_data(DATAFILE_OPENED, NULL, list);
+	real_register_data(DATAFILE_OPENED, NULL, plist);
     }
 
     if (import && !dataset_is_time_series(dataset) &&
@@ -612,13 +607,13 @@ static void finalize_data_open (const char *fname, int ftype,
 			     _("The imported data have been interpreted as undated\n"
 			       "(cross-sectional).  Do you want to give the data a\n"
 			       "time-series or panel interpretation?"),
-			     NULL);
+			     parent);
 	if (resp == GRETL_YES) {
 	    data_structure_dialog();
 	}
     } else if (import && dated_daily_data(dataset) &&
 	       !dataset->markers) {
-	maybe_offer_daily_options();
+	maybe_offer_daily_options(parent);
     }
 }
 
@@ -735,7 +730,7 @@ int get_imported_data (char *fname, int ftype, int append)
 		infobox(buf);
 	    }
 #endif
-	    finalize_data_open(fname, ftype, 1, append, plist);
+	    finalize_data_open(fname, ftype, 1, append, plist, NULL);
 	}
     }
 
@@ -800,7 +795,8 @@ static int get_csv_data (char *fname, int ftype, int append)
     if (err) {
 	delete_from_filelist(FILE_LIST_DATA, fname);
     } else {
-	finalize_data_open(fname, ftype, 1, append, NULL);
+	finalize_data_open(fname, ftype, 1, append, NULL,
+			   vwin_toplevel(vwin));
     }
 
     return err;
@@ -846,7 +842,7 @@ static int get_native_data (char *fname, int ftype, int append,
 	    gui_warnmsg(0);
 	}
 #endif
-	finalize_data_open(fname, ftype, 0, append, NULL);
+	finalize_data_open(fname, ftype, 0, append, NULL, NULL);
 	if (append) {
 	    infobox(_("Data appended OK\n"));
 	}

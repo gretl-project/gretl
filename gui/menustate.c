@@ -496,6 +496,7 @@ enum MenuIdx_ {
     MNU_CGRAM,
     MNU_PGRAM,
     MNU_ATTRS,
+    MNU_STRS,
     MNU_CORR,
     MNU_COND,
     MNU_XCORR,
@@ -564,6 +565,7 @@ struct popup_entries main_pop_entries[] = {
     { MNU_CGRAM, N_("Correlogram"), T_SINGLE, },
     { MNU_PGRAM, N_("Periodogram"), T_SINGLE, },
     { MNU_ATTRS, N_("Edit attributes"), T_SINGLE },
+    { MNU_STRS,  N_("Show string table"), T_SINGLE },
     { MNU_CORR,  N_("Correlation matrix"), T_MULTI },
     { MNU_COND,  N_("Collinearity"), T_MULTI },
     { MNU_XCORR, N_("Cross-correlogram"), T_MULTI },
@@ -638,6 +640,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case MNU_ATTRS:
         varinfo_dialog(v);
         break;
+    case MNU_STRS:
+	display_string_table(v);
+	break;
     case MNU_EDIT:
         show_spreadsheet(SHEET_EDIT_VARLIST);
         break;
@@ -681,6 +686,7 @@ GtkWidget *build_var_popup (int selvar)
     int i, j, n = G_N_ELEMENTS(main_pop_entries);
     int real_panel = multi_unit_panel_sample(dataset);
     int have_map = dataset_get_mapfile(dataset) != NULL;
+    int strvar = is_string_valued(dataset, selvar);
     int nullbak = 0;
 
     menu = gtk_menu_new();
@@ -731,8 +737,12 @@ GtkWidget *build_var_popup (int selvar)
             /* skip dummify option */
             continue;
         }
-        if (i == MNU_STATS && is_string_valued(dataset, selvar)) {
+        if (i == MNU_STATS && strvar) {
             /* skip (numerical) summary stats option */
+            continue;
+        }
+        if (i == MNU_STRS && !strvar) {
+            /* no string table */
             continue;
         }
         if (i == MNU_TDIS && series_get_orig_pd(dataset, selvar) == 0) {

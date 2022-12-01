@@ -2242,7 +2242,7 @@ int dta_get_data (const char *fname, DATASET *dset,
         }
 
         if (st != NULL) {
-            gretl_string_table_finalize(st, newset, fname, prn);
+            gretl_string_table_finalize(st, newset);
             gretl_string_table_destroy(st);
         }
 

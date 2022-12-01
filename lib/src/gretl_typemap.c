@@ -42,13 +42,15 @@ static struct type_map gretl_type_map[] = {
     { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF, 0, 0}
 };
 
+static int N_TYPES = G_N_ELEMENTS(gretl_type_map);
+
 GretlType gretl_type_get_plural (GretlType type)
 {
-    int i, n = G_N_ELEMENTS(gretl_type_map);
+    int i;
 
     if (type == 0) return 0;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<N_TYPES; i++) {
 	if (type == gretl_type_map[i].std) {
 	    return gretl_type_map[i].plural;
 	}
@@ -59,11 +61,11 @@ GretlType gretl_type_get_plural (GretlType type)
 
 GretlType gretl_type_get_singular (GretlType type)
 {
-    int i, n = G_N_ELEMENTS(gretl_type_map);
+    int i;
 
     if (type == 0) return 0;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<N_TYPES; i++) {
 	if (type == gretl_type_map[i].plural) {
 	    return gretl_type_map[i].std;
 	}
@@ -74,11 +76,11 @@ GretlType gretl_type_get_singular (GretlType type)
 
 GretlType gretl_type_get_ref_type (GretlType type)
 {
-    int i, n = G_N_ELEMENTS(gretl_type_map);
+    int i;
 
     if (type == 0) return 0;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<N_TYPES; i++) {
 	if (type == gretl_type_map[i].std) {
 	    return gretl_type_map[i].stdref;
 	}
@@ -97,11 +99,11 @@ GretlType gretl_type_get_ref_type (GretlType type)
 
 GretlType gretl_type_get_plain_type (GretlType type)
 {
-    int i, n = G_N_ELEMENTS(gretl_type_map);
+    int i;
 
     if (type == 0) return 0;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<N_TYPES; i++) {
 	if (type == gretl_type_map[i].stdref) {
 	    return gretl_type_map[i].std;
 	}
@@ -116,6 +118,41 @@ GretlType gretl_type_get_plain_type (GretlType type)
     }
 
     return 0;
+}
+
+int gretl_is_array_type (GretlType type)
+{
+    int i;
+
+    if (type == 0) return 0;
+
+    for (i=0; i<N_TYPES; i++) {
+	if (type == gretl_type_map[i].plural) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+int gretl_is_array_ref_type (GretlType type)
+{
+    int i;
+
+    if (type == 0) return 0;
+
+    for (i=0; i<N_TYPES; i++) {
+	if (type == gretl_type_map[i].plref) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+int gretl_is_arrayable_type (GretlType type)
+{
+    return gretl_type_get_plural(type) > 0;
 }
 
 /**
@@ -346,24 +383,6 @@ int gretl_type_get_order (GretlType type)
     } else {
         return 0;
     }
-}
-
-int gretl_is_array_type (GretlType type)
-{
-    return type == GRETL_TYPE_STRINGS ||
-	type == GRETL_TYPE_MATRICES ||
-	type == GRETL_TYPE_BUNDLES ||
-	type == GRETL_TYPE_LISTS ||
-	type == GRETL_TYPE_ARRAYS;
-}
-
-int gretl_is_arrayable_type (GretlType type)
-{
-    return type == GRETL_TYPE_STRING ||
-	type == GRETL_TYPE_MATRIX ||
-	type == GRETL_TYPE_BUNDLE ||
-	type == GRETL_TYPE_LIST ||
-	type == GRETL_TYPE_ARRAY;
 }
 
 int gretl_is_scalar_type (GretlType type)

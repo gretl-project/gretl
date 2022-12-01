@@ -1,4 +1,6 @@
 version 2022d, in progress
+- "midasreg" command: generate more specific error message
+  for invalid specification
 - pexpand() function: add optional boolean switch to expand
   in the cross-sectional dimension
 - readfile() function: ensure that we construct a legitimate
@@ -13,9 +15,11 @@ version 2022d, in progress
   may not be necessary with time-series data
 - Fix error message for invalid (string) array index
 - Fix error message for missing function-package dependency
+- Fix bug: buffer overrun when creating names for transformed
+  series if the original series has a very long name
 - Fix bug: crash on doing "pkg install" from the command line
   when the window listing function packages on the server is
-  displayed
+  displayed at the time
 - Fix bug: possible false positive when checking for duplicate
   function packages
 - Fix for detection of the R executable when called via a

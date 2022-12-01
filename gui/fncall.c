@@ -2697,16 +2697,12 @@ static int real_exec_bundle_function (gretl_bundle *b,
 				      int forecast,
 				      int t1, int t2)
 {
-    fncall *fc = NULL;
     user_var *uv = get_user_var_by_data(b);
-    const char *bname = NULL;
+    const char *bname = user_var_get_name(uv);
+    fncall *fc = fncall_new(func, 0);
     PRN *prn = NULL;
     int err = 0;
 
-    if (uv != NULL) {
-	bname = user_var_get_name(uv);
-    }
-    fc = fncall_new(func, 0);
     if (bname != NULL) {
 	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
     } else {

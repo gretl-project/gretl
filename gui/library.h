@@ -368,5 +368,7 @@ void VECM_add_EC_data (GtkAction *action, gpointer p);
 
 void maybe_display_string_table (void);
 
+void display_string_table (int v);
+
 #endif /* LIBRARY_H */
 

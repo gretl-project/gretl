@@ -3750,7 +3750,7 @@ int real_import_csv (const char *fname,
         } else if (joining(c)) {
             gretl_string_table_save(c->st, c->dset);
         } else {
-            gretl_string_table_finalize(c->st, c->dset, fname, prn);
+            gretl_string_table_finalize(c->st, c->dset);
         }
     }
 

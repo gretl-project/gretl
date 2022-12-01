@@ -8683,22 +8683,16 @@ void call_lpsolve_function (gchar *buf, const char *fname,
     gretl_bundle_destroy(b_inp);
 }
 
-void maybe_display_string_table (void)
+void display_string_table (int v)
 {
-    static int s_table_waiting;
+    PRN *prn = NULL;
 
-    if (gretl_string_table_written() || s_table_waiting) {
-        char stname[MAXLEN];
-
-        if (mdata == NULL) {
-            s_table_waiting = 1;
-            return;
-        }
-
-        s_table_waiting = 0;
-        gretl_build_path(stname, gretl_workdir(), "string_table.txt", NULL);
-        view_file(stname, 0, 0, 78, 350, VIEW_FILE);
+    if (bufopen(&prn)) {
+	return;
     }
+
+    series_table_print(dataset, v, prn);
+    view_buffer(prn, 84, 480, "string table", PRINT, NULL);
 }
 
 int maybe_restore_full_data (int action)
@@ -9265,6 +9259,7 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
 
     /* a few things that we don't want to echo at all */
     if (!strcmp(line, "set echo off") ||
+	!strcmp(line, "set verbose off") ||
 	!strcmp(line, "flush") ||
 	!strncmp(line, "printf", 6) ||
 	(!strncmp(line, "print ", 6) && strchr(line, '"'))) {
@@ -9585,9 +9580,6 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
         if (op->ftype == GRETL_CSV || SPREADSHEET_IMPORT(op->ftype) ||
             OTHER_IMPORT(op->ftype)) {
             data_status |= IMPORT_DATA;
-            if (!(cmd->opt & OPT_Q)) {
-                maybe_display_string_table();
-            }
         }
         if (dataset->v > 0 && !op->dbdata) {
             if (cmd->ci == APPEND) {

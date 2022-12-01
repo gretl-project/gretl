@@ -822,18 +822,11 @@ int user_var_set_name (user_var *uvar, const char *name)
     return err;
 }
 
-static int array_ref_type (GretlType type)
-{
-    return type == GRETL_TYPE_STRINGS_REF ||
-	type == GRETL_TYPE_MATRICES_REF ||
-	type == GRETL_TYPE_BUNDLES_REF ||
-	type == GRETL_TYPE_LISTS_REF;
-}
-
 /**
  * user_var_localize:
  * @origname: name of variable at caller level.
  * @localname: name to be used within function.
+ * @type: type of the variable.
  *
  * On entry to a function, renames the named variable (provided
  * as an argument) and sets its level so that is is accessible
@@ -849,20 +842,10 @@ int user_var_localize (const char *origname,
     user_var *u;
     int err = 0;
 
-    if (array_ref_type(type)) {
+    if (gretl_is_array_ref_type(type)) {
 	type = GRETL_TYPE_ARRAY;
     } else {
 	type = gretl_type_get_plain_type(type);
-    }
-
-    if (type == GRETL_TYPE_SCALAR_REF) {
-	type = GRETL_TYPE_DOUBLE;
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
-	type = GRETL_TYPE_MATRIX;
-    } else if (type == GRETL_TYPE_BUNDLE_REF) {
-	type = GRETL_TYPE_BUNDLE;
-    } else if (array_ref_type(type)) {
-	type = GRETL_TYPE_ARRAY;
     }
 
     u = get_user_var_of_type_by_name(origname, type);
