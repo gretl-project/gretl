@@ -1101,6 +1101,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
+        int sv = get_screen_height();
 
 	if (window_is_tab(vwin)) {
 	    vsize += 15;
@@ -1109,6 +1110,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	    /* approx golden ratio */
 	    vsize = 0.62 * hsize;
 	}
+        if (vsize < 0.65 * sv) {
+            vsize = 0.65 * sv;
+        }
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 
@@ -4865,6 +4869,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 #endif
 
     if (hsize > 0 || nlines > 0) {
+        int sv = get_screen_height();
 	int px, py;
 
 	get_char_width_and_height(w, &px, &py);
@@ -4879,13 +4884,14 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	if (nlines > 0) {
 	    /* Perhaps adjust how tall the window is? */
 	    int v1 = (nlines + 2) * py;
-	    int sv = get_screen_height();
 
 	    if (v1 > 0.85 * vsize && v1 <= 0.7 * sv) {
 		vsize = v1;
 	    } else if (v1 > 0.7 * sv) {
 		vsize = 0.7 * sv;
 	    }
+        } else if (role == SCRIPT_OUT && vsize < 0.65 * sv) {
+            vsize = 0.65 * sv;
 	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
 	    vsize = 0.62 * hsize;
 	}
