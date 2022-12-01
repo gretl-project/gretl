@@ -684,11 +684,13 @@ static int parse_midas_term (const char *s,
 			     int i,
 			     const DATASET *dset)
 {
+    const char *s0 = s;
     char lname[VNAMELEN];
     char mname[VNAMELEN];
     char p1str[VNAMELEN];
     char p2str[VNAMELEN];
     char typestr[10];
+    char mdtag[8];
     char fmt[64];
     int ns, p1 = 0, p2 = 0;
     int type, umidas = 0;
@@ -699,6 +701,7 @@ static int parse_midas_term (const char *s,
 
     if (!strncmp(s, "mds(", 4)) {
 	/* calling for auto-generated lags */
+        strcpy(mdtag, "mds");
 	s += 4;
 	sprintf(fmt, "%%%d[^, ] , %%%d[^, ] , %%%d[^, ] , %%%d[^,) ] , %%%d[^) ])",
 		VNAMELEN-1, VNAMELEN-1, VNAMELEN-1, 9, VNAMELEN-1);
@@ -708,10 +711,11 @@ static int parse_midas_term (const char *s,
 	    type = midas_type_from_arg(typestr, &umidas, &err);
 	}
 	if (!err && ns < 4) {
-	    err = E_PARSE;
+	    err = E_ARGS;
 	}
     } else if (!strncmp(s, "mdsl(", 5)) {
 	/* list already holds lags */
+        strcpy(mdtag, "mdsl");
 	mt->flags |= M_PRELAG;
 	s += 5;
 	sprintf(fmt, "%%%d[^, ] , %%%d[^,) ] , %%%d[^) ])",
@@ -722,6 +726,7 @@ static int parse_midas_term (const char *s,
 	    err = E_PARSE;
 	}
     } else {
+        strcpy(mdtag, "MIDAS");
 	err = E_INVARG;
     }
 
@@ -796,6 +801,13 @@ static int parse_midas_term (const char *s,
 	    mt->type = type;
 	    mt->nparm = k;
 	}
+    }
+
+    if (err) {
+        gchar *msg = g_strdup_printf(_("'%s': invalid %s specification"),
+                                     s0, mdtag);
+        gretl_errmsg_ensure(msg);
+        g_free(msg);
     }
 
     return err;
@@ -883,7 +895,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	int len, i = 0;
 
 	s = spec;
-	for (i=0; i<n_spec && !err; i++) {
+	for (i=0; i<n_spec; i++) {
 	    midas_term *mt = &mi->mterms[i];
 
 	    while (*s == ' ') s++;
@@ -896,26 +908,27 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		*test = '\0';
 		strncat(test, s, len);
 		err = parse_midas_term(test, mt, i, dset);
-		if (!err) {
-		    if (mt->type == MIDAS_BETA0 && (opt & OPT_C)) {
-			/* support legacy option */
-			mt->type = MIDAS_BETA1;
-		    }
-		    if (mt->type == MIDAS_U) {
-			n_umidas++;
-		    } else if (beta_type(mt->type) ||
-			       mt->type == MIDAS_NEALMON) {
-			n_boxed++;
-		    } else if (mt->type == MIDAS_ALMONP) {
-			n_almonp++;
-		    }
-		    if (takes_coeff(mt->type)) {
-			mi->hfslopes += 1;
-		    }
-		    if (mt->type == MIDAS_BETA1) {
-			n_beta1++;
-		    }
-		}
+                if (err) {
+                    break;
+                }
+                if (mt->type == MIDAS_BETA0 && (opt & OPT_C)) {
+                    /* support legacy option */
+                    mt->type = MIDAS_BETA1;
+                }
+                if (mt->type == MIDAS_U) {
+                    n_umidas++;
+                } else if (beta_type(mt->type) ||
+                           mt->type == MIDAS_NEALMON) {
+                    n_boxed++;
+                } else if (mt->type == MIDAS_ALMONP) {
+                    n_almonp++;
+                }
+                if (takes_coeff(mt->type)) {
+                    mi->hfslopes += 1;
+                }
+                if (mt->type == MIDAS_BETA1) {
+                    n_beta1++;
+                }
 		s = p + 1;
 	    }
 	}

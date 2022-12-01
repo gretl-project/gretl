@@ -244,7 +244,7 @@ struct fnpkg_ {
 struct fn_arg_ {
     char type;            /* argument type */
     char shifted;         /* level was shifted for execution */
-    const char *upname;   /* name of supplied arg at caller level */
+    char *upname;         /* name of supplied arg at caller level */
     user_var *uvar;       /* reference to "parent", if any */
     union {
 	int idnum;        /* named series arg (series ID) */
@@ -398,6 +398,14 @@ static void adjust_array_arg_type (fn_arg *arg)
     }
 }
 
+static void nullify_upname (fn_arg *arg)
+{
+    if (arg->upname != NULL) {
+	free(arg->upname);
+	arg->upname = NULL;
+    }
+}
+
 static int fn_arg_set_data (fn_arg *arg, const char *name,
 			    user_var *uvar, GretlType type,
 			    void *p)
@@ -406,8 +414,8 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
 
     arg->type = type;
     arg->shifted = 0;
-    arg->upname = name;
     arg->uvar = uvar;
+    arg->upname = (name != NULL)? gretl_strdup(name) : NULL;
 
     if (type == GRETL_TYPE_NONE) {
 	arg->val.x = 0;
@@ -468,13 +476,15 @@ static int fncall_add_args_array (fncall *fc)
 static void fncall_clear_args_array (fncall *fc)
 {
     int i, np = fc->fun->n_params;
+    fn_arg *arg;
 
     for (i=0; i<np; i++) {
-	fc->args[i].type = 0;
-	fc->args[i].shifted = 0;
-	fc->args[i].upname = NULL;
-	fc->args[i].uvar = NULL;
-	fc->args[i].val.px = NULL;
+	arg = &fc->args[i];
+	arg->type = 0;
+	arg->shifted = 0;
+	nullify_upname(arg);
+	arg->uvar = NULL;
+	arg->val.px = NULL;
     }
 
     fc->argc = 0;
@@ -7803,7 +7813,7 @@ static int localize_list (fncall *call, fn_arg *arg,
 	int tmp[] = {1, arg->val.idnum};
 
 	list = copy_list_as_arg(fp->name, tmp, &err);
-	arg->upname = NULL;
+	nullify_upname(arg);
     } else {
 	/* "can't happen" */
 	err = E_DATA;
@@ -8067,6 +8077,12 @@ static void fncall_finalize_listvars (fncall *call)
     }
 }
 
+static int upnames_match (fn_arg *ai, fn_arg *aj)
+{
+    return ai->upname != NULL && aj->upname != NULL &&
+	strcmp(ai->upname, aj->upname) == 0;
+}
+
 static int duplicated_pointer_arg_check (fncall *call)
 {
     fn_arg *ai, *aj;
@@ -8083,9 +8099,7 @@ static int duplicated_pointer_arg_check (fncall *call)
 	if (gretl_ref_type(ai->type)) {
 	    for (j=i+1; j<call->argc && !err; j++) {
 		aj = &call->args[j];
-		if (gretl_ref_type(aj->type) &&
-		    ai->upname != NULL && /* FIXME? */
-		    !strcmp(ai->upname, aj->upname)) {
+		if (gretl_ref_type(aj->type) && upnames_match(ai, aj)) {
 		    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 		    err = E_DATA;
 		}
