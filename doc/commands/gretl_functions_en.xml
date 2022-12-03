@@ -6138,11 +6138,15 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the integer part of <argname>x</argname>, truncating the
-	  fractional part. Note: <lit>int</lit> and <fncref targ="floor"/>
-	  differ in their effect for
-	  negative arguments: <lit>int(-3.5)</lit> gives &minus;3, while
-	  <lit>floor(-3.5)</lit> gives &minus;4.
+	  Returns the integer part of <argname>x</argname>, truncating
+	  the fractional part, or NA if the result cannot be
+	  represented as a 32-bit signed integer (does not lie in
+	  the interval [&minus;2147483648, 2147483647]).
+	</para>
+	<para>
+	  Note: <lit>int</lit> and <fncref targ="floor"/> differ in
+	  their effect for negative arguments: <lit>int(-3.5)</lit>
+	  gives &minus;3, while <lit>floor(-3.5)</lit> gives &minus;4.
 	  <seelist>
 	    <fncref targ="round"/>
             <fncref targ="ceil"/>

@@ -5735,7 +5735,11 @@ static double real_apply_func (double x, int f, parser *p)
     case U_NOT:
         return x == 0;
     case F_TOINT:
-        return (double) (int) x;
+	if (x > G_MAXINT32 || x < G_MININT32) {
+	    return NADBL;
+	} else {
+	    return (double) (int) x;
+	}
     case F_MISSING:
         return 0.0;
     case F_DATAOK:
