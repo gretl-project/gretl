@@ -52,7 +52,7 @@ void current_ymd (int *y, int *m, int *d)
 }
 
 static const char *compiler_defs =
-    "#\nif (defined __GNUC__) && !(defined __clang__)\n"
+    "\n#if (defined __GNUC__) && !(defined __clang__)\n"
     "# define COMPILER_IDENT \"GCC \" __VERSION__\n"
     "#else\n"
     "# define COMPILER_IDENT __VERSION__\n"
