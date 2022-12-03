@@ -1,0 +1,19 @@
+set verbose off
+include SVAR.gfn
+open sw_ch14.gdt
+
+series infl = 400*ldiff(PUNEW)
+rename LHUR unemp
+
+list X = unemp infl
+list Z = const
+
+Mod = SVAR_setup("C", X, Z, 3)
+Mod.horizon = 36
+SVAR_restrict(&Mod, "C", 1, 2)
+
+set stopwatch
+SVAR_estimate(&Mod)
+printf "Time (Cmodel) = %g\n", $stopwatch
+
+HDsave("hd.pdf", &Mod, 0)
