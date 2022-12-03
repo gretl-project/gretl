@@ -1850,6 +1850,9 @@ static int real_append_line (ExecState *s, LOOPSET *loop,
 	if (strchr(s->line, '@')) {
 	    loop->lines[n].flags |= LOOP_LINE_AT;
 	}
+        if (strncmp(s->line, "catch ", 6) == 0) {
+            loop->lines[n].flags |= LOOP_LINE_CATCH;
+        }
         if (s->cmd->ci == PRINT) {
             if (!loop_is_progressive(loop) || strchr(s->line, '"')) {
                 /* printing a literal string, not a variable's value */
