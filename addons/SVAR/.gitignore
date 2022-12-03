@@ -1,2 +1,6 @@
 session.inp
 string_table.txt
+
+/tests/*.png
+/tests/*.pdf
+/tests/*.gp
