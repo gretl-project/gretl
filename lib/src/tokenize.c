@@ -3401,6 +3401,23 @@ static int utf8_fail (char *s)
     }
 }
 
+static int print_do_eval (CMD *cmd, int imin, char *s)
+{
+    char c = peek_next_char(cmd, imin);
+
+    if (c == '$') {
+	/* display value of accessor */
+	cmd->ci = EVAL;
+	cmd->gtype = GRETL_TYPE_NONE;
+	cmd_set_vstart(cmd, strchr(s, '$'));
+	return 1;
+    } else if (c != '"') {
+	cmd->ciflags |= CI_LIST;
+    }
+
+    return 0;
+}
+
 /* @c is A-Z or a-z */
 
 static int is_ascii_alpha (int c)
@@ -3588,8 +3605,8 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 			    cmd->ntoks, imin);
 		}
 #endif
-		if (cmd->ci == PRINT && peek_next_char(cmd, imin) != '"') {
-		    cmd->ciflags |= CI_LIST;
+		if (cmd->ci == PRINT && print_do_eval(cmd, imin, s)) {
+		    goto skipit;
 		}
 		if (cmd->ciflags & CI_FNAME) {
 		    want_fname = 1;

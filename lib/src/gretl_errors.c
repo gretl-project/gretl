@@ -528,12 +528,6 @@ int gretl_error_clear (void)
     }
     error_printed = 0;
     errno = 0;
-#if 0 /* 2015-11-18: with the following activated, warning
-	 messages will rarely, if ever, get printed? 
-      */    
-    gretl_warnnum = 0;
-    *gretl_warnmsg = '\0';
-#endif
     
     return 0;
 }
@@ -576,9 +570,14 @@ void set_gretl_alarm (int val)
     alarm_set = val;
 }
 
-void set_gretl_errno (int err)
+static void real_set_gretl_errno (int err)
 {
     gretl_errno = err;
+}
+
+void set_gretl_errno (int err)
+{
+    real_set_gretl_errno(err);
 }
 
 void set_gretl_warning (int w)
@@ -590,7 +589,7 @@ int get_gretl_errno (void)
 {
     int err = gretl_errno;
 
-    gretl_errno = 0;
+    real_set_gretl_errno(0);
     return err;
 }
 

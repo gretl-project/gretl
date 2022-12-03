@@ -2149,15 +2149,6 @@ static int print_listed_objects (const char *s,
     char *name = NULL;
     int err = 0;
 
-    if (!strcmp(s, "$sysinfo")) {
-	gretl_bundle *b = get_sysinfo_bundle(&err);
-
-	if (b != NULL) {
-	    gretl_bundle_print(b, prn);
-	}
-	return err;
-    }
-
     if (strcspn(s, syms) < strlen(s)) {
 	/* try treating as expression to be evaluated */
 	return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
