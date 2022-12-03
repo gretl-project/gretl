@@ -3471,6 +3471,8 @@ int equation_system_bundlize (equation_system *sys,
     /* convert to 1-based for user-space */
     gretl_bundle_set_int(b, "t1", sys->t1 + 1);
     gretl_bundle_set_int(b, "t2", sys->t2 + 1);
+    gretl_bundle_set_int(b, "sample_t1", sys->smpl_t1 + 1);
+    gretl_bundle_set_int(b, "sample_t2", sys->smpl_t2 + 1);
 
     gretl_bundle_set_matrix(b, "coeff", sys->b);
     gretl_bundle_set_matrix(b, "vcv",   sys->vcv);
