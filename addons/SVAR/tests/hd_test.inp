@@ -16,4 +16,8 @@ set stopwatch
 SVAR_estimate(&Mod)
 printf "Time (Cmodel) = %g\n", $stopwatch
 
-HDsave("hd.pdf", &Mod, 0)
+FEVDsave("fevd_all.png", &Mod, 0)
+FEVDsave("fevd_v=1.png", &Mod, 1)
+
+HDsave("hd_all.png", &Mod, 0)
+HDsave("hd_v=1.png", &Mod, 2)
