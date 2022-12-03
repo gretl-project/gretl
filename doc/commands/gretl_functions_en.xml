@@ -6139,7 +6139,7 @@
       <description>
 	<para>
 	  Returns the integer part of <argname>x</argname>, truncating
-	  the fractional part, or NA if the result cannot be
+	  the fractional part, or <lit>NA</lit> if the result cannot be
 	  represented as a 32-bit signed integer (does not lie in
 	  the interval [&minus;2147483648, 2147483647]).
 	</para>

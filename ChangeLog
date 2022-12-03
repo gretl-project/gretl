@@ -7,12 +7,16 @@ version 2022d, in progress
   local filename when downloading a web resource
 - normtest() function: add option to include all available
   tests in the returned matrix
+- int() function: return NA if the integer part of the argument
+  lies beyond the range of a 32-bit signed integer
 - CSV data importation: be less hasty in concluding that the
   column separator is comma
 - CSV importation via GUI: clarify the dialog that governs
   how the first column is treated
 - "join" via the GUI: make it evident that specifying keys
   may not be necessary with time-series data
+- "system" command: ensure that the $system bundle includes
+  the sample limits as "sample_t1" and "sample_t2"
 - Fix error message for invalid (string) array index
 - Fix error message for missing function-package dependency
 - Fix bug: buffer overrun when creating names for transformed
