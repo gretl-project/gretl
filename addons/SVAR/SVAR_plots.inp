@@ -305,8 +305,11 @@ end function
 /* --- FEVD public graphing functions ----------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
-                       int keypos[0:2:1], int drawix[0::0])
+function void FEVDsave(string outfilename,
+                       bundle *obj,
+                       int vnum[0],
+                       int keypos[0:2:1],
+                       int drawix[0::0])
 
     scalar n = obj.n
     scalar vfrom vto
@@ -356,70 +359,51 @@ end function
 
 # TODO: AT suggests to minimize the number of input parameters by means of
 # an optional bundle which can be passed
-function void HDsave(string filename "Path or model for plotting",
+function void HDsave(string filename_out "Path or model for plotting",
                      bundle *obj "Model object",
-                     int vnum[0] "Number of the variable in model, 0 = ALL",
+                     int vnum[0] "ID of target series in model, 0 = ALL",
                      int keypos[0::2] "Key position",
-                     int drawix[0::0] "ONLY for SR-VAR: Select a specific draw, optionally",
-                     bool plot_boxes[FALSE] "If TRUE plot boxes, else rowstacked histograms")
+                     int drawix[0::0] "ONLY for SR-VAR: Select a specific draw, optionally")
     /* Saves the Historical Decomposition to a graphic file. The format
         is identified by the file extension. */
 
     scalar vfrom = NA
     scalar vto = NA
-    scalar is_vrange = range(vnum, n, &vfrom, &vto)
+    scalar is_vrange = range(vnum, obj.n, &vfrom, &vto)
+    check_variable_id_range(obj, vfrom, vto)
 
-    # TODO: separate function
-    errorif(from < 1 || vto > obj.n, \
-          sprintf("Some variable number is out of bounds.\n"))
-
-    strings filename_details = get_filename_details(filename)
-    string filename_out = create_filename(filename_details)
-    print filename_out
-
-    # prepare extended plot title, only for SR
-    scalar whichdraw = drawix ? drawix : obj.bestdraw
-    string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
+    strings filenames = array(0)
+    string drawinfo = get_drawinfo(obj, drawix)
 
     loop vnum = vfrom..vto
-        errorif(vnum < 1 || vnum > obj.n, \
-          sprintf("Variable number %d out of bounds.\n", vnum))
-
         list Ltmp = null
         list Ltmp = SVAR_hd(&obj, vnum, drawix)
         Ltmp -= Ltmp[1]       # take away deterministic component
 
-        # TODO: outsource this part
         series target = sum(Ltmp)
         string grph_name = sprintf("%s (stoch. component)", obj.Ynames[vnum])
         setinfo target --graph-name="@grph_name"
         Ltmp += target  # put the line with the target var (stoch.comp) _last_
                         # such that the shock colors match those in FEVD
 
-        # FIXME: This does not respect any folder paths!
-        if nelem(filename_details) && vfrom != vto
-            filename = sprintf("%s_%s.%s",
-                               filename_details[1],
-                               obj.Ynames[vnum],
-                               filename_details[2])
-        endif
         string title = sprintf("\"Historical decomp. for %s%s\"",
                                obj.Ynames[vnum], drawinfo)
 
-        if plot_boxes
-            # TODO: put into sep. function
-            plot Ltmp
-                option time-series
-                option single-yaxis
-                option with-boxes
-                option with-lines=tmpvar
-                printf "set title %s", title
-            end plot --output="@filename_out"
-        else
-            string tmpfile = HDgrph(Ltmp, title, keypos)
-            gnuplot --input="@tmpfile" --output="@filename_out"
-        endif
+        filenames += HDgrph(Ltmp, title, keypos)
     endloop
+
+    multiplot(filenames, filename_out)
+end function
+
+function string get_drawinfo (const bundle model,
+                              int drawix)
+    /* Create a string used for title indicating the selected draw.
+       Only for SR*/
+
+    scalar whichdraw = drawix ? drawix : model.bestdraw
+    string drawinfo = model.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
+
+    return drawinfo
 end function
 
 
@@ -552,27 +536,11 @@ function string map_keypos_to_command (const int keypos[0::],
 end function
 
 
-function strings get_filename_details (const string filename)
-    /* Extract filename and file extension if existing in filename.
-    return: strings, first put filename, second file-extension. If no
-            filename exists, return empty array. */
-
-    strings ret = array(0)
-
-    if filename != "display"
-        strings ret = splitfname(filename)[2:3]
-    endif
-
-    return ret
+function void check_variable_id_range (bundle model,
+                                       const int minima,
+                                       const int maxima)
+    errorif(minima < 1 || maxima > model.n, \
+          sprintf("Some variable number is out of bounds.\n"))
 end function
 
 
-function string create_filename (const strings details)
-    /* Concatenate filename + file-extension if information is available. */
-
-    if nelem(details) == 2
-        return sprintf("%s.%s", details[1], details[2])
-    endif
-
-    return ""
-end function

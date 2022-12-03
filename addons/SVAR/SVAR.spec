@@ -2,7 +2,7 @@ author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
 tags = C32
 version = 1.98
-date = 2022-11-02
+date = 2022-12-03
 description = Structural VARs
 public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_cumulate SVAR_boot SVAR_hd SVAR_coint \
@@ -27,6 +27,6 @@ sample-script = examples/simple_C.inp
 data-files = examples
 
 min-version = 2021a
-depends = extra
+depends = extra multiplot
 data-requirement = needs-time-series-data
 
