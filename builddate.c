@@ -51,6 +51,13 @@ void current_ymd (int *y, int *m, int *d)
     *d = lt->tm_mday;
 }
 
+static const char *compiler_defs =
+    "#\nif (defined __GNUC__) && !(defined __clang__)\n"
+    "# define COMPILER_IDENT \"GCC \" __VERSION__\n"
+    "#else\n"
+    "# define COMPILER_IDENT __VERSION__\n"
+    "#endif\n";
+
 /* See if build.h exists and is up to date, and if not,
    create/update it. */
 
@@ -88,6 +95,7 @@ int main (void)
 	    printf("Updating build.h\n");
 	    fprintf(fp, "#define BUILD_DATE \"%d-%02d-%02d\"\n",
 		    y, m, d);
+	    fputs(compiler_defs, fp);
 	    fclose(fp);
 	}
     } else {

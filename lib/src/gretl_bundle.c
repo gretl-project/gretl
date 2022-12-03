@@ -33,6 +33,7 @@
 #include "matrix_extra.h"
 #include "gretl_array.h"
 #include "libset.h"
+#include "build.h"
 #include "gretl_bundle.h"
 
 #define BDEBUG 0
@@ -2987,6 +2988,9 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 		gretl_bundle_set_string(b, "blascore", s1);
 		gretl_bundle_set_string(b, "blas_parallel", s2);
 	    }
+#if defined(COMPILER_IDENT)
+	    gretl_bundle_set_string(b, "compiler", COMPILER_IDENT);
+#endif
 	    fb = foreign_info();
 	    if (fb != NULL) {
 		gretl_bundle_donate_data(b, "foreign", fb,
