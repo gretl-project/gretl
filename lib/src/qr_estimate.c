@@ -39,6 +39,13 @@ enum {
     VCV_XPX
 };
 
+enum {
+    HAC_ES = 1,
+    HAC_AM
+};
+
+static int hac_missing = HAC_ES;
+
 static int qr_make_cluster_vcv (MODEL *pmod, int ci,
 				const DATASET *dset,
 				gretl_matrix *XX,
@@ -289,8 +296,8 @@ static void get_resids_and_SSR (MODEL *pmod, const DATASET *dset,
     }
 }
 
-static void
-get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
+static void get_data_X (gretl_matrix *X, const MODEL *pmod,
+			const DATASET *dset, int subzero)
 {
     int wt = pmod->nwt;
     int i, t, vi, s = 0;
@@ -317,6 +324,8 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
 		    } else {
 			X->val[s++] = dset->Z[vi][t];
 		    }
+		} else if (subzero) {
+		    X->val[s++] = 0;
 		}
 	    }
 	}
@@ -324,13 +333,19 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
 }
 
 static gretl_matrix *make_data_X (const MODEL *pmod,
-				  const DATASET *dset)
+				  const DATASET *dset,
+				  int subzero)
 {
+    int T = pmod->nobs;
     gretl_matrix *X;
 
-    X = gretl_matrix_alloc(pmod->nobs, pmod->ncoeff);
+    if (subzero) {
+	T = pmod->t2 - pmod->t1 + 1;
+    }
+
+    X = gretl_matrix_alloc(T, pmod->ncoeff);
     if (X != NULL) {
-	get_data_X(X, pmod, dset);
+	get_data_X(X, pmod, dset, subzero);
     }
 
     return X;
@@ -971,21 +986,41 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     VCVInfo vi;
     int T = pmod->nobs;
     int free_uh = 0;
+    int subzero = 0;
     int err = 0;
 
-    X = make_data_X(pmod, dset);
+    /* temporary hack */
+    char *evar = getenv("HAC_ALLOW_MISSING");
+    if (evar != NULL && !strcmp(evar, "AM")) {
+	hac_missing = HAC_AM;
+    }
+
+    if (pmod->missmask != NULL && hac_missing == HAC_AM) {
+	/* substitute zeros at missing observations */
+	T = pmod->t2 - pmod->t1 + 1;
+	subzero = 1;
+    }
+
+    X = make_data_X(pmod, dset, subzero);
     if (X == NULL) {
 	return E_ALLOC;
     }
 
     if (pmod->missmask != NULL) {
-	/* transcribe the non-missing residuals into @uh */
 	int t, s = pmod->t1;
 
 	uh = gretl_matrix_alloc(T, 1);
-	for (t=0; t<T; t++) {
-	    while (na(pmod->uhat[s])) s++;
-	    uh->val[t] = pmod->uhat[s++];
+	if (hac_missing == HAC_ES) {
+	    /* transcribe just the non-missing residuals into @uh */
+	    for (t=0; t<T; t++) {
+		while (na(pmod->uhat[s])) s++;
+		uh->val[t] = pmod->uhat[s++];
+	    }
+	} else {
+	    for (t=0; t<T; t++) {
+		uh->val[t] = na(pmod->uhat[s]) ? 0 : pmod->uhat[s];
+		s++;
+	    }
 	}
 	free_uh = 1;
     } else {
@@ -1083,7 +1118,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     int i, t;
     int err = 0;
 
-    X = make_data_X(pmod, dset);
+    X = make_data_X(pmod, dset, 0);
     if (X == NULL) return 1;
 
     hc_version = libset_get_int(HC_VERSION);
@@ -1243,7 +1278,7 @@ static int qr_dw_stats (MODEL *pmod, const DATASET *dset,
     double DW, pv;
     int t, s, err = 0;
 
-    get_data_X(X, pmod, dset);
+    get_data_X(X, pmod, dset, 0);
 
     for (s=0, t=pmod->t1; t<=pmod->t2; s++, t++) {
 	gretl_vector_set(u, s, pmod->uhat[t]);
@@ -2073,7 +2108,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 
     k = pmod->list[0] - 1;
 
-    Q = make_data_X(pmod, dset);
+    Q = make_data_X(pmod, dset, 0);
     R = gretl_matrix_alloc(k, k);
     V = gretl_matrix_alloc(k, k);
 
