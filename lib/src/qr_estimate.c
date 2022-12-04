@@ -966,9 +966,11 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 			gretl_matrix *XTXi)
 {
     gretl_matrix *X, *XOX, *V = NULL;
+    gretl_matrix *uh = NULL;
     gretl_matrix umat;
     VCVInfo vi;
     int T = pmod->nobs;
+    int free_uh = 0;
     int err = 0;
 
     X = make_data_X(pmod, dset);
@@ -976,16 +978,29 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 	return E_ALLOC;
     }
 
-    /* pmod->uhat is a full-length series: we must take an offset
-       into it, equal to the offset of the data on which the model
-       is actually estimated.
-    */
-    gretl_matrix_init(&umat);
-    umat.rows = T;
-    umat.cols = 1;
-    umat.val = pmod->uhat + pmod->t1;
+    if (pmod->missmask != NULL) {
+	/* transcribe the non-missing residuals into @uh */
+	int t, s = pmod->t1;
 
-    XOX = HAC_XOX(X, &umat, &vi, 0, &err);
+	uh = gretl_matrix_alloc(T, 1);
+	for (t=0; t<T; t++) {
+	    while (na(pmod->uhat[s])) s++;
+	    uh->val[t] = pmod->uhat[s++];
+	}
+	free_uh = 1;
+    } else {
+	/* pmod->uhat is a full-length series: we must take an offset
+	   into it, equal to the offset of the data on which the model
+	   is actually estimated.
+	*/
+	gretl_matrix_init(&umat);
+	umat.rows = T;
+	umat.cols = 1;
+	umat.val = pmod->uhat + pmod->t1;
+	uh = &umat;
+    }
+
+    XOX = HAC_XOX(X, uh, &vi, 0, &err);
 
     if (!err) {
 	V = gretl_matrix_alloc(XOX->rows, XOX->rows);
@@ -1019,6 +1034,9 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     gretl_matrix_free(X);
     gretl_matrix_free(XOX);
     gretl_matrix_free(V);
+    if (free_uh) {
+	gretl_matrix_free(uh);
+    }
 
     return err;
 }
