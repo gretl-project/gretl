@@ -75,6 +75,10 @@ double mn_logit_prediction (const gretl_matrix *Xt,
 			    const double *b,
 			    const gretl_matrix *yvals);
 
+gretl_matrix *binary_logit_odds_ratios (const MODEL *pmod,
+					const DATASET *dset,
+					int *err);
+
 void binary_model_hatvars (MODEL *pmod, 
 			   const gretl_matrix *ndx,
 			   const int *y,

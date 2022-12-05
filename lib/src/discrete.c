@@ -2062,6 +2062,46 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
     return P;
 }
 
+/**
+ * binary_logit_odds_ratios:
+ * @pmod: pointer to binary logit model
+ * @dset: dataset struct.
+ * @err: location to receive error code.
+ *
+ * Computes odds ratios, their standard errors, and 95 percent
+ * confidence intervals for a binary logit model. Returns a
+ * labeled matrix representation of the results.
+ *
+ * Returns: allocated matrix or NULL on failure.
+ */
+
+gretl_matrix *binary_logit_odds_ratios (const MODEL *pmod,
+					const DATASET *dset,
+					int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (pmod == NULL || pmod->list == NULL ||
+	pmod->coeff == NULL || dset == NULL) {
+	*err = E_DATA;
+    } else if (pmod->ci != LOGIT ||
+	       !gretl_model_get_int(pmod, "binary")) {
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	CoeffIntervals *cf;
+
+	cf = gretl_model_get_coeff_intervals(pmod, dset, OPT_O | OPT_E);
+	if (cf != NULL) {
+	    ret = conf_intervals_matrix(cf);
+	    free_coeff_intervals(cf);
+	}
+    }
+
+    return ret;
+}
+
 /* In case the dependent variable is not in canonical form for
    multinomial logit, construct a transformed version */
 

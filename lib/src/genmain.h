@@ -124,6 +124,7 @@ typedef enum {
     M_VMA,        /* VARs, VECMs: vector moving average representation */
     M_FEVD,       /* VAR variance decomposition */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
+    M_ODDSRATIOS, /* binary logit odds ratios */
     M_MBUILD_MAX, /*** SEPARATOR, end of matrix-builders ***/
     M_XLIST,      /* list of regressors */
     M_YLIST,      /* list of endogenous variables */

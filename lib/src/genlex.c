@@ -185,6 +185,7 @@ struct str_table mvars[] = {
     { M_COEFF_CI,"$coeff_ci" },
     { M_EHAT,    "$ehat" },
     { M_MNLPROBS, "$mnlprobs" },
+    { M_ODDSRATIOS, "$oddsratios" },
     { M_XLIST,   "$xlist" },
     { M_YLIST,   "$ylist" },
     { M_COMMAND, "$command" },
