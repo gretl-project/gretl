@@ -1207,7 +1207,8 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 #ifndef GRETL_EDIT
     vwin_add_tmpbar(vwin);
 #endif
-    create_text(vwin, SCRIPT_WIDTH, 450, 0, FALSE);
+    /* below: initial hsize was SCRIPT_WIDTH */
+    create_text(vwin, 72, 450, 0, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert the text buffer from @prn */

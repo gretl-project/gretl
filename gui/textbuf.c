@@ -1096,7 +1096,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     if (hsize > 0) {
 	hsize *= cw;
-	hsize += 2*cw; /* was 48 */
+	hsize += 48; /* was 48 */
     }
 
     if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
@@ -4875,7 +4875,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	get_char_width_and_height(w, &px, &py);
 	if (hsize > 0) {
 	    hsize *= px;
-	    // hsize += 2 * px;
+	    hsize += 3 * px;
 	}
 #if HDEBUG
 	fprintf(stderr, " px = %d, py = %d; hsize now = %d, nlines = %d\n",
