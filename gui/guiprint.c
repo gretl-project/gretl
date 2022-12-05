@@ -164,13 +164,11 @@ void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 
 /* row format specifications for RTF "tables" */
 
-#define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262"	\
+#define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
     "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
 
 static void printf_rtf (double x, PRN *prn, int endrow)
 {
-    /* was using "qr", for right alignment */
-
     if (na(x)) {
 	if (endrow) {
 	    pprintf(prn, "\\qc %s\\cell\\intbl \\row\n",
@@ -178,10 +176,7 @@ static void printf_rtf (double x, PRN *prn, int endrow)
 	} else {
 	    pprintf(prn, "\\qc %s\\cell", _("undefined"));
 	}
-	return;
-    }
-
-    if (endrow) {
+    } else if (endrow) {
 	pprintf(prn, "\\qc %#.*g\\cell \\intbl \\row\n",
 		get_gretl_digits(), x);
     } else {
@@ -1545,38 +1540,38 @@ static void
 texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     int odds = (cf->opt & OPT_O);
-    const double *b = cf->coeff;
-    const double *me = cf->maxerr;
+    double b = cf->coeff[i];
+    double me = cf->maxerr[i];
     char vname[2*VNAMELEN];
     char tmp[32];
 
     tex_escape(vname, cf->names[i]);
     pprintf(prn, " %s & ", vname);
 
-    if (isnan(b[i])) {
+    if (isnan(b)) {
 	pprintf(prn, "\\multicolumn{2}{c}{%s} & ", _("undefined"));
     } else {
-	tex_rl_double(odds ? exp(b[i]) : b[i], tmp);
+	tex_rl_double(odds ? exp(b) : b, tmp);
 	pprintf(prn, "%s & ", tmp);
     }
 
     if (cf->opt & OPT_E) {
-	double se = me[i] / cf->t;
+	double se = me / cf->t;
 
 	if (isnan(se)) {
 	    pprintf(prn, "\\multicolumn{2}{c}{%s} & ", _("undefined"));
 	} else {
-	    tex_rl_double(odds ? exp(b[i]) * se : se, tmp);
+	    tex_rl_double(odds ? exp(b) * se : se, tmp);
 	    pprintf(prn, "%s & ", tmp);
 	}
     }
 
-    if (isnan(me[i])) {
+    if (isnan(me)) {
 	pprintf(prn, "\\multicolumn{4}{c}{%s}", _("undefined"));
     } else {
 	char lo_str[32], hi_str[32];
-	double lo = b[i] - me[i];
-	double hi = b[i] + me[i];
+	double lo = b - me;
+	double hi = b + me;
 
 	tex_rl_double(odds ? exp(lo) : lo, lo_str);
 	tex_rl_double(odds ? exp(hi) : hi, hi_str);
@@ -1644,44 +1639,80 @@ static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 static void
 rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
+    int odds = (cf->opt & OPT_O);
+    double b = cf->coeff[i];
+    double me = cf->maxerr[i];
     int d = get_gretl_digits();
 
     pprintf(prn, "\\qc %s\\cell", cf->names[i]);
 
-    printf_rtf(cf->coeff[i], prn, 0);
+    printf_rtf(odds ? exp(b) : b, prn, 0);
 
-    if (isnan(cf->maxerr[i])) {
+    if (cf->opt & OPT_E) {
+	double se = me / cf->t;
+
+	fprintf(stderr, "HERE se = %g\n", se);
+
+	printf_rtf(odds ? exp(b) * se : se, prn, 0);
+    }
+
+    if (isnan(me)) {
 	pprintf(prn, "\\qc %s\\cell ", _("undefined"));
     } else {
-	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ",
-		d, cf->coeff[i] - cf->maxerr[i],
-		d, cf->coeff[i] + cf->maxerr[i]);
+	double lo = b - me;
+	double hi = b + me;
+
+	pprintf(prn, "\\qc [%#.*g, %#.*g]\\cell ",
+		d, odds ? exp(lo) : lo,
+		d, odds ? exp(hi) : hi);
     }
     pputs(prn, " \\intbl \\row\n");
 }
 
-#define CF_ROW  "\\trowd \\trgaph60\\trleft-30\\trrh262"	\
+#define CF_ROW  "\\trowd \\trgaph60\\trleft-30\\trrh262" \
     "\\cellx2400\\cellx4000\\cellx7200\n"
+
+#define CF_ROW2  "\\trowd \\trgaph60\\trleft-30\\trrh262" \
+    "\\cellx2400\\cellx4000\\cellx5600\\cellx8800\n"
 
 static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
+    int odds = (cf->opt & OPT_O);
     double tail = cf->alpha / 2;
     gchar *cstr;
     int i;
 
-    pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, %g) = %.3f\\par\n\\par\n",
-	    cf->df, tail, cf->t);
+    if (cf->asy) {
+	pprintf(prn, "{\\rtf1\\par\n\\qc z(%g) = %.3f\\par\n\\par\n",
+		tail, cf->t);
+    } else {
+	pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, %g) = %.3f\\par\n\\par\n",
+		cf->df, tail, cf->t);
+    }
 
     cstr = g_strdup_printf(_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
-    pputs(prn, "{" CF_ROW "\\intbl ");
-    pprintf(prn,
-	    " \\qc %s\\cell"
-	    " \\qc %s\\cell"
-	    " \\qc %s\\cell"
-	    " \\intbl \\row\n",
-	    _("Variable"), _("Coefficient"),
-	    cstr);
+    if (cf->opt & OPT_E) {
+	pputs(prn, "{" CF_ROW2 "\\intbl ");
+	pprintf(prn,
+		" \\qc \\cell"
+		" \\qc %s\\cell"
+		" \\qc %s\\cell"
+		" \\qc %s\\cell"
+		" \\intbl \\row\n",
+		odds ? _("odds ratio") : _("coefficient"),
+		_("std. error"),
+		cstr);
+    } else {
+	pputs(prn, "{" CF_ROW "\\intbl ");
+	pprintf(prn,
+		" \\qc \\cell"
+		" \\qc %s\\cell"
+		" \\qc %s\\cell"
+		" \\intbl \\row\n",
+		odds ? _("odds ratio") :  _("coefficient"),
+		cstr);
+    }
 
     g_free(cstr);
 
