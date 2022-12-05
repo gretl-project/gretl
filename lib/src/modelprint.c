@@ -4496,46 +4496,57 @@ static int plain_print_aux_coeffs (const double *b,
     return err;
 }
 
-/* opt: use OPT_O for odds ratios (logit) */
-
-int print_coeff_intervals (const CoeffIntervals *cf,
-			   gretlopt opt, PRN *prn)
+int print_coeff_intervals (const CoeffIntervals *cf, PRN *prn)
 {
     const double *b = cf->coeff;
     const double *me = cf->maxerr;
     char **names = cf->names;
     struct printval **vals, *vij;
-    const char *headings[] = {
+    const char *headings0[] = {
 	N_("coefficient"),
 	N_("low"),
 	N_("high")
     };
+    const char *headings1[] = {
+	N_("coefficient"),
+	N_("std. error"),
+	N_("low"),
+	N_("high")
+    };
+    const char **headings = headings0;
     const char *head;
-    int lmax[3] = {0};
-    int rmax[3] = {0};
-    int w[3], addoff[3] = {0};
+    int nfields = (cf->opt & OPT_E)? 4 : 3;
+    int lmax[nfields], rmax[nfields];
+    int w[nfields], addoff[nfields];
     int hlen, odds = 0;
-    int nc = cf->ncoeff;
-    double lo, hi, tail;
+    double se, lo, hi, tail;
+    int se_col = 0;
+    int lo_col = 1;
+    int hi_col = 2;
     int namelen = 0;
     int colsep = 2;
     int n, d, i, j;
     int err = 0;
 
-    if (opt & OPT_O) {
-	headings[0] = N_("odds ratio");
-	odds = 1;
-	if (cf->ifc) {
-	    b++;
-	    me++;
-	    names++;
-	    nc--;
-	}
+    if (cf->opt & OPT_E) {
+	headings = headings1;
+	se_col = 1;
+	lo_col++;
+	hi_col++;
     }
 
-    vals = allocate_printvals(nc, 3);
+    if (cf->opt & OPT_O) {
+	headings[0] = N_("odds ratio");
+	odds = 1;
+    }
+
+    vals = allocate_printvals(cf->ncoeff, nfields);
     if (vals == NULL) {
 	return E_ALLOC;
+    }
+
+    for (i=0; i<nfields; i++) {
+	lmax[i] = rmax[i] = w[i] = addoff[i] = 0;
     }
 
     d = get_gretl_digits();
@@ -4549,7 +4560,7 @@ int print_coeff_intervals (const CoeffIntervals *cf,
 	pprintf(prn, "\nt(%d, %g) = %.3f\n\n", cf->df, tail, cf->t);
     }
 
-    for (i=0; i<nc; i++) {
+    for (i=0; i<cf->ncoeff; i++) {
 	if (na(b[i])) {
 	    err = E_NAN;
 	    goto bailout;
@@ -4564,14 +4575,18 @@ int print_coeff_intervals (const CoeffIntervals *cf,
 	    lo = b[i] - me[i];
 	    hi = b[i] + me[i];
 	}
-	for (j=0; j<3; j++) {
+	for (j=0; j<nfields; j++) {
 	    if (j == 0) {
 		/* coeff or odds ratio */
 		vals[i][j].x = odds ? exp(b[i]) : b[i];
-	    } else if (j == 1) {
+	    } else if (j == se_col) {
+		/* standard error */
+		se = me[i] / cf->t;
+		vals[i][j].x = odds ? exp(b[i]) * se : se;
+	    } else if (j == lo_col) {
 		/* lower limit */
 		vals[i][j].x = odds ? exp(lo) : lo;
-	    } else {
+	    } else if (j == hi_col) {
 		/* upper limit */
 		vals[i][j].x = odds ? exp(hi) : hi;
 	    }
@@ -4585,7 +4600,7 @@ int print_coeff_intervals (const CoeffIntervals *cf,
     }
 
     /* figure appropriate column separation */
-    for (j=0; j<3; j++) {
+    for (j=0; j<nfields; j++) {
 	w[j] = lmax[j] + rmax[j];
 	head = _(headings[j]);
 	hlen = char_len(head);
@@ -4598,24 +4613,24 @@ int print_coeff_intervals (const CoeffIntervals *cf,
 
     /* print headings */
     bufspace(namelen + 2 + colsep, prn);
-    for (j=0; j<3; j++) {
+    for (j=0; j<nfields; j++) {
 	print_padded_head(_(headings[j]), w[j], prn);
-	if (j < 3) {
+	if (j < nfields-1) {
 	    bufspace(colsep, prn);
 	}
     }
 
     /* separator row */
-    print_sep_row(namelen, 3, w, colsep, prn);
+    print_sep_row(namelen, nfields, w, colsep, prn);
 
     /* print row values */
-    for (i=0; i<nc; i++) {
+    for (i=0; i<cf->ncoeff; i++) {
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);
-	for (j=0; j<3; j++) {
+	for (j=0; j<nfields; j++) {
 	    vij = &vals[i][j];
 	    print_padded_value(vij, w[j], lmax[j], addoff[j], prn);
-	    if (j < 2) {
+	    if (j < nfields-1) {
 		bufspace(colsep, prn);
 	    }
 	}
@@ -4624,7 +4639,7 @@ int print_coeff_intervals (const CoeffIntervals *cf,
 
  bailout:
 
-    for (i=0; i<nc; i++) {
+    for (i=0; i<cf->ncoeff; i++) {
 	free(vals[i]);
     }
     free(vals);

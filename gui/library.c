@@ -6095,19 +6095,24 @@ void residual_qq_plot (GtkAction *action, gpointer p)
 
 void do_coeff_intervals (GtkAction *action, gpointer p)
 {
+    const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     CoeffIntervals *cf;
+    gretlopt opt;
     PRN *prn;
 
     if (bufopen(&prn)) return;
 
-    cf = gretl_model_get_coeff_intervals(pmod, dataset);
+    opt = !strcmp(s, "OddsRatios") ? (OPT_O | OPT_E) : OPT_NONE;
+    cf = gretl_model_get_coeff_intervals(pmod, dataset, opt);
 
     if (cf != NULL) {
-        print_coeff_intervals(cf, OPT_NONE, prn);
-        view_buffer_with_parent(vwin, prn, 78, 300,
-                                _("gretl: coefficient confidence intervals"),
+	const char *title = (opt & OPT_O) ?
+	    N_("gretl: logit odds ratios") :
+	    N_("gretl: coefficient confidence intervals");
+        print_coeff_intervals(cf, prn);
+        view_buffer_with_parent(vwin, prn, 78, 300, _(title),
                                 COEFFINT, cf);
     }
 }

@@ -40,7 +40,7 @@ struct CoeffIntervals_ {
     double *coeff;
     double *maxerr;
     int df;
-    int ifc;
+    gretlopt opt;
 };
 
 typedef enum {
@@ -329,10 +329,13 @@ int gretl_model_get_param_number (const MODEL *pmod,
 void free_coeff_intervals (CoeffIntervals *cf);
 
 CoeffIntervals *
-gretl_model_get_coeff_intervals (const MODEL *pmod, 
-				 const DATASET *dset);
+gretl_model_get_coeff_intervals (const MODEL *pmod,
+				 const DATASET *dset,
+				 gretlopt opt);
 
 int reset_coeff_intervals (CoeffIntervals *cf, double alpha);
+
+gretl_matrix *conf_intervals_matrix (CoeffIntervals *cf);
 
 int gretl_model_get_depvar (const MODEL *pmod);
 
