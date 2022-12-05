@@ -1544,28 +1544,43 @@ void special_print_forecast (const FITRESID *fr,
 static void
 texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
+    int odds = (cf->opt & OPT_O);
+    const double *b = cf->coeff;
+    const double *me = cf->maxerr;
     char vname[2*VNAMELEN];
+    char tmp[32];
 
     tex_escape(vname, cf->names[i]);
     pprintf(prn, " %s & ", vname);
 
-    if (isnan(cf->coeff[i])) {
+    if (isnan(b[i])) {
 	pprintf(prn, "\\multicolumn{2}{c}{%s} & ", _("undefined"));
     } else {
-	char coeff[32];
-
-	tex_rl_double(cf->coeff[i], coeff);
-	pprintf(prn, "%s & ", coeff);
+	tex_rl_double(odds ? exp(b[i]) : b[i], tmp);
+	pprintf(prn, "%s & ", tmp);
     }
 
-    if (isnan(cf->maxerr[i])) {
+    if (cf->opt & OPT_E) {
+	double se = me[i] / cf->t;
+
+	if (isnan(se)) {
+	    pprintf(prn, "\\multicolumn{2}{c}{%s} & ", _("undefined"));
+	} else {
+	    tex_rl_double(odds ? exp(b[i]) * se : se, tmp);
+	    pprintf(prn, "%s & ", tmp);
+	}
+    }
+
+    if (isnan(me[i])) {
 	pprintf(prn, "\\multicolumn{4}{c}{%s}", _("undefined"));
     } else {
-	char lo[32], hi[32];
+	char lo_str[32], hi_str[32];
+	double lo = b[i] - me[i];
+	double hi = b[i] + me[i];
 
-	tex_rl_double(cf->coeff[i] - cf->maxerr[i], lo);
-	tex_rl_double(cf->coeff[i] + cf->maxerr[i], hi);
-	pprintf(prn, "%s & %s", lo, hi);
+	tex_rl_double(odds ? exp(lo) : lo, lo_str);
+	tex_rl_double(odds ? exp(hi) : hi, hi_str);
+	pprintf(prn, "%s & %s", lo_str, hi_str);
     }
 
     pputs(prn, "\\\\\n");
@@ -1573,24 +1588,48 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 
 static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
+    const char *hds[] = {
+	N_("coefficient"),
+	N_("odds ratio")
+    };
+    const char *hd = hds[0];
     char pt = get_local_decpoint();
     double tail = cf->alpha / 2;
     gchar *cstr;
     int i;
 
-    pprintf(prn, "$t(%d, %g) = %.3f$\n\n", cf->df, tail, cf->t);
+    if (cf->asy) {
+	pprintf(prn, "$z(%g) = %.3f$\n\n", tail, cf->t);
+    } else {
+	pprintf(prn, "$t(%d, %g) = %.3f$\n\n", cf->df, tail, cf->t);
+    }
 
-    pprintf(prn, "\\begin{center}\n"
-	    "\\begin{tabular}{rr@{%c}lr@{%c}lr@{%c}l}\n",
-	    pt, pt, pt);
+    if (cf->opt & OPT_O) {
+	hd = hds[1];
+    }
+
+    if (cf->opt & OPT_E) {
+	pprintf(prn, "\\begin{center}\n"
+		"\\begin{tabular}{rr@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
+		pt, pt, pt, pt);
+    } else {
+	pprintf(prn, "\\begin{center}\n"
+		"\\begin{tabular}{rr@{%c}lr@{%c}lr@{%c}l}\n",
+		pt, pt, pt);
+    }
 
     cstr = g_strdup_printf(_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
-    pprintf(prn, " %s%%\n"
-	    " & \\multicolumn{2}{c}{%s}%%\n"
-	    "  & \\multicolumn{4}{c}{%s}\\\\[1ex]\n",
-	    _("Variable"), _("Coefficient"),
-	    cstr);
+    if (cf->opt & OPT_E) {
+	pprintf(prn, " & \\multicolumn{2}{c}{%s}%%\n"
+		" & \\multicolumn{2}{c}{%s}%%\n"
+		"  & \\multicolumn{4}{c}{%s}\\\\[1ex]\n",
+		_(hd), _("std. error"), cstr);
+    } else {
+	pprintf(prn, " & \\multicolumn{2}{c}{%s}%%\n"
+		"  & \\multicolumn{4}{c}{%s}\\\\[1ex]\n",
+		_(hd), cstr);
+    }
 
     g_free(cstr);
 
