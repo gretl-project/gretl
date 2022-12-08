@@ -1471,7 +1471,7 @@ void function_help_callback (int idx, int en)
 static int help_pos_from_string (const char *s, int *idx, int *role)
 {
     char word[16];
-    int pos;
+    int pos = 0;
 
     *word = '\0';
     strncat(word, s, 15);
@@ -1479,7 +1479,6 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     if (*role != FUNC_HELP) {
 	*idx = gretl_command_number(word);
 	pos = help_pos_from_index(*idx, *role);
-
 	if (pos <= 0 && translated_cmdref) {
 	    pos = help_pos_from_index(*idx, CMD_HELP_EN);
 	    if (pos > 0) {
@@ -1532,7 +1531,7 @@ static int is_dollar_word (GtkTextBuffer *buf,
 
 /* In case a given identifier has both a command and a function
    form, try to determine if we're looking at the function
-   form, using the heuristic that the identifer should be
+   form, using the heuristic that the identifier should be
    followed by left parenthesis.
 */
 
@@ -1576,6 +1575,8 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    GtkTextIter w_start = iter;
 	    GtkTextIter w_end = iter;
 
+	    fprintf(stderr, "HERE 1, inside word\n");
+
 	    if (!gtk_text_iter_starts_word(&iter)) {
 		gtk_text_iter_backward_word_start(&w_start);
 	    }
@@ -1584,10 +1585,14 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    }
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
 
+	    fprintf(stderr, "HERE 2, text = '%s'\n", text);
+
 	    if (text != NULL) {
 		/* handle dollar accessors, functions */
 		if (!is_dollar_word(buf, &w_start, &text)) {
+		    fprintf(stderr, "HERE 3, NOT is_dollar_word\n");
 		    if (probably_function(buf, &w_end)) {
+			fprintf(stderr, "HERE 4, probably function\n");
 			role = FUNC_HELP;
 		    }
 		}
@@ -1596,6 +1601,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	if (text != NULL && *text != '\0') {
 	    pos = help_pos_from_string(text, &idx, &role);
+	    fprintf(stderr, "HERE 5, pos = %d\n", pos);
 	}
 
 	unset_window_help_active(vwin);
