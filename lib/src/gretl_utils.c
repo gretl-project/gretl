@@ -83,12 +83,12 @@ double date_as_double (int t, int pd, double sd0)
     ysd = (int) sd0;
 
     if (pd == 1) {
-	return (double) (ysd + t);
+        return (double) (ysd + t);
     }
 
     pp = pd;
     while ((pp = pp / 10)) {
-	p10 *= 10;
+        p10 *= 10;
     }
 
     pp = t % pd + p10 * (sd0 - ysd) + .5;
@@ -125,10 +125,10 @@ double date_as_double (int t, int pd, double sd0)
 int ijton (int i, int j, int nrows)
 {
     if (i > j) {
-	int tmp = i;
+        int tmp = i;
 
-	i = j;
-	j = tmp;
+        i = j;
+        j = tmp;
     }
 
     return nrows * i + j - i - ((i - 1) * i / 2);
@@ -147,14 +147,14 @@ int ijton (int i, int j, int nrows)
  */
 
 int transcribe_array (double *targ, const double *src,
-		      const DATASET *dset)
+                      const DATASET *dset)
 {
     int t, n = 0;
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(src[t])) {
-	    targ[n++] = src[t];
-	}
+        if (!na(src[t])) {
+            targ[n++] = src[t];
+        }
     }
 
     return n;
@@ -178,20 +178,20 @@ int gretl_isdummy (int t1, int t2, const double *x)
     int t, m = 0, goodobs = 0;
 
     for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	if (x[t] != 0.0 && x[t] != 1.0) {
-	    return 0;
-	}
-	if (x[t] == 1.0) {
-	    m++;
-	}
-	goodobs++;
+        if (na(x[t])) {
+            continue;
+        }
+        if (x[t] != 0.0 && x[t] != 1.0) {
+            return 0;
+        }
+        if (x[t] == 1.0) {
+            m++;
+        }
+        goodobs++;
     }
 
     if (m < goodobs) {
-	return m;
+        return m;
     }
 
     return 0;
@@ -215,9 +215,9 @@ int gretl_iszero (int t1, int t2, const double *x)
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t]) && x[t] != 0) {
-	    return 0;
-	}
+        if (!na(x[t]) && x[t] != 0) {
+            return 0;
+        }
     }
 
     return 1;
@@ -240,7 +240,7 @@ int gretl_isconst (int t1, int t2, const double *x)
     int t, ret = 1;
 
     while (na(x[t1]) && t1 <= t2) {
-	t1++;
+        t1++;
     }
 
     if (t1 >= t2) {
@@ -248,13 +248,13 @@ int gretl_isconst (int t1, int t2, const double *x)
     }
 
     for (t=t1+1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	if (floatneq(x[t], x[t1])) {
-	    ret = 0;
-	    break;
-	}
+        if (na(x[t])) {
+            continue;
+        }
+        if (floatneq(x[t], x[t1])) {
+            ret = 0;
+            break;
+        }
     }
 
     return ret;
@@ -289,16 +289,16 @@ int gretl_isstoch (int t1, int t2, const double *x)
     }
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    s1 = t;
-	    break;
-	}
+        if (!na(x[t])) {
+            s1 = t;
+            break;
+        }
     }
     for (t=t2; t>=s1; t--) {
-	if (!na(x[t])) {
-	    s2 = t;
-	    break;
-	}
+        if (!na(x[t])) {
+            s2 = t;
+            break;
+        }
     }
     if (s1 < 0 || s2 < 0 || s1 >= s2) {
         return 0;
@@ -307,15 +307,15 @@ int gretl_isstoch (int t1, int t2, const double *x)
     dx0 = x[s1+1] - x[s1];
 
     for (t=s1; t<=s2; t++) {
-	if (na(x[t])) {
-	    na_count++;
-	    break;
-	}
-	if (t > s1 && !multidiff) {
-	    if (x[t] - x[t-1] != dx0) {
-		multidiff = 1;
-	    }
-	}
+        if (na(x[t])) {
+            na_count++;
+            break;
+        }
+        if (t > s1 && !multidiff) {
+            if (x[t] - x[t-1] != dx0) {
+                multidiff = 1;
+            }
+        }
     }
 
     return (na_count == 0 && multidiff);
@@ -338,10 +338,10 @@ int gretl_isunits (int t1, int t2, const double *x)
     int t, ret = 1;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t]) && x[t] != 1.0) {
-	    ret = 0;
-	    break;
-	}
+        if (!na(x[t]) && x[t] != 1.0) {
+            ret = 0;
+            break;
+        }
     }
 
     return ret;
@@ -367,25 +367,25 @@ int gretl_iscount (int t1, int t2, const double *x)
     int ret = 1;
 
     for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	if (x[t] < 0.0) {
-	    ret = 0;
-	    break;
-	}
-	xi = x[t];
-	if (x[t] != (double) xi) {
-	    ret = 0;
-	    break;
-	}
-	if (x[t] > 1.0) {
-	    g1 = 1;
-	}
+        if (na(x[t])) {
+            continue;
+        }
+        if (x[t] < 0.0) {
+            ret = 0;
+            break;
+        }
+        xi = x[t];
+        if (x[t] != (double) xi) {
+            ret = 0;
+            break;
+        }
+        if (x[t] > 1.0) {
+            g1 = 1;
+        }
     }
 
     if (g1 == 0) {
-	ret = 0;
+        ret = 0;
     }
 
     return ret;
@@ -401,26 +401,26 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
     int i, t, n = 0, nv = 0;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    match = 0;
-	    for (i=0; i<nv; i++) {
-		if (x[t] == test[i]) {
-		    /* we've already seen this value */
-		    match = 1;
-		    break;
-		}
-	    }
-	    if (!match) {
-		/* x[t] is a "new" value */
-		if (nv == FEW_VALS) {
-		    /* hit the limit */
-		    nv++;
-		    break;
-		}
-		test[nv++] = x[t];
-	    }
-	    n++;
-	}
+        if (!na(x[t])) {
+            match = 0;
+            for (i=0; i<nv; i++) {
+                if (x[t] == test[i]) {
+                    /* we've already seen this value */
+                    match = 1;
+                    break;
+                }
+            }
+            if (!match) {
+                /* x[t] is a "new" value */
+                if (nv == FEW_VALS) {
+                    /* hit the limit */
+                    nv++;
+                    break;
+                }
+                test[nv++] = x[t];
+            }
+            n++;
+        }
     }
 
     /* ratio of distinct values to observations */
@@ -457,48 +457,48 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     double r = 0;
 
     for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	n++;
-	if (!ok_int(x[t])) {
-	    allints = disc = 0;
-	    break;
-	}
-	r = x[t] - floor(x[t]);
-	if (allints && r != 0) {
-	    allints = 0;
-	}
-	if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
-	    disc = 0;
-	    break;
-	}
+        if (na(x[t])) {
+            continue;
+        }
+        n++;
+        if (!ok_int(x[t])) {
+            allints = disc = 0;
+            break;
+        }
+        r = x[t] - floor(x[t]);
+        if (allints && r != 0) {
+            allints = 0;
+        }
+        if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
+            disc = 0;
+            break;
+        }
     }
 
     if (n == 0) {
-	disc = 0;
+        disc = 0;
     }
 
     if (disc) {
-	n = few_vals(t1, t2, x, &r);
-	if (allints) {
-	    if (n <= FEW_VALS && r < 0.2) {
-		disc = 2;
-	    } else {
-		disc = (n <= FEWER_VALS)? 2 : 1;
-	    }
-	} else if (n > FEW_VALS) {
-	    disc = 0;
-	} else if (r > 0.9 && n > 30) {
-	    /* somewhat arbitrary: but if r (= ratio of distinct
-	       values to number of cases) is "too high", and the
-	       number of observations is not tiny, perhaps we should
-	       not automatically take the var as discrete
-	    */
-	    disc = 0;
-	} else if (n <= FEWER_VALS) {
-	    disc = 2;
-	}
+        n = few_vals(t1, t2, x, &r);
+        if (allints) {
+            if (n <= FEW_VALS && r < 0.2) {
+                disc = 2;
+            } else {
+                disc = (n <= FEWER_VALS)? 2 : 1;
+            }
+        } else if (n > FEW_VALS) {
+            disc = 0;
+        } else if (r > 0.9 && n > 30) {
+            /* somewhat arbitrary: but if r (= ratio of distinct
+               values to number of cases) is "too high", and the
+               number of observations is not tiny, perhaps we should
+               not automatically take the var as discrete
+            */
+            disc = 0;
+        } else if (n <= FEWER_VALS) {
+            disc = 2;
+        }
     }
 
     return disc;
@@ -507,13 +507,13 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 int accept_as_discrete (const DATASET *dset, int v, int strict)
 {
     if (series_is_discrete(dset, v)) {
-	/* the series has been explicitly marked as discrete */
-	return 1;
+        /* the series has been explicitly marked as discrete */
+        return 1;
     } else {
-	/* check for plausibility of discreteness */
-	int d = gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]);
+        /* check for plausibility of discreteness */
+        int d = gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]);
 
-	return strict ? d > 1 : d > 0;
+        return strict ? d > 1 : d > 0;
     }
 }
 
@@ -534,17 +534,17 @@ int gretl_ispositive (int t1, int t2, const double *x, int strict)
     int t;
 
     if (strict) {
-	for (t=t1; t<=t2; t++) {
-	    if (x[t] <= 0) {
-		return 0;
-	    }
-	}
+        for (t=t1; t<=t2; t++) {
+            if (x[t] <= 0) {
+                return 0;
+            }
+        }
     } else {
-	for (t=t1; t<=t2; t++) {
-	    if (x[t] < 0) {
-		return 0;
-	    }
-	}
+        for (t=t1; t<=t2; t++) {
+            if (x[t] < 0) {
+                return 0;
+            }
+        }
     }
 
     return 1;
@@ -569,14 +569,14 @@ int gretl_is_oprobit_ok (int t1, int t2, const double *x)
     int t, n = 0, d = 1;
 
     for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	n++;
-	if (x[t] != floor(x[t]) || x[t] < 0) {
-	    d = 0;
-	    break;
-	}
+        if (na(x[t])) {
+            continue;
+        }
+        n++;
+        if (x[t] != floor(x[t]) || x[t] < 0) {
+            d = 0;
+            break;
+        }
     }
 
     return (d > 0 && n > 0);
@@ -596,7 +596,7 @@ int gretl_is_oprobit_ok (int t1, int t2, const double *x)
 int true_const (int v, const DATASET *dset)
 {
     if (v < 0 || v >= dset->v) {
-	return 0;
+        return 0;
     }
 
     return gretl_isunits(dset->t1, dset->t2, dset->Z[v]);
@@ -619,15 +619,15 @@ int gretl_compare_doubles (const void *a, const void *b)
     const double *db = (const double *) b;
 
     if (isnan(*da) || isnan(*db)) {
-	if (!isnan(*da)) {
-	    return -1;
-	} else if (!isnan(*db)) {
-	    return 1;
-	} else {
-	    return 0;
-	}
+        if (!isnan(*da)) {
+            return -1;
+        } else if (!isnan(*db)) {
+            return 1;
+        } else {
+            return 0;
+        }
     } else {
-	return (*da > *db) - (*da < *db);
+        return (*da > *db) - (*da < *db);
     }
 }
 
@@ -648,15 +648,15 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
     const double *db = (const double *) b;
 
     if (isnan(*da) || isnan(*db)) {
-	if (!isnan(*da)) {
-	    return 1;
-	} else if (!isnan(*db)) {
-	    return -1;
-	} else {
-	    return 0;
-	}
+        if (!isnan(*da)) {
+            return 1;
+        } else if (!isnan(*db)) {
+            return -1;
+        } else {
+            return 0;
+        }
     } else {
-	return (*da < *db) - (*da > *db);
+        return (*da < *db) - (*da > *db);
     }
 }
 
@@ -693,9 +693,9 @@ int count_distinct_values (const double *x, int n)
     int i, c = 1;
 
     for (i=1; i<n; i++) {
-	if (x[i] != x[i-1]) {
-	    c++;
-	}
+        if (x[i] != x[i-1]) {
+            c++;
+        }
     }
 
     return c;
@@ -715,7 +715,7 @@ int count_distinct_int_values (const int *x, int n)
     int i, c = 1;
 
     for (i=1; i<n; i++) {
-	if (x[i] != x[i-1]) c++;
+        if (x[i] != x[i-1]) c++;
     }
 
     return c;
@@ -739,13 +739,13 @@ int rearrange_id_array (double *x, int m, int n)
     int i, k = 1;
 
     if (m >= n || m == 1) {
-	return 1;
+        return 1;
     }
 
     for (i=1; i<n && k<m; i++) {
-	if (x[i] != x[i-1]) {
-	    x[k++] = x[i];
-	}
+        if (x[i] != x[i-1]) {
+            x[k++] = x[i];
+        }
     }
 
     return 0;
@@ -764,22 +764,22 @@ void printlist (const int *list, const char *msg)
     int i;
 
     if (msg) {
-	fprintf(stderr, "%s:\n", msg);
+        fprintf(stderr, "%s:\n", msg);
     } else {
-	fprintf(stderr, "list: ");
+        fprintf(stderr, "list: ");
     }
 
     if (list == NULL) {
-	fputs("list is NULL", stderr);
+        fputs("list is NULL", stderr);
     } else {
-	fprintf(stderr, "%d : ", list[0]);
-	for (i=1; i<=list[0]; i++) {
-	    if (list[i] == LISTSEP) {
-		fputs("; ", stderr);
-	    } else {
-		fprintf(stderr, "%d ", list[i]);
-	    }
-	}
+        fprintf(stderr, "%d : ", list[0]);
+        for (i=1; i<=list[0]; i++) {
+            if (list[i] == LISTSEP) {
+                fputs("; ", stderr);
+            } else {
+                fprintf(stderr, "%d ", list[i]);
+            }
+        }
     }
 
     fputc('\n', stderr);
@@ -802,34 +802,34 @@ void printlist (const int *list, const char *msg)
  */
 
 int gretl_calculate_criteria (double ess, int n, int k,
-			      double *ll, double *aic, double *bic,
-			      double *hqc)
+                              double *ll, double *aic, double *bic,
+                              double *hqc)
 {
     double lnl, c[3];
     int err = 0;
 
     if (na(ess) || ess <= 0.0 || n <= k) {
-	err = 1;
+        err = 1;
     } else {
-	errno = 0;
-	lnl = -.5 * n * log(ess);
-	if (errno == EDOM || errno == ERANGE) {
-	    err = 1;
-	} else {
-	    lnl += -.5 * n * (1 + LN_2_PI - log(n));
-	    c[0] = -2.0 * lnl + 2 * k;
-	    c[1] = -2.0 * lnl + k * log(n);
-	    c[2] = -2.0 * lnl + 2 * k * log(log(n));
-	}
+        errno = 0;
+        lnl = -.5 * n * log(ess);
+        if (errno == EDOM || errno == ERANGE) {
+            err = 1;
+        } else {
+            lnl += -.5 * n * (1 + LN_2_PI - log(n));
+            c[0] = -2.0 * lnl + 2 * k;
+            c[1] = -2.0 * lnl + k * log(n);
+            c[2] = -2.0 * lnl + 2 * k * log(log(n));
+        }
     }
 
     if (err) {
-	*ll = *aic = *bic = *hqc = NADBL;
+        *ll = *aic = *bic = *hqc = NADBL;
     } else {
-	*ll = lnl;
-	*aic = c[0];
-	*bic = c[1];
-	*hqc = c[2];
+        *ll = lnl;
+        *aic = c[0];
+        *bic = c[1];
+        *hqc = c[2];
     }
 
     return err;
@@ -851,7 +851,7 @@ int ls_criteria (MODEL *pmod)
     int err;
 
     err = gretl_calculate_criteria(pmod->ess, pmod->nobs, pmod->ncoeff,
-				   &ll, &aic, &bic, &hqc);
+                                   &ll, &aic, &bic, &hqc);
 
     pmod->lnL = ll;
     pmod->criterion[C_AIC] = aic;
@@ -865,14 +865,14 @@ static char *
 real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {
     if (pd >= 10) {
-	int pdp = pd / 10, minlen = 2;
-	char fmt[18];
+        int pdp = pd / 10, minlen = 2;
+        char fmt[18];
 
-	while ((pdp = pdp / 10)) minlen++;
-	sprintf(fmt, "%%d%c%%0%dd", sep, minlen);
-	sprintf(obs, fmt, maj, min);
+        while ((pdp = pdp / 10)) minlen++;
+        sprintf(fmt, "%%d%c%%0%dd", sep, minlen);
+        sprintf(obs, fmt, maj, min);
     } else {
-	sprintf(obs, "%d%c%d", maj, sep, min);
+        sprintf(obs, "%d%c%d", maj, sep, min);
     }
 
     return obs;
@@ -897,44 +897,44 @@ char *format_obs (char *obs, int maj, int min, int pd)
 }
 
 static int get_stobs_maj_min (char *stobs, int structure,
-			      int *maj, int *min)
+                              int *maj, int *min)
 {
     int dotc = 0;
     char *p = stobs;
     int err = 0;
 
     while (*p) {
-	if (*p == ':') {
-	    *p = '.';
-	    dotc++;
-	} else if (*p == '.') {
-	    dotc++;
-	} else if (!isdigit((unsigned char) *p)) {
-	    err = 1;
-	    break;
-	}
-	p++;
+        if (*p == ':') {
+            *p = '.';
+            dotc++;
+        } else if (*p == '.') {
+            dotc++;
+        } else if (!isdigit((unsigned char) *p)) {
+            err = 1;
+            break;
+        }
+        p++;
     }
 
     if (!err) {
-	if (dotc > 1 || *stobs == '.' ||
-	    stobs[strlen(stobs) - 1] == '.') {
-	    err = 1;
-	}
+        if (dotc > 1 || *stobs == '.' ||
+            stobs[strlen(stobs) - 1] == '.') {
+            err = 1;
+        }
     }
 
     if (!err) {
-	if (dotc > 0) {
-	    sscanf(stobs, "%d.%d", maj, min);
-	    if (*maj <= 0 || *min <= 0) {
-		err = 1;
-	    }
-	} else {
-	    sscanf(stobs, "%d", maj);
-	    if (*maj <= 0 && structure != SPECIAL_TIME_SERIES) {
-		err = 1;
-	    }
-	}
+        if (dotc > 0) {
+            sscanf(stobs, "%d.%d", maj, min);
+            if (*maj <= 0 || *min <= 0) {
+                err = 1;
+            }
+        } else {
+            sscanf(stobs, "%d", maj);
+            if (*maj <= 0 && structure != SPECIAL_TIME_SERIES) {
+                err = 1;
+            }
+        }
     }
 
     return err;
@@ -944,31 +944,31 @@ static int
 catch_setobs_errors (const char *stobs, int pd, int min, int structure)
 {
     int panel = structure == STACKED_TIME_SERIES ||
-	structure == STACKED_CROSS_SECTION;
+        structure == STACKED_CROSS_SECTION;
     int err = 0;
 
     if (pd == 1) {
-	if (min > 0) {
-	    gretl_errmsg_set(_("no ':' allowed in starting obs with "
-			       "frequency 1"));
-	    err = 1;
-	} else if (panel) {
-	    gretl_errmsg_set(_("panel data must have frequency > 1"));
-	    err = 1;
-	}
+        if (min > 0) {
+            gretl_errmsg_set(_("no ':' allowed in starting obs with "
+                               "frequency 1"));
+            err = 1;
+        } else if (panel) {
+            gretl_errmsg_set(_("panel data must have frequency > 1"));
+            err = 1;
+        }
     } else {
-	if (min == 0) {
-	    gretl_errmsg_set(_("starting obs must contain a ':' with "
-			       "frequency > 1"));
-	    err = 1;
-	} else if (min > pd) {
-	    gretl_errmsg_sprintf(_("starting obs '%s' is incompatible with frequency"),
-				 stobs);
-	    err = 1;
-	} else if (structure == CROSS_SECTION) {
-	    gretl_errmsg_set(_("cross-sectional data: frequency must be 1"));
-	    err = 1;
-	}
+        if (min == 0) {
+            gretl_errmsg_set(_("starting obs must contain a ':' with "
+                               "frequency > 1"));
+            err = 1;
+        } else if (min > pd) {
+            gretl_errmsg_sprintf(_("starting obs '%s' is incompatible with frequency"),
+                                 stobs);
+            err = 1;
+        } else if (structure == CROSS_SECTION) {
+            gretl_errmsg_set(_("cross-sectional data: frequency must be 1"));
+            err = 1;
+        }
     }
 
     return err;
@@ -986,23 +986,23 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
     int fix = 0;
 
     if (wday == 0) {
-	/* 5- or 6-day data: sunday not valid */
-	fix = 1;
+        /* 5- or 6-day data: sunday not valid */
+        fix = 1;
     } else if (wday == 6 && pd == 5) {
-	/* 5-day data: saturday not valid */
-	fix = 2;
+        /* 5-day data: saturday not valid */
+        fix = 2;
     }
 
     if (fix) {
-	char *fixed, *msg;
+        char *fixed, *msg;
 
-	*ed += fix;
-	fixed = ymd_extended_from_epoch_day(*ed, 0, NULL);
-	msg = gretl_strdup_printf("the starting date was corrected to Monday %s",
-				  fixed);
-	gretl_warnmsg_set(msg);
-	free(msg);
-	free(fixed);
+        *ed += fix;
+        fixed = ymd_extended_from_epoch_day(*ed, 0, NULL);
+        msg = gretl_strdup_printf("the starting date was corrected to Monday %s",
+                                  fixed);
+        gretl_warnmsg_set(msg);
+        free(msg);
+        free(fixed);
     }
 }
 
@@ -1011,8 +1011,8 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
 static int process_starting_obs (const char *stobs_in, int pd,
-				 int *pstructure, double *psd0,
-				 guint32 *ped0, gretlopt opt)
+                                 int *pstructure, double *psd0,
+                                 guint32 *ped0, gretlopt opt)
 {
     char stobs[OBSLEN];
     int structure = *pstructure;
@@ -1022,9 +1022,9 @@ static int process_starting_obs (const char *stobs_in, int pd,
     int err = 0;
 
     if (structure == CROSS_SECTION ||
-	structure == STACKED_TIME_SERIES ||
-	structure == STACKED_CROSS_SECTION) {
-	maybe_tseries = 0;
+        structure == STACKED_TIME_SERIES ||
+        structure == STACKED_CROSS_SECTION) {
+        maybe_tseries = 0;
     }
 
     *stobs = '\0';
@@ -1033,83 +1033,83 @@ static int process_starting_obs (const char *stobs_in, int pd,
     /* truncate stobs if not a calendar date */
 
     if (likely_calendar_obs_string(stobs)) {
-	if (maybe_tseries) {
-	    dated = 1;
-	} else {
-	    return invalid_stobs(stobs);
-	}
+        if (maybe_tseries) {
+            dated = 1;
+        } else {
+            return invalid_stobs(stobs);
+        }
     } else {
-	stobs[8] = '\0';
+        stobs[8] = '\0';
     }
 
     if (dated) {
-	if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
-	    /* calendar-dated data, daily or weekly */
-	    guint32 ed0 = get_epoch_day(stobs);
+        if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
+            /* calendar-dated data, daily or weekly */
+            guint32 ed0 = get_epoch_day(stobs);
 
-	    if (ed0 <= 0) {
-		return invalid_stobs(stobs);
-	    } else {
-		if (pd < 7) {
-		    maybe_fix_daily_start(&ed0, pd);
-		}
-		sd0 = ed0;
-		*ped0 = ed0;
-		structure = TIME_SERIES;
-	    }
-	} else {
-	    return invalid_stobs(stobs);
-	}
+            if (ed0 <= 0) {
+                return invalid_stobs(stobs);
+            } else {
+                if (pd < 7) {
+                    maybe_fix_daily_start(&ed0, pd);
+                }
+                sd0 = ed0;
+                *ped0 = ed0;
+                structure = TIME_SERIES;
+            }
+        } else {
+            return invalid_stobs(stobs);
+        }
     } else if (structure == TIME_SERIES && pd == 10) {
-	/* decennial data */
-	sd0 = (double) atoi(stobs);
+        /* decennial data */
+        sd0 = (double) atoi(stobs);
     } else {
-	int maj = 0, min = 0;
+        int maj = 0, min = 0;
 
-	if (get_stobs_maj_min(stobs, structure, &maj, &min)) {
-	    return invalid_stobs(stobs);
-	}
+        if (get_stobs_maj_min(stobs, structure, &maj, &min)) {
+            return invalid_stobs(stobs);
+        }
 
-	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) &&
-	    min == 0 && maybe_tseries) {
-	    /* catch undated daily or weekly data */
-	    structure = TIME_SERIES;
-	} else {
-	    if (catch_setobs_errors(stobs, pd, min, structure)) {
-		return E_DATA;
-	    } else if (pd == 1) {
-		sprintf(stobs, "%d", maj);
-		if (structure == STRUCTURE_UNKNOWN) {
-		    if (maj > 1) {
-			structure = TIME_SERIES; /* annual? */
-		    } else {
-			structure = CROSS_SECTION;
-		    }
-		}
-	    } else {
-		if (structure == TIME_SERIES && min > 0 &&
-		    !recognized_ts_frequency(pd)) {
-		    if (opt & OPT_I) {
-			return invalid_stobs(stobs);
-		    } else {
-			structure = SPECIAL_TIME_SERIES;
-		    }
-		}
-		real_format_obs(stobs, maj, min, pd, '.');
-		if (structure == STRUCTURE_UNKNOWN &&
-		    recognized_ts_frequency(pd)) {
-		    structure = TIME_SERIES;
-		}
-	    }
-	}
+        if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) &&
+            min == 0 && maybe_tseries) {
+            /* catch undated daily or weekly data */
+            structure = TIME_SERIES;
+        } else {
+            if (catch_setobs_errors(stobs, pd, min, structure)) {
+                return E_DATA;
+            } else if (pd == 1) {
+                sprintf(stobs, "%d", maj);
+                if (structure == STRUCTURE_UNKNOWN) {
+                    if (maj > 1) {
+                        structure = TIME_SERIES; /* annual? */
+                    } else {
+                        structure = CROSS_SECTION;
+                    }
+                }
+            } else {
+                if (structure == TIME_SERIES && min > 0 &&
+                    !recognized_ts_frequency(pd)) {
+                    if (opt & OPT_I) {
+                        return invalid_stobs(stobs);
+                    } else {
+                        structure = SPECIAL_TIME_SERIES;
+                    }
+                }
+                real_format_obs(stobs, maj, min, pd, '.');
+                if (structure == STRUCTURE_UNKNOWN &&
+                    recognized_ts_frequency(pd)) {
+                    structure = TIME_SERIES;
+                }
+            }
+        }
 
-	/* for non-calendar data */
-	sd0 = dot_atof(stobs);
+        /* for non-calendar data */
+        sd0 = dot_atof(stobs);
     }
 
     if (!err) {
-	*pstructure = structure;
-	*psd0 = sd0;
+        *pstructure = structure;
+        *psd0 = sd0;
     }
 
     return err;
@@ -1133,7 +1133,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
  */
 
 int set_obs (const char *parm1, const char *parm2,
-	     DATASET *dset, gretlopt opt)
+             DATASET *dset, gretlopt opt)
 {
     const char *stobs = NULL;
     int structure = STRUCTURE_UNKNOWN;
@@ -1143,110 +1143,110 @@ int set_obs (const char *parm1, const char *parm2,
     int err = 0;
 
     if (dset == NULL) {
-	return E_NODATA;
+        return E_NODATA;
     }
 
     if ((opt & (OPT_R | OPT_P)) && dset->Z == NULL) {
-	return E_NODATA;
+        return E_NODATA;
     }
 
     if ((opt & (OPT_G | OPT_I)) && !dataset_is_panel(dset)) {
-	return E_DATA;
+        return E_DATA;
     }
 
     /* prevent substantive reorganization of the dataset
        within a function */
     if ((opt & (OPT_P | OPT_C)) && gretl_function_depth() > 0) {
-	gretl_errmsg_set("You cannot do this within a function");
-	return E_DATA;
+        gretl_errmsg_set("You cannot do this within a function");
+        return E_DATA;
     }
 
     gretl_error_clear();
 
     if (opt & OPT_R) {
-	/* restructure panel: "hidden" option */
-	return switch_panel_orientation(dset);
+        /* restructure panel: "hidden" option */
+        return switch_panel_orientation(dset);
     }
 
     if (opt == OPT_NONE && parm1 == NULL && parm2 == NULL) {
-	/* we'll just print current obs info */
-	return 0;
+        /* we'll just print current obs info */
+        return 0;
     }
 
     if (parm1 == NULL || (!(opt & OPT_G) && parm2 == NULL)) {
-	/* all cases need at least one param, most need two */
-	return E_ARGS;
+        /* all cases need at least one param, most need two */
+        return E_ARGS;
     }
 
     if (opt & OPT_P) {
-	return set_panel_structure_from_varnames(parm1, parm2, dset);
+        return set_panel_structure_from_varnames(parm1, parm2, dset);
     } else if (opt & OPT_G) {
-	/* --panel-groups */
-	return set_panel_group_strings(parm1, parm2, dset);
+        /* --panel-groups */
+        return set_panel_group_strings(parm1, parm2, dset);
     }
 
     /* now we get down to business */
 
     pd = gretl_int_from_string(parm1, &err);
     if (!err && pd < 1) {
-	gretl_errmsg_sprintf(_("frequency (%d) does not seem to make sense"), pd);
-	return E_DATA;
+        gretl_errmsg_sprintf(_("frequency (%d) does not seem to make sense"), pd);
+        return E_DATA;
     }
 
     stobs = parm2;
 
     /* if an explicit structure option was passed in, respect it */
     if (opt == OPT_X) {
-	structure = CROSS_SECTION;
+        structure = CROSS_SECTION;
     } else if (opt == OPT_T) {
-	structure = TIME_SERIES;
+        structure = TIME_SERIES;
     } else if (opt == OPT_S) {
-	structure = STACKED_TIME_SERIES;
-	panel = 1;
+        structure = STACKED_TIME_SERIES;
+        panel = 1;
     } else if (opt == OPT_C) {
-	structure = STACKED_CROSS_SECTION;
-	panel = 1;
+        structure = STACKED_CROSS_SECTION;
+        panel = 1;
     } else if (opt == OPT_N) {
-	structure = SPECIAL_TIME_SERIES;
+        structure = SPECIAL_TIME_SERIES;
     } else if (opt == OPT_I) {
-	/* --panel-time */
-	structure = TIME_SERIES;
+        /* --panel-time */
+        structure = TIME_SERIES;
     }
 
     if (panel && dset->n > 0 && pd > dset->n) {
-	gretl_errmsg_sprintf(_("frequency (%d) does not seem to make sense"), pd);
-	return 1;
+        gretl_errmsg_sprintf(_("frequency (%d) does not seem to make sense"), pd);
+        return 1;
     }
 
     err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0, opt);
 
     if (err) {
-	return err;
+        return err;
     }
 
     if (opt == OPT_I) {
-	/* --panel-time */
-	dset->panel_pd = pd;
-	dset->panel_sd0 = sd0;
-	return 0;
+        /* --panel-time */
+        dset->panel_pd = pd;
+        dset->panel_sd0 = sd0;
+        return 0;
     }
 
     if (panel && dset->n % pd != 0) {
-	int sts = structure == STACKED_TIME_SERIES;
+        int sts = structure == STACKED_TIME_SERIES;
 
-	gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
-			       "The number of observations (%d) is not a multiple\n"
-			       "of the number of %s (%d)."),
-			     dset->n, sts ? _("periods") : _("units"), pd);
-	return E_DATA;
+        gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
+                               "The number of observations (%d) is not a multiple\n"
+                               "of the number of %s (%d)."),
+                             dset->n, sts ? _("periods") : _("units"), pd);
+        return E_DATA;
     }
 
     if (ed0 > 0) {
-	/* replace any existing markers with date strings */
-	dataset_destroy_obs_markers(dset);
+        /* replace any existing markers with date strings */
+        dataset_destroy_obs_markers(dset);
     } else if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
-	/* force use of regular time-series obs labels */
-	dataset_destroy_obs_markers(dset);
+        /* force use of regular time-series obs labels */
+        dataset_destroy_obs_markers(dset);
     }
 
     dset->pd = pd;
@@ -1254,23 +1254,23 @@ int set_obs (const char *parm1, const char *parm2,
     dset->sd0 = sd0;
 
     if (ed0 > 0) {
-	calendar_date_string(dset->stobs, 0, dset);
-	calendar_date_string(dset->endobs, dset->n - 1, dset);
+        calendar_date_string(dset->stobs, 0, dset);
+        calendar_date_string(dset->endobs, dset->n - 1, dset);
     } else {
-	ntolabel(dset->stobs, 0, dset);
-	ntolabel(dset->endobs, dset->n - 1, dset);
+        ntolabel(dset->stobs, 0, dset);
+        ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form
     */
     if (dset->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(dset);
+        err = switch_panel_orientation(dset);
     }
 
 #if 0
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
-	    dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
+            dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
 #endif
 
     return err;
@@ -1289,7 +1289,7 @@ int set_obs (const char *parm1, const char *parm2,
  */
 
 int simple_set_obs (DATASET *dset, int pd, const char *stobs,
-		    gretlopt opt)
+                    gretlopt opt)
 {
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = dset->sd0;
@@ -1298,44 +1298,44 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
     int err = 0;
 
     if (opt == OPT_X) {
-	structure = CROSS_SECTION;
+        structure = CROSS_SECTION;
     } else if (opt == OPT_T) {
-	structure = TIME_SERIES;
+        structure = TIME_SERIES;
     } else if (opt == OPT_S) {
-	structure = STACKED_TIME_SERIES;
-	panel = 1;
+        structure = STACKED_TIME_SERIES;
+        panel = 1;
     } else if (opt == OPT_C) {
-	structure = STACKED_CROSS_SECTION;
-	panel = 1;
+        structure = STACKED_CROSS_SECTION;
+        panel = 1;
     } else if (opt == OPT_N) {
-	structure = SPECIAL_TIME_SERIES;
+        structure = SPECIAL_TIME_SERIES;
     } else if (opt == OPT_I) {
-	/* --panel-time */
-	structure = TIME_SERIES;
+        /* --panel-time */
+        structure = TIME_SERIES;
     }
 
     err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0, OPT_NONE);
 
     if (err) {
-	return err;
+        return err;
     }
 
     if (panel && dset->n % pd != 0) {
-	int sts = structure == STACKED_TIME_SERIES;
+        int sts = structure == STACKED_TIME_SERIES;
 
-	gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
-			       "The number of observations (%d) is not a multiple\n"
-			       "of the number of %s (%d)."),
-			     dset->n, sts ? _("periods") : _("units"), pd);
-	return E_DATA;
+        gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
+                               "The number of observations (%d) is not a multiple\n"
+                               "of the number of %s (%d)."),
+                             dset->n, sts ? _("periods") : _("units"), pd);
+        return E_DATA;
     }
 
     if (ed0 > 0) {
-	/* replace any existing markers with date strings */
-	dataset_destroy_obs_markers(dset);
+        /* replace any existing markers with date strings */
+        dataset_destroy_obs_markers(dset);
     } else if (structure == TIME_SERIES && (pd == 1 || pd == 4 || pd == 12)) {
-	/* force use of regular time-series obs labels */
-	dataset_destroy_obs_markers(dset);
+        /* force use of regular time-series obs labels */
+        dataset_destroy_obs_markers(dset);
     }
 
     dset->pd = pd;
@@ -1343,15 +1343,15 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
     dset->sd0 = sd0;
 
     if (ed0 > 0) {
-	calendar_date_string(dset->stobs, 0, dset);
-	calendar_date_string(dset->endobs, dset->n - 1, dset);
+        calendar_date_string(dset->stobs, 0, dset);
+        calendar_date_string(dset->endobs, dset->n - 1, dset);
     } else {
-	ntolabel(dset->stobs, 0, dset);
-	ntolabel(dset->endobs, dset->n - 1, dset);
+        ntolabel(dset->stobs, 0, dset);
+        ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
     if (dset->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(dset);
+        err = switch_panel_orientation(dset);
     }
 
     return err;
@@ -1376,12 +1376,12 @@ double gretl_double_from_string (const char *s, int *err)
     double x;
 
     if (s == NULL || *s == '\0') {
-	*err = E_DATA;
-	return NADBL;
+        *err = E_DATA;
+        return NADBL;
     }
 
     if (isalpha(*s)) {
-	return get_scalar_value_by_name(s, err);
+        return get_scalar_value_by_name(s, err);
     }
 
     gretl_push_c_numeric_locale();
@@ -1390,9 +1390,9 @@ double gretl_double_from_string (const char *s, int *err)
     gretl_pop_c_numeric_locale();
 
     if (*test != '\0' || errno == ERANGE) {
-	*err = E_DATA;
-	errno = 0;
-	return NADBL;
+        *err = E_DATA;
+        errno = 0;
+        return NADBL;
     }
 
     return x;
@@ -1418,26 +1418,26 @@ int gretl_int_from_string (const char *s, int *err)
     int n = 0;
 
     if (s == NULL || *s == '\0') {
-	*err = E_DATA;
-	return 0;
+        *err = E_DATA;
+        return 0;
     }
 
     if (isalpha(*s)) {
-	double x = get_scalar_value_by_name(s, err);
+        double x = get_scalar_value_by_name(s, err);
 
-	if (!*err) {
-	    n = gretl_int_from_double(x, err);
-	}
-	return n;
+        if (!*err) {
+            n = gretl_int_from_double(x, err);
+        }
+        return n;
     }
 
     errno = 0;
     n = strtol(s, &test, 10);
 
     if (*test != '\0' || errno == ERANGE) {
-	*err = E_DATA;
-	errno = 0;
-	return 0;
+        *err = E_DATA;
+        errno = 0;
+        return 0;
     }
 
     return n;
@@ -1458,14 +1458,14 @@ int positive_int_from_string (const char *s)
     int ret = -1;
 
     if (s != NULL && *s != '\0') {
-	char *test;
+        char *test;
 
-	errno = 0;
+        errno = 0;
 
-	ret = strtol(s, &test, 10);
-	if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
-	    ret = -1;
-	}
+        ret = strtol(s, &test, 10);
+        if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
+            ret = -1;
+        }
     }
 
     return ret;
@@ -1477,11 +1477,11 @@ static int letter_to_int (char c)
     int i = 0;
 
     while (*s) {
-	if (c == *s) {
-	    return i;
-	}
-	s++;
-	i++;
+        if (c == *s) {
+            return i;
+        }
+        s++;
+        i++;
     }
 
     return 0;
@@ -1499,18 +1499,18 @@ int gretl_version_number (const char *version)
     int vnum = 0;
 
     if (atoi(version) >= 2015) {
-	/* as in "2015d" and subsequent releases */
-	int Y;
-	char c;
+        /* as in "2015d" and subsequent releases */
+        int Y;
+        char c;
 
-	sscanf(version, "%d%c", &Y, &c);
-	vnum = 10 * Y + letter_to_int(c);
+        sscanf(version, "%d%c", &Y, &c);
+        vnum = 10 * Y + letter_to_int(c);
     } else {
-	/* old style: "1.9.14" or whatever */
-	int x, y, z;
+        /* old style: "1.9.14" or whatever */
+        int x, y, z;
 
-	sscanf(version, "%d.%d.%d", &x, &y, &z);
-	vnum = 10000 * x + 100 * y + z;
+        sscanf(version, "%d.%d.%d", &x, &y, &z);
+        vnum = 10000 * x + 100 * y + z;
     }
 
     return vnum;
@@ -1524,31 +1524,31 @@ int gretl_version_number (const char *version)
 static int old_style_gretl_version_number (int v)
 {
     const int vtrans[18][2] = {
-	{10904, 20110},
-	{10905, 20111},
-	{10906, 20112},
-	{10907, 20113},
-	{10908, 20120},
-	{10909, 20121},
-	{10910, 20122},
-	{10911, 20123},
-	{10912, 20130},
-	{10913, 20131},
-	{10914, 20132},
-	{10990, 20140},
-	{10991, 20141},
-	{10992, 20142},
-	{11000, 20150},
-	{11001, 20151},
-	{11002, 20152},
-	{11003, 20153}
+        {10904, 20110},
+        {10905, 20111},
+        {10906, 20112},
+        {10907, 20113},
+        {10908, 20120},
+        {10909, 20121},
+        {10910, 20122},
+        {10911, 20123},
+        {10912, 20130},
+        {10913, 20131},
+        {10914, 20132},
+        {10990, 20140},
+        {10991, 20141},
+        {10992, 20142},
+        {11000, 20150},
+        {11001, 20151},
+        {11002, 20152},
+        {11003, 20153}
     };
     int i;
 
     for (i=0; i<17; i++) {
-	if (v == vtrans[i][1] || v < vtrans[i+1][1]) {
-	    return vtrans[i][0];
-	}
+        if (v == vtrans[i][1] || v < vtrans[i+1][1]) {
+            return vtrans[i][0];
+        }
     }
 
     /* default to 1.9.4 */
@@ -1567,34 +1567,34 @@ static int old_style_gretl_version_number (int v)
 char *gretl_version_string (char *targ, int vnum)
 {
     if (vnum >= 20153) {
-	/* "2105d" or higher */
-	const char *s = "abcdefghij";
-	int y, idx;
-	char c;
+        /* "2105d" or higher */
+        const char *s = "abcdefghij";
+        int y, idx;
+        char c;
 
-	y = vnum / 10;
-	idx = vnum - 10 * y;
+        y = vnum / 10;
+        idx = vnum - 10 * y;
 
-	if (idx >= 0 && idx < 10) {
-	    c = s[idx];
-	} else {
-	    c = 'a';
-	}
+        if (idx >= 0 && idx < 10) {
+            c = s[idx];
+        } else {
+            c = 'a';
+        }
 
-	sprintf(targ, "%d%c", y, c);
+        sprintf(targ, "%d%c", y, c);
     } else {
-	int x, y, z;
+        int x, y, z;
 
-	if (vnum > 20000) {
-	    /* translate back to old-style */
-	    vnum = old_style_gretl_version_number(vnum);
-	}
+        if (vnum > 20000) {
+            /* translate back to old-style */
+            vnum = old_style_gretl_version_number(vnum);
+        }
 
-	x = vnum / 10000;
-	y = (vnum - x * 10000) / 100;
-	z = vnum % 100;
+        x = vnum / 10000;
+        y = (vnum - x * 10000) / 100;
+        z = vnum % 100;
 
-	sprintf(targ, "%d.%d.%d", x, y, z);
+        sprintf(targ, "%d.%d.%d", x, y, z);
     }
 
     return targ;
@@ -1613,7 +1613,7 @@ int varnum_from_string (const char *str, DATASET *dset)
     int v = positive_int_from_string(str);
 
     if (v <= 0 || v >= dset->v) {
-	v = -1;
+        v = -1;
     }
 
     return v;
@@ -1636,9 +1636,9 @@ int gretl_int_from_double (double x, int *err)
     int k = -1;
 
     if (na(x) || fabs(x) > INT_MAX || fabs(x - nearbyint(x)) > 0.001) {
-	*err = E_INVARG;
+        *err = E_INVARG;
     } else {
-	k = (int) lrint(x);
+        k = (int) lrint(x);
     }
 
     return k;
@@ -1662,18 +1662,18 @@ guint32 gretl_unsigned_from_double (double x, int *err)
     guint32 u = 0;
 
     if (na(x) || x < 0 || fabs(x) > UINT_MAX) {
-	*err = E_INVARG;
+        *err = E_INVARG;
     } else {
-	double f = floor(x);
-	double c = ceil(x);
+        double f = floor(x);
+        double c = ceil(x);
 
-	if (x - f < 1e-6) {
-	    u = f;
-	} else if (c - x < 1e-6) {
-	    u = c;
-	} else {
-	    *err = E_INVARG;
-	}
+        if (x - f < 1e-6) {
+            u = f;
+        } else if (c - x < 1e-6) {
+            u = c;
+        } else {
+            *err = E_INVARG;
+        }
     }
 
     return u;
@@ -1695,18 +1695,18 @@ guint64 gretl_uint53_from_double (double x, int *err)
     guint64 k = 0;
 
     if (na(x) || x > 9007199254740992 /* 2^53 */) {
-	*err = E_INVARG;
+        *err = E_INVARG;
     } else {
-	double f = floor(x);
-	double c = ceil(x);
+        double f = floor(x);
+        double c = ceil(x);
 
-	if (x - f < 1e-6) {
-	    k = f;
-	} else if (c - x < 1e-6) {
-	    k = c;
-	} else {
-	    *err = E_INVARG;
-	}
+        if (x - f < 1e-6) {
+            k = f;
+        } else if (c - x < 1e-6) {
+            k = c;
+        } else {
+            *err = E_INVARG;
+        }
     }
 
     return k;
@@ -1725,9 +1725,9 @@ guint64 gretl_uint53_from_double (double x, int *err)
 GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 {
     if (dset != NULL && gretl_is_series(s, dset)) {
-	return GRETL_TYPE_SERIES;
+        return GRETL_TYPE_SERIES;
     } else {
-	return user_var_get_type_by_name(s);
+        return user_var_get_type_by_name(s);
     }
 }
 
@@ -1746,11 +1746,11 @@ double *copyvec (const double *src, int n)
     size_t sz = n * sizeof *targ;
 
     if (n > 0 && src != NULL) {
-	targ = malloc(sz);
+        targ = malloc(sz);
     }
 
     if (targ != NULL) {
-	memcpy(targ, src, sz);
+        memcpy(targ, src, sz);
     }
 
     return targ;
@@ -1768,12 +1768,12 @@ double *copyvec (const double *src, int n)
 void doubles_array_free (double **X, int m)
 {
     if (X != NULL) {
-	int i;
+        int i;
 
-	for (i=0; i<m; i++) {
-	    free(X[i]);
-	}
-	free(X);
+        for (i=0; i<m; i++) {
+            free(X[i]);
+        }
+        free(X);
     }
 }
 
@@ -1795,27 +1795,27 @@ double **doubles_array_new (int m, int n)
     int i;
 
     if (m == 0) {
-	return NULL;
+        return NULL;
     }
 
     X = malloc(m * sizeof *X);
     if (X == NULL) {
-	return X;
+        return X;
     }
 
     for (i=0; i<m; i++) {
-	X[i] = NULL;
+        X[i] = NULL;
     }
 
     if (n > 0) {
-	for (i=0; i<m; i++) {
-	    X[i] = malloc(n * sizeof **X);
-	    if (X[i] == NULL) {
-		doubles_array_free(X, m);
-		X = NULL;
-		break;
-	    }
-	}
+        for (i=0; i<m; i++) {
+            X[i] = malloc(n * sizeof **X);
+            if (X[i] == NULL) {
+                doubles_array_free(X, m);
+                X = NULL;
+                break;
+            }
+        }
     }
 
     return X;
@@ -1838,13 +1838,13 @@ double **doubles_array_new0 (int m, int n)
     double **X = doubles_array_new(m, n);
 
     if (X != NULL && n > 0) {
-	int i, j;
+        int i, j;
 
-	for (i=0; i<m; i++) {
-	    for (j=0; j<n; j++) {
-		X[i][j] = 0.0;
-	    }
-	}
+        for (i=0; i<m; i++) {
+            for (j=0; j<n; j++) {
+                X[i][j] = 0.0;
+            }
+        }
     }
 
     return X;
@@ -1867,24 +1867,24 @@ int doubles_array_adjust_length (double **X, int m, int new_n)
     int err = 0;
 
     if (X == NULL || m == 0) {
-	; /* no-op */
+        ; /* no-op */
     } else {
-	double *xi;
-	int i;
+        double *xi;
+        int i;
 
-	for (i=0; i<m && !err; i++) {
-	    if (new_n == 0) {
-		free(X[i]);
-		X[i] = NULL;
-	    } else {
-		xi = realloc(X[i], new_n * sizeof *xi);
-		if (xi == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    X[i] = xi;
-		}
-	    }
-	}
+        for (i=0; i<m && !err; i++) {
+            if (new_n == 0) {
+                free(X[i]);
+                X[i] = NULL;
+            } else {
+                xi = realloc(X[i], new_n * sizeof *xi);
+                if (xi == NULL) {
+                    err = E_ALLOC;
+                } else {
+                    X[i] = xi;
+                }
+            }
+        }
     }
 
     return err;
@@ -1915,41 +1915,41 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
     int v, i;
 
     if (missv) {
-	X = doubles_array_new(nv, pmod->nobs);
+        X = doubles_array_new(nv, pmod->nobs);
     } else {
-	X = malloc(nv * sizeof *X);
+        X = malloc(nv * sizeof *X);
     }
 
     if (X == NULL) return NULL;
 
     if (missv) {
-	int t, s;
+        int t, s;
 
-	for (t=0; t<pmod->nobs; t++) {
-	    X[0][t] = 1.0;
-	}
+        for (t=0; t<pmod->nobs; t++) {
+            X[0][t] = 1.0;
+        }
 
-	for (i=1; i<nv; i++) {
-	    v = (i == 1)? pmod->list[1] : pmod->list[i + 1];
-	    s = 0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		if (!na(pmod->uhat[t])) {
-		    X[i][s++] = Z[v][t];
-		}
-	    }
-	}
+        for (i=1; i<nv; i++) {
+            v = (i == 1)? pmod->list[1] : pmod->list[i + 1];
+            s = 0;
+            for (t=pmod->t1; t<=pmod->t2; t++) {
+                if (!na(pmod->uhat[t])) {
+                    X[i][s++] = Z[v][t];
+                }
+            }
+        }
     } else {
-	/* constant in slot 0 */
-	X[0] = Z[0] + offset;
+        /* constant in slot 0 */
+        X[0] = Z[0] + offset;
 
-	/* dependent var in slot 1 */
-	X[1] = Z[pmod->list[1]] + offset;
+        /* dependent var in slot 1 */
+        X[1] = Z[pmod->list[1]] + offset;
 
-	/* independent vars in slots 2, 3, ... */
-	for (i=2; i<nv; i++) {
-	    v = pmod->list[i + 1];
-	    X[i] = Z[v] + offset;
-	}
+        /* independent vars in slots 2, 3, ... */
+        for (i=2; i<nv; i++) {
+            v = pmod->list[i + 1];
+            X[i] = Z[v] + offset;
+        }
     }
 
     return X;
@@ -1968,46 +1968,46 @@ int gretl_spawn (char *cmdline)
     gretl_error_clear();
 
     ok = g_spawn_command_line_sync(cmdline,
-				   &sout,   /* standard output */
-				   &errout, /* standard error */
-				   &status, /* exit status */
-				   &error);
+                                   &sout,   /* standard output */
+                                   &errout, /* standard error */
+                                   &status, /* exit status */
+                                   &error);
 
     if (!ok) {
-	gretl_errmsg_set(error->message);
-	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
-	g_error_free(error);
-	if (errout != NULL) {
-	    fprintf(stderr, " stderr = '%s'\n", errout);
-	}
-	ret = 1;
+        gretl_errmsg_set(error->message);
+        fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
+        g_error_free(error);
+        if (errout != NULL) {
+            fprintf(stderr, " stderr = '%s'\n", errout);
+        }
+        ret = 1;
     } else if (status != 0) {
-	if (errout != NULL && *errout) {
-	    gretl_errmsg_set(errout);
-	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, errout);
-	} else if (sout != NULL && *sout) {
-	    gretl_errmsg_set(sout);
-	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, sout);
-	} else {
-	    gretl_errmsg_set(_("Command failed"));
-	    fprintf(stderr, "gretl_spawn: status = %d\n", status);
-	}
-	ret = 1;
+        if (errout != NULL && *errout) {
+            gretl_errmsg_set(errout);
+            fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, errout);
+        } else if (sout != NULL && *sout) {
+            gretl_errmsg_set(sout);
+            fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, sout);
+        } else {
+            gretl_errmsg_set(_("Command failed"));
+            fprintf(stderr, "gretl_spawn: status = %d\n", status);
+        }
+        ret = 1;
     }
 
     if (errout != NULL) g_free(errout);
     if (sout != NULL) g_free(sout);
 
     if (ret) {
-	fprintf(stderr, "Failed command: '%s'\n", cmdline);
+        fprintf(stderr, "Failed command: '%s'\n", cmdline);
     }
 
     return ret;
 }
 
 int gretl_pipe_output (gchar **argv, gchar **envp,
-		       const char *currdir, PRN *prn,
-		       gchar **errp)
+                       const char *currdir, PRN *prn,
+                       gchar **errp)
 {
     GError *error = NULL;
     gchar *errout = NULL;
@@ -2018,33 +2018,33 @@ int gretl_pipe_output (gchar **argv, gchar **envp,
     gretl_error_clear();
 
     ok = g_spawn_sync(currdir,
-		      argv,
-		      envp,    /* may be NULL to inherit env */
-		      G_SPAWN_SEARCH_PATH, /* ? */
-		      NULL,    /* child_setup */
-		      NULL,    /* user_data */
-		      &sout,   /* standard output */
-		      &errout, /* standard error */
-		      &status, /* exit status */
-		      &error);
+                      argv,
+                      envp,    /* may be NULL to inherit env */
+                      G_SPAWN_SEARCH_PATH, /* ? */
+                      NULL,    /* child_setup */
+                      NULL,    /* user_data */
+                      &sout,   /* standard output */
+                      &errout, /* standard error */
+                      &status, /* exit status */
+                      &error);
 
     if (!ok) {
-	gretl_errmsg_set(error->message);
-	fprintf(stderr, "gretl_pipe_output: '%s'\n", error->message);
-	g_error_free(error);
-	if (errout != NULL) {
-	    fprintf(stderr, " stderr = '%s'\n", errout);
-	}
-	err = 1;
+        gretl_errmsg_set(error->message);
+        fprintf(stderr, "gretl_pipe_output: '%s'\n", error->message);
+        g_error_free(error);
+        if (errout != NULL) {
+            fprintf(stderr, " stderr = '%s'\n", errout);
+        }
+        err = 1;
     } else if (status != 0) {
-	if (errout != NULL && *errout) {
-	    gretl_errmsg_set(errout);
-	    fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, errout);
-	} else {
-	    gretl_errmsg_set(_("Command failed"));
-	    fprintf(stderr, "gretl_pipe_output: status = %d\n", status);
-	}
-	err = 1;
+        if (errout != NULL && *errout) {
+            gretl_errmsg_set(errout);
+            fprintf(stderr, "gretl_pipe_output: status = %d: '%s'\n", status, errout);
+        } else {
+            gretl_errmsg_set(_("Command failed"));
+            fprintf(stderr, "gretl_pipe_output: status = %d\n", status);
+        }
+        err = 1;
     }
 
     if (sout != NULL) {
@@ -2055,12 +2055,12 @@ int gretl_pipe_output (gchar **argv, gchar **envp,
     }
     if (errout != NULL) {
         if (*errout != '\0') {
-	    if (errp != NULL) {
-		*errp = errout;
-		errout = NULL;
-	    } else {
-		fputs(errout, stderr);
-	    }
+            if (errp != NULL) {
+                *errp = errout;
+                errout = NULL;
+            } else {
+                fputs(errout, stderr);
+            }
         }
         g_free(errout);
     }
@@ -2079,23 +2079,23 @@ int gretl_copy_file (const char *src, const char *dest)
     size_t n;
 
     if (!strcmp(src, dest)) {
-	/* @src and @dest are the same: no-op */
-	return 0;
+        /* @src and @dest are the same: no-op */
+        return 0;
     }
 
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
-	gretl_errmsg_sprintf(_("Couldn't open %s"), src);
-	return E_FOPEN;
+        gretl_errmsg_sprintf(_("Couldn't open %s"), src);
+        return E_FOPEN;
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
-	gretl_errmsg_sprintf(_("Couldn't write to %s"), dest);
-	fclose(srcfd);
-	return E_FOPEN;
+        gretl_errmsg_sprintf(_("Couldn't write to %s"), dest);
+        fclose(srcfd);
+        return E_FOPEN;
     }
 
     while ((n = fread(buf, 1, sizeof buf, srcfd)) > 0) {
-	fwrite(buf, 1, n, destfd);
+        fwrite(buf, 1, n, destfd);
     }
 
     fclose(srcfd);
@@ -2105,7 +2105,7 @@ int gretl_copy_file (const char *src, const char *dest)
 }
 
 static int maybe_unload_function_package (const char *s,
-					  PRN *prn)
+                                          PRN *prn)
 {
     char *p, pkgname[FN_NAMELEN+4];
     const char *path;
@@ -2120,17 +2120,17 @@ static int maybe_unload_function_package (const char *s,
     pkg = get_function_package_by_name(pkgname);
 
     if (pkg != NULL) {
-	path = get_function_package_path_by_name(pkgname);
-	if (path != NULL) {
-	    function_package_unload_full_by_filename(path);
-	    done = 1;
-	}
+        path = get_function_package_path_by_name(pkgname);
+        if (path != NULL) {
+            function_package_unload_full_by_filename(path);
+            done = 1;
+        }
     }
 
     if (done) {
-	pprintf(prn, "Unloaded package %s\n", pkgname);
+        pprintf(prn, "Unloaded package %s\n", pkgname);
     } else {
-	pprintf(prn, "Package %s was not loaded\n", pkgname);
+        pprintf(prn, "Package %s was not loaded\n", pkgname);
     }
 
     return 0;
@@ -2143,24 +2143,24 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     int err = 0;
 
     if (s == NULL || *s == '\0') {
-	return E_PARSE;
+        return E_PARSE;
     }
 
     if (object_is_function_arg(s)) {
-	gretl_errmsg_sprintf(_("The variable %s is read-only"), s);
-	return E_DATA;
+        gretl_errmsg_sprintf(_("The variable %s is read-only"), s);
+        return E_DATA;
     }
 
     if (has_suffix(s, ".gfn")) {
-	err = maybe_unload_function_package(s, prn);
+        err = maybe_unload_function_package(s, prn);
     } else if (gretl_is_user_var(s)) {
-	err = user_var_delete_by_name(s, prn);
+        err = user_var_delete_by_name(s, prn);
     } else {
-	/* try for a bundle member? */
-	gchar *genstr = g_strdup_printf("%s=null", s);
+        /* try for a bundle member? */
+        gchar *genstr = g_strdup_printf("%s=null", s);
 
-	err = generate(genstr, NULL, GRETL_TYPE_ANY, OPT_P, prn);
-	g_free(genstr);
+        err = generate(genstr, NULL, GRETL_TYPE_ANY, OPT_P, prn);
+        g_free(genstr);
     }
 
     return err;
@@ -2187,7 +2187,7 @@ static double get_xtime (void)
 {
 #if defined(HAVE_MPI)
     if (gretl_mpi_initialized()) {
-	return gretl_mpi_time();
+        return gretl_mpi_time();
     }
 #endif
 #if defined(WIN32)
@@ -2211,8 +2211,8 @@ static struct xtimer *new_xtimer (int level)
 static void xtimer_init (void)
 {
     if (xtimers == NULL) {
-	xtimers = g_ptr_array_sized_new(1);
-	new_xtimer(gretl_function_depth());
+        xtimers = g_ptr_array_sized_new(1);
+        new_xtimer(gretl_function_depth());
     }
 }
 
@@ -2222,15 +2222,15 @@ static struct xtimer *get_xtimer (void)
     int i, lev = gretl_function_depth();
 
     if (xtimers == NULL) {
-	xtimers = g_ptr_array_sized_new(1);
-	return new_xtimer(lev);
+        xtimers = g_ptr_array_sized_new(1);
+        return new_xtimer(lev);
     }
 
     for (i=0; i<xtimers->len; i++) {
-	xt = g_ptr_array_index(xtimers, i);
-	if (xt->level == lev) {
-	    return xt;
-	}
+        xt = g_ptr_array_index(xtimers, i);
+        if (xt->level == lev) {
+            return xt;
+        }
     }
 
     return new_xtimer(lev);
@@ -2275,8 +2275,8 @@ static struct itimer *new_itimer (int level)
 static void itimer_init (void)
 {
     if (itimers == NULL) {
-	itimers = g_ptr_array_sized_new(1);
-	new_itimer(gretl_function_depth());
+        itimers = g_ptr_array_sized_new(1);
+        new_itimer(gretl_function_depth());
     }
 }
 
@@ -2286,15 +2286,15 @@ static struct itimer *get_itimer (void)
     int i, lev = gretl_function_depth();
 
     if (itimers == NULL) {
-	itimers = g_ptr_array_sized_new(1);
-	return new_itimer(lev);
+        itimers = g_ptr_array_sized_new(1);
+        return new_itimer(lev);
     }
 
     for (i=0; i<itimers->len; i++) {
-	it = g_ptr_array_index(itimers, i);
-	if (it->level == lev) {
-	    return it;
-	}
+        it = g_ptr_array_index(itimers, i);
+        if (it->level == lev) {
+            return it;
+        }
     }
 
     return new_itimer(lev);
@@ -2319,21 +2319,21 @@ static void gretl_stopwatch_cleanup (void)
 
 #ifdef WANT_XTIMER
     if (xtimers != NULL) {
-	for (i=0; i<xtimers->len; i++) {
-	    g_free(xtimers->pdata[i]);
-	}
-	g_ptr_array_free(xtimers, TRUE);
-	xtimers = NULL;
+        for (i=0; i<xtimers->len; i++) {
+            g_free(xtimers->pdata[i]);
+        }
+        g_ptr_array_free(xtimers, TRUE);
+        xtimers = NULL;
     }
 #endif
 
 #ifdef NEED_ITIMER
     if (itimers != NULL) {
-	for (i=0; i<itimers->len; i++) {
-	    g_free(itimers->pdata[i]);
-	}
-	g_ptr_array_free(itimers, TRUE);
-	itimers = NULL;
+        for (i=0; i<itimers->len; i++) {
+            g_free(itimers->pdata[i]);
+        }
+        g_ptr_array_free(itimers, TRUE);
+        itimers = NULL;
     }
 #endif
 }
@@ -2342,7 +2342,7 @@ double gretl_stopwatch (void)
 {
 #if defined(HAVE_MPI)
     if (gretl_mpi_initialized()) {
-	return xtimer_stopwatch();
+        return xtimer_stopwatch();
     }
 #endif
 #if defined(_OPENMP)
@@ -2356,8 +2356,8 @@ static void gretl_stopwatch_init (void)
 {
 #if defined(HAVE_MPI)
     if (gretl_mpi_initialized()) {
-	xtimer_init();
-	return;
+        xtimer_init();
+        return;
     }
 #endif
 #if defined(_OPENMP)
@@ -2376,7 +2376,7 @@ static int blas_variant;
 
 static int parse_ldd_output (const char *s)
 {
-    char found[4] = {0};
+    char found[5] = {0};
     char line[512];
     int i = 0;
     int ret = BLAS_UNKNOWN;
@@ -2384,36 +2384,40 @@ static int parse_ldd_output (const char *s)
     *line = '\0';
 
     while (*s) {
-	if (*s == '\n') {
-	    /* got to the end of a line */
-	    line[i] = '\0';
-	    if (strstr(line, "Accelerate.frame")) {
-		found[3] = 1;
-	    } else if (strstr(line, "libmkl")) {
-		found[2] = 1;
-	    } else if (strstr(line, "atlas")) {
-		found[1] = 1;
-	    } else if (strstr(line, "libblas")) {
-		found[0] = 1;
-	    }
-	    *line = '\0';
-	    i = 0;
-	} else {
-	    line[i++] = *s;
-	}
-	s++;
+        if (*s == '\n') {
+            /* got to the end of a line */
+            line[i] = '\0';
+            if (strstr(line, "libblis")) {
+                found[4] = 1;
+            } else if (strstr(line, "Accelerate.frame")) {
+                found[3] = 1;
+            } else if (strstr(line, "libmkl")) {
+                found[2] = 1;
+            } else if (strstr(line, "atlas")) {
+                found[1] = 1;
+            } else if (strstr(line, "libblas")) {
+                found[0] = 1;
+            }
+            *line = '\0';
+            i = 0;
+        } else {
+            line[i++] = *s;
+        }
+        s++;
     }
 
-    if (found[3]) {
-	ret = BLAS_VECLIB;
+    if (found[4]) {
+       ret = BLAS_BLIS;
+    } else if (found[3]) {
+        ret = BLAS_VECLIB;
     } else if (found[2]) {
-	ret = BLAS_MKL;
+        ret = BLAS_MKL;
     } else if (found[1]) {
-	ret = BLAS_ATLAS;
+        ret = BLAS_ATLAS;
     } else if (found[0]) {
-	ret = BLAS_NETLIB;
+        ret = BLAS_NETLIB;
     } else {
-	fputs("detect blas: found no relevant libs!\n", stderr);
+        fputs("detect blas: found no relevant libs!\n", stderr);
     }
 
     return ret;
@@ -2446,18 +2450,18 @@ static int detect_blas_via_ldd (void)
 #endif
 
     g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &sout, &errout,
-		 &status, &gerr);
+                 NULL, NULL, &sout, &errout,
+                 &status, &gerr);
 
     if (gerr != NULL) {
-	fprintf(stderr, "%s\n", gerr->message);
-	g_error_free(gerr);
+        fprintf(stderr, "%s\n", gerr->message);
+        g_error_free(gerr);
     } else if (status != 0) {
-	fprintf(stderr, "%s exited with status %d\n", argv[0], status);
+        fprintf(stderr, "%s exited with status %d\n", argv[0], status);
     } else if (sout != NULL) {
-	variant = parse_ldd_output(sout);
+        variant = parse_ldd_output(sout);
     } else {
-	fprintf(stderr, "%s: %s\n", argv[0], "Got no output");
+        fprintf(stderr, "%s: %s\n", argv[0], "Got no output");
     }
 
     g_free(sout);
@@ -2480,28 +2484,28 @@ static void register_openblas_details (void *handle)
     OB_get_parallel = dlsym(handle, "openblas_get_parallel");
 
     if (OB_get_corename != NULL) {
-	char *s = OB_get_corename();
+        char *s = OB_get_corename();
 
-	if (s != NULL) {
-	    *OB_core = '\0';
-	    strncat(OB_core, s, 31);
-	}
+        if (s != NULL) {
+            *OB_core = '\0';
+            strncat(OB_core, s, 31);
+        }
     } else {
-	fprintf(stderr, "Couldn't find openblas_get_corename()\n");
+        fprintf(stderr, "Couldn't find openblas_get_corename()\n");
     }
 
     if (OB_get_parallel != NULL) {
-	int p = OB_get_parallel();
+        int p = OB_get_parallel();
 
-	if (p == 0) {
-	    strcpy(OB_parallel, "none");
-	} else if (p == 1) {
-	    strcpy(OB_parallel, "pthreads");
-	} else if (p == 2) {
-	    strcpy(OB_parallel, "OpenMP");
-	}
+        if (p == 0) {
+            strcpy(OB_parallel, "none");
+        } else if (p == 1) {
+            strcpy(OB_parallel, "pthreads");
+        } else if (p == 2) {
+            strcpy(OB_parallel, "OpenMP");
+        }
     } else {
-	fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
+        fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
     }
 }
 
@@ -2510,11 +2514,11 @@ static void register_openblas_details (void *handle)
 int get_openblas_details (char **s1, char **s2)
 {
     if (*OB_core == '\0' || *OB_parallel == '\0') {
-	return 0;
+        return 0;
     } else {
-	*s1 = OB_core;
-	*s2 = OB_parallel;
-	return 1;
+        *s1 = OB_core;
+        *s2 = OB_parallel;
+        return 1;
     }
 }
 
@@ -2523,17 +2527,19 @@ int get_openblas_details (char **s1, char **s2)
 const char *blas_variant_string (void)
 {
     if (blas_variant == BLAS_NETLIB) {
-	return "netlib";
+        return "netlib";
     } else if (blas_variant == BLAS_ATLAS) {
-	return "atlas";
+        return "atlas";
     } else if (blas_variant == BLAS_OPENBLAS) {
-	return "openblas";
+        return "openblas";
     } else if (blas_variant == BLAS_MKL) {
-	return "mkl";
+        return "mkl";
     } else if (blas_variant == BLAS_VECLIB) {
-	return "veclib";
+        return "veclib";
+    } else if (blas_variant == BLAS_BLIS) {
+       return "blis";
     } else {
-	return "unknown";
+        return "unknown";
     }
 }
 
@@ -2550,16 +2556,16 @@ static int (*OB_get_num_threads) (void);
 void blas_set_num_threads (int nt)
 {
     if (OB_set_num_threads != NULL) {
-	OB_set_num_threads(nt);
+        OB_set_num_threads(nt);
     }
 }
 
 int blas_get_num_threads (void)
 {
     if (OB_get_num_threads != NULL) {
-	return OB_get_num_threads();
+        return OB_get_num_threads();
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -2575,19 +2581,19 @@ static void blas_init (void)
     ptr = dlopen(NULL, RTLD_NOW);
 
     if (ptr != NULL) {
-	OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
-	OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
-	if (OB_set_num_threads != NULL) {
-	    blas_variant = BLAS_OPENBLAS;
-	    register_openblas_details(ptr);
-	}
+        OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
+        OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
+        if (OB_set_num_threads != NULL) {
+            blas_variant = BLAS_OPENBLAS;
+            register_openblas_details(ptr);
+        }
     }
 
     if (blas_variant != BLAS_OPENBLAS && blas_variant != BLAS_VECLIB) {
 #ifdef WIN32
-	blas_variant = BLAS_NETLIB; /* ?? */
+        blas_variant = BLAS_NETLIB; /* ?? */
 #else
-	blas_variant = detect_blas_via_ldd();
+        blas_variant = detect_blas_via_ldd();
 #endif
     }
 }
@@ -2609,8 +2615,8 @@ void libgretl_init (void)
     gretl_xml_init();
     gretl_stopwatch_init();
     if (!gretl_in_tool_mode()) {
-	blas_init();
-	num_threads_init(blas_variant);
+        blas_init();
+        num_threads_init(blas_variant);
     }
 #if HAVE_GMP
     mpf_set_default_prec(get_mp_bits());
@@ -2642,15 +2648,15 @@ int libgretl_mpi_init (int self, int np, int dcmt)
     /* load MPI library functions */
     err = gretl_MPI_init();
     if (err) {
-	return err;
+        return err;
     }
 
     if (dcmt && np > 1) {
-	/* use DCMT for multiple RNGs */
-	gretl_dcmt_init(np, self, 0);
+        /* use DCMT for multiple RNGs */
+        gretl_dcmt_init(np, self, 0);
     } else {
-	/* just use one RNG */
-	gretl_rand_init();
+        /* just use one RNG */
+        gretl_rand_init();
     }
 
     gretl_xml_init();
@@ -2682,21 +2688,21 @@ static int other_gretl_running (const char *fname)
     int ret = 0;
 
     if (fp != NULL) {
-	/* Each entry in gretl.pid will contain two
-	   integers: PID and sequence number. So if
-	   we can read more than two values that must
-	   mean there's more than one gretl process
-	   running.
-	*/
-	long lv[4];
-	int np;
+        /* Each entry in gretl.pid will contain two
+           integers: PID and sequence number. So if
+           we can read more than two values that must
+           mean there's more than one gretl process
+           running.
+        */
+        long lv[4];
+        int np;
 
-	np = fscanf(fp, "%ld %ld %ld %ld", &lv[0],
-		    &lv[1], &lv[2], &lv[3]);
-	if (np > 2) {
-	    ret = 1;
-	}
-	fclose(fp);
+        np = fscanf(fp, "%ld %ld %ld %ld", &lv[0],
+                    &lv[1], &lv[2], &lv[3]);
+        if (np > 2) {
+            ret = 1;
+        }
+        fclose(fp);
     }
 
     return ret;
@@ -2709,43 +2715,43 @@ static void dotdir_cleanup (void)
     int err;
 
     if (!strcmp(dotdir, workdir)) {
-	return;
+        return;
     }
 
     err = gretl_chdir(dotdir);
 
     if (!err) {
-	GDir *dir = gretl_opendir(".");
-	const gchar *fname;
-	int skipit = 0;
+        GDir *dir = gretl_opendir(".");
+        const gchar *fname;
+        int skipit = 0;
 
-	if (dir != NULL) {
-	    while ((fname = g_dir_read_name(dir)) != NULL) {
-		if (!strcmp(fname, "gretl.pid")) {
-		    skipit = other_gretl_running(fname);
-		    break;
-		}
-	    }
-	    if (!skipit) {
-		g_dir_rewind(dir);
-		while ((fname = g_dir_read_name(dir)) != NULL) {
-		    if (gretl_isdir(fname)) {
-			if (*fname == '.' && strlen(fname) > 3) {
-			    /* failed auto-dot directory? */
-			    gretl_deltree(fname);
-			}
-		    } else if (strcmp(fname, "..") &&
-			       strcmp(fname, ".") &&
-			       strcmp(fname, ".gretl2rc") &&
-			       strcmp(fname, "gretl.pid") &&
-			       strcmp(fname, "addons.idx") &&
-			       strcmp(fname, "mail.dat")) {
-			gretl_remove(fname);
-		    }
-		}
-	    }
-	    g_dir_close(dir);
-	}
+        if (dir != NULL) {
+            while ((fname = g_dir_read_name(dir)) != NULL) {
+                if (!strcmp(fname, "gretl.pid")) {
+                    skipit = other_gretl_running(fname);
+                    break;
+                }
+            }
+            if (!skipit) {
+                g_dir_rewind(dir);
+                while ((fname = g_dir_read_name(dir)) != NULL) {
+                    if (gretl_isdir(fname)) {
+                        if (*fname == '.' && strlen(fname) > 3) {
+                            /* failed auto-dot directory? */
+                            gretl_deltree(fname);
+                        }
+                    } else if (strcmp(fname, "..") &&
+                               strcmp(fname, ".") &&
+                               strcmp(fname, ".gretl2rc") &&
+                               strcmp(fname, "gretl.pid") &&
+                               strcmp(fname, "addons.idx") &&
+                               strcmp(fname, "mail.dat")) {
+                        gretl_remove(fname);
+                    }
+                }
+            }
+            g_dir_close(dir);
+        }
     }
 }
 
@@ -2764,7 +2770,7 @@ void libgretl_session_cleanup (int mode)
     setopt_cleanup();
 
     if (mode != SESSION_CLEAR_DATASET) {
-	destroy_user_vars();
+        destroy_user_vars();
     }
 }
 
@@ -2806,7 +2812,7 @@ void libgretl_cleanup (void)
 
 #ifdef HAVE_MPI
     if (!gretl_mpi_initialized()) {
-	dotdir_cleanup();
+        dotdir_cleanup();
     }
 #else
     dotdir_cleanup();
@@ -2837,10 +2843,10 @@ enum {
 static GretlType last_test_type;
 
 static double record_or_get_test_result (double teststat,
-					 double pval,
-					 double lnl,
-					 double inbrk,
-					 int code)
+                                         double pval,
+                                         double lnl,
+                                         double inbrk,
+                                         int code)
 {
     static double val = NADBL;
     static double pv = NADBL;
@@ -2849,21 +2855,21 @@ static double record_or_get_test_result (double teststat,
     double ret = NADBL;
 
     if (code == SET_TEST_STAT) {
-	last_test_type = GRETL_TYPE_DOUBLE;
-	val = teststat;
-	pv = pval;
-	ll = lnl;
-	brk = inbrk;
+        last_test_type = GRETL_TYPE_DOUBLE;
+        val = teststat;
+        pv = pval;
+        ll = lnl;
+        brk = inbrk;
     } else if (getcode(code) && last_test_type == GRETL_TYPE_DOUBLE) {
-	if (code == GET_TEST_STAT) {
-	    ret = val;
-	} else if (code == GET_TEST_PVAL) {
-	    ret = pv;
-	} else if (code == GET_TEST_LNL) {
-	    ret = ll;
-	} else if (code == GET_TEST_BRK) {
-	    ret = brk;
-	}
+        if (code == GET_TEST_STAT) {
+            ret = val;
+        } else if (code == GET_TEST_PVAL) {
+            ret = pv;
+        } else if (code == GET_TEST_LNL) {
+            ret = ll;
+        } else if (code == GET_TEST_BRK) {
+            ret = brk;
+        }
     }
 
     return ret;
@@ -2871,38 +2877,38 @@ static double record_or_get_test_result (double teststat,
 
 static gretl_matrix *
 record_or_get_test_matrix (gretl_matrix *tests,
-			   gretl_matrix *pvals,
-			   int code, int *err)
+                           gretl_matrix *pvals,
+                           int code, int *err)
 {
     static gretl_matrix *vals = NULL;
     static gretl_matrix *pvs = NULL;
     gretl_matrix *ret = NULL;
 
     if (code == TESTS_CLEANUP) {
-	gretl_matrix_free(vals);
-	gretl_matrix_free(pvs);
-	vals = pvs = NULL;
-	last_test_type = GRETL_TYPE_NONE;
-	return NULL;
+        gretl_matrix_free(vals);
+        gretl_matrix_free(pvs);
+        vals = pvs = NULL;
+        last_test_type = GRETL_TYPE_NONE;
+        return NULL;
     }
 
     if (code == SET_TEST_STAT) {
-	last_test_type = GRETL_TYPE_MATRIX;
-	gretl_matrix_free(vals);
-	vals = tests;
-	gretl_matrix_free(pvs);
-	pvs = pvals;
+        last_test_type = GRETL_TYPE_MATRIX;
+        gretl_matrix_free(vals);
+        vals = tests;
+        gretl_matrix_free(pvs);
+        pvs = pvals;
     } else if (getcode(code)) {
-	gretl_matrix *src = (code == GET_TEST_STAT)? vals : pvs;
+        gretl_matrix *src = (code == GET_TEST_STAT)? vals : pvs;
 
-	if (src != NULL) {
-	    ret = gretl_matrix_copy(src);
-	    if (ret == NULL) {
-		*err = E_ALLOC;
-	    }
-	} else {
-	    *err = E_BADSTAT;
-	}
+        if (src != NULL) {
+            ret = gretl_matrix_copy(src);
+            if (ret == NULL) {
+                *err = E_ALLOC;
+            }
+        } else {
+            *err = E_BADSTAT;
+        }
     }
 
     return ret;
@@ -2943,7 +2949,7 @@ void record_QLR_test_result (double teststat, double pval, double brk)
 */
 
 void record_matrix_test_result (gretl_matrix *tests,
-				gretl_matrix *pvals)
+                                gretl_matrix *pvals)
 {
     record_or_get_test_matrix(tests, pvals, SET_TEST_STAT, NULL);
 }
@@ -3007,9 +3013,9 @@ gretl_matrix *get_last_pvals_matrix (int *err)
 #define NOT_POWER_OF_TWO(n) (((n) & ((n) - 1)))
 #define UI(p) ((uintptr_t) (p))
 
-#define PTR_ALIGN(p0, align)					\
-            ((void *) (((UI(p0) + (align + sizeof(void*)))	\
-			& (~UI(align - 1)))))
+#define PTR_ALIGN(p0, align)                                    \
+            ((void *) (((UI(p0) + (align + sizeof(void*)))      \
+                        & (~UI(align - 1)))))
 
 /* pointer must sometimes be aligned; assume sizeof(void*) is a power of two */
 #define ORIG_PTR(p) (*(((void **) (UI(p) & (~UI(sizeof(void*) - 1)))) - 1))
@@ -3019,12 +3025,12 @@ static void *real_aligned_malloc (size_t size, size_t align)
     void *p0, *p;
 
     if (NOT_POWER_OF_TWO(align)) {
-	errno = EINVAL;
-	return NULL;
+        errno = EINVAL;
+        return NULL;
     }
 
     if (align < sizeof(void *)) {
-	align = sizeof(void *);
+        align = sizeof(void *);
     }
 
     /* including the extra sizeof(void*) is overkill on a 32-bit
@@ -3033,7 +3039,7 @@ static void *real_aligned_malloc (size_t size, size_t align)
 
     p0 = malloc(size + align + sizeof(void *));
     if (!p0) {
-	return NULL;
+        return NULL;
     }
 
     p = PTR_ALIGN(p0, align);
@@ -3045,16 +3051,16 @@ static void *real_aligned_malloc (size_t size, size_t align)
 void *gretl_aligned_malloc (size_t size, size_t alignment)
 {
     if (size < 1) {
-	return NULL;
+        return NULL;
     } else {
-	return real_aligned_malloc(size, alignment);
+        return real_aligned_malloc(size, alignment);
     }
 }
 
 void gretl_aligned_free (void *mem)
 {
     if (mem != NULL) {
-	free(ORIG_PTR(mem));
+        free(ORIG_PTR(mem));
     }
 }
 
@@ -3067,16 +3073,16 @@ int check_for_program (const char *prog)
     int ret = 0;
 
     if (prog == NULL || *prog == '\0') {
-	return 0;
+        return 0;
     }
 
     if (has_suffix(prog, ".exe")) {
-	ret = win32_check_for_program(prog);
+        ret = win32_check_for_program(prog);
     } else {
-	gchar *test = g_strdup_printf("%s.exe", prog);
+        gchar *test = g_strdup_printf("%s.exe", prog);
 
-	ret = win32_check_for_program(test);
-	g_free(test);
+        ret = win32_check_for_program(test);
+        g_free(test);
     }
 
     return ret;
@@ -3093,18 +3099,18 @@ static int is_executable (const char *s, uid_t myid, gid_t mygrp)
     int ok = 0;
 
     if (gretl_stat(s, &buf) != 0) {
-	return 0;
+        return 0;
     }
 
     if (buf.st_mode & (S_IFREG|S_IFLNK)) {
-	if (buf.st_uid == myid && (buf.st_mode & S_IXUSR)) {
-	    ok = 1;
-	} else if (buf.st_gid == mygrp && (buf.st_mode & S_IXGRP)) {
-	    ok = 1;
-	} else if (buf.st_uid != myid && buf.st_gid != mygrp &&
-		   (buf.st_mode & S_IXOTH)) {
-	    ok = 1;
-	}
+        if (buf.st_uid == myid && (buf.st_mode & S_IXUSR)) {
+            ok = 1;
+        } else if (buf.st_gid == mygrp && (buf.st_mode & S_IXGRP)) {
+            ok = 1;
+        } else if (buf.st_uid != myid && buf.st_gid != mygrp &&
+                   (buf.st_mode & S_IXOTH)) {
+            ok = 1;
+        }
     }
 
     return ok;
@@ -3131,65 +3137,65 @@ int check_for_program (const char *prog)
     int i, ndirs;
 
     if (prog == NULL || *prog == '\0') {
-	return 0;
+        return 0;
     }
 
     if (*prog == '/') {
-	return is_executable(prog, myid, mygrp);
+        return is_executable(prog, myid, mygrp);
     }
 
     path = getenv("PATH");
     if (path == NULL || *path == '\0') {
-	return 0;
+        return 0;
     }
 
     pathcpy = gretl_strdup(path);
     if (pathcpy == NULL) {
-	return 0;
+        return 0;
     }
 
     ndirs = 1;
     p = pathcpy;
     while (*p) {
-	if (*p == ':') ndirs++;
-	p++;
+        if (*p == ':') ndirs++;
+        p++;
     }
 
     dirs = malloc(ndirs * sizeof *dirs);
     if (dirs == NULL) {
-	free(pathcpy);
-	return 0;
+        free(pathcpy);
+        return 0;
     }
 
     if (ndirs == 1) {
-	dirs[0] = pathcpy;
-	max_dlen = strlen(pathcpy);
+        dirs[0] = pathcpy;
+        max_dlen = strlen(pathcpy);
     } else {
-	for (i=0; i<ndirs; i++) {
-	    int dlen;
+        for (i=0; i<ndirs; i++) {
+            int dlen;
 
-	    dirs[i] = strtok((i == 0)? pathcpy : NULL, ":");
-	    if (dirs[i] == NULL) {
-		ndirs = i;
-		break;
-	    }
-	    dlen = strlen(dirs[i]);
-	    if (dlen > max_dlen) {
-		max_dlen = dlen;
-	    }
-	}
+            dirs[i] = strtok((i == 0)? pathcpy : NULL, ":");
+            if (dirs[i] == NULL) {
+                ndirs = i;
+                break;
+            }
+            dlen = strlen(dirs[i]);
+            if (dlen > max_dlen) {
+                max_dlen = dlen;
+            }
+        }
     }
 
     if (ndirs == 0 ||
-	(fullpath = malloc(max_dlen + strlen(prog) + 2)) == NULL) {
-	free(dirs);
-	free(pathcpy);
-	return 0;
+        (fullpath = malloc(max_dlen + strlen(prog) + 2)) == NULL) {
+        free(dirs);
+        free(pathcpy);
+        return 0;
     }
 
     for (i=0; i<ndirs && !found; i++) {
-	sprintf(fullpath, "%s/%s", dirs[i], prog);
-	found = is_executable(fullpath, myid, mygrp);
+        sprintf(fullpath, "%s/%s", dirs[i], prog);
+        found = is_executable(fullpath, myid, mygrp);
     }
 
     free(dirs);
@@ -3219,17 +3225,17 @@ int gretl_gzip (char *fname, char *zname)
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
-	return E_FOPEN;
+        return E_FOPEN;
     }
 
     fz = gretl_gzopen(zname, "wb");
     if (fz == Z_NULL) {
-	fclose(fp);
-	return E_FOPEN;
+        fclose(fp);
+        return E_FOPEN;
     }
 
     while ((len = fread(buf, 1, GRETL_ZBUFSIZ, fp)) > 0) {
-	gzwrite(fz, buf, len);
+        gzwrite(fz, buf, len);
     }
 
     fclose(fp);
@@ -3247,17 +3253,17 @@ int gretl_gunzip (char *zname, char *fname)
 
     fz = gretl_gzopen(zname, "rb");
     if (fz == Z_NULL) {
-	return E_FOPEN;
+        return E_FOPEN;
     }
 
     fp = gretl_fopen(fname, "wb");
     if (fp == NULL) {
-	gzclose(fz);
-	return E_FOPEN;
+        gzclose(fz);
+        return E_FOPEN;
     }
 
     while ((len = gzread(fz, buf, GRETL_ZBUFSIZ)) > 0) {
-	fwrite(buf, 1, len, fp);
+        fwrite(buf, 1, len, fp);
     }
 
     gzclose(fz);
@@ -3278,12 +3284,12 @@ int auto_mpi_ok (void)
 
 #ifdef HAVE_MPI
     if (gretl_mpi_initialized()) {
-	; /* No: can't run MPI under MPI */
+        ; /* No: can't run MPI under MPI */
     } else if (gretl_n_processors() < 2) {
-	; /* No: can't do local MPI */
+        ; /* No: can't do local MPI */
     } else {
-	/* Yes, if mpiexec is installed */
-	ret = check_for_mpiexec();
+        /* Yes, if mpiexec is installed */
+        ret = check_for_mpiexec();
     }
 #endif
 
@@ -3299,36 +3305,36 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err)
     int i, j;
 
     if (v != NULL) {
-	n = gretl_vector_get_length(v);
-	if (n == 0) {
-	    *err = E_INVARG;
-	    return NULL;
-	}
-	val = v->val;
+        n = gretl_vector_get_length(v);
+        if (n == 0) {
+            *err = E_INVARG;
+            return NULL;
+        }
+        val = v->val;
     } else {
-	val = &x;
+        val = &x;
     }
 
     ret = gretl_zero_matrix_new(n, 32);
     if (ret == NULL) {
-	*err = E_ALLOC;
+        *err = E_ALLOC;
     }
 
     for (i=0; i<n; i++) {
-	ui = gretl_unsigned_from_double(val[i], err);
-	if (*err) {
-	    break;
-	}
-	j = 0;
-	while (ui > 0) {
-	    gretl_matrix_set(ret, i, j++, ui % 2);
-	    ui = ui >> 1;
-	}
+        ui = gretl_unsigned_from_double(val[i], err);
+        if (*err) {
+            break;
+        }
+        j = 0;
+        while (ui > 0) {
+            gretl_matrix_set(ret, i, j++, ui % 2);
+            ui = ui >> 1;
+        }
     }
 
     if (*err) {
-	gretl_matrix_free(ret);
-	ret = NULL;
+        gretl_matrix_free(ret);
+        ret = NULL;
     }
 
     return ret;
@@ -3341,35 +3347,35 @@ gretl_matrix *bin2dec (const gretl_matrix *m, int *err)
     gretl_matrix *ret = NULL;
 
     if (r == 0 || c == 0 || c > 32) {
-	*err = E_INVARG;
+        *err = E_INVARG;
     } else {
-	/* allocate column vector for return */
-	ret = gretl_zero_matrix_new(r, 1);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
+        /* allocate column vector for return */
+        ret = gretl_zero_matrix_new(r, 1);
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        }
     }
 
     if (!*err) {
-	guint32 ui, k;
-	double mij;
-	int i, j;
+        guint32 ui, k;
+        double mij;
+        int i, j;
 
-	for (i=0; i<r && !*err; i++) {
-	    ui = 0;
-	    k = 0x01;
-	    for (j=0; j<c && !*err; j++) {
-		mij = gretl_matrix_get(m, i, j);
-		if (mij == 1) {
-		    ui += k;
-		} else if (mij != 0) {
-		    *err = E_INVARG;
-		    break;
-		}
-		k = k << 1;
-	    }
-	    ret->val[i] = (double) ui;
-	}
+        for (i=0; i<r && !*err; i++) {
+            ui = 0;
+            k = 0x01;
+            for (j=0; j<c && !*err; j++) {
+                mij = gretl_matrix_get(m, i, j);
+                if (mij == 1) {
+                    ui += k;
+                } else if (mij != 0) {
+                    *err = E_INVARG;
+                    break;
+                }
+                k = k << 1;
+            }
+            ret->val[i] = (double) ui;
+        }
     }
 
     return ret;
