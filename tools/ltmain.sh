@@ -7079,7 +7079,8 @@ func_mode_link ()
 	  case $arg in
 	  [\\/]* | [A-Za-z]:[\\/]*) ;;
 	  *)
-	    func_fatal_error "only absolute run-paths are allowed"
+            # local edit: comment out the following line
+	    # func_fatal_error "only absolute run-paths are allowed"
 	    ;;
 	  esac
 	  if test rpath = "$prev"; then
