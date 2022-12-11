@@ -43,8 +43,8 @@ enum {
     BLAS_ATLAS,
     BLAS_OPENBLAS,
     BLAS_MKL,
-    BLAS_VECLIB,
-    BLAS_BLIS
+    BLAS_BLIS,
+    BLAS_VECLIB    
 };
 
 void libgretl_init (void);
@@ -61,6 +61,12 @@ int blas_is_openblas (void);
 void blas_set_num_threads (int nt);
 
 int blas_get_num_threads (void);
+
+int blas_is_blis (void);
+
+void blis_set_num_threads (int nt);
+
+int blis_get_num_threads (void);
 
 int auto_mpi_ok (void);
 
@@ -228,6 +234,8 @@ int check_for_program (const char *prog);
 const char *blas_variant_string (void);
 
 int get_openblas_details (char **s1, char **s2);
+
+int get_blis_details (char **s1, char **s2, char **s3);
 
 gint64 gretl_monotonic_time (void);
 

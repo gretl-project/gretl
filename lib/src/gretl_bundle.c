@@ -2951,7 +2951,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    *err = E_ALLOC;
 	} else {
 	    gretl_bundle *fb;
-	    char *s1, *s2;
+	    char *s1, *s2, *s3;
 	    int ival = 0;
 
 #if HAVE_MPI
@@ -2987,6 +2987,11 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    if (get_openblas_details(&s1, &s2)) {
 		gretl_bundle_set_string(b, "blascore", s1);
 		gretl_bundle_set_string(b, "blas_parallel", s2);
+	    }
+		if (get_blis_details(&s1, &s2, &s3)) {		    
+		    gretl_bundle_set_string(b, "bliscore", s1);
+		    gretl_bundle_set_string(b, "blis_parallel", s2);
+		    gretl_bundle_set_string(b, "blis_version", s3);
 	    }
 #if defined(COMPILER_IDENT)
 	    gretl_bundle_set_string(b, "compiler", COMPILER_IDENT);

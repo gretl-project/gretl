@@ -191,7 +191,7 @@ static void usage (int err)
 
 static void check_blas_threading (int tool, int quiet)
 {
-    char *s1, *s2;
+    char *s1, *s2, *s3;
 
     if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
         if (tool || quiet) {
@@ -206,6 +206,19 @@ static void check_blas_threading (int tool, int quiet)
         }
         /* do we really need this? */
         gretl_setenv("OPENBLAS_NUM_THREADS", "1");
+    } else if (get_blis_details(&s1, &s2, &s3) && !strcmp(s2, "pthreads")) {
+        if (tool || quiet) {
+            fprintf(stderr, "Disabling BLIS multi-threading "
+                    "(OpenMP/pthreads collision)\n");
+        } else {
+            puts("\n*** Warning ***\n*\n"
+                 "* gretl is built using OpenMP, but is linked against\n"
+                 "* BLIS parallelized via pthreads. This combination\n"
+                 "* of threading mechanisms is not recommended. Ideally,\n"
+                 "* BLIS should also use OpenMP.");
+        }
+        /* do we really need this? - I don't know, but gives no efect for BLIS *** Marcin ****/
+        gretl_setenv("BLIS_NUM_THREADS", "1");
     }
 }
 
