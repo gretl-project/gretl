@@ -2513,55 +2513,21 @@ static void register_openblas_details (void *handle)
 }
 
 static void register_blis_details (void *handle)
-{   
-    /*typedef enum {
-        // Intel
-        BLIS_ARCH_SKX,
-        BLIS_ARCH_KNL,
-        BLIS_ARCH_KNC,
-        BLIS_ARCH_HASWELL,
-        BLIS_ARCH_SANDYBRIDGE,
-        BLIS_ARCH_PENRYN,
-        // AMD
-        BLIS_ARCH_ZEN3,
-        BLIS_ARCH_ZEN2,
-        BLIS_ARCH_ZEN,
-        BLIS_ARCH_EXCAVATOR,
-        BLIS_ARCH_STEAMROLLER,
-        BLIS_ARCH_PILEDRIVER,
-        BLIS_ARCH_BULLDOZER,
-        // ARM
-        BLIS_ARCH_ARMSVE,
-        BLIS_ARCH_A64FX,
-        BLIS_ARCH_FIRESTORM,
-        BLIS_ARCH_THUNDERX2,
-        BLIS_ARCH_CORTEXA57,
-        BLIS_ARCH_CORTEXA53,
-        BLIS_ARCH_CORTEXA15,
-        BLIS_ARCH_CORTEXA9,
-        // IBM/Power
-        BLIS_ARCH_POWER10,
-        BLIS_ARCH_POWER9,
-        BLIS_ARCH_POWER7,
-        BLIS_ARCH_BGQ,
-        // Generic architecture/configuration
-        BLIS_ARCH_GENERIC,
-        BLIS_NUM_ARCHS
-    } arch_t;*/
+{       
     typedef signed long int gint_t;
-    /*int isth=0, isomp=0, ispt=0;
-    arch_t id;*/
     int id;
-    const int BLIS_NUM_ARCHS=26; /* The last element on arch_t enum in libblis => must be updated whenever new architecture appears*/
-    char *buf;
+    char *buf = NULL;
+    /* The last element on arch_t enum in libblis =>
+    => must be updated whenever new architecture/cpu model appears*/
+    const int BLIS_NUM_ARCHS=26;    
     
     /* Functions from libblis we need. */
     char *(*BLIS_info_get_version_str) (void);    
     gint_t (*BLIS_info_get_enable_threading) (void);
     gint_t (*BLIS_info_get_enable_openmp) (void);
     gint_t (*BLIS_info_get_enable_pthreads) (void);
-    char *(*BLIS_arch_string) (int); // (arch_t id);
-    int (*BLIS_arch_query_id) (void); //arch_t
+    char *(*BLIS_arch_string) (int);
+    int (*BLIS_arch_query_id) (void);
     
     BLIS_info_get_version_str = dlsym(handle, "bli_info_get_version_str");    
     BLIS_info_get_enable_threading = dlsym(handle, "bli_info_get_enable_threading");
@@ -2583,22 +2549,6 @@ static void register_blis_details (void *handle)
     }
     
     /* Model we have: threaded or sequential */
-    /*if (BLIS_info_get_enable_threading != NULL) {
-        isth = (int) BLIS_info_get_enable_threading();
-    } else {
-        fprintf(stderr, "Couldn't find bli_info_get_enable_threading()\n");
-    }
-    if (BLIS_info_get_enable_openmp != NULL) {
-        isomp = (int) BLIS_info_get_enable_openmp();
-    } else {
-        fprintf(stderr, "Couldn't find bli_info_get_enable_openmp()\n");
-    }
-    if (BLIS_info_get_enable_pthreads) {
-        ispt = (int) BLIS_info_get_enable_pthreads();
-    } else {
-        fprintf(stderr, "Couldn't find bli_info_get_enable_pthreads()\n");
-    }*/
-    /* We need some heuristics to figure out what we deal with */ 
     if (!BLIS_info_get_enable_threading()) {
         buf = "sequential (non-threading)";
     } else {
@@ -2616,7 +2566,7 @@ static void register_blis_details (void *handle)
         buf = NULL;
     }
     
-    /* Core in use */
+    /* BLIS core in use */
     if (BLIS_arch_query_id != NULL) {
         id = BLIS_arch_query_id();
     } else {
