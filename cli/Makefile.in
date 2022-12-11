@@ -33,7 +33,9 @@ else
   SIMD_OPT = $(AVX_CFLAGS)
 endif
 
-OMP_OPT = @OPENMP_CFLAGS@
+ifneq ($(CC), icx)
+  OMP_OPT = @OPENMP_CFLAGS@
+endif
 
 quiet_build = @quiet_build@
 
