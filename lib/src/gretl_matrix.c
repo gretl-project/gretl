@@ -5663,7 +5663,6 @@ static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
     dgemm_(&TransA, &TransB, &m, &n, &k,
            &alpha, a->val, &a->rows, b->val, &b->rows, &beta,
            c->val, &c->rows);
-    fprintf(stderr, "jestem w gretl_blas_dgemm *** Marcin ***\n");
 }
 
 /* below: a native C re-write of netlib BLAS dgemm.f: note that
@@ -5697,8 +5696,10 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     }
 
 #if defined(_OPENMP)
+    fprintf(stderr, "*** Marcin *** gretl_dgemm => if defined(_OPENMP)\n");
     fpm = (guint64) m * n * k;
     if (!gretl_use_openmp(fpm)) {
+        fprintf(stderr, "*** Marcin *** gretl_use_openmp(fpm)=%d\n", gretl_use_openmp(fpm));
         goto st_mode;
     }
 
@@ -5792,6 +5793,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     if (!btr) {
         if (!atr) {
             /* C := alpha*A*B + beta*C */
+            fprintf(stderr, "*** Marcin *** C := alpha*A*B + beta*C\n");
             for (j=0; j<n; j++) {
                 if (beta == 0) {
                     for (i=0; i<m; i++) {
@@ -5876,7 +5878,6 @@ static void gretl_dgemm_single (const gretl_matrix *a, int atr,
     int br = b->rows;
     int cr = c->rows;
     int i, j, l;
-    fprintf(stderr, "jestem w gretl_dgemm_single *** Marcin ***\n");
 
     if (cmod == GRETL_MOD_CUMULATE) {
         beta = 1;

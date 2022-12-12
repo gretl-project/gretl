@@ -206,7 +206,7 @@ void num_threads_init (int blas_type)
     } else if (blas_type == BLAS_BLIS) {
         blis_set_num_threads(nc);
     }
-    if (blas_type > BLAS_VECLIB) {
+    if (blas_type > BLAS_BLIS) {
 	set_blas_mnk_min(90000);
     }
 }

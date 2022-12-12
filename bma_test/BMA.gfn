@@ -1,0 +1,1735 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gretl-functions>
+<gretl-function-package name="BMA" minver="2022b" lives-in-subdir="true">
+<author email="marcin@gretlconference.org">Marcin Błażejowski, Jacek Kwiatkowski</author>
+<version>3.2-svn</version>
+<date>2022-09-16</date>
+<description>Bayesian Model Averaging for the linear regression models with jointness measures</description>
+<tags>C11 C52</tags>
+<label>Bayesian Model Averaging</label>
+<menu-attachment>MAINWIN/Model/LinearModels</menu-attachment>
+<help>
+pdfdoc:BMA.pdf
+</help>
+<data-files count="1">
+examples </data-files>
+<gretl-function name="BMA" type="bundle">
+ <params count="3">
+  <param name="Y" type="series">
+<description>Dependent variable</description>
+  </param>
+  <param name="X_list" type="list">
+<description>List of indenpendent variables (X)</description>
+  </param>
+  <param name="Options" type="bundle" optional="true"/>
+ </params>
+<code>/*
+Bundle-based interface to carry out BMA analysis.
+Function returns bundle MODEL with (formatted) results.
+*/
+bundle MODEL
+string Y_name = argname(Y)
+series @Y_name = Y
+scalar acc_type,av_model_size,alpha,l_rank,g_type,do_joint,h_predict,Nrep,burn,verbosity,show_progress,do_plot
+string err
+if !exists(Options)
+  bundle Options
+endif
+# Basic parsing and checking
+err = BMA_bcheck(Options, nelem(X_list), &amp;acc_type, &amp;av_model_size, &amp;alpha, &amp;l_rank, &amp;g_type, &amp;do_joint, &amp;h_predict, &amp;Nrep, &amp;burn, &amp;verbosity, &amp;show_progress, &amp;do_plot)
+if strlen(err) != 0
+  funcerr &quot;@err !!!&quot;
+  return MODEL
+endif
+Norig = $nobs
+smpl Y X_list --no-missing --quiet
+if Norig != $nobs
+  printf &quot;\nThere are missing values in dataset!&quot;
+else
+  Norig = NA
+endif
+err = BMA_parse(&amp;MODEL, Y, argname(Y), X_list, av_model_size, l_rank)
+if strlen(err) != 0
+  funcerr &quot;@err !!!&quot;
+else
+  MODEL = BMA_setup(Y, MODEL.X_list, acc_type, av_model_size, alpha, l_rank, g_type, do_joint, h_predict, Nrep, burn, verbosity, argname(Y), show_progress, Norig, do_plot)
+  # Setting sample for forecasting
+  if MODEL.h_predict &gt; 0
+    smpl 1 MODEL.last_obs
+  endif
+  BMA_main(&amp;MODEL)
+  BMA_summary(&amp;MODEL)
+  BMA_Print(&amp;MODEL)
+  if MODEL.do_plot
+    BMA_Plot(&amp;MODEL)
+  endif
+endif
+set warnings on
+return MODEL
+</code>
+</gretl-function>
+<gretl-function name="BMA_Print" type="void" pkg-role="bundle-print">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+Function prints BMA results
+*/
+# We have to set sample
+if M.h_predict &gt; 0
+  smpl 1 M.last_obs
+endif
+# We re-create Y process
+string Y_name = M.Y_name
+series @Y_name = M.Y
+# Additional information in summary
+model_space = 2^M.k
+printf &quot;\n&quot;
+if M.verbosity == 2
+  print &quot;----------------------------------&quot;
+  printf &quot;Model prior: %s\n&quot;, M.prior_name
+  printf &quot;Prior average model size: %f\n&quot;, M.av_model_size
+  printf &quot;Significance level for the initial model: %f\n&quot;, M.alpha
+  printf &quot;g-prior: %s\n&quot;, M.gtype
+  printf &quot;Total number of iterations: %d\n&quot;, M.Nrep
+  printf &quot;Number of burn-in draws: %d\n&quot;, M.Nburn
+  if model_space &lt; 2^31
+    printf &quot;Total number of possible models: %d\n&quot;, model_space
+  else
+    printf &quot;Total number of possible models: %g\n&quot;, model_space
+  endif
+  printf &quot;Number of models visited: %d\n&quot;, M.post_n_models
+  printf &quot;Number of models accepted: %d\n&quot;, M.post_n_models_accepted
+  if exists(M.Norig) == 1
+    printf &quot;Original number of observations (with missing): %d\n&quot;, M.Norig
+  endif
+  print &quot;----------------------------------&quot;
+  printf &quot;\n&quot;
+  print &quot;The initial model:&quot;
+  list start_model = M.StartModel
+  ols @Y_name const start_model --simple
+endif
+# Standard information (PIPs, Means and so on)
+print &quot;----------------------------------&quot;
+printf &quot;\n&quot;
+printf &quot;Prior:\n&quot;
+printf &quot;\taverage model size: %f\n&quot;, sum(M.mod_sizes[,1] .* M.mod_sizes[,3])
+printf &quot;\tstandard deviation: %f\n&quot;, M.mod_size_sd_prior
+printf &quot;Posterior:\n&quot;
+printf &quot;\taverage model size: %f\n&quot;, M.mod_size_av
+printf &quot;\tstandard deviation: %f\n&quot;, M.mod_size_sd
+printf &quot;\n&quot;
+print &quot;----------------------------------&quot;
+printf &quot;\n&quot;
+print &quot;Posterior moments (unconditional and conditional on inclusion):&quot;
+if $version &lt; 20170
+  printf &quot;%15f&quot;, M.Post_Results
+else
+  printf &quot;%15f&quot;, mreverse(msortby(M.Post_Results, 1))
+endif
+printf &quot;\n&quot;
+print &quot;----------------------------------&quot;
+printf &quot;\n&quot;
+print &quot;Posterior probability of models:&quot;
+loop i=1..rows(M.models_probs_percents) --quiet
+  if i &lt;= 4
+    printf &quot;Best %d\t models account for %.4f of mass\n&quot;, M.models_probs_percents[i,1], M.models_probs_percents[i,2]
+  elif i == rows(M.models_probs_percents)
+    printf &quot;Best %d models account for %.4f of mass\n&quot;, M.models_probs_percents[i,1], M.models_probs_percents[i,2]
+  else
+    printf &quot;Best %d models account for %.4f of mass\n&quot;, M.models_probs_percents[i,1], M.models_probs_percents[i,2]
+  endif
+endloop
+printf &quot;\nBest models ranking:\n&quot;
+loop i=1..M.l_rank --quiet
+  printf &quot;Model %d:\t%f\n&quot;, i, M.Numerical_Likelihood[i]
+endloop
+printf &quot;Total probability of the models in ranking (numerical): %f\n&quot;, sumc(M.Numerical_Likelihood)
+printf &quot;\n&quot;
+printf &quot;Correlation coefficient between the analytical\n&quot;
+printf &quot;and numerical probabilities of the above models: %f\n&quot;, corr(M.Numerical_Likelihood, M.mod_rank_prob)
+# Forecasts
+if M.h_predict &gt; 0
+  printf &quot;\n&quot;
+  print &quot;----------------------------------&quot;
+  printf &quot;\n&quot;
+  print &quot;Predictive results:&quot;
+  printf &quot;%15f&quot;, M.prediction
+  printf &quot;\n&quot;
+endif
+# Jointess analysis
+if M.do_joint &amp;&amp; nelem(M.jointness_m)
+  matrix jointess_measure = BMA_jointness_measure(&amp;M)
+  string jointess_measure_name = M.jointess_measure_names[M.do_joint]
+  print &quot;----------------------------------&quot;
+  printf &quot;\n&quot;
+  print &quot;Posterior joint probability of variables:&quot;
+  printf &quot;%15f&quot;, M.jointness_m
+  printf &quot;\n&quot;
+  printf &quot;Jointness statistics (%s):\n&quot;, jointess_measure_name
+  printf &quot;%15f&quot;, jointess_measure
+  scalar strong_sub = 0
+  scalar significant_sub = 0
+  scalar strong_com = 0
+  scalar significant_com = 0
+  matrix pairs = zeros(round(0.5*M.k^2), 3)
+  scalar pair = 0
+  loop i=1..M.k --quiet
+    loop j=i+1..M.k --quiet
+      if abs(jointess_measure[i,j]) &gt; 1
+        pair += 1
+        pairs[pair,1] = jointess_measure[i,j]
+        pairs[pair,2] = i
+        pairs[pair,3] = j
+        if jointess_measure[i,j] &lt; 0
+          if jointess_measure[i,j] &lt; -2
+            strong_sub += 1
+          else
+            significant_sub += 1
+          endif
+        else
+          if jointess_measure[i,j] &gt; 2
+            strong_com += 1
+          else
+            significant_com += 1
+          endif
+        endif
+      endif
+    endloop
+  endloop
+  if pair &gt; 0
+    pairs = msortby(pairs[1:pair, ], 1)
+    scalar shift = 0
+    if strong_sub &gt; 0
+      BMA_jointness_pairs(&quot;Strong substitutes:&quot;, &amp;strong_sub, M.var_numbers, &amp;shift, &amp;pairs, M.jointness_m)
+    endif
+    if significant_sub &gt; 0
+      BMA_jointness_pairs(&quot;Significant substitutes:&quot;, &amp;significant_sub, M.var_numbers, &amp;shift, &amp;pairs, M.jointness_m)
+    endif
+    if significant_com &gt; 0
+      BMA_jointness_pairs(&quot;Significant complements:&quot;, &amp;significant_com, M.var_numbers, &amp;shift, &amp;pairs, M.jointness_m)
+    endif
+    if strong_com &gt; 0
+      BMA_jointness_pairs(&quot;Strong complements:&quot;, &amp;strong_com, M.var_numbers, &amp;shift, &amp;pairs, M.jointness_m)
+    endif
+  endif
+endif
+# Printing models in ranking
+if M.verbosity == 2
+  matrix coeffmat
+  strings Xnames # names of X-es
+  printf &quot;\n\nBest models estimates:&quot;
+  loop i=1..M.l_rank --quiet
+    if M.mod_nume_prob[i]
+      Xnames = null
+      printf &quot;\n&quot;
+      print &quot;----------------------------------&quot;
+      printf &quot;\nModel: %d, posterior probability: %f&quot;, i, M.Numerical_Likelihood[i]
+      if sum(M.mod_rank[i]) == 0
+        Xnames = defarray(&quot;const&quot;)
+        coeffmat = M.mod_rank_estimates[i]
+      else
+        Xnames = defarray(&quot;const&quot;) + M.all_names_sp_new[M.mod_rank_estimates[i][2:,3]]
+        coeffmat = M.mod_rank_estimates[i][,1:2]
+      endif
+      modprint coeffmat Xnames
+    endif
+  endloop
+endif
+print &quot;----------------------------------&quot;
+printf &quot;\n\n&quot;
+</code>
+</gretl-function>
+<gretl-function name="BMA_GUI" type="bundle" pkg-role="gui-main">
+ <params count="14">
+  <param name="Y" type="series">
+<description>Dependent variable</description>
+  </param>
+  <param name="X_list" type="list">
+<description>List of indenpendent variables (X)</description>
+  </param>
+  <param name="model_prior" type="int" min="1" max="2" default="1">
+<description>Model prior</description>
+<labels count="2">
+"Binomial" "Beta-Binomial" </labels>
+  </param>
+  <param name="avg_model_size" type="scalar" min="0" default="1">
+<description>Prior average model size</description>
+  </param>
+  <param name="alpha" type="scalar" min="0" max="1" default="0.6">
+<description>Significance level for the initial model</description>
+  </param>
+  <param name="Nrank" type="int" min="2" default="4">
+<description>Number of the top ranked models</description>
+  </param>
+  <param name="g_type" type="int" min="1" max="5" default="1">
+<description>g-prior type</description>
+<labels count="5">
+"Benchmark prior" "Unit Information Prior (g-UIP)" "Risk Inflation Criterion (g-RIC)" "Hannan and Quinn HQC" "Root of g-UIP" </labels>
+  </param>
+  <param name="do_joint" type="int" min="0" max="7" default="0">
+<description>Jointness analysis</description>
+<labels count="8">
+"None" "Doppelhofer-Weeks Measure (DW1)" "Doppelhofer-Weeks Measure (DW2)" "Ley-Steel Measure (LS1)" "Ley-Steel Measure (LS2)" "Strachan Measure (SM)" "Yule's Q Measure (YQ)" "Modified Yule's Q Measure (MYQ)" </labels>
+  </param>
+  <param name="Npredict" type="int" min="0" default="0">
+<description>Number of out-of-sample forecasts</description>
+  </param>
+  <param name="Nrep" type="int" default="1e+06">
+<description>Total number of replications</description>
+  </param>
+  <param name="burn" type="int" min="0" max="99" default="10">
+<description>Percentage of burn-in draws</description>
+  </param>
+  <param name="verbosity" type="int" min="1" max="2" default="1">
+<description>Verbosity</description>
+  </param>
+  <param name="show_progress" type="bool" default="1">
+<description>Show overall progress</description>
+  </param>
+  <param name="do_plot" type="bool" default="1">
+<description>Plot graphs?</description>
+  </param>
+ </params>
+<code>/*
+GUI-based function to carry out BMA analysis.
+Function is a wrapper to bundle-based BMA() interface.
+*/
+bundle Options
+string Y_name = argname(Y)
+series @Y_name = Y
+scalar Options[&quot;model_prior&quot;] = model_prior
+scalar Options[&quot;avg_model_size&quot;] = avg_model_size
+scalar Options[&quot;alpha&quot;] = alpha
+scalar Options[&quot;Nrank&quot;] = Nrank
+scalar Options[&quot;g_type&quot;] = g_type
+scalar Options[&quot;do_joint&quot;] = do_joint
+scalar Options[&quot;Npredict&quot;] = Npredict
+scalar Options[&quot;Nrep&quot;] = Nrep
+scalar Options[&quot;burn&quot;] = burn
+scalar Options[&quot;verbosity&quot;] = verbosity
+scalar Options[&quot;show_progress&quot;] = show_progress
+scalar Options[&quot;do_plot&quot;] = do_plot
+return BMA(@Y_name, X_list, Options)
+</code>
+</gretl-function>
+<gretl-function name="BMA_OldStyle" type="bundle">
+ <params count="11">
+  <param name="big_list" type="list">
+<description>List of all variables (Y must be the first one!!!)</description>
+  </param>
+  <param name="acc_type" type="int" min="1" max="2" default="1">
+<description>Model prior</description>
+<labels count="2">
+"Binomial" "Binomial-Beta" </labels>
+  </param>
+  <param name="av_model_size" type="scalar" min="0" default="1">
+<description>Prior average model size</description>
+  </param>
+  <param name="alpha" type="scalar" min="0" max="1" default="0.6">
+<description>Significance level for the initial model</description>
+  </param>
+  <param name="l_rank" type="int" min="2" default="4">
+<description>Number of the top ranked models</description>
+  </param>
+  <param name="g_type" type="int" min="1" max="5" default="1">
+<description>g-prior type</description>
+<labels count="5">
+"Benchmark prior" "Unit Information Prior (g-UIP)" "Risk Inflation Criterion (g-RIC)" "Hannan and Quinn HQC" "Root of g-UIP" </labels>
+  </param>
+  <param name="do_joint" type="int" min="0" max="2" default="0">
+<description>Jointness analysis</description>
+<labels count="3">
+"None" "Ley-Steel Measure" "Doppelhofer-Weeks Measure" </labels>
+  </param>
+  <param name="h_predict" type="int" min="0" default="0">
+<description>Number of out-of-sample forecasts</description>
+  </param>
+  <param name="Nrep" type="int" default="1e+06">
+<description>Total number of replications</description>
+  </param>
+  <param name="burn" type="int" min="0" max="99" default="10">
+<description>Percentage of burn-in draws</description>
+  </param>
+  <param name="verbosity" type="int" min="1" max="2" default="1">
+<description>Verbosity</description>
+  </param>
+ </params>
+<code>/*
+Function for backward compatibility
+*/
+bundle OldStyle
+matrix big_list_m = big_list
+if cols(big_list_m) &gt;= 2
+  string Y_name = varname(big_list_m[1])
+  series @Y_name = big_list[1]
+  OldStyle = BMA_GUI(@Y_name, big_list-big_list[1], acc_type, av_model_size, alpha, l_rank, g_type, do_joint, h_predict, Nrep, burn, verbosity)
+else
+  funcerr &quot;BMA needs at least one intenpendent variable.&quot;
+endif
+return OldStyle
+</code>
+</gretl-function>
+<gretl-function name="BMA_Plot" type="void" pkg-role="bundle-plot">
+ <params count="1">
+  <param name="MODEL" type="bundleref"/>
+ </params>
+<code>/*
+BMA result bundle plot function.
+*/
+string legend, output, basename, xtics
+if $sysinfo.gui_mode
+  basename = &quot;display&quot;
+else
+  basename = strftime($now[1], &quot;%Y%m%d%H%M%S&quot;)
+endif
+# Heatmap for variable inclusion
+BMA_heatmap(MODEL, &quot;inclusions&quot;, basename)
+# Heatmap for jointness
+if MODEL.do_joint
+  BMA_heatmap(MODEL, &quot;jointness&quot;, basename)
+endif
+# Models size distribution
+plotmat = mreverse(MODEL.mod_sizes, 1)
+output = basename
+if !$sysinfo.gui_mode
+  output = output ~ &quot;-MSD.plt&quot;
+endif
+if rows(plotmat) &lt; 20
+  xtics = &quot;set xtics 1&quot;
+else
+  xtics = &quot;&quot;
+endif
+if MODEL.mod_size_av &gt; MODEL.av_model_size
+  legend = &quot;left&quot;
+else
+  legend = &quot;right&quot;
+endif
+plot plotmat
+  options with-lp fit=none
+  printf &quot;%s&quot;, xtics
+  printf &quot;set title \&quot;%s\&quot;&quot;, &quot;Model Size Distribution&quot;
+  printf &quot;set xlabel \&quot;%s\&quot;&quot;, &quot;Model Size&quot;
+  printf &quot;set ylabel \&quot;%s\&quot;&quot;, &quot;Density&quot;
+  printf &quot;set key %s top&quot;, legend
+end plot --output=@output
+# Models size CDF
+plotmat = MODEL.models_probs_cdf
+output = basename
+if !$sysinfo.gui_mode
+  output = output ~ &quot;-CDF.plt&quot;
+endif
+if rows(plotmat) &lt; 20
+  xtics = &quot;set xtics 1&quot;
+else
+  xtics = &quot;&quot;
+endif
+plot plotmat
+  options with-line fit=none
+  literal set grid
+  printf &quot;%s&quot;, xtics
+  printf &quot;set title \&quot;%s\&quot;&quot;, &quot;CDF of Model Size&quot;
+  printf &quot;set xlabel \&quot;%s\&quot;&quot;, &quot;Number of Models&quot;
+  printf &quot;set ylabel \&quot;%s\&quot;&quot;, &quot;Posterior Probability Mass&quot;
+end plot --output=@output
+# Predictive results
+if MODEL.h_predict
+  plotmat = MODEL.prediction[,1:2]
+  bars = MODEL.prediction[,2:3]
+  cnameset(plotmat, cnameget(MODEL.prediction)[1:2])
+  output = basename
+  if !$sysinfo.gui_mode
+    output = output ~ &quot;-predict.plt&quot;
+  endif
+  xtics = &quot;(&quot;
+  loop i=1..MODEL.h_predict --quiet
+    xtics += sprintf(&quot;\&quot;%s\&quot; %d&quot;, rnameget(MODEL.prediction)[i], i)
+    if i == MODEL.h_predict
+      xtics += sprintf(&quot;)&quot;)
+    else
+      xtics += sprintf(&quot;, &quot;)
+    endif
+  endloop
+  plot plotmat
+    options time-series with-lines
+    options with-line fit=none
+    options band=bars,1 band-style=bars
+    printf &quot;set title \&quot;%s\&quot;&quot;, &quot;Predictive results (with +/- one standard deviations as bars)&quot;
+    printf &quot;set xlabel \&quot;%s\&quot;&quot;, &quot;Observation&quot;
+    printf &quot;set xtics %s&quot;, xtics
+  end plot --output=@output
+endif
+</code>
+</gretl-function>
+<gretl-function name="BMA_parse" type="string" private="1">
+ <params count="6">
+  <param name="M" type="bundleref"/>
+  <param name="Y" type="series"/>
+  <param name="Y_name" type="string"/>
+  <param name="X_list" type="list"/>
+  <param name="av_model_size" type="scalar"/>
+  <param name="l_rank" type="scalar"/>
+ </params>
+<code>/*
+Function parses given list of variables end checks several conditions:
+M				-	pointer to the bundle
+Y				-	dependent variable
+Y_name			-	name of dependent variable
+X_list			-	list of given independent variables
+*av_model_size	-	pointer to the scalar with prior average model size
+*l_rank			-	pointer to the scalar with number of models in ranking
+Returns: string err holding the first error found in given dataset
+*/
+# Local variables
+scalar k = nelem(X_list)
+string err = &quot;&quot;
+# We check if given X_list does not include Y
+if inlist(X_list, Y_name) != 0
+  X_list -= X_list[inlist(X_list, Y_name)]
+  k -= 1
+  print &quot;Dependent variable was removed from the X list.&quot;
+endif
+# We check if given X_list does not include const
+if inlist(X_list, const) != 0
+  X_list -= const
+  k -= 1
+  print &quot;Const was removed from the X list.&quot;
+endif
+# We check if given variables are not co-linear
+/*
+if force_dof_lack == 0
+  ols Y X_list const --quiet
+  if $ncoeff &lt; k + 1
+    X_list = $xlist - const
+    print &quot;Some of the indenpendent variables were colinear and were dropped.&quot;
+  endif
+endif
+*/
+# We check if average model size is within 0 and K
+if av_model_size &lt;= 0 || av_model_size &gt;= k
+  err = &quot;Average model size should be greater than 0 and lower than K&quot;
+  return err
+endif
+# We check if number of models in ranking is not greater than 2^K (model space)
+if l_rank &gt; 2^k
+  err = &quot;Number of the top ranked models cannot be greater than 2^K (space of parameters)&quot;
+  return err
+endif
+matrix M.X_list = X_list
+return err
+</code>
+</gretl-function>
+<gretl-function name="BMA_initial_model" type="void" private="1">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+Function creates list of variables for the initial model.
+Local variables:
+Y		- dependent variable
+max_k	- number of given indenpendent variables
+X_list2	- M.X_list in a form of list (not matrix)
+*/
+# Starting values of the local variables
+series Y = M.Y
+list X_list2 = M.X_list
+list last = {}
+scalar max_k = cols(M.var_numbers2)
+#M.var_numbers2 = transp(msortby(transp(M.var_numbers2), 2))
+if M.alpha == 0 # Empty model (const only)
+  M.k_new = 0
+elif M.alpha == 1	# Trully random model
+  M.k_new = randint(0, max_k)
+  if M.k_new &gt; 0
+    if M.k_new == max_k # All variables in the starting model, nothing to draw
+      last = X_list2
+    else
+      loop for i=1..M.k_new --quiet
+        scalar accept = 0
+        #set loop_maxiter 99999 # This should be set if we cannot construct random list
+        loop while accept == 0 --quiet
+          cand = transp(M.var_numbers2)[1, randint(1, max_k)]
+          if inlist(last, cand) == 0
+            last += cand
+            accept = 1
+          endif
+        endloop
+      endloop
+      # We have to sort variables in created list
+      matrix last_mat = zeros(2,M.k_new)
+      last_mat[1,] = last
+      loop for i=1..M.k_new --quiet
+        loop for j=1..max_k --quiet
+          if last_mat[1,i] == transp(M.var_numbers2)[1,j]
+            last_mat[2,i] = transp(M.var_numbers2)[2,j]
+            break
+          endif
+        endloop
+      endloop
+      last_mat = transp(msortby(transp(last_mat),2))
+      last = last_mat[1,]
+    endif
+  endif
+else
+  # Model reduced at given M.alpha (classic OLS)
+  ols Y const X_list2 --quiet
+  omit --auto=M.alpha --silent
+  last = $xlist
+  last -= const
+  M.k_new = $ncoeff-1
+endif
+M.k_old = nelem(last)
+matrix M.StartModel = last
+# If we have at least 1 variables, we construct starting model
+if M.k_new
+  # Setting 1 for variables in current draw
+  loop i=1..cols(M.StartModel) --quiet
+    loop j=1..M.k --quiet
+      if M.var_numbers2[1,j] == M.StartModel[i]
+        M.mod_struct_new[M.var_numbers2[2,j]-1] = 1
+        break
+      endif
+    endloop
+  endloop
+endif
+</code>
+</gretl-function>
+<gretl-function name="BMA_gprior" type="scalar" private="1">
+ <params count="2">
+  <param name="k" type="scalar"/>
+  <param name="type" type="int"/>
+ </params>
+<code>/*
+Function computes g-prior:
+*k	 - pointer to scalar holding numer of indenpendent variables
+type - type of g-prior to be computed
+Returs: scalar gprior
+*/
+# Starting value
+scalar gprior = 0
+if type == 1 # Benchmark prior
+  if $nobs &lt; k^2
+    gprior = 1/k^2
+  else
+    gprior = 1/$nobs
+  endif
+elif type == 2 # Unit Information Prior (g-UIP)
+  gprior = 1/$nobs
+elif type == 3 # Risk Inflation Criterion (g-RIC)
+  gprior = 1/k^2
+elif type == 4 # Hannan and Quinn HQC
+  gprior = 1/(log($nobs))^3
+elif type == 5 # Root of g-UIP
+  gprior = sqrt(1/$nobs)
+endif
+return gprior
+</code>
+</gretl-function>
+<gretl-function name="BMA_jointness_measure" type="matrix" private="1">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+Function computes jointness measure based on given jointness matrix.
+Local variables:
+var_prob - vector with posterior probability of indenpendent variables
+a, b, c, d	 - scalars according to
+Paul Hofmarcher, Jesus Crespo Cuaresma, Bettina Grün, Stefan Humer, Mathias Moser, Bivariate jointness measures in Bayesian Model Averaging: Solving the conundrum, Journal of Macroeconomics, Volume 57, 2018, Pages 150-165, ISSN 0164-0704, DOI: 10.1016/j.jmacro.2018.05.005.
+#
+Returns: matrix with computed jointness measure
+*/
+scalar a
+scalar b
+scalar c
+scalar d
+scalar N
+scalar loghuge = 999 # proxy for infty
+matrix var_prob = M.Post_Results[,1]
+matrix jointness_measure = zeros(rows(M.jointness_m), cols(M.jointness_m))
+loop i=1..M.k --quiet
+  loop j=i+1..M.k --quiet
+    # We compute a,b,c,d
+    a = M.jointness_m[i,j] # p(i &amp; j)
+    b = var_prob[i] - a	   # p(i &amp; ~j)
+    c = var_prob[j] - a	   # p(~i &amp; j)
+    d = 1 - b - c - a	   # p(~i &amp; ~j)
+    N = a + b + c + d
+    if M.do_joint == 4 # Ley-Steel Measure (LS2)
+      if a == 1
+        jointness_measure[i,j] = loghuge
+      elif a == 0
+        jointness_measure[i,j] = -loghuge
+      else
+        jointness_measure[i,j] = log(a/(b + c))
+      endif
+    elif M.do_joint == 2 # Doppelhofer-Weeks Measure (DW2)
+      if b * c == 0
+        jointness_measure[i,j] = loghuge
+      else
+        if a * d == 0
+          jointness_measure[i,j] = -loghuge
+        else
+          if (a*d)/(b*c) &lt;= 0
+            jointness_measure[i,j] = -loghuge
+          else
+            jointness_measure[i,j] = log((a*d)/(b*c))
+          endif
+        endif
+      endif
+    elif M.do_joint == 3 # Ley-Steel Measure (LS1)
+      jointness_measure[i,j] = log(a/(a + b + c))
+    elif M.do_joint == 1 # Doppelhofer-Weeks Measure (DW1)
+      if a == 0 &amp;&amp; (a + b)*(a + c) != 0
+        jointness_measure[i,j] = 0
+      elif a == 0 &amp;&amp; (a + b)*(a + c) &gt;= 0
+        jointness_measure[i,j] = loghuge
+      elif a == 0 &amp;&amp; (a + b)*(a + c) &lt; 0
+        jointness_measure[i,j] = -loghuge
+      else
+        jointness_measure[i,j] = log(a*N/((a + b)*(a + c)))
+      endif
+    elif M.do_joint == 5 # Strachan Measure
+      jointness_measure[i,j] = (a+b)/N * (a+c)/N * log(a*N/(b*c))
+    elif M.do_joint == 6 # Yule's Q (YQ)
+      jointness_measure[i,j] = (a*d - b*c) / (a*d + b*c)
+    elif M.do_joint == 7 # Modified Yule's Q (YQM)
+      jointness_measure[i,j] = ((a+0.5)*(d+0.5)-(b+0.5)*(c+0.5)) / ((a+0.5)*(d+0.5)+(b+0.5)*(c+0.5)-0.5)
+    endif
+  endloop
+endloop
+jointness_measure = jointness_measure + upper(jointness_measure)'
+jointness_measure[diag] = NA
+cnameset(jointness_measure, M.all_names_sp_new)
+rnameset(jointness_measure, M.all_names_sp_new)
+return jointness_measure
+</code>
+</gretl-function>
+<gretl-function name="BMA_jointness_pairs" type="void" private="1">
+ <params count="6">
+  <param name="MODE" type="string"/>
+  <param name="n_pairs" type="scalarref"/>
+  <param name="var_numbers" type="matrix"/>
+  <param name="shift" type="scalarref"/>
+  <param name="pairs" type="matrixref"/>
+  <param name="jointness_m" type="matrix"/>
+ </params>
+<code>/*
+Function for generating vector with pairs of hightly releated variables
+and jointness statistics for these pairs:
+MODE			- string with type of relation between variables
+*n_pairs		- pointer to the scalar with number of pairs of related variables
+*var_numbers	- pointer to the matrix holding numbers of variables
+*shift		- pointer to the scalar holding total number of previous pairs (shift in the &quot;pairs&quot; vector)
+*pairs		- pointer to the vector holding (ordered) pairs of hightly related variables
+jointness_m	- matrix with counts for every pair
+*/
+matrix pairs_related = pairs[shift + 1 : shift + n_pairs, ]
+shift += n_pairs
+string pair_names = &quot;&quot;
+loop i=1..n_pairs --quiet
+  pair_names += &quot; &quot; ~ cnameget(jointness_m, pairs_related[i,2]) ~ &quot;,&quot; ~ cnameget(jointness_m, pairs_related[i,3])
+endloop
+matrix pairs_related = pairs_related[,1]
+loop i=1..nelem(pairs_related) --quiet
+  if ok(pairs_related[i]) &amp;&amp; abs(pairs_related[i]) == 999
+    pairs_related[i] = sgn(pairs_related[1]) * 1/0
+  endif
+endloop
+printf &quot;\n%s\n&quot;, MODE
+rnameset(pairs_related, pair_names)
+eval pairs_related
+</code>
+</gretl-function>
+<gretl-function name="BMA_forecast" type="void" private="1">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+This function computes forecast of Y (average mean and average standard deviation):
+*/
+# Mean and precision
+if M.k_new == 0
+  M.Yhat = M.y_mean
+  precision = (($nobs - 1) / M.dj_new) * ((1 + 1/$nobs) .^ -1)
+else
+  M.Yhat = M.X_new_predict * M.bhat[2:M.k_new+1] + M.y_mean
+  precision = (($nobs - 1) / M.dj_new) * ((1 + 1/$nobs + M.scaling_f[3] * diag(qform(M.X_new_predict, M.ZtZinv_new))) .^ -1)
+endif
+# Variance
+M.Yhat_var = ($nobs - 1) / (precision * ($nobs - 3)) + M.Yhat .^ 2
+</code>
+</gretl-function>
+<gretl-function name="BMA_summary" type="void" private="1">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+We summarise some BMA results and deleting redundand items from the returned bundle
+*/
+BMA_print_status(&quot;Summarizing&quot;)
+scalar tmps, factor, k
+string title
+matrix percents1, percents2
+scalar NORM = M.Nrep - M.Nburn
+# Normalisations
+M.mod_rank_prob = exp(M.mod_rank_prob) / sum(exp(M.mod_rank_prob))
+M.Numerical_Likelihood = M.mod_nume_prob / NORM
+M.Post_Results = transp(M.var_prob / NORM)
+M.bhat_avg = M.bhat_avg / NORM
+M.bvar_avg = M.bvar_avg / NORM
+# Average model size (including matrix for plot)
+M.mod_size = sum(M.mod_sizes[,1] .* M.mod_sizes[,2])
+M.mod_sizes[,2] = M.mod_sizes[,2] / NORM
+M.mod_size_av = sum(M.mod_sizes[,1] .* M.mod_sizes[,2])
+M.mod_size_sd = sqrt(sum((M.mod_sizes[,1] - M.mod_size_av) .^2 .* M.mod_sizes[,2]))
+M.mod_sizes = M.mod_sizes ~ zeros(rows(M.mod_sizes),1)
+loop i=1..rows(M.mod_sizes) --quiet
+  k = M.mod_sizes[i,1]
+  M.mod_sizes[i,3] = bincoeff(M.k,k) * exp(M.model_prior_log[i])
+endloop
+M.mod_size_sd_prior = sqrt(sum((M.mod_sizes[,1] - M.av_model_size) .^2 .* M.mod_sizes[,3]))
+# Models size distribution
+title = &quot;Size Posterior Prior&quot;
+cnameset(M.mod_sizes, title)
+# Models size CDF
+M.models_probs_cum = M.models_probs_cum / NORM
+if M.post_n_models_accepted &lt; 100
+  factor = 1
+else
+  factor = int(M.post_n_models_accepted/100)
+endif
+M.models_probs_cdf = seq(1, M.post_n_models_accepted, factor)'
+M.models_probs_cdf = M.models_probs_cum[M.models_probs_cdf] ~ M.models_probs_cdf
+# Best 100 models
+percents1 = { 5; 25; 50; 75; 100 }
+percents1 = selifr(percents1, percents1 .&lt; M.post_n_models_accepted)
+percents1 = percents1 ~ zeros(nelem(percents1))
+if rows(percents1) &gt; 0
+  loop i=1..rows(percents1) --quiet
+    percents1[i,2] = M.models_probs_cum[percents1[i,1]]
+  endloop
+  percents1 = selifr(percents1, percents1[,2] .&gt; 0)
+endif
+# We look for certain percentiles
+percents2 = { 50; 75; 90; 95; 99 }
+if nelem(percents1) &gt; 0
+  percents2 = selifr(percents2, percents2 .&gt; percents1[end,end])
+  tmps = percents1[rows(percents1),1]
+else
+  tmps = 1
+endif
+percents2 = zeros(nelem(percents2)) ~ percents2
+nr = 1
+loop i=tmps..M.post_n_models_accepted-1 --quiet
+  if 100*M.models_probs_cum[i] &gt;= percents2[nr,2]
+    percents2[nr,1] = i
+    percents2[nr++,2] = M.models_probs_cum[i]
+  endif
+  if nr == rows(percents2)+1 || nr &gt; M.post_n_models_accepted
+    break
+  endif
+endloop
+percents2 = selifr(percents2, percents2[,1] .&gt; 0)
+M.models_probs_percents = percents2 | { M.post_n_models_accepted , 1 }
+if nelem(percents1) &gt; 0
+  tmps = sum(contains(percents2[,1], percents1[,1]))
+  if tmps &gt; 0
+    M.models_probs_percents = M.models_probs_percents[tmps+1:end,]
+  endif
+  M.models_probs_percents = percents1 | M.models_probs_percents
+endif
+# We construct Post_Results matrix
+matrix bvar = sqrt(M.bvar_avg - M.bhat_avg.^2)
+matrix tmp = M.bhat_avg' ~ bvar'
+M.Post_Results = M.Post_Results ~ tmp
+tmp = M.Post_Results[,2] ./ M.Post_Results[,1]
+M.Post_Results = M.Post_Results ~ tmp
+tmp = sqrt((M.Post_Results[,3] .* M.Post_Results[,3] .+ M.Post_Results[,2] .* M.Post_Results[,2]) ./ M.Post_Results[,1] .- M.Post_Results[,4] .* M.Post_Results[,4])
+M.Post_Results = M.Post_Results ~ tmp
+title = &quot;PIP Mean Std.Dev. Cond.Mean Cond.Std.Dev&quot;
+cnameset(M.Post_Results, title)
+rnameset(M.Post_Results, M.all_names_sp)
+# Forecasts
+if M.h_predict
+  M.Yhat_avg = M.Yhat_avg / NORM
+  M.Yhat_var_avg = M.Yhat_var_avg / NORM
+  M.Yhat_var_avg = sqrt(M.Yhat_var_avg - M.Yhat_avg .^ 2)
+  M.prediction = M.Y_mat_predict ~ M.Yhat_avg ~ M.Yhat_var_avg
+  cnameset(M.prediction, M.Y_name ~ &quot; Mean Std.Dev.&quot;)
+  rnameset(M.prediction, M.predict_obs_names)
+endif
+# Jointess analysis
+if M.do_joint
+  # We must clean up principal diagonal
+  M.jointness_m[diag] = NA
+  M.jointness_m = M.jointness_m / NORM
+  M.jointness_m = M.jointness_m + upper(M.jointness_m)'
+  cnameset(M.jointness_m, M.all_names_sp)
+  rnameset(M.jointness_m, M.all_names_sp)
+endif
+# Cleaning up the bundle
+delete M.show_progress
+delete M.var_numbers2
+delete M.big_mat
+delete M.ZtZinv_new
+delete M.k_new
+delete M.lprob_new
+delete M.X_new_num
+delete M.X_new
+delete M.ZtZinv_old
+delete M.k_old
+delete M.lprob_old
+delete M.X_old_num
+delete M.dj_new
+delete M.dj_old
+delete M.X_new_predict
+delete M.X_old_predict
+delete M.y_dem_sq
+delete M.y_mean
+delete M.yMy
+delete M.mod_struct_new
+delete M.var_prob
+delete M.a
+delete M.b
+delete M.c
+delete M.bhat
+delete M.bvar
+delete M.XtY
+delete M.XtXinv
+delete M.bhat_avg
+delete M.bvar_avg
+if M.h_predict
+  delete M.big_mat_predict
+  delete M.big_mat_dem_predict
+  delete M.Y_mat_predict
+  delete M.Yhat_avg
+  delete M.Yhat_var_avg
+  delete M.predict_obs_names
+  delete M.Yhat
+endif
+delete M.acc_type
+delete M.g_type
+delete M.bhat_old
+delete M.bvar_old
+delete M.big_cross
+delete M.big_cross_const
+delete M.big_mat_dem
+delete M.big_mat_dem_const
+delete M.big_mat_const
+delete M.mod_rank_dec
+delete M.mod_struct_old
+delete M.scaling_f
+delete M.var_numbers_const
+delete M.X_list
+delete M.XtY_cross_const
+delete M.Y_mat
+delete M.all_names_sp
+delete M.models_probs_cum
+delete M.progress
+delete M.empty_model_count
+BMA_print_status(null, 1, 10)
+</code>
+</gretl-function>
+<gretl-function name="BMA_main" type="void" private="1">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+This is main BMA function with complete MC3 simulation procedure.
+*/
+# Local variables
+BMA_print_status(&quot;MC3 setup&quot;)
+scalar percentage = M.progress # percentage of progress of MCMC
+string model_id # string containing model id (0-1 'image')
+scalar model_nr	# iteration number under which model's data are stored in matrices/arrays
+scalar model_nr_old
+bundle known_models
+matrix models_counter = zeros(M.Nrep+1) # this is because starting model has labeled as 1
+matrix models_lprob = zeros(M.Nrep+1)
+matrices models_estimates = array(M.Nrep+1)
+matrices models_structure = array(M.Nrep+1)
+matrix mod_struct_draw
+if M.h_predict &gt; 0
+  matrices models_forecasts = array(M.Nrep+1)
+else
+  matrices models_forecasts = null
+endif
+# Sample setting for prediction
+if M.h_predict &gt; 0
+  smpl 1 M.last_obs
+endif
+##########################
+# Part 1: Starting model #
+##########################
+# We estimate starting model and construct starting mod_rank_struct and mod_rank
+BMA_initial_model(&amp;M)
+BMA_estimate(&amp;M)
+M.lprob_old = M.lprob_new
+M.mod_struct_old = M.mod_struct_new
+model_id = sprintf(&quot;%d&quot;, M.mod_struct_old)[1:end-1] # we trim the &quot;\n&quot; at the end !!!
+model_nr = M.Nrep+1
+model_nr_old = model_nr
+known_models[model_id] = model_nr
+models_structure[model_nr] = M.mod_struct_new
+models_lprob[model_nr] = M.lprob_new
+models_estimates[model_nr] = M.bhat ~ M.bvar
+if M.h_predict &gt; 0
+  BMA_forecast(&amp;M)
+  models_forecasts[model_nr] = M.Yhat ~ M.Yhat_var
+endif
+BMA_print_status(null, 1, 12)
+############################################################
+# Part 2: Markov Chain Monte Carlo Model Composition - MC3 #
+############################################################
+if M.show_progress
+  BMA_print_status(&quot;MC3 overall progress&quot;, 0, 0, 1)
+else
+  BMA_print_status(&quot;MC3&quot;)
+endif
+loop rep=1..M.Nrep --quiet
+  # Now we draw the number of candidate variable
+  scalar potential_var = randint(0, M.k)
+  # Now we modify the list of variables (remove an existing variable or add a new one)
+  if potential_var &gt; 0
+    mod_struct_draw = M.mod_struct_old
+    mod_struct_draw[potential_var] = !mod_struct_draw[potential_var]
+    M.k_new = sum(mod_struct_draw)
+    M.mod_struct_new = mod_struct_draw
+    model_id = sprintf(&quot;%d&quot;, mod_struct_draw)[1:end-1]
+    if inbundle(known_models, model_id)
+      model_nr = known_models[model_id]
+      M.lprob_new = models_lprob[model_nr]
+    else
+      # We estimate newly drawn model, do out-of-sample forecasts and save results
+      BMA_estimate(&amp;M)
+      model_nr = rep
+      known_models[model_id] = model_nr
+      models_structure[model_nr] = M.mod_struct_new
+      models_lprob[model_nr] = M.lprob_new
+      models_estimates[model_nr] = M.bhat ~ M.bvar
+      if M.h_predict &gt; 0
+        BMA_forecast(&amp;M)
+        models_forecasts[model_nr] = M.Yhat ~ M.Yhat_var
+      endif
+    endif
+    # Now we decide if to accept the new model
+    if M.lprob_new-M.lprob_old &gt; log(randgen1(u,0,1))
+      M.lprob_old = M.lprob_new
+      M.mod_struct_old = M.mod_struct_new
+      M.k_old = M.k_new
+      model_nr_old = model_nr
+    endif
+  endif
+  # Now we count models
+  if rep &gt; M.Nburn
+    models_counter[model_nr_old] += 1
+  endif
+  # Flushing output - showing progress
+  if M.show_progress &amp;&amp; rep == percentage
+    BMA_show_progress(rep, &amp;percentage, M.progress, M.Nrep)
+  endif
+endloop
+if !M.show_progress
+  BMA_print_status(null, 1, 18)
+endif
+# Now we collect results (averaging and rankings)
+BMA_collect_results(&amp;M, &amp;known_models, &amp;models_counter, &amp;models_lprob, &amp;models_estimates, &amp;models_structure, &amp;models_forecasts)
+</code>
+</gretl-function>
+<gretl-function name="BMA_setup" type="bundle" private="1">
+ <params count="16">
+  <param name="Y" type="series" const="true"/>
+  <param name="X_list_m" type="matrix"/>
+  <param name="acc_type" type="int" min="1" max="2"/>
+  <param name="av_model_size" type="scalar" min="0"/>
+  <param name="alpha" type="scalar" min="0" max="1"/>
+  <param name="l_rank" type="int" min="2"/>
+  <param name="g_type" type="int" min="1" max="5"/>
+  <param name="do_joint" type="int" min="0" max="7"/>
+  <param name="h_predict" type="int" min="0"/>
+  <param name="Nrep" type="int"/>
+  <param name="burn" type="int" min="0" max="99"/>
+  <param name="verbosity" type="int" min="1" max="2"/>
+  <param name="Y_name" type="string"/>
+  <param name="show_progress" type="bool"/>
+  <param name="Norig" type="int"/>
+  <param name="do_plot" type="bool"/>
+ </params>
+<code>/*
+This function creates BUNDLE holding all BMA information.
+*/
+BMA_print_status(&quot;BMA setup&quot;)
+bundle M
+scalar tmp
+list X_list = X_list_m
+list big_list = Y X_list
+list big_list_const = Y const X_list
+###############################################
+# Global variables (given by user of default) #
+###############################################
+series M.Y = Y
+matrix M.X_list = X_list
+scalar M.acc_type = acc_type
+scalar M.av_model_size = av_model_size
+scalar M.alpha = alpha
+scalar M.l_rank = l_rank
+scalar M.g_type = g_type
+scalar M.do_joint = do_joint
+scalar M.h_predict = h_predict
+scalar M.Nrep = Nrep
+scalar M.burn = burn
+scalar M.verbosity = verbosity
+scalar M.show_progress = show_progress
+if ok(Norig)
+  scalar M.Norig = Norig
+endif
+scalar M.do_plot = do_plot
+###################
+# Local variables #
+###################
+matrix M.StartModel = {} # list with variables selected in starting model
+matrix M.X_list = X_list # X_list
+scalar M.k = nelem(X_list) # total number of indenpendent variables
+scalar M.Nburn = round(burn/100*Nrep) # number of burn-in draws
+matrix M.var_numbers = big_list # vector containing numbers of all variables (including Y) in the dataset (not in the procedure)
+matrix M.var_numbers2 = transp(msortby(transp(M.var_numbers[2:1+M.k] | seq(2,1+M.k)), 2)) # vector containing the dataset numbers of all variables and their order in the 'big_list'
+matrix M.big_mat = { big_list } # matrix of all variables (including Y)
+matrix M.big_mat_dem = stdize(M.big_mat, -1) # matrix of all demeaned variables (including Y)
+matrix M.var_numbers_const = big_list_const # vector containing numbers of all variables (including Y) in the dataset (not in the procedure)
+matrix M.var_numbers2_const = transp(msortby(transp(M.var_numbers_const[2:2+M.k] | seq(2,2+M.k)), 2)) # vector containing the dataset numbers of all variables and their order in the 'big_list'
+matrix M.big_mat_const = { big_list_const } # matrix of all variables (including Y)
+matrix M.big_mat_dem_const = stdize(M.big_mat_const, -1) # matrix of all demeaned variables (including Y)
+M.big_mat_dem_const[,2] = 1 # We need substitude zeros with ones (the former because of stdize() function)
+scalar M.post_n_models = 0
+scalar M.post_n_models_accepted = 0
+scalar M.mod_size_sd_prior = 0 # Prior model size standard deviation
+# In case of &quot;out-of-sample&quot; prediction
+if h_predict &gt; 0
+  scalar M.last_obs = $nobs-h_predict # number of &quot;out-of-sample&quot; forecasts
+  matrix M.big_mat_predict = M.big_mat_const[M.last_obs+1:$nobs,] # &quot;out-of-sample&quot; matrix of all variables (including Y)
+  matrix M.big_mat_dem_predict = M.big_mat_dem_const[M.last_obs+1:$nobs,] # &quot;out-of-sample&quot; matrix of all demeaned variables (including Y)
+  matrix M.Y_mat_predict = M.big_mat_predict[,1] # &quot;out-of-sample&quot; matrix of the dependent variable
+  matrix M.Yhat = zeros(h_predict,1) # vector of Y predictions in current draw
+  matrix M.Yhat_var = zeros(h_predict) # vector of Y variances of predictions in current draw
+  matrix M.Yhat_avg = zeros(h_predict,1) # vector of Y predictions - average
+  matrix M.Yhat_var_avg = zeros(h_predict,1) # predicion variance
+  matrix M.prediction = {} # matrix with prediction results
+  strings M.predict_obs_names = obslabel(seq(M.last_obs + 1, $nobs)) # obs labels for forecasts
+  smpl 1 M.last_obs # setting sample
+  matrix M.big_mat = M.big_mat[1:M.last_obs,] # big_mat for limited sample
+  matrix M.big_mat_dem = stdize(M.big_mat, -1) # big_mat_dem for limited sample
+  matrix M.big_mat_const = M.big_mat_const[1:M.last_obs,] # big_mat for limited sample
+  matrix M.big_mat_dem_const = stdize(M.big_mat_const, -1) # big_mat_dem for limited sample
+  M.big_mat_dem_const[,2] = 1
+else
+  matrix M.big_mat_dem_predict = {}
+  matrix M.Yhat_avg = {}
+  matrix M.Yhat_var_avg = {}
+  matrix M.Y_mat_predict = {}
+  strings M.predict_obs_names = array(0)
+endif
+# New model
+matrix M.ZtZinv_new = {} # inverse of Z'Z (X's without constant term)
+scalar M.k_new = 0 # number of variables in the current (new) model
+scalar M.lprob_new = 0 # scalar with natural logarithm of marginal density of the new model
+matrix M.X_new_num = {} # vector containing numbers of variables in the new model
+matrix M.X_new = {} # the X matrix for the current (new) model (demeaned)
+# Old model
+matrix M.ZtZinv_old = {} # old inverse of Z'Z (X's without constant term)
+scalar M.k_old = 0 # number of variables in the previous (old) model
+scalar M.lprob_old = 0 # scalar with natural logarithm of marginal density of the old model
+matrix M.X_old_num = {} # vector containing numbers of variables in the old model
+scalar M.dj_new = 0 # scalar M.needed for prediction precision computation
+scalar M.dj_old = 0 # scalar M.needed for prediction precision computation
+matrix M.X_new_predict = {} # &quot;out-of-sample&quot; the X matrix for the current (new) model (demeaned)
+matrix M.X_old_predict = {} # &quot;out-of-sample&quot; the X matrix for the previous (old) model (demeaned)
+matrix M.Y_mat = M.big_mat[,1] # matrix of the dependent variable
+matrix M.big_cross = M.big_mat_dem'M.big_mat_dem
+matrix M.big_cross_const = M.big_mat_dem_const'M.big_mat_dem_const
+scalar M.y_dem_sq = M.big_cross_const[1,1] # sum of squares of the demeaned Y
+matrix M.XtY_cross_const = M.big_mat_dem_const'M.Y_mat
+scalar M.y_mean = meanc(M.Y_mat) # mean of the Y
+scalar M.mod_size = 0 # size of models in MCMC (sum)
+scalar M.mod_size_av = 0 # Average size of models in MCMC
+scalar M.mod_size_sd = 0 # Standard deviaton of models size in MCMC
+scalar M.yMy = 0 # scalar M.for P_y computation
+matrix M.scaling_f = zeros(7,1) # vector containing the scaling factors
+matrix M.mod_struct_old = zeros(1,M.k) # 0-1 vector containing the structure of the old model
+matrix M.mod_struct_new = zeros(1,M.k) # 0-1 vector containing the structure of the current model
+matrix M.mod_rank_prob = zeros(l_rank,1) # probability of the models in ranking (analytical)
+matrix M.mod_nume_prob = zeros(l_rank,1) # probability of the models in ranking (numerical)
+matrices M.mod_rank_estimates = array(l_rank) # estimates of models in ranking
+matrices M.mod_rank = array(l_rank) # estimates of models in ranking
+matrix M.mod_rank_dec = zeros(l_rank) # Decimal representation of models in ranking
+strings M.all_names_sp_new = varnames(X_list)
+matrix M.bhat_old = {} # column vector containing the estimated coefficients for the old model
+matrix M.bvar_old = {} # column vector containing the variances of the coefficients for the old model
+matrix M.var_prob = zeros(1,M.k) # vector containing PIPs
+string M.all_names_sp = strsub(varname(X_list), &quot;,&quot;, &quot; &quot;) # string with names of all independent variables
+string M.Y_name = Y_name # string with name of denpendent variable
+# Jointness
+if do_joint
+  matrix M.jointness_m = zeros(M.k,M.k) # square matrix containing counts of coexistence (jointness) of every pair of indenpendent variables
+  strings M.jointess_measure_names = defarray(&quot;Doppelhofer-Weeks Measure (DW1)&quot;, &quot;Doppelhofer-Weeks Measure (DW2)&quot;, &quot;Ley-Steel Measure (LS1)&quot;, &quot;Ley-Steel Measure (LS2)&quot;, &quot;Strachan Measure (SM)&quot;, &quot;Yule's Q Measure (YQ)&quot;, &quot;Modified Yule's Q Measure (MYQ)&quot;)
+else
+  matrix M.jointness_m = {}
+endif
+# Model prior
+matrix M.model_prior_log = zeros(M.k+1)
+if acc_type == 1 # options for the prior
+  string M.prior_name = &quot;Binomial&quot;
+  scalar M.a = log(av_model_size/M.k)
+  scalar M.b = log(1 - av_model_size/M.k)
+  scalar M.c = 0
+  tmp = M.av_model_size/M.k
+  loop i=0..M.k --quiet
+    M.model_prior_log[i+1] = log(tmp^i * (1-tmp)^(M.k-i))
+  endloop
+else
+  string M.prior_name = &quot;Binomial-Beta&quot;
+  scalar M.a = 1
+  scalar M.b = (M.k - av_model_size)/av_model_size
+  scalar M.c = lngamma(M.a + M.b) - lngamma(M.a) - lngamma(M.b)
+  loop i=0..M.k --quiet
+    M.model_prior_log[i+1] = log((gammafun(i+1) * gammafun(M.k-i+M.b) / gammafun(1+M.k+M.b)) / (gammafun(M.a) * gammafun(M.b) / gammafun(M.a+M.b)))
+  endloop
+endif
+# For averaging
+matrix M.bhat = {} # column vector containing the estimated coefficients for the current model
+matrix M.bvar = {} # column vector containing the variances of the coefficients for the current model
+matrix M.XtY = {} # X'Y (part of OLS)
+matrix M.XtXinv = {} # inverse of X'X (part of OLS)
+matrix M.bhat_avg = zeros(1,M.k) # column vector containing average values of coefficients (over MCMC)
+matrix M.bvar_avg = zeros(1,M.k) # column vector containing average values of variances of the coefficients (over MCMC)
+matrix M.Numerical_Likelihood = {} # column vector containing numerical probabilities for models
+matrix M.Post_Results = {} # matrix with all posterior results
+matrix M.mod_sizes = {} # Vector with models size distribution
+matrix M.models_probs_percents = {} # CDF-like matrix for accepted models
+matrix M.models_probs_cdf = {} # accepted models CDF
+matrix M.models_probs_cum = {} # accepted models cumulation
+scalar M.empty_model_count = 0 # Counter for empty model
+# Setting scaling factors: g0, g1, g2, .5*log(g1), .5*(n-1), Y'Y
+matrix M.scaling_f = zeros(7,1) # vector containing the scaling factors
+# g0 (g-prior)
+M.scaling_f[1] = BMA_gprior(M.k, g_type)
+# g1 (g/(1+g))
+M.scaling_f[2] = M.scaling_f[1] / (1 + M.scaling_f[1])
+# g2 (1/(1+g))
+M.scaling_f[3] = 1 / (1 + M.scaling_f[1])
+# g1*y_sq
+M.scaling_f[4] = M.y_dem_sq * M.scaling_f[2]
+# .5*log(g1)
+M.scaling_f[5] = .5 * log(M.scaling_f[2])
+# .5*(n-1)
+M.scaling_f[6] = .5 * ($nobs - 1)
+# Y'Y (sum of squares of Y)
+M.scaling_f[7] = M.Y_mat'M.Y_mat
+if g_type == 1
+  string M.gtype = &quot;Benchmark prior&quot;
+elif g_type == 2
+  string M.gtype = &quot;Unit Information Prior (g-UIP)&quot;
+elif g_type == 3
+  string M.gtype = &quot;Risk Inflation Criterion (g-RIC)&quot;
+elif g_type == 4
+  string M.gtype = &quot;Hannan and Quinn HQC&quot;
+elif g_type == 5
+  string M.gtype = &quot;Root of g-UIP&quot;
+endif
+if verbosity
+  set warnings off
+endif
+# MC3 progress step
+scalar M.progress = floor(M.Nrep/100)
+BMA_print_status(null, 1, 12)
+return M
+</code>
+</gretl-function>
+<gretl-function name="BMA_show_progress" type="void" private="1">
+ <params count="4">
+  <param name="iter" type="scalar" const="true"/>
+  <param name="percentage" type="scalarref"/>
+  <param name="progress" type="scalar" const="true"/>
+  <param name="N" type="scalar" const="true"/>
+ </params>
+<code>/*
+Function prints overall progress
+*/
+printf &quot;%d%%\r&quot;, ceil(100 * iter/N)
+percentage += progress
+flush
+</code>
+</gretl-function>
+<gretl-function name="BMA_bcheck" type="string" private="1">
+ <params count="14">
+  <param name="UserOpts" type="bundle" const="true"/>
+  <param name="k" type="scalar"/>
+  <param name="acc_type" type="scalarref"/>
+  <param name="av_model_size" type="scalarref"/>
+  <param name="alpha" type="scalarref"/>
+  <param name="l_rank" type="scalarref"/>
+  <param name="g_type" type="scalarref"/>
+  <param name="do_joint" type="scalarref"/>
+  <param name="h_predict" type="scalarref"/>
+  <param name="Nrep" type="scalarref"/>
+  <param name="burn" type="scalarref"/>
+  <param name="verbosity" type="scalarref"/>
+  <param name="show_progress" type="scalarref"/>
+  <param name="do_plot" type="scalarref"/>
+ </params>
+<code>/*
+This function checks options bundle and returns error message in
+any problem found.
+Parameters:
+UserOpts - bundle with user-defined options for BMA
+k - number of independent variables
+*/
+string err = &quot;&quot;
+scalar err2
+bundle Options
+scalar arg_val
+string arg_name
+strings Integers = defarray(&quot;model_prior&quot;, &quot;Nrank&quot;, &quot;g_type&quot;, &quot;do_joint&quot;, &quot;Npredict&quot;, &quot;Nrep&quot;, &quot;burn&quot;, &quot;verbosity&quot;)
+strings Booleans = defarray(&quot;show_progress&quot;, &quot;do_plot&quot;)
+strings Scalars = defarray(&quot;avg_model_size&quot;, &quot;alpha&quot;)
+if $sysinfo.gui_mode
+  do_plot = 1
+  show_progress = 1
+else
+  do_plot = 0
+  show_progress = 0
+endif
+# We set the default Nrep conditional on k
+if k &lt;= 10
+  Nrep = 10000
+elif k &lt;= 15
+  Nrep = 20000
+elif k &lt;= 19
+  Nrep = 100000
+else
+  Nrep = 1e+06
+endif
+# Template bundle with default values
+scalar Options[&quot;model_prior&quot;] = 1
+scalar Options[&quot;avg_model_size&quot;] = k/2
+scalar Options[&quot;alpha&quot;] = 0.6
+scalar Options[&quot;Nrank&quot;] = xmin(2^(k-1), 40)
+scalar Options[&quot;g_type&quot;] = 1
+scalar Options[&quot;do_joint&quot;] = 0
+scalar Options[&quot;Npredict&quot;] = 0
+scalar Options[&quot;Nrep&quot;] = Nrep
+scalar Options[&quot;burn&quot;] = 10
+scalar Options[&quot;verbosity&quot;] = 2
+scalar Options[&quot;show_progress&quot;] = show_progress
+scalar Options[&quot;do_plot&quot;] = do_plot
+# General checking, but still needs some manual work
+err2 = bcheck(&amp;Options, UserOpts)
+if err2
+  err = sprintf(&quot;Valid options are:\n&quot;)
+  loop i=1..nelem(getkeys(Options)) --quiet
+    err += sprintf(&quot;\t%s\n&quot;, getkeys(Options)[i])
+  endloop
+  err += sprintf(&quot; Look at the PDF documentation for expected types of arguments.&quot;)
+endif
+# We check integers
+loop i=1..nelem(Integers) --quiet
+  arg_name = Integers[i]
+  arg_val = Options[arg_name]
+  if arg_val != int(arg_val)
+    err += sprintf(&quot;Argument %s must be an integer&quot;, arg_name)
+  endif
+endloop
+# We check booleans
+loop i=1..nelem(Booleans) --quiet
+  arg_name = Booleans[i]
+  arg_val = Options[arg_name]
+  if arg_val != int(arg_val) || arg_val &lt; 0 || arg_val &gt; 1
+    err += sprintf(&quot;Argument %s must be a bool&quot;, arg_name)
+  endif
+endloop
+# We set arguments
+acc_type = Options[&quot;model_prior&quot;]
+av_model_size = Options[&quot;avg_model_size&quot;]
+alpha = Options[&quot;alpha&quot;]
+l_rank = Options[&quot;Nrank&quot;]
+g_type = Options[&quot;g_type&quot;]
+do_joint = Options[&quot;do_joint&quot;]
+h_predict = Options[&quot;Npredict&quot;]
+Nrep = Options[&quot;Nrep&quot;]
+burn = Options[&quot;burn&quot;]
+verbosity = Options[&quot;verbosity&quot;]
+show_progress = Options[&quot;show_progress&quot;]
+do_plot = Options[&quot;do_plot&quot;]
+# We check arguments for valid values
+if acc_type &lt; 1 || acc_type &gt; 2
+  err += &quot;Model prior takes the integer values in the range [1; 2]&quot;
+elif alpha &lt; 0 || alpha &gt; 1
+  err += &quot;The significance level (alpha) takes the real values in the range [0; 1]&quot;
+elif g_type &lt; 0 || g_type &gt; 5
+  err += &quot;Zellner's g-prior takes the integer values in the range [1; 5]&quot;
+elif do_joint &lt; 0 || do_joint &gt; 7
+  err += &quot;Jointess type (do_joint) takes the integer values in the range [1; 7]&quot;
+elif h_predict &lt; 0
+  err += &quot;Number of out-of-sample forecasts (h_predict) takes the integer values&quot;
+elif h_predict &gt;= round($nobs/2)
+  printf(&quot;Number of out-of-sample forecasts is more than 50%s of sample length.\n&quot;, &quot;%&quot;)
+elif Nrep &lt; 0
+  err += &quot;Total number of replications (Nrep) takes the integer values&quot;
+elif burn &lt; 0 || burn &gt; 99
+  err += &quot;Percentage of burn-in draws (do_burn) takes the integer values in the range [0; 99]&quot;
+elif verbosity &lt; 1 || verbosity &gt; 2
+  err += &quot;Verbosity takes the integer values in the range [1; 2]&quot;
+endif
+return err
+</code>
+</gretl-function>
+<gretl-function name="BMA_collect_results" type="void" private="1">
+ <params count="7">
+  <param name="M" type="bundleref"/>
+  <param name="known_models" type="bundleref"/>
+  <param name="models_counter" type="matrixref"/>
+  <param name="models_lprob" type="matrixref"/>
+  <param name="models_estimates" type="matricesref"/>
+  <param name="models_structure" type="matricesref"/>
+  <param name="models_forecasts" type="matricesref" optional="true"/>
+ </params>
+<code>/*
+Function collects results from MC3 experiment.
+*/
+BMA_print_status(&quot;Collecting results&quot;, 0)
+matrix idx, var_idx, bhat, mod_struct, models_probs, X_new_num
+matrices models_structure_rank, models_estimates_rank
+scalar nr
+scalar weight = 0
+scalar percentage
+matrix bhat_avg = zeros(M.k)
+matrix bvar_avg = zeros(M.k)
+matrix mod_sizes = zeros(M.k)
+matrix var_prob = zeros(1,M.k)
+matrix Post_Results, tmp
+if M.do_joint
+  matrix jointness_m = zeros(M.k,M.k)
+endif
+if M.h_predict
+  Yhat_avg = zeros(M.h_predict)
+  Yhat_var_avg = zeros(M.h_predict)
+endif
+# We set the number of visited models
+M.post_n_models = nelem(known_models)
+known_models = null
+# We select objects only for accepted models
+idx = selifr(seq(1, M.Nrep+1)', models_counter .&gt; 0)
+M.post_n_models_accepted = nelem(idx)
+models_counter = models_counter[idx]
+models_estimates = models_estimates[idx]
+models_structure = models_structure[idx]
+if M.h_predict
+  models_forecasts = models_forecasts[idx]
+endif
+# Models size cumulative distribution
+models_probs = mreverse(msortby(models_counter ~ idx ~ seq(1, M.post_n_models_accepted)', 1))
+M.models_probs_cum = cum(dsort(models_probs[,1]))
+# We build analytical and numerical rankings
+M.l_rank = xmin(M.l_rank, M.post_n_models_accepted)
+models_probs = models_probs[1:M.l_rank,]
+M.mod_nume_prob = models_probs[,1]
+M.mod_rank_prob = models_lprob[models_probs[,2]]
+models_structure_rank = models_structure[models_probs[,3]]
+models_estimates_rank = models_estimates[models_probs[,3]]
+# We restore estimates for models in ranking
+loop i=1..M.l_rank --quiet
+  M.mod_rank[i] = models_structure_rank[i]
+  if sum(M.mod_rank[i]) == 0
+    M.mod_rank_estimates[i] = models_estimates_rank[i]
+  else
+    M.mod_rank_estimates[i] = models_estimates_rank[i][,1] ~ sqrt(models_estimates_rank[i][,2]) ~ transp(0 ~ (selifc(M.var_numbers2_const[2,2:], models_structure_rank[i])-2))
+  endif
+endloop
+# We average over all accepted models
+if M.show_progress
+  BMA_print_status(&quot;averaging&quot;, 0, 11, 1)
+  scalar M.progress = ceil(nelem(models_counter)/100)
+  percentage = M.progress
+  flush
+endif
+loop i=1..nelem(models_counter) --quiet
+  weight = models_counter[i]
+  mod_struct = models_structure[i]
+  if nelem(mod_struct) &gt; 0 &amp;&amp; sum(mod_struct) &gt; 0
+    X_new_num = selifc(M.var_numbers2_const[2,], 1 ~ mod_struct)
+    var_idx = X_new_num[2:] - 2
+    bhat = models_estimates[i][2:,1]
+    bhat_avg[var_idx] += weight * bhat
+    bvar_avg[var_idx] += weight * (models_estimates[i][2:,2] + bhat .^ 2)
+    mod_sizes[sum(mod_struct)] += weight
+    var_prob += weight * mod_struct
+    if M.do_joint
+      jointness_m = upper(jointness_m .+ weight * ((mod_struct .* mod_struct') .&gt; 0))
+    endif
+  else
+    M.empty_model_count = weight
+  endif
+  if M.h_predict
+    Yhat_avg += weight * models_forecasts[i][,1]
+    Yhat_var_avg += weight * models_forecasts[i][,2]
+  endif
+  # Flushing output - showing progress
+  if M.show_progress &amp;&amp; i == percentage
+    BMA_show_progress(i, &amp;percentage, M.progress, nelem(models_counter))
+  endif
+endloop
+#############################################
+# We save collected results in the bundle M #
+#############################################
+# Coefficients and variances
+M.bhat_avg = bhat_avg'
+M.bvar_avg = bvar_avg'
+# Probability of variables (for calculating PIPs)
+M.var_prob = var_prob
+# Jointness analysis
+if M.do_joint
+  M.jointness_m = jointness_m
+endif
+# Forecasts
+if M.h_predict
+  M.Yhat_avg = Yhat_avg
+  M.Yhat_var_avg = Yhat_var_avg
+endif
+# Models size distribution
+M.mod_sizes = seq(1, M.k)' ~ mod_sizes
+M.mod_sizes = {0} ~ M.empty_model_count | M.mod_sizes
+if M.show_progress
+  printf &quot;\n&quot;
+  BMA_print_status(null, 1, 22)
+else
+  BMA_print_status(null, 1, 3)
+endif
+</code>
+</gretl-function>
+<gretl-function name="BMA_estimate" type="void" private="1">
+ <params count="1">
+  <param name="M" type="bundleref"/>
+ </params>
+<code>/*
+Function performs all computations needed for parameters estimation
+(including prediction) and marginal data density calculation.
+*/
+# This code was in former BMA_new_X_matrix
+# If we have at least one variable we create new X matrix, otherwise it includes &quot;Ones&quot; only.
+if M.k_new
+  M.X_new_num = selifc(M.var_numbers2_const[2,], 1 ~ M.mod_struct_new)
+  if M.h_predict &gt; 0
+    M.X_new_predict = selifc(M.big_mat_dem_predict[,3:], M.mod_struct_new)
+  endif
+else
+  M.X_new_num = { 2 }
+  if M.h_predict &gt; 0
+    M.X_new_predict = {}
+  endif
+endif
+M.X_new = M.big_cross_const[M.X_new_num, M.X_new_num]
+# This code was in former BMA_matrix_precompute
+if M.k_new &gt; 0 &amp;&amp; M.h_predict &gt; 0
+  M.ZtZinv_new = invpd(M.X_new[2:,2:])
+endif
+matrix M.XtY = M.XtY_cross_const[M.X_new_num]
+M.XtXinv = invpd(M.X_new)
+M.yMy = M.scaling_f[7] - qform(M.XtY', M.XtXinv)
+# This code was in former BMA_lprob
+# We compute log of posterior probability for current draw
+M.lprob_new = M.model_prior_log[M.k_new+1] + M.scaling_f[5]*(M.k_new+1) - M.scaling_f[6]*log(M.scaling_f[3]*M.yMy + M.scaling_f[4])
+# This code was in former BMA_ols
+# We compute posterior beta vector end covariance matrix.
+matrix Vhat = M.XtXinv / (1 + M.scaling_f[1])
+M.bhat = Vhat * M.XtY
+M.dj_new = M.scaling_f[3] * M.yMy + M.scaling_f[4]
+M.bvar = diag((M.dj_new / ($nobs - 2)) * Vhat)
+</code>
+</gretl-function>
+<gretl-function name="BMA_heatmap" type="void" private="1">
+ <params count="3">
+  <param name="M" type="bundle"/>
+  <param name="MODE" type="string"/>
+  <param name="basename" type="string" optional="true" const="true"/>
+ </params>
+<code>/*
+M  - BMA result bundle, MODE  - string indicating image mode {&quot;inclusions&quot;, &quot;jointness&quot;}
+basename	- basename for gnuplot files
+*/
+scalar nrows, ncols, tmp, height, width, minval, maxval
+string grid, title, xlabel, ylabel, xtics, ytics, colorbox, palette, rotate, output
+matrix m
+# We set general image options
+if MODE == &quot;inclusions&quot;
+  title = sprintf(&quot;Variables Inclusions Based on Best %d Models&quot;, M.l_rank)
+  xlabel = &quot;Model number&quot;
+  ylabel = &quot;Variable&quot;
+  colorbox = &quot;unset colorbox&quot;
+  height = xmax(int(M.k/41*768), 480)
+  width = xmin(xmax(int(M.l_rank/20*1024), 640), 1024)
+  m = zeros(M.l_rank, M.k)
+  loop i=1..M.l_rank --quiet
+    m[i,] = M.mod_rank[i]
+  endloop
+  m = mreverse(m')
+  palette = &quot;0 'white', 1 'red'&quot;
+  output = &quot;-PIP.plt&quot;
+else
+  title = sprintf(&quot;Jointness Based on %s&quot;, M.jointess_measure_names[M.do_joint])
+  xlabel = &quot;Variable&quot;
+  ylabel = xlabel
+  height = xmin(xmax(int(M.k/41*1024), 640), 900)
+  width = xmin(xmax(int(M.k/41*1024), 900), 1024)
+  m = BMA_jointness_measure(&amp;M)
+  m[diag] = 0
+  minval = minc(minr(m))
+  maxval = maxc(maxr(m))
+  m[diag] = NA
+  m = mreverse(m)
+  if minval == 0
+    palette = sprintf(&quot;0 'white', %s 'red'&quot;, strsub(sprintf(&quot;%f&quot;, maxval), &quot;,&quot;, &quot;.&quot;))
+  else
+    palette = sprintf(&quot;%s 'blue', 0 'white', %s 'red'&quot;, strsub(sprintf(&quot;%f&quot;, minval), &quot;,&quot;, &quot;.&quot;), strsub(sprintf(&quot;%f&quot;, maxval), &quot;,&quot;, &quot;.&quot;))
+  endif
+  rotate = &quot;set xtics rotate by 45 right&quot;
+  output = &quot;-Jointness.plt&quot;
+endif
+nrows = rows(m)
+ncols = cols(m)
+# We set tics
+ytics = &quot;(&quot;
+loop i=1..M.k --quiet
+  ytics += sprintf(&quot;\&quot;%s\&quot; %d&quot;, M.all_names_sp_new[i], M.k-i)
+  if i == M.k
+    ytics += sprintf(&quot;)&quot;)
+  else
+    ytics += sprintf(&quot;, &quot;)
+  endif
+endloop
+xtics = &quot;(&quot;
+if MODE == &quot;inclusions&quot;
+  loop i=1..M.l_rank --quiet
+    xtics += sprintf(&quot;\&quot;%.d\&quot; %d&quot;, i, i-1)
+    if i == M.l_rank
+      xtics += sprintf(&quot;)&quot;)
+    else
+      xtics += sprintf(&quot;, &quot;)
+    endif
+  endloop
+else
+  loop i=1..M.k --quiet
+    xtics += sprintf(&quot;\&quot;%s\&quot; %d&quot;, M.all_names_sp_new[i], i-1)
+    if i == M.k
+      xtics += sprintf(&quot;)&quot;)
+    else
+      xtics += sprintf(&quot;, &quot;)
+    endif
+  endloop
+endif
+# We need to cast given matrix to its string representation
+loop i=1..nrows --quiet
+  loop j=1..ncols --quiet
+    if MODE == &quot;inclusions&quot;
+      grid += sprintf(&quot;%d&quot;, m[i,j])
+    else
+      grid += strsub(sprintf(&quot;%.4f&quot;, m[i,j]), &quot;,&quot;, &quot;.&quot;)
+    endif
+    if j == ncols
+      if i != nrows
+        grid += sprintf(&quot;\n&quot;)
+      endif
+    else
+      grid += sprintf(&quot;\t&quot;)
+    endif
+  endloop
+endloop
+# We check if we display or save plot
+if $sysinfo.gui_mode
+  output = &quot;display&quot;
+else
+  output = sprintf(&quot;%s%s&quot;, basename, output)
+endif
+# We plot heatmap
+plot
+  printf &quot;set term pngcairo font \&quot;Vera,9\&quot; size %d,%d noenhanced&quot;, width, height
+  literal set encoding utf8
+  literal set decimalsign '.'
+  literal set nokey
+  literal set datafile missing &quot;&quot;
+  #literal set datafile separator &quot;\t&quot;
+  literal set x2tics 1 format '' scale 0,0.001
+  literal set y2tics 1 format '' scale 0,0.001
+  literal set mx2tics 2
+  literal set my2tics 2
+  printf &quot;set palette defined (%s)&quot;, palette
+  printf &quot;set title \&quot;%s\&quot;&quot;, title
+  printf &quot;set xlabel \&quot;%s\&quot;&quot;, xlabel
+  printf &quot;set ylabel \&quot;%s\&quot;&quot;, ylabel
+  printf &quot;set xtics %s&quot;, xtics
+  printf &quot;set ytics %s&quot;, ytics
+  printf &quot;%s&quot;, colorbox
+  printf &quot;%s&quot;, rotate
+  literal set autoscale fix
+  literal set link x
+  literal set link y
+  literal set grid front mx2tics my2tics lw 2 lt -1 lc rgb 'white'
+  printf &quot;$map &lt;&lt; EOD&quot;
+  printf &quot;%s&quot;, grid
+  printf &quot;EOD&quot;
+  literal plot $map matrix with image
+end plot --output=@output
+</code>
+</gretl-function>
+<gretl-function name="BMA_print_status" type="void" private="1">
+ <params count="4">
+  <param name="message" type="string" optional="true" const="true"/>
+  <param name="done" type="bool" default="0" const="true"/>
+  <param name="pspaces" type="scalar" default="0" const="true"/>
+  <param name="spacesp" type="scalar" default="0" const="true"/>
+ </params>
+<code>/*
+Function prints current execution status and flushes screen.
+message 	- text to be printed
+done		- if this is end of stage
+pspaces	- number of prior paces
+spacesp	- number of post spaces
+*/
+string pSPACE = &quot;&quot;
+string SPACEp = &quot;&quot;
+if pspaces
+  loop i=1..pspaces --quiet
+    pSPACE += sprintf(&quot;%s&quot;, &quot; &quot;)
+  endloop
+endif
+if spacesp
+  loop i=1..spacesp --quiet
+    SPACEp += sprintf(&quot;%s&quot;, &quot; &quot;)
+  endloop
+endif
+if done
+  printf &quot;%sdone!&quot;, pSPACE
+else
+  printf &quot;\n%s%s:%s&quot;, pSPACE, message, SPACEp
+endif
+flush
+</code>
+</gretl-function>
+<sample-script filename="examples/BMA_sample.inp">
+#######################################################
+#   https://sourceforge.net/projects/bma-for-gretl/   #
+#######################################################
+
+# Usage:
+set verbose off
+open greene9_1.gdt
+include BMA.gfn
+
+# We set the seed in order to exact reproduction of results
+set seed 1000000
+
+list greene = capital labor nfirm
+results_b = BMA(valadd, greene)
+
+# More complex examples are described at section 4.2.2 of the PDF.
+</sample-script>
+</gretl-function-package>
+</gretl-functions>

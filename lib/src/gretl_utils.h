@@ -43,8 +43,8 @@ enum {
     BLAS_ATLAS,
     BLAS_OPENBLAS,
     BLAS_MKL,
-    BLAS_BLIS,
-    BLAS_VECLIB    
+    BLAS_VECLIB,
+    BLAS_BLIS
 };
 
 void libgretl_init (void);

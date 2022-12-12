@@ -191,34 +191,61 @@ static void usage (int err)
 
 static void check_blas_threading (int tool, int quiet)
 {
-    char *s1, *s2, *s3;
+    char *s1, *s2, *s3, *blas_type = NULL;
+    char *buf;
 
+//    if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
+//        blas_type = "OpenBLAS";
+//        if (tool || quiet) {
+//            fprintf(stderr, "Disabling OpenBLAS multi-threading "
+//                    "(OpenMP/pthreads collision)\n");
+//        } else {
+//            puts("\n*** Warning ***\n*\n"
+//                 "* gretl is built using OpenMP, but is linked against\n"
+//                 "* OpenBLAS parallelized via pthreads. This combination\n"
+//                 "* of threading mechanisms is not recommended. Ideally,\n"
+//                 "* OpenBLAS should also use OpenMP.");
+//        }
+//        /* do we really need this? */
+//        gretl_setenv("OPENBLAS_NUM_THREADS", "1");
+//    } else if (get_blis_details(&s1, &s2, &s3) && !strcmp(s2, "pthreads")) {
+//        blas_type = "BLIS";
+//        if (tool || quiet) {
+//            fprintf(stderr, "Disabling BLIS multi-threading "
+//                    "(OpenMP/pthreads collision)\n");
+//        } else {
+//            puts("\n*** Warning ***\n*\n"
+//                 "* gretl is built using OpenMP, but is linked against\n"
+//                 "* BLIS parallelized via pthreads. This combination\n"
+//                 "* of threading mechanisms is not recommended. Ideally,\n"
+//                 "* BLIS should also use OpenMP.");
+//        }
+//        /* do we really need this? - I don't know, but gives no efect for BLIS *** Marcin ****/
+//        gretl_setenv("BLIS_NUM_THREADS", "1");
+//    }
     if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
-        if (tool || quiet) {
-            fprintf(stderr, "Disabling OpenBLAS multi-threading "
-                    "(OpenMP/pthreads collision)\n");
-        } else {
-            puts("\n*** Warning ***\n*\n"
-                 "* gretl is built using OpenMP, but is linked against\n"
-                 "* OpenBLAS parallelized via pthreads. This combination\n"
-                 "* of threading mechanisms is not recommended. Ideally,\n"
-                 "* OpenBLAS should also use OpenMP.");
-        }
+        blas_type = "OpenBLAS";
         /* do we really need this? */
         gretl_setenv("OPENBLAS_NUM_THREADS", "1");
     } else if (get_blis_details(&s1, &s2, &s3) && !strcmp(s2, "pthreads")) {
-        if (tool || quiet) {
-            fprintf(stderr, "Disabling BLIS multi-threading "
-                    "(OpenMP/pthreads collision)\n");
-        } else {
-            puts("\n*** Warning ***\n*\n"
-                 "* gretl is built using OpenMP, but is linked against\n"
-                 "* BLIS parallelized via pthreads. This combination\n"
-                 "* of threading mechanisms is not recommended. Ideally,\n"
-                 "* BLIS should also use OpenMP.");
-        }
-        /* do we really need this? - I don't know, but gives no efect for BLIS *** Marcin ****/
+        blas_type = "BLIS";
+        /* do we really need this? *** Marcin *** */
         gretl_setenv("BLIS_NUM_THREADS", "1");
+    }
+    if (blas_type != NULL) {
+        if (tool || quiet) {
+            fprintf(stderr, "Disabling %s multi-threading (OpenMP/pthreads collision)\n", blas_type);
+        } else {
+            buf = malloc(sizeof *buf * 1024);
+            sprintf(buf, "%s%s%s%s%s%s%s%s%s",
+                    "\n*** Warning ***\n*\n",
+                    "* gretl is built using OpenMP, but is linked against\n",
+                    "* ",blas_type," parallelized via pthreads. This combination\n",
+                    "* of threading mechanisms is not recommended. Ideally,\n",
+                    "* ",blas_type," should also use OpenMP.");
+            puts(buf);
+            free(buf);
+        }
     }
 }
 

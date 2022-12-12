@@ -2987,8 +2987,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    if (get_openblas_details(&s1, &s2)) {
 		gretl_bundle_set_string(b, "blascore", s1);
 		gretl_bundle_set_string(b, "blas_parallel", s2);
-	    }
-		if (get_blis_details(&s1, &s2, &s3)) {		    
+	    } else if (get_blis_details(&s1, &s2, &s3)) {
 		    gretl_bundle_set_string(b, "bliscore", s1);
 		    gretl_bundle_set_string(b, "blis_parallel", s2);
 		    gretl_bundle_set_string(b, "blis_version", s3);

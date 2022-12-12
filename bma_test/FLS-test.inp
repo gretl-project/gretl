@@ -1,0 +1,12 @@
+set verbose off
+open ./FLS.gdt
+include ./BMA.gfn
+eval getenv("OMP_NUM_THREADS")
+eval $sysinfo
+set blas_mnk_min
+
+list X = 2..42
+
+set stopwatch
+BMA(Growth, X, _(do_plot=0, verbosity=1))
+eval $stopwatch
