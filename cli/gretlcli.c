@@ -191,26 +191,29 @@ static void usage (int err)
 
 static void check_blas_threading (int tool, int quiet)
 {
-    char *s1, *s2, *s3, *blas_type = NULL;
+    const char *blas_type;
+    char *s1, *s2;
 
-    if (get_openblas_details(&s1, &s2) && !strcmp(s2, "pthreads")) {
-        blas_type = "OpenBLAS";
+    if (!get_blas_details(&s1, &s2, NULL) || strcmp(s2, "pthreads")) {
+        return;
+    }
+
+    blas_type = blas_variant_string();
+    if (!strcmp(blas_type, "openblas")) {
         gretl_setenv("OPENBLAS_NUM_THREADS", "1");
-    } else if (get_blis_details(&s1, &s2, &s3) && !strcmp(s2, "pthreads")) {
-        blas_type = "BLIS";
+    } else if (!strcmp(blas_type, "blis")) {
         gretl_setenv("BLIS_NUM_THREADS", "1");
     }
 
-    if (blas_type != NULL) {
-        if (tool || quiet) {
-            fprintf(stderr, "Disabling %s multi-threading (OpenMP/pthreads collision)\n", blas_type);
-        } else {
-            printf("\n*** Warning ***\n*\n"
-                   "* gretl is built using OpenMP, but is linked against\n"
-                   "* %s parallelized via pthreads. This combination\n"
-                   "* of threading mechanisms is not recommended. Ideally,\n"
-                   "* %s should also use OpenMP.", blas_type, blas_type);
-        }
+    if (tool || quiet) {
+        fprintf(stderr, "Disabling %s multi-threading (OpenMP/pthreads collision)\n",
+                blas_type);
+    } else {
+        printf("\n*** Warning ***\n*\n"
+               "* gretl is built using OpenMP, but is linked against\n"
+               "* %s parallelized via pthreads. This combination\n"
+               "* of threading mechanisms is not recommended. Ideally,\n"
+               "* %s should also use OpenMP.", blas_type, blas_type);
     }
 }
 

@@ -2369,11 +2369,9 @@ static void gretl_stopwatch_init (void)
 
 /* BLAS detection and analysis */
 
-static char OB_core[32];
-static char OB_parallel[12];
-static char BLIS_version[32];
-static char BLIS_core[32];
-static char BLIS_parallel[32];
+static char blas_core[32];
+static char blas_parallel[32];
+static char blas_version[32];
 
 static int blas_variant;
 
@@ -2490,8 +2488,8 @@ static void register_openblas_details (void *handle)
         char *s = OB_get_corename();
 
         if (s != NULL) {
-            *OB_core = '\0';
-            strncat(OB_core, s, 31);
+            *blas_core = '\0';
+            strncat(blas_core, s, 31);
         }
     } else {
         fprintf(stderr, "Couldn't find openblas_get_corename()\n");
@@ -2501,11 +2499,11 @@ static void register_openblas_details (void *handle)
         int p = OB_get_parallel();
 
         if (p == 0) {
-            strcpy(OB_parallel, "none");
+            strcpy(blas_parallel, "none");
         } else if (p == 1) {
-            strcpy(OB_parallel, "pthreads");
+            strcpy(blas_parallel, "pthreads");
         } else if (p == 2) {
-            strcpy(OB_parallel, "OpenMP");
+            strcpy(blas_parallel, "OpenMP");
         }
     } else {
         fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
@@ -2514,57 +2512,56 @@ static void register_openblas_details (void *handle)
 
 static void register_blis_details (void *handle)
 {
-    int id;
-    char *buf = NULL;
     /* The last element on arch_t enum in libblis =>
     => must be updated whenever new architecture/cpu model appears*/
     /* Shouldn't this come from a header? (Allin) */
         /* -> Well, this enum is defined in blis.h which we do not include.
             And we can't retrive it via dlopen(), can we? (Marcin) */
     const int BLIS_NUM_ARCHS = 26;
+    char *buf = NULL;
+    int id;
 
     /* Functions from libblis we need. */
-    char *(*BLIS_info_get_version_str) (void);
-    int (*BLIS_info_get_enable_threading) (void);
-    int (*BLIS_info_get_enable_openmp) (void);
-    int (*BLIS_info_get_enable_pthreads) (void);
+    char *(*BLIS_get_version_str) (void);
+    int (*BLIS_get_enable_threading) (void);
+    int (*BLIS_get_enable_openmp) (void);
+    int (*BLIS_get_enable_pthreads) (void);
     char *(*BLIS_arch_string) (int);
     int (*BLIS_arch_query_id) (void);
 
-    BLIS_info_get_version_str = dlsym(handle, "bli_info_get_version_str");
-    BLIS_info_get_enable_threading = dlsym(handle, "bli_info_get_enable_threading");
-    BLIS_info_get_enable_openmp = dlsym(handle, "bli_info_get_enable_openmp");
-    BLIS_info_get_enable_pthreads = dlsym(handle, "bli_info_get_enable_pthreads");
+    BLIS_get_version_str = dlsym(handle, "bli_info_get_version_str");
+    BLIS_get_enable_threading = dlsym(handle, "bli_info_get_enable_threading");
+    BLIS_get_enable_openmp = dlsym(handle, "bli_info_get_enable_openmp");
+    BLIS_get_enable_pthreads = dlsym(handle, "bli_info_get_enable_pthreads");
     BLIS_arch_string = dlsym(handle, "bli_arch_string");
     BLIS_arch_query_id = dlsym(handle, "bli_arch_query_id");
 
-    /* Version */
-    if (BLIS_info_get_version_str != NULL) {
-        buf = BLIS_info_get_version_str();
+    if (BLIS_get_version_str != NULL) {
+        buf = BLIS_get_version_str();
         if (buf != NULL) {
-            *BLIS_version = '\0';
-            strncat(BLIS_version, buf, 31);
+            *blas_version = '\0';
+            strncat(blas_version, buf, 31);
+            buf = NULL;
         }
-        buf = NULL;
     } else {
         fprintf(stderr, "Couldn't find bli_info_get_version_str()\n");
     }
 
     /* Model we have: threaded or sequential */
-    if (!BLIS_info_get_enable_threading()) {
+    if (!BLIS_get_enable_threading()) {
         buf = "sequential (non-threading)";
     } else {
-        if (BLIS_info_get_enable_openmp()) {
+        if (BLIS_get_enable_openmp()) {
             buf = "OpenMP";
-        } else if (BLIS_info_get_enable_pthreads()) {
+        } else if (BLIS_get_enable_pthreads()) {
             buf = "pthreads";
         } else {
             buf = "unrecognized";
         }
     }
     if (buf != NULL) {
-        *BLIS_parallel = '\0';
-        strncat(BLIS_parallel, buf, 31);
+        *blas_parallel = '\0';
+        strncat(blas_parallel, buf, 31);
         buf = NULL;
     }
 
@@ -2582,33 +2579,24 @@ static void register_blis_details (void *handle)
         buf = "unrecognized";
     }
     if (buf != NULL) {
-        *BLIS_core = '\0';
-        strncat(BLIS_core, buf, 31);
+        *blas_core = '\0';
+        strncat(blas_core, buf, 31);
         buf = NULL;
     }
 }
 
 /* below: called in creating $sysinfo bundle */
 
-int get_openblas_details (char **s1, char **s2)
+int get_blas_details (char **s1, char **s2, char **s3)
 {
-    if (*OB_core == '\0' || *OB_parallel == '\0') {
+    if (*blas_core == '\0' || *blas_parallel == '\0') {
         return 0;
     } else {
-        *s1 = OB_core;
-        *s2 = OB_parallel;
-        return 1;
-    }
-}
-
-int get_blis_details (char **s1, char **s2, char **s3)
-{
-    if (*BLIS_core == '\0' || *BLIS_parallel == '\0' || *BLIS_version == '\0') {
-        return 0;
-    } else {
-        *s1 = BLIS_core;
-        *s2 = BLIS_parallel;
-        *s3 = BLIS_version;
+        *s1 = blas_core;
+        *s2 = blas_parallel;
+        if (s3 != NULL && *blas_version != '\0') {
+            *s3 = blas_version;
+        }
         return 1;
     }
 }
