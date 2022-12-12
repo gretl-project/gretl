@@ -5687,7 +5687,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 #endif
     int i, j, l;
     fprintf(stderr, "*** Marcin *** gretl_dgemm, get_omp_n_threads=%d, get_omp_mnk_min=%d\n", get_omp_n_threads(), get_omp_mnk_min());
-    
+
     if (cmod == GRETL_MOD_CUMULATE) {
         beta = 1;
     } else if (cmod == GRETL_MOD_DECREMENT) {
@@ -10241,7 +10241,7 @@ double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
 
 	memcpy(mval, m->val, n * sizeof *mval);
 
-	if (blas_is_openblas()) {
+	if (blas_is_threaded()) {
 	    save_nt = blas_get_num_threads();
 	    if (save_nt > 1) {
 		blas_set_num_threads(1);
@@ -10258,7 +10258,7 @@ double gretl_symmetric_matrix_min_eigenvalue (const gretl_matrix *m)
 		}
 	    }
 	}
-	if (blas_is_openblas() && save_nt > 1) {
+	if (blas_is_threaded() && save_nt > 1) {
 	    blas_set_num_threads(save_nt);
 	}
     }
@@ -10303,7 +10303,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
         return NULL;
     }
 
-    if (blas_is_openblas()) {
+    if (blas_is_threaded()) {
         save_nt = blas_get_num_threads();
         if (save_nt > 1) {
             blas_set_num_threads(1);
@@ -10322,7 +10322,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
         ret = eigensym_rrr(m, eigenvecs, err);
     }
 
-    if (blas_is_openblas() && save_nt > 1) {
+    if (blas_is_threaded() && save_nt > 1) {
         blas_set_num_threads(save_nt);
     }
 

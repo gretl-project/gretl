@@ -2514,18 +2514,18 @@ static void register_openblas_details (void *handle)
 
 static void register_blis_details (void *handle)
 {
-    typedef signed long int gint_t;
     int id;
     char *buf = NULL;
     /* The last element on arch_t enum in libblis =>
     => must be updated whenever new architecture/cpu model appears*/
-    const int BLIS_NUM_ARCHS=26;
+    /* Shouldn't this come from a header? (Allin) */
+    const int BLIS_NUM_ARCHS = 26;
 
     /* Functions from libblis we need. */
     char *(*BLIS_info_get_version_str) (void);
-    gint_t (*BLIS_info_get_enable_threading) (void);
-    gint_t (*BLIS_info_get_enable_openmp) (void);
-    gint_t (*BLIS_info_get_enable_pthreads) (void);
+    int (*BLIS_info_get_enable_threading) (void);
+    int (*BLIS_info_get_enable_openmp) (void);
+    int (*BLIS_info_get_enable_pthreads) (void);
     char *(*BLIS_arch_string) (int);
     int (*BLIS_arch_query_id) (void);
 
@@ -2632,25 +2632,26 @@ const char *blas_variant_string (void)
     }
 }
 
-/* for gretl_matrix.c, libset.c */
+/* for gretl_matrix.c, gretl_mt.c */
 
-int blas_is_openblas (void)
+int blas_is_threaded (void)
 {
-    return blas_variant == BLAS_OPENBLAS;
-}
-
-int blas_is_blis (void)
-{
-    return blas_variant == BLAS_BLIS;
+    return blas_variant == BLAS_OPENBLAS ||
+        blas_variant == BLAS_BLIS;
 }
 
 static void (*OB_set_num_threads) (int);
 static int (*OB_get_num_threads) (void);
+static void (*BLIS_set_num_threads) (int);
+static int (*BLIS_get_num_threads) (void);
+static void (*BLIS_init) (void);
 
 void blas_set_num_threads (int nt)
 {
     if (OB_set_num_threads != NULL) {
         OB_set_num_threads(nt);
+    } else if (BLIS_set_num_threads != NULL) {
+        BLIS_set_num_threads(nt);
     }
 }
 
@@ -2658,26 +2659,8 @@ int blas_get_num_threads (void)
 {
     if (OB_get_num_threads != NULL) {
         return OB_get_num_threads();
-    } else {
-        return 0;
-    }
-}
-
-static void (*BLIS_init) (void);
-static void (*BLIS_thread_set_num_threads) (int);
-static int (*BLIS_thread_get_num_threads) (void); /* In fact it is signed long int */
-
-void blis_set_num_threads (int nt)
-{
-    if (BLIS_thread_set_num_threads != NULL) {
-        BLIS_thread_set_num_threads(nt);
-    }
-}
-
-int blis_get_num_threads (void)
-{
-    if (BLIS_thread_get_num_threads != NULL) {
-        return BLIS_thread_get_num_threads();
+    } else if (BLIS_get_num_threads != NULL) {
+        return BLIS_get_num_threads();
     } else {
         return 0;
     }
@@ -2689,7 +2672,6 @@ static void blas_init (void)
 
 #if defined(OS_OSX) && defined(PKGBUILD)
     blas_variant = BLAS_VECLIB; /* the default */
-    // return;
 #endif
 
     ptr = dlopen(NULL, RTLD_NOW);
@@ -2702,19 +2684,23 @@ static void blas_init (void)
             register_openblas_details(ptr);
         }
     }
-    /* This must be done smarter!!! *** Marcin *** */
-    if (ptr != NULL) {
+
+    if (ptr != NULL && OB_set_num_threads == NULL) {
         BLIS_init = dlsym(ptr, "bli_init");
-        BLIS_thread_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
-        BLIS_thread_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
+        BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
+        BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
         if (BLIS_init != NULL) {
             blas_variant = BLAS_BLIS;
-            BLIS_init(); /* This is only to be sure that BLIS was initilized */
+            BLIS_init(); /* This is only to be sure that BLIS was initialized */
             register_blis_details(ptr);
         }
     }
 
-    if (blas_variant != BLAS_OPENBLAS && blas_variant != BLAS_VECLIB && blas_variant != BLAS_BLIS) {
+    /* What about MKL? */
+
+    if (blas_variant != BLAS_VECLIB &&
+        blas_variant != BLAS_OPENBLAS &&
+        blas_variant != BLAS_BLIS) {
 #ifdef WIN32
         blas_variant = BLAS_NETLIB; /* ?? */
 #else

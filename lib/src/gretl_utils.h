@@ -56,17 +56,13 @@ int libgretl_mpi_init (int self, int np, int dcmt);
 int gretl_mpi_initialized (void);
 #endif
 
-int blas_is_openblas (void);
+int blas_is_threaded (void);
 
 void blas_set_num_threads (int nt);
 
 int blas_get_num_threads (void);
 
 int blas_is_blis (void);
-
-void blis_set_num_threads (int nt);
-
-int blis_get_num_threads (void);
 
 int auto_mpi_ok (void);
 
