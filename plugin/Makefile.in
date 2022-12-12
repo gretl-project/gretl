@@ -278,6 +278,14 @@ all: .deps $(PLUGINS)
 
 -include .deps/*.d
 
+# hack for intel icx
+ifeq ($(CC), icx)
+  rqbr.lo: rq/rqbr.c
+	$(CCECHO)
+	$(AMP)$(COMPILE) -O1 $<
+	$(AMP)$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+endif
+
 stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 

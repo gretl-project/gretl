@@ -67,7 +67,8 @@ const char *builtin_strings[] = {
     "tramodir",
     "seats",
     "pkgdir",
-    "lang"
+    "lang",
+    NULL
 };
 
 /* Similar to strcmp, except that in case two strings match
@@ -422,7 +423,7 @@ void output_lang2_file (int all_foreign)
     strs = make_var_name_list(&n);
     if (strs != NULL) {
 	for (i=0; i<n; i++) {
-	   printf("      <keyword>%s</keyword>\n", strs[i]);
+            printf("      <keyword>%s</keyword>\n", strs[i]);
 	}
 	strings_array_free(strs, n);
     }

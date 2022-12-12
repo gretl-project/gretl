@@ -2119,20 +2119,17 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 		x[n++] = xt;
 	    }
 	}
-
 	if (n == 0) {
 	    continue;
 	}
 
 	qsort(x, n, sizeof *x, gretl_compare_doubles);
 	nuniq = count_distinct_values(x, n);
-
 	if (nuniq == 1) {
 	    continue;
 	}
 
 	rearrange_id_array(x, nuniq, n);
-
 	jmin = (opt & OPT_F)? 1 : 0;
 	jmax = (opt & OPT_L)? nuniq - 1 : nuniq;
 
@@ -2140,26 +2137,27 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	fprintf(stderr, "variable %d has %d distinct values\n", vi, nuniq);
 	if (opt & OPT_F) fprintf(stderr, "skipping lowest value\n");
 	if (opt & OPT_L) fprintf(stderr, "skipping highest value\n");
+        fprintf(stderr, "oddval = %g\n", oddval);
 #endif
 
 	for (j=jmin; j<jmax && !err; j++) {
-	    if (x[j] != oddval) {
-		tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset,
-				     startlen, origv, NULL);
+	    if (na(oddval) || x[j] != oddval) {
+                tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset,
+                                     startlen, origv, NULL);
 #if DUMDEBUG
-		fprintf(stderr, "%s: for value %g tnum = %d\n",
-			dset->varname[vi], x[j], tnum);
+                fprintf(stderr, "%s: for value %g tnum = %d\n",
+                        dset->varname[vi], x[j], tnum);
 #endif
-		if (tnum > 0) {
-		    tmplist = gretl_list_append_term(&tmplist, tnum);
-		    if (tmplist == NULL) {
-			err = E_ALLOC;
-		    }
-		} else {
-		    err = E_DATA;
-		}
-	    }
-	}
+                if (tnum > 0) {
+                    tmplist = gretl_list_append_term(&tmplist, tnum);
+                    if (tmplist == NULL) {
+                        err = E_ALLOC;
+                    }
+                } else {
+                    err = E_DATA;
+                }
+            }
+        }
     }
 
     if (!err && !(opt & OPT_A) && tmplist[0] == 0) {

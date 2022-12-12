@@ -1505,15 +1505,20 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     return pos;
 }
 
+/* Having found a 'word' at the cursor, see whether it's immediately
+   preceded by '$': if so, the word should be extended backward to
+   include that character.
+*/
+
 static int is_dollar_word (GtkTextBuffer *buf,
 			   GtkTextIter *w_start,
 			   gchar **textp)
 {
-    GtkTextIter dstart = *w_start;
+    GtkTextIter d_start = *w_start;
     int ret = 0;
 
-    if (gtk_text_iter_backward_char(&dstart)) {
-	gchar *dtest = gtk_text_buffer_get_text(buf, &dstart,
+    if (gtk_text_iter_backward_char(&d_start)) {
+	gchar *dtest = gtk_text_buffer_get_text(buf, &d_start,
 						w_start, FALSE);
 
 	if (*dtest == '$') {
@@ -1529,10 +1534,10 @@ static int is_dollar_word (GtkTextBuffer *buf,
     return ret;
 }
 
-/* In case a given identifier has both a command and a function
-   form, try to determine if we're looking at the function
-   form, using the heuristic that the identifier should be
-   followed by left parenthesis.
+/* In case a given identifier has both a command and a function form,
+   try to determine if we're looking at the function form, using the
+   fact that the identifier can be followed by left parenthesis only
+   in the function case.
 */
 
 static int probably_function (GtkTextBuffer *buf, GtkTextIter *w_end)
@@ -1561,8 +1566,6 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	return FALSE;
     } else {
 	gchar *text = NULL;
-	int pos = -1;
-	int idx = 0;
 	int role = CMD_HELP;
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
@@ -1575,8 +1578,6 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    GtkTextIter w_start = iter;
 	    GtkTextIter w_end = iter;
 
-	    fprintf(stderr, "HERE 1, inside word\n");
-
 	    if (!gtk_text_iter_starts_word(&iter)) {
 		gtk_text_iter_backward_word_start(&w_start);
 	    }
@@ -1585,29 +1586,21 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    }
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
 
-	    fprintf(stderr, "HERE 2, text = '%s'\n", text);
-
 	    if (text != NULL) {
-		/* handle dollar accessors, functions */
-		if (!is_dollar_word(buf, &w_start, &text)) {
-		    fprintf(stderr, "HERE 3, NOT is_dollar_word\n");
-		    if (probably_function(buf, &w_end)) {
-			fprintf(stderr, "HERE 4, probably function\n");
-			role = FUNC_HELP;
-		    }
+		if (is_dollar_word(buf, &w_start, &text)) {
+		    /* got $<word> */
+		    role = FUNC_HELP;
+		} else if (probably_function(buf, &w_end)) {
+		    /* got <word>( */
+		    role = FUNC_HELP;
 		}
 	    }
 	}
 
 	if (text != NULL && *text != '\0') {
+	    int idx, pos;
+
 	    pos = help_pos_from_string(text, &idx, &role);
-	    fprintf(stderr, "HERE 5, pos = %d\n", pos);
-	}
-
-	unset_window_help_active(vwin);
-	text_set_cursor(vwin->text, 0);
-
-	if (text != NULL && *text != '\0') {
 	    if (pos <= 0) {
 		warnbox(_("Sorry, help not found"));
 	    } else {
@@ -1615,6 +1608,9 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    }
 	}
 
+	/* clean up */
+	unset_window_help_active(vwin);
+	text_set_cursor(vwin->text, 0);
 	g_free(text);
     }
 
