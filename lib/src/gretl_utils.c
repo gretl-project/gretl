@@ -2513,41 +2513,41 @@ static void register_openblas_details (void *handle)
 }
 
 static void register_blis_details (void *handle)
-{       
+{
     typedef signed long int gint_t;
     int id;
     char *buf = NULL;
     /* The last element on arch_t enum in libblis =>
     => must be updated whenever new architecture/cpu model appears*/
-    const int BLIS_NUM_ARCHS=26;    
-    
+    const int BLIS_NUM_ARCHS=26;
+
     /* Functions from libblis we need. */
-    char *(*BLIS_info_get_version_str) (void);    
+    char *(*BLIS_info_get_version_str) (void);
     gint_t (*BLIS_info_get_enable_threading) (void);
     gint_t (*BLIS_info_get_enable_openmp) (void);
     gint_t (*BLIS_info_get_enable_pthreads) (void);
     char *(*BLIS_arch_string) (int);
     int (*BLIS_arch_query_id) (void);
-    
-    BLIS_info_get_version_str = dlsym(handle, "bli_info_get_version_str");    
+
+    BLIS_info_get_version_str = dlsym(handle, "bli_info_get_version_str");
     BLIS_info_get_enable_threading = dlsym(handle, "bli_info_get_enable_threading");
     BLIS_info_get_enable_openmp = dlsym(handle, "bli_info_get_enable_openmp");
     BLIS_info_get_enable_pthreads = dlsym(handle, "bli_info_get_enable_pthreads");
     BLIS_arch_string = dlsym(handle, "bli_arch_string");
     BLIS_arch_query_id = dlsym(handle, "bli_arch_query_id");
-    
+
     /* Version */
     if (BLIS_info_get_version_str != NULL) {
         buf = BLIS_info_get_version_str();
         if (buf != NULL) {
             *BLIS_version = '\0';
             strncat(BLIS_version, buf, 31);
-        }        
-        buf = NULL;        
+        }
+        buf = NULL;
     } else {
         fprintf(stderr, "Couldn't find bli_info_get_version_str()\n");
     }
-    
+
     /* Model we have: threaded or sequential */
     if (!BLIS_info_get_enable_threading()) {
         buf = "sequential (non-threading)";
@@ -2565,7 +2565,7 @@ static void register_blis_details (void *handle)
         strncat(BLIS_parallel, buf, 31);
         buf = NULL;
     }
-    
+
     /* BLIS core in use */
     if (BLIS_arch_query_id != NULL) {
         id = BLIS_arch_query_id();
@@ -2574,7 +2574,7 @@ static void register_blis_details (void *handle)
         id = BLIS_NUM_ARCHS-1;
     }
     if (BLIS_arch_string != NULL) {
-        buf = BLIS_arch_string(id);        
+        buf = BLIS_arch_string(id);
     } else {
         fprintf(stderr, "Couldn't find bli_arch_string()\n");
         buf = "unrecognized";
@@ -2600,7 +2600,7 @@ int get_openblas_details (char **s1, char **s2)
 }
 
 int get_blis_details (char **s1, char **s2, char **s3)
-{    
+{
     if (*BLIS_core == '\0' || *BLIS_parallel == '\0' || *BLIS_version == '\0') {
         return 0;
     } else {
@@ -2665,11 +2665,11 @@ int blas_get_num_threads (void)
 
 static void (*BLIS_init) (void);
 static void (*BLIS_thread_set_num_threads) (int);
-static int (*BLIS_thread_get_num_threads) (void); /* In fact it is signed long int */ 
+static int (*BLIS_thread_get_num_threads) (void); /* In fact it is signed long int */
 
 void blis_set_num_threads (int nt)
 {
-    if (BLIS_thread_set_num_threads != NULL) {                   
+    if (BLIS_thread_set_num_threads != NULL) {
         BLIS_thread_set_num_threads(nt);
     }
 }
@@ -2704,13 +2704,13 @@ static void blas_init (void)
     }
     /* This must be done smarter!!! *** Marcin *** */
     if (ptr != NULL) {
-        BLIS_init = dlsym(ptr, "bli_init");            
+        BLIS_init = dlsym(ptr, "bli_init");
         BLIS_thread_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
         BLIS_thread_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
         if (BLIS_init != NULL) {
             blas_variant = BLAS_BLIS;
             BLIS_init(); /* This is only to be sure that BLIS was initilized */
-            register_blis_details(ptr);            
+            register_blis_details(ptr);
         }
     }
 
