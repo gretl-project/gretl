@@ -2519,6 +2519,8 @@ static void register_blis_details (void *handle)
     /* The last element on arch_t enum in libblis =>
     => must be updated whenever new architecture/cpu model appears*/
     /* Shouldn't this come from a header? (Allin) */
+        /* -> Well, this enum is defined in blis.h which we do not include.
+            And we can't retrive it via dlopen(), can we? (Marcin) */
     const int BLIS_NUM_ARCHS = 26;
 
     /* Functions from libblis we need. */
@@ -2697,6 +2699,7 @@ static void blas_init (void)
     }
 
     /* What about MKL? */
+        /* -> I have a working prototype and I'll add it at next iteration */
 
     if (blas_variant != BLAS_VECLIB &&
         blas_variant != BLAS_OPENBLAS &&

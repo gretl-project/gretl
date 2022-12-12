@@ -62,7 +62,7 @@ void blas_set_num_threads (int nt);
 
 int blas_get_num_threads (void);
 
-int blas_is_blis (void);
+//int blas_is_blis (void); /* We probably don't use this function any more*/
 
 int auto_mpi_ok (void);
 
