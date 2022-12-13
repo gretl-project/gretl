@@ -2595,8 +2595,7 @@ static void register_blis_details (void *handle)
 
 static void register_mkl_details (void *handle)
 {
-    typedef struct
-    {
+    typedef struct {
         int MajorVersion;
         int MinorVersion;
         int UpdateVersion;
@@ -2784,6 +2783,9 @@ static void blas_init (void)
 
 #if defined(OS_OSX) && defined(PKGBUILD)
     blas_variant = BLAS_VECLIB; /* the default */
+    return;
+#else
+    blas_variant = BLAS_UNKNOWN;
 #endif
 
     ptr = dlopen(NULL, RTLD_NOW);
@@ -2797,7 +2799,7 @@ static void blas_init (void)
         }
     }
 
-    if (ptr != NULL && OB_set_num_threads == NULL) {
+    if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
         BLIS_init = dlsym(ptr, "bli_init");
         BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
         BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
@@ -2808,7 +2810,7 @@ static void blas_init (void)
         }
     }
 
-    if (ptr != NULL && OB_set_num_threads == NULL && BLIS_init == NULL) {
+    if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
         MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
         MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
         if (MKL_domain_set_num_threads != NULL) {
