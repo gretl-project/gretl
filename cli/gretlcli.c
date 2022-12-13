@@ -204,7 +204,7 @@ static void check_blas_threading (int tool, int quiet)
     } else if (!strcmp(blas_type, "blis")) {
         gretl_setenv("BLIS_NUM_THREADS", "1");
     } else if (!strcmp(blas_type, "mkl")) {
-        gretl_setenv("BLIS_NUM_THREADS", "1");
+        gretl_setenv("MKL_NUM_THREADS", "1");
     }
 
     if (tool || quiet) {
