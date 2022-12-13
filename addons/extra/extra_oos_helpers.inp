@@ -1,0 +1,209 @@
+/* 
+ -- This file just contains the private helper functions;
+ the main add_outofsample function lives in extra_withdata.inp --
+ 
+Functions by Sven
+ related to ticket https://sourceforge.net/p/gretl/todo/76/
+ " Provide expert hansl function to grab out-of-sample data"
+ 
+ The main interface is the add_outofsample() function, 
+   which accepts a bundle like $model or $system,
+   and returns a copy of that bundle with the additional 
+   members (all of matrix type):
+ - initY
+ - futureY
+ - futureX
+ 
+ For the right-hand side terms there are different conventions
+ between single-equation ($model) and generic simultaneous-equation 
+ ('system' block) setups on the one hand, 
+ and specialized  'var' / 'vecm' commands on the other hand:
+ 
+ - Generic single-equation and generic 'system': 
+   'futureX' will contain also deterministics and lagged terms 
+   (internally taken directly from $xlist).
+ 
+ - 'var' and 'vecm': 
+   'futureX' will contain only the truly exogenous and 
+   non-deterministic terms, for example not the lags of the 
+   endogenous variables.
+*/
+
+# private function
+function matrix lowlevelcopy(const list L, int start[1::], int stop[1::])
+    # This function is necessary because the out-of-sample data 
+    # access with the index-in-square-brackets syntax apparently only
+    # works obs-by-obs, not over a range.
+    # 
+    # We assume that 'start' and 'stop' apply to all members of 
+    # L equally, else errors may occur or not all available data 
+    # will be fetched. 
+     
+    matrix m = mshape(NA, stop - start + 1, nelem(L))
+    loop i = start..stop
+        matrix row = {}
+        loop foreach s L            
+            row ~= L.$s[i]
+        endloop
+        m[i -start+1, ] = row 
+    endloop
+    cnameset(m, varnames(L))
+    rnameset(m, obslabel(seq(start,stop)))
+    return m
+end function
+
+####
+
+# private function 
+function scalar trygrabvalue(const series y, int i)
+    # This function is only necessary as a workaround 
+    # for a bug with 'catch' in gretl 2022c, which prevents 
+    # to use catch directly in a loop, at least when grabbing 
+    # from a series datapoints that may not exist.
+    
+    catch scalar value = y[i]
+    return $error ? NA : value
+end function
+
+    
+# private function 
+function scalar beyond_tmax(const series y)
+    # Tries to determine how much future data 
+    # is available in the background dataset in outer scope
+    # beyond the active sample that was passed to the function(s).
+    # (Because $tmax only refers to the "official" inner scope.)
+    # A trial-and-error method is used. 
+    
+    tau = 1
+    loop while TRUE
+  
+        value = trygrabvalue(y, $tmax + tau)
+        # (workaround; see comment of the trygrabvalue function) 
+              
+        if missing(value) 
+            break 
+#         else
+#             print obslabel($tmax + tau)
+#             print value
+        endif
+        tau++
+    endloop 
+    return tau-1 # last working offset index (can be zero)
+end function
+
+####
+
+# private function 
+function list getendo(const bundle sys)
+    errorif(!instring("var vecm system", sys.command), \
+      "input doesn't seem to be a $system bundle")
+    string cmd = sys.command
+
+    if cmd == "system"
+        list endo = sys.endog_vars
+        
+    elif cmd == "var" || cmd == "vecm"
+        list endo = sys.ylist    
+        
+    endif
+    return endo 
+end function
+
+
+# private function
+function scalar getorder(const bundle sys)
+    errorif(!instring("var vecm system", sys.command), \
+      "input doesn't seem to be a $system bundle")
+      
+    # We always infer the endogenous lag order from the A 
+    # matrix shape and do not directly use the "order" element.
+    # The reason is that for a vecm the meaning of order was 
+    # different until 2022. (Referring to the differences.)
+    # (But with more recent gretl versions we could in principle
+    #  also use "order".)
+    
+    return cols(sys.A) / sys.neqns
+end function
+
+
+# private function
+function matrices get_past_future_from_model(const bundle mod)
+    errorif(nelem(mod.ylist) != 1, "single equation results expected")
+    matrix init_y, future_y, future_X
+
+    ## initial endo values
+    maxlag = inbundle(mod, "maxlag") ? mod.maxlag : 0
+    if maxlag
+        init_y = lowlevelcopy(mod.ylist, mod.t1 - maxlag, mod.t1 - 1)
+    endif
+
+    ## future values of endo / exo variables
+    
+    future_offset = beyond_tmax(mod.ylist[1])
+    # (here we must _not_ create a copy of the series,
+    #  else it is restricted to the current sample!) 
+    
+    if future_offset	# some future is available
+        # FIXME: so far this only works for the
+        # case that mod.t2 == mod.sample_t2, 
+        # which is not guaranteed, strictly speaking 
+         
+        start = mod.t2 + 1 
+        stop  = mod.t2 + future_offset
+        
+        # endogenous
+        future_y = lowlevelcopy(mod.ylist, start, stop)
+
+        # exogenous 
+        future_X = lowlevelcopy(mod.xlist, start, stop)
+    endif
+    return defarray(init_y, future_y, future_X)
+end function
+
+
+
+# private function
+function matrices get_past_future_from_system(const bundle sys)
+    errorif(!inbundle(sys, "neqns"), "var/vecm or system bundle expected")
+    matrix init_Y, future_Y, future_X
+      
+    list endo = getendo(sys)
+    order     = getorder(sys)
+
+    ## initial endo values
+    if order
+        init_Y = lowlevelcopy(endo, sys.t1 - order, sys.t1 - 1)
+    endif
+    
+    ## future values of endo / exo variables
+    future_offset = beyond_tmax(endo[1])
+    if future_offset	# some future is available
+        # FIXME: so far this only works for the
+        # case that sys.t2 == sys.sample_t2, 
+        # which is not guaranteed, strictly speaking 
+        start = sys.t2 + 1
+        stop  = sys.t2 + future_offset
+        
+        # endogenous 
+        future_Y = lowlevelcopy(endo, start, stop)
+
+        # exogenous 
+        list exo = sys.xlist
+        
+        if sys.command == "system"
+            # Here we give the values of any appearing exogenous 
+            # variable, we don't separate the different equations.
+            # (Unfortunately, it's not so easy to identify and 
+            #  remove the deterministics in the "system",
+            #  except the constant.)
+            exo -= sys.predet_vars # const
+        endif
+        
+        if nelem(exo)
+            future_X = lowlevelcopy(exo, start, stop)
+        endif
+    endif
+    
+    return defarray(init_Y, future_Y, future_X)
+end function
+

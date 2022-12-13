@@ -145,7 +145,51 @@ series winDM_asy = winsor(ldiff(LRM), 0.01, 0.8)
 print  winDM_asy
 
 
-print "---- fracorder ------"
+print "---- fracorder -----"
 open djclose.gdt --quiet	# need longer data here
 matrix M = fracorder(ldiff(djclose), 20)
 print  M
+
+print "---- add_outofsample -----"
+open denmark --quiet
+
+smpl +3 -5
+
+
+## plain ols single-equation
+ols LRM const LRY(-2) LRM(-3) 
+b = add_outofsample($model)
+eval b.initY
+eval b.futureY
+eval b.futureX
+
+## a VAR
+var 2 LRM LRY IBO; IDE -q 
+
+bundle b = add_outofsample($system)
+eval b.initY
+eval b.futureY
+eval b.futureX
+
+## a VECM 
+vecm 2 1 LRM LRY IBO; IDE --rc -q
+
+b = add_outofsample($system)
+eval b.initY
+eval b.futureY
+eval b.futureX
+
+
+## an explicit system 
+
+system method=sur --quiet
+    equation LRM const LRY(-2) LRM(-3)
+    equation LRY const LRY(-1)
+end system
+
+b = add_outofsample($system)
+eval b.initY
+eval b.futureY
+eval b.futureX
+
+### end add_outofsample example ###
