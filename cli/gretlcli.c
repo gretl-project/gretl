@@ -203,6 +203,8 @@ static void check_blas_threading (int tool, int quiet)
         gretl_setenv("OPENBLAS_NUM_THREADS", "1");
     } else if (!strcmp(blas_type, "blis")) {
         gretl_setenv("BLIS_NUM_THREADS", "1");
+    } else if (!strcmp(blas_type, "mkl")) {
+        gretl_setenv("BLIS_NUM_THREADS", "1");
     }
 
     if (tool || quiet) {
@@ -213,7 +215,7 @@ static void check_blas_threading (int tool, int quiet)
                "* gretl is built using OpenMP, but is linked against\n"
                "* %s parallelized via pthreads. This combination\n"
                "* of threading mechanisms is not recommended. Ideally,\n"
-               "* %s should also use OpenMP.", blas_type, blas_type);
+               "* %s should also use OpenMP.\n", blas_type, blas_type);
     }
 }
 

@@ -5686,7 +5686,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     guint64 fpm;
 #endif
     int i, j, l;
-    fprintf(stderr, "*** Marcin *** gretl_dgemm, get_omp_n_threads=%d, get_omp_mnk_min=%d\n", get_omp_n_threads(), get_omp_mnk_min());
 
     if (cmod == GRETL_MOD_CUMULATE) {
         beta = 1;
@@ -5696,10 +5695,8 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     }
 
 #if defined(_OPENMP)
-    fprintf(stderr, "*** Marcin *** gretl_dgemm => if defined(_OPENMP)\n");
     fpm = (guint64) m * n * k;
     if (!gretl_use_openmp(fpm)) {
-        fprintf(stderr, "*** Marcin *** gretl_use_openmp(fpm)=%d\n", gretl_use_openmp(fpm));
         goto st_mode;
     }
 
@@ -5793,7 +5790,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     if (!btr) {
         if (!atr) {
             /* C := alpha*A*B + beta*C */
-            fprintf(stderr, "*** Marcin *** C := alpha*A*B + beta*C\n");
             for (j=0; j<n; j++) {
                 if (beta == 0) {
                     for (i=0; i<m; i++) {

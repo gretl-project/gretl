@@ -2988,7 +2988,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 		gretl_bundle_set_string(b, "blascore", s1);
 		gretl_bundle_set_string(b, "blas_parallel", s2);
                 if (s3 != NULL) {
-                    gretl_bundle_set_string(b, "blis_version", s3);
+                    gretl_bundle_set_string(b, "blas_version", s3);
                 }
 	    }
 #if defined(COMPILER_IDENT)
