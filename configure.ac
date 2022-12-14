@@ -362,6 +362,10 @@ AC_PROG_CC
 AC_CANONICAL_HOST
 AC_PROG_INSTALL
 
+if test "$CC" = "icx" ; then
+  AX_APPEND_FLAG([-fp-model precise])
+fi
+
 dnl check for Windows build
 case $host_os in
   mingw*)

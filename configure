@@ -8847,6 +8847,42 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+if test "$CC" = "icx" ; then
+
+if test ${CFLAGS+y}
+then :
+
+  case " $CFLAGS " in #(
+  *" -fp-model precise "*) :
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: : CFLAGS already contains -fp-model precise"; } >&5
+  (: CFLAGS already contains -fp-model precise) 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } ;; #(
+  *) :
+
+     as_fn_append CFLAGS " -fp-model precise"
+     { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: : CFLAGS=\"\$CFLAGS\""; } >&5
+  (: CFLAGS="$CFLAGS") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }
+     ;;
+esac
+
+else $as_nop
+
+  CFLAGS=-fp-model precise
+  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: : CFLAGS=\"\$CFLAGS\""; } >&5
+  (: CFLAGS="$CFLAGS") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }
+
+fi
+
+fi
+
 case $host_os in
   mingw*)
     win32_build=yes
