@@ -12539,10 +12539,26 @@
       </description>
     </function>
 
+    <function name="strpday" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string" optional="true">format</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 This function works just like <fncref targ="strptime"/>,
+	 except that the return value is an <quote>epoch day</quote>
+	 value, for the definition of which see <fncref
+	 targ="epochday"/>.  Since the resolution is daily, any
+	 time-of-day information in <argname>s</argname> is ignored.
+	</para>
+      </description>
+    </function>
+
     <function name="strptime" section="calendar" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="string">format</fnarg>
+	<fnarg type="string" optional="true">format</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12551,6 +12567,18 @@
 	 specified <argname>format</argname> and returns a scalar
 	 giving the number of seconds since the start of 1970
 	 according to Coordinated Universal Time (UTC).
+	</para>
+	<para>
+	  If <argname>format</argname> is omitted, it defaults to ISO
+	  8601 <quote>extended</quote>, <lit>YYYY-MM-DD</lit> (which
+	  translates to <quote><lit>%Y-%m-%d</lit></quote> as a
+	  strptime format).
+	</para>
+	<para>
+	  Alternatively, the first argument may be given as an 8-digit
+	  integer conforming to the ISO 8601 <quote>basic</quote> date
+	  format, <lit>YYYYMMDD</lit> (for example 20221220). In that
+	  case <argname>format</argname> should be omitted.
 	</para>
 	<para>
 	  Warning: this function behaves differently on Windows and
