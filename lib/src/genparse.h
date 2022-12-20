@@ -379,6 +379,7 @@ enum {
     F_LSOLVE,
     F_STRFTIME,
     F_STRPTIME,
+    F_STRPDAY,
     F_CONV2D,
     F_FLATTEN,
     F_IMAT,
