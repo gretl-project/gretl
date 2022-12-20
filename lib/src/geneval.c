@@ -8874,7 +8874,9 @@ static NODE *strftime_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *strptime_node (NODE *l, NODE *r, parser *p)
+/* strptime_node() implements both strptime() and strpday() */
+
+static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
     const char *fmt = NULL;
@@ -8894,7 +8896,7 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
     }
 
     if (src == NULL) {
-        /* we won't accept a format string */
+        /* without @src we won't accept a format string */
         if (r->t != EMPTY) {
             p->err = E_INVARG;
         }
@@ -8928,16 +8930,22 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
         if (s == NULL) {
             /* strptime() failed */
             p->err = E_INVARG;
-        } else {
-            double retval = (double) mktime(&tm);
+        } else if (f == F_STRPDAY) {
+	    int y = tm.tm_year + 1900;
+	    int m = tm.tm_mon + 1;
 
+	    ret->v.xval = (double) epoch_day_from_ymd(y, m, tm.tm_mday);
+	    if (ret->v.xval == 0) {
+		ret->v.xval = NADBL;
+	    }
+	} else {
+            ret->v.xval = (double) mktime(&tm);
 #ifdef WIN32
             /* dates prior to 1970-01-01 not supported */
-            if (retval == -1) {
-                retval = NADBL;
+            if (ret->v.xval == -1) {
+                ret->v.xval = NADBL;
             }
 #endif
-            ret->v.xval = retval;
         }
     }
 
@@ -18347,8 +18355,9 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_STRPTIME:
+    case F_STRPDAY:
         if (l->t == STR || scalar_node(l)) {
-            ret = strptime_node(l, r, p);
+            ret = strptime_node(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, STR, l, p);
         }
