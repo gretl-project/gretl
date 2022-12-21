@@ -2488,9 +2488,11 @@ static void register_openblas_details (void *handle)
 {
     char *(*OB_get_corename) (void);
     int (*OB_get_parallel) (void);
+    char *(*OB_get_config) (void);
 
     OB_get_corename = dlsym(handle, "openblas_get_corename");
     OB_get_parallel = dlsym(handle, "openblas_get_parallel");
+    OB_get_config = dlsym(handle, "openblas_get_config");
 
     if (OB_get_corename != NULL) {
         char *s = OB_get_corename();
@@ -2515,6 +2517,19 @@ static void register_openblas_details (void *handle)
         }
     } else {
         fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
+    }
+
+    if (OB_get_config != NULL) {
+        char *ver = NULL;
+
+        ver = OB_get_config();
+        if (ver != NULL) {
+            *blas_version = '\0';
+            snprintf(blas_version, 7, "%s", ver+9);
+            ver = NULL;
+        }
+    } else {
+        fprintf(stderr, "Couldn't find openblas_get_config()\n");
     }
 }
 
