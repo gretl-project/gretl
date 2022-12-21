@@ -2369,8 +2369,9 @@ static void gretl_stopwatch_init (void)
 
 /* BLAS detection and analysis */
 
-static char OB_core[32];
-static char OB_parallel[12];
+static char blas_core[64];
+static char blas_parallel[32];
+static char blas_version[32];
 
 static int blas_variant;
 
@@ -2475,20 +2476,30 @@ static int detect_blas_via_ldd (void)
 
 #include <dlfcn.h>
 
+static void (*OB_set_num_threads) (int);
+static int (*OB_get_num_threads) (void);
+static void (*BLIS_set_num_threads) (int);
+static int (*BLIS_get_num_threads) (void);
+static void (*BLIS_init) (void);
+static void (*MKL_domain_set_num_threads) (int, int);
+static int (*MKL_domain_get_max_threads) (int);
+
 static void register_openblas_details (void *handle)
 {
     char *(*OB_get_corename) (void);
     int (*OB_get_parallel) (void);
+    char *(*OB_get_config) (void);
 
     OB_get_corename = dlsym(handle, "openblas_get_corename");
     OB_get_parallel = dlsym(handle, "openblas_get_parallel");
+    OB_get_config = dlsym(handle, "openblas_get_config");
 
     if (OB_get_corename != NULL) {
         char *s = OB_get_corename();
 
         if (s != NULL) {
-            *OB_core = '\0';
-            strncat(OB_core, s, 31);
+            *blas_core = '\0';
+            strncat(blas_core, s, 31);
         }
     } else {
         fprintf(stderr, "Couldn't find openblas_get_corename()\n");
@@ -2498,26 +2509,231 @@ static void register_openblas_details (void *handle)
         int p = OB_get_parallel();
 
         if (p == 0) {
-            strcpy(OB_parallel, "none");
+            strcpy(blas_parallel, "none");
         } else if (p == 1) {
-            strcpy(OB_parallel, "pthreads");
+            strcpy(blas_parallel, "pthreads");
         } else if (p == 2) {
-            strcpy(OB_parallel, "OpenMP");
+            strcpy(blas_parallel, "OpenMP");
         }
     } else {
         fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
+    }
+
+    if (OB_get_config != NULL) {
+        char *ver = NULL;
+
+        ver = OB_get_config();
+        if (ver != NULL) {
+            *blas_version = '\0';
+            snprintf(blas_version, 7, "%s", ver+9);
+            ver = NULL;
+        }
+    } else {
+        fprintf(stderr, "Couldn't find openblas_get_config()\n");
+    }
+}
+
+static void register_blis_details (void *handle)
+{
+    /* The last element on arch_t enum in libblis =>
+    => must be updated whenever new architecture/cpu model appears*/
+    /* Shouldn't this come from a header? (Allin) */
+        /* -> Well, this enum is defined in blis.h which we do not include.
+            And we can't retrive it via dlopen(), can we? (Marcin) */
+    const int BLIS_NUM_ARCHS = 26;
+    char *buf = NULL;
+    int id;
+
+    /* Functions from libblis we need. */
+    char *(*BLIS_get_version_str) (void);
+    int (*BLIS_get_enable_threading) (void);
+    int (*BLIS_get_enable_openmp) (void);
+    int (*BLIS_get_enable_pthreads) (void);
+    char *(*BLIS_arch_string) (int);
+    int (*BLIS_arch_query_id) (void);
+
+    BLIS_get_version_str = dlsym(handle, "bli_info_get_version_str");
+    BLIS_get_enable_threading = dlsym(handle, "bli_info_get_enable_threading");
+    BLIS_get_enable_openmp = dlsym(handle, "bli_info_get_enable_openmp");
+    BLIS_get_enable_pthreads = dlsym(handle, "bli_info_get_enable_pthreads");
+    BLIS_arch_string = dlsym(handle, "bli_arch_string");
+    BLIS_arch_query_id = dlsym(handle, "bli_arch_query_id");
+
+    if (BLIS_get_version_str != NULL) {
+        buf = BLIS_get_version_str();
+        if (buf != NULL) {
+            *blas_version = '\0';
+            strncat(blas_version, buf, 31);
+            buf = NULL;
+        }
+    } else {
+        fprintf(stderr, "Couldn't find bli_info_get_version_str()\n");
+    }
+
+    /* Model we have: threaded or sequential */
+    if (!BLIS_get_enable_threading()) {
+        buf = "sequential (non-threading)";
+    } else {
+        if (BLIS_get_enable_openmp()) {
+            buf = "OpenMP";
+        } else if (BLIS_get_enable_pthreads()) {
+            buf = "pthreads";
+        } else {
+            buf = "unrecognized";
+        }
+    }
+    if (buf != NULL) {
+        *blas_parallel = '\0';
+        strncat(blas_parallel, buf, 31);
+        buf = NULL;
+    }
+
+    /* BLIS core in use */
+    if (BLIS_arch_query_id != NULL) {
+        id = BLIS_arch_query_id();
+    } else {
+        fprintf(stderr, "Couldn't find bli_arch_query_id()\n");
+        id = BLIS_NUM_ARCHS-1;
+    }
+    if (BLIS_arch_string != NULL) {
+        buf = BLIS_arch_string(id);
+    } else {
+        fprintf(stderr, "Couldn't find bli_arch_string()\n");
+        buf = "unrecognized";
+    }
+    if (buf != NULL) {
+        *blas_core = '\0';
+        strncat(blas_core, buf, 31);
+        buf = NULL;
+    }
+}
+
+static void register_mkl_details (void *handle)
+{
+    typedef struct {
+        int MajorVersion;
+        int MinorVersion;
+        int UpdateVersion;
+        char *ProductStatus;
+        char *Build;
+        char *Processor;
+        char *Platform;
+    } MKL_version;
+
+    MKL_version *version;
+    char *buf = NULL;
+    int nt = 0, blas_nt = 0, id = 0;
+
+    /* Functions from libmkl_intel_lp64.so we need. */
+    void (*MKL_get_version) (MKL_version*);
+    int (*MKL_get_max_threads) (void);
+    int (*MKL_cbwr_get_auto_branch) (void);
+
+    MKL_get_version = dlsym(handle, "MKL_Get_Version");
+    MKL_get_max_threads = dlsym(handle, "MKL_Get_Max_Threads");
+    MKL_cbwr_get_auto_branch = dlsym(handle, "MKL_CBWR_Get_Auto_Branch");
+
+    /* MKL version */
+    if (MKL_get_version != NULL) {
+        version = malloc(sizeof *version);
+        if (version == NULL) {
+            return;
+        } else {
+            MKL_get_version(version);
+            if (version != NULL) {
+                *blas_version = '\0';
+                snprintf(blas_version, 31, "%d.%d build %s",
+                         version->MajorVersion,
+                         version->UpdateVersion,
+                         version->Build);
+            }
+        }
+        free(version);
+    } else {
+        fprintf(stderr, "Couldn't find MKL_Get_Version()\n");
+    }
+
+    /* Model we have: threaded or sequential */
+    if (MKL_get_max_threads != NULL && MKL_domain_get_max_threads != NULL) {
+        nt = MKL_get_max_threads();
+        blas_nt = MKL_domain_get_max_threads(1); /* MKL_DOMAIN_BLAS */
+        if (nt == 1)  {
+            buf = "sequential (non-threading)";
+        } else {
+            if (blas_nt == 1) {
+                buf = "TBB";
+            } else if (blas_nt > 1) {
+                buf = "OpenMP";
+            } else {
+                buf = "unrecognized";
+            }
+        }
+        strncat(blas_parallel, buf, 31);
+        buf = NULL;
+    } else {
+        fprintf(stderr, "Couldn't find MKL_get_max_threads() and/or MKL_domain_get_max_threads()\n");
+    }
+
+    /* MKL core in use */
+    if (MKL_cbwr_get_auto_branch != NULL) {
+        id = MKL_cbwr_get_auto_branch();
+        switch (id) {
+            case 3: /* MKL_CBWR_COMPATIBLE */
+                buf = "SSE2 without rcpps/rsqrtps instructions";
+                break;
+            case 4: /* MKL_CBWR_SSE2 */
+                buf = "SSE2";
+                break;
+            case 5: /* MKL_CBWR_SSE3 */
+                buf = "SSE2 (deprecated SSE3)";
+                break;
+            case 6: /* MKL_CBWR_SSSE3 */
+                buf = "SSSE3";
+                break;
+            case 7: /* MKL_CBWR_SSE4_1 */
+                buf = "SSE4-1";
+                break;
+            case 8: /* MKL_CBWR_SSE4_2 */
+                buf = "SSE4-2";
+                break;
+            case 9: /* MKL_CBWR_AVX */
+                buf = "AVX";
+                break;
+            case 10: /* MKL_CBWR_AVX2 */
+                buf = "AVX2";
+                break;
+            case 11: /* MKL_CBWR_AVX512_MIC */
+                buf = "AVX2 (deprecated AVX-512MIC)";
+                break;
+            case 12: /* MKL_CBWR_AVX512 */
+                buf = "AVX-512";
+                break;
+            case 13: /* MKL_CBWR_AVX512_MIC_E1 */
+                buf = "AVX2 (deprecated AVX-512MICE1)";
+                break;
+            case 14: /* MKL_CBWR_AVX512_E1 */
+                buf = "AVX-512 with support of Vector Neural Network Instructions";
+                break;
+            default:
+                buf = "unknown";
+        }
+        strncat(blas_core, buf, 63);
+        buf = NULL;
     }
 }
 
 /* below: called in creating $sysinfo bundle */
 
-int get_openblas_details (char **s1, char **s2)
+int get_blas_details (char **s1, char **s2, char **s3)
 {
-    if (*OB_core == '\0' || *OB_parallel == '\0') {
+    if (*blas_core == '\0' || *blas_parallel == '\0') {
         return 0;
     } else {
-        *s1 = OB_core;
-        *s2 = OB_parallel;
+        *s1 = blas_core;
+        *s2 = blas_parallel;
+        if (s3 != NULL && *blas_version != '\0') {
+            *s3 = blas_version;
+        }
         return 1;
     }
 }
@@ -2543,20 +2759,23 @@ const char *blas_variant_string (void)
     }
 }
 
-/* for gretl_matrix.c, libset.c */
+/* for gretl_matrix.c, gretl_mt.c */
 
-int blas_is_openblas (void)
+int blas_is_threaded (void)
 {
-    return blas_variant == BLAS_OPENBLAS;
+    return blas_variant == BLAS_OPENBLAS ||
+        blas_variant == BLAS_BLIS ||
+        blas_variant == BLAS_MKL;
 }
-
-static void (*OB_set_num_threads) (int);
-static int (*OB_get_num_threads) (void);
 
 void blas_set_num_threads (int nt)
 {
     if (OB_set_num_threads != NULL) {
         OB_set_num_threads(nt);
+    } else if (BLIS_set_num_threads != NULL) {
+        BLIS_set_num_threads(nt);
+    } else if (MKL_domain_set_num_threads != NULL) {
+        MKL_domain_set_num_threads(nt, 1); /* MKL_DOMAIN_BLAS */
     }
 }
 
@@ -2564,6 +2783,10 @@ int blas_get_num_threads (void)
 {
     if (OB_get_num_threads != NULL) {
         return OB_get_num_threads();
+    } else if (BLIS_get_num_threads != NULL) {
+        return BLIS_get_num_threads();
+    } else if (MKL_domain_get_max_threads != NULL) {
+        return MKL_domain_get_max_threads(1); /* MKL_DOMAIN_BLAS */
     } else {
         return 0;
     }
@@ -2575,7 +2798,9 @@ static void blas_init (void)
 
 #if defined(OS_OSX) && defined(PKGBUILD)
     blas_variant = BLAS_VECLIB; /* the default */
-    // return;
+    return;
+#else
+    blas_variant = BLAS_UNKNOWN;
 #endif
 
     ptr = dlopen(NULL, RTLD_NOW);
@@ -2589,7 +2814,30 @@ static void blas_init (void)
         }
     }
 
-    if (blas_variant != BLAS_OPENBLAS && blas_variant != BLAS_VECLIB) {
+    if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
+        BLIS_init = dlsym(ptr, "bli_init");
+        BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
+        BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
+        if (BLIS_init != NULL) {
+            blas_variant = BLAS_BLIS;
+            BLIS_init(); /* This is only to be sure that BLIS was initialized */
+            register_blis_details(ptr);
+        }
+    }
+
+    if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
+        MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
+        MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
+        if (MKL_domain_set_num_threads != NULL) {
+            blas_variant = BLAS_MKL;
+            register_mkl_details(ptr);
+        }
+    }
+
+    if (blas_variant != BLAS_VECLIB &&
+        blas_variant != BLAS_OPENBLAS &&
+        blas_variant != BLAS_BLIS &&
+        blas_variant != BLAS_MKL) {
 #ifdef WIN32
         blas_variant = BLAS_NETLIB; /* ?? */
 #else
