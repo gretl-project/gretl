@@ -2028,7 +2028,8 @@ static int got_none_option (const char *s)
     return s != NULL && !strcmp(s, "none");
 }
 
-static const char *plot_output_option (PlotType p, int *pci)
+static const char *plot_output_option (PlotType p, int *pci,
+				       int *pbuf)
 {
     int ci = plot_ci;
     const char *s;
@@ -2068,8 +2069,17 @@ static const char *plot_output_option (PlotType p, int *pci)
     }
 
     s = get_optval_string(ci, OPT_U);
+
     if (s != NULL && *s == '\0') {
 	s = NULL;
+    } else if (s == NULL) {
+	/* try for --buffer=<strname> */
+	s = get_optval_string(ci, OPT_B2);
+	if (s != NULL && *s == '\0') {
+	    s = NULL;
+	} else if (pbuf != NULL) {
+	    *pbuf = 1;
+	}
     }
 
     if (pci != NULL) {
@@ -2100,7 +2110,8 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
     const char *optname = NULL;
-    int ci, interactive = 0;
+    int ci, buffer = 0;
+    int interactive = 0;
     FILE *fp = NULL;
 
     /* ensure we have 'gnuplot_path' in place (file-scope static var) */
@@ -2120,7 +2131,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     *gnuplot_outname = '\0';
 
     /* check for --output=whatever option */
-    optname = plot_output_option(ptype, &ci);
+    optname = plot_output_option(ptype, &ci, &buffer);
 
     if (got_display_option(optname)) {
 	/* --output=display specified */
@@ -2168,7 +2179,7 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
 
     if (opt & OPT_U) {
 	/* check for --plot=whatever option */
-	optname = plot_output_option(ptype, NULL);
+	optname = plot_output_option(ptype, NULL, NULL);
     }
 
     if (got_none_option(optname)) {
@@ -9527,7 +9538,6 @@ int is_auto_fit_string (const char *s)
 
 /**
  * gnuplot_process_file:
- * @opt: may include %OPT_U for output to specified file.
  * @prn: gretl printing struct.
  *
  * Respond to the "gnuplot" command with %OPT_I, to specify
@@ -9537,7 +9547,7 @@ int is_auto_fit_string (const char *s)
  * Returns: 0 on success, or if ignored; otherwise error code.
  */
 
-int gnuplot_process_file (gretlopt opt, PRN *prn)
+int gnuplot_process_file (PRN *prn)
 {
     const char *inname = get_optval_string(plot_ci, OPT_I);
     FILE *fp, *fq;
@@ -9564,7 +9574,6 @@ int gnuplot_process_file (gretlopt opt, PRN *prn)
 	while (fgets(line, sizeof line, fp)) {
 	    fputs(line, fq);
 	}
-
 	fclose(fp);
 	err = finalize_plot_input_file(fq);
     }

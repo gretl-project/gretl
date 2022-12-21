@@ -300,6 +300,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_J, "band-style", 2 },
     { GNUPLOT,  OPT_W, "font", 2 },
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
+    { GNUPLOT,  OPT_B2, "buffer", 2 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
     { HECKIT,   OPT_M, "ml", 0 },

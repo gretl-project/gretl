@@ -3124,7 +3124,7 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
                                     dset, opt, prn);
     } else if (cmd->ci == GNUPLOT) {
         if (opt & OPT_I) {
-            err = gnuplot_process_file(opt, prn);
+            err = gnuplot_process_file(prn);
         } else if (opt & OPT_C) {
             err = xy_plot_with_control(cmd->list, cmd->param,
                                        dset, opt);
