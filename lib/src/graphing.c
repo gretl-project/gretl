@@ -68,6 +68,7 @@ static double default_png_scale = 1.0;
 static int xwide = 0;
 
 static char ad_hoc_font[64];
+static char plot_buffer_name[32];
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -512,6 +513,52 @@ static void maybe_record_font_choice (gretlopt opt)
     }
 }
 
+static int set_plot_buffer_name (const char *bname)
+{
+    int err = 0;
+
+    if (bname == NULL || *bname == '\0') {
+	*plot_buffer_name = '\0';
+    } else {
+	err = check_stringvar_name(bname, 1, NULL);
+	if (!err) {
+	    strcpy(plot_buffer_name, bname);
+	}
+    }
+
+    return err;
+}
+
+static int plot_output_to_buffer (void)
+{
+    return *plot_buffer_name != '\0';
+}
+
+static int make_plot_commands_buffer (const char *fname)
+{
+    gchar *contents = NULL;
+    GError *gerr = NULL;
+    gsize size = 0;
+    int err = 0;
+
+    g_file_get_contents(fname, &contents, &size, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+	err = E_FOPEN;
+    } else {
+	char *buf = gretl_strdup(contents);
+
+	err = user_var_add_or_replace(plot_buffer_name,
+				      GRETL_TYPE_STRING,
+				      buf);
+	g_free(contents);
+    }
+
+    return err;
+}
+
 static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 			 const int *list, const DATASET *dset)
 {
@@ -645,32 +692,7 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     return err;
 }
 
-#define GP_USE_NAN 1
-
-/* With gnuplot 5, if we represent NAs by "?" (flagging that we're
-   doing so with 'set datafile missing "?"')  then in "with-lines"
-   plots the lines are continuous across the missing values (joining
-   the successive non-missing values), so giving no visual clue that
-   there's anything missing. If we want lines to have gaps in case of
-   missing values we need to write "NaN" rather than "?" into the
-   gnuplot data block. See the gnuplot 5 doc for "missing":
-
-   "Gnuplot makes a distinction between missing data and invalid data
-   (e.g. "NaN", 1/0.).  For example invalid data causes a gap in a
-   line drawn through sequential data points; missing data does not."
-
-   This represents a change from gnuplot 4 behavior, which I didn't
-   notice for quite a while. But I think we want the gaps, hence
-   the following function.
-
-   Allin, 2018-08-12
-*/
-
-#if GP_USE_NAN
 static const char *gpna = "NaN";
-#else
-static const char *gpna = "?";
-#endif
 
 void write_gp_dataval (double x, FILE *fp, int final)
 {
@@ -1876,7 +1898,11 @@ static FILE *gp_set_up_batch (char *fname,
     int fmt = GP_TERM_NONE;
     FILE *fp = NULL;
 
-    if (optname != NULL) {
+    if (plot_output_to_buffer()) {
+	this_term_type = GP_TERM_PLT;
+	sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
+	fp = gretl_mktemp(fname, "w");
+    } else if (optname != NULL) {
 	/* user gave --output=<filename> */
 	fmt = set_term_type_from_fname(optname);
 	if (fmt) {
@@ -2028,11 +2054,13 @@ static int got_none_option (const char *s)
     return s != NULL && !strcmp(s, "none");
 }
 
-static const char *plot_output_option (PlotType p, int *pci,
-				       int *pbuf)
+static const char *plot_output_option (PlotType p, int *pci, int *err)
 {
     int ci = plot_ci;
     const char *s;
+
+    /* clear any previous setting */
+    set_plot_buffer_name(NULL);
 
     /* set a more specific command index based on
        the plot type, if applicable */
@@ -2074,11 +2102,11 @@ static const char *plot_output_option (PlotType p, int *pci,
 	s = NULL;
     } else if (s == NULL) {
 	/* try for --buffer=<strname> */
-	s = get_optval_string(ci, OPT_B2);
+	s = get_optval_string(ci, OPT_b);
 	if (s != NULL && *s == '\0') {
 	    s = NULL;
-	} else if (pbuf != NULL) {
-	    *pbuf = 1;
+	} else {
+	    *err = set_plot_buffer_name(s);
 	}
     }
 
@@ -2110,8 +2138,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 {
     char fname[FILENAME_MAX] = {0};
     const char *optname = NULL;
-    int ci, buffer = 0;
-    int interactive = 0;
+    int ci, interactive = 0;
     FILE *fp = NULL;
 
     /* ensure we have 'gnuplot_path' in place (file-scope static var) */
@@ -2130,14 +2157,17 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     this_term_type = GP_TERM_NONE;
     *gnuplot_outname = '\0';
 
-    /* check for --output=whatever option */
-    optname = plot_output_option(ptype, &ci, &buffer);
+    /* check for --output=whatever or --buffer=whatever */
+    optname = plot_output_option(ptype, &ci, err);
+    if (*err) {
+	return NULL;
+    }
 
     if (got_display_option(optname)) {
 	/* --output=display specified */
 	interactive = 1;
     } else if (optname != NULL) {
-	/* --output=filename specified */
+	/* --output=filename or --buffer=starvar specified */
 	interactive = 0;
     } else if (flags & GPT_ICON) {
 	interactive = 1;
@@ -2176,10 +2206,11 @@ int gnuplot_graph_wanted (PlotType ptype, gretlopt opt)
 {
     const char *optname = NULL;
     int ret = 0;
+    int err = 0;
 
-    if (opt & OPT_U) {
+    if (opt & (OPT_U | OPT_b)) {
 	/* check for --plot=whatever option */
-	optname = plot_output_option(ptype, NULL, NULL);
+	optname = plot_output_option(ptype, NULL, &err);
     }
 
     if (got_none_option(optname)) {
@@ -2271,9 +2302,13 @@ static int gnuplot_make_graph (void)
     fmt = specified_gp_output_format();
 
     if (fmt == GP_TERM_PLT) {
-	/* no-op: just the gnuplot commands are wanted */
-	graph_file_written = 1;
-	return 0;
+	/* just the gnuplot commands are wanted */
+	if (plot_output_to_buffer()) {
+	    err = make_plot_commands_buffer(fname);
+	} else {
+	    graph_file_written = 1;
+	}
+	return err;
     } else if (fmt == GP_TERM_NONE && gui) {
 	do_plot_bounding_box();
 	/* ensure we don't get stale output */
