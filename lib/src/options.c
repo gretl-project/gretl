@@ -25,16 +25,16 @@
 
 #define OPTDEBUG 0
 
-/* commands for which --vcv (= OPT_O) is applicable */
-
+/* commands for which --vcv (OPT_O) is applicable */
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
 
+/* commands for which --window (OPT_W) is applicable */
 #define window_opt_ok(c) (MODEL_COMMAND(c) || c == VAR || c == VECM)
 
-/* commands for which --quiet (= OPT_Q) is applicable */
-
+/* commands which support the $result accessor */
 #define yields_result(c) (c == CORR || c == FREQ || c == SUMMARY)
 
+/* commands for which --quiet (OPT_Q) is applicable */
 #define quiet_opt_ok(c) (MODEL_COMMAND(c) ||    \
                          yields_result(c) ||    \
                          c == ADD ||            \
@@ -81,6 +81,32 @@
                          c == XCORRGM ||        \
                          c == XTAB)
 
+/* --output (OPT_U) as attached to GNUPLOT */
+#define plot_output_opt_ok(c) (c == GNUPLOT ||	\
+			       c == PLOT ||	\
+			       c == BXPLOT ||	\
+			       c == HFPLOT ||	\
+			       c == PANPLOT ||	\
+			       c == QQPLOT ||	\
+			       c == RMPLOT ||	\
+			       c == SCATTERS)
+
+/* --plot (OPT_U) as attached to CORR */
+#define cmd_plot_opt_ok(c) (c == CORR ||	\
+			    c == CORRGM ||	\
+			    c == CUSUM ||	\
+			    c == FCAST ||	\
+			    c == FREQ ||	\
+			    c == HURST ||	\
+			    c == LEVERAGE ||	\
+			    c == PERGM ||	\
+			    c == QLRTEST ||	\
+			    c == XCORRGM)
+
+/* --buffer (OPT_b) as attached to GNUPLOT */
+#define plot_buffer_opt_ok(c) (plot_output_opt_ok(c) || \
+			       cmd_plot_opt_ok(c))
+
 struct gretl_option {
     int ci;              /* command index (gives context) */
     gretlopt o;          /* index of integer type */
@@ -96,11 +122,11 @@ struct flag_match {
     unsigned char c;
 };
 
-/* Below: This is used as a one-way mapping from the long form
-   to the index (e.g. OPT_Q), so a given index can have more than
-   one long-form counterpart, depending on context.  The last field
-   flags whether the given option accepts (1), or requires (2), an
-   accompanying parameter value.
+/* Below: This is used as a one-way mapping from the long form to the
+   index (e.g. OPT_Q), so a given index can have more than one
+   long-form counterpart depending on the context.  The last field
+   indicates whether the given option does not accept (0), accepts
+   (1), or requires (2) an associated parameter value.
 */
 
 struct gretl_option gretl_opts[] = {
@@ -159,8 +185,6 @@ struct gretl_option gretl_opts[] = {
     { BXPLOT,   OPT_K, "tweaks", 2 },
     { BXPLOT,   OPT_L, "outliers", 2 },
     { BXPLOT,   OPT_P, "panel", 0 },
-    { BXPLOT,   OPT_U, "output", 2 },
-    { BXPLOT,   OPT_b, "buffer", 2 },
     { BXPLOT,   OPT_X, "matrix", 2 },
     { BXPLOT,   OPT_Z, "factorized", 0 },
     { BXPLOT,   OPT_B, "whiskerbars", 0 },
@@ -194,11 +218,7 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_X, "matrix", 2 },
     { CORR,     OPT_T, "triangle", 0 },
     { CORRGM,   OPT_B, "bartlett", 0 },
-    { CORRGM,   OPT_U, "plot", 2 },
-    { CORRGM,   OPT_b, "buffer", 2 },
     { CUSUM,    OPT_R, "squares", 0 },
-    { CUSUM,    OPT_U, "plot", 2 },
-    { CUSUM,    OPT_b, "buffer", 2 },
     { DATA,     OPT_C, "compact", 2 },
     { DATA,     OPT_O, "odbc", 0 },
     { DATA,     OPT_N, "name", 2 },
@@ -258,8 +278,6 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_R, "rolling", 0 }, /* legacy alias */
     { FCAST,    OPT_O, "out-of-sample", 0 },
     { FCAST,    OPT_I, "integrate", 0 },
-    { FCAST,    OPT_U, "plot", 2 },
-    { FCAST,    OPT_b, "buffer", 2 },
     { FOREIGN,  OPT_D, "send-data", 1 },
     { FOREIGN,  OPT_V, "verbose", 0 },
     { FOREIGN,  OPT_F, "frame", 0 },
@@ -275,8 +293,6 @@ struct gretl_option gretl_opts[] = {
     { FREQ,     OPT_M, "min", 2 },
     { FREQ,     OPT_W, "binwidth", 2 },
     { FREQ,     OPT_X, "matrix", 2 },
-    { FREQ,     OPT_U, "plot", 2 },
-    { FREQ,     OPT_b, "buffer", 2 },
     { FREQ,     OPT_K, "tweaks", 2 },
     { GARCH,    OPT_A, "arma-init", 0 },
     { GARCH,    OPT_F, "fcp", 0 },
@@ -318,11 +334,7 @@ struct gretl_option gretl_opts[] = {
     { HELP,     OPT_F, "func", 0 },
     { HFPLOT,   OPT_O, "with-lines", 0 },
     { HFPLOT,   OPT_T, "time-series", 0 },
-    { HFPLOT,   OPT_U, "output", 2 },
-    { HFPLOT,   OPT_b, "buffer", 2 },
     { HSK,      OPT_N, "no-squares", 0 },
-    { HURST,    OPT_U, "plot", 2 },
-    { HURST,    OPT_b, "buffer", 2 },
     { INCLUDE,  OPT_F, "force", 0 },
     { INTREG,   OPT_G, "opg", 0 },
     { INTREG,   OPT_R, "robust", 0 },
@@ -356,8 +368,6 @@ struct gretl_option gretl_opts[] = {
     { KPSS,     OPT_F, "difference", 0 },
     { LAGS,     OPT_L, "bylag", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
-    { LEVERAGE, OPT_U, "plot", 2 },
-    { LEVERAGE, OPT_b, "buffer", 2 },
     { LEVERAGE, OPT_O, "overwrite", 0 },
     { LEVINLIN, OPT_N, "nc", 0 },
     { LEVINLIN, OPT_T, "ct", 0 },
@@ -512,8 +522,6 @@ struct gretl_option gretl_opts[] = {
     { PANPLOT,  OPT_A, "stack", 0 },
     { PANPLOT,  OPT_B, "boxplots", 0 },
     { PANPLOT,  OPT_C, "boxplot", 0 },
-    { PANPLOT,  OPT_U, "output", 2 },
-    { PANPLOT,  OPT_b, "buffer", 2 },
     { PANPLOT,  OPT_Y, "single-yaxis", 0 },
     { PANSPEC,  OPT_M, "matrix-diff", 0 },
     { PANSPEC,  OPT_N, "nerlove", 0 },
@@ -528,8 +536,6 @@ struct gretl_option gretl_opts[] = {
     { PERGM,    OPT_L, "log", 0 },
     { PERGM,    OPT_R, "radians", 0 },
     { PERGM,    OPT_D, "degrees", 0 },
-    { PERGM,    OPT_U, "plot", 2 },
-    { PERGM,    OPT_b, "buffer", 2 },
     { PKG,      OPT_L, "local", 0 },
     { PKG,      OPT_V, "verbose", 0 },
     { PLOT,     OPT_C, "control", 0 },
@@ -540,8 +546,6 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_M, "with-impulses", 1 },
     { PLOT,     OPT_P, "with-lp", 1 },
     { PLOT,     OPT_T, "time-series", 0 },
-    { PLOT,     OPT_U, "output", 2 },
-    { PLOT,     OPT_b, "buffer", 2 },
     { PLOT,     OPT_Y, "single-yaxis", 0 },
     { PLOT,     OPT_Z, "dummy", 0 },
     { PLOT,     OPT_N, "band", 2 },
@@ -566,12 +570,8 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_B, "bootstrap", 1 },
     { PROBIT,   OPT_S, "estrella", 0 },
     { QLRTEST,  OPT_L, "limit-to", 2 },
-    { QLRTEST,  OPT_U, "plot", 2 },
-    { QLRTEST,  OPT_b, "buffer", 2 },
     { QQPLOT,   OPT_R, "raw", 0 },
     { QQPLOT,   OPT_Z, "z-scores", 0 },
-    { QQPLOT,   OPT_U, "output", 2 },
-    { QQPLOT,   OPT_b, "buffer", 2 },
     { QUANTREG, OPT_I, "intervals", 1 },
     { QUANTREG, OPT_N, "no-df-corr", 0 },
     { QUANTREG, OPT_R, "robust", 0 },
@@ -588,8 +588,6 @@ struct gretl_option gretl_opts[] = {
     { RESTRICT, OPT_S, "silent", 0 },
     { RESTRICT, OPT_W, "wald", 0 },
     { RMPLOT,   OPT_T, "trim", 0 },
-    { RMPLOT,   OPT_U, "output", 2 },
-    { RMPLOT,   OPT_b, "buffer", 2 },
     { RUNS,     OPT_D, "difference", 0 },
     { RUNS,     OPT_E, "equal", 0 },
     { SCATTERS, OPT_O, "with-lines", 0 },
@@ -691,8 +689,6 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_R, "robust", 0 },
     { WLS,      OPT_C, "cluster", 2 },
     { WLS,      OPT_Z, "allow-zeros", 0 },
-    { XCORRGM,  OPT_U, "plot", 2 },
-    { XCORRGM,  OPT_b, "buffer", 2 },
     { XTAB,     OPT_C, "column", 0 },
     { XTAB,     OPT_X, "matrix", 2 },
     { XTAB,     OPT_R, "row", 0 },
@@ -809,10 +805,21 @@ const char **get_opts_for_command (int ci, int *nopt)
     const char **ret = NULL;
 
     if (ci != OLS) {
-        /* widely applicable options which are "attached" to OLS */
+        /* widely applicable options attached to OLS */
         n += vcv_opt_ok(ci);
         n += quiet_opt_ok(ci);
         n += window_opt_ok(ci);
+    }
+
+    if (ci != GNUPLOT) {
+	/* common plotting options attached to GNUPLOT */
+	n += plot_output_opt_ok(ci);
+	n += plot_buffer_opt_ok(ci);
+    }
+
+    if (ci != CORR) {
+	/* auxiliary plotting options attached to CORR */
+	n += cmd_plot_opt_ok(ci);
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
@@ -847,6 +854,17 @@ const char **get_opts_for_command (int ci, int *nopt)
         if (window_opt_ok(ci)) {
             ret[j++] = "window";
         }
+    } else if (ci != GNUPLOT) {
+	if (plot_output_opt_ok(ci)) {
+	    ret[j++] = "output";
+	}
+	if (plot_buffer_opt_ok(ci)) {
+	    ret[j++] = "buffer";
+	}
+    } else if (ci != CORR) {
+	if (cmd_plot_opt_ok(ci)) {
+	    ret[j++] = "plot";
+	}
     }
 
     *nopt = n;
@@ -915,6 +933,12 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
         return 1;
     } else if (opt == OPT_W && window_opt_ok(ci)) {
         return 1;
+    } else if (opt == OPT_U && plot_output_opt_ok(ci)) {
+	return 1;
+    } else if (opt == OPT_b && plot_buffer_opt_ok(ci)) {
+	return 1;
+    } else if (opt == OPT_U && cmd_plot_opt_ok(ci)) {
+	return 1;
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
@@ -1107,8 +1131,17 @@ static int option_parm_status (int ci, gretlopt opt)
 {
     int i, got_ci = 0;
 
-    for (i=0; gretl_opts[i].ci != 0; i++) {
+    if (opt == OPT_U) {
+	if (plot_output_opt_ok(ci)) {
+	    ci = GNUPLOT;
+	} else if (cmd_plot_opt_ok(ci)) {
+	    ci = CORR;
+	}
+    } else if (opt == OPT_b && plot_buffer_opt_ok(ci)) {
+        ci = GNUPLOT;
+    }
 
+    for (i=0; gretl_opts[i].ci != 0; i++) {
         if (gretl_opts[i].ci == ci) {
             if (gretl_opts[i].o == opt) {
                 return gretl_opts[i].parminfo;
@@ -1230,6 +1263,10 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     if (val_set && so->val != NULL) {
         maybe_evaluate_optval(so);
     }
+
+#if OPTDEBUG
+    fprintf(stderr, " push_option_param: returning err = %d\n", err);
+#endif
 
     return err;
 }
@@ -1575,7 +1612,7 @@ int set_optval_string (int ci, gretlopt opt, const char *s)
 }
 
 /* valid_long_opt: this is (semi-) public because we have need of
-   it in the new command tokenizer
+   it in the command tokenizer
 */
 
 gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
@@ -1589,16 +1626,32 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
         return 0;
     }
 
+#if OPTDEBUG
+    fprintf(stderr, "valid_long_opt, s = '%s'\n", s);
+#endif
+
+    /* common options without parameter */
     if (vcv_opt_ok(ci) && !strcmp(s, "vcv")) {
         return OPT_O;
     }
-
     if (quiet_opt_ok(ci) && !strcmp(s, "quiet")) {
         return OPT_Q;
     }
-
     if (window_opt_ok(ci) && !strcmp(s, "window")) {
         return OPT_W;
+    }
+
+    /* common options with parameter: switch @ci to the
+       command that "owns" the option in question
+    */
+    if (plot_output_opt_ok(ci) && !strcmp(s, "output")) {
+        ci = GNUPLOT;
+    }
+    if (plot_buffer_opt_ok(ci) && !strcmp(s, "buffer")) {
+        ci = GNUPLOT;
+    }
+    if (cmd_plot_opt_ok(ci) && !strcmp(s, "plot")) {
+        ci = CORR;
     }
 
     /* start by looking for an exact match */
@@ -1649,6 +1702,11 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
         opt = OPT_W;
         *status = 0;
     }
+
+#if OPTDEBUG
+    fprintf(stderr, "valid_long_opt, returning %d (status %d)\n",
+	    opt, *status);
+#endif
 
     return opt;
 }
@@ -1747,21 +1805,33 @@ const char *print_flags (gretlopt oflags, int ci)
         return "";
     }
 
-    /* special: -o (--vcv) can be used with several model
-       commands */
     if ((oflags & OPT_O) && vcv_opt_ok(ci)) {
         pputs(flagprn, " --vcv");
         oflags &= ~OPT_O; /* handled */
     }
-
     if ((oflags & OPT_Q) && quiet_opt_ok(ci)) {
         pputs(flagprn, " --quiet");
         oflags &= ~OPT_Q; /* handled */
     }
-
     if ((oflags & OPT_W) && window_opt_ok(ci)) {
         pputs(flagprn, " --window");
         oflags &= ~OPT_W; /* handled */
+    }
+
+    if (plot_buffer_opt_ok(ci)) {
+	if (oflags & OPT_b) {
+	    parm = get_optval_string(ci, OPT_b);
+	    pprintf(flagprn, " --buffer=%s\n", parm);
+	    oflags &= ~OPT_b; /* handled */
+	} else if (oflags & OPT_U) {
+	    parm = get_optval_string(ci, OPT_U);
+	    if (plot_output_opt_ok(ci)) {
+		pprintf(flagprn, " --output=%s\n", parm);
+	    } else {
+		pprintf(flagprn, " --plot=%s\n", parm);
+	    }
+	    oflags &= ~OPT_U; /* handled */
+	}
     }
 
     got_ci = 0;
