@@ -4,7 +4,7 @@ set -e
 DIR=$(dirname $(realpath "$0")) 	# locate folder where this sh-script is located in
 SCRIPT_1="test_extra.inp"
 SCRIPT_2="test_extra_matrix.inp"
-SCRIPT_3="test_oos_helpers.inp"
+SCRIPT_3="test_add_outofsample.inp"
 PROJECT="extra"
 
 cd $DIR

@@ -3,7 +3,7 @@ set verbose off
 set assert stop
 clear
 
-include "../extra_oos_helpers.inp" --force
+include "../extra_withdata.inp" --force
 include assertion.gfn
 
 open denmark --quiet
@@ -85,6 +85,64 @@ function void test_trygrabvalue (const bundles P)
   endloop
 end function
 test_trygrabvalue(Params)
+
+
+
+open denmark --quiet
+
+function void test_add_outofsample_seq (const list L)
+  print "Start testing function add_outofsample() for single-equation"
+
+
+  # Given
+  list Endo = L.LRY(-2)
+  list Exo = L.LRM(-2)
+
+  print LRM Endo Exo -o
+
+  smpl +3 -2
+  ols LRM const Endo Exo #--quiet
+
+  matrix initY_expected = {11.604; 11.582}'
+  strings dates_initY_expected = defarray("1974:2", "1974:3")
+
+  matrix futureY_expected = {12.03979; 12.015}
+  strings dates_futureY_expected = defarray("1987:2", "1987:3")
+
+  # const ~ LRY(-2) ~ LRM{-2}
+  matrix futureX_expected = {1; 1} ~ {6.0807; 6.0612} ~ {12.072; 12.028}
+  strings dates_futureX_expected = defarray("1987:2", "1987:3")
+
+  # When
+  bundle model = add_outofsample($model)
+  matrix initY_actual = model.initY
+  strings dates_initY_actual = rnameget(initY_actual)
+  matrix futureY_actual = model.futureY
+  strings dates_futureY_actual = rnameget(futureY_actual)
+  matrix futureX_actual = model.futureX
+  strings dates_futureX_actual = rnameget(futureX_actual)
+
+  # Then
+  loop foreach i dates_initY_actual
+    assert(dates_initY_actual[i] == dates_initY_expected[i])
+    assert_almost_equal_num(initY_actual[i], initY_expected[i], 1e-3)
+  endloop
+
+  loop foreach i dates_futureY_actual_actual
+    assert(dates_futureY_actual[i] == dates_futureY_expected[i])
+    assert_almost_equal_num(futureY_actual[i], futureY_expected[i], 1e-3)
+
+    assert(dates_futureX_actual[i] == dates_futureX_expected[i])
+  endloop
+
+  loop c=1..cols(futureX_expected)
+    loop r=1..rows(futureX_expected)
+      assert_almost_equal_num(futureX_actual[r,c], futureX_expected[r,c], 1e-3)
+    endloop
+  endloop
+
+end function
+test_add_outofsample_seq(dataset)
 
 
 
