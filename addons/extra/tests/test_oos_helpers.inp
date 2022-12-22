@@ -1,0 +1,93 @@
+set warnings off
+set verbose off
+set assert stop
+clear
+
+include "../extra_oos_helpers.inp" --force
+include assertion.gfn
+
+
+
+open denmark --quiet
+
+
+function void test_lowlevelcopy (const list L)
+  print "Start testing function lowlevelcopy()"
+
+  # Given
+  list Y = L.LRM L.LRY
+  scalar start = 1
+  scalar stop  = 2
+
+  # When
+  matrix m = lowlevelcopy(Y, start, stop)
+
+  # Then
+  assert(rows(m) == 2)
+  assert(cols(m) == 2)
+  assert(cnameget(m)[1] == "LRM")
+  assert(cnameget(m)[2] == "LRY")
+  assert_almost_equal_num(m[1,1], 11.633, 1e-3)
+  assert_almost_equal_num(m[2,1], 11.604, 1e-3)
+  assert_almost_equal_num(m[1,2], 5.9037, 1e-3)
+  assert_almost_equal_num(m[2,2], 5.8738, 1e-3)
+end function
+test_lowlevelcopy(dataset)
+
+
+function void test_lowlevelcopy_nan (const list L)
+  print "Start testing function lowlevelcopy() with NAs"
+
+  # Given
+  series LRM = L.LRM
+  LRM[1] = NA
+  list Y = LRM L.LRY
+  scalar start = 1
+  scalar stop  = 2
+
+  # When
+  matrix m = lowlevelcopy(Y, start, stop)
+
+  # Then
+  assert(rows(m) == 2)
+  assert(cols(m) == 2)
+  assert(cnameget(m)[1] == "LRM")
+  assert(cnameget(m)[2] == "LRY")
+  assert(ok(m[1,1]) == FALSE)
+  assert_almost_equal_num(m[2,1], 11.604, 1e-3)
+  assert_almost_equal_num(m[1,2], 5.9037, 1e-3)
+  assert_almost_equal_num(m[2,2], 5.8738, 1e-3)
+end function
+test_lowlevelcopy_nan(dataset)
+
+
+nulldata 3
+
+
+bundles Params = null
+Params = Params + _(idx=1, expected = 1)
+Params = Params + _(idx=2, expected = 2)
+Params = Params + _(idx=3, expected = NA)
+
+function void test_trygrabvalue (const bundles P)
+  print "Start testing function trygrabvalue()."
+
+  series y = {1, 2, NA}'
+
+  loop foreach i P
+    # Given + When
+    scalar actual = trygrabvalue(y, P[i].idx)
+
+    # Then
+    if ok(actual)
+      assert(actual == P[i].expected)
+    else
+      assert(missing(actual) == missing(P[i].expected))
+    endif
+  endloop
+end function
+test_trygrabvalue(Params)
+
+
+
+printf "\nInfo: All tests passed.\n"
