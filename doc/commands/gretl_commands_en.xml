@@ -10425,7 +10425,7 @@
 	case its content is over-written with the name of the
 	temporary file.  Please note: files written to the dot
 	directory are cleaned up on exit from the program, so don't
-	use this form is you want the output to be preserved after
+	use this form if you want the output to be preserved after
 	your gretl session.
       </para>
       <para>
