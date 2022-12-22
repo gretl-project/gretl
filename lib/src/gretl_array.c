@@ -2296,6 +2296,20 @@ gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
     return a;
 }
 
+/* is_strings_array_element() tests @str for representation of an
+   element of an array of strings. This should work if @str takes the
+   form
+
+   <arrayname>[<index>]
+
+   where @arrayname identifies a strings array and <index> represents
+   a valid (1-based) index into this array. In that case @arrayname is
+   written into @aname (which should be of length 32 bytes or more),
+   @index (converted to 0-based) is written into @pidx, and 1 is
+   returned. On failure, 0 is returned (and @aname and @pidx are not
+   touched).
+*/
+
 int is_strings_array_element (const char *str,
 			      char *aname,
 			      int *pidx)
