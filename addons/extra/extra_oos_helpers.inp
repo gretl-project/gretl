@@ -38,17 +38,15 @@ function matrix lowlevelcopy(const list L, int start[1::], int stop[1::])
     # We assume that 'start' and 'stop' apply to all members of 
     # L equally, else errors may occur or not all available data 
     # will be fetched. 
-     
-    matrix m = mshape(NA, stop - start + 1, nelem(L))
-    loop i = start..stop
-        matrix row = {}
-        loop foreach s L            
-            row ~= L.$s[i]
-        endloop
-        m[i -start+1, ] = row 
-    endloop
+
+    set skip_missing off
+
+    matrix m = {L}[start:stop,]
     cnameset(m, varnames(L))
     rnameset(m, obslabel(seq(start,stop)))
+
+    set skip_missing on
+
     return m
 end function
 
@@ -128,7 +126,11 @@ end function
 
 # private function
 function matrices get_past_future_from_model(const bundle mod)
+    /* Get initial endogenous values and future, out-of-sample
+        endogenous and exogenous values from a model bundle. */
+
     errorif(nelem(mod.ylist) != 1, "single equation results expected")
+
     matrix init_y, future_y, future_X
 
     ## initial endo values
@@ -138,7 +140,6 @@ function matrices get_past_future_from_model(const bundle mod)
     endif
 
     ## future values of endo / exo variables
-    
     future_offset = beyond_tmax(mod.ylist[1])
     # (here we must _not_ create a copy of the series,
     #  else it is restricted to the current sample!) 
@@ -157,14 +158,18 @@ function matrices get_past_future_from_model(const bundle mod)
         # exogenous 
         future_X = lowlevelcopy(mod.xlist, start, stop)
     endif
+
     return defarray(init_y, future_y, future_X)
 end function
 
 
-
 # private function
 function matrices get_past_future_from_system(const bundle sys)
+    /* Get initial endogenous values and future, out-of-sample
+        endogenous and exogenous values from a system bundle. */
+
     errorif(!inbundle(sys, "neqns"), "var/vecm or system bundle expected")
+
     matrix init_Y, future_Y, future_X
       
     list endo = getendo(sys)

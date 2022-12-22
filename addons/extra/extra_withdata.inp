@@ -166,7 +166,7 @@ function bundle add_outofsample(const bundle modorsys)
         funcerr "not implemented: case of sample_t2 < t2"
         # (but sample_t2 does not exist after 'system' (gretl 2022c))
     elif modorsys.t2 > $tmax 
-        funcerr "shouldn't happen"
+        funcerr "case of sample_t2 > t2. Shouldn't happen"
     endif 
     
     
