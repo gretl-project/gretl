@@ -187,4 +187,8 @@ gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
 				     int leadcols, int maxcols,
 				     int *err);
 
+int is_strings_array_element (const char *str,
+			      char *aname,
+			      int *pidx);
+
 #endif /* GRETL_ARRAY_H_ */

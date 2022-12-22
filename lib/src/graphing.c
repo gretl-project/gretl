@@ -69,6 +69,7 @@ static int xwide = 0;
 
 static char ad_hoc_font[64];
 static char plot_buffer_name[32];
+static int plot_buffer_idx = -1;
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -518,11 +519,17 @@ static int set_plot_buffer_name (const char *bname)
     int err = 0;
 
     if (bname == NULL || *bname == '\0') {
+	plot_buffer_idx = -1;
 	*plot_buffer_name = '\0';
     } else {
-	err = check_stringvar_name(bname, 1, NULL);
-	if (!err) {
-	    strcpy(plot_buffer_name, bname);
+	if (is_strings_array_element(bname, plot_buffer_name, &plot_buffer_idx)) {
+	    ; /* handled */
+	} else {
+	    plot_buffer_idx = -1;
+	    err = check_stringvar_name(bname, 1, NULL);
+	    if (!err) {
+		strcpy(plot_buffer_name, bname);
+	    }
 	}
     }
 
@@ -547,6 +554,10 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	err = E_FOPEN;
+    } else if (plot_buffer_idx >= 0) {
+	gretl_array *A = get_strings_array_by_name(plot_buffer_name);
+
+	gretl_array_set_string(A, plot_buffer_idx, contents, 1);
     } else {
 	char *buf = gretl_strdup(contents);
 
