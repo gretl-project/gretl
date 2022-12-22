@@ -6,8 +6,6 @@ clear
 include "../extra_oos_helpers.inp" --force
 include assertion.gfn
 
-
-
 open denmark --quiet
 
 

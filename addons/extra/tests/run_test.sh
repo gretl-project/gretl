@@ -4,6 +4,7 @@ set -e
 DIR=$(dirname $(realpath "$0")) 	# locate folder where this sh-script is located in
 SCRIPT_1="test_extra.inp"
 SCRIPT_2="test_extra_matrix.inp"
+SCRIPT_3="test_oos_helpers.inp"
 PROJECT="extra"
 
 cd $DIR
@@ -24,6 +25,15 @@ then
   echo "Success: All tests passed for '${SCRIPT_2}'."
 else
   echo "Failure: Tests not passed for '${SCRIPT_2}'." >&2
+  exit 1
+fi
+
+gretlcli -b -e -q ${SCRIPT_3}
+if [ $? -eq 0 ]
+then
+  echo "Success: All tests passed for '${SCRIPT_3}'."
+else
+  echo "Failure: Tests not passed for '${SCRIPT_3}'." >&2
   exit 1
 fi
 
