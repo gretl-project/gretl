@@ -6916,6 +6916,17 @@
 	</para>
       </li>
     </ilist>
+    <subhead>Datos de series temporales</subhead>
+    <para>
+      Cuando la base de datos vigente consiste en series temporales, es
+      muy probable que los datos que vayas a añadir sean también series de
+      tiempo. En ese caso, es posible que GRETL averigüe la unión sin ayuda
+      de las claves específicas de usuario. Esto se indica mediante la cadena
+      de texto <quote>detectar automáticamente</quote>, del marcador de
+      posición en las cajas de entrada de claves internas. Puesto que no hay
+      garantía de que esto haga exactamente lo que deseas, probablemente
+      valga la pena que pruebes antes a recurrir a un enfoque más complejo.
+    </para>
     </description>
   </command>
 

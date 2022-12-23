@@ -6089,7 +6089,7 @@
 	</code>
 	<para>
 	  Si el argumento opcional <argname>ign_mayus</argname> no es cero,
-	  la búsqueda no es sensible a mayúsculas y minúsculas. Por ejemplo:
+	  la búsqueda no distinguirá mayúsculas de minúsculas. Por ejemplo:
 	</para>
 	<code>
 	  instring("Gatada", "gata")
@@ -6139,9 +6139,13 @@
       <description>
 	<para>
 	  Devuelve un resultado (del tipo del argumento) con la parte entera de
-	  <argname>x</argname>, truncando la parte decimal. Ten en cuenta que
-	  <lit>int</lit> y <fncref targ="floor"/> producen distintos efectos
-	  con argumentos negativos: <lit>int(-3.5)</lit> genera &minus;3,
+	  <argname>x</argname>, truncando la parte decimal; o <lit>NA</lit>
+	  si no se puede representar el resultado como un entero de 32-bit con
+	  signo (si no cae en el intervalo [&minus;2147483648, 2147483647]).
+	</para>
+	<para>
+	  Nota: <lit>int</lit> y <fncref targ="floor"/> producen distintos
+	  efectos con argumentos negativos: <lit>int(-3.5)</lit> genera &minus;3,
 	  mientras que <lit>floor(-3.5)</lit> genera &minus;4.
 	  <seelist>
             <fncref targ="round"/>
@@ -9630,31 +9634,34 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve un vector fila con los resultados de realizar un contraste de
+	  Devuelve una matriz con los resultados de realizar un(os) contraste(s) de
 	  Normalidad sobre <argname>y</argname>. La función realiza por defecto
 	  el contraste de Doornik&ndash;Hansen, pero puedes utilizar el argumento
 	  <argname>método</argname> (opcional) para escoger una alternativa.
 	  Indica: <lit>swilk</lit> para ejecutar el contraste de Shapiro&ndash;Wilk,
 	  <lit>jbera</lit> para realizar el contraste de Jarque&ndash;Bera, o
-	  <lit>lillie</lit> para efectuar el contraste de Lilliefors.
+	  <lit>lillie</lit> para efectuar el contraste de KS-Lilliefors. O indica
+	  <lit>all</lit> en el argumento del <argname>método</argname> para
+	  realizar los cuatro contrastes.
 	</para>
 	<para>
 	  Puedes indicar el segundo argumento con formato entre comillas o sin
 	  ellas. En este último caso, también puedes indicar una cadena de texto cuyo
 	  valor sea el nombre de uno de los métodos, por el que se va a substituir cuando se
-	  ejecuta. A continuación se muestran tres modos aceptables de ejecutar
-	  el contraste de Shapiro&ndash;Wilk:
+	  ejecuta.
 	</para>
-	<code>
-	  matrix nt = normtest(y, swilk)
-	  matrix nt = normtest(y, "swilk")
-	  string testtype = "swilk"
-	  matrix nt = normtest(y, testtype)
-	</code>
 	<para>
-	  El vector fila que se devuelve es de orden <by r="1" c="2"/>; contiene
-	  el valor del estadístico de contraste solicitado y la probabilidad asociada
-	  a ese valor. Consulta también la instrucción <cmdref targ="normtest"/>.
+	  La matriz que se devuelve es de orden <by r="1" c="2"/> para un único
+	  contraste, o <by r="4" c="2"/> cuando se hacen todos los contrastes.
+	  Los estadísticos de prueba se encuentran en la primera columna, y las
+	  probabilidades asociadas en la segunda. El estadístico de prueba no
+	  sigue la misma distribución de probabilidad en todos los casos. Para
+	  Doornik&ndash;Hansen y Jarque&ndash;Bera es una Chi-cuadrado(2); en
+	  los otros métodos se trata de un estadístico peculiar para cuyas
+	  probabilidades asociadas se requiere un cálculo especial.
+	</para>
+	<para>
+	  Consulta también la instrucción <cmdref targ="normtest"/>.
 	</para>
       </description>
     </function>
@@ -10135,17 +10142,24 @@
     <function name="pexpand" section="panel" output="series">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
+	<fnarg type="bool" optional="true">por_elemento</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Se aplica tan solo si el conjunto vigente de datos tiene una estructura
-	  de panel, y realiza la operación inversa de <fncref targ="pshrink"/>.
-	  Es decir, dado un vector que tiene una longitud igual al número de
-	  elementos de la muestra (de panel) vigente seleccionada, esta
-	  función devuelve una serie en la cual cada valor del argumento se repite
-	  <math>T</math> veces, donde <math>T</math> expresa la longitud
-	  temporal del panel. De este modo, la serie resultante es invariante con
-	  respecto al tiempo.
+	  de panel, y por defecto realiza la operación inversa a la que hace
+	  <fncref targ="pshrink"/>. Es decir, dado un vector que tiene una
+	  longitud igual al número de elementos de la muestra (de panel) vigente
+	  seleccionada, esta función devuelve una serie en la cual cada valor
+	  del argumento se repite <math>T</math> veces, donde <math>T</math>
+	  expresa la longitud temporal del panel. De este modo, la serie
+	  resultante es invariante con respecto al tiempo.
+	</para>
+	<para>
+    Si indicas un valor para <argname>por_elemento</argname> que no
+    sea cero, la longitud de <argname>v</argname> deberá ser igual a
+    <math>T</math>, y la repetición se realiza a través de los elementos
+    del panel.
 	</para>
       </description>
     </function>
@@ -12525,10 +12539,26 @@
       </description>
     </function>
 
+    <function name="strpday" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 Esta función se comporta similamente a la función <fncref targ="strptime"/>,
+	 excepto en que el valor que se devuelve es de tipo <quote>día de época</quote>
+	 (para cuya definición puedes consultar <fncref targ="epochday"/>).
+	 Dado que la solución es de tipo diario, se ignora cualqueir información
+	 que haya en <argname>s</argname>, sobre el momento del día.
+	</para>
+      </description>
+    </function>
+
     <function name="strptime" section="calendar" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="string">formato</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12537,6 +12567,18 @@
 	 utilizando el <argname>formato</argname> especificado; y devuelve
 	 un escalar que proporciona el número de segundos transcurridos desde
 	 principios de 1970 según el Tiempo Universal Coordinado (UTC).
+	</para>
+	<para>
+	  Si omites la opción <argname>formato</argname>, este se establece por
+	  defecto en ISO 8601 <quote>extendido</quote>, <lit>YYYY-MM-DD</lit>
+	  (lo que se traduce a <quote><lit>%Y-%m-%d</lit></quote> como formato
+	  de strptime).
+	</para>
+	<para>
+	  Como alternativa, puedes indicar el primer argumento como un entero
+	  de 8 dígitos, conforme al formato de fechas <quote>básico</quote> de
+	  ISO 8601, <lit>YYYYMMDD</lit> (por ejemplo, 20221220). En ese caso,
+	  deberás omitir la opción <argname>formato</argname>.
 	</para>
 	<para>
 	  Aviso: Esta función se comporta de modo distinto en sistemas operativos
@@ -12652,7 +12694,7 @@
   </code>
 	<para>
 	  Si el argumento opcional <argname>ign_mayus</argname> no es cero,
-	  la búsqueda no es sensible a mayúsculas y minúsculas. Por ejemplo:
+	  la búsqueda no distinguirá mayúsculas de minúsculas. Por ejemplo:
 	</para>
 	<code>
 	  strstr("Bilbao", "b")
