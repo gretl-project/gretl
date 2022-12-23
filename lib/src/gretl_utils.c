@@ -2483,6 +2483,8 @@ static int (*BLIS_get_num_threads) (void);
 static void (*BLIS_init) (void);
 static void (*MKL_domain_set_num_threads) (int, int);
 static int (*MKL_domain_get_max_threads) (int);
+static void (*FLAME_init) (void);
+static int (*FLAME_initialized) (void);
 
 static void register_openblas_details (void *handle)
 {
@@ -2722,6 +2724,19 @@ static void register_mkl_details (void *handle)
     }
 }
 
+static void libflame_utils (void *handle)
+{
+    /* Functions form libflame we need */
+    FLAME_init = dlsym(handle, "FLA_Init");
+    FLAME_initialized = dlsym(handle, "FLA_Initialized");
+
+    if (FLAME_init != NULL && FLAME_initialized) {
+        FLAME_init();
+        printf("FLAME_initialized? %d\n", FLAME_initialized());
+    }
+}
+
+
 /* below: called in creating $sysinfo bundle */
 
 int get_blas_details (char **s1, char **s2, char **s3)
@@ -2822,6 +2837,7 @@ static void blas_init (void)
             blas_variant = BLAS_BLIS;
             BLIS_init(); /* This is only to be sure that BLIS was initialized */
             register_blis_details(ptr);
+            libflame_utils(ptr);
         }
     }
 
