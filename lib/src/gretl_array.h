@@ -189,6 +189,6 @@ gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
 
 int is_strings_array_element (const char *str,
 			      char *aname,
-			      int *pidx);
+			      char *pidx);
 
 #endif /* GRETL_ARRAY_H_ */

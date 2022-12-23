@@ -69,7 +69,7 @@ static int xwide = 0;
 
 static char ad_hoc_font[64];
 static char plot_buffer_name[32];
-static int plot_buffer_idx = -1;
+static char plot_buffer_idx[8];
 
 typedef struct gnuplot_info_ gnuplot_info;
 
@@ -524,13 +524,13 @@ static int set_plot_buffer_name (const char *bname)
     int err = 0;
 
     if (bname == NULL || *bname == '\0') {
-	plot_buffer_idx = -1;
 	*plot_buffer_name = '\0';
+        *plot_buffer_idx = '\0';
     } else {
-	if (is_strings_array_element(bname, plot_buffer_name, &plot_buffer_idx)) {
+	if (is_strings_array_element(bname, plot_buffer_name, plot_buffer_idx)) {
 	    ; /* handled */
 	} else {
-	    plot_buffer_idx = -1;
+	    *plot_buffer_idx = '\0';
 	    err = check_stringvar_name(bname, 1, NULL);
 	    if (!err) {
 		strcpy(plot_buffer_name, bname);
@@ -559,19 +559,23 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
 	err = E_FOPEN;
-    } else if (plot_buffer_idx >= 0) {
-	gretl_array *A = get_strings_array_by_name(plot_buffer_name);
+    } else if (*plot_buffer_idx != '\0') {
+	gretl_array *a = get_strings_array_by_name(plot_buffer_name);
+        int i = generate_int(plot_buffer_idx, NULL, &err);
 
-	gretl_array_set_string(A, plot_buffer_idx, contents, 1);
-	g_free(contents);
+        if (a != NULL && !err) {
+            err = gretl_array_set_string(a, i-1, contents, 1);
+        }
     } else {
 	char *buf = gretl_strdup(contents);
 
 	err = user_var_add_or_replace(plot_buffer_name,
 				      GRETL_TYPE_STRING,
 				      buf);
-	g_free(contents);
     }
+
+    g_free(contents);
+    gretl_remove(fname);
 
     return err;
 }
