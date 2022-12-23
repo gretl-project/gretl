@@ -514,6 +514,11 @@ static void maybe_record_font_choice (gretlopt opt)
     }
 }
 
+/* We come here in response to the --buffer option in plot
+   commands, and if applicable we set the static variables
+   @plot_buffer_name and @plot_buffer_idx.
+*/
+
 static int set_plot_buffer_name (const char *bname)
 {
     int err = 0;
@@ -558,6 +563,7 @@ static int make_plot_commands_buffer (const char *fname)
 	gretl_array *A = get_strings_array_by_name(plot_buffer_name);
 
 	gretl_array_set_string(A, plot_buffer_idx, contents, 1);
+	g_free(contents);
     } else {
 	char *buf = gretl_strdup(contents);
 
