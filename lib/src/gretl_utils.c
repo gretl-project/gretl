@@ -2481,10 +2481,12 @@ static int (*OB_get_num_threads) (void);
 static void (*BLIS_set_num_threads) (int);
 static int (*BLIS_get_num_threads) (void);
 static void (*BLIS_init) (void);
+static void (*BLIS_finalize) (void);
 static void (*MKL_domain_set_num_threads) (int, int);
 static int (*MKL_domain_get_max_threads) (int);
 static void (*FLAME_init) (void);
 static int (*FLAME_initialized) (void);
+static void (*FLAME_finalize) (void);
 
 static void register_openblas_details (void *handle)
 {
@@ -2727,15 +2729,9 @@ static void register_mkl_details (void *handle)
 static void libflame_utils (void *handle)
 {
     /* Functions form libflame we need */
-    FLAME_init = dlsym(handle, "FLA_Init");
     FLAME_initialized = dlsym(handle, "FLA_Initialized");
-
-    if (FLAME_init != NULL && FLAME_initialized) {
-        FLAME_init();
-        printf("FLAME_initialized? %d\n", FLAME_initialized());
-    }
+    FLAME_finalize = dlsym(handle, "FLA_Finalize");
 }
-
 
 /* below: called in creating $sysinfo bundle */
 
@@ -2831,13 +2827,13 @@ static void blas_init (void)
 
     if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
         BLIS_init = dlsym(ptr, "bli_init");
+        BLIS_finalize = dlsym(ptr, "bli_finalize");
         BLIS_set_num_threads = dlsym(ptr, "bli_thread_set_num_threads");
         BLIS_get_num_threads = dlsym(ptr, "bli_thread_get_num_threads");
         if (BLIS_init != NULL) {
             blas_variant = BLAS_BLIS;
             BLIS_init(); /* This is only to be sure that BLIS was initialized */
             register_blis_details(ptr);
-            libflame_utils(ptr);
         }
     }
 
@@ -2850,6 +2846,14 @@ static void blas_init (void)
         }
     }
 
+    if (ptr != NULL && FLAME_init == NULL) {
+        FLAME_init = dlsym(ptr, "FLA_Init");
+        if (FLAME_init != NULL) {
+            FLAME_init();
+            libflame_utils(ptr);
+        }
+    }
+
     if (blas_variant != BLAS_VECLIB &&
         blas_variant != BLAS_OPENBLAS &&
         blas_variant != BLAS_BLIS &&
@@ -2859,6 +2863,19 @@ static void blas_init (void)
 #else
         blas_variant = detect_blas_via_ldd();
 #endif
+    }
+}
+
+void blas_cleanup (void) {
+
+    if (blas_variant == BLAS_BLIS) {
+        BLIS_finalize();
+    }
+
+    if (FLAME_initialized != NULL && FLAME_finalize != NULL) {
+        if (FLAME_initialized()) {
+            FLAME_finalize();
+        }
     }
 }
 
@@ -3088,6 +3105,7 @@ void libgretl_cleanup (void)
 
     gretl_script_dirs_cleanup();
     gretl_xml_cleanup();
+    blas_cleanup();
 }
 
 /* record and retrieve hypothesis test results */

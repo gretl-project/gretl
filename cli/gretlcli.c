@@ -214,8 +214,8 @@ static void check_blas_threading (int tool, int quiet)
     }
 
     if (tool || quiet) {
-        fprintf(stderr, "Disabling %s multi-threading (OpenMP/pthreads collision)\n",
-                blas_type);
+        fprintf(stderr, "Disabling %s multi-threading (OpenMP/%s collision)\n",
+                blas_type, non_omp);
     } else {
         printf("\n*** Warning ***\n*\n"
                "* gretl is built using OpenMP, but is linked against\n"
