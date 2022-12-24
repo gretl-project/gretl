@@ -2482,6 +2482,7 @@ static void (*BLIS_set_num_threads) (int);
 static int (*BLIS_get_num_threads) (void);
 static void (*BLIS_init) (void);
 static void (*BLIS_finalize) (void);
+static void (*MKL_finalize) (void);
 static void (*MKL_domain_set_num_threads) (int, int);
 static int (*MKL_domain_get_max_threads) (int);
 static void (*FLAME_init) (void);
@@ -2838,6 +2839,7 @@ static void blas_init (void)
     }
 
     if (ptr != NULL && blas_variant == BLAS_UNKNOWN) {
+        MKL_finalize = dlsym(ptr, "mkl_finalize");
         MKL_domain_get_max_threads = dlsym(ptr, "MKL_Domain_Get_Max_Threads");
         MKL_domain_set_num_threads = dlsym(ptr, "MKL_Domain_Set_Num_Threads");
         if (MKL_domain_set_num_threads != NULL) {
@@ -2868,8 +2870,10 @@ static void blas_init (void)
 
 void blas_cleanup (void) {
 
-    if (blas_variant == BLAS_BLIS) {
+    if (blas_variant == BLAS_BLIS && BLIS_finalize != NULL) {
         BLIS_finalize();
+    } else if (blas_variant == BLAS_MKL && MKL_finalize != NULL) {
+        MKL_finalize();
     }
 
     if (FLAME_initialized != NULL && FLAME_finalize != NULL) {
