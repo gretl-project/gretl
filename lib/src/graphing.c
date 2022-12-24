@@ -526,15 +526,13 @@ static int set_plot_buffer_name (const char *bname)
     if (bname == NULL || *bname == '\0') {
 	*plot_buffer_name = '\0';
         *plot_buffer_idx = '\0';
+    } else if (is_strings_array_element(bname, plot_buffer_name, plot_buffer_idx)) {
+	; /* handled */
     } else {
-	if (is_strings_array_element(bname, plot_buffer_name, plot_buffer_idx)) {
-	    ; /* handled */
-	} else {
-	    *plot_buffer_idx = '\0';
-	    err = check_stringvar_name(bname, 1, NULL);
-	    if (!err) {
-		strcpy(plot_buffer_name, bname);
-	    }
+	*plot_buffer_idx = '\0';
+	err = check_stringvar_name(bname, 1, NULL);
+	if (!err) {
+	    strcpy(plot_buffer_name, bname);
 	}
     }
 
