@@ -543,8 +543,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	}
     }
 
-    if (getenv("HAC_ALLOW_MISSING") == NULL) {
-	/* can't do HAC VCV with missing obs in middle */
+    if (libset_get_int(HAC_MISSVALS) == 0) {
+	/* "refuse": don't do HAC VCV with embedded missing obs */
 	if ((opts & OPT_R) && dataset_is_time_series(dset) &&
 	    !libset_get_bool(FORCE_HC)) {
 	    reject_missing = 1;

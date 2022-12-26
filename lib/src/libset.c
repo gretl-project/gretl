@@ -125,8 +125,9 @@ static struct global_vars_ {
     gint8 loglevel;
     gint8 logstamp;
     gint8 csv_digits;
+    gint8 hac_missvals;
     int gmp_bits;
-} globals = {0, 0, 5, 0, 0, 1, 2, 0, UNSET_INT, 256};
+} globals = {0, 0, 5, 0, 0, 1, 2, 0, UNSET_INT, 0, 256};
 
 /* globals for internal use */
 static int seed_is_set;
@@ -218,6 +219,7 @@ setvar setvars[] = {
     { LOGLEVEL,      "loglevel",    CAT_BEHAVE, offsetof(global_vars,loglevel) },
     { LOGSTAMP,      "logstamp",    CAT_BEHAVE, offsetof(global_vars,logstamp) },
     { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE, offsetof(global_vars,csv_digits) },
+    { HAC_MISSVALS,  "hac_missvals", CAT_BEHAVE, offsetof(global_vars,hac_missvals) },
     { NS_SMALL_INT_MAX, NULL },
     { GMP_BITS,      "gmp_bits",    CAT_BEHAVE, offsetof(global_vars,gmp_bits) },
     { NS_MAX, NULL },
@@ -262,7 +264,8 @@ setvar setvars[] = {
 			 k == QUANTILE_TYPE || \
 			 k == GRETL_ASSERT || \
 			 k == PLOT_COLLECT || \
-			 k == LOGLEVEL)
+			 k == LOGLEVEL || \
+			 k == HAC_MISSVALS)
 
 /* the current set of state variables */
 set_state *state;
@@ -398,6 +401,7 @@ static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", "pipe", N
 static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
 static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
 static const char *qrp_strs[] = {"off", "on", "pivot", NULL};
+static const char *hmv_strs[] = {"refuse", "es", "am", NULL};
 
 struct codevar_info {
     SetKey key;
@@ -422,7 +426,8 @@ struct codevar_info coded[] = {
     { PLOT_COLLECT,  plc_strs },
     { HAC_LAG,       ahl_strs },
     { LOGLEVEL,      llv_strs },
-    { USE_QR,        qrp_strs }
+    { USE_QR,        qrp_strs },
+    { HAC_MISSVALS,  hmv_strs }
 };
 
 static const char **libset_option_strings (SetKey key)
