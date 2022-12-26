@@ -2066,40 +2066,30 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
  * binary_logit_odds_ratios:
  * @pmod: pointer to binary logit model
  * @dset: dataset struct.
- * @err: location to receive error code.
  *
  * Computes odds ratios, their standard errors, and 95 percent
- * confidence intervals for a binary logit model. Returns a
- * labeled matrix representation of the results.
+ * confidence intervals for a binary logit model. Attaches to
+ * @pmod a labeled matrix representation of the results.
  *
- * Returns: allocated matrix or NULL on failure.
+ * Returns: 0 on success, error code on error.
  */
 
-gretl_matrix *binary_logit_odds_ratios (const MODEL *pmod,
-					const DATASET *dset,
-					int *err)
+static int binary_logit_odds_ratios (MODEL *pmod,
+				     const DATASET *dset)
 {
-    gretl_matrix *ret = NULL;
+    CoeffIntervals *cf;
+    gretl_matrix *m;
+    int err = 0;
 
-    if (pmod == NULL || pmod->list == NULL ||
-	pmod->coeff == NULL || dset == NULL) {
-	*err = E_DATA;
-    } else if (pmod->ci != LOGIT ||
-	       !gretl_model_get_int(pmod, "binary")) {
-	*err = E_DATA;
+    cf = gretl_model_get_coeff_intervals(pmod, dset, OPT_O | OPT_E);
+    if (cf != NULL) {
+	m = conf_intervals_matrix(cf);
+	err = gretl_model_set_data(pmod, "oddsratios", m,
+				   GRETL_TYPE_MATRIX, 0);
+	free_coeff_intervals(cf);
     }
 
-    if (!*err) {
-	CoeffIntervals *cf;
-
-	cf = gretl_model_get_coeff_intervals(pmod, dset, OPT_O | OPT_E);
-	if (cf != NULL) {
-	    ret = conf_intervals_matrix(cf);
-	    free_coeff_intervals(cf);
-	}
-    }
-
-    return ret;
+    return err;
 }
 
 /* In case the dependent variable is not in canonical form for
@@ -3087,6 +3077,8 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
 	binary_model_hatvars(pmod, bin->Xb, bin->y, opt);
 	if (pmod->ci == PROBIT) {
 	    binary_probit_normtest(pmod, bin);
+	} else {
+	    binary_logit_odds_ratios(pmod, dset);
 	}
 	mle_criteria(pmod, 0);
 	if (opt & OPT_A) {

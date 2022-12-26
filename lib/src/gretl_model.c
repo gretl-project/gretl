@@ -7500,6 +7500,17 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	    }
 	}
 	break;
+    case M_ODDSRATIOS:
+	M = gretl_model_get_data(pmod, "oddsratios");
+	if (M == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(M);
+	    if (M == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	break;
     default:
 	*err = E_BADSTAT;
 	break;
