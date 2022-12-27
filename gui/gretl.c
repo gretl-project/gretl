@@ -1865,6 +1865,7 @@ GtkActionEntry main_entries[] = {
     { "AddObs", NULL, N_("_Add observations..."), NULL, NULL, G_CALLBACK(do_add_obs) },
     { "RemoveObs", NULL, N_("_Remove extra observations"), NULL, NULL, G_CALLBACK(do_remove_obs) },
     { "DataInfo", NULL, N_("_Dataset info"), NULL, NULL, G_CALLBACK(dataset_info) },
+    { "StringTables", NULL, N_("_Display string tables"), NULL, NULL, G_CALLBACK(string_tables) },
     { "DataMarkers", NULL, N_("_Observation markers..."), NULL, NULL, G_CALLBACK(markers_callback) },
     { "VarLabels", NULL, N_("_Variable labels..."), NULL, NULL, G_CALLBACK(labels_callback) },
     { "DataStructure", NULL, N_("Dataset _structure..."), NULL, NULL, G_CALLBACK(data_structure_dialog) },
