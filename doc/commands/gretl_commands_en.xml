@@ -7803,14 +7803,28 @@
 	<math>R</math><sup>2</sup> in the context of least-squares
 	estimation.
       </para>
+      <para context="cli">
+	If the dependent variable is binary, logit coefficients
+	represent the log of the odds ratio (the ratio of the
+	probability of <math>y</math> = 1 to that of <math>y</math> =
+	0). In this case the <lit>$model</lit> bundle available after
+	estimation includes an the extra element named
+	<lit>oddsratios</lit>, a matrix with four columns holding the
+	exponentiated coefficient (odds ratio) plus standard error
+	computed via the delta method and 95 percent confidence
+	interval, for each regressor. Note, however, that the
+	confidence interval is calculated as the exponential of that
+	for the original coefficient.
+      </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the "Robust standard errors" box is
-	checked, then QML or Huber&ndash;White standard errors are
-	calculated instead. In this case the estimated covariance matrix
-	is a <quote>sandwich</quote> of the inverse of the estimated
-	Hessian and the outer product of the gradient.  See chapter 10 of
-	Davidson and MacKinnon for details.
+	inverse of the Hessian.  If the <quote>Robust standard
+	errors</quote> box is checked, then QML or Huber&ndash;White
+	standard errors are calculated instead. In this case the
+	estimated covariance matrix is a <quote>sandwich</quote> of
+	the inverse of the estimated Hessian and the outer product of
+	the gradient.  See chapter 10 of Davidson and MacKinnon for
+	details.
       </para>
       <para>
 	If the dependent variable is not binary but is discrete, then

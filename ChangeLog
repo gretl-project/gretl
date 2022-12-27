@@ -1,4 +1,8 @@
 version 2022d, in progress
+- "logit" command (binary case): add a matrix holding odds
+  ratios plus standard errors and confidence intervals to the
+  $model bundle; also make this information available under
+  the Analysis menu in the GUI model window
 - "midasreg" command: generate more specific error message
   for invalid specification
 - pexpand() function: add optional boolean switch to expand
