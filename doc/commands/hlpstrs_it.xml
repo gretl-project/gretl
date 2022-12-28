@@ -22,8 +22,8 @@
  <gentext key="series-or-mat" text="serie o matrice"/>
  <gentext key="series-list-or-mat" text="serie, lista o matrice"/>
  <gentext key="scalar-or-series" text="scalare o serie"/>
- <gentext key="int-or-list"   text="integer o lista"/>
- <gentext key="int-or-string" text="integer o stringa"/>
+ <gentext key="int-or-list"   text="intero o lista"/>
+ <gentext key="int-or-string" text="intero o stringa"/>
  <gentext key="series-or-list" text="serie o lista"/>
  <gentext key="scalar-or-vec" text="scalare o vettore"/>
  <gentext key="scalar-or-matrix" text="scalare o matrice"/>

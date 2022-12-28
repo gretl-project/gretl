@@ -12557,7 +12557,7 @@
 
     <function name="strptime" section="calendar" output="scalar">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="int-or-string">s</fnarg>
 	<fnarg type="string" optional="true">format</fnarg>
       </fnargs>
       <description>

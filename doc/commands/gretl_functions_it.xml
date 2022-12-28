@@ -12632,10 +12632,29 @@
       </description>
     </function>
 
-    <function name="strptime" section="calendar" output="scalar">
+
+    <function name="strpday" section="calendar" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="string">formato</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 Questa funzione è quasi uguale a <fncref targ="strptime"/>, a
+	 parte il fatto che il valore restituito in output è un
+	 <quote>epoch day</quote>, per la cui definizione si rimanda a
+	 <fncref targ="epochday"/>.  Visto che la risoluzione è a
+	 livello di giorno, qualsiasi informazione infragiornaliera
+	 (come ad esmepio le ore) in <argname>s</argname> viene
+	 ignorata.
+	</para>
+      </description>
+    </function>
+
+    <function name="strptime" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="int-or-string">s</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12643,6 +12662,20 @@
 	  analizza la stringa <argname>s</argname> come data/ora usando
 	  il <argname>formato</argname> specificato e restituisce  il
 	  numero di secondi dall'inizio del 1970 (UTC).
+	</para>
+	<para>
+	  Se l'argomento <argname>formato</argname> viene omesso, il
+	  default è il formato ISO 8601 <quote>esteso</quote>, e cioè
+	  <lit>YYYY-MM-DD</lit> (che sarebbe
+	  <quote><lit>%Y-%m-%d</lit></quote> come formato
+	  <argname>strptime</argname>).
+	</para>
+	<para>
+	  In alternativa, il primo argomento può essere un intero ad 8
+	  cifre conforme alla specificazione ISO 8601 <quote>di
+	  base</quote>, <lit>YYYYMMDD</lit> (per esempio,
+	  20221220). In questo case l'argomento
+	  <argname>formato</argname> deve essere omesso.
 	</para>
 	<para>
 	  Attenzione: a causa di differenze nell'implementazione,
