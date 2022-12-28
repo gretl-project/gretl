@@ -214,7 +214,6 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_N, "uniform", 0 },
     { CORR,     OPT_V, "verbose", 0 },
     { CORR,     OPT_U, "plot", 2 },
-    { CORR,     OPT_b, "buffer", 2 },
     { CORR,     OPT_X, "matrix", 2 },
     { CORR,     OPT_T, "triangle", 0 },
     { CORRGM,   OPT_B, "bartlett", 0 },
@@ -501,7 +500,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
     { OUTFILE,  OPT_Q, "quiet", 0 },
-    { OUTFILE,  OPT_B, "buffer", 2 },
+    { OUTFILE,  OPT_B, "buffer", 1 }, /* note: 1 is for backward compat */
     { OUTFILE,  OPT_T, "tempfile", 1 },
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 1 },

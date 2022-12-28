@@ -210,6 +210,8 @@ void plot_get_scaled_dimensions (int *width, int *height, double scale);
 
 int graph_written_to_file (void);
 
+int plot_output_to_buffer (void);
+
 int graph_displayed (void);
 
 void reset_plot_count (void);

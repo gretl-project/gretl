@@ -3088,11 +3088,13 @@ static void maybe_schedule_graph_callback (ExecState *s)
 {
     int gui_mode = gretl_in_gui_mode();
 
-    if (graph_written_to_file()) {
+    if (graph_written_to_file() || plot_output_to_buffer()) {
         if (gui_mode && *s->cmd->savename != '\0') {
             pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
         }
-        report_plot_written(s->prn);
+	if (!plot_output_to_buffer()) {
+	    report_plot_written(s->prn);
+	}
     } else if (gui_mode && !graph_displayed()) {
         schedule_callback(s);
     }

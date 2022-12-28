@@ -539,7 +539,7 @@ static int set_plot_buffer_name (const char *bname)
     return err;
 }
 
-static int plot_output_to_buffer (void)
+int plot_output_to_buffer (void)
 {
     return *plot_buffer_name != '\0';
 }
