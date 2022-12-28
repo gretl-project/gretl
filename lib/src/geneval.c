@@ -8273,6 +8273,7 @@ static NODE *readfile_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+#if 0
 static void strstr_escape (char *s)
 {
     int i, n = strlen(s);
@@ -8291,6 +8292,7 @@ static void strstr_escape (char *s)
         }
     }
 }
+#endif
 
 static const char *strstr_insensitive (const gchar *sd1,
 				       const gchar *sd2,
@@ -8328,13 +8330,11 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
         } else if (r->t != STR) {
             p->err = E_TYPES;
         }
-
         if (!p->err) {
             ret = (f == F_INSTRING)? aux_scalar_node(p) :
                 (f == F_JSONGETB)? aux_bundle_node(p) :
                 aux_string_node(p);
         }
-
         if (p->err) {
             return NULL;
         }
@@ -8345,29 +8345,23 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
         if (f == F_STRSTR || f == F_INSTRING) {
             int ignore_case = node_get_bool(x, p, 0);
-            char *tmp = gretl_strdup(sr);
 	    const char *sret = NULL;
 
-            if (tmp != NULL) {
-                gchar *sd1 = NULL, *sd2 = NULL;
+            if (ignore_case) {
+                gchar *sd1 = g_utf8_strdown(sl, -1);
+                gchar *sd2 = g_utf8_strdown(sr, -1);
 
-                strstr_escape(tmp);
-                if (ignore_case) {
-                    sd1 = g_utf8_strdown(sl, -1);
-                    sd2 = g_utf8_strdown(tmp, -1);
-		    sret = strstr_insensitive(sd1, sd2, sl);
-                } else {
-                    sret = strstr(sl, tmp);
-                }
-                if (f == F_INSTRING) {
-                    ret->v.xval = sret != NULL;
-                } else if (sret != NULL) {
-                    ret->v.str = gretl_strdup(sret);
-                } else {
-                    ret->v.str = gretl_strdup("");
-                }
+                sret = strstr_insensitive(sd1, sd2, sl);
                 g_free(sd1); g_free(sd2);
-                free(tmp);
+            } else {
+                sret = strstr(sl, sr);
+            }
+            if (f == F_INSTRING) {
+                ret->v.xval = sret != NULL;
+            } else if (sret != NULL) {
+                ret->v.str = gretl_strdup(sret);
+            } else {
+                ret->v.str = gretl_strdup("");
             }
         } else if (f == B_HCAT) {
             int n1 = strlen(l->v.str);
