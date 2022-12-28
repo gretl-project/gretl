@@ -7869,6 +7869,10 @@ contenga un percorso completo.
 	<flag>--p-values</flag>
 	<effect>mostra i p-value invece delle pendenze</effect>
       </option>
+      <option>
+	<flag>--estrella</flag>
+	<effect>usa una versione alternativa dello pseudo-R-quadro</effect>
+      </option>
     </options>
     <examples>
       <demos>
@@ -7907,15 +7911,39 @@ contenga un percorso completo.
       <quote>cluster-robusti</quote>; vedi <guideref
       targ="chap:robust_vcv"/> per maggiori dettagli.
     </para>
-    <para context="gui">
-      In modalità predefinita, gli errori standard sono calcolati
-      con l'inversa negativa dell'Hessiana.  Se si seleziona la
-      casella "Errori standard robusti", verranno calcolati gli
-      errori standard QML o quelli di Huber&ndash;White. In questo
-      caso, la matrice di covarianza stimata è un
-      <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e
-      del prodotto esterno del gradiente.  Per i dettagli, si veda
-      Davidson e MacKinnon 2004, cap. 10.
+    <para context="cli">
+      Per dewfault, la statistica pseudo-R-quadro riportata è quella
+      suggerita da <cite key="mcfadden74">McFadden (1974)</cite>, ma
+      nel caso binario è anche disponibile, tramite l'opzione
+      <opt>estrella</opt>, la variante propugnata da <cite
+      key="estrella98">Estrella (1998)</cite>. Si può argomentare che
+      questa variante riproduce in modo più vicino le proprietà
+      dell'indice <math>R</math><sup>2</sup> nel contesto della stima
+      OLS.
+      </para>
+      <para context="cli">
+	Quando la variabile dipendente è binaria, i coefficienti
+	rappresentano i logaritmi degli <i>odds ratio</i> (il rapporto
+	fra la probabilità che <math>y</math> = 1 e quella che
+	<math>y</math> = 0). In questo caso il bundle
+	<lit>$model</lit> prodotto dopo la stima comprende una matrice
+	chiamata <lit>oddsratios</lit>; essa ha quattro colonne che
+	contengono, per tutti i regressori, l'esponenziale dei
+	coefficienti (gli <i>odds ratio</i>), i loro errori standard
+	calcolati col delta method e gli estremi di un intervallo di
+	confidenza al 95 percento. Si noti che l'intervallo di
+	confidenza è ottenuto come l'esponenziale di quello per il
+	coefficiente originale.
+      </para>
+      <para context="gui">
+      In modalità predefinita, gli errori standard sono calcolati con
+      l'inversa negativa dell'Hessiana.  Se si seleziona la casella
+      "Errori standard robusti", verranno calcolati gli errori
+      standard QML o quelli di Huber&ndash;White. In questo caso, la
+      matrice di covarianza stimata è un <quote>sandwich</quote>
+      dell'inversa dell'Hessiana stimata e del prodotto esterno del
+      gradiente.  Per i dettagli, si veda Davidson e MacKinnon 2004,
+      cap. 10.
     </para>
     <para>
       Se la variabile dipendente non è binaria, ma è discreta, si
