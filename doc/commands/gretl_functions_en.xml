@@ -12425,12 +12425,28 @@
 	  library.
 	</para>
 	<para>
+	  Note that the output of this function may have to be
+	  adjusted for time zones. For example, if the system clock is
+	  set to a time zone East of UTC (for example, Central
+	  Europe), the call
+	</para>
+	<code>
+	  strftime(1234567890, "%d-%m-%Y")
+	</code>
+	<para>
+	will return <quote>14-02-2009</quote>, but if your system is
+	set to UTC or West (for example, the US), the same call will
+	produce <quote>13-02-2009</quote>. This happens because the
+	number 1234567890 actually corresponds to <quote>Fri 13 Feb
+	2009 23:31:30 GMT</quote>.
+	</para>
+	<para>
 	  Warning: this function behaves differently on Windows and
 	  Unix-like operating systems for dates prior to January 1,
 	  1970. On unix-like systems (Linux, macOS) negative arguments
 	  can be used to represent such dates, so negative values
-	  result in regular date strings; on Windows, such dates are not
-	  supported and the return value is a null string.
+	  result in regular date strings; on Windows, such dates are
+	  not supported and the return value is a null string.
 	</para>
 	<para>
 	  Values of <argname>tm</argname> suitable for use with this

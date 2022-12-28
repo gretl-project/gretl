@@ -12513,6 +12513,24 @@
 	  stringa appropriata.
 	</para>
 	<para>
+	  Nota bene: in certi casi, l'output di questa funzione
+	  potrebbe dover essere aggiustato a seconda dei fusi
+	  orari. Se, ad esempio, l'orologio del sistema su cui si sta
+	  lavorando è impostato a un fuso orario ad est di UTC (per
+	  esempio, l'Europa centrale), la chiamata
+	</para>
+	<code>
+	  strftime(1234567890, "%d-%m-%Y")
+	</code>
+	<para>
+	produrrà la stringa <quote>14-02-2009</quote>. Se invece il
+	sistema è impostato come UTC o ancora più a ovest (per
+	esempio, gli Stati Uniti), la stessa chiamata darà come
+	risultato <quote>13-02-2009</quote>. Il motivo è che il numero
+	1234567890 corrisponde precisamente al 13 febbraio 2009, alle
+	23:31:30 UTC.
+	</para>
+	<para>
 	  Attenzione: a causa di differenze nell'implementazione,
 	  questa funzione si comporta in modo diverso su sistemi
 	  Windows e Unix-like per date precedenti al 1 gennaio
