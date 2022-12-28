@@ -7912,7 +7912,7 @@ contenga un percorso completo.
       targ="chap:robust_vcv"/> per maggiori dettagli.
     </para>
     <para context="cli">
-      Per dewfault, la statistica pseudo-R-quadro riportata è quella
+      Per default, la statistica pseudo-R-quadro riportata è quella
       suggerita da <cite key="mcfadden74">McFadden (1974)</cite>, ma
       nel caso binario è anche disponibile, tramite l'opzione
       <opt>estrella</opt>, la variante propugnata da <cite
@@ -8393,6 +8393,7 @@ contenga un percorso completo.
       <altform><lit>markers --from-file=</lit><repl>nomefile</repl></altform>
       <altform><lit>markers --to-array=</lit><repl>nome</repl></altform>
       <altform><lit>markers --from-array=</lit><repl>nome</repl></altform>
+      <altform><lit>markers --from-series=</lit><repl>nome</repl></altform>
       <altform><lit>markers --delete</lit></altform>
     </altforms>
   </usage>
@@ -8423,6 +8424,12 @@ contenga un percorso completo.
       <opt>from-array</opt> funziona in modo analogo, leggendo da un
       array di stringhe.
     </para>
+      <para>
+	L'opzione <opt>from-series</opt> permette di creare i
+	marcatori in modo molto semplice copiando i valori di una
+	serie con valori stringa. Se la serie non contiene stringhe,
+	verrà generato un errore.
+      </para>
     <para>
       L'opzione <opt>delete</opt> fa quello che ci si aspetta:
       cancella le stringhe marcatrici delle osservazioni dal dataset.
@@ -10546,7 +10553,7 @@ del comando <cmdref targ="set"/>.
     standard o sullo standard errors.
   </para>
   <para>
-    Quello che segue è un semplice esempio, in cui l'ouput di una
+    Quello che segue è un semplice esempio, in cui l'output di una
     regressione viene scritto su un file.
   </para>
   <code>
@@ -10601,7 +10608,28 @@ del comando <cmdref targ="set"/>.
     printf "The output was:\n%s\n", readfile(mytemp)
   </code>
 
-  <subhead>L'opzione quiet</subhead>
+      <para>
+	In certi casi, è desiderabile avere un po' di controllo sul
+	nome del file temporaneo. Questo è possibile usando una
+	variabile stringa contenente sei <lit>X</lit> consecutive,
+	come nell'esempio seguente:
+      </para>
+      <code>
+	string mytemp = "tmpXXXXXX.csv"
+	outfile --tempfile=mytemp
+	...
+      </code>
+      <para>
+	In questo caso, <lit>XXXXXX</lit> sarà sostituito da caratteri
+	a caso che assicurano l'unicità del nome del file, ma il
+	suffisso <quote><lit>.csv</lit></quote> sarà preservato. Come
+	nel caso più semplice presentato prima, il file viene scritto
+	automaticamente nella directory <quote>nascosta</quote> e il
+	contenuto della variabile stringa passato tramite l'opzione
+	viene modificato così da contenere l'intero percorso.
+      </para>
+
+      <subhead>L'opzione quiet</subhead>
   <para>
     L'effetto dell'opzione <opt>quiet</opt> è quello di disattivare la
     stampa dei comandi e dei messaggi ausiliari nel frattempo che
@@ -11035,21 +11063,25 @@ del comando <cmdref targ="set"/>.
     <options>
       <option>
 	<flag>--nerlove</flag>
-	<effect>usa il metodo di Nervole per effetti casuali</effect>
+	<effect>usa il metodo di Nerlove per effetti casuali</effect>
       </option>
       <option>
 	<flag>--matrix_diff</flag>
 	<effect>usa il metodo di differenze tra matrici per il test di Hausman</effect>
       </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Non stampare l'output</effect>
+	</option>
     </options>
   </usage>
   <description>
     <para>
-      Questo test è disponibile solo dopo aver stimato un modello OLS su dati
-      panel (si veda anche <cmd>setobs</cmd>). Testa il semplice modello
-      <quote>pooled</quote> (con tutte le osservazioni mescolate
-      indistintamente) contro le principali alternative: il modello a effetti
-      fissi e quello a effetti casuali.
+      Questo test è disponibile solo dopo aver stimato un modello OLS
+      su dati panel. Testa il semplice modello <quote>pooled</quote>
+      (con tutte le osservazioni mescolate indistintamente) contro le
+      principali alternative: il modello a effetti fissi e quello a
+      effetti casuali.
     </para>
     <para>
       Il modello a effetti fissi permette all'intercetta della regressione di
@@ -11078,7 +11110,7 @@ del comando <cmdref targ="set"/>.
       in favore del modello a effetti fissi.
     </para>
     <para>
-      Le due opzioni per questo comando riguardano il modello ad
+      Le prime due opzioni per questo comando riguardano il modello ad
       effetti casuali.  Di default viene utilizzato il metodo di
       Swamy e Arora ed il test di Hausman viene calcolato usando il
       metodo di regressione. Le opzioni di cui sopra consentono di
@@ -11086,7 +11118,23 @@ del comando <cmdref targ="set"/>.
       casuali e/o l'approccio di differenza tra matrici per il
       calcolo del test di Hausman.
     </para>
-  </description>
+       <para>
+	Se il comando va a buon fine, gli accessori <fncref
+	targ="$test"/> e <fncref targ="$pvalue"/> ritornano vettori a
+	tre elementi contenenti rispettivamente le statistiche test e
+	i p-value per i tre test menzionati sopra: poolability (Wald),
+	poolability (Breusch&ndash;Pagan), e Hausman. Nel caso in cui
+	questo sia tutto quel che serve, è consigliabile usare
+	l'opzione <opt>quiet</opt> per evitare di stampare i
+	risulatati.
+      </para>
+      <para>
+	Si noti che dopo la stima a effetti casuali con il comando
+	<cmd>panel</cmd>, il test di Hausman viene calcolato
+	automaticamente e il risultato è disponibile attraverso l'accessore <fncref
+	targ="$hausman"/>.
+      </para>
+ </description>
 
   <gui-access>
     <menu-path>Finestra del modello, /Test/HAUSMAN - Diagnosi panel</menu-path>
@@ -13713,21 +13761,33 @@ l'indentazione della linea sia corretta.
     </para>
   </li>
   <li>
-    <para><lit>loop_maxiter</lit>: un valore intero non
-    negativo.  Imposta il numero massimo di iterazioni
-    consentite prima che un loop di tipo <lit>while</lit> si
-    fermi (si veda <cmdref targ="loop"/>).  Si noti che questa
-    impostazione riguarda solo la variante <lit>while</lit>,
-    visto che lo scopo è quello di interrompere possibili cicli
-    infiniti. Il valore speciale 0 viene usato per rendere tali
-    cicli potenzialmente infiniti, visto che non viene fatto
-    alcun controllo sul numero di iterazioni. Usare con cautela.
+    <para><lit>loop_maxiter</lit>: un valore intero non negativo
+    (default = 100000).  Imposta il numero massimo di iterazioni
+    consentite prima che un loop di tipo <lit>while</lit> si fermi (si
+    veda <cmdref targ="loop"/>).  Si noti che questa impostazione
+    riguarda solo la variante <lit>while</lit>, visto che lo scopo è
+    quello di interrompere possibili cicli infiniti. Il valore
+    speciale 0 viene usato per rendere tali cicli potenzialmente
+    infiniti, visto che non viene fatto alcun controllo sul numero di
+    iterazioni. Usare con cautela.
     </para>
   </li>
   <li>
-    <para><lit>max_verbose</lit>: <lit>on</lit> o
-    <lit>off</lit> (valore predefinito). Attiva l'output aggiuntivo per la
-    funzione <lit>BFGSmax</lit> (si veda la Guida all'uso per i dettagli).
+    <para><lit>max_verbose</lit>: <lit>on</lit>, <lit>off</lit>
+    (valore predefinito) oppure <lit>full</lit>. Controlla la
+    verbosità di comandi e funzioni che usano metodi di ottimizzazione
+    numerica.  La scelta <lit>on</lit> si applica a funzioni (come ad
+    es. <fncref targ="BFGSmax"/> e <fncref targ="NRmax"/>) che, per
+    default, operano senza output; l'effetto è quello di stampare
+    informazioni di base sulle iterazioni. Il settaggio
+    <lit>full</lit> può essere usato per avere un output più
+    dettagliato, che comprende i valori dei parametri ed il gradiente
+    della funzione obiettivo ad ogni iterazione. Questa scelta si
+    applica sia a funzioni del tipo menzionato sopra sia a comandi che
+    usano l'ottimizzazione numerica, come <cmdref targ="arima"/>,
+    <cmdref targ="probit"/> o <cmdref targ="mle"/>. Nel caso dei
+    comandi l'effetto è di rendere l'opzione <opt>verbose</opt> più
+    dettagliata. Si veda anche <guideref targ="chap:numerical"/>.
     </para>
   </li>
   <li>
