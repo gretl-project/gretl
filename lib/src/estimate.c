@@ -533,8 +533,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 
 	/* If there was a reference mask present, it was put there
 	   as part of a hypothesis test on some original model, and
-	   it should be respected in estimation of this model */
-
+	   it should be respected in estimation of this model
+	*/
 	if (err) {
 	    pmod->errcode = E_ALLOC;
 	    return 1;
@@ -543,16 +543,14 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	}
     }
 
-    if (libset_get_int(HAC_MISSVALS) == 0) {
-	/* "refuse": don't do HAC VCV with embedded missing obs */
-	if ((opts & OPT_R) && dataset_is_time_series(dset) &&
-	    !libset_get_bool(FORCE_HC)) {
-	    reject_missing = 1;
-	}
-    }
-
     if (opts & OPT_M) {
 	reject_missing = 1;
+    } else if (libset_get_int(HAC_MISSVALS) == HAC_REFUSE) {
+	/* we won't do HAC VCV with embedded missing obs */
+	if ((opts & OPT_R) && dataset_is_time_series(dset) &&
+	    !libset_get_bool(FORCE_HC)) {
+	    reject_missing = 2;
+	}
     }
 
     if (reject_missing) {
@@ -560,6 +558,9 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	missv = model_adjust_sample(pmod, dset->n,
 				    (const double **) dset->Z,
 				    misst);
+	if (reject_missing == 2) {
+	    gretl_errmsg_append(_("HAC standard errors not available"), 0);
+	}
     } else {
 	/* we'll try to work around missing obs */
 	missv = model_adjust_sample(pmod, dset->n,
