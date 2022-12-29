@@ -13,10 +13,10 @@ for storing a date either as a string or a number.
 \section{Date and time representations}
 \label{sec:cal-representations}
 
-In Gretl, there are several ways to encode a piece of information such
-as ``May 26th, 1993''. Some of them are more intuitive, some others
-are less obvious from the viewpoint of a human, but easier to handle
-for an algorithm. The basic representations we discuss here are:
+In Gretl, there is more than one way to encode a piece of information
+such as ``May 26th, 1993''. Some are more intuitive, some others are
+less obvious from the viewpoint of a human, but easier to handle for
+an algorithm. The basic representations we discuss here are:
 \begin{enumerate}
 \item the three-digits approach;
 \item date as string;
@@ -41,11 +41,11 @@ numerically. Assuming we are not interested in intra-day information
 \end{code}
 
 Of course, it is perfectly possible to use gretl's multiple-element
-objects to extend this approach, for example using a 3-vector for
-year, month and day, or a 3 column matrix for storing as many dates as
-desired. If you have to store dates as a data series in your dataset,
-this approach would lead you to using three series and possibly
-grouping them into a list, as in
+objects to extend this approach, for example using a 3-element vector
+for year, month and day, or a 3-column matrix for storing as many
+dates as desired. If you have to store dates as a data series in your
+dataset, this approach would lead you to using three series and
+possibly grouping them into a list, as in
 \begin{code}
   nulldata 60
   series y = 2020
@@ -66,17 +66,19 @@ To a human being, this is the most natural choice: something like
 machine processing can be problematic for several reasons, the main
 one being the existence of many different conventions on (a)
 separators and (b) the order in which the three pieces of information
-(day, month, year) come. Therefore, Gretl provides a fairly
-comprehensive function for converting dates such as these into more
-manageable formats.
+(day, month, year) come. This possible source of ambiguity may become
+a problem with \texttt{CSV} files found ``in the wild'', that may
+contain arbitrarily-formatted dates. Therefore, Gretl provides a
+fairly comprehensive function for converting dates such as these into
+more manageable formats.
 
 \subsection{The ISO 8601 standard}
 \label{sec:cal-ISO8601}
 
-The ISO 8601 standard provides in fact two different representations
-for a date: the ``basic'' representation, which uses an 8-digit
-integer and the ``extended'' representation, which uses a 10-character
-string.
+Among other things, the ISO 8601 standard provides in fact two
+different representations for a date: the ``basic'' representation,
+which uses an 8-digit integer and the ``extended'' representation,
+which uses a 10-character string.
 
 In the basic representation, the idea is that the first four digits
 represent the year, the middle two the month and the rightmost two the
@@ -109,25 +111,25 @@ This representation has sevaral advantages: like the ISO 8601 basic
 representation, it lends itself quite naturally to represent dates as
 data series. Compared to ISO 8601, it has the disadvantage of not
 being immediately human-readable, but to compensate for that it makes
-very easy to find how long a date range is.
+very easy to find how long a date range is: while ISO 8601 basic dates
+can be used for easy comparison (which of two dates, on a given
+calendar, refers to a later day?), with epoch days one can carry out
+fully fledged ``dates arithmetic.''  Epoch days are always consecutive
+by construction, but 8-digit basic dates are consecutive only within a
+given month; they advance by 101 minus (days in previous month) at the
+start of each month other than January and by 8870 at the start of
+each year.
 
-While ISO 8601 basic dates can be used for easy comparison (which of
-two dates, on a given calendar, refers to a later day?), one needs
-epoch days to carry out fully fledged ``dates arithmetic.''  Epoch
-days are always consecutive by construction, but 8-digit basic dates
-are consecutive only within a given month; they advance by 101 minus
-(days in previous month) at the start of each month other than January
-and by 8870 at the start of each year.
+% For example, to find how many days separate 1993-05-26 from
+% 1996-04-12, one could use
+% \begin{code}
+%   scalar dif = epochday(19960412) - epochday(19930526)
+% \end{code}
+% That said, the dedicated function \cmd{dayspan} offers a more
+% sophisticated tool, that can take Saturdays and Sundays into account
+% (see below).
 
-For example, to find how many days separate 1993-05-26 from
-1996-04-12, one could use
-\begin{code}
-  scalar dif = epochday(19960412) - epochday(19930526)
-\end{code}
-That said, the dedicated function \cmd{dayspan} offers a more
-sophisticated tool, that can take Saturdays and Sundays into account.
-
-\subsection{Unix-like seconds}
+\subsection{Unix-style seconds}
 \label{sec:cal-seconds}
 
 In this representation (which has been the traditional cornerstone of
@@ -150,26 +152,27 @@ time zones.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.75]{figures/date-conversion}
+  \includegraphics[scale=0.667]{figures/date-conversion}
   \caption{Conversions between different date formats}
   \label{fig:cal-conversions}
 \end{figure}
 
 In order to make the conversion between different representations,
 Gretl provides several dedicated functions. In some cases, the
-convwersion can be carried out by using generic functions. Figure
+conversion can be carried out by using generic functions. Figure
 \ref{fig:cal-conversions} displays a summary: solid lines represent
 dedicated function, while dashed lines indicate that no special
-function is needed. In the rest of this section, we will discuss a few
-special cases.
+function is needed. For a full description of the functions depicted
+in the figure, we refer to the \GCR. In the rest of this section, we
+will discuss a few special cases.
 
 \subsection{Decomposing a series of ``basic'' dates}
 
 To generate from a series of dates in ISO 8601 basic format distinct
-series holding year, month and day, the function \texttt{isoconv} can
+series holding year, month and day, the function \cmd{isoconv} can
 be used. This function should be passed the original series followed
 by ``pointers to'' the series to be filled out. For example, if we
-have a series named \texttt{dates} in the prescribed format we might
+have a series named \cmd{dates} in the prescribed format we might
 do
 %
 \begin{code}
@@ -187,25 +190,25 @@ series m = floor((dates-10000*y)/100)
 series d = dates - 10000*y - 100*m
 \end{code}
 
-However, there is some ``value added'': \texttt{isoconv} checks the
+However, there is some ``value added'': \cmd{isoconv} checks the
 validity of the \texttt{dates} input. If the implied year, month and
 day for any \texttt{dates} observation do not correspond to a valid
-Gregorian date in the Common Era,\footnote{For example, the implied
-  month is not in the range 1--12, or the implied day is not in the
-  range of 1 to the number of days in the month, taking account of
-  Gregorian leap years.} then all the derived series will have value
-\texttt{NA} at that observation.
+date,\footnote{For example, the implied month is not in the range
+  1--12, or the implied day is not in the range of 1 to the number of
+  days in the month, taking account of leap years.} then all the
+derived series will have value \texttt{NA} at that observation.
 
+The inverse operation is trivial:
+\begin{code}
+series dates = 10000 * y + 100 * m + d
+\end{code}
 
+\subsection{Epoch days arithmetic}
 
-\subsection{Obtaining and using epoch days}
-
-
-A further---and perhaps more practical---use of epoch days is checking
-whether daily data are complete. Suppose we have what purport to be
-7-day daily data on the Gregorian calendar with a starting date of
-2015-01-01 and an ending date of 2016-12-31. How many observations
-should there be?
+Give the way epoch days are defined, they provide a useful tool for
+checking whether daily data are complete. Suppose we have what purport
+to be 7-day daily data with a starting date of 2015-01-01 and an
+ending date of 2016-12-31. How many observations should there be?
 %
 \begin{code}
 ed1 = epochday(2015,1,1)
@@ -216,7 +219,7 @@ We find that there should be \texttt{n} = 731 observations; if there
 are fewer, there's something missing. If the data are supposed to be
 on a 5-day week (skipping Saturday and Sunday) or 6-day week (skipping
 Sunday alone) the calculation is more complicated; in this case we can
-use the \texttt{dayspan} function, providing as arguments the
+use the \cmd{dayspan} function, providing as arguments the
 epoch-day values for the first and last dates and the number of days
 per week:
 \begin{code}
@@ -226,6 +229,122 @@ n = dayspan(ed1, ed2, 5)
 \end{code}
 %
 We discover that there were \texttt{n} = 522 weekdays in this period.
+
+\subsection{Dates as string-valued series}
+
+It often happens that \texttt{CSV} files contain date information
+stored as strings. Take for example a file containing earthquake data
+like the following:\footnote{The data used as an example here are
+  taken from a larger dataset available at
+  \url{https://www.kaggle.com/datasets/usgs/earthquake-database}.}
+
+\begin{center}
+  \begin{small}
+%    \begin{texttt}
+      \begin{tabular}{lllll}
+        Date	& Time	& Latitude	& Longitude                & Magnitude \\
+        "01/02/1965"	& "13:44:18"	& 19.246	& 145.616  & 6.0       \\
+        "01/04/1965"	& "11:29:49"	& 1.863	& 127.352          & 5.8       \\
+        "01/05/1965"	& "18:05:58"	& -20.579	& -173.972 & 6.2       \\
+        "01/08/1965"	& "18:49:43"	& -59.076	& -23.557  & 5.8       \\
+        "01/09/1965"	& "13:32:50"	& 11.938	& 126.427  & 5.8       \\
+        "01/10/1965"	& "13:36:32"	& -13.405	& 166.629  & 6.7       \\
+        "01/12/1965"	& "13:32:25"	& 27.357	& 87.867   & 5.9       \\
+        "01/15/1965"	& "23:17:42"	& -13.309	& 166.212  & 6.0       
+      \end{tabular}
+%    \end{texttt}
+  \end{small}
+\end{center}
+
+Now suppose we want to convert the first column (the ``Date'' field)
+to the epoch day format. Note that its format follows the American
+convention month-day-year, which is only possible to ascertain by
+visually inspecting the \texttt{CSV} file. One way to accomplish the
+task could is provided in Script \ref{ex:earthquakes}.
+
+\begin{script}[htbp]
+  \scriptcaption{Converting a string-valued date series to epochday}
+  \label{ex:earthquakes}
+\begin{scodebit}
+strings s_dates = strvals(Date, 1)             # Store all the different dates into 
+scalar ndates = nelem(s_dates)                 # a string array and count them
+matrix tmp = zeros(1, ndates)                  # create a temporary matrix
+loop i = 1 .. ndates
+    tmp[i] = strpday(s_dates[i], "%m/%d/%Y")   # fill it with the epochdays (note the format string)
+endloop
+series ed = replace(Date, seq(1, ndates), tmp) # replace the original series with the epoch days
+print Date ed --byobs                          # print out the results
+
+\end{scodebit}
+  
+Output:
+\begin{outbit}
+                      Date           ed
+
+1               01/02/1965       717338
+2               01/04/1965       717340
+3               01/05/1965       717341
+4               01/08/1965       717344
+5               01/09/1965       717345
+6               01/10/1965       717346
+7               01/12/1965       717348
+8               01/15/1965       717351
+\end{outbit}
+\end{script}
+
+\subsection{Unix seconds and time zones}
+
+When using dates stored as Unix-style seconds, it is important to
+remember that the number gives you the number of seconds \emph{in the
+  UTC time zone}. Following the convention of most programming
+languages (for example, C and Python), the two Gretl functions for
+handling Unix seconds, \cmd{strftime} and \cmd{strptime} work taking
+into account the time zone your computer is set to. So for example the
+number 1234567890 corresponds to ``13-02-2009 23:31:30'' in the UTC
+time zone, but on a computer whose clock is set to CET (Central
+European Time), the call
+\begin{code}
+  strftime(s, "%d-%m-%Y")
+\end{code}
+would return the string ``14-02-2009'', because at that moment it was
+already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
+
+In order to calculate the offset of the time zone you're in with
+respect with UTC, it is possible to use the \dollar{now} accessor (see
+Section \ref{sec:cal-builtins}) with the special \texttt{\%z} format
+sequence, wich returns a string with the offset in hours and
+minutes. An example on how to use this trick is provided in the
+example script \ref{ex:tzoffset}.
+
+\begin{script}[htbp]
+  \scriptcaption{Controlling for the time zone offset}
+  \label{ex:tzoffset}
+\begin{scodebit}
+# nearly midnight on 13/2/2009 in London
+scalar s = 1234567890
+# corresponding date WHERE YOU ARE
+string datestring = strftime(s, "%d-%m-%Y")
+
+# calculate adjustment as a string
+string offset_string = strftime($now[1], "%z")
+# convert the offset string to seconds
+scalar off_h = 0
+scalar off_m = 0
+out = sscanf(offset_string, "%3d%2d", &off_h, &off_m)
+scalar offset = 3600 * off_h + 60 * off_m
+
+# date in the UTC time zone
+adj_datestring = strftime(s - offset, "%d-%m-%Y")
+print datestring adj_datestring
+\end{scodebit}
+%$  
+If you run the script above anywhere East of UTC, you should get the
+following output:
+\begin{outbit}
+14-02-2009
+13-02-2009
+\end{outbit}
+\end{script}
 
 \section{Other functions and built-ins}
 \label{sec:cal-otherfuncs}
@@ -341,10 +460,10 @@ produces \texttt{edg} = 620548 and \texttt{edj} = 620558, indicating
 that the two calendars differed by 10 days at the point in time
 known as January 1, 1700, on the proleptic Gregorian calendar.
 
-Taken together with the \texttt{isodate} and \texttt{juldate}
+Taken together with the \cmd{isodate} and \cmd{juldate}
 functions (which each take an epoch day argument and return an ISO
 8601 basic date on, respectively, the Gregorian and Julian calendars),
-\texttt{epochday} can be used to convert between the two calendars.
+\cmd{epochday} can be used to convert between the two calendars.
 For example, what was the date in England (still on the Julian
 calendar) on the day known to Italians as June 26, 1740 (Italy having
 been on the Gregorian calendar since October 1582)?
