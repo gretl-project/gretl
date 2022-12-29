@@ -13963,6 +13963,19 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>hac_missvals</lit>: <lit>es</lit> (the default),
+	  <lit>am</lit> or <lit>off</lit>. Sets the policy regarding
+	  calculation of HAC standard errors when the estimation
+	  sample includes incomplete observations: <lit>es</lit>
+	  invokes the Equal Spacing method of <cite
+	  key="datta-du12">Datta and Du (2012)</cite>; <lit>am</lit>
+	  selects the Amplitude Modulation method of <cite
+	  key="parzen63">Parzen (1963)</cite>; and <lit>off</lit>
+	  causes gretl to refuse such estimation. See <guideref
+	  targ="chap:robust_vcv"/> for details.
+	  </para>
+	</li>	
+	<li>
 	  <para>
 	    <lit>hc_version</lit>: 0 (the default), 1, 2, 3 or 3a. Sets the
 	    variant used when calculating Heteroskedasticity Consistent
