@@ -167,8 +167,7 @@ function bundle add_outofsample(const bundle modorsys)
         # (but sample_t2 does not exist after 'system' (gretl 2022c))
     elif modorsys.t2 > $tmax 
         funcerr "shouldn't happen"
-    endif 
-    
+    endif
     
     if !inbundle(modorsys, "neqns")
         # this means we must be coming from $model

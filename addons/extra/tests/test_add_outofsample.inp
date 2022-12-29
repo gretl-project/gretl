@@ -93,15 +93,12 @@ open denmark --quiet
 function void test_add_outofsample_seq (const list L)
   print "Start testing function add_outofsample() for single-equation"
 
-
   # Given
   list Endo = L.LRY(-2)
   list Exo = L.LRM(-2)
 
-  print LRM Endo Exo -o
-
   smpl +3 -2
-  ols LRM const Endo Exo #--quiet
+  ols LRM const Endo Exo --quiet
 
   matrix initY_expected = {11.604; 11.582}'
   strings dates_initY_expected = defarray("1974:2", "1974:3")
@@ -128,10 +125,9 @@ function void test_add_outofsample_seq (const list L)
     assert_almost_equal_num(initY_actual[i], initY_expected[i], 1e-3)
   endloop
 
-  loop foreach i dates_futureY_actual_actual
+  loop foreach i dates_futureY_actual
     assert(dates_futureY_actual[i] == dates_futureY_expected[i])
     assert_almost_equal_num(futureY_actual[i], futureY_expected[i], 1e-3)
-
     assert(dates_futureX_actual[i] == dates_futureX_expected[i])
   endloop
 
@@ -140,10 +136,68 @@ function void test_add_outofsample_seq (const list L)
       assert_almost_equal_num(futureX_actual[r,c], futureX_expected[r,c], 1e-3)
     endloop
   endloop
-
 end function
 test_add_outofsample_seq(dataset)
 
+
+open denmark --quiet
+
+function void test_add_outofsample_var (const list L)
+  print "Start testing function add_outofsample() for VAR"
+
+  # Given
+  list Endo = L.LRM L.LRY
+  list Exo = IDE
+  scalar plag = 2
+
+  smpl ; -2
+
+  var plag Endo; Exo -q
+
+  matrix initY_expected = vec( {11.63255, 5.903658} | {11.604, 5.873820} )
+  strings dates_initY_expected = defarray("1974:1", "1974:2")
+
+  matrix futureY_expected = vec( {12.03979, 6.063730} | {12.015, 6.050830} )
+  strings dates_futureY_expected = defarray("1987:2", "1987:3")
+
+  # IDE
+  matrix futureX_expected = vec( {0.07626} | {0.07516})
+  strings dates_futureX_expected = defarray("1987:2", "1987:3")
+
+  # When
+  bundle model = add_outofsample($system)
+
+  matrix initY_actual = vec( model.initY )
+  strings dates_initY_actual = rnameget(initY_actual)
+  matrix futureY_actual = vec( model.futureY )
+  strings dates_futureY_actual = rnameget(futureY_actual)
+
+  # TODO: Is it right that "futureX" does not include the "const"?
+  matrix futureX_actual = vec( model.futureX )
+  strings dates_futureX_actual = rnameget(futureX_actual)
+
+  # Then
+  loop foreach i dates_initY_actual
+    assert(dates_initY_actual[i] == dates_initY_expected[i])
+  endloop
+  loop foreach i dates_futureY_actual
+    assert(dates_futureY_actual[i] == dates_futureY_expected[i])
+  endloop
+  loop foreach i dates_futureX_actual
+    assert(dates_futureX_actual[i] == dates_futureX_expected[i])
+  endloop
+
+  loop i=1..nelem(initY_expected)
+    assert_almost_equal_num(initY_actual[i], initY_expected[i], 1e-3)
+  endloop
+  loop i=1..nelem(futureY_expected)
+    assert_almost_equal_num(futureY_actual[i], futureY_expected[i], 1e-3)
+  endloop
+  loop i=1..nelem(futureX_expected)
+    assert_almost_equal_num(futureX_actual[i], futureX_expected[i], 1e-3)
+  endloop
+end function
+test_add_outofsample_var(dataset)
 
 
 printf "\nInfo: All tests passed.\n"
