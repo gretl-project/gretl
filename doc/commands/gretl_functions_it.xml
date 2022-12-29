@@ -12686,14 +12686,24 @@
 	  default è il formato ISO 8601 <quote>esteso</quote>, e cioè
 	  <lit>YYYY-MM-DD</lit> (che sarebbe
 	  <quote><lit>%Y-%m-%d</lit></quote> come formato
-	  <argname>strptime</argname>).
+	  <argname>strptime</argname>).  In alternativa, il primo
+	  argomento può essere un intero ad 8 cifre conforme alla
+	  specificazione ISO 8601 <quote>di base</quote>,
+	  <lit>YYYYMMDD</lit> (per esempio, 20221220). In questo case
+	  l'argomento <argname>formato</argname> deve essere omesso.
 	</para>
 	<para>
-	  In alternativa, il primo argomento può essere un intero ad 8
-	  cifre conforme alla specificazione ISO 8601 <quote>di
-	  base</quote>, <lit>YYYYMMDD</lit> (per esempio,
-	  20221220). In questo case l'argomento
-	  <argname>formato</argname> deve essere omesso.
+	  Si noti il valore restituito da questa funzione dipende dal
+	  settaggio di fuso orario del sistema su cui si sta
+	  lavorando. Ad esempio, l'output di 
+	</para>
+	<code>
+	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
+	</code>
+	<para>
+	  sarà 1234567890 solo se l'ora è impostata a UTC. Se invece,
+	  per esempio, l'ora è impostata alla zona pacifica degli USA
+	  (ad esempio, la California), l'output sarà 1234596690.
 	</para>
 	<para>
 	  Attenzione: a causa di differenze nell'implementazione,

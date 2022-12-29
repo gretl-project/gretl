@@ -12582,19 +12582,31 @@
 	 it parses the date/time string <argname>s</argname> using the
 	 specified <argname>format</argname> and returns a scalar
 	 giving the number of seconds since the start of 1970
-	 according to Coordinated Universal Time (UTC).
+	 according to Coordinated Universal Time (UTC - formerly known
+	 as Greenwich Mean Time).
 	</para>
 	<para>
 	  If <argname>format</argname> is omitted, it defaults to ISO
 	  8601 <quote>extended</quote>, <lit>YYYY-MM-DD</lit> (which
 	  translates to <quote><lit>%Y-%m-%d</lit></quote> as a
-	  strptime format).
+	  strptime format).  Alternatively, the first argument may be
+	  given as an 8-digit integer conforming to the ISO 8601
+	  <quote>basic</quote> date format, <lit>YYYYMMDD</lit> (for
+	  example 20221220). In that case <argname>format</argname>
+	  should be omitted.
 	</para>
 	<para>
-	  Alternatively, the first argument may be given as an 8-digit
-	  integer conforming to the ISO 8601 <quote>basic</quote> date
-	  format, <lit>YYYYMMDD</lit> (for example 20221220). In that
-	  case <argname>format</argname> should be omitted.
+	  Note that the output of this function depends on the time
+	  zone that is set as default on the system you are using: for
+	  example, the call 
+	</para>
+	<code>
+	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
+	</code>
+	<para>
+	  will produce 1234567890 on output only if your system is set
+	  on UTC. If, for instance, you're on the Pacific Time Zone
+	  (eg California), the output will be 1234596690.
 	</para>
 	<para>
 	  Warning: this function behaves differently on Windows and
