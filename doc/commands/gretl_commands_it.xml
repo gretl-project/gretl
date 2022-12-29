@@ -13946,10 +13946,9 @@ l'indentazione della linea sia corretta.
 </para>
 </li>
 <li>
-  <para><lit>bfgs_richardson</lit>: <lit>on</lit> or
-  <lit>off</lit> (the default). Use Richardson extrapolation
-  when computing numerical derivatives in the context of BFGS
-  maximization.
+  <para><lit>bfgs_richardson</lit>: <lit>on</lit> or <lit>off</lit>
+  (the default). Usa l'estrapolazione di Richardsonper calcolare le
+  derivate numeriche nel contesto dell'ottimizzazione con BFGS.
 </para>
 </li>
 <li>
@@ -14000,14 +13999,14 @@ l'indentazione della linea sia corretta.
 </li>
 <li>
   <para>
-    <lit>force_qr</lit>: <lit>on</lit> or <lit>off</lit> (the
-    default). This applies to the <cmdref targ="ols"/>
-    command. By default this command computes OLS estimates
-    using Cholesky decomposition (the fastest method), with a
-    fallback to QR if the data seem too ill-conditioned. You
-    can use <lit>force_qr</lit> to skip the Cholesky step; in
-    <quote>doubtful</quote> cases this may ensure greater
-    accuracy.
+    <lit>force_qr</lit>: <lit>on</lit> oppure <lit>off</lit> (il
+    default). Si riferisce al comando <cmdref targ="ols"/>. Per
+    default, questo comando calcola le stime usando la scomposizione
+    di Cholesky, che è il metodo più rapido, passando alla
+    scomposizione QR solo nel caso di dati mal condizionati. Settando
+    <lit>force_qr</lit> a <lit>on</lit> il tentativo con Cholesky
+    viene saltato; in casi <quote>dubbi</quote> questo potrebbe
+    portare ad una maggiore accuratezza.
   </para>
 </li>
 <li>
@@ -14103,13 +14102,12 @@ qual caso viene usato QML.
   </para>
 </li>
 <li>
-  <para><lit>robust_z</lit>: <lit>off</lit> (the default) or
-  <lit>on</lit>. This controls the distribution used when
-  calculating p-values based on robust standard errors in
-  the context of least-squares estimators. By default gretl
-  uses the Student <math>t</math> distribution but if
-  <lit>robust_z</lit> is turned on the normal distribution
-  is used.
+  <para><lit>robust_z</lit>: <lit>off</lit> (il default) oppure
+  <lit>on</lit>. Questo settaggio controlla la distribuzione usata per
+  calcolare i p-value basati s errori standard robusti, nel contesto
+  delle stime a minimi quadrati. Per default, gretl usa la
+  distribuzione t di Student <math>t</math>, ma se
+  <lit>robust_z</lit> è <quote>on</quote> viene usata la normale.
   </para>
 </li>
 <li>
@@ -14146,6 +14144,19 @@ qual caso viene usato QML.
   larghezza di banda basata sui dati.
   </para>
 </li>
+	<li>
+	  <para><lit>hac_missvals</lit>: <lit>es</lit> (il default),
+	  <lit>am</lit> or <lit>off</lit>. Imposta come debbano essere
+	  calcolati gli errori standard HAC in presenza di
+	  osservazioni incomplete: <lit>es</lit> imposta il metodo
+	  <quote>Equal Spacing</quote> di <cite key="datta-du12">Datta
+	  e Du (2012)</cite>; <lit>am</lit> seleziona il metodo
+	  <quote>Amplitude Modulation</quote> di <cite
+	  key="parzen63">Parzen (1963)</cite>; infine, <lit>off</lit>
+	  fa sì che gretl rifiuti di procedere. Si veda <guideref
+	  targ="chap:robust_vcv"/> per dettagli.
+	  </para>
+	</li>	
 <li>
   <para><lit>hc_version</lit>:
   0 (valore predefinito), 1, 2, 3 o 3a. Imposta la
