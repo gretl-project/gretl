@@ -143,8 +143,8 @@ hence to apply a specific correction.  The more common case, however,
 is where the heteroskedasticity is of unknown form.  We seek an
 estimator of the covariance matrix of the parameter estimates that
 retains its validity, at least asymptotically, in face of unspecified
-heteroskedasticity.  It is not obvious, a priori, that this should be
-possible, but \cite{white80} showed that
+heteroskedasticity.  It is not obvious \textit{a priori} that this
+should be possible, but \cite{white80} showed that
 %
 \begin{equation}
 \label{eq:ols-varb-h}
@@ -152,7 +152,7 @@ possible, but \cite{white80} showed that
        (X'X)^{-1} X' \hat{\Omega} X (X'X)^{-1}
 \end{equation}
 %
-does the trick. (As usual in statistics, we need to say ``under
+does the trick. (As usual in statistics we need to say ``under
 certain conditions'', but the conditions are not very restrictive.)
 $\hat{\Omega}$ is in this context a diagonal matrix, whose non-zero
 elements may be estimated using squared OLS residuals.  White referred
@@ -178,7 +178,7 @@ residuals,
 %
 is minimized for given $X$ and $y$.  Suppose that $\hat{\beta} \neq
 \beta$.  This is almost certain to be the case: even if OLS is not
-biased, it would be a miracle if the $\hat{\beta}$ calculated from any
+biased it would be a miracle if the $\hat{\beta}$ calculated from any
 finite sample were exactly equal to $\beta$.  But in that case the sum
 of squares of the true, unobserved \textit{errors}, $\sum u^2_t = \sum
 (y_t - X_t \beta)^2$ is bound to be greater than $\sum \hat{u}^2_t$.
@@ -188,15 +188,16 @@ The elaborated variants on HC$_0$ take this point on board as follows:
 \item HC$_1$: Applies a degrees-of-freedom correction, multiplying the
   HC$_0$ matrix by $T/(T-k)$.
 \item HC$_2$: Instead of using $\hat{u}^2_t$ for the diagonal elements
-  of $\hat{\Omega}$, uses $\hat{u}^2_t/(1-h_t)$, where $h_t =
-  X_t(X'X)^{-1}X'_t$, the $t^{\rm th}$ diagonal element of the projection
-  matrix, $P$, which has the property that $P\cdot y = \hat{y}$.  The
-  relevance of $h_t$ is that if the variance of all the $u_t$ is
-  $\sigma^2$, the expectation of $\hat{u}^2_t$ is $\sigma^2(1-h_t)$,
-  or in other words, the ratio $\hat{u}^2_t/(1-h_t)$ has expectation
-  $\sigma^2$.  As Davidson and MacKinnon show, $0\leq h_t <1$ for all
-  $t$, so this adjustment cannot reduce the the diagonal elements of
-  $\hat{\Omega}$ and in general revises them upward.
+  of $\hat{\Omega}$, uses $\hat{u}^2_t/(1-h_t)$, where
+  $h_t = X_t(X'X)^{-1}X'_t$, the $t^{\rm th}$ diagonal element of the
+  projection matrix $P_X$, which has the property that
+  $P_X\cdot y = \hat{y}$.  The relevance of $h_t$ is that if the
+  variance of all the $u_t$ is $\sigma^2$, the expectation of
+  $\hat{u}^2_t$ is $\sigma^2(1-h_t)$, or in other words, the ratio
+  $\hat{u}^2_t/(1-h_t)$ has expectation $\sigma^2$.  As Davidson and
+  MacKinnon show, $0\leq h_t <1$ for all $t$, so this adjustment
+  cannot reduce the the diagonal elements of $\hat{\Omega}$ and in
+  general revises them upward.
 \item HC$_3$: Uses $\hat{u}^2_t/(1-h_t)^2$.  The additional factor of
   $(1-h_t)$ in the denominator, relative to HC$_2$, may be justified
   on the grounds that observations with large variances tend to exert
@@ -215,7 +216,7 @@ nonetheless, ``White's standard errors'' are reported more often than
 the more sophisticated variants and therefore, for reasons of
 comparability, HC$_0$ is the default HCCME in gretl.
 
-If you wish to use HC$_1$, HC$_2$, HC$_3$, or HC$_{3a}$, you can arrange
+If you wish to use HC$_1$, HC$_2$, HC$_3$, or HC$_{3a}$ you can arrange
 for this in either of two ways.  In script mode, you can do, for example,
 %
 \begin{code}
@@ -229,10 +230,10 @@ noted above, and choose any of these variants to be the default.
 \section{Time series data and HAC covariance matrices}
 \label{vcv-hac}
 
-Heteroskedasticity may be an issue with time series data too, but it
+Heteroskedasticity may be an issue with time series data too but it
 is unlikely to be the only, or even the primary, concern.  
 
-One form of heteroskedasticity is common in macroeconomic time series,
+One form of heteroskedasticity is common in macroeconomic time series
 but is fairly easily dealt with.  That is, in the case of strongly
 trending series such as Gross Domestic Product, aggregate consumption,
 aggregate investment, and so on, higher levels of the variable in
@@ -240,7 +241,7 @@ question are likely to be associated with higher variability in
 absolute terms.  The obvious ``fix'', employed in many
 macroeconometric studies, is to use the logs of such series rather
 than the raw levels.  Provided the \textit{proportional} variability
-of such series remains roughly constant over time, the log
+of such series remains roughly constant over time the log
 transformation is effective.  
 
 Other forms of heteroskedasticity may resist the log transformation,
@@ -258,47 +259,46 @@ is that in most cases it is likely to be combined with serial
 correlation (autocorrelation), hence demanding a special treatment.
 In White's approach, $\hat{\Omega}$, the estimated covariance matrix
 of the $u_t$, remains conveniently diagonal: the variances,
-$E(u^2_t)$, may differ by $t$ but the covariances, $E(u_t u_s)$, are
-all zero.  Autocorrelation in time series data means that at least
-some of the the off-diagonal elements of $\hat{\Omega}$ should be
-non-zero.  This introduces a substantial complication and requires
-another piece of terminology; estimates of the covariance matrix that
-are asymptotically valid in face of both heteroskedasticity and
-autocorrelation of the error process are termed HAC
-(heteroskedasticity and autocorrelation consistent).
+$E(u^2_t)$, may differ by $t$ but the covariances, $E(u_t u_s)$ for
+$s \neq t$, are all zero.  Autocorrelation in time series data means
+that at least some of the the off-diagonal elements of $\hat{\Omega}$
+should be non-zero.  This introduces a substantial complication and
+requires another piece of terminology: estimates of the covariance
+matrix that are asymptotically valid in face of both
+heteroskedasticity and autocorrelation of the error process are termed
+HAC (heteroskedasticity- and autocorrelation-consistent).
 
 The issue of HAC estimation is treated in more technical terms in
 chapter~\ref{chap:gmm}.  Here we try to convey some of the intuition
 at a more basic level.  We begin with a general comment: residual
-autocorrelation is not so much a property of the data, as a symptom of
-an inadequate model.  Data may be persistent though time, and if we fit
-a model that does not take this aspect into account properly, we end
-up with a model with autocorrelated disturbances.  Conversely, it is
-often possible to mitigate or even eliminate the problem of
+autocorrelation is not so much a property of the data as a symptom of
+an inadequate model.  Data may be persistent though time, and if we
+fit a model that does not take this aspect into account properly we
+end up with a model with autocorrelated disturbances.  Conversely, it
+is often possible to mitigate or even eliminate the problem of
 autocorrelation by including relevant lagged variables in a time
 series model, or in other words, by specifying the dynamics of the
-model more fully.  HAC estimation should \textit{not} be seen as the
-first resort in dealing with an autocorrelated error process.
+model more fully.  HAC estimation should not be seen as the first
+resort in dealing with an autocorrelated error process.
 
 That said, the ``obvious'' extension of White's HCCME to the case of
 autocorrelated errors would seem to be this: estimate the off-diagonal
-elements of $\hat{\Omega}$ (that is, the autocovariances, $E(u_t
-u_s)$) using, once again, the appropriate OLS residuals:
+elements of $\hat{\Omega}$ (that is, the autocovariances,
+$E(u_t u_s)$) using, once again, the appropriate OLS residuals:
 $\hat{\omega}_{ts} = \hat{u}_t \hat{u}_s$.  This is basically right,
 but demands an important amendment.  We seek a \textit{consistent}
 estimator, one that converges towards the true $\Omega$ as the sample
 size tends towards infinity.  This can't work if we allow unbounded
-serial dependence.  Bigger samples will enable us to estimate more of
+serial dependence.  A larger sample will enable us to estimate more of
 the true $\omega_{ts}$ elements (that is, for $t$ and $s$ more widely
-separated in time) but will \textit{not} contribute ever-increasing
-information regarding the maximally separated $\omega_{ts}$ pairs,
-since the maximal separation itself grows with the sample size.  To
-ensure consistency, we have to confine our attention to processes
-exhibiting temporally limited dependence, or in other words cut off
-the computation of the $\hat{\omega}_{ts}$ values at some maximum
-value of $p = t-s$ (where $p$ is treated as an increasing function of
-the sample size, $T$, although it cannot increase in proportion to
-$T$).
+separated in time) but will not contribute ever-increasing information
+regarding the maximally separated $\omega_{ts}$ pairs since the
+maximal separation itself grows with the sample size.  To ensure
+consistency we have to confine our attention to processes exhibiting
+temporally limited dependence. In other words we cut off the
+computation of the $\hat{\omega}_{ts}$ values at some maximum value of
+$p = t-s$, where $p$ is treated as an increasing function of the
+sample size, $T$, although it cannot increase in proportion to $T$.
 
 The simplest variant of this idea is to truncate the computation at
 some finite lag order $p$, where $p$ grows as, say, $T^{1/4}$.  The
@@ -317,9 +317,9 @@ covariance matrix given in (\ref{eq:ols-varb-h}), namely,
 \]
 %
 This is known as a ``sandwich'' estimator.  The bread, which appears
-on both sides, is $(X'X)^{-1}$.  This is a $k \times k$ matrix, and is
-also the key ingredient in the computation of the classical covariance
-matrix.  The filling in the sandwich is
+on both sides, is $(X'X)^{-1}$.  This $k \times k$ matrix is also the
+key ingredient in the computation of the classical covariance matrix.
+The filling in the sandwich is
 %
 \[
 \begin{array}{ccccc}
@@ -330,11 +330,11 @@ matrix.  The filling in the sandwich is
 \end{array}
 \]
 %
-It can be proven that, under mild regularity conditions, $T^{-1}
-\hat{\Sigma}$ is a consistent estimator of the long-run covariance
-matrix of the random $k$-vector $x_t \cdot u_t$.   
+It can be proven that under mild regularity conditions
+$T^{-1} \hat{\Sigma}$ is a consistent estimator of the long-run
+covariance matrix of the random $k$-vector $x_t \cdot u_t$.
 
-From a computational point of view, it is neither necessary nor
+From a computational point of view it is neither necessary nor
 desirable to store the (potentially very large) $T \times T$ matrix
 $\hat{\Omega}$ as such.  Rather, one computes the sandwich filling by
 summation as a weighted sum:
@@ -382,7 +382,7 @@ where $a_j = j/(p+1)$, and for the QS kernel,
 w_j = \frac{25}{12\pi^2 d_j^2} 
    \left(\frac{\sin{m_j}}{m_j} - \cos{m_j} \right)
 \]
-where $d_j = j/p$ and $m_j = 6\pi d_i/5$.  
+where $d_j = j/p$ and $m_j = 6\pi d_j/5$.  
 
 Figure~\ref{fig:kernels} shows the weights generated by these kernels,
 for $p=4$ and $j$ = 1 to 9.
@@ -411,7 +411,7 @@ general terms how the HAC bandwidth, $p$, should grow with the sample
 size, $T$---that is, $p$ should grow in proportion to some
 fractional power of $T$.  Unfortunately this is of little help to the
 applied econometrician, working with a given dataset of fixed size.
-Various rules of thumb have been suggested, and gretl implements
+Various rules of thumb have been suggested and gretl implements
 two such.  The default is $p = 0.75 T^{1/3}$, as recommended by
 \cite{stock-watson03}.  An alternative is $p = 4(T/100)^{2/9}$, as in
 \cite{wooldridge-intro}.  In each case one takes the integer part of the
@@ -476,7 +476,7 @@ The long-run variance of $x_t$ can be shown to be
   V_{LR}(x_t) = \frac{V_{LR}(u_t)}{(1-\rho)^2}
 \]
 %
-In most cases, $u_t$ is likely to be less autocorrelated than $x_t$,
+In most cases $u_t$ is likely to be less autocorrelated than $x_t$,
 so a smaller bandwidth should suffice.  Estimation of $V_{LR}(x_t)$ can
 therefore proceed in three steps: (1) estimate $\rho$; (2) obtain a
 HAC estimate of $\hat{u}_t = x_t - \hat{\rho} x_{t-1}$; and (3)
@@ -484,7 +484,7 @@ divide the result by $(1-\rho)^2$.
 
 The application of the above concept to our problem implies estimating
 a finite-order Vector Autoregression (VAR) on the vector variables
-$\xi_t = X_t \hat{u}_t$. In general, the VAR can be of any order, but
+$\xi_t = X_t \hat{u}_t$. In general the VAR can be of any order, but
 in most cases 1 is sufficient; the aim is not to build a watertight
 model for $\xi_t$, but just to ``mop up'' a substantial part of the
 autocorrelation.  Hence, the following VAR is estimated
@@ -532,19 +532,64 @@ series is given as a function of the sample size, but only up to a
 scalar multiple---for example, it is given as $O(T^{2/9})$ for the
 Bartlett kernel. Gretl uses an implied multiple of 1.
 
+\subsection{Newey--West with missing values}
+\label{sec:has-missvals}
+
+If the estimation sample for a time-series model includes incomplete
+observations---where the value of the dependent variable or one more
+regressors is missing---the Newey--West procedure must be either
+modified or abandoned, since some ingredients of the $\hat{\Sigma}$
+matrix defined above will be absent. Two modified methods have been
+discussed in the literature. \cite{parzen63} proposed what he called
+Amplitude Modulation (AM), which involves setting the values of the
+residual and each of the regressors to zero for the incomplete
+observations (and then proceeding as usual). \cite{datta-du12} propose
+the so-called Equal Spacing (ES) method: calculate as if the incomplete
+observations did not exist, and the complete observations therefore
+form an equally-spaced series. Somewhat suprisingly, it can be shown
+that both of these methods have appropriate asymptotic properties;
+see \cite{rho-vogelsang18} for further elaboration.
+
+In gretl you can select a preferred method via one or other of these
+commands:
+%
+\begin{code}
+set hac_missvals es # ES, Datta and Du
+set hac_missvals am # AM, Parzen
+set hac_missvals off
+\end{code}
+%
+The ES method is the default. The \texttt{off} option means that gretl
+will refuse to produce HAC standard errors when the sample includes
+incomplete observations: use this if you have qualms about the
+modified methods.
+
+\subsection{VARs: a special case}
+\label{sec:hac-VARs}
+
+A well-specified vector autoregression (VAR) will generally include
+enough lags of the dependent variables to obviate the problem of
+residual autocorrelation, in which case HAC estimation is
+redundant---although there may still be a need to correct for
+heteroskedasticity. For that reason plain HCCME, and not HAC, is the
+default when the \option{robust} flag is given in the context of the
+\cmd{var} command. However, if for some reason you need HAC you can
+force the issue by giving the option \option{robust-hac}.
+
 \subsection{Long-run variance}
 \label{sec:lrvar}
 % moved here from the "special functions" chapter in part I,
 % where it really didn't belong
 
-Let us expand a little more on the subject of the long-run variance 
-that was mentioned in the previous subsection and the associated tools
-offered by gretl for scripting. (You may also want to check out the 
-reference for the \texttt{lrcovar} function for the multivariate case.)
-As is well known, the variance of the average of $T$ random variables
+Let us expand a little on the subject of the long-run variance that
+was mentioned above and the associated tools offered by gretl for
+scripting. (You may also want to check out the reference for the
+\texttt{lrcovar} function for the multivariate case.)  As is well
+known, the variance of the average of $T$ random variables
 $x_1, x_2, \ldots, x_T$ with equal variance $\sigma^2$ equals
 $\sigma^2/T$ if the data are uncorrelated. In this case, the sample
-variance of $x_t$ over the sample size provides a consistent estimator.
+variance of $x_t$ over the sample size provides a consistent
+estimator.
 
 If, however, there is serial correlation among the $x_t$s, the
 variance of $\bar{X} = T^{-1} \sum_{t=1}^T x_t$ must be estimated
@@ -580,19 +625,6 @@ lrs2 = lrvar(x, 12, 0)
 # impose mean zero, automatic window size
 lrs2 = lrvar(x, -1, 0)
 \end{code}
-
-\subsection{VARs: a special case}
-\label{sec:hac-VARs}
-
-A well-specified vector autoregression (VAR) will generally include
-enough lags of the dependent variables to obviate the problem of
-residual autocorrelation, in which case HAC estimation is
-redundant---although there may still be a need to correct for
-heteroskedasticity. For that reason plain HCCME, and not HAC, is the
-default when the \option{robust} flag is given in the context of the
-\cmd{var} command. However, if for some reason you need HAC you can
-force the issue by giving the option \option{robust-hac}.
-
 
 \section{Special issues with panel data}
 \label{sec:vcv-panel}
