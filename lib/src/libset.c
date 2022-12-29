@@ -401,7 +401,7 @@ static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", "pipe", N
 static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
 static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
 static const char *qrp_strs[] = {"off", "on", "pivot", NULL};
-static const char *hmv_strs[] = {"refuse", "es", "am", NULL};
+static const char *hmv_strs[] = {"off", "es", "am", NULL};
 
 struct codevar_info {
     SetKey key;
