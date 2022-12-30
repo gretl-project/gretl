@@ -8872,25 +8872,35 @@ static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 
 static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
     const char *fmt = NULL;
     const char *src = NULL;
+    int str_series = 0;
     int ymd = -1;
+    int v = -1;
+
+    if (l->t == SERIES) {
+	v = l->vnum;
+	if (is_string_valued(p->dset, v)) {
+	    str_series = 1;
+	}
+	ret = aux_series_node(p);
+    } else {
+	if (l->t == STR) {
+	    src = l->v.str;
+	} else {
+	    /* must be YYYYMMDD */
+	    ymd = node_get_int(l, p);
+	}
+	ret = aux_scalar_node(p);
+    }
 
     if (ret == NULL) {
         return NULL;
     }
 
-    /* we want a string or YYYYMMDD integer from @l */
-    if (l->t == STR) {
-        src = l->v.str;
-    } else {
-        /* must be YYYYMMDD */
-        ymd = node_get_int(l, p);
-    }
-
-    if (src == NULL) {
-        /* without @src we won't accept a format string */
+    if (src == NULL && !str_series) {
+        /* without a string arg we won't accept a format string */
         if (r->t != EMPTY) {
             p->err = E_INVARG;
         }
@@ -8904,43 +8914,64 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
     }
 
     if (!p->err) {
-        struct tm tm = {0,0,0,1,0,0,0,0,-1};
-        char *s;
+	double *targ = NULL;
+	int t, t1 = 0, t2 = 0;
+	char buf[32];
+	char *s;
 
-        if (src == NULL) {
-            /* has to be ISO 8601 basic */
-            gchar *buf = g_strdup_printf("%d", ymd);
-
-            s = strptime(buf, "%Y%m%d", &tm);
-            g_free(buf);
-        } else {
-            if (fmt == NULL) {
-                /* default to ISO 8601 extended */
-                fmt = "%Y-%m-%d";
-            }
-            s = strptime(src, fmt, &tm);
-        }
-
-        if (s == NULL) {
-            /* strptime() failed */
-            p->err = E_INVARG;
-        } else if (f == F_STRPDAY) {
-	    int y = tm.tm_year + 1900;
-	    int m = tm.tm_mon + 1;
-
-	    ret->v.xval = (double) epoch_day_from_ymd(y, m, tm.tm_mday);
-	    if (ret->v.xval == 0) {
-		ret->v.xval = NADBL;
-	    }
+	if (l->t == SERIES) {
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
 	} else {
-            ret->v.xval = (double) mktime(&tm);
+	    targ = &ret->v.xval;
+	}
+
+	for (t=t1; t<=t2; t++) {
+	    struct tm tm = {0,0,0,1,0,0,0,0,-1};
+
+	    if (l->t == SERIES) {
+		if (str_series) {
+		    src = series_get_string_for_obs(p->dset, v, t);
+		} else {
+		    ymd = (int) l->v.xvec[t];
+		}
+		targ = &ret->v.xvec[t];
+	    }
+
+	    if (src == NULL) {
+		/* has to be ISO 8601 basic */
+		sprintf(buf, "%d", ymd);
+		s = strptime(buf, "%Y%m%d", &tm);
+	    } else {
+		if (fmt == NULL) {
+		    /* default to ISO 8601 extended */
+		    fmt = "%Y-%m-%d";
+		}
+		s = strptime(src, fmt, &tm);
+	    }
+
+	    if (s == NULL) {
+		/* strptime() failed */
+		p->err = E_INVARG;
+		break;
+	    } else if (f == F_STRPDAY) {
+		int y = tm.tm_year + 1900;
+		int m = tm.tm_mon + 1;
+
+		*targ = (double) epoch_day_from_ymd(y, m, tm.tm_mday);
+		if (*targ == 0) {
+		    *targ = NADBL;
+		}
+	    } else {
+		*targ = (double) mktime(&tm);
 #ifdef WIN32
-            /* dates prior to 1970-01-01 not supported */
-            if (ret->v.xval == -1) {
-                ret->v.xval = NADBL;
-            }
+		/* dates prior to 1970-01-01 not supported */
+		if (*targ == -1) {
+		    *targ = NADBL;
+		}
 #endif
-        }
+	    }
+	}
     }
 
     return ret;
@@ -18350,7 +18381,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_STRPTIME:
     case F_STRPDAY:
-        if (l->t == STR || scalar_node(l)) {
+        if (l->t == STR || l->t == SERIES || scalar_node(l)) {
             ret = strptime_node(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, STR, l, p);
