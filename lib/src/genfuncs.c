@@ -8671,11 +8671,9 @@ static int val_map_search (double needle, const double *haystack,
 }
 
 /* Helper function for strftime() as applied to a series argument.
-   If the epoch days in the input series are not in chronological
-   order (either forward or reversed), and/or there are repeated
-   values, we need a mapping from epoch day to position in a
-   sorted array of unique values for the purpose of stringifying
-   the output series.
+   If the (epoch days) input series contains any duplicated values we
+   need a mapping from epoch day to position in an array of unique
+   values for the purpose of stringifying the output series.
 */
 
 int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
@@ -8688,10 +8686,18 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
 
     *pnv = 0;
 
-    /* is @x increasing or decreasing monotonically? */
+    /* Is @x increasing or decreasing monotonically?
+       This is a fairly cheap check for a sufficient
+       condition for no repetition. We count missing
+       values and check for bogus ones as we go.
+    */
     for (i=0; i<n; i++) {
 	if (na(x[i])) {
 	    n_ok--;
+	} else if (x[i] < -6.2e10 || x[i] > 2.5e11) {
+	    /* outside of plausible time_t range */
+	    *err = E_INVARG;
+	    break;
 	} else if (i > 0 && !na(x[i-1])) {
 	    if (j < 0) {
 		mono = (x[i] > x[i-1])? 1 : (x[i] < x[i-1])? 2 : 0;
@@ -8703,11 +8709,13 @@ int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
 	}
     }
 
-    if (n_ok == 0) {
+    if (*err) {
+	return NULL;
+    } else if (n_ok == 0) {
 	*err = E_MISSDATA;
 	return NULL;
     } else if (mono) {
-	/* monotonic: no map needed */
+	/* no repetition: no map needed */
 	*pnv = n_ok;
 	return NULL;
     }
