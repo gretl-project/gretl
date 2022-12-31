@@ -8816,21 +8816,20 @@ static NODE *ymd_node (NODE *l, NODE *r, parser *p)
 
 static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret = NULL;
     const char *fmt = NULL;
-    double tx;
-    time_t t;
+    int *vmap = NULL;
+    char **S = NULL;
+    int nv = 0;
+
+    if (l->t == SERIES) {
+	ret = aux_series_node(p);
+    } else {
+	ret = aux_string_node(p);
+    }
 
     if (ret == NULL) {
         return NULL;
-    }
-
-    /* we want a time_t compatible value from @l */
-    tx = node_get_scalar(l, p);
-    if (na(tx)) {
-        p->err = E_INVARG;
-    } else {
-        t = (time_t) floor(tx);
     }
 
     /* if @r isn't empty it should hold a format string */
@@ -8840,29 +8839,86 @@ static NODE *strftime_node (NODE *l, NODE *r, parser *p)
         p->err = E_TYPES;
     }
 
+    if (l->t == SERIES) {
+	const double *x = l->v.xvec + p->dset->t1;
+	int n = sample_size(p->dset);
+
+	vmap = maybe_get_values_map(x, n, &nv, &p->err);
+	if (!p->err) {
+	    S = strings_array_new(nv);
+	    if (S == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    }
+
     if (!p->err) {
-        struct tm tm;
+	int t, t1 = 0, t2 = 0;
+	double tx;
         char buf[64] = {0};
-        int bytes = 0;
+	char *dstr;
+	struct tm tm;
+	time_t tt;
+        int bytes;
+	int i = 0;
 
         if (fmt == NULL) {
             /* default to 'locale-preferred' format */
             fmt = "%c";
         }
+	if (l->t == SERIES) {
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
+	}
+
+	for (t=t1; t<=t2 && !p->err; t++) {
+	    tx = (l->t == SERIES)? l->v.xvec[t] : node_get_scalar(l, p);
+	    if (na(tx)) {
+		if (l->t == SERIES) {
+		    ret->v.xvec[t] = NADBL;
+		    continue;
+		} else {
+		    ret->v.str = gretl_strdup("");
+		}
+	    } else {
+		bytes = 0;
+		tt = (time_t) floor(tx);
 #ifdef WIN32
-        bytes = strftime(buf, sizeof buf, fmt, localtime(&t));
+		bytes = strftime(buf, sizeof buf, fmt, localtime(&tt));
 #else
-        if (localtime_r(&t, &tm) == NULL) {
-            p->err = E_INVARG;
-        } else {
-            bytes = strftime(buf, sizeof buf, fmt, &tm);
-        }
+		if (localtime_r(&tt, &tm) != NULL) {
+		    bytes = strftime(buf, sizeof buf, fmt, &tm);
+		}
 #endif
-        if (bytes > 0) {
-            ret->v.str = gretl_strdup(g_strchomp(buf));
-        } else {
-            ret->v.str = gretl_strdup("");
-        }
+		if (bytes > 0) {
+		    dstr = gretl_strdup(g_strchomp(buf));
+		    if (l->t == SERIES) {
+			if (vmap != NULL) {
+			    ret->v.xvec[t] = vmap[i] + 1;
+			    S[vmap[i++]] = dstr;
+			} else {
+			    ret->v.xvec[t] = i + 1;
+			    S[i++] = dstr;
+			}
+		    } else {
+			ret->v.str = dstr;
+		    }
+		} else if (l->t == SERIES) {
+		    ret->v.xvec[t] = NADBL;
+		} else {
+		    ret->v.str = gretl_strdup("");
+		}
+	    }
+	}
+    }
+
+    if (l->t == SERIES) {
+	if (p->err && S != NULL) {
+	    strings_array_free(S, nv);
+	} else if (!p->err) {
+	    prepare_stringvec_return(ret, p, S, nv, 1);
+	}
+	free(vmap);
     }
 
     return ret;
@@ -18373,7 +18429,7 @@ static NODE *eval (NODE *t, parser *p)
         ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
-        if (scalar_node(l)) {
+        if (scalar_node(l) || l->t == SERIES) {
             ret = strftime_node(l, r, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
