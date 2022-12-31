@@ -13,39 +13,38 @@ for storing a date either as a string or a number.
 \section{Date and time representations}
 \label{sec:cal-representations}
 
-In Gretl, there is more than one way to encode a piece of information
-such as ``May 26th, 1993''. Some are more intuitive, some others are
-less obvious from the viewpoint of a human, but easier to handle for
-an algorithm. The basic representations we discuss here are:
+In gretl there is more than one way to encode a date such as ``May
+26th, 1993''. Some are more intuitive, some less obvious from the
+human viewpoint of a human but easier to handle for an algorithm. The
+basic representations we discuss here are:
 \begin{enumerate}
-\item the three-digits approach;
-\item date as string;
-\item the ISO 8601 standard;
-\item the epoch day;
-\item Unix-like seconds;
+\item the three-numbers approach
+\item date as string
+\item the ISO 8601 standard
+\item the epoch day
+\item Unix time (seconds)
 \end{enumerate}
-First, we will briefly explain what these are; then, a description of
-how to convert one into another will follow.
+We first explain what these representations are, then we explain how
+to convert between them.
 
-\subsection{The three-digit approach}
-\label{sec:cal-3digits}
+\subsection{The three-numbers approach}
+\label{sec:cal-3numbers}
 
-This is probably the most obvious way to encode a date
-numerically. Assuming we are not interested in intra-day information
-(the time in hours and minutes, for example), the date ``May 26th,
-1993'' can be stored as
+This is probably the most obvious way to encode a date numerically. If
+we are not interested in intra-day information (the time in hours and
+minutes, for example) the date ``May 26th, 1993'' can be stored as
 \begin{code}
   scalar y = 1993
   scalar m = 5
   scalar d = 26
 \end{code}
 
-Of course, it is perfectly possible to use gretl's multiple-element
-objects to extend this approach, for example using a 3-element vector
-for year, month and day, or a 3-column matrix for storing as many
-dates as desired. If you have to store dates as a data series in your
-dataset, this approach would lead you to using three series and
-possibly grouping them into a list, as in
+Gretl's multiple-element objects can be used to extend this approach,
+for example by using a 3-element vector for year, month and day, or a
+3-column matrix for storing as many dates as desired. If you wish to
+store dates as series in your dataset this approach would lead you to
+use three series, possibly grouping them into a list, as in
+% Allin says: this is clever but insane
 \begin{code}
   nulldata 60
   series y = 2020
@@ -54,38 +53,37 @@ possibly grouping them into a list, as in
   list DATE = y m d
 \end{code}
 The example above will generate daily dates for January and February
-2020. In some cases, \texttt{CSV} files store dates exactly in this
-format, possibly with different conventions on the ordering of the
-three components.
+2020. Some \texttt{CSV} files store dates in this sort of format, with
+various conventions on the ordering of the three components.
 
 \subsection{Date as string}
 \label{sec:cal-generic-string}
 
-To a human being, this is the most natural choice: something like
-``26/6/1953'' is pretty much unambiguous. Using this format for
-machine processing can be problematic for several reasons, the main
-one being the existence of many different conventions on (a)
-separators and (b) the order in which the three pieces of information
-(day, month, year) come. This possible source of ambiguity may become
-a problem with \texttt{CSV} files found ``in the wild'', that may
-contain arbitrarily-formatted dates. Therefore, Gretl provides a
-fairly comprehensive function for converting dates such as these into
+To a human being, this may seem the most natural choice.  The string
+``26/6/1953'' is pretty much unambiguous. But using this format for
+machine processing can be problematic due to differing conventions
+regarding (a) the separators between day, month and year and (b) the
+order in which the three pieces of information are arranged:
+``2/6/1953'', for example, is not so unambiguous. Such ambiguity can
+be a problem with \texttt{CSV} files found ``in the wild'', containing
+arbitrarily formatted dates. Therefore gretl provides fairly
+comprehensive functionality for converting dates of this form into
 more manageable formats.
 
 \subsection{The ISO 8601 standard}
 \label{sec:cal-ISO8601}
 
-Among other things, the ISO 8601 standard provides in fact two
-different representations for a date: the ``basic'' representation,
-which uses an 8-digit integer and the ``extended'' representation,
-which uses a 10-character string.
+Among other things, the ISO 8601 standard provides two different
+representations for a date: the ``basic'' representation, which uses
+an 8-digit integer, and the ``extended'' representation, which uses a
+10-character string.
 
-In the basic representation, the idea is that the first four digits
-represent the year, the middle two the month and the rightmost two the
-day, so that for example \texttt{20170219} indicates February 2nd,
-2017. The extended representation works similarly, except that the
-date is a string where the items are separated by hyphens, so that the
-same date would be coded as ``\texttt{2017-02-19}''.
+In the basic representation, the first four digits represent the year,
+the middle two the month and the rightmost two the day, so that for
+example \texttt{20170219} indicates February 19th, 2017. The extended
+representation works similarly except that the date is a string in
+which the items are separated by hyphens, so the same date would be
+represented as ``\texttt{2017-02-19}''.
 
 Again, using series and/or matrices to store ISO 8601 basic dates is
 trivial.
@@ -93,32 +91,32 @@ trivial.
 \subsection{The epoch day}
 \label{sec:cal-epochday}
 
-The third representation is as an ``epoch day'': the date is stored as
-an integer, the number of days elapsed since January 1, AD 1 (that is,
-the first day of the Common Era), on the proleptic Gregorian
+The third representation is what we call an ``epoch day'': the date is
+stored as an integer, the number of days elapsed since January 1, AD 1
+(that is, the first day of the Common Era), on the proleptic Gregorian
 calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
   indicates that it is extrapolated backwards or forwards relative to
   its period of actual historical use.} For example, 1993-05-26
-orresponds to 727709.
+corresponds to 727709.
 
 This is also the convention used by the \textsf{GLib} library, on
 which gretl depends for most of its calendrical calculation. Since
 \textsf{GLib} represents epoch days as unsigned integers, this means
-that gretl does not support dates prior to the Common---or, if you
-prefer, Christian---Era (see also Section \ref{sec:cal-conversion}).
+that gretl does not support dates ``BC'', or prior to the Common Era
+(see also Section \ref{sec:cal-conversion}).
 
-This representation has sevaral advantages: like the ISO 8601 basic
-representation, it lends itself quite naturally to represent dates as
-data series. Compared to ISO 8601, it has the disadvantage of not
-being immediately human-readable, but to compensate for that it makes
-very easy to find how long a date range is: while ISO 8601 basic dates
-can be used for easy comparison (which of two dates, on a given
-calendar, refers to a later day?), with epoch days one can carry out
-fully fledged ``dates arithmetic.''  Epoch days are always consecutive
-by construction, but 8-digit basic dates are consecutive only within a
-given month; they advance by 101 minus (days in previous month) at the
-start of each month other than January and by 8870 at the start of
-each year.
+This representation has several advantages. Like the ISO 8601 basic
+representation, it lends itself naturally to the representation of
+dates as series. Compared to ISO 8601, it has the disadvantage of not
+being immediately understable by humans, but to compensate for that it
+makes it very easy to find how long a date range is. While ISO 8601
+basic dates can be used for easy comparison (which of two dates, on a
+given calendar, refers to a later day?), with epoch days one can carry
+out fully fledged ``dates arithmetic.''  Epoch days are always
+consecutive by construction, but 8-digit basic dates are consecutive
+only within a given month; they advance by 101 minus (days in previous
+month) at the start of each month other than January and by 8870 at
+the start of each year.
 
 % For example, to find how many days separate 1993-05-26 from
 % 1996-04-12, one could use
@@ -135,17 +133,17 @@ each year.
 In this representation (which has been the traditional cornerstone of
 date and time handling on Unix-like systems), the date is a scalar
 giving the number of seconds since the start of 1970 according to
-Coordinated Universal Time (UTC --- formerly known as Greenwich Mean
-Time). Therefore, this format is ideal for storing fine-grained
+Coordinated Universal Time (UTC, formerly known as Greenwich Mean
+Time or GMT). Therefore, this format is ideal for storing fine-grained
 information, including for example not only the date but the time of
 day as well.
 
-This is not human-readable (for example, the number 123456789
-corresponds to Thursday, 29 Nov 1973), but again it lends itself quite
+This is not transparent to humans (for example, the number 123456789
+corresponds to Thursday, 29 Nov 1973), but again it lends itself
 naturally to calculations. Note that this representation is hard-wired
 to the UTC time zone. Therefore, it is possible that a given value
-could correspond to a different dates, if evaluated in different
-time zones.
+could correspond to a different dates, if evaluated in different time
+zones.
 
 \section{Converting between representations}
 \label{sec:cal-conversions}
@@ -158,13 +156,13 @@ time zones.
 \end{figure}
 
 In order to make the conversion between different representations,
-Gretl provides several dedicated functions. In some cases, the
+gretl provides several dedicated functions. In some cases, the
 conversion can be carried out by using generic functions. Figure
 \ref{fig:cal-conversions} displays a summary: solid lines represent
-dedicated function, while dashed lines indicate that no special
+dedicated functions, while dashed lines indicate that no special
 function is needed. For a full description of the functions depicted
-in the figure, we refer to the \GCR. In the rest of this section, we
-will discuss a few special cases.
+in the figure, see the \GCR. In the rest of this section, we will
+discuss a few special cases.
 
 \subsection{Decomposing a series of ``basic'' dates}
 
@@ -258,7 +256,7 @@ like the following:\footnote{The data used as an example here are
 
 Now suppose we want to convert the first column (the ``Date'' field)
 to the epoch day format. Note that its format follows the American
-convention month-day-year, which is only possible to ascertain by
+convention month/day/year, which is only possible to ascertain by
 visually inspecting the \texttt{CSV} file. One way to accomplish the
 task could is provided in Script \ref{ex:earthquakes}.
 
@@ -297,7 +295,7 @@ Output:
 When using dates stored as Unix-style seconds, it is important to
 remember that the number gives you the number of seconds \emph{in the
   UTC time zone}. Following the convention of most programming
-languages (for example, C and Python), the two Gretl functions for
+languages (for example, C and Python), the two gretl functions for
 handling Unix seconds, \cmd{strftime} and \cmd{strptime} work taking
 into account the time zone your computer is set to. So for example the
 number 1234567890 corresponds to ``13-02-2009 23:31:30'' in the UTC
