@@ -46,12 +46,12 @@ for example by using a 3-element vector for year, month and day, or a
 3-column matrix for storing as many dates as desired. If you wish to
 store dates as series in your dataset this approach would lead you to
 use three series, possibly grouping them into a list, as in
-% Allin says: this is clever but insane
 \begin{code}
   nulldata 60
-  series y = 2020
-  series m = time < 32 ? 1 : 2
-  series d = time - (m==2) * 31
+  setobs 7 2020-01-01
+  series y = $obsmajor
+  series m = $obsminor
+  series d = $obsmicro
   list DATE = y m d
 \end{code}
 The example above will generate daily dates for January and February
@@ -64,14 +64,14 @@ various conventions on the ordering of the three components.
 To a human being, this may seem the most natural choice.  The string
 ``26/6/1953'' is pretty much unambiguous. But using this format for
 machine processing can be problematic due to differing conventions
-regarding (a) the separators between day, month and year and (b) the
-order in which the three pieces of information are arranged:
-``2/6/1953'', for example, is not so unambiguous; it will
-``naturally'' be read differently by a European and an American. Such
-ambiguity can be a problem with \texttt{CSV} files found ``in the
-wild'', containing arbitrarily formatted dates. Therefore gretl
-provides fairly comprehensive functionality for converting dates of
-this form into more manageable formats.
+regarding the separators between day, month and year, and also the
+order in which the three pieces of information are arranged.  For
+example, ``2/6/1953'' is not so unambiguous; it will ``naturally'' be
+read differently by a European and an American. Such ambiguity can be
+a problem with \texttt{CSV} files found ``in the wild'', containing
+arbitrarily formatted dates. Therefore gretl provides fairly
+comprehensive functionality for converting dates of this form into
+more manageable formats.
 
 \subsection{The ISO 8601 standard}
 \label{sec:cal-ISO8601}
@@ -88,6 +88,11 @@ representation works similarly except that the date is a string in
 which the items are separated by hyphens, so the same date would be
 represented as ``\texttt{2017-02-19}''.
 
+In several contexts ISO 8601 dates are privileged by gretl: the ISO
+format as taken as the default and you need to supply an additional
+function argument or take extra steps if the representation is
+non-standard.
+
 Using series and/or matrices to store ISO 8601 basic dates is
 perfectly straighforward.
 
@@ -95,12 +100,14 @@ perfectly straighforward.
 \label{sec:cal-epochday}
 
 The third representation is what we call an ``epoch day'': the date is
-stored as an integer, the number of days elapsed since January 1, AD 1
+stored as an integer, the number of days elapsed since January 1, 1 AD
 (that is, the first day of the Common Era), on the proleptic Gregorian
 calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
   indicates that it is extrapolated backwards or forwards relative to
   its period of actual historical use.} For example, 1993-05-26
-corresponds to 727709.
+corresponds to 727709.\footnote{This representation is based on the
+astronomers' ``Julian day'' which is also a count of days since a
+benchmark, namely January 1, 4713 BC.}
 
 This is also the convention used by the \textsf{GLib} library, on
 which gretl depends for most of its calendrical calculation. Since
@@ -108,14 +115,14 @@ which gretl depends for most of its calendrical calculation. Since
 that gretl does not support dates ``BC'', or prior to the Common Era
 (see also Section \ref{sec:cal-conversion}).
 
-This representation has several advantages. Like the ISO 8601 basic
-representation, it lends itself naturally to the representation of
-dates as series. Compared to ISO 8601, it has the disadvantage of not
-being immediately understable by humans, but to compensate for that it
+This representation has several advantages. Like ISO 8601 basic, it
+lends itself naturally to the representation of dates as
+series. Compared to ISO 8601, it has the disadvantage of not being
+immediately understandable by humans, but to compensate for that it
 makes it very easy to find how long a date range is. While ISO 8601
 basic dates can be used for easy comparison (which of two dates, on a
 given calendar, refers to a later day?), with epoch days one can carry
-out fully fledged ``dates arithmetic.''  Epoch days are always
+out fully-fledged ``dates arithmetic.''  Epoch days are always
 consecutive by construction, but 8-digit basic dates are consecutive
 only within a given month; they advance by 101 minus (days in previous
 month) at the start of each month other than January and by 8870 at
@@ -130,23 +137,21 @@ the start of each year.
 % sophisticated tool, that can take Saturdays and Sundays into account
 % (see below).
 
-\subsection{Unix-style seconds}
+\subsection{Unix seconds}
 \label{sec:cal-seconds}
 
 In this representation (which has been the traditional cornerstone of
 date and time handling on Unix-like systems), the date is a scalar
 giving the number of seconds since the start of 1970 according to
-Coordinated Universal Time (UTC, formerly known as Greenwich Mean
-Time or GMT). Therefore, this format is ideal for storing fine-grained
-information, including for example not only the date but the time of
-day as well.
+Coordinated Universal Time (UTC, formerly known as Greenwich Mean Time
+or GMT). This format is therefore ideal for storing fine-grained
+information, including time of day as well as date.
 
-This is not transparent to humans (for example, the number 123456789
-corresponds to Thursday, 29 Nov 1973), but again it lends itself
-naturally to calculations. Note that this representation is hard-wired
-to the UTC time zone. Therefore, it is possible that a given value
-could correspond to a different dates, if evaluated in different time
-zones.
+This representation is not transparent to humans (for example, the
+number 123456789 corresponds to the start of Thursday, 29 Nov 1973),
+but again it lends itself naturally to calculations. Note that since
+it is hard-wired to UTC a given value may correspond to different
+dates if evaluated in different time zones.
 
 \section{Converting between representations}
 \label{sec:cal-conversions}
