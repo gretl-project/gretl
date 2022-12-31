@@ -6,9 +6,11 @@
 
 Any software that aims to handle time-series data must have a good
 built-in calendar. Gretl offers several functions to handle date and
-time information, which are fully documented in the \GCR{}. In order
-to use them effectively, we begin by listing the various possibilities
-for storing a date either as a string or a number.
+time information, which are fully documented in the \GCR{}. To
+facilitate their effective use we begin by listing the various
+possibilities for storing a date either as a string or a number.
+Our primary focus in this chapter is dates as such (year, month and
+day) but we add some discussion of time-of-day where relevant.
 
 \section{Date and time representations}
 \label{sec:cal-representations}
@@ -24,15 +26,15 @@ basic representations we discuss here are:
 \item the epoch day
 \item Unix time (seconds)
 \end{enumerate}
-We first explain what these representations are, then we explain how
+We first explain what these representations are, then explain how
 to convert between them.
 
 \subsection{The three-numbers approach}
 \label{sec:cal-3numbers}
 
-This is probably the most obvious way to encode a date numerically. If
-we are not interested in intra-day information (the time in hours and
-minutes, for example) the date ``May 26th, 1993'' can be stored as
+Since a date (without regard to intra-day detail) basically consists
+of three numbers, it can obviously be encoded in precisely that way.
+For example the date ``May 26th, 1993'' can be stored as
 \begin{code}
   scalar y = 1993
   scalar m = 5
@@ -64,11 +66,12 @@ To a human being, this may seem the most natural choice.  The string
 machine processing can be problematic due to differing conventions
 regarding (a) the separators between day, month and year and (b) the
 order in which the three pieces of information are arranged:
-``2/6/1953'', for example, is not so unambiguous. Such ambiguity can
-be a problem with \texttt{CSV} files found ``in the wild'', containing
-arbitrarily formatted dates. Therefore gretl provides fairly
-comprehensive functionality for converting dates of this form into
-more manageable formats.
+``2/6/1953'', for example, is not so unambiguous; it will
+``naturally'' be read differently by a European and an American. Such
+ambiguity can be a problem with \texttt{CSV} files found ``in the
+wild'', containing arbitrarily formatted dates. Therefore gretl
+provides fairly comprehensive functionality for converting dates of
+this form into more manageable formats.
 
 \subsection{The ISO 8601 standard}
 \label{sec:cal-ISO8601}
@@ -85,8 +88,8 @@ representation works similarly except that the date is a string in
 which the items are separated by hyphens, so the same date would be
 represented as ``\texttt{2017-02-19}''.
 
-Again, using series and/or matrices to store ISO 8601 basic dates is
-trivial.
+Using series and/or matrices to store ISO 8601 basic dates is
+perfectly straighforward.
 
 \subsection{The epoch day}
 \label{sec:cal-epochday}
