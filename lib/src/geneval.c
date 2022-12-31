@@ -8880,6 +8880,10 @@ static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 		} else {
 		    ret->v.str = gretl_strdup("");
 		}
+	    } else if (vmap != NULL && S[vmap[i]] != NULL) {
+		/* a repeated date in series mode */
+		ret->v.xvec[t] = vmap[i] + 1;
+		i++;
 	    } else {
 		bytes = 0;
 		tt = (time_t) floor(tx);
