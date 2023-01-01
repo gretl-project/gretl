@@ -1763,7 +1763,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 
 double win32_mktime (struct tm *tm)
 {
-    double t = (double) mktime(&tm);
+    double t = (double) mktime(tm);
 
     if (t == -1) {
 	GDateTime *gdt;
