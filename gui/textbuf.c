@@ -5037,21 +5037,21 @@ static void set_pane_text_properties (GtkWidget *w2,
 {
     GtkTextView *tv2 = GTK_TEXT_VIEW(w2);
     GtkTextView *tv1 = GTK_TEXT_VIEW(w1);
-    gboolean bool;
+    gboolean s;
 
     gtk_text_view_set_wrap_mode(tv2, 0);
     gtk_text_view_set_left_margin(tv2, 4);
     gtk_text_view_set_right_margin(tv2, 4);
     gtk_widget_modify_font(w2, fixed_font);
 
-    bool = gtk_text_view_get_editable(tv1);
-    gtk_text_view_set_editable(tv2, bool);
-    gtk_text_view_set_cursor_visible(tv2, bool);
+    s = gtk_text_view_get_editable(tv1);
+    gtk_text_view_set_editable(tv2, s);
+    gtk_text_view_set_cursor_visible(tv2, s);
 
     /* sourceview line numbering? */
     if (GTK_IS_SOURCE_VIEW(w2)) {
-	bool = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(w1));
-	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(w2), bool);
+	s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(w1));
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(w2), s);
     }
 }
 
