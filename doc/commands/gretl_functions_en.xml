@@ -12407,6 +12407,24 @@
       </description>
     </function>
 
+    <function name="strfday" section="calendar" output="string">
+      <fnargs>
+	<fnarg type="scalar">epoch_day</fnarg>
+	<fnarg type="string" optional="true">format</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 This function works like <fncref targ="strftime"/>,
+	 converting from a numeric value to a string governed by
+	 <argname>format</argname>, except that the input is an
+	 <quote>epoch day</quote>, for the definition of which see
+	 <fncref targ="epochday"/>.  Since the resolution is daily,
+	 only date-related formats are handled; time-related formats
+	 give undefined results.
+	</para>
+      </description>
+    </function>
+
     <function name="strftime" section="calendar" output="string">
       <fnargs>
 	<fnarg type="scalar">tm</fnarg>

@@ -61,6 +61,7 @@
  <gentext key="bundles"       text="array of bundles"/>
  <gentext key="matrices-or-strings" text="array of matrices or strings"/>
  <gentext key="string-or-strings"  text="string or array of strings"/>
+ <gentext key="string-or-series"  text="string or string-valued series"/>
  <gentext key="strings-or-list"  text="array of strings or list"/>
  <gentext key="series-vec-or-strings"    text="series, vector or strings array"/>
  <gentext key="char"          text="character"/>
