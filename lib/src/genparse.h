@@ -378,6 +378,7 @@ enum {
     F_CCODE,
     F_LSOLVE,
     F_STRFTIME,
+    F_STRFDAY,
     F_STRPTIME,
     F_STRPDAY,
     F_CONV2D,

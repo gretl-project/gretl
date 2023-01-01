@@ -1483,3 +1483,32 @@ int iso_week_from_date (const char *datestr)
 
     return iso_week_number(y, m, d, &err);
 }
+
+/**
+ * gretl_date_strftime:
+ * @s: target string.
+ * @slen: length of target string.
+ * @format: as per strftime().
+ * @epoch_day: days since 1 AD.
+ *
+ * If @epoch_day is found to be valid, writes a string representing
+ * the date of @epoch_day to @s, governed by @format.
+ *
+ * Returns: The number of characters written to @s, or 0 in case
+ * of invalid input.
+ */
+
+int gretl_date_strftime (char *s, int slen, const char *format,
+			 guint32 epoch_day)
+{
+    int ret = 0;
+
+    if (g_date_valid_julian(epoch_day)) {
+	GDate *date = g_date_new_julian(epoch_day);
+
+	ret = (int) g_date_strftime(s, (gsize) slen, format, date);
+	g_date_free(date);
+    }
+
+    return ret;
+}

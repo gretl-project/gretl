@@ -8670,9 +8670,9 @@ static int val_map_search (double needle, const double *haystack,
     }
 }
 
-/* Helper function for strftime() as applied to a series argument.
-   If the (epoch days) input series contains any duplicated values we
-   need a mapping from epoch day to position in an array of unique
+/* Helper function for strftime() as applied to a series argument.  If
+   the numeric input series @x contains any duplicated values we need
+   a mapping from position in @x to position in an array of unique
    values for the purpose of stringifying the output series.
 */
 

@@ -103,4 +103,7 @@ int fill_monthlen_array (double *mlen, int t1, int t2,
 			 const double *yrvec,
 			 int julian);
 
+int gretl_date_strftime (char *s, int slen, const char *format,
+			 guint32 epoch_day);
+
 #endif /* CALENDAR_H */ 

@@ -8814,7 +8814,14 @@ static NODE *ymd_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *strftime_node (NODE *l, NODE *r, parser *p)
+/* strftime_node() implements both strftime() and strfday().
+   In both cases the @l node must hold a scalar or numeric
+   series; for strftime() this is interpreted as a time_t,
+   while for strfday it is interpreted as a GLib "epoch day"
+   or "julian day".
+*/
+
+static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
     const char *fmt = NULL;
@@ -8859,12 +8866,18 @@ static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 	char *dstr;
 	struct tm tm;
 	time_t tt;
+	guint32 ed;
         int bytes;
 	int i = 0;
 
         if (fmt == NULL) {
-            /* default to 'locale-preferred' format */
-            fmt = "%c";
+	    if (f == F_STRFDAY) {
+		/* default to ISO 8601 */
+		fmt = "%Y-%m-%d";
+	    } else {
+		/* default to 'locale-preferred' format */
+		fmt = "%c";
+	    }
         }
 	if (l->t == SERIES) {
 	    t1 = p->dset->t1;
@@ -8886,14 +8899,19 @@ static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 		i++;
 	    } else {
 		bytes = 0;
-		tt = (time_t) floor(tx);
+		if (f == F_STRFDAY) {
+		    ed = (guint32) floor(tx);
+		    bytes = gretl_date_strftime(buf, sizeof buf, fmt, ed);
+		} else {
+		    tt = (time_t) floor(tx);
 #ifdef WIN32
-		bytes = strftime(buf, sizeof buf, fmt, localtime(&tt));
+		    bytes = strftime(buf, sizeof buf, fmt, localtime(&tt));
 #else
-		if (localtime_r(&tt, &tm) != NULL) {
-		    bytes = strftime(buf, sizeof buf, fmt, &tm);
-		}
+		    if (localtime_r(&tt, &tm) != NULL) {
+			bytes = strftime(buf, sizeof buf, fmt, &tm);
+		    }
 #endif
+		}
 		if (bytes > 0) {
 		    dstr = gretl_strdup(g_strchomp(buf));
 		    if (l->t == SERIES) {
@@ -18433,8 +18451,9 @@ static NODE *eval (NODE *t, parser *p)
         ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
+    case F_STRFDAY:
         if (scalar_node(l) || l->t == SERIES) {
-            ret = strftime_node(l, r, p);
+            ret = strftime_node(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }
