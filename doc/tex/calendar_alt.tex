@@ -311,15 +311,13 @@ to. So for example the number 1234567890 corresponds to ``13-02-2009
 would return the string ``14-02-2009'', because at that moment it was
 already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
 
-In order to calculate the offset of the time zone you're in with
-respect with UTC, it is possible to use the \dollar{now} accessor (see
-Section \ref{sec:cal-builtins}) with the special \texttt{\%z} format
-sequence, wich returns a string with the offset in hours and
-minutes. An example on how to use this trick is provided in the
-example script \ref{ex:tzoffset}.
+In order to determine the offset of your time zone with respect with
+UTC, it's sufficient to invoke the \texttt{strptime} function with an
+argument of 19700101 (see Section \ref{sec:cal-builtins}).  An example
+of such usage is given in the script \ref{ex:tzoffset}.
 
 \begin{script}[htbp]
-  \scriptcaption{Controlling for the time zone offset}
+  \scriptcaption{Controlling for the time-zone offset}
   \label{ex:tzoffset}
 \begin{scodebit}
 set verbose off
@@ -330,18 +328,12 @@ scalar s = 1234567890
 string datestring = strftime(s, "%d-%m-%Y %H:%M:%S %Z")
 printf "local date/time: %s\n", datestring
 
-# calculate adjustment as a string
-string offset_string = strftime($now[1], "%z")
-printf "time offset string: %s\n", offset_string
-# convert the offset string to seconds
-scalar off_h = 0
-scalar off_m = 0
-out = sscanf(offset_string, "%3d%2d", &off_h, &off_m)
-scalar offset = 3600 * off_h + 60 * off_m
+# determine local offset relative to UTC
+scalar offset = strptime(19700101)
 printf "offset in seconds: %d\n", offset
 
 # date in UTC
-utc_datestring = strftime(s - offset, "%d-%m-%Y %H:%M:%S")
+utc_datestring = strftime(s + offset, "%d-%m-%Y %H:%M:%S")
 printf "UTC date/time: %s\n", utc_datestring
 \end{scodebit}
 %$  

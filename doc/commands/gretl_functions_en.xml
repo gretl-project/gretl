@@ -12459,14 +12459,6 @@
 	2009 23:31:30 GMT</quote>.
 	</para>
 	<para>
-	  Warning: this function behaves differently on Windows and
-	  Unix-like operating systems for dates prior to January 1,
-	  1970. On unix-like systems (Linux, macOS) negative arguments
-	  can be used to represent such dates, so negative values
-	  result in regular date strings; on Windows, such dates are
-	  not supported and the return value is a null string.
-	</para>
-	<para>
 	  Values of <argname>tm</argname> suitable for use with this
 	  function may be obtained via the <fncref targ="$now"/>
 	  accessor or the <fncref targ="strptime"/> function.
@@ -12627,13 +12619,6 @@
 	  (eg California), the output will be 1234596690.
 	</para>
 	<para>
-	  Warning: this function behaves differently on Windows and
-	  Unix-like operating systems for dates prior to January 1,
-	  1970. On unix-like systems (Linux, macOS) negative offsets
-	  in seconds are returned; on Windows, such dates are not
-	  supported and the return value is NA.
-	</para>
-	<para>
 	  The <argname>format</argname> options may be found by
 	  consulting the <lit>strptime</lit> manual page, on systems
 	  which have such pages, or via one of the many websites which
@@ -12650,7 +12635,7 @@
 	  eval strftime(tm, "%B %d, %Y")
 	</code>
 	<para>
-	  In the US English locale the result is
+	  In the US English locale, on the East Coast, the result is
 	</para>
 	<code>
 	  Thu 07 Feb 2019 12:00:00 AM EST

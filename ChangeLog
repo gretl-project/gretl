@@ -42,6 +42,8 @@ version 2022d, in progress
 - Fix for detection of the R executable when called via a
   foreign block on macOS
 - macOS build: include TargetConditionals.h in libgretl.h
+- MS Windows: work around the limitations of mktime() and
+  localtime() using GLib functionality
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
