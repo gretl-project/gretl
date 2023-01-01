@@ -175,11 +175,10 @@ discuss a few special cases.
 \subsection{Decomposing a series of ``basic'' dates}
 
 To generate from a series of dates in ISO 8601 basic format distinct
-series holding year, month and day, the function \cmd{isoconv} can
-be used. This function should be passed the original series followed
-by ``pointers to'' the series to be filled out. For example, if we
-have a series named \cmd{dates} in the prescribed format we might
-do
+series holding year, month and day, the function \cmd{isoconv} can be
+used. This function should be passed the original series followed by
+``pointers to'' the series to be filled out. For example, if we have a
+series named \texttt{dates} in the prescribed format we might do
 %
 \begin{code}
 series y, m, d
@@ -250,7 +249,7 @@ like the following:\footnote{The data used as an example here are
       \begin{tabular}{lllll}
         Date	& Time	& Latitude	& Longitude                & Magnitude \\
         "01/02/1965"	& "13:44:18"	& 19.246	& 145.616  & 6.0       \\
-        "01/04/1965"	& "11:29:49"	& 1.863	& 127.352          & 5.8       \\
+        "01/04/1965"	& "11:29:49"	& 1.863	        & 127.352  & 5.8       \\
         "01/05/1965"	& "18:05:58"	& -20.579	& -173.972 & 6.2       \\
         "01/08/1965"	& "18:49:43"	& -59.076	& -23.557  & 5.8       \\
         "01/09/1965"	& "13:32:50"	& 11.938	& 126.427  & 5.8       \\
@@ -262,55 +261,52 @@ like the following:\footnote{The data used as an example here are
   \end{small}
 \end{center}
 
-Now suppose we want to convert the first column (the ``Date'' field)
-to the epoch day format. Note that its format follows the American
-convention month/day/year, which is only possible to ascertain by
-visually inspecting the \texttt{CSV} file. One way to accomplish the
-task could is provided in Script \ref{ex:earthquakes}.
+Now suppose we want to convert the column headed ``Date'' to epoch
+days. Note that the date format follows the American convention
+month/day/year, a point which can be ascertained only by visual
+inspection of the \texttt{CSV} file. The simplest way to accomplish
+the task could is shown in Script \ref{ex:earthquakes}, where we
+assume that the data file is named \texttt{earthquakes.csv}. Note that
+the \option{--all-cols} option is needed here, so that gretl treats
+\texttt{Dates} as a string-valued series rather than just a source
+of time-series information.
 
 \begin{script}[htbp]
   \scriptcaption{Converting a string-valued date series to epochday}
   \label{ex:earthquakes}
 \begin{scodebit}
-strings s_dates = strvals(Date, 1)             # Store all the different dates into 
-scalar ndates = nelem(s_dates)                 # a string array and count them
-matrix tmp = zeros(1, ndates)                  # create a temporary matrix
-loop i = 1 .. ndates
-    tmp[i] = strpday(s_dates[i], "%m/%d/%Y")   # fill it with the epochdays (note the format string)
-endloop
-series ed = replace(Date, seq(1, ndates), tmp) # replace the original series with the epoch days
-print Date ed --byobs                          # print out the results
-
+open earthquakes.csv --all-cols
+series ed = strptime(Date, "m/d/y")
+print Date ed --byobs
 \end{scodebit}
   
 Output:
 \begin{outbit}
-                      Date           ed
+          Date           ed
 
-1               01/02/1965       717338
-2               01/04/1965       717340
-3               01/05/1965       717341
-4               01/08/1965       717344
-5               01/09/1965       717345
-6               01/10/1965       717346
-7               01/12/1965       717348
-8               01/15/1965       717351
+1   01/02/1965       717338
+2   01/04/1965       717340
+3   01/05/1965       717341
+4   01/08/1965       717344
+5   01/09/1965       717345
+6   01/10/1965       717346
+7   01/12/1965       717348
+8   01/15/1965       717351
 \end{outbit}
 \end{script}
 
 \subsection{Unix seconds and time zones}
 
 When using dates stored as Unix-style seconds, it is important to
-remember that the number gives you the number of seconds \emph{in the
-  UTC time zone}. Following the convention of most programming
-languages (for example, C and Python), the two gretl functions for
-handling Unix seconds, \cmd{strftime} and \cmd{strptime} work taking
-into account the time zone your computer is set to. So for example the
-number 1234567890 corresponds to ``13-02-2009 23:31:30'' in the UTC
-time zone, but on a computer whose clock is set to CET (Central
-European Time), the call
+remember that the number gives you a count of seconds \emph{relative
+  to UTC}. Following the convention of most programming languages, the
+two gretl functions for handling Unix seconds, \cmd{strftime} and
+\cmd{strptime}, take into account the time zone your computer is set
+to. So for example the number 1234567890 corresponds to ``13-02-2009
+23:31:30'' in UTC, but on a computer whose clock is set to CET
+(Central European Time), the call
 \begin{code}
-  strftime(s, "%d-%m-%Y")
+  strftime(1234567890, "%d-%m-%Y")
 \end{code}
 would return the string ``14-02-2009'', because at that moment it was
 already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
@@ -326,29 +322,36 @@ example script \ref{ex:tzoffset}.
   \scriptcaption{Controlling for the time zone offset}
   \label{ex:tzoffset}
 \begin{scodebit}
+set verbose off
+
 # nearly midnight on 13/2/2009 in London
 scalar s = 1234567890
 # corresponding date WHERE YOU ARE
-string datestring = strftime(s, "%d-%m-%Y")
+string datestring = strftime(s, "%d-%m-%Y %H:%M:%S %Z")
+printf "local date/time: %s\n", datestring
 
 # calculate adjustment as a string
 string offset_string = strftime($now[1], "%z")
+printf "time offset string: %s\n", offset_string
 # convert the offset string to seconds
 scalar off_h = 0
 scalar off_m = 0
 out = sscanf(offset_string, "%3d%2d", &off_h, &off_m)
 scalar offset = 3600 * off_h + 60 * off_m
+printf "offset in seconds: %d\n", offset
 
-# date in the UTC time zone
-adj_datestring = strftime(s - offset, "%d-%m-%Y")
-print datestring adj_datestring
+# date in UTC
+utc_datestring = strftime(s - offset, "%d-%m-%Y %H:%M:%S")
+printf "UTC date/time: %s\n", utc_datestring
 \end{scodebit}
 %$  
-If you run the script above anywhere East of UTC, you should get the
-following output:
+If you run the script in the CET zone you should get the following
+output:
 \begin{outbit}
-14-02-2009
-13-02-2009
+local date/time: 14-02-2009 00:31:30 CET
+time offset string: +0100
+offset in seconds: 3600
+UTC date/time: 13-02-2009 23:31:30
 \end{outbit}
 \end{script}
 
@@ -366,10 +369,10 @@ vector: the first one is in seconds (see Section
 
 Moreover, when a time-series dataset is open, three accessors are
 available to retrieve the dataset dates as series. \dollar{obsmajor}
-normally returns the year and \dollar{obsminor} the inner subdivision
-(eg the month for a monthly dataset). For daily datasets,
-\dollar{obsmicro} is also available for the day. See the \GCR{} for
-more details.
+normally returns the year and \dollar{obsminor} the sub-period, if
+applicable (generally the month or quarter). For daily datasets,
+\dollar{obsmicro} is also available and provides the day. See the
+\GCR{} for more details.
 
 \subsection{Miscellaneous functions}
 \label{sec:cal-misc}
