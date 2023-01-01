@@ -8865,6 +8865,7 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
         char buf[64] = {0};
 	char *dstr;
 	struct tm tm;
+	struct tm *lt;
 	time_t tt;
 	guint32 ed;
         int bytes;
@@ -8903,14 +8904,16 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 		    ed = (guint32) floor(tx);
 		    bytes = gretl_date_strftime(buf, sizeof buf, fmt, ed);
 		} else {
-		    tt = (time_t) floor(tx);
 #ifdef WIN32
-		    bytes = strftime(buf, sizeof buf, fmt, localtime(&tt));
+		    tt = (gint64) floor(tx);
+		    lt = win32_localtime(tt, &tm);
 #else
-		    if (localtime_r(&tt, &tm) != NULL) {
+		    tt = (time_t) floor(tx);
+		    lt = localtime_r(&tt, &tm);
+#endif
+		    if (lt != NULL) {
 			bytes = strftime(buf, sizeof buf, fmt, &tm);
 		    }
-#endif
 		}
 		if (bytes > 0) {
 		    dstr = gretl_strdup(g_strchomp(buf));
@@ -9041,12 +9044,11 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		    *targ = NADBL;
 		}
 	    } else {
-		*targ = (double) mktime(&tm);
+		/* F_STRPTIME */
 #ifdef WIN32
-		/* dates prior to 1970-01-01 not supported */
-		if (*targ == -1) {
-		    *targ = NADBL;
-		}
+		*targ = win32_mktime(&tm);
+#else
+		*targ = (double) mktime(&tm);
 #endif
 	    }
 	}

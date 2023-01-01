@@ -1761,6 +1761,47 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
     return (char *) buf;
 }
 
+double win32_mktime (struct tm *tm)
+{
+    double t = (double) mktime(&tm);
+
+    if (t == -1) {
+	GDateTime *gdt;
+	double sec = tm->tm_sec;
+
+	if (sec >= 60) sec = 59;
+	gdt = g_date_time_new_local(tm->tm_year + 1900,
+				    tm->tm_mon + 1,
+				    tm->tm_mday,
+				    tm->tm_hour,
+				    tm->tm_min,
+				    sec);
+	t = g_date_time_to_unix(gdt);
+	g_date_time_unref(gdt);
+    }
+
+    return t;
+}
+
+struct tm *win32_localtime (gint64 t, struct tm *tm)
+{
+    GDateTime *gdt = g_date_time_new_from_unix_local(t);
+
+    if (gdt == NULL) {
+	return NULL;
+    } else {
+	tm->tm_year = g_date_time_get_year(gdt) - 1900;
+	tm->tm_mon =  g_date_time_get_month(gdt) - 1;
+	tm->tm_mday = g_date_time_get_day_of_month(gdt);
+	tm->tm_hour = g_date_time_get_hour(gdt);
+	tm->tm_min =  g_date_time_get_minute(gdt);
+	tm->tm_sec =  g_date_time_get_second(gdt);
+	tm->tm_isdst = g_date_time_is_daylight_savings(gdt);
+
+	return tm;
+    }
+}
+
 double win32_fscan_nonfinite (FILE *fp, int *err)
 {
     char test[5] = {0};
