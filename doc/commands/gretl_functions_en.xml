@@ -12407,9 +12407,9 @@
       </description>
     </function>
 
-    <function name="strfday" section="calendar" output="string">
+    <function name="strfday" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="scalar">epoch_day</fnarg>
+	<fnarg type="anyfloat">epoch_day</fnarg>
 	<fnarg type="string" optional="true">format</fnarg>
       </fnargs>
       <description>
@@ -12425,22 +12425,27 @@
       </description>
     </function>
 
-    <function name="strftime" section="calendar" output="string">
+    <function name="strftime" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="scalar">tm</fnarg>
+	<fnarg type="anyfloat">tm</fnarg>
 	<fnarg optional="true" type="string">format</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>tm</argname> is taken to give the
-	  number of seconds since the start of the year 1970 according
-	  to UTC (Coordinated Universal Time, once known as Greenwich
-	  Mean Time), and the return value is a string giving the
-	  corresponding date and/or time&mdash;either in a format
-	  specified via the second, optional argument or, by default,
-	  the <quote>preferred date and time representation for the
-	  current locale</quote> as determined by the system C
-	  library.
+	  The argument <argname>tm</argname> is taken to give a count
+	  of seconds since the start of the year 1970 according to UTC
+	  (that is, <quote>Unix time</quote>) and the return value is
+	  a string giving the corresponding date and/or
+	  time&mdash;either in a format specified via the second,
+	  optional argument or, by default, the <quote>preferred date
+	  and time representation for the current locale</quote> as
+	  determined by the system C library.
+	</para>
+	<para>
+	  The specific type of the return value depends on that of
+	  <argname>tm</argname>: if <argname>tm</argname> is a scalar,
+	  vector, or series the output is, respectively, a single
+	  string, an array of strings, or a string-valued series.
 	</para>
 	<para>
 	  Note that the output of this function may have to be
@@ -12452,11 +12457,11 @@
 	  strftime(1234567890, "%d-%m-%Y")
 	</code>
 	<para>
-	will return <quote>14-02-2009</quote>, but if your system is
-	set to UTC or West (for example, the US), the same call will
-	produce <quote>13-02-2009</quote>. This happens because the
-	number 1234567890 actually corresponds to <quote>Fri 13 Feb
-	2009 23:31:30 GMT</quote>.
+	  will return <quote>14-02-2009</quote>, but if your system is
+	  set to UTC or West (for example, the US), the same call will
+	  produce <quote>13-02-2009</quote>. This happens because the
+	  number 1234567890 actually corresponds to <quote>Fri 13 Feb
+	  2009 23:31:30 GMT</quote>.
 	</para>
 	<para>
 	  Values of <argname>tm</argname> suitable for use with this
@@ -12565,9 +12570,9 @@
       </description>
     </function>
 
-    <function name="strpday" section="calendar" output="scalar">
+    <function name="strpday" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">format</fnarg>
       </fnargs>
       <description>
@@ -12581,29 +12586,34 @@
       </description>
     </function>
 
-    <function name="strptime" section="calendar" output="scalar">
+    <function name="strptime" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="int-or-string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">format</fnarg>
       </fnargs>
       <description>
 	<para>
 	 This function is the converse of <fncref targ="strftime"/>;
-	 it parses the date/time string <argname>s</argname> using the
-	 specified <argname>format</argname> and returns a scalar
-	 giving the number of seconds since the start of 1970
-	 according to Coordinated Universal Time (UTC - formerly known
-	 as Greenwich Mean Time).
+	 it parses one or more date/time strings using the specified
+	 <argname>format</argname> and returns the number of seconds
+	 since the start of 1970 according to Coordinated Universal
+	 Time (UTC).  The specific type of the return value depends on
+	 that of <argname>s</argname>: if <argname>s</argname> is a
+	 string, strings array, or string-valued series the output is,
+	 respectively, a scalar, a column vector, or a numeric series.
 	</para>
 	<para>
 	  If <argname>format</argname> is omitted, it defaults to ISO
 	  8601 <quote>extended</quote>, <lit>YYYY-MM-DD</lit> (which
 	  translates to <quote><lit>%Y-%m-%d</lit></quote> as a
-	  strptime format).  Alternatively, the first argument may be
-	  given as an 8-digit integer conforming to the ISO 8601
-	  <quote>basic</quote> date format, <lit>YYYYMMDD</lit> (for
-	  example 20221220). In that case <argname>format</argname>
-	  should be omitted.
+	  strptime format).
+	</para>
+	<para>
+	  As a special case, the first argument may be given as an
+	  8-digit integer conforming to the ISO 8601
+	  <quote>basic</quote> date format, <lit>YYYYMMDD</lit> (or a
+	  vector or series containing such values).  In that case
+	  <argname>format</argname> should be omitted.
 	</para>
 	<para>
 	  Note that the output of this function depends on the time
@@ -12614,9 +12624,9 @@
 	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
 	</code>
 	<para>
-	  will produce 1234567890 on output only if your system is set
-	  on UTC. If, for instance, you're on the Pacific Time Zone
-	  (eg California), the output will be 1234596690.
+	  will produce 1234567890 on output if your system time is set
+	  to UTC but if, for instance, you're in the Central European
+	  time zone the output will be 1234571490.
 	</para>
 	<para>
 	  The <argname>format</argname> options may be found by
