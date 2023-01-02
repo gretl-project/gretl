@@ -1512,3 +1512,65 @@ int gretl_date_strftime (char *s, int slen, const char *format,
 
     return ret;
 }
+
+/**
+ * gretl_strftime:
+ * @s: target string.
+ * @slen: length of target string.
+ * @format: as per strftime() or "localiso" or "utciso", or NULL for "%c".
+ * @t: Unix time as 64-bit integer.
+ *
+ * If @t and @format are found to be valid, writes a string representing
+ * the date and time of @t_day to @s, governed by @format.
+ *
+ * Returns: The number of characters written to @s, or 0 in case
+ * of invalid input.
+ */
+
+int gretl_strftime (char *s, int slen, const char *format,
+		    gint64 t)
+{
+    GDateTime *gdt;
+    int utc = 0;
+    int iso = 0;
+    int ret = 0;
+
+    if (format == NULL) {
+	format = "%c";
+    } else if (!strcmp(format, "utc")) {
+	format = "%c";
+	utc = 1;
+    } else if (!strcmp(format, "utc:8601")) {
+	utc = iso = 1;
+    } else if (!strncmp(format, "utc:", 4)) {
+	format = format + 4;
+	utc = 1;
+    } else if (!strcmp(format, "8601")) {
+	iso = 1;
+    }
+
+    if (utc) {
+	gdt = g_date_time_new_from_unix_utc(t);
+    } else {
+	gdt = g_date_time_new_from_unix_local(t);
+    }
+
+    if (gdt != NULL) {
+	gchar *tmp;
+
+	if (iso) {
+	    tmp = g_date_time_format_iso8601(gdt);
+	} else {
+	    tmp = g_date_time_format(gdt, format);
+	}
+	if (tmp != NULL) {
+	    *s = '\0';
+	    strncat(s, tmp, slen - 1);
+	    ret = strlen(s);
+	    g_free(tmp);
+	}
+	g_date_time_unref(gdt);
+    }
+
+    return ret;
+}

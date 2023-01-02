@@ -8877,26 +8877,19 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
     }
 
     if (!p->err) {
+	char buf[64] = {0};
+	char *dstr;
 	int t, t1 = 0, t2 = 0;
 	double tx;
-        char buf[64] = {0};
-	char *dstr;
-	struct tm tm;
-	struct tm *lt;
-	time_t tt;
+	gint64 tt;
 	guint32 ed;
         int bytes;
 	int i = 0;
 
-        if (fmt == NULL) {
-	    if (f == F_STRFDAY) {
-		/* default to ISO 8601 */
-		fmt = "%Y-%m-%d";
-	    } else {
-		/* default to 'locale-preferred' format */
-		fmt = "%c";
-	    }
-        }
+        if (fmt == NULL && f == F_STRFDAY) {
+	    /* default to ISO 8601 */
+	    fmt = "%Y-%m-%d";
+	}
 	if (l->t == SERIES) {
 	    t1 = p->dset->t1;
 	    t2 = p->dset->t2;
@@ -8923,16 +8916,8 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 		    ed = (guint32) floor(tx);
 		    bytes = gretl_date_strftime(buf, sizeof buf, fmt, ed);
 		} else {
-#ifdef WIN32
 		    tt = (gint64) floor(tx);
-		    lt = win32_localtime(tt, &tm);
-#else
-		    tt = (time_t) floor(tx);
-		    lt = localtime_r(&tt, &tm);
-#endif
-		    if (lt != NULL) {
-			bytes = strftime(buf, sizeof buf, fmt, &tm);
-		    }
+		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt);
 		}
 		if (bytes > 0) {
 		    dstr = gretl_strdup(g_strchomp(buf));
