@@ -695,7 +695,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="$panelpd" section="access" output="int">
       <description>
 	<para>
@@ -714,7 +714,7 @@
 	</para>
       </description>
     </function>
-	
+
     <function name="$parnames" section="access" output="strings">
       <description>
 	<para>
@@ -822,11 +822,11 @@
 	<para>
 	  Provides stored information following certain commands that
 	  do not have specific accessors. The commands in question
-	  include <cmdref targ="bds"/>, <cmdref targ="bkw"/>, 
+	  include <cmdref targ="bds"/>, <cmdref targ="bkw"/>,
 	  <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref targ="leverage"/>,
-	  <cmdref targ="summary"/>, <cmdref targ="vif"/> and <cmdref targ="xtab"/> 
-	  (in which cases the result is a matrix), plus <cmdref targ="pkg"/> 
+	  <cmdref targ="summary"/>, <cmdref targ="vif"/> and <cmdref targ="xtab"/>
+	  (in which cases the result is a matrix), plus <cmdref targ="pkg"/>
 	  (which optionally stores a bundle result).
 	</para>
       </description>
@@ -1338,7 +1338,7 @@
 	<para>
 	  If the last model was a single equation, returns the list of
 	  regressors. If the last model was a system of equations,
-	  returns the <quote>global</quote> list of exogenous 
+	  returns the <quote>global</quote> list of exogenous
 	  variables (in the same order in which they
 	  appear in <fncref targ="$sysB"/>). If the last model was a
 	  VAR, returns the list of exogenous regressors, if any,
@@ -1528,7 +1528,7 @@
 	  of the <math>n</math> series and the count column holds the
 	  number of observations at which each combination is
 	  realized. Note that the count column can always be found at
-	  the position <lit>nelem(byvar) + 1</lit>. 	
+	  the position <lit>nelem(byvar) + 1</lit>.
 	</para>
 	<subhead>Specifying an aggregation function</subhead>
 	<para>
@@ -3087,7 +3087,7 @@
 
 	  1   0   0
 	  0   1   0
-	  0   0   1	  
+	  0   0   1
 	</code>
 	<para>
 	  This function may be particularly useful when
@@ -3104,7 +3104,7 @@
 	  however an arbitrary matrix is accepted.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
@@ -5625,7 +5625,7 @@
 	  <math>i</math>-th row is the Kronecker product of the
 	  corresponding rows of <argname>X</argname> and
 	  <argname>Y</argname>. If <argname>Y</argname> is omitted,
-	  the <quote>shorthand</quote> syntax applies (see below). 
+	  the <quote>shorthand</quote> syntax applies (see below).
 	</para>
 	<para context="tex">
 	  If $X$ is an $r \times k$ matrix, $Y$ is an $r \times m$
@@ -5680,8 +5680,8 @@
 	  produces
 	</para>
 	<code>
-	  1    2    3    4    6    9 
-	  16   20   24   25   30   36 
+	  1    2    3    4    6    9
+	  16   20   24   25   30   36
 	</code>
 	<para context="tex">
 	  Note that the $i$-th row of $C$ is $\mathrm{vech}(a_i
@@ -9106,7 +9106,7 @@
 	  nonzero, the matrix will be split by columns; otherwise, as
 	  per default, by rows.
 	</para>
-	<para> 
+	<para>
 	  The argument <argname>v</argname> can be either a vector or
 	  a scalar.  In the former case, the vector must be of length
 	  equal to the relevant (row or column) dimension of
@@ -9158,12 +9158,12 @@
 	</para>
 	<code>
 	  ? print MM[1]
-	  1   2   3 
-	  4   5   6 
+	  1   2   3
+	  4   5   6
 
 	  ? print MM[2]
-	  7    8    9 
-	  10   11   12 
+	  7    8    9
+	  10   11   12
 	</code>
 	<para>
 	  See <fncref targ="flatten"/> for the inverse operation.
@@ -12432,36 +12432,21 @@
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>tm</argname> is taken to give a count
-	  of seconds since the start of the year 1970 according to UTC
-	  (that is, <quote>Unix time</quote>) and the return value is
-	  a string giving the corresponding date and/or
-	  time&mdash;either in a format specified via the second,
-	  optional argument or, by default, the <quote>preferred date
+	  The argument <argname>tm</argname> is taken to give
+	  <quote>Unix time</quote>, the number of seconds since the
+	  start of the year 1970 according to UTC, and the return
+	  value is a string giving the corresponding date and/or
+	  time&mdash;either in a format specified via the optional
+	  second argument or, by default, the <quote>preferred date
 	  and time representation for the current locale</quote> as
-	  determined by the system C library.
+	  determined by the system C library. See below for more on
+	  the format specification.
 	</para>
 	<para>
-	  The specific type of the return value depends on that of
+	  The specific type returned depends on that of
 	  <argname>tm</argname>: if <argname>tm</argname> is a scalar,
 	  vector, or series the output is, respectively, a single
 	  string, an array of strings, or a string-valued series.
-	</para>
-	<para>
-	  Note that the output of this function may have to be
-	  adjusted for time zones. For example, if the system clock is
-	  set to a time zone East of UTC (for example, Central
-	  Europe), the call
-	</para>
-	<code>
-	  strftime(1234567890, "%d-%m-%Y")
-	</code>
-	<para>
-	  will return <quote>14-02-2009</quote>, but if your system is
-	  set to UTC or West (for example, the US), the same call will
-	  produce <quote>13-02-2009</quote>. This happens because the
-	  number 1234567890 actually corresponds to <quote>Fri 13 Feb
-	  2009 23:31:30 GMT</quote>.
 	</para>
 	<para>
 	  Values of <argname>tm</argname> suitable for use with this
@@ -12469,12 +12454,50 @@
 	  accessor or the <fncref targ="strptime"/> function.
 	</para>
 	<para>
-	  The formatting options may be found by consulting the
-	  <lit>strftime</lit> manual page, on systems which have such
-	  pages, or via one of the many websites which present
-	  relevant information, such as
-	  <url>https://devhints.io/strftime</url>.
+	  Note that while <argname>tm</argname> is taken as relative
+	  to UTC the output of this function is by default
+	  <quote>local</quote>, relative to the time-zone setting on
+	  the host computer. A given <argname>tm</argname> will
+	  therefore show a different time, and perhaps a different
+	  date, in different time zones. But if you want a string
+	  representing UTC rather than local time, gretl can do that;
+	  see below.
 	</para>
+	<subhead>Format options</subhead>
+	<para>
+	  The standard formatting options may be found by consulting
+	  the <lit>strftime</lit> manual page, on systems which have
+	  such pages, or via one of the many websites which present
+	  relevant information, such as
+	  <url>https://devhints.io/strftime</url>. In addition to the
+	  standard formats gretl recognizes a few specials, as
+	  follows.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      If <argname>format</argname> is just
+	      <quote><lit>utc</lit></quote>, date and time are
+	      shown in the <quote>locally preferred</quote> format,
+	      but relative to UTC.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      If <argname>format</argname> is just
+	      <quote><lit>utc:8601</lit></quote>, date and time are
+	      shown as UTC in ISO 8601 format.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      If <argname>format</argname> takes the form of
+	      <quote><lit>utc:XXX</lit></quote> where <lit>XXX</lit>
+	      is a standard <lit>strftime</lit> format string, UTC
+	      time is formatted per <lit>XXX</lit>.
+	    </para>
+	  </li>
+	</ilist>
       </description>
     </function>
 
@@ -12616,17 +12639,17 @@
 	  <argname>format</argname> should be omitted.
 	</para>
 	<para>
-	  Note that the output of this function depends on the time
-	  zone that is set as default on the system you are using: for
-	  example, the call 
+	  Note that the first argument to this function is taken as
+	  relative to the time-zone setting on the host computer. So
+	  for example, the call
 	</para>
 	<code>
 	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
 	</code>
 	<para>
 	  will produce 1234567890 on output if your system time is set
-	  to UTC but if, for instance, you're in the Central European
-	  time zone the output will be 1234571490.
+	  to UTC but if you're in the Central European time zone
+	  (UTC+01:00) the output will be 1234564290.
 	</para>
 	<para>
 	  The <argname>format</argname> options may be found by
@@ -12645,7 +12668,7 @@
 	  eval strftime(tm, "%B %d, %Y")
 	</code>
 	<para>
-	  In the US English locale, on the East Coast, the result is
+	  On the East Coast of the USA the result is
 	</para>
 	<code>
 	  Thu 07 Feb 2019 12:00:00 AM EST
@@ -13152,24 +13175,24 @@
 	<code>
 A (3 x 3)
 
-  3   2   1 
-  2   3   2 
-  1   2   3 
+  3   2   1
+  2   3   2
+  1   2   3
 
 x (3 x 1)
 
-  1 
-  1 
-  1 
+  1
+  1
+  1
 
-     0.25000 
- -3.3307e-17 
-     0.25000 
+     0.25000
+ -3.3307e-17
+     0.25000
 
 8
-     0.25000 
-  2.7756e-17 
-     0.25000 
+     0.25000
+  2.7756e-17
+     0.25000
 
 
 d =  8.0000000
@@ -13419,14 +13442,14 @@ d =  8.0000000
     <code>
       one (2 x 2)
 
-      1   2 
-      2   3 
+      1   2
+      2   3
 
       two (3 x 3)
-      
-      99     1     2 
-       1    99     3 
-       2     3    99 
+
+      99     1     2
+       1    99     3
+       2     3    99
     </code>
     <para>
       <seelist>
@@ -14032,4 +14055,3 @@ d =  8.0000000
 
   </funclist>
 </funcref>
-
