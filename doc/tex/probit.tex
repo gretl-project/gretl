@@ -102,7 +102,14 @@ probit GRADE const GPA TUCE PSI
 
 As an example, we reproduce the results given in chapter 21 of
 \cite{greene00}, where the effectiveness of a program for teaching
-economics is evaluated by the improvements of students' grades.
+economics is evaluated by the improvements of students' grades.  The
+dependent variable, \texttt{GRADE}, equals 1 if a student's grade
+increased over a certain period, 0 otherwise. The independent
+variables are \texttt{PSI} (= 1 if the student participated in the
+program in question, otherwise 0) plus two controls, the student's
+initial Grade Point Average (\texttt{GPA}) and score on an economics
+test (\texttt{TUCE}).
+
 Running the code in Listing~\ref{simple-QR} gives the output reported
 in Table \ref{tab:logit-probit}. Note that for the probit model a
 conditional moment test on skewness and kurtosis \citep*{JBL84} is
@@ -206,6 +213,45 @@ printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{scode}
 \end{script}
+
+\subsection{Odds ratios}
+
+A noteworthy feature of the binary logit model is that the regression
+coefficients have an interpretation as log odds ratios, where the odds
+ratio is $0 < P(y=1)/P(y=0) < \infty$. In the logit example above the
+coefficient on \texttt{TUCE} has a value of 0.095. The corresponding
+odds ratio is then $e^{0.095} = 1.10$, meaning that the estimated
+effect of a unit increase in \texttt{TUCE} is to move the odds ratio
+by 10 percent in favor of \texttt{GRADE} = 1.
+
+When a binary logit model is estimated via the gretl GUI, the
+\textsf{Analysis} menu in the model output window incudes an ``Odds
+ratios'' item. This opens a window showing the odds ratios along with
+standard errors (obtained via the delta method) plus a 95 percent
+confidence interval, as illustrated below.
+%
+\begin{code}
+95% confidence intervals
+z(0.025) = 1.9600
+
+             odds ratio   std. error     low        high
+  ---------------------------------------------------------
+  GPA         16.8797     21.3181      1.42019    200.624
+  TUCE         1.09983     0.155686    0.833365     1.45150
+  PSI         10.7907     11.4874      1.33934     86.9380
+\end{code}
+%
+Note, however, that confidence intervals shown are not calculated
+using the delta-method standard errors; rather, the bounds are
+obtained by exponentiating the bounds of regular confidence intervals
+for the coefficients. This makes sense on the assumption that the
+coefficients themselves are more likely to be normally distributed
+than their exponentials.
+
+Odds ratio information can also be retrieved following binary logit
+estimation via scripting. In this case it takes the form of a matrix,
+provided by the \dollar{oddsratios} accessor or as
+\dollar{model.oddsratios}.
 
 \subsection{The perfect prediction problem}
 \label{sec:perfpred}
