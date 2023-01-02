@@ -8,6 +8,9 @@ version 2022d, in progress
   and make the Equal Spacing method the default
 - "midasreg" command: generate more specific error message
   for invalid specification
+- strptime() and strftime() functions: generalize to allow
+  vectorized usage, and add variants (strpday, strfday) to
+  work with epoch days rather than Unix time
 - pexpand() function: add optional boolean switch to expand
   in the cross-sectional dimension
 - readfile() function: ensure that we construct a legitimate
