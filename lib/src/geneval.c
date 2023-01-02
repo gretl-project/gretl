@@ -8814,11 +8814,21 @@ static NODE *ymd_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-/* strftime_node() implements both strftime() and strfday().
-   In both cases the @l node must hold a scalar or numeric
-   series; for strftime() this is interpreted as a time_t,
-   while for strfday it is interpreted as a GLib "epoch day"
-   or "julian day".
+static NODE *aux_sized_array_node (GretlType type, int n, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL) {
+	ret->v.a = gretl_array_new(type, n, &p->err);
+    }
+
+    return ret;
+}
+
+/* strftime_node() implements both strftime() and strfday().  In both
+   cases the @l node must hold a scalar, vector, or numeric series;
+   for strftime() this is interpreted as a time_t, while for strfday
+   it is interpreted as a GLib "julian day" or "epoch day".
 */
 
 static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
@@ -8831,6 +8841,13 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 
     if (l->t == SERIES) {
 	ret = aux_series_node(p);
+    } else if (l->t == MAT) {
+	nv = gretl_vector_get_length(l->v.m);
+	if (nv == 0) {
+	    p->err = E_INVARG;
+	} else {
+	    ret = aux_sized_array_node(GRETL_TYPE_STRINGS, nv, p);
+	}
     } else {
 	ret = aux_string_node(p);
     }
@@ -8883,15 +8900,17 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 	if (l->t == SERIES) {
 	    t1 = p->dset->t1;
 	    t2 = p->dset->t2;
+	} else if (l->t == MAT) {
+	    t2 = nv - 1;
 	}
 
 	for (t=t1; t<=t2 && !p->err; t++) {
-	    tx = (l->t == SERIES)? l->v.xvec[t] : node_get_scalar(l, p);
+	    tx = (l->t == SERIES)? l->v.xvec[t] : (l->t == MAT)? l->v.m->val[t] :
+		node_get_scalar(l, p);
 	    if (na(tx)) {
 		if (l->t == SERIES) {
 		    ret->v.xvec[t] = NADBL;
-		    continue;
-		} else {
+		} else if (l->t != MAT) {
 		    ret->v.str = gretl_strdup("");
 		}
 	    } else if (vmap != NULL && S[vmap[i]] != NULL) {
@@ -8925,6 +8944,8 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 			    ret->v.xvec[t] = i + 1;
 			    S[i++] = dstr;
 			}
+		    } else if (l->t == MAT) {
+			p->err = gretl_array_set_string(ret->v.a, t, dstr, 0);
 		    } else {
 			ret->v.str = dstr;
 		    }
@@ -8949,7 +8970,11 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* strptime_node() implements both strptime() and strpday() */
+/* strptime_node() implements both strptime() and strpday(). In the
+   primary use case the @l node contains a string, array of
+   strings, or string-valued series. In the secondary case @l
+   contains ISO 8601 "basic" dates (scalar, series or vector).
+*/
 
 static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 {
@@ -8957,21 +8982,36 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
     const char *fmt = NULL;
     const char *src = NULL;
     int str_series = 0;
-    int ymd = -1;
     int v = -1;
+    int n = 0;
 
     if (l->t == SERIES) {
+	/* either string-valued or ISO basic */
 	v = l->vnum;
 	if (is_string_valued(p->dset, v)) {
 	    str_series = 1;
 	}
 	ret = aux_series_node(p);
+    } else if (l->t == ARRAY) {
+	/* must be strings array */
+	if (gretl_array_get_type(l->v.a) != GRETL_TYPE_STRINGS) {
+	    p->err = E_INVARG;
+	} else {
+	    n = gretl_array_get_length(l->v.a);
+	    ret = aux_sized_matrix_node(p, n, 1, 0);
+	}
+    } else if (l->t == MAT) {
+	/* must be ISO basic */
+	n = gretl_vector_get_length(l->v.m);
+	if (n == 0) {
+	    p->err = E_INVARG;
+	} else {
+	    ret = aux_sized_matrix_node(p, n, 1, 0);
+	}
     } else {
+	/* single string or ISO basic */
 	if (l->t == STR) {
 	    src = l->v.str;
-	} else {
-	    /* must be YYYYMMDD */
-	    ymd = node_get_int(l, p);
 	}
 	ret = aux_scalar_node(p);
     }
@@ -8980,7 +9020,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
         return NULL;
     }
 
-    if (src == NULL && !str_series) {
+    if (src == NULL && !str_series && l->t != ARRAY) {
         /* without a string arg we won't accept a format string */
         if (r->t != EMPTY) {
             p->err = E_INVARG;
@@ -9003,26 +9043,50 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 	if (l->t == SERIES) {
 	    t1 = p->dset->t1;
 	    t2 = p->dset->t2;
+	} else if (l->t == ARRAY) {
+	    t2 = gretl_array_get_length(l->v.a) - 1;
+	} else if (l->t == MAT) {
+	    t2 = n - 1;
 	} else {
 	    targ = &ret->v.xval;
 	}
 
 	for (t=t1; t<=t2; t++) {
 	    struct tm tm = {0,0,0,1,0,0,0,0,-1};
+	    double x = NADBL;
 
 	    if (l->t == SERIES) {
 		if (str_series) {
 		    src = series_get_string_for_obs(p->dset, v, t);
 		} else {
-		    ymd = (int) l->v.xvec[t];
+		    x = l->v.xvec[t];
 		}
 		targ = &ret->v.xvec[t];
-	    }
+	    } else if (l->t == ARRAY) {
+		if ((src = gretl_array_get_data(l->v.a, t)) == NULL) {
+		    p->err = E_INVARG;
+		    break;
+		}
+		targ = &ret->v.m->val[t];
+	    } else if (l->t == MAT) {
+		x = l->v.m->val[t];
+		targ = &ret->v.m->val[t];
+	    } else if (l->t == NUM) {
+		x = l->v.xval;
+	    }	    
 
 	    if (src == NULL) {
 		/* has to be ISO 8601 basic */
-		sprintf(buf, "%d", ymd);
-		s = strptime(buf, "%Y%m%d", &tm);
+		if (na(x)) {
+		    *targ = NADBL;
+		    continue;
+		} else if (x < 0 || x != floor(x) || x > 99991231) {
+		    p->err = E_INVARG;
+		    break;
+		} else {
+		    sprintf(buf, "%d", (int) x);
+		    s = strptime(buf, "%Y%m%d", &tm);
+		}
 	    } else {
 		if (fmt == NULL) {
 		    /* default to ISO 8601 extended */
@@ -18454,7 +18518,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_STRFTIME:
     case F_STRFDAY:
-        if (scalar_node(l) || l->t == SERIES) {
+        if (l->t == NUM || l->t == SERIES || l->t == MAT) {
             ret = strftime_node(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
@@ -18462,7 +18526,8 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_STRPTIME:
     case F_STRPDAY:
-        if (l->t == STR || l->t == SERIES || scalar_node(l)) {
+        if (l->t == STR || l->t == SERIES || l->t == ARRAY ||
+	    l->t == MAT || l->t == NUM) {
             ret = strptime_node(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, STR, l, p);
