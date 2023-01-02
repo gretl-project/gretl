@@ -1763,7 +1763,7 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
 
 /* The win32 API does not support time_t values prior to
    1970-01-01. Here we try to work around this via use of
-   GLib functionality (win32_mktime, win32_localtime).
+   GLib functionality.
 */
 
 double win32_mktime (struct tm *tm)
@@ -1786,26 +1786,6 @@ double win32_mktime (struct tm *tm)
     }
 
     return t;
-}
-
-struct tm *win32_localtime (gint64 t, struct tm *tm)
-{
-    GDateTime *gdt = g_date_time_new_from_unix_local(t);
-
-    if (gdt == NULL) {
-	return NULL;
-    } else {
-	tm->tm_year = g_date_time_get_year(gdt) - 1900;
-	tm->tm_mon =  g_date_time_get_month(gdt) - 1;
-	tm->tm_mday = g_date_time_get_day_of_month(gdt);
-	tm->tm_hour = g_date_time_get_hour(gdt);
-	tm->tm_min =  g_date_time_get_minute(gdt);
-	tm->tm_sec =  g_date_time_get_second(gdt);
-	tm->tm_isdst = g_date_time_is_daylight_savings(gdt);
-
-	g_date_time_unref(gdt);
-	return tm;
-    }
 }
 
 double win32_fscan_nonfinite (FILE *fp, int *err)

@@ -91,8 +91,6 @@ char *strptime (const char *buf, const char *format,
 
 double win32_mktime (struct tm *tm);
 
-struct tm *win32_localtime (gint64 t, struct tm *tm);
-
 double win32_fscan_nonfinite (FILE *fp, int *err);
 
 double win32_sscan_nonfinite (const char *s, int *err);
