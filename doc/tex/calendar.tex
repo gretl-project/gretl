@@ -4,13 +4,36 @@
 \section{Introduction}
 \label{sec:cal-intro}
 
-Any software that aims to handle time-series data must have a good
+Any software that aims to handle dates and times must have a good
 built-in calendar. Gretl offers several functions to handle date and
-time information, which are fully documented in the \GCR{}. To
-facilitate their effective use we begin by listing the various
-possibilities for storing a date either as a string or a number.
-Our main focus in this chapter is dates as such (year, month and
-day) but we add some discussion of time-of-day where relevant.
+time information, which are documented in the \GCR{}. To facilitate
+their effective use this chapter lists the various possibilities for
+storing dates and times and discusses ways of converting between
+variant representations.  Our main focus in this chapter is dates as
+such (year, month and day) but we add some discussion of time-of-day
+where relevant.
+
+First of all, however, it may be useful to distinguish two contexts:
+\begin{itemize}
+\item You have a time-series dataset in place, or a panel dataset with
+  a well-defined time dimension.
+\item You have no such dataset in place, or perhaps no dataset at all.
+\end{itemize}
+
+While you can work with dates in the second case, in the first case
+you have extra resources.
+
+You probably know that if you open a dataset that is in fact time
+series but gretl has not immediately recognized that fact, you can
+rectify matters by use of the \cmd{setobs} command, or via the menu
+item \textsf{/Data/Dataset structure} in the gretl GUI. You may also
+know that with a panel dataset you can impose a definite dating and
+frequency in its time dimension (if appropriate)---again, via the
+\cmd{setobs} command but with the \option{panel-time} option.
+
+In what follows we will try to be clear on which points require a
+time-series dataset or well-defined panel-data time, and which are
+independent of such a requirement. [LET'S TRY TO MAKE GOOD ON THIS!]
 
 \section{Date and time representations}
 \label{sec:cal-representations}
@@ -54,38 +77,40 @@ use three series, possibly grouping them into a list, as in
   series d = $obsmicro
   list DATE = y m d
 \end{code}
-The example above will generate daily dates for January and February
-2020. Some \texttt{CSV} files store dates in this sort of format, with
+This example above will generate daily dates for January and February
+2020. Note that use of the \verb|$obsm*| accessors requires a
+time-series dataset, and \dollar{obsmicro} in particular requires
+daily data. Some CSV files store dates in this sort of format, with
 various conventions on the ordering of the three components.
 
 \subsection{Date as string}
 \label{sec:cal-generic-string}
 
 To a human being, this may seem the most natural choice.  The string
-``26/6/1953'' is pretty much unambiguous. But using this format for
+``26/6/1953'' is pretty much unambiguous. But using such a format for
 machine processing can be problematic due to differing conventions
-regarding the separators between day, month and year, and also the
+regarding the separators between day, month and year, as well as the
 order in which the three pieces of information are arranged.  For
-example, ``2/6/1953'' is not unambiguous; it will ``naturally'' be
-read differently by a European and an American. Such ambiguity can be
-a problem with \texttt{CSV} files found ``in the wild'', containing
+example, ``2/6/1953'' is \textit{not} unambiguous: it will
+``naturally'' be read differently by Europeans and Americans. This can
+be a problem with CSV files found ``in the wild'', containing
 arbitrarily formatted dates. Therefore gretl provides fairly
-comprehensive functionality for converting dates of this form into
+comprehensive functionality for converting dates of this sort into
 more manageable formats.
 
 \subsection{The ISO 8601 standard}
 \label{sec:cal-ISO8601}
 
-Among other things, the ISO 8601 standard provides two different
-representations for a date: the ``basic'' representation, which uses
-an 8-digit integer, and the ``extended'' representation, which uses a
+Among other things, the ISO 8601 standard provides two representations
+for a daily date: the ``basic'' representation, which uses an 8-digit
+integer, and the ``extended'' representation, which uses a
 10-character string.
 
-In the basic representation, the first four digits represent the year,
-the middle two the month and the rightmost two the day, so that for
+In the basic version the first four digits represent the year, the
+middle two the month and the rightmost two the day, so that for
 example \texttt{20170219} indicates February 19th, 2017. The extended
-representation works similarly except that the date is a string in
-which the items are separated by hyphens, so the same date would be
+representation is similar except that the date is a string in which
+the items are separated by hyphens, so the same date would be
 represented as ``\texttt{2017-02-19}''.
 
 In several contexts ISO 8601 dates are privileged by gretl: the ISO
@@ -96,52 +121,44 @@ non-standard.
 Using series and/or matrices to store ISO 8601 basic dates is
 perfectly straighforward.
 
-\subsection{The epoch day}
+\subsection{Epoch days}
 \label{sec:cal-epochday}
 
-The third representation is what we call an ``epoch day'': the date is
-stored as an integer, the number of days since January 1, 1 AD
-(that is, the first day of the Common Era), on the proleptic Gregorian
+In gretl an ``epoch day'' is an unsigned 64-bit integer which
+represents a date as the number of days since January 1, 1 AD (that
+is, the first day of the Common Era), on the proleptic Gregorian
 calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
   indicates that it is extrapolated backwards or forwards relative to
   its period of actual historical use.} For example, 1993-05-26
 corresponds to 727709.\footnote{This representation is based on the
-astronomers' ``Julian day'' which is also a count of days since a
-benchmark, namely January 1, 4713 BC.}
+  astronomers' ``Julian day'' which is also a count of days since a
+  benchmark, namely January 1, 4713 BC.}
 
-This is also the convention used by the \textsf{GLib} library, on
-which gretl depends for most of its calendrical calculation. Since
-\textsf{GLib} represents epoch days as unsigned integers, this means
-that gretl does not support dates ``BC'', or prior to the Common Era
-(see also Section \ref{sec:cal-conversion}).
+This is the convention used by the \textsf{GLib} library, on which
+gretl depends for much of its calendrical calculation. Since an epoch
+day is an unsigned integer, neither \textsf{GLib} nor gretl supports
+dates ``BC'', or prior to the Common Era (see also Section
+\ref{sec:cal-conversion}).
 
 This representation has several advantages. Like ISO 8601 basic, it
 lends itself naturally to storing dates as series. Compared to ISO
 8601, it has the disadvantage of not being readily understandable by
 humans, but to compensate for that it makes it very easy to determine
-the length of a range of dates.  ISO basic dates can be used for easy
+the length of a range of dates.  ISO basic dates can be used for
 comparison (which of two dates, on a given calendar, refers to a later
 day?) but with epoch days one can carry out fully-fledged ``dates
 arithmetic.''  Epoch days are always consecutive by construction, but
 8-digit basic dates are consecutive only within a given
 month.\footnote{In fact, they advance by 101 minus (days in previous
   month) at the start of each month other than January, and by 8870 at
-  the start of each year.}
-
-% For example, to find how many days separate 1993-05-26 from
-% 1996-04-12, one could use
-% \begin{code}
-%   scalar dif = epochday(19960412) - epochday(19930526)
-% \end{code}
-% That said, the dedicated function \cmd{dayspan} offers a more
-% sophisticated tool, that can take Saturdays and Sundays into account
-% (see below).
+  the start of each year.} For more on arithmetic with epoch days see
+Section FIXME:REF.
 
 \subsection{Unix seconds}
 \label{sec:cal-seconds}
 
-In this representation (the cornerstone of date and time handling on
-Unix-like systems) time is a scalar: the number of seconds since the
+In this representation---the cornerstone of date and time handling on
+Unix-like systems---time is a scalar: the number of seconds since the
 start of 1970 according to Coordinated Universal Time (UTC, formerly
 known as Greenwich Mean Time or GMT). This format is therefore ideal
 for storing fine-grained information, including time of day as well as
@@ -164,8 +181,8 @@ zones.
   \label{fig:cal-conversions}
 \end{figure}
 
-In order to make the conversion between different representations,
-gretl provides several dedicated functions. In some cases, the
+To support conversion between different representations, gretl
+provides several dedicated functions---although in some cases
 conversion can be carried out by using generic functions. Figure
 \ref{fig:cal-conversions} displays a summary: solid lines represent
 dedicated functions, while dashed lines indicate that no special
@@ -209,7 +226,14 @@ The inverse operation is trivial:
 series dates = 10000 * y + 100 * m + d
 \end{code}
 
-\subsection{Epoch days arithmetic}
+The use of series here means that such operations require that a
+dataset is in place, but although they would most naturally occur in
+the context of a time-series dataset they could equally well occur
+with an undated dataset, since an ISO 8601 basic value is just a
+numeric value (with some restrictions) and such values do not have to
+appear in chronological order.
+
+\subsection{Epoch day arithmetic}
 
 Give the way epoch days are defined, they provide a useful tool for
 checking whether daily data are complete. Suppose we have what purport
@@ -408,7 +432,14 @@ output, using this command in a terminal window:
 TZ="CET-1" gretlcli -b tzones.inp
 \end{code}
 (where we assume the script is saved as \texttt{tzones.inp}). Do
-``\texttt{man tzset}'' for details on what's going on!
+``\texttt{man tzset}'' for details on what's going on.\footnote{We'll
+  add one point here. The \texttt{offset} calculated in the example
+  script, and also the offset indicated by the \texttt{-1} in
+  \texttt{TZ="CET-1"}, represent the time (in seconds or hours,
+  respectively) that must be added to local time to get UTC. However,
+  in the standard representation of time zones---for example, of CET
+  as UTC+1---it's the other way round: UTC is the base and the offset
+  is that which must be added to UTC to get local time.}
 
 \section{Other functions and built-ins}
 \label{sec:cal-otherfuncs}
@@ -434,20 +465,19 @@ applicable (generally the month or quarter). For daily datasets,
 
 Besides conversion, several other calendrical functions are available:
 \begin{description}
-\item[monthlen] given month and year, returns the month length in days
-  (optionally ignoring weekends).
+\item[monthlen] given month and year, returns the length of the month
+  in days (optionally ignoring weekends).
 \item[weekday] given a date as year, month and day (or ISO 8601
-  basic), returns a number between 0 (Sunday) and 6 (Saturday)
+  basic), returns a number from 0 (Sunday) to 6 (Saturday)
   corresponding to the day of the week.
 \item[juldate] given an epoch day, returns the corresponding date on
-  the Julian calendar (see Section \ref{sec:cal-conversion} below) in
-  ISO format.
+  the Julian calendar (see Section \ref{sec:cal-conversion} below).
 \item[dayspan] given two epochdays, calculates their distance,
   optionally taking weekends into account.
-\item[easterday] given the year, returns the date of Easter in the
+\item[easterday] given the year, returns the date of Easter on the
   Gregorian calendar.
 \item[isoweek] given a date as year, month and day, returns the
-  progressive number of the week within that year as per ISO 8601
+  progressive number of the week within that year as per the ISO 8601
   specification.
 \end{description}
 
@@ -467,10 +497,7 @@ centuries.
 Gretl, like most data-oriented software, uses the Gregorian calendar
 by default for all dates, thereby ensuring that dates are all
 consecutive (the latter being a requirement of the ISO 8601 standard
-for dates and times).\footnote{Gretl was not consistent in this regard
-  prior to version 2017a: leap years were taken to be as defined by
-  the Julian calendar prior to the adoption of the Gregorian calendar
-  by Britain and its colonies in 1752.}
+for dates and times).
 
 As readers probably know, the Julian calendar adds a leap day
 (February 29) on each year that is divisible by 4 with no
@@ -682,12 +709,13 @@ Partial output:
 ...
 1751-12-31          365
 \end{outbit}
+\end{script}
 
-\subsection{The \cmd{weekday} and \cmd{monthlen} functions with the
-  Julian calendar}
+\subsection{Day of week and length of month}
+\label{sec:more-julian}
 
 Two of the functions described in Section \ref{sec:cal-misc}, that by
-default operate on the Gregorian calendar can be induced to work on
+default operate on the Gregorian calendar, can be induced to work on
 the Julian by the trick mentioned above, namely giving the negative of
 the year. These are \cmd{weekday} (which takes arguments year, month
 and day) and \cmd{monthlen} (which takes arguments month, year and
@@ -705,5 +733,3 @@ eval monthlen(2,-1900,5)
 gives 21, indicating that there were 21 weekdays in Julian February
 1900.
 
-
-\end{script}
