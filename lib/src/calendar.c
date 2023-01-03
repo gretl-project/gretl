@@ -1485,29 +1485,64 @@ int iso_week_from_date (const char *datestr)
 }
 
 /**
- * gretl_date_strftime:
+ * gretl_strfdate:
  * @s: target string.
  * @slen: length of target string.
  * @format: as per strftime().
- * @epoch_day: days since 1 AD.
+ * @ed: days since 1 CE.
  *
- * If @epoch_day is found to be valid, writes a string representing
- * the date of @epoch_day to @s, governed by @format.
+ * If @ed is found to be valid, writes a string representing
+ * the date of @ed to @s, governed by @format.
  *
  * Returns: The number of characters written to @s, or 0 in case
  * of invalid input.
  */
 
-int gretl_date_strftime (char *s, int slen, const char *format,
-			 guint32 epoch_day)
+int gretl_strfdate (char *s, int slen, const char *format,
+		    guint32 ed)
 {
     int ret = 0;
 
-    if (g_date_valid_julian(epoch_day)) {
-	GDate *date = g_date_new_julian(epoch_day);
+    if (g_date_valid_julian(ed)) {
+	GDate *date = g_date_new_julian(ed);
 
 	ret = (int) g_date_strftime(s, (gsize) slen, format, date);
 	g_date_free(date);
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_alt_strfdate:
+ * @s: target string.
+ * @slen: length of target string.
+ * @ed: days since 1 CE.
+ * @julian: 1 to use Julian calendar, 0 for Gregorian.
+ *
+ * If @ed is found to be valid, writes a string representing
+ * the date of @ed to @s, as ISO 8601 extended.
+ *
+ * Returns: The number of characters written to @s, or 0 in case
+ * of invalid input.
+ */
+
+int gretl_alt_strfdate (char *s, int slen, int julian,
+			guint32 ed)
+{
+    int ret = 0;
+    int y, m, d;
+    int err;
+
+    if (julian) {
+	err = julian_ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    } else {
+	err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    }
+
+    if (!err) {
+	sprintf(s, "%04d-%02d-%02d", y, m, d);
+	ret = 10;
     }
 
     return ret;

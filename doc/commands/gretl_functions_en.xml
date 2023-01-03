@@ -6698,11 +6698,11 @@
 	  the epoch day.
 	</para>
 	<para>
-	  If <argname>ed</argname> is a scalar (only) and the optional
-	  second argument <argname>as-string</argname> is non-zero,
-	  the return value is not numeric but rather a string on the
-	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
-	  <quote>extended</quote> format).
+	  If the optional second argument <argname>as-string</argname>
+	  is non-zero, the return value is not numeric but rather a
+	  string on the pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format), or a string-valued series
+	  if <argname>ed</argname> is a series.
 	</para>
 	<para>
 	  For the inverse function, see <fncref targ="epochday"/>;
@@ -6936,11 +6936,11 @@
 	  calendar date corresponding to the epoch day.
 	</para>
 	<para>
-	  If <argname>ed</argname> is a scalar (only) and the optional
-	  second argument <argname>as-string</argname> is non-zero,
-	  the return value is not numeric but rather a string on the
-	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
-	  <quote>extended</quote> format).
+	  If the optional second argument <argname>as-string</argname>
+	  is non-zero, the return value is not numeric but rather a
+	  string on the pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+	  <quote>extended</quote> format), or a string-valued series
+	  if <argname>ed</argname> is a series.
 	</para>
 	<para>
 	  See also <fncref targ="isodate"/>.

@@ -8686,69 +8686,6 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = NULL;
-
-    if (!scalar_node(l) && l->t != SERIES) {
-        node_type_error(f, 1, NUM, l, p);
-    } else if (!null_or_scalar(r)) {
-        node_type_error(f, 2, NUM, r, p);
-    }
-
-    if (!p->err) {
-        int julian = (f == F_JULDATE);
-
-        if (scalar_node(l)) {
-            /* epoch day node is scalar */
-            int as_string = scalar_node(r)? node_get_int(r, p) : 0;
-
-            if (!p->err) {
-                ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
-            }
-            if (ret != NULL) {
-                double x = node_get_scalar(l, p);
-
-                if (!as_string && na(x)) {
-                    ret->v.xval = NADBL;
-                } else if (x >= 1 && x <= UINT_MAX) {
-                    if (as_string) {
-                        ret->v.str = ymd_extended_from_epoch_day((guint32) x,
-                                                                 julian, &p->err);
-                    } else {
-                        ret->v.xval = ymd_basic_from_epoch_day((guint32) x,
-                                                               julian, &p->err);
-                    }
-                } else {
-                    p->err = E_INVARG;
-                }
-            }
-        } else {
-            /* epoch day node is series */
-            ret = aux_series_node(p);
-            if (ret != NULL) {
-                double xt;
-                int t;
-
-                for (t=p->dset->t1; t<=p->dset->t2; t++) {
-                    xt = l->v.xvec[t];
-                    if (na(xt)) {
-                        ret->v.xvec[t] = NADBL;
-                    } else if (xt >= 1 && xt <= UINT_MAX) {
-                        ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
-                                                                  julian, &p->err);
-                    } else {
-                        p->err = E_INVARG;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    return ret;
-}
-
 static NODE *ymd_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -8829,9 +8766,13 @@ static NODE *aux_sized_array_node (GretlType type, int n, parser *p)
    cases the @l node must hold a scalar, vector, or numeric series;
    for strftime() this is interpreted as a time_t, while for strfday
    it is interpreted as a GLib "julian day" or "epoch day".
+
+   isodate() also piggy-backs here when a string-valued series is
+   wanted on return.
 */
 
-static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
+static NODE *strftime_node (NODE *l, NODE *r, int f,
+			    int julian, parser *p)
 {
     NODE *ret = NULL;
     const char *fmt = NULL;
@@ -8856,11 +8797,13 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
         return NULL;
     }
 
-    /* if @r isn't empty it should hold a format string */
-    if (r->t == STR) {
-        fmt = r->v.str;
-    } else if (r->t != EMPTY) {
-        p->err = E_TYPES;
+    /* if @r isn't null or empty it should hold a format string */
+    if (r != NULL) {
+	if (r->t == STR) {
+	    fmt = r->v.str;
+	} else if (r->t != EMPTY) {
+	    p->err = E_TYPES;
+	}
     }
 
     if (l->t == SERIES) {
@@ -8886,7 +8829,7 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
         int bytes;
 	int i = 0;
 
-        if (fmt == NULL && f == F_STRFDAY) {
+        if (fmt == NULL && (f == F_STRFDAY || f == F_ISODATE)) {
 	    /* default to ISO 8601 */
 	    fmt = "%Y-%m-%d";
 	}
@@ -8914,7 +8857,10 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 		bytes = 0;
 		if (f == F_STRFDAY) {
 		    ed = (guint32) floor(tx);
-		    bytes = gretl_date_strftime(buf, sizeof buf, fmt, ed);
+		    bytes = gretl_strfdate(buf, sizeof buf, fmt, ed);
+		} else if (f == F_ISODATE) {
+		    ed = (guint32) floor(tx);
+		    bytes = gretl_alt_strfdate(buf, sizeof buf, julian, ed);
 		} else {
 		    tt = (gint64) floor(tx);
 		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt);
@@ -8950,6 +8896,65 @@ static NODE *strftime_node (NODE *l, NODE *r, int f, parser *p)
 	    prepare_stringvec_return(ret, p, S, nv, 1);
 	}
 	free(vmap);
+    }
+
+    return ret;
+}
+
+static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
+{
+    int julian = (f == F_JULDATE);
+    int as_string = 0;
+    NODE *ret = NULL;
+
+    if (!scalar_node(l) && l->t != SERIES) {
+        node_type_error(f, 1, NUM, l, p);
+    } else {
+	as_string = node_get_bool(r, p, 0);
+    }
+
+    if (p->err) {
+	return NULL;
+    } else if (l->t == SERIES && as_string) {
+	return strftime_node(l, NULL, F_ISODATE, julian, p);
+    }
+
+    if (scalar_node(l)) {
+	ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
+    } else {
+	ret = aux_series_node(p);
+    }
+
+    if (ret != NULL && scalar_node(l)) {
+	double x = node_get_scalar(l, p);
+
+	if (!as_string && na(x)) {
+	    ret->v.xval = NADBL;
+	} else if (x < 1 || x > UINT_MAX) {
+	    p->err = E_INVARG;
+	} else if (as_string) {
+	    ret->v.str = ymd_extended_from_epoch_day((guint32) x,
+						     julian, &p->err);
+	} else {
+	    ret->v.xval = ymd_basic_from_epoch_day((guint32) x,
+						   julian, &p->err);
+	}
+    } else if (ret != NULL) {
+	double xt;
+	int t;
+
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	    xt = l->v.xvec[t];
+	    if (na(xt)) {
+		ret->v.xvec[t] = NADBL;
+	    } else if (xt >= 1 && xt <= UINT_MAX) {
+		ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
+							  julian, &p->err);
+	    } else {
+		p->err = E_INVARG;
+		break;
+	    }
+	}
     }
 
     return ret;
@@ -9058,7 +9063,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		targ = &ret->v.m->val[t];
 	    } else if (l->t == NUM) {
 		x = l->v.xval;
-	    }	    
+	    }
 
 	    if (src == NULL) {
 		/* has to be ISO 8601 basic */
@@ -18504,7 +18509,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRFTIME:
     case F_STRFDAY:
         if (l->t == NUM || l->t == SERIES || l->t == MAT) {
-            ret = strftime_node(l, r, t->t, p);
+            ret = strftime_node(l, r, t->t, 0, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }
