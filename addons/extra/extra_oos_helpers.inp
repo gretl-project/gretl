@@ -164,6 +164,9 @@ end function
 
 # private function
 function matrices get_past_future_from_system(const bundle sys)
+    /* Return the initial values of the endogenous and the future
+        (out-of-sample) values of both the endogenous and exogenous. */
+
     errorif(!inbundle(sys, "neqns"), "var/vecm or system bundle expected")
     matrix init_Y, future_Y, future_X
       

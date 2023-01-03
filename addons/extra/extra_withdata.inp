@@ -153,9 +153,9 @@ function bundle add_outofsample(const bundle modorsys)
     # Adds the following three matrix elements to the input bundle
     #   and returns the resulting enlarged bundle:
     # initY: initial values of the endogenous variables
-    #    (empty 0x0 if no endogenous lags in model or system)
-    # futureY: future (post-sample) values of the endog. if they exist,
-    #   else empty 0x0
+    #   (empty 0x0 if no endogenous lags in model or system)
+    # futureY: future (post-sample) values of the endogeneous if they
+    #   exist, else empty 0x0
     # futureX: future (post-sample) values of the exogenous if they exist,
     #   else empty 0x0
     # 

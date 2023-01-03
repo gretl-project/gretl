@@ -152,7 +152,7 @@ function void test_add_outofsample_var (const list L)
 
   smpl ; -2
 
-  var plag Endo; Exo -q
+  var plag Endo; Exo --silent
 
   matrix initY_expected = vec( {11.63255, 5.903658} | {11.604, 5.873820} )
   strings dates_initY_expected = defarray("1974:1", "1974:2")
@@ -172,7 +172,7 @@ function void test_add_outofsample_var (const list L)
   matrix futureY_actual = vec( model.futureY )
   strings dates_futureY_actual = rnameget(futureY_actual)
 
-  # TODO: Is it right that "futureX" does not include the "const"?
+  # Gretl does not consider any deterministics in $system.xlist
   matrix futureX_actual = vec( model.futureX )
   strings dates_futureX_actual = rnameget(futureX_actual)
 
