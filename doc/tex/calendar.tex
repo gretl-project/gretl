@@ -117,15 +117,16 @@ that gretl does not support dates ``BC'', or prior to the Common Era
 
 This representation has several advantages. Like ISO 8601 basic, it
 lends itself naturally to storing dates as series. Compared to ISO
-8601, it has the disadvantage of not being immediately understandable
-by humans, but to compensate for that it makes it very easy to find
-how long a date range is. While ISO 8601 basic dates can be used for
-easy comparison (which of two dates, on a given calendar, refers to a
-later day?), with epoch days one can carry out fully-fledged ``dates
+8601, it has the disadvantage of not being readily understandable by
+humans, but to compensate for that it makes it very easy to determine
+the length of a range of dates.  ISO basic dates can be used for easy
+comparison (which of two dates, on a given calendar, refers to a later
+day?) but with epoch days one can carry out fully-fledged ``dates
 arithmetic.''  Epoch days are always consecutive by construction, but
-8-digit basic dates are consecutive only within a given month; they
-advance by 101 minus (days in previous month) at the start of each
-month other than January and by 8870 at the start of each year.
+8-digit basic dates are consecutive only within a given
+month.\footnote{In fact, they advance by 101 minus (days in previous
+  month) at the start of each month other than January, and by 8870 at
+  the start of each year.}
 
 % For example, to find how many days separate 1993-05-26 from
 % 1996-04-12, one could use
@@ -140,15 +141,15 @@ month other than January and by 8870 at the start of each year.
 \label{sec:cal-seconds}
 
 In this representation (the cornerstone of date and time handling on
-Unix-like systems), time is a scalar: the number of seconds since the
+Unix-like systems) time is a scalar: the number of seconds since the
 start of 1970 according to Coordinated Universal Time (UTC, formerly
 known as Greenwich Mean Time or GMT). This format is therefore ideal
 for storing fine-grained information, including time of day as well as
 date.
 
 This representation is not transparent to humans (for example, the
-number 123456789 corresponds to the start of Thursday, 29 Nov 1973),
-but again it lends itself naturally to calculations. Note that since
+number 123456789 corresponds to the start of Thursday, 29 Nov 1973)
+but again it lends itself naturally to calculation. Note that since
 it is hard-wired to UTC a given value will correspond to different
 times, and possibly different dates, if evaluated in different time
 zones.
@@ -235,35 +236,51 @@ n = dayspan(ed1, ed2, 5)
 %
 We discover that there were \texttt{n} = 522 weekdays in this period.
 
+\subsection{Strings to numeric and vice versa}
 
-FIXME formatting, placement and discussion of the following table.
+The primary means of converting between string and numeric
+representations of dates and times is provided by two pairs of
+functions, \texttt{strptime}/\texttt{strftime} and
+\texttt{strpday}/\texttt{strfday}. The first of each pair takes string
+input and outputs a numeric value, and the second performs the inverse
+operation, as shown in Table~\ref{tab:timeconv}. With the first pair,
+the numeric value is Unix seconds; with the second it's an epoch day.
+The numeric values are always relative to UTC, and the string values
+are (by default, at least) always relative to local time.
 
 \begin{table}[htbp]
   \centering
   \begin{tabular}{lll}
-    \textit{function} &
-      \multicolumn{1}{c}{\textit{input}} &
-        \multicolumn{1}{c}{\textit{output}} \\[6pt]
-    \texttt{strptime} & date/time string + format & Unix seconds (UTC) \\
-    \texttt{strftime} & Unix seconds + format & date/time string (local) \\[4pt]
-    \texttt{strpday}  & date string + format & epoch day (UTC) \\
-    \texttt{strfday}  & epoch day + format & date string (local)
+    \textit{function} & \textit{input} & \textit{output} \\[6pt]
+    \texttt{strptime} & date/time string + format & Unix seconds \\
+    \texttt{strftime} & Unix seconds + format & date/time string \\[4pt]
+    \texttt{strpday}  & date string + format & epoch day \\
+    \texttt{strfday}  & epoch day + format & date string
   \end{tabular}
-  \caption{String $\leftrightarrow$ numeric date/time conversions}
+  \caption{String $\longleftrightarrow$ numeric date/time conversions}
   \label{tab:timeconv}
 \end{table}
 
+Before moving on, let's be clear on what we mean by ``local time''.
+Generically, this is time according to the local time zone (with or
+without a ``Daylight saving'' or ``Summer'' adjustment depending on
+the time of year). In a computing context we have to be more specific:
+the ``local'' time zone is whatever is set as such via the operating
+system (and possibly adjusted via an environment variable) on the host
+computer. It will usually be the same as the geographically local zone
+but there's nothing to stop a user making a different setting.
+
 \subsection{Dates as string-valued series}
 
-It often happens that \texttt{CSV} files contain date information
-stored as strings. Take for example a file containing earthquake data
-like the following:\footnote{The data used as an example here are
-  taken from a larger dataset available at
+It often happens that CSV files contain date information stored as
+strings. Take for example a file containing earthquake data like the
+following:\footnote{The data used as an example here are taken from a
+  larger dataset available at
   \url{https://www.kaggle.com/datasets/usgs/earthquake-database}.}
 
 \begin{center}
   \begin{small}
-%    \begin{texttt}
+    \texttt{%
       \begin{tabular}{lllll}
         Date	& Time	& Latitude	& Longitude                & Magnitude \\
         "01/02/1965"	& "13:44:18"	& 19.246	& 145.616  & 6.0       \\
@@ -275,74 +292,75 @@ like the following:\footnote{The data used as an example here are
         "01/12/1965"	& "13:32:25"	& 27.357	& 87.867   & 5.9       \\
         "01/15/1965"	& "23:17:42"	& -13.309	& 166.212  & 6.0       
       \end{tabular}
-%    \end{texttt}
+    }
   \end{small}
 \end{center}
 
-Now suppose we want to convert the column headed ``Date'' to epoch
+Suppose we want to convert the column headed ``Date'' to epoch
 days. Note that the date format follows the American convention
 month/day/year, a point which can be ascertained only by visual
-inspection of the \texttt{CSV} file. The simplest way to accomplish
-the task could is shown in Script \ref{ex:earthquakes}, where we
-assume that the data file is named \texttt{earthquakes.csv}. Note that
-the \option{--all-cols} option is needed here, so that gretl treats
-\texttt{Dates} as a string-valued series rather than just a source
-of time-series information.
+inspection of the file's content. The simplest way to accomplish the
+task is shown in Script~\ref{ex:earthquakes}, where we assume that the
+data file is named \texttt{earthquakes.csv}. Note that the
+\option{all-cols} option is wanted here, so that gretl treats
+\texttt{Dates} as a string-valued series rather than just a source of
+time-series information. For good measure we show how to add an ISO
+8601 string dates series.
 
 \begin{script}[htbp]
   \scriptcaption{Converting a string-valued date series to epoch day}
   \label{ex:earthquakes}
 \begin{scodebit}
 open earthquakes.csv --all-cols
-series ed = strpday(Date, "m/d/y")
-print Date ed --byobs
+series eday = strpday(Date, "%m/%d/%Y")
+series isodates = strfday(eday, "%Y-%m-%d")
+print Date eday isodates -o
 \end{scodebit}
   
 Output:
 \begin{outbit}
-          Date           ed
+          Date         eday     isodates
 
-1   01/02/1965       717338
-2   01/04/1965       717340
-3   01/05/1965       717341
-4   01/08/1965       717344
-5   01/09/1965       717345
-6   01/10/1965       717346
-7   01/12/1965       717348
-8   01/15/1965       717351
+1   01/02/1965       717338   1965-01-02
+2   01/04/1965       717340   1965-01-04
+3   01/05/1965       717341   1965-01-05
+4   01/08/1965       717344   1965-01-08
+5   01/09/1965       717345   1965-01-09
+6   01/10/1965       717346   1965-01-10
+7   01/12/1965       717348   1965-01-12
+8   01/15/1965       717351   1965-01-15
 \end{outbit}
 \end{script}
 
 \subsection{Unix seconds and time zones}
 
-When using dates stored as Unix seconds, it is important to
-remember that the number gives you a count of seconds \emph{relative
-  to UTC}. Following the convention of most programming languages, the
-two gretl functions for handling Unix seconds, \cmd{strftime} and
-\cmd{strptime}, take into account the time zone your computer is set
-to. So for example the number 1234567890 corresponds to ``13-02-2009
-23:31:30'' in UTC, but on a computer whose clock is set to CET
-(Central European Time), the call
+As mentioned above, date/time information stored in the form of Unix
+seconds is always relative to UTC, while the string representations
+associated with the \texttt{strp*} functions (as input) and the
+\texttt{strf*} functions (as output) are relative to local time. So
+for example a Unix seconds value of 1234567890 corresponds to
+``13-02-2009 23:31:30'' in UTC, but on a computer whose clock is set
+to Central European Time (CET) the call
 \begin{code}
   strftime(1234567890, "%d-%m-%Y")
 \end{code}
-would return the string ``14-02-2009'', because at that moment it was
+will return the string ``14-02-2009'', because at that moment it was
 already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
 
-In order to determine the offset of your time zone with respect with
-UTC, it's sufficient to invoke the \texttt{strptime} function with an
-argument of 19700101 (see Section \ref{sec:cal-builtins}).  An example
-of such usage is given in the script \ref{ex:tzoffset}.
+If you wish to determine the offset of your time zone with respect
+with UTC, it's sufficient to invoke the \texttt{strptime} function
+with an argument of 19700101 (see Section \ref{sec:cal-builtins}).  An
+example of such usage is given in the script~\ref{ex:tzoffset}.
 
 \begin{script}[htbp]
-  \scriptcaption{Controlling for the time-zone offset}
+  \scriptcaption{Exploring the time-zone offset}
   \label{ex:tzoffset}
 \begin{scodebit}
 set verbose off
 
 # nearly midnight on 13/2/2009 in London
 scalar s = 1234567890
-# corresponding date WHERE YOU ARE
+# corresponding date according to your time zone
 string datestring = strftime(s, "%d-%m-%Y %H:%M:%S %Z")
 printf "local date/time: %s\n", datestring
 
@@ -354,15 +372,43 @@ printf "offset in seconds: %d\n", offset
 utc_datestring = strftime(s + offset, "%d-%m-%Y %H:%M:%S")
 printf "UTC date/time: %s\n", utc_datestring
 \end{scodebit}
-%$  
+%
 If you run the script in the CET zone you should get the following
 output:
 \begin{outbit}
 local date/time: 14-02-2009 00:31:30 CET
-offset in seconds: 3600
+offset in seconds: -3600
 UTC date/time: 13-02-2009 23:31:30
 \end{outbit}
 \end{script}
+
+A few points are worth noting in relation to
+script~\ref{ex:tzoffset}. First, the idiom
+\begin{code}
+scalar offset = strptime(19700101)
+\end{code}
+is special gretl shorthand (giving an ISO 8601 basic date in place of
+the usual date-string plus format, with the format left implicit). A more
+standard way of doing the same thing, also acceptable in gretl, would
+be
+\begin{code}
+scalar offset = strptime("1970-01-01", "%Y-%m-%d")
+\end{code}
+Second, looking up the offset is not really required to obtain the
+corresponding UTC date/time, thanks to another gretl special: if you
+prepend ``\texttt{utc:}'' to the format string, as in
+\begin{code}
+utc_datestring = strftime(s, "utc:%d-%m-%Y %H:%M:%S")
+\end{code}
+you'll get UTC output. Finally, readers whose operating system
+supports the \texttt{TZ} environment variable (such as Linux or macOS)
+but who are not in the CET zone might like to verify the script's CET
+output, using this command in a terminal window:
+\begin{code}
+TZ="CET-1" gretlcli -b tzones.inp
+\end{code}
+(where we assume the script is saved as \texttt{tzones.inp}). Do
+``\texttt{man tzset}'' for details on what's going on!
 
 \section{Other functions and built-ins}
 \label{sec:cal-otherfuncs}
@@ -389,17 +435,18 @@ applicable (generally the month or quarter). For daily datasets,
 Besides conversion, several other calendrical functions are available:
 \begin{description}
 \item[monthlen] given month and year, returns the month length in days
-  (optionally ignoring weekends)
+  (optionally ignoring weekends).
 \item[weekday] given a date as year, month and day (or ISO 8601
-  basic), returns a number between 0 and 7 corresponding to the weekday
-  (0 is Sunday)
-\item[juldate] given an epochday, returns the corresponding Julian
-  date (see Section \ref{sec:cal-conversion} below) in ISO format
-\item[dayspan] given two epochdays, calculate their distance,
+  basic), returns a number between 0 (Sunday) and 6 (Saturday)
+  corresponding to the day of the week.
+\item[juldate] given an epoch day, returns the corresponding date on
+  the Julian calendar (see Section \ref{sec:cal-conversion} below) in
+  ISO format.
+\item[dayspan] given two epochdays, calculates their distance,
   optionally taking weekends into account.
-\item[easterday] given the year, return the date of Easter in the
+\item[easterday] given the year, returns the date of Easter in the
   Gregorian calendar.
-\item[isoweek] given a date as year, month and day, return the
+\item[isoweek] given a date as year, month and day, returns the
   progressive number of the week within that year as per ISO 8601
   specification.
 \end{description}
@@ -409,7 +456,7 @@ Besides conversion, several other calendrical functions are available:
 \label{sec:cal-conversion}
 
 Working with dates is fairly straightforward in the current era, with
-the Gregorian calendar now used universally for the dating of
+the Gregorian calendar used universally for the dating of
 socioeconomic observations. It is not so straightforward, however,
 when dealing with historical data recorded prior to the adoption of
 the Gregorian calendar in place of the Julian, an event which first
@@ -463,7 +510,7 @@ data whose dates are given on the Julian at source.
 
 In order to represent Julian dates, Gretl uses two basic tools: one is
 the \cmd{juldate} function, which conversts a Gregorian epochday into
-an ISO8601-like integer and the convention that for some function,
+an ISO8601-like integer and the convention that for some functions,
 a negative value where a year is expected acts as a ``Julian calendar
 flag''.
 
