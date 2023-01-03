@@ -9,7 +9,7 @@ built-in calendar. Gretl offers several functions to handle date and
 time information, which are fully documented in the \GCR{}. To
 facilitate their effective use we begin by listing the various
 possibilities for storing a date either as a string or a number.
-Our primary focus in this chapter is dates as such (year, month and
+Our main focus in this chapter is dates as such (year, month and
 day) but we add some discussion of time-of-day where relevant.
 
 \section{Date and time representations}
@@ -66,7 +66,7 @@ To a human being, this may seem the most natural choice.  The string
 machine processing can be problematic due to differing conventions
 regarding the separators between day, month and year, and also the
 order in which the three pieces of information are arranged.  For
-example, ``2/6/1953'' is not so unambiguous; it will ``naturally'' be
+example, ``2/6/1953'' is not unambiguous; it will ``naturally'' be
 read differently by a European and an American. Such ambiguity can be
 a problem with \texttt{CSV} files found ``in the wild'', containing
 arbitrarily formatted dates. Therefore gretl provides fairly
@@ -100,7 +100,7 @@ perfectly straighforward.
 \label{sec:cal-epochday}
 
 The third representation is what we call an ``epoch day'': the date is
-stored as an integer, the number of days elapsed since January 1, 1 AD
+stored as an integer, the number of days since January 1, 1 AD
 (that is, the first day of the Common Era), on the proleptic Gregorian
 calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
   indicates that it is extrapolated backwards or forwards relative to
@@ -116,17 +116,16 @@ that gretl does not support dates ``BC'', or prior to the Common Era
 (see also Section \ref{sec:cal-conversion}).
 
 This representation has several advantages. Like ISO 8601 basic, it
-lends itself naturally to the representation of dates as
-series. Compared to ISO 8601, it has the disadvantage of not being
-immediately understandable by humans, but to compensate for that it
-makes it very easy to find how long a date range is. While ISO 8601
-basic dates can be used for easy comparison (which of two dates, on a
-given calendar, refers to a later day?), with epoch days one can carry
-out fully-fledged ``dates arithmetic.''  Epoch days are always
-consecutive by construction, but 8-digit basic dates are consecutive
-only within a given month; they advance by 101 minus (days in previous
-month) at the start of each month other than January and by 8870 at
-the start of each year.
+lends itself naturally to storing dates as series. Compared to ISO
+8601, it has the disadvantage of not being immediately understandable
+by humans, but to compensate for that it makes it very easy to find
+how long a date range is. While ISO 8601 basic dates can be used for
+easy comparison (which of two dates, on a given calendar, refers to a
+later day?), with epoch days one can carry out fully-fledged ``dates
+arithmetic.''  Epoch days are always consecutive by construction, but
+8-digit basic dates are consecutive only within a given month; they
+advance by 101 minus (days in previous month) at the start of each
+month other than January and by 8870 at the start of each year.
 
 % For example, to find how many days separate 1993-05-26 from
 % 1996-04-12, one could use
@@ -140,18 +139,19 @@ the start of each year.
 \subsection{Unix seconds}
 \label{sec:cal-seconds}
 
-In this representation (which has been the traditional cornerstone of
-date and time handling on Unix-like systems), the date is a scalar
-giving the number of seconds since the start of 1970 according to
-Coordinated Universal Time (UTC, formerly known as Greenwich Mean Time
-or GMT). This format is therefore ideal for storing fine-grained
-information, including time of day as well as date.
+In this representation (the cornerstone of date and time handling on
+Unix-like systems), time is a scalar: the number of seconds since the
+start of 1970 according to Coordinated Universal Time (UTC, formerly
+known as Greenwich Mean Time or GMT). This format is therefore ideal
+for storing fine-grained information, including time of day as well as
+date.
 
 This representation is not transparent to humans (for example, the
 number 123456789 corresponds to the start of Thursday, 29 Nov 1973),
 but again it lends itself naturally to calculations. Note that since
-it is hard-wired to UTC a given value may correspond to different
-dates if evaluated in different time zones.
+it is hard-wired to UTC a given value will correspond to different
+times, and possibly different dates, if evaluated in different time
+zones.
 
 \section{Converting between representations}
 \label{sec:cal-conversions}
@@ -169,8 +169,8 @@ conversion can be carried out by using generic functions. Figure
 \ref{fig:cal-conversions} displays a summary: solid lines represent
 dedicated functions, while dashed lines indicate that no special
 function is needed. For a full description of the functions depicted
-in the figure, see the \GCR. In the rest of this section, we will
-discuss a few special cases.
+in the figure, see the \GCR. In the rest of this section we discuss a
+few special cases.
 
 \subsection{Decomposing a series of ``basic'' dates}
 
@@ -297,7 +297,7 @@ Output:
 
 \subsection{Unix seconds and time zones}
 
-When using dates stored as Unix-style seconds, it is important to
+When using dates stored as Unix seconds, it is important to
 remember that the number gives you a count of seconds \emph{relative
   to UTC}. Following the convention of most programming languages, the
 two gretl functions for handling Unix seconds, \cmd{strftime} and
@@ -341,7 +341,6 @@ If you run the script in the CET zone you should get the following
 output:
 \begin{outbit}
 local date/time: 14-02-2009 00:31:30 CET
-time offset string: +0100
 offset in seconds: 3600
 UTC date/time: 13-02-2009 23:31:30
 \end{outbit}
