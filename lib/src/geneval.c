@@ -15486,63 +15486,61 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
         p->err = E_TYPES;
     } else {
         char *vname = l->v.str;
-        int vnum = current_series_index(p->dset, vname);
+	int v = current_series_index(p->dset, vname);
         const double *xvec = NULL;
-        double xval = NADBL;
+        double xt = NADBL;
         int subset = 0;
-        int err = 0;
 
-        if (r->t == SERIES) {
-            xvec = r->v.xvec;
-        } else if (r->t == MAT) {
-            xvec = xvec_from_matrix(r->v.m, p, &subset, &err);
-        } else {
-            xval = r->v.xval;
-        }
+	if (v == 0) {
+	    /* can't overwite the constant */
+	    p->err = E_INVARG;
+	} else if (v == -1) {
+	    /* no series called @vname: can we create one? */
+	    if (user_var_get_type_by_name(vname) != GRETL_TYPE_NONE) {
+		p->err = E_TYPES;
+            } else {
+                p->err = check_varname(vname);
+            }
+	}
 
-        if (!err && vnum > 0) {
-            /* a series of this name already exists */
+	if (!p->err) {
+	    /* get the data source */
+	    if (r->t == SERIES) {
+		xvec = r->v.xvec;
+	    } else if (r->t == MAT) {
+		xvec = xvec_from_matrix(r->v.m, p, &subset, &p->err);
+	    } else {
+		xt = r->v.xval;
+	    }
+	}
+
+	if (!p->err && v == -1) {
+	    /* add a new series if required */
+	    p->err = dataset_add_NA_series(p->dset, 1);
+	    if (!p->err) {
+		v = p->dset->v - 1;
+		strcpy(p->dset->varname[v], vname);
+	    }
+	}
+
+        if (!p->err) {
+	    /* copy data across */
             int t, i = 0;
 
             for (t=p->dset->t1; t<=p->dset->t2; t++) {
                 if (xvec != NULL) {
-                    xval = subset ? xvec[i++] : xvec[t];
+                    xt = subset ? xvec[i++] : xvec[t];
                 }
-                p->dset->Z[vnum][t] = xval;
-            }
-        } else if (!err) {
-            /* creating a new series */
-            GretlType ltype = user_var_get_type_by_name(vname);
-
-            if (ltype != GRETL_TYPE_NONE) {
-                /* cannot overwrite a variable of another type */
-                err = E_TYPES;
-            } else {
-                err = check_varname(vname);
-            }
-            if (!err) {
-                err = dataset_add_NA_series(p->dset, 1);
-            }
-            if (!err) {
-                int t, i = 0, v = p->dset->v - 1;
-
-                for (t=p->dset->t1; t<=p->dset->t2; t++) {
-                    if (xvec != NULL) {
-                        xval = subset ? xvec[i++] : xvec[t];
-                    }
-                    p->dset->Z[v][t] = xval;
-                }
-            }
-            if (!err) {
-                vnum = p->dset->v - 1;
-                strcpy(p->dset->varname[vnum], vname);
+                p->dset->Z[v][t] = xt;
             }
         }
 
-        ret = aux_scalar_node(p);
-        if (ret != NULL) {
-            ret->v.xval = err ? -1 : vnum;
-        }
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = v;
+	    }
+	}
     }
 
     return ret;
