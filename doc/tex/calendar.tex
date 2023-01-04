@@ -246,7 +246,7 @@ ed2 = epochday(2016,12,31)
 n = ed2 - ed1 + 1
 \end{code}
 We find that there should be \texttt{n} = 731 observations; if there
-are fewer, there's something missing. If the data are supposed to be
+are fewer there's something missing. If the data are supposed to be
 on a 5-day week (skipping Saturday and Sunday) or 6-day week (skipping
 Sunday alone) the calculation is more complicated; in this case we can
 use the \cmd{dayspan} function, providing as arguments the
@@ -260,6 +260,21 @@ n = dayspan(ed1, ed2, 5)
 %
 We discover that there were \texttt{n} = 522 weekdays in this period.
 
+The dayspan function can also be helpful if you wish to construct a
+suitably sized ``empty'' daily dataset prior to importing data from a
+third-party database (for example, stock prices from Yahoo). Say
+the data to be imported are on a 5-day week and you want the range to
+be from 2000-01-03 (the first weekday in 2000) to 2020-12-30 (a
+Wednesday). How many observations should be allocated?
+\begin{code}
+ed1 = epochday(2000,1,3)
+ed2 = epochday(2020,12,30)
+n = dayspan(ed1, ed2, 5)
+nulldata n
+setobs 5 2000-01-03
+\end{code}
+
+
 \subsection{Strings to numeric and vice versa}
 
 The primary means of converting between string and numeric
@@ -269,8 +284,8 @@ functions, \texttt{strptime}/\texttt{strftime} and
 input and outputs a numeric value, and the second performs the inverse
 operation, as shown in Table~\ref{tab:timeconv}. With the first pair,
 the numeric value is Unix seconds; with the second it's an epoch day.
-The numeric values are always relative to UTC, and the string values
-are (by default, at least) always relative to local time.
+Numeric values are always relative to UTC, and string values are (by
+default, at least) always relative to local time.
 
 \begin{table}[htbp]
   \centering
@@ -306,25 +321,25 @@ following:\footnote{The data used as an example here are taken from a
   \begin{small}
     \texttt{%
       \begin{tabular}{lllll}
-        Date	& Time	& Latitude	& Longitude                & Magnitude \\
-        "01/02/1965"	& "13:44:18"	& 19.246	& 145.616  & 6.0       \\
-        "01/04/1965"	& "11:29:49"	& 1.863	        & 127.352  & 5.8       \\
-        "01/05/1965"	& "18:05:58"	& -20.579	& -173.972 & 6.2       \\
-        "01/08/1965"	& "18:49:43"	& -59.076	& -23.557  & 5.8       \\
-        "01/09/1965"	& "13:32:50"	& 11.938	& 126.427  & 5.8       \\
-        "01/10/1965"	& "13:36:32"	& -13.405	& 166.629  & 6.7       \\
-        "01/12/1965"	& "13:32:25"	& 27.357	& 87.867   & 5.9       \\
-        "01/15/1965"	& "23:17:42"	& -13.309	& 166.212  & 6.0       
+        Date & Time & Latitude & Longitude & Magnitude \\
+        "01/02/1965" & "13:44:18" & 19.246  & 145.616  & 6.0\\
+        "01/04/1965" & "11:29:49" & 1.863   & 127.352  & 5.8\\
+        "01/05/1965" & "18:05:58" & -20.579 & -173.972 & 6.2\\
+        "01/08/1965" & "18:49:43" & -59.076 & -23.557  & 5.8\\
+        "01/09/1965" & "13:32:50" & 11.938  & 126.427  & 5.8\\
+        "01/10/1965" & "13:36:32" & -13.405 & 166.629  & 6.7\\
+        "01/12/1965" & "13:32:25" & 27.357  & 87.867   & 5.9\\
+        "01/15/1965" & "23:17:42" & -13.309 & 166.212  & 6.0       
       \end{tabular}
     }
   \end{small}
 \end{center}
 
-Suppose we want to convert the column headed ``Date'' to epoch
+Suppose we want to convert the \texttt{Date} column to epoch
 days. Note that the date format follows the American convention
 month/day/year, a point which can be ascertained only by visual
 inspection of the file's content. The simplest way to accomplish the
-task is shown in Script~\ref{ex:earthquakes}, where we assume that the
+task is shown in Listing~\ref{ex:earthquakes}, where we assume that the
 data file is named \texttt{earthquakes.csv}. Note that the
 \option{all-cols} option is wanted here, so that gretl treats
 \texttt{Dates} as a string-valued series rather than just a source of
@@ -332,7 +347,7 @@ time-series information. For good measure we show how to add an ISO
 8601 string dates series.
 
 \begin{script}[htbp]
-  \scriptcaption{Converting a string-valued date series to epoch day}
+  \fragcaption{Converting a string-valued date series to epoch day}
   \label{ex:earthquakes}
 \begin{scodebit}
 open earthquakes.csv --all-cols
@@ -356,11 +371,23 @@ Output:
 \end{outbit}
 \end{script}
 
+Alternatively, one might like to convert the \texttt{Date} and
+\texttt{Time} columns jointly to Unix seconds. This can be done by
+sticking the two strings together at each observation and calling
+\texttt{strptime} with a suitable format, as follows:
+%
+\begin{code}
+series date_time # Unix seconds
+loop i=1..$nobs
+   date_time[i] = strptime(Date[i] ~ Time[i], "%m/%d/%Y%H:%M:%S")
+endloop
+\end{code}
+
 \subsection{Unix seconds and time zones}
 
 As mentioned above, date/time information stored in the form of Unix
 seconds is always relative to UTC, while the string representations
-associated with the \texttt{strp*} functions (as input) and the
+associated with the \texttt{strp*} functions (as input) and
 \texttt{strf*} functions (as output) are relative to local time. So
 for example a Unix seconds value of 1234567890 corresponds to
 ``13-02-2009 23:31:30'' in UTC, but on a computer whose clock is set
@@ -373,8 +400,8 @@ already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
 
 If you wish to determine the offset of your time zone with respect
 with UTC, it's sufficient to invoke the \texttt{strptime} function
-with an argument of 19700101 (see Section \ref{sec:cal-builtins}).  An
-example of such usage is given in the script~\ref{ex:tzoffset}.
+with an argument of 19700101.  An example of such usage is given in
+the script~\ref{ex:tzoffset}.
 
 \begin{script}[htbp]
   \scriptcaption{Exploring the time-zone offset}
@@ -407,7 +434,7 @@ UTC date/time: 13-02-2009 23:31:30
 \end{script}
 
 A few points are worth noting in relation to
-script~\ref{ex:tzoffset}. First, the idiom
+Listing~\ref{ex:tzoffset}. First, the idiom
 \begin{code}
 scalar offset = strptime(19700101)
 \end{code}
@@ -441,24 +468,60 @@ TZ="CET-1" gretlcli -b tzones.inp
   as UTC+1---it's the other way round: UTC is the base and the offset
   is that which must be added to UTC to get local time.}
 
-\section{Other functions and built-ins}
+\section{Other accessors and functions}
 \label{sec:cal-otherfuncs}
 
-\subsection{Built-ins}
-\label{sec:cal-builtins}
+\subsection{Accessors}
+\label{sec:cal-accessors}
 
-Gretl offers you a few accessors for generating dates. One is
+Gretl offers a few accessors for generating dates. One is
 \dollar{now}, which returns the current date/time as a 2-element
-vector: the first one is in seconds (see Section
-\ref{sec:cal-seconds}) the second one is an epoch day (see Section
-\ref{sec:cal-epochday}).
+vector, comprising Unix seconds (see Section \ref{sec:cal-seconds})
+and an epoch day (see Section \ref{sec:cal-epochday}). This is
+available regardless of the presence or absence of a dataset.
 
-Moreover, when a time-series dataset is open, three accessors are
-available to retrieve the dataset dates as series. \dollar{obsmajor}
-normally returns the year and \dollar{obsminor} the sub-period, if
-applicable (generally the month or quarter). For daily datasets,
-\dollar{obsmicro} is also available and provides the day. See the
-\GCR{} for more details.
+When a time-series dataset is open, up to four accessors are available
+to retrieve observation dates as numeric series. First there is
+\dollar{obsdate}, which returns ISO 8601 basic dates. If the frequency
+is annual, quarterly or monthly these dates represent the first day of
+the period in question; if the frequency is hourly this accessor is
+not available. Then there's a set of (up to) three accessors,
+\dollar{obsmajor}, \dollar{obsminor} and \dollar{obsmicro}. The
+availability and interpretation of these values depends on the
+character of the dataset, as shown in Table~\ref{tab:cal-accessors}.
+For reference, the ``constructor'' column shows the argument that
+should be supplied to the \cmd{setobs} command to impose each
+frequency on a dataset, assuming it starts on January 1, 1990.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{llllll}
+    frequency & description & constructor & \dollar{obsmajor} &
+       \dollar{obsminor} & \dollar{obsmicro}\\
+    1 & annual & \texttt{1 1990} & year & NA & NA\\
+    4 & quarterly & \texttt{4 1990:1} & year & quarter & NA\\
+    12 & monthly & \texttt{12 1990:01} & year & month & NA\\
+    5, 6, 7 & daily & $n$ \texttt{1990-01-01} & year & month & day\\
+    52 & weekly & \texttt{52 1990-01-01} & year & month & day\\
+    24 & hourly & \texttt{24 726468:01} & day & hour & NA
+  \end{tabular}
+  \caption{Calendrical frequencies and accessors}
+  \label{tab:cal-accessors}
+\end{table}
+
+The hourly frequency is not fully supported by gretl's calendrical
+apparatus. But an epoch day value can be used to set the starting day
+for an hourly time series, as exemplified in
+Table~\ref{tab:cal-accessors} (726468 for 1990-01-01). One could then
+construct a string-valued hourly date/time series in this way:
+%
+\begin{code}
+series day = strptime(isodate($obsmajor))
+series usecs = day + 3600 * ($obsminor - 1) # Unix seconds
+series tstr = strftime(usecs, "%Y-%m-%d %H:%M:%S")
+print tstr -o
+\end{code}
+
 
 \subsection{Miscellaneous functions}
 \label{sec:cal-misc}
@@ -469,7 +532,7 @@ Besides conversion, several other calendrical functions are available:
   in days (optionally ignoring weekends).
 \item[weekday] given a date as year, month and day (or ISO 8601
   basic), returns a number from 0 (Sunday) to 6 (Saturday)
-  corresponding to the day of the week.
+  corresponding to day of the week.
 \item[juldate] given an epoch day, returns the corresponding date on
   the Julian calendar (see Section \ref{sec:cal-conversion} below).
 \item[dayspan] given two epochdays, calculates their distance,
