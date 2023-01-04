@@ -1594,7 +1594,11 @@ int gretl_strftime (char *s, int slen, const char *format,
 	gchar *tmp;
 
 	if (iso) {
+#if GLIB_MINOR_VERSION < 62
+	    tmp = g_date_time_format(gdt, "%Y-%m-%dT%H%M%d%Z");
+#else
 	    tmp = g_date_time_format_iso8601(gdt);
+#endif
 	} else {
 	    tmp = g_date_time_format(gdt, format);
 	}
