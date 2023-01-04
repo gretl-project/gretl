@@ -1743,6 +1743,9 @@ static double node_get_scalar (NODE *n, parser *p)
         return n->v.xval;
     } else if (scalar_matrix_node(n)) {
         return n->v.m->val[0];
+    } else if (n->t == EMPTY) {
+        p->err = E_ARGS;
+        return NADBL;
     } else {
         p->err = E_INVARG;
         return NADBL;
