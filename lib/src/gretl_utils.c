@@ -1030,8 +1030,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
     *stobs = '\0';
     strncat(stobs, stobs_in, OBSLEN - 1);
 
-    /* truncate stobs if not a calendar date */
-
+    /* check for possible calendar date */
     if (likely_calendar_obs_string(stobs)) {
         if (maybe_tseries) {
             dated = 1;
@@ -1039,8 +1038,15 @@ static int process_starting_obs (const char *stobs_in, int pd,
             return invalid_stobs(stobs);
         }
     } else {
-        stobs[8] = '\0';
+        ; /* stobs[8] = '\0'; */
     }
+
+    /* 2023-01-04: if the likely_calendar_obs_string() test failed, we
+       were truncating @stobs to 8 bytes. Now I don't understand
+       why. That truncation prevents interpretation of, e.g., "setobs
+       24 726468:01" as calling for hourly data starting in epoch day
+       726468, since it knocks off the trailing '1'.
+    */
 
     if (dated) {
         if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
