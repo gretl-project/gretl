@@ -11,7 +11,8 @@ their effective use this chapter lists the various possibilities for
 storing dates and times and discusses ways of converting between
 variant representations.  Our main focus in this chapter is dates as
 such (year, month and day) but we add some discussion of time-of-day
-where relevant.
+where relevant. A final section addresses the somewhat arcane issue
+of handling historical dates on the Julian calendar.
 
 First of all, however, it may be useful to distinguish two contexts:
 \begin{itemize}
@@ -31,9 +32,9 @@ know that with a panel dataset you can impose a definite dating and
 frequency in its time dimension (if appropriate)---again, via the
 \cmd{setobs} command but with the \option{panel-time} option.
 
-In what follows we will try to be clear on which points require a
-time-series dataset or well-defined panel-data time, and which are
-independent of such a requirement. [LET'S TRY TO MAKE GOOD ON THIS!]
+In what follows we state if a relevant function or accessor requires a
+time-series dataset or well-defined panel-data time; otherwise you can
+assume it does not carry such a requirement.
 
 \section{Date and time representations}
 \label{sec:cal-representations}
@@ -80,8 +81,10 @@ use three series, possibly grouping them into a list, as in
 This example above will generate daily dates for January and February
 2020. Note that use of the \verb|$obsm*| accessors requires a
 time-series dataset, and \dollar{obsmicro} in particular requires
-daily data. Some CSV files store dates in this sort of format, with
-various conventions on the ordering of the three components.
+daily data. See Section~\ref{sec:cal-otherfuncs} for details.
+
+Some CSV files represent dates in this sort of broken-down format,
+with various conventions on the ordering of the three components.
 
 \subsection{Date as string}
 \label{sec:cal-generic-string}
@@ -119,7 +122,7 @@ function argument or take extra steps if the representation is
 non-standard.
 
 Using series and/or matrices to store ISO 8601 basic dates is
-perfectly straighforward.
+perfectly straightforward.
 
 \subsection{Epoch days}
 \label{sec:cal-epochday}
@@ -152,7 +155,7 @@ arithmetic.''  Epoch days are always consecutive by construction, but
 month.\footnote{In fact, they advance by 101 minus (days in previous
   month) at the start of each month other than January, and by 8870 at
   the start of each year.} For more on arithmetic with epoch days see
-Section FIXME:REF.
+Section~\ref{sec:cal-arith}.
 
 \subsection{Unix seconds}
 \label{sec:cal-seconds}
@@ -166,10 +169,10 @@ date.
 
 This representation is not transparent to humans (for example, the
 number 123456789 corresponds to the start of Thursday, 29 Nov 1973)
-but again it lends itself naturally to calculation. Note that since
-it is hard-wired to UTC a given value will correspond to different
+but again it lends itself naturally to calculation. Since Unix seconds
+are hard-wired to UTC a given value will correspond to different
 times, and possibly different dates, if evaluated in different time
-zones.
+zones; we expand on this point below.
 
 \section{Converting between representations}
 \label{sec:cal-conversions}
@@ -182,13 +185,13 @@ zones.
 \end{figure}
 
 To support conversion between different representations, gretl
-provides several dedicated functions---although in some cases
-conversion can be carried out by using generic functions. Figure
-\ref{fig:cal-conversions} displays a summary: solid lines represent
-dedicated functions, while dashed lines indicate that no special
-function is needed. For a full description of the functions depicted
-in the figure, see the \GCR. In the rest of this section we discuss a
-few special cases.
+provides several dedicated functions, although in some cases
+conversion can be carried out by using general-purpose
+functions. Figure \ref{fig:cal-conversions} displays a summary: solid
+lines represent dedicated functions, while dashed lines indicate that
+no special function is needed. For a full description of the functions
+referenced in the figure, see the \GCR. In the rest of this section we
+discuss several cases of conversion with the help of examples.
 
 \subsection{Decomposing a series of ``basic'' dates}
 
@@ -232,48 +235,6 @@ the context of a time-series dataset they could equally well occur
 with an undated dataset, since an ISO 8601 basic value is just a
 numeric value (with some restrictions) and such values do not have to
 appear in chronological order.
-
-\subsection{Epoch day arithmetic}
-
-Give the way epoch days are defined, they provide a useful tool for
-checking whether daily data are complete. Suppose we have what purport
-to be 7-day daily data with a starting date of 2015-01-01 and an
-ending date of 2016-12-31. How many observations should there be?
-%
-\begin{code}
-ed1 = epochday(2015,1,1)
-ed2 = epochday(2016,12,31)
-n = ed2 - ed1 + 1
-\end{code}
-We find that there should be \texttt{n} = 731 observations; if there
-are fewer there's something missing. If the data are supposed to be
-on a 5-day week (skipping Saturday and Sunday) or 6-day week (skipping
-Sunday alone) the calculation is more complicated; in this case we can
-use the \cmd{dayspan} function, providing as arguments the
-epoch-day values for the first and last dates and the number of days
-per week:
-\begin{code}
-ed1 = epochday(2015,1,1)
-ed2 = epochday(2016,12,30)
-n = dayspan(ed1, ed2, 5)
-\end{code}
-%
-We discover that there were \texttt{n} = 522 weekdays in this period.
-
-The dayspan function can also be helpful if you wish to construct a
-suitably sized ``empty'' daily dataset prior to importing data from a
-third-party database (for example, stock prices from Yahoo). Say
-the data to be imported are on a 5-day week and you want the range to
-be from 2000-01-03 (the first weekday in 2000) to 2020-12-30 (a
-Wednesday). How many observations should be allocated?
-\begin{code}
-ed1 = epochday(2000,1,3)
-ed2 = epochday(2020,12,30)
-n = dayspan(ed1, ed2, 5)
-nulldata n
-setobs 5 2000-01-03
-\end{code}
-
 
 \subsection{Strings to numeric and vice versa}
 
@@ -468,6 +429,63 @@ TZ="CET-1" gretlcli -b tzones.inp
   as UTC+1---it's the other way round: UTC is the base and the offset
   is that which must be added to UTC to get local time.}
 
+\section{Epoch day arithmetic}
+\label{sec:cal-arith}
+
+Give the way epoch days are defined, they provide a useful tool for
+checking whether daily data are complete. Suppose we have what purport
+to be 7-day daily data with a starting date of 2015-01-01 and an
+ending date of 2016-12-31. How many observations should there be?
+%
+\begin{code}
+ed1 = epochday(2015,1,1)
+ed2 = epochday(2016,12,31)
+n = ed2 - ed1 + 1
+\end{code}
+We find that there should be \texttt{n} = 731 observations; if there
+are fewer there's something missing. If the data are supposed to be
+on a 5-day week (skipping Saturday and Sunday) or 6-day week (skipping
+Sunday alone) the calculation is more complicated; in this case we can
+use the \cmd{dayspan} function, providing as arguments the
+epoch-day values for the first and last dates and the number of days
+per week:
+\begin{code}
+ed1 = epochday(2015,1,1)
+ed2 = epochday(2016,12,30)
+n = dayspan(ed1, ed2, 5)
+\end{code}
+%
+We discover that there were \texttt{n} = 522 weekdays in this period.
+
+The \texttt{dayspan} function can also be helpful if you wish to
+construct a suitably sized ``empty'' daily dataset prior to importing
+data from a third-party database (for example, stock prices from
+\textsf{Yahoo}). Say the data to be imported are on a 5-day week and
+you want the range to be from 2000-01-03 (the first weekday in 2000)
+to 2020-12-30 (a Wednesday). Here's how one could initialize a
+suitable ``host'' dataset:
+\begin{code}
+ed1 = epochday(2000,1,3)
+ed2 = epochday(2020,12,30)
+n = dayspan(ed1, ed2, 5)
+nulldata n
+setobs 5 2000-01-03
+\end{code}
+
+Another use of arithmetic using epoch days is constructing a sequence
+of dates of non-standard frequency. Suppose you want a biweekly series
+including every second Saturday in 2023. Here's a solution:
+\begin{code}
+nulldata 26
+setobs 1 1 --special-time-series
+series eday
+eday[1] = epochday(20230107) # the first Saturday
+loop i=2..$nobs
+  eday[i] = eday[i-1] + 14
+endloop
+series dates = strfday(eday, "%Y-%m-%d")
+\end{code}
+
 \section{Other accessors and functions}
 \label{sec:cal-otherfuncs}
 
@@ -477,7 +495,7 @@ TZ="CET-1" gretlcli -b tzones.inp
 Gretl offers a few accessors for generating dates. One is
 \dollar{now}, which returns the current date/time as a 2-element
 vector, comprising Unix seconds (see Section \ref{sec:cal-seconds})
-and an epoch day (see Section \ref{sec:cal-epochday}). This is
+and an epoch day (see Section \ref{sec:cal-epochday}). This is always
 available regardless of the presence or absence of a dataset.
 
 When a time-series dataset is open, up to four accessors are available
@@ -485,7 +503,7 @@ to retrieve observation dates as numeric series. First there is
 \dollar{obsdate}, which returns ISO 8601 basic dates. If the frequency
 is annual, quarterly or monthly these dates represent the first day of
 the period in question; if the frequency is hourly this accessor is
-not available. Then there's a set of (up to) three accessors,
+not available. Then there's a set of up to three accessors,
 \dollar{obsmajor}, \dollar{obsminor} and \dollar{obsmicro}. The
 availability and interpretation of these values depends on the
 character of the dataset, as shown in Table~\ref{tab:cal-accessors}.
@@ -518,9 +536,16 @@ construct a string-valued hourly date/time series in this way:
 \begin{code}
 series day = strptime(isodate($obsmajor))
 series usecs = day + 3600 * ($obsminor - 1) # Unix seconds
-series tstr = strftime(usecs, "%Y-%m-%d %H:%M:%S")
-print tstr -o
+series tstrs = strftime(usecs, "%Y-%m-%d %H:%M")
 \end{code}
+
+When a panel dataset is open and its time dimension is specified (see
+Section~\ref{sec:cal-intro} and the documentation for the \cmd{setobs}
+command), \dollar{obsdate} works as described for time-series
+datasets. But \dollar{obsmajor} and \dollar{obsminor} do not refer to
+the time dimension; rather they give the 1-based indices of the
+individuals and time periods, respectively. And \dollar{obsmicro} is
+not available.
 
 
 \subsection{Miscellaneous functions}
@@ -535,7 +560,7 @@ Besides conversion, several other calendrical functions are available:
   corresponding to day of the week.
 \item[juldate] given an epoch day, returns the corresponding date on
   the Julian calendar (see Section \ref{sec:cal-conversion} below).
-\item[dayspan] given two epochdays, calculates their distance,
+\item[dayspan] given two epoch days, calculates their distance,
   optionally taking weekends into account.
 \item[easterday] given the year, returns the date of Easter on the
   Gregorian calendar.
@@ -599,7 +624,7 @@ it would be tricky and error-prone to enter on the Gregorian calendar
 data whose dates are given on the Julian at source.
 
 In order to represent Julian dates, Gretl uses two basic tools: one is
-the \cmd{juldate} function, which conversts a Gregorian epochday into
+the \cmd{juldate} function, which converts a Gregorian epochday into
 an ISO8601-like integer and the convention that for some functions,
 a negative value where a year is expected acts as a ``Julian calendar
 flag''.
@@ -795,4 +820,3 @@ eval monthlen(2,-1900,5)
 \end{code}
 gives 21, indicating that there were 21 weekdays in Julian February
 1900.
-
