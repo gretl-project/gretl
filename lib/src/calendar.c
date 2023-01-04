@@ -1397,9 +1397,8 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
 {
     int n = 0;
 
-    if (!g_date_valid_julian(ed1) ||
-	!g_date_valid_julian(ed2) ||
-	ed2 < ed1) {
+    if (ed2 < ed1 || !g_date_valid_julian(ed1) ||
+	!g_date_valid_julian(ed2)) {
 	if (err != NULL) {
 	    *err = E_INVARG;
 	}
@@ -1409,17 +1408,18 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
     } else {
 	GDate date;
 	guint32 i;
-	int idx;
+	int wd;
 
 	g_date_clear(&date, 1);
 	g_date_set_julian(&date, ed1);
-	idx = g_date_get_weekday(&date) - 1;
+	wd = g_date_get_weekday(&date);
+	wd = (wd == G_DATE_SUNDAY)? 0 : wd;
 
 	for (i=ed1; i<=ed2; i++) {
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, wd % 7)) {
 		n++;
 	    }
-	    idx++;
+	    wd++;
 	}
     }
 
