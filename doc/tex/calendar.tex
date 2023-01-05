@@ -274,9 +274,9 @@ but there's nothing to stop a user making a different setting.
 
 It often happens that CSV files contain date information stored as
 strings. Take for example a file containing earthquake data like the
-following:\footnote{These data are taken from a larger dataset
-  available at
-  \url{https://www.kaggle.com/datasets/usgs/earthquake-database}.}
+following:\footnote{See
+  \url{https://www.kaggle.com/datasets/usgs/earthquake-database} for
+  the dataset of which this is an extract.}
 
 \begin{center}
   \begin{small}
@@ -300,12 +300,12 @@ Suppose we want to convert the \texttt{Date} column to epoch
 days. Note that the date format follows the American convention
 month/day/year, a point which can be ascertained only by visual
 inspection of the file's content. The simplest way to accomplish the
-task is shown in Listing~\ref{ex:earthquakes}, where we assume that the
-data file is named \texttt{earthquakes.csv}. Note that the
+task is shown in Listing~\ref{ex:earthquakes}, where we assume that
+the data file is named \texttt{earthquakes.csv}. Note that the
 \option{all-cols} option is wanted here, so that gretl treats
 \texttt{Dates} as a string-valued series rather than just a source of
 time-series information. For good measure we show how to add an ISO
-8601 string dates series.
+8601 date series.
 
 \begin{script}[htbp]
   \fragcaption{Converting a string-valued date series to epoch day}
@@ -338,9 +338,9 @@ sticking the two strings together at each observation and calling
 \texttt{strptime} with a suitable format, as follows:
 %
 \begin{code}
-series date_time # Unix seconds
+series usecs # Unix seconds
 loop i=1..$nobs
-   date_time[i] = strptime(Date[i] ~ Time[i], "%m/%d/%Y%H:%M:%S")
+   usecs[i] = strptime(Date[i] ~ Time[i], "%m/%d/%Y%H:%M:%S")
 endloop
 \end{code}
 
@@ -407,7 +407,7 @@ be
 scalar offset = strptime("1970-01-01", "%Y-%m-%d")
 \end{code}
 Second, looking up the offset is not really required to obtain the
-corresponding UTC date/time, thanks to another gretl special: if you
+corresponding UTC date/time, thanks to another gretl special. If you
 prepend ``\texttt{utc:}'' to the format string, as in
 \begin{code}
 utc_datestring = strftime(s, "utc:%d-%m-%Y %H:%M:%S")
