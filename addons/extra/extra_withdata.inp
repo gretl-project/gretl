@@ -8,7 +8,7 @@
 # correspondence
 # fracorder
 # mat2list
-# add_outofsample (needs helpers from extra_oos_helpers.inp)
+# put_outofsmpl (needs helpers from extra_oos_helpers.inp)
 
 include extra_oos_helpers.inp
 
@@ -148,7 +148,7 @@ end function
 
 ####
 
-function bundle add_outofsample(const bundle modorsys)
+function bundle put_outofsmpl (const bundle modorsys)
     # Input must be a $model or $system -like bundle (pointerized).
     # Adds the following three matrix elements to the input bundle
     #   and returns the resulting enlarged bundle:

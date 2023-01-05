@@ -471,7 +471,7 @@ For the Hurst method a minimum of 128 observations is required, and test
 results are never available. Also note that by construction this estimator can
 only take values between $-0.5$ and $0.5$.
 
-\subsection{add\_outofsample}
+\subsection{put\_outofsmpl}
 
 \ArgRet{\texttt{bundle modorsys}}{bundle}
 
@@ -519,7 +519,7 @@ single-equation (\texttt{\$model}) and generic simultaneous-equation
   drill, correspondence, combinations, qformvech: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
-splitfname, multi\_instrings, fracorder, add\_outofsample:
+splitfname, multi\_instrings, fracorder, put\_outofsmpl:
 Sven Schreiber
 
 \item winsor: Sven Schreiber, original code JoshuaHe
@@ -529,7 +529,7 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
-\item December 2022: 1.6, introduce the add\_outofsample function
+\item December 2022: 1.6, introduce the put\_outofsmpl function
 \item July 2022: 1.5, introduce the mat2latex function
 \item June 2022: 1.4, retire the commute function (now in libgretl)
 \item January 2022: 1.3, retire the mat2list function (now in

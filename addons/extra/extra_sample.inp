@@ -150,7 +150,7 @@ open djclose.gdt --quiet	# need longer data here
 matrix M = fracorder(ldiff(djclose), 20)
 print  M
 
-print "---- add_outofsample -----"
+print "---- put_outofsmpl -----"
 open denmark --quiet
 
 smpl +3 -5
@@ -158,7 +158,7 @@ smpl +3 -5
 
 ## plain ols single-equation
 ols LRM const LRY(-2) LRM(-3) 
-b = add_outofsample($model)
+b = put_outofsmpl($model)
 eval b.initY
 eval b.futureY
 eval b.futureX
@@ -166,7 +166,7 @@ eval b.futureX
 ## a VAR
 var 2 LRM LRY IBO; IDE -q 
 
-bundle b = add_outofsample($system)
+bundle b = put_outofsmpl($system)
 eval b.initY
 eval b.futureY
 eval b.futureX
@@ -174,7 +174,7 @@ eval b.futureX
 ## a VECM 
 vecm 2 1 LRM LRY IBO; IDE --rc -q
 
-b = add_outofsample($system)
+b = put_outofsmpl($system)
 eval b.initY
 eval b.futureY
 eval b.futureX
@@ -187,9 +187,9 @@ system method=sur --quiet
     equation LRY const LRY(-1)
 end system
 
-b = add_outofsample($system)
+b = put_outofsmpl($system)
 eval b.initY
 eval b.futureY
 eval b.futureX
 
-### end add_outofsample example ###
+### end put_outofsmpl example ###

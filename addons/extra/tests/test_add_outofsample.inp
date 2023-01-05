@@ -90,8 +90,8 @@ test_trygrabvalue(Params)
 
 open denmark --quiet
 
-function void test_add_outofsample_seq (const list L)
-  print "Start testing function add_outofsample() for single-equation"
+function void test_put_outofsmpl_seq (const list L)
+  print "Start testing function put_outofsmpl() for single-equation"
 
   # Given
   list Endo = L.LRY(-2)
@@ -111,7 +111,7 @@ function void test_add_outofsample_seq (const list L)
   strings dates_futureX_expected = defarray("1987:2", "1987:3")
 
   # When
-  bundle model = add_outofsample($model)
+  bundle model = put_outofsmpl($model)
   matrix initY_actual = model.initY
   strings dates_initY_actual = rnameget(initY_actual)
   matrix futureY_actual = model.futureY
@@ -137,13 +137,13 @@ function void test_add_outofsample_seq (const list L)
     endloop
   endloop
 end function
-test_add_outofsample_seq(dataset)
+test_put_outofsmpl_seq(dataset)
 
 
 open denmark --quiet
 
-function void test_add_outofsample_var (const list L)
-  print "Start testing function add_outofsample() for VAR"
+function void test_put_outofsmpl_var (const list L)
+  print "Start testing function put_outofsmpl() for VAR"
 
   # Given
   list Endo = L.LRM L.LRY
@@ -165,7 +165,7 @@ function void test_add_outofsample_var (const list L)
   strings dates_futureX_expected = defarray("1987:2", "1987:3")
 
   # When
-  bundle model = add_outofsample($system)
+  bundle model = put_outofsmpl($system)
 
   matrix initY_actual = vec( model.initY )
   strings dates_initY_actual = rnameget(initY_actual)
@@ -197,7 +197,7 @@ function void test_add_outofsample_var (const list L)
     assert_almost_equal_num(futureX_actual[i], futureX_expected[i], 1e-3)
   endloop
 end function
-test_add_outofsample_var(dataset)
+test_put_outofsmpl_var(dataset)
 
 
 printf "\nInfo: All tests passed.\n"
