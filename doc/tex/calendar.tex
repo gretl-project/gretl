@@ -41,8 +41,8 @@ assume it does not carry such a requirement.
 
 In gretl there is more than one way to encode a date such as ``May
 26th, 1993''. Some are more intuitive, some less obvious from the
-human viewpoint of a human but easier to handle for an algorithm. The
-basic representations we discuss here are:
+viewpoint of a human but easier to handle for an algorithm. The basic
+representations we discuss here are:
 \begin{enumerate}
 \item the three-numbers approach
 \item date as string
@@ -133,15 +133,15 @@ is, the first day of the Common Era), on the proleptic Gregorian
 calendar.\footnote{The term ``proleptic,'' as applied to a calendar,
   indicates that it is extrapolated backwards or forwards relative to
   its period of actual historical use.} For example, 1993-05-26
-corresponds to 727709.\footnote{This representation is based on the
+corresponds to 727709.\footnote{This representation derives from the
   astronomers' ``Julian day'' which is also a count of days since a
-  benchmark, namely January 1, 4713 BC.}
+  benchmark, namely January 1, 4713 BC, at which time certain
+  astronomical cycles were aligned.}
 
 This is the convention used by the \textsf{GLib} library, on which
 gretl depends for much of its calendrical calculation. Since an epoch
 day is an unsigned integer, neither \textsf{GLib} nor gretl supports
-dates ``BC'', or prior to the Common Era (see also Section
-\ref{sec:cal-conversion}).
+dates ``BC'', or prior to the Common Era.
 
 This representation has several advantages. Like ISO 8601 basic, it
 lends itself naturally to storing dates as series. Compared to ISO
@@ -274,8 +274,8 @@ but there's nothing to stop a user making a different setting.
 
 It often happens that CSV files contain date information stored as
 strings. Take for example a file containing earthquake data like the
-following:\footnote{The data used as an example here are taken from a
-  larger dataset available at
+following:\footnote{These data are taken from a larger dataset
+  available at
   \url{https://www.kaggle.com/datasets/usgs/earthquake-database}.}
 
 \begin{center}
@@ -474,7 +474,7 @@ setobs 5 2000-01-03
 
 Another use of arithmetic using epoch days is constructing a sequence
 of dates of non-standard frequency. Suppose you want a biweekly series
-including every second Saturday in 2023. Here's a solution:
+including alternate Saturdays in 2023. Here's a solution:
 \begin{code}
 nulldata 26
 setobs 1 1 --special-time-series
@@ -492,11 +492,11 @@ series dates = strfday(eday, "%Y-%m-%d")
 \subsection{Accessors}
 \label{sec:cal-accessors}
 
-Gretl offers a few accessors for generating dates. One is
+Gretl offers various accessors for generating dates. One is
 \dollar{now}, which returns the current date/time as a 2-element
-vector, comprising Unix seconds (see Section \ref{sec:cal-seconds})
-and an epoch day (see Section \ref{sec:cal-epochday}). This is always
-available regardless of the presence or absence of a dataset.
+vector. The first element is Unix seconds and the second an epoch day
+(see Section \ref{sec:cal-seconds}). This is always available
+regardless of the presence or absence of a dataset.
 
 When a time-series dataset is open, up to four accessors are available
 to retrieve observation dates as numeric series. First there is
@@ -513,7 +513,7 @@ frequency on a dataset, assuming it starts on January 1, 1990.
 
 \begin{table}[htbp]
   \centering
-  \begin{tabular}{llllll}
+  \begin{tabular}{clllll}
     frequency & description & constructor & \dollar{obsmajor} &
        \dollar{obsminor} & \dollar{obsmicro}\\
     1 & annual & \texttt{1 1990} & year & NA & NA\\
