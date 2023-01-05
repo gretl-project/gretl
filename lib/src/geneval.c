@@ -8907,23 +8907,31 @@ static NODE *strftime_node (NODE *l, NODE *r, int f,
 static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 {
     int julian = (f == F_JULDATE);
-    int as_string = 0;
+    int as_string;
+    int n = 0;
     NODE *ret = NULL;
 
-    if (!scalar_node(l) && l->t != SERIES) {
+    as_string = node_get_bool(r, p, 0);
+
+    if (l->t == MAT) {
+        n = gretl_vector_get_length(l->v.m);
+        if (n == 0) {
+            p->err = E_NONCONF;
+        }
+    } else if (!scalar_node(l) && l->t != SERIES) {
         node_type_error(f, 1, NUM, l, p);
-    } else {
-	as_string = node_get_bool(r, p, 0);
     }
 
     if (p->err) {
 	return NULL;
-    } else if (l->t == SERIES && as_string) {
+    } else if ((l->t == SERIES || l->t == MAT) && as_string) {
 	return strftime_node(l, NULL, F_ISODATE, julian, p);
     }
 
-    if (scalar_node(l)) {
-	ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
+    if (l->t == MAT) {
+        ret = aux_sized_matrix_node(p, n, 1, 0);
+    } else if (l->t == NUM) {
+        ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
     } else {
 	ret = aux_series_node(p);
     }
@@ -8943,16 +8951,19 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 						   julian, &p->err);
 	}
     } else if (ret != NULL) {
-	double xt;
+        double xt, *targ;
+	int t1 = l->t == MAT ? 0 : p->dset->t1;
+        int t2 = l->t == MAT ? n-1 : p->dset->t2;
 	int t;
 
-	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    xt = l->v.xvec[t];
+	for (t=t1; t<=t2; t++) {
+            targ = l->t == MAT ? &ret->v.m->val[t] : &ret->v.xvec[t];
+	    xt = l->t == MAT ? l->v.m->val[t] : l->v.xvec[t];
 	    if (na(xt)) {
-		ret->v.xvec[t] = NADBL;
+		*targ = NADBL;
 	    } else if (xt >= 1 && xt <= UINT_MAX) {
-		ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
-							  julian, &p->err);
+		*targ = ymd_basic_from_epoch_day((guint32) xt,
+                                                 julian, &p->err);
 	    } else {
 		p->err = E_INVARG;
 		break;

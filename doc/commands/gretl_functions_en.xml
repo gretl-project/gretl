@@ -4475,7 +4475,7 @@
 	<para>
 	  Returns the number of the day in the current epoch specified
 	  by year, month and day. The epoch day equals 1 for the first
-	  of January in the year AD 1 on the proleptic Gregorian
+	  of January in the year 1 AD on the proleptic Gregorian
 	  calendar; it stood at 733786 on 2010-01-01. If any of the
 	  arguments are given as series the value returned is a
 	  series, otherwise it is a scalar.
@@ -4500,7 +4500,9 @@
 	</code>
 	<para>
 	  For the inverse function, see <fncref targ="isodate"/> and
-	  also (for the Julian calendar) <fncref targ="juldate"/>.
+	  also (for the Julian calendar) <fncref targ="juldate"/>. For
+	  another means of converting dates to epoch days see <fncref
+	  targ="strpday"/>.
 	</para>
       </description>
     </function>
@@ -6683,14 +6685,14 @@
 
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
-	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="anyfloat">ed</fnarg>
 	<fnarg type="bool" optional="true">as-string</fnarg>
       </fnargs>
       <description>
 	<para>
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day, which equals 1 for the first of January in the
-	  year AD 1 on the proleptic Gregorian calendar. The default
+	  year 1 AD on the proleptic Gregorian calendar. The default
 	  return value (of the same type as <argname>ed</argname>) is
 	  an 8-digit number, or a series of such numbers, on the
 	  pattern <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote>
@@ -6698,11 +6700,14 @@
 	  the epoch day.
 	</para>
 	<para>
-	  If the optional second argument <argname>as-string</argname>
-	  is non-zero, the return value is not numeric but rather a
-	  string on the pattern <lit>YYYY-MM-DD</lit> (ISO 8601
-	  <quote>extended</quote> format), or a string-valued series
-	  if <argname>ed</argname> is a series.
+          If the optional second argument <argname>as-string</argname>
+          is non-zero, the return value is not numeric but rather a
+          string on the pattern <lit>YYYY-MM-DD</lit> (ISO 8601
+          <quote>extended</quote> format), or a string-valued series
+          if <argname>ed</argname> is a series, or an array of strings
+          if <argname>ed</argname> is a vector.  For a more flexible
+          means of obtaining string representations of epoch days, see
+          <fncref targ="strfday"/>.
 	</para>
 	<para>
 	  For the inverse function, see <fncref targ="epochday"/>;
@@ -6921,30 +6926,15 @@
 
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
-	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="anyfloat">ed</fnarg>
 	<fnarg type="bool" optional="true">as-string</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>ed</argname> is interpreted as an
-	  epoch day, which equals 1 for the first of January in the
-	  year AD 1 on the proleptic Gregorian calendar. The default
-	  return value&mdash;of the same type as
-	  <argname>ed</argname>&mdash;is an 8-digit number, or a
-	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
-	  (ISO 8601 <quote>basic</quote> format), giving the Julian
-	  calendar date corresponding to the epoch day.
-	</para>
-	<para>
-	  If the optional second argument <argname>as-string</argname>
-	  is non-zero, the return value is not numeric but rather a
-	  string on the pattern <lit>YYYY-MM-DD</lit> (ISO 8601
-	  <quote>extended</quote> format), or a string-valued series
-	  if <argname>ed</argname> is a series.
-	</para>
-	<para>
-	  See also <fncref targ="isodate"/>.
-	</para>
+          This function works just like <fncref targ="isodate"/>
+          except that on output the dates are relative to the
+          Julian calendar rather than the Gregorian.
+        </para>
       </description>
     </function>
 
@@ -12422,6 +12412,10 @@
 	 only date-related formats are handled; time-related formats
 	 give undefined results.
 	</para>
+        <para>
+          If the second argument is omitted the format defaults to
+          ISO 8601 extended, <lit>YYYY-MM-DD</lit>.
+        </para>
       </description>
     </function>
 
