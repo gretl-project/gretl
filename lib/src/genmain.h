@@ -119,12 +119,12 @@ typedef enum {
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
     M_EHAT,       /* ARMA: vector of estimated innovations */
     M_PMANTEAU,   /* VAR portmanteau test plus 's' value */
+    M_ODDSRATIOS, /* binary logit odds ratios */
     M_MATRIX_MAX, /*** SEPARATOR, end of matrices ***/
     M_EC,         /* VECM error-correction terms */
     M_VMA,        /* VARs, VECMs: vector moving average representation */
     M_FEVD,       /* VAR variance decomposition */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
-    M_ODDSRATIOS, /* binary logit odds ratios */
     M_MBUILD_MAX, /*** SEPARATOR, end of matrix-builders ***/
     M_XLIST,      /* list of regressors */
     M_YLIST,      /* list of endogenous variables */

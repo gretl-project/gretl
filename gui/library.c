@@ -8700,6 +8700,30 @@ void display_string_table (int v)
     view_buffer(prn, 84, 480, "string table", PRINT, NULL);
 }
 
+void string_tables (void)
+{
+    PRN *prn = NULL;
+    int i, n = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    for (i=1; i<dataset->v; i++) {
+	if (is_string_valued(dataset, i)) {
+	    series_table_print(dataset, i, prn);
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	infobox(_("No string-valued series were found"));
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 84, 480, "string tables", PRINT, NULL);
+    }
+}
+
 int maybe_restore_full_data (int action)
 {
     if (dataset_is_subsampled(dataset)) {

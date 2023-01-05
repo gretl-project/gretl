@@ -36,6 +36,12 @@ typedef enum {
 } OptimCode;
 
 typedef enum {
+    HAC_REFUSE,
+    HAC_ES,
+    HAC_AM
+} HACopts;
+
+typedef enum {
     USE_CWD         = 1 << 0,  /* store: use current dir as default */
     ECHO_ON         = 1 << 1,  /* echoing commands or not */
     MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
@@ -104,6 +110,7 @@ typedef enum {
     LOGLEVEL,
     LOGSTAMP,
     CSV_DIGITS,
+    HAC_MISSVALS,
     NS_SMALL_INT_MAX, /* separator */
     GMP_BITS,
     NS_MAX, /* separator */

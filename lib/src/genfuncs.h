@@ -270,4 +270,7 @@ gretl_matrix *felogit_rec_loglik (int t, int T,
 				  const gretl_matrix *U,
 				  const gretl_matrix *xi);
 
+int *maybe_get_values_map (const double *x, int n,
+			   int *pnv, int *err);
+
 #endif /* GENFUNCS_H */

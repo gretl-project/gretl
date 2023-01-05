@@ -1380,17 +1380,11 @@ static const char *ampm[] = {
     NULL
 };
 
-/*
- * tm_year is relative this year
- */
+/* tm_year is relative to this year */
 const int tm_year_base = 1900;
 
-/*
- * Return TRUE iff `year' was a leap year.
- * Needed for strptime.
- */
-static int
-is_leap_year (int year)
+/* returns TRUE iff @year was a leap year */
+static int is_leap_year (int year)
 {
     return (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
 }
@@ -1399,10 +1393,10 @@ static int match_string (const char **buf, const char **strs)
 {
     int i = 0;
 
-    for (i = 0; strs[i] != NULL; ++i) {
-	int len = strlen (strs[i]);
+    for (i=0; strs[i] != NULL; ++i) {
+	int len = strlen(strs[i]);
 
-	if (strncasecmp (*buf, strs[i], len) == 0) {
+	if (strncasecmp(*buf, strs[i], len) == 0) {
 	    *buf += len;
 	    return i;
 	}
@@ -1414,18 +1408,15 @@ static int first_day (int year)
 {
     int ret = 4;
 
-    for (; year > 1970; --year)
+    for (; year > 1970; --year) {
 	ret = (ret + 365 + is_leap_year (year) ? 1 : 0) % 7;
+    }
     return ret;
 }
 
-/*
- * Set `timeptr' given `wnum' (week number [0, 53])
- * Needed for strptime
- */
+/* Set @timeptr given @wnum (week number [0, 53]) */
 
-static void
-set_week_number_sun (struct tm *timeptr, int wnum)
+static void set_week_number_sun (struct tm *timeptr, int wnum)
 {
     int fday = first_day (timeptr->tm_year + tm_year_base);
 
@@ -1768,6 +1759,33 @@ char *strptime (const char *buf, const char *format, struct tm *timeptr)
     }
 
     return (char *) buf;
+}
+
+/* The win32 API does not support time_t values prior to
+   1970-01-01. Here we try to work around this via use of
+   GLib functionality.
+*/
+
+double win32_mktime (struct tm *tm)
+{
+    double t = (double) mktime(tm);
+
+    if (t == -1) {
+	GDateTime *gdt;
+	double sec = tm->tm_sec;
+
+	if (sec >= 60) sec = 59;
+	gdt = g_date_time_new_local(tm->tm_year + 1900,
+				    tm->tm_mon + 1,
+				    tm->tm_mday,
+				    tm->tm_hour,
+				    tm->tm_min,
+				    sec);
+	t = (double) g_date_time_to_unix(gdt);
+	g_date_time_unref(gdt);
+    }
+
+    return t;
 }
 
 double win32_fscan_nonfinite (FILE *fp, int *err)

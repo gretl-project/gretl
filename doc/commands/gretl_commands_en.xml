@@ -7803,14 +7803,28 @@
 	<math>R</math><sup>2</sup> in the context of least-squares
 	estimation.
       </para>
+      <para context="cli">
+	If the dependent variable is binary, logit coefficients
+	represent the log of the odds ratio (the ratio of the
+	probability of <math>y</math> = 1 to that of <math>y</math> =
+	0). In this case the <lit>$model</lit> bundle available after
+	estimation includes an the extra element named
+	<lit>oddsratios</lit>, a matrix with four columns holding the
+	exponentiated coefficient (odds ratio) plus standard error
+	computed via the delta method and 95 percent confidence
+	interval, for each regressor. Note, however, that the
+	confidence interval is calculated as the exponential of that
+	for the original coefficient.
+      </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the "Robust standard errors" box is
-	checked, then QML or Huber&ndash;White standard errors are
-	calculated instead. In this case the estimated covariance matrix
-	is a <quote>sandwich</quote> of the inverse of the estimated
-	Hessian and the outer product of the gradient.  See chapter 10 of
-	Davidson and MacKinnon for details.
+	inverse of the Hessian.  If the <quote>Robust standard
+	errors</quote> box is checked, then QML or Huber&ndash;White
+	standard errors are calculated instead. In this case the
+	estimated covariance matrix is a <quote>sandwich</quote> of
+	the inverse of the estimated Hessian and the outer product of
+	the gradient.  See chapter 10 of Davidson and MacKinnon for
+	details.
       </para>
       <para>
 	If the dependent variable is not binary but is discrete, then
@@ -10425,7 +10439,7 @@
 	case its content is over-written with the name of the
 	temporary file.  Please note: files written to the dot
 	directory are cleaned up on exit from the program, so don't
-	use this form is you want the output to be preserved after
+	use this form if you want the output to be preserved after
 	your gretl session.
       </para>
       <para>
@@ -13948,6 +13962,19 @@
 	    implies use of data-based bandwidth selection.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>hac_missvals</lit>: <lit>es</lit> (the default),
+	  <lit>am</lit> or <lit>off</lit>. Sets the policy regarding
+	  calculation of HAC standard errors when the estimation
+	  sample includes incomplete observations: <lit>es</lit>
+	  invokes the Equal Spacing method of <cite
+	  key="datta-du12">Datta and Du (2012)</cite>; <lit>am</lit>
+	  selects the Amplitude Modulation method of <cite
+	  key="parzen63">Parzen (1963)</cite>; and <lit>off</lit>
+	  causes gretl to refuse such estimation. See <guideref
+	  targ="chap:robust_vcv"/> for details.
+	  </para>
+	</li>	
 	<li>
 	  <para>
 	    <lit>hc_version</lit>: 0 (the default), 1, 2, 3 or 3a. Sets the

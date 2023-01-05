@@ -6916,6 +6916,17 @@
 	</para>
       </li>
     </ilist>
+    <subhead>Datos de series de tempo</subhead>
+    <para>
+      Cando o banco de datos vixente é de series temporais, é moi probable
+      que os datos que vaias engadir sexan tamén series de tempo. Nese
+      caso, GRETL pode ser capaz de achar a unión sen a axuda das chaves
+      específicas do usuario. Isto se indica mediante a cadea de texto
+      <quote>detectar automaticamente</quote>, do marcador de posición
+      nas caixas de entrada de chaves internas. Posto que non hai garantía
+      de que isto faga exactamente o que queres, probablemente pague a
+      pena que probes antes a recorrer a un enfoque máis complexo.
+    </para>
     </description>
   </command>
 

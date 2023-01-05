@@ -1743,6 +1743,9 @@ static double node_get_scalar (NODE *n, parser *p)
         return n->v.xval;
     } else if (scalar_matrix_node(n)) {
         return n->v.m->val[0];
+    } else if (n->t == EMPTY) {
+        p->err = E_ARGS;
+        return NADBL;
     } else {
         p->err = E_INVARG;
         return NADBL;
@@ -8273,6 +8276,7 @@ static NODE *readfile_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+#if 0
 static void strstr_escape (char *s)
 {
     int i, n = strlen(s);
@@ -8291,6 +8295,7 @@ static void strstr_escape (char *s)
         }
     }
 }
+#endif
 
 static const char *strstr_insensitive (const gchar *sd1,
 				       const gchar *sd2,
@@ -8328,13 +8333,11 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
         } else if (r->t != STR) {
             p->err = E_TYPES;
         }
-
         if (!p->err) {
             ret = (f == F_INSTRING)? aux_scalar_node(p) :
                 (f == F_JSONGETB)? aux_bundle_node(p) :
                 aux_string_node(p);
         }
-
         if (p->err) {
             return NULL;
         }
@@ -8345,29 +8348,23 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
         if (f == F_STRSTR || f == F_INSTRING) {
             int ignore_case = node_get_bool(x, p, 0);
-            char *tmp = gretl_strdup(sr);
 	    const char *sret = NULL;
 
-            if (tmp != NULL) {
-                gchar *sd1 = NULL, *sd2 = NULL;
+            if (ignore_case) {
+                gchar *sd1 = g_utf8_strdown(sl, -1);
+                gchar *sd2 = g_utf8_strdown(sr, -1);
 
-                strstr_escape(tmp);
-                if (ignore_case) {
-                    sd1 = g_utf8_strdown(sl, -1);
-                    sd2 = g_utf8_strdown(tmp, -1);
-		    sret = strstr_insensitive(sd1, sd2, sl);
-                } else {
-                    sret = strstr(sl, tmp);
-                }
-                if (f == F_INSTRING) {
-                    ret->v.xval = sret != NULL;
-                } else if (sret != NULL) {
-                    ret->v.str = gretl_strdup(sret);
-                } else {
-                    ret->v.str = gretl_strdup("");
-                }
+                sret = strstr_insensitive(sd1, sd2, sl);
                 g_free(sd1); g_free(sd2);
-                free(tmp);
+            } else {
+                sret = strstr(sl, sr);
+            }
+            if (f == F_INSTRING) {
+                ret->v.xval = sret != NULL;
+            } else if (sret != NULL) {
+                ret->v.str = gretl_strdup(sret);
+            } else {
+                ret->v.str = gretl_strdup("");
             }
         } else if (f == B_HCAT) {
             int n1 = strlen(l->v.str);
@@ -8692,69 +8689,6 @@ static NODE *errmsg_node (NODE *l, parser *p)
     return ret;
 }
 
-static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
-{
-    NODE *ret = NULL;
-
-    if (!scalar_node(l) && l->t != SERIES) {
-        node_type_error(f, 1, NUM, l, p);
-    } else if (!null_or_scalar(r)) {
-        node_type_error(f, 2, NUM, r, p);
-    }
-
-    if (!p->err) {
-        int julian = (f == F_JULDATE);
-
-        if (scalar_node(l)) {
-            /* epoch day node is scalar */
-            int as_string = scalar_node(r)? node_get_int(r, p) : 0;
-
-            if (!p->err) {
-                ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
-            }
-            if (ret != NULL) {
-                double x = node_get_scalar(l, p);
-
-                if (!as_string && na(x)) {
-                    ret->v.xval = NADBL;
-                } else if (x >= 1 && x <= UINT_MAX) {
-                    if (as_string) {
-                        ret->v.str = ymd_extended_from_epoch_day((guint32) x,
-                                                                 julian, &p->err);
-                    } else {
-                        ret->v.xval = ymd_basic_from_epoch_day((guint32) x,
-                                                               julian, &p->err);
-                    }
-                } else {
-                    p->err = E_INVARG;
-                }
-            }
-        } else {
-            /* epoch day node is series */
-            ret = aux_series_node(p);
-            if (ret != NULL) {
-                double xt;
-                int t;
-
-                for (t=p->dset->t1; t<=p->dset->t2; t++) {
-                    xt = l->v.xvec[t];
-                    if (na(xt)) {
-                        ret->v.xvec[t] = NADBL;
-                    } else if (xt >= 1 && xt <= UINT_MAX) {
-                        ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
-                                                                  julian, &p->err);
-                    } else {
-                        p->err = E_INVARG;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    return ret;
-}
-
 static NODE *ymd_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -8820,81 +8754,267 @@ static NODE *ymd_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *strftime_node (NODE *l, NODE *r, parser *p)
+static NODE *aux_sized_array_node (GretlType type, int n, parser *p)
 {
-    NODE *ret = aux_string_node(p);
-    const char *fmt = NULL;
-    double tx;
-    time_t t;
+    NODE *ret = aux_array_node(p);
 
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    /* we want a time_t compatible value from @l */
-    tx = node_get_scalar(l, p);
-    if (na(tx)) {
-        p->err = E_INVARG;
-    } else {
-        t = (time_t) floor(tx);
-    }
-
-    /* if @r isn't empty it should hold a format string */
-    if (r->t == STR) {
-        fmt = r->v.str;
-    } else if (r->t != EMPTY) {
-        p->err = E_TYPES;
-    }
-
-    if (!p->err) {
-        struct tm tm;
-        char buf[64] = {0};
-        int bytes = 0;
-
-        if (fmt == NULL) {
-            /* default to 'locale-preferred' format */
-            fmt = "%c";
-        }
-#ifdef WIN32
-        bytes = strftime(buf, sizeof buf, fmt, localtime(&t));
-#else
-        if (localtime_r(&t, &tm) == NULL) {
-            p->err = E_INVARG;
-        } else {
-            bytes = strftime(buf, sizeof buf, fmt, &tm);
-        }
-#endif
-        if (bytes > 0) {
-            ret->v.str = gretl_strdup(g_strchomp(buf));
-        } else {
-            ret->v.str = gretl_strdup("");
-        }
+    if (ret != NULL) {
+	ret->v.a = gretl_array_new(type, n, &p->err);
     }
 
     return ret;
 }
 
-static NODE *strptime_node (NODE *l, NODE *r, parser *p)
+/* strftime_node() implements both strftime() and strfday().  In both
+   cases the @l node must hold a scalar, vector, or numeric series;
+   for strftime() this is interpreted as a time_t, while for strfday
+   it is interpreted as a GLib "julian day" or "epoch day".
+
+   isodate() also piggy-backs here when a string-valued series is
+   wanted on return.
+*/
+
+static NODE *strftime_node (NODE *l, NODE *r, int f,
+			    int julian, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
     const char *fmt = NULL;
-    const char *src = NULL;
-    int ymd = -1;
+    int *vmap = NULL;
+    char **S = NULL;
+    int nv = 0;
+
+    if (l->t == SERIES) {
+	ret = aux_series_node(p);
+    } else if (l->t == MAT) {
+	nv = gretl_vector_get_length(l->v.m);
+	if (nv == 0) {
+	    p->err = E_INVARG;
+	} else {
+	    ret = aux_sized_array_node(GRETL_TYPE_STRINGS, nv, p);
+	}
+    } else {
+	ret = aux_string_node(p);
+    }
 
     if (ret == NULL) {
         return NULL;
     }
 
-    /* we want a string or YYYYMMDD integer from @l */
-    if (l->t == STR) {
-        src = l->v.str;
-    } else {
-        /* must be YYYYMMDD */
-        ymd = node_get_int(l, p);
+    /* if @r isn't null or empty it should hold a format string */
+    if (r != NULL) {
+	if (r->t == STR) {
+	    fmt = r->v.str;
+	} else if (r->t != EMPTY) {
+	    p->err = E_TYPES;
+	}
     }
 
-    if (src == NULL) {
-        /* we won't accept a format string */
+    if (l->t == SERIES) {
+	const double *x = l->v.xvec + p->dset->t1;
+	int n = sample_size(p->dset);
+
+	vmap = maybe_get_values_map(x, n, &nv, &p->err);
+	if (!p->err) {
+	    S = strings_array_new(nv);
+	    if (S == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (!p->err) {
+	char buf[64] = {0};
+	char *dstr;
+	int t, t1 = 0, t2 = 0;
+	double tx;
+	gint64 tt;
+	guint32 ed;
+        int bytes;
+	int i = 0;
+
+        if (fmt == NULL && (f == F_STRFDAY || f == F_ISODATE)) {
+	    /* default to ISO 8601 */
+	    fmt = "%Y-%m-%d";
+	}
+	if (l->t == SERIES) {
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
+	} else if (l->t == MAT) {
+	    t2 = nv - 1;
+	}
+
+	for (t=t1; t<=t2 && !p->err; t++) {
+	    tx = (l->t == SERIES)? l->v.xvec[t] : (l->t == MAT)? l->v.m->val[t] :
+		node_get_scalar(l, p);
+	    if (na(tx)) {
+		if (l->t == SERIES) {
+		    ret->v.xvec[t] = NADBL;
+		} else if (l->t != MAT) {
+		    ret->v.str = gretl_strdup("");
+		}
+	    } else if (vmap != NULL && S[vmap[i]] != NULL) {
+		/* a repeated date in series mode */
+		ret->v.xvec[t] = vmap[i] + 1;
+		i++;
+	    } else {
+		bytes = 0;
+		if (f == F_STRFDAY) {
+		    ed = (guint32) floor(tx);
+		    bytes = gretl_strfdate(buf, sizeof buf, fmt, ed);
+		} else if (f == F_ISODATE) {
+		    ed = (guint32) floor(tx);
+		    bytes = gretl_alt_strfdate(buf, sizeof buf, julian, ed);
+		} else {
+		    tt = (gint64) floor(tx);
+		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt);
+		}
+		if (bytes > 0) {
+		    dstr = gretl_strdup(g_strchomp(buf));
+		    if (l->t == SERIES) {
+			if (vmap != NULL) {
+			    ret->v.xvec[t] = vmap[i] + 1;
+			    S[vmap[i++]] = dstr;
+			} else {
+			    ret->v.xvec[t] = i + 1;
+			    S[i++] = dstr;
+			}
+		    } else if (l->t == MAT) {
+			p->err = gretl_array_set_string(ret->v.a, t, dstr, 0);
+		    } else {
+			ret->v.str = dstr;
+		    }
+		} else if (l->t == SERIES) {
+		    ret->v.xvec[t] = NADBL;
+		} else {
+		    ret->v.str = gretl_strdup("");
+		}
+	    }
+	}
+    }
+
+    if (l->t == SERIES) {
+	if (p->err && S != NULL) {
+	    strings_array_free(S, nv);
+	} else if (!p->err) {
+	    prepare_stringvec_return(ret, p, S, nv, 1);
+	}
+	free(vmap);
+    }
+
+    return ret;
+}
+
+static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
+{
+    int julian = (f == F_JULDATE);
+    int as_string = 0;
+    NODE *ret = NULL;
+
+    if (!scalar_node(l) && l->t != SERIES) {
+        node_type_error(f, 1, NUM, l, p);
+    } else {
+	as_string = node_get_bool(r, p, 0);
+    }
+
+    if (p->err) {
+	return NULL;
+    } else if (l->t == SERIES && as_string) {
+	return strftime_node(l, NULL, F_ISODATE, julian, p);
+    }
+
+    if (scalar_node(l)) {
+	ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
+    } else {
+	ret = aux_series_node(p);
+    }
+
+    if (ret != NULL && scalar_node(l)) {
+	double x = node_get_scalar(l, p);
+
+	if (!as_string && na(x)) {
+	    ret->v.xval = NADBL;
+	} else if (x < 1 || x > UINT_MAX) {
+	    p->err = E_INVARG;
+	} else if (as_string) {
+	    ret->v.str = ymd_extended_from_epoch_day((guint32) x,
+						     julian, &p->err);
+	} else {
+	    ret->v.xval = ymd_basic_from_epoch_day((guint32) x,
+						   julian, &p->err);
+	}
+    } else if (ret != NULL) {
+	double xt;
+	int t;
+
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	    xt = l->v.xvec[t];
+	    if (na(xt)) {
+		ret->v.xvec[t] = NADBL;
+	    } else if (xt >= 1 && xt <= UINT_MAX) {
+		ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
+							  julian, &p->err);
+	    } else {
+		p->err = E_INVARG;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* strptime_node() implements both strptime() and strpday(). In the
+   primary use case the @l node contains a string, array of
+   strings, or string-valued series. In the secondary case @l
+   contains ISO 8601 "basic" dates (scalar, series or vector).
+*/
+
+static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = NULL;
+    const char *fmt = NULL;
+    const char *src = NULL;
+    int str_series = 0;
+    int v = -1;
+    int n = 0;
+
+    if (l->t == SERIES) {
+	/* either string-valued or ISO basic */
+	v = l->vnum;
+	if (is_string_valued(p->dset, v)) {
+	    str_series = 1;
+	}
+	ret = aux_series_node(p);
+    } else if (l->t == ARRAY) {
+	/* must be strings array */
+	if (gretl_array_get_type(l->v.a) != GRETL_TYPE_STRINGS) {
+	    p->err = E_INVARG;
+	} else {
+	    n = gretl_array_get_length(l->v.a);
+	    ret = aux_sized_matrix_node(p, n, 1, 0);
+	}
+    } else if (l->t == MAT) {
+	/* must be ISO basic */
+	n = gretl_vector_get_length(l->v.m);
+	if (n == 0) {
+	    p->err = E_INVARG;
+	} else {
+	    ret = aux_sized_matrix_node(p, n, 1, 0);
+	}
+    } else {
+	/* single string or ISO basic */
+	if (l->t == STR) {
+	    src = l->v.str;
+	}
+	ret = aux_scalar_node(p);
+    }
+
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    if (src == NULL && !str_series && l->t != ARRAY) {
+        /* without a string arg we won't accept a format string */
         if (r->t != EMPTY) {
             p->err = E_INVARG;
         }
@@ -8908,37 +9028,87 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
     }
 
     if (!p->err) {
-        struct tm tm = {0,0,0,1,0,0,0,0,-1};
-        char *s;
+	double *targ = NULL;
+	int t, t1 = 0, t2 = 0;
+	char buf[32];
+	char *s;
 
-        if (src == NULL) {
-            /* has to be ISO 8601 basic */
-            gchar *buf = g_strdup_printf("%d", ymd);
+	if (l->t == SERIES) {
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
+	} else if (l->t == ARRAY) {
+	    t2 = gretl_array_get_length(l->v.a) - 1;
+	} else if (l->t == MAT) {
+	    t2 = n - 1;
+	} else {
+	    targ = &ret->v.xval;
+	}
 
-            s = strptime(buf, "%Y%m%d", &tm);
-            g_free(buf);
-        } else {
-            if (fmt == NULL) {
-                /* default to ISO 8601 extended */
-                fmt = "%Y-%m-%d";
-            }
-            s = strptime(src, fmt, &tm);
-        }
+	for (t=t1; t<=t2; t++) {
+	    struct tm tm = {0,0,0,1,0,0,0,0,-1};
+	    double x = NADBL;
 
-        if (s == NULL) {
-            /* strptime() failed */
-            p->err = E_INVARG;
-        } else {
-            double retval = (double) mktime(&tm);
+	    if (l->t == SERIES) {
+		if (str_series) {
+		    src = series_get_string_for_obs(p->dset, v, t);
+		} else {
+		    x = l->v.xvec[t];
+		}
+		targ = &ret->v.xvec[t];
+	    } else if (l->t == ARRAY) {
+		if ((src = gretl_array_get_data(l->v.a, t)) == NULL) {
+		    p->err = E_INVARG;
+		    break;
+		}
+		targ = &ret->v.m->val[t];
+	    } else if (l->t == MAT) {
+		x = l->v.m->val[t];
+		targ = &ret->v.m->val[t];
+	    } else if (l->t == NUM) {
+		x = l->v.xval;
+	    }
 
+	    if (src == NULL) {
+		/* has to be ISO 8601 basic */
+		if (na(x)) {
+		    *targ = NADBL;
+		    continue;
+		} else if (x < 0 || x != floor(x) || x > 99991231) {
+		    p->err = E_INVARG;
+		    break;
+		} else {
+		    sprintf(buf, "%d", (int) x);
+		    s = strptime(buf, "%Y%m%d", &tm);
+		}
+	    } else {
+		if (fmt == NULL) {
+		    /* default to ISO 8601 extended */
+		    fmt = "%Y-%m-%d";
+		}
+		s = strptime(src, fmt, &tm);
+	    }
+
+	    if (s == NULL) {
+		/* strptime() failed */
+		p->err = E_INVARG;
+		break;
+	    } else if (f == F_STRPDAY) {
+		int y = tm.tm_year + 1900;
+		int m = tm.tm_mon + 1;
+
+		*targ = (double) epoch_day_from_ymd(y, m, tm.tm_mday);
+		if (*targ == 0) {
+		    *targ = NADBL;
+		}
+	    } else {
+		/* F_STRPTIME */
 #ifdef WIN32
-            /* dates prior to 1970-01-01 not supported */
-            if (retval == -1) {
-                retval = NADBL;
-            }
+		*targ = win32_mktime(&tm);
+#else
+		*targ = (double) mktime(&tm);
 #endif
-            ret->v.xval = retval;
-        }
+	    }
+	}
     }
 
     return ret;
@@ -15319,63 +15489,61 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
         p->err = E_TYPES;
     } else {
         char *vname = l->v.str;
-        int vnum = current_series_index(p->dset, vname);
+	int v = current_series_index(p->dset, vname);
         const double *xvec = NULL;
-        double xval = NADBL;
+        double xt = NADBL;
         int subset = 0;
-        int err = 0;
 
-        if (r->t == SERIES) {
-            xvec = r->v.xvec;
-        } else if (r->t == MAT) {
-            xvec = xvec_from_matrix(r->v.m, p, &subset, &err);
-        } else {
-            xval = r->v.xval;
-        }
+	if (v == 0) {
+	    /* can't overwite the constant */
+	    p->err = E_INVARG;
+	} else if (v == -1) {
+	    /* no series called @vname: can we create one? */
+	    if (user_var_get_type_by_name(vname) != GRETL_TYPE_NONE) {
+		p->err = E_TYPES;
+            } else {
+                p->err = check_varname(vname);
+            }
+	}
 
-        if (!err && vnum > 0) {
-            /* a series of this name already exists */
+	if (!p->err) {
+	    /* get the data source */
+	    if (r->t == SERIES) {
+		xvec = r->v.xvec;
+	    } else if (r->t == MAT) {
+		xvec = xvec_from_matrix(r->v.m, p, &subset, &p->err);
+	    } else {
+		xt = r->v.xval;
+	    }
+	}
+
+	if (!p->err && v == -1) {
+	    /* add a new series if required */
+	    p->err = dataset_add_NA_series(p->dset, 1);
+	    if (!p->err) {
+		v = p->dset->v - 1;
+		strcpy(p->dset->varname[v], vname);
+	    }
+	}
+
+        if (!p->err) {
+	    /* copy data across */
             int t, i = 0;
 
             for (t=p->dset->t1; t<=p->dset->t2; t++) {
                 if (xvec != NULL) {
-                    xval = subset ? xvec[i++] : xvec[t];
+                    xt = subset ? xvec[i++] : xvec[t];
                 }
-                p->dset->Z[vnum][t] = xval;
-            }
-        } else if (!err) {
-            /* creating a new series */
-            GretlType ltype = user_var_get_type_by_name(vname);
-
-            if (ltype != GRETL_TYPE_NONE) {
-                /* cannot overwrite a variable of another type */
-                err = E_TYPES;
-            } else {
-                err = check_varname(vname);
-            }
-            if (!err) {
-                err = dataset_add_NA_series(p->dset, 1);
-            }
-            if (!err) {
-                int t, i = 0, v = p->dset->v - 1;
-
-                for (t=p->dset->t1; t<=p->dset->t2; t++) {
-                    if (xvec != NULL) {
-                        xval = subset ? xvec[i++] : xvec[t];
-                    }
-                    p->dset->Z[v][t] = xval;
-                }
-            }
-            if (!err) {
-                vnum = p->dset->v - 1;
-                strcpy(p->dset->varname[vnum], vname);
+                p->dset->Z[v][t] = xt;
             }
         }
 
-        ret = aux_scalar_node(p);
-        if (ret != NULL) {
-            ret->v.xval = err ? -1 : vnum;
-        }
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = v;
+	    }
+	}
     }
 
     return ret;
@@ -18340,15 +18508,18 @@ static NODE *eval (NODE *t, parser *p)
         ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
-        if (scalar_node(l)) {
-            ret = strftime_node(l, r, p);
+    case F_STRFDAY:
+        if (l->t == NUM || l->t == SERIES || l->t == MAT) {
+            ret = strftime_node(l, r, t->t, 0, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }
         break;
     case F_STRPTIME:
-        if (l->t == STR || scalar_node(l)) {
-            ret = strptime_node(l, r, p);
+    case F_STRPDAY:
+        if (l->t == STR || l->t == SERIES || l->t == ARRAY ||
+	    l->t == MAT || l->t == NUM) {
+            ret = strptime_node(l, r, t->t, p);
         } else {
             node_type_error(t->t, 0, STR, l, p);
         }

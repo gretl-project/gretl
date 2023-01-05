@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_UTILS_H
@@ -56,7 +56,7 @@ int libgretl_mpi_init (int self, int np, int dcmt);
 int gretl_mpi_initialized (void);
 #endif
 
-int blas_is_openblas (void);
+int blas_is_threaded (void);
 
 void blas_set_num_threads (int nt);
 
@@ -99,10 +99,10 @@ int true_const (int v, const DATASET *dset);
 char *format_obs (char *obs, int maj, int min, int pd);
 
 int set_obs (const char *parm1, const char *parm2,
-	     DATASET *dset, gretlopt opt);
+             DATASET *dset, gretlopt opt);
 
-int simple_set_obs (DATASET *dset, int pd, const char *stobs, 
-		    gretlopt opt);
+int simple_set_obs (DATASET *dset, int pd, const char *stobs,
+                    gretlopt opt);
 
 /* sorting and comparison */
 
@@ -152,13 +152,13 @@ double **doubles_array_new0 (int m, int n);
 
 int doubles_array_adjust_length (double **X, int m, int new_n);
 
-double **data_array_from_model (const MODEL *pmod, double **Z, 
-				int missv);
+double **data_array_from_model (const MODEL *pmod, double **Z,
+                                int missv);
 
 int ijton (int i, int j, int nrows);
 
-int transcribe_array (double *targ, const double *src, 
-		      const DATASET *dset); 
+int transcribe_array (double *targ, const double *src,
+                      const DATASET *dset);
 
 int gretl_copy_file (const char *src, const char *dest);
 
@@ -169,16 +169,16 @@ int gretl_delete_var_by_name (const char *s, PRN *prn);
 int gretl_spawn (char *cmdline);
 
 int gretl_pipe_output (gchar **argv, gchar **envp,
-		       const char *currdir, PRN *prn,
-		       gchar **errp);
+                       const char *currdir, PRN *prn,
+                       gchar **errp);
 
 #endif
 
 /* model selection criteria */
 
 int gretl_calculate_criteria (double ess, int n, int k,
-			      double *ll, double *aic, double *bic, 
-			      double *hqc);
+                              double *ll, double *aic, double *bic,
+                              double *hqc);
 
 int ls_criteria (MODEL *pmod);
 
@@ -188,8 +188,8 @@ int get_last_test_type (void);
 
 void record_test_result (double teststat, double pval);
 
-void record_matrix_test_result (gretl_matrix *tests, 
-				gretl_matrix *pvals);
+void record_matrix_test_result (gretl_matrix *tests,
+                                gretl_matrix *pvals);
 
 void record_LR_test_result (double teststat, double pval, double lnl);
 
@@ -227,7 +227,7 @@ int check_for_program (const char *prog);
 
 const char *blas_variant_string (void);
 
-int get_openblas_details (char **s1, char **s2);
+int get_blas_details (char **s1, char **s2, char **s3);
 
 gint64 gretl_monotonic_time (void);
 

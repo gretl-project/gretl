@@ -187,8 +187,8 @@ function string mat2latex (matrix mprint, bundle useropts[null])
     endif
 
     fmtstr = sprintf("%%.%df", opts.decimals)
-
-    outfile buf --buffer --quiet
+    string ret = ""
+    outfile --buffer=ret --quiet
 
         printf "\begin{tabular}{%s}\n", opts.format
         printf "\\hline\n &\t"
@@ -227,5 +227,5 @@ function string mat2latex (matrix mprint, bundle useropts[null])
 
     outfile --close
 
-    return buf
+    return ret
 end function

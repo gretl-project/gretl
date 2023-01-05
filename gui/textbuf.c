@@ -5032,21 +5032,26 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
     gtk_widget_show(sw);
 }
 
-static void set_pane_text_properties (GtkTextView *w2,
-				      GtkTextView *w1)
+static void set_pane_text_properties (GtkWidget *w2,
+				      GtkWidget *w1)
 {
-    gtk_text_view_set_wrap_mode(w2, 0);
-    gtk_text_view_set_left_margin(w2, 4);
-    gtk_text_view_set_right_margin(w2, 4);
+    GtkTextView *tv2 = GTK_TEXT_VIEW(w2);
+    GtkTextView *tv1 = GTK_TEXT_VIEW(w1);
+    gboolean s;
 
-    gtk_widget_modify_font(GTK_WIDGET(w2), fixed_font);
+    gtk_text_view_set_wrap_mode(tv2, 0);
+    gtk_text_view_set_left_margin(tv2, 4);
+    gtk_text_view_set_right_margin(tv2, 4);
+    gtk_widget_modify_font(w2, fixed_font);
 
-    if (gtk_text_view_get_editable(w1)) {
-	gtk_text_view_set_editable(w2, TRUE);
-	gtk_text_view_set_cursor_visible(w2, TRUE);
-    } else {
-	gtk_text_view_set_editable(w2, FALSE);
-	gtk_text_view_set_cursor_visible(w2, FALSE);
+    s = gtk_text_view_get_editable(tv1);
+    gtk_text_view_set_editable(tv2, s);
+    gtk_text_view_set_cursor_visible(tv2, s);
+
+    /* sourceview line numbering? */
+    if (GTK_IS_SOURCE_VIEW(w2)) {
+	s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(w1));
+	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(w2), s);
     }
 }
 
@@ -5061,11 +5066,10 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     GtkTextBuffer *tbuf;
     gint width, height;
 
-    sw = g_object_get_data(G_OBJECT(vbox), "sw");
-
     vmain = vwin_toplevel(vwin);
     gtk_window_get_size(GTK_WINDOW(vmain), &width, &height);
 
+    sw = g_object_get_data(G_OBJECT(vbox), "sw");
     g_object_ref(sw);
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
 
@@ -5089,8 +5093,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
 	view2 = gtk_text_view_new_with_buffer(tbuf);
     }
 
-    set_pane_text_properties(GTK_TEXT_VIEW(view2),
-			     GTK_TEXT_VIEW(view1));
+    set_pane_text_properties(view2, view1);
 
     g_signal_connect(G_OBJECT(view2), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);

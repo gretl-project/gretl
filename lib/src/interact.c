@@ -980,8 +980,8 @@ static int redirection_ok (PRN *prn)
     }
 }
 
-static int outname_check (const char *name, int backward,
-                          const DATASET *dset)
+int check_stringvar_name (const char *name, int allow_new,
+			  const DATASET *dset)
 {
     GretlType t = gretl_type_from_name(name, dset);
     int err = 0;
@@ -989,14 +989,14 @@ static int outname_check (const char *name, int backward,
     if (t != GRETL_TYPE_NONE && t != GRETL_TYPE_STRING) {
         err = E_TYPES;
     } else if (t == GRETL_TYPE_NONE) {
-        if (backward) {
-            /* compatibility: create the variable if possible */
+        if (allow_new) {
+            /* create the variable if possible */
             err = check_identifier(name);
             if (!err) {
                 err = create_user_var(name, GRETL_TYPE_STRING);
             }
         } else {
-            /* we now require that the variable already exists */
+            /* otherwise require that the variable already exists */
             gretl_errmsg_sprintf(_("'%s' : not a string variable"), name);
             err = E_DATA;
         }
@@ -1154,14 +1154,14 @@ do_outfile_command (gretlopt opt, const char *fname,
        name of a string variable).
     */
     if (opt & (OPT_B | OPT_T)) {
-        int backward = 0;
+        int compat = 0;
 
         if (strvar == NULL) {
             /* backward compatibility */
             strvar = fname;
-            backward = 1;
+            compat = 1;
         }
-        err = outname_check(strvar, backward, dset);
+        err = check_stringvar_name(strvar, compat, dset);
         if (!err) {
             err = redirect_to_tempfile(strvar, prn, opt, vparms);
         }
@@ -3088,11 +3088,13 @@ static void maybe_schedule_graph_callback (ExecState *s)
 {
     int gui_mode = gretl_in_gui_mode();
 
-    if (graph_written_to_file()) {
+    if (graph_written_to_file() || plot_output_to_buffer()) {
         if (gui_mode && *s->cmd->savename != '\0') {
             pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
         }
-        report_plot_written(s->prn);
+	if (!plot_output_to_buffer()) {
+	    report_plot_written(s->prn);
+	}
     } else if (gui_mode && !graph_displayed()) {
         schedule_callback(s);
     }
@@ -3124,7 +3126,7 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
                                     dset, opt, prn);
     } else if (cmd->ci == GNUPLOT) {
         if (opt & OPT_I) {
-            err = gnuplot_process_file(opt, prn);
+            err = gnuplot_process_file(prn);
         } else if (opt & OPT_C) {
             err = xy_plot_with_control(cmd->list, cmd->param,
                                        dset, opt);
@@ -3216,6 +3218,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
                 err = E_ALLOC;
             }
         }
+    }
+
+    if (!err) {
+	/* the --buffer option (OPT_b) is always incompatible
+	   with --output (OPT_U)
+	*/
+	err = incompatible_options(cmd->opt, OPT_b | OPT_U);
     }
 
     if (err) {

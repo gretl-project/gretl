@@ -1397,9 +1397,8 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
 {
     int n = 0;
 
-    if (!g_date_valid_julian(ed1) ||
-	!g_date_valid_julian(ed2) ||
-	ed2 < ed1) {
+    if (ed2 < ed1 || !g_date_valid_julian(ed1) ||
+	!g_date_valid_julian(ed2)) {
 	if (err != NULL) {
 	    *err = E_INVARG;
 	}
@@ -1409,17 +1408,18 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
     } else {
 	GDate date;
 	guint32 i;
-	int idx;
+	int wd;
 
 	g_date_clear(&date, 1);
 	g_date_set_julian(&date, ed1);
-	idx = g_date_get_weekday(&date) - 1;
+	wd = g_date_get_weekday(&date);
+	wd = (wd == G_DATE_SUNDAY)? 0 : wd;
 
 	for (i=ed1; i<=ed2; i++) {
-	    if (day_in_calendar(wkdays, idx % 7)) {
+	    if (day_in_calendar(wkdays, wd % 7)) {
 		n++;
 	    }
-	    idx++;
+	    wd++;
 	}
     }
 
@@ -1482,4 +1482,134 @@ int iso_week_from_date (const char *datestr)
     }
 
     return iso_week_number(y, m, d, &err);
+}
+
+/**
+ * gretl_strfdate:
+ * @s: target string.
+ * @slen: length of target string.
+ * @format: as per strftime().
+ * @ed: days since 1 CE.
+ *
+ * If @ed is found to be valid, writes a string representing
+ * the date of @ed to @s, governed by @format.
+ *
+ * Returns: The number of characters written to @s, or 0 in case
+ * of invalid input.
+ */
+
+int gretl_strfdate (char *s, int slen, const char *format,
+		    guint32 ed)
+{
+    int ret = 0;
+
+    if (g_date_valid_julian(ed)) {
+	GDate *date = g_date_new_julian(ed);
+
+	ret = (int) g_date_strftime(s, (gsize) slen, format, date);
+	g_date_free(date);
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_alt_strfdate:
+ * @s: target string.
+ * @slen: length of target string.
+ * @ed: days since 1 CE.
+ * @julian: 1 to use Julian calendar, 0 for Gregorian.
+ *
+ * If @ed is found to be valid, writes a string representing
+ * the date of @ed to @s, as ISO 8601 extended.
+ *
+ * Returns: The number of characters written to @s, or 0 in case
+ * of invalid input.
+ */
+
+int gretl_alt_strfdate (char *s, int slen, int julian,
+			guint32 ed)
+{
+    int ret = 0;
+    int y, m, d;
+    int err;
+
+    if (julian) {
+	err = julian_ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    } else {
+	err = ymd_bits_from_epoch_day(ed, &y, &m, &d);
+    }
+
+    if (!err) {
+	sprintf(s, "%04d-%02d-%02d", y, m, d);
+	ret = 10;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_strftime:
+ * @s: target string.
+ * @slen: length of target string.
+ * @format: as per strftime() or "localiso" or "utciso", or NULL for "%c".
+ * @t: Unix time as 64-bit integer.
+ *
+ * If @t and @format are found to be valid, writes a string representing
+ * the date and time of @t_day to @s, governed by @format.
+ *
+ * Returns: The number of characters written to @s, or 0 in case
+ * of invalid input.
+ */
+
+int gretl_strftime (char *s, int slen, const char *format,
+		    gint64 t)
+{
+    GDateTime *gdt;
+    int utc = 0;
+    int iso = 0;
+    int ret = 0;
+
+    if (format == NULL) {
+	format = "%c";
+    } else if (!strcmp(format, "utc")) {
+	format = "%c";
+	utc = 1;
+    } else if (!strcmp(format, "utc:8601")) {
+	utc = iso = 1;
+    } else if (!strncmp(format, "utc:", 4)) {
+	format = format + 4;
+	utc = 1;
+    } else if (!strcmp(format, "8601")) {
+	iso = 1;
+    }
+
+    if (utc) {
+	gdt = g_date_time_new_from_unix_utc(t);
+    } else {
+	gdt = g_date_time_new_from_unix_local(t);
+    }
+
+    if (gdt != NULL) {
+	gchar *tmp;
+
+	if (iso) {
+#if GLIB_MINOR_VERSION < 62
+	    tmp = g_date_time_format(gdt, "%Y-%m-%dT%H%M%d%Z");
+#else
+	    tmp = g_date_time_format_iso8601(gdt);
+#endif
+	} else {
+	    tmp = g_date_time_format(gdt, format);
+	}
+	if (tmp != NULL) {
+	    *s = '\0';
+	    strncat(s, tmp, slen - 1);
+	    ret = strlen(s);
+	    g_free(tmp);
+	}
+	g_date_time_unref(gdt);
+    }
+
+    return ret;
 }

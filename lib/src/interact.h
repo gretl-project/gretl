@@ -111,6 +111,9 @@ int is_plotting_command (CMD *cmd);
 
 void set_plot_produced (void);
 
+int check_stringvar_name (const char *name, int allow_new,
+			  const DATASET *dset);
+
 int gretl_delete_variables (int *list,
 			    const char *param,
 			    gretlopt opt,

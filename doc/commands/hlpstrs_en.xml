@@ -61,6 +61,7 @@
  <gentext key="bundles"       text="array of bundles"/>
  <gentext key="matrices-or-strings" text="array of matrices or strings"/>
  <gentext key="string-or-strings"  text="string or array of strings"/>
+ <gentext key="all-strings"   text="string, strings array or string-valued series"/>
  <gentext key="strings-or-list"  text="array of strings or list"/>
  <gentext key="series-vec-or-strings"    text="series, vector or strings array"/>
  <gentext key="char"          text="character"/>
@@ -70,6 +71,7 @@
  <gentext key="fncall"        text="function call"/>
  <gentext key="optional"      text="optional"/>
  <gentext key="conditional"   text="conditional"/>
+ <gentext key="depends"       text="depends on input"/>
  <gentext key="seebelow"      text="see below"/>
  <gentext key="varargs"       text="see below"/>
  <gentext key="chapter"       text="Chapter"/>

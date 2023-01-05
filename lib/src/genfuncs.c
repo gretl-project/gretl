@@ -8653,3 +8653,97 @@ gretl_matrix *felogit_rec_loglik (int t, int T,
 
     return ret;
 }
+
+static int val_map_search (double needle, const double *haystack,
+			   int n, int offset)
+{
+    int m = n/2;
+
+    if (needle == haystack[m]) {
+        return m + offset;
+    } else if (needle < haystack[0] || needle > haystack[n-1]) {
+        return -1;
+    } else if (needle < haystack[m]) {
+        return val_map_search(needle, haystack, m, offset);
+    } else {
+        return val_map_search(needle, haystack + m, n - m, offset + m);
+    }
+}
+
+/* Helper function for strftime() as applied to a series argument.  If
+   the numeric input series @x contains any duplicated values we need
+   a mapping from position in @x to position in an array of unique
+   values for the purpose of stringifying the output series.
+*/
+
+int *maybe_get_values_map (const double *x, int n, int *pnv, int *err)
+{
+    gretl_vector *v = NULL;
+    int *ret = NULL;
+    int mono = 0;
+    int n_ok = n;
+    int i, j = -1;
+
+    *pnv = 0;
+
+    /* Is @x increasing or decreasing monotonically?
+       This is a fairly cheap check for a sufficient
+       condition for no repetition. We count missing
+       values and check for bogus ones as we go.
+    */
+    for (i=0; i<n; i++) {
+	if (na(x[i])) {
+	    n_ok--;
+	} else if (x[i] < -6.2e10 || x[i] > 2.5e11) {
+	    /* outside of plausible time_t range */
+	    *err = E_INVARG;
+	    break;
+	} else if (i > 0 && !na(x[i-1])) {
+	    if (j < 0) {
+		mono = (x[i] > x[i-1])? 1 : (x[i] < x[i-1])? 2 : 0;
+		j = i;
+	    } else if ((mono == 1 && x[i] <= x[i-1]) ||
+		       (mono == 2 && x[i] >= x[i-1])) {
+		mono = 0;
+	    }
+	}
+    }
+
+    if (*err) {
+	return NULL;
+    } else if (n_ok == 0) {
+	*err = E_MISSDATA;
+	return NULL;
+    } else if (mono) {
+	/* no repetition: no map needed */
+	*pnv = n_ok;
+	return NULL;
+    }
+
+    v = gretl_matrix_values(x, n, OPT_S, err);
+
+    if (!*err) {
+	/* allocate the integer map */
+	ret = malloc(n_ok * sizeof *ret);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	int nv = gretl_vector_get_length(v);
+
+	for (i=0, j=0; i<n; i++) {
+	    if (na(x[i])) {
+		continue;
+	    }
+	    /* find the position of x[i] in @v */
+	    ret[j++] = val_map_search(x[i], v->val, nv, 0);
+	}
+	*pnv = nv;
+    }
+
+    gretl_matrix_free(v);
+
+    return ret;
+}

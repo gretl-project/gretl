@@ -1470,13 +1470,16 @@ static void nls_robust_failed_line (PRN *prn)
     }
 }
 
-static void hac_vcv_line (const VCVInfo *vi, PRN *prn)
+static void hac_vcv_line (const MODEL *pmod,
+			  const VCVInfo *vi,
+			  PRN *prn)
 {
     const char *kstrs[] = {
 	N_("Bartlett kernel"),
 	N_("Parzen kernel"),
 	N_("QS kernel")
     };
+    int missvals = 0;
 
     if (vi->vmin == KERNEL_QS) {
 	pprintf(prn, _("HAC standard errors, "
@@ -1486,13 +1489,18 @@ static void hac_vcv_line (const VCVInfo *vi, PRN *prn)
 		       "bandwidth %d"), vi->order);
     }
 
-    pprintf(prn, " (%s", _(kstrs[vi->vmin]));
-
+    pprintf(prn, ", %s", _(kstrs[vi->vmin]));
     if (vi->flags) {
 	pprintf(prn, ", %s", _("prewhitened"));
     }
+    pputc(prn, '\n');
 
-    pputs(prn, ")\n");
+    missvals = gretl_model_get_int(pmod, "hac_missvals");
+    if (missvals) {
+	pprintf(prn, "Observations not contiguous: %s method used",
+		missvals == HAC_ES ? "ES" : "AM");
+	pputc(prn, '\n');
+    }
 }
 
 static void hc_vcv_line (const VCVInfo *vi, PRN *prn)
@@ -1647,7 +1655,7 @@ void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
 	    hc_vcv_line(vi, prn);
 	    break;
 	case VCV_HAC:
-	    hac_vcv_line(vi, prn);
+	    hac_vcv_line(pmod, vi, prn);
 	    break;
 	case VCV_ML:
 	    ml_vcv_line(vi, prn);

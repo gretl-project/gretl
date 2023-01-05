@@ -1,6 +1,16 @@
 version 2022d, in progress
+- "logit" command (binary case): add a matrix holding odds
+  ratios plus standard errors and confidence intervals to the
+  $model bundle; also make this information available under
+  the Analysis menu in the GUI model window
+- "set" command: add key "hac_missvals" to select the policy
+  for HAC estimation when there are incomplete observations;
+  and make the Equal Spacing method the default
 - "midasreg" command: generate more specific error message
   for invalid specification
+- strptime() and strftime() functions: generalize to allow
+  vectorized usage, and add variants (strpday, strfday) to
+  work with epoch days rather than Unix time
 - pexpand() function: add optional boolean switch to expand
   in the cross-sectional dimension
 - readfile() function: ensure that we construct a legitimate
@@ -9,14 +19,20 @@ version 2022d, in progress
   tests in the returned matrix
 - int() function: return NA if the integer part of the argument
   lies beyond the range of a 32-bit signed integer
+- instring() and strstr() functions: drop the policy of auto-
+  escaping the string to be found
 - CSV data importation: be less hasty in concluding that the
   column separator is comma
 - CSV importation via GUI: clarify the dialog that governs
-  how the first column is treated
+  how the first column is treated; also don't show any string
+  tables at the moment of importation (strings tables can now
+  be accessed under the Data menu)
 - "join" via the GUI: make it evident that specifying keys
   may not be necessary with time-series data
 - "system" command: ensure that the $system bundle includes
   the sample limits as "sample_t1" and "sample_t2"
+- Script editor, split pane: ensure that when line-numbering
+  is selected it carries over to the new pane
 - Fix error message for invalid (string) array index
 - Fix error message for missing function-package dependency
 - Fix bug: buffer overrun when creating names for transformed
@@ -29,6 +45,8 @@ version 2022d, in progress
 - Fix for detection of the R executable when called via a
   foreign block on macOS
 - macOS build: include TargetConditionals.h in libgretl.h
+- MS Windows: work around the limitations of mktime() and
+  localtime() using GLib functionality
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops

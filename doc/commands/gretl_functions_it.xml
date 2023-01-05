@@ -12513,6 +12513,24 @@
 	  stringa appropriata.
 	</para>
 	<para>
+	  Nota bene: in certi casi, l'output di questa funzione
+	  potrebbe dover essere aggiustato a seconda dei fusi
+	  orari. Se, ad esempio, l'orologio del sistema su cui si sta
+	  lavorando è impostato a un fuso orario ad est di UTC (per
+	  esempio, l'Europa centrale), la chiamata
+	</para>
+	<code>
+	  strftime(1234567890, "%d-%m-%Y")
+	</code>
+	<para>
+	produrrà la stringa <quote>14-02-2009</quote>. Se invece il
+	sistema è impostato come UTC o ancora più a ovest (per
+	esempio, gli Stati Uniti), la stessa chiamata darà come
+	risultato <quote>13-02-2009</quote>. Il motivo è che il numero
+	1234567890 corrisponde precisamente al 13 febbraio 2009, alle
+	23:31:30 UTC.
+	</para>
+	<para>
 	  Attenzione: a causa di differenze nell'implementazione,
 	  questa funzione si comporta in modo diverso su sistemi
 	  Windows e Unix-like per date precedenti al 1 gennaio
@@ -12632,10 +12650,29 @@
       </description>
     </function>
 
-    <function name="strptime" section="calendar" output="scalar">
+
+    <function name="strpday" section="calendar" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="string">formato</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 Questa funzione è quasi uguale a <fncref targ="strptime"/>, a
+	 parte il fatto che il valore restituito in output è un
+	 <quote>epoch day</quote>, per la cui definizione si rimanda a
+	 <fncref targ="epochday"/>.  Visto che la risoluzione è a
+	 livello di giorno, qualsiasi informazione infragiornaliera
+	 (come ad esmepio le ore) in <argname>s</argname> viene
+	 ignorata.
+	</para>
+      </description>
+    </function>
+
+    <function name="strptime" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="int-or-string">s</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12643,6 +12680,30 @@
 	  analizza la stringa <argname>s</argname> come data/ora usando
 	  il <argname>formato</argname> specificato e restituisce  il
 	  numero di secondi dall'inizio del 1970 (UTC).
+	</para>
+	<para>
+	  Se l'argomento <argname>formato</argname> viene omesso, il
+	  default è il formato ISO 8601 <quote>esteso</quote>, e cioè
+	  <lit>YYYY-MM-DD</lit> (che sarebbe
+	  <quote><lit>%Y-%m-%d</lit></quote> come formato
+	  <argname>strptime</argname>).  In alternativa, il primo
+	  argomento può essere un intero ad 8 cifre conforme alla
+	  specificazione ISO 8601 <quote>di base</quote>,
+	  <lit>YYYYMMDD</lit> (per esempio, 20221220). In questo case
+	  l'argomento <argname>formato</argname> deve essere omesso.
+	</para>
+	<para>
+	  Si noti il valore restituito da questa funzione dipende dal
+	  settaggio di fuso orario del sistema su cui si sta
+	  lavorando. Ad esempio, l'output di 
+	</para>
+	<code>
+	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
+	</code>
+	<para>
+	  sarà 1234567890 solo se l'ora è impostata a UTC. Se invece,
+	  per esempio, l'ora è impostata alla zona pacifica degli USA
+	  (ad esempio, la California), l'output sarà 1234596690.
 	</para>
 	<para>
 	  Attenzione: a causa di differenze nell'implementazione,

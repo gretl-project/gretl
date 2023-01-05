@@ -39,13 +39,6 @@ enum {
     VCV_XPX
 };
 
-enum {
-    HAC_ES = 1,
-    HAC_AM
-};
-
-static int hac_missing = HAC_ES;
-
 static int qr_make_cluster_vcv (MODEL *pmod, int ci,
 				const DATASET *dset,
 				gretl_matrix *XX,
@@ -987,18 +980,16 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     int T = pmod->nobs;
     int free_uh = 0;
     int subzero = 0;
+    int missvals = 0;
     int err = 0;
 
-    /* temporary hack */
-    char *evar = getenv("HAC_ALLOW_MISSING");
-    if (evar != NULL && !strcmp(evar, "AM")) {
-	hac_missing = HAC_AM;
-    }
-
-    if (pmod->missmask != NULL && hac_missing == HAC_AM) {
-	/* substitute zeros at missing observations */
-	T = pmod->t2 - pmod->t1 + 1;
-	subzero = 1;
+    if (pmod->missmask != NULL) {
+	missvals = libset_get_int(HAC_MISSVALS);
+	if (missvals == HAC_AM) {
+	    /* substitute zeros at missing observations */
+	    T = pmod->t2 - pmod->t1 + 1;
+	    subzero = 1;
+	}
     }
 
     X = make_data_X(pmod, dset, subzero);
@@ -1010,7 +1001,7 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 	int t, s = pmod->t1;
 
 	uh = gretl_matrix_alloc(T, 1);
-	if (hac_missing == HAC_ES) {
+	if (missvals == HAC_ES) {
 	    /* transcribe just the non-missing residuals into @uh */
 	    for (t=0; t<T; t++) {
 		while (na(pmod->uhat[s])) s++;
@@ -1063,6 +1054,9 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 	    gretl_model_set_double(pmod, "hac_bw", vi.bw);
 	} else {
 	    gretl_model_set_double(pmod, "hac_bw", (double) vi.order);
+	}
+	if (missvals) {
+	    gretl_model_set_int(pmod, "hac_missvals", missvals);
 	}
     }
 

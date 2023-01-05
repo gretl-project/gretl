@@ -180,7 +180,7 @@ int set_omp_n_threads (int n)
     } else {
 	omp_n_threads = n;
 	omp_set_num_threads(n); /* note: overrides env */
-	if (blas_is_openblas()) {
+	if (blas_is_threaded()) {
 	    blas_set_num_threads(n);
 	}
     }
@@ -199,11 +199,9 @@ void num_threads_init (int blas_type)
     omp_n_threads = nc;
     omp_set_num_threads(nc);
 #endif
-    if (blas_type == BLAS_OPENBLAS) {
+    if (blas_is_threaded()) {
 	blas_set_num_threads(nc);
-    }
-    if (blas_type > BLAS_NETLIB) {
-	set_blas_mnk_min(90000);
+        set_blas_mnk_min(90000); /* ? */
     }
 }
 

@@ -103,4 +103,13 @@ int fill_monthlen_array (double *mlen, int t1, int t2,
 			 const double *yrvec,
 			 int julian);
 
+int gretl_strfdate (char *s, int slen, const char *format,
+		    guint32 ed);
+
+int gretl_alt_strfdate (char *s, int slen, int julian,
+			guint32 ed);
+
+int gretl_strftime (char *s, int slen, const char *format,
+		    gint64 t);
+
 #endif /* CALENDAR_H */ 

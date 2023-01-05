@@ -108,6 +108,7 @@
       <menuitem action="RemoveObs"/>
       <separator/>
       <menuitem action="DataInfo"/>
+      <menuitem action="StringTables"/>
       <menuitem action="DataMarkers"/>
       <menuitem action="VarLabels"/>
       <separator/>

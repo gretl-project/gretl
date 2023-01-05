@@ -89,6 +89,8 @@ int win32_check_for_program (const char *prog);
 char *strptime (const char *buf, const char *format,
 		struct tm *timeptr);
 
+double win32_mktime (struct tm *tm);
+
 double win32_fscan_nonfinite (FILE *fp, int *err);
 
 double win32_sscan_nonfinite (const char *s, int *err);
