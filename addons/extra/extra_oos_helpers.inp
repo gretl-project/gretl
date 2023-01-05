@@ -1,12 +1,12 @@
 /* 
  -- This file just contains the private helper functions;
- the main add_outofsample function lives in extra_withdata.inp --
+ the main put_outofsmpl function lives in extra_withdata.inp --
  
 Functions by Sven
  related to ticket https://sourceforge.net/p/gretl/todo/76/
  " Provide expert hansl function to grab out-of-sample data"
  
- The main interface is the add_outofsample() function, 
+ The main interface is the put_outofsmpl() function,
    which accepts a bundle like $model or $system,
    and returns a copy of that bundle with the additional 
    members (all of matrix type):
