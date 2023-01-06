@@ -110,6 +110,9 @@ int gretl_alt_strfdate (char *s, int slen, int julian,
 			guint32 ed);
 
 int gretl_strftime (char *s, int slen, const char *format,
-		    gint64 t);
+		    gint64 t, int off_secs);
+
+char *gretl_strptime (const char *s, const char *format,
+		      double *dt);
 
 #endif /* CALENDAR_H */ 

@@ -1548,6 +1548,21 @@ int gretl_alt_strfdate (char *s, int slen, int julian,
     return ret;
 }
 
+static GDateTime *date_time_from_unix_offset (gint64 t, int off_secs)
+{
+    GDateTime *gdt0, *gdt1;
+    GTimeZone *gtzo;
+
+    gtzo = g_time_zone_new_offset(off_secs);
+    gdt0 = g_date_time_new_from_unix_utc(t);
+    gdt1 = g_date_time_to_timezone(gdt0, gtzo);
+
+    g_date_time_unref(gdt0);
+    g_time_zone_unref(gtzo);
+
+    return gdt1;
+}
+
 /**
  * gretl_strftime:
  * @s: target string.
@@ -1563,7 +1578,7 @@ int gretl_alt_strfdate (char *s, int slen, int julian,
  */
 
 int gretl_strftime (char *s, int slen, const char *format,
-		    gint64 t)
+		    gint64 t, int off_secs)
 {
     GDateTime *gdt;
     int utc = 0;
@@ -1584,7 +1599,9 @@ int gretl_strftime (char *s, int slen, const char *format,
 	iso = 1;
     }
 
-    if (utc) {
+    if (off_secs != 0) {
+	gdt = date_time_from_unix_offset(t, off_secs);
+    } else if (utc) {
 	gdt = g_date_time_new_from_unix_utc(t);
     } else {
 	gdt = g_date_time_new_from_unix_local(t);
@@ -1595,7 +1612,7 @@ int gretl_strftime (char *s, int slen, const char *format,
 
 	if (iso) {
 #if GLIB_MINOR_VERSION < 62
-	    tmp = g_date_time_format(gdt, "%Y-%m-%dT%H%M%d%Z");
+	    tmp = g_date_time_format(gdt, "%Y-%m-%dT%H%M%d%z");
 #else
 	    tmp = g_date_time_format_iso8601(gdt);
 #endif
@@ -1612,4 +1629,67 @@ int gretl_strftime (char *s, int slen, const char *format,
     }
 
     return ret;
+}
+
+static gint64 get_unix_time_GLib (const char *s, const char *rem,
+				  struct tm *tm)
+{
+    const char *isofmt = "%Y-%m-%dT%H:%M:%S";
+    GDateTime *gdt = NULL;
+    gchar *tmp;
+    char buf[64];
+    gint64 t = 0;
+
+    strftime(buf, sizeof buf, isofmt, tm);
+    tmp = g_strdup_printf("%s%s", buf, rem);
+    gdt = g_date_time_new_from_iso8601(tmp, NULL);
+    g_free(tmp);
+
+    if (gdt != NULL) {
+	t = g_date_time_to_unix(gdt);
+	g_date_time_unref(gdt);
+    }
+
+    return t;
+}
+
+static gchar *get_adjusted_format (const char *fmt, int *got_tz)
+{
+    gchar *ret = g_strdup(fmt);
+    gchar *p = strstr(ret, "%z");
+
+    if (p != NULL) {
+	*p = '\0';
+	*got_tz = 1;
+    }
+
+    return ret;
+}
+
+char *gretl_strptime (const char *s, const char *format, double *dt)
+{
+    struct tm tm = {0,0,0,1,0,0,0,0,-1};
+    int got_tz = 0;
+    char *rem;
+
+    if (strstr(format, "%z") != NULL) {
+	gchar *adjfmt = get_adjusted_format(format, &got_tz);
+
+	rem = strptime(s, adjfmt, &tm);
+	g_free(adjfmt);
+    } else {
+	rem = strptime(s, format, &tm);
+    }
+
+    if (got_tz && rem != NULL && *rem != '\0') {
+	*dt = (double) get_unix_time_GLib(s, rem, &tm);
+    } else {
+#ifdef WIN32
+	*dt = win32_mktime(&tm);
+#else
+	*dt = (double) mktime(&tm);
+#endif
+    }
+
+    return rem;
 }

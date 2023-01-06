@@ -8774,13 +8774,14 @@ static NODE *aux_sized_array_node (GretlType type, int n, parser *p)
    wanted on return.
 */
 
-static NODE *strftime_node (NODE *l, NODE *r, int f,
+static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 			    int julian, parser *p)
 {
     NODE *ret = NULL;
     const char *fmt = NULL;
     int *vmap = NULL;
     char **S = NULL;
+    int offset = 0;
     int nv = 0;
 
     if (l->t == SERIES) {
@@ -8809,7 +8810,12 @@ static NODE *strftime_node (NODE *l, NODE *r, int f,
 	}
     }
 
-    if (l->t == SERIES) {
+    /* if @o isn't null or empty it should hold an offset in seconds */
+    if (!null_node(o)) {
+	offset = node_get_int(o, p);
+    }
+
+    if (!p->err && l->t == SERIES) {
 	const double *x = l->v.xvec + p->dset->t1;
 	int n = sample_size(p->dset);
 
@@ -8866,7 +8872,7 @@ static NODE *strftime_node (NODE *l, NODE *r, int f,
 		    bytes = gretl_alt_strfdate(buf, sizeof buf, julian, ed);
 		} else {
 		    tt = (gint64) floor(tx);
-		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt);
+		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt, offset);
 		}
 		if (bytes > 0) {
 		    dstr = gretl_strdup(g_strchomp(buf));
@@ -8925,7 +8931,7 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     if (p->err) {
 	return NULL;
     } else if ((l->t == SERIES || l->t == MAT) && as_string) {
-	return strftime_node(l, NULL, F_ISODATE, julian, p);
+	return strftime_node(l, NULL, NULL, F_ISODATE, julian, p);
     }
 
     if (l->t == MAT) {
@@ -9057,6 +9063,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 
 	for (t=t1; t<=t2; t++) {
 	    struct tm tm = {0,0,0,1,0,0,0,0,-1};
+	    int handled = 0;
 	    double x = NADBL;
 
 	    if (l->t == SERIES) {
@@ -9096,7 +9103,12 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		    /* default to ISO 8601 extended */
 		    fmt = "%Y-%m-%d";
 		}
-		s = strptime(src, fmt, &tm);
+		if (f == F_STRPDAY) {
+		    s = strptime(src, fmt, &tm);
+		} else {
+		    s = gretl_strptime(src, fmt, targ);
+		    handled = 1;
+		}
 	    }
 
 	    if (s == NULL) {
@@ -9111,7 +9123,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		if (*targ == 0) {
 		    *targ = NADBL;
 		}
-	    } else {
+	    } else if (!handled) {
 		/* F_STRPTIME */
 #ifdef WIN32
 		*targ = win32_mktime(&tm);
@@ -18519,9 +18531,15 @@ static NODE *eval (NODE *t, parser *p)
         ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
+        if (l->t == NUM || l->t == SERIES || l->t == MAT) {
+            ret = strftime_node(l, m, r, t->t, 0, p);
+        } else {
+            node_type_error(t->t, 0, NUM, l, p);
+        }
+        break;
     case F_STRFDAY:
         if (l->t == NUM || l->t == SERIES || l->t == MAT) {
-            ret = strftime_node(l, r, t->t, 0, p);
+            ret = strftime_node(l, r, NULL, t->t, 0, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }
