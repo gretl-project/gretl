@@ -346,88 +346,95 @@ endloop
 
 \subsection{Unix seconds and time zones}
 
-As mentioned above, date/time information stored in the form of Unix
-seconds is always relative to UTC, while the string representations
-associated with the \texttt{strp*} functions (as input) and
-\texttt{strf*} functions (as output) are relative to local time. So
-for example a Unix seconds value of 1234567890 corresponds to
-``13-02-2009 23:31:30'' in UTC, but on a computer whose clock is set
-to Central European Time (CET) the call
-\begin{code}
-  strftime(1234567890, "%d-%m-%Y")
-\end{code}
-will return the string ``14-02-2009'', because at that moment it was
-already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
+At 8:46 in the morning of September 11, 2001 an airliner crashed into
+the North Tower of the World Trade Center in New York. Relative to
+what time zone is that statement correct? Eastern Daylight Time (EDT),
+of course. Unless we have special reason to do otherwise we always
+report the time of an event in the local time of the event; and if we
+do otherwise we need to state the metric we're using (for example, one
+might say that this event occurred at 2001-09-11 12:46 UTC).
 
-If you wish to determine the offset of your time zone with respect
-with UTC, it's sufficient to invoke the \texttt{strptime} function
-with an argument of 19700101.  An example of such usage is given in
-the script~\ref{ex:tzoffset}.
+Now consider the following script:
+%
+\begin{code}
+date = "2001-09-11 08:46"
+format = "%Y-%m-%d %H:%M"
+usecs = strptime(date, format)
+check = strftime(usecs, format)
+printf "Unix time %d\n", usecs
+printf "original:  %s\n", date
+printf "recovered: %s\n", check
+\end{code}
+
+Run this script in any time zone you like and the last line of output
+will read
+\begin{code}
+recovered: 2001-09-11 08:46
+\end{code}
+The \texttt{usecs} value will differ by time zone---for example it'll
+be 1000212360 under Eastern Daylight Time but 1000194360 under Central
+European Time---but this difference ``cancels out'' in recovering the
+original time via \texttt{strftime}.
+
+So far, so good. But suppose I write a script in which I store the
+date as Unix seconds, with my laptop's clock set to EDT:
+\begin{code}
+usecs = 1000212360
+date = strftime(usecs, "%Y-%m-%d %H:%M")
+print date
+\end{code}
+Running this script under EDT will again print out
+``\texttt{2001-09-11 08:46}'', but if I take my laptop to Italy in
+June, set its clock to the local time, and rerun the script, I'll get
+%
+\begin{code}
+2001-09-11 14:46
+\end{code}
+%
+Is that a problem? Well, 14:46 is indeed the time in Italy when it's
+08:46 in New York (with both zones in their Summer variants); it's a
+problem only if you want to preserve the locality of the original
+time. To do that you need to give time-zone information to both
+\texttt{strptime} and \texttt{strftime}. This is illustrated in
+Listing~\ref{ex:tzones}.
 
 \begin{script}[htbp]
-  \scriptcaption{Exploring the time-zone offset}
-  \label{ex:tzoffset}
+  \fragcaption{Enabling invariance with respect to current time zone}
+  \label{ex:tzones}
 \begin{scodebit}
-set verbose off
-
-# nearly midnight on 13/2/2009 in London
-scalar s = 1234567890
-# corresponding date according to your time zone
-string datestring = strftime(s, "%d-%m-%Y %H:%M:%S %Z")
-printf "local date/time: %s\n", datestring
-
-# determine local offset relative to UTC
-scalar offset = strptime(19700101)
-printf "offset in seconds: %d\n", offset
-
-# date in UTC
-utc_datestring = strftime(s + offset, "%d-%m-%Y %H:%M:%S")
-printf "UTC date/time: %s\n", utc_datestring
+string date = "2001-09-11 08:46 -0400"
+string format = "%Y-%m-%d %H:%M %z"
+usecs = strptime(date, format)
+printf "Unix time %d\n", usecs
 \end{scodebit}
-%
-If you run the script in the CET zone you should get the following
-output:
-\begin{outbit}
-local date/time: 14-02-2009 00:31:30 CET
-offset in seconds: -3600
-UTC date/time: 13-02-2009 23:31:30
-\end{outbit}
-\end{script}
+  In the code above we specify the time zone in \texttt{date} using
+  \texttt{-0400}, meaning 4 hours behind UTC, which is correct when
+  Daylight Saving time is in force in the Eastern US. And we match
+  this with the ``\verb|%z|'' specifier in \texttt{format}. As a
+  result, regardless of the time zone in which the code is run the
+  Unix time value will be 1000212360. Then we come to unpacking the
+  Unix time value:
+\begin{scodebit}
+date = strftime(1000212360, "%Y-%m-%d %H:%M %z", -4*3600)
+print date
+\end{scodebit}
+  Here we use the third, optional argument to \texttt{strftime} to
+  supply the offset in seconds of EDT relative to UTC. Having told
+  \texttt{strptime} the time zone, why do we need this? Well, remember
+  that Unix time is just a scalar value, always relative to UTC: it
+  cannot store time-zone information. Anyway, the result is that this
+  code will print \texttt{2001-09-11 08:46 -0400} regardless of where
+  and when it is executed.
 
-A few points are worth noting in relation to
-Listing~\ref{ex:tzoffset}. First, the idiom
-\begin{code}
-scalar offset = strptime(19700101)
-\end{code}
-is special gretl shorthand (giving an ISO 8601 basic date in place of
-the usual date-string plus format, with the format left implicit). A more
-standard way of doing the same thing, also acceptable in gretl, would
-be
-\begin{code}
-scalar offset = strptime("1970-01-01", "%Y-%m-%d")
-\end{code}
-Second, looking up the offset is not really required to obtain the
-corresponding UTC date/time, thanks to another gretl special. If you
-prepend ``\texttt{utc:}'' to the format string, as in
-\begin{code}
-utc_datestring = strftime(s, "utc:%d-%m-%Y %H:%M:%S")
-\end{code}
-you'll get UTC output. Finally, readers whose operating system
-supports the \texttt{TZ} environment variable (such as Linux or macOS)
-but who are not in the CET zone might like to verify the script's CET
-output, using this command in a terminal window:
-\begin{code}
-TZ="CET-1" gretlcli -b tzones.inp
-\end{code}
-(where we assume the script is saved as \texttt{tzones.inp}). Do
-``\texttt{man tzset}'' for details on what's going on.\footnote{We'll
-  add one point here. The \texttt{offset} calculated in the example
-  script, and also the offset indicated by the \texttt{-1} in
-  \texttt{TZ="CET-1"}, represent the time (in seconds or hours,
-  respectively) that must be added to local time to get UTC. However,
-  in the standard representation of time zones---for example, of CET
-  as UTC+1---it's the other way round: UTC is the base and the offset
-  is that which must be added to UTC to get local time.}
+  \vspace{1ex} Some additional comments are in order. First, spaces
+  matter in parsing the \texttt{strptime} arguments: they must match
+  between the date and format strings. In the example above we
+  inserted spaces before \verb|-0400| and \verb|%z|. We could have
+  omitted both spaces, but not just one of them. Second, the
+  \textsf{C} standard does not require that \texttt{strptime} and
+  \texttt{strftime} know anything about time zones; the extensions
+  offered by gretl are supported by \textsf{GLib} functionality.
+\end{script}
 
 \section{Epoch day arithmetic}
 \label{sec:cal-arith}
@@ -516,12 +523,12 @@ frequency on a dataset, assuming it starts on January 1, 1990.
   \begin{tabular}{clllll}
     frequency & description & constructor & \dollar{obsmajor} &
        \dollar{obsminor} & \dollar{obsmicro}\\
-    1 & annual & \texttt{1 1990} & year & NA & NA\\
-    4 & quarterly & \texttt{4 1990:1} & year & quarter & NA\\
-    12 & monthly & \texttt{12 1990:01} & year & month & NA\\
+    1 & annual & \texttt{1 1990} & year & -- & --\\
+    4 & quarterly & \texttt{4 1990:1} & year & quarter & --\\
+    12 & monthly & \texttt{12 1990:01} & year & month & --\\
     5, 6, 7 & daily & $n$ \texttt{1990-01-01} & year & month & day\\
     52 & weekly & \texttt{52 1990-01-01} & year & month & day\\
-    24 & hourly & \texttt{24 726468:01} & day & hour & NA
+    24 & hourly & \texttt{24 726468:01} & day & hour & --
   \end{tabular}
   \caption{Calendrical frequencies and accessors}
   \label{tab:cal-accessors}
