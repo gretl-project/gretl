@@ -520,7 +520,7 @@ static void open_file_from_filelist (GtkAction *action)
 	    }
 	}
 #endif
-	verify_open_data(NULL, 0);
+	verify_open_data(NULL, 0, FALSE);
     } else if (!strcmp(ftype, "Script")) {
 	set_tryfile(scriptp[i]);
 	do_open_script(EDIT_HANSL);

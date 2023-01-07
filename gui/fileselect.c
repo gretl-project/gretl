@@ -708,7 +708,7 @@ file_selector_process_result (const char *in_fname, int action,
 #ifndef GRETL_EDIT
     else if (action == OPEN_DATA) {
 	set_tryfile(fname);
-	verify_open_data(NULL, action);
+	verify_open_data(NULL, action, FALSE);
     } else if (action == APPEND_DATA) {
 	set_tryfile(fname);
 	do_open_data(NULL, action);
