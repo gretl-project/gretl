@@ -1550,17 +1550,38 @@ int gretl_alt_strfdate (char *s, int slen, int julian,
 
 static GDateTime *date_time_from_unix_offset (gint64 t, int off_secs)
 {
-    GDateTime *gdt0, *gdt1;
-    GTimeZone *gtzo;
+    GDateTime *gdt0;
 
-    gtzo = g_time_zone_new_offset(off_secs);
     gdt0 = g_date_time_new_from_unix_utc(t);
-    gdt1 = g_date_time_to_timezone(gdt0, gtzo);
 
-    g_date_time_unref(gdt0);
-    g_time_zone_unref(gtzo);
+    if (off_secs == 0) {
+	return gdt0;
+    } else {
+	GTimeZone *gtzo;
+	GDateTime *gdt1;
 
-    return gdt1;
+#if GLIB_MINOR_VERSION < 58
+	/* g_time_zone_new_offset() not available */
+	int pm = off_secs < 0 ? -1 : 1;
+	int a = abs(off_secs);
+	int h = a / 3600;
+	int m = (a - 3600*h) / 60;
+	int s = a - 3600*h - 60*m;
+	gchar *tmp;
+
+	h *= pm;
+	tmp = g_strdup_printf("%+02d:%02d:%02d", h, m, s);
+	gtzo = g_time_zone_new(tmp);
+	g_free(tmp);
+#else
+	gtzo = g_time_zone_new_offset(off_secs);
+#endif
+	gdt1 = g_date_time_to_timezone(gdt0, gtzo);
+	g_date_time_unref(gdt0);
+	g_time_zone_unref(gtzo);
+
+	return gdt1;
+    }
 }
 
 /**
@@ -1569,40 +1590,35 @@ static GDateTime *date_time_from_unix_offset (gint64 t, int off_secs)
  * @slen: length of target string.
  * @format: as per strftime() or "localiso" or "utciso", or NULL for "%c".
  * @t: Unix time as 64-bit integer.
+ * @off_secs: offset in seconds relative to UTC.
  *
  * If @t and @format are found to be valid, writes a string representing
- * the date and time of @t_day to @s, governed by @format.
+ * the date and time of @t_day to @s, governed by @format. By default
+ * date and time are relative to local time.
  *
  * Returns: The number of characters written to @s, or 0 in case
  * of invalid input.
  */
 
 int gretl_strftime (char *s, int slen, const char *format,
-		    gint64 t, int off_secs)
+		    gint64 t, double off_secs)
 {
-    GDateTime *gdt;
-    int utc = 0;
+    GDateTime *gdt = NULL;
     int iso = 0;
     int ret = 0;
 
     if (format == NULL) {
 	format = "%c";
-    } else if (!strcmp(format, "utc")) {
-	format = "%c";
-	utc = 1;
-    } else if (!strcmp(format, "utc:8601")) {
-	utc = iso = 1;
-    } else if (!strncmp(format, "utc:", 4)) {
-	format = format + 4;
-	utc = 1;
     } else if (!strcmp(format, "8601")) {
 	iso = 1;
     }
 
-    if (off_secs != 0) {
-	gdt = date_time_from_unix_offset(t, off_secs);
-    } else if (utc) {
-	gdt = g_date_time_new_from_unix_utc(t);
+    if (!na(off_secs)) {
+	int ioff = (int) floor(off_secs);
+
+	if (abs(ioff) <= 12 * 3600) {
+	    gdt = date_time_from_unix_offset(t, ioff);
+	}
     } else {
 	gdt = g_date_time_new_from_unix_local(t);
     }

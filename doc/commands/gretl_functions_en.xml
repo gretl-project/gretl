@@ -12423,6 +12423,7 @@
       <fnargs>
 	<fnarg type="anyfloat">tm</fnarg>
 	<fnarg optional="true" type="string">format</fnarg>
+	<fnarg optional="true" type="scalar">offset</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12435,6 +12436,15 @@
 	  and time representation for the current locale</quote> as
 	  determined by the system C library. See below for more on
 	  the format specification.
+	</para>
+	<para>
+	  The optional <argname>offset</argname> argument can be used
+	  to specify an offset in seconds relative to UTC, thus
+	  selecting a time zone other than the default, which is
+	  always local time. For example an offset of 3600 selects
+	  Central European Time, while 0 selects GMT. The absolute
+	  value of <argname>offset</argname> should not exceed 86400
+	  (24 hours).
 	</para>
 	<para>
 	  The specific type returned depends on that of
@@ -12464,34 +12474,11 @@
 	  such pages, or via one of the many websites which present
 	  relevant information, such as
 	  <url>https://devhints.io/strftime</url>. In addition to the
-	  standard formats gretl recognizes a few specials, as
-	  follows.
+	  standard formats gretl recognizes a special option: if
+	  <argname>format</argname> is just
+	  <quote><lit>8601</lit></quote>, date and time are shown in
+	  ISO 8601 format.
 	</para>
-	<ilist>
-	  <li>
-	    <para>
-	      If <argname>format</argname> is just
-	      <quote><lit>utc</lit></quote>, date and time are
-	      shown in the <quote>locally preferred</quote> format,
-	      but relative to UTC.
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      If <argname>format</argname> is just
-	      <quote><lit>utc:8601</lit></quote>, date and time are
-	      shown as UTC in ISO 8601 format.
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      If <argname>format</argname> takes the form of
-	      <quote><lit>utc:XXX</lit></quote> where <lit>XXX</lit>
-	      is a standard <lit>strftime</lit> format string, UTC
-	      time is formatted per <lit>XXX</lit>.
-	    </para>
-	  </li>
-	</ilist>
       </description>
     </function>
 

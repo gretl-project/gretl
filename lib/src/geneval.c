@@ -8781,7 +8781,7 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
     const char *fmt = NULL;
     int *vmap = NULL;
     char **S = NULL;
-    int offset = 0;
+    double offset = NADBL;
     int nv = 0;
 
     if (l->t == SERIES) {
@@ -8812,7 +8812,7 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 
     /* if @o isn't null or empty it should hold an offset in seconds */
     if (!null_node(o)) {
-	offset = node_get_int(o, p);
+	offset = node_get_scalar(o, p);
     }
 
     if (!p->err && l->t == SERIES) {
