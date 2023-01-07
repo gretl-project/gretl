@@ -152,20 +152,23 @@ comparison (which of two dates, on a given calendar, refers to a later
 day?) but with epoch days one can carry out fully-fledged ``dates
 arithmetic.''  Epoch days are always consecutive by construction, but
 8-digit basic dates are consecutive only within a given
-month.\footnote{In fact, they advance by 101 minus (days in previous
-  month) at the start of each month other than January, and by 8870 at
-  the start of each year.} For more on arithmetic with epoch days see
-Section~\ref{sec:cal-arith}.
+month.\footnote{In fact, they advance by 101 minus the number of days
+  in the previous month at the start of each month other than
+  January, and by 8870 at the start of each year.} For more on
+arithmetic with epoch days see Section~\ref{sec:cal-arith}.
 
 \subsection{Unix seconds}
 \label{sec:cal-seconds}
 
 In this representation---the cornerstone of date and time handling on
-Unix-like systems---time is a scalar: the number of seconds since the
-start of 1970 according to Coordinated Universal Time (UTC, formerly
-known as Greenwich Mean Time or GMT). This format is therefore ideal
-for storing fine-grained information, including time of day as well as
-date.
+Unix-like systems---time is the number of seconds since midnight at
+the start of 1970 according to Coordinated Universal Time
+(UTC).\footnote{UTC is, to a first approximation, the time such that
+  the Sun is at its highest point at noon over the prime meridian, the
+  line of 0\textdegree{} longitude, which as a matter of historical
+  contingency runs through Greenwich, England.}  This format is
+therefore ideal for storing fine-grained information, including time
+of day as well as date.
 
 This representation is not transparent to humans (for example, the
 number 123456789 corresponds to the start of Thursday, 29 Nov 1973)
@@ -219,10 +222,8 @@ series d = dates - 10000*y - 100*m
 However, there is some ``value added'': \cmd{isoconv} checks the
 validity of the \texttt{dates} input. If the implied year, month and
 day for any \texttt{dates} observation do not correspond to a valid
-date,\footnote{For example, the implied month is not in the range
-  1--12, or the implied day is not in the range of 1 to the number of
-  days in the month, taking account of leap years.} then all the
-derived series will have value \texttt{NA} at that observation.
+date, then all the derived series will have value \texttt{NA} at that
+observation.
 
 The inverse operation is trivial:
 \begin{code}
@@ -350,9 +351,10 @@ At 8:46 in the morning of September 11, 2001 an airliner crashed into
 the North Tower of the World Trade Center in New York. Relative to
 what time zone is that statement correct? Eastern Daylight Time (EDT),
 of course. Unless we have special reason to do otherwise we always
-report the time of an event in the local time of the event; and if we
-do otherwise we need to state the metric we're using (for example, one
-might say that this event occurred at 2001-09-11 12:46 UTC).
+report the time of an event relative to the time zone in which the
+event occurred; and if we do otherwise we need to state the metric
+we're using (for example, one might say that this event occurred at
+2001-09-11 12:46 UTC).
 
 Now consider the following script:
 %
@@ -399,7 +401,7 @@ time. To do that you need to give time-zone information to both
 Listing~\ref{ex:tzones}.
 
 \begin{script}[htbp]
-  \fragcaption{Enabling invariance with respect to current time zone}
+  \fragcaption{Date/time invariance with respect to current time zone}
   \label{ex:tzones}
 \begin{scodebit}
 string date = "2001-09-11 08:46 -0400"
@@ -412,8 +414,8 @@ printf "Unix time %d\n", usecs
   Daylight Saving time is in force in the Eastern US. And we match
   this with the ``\verb|%z|'' specifier in \texttt{format}. As a
   result, regardless of the time zone in which the code is run the
-  Unix time value will be 1000212360. Then we come to unpacking the
-  Unix time value:
+  Unix time value will be 1000212360. Then we come to unpacking that
+  value:
 \begin{scodebit}
 date = strftime(1000212360, "%Y-%m-%d %H:%M %z", -4*3600)
 print date
@@ -433,7 +435,7 @@ print date
   omitted both spaces, but not just one of them. Second, the
   \textsf{C} standard does not require that \texttt{strptime} and
   \texttt{strftime} know anything about time zones; the extensions
-  offered by gretl are supported by \textsf{GLib} functionality.
+  used in this example are supported by \textsf{GLib} functionality.
 \end{script}
 
 \section{Epoch day arithmetic}
@@ -618,10 +620,9 @@ was directly followed by Thursday September 14.
 In comparing calendars one wants to refer to a given day in terms that
 are not specific to either calendar---but how to define a ``given
 day''? This is accomplished by a count of days following some definite
-event. Astronomers use the ``Julian Day,'' whose count starts with a
-particular coincidence of astronomical cycles in the year known to the
-Gregorian calendar (if one extrapolates it backwards in time) as 4714
-BC.
+temporal benchmark. As described in
+Section~\ref{sec:cal-representations}, gretl uses days since the start
+of 1 AD, which we call epoch days.
 
 In this section we address the problem of constructing within gretl a
 calendar which agrees with the actual historical calendar prior to
@@ -631,7 +632,7 @@ it would be tricky and error-prone to enter on the Gregorian calendar
 data whose dates are given on the Julian at source.
 
 In order to represent Julian dates, Gretl uses two basic tools: one is
-the \cmd{juldate} function, which converts a Gregorian epochday into
+the \cmd{juldate} function, which converts a Gregorian epoch day into
 an ISO8601-like integer and the convention that for some functions,
 a negative value where a year is expected acts as a ``Julian calendar
 flag''.
@@ -658,7 +659,7 @@ been on the Gregorian calendar since October 1582)?
 \begin{code}
 ed = epochday(1740,6,26)
 english_date = juldate(ed)
-printf "%.0f\n", english_date
+printf "%d\n", english_date
 \end{code}
 %
 We find that the English date was \texttt{17400615}, the 15th of June.
@@ -668,7 +669,7 @@ Working in the other direction, what Italian date corresponded to the
 \begin{code}
 ed = epochday(-1740,11,5)
 italian_date = isodate(ed)
-printf "%.0f\n", italian_date
+printf "%d\n", italian_date
 \end{code}
 %
 Answer: \texttt{17401116}; Guy Fawkes night in 1740 occurred on 
