@@ -1590,17 +1590,17 @@ static GDateTime *date_time_from_unix_offset (gint64 t, int off_secs)
 
 /**
  * gretl_strftime:
- * @s: target string.
- * @slen: length of target string.
- * @format: as per strftime() or "8601" for ISO, or NULL for "%c".
+ * @s: target buffer.
+ * @slen: length of target buffer.
+ * @format: as per strftime(), or "8601" for ISO, or NULL for "%c".
  * @t: Unix time as 64-bit integer.
- * @off_secs: offset in seconds relative to UTC.
+ * @off_secs: offset in seconds relative to UTC, or #NADBL.
  *
  * If @t and @format are found to be valid, writes a string representing
- * the date and time of @t to @s, governed by @format. By default
- * date and time are relative to local time but this can be adjusted
- * via @off_secs. Give NADBL for @off_secs to have it ignored; a
- * zero value gives UTC.
+ * the date and time of @t to @s, governed by @format. If @off_secs is
+ * #NADBL it is ignored, and the date and time on output are relative to
+ * local time. Otherwise date and time are relative to the time zone
+ * defined by @off_secs (and so a zero value gives UTC).
  *
  * Returns: The number of characters written to @s, or 0 in case
  * of invalid input.
