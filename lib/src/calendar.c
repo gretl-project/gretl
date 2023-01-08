@@ -19,6 +19,10 @@
 
 #include "libgretl.h"
 
+#ifdef WIN32
+# include "gretl_win32.h" /* for strptime() */
+#endif
+
 /**
  * SECTION:calendar
  * @short_description: functions for working with dates
@@ -1658,7 +1662,11 @@ static gint64 get_unix_time_GLib (const char *s, const char *rem,
 
     strftime(buf, sizeof buf, isofmt, tm);
     tmp = g_strdup_printf("%s%s", buf, rem);
+#if GLIB_MINOR_VERSION < 56
+    ; /* requires GLib >= 2.56 : FIXME */
+#else
     gdt = g_date_time_new_from_iso8601(tmp, NULL);
+#endif
     g_free(tmp);
 
     if (gdt != NULL) {
