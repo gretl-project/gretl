@@ -1705,6 +1705,10 @@ char *gretl_strptime (const char *s, const char *format, double *dt)
 	rem = strptime(s, format, &tm);
     }
 
+#if GLIB_MINOR_VERSION < 56
+    got_tz = 0; /* can't do the special thing yet */
+#endif
+
     if (got_tz && rem != NULL && *rem != '\0') {
 	*dt = (double) get_unix_time_GLib(s, rem, &tm);
     } else {
