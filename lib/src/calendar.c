@@ -1592,13 +1592,15 @@ static GDateTime *date_time_from_unix_offset (gint64 t, int off_secs)
  * gretl_strftime:
  * @s: target string.
  * @slen: length of target string.
- * @format: as per strftime() or "localiso" or "utciso", or NULL for "%c".
+ * @format: as per strftime() or "8601" for ISO, or NULL for "%c".
  * @t: Unix time as 64-bit integer.
  * @off_secs: offset in seconds relative to UTC.
  *
  * If @t and @format are found to be valid, writes a string representing
- * the date and time of @t_day to @s, governed by @format. By default
- * date and time are relative to local time.
+ * the date and time of @t to @s, governed by @format. By default
+ * date and time are relative to local time but this can be adjusted
+ * via @off_secs. Give NADBL for @off_secs to have it ignored; a
+ * zero value gives UTC.
  *
  * Returns: The number of characters written to @s, or 0 in case
  * of invalid input.
@@ -1651,31 +1653,43 @@ int gretl_strftime (char *s, int slen, const char *format,
     return ret;
 }
 
-static gint64 get_unix_time_GLib (const char *s, const char *rem,
-				  struct tm *tm)
+/* Returns Unix time based on the information in @tm, inflected
+   by time-zone information in @zs.
+*/
+
+static gint64 get_unix_time_GLib (struct tm *tm, const char *zs)
 {
-    const char *isofmt = "%Y-%m-%dT%H:%M:%S";
-    GDateTime *gdt = NULL;
-    gchar *tmp;
-    char buf[64];
+    GDateTime *gdt;
+    GTimeZone *gtz;
+    gdouble sec;
     gint64 t = 0;
 
-    strftime(buf, sizeof buf, isofmt, tm);
-    tmp = g_strdup_printf("%s%s", buf, rem);
-#if GLIB_MINOR_VERSION < 56
-    ; /* requires GLib >= 2.56 : FIXME */
-#else
-    gdt = g_date_time_new_from_iso8601(tmp, NULL);
-#endif
-    g_free(tmp);
+    sec = tm->tm_sec >= 60 ? 59 : tm->tm_sec;
+    gtz = g_time_zone_new(zs);
+
+    gdt = g_date_time_new(gtz,
+			  tm->tm_year + 1900,
+			  tm->tm_mon + 1,
+			  tm->tm_mday,
+			  tm->tm_hour,
+			  tm->tm_min,
+			  sec);
 
     if (gdt != NULL) {
 	t = g_date_time_to_unix(gdt);
 	g_date_time_unref(gdt);
     }
 
+    g_time_zone_unref(gtz);
+
     return t;
 }
+
+/* Returns a copy of @fmt with the time-zone format "%z" lopped off:
+   by removing it we can get strptime() to return the time-zone
+   portion of a date/time string as unprocessed remainder, which
+   we can then pass to GLib to get a GTimeZone.
+*/
 
 static gchar *get_adjusted_format (const char *fmt, int *got_tz)
 {
@@ -1689,6 +1703,11 @@ static gchar *get_adjusted_format (const char *fmt, int *got_tz)
 
     return ret;
 }
+
+/* Wrapper for strptime() which handles time-zone information in
+   the date/time string @s, if present. "Returns" Unix time as a
+   double via the last argument.
+*/
 
 char *gretl_strptime (const char *s, const char *format, double *dt)
 {
@@ -1705,12 +1724,8 @@ char *gretl_strptime (const char *s, const char *format, double *dt)
 	rem = strptime(s, format, &tm);
     }
 
-#if GLIB_MINOR_VERSION < 56
-    got_tz = 0; /* can't do the special thing yet */
-#endif
-
     if (got_tz && rem != NULL && *rem != '\0') {
-	*dt = (double) get_unix_time_GLib(s, rem, &tm);
+	*dt = (double) get_unix_time_GLib(&tm, rem);
     } else {
 #ifdef WIN32
 	*dt = win32_mktime(&tm);

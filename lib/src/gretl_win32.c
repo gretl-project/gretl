@@ -1771,10 +1771,9 @@ double win32_mktime (struct tm *tm)
     double t = (double) mktime(tm);
 
     if (t == -1) {
+	double sec = tm->tm_sec >= 60 ? 59 : tm->tm_sec;
 	GDateTime *gdt;
-	double sec = tm->tm_sec;
 
-	if (sec >= 60) sec = 59;
 	gdt = g_date_time_new_local(tm->tm_year + 1900,
 				    tm->tm_mon + 1,
 				    tm->tm_mday,
