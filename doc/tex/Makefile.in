@@ -385,7 +385,7 @@ figlink:
 	@if [ ! -d figures ] || [ $(docsrc)/figures -nt figures ] ; then \
 	rm -rf figures && ln -s $(docsrc)/figures ./figures ; fi
 
-cal-figure:
+cal-figure: date-conversion.gv
 	cd $(docsrc)/figures;  dot -Tpdf date-conversion.gv -o date-conversion.pdf
 
 onepass: $(GUIDETEX) $(GENTEX1)
