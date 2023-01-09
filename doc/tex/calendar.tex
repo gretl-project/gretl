@@ -279,7 +279,7 @@ Figure \ref{fig:cal-conversions}, we indicated that these conversion
 can be performed via non-specialized functions. The two functions that
 can be used for this purpose are \cmd{printf} and \cmd{sscanf}. Here's
 how: suppose you encode a date via the the three scalars
-\texttt{d}=30, \texttt{m}=11 and \texttt{y}=1983. You can use \cmd{printf}
+\texttt{d}=30, \texttt{m}=10 and \texttt{y}=1983. You can use \cmd{printf}
 to turn it into a date string rather easily, as in
 \begin{code}
   eu_s = printf("%d/%m/%y", d, m, y)
@@ -289,14 +289,14 @@ where the two strings follow the European and US conventions,
 respectively.
 
 The reverse operation is a little trickier, and uses the \cmd{sscanf}
-function (see the \GCR{} for a full illustation). The
-string \texttt{s}=``1983-11-30'' can be broken down into three scalars
+function (see the \GCR{} for a full illustration). The
+string \texttt{s}=``1983-10-30'' can be broken down into three scalars
 as
 \begin{code}
   scalar d m y
   n = sscanf(s, "%d-%d-%d", y, m, d)
 \end{code}
-Note that in this case the \texttt{\%d} string in nthe format
+Note that in this case the \texttt{\%d} string in the format
 specification does not mean ``day'', but rather ``decimal integer'',
 which is why there are three instances. Alternatively, one could have
 used a 3-element vector, as in
