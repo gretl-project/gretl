@@ -1,0 +1,38 @@
+digraph Date_rep {
+	epochday [shape=box];
+	"list (dmy)" [shape=box];
+	"ISO integer" [shape=box];
+	"ISO integer" -> epochday [label="epochday", fontsize=8];
+	"Unix seconds" [shape=box];
+	"Generic string" -> "Unix seconds" [label="strptime/strftime", dir="both", fontsize=8];
+	"Generic string" -> epochday [label="strpday/strfday", dir="both", fontsize=8];
+	"Generic string" -> "list (dmy)" [label="sscanf", style="dashed", fontsize=8];
+	epochday -> "ISO integer" [label="isodate", fontsize=8];
+	epochday -> "ISO extended" [label="isodate", fontsize=8];
+	"ISO extended" -> "Unix seconds" [label="strptime/strftime", dir="both", fontsize=8];
+	"ISO extended" -> epochday [label="strpday/strfday", dir="both", fontsize=8];
+	"ISO extended" -> "ISO integer" [label="substr + atof", style="dashed", fontsize=8];
+	"ISO extended" -> "list (dmy)" [label="sscanf", style="dashed", fontsize=8];
+	"list (dmy)" -> epochday [label="epochday", fontsize=8];
+	"list (dmy)" -> "ISO integer" [label="genr", style="dashed", fontsize=8];
+	"ISO integer" -> "list (dmy)" [label="isoconv", fontsize=8];
+	"list (dmy)" -> "ISO extended" [label="printf", style="dashed", fontsize=8];
+	"list (dmy)" -> "Generic string" [label="printf", style="dashed", fontsize=8];
+
+/* fishy
+	epochday -> "Unix seconds" [label="linear (rough)", style="dashed", dir="both", fontsize=8];
+*/
+
+/* secondary
+	"list (dmy)" -> "month length" [label="monthlen", fontsize=8];
+	"list (dmy)" -> "ISO week" [label="isoweek", fontsize=8];
+	"list (dmy)" -> "Easter" [label="easterday", fontsize=8];
+	"Julian date" [shape=box];
+	epochday -> "Julian date" [label="juldate", fontsize=8];
+	"weekday" [shape=box];
+	"month length" [shape=box];
+	"ISO week" [shape=box];
+	"Easter" [shape=box];
+	"list (dmy)" -> weekday [label="weekday", fontsize=8];
+*/
+}
