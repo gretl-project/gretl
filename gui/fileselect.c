@@ -154,6 +154,7 @@ static const char *get_extension_for_action (int action, gpointer data)
 	else if (ttype == GP_TERM_PNG) s = ".png";
 	else if (ttype == GP_TERM_EMF) s = ".emf";
 	else if (ttype == GP_TERM_SVG) s = ".svg";
+	else if (ttype == GP_TERM_HTM) s = ".html";
 	else if (ttype == GP_TERM_PLT) s = ".plt";
     } else {
 	int i;

@@ -140,6 +140,7 @@ typedef enum {
     GP_TERM_TEX,
     GP_TERM_EMF,
     GP_TERM_SVG,
+    GP_TERM_HTM,
     GP_TERM_PLT,
     GP_TERM_VAR
 } TermType;

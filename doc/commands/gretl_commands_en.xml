@@ -5437,16 +5437,16 @@
 	<lit>01</lit>. The actual plots may be generated later using
 	<program>gnuplot</program> (under MS Windows,
 	<program>wgnuplot</program>).  This behavior can be modified
-	by use of the <opt>output=</opt><repl>filename</repl>
-	option.  This option controls the filename used, and at the
-	same time allows you to specify a particular output format via
-	the three-letter extension of the file name, as follows:
+	by use of the <opt>output=</opt><repl>filename</repl> option.
+	This option controls the filename used, and at the same time
+	allows you to specify a particular output format via the
+	three-letter extension of the file name, as follows:
 	<lit>.eps</lit> results in the production of an Encapsulated
 	PostScript (EPS) file; <lit>.pdf</lit> produces PDF;
 	<lit>.png</lit> produces PNG format, <lit>.emf</lit> calls for
 	EMF (Enhanced MetaFile), <lit>.fig</lit> calls for an Xfig
-	file, and <lit>.svg</lit> for SVG (Scalable Vector
-	Graphics). If the dummy filename
+	file, <lit>.svg</lit> for SVG (Scalable Vector Graphics) and
+	<lit>.html</lit> for an HTML canvas. If the dummy filename
 	<quote><lit>display</lit></quote> is given then the plot is
 	shown on screen as in interactive mode. If a filename with any
 	extension other than those just mentioned is given, a gnuplot
