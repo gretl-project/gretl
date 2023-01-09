@@ -917,7 +917,7 @@ gboolean do_open_data (windata_t *fwin, int code)
 static int give_dnd_options (GtkWidget *parent)
 {
     const char *opts[] = {
-	N_("Replace the current dataset (ends the current session)"),
+	N_("Replace the current dataset (clears the current session)"),
 	N_("Try appending to the current dataset"),
     };
     int resp;
