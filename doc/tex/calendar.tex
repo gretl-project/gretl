@@ -78,6 +78,7 @@ use three series, possibly grouping them into a list, as in
   series d = $obsmicro
   list DATE = y m d
 \end{code}
+%$
 This example above will generate daily dates for January and February
 2020. Note that use of the \verb|$obsm*| accessors requires a
 time-series dataset, and \dollar{obsmicro} in particular requires
@@ -192,7 +193,8 @@ provides several dedicated functions, although in some cases
 conversion can be carried out by using general-purpose
 functions. Figure \ref{fig:cal-conversions} displays a summary: solid
 lines represent dedicated functions, while dashed lines indicate that
-no special function is needed. For a full description of the functions
+no special function is needed. Numerical formats are depicted as boxes
+and string formats as ovals. For a full description of the functions
 referenced in the figure, see the \GCR. In the rest of this section we
 discuss several cases of conversion with the help of examples.
 
@@ -270,6 +272,40 @@ the ``local'' time zone is whatever is set as such via the operating
 system (and possibly adjusted via an environment variable) on the host
 computer. It will usually be the same as the geographically local zone
 but there's nothing to stop a user making a different setting.
+
+Another need that may arise at times is the one for the conversion
+between the string format and the 3-number format (and back). In
+Figure \ref{fig:cal-conversions}, we indicated that these conversion
+can be performed via non-specialized functions. The two functions that
+can be used for this purpose are \cmd{printf} and \cmd{sscanf}. Here's
+how: suppose you encode a date via the the three scalars
+\texttt{d}=30, \texttt{m}=11 and \texttt{y}=1983. You can use \cmd{printf}
+to turn it into a date string rather easily, as in
+\begin{code}
+  eu_s = printf("%d/%m/%y", d, m, y)
+  us_s = printf("%m/%d/%y", m, d, y)
+\end{code}
+where the two strings follow the European and US conventions,
+respectively.
+
+The reverse operation is a little trickier, and uses the \cmd{sscanf}
+function (see the \GCR{} for a full illustation). The
+string \texttt{s}=``1983-11-30'' can be broken down into three scalars
+as
+\begin{code}
+  scalar d m y
+  n = sscanf(s, "%d-%d-%d", y, m, d)
+\end{code}
+Note that in this case the \texttt{\%d} string in nthe format
+specification does not mean ``day'', but rather ``decimal integer'',
+which is why there are three instances. Alternatively, one could have
+used a 3-element vector, as in
+\begin{code}
+  matrix date = zeros(1,3)
+  n = sscanf(s, "%d-%d-%d", &date[1], &date[2], &date[3])
+\end{code}
+
+
 
 \subsection{Dates as string-valued series}
 
