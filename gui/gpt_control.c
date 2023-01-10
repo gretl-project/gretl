@@ -1323,6 +1323,8 @@ int write_plot_for_copy (int target)
 
     if (target == TARGET_SVG) {
 	spec->termtype = GP_TERM_SVG;
+    } else if (target == TARGET_HTM) {
+	spec->termtype = GP_TERM_HTM;
     } else if (target == TARGET_EMF) {
 	spec->termtype = GP_TERM_EMF;
     } else if (target == TARGET_PNG) {

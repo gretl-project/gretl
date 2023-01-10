@@ -281,7 +281,8 @@ enum clipstuff {
     TARGET_EMF,
     TARGET_EPS,
     TARGET_PDF,
-    TARGET_PNG
+    TARGET_PNG,
+    TARGET_HTM
 };
 
 enum data_status_flags {

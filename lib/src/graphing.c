@@ -1640,6 +1640,9 @@ const char *gretl_gnuplot_term_line (TermType ttype,
     } else if (ttype == GP_TERM_SVG) {
 	strcpy(term_line, "set term svg noenhanced");
 	append_gp_encoding(term_line);
+    } else if (ttype == GP_TERM_HTM) {
+	strcpy(term_line, "set term canvas noenhanced");
+	append_gp_encoding(term_line);
     } else if (ttype == GP_TERM_FIG) {
 	strcpy(term_line, "set term fig");
 	append_gp_encoding(term_line);
@@ -1819,6 +1822,8 @@ static void print_term_string (int ttype, PlotType ptype,
 	strcpy(term_line, "set term fig\nset encoding utf8");
     } else if (ttype == GP_TERM_SVG) {
 	strcpy(term_line, "set term svg noenhanced\nset encoding utf8");
+    } else if (ttype == GP_TERM_HTM) {
+	strcpy(term_line, "set term canvas noenhanced\nset encoding utf8");
     } else if (ttype == GP_TERM_TEX) {
 	tex_term_line(term_line, ptype, flags);
     }
@@ -1855,6 +1860,9 @@ static int set_term_type_from_fname (const char *fname)
 	this_term_type = GP_TERM_EMF;
     } else if (has_suffix(fname, ".svg")) {
 	this_term_type = GP_TERM_SVG;
+    } else if (has_suffix(fname, ".html") ||
+	       has_suffix(fname, ".htm")) {
+	this_term_type = GP_TERM_HTM;
     } else if (has_suffix(fname, ".tex")) {
 	this_term_type = GP_TERM_TEX;
     } else if (!strcmp(fname, "gnuplot")) {

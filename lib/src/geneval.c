@@ -8980,6 +8980,23 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static int strptime_error (const char *s, double x, int t, int ntype)
+{
+    if (ntype == STR) {
+        gretl_errmsg_sprintf("'%s': argument doesn't match format", s);
+    } else if (ntype == NUM) {
+        gretl_errmsg_sprintf("Invalid date number %.12g", x);
+    } else if (s != NULL) {
+        gretl_errmsg_sprintf("'%s': argument doesn't match format at "
+                             "obs %d\n", s, t);
+    } else if (!na(x)) {
+        gretl_errmsg_sprintf("Invalid date number %.12g at obs %d\n",
+                             x, t);
+    }
+
+    return E_INVARG;
+}
+
 /* strptime_node() implements both strptime() and strpday(). In the
    primary use case the @l node contains a string, array of
    strings, or string-valued series. In the secondary case @l
@@ -9092,10 +9109,10 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		    *targ = NADBL;
 		    continue;
 		} else if (x < 0 || x != floor(x) || x > 99991231) {
-		    p->err = E_INVARG;
+                    p->err = strptime_error(src, x, t, l->t);
 		    break;
 		} else {
-		    sprintf(buf, "%d", (int) x);
+		    sprintf(buf, "%08d", (int) x);
 		    s = strptime(buf, "%Y%m%d", &tm);
 		}
 	    } else {
@@ -9113,7 +9130,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 
 	    if (s == NULL) {
 		/* strptime() failed */
-		p->err = E_INVARG;
+		p->err = strptime_error(src, x, t, l->t);
 		break;
 	    } else if (f == F_STRPDAY) {
 		int y = tm.tm_year + 1900;
