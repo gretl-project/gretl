@@ -185,7 +185,19 @@ static regls_info *regls_info_new (gretl_matrix *X,
     if (ri == NULL) {
 	*err = E_ALLOC;
     } else {
-	ri->lfrac = gretl_bundle_get_matrix(b, "lfrac", err);
+        GretlType t = gretl_bundle_get_member_type(b, "lfrac", NULL);
+
+        if (t == GRETL_TYPE_MATRIX) {
+            ri->lfrac = gretl_bundle_get_matrix(b, "lfrac", err);
+        } else if (t == GRETL_TYPE_DOUBLE) {
+            double lf = gretl_bundle_get_scalar(b, "lfrac", err);
+
+            if (!*err) {
+                ri->lfrac = gretl_matrix_from_scalar(lf);
+            }
+        } else {
+            *err = E_ARGS;
+        }
     }
 
     if (!*err) {
