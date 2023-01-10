@@ -2188,7 +2188,7 @@ static int deseas_options_transcribe (x13a_opts *xopt,
 	/* arima */
 	gretl_vector *v = gretl_bundle_get_matrix(b, "arima", NULL);
 
-	if (v != NULL) {
+	if (!gretl_is_null_matrix(v)) {
 	    err = validate_arima_spec(xopt, v);
 	    if (!err && xopt->airline) {
 		xopt->airline = 0;
@@ -2229,7 +2229,7 @@ static gretl_bundle *deseas_options_template (void)
     /* miscellaneous */
     gretl_bundle_set_scalar(b, "critical", NADBL);
     gretl_bundle_set_string(b, "output", "sa");
-    gretl_bundle_set_matrix(b, "arima", NULL);
+    gretl_bundle_set_matrix(b, "arima", gretl_null_matrix_new());
 
     return b;
 }
