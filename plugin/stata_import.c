@@ -1559,18 +1559,18 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
             dset->Z[v][t] = NADBL;
 
             if (typ == STATA_13_FLOAT) {
-                dset->Z[v][t] = stata_read_float(fp, &err);
+                dset->Z[v][t] = (double) stata_read_float(fp, &err);
             } else if (typ == STATA_13_DOUBLE) {
                 dset->Z[v][t] = stata_read_double(fp, &err);
             } else if (typ == STATA_13_LONG) {
                 ix = stata_read_int32(fp, 0, &err);
-                dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
+                dset->Z[v][t] = (ix == NA_INT)? NADBL : (double) ix;
             } else if (typ == STATA_13_INT) {
                 ix = stata_read_short(fp, 0, &err);
-                dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
+                dset->Z[v][t] = (ix == NA_INT)? NADBL : (double) ix;
             } else if (typ == STATA_13_BYTE) {
                 ix = stata_read_signed_byte(fp, 0, &err);
-                dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
+                dset->Z[v][t] = (ix == NA_INT)? NADBL : (double) ix;
             } else if (typ <= STATA_STRF_MAX) {
                 /* fixed length string */
                 err = stata_read_buffer(buf, sizeof buf, typ, fp);
