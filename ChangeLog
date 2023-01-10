@@ -6,6 +6,8 @@ version 2022d, in progress
 - "set" command: add key "hac_missvals" to select the policy
   for HAC estimation when there are incomplete observations;
   and make the Equal Spacing method the default
+- "gnuplot" and "plot" commands: putting an .html suffix onto
+  the output filename now invokes gnuplot's "canvas" driver
 - "midasreg" command: generate more specific error message
   for invalid specification
 - strptime() and strftime() functions: generalize to allow
@@ -32,7 +34,10 @@ version 2022d, in progress
 - "system" command: ensure that the $system bundle includes
   the sample limits as "sample_t1" and "sample_t2"
 - Script editor, split pane: ensure that when line-numbering
-  is selected it carries over to the new pane
+  is selected it carries over to the new pane; also improve
+  tab-completion for names of functions
+- Drag and drop of data file onto gretl: offer a choice of
+  replacing or trying to append to the current dataset
 - Fix error message for invalid (string) array index
 - Fix error message for missing function-package dependency
 - Fix bug: buffer overrun when creating names for transformed
@@ -42,8 +47,13 @@ version 2022d, in progress
   displayed at the time
 - Fix bug: possible false positive when checking for duplicate
   function packages
+- Fix bug: the weekdat() function could produce an off-by-one
+  error in some cases
 - Fix for detection of the R executable when called via a
   foreign block on macOS
+- configure/build apparatus: add support for using Intel's
+  oneAPI and MKL, or libblis + libflame, for BLAS and LAPACK
+  functionality
 - macOS build: include TargetConditionals.h in libgretl.h
 - MS Windows: work around the limitations of mktime() and
   localtime() using GLib functionality
