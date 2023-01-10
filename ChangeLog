@@ -1,4 +1,4 @@
-version 2022d, in progress
+version 2023a, in progress
 - "logit" command (binary case): add a matrix holding odds
   ratios plus standard errors and confidence intervals to the
   $model bundle; also make this information available under
@@ -47,7 +47,7 @@ version 2022d, in progress
   displayed at the time
 - Fix bug: possible false positive when checking for duplicate
   function packages
-- Fix bug: the weekdat() function could produce an off-by-one
+- Fix bug: the weekday() function could produce an off-by-one
   error in some cases
 - Fix for detection of the R executable when called via a
   foreign block on macOS
