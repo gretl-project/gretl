@@ -7902,12 +7902,15 @@
 	  <flag>--verbose</flag>
 	  <effect>echo commands and show confirmatory messages</effect>
 	</option>
+        <option>
+          <flag>--decr</flag>
+          <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>loop 1000</example>
-	<example>loop 1000 --progressive</example>
+        <example>loop i=1..10</example>
         <example>loop while essdiff &gt; .00001</example>
-        <example>loop i=1991..2000 --verbose</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlist</example>
 	<demos>
@@ -7925,17 +7928,27 @@
 	point the stacked commands are executed.
       </para>
       <para>
-	The parameter <repl quote="true">control</repl> may take any of
-	five forms, as shown in the examples: an integer number of times to
-	repeat the commands within the loop; <quote><lit>while</lit></quote>
-	plus a boolean condition; a range of integer values for index
-	variable; <quote><lit>for</lit></quote> plus three expressions in
+	The parameter <repl quote="true">control</repl> may take any
+	of five forms, as shown in the examples: an integer number of
+	times to repeat the commands within the loop; a range of
+	integer values for an index variable;
+	<quote><lit>while</lit></quote> plus a boolean condition;
+	<quote><lit>for</lit></quote> plus three expressions in
 	parentheses, separated by semicolons (which emulates the
 	<lit>for</lit> statement in the C programming language); or
-	<quote><lit>foreach</lit></quote> plus an index variable and a list.
+	<quote><lit>foreach</lit></quote> plus an index variable and a
+	list.
       </para>
       <para>
-	See <guideref targ="chap:looping"/> for further details and
+        The <opt>decr</opt> option is specific to the <quote>range of
+        integer values</quote> form of loop. By default the index is
+        incremented by 1 at each iteration, and if the starting value
+        is less than the ending value the loop will not run at all.
+        When <opt>decr</opt> is given the index is decremented by 1
+        at each iteration.
+      </para>
+      <para>
+	See <guideref targ="chap:looping"/> for full details and
 	examples.  The effect of the <opt>progressive</opt> option
 	(which is designed for use in Monte Carlo simulations) is
 	explained there. Not all gretl commands may be used within
