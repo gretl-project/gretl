@@ -316,20 +316,20 @@ static void fill_matrix_info (int *rc, const gretl_matrix *m)
 
 static int matrix_reduce_alloc (int *rows, int *cols,
 				int n, Gretl_MPI_Op op,
-				gretl_matrix **pm,
-				double **px)
+				gretl_matrix **reduced,
+				double **wspace)
 {
     int rtotal = 0, ctotal = 0;
     int i, err = 0;
 
-    /* Note: in the arrays @rows and @cols the elements 0 to
-       n-1 are the values for each node, and the elements n
-       are the maxima.
+    /* Note: in the arrays @rows and @cols the elements 0 to n-1 are
+       the values for each node, and the elements n are the maxima.
 
-       The tasks here are (a) to allocate a matrix of the right
-       size to hold the result of the "reduce" operation and (b)
-       to allocate workspace big enough to hold the values of
-       the largest individual matrix.
+       The tasks here are (a) to allocate a matrix of the right size
+       to hold the result of the "reduce" operation and (b) to
+       allocate workspace big enough to hold the values of the largest
+       individual matrix, this being required by the root process to
+       hold data received from the other processes.
     */
 
     if (op == GRETL_MPI_SUM || op == GRETL_MPI_PROD) {
@@ -362,26 +362,31 @@ static int matrix_reduce_alloc (int *rows, int *cols,
     if (rtotal == 0 || ctotal == 0) {
 	err = E_DATA;
     } else if (op == GRETL_MPI_PROD) {
-	*pm = gretl_unit_matrix_new(rtotal, ctotal);
+	*reduced = gretl_unit_matrix_new(rtotal, ctotal);
     } else {
-	*pm = gretl_zero_matrix_new(rtotal, ctotal);
+	*reduced = gretl_zero_matrix_new(rtotal, ctotal);
     }
 
-    if (*pm == NULL) {
+    if (*reduced == NULL) {
 	err = E_ALLOC;
     } else {
 	size_t xsize = rows[n] * cols[n];
 
-	*px = malloc(xsize * sizeof **px);
-	if (*px == NULL) {
-	    gretl_matrix_free(*pm);
-	    *pm = NULL;
+	*wspace = malloc(xsize * sizeof **wspace);
+	if (*wspace == NULL) {
+	    gretl_matrix_free(*reduced);
+	    *reduced = NULL;
 	    err = E_ALLOC;
 	}
     }
 
     return err;
 }
+
+/* @mtarg is the target matrix, held by root, and @src
+   is the numerical content of a matrix received by root
+   from a non-root process.
+*/
 
 static int matrix_reduce_step (gretl_matrix *mtarg,
 			       double * restrict src,
@@ -448,14 +453,16 @@ static int gretl_comm_check (int root, int *idp, int *npp)
     return 0;
 }
 
-int gretl_matrix_mpi_reduce (gretl_matrix *sm,
+#define REDEBUG 0
+
+int gretl_matrix_mpi_reduce (gretl_matrix *mymat,
 			     gretl_matrix **pm,
 			     Gretl_MPI_Op op,
 			     int root,
 			     gretlopt opt)
 {
-    gretl_matrix *rm = NULL;
-    double *val = NULL;
+    gretl_matrix *ret = NULL;
+    double *wspace = NULL;
     int *rows = NULL;
     int *cols = NULL;
     int rc[MI_LEN] = {0};
@@ -474,9 +481,14 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 	return err;
     }
 
+#if REDEBUG
+    fprintf(stderr, "matrix reduction: root=%d, id=%d, np=%d\n",
+            root, id, np);
+#endif
+
     if (id != root) {
-	/* send matrix dimensions to root */
-	fill_matrix_info(rc, sm);
+	/* all processes other than root: send dimensions to root */
+	fill_matrix_info(rc, mymat);
 	err = mpi_send(rc, MI_LEN, mpi_int, root, TAG_MATRIX_INFO,
 		       mpi_comm_world);
     } else {
@@ -497,9 +509,9 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 
 	for (i=0; i<np && !err; i++) {
 	    if (i == root) {
-		if (sm != NULL) {
-		    rows[i] = sm->rows;
-		    cols[i] = sm->cols;
+		if (mymat != NULL) {
+		    rows[i] = mymat->rows;
+		    cols[i] = mymat->cols;
 		} else {
 		    rows[i] = cols[i] = 0;
 		}
@@ -516,25 +528,35 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 	if (!err) {
 	    err = matrix_dims_check(rows, cols, np, op);
 	}
-
 	if (!err) {
 	    err = matrix_reduce_alloc(rows, cols, np, op,
-				      &rm, &val);
+				      &ret, &wspace);
 	}
     }
+
+#if REDEBUG
+    fprintf(stderr, "id %d, done dimensions work\n", id);
+#endif
 
     if (!err) {
 	if (id != root) {
 	    /* send data to root */
 	    int sendsize = rc[0] * rc[1];
 
+#if REDEBUG
+            fprintf(stderr, "  id %d, sendsize %d\n", id, sendsize);
+#endif
 	    if (sendsize > 0) {
-		err = mpi_send(sm->val, sendsize, mpi_double, root,
+		err = mpi_send(mymat->val, sendsize, mpi_double, root,
 			       TAG_MATRIX_VAL, mpi_comm_world);
 	    }
 	} else {
 	    /* root gathers and processes data */
 	    int i, recvsize, offset = 0;
+
+#if REDEBUG
+            fprintf(stderr, "  id %d (root), gathering stuff\n", id);
+#endif
 
 	    for (i=0; i<np && !err; i++) {
 		recvsize = rows[i] * cols[i];
@@ -542,16 +564,18 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 		    continue;
 		}
 		if (i == root) {
-		    if (sm != NULL) {
-			err = matrix_reduce_step(rm, sm->val, recvsize, op,
+                    /* root handles its own matrix */
+		    if (mymat != NULL) {
+			err = matrix_reduce_step(ret, mymat->val, recvsize, op,
 						 &offset);
 		    }
 		} else {
-		    err = mpi_recv(val, recvsize, mpi_double, i,
-				   TAG_MATRIX_VAL,  mpi_comm_world,
+                    /* root handles matrix from process @i */
+		    err = mpi_recv(wspace, recvsize, mpi_double, i,
+				   TAG_MATRIX_VAL, mpi_comm_world,
 				   MPI_STATUS_IGNORE);
 		    if (!err) {
-			err = matrix_reduce_step(rm, val, recvsize, op,
+			err = matrix_reduce_step(ret, wspace, recvsize, op,
 						 &offset);
 		    }
 		}
@@ -561,14 +585,14 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 
     if (id == root) {
 	/* clean up */
-	free(val);
+	free(wspace);
 	free(rows);
 	free(cols);
 	/* handle return value */
 	if (!err) {
-	    *pm = rm;
+	    *pm = ret;
 	} else {
-	    gretl_matrix_free(rm);
+	    gretl_matrix_free(ret);
 	}
     }
 
