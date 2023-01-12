@@ -248,6 +248,8 @@ static void gretl_mpi_error (int *err)
    content of the largest matrix sent from a non-root process to root:
    @dsize for real matrices (if any) and @zsize for complex matrices
    (if any).
+
+   This function is only called by the root process.
 */
 
 static int matrix_dims_check (int *rows, int *cols, gint8 *cplx,
@@ -329,6 +331,8 @@ static int fill_matrix_info (int *minfo, const gretl_matrix *m)
     return err;
 }
 
+/* matrix_reduce_alloc: only called by the root process */
+
 static int matrix_reduce_alloc (int retrows, int retcols,
                                 int dsize, int zsize,
                                 Gretl_MPI_Op op,
@@ -338,6 +342,7 @@ static int matrix_reduce_alloc (int retrows, int retcols,
 {
     int err = 0;
 
+    /* allocate matrix to receive the "reduced" result */
     if (op == GRETL_MPI_PROD) {
         if (zsize > 0) {
             *reduced = gretl_cmatrix_new1(retrows, retcols);
@@ -355,6 +360,7 @@ static int matrix_reduce_alloc (int retrows, int retcols,
     if (*reduced == NULL) {
         err = E_ALLOC;
     } else {
+        /* allocate temporary storage */
         if (dsize > 0) {
             *dtmp = malloc(dsize * sizeof **dtmp);
             if (*dtmp == NULL) {
@@ -2077,7 +2083,7 @@ static void matsplit_rule (int n, int np, int *k1, int *n1,
 
 static int scatter_by_rows (const gretl_matrix *m,
                             gretl_matrix **recvm,
-                            int np, int root)
+                            int np, int self)
 {
     double *dtmp = NULL;
     double complex *ztmp = NULL;
@@ -2112,7 +2118,7 @@ static int scatter_by_rows (const gretl_matrix *m,
         if (minfo[0] > 0) {
             fill_tmp(dtmp, ztmp, m, minfo[0], &offset);
         }
-        if (i == root) {
+        if (i == self) {
             err = scatter_to_self(minfo, dtmp, ztmp, recvm);
         } else {
             err = mpi_send(minfo, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
@@ -2135,7 +2141,7 @@ static int scatter_by_rows (const gretl_matrix *m,
 
 static int scatter_by_cols (const gretl_matrix *m,
                             gretl_matrix **recvm,
-                            int np, int root)
+                            int np, int self)
 {
     double *dval = m->val;
     double complex *zval = m->z;
@@ -2155,7 +2161,7 @@ static int scatter_by_cols (const gretl_matrix *m,
             minfo[1] = n2;
             n = n2 * m->rows;
         }
-        if (i == root) {
+        if (i == self) {
             err = scatter_to_self(minfo, dval, zval, recvm);
         } else {
             err = mpi_send(minfo, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
