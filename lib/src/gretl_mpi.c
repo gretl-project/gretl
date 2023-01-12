@@ -232,7 +232,7 @@ static void gretl_mpi_error (int *err)
     *err = E_EXTERNAL;
 }
 
-#define REDEBUG 1
+#define REDEBUG 0
 
 /* Based on information on each of @n matrices (rows, columns, whether
    complex or not) we do the following:
@@ -244,8 +244,8 @@ static void gretl_mpi_error (int *err)
    "reduced" matrix that we're going to return; we write these into
    element @n of @rows and @cols.
 
-   * figure out the maximum amount of temporary storage needed to hold
-   the data content of a matrix sent from a non-root process to root:
+   * figure out the size of temporary storage needed to hold the data
+   content of the largest matrix sent from a non-root process to root:
    @dsize for real matrices (if any) and @zsize for complex matrices
    (if any).
 */
@@ -270,7 +270,7 @@ static int matrix_dims_check (int *rows, int *cols, gint8 *cplx,
                 break;
             }
         }
-        /* determine required temp storage sizes */
+        /* determine required temp storage size(s) */
         isize = rows[i] * cols[i];
         if (cplx[i] == 1 && isize > *pzsize) {
             *pzsize = isize;
@@ -312,18 +312,18 @@ static int matrix_dims_check (int *rows, int *cols, gint8 *cplx,
     return err;
 }
 
-static int fill_matrix_info (int *rc, const gretl_matrix *m)
+static int fill_matrix_info (int *minfo, const gretl_matrix *m)
 {
     int err = 0;
 
     if (gretl_is_null_matrix(m)) {
         err = E_DATA;
     } else {
-        rc[0] = m->rows;
-        rc[1] = m->cols;
-        rc[2] = m->is_complex;
-        rc[3] = gretl_matrix_get_t1(m);
-        rc[4] = gretl_matrix_get_t2(m);
+        minfo[0] = m->rows;
+        minfo[1] = m->cols;
+        minfo[2] = m->is_complex;
+        minfo[3] = gretl_matrix_get_t1(m);
+        minfo[4] = gretl_matrix_get_t2(m);
     }
 
     return err;
@@ -806,32 +806,32 @@ int gretl_scalar_mpi_reduce (double x,
     return ret;
 }
 
-static void maybe_date_matrix (gretl_matrix *m, int *rc)
+static void maybe_date_matrix (gretl_matrix *m, int *minfo)
 {
-    if (rc[3] >= 0 && rc[4] >= rc[3]) {
-        gretl_matrix_set_t1(m, rc[3]);
-        gretl_matrix_set_t2(m, rc[4]);
+    if (minfo[3] >= 0 && minfo[4] >= minfo[3]) {
+        gretl_matrix_set_t1(m, minfo[3]);
+        gretl_matrix_set_t2(m, minfo[4]);
     }
 }
 
 static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
 {
     gretl_matrix *m = NULL;
-    int rc[MI_LEN];
+    int minfo[MI_LEN];
     int err = 0;
 
     if (id == root) {
         m = *pm;
-        fill_matrix_info(rc, m);
+        fill_matrix_info(minfo, m);
     }
 
     /* broadcast the matrix dimensions first */
-    err = mpi_bcast(rc, MI_LEN, mpi_int, root, mpi_comm_world);
+    err = mpi_bcast(minfo, MI_LEN, mpi_int, root, mpi_comm_world);
 
     if (!err && id != root) {
-        int r = rc[0];
-        int c = rc[1];
-        int cmplx = rc[2];
+        int r = minfo[0];
+        int c = minfo[1];
+        int cmplx = minfo[2];
 
         /* everyone but root needs to allocate space */
         if (cmplx) {
@@ -842,25 +842,22 @@ static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
         if (m == NULL) {
             return E_ALLOC;
         } else {
-            maybe_date_matrix(m, rc);
+            maybe_date_matrix(m, minfo);
         }
     }
 
     if (!err) {
         /* broadcast the matrix content */
-        int n = rc[0] * rc[1];
+        int n = minfo[0] * minfo[1];
+        int cmplx = minfo[2];
 
-        if (rc[2]) {
-            n *= 2;
+        if (cmplx) {
+            err = mpi_bcast(m->z, n, mpi_complex, root,
+                            mpi_comm_world);
+        } else {
+            err = mpi_bcast(m->val, n, mpi_double, root,
+                            mpi_comm_world);
         }
-
-        /* FIXME we can get a hang here with 100% CPU if
-           a worker bombs out on bcast(); in that case
-           it seems that root's call never returns --
-           or maybe not before some looong time-out.
-        */
-        err = mpi_bcast(m->val, n, mpi_double, root,
-                        mpi_comm_world);
     }
 
     if (err) {
@@ -1338,22 +1335,24 @@ int gretl_mpi_bcast (void *p, GretlType type, int root)
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
 {
-    int rc[MI_LEN];
+    int minfo[MI_LEN];
     int err;
 
-    fill_matrix_info(rc, m);
+    fill_matrix_info(minfo, m);
 
-    err = mpi_send(rc, MI_LEN, mpi_int, dest, TAG_MATRIX_INFO,
+    err = mpi_send(minfo, MI_LEN, mpi_int, dest, TAG_MATRIX_INFO,
                    mpi_comm_world);
 
     if (!err) {
         int n = m->rows * m->cols;
 
         if (m->is_complex) {
-            n *= 2;
+            err = mpi_send(m->z, n, mpi_complex, dest, TAG_CMATRIX_VAL,
+                           mpi_comm_world);
+        } else {
+            err = mpi_send(m->val, n, mpi_double, dest, TAG_MATRIX_VAL,
+                           mpi_comm_world);
         }
-        err = mpi_send(m->val, n, mpi_double, dest, TAG_MATRIX_VAL,
-                       mpi_comm_world);
     }
 
     if (err) {
@@ -1512,34 +1511,36 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
                                         int *err)
 {
     gretl_matrix *m = NULL;
-    int rc[MI_LEN];
+    int minfo[MI_LEN];
 
-    *err = mpi_recv(rc, MI_LEN, mpi_int, source, TAG_MATRIX_INFO,
+    *err = mpi_recv(minfo, MI_LEN, mpi_int, source, TAG_MATRIX_INFO,
                     mpi_comm_world, MPI_STATUS_IGNORE);
 
     if (!*err) {
-        int r = rc[0];
-        int c = rc[1];
-        int cmplx = rc[2];
+        int r = minfo[0];
+        int c = minfo[1];
+        int cmplx = minfo[2];
         int n = r * c;
 
         if (cmplx) {
             m = gretl_cmatrix_new(r, c);
-            n *= 2;
         } else {
             m = gretl_matrix_alloc(r, c);
         }
 
         if (m == NULL) {
             *err = E_ALLOC;
-            return NULL;
+        } else if (cmplx) {
+            *err = mpi_recv(m->z, n, mpi_complex, source,
+                            TAG_CMATRIX_VAL, mpi_comm_world,
+                            MPI_STATUS_IGNORE);
         } else {
             *err = mpi_recv(m->val, n, mpi_double, source,
                             TAG_MATRIX_VAL, mpi_comm_world,
                             MPI_STATUS_IGNORE);
-            if (*err) {
-                maybe_date_matrix(m, rc);
-            }
+        }
+        if (!*err) {
+            maybe_date_matrix(m, minfo);
         }
     }
 
@@ -1552,27 +1553,26 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 
 int gretl_matrix_mpi_fill (gretl_matrix **pm, int source)
 {
-    int rc[MI_LEN];
+    int minfo[MI_LEN];
     int err;
 
     if (pm == NULL) {
         return E_DATA;
     }
 
-    err = mpi_recv(rc, MI_LEN, mpi_int, source, TAG_MATRIX_INFO,
+    err = mpi_recv(minfo, MI_LEN, mpi_int, source, TAG_MATRIX_INFO,
                    mpi_comm_world, MPI_STATUS_IGNORE);
 
     if (!err) {
         gretl_matrix *m = *pm;
-        int r = rc[0];
-        int c = rc[1];
-        int cmplx = rc[2];
+        int r = minfo[0];
+        int c = minfo[1];
+        int cmplx = minfo[2];
         int n = r * c;
 
         if (m == NULL) {
             if (cmplx) {
                 m = gretl_cmatrix_new(r, c);
-                n *= 2;
             } else {
                 m = gretl_matrix_alloc(r, c);
             }
@@ -1586,13 +1586,17 @@ int gretl_matrix_mpi_fill (gretl_matrix **pm, int source)
             err = E_NONCONF;
         }
 
-        if (!err) {
+        if (!err && cmplx) {
+            err = mpi_recv(m->z, n, mpi_complex, source,
+                           TAG_CMATRIX_VAL, mpi_comm_world,
+                           MPI_STATUS_IGNORE);
+        } else if (!err) {
             err = mpi_recv(m->val, n, mpi_double, source,
                            TAG_MATRIX_VAL, mpi_comm_world,
                            MPI_STATUS_IGNORE);
-            if (err) {
-                maybe_date_matrix(m, rc);
-            }
+        }
+        if (!err) {
+            maybe_date_matrix(m, minfo);
         }
     }
 
@@ -1996,26 +2000,21 @@ gretl_bundle *gretl_bundle_receive (int source, int *err)
     return b;
 }
 
-static void fill_tmp (double * restrict tmp,
+static void fill_tmp (double * restrict dtmp,
+                      double complex * restrict ztmp,
                       const gretl_matrix *m,
-                      int nr, int cmplx,
-                      int *offset)
+                      int nr, int *offset)
 {
-    double x;
-    double complex z;
     int imin = *offset;
     int imax = imin + nr;
     int i, j, k = 0;
 
     for (j=0; j<m->cols; j++) {
         for (i=imin; i<imax; i++) {
-            if (cmplx) {
-                z = gretl_cmatrix_get(m, i, j);
-                tmp[k++] = creal(z);
-                tmp[k++] = cimag(z);
+            if (ztmp != NULL) {
+                ztmp[k++] = gretl_cmatrix_get(m, i, j);
             } else {
-                x = gretl_matrix_get(m, i, j);
-                tmp[k++] = x;
+                dtmp[k++] = gretl_matrix_get(m, i, j);
             }
         }
     }
@@ -2023,27 +2022,30 @@ static void fill_tmp (double * restrict tmp,
     *offset += nr;
 }
 
-static int scatter_to_self (int *rc, double *val,
+static int scatter_to_self (int *minfo, double *dval,
+                            double complex *zval,
                             gretl_matrix **pm)
 {
-    int cmplx = rc[2];
+    int r = minfo[0];
+    int c = minfo[1];
+    int cmplx = minfo[2];
+    size_t n;
     int err = 0;
 
     if (cmplx) {
-        *pm = gretl_cmatrix_new(rc[0], rc[1]);
+        *pm = gretl_cmatrix_new(r, c);
     } else {
-        *pm = gretl_matrix_alloc(rc[0], rc[1]);
+        *pm = gretl_matrix_alloc(r, c);
     }
 
     if (*pm == NULL) {
         err = E_ALLOC;
+    } else if (cmplx) {
+        n = r * c * sizeof *zval;
+        memcpy((*pm)->z, zval, n);
     } else {
-        size_t n = rc[0] * rc[1] * sizeof *val;
-
-        if (cmplx) {
-            n *= 2;
-        }
-        memcpy((*pm)->val, val, n);
+        n = r * c * sizeof *dval;
+        memcpy((*pm)->val, dval, n);
     }
 
     return err;
@@ -2073,14 +2075,116 @@ static void matsplit_rule (int n, int np, int *k1, int *n1,
     }
 }
 
+static int scatter_by_rows (const gretl_matrix *m,
+                            gretl_matrix **recvm,
+                            int np, int root)
+{
+    double *dtmp = NULL;
+    double complex *ztmp = NULL;
+    int cmplx = m->is_complex;
+    int minfo[MI_LEN] = {0};
+    int n, k1, n1, k2, n2;
+    int i, offset = 0;
+    int err = 0;
+
+    matsplit_rule(m->rows, np, &k1, &n1, &k2, &n2);
+
+    n = n1 * m->cols;
+    minfo[0] = n1;
+    minfo[1] = m->cols;
+    minfo[2] = cmplx;
+
+    /* we'll need a working buffer */
+    if (cmplx) {
+        ztmp = malloc(n * sizeof *ztmp);
+    } else {
+        dtmp = malloc(n * sizeof *dtmp);
+    }
+    if (ztmp == NULL && dtmp == NULL) {
+        err = E_ALLOC;
+    }
+
+    for (i=0; i<np && !err; i++) {
+        if (i == k1) {
+            minfo[0] = n2;
+            n = n2 * m->cols;
+        }
+        if (minfo[0] > 0) {
+            fill_tmp(dtmp, ztmp, m, minfo[0], &offset);
+        }
+        if (i == root) {
+            err = scatter_to_self(minfo, dtmp, ztmp, recvm);
+        } else {
+            err = mpi_send(minfo, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+                           mpi_comm_world);
+            if (!err && cmplx) {
+                err = mpi_send(ztmp, n, mpi_complex, i, TAG_CMATRIX_VAL,
+                               mpi_comm_world);
+            } else if (!err) {
+                err = mpi_send(dtmp, n, mpi_double, i, TAG_MATRIX_VAL,
+                               mpi_comm_world);
+            }
+        }
+    }
+
+    free(dtmp);
+    free(ztmp);
+
+    return err;
+}
+
+static int scatter_by_cols (const gretl_matrix *m,
+                            gretl_matrix **recvm,
+                            int np, int root)
+{
+    double *dval = m->val;
+    double complex *zval = m->z;
+    int cmplx = m->is_complex;
+    int minfo[MI_LEN] = {0};
+    int i, n, k1, n1, k2, n2;
+    int err = 0;
+
+    matsplit_rule(m->cols, np, &k1, &n1, &k2, &n2);
+
+    n = n1 * m->rows;
+    fill_matrix_info(minfo, m);
+    minfo[1] = n1;
+
+    for (i=0; i<np && !err; i++) {
+        if (i == k1) {
+            minfo[1] = n2;
+            n = n2 * m->rows;
+        }
+        if (i == root) {
+            err = scatter_to_self(minfo, dval, zval, recvm);
+        } else {
+            err = mpi_send(minfo, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+                           mpi_comm_world);
+            if (!err && cmplx) {
+                err = mpi_send(zval, n, mpi_complex, i, TAG_CMATRIX_VAL,
+                               mpi_comm_world);
+            } else if (!err) {
+                err = mpi_send(dval, n, mpi_double, i, TAG_MATRIX_VAL,
+                               mpi_comm_world);
+            }
+        }
+        /* advance the read pointer */
+        if (zval != NULL) {
+            zval += n;
+        } else {
+            dval += n;
+        }
+    }
+
+    return err;
+}
+
 int gretl_matrix_mpi_scatter (const gretl_matrix *m,
                               gretl_matrix **recvm,
                               Gretl_MPI_Op op,
                               int root)
 {
-    double *tmp = NULL;
     int id, np;
-    int rc[MI_LEN] = {0};
     int err = 0;
 
     mpi_comm_rank(mpi_comm_world, &id);
@@ -2091,86 +2195,15 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
     }
 
     if (id == root) {
-        int cmplx = m->is_complex;
-        int k1, n1, k2, n2;
-        int i, n;
-
+        /* root divides stuff up */
         if (op == GRETL_MPI_VSPLIT) {
-            /* scatter by rows */
-            int offset = 0;
-
-            matsplit_rule(m->rows, np, &k1, &n1, &k2, &n2);
-
-            n = n1 * m->cols;
-            rc[0] = n1;
-            rc[1] = m->cols;
-            if (cmplx) {
-                rc[2] = 1;
-                n *= 2;
-            }
-
-            /* we'll need a working buffer */
-            tmp = malloc(n * sizeof *tmp);
-            if (tmp == NULL) {
-                err = E_ALLOC;
-            }
-
-            for (i=0; i<np; i++) {
-                if (i == k1) {
-                    rc[0] = n2;
-                    n = n2 * m->cols;
-                    if (cmplx) n *= 2;
-                }
-                if (rc[0] > 0) {
-                    fill_tmp(tmp, m, rc[0], cmplx, &offset);
-                }
-                if (i == root) {
-                    err = scatter_to_self(rc, tmp, recvm);
-                } else {
-                    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-                                   mpi_comm_world);
-                    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
-                                   mpi_comm_world);
-                }
-            }
+            err = scatter_by_rows(m, recvm, np, root);
         } else {
-            /* scatter by columns */
-            double *val = m->val;
-
-            matsplit_rule(m->cols, np, &k1, &n1, &k2, &n2);
-
-            n = n1 * m->rows;
-            if (cmplx) {
-                n *= 2;
-            }
-            fill_matrix_info(rc, m);
-            rc[1] = n1;
-
-            for (i=0; i<np; i++) {
-                if (i == k1) {
-                    rc[1] = n2;
-                    n = n2 * m->rows;
-                    if (cmplx) n *= 2;
-                }
-                if (i == root) {
-                    err = scatter_to_self(rc, val, recvm);
-                } else {
-                    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-                                   mpi_comm_world);
-                    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
-                                   mpi_comm_world);
-                }
-                /* advance the read pointer */
-                val += n;
-            }
+            err = scatter_by_cols(m, recvm, np, root);
         }
     } else {
         /* non-root processes get their share-out */
         *recvm = gretl_matrix_mpi_receive(root, &err);
-    }
-
-    if (id == root) {
-        free(tmp);
     }
 
     return err;
