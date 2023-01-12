@@ -341,7 +341,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    if (type == GRETL_TYPE_ARRAY) {
 		p->err = gretl_array_mpi_reduce(l->v.a, &a, op, root);
 	    } else if (type == GRETL_TYPE_MATRIX) {
-		lm = get_transfer_matrix(l, f, 0, p);
+		lm = get_transfer_matrix(l, f, 1, p);
 		if (!p->err) {
 		    p->err = gretl_matrix_mpi_reduce(lm, &m, op, root, opt);
 		}
