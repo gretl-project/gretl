@@ -46,6 +46,11 @@
 # define USE_MIMEPOST
 #endif
 
+/* use XFERINFOFUNCTION rather than PROGRESSFUNCTION if available */
+#if LIBCURL_VERSION_NUM >= 0x072000 /* 7.32.0 */
+# define USE_XFERINFOFUNCTION
+#endif
+
 enum {
     SAVE_NONE,
     SAVE_TO_FILE,
@@ -173,6 +178,26 @@ static void urlinfo_set_show_progress (urlinfo *u)
     }
 }
 
+#ifdef USE_XFERINFOFUNCTION
+
+static int progress_func (void *clientp, curl_off_t dltotal, curl_off_t dlnow,
+			  curl_off_t ultotal, curl_off_t ulnow)
+{
+    urlinfo *u = (urlinfo *) clientp;
+    int ret = 0;
+
+    if (u->pstarted) {
+	ret = u->progfunc((double) dlnow, (double) dltotal, SP_TOTAL);
+    } else if (u->progfunc != NULL && dltotal > 1024) {
+	u->progfunc((double) dlnow, (double) dltotal, SP_LOAD_INIT);
+	u->pstarted = 1;
+    }
+
+    return (ret == SP_RETURN_CANCELED) ? 1 : 0;
+}
+
+#else
+
 static int progress_func (void *clientp, double dltotal, double dlnow,
 			  double ultotal, double ulnow)
 {
@@ -188,6 +213,8 @@ static int progress_func (void *clientp, double dltotal, double dlnow,
 
     return (ret == SP_RETURN_CANCELED) ? 1 : 0;
 }
+
+#endif
 
 static void stop_progress_bar (urlinfo *u)
 {
@@ -514,8 +541,13 @@ static int curl_get (urlinfo *u)
     }
 
     if (u->progfunc != NULL) {
+#ifdef USE_XFERINFOFUNCTION
+        curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_func);
+        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, u);
+#else
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
-	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, u);
+        curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, u);
+#endif
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
     } else {
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
