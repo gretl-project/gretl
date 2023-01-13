@@ -911,7 +911,7 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     if (filter != NULL) {
 	jinfo->opt |= OPT_F;
 	pprintf(prn, " --filter=\"%s\"", filter);
-	sprintf(optstr, "\"%s\"", filter);
+	sprintf(optstr, "%s", filter);
 	set_optval_string(JOIN, OPT_F, optstr);
 	memset(optstr, 0, sizeof optstr);
     }
