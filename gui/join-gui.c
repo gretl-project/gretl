@@ -46,7 +46,7 @@ struct join_info_ {
     GtkWidget *rvars;       /* list box, outer series names */
     GtkWidget *iarrow;      /* arrow button for setting import */
     GtkWidget *larrow[2];   /* arrow buttons for setting ikey(s) */
-    GtkWidget *rarrow[2];   /* arrow buttons for setting okey(s) */
+    GtkWidget *rarrow[3];   /* arrow buttons for setting okey(s), filter */
     GtkWidget *ikey[2];     /* entry boxes, ikeys */
     GtkWidget *okey[2];     /* entry boxes, okeys */
     GtkWidget *filter;      /* entry box, filter expression */
@@ -523,6 +523,9 @@ static void arrow_clicked (GtkWidget *button, join_info *jinfo)
     } else if (button == jinfo->rarrow[1]) {
 	src = jinfo->rvars;
 	targ = jinfo->okey[1];
+    } else if (button == jinfo->rarrow[2]) {
+        src = jinfo->rvars;
+        targ = jinfo->filter;
     }
 
     if (src != NULL && targ != NULL) {
@@ -586,6 +589,15 @@ static void joiner_add_arrows_column (join_info *jinfo, int locus)
 		     0, 0, xpad, ypad);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(arrow_clicked), jinfo);
+
+    if (locus == OUTER) {
+        /* push to filter entry box */
+        jinfo->rarrow[2] = button = joiner_arrow_button(src);
+        gtk_table_attach(GTK_TABLE(jinfo->table), button, x, x+1, 5, 6,
+                         0, 0, xpad, ypad);
+        g_signal_connect(G_OBJECT(button), "clicked",
+                         G_CALLBACK(arrow_clicked), jinfo);
+    }
 }
 
 /* Apparatus for showing next or previous range of series
