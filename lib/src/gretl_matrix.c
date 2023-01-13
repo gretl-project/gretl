@@ -396,6 +396,22 @@ gretl_matrix *gretl_cmatrix_new0 (int r, int c)
     return m;
 }
 
+gretl_matrix *gretl_cmatrix_new1 (int r, int c)
+{
+    gretl_matrix *m = gretl_matrix_alloc(2*r, c);
+    int i;
+
+    if (m != NULL) {
+        m->is_complex = 1;
+        m->z = (double complex *) m->val;
+        m->rows = r;
+	for (i=0; i<r*c; i++) {
+	    m->z[i] = 1.0 + 0 * I;
+	}
+    }
+    return m;
+}
+
 gretl_matrix *gretl_matching_matrix_new (int r, int c,
                                          const gretl_matrix *m)
 {

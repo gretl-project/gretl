@@ -377,7 +377,6 @@ enum {
     F_ATAN2,
     F_CCODE,
     F_LSOLVE,
-    F_STRFTIME,
     F_STRFDAY,
     F_STRPTIME,
     F_STRPDAY,
@@ -477,6 +476,7 @@ enum {
     F_SPHCORR,
     F_STRSTR,
     F_INSTRING,
+    F_STRFTIME,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

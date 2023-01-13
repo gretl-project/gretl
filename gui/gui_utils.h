@@ -36,7 +36,8 @@ void register_startup_data (const char *fname);
 
 gboolean do_open_data (windata_t *vwin, int code);
 
-gboolean verify_open_data (windata_t *vwin, int code);
+gboolean verify_open_data (windata_t *vwin, int action,
+			   gboolean dnd);
 
 gboolean verify_open_session (void);
 

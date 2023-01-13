@@ -8774,13 +8774,14 @@ static NODE *aux_sized_array_node (GretlType type, int n, parser *p)
    wanted on return.
 */
 
-static NODE *strftime_node (NODE *l, NODE *r, int f,
+static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 			    int julian, parser *p)
 {
     NODE *ret = NULL;
     const char *fmt = NULL;
     int *vmap = NULL;
     char **S = NULL;
+    double offset = NADBL;
     int nv = 0;
 
     if (l->t == SERIES) {
@@ -8809,7 +8810,12 @@ static NODE *strftime_node (NODE *l, NODE *r, int f,
 	}
     }
 
-    if (l->t == SERIES) {
+    /* if @o isn't null or empty it should hold an offset in seconds */
+    if (!null_node(o)) {
+	offset = node_get_scalar(o, p);
+    }
+
+    if (!p->err && l->t == SERIES) {
 	const double *x = l->v.xvec + p->dset->t1;
 	int n = sample_size(p->dset);
 
@@ -8866,7 +8872,7 @@ static NODE *strftime_node (NODE *l, NODE *r, int f,
 		    bytes = gretl_alt_strfdate(buf, sizeof buf, julian, ed);
 		} else {
 		    tt = (gint64) floor(tx);
-		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt);
+		    bytes = gretl_strftime(buf, sizeof buf, fmt, tt, offset);
 		}
 		if (bytes > 0) {
 		    dstr = gretl_strdup(g_strchomp(buf));
@@ -8907,23 +8913,31 @@ static NODE *strftime_node (NODE *l, NODE *r, int f,
 static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 {
     int julian = (f == F_JULDATE);
-    int as_string = 0;
+    int as_string;
+    int n = 0;
     NODE *ret = NULL;
 
-    if (!scalar_node(l) && l->t != SERIES) {
+    as_string = node_get_bool(r, p, 0);
+
+    if (l->t == MAT) {
+        n = gretl_vector_get_length(l->v.m);
+        if (n == 0) {
+            p->err = E_NONCONF;
+        }
+    } else if (!scalar_node(l) && l->t != SERIES) {
         node_type_error(f, 1, NUM, l, p);
-    } else {
-	as_string = node_get_bool(r, p, 0);
     }
 
     if (p->err) {
 	return NULL;
-    } else if (l->t == SERIES && as_string) {
-	return strftime_node(l, NULL, F_ISODATE, julian, p);
+    } else if ((l->t == SERIES || l->t == MAT) && as_string) {
+	return strftime_node(l, NULL, NULL, F_ISODATE, julian, p);
     }
 
-    if (scalar_node(l)) {
-	ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
+    if (l->t == MAT) {
+        ret = aux_sized_matrix_node(p, n, 1, 0);
+    } else if (l->t == NUM) {
+        ret = as_string ? aux_string_node(p) : aux_scalar_node(p);
     } else {
 	ret = aux_series_node(p);
     }
@@ -8943,16 +8957,19 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 						   julian, &p->err);
 	}
     } else if (ret != NULL) {
-	double xt;
+        double xt, *targ;
+	int t1 = l->t == MAT ? 0 : p->dset->t1;
+        int t2 = l->t == MAT ? n-1 : p->dset->t2;
 	int t;
 
-	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    xt = l->v.xvec[t];
+	for (t=t1; t<=t2; t++) {
+            targ = l->t == MAT ? &ret->v.m->val[t] : &ret->v.xvec[t];
+	    xt = l->t == MAT ? l->v.m->val[t] : l->v.xvec[t];
 	    if (na(xt)) {
-		ret->v.xvec[t] = NADBL;
+		*targ = NADBL;
 	    } else if (xt >= 1 && xt <= UINT_MAX) {
-		ret->v.xvec[t] = ymd_basic_from_epoch_day((guint32) xt,
-							  julian, &p->err);
+		*targ = ymd_basic_from_epoch_day((guint32) xt,
+                                                 julian, &p->err);
 	    } else {
 		p->err = E_INVARG;
 		break;
@@ -8961,6 +8978,23 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     }
 
     return ret;
+}
+
+static int strptime_error (const char *s, double x, int t, int ntype)
+{
+    if (ntype == STR) {
+        gretl_errmsg_sprintf("'%s': argument doesn't match format", s);
+    } else if (ntype == NUM) {
+        gretl_errmsg_sprintf("Invalid date number %.12g", x);
+    } else if (s != NULL) {
+        gretl_errmsg_sprintf("'%s': argument doesn't match format at "
+                             "obs %d\n", s, t);
+    } else if (!na(x)) {
+        gretl_errmsg_sprintf("Invalid date number %.12g at obs %d\n",
+                             x, t);
+    }
+
+    return E_INVARG;
 }
 
 /* strptime_node() implements both strptime() and strpday(). In the
@@ -9046,6 +9080,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 
 	for (t=t1; t<=t2; t++) {
 	    struct tm tm = {0,0,0,1,0,0,0,0,-1};
+	    int handled = 0;
 	    double x = NADBL;
 
 	    if (l->t == SERIES) {
@@ -9074,10 +9109,10 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		    *targ = NADBL;
 		    continue;
 		} else if (x < 0 || x != floor(x) || x > 99991231) {
-		    p->err = E_INVARG;
+                    p->err = strptime_error(src, x, t, l->t);
 		    break;
 		} else {
-		    sprintf(buf, "%d", (int) x);
+		    sprintf(buf, "%08d", (int) x);
 		    s = strptime(buf, "%Y%m%d", &tm);
 		}
 	    } else {
@@ -9085,12 +9120,17 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		    /* default to ISO 8601 extended */
 		    fmt = "%Y-%m-%d";
 		}
-		s = strptime(src, fmt, &tm);
+		if (f == F_STRPDAY) {
+		    s = strptime(src, fmt, &tm);
+		} else {
+		    s = gretl_strptime(src, fmt, targ);
+		    handled = 1;
+		}
 	    }
 
 	    if (s == NULL) {
 		/* strptime() failed */
-		p->err = E_INVARG;
+		p->err = strptime_error(src, x, t, l->t);
 		break;
 	    } else if (f == F_STRPDAY) {
 		int y = tm.tm_year + 1900;
@@ -9100,7 +9140,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
 		if (*targ == 0) {
 		    *targ = NADBL;
 		}
-	    } else {
+	    } else if (!handled) {
 		/* F_STRPTIME */
 #ifdef WIN32
 		*targ = win32_mktime(&tm);
@@ -18508,9 +18548,15 @@ static NODE *eval (NODE *t, parser *p)
         ret = ymd_node(l, r, p);
         break;
     case F_STRFTIME:
+        if (l->t == NUM || l->t == SERIES || l->t == MAT) {
+            ret = strftime_node(l, m, r, t->t, 0, p);
+        } else {
+            node_type_error(t->t, 0, NUM, l, p);
+        }
+        break;
     case F_STRFDAY:
         if (l->t == NUM || l->t == SERIES || l->t == MAT) {
-            ret = strftime_node(l, r, t->t, 0, p);
+            ret = strftime_node(l, r, NULL, t->t, 0, p);
         } else {
             node_type_error(t->t, 0, NUM, l, p);
         }

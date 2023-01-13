@@ -914,29 +914,61 @@ gboolean do_open_data (windata_t *fwin, int code)
     return !err;
 }
 
+static int give_dnd_options (GtkWidget *parent)
+{
+    const char *opts[] = {
+	N_("Replace the current dataset (clears the current session)"),
+	N_("Try appending to the current dataset"),
+    };
+    int resp;
+
+    resp = radio_dialog(_("gretl: open data"), NULL, opts, 2,
+			0, 0, parent);
+
+    if (resp == GRETL_CANCEL) {
+	return 0;
+    } else {
+	return resp == 0 ? OPEN_DATA : APPEND_DATA;
+    }
+}
+
+static int give_cancel_option (GtkWidget *parent)
+{
+    const char *msg =
+	N_("Opening a new data file will automatically\n"
+	   "close the current one.  Any unsaved work\n"
+	   "will be lost.  Proceed to open data file?");
+
+    return yes_no_dialog(_("gretl: open data"), msg, parent);
+}
+
 /* give user choice of not opening selected datafile, if there's
    already a datafile open */
 
-gboolean verify_open_data (windata_t *vwin, int code)
+gboolean verify_open_data (windata_t *vwin, int action, gboolean dnd)
 {
     if (dataset_locked()) {
 	return FALSE;
     }
 
     if (data_status) {
-	int resp =
-	    yes_no_dialog(_("gretl: open data"),
-			  _("Opening a new data file will automatically\n"
-			    "close the current one.  Any unsaved work\n"
-			    "will be lost.  Proceed to open data file?"),
-			  vwin_toplevel(vwin));
+	GtkWidget *parent = vwin_toplevel(vwin);
 
-	if (resp != GRETL_YES) {
-	    return FALSE;
+	if (dnd) {
+	    action = give_dnd_options(parent);
+	    if (action == 0) {
+		return FALSE;
+	    }
+	} else {
+	    int resp = give_cancel_option(parent);
+
+	    if (resp != GRETL_YES) {
+		return FALSE;
+	    }
 	}
     }
 
-    return do_open_data(vwin, code);
+    return do_open_data(vwin, action);
 }
 
 /* give user choice of not opening session file, if there's already a

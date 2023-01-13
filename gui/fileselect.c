@@ -154,6 +154,7 @@ static const char *get_extension_for_action (int action, gpointer data)
 	else if (ttype == GP_TERM_PNG) s = ".png";
 	else if (ttype == GP_TERM_EMF) s = ".emf";
 	else if (ttype == GP_TERM_SVG) s = ".svg";
+	else if (ttype == GP_TERM_HTM) s = ".html";
 	else if (ttype == GP_TERM_PLT) s = ".plt";
     } else {
 	int i;
@@ -708,7 +709,7 @@ file_selector_process_result (const char *in_fname, int action,
 #ifndef GRETL_EDIT
     else if (action == OPEN_DATA) {
 	set_tryfile(fname);
-	verify_open_data(NULL, action);
+	verify_open_data(NULL, action, FALSE);
     } else if (action == APPEND_DATA) {
 	set_tryfile(fname);
 	do_open_data(NULL, action);

@@ -78,6 +78,7 @@ use three series, possibly grouping them into a list, as in
   series d = $obsmicro
   list DATE = y m d
 \end{code}
+%$
 This example above will generate daily dates for January and February
 2020. Note that use of the \verb|$obsm*| accessors requires a
 time-series dataset, and \dollar{obsmicro} in particular requires
@@ -152,20 +153,23 @@ comparison (which of two dates, on a given calendar, refers to a later
 day?) but with epoch days one can carry out fully-fledged ``dates
 arithmetic.''  Epoch days are always consecutive by construction, but
 8-digit basic dates are consecutive only within a given
-month.\footnote{In fact, they advance by 101 minus (days in previous
-  month) at the start of each month other than January, and by 8870 at
-  the start of each year.} For more on arithmetic with epoch days see
-Section~\ref{sec:cal-arith}.
+month.\footnote{In fact, they advance by 101 minus the number of days
+  in the previous month at the start of each month other than
+  January, and by 8870 at the start of each year.} For more on
+arithmetic with epoch days see Section~\ref{sec:cal-arith}.
 
 \subsection{Unix seconds}
 \label{sec:cal-seconds}
 
 In this representation---the cornerstone of date and time handling on
-Unix-like systems---time is a scalar: the number of seconds since the
-start of 1970 according to Coordinated Universal Time (UTC, formerly
-known as Greenwich Mean Time or GMT). This format is therefore ideal
-for storing fine-grained information, including time of day as well as
-date.
+Unix-like systems---time is the number of seconds since midnight at
+the start of 1970 according to Coordinated Universal Time
+(UTC).\footnote{UTC is, to a first approximation, the time such that
+  the Sun is at its highest point at noon over the prime meridian, the
+  line of 0\textdegree{} longitude, which as a matter of historical
+  contingency runs through Greenwich, England.}  This format is
+therefore ideal for storing fine-grained information, including time
+of day as well as date.
 
 This representation is not transparent to humans (for example, the
 number 123456789 corresponds to the start of Thursday, 29 Nov 1973)
@@ -189,9 +193,42 @@ provides several dedicated functions, although in some cases
 conversion can be carried out by using general-purpose
 functions. Figure \ref{fig:cal-conversions} displays a summary: solid
 lines represent dedicated functions, while dashed lines indicate that
-no special function is needed. For a full description of the functions
+no special function is needed. Numerical formats are depicted as boxes
+and string formats as ovals. For a full description of the functions
 referenced in the figure, see the \GCR. In the rest of this section we
 discuss several cases of conversion with the help of examples.
+
+\subsection{Strings and three-number dates}
+
+As indicated in Figure~\ref{fig:cal-conversions}, converting between
+date strings and the three-number representation does not require
+date-specific functions. The two ``generic'' functions that can be
+used for this purpose are \cmd{printf} and \cmd{sscanf}. Here's how:
+suppose you encode a date via the three scalars \texttt{d}=30,
+\texttt{m}=10 and \texttt{y}=1983. You can use \cmd{printf} to turn it
+into a date string rather easily, as in
+\begin{code}
+  eu_s = printf("%d/%m/%y", d, m, y)
+  us_s = printf("%m/%d/%y", m, d, y)
+\end{code}
+where the two strings follow the European and US conventions,
+respectively.
+
+The reverse operation, using the \cmd{sscanf} function, is a little
+trickier (see the \GCR{} for a full illustration). The string
+\texttt{s}=``1983-10-30'' can be broken down into three scalars as
+\begin{code}
+  scalar d m y
+  n = sscanf(s, "%d-%d-%d", y, m, d)
+\end{code}
+Note that in this case ``\texttt{\%d}'' in the format specification
+does not mean ``day'', but rather ``decimal integer'', which is why
+there are three instances. Alternatively, one could have used a
+3-element vector, as in
+\begin{code}
+  matrix date = zeros(1,3)
+  n = sscanf(s, "%d-%d-%d", &date[1], &date[2], &date[3])
+\end{code}
 
 \subsection{Decomposing a series of ``basic'' dates}
 
@@ -219,10 +256,8 @@ series d = dates - 10000*y - 100*m
 However, there is some ``value added'': \cmd{isoconv} checks the
 validity of the \texttt{dates} input. If the implied year, month and
 day for any \texttt{dates} observation do not correspond to a valid
-date,\footnote{For example, the implied month is not in the range
-  1--12, or the implied day is not in the range of 1 to the number of
-  days in the month, taking account of leap years.} then all the
-derived series will have value \texttt{NA} at that observation.
+date, then all the derived series will have value \texttt{NA} at that
+observation.
 
 The inverse operation is trivial:
 \begin{code}
@@ -236,9 +271,9 @@ with an undated dataset, since an ISO 8601 basic value is just a
 numeric value (with some restrictions) and such values do not have to
 appear in chronological order.
 
-\subsection{Strings to numeric and vice versa}
+\subsection{String/numeric conversions: dedicated functions}
 
-The primary means of converting between string and numeric
+The primary means of converting between string and scalar numeric
 representations of dates and times is provided by two pairs of
 functions, \texttt{strptime}/\texttt{strftime} and
 \texttt{strpday}/\texttt{strfday}. The first of each pair takes string
@@ -274,9 +309,9 @@ but there's nothing to stop a user making a different setting.
 
 It often happens that CSV files contain date information stored as
 strings. Take for example a file containing earthquake data like the
-following:\footnote{These data are taken from a larger dataset
-  available at
-  \url{https://www.kaggle.com/datasets/usgs/earthquake-database}.}
+following:\footnote{See
+  \url{https://www.kaggle.com/datasets/usgs/earthquake-database} for
+  the dataset of which this is an extract.}
 
 \begin{center}
   \begin{small}
@@ -300,12 +335,12 @@ Suppose we want to convert the \texttt{Date} column to epoch
 days. Note that the date format follows the American convention
 month/day/year, a point which can be ascertained only by visual
 inspection of the file's content. The simplest way to accomplish the
-task is shown in Listing~\ref{ex:earthquakes}, where we assume that the
-data file is named \texttt{earthquakes.csv}. Note that the
+task is shown in Listing~\ref{ex:earthquakes}, where we assume that
+the data file is named \texttt{earthquakes.csv}. Note that the
 \option{all-cols} option is wanted here, so that gretl treats
 \texttt{Dates} as a string-valued series rather than just a source of
 time-series information. For good measure we show how to add an ISO
-8601 string dates series.
+8601 date series.
 
 \begin{script}[htbp]
   \fragcaption{Converting a string-valued date series to epoch day}
@@ -338,96 +373,104 @@ sticking the two strings together at each observation and calling
 \texttt{strptime} with a suitable format, as follows:
 %
 \begin{code}
-series date_time # Unix seconds
+series usecs # Unix seconds
 loop i=1..$nobs
-   date_time[i] = strptime(Date[i] ~ Time[i], "%m/%d/%Y%H:%M:%S")
+   usecs[i] = strptime(Date[i] ~ Time[i], "%m/%d/%Y%H:%M:%S")
 endloop
 \end{code}
 
 \subsection{Unix seconds and time zones}
 
-As mentioned above, date/time information stored in the form of Unix
-seconds is always relative to UTC, while the string representations
-associated with the \texttt{strp*} functions (as input) and
-\texttt{strf*} functions (as output) are relative to local time. So
-for example a Unix seconds value of 1234567890 corresponds to
-``13-02-2009 23:31:30'' in UTC, but on a computer whose clock is set
-to Central European Time (CET) the call
-\begin{code}
-  strftime(1234567890, "%d-%m-%Y")
-\end{code}
-will return the string ``14-02-2009'', because at that moment it was
-already the 14th of February in Berlin, Paris and Rome (1 hour ahead).
+At 8:46 in the morning of September 11, 2001 an airliner crashed into
+the North Tower of the World Trade Center in New York. Relative to
+what time zone is that statement correct? Eastern Daylight Time (EDT),
+of course. Unless we have special reason to do otherwise we always
+report the time of an event relative to the time zone in which the
+event occurred; and if we do otherwise we need to state the metric
+we're using (for example, one might say that this event occurred at
+2001-09-11 12:46 UTC).
 
-If you wish to determine the offset of your time zone with respect
-with UTC, it's sufficient to invoke the \texttt{strptime} function
-with an argument of 19700101.  An example of such usage is given in
-the script~\ref{ex:tzoffset}.
+Now consider the following script:
+%
+\begin{code}
+date = "2001-09-11 08:46"
+format = "%Y-%m-%d %H:%M"
+usecs = strptime(date, format)
+check = strftime(usecs, format)
+printf "Unix time %d\n", usecs
+printf "original:  %s\n", date
+printf "recovered: %s\n", check
+\end{code}
+
+Run this script in any time zone you like and the last line of output
+will read
+\begin{code}
+recovered: 2001-09-11 08:46
+\end{code}
+The \texttt{usecs} value will differ by time zone---for example it'll
+be 1000212360 under Eastern Daylight Time but 1000194360 under Central
+European Time---but this difference ``cancels out'' in recovering the
+original time via \texttt{strftime}.
+
+So far, so good. But suppose I write a script in which I store the
+date as Unix seconds, with my laptop's clock set to EDT:
+\begin{code}
+usecs = 1000212360
+date = strftime(usecs, "%Y-%m-%d %H:%M")
+print date
+\end{code}
+Running this script under EDT will again print out
+``\texttt{2001-09-11 08:46}'', but if I take my laptop to Italy in
+June, set its clock to the local time, and rerun the script, I'll get
+%
+\begin{code}
+2001-09-11 14:46
+\end{code}
+%
+Is that a problem? Well, 14:46 is indeed the time in Italy when it's
+08:46 in New York (with both zones in their Summer variants); it's a
+problem only if you want to preserve the locality of the original
+time. To do that you need to give time-zone information to both
+\texttt{strptime} and \texttt{strftime}. This is illustrated in
+Listing~\ref{ex:tzones}.
 
 \begin{script}[htbp]
-  \scriptcaption{Exploring the time-zone offset}
-  \label{ex:tzoffset}
+  \fragcaption{Date/time invariance with respect to current time zone}
+  \label{ex:tzones}
 \begin{scodebit}
-set verbose off
-
-# nearly midnight on 13/2/2009 in London
-scalar s = 1234567890
-# corresponding date according to your time zone
-string datestring = strftime(s, "%d-%m-%Y %H:%M:%S %Z")
-printf "local date/time: %s\n", datestring
-
-# determine local offset relative to UTC
-scalar offset = strptime(19700101)
-printf "offset in seconds: %d\n", offset
-
-# date in UTC
-utc_datestring = strftime(s + offset, "%d-%m-%Y %H:%M:%S")
-printf "UTC date/time: %s\n", utc_datestring
+string date = "2001-09-11 08:46 -0400"
+string format = "%Y-%m-%d %H:%M %z"
+usecs = strptime(date, format)
+printf "Unix time %d\n", usecs
 \end{scodebit}
-%
-If you run the script in the CET zone you should get the following
-output:
-\begin{outbit}
-local date/time: 14-02-2009 00:31:30 CET
-offset in seconds: -3600
-UTC date/time: 13-02-2009 23:31:30
-\end{outbit}
-\end{script}
+  In the code above we specify the time zone in \texttt{date} using
+  \texttt{-0400}, meaning 4 hours behind UTC, which is correct when
+  Daylight Saving time is in force in the Eastern US. And we match
+  this with the ``\verb|%z|'' specifier in \texttt{format}. As a
+  result, regardless of the time zone in which the code is run the
+  Unix time value will be 1000212360. Then we come to unpacking that
+  value:
+\begin{scodebit}
+date = strftime(1000212360, "%Y-%m-%d %H:%M %z", -4*3600)
+print date
+\end{scodebit}
+  Here we use the third, optional argument to \texttt{strftime} to
+  supply the offset in seconds of EDT relative to UTC. Having told
+  \texttt{strptime} the time zone, why do we need this? Well, remember
+  that Unix time is just a scalar value, always relative to UTC: it
+  cannot store time-zone information. Anyway, the result is that this
+  code will print \texttt{2001-09-11 08:46 -0400} regardless of where
+  and when it is executed.
 
-A few points are worth noting in relation to
-Listing~\ref{ex:tzoffset}. First, the idiom
-\begin{code}
-scalar offset = strptime(19700101)
-\end{code}
-is special gretl shorthand (giving an ISO 8601 basic date in place of
-the usual date-string plus format, with the format left implicit). A more
-standard way of doing the same thing, also acceptable in gretl, would
-be
-\begin{code}
-scalar offset = strptime("1970-01-01", "%Y-%m-%d")
-\end{code}
-Second, looking up the offset is not really required to obtain the
-corresponding UTC date/time, thanks to another gretl special: if you
-prepend ``\texttt{utc:}'' to the format string, as in
-\begin{code}
-utc_datestring = strftime(s, "utc:%d-%m-%Y %H:%M:%S")
-\end{code}
-you'll get UTC output. Finally, readers whose operating system
-supports the \texttt{TZ} environment variable (such as Linux or macOS)
-but who are not in the CET zone might like to verify the script's CET
-output, using this command in a terminal window:
-\begin{code}
-TZ="CET-1" gretlcli -b tzones.inp
-\end{code}
-(where we assume the script is saved as \texttt{tzones.inp}). Do
-``\texttt{man tzset}'' for details on what's going on.\footnote{We'll
-  add one point here. The \texttt{offset} calculated in the example
-  script, and also the offset indicated by the \texttt{-1} in
-  \texttt{TZ="CET-1"}, represent the time (in seconds or hours,
-  respectively) that must be added to local time to get UTC. However,
-  in the standard representation of time zones---for example, of CET
-  as UTC+1---it's the other way round: UTC is the base and the offset
-  is that which must be added to UTC to get local time.}
+  \vspace{1ex} Some additional comments are in order. First, spaces
+  matter in parsing the \texttt{strptime} arguments: they must match
+  between the date and format strings. In the example above we
+  inserted spaces before \verb|-0400| and \verb|%z|. We could have
+  omitted both spaces, but not just one of them. Second, the
+  \textsf{C} standard does not require that \texttt{strptime} and
+  \texttt{strftime} know anything about time zones; the extensions
+  used in this example are supported by \textsf{GLib} functionality.
+\end{script}
 
 \section{Epoch day arithmetic}
 \label{sec:cal-arith}
@@ -516,12 +559,12 @@ frequency on a dataset, assuming it starts on January 1, 1990.
   \begin{tabular}{clllll}
     frequency & description & constructor & \dollar{obsmajor} &
        \dollar{obsminor} & \dollar{obsmicro}\\
-    1 & annual & \texttt{1 1990} & year & NA & NA\\
-    4 & quarterly & \texttt{4 1990:1} & year & quarter & NA\\
-    12 & monthly & \texttt{12 1990:01} & year & month & NA\\
+    1 & annual & \texttt{1 1990} & year & -- & --\\
+    4 & quarterly & \texttt{4 1990:1} & year & quarter & --\\
+    12 & monthly & \texttt{12 1990:01} & year & month & --\\
     5, 6, 7 & daily & $n$ \texttt{1990-01-01} & year & month & day\\
     52 & weekly & \texttt{52 1990-01-01} & year & month & day\\
-    24 & hourly & \texttt{24 726468:01} & day & hour & NA
+    24 & hourly & \texttt{24 726468:01} & day & hour & --
   \end{tabular}
   \caption{Calendrical frequencies and accessors}
   \label{tab:cal-accessors}
@@ -611,10 +654,9 @@ was directly followed by Thursday September 14.
 In comparing calendars one wants to refer to a given day in terms that
 are not specific to either calendar---but how to define a ``given
 day''? This is accomplished by a count of days following some definite
-event. Astronomers use the ``Julian Day,'' whose count starts with a
-particular coincidence of astronomical cycles in the year known to the
-Gregorian calendar (if one extrapolates it backwards in time) as 4714
-BC.
+temporal benchmark. As described in
+Section~\ref{sec:cal-representations}, gretl uses days since the start
+of 1 AD, which we call epoch days.
 
 In this section we address the problem of constructing within gretl a
 calendar which agrees with the actual historical calendar prior to
@@ -624,7 +666,7 @@ it would be tricky and error-prone to enter on the Gregorian calendar
 data whose dates are given on the Julian at source.
 
 In order to represent Julian dates, Gretl uses two basic tools: one is
-the \cmd{juldate} function, which converts a Gregorian epochday into
+the \cmd{juldate} function, which converts a Gregorian epoch day into
 an ISO8601-like integer and the convention that for some functions,
 a negative value where a year is expected acts as a ``Julian calendar
 flag''.
@@ -651,7 +693,7 @@ been on the Gregorian calendar since October 1582)?
 \begin{code}
 ed = epochday(1740,6,26)
 english_date = juldate(ed)
-printf "%.0f\n", english_date
+printf "%d\n", english_date
 \end{code}
 %
 We find that the English date was \texttt{17400615}, the 15th of June.
@@ -661,7 +703,7 @@ Working in the other direction, what Italian date corresponded to the
 \begin{code}
 ed = epochday(-1740,11,5)
 italian_date = isodate(ed)
-printf "%.0f\n", italian_date
+printf "%d\n", italian_date
 \end{code}
 %
 Answer: \texttt{17401116}; Guy Fawkes night in 1740 occurred on 

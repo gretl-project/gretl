@@ -59,7 +59,8 @@ GtkTargetEntry image_targets[] = {
     { "com.adobe.encapsulated-postscript", 0, TARGET_EPS },
     { "application/eps",   0, TARGET_EPS },
     { "com.adobe.pdf",     0, TARGET_PDF },
-    { "public.png",        0, TARGET_PNG }
+    { "public.png",        0, TARGET_PNG },
+    { "public.html",       0, TARGET_HTM }
 };
 
 #else
@@ -78,14 +79,15 @@ GtkTargetEntry image_targets[] = {
     { "image/x-eps",            0, TARGET_EPS },
     { "application/pdf",   0, TARGET_PDF },
     { "application/x-pdf", 0, TARGET_PDF },
-    { "image/png",         0, TARGET_PNG }
+    { "image/png",         0, TARGET_PNG },
+    { "text/html",         0, TARGET_HTM }
 };
 
 #endif /* OS_OSX */
 
 #define image_type(t) (t == TARGET_SVG || t == TARGET_EMF || \
 		       t == TARGET_EPS || t == TARGET_PDF || \
-		       t == TARGET_PNG)
+		       t == TARGET_PNG || t == TARGET_HTM)
 
 static int n_text  = G_N_ELEMENTS(text_targets);
 static int n_rtf   = G_N_ELEMENTS(rtf_targets);
@@ -143,6 +145,8 @@ static const char *fmt_label (int f)
 	return "TARGET_PDF";
     } else if (f == TARGET_PNG) {
 	return "TARGET_PNG";
+    } else if (f == TARGET_HTM) {
+	return "TARGET_HTM";
     } else {
 	return "unknown";
     }

@@ -250,6 +250,8 @@ gretl_matrix *gretl_cmatrix_new (int r, int c);
 
 gretl_matrix *gretl_cmatrix_new0 (int r, int c);
 
+gretl_matrix *gretl_cmatrix_new1 (int r, int c);
+
 gretl_matrix *gretl_matching_matrix_new (int r, int c,
 					 const gretl_matrix *m);
 

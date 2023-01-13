@@ -175,6 +175,24 @@ static int get_xvalidation_details (regls_info *ri)
     return err;
 }
 
+static gretl_matrix *get_bundled_lfrac (gretl_bundle *b, int *err)
+{
+    GretlType t = gretl_bundle_get_member_type(b, "lfrac", NULL);
+    gretl_matrix *lf = NULL;
+
+    if (t == GRETL_TYPE_MATRIX) {
+        lf = gretl_bundle_get_matrix(b, "lfrac", err);
+    } else if (t == GRETL_TYPE_DOUBLE) {
+        double x = gretl_bundle_get_scalar(b, "lfrac", err);
+
+        if (!*err) {
+            lf = gretl_matrix_from_scalar(x);
+        }
+    }
+
+    return lf;
+}
+
 static regls_info *regls_info_new (gretl_matrix *X,
 				   gretl_matrix *y,
 				   gretl_bundle *b,
@@ -185,7 +203,7 @@ static regls_info *regls_info_new (gretl_matrix *X,
     if (ri == NULL) {
 	*err = E_ALLOC;
     } else {
-	ri->lfrac = gretl_bundle_get_matrix(b, "lfrac", err);
+        ri->lfrac = get_bundled_lfrac(b, err);
     }
 
     if (!*err) {

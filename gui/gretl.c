@@ -549,7 +549,7 @@ static gboolean app_open_file_cb (GtkosxApplication *app,
 	    return TRUE;
 	}
 	set_tryfile(path);
-	return open_tryfile(FALSE);
+	return open_tryfile(FALSE, FALSE);
     } else {
 	clear_tryfile();
 	return TRUE;
@@ -921,7 +921,7 @@ int main (int argc, char **argv)
 #endif
 
     if (tryfile_is_set()) {
-	open_tryfile(TRUE);
+	open_tryfile(TRUE, FALSE);
     }
 
     /* try opening specified database or package */
@@ -2593,7 +2593,7 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
     set_tryfile(tmp);
 
-    open_tryfile(FALSE);
+    open_tryfile(FALSE, TRUE);
 }
 
 /* At start-up only: if we can't open a script file specified on the
@@ -2633,7 +2633,7 @@ static gboolean maybe_open_script (int stype)
     return FALSE;
 }
 
-gboolean open_tryfile (gboolean startup)
+gboolean open_tryfile (gboolean startup, gboolean dnd)
 {
     int stype = script_type(tryfile);
     gboolean ret = FALSE;
@@ -2656,7 +2656,7 @@ gboolean open_tryfile (gboolean startup)
 	       gretl_is_xml_file(tryfile)) {
 	ret = edit_specified_package(tryfile);
     } else {
-	ret = verify_open_data(NULL, 0);
+	ret = verify_open_data(NULL, 0, dnd);
     }
 
     return ret;

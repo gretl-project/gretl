@@ -144,12 +144,13 @@ void set_tryfile (const char *fname);
 char *get_tryfile (void);
 void clear_tryfile (void);
 int tryfile_is_set (void);
-gboolean open_tryfile (gboolean startup);
 void about_dialog (GtkWidget *w);
 
 #ifdef GRETL_EDIT
 void set_editor (GtkWidget *w);
+gboolean open_tryfile (gboolean startup);
 #else
+gboolean open_tryfile (gboolean startup, gboolean dnd);
 int mdata_selection_count (void);
 int mdata_active_var (void);
 void populate_varlist (void);
