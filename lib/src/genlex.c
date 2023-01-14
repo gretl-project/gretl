@@ -1677,10 +1677,10 @@ static void look_up_word (const char *s, parser *p)
 		/* note: all "native" types take precedence over this */
 		p->sym = RFUN;
 		p->idstr = gretl_strdup(s + 2);
-	    } else if (parsing_query || prevsym == B_AND) {
+	    } else if (parsing_query || prevsym == B_AND || prevsym == B_OR) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
-	    } else if (p->flags & P_AND) {
+	    } else if (p->flags & (P_AND | P_OR)) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
 	    } else if (!strcmp(s, "pi")) {
@@ -1705,6 +1705,10 @@ static void look_up_word (const char *s, parser *p)
 	    undefined_symbol_error(s, p);
 	}
     }
+
+#if LDEBUG
+    fprintf(stderr, "look_up_word: at return err=%d, p->err=%d\n", err, p->err);
+#endif
 }
 
 static void maybe_treat_as_postfix (parser *p)

@@ -1839,8 +1839,10 @@ static NODE *expr0 (parser *p)
     while (!p->err && p->sym == B_OR) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
+	    p->flags |= P_OR;
 	    lex(p);
 	    t->R = expr1(p);
+	    p->flags &= ~P_OR;
 	}
     }
 

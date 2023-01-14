@@ -680,11 +680,12 @@ typedef enum {
     P_OBSVAL  = 1 << 22, /* generating value of observation in series */
     P_ALIASED = 1 << 23, /* state: handling aliased object (temporary) */
     P_AND     = 1 << 24, /* state: working on right-hand term of B_AND */
-    P_STACK   = 1 << 25, /* executing stack() */
-    P_ALTINP  = 1 << 26, /* the input string has been substituted */
-    P_OBJQRY  = 1 << 27, /* querying the existence of an object */
-    P_STRVEC  = 1 << 28, /* "complex" calc with string-valued series */
-    P_PRNLIST = 1 << 29  /* defining a list for "print" */
+    P_OR      = 1 << 25, /* state: working on right-hand term of B_OR */
+    P_STACK   = 1 << 26, /* executing stack() */
+    P_ALTINP  = 1 << 27, /* the input string has been substituted */
+    P_OBJQRY  = 1 << 28, /* querying the existence of an object */
+    P_STRVEC  = 1 << 29, /* "complex" calc with string-valued series */
+    P_PRNLIST = 1 << 30  /* defining a list for "print" */
 } genflags;
 
 struct lhinfo {
