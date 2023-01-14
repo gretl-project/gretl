@@ -416,16 +416,19 @@ In matrix ``left division'', the statement
 matrix X = A \ B
 \end{code}
 %
-is interpreted as a request to find the matrix $X$ that solves $AX=B$.
-If $A$ is a square matrix, this is in principle equivalent to $A^{-1}B$,
-which fails if $A$ is singular; the numerical method employed here is
-the LU decomposition.  If $A$ is a $T \times k$ matrix with
-$T > k$, then $X$ is the least-squares solution, $X = (A'A)^{-1}A'B$,
-which fails if $A'A$ is singular; the numerical method employed here is
-the QR decomposition.  Otherwise, the operation necessarily fails.
+is interpreted as a request to find the matrix $X$ that solves $AX=B$,
+so $A$ and $B$ must have the same number of rows. If $A$ is a square
+matrix, this is in principle equivalent to $A^{-1}B$, which fails if
+$A$ is singular; the numerical method employed here is the LU
+decomposition.  If $A$ is a $T \times k$ matrix with $T > k$, then $X$
+is the least-squares solution, $X = (A'A)^{-1}A'B$, which fails if
+$A'A$ is singular; the numerical method is the QR decomposition.
+Otherwise, the operation fails.
 
 For matrix ``right division'', as in \texttt{X = A / B}, $X$ is the
-matrix that solves $XB = A$, in principle equivalent to $AB^{-1}$.
+matrix that solves $XB = A$, so $A$ and $B$ must have the same number
+of columns. If $B$ is non-singular this is in principle equivalent to
+$AB^{-1}$, otherwise $X$ is the least-squares solution.
 
 In ``dot'' operations a binary operation is applied element by
 element; the result of this operation is obvious if the matrices are
