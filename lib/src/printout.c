@@ -584,7 +584,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	/* don't bother with chi-square */
 	pearson = NADBL;
     }
-    
+
     if (opt & OPT_N) {
 	totals = 0;
     }
@@ -630,7 +630,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 
     /* allow for BIG integers */
     get_xtab_col_widths(tab, stdw, &cw, &tw);
-    
+
     if (tab->cstrs) {
 	clen = 2 + col_strlen(tab);
 	if (clen > 12) {
@@ -641,7 +641,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     } else {
 	clen = cw;
     }
-    
+
     bufspace(rlen, prn);
 
     /* header row: column labels */
@@ -2140,6 +2140,30 @@ static void string_print_range (const char *s, int lmin, int lmax,
     }
 }
 
+static int print_evaled_object_range (const char *s,
+                                      DATASET *dset,
+                                      PRN *prn)
+{
+    int start, stop;
+    int err;
+
+    err = get_print_range(-1, &start, &stop);
+
+    if (!err) {
+        gchar *tmp;
+
+        if (stop < 0) {
+            tmp = g_strdup_printf("%s[%d:]", s, start);
+        } else {
+            tmp = g_strdup_printf("%s[%d:%d]", s, start, stop);
+        }
+        err = generate(tmp, dset, GRETL_TYPE_NONE, OPT_P, prn);
+        g_free(tmp);
+    }
+
+    return err;
+}
+
 static int print_listed_objects (const char *s,
 				 const DATASET *dset,
 				 gretlopt opt,
@@ -2151,7 +2175,11 @@ static int print_listed_objects (const char *s,
 
     if (strcspn(s, syms) < strlen(s)) {
 	/* try treating as expression to be evaluated */
-	return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
+        if (opt & OPT_R) {
+            return print_evaled_object_range(s, (DATASET *) dset, prn);
+        } else {
+            return generate(s, (DATASET *) dset, GRETL_TYPE_NONE, OPT_P, prn);
+        }
     }
 
     while ((name = gretl_word_strdup(s, &s, OPT_S | OPT_U, &err)) != NULL) {
@@ -2315,6 +2343,13 @@ static int get_print_range (int len, int *start, int *stop)
 	    }
 	}
 
+        if (len == -1) {
+            /* length unknown */
+            *start = k1;
+            *stop = k2;
+            goto tests_done;
+        }
+
 	if (!err && (k1 == 0 || k2 == 0)) {
 	    fprintf(stderr, "get_print_range: got a zero value\n");
 	    err = E_INVARG;
@@ -2339,6 +2374,8 @@ static int get_print_range (int len, int *start, int *stop)
 	    *start = k1 - 1;
 	    *stop = k2 - 1;
 	}
+
+    tests_done:
 
 	strings_array_free(S, nf);
     }
