@@ -107,11 +107,11 @@ offers a nice collection for European NUTS regions (NUTS =
 Nomenclature of Territorial Units for Statistics).}
 Gretl supports what are probably the two most common formats:
 \begin{itemize}
-\item GeoJSON files: these are plain JSON files with a specified
-  internal structure regulated by RFC 7946. Basically, an array of
-  regions (or ``features'') with each element containing the metadata
-  and the polygons, under the \texttt{properties} and
-  \texttt{geometry} keys, respectively.
+\item GeoJSON files: these are plain JSON files with an internal
+  structure specified by RFC 7946. Such a file takes the form of an
+  array of regions (or ``features''), with each element containing the
+  metadata under the key \texttt{properties} and the polygons under
+  the key \texttt{geometry}.
 \item ESRI shapefiles: these come as collections of several files,
   usually zipped together. The essential components are an
   \textsf{xBase} file, with \texttt{dbf} extension, holding the
@@ -165,8 +165,8 @@ alphabetical order for US states).
 \label{sec:software}
 
 In principle one could represent maps using any one of the many
-plotting libraries around, but gretl uses \textsf{gnuplot}, which we
-already use for all other kinds of plot. Some insight into the
+plotting libraries available, but gretl uses \textsf{gnuplot}, which
+we already use for all other kinds of plot. Some insight into the
 \textsf{gnuplot} commands we use can be gained from
 Appendix~\ref{sec:gnuplot}.
 
@@ -190,30 +190,29 @@ as follows.
   \texttt{join} commands or in some other way.
 \item You decide on some details of your map (appearance, format,
   etc.), with sensible defaults being available.
-\item Finally, you create the map.
+\item You create the map.
 \end{enumerate}
 
-Point 1 is handled by using the existing \texttt{open} command on the
+Point 1 is handled by using the \texttt{open} command on the
 map-datafile. The filename extensions recognized for this purpose are
-\texttt{json} or \texttt{geojson} for GeoJSON files, \texttt{dbf} or
-\texttt{shp} for ESRI shapefiles.\footnote{In principle we could read
-  the polygons at this point and store them in RAM, but for now we
-  don't. We just read in the metadata, but store the path to the
+\texttt{json} or \texttt{geojson} for GeoJSON files, and \texttt{dbf}
+or \texttt{shp} for ESRI shapefiles.\footnote{In principle we could
+  read the polygons at this point and store them in RAM, but for now
+  we don't. We just read in the metadata, but store the path to the
   associated geometry file internally.} Point 2 is also handled by
-existing gretl commands.
+standard gretl commands.
 
-As for points 3 and 4, these are handled by the new (built-in)
-\texttt{geoplot} function, which has the following signature.
+Points 3 and 4 are handled by the \texttt{geoplot} function, which has
+the following signature.
 \begin{code}
 function void geoplot(const string mapfile,
 	              const series payload[null],
 	              const bundle options[null])
 \end{code}
-Here \texttt{mapfile} is the (required) name of the file containing
-the polygons, \texttt{payload} is the (optional) series with which to
-colorize the polygons, and \texttt{options} is an (optional) bundle to
-contain one or more elements governing the appearance or destination
-of the plot.
+Here \texttt{mapfile} is the name of the file containing the polygons,
+\texttt{payload} is the (optional) series with which to colorize the
+polygons, and \texttt{options} is an (optional) bundle to contain one
+or more elements governing the appearance or destination of the plot.
 \begin{itemize}
 \item If the \cmd{geoplot} call follows on the opening of a map
   metadata file in the same session, you can give the accessor
@@ -225,9 +224,9 @@ of the plot.
   colorization. This can be useful if you just want to see what the
   polygons look like.
 \item If the \texttt{options} bundle is omitted all options are set to
-  their default values---which means, in short, that you see the map
-  on screen but nothing is saved. For full details on the available
-  options see section~\ref{sec:opts}.
+  their default values---which means, among other things, that you see
+  the map on screen but nothing is saved. For full details on the
+  available options see section~\ref{sec:opts}.
 \end{itemize}
 
 \section{An example}
@@ -276,8 +275,7 @@ Netherlands,NL,17220721,41543,880716
 \end{script}
 
 The JSON file is too big to show here in full but small enough to
-examine in any text editor.\footnote{Even Microsoft's
-  \texttt{Notepad}!} Listing~\ref{tab:json-xrpt} contains a
+examine in any text editor; listing~\ref{tab:json-xrpt} contains a
 representative excerpt. Note that while Belgium is a single polygon
 France is an array of polygons (``\texttt{MultiPolygon}''), because of
 Corsica.
@@ -316,10 +314,10 @@ Listing~\ref{tab:founders-script}, and what we get after opening the
 \label{tab:founders-meta}
 \end{script}
 
-Next, we perform the \cmd{join} with \texttt{FID} (from the JSON file)
-as the inner key and \texttt{code} (from the CSV file) as the outer
-key. Finally, we call the \cmd{geoplot} function to create an
-on-screen map. We specify the \texttt{mapfile} to use and the
+Next, we perform a \cmd{join} operation with \texttt{FID} (from the
+JSON file) as the inner key and \texttt{code} (from the CSV file) as
+the outer key. Finally, we call the \cmd{geoplot} function to create
+an on-screen map. We specify the \texttt{mapfile} to use and the
 \texttt{payload} to colorize. Via the \texttt{options} argument we add
 a couple of points: the \textsf{gnuplot} input file should be saved
 under the name \texttt{GDPpc.plt}, and the geometry data should be
@@ -413,8 +411,8 @@ Apulia,Puglia
 Sardinia,Sardegna
 ...
 \end{code}
-Then you can use \texttt{join} on the Rosetta file to add to the map
-dataset the required identifier that's initially lacking.
+Then you can \texttt{join} the Rosetta file to the map dataset, hence
+adding the required identifier that's initially lacking.
 
 \subsection{Sub-sampling}
 \label{sec:sub-sample}
@@ -423,8 +421,8 @@ In some cases one may wish to leave out certain outlying regions. For
 example, it's quite common to produce thematic maps of the USA that
 omit Hawaii, and perhaps Alaska. In principle leaving out regions
 threatens to break the required alignment of payload and geometry, but
-this is handled: if you sub-sample the map dataset using the
-\texttt{smpl} command, \texttt{geoplot} automatically drops the
+this is handled as follows: if you sub-sample the map dataset using
+the \texttt{smpl} command, \texttt{geoplot} automatically drops the
 associated polygons from the plot.
 
 This is illustrated in Listing~\ref{tab:USA}. Figure~\ref{fig:USA}
@@ -582,7 +580,7 @@ become ``unstuck''. The disadvantage is that the command file may be
 very large, and perhaps not so easy to edit; besides the actual
 \textsf{gnuplot} commands it may contain many thousands of lines of
 coordinates data (which in general \textit{should not be touched}, on
-pain of breaking the map). At present we have \texttt{inlined} set to
+pain of breaking the map). At present \texttt{inlined} is set to
 0 by default but that may change; we recommend making an explicit
 choice via the \texttt{options} bundle.
 
@@ -638,14 +636,14 @@ ambitious users.  Can I open a map file, add a payload series, and
 save a modified version of the map file including the payload? And in
 relation to a map of the USA (for example), is there a way to include
 Alaska and Hawaii, but ``tuck them underneath'' the continental US,
-like I see in some graphics on the web?
+like I see in graphics on the web?
 
 Short answer: Yes. You can import a GeoJSON file (or shapefile) as a
-gretl ``bundle'', using the \texttt{bread} function; make changes to
-the bundle, then save it as GeoJSON using \texttt{bwrite}.
+gretl ``bundle'' by means of the \texttt{bread} function; make changes
+to the bundle; then save it as GeoJSON using \texttt{bwrite}.
 
 To get control over this it's necessary to understand the structure of
-the bundle that \texttt{bread} produces when given map input. This
+the bundle that \texttt{bread} produces when fed map input. This
 mimics the structure of a GeoJSON file (even if the input comes from a
 shapefile), as shown in Listing~\ref{tab:geojson}; the labeling of
 elements is as in GeoJSON, with gretl types in parentheses.
@@ -667,14 +665,14 @@ FeatureCollection (bundle)
 \subsection{Injecting payload data}
 \label{sec:inject}
 
-With this in mind, let's look at the relatively simple case of
-injecting a payload series into a map file. Listing~\ref{tab:add-gdp}
-revisits the EU founders map discussed in section~\ref{sec:example}.
-As before, we start by opening the metadata and ``joining'' the GDP
-per capita data. But now we open the GeoJSON as a bundle, and for each
-\texttt{feature} (country) we augment its \texttt{properties} bundle
-with the corresponding value of the \texttt{gdppc} series (under the
-key ``\texttt{gdppc}''). Finally, we write the modified data to file.
+First let's look at the case of injecting a payload series into a map
+file. Listing~\ref{tab:add-gdp} revisits the EU founders map discussed
+in section~\ref{sec:example}.  As before, we start by opening the
+metadata and ``joining'' the GDP per capita data. But now we open the
+GeoJSON as a bundle, and for each \texttt{feature} (country) we
+augment its \texttt{properties} bundle with the corresponding value of
+the \texttt{gdppc} series (under the key ``\texttt{gdppc}''). Finally,
+we write the modified data to file.
 
 \begin{script}[p]
 \begin{scode}
@@ -701,11 +699,15 @@ bwrite(b, "founders_mod.json")
 \subsection{Rearranging regions}
 \label{sec:rearrange}
 
-We now consider the case of rearranging regions of a given country (or
-more generally, \texttt{features} within a given
-\texttt{FeatureCollection}). Here we use the function
-\texttt{geoplot\_translate\_feature}, which requires inclusion of
-\texttt{geoplot.gfn} since it's not built in. Its signature is
+Now how about rearranging regions of a given country (or more
+generally, \texttt{features} within a given
+\texttt{FeatureCollection})? Here we use the function
+\texttt{geoplot\_translate\_feature}. Unlike the \texttt{geoplot}
+function this is not ``built in'' so before calling it one must do
+\begin{code}
+include geoplot.gfn
+\end{code}
+The signature of the feature-translation function is
 \begin{code}
 void geoplot_translate_feature(bundle *b, int f,
                                matrix shift,
@@ -713,8 +715,8 @@ void geoplot_translate_feature(bundle *b, int f,
                                matrix scale[null])
 \end{code}
 You pass in a map bundle obtained via \texttt{bread} (in pointer
-form), the sequential index of the feature to translate, and a
-2-vector \texttt{shift} giving displacement in the X and Y
+form); the sequential index, \texttt{f}, of the feature to translate;
+and a 2-vector \texttt{shift} giving displacement in the X and Y
 directions. If in addition you want to rescale the feature you pass
 two more 2-vectors: \texttt{center} holds the coordinates of the
 feature's centroid and \texttt{scale} the scale factors to apply in
@@ -912,7 +914,7 @@ coordinates are given as degrees of latitude (Y) and longtitude
 2016; it also appears to be the most common case for ESRI shapefiles.
 
 Everyone knows that the Earth is not actually a sphere, but let's
-assume it is for simplicity. Then a degree of latitude is always the
+pretend it is for simplicity. Then a degree of latitude is always the
 same length on the ground: 1/360 of the planet's circumference. But
 the length of a degree of longitude varies, from 1/360 of Earth's
 circumference at the equator to zero at the poles. So imagine that we
@@ -1066,11 +1068,11 @@ void geoplot_set_properties (bundle *b, list L)
 \end{verbatim}
   Rewrites the \texttt{properties} within the bundle representation of
   a map, \texttt{b}, to include all and only the series referenced in
-  the list \texttt{L}. Provides a means of adding ``payload'' data
-  (see section~\ref{sec:payload}) and also pruning unwanted metadata.
-  In the example below, \texttt{us-states.geojson} originally contains
-  40 items of metadata per state, most of them unlikely to be of
-  interest.
+  the list \texttt{L}. This provides a means of adding ``payload''
+  data (see section~\ref{sec:payload}) and also pruning unwanted
+  metadata.  In the example below, \texttt{us-states.geojson}
+  originally contains 40 items of metadata per state, most of them
+  unlikely to be of interest.
 \begin{code}
 # example
 open us-states.geojson --quiet --frompkg=geoplot
@@ -1126,8 +1128,11 @@ geoplot_seek_feature(map, "Florida")
 function void geoplot_simplify(bundle *b,
                                scalar preserve[0.1:1:0.75])
 \end{verbatim}
-  Simplifies the polygons in the map bundle \texttt{b} using
-  Visvalingam's algorithm. This may be useful if for a certain
+  Simplifies the polygons in the map bundle \texttt{b} using the
+  Visvalingam--Whyatt algorithm.\footnote{See
+    \url{https://hull-repository.worktribe.com/output/459275}. And for
+    a nice illustration see \url{https://bost.ocks.org/mike/simplify/}
+    (accessed 2023-01-16).}  This may be useful if for a certain
   geography of interest the only map file readily available is at a
   higher resolution than you need. Smaller values of the
   \texttt{preserve} parameter preserve less detail or in other words
