@@ -16,7 +16,7 @@ geoplot(mainlang, opts)
 
 # With specified colors and labels
 opts.title = "Swiss languages 3"
-strings zlabels = defarray("Deutsch", "Français", "Romansh", "Italiano")
+strings zlabels = defarray("Deutsch", "Français", "Rumantsch", "Italiano")
 opts.palette = "mycolors,zlabels"
 geoplot(mainlang, opts)
 
