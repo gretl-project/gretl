@@ -80,7 +80,7 @@ struct gretl_restriction_ {
 				 && r->rows[i]->eq[j] != R_UNSPEC)
 
 static int
-real_restriction_set_parse_line (gretl_restriction *rset,
+real_restriction_set_parse_line (gretl_restriction **prset,
 				 const char *line,
 				 const DATASET *dset,
 				 int first);
@@ -1134,6 +1134,9 @@ static void destroy_restriction (rrow *r)
 
 void destroy_restriction_set (gretl_restriction *rset)
 {
+    if (rset == NULL) {
+	return;
+    }
     if (rset->rows != NULL) {
 	int i;
 
@@ -1866,7 +1869,7 @@ static int parse_restriction_row (gretl_restriction *rset,
 }
 
 static int parse_strings_line (const char *line,
-			       gretl_restriction *rset,
+			       gretl_restriction **prset,
 			       const DATASET *dset)
 {
     char aname[VNAMELEN];
@@ -1885,7 +1888,7 @@ static int parse_strings_line (const char *line,
 
 	    S = gretl_array_get_strings(a, &n);
 	    for (i=0; i<n && !err; i++) {
-		err = real_restriction_set_parse_line(rset, S[i], dset, 0);
+		err = real_restriction_set_parse_line(prset, S[i], dset, 0);
 	    }
 	}
     }
@@ -1894,11 +1897,12 @@ static int parse_strings_line (const char *line,
 }
 
 static int
-real_restriction_set_parse_line (gretl_restriction *rset,
+real_restriction_set_parse_line (gretl_restriction **prset,
 				 const char *line,
 				 const DATASET *dset,
 				 int first)
 {
+    gretl_restriction *rset = *prset;
     const char *s = line;
     int err = 0;
 
@@ -1912,6 +1916,7 @@ real_restriction_set_parse_line (gretl_restriction *rset,
        should be supplied */
     if (rset->rfunc != NULL) {
 	destroy_restriction_set(rset);
+	*prset = NULL;
 	return E_PARSE;
     }
 
@@ -1935,14 +1940,15 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 	err = read_matrix_line(s, rset);
     } else if (!strncmp(s, "inject", 6)) {
 	/* restrictions given as an array of strings */
-	err = parse_strings_line(s + 6, rset, dset);
+	err = parse_strings_line(s + 6, prset, dset);
     } else {
 	/* a regular linear restriction */
 	err = parse_restriction_row(rset, s, dset);
     }
 
-    if (err) {
-	destroy_restriction_set(rset);
+    if (err && *prset != NULL) {
+	destroy_restriction_set(*prset);
+	*prset = NULL;
     }
 
     return err;
@@ -1959,7 +1965,7 @@ restriction_set_parse_line (gretl_restriction *rset, const char *line,
 	return E_DATA;
     }
 
-    return real_restriction_set_parse_line(rset, line, dset, 0);
+    return real_restriction_set_parse_line(&rset, line, dset, 0);
 }
 
 /* set-up for a set of restrictions for a VAR (vecm, actually) */
@@ -1977,7 +1983,7 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 
     gretl_error_clear();
 
-    if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
+    if (real_restriction_set_parse_line(&rset, line, NULL, 1)) {
 	if (!gretl_errmsg_is_set()) {
 	    gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	}
@@ -2001,7 +2007,7 @@ cross_restriction_set_start (const char *line, equation_system *sys)
 	return NULL;
     }
 
-    if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
+    if (real_restriction_set_parse_line(&rset, line, NULL, 1)) {
 	gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	return NULL;
     }
@@ -2024,7 +2030,7 @@ eqn_restriction_set_start (const char *line, MODEL *pmod,
 	return NULL;
     }
 
-    if (real_restriction_set_parse_line(rset, line, dset, 1)) {
+    if (real_restriction_set_parse_line(&rset, line, dset, 1)) {
 	gretl_errmsg_sprintf(_("parse error in '%s'\n"), line);
 	return NULL;
     }
@@ -3005,7 +3011,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
     }
 
     if (!err) {
-	err = real_restriction_set_parse_line(r, line, dset, 1);
+	err = real_restriction_set_parse_line(&r, line, dset, 1);
     }
 
     if (!err) {
