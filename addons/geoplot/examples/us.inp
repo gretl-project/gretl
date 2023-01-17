@@ -1,14 +1,14 @@
 open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
-opts = defbundle("plotfile", "us0.plt", "palette", "blues")
+opts = _(plotfile = "us0.plt", palette = "blues")
 
 # show the entire USA
 opts.title = "USA (complete)"
-geoplot($mapfile, x, opts)
+geoplot(x, opts)
 
 # skip Alaska and Hawaii
 smpl postal != "AK" && postal != "HI" --restrict
 opts.title = "USA (mainland)"
 opts.plotfile = "us1.plt"
-geoplot($mapfile, x, opts)
+geoplot(x, opts)
 

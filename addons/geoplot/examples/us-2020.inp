@@ -24,7 +24,7 @@ strings dem_states = defarray("WA", "OR", "CA", "NV", "AZ", "NM",
 "ME", "MA", "RI", "CT", "NJ", "DE", "MD", "DC", "HI")
 series D = 0
 loop i=1..$nobs
-   D[i] = nelem(instrings(dem_states, iso_3166_2[i] + 3))
+   D[i] = nelem(instrings(dem_states, postal[i]))
 endloop
 
 # Display electoral map
@@ -33,4 +33,4 @@ opts.literal = "set key bottom right"
 strings mycolors = defarray("#D22532", "#244999")
 strings zlabels = defarray("Republican", "Democratic")
 opts.palette = "mycolors,zlabels"
-geoplot($mapfile, D, opts)
+geoplot(D, opts)

@@ -27,12 +27,12 @@ smpl postal != "DC" --restrict
 bundle opts = _(title = "USA, population density", palette = "green-to-red")
 opts.projection = "EPSG2163"
 opts.logscale = 1
-geoplot($mapfile, pop_density, opts)
+geoplot(pop_density, opts)
 
 # display map 2
 bundle opts = _(title = "People per US Senator")
 opts.projection = "EPSG2163"
 opts.palette = "blues"
-geoplot($mapfile, people_per_sen, opts)
+geoplot(people_per_sen, opts)
 
 

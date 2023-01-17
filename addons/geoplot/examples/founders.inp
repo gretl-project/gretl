@@ -3,10 +3,10 @@ open founders.geojson --frompkg=geoplot
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
 
-opts = defbundle("plotfile", "GDPpc.plt", "inlined", 1)
-geoplot($mapfile, gdppc, opts)
+opts = _(plotfile="GDPpc.plt", inlined=1)
+geoplot(gdppc, opts)
 
 # uncomment to save as PDF
-# opts = defbundle("plotfile", "GDPpc.pdf", "inlined", 1)
-# geoplot($mapfile, gdppc, opts)
+# opts = _(plotfile="GDPpc.pdf", inlined=1)
+# geoplot(gdppc, opts)
 

@@ -1520,6 +1520,52 @@ static int get_na_action (mapinfo *mi)
     return err;
 }
 
+/* check for extraneous or misspelled options */
+
+static void check_geoplot_opt_keys (gretl_bundle *opts)
+{
+    const char *keys[] = {
+	/* the last 5 of these keys are "internals" */
+	"border", "height", "inlined", "linecolor", "linewidth",
+	"literal", "logscale", "missvals", "plotfile",
+	"projection", "palette", "show", "tics", "title",
+	"xrange", "yrange", "gui_auto", "dims", "cbrange",
+	"payload", "mask", NULL
+    };
+    gretl_array *S = gretl_bundle_get_keys(opts, NULL);
+
+    if (S != NULL) {
+	GString *warns = NULL;
+	int n = gretl_array_get_length(S);
+	int i, j, found;
+	const char *s;
+
+	for (i=0; i<n; i++) {
+	    s = gretl_array_get_data(S, i);
+	    found = 0;
+	    for (j=0; keys[j] != NULL; j++) {
+		if (!strcmp(s, keys[j])) {
+		    found = 1;
+		    break;
+		}
+	    }
+	    if (!found) {
+		if (warns == NULL) {
+		    warns = g_string_new(_("unrecognized geoplot option(s): "));
+		    g_string_append(warns, s);
+		} else {
+		    g_string_append_printf(warns, ", %s", s);
+		}
+	    }
+	}
+	if (warns != NULL) {
+	    gretl_warnmsg_set(warns->str);
+	    g_string_free(warns, 1);
+	}
+	gretl_array_destroy(S);
+    }
+}
+
 int geoplot (mapinfo *mi)
 {
     const gretl_matrix *mask = NULL;
@@ -1534,6 +1580,7 @@ int geoplot (mapinfo *mi)
     zna = 0;
 
     if (mi->opts != NULL) {
+	check_geoplot_opt_keys(mi->opts);
 	if (gretl_bundle_has_key(mi->opts, "show")) {
 	    int show = gretl_bundle_get_int(mi->opts, "show", &err);
 

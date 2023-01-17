@@ -27,7 +27,7 @@
 {\noindent\hrulefill\\[-10pt]}
 {\medskip}
 
-\title{geoplot: cartography in gretl\\ version 0.2}
+\title{geoplot: cartography in gretl\\ version 0.3}
 \author{Allin Cottrell and Jack Lucchetti}
 
 \begin{document}
@@ -48,10 +48,11 @@ producing a map image. Section~\ref{sec:example} then provides a
 simple worked example and section~\ref{sec:pairing} addresses a
 potential stumbling block. Section~\ref{sec:opts} goes over in detail
 the options to the core \texttt{geoplot} function;
-section~\ref{sec:gui} tells you what's available via gretl's graphical
-interface; and section~\ref{sec:expert} explains some ``expert''
-refinements. Three appendices cover some technical points that may be
-of interest to expert users.
+section~\ref{sec:qualitative} discusses some spcifics of plotting
+qualitative data; section~\ref{sec:gui} tells you what's available via
+gretl's graphical interface; and section~\ref{sec:expert} explains
+some ``expert'' refinements. Three appendices cover some technical
+points that may be of interest to expert users.
 
 \section{Preliminaries}
 \label{sec:prelim}
@@ -201,23 +202,22 @@ or \texttt{shp} for ESRI shapefiles.\footnote{In principle we could
   associated geometry file internally.} Point 2 is also handled by
 standard gretl commands.
 
-Points 3 and 4 are handled by the \texttt{geoplot} function, which has
-the following signature.
+Points 3 and 4 are handled by the \texttt{geoplot} function, which can
+be called in either of two ways, corresponding to these two signatures:
 \begin{code}
-function void geoplot(const string mapfile,
-	              const series payload[null],
-	              const bundle options[null])
+function void geoplot(const series payload[null], const bundle options[null])
+
+function void geoplot(string mapfile, const series payload[null],
+                      const bundle options[null])
 \end{code}
-Here \texttt{mapfile} is the name of the file containing the polygons,
-\texttt{payload} is the (optional) series with which to colorize the
-polygons, and \texttt{options} is an (optional) bundle to contain one
-or more elements governing the appearance or destination of the plot.
+The first case is applicable if the map to be shown has already been
+loaded as a gretl dataset. The second case is required if you want to
+use a map file which has not been so loaded: then you need to give its
+name. The \texttt{payload} argument is the (optional) series with
+which to colorize the polygons, and \texttt{options} is an (optional)
+bundle to contain one or more elements governing the appearance or
+destination of the plot.
 \begin{itemize}
-\item If the \cmd{geoplot} call follows on the opening of a map
-  metadata file in the same session, you can give the accessor
-  \dollar{mapfile} in place of an actual filename for the
-  \texttt{mapfile} argument, since gretl already knows what file we're
-  talking about.
 \item If the \texttt{payload} argument is given as \texttt{null} or
   omitted then the map is drawn ``as is'', without any
   colorization. This can be useful if you just want to see what the
@@ -227,6 +227,14 @@ or more elements governing the appearance or destination of the plot.
   the map on screen but nothing is saved. For full details on the
   available options see section~\ref{sec:opts}.
 \end{itemize}
+
+Note that once a map is loaded as a dataset you can retrieve its
+filename using the \verb|$mapfile| accessor. This is convenient if you
+wish to read the full content of the file (including the polygons) as
+a bundle:
+\begin{code}
+bundle b = bread($mapfile)
+\end{code}
 
 \section{An example}
 \label{sec:example}
@@ -286,8 +294,8 @@ open founders.geojson --frompkg=geoplot
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
 
-opts = defbundle("plotfile", "GDPpc.plt", "inlined", 1)
-geoplot($mapfile, gdppc, opts)
+opts = _(plotfile = "GDPpc.plt", inlined = 1)
+geoplot(gdppc, opts)
 \end{scode}
   %$
 \caption{Content of \texttt{founders.inp}}
@@ -316,11 +324,11 @@ Listing~\ref{tab:founders-script}, and what we get after opening the
 Next, we perform a \cmd{join} operation with \texttt{FID} (from the
 JSON file) as the inner key and \texttt{code} (from the CSV file) as
 the outer key. Finally, we call the \cmd{geoplot} function to create
-an on-screen map. We specify the \texttt{mapfile} to use and the
-\texttt{payload} to colorize. Via the \texttt{options} argument we add
-a couple of points: the \textsf{gnuplot} input file should be saved
-under the name \texttt{GDPpc.plt}, and the geometry data should be
-``inlined'' in this file, making it self-contained.
+an on-screen map. We specify the \texttt{payload} to colorize and via
+the \texttt{options} argument we add a couple of points: the
+\textsf{gnuplot} input file should be saved under the name
+\texttt{GDPpc.plt}, and the geometry data should be ``inlined'' in
+this file, making it self-contained.
 
 Running the script will produce a \textsf{gnuplot} file resembling the
 following:
@@ -359,7 +367,7 @@ Figure~\ref{fig:founders}.
 \label{fig:founders}
 \end{figure}
 
-\section{Alignment problems}
+\section{Ensuring correct alignment}
 \label{sec:pairing}
 
 In order to produce a correct map it is essential that everything be
@@ -375,14 +383,14 @@ issues in turn.
 
 \subsection{Aligning the payload}
 
-In the somewhat unlikely case that the payload you wish to plot is
-already included in the map metadata, no problem. But when the map
-data and the payload come from different sources it may be tricky to
-get them aligned properly. This problem is not specific to the mapping
-apparatus---it's a more general issue concerning the matching of data
-from different sources, addressed at length in the chapter titled
-``Joining data sources'' in the \GUG{}---but it may be helpful to
-offer a few comments here.
+If the payload you wish to plot is already included in the map
+metadata, there's no problem. But when the map data and the payload
+come from different sources it may be tricky to get them aligned
+properly. This problem is not specific to the mapping apparatus---it's
+a more general issue concerning the matching of data from different
+sources, addressed at length in the chapter titled ``Joining data
+sources'' in the \GUG{}---but it may be helpful to offer a few
+comments here.
 
 As mentioned above, the relevant tools provided by gretl are
 \texttt{append} and \texttt{join}. A simple \texttt{append} will work
@@ -433,17 +441,17 @@ Hawaii.\footnote{Given the role of this example we don't bother adding
   \begin{scode}
 open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
-opts = defbundle("plotfile", "us0.plt", "palette", "blues")
+opts = _(plotfile = "us0.plt", palette = "blues")
 
 # show the entire USA
 opts.title = "USA (complete)"
-geoplot($mapfile, x, opts)
+geoplot(x, opts)
 
 # skip Alaska and Hawaii
 smpl postal != "AK" && postal != "HI" --restrict
 opts.title = "USA (mainland)"
 opts.plotfile = "us1.plt"
-geoplot($mapfile, x, opts)
+geoplot(x, opts)
   \end{scode}
   \caption{US maps, complete vs contiguous states}
   \label{tab:USA}
@@ -608,37 +616,69 @@ likely wanted.
 How can \texttt{geoplot} tell the difference? Well, in a gretl dataset
 a categorical variable is likely represented by a string-valued
 series, but may take the form of a numeric series where the numbers
-are a pure encoding with no quantitative significance. A string-valued
-series (and also a 0/1 dummy series) will be recognized by
+are a pure encoding with no quantitative significance. String-valued
+series (and also 0/1 dummy series) will be recognized by
 \texttt{geoplot} as qualitative automatically, but otherwise a numeric
-series \texttt{cvals} which serves as an encoding should be marked as
-such, using the command
+series called \texttt{cvals} which serves as an encoding should be
+marked as such, using the command
 \begin{code}
 setinfo cvals --coded
 \end{code}
 If a payload series is recognized as qualitative with $k$ values, the
 default \texttt{geoplot} palette is not the gnuplot default (which is
 of the heat-map type) but rather an automatic selection of $k$
-distinct colors. The values accepted under the \texttt{palette} key in
-the \texttt{options} bundle are also different from the quantitative
-case. We expect either the name of an array of $k$ strings, each of
-which contains a color specification comprehensible by
-\textsf{gnuplot}, or the keyword \texttt{auto} to confirm automatic
-color selection. Here's an example, suitable for a binary payload
-variable ($k=2$):
+distinct colors. And the values accepted under the \texttt{palette}
+key in the \texttt{options} bundle are simpler than in the
+quantitative case. We expect either the name of an array of $k$
+strings, each of which contains a color specification comprehensible
+by \textsf{gnuplot}, or the keyword \texttt{auto} (which just confirms
+automatic color selection). Here's an example, suitable for a binary
+payload variable ($k=2$):
 \begin{code}
 strings mycolors = defarray("#D22532", "#244999")
 opts.palette = "mycolors"
 \end{code}
-In addition a second element can be given when the payload data are
-qualitative, namely an array of strings to appear in the ``key'' or
-legend for the plot. Such strings will be set automatically if the
-qualitative series is string-valued, but you may wish to supply
-alternative strings (translated or abbreviated) for this purpose, or
-to give suitable strings for a 0/1 binary variable (which cannot be
-``stringified'' since that operation can only be done on a series with
-a minimum value of 1 or greater). Examples of this usage can be found
-in the \texttt{geoplot} example scripts.
+In addition a second, comma-separated element can be given when the
+payload data are qualitative, namely an array of strings to appear in
+the ``key'' or legend for the plot. If the payload series is
+string-valued its strings will be used by default for this purpose,
+but you may wish to supply abbreviated or translated strings. This
+facility can also be used to give suitable strings for a 0/1 binary
+series (which cannot have string values since that requires a minimum
+numeric value of 1 or greater). Extending the example above, we might
+do:
+\begin{code}
+strings mycolors = defarray("#D22532", "#244999")
+string zlabels = defarray("Republican", "Democratic")
+opts.palette = "mycolors,zlabels"
+\end{code}
+
+Examples of maps showing qualitative data are provided by the scripts
+\texttt{swiss-langs.inp} and \texttt{us-2020.inp}. You can find these
+scripts and others via the item \textsf{Resource from addon} under the
+\textsf{File} menu in the gretl GUI. Figure~\ref{fig:swiss} shows two
+variants of a map representing the main language of each Swiss canton
+(via a string-valued series named \texttt{mainlang}). The
+customizations in the second map are achieved via
+\begin{code}
+strings langcolors = defarray("#E87E7E", "#9DA8E0", "#85E1C3", "#E1C385")
+strings zlabels = defarray("Deutsch", "Français", "Romansh", "Italiano")
+opts.palette = "langcolors,zlabels"
+\end{code}
+Give a palette string of (e.g.) \verb|"auto,zlabels"| if you want to
+adjust the strings but use the default colors.
+
+\begin{figure}[p]
+  \begin{center}
+  \includegraphics[scale=0.9]{swiss_langs1.pdf}
+
+  \includegraphics[scale=0.9]{swiss_langs2.pdf}
+\end{center}
+\caption{Main language per Swiss canton: the upper plot uses the
+  default palette and strings; the lower one uses a customized palette
+  and translated strings.}
+\label{fig:swiss}
+\end{figure}
 
 \section{Maps via the GUI}
 \label{sec:gui}
@@ -663,7 +703,10 @@ be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
   employed for this purpose is not terribly clever.} invoking
 \textsf{Display map} will produce a dialog box that allows you to
 select one, in which case you'll get a choice of color palette to
-represent it. Otherwise you just get to view the map outlines.
+represent it. Otherwise you just get to view the map outlines.  The
+options \texttt{border}, \texttt{linewidth}, \texttt{logscale} and
+\texttt{height} (see Section~\ref{sec:opts} can also be selected via
+the GUI.
 
 Further, the plot window shown by \textsf{Display map} offers a
 right-click menu that allows saving the map (as PDF, EPS, PNG or EMF),
@@ -772,7 +815,7 @@ feature's centroid and \texttt{scale} the scale factors to apply in
 the two directions.
 
 An example script is shown in Listing~\ref{tab:translate} and the
-result of plotting the modifed GeoJSON file in
+result of plotting the modified GeoJSON file in
 Figure~\ref{fig:usmod}. We obtain the second argument to pass to the
 translator by inspection of the map dataset: Alaska is feature 48 and
 Hawaii feature 5. In this case we decide to move Alaska 34\deg\
@@ -847,7 +890,7 @@ was tuned using the following option settings:
 \begin{code}
 string cmds = sprintf("set colorbox user origin 0.9,0.45 size 0.03,0.4\n")
 cmds ~= sprintf("set xrange [6.4:20.5]")
-bundle opts = defbundle("plotfile", "covid.pdf")
+bundle opts = _(plotfile = "covid.pdf")
 opts.logscale = 1
 opts.border = 0
 opts.linewidth = 0.4
@@ -878,7 +921,8 @@ axes.
 \section{Change log}
 
 Version 0.3 (2023-01-17): Update the documentation to explain how to
-handle qualitative payload data \\[6pt]
+handle qualitative payload data; fix bug whereby output to an image
+file could fail. \\[6pt]
 Version 0.2 (2021-02-12): Fix some incorrect type specifiers in
 \verb|geoplot_utils.inp|, revealed by improved type-checking following
 the gretl 2021a release. \\[6pt]
@@ -940,7 +984,7 @@ section~\ref{sec:opts} above).
 \label{app:proj}
 
 \textsf{Geoplot} assumes (mostly, but see below) that incoming map
-coordinates are given as degrees of latitude (Y) and longtitude
+coordinates are given as degrees of latitude (Y) and longitude
 (X). This is mandated by RFC 7946, which has governed GeoJSON since
 2016; it also appears to be the most common case for ESRI shapefiles.
 
@@ -1019,7 +1063,7 @@ bounds for representing degrees (that is, |X| > 360 or |Y| > 180).
 
 Failing such automatic detection, one can try specifying
 \textsf{EPSG:4326} to get the X and Y units to be treated as equal in
-size, in effect cancelling projection, as in
+size, in effect canceling projection, as in
 \begin{code}
 bundle options
 options.projection = "EPSG4326"
@@ -1054,11 +1098,11 @@ bundle opts
 opts.projection = "EPSG2163" # azimuthal
 opts.tics = 1
 # take a look-see
-geoplot($mapfile, null, opts)
+geoplot(null, opts)
 # suitable ranges, by inspection
 opts.xrange = {-330,410}
 opts.yrange = {-350,130}
-geoplot($mapfile, null, opts)
+geoplot(null, opts)
 \end{code}
 
 \subsection*{Further reading}
@@ -1177,7 +1221,7 @@ geoplot_simplify(&map, 0.5)
 bwrite(map, "simplified.geojson")
 open simplified.geojson --quiet
 # see if the level of detail is OK
-geoplot($mapfile)
+geoplot()
 \end{code}
 \end{funcdoc}
 
