@@ -49,10 +49,9 @@ simple worked example and section~\ref{sec:pairing} addresses a
 potential stumbling block. Section~\ref{sec:opts} goes over in detail
 the options to the core \texttt{geoplot} function;
 section~\ref{sec:gui} tells you what's available via gretl's graphical
-interface; section~\ref{sec:expert} explains some ``expert''
-refinements; and section~\ref{sec:future} gives our current thinking
-on possible future directions for maps in gretl. Three appendices
-cover some technical points that may be of interest to expert users.
+interface; and section~\ref{sec:expert} explains some ``expert''
+refinements. Three appendices cover some technical points that may be
+of interest to expert users.
 
 \section{Preliminaries}
 \label{sec:prelim}
@@ -623,9 +622,10 @@ of the heat-map type) but rather an automatic selection of $k$
 distinct colors. The values accepted under the \texttt{palette} key in
 the \texttt{options} bundle are also different from the quantitative
 case. We expect either the name of an array of $k$ strings, each of
-which contains a color specification comprehensible by gnuplot, or the
-keyword \texttt{auto} to confirm automatic color selection. Here's an
-example, suitable for a binary payload variable ($k=2$):
+which contains a color specification comprehensible by
+\textsf{gnuplot}, or the keyword \texttt{auto} to confirm automatic
+color selection. Here's an example, suitable for a binary payload
+variable ($k=2$):
 \begin{code}
 strings mycolors = defarray("#D22532", "#244999")
 opts.palette = "mycolors"
@@ -836,27 +836,6 @@ On searching the \texttt{verbose} = 3 output for Alaska one finds
 \end{code}
 The \texttt{Extents} data enable you to figure out plausible
 values for the \texttt{center} of a feature.
-
-\section{Future directions?}
-\label{sec:future}
-
-We've alluded above to possible extensions of \textsf{geoplot}. Here
-we collect various ideas.
-
-\begin{itemize}
-\item The \texttt{geoplot} function could be complemented with a
-  ``command block'' variant, on the pattern of the existing gretl
-  \texttt{plot} block. Some users might find this sort of interface
-  more comprehensible and convenient.
-\item We could provide a more fully featured graphical interface for
-  selection of options that inflect the appearance of maps.
-\item Besides just colorizing map polygons, we might add support for
-  showing geographical features such cities, roads or rivers.
-  Labeling of regions might also be nice to have.
-\item An ambitious project for the longer term could be adding support
-  for TopoJSON, an extension of GeoJSON that encodes topology. See
-  \url{https://github.com/topojson/topojson}.
-\end{itemize}
 
 \section{Coda}
 
