@@ -360,7 +360,6 @@ Figure~\ref{fig:founders}.
 \label{fig:founders}
 \end{figure}
 
-
 \section{Alignment problems}
 \label{sec:pairing}
 
@@ -510,10 +509,14 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   not as a full path, the file is written to the user's working
   directory.
 \item[\texttt{projection}:] string, see~\ref{app:proj}.
-\item[\texttt{palette}:] string, giving either a \textsf{gnuplot}
-  \texttt{set palette} command or a predefined option, of which there
-  are currently three: \texttt{blues}, \texttt{oranges} and
-  \texttt{green-to-red}. For example, the syntax
+\item[\texttt{palette}:] string, the exact specification of which
+  depends on whether the payload data are quantitative or
+  qualitative. For the qualitative case see
+  Section~\ref{sec:qualitative}. In the quantitative case the string
+  should give either a \textsf{gnuplot} \texttt{set palette} command
+  or a predefined option, of which there are currently three:
+  \texttt{blues}, \texttt{oranges} and \texttt{green-to-red}. For
+  example, the syntax
   \begin{code}
     options.palette = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
   \end{code}
@@ -590,6 +593,52 @@ the specified \texttt{plt} file plus a data file named by adding the
 extension \texttt{dat}. For example you might get \texttt{mygeo.plt}
 and \texttt{mygeo.plt.dat}, while with \texttt{inlined} = 1 you'd just
 get a big \texttt{mygeo.plt}.
+
+\section{Quantitative versus qualitative payloads}
+\label{sec:qualitative}
+
+In the foregoing we have assumed that if a payload is supplied the
+data are quantitative---either continuous, or if discrete then at
+least ordinal. However, one may wish to plot qualitative (categorical)
+data, and that calls for a different sort of color palette.  In the
+quantitative case one probably wants a graduated scheme---either
+shades of a single hue or perhaps a ``heat map'' comprising more than
+one hue. If the data are categorical, clearly distinct colors are
+likely wanted.
+
+How can \texttt{geoplot} tell the difference? Well, in a gretl dataset
+a categorical variable is likely represented by a string-valued
+series, but may take the form of a numeric series where the numbers
+are a pure encoding with no quantitative significance. A string-valued
+series (and also a 0/1 dummy series) will be recognized by
+\texttt{geoplot} as qualitative automatically, but otherwise a numeric
+series \texttt{cvals} which serves as an encoding should be marked as
+such, using the command
+\begin{code}
+setinfo cvals --coded
+\end{code}
+If a payload series is recognized as qualitative with $k$ values, the
+default \texttt{geoplot} palette is not the gnuplot default (which is
+of the heat-map type) but rather an automatic selection of $k$
+distinct colors. The values accepted under the \texttt{palette} key in
+the \texttt{options} bundle are also different from the quantitative
+case. We expect either the name of an array of $k$ strings, each of
+which contains a color specification comprehensible by gnuplot, or the
+keyword \texttt{auto} to confirm automatic color selection. Here's an
+example, suitable for a binary payload variable ($k=2$):
+\begin{code}
+strings mycolors = defarray("#D22532", "#244999")
+opts.palette = "mycolors"
+\end{code}
+In addition a second element can be given when the payload data are
+qualitative, namely an array of strings to appear in the ``key'' or
+legend for the plot. Such strings will be set automatically if the
+qualitative series is string-valued, but you may wish to supply
+alternative strings (translated or abbreviated) for this purpose, or
+to give suitable strings for a 0/1 binary variable (which cannot be
+``stringified'' since that operation can only be done on a series with
+a minimum value of 1 or greater). Examples of this usage can be found
+in the \texttt{geoplot} example scripts.
 
 \section{Maps via the GUI}
 \label{sec:gui}
@@ -828,15 +877,16 @@ opts.literal = cmds
 opts.height = 900
 \end{code}
 
-As you'll have seen in the previous figures, the default
+As you will have seen in the previous figures, the default
 \textsf{gnuplot} ``colorbox'' is quite large, occupying the full
 height of the plot.  This doesn't look so great for a tall, skinny
 country like Italy, so we used the \texttt{literal} option to pass in
-commands to make the colorbox smaller and reposition it; to prevent it
-from going off the right edge of the plot we also made the
-\texttt{xrange} a little wider than the default. We were able to
+commands to make the colorbox smaller and reposition it; to prevent
+the colorbox from going off the right edge of the plot we also made
+the \texttt{xrange} a little wider than the default. We were able to
 determine what the revised \texttt{xrange} should look like by
-examining a plot with no payload, showing the values on the axes.
+examining a plot with no payload, showing the latitude values on the
+axes.
 
 \begin{figure}[p]
   \centering
@@ -848,6 +898,8 @@ examining a plot with no payload, showing the values on the axes.
 
 \section{Change log}
 
+Version 0.3 (2023-01-17): Update the documentation to explain how to
+handle qualitative payload data \\[6pt]
 Version 0.2 (2021-02-12): Fix some incorrect type specifiers in
 \verb|geoplot_utils.inp|, revealed by improved type-checking following
 the gretl 2021a release. \\[6pt]

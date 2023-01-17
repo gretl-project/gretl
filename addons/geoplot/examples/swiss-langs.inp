@@ -1,0 +1,26 @@
+set verbose off
+open switzerland.geojson -q --frompkg=geoplot
+setinfo mainlang --coded
+
+bundle opts = null
+
+# Fully automatic
+opts.title = "Swiss languages 1"
+geoplot(mainlang, opts)
+
+# With specified colors
+strings mycolors = defarray("#E87E7E", "#9DA8E0", "#85E1C3", "#E1C385")
+opts.title = "Swiss languages 2"
+opts.palette = "mycolors"
+geoplot(mainlang, opts)
+
+# With specified colors and labels
+opts.title = "Swiss languages 3"
+strings zlabels = defarray("Deutsch", "Français", "Romansh", "Italiano")
+opts.palette = "mycolors,zlabels"
+geoplot(mainlang, opts)
+
+# With automatic colors but specified labels
+opts.title = "Swiss languages 4"
+opts.palette = "auto,zlabels"
+geoplot(mainlang, opts)

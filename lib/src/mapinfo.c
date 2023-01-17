@@ -447,7 +447,9 @@ static int print_discrete_map_palette (mapinfo *mi,
 
 static void simple_print_map_palette (const char *p, FILE *fp)
 {
-    if (!strcmp(p, "blues")) {
+    if (p == NULL || *p == '\0') {
+	return;
+    } else if (!strcmp(p, "blues")) {
         fputs("set palette defined (0 '#D4E4F2', 1 'steelblue')\n", fp);
     } else if (!strcmp(p, "oranges")) {
         fputs("set palette defined (0 '#E9D9B5', 1 'dark-orange')\n", fp);
@@ -521,8 +523,11 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
         p = gretl_bundle_get_string(mi->opts, "palette", NULL);
     }
 
-    if (p == NULL || *p == '\0') {
-        if (mi->n_codes > 0) {
+    if (mi->n_codes > 0) {
+	/* the payload series is an encoding */
+	if (p != NULL && *p != '\0') {
+	    return print_discrete_map_palette(mi, p, gpver, fp);
+	} else {
             print_discrete_autocolors(mi, fp);
 	    if (gpver < 5.4) {
 		if (mi->zlabels != NULL || mi->zname != NULL) {
@@ -532,20 +537,18 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
 		    fputs("unset colorbox\n", fp);
 		}
 	    }
-        }
-	return 0;
-    } else if (!strncmp(p, "coded,", 6)) {
-        return print_discrete_map_palette(mi, p + 6, gpver, fp);
-    } else if (mi->na_action == NA_FILL) {
-	tricky_print_map_palette(p, zlim, fp);
-	/* cbrange handled */
-	return 0;
+	}
     } else {
-	simple_print_map_palette(p, fp);
+	/* payload seems to be quantitative */
+	if (mi->na_action == NA_FILL) {
+	    tricky_print_map_palette(p, zlim, fp);
+	    /* note: cbrange handled */
+	} else {
+	    simple_print_map_palette(p, fp);
+	    /* FIXME is this always right (gnuplot version?) */
+	    fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
+	}
     }
-
-    /* FIXME is this always right (gnuplot version?) */
-    fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
 
     return 0;
 }

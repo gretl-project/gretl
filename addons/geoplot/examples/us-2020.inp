@@ -16,7 +16,7 @@ geoplot_translate_feature(&b, 5, shift)
 
 # Switch to revised map
 bwrite(b, "us-rearranged.geojson")
-open us-rearranged.geojson
+open us-rearranged.geojson -q
 
 # Add per-state Democratic-win dummy
 strings dem_states = defarray("WA", "OR", "CA", "NV", "AZ", "NM",
@@ -30,6 +30,7 @@ endloop
 # Display electoral map
 bundle opts = _(title = "USA, 2020", projection = "EPSG2163")
 opts.literal = "set key bottom right"
-opts.palette = "set palette maxcolors 2; \
-set palette defined (0 '#D22532', 1 '#244999'); unset colorbox"
+strings mycolors = defarray("#D22532", "#244999")
+strings zlabels = defarray("Republican", "Democratic")
+opts.palette = "mycolors,zlabels"
 geoplot($mapfile, D, opts)
