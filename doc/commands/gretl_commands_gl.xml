@@ -5445,12 +5445,12 @@
 	PostScript (EPS); <lit>.pdf</lit> produce un PDF; <lit>.png</lit>
 	xera un con formato PNG, <lit>.emf</lit> solicita que sexa EMF
 	(Enhanced MetaFile), <lit>.fig</lit> pide que sexa un ficheiro Xfig,
-	e <lit>.svg</lit> que sexa un SVG (Scalable Vector Graphics). Cando
-	indicas o nome ficticio de ficheiro <quote><lit>display</lit></quote>,
-	entón a gráfica amósase na pantalla, como no modo interactivo.
-	E cando indicas un nome de ficheiro con calquera extensión diferente
-	ás que acaban de mencionarse, escríbese un ficheiro de instrucións
-	Gnuplot.
+	<lit>.svg</lit> que sexa un SVG (Scalable Vector Graphics) e
+	<lit>.html</lit> é para un lenzo de HTML. Cando indicas o nome ficticio
+	de ficheiro <quote><lit>display</lit></quote>, entón a gráfica amósase
+	na pantalla, como no modo interactivo. E cando indicas un nome de
+	ficheiro con calquera extensión diferente ás que acaban de mencionarse,
+	escríbese un ficheiro de instrucións Gnuplot.
       </para>
       <subhead>Especificando unha fonte</subhead>
       <para>
@@ -7803,14 +7803,28 @@
 	<math>R</math><sup>2</sup> habitual no contexto da estimación
 	de mínimos cadrados.
       </para>
+      <para context="cli">
+	Se a variable dependente é binaria, os coeficientes de logit representan
+	os logaritmos das proporcións de probabilidades (cocientes entre a
+	probabilidade de que <math>y</math> = 1 e a de que <math>y</math> = 0).
+	Nese caso, o feixe (bundle) de <lit>$model</lit> dispoñible despois da
+	estimación inclúe un elemento adicional nomeado <lit>oddsratios</lit>,
+	unha matriz con catro columnas que conteñen o coeficiente (proporción
+	de probabilidades) exponenciado, máis o erro padrón calculado mediante
+	o método delta, e o intervalo co 95 por cento de confianza, para cada
+	regresor. Cae na conta, porén, de que o intervalo de confianza
+	calcúlase como o expoñente do intervalo para o coeficiente
+	orixinal.
+      </para>
       <para context="gui">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
-	negativa da matriz Hessiana. Se marcas o cadriño de 'Desviacións
-	padrón robustas', entón calcúlanse no seu lugar as desviacións padrón
-	CMV (QML) ou de Huber&ndash;White. Neste caso, a matriz de covarianzas
-	estimadas é un <quote>emparedado</quote> entre a inversa da matriz
-	Hessiana estimada e o produto externo do vector gradiente. Consulta o
-	capítulo 10 do libro de Davidson e MacKinnon para obter máis detalles.
+	negativa da matriz Hessiana. Se marcas o cadriño de
+	<quote>Desviacións padrón robustas</quote>, entón calcúlanse no seu
+	lugar as desviacións padrón CMV (QML) ou de Huber&ndash;White. Neste
+	caso, a matriz de covarianzas estimadas é un <quote>emparedado</quote>
+	entre a inversa da matriz Hessiana estimada e o produto externo do
+	vector gradiente. Consulta o capítulo 10 do libro de Davidson e MacKinnon
+	para obter máis detalles.
       </para>
       <para>
 	Se a variable dependente non é binaria senón discreta, entón por defecto
@@ -7888,12 +7902,15 @@
 	  <flag>--verbose</flag>
 	  <effect>Reflicte as instrucións e amosa mensaxes confirmatorios</effect>
 	</option>
+	<option>
+	  <flag>--decr</flag>
+	  <effect>Mira abaixo</effect>
+	</option>
       </options>
       <examples>
         <example>loop 1000</example>
-	<example>loop 1000 --progressive</example>
+        <example>loop i=1..10</example>
         <example>loop while essdiff &gt; .00001</example>
-        <example>loop i=1991..2000 --verbose</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i listaX</example>
 	<demos>
@@ -7912,16 +7929,26 @@
       </para>
       <para>
 	O parámetro <repl quote="true">control</repl> pode ter calquera das 5
-	formas seguintes, tal como se amosa nos exemplos: (a) un número enteiro
-	que indica as veces a repetir as instrucións dun bucle; (b) a palabra
-	<quote><lit>while</lit></quote> máis unha condición booleana; (c) un rango
-	de valores enteiros para o índice; (d) a palabra <quote><lit>for</lit></quote>
-	máis 3 expresións dentro dunha paréntese, separadas con punto e comas (que
-	imita a orde <lit>for</lit> na linguaxe de programación C); ou (e) a palabra
-	<quote><lit>foreach</lit></quote> máis unha variable índice e unha lista.
+	formas seguintes, tal como se amosa nos exemplos: (a) un número
+	enteiro que indica as veces a repetir as instrucións dun bucle;
+	(b) un rango de valores enteiros para unha variable índice; (c) a
+	palabra <quote><lit>while</lit></quote> máis unha condición booleana;
+	(d) a palabra <quote><lit>for</lit></quote> máis 3 expresións dentro
+	dunha paréntese, separadas con punto e comas (que imita a orde
+	<lit>for</lit> na linguaxe de programación C); ou (e) a palabra
+	<quote><lit>foreach</lit></quote> máis unha variable índice e unha
+	lista.
       </para>
       <para>
-	Consulta o <guideref targ="chap:looping"/> para obter outros detalles
+	A opción <opt>decr</opt> é específica só para a forma de bucle do
+	tipo <quote>rango de valores enteiros</quote>. Por defecto, o índice
+	se incrementa en 1 en cada iteración; e se o valor de inicio é menor
+	que o valor final, o bucle non vai funcionar. Pero cando se proporcione
+	un valor para <opt>decr</opt>, o índice se reduce en 1 en cada
+	iteración.
+      </para>
+      <para>
+	Consulta o <guideref targ="chap:looping"/> para obter todos os detalles
 	e exemplos. Aí explícase o efecto da opción <opt>progressive</opt>
 	(que está deseñada para utilizarse con simulacións de tipo Monte
 	Carlo). Non podes utilizar todas as instrucións de GRETL dentro dun
@@ -12751,7 +12778,7 @@
 	co nome do arranxo. Este é un exemplo sinxelo:
       </para>
       <code>
-	strings SR = array(2)
+	strings RS = array(2)
 	RS[1] = "b[1,2] = 0"
 	RS[2] = "b[2,1] = 0"
 	restrict
@@ -13946,6 +13973,19 @@
 	  Utiliza o 'branqueo' previo e a 'volta a colorear' de Andrews-Monahan
 	  cando se calculan as desviacións padrón HAC. Isto tamén implica
 	  utilizar unha elección do largo de banda que se basea nos datos.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_missvals</lit>: <lit>es</lit> (predeterminado),
+	  <lit>am</lit> ou <lit>off</lit>. Establece a política a respecto do
+	  cálculo das desviacións padrón HAC cando a mostra utilizada na
+	  estimación inclúe observacións incompletas: <lit>es</lit> invoca
+	  o método da Mesma Separación (Equal Spacing) de
+	  <cite key="datta-du12">Datta e Du (2012)</cite>; <lit>am</lit>
+	  selecciona o método da Modulación da Amplitude (Amplitude Modulation)
+	  de <cite key="parzen63">Parzen (1963)</cite>; e <lit>off</lit>
+	  provoca que GRETL rexeite dita estimación. Para obter máis detalles,
+	  consulta o <guideref targ="chap:robust_vcv"/>.
 	  </para>
 	</li>
 	<li>

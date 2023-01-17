@@ -5445,12 +5445,12 @@
 	PostScript (EPS); <lit>.pdf</lit> produce un PDF; <lit>.png</lit>
 	genera uno con formato PNG, <lit>.emf</lit> solicita que sea EMF
 	(Enhanced MetaFile), <lit>.fig</lit> pide que sea un archivo Xfig,
-	y <lit>.svg</lit> que sea un SVG (Scalable Vector Graphics). Cuando
-	indicas el nombre ficticio de archivo <quote><lit>display</lit></quote>,
-	entonces el gráfico se muestra en la pantalla, como en el modo interactivo.
-	Y cuando indicas un nombre de archivo con cualquier extensión diferente
-	a las que acaban de mencionarse, se escribe un archivo de instrucciones
-	Gnuplot.
+	<lit>.svg</lit> que sea un SVG (Scalable Vector Graphics) y 
+	<lit>.html</lit> es para un lienzo de HTML. Si indicas el nombre ficticio
+	de archivo <quote><lit>display</lit></quote>, entonces el gráfico se
+	muestra en la pantalla, como en el modo interactivo. Y cuando indicas
+	un nombre de archivo con cualquier extensión diferente a las que
+	acaban de mencionarse, se escribe un archivo de instrucciones Gnuplot.
       </para>
       <subhead>Especificando una fuente</subhead>
       <para>
@@ -7803,14 +7803,28 @@
 	<math>R</math><sup>2</sup> habitual en el contexto de la estimación
 	de mínimos cuadrados.
       </para>
+      <para context="cli">
+	Si la variable dependiente es binaria, los coeficientes de logit van a
+	representar los logaritmos de los ratios de probabilidades (cocientes entre
+	la probabilidad de que <math>y</math> = 1 y la de que <math>y</math> = 0).
+	En ese caso, el bundle de <lit>$model</lit> disponible después de la
+	estimación incluye un elemento adicional denominado <lit>oddsratios</lit>,
+	una matriz con cuatro columnas que contienen el coeficiente (ratio de
+	de probabilidades) exponenciado, más el error típico calculado mediante
+	el método delta, y el intervalo con el 95 por ciento de confianza, para
+	cada regresor. Ten en cuenta, sin embargo, que el intervalo de confianza
+	se calcula como el exponente del intervalo para el coeficiente
+	original.
+      </para>
       <para context="gui">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa
-	negativa de la matriz Hessiana. Si marcas el cuadradito de 'Desviaciones
-	típicas robustas', entonces se calculan en su lugar las desviaciones típicas
-	CMV (QML) o de Huber&ndash;White. En este caso, la matriz de covarianzas
-	estimadas es un <quote>emparedado</quote> entre la inversa de la matriz
-	Hessiana estimada y el producto externo del vector gradiente. Consulta el
-	capítulo 10 del libro de Davidson y MacKinnon para obtener más detalles.
+	negativa de la matriz Hessiana. Si marcas el cuadradito de
+	<quote>Desviaciones típicas robustas</quote>, entonces se calculan en su
+	lugar las desviaciones típicas CMV (QML) o de Huber&ndash;White. En este
+	caso, la matriz de covarianzas estimadas es un <quote>emparedado</quote>
+	entre la inversa de la matriz Hessiana estimada y el producto externo del
+	vector gradiente. Consulta el capítulo 10 del libro de Davidson y MacKinnon
+	para obtener más detalles.
       </para>
       <para>
 	Si la variable dependiente no es binaria sino discreta, entonces por defecto
@@ -7888,12 +7902,15 @@
 	  <flag>--verbose</flag>
 	  <effect>Refleja las instrucciones y muestra mensajes confirmatorios</effect>
 	</option>
+	<option>
+	  <flag>--decr</flag>
+	  <effect>Mira abajo</effect>
+	</option>
       </options>
       <examples>
         <example>loop 1000</example>
-	<example>loop 1000 --progressive</example>
+        <example>loop i=1..10</example>
         <example>loop while essdiff &gt; .00001</example>
-        <example>loop i=1991..2000 --verbose</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i listaX</example>
 	<demos>
@@ -7911,17 +7928,27 @@
 	en este punto se ejecutan las instrucciones acumuladas.
       </para>
       <para>
-	El parámetro <repl quote="true">control</repl> puede tener cualquiera de las 5
-	formas siguientes, tal como se muestra en los ejemplos: (a) un número entero
-	que indica las veces a repetir las instrucciones de un bucle; (b) la palabra
-	<quote><lit>while</lit></quote> más una condición booleana; (c) un rango
-	de valores enteros para el índice; (d) la palabra <quote><lit>for</lit></quote>
-	más 3 expresiones dentro de un paréntesis, separadas con punto y comas (que
-	imita la orden <lit>for</lit> en el lenguaje de programación C); o (e) la palabra
-	<quote><lit>foreach</lit></quote> más una variable índice y una lista.
+	El parámetro <repl quote="true">control</repl> puede tener cualquiera
+	de las 5 formas siguientes, tal como se muestra en los ejemplos:
+	(a) un número entero que indica las veces a repetir las instrucciones
+	de un bucle; (b) un rango de valores enteros para una variable índice;
+	(c) la palabra <quote><lit>while</lit></quote> más una condición booleana;
+	(d) la palabra <quote><lit>for</lit></quote> más 3 expresiones dentro
+	de un paréntesis, separadas con punto y comas (que imita la orden
+	<lit>for</lit> en el lenguaje de programación C); o (e) la palabra
+	<quote><lit>foreach</lit></quote> más una variable índice y una
+	lista.
       </para>
       <para>
-	Consulta <guideref targ="chap:looping"/> para obtener otros detalles
+	La opción <opt>decr</opt> es específica solo para la forma de bucle
+	del tipo <quote>rango de valores enteros</quote>. Por defecto, el índice
+	se incrementa en 1 en cada iteración; y si el valor de inicio es menor
+	que el valor final, el bucle no va a funcionar. Pero cuando se
+	proporcione un valor para <opt>decr</opt>, el índice se minora en 1
+	en cada iteración.
+      </para>
+      <para>
+	Consulta <guideref targ="chap:looping"/> para obtener todos los detalles
 	y ejemplos. Ahí se explica el efecto de la opción <opt>progressive</opt>
 	(que está diseñada para ser utilizada con simulaciones de tipo Monte
 	Carlo). No puedes utilizar todas las instrucciones de GRETL dentro de un
@@ -12751,7 +12778,7 @@
 	con el nombre del 'array'. Este es un ejemplo simple:
       </para>
       <code>
-	strings SR = array(2)
+	strings RS = array(2)
 	RS[1] = "b[1,2] = 0"
 	RS[2] = "b[2,1] = 0"
 	restrict
@@ -13946,6 +13973,19 @@
 	  Utiliza el 'blanqueo' previo y la 'vuelta a colorear' de Andrews-Monahan
 	  cuando se calculan las desviaciones típicas HAC. Esto también implica
 	  utilizar una elección del ancho de banda que se basa en los datos.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_missvals</lit>: <lit>es</lit> (predeterminado),
+	  <lit>am</lit> u <lit>off</lit>. Establece la política respecto al
+	  cálculo de las desviaciones típicas HAC cuando la muestra utilizada en
+	  la estimación incluye observaciones incompletas: <lit>es</lit> invoca
+	  el método de la Misma Separación (Equal Spacing) de
+	  <cite key="datta-du12">Datta y Du (2012)</cite>; <lit>am</lit>
+	  elige el método de la Modulación de la Amplitud (Amplitude Modulation)
+	  de <cite key="parzen63">Parzen (1963)</cite>; y <lit>off</lit>
+	  provoca que GRETL rechace dicha estimación. Para obtener más detalles,
+	  consulta <guideref targ="chap:robust_vcv"/>.
 	  </para>
 	</li>
 	<li>

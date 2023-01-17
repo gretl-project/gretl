@@ -427,18 +427,18 @@
 	<code>
 	  s0 (4 x 4)
 
-          0.019751     0.029816  -0.00044837   -0.12227
-          0.029816     0.31005   -0.45823      -0.18526
-         -0.00044837  -0.45823    1.2169       -0.035437
-         -0.12227     -0.18526   -0.035437      0.76062
+          0,019751     0,029816  -0,00044837   -0,12227
+          0,029816     0,31005   -0,45823      -0,18526
+         -0,00044837  -0,45823    1,2169       -0,035437
+         -0,12227     -0,18526   -0,035437      0,76062
 
 	  s1 (5 x 5)
 
-	  0.0000       0.0000       0.0000       0.0000       0.0000
-	  0.0000       0.0000       0.0000       0.0000       0.0000
-	  0.0000       0.0000      0.27398     -0.27398    -0.019059
-	  0.0000       0.0000     -0.27398      0.27398     0.019059
-	  0.0000       0.0000    -0.019059     0.019059    0.0014180
+	  0,0000       0,0000       0,0000       0,0000       0,0000
+	  0,0000       0,0000       0,0000       0,0000       0,0000
+	  0,0000       0,0000      0,27398     -0,27398    -0,019059
+	  0,0000       0,0000     -0,27398      0,27398     0,019059
+	  0,0000       0,0000    -0,019059     0,019059    0,0014180
 	</code>
       </description>
     </function>
@@ -1842,9 +1842,9 @@
 	</para>
 	<code>
 	  # Exemplos:
-	  x = atof("1.234") # Devolve x = 1.234
+	  x = atof("1.234") # Devolve x = 1,234
 	  x = atof("1,234") # Devolve x = 1
-	  x = atof("1.2y")  # Devolve x = 1.2
+	  x = atof("1.2y")  # Devolve x = 1,2
 	  x = atof("y")     # Devolve x = NA
 	  x = atof(",234")  # Devolve x = NA
 	</code>
@@ -4500,7 +4500,9 @@
 	</code>
 	<para>
 	  Para a inversa desta función consulta <fncref targ="isodate"/>, e
-	  tamén <fncref targ="juldate"/> (para o calendario Xuliano).
+	  tamén <fncref targ="juldate"/> (para o calendario Xuliano). Para
+	  ver outros medios de conversión de datas en días de época, consulta
+	  <fncref targ="strpday"/>.
 	</para>
       </description>
     </function>
@@ -4935,11 +4937,11 @@
 	<code>
           index            y
 
-          1            1     -0.40000
-          2            2      1.36000
-          3            3      0.27600
-          4            4      1.75160
-          5            5      0.92356
+          1            1     -0,40000
+          2            2      1,36000
+          3            3      0,27600
+          4            4      1,75160
+          5            5      0,92356
 
           x (5 x 2)
 
@@ -4951,11 +4953,11 @@
 
           w (5 x 2)
 
-          -0.40000     -0.40000
-           1.3600       0.36000
-           0.27600     -0.32400
-           1.7516       0.29160
-           0.92356     -0.26244
+          -0,40000     -0,40000
+           1,3600       0,36000
+           0,27600     -0,32400
+           1,7516       0,29160
+           0,92356     -0,26244
 	</code>
       </description>
     </function>
@@ -6683,7 +6685,7 @@
 
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
-	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="anyfloat">ed</fnarg>
 	<fnarg type="bool" optional="true">como-cadea</fnarg>
       </fnargs>
       <description>
@@ -6695,14 +6697,17 @@
 	  <argname>ed</argname>, ou unha serie composta por números desa
 	  clase. Séguese o padrón <lit>YYYYMMDD</lit> (formato ISO 8601
 	  <quote>básico</quote>) para proporcionar a data no calendario
-	  Gregoriano que se corresponde ao dia na época actual.
+	  Gregoriano que se corresponde ao día na época actual.
 	</para>
 	<para>
-	  Cando <argname>ed</argname> é unicamente un escalar e o segundo
-	  argumento <argname>como-cadea</argname> (opcional) é non nulo, a
-	  función non devolve un valor numérico senón unha cadea de texto
-	  que segue o padrón <lit>YYYY-MM-DD</lit> (formato ISO 8601
-	  <quote>estendido</quote>).
+	  Se o segundo argumento <argname>como-cadea</argname> (opcional) é
+	  non nulo, a función non devolve un valor numérico senón máis ben
+	  unha cadea de texto que segue o padrón <lit>YYYY-MM-DD</lit>
+	  (formato ISO 8601 <quote>estendido</quote>), ou unha serie con
+	  valores en formato de texto se <argname>ed</argname> é unha serie,
+	  ou un arranxo de cadeas de texto se <argname>ed</argname> é un vector.
+	  Para ver un medio máis flexible de obter representacións dos días
+	  de época con cadeas de texto, consulta <fncref targ="strfday"/>.
 	</para>
 	<para>
 	  Con relación á función inversa consulta <fncref targ="epochday"/>.
@@ -6921,29 +6926,14 @@
 
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
-	<fnarg type="scalar-or-series">ed</fnarg>
+	<fnarg type="anyfloat">ed</fnarg>
 	<fnarg type="bool" optional="true">como-cadea</fnarg>
       </fnargs>
       <description>
 	<para>
-	  O argumento <argname>ed</argname> interprétase como un día de
-	  época (que tomará o valor 1 para o primeiro día de xaneiro do ano 1
-	  despois de Cristo, no calendario Gregoriano proléptico). O valor que
-	  se devolve por defecto é un número de 8 díxitos do mesmo tipo ca
-	  <argname>ed</argname>, ou unha serie composta por números desa
-	  clase. Séguese o padrón <lit>YYYYMMDD</lit> (formato ISO 8601
-	  <quote>básico</quote>) para proporcionar a data no calendario Xuliano
-	  que se corresponde co dia na época actual.
-	</para>
-	<para>
-	  Cando <argname>ed</argname> é unicamente un escalar, e o segundo
-	  argumento <argname>como-cadea</argname> (opcional) é non nulo, a
-	  función non devolve un valor numérico senón unha cadea de texto
-	  que segue o padrón <lit>YYYY-MM-DD</lit> (formato ISO 8601
-	  <quote>estendido</quote>).
-	</para>
-	<para>
-	  Consulta tamén <fncref targ="isodate"/>.
+	  Esta funcion simplemente opera como <fncref targ="isodate"/>,
+	  agás en que as datas do resultado son relativas ao calendario
+	  Xuliano en troques do Gregoriano.
 	</para>
       </description>
     </function>
@@ -7874,46 +7864,46 @@
 	  ? print X Retardo Adianto
 	  X (6 x 2)
 
-	    -0.76587      -1.0600
-	    -0.43188      0.30687
-	    -0.82656      0.40681
-	     0.39246      0.75479
-	     0.36875       2.5498
-	     0.28855     -0.55251
+	    -0,76587      -1,0600
+	    -0,43188      0,30687
+	    -0,82656      0,40681
+	     0,39246      0,75479
+	     0,36875       2,5498
+	     0,28855     -0,55251
 
 	  Retardo (6 x 2)
 
-	      0.0000       0.0000
-	    -0.76587      -1.0600
-	    -0.43188      0.30687
-	    -0.82656      0.40681
-	     0.39246      0.75479
-	     0.36875       2.5498
+	      0,0000       0,0000
+	    -0,76587      -1,0600
+	    -0,43188      0,30687
+	    -0,82656      0,40681
+	     0,39246      0,75479
+	     0,36875       2,5498
 
 	  Adianto (6 x 2)
 
-	    -0.43188      0.30687
-	    -0.82656      0.40681
-	     0.39246      0.75479
-	     0.36875       2.5498
-	     0.28855     -0.55251
-	      0.0000       0.0000
+	    -0,43188      0,30687
+	    -0,82656      0,40681
+	     0,39246      0,75479
+	     0,36875       2,5498
+	     0,28855     -0,55251
+	      0,0000       0,0000
 
 	  ? eval X'X
-	      1.8295       1.4201
-	      1.4201       8.7596
+	      1,8295       1,4201
+	      1,4201       8,7596
 
 	  ? eval mcovg(X,,, 0)
-	      1.8295       1.4201
-	      1.4201       8.7596
+	      1,8295       1,4201
+	      1,4201       8,7596
 
 	  ? eval X'(X + Retardo + Adianto)
-	      3.0585       2.5603
-	      2.5603       10.004
+	      3,0585       2,5603
+	      2,5603       10,004
 
 	  ? eval mcovg(X,,, 1)
-	      3.0585       2.5603
-	      2.5603       10.004
+	      3,0585       2,5603
+	      2,5603       10,004
 	</code>
       </description>
     </function>
@@ -7990,14 +7980,14 @@
 	  ? print m
 	  m (5 x 2)
 
-	   -0.098299          nan
-	      1.1829      -1.2817
-	     0.46037     -0.92947
-	      1.4896     -0.91970
-	     0.91918      0.47748
+	   -0,098299          nan
+	      1,1829      -1,2817
+	     0,46037     -0,92947
+	      1,4896     -0,91970
+	     0,91918      0,47748
 
 	  ? eval meanc(m)
-	     0.79075          nan
+	     0,79075          nan
 	</code>
 	<para>
 	  <seelist>
@@ -8167,15 +8157,15 @@
 	  xera o seguinte resultado:
 	</para>
 	<code>
-             Coeficiente   Desv. padron     z       Valor p
+             Coeficiente   Desv. padrón     z       Valor p
   ---------------------------------------------------------
-  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
-  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
-  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
-  dIP_3      0.0601876     0.0621927     0.9678    0.3332
-  dIP_4      0.0131263     0.0259137     0.5065    0.6125
-  dIP_5      0.000965260   0.00346703    0.2784    0.7807
-  dIP_6      0.00000       0.00000      NA        NA
+  dIP_0      0,343146      0,0957752     3,583     0,0003   ***
+  dIP_1      0,402547      0,0834904     4,821     1,43e-06 ***
+  dIP_2      0,176437      0,0673776     2,619     0,0088   ***
+  dIP_3      0,0601876     0,0621927     0,9678    0,3332
+  dIP_4      0,0131263     0,0259137     0,5065    0,6125
+  dIP_5      0,000965260   0,00346703    0,2784    0,7807
+  dIP_6      0,00000       0,00000      NA        NA
 	</code>
 	<para>
 	  <seelist>
@@ -8273,9 +8263,9 @@
 	<code>
 		             y     y_ismiss
 
-		1    -1.551247            0
+		1    -1,551247            0
 		2                         1
-		3    -2.244616            0
+		3    -2,244616            0
 	</code>
 	<para>
 	  <seelist>
@@ -8312,9 +8302,9 @@
 	<code>
 	             x            y
 
-		1    0.7355250    0.7355250
-		2                     0.000
-		3   -0.2465936   -0.2465936
+		1    0,7355250    0,7355250
+		2                     0,000
+		3   -0,2465936   -0,2465936
 	</code>
 	<para>
 	  <seelist>
@@ -8376,17 +8366,17 @@
 	<code>
 	m (5 x 2)
 
-	    1.5953    -0.070740
-    -0.52713     -0.47669
-	   -2.2056     -0.28112
-	   0.97753       1.4280
-	   0.49654      0.18532
+	    1,5953    -0,070740
+    -0,52713     -0,47669
+	   -2,2056     -0,28112
+	   0,97753       1,4280
+	   0,49654      0,18532
 
 	       nan          nan          nan          nan
-     1.5953    -0.070740          nan          nan
-	   -0.52713     -0.47669       1.5953    -0.070740
-	   -2.2056     -0.28112     -0.52713     -0.47669
-	   0.97753       1.4280      -2.2056     -0.28112
+     1,5953    -0,070740          nan          nan
+	   -0,52713     -0,47669       1,5953    -0,070740
+	   -2,2056     -0,28112     -0,52713     -0,47669
+	   0,97753       1,4280      -2,2056     -0,28112
 	</code>
 	<para>
 	  Consulta tamén <fncref targ="lags"/>.
@@ -9836,19 +9826,19 @@
 
       B (3 x 1)
 
-      -0.5
+      -0,5
          1
-      -0.5
+      -0,5
 
       C (3 x 3)
 
          1      3      5
          2      4      6
-      -0.5      1   -0.5
+      -0,5      1   -0,5
 
       ? eval A*B
-      -4.4409e-16
-      -4.4409e-16
+      -4,4409e-16
+      -4,4409e-16
 
       ? eval rank(C)
       3
@@ -12407,30 +12397,60 @@
       </description>
     </function>
 
-    <function name="strftime" section="calendar" output="string">
+    <function name="strfday" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="scalar">tm</fnarg>
+	<fnarg type="anyfloat">dia_epoca</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función opera como <fncref targ="strftime"/>, convertendo un valor
+	  numérico nunha cadea de texto rexida por <argname>formato</argname>,
+	  agás cando a entrada sexa un <quote>día de época</quote> (para cuxa
+	  definición podes consultar a función <fncref targ="epochday"/>).
+	  Dado que a resolución é de tipo diario, só se manexan formatos
+	  relacionados con datas; os formatos relacionados con tempo
+	  proporcionan resultados indefinidos.
+	</para>
+	<para>
+	  Se omites o segundo argumento, o formato por defecto establécese
+	  en ISO 8601 extendido, <lit>YYYY-MM-DD</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="strftime" section="calendar" output="depends">
+      <fnargs>
+	<fnarg type="anyfloat">tm</fnarg>
 	<fnarg optional="true" type="string">formato</fnarg>
+	<fnarg optional="true" type="scalar">desprazamento</fnarg>
       </fnargs>
       <description>
 	<para>
 	  O argumento <argname>tm</argname> utilízase para proporcionar
-	  o número de segundos dende o inicio do ano 1970, de acordo
-	  co UTC (Tempo Universal Coordinado, antes coñecido como
-	  tempo medio de Greenwich). O valor que se devolve é unha
-	  cadea de texto que proporciona a data e/ou hora correspondente,
-	  ben nun formato especificado mediante o segundo argumento
-	  (opcional) ou ben, por defecto, mediante a
+	  o <quote>tempo Unix</quote>, é dicir o número de segundos dende
+	  o inicio do ano 1970, de acordo co UTC. O valor que se devolve é
+	  unha cadea de texto que proporciona a data e/ou hora correspondente,
+	  ben nun formato especificado mediante o segundo argumento (opcional)
+	  ou, por defecto, mediante a
 	  <quote>representación preferida de data e hora no entorno local vixente</quote>
-	  tal como determinaría a biblioteca do sistema C.
+	  tal como determinaría a biblioteca do sistema C. Mira máis abaixo para
+	  máis detalles sobre a especificación do formato.
 	</para>
 	<para>
-	  Aviso: Esta función compórtase de xeito distinto en sistemas operativos
-	  de Windows e de tipo Unix para as datas anteriores ao 1 de xaneiro de
-	  1970. Nos sistemas de tipo Unix (Linux, macOS), podes usar argumentos
-	  negativos para representar esas datas, de modo que os valores negativos
-	  dan como resultado cadeas de texto coas datas normais; en Windows, non
-	  se admiten esas datas, polo que o valor do resultado é unha cadea nula.
+	  Podes usar o argumento <argname>desprazamento</argname> (opcional)
+	  para especificar un desprazamento en segundos en relación a UTC,
+	  seleccionando así unha zona horaria diferente á predeterminada (que
+	  é sempre a hora local). Por exemplo, un desprazamento de 3600
+	  selecciona a Hora Central Europea, mentres que 0 selecciona a GMT.
+	  O valor absoluto de <argname>desprazamento</argname> non debe
+	  exceder de 86400 (24 horas).
+	</para>
+	<para>
+	  O tipo concreto que se devolve, depende do tipo de <argname>tm</argname>:
+	  cando <argname>tm</argname> é un escalar, un vector ou unha serie,
+	  o resultado é unha única cadea de texto, un arranxo de cadeas ou unha
+	  serie con cadeas de valores, respectivamente.
 	</para>
 	<para>
 	  Podes obter valores axeitados de <argname>tm</argname> para
@@ -12438,12 +12458,27 @@
 	  ou a función <fncref targ="strptime"/>.
 	</para>
 	<para>
-	  Podes atopar as opcións de formato consultando as páxinas
-	  sobre <lit>strftime</lit> do manual, en sistemas que as teñan;
-	  ou por medio dun dos moitos sitios web que presentan
-	  información relevante, como por exemplo
-	  <url>https://devhints.io/strftime</url>.
+	  Cae na conta de que mentres que <argname>tm</argname> se considera
+	  en relación ao UTC, o resultado predeterminado desta función é
+	  <quote>local</quote> (en relación coa zona horaria establecida no
+	  ordenador servidor). Por iso, un mesmo <argname>tm</argname> vai
+	  amosar un tempo distinto (e talvez unha distinta data) en zonas
+	  horarias diferentes. Pero se queres unha cadea de texto que represente
+	  o UTC en troques do tempo local, GRETL pode facelo; mira máis
+	  abaixo.
 	</para>
+	<subhead>Opcións de formato</subhead>
+	<para>
+	  Podes atopar as opcións típicas de formato consultando a páxina
+	  sobre <lit>strftime</lit> do manual, nos sistemas que teñan esas
+	  páxinas; ou por medio dun dos moitos sitios web que presentan
+	  información relevante, como por exemplo
+	  <url>https://devhints.io/strftime</url>. Ademais dos formatos
+	  típicos, GRETL tamén recoñece unha opción especial: se
+	  <argname>formato</argname> é <quote><lit>8601</lit></quote>
+	  simplemente, a data e o tempo se presentan no formato
+	  ISO 8601.
+  </para>
       </description>
     </function>
 
@@ -12539,14 +12574,14 @@
       </description>
     </function>
 
-    <function name="strpday" section="calendar" output="scalar">
+    <function name="strpday" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
-	 Esta función compórtase similamente á función <fncref targ="strptime"/>,
+	 Esta función compórtase de xeito similar á función <fncref targ="strptime"/>,
 	 agás en que o valor que se devolve é de tipo <quote>día de época</quote>
 	 (para cuxa definición podes consultar <fncref targ="epochday"/>).
 	 Dado que a solución é de tipo diario, ignórase calquera información
@@ -12555,18 +12590,21 @@
       </description>
     </function>
 
-    <function name="strptime" section="calendar" output="scalar">
+    <function name="strptime" section="calendar" output="depends">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
-	 Esta función é a recíproca de <fncref targ="strftime"/>. Analiza a
-	 cadea de texto <argname>s</argname> que expresa tempo ou data,
-	 utilizando o <argname>formato</argname> especificado; e devolve un
-	 escalar que proporciona o número de segundos transcorridos dende o
-	 inicio de 1970 segundo o Tempo Universal Coordinado (UTC).
+	 Esta función é a recíproca de <fncref targ="strftime"/>. Analiza unha
+	 ou máis cadeas de texto que expresan tempo ou data, utilizando o
+	 <argname>formato</argname> especificado; e devolve o número de
+	 segundos transcorridos dende o inicio de 1970 segundo o Tempo Universal
+	 Coordinado (UTC). O tipo concreto de valor que se devolve depende do de
+	 <argname>s</argname>: se <argname>s</argname> é unha cadea de texto,
+	 un arranxo de cadeas ou unha serie con cadeas de valores, o resultado é
+	 un escalar, un vector columna ou unha serie numérica, respectivamente.
 	</para>
 	<para>
 	  Se omites a opción <argname>formato</argname>, este se establece por
@@ -12575,17 +12613,24 @@
 	  de strptime).
 	</para>
 	<para>
-	  Como alternativa, podes indicar o primeiro argumento como un enteiro
-	  de 8 díxitos, de conformidade co formato de datas <quote>básico</quote>
-	  do ISO 8601, <lit>YYYYMMDD</lit> (por exemplo, 20221220). Nese caso,
-	  deberás omitir a opción <argname>formato</argname>.
+	  Como caso especial, podes indicar o primeiro argumento
+	  como un enteiro de 8 díxitos, de conformidade co formato de datas
+	  <quote>básico</quote> do ISO 8601, <lit>YYYYMMDD</lit> (ou un
+	  vector ou serie que conteña eses valores). Nese caso, deberás
+	  omitir a opción <argname>formato</argname>.
 	</para>
 	<para>
-	  Aviso: Esta función compórtase de xeito distinto en sistemas operativos
-	  de Windows e de tipo Unix para as datas anteriores ao 1 de xaneiro de
-	  1970. Nos sistemas de tipo Unix (Linux, macOS), devólvense intervalos
-	  negativos de tempo en segundos; en Windows, non se admiten esas datas,
-	  polo que o valor que se devolve é NA.
+	  Cae na conta de que o primeiro argumento desta función considérase
+	  en relación coa zona horaria que está establecida no ordenador
+	  servidor. Entón, por exemplo, a chamada
+	</para>
+	<code>
+	  strptime("13/02/2009 23:31.30", "%d/%m/%Y %H:%M.%S")
+	</code>
+	<para>
+	  vai devolver como resultado 1234567890, se o tempo do teu sistema
+	  está establecido en UTC; pero se o está na zona horaria de Europa
+	  Central (UTC+01:00), o resultado será 1234564290.
 	</para>
 	<para>
 	  Podes atopar as opcións de <argname>formato</argname> consultando
@@ -12604,11 +12649,11 @@
 	  eval strftime(tm, "%A, %d de %B de %Y")
 	</code>
 	<para>
-	  No entorno local galego (España), o resultado é
+	  No entorno local de Galiza, o resultado é
 	</para>
 	<code>
-	  17/02/2019 0:00:00
-	  domingo, 17 de febreiro de 2019
+	  07/02/2019 0:00:00
+	  Febreiro 07, 2019
 	</code>
       </description>
     </function>
@@ -13111,9 +13156,9 @@
 	<code>
 A (3 x 3)
 
-  3   2   1 
-  2   3   2 
-  1   2   3 
+  3   2   1
+  2   3   2
+  1   2   3
 
 x (3 x 1)
 
@@ -13121,17 +13166,17 @@ x (3 x 1)
   1 
   1 
 
-     0.25000 
- -3.3307e-17 
-     0.25000 
+     0,25000
+ -3.3307e-17
+     0,25000
 
 8
-     0.25000 
-  2.7756e-17 
-     0.25000 
+     0,25000
+  2,7756e-17
+     0,25000
 
 
-d =  8.0000000
+d =  8,0000000
 	</code>
       </description>
     </function>
@@ -13378,14 +13423,14 @@ d =  8.0000000
     <code>
       un (2 x 2)
 
-      1   2 
-      2   3 
+      1   2
+      2   3
 
       dous (3 x 3)
-      
-      99     1     2 
-       1    99     3 
-       2     3    99 
+
+      99     1     2
+       1    99     3
+       2     3    99
     </code>
 	<para>
 	  <seelist>
@@ -13991,4 +14036,3 @@ d =  8.0000000
 
   </funclist>
 </funcref>
-

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-01-01 09:35-0500\n"
-"PO-Revision-Date: 2022-10-27 18:51+0200\n"
+"PO-Revision-Date: 2023-01-03 12:06+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1656,12 +1656,12 @@ msgstr "***, **, * indica significación a niveis do 1%, 5%, 10%\n"
 
 #: lib/src/describe.c:3574
 msgid "using Bartlett standard errors for ACF"
-msgstr "Utilizando desviacións padrón de Bartlett para FAC"
+msgstr "Utilizando desvíos padrón de Bartlett para FAC"
 
 #: lib/src/describe.c:3576
 #, c-format
 msgid "using standard error 1/T^%.1f"
-msgstr "Utilizando desviación padrón 1/T^%.1f"
+msgstr "Utilizando desvío padrón 1/T^%.1f"
 
 #: lib/src/describe.c:3594
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
@@ -1790,7 +1790,7 @@ msgstr "Máximo"
 
 #: lib/src/describe.c:4951
 msgid "Standard deviation"
-msgstr "Desviación padrón"
+msgstr "Desvío padrón"
 
 #: lib/src/describe.c:4952 lib/src/describe.c:5168 lib/src/describe.c:5866
 #: gui/guiprint.c:315 gui/guiprint.c:742
@@ -1985,7 +1985,7 @@ msgstr "   Hipótese nula:[As dúas medias das poboacións son iguais]\n"
 #: lib/src/describe.c:6611
 #, c-format
 msgid "   Estimated standard error = %g\n"
-msgstr "   Desviación padrón estimada = %g\n"
+msgstr "   Desvío padrón estimado = %g\n"
 
 #: lib/src/describe.c:6612
 #, c-format
@@ -2157,9 +2157,8 @@ msgid "No. of obs (%d) is less than no. of parameters (%d)"
 msgstr "Nº de obs (%d) é menor ca nº de parámetros (%d)"
 
 #: lib/src/estimate.c:562
-#, fuzzy
 msgid "HAC standard errors not available"
-msgstr "Desviacións padrón HAC"
+msgstr "Desvíos padrón HAC"
 
 #: lib/src/estimate.c:633
 msgid "Weight variable is all zeros, aborting regression"
@@ -2712,8 +2711,8 @@ msgstr "constantes do modelo %d por unidade"
 #: lib/src/genfuncs.c:4326
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
 msgstr ""
-"Expresión incorrecta: é posible que necesites utilizar a instrución "
-"\"clear\"?"
+"Expresión incorrecta: é posible que necesites utilizar a instrución \"clear"
+"\"?"
 
 #: lib/src/genfuncs.c:4329
 msgid "Invalid declaration"
@@ -3868,9 +3867,9 @@ msgid "The argument does not seem to be a MIDAS list"
 msgstr "O argumento non semella ser unha lista MIDAS"
 
 #: lib/src/gretl_midas.c:807
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid %s specification"
-msgstr "Especificación incorrecta de MC non lineais"
+msgstr "'%s': Especificación %s incorrecta"
 
 #: lib/src/gretl_midas.c:2342
 #, c-format
@@ -4496,7 +4495,7 @@ msgstr "Estimacións restrinxidas"
 #: lib/src/gretl_restrict.c:2126 lib/src/modelprint.c:3021
 #: lib/src/printout.c:1510 gui/library.c:6882
 msgid "Standard error of the regression"
-msgstr "Desviación padrón da regresión"
+msgstr "Desvío padrón da regresión"
 
 #: lib/src/gretl_restrict.c:2416
 msgid "Robust chi^2"
@@ -4530,7 +4529,7 @@ msgstr "Suma dos coeficientes"
 #: lib/src/gretl_restrict.c:3033 lib/src/gretl_restrict.c:3040
 #: gui/dialogs.c:5843
 msgid "Standard error"
-msgstr "Desviación padrón"
+msgstr "Desvío padrón"
 
 #: lib/src/gretl_string_table.c:463
 #, c-format
@@ -5623,36 +5622,36 @@ msgstr "Instrumentos"
 
 #: lib/src/modelprint.c:1404 lib/src/modelprint.c:1406 gui/selector.c:6271
 msgid "Asymptotic standard errors"
-msgstr "Desviacións padrón asintóticas"
+msgstr "Desvíos padrón asintóticos"
 
 #: lib/src/modelprint.c:1416 lib/src/modelprint.c:1418
 msgid "Robust (HAC) standard errors"
-msgstr "Desviacións padrón robustas (HAC)"
+msgstr "Desvíos padrón robustos (HAC)"
 
 #: lib/src/modelprint.c:1423 lib/src/modelprint.c:1427
 msgid "Beck-Katz standard errors"
-msgstr "Desviacións padrón de Beck-Katz"
+msgstr "Desvíos padrón de Beck-Katz"
 
 #: lib/src/modelprint.c:1425
 msgid "Beck--Katz standard errors"
-msgstr "Desviacións padrón de Beck--Katz"
+msgstr "Desvíos padrón de Beck--Katz"
 
 #: lib/src/modelprint.c:1441
 #, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Desviacións padrón agrupadas en %d valores de *%s*"
+msgstr "Desvíos padrón agrupados en %d valores de *%s*"
 
 #: lib/src/modelprint.c:1444
 msgid "Clustered standard errors"
-msgstr "Desviacións padrón agrupadas"
+msgstr "Desvíos padrón agrupados"
 
 #: lib/src/modelprint.c:1460
 msgid "Could not compute Beck-Katz standard errors"
-msgstr "Non puideron calcularse as desviacións padrón de Beck-Katz"
+msgstr "Non puideron calcularse os desvíos padrón de Beck-Katz"
 
 #: lib/src/modelprint.c:1468
 msgid "Could not compute robust standard errors"
-msgstr "Non puideron calcularse as desviacións padrón robustas"
+msgstr "Non puideron calcularse os desvíos padrón robustos"
 
 #: lib/src/modelprint.c:1478
 msgid "Bartlett kernel"
@@ -5669,12 +5668,12 @@ msgstr "Kernel QS"
 #: lib/src/modelprint.c:1485
 #, c-format
 msgid "HAC standard errors, bandwidth %.2f"
-msgstr "Desviacións padrón HAC, con ancho de banda %.2f"
+msgstr "Desvíos padrón HAC, con ancho de banda %.2f"
 
 #: lib/src/modelprint.c:1488
 #, c-format
 msgid "HAC standard errors, bandwidth %d"
-msgstr "Desviacións padrón HAC, con ancho de banda %d"
+msgstr "Desvíos padrón HAC, con ancho de banda %d"
 
 #: lib/src/modelprint.c:1494
 msgid "prewhitened"
@@ -5682,7 +5681,7 @@ msgstr "prebranquexada"
 
 #: lib/src/modelprint.c:1517
 msgid "Heteroskedasticity-robust standard errors"
-msgstr "Desviacións padrón robustas ante heterocedasticidade"
+msgstr "Desvíos padrón robustos ante heterocedasticidade"
 
 #: lib/src/modelprint.c:1518
 msgid "variant"
@@ -5690,53 +5689,53 @@ msgstr "variante"
 
 #: lib/src/modelprint.c:1536
 msgid "Standard errors based on Hessian"
-msgstr "Desviacións padrón baseadas na Hessiana"
+msgstr "Desvíos padrón baseados na Hessiana"
 
 #: lib/src/modelprint.c:1539
 msgid "Standard errors based on Information Matrix"
-msgstr "Desviacións padrón baseadas na matriz de información"
+msgstr "Desvíos padrón baseados na matriz de información"
 
 #: lib/src/modelprint.c:1542
 msgid "Standard errors based on Outer Products matrix"
-msgstr "Desviacións padrón baseadas na matriz de Produtos Externos"
+msgstr "Desvíos padrón baseados na matriz de Produtos Externos"
 
 #: lib/src/modelprint.c:1545
 msgid "QML standard errors"
-msgstr "Desviacións padrón CMV (QML)"
+msgstr "Desvíos padrón CMV (QML)"
 
 #: lib/src/modelprint.c:1548
 msgid "HAC standard errors"
-msgstr "Desviacións padrón HAC"
+msgstr "Desvíos padrón HAC"
 
 #: lib/src/modelprint.c:1552
 msgid "Bollerslev--Wooldridge standard errors"
-msgstr "Desviacións padrón Bollerslev--Wooldridge"
+msgstr "Desvíos padrón Bollerslev--Wooldridge"
 
 #: lib/src/modelprint.c:1554
 msgid "Bollerslev-Wooldridge standard errors"
-msgstr "Desviacións padrón Bollerslev-Wooldridge"
+msgstr "Desvíos padrón de Bollerslev-Wooldridge"
 
 #: lib/src/modelprint.c:1558
 msgid "Warning: could not compute standard errors"
-msgstr "Aviso: Non puideron calcularse as desviacións padrón "
+msgstr "Aviso: Non puideron calcularse os desvíos padrón"
 
 #: lib/src/modelprint.c:1582
 #, c-format
 msgid "With robust %g percent confidence intervals"
-msgstr "Con intervalo de confianza robusto do %g por cento"
+msgstr "Con intervalo robusto do %g por cento de confianza"
 
 #: lib/src/modelprint.c:1585
 #, c-format
 msgid "With %g percent confidence intervals"
-msgstr "Con intervalos de confianza do %g por cento"
+msgstr "Con intervalos co %g por cento de confianza"
 
 #: lib/src/modelprint.c:1590
 msgid "Robust (sandwich) standard errors"
-msgstr "Desviacións padrón robustas (sandwich)"
+msgstr "Desvíos padrón robustos (sandwich)"
 
 #: lib/src/modelprint.c:1592
 msgid "Asymptotic standard errors assuming IID errors"
-msgstr "Desviacións padrón asintóticas supoñendo perturbacións IID"
+msgstr "Desvíos padrón asintóticos supoñendo perturbacións IID"
 
 #: lib/src/modelprint.c:1703
 msgid "Omitted because all values were zero:"
@@ -6097,7 +6096,7 @@ msgstr "Media da var. dependente"
 
 #: lib/src/modelprint.c:3019
 msgid "Standard deviation of dep. var."
-msgstr "Desviación padrón da var. dependente var."
+msgstr "Desvío padrón da var. dependente"
 
 #: lib/src/modelprint.c:3027
 msgid "Akaike information criterion"
@@ -6288,24 +6287,22 @@ msgid "SSR"
 msgstr "SCE"
 
 #: lib/src/modelprint.c:4515 lib/src/modelprint.c:4521
-#, fuzzy
 msgid "low"
 msgstr "Inferior"
 
 #: lib/src/modelprint.c:4516 lib/src/modelprint.c:4522
 msgid "high"
-msgstr ""
+msgstr "Superior"
 
 #: lib/src/modelprint.c:4547 gui/guiprint.c:1588 gui/guiprint.c:1703
 #: gui/guiprint.c:1713
-#, fuzzy
 msgid "odds ratio"
-msgstr "Engadir observación"
+msgstr "Razón de probabilidades"
 
 #: lib/src/modelprint.c:4564
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "%g%% confidence intervals"
-msgstr "Intervalo de confianza %g\\%%"
+msgstr "Intervalos co %g\\%% de confianza"
 
 #: lib/src/modelprint.c:4836
 msgid "Sum of AR coefficients"
@@ -7177,17 +7174,17 @@ msgstr "utilizando %d observacións"
 
 #: lib/src/printout.c:3144
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
-msgstr "Nota: '*' denota un erro superior a 2,5 desviacións padrón\n"
+msgstr "Nota: '*' denota un erro superior a 2,5 desvíos padrón\n"
 
 #: lib/src/printout.c:3216
 #, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
-msgstr " Para intervalos de confianza %g%%, z(%g) = %.2f\n"
+msgstr " Para intervalos co %g%% de confianza, z(%g) = %.2f\n"
 
 #: lib/src/printout.c:3219
 #, c-format
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
-msgstr " Para intervalos de confianza %g%%, t(%d; %g) = %.3f\n"
+msgstr " Para intervalos co %g%% de confianza, t(%d; %g) = %.3f\n"
 
 #: lib/src/printout.c:3243
 msgid " std. error"
@@ -7760,7 +7757,7 @@ msgstr "Vectores cointegrantes"
 #: lib/src/varprint.c:617 lib/src/varprint.c:673 gui/guiprint.c:502
 #: plugin/jrestrict.c:2841 plugin/jrestrict.c:2875
 msgid "standard errors in parentheses"
-msgstr "Desviacións padrón entre parénteses"
+msgstr "Desvíos padrón entre parénteses"
 
 #: lib/src/texprint.c:1084
 msgid "Adjustment vectors"
@@ -8002,7 +7999,7 @@ msgstr "Período de estimación"
 #: lib/src/varprint.c:91 lib/src/varprint.c:107 lib/src/varprint.c:122
 #, c-format
 msgid "Responses to a one-standard error shock in %s"
-msgstr "Respostas a un impacto dunha desviación padrón igual a 1 en *%s*"
+msgstr "Respostas a un impacto dun desvío padrón igual a 1 en *%s*"
 
 #: lib/src/varprint.c:94 lib/src/varprint.c:110 lib/src/varprint.c:125
 #, c-format
@@ -8469,7 +8466,7 @@ msgstr "Weibull(%g; %g)"
 
 #: gui/calculator.c:412 gui/dlgutils.c:1145
 msgid "Standard errors"
-msgstr "Desviacións padrón"
+msgstr "Desvíos padrón"
 
 #: gui/calculator.c:952
 msgid "Incomplete entry"
@@ -8536,7 +8533,7 @@ msgstr ""
 #: gui/calculator.c:1571 gui/calculator.c:1581
 #, c-format
 msgid " standard error of mean = %g\n"
-msgstr " Desviación padrón da media = %g\n"
+msgstr " Desvío padrón da media = %g\n"
 
 #: gui/calculator.c:1573 gui/calculator.c:1583
 #, c-format
@@ -8738,7 +8735,7 @@ msgstr "Máximo"
 
 #: gui/calculator.c:2039 gui/calculator.c:2738
 msgid "std. deviation"
-msgstr "Desviación padrón"
+msgstr "Desvío padrón"
 
 #: gui/calculator.c:2054
 msgid "shape"
@@ -8918,7 +8915,7 @@ msgstr "H0: Diferenza de medias ="
 
 #: gui/calculator.c:2769
 msgid "Assume common population standard deviation"
-msgstr "Supoñendo desviación padrón común nas poboacións"
+msgstr "Supoñendo desvío padrón común nas poboacións"
 
 #: gui/calculator.c:2774
 msgid "variance of sample 1"
@@ -10609,7 +10606,7 @@ msgstr "Usar nomes de modelos"
 
 #: gui/dialogs.c:5304
 msgid "Show standard errors in parentheses"
-msgstr "Amosar as desviacións padrón entre parénteses"
+msgstr "Amosar os desvíos padrón entre parénteses"
 
 #: gui/dialogs.c:5305
 msgid "Show t-statistics in parentheses"
@@ -11002,7 +10999,7 @@ msgstr "Amosar os detalles das iteracións"
 
 #: gui/dlgutils.c:913 gui/selector.c:6156
 msgid "Robust standard errors"
-msgstr "Desviacións padrón robustas"
+msgstr "Desvíos padrón robustos"
 
 #: gui/dlgutils.c:919 gui/selector.c:6374
 msgid "Use bootstrap"
@@ -11152,9 +11149,8 @@ msgid "Ox files (*.ox)"
 msgstr "Ficheiros de Ox (*.ox)"
 
 #: gui/fileselect.c:1007
-#, fuzzy
 msgid "Stata files (*.do, *.ado)"
-msgstr "Ficheiros de Stata (*.do)"
+msgstr "Ficheiros de Stata (*.do, *.ado)"
 
 #: gui/fileselect.c:1008
 msgid "Dynare files (*.mod)"
@@ -12895,9 +12891,8 @@ msgid "_Dataset info"
 msgstr "In_formación do conxunto de datos"
 
 #: gui/gretl.c:1868
-#, fuzzy
 msgid "_Display string tables"
-msgstr "_Amosar valores"
+msgstr "_Presentar táboas de cadeas de texto"
 
 #: gui/gretl.c:1869
 msgid "_Observation markers..."
@@ -13457,7 +13452,7 @@ msgstr "Estimación _Robusta"
 
 #: gui/gretl.c:2039
 msgid "Least _Absolute Deviation"
-msgstr "_Mínima Desviación Absoluta"
+msgstr "_Mínimo Desvío Absoluto"
 
 #: gui/gretl.c:2040
 msgid "_Quantile regression"
@@ -13742,19 +13737,19 @@ msgstr "Rango de estimación do modelo:"
 #: gui/guiprint.c:1135 gui/guiprint.c:1153
 #, c-format
 msgid "Standard error of residuals = %g"
-msgstr "Desviación padrón dos erros = %g"
+msgstr "Desvío padrón dos erros = %g"
 
 #: gui/guiprint.c:1222
 msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
 msgstr ""
-"\\textit{Nota}: '*' denota un erro superior a 2,5 desviacións padrón\n"
+"\\textit{Nota}: '*' denota un erro superior a 2,5 desvíos padrón\n"
 "\n"
 
 #: gui/guiprint.c:1286
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Nota: '*' denota un erro superior a 2,5 desviacións padrón"
+msgstr "Nota: '*' denota un erro superior a 2,5 desvíos padrón"
 
 #: gui/guiprint.c:1332 gui/guiprint.c:1395 gui/guiprint.c:1452
 #: gui/guiprint.c:1494
@@ -13767,7 +13762,7 @@ msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
 msgstr ""
-"Para intervalos de confianza %g\\%%, $z(%g) = %.2f$\n"
+"Para intervalos co %g\\%% de confianza , $z(%g) = %.2f$\n"
 "\n"
 
 #: gui/guiprint.c:1369
@@ -13776,7 +13771,7 @@ msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
 msgstr ""
-"Para intervalos de confianza %g\\%%, $t(%d; %g) = %.3f$\n"
+"Para intervalos co %g\\%% de confianza, $t(%d; %g) = %.3f$\n"
 "\n"
 
 #: gui/guiprint.c:1389
@@ -13787,12 +13782,12 @@ msgstr "Intervalo ao %g\\%% "
 #: gui/guiprint.c:1475
 #, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Para intervalos de confianza %g%%, z(%g) = %.2f"
+msgstr "Para intervalos co %g%% de confianza, z(%g) = %.2f"
 
 #: gui/guiprint.c:1479
 #, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Para intervalos de confianza %g%%, t(%d; %g) = %.3f"
+msgstr "Para intervalos co %g%% de confianza, t(%d; %g) = %.3f"
 
 #: gui/guiprint.c:1484
 #, c-format
@@ -14048,7 +14043,7 @@ msgstr "Opcións de _tabulación..."
 
 #: gui/gui_utils.c:321
 msgid "Show _standard errors"
-msgstr "Amosar _desviacións padrón"
+msgstr "Amosar _desvíos padrón"
 
 #: gui/gui_utils.c:322
 msgid "Show _t-ratios"
@@ -14094,12 +14089,17 @@ msgid ""
 "observation information (for example, dates) if\n"
 "the column heading looks suitable."
 msgstr ""
+"Trata de interpretar a primeira columna como se contese\n"
+"información das observacións (por exemplo, datas) se\n"
+"o encabezamento da columna semella axeitado."
 
 #: gui/gui_utils.c:765
 msgid ""
 "Treat the first column as an ordinary data series\n"
 "regardless of the column heading."
 msgstr ""
+"Trata de interpretar a primeira columna como unha serie\n"
+"de datos, a pesar do encabezamento da columna."
 
 #: gui/gui_utils.c:783 gui/gui_utils.c:786
 #, c-format
@@ -14163,9 +14163,8 @@ msgid "Outcome probabilities"
 msgstr "Probabilidades finais"
 
 #: gui/gui_utils.c:1168
-#, fuzzy
 msgid "Odds ratios"
-msgstr "Observacións"
+msgstr "Razóns de probabilidades"
 
 #: gui/gui_utils.c:1391
 msgid "_Model as bundle"
@@ -14189,7 +14188,7 @@ msgstr "_Suma de cadrados dos erros"
 
 #: gui/gui_utils.c:1404
 msgid "_Standard error of the regression"
-msgstr "_Desviación padrón da regresión"
+msgstr "_Desvío padrón da regresión"
 
 #: gui/gui_utils.c:1409
 msgid "_R-squared"
@@ -14695,7 +14694,7 @@ msgstr "Termo de corrección do erro %d para VECM %d"
 #: gui/library.c:595
 #, c-format
 msgid "forecast std errors of %s"
-msgstr "Desviacións padrón de predición para *%s*"
+msgstr "Desvíos padrón de predición para *%s*"
 
 #: gui/library.c:598
 #, c-format
@@ -15200,7 +15199,7 @@ msgstr "Correlograma"
 
 #: gui/library.c:5859
 msgid "Use Bartlett standard errors"
-msgstr "Utilizar desviacións padrón de Bartlett"
+msgstr "Utilizar desvíos padrón de Bartlett"
 
 #: gui/library.c:5865 gui/library.c:5869
 msgid "Maximum lag:"
@@ -15211,9 +15210,8 @@ msgid "gretl: fractional integration"
 msgstr "GRETL: Integración fraccional"
 
 #: gui/library.c:6112
-#, fuzzy
 msgid "gretl: logit odds ratios"
-msgstr "GRETL: Prescindir de observacións"
+msgstr "GRETL: Razóns de probabilidades de Logit"
 
 #: gui/library.c:6113 gui/toolbar.c:719
 msgid "gretl: coefficient confidence intervals"
@@ -15315,11 +15313,11 @@ msgstr "Días por semana"
 
 #: gui/library.c:6519
 msgid "Divide by sample standard deviation"
-msgstr "Dividir pola desviación padrón mostral"
+msgstr "Dividir polo desvío padrón mostral"
 
 #: gui/library.c:6520
 msgid "Divide by standard deviation without df correction"
-msgstr "Dividir pola desviación padrón sen corrección de graos de liberdade"
+msgstr "Dividir polo desvío padrón sen corrección de graos de liberdade"
 
 #: gui/library.c:6521
 msgid "Center only"
@@ -15503,9 +15501,8 @@ msgid "pre-load data"
 msgstr "precargar os datos"
 
 #: gui/library.c:8720
-#, fuzzy
 msgid "No string-valued series were found"
-msgstr "Non se atoparon series"
+msgstr "Non se atoparon series con valores en cadeas de texto"
 
 #: gui/library.c:8733 plugin/leverage.c:99 plugin/pca.c:100
 msgid "gretl: save data"
@@ -15686,9 +15683,8 @@ msgid "Edit attributes"
 msgstr "Editar atributos"
 
 #: gui/menustate.c:568
-#, fuzzy
 msgid "Show string table"
-msgstr "Asignando táboa de códigos de cadea\n"
+msgstr "Amosar a táboa de cadeas de texto"
 
 #: gui/menustate.c:570
 msgid "Collinearity"
@@ -15908,7 +15904,7 @@ msgstr "Entre parénteses os estatísticos t"
 
 #: gui/model_table.c:1117 gui/model_table.c:1237 gui/model_table.c:1324
 msgid "Standard errors in parentheses"
-msgstr "Entre parénteses as desviacións padrón"
+msgstr "Entre parénteses os desvíos padrón"
 
 #: gui/model_table.c:1121 gui/model_table.c:1328
 msgid "p-values in brackets"
@@ -16405,7 +16401,7 @@ msgstr "Puntos de cuadratura"
 
 #: gui/selector.c:6154
 msgid "Robust standard errors/intervals"
-msgstr "Desviacións padrón robustas/intervalos"
+msgstr "Desvíos padrón robustos/intervalos"
 
 #: gui/selector.c:6212 gui/selector.c:6222 gui/selector.c:6230
 msgid "Include a constant"
@@ -16497,7 +16493,7 @@ msgstr "Amosar as variables retardadas"
 
 #: gui/selector.c:6430
 msgid "Compute standard errors"
-msgstr "Calcular as desviacións padrón"
+msgstr "Calcular os desvíos padrón"
 
 #: gui/selector.c:6435
 msgid "Compute confidence intervals"
@@ -18085,7 +18081,7 @@ msgstr "_Gardar predición..."
 
 #: gui/toolbar.c:1237
 msgid "Save standard errors..."
-msgstr "Gardar desviacións padrón"
+msgstr "Gardar desvíos padrón..."
 
 #: gui/toolbar.c:1445
 msgid "New tab"
