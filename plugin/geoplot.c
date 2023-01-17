@@ -1549,6 +1549,7 @@ int geoplot (mapinfo *mi)
 		mi->plotfile = ensure_full_write_path(sval);
 		if (is_image_filename(mi->plotfile)) {
                     mi->flags |= MAP_IS_IMAGE;
+		    mi->flags &= ~MAP_DISPLAY;
 		}
 	    }
 	}
