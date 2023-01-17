@@ -32,5 +32,6 @@ symlinks:
 	ln -sf $$src . ; fi ; done
 
 clean:
-	rm -f string_table.txt *.plt *.dat us_modified.json founders_mod.json *~
+	rm -f string_table.txt *.plt *.dat us-rearranged.geojson \
+	us_modified.json founders_mod.json *~
 
