@@ -30,7 +30,8 @@ version 2023a, in progress
   tables at the moment of importation (strings tables can now
   be accessed under the Data menu)
 - "join" via the GUI: make it evident that specifying keys
-  may not be necessary with time-series data
+  may not be necessary with time-series data; fix a bug with
+  use of the filter option
 - "system" command: ensure that the $system bundle includes
   the sample limits as "sample_t1" and "sample_t2"
 - Script editor, split pane: ensure that when line-numbering
@@ -57,6 +58,12 @@ version 2023a, in progress
 - macOS build: include TargetConditionals.h in libgretl.h
 - MS Windows: work around the limitations of mktime() and
   localtime() using GLib functionality
+- geoplot addon: document the facilities available for
+  plotting qualitative data; fix a bug whereby writing a
+  map as an image file (e.g. PDF) could fail
+- Gretl User's Guide: rewrite the "Calendar dates" chapter
+  including more information on the available formats and
+  the means of converting between them
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
