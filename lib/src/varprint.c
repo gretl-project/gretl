@@ -422,7 +422,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 
     vd = gretl_VAR_get_fcast_decomp(var, targ, periods, &err);
     if (err) {
-	pprintf(prn, "Forecast decomposition failed\n");
+	pprintf(prn, _("Forecast decomposition failed\n"));
 	return err;
     }
 

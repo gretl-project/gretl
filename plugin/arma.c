@@ -202,7 +202,7 @@ static int arma_OPG_vcv (MODEL *pmod, void *data, int algo,
 	double rcond = gretl_symmetric_matrix_rcond(V, &err);
 
 	if (!err && rcond < 1.0E-10) {
-	    pprintf(prn, "OPG: rcond = %g; will try Hessian\n", rcond);
+	    pprintf(prn, _("OPG: rcond = %g; will try Hessian\n"), rcond);
 	    err = 1;
 	}
     }
@@ -380,7 +380,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo)
     if (nc == 0) {
 	return 0;
     } else if (nc < ainfo->nc) {
-	pprintf(ainfo->prn, "ARMA initialization: need %d coeffs but got %d\n",
+	pprintf(ainfo->prn, _("ARMA initialization: need %d coeffs but got %d\n"),
 		ainfo->nc, nc);
 	return E_DATA;
     }
