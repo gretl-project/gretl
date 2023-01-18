@@ -2162,7 +2162,7 @@ maybe_get_model_data (MODEL *pmod, gretlopt opt, int *err)
         if (pmod->dataset != NULL) {
             dset = pmod->dataset;
         } else {
-            gretl_errmsg_set("The group-means dataset is not available");
+            gretl_errmsg_set(_("The group-means dataset is not available"));
             *err = E_DATA;
             gui_errmsg(*err);
         }
@@ -9826,7 +9826,7 @@ static int script_delete_function_package (const char *action,
     err = get_full_filename(gfnname, fname, OPT_I);
 
     if (!err && !gretl_file_exists(fname)) {
-        pprintf(prn, "Couldn't find %s\n", gfnname);
+        pprintf(prn, _("Couldn't find %s\n"), gfnname);
         err = E_FOPEN;
     }
 
@@ -9852,9 +9852,9 @@ static int script_delete_function_package (const char *action,
     if (err) {
         errmsg(err, prn);
     } else if (delfile) {
-        pprintf(prn, "Removed %s\n", pkgname);
+        pprintf(prn, _("Removed %s\n", pkgname));
     } else {
-        pprintf(prn, "Unloaded %s\n", pkgname);
+        pprintf(prn, _("Unloaded %s\n", pkgname));
     }
 
     g_free(gfnname);

@@ -1145,7 +1145,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	    int n = gretl_vector_get_length(yvals);
 	    double x;
 
-	    pprintf(prn, "\nEstimated outcome probabilities for %s\n\n",
+	    pprintf(prn, _("\nEstimated outcome probabilities for %s\n\n"),
 		    gretl_model_get_depvar_name(pmod, dataset));
 
 	    /* case values */
