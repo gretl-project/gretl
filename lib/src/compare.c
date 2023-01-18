@@ -1,4 +1,4 @@
-/*
+  /*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
  *
@@ -1246,7 +1246,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	err = umod.errcode;
 	errmsg(err, prn);
     } else if (umod.ncoeff - orig->ncoeff != n_add) {
-	gretl_errmsg_sprintf("Failed to add %d variable(s)", n_add);
+	gretl_errmsg_sprintf(_("Failed to add %d variable(s)"), n_add);
 	err = E_DATA;
     }
 
@@ -2223,7 +2223,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
     df = order - arma_model_get_n_arma_coeffs(pmod);
 
     if (df < 0) {
-	gretl_errmsg_set("Insufficient degrees of freedom for test");
+	gretl_errmsg_set(_("Insufficient degrees of freedom for test"));
 	return E_DATA;
     }
 
@@ -3039,9 +3039,9 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    }
 
 	    if (na(test)) {
-		pputs(prn, "Couldn't compute Chow test statistic\n");
+		pputs(prn, _("Couldn't compute Chow test statistic\n"));
 	    } else if (na(pval)) {
-		pprintf(prn, "Couldn't compute Chow test p-value (test = %g)\n", test);
+		pprintf(prn, _("Couldn't compute Chow test p-value (test = %g)\n"), test);
 	    }
 
 	    if (!na(test) && !na(pval)) {

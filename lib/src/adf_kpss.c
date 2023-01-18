@@ -176,7 +176,7 @@ static int GLS_demean_detrend (DATASET *dset, int v,
 
 	ntolabel(date1, offset, dset);
 	ntolabel(date2, offset + T - 1, dset);
-	pprintf(prn, "\nGLS demean/detrend: using %s-%s (T = %d)\n",
+	pprintf(prn, _("\nGLS demean/detrend: using %s-%s (T = %d)\n"),
 		date1, date2, yd->rows);
 	for (i=0; i<xcols; i++) {
 	    pprintf(prn, "  %s = %#.8g\n", (i==0)? "mean" : "trend", b->val[i]);
@@ -257,7 +257,7 @@ static int OLS_demean_detrend (double *y, int offset,
     err = gretl_matrix_ols(yd, Xd, b, NULL, NULL, NULL);
 
     if (!err && prn != NULL) {
-	pprintf(prn, "\nOLS demean/detrend: (T = %d)\n", yd->rows);
+	pprintf(prn, _("\nOLS demean/detrend: (T = %d)\n"), yd->rows);
 	for (t=0; t<xcols; t++) {
 	    pprintf(prn, "  %s = %#.8g\n", (t==0)? "mean" : "trend", b->val[t]);
 	}
@@ -2506,19 +2506,19 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 	pprintf(prn, "%s\n\n", _("H0: all groups are stationary"));
 	do_choi_test(ppv, zpv, lpv, n, prn);
 	if (gt_10 > 0) {
-	    pputs(prn, "   Note: these are LOWER BOUNDS "
-		  "on the true p-values\n");
-	    pprintf(prn, "   (Individual p-values > .10, and recorded as .10: %d)\n",
+	    pputs(prn, _("   Note: these are LOWER BOUNDS "
+		  "on the true p-values\n"));
+	    pprintf(prn, _("   (Individual p-values > .10, and recorded as .10: %d)\n"),
 		    gt_10);
 	} else if (lt_01 > 0) {
-	    pputs(prn, "   Note: these are UPPER BOUNDS "
-		  "on the true p-values\n");
-	    pprintf(prn, "   (Individual p-values < .01, and recorded as .01: %d)\n",
+	    pputs(prn, _("   Note: these are UPPER BOUNDS "
+		  "on the true p-values\n"));
+	    pprintf(prn, _("   (Individual p-values < .01, and recorded as .01: %d)\n"),
 		    lt_01);
 	}
 	pputc(prn, '\n');
     } else {
-	pprintf(prn, "Choi test: cannot be calculated\n");
+	pprintf(prn, _("Choi test: cannot be calculated\n"));
     }
 
     return err;
@@ -2777,8 +2777,8 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     int err = 0;
 
     if (multi_unit_panel_sample(dset)) {
-	gretl_errmsg_set("Sorry, this command is not yet available "
-			 "for panel data");
+	gretl_errmsg_set(_("Sorry, this command is not yet available "
+			 "for panel data"));
 	return E_DATA;
     }
 

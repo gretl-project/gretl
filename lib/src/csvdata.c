@@ -610,28 +610,28 @@ static int check_daily_dates (DATASET *dset, int *pd,
         if (dset->pd == 5 && (wd == 6 || wd == 0)) {
             /* Got Sat or Sun, can't be 5-day daily? */
             alt_pd = (wd == 6)? 6 : 7;
-            pprintf(prn, "Found a Saturday (%s): re-trying with pd = %d\n",
+            pprintf(prn, _("Found a Saturday (%s): re-trying with pd = %d\n"),
                     dset->S[s], alt_pd);
             break;
         } else if (dset->pd == 6 && wd == 0) {
             /* Got Sun, can't be 6-day daily? */
             alt_pd = 7;
-            pprintf(prn, "Found a Sunday (%s): re-trying with pd = %d\n",
+            pprintf(prn, _("Found a Sunday (%s): re-trying with pd = %d\n"),
                     dset->S[s], alt_pd);
             break;
         }
 
         n = calendar_obs_number(dset->S[s], dset);
         if (n < t) {
-            pprintf(prn, "Daily dates error at t = %d:\n"
-                    "  calendar_obs_number() for '%s' = %d but t = %d\n",
+            pprintf(prn, _("Daily dates error at t = %d:\n"
+                    "  calendar_obs_number() for '%s' = %d but t = %d\n"),
                     t, dset->S[s], n, t);
             err = 1;
         } else if (n > fulln - 1) {
-            pprintf(prn, "Error: date '%s' out of bounds\n", dset->S[s]);
+            pprintf(prn, _("Error: date '%s' out of bounds\n"), dset->S[s]);
             err = 1;
         } else if (nbak > 0 && n == nbak) {
-            pprintf(prn, "Error: date '%s' is repeated\n", dset->S[s]);
+            pprintf(prn, _("Error: date '%s' is repeated\n"), dset->S[s]);
             err = 1;
         }
         nbak = n;
@@ -755,7 +755,7 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
             goto restart;
         } else if (pd == 12 && Ep == 5 && per == 1 && yr == Ey + 1) {
             /* apparently monthly but really quarterly? */
-            pprintf(prn, "   \"%s\": quarterly date with spurious zero?\n", label);
+            pprintf(prn, _("   \"%s\": quarterly date with spurious zero?\n"), label);
             *extra_zero = 1;
             *ppd = pd0 = pd = 4;
             goto restart;
@@ -764,18 +764,18 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
         }
 
         if (!ret) {
-            pprintf(prn, "   %s: not a consistent date\n", label);
+            pprintf(prn, _("   %s: not a consistent date\n"), label);
             break;
         }
     }
 
     if (ret) {
         if (pmin == 3) {
-            pprintf(prn, "   \"%s\": quarterly data pretending to be monthly?\n",
+            pprintf(prn, _("   \"%s\": quarterly data pretending to be monthly?\n"),
                     bad);
             *ppd = 4;
         } else if (pd == pd0 + 1) {
-            pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n",
+            pprintf(prn, _("   \"%s\": BLS-type nonsense? Trying again\n"),
                     bad);
             strcpy(skipstr, skip);
         }
@@ -1061,7 +1061,7 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
                     pprintf(prn, _("quarter %s?\n"), s);
                     pd = 4;
                 } else {
-                    pprintf(prn, "quarter %d: not possible\n", p);
+                    pprintf(prn, _("quarter %d: not possible\n"), p);
                 }
             } else if (len == 7) {
                 if (*s == 'Q') {
@@ -1075,14 +1075,14 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
                         pprintf(prn, _("quarter %d?\n"), p);
                         pd = 4;
                     } else {
-                        pprintf(prn, "quarter %d: not possible\n", p);
+                        pprintf(prn, _("quarter %d: not possible\n"), p);
                     }
                 } else {
                     if (p > 0 && p < 13) {
                         pprintf(prn, _("month %s?\n"), s);
                         pd = 12;
                     } else {
-                        pprintf(prn, "month %d: not possible\n", p);
+                        pprintf(prn, _("month %d: not possible\n"), p);
                     }
                 }
             }
@@ -2971,7 +2971,7 @@ static int csv_varname_scan (csvdata *c, gzFile fp, PRN *prn, PRN *mprn)
 
     if (!err && joining(c) && c->cols_list == NULL) {
         /* no relevant columns were found */
-        gretl_errmsg_set("No relevant columns were found");
+        gretl_errmsg_set(_("No relevant columns were found"));
         err = E_UNKVAR;
     }
 
@@ -3728,9 +3728,9 @@ int real_import_csv (const char *fname,
     if (c->markerpd > 0) {
         pputs(mprn, _("taking date information from row labels\n\n"));
         if (csv_skip_bad(c)) {
-            pprintf(prn, "WARNING: Check your data! gretl has stripped out "
+            pprintf(prn, _("WARNING: Check your data! gretl has stripped out "
                     "what appear to be\nextraneous lines in a %s dataset: "
-                    "this may not be right.\n\n",
+                    "this may not be right.\n\n"),
                     (c->dset->pd == 4)? "quarterly" : "monthly");
         }
     } else {
@@ -3937,7 +3937,7 @@ static int probe_varnames_check (DATASET *dset, gretlopt opt,
 
     if (missnames) {
         if (opt & OPT_H) {
-            gretl_errmsg_set("Couldn't find all variable names");
+            gretl_errmsg_set(_("Couldn't find all variable names"));
             err = E_DATA;
         } else {
             *rerun = 1;
