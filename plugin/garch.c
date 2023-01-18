@@ -277,18 +277,18 @@ static void garch_print_init (const double *theta, int k,
     pputc(prn, '\n');
 
     if (manual) {
-	pputs(prn, "Manual initialization of parameters");
+	pputs(prn, _("Manual initialization of parameters"));
     } else {
-	pputs(prn, "Automatic initialization of parameters");
+	pputs(prn, _("Automatic initialization of parameters"));
     }
 
-    pputs(prn, "\n\n Regression coefficients:\n");
+    pputs(prn, _("\n\n Regression coefficients:\n"));
 
     for (i=0; i<k; i++) {
 	pprintf(prn, "  theta[%d] = %g\n", i, theta[j++]);
     }
 
-    pputs(prn, "\n Variance parameters:\n");
+    pputs(prn, _("\n Variance parameters:\n"));
 
     pprintf(prn, "  alpha[0] = %g\n", theta[j++]);
     for (i=0; i<q; i++) {
@@ -732,10 +732,10 @@ int garch_pretest (MODEL *pmod, DATASET *dset,
 static void autocorr_message (double LMF, double pvF, int order, PRN *prn)
 {
     if (!na(LMF) && pvF < 0.05) {
-	pputs(prn, "\nConvergence was not reached.  One possible reason "
-	      "for this is\nautocorrelation in the error term.\n");
-	pprintf(prn, "After estimating the model by OLS, the following result "
-		"was\nobtained for a test of autocorrelation of order %d:\n",
+	pputs(prn, _("\nConvergence was not reached.  One possible reason "
+	      "for this is\nautocorrelation in the error term.\n"));
+	pprintf(prn, _("After estimating the model by OLS, the following result "
+		"was\nobtained for a test of autocorrelation of order %d:\n"),
 		order);
 	pprintf(prn, "LMF = %g, with p-value %g\n", LMF, pvF);
     }
