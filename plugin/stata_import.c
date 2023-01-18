@@ -945,10 +945,10 @@ static int label_array_header (const int *list, char **names,
     }
 
     if (n == 1) {
-        pprintf(prn, "\nValue -> label mappings for variable %d (%s)\n",
+        pprintf(prn, _("\nValue -> label mappings for variable %d (%s)\n"),
                 v, dset->varname[v]);
     } else {
-        pprintf(prn, "\nValue -> label mappings for the following %d variables\n", n);
+        pprintf(prn, _("\nValue -> label mappings for the following %d variables\n"), n);
         for (i=1; i<=list[0]; i++) {
             if (!strcmp(names[i-1], lname)) {
                 v = list[i];
@@ -1610,7 +1610,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
             char test[16] = {0};
 
             if (fread(test, 1, 15, fp) < 15 || !strcmp(test, "</value_labels>")) {
-                pprintf(vprn, "breaking on end of value labels\n");
+                pprintf(vprn, _("breaking on end of value labels\n"));
                 break;
             }
             /* otherwise it's supposed to be "<lbl>" */
@@ -1977,7 +1977,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     }
 
     if (dtab->version > 118) {
-        pprintf(prn, "This dta version not yet supported\n");
+        pprintf(prn, _("This dta version not yet supported\n"));
         return E_NOTYET;
     }
 
@@ -2107,7 +2107,7 @@ static int parse_old_dta_header (FILE *fp, int *namelen,
         return err;
     }
 
-    pprintf(prn, "Stata file version %d\n", stata_version);
+    pprintf(prn, _("Stata file version %d\n"), stata_version);
 
     /* these are file-scope globals */
     stata_endian = stata_get_endianness(fp, &err);

@@ -1794,8 +1794,8 @@ static void print_labelsets (spss_data *sdat, PRN *prn)
 {
     int i, j, lj;
 
-    pputs(prn, "\nNote: any values marked with a suffix of '[M]' are annotated\n"
-	  "in the SPSS data file as 'missing'.\n");
+    pputs(prn, _("\nNote: any values marked with a suffix of '[M]' are annotated\n"
+	  "in the SPSS data file as 'missing'.\n"));
 
     for (i=0; i<sdat->nlabelsets; i++) {
 	spss_labelset *lset = sdat->labelsets[i];
@@ -1815,11 +1815,11 @@ static void print_labelsets (spss_data *sdat, PRN *prn)
 	    /* mapping applies to just one variable */
 	    lj = vlist[1] - 1;
 	    v = &sdat->vars[lj];
-	    pprintf(prn, "Value -> label mappings for variable %d (%s)\n",
+	    pprintf(prn, _("Value -> label mappings for variable %d (%s)\n"),
 		    v->gretl_index, v->name);
 	} else {
 	    /* mapping applies to two or more variables */
-	    pprintf(prn, "Value -> label mappings for the following %d variables\n",
+	    pprintf(prn, _("Value -> label mappings for the following %d variables\n"),
 		    vlist[0]);
 	    for (j=1; j<=vlist[0]; j++) {
 		lj = vlist[j] - 1;
