@@ -1492,7 +1492,8 @@ static int is_image_filename (const char *s)
 	has_suffix(s, ".eps") ||
 	has_suffix(s, ".png") ||
 	has_suffix(s, ".svg") ||
-	has_suffix(s, ".emf")) {
+	has_suffix(s, ".emf") ||
+        has_suffix(s, ".html")) {
 	return 1;
     } else {
 	/* should really be .gp or .plt? */

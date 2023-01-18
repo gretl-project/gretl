@@ -526,7 +526,7 @@ int print_map_palette (mapinfo *mi, double gpver, FILE *fp)
     if (mi->n_codes > 0) {
 	/* the payload series is an encoding */
 	if (p != NULL && *p != '\0') {
-	    return print_discrete_map_palette(mi, p, gpver, fp);
+            return print_discrete_map_palette(mi, p, gpver, fp);
 	} else {
             print_discrete_autocolors(mi, fp);
 	    if (gpver < 5.4) {
