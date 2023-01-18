@@ -19,6 +19,7 @@ else
 endif
 
 ifeq ($(build_addons_doc),yes)
+  DOC = doc/$(PKG).pdf
   INSTDOC = install-doc
 endif
 
@@ -35,6 +36,8 @@ INP = HIP_public.inp \
       HIP_example.inp
 SPEC = HIP.spec
 SMPL = HIP_example.inp
+
+all: $(PKG).gfn $(DOC)
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp

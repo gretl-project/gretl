@@ -19,6 +19,7 @@ else
 endif
 
 ifeq ($(build_addons_doc),yes)
+  DOC = doc/$(PKG).pdf
   INSTDOC = install-doc
 endif
 
@@ -34,6 +35,8 @@ INP = dbnomics_public.inp \
       dbnomics_private.inp
 SPEC = dbnomics.spec
 SMPL = dbnomics_sample.inp
+
+all: $(PKG).gfn $(DOC)
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
