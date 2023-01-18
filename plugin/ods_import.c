@@ -225,7 +225,7 @@ static int ods_sheet_prune (ods_sheet *sheet, PRN *prn)
 	}
     
 	if (sheet->n_tables == 0) {
-	    pputs(prn, "File contains no data");
+	    pputs(prn, _("File contains no data"));
 	    err = E_DATA;
 	}
     }
@@ -813,7 +813,7 @@ static int repeat_data_row (ods_sheet *sheet, int iread,
     int i, t = iread - vnames;
 
     if (t < 1 || t >= sheet->dset->n) {
-	pprintf(prn, "Found a repeated row in the wrong place\n");
+	pprintf(prn, _("Found a repeated row in the wrong place\n"));
 	return E_DATA;
     }
 
@@ -1006,7 +1006,7 @@ static ods_sheet *ods_read_content (PRN *prn, int *err)
 				   &doc, &cur);
 
     if (*err) {
-	pprintf(prn, "didn't get office:document-content\n");
+	pprintf(prn, _("didn't get office:document-content\n"));
 	pprintf(prn, "%s", gretl_errmsg_get());
 	return NULL;
     }
@@ -1051,12 +1051,12 @@ static int check_mimetype (PRN *prn)
 
     fp = fopen("mimetype", "r");
     if (fp == NULL) {
-	pprintf(prn, "Couldn't find mimetype\n");
+	pprintf(prn, _("Couldn't find mimetype\n"));
 	err = E_FOPEN;
     } else {
 	if (fread(buf, 1, 46, fp) != 46 ||
 	    strcmp(buf, odsmime)) {
-	    pprintf(prn, "Wrong or missing mime type,\n should be '%s'\n", 
+	    pprintf(prn, _("Wrong or missing mime type,\n should be '%s'\n"), 
 		    odsmime);
 	    err = E_DATA;
 	}

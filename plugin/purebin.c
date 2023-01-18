@@ -458,7 +458,7 @@ int purebin_read_data (const char *fname, DATASET *dset,
     for (i=1; i<bset->v && !err; i++) {
 	sz = fread(bset->Z[i], sizeof(double), bset->n, fp);
 	if (sz != (size_t) bset->n) {
-	    pprintf(prn, "failed reading variable %d\n", i);
+	    pprintf(prn, _("failed reading variable %d\n"), i);
 	    err = E_DATA;
 	}
     }
@@ -573,11 +573,11 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 	if (sel[i]) {
 	    sz = fread(bset->Z[k++], sizeof(double), bset->n, fp);
 	    if (sz != (size_t) bset->n) {
-		gretl_errmsg_sprintf("failed reading variable %d", i);
+		gretl_errmsg_sprintf(_("failed reading variable %d"), i);
 		err = E_DATA;
 	    }
 	} else if (fseek(fp, slen, SEEK_CUR) != 0) {
-	    gretl_errmsg_sprintf("failed reading variable %d", i);
+	    gretl_errmsg_sprintf(_("failed reading variable %d"), i);
 	    err = E_DATA;
 	}
     }
