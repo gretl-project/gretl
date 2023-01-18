@@ -292,7 +292,7 @@ static int dbn_add_daily_data (windata_t *vwin, char *vname,
     S = gretl_bundle_get_array(b, "period", NULL);
     x = gretl_bundle_get_matrix(b, "value", NULL);
     if (T == 0 || S == NULL || x == NULL) {
-	gretl_errmsg_set("dbnomics bundle is broken");
+	gretl_errmsg_set(_("dbnomics bundle is broken"));
 	err = E_DATA;
     }
 
@@ -2039,7 +2039,7 @@ static int dbn_general_search_results (const gchar *key,
 	int i;
 
 	pprintf(prn, _("Results of DB.NOMICS search on '%s'\n"), key);
-	pputs(prn, "Provider/Dataset : description\n\n");
+	pputs(prn, _("Provider/Dataset : description\n\n");
 
 	for (i=0; i<n; i++) {
 	    b = gretl_array_get_bundle(a, i);
@@ -2053,7 +2053,7 @@ static int dbn_general_search_results (const gchar *key,
 	    }
 	}
 	if (n_ok > 0) {
-	    const char *title = "gretl: DB.NOMICS search";
+	    const char *title = N_("gretl: DB.NOMICS search");
 
 	    view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
 	} else {

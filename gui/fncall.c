@@ -4300,8 +4300,8 @@ static int in_own_subdir (const char *pkgname, const char *path)
     if (strstr(path, test) != NULL) {
 	ret = 1;
     } else {
-	gretl_errmsg_sprintf("The function file %s.gfn is not installed correctly:\n"
-			     "it should be in a subdirectory named '%s'.",
+	gretl_errmsg_sprintf(_("The function file %s.gfn is not installed correctly:\n"
+			     "it should be in a subdirectory named '%s'."),
 			     pkgname, pkgname);
     }
 
@@ -4642,13 +4642,13 @@ int dbnomics_get_dimensions_call (const char *provider,
 	return err;
     }
 
-    pprintf(prn, "Information on dbnomics dataset %s/%s (may be quite voluminous)\n\n",
+    pprintf(prn, _("Information on dbnomics dataset %s/%s (may be quite voluminous)\n\n"),
 	    provider, dsname);
-    pputs(prn, "This may indicate (as applicable):\n"
+    pputs(prn, _("This may indicate (as applicable):\n"
 	  " * topics covered by the dataset\n"
 	  " * countries included\n"
 	  " * units of measurement\n"
-	  " * other information\n\n");
+	  " * other information\n\n"));
 
     err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
     if (!err) {
