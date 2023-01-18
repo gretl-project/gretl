@@ -3106,16 +3106,16 @@ void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
 	pprintf(prn, "F(%g, %g)", parm[0], parm[1]);
 	break;
     case D_BINOMIAL:
-	pprintf(prn, "Binomial (P = %g, %g trials)", parm[0], parm[1]);
+	pprintf(prn, _("Binomial (P = %g, %g trials)"), parm[0], parm[1]);
 	break;
     case D_POISSON:
-	pprintf(prn, "Poisson (mean = %g)", parm[0]);
+	pprintf(prn, _("Poisson (mean = %g)"), parm[0]);
 	break;
     case D_EXPON:
-	pprintf(prn, "Exponential (scale = %g)", parm[0]);
+	pprintf(prn, _("Exponential (scale = %g)"), parm[0]);
 	break;
     case D_WEIBULL:
-	pprintf(prn, "Weibull (shape = %g, scale = %g)", parm[0], parm[1]);
+	pprintf(prn, _("Weibull (shape = %g, scale = %g)"), parm[0], parm[1]);
 	break;
     }
 

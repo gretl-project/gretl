@@ -1497,7 +1497,7 @@ static void hac_vcv_line (const MODEL *pmod,
 
     missvals = gretl_model_get_int(pmod, "hac_missvals");
     if (missvals) {
-	pprintf(prn, "Observations not contiguous: %s method used",
+	pprintf(prn, _("Observations not contiguous: %s method used"),
 		missvals == HAC_ES ? "ES" : "AM");
 	pputc(prn, '\n');
     }

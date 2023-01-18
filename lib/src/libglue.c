@@ -58,7 +58,7 @@ int model_test_driver (int order, DATASET *dset,
 
     if (opt == OPT_NONE || opt == OPT_Q || opt == OPT_I) {
 	/* note: OPT_Q and OPT_I are just quiet and silent respectively */
-	pprintf(prn, "modtest: no options selected\n");
+	pprintf(prn, _("modtest: no options selected\n"));
 	return 0;
     }
 
