@@ -998,7 +998,7 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 
         *ed += fix;
         fixed = ymd_extended_from_epoch_day(*ed, 0, NULL);
-        msg = gretl_strdup_printf("the starting date was corrected to Monday %s",
+        msg = gretl_strdup_printf(_("the starting date was corrected to Monday %s"),
                                   fixed);
         gretl_warnmsg_set(msg);
         free(msg);
@@ -1163,7 +1163,7 @@ int set_obs (const char *parm1, const char *parm2,
     /* prevent substantive reorganization of the dataset
        within a function */
     if ((opt & (OPT_P | OPT_C)) && gretl_function_depth() > 0) {
-        gretl_errmsg_set("You cannot do this within a function");
+        gretl_errmsg_set(_("You cannot do this within a function"));
         return E_DATA;
     }
 
@@ -2134,9 +2134,9 @@ static int maybe_unload_function_package (const char *s,
     }
 
     if (done) {
-        pprintf(prn, "Unloaded package %s\n", pkgname);
+        pprintf(prn, _("Unloaded package %s\n"), pkgname);
     } else {
-        pprintf(prn, "Package %s was not loaded\n", pkgname);
+        pprintf(prn, _("Package %s was not loaded\n"), pkgname);
     }
 
     return 0;

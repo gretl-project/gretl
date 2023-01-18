@@ -4410,7 +4410,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
     s2 = mdl.ess / mdl.nobs;
 
     if ((opt & OPT_V) && (opt & OPT_I)) {
-	pprintf(prn, "\nOLS error variance = %g\n", s2);
+	pprintf(prn, _("\nOLS error variance = %g\n"), s2);
 	pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
     }
 
@@ -4484,7 +4484,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 	if (opt & OPT_I) {
 	    diff = max_coeff_diff(&mdl, bvec);
 	    if ((opt & OPT_V) && iter == 1) {
-		pprintf(prn, "\nFGLS pooled error variance = %g\n",
+		pprintf(prn, _("\nFGLS pooled error variance = %g\n"),
 			mdl.ess / mdl.nobs);
 	    }
 	} else {
@@ -4802,7 +4802,7 @@ static int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 		dlist[0] += 1;
 	    }
 	} else if (i == 1) {
-	    gretl_errmsg_set("The dependent variable is constant");
+	    gretl_errmsg_set(_("The dependent variable is constant"));
 	    err = E_DATA;
 	}
     }
@@ -5746,15 +5746,15 @@ static int check_full_dataset (void)
 
     if (!dataset_is_panel(fset)) {
 	const char *msg =
-	    "You cannot use the --panel-vars option with the setobs command when\n"
+	    N_("You cannot use the --panel-vars option with the setobs command when\n"
 	    "\n"
 	    "* the dataset is currently sub-sampled and\n"
 	    "* the full dataset is not a panel.\n"
 	    "\n"
 	    "If you first structure your full dataset as a panel, you can then\n"
-	    "do what you are trying to do.";
+	    "do what you are trying to do.");
 
-	gretl_errmsg_set(msg);
+	gretl_errmsg_set(_(msg);
 	return E_DATA;
     }
 
@@ -5938,8 +5938,8 @@ static int group_uniqueness_check (char **S, int n)
     for (i=0; i<n-1; i++) {
 	for (j=i+1; j<n; j++) {
 	    if (!strcmp(S[i], S[j])) {
-		gretl_errmsg_sprintf("The string '%s' is given for "
-				     "two or more groups", S[i]);
+		gretl_errmsg_sprintf(_("The string '%s' is given for "
+				     "two or more groups"), S[i]);
 		return E_DATA;
 	    }
 	}
@@ -6000,14 +6000,14 @@ static int usable_groups_series (DATASET *dset, int v,
 	       prior group's value */
 	    for (j=0; j<=g; j++) {
 		if (x[i] == x[j*dset->pd]) {
-		    gretl_errmsg_sprintf("%s: values are not unique per group",
+		    gretl_errmsg_sprintf(_("%s: values are not unique per group"),
 					 vname);
 		    ok = 0;
 		}
 	    }
 	    g++;
 	} else if (x[i] != x[i-1]) {
-	    gretl_errmsg_sprintf("%s: is not constant within group", vname);
+	    gretl_errmsg_sprintf(_("%s: is not constant within group"), vname);
 	    ok = 0;
 	}
     }
@@ -6030,7 +6030,7 @@ static int maybe_use_strval_series (DATASET *dset,
 
     st = series_get_string_table(dset, v);
     if (st == NULL) {
-	gretl_errmsg_sprintf("The series %s is not string-valued", vname);
+	gretl_errmsg_sprintf(_("The series %s is not string-valued"), vname);
 	return E_INVARG;
     }
 
@@ -6041,8 +6041,8 @@ static int maybe_use_strval_series (DATASET *dset,
 #endif
 
     if (ns < ng) {
-	gretl_errmsg_sprintf("The series %s holds %d strings but %d "
-			     "are needed", vname, ns, ng);
+	gretl_errmsg_sprintf(_("The series %s holds %d strings but %d "
+			     "are needed"), vname, ns, ng);
 	err = E_INVARG;
     } else {
 	/* note: don't mess with numerical values, just check them */
@@ -6351,7 +6351,7 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
 	int cpos = in_gretl_list(drop, 0);
 
 	if (cpos >= 2) {
-	    gretl_errmsg_set("Panel models must include an intercept");
+	    gretl_errmsg_set(_("Panel models must include an intercept"));
 	    *err = E_DATA;
 	    return NULL;
 	}

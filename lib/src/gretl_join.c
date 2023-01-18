@@ -192,7 +192,7 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
         eday = epoch_day_from_ymd(y, m, d);
         if (eday < 0) {
             if (s != NULL) {
-                gretl_errmsg_sprintf("'%s' is not a valid date", s);
+                gretl_errmsg_sprintf(_("'%s' is not a valid date"), s);
             }
             err = E_DATA;
         } else if (jr->n_keys == 2) {
@@ -217,7 +217,7 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
         if (jr->auto_keys->m_means_q) {
             /* using the gretl-specific "%q" conversion */
             if (minor > 4) {
-                gretl_errmsg_sprintf("'%s' is not a valid date", s);
+                gretl_errmsg_sprintf(_("'%s' is not a valid date"), s);
                 err = E_DATA;
             }
         } else if (lpd == 4) {
@@ -410,7 +410,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
             }
         }
         if (err) {
-            gretl_errmsg_sprintf("'%s' does not match the format '%s'", s, tfmt);
+            gretl_errmsg_sprintf(_("'%s' does not match the format '%s'"), s, tfmt);
             fprintf(stderr, "time-format match error in read_outer_auto_keys:\n"
                     " remainder = '%s' (source = %s)\n", test ? test : "null",
                     s_src < 3 ? "specified time column" : "first-column strings");
@@ -443,7 +443,7 @@ static int read_iso_basic (joiner *jr, int j, int i)
         guint32 ed = epoch_day_from_ymd(y, m, d);
 
         if (ed <= 0) {
-            gretl_errmsg_sprintf("'%.8g' is not a valid date", x);
+            gretl_errmsg_sprintf(_("'%.8g' is not a valid date"), x);
             err = E_DATA;
         } else if (calendar_data(jr->l_dset)) {
             /* note: no need to go via struct tm */
@@ -498,8 +498,8 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
 #endif
         for (i=0; i<r_dset->n; i++) {
             if (na(filter->val[i])) {
-                gretl_errmsg_sprintf("join filter: indeterminate "
-                                     "value on row %d", i+1);
+                gretl_errmsg_sprintf(_("join filter: indeterminate "
+                                     "value on row %d"), i+1);
                 err = E_MISSDATA;
                 break;
             } else if (filter->val[i] != 0.0) {
@@ -527,11 +527,11 @@ static keynum dtoll_full (double x, int key, int row, int *err)
 {
     if (na(x)) {
         if (key == 2) {
-            gretl_errmsg_sprintf("%s: invalid secondary outer key value on row %d",
-                                 "join", row);
+            gretl_errmsg_sprintf(_("%s: invalid secondary outer key value on row %d",
+                                 "join"), row);
         } else {
-            gretl_errmsg_sprintf("%s: invalid (primary) outer key value on row %d",
-                                 "join", row);
+            gretl_errmsg_sprintf(_("%s: invalid (primary) outer key value on row %d",
+                                 "join"), row);
         }
         *err = E_DATA;
         return -1;
@@ -1579,7 +1579,7 @@ static int join_transcribe_multi_data (DATASET *l_dset,
         lv = targlist[i];
         rv = outer_series_index(jspec, i);
         if (rv < 0) {
-            gretl_errmsg_sprintf("join: '%s' not matched", l_dset->varname[lv]);
+            gretl_errmsg_sprintf(_("join: '%s' not matched"), l_dset->varname[lv]);
             err = E_DATA;
         } else {
             newvar = lv >= orig_v;
@@ -1626,10 +1626,10 @@ static int join_simple_range_check (DATASET *l_dset,
     int err = 0;
 
     if (r_dset->n != sample_size(l_dset)) {
-        gretl_errmsg_set("join: the observation ranges don't match");
+        gretl_errmsg_set(_("join: the observation ranges don't match"));
         err = E_DATA;
     } else if (r_dset->v - 1 < targlist[0]) {
-        gretl_errmsg_set("join: series missing on the right");
+        gretl_errmsg_set(_("join: series missing on the right"));
         err = E_DATA;
     }
 
@@ -1878,8 +1878,8 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
                 auto_keys->m_means_q = 1;
             } else {
                 err = E_DATA;
-                gretl_errmsg_sprintf("The '%c' format is not applicable "
-                                     "for data with frequency %d",
+                gretl_errmsg_sprintf(_("The '%c' format is not applicable "
+                                     "for data with frequency %d"),
                                      s[i+1], pd);
             }
             break;
@@ -2167,8 +2167,8 @@ static int aggregation_type_check (joinspec *jspec, AggrType aggr)
         }
 
         if (aggcol > 0 && is_string_valued(dset, aggcol)) {
-            gretl_errmsg_sprintf("'%s' is a string variable: aggregation type "
-                                 "is not applicable", dset->varname[aggcol]);
+            gretl_errmsg_sprintf(_("'%s' is a string variable: aggregation type "
+                                 "is not applicable"), dset->varname[aggcol]);
             err = E_TYPES;
         }
     }
@@ -2329,7 +2329,7 @@ static int determine_gdt_matches (const char *fname,
             }
 
             if (prn != NULL) {
-                pprintf(prn, "checking for '%s'\n", S[i]);
+                pprintf(prn, _("checking for '%s'\n"), S[i]);
             }
 
             if (is_wildstr(S[i])) {
@@ -2355,16 +2355,16 @@ static int determine_gdt_matches (const char *fname,
                 }
                 if (!match) {
                     err = E_DATA;
-                    gretl_errmsg_sprintf("'%s': not found", S[i]);
+                    gretl_errmsg_sprintf(_("'%s': not found"), S[i]);
                 }
             }
             if (prn != NULL) {
-                pprintf(prn, " found %d match(es)\n", match);
+                pprintf(prn, _(" found %d match(es)\n"), match);
             }
         }
 
         if (!err && (vlist == NULL || vlist[0] == 0)) {
-            gretl_errmsg_set("No matching data were found");
+            gretl_errmsg_set(_("No matching data were found"));
             err = E_DATA;
         }
 
@@ -2566,7 +2566,7 @@ static int join_import_csv (const char *fname,
     if (jspec->wildcard) {
         err = determine_csv_matches(fname, jspec, prn);
         if (err) {
-            pputs(prn, "join_import_csv: failed in matching varnames\n");
+            pputs(prn, _("join_import_csv: failed in matching varnames\n"));
         }
     }
 
@@ -2860,8 +2860,8 @@ static int *midas_revise_jspec (joinspec *jspec,
     m = midas_m_from_pd(dset, jspec->midas_pd);
 
     if (m == 0) {
-        gretl_errmsg_sprintf("frequency %d in import data: \"spread\" will "
-                             "not work", rpd);
+        gretl_errmsg_sprintf(_("frequency %d in import data: \"spread\" will "
+                             "not work"), rpd);
         *err = E_PDWRONG;
         return NULL;
     } else {
@@ -3281,7 +3281,7 @@ int gretl_join_data (const char *fname,
     }
 
     if (!err && filter != NULL && verbose) {
-        pprintf(prn, "Filter: %d rows were selected\n", jr->n_rows);
+        pprintf(prn, _("Filter: %d rows were selected\n"), jr->n_rows);
     }
 
     /* Step 7: transcribe more info and sort the "joiner" struct */
