@@ -322,7 +322,7 @@ static int ar1_mle (struct gls_info *G, double s, double *rho,
     if (!err) {
 	*rho = theta[0] > 0.999 ? 0.999 : theta[0];
 	if (G->flags & CL_SHOWMAX) {
-	    pprintf(prn, "rho as revised via ML: %g\n", *rho);
+	    pprintf(prn, _("rho as revised via ML: %g\n"), *rho);
 	}
     }
 
@@ -880,7 +880,7 @@ static double acf_1 (struct gls_info *G, PRN *prn)
     rho = num / den;
 
     if (G->flags & CL_SHOWMAX) {
-	pprintf(prn, "Initial rho from OLS residuals: %g\n", rho);
+	pprintf(prn, _("Initial rho from OLS residuals: %g\n"), rho);
     }
 
     if (rho < 1.0e-6) {
@@ -1648,9 +1648,9 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pplot = plot;
 	if (verbose && method <= R_UROOT) {
 	    pprintf(prn, "aggtype: %s\n", aggtype_names[agg]);
-	    pprintf(prn, "deterministics: %s\n", det_names[det]);
+	    pprintf(prn, _("deterministics: %s\n"), det_names[det]);
 	    if (!na(rho)) {
-		pprintf(prn, "Input rho value %g\n", rho);
+		pprintf(prn, _("Input rho value %g\n"), rho);
 	    }
 	}
     }

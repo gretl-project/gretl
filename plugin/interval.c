@@ -1135,8 +1135,8 @@ static int tobit_depvar_check (const int *list)
 
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == yvar) {
-	    gretl_errmsg_set("tobit: the dependent variable cannot be "
-			     "included as a regressor");
+	    gretl_errmsg_set(_("tobit: the dependent variable cannot be "
+			     "included as a regressor"));
 	    return E_DATA;
 	}
     }

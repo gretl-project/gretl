@@ -44,7 +44,7 @@ static void strip_vname_illegals (char *s)
 
 static int missing_varname (void)
 {
-    gretl_errmsg_set("Variable name is missing");
+    gretl_errmsg_set(_("Variable name is missing"));
     return E_DATA;
 }
 
@@ -341,7 +341,7 @@ importer_dates_check (char **labels, BookFlag *pflags,
 		MS_excel_date_string(dstr, d, 0, *pflags & BOOK_DATE_BASE_1904);
 		s = dstr;
 	    } else {
-		pprintf(prn, "Bad date on row %d: '%s'\n", t+1, s);
+		pprintf(prn, _("Bad date on row %d: '%s'\n"), t+1, s);
 		*err = E_DATA;
 	    }
 	}
@@ -411,7 +411,7 @@ static int wbook_check_params (wbook *book)
 	    }
 	}
 	if (book->selected < 0) {
-	    gretl_errmsg_sprintf("\"%s\": no such sheet", book->targname);
+	    gretl_errmsg_sprintf(_("\"%s\": no such sheet"), book->targname);
 	    return E_DATA;
 	}
     }
