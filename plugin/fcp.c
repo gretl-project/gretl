@@ -1252,19 +1252,19 @@ int garch_estimate (const double *y, const double **X,
     }
 
     if (sumgra >= SUMGRMAX) {
-	pprintf(prn, "\nParameters and gradients at iteration %d:\n\n",
+	pprintf(prn, _("\nParameters and gradients at iteration %d:\n\n"),
 		ittot);
 	for (i=0; i<f->npar; i++) {
 	    pprintf(prn, "%12.6f (%9.6f)\n", f->theta[i], f->grad[i]);
 	}
-	pprintf(prn, "\nSum of squared gradients = %.9g (should be less "
-		"than %g)\n", sumgra, SUMGRMAX);
+	pprintf(prn, _("\nSum of squared gradients = %.9g (should be less "
+		"than %g)\n"), sumgra, SUMGRMAX);
 	if (!err) {
 	    err = E_NOCONV;
 	}
     } else {
-	pprintf(prn, "\nFull Hessian convergence at iteration %d, "
-		"tol = %.9g\n\n", ittot, tol2);
+	pprintf(prn, _("\nFull Hessian convergence at iteration %d, "
+		"tol = %.9g\n\n"), ittot, tol2);
 	*pll = ll;
     }
 

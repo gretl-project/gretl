@@ -1012,12 +1012,12 @@ int fiml_driver (equation_system *sys, DATASET *dset,
 
     if (verbose) {
 	if (crit < tol) {
-	    pprintf(prn, "\nTolerance %g, criterion %g\n", tol, crit);
+	    pprintf(prn, _("\nTolerance %g, criterion %g\n"), tol, crit);
 	} else if (crit < bigtol) {
-	    pprintf(prn, "\nTolerance %g, criterion %g\n", bigtol, crit);
+	    pprintf(prn, _("\nTolerance %g, criterion %g\n"), bigtol, crit);
 	} else {
 	    pputc(prn, '\n');
-	    pprintf(prn, "Tolerance of %g was not met\n", bigtol);
+	    pprintf(prn, _("Tolerance of %g was not met\n"), bigtol);
 	    err = 1;
 	}
     }
