@@ -1837,13 +1837,13 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
 
 	type = user_var_get_type_by_name(name);
 	if (type != GRETL_TYPE_NONE) {
-	    gretl_errmsg_set("There is already an object of this name");
+	    gretl_errmsg_set(_("There is already an object of this name"));
 	    err = E_DATA;
 	}
     }
 
     if (!err && current_series_index(dset, name) >= 0) {
-	gretl_errmsg_set("There is already a series of this name");
+	gretl_errmsg_set(_("There is already a series of this name"));
 	err = E_DATA;
     }
 
@@ -2796,7 +2796,7 @@ static int dataset_sort (DATASET *dset, const int *list,
 {
     if (dataset_is_time_series(dset) ||
 	dataset_is_panel(dset)) {
-	gretl_errmsg_set("You can only do this with undated data");
+	gretl_errmsg_set(_("You can only do this with undated data"));
 	return E_DATA;
     }
 
@@ -2937,8 +2937,8 @@ int build_stacked_series (double **pstack, int *list,
     if (dset == NULL || dset->n == 0) {
 	return E_NODATA;
     } else if (dataset_is_subsampled(dset)) {
-	gretl_errmsg_set("stack: this function cannot be used when the dataset "
-			 "is sub-sampled");
+	gretl_errmsg_set(_("stack: this function cannot be used when the dataset "
+			 "is sub-sampled"));
 	return E_DATA;
     } else if (list == NULL || list[0] <= 0) {
 	return E_INVARG;
@@ -3276,7 +3276,7 @@ static int dataset_int_param (const char **ps, int op,
     }
 
     if (*err == E_PDWRONG) {
-	gretl_errmsg_set("This conversion is not supported");
+	gretl_errmsg_set(_("This conversion is not supported"));
     }
 
     return k;
@@ -3313,8 +3313,8 @@ static int compact_data_set_wrapper (const char *s, DATASET *dset,
 	    }
 	}
 	if (nsv > 0) {
-	    gretl_errmsg_sprintf("The dataset contains %d string-valued series. Such series cannot "
-				 "be compacted\nother than via the 'first' or 'last' method.", nsv);
+	    gretl_errmsg_sprintf(_("The dataset contains %d string-valued series. Such series cannot "
+				 "be compacted\nother than via the 'first' or 'last' method."), nsv);
 	    return E_DATA;
 	}
     }
@@ -3632,9 +3632,9 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	    err = E_DATA;
 	}
     } else if (op == DS_DELETE) {
-	pprintf(prn, "dataset delete: not ready yet\n");
+	pprintf(prn, _("dataset delete: not ready yet\n"));
     } else if (op == DS_KEEP) {
-	pprintf(prn, "dataset keep: not ready yet\n");
+	pprintf(prn, _("dataset keep: not ready yet\n"));
     } else {
 	err = E_PARSE;
     }
@@ -3717,7 +3717,7 @@ int dataset_purge_missing_rows (DATASET *dset)
     int i, t, s;
 
     if (!dated_daily_data(dset)) {
-        gretl_errmsg_set("Dataset is not dated daily");
+        gretl_errmsg_set(_("Dataset is not dated daily"));
         return E_DATA;
     }
 
@@ -4780,7 +4780,7 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
     vals = gretl_matrix_values(dset->Z[i], dset->n, OPT_S, &err);
 
     if (!err && gretl_is_null_matrix(vals)) {
-	gretl_errmsg_set("The target series has no valid values");
+	gretl_errmsg_set(_("The target series has no valid values"));
 	gretl_matrix_free(vals);
 	return E_DATA;
     }
@@ -4791,15 +4791,15 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 	double x1 = gretl_vector_get(vals, nvals - 1);
 
 	if (x0 < 1.0) {
-	    gretl_errmsg_set("The minimum value of the target series "
-			     "must be >= 1");
+	    gretl_errmsg_set(_("The minimum value of the target series "
+			     "must be >= 1"));
 	    err = E_DATA;
 	} else {
 	    /* the values should all be integers */
 	    for (i=0; i<nvals && !err; i++) {
 		x1 = gretl_vector_get(vals, i);
 		if (x1 != floor(x1)) {
-		    gretl_errmsg_set("The series values must be integers");
+		    gretl_errmsg_set(_("The series values must be integers"));
 		    err = E_DATA;
 		}
 	    }
@@ -4813,7 +4813,7 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 	    /* the strings should all be UTF-8 */
 	    for (i=0; i<ns && !err; i++) {
 		if (!g_utf8_validate(S[i], -1, NULL)) {
-		    gretl_errmsg_sprintf("String %d is not valid UTF-8", i+1);
+		    gretl_errmsg_sprintf(_("String %d is not valid UTF-8"), i+1);
 		    err = E_DATA;
 		}
 	    }
@@ -5140,7 +5140,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
     }
 
     if (totskip == 0) {
-	pprintf(prn, "Dataset is already complete for %d-day calendar", pd);
+	pprintf(prn, _("Dataset is already complete for %d-day calendar", pd));
 	return 0;
     }
 
@@ -5866,11 +5866,11 @@ gretl_bundle *get_current_map (const DATASET *dset,
     fname = dataset_get_mapfile(dset);
 
     if (fname == NULL) {
-	gretl_errmsg_set("no mapfile is present");
+	gretl_errmsg_set(_("no mapfile is present"));
 	*err = E_DATA;
     } else if (dataset_is_resampled(dset)) {
 	/* most unlikely */
-	gretl_errmsg_set("dataset is resampled!");
+	gretl_errmsg_set(_("dataset is resampled!"));
 	*err = E_DATA;
     }
 
@@ -5895,7 +5895,7 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	       have a number of observations equal to the number of
 	       features in the existing map.
 	    */
-	    gretl_errmsg_set("map and dataset are out of sync!");
+	    gretl_errmsg_set(_("map and dataset are out of sync!"));
 	    *err = E_DATA;
 	}
 	/* the number of features we're seeking */

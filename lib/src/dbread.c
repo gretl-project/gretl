@@ -832,7 +832,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     } else {
 	fprintf(stderr, "frequency (%d) does not seem to make sense\n",
 		(int) dinfo->info);
-	gretl_errmsg_sprintf(("frequency (%d) does not seem to make sense"),
+	gretl_errmsg_sprintf(_(("frequency (%d) does not seem to make sense")),
 			     (int) dinfo->info);
 	err = 1;
     }
@@ -1197,7 +1197,7 @@ static int count_in7_series (FILE *fp, int *err)
     while (fgets(line, sizeof line, fp)) {
 	if (i == 0 && strncmp(line, "pcgive 700", 10)) {
 	    *err = 1;
-	    gretl_errmsg_set("This is not a PcGive 700 data file");
+	    gretl_errmsg_set(_("This is not a PcGive 700 data file"));
 	    return 0;
 	}
 	if (*line == '>') {
@@ -1838,7 +1838,7 @@ int set_odbc_dsn (const char *line, PRN *prn)
 
     dbname = get_dsn_field("dsn", line);
     if (dbname == NULL) {
-	pputs(prn, "You must specify a DSN using 'dsn=...'\n");
+	pputs(prn, _("You must specify a DSN using 'dsn=...'\n"));
 	return E_DATA;
     }
 
@@ -1862,14 +1862,14 @@ int set_odbc_dsn (const char *line, PRN *prn)
 
     if (err) {
 	if (!got_plugin) {
-	    pprintf(prn, "Couldn't open the gretl ODBC plugin\n");
+	    pprintf(prn, _("Couldn't open the gretl ODBC plugin\n"));
 	} else {
-	    pprintf(prn, "Failed to connect to ODBC data source '%s'\n",
+	    pprintf(prn, _("Failed to connect to ODBC data source '%s'\n"),
 		    gretl_odinfo.dsn);
 	}
 	gretl_odbc_cleanup();
     } else if (gretl_messages_on()) {
-	pprintf(prn, "Connected to ODBC data source '%s'\n",
+	pprintf(prn, _("Connected to ODBC data source '%s'\n"),
 		gretl_odinfo.dsn);
     }
 
@@ -2321,18 +2321,18 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 		gstlnew[spos++] = v;
 		gstlnew[0] += 1;
 	    } else if (stl == NULL) {
-		gretl_errmsg_sprintf("%s: can't mix numeric and string data",
+		gretl_errmsg_sprintf(_("%s: can't mix numeric and string data"),
 				     dset->varname[v]);
 		err = E_TYPES;
 	    } else {
 		str = gretl_string_table_detach_col(gretl_odinfo.gst, i+1);
 	    }
 	    if (!err && gretl_messages_on()) {
-		pprintf(prn, "%s: string-valued\n", dset->varname[v]);
+		pprintf(prn, _("%s: string-valued\n"), dset->varname[v]);
 	    }
 	} else if (stl != NULL) {
 	    /* string-valued in dataset, numeric data from ODBC */
-	    gretl_errmsg_sprintf("%s: can't mix numeric and string data",
+	    gretl_errmsg_sprintf(_("%s: can't mix numeric and string data"),
 				 dset->varname[v]);
 	    err = E_TYPES;
 	}
@@ -2373,7 +2373,7 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    } else if (n == dset->n) {
 		s = dset->t1;
 	    } else {
-		gretl_errmsg_sprintf("%s: don't know how to align the data!",
+		gretl_errmsg_sprintf(_("%s: don't know how to align the data!"),
 				     dset->varname[v]);
 		err = E_DATA;
 	    }
@@ -2507,7 +2507,7 @@ static int odbc_get_series (const char *line, DATASET *dset,
 	int newvars, vmin = 1;
 
 	if (gretl_messages_on()) {
-	    pprintf(prn, "Retrieved %d observations on %d series via ODBC\n",
+	    pprintf(prn, _("Retrieved %d observations on %d series via ODBC\n"),
 		    n, nv);
 	}
 
@@ -2838,7 +2838,7 @@ static int db_delete_series (const char *line, const int *list,
 	    gretl_errmsg_set(_("No database has been opened"));
 	    err = 1;
 	} else if (saved_db_type != GRETL_NATIVE_DB) {
-	    gretl_errmsg_set("This only works for gretl databases");
+	    gretl_errmsg_set(_("This only works for gretl databases"));
 	    err = 1;
 	} else {
 	    err = open_native_db_files(saved_db_name, &fidx, src1, &fbin, src2);
@@ -2967,7 +2967,7 @@ static int db_delete_series (const char *line, const int *list,
     }
 
     if (!err && prn != NULL) {
-	pprintf(prn, "Deleted %d series from %s\n", ndel, src2);
+	pprintf(prn, _("Deleted %d series from %s\n"), ndel, src2);
     }
 
     return err;
@@ -3102,7 +3102,7 @@ static int compact_spread_pd_check (int high, int low)
     if (!(high == 12 && low == 1) &&
 	!(high == 12 && low == 4) &&
 	!(high == 4 && low == 1)) {
-	gretl_errmsg_set("Unsupported conversion");
+	gretl_errmsg_set(_("Unsupported conversion"));
 	return E_DATA;
     }
 
@@ -3277,7 +3277,7 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
     int err = 0;
 
     if (dset == NULL || dset->v == 0) {
-	gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
+	gretl_errmsg_set(_("\"compact=spread\": requires a dataset in place"));
 	err = E_DATA;
     } else {
 	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
@@ -3304,7 +3304,7 @@ int lib_spread_dbnomics_data (DATASET *dset, DATASET *dbset,
     int err = 0;
 
     if (dset == NULL || dset->v == 0) {
-	gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
+	gretl_errmsg_set(_("\"compact=spread\": requires a dataset in place"));
 	err = E_DATA;
     } else {
 	err = do_compact_spread(dbset, dset->pd);
@@ -4753,7 +4753,7 @@ static int do_compact_spread (DATASET *dset, int newpd)
     if (dated_daily_data(dset)) {
 	err = maybe_expand_daily_data(dset);
 	if (err) {
-	    gretl_errmsg_set("Error expanding daily data with missing observations");
+	    gretl_errmsg_set(_("Error expanding daily data with missing observations"));
 	} else {
 	    cset = compact_daily_spread(dset, newpd, &nv, &err);
 	}
@@ -4832,7 +4832,7 @@ int compact_data_set (DATASET *dset, int newpd,
 	*/
 	err = maybe_expand_daily_data(dset);
 	if (err) {
-	    gretl_errmsg_set("Error expanding daily data with missing observations");
+	    gretl_errmsg_set(_("Error expanding daily data with missing observations"));
 	    return err;
 	} else {
 	    oldn = dset->n;

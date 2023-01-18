@@ -103,7 +103,7 @@ static int real_check_varname (const char *vname,
     gretl_error_clear();
 
     if (vname == NULL || *vname == '\0') {
-	gretl_errmsg_set("Expected an identifier");
+	gretl_errmsg_set(_("Expected an identifier"));
 	return E_PARSE;
     }
 
@@ -1575,7 +1575,7 @@ static void merge_name_error (const char *objname, PRN *prn)
 {
     gchar *msg;
 
-    msg = g_strdup_printf("Can't replace %s with a series", objname);
+    msg = g_strdup_printf(_("Can't replace %s with a series"), objname);
     pprintf(prn, "%s\n", msg);
     if (!printing_to_standard_stream(prn)) {
 	gretl_errmsg_set(msg);
@@ -1813,7 +1813,7 @@ static int check_for_overlap (const DATASET *dset,
 	   or they end before the originals start, no there's no
 	   overlap
 	*/
-	gretl_errmsg_set("No overlap in data ranges");
+	gretl_errmsg_set(_("No overlap in data ranges"));
 	return E_DATA;
     }
 }
@@ -2214,7 +2214,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	    if (update_overlap) {
 		; /* might be OK? */
 	    } else {
-		gretl_errmsg_set("Found no data conformable for appending");
+		gretl_errmsg_set(_("Found no data conformable for appending"));
 		err = E_DATA;
 	    }
 	} else if (addset->n != dset->n && !yrspecial && !dayspecial) {
@@ -2497,7 +2497,7 @@ static int check_imported_string (char *src, int i, size_t len)
 	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
 
 	if (trstr == NULL) {
-	    gretl_errmsg_sprintf("Invalid characters in imported string, line %d", i);
+	    gretl_errmsg_sprintf(_("Invalid characters in imported string, line %d"), i);
 	    err = E_DATA;
 	} else {
 	    *src = '\0';
@@ -2603,11 +2603,11 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
     } else {
 	for (t=0; t<dset->n && !err; t++) {
 	    if (fgets(line, sizeof line, fp) == NULL) {
-		gretl_errmsg_sprintf("Expected %d markers; found %d\n",
+		gretl_errmsg_sprintf(_("Expected %d markers; found %d\n"),
 				     dset->n, t);
 		err = E_DATA;
 	    } else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
-		gretl_errmsg_sprintf("Couldn't read marker on line %d", t+1);
+		gretl_errmsg_sprintf(_("Couldn't read marker on line %d"), t+1);
 		err = E_DATA;
 	    } else {
 		g_strstrip(marker);
@@ -2915,7 +2915,7 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
     }
 
     if (!err && nlabels == 0) {
-	gretl_errmsg_set("No labels found");
+	gretl_errmsg_set(_("No labels found"));
 	err = E_DATA;
     }
 
@@ -2928,7 +2928,7 @@ static int add_var_labels_from_array (DATASET *dset, const char *aname)
     int i, err = 0;
 
     if (a == NULL) {
-	gretl_errmsg_sprintf("%s: no such array", aname);
+	gretl_errmsg_sprintf(_("%s: no such array"), aname);
 	err = E_DATA;
     } else if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS ||
 	       gretl_array_get_length(a) < dset->v - 1) {
@@ -2974,7 +2974,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
     } else if (opt & (OPT_T | OPT_R)) {
 	/* to-file, to-array */
 	if (!dataset_has_var_labels(dset)) {
-	    pprintf(prn, "No labels are available for writing\n");
+	    pprintf(prn, _("No labels are available for writing\n"));
 	    err = E_DATA;
 	} else {
 	    if (opt & OPT_T) {
@@ -2983,7 +2983,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 		err = save_var_labels_to_array(dset, lname);
 	    }
 	    if (!err && gretl_messages_on()) {
-		pprintf(prn, "Labels written OK\n");
+		pprintf(prn, _("Labels written OK\n"));
 	    }
 	}
     } else if (opt & (OPT_F | OPT_A)) {
@@ -2994,7 +2994,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	    err = add_var_labels_from_array(dset, lname);
 	}
 	if (!err && gretl_messages_on()) {
-	    pprintf(prn, "Labels loaded OK\n");
+	    pprintf(prn, _("Labels loaded OK\n"));
 	}
     }
 
@@ -3055,13 +3055,13 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	/* to-file */
 	err = save_obs_markers_to_file(dset, fname);
 	if (!err && gretl_messages_on()) {
-	    pprintf(prn, "Markers written OK\n");
+	    pprintf(prn, _("Markers written OK\n"));
 	}
     } else if (opt & OPT_F) {
 	/* from-file */
 	err = add_obs_markers_from_file(dset, fname);
 	if (!err && gretl_messages_on()) {
-	    pprintf(prn, "Markers loaded OK\n");
+	    pprintf(prn, _("Markers loaded OK\n"));
 	}
     } else if (opt & OPT_A) {
 	/* to-array */
@@ -3985,20 +3985,20 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	double misspc = 100.0 * blank_weekdays / (double) n_weekdays;
 
 	if (pd == 7) {
-	    pputs(prn, "This dataset is on 7-day calendar, but weekends are blank.");
+	    pputs(prn, _("This dataset is on 7-day calendar, but weekends are blank."));
 	} else {
-	    pprintf(prn, "This dataset is on 6-day calendar, but %s are blank.",
-		    sat0 >= 0 ? "Sundays" : "Saturdays");
+	    pprintf(prn, _("This dataset is on 6-day calendar, but %s are blank."),
+		    sat0 >= 0 ? _("Sundays") : _("Saturdays"));
 	}
 	ret = 1;
 	if (misspc > 0.0) {
 	    pputc(prn, '\n');
-	    pputs(prn, "In addition, ");
+	    pputs(prn, _("In addition, "));
 	    if (misspc >= 0.01) {
-		pprintf(prn, "%.2f percent of weekday observations are missing.",
+		pprintf(prn, _("%.2f percent of weekday observations are missing."),
 			misspc);
 	    } else {
-		pprintf(prn, "%g percent of weekday observations are missing.",
+		pprintf(prn, _("%g percent of weekday observations are missing."),
 			misspc);
 	    }
 	    if (misspc < 10.0) {
@@ -4011,10 +4011,10 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	double misspc = 100.0 * nmiss / (double) ndays;
 
 	if (misspc >= 0.01) {
-	    pprintf(prn, "%.2f percent of daily observations are missing.",
+	    pprintf(prn, _("%.2f percent of daily observations are missing."),
 		    misspc);
 	} else {
-	    pprintf(prn, "%g percent of daily observations are missing.",
+	    pprintf(prn, _("%g percent of daily observations are missing."),
 		    misspc);
 	}
 	if (misspc < 10) {
