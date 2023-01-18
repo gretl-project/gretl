@@ -9805,7 +9805,7 @@ static void output_map_plot_lines (mapinfo *mi,
             /* ensure colorbox is omitted and key boxes are filled */
             fputs("unset colorbox\n", fp); /* should be handled already? */
             fputs("set style fill solid\n", fp);
-        }
+         }
 
 	/* polygons */
 	fprintf(fp, "plot for [i=0:*] %s index i %s notitle%s", datasrc, with,
@@ -9829,6 +9829,8 @@ static void output_map_plot_lines (mapinfo *mi,
 			    v, mi->zname, v, (i < nv - 1)? cont : "\n");
 		}
 	    }
+            /* this seems to work better than the default on average? */
+            fputs("set key bottom right\n", fp);
 	}
     } else {
 	/* just show feature outlines */
