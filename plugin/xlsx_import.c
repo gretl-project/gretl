@@ -132,7 +132,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 				  &doc, &cur);
 
     if (err) {
-	pprintf(prn, "Couldn't find shared strings table\n");
+	pprintf(prn, _("Couldn't find shared strings table\n"));
 	pprintf(prn, "%s", gretl_errmsg_get());
 	return err;
     }
@@ -143,12 +143,12 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     }
 
     if (tmp == NULL) {
-	pprintf(prn, "didn't get sst count\n");
+	pprintf(prn, _("didn't get sst count\n"));
 	err = E_DATA;
     } else {
 	n = atoi(tmp);
 	if (n <= 0) {
-	    pprintf(prn, "didn't get valid sst count\n");
+	    pprintf(prn, _("didn't get valid sst count\n"));
 	    err = E_DATA;
 	}
 	free(tmp);
@@ -188,7 +188,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 		    /* got a regular <t> element */
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp == NULL) {
-			pprintf(prn, "failed reading string %d\n", i);
+			pprintf(prn, _("failed reading string %d\n"), i);
 			err = E_DATA;
 		    } else {
 			xinfo->strings[i++] = g_strstrip(tmp);
@@ -202,7 +202,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 			if (!xmlStrcmp(sub->name, (XUC) "t")) {
 			    tmp = (char *) xmlNodeGetContent(sub);
 			    if (tmp == NULL) {
-				pprintf(prn, "failed reading string %d\n", i);
+				pprintf(prn, _("failed reading string %d\n"), i);
 				err = E_DATA;
 			    } else {
 				xinfo->strings[i++] = g_strstrip(tmp);
@@ -222,7 +222,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     }
 
     if (!err && i < n) {
-	pprintf(prn, "expected %d shared strings but only found %d\n",
+	pprintf(prn, _("expected %d shared strings but only found %d\n"),
 		n, i);
 	err = E_DATA;
     }
@@ -656,13 +656,13 @@ static int get_cell_basics (xmlNodePtr cur,
 
     *cref = (char *) xmlGetProp(cur, (XUC) "r");
     if (*cref == NULL) {
-	pprintf(prn, ": couldn't find 'r' property\n");
+	pprintf(prn, _(": couldn't find 'r' property\n"));
 	return E_DATA;
     }
 
     err = xlsx_cell_get_coordinates(*cref, row, col);
     if (err) {
-	pprintf(prn, ": couldn't find coordinates\n");
+	pprintf(prn, _(": couldn't find coordinates\n"));
 	return E_DATA;
     }
 
@@ -775,7 +775,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
 			if (celltype == CELL_NUMBER) {
-			    pprintf(myprn, " value = %s\n", tmp);
+			    pprintf(myprn, _(" value = %s\n"), tmp);
 			    if (*tmp != '\0' && check_atof(tmp) == 0) {
 				xval = atof(tmp);
 			    }
@@ -783,10 +783,10 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 			    /* look up string table */
 			    strval = xlsx_string_value(tmp, xinfo, prn);
 			    if (strval == NULL) {
-				pputs(myprn, " value = ?\n");
+				pputs(myprn, _(" value = ?\n"));
 				err = E_DATA;
 			    } else {
-				pprintf(myprn, " value = '%s'\n", strval);
+				pprintf(myprn, _(" value = '%s'\n"), strval);
 			    }
 			}
 			free(tmp);
@@ -817,11 +817,11 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 	    }
 
 	    if (err) {
-		pprintf(myprn, ": (%s) error", cref);
+		pprintf(myprn, _(": (%s) error"), cref);
 	    } else if (!gotv) {
-		pprintf(myprn, ": (%s) no data value", cref);
+		pprintf(myprn, _(": (%s) no data value"), cref);
 		if (gotf) {
-		    pprintf(myprn, ": formula = '%s'\n", formula);
+		    pprintf(myprn, _(": formula = '%s'\n"), formula);
 		} else {
 		    pputc(myprn, '\n');
 		}
@@ -988,7 +988,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 				  &doc, &cur);
 
     if (err) {
-	pprintf(prn, "didn't get worksheet\n");
+	pprintf(prn, _("didn't get worksheet\n"));
 	pprintf(prn, "%s", gretl_errmsg_get());
 	return err;
     }
@@ -1264,14 +1264,14 @@ static int xlsx_verify_specific_sheet (xlsx_info *xinfo,
 		    found = 1;
 		    fname = (char *) xmlGetProp(cur, (XUC) "Target");
 		    if (fname == NULL) {
-			pprintf(prn, "'%s': couldn't find filename\n", sname);
+			pprintf(prn, _("'%s': couldn't find filename\n"), sname);
 			err = E_DATA;
 		    } else if (xlsx_sheet_has_data(fname)) {
 			pprintf(prn, "'%s' -> %s\n", sname, fname);
 			free(xinfo->filenames[idx]);
 			xinfo->filenames[idx] = fname;
 		    } else {
-			pprintf(prn, "'%s': contains no data\n", sname);
+			pprintf(prn, _("'%s': contains no data\n"), sname);
 			err = E_DATA;
 			free(fname);
 		    }
@@ -1284,7 +1284,7 @@ static int xlsx_verify_specific_sheet (xlsx_info *xinfo,
 	xmlFreeDoc(doc);
 
 	if (!found) {
-	    pprintf(prn, "'%s': couldn't find file Id\n", sname);
+	    pprintf(prn, _("'%s': couldn't find file Id\n"), sname);
 	    err = E_DATA;
 	}
 
@@ -1371,7 +1371,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 	    } else {
 		err = xlsx_verify_sheets(xinfo, prn);
 		if (xinfo->n_sheets == 0) {
-		    pputs(prn, "\nFound no valid sheets\n");
+		    pputs(prn, _("\nFound no valid sheets\n"));
 		    err = E_DATA;
 		} else {
 		    pprintf(prn, _("\nFound %d valid sheet(s)\n"), xinfo->n_sheets);
@@ -1608,7 +1608,7 @@ static int finalize_xlsx_import (DATASET *dset,
 
 	for (i=1; i<xinfo->dset->v && !err; i++) {
 	    if (*xinfo->dset->varname[i] == '\0') {
-		pprintf(prn, "Name missing for variable %d\n", i);
+		pprintf(prn, _("Name missing for variable %d\n"), i);
 		err = E_DATA;
 	    }
 	}
@@ -1717,7 +1717,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	gretl_errmsg_set(save_errmsg);
 	free(save_errmsg);
     } else if (err > 0) {
-	pputs(prn, "Error reading xlsx data\n");
+	pputs(prn, _("Error reading xlsx data\n"));
     }
 
     return err;

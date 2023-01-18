@@ -744,7 +744,7 @@ static int sys_converged (equation_system *sys, double *llbak,
 	crit = ll - *llbak;
 
 	if (opt & OPT_V) {
-	    pprintf(prn, "Iteration %3d, ll = %#.8g\n", sys->iters, ll);
+	    pprintf(prn, _("Iteration %3d, ll = %#.8g\n"), sys->iters, ll);
 	}
 	if (crit <= tol) {
 	    met = 1;
@@ -755,7 +755,7 @@ static int sys_converged (equation_system *sys, double *llbak,
 	tol = SYS_BDIFF_TOL;
 	crit = sys->bdiff;
 	if (opt & OPT_V) {
-	    pprintf(prn, "Iteration %3d, criterion = %g\n", sys->iters, crit);
+	    pprintf(prn, _("Iteration %3d, criterion = %g\n"), sys->iters, crit);
 	}
 	if (crit <= tol) {
 	    met = 1;
@@ -763,12 +763,12 @@ static int sys_converged (equation_system *sys, double *llbak,
     }
 
     if (met && tol > 0 && (opt & OPT_V)) {
-	pprintf(prn, "Tolerance of %g is met\n", tol);
+	pprintf(prn, _("Tolerance of %g is met\n"), tol);
     }
 
     if (!met && sys->iters >= SYS_MAX_ITER) {
-	pprintf(prn, "Reached %d iterations without meeting "
-		"tolerance of %g\n", sys->iters, tol);
+	pprintf(prn, _("Reached %d iterations without meeting "
+		"tolerance of %g\n"), sys->iters, tol);
 	*err = E_NOCONV;
     }
 
@@ -820,14 +820,14 @@ static int perfect_collinearity_check (MODEL *pmod,
     const int *d2 = gretl_model_get_list(pmod, "inst_droplist");
 
     if (d1 != NULL) {
-	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
+	gretl_errmsg_sprintf(_("Equation %d exhibits perfect collinearity.\n"
 			     "The regressor %s cannot be included. Please "
-			     "respecify the system.", i, dset->varname[d1[1]]);
+			     "respecify the system."), i, dset->varname[d1[1]]);
 	return E_SINGULAR;
     } else if (d2 != NULL) {
-	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
+	gretl_errmsg_sprintf(_("Equation %d exhibits perfect collinearity.\n"
 			     "The instrument %s cannot be included. Please "
-			     "respecify the system.", i, dset->varname[d2[1]]);
+			     "respecify the system."), i, dset->varname[d2[1]]);
 	return E_SINGULAR;
     } else {
 	return 0;
