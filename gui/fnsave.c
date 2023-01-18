@@ -921,7 +921,7 @@ static int extract_funcname (const char *s, const char *origname)
     }
 
     if (!ok_function_return_type(type)) {
-	gretl_errmsg_sprintf("%s: bad or missing return type", origname);
+	gretl_errmsg_sprintf(_("%s: bad or missing return type"), origname);
 	err = E_DATA;
     } else {
 	s += n;
@@ -5360,15 +5360,15 @@ void build_package_from_spec_file (windata_t *vwin)
 
 	function_package_unload_by_filename(gfnname);
 
-	pprintf(prn, "Found script file '%s'\n", inpname);
+	pprintf(prn, _("Found script file '%s'\n"), inpname);
 	err = execute_script(inpname, NULL, prn, SCRIPT_EXEC | INCLUDE_EXEC,
 			     vwin->main);
 	if (!err) {
 	    err = create_and_write_function_package(gfnname, OPT_G, prn);
 	    if (err) {
-		pputs(prn, "Failed to produce gfn file\n");
+		pputs(prn, _("Failed to produce gfn file\n");
 	    } else {
-		pprintf(prn, "Wrote '%s'\n", gfnname);
+		pprintf(prn, _("Wrote '%s'\n"), gfnname);
 	    }
 	}
 	gretl_set_batch_mode(save_batch);

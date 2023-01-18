@@ -2092,7 +2092,7 @@ static int dbn_dataset_search_results (const char *key,
 
 	pprintf(prn, _("DB.NOMICS search on '%s' in dataset %s/%s\n"),
 		key, prov, dset);
-	pprintf(prn, "Matching series %d to %d of %d", offset + 1,
+	pprintf(prn, _("Matching series %d to %d of %d"), offset + 1,
 		offset + n, ntot);
 
 	if (ntot > offset + n) {
