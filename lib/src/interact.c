@@ -783,7 +783,7 @@ static int set_var_info (const int *list,
             if (ivals && !isdum) {
                 series_set_flag(dset, vi, VAR_CODED);
             } else {
-                gretl_errmsg_sprintf("%s cannot be set as 'coded' (%s)",
+                gretl_errmsg_sprintf(_("%s cannot be set as 'coded' (%s)"),
                                      dset->varname[vi], ivals ?
                                      _("is a 0/1 variable") :
                                      _("not integer-valued"));
@@ -1273,7 +1273,7 @@ static int do_pca (int *list, DATASET *dset,
             if (!err && (opt & (OPT_O | OPT_A))) {
                 /* results saved as series */
                 if (gretl_messages_on()) {
-                    pputs(prn, "Generated principal component series\n");
+                    pputs(prn, _("Generated principal component series\n"));
                 }
             }
             free_vmatrix(cmat);
@@ -1320,7 +1320,7 @@ static void query_package (const char *pkgname,
         }
     } else {
         if (err) {
-            pprintf(prn, "%s: not found\n\n", pkgname);
+            pprintf(prn, _("%s: not found\n\n"), pkgname);
         } else {
             print_function_package_info(path, 0, prn);
         }
@@ -1346,7 +1346,7 @@ static int do_pkg_command (const char *action,
     } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
         update_addons_index((opt & OPT_V)? prn : NULL);
     } else {
-        gretl_errmsg_sprintf("pkg: unknown action '%s'", action);
+        gretl_errmsg_sprintf(_("pkg: unknown action '%s'"), action);
         err = E_PARSE;
     }
 
@@ -1643,7 +1643,7 @@ static int get_inner_key_id (const char *s, int n,
         } else {
             id = current_series_index(dset, vname);
             if (id < 0) {
-                gretl_errmsg_sprintf("'%s': no such series", vname);
+                gretl_errmsg_sprintf(_("'%s': no such series"), vname);
                 *err = E_UNKVAR;
             }
         }
@@ -1663,7 +1663,7 @@ static int *get_inner_keys (const char *s, DATASET *dset,
         /* just one key, fine */
         ikey1 = current_series_index(dset, s);
         if (ikey1 < 0) {
-            gretl_errmsg_sprintf("'%s': no such series", s);
+            gretl_errmsg_sprintf(_("'%s': no such series"), s);
             *err = E_UNKVAR;
         } else {
             nkeys = 1;
@@ -1862,7 +1862,7 @@ int lib_join_data (const char *param,
         if (opt & jopt) {
             optparm = get_optval_string(JOIN, jopt);
             if (optparm == NULL) {
-                gretl_errmsg_set("Missing option parameter");
+                gretl_errmsg_set(_("Missing option parameter"));
                 err = E_DATA;
             } else if (jopt == OPT_I) {
                 /* --ikey: the inner key(s) string */
@@ -2048,7 +2048,7 @@ static int open_append_stage_1 (CMD *cmd,
             set_dataset_is_changed(dset, 0);
             err = lib_join_data(cmd->parm2, op->fname, dset, opt, prn);
         } else {
-            gretl_errmsg_set("join: only CSV and gdt[b] files are supported");
+            gretl_errmsg_set(_("join: only CSV and gdt[b] files are supported"));
             err = E_DATA;
         }
         if (err) {
@@ -2107,7 +2107,7 @@ static int handle_gdt_selection (const char *fname,
 	    }
 	}
 	if (k != n_sel) {
-	    pputs(prn, "Invalid selection");
+	    pputs(prn, _("Invalid selection"));
 	    pputc(prn, '\n');
 	    err = E_DATA;
 	} else {
@@ -2798,7 +2798,7 @@ static int handle_tgz (const char *fname,
     }
 
     if (!err && gretl_messages_on()) {
-        pprintf(prn, "Installed %s\n", fname);
+        pprintf(prn, _("Installed %s\n"), fname);
     }
 
     if (!err && s != NULL && path_id != NULL && gui_callback != NULL) {
@@ -2951,9 +2951,9 @@ static int install_function_package (const char *pkgname,
 
         if (!err && gretl_messages_on()) {
             if (opt & OPT_D) {
-                pprintf(prn, "Installed dependency %s\n", basename);
+                pprintf(prn, _("Installed dependency %s\n"), basename);
             } else {
-                pprintf(prn, "Installed %s\n", basename);
+                pprintf(prn, _("Installed %s\n"), basename);
             }
         }
 
@@ -3046,7 +3046,7 @@ static int install_function_package (const char *pkgname,
         g_free(fullname);
 
         if (!err && gretl_messages_on()) {
-            pprintf(prn, "Installed %s\n", basename);
+            pprintf(prn, _("Installed %s\n"), basename);
         }
     }
 
@@ -3090,7 +3090,7 @@ static void maybe_schedule_graph_callback (ExecState *s)
 
     if (graph_written_to_file() || plot_output_to_buffer()) {
         if (gui_mode && *s->cmd->savename != '\0') {
-            pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
+            pprintf(s->prn, _("Warning: ignoring \"%s <-\"\n"), s->cmd->savename);
         }
 	if (!plot_output_to_buffer()) {
 	    report_plot_written(s->prn);
@@ -3632,7 +3632,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SETOPT:
         err = set_options_for_command(cmd->param, cmd->parm2, cmd->opt);
         if (!err && gretl_messages_on()) {
-            pprintf(prn, "Set option(s) for command \"%s\"\n", cmd->param);
+            pprintf(prn, _("Set option(s) for command \"%s\"\n"), cmd->param);
         }
         break;
 
@@ -4044,7 +4044,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case FUNCERR:
     case FUNCRET:
         if (gretl_function_depth() == 0) {
-            gretl_errmsg_sprintf("'%s': can only be used within a function",
+            gretl_errmsg_sprintf(_("'%s': can only be used within a function"),
                                  gretl_command_word(cmd->ci));
             err = 1;
         } else if (cmd->ci == FUNCERR) {

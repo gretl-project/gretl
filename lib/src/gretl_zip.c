@@ -33,7 +33,7 @@ static int handle_zip_error (const char *fname,
 	gretl_errmsg_sprintf("%s: %s", fname, gerr->message);
 	g_error_free(gerr);
     } else if (err) {
-	gretl_errmsg_sprintf("%s: error %s", fname, action);
+	gretl_errmsg_sprintf(_("%s: error %s"), fname, action);
     }
 
     return err;
@@ -500,9 +500,9 @@ static void zip_report (int err, int nf, gretlopt opt, PRN *prn)
 	}
     } else {
 	if (err && nf) {
-	    pprintf(prn, "failed (%s)\n", _("not found"));
+	    pprintf(prn, _("failed (%s)\n"), _("not found"));
 	} else if (err) {
-	    pputs(prn, "failed\n");
+	    pputs(prn, _("failed\n"));
 	} else {
 	    pputs(prn, "OK\n");
 	}
@@ -519,7 +519,7 @@ static int pkg_zipfile_add (const char *fname,
     int nf = 0;
     int err = 0;
 
-    pprintf(prn, "Copying %s... ", fname);
+    pprintf(prn, _("Copying %s... "), fname);
 
     if (stat(fname, &sbuf) != 0) {
 	nf = err = E_DATA;
@@ -605,7 +605,7 @@ int package_make_zipfile (const char *gfnname,
     }
 
     if (!has_suffix(gfnname, ".gfn")) {
-	gretl_errmsg_set("Input must have extension \".gfn\"");
+	gretl_errmsg_set(_("Input must have extension \".gfn\""));
 	return E_DATA;
     }
 
@@ -626,7 +626,7 @@ int package_make_zipfile (const char *gfnname,
 
     len = strlen(tmp) - 4; /* minus 4 for ".gfn" */
     if (len < 0 || len > 31) {
-	gretl_errmsg_set("Invalid package name (31 bytes max)");
+	gretl_errmsg_set(_("Invalid package name (31 bytes max)"));
 	return E_DATA;
     }
 
@@ -643,7 +643,7 @@ int package_make_zipfile (const char *gfnname,
 
     if (*pkgbase != '\0') {
 	/* get into place for copying */
-	pputs(prn, "Getting in place... ");
+	pputs(prn, _("Getting in place... "));
 	err = gretl_chdir(pkgbase);
 	zip_report(err, 0, opt, prn);
     }
@@ -651,7 +651,7 @@ int package_make_zipfile (const char *gfnname,
     if (!err) {
 	/* path to temporary dir for zipping */
 	dotpath = g_strdup_printf("%s%s", gretl_dotdir(), pkgname);
-	pputs(prn, "Making temporary directory... ");
+	pputs(prn, _("Making temporary directory... "));
 	err = gretl_mkdir(dotpath);
 	zip_report(err, 0, opt, prn);
     }
@@ -695,7 +695,7 @@ int package_make_zipfile (const char *gfnname,
 	err = gretl_chdir(gretl_dotdir());
 	if (!err) {
 	    tmp = g_strdup_printf("%s.zip", pkgname);
-	    pprintf(prn, "Making %s... ", tmp);
+	    pprintf(prn, _("Making %s... "), tmp);
 	    err = gretl_make_zipfile(tmp, pkgname);
 	    zip_report(err, 0, opt, prn);
 	    if (!err) {
@@ -715,7 +715,7 @@ int package_make_zipfile (const char *gfnname,
 		    const char *realdest = dest;
 		    gchar *zipname = NULL;
 
-		    pprintf(prn, "Copying %s... ", tmp);
+		    pprintf(prn, _("Copying %s... "), tmp);
 
 		    if (origdir != NULL && !g_path_is_absolute(dest)) {
 			zipname = g_build_filename(origdir, dest, NULL);

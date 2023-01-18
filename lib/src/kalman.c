@@ -614,11 +614,11 @@ static int check_matrix_dims (kalman *K, const gretl_matrix *m, int i)
     }
 
     if (m->rows != r || m->cols != c) {
-        gretl_errmsg_sprintf("kalman: %s is %d x %d, should be %d x %d\n",
+        gretl_errmsg_sprintf(_("kalman: %s is %d x %d, should be %d x %d\n"),
                              kalman_matrix_name(i), m->rows, m->cols, r, c);
         err = E_NONCONF;
     } else if (symm && !gretl_matrix_is_symmetric(m)) {
-        gretl_errmsg_sprintf("kalman: %s is not symmetric\n",
+        gretl_errmsg_sprintf(_("kalman: %s is not symmetric\n"),
                 kalman_matrix_name(i));
         err = E_NONCONF;
     }
@@ -1743,7 +1743,7 @@ static int check_for_matrix_updates (kalman *K, ufunc *uf)
     if (uf == NULL) {
         uf = get_user_function_by_name(K->matcall);
         if (uf == NULL) {
-            gretl_errmsg_sprintf("Couldn't find function '%s'", K->matcall);
+            gretl_errmsg_sprintf(_("Couldn't find function '%s'"), K->matcall);
             return E_DATA;
         }
     }
@@ -1794,7 +1794,7 @@ static int kalman_update_matrices (kalman *K, PRN *prn)
 
     uf = get_user_function_by_name(K->matcall);
     if (uf == NULL) {
-        gretl_errmsg_sprintf("Couldn't find function '%s'", K->matcall);
+        gretl_errmsg_sprintf(_("Couldn't find function '%s'"), K->matcall);
         return E_DATA;
     }
 
@@ -3089,7 +3089,7 @@ static int check_simul_inputs (kalman *K,
         }
 
         if (U->cols != ncols) {
-            pprintf(prn, "U should have %d columns but has %d\n",
+            pprintf(prn, _("U should have %d columns but has %d\n"),
                     ncols, U->cols);
             err = E_NONCONF;
         }
@@ -3100,7 +3100,7 @@ static int check_simul_inputs (kalman *K,
         int c = ssfsim ? K->r : 1;
 
         if (Sim0->rows != r || Sim0->cols != c) {
-            pprintf(prn, "simstart should be %d x %d, is %d x %d\n",
+            pprintf(prn, _("simstart should be %d x %d, is %d x %d\n"),
                     r, c, Sim0->rows, Sim0->cols);
         }
     }
@@ -3110,7 +3110,7 @@ static int check_simul_inputs (kalman *K,
         const gretl_matrix *X = SimX != NULL ? SimX : K->x;
 
         if (X->rows < U->rows) {
-            pprintf(prn, "obsx should have %d rows but has %d\n",
+            pprintf(prn, _("obsx should have %d rows but has %d\n"),
                     U->rows, X->rows);
             err = E_NONCONF;
         }
@@ -3329,7 +3329,7 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
                         }
                         *err = gretl_matrix_psd_root(V, 0);
                         if (*err) {
-                            gretl_errmsg_set("Failed to compute factor of Omega_t");
+                            gretl_errmsg_set(_("Failed to compute factor of Omega_t"));
                         } else {
                             load_from_row(Ut, U, t);
                             gretl_matrix_multiply_mod(Ut, GRETL_MOD_NONE,
@@ -3351,7 +3351,7 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
                 }
                 *err = gretl_matrix_psd_root(V, 0);
                 if (*err) {
-                    gretl_errmsg_set("Failed to compute factor of Omega");
+                    gretl_errmsg_set(_("Failed to compute factor of Omega"));
                 } else {
                     gretl_matrix_multiply_mod(U, GRETL_MOD_NONE,
                                               V, GRETL_MOD_TRANSPOSE,
@@ -3400,7 +3400,7 @@ static int check_replacement_dims (const gretl_matrix *orig,
     }
 
     if (err) {
-        gretl_errmsg_set("You cannot resize a state-space system matrix");
+        gretl_errmsg_set(_("You cannot resize a state-space system matrix"));
     }
 
     return err;
@@ -3829,8 +3829,8 @@ static int kalman_set_diffuse (kalman *K, int d)
 static int kalman_set_code (kalman *K, int code, int s)
 {
     if (s && code == K_UNIVAR && K->vartype == DJ_VAR) {
-        gretl_errmsg_set("kalman: the 'univariate' setting is not compatible with\n"
-                         "cross-correlated disturbances");
+        gretl_errmsg_set(_("kalman: the 'univariate' setting is not compatible with\n"
+                         "cross-correlated disturbances"));
         return E_INVARG;
     } else if (s && (code != K->code)) {
         K->code = code;
@@ -3954,7 +3954,7 @@ int maybe_set_kalman_element (void *kptr,
         if (kalman_output_matrix(K, key) != NULL ||
             kalman_output_scalar(K, key) != NULL) {
             *err = E_DATA;
-            gretl_errmsg_sprintf("The member %s is read-only", key);
+            gretl_errmsg_sprintf(_("The member %s is read-only"), key);
         }
     } else {
         *err = kalman_bundle_try_set_matrix(K, vptr, vtype, id, copy);
@@ -3980,7 +3980,7 @@ int maybe_delete_kalman_element (void *kptr,
         input_matrix_slot(key) >= 0 || !strcmp(key, "uhat")) {
         /* note: the matrix under the key "uhat" is part of
            the internal kalman apparatus */
-        gretl_errmsg_sprintf("%s: cannot be deleted", key);
+        gretl_errmsg_sprintf(_("%s: cannot be deleted"), key);
         *err = E_DATA;
     } else if ((pm = kalman_output_matrix(K, key)) != NULL) {
         /* OK to delete a user-output matrix */
@@ -4246,7 +4246,7 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
     int err = 0;
 
     if (K == NULL) {
-        pputs(prn, "Kalman struct: empty\n");
+        pputs(prn, _("Kalman struct: empty\n"));
         err = E_DATA;
     } else {
         const gretl_matrix *m;
@@ -4255,7 +4255,7 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
         const char *name;
         int i, id;
 
-        pputs(prn, "\nKalman input matrices\n");
+        pputs(prn, _("\nKalman input matrices\n"));
 
         for (i=0; i<K_MMAX; i++) {
             id = K_input_mats[i].sym;
@@ -4267,7 +4267,7 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
         }
 
         if (output_matrix_count(K) > 0) {
-            pputs(prn, "\nKalman output matrices\n");
+            pputs(prn, _("\nKalman output matrices\n"));
             for (i=0; i<K_N_OUTPUTS; i++) {
                 name = kalman_output_matrix_names[i];
                 pm = kalman_output_matrix(K, name);
@@ -4279,7 +4279,7 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
             }
         }
 
-        pputs(prn, "\nKalman scalars\n");
+        pputs(prn, _("\nKalman scalars\n"));
 
         for (i=0; i<K_N_SCALARS; i++) {
             name = kalman_output_scalar_names[i];
