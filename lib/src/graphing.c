@@ -9805,6 +9805,8 @@ static void output_map_plot_lines (mapinfo *mi,
             /* ensure colorbox is omitted and key boxes are filled */
             fputs("unset colorbox\n", fp); /* should be handled already? */
             fputs("set style fill solid\n", fp);
+            /* this seems to work better than the default on average? */
+            fputs("set key bottom right\n", fp);
          }
 
 	/* polygons */
@@ -9822,15 +9824,17 @@ static void output_map_plot_lines (mapinfo *mi,
 	    for (i=0; i<nv; i++) {
 		v = i + v0;
 		if (mi->zlabels != NULL) {
-		    fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
-			    v, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+                    if (strcmp(mi->zlabels[i], "empty string")) {
+                        fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
+                                v, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+                    } else if (i == nv - 1) {
+                        fputc('\n', fp);
+                    }
 		} else {
 		    fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s=%d\"%s",
 			    v, mi->zname, v, (i < nv - 1)? cont : "\n");
 		}
 	    }
-            /* this seems to work better than the default on average? */
-            fputs("set key bottom right\n", fp);
 	}
     } else {
 	/* just show feature outlines */

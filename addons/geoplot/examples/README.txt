@@ -5,6 +5,7 @@ founders.geojson     founder countries of the EU
 switzerland.geojson  Switzerland, showing cantons
 states.shp           US states and DC (shapefile)
 us-states.geojson    US states and DC
+us2020.geojson       US states and DC with added properties
 
 # data files
 founders.csv   population and GDP, EU founders (cross section, n=6)
