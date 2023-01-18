@@ -697,14 +697,14 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	goto bailout;
     }
 
-    pprintf(prn, "Number of columns = %d\n", (int) ncols);
+    pprintf(prn, _("Number of columns = %d\n"), (int) ncols);
     if (ncols != totcols) {
-	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
+	gretl_errmsg_sprintf(_("ODBC: expected %d columns but got %d"),
 			     totcols, ncols);
 	err = 1;
 	goto bailout;
     } else if (ncols <= 0) {
-	gretl_errmsg_set("Didn't get any data");
+	gretl_errmsg_set(_("Didn't get any data"));
 	err = E_DATA;
 	goto bailout;
     }

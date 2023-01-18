@@ -402,7 +402,7 @@ char *iso_country (const char *src, int output,
     if (ret == NULL) {
 	ret = gretl_strdup("");
 	if (prn != NULL) {
-	    pprintf(prn, "isocountry: '%s' was not matched\n", src);
+	    pprintf(prn, _("isocountry: '%s' was not matched\n"), src);
 	} else {
 	    fprintf(stderr, "isocountry: '%s' was not matched\n", src);
 	}

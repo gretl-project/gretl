@@ -357,7 +357,7 @@ static lprec *lp_model_from_file (const char *fname,
 	*err = E_FOPEN;
     } else {
 	if (fname != NULL && prn != NULL) {
-	    pprintf(prn, "Reading input from '%s'\n", fname);
+	    pprintf(prn, _("Reading input from '%s'\n"), fname);
 	}
 	lp = read_lp(fp, NORMAL, NULL);
 	if (lp == NULL) {
@@ -649,7 +649,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     }
 
     if (gretl_lpsolve_err) {
-	gretl_errmsg_sprintf("lpsolve: failed to load %s", gretl_lpsolve_path());
+	gretl_errmsg_sprintf(_("lpsolve: failed to load %s"), gretl_lpsolve_path());
 	*err = gretl_lpsolve_err;
 	return NULL;
     }
@@ -663,14 +663,14 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
     } else if (lpb != NULL) {
 	lp = lp_model_from_bundle(lpb, &cnames, &rnames, opt, err);
     } else {
-	gretl_errmsg_set("lpsolve: didn't find a model specification");
+	gretl_errmsg_set(_("lpsolve: didn't find a model specification"));
 	msg_set = 1;
 	*err = E_ARGS;
     }
 
     if (*err) {
 	if (!msg_set) {
-	    gretl_errmsg_set("lpsolve: failed to build model");
+	    gretl_errmsg_set(_("lpsolve: failed to build model"));
 	}
     } else {
 	if (lpname != NULL) {
@@ -688,7 +688,7 @@ gretl_bundle *gretl_lpsolve (gretl_bundle *b, PRN *prn, int *err)
 	}	
 	*err = maybe_catch_solve(lp, opt, prn);
 	if (*err) {
-	    gretl_errmsg_set("lpsolve: solution failed");
+	    gretl_errmsg_set(_("lpsolve: solution failed"));
 	} else {
 	    ret = gretl_bundle_new();
 	    *err = get_lp_model_data(lp, ret, cnames, rnames,
