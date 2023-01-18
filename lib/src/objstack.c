@@ -882,7 +882,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 	unstack_replace = 0;
 	ostack[onum].ptr = p;
 	ostack[onum].type = type;
-	pprintf(prn, "Replaced object '%s'\n", name);
+	pprintf(prn, _("Replaced object '%s'\n"), name);
 	gretl_object_ref(p, type);
     } else {
 	stacker *tmp;
@@ -896,7 +896,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 	ostack[n_obj].type = type;
 	gretl_object_ref(p, type);
 	n_obj++;
-	pprintf(prn, "Added object '%s'\n", name);
+	pprintf(prn, _("Added object '%s'\n"), name);
     }
 
 #if ODEBUG

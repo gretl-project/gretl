@@ -421,7 +421,7 @@ int user_var_delete_by_name (const char *name, PRN *prn)
     }
 
     if (level > 0 && (targ->flags & UV_MAIN)) {
-	gretl_errmsg_sprintf("%s: cannot be deleted here", targ->name);
+	gretl_errmsg_sprintf(_("%s: cannot be deleted here"), targ->name);
 	return E_DATA;
     }
 
@@ -913,7 +913,7 @@ int user_var_replace_value (user_var *uvar, void *value,
     if (uvar == NULL) {
 	err = E_UNKVAR;
     } else if (value != uvar->ptr && (uvar->flags & UV_NOREPL)) {
-	gretl_errmsg_sprintf("The variable %s is read-only", uvar->name);
+	gretl_errmsg_sprintf(_("The variable %s is read-only"), uvar->name);
 	err = E_DATA;
     } else if (type != uvar->type) {
 	err = E_TYPES; /* assume the worst */
@@ -1433,7 +1433,7 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 	}
 
 	if (!err && gretl_messages_on()) {
-	    pprintf(prn, "Deleted all variables of type %s\n",
+	    pprintf(prn, _("Deleted all variables of type %s\n"),
 		    gretl_type_get_name(type));
 	}
     } else {
@@ -1685,7 +1685,7 @@ int gretl_scalar_set_value (const char *name, double val)
     u = get_user_var_of_type_by_name(name, GRETL_TYPE_DOUBLE);
 
     if (u == NULL) {
-	gretl_errmsg_sprintf("%s: no such scalar", name);
+	gretl_errmsg_sprintf(_("%s: no such scalar"), name);
 	err = E_DATA;
     } else if (scalar_is_read_only_index(name)) {
 	err = E_DATA;

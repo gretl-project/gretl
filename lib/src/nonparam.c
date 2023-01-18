@@ -1115,8 +1115,8 @@ signed_rank_test (const double *x, const double *y,
 	pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 		_("the median difference is zero"));
 	if (opt & OPT_V) {
-	    pprintf(prn, "%16s %8s %16s\n\n", "difference", "rank",
-		    "signed rank");
+	    pprintf(prn, "%16s %8s %16s\n\n", _("difference"), _("rank"),
+		    _("signed rank"));
 	}
     }
 
@@ -1173,7 +1173,7 @@ signed_rank_test (const double *x, const double *y,
 	    pval = print_z_prob(z, prn);
 	}
     } else if (n > 5) {
-	pprintf(prn, "  5%% critical values: %d (two-tailed), %d (one-tailed)\n",
+	pprintf(prn, _("  5%% critical values: %d (two-tailed), %d (one-tailed)\n"),
 		rank5[n-6][0], rank5[n-6][1]);
     } else {
 	pprintf(prn, "  %s\n",
@@ -1820,7 +1820,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     }
 
     if (!data_pre_sorted(x)) {
-	gretl_errmsg_set("loess: the data must be sorted by x");
+	gretl_errmsg_set(_("loess: the data must be sorted by x"));
 	*err = E_DATA;
 	return NULL;
     }
