@@ -779,11 +779,11 @@ opts.palette = "langcolors,zlabels"
 Give a palette string of (e.g.) \verb|"auto,zlabels"| if you want to
 adjust the strings but use the default colors.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
   \begin{center}
-  \includegraphics[scale=0.9]{swiss_langs1.pdf}
+  \includegraphics[scale=0.7]{swiss_langs1.pdf}
 
-  \includegraphics[scale=0.9]{swiss_langs2.pdf}
+  \includegraphics[scale=0.7]{swiss_langs2.pdf}
 \end{center}
 \caption{Main language per Swiss canton: the upper plot uses the
   default palette and strings; the lower one uses a customized palette
@@ -806,10 +806,19 @@ the ``open file'' dialog, use the pull-down list to select
 ``Shapefiles'' or ``GeoJSON files''. You can also drag-and-drop such
 files onto the main gretl window to the same effect.
 
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=0.333\textwidth]{geoplot_GUI.png}
+  \end{center}
+  \caption{Graphical interface to the \cmd{geoplot} command.}
+\label{fig:gui}
+\end{figure}
 Once map metadata are loaded in this way, the option \textsf{Display
   map} becomes available via the context (``right-click'') menu in the
-main window, and also under \textsf{/View/Graph specified vars}. If
-the current dataset contains one or more series that seem to gretl to
+main window, and also under \textsf{/View/Graph specified vars};
+it will trigger a window like the one in Figure~\ref{fig:gui}.
+
+If the current dataset contains one or more series that seem to gretl to
 be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
   employed for this purpose is not terribly clever.} invoking
 \textsf{Display map} will produce a dialog box that allows you to
@@ -823,10 +832,11 @@ Further, the plot window shown by \textsf{Display map} offers a
 right-click menu that allows saving the map (as PDF, EPS, PNG or EMF),
 copying it to the clipboard, or saving it ``as an icon''.
 
-So far, that's it. We may at some point expand the \textsf{Display
-  map} dialog to offer more of the choices available via the
-\texttt{options} argument to the \texttt{geoplot}
-function.
+Note that the options offered by the GUI are, at the moment, quite
+limited compared to the ones available via scripting. We may at some
+point expand the \textsf{Display map} dialog to offer more of the
+choices available via the \texttt{options} argument to the
+\texttt{geoplot} function.
 
 \section{``Expert'' refinements}
 \label{sec:expert}
