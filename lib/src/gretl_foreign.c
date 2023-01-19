@@ -236,7 +236,7 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 	err = E_NOTIMP;
 #endif
     } else {
-	pprintf(prn, "%s: unknown language\n", lang);
+	pprintf(prn, _("%s: unknown language\n"), lang);
 	err = E_DATA;
     }
 
@@ -262,7 +262,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 	g_error_free(gerr);
 	err = 1;
     } else if (status != 0) {
-	pprintf(prn, "%s exited with status %d\n", argv[0], status);
+	pprintf(prn, _("%s exited with status %d\n"), argv[0], status);
 	if (sout != NULL && *sout != '\0') {
 	    pputs(prn, "stdout:\n");
 	    pputs(prn, sout);
@@ -295,7 +295,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 	    }
 	}
     } else {
-	pprintf(prn, "%s: %s\n", argv[0], "Got no output");
+	pprintf(prn, "%s: %s\n", argv[0], _("Got no output"));
 	err = 1;
     }
 
@@ -768,7 +768,7 @@ static void win32_put_R_output_line (const char *line, PRN *prn)
 	    pputs(prn, lconv);
 	    g_free(lconv);
 	} else {
-	    pputs(prn, "line could not be converted to UTF-8\n");
+	    pputs(prn, _("line could not be converted to UTF-8\n"));
 	}
     } else {
 	pputs(prn, line);
@@ -2545,7 +2545,7 @@ static int try_set_R_home (void)
     }
 
     if (err) {
-	gretl_errmsg_set("Can't determine R_HOME");
+	gretl_errmsg_set(_("Can't determine R_HOME"));
     }
 
     return err;
@@ -2845,7 +2845,7 @@ static SEXP make_R_array (gretl_array *a, int *err)
     int i;
 
     if (t != GRETL_TYPE_STRINGS) {
-	gretl_errmsg_set("Only strings arrays are accepted as R-function arguments");
+	gretl_errmsg_set(_("Only strings arrays are accepted as R-function arguments"));
 	*err = E_TYPES;
 	return NULL;
     }
@@ -2938,7 +2938,7 @@ static SEXP make_R_bundle (gretl_bundle *b, int *err)
 		R_SET_VECTOR_ELT(res, i, bs);
 	    }
 	} else {
-	    gretl_errmsg_sprintf("%s: not handled\n",
+	    gretl_errmsg_sprintf(_("%s: not handled\n"),
 				 gretl_type_get_name(type));
 	    *err = E_TYPES;
 	}
@@ -2962,7 +2962,7 @@ static int R_function_add_object (void *ptr, GretlType t)
     } else if (t == GRETL_TYPE_BUNDLE) {
 	res = make_R_bundle(ptr, &err);
     } else {
-	gretl_errmsg_sprintf("%s: not handled as R-function argument\n",
+	gretl_errmsg_sprintf(_("%s: not handled as R-function argument\n"),
 			     gretl_type_get_name(t));
 	err = E_TYPES;
     }
@@ -3062,7 +3062,7 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
 	    *err = E_ALLOC;
 	}
     } else {
-	gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
+	gretl_errmsg_sprintf(_("%s: invalid matrix dimensions, %d x %d"),
 			     name, nr, nc);
 	*err = E_DATA;
     }
@@ -3095,7 +3095,7 @@ static gretl_array *array_from_R (SEXP res, const char *name,
     if (nr >= 0) {
 	a = gretl_array_new(GRETL_TYPE_STRINGS, nr, err);
     } else {
-	gretl_errmsg_sprintf("%s: invalid array length %d",
+	gretl_errmsg_sprintf(_("%s: invalid array length %d"),
 			     name, nr);
 	*err = E_DATA;
     }
@@ -3121,7 +3121,7 @@ static int vector_can_be_bundle (SEXP s, const char *name)
     int err = 0;
 
     if (R_TYPEOF(s) != VECSXP) {
-	gretl_errmsg_sprintf("%s: not generic vector, can't make into bundle", name);
+	gretl_errmsg_sprintf(_("%s: not generic vector, can't make into bundle"), name);
 	return 0;
     }
 
@@ -3133,7 +3133,7 @@ static int vector_can_be_bundle (SEXP s, const char *name)
 
     names = R_getAttrib(s, VR_NamesSymbol);
     if (R_NULL(names)) {
-	gretl_errmsg_sprintf("%s: R list has no tags, can't make into bundle", name);
+	gretl_errmsg_sprintf(_("%s: R list has no tags, can't make into bundle"), name);
 	return 0;
     }
 
@@ -3222,7 +3222,7 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else {
-	    gretl_errmsg_sprintf("%s: got 'matrix' result, but not numeric", name);
+	    gretl_errmsg_sprintf(_("%s: got 'matrix' result, but not numeric"), name);
 	    *err = E_TYPES;
 	}
     } else if (R_isVector(s)) {
@@ -3353,7 +3353,7 @@ int foreign_start (int ci, const char *param, gretlopt opt,
     int err = 0;
 
     if (foreign_started) {
-	gretl_errmsg_sprintf("%s: a block is already started",
+	gretl_errmsg_sprintf(_("%s: a block is already started"),
 			     gretl_command_word(ci));
 	return E_DATA;
     }
@@ -3404,7 +3404,7 @@ int foreign_append (const char *line, int context)
 #endif
 
     if (!foreign_started) {
-	gretl_errmsg_sprintf("%s: no block is in progress",
+	gretl_errmsg_sprintf(_("%s: no block is in progress"),
 			     gretl_command_word(context));
 	err = E_DATA;
     } else if (!string_is_blank(line)) {
@@ -3456,7 +3456,7 @@ static int write_foreign_io_file (int lang, PRN *prn)
 	fname = gretl_maybe_switch_dir(fname);
 	err = ensure_foreign_io_file(lang, fname);
 	if (!err && gretl_messages_on()) {
-	    pprintf(prn, "Wrote '%s'\n", fname);
+	    pprintf(prn, _("Wrote '%s'\n"), fname);
 	}
     }
 

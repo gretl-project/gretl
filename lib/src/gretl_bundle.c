@@ -1782,8 +1782,8 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
     gretl_bundle *b = NULL;
 
     if (bundle2->type == BUNDLE_KALMAN) {
-	gretl_errmsg_set("bundle union: the right-hand operand cannot "
-			 "be a kalman bundle");
+	gretl_errmsg_set(_("bundle union: the right-hand operand cannot "
+			 "be a kalman bundle"));
 	*err = E_DATA;
     } else {
 	b = gretl_bundle_copy(bundle1, err);
@@ -1985,8 +1985,8 @@ int gretl_bundle_append (gretl_bundle *bundle1,
 			 const gretl_bundle *bundle2)
 {
     if (bundle2->type == BUNDLE_KALMAN) {
-	gretl_errmsg_set("bundle union: the right-hand operand cannot "
-			 "be a kalman bundle");
+	gretl_errmsg_set(_("bundle union: the right-hand operand cannot "
+			 "be a kalman bundle"));
 	return E_DATA;
     } else {
 	g_hash_table_foreach(bundle2->ht, copy_new_bundled_item, bundle1);
