@@ -1928,7 +1928,7 @@ static GretlType param_field_to_type (const char *s,
     GretlType t = gretl_type_from_string(s);
 
     if (!ok_function_arg_type(t)) {
-	gretl_errmsg_sprintf("function %s: invalid parameter type '%s'",
+	gretl_errmsg_sprintf(_("function %s: invalid parameter type '%s'"),
 			     funname, s);
 	*err = E_INVARG;
     }
@@ -2455,7 +2455,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 			fun->name);
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "return")) {
-	    gretl_errmsg_set("Old-style function definitions no longer supported");
+	    gretl_errmsg_set(_("Old-style function definitions no longer supported"));
 	    err = E_DATA;
 	} else if (!xmlStrcmp(cur->name, (XUC) "code")) {
 	    err = func_read_code(cur, doc, fun);
@@ -2927,7 +2927,7 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
     for (i=0; i<n; i++) {
 	for (j=0; j<i; j++) {
 	    if (!strcmp(names[j], names[i])) {
-		gretl_errmsg_sprintf("Duplicated function name '%s'", names[i]);
+		gretl_errmsg_sprintf(_("Duplicated function name '%s'"), names[i]);
 		return E_DATA;
 	    }
 	}
@@ -3866,7 +3866,7 @@ static int check_R_depends (const char *s)
     }
 
     if (err) {
-	gretl_errmsg_set("Invalid R-depends line");
+	gretl_errmsg_set(_("Invalid R-depends line"));
     }
 
     return err;
@@ -4078,7 +4078,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
     }
 
     if (!err && got < 7) {
-	gretl_errmsg_set("Some required information was missing");
+	gretl_errmsg_set(_("Some required information was missing"));
 	err = E_DATA;
     }
 
@@ -4111,7 +4111,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
     FILE *fp;
 
     if (!has_suffix(gfnname, ".gfn")) {
-	gretl_errmsg_set("Output must have extension \".gfn\"");
+	gretl_errmsg_set(_("Output must have extension \".gfn\""));
 	*err = E_DATA;
 	return NULL;
     }
@@ -4129,7 +4129,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	int i;
 
 	if (!quiet) {
-	    pprintf(prn, "Found spec file '%s'\n", fname);
+	    pprintf(prn, _("Found spec file '%s'\n"), fname);
 	}
 
 	/* first pass: gather names of public functions */
@@ -4156,13 +4156,13 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	}
 
 	if (npub == 0) {
-	    pprintf(prn, "no specification of public functions was found\n");
+	    pprintf(prn, _("no specification of public functions was found\n"));
 	    *err = E_DATA;
 	}
 
 	if (!*err) {
 	    if (!quiet) {
-		pprintf(prn, "number of public interfaces = %d\n", npub);
+		pprintf(prn, _("number of public interfaces = %d\n"), npub);
 	    }
 	    for (i=0; i<npub && !*err; i++) {
 		uf = get_user_function_by_name(pubnames[i]);
@@ -4171,9 +4171,9 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 		}
 		if (uf == NULL) {
 		    if (!quiet) {
-			pputs(prn, ": *** not found");
+			pputs(prn, _(": *** not found"));
 		    }
-		    gretl_errmsg_sprintf("'%s': no such function", pubnames[i]);
+		    gretl_errmsg_sprintf(_("'%s': no such function"), pubnames[i]);
 		    *err = E_DATA;
 		}
 		if (!quiet) {
@@ -4517,7 +4517,7 @@ double function_package_get_version (fnpkg *pkg)
 static int maybe_replace_string_var (char **svar, const char *src)
 {
     if (src == NULL) {
-	gretl_errmsg_set("string value is missing");
+	gretl_errmsg_set(_("string value is missing"));
 	return E_DATA;
     } else {
 	free(*svar);
@@ -5349,8 +5349,8 @@ static int function_package_record (fnpkg *pkg)
 
 static int broken_package_error (fnpkg *pkg)
 {
-    gretl_errmsg_sprintf("'%s': package contains "
-			 "duplicated function names",
+    gretl_errmsg_sprintf(_("'%s': package contains "
+			 "duplicated function names"),
 			 pkg->name);
     return E_DATA;
 }
@@ -5414,8 +5414,8 @@ static int load_public_function (fnpkg *pkg, int i)
 		done = 1;
 	    } else if (!function_is_private(ufuns[j])) {
 		/* got a conflicting package */
-		gretl_errmsg_sprintf("The function %s is already defined "
-				     "by package '%s'", fun->name,
+		gretl_errmsg_sprintf(_("The function %s is already defined "
+				     "by package '%s'"), fun->name,
 				     ufuns[j]->pkg->name);
 		err = E_DATA;
 		break;
@@ -5483,7 +5483,7 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
 		pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
 		if (pkgpath == NULL) {
 		    err = E_DATA;
-		    gretl_errmsg_sprintf("%s: dependency %s was not found",
+		    gretl_errmsg_sprintf(_("%s: dependency %s was not found"),
 					 pkg->name, dep);
 		} else {
 		    err = load_function_package(pkgpath, OPT_NONE,
@@ -5536,7 +5536,7 @@ static int real_load_package (fnpkg *pkg, GArray *pstack)
     if (!err && pkg->provider != NULL) {
 	/* check that provider really got loaded */
 	if (get_function_package_by_name(pkg->provider) == NULL) {
-	    gretl_errmsg_sprintf("Provider package %s is not loaded\n",
+	    gretl_errmsg_sprintf(_("Provider package %s is not loaded\n"),
 				 pkg->provider);
 	    err = E_DATA;
 	}
@@ -5581,7 +5581,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	pkg->minver <= 0 || pkg->descrip == NULL ||
 	pkg->version == NULL || pkg->date == NULL ||
 	pkg->help == NULL) {
-	pprintf(prn, "\nBroken package! Basic information is missing\n");
+	pprintf(prn, _("\nBroken package! Basic information is missing\n"));
 	return;
     }
 
@@ -5675,7 +5675,7 @@ static void plain_print_package_info (const fnpkg *pkg,
 	pkg->minver <= 0 || pkg->descrip == NULL ||
 	pkg->version == NULL || pkg->date == NULL ||
 	pkg->help == NULL) {
-	pprintf(prn, "Broken package! Basic information is missing\n");
+	pprintf(prn, _("Broken package! Basic information is missing\n"));
 	return;
     }
 
@@ -6162,12 +6162,12 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
 static void maybe_print_R_info (fnpkg *pkg, PRN *prn)
 {
     if (pkg->Rdeps != NULL) {
-	pputs(prn, "# Notice: this package requires GNU R.\n"
+	pputs(prn, _("# Notice: this package requires GNU R.\n"
 	      "# It is known to work with the following version of R,\n"
-	      "# plus required R package(s) if applicable:\n");
+	      "# plus required R package(s) if applicable:\n"));
 	pprintf(prn, "#\n# %s\n#\n", pkg->Rdeps);
-	pputs(prn, "# It will likely work with later versions but that is\n"
-	      "# not guaranteed.\n\n");
+	pputs(prn, _("# It will likely work with later versions but that is\n"
+	      "# not guaranteed.\n\n"));
     }
 }
 
@@ -6873,8 +6873,8 @@ static int check_function_name (const char *name, ufunc **pfun,
 #endif
 		if (ufuns[i]->pkg != NULL && ufuns[i]->pkg != current_pkg) {
 		    /* don't allow overwriting */
-		    gretl_errmsg_sprintf("The function %s is already defined "
-					 "by package '%s'", name,
+		    gretl_errmsg_sprintf(_("The function %s is already defined "
+					 "by package '%s'"), name,
 					 ufuns[i]->pkg->name);
 		    err = E_DATA;
 		} else if (pfun != NULL) {
@@ -6899,10 +6899,10 @@ static int maybe_delete_function (const char *fname, PRN *prn)
     if (fun == NULL) {
 	; /* no-op */
     } else if (function_in_use(fun)) {
-	gretl_errmsg_sprintf("%s: function is in use", fname);
+	gretl_errmsg_sprintf(_("%s: function is in use"), fname);
 	err = 1;
     } else if (fun->pkg != NULL) {
-	gretl_errmsg_sprintf("%s: function belongs to package", fname);
+	gretl_errmsg_sprintf(_("%s: function belongs to package"), fname);
 	err = 1;
     } else {
 	ufunc_unload(fun);
@@ -6947,8 +6947,8 @@ static int check_parm_min_max (fn_param *p, const char *name,
     int err = 0;
 
     if (p->type != GRETL_TYPE_DOUBLE && na(p->deflt)) {
-	gretl_errmsg_sprintf("%s: parameters of type %s cannot have a "
-			     "default value of NA", name,
+	gretl_errmsg_sprintf(_("%s: parameters of type %s cannot have a "
+			     "default value of NA"), name,
 			     gretl_type_get_name(p->type));
 	err = E_DATA;
     }
@@ -6968,10 +6968,10 @@ static int check_parm_min_max (fn_param *p, const char *name,
 
     if (!err && !na(p->deflt) && !default_unset(p)) {
 	if (!na(p->min) && p->deflt < p->min) {
-	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
+	    gretl_errmsg_sprintf(_("%s: default value out of bounds"), name);
 	    err = E_DATA;
 	} else if (!na(p->max) && p->deflt > p->max) {
-	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
+	    gretl_errmsg_sprintf(_("%s: default value out of bounds"), name);
 	    err = E_DATA;
 	}
     }
@@ -7006,7 +7006,7 @@ static int read_min_max_deflt (char **ps, fn_param *param,
     errno = 0;
 
     if (!strcmp(p, "[null]")) {
-	gretl_errmsg_set("'null' is not a valid default for scalars");
+	gretl_errmsg_set(_("'null' is not a valid default for scalars"));
 	err = E_TYPES;
     } else if (param->type == GRETL_TYPE_BOOL) {
 	if (!strncmp(p, "[TRUE]", 6)) {
@@ -7164,7 +7164,7 @@ static int read_param_labels (char **ps, fn_param *param,
 						      " ,", &err);
 	    free(tmp);
 	    if (!err && param->nlabels != nvals) {
-		gretl_errmsg_sprintf("%s: found %d values but %d value-labels",
+		gretl_errmsg_sprintf(_("%s: found %d values but %d value-labels"),
 				     name, nvals, param->nlabels);
 		err = E_DATA;
 	    }
@@ -7279,7 +7279,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	} else if (arg_may_be_optional(type)) {
 	    err = read_param_option(&s, param);
 	} else {
-	    gretl_errmsg_sprintf("'%s': error scanning default value",
+	    gretl_errmsg_sprintf(_("'%s': error scanning default value"),
 				 name);
 	    err = E_PARSE;
 	}
@@ -7520,7 +7520,7 @@ int gretl_start_compiling_function (const char *line,
     if (err) {
 	return err;
     } else if (nf < 2) {
-	gretl_errmsg_set("A function definition must have a return type and name");
+	gretl_errmsg_set(_("A function definition must have a return type and name"));
 	return E_PARSE;
     }
 
@@ -7669,7 +7669,7 @@ int gretl_function_append_line (ExecState *s)
 	cmd->ci = 0;
     } else if (cmd->flags & CMD_ENDFUN) {
 	if (fun->n_lines == 0) {
-	    gretl_errmsg_sprintf("%s: empty function", fun->name);
+	    gretl_errmsg_sprintf(_("%s: empty function"), fun->name);
 	    err = 1;
 	}
 	set_compiling_off();
@@ -7682,10 +7682,10 @@ int gretl_function_append_line (ExecState *s)
 	    fun->flags |= UFUN_HAS_FLOW;
 	    ifdepth++;
 	} else if (ifdepth == 0) {
-	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
 	    err = E_PARSE;
 	} else if (cmd->ci == ELSE && last_flow == ELSE) {
-	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
 	    err = E_PARSE;
 	} else if (cmd->ci == ENDIF) {
 	    ifdepth--;
@@ -7723,7 +7723,7 @@ int gretl_function_append_line (ExecState *s)
     } else {
 	/* finished compilation */
 	if (!err && ifdepth != 0) {
-	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    gretl_errmsg_sprintf(_("%s: unbalanced if/else/endif"), fun->name);
 	    err = E_PARSE;
 	}
 #if COMP_DEBUG
@@ -8187,9 +8187,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    const char *caller;
 
 	    current_function_info(&caller, NULL);
-	    gretl_errmsg_sprintf("%s() tries to pass const argument "
+	    gretl_errmsg_sprintf(_("%s() tries to pass const argument "
 				 "%s to %s() in pointer form with no\n"
-				 "const guarantee\n",
+				 "const guarantee\n"),
 				 caller, fp->name, call->fun->name);
 	    err = E_INVARG;
 	    break;
@@ -8303,29 +8303,29 @@ int check_function_needs (const DATASET *dset, DataReq dreq,
 	char vstr[8];
 
 	gretl_version_string(vstr, minver);
-	gretl_errmsg_sprintf("This function needs gretl version %s", vstr);
+	gretl_errmsg_sprintf(_("This function needs gretl version %s"), vstr);
 	return 1;
     }
 
     if ((dset == NULL || dset->v == 0) && dreq != FN_NODATA_OK) {
-	gretl_errmsg_set("This function needs a dataset in place");
+	gretl_errmsg_set(_("This function needs a dataset in place"));
 	return E_DATA;
     }
 
     if (dreq == FN_NEEDS_TS && !dataset_is_time_series(dset)) {
-	gretl_errmsg_set("This function needs time-series data");
+	gretl_errmsg_set(_("This function needs time-series data"));
 	return E_DATA;
     }
 
     if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(dset)) {
-	gretl_errmsg_set("This function needs panel data");
+	gretl_errmsg_set(_("This function needs panel data"));
 	return E_DATA;
     }
 
     if (dreq == FN_NEEDS_QM &&
 	(!dataset_is_time_series(dset) ||
 	 (dset->pd != 4 && dset->pd != 12))) {
-	gretl_errmsg_set("This function needs quarterly or monthly data");
+	gretl_errmsg_set(_("This function needs quarterly or monthly data"));
 	return E_DATA;
     }
 
@@ -8392,8 +8392,8 @@ static int handle_scalar_return (fncall *call, void *ptr, int rtype)
 	    user_var *uv = get_user_var_by_name(vname);
 	    GretlType t = user_var_get_type(uv);
 
-	    gretl_errmsg_sprintf("Function %s did not provide the specified return value\n"
-				 "(expected %s, got %s)", call->fun->name,
+	    gretl_errmsg_sprintf(_("Function %s did not provide the specified return value\n"
+				 "(expected %s, got %s)"), call->fun->name,
 				 gretl_type_get_name(rtype), gretl_type_get_name(t));
 	    err = E_TYPES;
 	    xret = NADBL;
@@ -8806,8 +8806,8 @@ function_assign_returns (fncall *call, int rtype,
 
     if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
 	/* missing return value */
-	gretl_errmsg_sprintf("Function %s did not provide the specified return value\n"
-			     "(expected %s)", u->name, gretl_type_get_name(rtype));
+	gretl_errmsg_sprintf(_("Function %s did not provide the specified return value\n"
+			     "(expected %s)"), u->name, gretl_type_get_name(rtype));
 	*perr = err = E_UNKVAR;
     } else if (*perr == 0 && needs_dataset(rtype) && dset == NULL) {
 	/* "can't happen" */
@@ -8845,7 +8845,7 @@ function_assign_returns (fncall *call, int rtype,
 	}
 
 	if (err == E_UNKVAR) {
-	    pprintf(prn, "Function %s did not provide the specified return value\n",
+	    pprintf(prn, _("Function %s did not provide the specified return value\n"),
 		    u->name);
 	}
 
@@ -9053,7 +9053,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     set_executing_off(&call, dset, prn);
 
     if (print_redirection_level(prn) > redir_level) {
-	gretl_errmsg_set("Incorrect use of 'outfile' in function");
+	gretl_errmsg_set(_("Incorrect use of 'outfile' in function"));
 	err = 1;
     }
 
@@ -9322,18 +9322,18 @@ static void set_func_error_message (int err, ufunc *u,
 	       available (the error occurred inside a loop)
 	    */
 	    if (showline && err != E_FNEST) {
-		gretl_errmsg_sprintf("*** error within loop in function %s\n> %s",
+		gretl_errmsg_sprintf(_("*** error within loop in function %s\n> %s"),
 				     u->name, cmdline);
 	    } else {
-		gretl_errmsg_sprintf("*** error within loop in function %s\n",
+		gretl_errmsg_sprintf(_("*** error within loop in function %s\n"),
 				     u->name);
 	    }
 	} else {
 	    if (showline && err != E_FNEST) {
-		gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s",
+		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s"),
 				     u->name, fline->idx, cmdline);
 	    } else {
-		gretl_errmsg_sprintf("*** error in function %s, line %d\n",
+		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n"),
 				     u->name, fline->idx);
 	    }
 	}
@@ -9346,7 +9346,7 @@ static void set_func_error_message (int err, ufunc *u,
 		if (tmp != NULL) {
 		    fncall *call = tmp->data;
 
-		    gretl_errmsg_sprintf(" called by function %s", call->fun->name);
+		    gretl_errmsg_sprintf(_(" called by function %s"), call->fun->name);
 		}
 	    }
 	}
@@ -9486,11 +9486,11 @@ static int handle_return_statement (fncall *call,
         if (s == NULL || *s == '\0') {
             ; /* plain "return" from void function: OK */
         } else if (line == NULL) {
-            gretl_errmsg_sprintf("%s: non-null return value '%s' is not valid",
+            gretl_errmsg_sprintf(_("%s: non-null return value '%s' is not valid"),
                                  fun->name, s);
             err = E_TYPES;
         } else {
-            gretl_errmsg_sprintf("%s, line %d: non-null return value '%s' is not valid",
+            gretl_errmsg_sprintf(_("%s, line %d: non-null return value '%s' is not valid"),
                                  fun->name, line->idx, s);
             err = E_TYPES;
         }
@@ -9499,9 +9499,9 @@ static int handle_return_statement (fncall *call,
 
     if (s == NULL || *s == '\0') {
         if (line == NULL) {
-            gretl_errmsg_sprintf("%s: return value is missing", fun->name);
+            gretl_errmsg_sprintf(_("%s: return value is missing"), fun->name);
         } else {
-            gretl_errmsg_sprintf("%s, line %d: return value is missing",
+            gretl_errmsg_sprintf(_("%s, line %d: return value is missing"),
                                  fun->name, line->idx);
         }
         err = E_TYPES;
@@ -9555,7 +9555,7 @@ int set_function_should_return (const char *line)
 	return_line = g_strdup(line);
 	return 0;
     } else {
-	gretl_errmsg_set("return: can only be used in a function");
+	gretl_errmsg_set(_("return: can only be used in a function"));
 	return E_PARSE;
     }
 }
@@ -10366,14 +10366,14 @@ int delete_function_package (const char *gfnpath)
 	*/
 	err = gretl_deltree(pkgdir);
 	if (err) {
-	    gretl_errmsg_sprintf("Couldn't delete %s", pkgdir);
+	    gretl_errmsg_sprintf(_("Couldn't delete %s"), pkgdir);
 	}
     } else {
 	/* just delete the .gfn file itself */
 	err = gretl_remove(gfnpath);
 
 	if (err) {
-	    gretl_errmsg_sprintf("Couldn't delete %s", gfnpath);
+	    gretl_errmsg_sprintf(_("Couldn't delete %s"), gfnpath);
 	}
     }
 
@@ -10422,7 +10422,7 @@ int uninstall_function_package (const char *package, gretlopt opt,
     err = get_full_filename(gfnname, fname, OPT_I);
 
     if (!err && !gretl_file_exists(fname)) {
-	gretl_errmsg_sprintf("Couldn't find %s", gfnname);
+	gretl_errmsg_sprintf(_("Couldn't find %s"), gfnname);
 	err = E_FOPEN;
     }
 
