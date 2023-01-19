@@ -2210,8 +2210,8 @@ static int mn_value_count (const double *y, MODEL *pmod,
     for (t=0; t<pmod->nobs && !pmod->errcode; t++) {
 	if (sy[t] != floor(sy[t])) {
 	    pmod->errcode = E_DATA;
-	    gretl_errmsg_set("logit: the dependent variable must form a sequence of "
-			     "integers");
+	    gretl_errmsg_set(_("logit: the dependent variable must form a sequence of "
+			     "integers"));
 	} else if (t > 0 && sy[t] != sy[t-1]) {
 	    v[++s] = (int) sy[t];
 	    if (sy[t] != sy[t-1] + 1) {
@@ -3723,9 +3723,9 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
 
     if (!err) {
 	pprintf(prn, "\n%s:\n", _("Fisher's Exact Test"));
-	pprintf(prn, "  Left:   P-value = %g\n", PL);
-	pprintf(prn, "  Right:  P-value = %g\n", PR);
-	pprintf(prn, "  2-Tail: P-value = %g\n", P2);
+	pprintf(prn, _("  Left:   P-value = %g\n"), PL);
+	pprintf(prn, _("  Right:  P-value = %g\n"), PR);
+	pprintf(prn, _("  2-Tail: P-value = %g\n"), P2);
 	pputc(prn, '\n');
     }
 

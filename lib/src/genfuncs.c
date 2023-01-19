@@ -2123,7 +2123,7 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
 #endif
 
     if (bkl >= bku) {
-        gretl_errmsg_set("Error in Baxter-King frequencies");
+        gretl_errmsg_set(_("Error in Baxter-King frequencies"));
         return 1;
     }
 
@@ -2133,7 +2133,7 @@ int bkbp_filter (const double *x, double *bk, const DATASET *dset,
     }
 
     if (2 * k >= t2 - t1 + 1) {
-        gretl_errmsg_set("Insufficient observations");
+        gretl_errmsg_set(_("Insufficient observations"));
         return E_DATA;
     }
 
@@ -2759,7 +2759,7 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
     }
 
     if (2 * n >= t2 - t1) {
-        gretl_errmsg_set("Insufficient observations");
+        gretl_errmsg_set(_("Insufficient observations"));
         return E_DATA;
     }
 
@@ -2781,14 +2781,14 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
 
 #if HAVE_GMP
     if (bad_lambda > 1) {
-        gretl_errmsg_set("Butterworth: infeasible lambda value");
+        gretl_errmsg_set(_("Butterworth: infeasible lambda value"));
         return E_DATA;
     } else if (bad_lambda) {
         return mp_butterworth(x, y, T, n, cutoff);
     }
 #else
     if (bad_lambda) {
-        gretl_errmsg_set("Butterworth: infeasible lambda value");
+        gretl_errmsg_set(_("Butterworth: infeasible lambda value"));
         return E_DATA;
     }
 #endif
@@ -3482,7 +3482,7 @@ int gen_panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
         double sz = nnew * dset->n * 8 / (1024.0 * 1024.0);
 
         if (sz > 1024) {
-            pprintf(prn, "warning: requested %gMb of storage\n", sz);
+            pprintf(prn, _("warning: requested %gMb of storage\n"), sz);
         }
     }
 
@@ -3575,8 +3575,8 @@ int gen_unit (DATASET *dset, int *vnum)
     int i, t;
 
     if (dset->structure != STACKED_TIME_SERIES) {
-        gretl_errmsg_set("'genr unit' can be used only with "
-                         "panel data");
+        gretl_errmsg_set(_("'genr unit' can be used only with "
+                         "panel data"));
         return E_DATA;
     }
 
@@ -4492,8 +4492,8 @@ int x_sectional_weighted_stat (double *y, const int *xlist,
     int err = 0;
 
     if (wlist[0] != xlist[0]) {
-        gretl_errmsg_sprintf("Weighted stats: data list has %d members but weight "
-                             "list has %d", xlist[0], wlist[0]);
+        gretl_errmsg_sprintf(_("Weighted stats: data list has %d members but weight "
+                             "list has %d"), xlist[0], wlist[0]);
         return E_DATA;
     }
 
@@ -4649,14 +4649,14 @@ static int check_beta_params (int method, double *theta,
     int err = 0;
 
     if ((method == MIDAS_BETA0 || method == MIDAS_BETA1) && k != 2) {
-        gretl_errmsg_set("theta must be a 2-vector");
+        gretl_errmsg_set(_("theta must be a 2-vector"));
         err = E_INVARG;
     } else if (method == MIDAS_BETAN && k != 3) {
-        gretl_errmsg_set("theta must be a 3-vector");
+        gretl_errmsg_set(_("theta must be a 3-vector"));
         err = E_INVARG;
     } else if (theta[0] < eps || theta[1] < eps) {
         if (theta[0] < 0.0 || theta[1] < 0.0) {
-            gretl_errmsg_set("beta: parameters must be positive");
+            gretl_errmsg_set(_("beta: parameters must be positive"));
             fprintf(stderr, "beta: theta1=%g, theta2=%g\n", theta[0], theta[1]);
             err = E_INVARG;
         } else {
@@ -4773,7 +4773,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 #endif
 
     if (errno) {
-        gretl_errmsg_sprintf("Failed to calculate MIDAS weights: %s",
+        gretl_errmsg_sprintf(_("Failed to calculate MIDAS weights: %s"),
                              gretl_strerror(errno));
         if (*err == 0) {
             *err = E_INVARG;
@@ -5051,7 +5051,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     gretl_matrix_free(w);
 
     if (errno) {
-        gretl_errmsg_sprintf("Failed to calculate MIDAS gradient: %s",
+        gretl_errmsg_sprintf(_("Failed to calculate MIDAS gradient: %s"),
                              gretl_strerror(errno));
         if (*err == 0) {
             *err = E_INVARG;
@@ -5107,7 +5107,7 @@ static int process_midas_bundle (gretl_bundle *mb, int idx,
     i0 = xlist[0];
     nm = gretl_array_get_length(mt);
     if (idx < 1 || idx > nm) {
-        gretl_errmsg_set("Invalid MIDAS term index");
+        gretl_errmsg_set(_("Invalid MIDAS term index"));
         err = E_DATA;
     } else {
         idx--; /* convert index to 0-based */
@@ -5187,7 +5187,7 @@ gretl_matrix *midas_multipliers (gretl_bundle *mb, int cumulate,
     *err = process_midas_bundle(mb, idx, &theta, &V, &mtype,
                                 &h, &minlag, &lname);
     if (*err) {
-        gretl_errmsg_set("Not a valid midasreg bundle");
+        gretl_errmsg_set(_("Not a valid midasreg bundle"));
         return NULL;
     }
 
@@ -5347,8 +5347,8 @@ int *vector_to_midas_list (const gretl_matrix *v,
         sprintf(vname, "%s%d", prefix, i+1);
         if (current_series_index(dset, vname) >= 1 ||
             get_user_var_by_name(vname) != NULL) {
-            gretl_errmsg_set("The constructed series names would "
-                             "collide with those of existing objects");
+            gretl_errmsg_set(_("The constructed series names would "
+                             "collide with those of existing objects"));
             *err = E_INVARG;
         }
     }
@@ -7862,10 +7862,10 @@ int sample_span (const char *stobs, const char *endobs,
         }
 
         if (ed1 == 0) {
-            gretl_errmsg_sprintf("Invalid observation %s", stobs);
+            gretl_errmsg_sprintf(_("Invalid observation %s"), stobs);
             *err = E_INVARG;
         } else if (ed2 == 0) {
-            gretl_errmsg_sprintf("Invalid observation %s", endobs);
+            gretl_errmsg_sprintf(_("Invalid observation %s"), endobs);
             *err = E_INVARG;
         } else {
             dset.sd0 = (double) ed1;

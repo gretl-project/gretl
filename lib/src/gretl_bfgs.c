@@ -2376,7 +2376,7 @@ gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
     }
 
     if (nnf > 0) {
-	gretl_errmsg_sprintf("fdjac: got %d non-finite value(s) on input",
+	gretl_errmsg_sprintf(_("fdjac: got %d non-finite value(s) on input"),
 			     nnf);
 	*err = E_DATA;
     } else {
@@ -2903,7 +2903,7 @@ int gretl_simann (double *theta, int n, int maxit,
     f0 = fbest = fworst = simann_call(cfunc, b.val, data, minimize);
 
     if (opt & OPT_V) {
-	pprintf(prn, "\nSimulated annealing: initial function value = %.8g\n",
+	pprintf(prn, _("\nSimulated annealing: initial function value = %.8g\n"),
 		f0);
     }
 
@@ -2961,11 +2961,11 @@ int gretl_simann (double *theta, int n, int maxit,
     if (improved) {
 	if (opt & OPT_V) pputc(prn, '\n');
     } else {
-	pprintf(prn, "No improvement found in %d iterations\n\n", maxit);
+	pprintf(prn, _("No improvement found in %d iterations\n\n"), maxit);
     }
 
     if (fbest - fworst < 1.0e-9) {
-	pprintf(prn, "*** warning: surface seems to be flat\n");
+	pprintf(prn, _("*** warning: surface seems to be flat\n"));
     }
 
  bailout:
@@ -3064,10 +3064,10 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 
 	if (opt & OPT_V) {
 	    if (outer == 1) {
-		pprintf(prn, "\nOuter iteration %d: function value = %#g\n",
+		pprintf(prn, _("\nOuter iteration %d: function value = %#g\n"),
 			outer, y[n]);
 	    } else {
-		pprintf(prn, "Outer iteration %d (reset)\n", outer);
+		pprintf(prn, _("Outer iteration %d (reset)\n"), outer);
 	    }
 	}
 
@@ -3119,7 +3119,7 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	    ystar = nm_call(cfunc, pstar, data, ncalls, getmin);
 
 	    if ((opt & OPT_V) && (inner == 1 || inner % 10 == 0)) {
-		pprintf(prn, " inner iter %3d: function value %#g\n",
+		pprintf(prn, _(" inner iter %3d: function value %#g\n"),
 			inner, ystar);
 	    }
 
@@ -3267,8 +3267,8 @@ nelder_mead (BFGS_CRIT_FUNC cfunc, int n, double start[],
 	    if (opt & OPT_V) {
 		double crit = getmin ? *ynewlo : -(*ynewlo);
 
-		pprintf(prn, "Found optimum %#g after %d function calls, "
-			"%d resets\n\n", crit, *ncalls, *nresets);
+		pprintf(prn, _("Found optimum %#g after %d function calls, "
+			"%d resets\n\n"), crit, *ncalls, *nresets);
 	    }
 	    break;
 	}
