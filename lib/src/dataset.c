@@ -5140,7 +5140,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
     }
 
     if (totskip == 0) {
-	pprintf(prn, _("Dataset is already complete for %d-day calendar", pd));
+	pprintf(prn, _("Dataset is already complete for %d-day calendar"), pd);
 	return 0;
     }
 

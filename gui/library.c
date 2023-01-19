@@ -9852,9 +9852,9 @@ static int script_delete_function_package (const char *action,
     if (err) {
         errmsg(err, prn);
     } else if (delfile) {
-        pprintf(prn, _("Removed %s\n", pkgname));
+        pprintf(prn, _("Removed %s\n"), pkgname);
     } else {
-        pprintf(prn, _("Unloaded %s\n", pkgname));
+        pprintf(prn, _("Unloaded %s\n"), pkgname);
     }
 
     g_free(gfnname);

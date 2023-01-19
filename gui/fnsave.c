@@ -5366,7 +5366,7 @@ void build_package_from_spec_file (windata_t *vwin)
 	if (!err) {
 	    err = create_and_write_function_package(gfnname, OPT_G, prn);
 	    if (err) {
-		pputs(prn, _("Failed to produce gfn file\n");
+		pputs(prn, _("Failed to produce gfn file\n"));
 	    } else {
 		pprintf(prn, _("Wrote '%s'\n"), gfnname);
 	    }

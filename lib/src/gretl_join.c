@@ -527,11 +527,11 @@ static keynum dtoll_full (double x, int key, int row, int *err)
 {
     if (na(x)) {
         if (key == 2) {
-            gretl_errmsg_sprintf(_("%s: invalid secondary outer key value on row %d",
-                                 "join"), row);
+            gretl_errmsg_sprintf(_("%s: invalid secondary outer key value on row %d"),
+                                 "join", row);
         } else {
-            gretl_errmsg_sprintf(_("%s: invalid (primary) outer key value on row %d",
-                                 "join"), row);
+            gretl_errmsg_sprintf(_("%s: invalid (primary) outer key value on row %d"),
+                                 "join", row);
         }
         *err = E_DATA;
         return -1;

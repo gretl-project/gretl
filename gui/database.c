@@ -2039,7 +2039,7 @@ static int dbn_general_search_results (const gchar *key,
 	int i;
 
 	pprintf(prn, _("Results of DB.NOMICS search on '%s'\n"), key);
-	pputs(prn, _("Provider/Dataset : description\n\n");
+	pputs(prn, _("Provider/Dataset : description\n\n"));
 
 	for (i=0; i<n; i++) {
 	    b = gretl_array_get_bundle(a, i);

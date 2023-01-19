@@ -5754,7 +5754,7 @@ static int check_full_dataset (void)
 	    "If you first structure your full dataset as a panel, you can then\n"
 	    "do what you are trying to do.");
 
-	gretl_errmsg_set(_(msg);
+	gretl_errmsg_set(_(msg));
 	return E_DATA;
     }
 
