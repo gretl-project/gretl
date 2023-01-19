@@ -89,10 +89,10 @@ dataset:
 \end{tabular}
 \end{center}
 
-In fact this dataset is special, since it also contains special
-cartographic information. The issue on how to create such a file will
-be dealt with in Sections~\ref{sec:prelim} and \ref{sec:workflow}, but
-for the moment let's just skip this point.
+In fact this dataset is special, since it also contains cartographic
+information ``in the background''. The question of how to create such
+a file will be dealt with in Sections~\ref{sec:prelim} and
+\ref{sec:workflow}, but for the moment let's just skip this point.
 
 To plot a thematic map for the share of votes received by the
 Republicans in each state, you could simply open a console and type
@@ -117,15 +117,15 @@ map. If we try the same with the \texttt{region} variable via
 \begin{code}
   geoplot(region)
 \end{code}
-we get a map similar to the one in Figure~\ref{fig:us2020-reg}. In
-this case, the colors are the same for states in the same US region:
-note that the format of the legend has also changed appropriately. The
-difference is due to the fact that \texttt{rep} is a quantitative
-variable, while \texttt{region} is a qualitative, string-valued
-one. Gretl is aware of the difference and plots the map with the
-appropriate adjustments. A similar result that you can try by yourself
-is achieved by plotting a map for the binary variable
-\texttt{biden}. More on this in Section~\ref{sec:qualitative}.
+we get a map similar to Figure~\ref{fig:us2020-reg}. In this case the
+colors are the same for states in the same US region: note that the
+format of the legend has also changed appropriately. The difference is
+due to the fact that \texttt{rep} is a quantitative variable, while
+\texttt{region} is qualitative (and string-valued). Gretl is aware of
+the difference and plots the map with the appropriate adjustments. A
+similar example that you can try by yourself is plotting a map for the
+binary variable \texttt{biden}. More on this in
+Section~\ref{sec:qualitative}.
 
 \begin{figure}[htbp]
   \centering
@@ -149,9 +149,9 @@ its behavior. For example, the line
   geoplot(dem, _(palette="blues"))
 \end{code}
 produces something like Figure~\ref{fig:us2020-dem}. In this case, we
-use the \texttt{palette} option to make Democratic states, well,
-bluer. The available options and their meaning are explained in
-section~\ref{sec:opts}.
+use the \texttt{palette} option to represent the degree of Democratic
+support by shades of blue. The available options and their meaning are
+explained in section~\ref{sec:opts}.
 
 And now, let's take a deeper look under the hood.
 
@@ -267,8 +267,7 @@ alphabetical order for US states).
 In principle one could represent maps using any one of the many
 plotting libraries available, but gretl uses \textsf{gnuplot}, which
 we already use for all other kinds of plot. Some insight into the
-\textsf{gnuplot} commands we use can be gained from
-Appendix~\ref{sec:gnuplot}.
+\textsf{gnuplot} commands we use can be gained from \ref{sec:gnuplot}.
 
 Given the geometry data and the payload, writing a \textsf{gnuplot}
 script for producing the map is straightforward. And in most cases
@@ -285,27 +284,28 @@ as follows.
 \begin{enumerate}
 \item You \cmd{open} the map-datafile as a gretl dataset; this reads
   in the metadata so gretl's \dollar{nobs} will be equal to the number
-  of regions, $n$.
+  of regions, $n$.\label{item:open}
 \item You add the payload data, via the \texttt{append} or
-  \texttt{join} commands or in some other way.
+  \texttt{join} commands or in some other way.\label{item:join}
 \item You decide on some details of your map (appearance, format,
-  etc.), with sensible defaults being available.
-\item You create the map.
+  etc.), with sensible defaults being available.\label{item:look}
+\item You create the map.\label{item:map}
 \item Optionally, you can save the data in gretl's native \texttt{gdt}
-  format (but see below).
+  format (but see below).\label{item:save}
 \end{enumerate}
 
-Point 1 is handled by using the \texttt{open} command on the
-map-datafile. The filename extensions recognized for this purpose are
-\texttt{json} or \texttt{geojson} for GeoJSON files, and \texttt{dbf}
-or \texttt{shp} for ESRI shapefiles.\footnote{In principle we could
-  read the polygons at this point and store them in RAM, but for now
-  we don't. We just read in the metadata, but store the path to the
-  associated geometry file internally.} Point 2 is also handled by
-standard gretl commands.
+Point \ref{item:open} is handled by using the \texttt{open} command on
+the map-datafile. The filename extensions recognized for this purpose
+are \texttt{json} or \texttt{geojson} for GeoJSON files, and
+\texttt{dbf} or \texttt{shp} for ESRI shapefiles.\footnote{In
+  principle we could read the polygons at this point and store them in
+  RAM, but for now we don't. We just read in the metadata, but store
+  the path to the associated geometry file internally.}
+Point~\ref{item:join} is also handled by standard gretl commands.
 
-Points 3 and 4 are handled by the \texttt{geoplot} function, which can
-be called in either of two ways, corresponding to these two signatures:
+Points \ref{item:look} and \ref{item:map} are handled by the
+\texttt{geoplot} function, which can be called in either of two ways,
+corresponding to these two signatures:
 \begin{code}
 function void geoplot(const series payload[null], const bundle options[null])
 
@@ -338,14 +338,14 @@ a bundle:
 bundle b = bread($mapfile)
 \end{code}
 %$
-Finally, a cautionary note on point 5: the saved \texttt{gdt} file
-will \emph{not} contain the geometry information, but rather a pointer
-to the appropriate file (GeoJSON or shapefile). As a consequence, as
-long as the file holding the polygon info remains in the same place,
-you can simply re-open your \texttt{gdt} file and create new
-maps. However, you can't send it to someone else and expect it to work
-for map creation, unless you also supply them with the original
-geometry file.
+Finally, a cautionary note on point~\ref{item:save} above: the saved
+\texttt{gdt} file will \emph{not} contain the geometry information,
+but rather a pointer to the appropriate file (GeoJSON or
+shapefile). As a consequence, as long as the file holding the polygon
+info remains in the same place, you can simply re-open your
+\texttt{gdt} file and create new maps. However, you can't send it to
+someone else and expect it to work for map creation, unless you also
+supply them with the original geometry file.
 
 \section{An example}
 \label{sec:example}
