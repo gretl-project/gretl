@@ -100,33 +100,32 @@ Republicans in each state, you could simply open a console and type
 geoplot(rep)
 \end{code}
 and a plot like the one shown in Figure~\ref{fig:us2020-rep}
+should appear on your screen. Achieving the same via the GUI is quite
+easy; we'll deal with this in Section~\ref{sec:gui}.
+
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.75]{us2020-rep}
   \caption{Output of the \texttt{geoplot(rep)} command}
   \label{fig:us2020-rep}
 \end{figure}
-should appear on your screen. Achieving the same via the GUI is quite
-easy; we'll deal with this in Section~\ref{sec:gui}.
 
 The interpretation of the map in Figure~\ref{fig:us2020-rep} should be
-obvious, with ``warmer'' colors for the states where the Republican
+obvious, with ``hotter'' colors for the states where the Republican
 party enjoyed more support, as shown by the legend to the right of the
-map. If, instead, we try the same with the \texttt{region} variable
-via
+map. If we try the same with the \texttt{region} variable via
 \begin{code}
   geoplot(region)
 \end{code}
-what we get is a map similar to the one in
-Figure~\ref{fig:us2020-reg}. In this case, the colors are the same for
-the states in the same US region: note that the format of the legend
-has also changed appropriately. The difference is due to the fact that
-\texttt{rep} is a continuous variable, while \texttt{region} is a
-discrete, string-valued one. Gretl is aware of the difference and
-plots the map with the appropriate adjustments. A similar result that
-you can try by yourself is achieved by plotting a map for the binary
-variable \texttt{biden}. More on this in
-Section~\ref{sec:qualitative}.
+we get a map similar to the one in Figure~\ref{fig:us2020-reg}. In
+this case, the colors are the same for states in the same US region:
+note that the format of the legend has also changed appropriately. The
+difference is due to the fact that \texttt{rep} is a quantitative
+variable, while \texttt{region} is a qualitative, string-valued
+one. Gretl is aware of the difference and plots the map with the
+appropriate adjustments. A similar result that you can try by yourself
+is achieved by plotting a map for the binary variable
+\texttt{biden}. More on this in Section~\ref{sec:qualitative}.
 
 \begin{figure}[htbp]
   \centering
@@ -138,18 +137,19 @@ Section~\ref{sec:qualitative}.
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.75]{us2020-dem}
-  \caption{Output of the \texttt{geoplot(region, \_(palette="blues"))} command}
+  \caption{Output of the \texttt{geoplot(dem, \_(palette="blues"))} command}
   \label{fig:us2020-dem}
 \end{figure}
-Of course, many details of the maps, such as its color scheme, its
-size etc. can be customized to the user's needs. To this aim, we
-supply an options bundle to the \cmd{geoplot} function to inflect the
+
+Many details of the maps---such as their color scheme, size, and so
+on---can be customized to the user's needs. To this aim, you can
+supply an options bundle to the \cmd{geoplot} function to inflect
 its behavior. For example, the line
 \begin{code}
-  geoplot(region, _(palette="blues"))
+  geoplot(dem, _(palette="blues"))
 \end{code}
 produces something like Figure~\ref{fig:us2020-dem}. In this case, we
-used the \texttt{palette} option to make Democrat states, well,
+use the \texttt{palette} option to make Democratic states, well,
 bluer. The available options and their meaning are explained in
 section~\ref{sec:opts}.
 
