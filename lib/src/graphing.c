@@ -3904,9 +3904,9 @@ static int single_year_sample (const DATASET *dset,
    fewer than 6 monthly observations.
 */
 
-static void short_monthly_tics (gnuplot_info *gi,
-				const DATASET *dset,
-				PRN *prn)
+static void few_monthly_tics (gnuplot_info *gi,
+			      const DATASET *dset,
+			      PRN *prn)
 {
     double x;
     int y, m, t;
@@ -3922,6 +3922,19 @@ static void short_monthly_tics (gnuplot_info *gi,
     }
 
     gretl_pop_c_numeric_locale();
+}
+
+/* The following works tolerably well (?) for monthly data when
+   6 <= T <= 36, using gnuplot's timefmt.
+*/
+
+static void short_monthly_tics (gnuplot_info *gi, int T, PRN *prn)
+{
+    int mt = 1 + (T > 13) + (T > 25);
+
+    strcpy(gi->xfmt, "%b %Y");
+    pprintf(prn, "set mxtics %d\n", mt);
+    pputs(prn, "set rmargin 8\n");
 }
 
 /* special tics for time series plots */
@@ -3947,10 +3960,7 @@ static void make_time_tics (gnuplot_info *gi,
 	strcpy(gi->timefmt, "%s");
 	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
 	if (dset->pd == 12) {
-	    /* FIXME mxtics argument */
-	    strcpy(gi->xfmt, "%b %Y");
-	    pprintf(prn, "set mxtics %d\n", (int) nearbyint(T / 11.0));
-	    pputs(prn, "set rmargin 8\n");
+	    short_monthly_tics(gi, T, prn);
 	} else if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
 	} else {
@@ -3967,7 +3977,7 @@ static void make_time_tics (gnuplot_info *gi,
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
     } else if (dset->pd == 12 && T < 6) {
-	short_monthly_tics(gi, dset, prn);
+	few_monthly_tics(gi, dset, prn);
     } else if (dset->pd == 12 && T / 12 < few) {
 	/* FIXME is this still wanted? */
 	pputs(prn, "set xtics nomirror 0,1\n");
