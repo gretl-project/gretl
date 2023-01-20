@@ -623,7 +623,7 @@ static void do_boxplot_xtics (PLOTGROUP *grp, gretlopt opt,
         }
     }
 
-    if (ntics > 15 && ticlen > 1) {
+    if (ntics * ticlen > 80) {
         /* try to avoid xtic mash-up */
         fputs("set xtics rotate by -45\n", fp);
     }
