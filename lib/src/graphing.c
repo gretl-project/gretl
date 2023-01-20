@@ -3900,6 +3900,30 @@ static int single_year_sample (const DATASET *dset,
     return y2 == y1;
 }
 
+/* Put a YYYY-MM tic for each data-point when plotting
+   fewer than 6 monthly observations.
+*/
+
+static void short_monthly_tics (gnuplot_info *gi,
+				const DATASET *dset,
+				PRN *prn)
+{
+    double x;
+    int y, m, t;
+
+    pprintf(prn, "set xtics (");
+    gretl_push_c_numeric_locale();
+
+    for (t=gi->t1; t<=gi->t2; t++) {
+	date_maj_min(t, dset, &y, &m);
+	x = y + (m - 1) / 12.0;
+	pprintf(prn, "\"%d-%02d\" %g", y, m, x);
+	pputs(prn, t < gi->t2 ? ", " : ")\n");
+    }
+
+    gretl_pop_c_numeric_locale();
+}
+
 /* special tics for time series plots */
 
 static void make_time_tics (gnuplot_info *gi,
@@ -3942,7 +3966,10 @@ static void make_time_tics (gnuplot_info *gi,
     } else if (dset->pd == 4 && T / 4 < few) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
+    } else if (dset->pd == 12 && T < 6) {
+	short_monthly_tics(gi, dset, prn);
     } else if (dset->pd == 12 && T / 12 < few) {
+	/* FIXME is this still wanted? */
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 12\n");
     } else if (dated_daily_data(dset) || dated_weekly_data(dset)) {
