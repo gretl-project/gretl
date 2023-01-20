@@ -3591,17 +3591,20 @@ static int graph_list_adjust_sample (int *list,
     return err;
 }
 
-/* Check whether mktime() works for the starting date.
-   Note that it won't work on Windows for dates prior to
-   1970 since Microsoft doesn't handle negative time_t
-   values.
-*/
+#if 0
+
+/* check whether mktime() works for the starting date */
 
 static int timefmt_useable (const DATASET *dset)
 {
     char *test, datestr[OBSLEN];
     struct tm t = {0};
     int ok = 0;
+
+    if (!dated_daily_data(dset) && !dated_weekly_data(dset)) {
+	/* restriction prior to 2023-01-19 */
+	return 0;
+    }
 
     if (sample_size(dset) > 300) {
 	/* not a good idea? */
@@ -3618,7 +3621,11 @@ static int timefmt_useable (const DATASET *dset)
 
     test = strptime(datestr, "%Y-%m-%d", &t);
     if (test != NULL && *test == '\0') {
+#ifdef WIN32
+	win32_mktime(&t);
+#else
 	mktime(&t);
+#endif
 	ok = (errno == 0);
     }
 
@@ -3626,6 +3633,23 @@ static int timefmt_useable (const DATASET *dset)
 
     return ok;
 }
+
+#else /* new version, needs checking */
+
+static int timefmt_useable (gnuplot_info *gi, const DATASET *dset)
+{
+    if (dated_daily_data(dset) || dated_weekly_data(dset)) {
+	return 1;
+    } else if (dset->pd == 12) {
+	int T = gi->t2 - gi->t1 + 1;
+
+	return T >= 6 && T <= 36;
+    }
+
+    return 0;
+}
+
+#endif
 
 static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 			    const DATASET *dset)
@@ -3645,14 +3669,10 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	return 0;
     }
 
-    if (!time_fit) {
-	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
-	    if (timefmt_useable(dset)) {
-		/* experimental */
-		gi->flags |= GPT_TIMEFMT;
-		xopt = OPT_T;
-	    }
-	}
+    if (!time_fit && timefmt_useable(gi, dset)) {
+	/* experimental */
+	gi->flags |= GPT_TIMEFMT;
+	xopt = OPT_T;
     }
 
     gi->x = gretl_plotx(dset, xopt);
@@ -3887,6 +3907,7 @@ static void make_time_tics (gnuplot_info *gi,
 			    int many, char *xlabel,
 			    PRN *prn)
 {
+    int T = gi->t2 - gi->t1 + 1;
     int few = 8;
 
     if (many) {
@@ -3901,7 +3922,12 @@ static void make_time_tics (gnuplot_info *gi,
 	pputs(prn, "set xdata time\n");
 	strcpy(gi->timefmt, "%s");
 	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
-	if (single_year_sample(dset, gi->t1, gi->t2)) {
+	if (dset->pd == 12) {
+	    /* FIXME mxtics argument */
+	    strcpy(gi->xfmt, "%b %Y");
+	    pprintf(prn, "set mxtics %d\n", (int) nearbyint(T / 11.0));
+	    pputs(prn, "set rmargin 8\n");
+	} else if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
 	} else {
 	    strcpy(gi->xfmt, "%y-%m-%d"); /* two-digit year */
@@ -3911,12 +3937,12 @@ static void make_time_tics (gnuplot_info *gi,
 	return;
     }
 
-    if (dset->pd == 1 && (gi->t2 - gi->t1) < few) {
+    if (dset->pd == 1 && T < few) {
 	pputs(prn, "set xtics nomirror 1\n");
-    } else if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < few) {
+    } else if (dset->pd == 4 && T / 4 < few) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
-    } else if (dset->pd == 12 && (gi->t2 - gi->t1) / 12 < few) {
+    } else if (dset->pd == 12 && T / 12 < few) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 12\n");
     } else if (dated_daily_data(dset) || dated_weekly_data(dset)) {
@@ -9661,27 +9687,24 @@ void date_from_gnuplot_time (char *targ, size_t tsize,
 
 double gnuplot_time_from_date (const char *s, const char *fmt)
 {
-    double x = NADBL;
+    double ret = NADBL;
 
     if (fmt != NULL) {
 	if (strcmp(fmt, "%s") == 0) {
 	    /* already in seconds since epoch start */
-	    x = atof(s);
+	    ret = atof(s);
 	} else if (*fmt != '\0') {
-	    struct tm t = {0,0,0,1,0,0,0,0,-1};
-	    time_t etime;
 	    char *test;
+	    double x;
 
-	    test = strptime(s, fmt, &t);
+	    test = gretl_strptime(s, fmt, &x);
 	    if (test != NULL && *test == '\0') {
-		/* conversion went OK */
-		etime = mktime(&t);
-		x = (double) etime;
+		ret = x;
 	    }
 	}
     }
 
-    return x;
+    return ret;
 }
 
 /* geoplot-specific functions */
