@@ -13675,6 +13675,88 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 }
 
 /**
+ * gretl_matrix_diag_qform:
+ * @A: m * k matrix or k * m matrix, depending on @amod.
+ * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first
+ * case @A should be m * k; in the second, k * m;
+ * @d: k-element vector.
+ * @C: matrix to hold the product.
+ * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
+ * add the result to the existing value of @C.
+ *
+ * Computes either A * <d> * A' (if amod = %GRETL_MOD_NONE) or A' *
+ * <d> * A (if amod = %GRETL_MOD_TRANSPOSE), where <d> is a diagonal
+ * matrix holding the vector @d. The result is written into @C.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
+			     const gretl_vector *d, gretl_matrix *C,
+			     GretlMatrixMod cmod)
+{
+    register int i, j, k;
+    double x, xi, xj, cij;
+    int r, c;
+
+    if (gretl_is_null_matrix(A) ||
+        gretl_is_null_matrix(d) ||
+        gretl_is_null_matrix(C)) {
+        return E_DATA;
+    } else if (A->is_complex || d->is_complex) {
+        fprintf(stderr, "E_CMPLX in gretl_matrix_qform\n");
+        if (A->is_complex) fprintf(stderr, "\touter is complex\n");
+        if (d->is_complex) fprintf(stderr, "\tinner is complex\n");
+        return E_CMPLX;
+    }
+
+    r = (amod)? A->cols : A->rows;
+    c = (amod)? A->rows : A->cols;
+    int ld = gretl_vector_get_length(d);
+
+    if (c != ld) {
+        fprintf(stderr, "gretl_matrix_diag_qform: %s is (%d x %d) but d has %d elements\n",
+                (amod)? "A'" : "A", r, c, ld);
+        return E_NONCONF;
+    }
+
+    if (C->rows != r || C->cols != r) {
+        fputs("gretl_matrix_diag_qform: destination matrix not conformable\n", stderr);
+        return E_NONCONF;
+    }
+
+    for (i=0; i<r; i++) {
+	for (j=0; j<=i; j++) {
+	    x = 0.0;
+	    for (k=0; k<c; k++) {
+		if (amod) {
+		    xi = gretl_matrix_get(A,k,i);
+		    xj = gretl_matrix_get(A,k,j);
+		} else {
+		    xi = gretl_matrix_get(A,i,k);
+		    xj = gretl_matrix_get(A,j,k);
+		}
+		x += d->val[k] * xi * xj;
+	    }
+	    if (cmod == GRETL_MOD_CUMULATE) {
+		cij = gretl_matrix_get(C, i, j) + x;
+	    } else if (cmod == GRETL_MOD_DECREMENT) {
+		cij = gretl_matrix_get(C, i, j) - x;
+	    } else {
+		cij = x;
+	    }
+
+	    gretl_matrix_set(C, i, j, cij);
+	    if (j != i) {
+		gretl_matrix_set(C, j, i, cij);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
  * gretl_scalar_qform:
  * @b: k-vector.
  * @X: symmetric k x k matrix.
