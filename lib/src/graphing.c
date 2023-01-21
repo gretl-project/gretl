@@ -3636,15 +3636,21 @@ static int timefmt_useable (const DATASET *dset)
 
 #else /* new version, needs checking */
 
+#define MONTHS_USE_TIMEFMT 1
+
 static int timefmt_useable (gnuplot_info *gi, const DATASET *dset)
 {
     if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	return 1;
-    } else if (dset->pd == 12) {
+    }
+
+# if MONTHS_USE_TIMEFMT
+    if (dset->pd == 12) {
 	int T = gi->t2 - gi->t1 + 1;
 
 	return T >= 6 && T <= 36;
     }
+# endif
 
     return 0;
 }
@@ -3917,6 +3923,7 @@ static void few_monthly_tics (gnuplot_info *gi,
     for (t=gi->t1; t<=gi->t2; t++) {
 	date_maj_min(t, dset, &y, &m);
 	x = y + (m - 1) / 12.0;
+	/* could use month names here */
 	pprintf(prn, "\"%d-%02d\" %g", y, m, x);
 	pputs(prn, t < gi->t2 ? ", " : ")\n");
     }
@@ -3925,7 +3932,8 @@ static void few_monthly_tics (gnuplot_info *gi,
 }
 
 /* The following works tolerably well (?) for monthly data when
-   6 <= T <= 36, using gnuplot's timefmt.
+   6 <= T <= 36, using gnuplot's timefmt. Or maybe it's too
+   fragile?
 */
 
 static void short_monthly_tics (gnuplot_info *gi, int T, PRN *prn)
