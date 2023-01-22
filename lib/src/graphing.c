@@ -3849,12 +3849,13 @@ static int single_year_sample (const DATASET *dset,
     return y2 == y1;
 }
 
-/* Use YYYY-MM tics when plotting fewer than ? monthly
-   observations.
+/* Use year-and-month major tics when plotting fewer than ??
+   monthly observations.
 */
 
-static void few_monthly_tics (gnuplot_info *gi, int T,
-			      const DATASET *dset, PRN *prn)
+static void short_monthly_tics (gnuplot_info *gi, int T,
+				const DATASET *dset,
+				PRN *prn)
 {
     GDateTime *dt0 = NULL;
     GDateTime *dt1 = NULL;
@@ -3917,7 +3918,7 @@ static void make_time_tics (gnuplot_info *gi,
 			    PRN *prn)
 {
     int T = gi->t2 - gi->t1 + 1;
-    int few = 8;
+    int few_years = 8;
 
     if (many) {
 	pprintf(prn, "# multiple timeseries %d\n", dset->pd);
@@ -3941,15 +3942,15 @@ static void make_time_tics (gnuplot_info *gi,
 	return;
     }
 
-    if (dset->pd == 1 && T < few) {
+    if (dset->pd == 1 && T < few_years) {
 	pputs(prn, "set xtics nomirror 1\n");
-    } else if (dset->pd == 4 && T / 4 < few) {
+    } else if (dset->pd == 4 && T / 4 < few_years) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
     } else if (dset->pd == 12) {
 	if (T < 36) {
-	    few_monthly_tics(gi, T, dset, prn);
-	} else if (T / 12 < few) {
+	    short_monthly_tics(gi, T, dset, prn);
+	} else if (T / 12 < few_years) {
 	    pputs(prn, "set xtics nomirror 0,1\n");
 	    pputs(prn, "set mxtics 12\n");
 	}
