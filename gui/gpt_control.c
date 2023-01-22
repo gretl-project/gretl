@@ -2029,6 +2029,11 @@ static void read_xtics_setting (GPT_SPEC *spec,
     if (!strcmp(key, "x2tics")) {
 	spec->x2ticstr = gretl_strdup(val);
     } else if (*val == '(') {
+	int len = strlen(val);
+
+	if (val[len-1] == '\\') {
+	    fprintf(stderr, "got continuing xtics\n");
+	}
 	spec->xticstr = gretl_strdup(val);
     } else {
 	*spec->xtics = '\0';
@@ -3328,7 +3333,21 @@ static int read_plotspec_from_file (png_plot *plot)
 			errbox(_("Plot file is corrupted"));
 		    } else {
 			top_n_tail(gpline, 0, NULL);
-			spec->literal[i] = g_strdup(gpline);
+			spec->literal[i] = gretl_strdup(gpline);
+		    }
+		}
+	    }
+	} else if (sscanf(gpline, "# xtics lines = %d", &spec->n_xtics)) {
+	    spec->multi_xtics = strings_array_new(spec->n_xtics);
+	    if (spec->multi_xtics == NULL) {
+		err = E_ALLOC;
+	    } else {
+		for (i=0; i<spec->n_xtics; i++) {
+		    if (!bufgets(gpline, MAXLEN - 1, buf)) {
+			errbox(_("Plot file is corrupted"));
+		    } else {
+			g_strstrip(gpline);
+			spec->multi_xtics[i] = gretl_strdup(gpline);
 		    }
 		}
 	    }

@@ -61,6 +61,9 @@ GPT_SPEC *plotspec_new (void)
     spec->literal = NULL;
     spec->n_literal = 0;
 
+    spec->multi_xtics = NULL;
+    spec->n_xtics = 0;
+
     for (i=0; i<5; i++) {
 	spec->titles[i] = NULL;
     }
@@ -177,6 +180,10 @@ void plotspec_destroy (GPT_SPEC *spec)
 
     if (spec->literal != NULL) {
 	strings_array_free(spec->literal, spec->n_literal);
+    }
+
+    if (spec->multi_xtics != NULL) {
+	strings_array_free(spec->multi_xtics, spec->n_xtics);
     }
 
     if (spec->markers != NULL) {
@@ -823,7 +830,7 @@ static int usable_obs (const double *x, const double *y0,
 int plotspec_line_is_formula (const GPT_SPEC *spec, int i)
 {
     int ret = 0;
-    
+
     if (i >= 0 && i < spec->n_lines) {
 	GPT_LINE *line = &spec->lines[i];
 
@@ -1464,6 +1471,15 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 		fprintf(fp, "%s\n", spec->literal[i]);
 	    } else {
 		fputs("# empty line!\n", fp);
+	    }
+	}
+    }
+
+    if (spec->n_xtics > 0) {
+	fprintf(fp, "# xtics lines = %d\n", spec->n_xtics);
+	for (i=0; i<spec->n_xtics; i++) {
+	    if (spec->multi_xtics[i] != NULL && *spec->multi_xtics[i] != '\0') {
+		fprintf(fp, "%s\n", spec->multi_xtics[i]);
 	    }
 	}
     }

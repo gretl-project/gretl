@@ -3861,16 +3861,21 @@ static void short_monthly_tics (gnuplot_info *gi, int T,
     GDateTime *dt1 = NULL;
     gchar *tstr = NULL;
     int use_names = 1;
-    int ticskip;
+    int ticskip = 1;
     int y, m, t, j;
     double x;
 
-    ticskip = 1 + (T > 12) + (T > 24);
+    if (T > 12) {
+	ticskip += (T > 12) + (T > 24);
+    }
+
     date_maj_min(gi->t1, dset, &y, &m);
     if (use_names) {
 	dt0 = g_date_time_new_local(y, m, 1, 0, 0, 0);
     }
 
+
+    pprintf(prn, "# xtics lines = %d\n", T);
     pprintf(prn, "set xtics (");
     gretl_push_c_numeric_locale();
 
