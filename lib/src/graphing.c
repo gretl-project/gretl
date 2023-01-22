@@ -3591,71 +3591,14 @@ static int graph_list_adjust_sample (int *list,
     return err;
 }
 
-#if 0
-
-/* check whether mktime() works for the starting date */
-
 static int timefmt_useable (const DATASET *dset)
-{
-    char *test, datestr[OBSLEN];
-    struct tm t = {0};
-    int ok = 0;
-
-    if (!dated_daily_data(dset) && !dated_weekly_data(dset)) {
-	/* restriction prior to 2023-01-19 */
-	return 0;
-    }
-
-    if (sample_size(dset) > 300) {
-	/* not a good idea? */
-	return 0;
-    }
-
-    errno = 0;
-
-    if (dset->S != NULL) {
-	strcpy(datestr, dset->S[dset->t1]);
-    } else {
-	calendar_date_string(datestr, dset->t1, dset);
-    }
-
-    test = strptime(datestr, "%Y-%m-%d", &t);
-    if (test != NULL && *test == '\0') {
-#ifdef WIN32
-	win32_mktime(&t);
-#else
-	mktime(&t);
-#endif
-	ok = (errno == 0);
-    }
-
-    errno = 0;
-
-    return ok;
-}
-
-#else /* new version, needs checking */
-
-#define MONTHS_USE_TIMEFMT 1
-
-static int timefmt_useable (gnuplot_info *gi, const DATASET *dset)
 {
     if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	return 1;
+    } else {
+	return 0;
     }
-
-# if MONTHS_USE_TIMEFMT
-    if (dset->pd == 12) {
-	int T = gi->t2 - gi->t1 + 1;
-
-	return T >= 6 && T <= 36;
-    }
-# endif
-
-    return 0;
 }
-
-#endif
 
 static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 			    const DATASET *dset)
@@ -3675,7 +3618,7 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	return 0;
     }
 
-    if (!time_fit && timefmt_useable(gi, dset)) {
+    if (!time_fit && timefmt_useable(dset)) {
 	/* experimental */
 	gi->flags |= GPT_TIMEFMT;
 	xopt = OPT_T;
@@ -3906,43 +3849,64 @@ static int single_year_sample (const DATASET *dset,
     return y2 == y1;
 }
 
-/* Put a YYYY-MM tic for each data-point when plotting
-   fewer than 6 monthly observations.
+/* Use YYYY-MM tics when plotting fewer than ? monthly
+   observations.
 */
 
-static void few_monthly_tics (gnuplot_info *gi,
-			      const DATASET *dset,
-			      PRN *prn)
+static void few_monthly_tics (gnuplot_info *gi, int T,
+			      const DATASET *dset, PRN *prn)
 {
+    GDateTime *dt0 = NULL;
+    GDateTime *dt1 = NULL;
+    gchar *tstr = NULL;
+    int use_names = 1;
+    int ticskip;
+    int y, m, t, j;
     double x;
-    int y, m, t;
+
+    ticskip = 1 + (T > 12) + (T > 24);
+    date_maj_min(gi->t1, dset, &y, &m);
+    if (use_names) {
+	dt0 = g_date_time_new_local(y, m, 1, 0, 0, 0);
+    }
 
     pprintf(prn, "set xtics (");
     gretl_push_c_numeric_locale();
 
-    for (t=gi->t1; t<=gi->t2; t++) {
-	date_maj_min(t, dset, &y, &m);
+    for (t=gi->t1, j=0; t<=gi->t2; t++, j++) {
 	x = y + (m - 1) / 12.0;
-	/* could use month names here */
-	pprintf(prn, "\"%d-%02d\" %g", y, m, x);
-	pputs(prn, t < gi->t2 ? ", " : ")\n");
+	if (j % ticskip == 0) {
+	    /* major (labeled) tic */
+	    if (use_names) {
+		tstr = g_date_time_format(dt0, "%b %Y");
+		pprintf(prn, "\"%s\" %g 0", tstr, m, x);
+		dt1 = g_date_time_add_months(dt0, ticskip);
+		g_date_time_unref(dt0);
+		dt0 = dt1;
+		g_free(tstr);
+	    } else {
+		pprintf(prn, "\"%d-%02d\" %g 0", y, m, x);
+	    }
+	} else {
+	    /* minor (unlabeled) tic */
+	    pprintf(prn, "\"\" %g 1", x);
+	}
+	pputs(prn, t < gi->t2 ? ", \\\n" : ")\n");
+	if (m == 12) {
+	    y++;
+	    m = 1;
+	} else {
+	    m++;
+	}
     }
 
     gretl_pop_c_numeric_locale();
-}
-
-/* The following works tolerably well (?) for monthly data when
-   6 <= T <= 36, using gnuplot's timefmt. Or maybe it's too
-   fragile?
-*/
-
-static void short_monthly_tics (gnuplot_info *gi, int T, PRN *prn)
-{
-    int mt = 1 + (T > 13) + (T > 25);
-
-    strcpy(gi->xfmt, "%b %Y");
-    pprintf(prn, "set mxtics %d\n", mt);
-    pputs(prn, "set rmargin 8\n");
+    if (T > 8) {
+	pputs(prn, "set xtics rotate by -45\n");
+    }
+    if (use_names) {
+	g_date_time_unref(dt0);
+    }
 }
 
 /* special tics for time series plots */
@@ -3967,9 +3931,7 @@ static void make_time_tics (gnuplot_info *gi,
 	pputs(prn, "set xdata time\n");
 	strcpy(gi->timefmt, "%s");
 	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
-	if (dset->pd == 12) {
-	    short_monthly_tics(gi, T, prn);
-	} else if (single_year_sample(dset, gi->t1, gi->t2)) {
+	if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
 	} else {
 	    strcpy(gi->xfmt, "%y-%m-%d"); /* two-digit year */
@@ -3984,12 +3946,13 @@ static void make_time_tics (gnuplot_info *gi,
     } else if (dset->pd == 4 && T / 4 < few) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
-    } else if (dset->pd == 12 && T < 6) {
-	few_monthly_tics(gi, dset, prn);
-    } else if (dset->pd == 12 && T / 12 < few) {
-	/* FIXME is this still wanted? */
-	pputs(prn, "set xtics nomirror 0,1\n");
-	pputs(prn, "set mxtics 12\n");
+    } else if (dset->pd == 12) {
+	if (T < 36) {
+	    few_monthly_tics(gi, T, dset, prn);
+	} else if (T / 12 < few) {
+	    pputs(prn, "set xtics nomirror 0,1\n");
+	    pputs(prn, "set mxtics 12\n");
+	}
     } else if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	make_calendar_tics(dset, gi, prn);
     } else if (multiple_groups(dset, gi->t1, gi->t2)) {

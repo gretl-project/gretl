@@ -3762,7 +3762,7 @@ static int plotvar_code (const DATASET *dset, gretlopt opt)
     } else if (dset->pd == 4) {
         return PLOTVAR_QUARTERS;
     } else if (dset->pd == 12) {
-        return (opt & OPT_T)? PLOTVAR_GPTIME : PLOTVAR_MONTHS;
+        return PLOTVAR_MONTHS;
     } else if (dset->pd == 24) {
         return PLOTVAR_HOURLY;
     } else if (calendar_data(dset)) {
@@ -3945,13 +3945,6 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
                 } else {
                     x[t] = get_dec_date(dset->S[t]);
                 }
-            } else if (dset->pd == 12) {
-		char datestr[OBSLEN];
-
-		for (t=0; t<T; t++) {
-		    ntolabel(datestr, t, dset);
-		    gretl_strptime(datestr, "%Y:%m", &x[t]);
-		}
 	    } else {
                 char datestr[OBSLEN];
 
