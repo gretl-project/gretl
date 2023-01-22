@@ -3332,7 +3332,7 @@ static int read_plotspec_from_file (png_plot *plot)
 		    if (!bufgets(gpline, MAXLEN - 1, buf)) {
 			errbox(_("Plot file is corrupted"));
 		    } else {
-			top_n_tail(gpline, 0, NULL);
+			g_strstrip(gpline);
 			spec->literal[i] = gretl_strdup(gpline);
 		    }
 		}
