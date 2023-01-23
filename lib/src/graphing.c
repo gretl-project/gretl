@@ -4065,6 +4065,17 @@ static int panel_group_invariant_plot (const int *plotlist,
     return err;
 }
 
+static int time_fit_wanted (gretlopt opt)
+{
+    if ((opt & OPT_T) && (opt & OPT_F)) {
+        const char *s = get_optval_string(GNUPLOT, OPT_F);
+
+        return s != NULL && strcmp(s, "none") != 0;
+    } else {
+        return 1;
+    }
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -4101,7 +4112,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_error_clear();
 
-    if ((opt & OPT_T) && (opt & OPT_F)) {
+    if (time_fit_wanted(opt)) {
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
 	} else {
