@@ -9683,17 +9683,7 @@ int gnuplot_process_file (PRN *prn)
 void date_from_gnuplot_time (char *targ, size_t tsize,
 			     const char *fmt, double x)
 {
-#ifdef WIN32
-    time_t etime = (time_t) x;
-
-    strftime(targ, tsize, fmt, localtime(&etime));
-#else
-    struct tm t = {0};
-    time_t etime = (time_t) x;
-
-    localtime_r(&etime, &t);
-    strftime(targ, tsize, fmt, &t);
-#endif
+    gretl_strftime(targ, (int) tsize, fmt, (gint64) x, NADBL);
 }
 
 double gnuplot_time_from_date (const char *s, const char *fmt)
