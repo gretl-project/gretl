@@ -350,12 +350,6 @@ int gnuplot_test_command (const char *cmd);
 
 void gnuplot_png_set_default_scale (double s);
 
-void date_from_gnuplot_time (char *targ, size_t tsize, 
-			     const char *fmt, double x);
-
-double gnuplot_time_from_date (const char *s, 
-			       const char *fmt);
-
 int gnuplot_has_wxt (void);
 
 int write_map_gp_file (void *ptr);
