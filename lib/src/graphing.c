@@ -4065,15 +4065,19 @@ static int panel_group_invariant_plot (const int *plotlist,
     return err;
 }
 
-static int time_fit_wanted (gretlopt opt)
+static int time_fit_wanted (gretlopt *popt)
 {
-    if ((opt & OPT_T) && (opt & OPT_F)) {
+    if ((*popt & OPT_T) && (*popt & OPT_F)) {
         const char *s = get_optval_string(GNUPLOT, OPT_F);
 
-        return s != NULL && strcmp(s, "none") != 0;
-    } else {
-        return 1;
+	if (s == NULL || !strcmp(s, "none")) {
+	    *popt &= ~OPT_F;
+	} else {
+	    return 1;
+	}
     }
+
+    return 0;
 }
 
 /**
@@ -4112,7 +4116,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_error_clear();
 
-    if (time_fit_wanted(opt)) {
+    if (time_fit_wanted(&opt)) {
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
 	} else {
