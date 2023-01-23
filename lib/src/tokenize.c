@@ -3146,6 +3146,9 @@ static int handle_command_extra (CMD *c)
 		    c->opt |= OPT_A;
 		    c->err = push_option_param(c->ci, OPT_A, extra);
 		}
+	    } else if (!token_done(tok)) {
+		gretl_errmsg_set(_("modprint: third argument must be a named matrix"));
+		c->err = E_TYPES;
 	    }
 	}
     } else if (c->ci == STORE) {
