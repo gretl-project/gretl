@@ -3593,11 +3593,7 @@ static int graph_list_adjust_sample (int *list,
 
 static int timefmt_useable (const DATASET *dset)
 {
-    if (dated_daily_data(dset) || dated_weekly_data(dset)) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return dated_daily_data(dset) || dated_weekly_data(dset);
 }
 
 static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
@@ -3940,10 +3936,11 @@ static void make_time_tics (gnuplot_info *gi,
 	if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
 	} else {
-	    strcpy(gi->xfmt, "%y-%m-%d"); /* two-digit year */
+	    strcpy(gi->xfmt, "%Y-%m-%d");
 	}
 	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
 	pputs(prn, "set xtics rotate by -45\n");
+	pputs(prn, "set xtics nomirror\n");
 	return;
     }
 
