@@ -1198,15 +1198,18 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 
     if (fname == NULL || *fname == '\0') {
 	*err = E_INVARG;
-    } else if (strlen(fname) >= FILENAME_MAX) {
-	*err = E_INVARG;
+    } else {
+        len = strlen(fname);
+        if (len >= MAXLEN) {
+            gretl_errmsg_sprintf(_("filename too long (%d bytes)"), (int) len);
+            *err = E_INVARG;
+        }
+        len = 0;
     }
 
     if (*err) {
 	return NULL;
     }
-
-    fprintf(stderr, "");
 
     if (is_web_resource(fname)) {
 #ifdef USE_CURL
@@ -1216,9 +1219,9 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	*err = E_DATA;
 #endif
     } else {
-	char fullname[FILENAME_MAX] = {0};
+	char fullname[MAXLEN] = {0};
 
-	strncat(fullname, fname, FILENAME_MAX - 1);
+	strcpy(fullname, fname);
 	gretl_addpath(fullname, 0);
 	if (is_gzipped(fullname)) {
 	    content = gzipped_file_get_content(fullname, err);
