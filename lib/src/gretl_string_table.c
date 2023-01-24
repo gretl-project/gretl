@@ -1198,7 +1198,17 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 
     if (fname == NULL || *fname == '\0') {
 	*err = E_INVARG;
-    } else if (is_web_resource(fname)) {
+    } else if (strlen(fname) >= FILENAME_MAX) {
+	*err = E_INVARG;
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    fprintf(stderr, "");
+
+    if (is_web_resource(fname)) {
 #ifdef USE_CURL
 	content = retrieve_public_file_as_buffer(fname, &len, err);
 #else
