@@ -13560,8 +13560,10 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * case @A should be m * k; in the second, k * m;
  * @X: symmetric k * k matrix.
  * @C: matrix to hold the product.
- * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
- * add the result to the existing value of @C.
+ * @cmod: modifier: %GRETL_MOD_NONE, or %GRETL_MOD_CUMULATE to
+ * add the result to the existing value of @C, or
+ * %GRETL_MOD_DECREMENT to subtract from the existing value
+ * of @C.
  *
  * Computes either A * X * A' (if amod = %GRETL_MOD_NONE) or
  * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE), with the result
@@ -13681,8 +13683,10 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * case @A should be m * k; in the second, k * m;
  * @d: k-element vector.
  * @C: matrix to hold the product.
- * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
- * add the result to the existing value of @C.
+ * @cmod: modifier: %GRETL_MOD_NONE, or %GRETL_MOD_CUMULATE to
+ * add the result to the existing value of @C, or
+ * %GRETL_MOD_DECREMENT to subtract from the existing value of
+ * @C.
  *
  * Computes either A * <d> * A' (if amod = %GRETL_MOD_NONE) or A' *
  * <d> * A (if amod = %GRETL_MOD_TRANSPOSE), where <d> is a diagonal
@@ -13697,14 +13701,14 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 {
     register int i, j, k;
     double x, xi, xj, cij;
-    int r, c;
+    int r, c, ld;
 
     if (gretl_is_null_matrix(A) ||
         gretl_is_null_matrix(d) ||
         gretl_is_null_matrix(C)) {
         return E_DATA;
     } else if (A->is_complex || d->is_complex) {
-        fprintf(stderr, "E_CMPLX in gretl_matrix_qform\n");
+        fprintf(stderr, "E_CMPLX in gretl_matrix_diag_qform\n");
         if (A->is_complex) fprintf(stderr, "\touter is complex\n");
         if (d->is_complex) fprintf(stderr, "\tinner is complex\n");
         return E_CMPLX;
@@ -13712,7 +13716,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
     r = (amod)? A->cols : A->rows;
     c = (amod)? A->rows : A->cols;
-    int ld = gretl_vector_get_length(d);
+    ld = gretl_vector_get_length(d);
 
     if (c != ld) {
         fprintf(stderr, "gretl_matrix_diag_qform: %s is (%d x %d) but d has %d elements\n",
@@ -13745,7 +13749,6 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	    } else {
 		cij = x;
 	    }
-
 	    gretl_matrix_set(C, i, j, cij);
 	    if (j != i) {
 		gretl_matrix_set(C, j, i, cij);
