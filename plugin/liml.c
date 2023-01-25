@@ -203,8 +203,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     int *list = system_get_list(sys, eq);
     int *exlist = NULL;
     gretl_matrix_block *B = NULL;
-    gretl_matrix *E, *W0, *W1, *W2, *Inv;
-    gretl_matrix *lambda = NULL;
+    gretl_matrix *E, *W0, *W1, *L;
     double lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
@@ -265,17 +264,13 @@ static int liml_do_equation (equation_system *sys, int eq,
     B = gretl_matrix_block_new(&E, T, k,
 			       &W0, k, k,
 			       &W1, k, k,
-			       &W2, k, k,
-			       &Inv, k, k,
 			       NULL);
-
     if (B == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
-
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
@@ -294,7 +289,6 @@ static int liml_do_equation (equation_system *sys, int eq,
 	}
 	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
-
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
@@ -305,32 +299,21 @@ static int liml_do_equation (equation_system *sys, int eq,
     gretl_matrix_print(W1, "W1");
 #endif
 
-    /* form a symmetric matrix that has the same eigenvalues
-       as W1^{-1} * W0, and find its minimum eigenvalue
-    */
-
     if (!err) {
-	gretl_matrix_copy_values(Inv, W1);
-	err = gretl_matrix_cholesky_decomp(Inv) ||
-	    gretl_invert_triangular_matrix(Inv, 'L');
-    }
-
-    if (!err) {
-	err = gretl_matrix_qform(Inv, GRETL_MOD_NONE, W0,
-				 W2, GRETL_MOD_NONE);
-	if (!err) {
-	    lmin = gretl_symm_matrix_lambda_min(W2, &err);
-	}
+        /* determine the minimum eigenvalue of W1^{-1} * W0 */
+        L = gretl_gensymm_eigenvals(W1, W0, NULL, &err);
+        if (!err) {
+            lmin = 1.0 / L->val[k-1];
+        }
+        gretl_matrix_free(L);
     }
 
     if (!err) {
 	gretl_model_set_double(pmod, "lmin", lmin);
 	gretl_model_set_int(pmod, "idf", idf);
-
 #if LDEBUG
 	fprintf(stderr, "lmin = %g, idf = %d\n", lmin, idf);
 #endif
-
 	err = liml_set_model_data(pmod, E, exlist, list, T, 
 				  lmin, dset);
 	if (err) {
@@ -356,7 +339,6 @@ static int liml_do_equation (equation_system *sys, int eq,
 
     free(reglist);
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(lambda);
 
     if (freelists) {
 	free(list);
