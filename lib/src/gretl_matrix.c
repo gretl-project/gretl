@@ -95,10 +95,6 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
                                          int checked,
                                          int verbose);
 
-static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
-                      const gretl_matrix *X, gretl_matrix *C,
-                      GretlMatrixMod cmod);
-
 static inline void *mval_malloc (size_t sz)
 {
 #if 0 /* ifdef USE_SIMD */
@@ -13701,7 +13697,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 {
     register int i, j, k;
     double x, xi, xj, cij;
-    int r, c, ld;
+    int r, c, ld, nf;
 
     if (gretl_is_null_matrix(A) ||
         gretl_is_null_matrix(d) ||
@@ -13727,6 +13723,23 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
     if (C->rows != r || C->cols != r) {
         fputs("gretl_matrix_diag_qform: destination matrix not conformable\n", stderr);
         return E_NONCONF;
+    }
+
+    /* the number of flops required */
+    nf = 3 * c * 0.5 * (r+1) * r;
+
+    if (nf > 100000) {
+        /* take advantage of optimized matrix multiplication */
+        gretl_matrix *D = gretl_zero_matrix_new(ld, ld);
+
+        if (D != NULL) {
+            for (i=0; i<ld; i++) {
+                gretl_matrix_set(D, i, i, d->val[i]);
+            }
+            alt_qform(A, amod, D, C, cmod);
+            gretl_matrix_free(D);
+            return 0;
+        }
     }
 
     for (i=0; i<r; i++) {
