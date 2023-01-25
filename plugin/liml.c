@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
+#include "matrix_extra.h"
 #include "system.h"
 #include "sysml.h"
 
@@ -290,6 +291,14 @@ static int liml_do_equation (equation_system *sys, int eq,
 	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
     if (!err) {
+        char *mask = gretl_matrix_rank_mask(E, &err);
+
+        if (mask != NULL) {
+            fprintf(stderr, "LIML: E is not of full column rank\n");
+            /* FIXME do something here! */
+            //gretl_matrix_cut_rows_cols(XX, mask);
+            free(mask);
+        }
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
 					W1, GRETL_MOD_NONE);
