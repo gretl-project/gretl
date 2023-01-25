@@ -2982,25 +2982,39 @@ static int real_matrix_calc (const gretl_matrix *A,
         rb = gretl_matrix_rows(B);
         cb = gretl_matrix_cols(B);
 
-        if (ca != rb || cb != rb) {
-            err = E_NONCONF;
-        } else {
-            gretl_matrix_set_equals_tolerance(1.0e-7);
-            if (!gretl_matrix_is_symmetric(B)) {
-                gretl_errmsg_set(_("Matrix is not symmetric"));
-                err = E_NONCONF;
-            }
-            gretl_matrix_unset_equals_tolerance();
-        }
+	int B_diag = (rb == 1) || (cb == 1);
+
+	if (!B_diag) {
+	    if (ca != rb || cb != rb) {
+		err = E_NONCONF;
+	    } else {
+		gretl_matrix_set_equals_tolerance(1.0e-7);
+		if (!gretl_matrix_is_symmetric(B)) {
+		    gretl_errmsg_set(_("Matrix is not symmetric"));
+		    err = E_NONCONF;
+		}
+		gretl_matrix_unset_equals_tolerance();
+	    }
+	} else {
+	    if (ca != gretl_vector_get_length(B)) {
+		err = E_NONCONF;
+	    } 
+	}
+	
         if (!err) {
             C = calc_get_matrix(pM, ra, ra);
             if (C == NULL) {
                 err = E_ALLOC;
             } else {
                 mod = GRETL_MOD_NONE;
-                err = gretl_matrix_qform(A, mod, B, C, mod);
+		if (B_diag) {
+		    err = gretl_matrix_diag_qform(A, mod, B, C, mod);
+		} else {
+		    err = gretl_matrix_qform(A, mod, B, C, mod);
+		}
             }
         }
+	
         break;
     case B_LDIV:
     case B_DIV:
