@@ -2982,9 +2982,14 @@ static int real_matrix_calc (const gretl_matrix *A,
         rb = gretl_matrix_rows(B);
         cb = gretl_matrix_cols(B);
 
-	int B_diag = (rb == 1) || (cb == 1);
-
-	if (!B_diag) {
+	/* input checks */
+	if (rb == 1 || cb == 1) {
+	    /* the diagonal B case */
+	    if (ca != gretl_vector_get_length(B)) {
+		err = E_NONCONF;
+	    }
+	} else {
+	    /* the "full B" case */
 	    if (ca != rb || cb != rb) {
 		err = E_NONCONF;
 	    } else {
@@ -2995,26 +3000,18 @@ static int real_matrix_calc (const gretl_matrix *A,
 		}
 		gretl_matrix_unset_equals_tolerance();
 	    }
-	} else {
-	    if (ca != gretl_vector_get_length(B)) {
-		err = E_NONCONF;
-	    } 
 	}
-	
         if (!err) {
+	    mod = GRETL_MOD_NONE;
             C = calc_get_matrix(pM, ra, ra);
             if (C == NULL) {
                 err = E_ALLOC;
-            } else {
-                mod = GRETL_MOD_NONE;
-		if (B_diag) {
-		    err = gretl_matrix_diag_qform(A, mod, B, C, mod);
-		} else {
-		    err = gretl_matrix_qform(A, mod, B, C, mod);
-		}
+            } else if (rb == 1 || cb == 1) {
+		err = gretl_matrix_diag_qform(A, mod, B, C, mod);
+	    } else {
+		err = gretl_matrix_qform(A, mod, B, C, mod);
             }
         }
-	
         break;
     case B_LDIV:
     case B_DIV:

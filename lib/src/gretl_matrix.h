@@ -787,8 +787,10 @@ int gretl_matrix_qform (const gretl_matrix *A,
 			gretl_matrix *C,
 			GretlMatrixMod cmod);
 
-int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
-			     const gretl_vector *X, gretl_matrix *C,
+int gretl_matrix_diag_qform (const gretl_matrix *A,
+			     GretlMatrixMod amod,
+			     const gretl_vector *X,
+			     gretl_matrix *C,
 			     GretlMatrixMod cmod);
 
 double gretl_scalar_qform (const gretl_vector *b,
