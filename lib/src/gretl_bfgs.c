@@ -1304,7 +1304,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
         }
     }
 
-    if (!err && gradnorm > GRAD_TOLER) {
+    if (!err && gradnorm > GRAD_TOLER && gretl_warnings_on()) {
         gretl_warnmsg_sprintf(_("norm of gradient = %g"), gradnorm);
         set_gretl_warning(W_GRADIENT);
     }
@@ -2522,7 +2522,7 @@ static void print_NR_status (int status, double crittol, double gradtol,
             pprintf(prn, _("Successive criterion values within tolerance (%g)\n"),
                     crittol);
         }
-    } else if (status == STEPMIN_MET) {
+    } else if (status == STEPMIN_MET && gretl_warnings_on()) {
         if (sumgrad > 0) {
             pprintf(prn, _("Warning: couldn't improve criterion (gradient = %g)\n"),
                     sumgrad);
