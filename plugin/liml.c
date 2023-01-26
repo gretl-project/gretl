@@ -94,12 +94,14 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
    needed as a basis for LIML */
 
 static int *
-liml_make_reglist (const equation_system *sys, const int *list,
-		   const int *exlist, int *k, int *err)
+liml_make_reglist (const equation_system *sys,
+		   DATASET *dset, const int *list,
+		   const int *exlist, int *k,
+		   int *err)
 {
     int nexo = exlist[0];
     int *reglist;
-    int i, j;
+    int i, j, vi;
 
     reglist = gretl_list_new(nexo + 1);
     if (reglist == NULL) {
@@ -109,6 +111,7 @@ liml_make_reglist (const equation_system *sys, const int *list,
 
 #if LDEBUG
     fprintf(stderr, "liml_make_reglist: found %d exog vars\n", nexo);
+    printlist(exlist, "exog list");
 #endif
 
     /* at first, put all _included_ exog vars in reglist */
@@ -117,11 +120,18 @@ liml_make_reglist (const equation_system *sys, const int *list,
     reglist[1] = 0;
     j = 2;
     for (i=2; i<=list[0]; i++) {
-	if (in_gretl_list(exlist, list[i])) {
+	vi = list[i];
+	if (in_gretl_list(exlist, vi)) {
 	    reglist[0] += 1;
-	    reglist[j++] = list[i];
+#if LDEBUG
+	    fprintf(stderr, " adding %s to reglist\n", dset->varname[vi]);
+#endif
+	    reglist[j++] = vi;
 	} else {
 	    /* an endogenous var */
+#if LDEBUG
+	    fprintf(stderr, " noting endog var %s\n", dset->varname[vi]);
+#endif
 	    *k += 1;
 	}
     }
@@ -249,7 +259,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     /* first make regression list using only included instruments */
-    reglist = liml_make_reglist(sys, list, exlist, &k, &err);
+    reglist = liml_make_reglist(sys, dset, list, exlist, &k, &err);
     if (err) {
 	if (freelists) {
 	    free(list);
@@ -287,29 +297,15 @@ static int liml_do_equation (equation_system *sys, int eq,
 	for (i=2; i<=reglist[0]; i++) {
 	    reglist[i] = exlist[i-1];
 	}
+#if LDEBUG
+	printlist(reglist, "reglist, for W1");
+#endif
 	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
     if (!err) {
-#if 0
-        char *mask = gretl_matrix_rank_mask(E, &err);
-
-        if (mask != NULL) {
-            fprintf(stderr, "LIML: E is not of full column rank\n");
-            /* FIXME do something here! */
-            free(mask);
-        }
-#endif
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
 					W1, GRETL_MOD_NONE);
-#if 0
-	mask = gretl_matrix_rank_mask(W1, &err);
-        if (mask != NULL) {
-            fprintf(stderr, "LIML: W1 is not of full column rank\n");
-            gretl_matrix_cut_rows_cols(W1, mask);
-            free(mask);
-        }
-#endif
     }
 #if LDEBUG
     gretl_matrix_print(W1, "W1");
