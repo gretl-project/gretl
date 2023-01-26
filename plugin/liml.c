@@ -60,29 +60,28 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
     int t1 = dset->t1;
     int err = 0;
 
-    for (i=1; i<=list[0]; i++) {
+    for (i=1; i<=list[0] && !err; i++) {
 	int vi = list[i];
 
 	if (in_gretl_list(exlist, vi)) {
 	    continue;
 	}
 
+        /* set the dependent variable */
 	reglist[1] = vi;
 
-	/* regress the given endogenous var on the specified
-	   set of instruments */
+	/* regress on the specified set of instruments */
 	*lmod = lsq(reglist, dset, OLS, OPT_A);
-	if ((err = lmod->errcode)) {
-	    clear_model(lmod);
-	    break;
-	}
+        err = lmod->errcode;
 
-	/* put residuals into appropriate column of E and
-	   increment the column */
-	for (t=0; t<T; t++) {
-	    gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
-	}
-	j++;
+	if (!err) {
+            /* put residuals into appropriate column of E and
+               increment the column */
+            for (t=0; t<T; t++) {
+                gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
+            }
+            j++;
+        }
 
 	clear_model(lmod);
     }
@@ -337,6 +336,12 @@ static int liml_do_equation (equation_system *sys, int eq,
 	/* compute and set log-likelihood, etc. */
 	double ldet = gretl_matrix_log_determinant(W1, &err);
 	int g = sys->neqns;
+#if 0
+        int r, r_err;
+
+        r = gretl_matrix_rank(W1, 0, &r_err);
+        fprintf(stderr, "W1: rank %d, cols %d\n", r, W1->cols);
+#endif
 
 	if (err) {
 	    pmod->lnL = NADBL;

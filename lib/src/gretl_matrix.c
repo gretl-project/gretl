@@ -4324,6 +4324,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet,
 
     if (logdet) {
         int negcount = 0;
+        double di;
 
         /* Note: we're better off here taking logs and adding, rather
            than multiplying terms then taking the log of the product.
@@ -4333,24 +4334,35 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet,
         */
         det = 0.0;
         for (i=0; i<n; i++) {
-            double aii = gretl_matrix_get(a, i, i);
-
-            if (aii == 0.0) {
+            di = gretl_matrix_get(a, i, i);
+            if (di == 0.0) {
                 fputs("gretl_matrix_log_determinant: determinant = 0\n", stderr);
                 det = NADBL;
                 break;
             }
             if (ipiv[i] != i + 1) {
-                aii = -aii;
+                di = -di;
             }
-            if (aii < 0) {
-                aii = -aii;
+            if (di < 0) {
+                di = -di;
                 negcount++;
             }
-            det += log(aii);
+            det += log(di);
         }
         if (!absval && negcount % 2) {
-            fputs("gretl_matrix_log_determinant: determinant is < 0\n", stderr);
+            /* got a negative value: try calculating the determinant
+               itself, for reporting
+            */
+            double d = 1.0;
+
+            for (i=0; i<n; i++) {
+                di = gretl_matrix_get(a, i, i);
+                if (ipiv[i] != i + 1) {
+                    di = -di;
+                }
+                d *= di;
+            }
+            fprintf(stderr, "gretl_matrix_log_determinant: determinant is < 0 (%g)\n", d);
             det = NADBL;
         }
     } else {
