@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -48,11 +48,11 @@
 */
 
 /* compose E0 or E1 as in Greene, 4e, p. 686, looping across the
-   endogenous vars in the model list 
+   endogenous vars in the model list
 */
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
-			const int *exlist, const int *list, 
+			const int *exlist, const int *list,
 			DATASET *dset)
 {
     int i, t, j = 0;
@@ -94,7 +94,7 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
    needed as a basis for LIML */
 
 static int *
-liml_make_reglist (const equation_system *sys, const int *list, 
+liml_make_reglist (const equation_system *sys, const int *list,
 		   const int *exlist, int *k, int *err)
 {
     int nexo = exlist[0];
@@ -138,9 +138,9 @@ liml_make_reglist (const equation_system *sys, const int *list,
    covariance matrix (in sysest.c)
 */
 
-static int 
-liml_set_model_data (MODEL *pmod, const gretl_matrix *E, 
-		     const int *exlist, const int *list, 
+static int
+liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
+		     const int *exlist, const int *list,
 		     int T, double lmin, DATASET *dset)
 {
     double *Xi = NULL;
@@ -186,7 +186,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     }
 
     if (!err) {
-	err = gretl_model_set_data(pmod, "liml_y", ymod, 
+	err = gretl_model_set_data(pmod, "liml_y", ymod,
 				   GRETL_TYPE_DOUBLE_ARRAY,
 				   dset->n * sizeof *ymod);
     }
@@ -198,7 +198,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     return err;
 }
 
-static int liml_do_equation (equation_system *sys, int eq, 
+static int liml_do_equation (equation_system *sys, int eq,
 			     DATASET *dset, PRN *prn)
 {
     int *list = system_get_list(sys, eq);
@@ -277,7 +277,6 @@ static int liml_do_equation (equation_system *sys, int eq,
 					E, GRETL_MOD_NONE,
 					W0, GRETL_MOD_NONE);
     }
-
 #if LDEBUG
     gretl_matrix_print(W0, "W0");
 #endif
@@ -291,19 +290,27 @@ static int liml_do_equation (equation_system *sys, int eq,
 	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
     if (!err) {
+#if 0
         char *mask = gretl_matrix_rank_mask(E, &err);
 
         if (mask != NULL) {
             fprintf(stderr, "LIML: E is not of full column rank\n");
             /* FIXME do something here! */
-            //gretl_matrix_cut_rows_cols(XX, mask);
             free(mask);
         }
+#endif
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
 					W1, GRETL_MOD_NONE);
+#if 0
+	mask = gretl_matrix_rank_mask(W1, &err);
+        if (mask != NULL) {
+            fprintf(stderr, "LIML: W1 is not of full column rank\n");
+            gretl_matrix_cut_rows_cols(W1, mask);
+            free(mask);
+        }
+#endif
     }
-
 #if LDEBUG
     gretl_matrix_print(W1, "W1");
 #endif
@@ -323,7 +330,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 #if LDEBUG
 	fprintf(stderr, "lmin = %g, idf = %d\n", lmin, idf);
 #endif
-	err = liml_set_model_data(pmod, E, exlist, list, T, 
+	err = liml_set_model_data(pmod, E, exlist, list, T,
 				  lmin, dset);
 	if (err) {
 	    fprintf(stderr, "error in liml_set_model_data()\n");
@@ -379,15 +386,3 @@ int liml_driver (equation_system *sys, DATASET *dset, PRN *prn)
 
     return err;
 }
-
-
-
-    
-	
-
-    
-    
-    
-
-    
-    
