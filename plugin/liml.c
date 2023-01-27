@@ -205,6 +205,7 @@ static double liml_get_ldet (gretl_matrix *W1, int *err)
     /* allow for the possibility that W1 is rank-deficient? */
     mask = gretl_matrix_rank_mask(W1, err);
     if (mask != NULL) {
+	fprintf(stderr, "note: LIML W1 is rank deficient\n");
         *err = gretl_matrix_cut_rows_cols(W1, mask);
     }
     if (!*err) {

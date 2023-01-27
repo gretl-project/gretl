@@ -458,6 +458,23 @@ static int fill_E_matrix (gretl_matrix *E,
     return err;
 }
 
+static double tsls_get_ldet (gretl_matrix *S, int *err)
+{
+    double ret = NADBL;
+    char *mask;
+
+    /* allow for the possibility that S is rank-deficient? */
+    mask = gretl_matrix_rank_mask(S, err);
+    if (mask != NULL) {
+        *err = gretl_matrix_cut_rows_cols(S, mask);
+    }
+    if (!*err) {
+        ret = gretl_matrix_log_determinant(S, err);
+    }
+
+    return ret;
+}
+
 /* calculate the maximized log-likelihood for a just-identified
    model */
 
@@ -492,9 +509,9 @@ static int tsls_loglik (MODEL *pmod,
     }
 
     if (!err) {
-	double ldet = gretl_matrix_log_determinant(S, &err);
+	double ldet = tsls_get_ldet(S, &err);
 
-	if (err) {
+	if (na(ldet)) {
 	    pmod->lnL = NADBL;
 	} else {
 	    /* Davidson and MacKinnon, ETM, p. 538, taking
