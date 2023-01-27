@@ -1800,10 +1800,11 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 
 struct bchecker {
     gretl_bundle *b;
+    char **ignore;
+    gretl_array *limits;
     int *ret;
     int *err;
     PRN *prn;
-    char **ignore;
     int ni;
 };
 
@@ -1843,6 +1844,84 @@ static int bundled_types_mismatch (bundled_item *targ,
     return err;
 }
 
+static int should_ignore (const char *key,
+			  struct bchecker *bchk)
+{
+    int i;
+
+    for (i=0; i<bchk->ni; i++) {
+	if (!strcmp(key, bchk->ignore[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static double bundled_item_get_scalar (bundled_item *item)
+{
+    if (item->type == GRETL_TYPE_DOUBLE) {
+	return *(double *) item->data;
+    } else if (item->type == GRETL_TYPE_INT) {
+	return (double) *(int *) item->data;
+    } else {
+	return NADBL;
+    }
+}
+
+/* check @src, a presumably scalar bundled input value,
+   against any relevant bounds specification in @limits
+*/
+
+static int bcheck_limits (const char *key,
+			  bundled_item *src,
+			  gretl_array *limits,
+			  PRN *prn, int *err)
+{
+    int i, n = gretl_array_get_length(limits);
+    double lo, hi, val;
+    gretl_bundle *b;
+    const char *s;
+
+    for (i=0; i<n; i++) {
+	b = gretl_array_get_bundle(limits, i);
+	if (b == NULL) {
+	    *err = E_DATA;
+	    return 1;
+	}
+	s = gretl_bundle_get_string(b, "key", err);
+	if (s == NULL) {
+	    return 1;
+	}
+	if (!strcmp(s, src->name)) {
+	    /* found an associated limits item */
+	    if (!gretl_is_scalar_type(src->type)) {
+		pprintf(prn, _("%s: should be scalar\n"), src->name);
+		return 1;
+	    }
+	    val = bundled_item_get_scalar(src);
+	    if (na(val)) {
+		pprintf(prn, _("%s: invalid (missing) value\n"), src->name);
+		return 1;
+	    }
+	    lo = gretl_bundle_get_scalar(b, "lower", NULL);
+	    hi = gretl_bundle_get_scalar(b, "upper", NULL);
+	    if (!na(lo) && val < lo) {
+		pprintf(prn, _("%s: value %g is out of bounds (lower limit %g)\n"),
+			src->name, val, lo);
+		return 1;
+	    } else if (!na(hi) && val > hi) {
+		pprintf(prn, _("%s: value %g is out of bounds (upper limit %g)\n"),
+			src->name, val, hi);
+		return 1;
+	    }
+	    break;
+	}
+    }
+
+    return 0;
+}
+
 static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *targ, *src = (bundled_item *) value;
@@ -1853,13 +1932,15 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 	return;
     }
 
-    if (bchk->ignore != NULL) {
-	int i;
+    if (bchk->ignore != NULL && should_ignore(key, bchk)) {
+	return;
+    }
 
-	for (i=0; i<bchk->ni; i++) {
-	    if (!strcmp((const char *) key, bchk->ignore[i])) {
-		return;
-	    }
+    if (bchk->limits != NULL) {
+	*bchk->ret = bcheck_limits(key, src, bchk->limits,
+				   bchk->prn, bchk->err);
+	if (*bchk->ret) {
+	    return;
 	}
     }
 
@@ -1939,6 +2020,7 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
 			       gretl_array *ignore,
+			       gretl_array *limits,
 			       PRN *prn, int *err)
 {
     int ret = 0;
@@ -1963,7 +2045,8 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
     }
 
     if (ret == 0) {
-	struct bchecker bchk = {defaults, &ret, err, prn, NULL, 0};
+	struct bchecker bchk = {defaults, NULL, limits,
+				&ret, err, prn, 0};
 
 	if (ignore != NULL) {
 	    char **S = NULL;

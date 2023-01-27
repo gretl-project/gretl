@@ -470,7 +470,6 @@ enum {
     F_GEOPLOT,
     F_VMA,
     F_FCSTATS,
-    F_BCHECK,
     F_MSPLITBY,
     F_DISTANCE,
     F_SPHCORR,
@@ -515,6 +514,7 @@ enum {
     F_MIDASMULT,
     F_COMMUTE,
     F_TOEPSOLV,
+    F_BCHECK,
     HF_FELOGITR,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
