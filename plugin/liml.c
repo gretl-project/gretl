@@ -61,14 +61,11 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
     int err = 0;
 
     for (i=1; i<=list[0] && !err; i++) {
-	int vi = list[i];
-
-	if (in_gretl_list(exlist, vi)) {
+	if (in_gretl_list(exlist, list[i])) {
 	    continue;
 	}
-
         /* set the dependent variable */
-	reglist[1] = vi;
+	reglist[1] = list[i];
 
 	/* regress on the specified set of instruments */
 	*lmod = lsq(reglist, dset, OLS, OPT_A);
@@ -82,7 +79,6 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
             }
             j++;
         }
-
 	clear_model(lmod);
     }
 
@@ -122,15 +118,9 @@ liml_make_reglist (const equation_system *sys,
 	vi = list[i];
 	if (in_gretl_list(exlist, vi)) {
 	    reglist[0] += 1;
-#if LDEBUG
-	    fprintf(stderr, " adding %s to reglist\n", dset->varname[vi]);
-#endif
 	    reglist[j++] = vi;
 	} else {
 	    /* an endogenous var */
-#if LDEBUG
-	    fprintf(stderr, " noting endog var %s\n", dset->varname[vi]);
-#endif
 	    *k += 1;
 	}
     }
@@ -207,13 +197,50 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     return err;
 }
 
+static double liml_get_ldet (gretl_matrix *W1, int *err)
+{
+    double ret = NADBL;
+    char *mask;
+
+    /* allow for the possibility that W1 is rank-deficient? */
+    mask = gretl_matrix_rank_mask(W1, err);
+    if (mask != NULL) {
+        *err = gretl_matrix_cut_rows_cols(W1, mask);
+    }
+    if (!*err) {
+        ret = gretl_matrix_log_determinant(W1, err);
+    }
+
+    return ret;
+}
+
+static int liml_eqn_get_lists (equation_system *sys, int eq,
+                               int **plist, int **pexlist,
+                               int *freelists)
+{
+    int *list = system_get_list(sys, eq);
+    int err = 0;
+
+    if (gretl_list_has_separator(list)) {
+        /* got a TSLS-style list */
+        err = gretl_list_split_on_separator(list, plist, pexlist);
+        *freelists = 1;
+    } else {
+        *plist = list;
+        *pexlist = system_get_instr_vars(sys);
+    }
+
+    return err;
+}
+
 static int liml_do_equation (equation_system *sys, int eq,
 			     DATASET *dset, PRN *prn)
 {
-    int *list = system_get_list(sys, eq);
+    int *list = NULL;
     int *exlist = NULL;
-    gretl_matrix_block *B = NULL;
-    gretl_matrix *E, *W0, *W1, *L;
+    gretl_matrix *E = NULL;
+    gretl_matrix *W0 = NULL;
+    gretl_matrix *W1 = NULL;
     double lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
@@ -225,21 +252,11 @@ static int liml_do_equation (equation_system *sys, int eq,
 
 #if LDEBUG
     fprintf(stderr, "\nWorking on equation for %s\n", dset->varname[list[1]]);
-    printlist(list, "original equation list");
 #endif
 
-    if (gretl_list_has_separator(list)) {
-	/* we got a TSLS-style list */
-	const int *elist = list;
-
-	list = NULL;
-	err = gretl_list_split_on_separator(elist, &list, &exlist);
-	if (err) {
-	    return err;
-	}
-	freelists = 1;
-    } else {
-	exlist = system_get_instr_vars(sys);
+    err = liml_eqn_get_lists(sys, eq, &list, &exlist, &freelists);
+    if (err) {
+        return err;
     }
 
     /* get pointer to model (initialized via TSLS) */
@@ -271,11 +288,11 @@ static int liml_do_equation (equation_system *sys, int eq,
     fprintf(stderr, "number of endogenous vars in equation: k = %d\n", k);
 #endif
 
-    B = gretl_matrix_block_new(&E, T, k,
-			       &W0, k, k,
-			       &W1, k, k,
-			       NULL);
-    if (B == NULL) {
+    E = gretl_matrix_alloc(T, k);
+    W0 = gretl_matrix_alloc(k, k);
+    W1 = gretl_matrix_alloc(k, k);
+
+    if (E == NULL || W0 == NULL || W1 == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -312,7 +329,8 @@ static int liml_do_equation (equation_system *sys, int eq,
 
     if (!err) {
         /* determine the minimum eigenvalue of W1^{-1} * W0 */
-        L = gretl_gensymm_eigenvals(W1, W0, NULL, &err);
+        gretl_matrix *L = gretl_gensymm_eigenvals(W1, W0, NULL, &err);
+
         if (!err) {
             lmin = 1.0 / L->val[k-1];
         }
@@ -334,29 +352,24 @@ static int liml_do_equation (equation_system *sys, int eq,
 
     if (!err) {
 	/* compute and set log-likelihood, etc. */
-	double ldet = gretl_matrix_log_determinant(W1, &err);
-	int g = sys->neqns;
-#if 0
-        int r, r_err;
+	double ldet = liml_get_ldet(W1, &err);
 
-        r = gretl_matrix_rank(W1, 0, &r_err);
-        fprintf(stderr, "W1: rank %d, cols %d\n", r, W1->cols);
-#endif
-
-	if (err) {
+	if (na(ldet)) {
 	    pmod->lnL = NADBL;
 	} else {
 	    /* Davidson and MacKinnon, ETM, p. 538 */
-	    pmod->lnL = -(T / 2.0) * (g * LN_2_PI + log(lmin) + ldet);
+	    pmod->lnL = -(T/2.0) * (sys->neqns * LN_2_PI + log(lmin) + ldet);
 	}
-	mle_criteria(pmod, 0); /* check the "0" (additional params) here */
+	mle_criteria(pmod, 0);
     }
 
  bailout:
 
-    free(reglist);
-    gretl_matrix_block_destroy(B);
+    gretl_matrix_free(E);
+    gretl_matrix_free(W0);
+    gretl_matrix_free(W1);
 
+    free(reglist);
     if (freelists) {
 	free(list);
 	free(exlist);
