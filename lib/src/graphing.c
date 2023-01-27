@@ -7888,8 +7888,6 @@ int cli_panel_plot (const int *list, const char *literal,
 	err = boxplots(list, literal, dset, opt);
     }
 
-    fprintf(stderr, "panplot: vnum=%d, N=%d, err=%d\n", vnum, N, err);
-
     return err;
 }
 
