@@ -2511,7 +2511,7 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 		    gt_10);
 	} else if (lt_01 > 0) {
 	    pprintf(prn, "   %s\n", _("Note: these are UPPER BOUNDS on the true p-values"));
-	    pprintf(prn, "   (%s: %d)\n", _("Individual p-values < .01, and recorded as .01",
+	    pprintf(prn, "   (%s: %d)\n", _("Individual p-values < .01, and recorded as .01"),
 		    lt_01);
 	}
 	pputc(prn, '\n');

@@ -2726,7 +2726,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 	*/
 	if (ival == 0) {
 	    wrap->flags |= W_NOTRAIN;
-	    printf(prn, "n_train = 0, %s\n", _("no training will be done"));
+	    pprintf(prn, "n_train = 0, %s\n", _("no training will be done"));
 	} else {
 	    int nmax = wrap->t2 - wrap->t1 + 1;
 

@@ -192,7 +192,7 @@ int update_addons_index (PRN *prn)
 	    if (v1 > 0) {
 		pprintf(prn, "  %s %s\n", _("found version"), pkgver1);
 	    } else {
-		pputs(prn, "  %s\n", _("not found"));
+		pprintf(prn, "  %s\n", _("not found"));
 	    }
 	}
 	/* build expected "userspace" path for the addon */
