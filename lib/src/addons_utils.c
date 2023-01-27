@@ -188,11 +188,11 @@ int update_addons_index (PRN *prn)
 	pkgver1 = get_addon_version(syspath, NULL);
 	v1 = (pkgver1 != NULL)? dot_atof(pkgver1) : 0;
 	if (verbose) {
-	    pprintf(prn, _(" try '%s'\n"), syspath);
+	    pprintf(prn, " %s '%s'\n", _("try"), syspath);
 	    if (v1 > 0) {
-		pprintf(prn, _("  found version %s\n"), pkgver1);
+		pprintf(prn, "  %s %s\n", _("found version"), pkgver1);
 	    } else {
-		pputs(prn, _("  not found\n"));
+		pputs(prn, "  %s\n", _("not found"));
 	    }
 	}
 	/* build expected "userspace" path for the addon */
@@ -201,11 +201,11 @@ int update_addons_index (PRN *prn)
 	pkgver2 = get_addon_version(usrpath, NULL);
 	v2 = (pkgver2 != NULL)? dot_atof(pkgver2) : 0;
 	if (verbose) {
-	    pprintf(prn, _(" try '%s'\n"), usrpath);
+	    pprintf(prn, " %s '%s'\n", _("try"), usrpath);
 	    if (v2 > 0) {
-		pprintf(prn, _("  found version %s\n"), pkgver2);
+		pprintf(prn, "  %s %s\n", _("found version"), pkgver2);
 	    } else {
-		pputs(prn, _("  not found\n"));
+		pprintf(prn, "  %s\n", _("not found"));
 	    }
 	}
 
@@ -217,7 +217,7 @@ int update_addons_index (PRN *prn)
 	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver2, usrpath);
 	}
 	if (verbose && (v1 > 0 || v2 > 0)) {
-	    pprintf(prn, _(" indexed version %s\n"), v1 > v2 ?
+	    pprintf(prn, " %s %s\n", _("indexed version"), v1 > v2 ?
 		    pkgver1 : pkgver2);
 	}
 	free(pkgver1);

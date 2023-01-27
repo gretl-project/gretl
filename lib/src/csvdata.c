@@ -764,19 +764,17 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
         }
 
         if (!ret) {
-            pprintf(prn, _("   %s: not a consistent date\n"), label);
+            pprintf(prn, "   %s: %s\n", label, _("not a consistent date"));
             break;
         }
     }
 
     if (ret) {
         if (pmin == 3) {
-            pprintf(prn, _("   \"%s\": quarterly data pretending to be monthly?\n"),
-                    bad);
+            pprintf(prn, "   \"%s\": %s\n", bad, _("quarterly data pretending to be monthly?"));
             *ppd = 4;
         } else if (pd == pd0 + 1) {
-            pprintf(prn, _("   \"%s\": BLS-type nonsense? Trying again\n"),
-                    bad);
+            pprintf(prn, "   \"%s\": %s\n", bad, _("BLS-type nonsense? Trying again"));
             strcpy(skipstr, skip);
         }
     }

@@ -2506,14 +2506,12 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 	pprintf(prn, "%s\n\n", _("H0: all groups are stationary"));
 	do_choi_test(ppv, zpv, lpv, n, prn);
 	if (gt_10 > 0) {
-	    pputs(prn, _("   Note: these are LOWER BOUNDS "
-		  "on the true p-values\n"));
-	    pprintf(prn, _("   (Individual p-values > .10, and recorded as .10: %d)\n"),
+	    pprintf(prn, "   %s\n", _("Note: these are LOWER BOUNDS on the true p-values"));
+	    pprintf(prn, "   (%s: %d)\n", _("Individual p-values > .10, and recorded as .10"),
 		    gt_10);
 	} else if (lt_01 > 0) {
-	    pputs(prn, _("   Note: these are UPPER BOUNDS "
-		  "on the true p-values\n"));
-	    pprintf(prn, _("   (Individual p-values < .01, and recorded as .01: %d)\n"),
+	    pprintf(prn, "   %s\n", _("Note: these are UPPER BOUNDS on the true p-values"));
+	    pprintf(prn, "   (%s: %d)\n", _("Individual p-values < .01, and recorded as .01",
 		    lt_01);
 	}
 	pputc(prn, '\n');

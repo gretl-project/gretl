@@ -656,13 +656,13 @@ static int get_cell_basics (xmlNodePtr cur,
 
     *cref = (char *) xmlGetProp(cur, (XUC) "r");
     if (*cref == NULL) {
-	pprintf(prn, _(": couldn't find 'r' property\n"));
+	pprintf(prn, ": %s\n", _("couldn't find 'r' property"));
 	return E_DATA;
     }
 
     err = xlsx_cell_get_coordinates(*cref, row, col);
     if (err) {
-	pprintf(prn, _(": couldn't find coordinates\n"));
+	pprintf(prn, ": %s\n", _("couldn't find coordinates"));
 	return E_DATA;
     }
 
@@ -672,7 +672,7 @@ static int get_cell_basics (xmlNodePtr cur,
 	ctype = gretl_strdup("n");
     }
 
-    pprintf(prn, "(%d, %d; type %s)", *row, *col, ctype);
+    pprintf(prn, "(%d, %d; %s %s)", *row, *col, _("type"), ctype);
 
     if (!strcmp(ctype, "n") || !strcmp(ctype, "b")) {
 	/* numeric or boolean (0/1) */
@@ -775,7 +775,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
 			if (celltype == CELL_NUMBER) {
-			    pprintf(myprn, _(" value = %s\n"), tmp);
+			    pprintf(myprn, " %s = %s\n", _("value"), tmp);
 			    if (*tmp != '\0' && check_atof(tmp) == 0) {
 				xval = atof(tmp);
 			    }
@@ -783,10 +783,10 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 			    /* look up string table */
 			    strval = xlsx_string_value(tmp, xinfo, prn);
 			    if (strval == NULL) {
-				pputs(myprn, _(" value = ?\n"));
+				pprintf(myprn, " %s = ?\n", _("value"));
 				err = E_DATA;
 			    } else {
-				pprintf(myprn, _(" value = '%s'\n"), strval);
+				pprintf(myprn, " %s = '%s'\n", _("value"), strval);
 			    }
 			}
 			free(tmp);
@@ -817,11 +817,11 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
 	    }
 
 	    if (err) {
-		pprintf(myprn, _(": (%s) error"), cref);
+		pprintf(myprn, ": (%s) %s", cref, _("error"));
 	    } else if (!gotv) {
-		pprintf(myprn, _(": (%s) no data value"), cref);
+		pprintf(myprn, ": (%s) %s", cref, _("no data value"));
 		if (gotf) {
-		    pprintf(myprn, _(": formula = '%s'\n"), formula);
+		    pprintf(myprn, ": %s = '%s'\n", _("formula"), formula);
 		} else {
 		    pputc(myprn, '\n');
 		}

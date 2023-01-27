@@ -282,13 +282,13 @@ static void garch_print_init (const double *theta, int k,
 	pputs(prn, _("Automatic initialization of parameters"));
     }
 
-    pputs(prn, _("\n\n Regression coefficients:\n"));
+    pprintf(prn, "\n\n %s:\n", _("Regression coefficients"));
 
     for (i=0; i<k; i++) {
 	pprintf(prn, "  theta[%d] = %g\n", i, theta[j++]);
     }
 
-    pputs(prn, _("\n Variance parameters:\n"));
+    pprintf(prn, "\n %s:\n", _("Variance parameters"));
 
     pprintf(prn, "  alpha[0] = %g\n", theta[j++]);
     for (i=0; i<q; i++) {

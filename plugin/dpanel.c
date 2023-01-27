@@ -3449,15 +3449,16 @@ static void print_instrument_specs (dpmod *dpd, const char *ispec,
 
     pputs(prn, _("GMM-style instruments, differences equation:\n"));
     for (i=0; i<dpd->nzb; i++) {
-	pprintf(prn, _("  %s: lags %d to %s\n"), dset->varname[dpd->d[i].v],
-		dpd->d[i].minlag, maxlag_string(lmax, &dpd->d[i]));
+	pprintf(prn, _("  %s: %s %d %s %s\n"), dset->varname[dpd->d[i].v],
+		_("lags"), dpd->d[i].minlag, _("to"), maxlag_string(lmax, &dpd->d[i]));
     }
 
     if (dpd->nzb2 > 0) {
 	pputs(prn, _("GMM-style instruments, levels equation:\n"));
 	for (i=0; i<dpd->nzb2; i++) {
-	    pprintf(prn, _("  %s: lags %d to %s\n"), dset->varname[dpd->d2[i].v],
-		    dpd->d2[i].minlag, maxlag_string(lmax, &dpd->d2[i]));
+	    pprintf(prn, _("  %s: %s %d %s %s\n"), dset->varname[dpd->d2[i].v],
+		    _("lags"), dpd->d2[i].minlag, _("to"), 
+		    maxlag_string(lmax, &dpd->d2[i]));
 	}
     }
 }

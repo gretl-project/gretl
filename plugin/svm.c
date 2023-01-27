@@ -1508,8 +1508,9 @@ static int real_svm_predict (double *yhat,
 		    SSR / prob->l, 1.0 - SSR / TSS, MAD);
 	}
     } else {
-	pprintf(prn, _("%s: correct predictions = %d (%.1f percent)\n"), _(datastr),
-		n_correct, 100 * n_correct / (double) prob->l);
+	pprintf(prn, "%s: %s = %d (%.1f %s)\n", _(datastr),
+		_("correct predictions"), n_correct, 100 * n_correct / (double) prob->l, 
+		_("percent"));
     }
 
     return 0;
@@ -1525,7 +1526,7 @@ static void print_xvalid_iter (sv_parm *parm,
     if (iter >= 0) {
 	pprintf(prn, "[%d] ", iter + 1);
     } else {
-	pputs(prn, _("\nCross validation:\n "));
+	pprintf(prn, "\n%s:\n ", _("Cross validation"));
     }
     pprintf(prn, "C = %g", parm->C);
     if (uses_gamma(parm)) {
@@ -1809,8 +1810,8 @@ static void print_grid (sv_grid *g, sv_parm *parm, PRN *prn)
 		    g->row[i].start, g->row[i].stop,
 		    g->row[i].step);
 	    if (g->n[i] > 1) {
-		pprintf(prn, _(" (%d values, %s)\n"), g->n[i],
-			g->linear[i] ? "linear" : "log2-based");
+		pprintf(prn, " (%d %s, %s)\n", g->n[i], _("values"),
+			g->linear[i] ? _("linear") : _("log2-based"));
 	    } else {
 		pputc(prn, '\n');
 	    }
@@ -2397,7 +2398,7 @@ static int call_cross_validation (sv_data *data,
     double crit;
     int err = 0;
 
-    pputs(prn, _("Cross-validation "));
+    pprintf(prn, "%s ", _("Cross-validation"));
     if (w->flags & W_CONSEC) {
 	pprintf(prn, _("using %d consecutive blocks"), w->nfold);
     } else if (w->flags & W_FOLDVAR) {
@@ -2405,7 +2406,7 @@ static int call_cross_validation (sv_data *data,
     } else {
 	pprintf(prn, _("using %d random folds"), w->nfold);
     }
-    pputs(prn, _(" (may take a while)\n"));
+    pprintf(prn, " %s\n", _("(may take a while)"));
     gretl_flush(prn);
 
     if (w->grid != NULL) {
@@ -2725,7 +2726,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 	*/
 	if (ival == 0) {
 	    wrap->flags |= W_NOTRAIN;
-	    pputs(prn, _("n_train = 0, no training will be done\n"));
+	    printf(prn, "n_train = 0, %s\n", _("no training will be done"));
 	} else {
 	    int nmax = wrap->t2 - wrap->t1 + 1;
 

@@ -3993,7 +3993,7 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	ret = 1;
 	if (misspc > 0.0) {
 	    pputc(prn, '\n');
-	    pputs(prn, _("In addition, "));
+	    pprintf(prn, "%s ", _("In addition,"));
 	    if (misspc >= 0.01) {
 		pprintf(prn, _("%.2f percent of weekday observations are missing."),
 			misspc);

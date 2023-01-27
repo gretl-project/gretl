@@ -482,7 +482,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 	x = gretl_model_get_double(pmod, "ladsum");
 	if (!na(x)) {
 	    eqn_numstr(x, xstr);
-	    pprintf(prn, _(", sum of abs. residuals = %s "), xstr);
+	    pprintf(prn, ", %s = %s ", _("sum of abs. residuals"), xstr);
 	}
     } else {
 	if (!na(pmod->adjrsq)) {

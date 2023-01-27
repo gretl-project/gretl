@@ -459,8 +459,8 @@ static void BKW_print (gretl_matrix *B, int namelen, PRN *prn)
 	gretl_matrix_print_with_format(B, fmt, 0, 0, prn);
     }
 
-    pprintf(prn, _("\n  lambda = %s (smallest is %g)\n"), _(strs[2]),
-	    gretl_matrix_get(B, B->rows - 1, 0));
+    pprintf(prn, "\n  lambda = %s (%s %g)\n"), _(strs[2]),
+	    _("smallest is"), gretl_matrix_get(B, B->rows - 1, 0));
     pprintf(prn, "  cond   = %s\n", _(strs[3]));
     pprintf(prn, "  %s\n\n", _(strs[4]));
 
