@@ -1455,7 +1455,9 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
 }
 
 static int estimate_with_test (equation_system *sys, DATASET *dset,
-                               int stest, int (*system_est)(),
+                               int stest, int (*system_est)
+                               (equation_system *, DATASET *,
+                                gretlopt, PRN *),
                                gretlopt opt, PRN *prn)
 {
     gretl_matrix *vcv = NULL;
@@ -1465,7 +1467,7 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
 
     /* estimate the unrestricted system first */
     sys->flags &= ~SYSTEM_RESTRICT;
-    err = (* system_est) (sys, dset, opt | OPT_Q, prn);
+    err = (*system_est) (sys, dset, opt | OPT_Q, prn);
     sys->flags ^= SYSTEM_RESTRICT;
     if (err) {
         goto bailout;
@@ -1483,7 +1485,7 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
 
     /* now estimate the restricted system */
     system_clear_results(sys);
-    err = (* system_est) (sys, dset, opt, prn);
+    err = (*system_est) (sys, dset, opt, prn);
     if (!err) {
         if (stest == SYS_TEST_LR) {
             err = system_do_LR_test(sys, llu, opt, prn);

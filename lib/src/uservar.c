@@ -2240,7 +2240,7 @@ int serialize_user_vars (const char *dirname)
 {
     GretlType type;
     const char *typestr;
-    void (*write_func)();
+    void (*write_func)(PRN *prn);
     char path[MAXLEN];
     PRN *prn;
     int i, n, ni;
@@ -2289,7 +2289,7 @@ int deserialize_user_vars (const char *dirname)
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     const char *typestr;
-    int (*read_func)();
+    int (*read_func)(xmlDocPtr, xmlNodePtr);
     char root_name[16];
     char path[MAXLEN];
     FILE *fp;

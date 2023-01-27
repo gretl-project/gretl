@@ -1206,9 +1206,9 @@ void destroy_matrix_mask (void)
     state->matmask = NULL;
 }
 
-static int (*workdir_callback)();
+static int (*workdir_callback)(char *s);
 
-void set_workdir_callback (int (*callback)())
+void set_workdir_callback (int (*callback)(char *s))
 {
     workdir_callback = callback;
 }

@@ -1,5 +1,5 @@
-/* 
-   This source file based on Minpack: initially converted from 
+/*
+   This source file based on Minpack: initially converted from
    fortran using f2c, then rendered into relatively idiomatic
    C with zero-based indexing throughout and pass-by-value for
    parameters that do not function as pointers. We also rely
@@ -189,11 +189,11 @@ c     Argonne National Laboratory. Minpack project. March 1980.
 c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 */
 
-int lmder_(S_fp fcn, int m, int n, double *x, double *fvec, 
-	   double *fjac, int ldfjac, double ftol, double xtol, 
-	   double gtol, int maxfev, double *diag, int mode, 
-	   double factor, int nprint, int *info, int *nfev, 
-	   int *njev, int *ipvt, double *qtf, double *wa1, 
+int lmder_(S_fp8 fcn, int m, int n, double *x, double *fvec,
+	   double *fjac, int ldfjac, double ftol, double xtol,
+	   double gtol, int maxfev, double *diag, int mode,
+	   double factor, int nprint, int *info, int *nfev,
+	   int *njev, int *ipvt, double *qtf, double *wa1,
 	   double *wa2, double *wa3, double *wa4, void *p)
 {
     const double p1 = .1;
@@ -216,7 +216,7 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     *njev = 0;
 
     /* check the input parameters for errors */
-    if (n <= 0 || m < n || ldfjac < m || ftol < 0.0 || xtol < 0.0 || 
+    if (n <= 0 || m < n || ldfjac < m || ftol < 0.0 || xtol < 0.0 ||
 	    gtol < 0.0 || maxfev <= 0 || factor <= 0.0) {
 	goto bailout;
     }
@@ -269,7 +269,7 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     qrfac_(m, n, fjac, ldfjac, ipvt, wa1, wa2, wa3);
 
     /* on the first iteration and if mode is 1, scale according
-       to the norms of the columns of the initial jacobian 
+       to the norms of the columns of the initial jacobian
     */
     if (iter == 1) {
 	if (mode != 2) {
@@ -281,7 +281,7 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 	    }
 	}
 	/* on the first iteration, calculate the norm of the scaled x
-	   and initialize the step bound delta 
+	   and initialize the step bound delta
         */
 	for (j = 0; j < n; ++j) {
 	    wa3[j] = diag[j] * x[j];
@@ -348,7 +348,7 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
     while (1) {
 
 	/* determine the Levenberg-Marquardt parameter */
-	lmpar_(n, fjac, ldfjac, ipvt, diag, qtf, delta, 
+	lmpar_(n, fjac, ldfjac, ipvt, diag, qtf, delta,
 	       &par, wa1, wa2, wa3, wa4);
 
 	/* store the direction p and x + p; calculate the norm of p */
@@ -381,7 +381,7 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 	}
 
 	/* compute the scaled predicted reduction and
-	   the scaled directional derivative 
+	   the scaled directional derivative
 	*/
 	for (j = 0; j < n; ++j) {
 	    wa3[j] = 0.0;
@@ -444,7 +444,7 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 	if (delta <= xtol * xnorm) {
 	    *info = 2;
 	}
-	if (fabs(actred) <= ftol && prered <= ftol && 
+	if (fabs(actred) <= ftol && prered <= ftol &&
 	    p5 * ratio <= 1.0 && *info == 2) {
 	    *info = 3;
 	}
@@ -491,4 +491,3 @@ int lmder_(S_fp fcn, int m, int n, double *x, double *fvec,
 
     return 0;
 }
-
