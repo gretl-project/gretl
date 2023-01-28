@@ -6150,8 +6150,9 @@
 	  their effect for negative arguments: <lit>int(-3.5)</lit>
 	  gives &minus;3, while <lit>floor(-3.5)</lit> gives &minus;4.
 	  <seelist>
-	    <fncref targ="round"/>
             <fncref targ="ceil"/>
+            <fncref targ="floor"/>
+            <fncref targ="round"/>
 	  </seelist>
 	</para>
       </description>
