@@ -28,6 +28,7 @@
 #include "tsls.h"
 
 #define TDEBUG 0
+#define HTDEBUG 0
 
 static void tsls_omitzero (int *list, const DATASET *dset,
 			   const char *mask)
@@ -620,13 +621,31 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     return err;
 }
 
-#define HTDBG 0
+static void hausman_drop_check (MODEL *hmod,
+				int *hatlist,
+				int *endolist,
+				DATASET *dset)
+{
+    int *dlist = gretl_model_get_list(hmod, "droplist");
+
+    if (dlist != NULL) {
+	int i, pos;
+
+	for (i=1; i<=dlist[0]; i++) {
+	    pos = in_gretl_list(hatlist, dlist[i]);
+	    if (pos > 0 && pos <= endolist[0]) {
+		gretl_warnmsg_sprintf("%s does not seem to be endogenous",
+				      dset->varname[endolist[pos]]);
+	    }
+	}
+    }
+}
 
 /* Hausman test via the regression method */
 
 static int
 tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
-		   DATASET *dset)
+		   int *endolist, DATASET *dset)
 {
     MODEL hmod;
     double URSS;
@@ -636,27 +655,25 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     int ku = 0;
     int err = 0;
 
-#if HTDBG
-    int nobs1;
+#if HTDEBUG
+    int nobs1 = 0;
     PRN *dbgprn = NULL;
-    dbgprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+    dbgprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 #endif
 
     /* create regression list for unrestricted model by appending
        @hatlist to @reglist */
     HT_list = gretl_list_add(reglist, hatlist, &err);
-    if (err) {
-	if (err == E_NOADD) {
-	    /* more of a no-op than an error */
-	    err = 0;
-	} else {
-	    fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
-	}
+    if (err == E_NOADD) {
+	err = 0; /* more of a no-op than an error */
+    } else if (err) {
+	fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
 	return err;
     }
 
 #if TDEBUG
     fprintf(stderr, "running regression for Hausman test, 1\n");
+    printlist(HT_list, "Hausman list");
 #endif
 
     /* estimate the unrestricted model */
@@ -667,7 +684,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	goto bailout;
     }
 
-#if HTDBG
+    hausman_drop_check(&hmod, hatlist, endolist, dset);
+
+#if HTDEBUG
     pprintf(dbgprn, "Hausman: unrestricted model (df = %d)\n", hmod.dfd);
     printmodel(&hmod, dset, OPT_NONE, dbgprn);
     nobs1 = hmod.nobs;
@@ -681,7 +700,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     /* record U-model info */
     URSS = hmod.ess;
     ku = hmod.ncoeff;
-#if HTDBG
+#if HTDEBUG
     pprintf(dbgprn, "URSS = %g (ku = %d)\n", URSS, ku);
 #endif
 
@@ -712,7 +731,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     */
     hmod = lsq(HT_list, dset, OLS, OPT_A);
 
-#if HTDBG
+#if HTDEBUG
     strcpy(dset->varname[dset->v - 1], "Ufitvals");
     pprintf(dbgprn, "Hausman: aux regression\n", hmod.dfd);
     printmodel(&hmod, dset, OPT_NONE, dbgprn);
@@ -732,7 +751,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	double HTest = (DRSS/URSS) * hmod.nobs;
 	ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
 
-#if HTDBG
+#if HTDEBUG
 	pprintf(dbgprn, "df = %d - %d = %d\n", ku, hmod.ncoeff, df);
 	pprintf(dbgprn, "DRSS = (RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
 	pprintf(dbgprn, "Htest = %g [%.4f]\n", HTest, chisq_cdf_comp(df, HTest));
@@ -749,7 +768,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
  bailout:
 
-#if HTDBG
+#if HTDEBUG
     gretl_print_destroy(dbgprn);
 #endif
 
@@ -824,7 +843,6 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
 	if (droplist != NULL) {
 	    droplist[0] = 0;
 	}
-
 	j = 1;
 	for (i=0; i<k; i++) {
 	    test = gretl_matrix_get(R, i, i);
@@ -1796,7 +1814,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     if (!sysest && !no_tests) {
 	if (nendo > 0 && hatlist != NULL) {
-	    tsls_hausman_test(&tsls, reglist, hatlist, dset);
+	    tsls_hausman_test(&tsls, reglist, hatlist, endolist, dset);
 	}
 	if (OverIdRank > 0) {
 	    ivreg_sargan_test(&tsls, OverIdRank, instlist, dset);
