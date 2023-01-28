@@ -6893,16 +6893,39 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     gtk_widget_destroy(gi->dlg);
 }
 
+static int qualitative_series (const char *vname)
+{
+    int v = current_series_index(dataset, vname);
+
+    if (v == -1) {
+        return 0;
+    } else {
+        return series_is_coded(dataset, v) ||
+            is_string_valued(dataset, v) ||
+            gretl_isdummy(dataset->t1, dataset->t2,
+                          dataset->Z[v]);
+    }
+}
+
 static void sensitize_map_controls (GtkComboBox *combo,
                                     struct geoplot_info *gi)
 {
-    gchar *s = combo_box_get_active_text(combo);
-    int active = strcmp(s, "none");
+    gchar *vname = combo_box_get_active_text(combo);
+    int active = strcmp(vname, "none");
+    gboolean numeric = FALSE;
 
-    gtk_widget_set_sensitive(gi->palette_combo, active);
-    gtk_widget_set_sensitive(gi->logscale_check, active);
+    if (active) {
+        if (qualitative_series(vname)) {
+            gtk_combo_box_set_active(GTK_COMBO_BOX(gi->palette_combo), 0);
+        } else {
+            numeric = TRUE;
+        }
+    }
+    gtk_widget_set_sensitive(gi->palette_combo, numeric);
+    gtk_widget_set_sensitive(gi->logscale_check, numeric);
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(gi->linewidth_spin),
 			      active ? 0.0 : 0.1, 2.0);
+    g_free(vname);
 }
 
 /* If we have a previously selected @payload, and it's a
@@ -7038,6 +7061,9 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
                      G_CALLBACK(geoplot_callback), &gi);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, MAPHELP);
+
+    /* initialize controls state */
+    sensitize_map_controls(GTK_COMBO_BOX(gi.payload_combo), &gi);
 
     gtk_widget_show_all(dialog);
 

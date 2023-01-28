@@ -19,6 +19,7 @@ else
 endif
 
 ifeq ($(build_addons_doc),yes)
+  DOC = doc/$(PKG).pdf
   INSTDOC = install-doc
 endif
 
@@ -33,6 +34,8 @@ vpath %.spec $(PKGSRC)
 INP = extra.inp
 SPEC = extra.spec
 SMPL = extra_sample.inp
+
+all: $(PKG).gfn $(DOC)
 
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp

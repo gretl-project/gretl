@@ -19,6 +19,7 @@ else
 endif
 
 ifeq ($(build_addons_doc),yes)
+  DOC = doc/$(PKG).pdf
   INSTDOC = install-doc
 endif
 
@@ -45,6 +46,8 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_signrestr_utils.inp 
 
 SPEC = SVAR.spec
+
+all: $(PKG).gfn $(DOC)
 
 $(PKG).gfn: symlinks $(INP) $(SPEC)
 	$(GRETLCLI) -t pkg.inp

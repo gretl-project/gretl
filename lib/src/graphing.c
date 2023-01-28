@@ -3591,40 +3591,13 @@ static int graph_list_adjust_sample (int *list,
     return err;
 }
 
-/* Check whether mktime() works for the starting date.
-   Note that it won't work on Windows for dates prior to
-   1970 since Microsoft doesn't handle negative time_t
-   values.
-*/
-
 static int timefmt_useable (const DATASET *dset)
 {
-    char *test, datestr[OBSLEN];
-    struct tm t = {0};
-    int ok = 0;
-
-    if (sample_size(dset) > 300) {
-	/* not a good idea? */
+    if (dated_daily_data(dset) || dated_weekly_data(dset)) {
+	return 1;
+    } else {
 	return 0;
     }
-
-    errno = 0;
-
-    if (dset->S != NULL) {
-	strcpy(datestr, dset->S[dset->t1]);
-    } else {
-	calendar_date_string(datestr, dset->t1, dset);
-    }
-
-    test = strptime(datestr, "%Y-%m-%d", &t);
-    if (test != NULL && *test == '\0') {
-	mktime(&t);
-	ok = (errno == 0);
-    }
-
-    errno = 0;
-
-    return ok;
 }
 
 static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
@@ -3645,14 +3618,10 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	return 0;
     }
 
-    if (!time_fit) {
-	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
-	    if (timefmt_useable(dset)) {
-		/* experimental */
-		gi->flags |= GPT_TIMEFMT;
-		xopt = OPT_T;
-	    }
-	}
+    if (!time_fit && timefmt_useable(dset)) {
+	/* experimental */
+	gi->flags |= GPT_TIMEFMT;
+	xopt = OPT_T;
     }
 
     gi->x = gretl_plotx(dset, xopt);
@@ -3880,6 +3849,72 @@ static int single_year_sample (const DATASET *dset,
     return y2 == y1;
 }
 
+/* Use year-and-month major tics when plotting fewer than ??
+   monthly observations.
+*/
+
+static void short_monthly_tics (gnuplot_info *gi, int T,
+				const DATASET *dset,
+				PRN *prn)
+{
+    GDateTime *dt0 = NULL;
+    GDateTime *dt1 = NULL;
+    gchar *tstr = NULL;
+    int use_names = 1;
+    int ticskip = 1;
+    int y, m, t, j;
+    double x;
+
+    if (T > 12) {
+	ticskip += (T > 12) + (T > 24);
+    }
+
+    date_maj_min(gi->t1, dset, &y, &m);
+    if (use_names) {
+	dt0 = g_date_time_new_local(y, m, 1, 0, 0, 0);
+    }
+
+
+    pprintf(prn, "# xtics lines = %d\n", T);
+    pprintf(prn, "set xtics (");
+    gretl_push_c_numeric_locale();
+
+    for (t=gi->t1, j=0; t<=gi->t2; t++, j++) {
+	x = y + (m - 1) / 12.0;
+	if (j % ticskip == 0) {
+	    /* major (labeled) tic */
+	    if (use_names) {
+		tstr = g_date_time_format(dt0, "%b %Y");
+		pprintf(prn, "\"%s\" %g 0", tstr, m, x);
+		dt1 = g_date_time_add_months(dt0, ticskip);
+		g_date_time_unref(dt0);
+		dt0 = dt1;
+		g_free(tstr);
+	    } else {
+		pprintf(prn, "\"%d-%02d\" %g 0", y, m, x);
+	    }
+	} else {
+	    /* minor (unlabeled) tic */
+	    pprintf(prn, "\"\" %g 1", x);
+	}
+	pputs(prn, t < gi->t2 ? ", \\\n" : ")\n");
+	if (m == 12) {
+	    y++;
+	    m = 1;
+	} else {
+	    m++;
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+    if (T > 8) {
+	pputs(prn, "set xtics rotate by -45\n");
+    }
+    if (use_names) {
+	g_date_time_unref(dt0);
+    }
+}
+
 /* special tics for time series plots */
 
 static void make_time_tics (gnuplot_info *gi,
@@ -3887,7 +3922,8 @@ static void make_time_tics (gnuplot_info *gi,
 			    int many, char *xlabel,
 			    PRN *prn)
 {
-    int few = 8;
+    int T = gi->t2 - gi->t1 + 1;
+    int few_years = 8;
 
     if (many) {
 	pprintf(prn, "# multiple timeseries %d\n", dset->pd);
@@ -3911,14 +3947,18 @@ static void make_time_tics (gnuplot_info *gi,
 	return;
     }
 
-    if (dset->pd == 1 && (gi->t2 - gi->t1) < few) {
+    if (dset->pd == 1 && T < few_years) {
 	pputs(prn, "set xtics nomirror 1\n");
-    } else if (dset->pd == 4 && (gi->t2 - gi->t1) / 4 < few) {
+    } else if (dset->pd == 4 && T / 4 < few_years) {
 	pputs(prn, "set xtics nomirror 0,1\n");
 	pputs(prn, "set mxtics 4\n");
-    } else if (dset->pd == 12 && (gi->t2 - gi->t1) / 12 < few) {
-	pputs(prn, "set xtics nomirror 0,1\n");
-	pputs(prn, "set mxtics 12\n");
+    } else if (dset->pd == 12) {
+	if (T < 36) {
+	    short_monthly_tics(gi, T, dset, prn);
+	} else if (T / 12 < few_years) {
+	    pputs(prn, "set xtics nomirror 0,1\n");
+	    pputs(prn, "set mxtics 12\n");
+	}
     } else if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	make_calendar_tics(dset, gi, prn);
     } else if (multiple_groups(dset, gi->t1, gi->t2)) {
@@ -9661,27 +9701,24 @@ void date_from_gnuplot_time (char *targ, size_t tsize,
 
 double gnuplot_time_from_date (const char *s, const char *fmt)
 {
-    double x = NADBL;
+    double ret = NADBL;
 
     if (fmt != NULL) {
 	if (strcmp(fmt, "%s") == 0) {
 	    /* already in seconds since epoch start */
-	    x = atof(s);
+	    ret = atof(s);
 	} else if (*fmt != '\0') {
-	    struct tm t = {0,0,0,1,0,0,0,0,-1};
-	    time_t etime;
 	    char *test;
+	    double x;
 
-	    test = strptime(s, fmt, &t);
+	    test = gretl_strptime(s, fmt, &x);
 	    if (test != NULL && *test == '\0') {
-		/* conversion went OK */
-		etime = mktime(&t);
-		x = (double) etime;
+		ret = x;
 	    }
 	}
     }
 
-    return x;
+    return ret;
 }
 
 /* geoplot-specific functions */
@@ -9805,7 +9842,9 @@ static void output_map_plot_lines (mapinfo *mi,
             /* ensure colorbox is omitted and key boxes are filled */
             fputs("unset colorbox\n", fp); /* should be handled already? */
             fputs("set style fill solid\n", fp);
-        }
+            /* this seems to work better than the default on average? */
+            fputs("set key bottom right\n", fp);
+         }
 
 	/* polygons */
 	fprintf(fp, "plot for [i=0:*] %s index i %s notitle%s", datasrc, with,
@@ -9822,8 +9861,12 @@ static void output_map_plot_lines (mapinfo *mi,
 	    for (i=0; i<nv; i++) {
 		v = i + v0;
 		if (mi->zlabels != NULL) {
-		    fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
-			    v, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+                    if (strcmp(mi->zlabels[i], "empty string")) {
+                        fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s\"%s",
+                                v, mi->zlabels[i], (i < nv - 1)? cont : "\n");
+                    } else if (i == nv - 1) {
+                        fputc('\n', fp);
+                    }
 		} else {
 		    fprintf(fp, "keyentry with boxes fc palette cb %d title \"%s=%d\"%s",
 			    v, mi->zname, v, (i < nv - 1)? cont : "\n");

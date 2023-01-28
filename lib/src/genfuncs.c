@@ -3945,7 +3945,7 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
                 } else {
                     x[t] = get_dec_date(dset->S[t]);
                 }
-            } else {
+	    } else {
                 char datestr[OBSLEN];
 
                 calendar_date_string(datestr, t, dset);

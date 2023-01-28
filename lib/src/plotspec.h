@@ -162,6 +162,8 @@ struct GPT_SPEC_ {
     GPT_LINE *lines;           /* details on individual lines */
     char **literal;            /* additional commands */
     int n_literal;             /* number of the above */
+    char **multi_xtics;        /* array of xtics strings and positions */
+    int n_xtics;               /* number of the above */
     gretl_matrix *data;        /* data to plot */
     char **markers;            /* data-point markers (not always present) */
     int n_markers;             /* number of such markers */

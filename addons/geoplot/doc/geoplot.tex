@@ -27,7 +27,7 @@
 {\noindent\hrulefill\\[-10pt]}
 {\medskip}
 
-\title{geoplot: cartography in gretl\\ version 0.3}
+\title{geoplot: cartography in gretl\\ version 1.0}
 \author{Allin Cottrell and Jack Lucchetti}
 
 \begin{document}
@@ -41,6 +41,11 @@ built-in functions, coded in C. For basic usage, therefore, it's not
 necessary to load the package explicitly via ``\texttt{include
   geoplot.gfn}'', as one would usually expect for an addon.
 
+Section~\ref{sec:quick} in this document is meant to give the reader a
+quick introduction to the main cartographic features we offer. In
+order to produce more refined maps, however, we provide more
+specialized facilities that are explained in the rest of the document.
+
 Section~\ref{sec:prelim} below covers some preliminaries which we hope
 will help the reader understand the basics of cartography via
 gretl. Section~\ref{sec:workflow} describes the basic workflow for
@@ -53,6 +58,102 @@ qualitative data; section~\ref{sec:gui} tells you what's available via
 gretl's graphical interface; and section~\ref{sec:expert} explains
 some ``expert'' refinements. Three appendices cover some technical
 points that may be of interest to expert users.
+
+\section{Quick start}
+\label{sec:quick}
+
+The sample file \texttt{us2020.geojson} contains the main results of
+the 2020 presidential elections in the US. If you open it via the
+command
+\begin{code}
+  open us2020.geojson --frompkg=geoplot
+\end{code}
+you will see a dataset that looks very much like an ordinary gretl
+dataset:
+\begin{center}
+\begin{tabular}{rrrrrr}
+\hline
+   &          name &   region &         dem &    biden &      rep  \\ 
+\hline                                                   
+ 1 &      Maryland &    South &      0.6536 &        1 &   0.3215  \\ 
+ 2 &     Minnesota &  Midwest &      0.5240 &        1 &   0.4528  \\ 
+ 3 &       Montana &     West &      0.4055 &        0 &   0.5692  \\ 
+ 4 &  North Dakota &  Midwest &      0.3178 &        0 &   0.6512  \\ 
+ 5 &        Hawaii &     West &      0.6373 &        1 &   0.3427  \\ 
+ 6 &         Idaho &     West &      0.3307 &        0 &   0.6384  \\ 
+ % 7 &    Washington &     West &      0.5797 &        1 &   0.3877  \\ 
+ % 8 &       Arizona &     West &      0.4936 &        1 &   0.4906  \\ 
+ % 9 &    California &     West &      0.6348 &        1 &   0.3432  \\
+\multicolumn{6}{c}{\vdots} \\  
+\hline
+\end{tabular}
+\end{center}
+
+In fact this dataset is special, since it also contains cartographic
+information ``in the background''. The question of how to create such
+a file will be dealt with in Sections~\ref{sec:prelim} and
+\ref{sec:workflow}, but for the moment let's just skip this point.
+
+To plot a thematic map for the share of votes received by the
+Republicans in each state, you could simply open a console and type
+\begin{code}
+geoplot(rep)
+\end{code}
+and a plot like the one shown in Figure~\ref{fig:us2020-rep}
+should appear on your screen. Achieving the same via the GUI is quite
+easy; we'll deal with this in Section~\ref{sec:gui}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.75]{us2020-rep}
+  \caption{Output of the \texttt{geoplot(rep)} command}
+  \label{fig:us2020-rep}
+\end{figure}
+
+The interpretation of the map in Figure~\ref{fig:us2020-rep} should be
+obvious, with ``hotter'' colors for the states where the Republican
+party enjoyed more support, as shown by the legend to the right of the
+map. If we try the same with the \texttt{region} variable via
+\begin{code}
+  geoplot(region)
+\end{code}
+we get a map similar to Figure~\ref{fig:us2020-reg}. In this case the
+colors are the same for states in the same US region: note that the
+format of the legend has also changed appropriately. The difference is
+due to the fact that \texttt{rep} is a quantitative variable, while
+\texttt{region} is qualitative (and string-valued). Gretl is aware of
+the difference and plots the map with the appropriate adjustments. A
+similar example that you can try by yourself is plotting a map for the
+binary variable \texttt{biden}. More on this in
+Section~\ref{sec:qualitative}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.75]{us2020-reg}
+  \caption{Output of the \texttt{geoplot(region)} command}
+  \label{fig:us2020-reg}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.75]{us2020-dem}
+  \caption{Output of the \texttt{geoplot(dem, \_(palette="blues"))} command}
+  \label{fig:us2020-dem}
+\end{figure}
+
+Many details of the maps---such as their color scheme, size, and so
+on---can be customized to the user's needs. To this aim, you can
+supply an options bundle to the \cmd{geoplot} function to inflect
+its behavior. For example, the line
+\begin{code}
+  geoplot(dem, _(palette="blues"))
+\end{code}
+produces something like Figure~\ref{fig:us2020-dem}. In this case, we
+use the \texttt{palette} option to represent the degree of Democratic
+support by shades of blue. The available options and their meaning are
+explained in section~\ref{sec:opts}.
+
+And now, let's take a deeper look under the hood.
 
 \section{Preliminaries}
 \label{sec:prelim}
@@ -160,15 +261,13 @@ alphabetical order for US states).
 \label{tab:payload}
 \end{table}
 
-
 \subsection{The software backend}
 \label{sec:software}
 
 In principle one could represent maps using any one of the many
 plotting libraries available, but gretl uses \textsf{gnuplot}, which
 we already use for all other kinds of plot. Some insight into the
-\textsf{gnuplot} commands we use can be gained from
-Appendix~\ref{sec:gnuplot}.
+\textsf{gnuplot} commands we use can be gained from \ref{sec:gnuplot}.
 
 Given the geometry data and the payload, writing a \textsf{gnuplot}
 script for producing the map is straightforward. And in most cases
@@ -185,25 +284,28 @@ as follows.
 \begin{enumerate}
 \item You \cmd{open} the map-datafile as a gretl dataset; this reads
   in the metadata so gretl's \dollar{nobs} will be equal to the number
-  of regions, $n$.
+  of regions, $n$.\label{item:open}
 \item You add the payload data, via the \texttt{append} or
-  \texttt{join} commands or in some other way.
+  \texttt{join} commands or in some other way.\label{item:join}
 \item You decide on some details of your map (appearance, format,
-  etc.), with sensible defaults being available.
-\item You create the map.
+  etc.), with sensible defaults being available.\label{item:look}
+\item You create the map.\label{item:map}
+\item Optionally, you can save the data in gretl's native \texttt{gdt}
+  format (but see below).\label{item:save}
 \end{enumerate}
 
-Point 1 is handled by using the \texttt{open} command on the
-map-datafile. The filename extensions recognized for this purpose are
-\texttt{json} or \texttt{geojson} for GeoJSON files, and \texttt{dbf}
-or \texttt{shp} for ESRI shapefiles.\footnote{In principle we could
-  read the polygons at this point and store them in RAM, but for now
-  we don't. We just read in the metadata, but store the path to the
-  associated geometry file internally.} Point 2 is also handled by
-standard gretl commands.
+Point \ref{item:open} is handled by using the \texttt{open} command on
+the map-datafile. The filename extensions recognized for this purpose
+are \texttt{json} or \texttt{geojson} for GeoJSON files, and
+\texttt{dbf} or \texttt{shp} for ESRI shapefiles.\footnote{In
+  principle we could read the polygons at this point and store them in
+  RAM, but for now we don't. We just read in the metadata, but store
+  the path to the associated geometry file internally.}
+Point~\ref{item:join} is also handled by standard gretl commands.
 
-Points 3 and 4 are handled by the \texttt{geoplot} function, which can
-be called in either of two ways, corresponding to these two signatures:
+Points \ref{item:look} and \ref{item:map} are handled by the
+\texttt{geoplot} function, which can be called in either of two ways,
+corresponding to these two signatures:
 \begin{code}
 function void geoplot(const series payload[null], const bundle options[null])
 
@@ -235,6 +337,15 @@ a bundle:
 \begin{code}
 bundle b = bread($mapfile)
 \end{code}
+%$
+Finally, a cautionary note on point~\ref{item:save} above: the saved
+\texttt{gdt} file will \emph{not} contain the geometry information,
+but rather a pointer to the appropriate file (GeoJSON or
+shapefile). As a consequence, as long as the file holding the polygon
+info remains in the same place, you can simply re-open your
+\texttt{gdt} file and create new maps. However, you can't send it to
+someone else and expect it to work for map creation, unless you also
+supply them with the original geometry file.
 
 \section{An example}
 \label{sec:example}
@@ -668,11 +779,11 @@ opts.palette = "langcolors,zlabels"
 Give a palette string of (e.g.) \verb|"auto,zlabels"| if you want to
 adjust the strings but use the default colors.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
   \begin{center}
-  \includegraphics[scale=0.9]{swiss_langs1.pdf}
+  \includegraphics[scale=0.7]{swiss_langs1.pdf}
 
-  \includegraphics[scale=0.9]{swiss_langs2.pdf}
+  \includegraphics[scale=0.7]{swiss_langs2.pdf}
 \end{center}
 \caption{Main language per Swiss canton: the upper plot uses the
   default palette and strings; the lower one uses a customized palette
@@ -695,10 +806,19 @@ the ``open file'' dialog, use the pull-down list to select
 ``Shapefiles'' or ``GeoJSON files''. You can also drag-and-drop such
 files onto the main gretl window to the same effect.
 
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=0.333\textwidth]{geoplot_GUI.png}
+  \end{center}
+  \caption{Graphical interface to the \cmd{geoplot} command.}
+\label{fig:gui}
+\end{figure}
 Once map metadata are loaded in this way, the option \textsf{Display
   map} becomes available via the context (``right-click'') menu in the
-main window, and also under \textsf{/View/Graph specified vars}. If
-the current dataset contains one or more series that seem to gretl to
+main window, and also under \textsf{/View/Graph specified vars};
+it will trigger a window like the one in Figure~\ref{fig:gui}.
+
+If the current dataset contains one or more series that seem to gretl to
 be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
   employed for this purpose is not terribly clever.} invoking
 \textsf{Display map} will produce a dialog box that allows you to
@@ -712,10 +832,11 @@ Further, the plot window shown by \textsf{Display map} offers a
 right-click menu that allows saving the map (as PDF, EPS, PNG or EMF),
 copying it to the clipboard, or saving it ``as an icon''.
 
-So far, that's it. We may at some point expand the \textsf{Display
-  map} dialog to offer more of the choices available via the
-\texttt{options} argument to the \texttt{geoplot}
-function.
+Note that the options offered by the GUI are, at the moment, quite
+limited compared to the ones available via scripting. We may at some
+point expand the \textsf{Display map} dialog to offer more of the
+choices available via the \texttt{options} argument to the
+\texttt{geoplot} function.
 
 \section{``Expert'' refinements}
 \label{sec:expert}

@@ -6,7 +6,9 @@ DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
 FIGS = GDPpc.pdf us0.pdf us1.pdf usmod.pdf covid.pdf triangle.pdf \
 	squares.png prj0.pdf mercator.pdf epsg2163.pdf epsg4326.pdf \
-	swiss_langs1.pdf swiss_langs2.pdf
+	swiss_langs1.pdf swiss_langs2.pdf us2020-dem.pdf us2020-reg.pdf \
+	us2020-rep.pdf geoplot_GUI.png
+
 SRCS = $(PKG).tex $(FIGS) gretl.sty
 
 $(PKG).pdf: $(SRCS)
