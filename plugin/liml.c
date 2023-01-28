@@ -239,13 +239,13 @@ static int liml_do_equation (equation_system *sys, int eq,
 {
     int *list = NULL;
     int *exlist = NULL;
+    int *reglist = NULL;
     gretl_matrix *E = NULL;
     gretl_matrix *W0 = NULL;
     gretl_matrix *W1 = NULL;
     double lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
-    int *reglist;
     int freelists = 0;
     int idf, i, k;
     int T = sys->T;
@@ -314,9 +314,6 @@ static int liml_do_equation (equation_system *sys, int eq,
 	for (i=2; i<=reglist[0]; i++) {
 	    reglist[i] = exlist[i-1];
 	}
-#if LDEBUG
-	printlist(reglist, "reglist, for W1");
-#endif
 	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
     if (!err) {
