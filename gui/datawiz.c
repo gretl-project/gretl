@@ -1198,6 +1198,10 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
     int nperiods = 0;
     int err = 0;
 
+#if DWDEBUG
+    fprintf(stderr, "process_panel_vars\n");
+#endif
+
     /* FIXME sub-sampled dataset? */
 
     err = translate_panel_vars(opts, &uv, &tv);
