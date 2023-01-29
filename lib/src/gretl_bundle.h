@@ -248,7 +248,6 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
 			       gretl_array *ignore,
-			       gretl_array *limits,
 			       PRN *prn, int *err);
 
 GList *gretl_bundle_get_sorted_items (gretl_bundle *b);

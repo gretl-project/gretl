@@ -1798,15 +1798,69 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 
 /* argument-bundle checking apparatus */
 
-struct bchecker {
+struct bchecker_ {
     gretl_bundle *b;
+    char **bounds_keys;
+    gretl_matrix *bounds_mat;
+    int n_bounds;
     char **ignore;
-    gretl_array *limits;
+    int n_ignores;
     int *ret;
     int *err;
     PRN *prn;
-    int ni;
 };
+
+typedef struct bchecker_ bchecker;
+
+static void bchecker_free (bchecker *bc)
+{
+    if (bc->n_bounds > 0) {
+        gretl_matrix_free(bc->bounds_mat);
+        strings_array_free(bc->bounds_keys, bc->n_bounds);
+    }
+    free(bc);
+}
+
+static int unpack_bounds_info (bchecker *bc, gretl_bundle *bounds);
+
+static bchecker *bchecker_new (gretl_bundle *b, int *ret, int *err,
+                               gretl_array *ignore, PRN *prn)
+{
+    bchecker *bc = calloc(1, sizeof *bc);
+
+    if (bc == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    bc->b = b;
+    bc->ret = ret;
+    bc->err = err;
+    bc->prn = prn;
+
+    if (gretl_bundle_has_key(b, "bounds")) {
+        gretl_bundle *bb;
+
+        bb = gretl_bundle_get_bundle(b, "bounds", err);
+        if (!*err) {
+            *err = unpack_bounds_info(bc, bb);
+        }
+    }
+
+    if (!*err && ignore != NULL) {
+        char **S = NULL;
+        int ns = 0;
+
+        /* note: borrowing here */
+        S = gretl_array_get_strings(ignore, &ns);
+        if (S != NULL) {
+            bc->ignore = S;
+            bc->n_ignores = ns;
+        }
+    }
+
+    return bc;
+}
 
 /* Check for mismatched types in @targ vs @src, allowing for
    convertibility between scalar types.
@@ -1845,12 +1899,12 @@ static int bundled_types_mismatch (bundled_item *targ,
 }
 
 static int should_ignore (const char *key,
-			  struct bchecker *bchk)
+			  bchecker *bc)
 {
     int i;
 
-    for (i=0; i<bchk->ni; i++) {
-	if (!strcmp(key, bchk->ignore[i])) {
+    for (i=0; i<bc->n_ignores; i++) {
+	if (!strcmp(key, bc->ignore[i])) {
 	    return 1;
 	}
     }
@@ -1870,48 +1924,38 @@ static double bundled_item_get_scalar (bundled_item *item)
 }
 
 /* check @src, a presumably scalar bundled input value,
-   against any relevant bounds specification in @limits
+   against any relevant bounds specification in @bc
 */
 
-static int bcheck_limits (const char *key,
+static int bcheck_bounds (const char *key,
 			  bundled_item *src,
-			  gretl_array *limits,
-			  PRN *prn, int *err)
+                          bchecker *bc)
 {
-    int i, n = gretl_array_get_length(limits);
     double lo, hi, val;
-    gretl_bundle *b;
     const char *s;
+    int i;
 
-    for (i=0; i<n; i++) {
-	b = gretl_array_get_bundle(limits, i);
-	if (b == NULL) {
-	    *err = E_DATA;
-	    return 1;
-	}
-	s = gretl_bundle_get_string(b, "key", err);
-	if (s == NULL) {
-	    return 1;
-	}
+    for (i=0; i<bc->n_bounds; i++) {
+        s = bc->bounds_keys[i];
 	if (!strcmp(s, src->name)) {
 	    /* found an associated limits item */
 	    if (!gretl_is_scalar_type(src->type)) {
-		pprintf(prn, _("%s: should be scalar\n"), src->name);
+		pprintf(bc->prn, _("%s: should be scalar\n"), src->name);
 		return 1;
 	    }
 	    val = bundled_item_get_scalar(src);
 	    if (na(val)) {
-		pprintf(prn, _("%s: invalid (missing) value\n"), src->name);
+		pprintf(bc->prn, _("%s: invalid (missing) value\n"), src->name);
 		return 1;
 	    }
-	    lo = gretl_bundle_get_scalar(b, "lower", NULL);
-	    hi = gretl_bundle_get_scalar(b, "upper", NULL);
+	    lo = gretl_matrix_get(bc->bounds_mat, i, 0);
+	    hi = gretl_matrix_get(bc->bounds_mat, i, 1);
 	    if (!na(lo) && val < lo) {
-		pprintf(prn, _("%s: value %g is out of bounds (lower limit %g)\n"),
+		pprintf(bc->prn, _("%s: value %g is out of bounds (lower limit %g)\n"),
 			src->name, val, lo);
 		return 1;
 	    } else if (!na(hi) && val > hi) {
-		pprintf(prn, _("%s: value %g is out of bounds (upper limit %g)\n"),
+		pprintf(bc->prn, _("%s: value %g is out of bounds (upper limit %g)\n"),
 			src->name, val, hi);
 		return 1;
 	    }
@@ -1922,65 +1966,105 @@ static int bcheck_limits (const char *key,
     return 0;
 }
 
+/* Given a sub-bundle named 'bounds', unpack it to form an
+   array of n >= 1 key-strings and an associated n x 2 matrix
+   holding lower and upper bounds.
+*/
+
+static int unpack_bounds_info (bchecker *bc, gretl_bundle *bounds)
+{
+    gretl_matrix *bi, *bb = NULL;
+    char **S = NULL;
+    int i, ns = 0;
+    int err = 0;
+
+    S = gretl_bundle_get_keys_raw(bounds, &ns);
+    if (S == NULL) {
+        err = 1;
+    } else {
+        bb = gretl_matrix_alloc(ns, 2);
+        if (bb == NULL) {
+            err = 1;
+        }
+    }
+
+    for (i=0; i<ns && !err; i++) {
+        bi = gretl_bundle_get_matrix(bounds, S[i], &err);
+        if (!err && gretl_vector_get_length(bi) != 2) {
+            err = E_INVARG;
+        } else {
+            gretl_matrix_set(bb, i, 0, bi->val[0]);
+            gretl_matrix_set(bb, i, 1, bi->val[1]);
+        }
+    }
+
+    if (!err) {
+        bc->bounds_keys = S;
+        bc->bounds_mat = bb;
+        bc->n_bounds = ns;
+    }
+
+    return err;
+}
+
 static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *targ, *src = (bundled_item *) value;
-    struct bchecker *bchk = (struct bchecker *) p;
+    bchecker *bc = (bchecker *) p;
 
-    if (*bchk->ret || *bchk->err) {
+    if (*bc->ret || *bc->err) {
 	/* don't waste time if we already hit an error */
 	return;
     }
 
-    if (bchk->ignore != NULL && should_ignore(key, bchk)) {
+    if (bc->ignore != NULL && should_ignore(key, bc)) {
 	return;
     }
 
-    if (bchk->limits != NULL) {
-	*bchk->ret = bcheck_limits(key, src, bchk->limits,
-				   bchk->prn, bchk->err);
-	if (*bchk->ret) {
+    if (bc->n_bounds > 0) {
+	*bc->ret = bcheck_bounds(key, src, bc);
+	if (*bc->ret) {
 	    return;
 	}
     }
 
     /* look up @key (from input) in the template bundle */
-    targ = g_hash_table_lookup(bchk->b->ht, (const char *) key);
+    targ = g_hash_table_lookup(bc->b->ht, (const char *) key);
 
     if (targ == NULL) {
 	/* extraneous key in input */
-	pprintf(bchk->prn, "bcheck: unrecognized key '%s'\n", key);
-	*bchk->ret = 2;
+	pprintf(bc->prn, "bcheck: unrecognized key '%s'\n", key);
+	*bc->ret = 2;
     } else if (targ->type == GRETL_TYPE_MATRIX &&
 	       src->type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) src->data;
 	gretl_matrix *m = gretl_matrix_from_scalar(x);
 
-	*bchk->err = bundled_item_replace_data(targ, m, GRETL_TYPE_MATRIX,
-					       0, 0);
+	*bc->err = bundled_item_replace_data(targ, m, GRETL_TYPE_MATRIX,
+                                             0, 0);
     } else if (targ->type == GRETL_TYPE_DOUBLE &&
 	       src->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = src->data;
 
 	if (gretl_matrix_is_scalar(m)) {
-	    *bchk->err = bundled_item_replace_data(targ, &m->val[0],
-						   GRETL_TYPE_DOUBLE,
-						   0, 0);
+	    *bc->err = bundled_item_replace_data(targ, &m->val[0],
+                                                 GRETL_TYPE_DOUBLE,
+                                                 0, 0);
 	} else {
-	    *bchk->ret = 3;
+	    *bc->ret = 3;
 	}
     } else if (bundled_types_mismatch(targ, src)) {
-	*bchk->ret = 3;
+	*bc->ret = 3;
     } else {
 	/* transcribe input value -> template */
-	*bchk->err = bundled_item_replace_data(targ, src->data, src->type, 0, 1);
-	if (*bchk->err) {
-	    pprintf(bchk->prn, "bcheck: failed to copy '%s'\n", key);
+	*bc->err = bundled_item_replace_data(targ, src->data, src->type, 0, 1);
+	if (*bc->err) {
+	    pprintf(bc->prn, "bcheck: failed to copy '%s'\n", key);
 	}
     }
 
-    if (*bchk->ret == 3) {
-	pprintf(bchk->prn, "bcheck: '%s' should be %s, is %s\n", key,
+    if (*bc->ret == 3) {
+	pprintf(bc->prn, "bcheck: '%s' should be %s, is %s\n", key,
 		gretl_type_get_name(targ->type),
 		gretl_type_get_name(src->type));
     }
@@ -2020,7 +2104,6 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
 			       gretl_array *ignore,
-			       gretl_array *limits,
 			       PRN *prn, int *err)
 {
     int ret = 0;
@@ -2045,20 +2128,12 @@ int gretl_bundle_extract_args (gretl_bundle *defaults,
     }
 
     if (ret == 0) {
-	struct bchecker bchk = {defaults, NULL, limits,
-				&ret, err, prn, 0};
+        bchecker *bc = bchecker_new(defaults, &ret, err, ignore, prn);
 
-	if (ignore != NULL) {
-	    char **S = NULL;
-	    int ns = 0;
-
-	    S = gretl_array_get_strings(ignore, &ns);
-	    if (S != NULL) {
-		bchk.ignore = S;
-		bchk.ni = ns;
-	    }
-	}
-	g_hash_table_foreach(input->ht, check_bundled_item, &bchk);
+        if (bc != NULL) {
+            g_hash_table_foreach(input->ht, check_bundled_item, bc);
+            bchecker_free(bc);
+        }
     }
 
     return ret;

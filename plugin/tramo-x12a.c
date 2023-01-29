@@ -2295,7 +2295,7 @@ static int process_options_bundle (x13a_opts *xopt,
     int err = 0;
 
     a = gretl_array_from_strings(ignores, 2, 0, &err);
-    err = gretl_bundle_extract_args(b, opts, NULL, a, NULL, prn, &berr);
+    err = gretl_bundle_extract_args(b, opts, NULL, a, prn, &berr);
     if (!err && !berr) {
 	err = deseas_options_transcribe(xopt, b, prn);
     }

@@ -13174,6 +13174,28 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = vma_rep(compan_top, C, horizon, &p->err);
             }
         }
+    } else if (f == F_BCHECK) {
+        gretl_bundle *lb = NULL;
+        gretl_array *reqd = NULL;
+
+        post_process = 0;
+        if ((lb = ptr_node_get_bundle(l, p)) == NULL) {
+            node_type_error(f, 1, BUNDLE, l, p);
+        } else if (m->t != BUNDLE) {
+            node_type_error(f, 2, BUNDLE, m, p);
+        } else if (!null_node(r) && r->t != ARRAY) {
+            node_type_error(f, 3, ARRAY, r, p);
+        } else {
+            ret = aux_scalar_node(p);
+        }
+        if (!p->err && !null_node(r)) {
+            reqd = r->v.a;
+        }
+        if (!p->err) {
+            ret->v.xval = gretl_bundle_extract_args(lb, m->v.b, reqd,
+                                                    NULL, p->prn,
+                                                    &p->err);
+        }
     } else if (f == F_SPHCORR) {
         int mode = null_node(m) ? 0 : node_get_int(m, p);
         gretl_matrix *J = NULL;
@@ -14003,9 +14025,9 @@ static int check_argc (int f, int k, parser *p)
         { F_MIDASMULT, 1, 3 },
         { F_TDISAGG,   3, 5 },
         { F_COMMUTE,   2, 5 },
-        { F_TOEPSOLV,  3, 4 },
-	{ F_BCHECK,    2, 4 }
+        { F_TOEPSOLV,  3, 4 }
     };
+
     int argc_min = 2;
     int argc_max = 4;
     int i;
@@ -14788,40 +14810,6 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 user_var_set_scalar_value(uv, d);
             }
         }
-    } else if (t->t == F_BCHECK) {
-        gretl_bundle *targ = NULL;
-	gretl_bundle *input = NULL;
-        gretl_array *reqd = NULL;
-	gretl_array *limits = NULL;
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = n->v.bn.n[i];
-	    if (i == 0) {
-		targ = ptr_node_get_bundle(e, p);
-	    } else if (i == 1) {
-		input = node_get_bundle(e, p);
-	    } else if (i == 2) {
-		if (!null_node(e) && e->t != ARRAY) {
-		    p->err = E_TYPES;
-		} else {
-		    reqd = e->v.a;
-		}
-	    } else if (i == 3 && !null_node(e)) {
-		if (!null_node(e) && e->t != ARRAY) {
-		    p->err = E_TYPES;
-		} else {
-		    limits = e->v.a;
-		}
-	    }
-	}
-        if (!p->err) {
-	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		ret->v.xval = gretl_bundle_extract_args(targ, input, reqd,
-							NULL, limits, p->prn,
-							&p->err);
-	    }
-        }
     } else if (t->t == HF_FELOGITR) {
         gretl_matrix *U = NULL;
         gretl_matrix *X = NULL;
@@ -14853,10 +14841,8 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         }
         if (!p->err) {
             ret = aux_matrix_node(p);
-	    if (!p->err) {
-		ret->v.m = felogit_rec_loglik(t, T, U, X);
-	    }
-	}
+            ret->v.m = felogit_rec_loglik(t, T, U, X);
+        }
     }
 
     return ret;
@@ -18190,6 +18176,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOWEEK:
     case F_STACK:
     case F_VMA:
+    case F_BCHECK:
     case F_SPHCORR:
     case HF_REGLS:
         /* built-in functions taking three args */
@@ -18259,7 +18246,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MIDASMULT:
     case F_COMMUTE:
     case F_TOEPSOLV:
-    case F_BCHECK:
     case HF_FELOGITR:
         /* built-in functions taking more than three args */
         if (multi == NULL) {
