@@ -3868,7 +3868,6 @@ static void short_monthly_tics (gnuplot_info *gi, int T,
 	dt0 = g_date_time_new_local(y, m, 1, 0, 0, 0);
     }
 
-
     pprintf(prn, "# xtics lines = %d\n", T);
     pprintf(prn, "set xtics (");
     gretl_push_c_numeric_locale();
@@ -3879,7 +3878,7 @@ static void short_monthly_tics (gnuplot_info *gi, int T,
 	    /* major (labeled) tic */
 	    if (use_names) {
 		tstr = g_date_time_format(dt0, "%b %Y");
-		pprintf(prn, "\"%s\" %g 0", tstr, m, x);
+		pprintf(prn, "\"%s\" %g 0", tstr, x);
 		dt1 = g_date_time_add_months(dt0, ticskip);
 		g_date_time_unref(dt0);
 		dt0 = dt1;
