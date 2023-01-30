@@ -757,6 +757,18 @@ static int get_csv_data (char *fname, int ftype, int append)
 	return E_FOPEN;
     }
 
+#if 1
+    if (ftype == GRETL_CSV) {
+        int resp = csv_open_dialog(fname);
+
+	if (resp == GRETL_CANCEL) {
+	    return 0;
+	} else if (resp == 1) {
+            /* all columns */
+	    opt = OPT_A;
+	}
+    }
+#else
     if (ftype == GRETL_CSV) {
 	const char *opts[] = {
 	    N_("Try to interpret the first column as containing\n"
@@ -773,6 +785,7 @@ static int get_csv_data (char *fname, int ftype, int append)
 	    opt = OPT_A;
 	}
     }
+#endif
 
     if (bufopen(&prn)) {
 	return 1;

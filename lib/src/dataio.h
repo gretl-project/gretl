@@ -124,6 +124,8 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 int import_other (const char *fname, GretlFileType ftype,
 		  DATASET *dset, gretlopt opt, PRN *prn);
 
+int peek_at_csv (const char *fname, int n_lines, PRN *prn);
+
 int gretl_read_purebin (const char *fname, DATASET *dset,
 			gretlopt opt, PRN *prn);
 

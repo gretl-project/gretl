@@ -4262,6 +4262,103 @@ int real_radio_dialog (const char *title, const char *label,
     return ret;
 }
 
+static void peek_csv (GtkWidget *button, GtkWidget *dialog)
+{
+    const char *fname;
+    windata_t *vwin;
+    PRN *prn;
+    int err;
+
+    fname = g_object_get_data(G_OBJECT(button), "fname");
+    bufopen(&prn);
+    err = peek_at_csv(fname, 8, prn);
+    if (err) {
+        gui_errmsg(err);
+    } else {
+        pputs(prn, "...\n");
+        vwin = view_buffer(prn, 84, 300, fname, PRINT, NULL);
+        gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+                                     GTK_WINDOW(dialog));
+    }
+}
+
+int csv_open_dialog (const char *fname)
+{
+    const char *opts[] = {
+        N_("Try to interpret the first column as containing\n"
+           "observation information (for example, dates) if\n"
+           "the column heading looks suitable."),
+        N_("Treat the first column as an ordinary data series\n"
+           "regardless of the column heading.")
+    };
+    GtkWidget *dialog;
+    GtkWidget *vbox, *hbox;
+    GtkWidget *button = NULL;
+    GtkWidget *label;
+    GSList *group = NULL;
+    int radio_val = 0;
+    int hcode = 0;
+    int i, ret = GRETL_CANCEL;
+
+    if (maybe_raise_dialog()) {
+        return ret;
+    }
+
+    dialog = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new("Data file options:");
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+
+    for (i=0; i<2; i++) {
+        button = gtk_radio_button_new_with_label(group, _(opts[i]));
+        gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+        g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(i));
+        g_signal_connect(G_OBJECT(button), "clicked",
+                         G_CALLBACK(set_radio_opt), &radio_val);
+        if (i == 0) {
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+        }
+        group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new("\"View\": view the first few lines of the file");
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    /* View (the first few lines) */
+    button = gtk_button_new_with_label("View");
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       button, TRUE);
+    g_object_set_data(G_OBJECT(button), "fname", (char *) fname);
+    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(peek_csv),
+			     dialog);
+    /* Cancel */
+    cancel_delete_button(hbox, dialog);
+    /* OK */
+    button = ok_validate_button(hbox, &ret, &radio_val);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     dialog);
+    gtk_widget_grab_default(button);
+    if (hcode) {
+        context_help_button(hbox, hcode);
+    } else {
+        gretl_dialog_keep_above(dialog);
+    }
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+
 int radio_dialog (const char *title, const char *label, const char **opts,
                   int nopts, int deflt, int hcode, GtkWidget *parent)
 {

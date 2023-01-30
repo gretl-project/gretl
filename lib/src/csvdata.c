@@ -4016,3 +4016,73 @@ int csv_open_needs_matrix (gretlopt opt)
 
     return ret;
 }
+
+/* Read the first @n_lines lines of @fname and write the
+   content to @prn.
+*/
+
+int peek_at_csv (const char *fname, int n_lines, PRN *prn)
+{
+    csvdata *c = NULL;
+    gzFile fp = NULL;
+    gchar *altname = NULL;
+    int recode;
+    int err = 0;
+
+    fp = gretl_gzopen(fname, "rb");
+    if (fp == NULL) {
+        return E_FOPEN;
+    }
+
+    c = csvdata_new(NULL);
+    if (c == NULL) {
+        err = E_ALLOC;
+    }
+
+    if (!err) {
+        recode = csv_unicode_check(fp, c, prn);
+        if (recode) {
+            err = csv_recode_input(&fp, fname, &altname, recode, prn);
+        }
+    }
+
+    if (!err) {
+        c->maxlinelen = csv_max_line_length(fp, c, prn);
+        if (c->maxlinelen <= 0) {
+            err = E_DATA;
+        }
+    }
+
+    if (!err) {
+        c->line = malloc(c->maxlinelen);
+        if (c->line == NULL) {
+            err = E_ALLOC;
+        }
+    }
+
+    if (!err) {
+        char *s;
+        int i;
+
+        gzrewind(fp);
+
+        for (i=0; i<n_lines; i++) {
+            s = gzgets(fp, c->line, c->maxlinelen);
+            if (s == Z_NULL) {
+                break;
+            } else {
+                pputs(prn, s);
+            }
+        }
+    }
+
+    gzclose(fp);
+    csvdata_free(c);
+
+    if (altname != NULL) {
+        gretl_remove(altname);
+        g_free(altname);
+    }
+
+    return err;
+}

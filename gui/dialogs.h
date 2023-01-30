@@ -232,4 +232,6 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent);
 
 gint script_start_dialog (const char *msg);
 
+int csv_open_dialog (const char *fname);
+
 #endif /* DIALOGS_H */
