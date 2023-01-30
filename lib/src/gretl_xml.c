@@ -2138,7 +2138,8 @@ static void strval_saver_restore (DATASET *dset,
 static int gdt_write_observations (const DATASET *dset,
 				   const int *storelist,
 				   int skip_padding, int T,
-				   int (*show_progress)(),
+				   int (*show_progress)
+                                   (double, double, int),
 				   PRN *prn)
 {
     char buf[32], numstr[32];

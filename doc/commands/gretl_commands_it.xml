@@ -13679,10 +13679,11 @@ l'indentazione della linea sia corretta.
     </para>
   </li>
   <li>
-    <para><lit>warnings</lit>: <lit>off</lit> oppure
-    <lit>on</lit> (valore predefinito). Sopprime o ripristina i
-    messaggi cautelativi, emessi quando certe operazioni
-    aritmetiche producono valori non finiti.
+    <para><lit>warnings</lit>: <lit>off</lit> oppure <lit>on</lit>
+    (valore predefinito). Sopprime o ripristina i messaggi cautelativi
+    relativi a problemi numerici, come ad esempio quando quando certe
+    operazioni aritmetiche producono valori non finiti o la
+    convergenza di un ottimizatore è dubbia.
     </para>
   </li>
   <li>
@@ -13936,18 +13937,18 @@ l'indentazione della linea sia corretta.
 </para>
 </li>
 <li>
-  <para><lit>bfgs_maxgrad</lit>: one floating point value. This is
-  used in gretl's BFGS routine to check if the norm of the gradient
-  is reasonably close to zero when the <lit>bfgs_toler</lit>
-  criterion is met.  A warning is printed if the norm of the
-  gradient exceeds 1; an error is flagged if the norm exceeds
-  <lit>bfgs_maxgrad</lit>. At present the default is the
-  permissive value of 5.0.
+  <para><lit>bfgs_maxgrad</lit>: un valore in virgola mobile. Esso
+  viene usato nella routine BFGS di gretl per controllare se la norma
+  del gradiente è ragionevolmente prossima a zero quando il criterio
+  <lit>bfgs_toler</lit> è soddisfatto.  Se la norma eccede 1, viene
+  stampato un messaggio cautelativo; se la norma eccede
+  <lit>bfgs_maxgrad</lit>, questo viene considerato un vero e proprio
+  errore. Al momento il default è 5.0 (che è piuttosto permissivo).
 </para>
 </li>
 <li>
   <para><lit>bfgs_richardson</lit>: <lit>on</lit> or <lit>off</lit>
-  (the default). Usa l'estrapolazione di Richardsonper calcolare le
+  (il default). Usa l'estrapolazione di Richardsonper calcolare le
   derivate numeriche nel contesto dell'ottimizzazione con BFGS.
 </para>
 </li>

@@ -1,5 +1,5 @@
-/* 
-   This source file based on Minpack: initially converted from 
+/*
+   This source file based on Minpack: initially converted from
    fortran using f2c, then rendered into relatively idiomatic
    C with zero-based indexing throughout and pass-by-value for
    parameters that do not function as pointers. We also rely
@@ -192,11 +192,11 @@ c     argonne national laboratory. minpack project. march 1980.
 c     burton s. garbow, kenneth e. hillstrom, jorge j. more
 */
 
-int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec, 
-	   double ftol, double xtol, double gtol, int maxfev, 
-	   double epsfcn, double *diag, int mode, double factor, 
-	   int nprint, int *info, int *nfev, double *fjac, 
-	   int ldfjac, int *ipvt, double *qtf, double *wa1, 
+int lmdif_(S_fp6 fcn, int m, int n, double *x, double *fvec,
+	   double ftol, double xtol, double gtol, int maxfev,
+	   double epsfcn, double *diag, int mode, double factor,
+	   int nprint, int *info, int *nfev, double *fjac,
+	   int ldfjac, int *ipvt, double *qtf, double *wa1,
 	   double *wa2, double *wa3, double *wa4, void *p)
 {
     const double p1 = .1;
@@ -219,8 +219,8 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 
     /* check the input parameters for errors */
 
-    if (n <= 0 || m < n || ldfjac < m || 
-	ftol < 0.0 || xtol < 0.0 || gtol < 0.0 || 
+    if (n <= 0 || m < n || ldfjac < m ||
+	ftol < 0.0 || xtol < 0.0 || gtol < 0.0 ||
 	maxfev <= 0 || factor <= 0.0) {
 	goto terminate;
     }
@@ -254,7 +254,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     /* calculate the jacobian matrix */
 
     iflag = 2;
-    fdjac2_((S_fp)fcn, m, n, 0, x, fvec, fjac, ldfjac, &iflag, 
+    fdjac2_((S_fp6)fcn, m, n, 0, x, fvec, fjac, ldfjac, &iflag,
 	    epsfcn, wa4, p);
     *nfev += n;
     if (iflag < 0) {
@@ -277,7 +277,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     qrfac_(m, n, fjac, ldfjac, ipvt, wa1, wa2, wa3);
 
     /* on the first iteration and if mode is 1, scale according
-       to the norms of the columns of the initial jacobian 
+       to the norms of the columns of the initial jacobian
     */
     if (iter == 1) {
 	if (mode != 2) {
@@ -356,7 +356,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
  inner_start:
 
     /* determine the Levenberg-Marquardt parameter */
-    lmpar_(n, fjac, ldfjac, ipvt, diag, qtf, delta, &par, 
+    lmpar_(n, fjac, ldfjac, ipvt, diag, qtf, delta, &par,
 	   wa1, wa2, wa3, wa4);
 
     /* store the direction p and x + p; calculate the norm of p */
@@ -457,7 +457,7 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
     if (delta <= xtol * xnorm) {
 	*info = 2;
     }
-    if (fabs(actred) <= ftol && prered <= ftol && p5 * ratio <= 1.0 && *info 
+    if (fabs(actred) <= ftol && prered <= ftol && p5 * ratio <= 1.0 && *info
 	    == 2) {
 	*info = 3;
     }
@@ -504,4 +504,3 @@ int lmdif_(S_fp fcn, int m, int n, double *x, double *fvec,
 
     return 0;
 }
-

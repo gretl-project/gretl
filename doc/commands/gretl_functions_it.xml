@@ -6181,13 +6181,21 @@
       </fnargs>
       <description>
 	<para>
-	  Tronca la parte frazionaria di <argname>x</argname>. Si noti
-	  che <lit>int</lit> e <fncref targ="floor"/> differiscono in
-	  termini di risultato sui numeri negativi:
+	  Ritornaa la parte intera di <argname>x</argname>,
+	  troncandone la parte frazionaria. Se il risultato non può
+	  essere rappresentato come intero a 32 bit (cioè non è
+	  compreso fra &minus;2147483648 e 2147483647), allora il
+	  risultato è NA.
+	</para>
+	<para>
+	  Si noti che <lit>int</lit> e <fncref targ="floor"/>
+	  differiscono in termini di risultato sui numeri negativi:
 	  <lit>int(-3.5)</lit> restituisce &minus;3, mentre
 	  <lit>floor(-3.5)</lit> produce &minus;4.
 	  <seelist>
             <fncref targ="ceil"/>
+            <fncref targ="floor"/>
+            <fncref targ="round"/>
 	  </seelist>
 	</para>
       </description>

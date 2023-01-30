@@ -105,7 +105,7 @@ struct _selector {
     size_t cmdlen;
     gpointer data;
     gpointer extra_data;
-    int (*callback)();
+    int (*callback)(selector *);
 };
 
 enum {

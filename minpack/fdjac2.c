@@ -1,5 +1,5 @@
-/* 
-   This source file based on Minpack: initially converted from 
+/*
+   This source file based on Minpack: initially converted from
    fortran using f2c, then rendered into relatively idiomatic
    C with zero-based indexing throughout and pass-by-value for
    parameters that do not function as pointers. We also rely
@@ -100,9 +100,9 @@ c     Burton S. Garbow, Kenneth E. Hillstrom, Jorge J. More
 # define DEN sqrt(6.0)
 #endif
 
-int fdjac2_(S_fp fcn, int m, int n, int quality, 
-	    double *x, double *fvec, 
-	    double *fjac, int ldfjac, int *iflag, 
+int fdjac2_(S_fp6 fcn, int m, int n, int quality,
+	    double *x, double *fvec,
+	    double *fjac, int ldfjac, int *iflag,
 	    double epsfcn, double *wa, void *p)
 {
     double eps = sqrt(DBL_EPSILON);
@@ -165,7 +165,7 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 
 	for (j = 0; j < n; j++) {
 	    temp = x[j];
-#if BIGGER_H	    
+#if BIGGER_H
 	    if (quality > 1) {
 		if (fabs(temp) > XREF) {
 		    h = XREF * sqrt(fabs(temp/XREF)) * eps / DEN;
@@ -177,7 +177,7 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    }
 #else
 	    h = eps * fabs(temp);
-#endif	    
+#endif
 	    if (h == 0.0) {
 		h = eps;
 	    }
@@ -185,7 +185,7 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    for (i = 0; i < m; i++) {
 		y[i] = 0.0;
 	    }
-	    
+
 	    for (k = 0; k < dim; k++) {
 		x[j] = temp + a[k]*h;
 		(*fcn)(m, n, x, wa, iflag, p);
@@ -200,11 +200,10 @@ int fdjac2_(S_fp fcn, int m, int n, int quality,
 	    for (i = 0; i < m; i++) {
 		fjac[i + j * ldfjac] = y[i] / (d*h);
 	    }
-	    
+
 	    x[j] = temp;
 	}
     }
-    
+
     return 0;
 }
-

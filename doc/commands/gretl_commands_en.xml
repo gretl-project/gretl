@@ -13503,9 +13503,11 @@
          </para>
 	</li>
 	<li>
-	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit> (the
-	  default). Suppress or resume the printing of warning messages
-	  issued when arithmetical operations produce non-finite values.
+	  <para><lit>warnings</lit>: <lit>off</lit> or <lit>on</lit>
+	  (the default). Suppress or resume the printing of warning
+	  messages when numerical problems arise, for example a
+	  computation produces non-finite values or the convergence of
+	  an optimizer is questionable.
          </para>
 	</li>
 	<li>

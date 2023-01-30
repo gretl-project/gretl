@@ -17,7 +17,7 @@
   <td align=left>
       <p><a href="#db">gretl databases</a></p>
       <p><a href="#jw">textbook datasets</a></p>
-      <p><a href="#df">big datafiles</a></p>
+      <p><a href="#df">larger datafiles</a></p>
       <p><a href="#custom">custom data collections</a></p>
       <p><a href="#utils">data utilities</a></p>
   </td>
@@ -48,13 +48,12 @@ are in XML format, conforming to the Document Type Definition (DTD) given in
 <h2><a name="db">1. gretl databases</a></h2>
 
 <p>The gretl distribution contains one sample database, a collection
-of US macroeconomic time series from the Federal Reserve Bank of St Louis.  <a
-href="http://gretl.sourceforge.net/cgi-bin/gretldata.cgi?opt=SHOW_DBS">Several
+of US macroeconomic time series from the Federal Reserve Bank of St
+Louis.  <a href="http://gretl.sourceforge.net/cgi-bin/gretldata.cgi?opt=SHOW_DBS">Several
 more databases</a> are available for free downloading, or online
-access. Note that with gretl 0.40 and higher you can access these
-additional databases via the menu item <kbd>File/Databases/On
-database server</kbd> (provided you are connected to the
-internet).</p>
+access. You can access these additional databases from within gretl,
+via the menu item <kbd>File/Databases/On database server</kbd>
+(provided you are connected to the internet).</p>
 
 <h2><a name="jw">2. Textbook datasets</a></h2>
 
@@ -199,20 +198,28 @@ The Stock and Watson scripts package should be unpacked in
 not installed under <kbd>/usr</kbd>).
 </p>
 
-<h2><a name="df">3. Big datafiles</a></h2>
+<h2><a name="df">3. Larger datafiles</a></h2>
 
 <table width="90%" border=0 cellspacing=4 cellpadding=4>
 <tr><th align=left>Source</th>
   <th align=left>Description</th>
-    <th align=left>File</th></tr> 
+  <th align=left>File</th></tr>
 <tr bgcolor="#E0E0E0">
-  <td><p><a href="http://pwt.econ.upenn.edu/">U. Penn</a></p></td>
-    <td><p>Penn World Table, PWT56 (cross-country macro panel data)</p></td>
+  <td><p><a href="https://www.rug.nl/ggdc/productivity/pwt/">University of Groningen</a></p></td>
+    <td><p>Penn World Table 10.01 (cross-country macro panel data)</p></td>
+     <td><p>
+	 <a
+	 href="http://sourceforge.net/projects/gretl/files/datafiles/pwt56.tar.gz/download">pwt10.gdt</a></p>
+	 </td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><p><a href="https://www.rug.nl/ggdc/productivity/pwt/pwt-releases/pwt-5.6">University of Groningen</a></p></td>
+    <td><p>Penn World Table 5.6 (cross-country macro panel data)</p></td>
      <td><p>
 	 <a
 	 href="http://sourceforge.net/projects/gretl/files/datafiles/pwt56.tar.gz/download">pwt56.tar.gz</a></p>
 	 </td>
-   </tr>
+</tr>
 <tr bgcolor="#E0E0E0">
   <td><p><a href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></p></td>
     <td><p>Jones-Obstfeld Saving and Investment Data for 13 Countries
@@ -233,15 +240,13 @@ not installed under <kbd>/usr</kbd>).
 </table>
 
 <p>You should follow up the links in the first column above to get
-full details on these data sets.  I am in the process of assembling
-my own notes on these packages; for the moment I have only done this
-for the Penn World Table.</p>
+full details on these data sets.</p>
 
-<h3>Penn World Table</h3>
+<h3>Penn World Tables</h3>
 
-<p>PWT56 is a rich macroeconomic panel dataset, spanning 152 countries
-over the years 1950 to 1992.  The package for gretl comprises three
-main data files:</p>
+<p>The version 10.01 data take the form of a single compressed gretl
+  datafile. The version 5.6 package for gretl comprises three main
+  data files as follows:</p>
 
 <ul>
   
@@ -252,11 +257,11 @@ main data files:</p>
 the 30 years 1960-89, containing 20 variables.  This data set has no
 missing observations.</p></li>
       
-<li><p><kbd>pwt56_1985.gdt</kbd>: More data are available for 1985 than for
-any other year, so I also made a pure cross-sectional data file for
-all 152 countries for this year.  This file has some missing
-observations, but these will not be quite so difficult to deal with in
-a cross section as in a panel data set.</p></li>
+<li><p><kbd>pwt56_1985.gdt</kbd>: More data are available for 1985
+than for any other year, and this is a purely cross-sectional data
+file for all 152 countries for this year.  This file has some missing
+observations, but these will not be so difficult to deal with in a
+cross section as in a panel data set.</p></li>
 
 </ul>
 

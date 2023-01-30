@@ -3031,6 +3031,9 @@ static void dotdir_cleanup (void)
                             /* failed auto-dot directory? */
                             gretl_deltree(fname);
                         }
+		    } else if (!strncmp(fname, "prntmp.", 7) &&
+			       !gretl_in_gui_mode()) {
+			; /* don't let gretlcli delete a GUI file */
                     } else if (strcmp(fname, "..") &&
                                strcmp(fname, ".") &&
                                strcmp(fname, ".gretl2rc") &&

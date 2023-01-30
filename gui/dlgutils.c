@@ -444,7 +444,7 @@ void set_active_edit_name (GtkWidget *w)
 
 struct dialog_t_ {
     int ci;
-    void (*okfunc)();
+    void (*okfunc)(GtkWidget *, dialog_t *);
     void *data;
     int blocking;
     int *cancel;
@@ -474,9 +474,9 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
 }
 
 static dialog_t *edit_dialog_new (int ci, const char *title,
-				  void (*okfunc)(), void *data,
-				  int helpcode, GtkWidget *parent,
-				  int *canceled)
+				  void (*okfunc)(GtkWidget *, dialog_t *),
+                                  void *data, int helpcode,
+                                  GtkWidget *parent, int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
 
@@ -1309,9 +1309,9 @@ static void edit_dialog_add_note (int ci, const char *s,
 void
 blocking_edit_dialog (int ci, const char *title,
 		      const char *info, const char *deflt,
-		      void (*okfunc)(), void *okptr,
-		      Varclick click, GtkWidget *parent,
-		      int *canceled)
+		      void (*okfunc)(GtkWidget *, dialog_t *),
+                      void *okptr, Varclick click,
+                      GtkWidget *parent, int *canceled)
 {
     dialog_t *d;
     GtkWidget *w;
@@ -1468,8 +1468,9 @@ blocking_edit_dialog (int ci, const char *title,
 
 void edit_dialog (int ci, const char *title,
 		  const char *info, const char *deflt,
-		  void (*okfunc)(), void *okptr,
-		  Varclick click, GtkWidget *parent)
+		  void (*okfunc)(GtkWidget *, dialog_t *),
+                  void *okptr, Varclick click,
+                  GtkWidget *parent)
 {
     blocking_edit_dialog(ci, title, info, deflt, okfunc, okptr,
 			 click, parent, NULL);

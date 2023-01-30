@@ -66,7 +66,7 @@ struct wbook_ {
     guint32 *byte_offsets;
     void *colspin, *rowspin;
     int *xf_list;
-    int (*get_min_offset)();
+    int (*get_min_offset)(wbook *, int);
     void *data;
 };
 
