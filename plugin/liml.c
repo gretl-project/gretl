@@ -1,24 +1,25 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
+#include "matrix_extra.h"
 #include "system.h"
 #include "sysml.h"
 
@@ -47,11 +48,11 @@
 */
 
 /* compose E0 or E1 as in Greene, 4e, p. 686, looping across the
-   endogenous vars in the model list 
+   endogenous vars in the model list
 */
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
-			const int *exlist, const int *list, 
+			const int *exlist, const int *list,
 			DATASET *dset)
 {
     int i, t, j = 0;
@@ -93,12 +94,14 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
    needed as a basis for LIML */
 
 static int *
-liml_make_reglist (const equation_system *sys, const int *list, 
-		   const int *exlist, int *k, int *err)
+liml_make_reglist (const equation_system *sys,
+		   DATASET *dset, const int *list,
+		   const int *exlist, int *k,
+		   int *err)
 {
     int nexo = exlist[0];
     int *reglist;
-    int i, j;
+    int i, j, vi;
 
     reglist = gretl_list_new(nexo + 1);
     if (reglist == NULL) {
@@ -108,6 +111,7 @@ liml_make_reglist (const equation_system *sys, const int *list,
 
 #if LDEBUG
     fprintf(stderr, "liml_make_reglist: found %d exog vars\n", nexo);
+    printlist(exlist, "exog list");
 #endif
 
     /* at first, put all _included_ exog vars in reglist */
@@ -116,11 +120,18 @@ liml_make_reglist (const equation_system *sys, const int *list,
     reglist[1] = 0;
     j = 2;
     for (i=2; i<=list[0]; i++) {
-	if (in_gretl_list(exlist, list[i])) {
+	vi = list[i];
+	if (in_gretl_list(exlist, vi)) {
 	    reglist[0] += 1;
-	    reglist[j++] = list[i];
+#if LDEBUG
+	    fprintf(stderr, " adding %s to reglist\n", dset->varname[vi]);
+#endif
+	    reglist[j++] = vi;
 	} else {
 	    /* an endogenous var */
+#if LDEBUG
+	    fprintf(stderr, " noting endog var %s\n", dset->varname[vi]);
+#endif
 	    *k += 1;
 	}
     }
@@ -137,9 +148,9 @@ liml_make_reglist (const equation_system *sys, const int *list,
    covariance matrix (in sysest.c)
 */
 
-static int 
-liml_set_model_data (MODEL *pmod, const gretl_matrix *E, 
-		     const int *exlist, const int *list, 
+static int
+liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
+		     const int *exlist, const int *list,
 		     int T, double lmin, DATASET *dset)
 {
     double *Xi = NULL;
@@ -185,7 +196,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     }
 
     if (!err) {
-	err = gretl_model_set_data(pmod, "liml_y", ymod, 
+	err = gretl_model_set_data(pmod, "liml_y", ymod,
 				   GRETL_TYPE_DOUBLE_ARRAY,
 				   dset->n * sizeof *ymod);
     }
@@ -197,14 +208,13 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     return err;
 }
 
-static int liml_do_equation (equation_system *sys, int eq, 
+static int liml_do_equation (equation_system *sys, int eq,
 			     DATASET *dset, PRN *prn)
 {
     int *list = system_get_list(sys, eq);
     int *exlist = NULL;
     gretl_matrix_block *B = NULL;
-    gretl_matrix *E, *W0, *W1, *W2, *Inv;
-    gretl_matrix *lambda = NULL;
+    gretl_matrix *E, *W0, *W1, *L;
     double lmin = 1.0;
     MODEL *pmod;
     MODEL lmod;
@@ -249,7 +259,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     /* first make regression list using only included instruments */
-    reglist = liml_make_reglist(sys, list, exlist, &k, &err);
+    reglist = liml_make_reglist(sys, dset, list, exlist, &k, &err);
     if (err) {
 	if (freelists) {
 	    free(list);
@@ -265,23 +275,18 @@ static int liml_do_equation (equation_system *sys, int eq,
     B = gretl_matrix_block_new(&E, T, k,
 			       &W0, k, k,
 			       &W1, k, k,
-			       &W2, k, k,
-			       &Inv, k, k,
 			       NULL);
-
     if (B == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
-
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
 					W0, GRETL_MOD_NONE);
     }
-
 #if LDEBUG
     gretl_matrix_print(W0, "W0");
 #endif
@@ -292,46 +297,36 @@ static int liml_do_equation (equation_system *sys, int eq,
 	for (i=2; i<=reglist[0]; i++) {
 	    reglist[i] = exlist[i-1];
 	}
+#if LDEBUG
+	printlist(reglist, "reglist, for W1");
+#endif
 	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
-
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
 					W1, GRETL_MOD_NONE);
     }
-
 #if LDEBUG
     gretl_matrix_print(W1, "W1");
 #endif
 
-    /* form a symmetric matrix that has the same eigenvalues
-       as W1^{-1} * W0, and find its minimum eigenvalue
-    */
-
     if (!err) {
-	gretl_matrix_copy_values(Inv, W1);
-	err = gretl_matrix_cholesky_decomp(Inv) ||
-	    gretl_invert_triangular_matrix(Inv, 'L');
-    }
-
-    if (!err) {
-	err = gretl_matrix_qform(Inv, GRETL_MOD_NONE, W0,
-				 W2, GRETL_MOD_NONE);
-	if (!err) {
-	    lmin = gretl_symm_matrix_lambda_min(W2, &err);
-	}
+        /* determine the minimum eigenvalue of W1^{-1} * W0 */
+        L = gretl_gensymm_eigenvals(W1, W0, NULL, &err);
+        if (!err) {
+            lmin = 1.0 / L->val[k-1];
+        }
+        gretl_matrix_free(L);
     }
 
     if (!err) {
 	gretl_model_set_double(pmod, "lmin", lmin);
 	gretl_model_set_int(pmod, "idf", idf);
-
 #if LDEBUG
 	fprintf(stderr, "lmin = %g, idf = %d\n", lmin, idf);
 #endif
-
-	err = liml_set_model_data(pmod, E, exlist, list, T, 
+	err = liml_set_model_data(pmod, E, exlist, list, T,
 				  lmin, dset);
 	if (err) {
 	    fprintf(stderr, "error in liml_set_model_data()\n");
@@ -356,7 +351,6 @@ static int liml_do_equation (equation_system *sys, int eq,
 
     free(reglist);
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(lambda);
 
     if (freelists) {
 	free(list);
@@ -388,15 +382,3 @@ int liml_driver (equation_system *sys, DATASET *dset, PRN *prn)
 
     return err;
 }
-
-
-
-    
-	
-
-    
-    
-    
-
-    
-    

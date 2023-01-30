@@ -159,19 +159,19 @@ static const gchar *get_window_title (GtkWidget *w)
     const char *skip = "gretl_edit";
 #else
     const char *skip = "gretl";
-#endif    
+#endif
     const gchar *s = NULL;
 
     if (GTK_IS_WINDOW(w)) {
 	int n = strlen(skip);
-	
+
 	s = gtk_window_get_title(GTK_WINDOW(w));
 	if (s != NULL && !strncmp(s, skip, n)) {
 #ifdef GRETL_EDIT
 	    if (strlen(s) == n) {
 		return _("Script editor");
 	    }
-#endif	    
+#endif
 	    s += n;
 	    s += strspn(s, " ");
 	    if (*s == ':') {
@@ -560,7 +560,11 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     if (menu != NULL) {
 	/* we need to make sure this is up to date */
 	gtk_widget_destroy(menu);
-	menu = NULL;
+    }
+
+    if (wlist == NULL) {
+        /* "can't happen" */
+        return;
     }
 
     if (n_listed_windows > 1) {
@@ -572,25 +576,32 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 
     menu = gtk_menu_new();
+    g_signal_connect(G_OBJECT(menu), "destroy",
+                     G_CALLBACK(gtk_widget_destroyed),
+                     &menu);
     list = g_list_first(wlist);
 
     while (list != NULL) {
 	action = (GtkAction *) list->data;
+        if (action != NULL) {
 #ifndef GRETL_EDIT
-	lwin = window_from_action(action);
-	if (is_command_log_viewer(lwin)) {
-	    log_up = 1;
-	} else if (widget_is_iconview(lwin)) {
-	    icons_up = 1;
-	}
+            lwin = window_from_action(action);
+            if (lwin != NULL) {
+                if (is_command_log_viewer(lwin)) {
+                    log_up = 1;
+                } else if (widget_is_iconview(lwin)) {
+                    icons_up = 1;
+                }
+            }
 #endif
-	if (n_listed_windows > 1 && thiswin != NULL) {
-	    maybe_revise_action_label(action, thiswin);
-	}
-	gtk_action_set_accel_path(action, NULL);
-	item = gtk_action_create_menu_item(action);
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+            if (n_listed_windows > 1 && thiswin != NULL) {
+                maybe_revise_action_label(action, thiswin);
+            }
+            gtk_action_set_accel_path(action, NULL);
+            item = gtk_action_create_menu_item(action);
+            gtk_widget_show(item);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+        }
 	list = list->next;
     }
     g_list_free(wlist);

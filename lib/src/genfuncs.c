@@ -3808,6 +3808,19 @@ static double correct_to_int (double x)
     return x;
 }
 
+static double unix_time_from_iso_date (const char *s)
+{
+    double x, ret = NADBL;
+    char *test;
+
+    test = gretl_strptime(s, "%Y-%m-%d", &x);
+    if (test != NULL && *test == '\0') {
+        ret = x;
+    }
+
+    return ret;
+}
+
 /**
  * gretl_plotx:
  * @dset: data information struct.
@@ -3831,6 +3844,8 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     static int ptype;
     static int Tbak;
     static double sd0bak;
+    char datestr[OBSLEN];
+    char *tstr = NULL;
     double mul, frac;
     int t, y1, T = 0;
     int maj, min;
@@ -3940,20 +3955,15 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     case PLOTVAR_GPTIME:
         for (t=0; t<T; t++) {
             if (dset->S != NULL) {
-                if (ptype == PLOTVAR_GPTIME) {
-                    x[t] = gnuplot_time_from_date(dset->S[t], "%Y-%m-%d");
-                } else {
-                    x[t] = get_dec_date(dset->S[t]);
-                }
-	    } else {
-                char datestr[OBSLEN];
-
+                tstr = dset->S[t];
+            } else {
                 calendar_date_string(datestr, t, dset);
-                if (ptype == PLOTVAR_GPTIME) {
-                    x[t] = gnuplot_time_from_date(datestr, "%Y-%m-%d");
-                } else {
-                    x[t] = get_dec_date(datestr);
-                }
+                tstr = datestr;
+            }
+            if (ptype == PLOTVAR_GPTIME) {
+                x[t] = unix_time_from_iso_date(tstr);
+            } else {
+                x[t] = get_dec_date(tstr);
             }
             if (na(x[t])) {
                 failed++;

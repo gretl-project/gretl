@@ -74,7 +74,6 @@ GPT_SPEC *plotspec_new (void)
     spec->xticstr = NULL;
     spec->x2ticstr = NULL;
 
-    spec->timefmt[0] = 0;
     spec->xfmt[0] = 0;
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
@@ -1388,9 +1387,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     print_plot_ranges_etc(spec, fp);
 
     /* using time format for x-axis? */
-    if (*spec->timefmt != '\0') {
+    if (spec->flags & GPT_TIMEFMT) {
 	fputs("set xdata time\n", fp);
-	fprintf(fp, "set timefmt \"%s\"\n", spec->timefmt);
+	fputs("set timefmt \"%s\"\n", fp);
     }
 
     /* special x and/or y format? */

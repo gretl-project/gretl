@@ -1555,12 +1555,6 @@ static int get_gpt_data (GPT_SPEC *spec,
 		if (gp_missing(test[j])) {
 		    x[j][t] = NADBL;
 		    missing++;
-		} else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
-		    /* allow for backward compatibility */
-		    x[j][t] = gnuplot_time_from_date(test[j], spec->timefmt);
-		    if (na(x[j][t])) {
-			err = E_DATA;
-		    }
 		} else {
 		    x[j][t] = atof(test[j]);
 		}
@@ -1660,8 +1654,6 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 	    sscanf(s, "%31s", test);
 	    if (gp_missing(test)) {
 		xij = NADBL;
-	    } else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
-		xij = gnuplot_time_from_date(test, spec->timefmt);
 	    } else {
 		xij = atof(test);
 	    }
@@ -1900,26 +1892,19 @@ static int read_plot_format (const char *s, GPT_SPEC *spec,
     int n, err = 0;
 
     if (timefmt) {
-	/* including 'x' axis here is actually wrong,
-	   but it may be in some old plot files */
-	s += strspn(s, " ");
-	if (*s == 'x') {
-	    n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
-	    err = n < 2;
-	} else {
-	    n = sscanf(s, "%15s", fmt);
-	    err = n < 1;
-	}
+        if (strcmp(s, "%s") != 0) {
+            gretl_errmsg_set("Invalid 'timefmt' setting");
+            err = 1;
+        } else {
+            spec->flags |= GPT_TIMEFMT;
+        }
     } else {
 	n = sscanf(s, "%c \"%15[^\"]", &axis, fmt);
 	err = n < 2;
     }
 
     if (!err) {
-	if (timefmt) {
-	    *spec->timefmt = '\0';
-	    strncat(spec->timefmt, fmt, 15);
-	} else if (axis == 'x') {
+	if (axis == 'x') {
 	    *spec->xfmt = '\0';
 	    strncat(spec->xfmt, fmt, 15);
 	} else if (axis == 'y') {
@@ -3007,7 +2992,7 @@ static void check_for_plot_time_data (GPT_SPEC *spec, gchar *buf)
     char line[128];
 
     while (bufgets(line, sizeof line, buf)) {
-	if (!strncmp(line, "set timefmt \"%s\"", 16)) {
+	if (!strncmp(line, "set timefmt ", 12)) {
 	    spec->flags |= GPT_TIMEFMT;
 	} else if (*line == '#' && strstr(line, "letterbox")) {
 	    spec->flags |= GPT_LETTERBOX;
@@ -3390,12 +3375,6 @@ static int read_plotspec_from_file (png_plot *plot)
     }
 
     if (err) {
-	goto bailout;
-    }
-
-    if ((spec->flags & GPT_TIMEFMT) && *spec->timefmt == '\0') {
-	fprintf(stderr, "got 'xdata time' but no timefmt\n");
-	err = E_DATA;
 	goto bailout;
     }
 
@@ -4059,8 +4038,8 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event,
 	    if (plot->pd == 4 || plot->pd == 12) {
 		x_to_date(data_x, plot->pd, label);
 	    } else if (plot->spec->flags & GPT_TIMEFMT) {
-		date_from_gnuplot_time(label, sizeof label,
-				       "%Y-%m-%d", data_x);
+                gretl_strftime(label, sizeof label, "%Y-%m-%d",
+                               (gint64) data_x, NADBL);
 	    } else if (xfmt != NULL) {
 		sprintf(label, xfmt, data_x);
 	    } else if (use_integer_format(plot->xint, data_x)) {

@@ -80,7 +80,6 @@ struct gnuplot_info_ {
     int t1;
     int t2;
     double xrange;
-    char timefmt[16];
     char xtics[64];
     char xfmt[16];
     char yfmt[16];
@@ -3377,7 +3376,6 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->t1 = dset->t1;
     gi->t2 = dset->t2;
     gi->xrange = 0.0;
-    gi->timefmt[0] = '\0';
     gi->xtics[0] = '\0';
     gi->xfmt[0] = '\0';
     gi->yfmt[0] = '\0';
@@ -3593,11 +3591,7 @@ static int graph_list_adjust_sample (int *list,
 
 static int timefmt_useable (const DATASET *dset)
 {
-    if (dated_daily_data(dset) || dated_weekly_data(dset)) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return dated_daily_data(dset) || dated_weekly_data(dset);
 }
 
 static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
@@ -3935,15 +3929,15 @@ static void make_time_tics (gnuplot_info *gi,
 
     if (gi->flags & GPT_TIMEFMT) {
 	pputs(prn, "set xdata time\n");
-	strcpy(gi->timefmt, "%s");
-	pprintf(prn, "set timefmt \"%s\"\n", gi->timefmt);
+	pputs(prn, "set timefmt \"%s\"\n");
 	if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
 	} else {
-	    strcpy(gi->xfmt, "%y-%m-%d"); /* two-digit year */
+	    strcpy(gi->xfmt, "%Y-%m-%d");
 	}
 	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
 	pputs(prn, "set xtics rotate by -45\n");
+	pputs(prn, "set xtics nomirror\n");
 	return;
     }
 
@@ -4071,6 +4065,21 @@ static int panel_group_invariant_plot (const int *plotlist,
     return err;
 }
 
+static int time_fit_wanted (gretlopt *popt)
+{
+    if ((*popt & OPT_T) && (*popt & OPT_F)) {
+        const char *s = get_optval_string(GNUPLOT, OPT_F);
+
+	if (s == NULL || !strcmp(s, "none")) {
+	    *popt &= ~OPT_F;
+	} else {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -4107,7 +4116,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     gretl_error_clear();
 
-    if ((opt & OPT_T) && (opt & OPT_F)) {
+    if (time_fit_wanted(&opt)) {
 	if (plotlist[0] > 1 || !dataset_is_time_series(dset)) {
 	    return E_BADOPT;
 	} else {
@@ -4669,7 +4678,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     gretl_push_c_numeric_locale();
 
     if (use_timefmt) {
-	fprintf(fp, "set xrange [%.12g:%.12g]\n", obs[dset->t1], obs[dset->t2]);
+	fprintf(fp, "set xrange [%.0f:%.0f]\n", obs[dset->t1], obs[dset->t2]);
 	scatters_set_timefmt(dset, obs, fp);
     } else if (obs != NULL) {
 	scatters_time_tics(obs, dset, fp);
@@ -9681,44 +9690,6 @@ int gnuplot_process_file (PRN *prn)
     }
 
     return err;
-}
-
-void date_from_gnuplot_time (char *targ, size_t tsize,
-			     const char *fmt, double x)
-{
-#ifdef WIN32
-    time_t etime = (time_t) x;
-
-    strftime(targ, tsize, fmt, localtime(&etime));
-#else
-    struct tm t = {0};
-    time_t etime = (time_t) x;
-
-    localtime_r(&etime, &t);
-    strftime(targ, tsize, fmt, &t);
-#endif
-}
-
-double gnuplot_time_from_date (const char *s, const char *fmt)
-{
-    double ret = NADBL;
-
-    if (fmt != NULL) {
-	if (strcmp(fmt, "%s") == 0) {
-	    /* already in seconds since epoch start */
-	    ret = atof(s);
-	} else if (*fmt != '\0') {
-	    char *test;
-	    double x;
-
-	    test = gretl_strptime(s, fmt, &x);
-	    if (test != NULL && *test == '\0') {
-		ret = x;
-	    }
-	}
-    }
-
-    return ret;
 }
 
 /* geoplot-specific functions */
