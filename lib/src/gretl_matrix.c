@@ -5668,13 +5668,13 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
     return XTX;
 }
 
-static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
-                              const gretl_matrix *b, int btr,
-                              gretl_matrix *c, GretlMatrixMod cmod,
-                              int m, int n, int k)
+void gretl_blas_dgemm (const gretl_matrix *a, int atr,
+		       const gretl_matrix *b, int btr,
+		       gretl_matrix *c, GretlMatrixMod cmod,
+		       int m, int n, int k)
 {
-    char TransA = (atr)? 'T' : 'N';
-    char TransB = (btr)? 'T' : 'N';
+    char TransA = atr ? 'T' : 'N';
+    char TransB = btr ? 'T' : 'N';
     double alpha = 1.0, beta = 0.0;
 
     if (cmod == GRETL_MOD_CUMULATE) {
@@ -5687,6 +5687,26 @@ static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
     dgemm_(&TransA, &TransB, &m, &n, &k,
            &alpha, a->val, &a->rows, b->val, &b->rows, &beta,
            c->val, &c->rows);
+}
+
+void gretl_blas_dsymm (const gretl_matrix *a, int asecond,
+		       const gretl_matrix *b, int upper,
+		       gretl_matrix *c, GretlMatrixMod cmod,
+		       int m, int n)
+{
+    double alpha = 1.0, beta = 0.0;
+    char side = asecond ? 'R' : 'L';
+    char uplo = upper ? 'U' : 'L';
+
+    if (cmod == GRETL_MOD_CUMULATE) {
+        beta = 1.0;
+    } else if (cmod == GRETL_MOD_DECREMENT) {
+        alpha = -1.0;
+        beta = 1.0;
+    }
+
+    dsymm_(&side, &uplo, &m, &n, &alpha, a->val, &a->rows,
+           b->val, &b->rows, &beta, c->val, &c->rows);
 }
 
 /* below: a native C re-write of netlib BLAS dgemm.f: note that

@@ -1427,6 +1427,13 @@ void dsyrk_ (const char *UPLO, const char *TRANS, const integer *N,
 	     const integer *LDA, const double *BETA, double *C,
 	     const integer *LDC);
 
+void dsymm_ (const char *SIDE, const char *UPLO,
+	     const integer *M, const integer *N,
+	     const double *ALPHA, const double *A,
+	     const integer *LDA, const double *B,
+	     const integer *LDB, const double *BETA,
+	     double *C, const integer *LDC);
+
 double dnrm2_ (const integer *n, double *X, const integer *incx);
 
 void daxpy_ (integer *n, double *da, double *dx, integer *incx,

@@ -230,7 +230,7 @@ void clear_gretl_matrix_err (void);
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg);
 
-void gretl_matrix_print2 (const gretl_matrix *m, const char *msg);    
+void gretl_matrix_print2 (const gretl_matrix *m, const char *msg);
 
 int gretl_matrix_na_check (const gretl_matrix *m);
 
@@ -493,6 +493,16 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 					 const gretl_matrix *b,
 					 int *err);
 
+void gretl_blas_dgemm (const gretl_matrix *a, int atr,
+		       const gretl_matrix *b, int btr,
+		       gretl_matrix *c, GretlMatrixMod cmod,
+		       int m, int n, int k);
+
+void gretl_blas_dsymm (const gretl_matrix *a, int asecond,
+		       const gretl_matrix *b, int upper,
+		       gretl_matrix *c, GretlMatrixMod cmod,
+		       int m, int n);
+
 int
 gretl_matrix_kronecker_product (const gretl_matrix *A,
 				const gretl_matrix *B,
@@ -716,7 +726,7 @@ int gretl_check_QR_rank (const gretl_matrix *R,
 
 int gretl_matrix_rank (const gretl_matrix *a, double eps,
 		       int *err);
-    
+
 int gretl_matrix_ols (const gretl_vector *y,
 		      const gretl_matrix *X,
 		      gretl_vector *b,
