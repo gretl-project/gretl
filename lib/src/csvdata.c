@@ -4065,6 +4065,7 @@ int peek_at_csv (const char *fname, int n_lines, PRN *prn)
         int i;
 
         gzrewind(fp);
+        gretl_print_reset_buffer(prn);
 
         for (i=0; i<n_lines; i++) {
             s = gzgets(fp, c->line, c->maxlinelen);
