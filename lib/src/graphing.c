@@ -3927,11 +3927,16 @@ static void make_time_tics (gnuplot_info *gi,
     }
 
     if (gi->flags & GPT_TIMEFMT) {
+        double yr100 = -59011441438;
+
 	pputs(prn, "set xdata time\n");
 	pputs(prn, "set timefmt \"%s\"\n");
 	if (single_year_sample(dset, gi->t1, gi->t2)) {
 	    strcpy(gi->xfmt, "%m-%d");
-	} else {
+	} else if (gi->x != NULL && gi->x[gi->t2] < yr100) {
+            /* century not known */
+            strcpy(gi->xfmt, "%y-%m-%d");
+        } else {
 	    strcpy(gi->xfmt, "%Y-%m-%d");
 	}
 	pprintf(prn, "set format x \"%s\"\n", gi->xfmt);
