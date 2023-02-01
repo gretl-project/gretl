@@ -1876,8 +1876,7 @@ static int dtab_save_offset (dta_table *dtab, int i, goffset offset)
         }
 
         if (i == 7) {
-            /* semi-expected */
-            fprintf(stderr, "buggy Stata file: variable labels not mapped\n");
+            ; /* semi-expected */
         } else {
             fprintf(stderr, "map: bad offset (<= 0) for element %d\n", i);
         }
