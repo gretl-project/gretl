@@ -1992,7 +1992,8 @@ static int unpack_bounds_info (bchecker *bc, gretl_bundle *bounds)
         bi = gretl_bundle_get_matrix(bounds, S[i], &err);
         if (!err && gretl_vector_get_length(bi) != 2) {
             err = E_INVARG;
-        } else {
+        }
+        if (!err) {
             gretl_matrix_set(bb, i, 0, bi->val[0]);
             gretl_matrix_set(bb, i, 1, bi->val[1]);
         }
