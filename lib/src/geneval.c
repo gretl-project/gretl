@@ -8801,6 +8801,8 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 	nv = gretl_vector_get_length(l->v.m);
 	if (nv == 0) {
 	    p->err = E_INVARG;
+	} else if (nv == 1) {
+	    ret = aux_string_node(p);
 	} else {
 	    ret = aux_sized_array_node(GRETL_TYPE_STRINGS, nv, p);
 	}
@@ -8895,7 +8897,7 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 			    ret->v.xvec[t] = i + 1;
 			    S[i++] = dstr;
 			}
-		    } else if (l->t == MAT) {
+		    } else if (l->t == MAT && nv > 1) {
 			p->err = gretl_array_set_string(ret->v.a, t, dstr, 0);
 		    } else {
 			ret->v.str = dstr;
