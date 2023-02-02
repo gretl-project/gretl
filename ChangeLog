@@ -10,6 +10,8 @@ version 2023a, in progress
   the output filename now invokes gnuplot's "canvas" driver
 - "midasreg" command: generate more specific error message
   for invalid specification
+- "fcast" command: enable the --plot option for forecasts
+  based on a system, when a single series is selected
 - strptime() and strftime() functions: generalize to allow
   vectorized usage, and add variants (strpday, strfday) to
   work with epoch days rather than Unix time

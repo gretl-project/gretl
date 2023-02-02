@@ -4048,12 +4048,15 @@
       <para context="cli">
 	The <opt>plot</opt> option calls for a plot file to be
 	produced, containing a graphical representation of the
-	forecast. The suffix of the <repl>filename</repl> argument to
-	this option controls the format of the plot: <lit>.eps</lit>
-	for EPS, <lit>.pdf</lit> for PDF, <lit>.png</lit> for PNG,
-	<lit>.plt</lit> for a gnuplot command file. The dummy filename
-	<lit>display</lit> can be used to force display of the plot in
-	a window. For example,
+	forecast. In the system case this option is available only
+	when the <repl>vname</repl> argument is used to select a
+	single variable for forecasting.  The suffix of the
+	<repl>filename</repl> argument to this option controls the
+	format of the plot: <lit>.eps</lit> for EPS, <lit>.pdf</lit>
+	for PDF, <lit>.png</lit> for PNG, <lit>.plt</lit> for a
+	gnuplot command file. The dummy filename <lit>display</lit>
+	can be used to force display of the plot in a window. For
+	example,
       </para>
       <code context="cli">
 	fcast --plot=fc.pdf
