@@ -3789,6 +3789,11 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	    fr->df = df;
 	}
 
+	if ((opt & OPT_U) && *vname != '\0') {
+	    /* produce a plot */
+	    printopt |= OPT_P;
+	}
+
 	for (i=imin; i<=imax && !err; i++) {
 	    err = fill_system_forecast(fr, i, ylist[i+1], var, sys,
 				       F, dset);
@@ -3842,8 +3847,8 @@ int do_forecast (const char *str, DATASET *dset,
     if ((opt & OPT_U) && dataset_is_panel(dset)) {
 	gretl_errmsg_set(_("Forecast plot not implemented for panel data"));
 	err = E_NOTIMP;
-    } else if ((opt & (OPT_R | OPT_I | OPT_U)) && type != GRETL_OBJ_EQN) {
-	/* "recursive", "integrate", plot option: single equations only */
+    } else if ((opt & (OPT_R | OPT_I)) && type != GRETL_OBJ_EQN) {
+	/* "recursive", "integrate": single equations only */
 	err = E_BADOPT;
     } else if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, dset, opt, prn);

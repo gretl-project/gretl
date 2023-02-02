@@ -4046,8 +4046,7 @@
       </para>
 
       <para context="cli">
-	The <opt>plot</opt> option (available only in the case of
-	single-equation estimation) calls for a plot file to be
+	The <opt>plot</opt> option calls for a plot file to be
 	produced, containing a graphical representation of the
 	forecast. The suffix of the <repl>filename</repl> argument to
 	this option controls the format of the plot: <lit>.eps</lit>
