@@ -534,16 +534,16 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     if (action == ADD_PNG) {
 	/* see if there's already a png term setting, possibly commented
 	   out, that can be reused */
-	char restore_line[MAXLEN];
+	char restore[MAXLEN];
 	int add_line_styles = 1;
 
-	*restore_line = '\0';
+	*restore = '\0';
 
 	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (is_png_term_line(fline) && *restore_line == '\0') {
-		strcat(restore_line, fline);
-	    } else if (commented_term_line(fline) && *restore_line == '\0') {
-		strcat(restore_line, fline + 2);
+	    if (*restore == '\0' && is_png_term_line(fline)) {
+		strcat(restore, fline);
+	    } else if (*restore == '\0' && commented_term_line(fline)) {
+		strcat(restore, fline + 2);
 	    } else if (strstr(fline, "letterbox")) {
 		flags = GPT_LETTERBOX;
 	    } else if (strstr(fline, "large")) {
@@ -567,11 +567,11 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 #ifdef G_OS_WIN32
 	/* check for obsolete png term specification (as may be found
 	   in an old session file) */
-	check_win32_png_spec(restore_line);
+	check_win32_png_spec(restore);
 #endif
 
-	if (*restore_line != '\0') {
-	    fputs(restore_line, ftmp);
+	if (*restore != '\0') {
+	    fputs(restore, ftmp);
 	    fputs("set encoding utf8\n", ftmp);
 	} else {
 	    const char *tline;
@@ -4882,11 +4882,11 @@ static gchar *recover_plot_header (char *line, FILE *fp)
     gchar *setterm = NULL;
 
     while (fgets(line, MAXLEN-1, fp)) {
-	if (commented_term_line(line) && setterm == NULL) {
+	if (setterm == NULL && commented_term_line(line)) {
 	    gchar *dpath = gretl_make_dotpath("gretltmp.png");
 	    GString *gs = g_string_new(line + 2);
 
-	    gs = g_string_append(gs, "set encoding utf8\n");
+	    g_string_append(gs, "set encoding utf8\n");
 	    g_string_append_printf(gs, "set output \"%s\"\n", dpath);
 	    g_free(dpath);
 	    setterm = g_string_free(gs, FALSE);

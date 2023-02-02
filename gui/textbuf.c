@@ -381,7 +381,7 @@ gchar *textview_get_wrapped_text (GtkWidget *view)
 	g_free(line);
     }
 
-    return g_string_free(str, FALSE);
+    return str == NULL ? NULL : g_string_free(str, FALSE);
 }
 
 gchar *textview_get_selection_or_all (GtkWidget *view,

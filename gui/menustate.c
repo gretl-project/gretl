@@ -1175,7 +1175,9 @@ void set_sample_label (DATASET *dset)
             dl = g_string_new(_(" Unsaved data "));
             gtk_label_set_text(GTK_LABEL(dlabel), dl->str);
         }
-        g_string_free(dl, TRUE);
+	if (dl != NULL) {
+	    g_string_free(dl, TRUE);
+	}
     }
 
     if (complex_subsampled() || dset->t1 > 0 || dset->t2 < dset->n - 1) {
