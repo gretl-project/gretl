@@ -4143,23 +4143,24 @@
       </para>
 
       <para context="cli">
-	L'opzione <opt>plot</opt> (disponibile solo nel caso della
-	stima di un modello uniequazionale) consente di ottenere un
-	file con un grafico delle previsioni. L'estensione
-	dell'argomento <repl>filename</repl> di questa opzione
-	controlla il formato del grafico: <lit>.eps</lit> per EPS,
-	<lit>.pdf</lit> per PDF, <lit>.png</lit> per PNG,
-	<lit>.plt</lit> per un file di comandi gnuplot. Il nome di
-	file dummy <lit>display</lit> può essere usato per mostrare il
-	grafico in una finestra.  Per esempio,
+	L'opzione <opt>plot</opt> provoca la rappresentazione grafica
+	della previsione. Nel caso di sistemi di equazioni
+	quest'opzione è disponibile solo quando l'argomento
+	<repl>vname</repl> seleziona per la previsione una variabile
+	singola. L'estensione dell'argomento <repl>filename</repl> di
+	questa opzione controlla il formato del grafico:
+	<lit>.eps</lit> per EPS, <lit>.pdf</lit> per PDF,
+	<lit>.png</lit> per PNG, <lit>.plt</lit> per un file di
+	comandi gnuplot. Il nome di file <lit>display</lit> può essere
+	usato per mostrare il grafico in una finestra.  Per esempio,
       </para>
       <code>
 	fcast --plot=fc.pdf
       </code>
       <para>
-	genererà un grafico in formato PDF. Vengono rispettati gli indirizzi
-	di file assoluti; in caso contrario i fail vengono scritti nella directory
-	di lavoro di gretl.
+	genererà un grafico in formato PDF. Vengono rispettati gli
+	indirizzi di file assoluti; in caso contrario i file vengono
+	scritti nella directory di lavoro di gretl.
       </para>
 
       <para>
@@ -5306,6 +5307,10 @@
 	  <effect>ordinate in scala logaritmica</effect>
 	</option>
 	<option>
+	  <flag>--control</flag>
+	  <effect>si veda sotto</effect>
+	</option>
+	<option>
 	  <flag>--dummy</flag>
 	  <effect>si veda sotto</effect>
 	</option>
@@ -5385,6 +5390,20 @@
 	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
 	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
 	1 o 0.
+      </para>
+      <para>
+	L'opzione <opt>control</opt> è simile, in quanto occorre
+	fornire esattamente tre variabili: una variabile
+	<math>y</math> e due variabili <quote>esplicative</quote>
+	<math>x</math> e <math>z</math>.  L'effetto è quello di
+	mostrare <repl>y</repl> rispetto a <repl>x</repl> controllando
+	per <math>z</math>.  Questo può essere utile per visualizzare
+	la relazione fra <math>x</math> e <math>y</math>, tenendo
+	conto dell'effetto che <math>z</math> può avere su
+	ambedue. Statisticamente, questo è equivalente a una
+	regressione di <math>y</math> su <math>x</math>
+	<emphasis>e</emphasis> <math>z</math>
+	<emphasis>contemporaneamente</emphasis>.
       </para>
       <para>
 	Usando l'opzione <opt>ylogscale</opt> si punò far sì che

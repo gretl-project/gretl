@@ -5195,6 +5195,10 @@
 	  <effect>use log scale for vertical axis</effect>
         </option>
         <option>
+	  <flag>--control</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>see below</effect>
         </option>
@@ -5274,6 +5278,19 @@
 	<repl>xvar</repl> with the points shown in different colors
 	depending on the value of <repl>dvar</repl> at the given
 	observation.
+      </para>
+      <para>
+	The <opt>control</opt> option is similar, in that exactly
+	three variables should be given: a single <math>y</math>
+	variable and two <quote>explanatory</quote> variables
+	<math>x</math> and <math>z</math>.  The effect is to plot
+	<repl>y</repl> against <repl>x</repl> controlling for
+	<math>z</math>.  Such plot can be useful to visualize the
+	relationship between <math>x</math> and <math>y</math>, taking
+	into account the effect that <math>z</math> can have on
+	both. Statistically, this would be equivalent to a regression
+	of <math>y</math> on <math>x</math> <emphasis>and</emphasis>
+	<math>z</math>.
       </para>
       <para>
 	You can choose the scale for the y axis to be logarithmic
