@@ -567,7 +567,8 @@ double ordered_model_prediction (const MODEL *pmod, double Xb,
 gretl_matrix *ordered_probabilities (const MODEL *pmod,
 				     const double *zhat,
 				     int t1, int t2,
-				     const DATASET *dset)
+				     const DATASET *dset,
+				     int *err)
 {
     gretl_matrix *P;
     int k = gretl_model_get_int(pmod, "nx");
@@ -578,10 +579,10 @@ gretl_matrix *ordered_probabilities (const MODEL *pmod,
     char **S = NULL;
     double zht, pij;
     int i, t, j;
-    int err = 0;
 
     P = gretl_matrix_alloc(n, ncut+1);
     if (P == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
     S = strings_array_new(n);
@@ -602,12 +603,16 @@ gretl_matrix *ordered_probabilities (const MODEL *pmod,
 	    pij = 1.0 - lp_cdf(c[ncut-1] - zht, pmod->ci);
 	    gretl_matrix_set(P, i, ncut, pij);
 	}
-	S[i] = retrieve_date_string(t+1, dset, &err);
+	if (S != NULL) {
+	    S[i] = retrieve_date_string(t+1, dset, err);
+	}
     }
 
     gretl_matrix_set_t1(P, t1);
     gretl_matrix_set_t2(P, t2);
-    gretl_matrix_set_rownames(P, S);
+    if (S != NULL) {
+	gretl_matrix_set_rownames(P, S);
+    }
 
     return P;
 }
@@ -858,7 +863,7 @@ static int fill_op_model (MODEL *pmod, const int *list,
     int npar = OC->k;
     int nx = OC->nx;
     int correct = 0;
-    double Xb;
+    double xti, Xb;
     int i, s, t, v;
     int err = 0;
 
@@ -908,16 +913,22 @@ static int fill_op_model (MODEL *pmod, const int *list,
 
     s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
-	if (na(OC->pmod->uhat[t])) {
-	    continue;
-	}
 	Xb = 0.0;
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
-	    Xb += OC->theta[i] * OC->Z[v][t];
+	    xti = OC->Z[v][t];
+	    if (na(xti)) {
+		Xb = NADBL;
+		break;
+	    } else {
+		Xb += OC->theta[i] * xti;
+	    }
 	}
 	/* yhat = X\hat{beta} */
 	pmod->yhat[t] = Xb;
+	if (na(Xb)) {
+	    continue;
+	}
 	if (ordered_model_prediction(pmod, Xb, 0) == OC->y[s]) {
 	    correct++;
 	}

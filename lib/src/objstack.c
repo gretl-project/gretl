@@ -1383,6 +1383,28 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
     return M;
 }
 
+static gretl_matrix *get_all_probs (MODEL *pmod, int idx,
+				    const DATASET *dset,
+				    int *err)
+{
+    if (pmod->ci == LOGIT &&
+	gretl_model_get_int(pmod, "multinom")) {
+	/* M_MNLPROBS or M_ALLPROBS */
+	return mn_logit_probabilities(pmod, pmod->t1, pmod->t2,
+				      dset, err);
+    }
+    if (idx == M_ALLPROBS &&
+	(pmod->ci == LOGIT || pmod->ci == PROBIT) &&
+	gretl_model_get_int(pmod, "ordered")) {
+	return ordered_probabilities(pmod, pmod->yhat,
+				     pmod->t1, pmod->t2,
+				     dset, err);
+    }
+
+    *err = E_BADSTAT;
+    return NULL;
+}
+
 /* similar to the above, but in this case the matrix to be
    retrieved is not pre-built, and requires (or may require)
    access to the current dataset for its building.
@@ -1398,16 +1420,15 @@ saved_object_build_matrix (const char *oname, int idx,
 
     if (smatch == NULL) {
 	*err = E_DATA;
-    } else if (idx == M_MNLPROBS && smatch->type == GRETL_OBJ_EQN) {
-	MODEL *pmod = smatch->ptr;
-
-	M = mn_logit_probabilities(pmod, pmod->t1, pmod->t2, dset, err);
     } else if (idx == M_EC && smatch->type == GRETL_OBJ_VAR) {
 	M = VECM_get_EC_matrix(smatch->ptr, dset, err);
     } else if (idx == M_VMA && smatch->type == GRETL_OBJ_VAR) {
 	M = gretl_VAR_get_vma_matrix(smatch->ptr, dset, err);
     } else if (idx == M_FEVD && smatch->type == GRETL_OBJ_VAR) {
 	M = gretl_VAR_get_full_FEVD_matrix(smatch->ptr, dset, err);
+    } else if ((idx == M_MNLPROBS || idx == M_ALLPROBS) &&
+	       (smatch->type == GRETL_OBJ_EQN)) {
+	M = get_all_probs(smatch->ptr, idx, dset, err);
     } else {
 	*err = E_BADSTAT;
     }

@@ -2570,6 +2570,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
     int all_probs = 0;
     int k = pmod->ncoeff;
     int i, vi, t;
+    int err = 0;
 
     if (COUNT_MODEL(pmod->ci)) {
 	/* special for "offset" variable */
@@ -2626,11 +2627,12 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
     if (all_probs) {
 	gretl_matrix *P;
 
-	P = ordered_probabilities(pmod, fc->yhat, fc->t1, fc->t2, dset);
+	P = ordered_probabilities(pmod, fc->yhat, fc->t1, fc->t2,
+				  dset, &err);
 	set_fcast_matrices(P, NULL);
     }
 
-    return 0;
+    return err;
 }
 
 #define dynamic_nls(m) ((m->ci == NLS || m->ci == MIDASREG) \

@@ -25,6 +25,19 @@
       </description>
     </function>
 
+    <function name="$allprobs" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow estimation via ordered probit or logit, or
+	  multinomial logit. Returns an <by r="n" c="j"/> matrix,
+	  where <math>n</math> is the number of observations used and
+	  <math>j</math> is the number of possible outcomes, holding
+	  the estimated probability of each outcome at each
+	  observation.
+	</para>
+      </description>
+    </function>
+
     <function name="$bic" section="access" output="scalar">
       <description>
 	<para>
@@ -508,10 +521,11 @@
       <description>
 	<para>
 	  Following estimation of a multinomial logit model (only),
-	  retrieves a matrix holding the estimated probabilities
-	  of each possible outcome at each observation in the model's
-	  sample range. Each row represents an observation and
-	  each column an outcome.
+	  retrieves a matrix holding the estimated probabilities of
+	  each possible outcome at each observation in the model's
+	  sample range. Each row represents an observation and each
+	  column an outcome. As of gretl 2023a this accessor is
+	  deprecated: please use <fncref targ="$allprobs"/> instead.
 	</para>
       </description>
     </function>
