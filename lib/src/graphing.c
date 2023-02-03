@@ -5949,6 +5949,10 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	return E_ALLOC;
     }
 
+    if (dataset_is_time_series(dset)) {
+	flags |= GPT_LETTERBOX;
+    }
+
     fp = open_plot_input_file(PLOT_FORECAST, flags, &err);
     if (err) {
 	return err;
@@ -5982,7 +5986,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     gnuplot_missval_string(fp);
 
     if (dataset_is_time_series(dset)) {
-	fprintf(fp, "# timeseries %d\n", dset->pd);
+	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
     }
 
     if (do_errs && !use_fill && !use_lines && n > 150) {
