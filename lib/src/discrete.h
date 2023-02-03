@@ -71,6 +71,11 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 				      const DATASET *dset,
 				      int *err);
 
+gretl_matrix *ordered_probabilities (const MODEL *pmod,
+				     const double *zhat,
+				     int t1, int t2,
+				     const DATASET *dset);
+
 double mn_logit_prediction (const gretl_matrix *Xt,
 			    const double *b,
 			    const gretl_matrix *yvals);

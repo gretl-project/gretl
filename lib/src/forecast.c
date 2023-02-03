@@ -2549,10 +2549,11 @@ static int mlogit_fcast (Forecast *fc, const MODEL *pmod,
 */
 
 static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
-			 const DATASET *dset)
+			 const DATASET *dset, gretlopt opt)
 {
     const double *offvar = NULL;
     double xval, lmax = NADBL;
+    int all_probs = 0;
     int k = pmod->ncoeff;
     int i, vi, t;
 
@@ -2572,6 +2573,8 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	    k = gretl_model_get_int(pmod, "nx");
 	    if (k <= 0) {
 		return E_MISSDATA;
+	    } else if (opt & OPT_L) {
+		all_probs = 1;
 	    }
 	}
     }
@@ -2598,12 +2601,19 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 
 	if (miss) {
 	    fc->yhat[t] = NADBL;
-	} else if (FCAST_SPECIAL(pmod->ci)) {
+	} else if (FCAST_SPECIAL(pmod->ci) && !all_probs) {
 	    /* special handling for LOGIT and others */
 	    fc->yhat[t] = fcast_transform(yht, pmod, t, offvar, lmax);
 	} else {
 	    fc->yhat[t] = yht;
 	}
+    }
+
+    if (all_probs) {
+	gretl_matrix *P;
+
+	P = ordered_probabilities(pmod, fc->yhat, fc->t1, fc->t2, dset);
+	set_fcast_matrices(P, NULL);
     }
 
     return 0;
@@ -2903,7 +2913,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
 	err = mlogit_fcast(&fc, pmod, dset);
     } else {
-	err = linear_fcast(&fc, pmod, yno, dset);
+	err = linear_fcast(&fc, pmod, yno, dset, opt);
     }
 
     /* free any auxiliary info */
@@ -3551,6 +3561,25 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
     return err;
 }
 
+static int add_fcast_matrix (const char *name,
+			     DATASET *dset,
+			     PRN *prn)
+{
+    int err = 0;
+
+    if (gretl_reserved_word(name)) {
+        err = E_TYPES;
+    } else if (current_series_index(dset, name) >= 0) {
+	err = E_TYPES;
+    } else {
+	err = user_var_add_or_replace(name, GRETL_TYPE_MATRIX,
+				      fcast_matrix);
+	fcast_matrix = NULL;
+    }
+
+    return err;
+}
+
 static int model_do_forecast (const char *str, MODEL *pmod,
 			      DATASET *dset, gretlopt opt,
 			      PRN *prn)
@@ -3594,8 +3623,11 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (*vname != '\0') {
-	/* saving to named series */
+	/* saving to named series or matrix */
 	opt |= (OPT_A | OPT_Q);
+    } else if (opt & OPT_L) {
+	/* --all-probs implies quiet */
+	opt |= OPT_Q;
     }
 
     if (os_case == OS_PANEL) {
@@ -3619,10 +3651,14 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 
     if (!err && (opt & OPT_A)) {
 	/* add forecast directly */
-	err = add_fcast_to_dataset(fr, vname, dset, prn);
+	if (opt & OPT_L) {
+	    err = add_fcast_matrix(vname, dset, prn);
+	} else {
+	    err = add_fcast_to_dataset(fr, vname, dset, prn);
+	}
     }
 
-    if (!err) {
+    if (!err && !(opt & OPT_L)) {
 	set_forecast_matrices_from_fr(fr);
     }
 

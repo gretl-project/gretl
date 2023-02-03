@@ -23,6 +23,7 @@
 #include "gretl_bfgs.h"
 #include "gretl_normal.h"
 #include "qr_estimate.h"
+#include "gretl_string_table.h"
 
 #include <errno.h>
 
@@ -527,8 +528,8 @@ static gretl_matrix *ordered_hessian_inverse (op_container *OC,
  * observation.
  * @ymin: the minimum value of the dependent variable.
  *
- * Returns: the predicted value of the (ordinal) dependent variable;
- * that is, the value for which the estimated probability is greatest.
+ * Returns: the "predicted value" of the (ordinal) dependent variable,
+ * taken to be the value for which the estimated probability is greatest.
  */
 
 double ordered_model_prediction (const MODEL *pmod, double Xb,
@@ -561,6 +562,54 @@ double ordered_model_prediction (const MODEL *pmod, double Xb,
     }
 
     return (double) pred;
+}
+
+gretl_matrix *ordered_probabilities (const MODEL *pmod,
+				     const double *zhat,
+				     int t1, int t2,
+				     const DATASET *dset)
+{
+    gretl_matrix *P;
+    int k = gretl_model_get_int(pmod, "nx");
+    const double *c = pmod->coeff + k;
+    int ncut = pmod->ncoeff - k;
+    int n = t2 - t1 + 1;
+    int ci = pmod->ci;
+    char **S = NULL;
+    double zht, pij;
+    int i, t, j;
+    int err = 0;
+
+    P = gretl_matrix_alloc(n, ncut+1);
+    if (P == NULL) {
+	return NULL;
+    }
+    S = strings_array_new(n);
+
+    for (t=t1, i=0; t<=t2; t++, i++) {
+	zht = zhat[t];
+	if (na(zht)) {
+	    for (j=0; j<=ncut; j++) {
+		gretl_matrix_set(P, i, j, NADBL);
+	    }
+	} else {
+	    pij = lp_cdf(c[0] - zht, ci);
+	    gretl_matrix_set(P, i, 0, pij);
+	    for (j=1; j<ncut; j++) {
+		pij = lp_cdf(c[j] - zht, ci) - lp_cdf(c[j-1] - zht, ci);
+		gretl_matrix_set(P, i, j, pij);
+	    }
+	    pij = 1.0 - lp_cdf(c[ncut-1] - zht, pmod->ci);
+	    gretl_matrix_set(P, i, ncut, pij);
+	}
+	S[i] = retrieve_date_string(t+1, dset, &err);
+    }
+
+    gretl_matrix_set_t1(P, t1);
+    gretl_matrix_set_t2(P, t2);
+    gretl_matrix_set_rownames(P, S);
+
+    return P;
 }
 
 /**

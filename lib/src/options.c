@@ -268,6 +268,7 @@ struct gretl_option gretl_opts[] = {
     { ESTIMATE, OPT_U, "unrestrict-init", 0 },
     { ESTIMATE, OPT_V, "verbose", 0 },
     { ESTIMATE, OPT_W, "window", 0 },
+    { FCAST,    OPT_L, "all-probs", 0 },
     { FCAST,    OPT_D, "dynamic", 0 },
     { FCAST,    OPT_M, "mean-y", 0 },
     { FCAST,    OPT_N, "no-stats", 0 },
