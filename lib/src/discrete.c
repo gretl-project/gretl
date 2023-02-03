@@ -2002,7 +2002,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
  * given the values of the regressors at observation i.
  *
  * If any of the regressor values are missing at a given
- * observation the probabiity is set to NaN; provided the
+ * observation the probability is set to NaN; provided the
  * regressor information is complete we compute the
  * outcome probabilities even if the actual outcome is
  * missing.
@@ -2011,6 +2011,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
  */
 
 gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
+				      int t1, int t2,
 				      const DATASET *dset,
 				      int *err)
 {
@@ -2044,7 +2045,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
     }
 
     if (!*err) {
-	int n = pmod->t2 - pmod->t1 + 1;
+	int n = t2 - t1 + 1;
 
 	P = gretl_matrix_alloc(n, m);
 	if (P == NULL) {
@@ -2069,7 +2070,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 	double St, ptj;
 	int j, k, t, vi, ok;
 
-	for (t=pmod->t1; t<=pmod->t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    ok = 1;
 	    for (i=2; i<=pmod->list[0]; i++) {
 		vi = pmod->list[i];

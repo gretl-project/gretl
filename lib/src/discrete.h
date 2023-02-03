@@ -68,6 +68,7 @@ int logistic_ymax_lmax (const double *y, const DATASET *dset,
 			double *ymax, double *lmax);
 
 gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
+				      int t1, int t2,
 				      const DATASET *dset,
 				      int *err);
 

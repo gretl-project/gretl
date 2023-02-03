@@ -2498,6 +2498,20 @@ integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
     return 0;
 }
 
+static int mlogit_allprobs (Forecast *fc, const MODEL *pmod,
+			    const DATASET *dset)
+{
+    gretl_matrix *P;
+    int err = 0;
+
+    P = mn_logit_probabilities(pmod, fc->t1, fc->t2, dset, &err);
+    if (P != NULL) {
+	set_fcast_matrices(P, NULL);
+    }
+
+    return err;
+}
+
 static int mlogit_fcast (Forecast *fc, const MODEL *pmod,
 			 const DATASET *dset)
 {
@@ -2802,6 +2816,24 @@ static int check_integrated_forecast_option (MODEL *pmod,
     return err;
 }
 
+static int check_all_probs_option (MODEL *pmod)
+{
+    int err = E_BADOPT;
+
+    if (pmod->ci == LOGIT) {
+	if (gretl_model_get_int(pmod, "multinom") ||
+	    gretl_model_get_int(pmod, "ordered")) {
+	    err = 0;
+	}
+    } else if (pmod->ci == PROBIT) {
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    err = 0;
+	}
+    }
+
+    return err;
+}
+
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
@@ -2820,6 +2852,13 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     int same_data = 0;
     int nf = 0;
     int t, err;
+
+    if (opt & OPT_L) {
+	err = check_all_probs_option(pmod);
+	if (err) {
+	    return err;
+	}
+    }
 
     forecast_init(&fc);
 
@@ -2911,13 +2950,22 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     } else if (integrate) {
 	err = integrated_fcast(&fc, pmod, yno, dset);
     } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
-	err = mlogit_fcast(&fc, pmod, dset);
+	if (opt & OPT_L) {
+	    /* --all-probs */
+	    err = mlogit_allprobs(&fc, pmod, dset);
+	} else {
+	    err = mlogit_fcast(&fc, pmod, dset);
+	}
     } else {
 	err = linear_fcast(&fc, pmod, yno, dset, opt);
     }
 
     /* free any auxiliary info */
     forecast_free(&fc);
+
+    if (opt & OPT_L) {
+	return err;
+    }
 
     if (dummy_AR) {
 	free(pmod->arinfo->arlist);

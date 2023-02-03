@@ -1399,7 +1399,9 @@ saved_object_build_matrix (const char *oname, int idx,
     if (smatch == NULL) {
 	*err = E_DATA;
     } else if (idx == M_MNLPROBS && smatch->type == GRETL_OBJ_EQN) {
-	M = mn_logit_probabilities(smatch->ptr, dset, err);
+	MODEL *pmod = smatch->ptr;
+
+	M = mn_logit_probabilities(pmod, pmod->t1, pmod->t2, dset, err);
     } else if (idx == M_EC && smatch->type == GRETL_OBJ_VAR) {
 	M = VECM_get_EC_matrix(smatch->ptr, dset, err);
     } else if (idx == M_VMA && smatch->type == GRETL_OBJ_VAR) {

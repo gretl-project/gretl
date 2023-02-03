@@ -1142,7 +1142,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 
     if (pmod == NULL) return;
 
-    P = mn_logit_probabilities(pmod, dataset, &err);
+    P = mn_logit_probabilities(pmod, pmod->t1, pmod->t2, dataset, &err);
 
     if (err) {
 	gui_errmsg(err);
