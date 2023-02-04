@@ -77,6 +77,7 @@ struct function_info_ {
     GtkWidget *file_entries[N_FILE_ENTRIES]; /* data files */
     GtkWidget *dep_entries[N_DEP_ENTRIES];   /* dependencies */
     GtkWidget *prov_check; /* "provider" selected? */
+    GtkWidget *Rdep_entry; /* for R-dependent packages */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
@@ -116,6 +117,7 @@ struct function_info_ {
     char **specials;       /* names of special functions */
     char **datafiles;      /* names of included data files */
     char **depends;        /* names of dependencies */
+    char *R_depends;       /* R dependency info */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
     int n_files;           /* number of included data files */
@@ -230,6 +232,7 @@ function_info *finfo_new (void)
     finfo->privnames = NULL;
     finfo->datafiles = NULL;
     finfo->depends = NULL;
+    finfo->R_depends = NULL;
 
     finfo->n_pub = 0;
     finfo->n_priv = 0;
@@ -292,48 +295,40 @@ static void finfo_free (function_info *finfo)
     if (finfo->pubnames != NULL) {
 	strings_array_free(finfo->pubnames, finfo->n_pub);
     }
-
     if (finfo->privnames != NULL) {
 	strings_array_free(finfo->privnames, finfo->n_priv);
     }
-
     if (finfo->specials != NULL) {
 	strings_array_free(finfo->specials, N_SPECIALS);
     }
-
     if (finfo->datafiles != NULL) {
 	strings_array_free(finfo->datafiles, finfo->n_files);
     }
-
     if (finfo->depends != NULL) {
 	strings_array_free(finfo->depends, finfo->n_depends);
     }
-
+    if (finfo->R_depends != NULL) {
+	g_free(finfo->R_depends);
+    }
     if (finfo->provider != NULL) {
 	g_free(finfo->provider);
     }
-
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
     }
-
     if (finfo->helpwin != NULL) {
 	gtk_widget_destroy(finfo->helpwin->main);
     }
-
     if (finfo->gui_helpwin != NULL) {
 	gtk_widget_destroy(finfo->gui_helpwin->main);
     }
-
     if (finfo->codewins != NULL) {
 	g_list_foreach(finfo->codewins, (GFunc) destroy_code_window, NULL);
 	g_list_free(finfo->codewins);
     }
-
     if (finfo->ui != NULL) {
 	g_object_unref(finfo->ui);
     }
-
     if (finfo->popup != NULL) {
 	gtk_widget_destroy(finfo->popup);
     }
@@ -1294,7 +1289,7 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    title = g_strdup_printf("%s-sample", pkgname);
+    title = g_strdup_printf("%s sample script", pkgname);
 
     if (finfo->sample == NULL) {
 	pprintf(prn, "include %s.gfn\n", pkgname);
@@ -1358,11 +1353,9 @@ static void gfn_to_script_callback (function_info *finfo)
 				    _("Saving packaged functions as script:\n"
 				      "include the sample script?"),
 				    finfo->dlg);
-
 	if (canceled(resp)) {
 	    return;
 	}
-
 	if (resp == GRETL_YES) {
 	    finfo->save_flags |= APPEND_SAMPLE;
 	} else {
@@ -2759,6 +2752,7 @@ static void add_dependency_entries (GtkWidget *holder,
     const char *msg = N_("You may add or delete names of packages "
 			 "to be recorded as dependencies.\nLeave off the "
 			 ".gfn or .zip suffix.");
+    const char *ms2 = N_("You can also record a dependency on R.");
     GtkWidget *w, *hbox, *entry;
     int i;
 
@@ -2785,6 +2779,20 @@ static void add_dependency_entries (GtkWidget *holder,
 	}
 	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     }
+
+    w = gtk_label_new(_(ms2));
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    finfo->Rdep_entry = entry = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
+    if (finfo->R_depends != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(entry), finfo->R_depends);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
 static void gui_help_text_callback (GtkButton *b, function_info *finfo)
@@ -3046,7 +3054,8 @@ static int process_menu_attachment (function_info *finfo,
 static int want_no_print_toggle (int role)
 {
     return role != UFUN_GUI_PRECHECK &&
-	role != UFUN_BUNDLE_PRINT;
+	role != UFUN_BUNDLE_PRINT &&
+	role != UFUN_R_SETUP;
 }
 
 /* pertaining to the "extra properties" dialog: check for
@@ -3097,7 +3106,6 @@ static int process_special_functions (function_info *finfo,
 		    attr |= UFUN_NOPRINT;
 		}
 	    }
-
 	    if (role == UFUN_GUI_MAIN) {
 		/* retrieve the menu-only attribute? */
 		cb = g_object_get_data(G_OBJECT(c_array[i]), "mo-toggle");
@@ -3310,7 +3318,6 @@ static int process_dependency_names (function_info *finfo,
 		finfo->n_depends = nd;
 	    }
 	}
-
 	if (finfo->depends != NULL) {
 	    int j = 0;
 
@@ -3366,6 +3373,36 @@ static int process_provider_name (function_info *finfo,
     return changed;
 }
 
+static int process_R_dependency (function_info *finfo,
+				 gboolean make_changes)
+{
+    gchar *s, *prev = finfo->R_depends;
+    int changed = 0;
+    int blank;
+
+    s = entry_box_get_trimmed_text(finfo->Rdep_entry);
+    blank = s == NULL || *s == '\0';
+
+    if (!blank) {
+	if (prev == NULL || strcmp(s, prev)) {
+	    changed = 1;
+	}
+    } else if (prev != NULL) {
+	changed = 1;
+    }
+
+    if (changed && make_changes) {
+	g_free(finfo->R_depends);
+	if (blank) {
+	    finfo->R_depends = NULL;
+	} else {
+	    finfo->R_depends = g_strdup(s);
+	}
+    }
+
+    return changed;
+}
+
 static int process_extra_properties (function_info *finfo,
 				     gboolean make_changes)
 {
@@ -3373,6 +3410,7 @@ static int process_extra_properties (function_info *finfo,
     int changed = 0;
 
     changed += process_special_functions(finfo, make_changes);
+    fprintf(stderr, "special_functions changed: %d\n", changed);
 
     changed += process_menu_attachment(finfo, make_changes, &focus_label);
     if (focus_label) {
@@ -3384,6 +3422,7 @@ static int process_extra_properties (function_info *finfo,
     changed += process_data_file_names(finfo, make_changes);
     changed += process_dependency_names(finfo, make_changes);
     changed += process_provider_name(finfo, make_changes);
+    changed += process_R_dependency(finfo, make_changes);
 
     if (changed && make_changes) {
 	finfo_set_modified(finfo, TRUE);
@@ -4976,6 +5015,11 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
     }
 
+    /* write out R dependency string? */
+    if (finfo->R_depends != NULL) {
+	pprintf(prn, "R-depends = %s\n", finfo->R_depends);
+    }
+
     /* write out provider name? */
     if (finfo->provider != NULL) {
 	pprintf(prn, "provider = %s\n", finfo->provider);
@@ -5229,28 +5273,23 @@ void edit_function_package (const char *fname)
 					  "model-requirement", &finfo->mreq,
 					  "gui-attrs", finfo->gui_attrs,
 					  "provider", &finfo->provider,
+					  "R-depends", &finfo->R_depends,
 					  NULL);
-
     if (!err && publist == NULL) {
 	err = E_DATA;
     }
-
     if (!err) {
 	err = finfo_set_function_names(finfo, publist, privlist);
     }
-
     if (!err) {
 	err = finfo_set_special_names(finfo);
     }
-
     if (!err) {
 	finfo_set_menuwin(finfo);
     }
-
     if (!err) {
 	err = finfo_set_data_files(finfo);
     }
-
     if (!err) {
 	err = finfo_set_dependencies(finfo);
     }

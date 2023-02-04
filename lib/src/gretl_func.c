@@ -4606,28 +4606,34 @@ static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
 }
 
 /* Called (indirectly) from GUI function packager. Note that we scrub
-   UFUN_PRIVATE from the user function flags passed to the packager:
-   this flag is handled by a different mechanism.
+   UFUN_PRIVATE,  from the user function flags passed to the packager:
+   this flag is handled by a different mechanism. HERE
 */
 
 static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
 {
     ufunc *uf;
+    UfunAttrs a;
     int i, r;
 
     for (r=1; r<UFUN_GUI_PRECHECK; r++) {
 	uf = NULL;
+	a = 0;
 	for (i=0; i<n_ufuns; i++) {
 	    if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == r) {
 		uf = ufuns[i];
 		break;
 	    }
 	}
-	if (uf == NULL) {
-	    attrs[r-1] = 0;
-	} else {
-	    attrs[r-1] = (uf->flags & ~UFUN_PRIVATE);
+	if (uf != NULL) {
+	    if (uf->flags & UFUN_NOPRINT) {
+		a |= UFUN_NOPRINT;
+	    }
+	    if (uf->flags & UFUN_MENU_ONLY) {
+		a |= UFUN_MENU_ONLY;
+	    }
 	}
+	attrs[r-1] = a;
     }
 }
 
@@ -5449,7 +5455,9 @@ static int load_private_function (fnpkg *pkg, int i)
 
     if (fun->pkg_role == UFUN_R_SETUP) {
 	err = package_run_R_setup(fun);
-    } else {
+    }
+
+    if (!err) {
 	err = add_allocated_ufunc(fun);
 	if (!err && function_lookup(fun->name)) {
 	    gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
