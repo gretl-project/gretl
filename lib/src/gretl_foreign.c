@@ -3591,10 +3591,6 @@ int foreign_execute (const DATASET *dset,
  * when called from gretl_edit.
  * @prn: struct for printing output.
  *
- * This is used only for MS Windows, working around
- * breakage in previously coded non-interactive calls to R
- * executable(s).
- *
  * Returns: 0 on success, non-zero on error.
  */
 

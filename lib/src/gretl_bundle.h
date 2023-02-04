@@ -28,6 +28,7 @@
 #define GUI_MAIN     "gui-main"
 #define GUI_PRECHECK "gui-precheck"
 #define LIST_MAKER   "list-maker"
+#define R_SETUP      "R-setup"
 
 typedef enum {
     BUNDLE_PLAIN,

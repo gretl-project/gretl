@@ -40,6 +40,7 @@ typedef enum {
     UFUN_GUI_MAIN,
     UFUN_GUI_PRECHECK,
     UFUN_LIST_MAKER,
+    UFUN_R_SETUP,
     UFUN_ROLE_MAX
 } UfunRole;
 

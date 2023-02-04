@@ -2086,7 +2086,7 @@ static int check_R_setting (gint8 *var, SetKey key, int val)
     if (val) {
 	const char *s = (key == R_FUNCTIONS)? "R_functions" : "R_lib";
 
-	gretl_errmsg_sprintf("%s: not supported", s);
+	gretl_errmsg_sprintf(_("%s: not supported in this build of gretl"), s);
 	err = E_EXTERNAL;
     }
 #endif

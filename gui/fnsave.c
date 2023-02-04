@@ -3139,8 +3139,8 @@ static int process_special_functions (function_info *finfo,
     return n_changed;
 }
 
-#define must_be_private(r) (r == UFUN_GUI_PRECHECK)
-#define must_be_public(r) (r != UFUN_GUI_PRECHECK && r != UFUN_LIST_MAKER)
+#define must_be_private(r) (r == UFUN_GUI_PRECHECK || r == UFUN_R_SETUP)
+#define must_be_public(r) (!must_be_private(r) && r != UFUN_LIST_MAKER)
 
 /* After adding or deleting functions, check that any
    selected "specials" are still valid: the selected
@@ -4797,6 +4797,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	BUNDLE_EXTRA,
 	GUI_PRECHECK,
 	LIST_MAKER,
+	R_SETUP,
 	NULL
     };
     const char *reqstr = NULL;

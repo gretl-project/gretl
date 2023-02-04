@@ -35,6 +35,7 @@
 #include "system.h"
 #include "genparse.h"
 #include "genr_optim.h"
+#include "gretl_foreign.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -307,6 +308,7 @@ static struct flag_and_key pkg_lookups[] = {
     { UFUN_GUI_MAIN,     GUI_MAIN },
     { UFUN_GUI_PRECHECK, GUI_PRECHECK },
     { UFUN_LIST_MAKER,   LIST_MAKER },
+    { UFUN_R_SETUP,      R_SETUP },
     { -1,                NULL }
 };
 
@@ -314,7 +316,8 @@ static struct flag_and_key pkg_lookups[] = {
 			 r == UFUN_BUNDLE_PLOT ||  \
 			 r == UFUN_BUNDLE_TEST ||  \
 			 r == UFUN_BUNDLE_FCAST || \
-			 r == UFUN_BUNDLE_EXTRA)
+			 r == UFUN_BUNDLE_EXTRA || \
+			 r == UFUN_R_SETUP)
 
 static int pkg_key_get_role (const char *key)
 {
@@ -3621,6 +3624,26 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	/* not found */
 	pprintf(prn, "%s: %s: no such private function\n", attr, name);
 	return E_DATA;
+    } else if (role == UFUN_R_SETUP) {
+	/* another private one */
+	for (i=0; i<pkg->n_priv; i++) {
+	    if (!strcmp(name, pkg->priv[i]->name)) {
+		u = pkg->priv[i];
+		if (u->rettype != GRETL_TYPE_VOID) {
+		    pprintf(prn, "%s: should not return anything\n", attr);
+		    err = E_TYPES;
+		} else if (u->n_params > 0) {
+		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		    err = E_TYPES;
+		}
+		if (!err) {
+		    u->pkg_role = role;
+		}
+		return err; /* found */
+	    }
+	}
+	/* not found */
+	pprintf(prn, "%s: %s: no such private function\n", attr, name);
     }
 
     for (i=0; i<pkg->n_pub; i++) {
@@ -3709,6 +3732,13 @@ int function_ok_for_package_role (const char *name,
 	return !err; /* found */
     } else if (role == UFUN_LIST_MAKER) {
 	if (u->rettype != GRETL_TYPE_LIST) {
+	    err = E_TYPES;
+	} else if (!valid_list_maker(u)) {
+	    err = E_TYPES;
+	}
+	return !err; /* found */
+    } else if (role == UFUN_R_SETUP) {
+	if (u->rettype != GRETL_TYPE_VOID) {
 	    err = E_TYPES;
 	} else if (u->n_params > 0) {
 	    err = E_TYPES;
@@ -4030,7 +4060,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    if (!quiet) {
 			pprintf(prn, "Recording R dependency list: %s\n", p);
 		    }
-		    err = function_package_set_properties(pkg, "R-depends",p, NULL);
+		    err = function_package_set_properties(pkg, "R-depends", p, NULL);
 		}
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
@@ -4952,6 +4982,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, LIST_MAKER)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func_name(pkg, UFUN_LIST_MAKER);
+	} else if (!strcmp(key, R_SETUP)) {
+	    ps = (char **) ptr;
+	    *ps = pkg_get_special_func_name(pkg, UFUN_R_SETUP);
 	} else if (!strcmp(key, "gui-attrs")) {
 	    unsigned char *s = (unsigned char *) ptr;
 
@@ -5355,6 +5388,45 @@ static int broken_package_error (fnpkg *pkg)
     return E_DATA;
 }
 
+/* For an R-dependent package that wants to define one or more R
+   functions: extract the relevant lines of code from its dedicated
+   R-setup function (which must be private) and send them to the R
+   library for "compilation".
+*/
+
+static int package_run_R_setup (ufunc *fun)
+{
+    char *buf = NULL;
+    PRN *prn = NULL;
+    int i, err;
+
+    /* first screen for availability of libR */
+    err = libset_set_bool(R_FUNCTIONS, 1);
+
+    if (!err) {
+	prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    }
+
+    if (prn != NULL) {
+	for (i=0; i<fun->n_lines; i++) {
+	    if (i > 0 && i < fun->n_lines - 1) {
+		/* skip "foreign" and "end foreign" */
+		pputs(prn, fun->lines[i].s);
+		pputc(prn, '\n');
+	    }
+	}
+	buf = gretl_print_steal_buffer(prn);
+	gretl_print_destroy(prn);
+    }
+
+    if (buf != NULL) {
+	err = execute_R_buffer(buf, NULL, OPT_NONE, NULL);
+	free(buf);
+    }
+
+    return err;
+}
+
 #define fn_redef_msg(s) fprintf(stderr, "Redefining function '%s'\n", s)
 
 /* When loading a private function the only real conflict would be
@@ -5370,21 +5442,21 @@ static int load_private_function (fnpkg *pkg, int i)
     for (j=0; j<n_ufuns; j++) {
 	if (!strcmp(fun->name, ufuns[j]->name)) {
 	    if (pkg == ufuns[j]->pkg) {
-		err = broken_package_error(pkg);
-		break;
+		return broken_package_error(pkg);
 	    }
 	}
     }
 
-    if (!err) {
+    if (fun->pkg_role == UFUN_R_SETUP) {
+	err = package_run_R_setup(fun);
+    } else {
 	err = add_allocated_ufunc(fun);
-    }
-
-    if (!err && function_lookup(fun->name)) {
-	gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
-			      fun->name);
-	install_function_override(fun->name, fun->pkg->name, fun);
-	pkg->overrides += 1;
+	if (!err && function_lookup(fun->name)) {
+	    gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
+				  fun->name);
+	    install_function_override(fun->name, fun->pkg->name, fun);
+	    pkg->overrides += 1;
+	}
     }
 
     return err;
