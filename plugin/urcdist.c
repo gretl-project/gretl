@@ -250,10 +250,31 @@ static double fpval (double *beta, int nbeta, double *wght,
     int np1, nph, nptop, np = 9;
     double bot, top, ssr, ssrt;
     double se3, ttest, crfit;
-    double yvec[20], fits[20], resid[20];
-    double xmat[80], xomx[16], gamma[4], omega[400];
+    double *yvec, *fits, *resid;
+    double *xmat, *xomx, *gamma, *omega;
     double crits[URCLEN];
     double pval = 0.0;
+
+    /* sizes of arrays:
+       yvec[20], fits[20], resid[20]
+       xmat[80], xomx[16], gamma[4], omega[400]
+    */
+    int wlen = 3*20 + 20 + 400;
+    double *wspace = malloc(wlen * sizeof *wspace);
+
+    if (wspace == NULL) {
+	*err = E_ALLOC;
+	return NADBL;
+    }
+
+    /* set offsets into workspace */
+    yvec = wspace;
+    fits = yvec + 20;
+    resid = fits + 20;
+    xmat = resid + 20;
+    xomx = xmat + 80;
+    gamma = xomx + 16;
+    omega = gamma + 4;
 
     /* first compute all the estimated critical values,
        and find the one closest to the test statistic,
@@ -405,6 +426,7 @@ static double fpval (double *beta, int nbeta, double *wght,
 
  bailout:
 
+    free(wspace);
     if (*err) {
 	pval = NADBL;
     }
