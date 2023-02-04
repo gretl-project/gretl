@@ -46,13 +46,15 @@
 <!ELEMENT gretl-function (params?, return?, code)>
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
-   type (void | scalar | series | matrix | list | string | bundle | strings | matrices | bundles | lists | arrays) 'void'
+   type (void | scalar | series | matrix | list | string | bundle |
+   strings | matrices | bundles | lists | arrays) 'void'
    private (0|1) '0'
    plugin-wrapper (0|1) '0'
    no-print (0|1) '0'
    menu-only (0|1) '0'
    pkg-role (bundle-print | bundle-plot | bundle-test | bundle-fcast |
-             bundle-extra | gui-main | gui-precheck | list-maker | none) 'none'
+             bundle-extra | gui-main | gui-precheck | list-maker |
+	     R-setup | none) 'none'
 >
 
 <!ATTLIST help
