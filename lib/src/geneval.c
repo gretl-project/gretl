@@ -15067,6 +15067,7 @@ static NODE *eval_feval (NODE *t, NODE *n, parser *p)
 
     if (!p->err && f == 0 && u == NULL) {
         gretl_errmsg_sprintf("%s: function not found", e->v.str);
+	p->err = E_DATA;
     }
 
     return ret;
