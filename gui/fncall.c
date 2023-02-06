@@ -526,6 +526,7 @@ static GList *get_selection_list (int type)
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
 	list = add_names_for_type(list, GRETL_TYPE_LIST);
+	/* allow for singleton list? */
 	list = add_series_names(list);
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
@@ -1207,10 +1208,14 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
 */
 
 static int already_set_as_default (call_info *cinfo,
+				   int argnum,
 				   const char *name,
 				   int ptype)
 {
     GList *slist;
+    GtkComboBox *sel;
+    gchar *s;
+    int iter = 0;
     int ret = 0;
 
     if (series_arg(ptype)) {
@@ -1229,16 +1234,31 @@ static int already_set_as_default (call_info *cinfo,
 	return 0;
     }
 
-    while (slist != NULL && !ret) {
-	GtkComboBox *sel = GTK_COMBO_BOX(slist->data);
-	gchar *s = combo_box_get_active_text(sel);
+ retry:
 
+    while (slist != NULL && !ret) {
+	sel = GTK_COMBO_BOX(slist->data);
+	if (iter > 0 && widget_get_int(sel, "argnum") > argnum) {
+	    /* don't reference a combo below the 'current' one */
+	    break;
+	}
+	s = combo_box_get_active_text(sel);
 	if (!strcmp(s, name)) {
 	    ret = 1;
 	} else {
 	    slist = g_list_next(slist);
 	}
 	g_free(s);
+    }
+
+    if (!ret && iter == 0 && ptype == GRETL_TYPE_LIST &&
+	current_series_index(dataset, name) >= 0) {
+	/* don't select a given series qua list if it's
+	   already selected above as a series?
+	*/
+	slist = g_list_first(cinfo->vsels);
+	iter++;
+	goto retry;
     }
 
     return ret;
@@ -1299,6 +1319,7 @@ static void arg_combo_set_default (call_info *cinfo,
 
     for (i=0; tmp != NULL; i++) {
 	gchar *name = tmp->data;
+	int argnum = widget_get_int(combo, "argnum");
 	int ok = 0;
 
 	if (targname != NULL) {
@@ -1306,10 +1327,10 @@ static void arg_combo_set_default (call_info *cinfo,
 	} else if (series_arg(ptype)) {
 	    v = current_series_index(dataset, name);
 	    if (v > 0 && probably_stochastic(v)) {
-		ok = !already_set_as_default(cinfo, name, ptype);
+		ok = !already_set_as_default(cinfo, argnum, name, ptype);
 	    }
 	} else {
-	    ok = !already_set_as_default(cinfo, name, ptype);
+	    ok = !already_set_as_default(cinfo, argnum, name, ptype);
 	}
 
 	if (ok) {
