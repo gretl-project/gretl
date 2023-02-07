@@ -13762,7 +13762,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
         return E_NONCONF;
     }
 
-#if DIAG_COND_COND
+#if DIAG_CODE_COND
     /* condition on the number of flops required */
     cond = 3 * c * 0.5 * (r+1) * r > 9500;
 #endif
@@ -13774,7 +13774,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	if (AD != NULL) {
 	    k = 0;
 	    if (amod) {
-		/* this is in fact A'<d> */
+		/* this is in fact <d> A' */
 		for (i=0; i<A->rows; i++) {
 		    x = d->val[i];
 		    k = i;
@@ -13787,6 +13787,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 					  A, GRETL_MOD_NONE,
 					  C, cmod);
 	    } else {
+		/* A <d> */
 		for (i=0; i<A->cols; i++) {
 		    x = d->val[i];
 		    for (j=0; j<A->rows; j++) {
