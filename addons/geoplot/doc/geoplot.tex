@@ -1284,10 +1284,10 @@ bwrite(b, "us_pruned.json")
 
 \begin{funcdoc}
 \begin{verbatim}
-function void geoplot_translate_feature (bundle *b, int f,
-                                         matrix shift,
-                                         matrix center[null],
-                                         matrix scale[null])
+void geoplot_translate_feature (bundle *b, int f,
+                                matrix shift,
+                                matrix center[null],
+                                matrix scale[null])
 \end{verbatim}
   Shifts the feature with sequential index \texttt{f}, optionally
   rescaling it. See section~\ref{sec:rearrange} for an example and
@@ -1296,9 +1296,9 @@ function void geoplot_translate_feature (bundle *b, int f,
 
 \begin{funcdoc}
 \begin{verbatim}
-function matrix geoplot_seek_feature(const bundle b,
-                                     string name,
-                                     bool do_plot[1])
+matrix geoplot_seek_feature(const bundle b,
+                            string name,
+                            bool do_plot[1])
 \end{verbatim}
   Searches the map bundle \texttt{b} for features matching
   \texttt{name} (on a case-insensitive basis). If one or more matches
@@ -1321,8 +1321,8 @@ geoplot_seek_feature(map, "Florida")
 
 \begin{funcdoc}
 \begin{verbatim}
-function void geoplot_simplify(bundle *b,
-                               scalar preserve[0.1:1:0.75])
+void geoplot_simplify(bundle *b,
+                      scalar preserve[0.1:1:0.75])
 \end{verbatim}
   Simplifies the polygons in the map bundle \texttt{b} using the
   Visvalingam--Whyatt algorithm.\footnote{See
