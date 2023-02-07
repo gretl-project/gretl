@@ -13726,13 +13726,15 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
+#define DIAG_CODE_COND 1
+
 int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
                              const gretl_vector *d, gretl_matrix *C,
                              GretlMatrixMod cmod)
 {
     register int i, j, k;
     double x, xi, xj, cij;
-    int r, c, ld, nf;
+    int r, c, ld, cond = 1;
 
     if (gretl_is_null_matrix(A) ||
         gretl_is_null_matrix(d) ||
@@ -13760,24 +13762,48 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
         return E_NONCONF;
     }
 
-#if 0
-    /* the number of flops required */
-    nf = 3 * c * 0.5 * (r+1) * r;
+#if DIAG_COND_COND
+    /* condition on the number of flops required */
+    cond = 3 * c * 0.5 * (r+1) * r > 9500;
+#endif
 
-    if (nf > 100000) {
-        /* take advantage of optimized matrix multiplication */
-        gretl_matrix *D = gretl_zero_matrix_new(ld, ld);
+    if (cond) {
+        /* hybrid of special code and optimized matrix multiplication */
+	gretl_matrix *AD = gretl_matrix_alloc(A->rows, A->cols);
 
-        if (D != NULL) {
-            for (i=0; i<ld; i++) {
-                gretl_matrix_set(D, i, i, d->val[i]);
-            }
-            alt_qform(A, amod, D, C, cmod);
-            gretl_matrix_free(D);
-            return 0;
-        }
+	if (AD != NULL) {
+	    k = 0;
+	    if (amod) {
+		/* this is in fact A'<d> */
+		for (i=0; i<A->rows; i++) {
+		    x = d->val[i];
+		    k = i;
+		    for (j=0; j<A->cols; j++) {
+			AD->val[k] = A->val[k] * x;
+			k += A->rows;
+		    }
+		}
+		gretl_matrix_multiply_mod(AD, GRETL_MOD_TRANSPOSE,
+					  A, GRETL_MOD_NONE,
+					  C, cmod);
+	    } else {
+		for (i=0; i<A->cols; i++) {
+		    x = d->val[i];
+		    for (j=0; j<A->rows; j++) {
+			AD->val[k] = A->val[k] * x;
+			k++;
+		    }
+		}
+		gretl_matrix_multiply_mod(AD, GRETL_MOD_NONE,
+					  A, GRETL_MOD_TRANSPOSE,
+					  C, cmod);
+	    }
+	    gretl_matrix_free(AD);
+	    return 0;
+	}
     }
 
+    /* fully specialized code which works well for small input */
     for (i=0; i<r; i++) {
         for (j=0; j<=i; j++) {
             x = 0.0;
@@ -13804,45 +13830,6 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
             }
         }
     }
-#else
-    gretl_matrix *AD = gretl_matrix_alloc(A->rows, A->cols);
-
-    if (AD != NULL) {
-        k = 0;
-
-        if (amod) {
-            /* this is in fact A'<d> */
-            for (i=0; i<A->rows; i++) {
-                x = d->val[i];
-                k = i;
-                for (j=0; j<A->cols; j++) {
-                    AD->val[k] = A->val[k] * x;
-                    k += A->rows;
-                }
-            }
-            gretl_matrix_multiply_mod(AD, GRETL_MOD_TRANSPOSE,
-                                      A, GRETL_MOD_NONE,
-                                      C, cmod);
-        } else {
-
-            for (i=0; i<A->cols; i++) {
-                x = d->val[i];
-                for (j=0; j<A->rows; j++) {
-                    AD->val[k] = A->val[k] * x;
-                    k++;
-                }
-            }
-
-            gretl_matrix_multiply_mod(AD, GRETL_MOD_NONE,
-                                      A, GRETL_MOD_TRANSPOSE,
-                                      C, cmod);
-        }
-
-	gretl_matrix_free(AD);
-	return 0;
-    }
-
-#endif
 
     return 0;
 }
