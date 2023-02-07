@@ -13734,7 +13734,8 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 {
     register int i, j, k;
     double x, xi, xj, cij;
-    int r, c, ld, cond = 1;
+    int r, c, ld;
+    int use_hybrid = 1;
 
     if (gretl_is_null_matrix(A) ||
         gretl_is_null_matrix(d) ||
@@ -13764,10 +13765,10 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
 #if DIAG_CODE_COND
     /* condition on the number of flops required */
-    cond = 3 * c * 0.5 * (r+1) * r > 9500;
+    use_hybrid = 3 * c * 0.5 * (r+1) * r > 9500;
 #endif
 
-    if (cond) {
+    if (use_hybrid) {
         /* hybrid of special code and optimized matrix multiplication */
 	gretl_matrix *AD = gretl_matrix_alloc(A->rows, A->cols);
 
