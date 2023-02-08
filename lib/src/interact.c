@@ -2204,7 +2204,9 @@ static int lib_open_append (ExecState *s,
             if (buf != NULL && *buf != '\0') {
                 pputs(prn, buf);
             }
-        } else if (op.ftype != GRETL_NATIVE_DB_WWW && op.ftype != GRETL_ODBC) {
+        } else if (gretl_messages_on() &&
+                   op.ftype != GRETL_NATIVE_DB_WWW &&
+                   op.ftype != GRETL_ODBC) {
 #ifdef HAVE_MPI
 	    /* print minimal success message? */
 	    if (!gretl_mpi_initialized()) {
