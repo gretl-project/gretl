@@ -7966,15 +7966,15 @@ contenga un percorso completo.
     </para>
     <para>
       Se la variabile dipendente non è binaria, ma è discreta, si
-      ottengono stime Logit ordinate. Tuttavia, se viene fornita
+      ottengono stime logit ordinali. Tuttavia, se viene fornita
       l'opzione <opt>multinomial</opt>, la variabile dipendente è
       interpretata come non ordinale, e vengono prodotte stime Logit
       Multinomiali. (In ambo i casi, verrà dato un errore se la
       dipendente non è discreta.) Nel caso multinomiale, l'accessore
-      <fncref targ="$mnlprobs"/> sarà disponibile dopo la stima; esso
+      <fncref targ="$allprobs"/> sarà disponibile dopo la stima; esso
       conterrà una matrice con le probabilità stimate dei possibili
       valori della dipendente per ogni osservazione (osservazioni per
-      riga, valori per colonna).
+      riga, esiti per colonna).
     </para>
     <para>
       Per condurre un'analisi delle proporzioni (dove la variabile

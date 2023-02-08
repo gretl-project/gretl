@@ -25,7 +25,20 @@
       </description>
     </function>
 
-    <function name="$bic" section="access" output="scalar">
+    <function name="$allprobs" section="access" output="matrix">
+      <description>
+	<para>
+	  Deve seguire la stima di un modello ordinale (logit o
+	  probit) o di un logit multinomiale. Produce una matrice <by
+	  r="n" c="j"/>, dove <math>n</math> è il numero di
+	  osservazioni usate e <math>j</math> è il numero di valori
+	  possibili della variabile dipendente. La matrice conterrà la
+	  probabilità stimata per ogni valore e per ogni osservazione.
+       </para>
+      </description>
+    </function>
+
+      <function name="$bic" section="access" output="scalar">
       <description>
 	<para>
 	  Produce il criterio di informazione bayesiano di Schwarz per
@@ -518,7 +531,9 @@
 	  Dopo la stima di un modello logit multinomiale, crea una
 	  matrice con le probabilità stimate di tutti i possibili
 	  esiti per tutte le osservazioni usate nella stima. Le
-	  osservazioni sono per riga e gli esiti per colonna.
+	  osservazioni sono per riga e gli esiti per colonna. Dalla
+	  versione 2023a l'uso di quest'accessore è deprecato: si
+	  raccomanda di usare <fncref targ="$allprobs"/> al suo posto.
 	</para>
       </description>
     </function>
