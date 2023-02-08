@@ -13726,8 +13726,6 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-#define DIAG_CODE_COND 1
-
 int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
                              const gretl_vector *d, gretl_matrix *C,
                              GretlMatrixMod cmod)
@@ -13735,6 +13733,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
     register int i, j, k;
     double x, xi, xj, cij;
     int r, c, ld;
+    int hybrid_min = 9500;
     int use_hybrid = 1;
 
     if (gretl_is_null_matrix(A) ||
@@ -13763,10 +13762,15 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
         return E_NONCONF;
     }
 
-#if DIAG_CODE_COND
-    /* condition on the number of flops required */
-    use_hybrid = 3 * c * 0.5 * (r+1) * r > 9500;
-#endif
+    if (hybrid_min > 0) {
+        char *s = getenv("HYBRID_MIN");
+
+        if (s != NULL) {
+            hybrid_min = atoi(s);
+        }
+        /* condition on the number of flops required */
+        use_hybrid = 3 * c * 0.5 * (r+1) * r > hybrid_min;
+    }
 
     if (use_hybrid) {
         /* hybrid of special code and optimized matrix multiplication */
