@@ -493,6 +493,19 @@ static void fncall_clear_args_array (fncall *fc)
     fc->argc = 0;
 }
 
+static void fncall_destroy_args_array (fncall *fc)
+{
+    int i;
+
+    for (i=0; i<fc->fun->n_params; i++) {
+        if (fc->args[i].upname != NULL) {
+            free(fc->args[i].upname);
+        }
+    }
+
+    free(fc->args);
+}
+
 static void maybe_set_param_const (fn_param *fp)
 {
     fp->flags |= FP_CONST;
@@ -694,7 +707,7 @@ void fncall_destroy (void *data)
 #endif
         fncall *call = data;
 
-	free(call->args);
+	fncall_destroy_args_array(call);
 	free(call->ptrvars);
 	free(call->listvars);
 	free(call->retname);
@@ -10086,6 +10099,10 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 	if (call != NULL) {
 	    tvals[0] = call->obs.t1;
 	    tvals[1] = call->obs.t2 + call->obs.added;
+            /* FIXME this needs to be smarter */
+            if (tvals[1] > dset->n - 1) {
+                tvals[1] = dset->n - 1;
+            }
 	}
     }
 
