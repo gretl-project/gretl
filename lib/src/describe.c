@@ -2065,7 +2065,6 @@ FreqDist *get_freq (int varno, const DATASET *dset,
 
     if (na(fmin) || na(fwid)) {
 	freq->endpt[0] = xmin - .5 * binwidth;
-
 	if (xmin > 0.0 && freq->endpt[0] < 0.0) {
 	    double rshift;
 
