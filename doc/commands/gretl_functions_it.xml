@@ -10797,6 +10797,13 @@
 	  <lit>qform(x',I(rows(x))</lit>.
 	</para>
 	<para>
+	  Nel caso particolare in cui <argname>A</argname> sia
+	  diagonale, il secondo argomento può essere un vettore di
+	  dimensione appropriata, che viene interpretato come la
+	  diagonale di <argname>A</argname>. Questo permette l'uso di
+	  un algoritmo più efficiente.
+	</para>
+	<para>
 	  Se le dimensioni di <argname>x</argname> e
 	  <argname>A</argname> non sono compatibili o se
 	  <argname>A</argname> non è simmetrica viene restituito un

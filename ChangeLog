@@ -25,6 +25,8 @@ version 2023a, in progress
   lies beyond the range of a 32-bit signed integer
 - instring() and strstr() functions: drop the policy of auto-
   escaping the string to be found
+- qform() function: introduce alternate syntax for the case when the
+  middle matrix is diagonal
 - CSV data importation: be less hasty in concluding that the
   column separator is comma
 - CSV importation via GUI: clarify the dialog that governs

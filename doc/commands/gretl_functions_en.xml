@@ -10692,9 +10692,16 @@
 	  <lit>qform(x',I(rows(x))</lit>.
 	</para>
 	<para>
-	If <argname>x</argname> and <argname>A</argname> are not
-	conformable, or <argname>A</argname> is not symmetric, an error
-	is returned.
+	  In the special case when <argname>A</argname> is a diagonal
+	  matrix, the second argument can be given as a vector of the
+	  appropriate size, which is understood to contain the main
+	  diagonal of <argname>A</argname>. In this case, a more
+	  efficient algorithm is used.
+	</para>
+	<para>
+	  If <argname>x</argname> and <argname>A</argname> are not
+	  conformable, or <argname>A</argname> is not symmetric, an error
+	  is returned.
 	</para>
       </description>
     </function>
