@@ -13733,7 +13733,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
     register int i, j, k;
     double x, xi, xj, cij;
     int r, c, ld;
-    int hybrid_min = 9500;
+    int dim, hybrid_min = 9500;
     int use_hybrid = 1;
 
     if (gretl_is_null_matrix(A) ||
@@ -13769,8 +13769,14 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
             hybrid_min = atoi(s);
         }
         /* condition on the number of flops required */
-        use_hybrid = 3 * c * 0.5 * (r+1) * r > hybrid_min;
+	dim = 3 * c * 0.5 * (r+1) * r;
+        use_hybrid = (dim > hybrid_min);
     }
+
+#if 0
+    fprintf(stderr, "r = %d, c = %d, dim = %d, hybrid_min = %d; -> use_hybrid = %d\n",
+	    r, c, dim, hybrid_min, use_hybrid);
+#endif
 
     if (use_hybrid) {
         /* hybrid of special code and optimized matrix multiplication */
@@ -13779,7 +13785,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	if (AD != NULL) {
 	    k = 0;
 	    if (amod) {
-		/* this is in fact <d> A' */
+		/* here AD is actually <d> A */
 		for (i=0; i<A->rows; i++) {
 		    x = d->val[i];
 		    k = i;
@@ -13792,7 +13798,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 					  A, GRETL_MOD_NONE,
 					  C, cmod);
 	    } else {
-		/* A <d> */
+		/* here AD is A <d> */
 		for (i=0; i<A->cols; i++) {
 		    x = d->val[i];
 		    for (j=0; j<A->rows; j++) {
@@ -13805,38 +13811,37 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 					  C, cmod);
 	    }
 	    gretl_matrix_free(AD);
-	    return 0;
+	}
+    } else {
+	/* fully specialized code which works well for small input */
+	for (i=0; i<r; i++) {
+	    for (j=0; j<=i; j++) {
+		x = 0.0;
+		for (k=0; k<c; k++) {
+		    if (amod) {
+			xi = gretl_matrix_get(A,k,i);
+			xj = gretl_matrix_get(A,k,j);
+		    } else {
+			xi = gretl_matrix_get(A,i,k);
+			xj = gretl_matrix_get(A,j,k);
+		    }
+		    x += d->val[k] * xi * xj;
+		}
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    cij = gretl_matrix_get(C, i, j) + x;
+		} else if (cmod == GRETL_MOD_DECREMENT) {
+		    cij = gretl_matrix_get(C, i, j) - x;
+		} else {
+		    cij = x;
+		}
+		gretl_matrix_set(C, i, j, cij);
+		if (j != i) {
+		    gretl_matrix_set(C, j, i, cij);
+		}
+	    }
 	}
     }
-
-    /* fully specialized code which works well for small input */
-    for (i=0; i<r; i++) {
-        for (j=0; j<=i; j++) {
-            x = 0.0;
-            for (k=0; k<c; k++) {
-                if (amod) {
-                    xi = gretl_matrix_get(A,k,i);
-                    xj = gretl_matrix_get(A,k,j);
-                } else {
-                    xi = gretl_matrix_get(A,i,k);
-                    xj = gretl_matrix_get(A,j,k);
-                }
-                x += d->val[k] * xi * xj;
-            }
-            if (cmod == GRETL_MOD_CUMULATE) {
-                cij = gretl_matrix_get(C, i, j) + x;
-            } else if (cmod == GRETL_MOD_DECREMENT) {
-                cij = gretl_matrix_get(C, i, j) - x;
-            } else {
-                cij = x;
-            }
-            gretl_matrix_set(C, i, j, cij);
-            if (j != i) {
-                gretl_matrix_set(C, j, i, cij);
-            }
-        }
-    }
-
+    
     return 0;
 }
 
