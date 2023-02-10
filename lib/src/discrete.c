@@ -2029,21 +2029,24 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 {
     gretl_matrix *P = NULL;
     const gretl_matrix *yvals = NULL;
+    const double *b = NULL;
     double *eXbt = NULL;
+    double St, ptj;
+    char **S = NULL;
+    int j, k, s, t, vi, ok;
     int i, m = 0;
 
     if (pmod == NULL || pmod->list == NULL || pmod->coeff == NULL) {
 	*err = E_DATA;
+	return NULL;
     }
 
-    if (!*err) {
-	/* list of outcome values (including the base case) */
-	yvals = gretl_model_get_data(pmod, "yvals");
-	if (yvals == NULL) {
-	    *err = E_DATA;
-	} else {
-	    m = gretl_vector_get_length(yvals);
-	}
+    /* list of outcome values (including the base case) */
+    yvals = gretl_model_get_data(pmod, "yvals");
+    if (yvals == NULL) {
+	*err = E_DATA;
+    } else {
+	m = gretl_vector_get_length(yvals);
     }
 
     if (!*err) {
@@ -2063,9 +2066,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 	if (P == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    /* allow for casting results to series */
-	    gretl_matrix_set_t1(P, pmod->t1);
-	    gretl_matrix_set_t2(P, pmod->t2);
+	    S = strings_array_new(n);
 	}
     }
 
@@ -2077,47 +2078,60 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 	}
     }
 
-    if (!*err) {
-	const double *b = pmod->coeff;
-	double St, ptj;
-	int j, k, t, vi, ok;
+    if (*err) {
+	goto bailout;
+    }
 
-	for (t=t1; t<=t2; t++) {
-	    ok = 1;
-	    for (i=2; i<=pmod->list[0]; i++) {
-		vi = pmod->list[i];
-		if (na(dset->Z[vi][t])) {
-		    ok = 0;
-		    break;
-		}
-	    }
-	    if (!ok) {
-		/* one or more regressors missing */
-		for (j=0; j<m; j++) {
-		    gretl_matrix_set(P, t, j, NADBL);
-		}
-	    } else {
-		/* base case */
-		eXbt[0] = St = 1.0;
-		k = 0;
-		/* loop across the other y-values */
-		for (j=1; j<m; j++) {
-		    /* accumulate exp(X*beta) */
-		    eXbt[j] = 0.0;
-		    for (i=2; i<=pmod->list[0]; i++) {
-			vi = pmod->list[i];
-			eXbt[j] += dset->Z[vi][t] * b[k++];
-		    }
-		    eXbt[j] = exp(eXbt[j]);
-		    St += eXbt[j];
-		}
-		for (j=0; j<m; j++) {
-		    ptj = eXbt[j] / St;
-		    gretl_matrix_set(P, t, j, ptj);
-		}
+    b = pmod->coeff;
+
+    for (t=t1, s=0; t<=t2; t++, s++) {
+	ok = 1;
+	for (i=2; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    if (na(dset->Z[vi][t])) {
+		ok = 0;
+		break;
 	    }
 	}
+	if (!ok) {
+	    /* one or more regressors missing */
+	    for (j=0; j<m; j++) {
+		gretl_matrix_set(P, s, j, NADBL);
+	    }
+	} else {
+	    /* base case */
+	    eXbt[0] = St = 1.0;
+	    k = 0;
+	    /* loop across the other y-values */
+	    for (j=1; j<m; j++) {
+		/* accumulate exp(X*beta) */
+		eXbt[j] = 0.0;
+		for (i=2; i<=pmod->list[0]; i++) {
+		    vi = pmod->list[i];
+		    eXbt[j] += dset->Z[vi][t] * b[k++];
+		}
+		eXbt[j] = exp(eXbt[j]);
+		St += eXbt[j];
+	    }
+	    for (j=0; j<m; j++) {
+		ptj = eXbt[j] / St;
+		gretl_matrix_set(P, s, j, ptj);
+	    }
+	}
+	if (S != NULL) {
+	    S[s] = retrieve_date_string(t+1, dset, err);
+	}
     }
+
+    if (P != NULL) {
+	gretl_matrix_set_t1(P, t1);
+	gretl_matrix_set_t2(P, t2);
+	if (S != NULL) {
+	    gretl_matrix_set_rownames(P, S);
+	}
+    }
+
+ bailout:
 
     free(eXbt);
 
