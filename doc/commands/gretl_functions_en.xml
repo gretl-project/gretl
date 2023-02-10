@@ -13807,8 +13807,8 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Returns the day of the week (Sunday = 0, Monday = 1, etc.)
-	  for the date(s) specified by the three arguments, or
+	  Returns the day of the week (from Sunday = 0 to Saturday =
+	  6) for the date(s) specified by the three arguments, or
 	  <lit>NA</lit> if the date is invalid. Note that all three
 	  arguments must be of the same type, either scalars
 	  (integers) or series.
@@ -13824,6 +13824,20 @@ d =  8.0000000
 	  eval weekday(1990, 5, 1)
 	  eval weekday(19900501)
 	</code>
+	<para>
+	  A common alternative numbering for days of the week runs
+	  from Monday = 1 to Sunday = 7. If you have a series named
+	  <lit>wd</lit> obtained via <lit>weekday</lit> and you want
+	  to convert to the alternative you can do
+	</para>
+	<code>
+	  altwd = wd == 0 ? 7 : wd
+	</code>
+	<para>
+	  Note that if you simply add 1 to <lit>wd</lit> you get a
+	  numbering that's valid but non-standard, namely Sunday = 1
+	  to Saturday = 7.
+	</para>
       </description>
     </function>
 
