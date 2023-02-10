@@ -2966,6 +2966,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     forecast_free(&fc);
 
     if (opt & OPT_L) {
+        /* --all-probs: we're done */
 	return err;
     }
 
@@ -3611,6 +3612,17 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
     return err;
 }
 
+static void print_probs_matrix (PRN *prn)
+{
+    if (fcast_matrix != NULL) {
+        if (gretl_echo_on()) {
+            pputc(prn, '\n');
+        }
+        pprintf(prn, "%s\n\n", _("Estimated outcome probabilities"));
+        gretl_matrix_print_to_prn(fcast_matrix, NULL, prn);
+    }
+}
+
 static int add_fcast_matrix (const char *name,
 			     DATASET *dset,
 			     PRN *prn)
@@ -3637,24 +3649,25 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     char vname[VNAMELEN];
     FITRESID *fr = NULL;
     int t1, t2, k = -1;
+    int all_probs = (opt & OPT_L);
     int os_case = 0;
+    int quiet = 0;
     int err;
 
+    /* FIXME relax some of these limitations? */
     if (pmod->ci == HECKIT || pmod->ci == DURATION) {
-	/* FIXME */
 	return E_NOTIMP;
-    }
-
-    if (pmod->ci == PANEL && !(pmod->opt & OPT_P)) {
-	/* FIXME */
+    } else if (pmod->ci == PANEL && !(pmod->opt & OPT_P)) {
 	if (opt & OPT_R) {
 	    return E_NOTIMP;
 	}
+    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
+	return E_NOTIMP;
     }
 
-    if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
-	/* random effects probit: FIXME */
-	return E_NOTIMP;
+    /* can't use --plot with --all-probs */
+    if (all_probs && (opt & OPT_U)) {
+        return E_BADOPT;
     }
 
     /* OPT_I for integrate: reject for non-OLS, or if the dependent
@@ -3673,12 +3686,11 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (*vname != '\0') {
-	/* saving to named series or matrix */
+	/* saving to named series or matrix: be quiet */
 	opt |= (OPT_A | OPT_Q);
-    } else if (opt & OPT_L) {
-	/* --all-probs implies quiet */
-	opt |= OPT_Q;
     }
+
+    quiet = (opt & OPT_Q);
 
     if (os_case == OS_PANEL) {
 	return panel_os_special(pmod, dset, vname, opt, prn);
@@ -3689,28 +3701,38 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	fr = get_forecast(pmod, t1, t2, 0, dset, opt, &err);
     }
 
-    if (!err && !(opt & OPT_Q)) {
-	gretlopt printopt = opt;
-
-	if (opt & OPT_U) {
-	    /* do graph (from command line) */
-	    printopt |= OPT_P;
-	}
-	err = text_print_forecast(fr, dset, printopt, prn);
+    if (err) {
+        goto bailout;
     }
 
     if (!err && (opt & OPT_A)) {
-	/* add forecast directly */
+        /* named output */
 	if (opt & OPT_L) {
+            /* add forecast matrix directly */
 	    err = add_fcast_matrix(vname, dset, prn);
 	} else {
+            /* add forecast series directly */
 	    err = add_fcast_to_dataset(fr, vname, dset, prn);
 	}
+    }
+
+    if (!quiet && (opt & OPT_L)) {
+        print_probs_matrix(prn);
+    } else if (!quiet) {
+        gretlopt printopt = opt;
+
+        if (opt & OPT_U) {
+            /* do graph (from command line) */
+            printopt |= OPT_P;
+        }
+        err = text_print_forecast(fr, dset, printopt, prn);
     }
 
     if (!err && !(opt & OPT_L)) {
 	set_forecast_matrices_from_fr(fr);
     }
+
+ bailout:
 
     free_fit_resid(fr);
 

@@ -3955,6 +3955,10 @@
 	  <effect>see below</effect>
         </option>
         <option>
+	  <flag>--all-probs</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--plot</flag>
 	  <optparm>filename</optparm>
 	  <effect>see below</effect>
@@ -4006,6 +4010,7 @@
 	standard errors, if available, via <fncref targ="$fcse"/>.
       </para>
 
+      <subhead>Static and dynamic forecasts</subhead>
       <para>
 	The choice between a static and a dynamic forecast applies
 	only in the case of dynamic models, with an autoregressive
@@ -4019,7 +4024,6 @@
 	dynamic forecast for 2008 is possible if a prior forecast can
 	be substituted for <math>y</math> in 2007.
       </para>
-
       <para>
 	The default is to give a static forecast for any portion of
 	the forecast range that lies within the sample range over which
@@ -4030,6 +4034,7 @@
 	of sample.
       </para>
 
+      <subhead context="cli">Recursive forecasts</subhead>
       <para context="cli">
 	The <opt>recursive</opt> option is presently available only
 	for single-equation models estimated via OLS.  When this
@@ -4045,6 +4050,22 @@
 	conjunction with the <opt>recursive</opt> option.
       </para>
 
+      <subhead>Ordered and multinomial models</subhead>
+      <para>
+        When estimation is via ordered logit or probit, or multinomial
+        logit, one may be interested in the estimated probabilities of
+        each of the discrete outcomes rather than just a <quote>most
+        likely</quote> outcome for each observation. This is supported
+        by the <opt>all-probs</opt> option: the output of
+        <lit>fcast</lit> is then a matrix with one column per possible
+        outcome.  The <repl>vname</repl> argument can be used to name
+        this matrix, in which case nothing is printed. If
+        <repl>vname</repl> is not given the matrix can be retrieved
+        via <fncref targ="$fcast"/>. The <opt>plot</opt> option is
+        incompatible with <opt>all-probs</opt>.
+      </para>
+
+      <subhead context="cli">Forecast plots</subhead>
       <para context="cli">
 	The <opt>plot</opt> option calls for a plot file to be
 	produced, containing a graphical representation of the
@@ -4066,6 +4087,8 @@
 	respected, otherwise files are written to the gretl working
 	directory.
       </para>
+
+      <subhead>Standard errors</subhead>
       <para>
 	The nature of the forecast standard errors (if available) depends
 	on the nature of the model and the forecast.  For static linear

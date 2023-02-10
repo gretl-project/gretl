@@ -864,7 +864,7 @@ static int fill_op_model (MODEL *pmod, const int *list,
     int nx = OC->nx;
     int correct = 0;
     double xti, Xb;
-    int i, s, t, v;
+    int i, s, t, v, omp;
     int err = 0;
 
     H = ordered_hessian_inverse(OC, &err);
@@ -926,10 +926,11 @@ static int fill_op_model (MODEL *pmod, const int *list,
 	}
 	/* yhat = X\hat{beta} */
 	pmod->yhat[t] = Xb;
-	if (na(Xb)) {
+	if (na(Xb) || na(pmod->uhat[t])) {
 	    continue;
 	}
-	if (ordered_model_prediction(pmod, Xb, 0) == OC->y[s]) {
+        omp = (int) ordered_model_prediction(pmod, Xb, 0);
+	if (omp == OC->y[s]) {
 	    correct++;
 	}
 	/* compute generalized residual */
