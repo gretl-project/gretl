@@ -103,6 +103,7 @@ struct str_table dvars[] = {
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
     { R_TMAX,      "$tmax" },
+    { R_NONCONTIG, "$noncontig" },
     { R_DATATYPE,  "$datatype" },
     { R_TEST_STAT, "$test" },
     { R_TEST_PVAL, "$pvalue" },
