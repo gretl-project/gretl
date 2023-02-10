@@ -26,6 +26,11 @@ probit Vote 0 CPI
 # CPI is still strongly significant
 probit Vote 0 CPI --robust
 
+# See what the model predicts for each country
+fcast --all-probs
+list PROBS = mat2list($fcast, "prob")
+print PROBS --byobs
+
 # Compare the rank-sum test given on effi.org, using
 # all non-abstaining countries for which CPI is available
 smpl --full

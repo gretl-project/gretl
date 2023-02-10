@@ -11,7 +11,11 @@ version 2023a, in progress
 - "midasreg" command: generate more specific error message
   for invalid specification
 - "fcast" command: enable the --plot option for forecasts
-  based on a system, when a single series is selected
+  based on a system, when a single series is selected;
+  introduce the --all-probs for ordered logit/probit and
+  multinomial logit models
+- "system" command: ensure that the $system bundle includes
+  the sample limits as "sample_t1" and "sample_t2"
 - strptime() and strftime() functions: generalize to allow
   vectorized usage, and add variants (strpday, strfday) to
   work with epoch days rather than Unix time
@@ -25,8 +29,8 @@ version 2023a, in progress
   lies beyond the range of a 32-bit signed integer
 - instring() and strstr() functions: drop the policy of auto-
   escaping the string to be found
-- qform() function: introduce alternate syntax for the case when the
-  middle matrix is diagonal
+- qform() function: introduce alternate syntax for the case
+  when the middle matrix is diagonal
 - CSV data importation: be less hasty in concluding that the
   column separator is comma
 - CSV importation via GUI: clarify the dialog that governs
@@ -36,8 +40,6 @@ version 2023a, in progress
 - "join" via the GUI: make it evident that specifying keys
   may not be necessary with time-series data; fix a bug with
   use of the filter option
-- "system" command: ensure that the $system bundle includes
-  the sample limits as "sample_t1" and "sample_t2"
 - Script editor, split pane: ensure that when line-numbering
   is selected it carries over to the new pane; also improve
   tab-completion for names of functions
