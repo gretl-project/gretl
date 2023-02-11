@@ -790,8 +790,6 @@ void edit_gfn_callback (void)
     }
 #endif
 
-    gretl_app_support_dir
-
     if (n_opts > 1) {
 	const char *opts[n_opts];
 	int resp;
