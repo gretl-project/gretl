@@ -776,11 +776,21 @@ void edit_gfn_callback (void)
 	n_opts++;
     }
 
+#ifdef OS_OSX
+    dotpath = g_strdup_printf("%sfunctions", gretl_app_support_dir());
+    if (gretl_write_access(dotpath) == 0) {
+	edit_dot_ok = 1;
+	n_opts++;
+    }
+#else
     dotpath = g_strdup_printf("%sfunctions", gretl_dotdir());
     if (gretl_write_access(dotpath) == 0) {
 	edit_dot_ok = 1;
 	n_opts++;
     }
+#endif
+
+    gretl_app_support_dir
 
     if (n_opts > 1) {
 	const char *opts[n_opts];

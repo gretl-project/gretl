@@ -3505,6 +3505,10 @@ const char *gretl_app_support_dir (void)
                 strcpy(p, "db");
                 err = gretl_mkdir(suppdir);
             }
+            if (!err) {
+                strcpy(p, "functions");
+                err = gretl_mkdir(suppdir);
+            }
             if (err) {
                 *suppdir = '\0';
             } else {
