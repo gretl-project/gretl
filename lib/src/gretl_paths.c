@@ -3845,8 +3845,19 @@ gretl_bundle *foreign_info (void)
     gretl_bundle *b = gretl_bundle_new();
     gchar *fullpath;
     int found, i;
+    int dbg = 0;
+
+#if 1
+    char *s;
+    if ((s = getenv("FOREIGN_DEBUG")) != NULL) {
+	dbg = 1;
+    }
+#endif
 
     for (i=0; fpaths[i].id != NULL; i++) {
+	if (dbg) {
+	    fprintf(stderr, "'%s' -> '%s'\n", fpaths[i].id, fpaths[i].path);
+	}
 	if (fpaths[i].path[0] == '\0') {
 	    gretl_bundle_set_int(b, fpaths[i].id, 0);
 	} else if (g_path_is_absolute(fpaths[i].path)) {
