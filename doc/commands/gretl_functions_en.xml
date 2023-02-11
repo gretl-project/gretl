@@ -602,18 +602,6 @@
       </description>
     </function>
 
-    <function name="$noncontig" section="access" output="int">
-      <description>
-	<para>
-	  Returns 1 if the current sample range comprises a
-	  non-contiguous subset of the full dataset, or 0 if either
-	  (a) no sample restriction is applied or (b) the current
-	  sample restriction simply involves advancing the starting
-	  point or retarding the ending point of the full dataset.
-	</para>
-      </description>
-    </function>
-
     <function name="$now" section="access" output="vector">
       <description>
 	<para>

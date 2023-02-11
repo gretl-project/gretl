@@ -16041,8 +16041,6 @@ double dvar_get_scalar (int i, const DATASET *dset)
             sample_range_get_extrema(dset, NULL, &tmax);
             return tmax + 1;
         }
-    case R_NONCONTIG:
-	return complex_subsampled();
     case R_DATATYPE:
         return dataset_get_structure(dset);
     case R_TEST_PVAL:

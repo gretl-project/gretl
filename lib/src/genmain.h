@@ -30,7 +30,6 @@ typedef enum {
     R_T1,         /* start of current sample range */
     R_T2,         /* end of current sample range */
     R_TMAX,       /* maximum value for t2 */
-    R_NONCONTIG,  /* current sample contains non-contiguous observations */
     R_DATATYPE,   /* dataset structure (x-section, time-series, panel) */
     R_WINDOWS,    /* running on MS Windows (1) or not (0) */
     R_VERSION,    /* gretl version number */
