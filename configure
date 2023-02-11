@@ -24814,7 +24814,9 @@ else
 printf "%s\n" "yes" >&6; }
 	printf "%s\n" "#define USE_RLIB 1" >>confdefs.h
 
-      if echo "$RLIB_LIBS" | grep ^-L > /dev/null ; then
+      if test "$darwin_build" = "yes" ; then
+        RLIBDIR="/Library/Frameworks/R.framework/Resources/lib"
+      elif echo "$RLIB_LIBS" | grep ^-L > /dev/null ; then
         RLIBDIR=`echo $RLIB_LIBS | cut -b 3- | awk '{ print $1 }'`
       else
         RLIBDIR="/usr/lib"
