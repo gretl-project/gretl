@@ -920,7 +920,9 @@ if test "$try_libR" = "yes" ; then
   else
     PKG_CHECK_MODULES(RLIB, libR,
       AC_DEFINE(USE_RLIB)
-      if echo "$RLIB_LIBS" | grep ^-L > /dev/null ; then
+      if test "$darwin_build" = "yes" ; then
+        RLIBDIR="/Library/Frameworks/R.framework/Resources/lib"
+      elif echo "$RLIB_LIBS" | grep ^-L > /dev/null ; then
         RLIBDIR=`echo $RLIB_LIBS | cut -b 3- | awk '{ print $1 }'`
       else
         RLIBDIR="/usr/lib"
