@@ -2756,6 +2756,41 @@ static void print_function_start (ufunc *fun, PRN *prn)
     gretl_pop_c_numeric_locale();
 }
 
+/* The following is an attempt at generic indentation based
+   on occurrences of '{' and '}', which should probably
+   work for R code.
+*/
+
+static void foreign_adjust_indent (const char *s,
+				   int *this_indent,
+				   int *next_indent)
+{
+    int n = strlen(s);
+
+    *this_indent = *next_indent;
+
+    if (strncmp(s, "} else", 6) == 0) {
+	*next_indent = *this_indent;
+	*this_indent = *this_indent - 1;
+    } else if (s[n-1] == '{') {
+	*next_indent = *this_indent + 1;
+    } else if (strcmp(s, "}") == 0 ||
+	       strncmp(s, "} else", 6) == 0) {
+	*this_indent = *next_indent = *this_indent - 1;
+    }
+}
+
+static void maybe_toggle_foreign (const char *s, int *in_foreign)
+{
+    if (!*in_foreign) {
+	if (strncmp(s, "foreign ", 8) == 0) {
+	    *in_foreign = 1;
+	}
+    } else if (strncmp(s, "end foreign", 11) == 0) {
+	*in_foreign = 0;
+    }
+}
+
 /**
  * gretl_function_print_code:
  * @u: pointer to user-function.
@@ -2771,6 +2806,7 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 {
     int this_indent = 0;
     int next_indent = 0;
+    int in_foreign = 0;
     int i, j;
 
     if (u == NULL) {
@@ -2784,7 +2820,12 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     print_function_start(u, prn);
 
     for (i=0; i<u->n_lines; i++) {
-	adjust_indent(u->lines[i].s, &this_indent, &next_indent);
+	maybe_toggle_foreign(u->lines[i].s, &in_foreign);
+	if (in_foreign) {
+	    foreign_adjust_indent(u->lines[i].s, &this_indent, &next_indent);
+	} else {
+	    adjust_indent(u->lines[i].s, &this_indent, &next_indent);
+	}
 	for (j=0; j<=this_indent; j++) {
 	    bufspace(tabwidth, prn);
 	}
