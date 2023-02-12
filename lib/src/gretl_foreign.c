@@ -2314,6 +2314,8 @@ static void (*R_SET_TAG) (SEXP, SEXP);
 static SEXP (*R_VECTOR_ELT) (SEXP, int);
 static void (*R_SET_VECTOR_ELT) (SEXP, int, SEXP);
 
+static const char *(*R_errmsg) (void);
+
 #ifdef WIN32
 static char *(*R_get_HOME) (void);
 #endif
@@ -2383,6 +2385,7 @@ static int load_R_symbols (void)
     R_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
     R_unprotect     = dlget(Rhandle, "Rf_unprotect", &err);
     R_catch         = dlget(Rhandle, "R_tryEval", &err);
+    R_errmsg        = dlget(Rhandle, "R_curErrorBuf", &err);
     R_SETCAR        = dlget(Rhandle, "SETCAR", &err);
     R_SET_TYPEOF    = dlget(Rhandle, "SET_TYPEOF", &err);
     R_TYPEOF        = dlget(Rhandle, "TYPEOF", &err);
@@ -3262,13 +3265,22 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     SEXP res;
     int err = 0;
 
+#if FDEBUG
+    printf("gretl_R_function_exec...\n");
+#endif
+
     if (gretl_messages_on()) {
 	R_PrintValue(current_call);
     }
 
     res = R_catch(current_call, VR_GlobalEnv, &err);
     if (err) {
+	const char *Rmsg = R_errmsg();
+
 	fprintf(stderr, "gretl_R_function_exec: R_catch failed on %s\n", name);
+	if (Rmsg != NULL) {
+	    gretl_errmsg_set(Rmsg);
+	}
 	return E_EXTERNAL;
     }
 
