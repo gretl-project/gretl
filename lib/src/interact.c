@@ -344,25 +344,36 @@ static int gretl_shell_async (const char *cmdline, PRN *prn)
     return err;
 }
 
+#define SHELL_KISS 1
+
 static int gretl_shell_sync (const char *arg, gchar **psout,
                              PRN *prn)
 {
     gchar *sout = NULL;
     gchar *serr = NULL;
     GError *gerr = NULL;
-    int status;
     gchar *argv[5];
+    int i, status;
+    int err = 0;
+
+#if SHELL_KISS /* simple version */
+    argv[0] = g_strdup("/bin/sh");
+    argv[1] = g_strdup("-sh");
+    argv[2] = g_strdup("-c");
+    argv[3] = g_strdup(arg);
+    argv[4] = NULL;
+#else
+    /* the following fails with zsh on macOS */
     const char *theshell = getenv("SHELL");
     const char *namep;
     char shellnam[40];
-    int err = 0;
 
     if (theshell == NULL) {
-#ifdef HAVE_PATHS_H
+# ifdef HAVE_PATHS_H
         theshell =_PATH_BSHELL;
-#else
+# else
         theshell = "/bin/sh";
-#endif
+# endif
     }
 
     namep = strrchr(theshell, '/');
@@ -377,17 +388,21 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
     }
 
     argv[0] = g_strdup(theshell);
-    argv[1] = shellnam;
+    argv[1] = g_strdup(shellnam);
     argv[2] = g_strdup("-c");
     argv[3] = g_strdup(arg);
     argv[4] = NULL;
+#endif /* SHELL_KISS or not */
 
     g_spawn_sync(gretl_workdir(), argv, NULL, 0, NULL, NULL,
                  &sout, &serr, &status, &gerr);
 
-    g_free(argv[0]);
-    g_free(argv[2]);
-    g_free(argv[3]);
+    for (i=0; i<4; i++) {
+#if 1
+	fprintf(stderr, "argv[%d] = '%s'\n", i, argv[i]);
+#endif
+	g_free(argv[i]);
+    }
 
     if (gerr != NULL) {
         if (prn != NULL) {
