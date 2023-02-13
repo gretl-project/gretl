@@ -2811,14 +2811,16 @@ static void load_default_path (char *targ)
 {
 #ifdef OS_OSX
     const char *app_paths[] = {
+	"/Library/Frameworks/R.framework/Resources/bin/R",
+	"/Applications/Octave.app/Contents/Resources/bin/octave",
         "/Applications/OxMetrics8/ox/bin/oxl",
-        "/Applications/Octave.app/Contents/Resources/bin/octave",
         "/Applications/Stata/Stata.app/Contents/MacOS/Stata"
     };
 #else
     const char *app_paths[] = {
+	"R",
+	"octave",
         "oxl",
-        "octave",
         "stata"
     };
 #endif
@@ -2843,20 +2845,20 @@ static void load_default_path (char *targ)
 #else
         *targ = '\0';
 #endif
-    } else if (targ == paths.rbinpath) {
-        strcpy(paths.rbinpath, "R");
     } else if (targ == paths.rlibpath) {
 #ifdef RLIBPATH
         strcpy(paths.rlibpath, RLIBPATH);
 #else
         *paths.rlibpath = '\0';
 #endif
-    } else if (targ == paths.oxlpath) {
-        strcpy(paths.oxlpath, app_paths[0]);
+    } else if (targ == paths.rbinpath) {
+	strcpy(paths.rbinpath, app_paths[0]);
     } else if (targ == paths.octpath) {
         strcpy(paths.octpath, app_paths[1]);
+    } else if (targ == paths.oxlpath) {
+        strcpy(paths.oxlpath, app_paths[2]);
     } else if (targ == paths.statapath) {
-        strcpy(paths.statapath, app_paths[2]);
+        strcpy(paths.statapath, app_paths[3]);
     } else if (targ == paths.pypath) {
         strcpy(paths.pypath, "python");
     } else if (targ == paths.jlpath) {
