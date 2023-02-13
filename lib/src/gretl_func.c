@@ -2843,6 +2843,8 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     return 0;
 }
 
+/* called from kalman.c for time-varying matrices */
+
 char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 {
     char **S = NULL;
