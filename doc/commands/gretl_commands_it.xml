@@ -4054,6 +4054,10 @@
 	  <effect>vedi sotto</effect>
 	</option>
 	<option>
+	  <flag>--all-probs</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>nome di file</optparm>
 	  <effect>vedi sotto</effect>
@@ -4103,6 +4107,8 @@
 	accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
 	disponibili, sono recuperabili con <fncref targ="$fcse"/>.
       </para>
+      
+      <subhead>Previsioni statiche e dinamiche</subhead>
       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
 	modelli dinamici, che comprendono un processo di errore autoregressivo,
@@ -4128,6 +4134,7 @@
 	richiede di produrre previsioni statiche anche fuori dal campione.
       </para>
 
+      <subhead context="cli">Previsioni ricorsive</subhead>
       <para context="cli">
 	L'opzione <lit>recursive</lit> al momento è disponibile solo per i
 	modelli composti da una singola equazione e stimati via OLS. Quando si
@@ -4142,6 +4149,23 @@
 	<lit>recursive</lit>.
       </para>
 
+      <subhead>Modelli ordinali e multinomiali</subhead>
+      <para>
+	Dopo la stima di un modello logit o probit ordinale, o di un
+	logit multinomiale, si potrebbero voler calcolare le
+	probabilità di ogni possibile esito anziché una previsione
+	<quote>secca</quote> per ogni osservazione. Per questo si usa
+	l'opzione <opt>all-probs</opt>: l'output di <lit>fcast</lit>
+	diventa una matrice con una colonna per ogni esito
+	possibile. Per dare un nome a tale matrice, si usi l'argomento
+	<repl>vname</repl>, col quale la stampa dell'output è
+	soppressa. Se l'argomento <repl>vname</repl> non viene
+	fornito, la matrice può essere recuperata attraverso
+	l'accessore <fncref targ="$fcast"/>. Le opzioni <opt>plot</opt>
+	e <opt>all-probs</opt> sono incompatibili.
+      </para>
+
+      <subhead context="cli">Grafici</subhead>
       <para context="cli">
 	L'opzione <opt>plot</opt> provoca la rappresentazione grafica
 	della previsione. Nel caso di sistemi di equazioni

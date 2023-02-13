@@ -13902,11 +13902,11 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Fornisce il giorno della settimana (Domenica = 0, Lunedì =
-	  1, ecc.) corrispondente alla data specificata dai tre
-	  argomenti, o <lit>NA</lit> se la data non è valida. Si noti
-	  che i tre argomenti devono essere dello stesso tipo: o
-	  scalari (interi), oppure serie.
+	  Fornisce il giorno della settimana (da domenica = 0 a sabato
+	  = 6) corrispondente alla data specificata dai tre argomenti,
+	  o <lit>NA</lit> se la data non è valida. Si noti che i tre
+	  argomenti devono essere dello stesso tipo: o scalari
+	  (interi), oppure serie.
 	</para>
 	<para>
 	  Un modo alternativo di usare questa funzione è darle un solo
@@ -13914,11 +13914,25 @@ d =  8.0000000
 	  in formato ISO 8601 <quote>basico</quote>, cioè
 	  <lit>YYYYMMDD</lit>. Le due espressioni seguenti
 	  restituiscono lo stesso risultato, cioè 2.
-       </para>
+	</para>
 	<code>
 	  eval weekday(1990, 5, 1)
 	  eval weekday(19900501)
 	</code>
+	<para>
+	  Una convenzione alternativa prevede che la domenica sia
+	  identificata col 7 anziché con lo 0. In questo caso, se
+	  <lit>wd</lit> è il risultato della funzione, la conversione
+	  può essere portata a termine con
+	</para>
+	<code>
+	  altwd = wd == 0 ? 7 : wd
+	</code>
+	<para>
+	  Si noti che la semplice aggiunta di 1 a <lit>wd</lit>
+	  produce una numerazione valida, ma non standard, da
+	  domenica = 1 a sabato = 7.
+	</para>
       </description>
     </function>
 
