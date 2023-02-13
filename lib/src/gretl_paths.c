@@ -2603,6 +2603,17 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
 {
     int ret = 0;
 
+    if (*targ != '\0' && g_path_is_absolute(targ) &&
+        *src != '\0' && g_path_is_absolute(src)) {
+        int st = gretl_stat(targ);
+        int ss = gretl_stat(src);
+
+        if (st == 0 && ss != 0) {
+            /* don't replace OK path with broken? */
+            return 0;
+        }
+    }
+
     if (*src == '\0' && (flags & PATH_BLANK_OK)) {
         if (*targ != '\0') {
             *targ = '\0';
