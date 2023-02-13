@@ -84,7 +84,7 @@ struct stmt_ {
     gint16 ci;     /* command index */
     gint16 next;   /* line index to skip to after loop or conditional */
     gint16 idx;    /* 1-based line index allowing for blanks (functions only) */
-    gint16 flags;  /* state flags */
+    gint16 flags;  /* state flags (different for functions vs loops) */
     void *ptr;     /* attachment for LOOPSET or GENERATOR */
 };
 
