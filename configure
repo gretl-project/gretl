@@ -8946,8 +8946,8 @@ esac
 
 
 
-macro_version='2.4.7-dirty'
-macro_revision='2.4.7'
+macro_version='2.4.7.4-1ec8f-dirty'
+macro_revision='2.4.7.4'
 
 
 
@@ -17624,8 +17624,11 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
       if test "$ac_cv_prog_cc_openmp" = unsupported; then
-									for brand in clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
+									for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
+            apple)
+              ac_conditional='defined __clang__ && defined(__apple-build_version__)'
+              ac_options='-fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
