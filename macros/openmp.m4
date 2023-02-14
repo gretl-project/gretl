@@ -40,7 +40,7 @@ int main () { return omp_get_num_threads (); }
 	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
             apple)
-              ac_conditional='defined __clang__ && defined(__apple_build_version__)'
+              ac_conditional='defined __clang__ && defined __apple_build_version__'
               ac_options='-fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
