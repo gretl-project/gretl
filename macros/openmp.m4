@@ -37,11 +37,12 @@ int main () { return omp_get_num_threads (); }
 	dnl   Tru64 Compaq C	   -omp
 	dnl   IBM C (AIX, Linux)   -qsmp=omp
 	dnl   InteloneAPI          -qopenmp
+        dnl   Apple                -Xclang -fopenmp
 	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
             apple)
               ac_conditional='defined __clang__ && defined __apple_build_version__'
-              ac_options='-fopenmp' ;;
+              ac_options='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
