@@ -17624,11 +17624,11 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
       if test "$ac_cv_prog_cc_openmp" = unsupported; then
-									for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
+								        	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
             apple)
               ac_conditional='defined __clang__ && defined __apple_build_version__'
-              ac_options='-fopenmp' ;;
+              ac_options='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
