@@ -1925,6 +1925,23 @@
 	  </li>
 	</ilist>
 	<para>
+	  In addition to the above you may wish to impose lower and/or
+	  upper bounds on the value of one or more scalar members of
+	  the bundle argument. If so, add a bundle named
+	  <lit>bounds</lit> to your template bundle. Each member of
+	  this secondary bundle should have a <i>key</i> that
+	  identifies a member of the template bundle; its <i>value</i>
+	  should be 2-vector that holds lower and upper limits.
+	  Put <lit>NA</lit> in place of one of the limits if it is
+	  unbounded. So, for example, the following code will check
+	  that if <lit>x1</lit> is given in the caller's input it is
+	  between 1 and 5, and if <lit>x2</lit> is given it is
+	  non-negative:
+	</para>
+	<code>
+	  template.bounds = _(x1={1,5}, x2={0,NA})
+	</code>
+	<para>
 	  If no errors are detected on these points, any values
 	  supplied in <argname>input</argname> are copied to
 	  <argname>target</argname> (that is, defaults are replaced by
