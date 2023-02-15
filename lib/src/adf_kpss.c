@@ -1689,7 +1689,6 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		Etbar += E;
 		Vtbar += V;
 	    }
-
 	    if (!err) {
 		Etbar /= n;
 		Vtbar /= n;
@@ -1697,6 +1696,8 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
 		pprintf(prn, "Im-Pesaran-Shin W_tbar = %g [%.4f]\n", Wtbar,
 			normal_pvalue_1(-Wtbar));
+	    } else {
+		pputs(prn, _("Im-Pesaran-Shin test: cannot be computed\n"));
 	    }
 	}
     } else if (Tmax > Tmin) {
@@ -1712,7 +1713,6 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		Etbar += E;
 		Vtbar += V;
 	    }
-
 	    if (!err) {
 		Etbar /= n;
 		Vtbar /= n;
@@ -1720,6 +1720,8 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
 		pprintf(prn, "Im-Pesaran-Shin Z_tbar = %g [%.4f]\n", Ztbar,
 			normal_pvalue_1(-Ztbar));
+	    } else {
+		pputs(prn, _("Im-Pesaran-Shin test: cannot be computed\n"));
 	    }
 	}
     } else {
@@ -1730,13 +1732,15 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	get_IPS_critvals = get_plugin_function("get_IPS_critvals");
 
 	if (get_IPS_critvals != NULL) {
-	    double a[] = { 0.1, 0.05, 0.01 };
+	    double a[] = {0.1, 0.05, 0.01};
 	    double cv[3];
 
 	    err = (*get_IPS_critvals) (n, Tmax, (opt & OPT_T), cv);
 	    if (!err) {
 		print_critical_values(a, cv, ADF, prn);
 	    }
+	} else {
+	    pputs(prn, _("Im-Pesaran-Shin test: cannot be computed\n"));
 	}
     }
 
