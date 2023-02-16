@@ -42,7 +42,7 @@ int main () { return omp_get_num_threads (); }
 	  case $brand in
             apple)
               ac_conditional='defined __clang__ && defined __apple_build_version__'
-              ac_options='-Xclang -fopenmp' ;;
+              ac_option='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
@@ -86,6 +86,7 @@ int main () { return omp_get_num_threads (); }
 	  if test $ac_openmp_result = yes; then
 	    ac_save_CFLAGS=$CFLAGS
 	    CFLAGS="$CFLAGS $ac_option"
+            LIBS="$LIBS $OMPLIB"
 	    AC_LINK_IFELSE([AC_LANG_SOURCE([
 #ifndef _OPENMP
  choke me
