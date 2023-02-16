@@ -767,6 +767,11 @@
           trimestrali). Nel caso di dati panel il valore prodotto rappresenta
           la lunghezza della serie storica.
 	</para>
+	<para>
+	  <seelist>
+            <fncref targ="$panelpd"/>
+	  </seelist>
+	  </para>
       </description>
     </function>
 
@@ -972,6 +977,14 @@
 	  cronometro viene riazzerato, cosicché l'uso successivo
 	  dell'accessore restituisce i secondi di CPU intercorsi dalla
 	  chiamata precedente.
+	</para>
+	<para>
+	  Durante l'esecuzione di una funzione definita dall'utente,
+	  il comando <lit>set stopwatch</lit> e l'accessore
+	  <lit>$stopwatch</lit> sono locali alla funzione&mdash;vale a
+	  dire che i tempi presi nella funzione non hanno effetto sui
+	  tempi <quote>globali</quote> che potrebbero essere presi
+	  esternamente.
 	</para>
       </description>
     </function>
@@ -1662,13 +1675,16 @@
     <function name="argname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
+	<fnarg type="string" optional="true">default</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Per <argname>s</argname>, il nome di un parametro in una
 	  funzione definita dall'utente, restituisce il nome del
 	  corrispondente argomento, o una stringa vuota se l'argomento
-	  era anonimo.
+	  era anonimo. Se l'argomento non ha nome, viene prodotta una
+	  stringa vuota, a meno che non venga usato l'argomento
+	  <argname>default</argname>, che viene usato in tal caso.
 	</para>
       </description>
     </function>
@@ -1916,7 +1932,8 @@
 	      Ci sono delle chiavi in <argname>input</argname> ma non
 	      in <argname>target</argname>? In tal caso,
 	      <lit>bcheck</lit> ritorna un valore non-zero, indicante
-	      che <argname>input</argname> è erroneo.
+	      che <argname>input</argname> è erroneo. (In molti casi,
+	      è semplicemente un errore di battitura.)
 	    </para>
 	  </li>
 	  <li>
@@ -1942,6 +1959,22 @@
 	  </li>
 	</ilist>
 	<para>
+	  In aggiunta a questi controlli, uno potrebbe voler imporre
+	  dei limiti (inferiore o superiore) ad alcuni dei membri
+	  scalari del bundle. In tal caso, va aggiunto un bundle di
+	  nome <lit>bounds</lit> a quello di riferimento. Ogni membro
+	  di questo bundle secondario deve vere una <i>chiave</i> che
+	  identifica un membro del nbundle di riferimento; il suo
+	  <i>valore</i> deve essere un vettore a due elementi col
+	  minimo e il massimo, usando <lit>NA</lit> al posto di uno
+	  dei due limiti se necessario. Quindi, ad esempio, il codice
+	  seguente controllerà che <lit>x1</lit> is sia fra 1 e 5, e
+	  che <lit>x2</lit> sia non negativo:
+	</para>
+	<code>
+	  template.bounds = _(x1={1,5}, x2={0,NA})
+	</code>
+	<para>
 	  Se i controlli precedenti sono andati a buon fine, i valori
 	  contenuti in <argname>input</argname> vengono copiati in
 	  <argname>target</argname> (e quindi i valori di default sono
@@ -1953,14 +1986,16 @@
 	<para>
 	  Facciamo un semplice esempio: prendiamo una funzione che ha
 	  come argomento un bundle contenente (obbligatoriamente) una
-	  matrice <lit>X</lit>, uno scalare <lit>z</lit> con default
-	  pari a 0, e una stringa <lit>s</lit> con default pari a
-	  <quote><lit>display</lit></quote>. Il frammento seguente
-	  controllerà la correttezza del bundle <lit>uservals</lit>,
-	  che si immagina fornito dalla funzione chiamante:
+	  matrice <lit>X</lit>, uno scalare <lit>z</lit> non negativo
+	  con default pari a 0, e una stringa <lit>s</lit> con default
+	  pari a <quote><lit>display</lit></quote>. Il frammento
+	  seguente controllerà la correttezza del bundle
+	  <lit>uservals</lit>, che si immagina fornito dalla funzione
+	  chiamante:
 	</para>
 	<code>
 	  bundle target = _(X={}, z=0, s="display")
+	  target.bounds = _(z={0,NA})
 	  strings req = defarray("X")
 	  err = bcheck(&amp;target, uservals, req)
 	  if err
@@ -4627,23 +4662,28 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="series-or-mat">f</fnarg>
+	<fnarg optional="true" type="bool">U2</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce un vettore colonna contenente diverse
-	  statistiche utili per valutare la variabile <argname>f</argname>
-	  come previsione della variabile <argname>y</argname>.
+	  Restituisce una matrice contenente diverse statistiche utili
+	  per valutare <argname>f</argname> come previsione della
+	  variabile <argname>y</argname>.
 	</para>
 	<para>
-	  Se uno degli argomenti è una serie, la dimensione dell'input è
-	  data dal campione corrente (il che implica che se uno degli
-	  argomenti è una matrice, essa deve avere un numero appropriato
-	  di righe). Se <argname>f</argname> è una serie o un vettore,
-	  l'output sarà un vettore colonna; se <argname>f</argname> è una
-	  matrice <by r="T" c="k"/>, l'output avrà <math>k</math>
-	  colonne, ognuna delle quali conterrà le statistiche relative
-	  alla colonna corrispondente di <argname>f</argname> come
-	  previsore di <argname>y</argname>.
+	  Se <argname>f</argname> è una serie o un vettore, l'output
+	  sarà un vettore colonna; se <argname>f</argname> è una lista
+	  con <math>k</math> elementi o una matrice <by r="T" c="k"/>,
+	  l'output avrà <math>k</math> colonne, ognuna delle quali
+	  conterrà le statistiche relative alla colonna corrispondente
+	  di <argname>f</argname> come previsore di
+	  <argname>y</argname>.
+	</para>
+	<para>
+	  In ogni caso, la dimensione verticale dell'input (per una
+	  serie o una lista l'ampiezza campionaria corrente, per una
+	  matrice il numero di righe) deve essere uguale per i due
+	  argomenti.
 	</para>
 	<para>
 	  La struttura dell'output è la seguente:
@@ -4654,11 +4694,18 @@
 	  3  Errore Medio Assoluto (Mean Absolute Error, MAE)
 	  4  Errore Medio Percentuale (Mean Percentage Error, MPE)
 	  5  Errore Medio Assoluto Percentuale (Mean Absolute Percentage Error, MAPE)
-	  6  Coefficiente U di Theil (Theil's U)
+	  6  Coefficiente U di Theil (U1 o U2)
 	  7  Proporzione della distorsione (Bias proportion, UM)
 	  8  Proporzione della regressione (Regression proportion, UR)
 	  9  Proporzione del disturbo (Disturbance proportion, UD)
 	</code>
+	<para>
+	  La variante della U di Theil mostrata di default dipende
+	  dalla natura dei dati: se essi sono di tipo serie storiche,
+	  viene usata U2, altrimenti U1. Questa scelta può però essere
+	  forzata usanto il terzo argomento (opzionale): con un valore
+	  non-zero si forza la scelta a U2, con zero si forza U1.
+	</para>
 	<para>
 	  Per maggiori dettagli sul calcolo di queste statistiche e
 	  l'interpretazione dei valori del coefficiente
@@ -6272,18 +6319,26 @@
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
-	<fnarg type="anyfloat">p</fnarg>
+	<fnarg type="anyfloat">u</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Funzione di distribuzione inversa. Restituisce il valore
 	  <math>x</math> tale che <equation status="inline" ascii="P(X
-	  &lt; x) = p" tex="$P(X \le x) = p$"/>, dove la distribuzione
+	  &lt; x) = u" tex="$P(X \le x) = u$"/>, dove la distribuzione
 	  di <math>X</math> è determinata dal carattere
-	  <argname>c</argname>. Tra i due argomenti
-	  <argname>c</argname> e <argname>p</argname>, zero o più
-	  argomenti addizionali sono richiesti al fine di specificare
-	  i parametri della distribuzione, secondo le regole seguenti:
+	  <argname>c</argname> e <argname>u</argname> sta fra 0 e
+	  1. For Per distribuzioni discrete (Binomiale o Poisson),
+	  la funzione produce la <math>x</math> più piccola tale che <equation
+	  status="inline" ascii="P(X &le; x) &ge; u" tex="$P(X \le x)
+	  \ge u$"/>.
+	</para>
+	<para>
+	  The distribution of <math>X</math> is determined by the
+	  string <argname>d</argname>.  Between the arguments
+	  <argname>d</argname> and <argname>u</argname>, zero or more
+	  additional scalar arguments are required to specify the
+	  parameters of the distribution, as follows.
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -6994,23 +7049,9 @@
       </fnargs>
       <description>
 	<para>
-	  L'argomento <argname>ed</argname> viene interpretato come
-	  data epocale, pari a 1 per il 1° gennaio 1 d.C. nel
-	  calendario gregoriano prolettico. Il valore ritornato
-	  &mdash; dello stesso tipo di <argname>ed</argname> &mdash; è
-	  un numero di 8 cifre, o una serie di numeri siffatti,
-	  codificati come <lit>AAAAMMGG</lit> (il formato <quote>base</quote>
-	  nella specifica ISO 8601), con le date corrispondenti nel
-	  calendario giuliano.
-	</para>
-	<para>
-	  Nel solo caso in cui <argname>ed</argname> sia uno scalare e
-	  l'argomento <argname>come-stringa</argname> sia non-zero, il
-	  valore ritornato non è numerico, ma una stringa del tipo
-	  <lit>AAAA-MM-GG</lit> (il formato ISO 8601 <quote>esteso</quote>).
-	</para>
-	<para>
-	  Vedi anche <fncref targ="isodate"/>.
+	  Questa funzione opera esattamente come  <fncref
+	  targ="isodate"/>, con l'unica differenza che viene usato il
+	  calendario giuliano anziché quello gregoriano.
 	</para>
       </description>
     </function>
@@ -12524,6 +12565,29 @@
 	  <argname>v</argname> è uguale a &minus;1 è eseguita solo
 	  la centratura.
 	</para>
+      </description>
+    </function>
+
+    <function name="strfday" section="calendar" output="depends">
+      <fnargs>
+	<fnarg type="anyfloat">eday</fnarg>
+	<fnarg type="string" optional="true">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 Questa funzione è quasi uguale a <fncref targ="strftime"/>,
+	 nel senso che converte un valore numerico a una stringa
+	 usando il parametro <argname>formato</argname>. In questa
+	 funzione, tuttavia, l'input è un numero in formato
+	 <quote>epoch</quote>, per la cui definizione si veda <fncref
+	 targ="epochday"/>.  Poiché la risoluzione è giornaliera, sono
+	 gestiti solo formati con specificatorei di data; quel che
+	 succede con specificatori di ora non è definito.
+	</para>
+        <para>
+          Se il secondo argomento è omesso, il formato di default è lo
+          ISO 8601 esteso, <lit>YYYY-MM-DD</lit>.
+        </para>
       </description>
     </function>
 
