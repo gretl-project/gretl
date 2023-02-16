@@ -200,7 +200,6 @@ enum {
     F_MEANC,
     F_CHOL,
     F_INV,
-    F_INVPD,
     F_DIAG,
     F_TRANSP,
     F_VEC,
@@ -403,6 +402,7 @@ enum {
     F_CMULT,
     F_CDIV,
     F_PEXPAND,
+    F_INVPD,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_WMEAN,
     F_WVAR,

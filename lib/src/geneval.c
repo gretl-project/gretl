@@ -4472,8 +4472,6 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
             *err = gretl_matrix_cholesky_decomp(R);
         } else if (f == F_PSDROOT) {
             *err = gretl_matrix_psd_root(R, parm);
-        } else if (f == F_INVPD) {
-            *err = gretl_invpd(R);
         } else if (f == F_GINV) {
             *err = gretl_matrix_moore_penrose(R, xparm);
         } else if (f == F_INV) {
@@ -4660,7 +4658,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         case F_CDEMEAN:
         case F_STDIZE:
         case F_PSDROOT:
-        case F_INVPD:
         case F_UPPER:
         case F_LOWER:
             ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
@@ -4888,6 +4885,54 @@ static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
             ret->v.m = gretl_cmatrix_from_scalar(x + y*I, &p->err);
         } else {
             ret->v.m = gretl_cmatrix_build(Re, Im, x, y, &p->err);
+        }
+    }
+
+    return ret;
+}
+
+/* 2023-02-16: added optional scalar-pointer arg to invpd(),
+   to retrieve the log determinant if wanted.
+*/
+
+static NODE *invpd_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+        gretl_matrix *m = node_get_matrix(l, p, 0, 0);
+        user_var *uv = NULL;
+        double ldet = NADBL;
+
+        if (!p->err && gretl_is_null_matrix(m)) {
+            p->err = E_DATA;
+        }
+        if (!p->err && !null_node(r)) {
+            uv = ptr_node_get_uvar(r, NUM, p);
+        }
+        if (!p->err) {
+            if (l->t == MAT && is_tmp_node(l)) {
+                /* OK to overwrite @m */
+                ret->v.m = m;
+            } else {
+                /* don't destroy @m */
+                ret->v.m = gretl_matrix_copy(m);
+                if (ret->v.m == NULL) {
+                    p->err = E_ALLOC;
+                }
+            }
+        }
+        if (!p->err) {
+            double *dp = uv == NULL ? NULL : &ldet;
+
+            p->err = gretl_invert_symmetric_matrix2(ret->v.m, dp);
+            if (uv != NULL) {
+                user_var_set_scalar_value(uv, ldet);
+            }
+        }
+        if (p->err && ret->v.m != m) {
+            gretl_matrix_free(ret->v.m);
+            ret->v.m = NULL;
         }
     }
 
@@ -17948,7 +17993,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_CHOL:
     case F_PSDROOT:
     case F_INV:
-    case F_INVPD:
     case F_GINV:
     case F_DIAG:
     case F_TRANSP:
@@ -17978,6 +18022,14 @@ static NODE *eval (NODE *t, parser *p)
             ret = matrix_to_matrix_func(l, r, t->t, p);
         } else if (t->t == F_MREV && l->t == LIST) {
             ret = list_reverse_node(l, p);
+        } else {
+            node_type_error(t->t, 1, MAT, l, p);
+        }
+        break;
+    case F_INVPD:
+        /* matrix -> matrix with optional scalar pointer */
+        if (l->t == MAT || l->t == NUM) {
+            ret = invpd_node(l, r, p);
         } else {
             node_type_error(t->t, 1, MAT, l, p);
         }
