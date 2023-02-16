@@ -17630,9 +17630,9 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
       if test "$ac_cv_prog_cc_openmp" = unsupported; then
 								        	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
-            apple)
-              ac_conditional='defined __clang__ && defined __apple_build_version__'
-              ac_option='-Xclang -fopenmp' ;;
+        apple)
+          ac_conditional='defined __clang__ && defined __apple_build_version__'
+          ac_option='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
@@ -17654,9 +17654,9 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
             IBM)
 	      ac_conditional='defined __xlc__ || defined __xlC__'
 	      ac_option='-qsmp=omp' ;;
-            InteloneAPI)
-              ac_conditional='defined __INTEL_LLVM_COMPILER'
-              ac_option='-qopenmp' ;;
+        InteloneAPI)
+          ac_conditional='defined __INTEL_LLVM_COMPILER'
+          ac_option='-qopenmp' ;;
 	  esac
 	  if test $brand = GCC; then
 	    if test $CC = icx || test $CC = icpx; then
@@ -17687,8 +17687,9 @@ rm -rf conftest*
 	  fi
 	  if test $ac_openmp_result = yes; then
 	    ac_save_CFLAGS=$CFLAGS
+		ac_save_LIBS=$LIBS
 	    CFLAGS="$CFLAGS $ac_option"
-            LIBS="$LIBS $OMPLIB"
+        LIBS="$LIBS $OMPLIB"
 	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -17706,6 +17707,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 	    CFLAGS=$ac_save_CFLAGS
+		LIBS=$ac_save_LIBS
 	    break
 	  fi
 	done
