@@ -40,9 +40,9 @@ int main () { return omp_get_num_threads (); }
         dnl   Apple                -Xclang -fopenmp
 	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
-            apple)
-              ac_conditional='defined __clang__ && defined __apple_build_version__'
-              ac_option='-Xclang -fopenmp' ;;
+        apple)
+          ac_conditional='defined __clang__ && defined __apple_build_version__'
+          ac_option='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
@@ -64,9 +64,9 @@ int main () { return omp_get_num_threads (); }
             IBM)
 	      ac_conditional='defined __xlc__ || defined __xlC__'
 	      ac_option='-qsmp=omp' ;;
-            InteloneAPI)
-              ac_conditional='defined __INTEL_LLVM_COMPILER'
-              ac_option='-qopenmp' ;;
+        InteloneAPI)
+          ac_conditional='defined __INTEL_LLVM_COMPILER'
+          ac_option='-qopenmp' ;;
 	  esac
 	  if test $brand = GCC; then
 	    if test $CC = icx || test $CC = icpx; then
@@ -85,8 +85,9 @@ int main () { return omp_get_num_threads (); }
 	  fi
 	  if test $ac_openmp_result = yes; then
 	    ac_save_CFLAGS=$CFLAGS
+		ac_save_LIBS=$LIBS
 	    CFLAGS="$CFLAGS $ac_option"
-            LIBS="$LIBS $OMPLIB"
+        LIBS="$LIBS $OMPLIB"
 	    AC_LINK_IFELSE([AC_LANG_SOURCE([
 #ifndef _OPENMP
  choke me
@@ -95,6 +96,7 @@ int main () { return omp_get_num_threads (); }
 int main () { return omp_get_num_threads (); }
 	      ])], [ac_cv_prog_cc_openmp=$ac_option])
 	    CFLAGS=$ac_save_CFLAGS
+		LIBS=$ac_save_LIBS
 	    break
 	  fi
 	done
