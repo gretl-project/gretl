@@ -3955,6 +3955,10 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
+	  <flag>--all-probs</flag>
+	  <effect>Mira abajo</effect>
+        </option>
+        <option>
 	  <flag>--plot</flag>
 	  <optparm>nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
@@ -4006,6 +4010,7 @@
 	disponibles, las desviaciones típicas mediante <fncref targ="$fcse"/>.
       </para>
 
+      <subhead>Predicciones estáticas y dinámicas</subhead>
       <para>
 	La elección entre una predicción estática o dinámica se aplica
 	únicamente en caso de modelos dinámicos, con una perturbación con un
@@ -4019,7 +4024,6 @@
 	pero una predicción dinámica para 2008 es posible si puedes substituir
 	una predicción previa para <math>y</math> en 2007.
       </para>
-
       <para>
 	Por defecto se proporciona: (a) una predicción estática para alguna
 	porción del rango de predicción que cae dentro del rango de la muestra sobre
@@ -4030,6 +4034,7 @@
 	muestra.
       </para>
 
+      <subhead context="cli">Predicciones recursivas</subhead>
       <para context="cli">
 	La opción <opt>recursive</opt> está actualmente disponible solo
 	para modelos de una sola ecuación, estimados mediante MCO.
@@ -4045,16 +4050,34 @@
 	únicamente junto con la opción <opt>recursive</opt>.
       </para>
 
+      <subhead>Modelos ordenados y modelo multinomial</subhead>
+      <para>
+	Cuando la estimación es mediante logit o probit ordenados, o logit
+	multinomial, podrías estar interesado en las probabilidades estimadas
+	de cada uno de los resultados discretos, mejor que únicamente en el
+	resultado <quote>más probable</quote> para cada observación. Esto se
+	consigue mediante la opción <opt>all-probs</opt>: el efecto de
+	<lit>fcast</lit> es en ese caso una matriz con una columna por cada
+	resultado posible. Puedes usar el argumento <repl>vname</repl> para
+	nombrar esa matriz, en cuyo caso no se presenta nada. Si no indicas
+	<repl>vname</repl>, entonces la matriz se puede recuperar mediante
+	<fncref targ="$fcast"/>. La opción <opt>plot</opt> no es compatible
+	con la opción <opt>all-probs</opt>.
+      </para>
+
+      <subhead context="cli">Gráficos de predicciones</subhead>
       <para context="cli">
-	La opción <opt>plot</opt> (disponible solo en caso de estimación
-	de una única ecuación) solicita que se produzca un archivo gráfico,
-	que contiene una representación gráfica de la predicción. El sufijo del
-	argumento <repl>nombrearchivo</repl> de esta opción controla el formato
-	del gráfico: <lit>.eps</lit> para EPS, <lit>.pdf</lit> para PDF,
-	<lit>.png</lit> para PNG, y <lit>.plt</lit> para un archivo de
-	instrucciones Gnuplot. Puedes utilizar el título <lit>display</lit>
-	en substitución del nombre de archivo para forzar la representación
-	del gráfico en una ventana. Por ejemplo,
+	La opción <opt>plot</opt> solicita que se produzca un archivo gráfico,
+	que contiene una representación gráfica de la predicción. En el caso de
+	un sistema, esta opción solo está disponible cuando se usa el argumento
+	<repl>nombrev</repl> para seleccionar una única variable para hacer
+	la predición. El sufijo del argumento <repl>nombrearchivo</repl> de
+	esta opción, controla el formato del gráfico: <lit>.eps</lit> para EPS,
+	<lit>.pdf</lit> para PDF, <lit>.png</lit> para PNG, y <lit>.plt</lit>
+	para un archivo de instrucciones de Gnuplot. Puedes utilizar el nombre
+	ficticio <lit>display</lit> en substitución del nombre de archivo para
+	forzar la representación del gráfico en una ventana. Por
+	ejemplo,
       </para>
       <code context="cli">
 	fcast --plot=fc.pdf
@@ -4064,6 +4087,8 @@
 	rutas que no ofrezcan dudas; en otro caso, los archivos se escriben
 	en el directorio de trabajo de GRETL.
       </para>
+
+      <subhead>Desviaciones típicas</subhead>
       <para>
 	La naturaleza de las desviaciones típicas de las predicciones (si están disponibles)
 	depende de la naturaleza del modelo y de la predicción. En modelos lineales estáticos,
@@ -5193,6 +5218,10 @@
 	  <effect>Utiliza la escala logarítmica para el eje vertical</effect>
         </option>
         <option>
+	  <flag>--control</flag>
+	  <effect>Mira abajo</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>Mira abajo</effect>
         </option>
@@ -5272,6 +5301,19 @@
 	frente a <repl>xvar</repl> con los puntos mostrados con colores diferentes
 	dependiendo del valor de <repl>varficticia</repl> en la observación
 	indicada.
+      </para>
+      <para>
+	La opción <opt>control</opt> es similar en el hecho de que se deben
+	indicar exactamente tres variables: una única variable <math>y</math>
+	además de las dos variables <quote>explicativas</quote>, <math>x</math>
+	y <math>z</math>. El efecto de esto es la representación de <repl>y</repl>
+	respecto a <repl>x</repl>, con el control de <math>z</math>. Esta forma
+	de representación puede ser útil para observar la relación entre
+	<math>x</math> e <math>y</math>, teniendo en cuenta el efecto que
+	pueda tener <math>z</math> en ambas. Estadísticamente, esto podría
+	ser equivalente a una regresión de <math>y</math> sobre las variables
+	<math>x</math> <emphasis>y</emphasis>
+	<math>z</math>.
       </para>
       <para>
 	Puedes escoger que la escala del eje 'y' sea logarítmica en lugar
@@ -7833,11 +7875,11 @@
 	la variable dependiente se interpreta como una respuesta sin ordenar y
 	se generan las estimaciones con un Logit Multinomial. (En otro caso, si
 	la variable escogida como dependiente no es de tipo discreto, se muestra
-	un fallo.) En el caso multinomial, el accesor <lit>$mnlprobs</lit> está
-	disponible después de la estimación, para conseguir una matriz que
-	contenga las probabilidades estimadas de los posibles valores de la variable
-	dependiente para cada observación (con las observaciones por filas y los
-	posibles valores por columnas).
+	un fallo.) El accesor <lit>$allprobs</lit> está disponible después de la
+	estimación, para conseguir una matriz que contenga las probabilidades
+	estimadas de los posibles valores de la variable dependiente para cada
+	observación (con las observaciones por filas y los posibles valores por
+	columnas).
       </para>
       <para>
 	Si quieres utilizar un Logit para el análisis de proporciones donde, para
@@ -13504,8 +13546,10 @@
 	</li>
 	<li>
 	  <para><lit>warnings</lit>: <lit>off</lit> u <lit>on</lit> (por defecto).
-	  Elimina (o acorta) la presentación de mensajes de advertencia que
-	  surgen cuando las operaciones aritméticas producen valores no finitos.
+	  Elimina (o acorta) la presentación de mensajes de advertencia cuando
+	  surgen problemas numéricos; por ejemplo, si un cálculo produce
+	  valores no finitos o si la convergencia de un proceso de optimización
+	  es cuestionable.
 	  </para>
 	</li>
 	<li>

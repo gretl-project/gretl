@@ -25,6 +25,19 @@
       </description>
     </function>
 
+    <function name="$allprobs" section="access" output="matrix">
+      <description>
+	<para>
+	  Debe ir después de una estimación con probit o logit ordenados,
+	  o con logit multinomial; y devolverá una matriz de orden
+	  <by r="n" c="j"/>, donde <math>n</math> es el número de observaciones
+	  utilizadas y <math>j</math> indica el número de resultados posibles,
+	  que contiene la probabilidad estimada de cada resultado para cada
+	  observación.
+	</para>
+      </description>
+    </function>
+
     <function name="$bic" section="access" output="scalar">
       <description>
 	<para>
@@ -511,7 +524,8 @@
 	  y devuelve una matriz con las probabilidades estimadas de cada resultado
 	  posible, en cada observación de la muestra utilizada en la estimación del
 	  modelo. Cada línea representa una observación y cada columna un
-	  resultado.
+	  resultado. Dado que desde GRETL 2023a, este accesorio es obsoleto:
+	  por favor, utiliza <fncref targ="$allprobs"/> en su lugar.
 	</para>
       </description>
     </function>
@@ -1886,7 +1900,8 @@
 	      Contiene la <argname>entrada</argname> alguna clave que no
 	      esté presente en el <argname>objetivo</argname>? En tal caso,
 	      <lit>bcheck</lit> devuelve un valor no nulo, indicando que la
-	      <argname>entrada</argname> es incorrecta.
+	      <argname>entrada</argname> es incorrecta. (Muy probablemente,
+	      la clave en cuestión está escrita incorrectamente).
 	    </para>
 	  </li>
 	  <li>
@@ -1901,7 +1916,7 @@
 	    <para>
 	      Si algunos elementos del <argname>objetivo</argname> necesitan
 	      una entrada del solicitante (por lo que el valor que indicas no es
-	      realmente el predeterminado, si no solo un marcador de posición
+	      un valor predeterminado, si no solo un marcador de posición
 	      para indicar el tipo requerido), debes indicar un tercer
 	      argumento a <lit>bcheck</lit>: un 'array' de cadenas de texto
 	      que contenga las claves para las que no es opcional la entrada.
@@ -1911,29 +1926,48 @@
 	  </li>
 	</ilist>
 	<para>
-	  Si no se detectan fallos en esos puntos, cualquier valor indicado en
-	  <argname>entrada</argname> se copia a <argname>objetivo</argname>
-	  (es decir, los predeterminados se substituyen por elecciones correctas
-	  en la parte del solicitante). Cuando se detecten fallos, se va a
-	  presentar un mensaje que indicará que es lo que está mal en la
-	  <argname>entrada</argname>.
+	  Además de lo anterior, podrías estar interesado en imponer límites
+	  inferiores y/o superiores al valor de uno o más de los elementos
+	  escalares del argumento de 'bundle'. En tal caso, añade un 'bundle'
+	  con el nombre <lit>bounds</lit> a tu modelo de 'bundle'. Cada
+	  elemento de este 'bundle' secundario deberá tener una <i>clave</i>
+	  que identifique un elemento del modelo de 'bundle'; su <i>valor</i>
+	  deberá ser un vector 'doble' que contenga los límites inferiores y
+	  superiores. Pon un <lit>NA</lit> en el lugar de uno de los límites,
+	  si no hay límite de ese lado. Así, por ejemplo, cuando se indica
+	  <lit>x1</lit> en la entrada del solicitante, el siguiente código va a
+	  comprobar que está entre 1 y 5; y cuando se indica <lit>x2</lit>,
+	  que este no es negativo:
+	</para>
+	<code>
+	  template.bounds = _(x1={1,5}, x2={0,NA})
+	</code>
+	<para>
+	  Cuando no se detectan fallos en ninguno de esos puntos, los valores
+	  indicados en <argname>entrada</argname> se copian a
+	  <argname>objetivo</argname> (substituyéndose los predeterminados
+	  por elecciones correctas en la parte del solicitante). Cuando se
+	  detecten fallos, se va a presentar un mensaje que indicará qué es lo
+	  que está mal en la <argname>entrada</argname>.
 	</para>
 	<para>
 	  Para ofrecer un sencillo ejemplo, supón que tu 'bundle' de argumentos
 	  de la función admite una matriz <lit>X</lit> (requerida), un escalar
-	  <lit>z</lit> con valor 0 por defecto, y una cadena <lit>s</lit>
-	  con el valor <quote><lit>presentar</lit></quote> predeterminado.
-	  Entonces, el siguiente fragmento de código sería adecuado para comprobar
-	  un 'bundle' de nombre <lit>uservals</lit> proporcionado por el solicitante:
+	  no negativo <lit>z</lit> con valor 0 por defecto, y una cadena
+	  <lit>s</lit> con el valor predeterminado <quote><lit>display</lit></quote>.
+	  Entonces, el siguiente fragmento de código sería adecuado para
+	  comprobar un 'bundle' de nombre <lit>uservals</lit> proporcionado
+	  por el solicitante:
 	</para>
 	<code>
-	  bundle target = _(X={}, z=0, s="presentar")
+	  bundle target = _(X={}, z=0, s="display")
+	  target.bounds = _(z={0,NA})
 	  strings req = defarray("X")
 	  err = bcheck(&amp;target, uservals, req)
 	  if err
-	     # reaccionar adecuadamente
+	     # Reaccionar adecuadamente
 	  else
-	     # continuar utilizando los valores en el objetivo
+	     # Proceder utilizando los valores en el objetivo
 	  endif
 	</code>
       </description>
@@ -6150,8 +6184,9 @@
 	  efectos con argumentos negativos: <lit>int(-3.5)</lit> genera &minus;3,
 	  mientras que <lit>floor(-3.5)</lit> genera &minus;4.
 	  <seelist>
-            <fncref targ="round"/>
             <fncref targ="ceil"/>
+            <fncref targ="floor"/>
+            <fncref targ="round"/>
 	  </seelist>
 	</para>
       </description>
@@ -10677,9 +10712,16 @@
 	  <lit>qform(x',I(rows(x))</lit>.
 	</para>
 	<para>
-	Si <argname>x</argname> y <argname>A</argname> no son matrices
-	conformables, o si <argname>A</argname> no es simétrica, la función
-	devuelve un fallo.
+	  En el caso especial de que <argname>A</argname> sea una matriz
+	  diagonal, puedes indicar el segundo argumento como un vector del
+	  tamaño apropiado, en el que se entiende que está contenida la diagonal
+	  principal de <argname>A</argname>. En ese caso, se utiliza un
+	  algoritmo más eficiente.
+	</para>
+	<para>
+	  Si <argname>x</argname> y <argname>A</argname> no son matrices
+	  conformables, o si <argname>A</argname> no es simétrica, la función
+	  devuelve un fallo.
 	</para>
       </description>
     </function>
@@ -13773,7 +13815,7 @@ d =  8,0000000
       </fnargs>
       <description>
 	<para>
-	  Devuelve el día de la semana (domingo = 0, lunes = 1, etc.) de la fecha
+	  Devuelve el día de la semana (de Domingo = 0 hasta Sábado=6) de la fecha
 	  especificada por los tres argumentos, o <lit>NA</lit> si la fecha
 	  no es correcta. Ten en cuenta que los tres argumentos deben ser
 	  del mismo tipo; o sea, deben ser todos de tipo escalar (entero)
@@ -13790,6 +13832,20 @@ d =  8,0000000
 	  eval weekday(1990, 5, 1)
 	  eval weekday(19900501)
 	</code>
+	<para>
+	  Una alternativa habitual de numeración de los días de la semana va
+	  desde Lunes = 1 hasta Domingo = 7. Si tienes una serie denominada
+	  <lit>wd</lit> obtenida mediante la función <lit>weekday</lit>, y
+	  quieres convertirla a la alternativa, puedes hacer
+	</para>
+	<code>
+	  altwd = wd == 0 ? 7 : wd
+	</code>
+	<para>
+	  Ten en cuenta que si únicamente añades 1 a <lit>wd</lit>, obtienes
+	  una numeración que es válida pero no estándar; concretamente
+	  de Domingo = 1 a Sábado = 7.
+	</para>
       </description>
     </function>
 
