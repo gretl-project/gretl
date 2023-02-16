@@ -12820,7 +12820,7 @@
 	with the name of the array. Here's a simple example:
       </para>
       <code>
-	strings SR = array(2)
+	strings RS = array(2)
 	RS[1] = "b[1,2] = 0"
 	RS[2] = "b[2,1] = 0"
 	restrict
