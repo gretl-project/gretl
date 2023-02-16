@@ -1930,7 +1930,11 @@ static void write_R_io_file (FILE *fp, const char *ddir)
 	"  if (missing(sx)) {\n"
 	"    sx <- objname\n"
 	"  }\n"
-	"  if (is.ts(x)) {\n"
+        "  if (is.character(x) && length(x) == 1) {\n"
+        "    fname <- paste(prefix, sx, \".txt\", sep=\"\")\n"
+        "    cat(x, file=fname, sep='\n')\n"
+        "    gretlmsg <- paste(\"wrote txt data\", fname, \"\\n\")\n"
+        "  } else if (is.ts(x)) {\n"
 	"    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n"
 	"    dfx <- data.frame(x)\n"
 	"    if (ncol(dfx) == 1) {\n"
@@ -2290,6 +2294,7 @@ static SEXP (*R_mkString) (const char *);
 static SEXP (*R_mkChar) (const char *);
 static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
 static SEXP (*R_GetRowNames) (SEXP);
+static SEXP (*R_GetColNames) (SEXP);
 static SEXP (*R_getAttrib) (SEXP, SEXP);
 
 static Rboolean (*R_isMatrix) (SEXP);
@@ -2298,10 +2303,12 @@ static Rboolean (*R_isLogical) (SEXP);
 static Rboolean (*R_isInteger) (SEXP);
 static Rboolean (*R_isReal) (SEXP);
 static Rboolean (*R_isString) (SEXP);
+static Rboolean (*R_isList) (SEXP);
 
 static int (*R_initEmbeddedR) (int, char **);
 static int (*R_ncols) (SEXP);
 static int (*R_nrows) (SEXP);
+static int (*R_length) (SEXP);
 static int (*R_TYPEOF) (SEXP);
 static int *(*R_LOGICAL) (SEXP);
 
@@ -2373,12 +2380,15 @@ static int load_R_symbols (void)
     R_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
     R_isReal        = dlget(Rhandle, "Rf_isReal", &err);
     R_isString      = dlget(Rhandle, "Rf_isString", &err);
+    R_isList        = dlget(Rhandle, "Rf_isList", &err);
     R_mkString      = dlget(Rhandle, "Rf_mkString", &err);
     R_mkChar        = dlget(Rhandle, "Rf_mkChar", &err);
     R_mkNamed       = dlget(Rhandle, "Rf_mkNamed", &err);
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
+    R_length        = dlget(Rhandle, "Rf_length", &err);
     R_GetRowNames   = dlget(Rhandle, "Rf_GetRowNames", &err);
+    R_GetColNames   = dlget(Rhandle, "Rf_GetColNames", &err);
     R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
@@ -3059,6 +3069,23 @@ static gretl_matrix *matrix_from_R (SEXP s, const char *name,
     int nr = R_nrows(s);
     int nc = R_ncols(s);
 
+#if 0 /* experimental, not working yet */
+    SEXP rn = R_GetRowNames(s);
+    SEXP cn = R_GetColNames(s);
+    GretlType t;
+
+    fprintf(stderr, "matrix_from_R: name='%s', %d x %d\n", name, nr, nc);
+
+    t = R_type_to_gretl_type(rn, "rn", err);
+    if (!*err) {
+        fprintf(stderr, " R_GetRowNames: type %d\n", t);
+    }
+    t = R_type_to_gretl_type(cn, "cn", err);
+    if (!*err) {
+        fprintf(stderr, " R_GetColNames: type %d\n", t);
+    }
+#endif
+
     if (nr >= 0 && nc >= 0) {
 	m = gretl_matrix_alloc(nr, nc);
 	if (m == NULL) {
@@ -3221,7 +3248,9 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 {
     GretlType t = GRETL_TYPE_NONE;
 
-    if (R_isMatrix(s)) {
+    if (R_isList(s)) {
+        fprintf(stderr, " %s: list, length %d\n", name, R_length(s));
+    } else if (R_isMatrix(s)) {
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else {
