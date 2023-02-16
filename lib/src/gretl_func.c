@@ -497,6 +497,10 @@ static void fncall_destroy_args_array (fncall *fc)
 {
     int i;
 
+    if (fc->args == NULL) {
+	return;
+    }
+
     for (i=0; i<fc->fun->n_params; i++) {
         if (fc->args[i].upname != NULL) {
             free(fc->args[i].upname);
