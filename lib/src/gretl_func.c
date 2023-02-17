@@ -6316,12 +6316,8 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
 static void maybe_print_R_info (fnpkg *pkg, PRN *prn)
 {
     if (pkg->Rdeps != NULL) {
-	pputs(prn, _("# Notice: this package requires GNU R.\n"
-	      "# It is known to work with the following version of R, plus\n"
-	      "# required R package(s) if applicable:\n"));
-	pprintf(prn, "#\n# %s\n#\n", pkg->Rdeps);
-	pputs(prn, _("# It will likely work with later versions but that is "
-	      "not guaranteed.\n\n"));
+	pputs(prn, _("# This package has the following minimal R requirement:\n"));
+	pprintf(prn, "# %s\n", pkg->Rdeps);
     }
 }
 
