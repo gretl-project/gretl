@@ -4911,8 +4911,8 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
             uv = ptr_node_get_uvar(r, NUM, p);
         }
         if (!p->err) {
-            if (l->t == MAT && is_tmp_node(l)) {
-                /* OK to overwrite @m */
+            if (0 /* l->t == MAT && is_tmp_node(l) */) {
+                /* OK to overwrite @m? Not always! */
                 ret->v.m = m;
             } else {
                 /* don't destroy @m */
