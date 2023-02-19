@@ -929,8 +929,8 @@
       </para>
 
       <para context="cli">
-	Cando se utiliza código propio de MV exacta, as desviacións
-	padrón estimadas baséanse por defecto nunha aproximación numérica á
+	Cando se utiliza código propio de MV exacta, os desvíos
+	padrón estimados baséanse por defecto nunha aproximación numérica á
 	(inversa negativa da) matriz Hessiana, cun último recurso ao Produto
 	Externo do vector Gradiente (PEG) se o cálculo da matriz Hessiana
 	numérica puidera fallar. Podes utilizar dous indicadores de opción
@@ -1126,10 +1126,10 @@
 	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; elíxese de modo que
 	a integral de correlación de primeira orde estea arredor de 0.7. Unha
 	alternativa habitual (que require menos cálculos) consiste en especificar
-	&egr; como un múltiplo da desviación padrón da serie de interese.
+	&egr; como un múltiplo do desvío padrón da serie de interese.
 	A opción <opt>sdcrit</opt> permite este derradeiro método;
 	así, no terceiro exemplo indicado máis arriba, &egr; establécese que
-	sexa igual a dúas veces a desviación padrón de <repl>x</repl>.
+	sexa igual a dúas veces o desvío padrón de <repl>x</repl>.
 	A opción <opt>corr1</opt> implica a utilización do método de Kanzler
 	pero permite outra correlación obxectivo diferente de 0.7. Debería
 	quedarche claro que estas dúas opcións exclúense mutuamente.
@@ -1143,7 +1143,7 @@
 	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; elíxese de modo que
 	a integral de correlación de primeira orde estea arredor de 0.7. Unha
 	alternativa habitual (que require menos cálculos) consiste en especificar
-	&egr; como un múltiplo da desviación padrón da serie de interese. 
+	&egr; como un múltiplo do desvío padrón da serie de interese. 
       </para>
       <subhead context="cli">Mostraxe repetida</subhead>
       <para context="cli">
@@ -1225,7 +1225,7 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -1268,11 +1268,11 @@
 	que representa un conxunto de regresores común.
       </para>
       <para>
-	Por defecto, as desviacións padrón calcúlanse utilizando a matriz
+	Por defecto, os desvíos padrón calcúlanse utilizando a matriz
 	Hessiana analítica ao converxer. Pero se indicas a opción <opt>opg</opt>,
 	a matriz de covarianzas baséase no Produto Externo do vector Gradiente
-	(PEG ou OPG); ou se indicas a opción <opt>robust</opt>, calcúlanse as
-	desviacións padrón case máximo verosímiles (QML), utilizando un
+	(PEG ou OPG); ou se indicas a opción <opt>robust</opt>, calcúlanse os
+	desvíos padrón case máximo verosímiles (QML), utilizando un
 	<quote>emparedado</quote> entre a inversa da matriz Hessiana e o
 	PEG.
       </para>
@@ -1375,7 +1375,7 @@
 	    (ETM, capítulo 5): en cada repetición do bootstrap fórmase
 	    unha razón <math>t</math> que se calcula collendo a
 	    diferenza entre a estimación dos coeficientes obtida mediante
-	    bootstrap e a de partida, e dividíndoa entre a desviación
+	    bootstrap e a de partida, e dividíndoa entre o desvío
 	    padrón de bootstrap. O intervalo de confianza 
 	    baséase entón nos cuantís desta razón <math>t</math>
 	    de bootstrap, como se explica no citado ETM. A opción valor p
@@ -1770,13 +1770,13 @@
 	    </para>
       <para context="gui">
 	Calcula a suma dos coeficientes das variables da lista especificada.
-	Presenta esta suma xunto coa súa desviación padrón e a probabilidade
+	Presenta esta suma xunto co seu desvío padrón e a probabilidade
 	asociada ao estatístico para probar a hipótese nula de que a suma é cero.
       </para>
       <para context="cli">
 	Debe de ir despois dunha regresión. Calcula a suma dos coeficientes
 	das variables do argumento <repl>listavariables</repl>. Presenta esta suma
-	xunto coa súa desviación padrón e a probabilidade asociada ao
+	xunto co seu desvío padrón e a probabilidade asociada ao
 	estatístico para probar a hipótese nula de que a suma é cero.
       </para>
       <para>
@@ -2149,7 +2149,7 @@
       <options>
         <option>
 	  <flag>--bartlett</flag>
-	  <effect>Utiliza as desviacións padrón de Bartlett</effect>
+	  <effect>Utiliza os desvíos padrón de Bartlett</effect>
         </option>
         <option>
 	  <flag>--plot</flag>
@@ -2195,17 +2195,17 @@
       <para context="cli">
 	Utilízanse asteriscos para indicar a significación estatística das
 	autocorrelacións individuais. Por defecto, isto avalíase utilizando
-	unha desviación padrón igual ao cociente entre 1 e a raíz cadrada
+	un desvío padrón igual ao cociente entre 1 e a raíz cadrada
 	do tamaño da mostra; pero cando indicas a opción <opt>bartlett</opt>,
-	entón utilízanse as desviacións padrón de Bartlett para a FAC. Se
+	entón utilízanse os desvíos padrón de Bartlett para a FAC. Se
 	resulta aplicable, esta opción tamén determina a banda de confianza
 	que se debuxa na gráfica da FAC.
       </para>
       <para context="gui">
 	Utilízanse asteriscos para indicar a significación estatística das
 	autocorrelacións individuais. Por defecto, isto avalíase utilizando
-	unha desviación padrón igual ao cociente entre 1 e a raíz cadrada
-	do tamaño da mostra, pero tes a opción de utilizar as desviacións
+	un desvío padrón igual ao cociente entre 1 e a raíz cadrada
+	do tamaño da mostra, pero tes a opción de utilizar os desvíos
 	padrón de Bartlett para a FAC. Esta opción tamén determina a banda
 	de confianza que se debuxa na gráfica da FAC.
       </para>
@@ -2270,9 +2270,9 @@
 	estritamente positiva.
       </para>
       <para>
-	Por defecto, as desviacións padrón calcúlanse utilizando unha aproximación
+	Por defecto, os desvíos padrón calcúlanse utilizando unha aproximación
 	numérica á matriz Hessiana na converxencia. Pero se marcas o cadriño de
-	'Desviacións padrón robustas', entón calcúlanse as desviacións padrón Case
+	'Desvíos padrón robustos', entón calcúlanse os Desvíos Padrón Case
 	Máximo Verosímiles (CMV ou QML), utilizando un <quote>emparedado</quote>
 	entre a inversa da matriz Hessiana e o produto externo do vector gradiente.
       </para>
@@ -2911,7 +2911,7 @@
 	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{-1/5}\]"
 	  ascii="h = 0.9 min(s, IQR/1.349) n^{-1/5}"
 	  graphic="kernel2"/>
-	onde <math>s</math> representa a desviación padrón dos datos e IQR
+	onde <math>s</math> representa o desvío padrón dos datos e IQR
 	denota o rango intercuartil. Podes ampliar ou reducir o largo de
 	banda mediante o <quote>Factor de axuste do ancho de banda</quote>,
 	posto que entón o largo real de banda que se vai utilizar, obtense
@@ -3212,7 +3212,7 @@
         </option>
         <option>
 	  <flag>--asymptotic</flag>
-	  <effect>Desviacións padrón asintóticas sen corrixir</effect>
+	  <effect>Desvíos padrón asintóticos sen corrixir</effect>
         </option>
         <option>
 	  <flag>--keep-extra</flag>
@@ -3278,8 +3278,8 @@
 	tódalas variables independentes considéranse estritamente esóxenas.
       </para>
       <para>
-	Por defecto, preséntanse os resultados da estimación en 1 etapa (coas
-	desviacións padrón robustas) pero tes a opción de escoller a estimación
+	Por defecto, preséntanse os resultados da estimación en 1 etapa (cos
+	desvíos padrón robustos) pero tes a opción de escoller a estimación
 	en 2 etapas. En ambos casos, preséntanse as probas de autocorrelación
 	de nivel 1 e 2 , así como as probas de Sargan e/ou Hansen de
 	sobreidentificación, e o estatístico da proba de Wald para a significación
@@ -3289,12 +3289,12 @@
 	estatísticos vixentes.
       </para>
       <para context="cli">
-	No caso da estimación en 2 etapas, as desviacións padrón calcúlanse
+	No caso da estimación en 2 etapas, os desvíos padrón calcúlanse
 	por defecto utilizando a corrección de mostra finita suxerida por
 	<cite key="windmeijer05">Windmeijer (2005)</cite>. Xeralmente
-	considérase que as desviacións padrón asintóticas estándar asociadas
+	considérase que os desvíos padrón asintóticos estándar asociados
 	ao estimador do método en 2 etapas, son unha guía pouco fiable para a
-	inferencia, pero se por algunha razón queres velas, podes utilizar
+	inferencia, pero se por algunha razón queres velos, podes utilizar
 	a opción <opt>asymptotic</opt> para desactivar a corrección de
 	Windmeijer.
       </para>
@@ -3444,7 +3444,7 @@
         </option>
         <option>
           <flag>--robust</flag>
-          <effect>Desviacións padrón robustas: CMV (QML)</effect>
+          <effect>Desvíos padrón robustos: CMV (QML)</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -3731,7 +3731,7 @@
       <para>
 	Se elixes os estimadores de ecuación a ecuación <cmd>ols</cmd>
 	ou <cmd>tsls</cmd>, por defecto aplícase unha corrección dos
-	graos de liberdade cando se calculan as desviacións padrón, mais
+	graos de liberdade cando se calculan os desvíos padrón, mais
 	podes eliminar isto utilizando a opción <opt>no-df-corr</opt>. Esta
 	opción non ten efecto cos outros estimadores, e así non se aplica a
 	corrección dos graos de liberdade en ningún caso.
@@ -3955,6 +3955,10 @@
 	  <effect>Mira abaixo</effect>
         </option>
         <option>
+	  <flag>--all-probs</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
 	  <flag>--plot</flag>
 	  <optparm>nomeficheiro</optparm>
 	  <effect>Mira abaixo</effect>
@@ -3975,7 +3979,7 @@
       <para context="gui">
 	Debe de ir despois dunha instrución de estimación. As predicións xéranse
 	para o rango especificado de observacións. Dependendo da natureza do
-	modelo, tamén poden xerarse as desviacións padrón (mira abaixo).
+	modelo, tamén poden xerarse os desvíos padrón (mira abaixo).
       </para>
 
       <para context="cli">
@@ -3987,7 +3991,7 @@
 	<opt>out-of-sample</opt>, ou ben, se non, o rango da mostra
 	definido nese momento. Cando solicitas unha predición 'out-of-sample'
 	pero non hai dispoñibles observacións relevantes, amósase un fallo.
-	Dependendo da natureza do modelo, tamén poden xerarse as desviacións
+	Dependendo da natureza do modelo, tamén poden xerarse os desvíos
 	padrón (mira abaixo). Tamén mira abaixo para indagar sobre o efecto
 	especial da opción <opt>recursive</opt>.
       </para>
@@ -4002,10 +4006,11 @@
 	a predición (pois por defecto xéranse as predicións para todas as
 	variables endóxenas). No caso dun sistema ou se non indicas
 	<repl>nomev</repl>, podes recuperar os valores de predición utilizando
-	o accesorio <fncref targ="$fcast"/> e, se están dispoñibles, as
-	desviacións padrón mediante <fncref targ="$fcse"/>.
+	o accesorio <fncref targ="$fcast"/> e, se están dispoñibles, os
+	desvíos padrón mediante <fncref targ="$fcse"/>.
       </para>
 
+      <subhead>Predicións estáticas e dinámicas</subhead>
       <para>
 	A elección entre unha predición estática ou dinámica aplícase
 	unicamente no caso de modelos dinámicos, cunha perturbación cun
@@ -4019,7 +4024,6 @@
 	pero unha predición dinámica para 2008 é posible se podes substituír
 	unha predición previa para <math>y</math> en 2007.
       </para>
-
       <para>
 	Por defecto proporciónase: (a) unha predición estática para algunha
 	porción do rango de predición que cae dentro do rango da mostra sobre
@@ -4030,6 +4034,7 @@
 	mostra.
       </para>
 
+      <subhead context="cli">Predicións recursivas</subhead>
       <para context="cli">
 	A opción <opt>recursive</opt> está actualmente dispoñible só
 	para modelos dunha soa ecuación, estimados mediante MCO.
@@ -4045,16 +4050,34 @@
 	unicamente xunto coa opción <opt>recursive</opt>.
       </para>
 
+      <subhead>Modelos ordenados e modelo multinomial</subhead>
+      <para>
+	Cando a estimación é mediante logit ou probit ordenados, ou logit
+	multinomial, poderías estar interesado nas probabilidades estimadas
+	de cada un dos resultados discretos, mellor que unicamente no resultado
+	<quote>máis probable</quote> para cada observación. Isto acádase
+	mediante a opción <opt>all-probs</opt>: o efecto de <lit>fcast</lit>
+	é nese caso unha matriz cunha columna por cada resultado posible.
+	Podes usar o argumento <repl>vname</repl> para nomear esa matriz,
+	en cuxo caso non se presenta nada. Se non indicas <repl>vname</repl>,
+	entón a matriz pódese recuperar mediante <fncref targ="$fcast"/>.
+	A opción <opt>plot</opt> non é compatible coa opción
+	<opt>all-probs</opt>.
+      </para>
+
+      <subhead context="cli">Gráficas de predicións</subhead>
       <para context="cli">
-	A opción <opt>plot</opt> (dispoñible só no caso da estimación
-	dunha única ecuación) solicita que se produza un ficheiro gráfico,
-	que contén unha representación gráfica da predición. O sufixo do
-	argumento <repl>nomeficheiro</repl> desta opción controla o formato
-	da gráfica: <lit>.eps</lit> para EPS, <lit>.pdf</lit> para PDF,
-	<lit>.png</lit> para PNG, e <lit>.plt</lit> para un ficheiro de
-	instrucións Gnuplot. Podes utilizar o título <lit>display</lit>
-	en substitución do nome de ficheiro para forzar a representación
-	da gráfica nunha xanela. Por exemplo,
+	A opción <opt>plot</opt> solicita que se produza un ficheiro gráfico,
+	que contén unha representación gráfica da predición. No caso dun
+	sistema, esta opción só está dispoñible cando se usa o argumento
+	<repl>nomev</repl> para seleccionar unha única variable para facer
+	a predición. O sufixo do argumento <repl>nomeficheiro</repl> desta
+	opción, controla o formato da gráfica: <lit>.eps</lit> para EPS,
+	<lit>.pdf</lit> para PDF, <lit>.png</lit> para PNG, e <lit>.plt</lit>
+	para un ficheiro de instrucións de Gnuplot. Podes utilizar o nome
+	ficticio <lit>display</lit> en substitución do nome de ficheiro para
+	forzar a representación da gráfica nunha xanela. Por
+	exemplo,
       </para>
       <code context="cli">
 	fcast --plot=fc.pdf
@@ -4064,17 +4087,19 @@
 	rutas que non ofrezan dúbidas; se non, os ficheiros escríbense
 	no cartafol de traballo de GRETL.
       </para>
+
+      <subhead>Desvíos padrón</subhead>
       <para>
-	A natureza das desviacións padrón das predicións (se están dispoñibles)
+	A natureza dos desvíos padrón das predicións (se están dispoñibles)
 	depende da natureza do modelo e da predición. En modelos lineais estáticos,
-	as desviacións padrón calcúlanse utilizando o método bosquexado por
+	os desvíos padrón calcúlanse utilizando o método bosquexado por
 	<cite key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>;
 	eles incorporan tanto a incerteza debida ao proceso da perturbación como a
 	incerteza nos parámetros (resumida na matriz de covarianzas dos
-	estimadores dos parámetros). En modelos dinámicos, as desviacións
+	estimadores dos parámetros). En modelos dinámicos, os desvíos
 	padrón das predicións calcúlanse unicamente no caso dunha predición
 	dinámica, e non incorporan a incerteza nos parámetros. Para modelos
-	non lineais, as desviacións padrón das predicións non están dispoñibles
+	non lineais, os desvíos padrón das predicións non están dispoñibles
 	actualmente.
       </para>
 
@@ -4248,7 +4273,7 @@
 	entre <math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	As ordes estimadas de integración fraccional e as desviacións
+	As ordes estimadas de integración fraccional e os desvíos
 	padrón correspondentes están dispoñibles mediante o accesorio
 	<fncref targ="$result"/>. Coa opción <opt>all</opt>, atoparás a
 	estimación Local Whittle na primeira fila e a estimación GPH na
@@ -4488,7 +4513,7 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
 	<option>
 	  <flag>--verbose</flag>
@@ -4600,7 +4625,7 @@
 	Con esta instrución dispós de diversas variantes da matriz estimada
 	das covarianzas dos estimadores. Por defecto, utilízase a
 	matriz Hessiana agás que marques o cadriño
-	<quote>Desviacións padrón robustas</quote>, en cuxo caso vaise
+	<quote>Desvíos padrón robustos</quote>, en cuxo caso vaise
 	usar a matriz de covarianzas CMV (QML de White). Tamén podes
 	especificar outras posibilidades (&eg; a matriz de información
 	ou o estimador de Bollerslev&ndash;Wooldridge) utilizando a
@@ -4989,7 +5014,7 @@
 	</li>
 	<li>
 	    <para>
-	    Normal: A media e a desviación padrón (positiva).
+	    Normal: A media e o desvío padrón (positivo).
 	    </para>
 	</li>
 	<li>
@@ -5193,6 +5218,10 @@
 	  <effect>Utiliza a escala logarítmica para o eixe vertical</effect>
         </option>
         <option>
+	  <flag>--control</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>Mira abaixo</effect>
         </option>
@@ -5272,6 +5301,19 @@
 	fronte a <repl>xvar</repl> cos puntos amosados con cores diferentes
 	dependendo do valor de <repl>varficticia</repl> na observación
 	indicada.
+      </para>
+      <para>
+	A opción <opt>control</opt> é semellante no feito de que se deben
+	indicar exactamente tres variables: unha única variable <math>y</math>
+	ademais das dúas variables <quote>explicativas</quote>, <math>x</math>
+	e <math>z</math>. O efecto disto é a representación de <repl>y</repl>
+	fronte a <repl>x</repl>, co control de <math>z</math>. Esta forma de
+	representación pode ser útil para observar a relación entre
+	<math>x</math> e <math>y</math>, tendo en conta o efecto que
+	poda ter <math>z</math> en ambas. Estatisticamente, isto podería
+	ser equivalente a unha regresión de <math>y</math> sobre as variables
+	<math>x</math> <emphasis>e</emphasis>
+	<math>z</math>.
       </para>
       <para>
 	Podes escoller que a escala do eixe 'y' sexa logarítmica en troques
@@ -5976,16 +6018,16 @@
   </command>
   
   <command name="hccme" section="Estimation" context="gui"
-    label="Desviacións padrón robustas">
+    label="Desvíos padrón robustos">
 
     <description>
       <para>
-	Se te ofrecen diversas variantes de cálculo das desviacións padrón que
+	Se te ofrecen diversas variantes de cálculo dos desvíos padrón que
 	son robustas na presenza de heterocedasticidade (e de autocorrelación
 	no caso do estimador HAC).
       </para>
       <para>
-	HC0 produce as <quote>Desviacións padrón de White</quote> orixinais;
+	HC0 produce as <quote>Desvíos padrón de White</quote> orixinais;
 	HC1, HC2, HC3 e HC3a son variantes subseguintes que xeralmente se
 	considera que producen resultados superiores (máis fiables). Para
 	obter máis detalles sobre os estimadores, consulta
@@ -6006,8 +6048,8 @@
       <para>
 	Cando estimas un modelo que utiliza datos de panel mediante MCO, o
 	estimador robusto da matriz de covarianzas que se usa por defecto é o
-	proporcionado por Arellano. A alternativa é o das Desviacións Padrón
-	Corrixidas de Panel (PCSE) de Beck e Katz. O derradeiro ten en conta
+	proporcionado por Arellano. A alternativa é o dos Desvíos Padrón
+	Corrixidos de Panel (PCSE) de Beck e Katz. O derradeiro ten en conta
 	a heterocedasticidade pero non a autocorrelación.
       </para>
       <para>
@@ -6017,8 +6059,8 @@
       </para>
       <para>
 	Por defecto, GRETL usa a distribución <math>t</math>-Student ao calcular
-	as probabilidades asociadas (valores p) baseadas en desviacións padrón
-	robustas no contexto de estimadores de mínimos cadrados. A opción titulada
+	as probabilidades asociadas (valores p) baseadas en desvíos padrón
+	robustos no contexto de estimadores de mínimos cadrados. A opción titulada
 	<quote>Utilizar a distribución Normal para obter valores p robustos</quote>
 	pode usarse para modificar este comportamento.
       </para>
@@ -6050,11 +6092,11 @@
         </option>
 	<option>
 	  <flag>--opg</flag>
-	  <effect>Desviacións padrón PEG (OPG)</effect>
+	  <effect>Desvíos padrón PEG (OPG)</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón CMV (QML)</effect>
+	  <effect>Desvíos padrón CMV (QML)</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -6211,7 +6253,7 @@
 	Esta instrución é aplicable cando existe heterocedasticidade en forma
 	dunha función descoñecida dos regresores, que pode aproximarse por
 	medio dunha relación cuadrática. Nese contexto, ofrece a posibilidade
-	de obter desviacións padrón consistentes e estimacións máis eficientes
+	de obter desvíos padrón consistentes e estimacións máis eficientes
 	dos parámetros, en comparación con MCO.
       </para>
       <para>
@@ -6270,8 +6312,8 @@
       <para>
 	Calcula o expoñente de Hurst (unha medida de persistencia ou memoria
 	longa) para unha variable de tipo serie temporal que teña polo menos
-	128 observacións. Podes obter o resultado (xunto coa súa desviación
-	padrón) mediante o accesorio <fncref targ="$result"/>.
+	128 observacións. Podes obter o resultado (xunto co seu desvío padrón)
+	mediante o accesorio <fncref targ="$result"/>.
       </para>
       <para>
 	<cite key="mandelbrot83">Mandelbrot (1983)</cite> discute
@@ -6285,13 +6327,13 @@
 	constante. O rango reescalado é o rango (valor máximo menos
 	mínimo) do valor acumulado ou suma parcial de <math>x</math>
 	(logo da subtracción da súa media mostral) no período da
-	mostra, dividida pola desviación padrón mostral.
+	mostra, dividida polo desvío padrón mostral.
       </para>
       <para>
 	Como punto de referencia, se <math>x</math> é unha variable ruído
 	branco (con media e persistencia nulas) entón o rango do seu
 	<quote>paseo</quote> (forma un paseo aleatorio) acumulado e
-	escalado pola súa desviación padrón, ten un crecemento igual á
+	escalado polo seu desvío padrón, ten un crecemento igual á
 	raíz cadrada do tamaño da mostra, proporcionando un expoñente
 	de Hurst agardado de 0.5. Os valores do expoñente que estean
 	significativamente por encima de 0.5 indican persistencia, e os
@@ -6443,7 +6485,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
         <option>
 	  <flag>--opg</flag>
@@ -6492,19 +6534,19 @@
       </para>
 
       <para context="cli">
-	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
+	Por defecto, os desvíos padrón calcúlanse utilizando a inversa
 	negativa da matriz Hessiana. Cando especificas a opción
-	<opt>robust</opt>, entón calcúlanse no seu lugar as desviacións
+	<opt>robust</opt>, entón calcúlanse no seu lugar os desvíos
 	padrón CMV (QML) ou de Huber&ndash;White. Neste caso, a matriz de
 	covarianzas estimada é un <quote>emparedado</quote> entre a inversa da
 	matriz Hessiana estimada e o produto externo do vector gradiente. Como
-	alternativa podes indicar a opción<opt>opg</opt>, en cuxo caso as desviacións
+	alternativa podes indicar a opción<opt>opg</opt>, en cuxo caso os desvíos
 	padrón baséanse unicamente no produto externo do vector gradiente.
       </para>
       <para context="gui">
-	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
-	negativa da matriz Hessiana. Se marcas o cadriño de 'Desviacións
-	padrón robustas', entón calcúlanse no seu lugar as desviacións padrón
+	Por defecto, os desvíos padrón calcúlanse utilizando a inversa
+	negativa da matriz Hessiana. Se marcas o cadriño de 'Desvíos
+	padrón robustos', entón calcúlanse no seu lugar os desvíos padrón
 	CMV (QML) ou Huber&ndash;White. Neste caso, a matriz de covarianzas
 	estimada é un <quote>emparedado</quote> entre a inversa da matriz
 	Hessiana estimada e o produto externo do vector gradiente.
@@ -6544,7 +6586,7 @@
       </para>
       <para>
 	A respecto da escala das respostas ao impulso, a dimensión do
-	<quote>impacto</quote> establécese nunha desviación padrón das
+	<quote>impacto</quote> establécese nun desvío padrón das
 	innovacións estimadas na variable de orixe, e as respostas se
 	proporcionan en calquera que sexa a unidade <quote>natural</quote>
 	da variable obxectivo.
@@ -7172,13 +7214,13 @@
 	advertencia se a solución non é única.
       </para>
       <para>
-	As desviacións padrón dedúcense utilizando o procedemento 'bootstrap'
+	os desvíos padrón dedúcense utilizando o procedemento 'bootstrap'
 	con 500 extraccións. A matriz de covarianzas dos estimadores dos
 	parámetros, que se presenta cando indicas <opt>vcv</opt>, baséase
 	no mesmo 'bootstrap'. Dado que esta é unha operación custosa dabondo,
 	a opción <opt>no-vcv</opt> proporciónase para aqueles casos nos que
-	non se precisa a matriz de covarianzas; cando indicas esta opción, as
-	desviacións padrón no van estar dispoñibles.
+	non se precisa a matriz de covarianzas; cando indicas esta opción, os
+	desvíos padrón no van estar dispoñibles.
       </para>
       <para>
 	Ten en conta que este método pode resultar lento cando a mostra
@@ -7187,8 +7229,8 @@
 	Dadas unha variable dependente <lit>y</lit> e unha lista <lit>X</lit>
 	de regresores, as seguintes instrucións son basicamente equivalentes,
 	coa excepción de que o método "quantreg" utiliza o algoritmo máis
-	rápido de Frisch&ndash;Newton, e que proporciona as desviacións
-	padrón analíticas en lugar das de "bootstrapping".
+	rápido de Frisch&ndash;Newton, e que proporciona os desvíos
+	padrón analíticos en lugar dos de "bootstrapping".
       </para>
       <code>
 	lad y const X
@@ -7625,7 +7667,7 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -7725,12 +7767,12 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
-	  <effect>Desviacións padrón agrupadas</effect>
+	  <effect>Desvíos padrón agrupados</effect>
         </option>
 	<option>
 	  <flag>--multinomial</flag>
@@ -7781,15 +7823,15 @@
 	constante.
       </para>
       <para context="cli">
-	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
+	Por defecto, os desvíos padrón calcúlanse utilizando a inversa
 	negativa da matriz Hessiana. Se indicas a opción <opt>robust</opt>,
-	entón calcúlanse no seu lugar as desviacións padrón CMV (QML) ou de
+	entón calcúlanse no seu lugar os desvíos padrón CMV (QML) ou de
 	Huber&ndash;White. Neste caso, a matriz de covarianzas estimadas é un
 	<quote>emparedado</quote> entre a inversa da matriz Hessiana estimada
 	e o produto externo do vector gradiente; consulta o capítulo 10 do libro de
 	<cite key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>.
-	Pero cando indicas a opción <opt>cluster</opt>, entón xéranse as
-	desviacións padrón <quote>robustas por agrupación</quote>;
+	Pero cando indicas a opción <opt>cluster</opt>, entón xéranse os
+	desvíos padrón <quote>robustos por agrupación</quote>;
 	consulta o <guideref targ="chap:robust_vcv"/> para obter máis
 	detalles.
       </para>
@@ -7817,10 +7859,10 @@
 	orixinal.
       </para>
       <para context="gui">
-	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
+	Por defecto, os desvíos padrón calcúlanse utilizando a inversa
 	negativa da matriz Hessiana. Se marcas o cadriño de
-	<quote>Desviacións padrón robustas</quote>, entón calcúlanse no seu
-	lugar as desviacións padrón CMV (QML) ou de Huber&ndash;White. Neste
+	<quote>Desvíos padrón robustos</quote>, entón calcúlanse no seu
+	lugar os desvíos padrón CMV (QML) ou de Huber&ndash;White. Neste
 	caso, a matriz de covarianzas estimadas é un <quote>emparedado</quote>
 	entre a inversa da matriz Hessiana estimada e o produto externo do
 	vector gradiente. Consulta o capítulo 10 do libro de Davidson e MacKinnon
@@ -7833,11 +7875,11 @@
 	a variable dependente interprétase como unha resposta sen ordenar e
 	xéranse as estimacións cun Logit Multinomial. (Noutro caso, se
 	a variable escollida como dependente non é de tipo discreto, amósase
-	un fallo.) No caso multinomial, o accesorio <lit>$mnlprobs</lit> está
-	dispoñible despois da estimación, para conseguir unha matriz que
-	conteña as probabilidades estimadas dos posibles valores da variable
-	dependente para cada observación (coas observacións por filas e os
-	posibles valores por columnas).
+	un fallo.) O accesorio <lit>$allprobs</lit> está dispoñible despois da
+	estimación, para conseguir unha matriz que conteña as probabilidades
+	estimadas dos posibles valores da variable dependente para cada
+	observación (coas observacións por filas e os posibles valores por
+	columnas).
       </para>
       <para>
 	Se queres utilizar un Logit para a análise de proporcións onde, para
@@ -8490,7 +8532,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -8821,8 +8863,8 @@
 	scalar p = 0.5
       </code>
       <para>
-	As desviacións padrón baséanse no Produto Externo do vector Gradiente, por
-	defecto. Se marcas o cadriño <quote>Desviacións padrón robustas</quote>,
+	os desvíos padrón baséanse no Produto Externo do vector Gradiente, por
+	defecto. Se marcas o cadriño <quote>Desvíos padrón robustos</quote>,
 	utilízase un estimador CMV (QML, un <quote>emparedado</quote> entre a
 	inversa negativa da matriz Hessiana e a matriz de covarianzas do vector
 	gradiente, en concreto). A matriz Hessiana aproxímase numericamente.
@@ -8903,11 +8945,11 @@
 	  params p
 	end mle --quiet
       </code>
-      <subhead>Matriz de covarianzas e desviacións padrón</subhead>
+      <subhead>Matriz de covarianzas e desvíos padrón</subhead>
       <para>
 	Cando a función do logaritmo da verosimilitude devolve unha serie ou
-	un vector que proporciona valores por observación, entón as desviacións
-	padrón estimadas baséanse por defecto no Produto Externo do vector
+	un vector que proporciona valores por observación, entón os desvíos
+	padrón estimados baséanse por defecto no Produto Externo do vector
 	Gradiente (PEG); mentres que se indicas a opción <opt>hessian</opt>,
 	baséanse pola contra na inversa negativa da matriz Hessiana, que se
 	aproxima numericamente. Cando indicas a opción <opt>robust</opt>,
@@ -8918,14 +8960,14 @@
 	autocorrelación do gradente. (Isto unicamente ten sentido con datos
 	de series de tempo.) Agora ben, cando a función do logaritmo da
 	verosimilitude unicamente devolve un valor escalar, o PEG non está
-	dispoñible (polo tanto tampouco o estimador CMV), e as desviacións
+	dispoñible (polo tanto tampouco o estimador CMV), e os desvíos
 	padrón teñen que calcularse necesariamente utilizando a matriz
 	Hessiana numérica.
       </para>
       <para>
 	No caso de que unicamente queiras as estimacións do parámetro
 	primario, podes indicar a opción <opt>auxiliary</opt>, que elimina
-	o cálculo da matriz de covarianzas e das desviacións padrón. Isto
+	o cálculo da matriz de covarianzas e dos desvíos padrón. Isto
 	vai aforrar algúns ciclos de CPU e uso de memoria.
       </para>
       <subhead>Comprobando as derivadas analíticas</subhead>
@@ -8983,7 +9025,7 @@
 	quizais, no tipo de estimador utilizado. Nesta situación, resulta
 	conveniente presentar os resultados da regresión en forma dunha
 	táboa, na que cada columna conteña os resultados (as estimacións
-	dos coeficientes e das desviacións padrón) para un modelo dado,
+	dos coeficientes e dos desvíos padrón) para un modelo dado,
 	e na que cada fila conteña as estimacións para unha determinada
 	variable nos diferentes modelos.
       </para>
@@ -9113,7 +9155,7 @@
       <para>
 	O argumento <repl>matrizcoef</repl> debe de ser unha matriz de
 	dimensión <math>k</math> por 2, que contén <math>k</math>
-	coeficientes e <math>k</math> desviacións padrón asociadas.
+	coeficientes e <math>k</math> desvíos padrón asociados.
 	O argumento <repl>nomes</repl> debe de proporcionar polo
 	menos <math>k</math> nomes para etiquetar os coeficientes.
 	Podes indicalo co formato: (a) dunha cadea de texto literal
@@ -9494,11 +9536,11 @@
 	forma restrinxida da Binomial Negativa na que &alpha; = 0 por construción.
       </para>
       <para>
-	Por defecto, as desviacións padrón calcúlanse utilizando unha
+	Por defecto, os desvíos padrón calcúlanse utilizando unha
 	aproximación numérica á matriz Hessiana na converxencia. Pero
 	se indicas a opción <opt>opg</opt>, a matriz de covarianzas
 	baséase no Produto Externo do vector Gradiente, PEG (OPG), e
-	se indicas a opción <opt>robust</opt>, calcúlanse as desviacións
+	se indicas a opción <opt>robust</opt>, calcúlanse os desvíos
 	padrón CMV (QML), utilizando un <quote>emparedado</quote>
 	entre a inversa da matriz Hessiana e o PEG.
       </para>
@@ -9524,7 +9566,7 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
 	<option>
 	  <flag>--vcv</flag>
@@ -9823,12 +9865,12 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
         <option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
-	  <effect>Desviacións padrón agrupadas</effect>
+	  <effect>Desvíos padrón agrupados</effect>
         </option>
         <option>
 	  <flag>--jackknife</flag>
@@ -9877,7 +9919,7 @@
       </para>
 
       <para>
-	Aparte das estimacións dos coeficientes e das desviacións padrón, o programa
+	Aparte das estimacións dos coeficientes e dos desvíos padrón, o programa
 	tamén presenta as probabilidades asociadas (valores p) aos estatísticos
 	<math>t</math> (con dúas colas) e <math>F</math>. Un 'valor p' por debaixo de
 	0.01 indica significación estatística a un nivel do 1 por cento, e márcase con
@@ -9892,7 +9934,7 @@
 
       <para context="cli">
 	Se indicas a opción <opt>no-df-corr</opt>, non se aplica a corrección habitual dos graos de liberdade ao calcular
-	a varianza estimada da perturbación (e polo tanto, tampouco as desviacións padrón dos estimadores dos parámetros).
+	a varianza estimada da perturbación (e polo tanto, tampouco os desvíos padrón dos estimadores dos parámetros).
 	    </para>
 
       <para context="cli">
@@ -9917,12 +9959,12 @@
 
       <para context="cli">
 	Podes axustar a fórmula (versión <quote>HC</quote>) específica
-	que se vai utilizar para xerar as desviacións padrón robustas
+	que se vai utilizar para xerar os desvíos padrón robustos
 	cando indicas a opción <opt>robust</opt>, mediante a instrución
 	<cmdref targ="set"/>. A opción <opt>jackknife</opt> ten como
 	consecuencia a selección dunha <lit>hc_version</lit> de <lit>3a</lit>.
 	A opción <opt>cluster</opt> anula a selección da versión HC, e
-	produce as desviacións padrón robustas agrupando as observacións
+	produce os desvíos padrón robustos agrupando as observacións
 	segundo os distintos valores de <repl>clustvar</repl>. Consulta o
 	<guideref targ="chap:robust_vcv"/> para obter máis detalles.
       </para>
@@ -10632,7 +10674,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas; mira abaixo</effect>
+	  <effect>Desvíos padrón robustos; mira abaixo</effect>
         </option>
         <option>
 	  <flag>--time-dummies</flag>
@@ -10704,9 +10746,9 @@
 	utilizando as medias dos grupos).
       </para>
       <para context="cli">
-	O procedemento por defecto para calcular desviacións padrón robustas
+	O procedemento por defecto para calcular Desvíos padrón robustos
 	en modelos con datos de panel, é o estimador HAC de Arellano, pero
-	podes escoller as <quote>Desviacións Padrón Corrixidas de Panel</quote>
+	podes escoller as <quote>Desvíos Padrón Corrixidos de Panel</quote>
 	de Beck&ndash;Katz mediante a instrución <lit>set pcse on</lit>. Cando
 	especificas a opción robusta, execútase a proba conxunta <math>F</math>
 	sobre os efectos fixos utilizando o método robusto de
@@ -11542,7 +11584,7 @@
       <options>
         <option>
           <flag>--robust</flag>
-          <effect>Desviacións padrón robustas</effect>
+          <effect>Desvíos padrón robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
@@ -11612,9 +11654,9 @@
 	de accidentes. A variable de exposición debe de ser estritamente positiva.
       </para>
       <para>
-	Por defecto, calcúlanse as desviacións padrón utilizando a inversa
+	Por defecto, calcúlanse os desvíos padrón utilizando a inversa
 	negativa da matriz Hessiana. Se especificas a opción <opt>robust</opt>,
-	entón calcúlanse no seu lugar as desviacións padrón CMV (QML) ou de
+	entón calcúlanse no seu lugar os desvíos padrón CMV (QML) ou de
 	Huber&ndash;White. Neste caso, a matriz de covarianzas estimada é un
 	<quote>emparedado</quote> entre a inversa da matriz Hessiana estimada
 	e o produto externo do vector gradiente.
@@ -11798,7 +11840,7 @@
 	ols 1 0 2 3
 	scalar b = $coeff[2]
 	scalar se_b = $stderr[2]
-	printf "b = %.8g, Desviación padrón %.8g, t = %.4f\n",
+	printf "b = %.8g, Desvío padrón %.8g, t = %.4f\n",
           b, se_b, b/se_b
       </code>
       <para>
@@ -11853,7 +11895,7 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -11915,9 +11957,9 @@
 	constante.
       </para>
       <para context="cli">
-	Por defecto, as desviacións padrón calcúlanse utilizando a inversa negativa
+	Por defecto, os desvíos padrón calcúlanse utilizando a inversa negativa
 	da matriz Hessiana. Se indicas a opción <opt>robust</opt>, entón calcúlanse
-	no seu lugar as desviacións padrón CMV (QML) ou de Huber&ndash;White. Neste
+	no seu lugar os desvíos padrón CMV (QML) ou de Huber&ndash;White. Neste
 	caso, a matriz de covarianzas estimadas é un <quote>emparedado</quote>
 	entre a inversa da matriz Hessiana estimada e o produto externo do vector
 	gradiente. Para obter máis detalles, consulta o capítulo 10 do libro de
@@ -11934,10 +11976,10 @@
 	de mínimos cadrados.
       </para>
       <para context="gui">
-	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
+	Por defecto, os desvíos padrón calcúlanse utilizando a inversa
 	negativa da matriz Hessiana. Se marcas o cadriño de
-	<quote>Desviacións padrón robustas</quote>, entón calcúlanse en
-	troques as desviacións padrón CMV (QML) ou de Huber&ndash;White.
+	<quote>Desvíos padrón robustos</quote>, entón calcúlanse en
+	troques os desvíos padrón CMV (QML) ou de Huber&ndash;White.
 	Neste caso, a matriz de covarianzas estimadas é un
 	<quote>emparedado</quote> entre a inversa da matriz Hessiana
 	estimada e o produto externo do vector gradiente. Consulta o capítulo
@@ -11982,7 +12024,7 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>sigma_u</lit>: A estimación da desviación padrón do efecto
+	    <lit>sigma_u</lit>: A estimación do desvío padrón do efecto
 	    individual; e
 	  </para>
 	</li>
@@ -12227,7 +12269,7 @@
       <options>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
         <option>
 	  <flag>--intervals</flag>
@@ -12256,30 +12298,30 @@
 
     <description context="gui">
       <para>
-	Regresión de cuantís. Por defecto, as desviacións padrón
+	Regresión de cuantís. Por defecto, os desvíos padrón
 	calcúlanse de acordo coa fórmula asintótica indicada por
 	<cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>, pero
-	se marcas o cadriño de <quote>Desviacións padrón robustas</quote>,
+	se marcas o cadriño de <quote>Desvíos padrón robustos</quote>,
 	utilízase a variante robusta á heterocedasticidade
 	de <cite key="koenker-zhao94">Koenker e Zhao (1994)</cite>.
       </para>
       <para>
 	Se marcas a opción <quote>Calcular os intervalos de confianza</quote>,
 	GRETL calcula os intervalos de confianza para os coeficientes
-	en troques das desviacións padrón. E o cadriño de validación
-	de <quote>Desviacións padrón robustas</quote> ten outro efecto:
+	en troques dos desvíos padrón. E o cadriño de validación
+	de <quote>Desvíos padrón robustos</quote> ten outro efecto:
 	se non se marca, os intervalos calcúlanse baixo o suposto
 	de perturbacións IID; e ao marcalo, GRETL utiliza o estimador
 	robusto desenvolvido por
 	<cite key="koenker-machado99">Koenker e Machado (1999)</cite>.
 	Ten en conta que estes intervalos non son exactamente
-	<quote>máis ou menos tantas desviacións padrón</quote> pois, en xeral,
+	<quote>máis ou menos tantos desvíos padrón</quote> pois, en xeral,
 	son asimétricos a respecto das estimacións puntuais dos coeficientes.
 	    </para>
       <para>
 	Podes indicar unha lista de cuantís (consulta a lista despregable para
 	algunhas posibilidades xa definidas con anterioridade). Nese caso, GRETL
-	calcula as estimacións de cuantís e, ou ben as desviacións padrón ou
+	calcula as estimacións de cuantís e, ou ben os desvíos padrón ou
 	ben os intervalos de confianza para cada un dos valores especificados.
       </para>
       <para>
@@ -12299,19 +12341,19 @@
 	de regresión co mesmo padrón ca <cmdref targ="ols"/>.
       </para>
       <para>
-	Sen a opción <opt>intervals</opt>, preséntanse as desviacións
+	Sen a opción <opt>intervals</opt>, preséntanse os desvíos
 	padrón para as estimacións dos cuantís. Por defecto, estas
 	calcúlanse de acordo coa fórmula asintótica indicada por
 	<cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>,
 	pero cando indicas a opción <opt>robust</opt>, calcúlanse
-	as desviacións padrón que son robustas con respecto á
+	os desvíos padrón que son robustos con respecto á
 	heterocedasticidade, utilizando o método de
 	<cite key="koenker-zhao94">Koenker e Zhao (1994)</cite>.
       </para>
       <para>
 	Cando escolles a opción <opt>intervals</opt>, preséntanse os
 	intervalos de confianza para as estimacións dos parámetros en
-	vez das desviacións padrón. Estes intervalos calcúlanse usando
+	troques dos desvíos padrón. Estes intervalos calcúlanse usando
 	o método da inversión do rango e, en xeral, son asimétricos a
 	respecto das estimacións puntuais. As especificidades do cálculo
 	están mediatizadas pola opción <opt>robust</opt>: sen esta, os
@@ -12447,9 +12489,9 @@
 	    O criterio por defecto para que renda <quote>mellor</quote>
 	    a validación cruzada é minimizar o Erro Cadrado Medio (MSE),
 	    pero podes seleccionar a regra alternativa
-	    <quote>unha desviación padrón</quote>. Esta alternativa, que
+	    <quote>un desvío padrón</quote>. Esta alternativa, que
 	    favorece a sobriedade, escolle o maior factor de penalización
-	    cuxo MSE está a menos dunha desviación padrón do mínimo.
+	    cuxo MSE está a menos dun desvío padrón do mínimo.
 	  </para>
 	</li>
 	<li>
@@ -12551,7 +12593,7 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>sigma_u</lit>: A estimación da desviación padrón do efecto
+	    <lit>sigma_u</lit>: A estimación do desvío padrón do efecto
 	    individual; e
 	  </para>
 	</li>
@@ -13504,8 +13546,10 @@
 	</li>
 	<li>
 	  <para><lit>warnings</lit>: <lit>off</lit> ou <lit>on</lit> (por defecto).
-	  Elimina (ou acurta) a presentación de mensaxes de advertencia que
-	  xorden cando as operacións aritméticas producen valores non finitos.
+	  Elimina (ou acurta) a presentación de mensaxes de advertencia cando
+	  xorden problemas numéricos; por exemplo, se un cálculo produce
+	  valores non finitos ou se a converxencia dun proceso de optimización
+	  é cuestionable.
 	  </para>
 	</li>
 	<li>
@@ -13553,7 +13597,7 @@
 	<li>
 	  <para><lit>display_digits</lit>: Un enteiro de 3 a 6 que especifica
 	  o número de díxitos significativos a usar cando se amosan os
-	  coeficientes da regresión e as desviacións padrón (sendo 6
+	  coeficientes da regresión e os desvíos padrón (sendo 6
 	  por defecto). Tamén podes utilizar esta configuración para
 	  limitar o número de díxitos que se amosan coa instrución
 	  <cmdref targ="summary"/>; sendo neste caso 5 por defecto (e
@@ -13933,8 +13977,8 @@
 	<li>
 	  <para><lit>robust_z</lit>: <lit>off</lit> (por defecto) ou <lit>on</lit>.
 	  Isto controla a distribución que se utiliza cando se calculan as
-	  probabilidades asociadas (valores p) baseadas nas desviacións
-	  padrón robustas, no contexto dos estimadores de mínimos cadrados.
+	  probabilidades asociadas (valores p) baseadas nos desvíos
+	  padrón robustos, no contexto dos estimadores de mínimos cadrados.
 	  Por defecto, GRETL utiliza a distribución <math>t</math> de Student
 	  pero se activas <lit>robust_z</lit>, utilízase unha distribución
 	  Normal.
@@ -13944,7 +13988,7 @@
 	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (por defecto), <lit>nw2</lit>,
 	  <lit>nw3</lit> ou un enteiro. Establece o valor do retardo máximo
 	  ou largo de banda (<math>p</math>) utilizado cando se calculan
-	  as desviacións padrón HAC (Consistentes ante Heterocedasticidade
+	  os desvíos padrón HAC (Consistentes ante Heterocedasticidade
 	  e Autocorrelación) utilizando o enfoque de Newey-West, para datos
 	  de series temporais. As opcións <lit>nw1</lit> e <lit>nw2</lit>
 	  representan dúas variantes de cálculo automático baseadas no
@@ -13965,20 +14009,20 @@
 	  <para><lit>hac_kernel</lit>: <lit>bartlett</lit> (por defecto),
 	  <lit>parzen</lit> ou <lit>qs</lit> (Espectral cadrado). Establece
 	  o 'kernel', ou padrón de ponderacións, que se utiliza cando se
-	  calculan as desviacións padrón HAC.
+	  calculan os desvíos padrón HAC.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>hac_prewhiten</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
 	  Utiliza o 'branqueo' previo e a 'volta a colorear' de Andrews-Monahan
-	  cando se calculan as desviacións padrón HAC. Isto tamén implica
+	  cando se calculan os desvíos padrón HAC. Isto tamén implica
 	  utilizar unha elección do largo de banda que se basea nos datos.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>hac_missvals</lit>: <lit>es</lit> (predeterminado),
 	  <lit>am</lit> ou <lit>off</lit>. Establece a política a respecto do
-	  cálculo das desviacións padrón HAC cando a mostra utilizada na
+	  cálculo dos desvíos padrón HAC cando a mostra utilizada na
 	  estimación inclúe observacións incompletas: <lit>es</lit> invoca
 	  o método da Mesma Separación (Equal Spacing) de
 	  <cite key="datta-du12">Datta e Du (2012)</cite>; <lit>am</lit>
@@ -13991,11 +14035,11 @@
 	<li>
 	  <para>
 	  <lit>hc_version</lit>: 0 (por defecto), 1, 2, 3 ou 3a. Establece a variante
-	  que se utiliza ao calcular as desviacións padrón Consistentes ante
+	  que se utiliza ao calcular os Desvíos Padrón Consistentes ante
 	  Heterocedasticidade (HC) con datos de sección cruzada. As 4 primeiras
 	  opcións correspóndense a HC0, HC1, HC2 e HC3 discutidas por Davidson e
 	  MacKinnon no capítulo 5 de <book>Econometric Theory and Methods</book>.
-	  HC0 produce as <quote>desviacións padrón de White</quote>, como se
+	  HC0 produce os <quote>desvíos padrón de White</quote>, como se
 	  denominan habitualmente. A variante 3a é o procedemento da
 	  <quote>navalla</quote> de MacKinnon&ndash;White.
 	  </para>
@@ -14006,7 +14050,7 @@
 	  con datos de panel coa opción <opt>robust</opt>, utilízase o
 	  estimador de Arellano para a matriz de covarianzas. Cando pos
 	  <lit>pcse</lit> en <quote>on</quote>, isto forza que se utilicen
-	  as Desviacións Padrón Corrixidas de Panel de Beck e Katz (que
+	  os Desvíos Padrón Corrixidos de Panel de Beck e Katz (que
 	  non teñen en conta a autocorrelación).
 	  </para>
 	</li>
@@ -14934,7 +14978,7 @@
         </option>
         <option>
 	  <flag>--center-only</flag>
-	  <effect>Sen dividir por desviación padrón</effect>
+	  <effect>Sen dividir por desvío padrón</effect>
         </option>
       </options>
     </usage>
@@ -14944,9 +14988,9 @@
 	Por defecto, esta instrución engade ao conxunto de datos vixente, novas
 	series que son versións tipificadas das series orixinais, e que se
 	nomean co prefixo <lit>s_</lit>. Por exemplo, <lit>s_x</lit> fórmase
-	restándolle a media a <lit>x</lit>, e dividindo o resultado pola
-	desviación padrón mostral de <lit>x</lit> (coa corrección de 1, nos
-	graos de liberdade). Pero podes elixir que se divida pola desviación
+	restándolle a media a <lit>x</lit>, e dividindo o resultado polo
+	desvío padrón mostral de <lit>x</lit> (coa corrección de 1, nos
+	graos de liberdade). Pero podes elixir que se divida polo desvío
 	padrón sen ningunha corrección dos graos de liberdade, é dicir, o
 	estimador máximo-verosímil.
       </para>
@@ -14965,12 +15009,12 @@
 	nunha nova serie co prefixo <lit>s_</lit>. Así, por exemplo, a
 	expresión <cmd>stdize x y</cmd> crea as novas series <lit>s_x</lit>
 	e <lit>s_y</lit>, cada unha como resultado de centrar e dividir a
-	orixinal pola súa desviación padrón mostral (coa corrección de 1,
+	orixinal polo seu desvío padrón mostral (coa corrección de 1,
 	nos graos de liberdade).
       </para>
       <para>
 	Cando indicas a opción <opt>no-df-corr</opt>, non se vai aplicar
-	ningunha corrección dos graos de liberdade na desviación padrón
+	ningunha corrección dos graos de liberdade no desvío padrón
 	que se utiliza; será o estimador máximo-verosímil. Se indicas a
 	opción <opt>center-only</opt>, as series resultan de unicamente
 	restar a media e, nese caso, os nomes das resultantes van ter o
@@ -15231,11 +15275,11 @@
 	Na súa primeira forma, esta instrución presenta un resumo estatístico
 	das variables de <repl>listavariables</repl>, ou de todas as
 	variables do conxunto de datos cando omites <repl>listavariables</repl>.
-	Por defecto, o resultado consiste na media, desviación padrón (sd),
-	coeficiente de variación (= sd/media), mediana, mínimo, máximo,
+	Por defecto, o resultado consiste na media, desvío padrón (dp),
+	coeficiente de variación (= dp/media), mediana, mínimo, máximo,
 	coeficiente de asimetría e exceso de curtose. Cando indicas a opción
 	<opt>simple</opt>, o resultado limítase á media, o mínimo, o máximo
-	e a desviación padrón.
+	e o desvío padrón.
       </para>
       <para>
 	Cando indicas a opción <opt>by</opt> (en cuxo caso o parámetro
@@ -15474,7 +15518,7 @@
 	<opt>format</opt>. A cadea de formato debe de estar contornada entre
 	comiñas e debe de estar ligada á opción cun signo de igualdade. O
 	padrón para as cadeas de formato é o seguinte. Existen 4 campos que
-	representan: o coeficiente, a desviación padrón, a razón <math>t</math>
+	representan: o coeficiente, o desvío padrón, a razón <math>t</math>
 	e a probabilidade asociada, respectivamente. Debes de separar estes
 	campos mediante barras verticais; e, ou ben poden ter unha especificación
 	de tipo <lit>printf</lit> para o formato do valor numérico en cuestión,
@@ -15493,7 +15537,7 @@
 	columnas usando 4 díxitos decimais. A segunda elimina a probabilidade
 	asociada e presenta as razóns <math>t</math> con 3 díxitos decimais.
 	A terceira omite a razón <math>t</math>. A derradeira tamén omite a
-	<math>t</math>, e presenta tanto o coeficiente como a desviación
+	<math>t</math>, e presenta tanto o coeficiente como o desvío
 	padrón con 8 cifras significativas.
       </para>
       <para>
@@ -15627,7 +15671,7 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
         <option>
 	  <flag>--opg</flag>
@@ -15740,12 +15784,12 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
-	  <effect>Desviacións padrón agrupadas</effect>
+	  <effect>Desvíos padrón agrupados</effect>
         </option>
 	<option>
 	  <flag>--liml</flag>
@@ -15904,11 +15948,11 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
         <option>
 	  <flag>--robust-hac</flag>
-	  <effect>Desviacións padrón HAC</effect>
+	  <effect>Desvíos padrón HAC</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -16027,10 +16071,10 @@
 	función <fncref targ="irf"/>.
       </para>
       <para context="cli">
-	Cando indicas a opción <opt>robust</opt>, as desviacións padrón 
+	Cando indicas a opción <opt>robust</opt>, os desvíos padrón 
 	corríxense do efecto da heterocedasticidade. Como alternativa, podes
-	indicar a opción <opt>robust-hac</opt> para dar lugar a desviacións
-	padrón que sexan robustas con respecto tanto á heterocedasticidade como
+	indicar a opción <opt>robust-hac</opt> para dar lugar a desvíos
+	padrón que sexan robustos con respecto tanto á heterocedasticidade como
 	á autocorrelación (HAC). En xeral, esta última corrección non debera
 	de ser necesaria se o VAR inclúe un número suficiente de retardos.
       </para>
@@ -16440,7 +16484,7 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Desviacións padrón robustas</effect>
+	  <effect>Desvíos padrón robustos</effect>
         </option>
 	<option>
 	  <flag>--quiet</flag>

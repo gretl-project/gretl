@@ -4913,7 +4913,8 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
         if (!p->err) {
             if (l->t == MAT && is_tmp_node(l)) {
                 /* OK to overwrite @m */
-                ret->v.m = m;
+                ret->v.m = l->v.m;
+		l->v.m = NULL;
             } else {
                 /* don't destroy @m */
                 ret->v.m = gretl_matrix_copy(m);
@@ -4930,7 +4931,7 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
                 user_var_set_scalar_value(uv, ldet);
             }
         }
-        if (p->err && ret->v.m != m) {
+        if (p->err && ret->v.m != NULL) {
             gretl_matrix_free(ret->v.m);
             ret->v.m = NULL;
         }

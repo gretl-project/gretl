@@ -25,6 +25,19 @@
       </description>
     </function>
 
+    <function name="$allprobs" section="access" output="matrix">
+      <description>
+	<para>
+	  Debe ir despois dunha estimación con probit ou logit ordenados,
+	  ou con logit multinomial; e devolverá unha matriz de orde
+	  <by r="n" c="j"/>, onde <math>n</math> é o número de observacións
+	  utilizadas e <math>j</math> indica o número de resultados posibles,
+	  que contén a probabilidade estimada de cada resultado para cada
+	  observación.
+	</para>
+      </description>
+    </function>
+
     <function name="$bic" section="access" output="scalar">
       <description>
 	<para>
@@ -271,7 +284,7 @@
       <description>
 	<para>
 	  Se pode calcularse, debe de executarse logo de procesar a instrución
-	  <cmdref targ="fcast"/> e devolve unha matriz cas desviacións padrón
+	  <cmdref targ="fcast"/> e devolve unha matriz cos desvíos padrón
 	  das predicións. Se o modelo que se utiliza para facer as predicións é
 	  un sistema de ecuacións, a matriz está formada por unha columna para
 	  cada ecuación; noutro caso, é un vector columna.
@@ -511,7 +524,8 @@
 	  e devolve unha matriz coas probabilidades estimadas de cada resultado
 	  posible, en cada observación da mostra utilizada na estimación do
 	  modelo. Cada liña representa unha observación e cada columna un
-	  resultado.
+	  resultado. Dado que desde GRETL 2023a, este accesorio é obsoleto:
+	  por favor, utiliza en troques <fncref targ="$allprobs"/>.
 	</para>
       </description>
     </function>
@@ -906,7 +920,7 @@
       <description>
 	<para>
 	  Se o último modelo estimado foi uniecuacional, devolve un escalar coa
-	  Desviación Padrón da regresión (S, ou noutras palabras, a desviación
+	  Desviación Padrón da regresión (S, ou noutras palabras, o desvío
 	  padrón dos erros do modelo coa oportuna corrección dos graos de
 	  liberdade). Se o último modelo estimado foi un sistema de ecuacións,
 	  devolve unha matriz coas varianzas-covarianzas dos erros das ecuacións
@@ -922,7 +936,7 @@
       <description>
 	<para>
 	  Cando se utiliza sen argumentos, <lit>$stderr</lit> devolve un vector
-	  columna que contén as desviacións padrón dos coeficientes do último
+	  columna que contén os desvíos padrón dos coeficientes do último
 	  modelo estimado. Co argumento opcional <lit>(nome dun regresor)</lit>
 	  devolve un escalar co valor do parámetro estimado dese regresor
 	  <argname>s</argname>.
@@ -1608,8 +1622,8 @@
 	  orde <by r="6" c="5"/>. Nas dúas primeiras columnas exprésanse as
 	  6 distintas combinacións dos valores de 'xenero' e 'raza'; a columna
 	  do medio contén o reconto do número de casos para cada unha desas
-	  combinacións; e as dúas columnas máis á dereita conteñen as
-	  desviacións padrón mostrais de <lit>renda</lit> e <lit>idade</lit>.
+	  combinacións; e as dúas columnas máis á dereita conteñen os
+	  desvíos padrón mostrais de <lit>renda</lit> e <lit>idade</lit>.
 	</para>
 	<para>
 	  Observa que se <argname>segunvar</argname> é unha lista de variables,
@@ -1886,7 +1900,8 @@
 	      Contén a <argname>entrada</argname> algunha chave que non
 	      estea presente no <argname>obxectivo</argname>? En tal caso,
 	      <lit>bcheck</lit> devolve un valor non nulo, indicando que a
-	      <argname>entrada</argname> é incorrecta.
+	      <argname>entrada</argname> é incorrecta. (Moi probablemente,
+	      a chave en cuestión está escrita incorrectamente).
 	    </para>
 	  </li>
 	  <li>
@@ -1901,7 +1916,7 @@
 	    <para>
 	      Se algúns elementos do <argname>obxectivo</argname> requiren
 	      unha entrada do solicitante (polo que o valor que indicas non é
-	      realmente o predeterminado, senón só un marcador de posición
+	      un valor predeterminado, senón só un marcador de posición
 	      para indicar o tipo requirido), debes de indicar un terceiro
 	      argumento a <lit>bcheck</lit>: un arranxo de cadeas de texto
 	      que conteña as chaves para as que non é opcional a entrada. Entón,
@@ -1911,29 +1926,48 @@
 	  </li>
 	</ilist>
 	<para>
-	  Se non se detectan fallos neses puntos, calquera valor indicado en
-	  <argname>entrada</argname> cópiase a <argname>obxectivo</argname>
-	  (é dicir, os predeterminados substitúense por eleccións correctas
-	  na parte do solicitante). Cando se detecten fallos, vaise presentar
-	  unha mensaxe que vai indicar qué é o que está mal na
-	  <argname>entrada</argname>.
+	  Ademais do anterior, poderías estar interesado en impoñer límites
+	  inferiores e/ou superiores ao valor de un ou máis dos elementos
+	  escalares do argumento de feixe. En tal caso, engade un feixe co
+	  nome <lit>bounds</lit> ao teu modelo de feixe. Cada elemento deste
+	  feixe secundario deberá ter unha <i>chave</i> que identifique un
+	  elemento do modelo de feixe; o seu <i>valor</i> deberá ser un
+	  vector 'dobre' que conteña os límites inferiores e superiores. Coloca
+	  un <lit>NA</lit> no lugar dun dos límites, se non hai límite dese
+	  lado. Así, por exemplo, cando se indica <lit>x1</lit> na entrada
+	  do solicitante, o seguinte código vai comprobar que está entre
+	  1 e 5; e cando se indica <lit>x2</lit>, que este non é
+	  negativo:
+	</para>
+	<code>
+	  template.bounds = _(x1={1,5}, x2={0,NA})
+	</code>
+	<para>
+	  Cando non se detectan fallos en ningún deses puntos, os valores
+	  indicados en <argname>entrada</argname> cópianse a
+	  <argname>obxectivo</argname> (substituíndose os predeterminados
+	  por eleccións correctas na parte do solicitante). Cando se detecten
+	  fallos, vaise presentar unha mensaxe que vai indicar qué é o que
+	  está mal na <argname>entrada</argname>.
 	</para>
 	<para>
 	  Para ofrecer un exemplo sinxelo, supón que o teu feixe de argumentos
 	  da función admite unha matriz <lit>X</lit> (requirida), un escalar
-	  <lit>z</lit> con valor 0 por defecto, e unha cadea <lit>s</lit>
-	  co valor <quote><lit>presentar</lit></quote> predeterminado. Entón,
-	  o seguinte fragmento de código sería axeitado para comprobar un
-	  feixe de nome <lit>uservals</lit> proporcionado polo solicitante:
+	  non negativo <lit>z</lit> con valor 0 por defecto, e unha cadea
+	  <lit>s</lit> co valor predeterminado <quote><lit>display</lit></quote>.
+	  Entón, o seguinte fragmento de código sería axeitado para comprobar
+	  un feixe de nome <lit>uservals</lit> proporcionado polo
+	  solicitante:
 	</para>
 	<code>
-	  bundle target = _(X={}, z=0, s="presentar")
+	  bundle target = _(X={}, z=0, s="display")
+	  target.bounds = _(z={0,NA})
 	  strings req = defarray("X")
 	  err = bcheck(&amp;target, uservals, req)
 	  if err
-	     # reaccionar adecuadamente
+	     # Reaccionar adecuadamente
 	  else
-	     # continuar utilizando os valores no obxectivo
+	     # Continuar utilizando os valores no obxectivo
 	  endif
 	</code>
       </description>
@@ -2454,8 +2488,8 @@
 	<para>
 	  Centra as columnas da matriz <argname>X</argname> a respecto
 	  das súas medias. Se o segundo argumento (opcional) ten un valor
-	  non nulo, entón os valores centrados divídense ademais polas
-	  desviacións padrón de cada columna (que se caculan utilizando
+	  non nulo, entón os valores centrados divídense ademais polos
+	  desvíos padrón de cada columna (que se caculan utilizando
 	  <math>n</math> &minus; 1 como divisor, no que <math>n</math>
 	  é o número de filas de <argname>X</argname>).
 	</para>
@@ -6150,8 +6184,9 @@
 	  efectos con argumentos negativos: <lit>int(-3.5)</lit> xera &minus;3,
 	  namentres <lit>floor(-3.5)</lit> xera &minus;4.
 	  <seelist>
-            <fncref targ="round"/>
             <fncref targ="ceil"/>
+            <fncref targ="floor"/>
+            <fncref targ="round"/>
 	  </seelist>
 	</para>
       </description>
@@ -6409,7 +6444,7 @@
 	  son índices, con formato de números enteiros, das variables endóxenas
 	  do sistema; e se usa 0 para indicar <quote>todas</quote>. As respostas
 	  (expresadas nas unidades da variable <argname>efecto</argname>) o
-	  son ante unha innovación de unha desviación padrón na variable
+	  son ante unha innovación de un desvío padrón na variable
 	  <argname>choque</argname>. Cando lle das un valor positivo que
 	  sexa axeitado a <argname>alfa</argname>, as estimacións inclúen
 	  un intervalo de confianza de 1 &minus; &agr; (deste xeito, por
@@ -6999,11 +7034,11 @@
 	<para>
 	  O argumento <argname>MSE</argname> (opcional) determina o contido
 	  da chave <lit>Mod.smdisterr</lit>. Cando é 0 ou se omite, esta
-	  matriz vai estar composta polas desviacións padrón incondicionais
+	  matriz vai estar composta polos desvíos padrón incondicionais
 	  das perturbacións suavizadas, que habitualmente se utilizan para
 	  calcular os denominados <emphasis>erros auxiliares</emphasis>.
 	  Mais, en caso contrario, <lit>Mod.smdisterr</lit> vai conter as
-	  raíces das desviacións cadradas medias entre os erros auxiliares
+	  raíces dos desvíos cadrados medios entre os erros auxiliares
 	  e os seus valores verdadeiros.
 	</para>
 	<para>
@@ -7068,7 +7103,7 @@
 	  A matriz que se devolve ten tres columnas que conteñen,
 	  respectivamente: os valores únicos ordenados en <argname>d</argname>,
 	  a estimación da función de supervivencia que se corresponde cos
-	  valores de duración da columna 1, e a desviación padrón (para mostras
+	  valores de duración da columna 1, e o desvío padrón (para mostras
 	  grandes) do estimador, calculados por medio do método de
 	  <cite key="greenwood26">Greenwood (1926)</cite>.
 	</para>
@@ -8135,7 +8170,7 @@
 	  <cmdref targ="midasreg"/> e que é accesible mediante a clave
 	  <fncref targ="$model"/>. A función devolve unha matriz cos
 	  multiplicadores implícitos MIDAS para a variable <argname>v</argname>
-	  na primeira columna, e as desviacións padrón correspondentes na
+	  na primeira columna, e os desvíos padrón correspondentes na
 	  segunda columna. Se o argumento <argname>acumular</argname> non
 	  é cero, os multiplicadores se acumulan.
 	</para>
@@ -9366,7 +9401,7 @@
 	  A matriz que devolve a función ten tres columnas que conteñen,
 	  respectivamente: os valores únicos ordenados en
 	  <argname>d</argname>, a estimación da función de risco acumulado
-	  que se corresponde cos valores de duración da columna 1, e a desviación
+	  que se corresponde cos valores de duración da columna 1, e o desvío
 	  padrón do estimador.
 	</para>
 	<para>
@@ -9435,7 +9470,7 @@
 	  igualas a cero, o ancho de banda establécese por defecto cun valor
 	  determinado polos datos, utilizando a proporcionalidade que se acaba de
 	  mencionar, pero introducindo a dispersión dos datos de <argname>x</argname>
-	  tal como a mide o rango inter-cuartil ou a desviación padrón; consulta
+	  tal como a mide o rango inter-cuartil ou o desvío padrón; consulta
 	  o <guideref targ="chap:nonparam"/> para obter máis detalles.
 	</para>
 	<subhead>Deixar-unha-fóra</subhead>
@@ -9601,7 +9636,7 @@
       <description>
 	<para>
 	  Devolve unha serie xerada cunha variable pseudoaleatoria gaussiana
-	  de media &mu; e desviación padrón &sigma;. Se non indicas ningún
+	  de media &mu; e desvío padrón &sigma;. Se non indicas ningún
 	  argumento, os valores que se devolven son os dunha variable con
 	  distribución de probabilidade Normal estándar, <math>N</math>(0,1).
 	  Os valores prodúcense utilizando o método Ziggurat
@@ -10046,12 +10081,12 @@
       <description>
 	<para context="notex">
 	  Aplícase tan só se o conxunto vixente de datos ten unha estrutura
-	  de panel, e devolve unha serie co cálculo das desviacións ortogonais
+	  de panel, e devolve unha serie co cálculo dos desvíos ortogonais
 	  adiantadas para a variable <argname>y</argname>.
 	</para>
 	<para context="tex">
 	  Aplícase tan só se o conxunto vixente de datos ten unha estrutura
-	  de panel, e devolve unha serie co cálculo das desviacións ortogonais
+	  de panel, e devolve unha serie co cálculo dos desvíos ortogonais
 	  adiantadas para a variable <argname>y</argname>, é dicir
 	  \[ \tilde{y}_{i,t} =
 	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
@@ -10060,9 +10095,9 @@
 	<para>
 	  Algunhas veces se utiliza esta transformación en troques da
 	  diferenciación para eliminar os efectos individuais dos datos de
-	  panel. Por compatibilidade coas primeiras diferenzas, as desviacións
-	  gárdanse adiantadas un paso da súa localización temporal verdadeira
-	  (é dicir, o valor na observación <math>t</math> é a desviación que,
+	  panel. Por compatibilidade coas primeiras diferenzas, os desvíos
+	  gárdanse adiantados un paso da súa localización temporal verdadeira
+	  (é dicir, o valor na observación <math>t</math> é o desvío que,
 	  expresándoo de maneira estrita, pertence a <math>t</math> &minus; 1).
 	  Deste xeito, pérdese a primeira observación en cada serie temporal,
 	  non a derradeira.
@@ -10416,7 +10451,7 @@
       <description>
 	<para context="notex">
 	  Aplícase tan só se o conxunto vixente de datos ten unha estrutura de
-	  panel, e devolve unha serie que contén a desviación padrón (na mostra)
+	  panel, e devolve unha serie que contén o desvío padrón (na mostra)
 	  da variable <math>y</math> en cada unidade de corte transversal
 	  (repetindo cada valor nos períodos temporais de cada unha destas).
 	  O denominador que se utiliza é o tamaño da mostra en cada unidade
@@ -10426,7 +10461,7 @@
 	</para>
 	<para context="tex">
 	  Aplícase tan só se o conxunto vixente de datos ten unha estrutura de
-	  panel, e devolve unha serie que contén a desviación padrón (na mostra)
+	  panel, e devolve unha serie que contén o desvío padrón (na mostra)
 	  da variable <math>y</math> en cada unidade de corte transversal, é dicir,
 	  \[ \sigma_i = \sqrt{\frac{1}{T_i - 1} \sum_{t=1}^{T_i} (y_{i,t} -
 	  \bar{y}_i)^2 } \]. Esta fórmula aplícase cando $T_i \ge 2$, onde
@@ -10677,9 +10712,16 @@
 	  <lit>qform(x',I(rows(x))</lit>.
 	</para>
 	<para>
-	Se <argname>x</argname> e <argname>A</argname> non son matrices
-	conformables, ou se <argname>A</argname> non é simétrica, a función
-	devolve un fallo.
+	  No caso especial de que <argname>A</argname> sexa unha matriz
+	  diagonal, podes indicar o segundo argumento como un vector do
+	  tamaño axeitado, no que se entende que está contida a diagonal
+	  principal de <argname>A</argname>. Nese caso, utilízase un algoritmo
+	  máis eficiente.
+	</para>
+	<para>
+	  Se <argname>x</argname> e <argname>A</argname> non son matrices
+	  conformables, ou se <argname>A</argname> non é simétrica, a función
+	  devolve un fallo.
 	</para>
       </description>
     </function>
@@ -10849,7 +10891,7 @@
 	  No caso de Hermite, <argname>a</argname> e <argname>b</argname>
 	  xogan papeis diferentes: poden utilizarse para substituír a forma
 	  por defecto de <math>W</math>(<math>x</math>) pola distribución
-	  Normal de probabilidade con media <argname>a</argname> e desviación
+	  Normal de probabilidade con media <argname>a</argname> e desvío
 	  padrón <argname>b</argname> (coa que está estreitamente emparentada).
 	  Por exemplo, se indicas os valores 0 e 1 para estes parámetros,
 	  respectivamente, vas provocar que <math>W</math>(<math>x</math>)
@@ -10862,7 +10904,7 @@
 	  No caso de Hermite, <argname>a</argname> e <argname>b</argname>
 	  xogan papeis diferentes: poden utilizarse para substituír a forma
 	  por defecto de $W(x)$ pola distribución Normal de probabilidade con
-	  media <argname>a</argname> e desviación padrón <argname>b</argname>
+	  media <argname>a</argname> e desvío padrón <argname>b</argname>
 	  (coa que está estreitamente emparentada). Por exemplo, se indicas
 	  os valores 0 e 1 para estes parámetros, respectivamente, vas
 	  provocar que $W(x)$ sexa a función de densidade de probabilidade
@@ -10999,7 +11041,7 @@
 	  </li>
 	  <li>
             <para>
-              Normal (z, n ou N): media, desviación padrón
+              Normal (z, n ou N): media, desvío padrón
             </para>
 	  </li>
 	  <li>
@@ -11072,7 +11114,7 @@
 	  \textbf{Distribución} &amp; \textsl{d} &amp; \textsl{p1} &amp; \textsl{p2} &amp; \textsl{p3}\\[4pt]
 	  Uniforme (continua) &amp; \texttt{u} ou \texttt{U} &amp; mínimo &amp; máximo &amp; --\\
 	  Uniforme (discreta) &amp; \texttt{i} &amp; mínimo &amp; máximo &amp; --\\
-	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; media &amp; desviación padrón &amp; --\\
+	  Normal &amp; \texttt{z}, \texttt{n} ou \texttt{N} &amp; media &amp; desvío padrón &amp; --\\
 	  $t$ de Student &amp; \texttt{t} &amp; graos de liberdade &amp; -- &amp; --\\
 	  Khi-cadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp; graos de liberdade &amp; -- &amp; --\\
 	  $F$ de Snedecor &amp; \texttt{f} ou \texttt{F} &amp; gl (num.) &amp; gl (den.) &amp; --\\
@@ -11634,14 +11676,14 @@
       <description>
 	<para>
 	  Se <argname>x</argname> é unha serie, a función devolve un escalar
-	  coa súa desviación padrón na mostra, descartando as observacións ausentes.
+	  co seu desvío padrón na mostra, descartando as observacións ausentes.
 	</para>
 	<para>
 	  Se <argname>x</argname> é unha lista, a función devolve unha
 	  serie <math>y</math> tal que <math>y</math><sub>t</sub>
-	  representa a desviación padrón na mostra dos valores das
+	  representa o desvío padrón na mostra dos valores das
 	  variables da lista, na observación <math>t</math>. Por defecto,
-	  se hai algún valor ausente en <math>t</math>, a desviación
+	  se hai algún valor ausente en <math>t</math>, o desvío
 	  padrón rexístrase como <lit>NA</lit>; pero se lle das un valor
 	  non nulo a <argname>parcial</argname>, calquera valor non
 	  ausente se usará para crear o estatístico.
@@ -11661,7 +11703,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila coas desviacións padrón das columnas da
+	  Devolve un vector fila cos desvíos padrón das columnas da
 	  matriz <argname>X</argname>. Se <argname>df</argname> é positivo,
 	  utilízase como divisor para as varianzas das columnas; noutro caso,
 	  o divisor é igual ao número de filas que ten <argname>X</argname>
@@ -12329,7 +12371,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un escalar coa suma dos cadrados das desviacións respecto á
+	  Devolve un escalar coa suma dos cadrados dos desvíos respecto á
 	  media (SCT), das observacións non ausentes da serie <argname>y</argname>.
 	  <seelist>
             <fncref targ="var"/>
@@ -12381,14 +12423,14 @@
 	<para>
 	  Por defecto, devolve un resultado do mesmo tipo que o argumento, coa
 	  versión tipificada desa serie, lista ou matriz: o argumento céntrase
-	  e divídese pola súa desviación padrón mostral (con corrección de 1,
+	  e divídese polo seu desvío padrón mostral (con corrección de 1,
 	  nos graos de liberdade). No caso de que o argumento sexa unha matriz,
 	  os resultados calcúlanse por columnas.
 	</para>
 	<para>
 	  Podes usar o segundo argumento (opcional) para modular o resultado.
 	  Un valor non negativo dese <argname>v</argname> permite configurar
-	  a corrección nos graos de liberdade que se utilizan para a desviación
+	  a corrección nos graos de liberdade que se utilizan para o desvío
 	  padrón; así <argname>v</argname> = 0 solicita utilizar o estimador
 	  máximo-verosímil. Como caso especial, se estableces que
 	  <argname>v</argname> sexa igual a &minus;1, unicamente
@@ -13545,7 +13587,7 @@ d =  8,0000000
 	  usará para crear o estatístico.
 	</para>
 	<para>
-	  En cada un deses casos, a suma dos cadrados das desviacións con
+	  En cada un deses casos, a suma dos cadrados dos desvíos con
 	  respecto á media divídese por (<math>n</math> &minus; 1) cando
 	  <math>n</math> &gt; 1. Noutro caso, indícase que a varianza é igual
 	  a cero se <math>n</math> = 1, ou é igual a <lit>NA</lit> se
@@ -13773,7 +13815,7 @@ d =  8,0000000
       </fnargs>
       <description>
 	<para>
-	  Devolve o día da semana (domingo = 0, luns = 1, etc.) da data
+	  Devolve o día da semana (de Domingo = 0 ata Sábado=6) da data
 	  especificada polos tres argumentos, ou <lit>NA</lit> se a data
 	  non é correcta. Ten en conta que os tres argumentos deben de ser
 	  do mesmo tipo; ou sexa, deben de ser todos de tipo escalar (enteiro)
@@ -13790,6 +13832,20 @@ d =  8,0000000
 	  eval weekday(1990, 5, 1)
 	  eval weekday(19900501)
 	</code>
+	<para>
+	  Unha alternativa habitual de numeración dos días da semana vai
+	  desde Luns = 1 ata Domingo = 7. Se tes unha serie denominada
+	  <lit>wd</lit> obtida mediante a función <lit>weekday</lit>, e
+	  queres convertela á alternativa, podes facer
+	</para>
+	<code>
+	  altwd = wd == 0 ? 7 : wd
+	</code>
+	<para>
+	  Cae na conta de que se unicamente engades 1 a <lit>wd</lit>, obtés
+	  unha numeración que é válida pero non estándar; concretamente
+	  de Domingo = 1 a Sábado = 7.
+	</para>
       </description>
     </function>
 
@@ -13835,7 +13891,7 @@ d =  8,0000000
       <description>
 	<para>
 	  Devolve unha serie <math>y</math> calculada de forma que cada
-	  <math>y</math><sub>t</sub> indica a desviación padrón ponderada
+	  <math>y</math><sub>t</sub> indica o desvío padrón ponderado
 	  na mostra, dos valores (na observación <math>t</math>) das variables
 	  presentes na lista <argname>Y</argname>, coas respectivas ponderacións
 	  sinaladas polos valores das variables da lista <argname>W</argname>

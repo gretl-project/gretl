@@ -61,7 +61,7 @@
  <gentext key="bundles"       text="array de bundles"/>
  <gentext key="matrices-or-strings" text="array de matrices o cadenas"/>
  <gentext key="string-or-strings"  text="cadena o array de cadenas"/>
- <gentext key="all-strings"   text="string, strings array or string-valued series"/>
+ <gentext key="all-strings"   text="cadena, array de cadenas o serie con cadenas de valores"/>
  <gentext key="strings-or-list"  text="array de cadenas o lista"/>
  <gentext key="series-vec-or-strings"    text="serie, vector o array de cadenas"/>
  <gentext key="char"          text="carácter"/>
@@ -71,7 +71,7 @@
  <gentext key="fncall"        text="llamada a función"/>
  <gentext key="optional"      text="opcional"/>
  <gentext key="conditional"   text="condicional"/>
- <gentext key="depends"       text="depends on input"/>
+ <gentext key="depends"       text="depende de la entrada"/>
  <gentext key="seebelow"      text="mira más abajo"/>
  <gentext key="varargs"       text="mira más abajo"/>
  <gentext key="chapter"       text="Capítulo"/>
