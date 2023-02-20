@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-01-01 09:35-0500\n"
-"PO-Revision-Date: 2022-05-19 19:32+0200\n"
+"PO-Revision-Date: 2023-02-19 20:07+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: lib/src/adf_kpss.c:595
 msgid "lagged differences"
@@ -977,7 +977,7 @@ msgstr "Unterstelle einfaches Anführungszeichen als relevant\n"
 
 #: lib/src/csvdata.c:1591
 msgid "Quotation broken: marks not paired\n"
-msgstr ""
+msgstr "Formatfehler: Ungepaarte Anführungszeichen\n"
 
 #: lib/src/csvdata.c:1680
 #, c-format
@@ -2153,9 +2153,8 @@ msgid "No. of obs (%d) is less than no. of parameters (%d)"
 msgstr "Anzahl Beobachtungen (%d) geringer als Anzahl Parameter (%d)"
 
 #: lib/src/estimate.c:562
-#, fuzzy
 msgid "HAC standard errors not available"
-msgstr "HAC-Standardfehler"
+msgstr "HAC-Standardfehler nicht verfügbar"
 
 #: lib/src/estimate.c:633
 msgid "Weight variable is all zeros, aborting regression"
@@ -2488,9 +2487,8 @@ msgid "array: no type was specified"
 msgstr "array: kein Typ spezifiziert"
 
 #: lib/src/geneval.c:15684 lib/src/geneval.c:15758
-#, fuzzy
 msgid "indeterminate condition for '?' operator"
-msgstr "unbestimmte 'if'-Bedingung"
+msgstr "unbestimmte Bedingung für '?'-Operator"
 
 #: lib/src/geneval.c:16277
 #, c-format
@@ -2630,9 +2628,9 @@ msgid "= 1 if month = %d, 0 otherwise"
 msgstr "= 1 wenn Monat %d ist, 0 sonst"
 
 #: lib/src/genfuncs.c:3154
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if day = %s, 0 otherwise"
-msgstr "= 1 wenn Quartal = %d, 0 sonst"
+msgstr "= 1 falls Tag = %s, 0 sonst"
 
 #: lib/src/genfuncs.c:3164
 #, c-format
@@ -2876,9 +2874,8 @@ msgid "Periodic dummy variables generated.\n"
 msgstr "Periodische Dummyvariablen wurden generiert.\n"
 
 #: lib/src/genmain.c:598 lib/src/genmain.c:630
-#, fuzzy
 msgid "Centered periodic dummy variables generated.\n"
-msgstr "Periodische Dummyvariablen wurden generiert.\n"
+msgstr "Generierte zentrierte periodische Dummyvariablen.\n"
 
 #: lib/src/genmain.c:603 lib/src/genmain.c:608
 msgid "Panel dummy variables generated.\n"
@@ -3365,9 +3362,8 @@ msgstr "Matrix ist nicht hermitisch"
 #: lib/src/gretl_cmatrix.c:2769 lib/src/gretl_cmatrix.c:2915
 #: lib/src/gretl_matrix.c:8529 lib/src/gretl_matrix.c:8659
 #: lib/src/usermat.c:1667
-#, fuzzy
 msgid "qrdecomp: the input must have rows >= columns"
-msgstr "modprint: erstes Matrixargument muss 2 Spalten haben"
+msgstr "qrdecomp: Eingabe muss Zeilen >= Spalten aufweisen"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3859,9 +3855,9 @@ msgid "The argument does not seem to be a MIDAS list"
 msgstr "Argument scheint keine MIDAS-Liste zu sein"
 
 #: lib/src/gretl_midas.c:807
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid %s specification"
-msgstr "Ungültige NLKQ-Spezifikation"
+msgstr "'%s': ungültige %s-Spezifikation"
 
 #: lib/src/gretl_midas.c:2342
 #, c-format
@@ -4846,7 +4842,7 @@ msgstr "Innerer Schlüssel fehlt"
 
 #: lib/src/interact.c:2035
 msgid "gretl session files can only be opened via the GUI program"
-msgstr ""
+msgstr "gretl-Sitzungsdateien nur mit dem GUI-Programm zu öffnen"
 
 #: lib/src/interact.c:2064 lib/src/interact.c:2256 lib/src/interact.c:4088
 #, c-format
@@ -4913,9 +4909,9 @@ msgid "kalman: required matrix %s is missing"
 msgstr "kalman: benötigte Matrix %s fehlt"
 
 #: lib/src/kalman.c:3933
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected matrix but got %s"
-msgstr "Erwartete %s, aber fand %s"
+msgstr "%s: erwartete Matrix, aber fand %s"
 
 #: lib/src/libglue.c:315
 #, c-format
@@ -6271,22 +6267,21 @@ msgstr "RQS"
 
 #: lib/src/modelprint.c:4515 lib/src/modelprint.c:4521
 msgid "low"
-msgstr "niedrig"
+msgstr "unterer"
 
 #: lib/src/modelprint.c:4516 lib/src/modelprint.c:4522
 msgid "high"
-msgstr ""
+msgstr "oberer"
 
 #: lib/src/modelprint.c:4547 gui/guiprint.c:1588 gui/guiprint.c:1703
 #: gui/guiprint.c:1713
-#, fuzzy
 msgid "odds ratio"
-msgstr "Füge Beobachtung hinzu"
+msgstr "Chancenverhältnis"
 
 #: lib/src/modelprint.c:4564
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "%g%% confidence intervals"
-msgstr "%g\\%%-Konfidenzintervall"
+msgstr "%g%%-Konfidenzintervalle"
 
 #: lib/src/modelprint.c:4836
 msgid "Sum of AR coefficients"
@@ -7302,9 +7297,9 @@ msgid " Prob(x <= %d) = %g\n"
 msgstr " Prob(x <= %d) = %g\n"
 
 #: lib/src/pvalues.c:3867
-#, fuzzy, c-format
+#, c-format
 msgid " Prob(x >= %d) = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr " Prob(x >= %d) = %g\n"
 
 #: lib/src/pvalues.c:3868 lib/src/pvalues.c:3870 lib/src/pvalues.c:3881
 #: lib/src/pvalues.c:3884
@@ -7901,9 +7896,8 @@ msgid "Ambiguous matrix index"
 msgstr "Uneindeutiger Matrixindex"
 
 #: lib/src/usermat.c:607
-#, fuzzy
 msgid "Invalid submatrix specification"
-msgstr "Ungültige Quantilsspezifikation"
+msgstr "Ungültige Teilmatrixspezifikation"
 
 #: lib/src/usermat.c:1634
 msgid "Matrix decomposition failed"
@@ -8938,9 +8932,8 @@ msgid "x minimum"
 msgstr "x Minimum"
 
 #: gui/calculator.c:3320
-#, fuzzy
 msgid "x maximum"
-msgstr "Maximum"
+msgstr "x-Maximum"
 
 #: gui/calculator.c:3353
 msgid "normal CDF"
@@ -9334,7 +9327,7 @@ msgstr "Fehler beim Entzippen der gepackten Daten"
 
 #: gui/database.c:2949
 msgid "Restart gretl to access this database"
-msgstr ""
+msgstr "Für Zugriff auf diese Datenbank gretl neu starten"
 
 #: gui/database.c:3229 gui/database.c:3262
 msgid "Unknown: access error"
@@ -10806,9 +10799,8 @@ msgstr ""
 "Die Reihe %s hat anscheinend dieselbe Periodizität wie der aktuelle Datensatz"
 
 #: gui/dialogs.c:7277
-#, fuzzy
 msgid "gretl: temporal disaggregation"
-msgstr "Zeitliche Disaggregierung"
+msgstr "gretl: Zeitliche Disaggregierung"
 
 #: gui/dialogs.c:7289
 msgid "Output name:"
@@ -10851,9 +10843,8 @@ msgid "show regression results"
 msgstr "Zeige Regressionsergebnisse"
 
 #: gui/dialogs.c:7506
-#, fuzzy
 msgid "gretl: BDS test"
-msgstr "gretl: ADF-Test"
+msgstr "gretl: BDS-Test"
 
 #: gui/dialogs.c:7515
 msgid "Maximum dimension:"
@@ -10888,9 +10879,8 @@ msgid "RIDGE algorithm:"
 msgstr "Ridge-Algorithmus:"
 
 #: gui/dialogs.c:7630
-#, fuzzy
 msgid "gretl: regls options"
-msgstr "gretl: Optionen"
+msgstr "gretl: regls-Optionen"
 
 #: gui/dialogs.c:7662
 msgid "cross validation criterion"
@@ -10917,13 +10907,12 @@ msgid "show execution time"
 msgstr "Zeige Ausführungszeit"
 
 #: gui/dialogs.c:7723
-#, fuzzy
 msgid "New script"
-msgstr "_Neues Skript"
+msgstr "Neues Skript"
 
 #: gui/dialogs.c:7725
 msgid "Quit"
-msgstr ""
+msgstr "Beenden"
 
 #: gui/dlgutils.c:797
 msgid "Add equation"
@@ -11105,9 +11094,8 @@ msgid "Ox files (*.ox)"
 msgstr "Ox-dateien (*.ox)"
 
 #: gui/fileselect.c:1007
-#, fuzzy
 msgid "Stata files (*.do, *.ado)"
-msgstr "Stata-Dateien (*.do)"
+msgstr "Stata-Dateien (*.do, *.ado)"
 
 #: gui/fileselect.c:1008
 msgid "Dynare files (*.mod)"
@@ -12849,9 +12837,8 @@ msgid "_Dataset info"
 msgstr "_Datensatzinfo"
 
 #: gui/gretl.c:1868
-#, fuzzy
 msgid "_Display string tables"
-msgstr "_Zeige Werte"
+msgstr "_Zeige Zeichencodetabellen"
 
 #: gui/gretl.c:1869
 msgid "_Observation markers..."
@@ -14050,12 +14037,17 @@ msgid ""
 "observation information (for example, dates) if\n"
 "the column heading looks suitable."
 msgstr ""
+"Versuche, die erste Spalte als Beobachtungs-\n"
+"information zu behandeln (z.B. Datumsangaben),\n"
+"falls der Spaltenkopf passend erscheint."
 
 #: gui/gui_utils.c:765
 msgid ""
 "Treat the first column as an ordinary data series\n"
 "regardless of the column heading."
 msgstr ""
+"Behandle die erste Spalte als normale Datenreihe\n"
+"unabhängig vom Spaltenkopf."
 
 #: gui/gui_utils.c:783 gui/gui_utils.c:786
 #, c-format
@@ -14119,9 +14111,8 @@ msgid "Outcome probabilities"
 msgstr "Ergebniswahrscheinlichkeiten"
 
 #: gui/gui_utils.c:1168
-#, fuzzy
 msgid "Odds ratios"
-msgstr "Beobachtungen"
+msgstr "Chancenverhältnisse"
 
 #: gui/gui_utils.c:1391
 msgid "_Model as bundle"
@@ -15168,9 +15159,8 @@ msgid "gretl: fractional integration"
 msgstr "gretl: fraktionale Integration"
 
 #: gui/library.c:6112
-#, fuzzy
 msgid "gretl: logit odds ratios"
-msgstr "gretl: Beobachtungen entfernen"
+msgstr "gretl: logit-Chancenverhältnisse"
 
 #: gui/library.c:6113 gui/toolbar.c:719
 msgid "gretl: coefficient confidence intervals"
@@ -15222,28 +15212,24 @@ msgid "No discrete series are available"
 msgstr "Keine diskreten Reihen verfügbar"
 
 #: gui/library.c:6323
-#, fuzzy
 msgid "All periodic dummies"
-msgstr "_periodische Dummies"
+msgstr "Alle periodischen Dummies"
 
 #: gui/library.c:6324
 msgid "Omit the first dummy"
-msgstr ""
+msgstr "Erste Dummy weglassen"
 
 #: gui/library.c:6325
-#, fuzzy
 msgid "Omit the last dummy"
-msgstr "Saisondummies weglassen"
+msgstr "Letzte Dummy weglassen"
 
 #: gui/library.c:6329
-#, fuzzy
 msgid "Add periodic dummies"
-msgstr "_periodische Dummies"
+msgstr "Periodische Dummies hinzufügen"
 
 #: gui/library.c:6331
-#, fuzzy
 msgid "Center the periodic dummies?"
-msgstr "zentrierte periodische Dummy"
+msgstr "Die periodischen Dummies zentrieren?"
 
 #: gui/library.c:6426
 msgid "in the cross-sectional dimension"
@@ -15464,9 +15450,8 @@ msgid "pre-load data"
 msgstr "vorweg Daten laden"
 
 #: gui/library.c:8720
-#, fuzzy
 msgid "No string-valued series were found"
-msgstr "Keine Reihen gefunden"
+msgstr "Keine Zeichenkettenreihen gefunden"
 
 #: gui/library.c:8733 plugin/leverage.c:99 plugin/pca.c:100
 msgid "gretl: save data"
@@ -15647,9 +15632,8 @@ msgid "Edit attributes"
 msgstr "Bearbeite Attribute"
 
 #: gui/menustate.c:568
-#, fuzzy
 msgid "Show string table"
-msgstr "weise Zeichenkettentabelle zu\n"
+msgstr "Zeige Zeichenkettentabelle"
 
 #: gui/menustate.c:570
 msgid "Collinearity"
@@ -16504,9 +16488,8 @@ msgid "Show criterion plot"
 msgstr "Zeige Kriteriumsgraph"
 
 #: gui/selector.c:6700
-#, fuzzy
 msgid "Advanced..."
-msgstr "Hinzufügen..."
+msgstr "Fortgeschritten..."
 
 #: gui/selector.c:6717 gui/toolbar.c:724
 msgid "Confidence level"
@@ -16797,9 +16780,8 @@ msgid "Define named list"
 msgstr "Definiere benannte Liste"
 
 #: gui/selector.c:7874
-#, fuzzy
 msgid "Select coefficients to track"
-msgstr "Wähle zu summierende Variablen"
+msgstr "Wähle zu verfolgende Koeffizienten"
 
 #: gui/selector.c:8134
 msgid "Name of list"
@@ -16846,9 +16828,8 @@ msgid "default"
 msgstr "Voreinstellung"
 
 #: gui/selector.c:9437
-#, fuzzy
 msgid "Please add some variables to the model first"
-msgstr "Bitte erst eine Variable zum Datensatz hinzufügen"
+msgstr "Bitte erst Variablen zum Modell hinzufügen"
 
 #: gui/series_view.c:391 gui/series_view.c:438
 msgid "Original order"
@@ -16981,6 +16962,8 @@ msgid ""
 "Really delete %s?\n"
 "(This will remove it from the Graph page.)"
 msgstr ""
+"Wirklich %s löschen?\n"
+"(Wird dadurch aus der Graphenseite entfernt.)"
 
 #: gui/session.c:2769 gui/session.c:2795
 #, c-format
@@ -17679,9 +17662,8 @@ msgid "Couldn't open '%s'"
 msgstr "Konnte '%s' nicht öffnen"
 
 #: gui/tabwin.c:56
-#, fuzzy
 msgid "gretl_edit"
-msgstr "gretl-Website"
+msgstr "gretl_edit"
 
 #: gui/tabwin.c:58
 msgid "gretl: script editor"
@@ -17802,9 +17784,8 @@ msgid "Indent region"
 msgstr "Region einrücken"
 
 #: gui/textbuf.c:4245
-#, fuzzy
 msgid "Hide region"
-msgstr "Region ent-einrücken"
+msgstr "Region verbergen"
 
 #: gui/textbuf.c:4253
 msgid "Unindent region"
@@ -17832,21 +17813,19 @@ msgstr "Ersetzen mit:"
 
 #: gui/textutil.c:374
 msgid "Match case"
-msgstr ""
+msgstr "Groß-/Kleinschreibung beachten"
 
 #: gui/textutil.c:380
 msgid "Backward search"
-msgstr ""
+msgstr "Rückwärtssuche"
 
 #: gui/textutil.c:390
-#, fuzzy
 msgid "Replace all in:"
-msgstr "Volle Sicht ersetzen"
+msgstr "Ersetze alle in:"
 
 #: gui/textutil.c:396
-#, fuzzy
 msgid "Selection"
-msgstr "Wähle"
+msgstr "Auswahl"
 
 #: gui/textutil.c:422
 msgid "_Replace"
@@ -18210,9 +18189,8 @@ msgid "gretl: save series"
 msgstr "gretl: Reihe speichern"
 
 #: gui/winstack.c:172
-#, fuzzy
 msgid "Script editor"
-msgstr "gretl: Skripteditor"
+msgstr "Skripteditor"
 
 #: gui/winstack.c:196 gui/winstack.c:203
 msgid "Main window"
@@ -18744,7 +18722,7 @@ msgstr "Geschätzter Hurst-Exponent"
 
 #: plugin/garch.c:648
 msgid "GARCH: neither p nor q can be negative"
-msgstr ""
+msgstr "GARCH: weder negatives p noch q möglich"
 
 #: plugin/garch.c:655
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"

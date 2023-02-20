@@ -1,15 +1,15 @@
 # Polish translation for gretl 2022c_cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <pawel.kufel@wsb.torun.pl>, 2004 - 2022
-# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2022
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2022
+# Pawel Kufel <pawel.kufel@wsb.torun.pl>, 2004 - 2023
+# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2023
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2023
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 2022c\n"
+"Project-Id-Version: gretl 2023a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-01-01 09:35-0500\n"
-"PO-Revision-Date: 2022-08-27 20:05-0400\n"
+"PO-Revision-Date: 2023-02-17 11:47-0500\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@wsb.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -978,7 +978,7 @@ msgstr "Assuming single-quote is the relevant quotation character\n"
 
 #: lib/src/csvdata.c:1591
 msgid "Quotation broken: marks not paired\n"
-msgstr ""
+msgstr "Cytat zepsuty: znaki nie są sparowane\n"
 
 #: lib/src/csvdata.c:1680
 #, c-format
@@ -2161,9 +2161,8 @@ msgstr ""
 "Liczba obserwacji (%d) jest mniejsza od liczby szacowanych parametrów (%d)"
 
 #: lib/src/estimate.c:562
-#, fuzzy
 msgid "HAC standard errors not available"
-msgstr "Błędy standardowe HAC (Heterosked.and Autocorr.-Consistent)"
+msgstr "Błędy standardowe HAC (Heterosked.and Autocorr.-Consistent) niedostępne"
 
 #: lib/src/estimate.c:633
 msgid "Weight variable is all zeros, aborting regression"
@@ -2498,9 +2497,8 @@ msgid "array: no type was specified"
 msgstr "Tablica: nie wyspecyfikowano typu"
 
 #: lib/src/geneval.c:15684 lib/src/geneval.c:15758
-#, fuzzy
 msgid "indeterminate condition for '?' operator"
-msgstr "nieokreślony warunek dla polecenia 'if'"
+msgstr "nieokreślony warunek dla polecenia '?'"
 
 #: lib/src/geneval.c:16277
 #, c-format
@@ -3373,9 +3371,8 @@ msgstr "Matrix is not Hermitian"
 #: lib/src/gretl_cmatrix.c:2769 lib/src/gretl_cmatrix.c:2915
 #: lib/src/gretl_matrix.c:8529 lib/src/gretl_matrix.c:8659
 #: lib/src/usermat.c:1667
-#, fuzzy
 msgid "qrdecomp: the input must have rows >= columns"
-msgstr "modprint: pierwszy argument macierzy musi zawierać 2 kolumny"
+msgstr "qrdecomp: dane wejściowe muszą mieć liczbę wierszy >= liczby kolumn"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3865,9 +3862,9 @@ msgid "The argument does not seem to be a MIDAS list"
 msgstr "To nie jest prawidłowy argument dla MIDAS"
 
 #: lib/src/gretl_midas.c:807
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid %s specification"
-msgstr "Błąd w specyfikacji NLS"
+msgstr "%s': błąd specyfikacji %s"
 
 #: lib/src/gretl_midas.c:2342
 #, c-format
@@ -4850,7 +4847,7 @@ msgstr "Błędna wewnętrzna nazwa"
 
 #: lib/src/interact.c:2035
 msgid "gretl session files can only be opened via the GUI program"
-msgstr ""
+msgstr "Pliki sesji (*.gretl) można otwierać tylko za pomocą programu GUI"
 
 #: lib/src/interact.c:2064 lib/src/interact.c:2256 lib/src/interact.c:4088
 #, c-format
@@ -4918,9 +4915,9 @@ msgid "kalman: required matrix %s is missing"
 msgstr "Kalman: wymagana macierz %s jest błędna"
 
 #: lib/src/kalman.c:3933
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected matrix but got %s"
-msgstr "oczekiwane %s, lecz znaleziono %s"
+msgstr "oczekiwane %s, lecz otrzymano %s"
 
 #: lib/src/libglue.c:315
 #, c-format
@@ -5459,11 +5456,11 @@ msgstr "1-step GMM"
 
 #: lib/src/modelprint.c:1050 gui/selector.c:4326
 msgid "Ordered Logit"
-msgstr "Wielopoziomowy uporządkowany Logit"
+msgstr "Logit dla wiele kategorii uporządkowanych"
 
 #: lib/src/modelprint.c:1052 gui/selector.c:4328
 msgid "Multinomial Logit"
-msgstr "Wielopoziomowy nieuporządkowany Logit"
+msgstr "Logit dla wiele kategorii nieuporządkowanych"
 
 #: lib/src/modelprint.c:1058
 msgid "Random-effects probit"
@@ -5471,7 +5468,7 @@ msgstr "Probit z losowymi efektami"
 
 #: lib/src/modelprint.c:1060 gui/selector.c:4332
 msgid "Ordered Probit"
-msgstr "Wielopoziomowy uporządkowany Probit"
+msgstr "Probit dla wiele kategorii uporządkowanych"
 
 #: lib/src/modelprint.c:1066
 msgid "Fixed-effects logistic"
@@ -6277,24 +6274,22 @@ msgid "SSR"
 msgstr "SSR"
 
 #: lib/src/modelprint.c:4515 lib/src/modelprint.c:4521
-#, fuzzy
 msgid "low"
 msgstr "dolny"
 
 #: lib/src/modelprint.c:4516 lib/src/modelprint.c:4522
 msgid "high"
-msgstr ""
+msgstr "górny"
 
 #: lib/src/modelprint.c:4547 gui/guiprint.c:1588 gui/guiprint.c:1703
 #: gui/guiprint.c:1713
-#, fuzzy
 msgid "odds ratio"
-msgstr "Dołącz obserwację"
+msgstr "iloraz szans"
 
 #: lib/src/modelprint.c:4564
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "%g%% confidence intervals"
-msgstr "%g\\%% przedział ufności"
+msgstr "%g%% przedział ufności"
 
 #: lib/src/modelprint.c:4836
 msgid "Sum of AR coefficients"
@@ -6948,8 +6943,8 @@ msgstr "Copyright Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 #: lib/src/printout.c:267
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny.Test "
-"Doornika-Hansena (1994) - transformowana skośność i kurtoza."
+"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny.\n"
+"Test Doornika-Hansena (1994) - transformowana skośność i kurtoza."
 
 #: lib/src/printout.c:274
 msgid "Test for null hypothesis of gamma distribution"
@@ -7311,9 +7306,9 @@ msgid " Prob(x <= %d) = %g\n"
 msgstr " Prob(x <= %d) = %g\n"
 
 #: lib/src/pvalues.c:3867
-#, fuzzy, c-format
+#, c-format
 msgid " Prob(x >= %d) = %g\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr " Prob(x >= %d) = %g\n"
 
 #: lib/src/pvalues.c:3868 lib/src/pvalues.c:3870 lib/src/pvalues.c:3881
 #: lib/src/pvalues.c:3884
@@ -7913,9 +7908,8 @@ msgid "Ambiguous matrix index"
 msgstr "Niejednoznaczny indeks macierzy"
 
 #: lib/src/usermat.c:607
-#, fuzzy
 msgid "Invalid submatrix specification"
-msgstr "Błąd w specyfikacji kwantyli"
+msgstr "Błąd w specyfikacji podmacierzy"
 
 #: lib/src/usermat.c:1634
 msgid "Matrix decomposition failed"
@@ -8377,7 +8371,7 @@ msgstr ""
 
 #: gui/about.c:233
 msgid "Rationale"
-msgstr ""
+msgstr "Uzasadnienie"
 
 #: gui/about.c:240
 msgid "News"
@@ -8951,9 +8945,8 @@ msgid "x minimum"
 msgstr "x minimum"
 
 #: gui/calculator.c:3320
-#, fuzzy
 msgid "x maximum"
-msgstr "maksimum"
+msgstr "x maksimum"
 
 #: gui/calculator.c:3353
 msgid "normal CDF"
@@ -9347,7 +9340,7 @@ msgstr "Błąd rozpakowania skompresowanych danych"
 
 #: gui/database.c:2949
 msgid "Restart gretl to access this database"
-msgstr ""
+msgstr "Aby uzyskać dostęp do tej bazy danych, uruchom ponownie gretl"
 
 #: gui/database.c:3229 gui/database.c:3262
 msgid "Unknown: access error"
@@ -9944,7 +9937,6 @@ msgid "Data structure wizard"
 msgstr "Kreator struktury danych"
 
 #: gui/datawiz.c:2496
-#, fuzzy
 msgid ""
 "The current dataset holds daily data on an incomplete calendar\n"
 "(missing values are skipped rather than recorded as such).\n"
@@ -9958,8 +9950,8 @@ msgid ""
 "\n"
 "Do you want to continue?"
 msgstr ""
-"Obecny zbiór danych przechowuje dane dzienne w niekompletnym kalendarzu\n"
-"(brakujące wartości są pomijane, a nie zapisywane jako takie).\n"
+"Obecny zbiór danych przechowuje dane dzienne w niepełnym kalendarzu\n"
+"(brakujące wartości są pomijane, a nie rejestrowane jako takie).\n"
 "\n"
 "Jeśli chcesz, gretl może uzupełnić dane (wstawić NA), aby utworzyć\n"
 "kompletny kalendarz. Pamiętaj jednak, że może to utrudnić stosowanie\n"
@@ -10927,13 +10919,12 @@ msgid "show execution time"
 msgstr "pokaż czas wykonania"
 
 #: gui/dialogs.c:7723
-#, fuzzy
 msgid "New script"
 msgstr "_Nowy plik skryptowy"
 
 #: gui/dialogs.c:7725
 msgid "Quit"
-msgstr ""
+msgstr "Koniec"
 
 #: gui/dlgutils.c:797
 msgid "Add equation"
@@ -11115,9 +11106,8 @@ msgid "Ox files (*.ox)"
 msgstr "pliki programu Ox (*.ox)"
 
 #: gui/fileselect.c:1007
-#, fuzzy
 msgid "Stata files (*.do, *.ado)"
-msgstr "pliki danych Stata (*.do)"
+msgstr "pliki danych Stata (*.do, *.ado)"
 
 #: gui/fileselect.c:1008
 msgid "Dynare files (*.mod)"
@@ -12799,7 +12789,7 @@ msgid "_Gretl console"
 msgstr "_Konsola gretla..."
 
 #: gui/gretl.c:1851
-msgid "_Gnuplot"
+msgid "Start _Gnuplot"
 msgstr "_Gnuplot"
 
 #: gui/gretl.c:1852
@@ -12859,9 +12849,8 @@ msgid "_Dataset info"
 msgstr "_Opis pliku"
 
 #: gui/gretl.c:1868
-#, fuzzy
 msgid "_Display string tables"
-msgstr "_Pokaż wartości"
+msgstr "_Pokaż tablice łańcuchów znaków"
 
 #: gui/gretl.c:1869
 msgid "_Observation markers..."
@@ -12893,7 +12882,7 @@ msgstr "_Sortowanie danych przekrojowych..."
 
 #: gui/gretl.c:1876
 msgid "Paste from clipboard..."
-msgstr "wklej ze schowka..."
+msgstr "Wklej ze schowka..."
 
 #: gui/gretl.c:1877 gui/gretl.c:1987
 msgid "Set missing _value code..."
@@ -13369,15 +13358,15 @@ msgstr "Model _Logitowy"
 
 #: gui/gretl.c:2024 gui/gretl.c:2028
 msgid "_Binary"
-msgstr "_Dwupoziomowy (_binarny)"
+msgstr "_dla dwóch kategorii (_binary)"
 
 #: gui/gretl.c:2025 gui/gretl.c:2029
 msgid "_Ordered"
-msgstr "Wielopoziomowy _uporządkowany"
+msgstr "dla wielu kategorii uporządkowanych (_ordered)"
 
 #: gui/gretl.c:2026
 msgid "_Multinomial"
-msgstr "Wielopoziomowy _nieuporządkowany"
+msgstr "dla wielu kategorii nieuporządkowanych (_multinomial)"
 
 #: gui/gretl.c:2027
 msgid "_Probit"
@@ -13461,7 +13450,7 @@ msgstr "_Opis funkcji gretla"
 
 #: gui/gretl.c:2053
 msgid "_Packages"
-msgstr "_Pakiety"
+msgstr "_Pakiety funkcji"
 
 #: gui/gretl.c:2054
 msgid "_User's guide"
@@ -14061,13 +14050,18 @@ msgid ""
 "Try to interpret the first column as containing\n"
 "observation information (for example, dates) if\n"
 "the column heading looks suitable."
-msgstr ""
+msgstr "" 
+"Spróbuj zinterpretować pierwszą kolumnę jako\n"
+"informacje z obserwacji (na przykład daty),\n"
+"jeśli nagłówek kolumny wygląda na odpowiedni."
 
 #: gui/gui_utils.c:765
 msgid ""
 "Treat the first column as an ordinary data series\n"
 "regardless of the column heading."
-msgstr ""
+msgstr "" 
+"Traktuj pierwszą kolumnę jako zwykłą serię danych\n"
+"niezależnie od nagłówka kolumny."
 
 #: gui/gui_utils.c:783 gui/gui_utils.c:786
 #, c-format
@@ -14126,12 +14120,11 @@ msgstr "gretl: model %d"
 
 #: gui/gui_utils.c:1143 gui/gui_utils.c:1156
 msgid "Outcome probabilities"
-msgstr "Outcome probabilities"
+msgstr "Prawdopodobieństwa wyniku"
 
 #: gui/gui_utils.c:1168
-#, fuzzy
 msgid "Odds ratios"
-msgstr "Zakres obserwacji"
+msgstr "Iloraz szans"
 
 #: gui/gui_utils.c:1391
 msgid "_Model as bundle"
@@ -14208,7 +14201,7 @@ msgstr "względem %s"
 
 #: gui/gui_utils.c:1670
 msgid "Actual vs. Fitted"
-msgstr "Empiryczne i wyrównane wartości zmiennej"
+msgstr "Empiryczne vs. wyrównane wartości zmiennej"
 
 #: gui/gui_utils.c:1680
 msgid "Residual _correlogram"
@@ -15177,9 +15170,8 @@ msgid "gretl: fractional integration"
 msgstr "gretl: Testy na ułamkowy rząd integracji"
 
 #: gui/library.c:6112
-#, fuzzy
 msgid "gretl: logit odds ratios"
-msgstr "gretl: usuwanie obserwacji"
+msgstr "gretl: logitowy iloraz szans"
 
 #: gui/library.c:6113 gui/toolbar.c:719
 msgid "gretl: coefficient confidence intervals"
@@ -15231,27 +15223,24 @@ msgid "No discrete series are available"
 msgstr "Brak zmiennych dyskretnych"
 
 #: gui/library.c:6323
-#, fuzzy
 msgid "All periodic dummies"
-msgstr "perio_dyczne zmienne 0-1"
+msgstr "Wszystkie periodyczne zmienne 0-1"
 
 #: gui/library.c:6324
 msgid "Omit the first dummy"
-msgstr ""
+msgstr "Bez pierwszej periodycznej zmiennej 0-1"
 
 #: gui/library.c:6325
-#, fuzzy
 msgid "Omit the last dummy"
-msgstr "Pominięto sezonowe zmienne 0-1"
+msgstr "Bez ostatniej periodycznej zmiennej 0-1"
 
 #: gui/library.c:6329
-#, fuzzy
 msgid "Add periodic dummies"
-msgstr "perio_dyczne zmienne 0-1"
+msgstr "Generowanie periodycznych zmiennych 0-1"
 
 #: gui/library.c:6331
 msgid "Center the periodic dummies?"
-msgstr "Wygenerować scentrowane periodyczne zmienne?"
+msgstr "Wygenerować scentrowane periodyczne zmienne 0-1 ?"
 
 #: gui/library.c:6426
 msgid "in the cross-sectional dimension"
@@ -15276,7 +15265,7 @@ msgstr "Brak dodanych obserwacji do usunięcia"
 
 #: gui/library.c:6491
 msgid "Pad incomplete daily data"
-msgstr "Pad niekompletne dane dzienne"
+msgstr "Uzupełnij niekompletne dane dzienne"
 
 #: gui/library.c:6492
 msgid "Days per week"
@@ -15472,9 +15461,8 @@ msgid "pre-load data"
 msgstr "wykorzystaj otwarty plik danych"
 
 #: gui/library.c:8720
-#, fuzzy
 msgid "No string-valued series were found"
-msgstr "Nie znaleziono żadnych szeregów"
+msgstr "Nie znaleziono serii o wartościach łańcuchowych"
 
 #: gui/library.c:8733 plugin/leverage.c:99 plugin/pca.c:100
 msgid "gretl: save data"
@@ -15655,9 +15643,8 @@ msgid "Edit attributes"
 msgstr "Edycja atrybutów"
 
 #: gui/menustate.c:568
-#, fuzzy
 msgid "Show string table"
-msgstr "allocating string table\n"
+msgstr "Pokaż tabelę ciągów znaków"
 
 #: gui/menustate.c:570
 msgid "Collinearity"
@@ -15685,7 +15672,7 @@ msgstr "Dodaj indeks wartości..."
 
 #: gui/menustate.c:580
 msgid "Dummify..."
-msgstr "Dodaj zmienne 0-1 dla dyskretnej zmiennej"
+msgstr "Dodaj zmienne 0-1 dla dyskretnej zmiennej..."
 
 #: gui/menustate.c:581
 msgid "Add logs"
@@ -16808,9 +16795,8 @@ msgid "Define named list"
 msgstr "Definiowanie listy zmiennych"
 
 #: gui/selector.c:7874
-#, fuzzy
 msgid "Select coefficients to track"
-msgstr "Wybór współczynników do sumy"
+msgstr "Wybór współczynników do śledzenia"
 
 #: gui/selector.c:8134
 msgid "Name of list"
@@ -16991,7 +16977,9 @@ msgid ""
 "Really delete %s?\n"
 "(This will remove it from the Graph page.)"
 msgstr ""
-
+"Naprawdę usunąć %s? \n"
+"(Spowoduje to usunięcie jego ze strony wykresu.)"
+            
 #: gui/session.c:2769 gui/session.c:2795
 #, c-format
 msgid "'%s': there is already an object of this name"
@@ -17689,9 +17677,8 @@ msgid "Couldn't open '%s'"
 msgstr "Niemożliwe otwarcie pliku '%s'"
 
 #: gui/tabwin.c:56
-#, fuzzy
 msgid "gretl_edit"
-msgstr "gretl: edycja danych"
+msgstr "gretl_edit"
 
 #: gui/tabwin.c:58
 msgid "gretl: script editor"
@@ -17812,9 +17799,8 @@ msgid "Indent region"
 msgstr "Indent region"
 
 #: gui/textbuf.c:4245
-#, fuzzy
 msgid "Hide region"
-msgstr "Unindent region"
+msgstr "Ukryj region"
 
 #: gui/textbuf.c:4253
 msgid "Unindent region"
@@ -18216,9 +18202,8 @@ msgid "gretl: save series"
 msgstr "gretl: zapisz szereg"
 
 #: gui/winstack.c:172
-#, fuzzy
 msgid "Script editor"
-msgstr "tryb edytora skryptów"
+msgstr "Edytor skryptów"
 
 #: gui/winstack.c:196 gui/winstack.c:203
 msgid "Main window"
@@ -18750,7 +18735,7 @@ msgstr "Oszacowany wykładnik Hursta"
 
 #: plugin/garch.c:648
 msgid "GARCH: neither p nor q can be negative"
-msgstr ""
+msgstr "GARCH: ani p, ani q nie mogą być ujemne"
 
 #: plugin/garch.c:655
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
@@ -19018,7 +19003,7 @@ msgstr "Czy wprowadzić hasło?"
 
 #: plugin/mailer.c:696
 msgid "Use password once and forget it"
-msgstr "Use password once and forget it"
+msgstr "Użyj hasła raz i zapomnij"
 
 #: plugin/mailer.c:697
 msgid "Store this password"
@@ -19055,12 +19040,12 @@ msgstr "Wiadomość"
 #: plugin/mailer.c:863
 #, c-format
 msgid "Please find the gretl data file %s attached."
-msgstr "Please find the gretl data file %s attached."
+msgstr "W załączniku znajduje się plik danych gretl %s."
 
 #: plugin/mailer.c:866
 #, c-format
 msgid "Please find the gretl script %s attached."
-msgstr "Please find the gretl script %s attached."
+msgstr "W załączniku znajduje się skrypt gretl %s."
 
 #: plugin/mailer.c:890
 msgid "Append signature"
@@ -19592,197 +19577,3 @@ msgstr "Statystyki/Transformacje"
 msgid "Decoration"
 msgstr "Decoration"
 
-#~ msgid ""
-#~ "One or more non-numeric variables were found.\n"
-#~ "These variables have been given numeric codes as follows.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Znaleziono jedną lub więcej nienumerycznych zmiennych.\n"
-#~ "Gretl nie może ich wykorzystać bezpośrednio, w związku \n"
-#~ "z tym nadano im następujące numeryczne kody.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "In addition, some mappings from numerical values to string\n"
-#~ "labels were found, and are printed below.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Znaleziono wykaz podstawień numerycznych wartości\n"
-#~ "na łańcuchy znaków. Zestawienie poniżej.\n"
-#~ "\n"
-
-#, c-format
-#~ msgid ""
-#~ "String code table written to\n"
-#~ " %s\n"
-#~ msgstr ""
-#~ "Tablica znaków kodowych zapisana do\n"
-#~ " %s\n"
-
-#, no-c-format
-#~ msgid ""
-#~ "      VARIABLE         COEFFICIENT      %g%% CONFIDENCE INTERVAL\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      Zmienna         Współczynnik      %g%% Przedział ufności\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Usually gretl tries to interpret the first column of a CSV\n"
-#~ "data file as containing observation information (for example,\n"
-#~ "dates), if the column heading looks suitable.\n"
-#~ "\n"
-#~ "Do you want to force gretl to treat the first column as just\n"
-#~ "an ordinary data series (regardless of the column heading)?"
-#~ msgstr ""
-#~ "Zazwyczaj gretl zinterpretuje pierwszą kolumnę pliku CSV\n"
-#~ "jako zawierającą informacje o obserwacji (na przykład daty),\n"
-#~ "jeśli nagłówek kolumny wygląda na odpowiedni.\n"
-#~ "\n"
-#~ "Czy chcesz aby gretl traktował pierwszą kolumnę jako\n"
-#~ "zwykła seria danych (niezależnie od nagłówka kolumny)?"
-
-#~ msgid "progressive loop: model must be of constant size"
-#~ msgstr "progressive loop: model must be of constant size"
-
-#, c-format
-#~ msgid "%s estimates using the %d observations %s-%s\n"
-#~ msgstr "Estymacja %s dla %d obserwacji %s-%s\n"
-
-#, c-format
-#~ msgid "Statistics for %d repetitions\n"
-#~ msgstr "Statystyka dla %d powtórzeń\n"
-
-#, c-format
-#~ msgid ""
-#~ "Dependent variable: %s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Zmienna zależna: %s\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "                     mean of      std. dev. of     mean of     std. dev. "
-#~ "of\n"
-#~ "                    estimated      estimated      estimated      "
-#~ "estimated\n"
-#~ "      Variable     coefficients   coefficients   std. errors    std. "
-#~ "errors\n"
-#~ "\n"
-#~ msgstr ""
-#~ "                 średnia dla    odch. stand.    średnia dla    odch. "
-#~ "stand.\n"
-#~ "                estymowanych    estymowanych    estymowanych   "
-#~ "estymowanych\n"
-#~ "     Zmienna   współczynników  współczynników   błędów stand.  błędów "
-#~ "stand.\n"
-#~ "\n"
-
-#, c-format
-#~ msgid "store: using filename %s\n"
-#~ msgstr "polecenie 'store' wykorzystuje plik %s\n"
-
-#~ msgid "write of data file failed\n"
-#~ msgstr "Błąd w zapisie zbioru danych\n"
-
-#, c-format
-#~ msgid "%s: not implemented in 'progressive' loops"
-#~ msgstr "%s: 'progressive' nie jest zaimplementowane dla pętli"
-
-#~ msgid "x range"
-#~ msgstr "x maksimum"
-
-#~ msgid "Sorry, this item not yet implemented!"
-#~ msgstr "Sorry, ta pozycja nie jest jeszcze zaimplementowana!"
-
-#, c-format
-#~ msgid "%s: not a recognized script file"
-#~ msgstr "%s: nierozpoznany plik skryptu"
-
-#~ msgid "Couldn't open temp file"
-#~ msgstr "Nie można otworzyć pliku temp"
-
-#~ msgid "Buffer is empty"
-#~ msgstr "Bufor jest pusty"
-
-#~ msgid "gretl: edit plot commands"
-#~ msgstr "gretl: edycja parametrów wykresu"
-
-#~ msgid "gretl: edit R script"
-#~ msgstr "gretl: edycja skryptu R"
-
-#~ msgid "gretl: edit Ox program"
-#~ msgstr "gretl: edycja skryptu Ox"
-
-#~ msgid "gretl: edit Octave script"
-#~ msgstr "gretl: edycja skryptu Octave"
-
-#~ msgid "gretl: edit Python script"
-#~ msgstr "gretl: edycja skryptu Pythona"
-
-#~ msgid "gretl: edit Julia program"
-#~ msgstr "gretl: edycja programu Julia"
-
-#~ msgid "gretl: edit Stata program"
-#~ msgstr "gretl: edycja skryptu Stata"
-
-#~ msgid "gretl: edit Dynare script"
-#~ msgstr "gretl: edycja skryptu Dynare"
-
-#~ msgid "gretl: edit lpsolve script"
-#~ msgstr "gretl: edycja skryptu lpsolve"
-
-#~ msgid "gretl: edit package spec file"
-#~ msgstr "gretl: edycja pakietu spec file"
-
-#~ msgid "gretl: untitled"
-#~ msgstr "gretl: bez nazwy"
-
-#, c-format
-#~ msgid "%s output"
-#~ msgstr "%s wyniki gretla"
-
-#, c-format
-#~ msgid "gretl: %s output"
-#~ msgstr "gretl: %s wyniki gretla"
-
-#, c-format
-#~ msgid "gretl: script output %d"
-#~ msgstr "gretl: wyniki skryptu %d"
-
-#~ msgid "gretl: script output"
-#~ msgstr "gretl: wyniki skryptu"
-
-#~ msgid "gretl: command reference"
-#~ msgstr "gretl: opis poleceń gretla"
-
-#~ msgid "gretl: help"
-#~ msgstr "gretl: pomoc"
-
-#~ msgid "gretl: function reference"
-#~ msgstr "gretl: opis funkcji gretla"
-
-#~ msgid "gretl: command log"
-#~ msgstr "gretl: dziennik poleceń"
-
-#, c-format
-#~ msgid "Can't open %s for reading"
-#~ msgstr "Niemożliwe otwarcie pliku %s"
-
-#~ msgid "No output was produced"
-#~ msgstr "Nie wyprodukowano żadnych danych wyjściowych"
-
-#~ msgid "No command was supplied to start R"
-#~ msgstr "Brak polecenia uruchamiającego program R"
-
-#~ msgid "gretlcli command failed"
-#~ msgstr "Nieudane wykonanie polecenia gretlcli"
-
-#~ msgid "multiple time series object"
-#~ msgstr "multiple time series object"
-
-#~ msgid "data frame"
-#~ msgstr "data frame"
-
-#~ msgid "Send data as"
-#~ msgstr "Wyślij dane jako"

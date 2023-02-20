@@ -952,7 +952,7 @@ static int give_cancel_option (GtkWidget *parent)
 	   "close the current one.  Any unsaved work\n"
 	   "will be lost.  Proceed to open data file?");
 
-    return yes_no_dialog(_("gretl: open data"), msg, parent);
+    return yes_no_dialog(_("gretl: open data"), _(msg), parent);
 }
 
 /* give user choice of not opening selected datafile, if there's
