@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-01-01 09:35-0500\n"
-"PO-Revision-Date: 2022-11-29 11:54+0100\n"
+"PO-Revision-Date: 2023-02-21 23:11+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -972,15 +972,15 @@ msgstr "Trovate %d virgolette, massimo %d per riga\n"
 
 #: lib/src/csvdata.c:1585
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr "Posto che il marcatore per i caratteri sia la virgoletta doppia\n"
+msgstr "Marcatore per i caratteri: virgoletta doppia\n"
 
 #: lib/src/csvdata.c:1588
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr "Posto che il marcatore per i caratteri sia la virgoletta singola\n"
+msgstr "Marcatore per i caratteri: virgoletta singola\n"
 
 #: lib/src/csvdata.c:1591
 msgid "Quotation broken: marks not paired\n"
-msgstr ""
+msgstr "Delimitazione stringhe fallita: marcatori non a coppie\n"
 
 #: lib/src/csvdata.c:1680
 #, c-format
@@ -2164,9 +2164,8 @@ msgstr ""
 "Il numero delle osservazioni (%d) è minore di quello dei parametri (%d) "
 
 #: lib/src/estimate.c:562
-#, fuzzy
 msgid "HAC standard errors not available"
-msgstr "errori standard HAC"
+msgstr "errori standard HAC non disponibili"
 
 #: lib/src/estimate.c:633
 msgid "Weight variable is all zeros, aborting regression"
@@ -3870,9 +3869,9 @@ msgid "The argument does not seem to be a MIDAS list"
 msgstr "L'argomento non sembra essere una lista MIDAS"
 
 #: lib/src/gretl_midas.c:807
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid %s specification"
-msgstr "Specificazione NLS non valida"
+msgstr "'%s': Specificazione %s non valida"
 
 #: lib/src/gretl_midas.c:2342
 #, c-format
@@ -6300,20 +6299,19 @@ msgstr "SSR"
 
 #: lib/src/modelprint.c:4515 lib/src/modelprint.c:4521
 msgid "low"
-msgstr "Basso"
+msgstr "inf."
 
 #: lib/src/modelprint.c:4516 lib/src/modelprint.c:4522
 msgid "high"
-msgstr ""
+msgstr "sup."
 
 #: lib/src/modelprint.c:4547 gui/guiprint.c:1588 gui/guiprint.c:1703
 #: gui/guiprint.c:1713
-#, fuzzy
 msgid "odds ratio"
-msgstr "Aggiungi osservazione"
+msgstr "odds ratio"
 
 #: lib/src/modelprint.c:4564
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "%g%% confidence intervals"
 msgstr "Intervallo di confidenza al %g\\%%"
 
@@ -11141,9 +11139,8 @@ msgid "Ox files (*.ox)"
 msgstr "file Ox (*.ox)"
 
 #: gui/fileselect.c:1007
-#, fuzzy
 msgid "Stata files (*.do, *.ado)"
-msgstr "File di Stata (*.do)"
+msgstr "File di Stata (*.do, *.ado)"
 
 #: gui/fileselect.c:1008
 msgid "Dynare files (*.mod)"
@@ -12885,9 +12882,8 @@ msgid "_Dataset info"
 msgstr "_Info dataset"
 
 #: gui/gretl.c:1868
-#, fuzzy
 msgid "_Display string tables"
-msgstr "_Mostra valori"
+msgstr "_Mostra tavola delle stringhe"
 
 #: gui/gretl.c:1869
 msgid "_Observation markers..."
@@ -14090,12 +14086,17 @@ msgid ""
 "observation information (for example, dates) if\n"
 "the column heading looks suitable."
 msgstr ""
+"Prova a interpretare la prima colonna come\n"
+"marcatore delle osservazioni (ad es., date)\n"
+"se l'intestazione lo suggerisce"
 
 #: gui/gui_utils.c:765
 msgid ""
 "Treat the first column as an ordinary data series\n"
 "regardless of the column heading."
 msgstr ""
+"Tratta la prima colonna come una normale colonna\n"
+"di dati qualsiasi sia l'intestazione"
 
 #: gui/gui_utils.c:783 gui/gui_utils.c:786
 #, c-format
@@ -14157,9 +14158,8 @@ msgid "Outcome probabilities"
 msgstr "Probabilità del risultato"
 
 #: gui/gui_utils.c:1168
-#, fuzzy
 msgid "Odds ratios"
-msgstr "Osservazioni"
+msgstr "Odds ratio"
 
 #: gui/gui_utils.c:1391
 msgid "_Model as bundle"
@@ -15212,9 +15212,8 @@ msgid "gretl: fractional integration"
 msgstr "gretl: integrazione frazionale"
 
 #: gui/library.c:6112
-#, fuzzy
 msgid "gretl: logit odds ratios"
-msgstr "gretl: elimina osservazioni"
+msgstr "gretl: odds ratio del logit"
 
 #: gui/library.c:6113 gui/toolbar.c:719
 msgid "gretl: coefficient confidence intervals"
@@ -15505,9 +15504,8 @@ msgid "pre-load data"
 msgstr "pre-carica i dati"
 
 #: gui/library.c:8720
-#, fuzzy
 msgid "No string-valued series were found"
-msgstr "Non è stata trovata alcuna serie<"
+msgstr "Non è stata trovata alcuna serie a valori stringa"
 
 #: gui/library.c:8733 plugin/leverage.c:99 plugin/pca.c:100
 msgid "gretl: save data"
@@ -15689,9 +15687,8 @@ msgstr "Modifica attributi"
 
 #  Comando plotvar, non ancora implementato
 #: gui/menustate.c:568
-#, fuzzy
 msgid "Show string table"
-msgstr "allocazione tabella stringhe\n"
+msgstr "Mostra la tabella stringhe"
 
 #: gui/menustate.c:570
 msgid "Collinearity"
