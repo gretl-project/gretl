@@ -2102,11 +2102,11 @@ static int push_function_line (ufunc *fun, char *s, int ci, int donate)
             if (strchr(lines[i].s, '$') != NULL) {
                 /* be on the safe side wrt string substitution */
                 lines[i].flags = LINE_NOCOMP;
-	    } else if (0 && strchr(lines[i].s, '(') != NULL) {
-		/* and also wrt function calls (could be cross-recursive) */
-		lines[i].flags = LINE_NOCOMP;
             } else {
                 lines[i].flags = 0;
+            }
+            if (ci == CMD_COMMENT) {
+                lines[i].flags |= LINE_IGNORE;
             }
             fun->n_lines = n;
             fun->line_idx += 1;
@@ -2127,6 +2127,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     char *buf, *s;
     gint8 uses_set = 0;
     gint8 has_flow = 0;
+    int save_comments = 0; /* not yet */
     int err = 0;
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -2142,7 +2143,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 	s = line;
 	while (isspace(*s)) s++;
         state.line = s;
-        err = get_command_index(&state, FUNC);
+        err = get_command_index(&state, FUNC, save_comments);
         if (err) {
             break;
         }
@@ -5474,10 +5475,18 @@ static int package_run_R_setup (ufunc *fun)
     }
 
     if (prn != NULL) {
+        const char *s;
+
 	for (i=0; i<fun->n_lines; i++) {
-	    if (i > 0 && i < fun->n_lines - 1) {
-		/* skip "foreign" and "end foreign" */
-		pputs(prn, fun->lines[i].s);
+            s = fun->lines[i].s;
+            /* skip "foreign" and "end foreign" */
+            if (!strncmp(s, "foreign lan", 11) ||
+                !strncmp(s, "end foreign", 11)) {
+                continue;
+            } else if (fun->lines[i].flags & LINE_IGNORE) {
+                continue;
+            } else {
+		pputs(prn, s);
 		pputc(prn, '\n');
 	    }
 	}
@@ -7805,7 +7814,7 @@ int gretl_function_append_line (ExecState *s)
     origline = gretl_strdup(line);
 
     if (!blank) {
-	err = get_command_index(s, FUNC);
+	err = get_command_index(s, FUNC, 0);
     }
     if (blank || err) {
 	goto next_step;
