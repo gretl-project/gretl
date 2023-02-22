@@ -153,7 +153,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, void *ptr)
     }
 
     if (gretl_compiling_loop()) {
-        err = get_command_index(s, LOOP);
+        err = get_command_index(s, LOOP, 0);
     } else {
         err = parse_command_line(s, dset, ptr);
         if (s->cmd->ci == GENR && !err && ptr != NULL) {

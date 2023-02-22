@@ -117,7 +117,7 @@ static int strip_inline_comments (char *s)
 /* filter_comments: strip comments out of line; return non-zero if
    the whole line is a comment */
 
-static int filter_comments (char *s, CMD *cmd)
+static int filter_comments (char *s, CMD *cmd, int preserve)
 {
     char tmp[MAXLINE];
     char *p = s;
@@ -160,6 +160,10 @@ static int filter_comments (char *s, CMD *cmd)
     }
 
     tmp[j] = '\0';
+    if (preserve && tmp[0] == '\0') {
+        cmd->ci = CMD_COMMENT;
+        return 1;
+    }
     strcpy(s, tmp);
     tailstrip(s);
 
@@ -307,7 +311,7 @@ int parse_command_line (ExecState *s, DATASET *dset, void *ptr)
         compress_spaces(line);
 
         /* trap lines that are nothing but comments */
-        if (filter_comments(line, cmd)) {
+        if (filter_comments(line, cmd, 0)) {
             return 0;
         }
 
@@ -4160,7 +4164,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
  * Returns: 1 on error, otherwise 0.
  */
 
-int get_command_index (ExecState *s, int cmode)
+int get_command_index (ExecState *s, int cmode, int preserve)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
@@ -4179,7 +4183,7 @@ int get_command_index (ExecState *s, int cmode)
         return 0;
     }
 
-    if (filter_comments(line, cmd)) {
+    if (filter_comments(line, cmd, preserve)) {
         return 0;
     }
 

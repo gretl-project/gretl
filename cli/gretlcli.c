@@ -1183,7 +1183,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 
     if (gretl_compiling_loop()) {
         /* if we're stacking commands for a loop, parse "lightly" */
-        err = get_command_index(s, LOOP);
+        err = get_command_index(s, LOOP, 0);
     } else {
         err = parse_command_line(s, dset, NULL);
     }
