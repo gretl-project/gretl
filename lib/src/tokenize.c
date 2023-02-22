@@ -3939,9 +3939,12 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (first_arg_quoted(cmd)) {
 	    /* printing a string literal */
 	    cmd->ciflags = CI_PARM1;
-	} else {
+	} else if (dset != NULL && dset->v > 0) {
 	    /* assume for now that we're printing series */
 	    cmd->ciflags |= (CI_LIST | CI_DOALL);
+	} else {
+	    /* expression to be evaluated? */
+	    cmd->ciflags = CI_PARM2;
 	}
     } else if (option_inflected(cmd)) {
 	handle_option_inflections(cmd);
