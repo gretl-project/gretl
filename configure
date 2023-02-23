@@ -17632,7 +17632,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 	  case $brand in
         apple)
           ac_conditional='defined __clang__ && defined __apple_build_version__'
-          ac_option='-Xclang -fopenmp' ;;
+          ac_option='-Xpreprocessor -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
@@ -17686,11 +17686,11 @@ rm -rf conftest*
 
 	  fi
 	  if test $ac_openmp_result = yes; then
-	    ac_save_CFLAGS=$CFLAGS
-		ac_save_LIBS=$LIBS
-	    CFLAGS="$CFLAGS $ac_option"
-        LIBS="$LIBS $OMPLIB"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+            ac_save_CFLAGS=$CFLAGS
+            ac_save_LIBS=$LIBS
+            CFLAGS="$CFLAGS $ac_option"
+            LIBS="$LIBS $OMPLIB"
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #ifndef _OPENMP
@@ -17706,8 +17706,8 @@ then :
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
-	    CFLAGS=$ac_save_CFLAGS
-		LIBS=$ac_save_LIBS
+            CFLAGS=$ac_save_CFLAGS
+            LIBS=$ac_save_LIBS
 	    break
 	  fi
 	done
@@ -24452,7 +24452,6 @@ printf "%s\n" "yes" >&6; }
       have_sourceview="4"
 fi
 fi
-
 
 if test $have_sourceview = "3.0" || test $have_sourceview = "4" || test $pkg_build = "yes" ; then
    printf "%s\n" "#define HAVE_GTKSV_COMPLETION 1" >>confdefs.h
