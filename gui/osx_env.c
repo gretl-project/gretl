@@ -10,7 +10,7 @@ void osx_setup_paths (void)
 {
     char userpath[MAXPATHLEN + 1];
     char execpath[MAXPATHLEN + 1];
-    uint32_t pathsz = sizeof respath;
+    uint32_t pathsz = sizeof execpath;
     gchar *tmp, *respath = NULL;
     char *c, *rhome;
 
