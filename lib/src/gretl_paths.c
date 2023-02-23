@@ -1054,10 +1054,13 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     }
 #endif
 
+#if 0 /* this clause added 2021-02-04, reverted 2023-02-23 for the
+         sake of backward compatibility */
     if (stype == FUNCS_SEARCH) {
 	/* we don't really want the additional paths below? */
 	return dirs;
     }
+#endif
 
     if (!err) {
         /* the user's working dir */
@@ -1065,7 +1068,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
         err = strings_array_add(&dirs, n_dirs, dirname);
     }
 
-    if (!err) {
+    if (!err && stype != FUNCS_SEARCH) {
         /* working dir, no subdir */
         strcpy(dirname, gretl_workdir());
         err = strings_array_add(&dirs, n_dirs, dirname);
@@ -2003,12 +2006,12 @@ static const char *regular_default_workdir (void)
  * maybe_get_default_workdir:
  *
  * Figures the full path to the default value of the
- * user's gretl working directory; call this "defdir".
+ * user's gretl working directory; call this @defdir.
  *
- * If this defdir turns out to be the same as the
+ * If this @defdir turns out to be the same as the
  * current gretl working directory, as would be returned
  * by gretl_workdir(), this function returns NULL,
- * otherwise it returns the defdir value.
+ * otherwise it returns the @defdir value.
  *
  * Returns: a path, or NULL.
  */
