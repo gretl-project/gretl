@@ -144,7 +144,7 @@ static int caller_is_model_window (windata_t *vwin)
 
 static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 {
-    call_info *cinfo = mymalloc(sizeof *cinfo);
+    call_info *cinfo = calloc(1, sizeof *cinfo);
 
     if (cinfo == NULL) {
 	return NULL;
@@ -162,7 +162,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
     cinfo->iface = -1;
     cinfo->flags = 0;
 
-    if (caller_is_model_window(vwin)) {
+    if (vwin != NULL && caller_is_model_window(vwin)) {
 	cinfo->flags |= MODEL_CALL;
     }
 
@@ -2678,7 +2678,7 @@ int open_function_package (const char *pkgname,
 	free(fname2);
     }
 
-    if (free_cinfo) {
+    if (cinfo != NULL && free_cinfo) {
 	cinfo_free(cinfo);
     }
 
