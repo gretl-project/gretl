@@ -834,17 +834,6 @@ if test "$gtk_version" = "3.0" ; then
    )
 fi
 
-dnl
-dnl Check for installed gtksourceview (GTK 3 variant, previous)
-dnl
-dnl if test "$gtk_version" = "3.0" ; then
-dnl    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0 >= 3.20.0,
-dnl      GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-3.0`
-dnl      have_sourceview="3.0",
-dnl      echo "version 3.0 >= 3.20.0 not found"
-dnl    )
-dnl fi
-
 if test $have_sourceview = "3.0" || test $have_sourceview = "4" || test $pkg_build = "yes" ; then
    AC_DEFINE(HAVE_GTKSV_COMPLETION)
    gtksv_completion="yes"
