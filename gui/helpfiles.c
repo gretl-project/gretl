@@ -1542,17 +1542,13 @@ static int is_dollar_word (GtkTextBuffer *buf,
 
 static int probably_function (GtkTextBuffer *buf, GtkTextIter *w_end)
 {
-    GtkTextIter p_end = *w_end;
+    gunichar gu = gtk_text_iter_get_char(w_end);
+    gchar *chk = g_ucs4_to_utf8(&gu, 1, NULL, NULL, NULL);
     int ret = 0;
 
-    if (gtk_text_iter_forward_char(&p_end)) {
-	gchar *ptest = gtk_text_buffer_get_text(buf, w_end,
-						&p_end, FALSE);
-
-	if (*ptest == '(') {
-	    ret = 1;
-	}
-	g_free(ptest);
+    if (chk != NULL) {
+        ret = *chk == '(';
+	g_free(chk);
     }
 
     return ret;
