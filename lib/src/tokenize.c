@@ -3905,7 +3905,7 @@ static void handle_option_inflections (CMD *cmd)
    we're not going to support this.
 */
 
-static int includes_fncall (CMD *c)
+static int command_includes_fncall (CMD *c)
 {
     const char *s;
     int i, err = 0;
@@ -3922,8 +3922,8 @@ static int includes_fncall (CMD *c)
     }
 
     if (err) {
-	gretl_errmsg_set("\"print\" doesn't work with function "
-			 "calls: please use \"printf\" or \"eval\"");
+	gretl_errmsg_set(_("\"print\" doesn't work with function "
+                           "calls: please use \"eval\" or \"printf\""));
     }
 
     return err;
@@ -3957,7 +3957,7 @@ static int assemble_command (CMD *cmd, DATASET *dset,
     }
 
     if (!cmd->err && cmd->ci == PRINT) {
-	cmd->err = includes_fncall(cmd);
+	cmd->err = command_includes_fncall(cmd);
     }
 
     if (cmd->err) {
