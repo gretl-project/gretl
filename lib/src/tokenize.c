@@ -2835,6 +2835,10 @@ static int process_command_list (CMD *c, DATASET *dset)
 	want_ints = 1;
     }
 
+#if CDEBUG
+    fprintf(stderr, "process command list, ntoks = %d\n", c->ntoks);
+#endif
+
     ns = cmd_get_sepcount(c);
 
     *lstr = '\0';
@@ -2890,15 +2894,13 @@ static int process_command_list (CMD *c, DATASET *dset)
 		}
 	    } else if (next_joined_token(c, i) != NULL) {
 		rejoin_list_toks(c, i, &i, lstr, j++);
-	    } else {
-		if (validate_list_token(tok)) {
-		    if (j > 0) {
-			strcat(lstr, " ");
-		    }
-		    strcat(lstr, tok->s);
-		    tok->flag |= TOK_PROV;
-		    j++;
+	    } else if (validate_list_token(tok)) {
+		if (j > 0) {
+		    strcat(lstr, " ");
 		}
+		strcat(lstr, tok->s);
+		tok->flag |= TOK_PROV;
+		j++;
 	    }
 	}
 	if (j == 1 && (c->ciflags & CI_LLEN1)) {
@@ -3899,6 +3901,34 @@ static void handle_option_inflections (CMD *cmd)
     }
 }
 
+/* Check whether a "print" command includes a function call:
+   we're not going to support this.
+*/
+
+static int includes_fncall (CMD *c)
+{
+    const char *s;
+    int i, err = 0;
+
+    for (i=c->cstart+1; i<c->ntoks && !err; i++) {
+	if (i > 1 && c->toks[i].type == TOK_PRSTR) {
+	    s = c->toks[i-1].s;
+	    if (function_lookup(s)) {
+		err = 1;
+	    } else if (get_user_function_by_name(s) != NULL) {
+		err = 1;
+	    }
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set("\"print\" doesn't work with function "
+			 "calls: please use \"printf\" or \"eval\"");
+    }
+
+    return err;
+}
+
 static int assemble_command (CMD *cmd, DATASET *dset,
 			     ExecState *s, char *line)
 {
@@ -3924,6 +3954,10 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 
     if (!cmd->err) {
 	handle_command_preamble(cmd);
+    }
+
+    if (!cmd->err && cmd->ci == PRINT) {
+	cmd->err = includes_fncall(cmd);
     }
 
     if (cmd->err) {

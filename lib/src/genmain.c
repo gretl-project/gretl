@@ -238,40 +238,6 @@ static void gen_write_label (parser *p, int oldv)
     }
 }
 
-/**
- * function_from_string:
- * @s: the string to look up.
- *
- * Returns: 1 if there is a function corresponding
- * to the name @s, or 0 if there is no such function.
- */
-
-int function_from_string (const char *s)
-{
-    char word[9];
-    const char *p;
-
-    *word = 0;
-
-    p = strchr(s, '(');
-    if (p != NULL && p - s <= 8) {
-	strncat(word, s, p - s);
-    } else {
-	strncat(word, s, 8);
-    }
-
-    if (function_lookup(word)) {
-	return 1;
-    }
-
-    /* user-defined functions */
-    if (get_user_function_by_name(s)) {
-	return 1;
-    }
-
-    return 0;
-}
-
 static const char *reswords[] = {
     /* constants */
     "const",
