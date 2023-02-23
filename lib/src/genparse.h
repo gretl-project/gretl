@@ -254,7 +254,6 @@ enum {
     F_ERRMSG,
     F_GETENV,
     F_NGETENV,
-    F_FREQ,
     F_ISNAN,
     F_TYPESTR,
     F_STRSTRIP,
