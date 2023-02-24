@@ -6282,6 +6282,8 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == GR_3D) {
         tmp = gtk_check_button_new_with_label(_("Make plot interactive"));
         pack_switch(tmp, sr, TRUE, FALSE, OPT_I, 0);
+        tmp = gtk_check_button_new_with_label(_("Show gnuplot code"));
+        pack_switch(tmp, sr, FALSE, FALSE, OPT_F, 0);
     } else if (sr->ci == GR_BOX) {
         tmp = gtk_check_button_new_with_label(_("Show interval for median"));
         pack_switch(tmp, sr, FALSE, FALSE, OPT_O, 0);

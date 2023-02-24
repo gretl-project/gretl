@@ -172,7 +172,6 @@ enum {
     F_CONJ,
     F_TOINT,
     F_DIFF,	  /* first difference */
-    F_LDIFF,	  /* log difference */
     F_SDIFF,	  /* seasonal difference */
     F_SORT,	  /* ascending sort */
     F_DSORT,	  /* descending sort */
@@ -254,7 +253,6 @@ enum {
     F_ERRMSG,
     F_GETENV,
     F_NGETENV,
-    F_FREQ,
     F_ISNAN,
     F_TYPESTR,
     F_STRSTRIP,
@@ -478,6 +476,7 @@ enum {
     F_INSTRING,
     F_STRFTIME,
     HF_REGLS,
+    F_LDIFF,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

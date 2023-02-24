@@ -762,7 +762,6 @@ void set_gretl_startdir (void)
 
 	/* the environment variable check is mostly for the macOS
 	   package */
-
 	if (test != NULL) {
 	    startdir = g_strdup(test);
 	} else {

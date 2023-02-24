@@ -70,6 +70,7 @@ version 2023a, in progress
 - Gretl User's Guide: rewrite the "Calendar dates" chapter
   including more information on the available formats and
   the means of converting between them
+- Reinstate old function file path for backward compatibility
 
 2022-11-01 version 2022c
 - substantial speed-up for hansl functions called from loops
