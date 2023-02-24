@@ -6375,7 +6375,7 @@ static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 	    x = ret->v.xvec;
 	} else {
 	    list = ret->v.ivec;
-	    imax = list[0] + 1;
+	    imax = list[0];
 	}
 	for (i=0; i<imax; i++) {
 	    if (list != NULL) {
