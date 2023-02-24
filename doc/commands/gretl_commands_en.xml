@@ -5784,8 +5784,12 @@
       </para>
       <para>
 	Unlike most other gretl graphs, an interactive 3-D plot is
-	controlled by gnuplot rather than gretl itself. The gretl
-	graph-editing menu is not available.
+	controlled by gnuplot rather than gretl itself, and gretl's
+	graph-editing menu is not available. If you want to see the
+	gnuplot code that produces the plot, uncheck the interactive
+	button. Then you can use the menu in the plot window to save
+	it <quote>as an icon</quote>. Open the icon view window, and
+	you can right-click on the plot's icon to see the commands.
       </para>
     </description>
   </command>
