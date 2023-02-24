@@ -92,8 +92,8 @@ struct gretl_matrix_block_ {
 #define no_metadata(m) (m->info == NULL || is_block_matrix(m))
 
 static int real_invert_symmetric_matrix (gretl_matrix *a,
-                                         int checked,
-                                         int verbose);
+                                         int symmcheck,
+					 inr preserve);
 
 static inline void *mval_malloc (size_t sz)
 {
@@ -9206,7 +9206,7 @@ int gretl_invert_matrix (gretl_matrix *a)
     } else if (s == GRETL_MATRIX_DIAGONAL) {
         err = gretl_invert_diagonal_matrix(a);
     } else if (s == GRETL_MATRIX_SYMMETRIC) {
-        err = real_invert_symmetric_matrix(a, 1, 0);
+        err = real_invert_symmetric_matrix(a, 0, 1);
         if (err) {
             err = gretl_invert_symmetric_indef_matrix(a);
         }
@@ -9338,13 +9338,14 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     return err;
 }
 
+#define INV_DEBUG 0
+
 static int real_invert_symmetric_matrix (gretl_matrix *a,
-                                         int checked,
-                                         int verbose)
+                                         int symmcheck,
+					 int preserve)
 {
     integer n, info;
     double *aval = NULL;
-    size_t bytes;
     char uplo = 'L';
     int err = 0;
 
@@ -9353,7 +9354,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
     }
 
     if (a->cols != a->rows) {
-        fputs("real_invert_symmetric_matrix: input is not square\n",
+        fputs("invert_symmetric_matrix: input is not square\n",
               stderr);
         return E_NONCONF;
     }
@@ -9365,26 +9366,29 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         return 0;
     }
 
-    if (!checked && !real_gretl_matrix_is_symmetric(a, 1)) {
-        fputs("real_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
+    if (symmcheck && !real_gretl_matrix_is_symmetric(a, 1)) {
+        fputs("invert_symmetric_matrix: matrix is not symmetric\n", stderr);
         return E_NOTPD;
     }
 
-    /* back-up, just in case */
-    bytes = n * n * sizeof *aval;
-    aval = lapack_malloc(bytes);
-    if (aval == NULL) {
-        return E_ALLOC;
-    }
+    if (preserve) {
+	/* back-up, just in case */
+	int butes n * n * sizeof *aval;
 
-    memcpy(aval, a->val, bytes);
+	aval = lapack_malloc(bytes);
+	if (aval == NULL) {
+	    return E_ALLOC;
+	} else {
+	    memcpy(aval, a->val, bytes);
+	}
+    }
 
     dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
         err = (info > 0)? E_NOTPD : E_DATA;
-        if (err == E_DATA || verbose) {
-            fprintf(stderr, "real_invert_symmetric_matrix: "
+        if (err == E_DATA) {
+            fprintf(stderr, "invert_symmetric_matrix: "
                     "dpotrf failed with info = %d (n = %d)\n",
                     (int) info, (int) n);
         }
@@ -9394,23 +9398,25 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
         dpotri_(&uplo, &n, a->val, &n, &info);
         if (info != 0) {
             err = E_NOTPD;
-            if (verbose) {
-                fprintf(stderr, "real_invert_symmetric_matrix:\n"
-                        " dpotri failed with info = %d\n", (int) info);
-            }
+#if INV_DEBUG
+	    fprintf(stderr, "invert_symmetric_matrix:\n"
+		    " dpotri failed with info = %d\n", (int) info);
+#endif
         } else {
             gretl_matrix_mirror(a, uplo);
         }
     }
 
-    if (err) {
+    if (err && preserve) {
         memcpy(a->val, aval, bytes);
         if (getenv("GRETL_MATRIX_DEBUG")) {
             gretl_matrix_print(a, "input matrix");
         }
     }
 
-    lapack_free(aval);
+    if (aval != NULL) {
+	lapack_free(aval);
+    }
 
     return err;
 }
@@ -9428,7 +9434,8 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 
 int gretl_invert_symmetric_matrix (gretl_matrix *a)
 {
-    return real_invert_symmetric_matrix(a, 0, 0);
+    /* note: the last '1' for @preserve is debatable */
+    return real_invert_symmetric_matrix(a, 1, 1);
 }
 
 /**
@@ -9446,44 +9453,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
 int gretl_invpd (gretl_matrix *a)
 {
-    integer n, info;
-    char uplo = 'L';
-    int err = 0;
-
-    if (a->cols != a->rows) {
-        fputs("gretl_invpd: input is not square\n",
-              stderr);
-        return E_NONCONF;
-    }
-
-    n = a->cols;
-
-    if (n == 1) {
-        a->val[0] = 1.0 / a->val[0];
-        return 0;
-    }
-
-    dpotrf_(&uplo, &n, a->val, &n, &info);
-
-    if (info != 0) {
-        fprintf(stderr, "gretl_invpd: "
-                "dpotrf failed with info = %d (n = %d)\n",
-                (int) info, (int) n);
-        err = info > 0 ? E_NOTPD : E_DATA;
-    }
-
-    if (!err) {
-        dpotri_(&uplo, &n, a->val, &n, &info);
-        if (info != 0) {
-            err = E_SINGULAR;
-            fprintf(stderr, "gretl_invpd:\n"
-                    " dpotri failed with info = %d\n", (int) info);
-        } else {
-            gretl_matrix_mirror(a, uplo);
-        }
-    }
-
-    return err;
+    return real_invert_symmetric_matrix(a, 0, 0);
 }
 
 /**
@@ -9511,7 +9481,7 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
 
     n = src->cols;
 
-    if (n != src->rows || targ->cols != targ->rows || targ->cols != n) {
+    if (n != src->rows || n != targ->rows || n != targ->cols) {
         return E_NONCONF;
     }
 
@@ -9521,7 +9491,7 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
 
     if (info != 0) {
         err = E_SINGULAR;
-        fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+        fprintf(stderr, "invert_symmetric_matrix:\n"
                 " dpotri failed with info = %d\n", (int) info);
     } else {
         gretl_matrix_mirror(targ, uplo);
@@ -13841,7 +13811,7 @@ int gretl_matrix_diag_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	    }
 	}
     }
-    
+
     return 0;
 }
 
