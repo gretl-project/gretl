@@ -4902,7 +4902,6 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
         gretl_matrix *m = node_get_matrix(l, p, 0, 0);
         user_var *uv = NULL;
-        double ldet = NADBL;
 
         if (!p->err && gretl_is_null_matrix(m)) {
             p->err = E_DATA;
@@ -4924,11 +4923,13 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
             }
         }
         if (!p->err) {
-            double *dp = uv == NULL ? NULL : &ldet;
-
-            p->err = gretl_invert_symmetric_matrix2(ret->v.m, dp);
             if (uv != NULL) {
+                double ldet;
+
+                p->err = gretl_invert_symmetric_matrix2(ret->v.m, &ldet);
                 user_var_set_scalar_value(uv, ldet);
+            } else {
+                p->err = gretl_invpd(ret->v.m);
             }
         }
         if (p->err && ret->v.m != NULL) {
