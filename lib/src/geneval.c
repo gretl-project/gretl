@@ -6350,8 +6350,8 @@ static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 				parser *p)
 {
-    double mult = NADBL;
-    int fill;
+    double d = NADBL;
+    int fill, mul = 0;
 
     if (ret->t != SERIES && ret->t != LIST) {
 	/* "can't happen" */
@@ -6361,7 +6361,8 @@ static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 
     fill = node_get_bool(m, p, 0);
     if (!p->err && !null_node(r)) {
-	mult = node_get_scalar(r, p);
+	d = node_get_scalar(r, p);
+        mul = 1;
     }
 
     if (!p->err) {
@@ -6381,11 +6382,13 @@ static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 		x = p->dset->Z[list[i+1]];
 	    }
 	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		if (fill && na(x[t])) {
-		    x[t] = 0.0;
-		} else if (!na(mult)) {
-		    x[t] *= mult;
-		}
+                if (na(x[t])) {
+                    if (t > 0 && fill) {
+                        x[t] = 0.0;
+                    }
+                } else if (mul) {
+                    x[t] *= d;
+                }
 	    }
 	}
     }
@@ -18750,7 +18753,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && t->t == F_LDIFF) {
-	if (m != NULL || r != NULL) {
+	if (!null_node(m) || !null_node(r)) {
 	    post_process_ldiff(ret, m, r, p);
 	}
     }
