@@ -9533,7 +9533,7 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
 /**
  * gretl_invert_symmetric_matrix2:
  * @a: matrix to invert.
- * @ldet: location to recieve log determinant, or NULL.
+ * @ldet: location to receive log determinant, or NULL.
  *
  * Computes the inverse of a symmetric positive definite matrix
  * using Cholesky factorization, computing the log-determinant
