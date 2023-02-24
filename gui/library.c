@@ -7861,8 +7861,8 @@ int do_splot_from_selector (selector *sr)
 	const char *fname = gretl_plotfile();
 
 	if (opt & OPT_F) {
-	    view_file_with_title(fname, 1, 0, 78, 400,
-				 EDIT_GP, _("3D plot commands"));
+	    view_file_with_title(fname, 1, 0, 78, 400, EDIT_GP,
+				 _("3D plot commands"));
 	} else if (opt & OPT_I) {
 	    gnuplot_view_3d(fname);
 	} else {
