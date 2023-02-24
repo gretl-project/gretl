@@ -7857,17 +7857,10 @@ int do_splot_from_selector (selector *sr)
 
     if (err) {
         gui_errmsg(err);
+    } else if (opt & OPT_I) {
+	gnuplot_view_3d(gretl_plotfile());
     } else {
-	const char *fname = gretl_plotfile();
-
-	if (opt & OPT_F) {
-	    view_file_with_title(fname, 1, 0, 78, 400, EDIT_GP,
-				 _("3D plot commands"));
-	} else if (opt & OPT_I) {
-	    gnuplot_view_3d(fname);
-	} else {
-	    register_graph();
-	}
+	register_graph();
     }
 
     free(list);
