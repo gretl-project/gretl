@@ -1293,13 +1293,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
                              gradnorm, gradmax);
         err = E_NOCONV;
     } else if (fmax < f0) {
-        /* allow a small sloppiness factor here? */
-        double rdiff;
+        /* allow a small slop factor here? */
+        double rdiff = fabs(f0 - fmax);
 
-        rdiff = (f0 == 0.0)? -fmax : fabs((f0 - fmax) / f0);
+        if (fabs(f0) > 1.0e-16) {
+            rdiff /= fabs(f0);
+        }
         if (rdiff > 1.0e-12) {
             fprintf(stderr, "failed to match initial value of objective function:\n"
-                    " f0=%.18g, fmax=%.18g\n", f0, fmax);
+                    " f0=%.16g, fmax=%.16g, rdiff=%g\n", f0, fmax, rdiff);
             err = E_NOCONV;
         }
     }
