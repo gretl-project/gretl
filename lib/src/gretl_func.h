@@ -83,6 +83,8 @@ int n_free_functions (void);
 
 ufunc *get_user_function_by_name (const char *name);
 
+int is_user_function (const char *name);
+
 const ufunc *get_user_function_by_index (int idx);
 
 fncall *fncall_new (ufunc *fun, int preserve);

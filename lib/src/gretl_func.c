@@ -1663,6 +1663,19 @@ ufunc *get_user_function_by_name (const char *name)
 }
 
 /**
+ * is_user_function:
+ * @name: name to test.
+ *
+ * Returns: 1 if @name identifies a hansl function accessible
+ * in the current context, otherwise 0.
+ */
+
+int is_user_function (const char *name)
+{
+    return get_user_function_by_name(name) != NULL;
+}
+
+/**
  * get_function_from_package:
  * @funname: name of function to retrieve.
  * @pkg: function package.

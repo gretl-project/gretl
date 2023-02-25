@@ -3901,29 +3901,29 @@ static void handle_option_inflections (CMD *cmd)
     }
 }
 
-/* Check whether a "print" command includes a function call:
-   we're not going to support this.
+/* Check whether a "print" command includes a function call
+   taking a pointer argument: we don't allow this.
 */
 
 static int command_includes_fncall (CMD *c)
 {
     const char *s;
-    int i, err = 0;
+    int i, ptr;
+    int err = 0;
 
     for (i=c->cstart+1; i<c->ntoks && !err; i++) {
 	if (i > 1 && c->toks[i].type == TOK_PRSTR) {
+	    ptr = strchr(c->toks[i].s, '&') != NULL;
 	    s = c->toks[i-1].s;
-	    if (function_lookup(s)) {
-		err = 1;
-	    } else if (get_user_function_by_name(s) != NULL) {
+	    if (ptr && (function_lookup(s) || is_user_function(s))) {
 		err = 1;
 	    }
 	}
     }
 
     if (err) {
-	gretl_errmsg_set(_("\"print\" doesn't work with function "
-                           "calls: please use \"eval\" or \"printf\""));
+	gretl_errmsg_set(_("\"print\": pointer arguments not allowed: "
+                           "please use \"eval\" or \"printf\""));
     }
 
     return err;
