@@ -326,7 +326,6 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
 	lc = 1;
-	fprintf(stderr, "greek: lc 1, ukey %d\n", ukey);
     } else if (key >= GDK_A && key <= GDK_Z) {
 	if (ok_greek_cap(key)) {
 	    ukey = key;
@@ -347,11 +346,9 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
 		if (lc) {
 		    ins[0] = g > 0x9f ? 0xCF : 0xCE;
 		    ins[1] = g > 0x9f ? g - 0x20 : g + 0x20;
-		    fprintf(stderr, "greek lc: %d, %d\n", ins[0], ins[1]);
 		} else {
 		    ins[0] = 0xCE;
 		    ins[1] = g;
-		    fprintf(stderr, "greek not-lc: %d, %d\n", ins[0], ins[1]);
 		}
 		textview_insert_text(vwin->text, (char *) ins);
 		return 1;
