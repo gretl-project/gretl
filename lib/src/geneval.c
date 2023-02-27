@@ -4902,7 +4902,6 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
         gretl_matrix *m = node_get_matrix(l, p, 0, 0);
         user_var *uv = NULL;
-        double ldet = NADBL;
 
         if (!p->err && gretl_is_null_matrix(m)) {
             p->err = E_DATA;
@@ -4924,11 +4923,13 @@ static NODE *invpd_node (NODE *l, NODE *r, parser *p)
             }
         }
         if (!p->err) {
-            double *dp = uv == NULL ? NULL : &ldet;
-
-            p->err = gretl_invert_symmetric_matrix2(ret->v.m, dp);
             if (uv != NULL) {
+                double ldet;
+
+                p->err = gretl_invert_symmetric_matrix2(ret->v.m, &ldet);
                 user_var_set_scalar_value(uv, ldet);
+            } else {
+                p->err = gretl_invpd(ret->v.m);
             }
         }
         if (p->err && ret->v.m != NULL) {
@@ -6350,8 +6351,8 @@ static NODE *hf_list_make_lags (NODE *l, NODE *m, NODE *r, parser *p)
 static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 				parser *p)
 {
-    double mult = NADBL;
-    int fill;
+    double d = NADBL;
+    int fill, mul = 0;
 
     if (ret->t != SERIES && ret->t != LIST) {
 	/* "can't happen" */
@@ -6361,7 +6362,8 @@ static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 
     fill = node_get_bool(m, p, 0);
     if (!p->err && !null_node(r)) {
-	mult = node_get_scalar(r, p);
+	d = node_get_scalar(r, p);
+        mul = 1;
     }
 
     if (!p->err) {
@@ -6374,18 +6376,20 @@ static void post_process_ldiff (NODE *ret, NODE *m, NODE *r,
 	    x = ret->v.xvec;
 	} else {
 	    list = ret->v.ivec;
-	    imax = list[0] + 1;
+	    imax = list[0];
 	}
 	for (i=0; i<imax; i++) {
 	    if (list != NULL) {
 		x = p->dset->Z[list[i+1]];
 	    }
 	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		if (fill && na(x[t])) {
-		    x[t] = 0.0;
-		} else if (!na(mult)) {
-		    x[t] *= mult;
-		}
+                if (na(x[t])) {
+                    if (t > 0 && fill) {
+                        x[t] = 0.0;
+                    }
+                } else if (mul) {
+                    x[t] *= d;
+                }
 	    }
 	}
     }
@@ -18750,7 +18754,7 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (!p->err && t->t == F_LDIFF) {
-	if (m != NULL || r != NULL) {
+	if (!null_node(m) || !null_node(r)) {
 	    post_process_ldiff(ret, m, r, p);
 	}
     }

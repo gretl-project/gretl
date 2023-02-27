@@ -348,7 +348,7 @@ static int gretl_shell_async (const char *cmdline, PRN *prn)
     return err;
 }
 
-#define SHELL_KISS 1
+#define SHELL_KISS 1 /* Keep It Simple, Stupid */
 
 static int gretl_shell_sync (const char *arg, gchar **psout,
                              PRN *prn)
@@ -360,7 +360,7 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
     int i, status;
     int err = 0;
 
-#if SHELL_KISS /* simple version */
+#if SHELL_KISS
     argv[0] = g_strdup("/bin/sh");
     argv[1] = g_strdup("-sh");
     argv[2] = g_strdup("-c");
@@ -402,9 +402,6 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
                  &sout, &serr, &status, &gerr);
 
     for (i=0; i<4; i++) {
-#if 1
-	fprintf(stderr, "argv[%d] = '%s'\n", i, argv[i]);
-#endif
 	g_free(argv[i]);
     }
 
