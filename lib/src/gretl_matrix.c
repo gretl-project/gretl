@@ -8025,7 +8025,11 @@ static int matrix_divide_by_scalmat (gretl_matrix *num,
 
         zden = den->is_complex ? den->z[0] : den->val[0];
         for (i=0; i<n; i++) {
-            num->z[i] /= zden;
+#ifdef __ARM_ARCH_ISA_A64
+	    num->z[i] = arm_complex_divide(num->z[i], zden);
+#else
+	    num->z[i] /= zden;
+#endif
         }
     } else {
         if (den->is_complex) {
