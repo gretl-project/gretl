@@ -310,6 +310,97 @@ static struct greek_map greek_keys[] = {
     { GDK_Z, 0x96 }  /* zeta */
 };
 
+#ifdef OS_OSX
+
+struct mac_map {
+    guint mac; /* Mac "option+" keysym */
+    guint rom; /* associated GDK Roman letter */
+};
+
+static struct mac_map mac_keys[] = {
+	{ 229,   GDK_a },
+	{ 2239,  GDK_b },
+	{ 231,   GDK_c },
+	{ 2287,  GDK_d },
+	{ 65105, GDK_e },
+	{ 2294,  GDK_f },
+	{ 169,   GDK_g },
+	{ 511,   GDK_h },
+	{ 65106, GDK_i },
+	{ 16785926, GDK_j },
+	{ 16777946, GDK_k },
+	{ 172,   GDK_l },
+	{ 181,   GDK_m },
+	{ 65107, GDK_n },
+	{ 248,   GDK_o },
+	{ 2032,  GDK_p },
+	{ 5053,  GDK_q },
+	{ 174,   GDK_r },
+	{ 223,   GDK_s },
+	{ 2801,  GDK_t },
+	{ 65111, GDK_u },
+	{ 2262,  GDK_v },
+	{ 16785937, GDK_w },
+	{ 16785992, GDK_x },
+	{ 165,   GDK_y },
+	{ 2009,  GDK_z }
+};
+
+static struct mac_map mac_uc_keys[] = {
+	{ 197, GDK_A },
+	{ 697, GDK_B },
+	{ 199, GDK_C },
+	{ 206, GDK_D },
+	{ 180, GDK_E },
+	{ 207, GDK_F },
+	{ 445, GDK_G },
+	{ 211, GDK_H },
+	{ 16777926, GDK_I },
+	{ 212, GDK_J },
+	{ 16840959, GDK_K },
+	{ 210, GDK_L },
+	{ 194, GDK_M },
+	{ 16777948, GDK_N },
+	{ 216, GDK_O },
+	{ 16785935, GDK_P },
+	{ 5052, GDK_Q },
+	{ 16785456, GDK_R },
+	{ 205, GDK_S },
+	{ 439, GDK_T },
+	{ 168, GDK_U },
+	{ 16786890, GDK_V },
+	{ 2814, GDK_W },
+	{ 434, GDK_X},
+	{ 193, GDK_Y },
+	{ 184, GDK_Z }
+};
+
+static uint key_from_mac (guint k)
+{
+	int i, n = G_N_ELEMENTS(mac_keys);
+	
+	for (i=0; i<n; i++) {
+		if (k == mac_keys[i].mac) {
+			return mac_keys[i].rom;
+		}
+	}
+	return 0;
+}
+
+static uint uc_key_from_mac (guint k)
+{
+	int i, n = G_N_ELEMENTS(mac_uc_keys);
+	
+	for (i=0; i<n; i++) {
+		if (k == mac_uc_keys[i].mac) {
+			return mac_uc_keys[i].rom;
+		}
+	}
+	return 0;
+}
+
+#endif /* OS_OSX */
+
 /* Note: exclude Greek capital letters that are indistinguishable from
    Latin caps.
 */
@@ -324,7 +415,12 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     guint lc = 0, ukey = 0;
 
 #ifdef OS_OSX
+	guint save_key = key;
     fprintf(stderr, "greeks: key = %u\n", key);
+	key = key_from_mac(key);
+	if (key == 0) {
+		key = uc_key_from_mac(save_key);
+	}
 #endif
 
     if (key >= GDK_a && key <= GDK_z) {
