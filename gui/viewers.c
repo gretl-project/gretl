@@ -323,6 +323,10 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
 {
     guint lc = 0, ukey = 0;
 
+#ifdef OS_OSX
+    fprintf(stderr, "greeks: key = %u\n", key);
+#endif
+
     if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
 	lc = 1;
