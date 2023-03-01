@@ -310,6 +310,54 @@ static struct greek_map greek_keys[] = {
     { GDK_Z, 0x96 }  /* zeta */
 };
 
+#ifdef OS_OSX
+
+/* The keysyms you get on macOS by typing "option" + a..z */
+
+static guint mac_lc_keys[] = {
+    229, 2239, 231, 2287, 65105, 2294, 169,
+    511, 65106, 16785926, 16777946, 172,
+    181, 65107, 248, 2032, 5053, 174, 223,
+    2801, 65111, 2262, 16785937, 16785992,
+    165, 2009
+};
+
+/* The keysyms you get on macOS by typing "option" + A..Z */
+
+static guint mac_uc_keys[] = {
+    197, 697, 199, 206, 180, 207, 445, 211,
+    16777926, 212, 16840959, 210, 194,
+    16777948, 216, 16785935, 5052, 16785456,
+    205, 439, 168, 16786890, 2814, 434,
+    193, 184
+};
+
+static uint lc_key_from_mac (guint k)
+{
+    int i;
+
+    for (i=0; i<26; i++) {
+	if (k == mac_lc_keys[i]) {
+	    return GDK_a + i;
+	}
+    }
+    return 0;
+}
+
+static uint uc_key_from_mac (guint k)
+{
+    int i;
+
+    for (i=0; i<26; i++) {
+	if (k == mac_uc_keys[i]) {
+	    return GDK_A + i;
+	}
+    }
+    return 0;
+}
+
+#endif /* OS_OSX */
+
 /* Note: exclude Greek capital letters that are indistinguishable from
    Latin caps.
 */
@@ -322,6 +370,14 @@ static struct greek_map greek_keys[] = {
 static int maybe_insert_greek (guint key, windata_t *vwin)
 {
     guint lc = 0, ukey = 0;
+#ifdef OS_OSX
+    guint mac_key = key;
+
+    key = lc_key_from_mac(mac_key);
+    if (key == 0) {
+	key = uc_key_from_mac(mac_key);
+    }
+#endif
 
     if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
