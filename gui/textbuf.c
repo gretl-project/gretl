@@ -3298,7 +3298,8 @@ static void auto_indent_script (GtkWidget *w, windata_t *vwin)
     GtkTextMark *mark;
     GtkTextIter here, start, end;
     gchar *buf;
-    gint line, offset;
+    gint line;
+    gboolean ends;
     gdouble pos;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
@@ -3311,7 +3312,7 @@ static void auto_indent_script (GtkWidget *w, windata_t *vwin)
     mark = gtk_text_buffer_get_insert(tbuf);
     gtk_text_buffer_get_iter_at_mark(tbuf, &here, mark);
     line = gtk_text_iter_get_line(&here);
-    offset = gtk_text_iter_get_line_offset(&here);
+    ends = gtk_text_iter_ends_line(&here);
 
     /* grab and revise the text */
     gtk_text_buffer_get_start_iter(tbuf, &start);
@@ -3322,7 +3323,9 @@ static void auto_indent_script (GtkWidget *w, windata_t *vwin)
 
     /* restore cursor position */
     gtk_text_buffer_get_iter_at_line(tbuf, &here, line);
-    gtk_text_iter_set_line_offset(&here, offset);
+    if (ends && !gtk_text_iter_ends_line(&here)) {
+	gtk_text_iter_forward_to_line_end(&here);
+    }
     gtk_text_buffer_place_cursor(tbuf, &here);
 
     /* restore scrolling position */
