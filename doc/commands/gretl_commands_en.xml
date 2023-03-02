@@ -579,10 +579,10 @@
 	recognized as panel data two cases arise. (1) The time-series
 	length, <math>T</math>, differs between the two. Then an error
 	is flagged.  (2) <math>T</math> matches. Then a very simple
-	assumption is made, namely that the units match up, starting
-	with the first unit in the current dataset. If that is not
-	what you want, you must use <cmdref targ="join"/> instead of
-	<lit>append</lit>.
+	assumption is made, namely that the units match up,
+	<emphasis>starting with the first unit</emphasis> in both
+	datasets. If that assumption is not correct you must use
+	<cmdref targ="join"/> instead of <lit>append</lit>.
       </para>
     </description>
 
