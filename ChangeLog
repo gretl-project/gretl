@@ -1,4 +1,4 @@
-version 2023a, in progress
+2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds
   ratios plus standard errors and confidence intervals to the
   $model bundle; also make this information available under
@@ -12,7 +12,7 @@ version 2023a, in progress
   for invalid specification
 - "fcast" command: enable the --plot option for forecasts
   based on a system, when a single series is selected;
-  introduce the --all-probs for ordered logit/probit and
+  introduce --all-probs option for ordered logit/probit and
   multinomial logit models
 - "system" command: ensure that the $system bundle includes
   the sample limits as "sample_t1" and "sample_t2"

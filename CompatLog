@@ -1,3 +1,8 @@
+2023-03-02 version 2023a
+
+instring() and strstr() functions: the policy of automatically
+escaping the string to be found has been discontinued.s
+
 2022-11-01 version 2022c
 
 The deprecated command version of "sprintf" now provokes
