@@ -10,7 +10,7 @@ Local:
 * Rebuild and publish the PDF docs
 * Rebuild and publish the HMTL docs
 * "make dist" to create the new gretl-YYYYx.tar.xz
-* Create a new versioned directory in the sourcefore files area
+* Create a new versioned directory in the sourceforge files area
 * Make and upload the MS Windows installers (32- and 64-bit)
 * Make and upload the macOS installers (intel and arm64)
 * Upload a new version of RELEASE to the gretl cgi-bin directory
