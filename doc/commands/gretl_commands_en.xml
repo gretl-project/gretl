@@ -511,7 +511,12 @@
 	Opens a data file and appends the content to the current
 	dataset, if the new data are compatible.  The program will try
 	to detect the format of the data file (native, plain text,
-	CSV, Gnumeric, Excel, etc.).
+	CSV, Gnumeric, Excel, etc.). Please note that the <cmdref
+	targ="join"/> command offers much more control over the
+	matching of supplementary data to the current dataset. Also
+	note that appending data to an existing panel dataset is
+	potentially quite tricky; see the section headed <quote>Panel
+	data</quote> below.
       </para>
       <para>
 	The appended data may take the form of either additional
@@ -531,23 +536,6 @@
 	of new series.
       </para>
       <para>
-	A special feature is supported for appending to a panel
-	dataset. Let <math>n</math> denote the number of
-	cross-sectional units in the panel, <math>T</math> denote the
-	number of time periods, and <math>m</math> denote the number
-	of observations for the new data. If <math>m = n</math> the
-	new data are taken to be time-invariant, and are copied into
-	place for each time period. On the other hand, if <math>m =
-	T</math> the data are treated as non-varying across the panel
-	units, and are copied into place for each unit. If the panel
-	is <quote>square</quote>, and <math>m</math> equals both
-	<math>n</math> and <math>T</math>, an ambiguity arises. The
-	default in this case is to treat the new data as
-	time-invariant, but you can force gretl to treat the new data
-	as time series via the <opt>time-series</opt> option.  (This
-	option is ignored in all other cases.)
-      </para>
-      <para>
 	When a data file is selected for appending, there may be an
 	area of overlap with the existing dataset; that is, one or
 	more series may have one or more observations in common across
@@ -563,9 +551,38 @@
 	<opt>fixed-cols</opt> work in the same way as with <cmdref
 	targ="open"/>; see that command for explanations.
       </para>
+      <subhead>Panel data</subhead>
       <para>
-	See also <cmdref targ="join"/> for more sophisticated handling of
-	multiple data sources.
+	When new data are appended to a panel dataset, the result will
+	be correct only if both the <quote>units</quote> or
+	<quote>individuals</quote> and the time-periods are properly
+	matched.
+      </para>
+      <para>
+	Two relatively simple cases should be handled correctly by
+	<lit>append</lit>. Let <math>n</math> denote the number of
+	cross-sectional units and <math>T</math> denote the number of
+	time periods in the current panel, and let <math>m</math>
+	denote the number of observations for the new data.  If
+	<math>m = n</math> the new data are taken to be
+	time-invariant, and are copied into place for each time
+	period. On the other hand, if <math>m = T</math> the data are
+	treated as invariant across the panel units, and are copied
+	into place for each unit. If <math>T = n</math> an ambiguity
+	arises. In that case the new data are treated as
+	time-invariant by default, but you can force gretl to treat
+	them as time series (invariant across the units) via the
+	<opt>time-series</opt> option.
+      </para>
+      <para>
+	If both the current dataset and the incoming data are
+	recognized as panel data two cases arise. (1) The time-series
+	length, <math>T</math>, differs between the two. Then an error
+	is flagged.  (2) <math>T</math> matches. Then a very simple
+	assumption is made, namely that the units match up, starting
+	with the first unit in the current dataset. If that is not
+	what you want, you must use <cmdref targ="join"/> instead of
+	<lit>append</lit>.
       </para>
     </description>
 
