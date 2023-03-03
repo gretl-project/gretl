@@ -946,7 +946,7 @@ static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
     pprintf(prn, "\nInformation Criteria for %s%s%s specifications\n",
 	    word, s1, s2);
     pputs(prn, "-----------------------------------------------\n");
-    pprintf(prn, " p, q %*s %*s %*s\n", w, "AIC", w+1, "BIC", w+1, "HQC");
+    pprintf(prn, " p, q %*s %*s %*s", w, "AIC", w+1, "BIC", w+1, "HQC");
     pputs(prn, "-----------------------------------------------\n");
 }
 
@@ -1046,7 +1046,7 @@ int arma_select (const int *list, const int *pqspec,
                     if (na(cij)) {
                         pprintf(prn, " %*s", width, "NA");
                     } else {
-                        pprintf(prn, " %*.*f%", width, ndec, cij);
+                        pprintf(prn, " %*.*f", width, ndec, cij);
                         pputc(prn, i == minidx[j] ? '*' : ' ');
                     }
                 }
