@@ -5904,8 +5904,13 @@
       </para>
       <para>
 	A differenza di molti altri grafici di gretl, i grafici 3D
-	sono controllati da gnuplot invece che da gretl, quindi il menù
-	di modifica dei grafici in questo caso non è disponibile.
+	interattivi sono controllati da gnuplot invece che da gretl,
+	quindi il menu di modifica dei grafici in questo caso non è
+	disponibile. Per vedere il codice gnuplot che produce il
+	grafico, togliere la spunta alla casella "Rendi il grafico
+	interattivo". A quel punto il grafico può essere salvato come
+	icona, e aprendo la finestra delle icone si potrà usare il
+	pulsante destro sull'icona del grafico per vedere i comandi.
       </para>
     </description>
   </command>
