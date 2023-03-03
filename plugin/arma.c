@@ -946,8 +946,17 @@ static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
     pprintf(prn, "\nInformation Criteria for %s%s%s specifications\n",
 	    word, s1, s2);
     pputs(prn, "-----------------------------------------------\n");
-    pprintf(prn, " p, q %*s %*s %*s", w, "AIC", w+1, "BIC", w+1, "HQC");
+    pprintf(prn, " p, q %*s %*s %*s\n", w, "AIC", w+1, "BIC", w+1, "HQC");
     pputs(prn, "-----------------------------------------------\n");
+}
+
+static void arma_select_trailer (int nbad, PRN *prn)
+{
+    pputs(prn, "* indicates best, per criterion\n");
+    if (nbad > 0) {
+	pputs(prn, "NA idicates that a specification could not be estimated\n");
+    }
+    pputc(prn, '\n');
 }
 
 /* A simple start on providing built-in means of selecting the AR and
@@ -965,7 +974,8 @@ int arma_select (const int *list, const int *pqspec,
     int print = !(opt & OPT_Q);
     gretlopt aopt = opt | OPT_Q;
     gretl_matrix *m = NULL;
-    double cij, mincrit[3];
+    double cij;
+    double mincrit[3] = {NADBL, NADBL, NADBL};
     int minidx[3] = {0};
     int *mylist = NULL;
     int p, q, pmax, qmax;
@@ -1019,8 +1029,9 @@ int arma_select (const int *list, const int *pqspec,
                 for (j=0; j<3; j++) {
                     cij = amod.criterion[j];
                     gretl_matrix_set(m, i, j+2, cij);
-                    if (i == 0) {
+                    if (na(mincrit[j])) {
                         mincrit[j] = cij;
+			minidx[j] = i;
                     } else if (cij < mincrit[j]) {
                         mincrit[j] = cij;
                         minidx[j] = i;
@@ -1035,6 +1046,7 @@ int arma_select (const int *list, const int *pqspec,
     if (print) {
         /* print as table */
         int width = 12, ndec = 4;
+	int nbad = 0;
 
         arma_select_header(&dinfo, width, prn);
         i = 0;
@@ -1044,7 +1056,9 @@ int arma_select (const int *list, const int *pqspec,
                 for (j=0; j<3; j++) {
                     cij = gretl_matrix_get(m, i, j+2);
                     if (na(cij)) {
-                        pprintf(prn, " %*s", width, "NA");
+			int w = j==0 ? width : width + 1;
+                        pprintf(prn, " %*s", w, "NA");
+			nbad++;
                     } else {
                         pprintf(prn, " %*.*f", width, ndec, cij);
                         pputc(prn, i == minidx[j] ? '*' : ' ');
@@ -1054,6 +1068,8 @@ int arma_select (const int *list, const int *pqspec,
                 i++;
             }
         }
+	pputc(prn, '\n');
+	arma_select_trailer(nbad, prn);
     }
 
     free(mylist);
