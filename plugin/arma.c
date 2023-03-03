@@ -671,6 +671,58 @@ static int check_arma_options (gretlopt opt)
     return err;
 }
 
+typedef struct dim_info_ dim_info;
+
+struct dim_info_ {
+    int p; /* max non-seasonal AR order */
+    int d; /* non-seasonal difference */
+    int q; /* max non-seasonal MA order */
+    int P; /* seasonal AR order */
+    int D; /* seasonal difference */
+    int Q; /* seasonal MA order */
+};
+
+static int arma_precheck (const int *list,
+			  const int *pqspec,
+			  gretlopt opt,
+			  DATASET *dset,
+			  arma_info *painfo,
+			  dim_info *dinfo)
+{
+    arma_info ainfo = {0};
+    int err;
+
+    arma_info_init(&ainfo, opt, pqspec, dset);
+    err = check_arma_options(opt);
+    if (!err) {
+	ainfo.alist = gretl_list_copy(list);
+	if (ainfo.alist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    if (!err) {
+	err = arma_check_list(&ainfo, dset, opt);
+    }
+    if (!err) {
+	if (painfo != NULL) {
+	    *painfo = ainfo;
+	} else if (dinfo != NULL) {
+	    /* just transcribe the basics */
+	    dinfo->p = ainfo.p;
+	    dinfo->d = ainfo.d;
+	    dinfo->q = ainfo.q;
+	    dinfo->P = ainfo.P;
+	    dinfo->D = ainfo.D;
+	    dinfo->Q = ainfo.Q;
+	}
+	if (painfo == NULL) {
+	    free(ainfo.alist);
+	}
+    }
+
+    return err;
+}
+
 MODEL arma_model (const int *list, const int *pqspec,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
@@ -679,28 +731,19 @@ MODEL arma_model (const int *list, const int *pqspec,
     arma_info ainfo_s, *ainfo;
     int missv = 0, misst = 0;
     int orig_v = dset->v;
-    int err = 0;
-
-    ainfo = &ainfo_s;
-    arma_info_init(ainfo, opt, pqspec, dset);
-
-    if (opt & OPT_V) {
-	ainfo->prn = prn;
-    }
+    int err;
 
     gretl_model_init(&armod, dset);
 
-    err = check_arma_options(opt);
-
-    if (!err) {
-	ainfo->alist = gretl_list_copy(list);
-	if (ainfo->alist == NULL) {
-	    err = E_ALLOC;
-	}
+    err = arma_precheck(list, pqspec, opt, dset, &ainfo_s, NULL);
+    if (err) {
+	armod.errcode = err;
+	return armod;
     }
 
-    if (!err) {
-	err = arma_check_list(ainfo, dset, opt);
+    ainfo = &ainfo_s;
+    if (opt & OPT_V) {
+	ainfo->prn = prn;
     }
 
     if (!err) {
@@ -859,31 +902,6 @@ MODEL arma_model (const int *list, const int *pqspec,
     return armod;
 }
 
-static int arma_select_check_list (const int *list)
-{
-    int i, sep1 = gretl_list_separator_position(list);
-    int err = 0;
-
-    if (sep1 == 3) {
-	if (list[0] < 4) {
-	    err = E_PARSE;
-	} else {
-            for (i=sep1+1; i<=list[0]; i++) {
-                if (list[i] == LISTSEP) {
-                    /* seasonal terms not handled yet */
-                    err = E_DATA;
-                    break;
-                }
-            }
-        }
-    } else {
-        /* ARIMA not handled yet */
-	err = E_DATA;
-    }
-
-    return err;
-}
-
 static gretl_matrix *arma_select_matrix (int pmax, int qmax)
 {
     gretl_matrix *m;
@@ -906,45 +924,72 @@ static gretl_matrix *arma_select_matrix (int pmax, int qmax)
     return m;
 }
 
-static void arma_select_header (int w, PRN *prn)
+static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
 {
-    pputs(prn, "\nInformation Criteria\n");
+    char word[8], s1[32], s2[32] = {0};
+
+    if (dinfo->d) {
+	sprintf(s1, "(p %d q)", dinfo->d);
+	strcpy(word, "ARIMA");
+    } else {
+	strcpy(s1, "(p q)");
+	strcpy(word, "ARMA");
+    }
+    if (dinfo->D) {
+	sprintf(s2, "(%d %d %d)", dinfo->P, dinfo->D, dinfo->Q);
+	strcpy(word, "SARIMA");
+    } else if (dinfo->P || dinfo->Q) {
+	sprintf(s2, "(%d %d)", dinfo->P, dinfo->Q);
+	strcpy(word, "SARMA");
+    }
+
+    pprintf(prn, "\nInformation Criteria for %s%s%s specifications\n",
+	    word, s1, s2);
     pputs(prn, "-----------------------------------------------\n");
     pprintf(prn, " p, q %*s %*s %*s\n", w, "AIC", w+1, "BIC", w+1, "HQC");
     pputs(prn, "-----------------------------------------------\n");
 }
 
-/* A simple start on providing built-in means of selecting the
-   AR and MA orders of an AR(I)MA model via Information Criteria.
-   At present only plain ARMA is supported and seasonal terms are
-   excluded.
+/* A simple start on providing built-in means of selecting the AR and
+   MA orders of an AR(I)MA model via Information Criteria.  As things
+   stand we accept a general (p d q)(P D Q) specification but we only
+   actually search over p and q, the other paramaters being clamped at
+   their input values.
 */
 
 int arma_select (const int *list, const int *pqspec,
                  DATASET *dset, gretlopt opt, PRN *prn)
 {
+    dim_info dinfo = {0};
     MODEL amod;
     int print = !(opt & OPT_Q);
     gretlopt aopt = opt | OPT_Q;
     gretl_matrix *m = NULL;
     double cij, mincrit[3];
     int minidx[3] = {0};
-    int *alist = NULL;
+    int *mylist = NULL;
     int p, q, pmax, qmax;
+    int qpos = 2;
     int i, j;
     int err = 0;
 
     if (pqspec != NULL) {
         err = E_DATA;
     } else {
-        err = arma_select_check_list(list);
+	err = arma_precheck(list, NULL, opt, dset, NULL, &dinfo);
     }
-    if (!err) {
-        pmax = list[1];
-        qmax = list[2];
-        if (pmax < 0 || qmax < 0) {
-            err = E_INVARG;
-        }
+    if (err) {
+	return err;
+    }
+
+    mylist = gretl_list_copy(list);
+    if (gretl_list_separator_position(mylist) == 4) {
+	qpos = 3;
+    }
+    pmax = mylist[1];
+    qmax = mylist[qpos];
+    if (pmax < 0 || qmax < 0) {
+	err = E_INVARG;
     }
     if (!err) {
         m = arma_select_matrix(pmax, qmax);
@@ -953,10 +998,9 @@ int arma_select (const int *list, const int *pqspec,
         }
     }
     if (err) {
+	free(mylist);
         return err;
     }
-
-    alist = gretl_list_copy(list);
 
     /* fill the results matrix */
     i = 0;
@@ -964,9 +1008,9 @@ int arma_select (const int *list, const int *pqspec,
         for (q=0; q<=qmax; q++) {
             gretl_matrix_set(m, i, 0, p);
             gretl_matrix_set(m, i, 1, q);
-            alist[1] = p;
-            alist[2] = q;
-            amod = arma_model(alist, NULL, dset, aopt, NULL);
+            mylist[1] = p;
+	    mylist[qpos] = q;
+            amod = arma_model(mylist, NULL, dset, aopt, NULL);
             if (amod.errcode) {
                 for (j=0; j<3; j++) {
                     gretl_matrix_set(m, i, j+2, NADBL);
@@ -992,7 +1036,7 @@ int arma_select (const int *list, const int *pqspec,
         /* print as table */
         int width = 12, ndec = 4;
 
-        arma_select_header(width, prn);
+        arma_select_header(&dinfo, width, prn);
         i = 0;
         for (p=0; p<=pmax; p++) {
             for (q=0; q<=qmax; q++) {
@@ -1012,7 +1056,7 @@ int arma_select (const int *list, const int *pqspec,
         }
     }
 
-    free(alist);
+    free(mylist);
     if (m != NULL) {
         record_matrix_test_result(m, NULL);
     }

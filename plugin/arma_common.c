@@ -860,13 +860,6 @@ static int arma_check_list (arma_info *ainfo,
 	}
     }
 
-#if 0
-    /* catch null model */
-    if (ainfo->nc == 0) {
-	err = E_ARGS;
-    }
-#endif
-
     return err;
 }
 
