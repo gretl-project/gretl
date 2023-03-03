@@ -238,6 +238,7 @@ struct plugin_function_info plugin_functions[] = {
 
     /* modeling */
     { "arma_model",        P_ARMA },
+    { "arma_select",       P_ARMA },
     { "arma_x12_model",    P_ARMA_X12 },
     { "garch_model",       P_GARCH },
     { "count_data_estimate", P_POISSON },

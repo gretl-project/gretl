@@ -3738,7 +3738,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
             *model = arch_model(cmd->list, cmd->order, dset,
                                 cmd->opt);
         }
-        err = print_save_model(model, dset, cmd->opt, 0, prn, s);
+        if (cmd->ci == ARMA && (cmd->opt & OPT_Z)) {
+            ; /* no real MODEL is returned */
+        } else {
+            err = print_save_model(model, dset, cmd->opt, 0, prn, s);
+        }
         break;
 
     case PANEL:

@@ -4214,7 +4214,7 @@ MODEL arma (const int *list, const int *pqlags,
 
     err = incompatible_options(opt, OPT_G | OPT_H);
     if (!err) {
-	err = options_incompatible_with(opt, OPT_X, OPT_R | OPT_S);
+	err = options_incompatible_with(opt, OPT_X, OPT_R | OPT_S | OPT_Z);
     }
     if (err) {
 	armod.errcode = err;
@@ -4230,12 +4230,21 @@ MODEL arma (const int *list, const int *pqlags,
 	    armod.errcode = E_DATA;
 	    return armod;
 	}
-
 	arma_x12_model = get_plugin_function("arma_x12_model");
 	if (arma_x12_model == NULL) {
 	    err = E_FOPEN;
 	} else {
 	    armod = (*arma_x12_model) (list, pqlags, dset, pdmax, opt, prn);
+	}
+    } else if (opt & OPT_Z) {
+        int (*arma_select) (const int *, const int *,
+                            DATASET *, gretlopt, PRN *);
+
+        arma_select = get_plugin_function("arma_select");
+	if (arma_select == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    err = (*arma_select) (list, pqlags, dset, opt, prn);
 	}
     } else {
 	arma_model = get_plugin_function("arma_model");
@@ -4251,7 +4260,9 @@ MODEL arma (const int *list, const int *pqlags,
 	return armod;
     }
 
-    set_model_id(&armod, opt);
+    if (!(opt & OPT_Z)) {
+        set_model_id(&armod, opt);
+    }
 
     return armod;
 }

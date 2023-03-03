@@ -239,7 +239,7 @@ static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H,
     } else {
 	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
 				   data, &err);
-    }	
+    }
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(G, sqrt(s2));
@@ -857,4 +857,165 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     return armod;
+}
+
+static int arma_select_check_list (const int *list)
+{
+    int i, sep1 = gretl_list_separator_position(list);
+    int err = 0;
+
+    if (sep1 == 3) {
+	if (list[0] < 4) {
+	    err = E_PARSE;
+	} else {
+            for (i=sep1+1; i<=list[0]; i++) {
+                if (list[i] == LISTSEP) {
+                    /* seasonal terms not handled yet */
+                    err = E_DATA;
+                    break;
+                }
+            }
+        }
+    } else {
+        /* ARIMA not handled yet */
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static gretl_matrix *arma_select_matrix (int pmax, int qmax)
+{
+    gretl_matrix *m;
+
+    m = gretl_matrix_alloc((pmax+1) * (qmax+1), 5);
+
+    if (m != NULL) {
+        char **S = strings_array_new(5);
+
+        if (S != NULL) {
+            S[0] = gretl_strdup("p");
+            S[1] = gretl_strdup("q");
+            S[2] = gretl_strdup("AIC");
+            S[3] = gretl_strdup("BIC");
+            S[4] = gretl_strdup("HQC");
+            gretl_matrix_set_colnames(m, S);
+        }
+    }
+
+    return m;
+}
+
+static void arma_select_header (int w, PRN *prn)
+{
+    pputs(prn, "\nInformation Criteria\n");
+    pputs(prn, "-----------------------------------------------\n");
+    pprintf(prn, " p, q %*s %*s %*s\n", w, "AIC", w+1, "BIC", w+1, "HQC");
+    pputs(prn, "-----------------------------------------------\n");
+}
+
+/* A simple start on providing built-in means of selecting the
+   AR and MA orders of an AR(I)MA model via Information Criteria.
+   At present only plain ARMA is supported and seasonal terms are
+   excluded.
+*/
+
+int arma_select (const int *list, const int *pqspec,
+                 DATASET *dset, gretlopt opt, PRN *prn)
+{
+    MODEL amod;
+    int print = !(opt & OPT_Q);
+    gretlopt aopt = opt | OPT_Q;
+    gretl_matrix *m = NULL;
+    double cij, mincrit[3];
+    int minidx[3] = {0};
+    int *alist = NULL;
+    int p, q, pmax, qmax;
+    int i, j;
+    int err = 0;
+
+    if (pqspec != NULL) {
+        err = E_DATA;
+    } else {
+        err = arma_select_check_list(list);
+    }
+    if (!err) {
+        pmax = list[1];
+        qmax = list[2];
+        if (pmax < 0 || qmax < 0) {
+            err = E_INVARG;
+        }
+    }
+    if (!err) {
+        m = arma_select_matrix(pmax, qmax);
+        if (m == NULL) {
+            err = E_ALLOC;
+        }
+    }
+    if (err) {
+        return err;
+    }
+
+    alist = gretl_list_copy(list);
+
+    /* fill the results matrix */
+    i = 0;
+    for (p=0; p<=pmax; p++) {
+        for (q=0; q<=qmax; q++) {
+            gretl_matrix_set(m, i, 0, p);
+            gretl_matrix_set(m, i, 1, q);
+            alist[1] = p;
+            alist[2] = q;
+            amod = arma_model(alist, NULL, dset, aopt, NULL);
+            if (amod.errcode) {
+                for (j=0; j<3; j++) {
+                    gretl_matrix_set(m, i, j+2, NADBL);
+                }
+            } else {
+                for (j=0; j<3; j++) {
+                    cij = amod.criterion[j];
+                    gretl_matrix_set(m, i, j+2, cij);
+                    if (i == 0) {
+                        mincrit[j] = cij;
+                    } else if (cij < mincrit[j]) {
+                        mincrit[j] = cij;
+                        minidx[j] = i;
+                    }
+                }
+            }
+            clear_model(&amod);
+            i++;
+        }
+    }
+
+    if (print) {
+        /* print as table */
+        int width = 12, ndec = 4;
+
+        arma_select_header(width, prn);
+        i = 0;
+        for (p=0; p<=pmax; p++) {
+            for (q=0; q<=qmax; q++) {
+                pprintf(prn, "%2d,%2d", p, q);
+                for (j=0; j<3; j++) {
+                    cij = gretl_matrix_get(m, i, j+2);
+                    if (na(cij)) {
+                        pprintf(prn, " %*s", width, "NA");
+                    } else {
+                        pprintf(prn, " %*.*f%", width, ndec, cij);
+                        pputc(prn, i == minidx[j] ? '*' : ' ');
+                    }
+                }
+                pputc(prn, '\n');
+                i++;
+            }
+        }
+    }
+
+    free(alist);
+    if (m != NULL) {
+        record_matrix_test_result(m, NULL);
+    }
+
+    return err;
 }
