@@ -929,17 +929,17 @@ static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
     char word[8], s1[32], s2[32] = {0};
 
     if (dinfo->d) {
-	sprintf(s1, "(p %d q)", dinfo->d);
+	sprintf(s1, "(p, %d, q)", dinfo->d);
 	strcpy(word, "ARIMA");
     } else {
-	strcpy(s1, "(p q)");
+	strcpy(s1, "(p, q)");
 	strcpy(word, "ARMA");
     }
     if (dinfo->D) {
-	sprintf(s2, "(%d %d %d)", dinfo->P, dinfo->D, dinfo->Q);
+	sprintf(s2, "(%d, %d, %d)", dinfo->P, dinfo->D, dinfo->Q);
 	strcpy(word, "SARIMA");
     } else if (dinfo->P || dinfo->Q) {
-	sprintf(s2, "(%d %d)", dinfo->P, dinfo->Q);
+	sprintf(s2, "(%d, %d)", dinfo->P, dinfo->Q);
 	strcpy(word, "SARMA");
     }
 
@@ -1045,7 +1045,7 @@ int arma_select (const int *list, const int *pqspec,
 
     if (print) {
         /* print as table */
-        int width = 12, ndec = 4;
+        int w, width = 12, ndec = 4;
 	int nbad = 0;
 
         arma_select_header(&dinfo, width, prn);
@@ -1056,7 +1056,7 @@ int arma_select (const int *list, const int *pqspec,
                 for (j=0; j<3; j++) {
                     cij = gretl_matrix_get(m, i, j+2);
                     if (na(cij)) {
-			int w = j==0 ? width : width + 1;
+			w = j==0 ? width : width + 1;
                         pprintf(prn, " %*s", w, "NA");
 			nbad++;
                     } else {
