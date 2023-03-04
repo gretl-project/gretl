@@ -31,6 +31,10 @@
 
 #include "arma_common.c"
 
+enum {
+    p_, q_, P_, Q_, d_, D_
+};
+
 static const double *as197_llt_callback (const double *b,
 					 int i, void *data);
 
@@ -671,23 +675,12 @@ static int check_arma_options (gretlopt opt)
     return err;
 }
 
-typedef struct dim_info_ dim_info;
-
-struct dim_info_ {
-    int p; /* max non-seasonal AR order */
-    int d; /* non-seasonal difference */
-    int q; /* max non-seasonal MA order */
-    int P; /* seasonal AR order */
-    int D; /* seasonal difference */
-    int Q; /* seasonal MA order */
-};
-
 static int arma_precheck (const int *list,
 			  const int *pqspec,
 			  gretlopt opt,
 			  DATASET *dset,
 			  arma_info *painfo,
-			  dim_info *dinfo)
+			  int *dim)
 {
     arma_info ainfo = {0};
     int err;
@@ -706,14 +699,14 @@ static int arma_precheck (const int *list,
     if (!err) {
 	if (painfo != NULL) {
 	    *painfo = ainfo;
-	} else if (dinfo != NULL) {
+	} else if (dim != NULL) {
 	    /* just transcribe the basics */
-	    dinfo->p = ainfo.p;
-	    dinfo->d = ainfo.d;
-	    dinfo->q = ainfo.q;
-	    dinfo->P = ainfo.P;
-	    dinfo->D = ainfo.D;
-	    dinfo->Q = ainfo.Q;
+	    dim[p_] = ainfo.p;
+	    dim[q_] = ainfo.q;
+	    dim[P_] = ainfo.P;
+	    dim[Q_] = ainfo.Q;
+	    dim[d_] = ainfo.d;
+	    dim[D_] = ainfo.D;
 	}
 	if (painfo == NULL) {
 	    free(ainfo.alist);
@@ -902,63 +895,310 @@ MODEL arma_model (const int *list, const int *pqspec,
     return armod;
 }
 
-static gretl_matrix *arma_select_matrix (int pmax, int qmax)
-{
+struct arma_sel_ {
     gretl_matrix *m;
+    int *list;
+    int dim[6];
+    double mincrit[3];
+    int minidx[3];
+    int seasonal;
+    int qpos;  /* position of 'q' in command list */
+    int Ppos;  /* position of 'P' in command list */
+    int Qpos;  /* position of 'Q' in command list */
+    int width; /* width to print criteria */
+    int ndec;  /* number of decimal places */
+    int nbad;  /* count of non-estimated specifications */
+};
 
-    m = gretl_matrix_alloc((pmax+1) * (qmax+1), 5);
+typedef struct arma_sel_ arma_sel;
 
-    if (m != NULL) {
-        char **S = strings_array_new(5);
+#define ASEL_DEBUG 1
+
+#if ASEL_DEBUG
+
+static void asel_print (arma_sel *asel)
+{
+    fputs("asel:\n", stderr);
+    fprintf(stderr, "spec = (%d %d %d)(%d %d %d)\n",
+	    asel->dim[p_], asel->dim[d_], asel->dim[q_],
+	    asel->dim[P_], asel->dim[D_], asel->dim[Q_]);
+    printlist(asel->list, "list");
+    fprintf(stderr, "qpos %d, Ppos %d, Qpos %d\n",
+	    asel->qpos, asel->Ppos, asel->Qpos);
+    fprintf(stderr, "seasonal = %d\n", asel->seasonal);
+}
+
+#endif
+
+static int add_select_matrix (arma_sel *asel)
+{
+    int i, cols, rows = 0;
+    int err = 0;
+
+    for (i=0; i<4; i++) {
+	if (asel->dim[i] > 0) {
+	    if (rows > 0) {
+		rows *= asel->dim[i] + 1;
+	    } else {
+		rows = asel->dim[i] + 1;
+	    }
+	}
+    }
+
+    if (rows == 0) {
+	gretl_errmsg_set("arima --select: search space is null");
+	return E_DATA;
+    }
+
+    cols = asel->seasonal ? 7 : 5;
+    asel->m = gretl_matrix_alloc(rows, cols);
+
+    if (asel->m == NULL) {
+	err = E_ALLOC;
+    } else {
+	const char *S1[] = {"p", "q", "AIC", "BIC", "HQC"};
+	const char *S2[] = {"p", "q", "P", "Q", "AIC", "BIC", "HQC"};
+        char **S = strings_array_new(cols);
 
         if (S != NULL) {
-            S[0] = gretl_strdup("p");
-            S[1] = gretl_strdup("q");
-            S[2] = gretl_strdup("AIC");
-            S[3] = gretl_strdup("BIC");
-            S[4] = gretl_strdup("HQC");
-            gretl_matrix_set_colnames(m, S);
+	    for (i=0; i<cols; i++) {
+		S[i] = gretl_strdup(cols == 5 ? S1[i] : S2[i]);
+	    }
+            gretl_matrix_set_colnames(asel->m, S);
         }
     }
 
-    return m;
+    return err;
 }
 
-static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
+static void arma_select_header (arma_sel *asel, PRN *prn)
 {
     char word[8], s1[32], s2[32];
+    int w = asel->width;
+    int *num = asel->dim;
 
-    if (dinfo->d) {
-	sprintf(s1, "(p, %d, q)", dinfo->d);
+    if (num[d_] || num[D_]) {
 	strcpy(word, "ARIMA");
     } else {
-	strcpy(s1, "(p, q)");
 	strcpy(word, "ARMA");
     }
-    if (dinfo->D) {
-	sprintf(s2, "(%d, %d, %d)", dinfo->P, dinfo->D, dinfo->Q);
-	strcpy(word, "SARIMA");
-    } else if (dinfo->P || dinfo->Q) {
-	sprintf(s2, "(%d, %d)", dinfo->P, dinfo->Q);
-	strcpy(word, "SARMA");
+
+    if (num[d_]) {
+	sprintf(s1, "(p, %d, q)", num[d_]);
+    } else {
+	strcpy(s1, "(p, q)");
+    }
+    if (num[D_]) {
+	if (asel->seasonal) {
+	    sprintf(s2, "(P, %d, Q)", num[D_]);
+	} else {
+	    sprintf(s2, "(%d, %d, %d)", num[P_], num[D_], num[Q_]);
+	}
+    } else if (num[P_] || num[Q_]) {
+	if (asel->seasonal) {
+	    strcpy(s2, "(P, Q)");
+	} else {
+	    sprintf(s2, "(%d, %d)", num[P_], num[Q_]);
+	}
     } else {
 	s2[0] = '\0';
     }
 
-    pprintf(prn, "\nInformation Criteria for %s%s%s specifications\n",
+    pprintf(prn, "\nCriteria for %s%s%s specifications\n",
 	    word, s1, s2);
-    pputs(prn, "-----------------------------------------------\n");
-    pprintf(prn, " p, q %*s %*s %*s\n", w, "AIC", w+1, "BIC", w+1, "HQC");
-    pputs(prn, "-----------------------------------------------\n");
+    pputs(prn, "-----------------------------------------------");
+    if (asel->seasonal) {
+	pputs(prn, "-----");
+	pprintf(prn, "\n p, q, P, Q %*s %*s %*s\n", w, "AIC", w+1,
+		"BIC", w+1, "HQC");
+    } else {
+	pprintf(prn, "\n p, q %*s %*s %*s\n", w, "AIC", w+1, "BIC",
+		w+1, "HQC");
+    }
+    pputs(prn, "-----------------------------------------------");
+    pputs(prn, asel->seasonal ? "-----\n" : "\n");
 }
 
-static void arma_select_trailer (int nbad, PRN *prn)
+static void arma_select_footer (arma_sel *asel, PRN *prn)
 {
+    pputc(prn, '\n');
     pputs(prn, "* indicates best, per criterion\n");
-    if (nbad > 0) {
+    if (asel->nbad > 0) {
 	pputs(prn, "NA indicates that a specification could not be estimated\n");
     }
     pputc(prn, '\n');
+}
+
+/* asel->dim should already be filled out when arma_sel_init()
+   is called
+*/
+
+static void arma_sel_init (arma_sel *asel, const int *list)
+{
+    int i, s1;
+
+    for (i=0; i<3; i++) {
+	asel->mincrit[i] = NADBL;
+	asel->minidx[i] = 0;
+    }
+
+    asel->Ppos = asel->Qpos = 0;
+    asel->m = NULL;
+    asel->list = NULL;
+    asel->width = 12; /* for printout */
+    asel->ndec = 4;   /* ditto */
+    asel->nbad = 0;
+
+    s1 = gretl_list_separator_position(list);
+    asel->qpos = (s1 == 4)? 3 : 2;
+
+    if (asel->dim[P_] || asel->dim[Q_]) {
+	asel->seasonal = 1;
+	asel->Ppos = s1 + 1;
+	for (i=s1+1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		asel->Qpos = i-1;
+		break;
+	    }
+	}
+    } else {
+	asel->seasonal = 0;
+    }
+}
+
+static void record_criterion (arma_sel *asel, MODEL *amod,
+			      int i, int j, int k)
+{
+    double cij = amod->criterion[j];
+
+    gretl_matrix_set(asel->m, i, k, cij);
+    if (na(asel->mincrit[j])) {
+	asel->mincrit[j] = cij;
+	asel->minidx[j] = i;
+    } else if (cij < asel->mincrit[j]) {
+	asel->mincrit[j] = cij;
+	asel->minidx[j] = i;
+    }
+}
+
+static void fill_pq_matrix (arma_sel *asel,
+			    MODEL *amod,
+			    gretlopt opt,
+			    DATASET *dset)
+{
+    int j, i = 0;
+    int p, q;
+
+    for (p=0; p<=asel->dim[p_]; p++) {
+	asel->list[1] = p;
+        for (q=0; q<=asel->dim[q_]; q++) {
+            gretl_matrix_set(asel->m, i, 0, p);
+            gretl_matrix_set(asel->m, i, 1, q);
+	    asel->list[asel->qpos] = q;
+            *amod = arma_model(asel->list, NULL, dset, opt, NULL);
+	    for (j=0; j<3; j++) {
+		if (amod->errcode) {
+                    gretl_matrix_set(asel->m, i, j+2, NADBL);
+		    asel->nbad += 1;
+                } else {
+		    record_criterion(asel, amod, i, j, j+2);
+                }
+            }
+            clear_model(amod);
+            i++;
+        }
+    }
+}
+
+static void fill_pqPQ_matrix (arma_sel *asel,
+			      MODEL *amod,
+			      gretlopt opt,
+			      DATASET *dset)
+{
+    int j, i = 0;
+    int p, q, P, Q;
+
+    for (p=0; p<=asel->dim[p_]; p++) {
+	asel->list[1] = p;
+        for (q=0; q<=asel->dim[q_]; q++) {
+	    asel->list[asel->qpos] = q;
+	    for (P=0; P<=asel->dim[P_]; P++) {
+		asel->list[asel->Ppos] = P;
+		for (Q=0; Q<=asel->dim[Q_]; Q++) {
+		    asel->list[asel->Qpos] = Q;
+		    gretl_matrix_set(asel->m, i, 0, p);
+		    gretl_matrix_set(asel->m, i, 1, q);
+		    gretl_matrix_set(asel->m, i, 2, P);
+		    gretl_matrix_set(asel->m, i, 3, Q);
+		    *amod = arma_model(asel->list, NULL, dset, opt, NULL);
+		    for (j=0; j<3; j++) {
+			if (amod->errcode) {
+			    gretl_matrix_set(asel->m, i, j+4, NADBL);
+			    asel->nbad += 1;
+			} else {
+			    record_criterion(asel, amod, i, j, j+4);
+			}
+		    }
+		    clear_model(amod);
+		    i++;
+		}
+            }
+        }
+    }
+}
+
+static void print_pq_matrix (arma_sel *asel, PRN *prn)
+{
+    int w, i, j, p, q;
+    double cij;
+
+    i = 0;
+    for (p=0; p<=asel->dim[p_]; p++) {
+	for (q=0; q<=asel->dim[q_]; q++) {
+	    pprintf(prn, "%2d,%2d", p, q);
+	    for (j=0; j<3; j++) {
+		cij = gretl_matrix_get(asel->m, i, j+2);
+		if (na(cij)) {
+		    w = j==0 ? asel->width : asel->width + 1;
+		    pprintf(prn, " %*s", w, "NA");
+		} else {
+		    pprintf(prn, " %*.*f", asel->width, asel->ndec, cij);
+		    pputc(prn, i == asel->minidx[j] ? '*' : ' ');
+		}
+	    }
+	    pputc(prn, '\n');
+	    i++;
+	}
+    }
+}
+
+static void print_pqPQ_matrix (arma_sel *asel, PRN *prn)
+{
+    int w, i, j, p, q, P, Q;
+    double cij;
+
+    i = 0;
+    for (p=0; p<=asel->dim[p_]; p++) {
+	for (q=0; q<=asel->dim[q_]; q++) {
+	    for (P=0; P<=asel->dim[P_]; P++) {
+		for (Q=0; Q<=asel->dim[Q_]; Q++) {
+		    pprintf(prn, "%2d,%2d,%2d,%2d", p, q, P, Q);
+		    for (j=0; j<3; j++) {
+			cij = gretl_matrix_get(asel->m, i, j+4);
+			if (na(cij)) {
+			    w = j==0 ? asel->width : asel->width + 1;
+			    pprintf(prn, " %*s", w, "NA");
+			} else {
+			    pprintf(prn, " %*.*f", asel->width, asel->ndec, cij);
+			    pputc(prn, i == asel->minidx[j] ? '*' : ' ');
+			}
+		    }
+		    pputc(prn, '\n');
+		    i++;
+		}
+	    }
+	}
+    }
 }
 
 /* A simple start on providing built-in means of selecting the AR and
@@ -971,113 +1211,54 @@ static void arma_select_trailer (int nbad, PRN *prn)
 int arma_select (const int *list, const int *pqspec,
                  DATASET *dset, gretlopt opt, PRN *prn)
 {
-    dim_info dinfo = {0};
     MODEL amod;
-    int print = !(opt & OPT_Q);
+    arma_sel asel = {0};
     gretlopt aopt = opt | OPT_Q;
-    gretl_matrix *m = NULL;
-    double cij;
-    double mincrit[3] = {NADBL, NADBL, NADBL};
-    int minidx[3] = {0};
-    int *mylist = NULL;
-    int p, q, pmax, qmax;
-    int qpos = 2;
-    int i, j;
     int err = 0;
 
     if (pqspec != NULL) {
         err = E_DATA;
     } else {
-	err = arma_precheck(list, NULL, opt, dset, NULL, &dinfo);
+	err = arma_precheck(list, NULL, opt, dset, NULL, asel.dim);
     }
     if (err) {
 	return err;
     }
 
-    mylist = gretl_list_copy(list);
-    if (gretl_list_separator_position(mylist) == 4) {
-	qpos = 3;
-    }
-    pmax = mylist[1];
-    qmax = mylist[qpos];
-    if (pmax < 0 || qmax < 0) {
-	err = E_INVARG;
-    }
-    if (!err) {
-        m = arma_select_matrix(pmax, qmax);
-        if (m == NULL) {
-            err = E_ALLOC;
-        }
-    }
+    arma_sel_init(&asel, list);
+    err = add_select_matrix(&asel);
     if (err) {
-	gretl_matrix_free(m);
-	free(mylist);
         return err;
     }
 
+    /* to preserve const property of @list */
+    asel.list = gretl_list_copy(list);
+
+#if ASEL_DEBUG
+    asel_print(&asel);
+#endif
+
     /* fill the results matrix */
-    i = 0;
-    for (p=0; p<=pmax; p++) {
-	mylist[1] = p;
-        for (q=0; q<=qmax; q++) {
-            gretl_matrix_set(m, i, 0, p);
-            gretl_matrix_set(m, i, 1, q);
-	    mylist[qpos] = q;
-            amod = arma_model(mylist, NULL, dset, aopt, NULL);
-            if (amod.errcode) {
-                for (j=0; j<3; j++) {
-                    gretl_matrix_set(m, i, j+2, NADBL);
-                }
-            } else {
-                for (j=0; j<3; j++) {
-                    cij = amod.criterion[j];
-                    gretl_matrix_set(m, i, j+2, cij);
-                    if (na(mincrit[j])) {
-                        mincrit[j] = cij;
-			minidx[j] = i;
-                    } else if (cij < mincrit[j]) {
-                        mincrit[j] = cij;
-                        minidx[j] = i;
-                    }
-                }
-            }
-            clear_model(&amod);
-            i++;
-        }
+    if (asel.seasonal) {
+	fill_pqPQ_matrix(&asel, &amod, aopt, dset);
+    } else {
+	fill_pq_matrix(&asel, &amod, aopt, dset);
     }
 
-    if (print) {
+    if (!(opt & OPT_Q)) {
         /* print as table */
-        int w, width = 12, ndec = 4;
-	int nbad = 0;
-
-        arma_select_header(&dinfo, width, prn);
-        i = 0;
-        for (p=0; p<=pmax; p++) {
-            for (q=0; q<=qmax; q++) {
-                pprintf(prn, "%2d,%2d", p, q);
-                for (j=0; j<3; j++) {
-                    cij = gretl_matrix_get(m, i, j+2);
-                    if (na(cij)) {
-			w = j==0 ? width : width + 1;
-                        pprintf(prn, " %*s", w, "NA");
-			nbad++;
-                    } else {
-                        pprintf(prn, " %*.*f", width, ndec, cij);
-                        pputc(prn, i == minidx[j] ? '*' : ' ');
-                    }
-                }
-                pputc(prn, '\n');
-                i++;
-            }
-        }
-	pputc(prn, '\n');
-	arma_select_trailer(nbad, prn);
+	arma_select_header(&asel, prn);
+	if (asel.seasonal) {
+	    print_pqPQ_matrix(&asel, prn);
+	} else {
+	    print_pq_matrix(&asel, prn);
+	}
+	arma_select_footer(&asel, prn);
     }
 
-    free(mylist);
-    if (m != NULL) {
-        record_matrix_test_result(m, NULL);
+    free(asel.list);
+    if (asel.m != NULL) {
+        record_matrix_test_result(asel.m, NULL);
     }
 
     return err;
