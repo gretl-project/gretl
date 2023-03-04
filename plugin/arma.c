@@ -1230,11 +1230,13 @@ static int set_common_sample (arma_sel *asel, MODEL *amod,
     return err;
 }
 
-/* A simple start on providing built-in means of selecting the AR and
-   MA orders of an AR(I)MA model via Information Criteria.  As things
-   stand we accept a general (p d q)(P D Q) specification but we only
-   actually search over p and q, the other parameters being clamped at
-   their input values.
+/* Provides built-in means of selecting the AR and MA orders of
+   an AR(I)MA model via Information Criteria. We accept a general
+
+   (p d q)(P D Q)
+
+   specification and search over p, q, P and Q, taking their values
+   on input as maxima; d and D remain clamped at their input values.
 */
 
 int arma_select (const int *list, const int *pqspec,
