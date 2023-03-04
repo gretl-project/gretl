@@ -926,7 +926,7 @@ static gretl_matrix *arma_select_matrix (int pmax, int qmax)
 
 static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
 {
-    char word[8], s1[32], s2[32] = {0};
+    char word[8], s1[32], s2[32];
 
     if (dinfo->d) {
 	sprintf(s1, "(p, %d, q)", dinfo->d);
@@ -941,6 +941,8 @@ static void arma_select_header (dim_info *dinfo, int w, PRN *prn)
     } else if (dinfo->P || dinfo->Q) {
 	sprintf(s2, "(%d, %d)", dinfo->P, dinfo->Q);
 	strcpy(word, "SARMA");
+    } else {
+	s2[0] = '\0';
     }
 
     pprintf(prn, "\nInformation Criteria for %s%s%s specifications\n",
@@ -954,7 +956,7 @@ static void arma_select_trailer (int nbad, PRN *prn)
 {
     pputs(prn, "* indicates best, per criterion\n");
     if (nbad > 0) {
-	pputs(prn, "NA idicates that a specification could not be estimated\n");
+	pputs(prn, "NA indicates that a specification could not be estimated\n");
     }
     pputc(prn, '\n');
 }
@@ -962,7 +964,7 @@ static void arma_select_trailer (int nbad, PRN *prn)
 /* A simple start on providing built-in means of selecting the AR and
    MA orders of an AR(I)MA model via Information Criteria.  As things
    stand we accept a general (p d q)(P D Q) specification but we only
-   actually search over p and q, the other paramaters being clamped at
+   actually search over p and q, the other parameters being clamped at
    their input values.
 */
 
@@ -1008,6 +1010,7 @@ int arma_select (const int *list, const int *pqspec,
         }
     }
     if (err) {
+	gretl_matrix_free(m);
 	free(mylist);
         return err;
     }
@@ -1015,10 +1018,10 @@ int arma_select (const int *list, const int *pqspec,
     /* fill the results matrix */
     i = 0;
     for (p=0; p<=pmax; p++) {
+	mylist[1] = p;
         for (q=0; q<=qmax; q++) {
             gretl_matrix_set(m, i, 0, p);
             gretl_matrix_set(m, i, 1, q);
-            mylist[1] = p;
 	    mylist[qpos] = q;
             amod = arma_model(mylist, NULL, dset, aopt, NULL);
             if (amod.errcode) {
