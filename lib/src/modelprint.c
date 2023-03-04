@@ -1803,7 +1803,7 @@ static void print_arma_depvar (const MODEL *pmod,
     pprintf(prn, "%s: %s", _("Dependent variable"), vname);
 }
 
-static void arma_extra_info (const MODEL *pmod, PRN *prn)
+void arma_extra_info (const MODEL *pmod, PRN *prn)
 {
     int acode = gretl_model_get_int(pmod, "arma_flags");
 

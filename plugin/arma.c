@@ -27,12 +27,13 @@
 
 #define ARMA_DEBUG 0
 #define ARMA_MDEBUG 0
+#define ASEL_DEBUG 0
 #define SHOW_INIT 0
 
 #include "arma_common.c"
 
 enum {
-    p_, q_, P_, Q_, d_, D_
+    p_, q_, P_, Q_, d_, D_, y_
 };
 
 static const double *as197_llt_callback (const double *b,
@@ -707,6 +708,7 @@ static int arma_precheck (const int *list,
 	    dim[Q_] = ainfo.Q;
 	    dim[d_] = ainfo.d;
 	    dim[D_] = ainfo.D;
+	    dim[y_] = ainfo.yno;
 	}
 	if (painfo == NULL) {
 	    free(ainfo.alist);
@@ -898,7 +900,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 struct arma_sel_ {
     gretl_matrix *m;
     int *list;
-    int dim[6];
+    int dim[7];
     double mincrit[3];
     int minidx[3];
     int seasonal;
@@ -911,8 +913,6 @@ struct arma_sel_ {
 };
 
 typedef struct arma_sel_ arma_sel;
-
-#define ASEL_DEBUG 1
 
 #if ASEL_DEBUG
 
@@ -981,7 +981,8 @@ static void dashline (int n, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void arma_select_header (arma_sel *asel, PRN *prn)
+static void arma_select_header (arma_sel *asel, MODEL *amod,
+				DATASET *dset, PRN *prn)
 {
     char word[8], s1[32], s2[32];
     int w = asel->width;
@@ -1009,8 +1010,11 @@ static void arma_select_header (arma_sel *asel, PRN *prn)
 	strcpy(s2, "(P, Q)");
     }
 
-    pprintf(prn, "\nCriteria for %s%s%s specifications\n",
-	    word, s1, s2);
+    pputc(prn, '\n');
+    arma_extra_info(amod, prn);
+    pprintf(prn, "Dependent variable %s, T = %d\n", dset->varname[num[y_]],
+	    amod->nobs);
+    pprintf(prn, "Criteria for %s%s%s specifications\n", word, s1, s2);
     if (asel->seasonal) {
 	dashline(66, prn);
 	pprintf(prn, " p, q, P, Q %*s %*s %*s %*s\n", w, "AIC", w+1,
@@ -1096,8 +1100,8 @@ static void fill_arma_sel_matrix (arma_sel *asel,
 				  gretlopt opt,
 				  DATASET *dset)
 {
-    int j, i = 0;
     int p, q, P, Q;
+    int j, i = 0;
 
     for (p=0; p<=asel->dim[p_]; p++) {
 	asel->list[1] = p;
@@ -1122,7 +1126,9 @@ static void fill_arma_sel_matrix (arma_sel *asel,
 				record_criterion(asel, amod, i, j, j+4);
 			    }
 			}
-			clear_model(amod);
+			if (i < asel->m->rows - 1) {
+			    clear_model(amod);
+			}
 			i++;
 		    }
 		}
@@ -1139,7 +1145,9 @@ static void fill_arma_sel_matrix (arma_sel *asel,
 			record_criterion(asel, amod, i, j, j+2);
 		    }
 		}
-		clear_model(amod);
+		if (i < asel->m->rows - 1) {
+		    clear_model(amod);
+		}
 		i++;
 	    }
         }
@@ -1195,6 +1203,33 @@ static void print_arma_sel_matrix (arma_sel *asel, PRN *prn)
     }
 }
 
+static int set_common_sample (arma_sel *asel, MODEL *amod,
+			      gretlopt opt, DATASET *dset)
+{
+    int err = 0;
+
+    /* set all orders to max */
+    asel->list[1] = asel->dim[p_];
+    asel->list[asel->qpos] = asel->dim[q_];
+    if (asel->seasonal) {
+	asel->list[asel->Ppos] = asel->dim[P_];
+	asel->list[asel->Qpos] = asel->dim[Q_];
+    }
+
+    *amod = arma_model(asel->list, NULL, dset, opt, NULL);
+    if (amod->errcode) {
+	gretl_errmsg_set("Error estimating biggest spec via CML");
+	err = amod->errcode;
+    } else {
+	dset->t1 = amod->t1;
+	dset->t2 = amod->t2;
+    }
+
+    clear_model(amod);
+
+    return err;
+}
+
 /* A simple start on providing built-in means of selecting the AR and
    MA orders of an AR(I)MA model via Information Criteria.  As things
    stand we accept a general (p d q)(P D Q) specification but we only
@@ -1208,6 +1243,8 @@ int arma_select (const int *list, const int *pqspec,
     MODEL amod;
     arma_sel asel = {0};
     gretlopt aopt = opt | OPT_Q;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int err = 0;
 
     if (pqspec != NULL) {
@@ -1232,12 +1269,22 @@ int arma_select (const int *list, const int *pqspec,
     asel_print(&asel);
 #endif
 
+    if (opt & OPT_C) {
+	/* conditional ML: we need to ensure a common sample */
+	err = set_common_sample(&asel, &amod, aopt, dset);
+	if (err) {
+	    gretl_matrix_free(asel.m);
+	    free(asel.list);
+	    return err;
+	}
+    }
+
     /* fill the results matrix */
     fill_arma_sel_matrix(&asel, &amod, aopt, dset);
 
     if (!(opt & OPT_Q)) {
         /* print as table */
-	arma_select_header(&asel, prn);
+	arma_select_header(&asel, &amod, dset, prn);
 	print_arma_sel_matrix(&asel, prn);
 	arma_select_footer(&asel, prn);
     }
@@ -1246,6 +1293,11 @@ int arma_select (const int *list, const int *pqspec,
     if (asel.m != NULL) {
         record_matrix_test_result(asel.m, NULL);
     }
+
+    clear_model(&amod);
+
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }

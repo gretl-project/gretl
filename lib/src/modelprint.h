@@ -46,6 +46,8 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
 const char *estimator_string (const MODEL *pmod, PRN *prn);
 
+void arma_extra_info (const MODEL *pmod, PRN *prn);
+
 void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
 			   PRN *prn);
 
