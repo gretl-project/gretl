@@ -982,6 +982,7 @@ static void arma_select_header (arma_sel *asel, PRN *prn)
     } else {
 	strcpy(word, "ARMA");
     }
+    s2[0] = '\0';
 
     if (num[d_]) {
 	sprintf(s1, "(p, %d, q)", num[d_]);
@@ -995,13 +996,7 @@ static void arma_select_header (arma_sel *asel, PRN *prn)
 	    sprintf(s2, "(%d, %d, %d)", num[P_], num[D_], num[Q_]);
 	}
     } else if (num[P_] || num[Q_]) {
-	if (asel->seasonal) {
-	    strcpy(s2, "(P, Q)");
-	} else {
-	    sprintf(s2, "(%d, %d)", num[P_], num[Q_]);
-	}
-    } else {
-	s2[0] = '\0';
+	strcpy(s2, "(P, Q)");
     }
 
     pprintf(prn, "\nCriteria for %s%s%s specifications\n",
@@ -1045,8 +1040,8 @@ static void arma_sel_init (arma_sel *asel, const int *list)
     asel->Ppos = asel->Qpos = 0;
     asel->m = NULL;
     asel->list = NULL;
-    asel->width = 12; /* for printout */
-    asel->ndec = 4;   /* ditto */
+    asel->width = 12;
+    asel->ndec = 4;
     asel->nbad = 0;
 
     s1 = gretl_list_separator_position(list);
