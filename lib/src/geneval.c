@@ -9690,6 +9690,13 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 {
     NODE *ret = NULL;
 
+    if (f == F_LRVAR && dataset_is_panel(p->dset)) {
+        /* FIXME */
+        gretl_errmsg_set("lrvar(): not yet supported for panel data");
+        p->err = E_DATA;
+        return ret;
+    }
+
     if (starting(p)) {
         double rval = -1;
         double r2val = NADBL;
