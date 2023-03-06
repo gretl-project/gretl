@@ -845,6 +845,10 @@
 	  <flag>--y-diff-only</flag>
 	  <effect>ARIMAX special, see below</effect>
 	</option>
+	<option>
+	  <flag>--lagselect</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -862,7 +866,6 @@
       <para>
 	Note: <lit>arma</lit> is an acceptable alias for this command.
       </para>
-
       <para context="cli">
 	If no <repl>indepvars</repl> list is given, estimates a
 	univariate ARIMA (Autoregressive, Integrated, Moving Average)
@@ -875,7 +878,6 @@
 	difference of the dependent variable should be taken before
 	estimating the ARMA parameters.
       </para>
-
       <para context="cli">
 	If you wish to include only specific AR or MA lags in the
 	model (as opposed to all lags up to a given order) you can
@@ -884,7 +886,6 @@
 	values or (b) an expression such as <lit>{1,4}</lit>; that is,
 	a set of lags separated by commas and enclosed in braces.
       </para>
-
       <para context="cli">
 	The optional integer values <repl>P</repl>, <repl>D</repl> and
 	<repl>Q</repl> represent the seasonal AR order, the order for
@@ -894,7 +895,6 @@
 	data).  These orders may be given in numerical form or as
 	scalar variables.
       </para>
-
       <para context="cli">
 	In the univariate case the default is to include an intercept
 	in the model but this can be suppressed with the
@@ -903,7 +903,6 @@
 	included explicitly if you want an intercept (as in the second
 	example above).
       </para>
-
       <para context="cli">
 	An alternative form of syntax is available for this command:
 	if you do not want to apply differencing (either seasonal or
@@ -916,7 +915,6 @@
       <code context="cli">
 	arma 2 1 ; y
       </code>
-
       <para context="gui">
 	Estimates an ARMA model, with or without exogenous
 	regressors. If the order of differencing is greater than zero
@@ -924,7 +922,6 @@
 	than 1 the option of including a seasonal component is
 	presented.
       </para>
-
       <para context="gui">
 	If you wish to include only specified AR or MA lags in the model
 	(as opposed to all lags up to a given order) check the box to the
@@ -933,7 +930,6 @@
 	a matrix containing the desired set of lags you can type its name
 	into the entry field.
       </para>
-
       <para>
 	The default is to use the <quote>native</quote> gretl ARMA
 	functionality, with estimation by exact ML; estimation via
@@ -944,7 +940,6 @@
 	exactly the same way.) For details regarding
 	these options, please see <guideref targ="chap:timeseries"/>.
       </para>
-
       <para context="cli">
 	When native exact ML code is used, estimated standard
 	errors are by default based on a numerical approximation to
@@ -958,7 +953,6 @@
 	numerical Hessian computation is generally an indicator of a
 	misspecified model.
       </para>
-
       <para context="cli">
 	The option <opt>lbfgs</opt> is specific to estimation using
 	native ARMA code and exact ML: it calls for use of the
@@ -966,7 +960,6 @@
 	of the regular BFGS maximizer.  This may help in some
 	instances where convergence is difficult to achieve.
       </para>
-
       <para context="cli">
 	The option <opt>y-diff-only</opt> is specific to estimation of
 	ARIMAX models (models with a non-zero order of integration and
@@ -976,7 +969,6 @@
 	this option is specified only the dependent variable is differenced,
 	the regressors remaining in level form.
       </para>
-
       <para>The AIC value given in connection with ARIMA models is
 	calculated according to the definition used in
 	<program>X-12-ARIMA</program>, namely
@@ -992,7 +984,6 @@
 	does not produce information criteria such as AIC when estimation
 	is by conditional ML.
       </para>
-
       <para context="tex">
 	The AR and MA roots shown in connection with ARMA estimation
 	are based on the following representation of an ARMA($p,q$)
@@ -1009,14 +1000,12 @@
         and stability requires that these roots lie outside the
 	unit circle.
       </para>
-
       <para context="tex">
 	The <quote>frequency</quote> figure printed in connection with
 	the AR and MA roots is the $\lambda$ value that solves
 	$z=re^{i2\pi\lambda}$, where $z$ is the root in question
 	and $r$ is its modulus.
       </para>
-
       <para context="notex">
 	The AR and MA roots shown in connection with ARMA estimation
 	are based on the following representation of an ARMA(p, q)
@@ -1036,15 +1025,28 @@
         and stability requires that these roots lie outside the
 	unit circle.
       </para>
-
       <para context="notex">
-	The <quote>frequency</quote> figure
-	printed in connection with AR and MA roots is the &lgr; value
-	that solves <math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;)
-	where <math>z</math> is the root in question and <math>r</math>
-	is its modulus.
+	The <quote>frequency</quote> figure printed in connection with
+	AR and MA roots is the &lgr; value that solves <math>z</math>
+	= <math>r</math> * exp(i*2*&pi;*&lgr;) where <math>z</math> is
+	the root in question and <math>r</math> is its modulus.
       </para>
 
+      <subhead context="cli">Lag selection</subhead>
+      <para context="cli">
+	When the <opt>lagselect</opt> option is given, this command
+	does not give specific estimates, but instead produces a table
+	showing information criteria and log-likelihood for a number
+	of ARMA or ARIMA specifications. The lag orders <math>p</math>
+	and <math>q</math> are taken as maxima; and if a seasonal
+	specification is provided <math>P</math> and <math>Q</math>
+	are also taken as maxima. In each case the minimum order is
+	taken to be 0, and results are shown for all specifications
+	from mimima to maxima. The degrees of differencing in the
+	command, <math>d</math> and/or <math>D</math>, are respected
+	but not treated as subject to search. A matrix holding the
+	results is available via the <fncref targ="$test"/> accessor.
+      </para>
     </description>
 
     <gui-access>
@@ -14052,7 +14054,7 @@
 	  causes gretl to refuse such estimation. See <guideref
 	  targ="chap:robust_vcv"/> for details.
 	  </para>
-	</li>	
+	</li>
 	<li>
 	  <para>
 	    <lit>hc_version</lit>: 0 (the default), 1, 2, 3 or 3a. Sets the
