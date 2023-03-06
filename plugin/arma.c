@@ -930,6 +930,12 @@ static void asel_print (arma_sel *asel)
 
 #endif
 
+/* Allocate the matrix required to hold arma lag selection
+   information, and add column names. The dimensions of this
+   matrix depend on whether seasonal terms should be
+   included.
+*/
+
 static int add_select_matrix (arma_sel *asel)
 {
     int i, cols, rows = 0;
@@ -981,6 +987,10 @@ static void dashline (int n, PRN *prn)
     pputc(prn, '\n');
 }
 
+/* Output a header for the arma lag-selection matrix, including
+   information gleaned from the last model estimated, @amod.
+*/
+
 static void arma_select_header (arma_sel *asel, MODEL *amod,
 				DATASET *dset, PRN *prn)
 {
@@ -1028,6 +1038,8 @@ static void arma_select_header (arma_sel *asel, MODEL *amod,
     }
 }
 
+/* Notes to be printed under the lag-selection matrix */
+
 static void arma_select_footer (arma_sel *asel, PRN *prn)
 {
     pputc(prn, '\n');
@@ -1039,7 +1051,7 @@ static void arma_select_footer (arma_sel *asel, PRN *prn)
     pputc(prn, '\n');
 }
 
-/* asel->dim should already be filled out when arma_sel_init()
+/* Note: asel->dim should already be filled out when arma_sel_init()
    is called
 */
 
@@ -1053,6 +1065,7 @@ static void arma_sel_init (arma_sel *asel, const int *list)
     }
 
     asel->Ppos = asel->Qpos = 0;
+    asel->seasonal = 0;
     asel->m = NULL;
     asel->list = NULL;
     asel->width = 12;
@@ -1071,8 +1084,6 @@ static void arma_sel_init (arma_sel *asel, const int *list)
 		break;
 	    }
 	}
-    } else {
-	asel->seasonal = 0;
     }
 }
 
@@ -1080,6 +1091,7 @@ static void record_criterion (arma_sel *asel, MODEL *amod,
 			      int i, int j, int k)
 {
     if (j < 3) {
+        /* one of the three info criteria */
 	double cij = amod->criterion[j];
 
 	gretl_matrix_set(asel->m, i, k, cij);
@@ -1091,6 +1103,7 @@ static void record_criterion (arma_sel *asel, MODEL *amod,
 	    asel->minidx[j] = i;
 	}
     } else {
+        /* last column: log-likelihood */
 	gretl_matrix_set(asel->m, i, k, amod->lnL);
     }
 }
@@ -1154,6 +1167,8 @@ static void fill_arma_sel_matrix (arma_sel *asel,
     }
 }
 
+/* pretty-printer for arma lag selection matrix */
+
 static void print_arma_sel_matrix (arma_sel *asel, PRN *prn)
 {
     int w, i, j, p, q, P, Q;
@@ -1202,6 +1217,12 @@ static void print_arma_sel_matrix (arma_sel *asel, PRN *prn)
 	}
     }
 }
+
+/* Specific to conditional ML estimation: ensure a
+   common sample by first estimating the biggest model
+   and restricting the sample range to the observations
+   usable in that case.
+*/
 
 static int set_common_sample (arma_sel *asel, MODEL *amod,
 			      gretlopt opt, DATASET *dset)
@@ -1272,7 +1293,7 @@ int arma_select (const int *list, const int *pqspec,
 #endif
 
     if (opt & OPT_C) {
-	/* conditional ML: we need to ensure a common sample */
+	/* conditional ML: ensure a common sample */
 	err = set_common_sample(&asel, &amod, aopt, dset);
 	if (err) {
 	    gretl_matrix_free(asel.m);
