@@ -1,3 +1,7 @@
+version 2023b, in progress
+- "arima" command: implement built-in procedure for assessing
+  lag orders, via new --lagselect option
+
 2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds
   ratios plus standard errors and confidence intervals to the
