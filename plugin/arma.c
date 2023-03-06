@@ -977,16 +977,6 @@ static int add_select_matrix (arma_sel *asel)
     return err;
 }
 
-static void dashline (int n, PRN *prn)
-{
-    int i;
-
-    for (i=0; i<n; i++) {
-	pputc(prn, '-');
-    }
-    pputc(prn, '\n');
-}
-
 /* Output a header for the arma lag-selection matrix, including
    information gleaned from the last model estimated, @amod.
 */

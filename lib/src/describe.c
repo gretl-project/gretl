@@ -2886,9 +2886,10 @@ static int xtab_do_pearson (const Xtab *tab)
 int crosstab_from_matrix (gretlopt opt, PRN *prn)
 {
     const char *mname;
-    const gretl_matrix *m;
-    Xtab *tab;
+    gretl_matrix *m;
+    Xtab *tab = NULL;
     int i, j, nvals, n = 0;
+    int free_m = 0;
     double x;
     int err = 0;
 
@@ -2899,7 +2900,12 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 
     m = get_matrix_by_name(mname);
     if (m == NULL) {
-	return E_UNKVAR;
+        m = generate_matrix(mname, NULL, &err);
+        if (m == NULL) {
+            return E_UNKVAR;
+        } else {
+            free_m = 1;
+        }
     }
 
     if (m->rows < 2 || m->cols < 2) {
@@ -2919,20 +2925,25 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     if (err) {
 	gretl_errmsg_sprintf(_("Matrix %s does not represent a "
 			       "contingency table"), mname);
-	return err;
+    } else {
+        tab = xtab_new(n, 0, 0);
+        if (tab == NULL) {
+            err = E_ALLOC;
+        }
     }
 
-    tab = xtab_new(n, 0, 0);
-    if (tab == NULL) {
-	return E_ALLOC;
+    if (err) {
+        goto bailout;
     }
 
     tab->rows = m->rows;
     tab->cols = m->cols;
+    tab->Sc = (char **) gretl_matrix_get_colnames(m);
+    tab->Sr = (char **) gretl_matrix_get_rownames(m);
 
     if (xtab_allocate_arrays(tab)) {
-	free_xtab(tab);
-	return E_ALLOC;
+        err = E_ALLOC;
+        goto bailout;
     }
 
     for (i=0; i<m->rows; i++) {
@@ -2958,7 +2969,16 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	print_xtab(tab, NULL, opt | OPT_S, prn);
     }
 
-    free_xtab(tab);
+ bailout:
+
+    if (tab != NULL) {
+        tab->Sc = NULL;
+        tab->Sr = NULL;
+        free_xtab(tab);
+    }
+    if (free_m) {
+        gretl_matrix_free(m);
+    }
 
     return err;
 }

@@ -44,6 +44,14 @@ void bufspace (int n, PRN *prn)
     }
 }
 
+void dashline (int n, PRN *prn)
+{
+    while (n-- > 0) {
+	pputc(prn, '-');
+    }
+    pputc(prn, '\n');
+}
+
 /**
  * printxx:
  * @xx: number to print.
@@ -565,6 +573,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     double pearson = 0.0;
     double pval = NADBL;
     char lbl[64];
+    int dashlen = 0;
     int rlen = 0;
     int clen = 0;
     int cw, tw;
@@ -617,7 +626,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	pputs(prn, "     & ");
     }
 
-    if (tab->rstrs) {
+    if (tab->Sr != NULL) {
 	rlen = 2 + row_strlen(tab);
 	if (rlen > 16) {
 	    rlen = 16;
@@ -631,7 +640,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     /* allow for BIG integers */
     get_xtab_col_widths(tab, stdw, &cw, &tw);
 
-    if (tab->cstrs) {
+    if (tab->Sc != NULL) {
 	clen = 2 + col_strlen(tab);
 	if (clen > 12) {
 	    clen = 12;
@@ -642,12 +651,16 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	clen = cw;
     }
 
+    if (totals) {
+        dashlen = clen + 1 + tab->cols*cw + tw;
+    }
+
     bufspace(rlen, prn);
 
     /* header row: column labels */
 
     for (j=0; j<tab->cols; j++) {
-	if (tab->cstrs) {
+	if (tab->Sc != NULL) {
 	    *lbl = '\0';
 	    strncat(lbl, tab->Sc[j], 63);
 	    gretl_utf8_truncate(lbl, clen-2);
@@ -679,7 +692,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    pprintf(prn,"$\\Sigma$\\\\ \\hline\n");
 	} else {
 	    bufspace(2 + (tw - stdw), prn);
-	    pprintf(prn,"%s\n  \n", _("TOT."));
+	    pprintf(prn,"%s\n", _("TOT."));
+            dashline(dashlen, prn);
 	}
     } else if (!tex) {
 	pputc(prn, '\n');
@@ -691,7 +705,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	if (tab->rtotal[i] == 0) {
 	    continue;
 	}
-	if (tab->rstrs) {
+	if (tab->Sr != NULL) {
 	    *lbl = '\0';
 	    strncat(lbl, tab->Sr[i], 63);
 	    gretl_utf8_truncate(lbl, rlen-2);
@@ -790,7 +804,11 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	if (tex) {
 	    pputs(prn, "$\\Sigma$ & ");
 	} else {
-	    pputc(prn, '\n');
+            if (dashlen > 0) {
+                dashline(dashlen, prn);
+            } else {
+                pputc(prn, '\n');
+            }
 	    pprintf(prn, "%-*s", rlen, _("TOTAL"));
 	}
 	for (j=0; j<tab->cols; j++) {
@@ -854,7 +872,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	record_test_result(pearson, pval);
     }
 
-    if (!tex && tab->rows == 2 && tab->cols == 2) {
+    if (!(opt & OPT_F) && !tex && tab->rows == 2 && tab->cols == 2) {
 	fishers_exact_test(tab, prn);
     }
 }

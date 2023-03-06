@@ -697,6 +697,7 @@ struct gretl_option gretl_opts[] = {
     { XTAB,     OPT_T, "tex", 1 },
     { XTAB,     OPT_N, "no-totals", 0 },
     { XTAB,     OPT_E, "equal", 0 },
+    { XTAB,     OPT_F, "no-fisher", 0 },
     { 0,        0L,    NULL, 0 }
 };
 
