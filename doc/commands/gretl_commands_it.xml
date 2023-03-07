@@ -535,7 +535,12 @@
         Apre un file di dati e aggiunge il suo contenuto al dataset
         attuale, se i nuovi dati sono compatibili. Il programma cerca
         di riconoscere il formato del file di dati (interno, testo
-        semplice, CSV, Gnumeric, Excel, ecc.).
+        semplice, CSV, Gnumeric, Excel, ecc.). Si noti che il comando
+        <cmdref targ="join"/> fornisce un controllo molto più puntuale
+        sul modo in cui i nuovi dati vengono gestiti. Inoltre,
+        l'aggiunta di dati ad un dataset con struttura panel può
+	essere una faccenda piuttosto intricata. Si veda la sezione
+	<quote>Dati panel</quote> più avanti.
       </para>
       <para>
 	I dati aggiunti possono avere la forma di osservazioni
@@ -553,23 +558,6 @@
 	<opt>fixed-sample</opt>; ciò ha l'effetto di di sopprimere
 	l'aggiunta di osservazioni, e quindi restringere l'operazione
 	all'aggiunta di nuove serie.
-      </para>
-      <para>
-	Nel caso di aggiunta di dati a un dataset panel, c'è una
-	possibilità speciale. Siano <math>n</math> il numero di unità
-	cross-section, <math>T</math> il numero di periodi temporali,
-	e <math>m</math> il numero di nuove osservazioni da
-	aggiungere. Se <math>m = n</math> i nuovi dati saranno
-	considerati invarianti nel tempo, e saranno copiati per ognuno
-	dei periodi temporali. D'altra parte, se <math>m = T</math> i
-	dati saranno trattati come invarianti tra le unità. Se il
-	panel è <quote>quadrato</quote>, ed <math>m</math> è pari sia
-	ad <math>n</math> che a <math>T</math>, il comportamento
-	predefinito consiste nel trattare i nuovi casi come invarianti
-	nel tempo, ma è possibile forzare l'interpretazione dei nuovi
-	dati come serie storiche usando l'opzione
-	<opt>time-series</opt> (che verrà ignorata in tutti gli
-	altri casi).
       </para>
       <para>
 	Quando viene scelto per l'aggiunta un file di dati, potrebbe
@@ -590,6 +578,37 @@
       <para>
 	Vedi anche <cmdref targ="join"/> per una gestione più
 	sofisticata di più di un file di dati esterno.
+      </para>
+      <subhead>Dati panel</subhead>
+      <para>
+	Quando il comando è usato su un dataset di tipo panel, i
+	risultati saranno corretti solo se le informazioni sulle
+	<quote>unità</quote> e sul tempo sono ben allineate.
+      </para>
+      <para>
+	Il comando dovrebbe gestire con facilità due casi
+	semplici. Siano <math>n</math> il numero di unità
+	cross-sezionali e <math>T</math> il numero di periodi nel
+	panel attualmente aperto, e <math>m</math> il numero di
+	osservazioni dei dati da aggiungere.  Se <math>m = n</math> i
+	nuovi dati sono considerati invarianti nel tempo, e inseriti
+	come tali. Se, per converso, <math>m = T</math> i dati sono
+	trattati come invarianti fra le unità, e ripetuti per ognuna
+	di esse. Nel caso ambiguo <math>T = n</math>, per default i
+	dati sono trattati come invarianti nel tempo, a meno che non
+	venga usata l'opzione <opt>time-series</opt>, che forza gretl
+	a considerarli una serie storica.
+      </para>
+      <para>
+	Se il dataset corrente e i dati in ingresso sono entrambi
+	riconosciuti come dei panel, vanno considerati due casi. (1)
+	La lunghezza temporale <math>T</math> e diversa fra i due
+	dataset. Quaesta situazione provoca un errore. (2) Se invece
+	<math>T</math> è uguale, si dà per scontato che le unità
+	combacino, a <emphasis>partire dalla prima unità</emphasis>
+	doi ognuno dei due dataset. Per situazioni più sofisticate o
+	complesse, consigliamo di usare <cmdref targ="join"/> anziché
+	<lit>append</lit>.
       </para>
 
     </description>
@@ -855,6 +874,10 @@
 	  <flag>--y-diff-only</flag>
 	  <effect>speciale per ARIMAX, si veda sotto</effect>
 	</option>
+	<option>
+          <flag>--lagselect</flag>
+          <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -868,7 +891,6 @@
       <para>
 	Nota: <lit>arma</lit> è un sinomimo di questo comando.
       </para>
-
       <para context="cli">
 	Se non viene fornita una lista di
 	<repl>variabili-indipendenti</repl>, stima un modello
@@ -883,7 +905,6 @@
 	significa che prima di stimare i parametri ARMA occorre
 	prendere la differenza della variabile dipendente.
       </para>
-
       <para context="cli">
         Se si vuole includere solo alcuni specifici ritardi AR o MA
         (invece che tutti i ritardi fino all'ordine specificato) è
@@ -893,7 +914,6 @@
         <lit>{1 4}</lit>, ossia un insieme di ritardi separati da
         spazi e racchiusi tra parentesi graffe.
       </para>
-
       <para context="cli">
         I valori interi opzionali <repl>P</repl>, <repl>D</repl> e
         <repl>Q</repl> rappresentano rispettivamente, l'ordine dei
@@ -903,7 +923,6 @@
         trimestrali o mensili). Questi valori devono essere indicati
         in forma numerica o come variabili scalari.
       </para>
-
       <para context="cli">
         Nel caso univariato la scelta predefinita include
         un'intercetta nel modello, ma questa può essere soppressa con
@@ -913,7 +932,6 @@
         costante se si desidera un'intercetta (come nel secondo degli
         esempi proposti).
       </para>
-
       <para context="cli">
         È disponibile una sintassi alternativa per questo comando: se
         non si intende applicare alcuna operazione di differenziazione
@@ -927,14 +945,12 @@
       <code context="cli">
 	arma 2 1 ; y
       </code>
-
       <para context="gui">
 	Stima un modello ARMA, con o senza regressori esogeni. Se
 	l'ordine di differenziazione è maggiore di zero, il modello
 	diventa un ARIMA. Se i dati hanno una frequenza superiore a 1,
 	viene offerta la possibilità di includere termini stagionali.
       </para>
-
       <para context="gui">
         Se si vuole includere solo alcuni specifici ritardi AR o MA (invece che
         tutti i ritardi fino all'ordine specificato) è possibile marcare la
@@ -943,7 +959,6 @@
         definita una matrice che contiene l'insieme dei ritardi desiderati, è
         possibile scrivere il suo nome nel campo.
       </para>
-
       <para>
         Il funzionamento predefinito utilizza la funzionalità ARMA
         <quote>interna</quote> di gretl, che usa la stima di massima
@@ -954,7 +969,6 @@
         posto del codice interno di gretl.  Per i dettagli su queste
         opzioni si veda <guideref targ="chap:timeseries"/>.
       </para>
-
       <para context="cli">
         Quando si usa il codice ARMA interno, le deviazioni standard
         sono stimate basandosi su un'approssimazione numerica
@@ -967,7 +981,6 @@
         l'impossibilità di calcolare numericamente l'hessiana è per
         solito indice di un modello mal specificato.
       </para>
-
       <para context="cli">
 	L'opzione <opt>lbfgs</opt> è riservata alla stima basata su codice
 	ARMA nativo e MV esatta; quando viene indicata, la stima usa l'algoritmo
@@ -975,7 +988,6 @@
 	consueto. Questa variante può essere utile in alcune situazioni nelle quali
 	la convergenza all'ottimo è problematica.
       </para>
-
       <para context="cli">
 	L'opzione <opt>y-diff-only</opt> è riservata alla stima di modelli
 	ARIMAX (modelli con ordine di integrazione non nullo e che includono
@@ -985,7 +997,6 @@
 	viene indicata questa opzione viene differenziata solo la variabile
 	dipendente, mentre i regressori restano nei livelli.
       </para>
-
       <para>
         Il valore AIC mostrato nei modelli ARIMA è calcolato secondo la
 	definizione usata in <program>X-12-ARIMA</program>, ossia
@@ -1001,7 +1012,6 @@
         criteri di informazione come l'AIC quando la stima è effettuata col
         metodo della massima verosimiglianza condizionale.
       </para>
-
       <para context="tex">
 	Le radici AR e MA mostrate in occasione della stima ARMA sono
 	basate sulla seguente rappresentazione di un processo ARMA($p,q$):
@@ -1017,14 +1027,12 @@
 	e la stazionarietà del processo richiede che queste radici si
 	trovino al di fuori del cerchio di raggio unitario.
       </para>
-
       <para context="tex">
 	Il valore di <quote>frequency</quote> mostrato assieme alle radici
 	AR e MA è il valore di $\lambda$ che risolve
 	$z=re^{i2\pi\lambda}$, dove $z$ è la radice in questione e $r$ è
 	il suo modulo.
       </para>
-
       <para context="notex">
 	Le radici AR e MA mostrate in occasione della stima ARMA sono
 	basate sulla seguente rappresentazione	di un processo ARMA(p,q):
@@ -1043,14 +1051,27 @@
 	e la stazionarietà del processo richiede che queste radici si
 	trovino al di fuori del cerchio di raggio unitario.
       </para>
-
       <para context="notex">
 	Il valore di <quote>frequenza</quote> mostrato insieme alle
 	radici AR e MA è il valore di &lgr; che risolve <math>z</math>
 	= <math>r</math> * exp(i*2*&pi;*&lgr;)dove <math>z</math> è la
 	radice in questione e <math>r</math> è il suo modulo.
       </para>
-
+      <subhead context="cli">Selezione dei ritardi</subhead>
+      <para context="cli">
+	Con l'opzione <opt>lagselect</opt>, il comando non fornisce
+	stime specifiche, bensì una tavola coi criteri di informazione
+	e la log-verosimiglianza per svariate specificazioni ARMA o
+	ARIMA. I parametri <math>p</math> e <math>q</math> sono
+	interpretati come ordini massimi, così come <math>P</math> e
+	<math>Q</math> se c'è una componente stagionale. In ogni caso,
+	il minimo è 0, e i risultati sono mostrati per tutte le
+	combinazioni dal minimo al massimo. Gli ordini di
+	differenziazione <math>d</math> e/o <math>D</math> sono
+	utilizzati ma non sono soggetti a ricerca. Per recuperare la
+	matrice dei risultati si usi l'accessore <fncref
+	targ="$test"/>.
+      </para>
     </description>
 
     <gui-access>
