@@ -210,6 +210,7 @@ struct fnpkg_ {
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
+    gretl_bundle *ui; /* for GUI use */
 };
 
 /* acceptable types for parameters of user-defined functions */
@@ -309,6 +310,7 @@ static struct flag_and_key pkg_lookups[] = {
     { UFUN_GUI_PRECHECK, GUI_PRECHECK },
     { UFUN_LIST_MAKER,   LIST_MAKER },
     { UFUN_R_SETUP,      R_SETUP },
+    { UFUN_UI_MAKER,     UI_MAKER },
     { -1,                NULL }
 };
 
@@ -317,7 +319,8 @@ static struct flag_and_key pkg_lookups[] = {
 			 r == UFUN_BUNDLE_TEST ||  \
 			 r == UFUN_BUNDLE_FCAST || \
 			 r == UFUN_BUNDLE_EXTRA || \
-			 r == UFUN_R_SETUP)
+			 r == UFUN_R_SETUP || \
+                         r == UFUN_UI_MAKER)
 
 static int pkg_key_get_role (const char *key)
 {
@@ -869,6 +872,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_depends = 0;
     pkg->provider = NULL;
     pkg->editor = NULL;
+    pkg->ui = NULL;
 
     return pkg;
 }
@@ -3718,6 +3722,26 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	}
 	/* not found */
 	pprintf(prn, "%s: %s: no such private function\n", attr, name);
+    } else if (role == UFUN_UI_MAKER) {
+        /* also private */
+	for (i=0; i<pkg->n_priv; i++) {
+	    if (!strcmp(name, pkg->priv[i]->name)) {
+		u = pkg->priv[i];
+		if (u->rettype != GRETL_TYPE_BUNDLE) {
+		    pprintf(prn, "%s: should return a bundle\n", attr);
+		    err = E_TYPES;
+		} else if (u->n_params > 0) {
+		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		    err = E_TYPES;
+		}
+		if (!err) {
+		    u->pkg_role = role;
+		}
+		return err; /* found */
+	    }
+	}
+	/* not found */
+	pprintf(prn, "%s: %s: no such private function\n", attr, name);
     }
 
     for (i=0; i<pkg->n_pub; i++) {
@@ -3813,6 +3837,13 @@ int function_ok_for_package_role (const char *name,
 	return !err; /* found */
     } else if (role == UFUN_R_SETUP) {
 	if (u->rettype != GRETL_TYPE_VOID) {
+	    err = E_TYPES;
+	} else if (u->n_params > 0) {
+	    err = E_TYPES;
+	}
+	return !err; /* found */
+    } else if (role == UFUN_UI_MAKER) {
+	if (u->rettype != GRETL_TYPE_BUNDLE) {
 	    err = E_TYPES;
 	} else if (u->n_params > 0) {
 	    err = E_TYPES;
@@ -4880,7 +4911,7 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
     return list;
 }
 
-static char *pkg_get_special_func_name (fnpkg *pkg, UfunRole role)
+static gchar *pkg_get_special_func_name (fnpkg *pkg, UfunRole role)
 {
     int i;
 
@@ -4928,6 +4959,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
     int npriv = 0;
     int **plist;
     const char *key;
+    UfunRole role;
     void *ptr;
     char **ps;
     int *pi;
@@ -5038,38 +5070,14 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "gui-main-id")) {
 	    pi = (int *) ptr;
 	    *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
-	} else if (!strcmp(key, BUNDLE_PRINT)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_PRINT);
-	} else if (!strcmp(key, BUNDLE_PLOT)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_PLOT);
-	} else if (!strcmp(key, BUNDLE_TEST)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_TEST);
-	} else if (!strcmp(key, BUNDLE_FCAST)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_FCAST);
-	} else if (!strcmp(key, BUNDLE_EXTRA)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_EXTRA);
-	} else if (!strcmp(key, GUI_MAIN)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_GUI_MAIN);
-	} else if (!strcmp(key, GUI_PRECHECK)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_GUI_PRECHECK);
-	} else if (!strcmp(key, LIST_MAKER)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_LIST_MAKER);
-	} else if (!strcmp(key, R_SETUP)) {
-	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func_name(pkg, UFUN_R_SETUP);
-	} else if (!strcmp(key, "gui-attrs")) {
-	    unsigned char *s = (unsigned char *) ptr;
+        } else if (!strcmp(key, "gui-attrs")) {
+            unsigned char *s = (unsigned char *) ptr;
 
-	    pkg_get_gui_attrs(pkg, s);
-	}
+            pkg_get_gui_attrs(pkg, s);
+        } else if ((role = pkg_key_get_role(key))) {
+            ps = (char **) ptr;
+            *ps = pkg_get_special_func_name(pkg, role);
+        }
     }
 
     va_end(ap);
@@ -5300,10 +5308,12 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	if (pkg->datafiles != NULL && pkg->n_files > 0) {
 	    strings_array_free(pkg->datafiles, pkg->n_files);
 	}
-
 	if (pkg->depends != NULL && pkg->n_depends > 0) {
 	    strings_array_free(pkg->depends, pkg->n_depends);
 	}
+        if (pkg->ui != NULL) {
+            gretl_bundle_destroy(pkg->ui);
+        }
 
 	free(pkg->pub);
 	free(pkg->priv);
@@ -10493,6 +10503,18 @@ void function_package_set_editor (fnpkg *pkg, void *editor)
 void *function_package_get_editor (fnpkg *pkg)
 {
     return pkg == NULL ? NULL : pkg->editor;
+}
+
+void function_package_set_ui_spec (fnpkg *pkg, void *ui_spec)
+{
+    if (pkg != NULL) {
+	pkg->ui = ui_spec;
+    }
+}
+
+void *function_package_get_ui_spec (fnpkg *pkg)
+{
+    return pkg == NULL ? NULL : pkg->ui;
 }
 
 /**

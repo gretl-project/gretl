@@ -254,6 +254,16 @@ static int cinfo_args_init (call_info *cinfo)
 	}
     }
 
+    if (!err && cinfo->pkg != NULL) {
+        gchar *funcname = NULL;
+
+        function_package_get_properties(cinfo->pkg, UI_MAKER, &funcname, NULL);
+        if (funcname != NULL) {
+            fprintf(stderr, "HERE, ui-maker '%s'\n", funcname);
+            g_free(funcname);
+        }
+    }
+
     return err;
 }
 

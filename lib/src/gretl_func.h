@@ -41,6 +41,7 @@ typedef enum {
     UFUN_GUI_PRECHECK,
     UFUN_LIST_MAKER,
     UFUN_R_SETUP,
+    UFUN_UI_MAKER,
     UFUN_ROLE_MAX
 } UfunRole;
 
@@ -305,6 +306,10 @@ int function_package_has_gui_help (fnpkg *pkg);
 void function_package_set_editor (fnpkg *pkg, void *editor);
 
 void *function_package_get_editor (fnpkg *pkg);
+
+void function_package_set_ui_spec (fnpkg *pkg, void *ui_spec);
+
+void *function_package_get_ui_spec (fnpkg *pkg);
 
 int package_has_menu_attachment (const char *fname,
 				 char **pkgname,
