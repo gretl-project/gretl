@@ -1347,11 +1347,11 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("literal");
-    g_object_set(tag, "family", "monospace", NULL);
+    g_object_set(tag, "font-desc", fixed_font, NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("optflag");
-    g_object_set(tag, "family", "monospace",
+    g_object_set(tag, "font-desc", fixed_font,
 		 "foreground", "#396d60", NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -1364,30 +1364,49 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("code");
-    g_object_set(tag, "family", "monospace",
+    g_object_set(tag, "font-desc", fixed_font,
 		 "paragraph-background", "#e6f3ff",
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("mono");
-    g_object_set(tag, "family", "monospace", NULL);
+    g_object_set(tag, "font-desc", fixed_font, NULL);
     gtk_text_tag_table_add(table, tag);
 
     return table;
 }
 
+static GtkTextTagTable *gretl_tags = NULL;
+
 GtkTextBuffer *gretl_text_buf_new (void)
 {
-    static GtkTextTagTable *tags = NULL;
     GtkTextBuffer *tbuf;
 
-    if (tags == NULL) {
-	tags = gretl_tags_new();
+    if (gretl_tags == NULL) {
+	gretl_tags = gretl_tags_new();
     }
 
-    tbuf = gtk_text_buffer_new(tags);
+    tbuf = gtk_text_buffer_new(gretl_tags);
 
     return tbuf;
+}
+
+void revise_gretl_mono_tags (void)
+{
+    if (gretl_tags != NULL) {
+	const char *mono_tags[] = {
+	    "literal", "optflag", "code", "mono"
+	};
+	GtkTextTag *tag;
+	int i;
+
+	for (i=0; i<G_N_ELEMENTS(mono_tags); i++) {
+	    tag = gtk_text_tag_table_lookup(gretl_tags, mono_tags[i]);
+	    if (tag != NULL) {
+		g_object_set(tag, "font-desc", fixed_font, NULL);
+	    }
+	}
+    }
 }
 
 static void
@@ -1821,7 +1840,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	} else if (page == SCRIPT_PAGE || page == EXT_PAGE ||
 		   page == PDF_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
-					     "family", "monospace", NULL);
+					     "font-desc", fixed_font, NULL);
 	} else if (indent != NULL) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
 					     "left_margin", 30, NULL);

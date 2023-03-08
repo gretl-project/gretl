@@ -591,6 +591,7 @@ void set_fixed_font (const char *fontname, int remember)
 	    pango_font_description_free(fixed_font);
 	}
 	fixed_font = pango_font_description_from_string(fontname);
+	revise_gretl_mono_tags();
 	if (remember) {
 	    strcpy(fixedfontname, fontname);
 	}
@@ -2914,8 +2915,7 @@ static void chooser_font_selector (GtkAction *action)
     }
 
     fc = gtk_font_chooser_dialog_new(title, GTK_WINDOW(mdata->main));
-    gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fc),
-			      fontname);
+    gtk_font_chooser_set_font(GTK_FONT_CHOOSER(fc), fontname);
     gtk_font_chooser_set_filter_func(GTK_FONT_CHOOSER(fc),
 				     filter, NULL, NULL);
     gtk_window_set_position(GTK_WINDOW(fc), GTK_WIN_POS_MOUSE);

@@ -98,6 +98,8 @@ void text_larger (GtkWidget *w, gpointer data);
 
 void text_smaller (GtkWidget *w, gpointer data);
 
+void revise_gretl_mono_tags (void);
+
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
 
 void textview_append_text_colorized (GtkWidget *view, const char *buf,
