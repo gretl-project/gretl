@@ -1391,6 +1391,12 @@ GtkTextBuffer *gretl_text_buf_new (void)
     return tbuf;
 }
 
+/* Modify the @gretl_tags members that specify a monospaced
+   font, in response to the user's changing the choice of
+   such font. If we don't do this, the change will not take
+   effect until gretl is restarted.
+*/
+
 void revise_gretl_mono_tags (void)
 {
     if (gretl_tags != NULL) {
