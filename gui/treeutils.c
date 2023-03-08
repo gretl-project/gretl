@@ -529,10 +529,12 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     GtkListStore *lstore = NULL;
     GtkTreeStore *tstore = NULL;
     GtkWidget *view, *scroller;
-    GtkCellRenderer *renderer;
+    GtkCellRenderer *text_renderer;
     GtkCellRenderer *bool_renderer = NULL;
+    GtkCellRenderer *gfn_renderer = NULL;
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
+    gboolean gfn_view = 0;
     int i, viscols;
 
     viscols = ncols - hidden_cols;
@@ -549,8 +551,17 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
 #endif
 
-    renderer = gtk_cell_renderer_text_new();
-    g_object_set(renderer, "ypad", 0, NULL);
+    text_renderer = gtk_cell_renderer_text_new();
+    g_object_set(text_renderer, "ypad", 0, NULL);
+
+    if (vwin->role == FUNC_FILES || vwin->role == REMOTE_FUNC_FILES) {
+	gfn_view = 1;
+#if 0 /* not yet */
+	gfn_renderer = gtk_cell_renderer_text_new();
+	g_object_set(gfn_renderer, "ypad", 0, "ellipsize",
+		     PANGO_ELLIPSIZE_END, NULL);
+#endif
+    }
 
     for (i=0; i<viscols; i++) {
 	if (types[i] == G_TYPE_BOOLEAN) {
@@ -567,18 +578,26 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	    gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(column), 50);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	} else {
+	    GtkCellRenderer *renderer = text_renderer;
+
+	    if (gfn_view && i > 2 && gfn_renderer != NULL) {
+		renderer = gfn_renderer;
+	    }
+
 	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
 							      renderer,
 							      "text", i,
 							      NULL);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
-	    if ((vwin->role == FUNC_FILES || vwin->role == REMOTE_FUNC_FILES) && i == 1) {
-		; /* sorting functions by version number is not meaningful */
-	    } else {
+	    if (renderer == gfn_renderer) {
+		/* FIXME */
+		/* gtk_tree_view_column_set_min_width(column, 120); */
+	    }
+	    if (gfn_view == 0 || i != 1) {
+		/* sorting gfns by version number (col 1) is not meaningful */
 		gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
 	    }
-
 	    if (vwin != mdata) {
 		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
 	    }
@@ -600,7 +619,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 
     for (i=viscols; i<ncols; i++) {
 	column = gtk_tree_view_column_new_with_attributes(NULL,
-							  renderer,
+							  text_renderer,
 							  "text", i,
 							  NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
