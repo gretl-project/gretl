@@ -2429,22 +2429,17 @@ char *maybe_ellipsize_string (char *s, int maxlen)
     return s;
 }
 
-#define HARD_ELLIPSIZE 1
-
-/* note: @summary is not const because it may get truncated */
-
 static void browser_insert_gfn_info (const char *pkgname,
 				     const char *version,
 				     const char *date,
 				     const char *author,
-				     char *summary,
+				     const char *summary,
 				     const char *dirname,
 				     int uses_subdir,
 				     int pdfdoc,
 				     GtkListStore *store,
 				     GtkTreeIter *iter)
 {
-    char *tmp = NULL;
     gint flags = 0;
 
     if (uses_subdir) {
@@ -2456,24 +2451,15 @@ static void browser_insert_gfn_info (const char *pkgname,
 	}
     }
 
-#if HARD_ELLIPSIZE
-    if (g_utf8_strlen(author, -1) > 26) {
-	tmp = gretl_strdup(author);
-	maybe_ellipsize_string(tmp, 26);
-    }
-    maybe_ellipsize_string(summary, 68);
-#endif
-
     gtk_list_store_set(store, iter,
 		       0, pkgname,
 		       1, version,
 		       2, date,
-		       3, tmp ? tmp : author,
+		       3, author,
 		       4, summary,
 		       5, dirname,
 		       6, flags,
 		       -1);
-    free(tmp);
 }
 
 static void check_loaded_gfn (const char *pkgname,

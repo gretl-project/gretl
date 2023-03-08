@@ -1217,53 +1217,8 @@ static int db_is_writable (int action, const char *fname)
     return ret;
 }
 
-static gboolean
-db_col_callback (GtkWidget *w, GdkEventMotion *event, gpointer p)
-{
-    GtkTreeViewColumn *col =
-	gtk_tree_view_get_column(GTK_TREE_VIEW(w), 1);
-
-    if (gtk_tree_view_column_get_max_width(col) > 0) {
-	/* remove the width constraint */
-	gtk_tree_view_column_set_max_width(col, -1);
-    }
-
-    return 0;
-}
-
-static void
-maybe_adjust_descrip_column (windata_t *vwin)
-{
-    GtkTreeViewColumn *col;
-    GdkWindow *window;
-    gint w0, w1, lw, w1max;
-
-    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), DBCOL_VARNAME);
-    w0 = gtk_tree_view_column_get_width(col);
-
-    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), DBCOL_DESCRIP);
-    w1 = gtk_tree_view_column_get_width(col);
-
-    window = gtk_widget_get_window(vwin->listbox);
-
-#if GTK_MAJOR_VERSION >= 3
-    lw = gdk_window_get_width(window);
-#else
-    gdk_drawable_get_size(window, &lw, NULL);
-#endif
-
-    w1max = lw - w0 - 140;
-
-    if (w1 > w1max) {
-	gtk_tree_view_column_set_max_width(col, w1max);
-	g_signal_connect(vwin->listbox, "motion-notify-event",
-			 G_CALLBACK(db_col_callback), NULL);
-    }
-}
-
-static int
-make_db_index_window (int action, char *fname, char *buf,
-		      int index_button)
+static int make_db_index_window (int action, char *fname,
+				 char *buf, int index_button)
 {
     GtkWidget *listbox;
     gchar *title;
@@ -1278,11 +1233,9 @@ make_db_index_window (int action, char *fname, char *buf,
 	gtk_window_present(GTK_WINDOW(vwin->main));
 	return 0;
     }
-
     if (action == REMOTE_SERIES && buf == NULL) {
 	return 1;
     }
-
     if (buf == NULL && strrslash(fname) != NULL) {
 	title = strrslash(fname) + 1;
     } else {
@@ -1346,7 +1299,6 @@ make_db_index_window (int action, char *fname, char *buf,
 	gtk_widget_destroy(vwin->main);
     } else {
 	gtk_widget_show_all(vwin->main);
-	maybe_adjust_descrip_column(vwin);
 	listbox_select_first(vwin);
     }
 
