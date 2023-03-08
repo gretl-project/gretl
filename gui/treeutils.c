@@ -516,10 +516,24 @@ static void id_col_clicked (GtkTreeViewColumn *column, GtkWidget *view)
     }
 }
 
+static void set_min_col_width (GtkTreeViewColumn *column,
+                               windata_t *vwin, int i)
+{
+    /* for the "author" field in a gfn-listing window */
+    int w = get_string_width(" Marcos Larios Santa Rosa ");
+
+    gtk_tree_view_column_set_min_width(column, w);
+}
+
 #define db_series_window(v) (v->role == NATIVE_SERIES || \
                              v->role == RATS_SERIES || \
                              v->role == PCGIVE_SERIES || \
                              v->role == REMOTE_SERIES)
+
+#define gfn_window(v) (v->role == FUNC_FILES || \
+                       v->role == REMOTE_FUNC_FILES)
+
+#define AUTO_ELLIPSIS 0
 
 void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			int ncols, int hidden_cols,
@@ -531,10 +545,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     GtkWidget *view, *scroller;
     GtkCellRenderer *text_renderer;
     GtkCellRenderer *bool_renderer = NULL;
-    GtkCellRenderer *gfn_renderer = NULL;
+    GtkCellRenderer *alt_renderer = NULL;
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
-    gboolean gfn_view = 0;
     int i, viscols;
 
     viscols = ncols - hidden_cols;
@@ -554,11 +567,10 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     text_renderer = gtk_cell_renderer_text_new();
     g_object_set(text_renderer, "ypad", 0, NULL);
 
-    if (vwin->role == FUNC_FILES || vwin->role == REMOTE_FUNC_FILES) {
-	gfn_view = 1;
-#if 0 /* not yet */
-	gfn_renderer = gtk_cell_renderer_text_new();
-	g_object_set(gfn_renderer, "ypad", 0, "ellipsize",
+    if (gfn_window(vwin)) {
+#if AUTO_ELLIPSIS
+	alt_renderer = gtk_cell_renderer_text_new();
+	g_object_set(alt_renderer, "ypad", 0, "ellipsize",
 		     PANGO_ELLIPSIZE_END, NULL);
 #endif
     }
@@ -580,22 +592,23 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 	} else {
 	    GtkCellRenderer *renderer = text_renderer;
 
-	    if (gfn_view && i > 2 && gfn_renderer != NULL) {
-		renderer = gfn_renderer;
+	    if (gfn_window(vwin) && i > 2 && alt_renderer != NULL) {
+		renderer = alt_renderer;
 	    }
-
 	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
 							      renderer,
 							      "text", i,
 							      NULL);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
-	    if (renderer == gfn_renderer) {
-		/* FIXME */
-		/* gtk_tree_view_column_set_min_width(column, 120); */
+	    if (renderer == alt_renderer && i == 3) {
+                /* allowing automatic ellipsis */
+                set_min_col_width(column, vwin, i);
 	    }
-	    if (gfn_view == 0 || i != 1) {
-		/* sorting gfns by version number (col 1) is not meaningful */
+	    if (!gfn_window(vwin) || i != 1) {
+		/* sorting gfns by version number (col 1) is not meaningful;
+                   otherwise allow sorting by any column
+                */
 		gtk_tree_view_column_set_sort_column_id(GTK_TREE_VIEW_COLUMN(column), i);
 	    }
 	    if (vwin != mdata) {
@@ -618,6 +631,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     }
 
     for (i=viscols; i<ncols; i++) {
+        /* handle the invisible columns, if any */
 	column = gtk_tree_view_column_new_with_attributes(NULL,
 							  text_renderer,
 							  "text", i,
