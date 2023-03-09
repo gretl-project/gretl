@@ -506,6 +506,64 @@ The output from the last command is:
 \end{code}
 \end{script}
 
+\subsection{Lag selection}
+\label{arma-lagsel}
+
+A variant of the \cmd{arma} and \cmd{arima} commands is available as
+an aid to specification. If you give the \option{lagselect} option the
+lag orders $p$ and $q$---as well as $P$ and $Q$, if applicable---are
+taken as \textit{maxima}, and the usual output is replaced by a table
+showing information criteria and log-likelihood for a range of
+specifications from zero lags to the maxima. If no seasonal component
+is given this table has six columns: $p$ and $q$; the criteria AIC,
+BIC and HQC (see Chapter~\ref{chap:criteria}); and log-likelihood. In
+the seasonal case there are eight columns: $P$ and $Q$ are inserted
+following $p$ and $q$. Asterisks identify the rows (specifications) on
+which each information criterion is minimized.
+
+If the input specification includes differencing (non-seasonal and/or
+seasonal) this is respected but $d$ and $D$ are treated as fixed
+values rather than maxima. You have the usual choice between exact and
+conditional ML estimation but the option of using \app{X-12-ARIMA} (or
+X13) is not supported. You also have the usual option of including
+exogenous regressors (ARMAX).
+
+On successful completion the table of results is available in the form
+of a matrix via the \dollar{test} accessor. The printed version can be
+suppressed via the \option{quiet} option.
+
+\begin{script}[htbp]
+  \scriptcaption{Lag selection}
+  \label{arma-lagsel-script}
+\begin{scode}
+open greene18_2.gdt
+# log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
+series y = log(Y)
+# and its first difference
+series dy = diff(y)
+# reserve 2 years for out-of-sample forecast
+smpl ; 1981:4
+# Estimate using ARIMA
+arima 1 1 1 ; y 
+# forecast over full period
+smpl --full
+fcast fc1
+# Return to sub-sample and run ARMA on the first difference of y
+smpl ; 1981:4
+arma 1 1 ; dy
+smpl --full
+fcast fc2
+series fcdiff = (t<=1982:1)? (fc1 - y(-1)) : (fc1 - fc1(-1))
+# compare the forecasts over the later period
+smpl 1981:1 1983:4
+print y fc1 fc2 fcdiff --byobs
+\end{scode}
+The output from the last command is:
+%
+\begin{code}
+output
+\end{code}
+\end{script}
 
 \section{Unit root tests}
 \label{sec:uroot}
