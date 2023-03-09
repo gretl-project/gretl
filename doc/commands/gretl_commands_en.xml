@@ -1063,6 +1063,25 @@
     </description>
   </command>
 
+  <command name="ARMA-lagselect" section="Tests" context="gui"
+    label="AR(I)MA lag-length selection">
+
+    <description>
+      <para>
+	In this dialog box you specify an ARMA or ARIMA model as
+	usual, but the lag orders you specify are taken as maxima.
+      </para>
+      <para>
+	Output consists of a table showing the values of the Akaike
+	(AIC), Schwarz (BIC) and Hannan&ndash;Quinn (HQC) information
+	criteria, and also the log-likelihood, computed for
+	specifications ranging from minimal to the chosen maxima.
+	This is intended to help with the selection of the optimal lag
+	orders.
+      </para>
+    </description>
+  </command>
+
   <command name="bds" section="Tests" label="BDS nonlinearity test">
     <usage>
       <arguments>
@@ -16140,17 +16159,24 @@
 
     <description>
       <para>
-	In this dialog box you specify a VAR as usual, but use the lag order
-	spin button to set the maximum number of lags to test.
+	In this dialog box you specify a VAR as usual, but use the lag
+	order spin button to set the maximum number of lags to test.
       </para>
       <para>
-	Output will consist of a table showing the values of the Akaike (AIC),
-	Schwarz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed
-	from VARs of order 1 to the chosen maximum.  This is intended to help with
-	the selection of the optimal lag order.
+	Output consists of a table showing the values of the Akaike
+	(AIC), Schwarz (BIC) and Hannan&ndash;Quinn (HQC) information
+	criteria computed from VARs of order 1 to the chosen maximum.
+	In addition the log-likelihood is shown for each
+	specification, along with the <math>P</math>-value for a
+	Likelihood Ratio test of the null hypothesis that all the
+	parameters added on row <math>i</math>, relative to row
+	<math>i</math> &minus; 1, have zero values.
+      </para>
+      <para>
+	This is intended to help with the selection of the optimal lag
+	order.
       </para>
     </description>
-
   </command>
 
   <command name="VAR-omit" section="Tests" context="gui"
