@@ -75,6 +75,7 @@ struct call_info_ {
     gchar *pkgname;      /* and its name */
     gchar *pkgver;       /* plus its version */
     int *publist;        /* list of public interfaces */
+    gretl_bundle *ui;    /* the package's GUI specification, if any */
     int iface;           /* selected interface */
     int flags;           /* misc. info on package */
     const ufunc *func;   /* the function we're calling */
@@ -159,6 +160,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
     cinfo->top_hbox = NULL;
 
     cinfo->publist = NULL;
+    cinfo->ui = NULL;
     cinfo->iface = -1;
     cinfo->flags = 0;
 
@@ -240,6 +242,29 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     return err;
 }
 
+static gretl_bundle *try_run_ui_maker (fnpkg *pkg)
+{
+    gretl_bundle *b = NULL;
+    gchar *funname = NULL;
+    ufunc *func = NULL;
+    fncall *fc = NULL;
+
+    function_package_get_properties(pkg, UI_MAKER, &funname, NULL);
+    if (funname != NULL) {
+        func = get_function_from_package(funname, pkg);
+    }
+    if (func != NULL) {
+        fc = fncall_new(func, 0);
+    }
+    if (fc != NULL) {
+        gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+                            &b, NULL, NULL);
+    }
+    g_free(funname);
+
+    return b;
+}
+
 static int cinfo_args_init (call_info *cinfo)
 {
     int err = 0;
@@ -255,27 +280,16 @@ static int cinfo_args_init (call_info *cinfo)
     }
 
     if (!err && cinfo->pkg != NULL) {
-        gchar *funcname = NULL;
+        gretl_bundle *b = function_package_get_ui_spec(cinfo->pkg);
 
-        function_package_get_properties(cinfo->pkg, UI_MAKER, &funcname, NULL);
-        if (funcname != NULL) {
-            ufunc *func;
-
-            fprintf(stderr, "%s: ui-maker is '%s'\n",
-                    function_package_get_name(cinfo->pkg), funcname);
-            func = get_function_from_package(funcname, cinfo->pkg);
-            if (func != NULL) {
-                gretl_bundle *b = NULL;
-                fncall *fc = fncall_new(func, 0);
-
-                err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-                                          &b, NULL, NULL);
-                if (b != NULL) {
-                    gretl_bundle_debug_print(b, "bundle from ui-maker");
-                    gretl_bundle_destroy(b);
-                }
+        if (b == NULL) {
+            b = try_run_ui_maker(cinfo->pkg);
+            if (b != NULL) {
+                function_package_set_ui_spec(cinfo->pkg, b);
             }
-            g_free(funcname);
+        }
+        if (b != NULL) {
+            cinfo->ui = b;
         }
     }
 
