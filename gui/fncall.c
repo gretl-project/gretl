@@ -242,6 +242,8 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     return err;
 }
 
+#define UI_DEBUG 1
+
 static gretl_bundle *try_run_ui_maker (fnpkg *pkg)
 {
     gretl_bundle *b = NULL;
@@ -251,16 +253,32 @@ static gretl_bundle *try_run_ui_maker (fnpkg *pkg)
 
     function_package_get_properties(pkg, UI_MAKER, &funname, NULL);
     if (funname != NULL) {
+#if UI_DEBUG
+	fprintf(stderr, "UI_MAKER: %s\n", funname);
+#endif
         func = get_function_from_package(funname, pkg);
     }
     if (func != NULL) {
+#if UI_DEBUG
+	fprintf(stderr, "UI_MAKER function: %p\n", func);
+#endif
         fc = fncall_new(func, 0);
     }
     if (fc != NULL) {
-        gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-                            &b, NULL, NULL);
+	int err;
+#if UI_DEBUG
+	fprintf(stderr, "UI_MAKER fncall: %p\n", fc);
+#endif
+        err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				  &b, NULL, NULL);
+#if UI_DEBUG
+	fprintf(stderr, "UI_MAKER err = %d\n", err);
+#endif
     }
     g_free(funname);
+#if UI_DEBUG
+    fprintf(stderr, "try_run_ui_maker: b = %p\n", (void *) b);
+#endif
 
     return b;
 }
