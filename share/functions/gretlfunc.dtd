@@ -54,7 +54,7 @@
    menu-only (0|1) '0'
    pkg-role (bundle-print | bundle-plot | bundle-test | bundle-fcast |
              bundle-extra | gui-main | gui-precheck | list-maker |
-	     R-setup | none) 'none'
+	     R-setup | ui-maker | none) 'none'
 >
 
 <!ATTLIST help
