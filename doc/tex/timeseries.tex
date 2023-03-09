@@ -532,36 +532,60 @@ On successful completion the table of results is available in the form
 of a matrix via the \dollar{test} accessor. The printed version can be
 suppressed via the \option{quiet} option.
 
+A simple example of usage is shown in
+Listing~\ref{arma-lagsel-script}, using annual sunspot data from 1700
+to 2021. The table (part of which is elided for brevity) has the three
+information criteria agreeing on ARMA(4,2) as the optimum among the
+specifications estimated. The script illustrates how the \dollar{test}
+matrix can be used to extract the ``best'' specification.
+
 \begin{script}[htbp]
-  \scriptcaption{Lag selection}
+  \scriptcaption{ARMA lag selection}
   \label{arma-lagsel-script}
 \begin{scode}
-open greene18_2.gdt
-# log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
-series y = log(Y)
-# and its first difference
-series dy = diff(y)
-# reserve 2 years for out-of-sample forecast
-smpl ; 1981:4
-# Estimate using ARIMA
-arima 1 1 1 ; y 
-# forecast over full period
-smpl --full
-fcast fc1
-# Return to sub-sample and run ARMA on the first difference of y
-smpl ; 1981:4
-arma 1 1 ; dy
-smpl --full
-fcast fc2
-series fcdiff = (t<=1982:1)? (fc1 - y(-1)) : (fc1 - fc1(-1))
-# compare the forecasts over the later period
-smpl 1981:1 1983:4
-print y fc1 fc2 fcdiff --byobs
+open sunspots.gdt
+# ARMA lag selection with maxima of 4 for p and q
+arma 4 4 ; sunspots --lagselect
+# determine the "best" row per BIC (column 4)
+best_row = iminc($test)[4]
+# extract this row
+spec = $test[best_row,][1:2]
+# extract p and q as scalars
+scalar p = spec[1]
+scalar q = spec[2]
+# and estimate the "best" specification
+arma p q ; sunspots
 \end{scode}
-The output from the last command is:
+Part of the lag-selection table:
 %
 \begin{code}
-output
+Estimated using AS 197 (exact ML)
+Dependent variable sunspots, T = 322
+Criteria for ARMA(p, q) specifications
+------------------------------------------------------------
+ p, q          AIC           BIC           HQC           lnL
+------------------------------------------------------------
+ 0, 0    3575.2367     3582.7858     3578.2505    -1785.6183
+ 0, 1    3283.7333     3295.0569     3288.2540    -1638.8666
+ 0, 2    3123.6726     3138.7708     3129.7002    -1557.8363
+ 0, 3    3071.8351     3090.7078     3079.3697    -1530.9175
+ 0, 4    3047.0500     3069.6973     3056.0916    -1517.5250
+ 1, 0    3220.3385     3231.6621     3224.8593    -1607.1692
+ 1, 1    3108.4048     3123.5030     3114.4325    -1550.2024
+ 1, 2    3060.3363     3079.2090     3067.8709    -1525.1681
+ 1, 3    3051.2713     3073.9187     3060.3129    -1519.6357
+ 1, 4    3045.1230     3071.5449     3055.6715    -1515.5615
+ ...
+ 3, 0    3008.6022     3027.4750     3016.1368    -1499.3011
+ 3, 1    3010.5262     3033.1735     3019.5677    -1499.2631
+ 3, 2    2976.3054     3002.7273     2986.8539    -1481.1527
+ 3, 3    2969.6493     2999.8457     2981.7046    -1476.8246
+ 3, 4    2970.5017     3004.4727     2984.0640    -1476.2509
+ 4, 0    3010.5497     3033.1970     3019.5912    -1499.2748
+ 4, 1    3012.3267     3038.7485     3022.8751    -1499.1633
+ 4, 2    2969.5073*    2999.7037*    2981.5626*   -1476.7536
+ 4, 3    2971.2552     3005.2262     2984.8175    -1476.6276
+ 4, 4    2971.1378     3008.8833     2986.2070    -1475.5689
 \end{code}
 \end{script}
 
