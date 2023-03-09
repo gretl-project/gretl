@@ -259,7 +259,22 @@ static int cinfo_args_init (call_info *cinfo)
 
         function_package_get_properties(cinfo->pkg, UI_MAKER, &funcname, NULL);
         if (funcname != NULL) {
-            fprintf(stderr, "HERE, ui-maker '%s'\n", funcname);
+            ufunc *func;
+
+            fprintf(stderr, "%s: ui-maker is '%s'\n",
+                    function_package_get_name(cinfo->pkg), funcname);
+            func = get_function_from_package(funcname, cinfo->pkg);
+            if (func != NULL) {
+                gretl_bundle *b = NULL;
+                fncall *fc = fncall_new(func, 0);
+
+                err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+                                          &b, NULL, NULL);
+                if (b != NULL) {
+                    gretl_bundle_debug_print(b, "bundle from ui-maker");
+                    gretl_bundle_destroy(b);
+                }
+            }
             g_free(funcname);
         }
     }
