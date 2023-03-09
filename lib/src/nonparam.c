@@ -32,7 +32,7 @@
 
 /* Spearman, one-tailed alpha = .005, .025, .05 */
 
-static double rhocrit[18][3] = {
+static double srhocrit[18][3] = {
     { 0.8929, 0.7450, 0.6786 }, /*  n = 7 */
     { 0.8571, 0.7143, 0.6190 }, /*  8 */
     { 0.8167, 0.6833, 0.5833 }, /*  9 */
@@ -65,7 +65,7 @@ static double spearman_signif (double rho, int n)
 	return 1.0;
     }
 
-    x = rhocrit[n - 7];
+    x = srhocrit[n - 7];
 
     if (rho > x[0]) return .01;
     if (rho > x[1]) return .05;

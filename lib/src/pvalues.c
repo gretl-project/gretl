@@ -575,10 +575,11 @@ double tcrit95 (int df)
 }
 
 /**
- * rhocrit95:
+ * rhocrit:
  * @n: sample size.
+ * @alpha: significance level as decimal fraction.
  *
- * Computes the two-sided 5 percent critical value of the sample
+ * Computes the two-sided 100 * @alpha critical value of the sample
  * correlation coefficient for a sample of size @n. This is based
  * on the inverse of the function which maps from the correlation
  * coefficient, r, to a student t statistic, namely
@@ -590,12 +591,13 @@ double tcrit95 (int df)
  * Returns: the critical value, or #NADBL on failure.
  */
 
-double rhocrit95 (int n)
+double rhocrit (int n, double alpha)
 {
     double rc = NADBL;
 
     if (n - 2 > 0) {
-	double tc = stdtri(n - 2, 0.975);
+	double tmax = 1.0 - 0.5 * alpha;
+	double tc = stdtri(n - 2, tmax);
 
 	if (get_cephes_errno() == 0) {
 	    double tc2 = tc * tc;

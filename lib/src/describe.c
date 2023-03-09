@@ -6385,9 +6385,10 @@ static void printcorr (const VMatrix *v, PRN *prn)
 		    tval, student_pvalue_2(n2, tval));
 	    pputc(prn, '\n');
 	} else {
-	    pprintf(prn, _("5%% critical value (two-tailed) = "
-		       "%.4f for n = %d"), rhocrit95(v->n), v->n);
-	    pputs(prn, "\n\n");
+	    pprintf(prn, _("Two-tailed critical values for n = %d"), v->n);
+	    pprintf(prn, ": 5%% %.4f, 1%% %.4f\n", rhocrit(v->n, 0.05),
+		    rhocrit(v->n, 0.01));
+	    pputc(prn, '\n');
 	}
     }
 }
@@ -6424,11 +6425,10 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
 	}
 
 	if (corr->n > 0) {
-	    tmp = g_strdup_printf(_("5%% critical value (two-tailed) = "
-				    "%.4f for n = %d"), rhocrit95(corr->n),
-				  corr->n);
-	    output_line(tmp, prn, 1);
-	    g_free(tmp);
+	    pprintf(prn, _("Two-tailed critical values for n = %d"), corr->n);
+	    pprintf(prn, ": 5%% %.4f, 1%% %.4f\n", rhocrit(corr->n, 0.05),
+		    rhocrit(corr->n, 0.01));
+	    pputc(prn, '\n');
 	}
 
 	text_print_vmatrix(corr, prn);

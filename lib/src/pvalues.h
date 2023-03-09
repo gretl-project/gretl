@@ -139,7 +139,7 @@ double laplace_cdf_inverse (double mu, double b, double a);
 
 double tcrit95 (int df);
 
-double rhocrit95 (int n);
+double rhocrit (int n, double alpha);
 
 double cephes_gamma (double x);
 

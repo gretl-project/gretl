@@ -877,7 +877,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 	    pprintf(prn, "%s\\par\n", _("(missing values were skipped)"));
 	}
 	pprintf(prn, _("5%% critical value (two-tailed) = %.4f for n = %d"),
-		rhocrit95(n), n);
+		rhocrit(n, 0.05), n);
 	pputs(prn, "\\par\n\\par\n{");
     } else {
 	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n{",
@@ -969,7 +969,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 	    pputs(prn, "\\\\\n");
 	}
 	pprintf(prn, _("5\\%% critical value (two-tailed) = %.4f for n = %d"),
-		rhocrit95(n), n);
+		rhocrit(n, 0.05), n);
 	pputs(prn, "\\\\\n");
     } else {
 	pprintf(prn, "\\begin{center}\n%s\\\\\n",
