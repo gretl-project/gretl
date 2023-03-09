@@ -16101,23 +16101,31 @@
 	and autocorrelation (HAC). In general the latter correction
 	should not be needed if the VAR includes sufficient lags.
       </para>
+      <subhead context="cli">Lag selection</subhead>
       <para context="cli">
-	If the <opt>lagselect</opt> option is given, the first
-	parameter to the <lit>var</lit> command is taken as the
-	maximum lag order.  Output consists of a table showing the
-	values of the Akaike (AIC), Schwarz (BIC) and
-	Hannan&ndash;Quinn (HQC) information criteria, by default
-	computed from VARs of order 1 to the given maximum.  This is
-	intended to help with the selection of the optimal lag order.
-	The usual VAR output is not presented. The table of
-	information criteria may be retrieved as a matrix via the
-	<fncref targ="$test"/> accessor. In this context (only) the
-	<opt>minlag</opt> option can be used to adjust the minimum lag
-	order. Set this to 0 to allow for the possibility that the
-	optimal lag order is zero, meaning that a VAR is not really
-	called for at all. Conversely you could set
-	<opt>minlag=4</opt> if you believe you need at least 4 lags,
-	thereby saving a little compute time.
+	If the <opt>lagselect</opt> option is given, the usual VAR
+	output is not presented. Instead the first argument is taken
+	as the <emphasis>maximum</emphasis> lag order and the output
+	consists of a table showing comparative figures computed for
+	VARs of order 1 (by default) up to the specified maximum. The
+	table includes log-likelihood and the <math>P</math>-value
+	for a Likelihood Ratio (LR) test, followed by the Akaike
+	(AIC), Schwarz (BIC) and Hannan&ndash;Quinn (HQC) information
+	criteria. The LR test compares the specification on row
+	<math>i</math> with that on row <math>i</math> &minus; 1, the
+	null hypothesis being that all the parameters added on row
+	<math>i</math> have zero values.  The table of results may be
+	retrieved in matrix form via the <fncref targ="$test"/>
+	accessor.
+      </para>
+      <para>
+	In the lag-selection context (only) the <opt>minlag</opt>
+	option can be used to adjust the minimum lag order. Set this
+	to 0 to allow for the possibility that the optimal lag order
+	is zero (meaning that a VAR is not really called for at
+	all). Conversely you could set <opt>minlag=4</opt> if you
+	believe you need at least 4 lags, thereby saving a little
+	compute time.
       </para>
     </description>
 

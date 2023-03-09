@@ -96,6 +96,11 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 		       const DATASET *dset, gretlopt opt,
 		       PRN *prn, int *err);
 
+int gui_VAR_lagsel (int order, int *list,
+		    const DATASET *dset,
+		    gretlopt opt, PRN *prn,
+		    gretl_matrix **pm);
+
 const gretl_matrix *
 gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 			       DATASET *dset, gretlopt opt,

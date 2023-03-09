@@ -2763,9 +2763,9 @@ static int *lags_from_laglist (const int *llist, int *err)
  * Returns: pointer to VAR struct, which may be %NULL on error.
  */
 
-GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
-                      const DATASET *dset, gretlopt opt,
-                      PRN *prn, int *err)
+static GRETL_VAR *real_gretl_VAR (int order, int *laglist, int *list,
+				  const DATASET *dset, gretlopt opt,
+				  PRN *prn, int *err, gretl_matrix **pm)
 {
     GRETL_VAR *var = NULL;
     int code = (opt & OPT_L)? VAR_LAGSEL : VAR_ESTIMATE;
@@ -2808,7 +2808,7 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
             /* doing lag-length selection */
             *err = VAR_add_stats(var, code);
             if (!*err) {
-                *err = VAR_do_lagsel(var, dset, opt, prn);
+                *err = VAR_do_lagsel(var, dset, opt, prn, pm);
             }
         } else {
             /* regular VAR estimation */
@@ -2840,6 +2840,26 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
     }
 
     return var;
+}
+
+GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
+                      const DATASET *dset, gretlopt opt,
+                      PRN *prn, int *err)
+{
+    return real_gretl_VAR(order, laglist, list, dset,
+			  opt, prn, err, NULL);
+}
+
+int gui_VAR_lagsel (int order, int *list,
+		    const DATASET *dset,
+		    gretlopt opt, PRN *prn,
+		    gretl_matrix **pm)
+{
+    int err = 0;
+
+    real_gretl_VAR(order, NULL, list, dset,
+		   opt, prn, &err, pm);
+    return err;
 }
 
 static void

@@ -962,8 +962,8 @@ static int add_select_matrix (arma_sel *asel)
     if (asel->m == NULL) {
 	err = E_ALLOC;
     } else {
-	const char *S1[] = {"p", "q", "AIC", "BIC", "HQC", "lnL"};
-	const char *S2[] = {"p", "q", "P", "Q", "AIC", "BIC", "HQC", "lnL"};
+	const char *S1[] = {"p", "q", "AIC", "BIC", "HQC", "loglik"};
+	const char *S2[] = {"p", "q", "P", "Q", "AIC", "BIC", "HQC", "loglik"};
         char **S = strings_array_new(cols);
 
         if (S != NULL) {
@@ -1037,7 +1037,7 @@ static void arma_select_footer (arma_sel *asel, PRN *prn)
     if (asel->nbad > 0) {
 	pputs(prn, "'NA' indicates that a specification could not be estimated\n");
     }
-    pputs(prn, "Log-likelihood ('lnL') is provided for reference\n");
+    pputs(prn, "Log-likelihood ('loglik') is provided for reference\n");
     pputc(prn, '\n');
 }
 
@@ -1250,8 +1250,9 @@ static int set_common_sample (arma_sel *asel, MODEL *amod,
    on input as maxima; d and D remain clamped at their input values.
 */
 
-int arma_select (const int *list, const int *pqspec,
-                 DATASET *dset, gretlopt opt, PRN *prn)
+static int real_arma_select (const int *list, DATASET *dset,
+			     gretlopt opt, PRN *prn,
+			     gretl_matrix **pm)
 {
     MODEL amod;
     arma_sel asel = {0};
@@ -1260,11 +1261,7 @@ int arma_select (const int *list, const int *pqspec,
     int save_t2 = dset->t2;
     int err = 0;
 
-    if (pqspec != NULL) {
-        err = E_DATA;
-    } else {
-	err = arma_precheck(list, NULL, opt, dset, NULL, asel.dim);
-    }
+    err = arma_precheck(list, NULL, opt, dset, NULL, asel.dim);
     if (err) {
 	return err;
     }
@@ -1303,8 +1300,13 @@ int arma_select (const int *list, const int *pqspec,
     }
 
     free(asel.list);
+
     if (asel.m != NULL) {
-        record_matrix_test_result(asel.m, NULL);
+	if (pm != NULL) {
+	    *pm = asel.m;
+	} else {
+	    record_matrix_test_result(asel.m, NULL);
+	}
     }
 
     clear_model(&amod);
@@ -1313,4 +1315,20 @@ int arma_select (const int *list, const int *pqspec,
     dset->t2 = save_t2;
 
     return err;
+}
+
+int arma_select (const int *list, const int *pqspec,
+		 DATASET *dset, gretlopt opt, PRN *prn)
+{
+    if (pqspec != NULL) {
+        return E_DATA;
+    } else {
+	return real_arma_select(list, dset, opt, prn, NULL);
+    }
+}
+int gui_arma_select (const int *list, DATASET *dset,
+		     gretlopt opt, PRN *prn,
+		     gretl_matrix **pm)
+{
+    return real_arma_select(list, dset, opt, prn, pm);
 }

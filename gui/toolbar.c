@@ -532,7 +532,8 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
     gretl_matrix *m = NULL;
     int err, cancel = 0;
 
-    if (vwin->role != XTAB && vwin->role != COEFFINT) {
+    if (vwin->role != XTAB && vwin->role != COEFFINT &&
+	vwin->role != ALAGSEL && vwin->role != VLAGSEL) {
 	dummy_call();
 	return;
     }
@@ -548,6 +549,8 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 	    m = xtab_to_matrix(vwin->data);
 	} else if (vwin->role == COEFFINT) {
 	    m = conf_intervals_matrix(vwin->data);
+	} else if (vwin->role == ALAGSEL || vwin->role == VLAGSEL) {
+	    m = gretl_matrix_copy(vwin->data);
 	}
 	if (m == NULL) {
 	    nomem();
@@ -1060,6 +1063,9 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 			r == LOESS || r == NADARWAT || \
 			r == VIEW_DBNOMICS)
 
+#define add_matrix_ok(r) (r == XTAB || r == COEFFINT || \
+			  r == ALAGSEL || r == VLAGSEL)
+
 #define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
 		       r == VIEW_LOG || r == VIEW_PKG_CODE || \
 		       r == VIEW_BUNDLE || r == X12A || \
@@ -1147,7 +1153,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!add_data_ok(r) && f == ADD_DATA_ITEM) {
 	return NULL;
-    } else if (r != XTAB && r != COEFFINT && f == ADD_MATRIX_ITEM) {
+    } else if (!add_matrix_ok(r) && f == ADD_MATRIX_ITEM) {
 	return NULL;
     } else if (!sort_ok(r) && f == SORT_ITEM) {
 	return NULL;

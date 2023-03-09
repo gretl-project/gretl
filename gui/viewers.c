@@ -785,7 +785,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_object_unref(vwin->data, GRETL_OBJ_EQN);
 	} else if (vwin->role == VAR || vwin->role == VECM) {
 	    gretl_object_unref(vwin->data, GRETL_OBJ_VAR);
-	} else if (vwin->role == LEVERAGE) {
+	} else if (vwin->role == LEVERAGE ||
+		   vwin->role == VLAGSEL ||
+		   vwin->role == ALAGSEL) {
 	    gretl_matrix_free(vwin->data);
 	} else if (vwin->role == MAHAL) {
 	    free_mahal_dist(vwin->data);

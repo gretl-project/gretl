@@ -4070,22 +4070,25 @@ static int do_straight_anova (void)
 
 static int do_arma_select (PRN *prn)
 {
-    int (*arma_select) (const int *, const int *,
-                        DATASET *, gretlopt, PRN *);
+    gretl_matrix *m = NULL;
+    int (*gui_arma_select) (const int *, DATASET *,
+			    gretlopt, PRN *,
+			    gretl_matrix **);
     int err = 0;
 
-    arma_select = get_plugin_function("arma_select");
-    if (arma_select == NULL) {
+    gui_arma_select = get_plugin_function("gui_arma_select");
+    if (gui_arma_select == NULL) {
         err = E_FOPEN;
     } else {
-        err = (*arma_select)(libcmd.list, NULL, dataset, libcmd.opt, prn);
+        err = (*gui_arma_select)(libcmd.list, dataset, libcmd.opt,
+				 prn, &m);
     }
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
     } else {
         view_buffer(prn, 72, 350, _("gretl: ARIMA lag selection"),
-                    PRINT, NULL);
+                    ALAGSEL, m);
     }
 
     return err;
@@ -4786,11 +4789,13 @@ int do_vector_model (selector *sr)
         }
     } else if (action == VAR) {
         /* VAR lag selection */
-        gretl_VAR(libcmd.order, NULL, libcmd.list, dataset,
-                  libcmd.opt, prn, &err);
+	gretl_matrix *m = NULL;
+
+        err = gui_VAR_lagsel(libcmd.order, libcmd.list, dataset,
+			     libcmd.opt, prn, &m);
         if (!err) {
             view_buffer(prn, 72, 350, _("gretl: VAR lag selection"),
-                        PRINT, NULL);
+                        VLAGSEL, m);
         }
     } else if (action == VECM) {
         /* Vector Error Correction Model */
