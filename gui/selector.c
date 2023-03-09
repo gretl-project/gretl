@@ -154,9 +154,12 @@ enum {
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == PANEL_WLS || c == PANEL_B || \
                        c == OLOGIT || c == OPROBIT || c == REPROBIT || \
                        c == MLOGIT || c == IV_LIML || c == IV_GMM || \
-                       c == COUNTMOD || c == REGLS || c == FE_LOGISTIC)
+                       c == COUNTMOD || c == REGLS || c == FE_LOGISTIC || \
+                       c == ALAGSEL)
 
-#define MODEL_NEEDS_X(c) (MODEL_CODE(c) && !(c == ARMA || c == GARCH))
+#define ARMA_RELATED(c) (c == ARMA || c == ALAGSEL)
+
+#define NO_X_OK(c) (c == ARMA || c == ALAGSEL || c == GARCH)
 
 #define IV_MODEL(c) (c == IVREG || c == IV_LIML || c == IV_GMM)
 
@@ -217,6 +220,7 @@ enum {
                          c == VAR || \
                          c == VECM || \
                          c == VLAGSEL || \
+                         c == ALAGSEL || \
                          c == WLS || \
                          c == GR_BOX || \
                          c == XTAB)
@@ -377,6 +381,7 @@ static int get_n_rvars1 (void)
 static int want_combo (selector *sr)
 {
     return (sr->ci == ARMA ||
+            sr->ci == ALAGSEL ||
             sr->ci == VECM ||
             sr->ci == COINT ||
             sr->ci == COINT2 ||
@@ -2058,7 +2063,7 @@ static void real_add_generic (GtkTreeModel *srcmodel,
                    sr->extra[EXTRA_LAGS] != NULL) {
             gtk_widget_set_sensitive(sr->extra[EXTRA_LAGS], TRUE);
         }
-        if (sr->ci == ARMA) {
+        if (ARMA_RELATED(sr->ci)) {
             xdiff_button_set_sensitive(sr, TRUE);
         }
         if (USE_VECXLIST(sr->ci) || FNPKG_CODE(sr->ci)) {
@@ -2296,7 +2301,7 @@ static void remove_from_right (GtkWidget *w, selector *sr,
 
             gtk_widget_set_sensitive(sr->lags_button, y_lags_ok);
         }
-        if (GTK_WIDGET(view) == sr->rvars1 && sr->ci == ARMA) {
+        if (GTK_WIDGET(view) == sr->rvars1 && ARMA_RELATED(sr->ci)) {
             xdiff_button_set_sensitive(sr, FALSE);
         }
     } else if (sr->ci == MIDASREG && context && nrows == 1) {
@@ -2924,6 +2929,15 @@ static char *arma_lag_string (char *targ, const char *s)
     return targ;
 }
 
+static int widget_is_relevant (GtkWidget *w)
+{
+    if (w == NULL) {
+        return 0;
+    } else {
+        return gtk_widget_is_sensitive(w);
+    }
+}
+
 static void arma_spec_to_cmdlist (selector *sr)
 {
     const char *txt;
@@ -2935,7 +2949,7 @@ static void arma_spec_to_cmdlist (selector *sr)
     free(malags);
     malags = NULL;
 
-    if (gtk_widget_is_sensitive(sr->extra[ARMA_plist])) {
+    if (widget_is_relevant(sr->extra[ARMA_plist])) {
         /* "gappy" AR lags activated */
         txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[ARMA_plist]));
         add_to_cmdlist(sr, arma_lag_string(s, txt));
@@ -2951,7 +2965,7 @@ static void arma_spec_to_cmdlist (selector *sr)
     sprintf(s, "%d ", arima_d);
     add_to_cmdlist(sr, s);
 
-    if (gtk_widget_is_sensitive(sr->extra[ARMA_qlist])) {
+    if (widget_is_relevant(sr->extra[ARMA_qlist])) {
         /* "gappy" MA lags activated */
         txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[ARMA_qlist]));
         add_to_cmdlist(sr, arma_lag_string(s, txt));
@@ -4102,7 +4116,7 @@ static void compose_cmdlist (selector *sr)
     }
 
     /* deal with content of "extra" widgets */
-    if (sr->ci == ARMA) {
+    if (ARMA_RELATED(sr->ci)) {
         arma_spec_to_cmdlist(sr);
     } else if (sr->ci == ARCH ||
                sr->ci == GARCH ||
@@ -4160,7 +4174,7 @@ static void compose_cmdlist (selector *sr)
         warnbox(_("You must select a dependent variable"));
         sr->error = 1;
         return;
-    } else if (MODEL_NEEDS_X(sr->ci) && rows < 1) {
+    } else if (MODEL_CODE(sr->ci) && !NO_X_OK(sr->ci) && rows < 1) {
         warnbox(_("You must specify an independent variable"));
         sr->error = 1;
         return;
@@ -4366,6 +4380,8 @@ static char *estimator_label (int ci)
         return N_("Autoregressive errors");
     case ARMA:
         return N_("ARIMA");
+    case ALAGSEL:
+        return N_("ARIMA lag selection");
     case ARCH:
         return N_("ARCH");
     case GARCH:
@@ -5662,7 +5678,7 @@ static void build_garch_spinners (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 
-static GtkWidget *arma_aux_label (int i)
+static GtkWidget *arma_aux_label (int ci, int i)
 {
     GtkWidget *hbox;
     GtkWidget *lbl;
@@ -5673,7 +5689,11 @@ static GtkWidget *arma_aux_label (int i)
     };
 
     hbox = gtk_hbox_new(FALSE, 5);
-    lbl = gtk_label_new(_(strs[i]));
+    if (ci == ALAGSEL && i == 2) {
+        lbl = gtk_label_new(_("Maxima"));
+    } else {
+        lbl = gtk_label_new(_(strs[i]));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
 
     return hbox;
@@ -5724,7 +5744,7 @@ static void build_arma_spinners (selector *sr)
     gtk_table_set_col_spacings(GTK_TABLE(tab), 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), tab, FALSE, FALSE, 0);
 
-    lbl = arma_aux_label(seasonals? 0 : 2);
+    lbl = arma_aux_label(sr->ci, seasonals? 0 : 2);
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
     c = 1;
 
@@ -5733,7 +5753,11 @@ static void build_arma_spinners (selector *sr)
         lbl = gtk_label_new(_(strs[i]));
         gtk_table_attach_defaults(GTK_TABLE(tab), lbl, c, c+1, 0, 1);
         c++;
-        val = (i==0)? arma_p : (i==1)? arima_d : arma_q;
+        if (sr->ci == ALAGSEL) {
+            val = (i==0)? 3 : (i==1)? 0 : 3;
+        } else {
+            val = (i==0)? arma_p : (i==1)? arima_d : arma_q;
+        }
         vmax = (i == 1)? 2 : 10;
         adj = (GtkAdjustment *) gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
         sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
@@ -5745,35 +5769,35 @@ static void build_arma_spinners (selector *sr)
         c++;
     }
 
-    lbl = gtk_label_new(_("specific lags"));
-    gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
+    if (sr->ci != ALAGSEL) {
+        lbl = gtk_label_new(_("specific lags"));
+        gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
+        c = 1;
+        j = 3;
+        /* check buttons and entries for free-form lags */
+        for (i=0; i<2; i++) {
+            GCallback cb = (i == 0)? G_CALLBACK(toggle_p) : G_CALLBACK(toggle_q);
+            char *fill = (i == 0)? arlags : malags;
 
-    c = 1;
-    j = 3;
-
-    /* check buttons and entries for free-form lags */
-    for (i=0; i<2; i++) {
-        GCallback cb = (i == 0)? G_CALLBACK(toggle_p) : G_CALLBACK(toggle_q);
-        char *fill = (i == 0)? arlags : malags;
-
-        chk = gtk_check_button_new();
-        g_signal_connect(G_OBJECT(chk), "clicked", cb, sr);
-        gtk_table_attach_defaults(GTK_TABLE(tab), chk, c, c+1, 1, 2);
-        c++;
-        sr->extra[j] = gtk_entry_new();
-        gtk_entry_set_max_length(GTK_ENTRY(sr->extra[j]), 16);
-        gtk_entry_set_width_chars(GTK_ENTRY(sr->extra[j]), 8);
-        gtk_widget_set_sensitive(sr->extra[j], FALSE);
-        freeform = maybe_set_entry_text(sr->extra[j], fill);
-        gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[j], c, c+1, 1, 2);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), freeform);
-        j++;
-        c += 3;
+            chk = gtk_check_button_new();
+            g_signal_connect(G_OBJECT(chk), "clicked", cb, sr);
+            gtk_table_attach_defaults(GTK_TABLE(tab), chk, c, c+1, 1, 2);
+            c++;
+            sr->extra[j] = gtk_entry_new();
+            gtk_entry_set_max_length(GTK_ENTRY(sr->extra[j]), 16);
+            gtk_entry_set_width_chars(GTK_ENTRY(sr->extra[j]), 8);
+            gtk_widget_set_sensitive(sr->extra[j], FALSE);
+            freeform = maybe_set_entry_text(sr->extra[j], fill);
+            gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[j], c, c+1, 1, 2);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), freeform);
+            j++;
+            c += 3;
+        }
     }
 
     if (seasonals) {
         gtk_table_set_row_spacing(GTK_TABLE(tab), 1, 10);
-        lbl = arma_aux_label(1);
+        lbl = arma_aux_label(sr->ci, 1);
         gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
         c = 1;
         for (i=0; i<3; i++) {
@@ -6206,13 +6230,15 @@ static void build_selector_switches (selector *sr)
         gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     }
 
-    if (sr->ci == ARMA) {
+    if (ARMA_RELATED(sr->ci)) {
         hbox = gtk_hbox_new(FALSE, 5);
         vbox_add_vwedge(sr->vbox);
         tmp = gtk_check_button_new_with_label(_("Include a constant"));
         pack_switch_in(hbox, tmp, sr, arma_const, TRUE, OPT_N, 0);
-        tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
-        pack_switch_in(hbox, tmp, sr, verbose, FALSE, OPT_V, 0);
+        if (sr->ci == ARMA) {
+            tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+            pack_switch_in(hbox, tmp, sr, verbose, FALSE, OPT_V, 0);
+        }
         gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     } else if (sr->ci == TOBIT || sr->ci == GARCH ||
         sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
@@ -6290,7 +6316,11 @@ static void build_selector_switches (selector *sr)
         pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
     }
 
-    if (sr->ci == ARMA) {
+    if (sr->ci == ALAGSEL) {
+        sr->xdiff_button = gtk_check_button_new_with_label(_("Difference the independent variables"));
+        pack_switch(sr->xdiff_button, sr, arima_xdiff, TRUE, OPT_Y, 0);
+        gtk_widget_set_sensitive(sr->xdiff_button, (arima_d > 0 || arima_D > 0) && !arma_x12);
+    } else if (sr->ci == ARMA) {
         sr->hess_button =
             gtk_check_button_new_with_label(_("Parameter covariance matrix via Hessian"));
         pack_switch(sr->hess_button, sr, arma_hessian, TRUE, OPT_G, 0);
@@ -7223,7 +7253,7 @@ static void build_selector_radios (selector *sr)
 
 static void build_selector_combo (selector *sr)
 {
-    if (sr->ci == ARMA) {
+    if (ARMA_RELATED(sr->ci)) {
         build_arma_combo(sr);
     } else if (sr->ci == COINT) {
         build_coint_combo(sr);
@@ -7520,7 +7550,7 @@ static void primary_rhs_varlist (selector *sr)
     sr->rvars1 = var_list_box_new(GTK_BOX(hbox), sr, SR_RVARS1);
     mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
 
-    if (sr->ci == ARMA) {
+    if (ARMA_RELATED(sr->ci)) {
         lptr = &sr->lags_button;
     } else if (sr->ci == VAR) { /* FIXME VECM? */
         lptr = &sr->extra[EXTRA_LAGS];
@@ -7536,7 +7566,7 @@ static void primary_rhs_varlist (selector *sr)
     gtk_tree_model_get_iter_first(mod, &iter);
 
     if (MODEL_CODE(sr->ci)) {
-        if (sr->ci == ARMA || sr->ci == GARCH || NONPARAM_CODE(sr->ci)) {
+        if (ARMA_RELATED(sr->ci) || sr->ci == GARCH || NONPARAM_CODE(sr->ci)) {
             ; /* skip */
         } else if (xlist == NULL || has_0(xlist)) {
             /* stick the constant in by default */
@@ -7771,7 +7801,7 @@ selector *selection_dialog (int ci, const char *title,
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), sr->table, TRUE, TRUE, 0);
 
-    if (ci == ARMA) {
+    if (ARMA_RELATED(ci)) {
         /* AR, D, MA for ARIMA */
         build_arma_spinners(sr);
     } else if (ci == GARCH) {
@@ -7806,7 +7836,7 @@ selector *selection_dialog (int ci, const char *title,
             ci == SCATTERS || ci == GR_XYZ) {
             unhide_lags_switch(sr);
         }
-        if (MODEL_CODE(ci) && ci != ARMA) {
+        if (MODEL_CODE(ci) && !ARMA_RELATED(ci)) {
             lag_selector_button(sr);
         }
         if (select_lags_depvar(ci) && yvar > 0) {

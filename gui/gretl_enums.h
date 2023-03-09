@@ -94,6 +94,7 @@ enum extra_cmds {
     ELLIPSE,
     LAGS_DIALOG,
     MINIBUF,
+    ALAGSEL,
     VLAGSEL,
     VAROMIT,
     DEFINE_LIST,

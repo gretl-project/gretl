@@ -262,6 +262,7 @@
       </menu>
       <menu action="TSModels">
 	<menuitem action="arima"/>
+        <menuitem action="ALAGSEL"/>
 	<menuitem action="garch"/>
 	<menuitem action="midasreg"/>
 	<menu action="AR-GLS">

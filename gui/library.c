@@ -4068,6 +4068,29 @@ static int do_straight_anova (void)
     return err;
 }
 
+static int do_arma_select (PRN *prn)
+{
+    int (*arma_select) (const int *, const int *,
+                        DATASET *, gretlopt, PRN *);
+    int err = 0;
+
+    arma_select = get_plugin_function("arma_select");
+    if (arma_select == NULL) {
+        err = E_FOPEN;
+    } else {
+        err = (*arma_select)(libcmd.list, NULL, dataset, libcmd.opt, prn);
+    }
+    if (err) {
+        gui_errmsg(err);
+        gretl_print_destroy(prn);
+    } else {
+        view_buffer(prn, 72, 350, _("gretl: ARIMA lag selection"),
+                    PRINT, NULL);
+    }
+
+    return err;
+}
+
 static int real_do_model (int action)
 {
     int orig_v = dataset->v;
@@ -4081,6 +4104,11 @@ static int real_do_model (int action)
 
     if (parse_lib_command() || bufopen(&prn)) {
         return 1;
+    }
+
+    if (action == ARMA && (libcmd.opt & OPT_Z)) {
+        /* special case! */
+        return do_arma_select(prn);
     }
 
     pmod = gretl_model_new();
@@ -4338,14 +4366,18 @@ int do_model (selector *sr)
     extra_data = selector_get_extra_data(sr);
 
     /* In some cases, choices which are represented by option flags in
-       gretl script are represented by ancillary "ci" values in the
-       GUI model selector (in order to avoid overloading the model
-       selection dialog with options).  Here we have to decode such
-       values, parsing them out into basic command index value and
-       associated option.
+       hansl are represented by ancillary "ci" values in the GUI model
+       selector (in order to avoid overloading the model selection
+       dialog with options).  Here we have to decode such values,
+       parsing them out into basic command index value and associated
+       option.
     */
 
-    if (ci == OLS && dataset_is_panel(dataset)) {
+    if (ci == ALAGSEL) {
+        /* ARMA lag selection */
+        ci = ARMA;
+        addopt = OPT_Z;
+    } else if (ci == OLS && dataset_is_panel(dataset)) {
         /* pooled OLS */
         ci = PANEL;
         addopt = OPT_P;

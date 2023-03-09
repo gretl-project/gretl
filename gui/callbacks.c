@@ -257,6 +257,8 @@ static int model_action_code (GtkAction *action)
 	    ci = PANEL_WLS;
 	else if (!strcmp(s, "PANEL_B"))
 	    ci = PANEL_B;
+	else if (!strcmp(s, "ALAGSEL"))
+	    ci = ALAGSEL;
 	else if (!strcmp(s, "VLAGSEL"))
 	    ci = VLAGSEL;
 	else if (!strcmp(s, "blogit"))
@@ -446,6 +448,8 @@ static int selector_callback_code (const gchar *s)
 	return GR_FBOX;
     if (!strcmp(s, "GR_QQ"))
 	return QQPLOT;
+    if (!strcmp(s, "ALAGSEL"))
+	return ALAGSEL;
     if (!strcmp(s, "VLAGSEL"))
 	return VLAGSEL;
     if (!strcmp(s, "ConfEllipse"))
@@ -475,6 +479,8 @@ void selector_callback (GtkAction *action, gpointer data)
 			 NULL, do_vector_model);
     } else if (ci == VLAGSEL) {
 	selection_dialog(ci, _("gretl: VAR lag selection"), NULL, do_vector_model);
+    } else if (ci == ALAGSEL) {
+        selection_dialog(ci, _("gretl: ARIMA lag selection"), NULL, do_model);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
 	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
 	       ci == GR_FBOX) {

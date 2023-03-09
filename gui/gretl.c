@@ -2002,6 +2002,7 @@ GtkActionEntry main_entries[] = {
     { "anova", NULL, N_("ANOVA"), NULL, NULL, G_CALLBACK(model_callback) },
     { "TSModels", NULL, N_("_Univariate time series"), NULL, NULL, NULL },
     { "arima", NULL, N_("ARI_MA"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "ALAGSEL", NULL, N_("ARIMA lag selection"), NULL, NULL, G_CALLBACK(selector_callback) },
     { "garch", NULL, N_("_GARCH"), NULL, NULL, G_CALLBACK(model_callback) },
     { "midasreg", NULL, "MIDAS", NULL, NULL, G_CALLBACK(model_callback) },
     { "AR-GLS", NULL, N_("_AR errors (GLS)"), NULL, NULL, NULL },

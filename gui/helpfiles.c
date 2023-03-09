@@ -132,6 +132,7 @@ static struct gui_help_item gui_help_items[] = {
     { VECM_RESTR,     "restrict-vecm" },
     { LAGS_DIALOG,    "lags-dialog" },
     { MINIBUF,        "minibuffer" },
+    { ALAGSEL,        "ARMA-lagselect" },
     { VLAGSEL,        "VAR-lagselect" },
     { VAROMIT,        "VAR-omit" },
     { PANEL_MODE,     "panel-mode" },
