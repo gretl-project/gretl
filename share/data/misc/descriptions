@@ -48,6 +48,7 @@
 "rac3d","Cameron-Trivedi doctor visits data","cross section, n=5190"
 "recid","Wooldridge recidivism (duration) data","cross section, n=1445"
 "rwm","German microdata, assorted socioeconomic variables","panel, T=7 N=7293"
+"sunspots","Yearly mean total sunspot number","time series, T=322"
 "sw_ch12","International macro data (Stock and Watson)","time series, T=164"
 "sw_ch14","Unemployment and inflation (Stock and Watson)","time series, T=164"
 "swisspharma","Swiss pharmaceutical sales, 1975-2011","time series, T=146"
