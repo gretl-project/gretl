@@ -638,6 +638,11 @@ static int check_arma_sep (arma_info *ainfo, int sep1)
 	}
     }
 
+    if (!err && arma_has_seasonal(ainfo) && ainfo->pd == 1) {
+        gretl_errmsg_set("Invalid seasonal specification: data frequency = 1");
+        err = E_PDWRONG;
+    }
+
     return err;
 }
 
