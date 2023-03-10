@@ -1,6 +1,8 @@
 version 2023b, in progress
 - "arima" command: implement built-in procedure for assessing
-  lag orders, via new --lagselect option
+  lag orders, via new --lagselect option, and add GUI access
+- "corr" command: add 1 percent critical value of correlation
+  coefficient to the output
 
 2023-03-02 version 2023a
 - "logit" command (binary case): add a matrix holding odds
