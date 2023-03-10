@@ -32,6 +32,8 @@ void destroy_gui_package_info (void);
 
 void gui_define_list (void);
 
+gchar **get_listdef_exclude (gpointer p);
+
 void fncall_register_genr (int addv, gpointer p);
 
 gchar *get_bundle_special_function (gretl_bundle *b,

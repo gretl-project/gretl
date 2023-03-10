@@ -345,7 +345,7 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
                                    gpointer data);
 static gint listvar_midas_click (GtkWidget *widget, GdkEventButton *event,
                                  selector *sr);
-static int list_show_var (selector *sr, int v, int show_lags);
+static int list_show_var (selector *sr, int v, int show_lags, gchar **exclude);
 static void available_functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
@@ -6361,7 +6361,7 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
     show_lags = button_is_active(w);
 
     for (i=imin; i<dataset->v; i++) {
-        if (list_show_var(sr, i, show_lags)) {
+        if (list_show_var(sr, i, show_lags, NULL)) {
             list_append_var_simple(store, &iter, i);
         }
     }
@@ -7366,10 +7366,19 @@ static void build_selector_buttons (selector *sr)
     gtk_widget_grab_default(tmp);
 }
 
-static int list_show_var (selector *sr, int v, int show_lags)
+static int list_show_var (selector *sr, int v, int show_lags,
+			  gchar **exclude)
 {
     int ci = sr->ci;
-    int ret = 1;
+    int i, ret = 1;
+
+    if (exclude != NULL) {
+	for (i=0; exclude[i] != NULL; i++) {
+	    if (!strcmp(dataset->varname[v], exclude[i])) {
+		return 0;
+	    }
+	}
+    }
 
     if (ci == LOESS || ci == NADARWAT) {
         /* special: for nonparam models we should show
@@ -7416,7 +7425,7 @@ void selector_register_genr (int newvars, gpointer p)
 
     for (i=0; i<newvars; i++) {
         v = dataset->v - newvars + i;
-        if (list_show_var(sr, v, 0)) {
+        if (list_show_var(sr, v, 0, NULL)) {
             list_append_var_simple(store, &iter, v);
         }
     }
@@ -7614,7 +7623,7 @@ static void selector_set_focus (selector *sr)
         gtk_widget_grab_focus(sr->lvars);
         do_sel = gtk_tree_model_get_iter_first(mod, &iter);
         if (do_sel) {
-            if (!FNPKG_CODE(sr->ci) && list_show_var(sr, 0, 0)) {
+            if (!FNPKG_CODE(sr->ci) && list_show_var(sr, 0, 0, NULL)) {
                 /* don't select the constant: skip a row */
                 do_sel = gtk_tree_model_iter_next(mod, &iter);
             }
@@ -7750,7 +7759,7 @@ selector *selection_dialog (int ci, const char *title,
             if (i == 1 && (MODEL_CODE(ci) || VEC_CODE(ci))) {
                 list_append_named_lists(store, &iter);
             }
-            if (list_show_var(sr, i, 0)) {
+            if (list_show_var(sr, i, 0, NULL)) {
                 list_append_var_simple(store, &iter, i);
             }
         }
@@ -8244,6 +8253,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     GtkWidget *left_box, *right_box;
     GtkWidget *tmp;
     selector *sr;
+    gchar **exclude = NULL;
     int nleft = 0;
     int i, err = 0;
 
@@ -8275,6 +8285,12 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
+    /* check for any specific exclusions */
+    if (ci == DEFINE_LIST && data != NULL) {
+	exclude = get_listdef_exclude(data);
+    }
+
+    /* add selectable series */
     if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
         ci == ELLIPSE || ci == VAROMIT || ci == CHOW) {
         nleft = add_omit_list(data, sr);
@@ -8285,7 +8301,7 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
             if (i == 1 && SHOW_LISTS_CODE(ci)) {
                 list_append_named_lists(store, &iter);
             }
-            if (list_show_var(sr, i, 0)) {
+            if (list_show_var(sr, i, 0, exclude)) {
                 list_append_var_simple(store, &iter, i);
                 nleft++;
             }
@@ -8388,6 +8404,10 @@ simple_selection_with_data (int ci, const char *title, int (*callback)(),
         sr = NULL;
     } else if (sr->ci == DEFINE_MATRIX) {
         selector_set_blocking(sr, 1);
+    }
+
+    if (exclude != NULL) {
+	g_strfreev(exclude);
     }
 
     return sr;

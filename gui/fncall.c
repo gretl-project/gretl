@@ -65,6 +65,7 @@ struct call_info_ {
     GtkWidget *dlg;      /* main dialog */
     GtkWidget *top_hbox; /* upper hbox in dialog */
     windata_t *vwin;     /* gretl caller window */
+    GtkWidget **sels;    /* array of arg selector widgets */
     GList *vsels;        /* series argument selectors */
     GList *lsels;        /* list argument selectors */
     GList *msels;        /* matrix arg selectors */
@@ -168,6 +169,7 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 	cinfo->flags |= MODEL_CALL;
     }
 
+    cinfo->sels = NULL;
     cinfo->vsels = NULL;
     cinfo->lsels = NULL;
     cinfo->msels = NULL;
@@ -242,7 +244,9 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     return err;
 }
 
-#define UI_DEBUG 1
+#define UI_BUNDLE 0 /* will change shortly */
+
+#if UI_BUNDLE
 
 static gretl_bundle *try_run_ui_maker (fnpkg *pkg)
 {
@@ -253,34 +257,65 @@ static gretl_bundle *try_run_ui_maker (fnpkg *pkg)
 
     function_package_get_properties(pkg, UI_MAKER, &funname, NULL);
     if (funname != NULL) {
-#if UI_DEBUG
-	fprintf(stderr, "UI_MAKER: %s\n", funname);
-#endif
         func = get_function_from_package(funname, pkg);
     }
     if (func != NULL) {
-#if UI_DEBUG
-	fprintf(stderr, "UI_MAKER function: %p\n", func);
-#endif
         fc = fncall_new(func, 0);
     }
     if (fc != NULL) {
 	int err;
-#if UI_DEBUG
-	fprintf(stderr, "UI_MAKER fncall: %p\n", fc);
-#endif
+
         err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
 				  &b, NULL, NULL);
-#if UI_DEBUG
-	fprintf(stderr, "UI_MAKER err = %d\n", err);
-#endif
+	fprintf(stderr, "ui_maker: err = %d\n", err);
     }
+
     g_free(funname);
-#if UI_DEBUG
-    fprintf(stderr, "try_run_ui_maker: b = %p\n", (void *) b);
-#endif
 
     return b;
+}
+
+#endif
+
+static GtkWidget *get_selector_for_param (call_info *cinfo,
+					  const char *name)
+{
+    const char *s;
+    int j;
+
+    for (j=0; j<cinfo->n_params; j++) {
+	if (cinfo->sels[j] != NULL) {
+	    s = g_object_get_data(G_OBJECT(cinfo->sels[j]), "parname");
+	    if (s != NULL && !strcmp(name, s)) {
+		return cinfo->sels[j];
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+static void check_depends (call_info *cinfo, int i,
+			   gretl_bundle *ui)
+{
+    const char *dep;
+
+    /* first attach @ui to widget for future reference */
+    g_object_set_data(G_OBJECT(cinfo->sels[i]), "ui", ui);
+
+    /* see if we have a dependency */
+    dep = gretl_bundle_get_string(ui, "depends", NULL);
+
+    if (dep != NULL) {
+	GtkWidget *b = get_selector_for_param(cinfo, dep);
+
+	if (b != NULL && GTK_IS_TOGGLE_BUTTON(b)) {
+	    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b))) {
+		gtk_widget_set_sensitive(cinfo->sels[i], FALSE);
+	    }
+	    sensitize_conditional_on(cinfo->sels[i], b);
+	}
+    }
 }
 
 static int cinfo_args_init (call_info *cinfo)
@@ -297,6 +332,7 @@ static int cinfo_args_init (call_info *cinfo)
 	}
     }
 
+#if UI_BUNDLE
     if (!err && cinfo->pkg != NULL) {
         gretl_bundle *b = function_package_get_ui_spec(cinfo->pkg);
 
@@ -310,6 +346,7 @@ static int cinfo_args_init (call_info *cinfo)
             cinfo->ui = b;
         }
     }
+#endif
 
     return err;
 }
@@ -325,6 +362,9 @@ static void cinfo_free (call_info *cinfo)
     }
     if (cinfo->ret != NULL) {
 	g_free(cinfo->ret);
+    }
+    if (cinfo->sels != NULL) {
+	free(cinfo->sels);
     }
     if (cinfo->vsels != NULL) {
 	g_list_free(cinfo->vsels);
@@ -573,7 +613,16 @@ static GList *add_series_names (GList *list)
     return list;
 }
 
-static GList *get_selection_list (int type)
+static int allow_singleton_list (gretl_bundle *ui)
+{
+    if (ui != NULL) {
+	return gretl_bundle_get_bool(ui, "singleton", 1);
+    } else {
+	return 1;
+    }
+}
+
+static GList *get_selection_list (int type, gretl_bundle *ui)
 {
     GList *list = NULL;
 
@@ -583,8 +632,9 @@ static GList *get_selection_list (int type)
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
 	list = add_names_for_type(list, GRETL_TYPE_LIST);
-	/* allow for singleton list? */
-	list = add_series_names(list);
+	if (allow_singleton_list(ui)) {
+	    list = add_series_names(list);
+	}
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
     } else if (bundle_arg(type)) {
@@ -739,7 +789,7 @@ static void update_combo_selectors (call_info *cinfo,
 	sellist = g_list_first(cinfo->vsels);
     }
 
-    newlist = get_selection_list(ptype);
+    newlist = get_selection_list(ptype, NULL);
     llen = g_list_length(newlist);
 
     while (sellist != NULL) {
@@ -904,9 +954,54 @@ static int do_make_list (selector *sr)
     return err;
 }
 
+gchar **get_listdef_exclude (gpointer p)
+{
+    gchar **S = NULL;
+
+    if (GTK_IS_ENTRY(p)) {
+	GtkWidget *sel = g_object_get_data(G_OBJECT(p), "sel");
+	GtkWidget *ref = NULL;
+	call_info *cinfo = NULL;
+	gretl_bundle *ui = NULL;
+	const char *s = NULL;
+	gchar *x = NULL;
+	int no_const = 0;
+
+	if (sel != NULL) {
+	    cinfo = g_object_get_data(G_OBJECT(p), "cinfo");
+	    ui = g_object_get_data(G_OBJECT(sel), "ui");
+	}
+	if (cinfo != NULL && ui != NULL) {
+	    s = gretl_bundle_get_string(ui, "exclude", NULL);
+	    no_const = gretl_bundle_get_bool(ui, "no_const", 0);
+	}
+	if (s != NULL) {
+	    ref = get_selector_for_param(cinfo, s);
+	}
+	if (ref != NULL && GTK_IS_COMBO_BOX(ref)) {
+	    x = combo_box_get_active_text(ref);
+	}
+	if (no_const && x != NULL) {
+	    gchar *tmp = g_strdup_printf("const %s", x);
+
+	    S = g_strsplit(tmp, " ", -1);
+	    g_free(tmp);
+	} else if (x != NULL) {
+	    S = g_strsplit(x, " ", -1);
+	} else if (no_const) {
+	    S = g_strsplit("const", " ", -1);
+	}
+	g_free(x);
+    }
+
+    return S;
+}
+
 static void launch_list_maker (GtkWidget *button, GtkWidget *entry)
 {
     call_info *cinfo;
+
+    /* note: @entry has @sel attached as data */
 
     cinfo = g_object_get_data(G_OBJECT(button), "cinfo");
     g_object_set_data(G_OBJECT(cinfo->dlg), "button", button);
@@ -1175,14 +1270,44 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     return spin;
 }
 
+static int min_max_def_from_ui (gretl_bundle *ui,
+				double *dvals[])
+{
+    const char *S[] = {"minimum", "maximum", "default"};
+    const char *s;
+    double val;
+    int i, err = 0;
+
+    for (i=0; i<3 && !err; i++) {
+	s = gretl_bundle_get_string(ui, S[i], NULL);
+	if (s != NULL) {
+	    val = generate_scalar(s, dataset, &err);
+	    fprintf(stderr, "ui %s: '%s' -> %g (err %d)\n",
+		    S[i], s, val, err);
+	    if (!err) {
+		*(dvals[i]) = val;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static GtkWidget *int_arg_selector (call_info *cinfo,
 				    int i, GretlType type,
-				    const char *prior_val)
+				    const char *prior_val,
+				    gretl_bundle *ui)
 {
     double dminv = fn_param_minval(cinfo->func, i);
     double dmaxv = fn_param_maxval(cinfo->func, i);
     double deflt = fn_param_default(cinfo->func, i);
     int minv, maxv, initv = 0;
+
+    if (ui != NULL) {
+	double *dvals[] = {&dminv, &dmaxv, &deflt};
+
+	min_max_def_from_ui(ui, dvals);
+    }
 
     if (type == GRETL_TYPE_OBS) {
 	/* the incoming vals will be 1-based */
@@ -1406,8 +1531,9 @@ static void arg_combo_set_default (call_info *cinfo,
    list (which may initially be empty)
 */
 
-static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i,
-				      const char *prior_val)
+static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
+				      int i, const char *prior_val,
+				      gretl_bundle *ui)
 {
     GList *list = NULL;
     GtkWidget *combo;
@@ -1427,7 +1553,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i,
 	widget_set_int(combo, "null_OK", 1);
     }
 
-    list = get_selection_list(ptype);
+    list = get_selection_list(ptype, ui);
     if (list != NULL) {
 	set_combo_box_strings_from_list(combo, list);
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo),
@@ -1595,6 +1721,9 @@ static int function_call_dialog (call_info *cinfo)
 	if (show_ret) {
 	    trows += 4;
 	}
+	if (cinfo->ui) {
+	    cinfo->sels = calloc(cinfo->n_params, sizeof *cinfo->sels);
+	}
 	alist = arglist_lookup(cinfo->pkgname, cinfo->func);
     } else if (show_ret) {
 	tcols = 2;
@@ -1611,6 +1740,7 @@ static int function_call_dialog (call_info *cinfo)
 	const char *desc = fn_param_descrip(cinfo->func, i);
 	const char *parname = fn_param_name(cinfo->func, i);
 	const char *prior_val = NULL;
+	gretl_bundle *ui = NULL;
 	int ptype = fn_param_type(cinfo->func, i);
 	int spinnable = 0;
 	gchar *argtxt;
@@ -1618,7 +1748,6 @@ static int function_call_dialog (call_info *cinfo)
 	if (i == 0 && cinfo->n_params > 1) {
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
 	}
-
 	if (alist != NULL) {
 	    prior_val = arglist_lookup_val(alist, i);
 	}
@@ -1627,6 +1756,12 @@ static int function_call_dialog (call_info *cinfo)
 
 	if (ptype == GRETL_TYPE_DOUBLE) {
 	    spinnable = spinnable_scalar_arg(cinfo, i);
+	}
+	if (cinfo->ui != NULL) {
+	    ui = gretl_bundle_get_bundle(cinfo->ui, parname, NULL);
+	    if (ui != NULL) {
+		fprintf(stderr, "arg %d (%s), got ui bundle\n", i, parname);
+	    }
 	}
 
 	/* label for name (and maybe type) of argument, using
@@ -1667,17 +1802,23 @@ static int function_call_dialog (call_info *cinfo)
 	    sel = bool_arg_selector(cinfo, i, prior_val);
 	} else if (ptype == GRETL_TYPE_INT ||
 		   ptype == GRETL_TYPE_OBS) {
-	    sel = int_arg_selector(cinfo, i, ptype, prior_val);
+	    sel = int_arg_selector(cinfo, i, ptype, prior_val, ui);
 	} else if (spinnable) {
 	    sel = double_arg_selector(cinfo, i, prior_val);
 	} else {
-	    sel = combo_arg_selector(cinfo, ptype, i, prior_val);
+	    sel = combo_arg_selector(cinfo, ptype, i, prior_val, ui);
 	}
 
 	if (sel == NULL) {
 	    /* panic! */
 	    err = 1;
 	    break;
+	} else if (cinfo->sels != NULL) {
+	    g_object_set_data(G_OBJECT(sel), "parname", (char *) parname);
+	    cinfo->sels[i] = sel;
+	    if (ui != NULL) {
+		check_depends(cinfo, i, ui);
+	    }
 	}
 
 	add_table_cell(tbl, sel, 1, 2, row);
@@ -1760,7 +1901,7 @@ static int function_call_dialog (call_info *cinfo)
 	sel = combo_box_text_new_with_entry();
 	g_signal_connect(G_OBJECT(sel), "changed",
 			 G_CALLBACK(update_return), cinfo);
-	list = get_selection_list(cinfo->rettype);
+	list = get_selection_list(cinfo->rettype, NULL);
 	if (list != NULL) {
 	    set_combo_box_strings_from_list(sel, list);
 	    g_list_free(list);
