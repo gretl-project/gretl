@@ -244,38 +244,24 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     return err;
 }
 
-#define UI_BUNDLE 0 /* will change shortly */
-
-#if UI_BUNDLE
-
-static gretl_bundle *try_run_ui_maker (fnpkg *pkg)
+static gretl_bundle *get_ui_from_maker (fnpkg *pkg,
+					gchar *funname)
 {
     gretl_bundle *b = NULL;
-    gchar *funname = NULL;
     ufunc *func = NULL;
     fncall *fc = NULL;
 
-    function_package_get_properties(pkg, UI_MAKER, &funname, NULL);
-    if (funname != NULL) {
-        func = get_function_from_package(funname, pkg);
-    }
+    func = get_function_from_package(funname, pkg);
     if (func != NULL) {
         fc = fncall_new(func, 0);
     }
     if (fc != NULL) {
-	int err;
-
-        err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-				  &b, NULL, NULL);
-	fprintf(stderr, "ui_maker: err = %d\n", err);
+        gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+			    &b, NULL, NULL);
     }
-
-    g_free(funname);
 
     return b;
 }
-
-#endif
 
 static GtkWidget *get_selector_for_param (call_info *cinfo,
 					  const char *name)
@@ -332,21 +318,16 @@ static int cinfo_args_init (call_info *cinfo)
 	}
     }
 
-#if UI_BUNDLE
     if (!err && cinfo->pkg != NULL) {
-        gretl_bundle *b = function_package_get_ui_spec(cinfo->pkg);
+	gchar *funname = NULL;
 
-        if (b == NULL) {
-            b = try_run_ui_maker(cinfo->pkg);
-            if (b != NULL) {
-                function_package_set_ui_spec(cinfo->pkg, b);
-            }
-        }
-        if (b != NULL) {
-            cinfo->ui = b;
-        }
+	function_package_get_properties(cinfo->pkg, UI_MAKER,
+					&funname, NULL);
+	if (funname != NULL) {
+	    cinfo->ui = get_ui_from_maker(cinfo->pkg, funname);
+	    g_free(funname);
+	}
     }
-#endif
 
     return err;
 }
@@ -383,6 +364,9 @@ static void cinfo_free (call_info *cinfo)
     }
     if (cinfo->ssels != NULL) {
 	g_list_free(cinfo->ssels);
+    }
+    if (cinfo->ui != NULL) {
+	gretl_bundle_destroy(cinfo->ui);
     }
 
     g_free(cinfo->pkgname);
@@ -1282,9 +1266,7 @@ static int min_max_def_from_ui (gretl_bundle *ui,
 	s = gretl_bundle_get_string(ui, S[i], NULL);
 	if (s != NULL) {
 	    val = generate_scalar(s, dataset, &err);
-	    fprintf(stderr, "ui %s: '%s' -> %g (err %d)\n",
-		    S[i], s, val, err);
-	    if (!err) {
+	    if (!err && !na(val)) {
 		*(dvals[i]) = val;
 	    }
 	}

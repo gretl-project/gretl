@@ -210,7 +210,6 @@ struct fnpkg_ {
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
-    gretl_bundle *ui; /* for GUI use */
 };
 
 /* acceptable types for parameters of user-defined functions */
@@ -872,7 +871,6 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_depends = 0;
     pkg->provider = NULL;
     pkg->editor = NULL;
-    pkg->ui = NULL;
 
     return pkg;
 }
@@ -5311,9 +5309,6 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	if (pkg->depends != NULL && pkg->n_depends > 0) {
 	    strings_array_free(pkg->depends, pkg->n_depends);
 	}
-        if (pkg->ui != NULL) {
-            gretl_bundle_destroy(pkg->ui);
-        }
 
 	free(pkg->pub);
 	free(pkg->priv);
@@ -10503,18 +10498,6 @@ void function_package_set_editor (fnpkg *pkg, void *editor)
 void *function_package_get_editor (fnpkg *pkg)
 {
     return pkg == NULL ? NULL : pkg->editor;
-}
-
-void function_package_set_ui_spec (fnpkg *pkg, void *ui_spec)
-{
-    if (pkg != NULL) {
-	pkg->ui = ui_spec;
-    }
-}
-
-void *function_package_get_ui_spec (fnpkg *pkg)
-{
-    return pkg == NULL ? NULL : pkg->ui;
 }
 
 /**

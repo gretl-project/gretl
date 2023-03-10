@@ -307,10 +307,6 @@ void function_package_set_editor (fnpkg *pkg, void *editor);
 
 void *function_package_get_editor (fnpkg *pkg);
 
-void function_package_set_ui_spec (fnpkg *pkg, void *ui_spec);
-
-void *function_package_get_ui_spec (fnpkg *pkg);
-
 int package_has_menu_attachment (const char *fname,
 				 char **pkgname,
 				 char **attach,
