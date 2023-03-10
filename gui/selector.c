@@ -7721,12 +7721,16 @@ selector *selection_dialog (int ci, const char *title,
     GtkTreeIter iter;
     GtkWidget *left_box;
     selector *sr;
-    int preselect;
+    int preselect = 0;
     int saverow;
     int i, yvar = 0;
 
-    preselect = presel;
-    presel = 0;
+    if (presel > 0) {
+	preselect = presel;
+	presel = 0;
+    } else if (dataset->v == 2 && NO_X_OK(ci)) {
+	preselect = 1;
+    }
 
     if (open_selector != NULL) {
         gtk_window_present(GTK_WINDOW(open_selector->dlg));
