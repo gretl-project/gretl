@@ -183,7 +183,7 @@ char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
 char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OS_OSX)
-char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
+char calculator[MAXSTR] = "/System/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
 #else
