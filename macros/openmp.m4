@@ -40,9 +40,9 @@ int main () { return omp_get_num_threads (); }
         dnl   Apple                -Xclang -fopenmp
 	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
-        apple)
-          ac_conditional='defined __clang__ && defined __apple_build_version__'
-          ac_option='-Xpreprocessor -fopenmp' ;;
+            apple)
+              ac_conditional='defined __clang__ && defined __apple_build_version__'
+              ac_option='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
@@ -87,7 +87,7 @@ int main () { return omp_get_num_threads (); }
             ac_save_CFLAGS=$CFLAGS
             ac_save_LIBS=$LIBS
             CFLAGS="$CFLAGS $ac_option"
-            LIBS="$LIBS $OMPLIB"
+            LIBS="$LIBS $OMP_LIB"
             AC_LINK_IFELSE([AC_LANG_SOURCE([
 #ifndef _OPENMP
  choke me

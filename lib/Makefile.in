@@ -28,6 +28,7 @@ DARWIN_RPATH = @DARWIN_RPATH@
 SSE2_CFLAGS = @SSE2_CFLAGS@
 AVX_CFLAGS = @AVX_CFLAGS@
 RT_LIB = @RT_LIB@
+OMP_LIB = @OMP_LIB@
 
 use_curl = @use_curl@
 ifeq ($(use_curl),yes)
@@ -98,7 +99,8 @@ else
 endif
 
 LIBS = $(LAPACK_LIBS) -lm $(LIBDL) -lz $(XML_LIBS) $(MACLIB) \
-	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) $(GSF_LIBS) $(RT_LIB)
+	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS) $(CURL_LIBS) \
+	$(GSF_LIBS) $(RT_LIB) $(OMP_LIB)
 
 #### End of system configuration section. ####
 
