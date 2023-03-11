@@ -1018,12 +1018,12 @@ static void arma_select_header (arma_sel *asel, MODEL *amod,
     if (asel->seasonal) {
 	dashline(66, prn);
 	pprintf(prn, " p, q, P, Q %*s %*s %*s %*s\n", w, "AIC", w+1,
-		"BIC", w+1, "HQC", w+1, "lnL");
+		"BIC", w+1, "HQC", w+1, "loglik");
 	dashline(66, prn);
     } else {
 	dashline(60, prn);
 	pprintf(prn, " p, q %*s %*s %*s %*s\n", w, "AIC", w+1, "BIC",
-		w+1, "HQC", w+1, "lnL");
+		w+1, "HQC", w+1, "loglik");
 	dashline(60, prn);
     }
 }
