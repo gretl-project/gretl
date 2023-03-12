@@ -1648,19 +1648,29 @@ gretl_array *gretl_strings_sort (const gretl_array *A,
 int gretl_array_copy_into (gretl_array *A1,
 			   const gretl_array *A2)
 {
+    gretl_array *Tmp = NULL;
     int old_n = 0, err = 0;
 
     if (A1 == NULL || A2 == NULL) {
 	err = E_DATA;
     } else if (A1->type != A2->type) {
 	err = E_TYPES;
-    } else {
-	old_n = A1->n;
-	err = array_extend_content(A1, A2->n);
+    } else if (A1 == A2) {
+        Tmp = gretl_array_copy(A1, &err);
+        if (!err) {
+            A2 = Tmp;
+        }
     }
 
     if (!err) {
+	old_n = A1->n;
+	err = array_extend_content(A1, A2->n);
+    }
+    if (!err) {
 	err = gretl_array_copy_content(A1, A2, old_n);
+    }
+    if (Tmp != NULL) {
+        gretl_array_destroy(Tmp);
     }
 
     return err;
