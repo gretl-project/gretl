@@ -756,7 +756,7 @@ HAVE_MPICC
 OPENMP_CFLAGS
 AVX_CFLAGS
 SSE2_CFLAGS
-OMPLIB
+OMP_LIB
 MPILINK
 MPICC
 COMPRES
@@ -943,7 +943,7 @@ MKPNGLIST
 COMPRES
 MPICC
 MPILINK
-OMPLIB
+OMP_LIB
 CXX
 CXXFLAGS
 CCC
@@ -1675,7 +1675,7 @@ Some influential environment variables:
   COMPRES     GLib resource compiler (cross-build)
   MPICC       path to MPI compiler wrapper
   MPILINK     linker commands for MPI (cross-build)
-  OMPLIB      linker command for OpenMP (auto)
+  OMP_LIB     linker command for OpenMP (auto)
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
   CXXCPP      C++ preprocessor
@@ -17630,9 +17630,9 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
       if test "$ac_cv_prog_cc_openmp" = unsupported; then
 								        	for brand in apple clang GCC SunPRO Intel SGI/PGI Compaq IBM InteloneAPI; do
 	  case $brand in
-        apple)
-          ac_conditional='defined __clang__ && defined __apple_build_version__'
-          ac_option='-Xpreprocessor -fopenmp' ;;
+            apple)
+              ac_conditional='defined __clang__ && defined __apple_build_version__'
+              ac_option='-Xclang -fopenmp' ;;
 	    clang)
 	      ac_conditional='defined __clang__ && !(defined __INTEL_LLVM_COMPILER)'
 	      ac_option='-fopenmp=libomp' ;;
@@ -17689,7 +17689,7 @@ rm -rf conftest*
             ac_save_CFLAGS=$CFLAGS
             ac_save_LIBS=$LIBS
             CFLAGS="$CFLAGS $ac_option"
-            LIBS="$LIBS $OMPLIB"
+            LIBS="$LIBS $OMP_LIB"
             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
