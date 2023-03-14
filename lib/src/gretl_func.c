@@ -2151,7 +2151,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     char *buf, *s;
     gint8 uses_set = 0;
     gint8 has_flow = 0;
-    int save_comments = 0; /* not yet */
+    int save_comments = 1; /* let's try it */
     int err = 0;
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -2710,6 +2710,10 @@ static int write_function_xml (ufunc *fun, PRN *prn)
     pputs(prn, "<code>");
 
     for (i=0; i<fun->n_lines; i++) {
+	if (i > 0 && fun->lines[i].idx - fun->lines[i-1].idx > 1) {
+	    /* reinstate single blank lines */
+	    pputc(prn, '\n');
+	}
 	adjust_indent(fun->lines[i].s, &this_indent, &next_indent);
 	for (j=0; j<this_indent; j++) {
 	    pputs(prn, "  ");
@@ -10641,6 +10645,3 @@ int uninstall_function_package (const char *package, gretlopt opt,
 
     return err;
 }
-
-/* temporary hack? */
-/* #include "funcshell.c" */
