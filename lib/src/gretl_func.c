@@ -10643,4 +10643,4 @@ int uninstall_function_package (const char *package, gretlopt opt,
 }
 
 /* temporary hack? */
-#include "funcshell.c"
+/* #include "funcshell.c" */

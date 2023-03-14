@@ -350,9 +350,11 @@ static int assess_exit_status (PROCESS_INFORMATION *pinfo,
 	/* the call "succeeded" */
 	if (exitcode != 0) {
 	    fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
-	    gretl_errmsg_sprintf("%s: exit code %u", cmdline,
-				 exitcode);
-	    err = 1;
+	    if (exitcode < 3000000000) {
+		gretl_errmsg_sprintf("%s: exit code %u", cmdline,
+				     exitcode);
+		err = 1;
+	    }
 	}
     } else {
 	fprintf(stderr, "%s: no exit code:\n%s\n", caller, cmdline);
