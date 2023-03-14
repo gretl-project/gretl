@@ -30,6 +30,24 @@ static pkgshell *pkgshell_new (const char *fname)
     return pks;
 }
 
+static int pkgshell_attach (funcshell *fns,
+			    funcshell ***pfs,
+			    int *pnf)
+{
+    funcshell **tmp = NULL;
+    int n = *pnf + 1;
+
+    tmp = realloc(*pfs, n * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    } else {
+	tmp[n-1] = fns;
+	*pfs = tmp;
+	*pnf = n;
+	return 0;
+    }
+}
+
 static int read_funcshell_from_xml (xmlNodePtr node,
 				    xmlDocPtr doc,
 				    pkgshell *pks)
@@ -74,8 +92,10 @@ static int read_funcshell_from_xml (xmlNodePtr node,
 
     if (err) {
 	fns_free(fns);
+    } else if (fns->flags & UFUN_PRIVATE) {
+	err = pkgshell_attach(fns, &pks->priv, &pks->n_priv);
     } else {
-	; /* add to @pks */
+	err = pkgshell_attach(fns, &pks->pub, &pks->n_pub);
     }
 
     return err;
@@ -122,7 +142,7 @@ static pkgshell *read_pkg_as_shell (const char *fname, int *err)
     }
 
     cur = node->xmlChildrenNode;
-    
+
     while (cur != NULL && !*err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
 	    pks = real_read_pkgshell(doc, cur, fname, err);
