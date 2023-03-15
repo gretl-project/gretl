@@ -1997,48 +1997,46 @@ static gboolean special_int_default (fn_param *param,
 
 /* read the parameter info for a function from XML file */
 
-static fn_param *func_read_params (xmlNodePtr node, xmlDocPtr doc,
-                                   const char *funcname,
-                                   int *n_params, int *err)
+static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
+			     ufunc *fun)
 {
-    fn_param *params;
     xmlNodePtr cur;
     char *field;
-    int n;
+    int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
 	fprintf(stderr, "Couldn't read param count\n");
-	*err = E_DATA;
-        return NULL;
+	return E_DATA;
     }
 
     if (n == 0) {
-	return NULL;
+	return 0;
     }
 
-    params = allocate_params(n);
-    if (params == NULL) {
-	*err = E_ALLOC;
-        return NULL;
+    fun->params = allocate_params(n);
+    if (fun->params == NULL) {
+	return E_ALLOC;
     }
 
-    *n_params = n;
+    fun->n_params = n;
+
     gretl_push_c_numeric_locale();
+
     cur = node->xmlChildrenNode;
     n = 0;
 
-    while (cur != NULL && !*err) {
+    while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "param")) {
-	    fn_param *param = &params[n++];
+	    fn_param *param = &fun->params[n++];
 
 	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
 		param->name = field;
 	    } else {
-		*err = E_DATA;
+		err = E_DATA;
 		break;
 	    }
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
-		param->type = param_field_to_type(field, funcname, err);
+		param->type = param_field_to_type(field, fun->name, &err);
 		free(field);
 		if (special_int_default(param, cur)) {
 		    ; /* handled */
@@ -2063,7 +2061,7 @@ static fn_param *func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		    maybe_set_param_const(param);
 		}
 	    } else {
-		*err = E_DATA;
+		err = E_DATA;
 		break;
 	    }
 	    gretl_xml_child_get_string(cur, doc, "description",
@@ -2077,18 +2075,11 @@ static fn_param *func_read_params (xmlNodePtr node, xmlDocPtr doc,
 
     gretl_pop_c_numeric_locale();
 
-    if (!*err && n != *n_params) {
-	*err = E_DATA;
+    if (!err && n != fun->n_params) {
+	err = E_DATA;
     }
 
-    if (*err) {
-        /* clean up */
-        free(params);
-        params = NULL;
-        *n_params = 0;
-    }
-
-    return params;
+    return err;
 }
 
 static int push_function_line (ufunc *fun, char *s, int ci, int donate)
@@ -2494,8 +2485,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	    }
 	    pkg->help = gretl_xml_get_string(cur, doc);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
-	    fun->params = func_read_params(cur, doc, fun->name,
-                                           &fun->n_params, &err);
+	    err = func_read_params(cur, doc, fun);
 	    if (err) {
 		fprintf(stderr, "%s: error parsing function parameters\n",
 			fun->name);
@@ -2731,33 +2721,29 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 
 /* script-style output */
 
-static void print_function_start (const char *name,
-                                  GretlType rettype,
-                                  fn_param *params,
-                                  int n_params,
-                                  PRN *prn)
+static void print_function_start (ufunc *fun, PRN *prn)
 {
     const char *s;
     int i, pos = 0;
 
-    if (rettype == GRETL_TYPE_NONE) {
-	pos += pprintf(prn, "function void %s ", name);
+    if (fun->rettype == GRETL_TYPE_NONE) {
+	pos += pprintf(prn, "function void %s ", fun->name);
     } else {
-	const char *typestr = gretl_type_get_name(rettype);
+	const char *typestr = gretl_type_get_name(fun->rettype);
 
-	pos += pprintf(prn, "function %s %s ", typestr, name);
+	pos += pprintf(prn, "function %s %s ", typestr, fun->name);
     }
 
     gretl_push_c_numeric_locale();
 
-    if (n_params == 0) {
+    if (fun->n_params == 0) {
 	pputs(prn, "(void)");
     } else {
 	pos += pputc(prn, '(');
     }
 
-    for (i=0; i<n_params; i++) {
-	fn_param *fp = &params[i];
+    for (i=0; i<fun->n_params; i++) {
+	fn_param *fp = &fun->params[i];
 
 	if (fp->flags & FP_CONST) {
 	    pputs(prn, "const ");
@@ -2781,7 +2767,7 @@ static void print_function_start (const char *name,
 	if (fp->nlabels > 0) {
 	    print_param_labels(fp, prn);
 	}
-	if (i == n_params - 1) {
+	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
 	} else {
 	    pputs(prn, ",\n");
@@ -2855,7 +2841,7 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 	tabwidth = 2;
     }
 
-    print_function_start(u->name, u->rettype, u->params, u->n_params, prn);
+    print_function_start(u, prn);
 
     for (i=0; i<u->n_lines; i++) {
 	maybe_toggle_foreign(u->lines[i].s, &in_foreign);
