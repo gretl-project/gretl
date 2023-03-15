@@ -22357,7 +22357,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
      fi
      MPFR_CFLAGS=""
      MPFR_LIBS=""
-     gmp_fail="yes"
+     mpfr_fail="yes"
   fi
   if test "$MPFR_CFLAGS" = "-I/include" ; then
      MPFR_CFLAGS=""
