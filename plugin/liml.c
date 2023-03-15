@@ -67,10 +67,20 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
         /* set the dependent variable */
 	reglist[1] = list[i];
 
+	if (reglist[0] == 1) {
+	    /* null model! */
+	    int v = reglist[1];
+
+            for (t=0; t<T; t++) {
+                gretl_matrix_set(E, t, j, dset->Z[v][t + t1]);
+            }
+            j++;
+	    continue;
+	}
+
 	/* regress on the specified set of instruments */
 	*lmod = lsq(reglist, dset, OLS, OPT_A);
         err = lmod->errcode;
-
 	if (!err) {
             /* put residuals into appropriate column of E and
                increment the column */
@@ -251,14 +261,14 @@ static int liml_do_equation (equation_system *sys, int eq,
     int T = sys->T;
     int err = 0;
 
-#if LDEBUG
-    fprintf(stderr, "\nWorking on equation for %s\n", dset->varname[list[1]]);
-#endif
-
     err = liml_eqn_get_lists(sys, eq, &list, &exlist, &freelists);
     if (err) {
         return err;
     }
+
+#if LDEBUG
+    fprintf(stderr, "\nWorking on equation for %s\n", dset->varname[list[1]]);
+#endif
 
     /* get pointer to model (initialized via TSLS) */
     pmod = system_get_model(sys, eq);
@@ -305,7 +315,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 					W0, GRETL_MOD_NONE);
     }
 #if LDEBUG
-    gretl_matrix_print(W0, "W0");
+    if (!err) gretl_matrix_print(W0, "W0");
 #endif
 
     if (!err) {
@@ -322,7 +332,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 					W1, GRETL_MOD_NONE);
     }
 #if LDEBUG
-    gretl_matrix_print(W1, "W1");
+    if (!err) gretl_matrix_print(W1, "W1");
 #endif
 
     if (!err) {
@@ -386,12 +396,14 @@ int liml_driver (equation_system *sys, DATASET *dset, PRN *prn)
     int i, err = 0;
 
 #if LDEBUG
-    fprintf(stderr, "\n *** liml driver called\n");
+    fprintf(stderr, "\n *** liml driver called: sys = %p\n", (void *) sys);
 #endif
 
     for (i=0; i<sys->neqns && !err; i++) {
 #if LDEBUG > 1
-	printmodel(system_get_model(sys, i), dset, OPT_NONE, prn);
+	if (prn != NULL) {
+	    printmodel(system_get_model(sys, i), dset, OPT_NONE, prn);
+	}
 #endif
 	err = liml_do_equation(sys, i, dset, prn);
     }

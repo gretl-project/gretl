@@ -2181,8 +2181,6 @@ static int sys_has_user_name (equation_system *sys)
             !sys_anonymous(sys->name));
 }
 
-#define ALLOW_SINGLE 1
-
 /**
  * equation_system_finalize:
  * @sys: pre-defined equation system.
@@ -2205,11 +2203,7 @@ static int sys_has_user_name (equation_system *sys)
 int equation_system_finalize (equation_system *sys, DATASET *dset,
                               gretlopt opt, PRN *prn)
 {
-#if ALLOW_SINGLE
     int mineq = 1;
-#else
-    int mineq = (opt & OPT_S)? 1 : 2;
-#endif
     int err = 0;
 
 #if SYSDEBUG
@@ -2221,15 +2215,11 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
     if (sys == NULL) {
         gretl_errmsg_set(_(nosystem));
         return 1;
-    }
-
-    if (sys->neqns < mineq) {
+    } else if (sys->neqns < mineq) {
         gretl_errmsg_set(_(toofew));
         equation_system_destroy(sys);
         return 1;
-    }
-
-    if (sys->method >= SYS_METHOD_MAX) {
+    } else if (sys->method >= SYS_METHOD_MAX) {
         gretl_errmsg_set(_(badsystem));
         equation_system_destroy(sys);
         return 1;
@@ -2582,7 +2572,7 @@ void system_attach_uhat (equation_system *sys, gretl_matrix *E)
 
 MODEL *system_get_model (const equation_system *sys, int i)
 {
-    if (sys->models == NULL || i >= sys->neqns) {
+    if (sys == NULL || sys->models == NULL || i >= sys->neqns) {
         return NULL;
     }
 
@@ -4969,11 +4959,9 @@ MODEL single_equation_liml (const int *list, DATASET *dset,
     if (!err) {
         sys = equation_system_new(SYS_METHOD_LIML, NULL, &err);
     }
-
     if (!err) {
         err = equation_system_append(sys, mlist);
     }
-
     if (!err) {
         sys->ilist = ilist;
         err = equation_system_finalize(sys, dset, OPT_S, NULL);
