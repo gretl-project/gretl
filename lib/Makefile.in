@@ -340,12 +340,10 @@ install: $(LIBGRETL) install-data
 install-strip: $(LIBGRETL) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $< $(DESTDIR)$(libdir)/$<
 
-install-data: installdirs install-cfg
+install-data: ../gretl.pc installdirs
 	for f in $(PUBLIC_HDRS) ; do \
 	$(INSTALL_DATA) $(libsrc)/$$f $(DESTDIR)$(includedir) ; done
-
-install-cfg: ../gretl.pc
-	$(INSTALL_DATA) $< $(DESTDIR)$(pkgconfigdir)
+	$(INSTALL_DATA) ../gretl.pc $(DESTDIR)$(pkgconfigdir)/
 
 install-lib: $(LIBGRETL)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(DESTDIR)$(libdir)/$<

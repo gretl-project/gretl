@@ -498,7 +498,7 @@ dnl Check for GMP and MPFR
 dnl
 if test "$try_gmp" = "yes" ; then
   AM_PATH_GMP(4.0.1, have_gmp="yes", gmp_fail="yes")
-  AM_PATH_MPFR(2.2.0, have_mpfr="yes", gmp_fail="yes")
+  AM_PATH_MPFR(2.2.0, have_mpfr="yes", mpfr_fail="yes")
   if test "$have_gmp" = "yes" -a "$have_mpfr" = "yes" ; then
     AC_DEFINE(HAVE_GMP)
   fi
