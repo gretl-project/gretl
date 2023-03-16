@@ -123,21 +123,35 @@ static void toggle_ccmt (CMD *cmd, int state)
     }
 }
 
+static int tail_is_blank (const char *s)
+{
+    while (*s) {
+	if (!isspace(*s)) {
+	    return 0;
+	}
+	s++;
+    }
+
+    return 1;
+}
+
 /* filter_comments: strip comments out of line; return non-zero if
-   the whole line is a comment */
+   the whole line is a comment
+*/
 
 static int filter_comments (char *s, CMD *cmd, int preserve)
 {
     char tmp[MAXLINE];
     char *p = s;
-    int quoted = 0;
-    int ccmt = (cmd->flags & CMD_CCMT);
+    int ccmt, quoted = 0;
     int j = 0, filt = 0;
 
     if (strlen(s) >= MAXLINE) {
         cmd->err = E_TOOLONG;
         return 0;
     }
+
+    ccmt = (cmd->flags & CMD_CCMT);
 
     while (*p) {
         if (!quoted && !ccmt && *p == '#') {
@@ -170,7 +184,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
     }
 
     tmp[j] = '\0';
-    if (preserve && tmp[0] == '\0') {
+    if (preserve && tail_is_blank(tmp)) {
         cmd->ci = CMD_COMMENT;
         toggle_ccmt(cmd, ccmt);
         return 1;
