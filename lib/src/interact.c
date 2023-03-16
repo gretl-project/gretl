@@ -70,9 +70,9 @@
 
 #include "tokenize.c"
 
-#define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
-#define starts_comment(p) (*p == '/' && *(p+1) == '*')
-#define ends_comment(p)   (*p == '*' && *(p+1) == '/')
+#define bare_quote(p,s) (*p == '"' && (p-s==0 || *(p-1) != '\\'))
+#define starts_ccmt(p)  (*p == '/' && *(p+1) == '*')
+#define ends_ccmt(p)    (*p == '*' && *(p+1) == '/')
 
 static int install_function_package (const char *pkgname,
                                      gretlopt opt,
@@ -114,6 +114,15 @@ static int strip_inline_comments (char *s)
     return ret;
 }
 
+static void toggle_ccmt (CMD *cmd, int state)
+{
+    if (state) {
+        cmd->flags |= CMD_CCMT;
+    } else {
+        cmd->flags &= ~CMD_CCMT;
+    }
+}
+
 /* filter_comments: strip comments out of line; return non-zero if
    the whole line is a comment */
 
@@ -122,7 +131,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
     char tmp[MAXLINE];
     char *p = s;
     int quoted = 0;
-    int ignore = (cmd->flags & CMD_IGNORE);
+    int ccmt = (cmd->flags & CMD_CCMT);
     int j = 0, filt = 0;
 
     if (strlen(s) >= MAXLINE) {
@@ -131,27 +140,28 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
     }
 
     while (*p) {
-        if (!quoted && !ignore && *p == '#') {
+        if (!quoted && !ccmt && *p == '#') {
             break;
         }
-        if (!ignore && bare_quote(p, s)) {
+        if (!ccmt && bare_quote(p, s)) {
             quoted = !quoted;
         }
         if (!quoted) {
-            if (starts_comment(p)) {
-                ignore = 1;
+            if (starts_ccmt(p)) {
+                ccmt = 1;
                 p += 2;
-            } else if (ends_comment(p)) {
-                if (!ignore) {
+            } else if (ends_ccmt(p)) {
+                if (!ccmt) {
                     cmd->err = E_PARSE;
+                    fprintf(stderr, "unbalanced close comment\n");
                     return 0;
                 }
-                ignore = 0;
+                ccmt = 0;
                 p += 2;
                 p += strspn(p, " ");
             }
         }
-        if (!ignore && *p != '\r') {
+        if (!ccmt && *p != '\r') {
             tmp[j++] = *p;
         }
         if (*p) {
@@ -162,6 +172,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
     tmp[j] = '\0';
     if (preserve && tmp[0] == '\0') {
         cmd->ci = CMD_COMMENT;
+        toggle_ccmt(cmd, ccmt);
         return 1;
     }
     strcpy(s, tmp);
@@ -169,7 +180,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
 
     if (*s == '\0') {
         filt = 1;
-    } else if (!ignore) {
+    } else if (!ccmt) {
         /* '#' comments */
         filt = strip_inline_comments(s);
         tailstrip(s);
@@ -180,12 +191,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
         cmd->ci = CMD_COMMENT;
     }
 
-    if (ignore) {
-        /* the line ends in multi-line comment mode */
-        cmd->flags |= CMD_IGNORE;
-    } else {
-        cmd->flags &= ~CMD_IGNORE;
-    }
+    toggle_ccmt(cmd, ccmt);
 
     return filt;
 }
@@ -4345,12 +4351,12 @@ void gretl_exec_state_destroy (ExecState *s)
 void gretl_exec_state_uncomment (ExecState *s)
 {
     s->in_comment = 0;
-    s->cmd->flags &= ~CMD_IGNORE;
+    s->cmd->flags &= ~CMD_CCMT;
 }
 
 void gretl_exec_state_transcribe_flags (ExecState *s, CMD *cmd)
 {
-    s->in_comment = (cmd_ignore(cmd))? 1 : 0;
+    s->in_comment = (cmd_ccmt(cmd))? 1 : 0;
 }
 
 void gretl_exec_state_set_model (ExecState *s, MODEL *pmod)

@@ -2082,57 +2082,94 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static int push_function_line (ufunc *fun, char *s, int ci, int donate)
+/* When we come here @fun may already have an array of lines allocated
+   (if we know its size in advance). In that case @n_alloced will be
+   non-NULL and will contain the number of lines allocated.  Otherwise
+   the array of lines will be NULL initially, and @n_alloced will be
+   NULL.
+
+   In both cases fun->n_lines will be zero on the first call to this
+   function, and it must be incremented each time a line is saved.
+*/
+
+static int push_function_line (ufunc *fun, char *s, int ci,
+                               int donate, int *n_alloced)
 {
-    fn_line *lines;
+    fn_line *ln = NULL;
     int n = fun->n_lines + 1;
-    int i, err = 0;
+    int err = 0;
 
-    /* FIXME realloc'ing for _one_ extra line at a time not
-       very efficient?
-    */
+    if (n_alloced == NULL || n > *n_alloced) {
+        /* create or enlarge the array of lines */
+        fn_line *lines = realloc(fun->lines, n * sizeof *lines);
 
-    lines = realloc(fun->lines, n * sizeof *lines);
-
-    if (lines == NULL) {
-        err = E_ALLOC;
-    } else {
-        i = n - 1;
+        if (lines == NULL) {
+            return E_ALLOC;
+        }
         fun->lines = lines;
-        lines[i].idx = fun->line_idx;
-        if (donate) {
-            /* take ownership of @s */
-            lines[i].s = s;
-        } else {
-            /* make a copy of @s */
-            lines[i].s = gretl_strdup(s);
-            if (lines[i].s == NULL) {
-                err = E_ALLOC;
-            }
+        fun->n_lines = n;
+        if (n_alloced != NULL) {
+            *n_alloced = n;
         }
-        if (!err) {
-            lines[i].ptr = NULL;
-            lines[i].ci = ci;
-            lines[i].next = 0;
-            if (strchr(lines[i].s, '$') != NULL) {
-                /* be on the safe side wrt string substitution */
-                lines[i].flags = LINE_NOCOMP;
-            } else {
-                lines[i].flags = 0;
-            }
-            if (ci == CMD_COMMENT) {
-                lines[i].flags |= LINE_IGNORE;
-            }
-            fun->n_lines = n;
-            fun->line_idx += 1;
+    } else {
+        /* we already have sufficient storage */
+        fun->n_lines += 1;
+    }
+
+    ln = &fun->lines[n-1];
+    ln->idx = fun->line_idx;
+
+    if (donate) {
+        /* take ownership of @s */
+        ln->s = s;
+    } else {
+        /* make a copy of @s */
+        ln->s = gretl_strdup(s);
+        if (ln->s == NULL) {
+            err = E_ALLOC;
         }
+    }
+
+    if (!err) {
+        ln->ptr = NULL;
+        ln->ci = ci;
+        ln->next = 0;
+        /* be on the safe side wrt string substitution */
+        ln->flags = strchr(ln->s, '$') ? LINE_NOCOMP : 0;
+        if (ci == CMD_COMMENT) {
+            ln->flags |= LINE_IGNORE;
+        }
+        fun->line_idx += 1;
     }
 
     return err;
 }
 
-/* read the actual code lines from the XML representation of a
-   function */
+/* Get a quick reading on the number of non-blank lines in @buf, so we
+   can pre-allocate all the lines needed to store a function
+   definition. This may be an overestimate if some "blank" lines
+   actually contain spaces.
+*/
+
+static int buf_get_n_lines (const char *buf)
+{
+    const char *p = buf;
+    const char *prev = NULL;
+    int n = 0;
+
+    while ((p = strchr(p, '\n')) != NULL) {
+        if (prev != NULL && p - prev > 1) {
+            n++;
+        }
+        prev = p++;
+    }
+
+    return n;
+}
+
+/* Read the lines of hansl code from the <code> element of the XML
+   representation of a function.
+*/
 
 static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 {
@@ -2142,7 +2179,8 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     char *buf, *s;
     gint8 uses_set = 0;
     gint8 has_flow = 0;
-    int save_comments = 0; /* let's try it */
+    int save_comments = 1; /* added 2023-03-16 */
+    int n_lines = 0;
     int err = 0;
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -2151,17 +2189,19 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     }
 
     bufgets_init(buf);
+    n_lines = buf_get_n_lines(buf);
     gretl_cmd_init(&cmd);
     state.cmd = &cmd;
 
+    /* pre-allocate storage */
+    fun->lines = calloc(n_lines, sizeof *fun->lines);
+
     while (bufgets(line, sizeof line, buf)) {
-        // fprintf(stderr, "line='%s'\n", line);
 	s = line;
 	while (isspace(*s)) s++;
         state.line = s;
         err = get_command_index(&state, FUNC, save_comments);
         if (err) {
-            // fprintf(stderr, "HERE err %d\n", err);
             break;
         }
 	if (cmd.ci == SET) {
@@ -2173,8 +2213,13 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
         if (string_is_blank(s)) {
             fun->line_idx += 1;
         } else {
-            err = push_function_line(fun, s, cmd.ci, 0);
+            err = push_function_line(fun, s, cmd.ci, 0, &n_lines);
         }
+    }
+
+    if (fun->n_lines < n_lines) {
+        /* shrink to avoid a memory leak later */
+        fun->lines = realloc(fun->lines, n_lines * sizeof *fun->lines);
     }
 
     if (uses_set) {
@@ -7893,7 +7938,7 @@ int gretl_function_append_line (ExecState *s)
         } else {
             /* actually add the line */
             i = fun->n_lines;
-            err = push_function_line(fun, origline, cmd->ci, 1);
+            err = push_function_line(fun, origline, cmd->ci, 1, NULL);
             if (!err) {
 		origline = NULL; /* successfully donated */
                 if (ignore) {

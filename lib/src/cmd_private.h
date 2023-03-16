@@ -8,7 +8,7 @@
 #include "monte_carlo.h"
 
 typedef enum {
-    CMD_IGNORE  = 1 << 0, /* line should be ignored */
+    CMD_CCMT    = 1 << 0, /* line is in a C-style multi-line comment */
     CMD_SUBST   = 1 << 1, /* string substitution has been done on command */
     CMD_PROG    = 1 << 2, /* command is in context of progressive loop */
     CMD_CATCH   = 1 << 3, /* error from command should be "caught" */
@@ -16,9 +16,9 @@ typedef enum {
     CMD_ENDFUN  = 1 << 5  /* line terminates a function definition */
 } CmdFlags;
 
-#define cmd_ignore(c)  (c->flags & CMD_IGNORE)
-#define cmd_subst(c)   (c->flags & CMD_SUBST)
-#define cmd_nosub(c)   (c->flags & CMD_NOSUB)
+#define cmd_ccmt(c)  (c->flags & CMD_CCMT)
+#define cmd_subst(c) (c->flags & CMD_SUBST)
+#define cmd_nosub(c) (c->flags & CMD_NOSUB)
 
 typedef struct cmd_token_ cmd_token;
 
