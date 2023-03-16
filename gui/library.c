@@ -9549,7 +9549,7 @@ int execute_script (char *runfile, const char *buf,
         }
     }
 
-    if (state.in_comment || (state.cmd->flags & CMD_IGNORE)) {
+    if (state.in_comment || (state.cmd->flags & CMD_CCMT)) {
         warnbox(_("Unterminated comment in script"));
         gretl_exec_state_uncomment(&state);
     }
