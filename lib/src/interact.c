@@ -4174,7 +4174,7 @@ int get_command_index (ExecState *s, int cmode, int preserve)
     gretl_cmd_clear(cmd);
 
 #if CMD_DEBUG
-    fprintf(stderr, "get_command_index2: line='%s'\n", line);
+    fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
 
     if ((cmd->context == FOREIGN || cmd->context == MPI) &&

@@ -2142,7 +2142,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     char *buf, *s;
     gint8 uses_set = 0;
     gint8 has_flow = 0;
-    int save_comments = 1; /* let's try it */
+    int save_comments = 0; /* let's try it */
     int err = 0;
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -2155,17 +2155,18 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     state.cmd = &cmd;
 
     while (bufgets(line, sizeof line, buf)) {
+        // fprintf(stderr, "line='%s'\n", line);
 	s = line;
 	while (isspace(*s)) s++;
         state.line = s;
         err = get_command_index(&state, FUNC, save_comments);
         if (err) {
+            // fprintf(stderr, "HERE err %d\n", err);
             break;
         }
 	if (cmd.ci == SET) {
 	    uses_set = 1;
-	}
-	if (cmd.ci == IF || cmd.ci == LOOP) {
+	} else if (cmd.ci == IF || cmd.ci == LOOP) {
 	    has_flow = 1;
 	}
 	tailstrip(s);
@@ -4714,7 +4715,7 @@ static void pkg_set_gui_attrs (fnpkg *pkg, const unsigned char *attrs)
 
 /* Called (indirectly) from GUI function packager. Note that we scrub
    UFUN_PRIVATE,  from the user function flags passed to the packager:
-   this flag is handled by a different mechanism. HERE
+   this flag is handled by a different mechanism.
 */
 
 static void pkg_get_gui_attrs (fnpkg *pkg, unsigned char *attrs)
@@ -6380,6 +6381,7 @@ static int load_function_package (const char *fname,
     }
 
     pkg = read_package_file(fname, 1, &err);
+
     if (!err) {
 	/* Let's double-check that we don't have a
 	   colliding package (it would have to be
