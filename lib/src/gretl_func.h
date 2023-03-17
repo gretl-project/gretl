@@ -331,4 +331,7 @@ int push_function_args (fncall *fc, ...);
 void adjust_indent (const char *line, int *this_indent,
 		    int *next_indent);
 
+void normalize_hansl (const char *buf, int tabwidth,
+		      PRN *prn);
+
 #endif /* GRETL_FUNC_H */

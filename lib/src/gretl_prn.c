@@ -819,7 +819,7 @@ char *gretl_print_get_chunk (PRN *prn)
 /**
  * gretl_print_get_chunk_at:
  * @prn: printing struct.
- * @pos: the byte poistion at which to start.
+ * @pos: the byte position at which to start.
  *
  * Retrieves a copy of the buffer associated with @prn,
  * starting at the offset from the start of the buffer

@@ -3084,205 +3084,29 @@ static int spaces_to_tab_stop (const char *s, int targ)
     return ret;
 }
 
-static void textbuf_get_cmdword (const char *s, char *word)
-{
-    if (!strncmp(s, "catch ", 6)) {
-	s += 6;
-    }
-
-    if (sscanf(s, "%*s <- %8s", word) != 1) {
-	sscanf(s, "%8s", word);
-    }
-}
-
-#define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
-#define starts_comment(p) (*p == '/' && *(p+1) == '*')
-#define ends_comment(p)   (*p == '*' && *(p+1) == '/')
-
-static void check_for_comment (const char *s, int *incomm)
-{
-    int commbak = *incomm;
-    const char *p = s;
-    int quoted = 0;
-
-    while (*p) {
-	if (!quoted && !*incomm && *p == '#') {
-	    break;
-	}
-	if (!*incomm && bare_quote(p, s)) {
-	    quoted = !quoted;
-	}
-	if (!quoted) {
-	    if (starts_comment(p)) {
-		*incomm = 1;
-		p += 2;
-	    } else if (ends_comment(p)) {
-		*incomm = 0;
-		p += 2;
-		p += strspn(p, " ");
-	    }
-	}
-	if (*p) {
-	    p++;
-	}
-    }
-
-    if (*incomm && commbak) {
-	/* on the second or subsequent line of a multiline
-	   comment */
-	*incomm = 2;
-    }
-}
-
-/* determine whether a given line is subject to
-   continuation (i.e. ends with backslash, comma
-   or semicolon, other than in a comment)
+/* This function is called for both indenting an entire script
+   and indenting a selected region. The @start and @end iters
+   will differ in the two cases, as will the size of &buf.
 */
-
-static int line_broken (const char *s)
-{
-    int ret = 0;
-
-    if (*s != '\0') {
-	int i, n = strlen(s);
-
-	for (i=n-1; i>=0; i--) {
-	    if (s[i] == '\\' || s[i] == ',') {
-		ret = 1;
-	    } else if (!ret && !isspace(s[i])) {
-		break;
-	    } else if (ret && s[i] == '#') {
-		ret = 0;
-		break;
-	    }
-	}
-    }
-
-    return ret;
-}
-
-static void strip_trailing_whitespace (char *s)
-{
-    int i, n = strlen(s);
-
-    for (i=n-1; i>=0; i--) {
-	if (s[i] == '\n' || s[i] == ' ' || s[i] == '\t') {
-	    s[i] = '\0';
-	} else {
-	    break;
-	}
-    }
-
-    strcat(s, "\n");
-}
-
-/* determine position of unmatched left parenthesis,
-   when applicable, if @s starts a function definition
-*/
-
-static int left_paren_offset (const char *s)
-{
-    const char *p = strchr(s, '(');
-
-    if (p != NULL && strchr(p, ')') == NULL) {
-	return p - s;
-    } else {
-	return 0;
-    }
-}
 
 static void normalize_indent (GtkTextBuffer *tbuf,
 			      const gchar *buf,
 			      GtkTextIter *start,
 			      GtkTextIter *end)
 {
-    int this_indent = 0;
-    int next_indent = 0;
-    char word[9], line[1024];
-    char lastline[1024];
     const char *ins;
-    int incomment = 0;
-    int inforeign = 0;
-    int lp_pos = 0;
-    int lp_zero = 0;
-    int i, nsp;
+    PRN *prn;
 
     if (buf == NULL) {
 	return;
     }
 
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    normalize_hansl(buf, tabwidth, prn);
+    ins = gretl_print_get_buffer(prn);
     gtk_text_buffer_delete(tbuf, start, end);
-
-    lastline[0] = '\0';
-    bufgets_init(buf);
-
-    while (bufgets(line, sizeof line, buf)) {
-	int handled = 0;
-
-	strip_trailing_whitespace(line);
-
-	if (string_is_blank(line)) {
-	    gtk_text_buffer_insert(tbuf, start, line, -1);
-	    continue;
-	}
-	check_for_comment(line, &incomment);
-#if 0
-	if (incomment) {
-	    /* in multiline comment */
-	    gtk_text_buffer_insert(tbuf, start, line, -1);
-	    continue;
-	}
-#endif
-	ins = line + strspn(line, " \t");
-	if (!incomment) {
-	    *word = '\0';
-	    textbuf_get_cmdword(ins, word);
-	    if (!strcmp(word, "foreign")) {
-		inforeign = 1;
-	    } else if (inforeign) {
-		if (!strncmp(ins, "end foreign", 11)) {
-		    inforeign = 0;
-		} else {
-		    gtk_text_buffer_insert(tbuf, start, line, -1);
-		    handled = 1;
-		}
-	    } else {
-		if (!strcmp(word, "function")) {
-		    lp_pos = left_paren_offset(ins);
-		} else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
-		    lp_zero = 1;
-		}
-		if (!strcmp(word, "outfile")) {
-		    /* handle legacy syntax */
-		    adjust_indent(ins, &this_indent, &next_indent);
-		} else {
-		    adjust_indent(word, &this_indent, &next_indent);
-		}
-	    }
-	}
-	if (!handled) {
-	    nsp = this_indent * tabwidth;
-	    if (incomment == 2) {
-		nsp += 3;
-	    } else if (line_broken(lastline)) {
-		if (lp_pos > 0) {
-		    nsp = lp_pos + 1;
-		} else {
-		    nsp += 2;
-		}
-	    }
-	    for (i=0; i<nsp; i++) {
-		gtk_text_buffer_insert(tbuf, start, " ", -1);
-	    }
-	    gtk_text_buffer_insert(tbuf, start, ins, -1);
-	}
-	strcpy(lastline, line);
-	if (lp_zero) {
-	    lp_zero = lp_pos = 0;
-	}
-    }
-
-    bufgets_finalize(buf);
+    gtk_text_buffer_insert(tbuf, start, ins, -1);
+    gretl_print_destroy(prn);
 }
 
 static int in_foreign_land (GtkWidget *text_widget)
@@ -3536,6 +3360,17 @@ static int count_leading_spaces (const char *s)
     return n;
 }
 
+static int lparen_offset (const char *s)
+{
+    const char *p = strchr(s, '(');
+
+    if (p != NULL && strchr(p, ')') == NULL) {
+	return p - s;
+    } else {
+	return 0;
+    }
+}
+
 /* Given what's presumed to be a start-of-line iter, find how many
    leading spaces are on the line, counting tabs as multiple spaces.
 */
@@ -3552,7 +3387,7 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf,
     s = gtk_text_buffer_get_text(tbuf, start, &end, FALSE);
     if (s != NULL) {
 	if (!strcmp(word, "function")) {
-	    n = left_paren_offset(s);
+	    n = lparen_offset(s);
 	    if (n > 0) {
 		n--;
 	    } else {

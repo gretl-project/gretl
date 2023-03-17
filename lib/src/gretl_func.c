@@ -2566,75 +2566,6 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     return err;
 }
 
-static int wordmatch (const char *s, const char *test)
-{
-    int n = strlen(test);
-
-    return (!strncmp(s, test, n) && (s[n] == '\0' || isspace(s[n])));
-}
-
-void adjust_indent (const char *s, int *this_indent, int *next_indent)
-{
-    const char *block_starts[] = {
-	"loop", "if", "nls", "mle", "gmm", "mpi", "plot",
-	"function", "restrict", "system", "foreign", NULL
-    };
-    int ti = *next_indent;
-    int ni = *next_indent;
-    int i, matched = 0;
-
-    if (*s == '\0') {
-	*this_indent = *next_indent;
-	return;
-    }
-
-    /* skip "catch" if present */
-    if (!strncmp(s, "catch ", 6)) {
-	s += 6;
-	s += strspn(s, " ");
-    }
-
-    for (i=0; block_starts[i] != NULL && !matched; i++) {
-	if (wordmatch(s, block_starts[i])) {
-	    matched = 1;
-	    ni++;
-	}
-    }
-
-    if (!matched && wordmatch(s, "outfile")) {
-	/* Current syntax is "outfile <lines> end outfile", with
-	   options --append, --quiet, --buffer available on
-	   the initial line. Legacy syntax is "outfile --write"
-	   (or --append) to start and "outfile --close" to
-	   finish. We should indent <lines> in the first case
-	   but not the second.
-	*/
-	if (strstr(s, "--close") || strstr(s, "--write")) {
-	    ; /* no-op */
-	} else {
-	    /* note: --append is ambiguous wrt indenting! */
-	    ni++;
-	}
-	matched = 1;
-    }
-
-    if (!matched) {
-	if (wordmatch(s, "end") ||
-	    wordmatch(s, "endif") ||
-	    wordmatch(s, "endloop")) {
-	    ti--;
-	    ni--;
-	} else if (wordmatch(s, "else") ||
-		   wordmatch(s, "elif")) {
-	    ni = ti;
-	    ti--;
-	}
-    }
-
-    *this_indent = ti;
-    *next_indent = ni;
-}
-
 /* ensure use of canonical forms "endif", "endloop" */
 
 static void maybe_correct_line (char *line)
@@ -2678,10 +2609,11 @@ static void print_param_limit (fn_param *param, int i, PRN *prn)
 
 static int write_function_xml (ufunc *fun, PRN *prn)
 {
+
     int rtype = fun->rettype;
     int this_indent = 0;
     int next_indent = 0;
-    int i, j;
+    int i;
 
     if (rtype == GRETL_TYPE_NONE) {
 	rtype = GRETL_TYPE_VOID;
@@ -2707,13 +2639,12 @@ static int write_function_xml (ufunc *fun, PRN *prn)
     pputs(prn, ">\n");
 
     if (fun->n_params > 0) {
+	fn_param *param;
 
 	gretl_push_c_numeric_locale();
-
 	pprintf(prn, " <params count=\"%d\">\n", fun->n_params);
 	for (i=0; i<fun->n_params; i++) {
-	    fn_param *param = &fun->params[i];
-
+	    param = &fun->params[i];
 	    pprintf(prn, "  <param name=\"%s\" type=\"%s\"",
 		    param->name, arg_type_xml_string(param->type));
 	    if (!na(param->min)) {
@@ -2760,7 +2691,6 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    }
 	}
 	pputs(prn, " </params>\n");
-
 	gretl_pop_c_numeric_locale();
     }
 
@@ -2771,13 +2701,12 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    /* reinstate single blank lines */
 	    pputc(prn, '\n');
 	}
+	/* minimal indentation adjustment */
 	adjust_indent(fun->lines[i].s, &this_indent, &next_indent);
-	for (j=0; j<this_indent; j++) {
-	    pputs(prn, "  ");
-	}
+	bufspace(2 * this_indent, prn);
 	maybe_correct_line(fun->lines[i].s);
 	gretl_xml_put_string(fun->lines[i].s, prn);
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     pputs(prn, "</code>\n");
@@ -2888,13 +2817,17 @@ static void maybe_toggle_foreign (const char *s, int *in_foreign)
  * @tabwidth: number of spaces per "tab" (logical indent).
  * @prn: printing struct.
  *
- * Prints out function @fun to @prn, script-style.
+ * Prints out function @fun to @prn, script-style. Note
+ * that this function may be called for several functions
+ * in turn, with a single @prn as target.
  *
  * Returns: 0 on success, non-zero if @fun is %NULL.
  */
 
 int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 {
+    PRN *ptmp;
+    const char *buf;
     int this_indent = 0;
     int next_indent = 0;
     int in_foreign = 0;
@@ -2908,7 +2841,8 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 	tabwidth = 2;
     }
 
-    print_function_start(u, prn);
+    ptmp = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    print_function_start(u, ptmp);
 
     for (i=0; i<u->n_lines; i++) {
 	maybe_toggle_foreign(u->lines[i].s, &in_foreign);
@@ -2918,18 +2852,23 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
 	    adjust_indent(u->lines[i].s, &this_indent, &next_indent);
 	}
 	for (j=0; j<=this_indent; j++) {
-	    bufspace(tabwidth, prn);
+	    bufspace(tabwidth, ptmp);
 	}
-	pputs(prn, u->lines[i].s);
+	pputs(ptmp, u->lines[i].s);
 	if (i < u->n_lines - 1) {
 	    if (u->lines[i+1].idx > u->lines[i].idx + 1) {
-		pputc(prn, '\n');
+		pputc(ptmp, '\n');
 	    }
 	}
-	pputc(prn, '\n');
+	pputc(ptmp, '\n');
     }
 
-    pputs(prn, "end function\n");
+    pputs(ptmp, "end function\n");
+
+    /* now refine the indentation */
+    buf = gretl_print_get_buffer(ptmp);
+    normalize_hansl(buf, tabwidth, prn);
+    gretl_print_destroy(ptmp);
 
     return 0;
 }
@@ -10699,3 +10638,265 @@ int uninstall_function_package (const char *package, gretlopt opt,
 
     return err;
 }
+
+/* full apparatus for hansl indentation follows */
+
+static void get_cmdword (const char *s, char *word)
+{
+    if (!strncmp(s, "catch ", 6)) {
+	s += 6;
+    }
+
+    if (sscanf(s, "%*s <- %8s", word) != 1) {
+	sscanf(s, "%8s", word);
+    }
+}
+
+#define bare_quote(p,s) (*p == '"' && (p-s==0 || *(p-1) != '\\'))
+#define starts_ccmt(p)  (*p == '/' && *(p+1) == '*')
+#define ends_ccmt(p)    (*p == '*' && *(p+1) == '/')
+
+static void check_for_comment (const char *s, int *incomm)
+{
+    const char *p = s;
+    int commbak = *incomm;
+    int quoted = 0;
+
+    while (*p) {
+	if (!quoted && !*incomm && *p == '#') {
+	    break;
+	}
+	if (!*incomm && bare_quote(p, s)) {
+	    quoted = !quoted;
+	}
+	if (!quoted) {
+	    if (starts_ccmt(p)) {
+		*incomm = 1;
+		p += 2;
+	    } else if (ends_ccmt(p)) {
+		*incomm = 0;
+		p += 2;
+		p += strspn(p, " ");
+	    }
+	}
+	if (*p) {
+	    p++;
+	}
+    }
+
+    if (*incomm && commbak) {
+	/* on the second or subsequent line of a multiline
+	   comment */
+	*incomm = 2;
+    }
+}
+
+/* determine whether a given line is subject to
+   continuation (i.e. ends with backslash, comma
+   or semicolon, other than in a comment)
+*/
+
+static int line_broken (const char *s)
+{
+    int ret = 0;
+
+    if (*s != '\0') {
+	int i, n = strlen(s);
+
+	for (i=n-1; i>=0; i--) {
+	    if (s[i] == '\\' || s[i] == ',') {
+		ret = 1;
+	    } else if (!ret && !isspace(s[i])) {
+		break;
+	    } else if (ret && s[i] == '#') {
+		ret = 0;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static void strip_trailing_whitespace (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>=0; i--) {
+	if (s[i] == '\n' || s[i] == ' ' || s[i] == '\t') {
+	    s[i] = '\0';
+	} else {
+	    break;
+	}
+    }
+
+    strcat(s, "\n");
+}
+
+/* determine position of unmatched left parenthesis,
+   when applicable, if @s starts a function definition
+*/
+
+static int left_paren_offset (const char *s)
+{
+    const char *p = strchr(s, '(');
+
+    if (p != NULL && strchr(p, ')') == NULL) {
+	return p - s;
+    } else {
+	return 0;
+    }
+}
+
+static int wordmatch (const char *s, const char *test)
+{
+    int n = strlen(test);
+
+    return (!strncmp(s, test, n) && (s[n] == '\0' || isspace(s[n])));
+}
+
+void adjust_indent (const char *s, int *this_indent, int *next_indent)
+{
+    const char *block_starts[] = {
+	"loop", "if", "nls", "mle", "gmm", "mpi", "plot",
+	"function", "restrict", "system", "foreign", NULL
+    };
+    int ti = *next_indent;
+    int ni = *next_indent;
+    int i, matched = 0;
+
+    if (*s == '\0') {
+	*this_indent = *next_indent;
+	return;
+    }
+
+    /* skip "catch" if present */
+    if (!strncmp(s, "catch ", 6)) {
+	s += 6;
+	s += strspn(s, " ");
+    }
+
+    for (i=0; block_starts[i] != NULL && !matched; i++) {
+	if (wordmatch(s, block_starts[i])) {
+	    matched = 1;
+	    ni++;
+	}
+    }
+
+    if (!matched && wordmatch(s, "outfile")) {
+	/* Current syntax is "outfile <lines> end outfile", with
+	   options --append, --quiet, --buffer available on
+	   the initial line. Legacy syntax is "outfile --write"
+	   (or --append) to start and "outfile --close" to
+	   finish. We should indent <lines> in the first case
+	   but not the second.
+	*/
+	if (strstr(s, "--close") || strstr(s, "--write")) {
+	    ; /* no-op */
+	} else {
+	    /* note: --append is ambiguous wrt indenting! */
+	    ni++;
+	}
+	matched = 1;
+    }
+
+    if (!matched) {
+	if (wordmatch(s, "end") ||
+	    wordmatch(s, "endif") ||
+	    wordmatch(s, "endloop")) {
+	    ti--;
+	    ni--;
+	} else if (wordmatch(s, "else") ||
+		   wordmatch(s, "elif")) {
+	    ni = ti;
+	    ti--;
+	}
+    }
+
+    *this_indent = ti;
+    *next_indent = ni;
+}
+
+void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
+{
+    int this_indent = 0;
+    int next_indent = 0;
+    char word[9], line[1024];
+    char prevline[1024];
+    const char *ins;
+    int incomment = 0;
+    int inforeign = 0;
+    int lp_pos = 0;
+    int lp_zero = 0;
+    int nsp;
+
+    prevline[0] = '\0';
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	int handled = 0;
+
+	strip_trailing_whitespace(line);
+
+	if (string_is_blank(line)) {
+	    pputc(prn, '\n');
+	    continue;
+	}
+	check_for_comment(line, &incomment);
+
+	ins = line + strspn(line, " \t");
+	if (!incomment) {
+	    *word = '\0';
+	    get_cmdword(ins, word);
+	    if (!strcmp(word, "foreign")) {
+		inforeign = 1;
+	    } else if (inforeign) {
+		if (!strncmp(ins, "end foreign", 11)) {
+		    inforeign = 0;
+		} else {
+		    /* insert foreign line as is */
+		    pputs(prn, line);
+		    handled = 1;
+		}
+	    } else {
+		if (!strcmp(word, "function")) {
+		    lp_pos = left_paren_offset(ins);
+		} else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
+		    lp_zero = 1;
+		}
+		if (!strcmp(word, "outfile")) {
+		    /* handle legacy syntax */
+		    adjust_indent(ins, &this_indent, &next_indent);
+		} else {
+		    adjust_indent(word, &this_indent, &next_indent);
+		}
+	    }
+	}
+
+	if (!handled) {
+	    nsp = this_indent * tabwidth;
+	    if (incomment == 2) {
+		/* comment continuation */
+		nsp += 3;
+	    } else if (line_broken(prevline)) {
+		if (lp_pos > 0) {
+		    nsp = lp_pos + 1;
+		} else {
+		    nsp += 2;
+		}
+	    }
+	    /* insert required number of spaces */
+	    bufspace(nsp, prn);
+	    /* insert line, with leading space pruned */
+	    pputs(prn, ins);
+	}
+
+	strcpy(prevline, line);
+	if (lp_zero) {
+	    lp_zero = lp_pos = 0;
+	}
+    }
+
+    bufgets_finalize(buf);
+}
+
