@@ -2650,6 +2650,27 @@ static void maybe_correct_line (char *line)
     }
 }
 
+static void print_param_limit (fn_param *param, int i, PRN *prn)
+{
+    if (param->type == GRETL_TYPE_INT) {
+	if (i == 0) {
+	    pprintf(prn, " min=\"%.0f\"", param->min);
+	} else if (i == 1) {
+	    pprintf(prn, " max=\"%.0f\"", param->max);
+	} else {
+	    pprintf(prn, " default=\"%.0f\"", param->deflt);
+	}
+    } else {
+	if (i == 0) {
+	    pprintf(prn, " min=\"%.15g\"", param->min);
+	} else if (i == 1) {
+	    pprintf(prn, " max=\"%.15g\"", param->max);
+	} else {
+	    pprintf(prn, " default=\"%.15g\"", param->deflt);
+	}
+    }
+}
+
 #define parm_has_children(p) (p->descrip != NULL || p->nlabels > 0)
 
 /* write out a single user-defined function as XML, according to
@@ -2696,10 +2717,10 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    pprintf(prn, "  <param name=\"%s\" type=\"%s\"",
 		    param->name, arg_type_xml_string(param->type));
 	    if (!na(param->min)) {
-		pprintf(prn, " min=\"%g\"", param->min);
+		print_param_limit(param, 0, prn);
 	    }
 	    if (!na(param->max)) {
-		pprintf(prn, " max=\"%g\"", param->max);
+		print_param_limit(param, 1, prn);
 	    }
 	    if (!default_unset(param)) {
 		if (na(param->deflt)) {
@@ -2709,7 +2730,7 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 		} else if (param->deflt == INT_USE_XLIST) {
 		    pputs(prn, " default=\"$xlist\"");
 		} else {
-		    pprintf(prn, " default=\"%g\"", param->deflt);
+		    print_param_limit(param, 2, prn);
 		}
 	    }
 	    if (!na(param->step)) {
