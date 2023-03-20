@@ -1893,6 +1893,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 
     while (pos < 0) {
 	for (i=0; pos < 0 && search_cols[i] >= 0; i++) {
+	    /* iterate across searchable columns */
 	    gtk_tree_model_get(model, &iter, search_cols[i], &haystack, -1);
 	    if (haystack != NULL) {
 		if (*haystack != '\0') {
@@ -1903,6 +1904,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	    }
 	}
 	if (pos >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
+	    /* either found, or nowhere left to search */
 	    break;
 	}
     }
