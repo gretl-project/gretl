@@ -1893,7 +1893,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 
     while (pos < 0) {
 	for (i=0; pos < 0 && search_cols[i] >= 0; i++) {
-	    gtk_tree_model_get(model, &iter, i, &haystack, -1);
+	    gtk_tree_model_get(model, &iter, search_cols[i], &haystack, -1);
 	    if (haystack != NULL) {
 		if (*haystack != '\0') {
 		    pos = string_match_pos(haystack, needle, sensitive, 0);
