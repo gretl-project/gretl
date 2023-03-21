@@ -230,6 +230,7 @@ SRCS = adf_kpss.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_cmatrix.c \
+	gretl_mdconv.c \
 	gretl_midas.c \
 	gretl_model.c \
 	gretl_mt.c \

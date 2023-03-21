@@ -36,6 +36,7 @@
 #include "genparse.h"
 #include "genr_optim.h"
 #include "gretl_foreign.h"
+#include "gretl_mdconv.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -3971,7 +3972,6 @@ static int is_pdf_ref (const char *s)
     if (!strncmp(s, "pdfdoc:", 7)) {
 	s += 7;
     }
-
     return strlen(s) < 64 && strchr(s, ' ') == NULL &&
 	has_suffix(s, ".pdf");
 }
@@ -5835,7 +5835,9 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	}
     }
 
-    if (!pdfdoc) {
+    if (pkg->help_fname != NULL && has_suffix(pkg->help_fname, ".md")) {
+	md_to_gretl(pkg->help, prn);
+    } else if (!pdfdoc) {
 	pputs(prn, "<@itl=\"Help text\">:\n\n");
 	pputs(prn, "<mono>\n");
 	pputs(prn, pkg->help);
@@ -10899,4 +10901,3 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 
     bufgets_finalize(buf);
 }
-
