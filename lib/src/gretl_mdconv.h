@@ -22,4 +22,6 @@
 
 int md_to_gretl (const char *buf, PRN *prn);
 
+void mdconv_cleanup (void);
+
 #endif /* GRETL_MDCONV_H */

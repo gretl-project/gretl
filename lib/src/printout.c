@@ -3676,7 +3676,8 @@ char *bufgets (char *s, size_t size, const char *buf)
 	return NULL;
     }
 
-    *s = 0;
+    *s = '\0';
+
     /* advance to line-end, end of buffer, or maximum size,
        whichever comes first */
     for (i=0; ; i++) {

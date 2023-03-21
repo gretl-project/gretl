@@ -24,6 +24,7 @@
 */
 
 #include "libgretl.h"
+#include "gretl_mdconv.h"
 
 struct m2g_data_ {
     const char *re;
@@ -228,6 +229,7 @@ int md_to_gretl (const char *buf, PRN *prn)
 	int is_blank;
 
 	is_blank = string_is_blank(line);
+	// printf("@ blank %d, input '%s'\n", is_blank, line);
 
         if (is_blank && !is_code) {
             if (list_item) {
@@ -311,6 +313,13 @@ int md_to_gretl (const char *buf, PRN *prn)
 		g_free(result);
 	    }
 	}
+    }
+
+    /* catch any chunks not flushed by blank line */
+    if (para_lines != NULL) {
+	finish_chunk(&para_lines, PARA, prn);
+    } else if (item_lines != NULL) {
+	finish_chunk(&item_lines, UL, prn);
     }
 
     bufgets_finalize(buf);
