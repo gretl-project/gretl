@@ -43,7 +43,7 @@ static m2g_data m2g_sections[] = {
     { "^(##\\s+)(.*)(\\s*)$", "<@itl=\"\\2\">\n", NULL },
     { "^(\\s*[\\*\\-]\\s)(.*)(\\s*)$",  "• \\2", NULL },
     { "^(\\s*[0-9]+\\.\\s)(.*)(\\s*)$", "\\1\\2\n", NULL },
-    { "^```[a-z_]*$", "<tt>", NULL }
+    { "^```[a-z_]*$", NULL, NULL }
 };
 
 /* symbols for the types above, plus paragraph */
@@ -51,15 +51,18 @@ enum {HD1, HD2, UL, OL, CODE, PARA};
 
 static int n_m2g_sections = G_N_ELEMENTS(m2g_sections);
 
-/* m2g_styles handle replacement of inline styled text */
+/* m2g_styles handle replacement of inline styles, URIs */
 static m2g_data m2g_styles[] = {
     { "(^|[^\\*])(\\*\\*)(.*)(\\*\\*)", "\\1<@bld=\"\\3\">", NULL },
     { "(\\*\\*)(.*)(\\*\\*)([^\\*]|$)", "<@bld=\"\\3\">\\4", NULL },
     { "(^|[^\\*])(\\*)(.*)(\\*)", "\\1<@itl=\"\\3\">", NULL },
     { "(\\*)(.*)(\\*)([^\\*]|$)", "<@itl=\"\\3\">\\4", NULL },
+    { "(^|[^_])(_)(.*)(_)", "\\1<@itl=\"\\3\">", NULL },
+    { "(_)(.*)(_)([^_]|$)", "<@itl=\"\\3\">\\4", NULL },
     { "(`)([^`]*)(`)", "<@lit=\"\\2\">", NULL },
     { "(!)?(\\[)(.*)(\\]\\()(.+)(\\))", "<@url=\"\\5\">", NULL },
-    { "(!)?(\\[)(.*)(\\]\\(\\))", "<@url=\"\\3\">", NULL }
+    { "(!)?(\\[)(.*)(\\]\\(\\))", "<@url=\"\\3\">", NULL },
+    { "(http[s]?:\\/\\/[^\\s',]*)", "<@url=\"\\1\">", NULL }
 };
 
 static int n_m2g_styles = G_N_ELEMENTS(m2g_styles);
@@ -128,7 +131,7 @@ static GRegex *get_rx (const char *re)
     }
 }
 
-static gboolean rx_section_match (const char *s, m2g_data *d)
+static gboolean rx_match (const char *s, m2g_data *d)
 {
     if (d->rx == NULL) {
 	d->rx = get_rx(d->re);
@@ -247,7 +250,7 @@ int md_to_gretl (const char *buf, PRN *prn)
 	for (i=0; i<n_m2g_sections && !conv_err; i++) {
 	    m2g_data *sect = &m2g_sections[i];
 
-            if (rx_section_match(line, sect)) {
+            if (rx_match(line, sect)) {
                 if (i == CODE) {
 		    /* start/end of code-block */
                     if (!is_code) {
@@ -308,7 +311,6 @@ int md_to_gretl (const char *buf, PRN *prn)
         }
 
 	if (result != NULL) {
-	    // pputs(prn, result);
 	    if (free_result) {
 		g_free(result);
 	    }
