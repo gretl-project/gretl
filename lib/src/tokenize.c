@@ -6,9 +6,6 @@
 #define CDEBUG 0
 #define TDEBUG 0
 
-/* experiment: allow statements separated by ';' */
-#define SEMIC_TEST 0
-
 typedef enum {
     CI_LIST  = 1 << 0,  /* list may be present */
     CI_LLEN1 = 1 << 1,  /* list must contain exactly 1 member */
@@ -3087,33 +3084,6 @@ static int n_regular_tokens (CMD *c)
     return n;
 }
 
-#if SEMIC_TEST
-
-static char *free_semicolon (char *s)
-{
-    int quoted = 0;
-    int braced = 0;
-    char *ret = NULL;
-
-    while (*s) {
-	if (*s == '"') {
-	    quoted = !quoted;
-	} else if (*s == '{') {
-	    braced++;
-	} else if (*s == '}') {
-	    braced--;
-	} else if (*s == ';' && !quoted && !braced) {
-	    ret = s;
-	    break;
-	}
-	s++;
-    }
-
-    return ret;
-}
-
-#endif
-
 static int handle_command_extra (CMD *c)
 {
     cmd_token *tok;
@@ -3247,21 +3217,6 @@ static int set_command_vstart (CMD *cmd, ExecState *state,
 	    return E_INVARG;
 	}
     }
-
-#if SEMIC_TEST
-    if (state != NULL && s != NULL && strchr(s, ';')) {
-	char *p = free_semicolon((char *) s);
-
-	if (p != NULL) {
-	    *p = '\0';
-	    p++;
-	    state->more = p + strspn(p, " \t");
-# if 0
-	    fprintf(stderr, "SEMIC_TEST: s->more = '%s'\n", state->more);
-# endif
-	}
-    }
-#endif
 
     cmd_set_vstart(cmd, s);
 
@@ -3466,7 +3421,6 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     }
 
     gretl_push_c_numeric_locale();
-    state->more = NULL;
 
     if (!gretl_in_batch_mode() && *s == '=') {
 	/* treat as a bare expression to be evaluated */
@@ -4181,11 +4135,6 @@ static int real_parse_command (ExecState *s,
 	    } else if (cmd->ci == IF || cmd->ci == ELIF) {
 		err = set_command_vstart(cmd, s, s->prn);
 	    }
-#if SEMIC_TEST
-	    else if (cmd->ci == GENR) {
-		set_command_vstart(cmd, s, s->prn);
-	    }
-#endif
 	    goto parse_exit;
 	}
 
