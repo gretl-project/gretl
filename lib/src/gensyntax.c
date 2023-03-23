@@ -335,6 +335,10 @@ static NODE *base (parser *p, NODE *up)
 	}
 	lex(p);
 	break;
+    case EMPTY:
+	t = newempty();
+	lex(p);
+	break;
     case B_RANGE:
     case P_DOT:
 	lex(p);

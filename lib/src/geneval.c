@@ -170,7 +170,7 @@ static int gen_type_is_arrayable (int gen_t);
 
 static int ok_list_node (NODE *n, parser *p)
 {
-    if (n == NULL) {
+    if (null_node(n)) {
         return 0;
     } else if (n->t == LIST) {
         return 1;
@@ -179,7 +179,7 @@ static int ok_list_node (NODE *n, parser *p)
         return 1;
     } else if (p->flags & P_LISTDEF) {
         /* when defining a list we can be a bit more accommodating */
-        return null_or_scalar(n);
+	return scalar_node(n);
     }
 
     return 0;
@@ -6842,7 +6842,13 @@ int *node_get_list (NODE *n, parser *p)
     int *list = NULL;
     int v = 0;
 
-    if (n->t == LIST) {
+    if (null_node(n)) {
+	if (p->flags & P_PRNLIST) {
+	    p->err = E_TYPES;
+	} else {
+	    list = gretl_null_list();
+	}
+    } else if (n->t == LIST) {
         list = gretl_list_copy(n->v.ivec);
     } else if (n->t == SERIES || n->t == NUM) {
         v = (n->t == SERIES)? n->vnum : node_get_int(n, p);
@@ -6858,8 +6864,6 @@ int *node_get_list (NODE *n, parser *p)
                 }
             }
         }
-    } else if (null_node(n)) {
-        list = gretl_null_list();
     } else if (dataset_dum(n)) {
         list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
@@ -21386,6 +21390,8 @@ void gen_save_or_print (parser *p, PRN *prn)
         /* doing "eval" */
         if (p->ret == NULL) {
             return;
+	} else if (p->ret->t == EMPTY) {
+	    pputs(prn, "[null]\n");
         } else if (p->ret->t == MAT) {
             if (p->ret->v.m->is_complex) {
                 gretl_cmatrix_print(p->ret->v.m, p->lh.name, p->prn);

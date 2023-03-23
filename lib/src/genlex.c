@@ -1697,10 +1697,14 @@ static void look_up_word (const char *s, parser *p)
     }
 
     if (err) {
-	/* @s could be a function identifier with no
-	   following left paren */
 	if (is_function_word(s)) {
+	    /* @s is a function identifier with no
+	       following left paren */
 	    function_noargs_error(s, p);
+	} else if (object_is_function_arg(s)) {
+	    /* @s is the name of a function parameter
+	       with a null value */
+	    p->sym = EMPTY;
 	} else {
 	    undefined_symbol_error(s, p);
 	}
