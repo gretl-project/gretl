@@ -21178,7 +21178,11 @@ static int save_generated_var (parser *p, PRN *prn)
             gretl_array *a = NULL;
 
             if (p->lh.gtype > 0 && atype != p->lh.gtype) {
-                p->err = E_TYPES;
+		if (atype == GRETL_TYPE_ANY) {
+		    gretl_array_set_type(r->v.a, p->lh.gtype);
+		} else {
+		    p->err = E_TYPES;
+		}
             } else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
                 /* grabbing r->v.a is OK */
                 a = r->v.a;

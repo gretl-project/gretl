@@ -1294,6 +1294,14 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    p->ch, p->point);
 #endif
 
+    /* allow for any empty definition */
+    while (p->ch == ' ') parser_getc(p);
+    if (p->ch == ')') {
+	parser_getc(p);
+	lex(p);
+	return;
+    }
+
     while (p->ch && !p->err) {
 	/* first get an unquoted key */
 	while (p->ch == ' ') parser_getc(p);
