@@ -336,7 +336,11 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	break;
     case EMPTY:
+    case NULLARG:
 	t = newempty();
+	if (p->sym == NULLARG) {
+	    t->vname = p->idstr;
+	}
 	lex(p);
 	break;
     case B_RANGE:

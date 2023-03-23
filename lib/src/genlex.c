@@ -1704,7 +1704,8 @@ static void look_up_word (const char *s, parser *p)
 	} else if (object_is_function_arg(s)) {
 	    /* @s is the name of a function parameter
 	       with a null value */
-	    p->sym = EMPTY;
+	    p->sym = NULLARG;
+	    p->idstr = gretl_strdup(s);
 	} else {
 	    undefined_symbol_error(s, p);
 	}

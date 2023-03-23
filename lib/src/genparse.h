@@ -114,12 +114,13 @@ enum {
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
 	      UNDEF,      /* undefined (allowed in "query" context only) */
+	      NULLARG,    /* record of missing function argument */
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
 	      IVEC,       /* array of ints, not a varlist */
-	      OSL,        /* "slice" of object (matrix, array, string) */
-  /* 90 */    USERIES,    /* named series (defined only for error reporting) */
+  /* 90 */    OSL,        /* "slice" of object (matrix, array, string) */
+              USERIES,    /* named series (defined only for error reporting) */
 	      SUB_ADDR,   /* "address" of (e.g.) array element */
               INC,        /* increment */
               DEC,        /* decrement */

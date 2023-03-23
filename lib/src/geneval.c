@@ -10677,8 +10677,9 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
             p->err = E_TYPES;
         }
 #if EDEBUG
-        fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n", funname, i+1,
-                arg == NULL ? "?" : getsymb(arg->t), p->err);
+        fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n",
+		funname, i+1, arg == NULL ? "?" : getsymb(arg->t),
+		p->err);
 #endif
         if (p->err) {
             break;
@@ -17009,6 +17010,25 @@ static NODE *evaluate_multi_args (NODE *nn, parser *p)
     return ret;
 }
 
+#define ok_nullarg_sym(s) (s == FARGS || s == F_TYPEOF)
+
+/* determine if an EMPTY node is acceptable in context */
+
+static int empty_ok (NODE *n, parser *p)
+{
+    if (n->vname == NULL) {
+	/* regular EMPTY node, OK */
+	return 1;
+    } else if (n->parent != NULL && ok_nullarg_sym(n->parent->t)) {
+	/* null argument pass-through, OK */
+	return 1;
+    } else {
+	p->err = E_TYPES;
+	gretl_errmsg_sprintf("'%s': no such object", n->vname);
+	return 0;
+    }
+}
+
 /* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
@@ -17044,8 +17064,14 @@ static NODE *eval (NODE *t, parser *p)
 #endif
 
     /* handle terminals first */
-    if (t->t == MSPEC || t->t == EMPTY) {
-        return t;
+    if (t->t == MSPEC) {
+	return t;
+    } else if (t->t == EMPTY) {
+	if (empty_ok(t, p)) {
+	    return t;
+	} else {
+	    return NULL;
+	}
     } else if (t->t >= NUM && t->t <= STR) {
         if (exestart(p) && uvar_node(t)) {
             node_reattach_data(t, p);

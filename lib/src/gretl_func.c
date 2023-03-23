@@ -10138,7 +10138,8 @@ int object_is_const (const char *name, int vnum)
  * Checks whether the named object has been made available
  * as a function argument.
  *
- * Returns: 1 if the object has arg status, 0 otherwise.
+ * Returns: non-zero (the gretl type of the object) if the
+ * object has arg status, 0 otherwise.
  */
 
 int object_is_function_arg (const char *name)
@@ -10151,7 +10152,7 @@ int object_is_function_arg (const char *name)
 
 	for (i=0; i<call->fun->n_params; i++) {
 	    if (!strcmp(name, params[i].name)) {
-		return 1;
+		return params[i].type;
 	    }
 	}
     }
