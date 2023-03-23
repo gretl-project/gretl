@@ -1294,7 +1294,7 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    p->ch, p->point);
 #endif
 
-    /* allow for any empty definition */
+    /* allow for an empty definition */
     while (p->ch == ' ') parser_getc(p);
     if (p->ch == ')') {
 	parser_getc(p);
