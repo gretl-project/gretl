@@ -49,5 +49,5 @@
  <gentext key="seebelow"      text="variant"/>
  <gentext key="depends"       text="variant"/>
  <gentext key="varargs"       text="varargs"/>
- <gentext key="none"          text="none"/>
+ <gentext key="none"          text="void"/>
 </localization>

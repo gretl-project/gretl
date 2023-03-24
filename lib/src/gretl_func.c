@@ -72,7 +72,7 @@ typedef struct stmt_ fn_line;
 
 enum {
     FP_CONST    = 1 << 0, /* explicitly marked as "const" */
-    FP_OPTIONAL = 1 << 1  /* marked as optional (has default value) */
+    FP_OPTIONAL = 1 << 1  /* marked as optional (null is OK) */
 };
 
 /* structure representing a parameter of a user-defined function */
@@ -91,6 +91,9 @@ struct fn_param_ {
 };
 
 #define param_is_const(p) (p->flags & FP_CONST)
+#define param_is_optional(p) (p->flags & FP_OPTIONAL)
+
+#define set_param_optional(p) (p->flags |= FP_OPTIONAL)
 
 typedef enum {
     LINE_IGNORE = 1 << 0,
@@ -2056,7 +2059,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		    }
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
-		    param->flags |= FP_OPTIONAL;
+		    set_param_optional(param);
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "const")) {
 		    maybe_set_param_const(param);
@@ -2244,7 +2247,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 
 static void print_opt_flags (fn_param *param, PRN *prn)
 {
-    if (param->flags & FP_OPTIONAL) {
+    if (param_is_optional(param)) {
 	pputs(prn, "[null]");
     }
 }
@@ -2668,10 +2671,10 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    if (!na(param->step)) {
 		pprintf(prn, " step=\"%g\"", param->step);
 	    }
-	    if (param->flags & FP_OPTIONAL) {
+	    if (param_is_optional(param)) {
 		pputs(prn, " optional=\"true\"");
 	    }
-	    if (param->flags & FP_CONST) {
+	    if (param_is_const(param)) {
 		pputs(prn, " const=\"true\"");
 	    }
 	    if (parm_has_children(param)) {
@@ -7280,7 +7283,7 @@ static int read_param_option (char **ps, fn_param *param)
 #endif
 
     if (!strncmp(*ps, "[null]", 6)) {
-	param->flags |= FP_OPTIONAL;
+        set_param_optional(param);
 	*ps += 6;
     } else {
 	gretl_errmsg_sprintf(_("got invalid field '%s'"), *ps);
@@ -8370,7 +8373,9 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	fprintf(stderr, "arg[%d], param type %s (%s), arg type %s (%s)\n",
 		i, gretl_type_get_name(fp->type), fp->name,
 		gretl_type_get_name(arg->type), arg->upname);
-        fprintf(stderr, " param_is_const: %d\n", param_is_const(fp));
+        fprintf(stderr, "  const %s, optional %s\n",
+                param_is_const(fp) ? "yes" : "no",
+                param_is_optional(fp) ? "yes" : "no");
 #endif
         if (arg->upname != NULL && object_is_const(arg->upname, -1) &&
 	    gretl_ref_type(fp->type) && !param_is_const(fp)) {
@@ -9401,7 +9406,7 @@ static int check_function_args (fncall *call, PRN *prn)
 	arg = &call->args[i];
 	fp = &u->params[i];
 
-	if ((fp->flags & FP_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
+	if (param_is_optional(fp) && arg->type == GRETL_TYPE_NONE) {
 	    ; /* this is OK */
 	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
 	    ; /* OK: types match */
@@ -9444,7 +9449,7 @@ static int check_function_args (fncall *call, PRN *prn)
     for (i=call->argc; i<u->n_params && !err; i++) {
 	/* do we have defaults for any empty args? */
 	fp = &u->params[i];
-	if (!(fp->flags & FP_OPTIONAL) && no_scalar_default(fp)) {
+	if (!param_is_optional(fp) && no_scalar_default(fp)) {
 	    pprintf(prn, _("%s: not enough arguments\n"), u->name);
 	    err = E_ARGS;
 	}
