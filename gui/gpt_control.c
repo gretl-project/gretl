@@ -2007,6 +2007,24 @@ static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
     return err;
 }
 
+/* here we're appending a second specification (e.g. rotation)
+   to a prior tics spec (e.g. "nomirror")
+*/
+
+static void xtics_concat (char *targ, const char *src, size_t sz)
+{
+    int n = strlen(targ);
+
+    if (targ[n-1] != ' ') {
+	gchar *tmp = g_strdup_printf(" %s", src);
+
+	strncat(targ, tmp, sz - n);
+	g_free(tmp);
+    } else {
+	strncat(targ, src, sz - n);
+    }
+}
+
 static void read_xtics_setting (GPT_SPEC *spec,
 				const char *key,
 				const char *val)
@@ -2014,6 +2032,7 @@ static void read_xtics_setting (GPT_SPEC *spec,
     if (!strcmp(key, "x2tics")) {
 	spec->x2ticstr = gretl_strdup(val);
     } else if (*val == '(') {
+	/* the 'special' form of xtics */
 	int len = strlen(val);
 
 	if (val[len-1] == '\\') {
@@ -2021,8 +2040,20 @@ static void read_xtics_setting (GPT_SPEC *spec,
 	}
 	spec->xticstr = gretl_strdup(val);
     } else {
-	*spec->xtics = '\0';
-	strncat(spec->xtics, val, sizeof(spec->xtics) - 1);
+	/* regular xtics specification: this might come in
+	   two parts if rotation is specified
+	*/
+	size_t sz = sizeof(spec->xtics) - 1;
+
+	if (*spec->xtics == '\0') {
+	    strncat(spec->xtics, val, sz);
+	} else if (!strcmp(spec->xtics, "none")) {
+	    *spec->xtics = '\0';
+	    strncat(spec->xtics, val, sz);
+	} else {
+	    /* concatenate */
+	    xtics_concat(spec->xtics, val, sz);
+	}
     }
 }
 
