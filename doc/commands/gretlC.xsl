@@ -46,61 +46,69 @@
 </xsl:template>
 
 <xsl:template match="function">
-  <xsl:text>"</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="@output"/>
+  </xsl:call-template>
+  <xsl:text> </xsl:text>
   <xsl:value-of select="@name"/>
-  <xsl:text>", return: </xsl:text>
-  <xsl:value-of select="@output"/>
-  <xsl:text>, </xsl:text>
-  <xsl:apply-templates/>
-  <xsl:call-template name="nl"/>
+  <xsl:choose>
+    <xsl:when test="fnargs">
+      <xsl:text> </xsl:text>
+      <xsl:apply-templates/>
+      <xsl:call-template name="nl"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text> ()</xsl:text>
+      <xsl:call-template name="dnl"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="fnargs">
-  <xsl:text>argc=</xsl:text>
-  <xsl:value-of select="count(fnarg)"/>
-  <xsl:text>,</xsl:text>
-  <xsl:call-template name="nl"/>
+  <xsl:text>(</xsl:text>
   <xsl:apply-templates/>
+  <xsl:text>)</xsl:text>
+  <xsl:call-template name="nl"/>
+</xsl:template>
+
+<xsl:template name="argname">
+  <xsl:variable name="aname" select="current()"/>  
+  <xsl:choose>
+    <xsl:when test="contains($aname, '&amp;')">
+      <xsl:value-of select ="substring($aname,2)"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select ="$aname"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="fnarg">
-  <xsl:choose>
-    <xsl:when test="@type='varargs' or @type='seebelow'">
-      <xsl:text>varargs</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:apply-templates/>
-    </xsl:otherwise>
-  </xsl:choose>
-  <xsl:text> (</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="@type"/>
   </xsl:call-template>
+  <xsl:if test="(@conditional)">
+    <xsl:text> conditional</xsl:text>
+  </xsl:if>
+  <xsl:if test="@type != 'varargs'">
+    <xsl:text> </xsl:text>
+  </xsl:if>
+  <xsl:call-template name="argname"/>
   <xsl:if test="(@optional)">
     <xsl:choose>
-      <xsl:when test="@type='matrixref'">
-        <xsl:text>,</xsl:text>
-        <xsl:call-template name="gettext">
-          <xsl:with-param name="key" select="'or'"/>
-        </xsl:call-template>
-        <xsl:text>null</xsl:text>
+      <xsl:when test="@type='matrix' or @type='bundle' or
+		      @type='string' or @type='matrixref' or
+		      @type='bundleref' or @type='strings'">
+	<xsl:text>[null]</xsl:text>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:text>, </xsl:text>
-        <xsl:call-template name="gettext">
-          <xsl:with-param name="key" select="'optional'"/>
-        </xsl:call-template>
+	<xsl:text>[opt]</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
-  </xsl:if>
-  <xsl:if test="(@conditional)">
+  </xsl:if>  
+  <xsl:if test="following-sibling::*">
     <xsl:text>, </xsl:text>
-    <xsl:call-template name="gettext">
-      <xsl:with-param name="key" select="'conditional'"/>
-    </xsl:call-template>
-  </xsl:if> 
-  <xsl:text>)</xsl:text>
-  <xsl:text>&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="func">
