@@ -3,12 +3,6 @@
 
  <gentext key="args"          text="Arguments:  "/>
  <gentext key="arg"           text="Argument:   "/>
- <gentext key="altforms"      text="Variants:   "/>
- <gentext key="syntax"        text="Syntax:     "/>
- <gentext key="opts"          text="Options:    "/>
- <gentext key="opt"           text="Option:     "/>
- <gentext key="examples"      text="Examples:   "/>
- <gentext key="example"       text="Example:    "/>
  <gentext key="output"        text="Output:     "/>
  <gentext key="anyfloat"      text="scalar|series|matrix"/>
  <gentext key="series-or-vec" text="series|matrix"/>
@@ -25,12 +19,7 @@
  <gentext key="list-or-mat"    text="list|matrix"/>
  <gentext key="matrix-or-bundle" text="matrix|bundle"/>
  <gentext key="asinput"       text="variant"/>
- <gentext key="bundle"        text="bundle"/> 
- <gentext key="scalar"        text="scalar"/>
  <gentext key="pscalar"       text="scalar"/>
- <gentext key="int"           text="int"/>
- <gentext key="bool"          text="bool"/>
- <gentext key="series"        text="series"/>
  <gentext key="vector"        text="matrix"/>
  <gentext key="matrix"        text="matrix"/>
  <gentext key="smatrix"       text="matrix"/>
@@ -46,27 +35,19 @@
  <gentext key="stringref"     text="string *"/>
  <gentext key="cvec"          text="matrix"/>
  <gentext key="rvec"          text="matrix"/>
- <gentext key="list"          text="list"/>
- <gentext key="string"        text="string"/>
- <gentext key="listetc"       text="list"/>
- <gentext key="strings"       text="strings"/>
- <gentext key="matrices"      text="matrices"/>
- <gentext key="bundles"       text="bundles"/>
+ <gentext key="listetc"       text="list|matrix|bundle|array"/>
  <gentext key="matrices-or-strings" text="matrices|strings"/>
  <gentext key="string-or-strings"  text="string|strings"/>
- <gentext key="all-strings"   text="string"/>
+ <gentext key="all-strings"   text="string|strings|series"/>
  <gentext key="strings-or-list"  text="strings|list"/>
- <gentext key="series-vec-or-strings"    text="series|matrix|strings"/> 
- <gentext key="char"          text="char"/>
+ <gentext key="series-vec-or-strings"    text="series|matrix|strings"/>
  <gentext key="coeffname"     text="string"/>
  <gentext key="sslist"        text="scalar|series|list"/>
  <gentext key="smlist"        text="series|matrix|list"/>
- <gentext key="fncall"        text="fncall"/>
  <gentext key="optional"      text="optional"/>
  <gentext key="conditional"   text="conditional"/>
  <gentext key="seebelow"      text="variant"/>
  <gentext key="depends"       text="variant"/>
- <gentext key="varargs"       text="varargs"/>  
- <gentext key="applies-to"    text="Applies to"/>
+ <gentext key="varargs"       text="varargs"/>
  <gentext key="none"          text="none"/>
 </localization>

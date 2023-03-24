@@ -21,22 +21,16 @@
       <xsl:value-of select="$itext"/>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:message terminate="yes">
-        <xsl:text>** Error: no phrase with key = '</xsl:text>
-        <xsl:value-of select="$key"/>
-        <xsl:text>' found for lang '</xsl:text>
-        <xsl:value-of select="$lang"/>
-        <xsl:text>'.</xsl:text>
-      </xsl:message>
+      <xsl:value-of select="$key"/>
     </xsl:otherwise>
-  </xsl:choose>  
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="description" />
 <xsl:template match="examples" />
 
 <xsl:template match="funcref">
-  <xsl:apply-templates/> 
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="funclist">
@@ -72,7 +66,7 @@
 </xsl:template>
 
 <xsl:template name="argname">
-  <xsl:variable name="aname" select="current()"/>  
+  <xsl:variable name="aname" select="current()"/>
   <xsl:choose>
     <xsl:when test="contains($aname, '&amp;')">
       <xsl:value-of select ="substring($aname,2)"/>
@@ -98,14 +92,15 @@
     <xsl:choose>
       <xsl:when test="@type='matrix' or @type='bundle' or
 		      @type='string' or @type='matrixref' or
-		      @type='bundleref' or @type='strings'">
+		      @type='bundleref' or @type='strings' or
+                      @type='scalarref'">
 	<xsl:text>[null]</xsl:text>
       </xsl:when>
       <xsl:otherwise>
 	<xsl:text>[opt]</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
-  </xsl:if>  
+  </xsl:if>
   <xsl:if test="following-sibling::*">
     <xsl:text>, </xsl:text>
   </xsl:if>
@@ -116,11 +111,11 @@
 </xsl:template>
 
 <xsl:template name="nl">
-  <xsl:text>&#10;</xsl:text>  
+  <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template name="dnl">
-  <xsl:text>&#10;&#10;</xsl:text>  
+  <xsl:text>&#10;&#10;</xsl:text>
 </xsl:template>
 
 </xsl:stylesheet>
