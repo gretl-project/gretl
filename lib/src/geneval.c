@@ -161,6 +161,7 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
 static gretl_bundle *node_get_bundle (NODE *n, parser *p);
 static int gen_type_is_arrayable (int gen_t);
+static GretlType gretl_type_from_gen_type (int gen_t);
 
 /* ok_list_node: This is a first-pass assessment of whether
    a given node _may_ be interpretable as holding a LIST.
@@ -894,6 +895,33 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
     return ret;
 }
 
+static int e_types (NODE *n)
+{
+    if (n != NULL) {
+	GretlType t;
+	const char *s;
+
+	if (n->t == ARRAY) {
+	    t = gretl_array_get_type(n->v.a);
+	    s = gretl_type_get_name(t);
+	} else if (n->t == U_ADDR) {
+	    s = "pointer-to-object";
+	} else if (n->t == EMPTY) {
+	    s = "null";
+	} else {
+	    t = gretl_type_from_gen_type(n->t);
+	    s = gretl_type_get_name(t);
+	    if (!strcmp(s, "invalid")) {
+		s = getsymb(n->t);
+	    }
+	}
+	gretl_errmsg_sprintf("%s is %s, not acceptable in context",
+			     n->vname == NULL ? "[anonymous]" : n->vname, s);
+    }
+
+    return E_TYPES;
+}
+
 /* We come here by preference to the generic get_aux_node()
    (above) if we want an aux node holding an allocated matrix
    of known size (m x n). On the second or subsequent
@@ -920,7 +948,7 @@ static NODE *aux_sized_matrix_node (parser *p, int m, int n,
             ret->v.m = NULL;
             ret->flags |= TMP_NODE;
         } else if (ret->t != MAT) {
-            p->err = E_TYPES;
+            p->err = e_types(ret);
         } else {
             /* check for reusable matrix */
             gretl_matrix *a = ret->v.m;
@@ -1899,7 +1927,7 @@ static NODE *eval_urcpval (NODE *n, NODE *r, parser *p)
                     iargs[i-1] = node_get_int(e, p);
                 }
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(e);
             }
         }
 
@@ -3175,12 +3203,12 @@ const double *get_colvec_as_series_with_size (NODE *n,
     double *ret = NULL;
 
     if (n->t != MAT) {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     } else {
         const gretl_matrix *m = n->v.m;
 
         if (m->cols != 1) {
-            p->err = E_TYPES;
+            p->err = E_INVARG;
         } else if (m->rows == p->dset->n) {
             *size = p->dset->n;
             ret = m->val;
@@ -3232,7 +3260,7 @@ static NODE *array_str_calc (NODE *l, NODE *r, int op, parser *p)
         gretl_array *a = l->v.a;
 
         if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS) {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         } else {
             int i, n = gretl_array_get_length(a);
             const char *si;
@@ -3336,7 +3364,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
     /* mod, pow: the right-hand term must be scalar */
     if ((op == B_MOD || op == B_POW) && !scalar_node(r)) {
-        p->err = E_TYPES;
+        p->err = e_types(r);
         return NULL;
     }
 
@@ -3440,6 +3468,7 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
 static int is_function_call (const char *s)
 {
     if (!strchr(s, '(') || !strchr(s, ')')) {
+	gretl_errmsg_sprintf("%s: expected a function call", s);
         return 0;
     } else {
         return 1;
@@ -3491,7 +3520,7 @@ static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
 
     if (n->t == U_ADDR) {
         if (n->L->t != t) {
-            p->err = E_TYPES;
+            p->err = e_types(n->L);
         } else {
             uv = n->L->uv;
             if (uv == NULL && n->L->vname != NULL) {
@@ -3502,7 +3531,7 @@ static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
             }
         }
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     return uv;
@@ -3570,7 +3599,7 @@ static gretl_matrix *mat_node_get_real_matrix (NODE *n, parser *p)
     } else if (n->t == U_ADDR) {
         m = ptr_node_get_matrix(n, p);
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     if (!p->err) {
@@ -3590,7 +3619,7 @@ static const char *node_get_fncall (NODE *n, parser *p)
     const char *ret = NULL;
 
     if (n->t != STR) {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     } else {
         ret = n->v.str;
         if (!is_function_call(ret)) {
@@ -3658,7 +3687,7 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r,
             if (r->t == STR) {
                 sg = r->v.str;
             } else if (r->t != EMPTY) {
-                p->err = E_TYPES;
+                p->err = e_types(r);
             }
         }
         if (!p->err && !is_function_call(sf)) {
@@ -3715,7 +3744,7 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
                     maxit = node_get_int(r, p);
                 }
             } else if (!null_node(r)) {
-                p->err = E_TYPES;
+                p->err = e_types(r);
             }
         }
         if (!p->err) {
@@ -3759,7 +3788,7 @@ static NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
         } else if (m->t == MAT) {
             b = m->v.m;
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(m);
         }
         if (!p->err) {
             if (gretl_is_null_matrix(b)) {
@@ -3772,7 +3801,7 @@ static NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
             if (scalar_node(r)) {
                 tol = node_get_scalar(r, p);
             } else if (!null_node(r)) {
-                p->err = E_TYPES;
+                p->err = e_types(r);
             }
         }
         if (!p->err) {
@@ -4040,7 +4069,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
             if (scalar_node(l) && scalar_node(r)) {
                 op = B_DOTPOW;
             } else if (!scalar_node(r)) {
-                p->err = E_TYPES;
+                p->err = e_types(r);
                 return NULL;
             }
         }
@@ -4296,7 +4325,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
             ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
         } else if (r->t == ARRAY) {
             if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
-                p->err = E_TYPES;
+                p->err = e_types(r);
             } else {
                 p->err = ret->v.xval = umatrix_set_names_from_array(m, r->v.a,
                                                                     byrow);
@@ -4390,12 +4419,12 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
                 }
             } else if (m->t == ARRAY) {
                 if (gretl_array_get_type(m->v.a) != GRETL_TYPE_STRINGS) {
-                    p->err = E_TYPES;
+                    p->err = e_types(m);
                 } else {
                     pnames = gretl_array_copy(m->v.a, &p->err);
                 }
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(m);
             }
         }
 
@@ -5136,7 +5165,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
             spec->rtype = SEL_NULL;
             spec->lsel.str = l->v.str;
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         }
         goto finished;
     }
@@ -5203,7 +5232,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     } else if (null_node(l)) {
         spec->ltype = SEL_ALL;
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(l);
         goto finished;
     }
 
@@ -5221,7 +5250,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     } else if (null_node(r)) {
         spec->rtype = SEL_ALL;
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(r);
     }
 
  finished:
@@ -5612,7 +5641,7 @@ static int *array_subspec_list (NODE *l, NODE *r, parser *p)
         } else if (l->t == LIST) {
             len = l->v.ivec[0];
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(l);
             return NULL;
         }
 
@@ -5630,7 +5659,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 
     if (starting(p)) {
         if (r == NULL || r->t != MSPEC) {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         } else if (l->t == MAT) {
             return submatrix_node(l, r, p);
         } else if (l->t == ARRAY) {
@@ -5728,9 +5757,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                 p->err = E_TYPES;
             }
         } else {
-            fprintf(stderr, "subobject_node: l='%s', r='%s'\n",
-                    getsymb(l->t), getsymb(r->t));
-            p->err = E_TYPES;
+            p->err = e_types(l);
         }
     } else {
         ret = aux_any_node(p);
@@ -5744,7 +5771,11 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        if (scalar_node(l) && null_or_scalar(r)) {
+	if (!scalar_node(l)) {
+	    p->err = e_types(l);
+	} else if (!null_or_scalar(r)) {
+	    p->err = e_types(r);
+        } else {
             ret = aux_ivec_node(p, 2);
             if (ret != NULL) {
                 ret->v.ivec[0] = node_get_int(l, p);
@@ -5754,8 +5785,6 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
                     ret->v.ivec[1] = node_get_int(r, p);
                 }
             }
-        } else {
-            p->err = E_TYPES;
         }
     } else {
         ret = aux_ivec_node(p, 2);
@@ -6070,7 +6099,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 
         if (!null_node(r)) {
             if (r->t != NUM) {
-                p->err = E_TYPES;
+                p->err = e_types(r);
                 return ret;
             } else {
                 oddval = r->v.xval;
@@ -6124,7 +6153,7 @@ static NODE *cdummify_func (NODE *n, parser *p)
             list = gretl_list_new(1);
             list[1] = n->vnum;
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(n);
         }
 
         if (p->err) {
@@ -6583,7 +6612,7 @@ static int object_get_size (NODE *n, parser *p)
     } else if (n->t == STR) {
         ret = g_utf8_strlen(n->v.str, -1);
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     return ret;
@@ -6721,10 +6750,10 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 
         if (!useries_node(l) && l->t != LIST) {
             /* we need a named series or a list on the left */
-            p->err = E_TYPES;
+            p->err = e_types(l);
         } else if (r->t != IVEC && r->t != NUM) {
             /* we need one or more integers on the right */
-            p->err = E_TYPES;
+            p->err = e_types(r);
         }
 
         if (p->err) {
@@ -6844,7 +6873,7 @@ int *node_get_list (NODE *n, parser *p)
 
     if (null_node(n)) {
 	if (p->flags & P_PRNLIST) {
-	    p->err = E_TYPES;
+	    p->err = e_types(n);
 	} else {
 	    list = gretl_null_list();
 	}
@@ -6869,7 +6898,7 @@ int *node_get_list (NODE *n, parser *p)
     } else if (n->t == MAT) {
         list = gretl_list_from_vector(n->v.m, p->dset, &p->err);
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     if (!p->err && list == NULL) {
@@ -7509,7 +7538,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
                     y = r->v.m->val;
                 }
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(r);
             }
         }
 
@@ -7712,12 +7741,12 @@ static NODE *multi_str_node (NODE *l, int f, parser *p)
         }
     } else if (l->t == ARRAY) {
         if (gretl_array_get_type(l->v.a) != GRETL_TYPE_STRINGS) {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         } else {
             ret = aux_matrix_node(p);
         }
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(l);
     }
 
     if (!p->err && l->t == SERIES) {
@@ -7878,7 +7907,7 @@ static NODE *argname_from_uvar (NODE *n, NODE *r, parser *p)
 
         if (!null_or_string(r)) {
             /* if @r is present it must hold a string */
-            p->err = E_TYPES;
+            p->err = e_types(r);
             return ret;
         }
 
@@ -8259,7 +8288,7 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
                 if (x->t == STR) {
                     deflt = x->v.str;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(x);
                 }
             }
             s = (n->vname != NULL)? n->vname : s;
@@ -8444,7 +8473,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
                 p->err = E_TYPES;
             }
         } else if (r->t != STR) {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         }
         if (!p->err) {
             ret = (f == F_INSTRING)? aux_scalar_node(p) :
@@ -8714,7 +8743,7 @@ static NODE *array_sort_node (NODE *n, int f, parser *p)
     NODE *ret = NULL;
 
     if (gretl_array_get_type(n->v.a) != GRETL_TYPE_STRINGS) {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     } else {
         ret = aux_array_node(p);
         if (!p->err) {
@@ -8921,7 +8950,7 @@ static NODE *strftime_node (NODE *l, NODE *r, NODE *o, int f,
 	if (r->t == STR) {
 	    fmt = r->v.str;
 	} else if (r->t != EMPTY) {
-	    p->err = E_TYPES;
+	    p->err = e_types(r);
 	}
     }
 
@@ -9172,7 +9201,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
         if (r->t == STR) {
             fmt = r->v.str;
         } else if (r->t != EMPTY) {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         }
     }
 
@@ -9607,7 +9636,7 @@ static gretlopt get_normtest_option (NODE *n, parser *p)
             p->err = E_INVARG;
         }
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     return opt;
@@ -9922,8 +9951,10 @@ static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
         if (l->t == SERIES && r->t == SERIES) {
             p->err = gretl_sort_by(l->v.xvec, r->v.xvec, ret->v.xvec, p->dset);
-        } else {
-            p->err = E_TYPES;
+        } else if (l->t != SERIES) {
+	    p->err = e_types(l);
+	} else {
+            p->err = e_types(r);
         }
     }
 
@@ -10083,7 +10114,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
         ; /* not present, OK */
     } else if (f == F_DESEAS) {
         if (r->t != STR && r->t != BUNDLE && r->t != U_ADDR) {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         }
     } else if (is_panel_stat(f)) {
         if (r->t != SERIES) {
@@ -10827,10 +10858,10 @@ static NODE *eval_Rfunc (NODE *l, NODE *r, parser *p)
         GretlType type;
 
         if (arg == NULL) {
-            fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i);
+            fprintf(stderr, "%s: arg %d is NULL!\n", funname, i);
+	    p->err = E_DATA;
         } else if (!ok_ufunc_sym(arg->t)) {
-            fprintf(stderr, "%s: node type %d: not OK\n", funname, arg->t);
-            p->err = E_TYPES;
+            p->err = e_types(arg);
         }
         if (p->err) {
             break;
@@ -11122,13 +11153,13 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
         int curl_err = 0;
 
         if (n->t != U_ADDR) {
-            p->err = E_TYPES;
+            p->err = e_types(n);
         } else {
             /* switch to 'content' sub-node */
             n = ptr_node_get_referent_node(n, p);
             if (!p->err) {
                 if (n->t != BUNDLE) {
-                    p->err = E_TYPES;
+                    p->err = e_types(n);
                 } else {
                     b = n->v.b;
                 }
@@ -11211,13 +11242,13 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
         n = ptr_node_get_referent_node(n, p);
         if (!p->err) {
             if (n->t != BUNDLE) {
-                p->err = E_TYPES;
+                p->err = e_types(n);
             } else {
                 b = n->v.b;
             }
         }
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     return b;
@@ -11520,7 +11551,7 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
                 ret = lp;
                 *(double *) lp = ev->v.xval;
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(ev);
             }
         }
 
@@ -11556,7 +11587,7 @@ static int dot_assign_to_matrix (gretl_matrix *m, parser *p)
     } else if (cscalar_node(n)) {
         err = gretl_cmatrix_fill(m, n->v.m->z[0]);
     } else {
-        err = E_TYPES;
+        err = e_types(n);
     }
 
     return err;
@@ -12004,7 +12035,7 @@ static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
     } else if (rhs->t == SERIES) {
         v = rhs->vnum;
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(rhs);
     }
 
     if (!p->err) {
@@ -12044,7 +12075,7 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
                              get_opstr(p->op));
         return E_TYPES;
     } else if (rhs->t != STR) {
-        return E_TYPES;
+        return e_types(rhs);
     }
 
     if (lh2->t == MSPEC) {
@@ -12544,7 +12575,7 @@ static void node_get_int_or_series (int *ip, double **vecp,
     } else if (n->t == SERIES) {
         *vecp = n->v.xvec;
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 }
 
@@ -12794,7 +12825,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             } else if (scalar_node(l)) {
                 basic_mode = 1;
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(l);
             }
         } else if (l->t == SERIES && m->t == SERIES && r->t == SERIES) {
             series_mode = 1;
@@ -13403,7 +13434,7 @@ static int scan_to_vector (NODE *n, const char *fmt,
     }
 
     if (gretl_array_get_type(n->v.a) != GRETL_TYPE_STRINGS) {
-        *err = E_TYPES;
+        *err = e_types(n);
     } else {
         S = gretl_array_get_strings(n->v.a, &ns);
         m = vector_from_strings(S, ns, fmt, &nmax, err);
@@ -13742,10 +13773,10 @@ static NODE *string_replace (NODE *src, NODE *n0, NODE *n1,
                 Ssrc = gretl_array_get_strings(src->v.a, &ns);
                 ret = aux_array_node(p);
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(src);
             }
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(src);
         }
 
         if (ret == NULL) {
@@ -14731,7 +14762,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 if (e->t == MAT) {
                     Y = e->v.m;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (i == 1) {
                 /* expansion factor */
@@ -14741,7 +14772,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 if (e->t == MAT) {
                     X = e->v.m;
                 } else if (!null_node(e)) {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             }
         }
@@ -14762,7 +14793,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 if (e->t == BUNDLE) {
                     mb = e->v.b;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (i == 1) {
                 /* cumulate? */
@@ -14795,7 +14826,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 } else if (e->t == LIST) {
                     tdi.ylist = e->v.ivec;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (i == 1) {
                 /* X: matrix, series, list or null */
@@ -14812,7 +14843,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                         tdi.xlist = e->v.ivec;
                     }
                 } else if (!null_node(e)) {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (i == 2) {
                 /* integer expansion factor */
@@ -14822,13 +14853,13 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 if (e->t == BUNDLE) {
                     b = e->v.b;
                 } else if (!null_node(e)) {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (e->t == BUNDLE) {
                 /* optional retrieval bundle */
                 r = e->v.b;
             } else if (!null_node(e)) {
-                p->err = E_TYPES;
+                p->err = e_types(e);
             }
         }
         if (!p->err) {
@@ -14850,7 +14881,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 if (e->t == MAT) {
                     A = e->v.m;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (i == 1) {
                 /* row dimension */
@@ -14911,14 +14942,14 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                 if (e->t == MAT) {
                     U = e->v.m;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else if (i == 3) {
                 /* T x k matrix of covariates */
                 if (e->t == MAT) {
                     X = e->v.m;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             }
         }
@@ -14997,7 +15028,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                 if (e->t == STR) {
                     key = e->v.str;
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             } else {
                 /* we need some valid content */
@@ -15017,7 +15048,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                         gretl_bundle_set_data(b, key, ptr, gtype, size);
                     }
                 } else {
-                    p->err = E_TYPES;
+                    p->err = e_types(e);
                 }
             }
         }
@@ -15042,7 +15073,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
             } else if (e->t == MAT) {
                 li = node_get_list(e, p);
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(e);
             }
             if (!p->err && li[0] > 0) {
                 gretl_list_append_list(&full_list, li, &p->err);
@@ -15175,7 +15206,7 @@ static gretl_matrix *node_get_matrix_lenient (NODE *n,
                                      p->dset->t1, p->dset->t2,
                                      M_MISSING_OK, &p->err);
     } else {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     }
 
     if (!p->err && m == NULL) {
@@ -15201,7 +15232,7 @@ static gretl_bundle *get_kalman_bundle_arg (NODE *n, parser *p)
     }
 
     if (e == NULL || e->t != BUNDLE) {
-        p->err = E_TYPES;
+        p->err = e_types(e);
     } else {
         b = e->v.b; /* get the actual bundle */
         if (gretl_bundle_get_type(b) != BUNDLE_KALMAN ||
@@ -15491,8 +15522,7 @@ static NODE *matrix_def_node (NODE *t, NODE *n, parser *p)
     for (i=0; i<k && !p->err; i++) {
         e = n->v.bn.n[i];
         if (!ok_matdef_sym(e->t) && !scalar_matrix_node(e)) {
-            fprintf(stderr, "matrix_def_node: node type %d: not OK\n", e->t);
-            p->err = E_TYPES;
+            p->err = e_types(e);
             break;
         }
         if (scalar_node(e)) {
@@ -15689,7 +15719,7 @@ static NODE *gen_array_node (NODE *n, parser *p)
     NODE *ret = NULL;
 
     if (!null_or_scalar(n)) {
-        p->err = E_TYPES;
+        p->err = e_types(n);
     } else if (p->lh.gtype == 0) {
         gretl_errmsg_set(_("array: no type was specified"));
         p->err = E_DATA;
@@ -15813,7 +15843,7 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
         } else if (scalar_node(l)) {
             x = node_get_scalar(l, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(l);
             return NULL;
         }
     }
@@ -15828,7 +15858,7 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
         } else if (scalar_node(r)) {
             y = node_get_scalar(r, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(r);
             return NULL;
         }
     }
@@ -16079,7 +16109,7 @@ static NODE *eval_query (NODE *t, NODE *c, parser *p)
         ret = query_eval_matrix(c->v.m, t, p);
     } else {
         /* invalid type for boolean condition */
-        p->err = E_TYPES;
+        p->err = e_types(c);
     }
 
 #if EDEBUG
@@ -16476,7 +16506,7 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
             if (e->t == STR) {
                 str = e->v.str;
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(e);
             }
         }
         if (!p->err) {
@@ -17010,7 +17040,7 @@ static NODE *evaluate_multi_args (NODE *nn, parser *p)
     return ret;
 }
 
-#define ok_nullarg_sym(s) (s == FARGS || s == F_TYPEOF)
+#define ok_nullarg_sym(s) (s == FARGS || s > FP_MAX)
 
 /* determine if an EMPTY node is acceptable in context */
 
@@ -17427,7 +17457,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_STDIZE:
         if (!null_or_scalar(r)) {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         } else if (l->t == SERIES) {
             ret = series_stdize(l, r, p);
         } else if (l->t == LIST) {
@@ -17510,7 +17540,7 @@ static NODE *eval (NODE *t, parser *p)
         } else if (ok_list_node(l, p) && t->t == F_LOG) {
             ret = apply_list_func(l, NULL, t->t, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         }
         break;
     case F_REAL:
@@ -17558,7 +17588,7 @@ static NODE *eval (NODE *t, parser *p)
         if (useries_node(l) || l->t == NUM) {
             ret = get_info_on_series(l, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         }
         break;
     case F_SEASONALS:
@@ -17865,7 +17895,7 @@ static NODE *eval (NODE *t, parser *p)
                 ret = vector_sort(l, t->t, p);
             }
         } else {
-            node_type_error(t->t, 0, SERIES, l, p);
+            p->err = e_types(l);
         }
         break;
     case F_SUM:
@@ -17904,11 +17934,11 @@ static NODE *eval (NODE *t, parser *p)
         /* series or vector (plus optional string arg for
            normtest); returns matrix */
         if (l->t != SERIES && l->t != MAT) {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         } else if (null_or_string(r)) {
             ret = series_matrix_node(l, r, t->t, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         }
         break;
     case F_LRVAR:
@@ -18187,7 +18217,7 @@ static NODE *eval (NODE *t, parser *p)
         if (l->t == STR) {
             ret = fzero_node(l, m, r, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         }
         break;
     case F_IMHOF:
@@ -18204,7 +18234,7 @@ static NODE *eval (NODE *t, parser *p)
         if (l->t == MAT) {
             ret = bkw_node(l, m, r, p);
         } else {
-            p->err = E_TYPES;
+            p->err = e_types(l);
         }
         break;
     case F_FEVD:
@@ -18555,7 +18585,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_ERRORIF:
         if (r->t != STR) {
-            p->err = E_TYPES;
+            p->err = e_types(r);
         } else {
             ret = do_errorif(l, r, p);
         }
@@ -21227,7 +21257,7 @@ static int save_generated_var (parser *p, PRN *prn)
                     p->err = gen_add_or_replace(p, atype, a);
                 }
             } else {
-                p->err = E_TYPES;
+                p->err = e_types(r);
             }
         }
     }
