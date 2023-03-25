@@ -68,8 +68,14 @@
 <xsl:template name="argname">
   <xsl:variable name="aname" select="current()"/>
   <xsl:choose>
+    <xsl:when test="contains($aname, '-')">
+      <xsl:value-of select="translate($aname,'-','_')"/>
+    </xsl:when>
     <xsl:when test="contains($aname, '&amp;')">
       <xsl:value-of select ="substring($aname,2)"/>
+    </xsl:when>
+    <xsl:when test="$aname = '&#8230;'">
+      <xsl:text>...</xsl:text>
     </xsl:when>
     <xsl:otherwise>
       <xsl:value-of select ="$aname"/>
@@ -78,22 +84,23 @@
 </xsl:template>
 
 <xsl:template match="fnarg">
+  <xsl:if test="(@conditional)">
+    <xsl:text>cond. </xsl:text>
+  </xsl:if>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="@type"/>
   </xsl:call-template>
-  <xsl:if test="(@conditional)">
-    <xsl:text> conditional</xsl:text>
-  </xsl:if>
   <xsl:if test="@type != 'varargs'">
     <xsl:text> </xsl:text>
   </xsl:if>
   <xsl:call-template name="argname"/>
   <xsl:if test="(@optional)">
     <xsl:choose>
-      <xsl:when test="@type='matrix' or @type='bundle' or
-		      @type='string' or @type='matrixref' or
-		      @type='bundleref' or @type='strings' or
-                      @type='scalarref'">
+      <xsl:when test="contains(@type, 'matri') or
+		      contains(@type, 'series') or
+		      contains(@type, 'string') or
+		      contains(@type, 'ref') or
+		      @type='fncall' or @type='bundle'">
 	<xsl:text>[null]</xsl:text>
       </xsl:when>
       <xsl:otherwise>

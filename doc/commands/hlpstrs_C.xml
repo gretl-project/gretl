@@ -45,7 +45,7 @@
  <gentext key="sslist"        text="scalar|series|list"/>
  <gentext key="smlist"        text="series|matrix|list"/>
  <gentext key="optional"      text="optional"/>
- <gentext key="conditional"   text="conditional"/>
+ <gentext key="conditional"   text="cond."/>
  <gentext key="seebelow"      text="variant"/>
  <gentext key="depends"       text="variant"/>
  <gentext key="varargs"       text="varargs"/>
