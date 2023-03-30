@@ -159,6 +159,7 @@ void mdata_select_last_var (void);
 int gui_restore_sample (DATASET *dset);
 void make_list_from_main (void);
 void do_stop_script (GtkWidget *w, windata_t *vwin);
+int clear_stop_script (PRN *prn);
 void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);

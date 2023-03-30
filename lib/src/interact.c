@@ -3099,7 +3099,6 @@ static int abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
     gretl_cmd_destroy_context(s->cmd);
-    errmsg(E_STOP, s->prn);
     return E_STOP;
 }
 
@@ -3240,7 +3239,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (gretl_in_gui_mode() && check_for_stop()) {
         /* the GUI user clicked the "Stop" button */
-	fprintf(stderr, "HERE stop, cmd='%s'\n", s->line);
         return abort_execution(s);
     }
 

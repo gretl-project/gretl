@@ -8549,6 +8549,9 @@ void run_native_script (windata_t *vwin, gchar *buf, int silent)
 	return;
     }
 
+    /* in case execution was halted via the "stop" button */
+    clear_stop_script(prn);
+
     if (oh.vwin != NULL) {
         if (untmp) {
             finalize_reusable_output_window(targ);

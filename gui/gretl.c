@@ -2784,12 +2784,19 @@ static int script_stopper (int set)
     static int stop;
     int ret = 0;
 
-    if (set) {
+    fprintf(stderr, "script_stopper: %s\n",
+	    set==1 ? "set" : set==-1 ? "unset" : "query");
+
+    if (set == 1) {
 	/* set the stop signal */
 	stop = 1;
-    } else if (stop) {
-	ret = 1;
+    } else if (set == -1) {
+	/* unset the stop signal */
 	stop = 0;
+    } else {
+	/* query the signal */
+	ret = stop;
+	// stop = 0;
     }
 
     return ret;
@@ -2800,9 +2807,26 @@ static int gui_query_stop (void)
     return script_stopper(0);
 }
 
-/* callback from "stop" button in script output viewer */
+/* Called via the "stop" button in script output viewer:
+   set a block on execution until further notice.
+*/
 
 void do_stop_script (GtkWidget *w, windata_t *vwin)
 {
     script_stopper(1);
+}
+
+/* If execution was blocked, report this on @prn and unblock.
+   In case the caller wishes to know if a block was in place,
+   return 1 if so, 0 if not.
+*/
+
+int clear_stop_script (PRN *prn)
+{
+    if (script_stopper(0)) {
+	errmsg(E_STOP, prn);
+	script_stopper(-1);
+	return 1;
+    }
+    return 0;
 }

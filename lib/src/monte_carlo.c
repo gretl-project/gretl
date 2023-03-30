@@ -2608,7 +2608,6 @@ static int abort_loop_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
     gretl_cmd_destroy_context(s->cmd);
-    errmsg(E_STOP, s->prn);
     return E_STOP;
 }
 
