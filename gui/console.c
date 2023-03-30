@@ -336,6 +336,16 @@ static int detect_quit (const char *s)
     return 0;
 }
 
+static int detect_run (const char *s, char *fname)
+{
+    s += strspn(s, " \t");
+    if (sscanf(s, "run %511s", fname)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void maybe_exit_on_quit (void)
 {
     if (exit_check()) {
@@ -352,6 +362,7 @@ static void maybe_exit_on_quit (void)
 
 static int real_console_exec (ExecState *state)
 {
+    char fname[512];
     int err = 0;
 
 #if CDEBUG
@@ -365,11 +376,16 @@ static int real_console_exec (ExecState *state)
 
     push_history_line(state->line);
 
-    state->flags = CONSOLE_EXEC;
-    err = gui_exec_line(state, dataset, console_main);
-
-    while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(state, dataset);
+    if (detect_run(state->line, fname)) {
+	/* is this a good idea? */
+	err = execute_script(fname, NULL, state->prn, CONSOLE_EXEC,
+			     console_main);
+    } else {
+	state->flags = CONSOLE_EXEC;
+	err = gui_exec_line(state, dataset, console_main);
+	while (!err && gretl_execute_loop()) {
+	    err = gretl_loop_exec(state, dataset);
+	}
     }
 
 #if CDEBUG

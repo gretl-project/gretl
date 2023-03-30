@@ -9435,7 +9435,7 @@ int execute_script (char *runfile, const char *buf,
         bufread = 1;
     }
 
-    if (!including && !suppress_logo) {
+    if (!including && !suppress_logo && exec_code != CONSOLE_EXEC) {
         gui_script_logo(prn);
     }
 
