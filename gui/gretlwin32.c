@@ -241,6 +241,28 @@ void record_win32_locale (char *s)
     }
 }
 
+int win32_lang_id_from_locale (void)
+{
+    if (winlocale != NULL) {
+        char c, lword[32] = {0};
+        int i = 0;
+
+        while ((c = winlocale[i]) != '\0') {
+            if (c == ' ' || c == '_' || c == '-' || i == 30) {
+                break;
+            } else {
+                lword[i] = c;
+            }
+            i++;
+        }
+        if (*lword) {
+            return lang_id_from_name(lword);
+        }
+    }
+
+    return LANG_AUTO;
+}
+
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
@@ -257,6 +279,9 @@ void gretl_win32_debug_init (int debug)
 	    redirect_io_to_console();
 	}
 	set_windebug(1);
+        /* @winlocale is probably something like
+             "English_United States.1252"
+        */
 	fprintf(stderr, "Windows locale = %s\n",
 		winlocale == NULL ? "NULL" : winlocale);
 	g_get_charset(&charset);

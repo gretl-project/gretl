@@ -2092,6 +2092,11 @@ static void rcvar_set_int (RCVAR *rcvar, int ival, int *changed)
 	if (intvar == &lcnumeric) {
 	    int langid = lang_id_from_name(langpref);
 
+#ifdef G_OS_WIN32
+            if (langid == LANG_AUTO && !getenv("LANG")) {
+                langid = win32_lang_id_from_locale();
+            }
+#endif
 	    set_lcnumeric(langid, lcnumeric);
 	}
     }

@@ -38,6 +38,8 @@ void gretl_win32_debug_init (int debug);
 
 void record_win32_locale (char *s);
 
+int win32_lang_id_from_locale (void);
+
 void gretl_win32_init (int debug);
 
 int prn_to_clipboard (PRN *prn, int fmt);

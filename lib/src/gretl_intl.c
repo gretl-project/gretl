@@ -315,7 +315,7 @@ const char *lang_string_from_id (int langid)
 
 int lang_id_from_name (const char *s)
 {
-    if (s != NULL || *s != '\0') {
+    if (s != NULL && *s != '\0') {
 	int i;
 
 	for (i=0; i<LANG_MAX; i++) {
