@@ -9444,7 +9444,7 @@ int execute_script (char *runfile, const char *buf,
         if (gretl_execute_loop()) {
             exec_err = gretl_loop_exec(&state, dataset);
             if (exec_err) {
-                goto endwhile;
+                break;
             }
         } else {
             char *gotline = NULL;
@@ -9453,7 +9453,7 @@ int execute_script (char *runfile, const char *buf,
             gotline = gui_get_input_line(line, fb, buf, &exec_err);
             if (gotline == NULL) {
                 /* done reading */
-                goto endwhile;
+                break;
             }
 
             if (!exec_err) {
@@ -9503,7 +9503,7 @@ int execute_script (char *runfile, const char *buf,
             if (exec_err) {
                 if (exec_err == E_STOP) {
                     /* not really an error */
-                    goto endwhile;
+                    break;
                 } else if (!gretl_error_is_fatal()) {
                     exec_err = 0;
                 } else {
@@ -9513,13 +9513,11 @@ int execute_script (char *runfile, const char *buf,
                     } else {
                         print_fatal_error(tmp, prn);
                     }
-                    goto endwhile;
+                    break;
                 }
             }
         } /* end non-loop command processor */
     } /* end while command != quit */
-
- endwhile:
 
     if (bufread) {
         bufgets_finalize(buf);

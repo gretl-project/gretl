@@ -2326,8 +2326,10 @@ static int loop_process_error (LOOPSET *loop, loop_line *ll,
 {
     if (loop_line_catch(ll)) {
         set_gretl_errno(err);
-        loop->flags |= LOOP_ERR_CAUGHT;
-        err = 0;
+	if (err != E_STOP) {
+	    loop->flags |= LOOP_ERR_CAUGHT;
+	    err = 0;
+	}
     }
 
     return err;
@@ -2602,11 +2604,12 @@ static int check_for_dollar_subst (loop_line *ll,
     return err;
 }
 
-static void abort_loop_execution (ExecState *s)
+static int abort_loop_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
     gretl_cmd_destroy_context(s->cmd);
     errmsg(E_STOP, s->prn);
+    return E_STOP;
 }
 
 static int block_model (CMD *cmd)
@@ -2689,8 +2692,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #endif
         if (gui_mode && loop->iter % 10 == 0 && check_for_stop()) {
             /* the GUI user clicked the "Stop" button */
-            abort_loop_execution(s);
-            err = E_STOP;
+            err = abort_loop_execution(s);
             break;
         }
 
@@ -2958,8 +2960,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
             inner_errline = gretl_strdup(currline);
         }
     } /* end iterations of loop */
-
-    //fprintf(stderr, "xcount = %d\n", xcount);
 
     cmd->flags &= ~CMD_NOSUB;
 

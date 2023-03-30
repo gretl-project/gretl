@@ -181,7 +181,7 @@ int mainwin_height = 420;
 #if defined(G_OS_WIN32)
 char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
-char Rcommand[MAXSTR] = "RGui.exe";
+char Rcommand[MAXSTR] = "Rgui.exe";
 #elif defined(OS_OSX)
 char calculator[MAXSTR] = "/System/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";

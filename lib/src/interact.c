@@ -3095,11 +3095,12 @@ static int install_function_package (const char *pkgname,
 
 #endif
 
-static void abort_execution (ExecState *s)
+static int abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
     gretl_cmd_destroy_context(s->cmd);
     errmsg(E_STOP, s->prn);
+    return E_STOP;
 }
 
 static int plot_ok;
@@ -3239,8 +3240,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (gretl_in_gui_mode() && check_for_stop()) {
         /* the GUI user clicked the "Stop" button */
-        abort_execution(s);
-        return E_STOP;
+	fprintf(stderr, "HERE stop, cmd='%s'\n", s->line);
+        return abort_execution(s);
     }
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
@@ -4399,5 +4400,5 @@ int process_command_error (ExecState *s, int err)
         pputs(s->prn, _("An error occurred when 'outfile' was active\n"));
     }
 
-    return ret;
+    return (err == E_STOP)? err : ret;
 }
