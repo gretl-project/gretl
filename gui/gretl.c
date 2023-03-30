@@ -91,7 +91,6 @@ static void restore_sample_callback (void);
 static void show_sample_callback (void);
 static void mdata_select_all (void);
 static void mdata_select_list (void);
-static int gui_query_stop (void);
 static void mdata_handle_paste (void);
 
 #ifdef MAC_INTEGRATION
@@ -841,7 +840,6 @@ int main (int argc, char **argv)
     /* set libgretl callbacks */
     set_workdir_callback(gui_set_working_dir);
     set_show_activity_func(gui_show_activity);
-    set_query_stop_func(gui_query_stop);
     set_gui_model_list_callback(get_or_send_gui_models);
     gui_exec_callback_init(); /* see library.c */
 
@@ -2779,41 +2777,13 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
     return FALSE;
 }
 
-static int script_stopper (int set)
-{
-    static int stop;
-    int ret = 0;
-
-    fprintf(stderr, "script_stopper: %s\n",
-	    set==1 ? "set" : set==-1 ? "unset" : "query");
-
-    if (set == 1) {
-	/* set the stop signal */
-	stop = 1;
-    } else if (set == -1) {
-	/* unset the stop signal */
-	stop = 0;
-    } else {
-	/* query the signal */
-	ret = stop;
-	// stop = 0;
-    }
-
-    return ret;
-}
-
-static int gui_query_stop (void)
-{
-    return script_stopper(0);
-}
-
 /* Called via the "stop" button in script output viewer:
    set a block on execution until further notice.
 */
 
-void do_stop_script (GtkWidget *w, windata_t *vwin)
+void do_stop_script (GtkWidget *w, gpointer p)
 {
-    script_stopper(1);
+    set_user_stop(1);
 }
 
 /* If execution was blocked, report this on @prn and unblock.
@@ -2823,9 +2793,18 @@ void do_stop_script (GtkWidget *w, windata_t *vwin)
 
 int clear_stop_script (PRN *prn)
 {
-    if (script_stopper(0)) {
-	errmsg(E_STOP, prn);
-	script_stopper(-1);
+    if (get_user_stop()) {
+        if (prn != NULL) {
+            /* print the E_STOP message if not already done */
+            const char *buf = gretl_print_get_buffer(prn);
+            const char *s = errmsg_get_with_default(E_STOP);
+
+            if (buf != NULL && s != NULL &&
+                strstr(buf, s) == NULL) {
+                errmsg(E_STOP, prn);
+            }
+        }
+        set_user_stop(0);
 	return 1;
     }
     return 0;

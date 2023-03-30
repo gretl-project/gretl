@@ -133,7 +133,6 @@ typedef enum {
 } SetKey;
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
-typedef int (*QUERY_STOP) (void);
 
 #define set_nls_toler(x) (libset_set_double(NLS_TOLER, x))
 
@@ -232,8 +231,8 @@ void set_show_activity_func (SHOW_ACTIVITY_FUNC func);
 void show_activity_callback (void);
 int show_activity_func_installed (void);
 
-void set_query_stop_func (QUERY_STOP query);
-int check_for_stop (void);
+void set_user_stop (int s);
+int get_user_stop (void);
 
 void set_workdir_callback (int (*callback)());
 

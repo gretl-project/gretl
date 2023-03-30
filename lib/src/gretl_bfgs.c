@@ -1117,10 +1117,13 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     show_activity = show_activity_func_installed();
 
     do {
+        if (get_user_stop()) {
+            err = E_STOP;
+            break;
+        }
         if (bfgs_print_iter(verbose, verbskip, iter)) {
             print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
         }
-
         if (show_activity && (iter % 10 == 0)) {
             show_activity_callback();
         }
@@ -1277,7 +1280,11 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
             ilast = gcount;
         }
 
-    } while (ndelta > 0 || ilast < gcount);
+    } while (ndelta > 0 || ilast < gcount); /* end of outer do-loop */
+
+    if (err == E_STOP) {
+        goto bailout;
+    }
 
 #if BFGS_DEBUG
     fprintf(stderr, "terminated: fmax=%g, ndelta=%d, ilast=%d, gcount=%d\n",
@@ -1496,6 +1503,11 @@ int LBFGS_max (double *b, int n,
     strcpy(task, "START");
 
     while (1) {
+        if (get_user_stop()) {
+            err = E_STOP;
+            break;
+        }
+
         /* Call the L-BFGS-B code */
         setulb_(&n, &m, b, l, u, nbd, &f, g, &factr, &pgtol, wa, iwa,
                 task, csave, lsave, isave, dsave);
@@ -1554,6 +1566,10 @@ int LBFGS_max (double *b, int n,
         if (show_activity && (iter % 10 == 0)) {
             show_activity_callback();
         }
+    }
+
+    if (err == E_STOP) {
+        goto bailout;
     }
 
     if (!err && crittype == C_GMM) {

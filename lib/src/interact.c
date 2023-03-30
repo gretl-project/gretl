@@ -3237,8 +3237,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     exec_state_prep(s);
     plot_ok = 0;
 
-    if (gretl_in_gui_mode() && check_for_stop()) {
-        /* the GUI user clicked the "Stop" button */
+    if (get_user_stop()) {
+        /* the user called a halt to execution */
         return abort_execution(s);
     }
 

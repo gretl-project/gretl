@@ -2689,8 +2689,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 #if LOOP_DEBUG > 1
         fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
-        if (gui_mode && loop->iter % 10 == 0 && check_for_stop()) {
-            /* the GUI user clicked the "Stop" button */
+        if (gui_mode && loop->iter % 10 == 0 && get_user_stop()) {
+            /* the user called a halt */
             err = abort_loop_execution(s);
             break;
         }

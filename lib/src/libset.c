@@ -2485,23 +2485,23 @@ void show_activity_callback (void)
     }
 }
 
-/* support for GUI "Stop" button */
+/* Support for the GUI "Stop" button -- could in principle be extended
+   to gretlcli via some Ctrl+key combination?
+*/
 
-static QUERY_STOP query_stop;
+static int user_stop;
 
-void set_query_stop_func (QUERY_STOP query)
+void set_user_stop (int s)
 {
-    query_stop = query;
+    user_stop = s;
 }
 
-int check_for_stop (void)
+int get_user_stop (void)
 {
-    if (query_stop != NULL) {
-	return (*query_stop)();
-    } else {
-	return 0;
-    }
+    return user_stop;
 }
+
+/* internal: set the value of a string-valued "setvar" */
 
 static int set_string_setvar (char *targ, const char *s, int len)
 {
