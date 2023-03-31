@@ -3276,7 +3276,7 @@ static void exec_script_text (GtkWidget *w, gpointer p)
     struct textbit *tb = (struct textbit *) p;
 
     if (editing_hansl(tb->vwin->role)) {
-	run_native_script(tb->vwin, tb->chunk, 0);
+	run_native_script(tb->vwin, tb->chunk, NULL, 0);
     } else {
 	run_script_fragment(tb->vwin, tb->chunk);
     }

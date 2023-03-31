@@ -994,7 +994,7 @@ static void real_run_script (windata_t *vwin, int silent)
     }
 #else
     if (editing_hansl(vwin->role)) {
-	run_native_script(vwin, buf, silent);
+	run_native_script(vwin, buf, NULL, silent);
     } else if (vwin->role == EDIT_GP) {
         run_gnuplot_script(buf, vwin);
     } else if (vwin->role == EDIT_R) {
@@ -1008,7 +1008,7 @@ static void real_run_script (windata_t *vwin, int silent)
     } else if (selection) {
 	run_script_fragment(vwin, buf);
     } else {
-        run_native_script(vwin, buf, silent);
+        run_native_script(vwin, buf, NULL, silent);
     }
 #endif
 

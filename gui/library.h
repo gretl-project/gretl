@@ -69,7 +69,8 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
 
 void run_script_fragment (windata_t *vwin, gchar *buf);
 
-void run_native_script (windata_t *vwin, gchar *buf, int silent);
+void run_native_script (windata_t *vwin, gchar *buf,
+                        char *fname, int silent);
 
 void run_R_script (gchar *buf, windata_t *vwin);
 

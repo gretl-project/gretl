@@ -8274,7 +8274,9 @@ void start_wait_for_output (windata_t *vwin, GtkWidget *w)
 static void clear_output_handler (void)
 {
     if (oh.vwin != NULL) {
-        maybe_view_session();
+        if (oh.vwin->role != CONSOLE) {
+            maybe_view_session();
+        }
         g_signal_handler_disconnect(G_OBJECT(oh.vwin->main),
                                     oh.handler_id);
     }
@@ -8351,7 +8353,9 @@ static void handle_flush_callback (gretlopt opt)
             if (oh.flushing) {
                 scroll_to_foot(oh.vwin);
             }
-            gretl_print_destroy(oh.prn);
+            if (oh.vwin->role != CONSOLE) {
+                gretl_print_destroy(oh.prn);
+            }
         } else {
             /* prepare for another chunk of output */
             if (!ctrlr && !(opt & OPT_Q)) {
@@ -8438,7 +8442,9 @@ void finalize_script_output_window (int role, gpointer data)
 void finalize_reusable_output_window (windata_t *vwin)
 {
     handle_flush_callback(OPT_F);
-    vwin_reinstate_toolbar(vwin);
+    if (vwin->role != CONSOLE) {
+        vwin_reinstate_toolbar(vwin);
+    }
     clear_output_handler();
 }
 
@@ -8478,9 +8484,12 @@ static int already_running_script (void)
     }
 }
 
-/* Execute a script from the buffer in viewer window @vwin */
+/* Execute a script from a buffer or filename supplied by
+   viewer window @vwin
+*/
 
-void run_native_script (windata_t *vwin, gchar *buf, int silent)
+void run_native_script (windata_t *vwin, gchar *buf,
+                        char *fname, int silent)
 {
     int policy = get_script_output_policy();
     GtkWidget *parent;
@@ -8492,6 +8501,11 @@ void run_native_script (windata_t *vwin, gchar *buf, int silent)
 
     if (already_running_script()) {
         return;
+    }
+
+    if (vwin->role == CONSOLE) {
+        targ = vwin;
+        // prn = ??;
     }
 
     if (silent) {
@@ -8540,7 +8554,7 @@ void run_native_script (windata_t *vwin, gchar *buf, int silent)
     parent = vwin_toplevel(vwin);
     save_batch = gretl_in_batch_mode();
     gui_main_exec = 1;
-    err = execute_script(NULL, buf, prn, SCRIPT_EXEC, parent);
+    err = execute_script(fname, buf, prn, SCRIPT_EXEC, parent);
     gui_main_exec = 0;
     gretl_set_batch_mode(save_batch);
     refresh_data();
