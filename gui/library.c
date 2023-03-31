@@ -8376,37 +8376,39 @@ static int start_script_output_handler (PRN *prn, int role,
                                         const char *title,
                                         windata_t **outwin)
 {
+    windata_t *vwin = NULL;
     int err = 0;
 
     if (!output_handler_is_free()) {
         /* we're messed up! */
         errbox("Script already running?!");
-        err = 1;
+        return 1;
+    }
+
+    if (role == CONSOLE) {
+        vwin = gretl_console();
+        oh.reusable = 1;
+    } else if (outwin != NULL && *outwin != NULL) {
+        /* using an existing viewer */
+        oh.reusable = 1;
+        vwin = *outwin;
+        vwin_add_tmpbar(vwin);
     } else {
-        windata_t *vwin;
-
-        if (outwin != NULL && *outwin != NULL) {
-            /* using an existing viewer */
-            oh.reusable = 1;
-            vwin = *outwin;
-            vwin_add_tmpbar(vwin);
-        } else {
-            /* new viewer needed */
-            vwin = hansl_output_viewer_new(prn, role, title);
-            if (vwin == NULL) {
-                err = E_ALLOC;
-            }
+        /* new viewer needed */
+        vwin = hansl_output_viewer_new(prn, role, title);
+        if (vwin == NULL) {
+            err = E_ALLOC;
         }
+    }
 
-        if (!err) {
-            oh.prn = prn;
-            oh.vwin = vwin;
-            gretl_print_set_save_position(oh.prn);
-            if (outwin != NULL && *outwin == NULL) {
-                *outwin = vwin;
-            }
-            output_handler_block_deletion();
+    if (!err) {
+        oh.prn = prn;
+        oh.vwin = vwin;
+        gretl_print_set_save_position(oh.prn);
+        if (outwin != NULL && *outwin == NULL) {
+            *outwin = vwin;
         }
+        output_handler_block_deletion();
     }
 
     return err;
