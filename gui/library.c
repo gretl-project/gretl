@@ -8353,9 +8353,7 @@ static void handle_flush_callback (gretlopt opt)
             if (oh.flushing) {
                 scroll_to_foot(oh.vwin);
             }
-            if (oh.vwin->role != CONSOLE) {
-                gretl_print_destroy(oh.prn);
-            }
+            gretl_print_destroy(oh.prn);
         } else {
             /* prepare for another chunk of output */
             if (!ctrlr && !(opt & OPT_Q)) {
@@ -8503,26 +8501,24 @@ void run_native_script (windata_t *vwin, gchar *buf,
         return;
     }
 
-    if (vwin->role == CONSOLE) {
-        targ = vwin;
-        // prn = ??;
-    }
-
     if (silent) {
 	goto do_exec;
     }
 
-    if (policy != OUTPUT_POLICY_NEW_WINDOW) {
-	/* check for an existing output window */
-	targ = get_unique_output_viewer();
-    }
-
-    if (targ != NULL && policy == OUTPUT_POLICY_UNSET) {
-	/* ask the user to choose a policy */
-	policy = output_policy_dialog(vwin, targ, 0);
-	if (policy == OUTPUT_POLICY_NEW_WINDOW) {
-	    targ = NULL;
-	}
+    if (vwin->role == CONSOLE) {
+        targ = vwin;
+    } else {
+        if (policy != OUTPUT_POLICY_NEW_WINDOW) {
+            /* check for an existing output window */
+            targ = get_unique_output_viewer();
+        }
+        if (targ != NULL && policy == OUTPUT_POLICY_UNSET) {
+            /* ask the user to choose a policy */
+            policy = output_policy_dialog(vwin, targ, 0);
+            if (policy == OUTPUT_POLICY_NEW_WINDOW) {
+                targ = NULL;
+            }
+        }
     }
 
     if (bufopen(&prn)) {
@@ -8543,6 +8539,7 @@ void run_native_script (windata_t *vwin, gchar *buf,
             return;
         }
     } else {
+        /* FIXME console? */
         set_reuseable_output_window(policy, targ);
         start_script_output_handler(prn, SCRIPT_OUT,
                                     NULL, &targ);
@@ -8583,7 +8580,7 @@ void run_native_script (windata_t *vwin, gchar *buf,
     }
 
     if (!err && vwin->role != EDIT_PKG_SAMPLE &&
-        vwin->role != VIEW_PKG_SAMPLE &&
+        vwin->role != VIEW_PK G_SAMPLE && vwin->role != CONSOLE &&
         *vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
         mkfilelist(FILE_LIST_SCRIPT, vwin->fname, 0);
         lib_command_sprintf("run %s", vwin->fname);
