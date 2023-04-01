@@ -50,10 +50,12 @@ static char **cmd_history;
 static int hpos, hlines;
 static gchar *hist0;
 static GtkWidget *console_main;
+static windata_t *console_vwin;
 static int console_protected;
 
-static gint console_key_handler (GtkWidget *cview, GdkEvent *key,
-				 gpointer p);
+static gint console_key_handler (GtkWidget *cview,
+				 GdkEvent *key,
+				 windata_t *vwin);
 
 static void protect_console (void)
 {
@@ -360,7 +362,9 @@ static void maybe_exit_on_quit (void)
     }
 }
 
-static int real_console_exec (ExecState *state, GtkTextBuffer *tbuf)
+static int real_console_exec (ExecState *state,
+			      GtkTextBuffer *tbuf,
+			      windata_t *vwin)
 {
     char fname[512];
     int err = 0;
@@ -377,13 +381,12 @@ static int real_console_exec (ExecState *state, GtkTextBuffer *tbuf)
     push_history_line(state->line);
 
     if (detect_run(state->line, fname)) {
-	/* is calling execute_script a good idea? */
+	/* added 2023-04-01: testing wanted */
 	GtkTextIter iter;
 
 	gtk_text_buffer_get_end_iter(tbuf, &iter);
 	gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-	err = execute_script(fname, NULL, state->prn, CONSOLE_EXEC,
-			     console_main);
+	run_native_script(vwin, NULL, fname, 0);
     } else {
 	state->flags = CONSOLE_EXEC;
 	err = gui_exec_line(state, dataset, console_main);
@@ -411,7 +414,8 @@ static const char *console_prompt (ExecState *s)
 
 /* called on receipt of a completed command line */
 
-static void update_console (ExecState *state, GtkWidget *cview)
+static void update_console (ExecState *state, GtkWidget *cview,
+			    windata_t *vwin)
 {
     GtkTextBuffer *buf;
     GtkTextIter iter;
@@ -420,7 +424,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
     protect_console();
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
-    real_console_exec(state, buf);
+    real_console_exec(state, buf, vwin);
 
     if (state->cmd->ci == QUIT) {
 	*state->line = '\0';
@@ -480,6 +484,7 @@ static void console_destroyed (GtkWidget *w, ExecState *state)
     gretl_print_destroy(state->prn);
     gretl_exec_state_destroy(state);
     console_main = NULL;
+    console_vwin = NULL;
     if (!swallow) {
 	/* exit the command loop */
 	gtk_main_quit();
@@ -489,6 +494,11 @@ static void console_destroyed (GtkWidget *w, ExecState *state)
 static gboolean console_destroy_check (void)
 {
     return console_protected ? TRUE : FALSE;
+}
+
+windata_t *get_console_vwin (void)
+{
+    return console_vwin;
 }
 
 windata_t *gretl_console (void)
@@ -519,7 +529,7 @@ windata_t *gretl_console (void)
     if (swallow) {
 	preset_viewer_flag(VWIN_SWALLOW);
     }
-    vwin = console_window(78, 450);
+    console_vwin = vwin = console_window(78, 450);
     console_main = vwin->main;
 
     g_signal_connect(G_OBJECT(vwin->text), "paste-clipboard",
@@ -605,7 +615,7 @@ static gchar *console_get_current_line (GtkTextBuffer *buf,
 
 static gint console_key_handler (GtkWidget *cview,
 				 GdkEvent *event,
-				 gpointer p)
+				 windata_t *vwin)
 {
     GdkEventKey *kevent = (GdkEventKey *) event;
     guint keyval = kevent->keyval;
@@ -685,8 +695,7 @@ static gint console_key_handler (GtkWidget *cview,
 
     if (keyval == GDK_Return) {
 	/* execute the command, unless backslash-continuation
-	   is happening
-	*/
+	   is happening */
 	ExecState *state;
 	gchar *thisline;
 	int contd = 0, err = 0;
@@ -707,10 +716,8 @@ static gint console_key_handler (GtkWidget *cview,
 	    console_scroll_to_end(cview, buf, &end);
 	} else {
 	    /* request execution of the completed command */
-	    update_console(state, cview);
+	    update_console(state, cview, vwin);
 	    if (state->cmd->ci == QUIT) {
-		windata_t *vwin = (windata_t *) p;
-
 		gtk_widget_destroy(vwin->main);
 	    }
 	}
@@ -745,14 +752,14 @@ static gint console_key_handler (GtkWidget *cview,
 
 #ifdef HAVE_GTKSV_COMPLETION
     if (keyval == GDK_Tab && console_completion == COMPLETE_USER &&
-	maybe_try_completion((windata_t *) p)) {
+	maybe_try_completion(vwin)) {
 	call_user_completion(cview);
 	return TRUE;
     }
 #endif
 
     if (script_auto_bracket && lbracket(keyval)) {
-	return script_bracket_handler((windata_t *) p, keyval);
+	return script_bracket_handler(vwin, keyval);
     }
 
     return FALSE;

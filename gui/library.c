@@ -8388,7 +8388,7 @@ static int start_script_output_handler (PRN *prn, int role,
     }
 
     if (role == CONSOLE) {
-        vwin = gretl_console();
+        vwin = get_console_vwin();
         oh.reusable = 1;
     } else if (outwin != NULL && *outwin != NULL) {
         /* using an existing viewer */
@@ -8490,6 +8490,7 @@ void run_native_script (windata_t *vwin, gchar *buf,
                         char *fname, int silent)
 {
     int policy = get_script_output_policy();
+    int exec_code = SCRIPT_EXEC;
     GtkWidget *parent;
     windata_t *targ = NULL;
     PRN *prn = NULL;
@@ -8506,6 +8507,7 @@ void run_native_script (windata_t *vwin, gchar *buf,
     }
 
     if (vwin->role == CONSOLE) {
+	exec_code = CONSOLE_EXEC;
         targ = vwin;
     } else {
         if (policy != OUTPUT_POLICY_NEW_WINDOW) {
@@ -8538,8 +8540,11 @@ void run_native_script (windata_t *vwin, gchar *buf,
             gretl_print_destroy(prn);
             return;
         }
+    } else if (vwin->role == CONSOLE) {
+        start_script_output_handler(prn, CONSOLE,
+                                    NULL, NULL);
+        untmp = 1;
     } else {
-        /* FIXME console? */
         set_reuseable_output_window(policy, targ);
         start_script_output_handler(prn, SCRIPT_OUT,
                                     NULL, &targ);
@@ -8551,7 +8556,7 @@ void run_native_script (windata_t *vwin, gchar *buf,
     parent = vwin_toplevel(vwin);
     save_batch = gretl_in_batch_mode();
     gui_main_exec = 1;
-    err = execute_script(fname, buf, prn, SCRIPT_EXEC, parent);
+    err = execute_script(fname, buf, prn, exec_code, parent);
     gui_main_exec = 0;
     gretl_set_batch_mode(save_batch);
     refresh_data();
@@ -8573,10 +8578,6 @@ void run_native_script (windata_t *vwin, gchar *buf,
         }
     } else {
         view_buffer(prn, SCRIPT_WIDTH, 450, NULL, SCRIPT_OUT, NULL);
-        if (untmp) {
-            /* not reachable any more? */
-            finalize_reusable_output_window(targ);
-        }
     }
 
     if (!err && vwin->role != EDIT_PKG_SAMPLE &&
@@ -9422,10 +9423,6 @@ int execute_script (char *runfile, const char *buf,
     int exec_err = 0;
 
     gretl_set_batch_mode(1);
-
-#if 0
-    debug_print_model_info(model, "Start of execute_script, model");
-#endif
 
     if (runfile != NULL) {
         /* we'll get commands from file */

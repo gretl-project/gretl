@@ -1424,6 +1424,7 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
     int nextcolor, thiscolor = PLAIN_TEXT;
     int in_comment = 0;
     char readbuf[4096];
+    int console;
     int i = 0;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
@@ -1436,6 +1437,7 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     }
 
+    console = widget_get_int(view, "console");
     bufgets_init(buf);
 
     while (bufgets(readbuf, sizeof readbuf, buf)) {
@@ -1466,6 +1468,10 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 						     readbuf, -1,
 						     "bluetext", NULL);
+	} else if (console) {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						     readbuf, -1,
+						     "output", NULL);
 	} else {
 	    gtk_text_buffer_insert(tbuf, &iter, readbuf, -1);
 	}
@@ -4820,6 +4826,15 @@ static GtkTextTagTable *gretl_console_tags_new (void)
 		 "weight", PANGO_WEIGHT_NORMAL, NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("bluetext");
+    g_object_set(tag, "foreground", "blue",
+		 "weight", PANGO_WEIGHT_NORMAL, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("redtext");
+    g_object_set(tag, "foreground", "red", NULL);
+    gtk_text_tag_table_add(table, tag);
+
     return table;
 }
 
@@ -4847,6 +4862,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     }
 
     vwin->text = gtk_source_view_new_with_buffer(sbuf);
+    widget_set_int(vwin->text, "console", 1);
     vwin->sbuf = sbuf;
 
     view = GTK_TEXT_VIEW(vwin->text);
