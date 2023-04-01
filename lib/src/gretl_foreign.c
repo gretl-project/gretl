@@ -3719,7 +3719,9 @@ int check_R_depends (const char *pkgname, const char *deps,
 	pputs(prn, "}\n");
 	buf = gretl_print_get_buffer(prn);
 	err = execute_R_buffer(buf, NULL, OPT_T, inprn);
-	if (!err && strstr(gretl_print_get_buffer(inprn), "not met")) {
+	if (err) {
+	    pputs(inprn, "Check for R dependencies failed\n");
+	} else if (strstr(gretl_print_get_buffer(inprn), "not met")) {
 	    err = E_DATA; /* is there a better choice? */
 	}
     }
