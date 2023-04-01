@@ -360,7 +360,7 @@ static void maybe_exit_on_quit (void)
     }
 }
 
-static int real_console_exec (ExecState *state)
+static int real_console_exec (ExecState *state, GtkTextBuffer *tbuf)
 {
     char fname[512];
     int err = 0;
@@ -377,7 +377,11 @@ static int real_console_exec (ExecState *state)
     push_history_line(state->line);
 
     if (detect_run(state->line, fname)) {
-	/* is this a good idea? */
+	/* is calling execute_script a good idea? */
+	GtkTextIter iter;
+
+	gtk_text_buffer_get_end_iter(tbuf, &iter);
+	gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 	err = execute_script(fname, NULL, state->prn, CONSOLE_EXEC,
 			     console_main);
     } else {
@@ -415,15 +419,14 @@ static void update_console (ExecState *state, GtkWidget *cview)
     console_record_sample(dataset);
 
     protect_console();
-    real_console_exec(state);
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
+    real_console_exec(state, buf);
 
     if (state->cmd->ci == QUIT) {
 	*state->line = '\0';
 	unprotect_console();
 	return;
     }
-
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(cview));
 
     gtk_text_buffer_get_end_iter(buf, &iter);
     gtk_text_buffer_insert(buf, &iter, "\n", 1);
