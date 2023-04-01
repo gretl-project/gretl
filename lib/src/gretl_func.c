@@ -3979,7 +3979,7 @@ static int is_pdf_ref (const char *s)
 	has_suffix(s, ".pdf");
 }
 
-static int check_R_depends (const char *s)
+static int validate_R_depends (const char *s)
 {
     int err = 0;
 
@@ -4171,7 +4171,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		}
 		err = pkg_set_depends(pkg, p);
 	    } else if (!strncmp(line, "R-depends", 9)) {
-		err = check_R_depends(p);
+		err = validate_R_depends(p);
 		if (!err) {
 		    if (!quiet) {
 			pprintf(prn, "Recording R dependency list: %s\n", p);
@@ -6355,14 +6355,6 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
     return pkg;
 }
 
-static void maybe_print_R_info (fnpkg *pkg, PRN *prn)
-{
-    if (pkg->Rdeps != NULL) {
-	pputs(prn, _("# This package has the following minimal R requirement:\n"));
-	pprintf(prn, "# %s\n", pkg->Rdeps);
-    }
-}
-
 /**
  * load_function_package:
  * @fname: full path to gfn file.
@@ -6406,13 +6398,16 @@ static int load_function_package (const char *fname,
 	err = real_load_package(pkg, pstack);
     }
 
+    if (!err && pkg->Rdeps != NULL) {
+	err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+    }
+
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
     } else if (pkg != NULL) {
 	if (prn != NULL && not_mpi_duplicate()) {
 	    pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
 		    pkg->date, pkg->author);
-	    maybe_print_R_info(pkg, prn);
 	}
     }
 

@@ -43,6 +43,10 @@ int execute_R_buffer (const char *buf,
 		      gretlopt opt,
 		      PRN *prn);
 
+int check_R_depends (const char *pkgname,
+		     const char *deps,
+		     PRN *inprn);
+
 int write_gretl_R_files (const char *buf,
 			 const DATASET *dset,
 			 gretlopt opt);
