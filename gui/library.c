@@ -10024,7 +10024,17 @@ static int run_include_error (ExecState *s, const char *param,
 {
     const char *msg = gretl_errmsg_get();
 
-    pprintf(prn, _("Error reading %s\n"), param);
+    if (s->cmd->ci == INCLUDE) {
+	const char *s = strrchr(param, SLASH);
+
+	if (s != NULL) {
+	    pprintf(prn, _("Error loading %s\n"), s + 1);
+	} else {
+	    pprintf(prn, _("Error loading %s\n"), param);
+	}
+    } else {
+	pprintf(prn, _("Error reading %s\n"), param);
+    }
     if (*msg != '\0') {
         pprintf(prn, "%s\n", msg);
     }

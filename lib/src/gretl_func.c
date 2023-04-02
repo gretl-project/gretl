@@ -6400,15 +6400,14 @@ static int load_function_package (const char *fname,
 
     if (!err && pkg->Rdeps != NULL) {
 	err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+	fprintf(stderr, "HERE load_function_package: err = %d\n", err);
     }
 
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
-    } else if (pkg != NULL) {
-	if (prn != NULL && not_mpi_duplicate()) {
-	    pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
-		    pkg->date, pkg->author);
-	}
+    } else if (pkg != NULL && prn != NULL && not_mpi_duplicate()) {
+	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
+		pkg->date, pkg->author);
     }
 
     return err;

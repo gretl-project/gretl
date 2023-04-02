@@ -3673,7 +3673,7 @@ int check_R_depends (const char *pkgname, const char *deps,
 
     /* @deps should already be checked for validity, but
        let's just "mak siccar" */
-    if (S == NULL || n < 2 || n%2 != 0 || strcmp(S[0], "R")) {
+    if (S == NULL || n < 2 || n % 2 != 0 || strcmp(S[0], "R")) {
 	gretl_errmsg_sprintf("%s: broken R-dependency information", pkgname);
 	return E_DATA;
     }
@@ -3718,11 +3718,17 @@ int check_R_depends (const char *pkgname, const char *deps,
 	pputs(prn, "   cat(\"R requirements are not met\\n\")\n");
 	pputs(prn, "}\n");
 	buf = gretl_print_get_buffer(prn);
-	err = execute_R_buffer(buf, NULL, OPT_T, inprn);
+	// fprintf(stderr, "buf for R: '%s'\n", buf);
+	err = execute_R_buffer(buf, NULL, OPT_NONE, inprn);
 	if (err) {
-	    pputs(inprn, "Check for R dependencies failed\n");
-	} else if (strstr(gretl_print_get_buffer(inprn), "not met")) {
-	    err = E_DATA; /* is there a better choice? */
+	    pprintf(inprn, "%s: check for R dependencies failed\n", pkgname);
+	} else {
+	    buf = gretl_print_get_buffer(inprn);
+	    fprintf(stderr, "inprn %p\n", (void *) inprn);
+	    fprintf(stderr, "inprn buf: '%s'\n", buf);
+	    if (buf != NULL && strstr(buf, "not met")) {
+		err = E_DATA; /* is there a better choice? */
+	    }
 	}
     }
 
