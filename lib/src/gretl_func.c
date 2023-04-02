@@ -6474,7 +6474,9 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
     }
 
     if (pkg == NULL) {
-	myerr = include_gfn(fname, OPT_NONE, NULL);
+        PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+
+	myerr = include_gfn(fname, OPT_NONE, prn);
 	if (!myerr) {
 	    for (i=0; i<n_pkgs; i++) {
 		if (!strcmp(fname, pkgs[i]->fname)) {
@@ -6482,7 +6484,12 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
 		    break;
 		}
 	    }
-	}
+	} else if (prn != NULL) {
+            const char *buf = gretl_print_get_buffer(prn);
+
+            gretl_errmsg_set(buf);
+        }
+        gretl_print_destroy(prn);
     }
 
     if (err != NULL) {
