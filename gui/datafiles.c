@@ -2717,6 +2717,25 @@ static int gfn_paths_match (const char *p0, const char *p1,
     return ret;
 }
 
+void set_gfn_add_button_state (const char *pkgname,
+                               windata_t *vwin,
+                               gboolean state)
+{
+    gchar *name = NULL;
+
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
+			 0, &name);
+    if (name != NULL && !strcmp(name, pkgname)) {
+        GtkWidget *button;
+
+        button = g_object_get_data(G_OBJECT(vwin->mbar), "add-button");
+        if (button != NULL) {
+            gtk_widget_set_sensitive(button, state);
+        }
+    }
+    g_free(name);
+}
+
 static void update_gfn_browser (const char *pkgname,
 				const char *version,
 				const char *date,
@@ -2827,7 +2846,7 @@ void maybe_update_pkg_registry_window (const char *pkgname,
     if (vwin != NULL && vwin->listbox != NULL) {
 	if (code == MENU_ADD_FN_PKG) {
 	    populate_gfn_registry_list(vwin);
-	} else if (code == DELETE_FN_PKG) {
+	} else if (code == MENU_REMOVE_FN_PKG) {
 	    browser_delete_row_by_content(vwin, 0, pkgname,
 					  0, NULL);
 	}

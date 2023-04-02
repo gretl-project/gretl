@@ -4479,6 +4479,7 @@ DataReq pkg_get_data_requirement (GtkActionGroup *ag)
 void gui_function_pkg_unregister (const gchar *pkgname)
 {
     gui_package_info *gpi;
+    windata_t *vwin;
 
     gpi = get_gpi_entry(pkgname);
     if (gpi != NULL) {
@@ -4487,7 +4488,13 @@ void gui_function_pkg_unregister (const gchar *pkgname)
 
     /* sync the package registry window, if it happens to
        be open currently */
-    maybe_update_pkg_registry_window(pkgname, DELETE_FN_PKG);
+    maybe_update_pkg_registry_window(pkgname, MENU_REMOVE_FN_PKG);
+
+    /* and also the gfn browser window, if it's open */
+    vwin = get_browser_for_role(FUNC_FILES, NULL);
+    if (vwin != NULL) {
+        set_gfn_add_button_state(pkgname, vwin, TRUE);
+    }
 }
 
 static int in_own_subdir (const char *pkgname, const char *path)
@@ -4560,13 +4567,11 @@ static int gui_function_pkg_register (const char *fname,
 	       must be in their own subdir */
 	    uses_subdir = function_package_has_PDF_doc(pkg, NULL);
 	}
-
 	if (!err && uses_subdir && !in_own_subdir(pkgname, fname)) {
 	    /* detect mis-installed package: should be in
 	       own subdirectory but is not */
 	    err = E_DATA;
 	}
-
 	if (!err) {
 	    err = update_gui_package_info(pkgname,
 					  fname,
@@ -4581,6 +4586,12 @@ static int gui_function_pkg_register (const char *fname,
 
     if (err) {
 	gui_errmsg(err);
+    } else {
+        windata_t *vwin = get_browser_for_role(FUNC_FILES, NULL);
+
+        if (vwin != NULL) {
+            set_gfn_add_button_state(pkgname, vwin, FALSE);
+        }
     }
 
     return err;

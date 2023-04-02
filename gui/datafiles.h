@@ -69,6 +69,10 @@ void maybe_update_gfn_browser (const char *pkgname,
 			       int uses_subdir,
 			       int pdfdoc);
 
+void set_gfn_add_button_state (const char *pkgname,
+                               windata_t *vwin,
+                               gboolean state);
+
 void maybe_update_pkg_registry_window (const char *pkgname,
 				       int code);
 
