@@ -1632,24 +1632,22 @@
     </usage>
     <description>
       <para>
-	This is not a command in its own right but can be used as a prefix
-	to most regular commands: the effect is to prevent termination of
-	a script if an error occurs in executing the command. If an error
-	does occur, this is registered in an internal error code which can
-	be accessed as <lit>$error</lit> (a zero value indicates success).
-	The value of <lit>$error</lit> should always be checked
-	immediately after using <lit>catch</lit>, and appropriate action
-	taken if the command failed.
+	This is not a command in its own right but can be used as a prefix to
+	most regular commands: the effect is to prevent termination of a script
+	if an error occurs in executing the command. If an error does occur,
+	this is registered in an internal error code which can be accessed as
+	<fncref targ="$error"/> (a zero value indicates success).  The value of
+	<lit>$error</lit> should always be checked immediately after using
+	<lit>catch</lit>, and appropriate action taken if the command failed.
       </para>
       <para>
-	The <lit>catch</lit> keyword cannot be used before
-	<lit>if</lit>, <lit>elif</lit> or <lit>endif</lit>. In
-	addition it should not be used on calls to user-defined
-	functions; it is intended for use only with gretl commands and
-	calls to <quote>built-in</quote> functions or operators.
-	Furthermore, <lit>catch</lit> cannot be used in conjunction
-	with <quote>back-arrow</quote> assignment of models or plots
-	to session icons (see <guideref targ="chap:modes"/>).
+	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
+	<lit>elif</lit> or <lit>endif</lit>. In addition it should not be used
+	on calls to user-defined functions; it is intended for use only with
+	gretl commands and calls to <quote>built-in</quote> functions or
+	operators.  Furthermore, <lit>catch</lit> cannot be used in conjunction
+	with <quote>back-arrow</quote> assignment of models or plots to session
+	icons (see <guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
