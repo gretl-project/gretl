@@ -1056,7 +1056,7 @@ static void attach_child (NODE *parent, NODE *child, int f,
     if (np > 0 && i == np) {
 	gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
 			     _("too many arguments"));
-	p->err = E_ARGS;
+	p->err = E_INVARG;
     } else if (child->t == EMPTY && no_empty(f)) {
 	p->err = E_PARSE;
     }
