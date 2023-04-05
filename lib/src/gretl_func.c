@@ -8563,10 +8563,17 @@ static int maybe_check_function_needs (const DATASET *dset,
 {
     if (fun->pkg == NULL || fun->pkg->prechecked) {
 	return 0;
-    } else {
-	return check_function_needs(dset, fun->pkg->dreq,
-				    fun->pkg->minver);
     }
+
+#ifdef HAVE_MPI
+    if (*mpi_caller != '\0') {
+	/* let's assume we're OK */
+	return 0;
+    }
+#endif
+
+    return check_function_needs(dset, fun->pkg->dreq,
+				fun->pkg->minver);
 }
 
 /* next block: handling function return values */
@@ -9529,8 +9536,8 @@ static void set_func_error_message (int err, ufunc *u,
 		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s"),
 				     u->name, fline->idx, cmdline);
 	    } else {
-		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n"),
-				     u->name, fline->idx);
+		gretl_errmsg_sprintf(_("*** error in function %s, line %d\n> %s\n"),
+				     u->name, fline->idx, fline->s);
 	    }
 	}
 
@@ -9830,10 +9837,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	maybe_destroy_fncall(&call);
 	return err;
     }
-
-#if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: %s\n", u->name);
-#endif
 
     /* record incoming dataset dimensions */
     if (dset != NULL) {

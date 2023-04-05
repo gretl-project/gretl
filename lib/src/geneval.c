@@ -10648,13 +10648,14 @@ static NODE *eval_ufunc (NODE *l, NODE *r, parser *p)
     GretlType rtype = 0;
     int i, nparam, argc = 0;
 
+    rtype = user_func_get_return_type(uf);
+
 #if EDEBUG
-    fprintf(stderr, "eval_ufunc (%s, depth %d):\n", funname, gretl_function_depth());
+    fprintf(stderr, "eval_ufunc (%s, depth %d, rtype %s):\n", funname,
+	    gretl_function_depth(), gretl_type_get_name(rtype));
     fprintf(stderr, " compiling %d, exec'ing %d\n", (p->flags & P_COMPILE)? 1 : 0,
             (p->flags & P_EXEC)? 1 : 0);
 #endif
-
-    rtype = user_func_get_return_type(uf);
 
     if (!p->err && rtype == GRETL_TYPE_VOID) {
         if (p->targ == UNK && p->lh.name[0] == '\0' && p->lh.expr == NULL) {
