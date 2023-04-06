@@ -237,7 +237,7 @@
 	<code>
 	  err = $error
 	  if (err)
-	      printf "Se obtuvo el fallo %d (%s)\n", err, errmsg(err);
+	      printf "Se obtuvo el fallo %d (%s)\n", err, errmsg(err)
 	  endif
 	</code>
 	<para>

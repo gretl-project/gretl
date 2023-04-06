@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-01-01 09:35-0500\n"
-"PO-Revision-Date: 2023-01-03 12:06+0100\n"
+"PO-Revision-Date: 2023-04-05 11:58+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -6302,7 +6302,7 @@ msgstr "Razón de probabilidades"
 #: lib/src/modelprint.c:4564
 #, no-c-format
 msgid "%g%% confidence intervals"
-msgstr "Intervalos co %g\\%% de confianza"
+msgstr "Intervalos co %g%% de confianza"
 
 #: lib/src/modelprint.c:4836
 msgid "Sum of AR coefficients"
@@ -8400,7 +8400,7 @@ msgstr ""
 
 #: gui/about.c:233
 msgid "Rationale"
-msgstr "Razoamento"
+msgstr "Explicación"
 
 #: gui/about.c:240
 msgid "News"

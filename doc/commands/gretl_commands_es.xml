@@ -511,7 +511,12 @@
 	Abre un archivo de datos y agrega el contenido al conjunto vigente
 	de datos, si los nuevos datos son compatibles. El programa intentará
 	detectar el formato del archivo de datos (propio, texto plano, CSV,
-	Gnumeric, Excel, etc.).
+	Gnumeric, Excel, etc.). Por favor, ten en cuenta que dispones de la
+	instrucción <cmdref targ="join"/> que ofrece un control mucho mayor para
+	hacer coincidir los datos adicionales con la base de datos vigente.
+	Observa también que añadir datos a un conjunto de datos ya existente es
+	potencialmente bastante complicado; en ese sentido, consulta más abajo
+	la sección titulada <quote>Datos de panel</quote>.
       </para>
       <para>
 	Los datos añadidos pueden tener el formato de observaciones
@@ -531,23 +536,6 @@
 	nuevas.
       </para>
       <para>
-	Se admite una característica especial cuando se añaden datos a un
-	conjunto de datos de panel. Sirva <math>n</math> para denotar el
-	número de unidades atemporales en el panel, <math>T</math> para denotar
-	el número de períodos de tiempo, y <math>m</math> para denotar el
-	número de observaciones de los nuevos datos. Si <math>m = n</math>,
-	los nuevos datos se consideran invariantes en el tiempo, y se copian
-	repetidos para cada período de tiempo. Por otro lado, si
-	<math>m = T</math> los datos se tratan como invariantes entre
-	las unidades atemporales, y se copian repetidos para cada unidad
-	atemporal. Si el panel es <quote>cuadrado</quote>, y <math>m</math>
-	es igual tanto a <math>n</math> como a <math>T</math>, aparece una
-	ambigüedad. Por defecto, en este caso se tratan los nuevos datos como
-	invariantes en el tiempo, pero puedes forzar a que GRETL trate los nuevos
-	datos como series temporales con la opción <opt>time-series</opt>.
-	(Esta posibilidad se ignora en todos los otros casos.)
-      </para>
-      <para>
 	Cuando se selecciona un archivo de datos para agregar, puede
 	haber un área de solapamiento con el conjunto de datos existente;
 	es decir, una o más series pueden tener una o más observaciones
@@ -563,9 +551,38 @@
 	que con <cmdref targ="open"/>; consulta esa instrucción para obtener más
 	explicaciones.
       </para>
+      <subhead>Datos de panel</subhead>
       <para>
-	Consulta también <cmdref targ="join"/> para un manejo más sofisticado
-	de orígenes de datos múltiples.
+	Cuando los datos se añaden a un conjunto de datos de panel, el resultado
+	tan solo va a ser correcto si coinciden de forma apropiada tanto las
+	<quote>unidades</quote> o <quote>individuos</quote>, como los períodos
+	de tiempo.
+      </para>
+      <para>
+	La instrucción <lit>append</lit> debería manejar correctamente dos
+	situaciones relativamente simples. Sirva <math>n</math> para denotar el
+	número de unidades atemporales y <math>T</math> para denotar el número
+	de períodos de tiempo del panel vigente; y sirva <math>m</math> para
+	denotar el número de observaciones de los nuevos datos. Si <math>m = n</math>,
+	los nuevos datos se consideran invariantes en el tiempo, y se copian
+	repetidos para cada período de tiempo. Por otro lado, si
+	<math>m = T</math> los datos se tratan como invariantes entre
+	las unidades atemporales, y se copian repetidos para cada unidad
+	atemporal. Si el panel es <quote>cuadrado</quote>, y <math>T = n</math>
+	aparece una ambigüedad. Por defecto, en este caso se tratan los nuevos
+	datos como invariantes en el tiempo, pero puedes forzar a que GRETL los
+	trate como series temporales (invariantes entre las unidades) con la
+	opción <opt>time-series</opt>.
+      </para>
+      <para>
+	Cuando se reconoce tanto al conjunto de datos vigente como a los datos
+	que se van a añadir como datos de panel, aparecen dos situaciones.
+	(1) La longitud de las series de tiempo, <math>T</math>, es diferente
+	entre los dos. Entonces se presenta un fallo. (2) <math>T</math> coincide.
+	En ese caso se hace un supuesto muy simple, en particular que las
+	unidades coinciden, <emphasis>empezando por la primera unidad</emphasis>
+	en ambos conjuntos de datos. Si ese supuesto no es correcto, deberás
+	utilizar la instrucción <cmdref targ="join"/> en lugar de <lit>append</lit>.
       </para>
     </description>
 
@@ -828,6 +845,10 @@
 	  <flag>--y-diff-only</flag>
 	  <effect>ARIMAX especial; mira abajo</effect>
 	</option>
+	<option>
+	  <flag>--lagselect</flag>
+	  <effect>Mira abajo</effect>
+	</option>
 	      </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -845,7 +866,6 @@
       <para>
 	Advertencia: <lit>arma</lit> es un alias aceptable para esta instrucción.
       </para>
-
       <para context="cli">
 	Cuando no indicas la lista <repl>indepvars</repl>, se estima
 	un modelo univariante ARIMA (Autorregresivo, Integrado, de
@@ -858,7 +878,6 @@
 	antes de estimar los parámetros del ARMA, debe tomarse
 	la primera diferencia de la variable dependiente.
       </para>
-
       <para context="cli">
 	Si quieres incluir en el modelo solo retardos AR o MA específicos (en
 	contraposición a todos los retardos hasta un orden indicado) puedes
@@ -867,7 +886,6 @@
 	enteros, o bien (b) una expresión tal como <lit>{1,4}</lit>; es decir,
 	un conjunto de retardos separados con comas y puestos entre llaves.
       </para>
-
       <para context="cli">
 	Los valores enteros <repl>P</repl>, <repl>D</repl> y
 	<repl>Q</repl> (opcionales) representan el orden AR estacional,
@@ -877,7 +895,6 @@
 	datos trimestrales o mensuales); y puedes indicarlas en formato
 	numérico o como variables escalares.
       </para>
-
       <para context="cli">
 	En el caso univariante, por defecto se incluye en el modelo
 	una ordenada en el origen, pero puedes eliminar esto por medio de la
@@ -886,7 +903,6 @@
 	constante explícitamente si quieres tener la ordenada en el origen
 	(como en el segundo ejemplo de arriba).
       </para>
-
       <para context="cli">
 	Dispones de una forma alternativa de sintaxis para esta instrucción:
 	si no quieres aplicar diferencias (ni estacionales ni no estacionales),
@@ -899,7 +915,6 @@
       <code context="cli">
 	arma 2 1 ; y
       </code>
-
       <para context="gui">
 	Estima un modelo ARMA, con o sin regresores exógenos. Si
 	el orden de diferenciación es mayor que cero, el modelo se convierte
@@ -907,7 +922,6 @@
 	se te presenta la posibilidad de que incluyas una componente
 	estacional.
       </para>
-
       <para context="gui">
 	Si quieres incluir en el modelo únicamente retardos AR o MA específicos (en
 	contraposición a incluir todos los retardos hasta un orden indicado), marca
@@ -916,7 +930,6 @@
 	alternativa, si tienes definida una matriz que contiene el conjunto de retardos
 	que deseas, puedes teclear su nombre en el campo de anotación.
       </para>
-
       <para>
 	Por defecto, se utiliza la funcionalidad ARMA <quote>propia</quote> de
 	GRETL, con la estimación Máximo Verosímil (MV) exacta; pero dispones de
@@ -927,7 +940,6 @@
 	como un recambio automático.) Para otros detalles relacionados con
 	estas opciones, consulta <guideref targ="chap:timeseries"/>.
       </para>
-
       <para context="cli">
 	Cuando se utiliza código propio de MV exacta, las desviaciones
 	típicas estimadas se basan por defecto en una aproximación numérica a la
@@ -941,7 +953,6 @@
 	Hessiana numérica, generalmente es un indicador de que un modelo está
 	mal especificado.
       </para>
-
       <para context="cli">
 	La opción <opt>lbfgs</opt> es específica de la estimación que utiliza
 	código ARMA propio y Máxima Verosimilitud exacta; y solicita
@@ -949,7 +960,6 @@
 	L-BFGS-B en lugar del maximizador BFGS habitual. Esto puede ser de
 	ayuda en algunos casos en los que la convergencia es difícil de lograr.
       </para>
-
       <para context="cli">
 	La opción <opt>y-diff-only</opt> es específica de la estimación de modelos
 	ARIMAX (modelos con orden de integración no nulo, en los que se incluyen
@@ -959,7 +969,6 @@
 	como de los regresores; pero cuando indicas esta opción, solo se calcula para
 	la variable dependiente, quedando los regresores en niveles.
       </para>
-
       <para>El valor del AIC de Akaike indicado en conexión
 	con modelos ARIMA, se calcula de acuerdo con la definición que
 	utiliza el <program>ARIMA X-12</program>, concretamente
@@ -975,7 +984,6 @@
 	no produce criterios de información tales como AIC cuando la estimación
 	es por Máxima Verosimilitud condicional.
       </para>
-
       <para context="tex">
 	Las raíces AR y MA mostradas en conexión con la estimación
 	ARMA se basan en la siguiente representación de un proceso
@@ -992,14 +1000,12 @@
 	y la estabilidad requiere que estas raíces se encuentren
 	fuera del círculo de radio unitario.
       </para>
-
       <para context="tex">
 	La cantidad <quote>Frecuencia</quote> presentada en
 	conexión con las raíces AR y MA, es el valor $\lambda$ que
 	soluciona $z=re^{i2\pi\lambda}$, donde $z$ es la raíz en
 	cuestión y $r$ es su módulo.
       </para>
-
       <para context="notex">
 	Las raíces AR y MA mostradas en conexión con la estimación
 	ARMA se basan en la siguiente representación de un proceso
@@ -1019,15 +1025,28 @@
 	y la estabilidad requiere que estas raíces se encuentren
 	fuera del círculo de radio unitario.
       </para>
-
       <para context="notex">
-	La cantidad <quote>Frecuencia</quote> presentada en
-	conexión con las raíces AR y MA, es el valor &lgr; que soluciona
-	<math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;)
-	donde <math>z</math> es la raíz en cuestión y <math>r</math>
-	es su módulo.
+	La cantidad <quote>Frecuencia</quote> presentada en conexión con las
+	raíces AR y MA, es el valor &lgr; que soluciona <math>z</math> =
+	<math>r</math> * exp(i*2*&pi;*&lgr;) donde <math>z</math> es la raíz
+	en cuestión, y <math>r</math> es su módulo.
       </para>
 
+      <subhead context="cli">Lag selection</subhead>
+      <para context="cli">
+	Cuando se indica la opción <opt>lagselect</opt>, esta instrucción no
+	proporciona estimaciones concretas, sino que en su lugar produce
+	una tabla que presenta criterios de información y el logaritmo de la
+	verosimilitud para ciertas especificaciones ARMA o ARIMA. Los órdenes de
+	retardo <math>p</math> y <math>q</math> se consideran como máximos;
+	y cuando se indica una especificación estacional, <math>P</math> y
+	<math>Q</math> también se consideran como máximos. En todo caso, el orden
+	mínimo se considera que es 0, y los resultados se muestran para todas las
+	especificaciones desde la mínima hasta la máxima. Los grados de diferenciación
+	en la instrucción, <math>d</math> y/o <math>D</math>, se respetan pero
+	no se tratan como objeto de investigación. Puedes obtener una matriz que
+	contenga los resultados mediante el accesor <fncref targ="$test"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -1044,7 +1063,26 @@
     </description>
   </command>
 
-  <command name="bds" section="Tests" label="BDS nonlinearity test">
+  <command name="ARMA-lagselect" section="Tests" context="gui"
+    label="Selección del orden de retardo de un AR(I)MA">
+
+    <description>
+      <para>
+	En esta caja de diálogo, se especifica un modelo ARMA o ARIMA como se hace
+	habitualmente; pero los órdenes de retardo que indiques se toman como máximos.
+      </para>
+      <para>
+	La salida de resultados consiste en una tabla que muestra los valores
+	de los Criterios de Información de Akaike (AIC), de Schwarz (BIC) y de
+	Hannan&ndash;Quinn (HQC), así como el logaritmo de la verosimilitud,
+	calculados para las especificaciones que van desde los mínimos hasta
+	los máximos. Esto está pensado para ayudar en la selección de los
+	órdenes óptimos de retardo.
+      </para>
+    </description>
+  </command>
+
+  <command name="bds" section="Tests" label="Contraste BDS de no linealidad">
     <usage>
       <arguments>
         <argument>orden</argument>
@@ -1594,24 +1632,22 @@
     </usage>
     <description>
       <para>
-	Esta no es una instrucción por si misma, pero puedes utilizarla como
-	prefijo en la mayoría de las instrucciones habituales: su efecto es el de
-	prevenir que termine un guion de instrucciones si ocurre un fallo al
-	ejecutar una de ellas. Si aparece un fallo, esto se registra con un código
-	de fallo interno al que puedes acceder con <lit>$error</lit> (un valor
-	de 0 indica éxito). Inmediatamente después de utilizar <lit>catch</lit>
-	deberías verificar siempre cual es el valor de <lit>$error</lit>, y
-	realizar una acción adecuada si falló una de las instrucciones.
+	Esta no es una instrucción por si misma, pero puedes utilizarla como prefijo en
+	la mayoría de las instrucciones habituales: su efecto es el de prevenir que acabe
+	un guion de instrucciones si ocurre un fallo al ejecutar una de ellas. Si aparece
+	un fallo, esto se registra con un código de fallo interno al que puedes acceder
+	con <fncref targ="$error"/> (un valor de 0 indica éxito). Inmediatamente
+	después de utilizar <lit>catch</lit> deberías verificar siempre cual es el valor
+	de <lit>$error</lit>, y realizar una acción adecuada si falló una de las instrucciones.
       </para>
       <para>
-	No puedes utilizar la palabra clave <lit>catch</lit> antes de
-	<lit>if</lit>, <lit>elif</lit> o <lit>endif</lit>. Además, no
-	debe utilizarse en peticiones a funciones definidas por el usuario,
-	pues se pretende utilizarla solo con las instrucciones de GRETL y con las
-	peticiones a los operadores o funciones <quote>internos</quote>.
-	Más aún, no puedes usar <lit>catch</lit> combinada con la asignación
-	mediante <quote>flecha atrás</quote> de modelos o gráficos, a iconos
-	de sesión (consulta <guideref targ="chap:modes"/>).
+	No puedes utilizar la palabra clave <lit>catch</lit> antes de <lit>if</lit>,
+	<lit>elif</lit> o <lit>endif</lit>. Además, no debe utilizarse en peticiones
+	a funciones definidas por el usuario, pues se pretende utilizarla solo con las
+	instrucciones de GRETL y con las peticiones a los operadores o funciones
+	<quote>internos</quote>. Más aún, no puedes usar <lit>catch</lit> combinada
+	con la asignación mediante <quote>flecha atrás</quote> de modelos o gráficos,
+	a iconos de sesión (consulta <guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
@@ -5783,9 +5819,13 @@
 	independientes en los ejes X e Y.
       </para>
       <para>
-	Al contrario de la mayoría de los gráficos de GRETL, un gráfico interactivo
-	3-D se controla mediante Gnuplot y no con el propio GRETL. El menú de
-	edición de gráficos de GRETL no está disponible.
+	Al contrario que en la mayoría de los gráficos de GRETL, uno interactivo 3-D
+	se controla mediante Gnuplot y no con el propio GRETL; por eso el menú de
+	GRETL para editar gráficos, no está disponible. Para ver el código de Gnuplot
+	que genera el gráfico, quita la marca que permite hacerlo interactivo. Puedes
+	usar entonces el propio menú del gráfico (pulsa en él con el botón derecho del
+	ratón) para guardarlo <quote>como icono</quote>. En la ventana del Visor de iconos
+	de la sesión, puedes ver las instrucciones pulsando con el botón derecho en el icono del gráfico.
       </para>
     </description>
   </command>
@@ -16078,23 +16118,31 @@
 	a la autocorrelación (HAC). En general, esta última corrección no debiera
 	de ser necesaria si el VAR incluye un número suficiente de retardos.
       </para>
+      <subhead context="cli">Selección de retardo</subhead>
       <para context="cli">
-	Cuando indicas la opción <opt>lagselect</opt>, se toma el primer
-	parámetro de la instrucción <lit>var</lit> como el orden máximo de
-	retardos. El resultado consiste en una tabla que muestra los valores
-	de los criterios de información de Akaike (AIC), Schwarz (BIC) y
-	Hannan&ndash;Quinn (HQC) calculados por defecto con VARs de órdenes
-	desde 1 hasta el máximo indicado. Esto trata de ayudar en la selección
-	del orden óptimo de retardos. El resultado habitual del VAR no se presenta.
-	Puedes recuperar la tabla con los criterios de información en forma de
-	matriz mediante el accesor <fncref targ="$test"/>. En este contexto
-	(únicamente), puedes usar la opción <opt>minlag</opt> para ajustar
-	el nivel mínimo de retardos. Ajústalo a 0 para permitir la posibilidad
-	de que el nivel óptimo de retardos sea cero, queriendo ello decir
-	realmente que no se requiere un VAR para nada. Por el contrario,
-	podrías hacer que <opt>minlag=4</opt> si crees que necesitas
-	4 retardos por lo menos, de forma que se ahorre un poco de tiempo
-	de cálculo.
+	Cuando indicas la opción <opt>lagselect</opt>, no se presenta el
+	resultado habitual del VAR. En su lugar, se toma el primer argumento
+	como orden <emphasis>máximo</emphasis> de retardo, y la salida de
+	resultados consiste en una tabla que muestra cifras comparativas
+	calculadas para VARs que van desde el orden 1 (predeterminado) hasta
+	el máximo especificado. La tabla incluye el logaritmo de la verosimilitud
+	y el valor <math>P</math> de un contraste de Razón de Verosimilitudes
+	(RV o LR), seguidos de los Criterios de Información de Akaike (AIC),
+	de Schwarz (BIC) y de Hannan&ndash;Quinn (HQC). El contraste RV (LR)
+	compara la especificación de la fila <math>i</math> con la de la fila
+	<math>i</math> &minus; 1, considerando como hipótesis nula que todos
+	los parámetros añadidos en la fila <math>i</math> tienen valores nulos.
+	Puedes recuperar la tabla con los resultados, en formato de matriz,
+	mediante el accesor <fncref targ="$test"/>.
+      </para>
+      <para>
+  Únicamente en el contexto de la selección de retardo, puedes usar la
+  opción <opt>minlag</opt> para ajustar el nivel mínimo de retardos.
+  Ajústalo a 0 para permitir la posibilidad de que el nivel óptimo de
+  retardos sea cero (queriendo ello decir realmente que no se requiere un
+  VAR para nada). Por el contrario, podrías hacer que <opt>minlag=4</opt>
+  si crees que necesitas 4 retardos por lo menos, de forma que se ahorre
+  un poco de tiempo de cálculo.
       </para>
     </description>
 
@@ -16109,17 +16157,24 @@
 
     <description>
       <para>
-	En esta caja de diálogo especifica un VAR como siempre, pero utiliza el botón (con
+	En esta caja de diálogo, especifica un VAR como siempre, pero utiliza el botón (con
 	flechas arriba/abajo) del orden de retardos, para indicar el número máximo a probar.
       </para>
       <para>
-	El resultado consiste en una tabla que muestra los valores de los criterios de
-	información de Akaike (AIC), Schwarz (BIC) y Hannan&ndash;Quinn (HQC),
-	calculados para VARs de órdenes desde 1 hasta el máximo indicado. Esto trata
-	de ayudar en la selección del orden óptimo de retardos.
+	El resultado consiste en una tabla que muestra los valores de los
+	criterios de información de Akaike (AIC), de Schwarz (BIC) y de
+	Hannan&ndash;Quinn (HQC), calculados para VARs de órdenes desde 1 hasta
+	el máximo elegido. Además, el logaritmo de la verosimilitud se muestra
+	para cada especificación, junto con el valor <math>P</math> de un
+	contraste de Razón de Verosimilitudes sobre la hipótesis nula de que
+	todos los parámetros añadidos en la fila <math>i</math>, en relación
+	con los de la fila <math>i</math> &minus; 1, tienen valores nulos.
+      </para>
+      <para>
+	Esto está pensado para ayudar en la selección del orden óptimo del
+	retardo.
       </para>
     </description>
-
   </command>
 
   <command name="VAR-omit" section="Tests" context="gui"
