@@ -1025,6 +1025,11 @@ static int copy_mp_results (MPMODEL *mpmod, MODEL *pmod,
 	    mp_ll_stats(mpmod, pmod);
 	    mp_makevcv(mpmod, pmod, NULL, NULL);
 	}
+	if (pmod->ifc == 0) {
+	    gretl_model_set_int(pmod, "uncentered", 1);
+	    gretl_model_set_double(pmod, "centered-R2",
+				   mpf_get_d(mpmod->adjrsq));
+	}
     }
 
     if (lhconst) {
@@ -1438,27 +1443,26 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy,
     }
 
     if (mpf_sgn(tss) > 0) {
+	/* compute SSR/TSS */
 	mpf_div(tmp, pmod->ess, tss);
+	/* and subtract from 1 to get R-squared */
 	mpf_sub(pmod->rsq, MPF_ONE, tmp);
     }
 
     if (pmod->dfd > 0 && !lhconst) {
-	mpf_set_d(tmp, (double) (nobs - 1));
-	mpf_div(tmp, tmp, den);
-	mpf_mul(tmp, tmp, pmod->ess);
-	mpf_sub(pmod->adjrsq, MPF_ONE, tmp);
-	if (!pmod->ifc) {
-	    mpf_t df;
-
-	    mpf_div(tmp, pmod->ess, ypy);
-	    mpf_sub(pmod->rsq, MPF_ONE, tmp);
-	    mpf_sub(tmp, MPF_ONE, pmod->rsq);
-	    mpf_init_set_d(df, (double) (nobs - 1));
-	    mpf_mul(tmp, tmp, df);
-	    mpf_set_d(df, (double) pmod->dfd);
-	    mpf_div(tmp, tmp, df);
+	if (pmod->ifc) {
+	    /* dfd =  n - 1 */
+	    mpf_set_d(tmp, (double) (nobs - 1));
+	    mpf_div(tmp, tmp, den);
+	    mpf_mul(tmp, tmp, pmod->ess);
 	    mpf_sub(pmod->adjrsq, MPF_ONE, tmp);
-	    mpf_clear(df);
+	} else {
+	    /* record the centered R-squared as "adjusted" */
+	    mpf_set(pmod->adjrsq, pmod->rsq);
+	    /* compute SSR / sum(y^2) */
+	    mpf_div(tmp, pmod->ess, ypy);
+	    /* reset rsq as uncentered R-squared */
+	    mpf_sub(pmod->rsq, MPF_ONE, tmp);
 	}
     }
 
