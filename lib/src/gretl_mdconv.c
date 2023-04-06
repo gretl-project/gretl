@@ -17,7 +17,7 @@
  *
  */
 
-/* conversion from simple markdown to gretk's custom help-file
+/* conversion from simple markdown to gretl's custom help-file
    markup. The regular expressions used below are converted
    from Uwe Jugel's md2pango (https://github.com/ubunatic/md2pango)
    which is under the MIT license.
@@ -57,8 +57,10 @@ static m2g_data m2g_styles[] = {
     { "(\\*\\*)(.*)(\\*\\*)([^\\*]|$)", "<@bld=\"\\3\">\\4", NULL },
     { "(^|[^\\*])(\\*)(.*)(\\*)", "\\1<@itl=\"\\3\">", NULL },
     { "(\\*)(.*)(\\*)([^\\*]|$)", "<@itl=\"\\3\">\\4", NULL },
+#if 0 /* can mess up URIs */
     { "(^|[^_])(_)(.*)(_)", "\\1<@itl=\"\\3\">", NULL },
     { "(_)(.*)(_)([^_]|$)", "<@itl=\"\\3\">\\4", NULL },
+#endif
     { "(`)([^`]*)(`)", "<@lit=\"\\2\">", NULL },
     { "(!)?(\\[)(.*)(\\]\\()(.+)(\\))", "<@url=\"\\5\">", NULL },
     { "(!)?(\\[)(.*)(\\]\\(\\))", "<@url=\"\\3\">", NULL },
@@ -232,7 +234,9 @@ int md_to_gretl (const char *buf, PRN *prn)
 	int is_blank;
 
 	is_blank = string_is_blank(line);
-	// printf("@ blank %d, input '%s'\n", is_blank, line);
+#if 0
+	printf("@ blank %d, input '%s'\n", is_blank, line);
+#endif
 
         if (is_blank && !is_code) {
             if (list_item) {
