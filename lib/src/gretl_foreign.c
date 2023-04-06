@@ -269,7 +269,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
             pputc(prn, '\n');
         }
         if (errout != NULL && *errout != '\0') {
-            pputs(prn, "\nstderr:\n");
+            pprintf(prn, "\nstderr from %s:\n", argv[0]);
             pputs(prn, errout);
             pputc(prn, '\n');
         }
@@ -291,7 +291,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
         if (opt & OPT_V) {
             /* also print stderr output, if any */
             if (errout != NULL && *errout != '\0') {
-                pputs(prn, "\nstderr:\n");
+                pprintf(prn, "\nstderr from %s:\n", argv[0]);
                 pputs(prn, errout);
                 pputc(prn, '\n');
             }
