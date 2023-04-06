@@ -2016,6 +2016,55 @@ static void write_R_io_file (FILE *fp, const char *ddir)
     fputs(loadmat_body, fp);
 }
 
+static gchar *get_checkdeps_buffer (const char *deps)
+{
+    const char *checkdeps_body =
+	"checkdeps <- function(deps) {\n"
+	"  terms <- unlist(strsplit(deps, \" \"))\n"
+	"  n <- length(terms) / 2\n"
+	"  n_ok <- n\n"
+	"  j <- 1\n"
+	"  for (i in 1:n) {\n"
+	"    obj <- terms[j]\n"
+	"    minver <- terms[j+1]\n"
+	"    cat(sprintf(\"check for %s >= %s: \", obj, minver))\n"
+	"    if (obj == \"R\") {\n"
+	"      rv <- getRversion()\n"
+	"  	    if (getRversion() >= minver) {\n"
+	"  	      cat(sprintf(\"%s OK\\n\", rv))\n"
+	"  	    } else {\n"
+	"  	      cat(sprintf(\"%s too old\\n\", rv))\n"
+	"        n_ok <- n_ok - 1\n"
+	"  	    }\n"
+	"    } else {\n"
+	"      if (!require(obj, character.only=TRUE, quietly=TRUE)) {\n"
+	"        cat(\"not found\\n\")\n"
+	"        n_ok <- n_ok - 1\n"
+	"  	    } else {\n"
+	"        pv <- packageVersion(obj)\n"
+	"        if (packageVersion(obj) >= minver) {\n"
+	"          cat(sprintf(\"%s OK\\n\", pv))\n"
+	"  	      } else {\n"
+	"          cat(sprintf(\"%s too old\\n\", pv))\n"
+	"          n_ok <- n_ok - 1\n"
+	"        }\n"
+	"      }\n"
+	"    }\n"
+	"    j <- j + 2\n"
+	"  }\n"
+	"  if (n_ok < n) {\n"
+	"    cat(\"R requirements are not met\\n\")\n"
+	"  }\n"
+	"  err <- n_ok < n\n"
+	"}\n";
+    const char *suppress = "suppressPackageStartupMessages";
+    GString *gs = g_string_new(checkdeps_body);
+
+    g_string_append_printf(gs, "%s(checkdeps(\"%s\"))\n", suppress, deps);
+
+    return g_string_free(gs, FALSE);
+}
+
 /* basic content which can either go into gretl.Rsetup or into
    Rsrc for sourcing */
 
@@ -3660,80 +3709,27 @@ int execute_R_buffer (const char *buf,
 }
 
 int check_R_depends (const char *pkgname, const char *deps,
-		     PRN *inprn)
+		     PRN *prn)
 {
-    PRN *prn = NULL;
-    char **S = NULL;
-    const char *name;
-    const char *minver;
-    int i, j, n = 0;
-    int err = 0;
+    gchar *rbuf;
+    int err;
 
-    S = gretl_string_split(deps, &n, NULL);
+    rbuf = get_checkdeps_buffer(deps);
+    err = execute_R_buffer(rbuf, NULL, OPT_NONE, prn);
 
-    /* @deps should already be checked for validity, but
-       let's just "mak siccar" */
-    if (S == NULL || n < 2 || n % 2 != 0 || strcmp(S[0], "R")) {
-	gretl_errmsg_sprintf("%s: broken R-dependency information", pkgname);
-	return E_DATA;
-    }
+    if (err) {
+	pprintf(prn, "%s: check for R dependencies failed\n", pkgname);
+    } else {
+	const char *pbuf = gretl_print_get_buffer(prn);
 
-    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-    pprintf(prn, "nchk <- %d\n", n/2);
-    pprintf(prn, "n_ok <- %d\n", n/2);
-    pputs(prn, "rv <- getRversion()\n");
-
-    for (i=0, j=0; i<n/2; i++) {
-	name = S[j];
-	minver = S[j+1];
-	pprintf(prn, "cat(\"check for %s >= %s: \")\n", name, minver);
-	if (j == 0) {
-	    pprintf(prn, "if (getRversion() < \"%s\") {\n", minver);
-	    pputs(prn, "   cat(sprintf(\"%s is too old\\n\", rv))\n");
-	    pputs(prn, "   n_ok <- n_ok - 1\n");
-	    pputs(prn, "} else {\n");
-	    pputs(prn, "   cat(sprintf(\"%s OK\\n\", rv))\n");
-	} else {
-	    pprintf(prn, "if (!require(%s)) {\n", name);
-	    pprintf(prn, "   cat(\"%s not found\\n\")\n", name);
-	    pputs(prn, "   n_ok <- n_ok - 1\n");
-	    pputs(prn, "} else {\n");
-	    pprintf(prn, "   pv <- packageVersion(\"%s\")\n", name);
-	    pprintf(prn, "   if (packageVersion(\"%s\") < \"%s\") {\n",
-		    name, minver);
-	    pputs(prn, "      cat(sprintf(\"%s is too old\\n\", pv))\n");
-	    pputs(prn, "      n_ok <- n_ok - 1\n");
-	    pputs(prn, "   } else {\n");
-	    pputs(prn, "      cat(sprintf(\"%s OK\\n\", pv))\n");
-	    pputs(prn, "   }\n");
-	}
-	pputs(prn, "}\n");
-	j += 2;
-    }
-
-    if (!err) {
-	const char *buf;
-
-	pputs(prn, "if (n_ok < nchk) {\n");
-	pputs(prn, "   cat(\"R requirements are not met\\n\")\n");
-	pputs(prn, "}\n");
-	buf = gretl_print_get_buffer(prn);
-	// fprintf(stderr, "buf for R: '%s'\n", buf);
-	err = execute_R_buffer(buf, NULL, OPT_NONE, inprn);
-	if (err) {
-	    pprintf(inprn, "%s: check for R dependencies failed\n", pkgname);
-	} else {
-	    buf = gretl_print_get_buffer(inprn);
-	    fprintf(stderr, "inprn %p\n", (void *) inprn);
-	    fprintf(stderr, "inprn buf: '%s'\n", buf);
-	    if (buf != NULL && strstr(buf, "not met")) {
-		err = E_DATA; /* is there a better choice? */
-	    }
+	//fprintf(stderr, "prn %p\n", (void *) prn);
+	//fprintf(stderr, "prn buf: '%s'\n", pbuf);
+	if (pbuf != NULL && strstr(pbuf, "not met")) {
+	    err = E_DATA; /* is there a better choice? */
 	}
     }
 
-    strings_array_free(S, n);
-    gretl_print_destroy(prn);
+    g_free(rbuf);
 
     return err;
 }
