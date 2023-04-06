@@ -10308,9 +10308,38 @@ void gretl_functions_cleanup (void)
     n_pkgs = 0;
 }
 
-/* generate help output for a packaged function, either for
+static void show_gfn_help (fnpkg *pkg, int gui_help,
+			   int markup, PRN *prn)
+{
+    const char *fname;
+    const char *text;
+    int mdconv;
+
+    text = gui_help ? pkg->gui_help : pkg->help;
+    fname = gui_help ? pkg->gui_help_fname : pkg->help_fname;
+    mdconv = fname != NULL && has_suffix(fname, ".md");
+
+    if (mdconv) {
+	/* help is in markdown */
+	md_to_gretl(text, prn);
+    } else {
+	if (markup) {
+	    pputs(prn, "<@itl=\"Help text\">:\n\n");
+	    pputs(prn, "<mono>\n");
+	} else {
+	    pputs(prn, "Help text:\n");
+	}
+	pputs(prn, text);
+	if (markup) {
+	    pputs(prn, "\n</mono>");
+	}
+	pputs(prn, "\n\n");
+    }
+}
+
+/* Generate help output for a packaged function, either for
    display on the console, or with markup for display in a
-   GtkTextView window in the GUI (opt & OPT_M)
+   GtkTextView window in the GUI (opt & OPT_M).
 */
 
 static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
@@ -10346,17 +10375,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 
     if ((opt & OPT_G) && pkg != NULL && pkg->gui_help != NULL) {
 	/* GUI-specific help is preferred, and is available */
-	if (markup) {
-	    pputs(prn, "<@itl=\"Help text\">:\n\n");
-	    pputs(prn, "<mono>\n");
-	} else {
-	    pputs(prn, "Help text:\n");
-	}
-	pputs(prn, pkg->gui_help);
-	if (markup) {
-	    pputs(prn, "\n</mono>");
-	}
-	pputs(prn, "\n\n");
+	show_gfn_help(pkg, 1, markup, prn);
 	return;
     }
 
@@ -10408,17 +10427,7 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	    }
 	    g_free(pdfname);
 	} else {
-	    if (markup) {
-		pputs(prn, "<@itl=\"Help text\">:\n\n");
-		pputs(prn, "<mono>\n");
-	    } else {
-		pputs(prn, "Help text:\n");
-	    }
-	    pputs(prn, pkg->help);
-	    if (markup) {
-		pputs(prn, "\n</mono>");
-	    }
-	    pputs(prn, "\n\n");
+	    show_gfn_help(pkg, 0, markup, prn);
 	}
     }
 
