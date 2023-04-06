@@ -34,6 +34,8 @@ struct m2g_data_ {
 
 typedef struct m2g_data_ m2g_data;
 
+static m2g_data lr_quotes = {"(\")([^\"]*)(\")", "“\\2”", NULL};
+
 /* m2g_sections define how to detect special markdown sections.
    These expressions scan the full line to detect headings, lists,
    and code.
@@ -249,12 +251,19 @@ int md_to_gretl (const char *buf, PRN *prn)
             continue;
         }
 
+	if (!is_code && strchr(line, '"')) {
+            result = rx_replace(line, &lr_quotes);
+	    strcpy(line, result);
+	    g_free(result);
+	    result = line;
+	}
+
 	code_start = 0; /* start of a code block? */
 
 	for (i=0; i<n_m2g_sections && !conv_err; i++) {
 	    m2g_data *sect = &m2g_sections[i];
 
-            if (rx_match(line, sect)) {
+            if (rx_match(result, sect)) {
                 if (i == CODE) {
 		    /* start/end of code-block */
                     if (!is_code) {
@@ -314,10 +323,8 @@ int md_to_gretl (const char *buf, PRN *prn)
             }
         }
 
-	if (result != NULL) {
-	    if (free_result) {
-		g_free(result);
-	    }
+	if (result != NULL && free_result) {
+	    g_free(result);
 	}
     }
 
