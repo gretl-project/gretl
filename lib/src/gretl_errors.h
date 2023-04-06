@@ -71,9 +71,10 @@ typedef enum {
     E_BADCATCH,    /* 49 : "catch" used where it's not valid */
     E_CMPLX,       /* 50 : complex arguments/operands not supported */
     E_MIXED,       /* 51 : mixed complex/real operands not supported */
-    E_DB_DUP,      /* 52 : duplicate vars found when saving to database */
-    E_OK,          /* 53 : not really an error */
-    E_MAX          /* 54 */
+    E_DEPENDS,     /* 52 : gfn dependencies not met */
+    E_DB_DUP,      /* 53 : duplicate vars found when saving to database */
+    E_OK,          /* 54 : not really an error */
+    E_MAX          /* 55 */
 } GretlError; 
 
 enum gretl_warning_codes {

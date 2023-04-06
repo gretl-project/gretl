@@ -4536,9 +4536,13 @@ static int gui_function_pkg_register (const char *fname,
     }
 
     if (pkg == NULL) {
-	/* not already loaded */
+	/* not already loaded, load it now*/
 	pkg = get_function_package_by_filename(fname, &err);
-	if (err) {
+	if (err == E_DEPENDS) {
+	    /* problem with R dependencies? */
+	    gui_warnmsg(err);
+	    return err;
+	} else if (err) {
 	    gui_errmsg(err);
 	    return err;
 	}

@@ -2778,7 +2778,7 @@ static int gui_install_gfn (const gchar *objname,
     int err = 0;
 
     if (depends != NULL) {
-	/* try to handle dependencies first */
+	/* try to handle native dependencies first */
 	char *pkgpath, **Deps;
 	int i, n_deps;
 
@@ -2864,6 +2864,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
     if (objname == NULL || *objname == '\0') {
 	g_free(objname);
+	g_free(depends);
 	return;
     }
 

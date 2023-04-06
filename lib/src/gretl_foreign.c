@@ -3725,7 +3725,7 @@ int check_R_depends (const char *pkgname, const char *deps,
         //fprintf(stderr, "prn %p\n", (void *) prn);
         //fprintf(stderr, "prn buf: '%s'\n", pbuf);
         if (pbuf != NULL && strstr(pbuf, "not met")) {
-            err = E_DATA; /* is there a better choice? */
+            err = E_DEPENDS;
         }
     }
 
