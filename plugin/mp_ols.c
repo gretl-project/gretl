@@ -1026,9 +1026,11 @@ static int copy_mp_results (MPMODEL *mpmod, MODEL *pmod,
 	    mp_makevcv(mpmod, pmod, NULL, NULL);
 	}
 	if (pmod->ifc == 0) {
+	    /* do what we do with regular ols */
 	    gretl_model_set_int(pmod, "uncentered", 1);
 	    gretl_model_set_double(pmod, "centered-R2",
 				   mpf_get_d(mpmod->adjrsq));
+	    pmod->adjrsq = NADBL;
 	}
     }
 

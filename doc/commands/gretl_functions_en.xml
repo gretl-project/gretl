@@ -865,7 +865,12 @@
       <description>
 	<para>
 	  Returns the unadjusted <math>R</math><sup>2</sup> from the
-	  last estimated model, if available.
+	  last estimated model, if available. Usually this will be the
+	  regular (centered) <math>R</math><sup>2</sup> but if the
+	  specification contains no constant (and no set of regressors
+	  that <quote>add up to</quote> a constant) it will be the
+	  uncentered version. In that case the centered version can
+	  be accessed as <lit>$model.centered_R2</lit>.
 	</para>
       </description>
     </function>
