@@ -6384,6 +6384,10 @@ static int load_function_package (const char *fname,
 
     pkg = read_package_file(fname, 1, &err);
 
+    if (!err && pkg->Rdeps != NULL) {
+	err = check_R_depends(pkg->name, pkg->Rdeps, prn);
+    }
+
     if (!err) {
 	/* Let's double-check that we don't have a
 	   colliding package (it would have to be
@@ -6396,11 +6400,6 @@ static int load_function_package (const char *fname,
 	    real_function_package_unload(oldpkg, 1);
 	}
 	err = real_load_package(pkg, pstack);
-    }
-
-    if (!err && pkg->Rdeps != NULL) {
-	err = check_R_depends(pkg->name, pkg->Rdeps, prn);
-	fprintf(stderr, "HERE load_function_package: err = %d\n", err);
     }
 
     if (err) {
