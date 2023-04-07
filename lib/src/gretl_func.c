@@ -5938,25 +5938,14 @@ static void real_bundle_package_info (const fnpkg *pkg,
     }
 }
 
-/* simple plain-text help output */
-
-static void print_package_help (const fnpkg *pkg,
-				const char *fname,
-				PRN *prn)
+static void reflow_package_help (const char *help, PRN *prn)
 {
     char *rem, *prev, line[2048];
     int i, lmax = 80;
 
-    pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
-	    pkg->date, pkg->author);
-    pputs(prn, gretl_strstrip(pkg->descrip));
-    pputs(prn, "\n\n");
+    bufgets_init(help);
 
-    /* try reflowing the help text if lines are too long
-       for presentation in console */
-
-    bufgets_init(pkg->help);
-    while (bufgets(line, sizeof line, pkg->help)) {
+    while (bufgets(line, sizeof line, help)) {
 	if (strlen(line) <= lmax) {
 	    pputs(prn, line);
 	} else {
@@ -5971,7 +5960,7 @@ static void print_package_help (const fnpkg *pkg,
 			break;
 		    }
 		}
-		if (rem - line == 0 || rem == prev) {
+		if (rem == line || rem == prev) {
 		    /* let's not get into an infinite loop */
 		    break;
 		}
@@ -5982,9 +5971,39 @@ static void print_package_help (const fnpkg *pkg,
 	    }
 	}
     }
-    bufgets_finalize(pkg->help);
 
+    bufgets_finalize(help);
     pputs(prn, "\n\n");
+}
+
+/* Simple plain-text help output, or converted markdown if
+   applicable -- that is, we're in GUI mode and @pkg has
+   help text in markdown. Being in GUI mode is signalled
+   by @pbuf being non-NULL.
+*/
+
+static void print_package_help (const fnpkg *pkg,
+				const char *fname,
+                                char **pbuf,
+				PRN *prn)
+{
+    pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
+	    pkg->date, pkg->author);
+    pputs(prn, gretl_strstrip(pkg->descrip));
+    pputs(prn, "\n\n");
+
+    if (pbuf != NULL && pkg->help_fname != NULL &&
+        has_suffix(pkg->help_fname, ".md")) {
+        PRN *myprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+
+        /* FIXME should the next line really be needed? */
+        pprintf(myprn, "<@bld=\"%s\">\n\n", pkg->name);
+        md_to_gretl(pkg->help, myprn);
+        *pbuf = gretl_print_steal_buffer(myprn);
+        gretl_print_destroy(myprn);
+    } else {
+        reflow_package_help(pkg->help, prn);
+    }
 }
 
 static void print_package_code (const fnpkg *pkg,
@@ -6583,7 +6602,8 @@ static int gfn_version_fail (const char *fname, PRN *prn)
    (indirectly) from the GUI (see below for the actual callbacks).
 */
 
-static int real_print_gfn_data (const char *fname, PRN *prn,
+static int real_print_gfn_data (const char *fname,
+                                char **pbuf, PRN *prn,
 				int tabwidth, int task,
 				gretl_bundle *b)
 {
@@ -6621,7 +6641,7 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 
     if (!err) {
 	if (task == FUNCS_HELP) {
-	    print_package_help(pkg, fname, prn);
+	    print_package_help(pkg, fname, pbuf, prn);
 	} else if (task == FUNCS_INFO) {
 	    print_package_info(pkg, fname, prn);
 	} else if (task == FUNCS_QUERY) {
@@ -6655,14 +6675,14 @@ int print_function_package_info (const char *fname, int gui_mode,
 {
     int mode = gui_mode ? FUNCS_INFO : FUNCS_QUERY;
 
-    return real_print_gfn_data(fname, prn, 0, mode, NULL);
+    return real_print_gfn_data(fname, NULL, prn, 0, mode, NULL);
 }
 
 /* callback used by "pkg" command with query action + --quiet */
 
 int bundle_function_package_info (const char *fname, gretl_bundle *b)
 {
-    return real_print_gfn_data(fname, NULL, 0, FUNCS_QUERY, b);
+    return real_print_gfn_data(fname, NULL, NULL, 0, FUNCS_QUERY, b);
 }
 
 /* callback used in the GUI function package browser */
@@ -6670,7 +6690,7 @@ int bundle_function_package_info (const char *fname, gretl_bundle *b)
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_CODE, NULL);
+    return real_print_gfn_data(fname, NULL, prn, tabwidth, FUNCS_CODE, NULL);
 }
 
 /* callback used in the GUI function package browser */
@@ -6678,14 +6698,14 @@ int print_function_package_code (const char *fname, int tabwidth,
 int print_function_package_sample (const char *fname, int tabwidth,
 				   PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_SAMPLE, NULL);
+    return real_print_gfn_data(fname, NULL, prn, tabwidth, FUNCS_SAMPLE, NULL);
 }
 
 /* callback used via command line */
 
-int print_function_package_help (const char *fname, PRN *prn)
+int print_function_package_help (const char *fname, char **pbuf, PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, 0, FUNCS_HELP, NULL);
+    return real_print_gfn_data(fname, pbuf, prn, 0, FUNCS_HELP, NULL);
 }
 
 static void maybe_fix_broken_date (char **pdate)

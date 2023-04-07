@@ -287,7 +287,8 @@ int bundle_function_package_info (const char *fname, gretl_bundle *b);
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn);
 
-int print_function_package_help (const char *fname, PRN *prn);
+int print_function_package_help (const char *fname, char **pbuf,
+                                 PRN *prn);
 
 ufunc *get_function_from_package (const char *funname, fnpkg *pkg);
 

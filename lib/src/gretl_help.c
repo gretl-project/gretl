@@ -332,11 +332,11 @@ static int show_pkg_pdf (const char *fname)
 }
 
 static int find_function_package_help (const char *targ,
-				       char **pbuf,
-				       PRN *prn, int *err)
+				       char **pbuf, PRN *prn,
+                                       int *err)
 {
-    char *gfn = NULL;
-    char *pdf = NULL;
+    char *gfnname = NULL;
+    char *pdfname = NULL;
     char **dnames = NULL;
     int i, n_dirs = 0;
     int found = 0;
@@ -348,17 +348,18 @@ static int find_function_package_help (const char *targ,
 	GDir *dir = gretl_opendir(dnames[i]);
 
 	if (dir != NULL) {
-	    found = find_pkg_in_dir(targ, dir, dnames[i], &gfn, &pdf);
+	    found = find_pkg_in_dir(targ, dir, dnames[i],
+                                    &gfnname, &pdfname);
 	    g_dir_close(dir);
 	}
     }
 
-    if (pdf != NULL) {
-	*err = show_pkg_pdf(pdf);
-	free(pdf);
-    } else if (gfn != NULL) {
-	*err = print_function_package_help(gfn, prn);
-	free(gfn);
+    if (pdfname != NULL) {
+	*err = show_pkg_pdf(pdfname);
+	free(pdfname);
+    } else if (gfnname != NULL) {
+	*err = print_function_package_help(gfnname, pbuf, prn);
+	free(gfnname);
     }
 
     strings_array_free(dnames, n_dirs);
