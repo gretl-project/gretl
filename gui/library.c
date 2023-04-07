@@ -10049,18 +10049,16 @@ static void gui_exec_help (ExecState *s, CMD *cmd)
 {
 
     char *buf = NULL;
-    int err = 0;
 
     if ((s->flags & CONSOLE_EXEC) && try_gui_help(cmd)) {
-        err = gui_console_help(cmd->param);
-        if (err) {
-            /* fallback */
-            err = 0;
-            cli_help(cmd->param, cmd->parm2, cmd->opt, &buf, s->prn);
-        }
-    } else {
-        cli_help(cmd->param, cmd->parm2, cmd->opt, &buf, s->prn);
+	/* try for a gretl command or built-in function */
+	if (gui_console_help(cmd->param) == 0) {
+	    /* no error: we're done */
+	    return;
+	}
     }
+
+    cli_help(cmd->param, cmd->parm2, cmd->opt, &buf, s->prn);
 
     if (buf != NULL) {
         view_formatted_text_buffer(cmd->param, buf, 80, 400,

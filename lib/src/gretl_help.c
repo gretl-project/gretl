@@ -352,6 +352,8 @@ static int find_function_package_help (const char *targ,
 	}
     }
 
+    fprintf(stderr, "found gfn = %p (%s)\n", (void *) gfn, gfn);
+
     if (pdf != NULL) {
 	*err = show_pkg_pdf(pdf);
 	free(pdf);
@@ -388,20 +390,18 @@ static int maybe_do_markup (const char *hlpword, char **pbuf,
 /**
  * cli_help:
  * @hlpword: the word (usually a command) on which help is wanted.
- * @param: parameter usable when @hlpword is "set".
+ * @param: parameter usable when @hlpword is (literally) "set".
  * @opt: may include %OPT_F to give priority to functions
  * rather than commands.
  * @pbuf: location to receive text buffer with GUI-friendly markup,
  * if applicable.
- * text uses GUI-friendly markup.
  * @prn: pointer to gretl printing struct.
  *
- * Searches in the gretl helpfile for help on @hlpword and,
+ * Searches in the gretl help files for help on @hlpword and,
  * if help is found, prints it to @prn.  If @hlpword is %NULL,
  * lists the valid commands.
  *
- * Returns: 0 on success, 1 if the helpfile was not found or the
- * requested topic was not found.
+ * Returns: 0 on success, non-zero if no help could be found.
  */
 
 int cli_help (const char *hlpword, const char *param,

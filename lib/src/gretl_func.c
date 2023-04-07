@@ -5944,8 +5944,8 @@ static void print_package_help (const fnpkg *pkg,
 				const char *fname,
 				PRN *prn)
 {
-    char *rem, line[2048];
-    int i, lmax = 76;
+    char *rem, *prev, line[2048];
+    int i, lmax = 80;
 
     pprintf(prn, "%s %s (%s), %s\n", pkg->name, pkg->version,
 	    pkg->date, pkg->author);
@@ -5961,6 +5961,7 @@ static void print_package_help (const fnpkg *pkg,
 	    pputs(prn, line);
 	} else {
 	    rem = line;
+	    prev = NULL;
 	    while (strlen(rem) > lmax) {
 		for (i=lmax-1; i>0; i--) {
 		    if (rem[i] == ' ') {
@@ -5970,10 +5971,11 @@ static void print_package_help (const fnpkg *pkg,
 			break;
 		    }
 		}
-		if (rem - line == 0) {
+		if (rem - line == 0 || rem == prev) {
 		    /* let's not get into an infinite loop */
 		    break;
 		}
+		prev = rem;
 	    }
 	    if (*rem != '\0') {
 		pputs(prn, rem);
