@@ -332,6 +332,7 @@ static int show_pkg_pdf (const char *fname)
 }
 
 static int find_function_package_help (const char *targ,
+				       char **pbuf,
 				       PRN *prn, int *err)
 {
     char *gfn = NULL;
@@ -351,8 +352,6 @@ static int find_function_package_help (const char *targ,
 	    g_dir_close(dir);
 	}
     }
-
-    fprintf(stderr, "found gfn = %p (%s)\n", (void *) gfn, gfn);
 
     if (pdf != NULL) {
 	*err = show_pkg_pdf(pdf);
@@ -455,7 +454,7 @@ int cli_help (const char *hlpword, const char *param,
 	} else {
 	    return user_function_help(hlpword, OPT_NONE, prn);
 	}
-    } else if (find_function_package_help(hlpword, prn, &err)) {
+    } else if (find_function_package_help(hlpword, pbuf, prn, &err)) {
 	return err; /* handled */
     } else {
 	pprintf(prn, _("\"%s\" is not a gretl command.\n"), hlpword);
