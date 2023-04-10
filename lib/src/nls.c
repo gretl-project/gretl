@@ -1415,21 +1415,32 @@ static gretl_matrix *mle_hessian_inverse (nlspec *spec, int *err)
 static void add_stats_to_model (MODEL *pmod, nlspec *spec)
 {
     int dv = spec->dv;
-    double d, tss;
+    int uncentered = 0;
+    double *y = spec->dset->Z[dv];
+    double tss = 0.0;
+    double ypy = 0.0;
+    double d;
     int s, t;
+
+    if (gretl_model_get_int(pmod, "uncentered")) {
+	uncentered = 1;
+    }
 
     pmod->ess = spec->crit;
     pmod->sigma = sqrt(pmod->ess / (pmod->nobs - spec->ncoeff));
 
-    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, spec->dset->Z[dv]);
-    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, spec->dset->Z[dv]);
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
 
     s = (spec->missmask != NULL)? 0 : pmod->t1;
 
-    tss = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	d = spec->dset->Z[dv][s++] - pmod->ybar;
+	d = y[s] - pmod->ybar;
 	tss += d * d;
+	if (uncentered) {
+	    ypy += y[s] * y[s];
+	}
+	s++;
     }
 
     /* before over-writing the Gauss-Newton R^2, record it:
@@ -1437,12 +1448,26 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
     */
     gretl_model_set_double(pmod, "GNR_Rsquared", pmod->rsq);
 
-    if (tss == 0.0) {
+    if (uncentered) {
+	/* add uncentered R-squared */
+	pmod->rsq = 1.0 - pmod->ess / ypy;
+    } else if (tss == 0.0) {
 	pmod->rsq = pmod->adjrsq = NADBL;
-    } else {
-	pmod->rsq = 1.0 - pmod->ess / tss;
-	pmod->adjrsq = 1.0 - (1.0 - pmod->rsq) *
-	    ((double) (pmod->nobs - 1) / (pmod->nobs - pmod->ncoeff));
+    }
+
+    if (tss > 0) {
+	double rsq = 1.0 - pmod->ess / tss;
+
+	if (uncentered) {
+	    gretl_model_set_double(pmod, "centered-R2", rsq);
+	    pmod->adjrsq = NADBL;
+	} else {
+	    double num = pmod->ess / (pmod->nobs - pmod->ncoeff);
+	    double den = tss / (pmod->nobs - 1);
+
+	    pmod->rsq = rsq;
+	    pmod->adjrsq = 1.0 - num / den;
+	}
     }
 }
 
@@ -3441,12 +3466,12 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     spec->opt = opt;
 
-    /* make dset and prn available via spec */
+    /* make @dset and @prn available via @spec */
     spec->dset = dset;
     spec->prn = prn;
 
     if (spec->opt & OPT_N) {
-	/* ignore any analytical derivs */
+	/* ignore any analytical derivatives */
 	set_numeric_mode(spec);
     }
 
