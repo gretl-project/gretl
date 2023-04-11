@@ -897,7 +897,7 @@ static void print_outer_dataset (const DATASET *dset, const char *fname)
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
     pprintf(prn, "Data extracted from %s:\n", fname);
-    printdata(NULL, NULL, dset, OPT_O, prn);
+    printdata(NULL, NULL, (DATASET *) dset, OPT_O, prn);
     gretl_print_destroy(prn);
 }
 # endif
@@ -2917,24 +2917,37 @@ static int *midas_revise_jspec (joinspec *jspec,
     return ret;
 }
 
-static void maybe_transfer_string_table (DATASET *l_dset,
-                                         DATASET *r_dset,
-                                         joinspec *jspec,
-                                         int *targvars,
-                                         int orig_v)
+/* For newly added series: import labels and/or string tables
+   from the outer dataset, if applicable.
+*/
+
+static void maybe_import_strings (DATASET *l_dset,
+				  DATASET *r_dset,
+				  joinspec *jspec,
+				  int *targvars,
+				  int orig_v)
 {
+    const char *label;
     int i, lv, rv;
 
     for (i=1; i<=targvars[0]; i++) {
-        lv = targvars[i];
-        if (lv >= orig_v) {
-            /* it's a new series */
-            rv = outer_series_index(jspec, i);
-            if (rv > 0 && is_string_valued(r_dset, rv)) {
-                /* let the new series grab the RHS string table */
-                steal_string_table(l_dset, lv, r_dset, rv);
-            }
-        }
+	if (targvars[i] < orig_v) {
+	    /* not a new series, skip it */
+	    continue;
+	}
+	rv = outer_series_index(jspec, i);
+	if (rv > 0) {
+	    lv = targvars[i];
+	    label = series_get_label(r_dset, rv);
+	    if (label != NULL && *label != '\0') {
+		/* transcribe descriptive label */
+		series_set_label(l_dset, lv, label);
+	    }
+	    if (is_string_valued(r_dset, rv)) {
+		/* grab the RHS string table */
+		steal_string_table(l_dset, lv, r_dset, rv);
+	    }
+	}
     }
 }
 
@@ -3369,8 +3382,8 @@ int gretl_join_data (const char *fname,
     if (!err && add_v > 0 && jspec.colnums[JOIN_TARG] > 0) {
         /* we added one or more new series */
         if (aggr != AGGR_MIDAS) {
-            maybe_transfer_string_table(dset, outer_dset, &jspec,
-                                        targvars, orig_v);
+            maybe_import_strings(dset, outer_dset, &jspec,
+				 targvars, orig_v);
         }
     }
 
