@@ -1416,6 +1416,7 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
 {
     int dv = spec->dv;
     int uncentered = 0;
+    int k = spec->spec->ncoeff;
     double *y = spec->dset->Z[dv];
     double tss = 0.0;
     double ypy = 0.0;
@@ -1427,7 +1428,7 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
     }
 
     pmod->ess = spec->crit;
-    pmod->sigma = sqrt(pmod->ess / (pmod->nobs - spec->ncoeff));
+    pmod->sigma = sqrt(pmod->ess / (pmod->nobs - k));
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
@@ -1462,7 +1463,7 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
 	    gretl_model_set_double(pmod, "centered-R2", rsq);
 	    pmod->adjrsq = NADBL;
 	} else {
-	    double num = pmod->ess / (pmod->nobs - pmod->ncoeff);
+	    double num = pmod->ess / (pmod->nobs - k);
 	    double den = tss / (pmod->nobs - 1);
 
 	    pmod->rsq = rsq;
