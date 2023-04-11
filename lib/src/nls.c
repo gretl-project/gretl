@@ -1416,7 +1416,7 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec)
 {
     int dv = spec->dv;
     int uncentered = 0;
-    int k = spec->spec->ncoeff;
+    int k = spec->ncoeff;
     double *y = spec->dset->Z[dv];
     double tss = 0.0;
     double ypy = 0.0;
