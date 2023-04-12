@@ -14375,7 +14375,7 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     if (rc == 0) {
         /* going by rows */
         for (i=0; i<A->rows; i++) {
-            d = mm > 0 ? -1.0e300 : DBL_MAX;
+            d = mm > 0 ? -DBL_MAX : DBL_MAX;
             k = 0;
             int valid_cols = A->cols;
             for (j=0; j<A->cols; j++) {
@@ -14412,7 +14412,7 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     } else {
         /* going by columns */
         for (j=0; j<A->cols; j++) {
-            d = mm > 0 ? -1.0e300 : DBL_MAX;
+            d = mm > 0 ? -DBL_MAX : DBL_MAX;
             int valid_rows = A->rows;
             k = 0;
             for (i=0; i<A->rows; i++) {
