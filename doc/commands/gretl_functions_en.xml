@@ -5924,11 +5924,15 @@
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the row indices of the maxima of the columns of
-	  <argname>X</argname>.
+	  <argname>X</argname>. For columns containing <lit>NA</lit>s
+	  the result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the index for the maximum valid entry will be returned. 
 	</para>
 	<para>
 	  <seelist>
@@ -5943,11 +5947,15 @@
     <function name="imaxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the column indices of the maxima of the rows of
-	  <argname>X</argname>.
+	  Returns the column indices of the maxima of the columns of
+	  <argname>X</argname>. For rows containing <lit>NA</lit>s the
+	  result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the index for the maximum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -5992,11 +6000,15 @@
     <function name="iminc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the row indices of the minima of the columns of
-	  <math>X</math>.
+	  <math>X</math>. For columns containing <lit>NA</lit>s
+	  the result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the index for the minimum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -6011,11 +6023,15 @@
     <function name="iminr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the column indices of the minima of the rows of
-	  <math>X</math>.
+	  <math>X</math>. For rows containing <lit>NA</lit>s
+	  the result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the index for the minimum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -7773,11 +7789,15 @@
     <function name="maxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns a row vector containing the maxima of the columns of
-	  <argname>X</argname>.
+	  <argname>X</argname>. For columns containing <lit>NA</lit>s
+	  the result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the maximum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -7792,11 +7812,15 @@
     <function name="maxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns a column vector containing the maxima of the rows of
-	  <argname>X</argname>.
+	  <argname>X</argname>. For rows containing <lit>NA</lit>s
+	  the result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the maximum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -8242,10 +8266,15 @@
     <function name="minc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the minima of the columns of <argname>X</argname>.
+	  Returns the minima of the columns of
+	  <argname>X</argname>. For columns containing <lit>NA</lit>s
+	  the result is also set to <lit>NA</lit>, unless the optional
+	  argument <argname>skip_na</argname> is nonzero, in which
+	  case the minimum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
@@ -8260,10 +8289,15 @@
     <function name="minr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the minima of the rows of <argname>X</argname>.
+	  Returns the minima of the rows of <argname>X</argname>. For
+	  rows containing <lit>NA</lit>s the result is also set to
+	  <lit>NA</lit>, unless the optional argument
+	  <argname>skip_na</argname> is nonzero, in which case the
+	  minimum valid entry will be returned.
 	</para>
 	<para>
 	  <seelist>
