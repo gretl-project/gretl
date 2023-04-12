@@ -4592,6 +4592,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             } else if (!null_node(r)) {
                 xparm = node_get_scalar(r, p);
             }
+        } else if (f >= F_MINC && f <= F_IMAXR) {
+            parm = node_get_bool(r, p, 0);
         } else if (f == F_RANKING) {
             if (gretl_vector_get_length(m) == 0) {
                 /* m must be a vector */
@@ -4755,7 +4757,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         case F_IMINR:
         case F_IMAXR:
             matrix_minmax_indices(f, &a, &b, &c);
-            ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
+            ret->v.m = gretl_matrix_minmax(m, a, b, c, parm, &p->err);
             break;
         case F_CTRANS:
             ret->v.m = gretl_ctrans(m, 1, &p->err);

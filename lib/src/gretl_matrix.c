@@ -14336,6 +14336,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
  * @mm: 0 for minima, 1 for maxima.
  * @rc: 0 for row-wise, 1 for column-wise.
  * @idx: 0 for values, 1 for indices.
+ * @skip_na: ignore missing values.
  * @err: location to receive error code.
  *
  * Creates a matrix holding the row or column mimima or
@@ -14349,7 +14350,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 
 gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                                    int mm, int rc, int idx,
-                                   int *err)
+                                   int skip_na, int *err)
 {
     gretl_matrix *B;
     double d, x;
@@ -14373,18 +14374,20 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 
     if (rc == 0) {
         /* going by rows */
+        d = mm > 0 ? DBL_MIN : DBL_MAX;
         for (i=0; i<A->rows; i++) {
-            d = gretl_matrix_get(A, i, 0);
-            if (na(d)) {
-                B->val[i] = NADBL;
-                continue;
-            }
             k = 0;
-            for (j=1; j<A->cols; j++) {
+            int valid_cols = A->cols;
+            for (j=0; j<A->cols; j++) {
                 x = gretl_matrix_get(A, i, j);
                 if (na(x)) {
-                    B->val[i] = NADBL;
-                    break;
+                    if (skip_na) {
+                        valid_cols--;
+                        continue;
+                    } else {
+                        B->val[i] = NADBL;
+                        break;
+                    }
                 } else if (mm > 0) {
                     /* looking for max */
                     if (x > d) {
@@ -14398,6 +14401,9 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                         k = j;
                     }
                 }
+            }
+            if (valid_cols == 0) {
+                B->val[i] = NADBL;
             }
             if (!na(B->val[i])) {
                 B->val[i] = idx ? (double) k + 1 : d;
@@ -14405,18 +14411,20 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
         }
     } else {
         /* going by columns */
+        d = mm > 0 ? DBL_MIN : DBL_MAX;
         for (j=0; j<A->cols; j++) {
-            d = gretl_matrix_get(A, 0, j);
-            if (na(d)) {
-                B->val[j] = NADBL;
-                continue;
-            }
+            int valid_rows = A->rows;
             k = 0;
             for (i=1; i<A->rows; i++) {
                 x = gretl_matrix_get(A, i, j);
                 if (na(x)) {
-                    B->val[j] = NADBL;
-                    break;
+                    if (skip_na) {
+                        valid_rows--;
+                        continue;
+                    } else {
+                        B->val[j] = NADBL;
+                        break;
+                    }
                 } else if (mm > 0) {
                     /* looking for max */
                     if (x > d) {
@@ -14430,6 +14438,9 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
                         k = i;
                     }
                 }
+            }
+            if (valid_rows == 0) {
+                B->val[j] = NADBL;
             }
             if (!na(B->val[j])) {
                 B->val[j] = idx ? (double) k + 1 : d;

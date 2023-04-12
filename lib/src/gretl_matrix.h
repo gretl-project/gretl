@@ -870,7 +870,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 
 gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 				   int mm, int rc, int idx,
-				   int *err);
+				   int skip_na, int *err);
 
 double gretl_matrix_global_minmax (const gretl_matrix *A,
 				   int mm, int *err);
