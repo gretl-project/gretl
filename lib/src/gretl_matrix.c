@@ -14415,7 +14415,7 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
             d = mm > 0 ? -1.0e300 : DBL_MAX;
             int valid_rows = A->rows;
             k = 0;
-            for (i=1; i<A->rows; i++) {
+            for (i=0; i<A->rows; i++) {
                 x = gretl_matrix_get(A, i, j);
                 if (na(x)) {
                     if (skip_na) {
