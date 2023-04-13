@@ -5924,7 +5924,7 @@
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5947,7 +5947,7 @@
     <function name="imaxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6000,7 +6000,7 @@
     <function name="iminc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6023,7 +6023,7 @@
     <function name="iminr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7789,7 +7789,7 @@
     <function name="maxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7812,7 +7812,7 @@
     <function name="maxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -8022,11 +8022,14 @@
     <function name="meanc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the columns of <argname>X</argname>, not
-	  skipping any missing observations.
+	  Returns the means of the columns of <argname>X</argname>.
+	  If a non-zero value is given for the optional second
+	  argument missing values are ignored, otherwise the result is
+	  <lit>NA</lit> for any columns that contain missing values.
 	</para>
 	<para>
 	  For example, the following piece of code
@@ -8069,10 +8072,14 @@
     <function name="meanr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the rows of <argname>X</argname>.
+	  Returns the means of the rows of <argname>X</argname>.  If a
+	  non-zero value is given for the optional second argument
+	  missing values are ignored, otherwise the result is
+	  <lit>NA</lit> for any rows that contain missing values.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumr"/>
@@ -8266,7 +8273,7 @@
     <function name="minc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -8289,7 +8296,7 @@
     <function name="minr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg optional="true" type="scalar">skip_na</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10450,11 +10457,15 @@
     <function name="prodc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the product of the elements of <argname>X</argname>,
-	  by column.
+	  by column. If a non-zero value is given for the optional
+	  second argument missing values are ignored, otherwise the
+	  result is <lit>NA</lit> for any columns that contain missing
+	  values.
 	  <seelist>
             <fncref targ="prodr"/>
             <fncref targ="meanc"/>
@@ -10468,11 +10479,14 @@
     <function name="prodr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the product of the elements of <argname>X</argname>,
-	  by row.
+	  by row. If a non-zero value is given for the optional second
+	  argument missing values are ignored, otherwise the result is
+	  <lit>NA</lit> for any rows that contain missing values.
 	  <seelist>
             <fncref targ="prodc"/>
             <fncref targ="meanr"/>
@@ -11739,6 +11753,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar" optional="true">df</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -11747,7 +11762,10 @@
 	  it is used as the divisor for the column variances,
 	  otherwise the divisor is the number of rows in
 	  <argname>X</argname> (that is, no degrees of freedom
-	  correction is applied).
+	  correction is applied). If a non-zero value is given for the
+	  optional third argument missing values are ignored,
+	  otherwise the result is <lit>NA</lit> for any columns that
+	  contain missing values.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumc"/>
@@ -13017,10 +13035,14 @@
     <function name="sumc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the sums of the columns of <argname>X</argname>.
+	  Returns the sums of the columns of <argname>X</argname>. If
+	  a non-zero value is given for the optional second argument
+	  missing values are ignored, otherwise the result is
+	  <lit>NA</lit> for any columns that contain missing values.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumr"/>
@@ -13032,10 +13054,14 @@
     <function name="sumr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the sums of the rows of <argname>X</argname>.
+	  Returns the sums of the rows of <argname>X</argname>.  If a
+	  non-zero value is given for the optional second argument
+	  missing values are ignored, otherwise the result is
+	  <lit>NA</lit> for any rows that contain missing values.
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
