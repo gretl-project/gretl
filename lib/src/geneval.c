@@ -4549,15 +4549,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         double xparm = NADBL;
         int tmpmat = 0;
         int parm = 0;
-        int gotopt = 0;
         int a = 0, b = 0, c = 0;
 
         /* Note: @parm is an integer parameter, required
            for some functions, optional for others. In the
-           special case of stdize() the default @parm
-           value is 1;
+           cases of mcov() and stdize() the default @parm
+           value is 1, otherwise it's 0.
         */
-        if (f == F_STDIZE) {
+        if (f == F_MCOV || f == F_STDIZE) {
             parm = 1;
         }
 
@@ -4575,7 +4574,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             goto finalize;
         }
 
-        if (f == F_MREV || f == F_SDC || f == F_MCOV ||
+        if (f == F_MREV || f == F_MCOV ||
             f == F_CDEMEAN || f == F_STDIZE ||
             f == F_PSDROOT || f == F_VECH) {
             /* if present, the @r node should hold an integer */
@@ -4583,7 +4582,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
                 node_type_error(f, 2, NUM, r, p);
             } else if (!null_node(r)) {
                 parm = node_get_int(r, p);
-                gotopt = 1;
             }
         } else if (f == F_UNVECH || f == F_GINV) {
             /* if present, the @r node should hold a scalar */
@@ -4636,22 +4634,11 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         case F_MEANR:
             ret->v.m = gretl_matrix_vector_stat(m, V_MEAN, 1, parm, &p->err);
             break;
-        case F_SD:
-            ret->v.m = gretl_matrix_column_sd(m, 0, 0, &p->err);
-            break;
-        case F_SDC:
-	    ret->v.m = gretl_matrix_column_sd(m, parm, 0, &p->err);
-            break;
         case F_MCOV:
-            if (!gotopt) {
-                parm = 1;
-            }
-            ret->v.m = gretl_covariance_matrix(m, f == F_MCORR,
-                                               parm, &p->err);
+            ret->v.m = gretl_covariance_matrix(m, 0, parm, &p->err);
             break;
         case F_MCORR:
-            ret->v.m = gretl_covariance_matrix(m, f == F_MCORR,
-                                               1, &p->err);
+            ret->v.m = gretl_covariance_matrix(m, 1, 1, &p->err);
             break;
         case F_CUM:
             ret->v.m = gretl_matrix_cumcol(m, &p->err);
@@ -13335,6 +13322,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = R_from_omega(l->v.m, mode == 2, J, &p->err);
             }
         }
+    } else if (f == F_SDC) {
+	gretl_matrix *X = NULL;
+	int skip_na = 0;
+	int df = 0;
+
+	if (l->t != MAT) {
+	    p->err = E_TYPES;
+	} else {
+	    X = l->v.m;
+	}
+	if (!p->err && !null_node(m)) {
+	    df = node_get_int(m, p);
+	}
+	if (!p->err && !null_node(r)) {
+	    skip_na = node_get_bool(r, p, 0);
+	}
+	if (!p->err) {
+	    A = gretl_matrix_column_sd(X, df, skip_na, &p->err);
+	}
     }
 
     if (post_process) {
@@ -18069,7 +18075,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_PRODR:
     case F_MEANC:
     case F_MEANR:
-    case F_SDC:
     case F_MCOV:
     case F_MCORR:
     case F_CDEMEAN:
@@ -18316,6 +18321,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_VMA:
     case F_BCHECK:
     case F_SPHCORR:
+    case F_SDC:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {

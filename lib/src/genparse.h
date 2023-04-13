@@ -282,7 +282,6 @@ enum {
     F_T1,
     F_T2,
     F_COV,
-    F_SDC,
     F_CDEMEAN,
     F_MCOV,
     F_DUMIFY,
@@ -477,6 +476,7 @@ enum {
     F_INSTRING,
     F_STRFTIME,
     F_LDIFF,
+    F_SDC,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

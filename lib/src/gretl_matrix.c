@@ -7630,14 +7630,13 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m,
 {
     gretl_matrix *s;
     double mij, xbar, dev, v;
-    int auto_df = 1;
     int i, j, nrows;
+    int den, dfc = 0;
 
     if (gretl_is_null_matrix(m)) {
         *err = E_DATA;
         return NULL;
     } else if (m->is_complex) {
-        fprintf(stderr, "E_CMPLX in gretl_matrix_columns_sd2\n");
         *err = E_CMPLX;
         return NULL;
     }
@@ -7650,8 +7649,10 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m,
     }
 
     if (df > 0) {
-	/* respect the df supplied by the caller */
-        auto_df = 0;
+	/* respect the df supplied by the caller, taking it
+	   as implicitly defining the df correction, dfc
+	*/
+	dfc = m->rows - df;
     }
 
     for (j=0; j<m->cols; j++) {
@@ -7665,14 +7666,12 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m,
 		xbar += mij;
 	    }
         }
-	if (nrows < 2 || na(xbar)) {
+	den = nrows - dfc;
+	if (nrows < 2 || den <= 0 || na(xbar)) {
 	    s->val[j] = NADBL;
 	} else {
 	    xbar /= nrows;
-	    if (auto_df) {
-		df = nrows;
-	    }
-	    v = 0;
+	    v = 0.0;
 	    for (i=0; i<m->rows; i++) {
 		mij = gretl_matrix_get(m, i, j);
 		if (na(mij) && skip_na) {
@@ -7682,7 +7681,7 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m,
 		    v += dev * dev;
 		}
 	    }
-	    s->val[j] = sqrt(v / df);
+	    s->val[j] = sqrt(v / den);
 	}
     }
 
