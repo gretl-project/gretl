@@ -4279,7 +4279,7 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 #if 0
 	gretl_matrix_print(fcmat, "Forecast matrix");
 #endif
-	sd = gretl_matrix_column_sd(fcmat, &err);
+	sd = gretl_matrix_column_sd(fcmat, 0, 0, &err);
 	if (!err) {
 	    double cfac = sqrt((double) iters / (iters - 1));
 

@@ -249,7 +249,7 @@ int sample_span (const char *stobs, const char *endobs,
 
 gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 					GretlVecStat vs, int rowwise,
-					int *err);
+					int skip_na, int *err);
 
 int fill_permutation_vector (gretl_vector *v, int n);
 

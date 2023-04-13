@@ -2971,7 +2971,7 @@ static int binary_model_add_slopes (MODEL *pmod, bin_info *bin)
     size_t ssize;
     int i, err = 0;
 
-    xbar = gretl_rmatrix_vector_stat(bin->X, V_MEAN, 0, &err);
+    xbar = gretl_rmatrix_vector_stat(bin->X, V_MEAN, 0, 0, &err);
     if (err) {
 	return err;
     }

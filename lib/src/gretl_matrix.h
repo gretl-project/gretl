@@ -549,12 +549,11 @@ double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
 
 gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
 					 GretlVecStat vs, int rowwise,
-					 int *err);
+					 int skip_na, int *err);
 
-gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
-				       int df, int *err);
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m,
+				      int df, int skip_na,
+				      int *err);
 
 void gretl_matrix_demean_by_row (gretl_matrix *m);
 

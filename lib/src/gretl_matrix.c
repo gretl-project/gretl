@@ -7515,6 +7515,7 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
  * @m: source matrix.
  * @vs: the required statistic or quantity: sum, product or mean.
  * @rowwise: if non-zero go by rows, otherwise go by columns.
+ * @skip_na: ignore missing values.
  * @err: location to receive error code.
  *
  * Returns: a row vector or column vector containing the sums,
@@ -7524,10 +7525,12 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
 
 gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
                                          GretlVecStat vs,
-                                         int rowwise, int *err)
+                                         int rowwise,
+					 int skip_na,
+					 int *err)
 {
     gretl_matrix *ret;
-    double x;
+    double x, mij;
     int r, c, i, j;
 
     if (gretl_is_null_matrix(m)) {
@@ -7546,37 +7549,53 @@ gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
 
     if (rowwise) {
         /* by rows */
-        int jmin = vs == V_PROD ? 1 : 0;
+	double x0 = vs == V_PROD ? 1 : 0;
+	int ncols;
 
         for (i=0; i<m->rows; i++) {
-            x = vs == V_PROD ? m->val[i] : 0;
-            for (j=jmin; j<m->cols; j++) {
-                if (vs == V_PROD) {
-                    x *= gretl_matrix_get(m, i, j);
-                } else {
-                    x += gretl_matrix_get(m, i, j);
-                }
+	    ncols = m->cols;
+            x = x0;
+            for (j=0; j<m->cols; j++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ncols--;
+		    continue;
+		} else if (vs == V_PROD) {
+		    x *= mij;
+		} else {
+		    x += mij;
+		}
             }
-            if (vs == V_MEAN) {
-                x /= m->cols;
+	    if (ncols == 0) {
+		x = NADBL;
+	    } else if (vs == V_MEAN) {
+                x /= ncols;
             }
             gretl_matrix_set(ret, i, 0, x);
         }
     } else {
         /* by columns */
-        int imin = vs == V_PROD ? 1 : 0;
+	double x0 = vs == V_PROD ? 1 : 0;
+	int nrows;
 
         for (j=0; j<m->cols; j++) {
-            x = vs == V_PROD ? gretl_matrix_get(m, 0, j) : 0;
-            for (i=imin; i<m->rows; i++) {
-                if (vs == V_PROD) {
-                    x *= gretl_matrix_get(m, i, j);
-                } else {
-                    x += gretl_matrix_get(m, i, j);
-                }
+	    nrows = m->rows;
+            x = x0;
+            for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    nrows--;
+		    continue;
+                } else if (vs == V_PROD) {
+		    x *= mij;
+		} else {
+		    x += mij;
+		}
             }
-            if (vs == V_MEAN) {
-                x /= m->rows;
+	    if (nrows == 0) {
+		x = NADBL;
+            } else if (vs == V_MEAN) {
+                x /= nrows;
             }
             gretl_matrix_set(ret, 0, j, x);
         }
@@ -7592,9 +7611,10 @@ gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
 }
 
 /**
- * gretl_matrix_column_sd2:
+ * gretl_matrix_column_sd:
  * @m: source matrix.
  * @df: degrees of freedom for standard deviations.
+ * @skip_na: ignore missing values.
  * @err: location to receive error code.
  *
  * Returns: a row vector containing the standard deviations of
@@ -7604,12 +7624,14 @@ gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
  * @m.
  */
 
-gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
-                                       int df, int *err)
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m,
+				      int df, int skip_na,
+				      int *err)
 {
     gretl_matrix *s;
-    double xbar, dev, v;
-    int i, j;
+    double mij, xbar, dev, v;
+    int auto_df = 1;
+    int i, j, nrows;
 
     if (gretl_is_null_matrix(m)) {
         *err = E_DATA;
@@ -7627,39 +7649,44 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
         return NULL;
     }
 
-    if (df <= 0) {
-        df = m->rows;
+    if (df > 0) {
+	/* respect the df supplied by the caller */
+        auto_df = 0;
     }
 
     for (j=0; j<m->cols; j++) {
-        xbar = v = 0.0;
+	nrows = m->rows;
+        xbar = 0.0;
         for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
+	    mij = gretl_matrix_get(m, i, j);
+	    if (na(mij) && skip_na) {
+		nrows--;
+	    } else {
+		xbar += mij;
+	    }
         }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            dev = gretl_matrix_get(m, i, j) - xbar;
-            v += dev * dev;
-        }
-        s->val[j] = sqrt(v / df);
+	if (nrows < 2 || na(xbar)) {
+	    s->val[j] = NADBL;
+	} else {
+	    xbar /= nrows;
+	    if (auto_df) {
+		df = nrows;
+	    }
+	    v = 0;
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    dev = mij - xbar;
+		    v += dev * dev;
+		}
+	    }
+	    s->val[j] = sqrt(v / df);
+	}
     }
 
     return s;
-}
-
-/**
- * gretl_matrix_column_sd:
- * @m: source matrix.
- * @err: location to receive error code.
- *
- * Returns: a row vector containing the standard deviations of
- * the columns of @m (without a degrees of freedom correction),
- * or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
-{
-    return gretl_matrix_column_sd2(m, 0, err);
 }
 
 /**

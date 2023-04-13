@@ -4592,7 +4592,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             } else if (!null_node(r)) {
                 xparm = node_get_scalar(r, p);
             }
-        } else if (f >= F_MINC && f <= F_IMAXR) {
+        } else if (f >= F_MINC && f <= F_MEANR) {
+	    /* set the skip_na boolean option */
             parm = node_get_bool(r, p, 0);
         } else if (f == F_RANKING) {
             if (gretl_vector_get_length(m) == 0) {
@@ -4618,32 +4619,28 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
         switch (f) {
         case F_SUMC:
-            ret->v.m = gretl_matrix_vector_stat(m, V_SUM, 0, &p->err);
+            ret->v.m = gretl_matrix_vector_stat(m, V_SUM, 0, parm, &p->err);
             break;
         case F_SUMR:
-            ret->v.m = gretl_matrix_vector_stat(m, V_SUM, 1, &p->err);
+            ret->v.m = gretl_matrix_vector_stat(m, V_SUM, 1, parm, &p->err);
             break;
         case F_PRODC:
-            ret->v.m = gretl_matrix_vector_stat(m, V_PROD, 0, &p->err);
+            ret->v.m = gretl_matrix_vector_stat(m, V_PROD, 0, parm, &p->err);
             break;
         case F_PRODR:
-            ret->v.m = gretl_matrix_vector_stat(m, V_PROD, 1, &p->err);
+            ret->v.m = gretl_matrix_vector_stat(m, V_PROD, 1, parm, &p->err);
             break;
         case F_MEANC:
-            ret->v.m = gretl_matrix_vector_stat(m, V_MEAN, 0, &p->err);
+            ret->v.m = gretl_matrix_vector_stat(m, V_MEAN, 0, parm, &p->err);
             break;
         case F_MEANR:
-            ret->v.m = gretl_matrix_vector_stat(m, V_MEAN, 1, &p->err);
+            ret->v.m = gretl_matrix_vector_stat(m, V_MEAN, 1, parm, &p->err);
             break;
         case F_SD:
-            ret->v.m = gretl_matrix_column_sd(m, &p->err);
+            ret->v.m = gretl_matrix_column_sd(m, 0, 0, &p->err);
             break;
         case F_SDC:
-            if (gotopt) {
-                ret->v.m = gretl_matrix_column_sd2(m, parm, &p->err);
-            } else {
-                ret->v.m = gretl_matrix_column_sd(m, &p->err);
-            }
+	    ret->v.m = gretl_matrix_column_sd(m, parm, 0, &p->err);
             break;
         case F_MCOV:
             if (!gotopt) {

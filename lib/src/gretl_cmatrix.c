@@ -33,6 +33,8 @@
 
 #define cscalar(m) (m->rows == 1 && m->cols == 1)
 
+#define cna(z) (na(creal(z)) || na(cimag(z)))
+
 /* helper function for fftw-based real FFT functions */
 
 static int fft_allocate (double **ffx, double complex **ffz,
@@ -2039,9 +2041,10 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 
 gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 					 GretlVecStat vs, int rowwise,
-					 int *err)
+					 int skip_na, int *err)
 {
     double complex z;
+    double complex mij;
     gretl_matrix *ret;
     int r, c, i, j;
 
@@ -2061,37 +2064,53 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 
     if (rowwise) {
 	/* by rows */
-	int jmin = vs == V_PROD ? 1 : 0;
+	double complex z0 = V_PROD ? 1 : 0;
+	int ncols;
 
 	for (i=0; i<m->rows; i++) {
-	    z = vs == V_PROD ? m->z[i] : 0;
-	    for (j=jmin; j<m->cols; j++) {
-		if (vs == V_PROD) {
-		    z *= gretl_cmatrix_get(m, i, j);
+	    ncols = m->cols;
+	    z = z0;
+	    for (j=0; j<m->cols; j++) {
+		mij = gretl_cmatrix_get(m, i, j);
+		if (cna(mij) && skip_na) {
+		    ncols--;
+		    continue;
+		} else if (vs == V_PROD) {
+		    z *= mij;
 		} else {
-		    z += gretl_cmatrix_get(m, i, j);
+		    z += mij;
 		}
 	    }
-	    if (vs == V_MEAN) {
-		z /= m->cols;
+	    if (ncols == 0) {
+		z = NADBL + 0*I;
+	    } else if (vs == V_MEAN) {
+		z /= ncols;
 	    }
 	    gretl_cmatrix_set(ret, i, 0, z);
 	}
     } else {
 	/* by columns */
-	int imin = vs == V_PROD ? 1 : 0;
+	double complex z0 = V_PROD ? 1 : 0;
+	int nrows;
 
 	for (j=0; j<m->cols; j++) {
-	    z = vs == V_PROD ? gretl_cmatrix_get(m, 0, j) : 0;
-	    for (i=imin; i<m->rows; i++) {
-		if (vs == V_PROD) {
-		    z *= gretl_cmatrix_get(m, i, j);
+	    nrows = m->rows;
+	    z = z0;
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_cmatrix_get(m, i, j);
+		if (cna(mij) && skip_na) {
+		    nrows--;
+		    continue;
+		} else if (vs == V_PROD) {
+		    z *= mij;
 		} else {
-		    z += gretl_cmatrix_get(m, i, j);
+		    z += mij;
 		}
 	    }
-	    if (vs == V_MEAN) {
-		z /= m->rows;
+	    if (nrows == 0) {
+		z = NADBL + 0*I;
+	    } else if (vs == V_MEAN) {
+		z /= nrows;
 	    }
 	    gretl_cmatrix_set(ret, 0, j, z);
 	}

@@ -7902,12 +7902,12 @@ int sample_span (const char *stobs, const char *endobs,
 
 gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
                                         GretlVecStat vs, int rowwise,
-                                        int *err)
+                                        int skip_na, int *err)
 {
     if (m->is_complex) {
-        return gretl_cmatrix_vector_stat(m, vs, rowwise, err);
+        return gretl_cmatrix_vector_stat(m, vs, rowwise, skip_na, err);
     } else {
-        return gretl_rmatrix_vector_stat(m, vs, rowwise, err);
+        return gretl_rmatrix_vector_stat(m, vs, rowwise, skip_na, err);
     }
 }
 
