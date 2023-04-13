@@ -953,8 +953,10 @@ static int write_session_xml (const char *datname)
 		    free(xmlname);
 		}
 		gretl_xml_header(pm);
+		gretl_push_c_numeric_locale();
 		gretl_model_serialize(pmod, model_save_flags(pmod, GRETL_OBJ_EQN),
 				      pm);
+		gretl_pop_c_numeric_locale();
 		gretl_print_destroy(pm);
 	    }
 	}
