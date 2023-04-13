@@ -7859,9 +7859,9 @@
 	  Computes a covariance matrix treating each column of
 	  <argname>X</argname> as a variable. The divisor is
 	  <math>n</math> &minus; 1, where <math>n</math> is the number
-	  of rows of <argname>X</argname>, unless the optional
-	  argument <argname>dfcorr</argname> is 0, in which case
-	  <math>n</math> is used.
+	  of rows of <argname>X</argname>, unless the optional second
+	  argument is supplied, in which case <math>n</math> &minus;
+	  <argname>dfcorr</argname> is used.
 	</para>
 	<para>
 	  <seelist>
