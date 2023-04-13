@@ -911,6 +911,7 @@ static int write_session_xml (const char *datname)
 	    }
 	    gretl_xml_header(pm);
 	    sflags = model_save_flags(ptr, type);
+	    gretl_push_c_numeric_locale();
 	    if (type == GRETL_OBJ_EQN) {
 		gretl_model_serialize(ptr, sflags, pm);
 	    } else if (type == GRETL_OBJ_VAR) {
@@ -918,6 +919,7 @@ static int write_session_xml (const char *datname)
 	    } else if (type == GRETL_OBJ_SYS) {
 		equation_system_serialize(ptr, sflags, pm);
 	    }
+	    gretl_pop_c_numeric_locale();
 	    gretl_print_destroy(pm);
 	}
     }
