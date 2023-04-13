@@ -5991,28 +5991,38 @@
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce un vettore contenente gli indici riga dei massimi
-	  delle colonne di <argname>X</argname>.
-	  <seelist>
-            <fncref targ="imaxr"/>
-            <fncref targ="iminc"/>
-            <fncref targ="maxc"/>
-	  </seelist>
+	  Restituisce un vettore contenente gli indici riga dei
+	  massimi delle colonne di <argname>X</argname>. Per colonne
+	  contenenti <lit>NA</lit> il risultato è <lit>NA</lit> a meno
+	  che il parametro opzionale <argname>skip_na</argname> sia
+	  diverso da zero, nel qual caso il risultato è l'indice del
+	  massimo fra i valori validi.
 	</para>
+	<seelist>
+          <fncref targ="imaxr"/>
+          <fncref targ="iminc"/>
+          <fncref targ="maxc"/>
+	</seelist>
       </description>
     </function>
 
     <function name="imaxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce un vettore contenente gli indici colonna dei massimi
-	  delle righe di <argname>X</argname>.
+	  Restituisce un vettore contenente gli indici colonna dei
+	  massimi delle righe di <argname>X</argname>. Per righe
+	  contenenti <lit>NA</lit> il risultato è <lit>NA</lit> a meno
+	  che il parametro opzionale <argname>skip_na</argname> sia
+	  diverso da zero, nel qual caso il risultato è l'indice del
+	  massimo fra i valori validi.
 	  <seelist>
             <fncref targ="imaxc"/>
             <fncref targ="iminr"/>
@@ -6059,34 +6069,44 @@
     <function name="iminc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce un vettore contenente gli indici riga dei minimi
-	  delle colonne di <argname>X</argname>.
-	  <seelist>
-            <fncref targ="imaxc"/>
-            <fncref targ="iminr"/>
-            <fncref targ="minc"/>
-	  </seelist>
+	  delle colonne di <argname>X</argname>. Per colonne
+	  contenenti <lit>NA</lit> il risultato è <lit>NA</lit> a meno
+	  che il parametro opzionale <argname>skip_na</argname> sia
+	  diverso da zero, nel qual caso il risultato è l'indice del
+	  minimo fra i valori validi.
 	</para>
+	<seelist>
+          <fncref targ="imaxc"/>
+          <fncref targ="iminr"/>
+          <fncref targ="minc"/>
+	</seelist>
       </description>
     </function>
 
     <function name="iminr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce un vettore contenente gli indici colonna dei minimi
-	  delle righe di <argname>X</argname>.
+	  Restituisce un vettore contenente gli indici colonna dei
+	  minimi delle righe di <argname>X</argname>. Per righe
+	  contenenti <lit>NA</lit> il risultato è <lit>NA</lit> a meno
+	  che il parametro opzionale <argname>skip_na</argname> sia
+	  diverso da zero, nel qual caso il risultato è l'indice del
+	  minimo fra i valori validi.
+	</para>
 	  <seelist>
             <fncref targ="imaxr"/>
             <fncref targ="iminc"/>
             <fncref targ="minr"/>
 	  </seelist>
-	</para>
       </description>
     </function>
 
@@ -7865,32 +7885,42 @@
     <function name="maxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce i massimi per colonna di <argname>X</argname>.
-	  <seelist>
-	    <fncref targ="imaxc"/>
-	    <fncref targ="maxr"/>
-	    <fncref targ="minc"/>
-	  </seelist>
+	  Restituisce i massimi per colonna di
+	  <argname>X</argname>. Per colonne contenenti <lit>NA</lit>
+	  il risultato è <lit>NA</lit> a meno che il parametro
+	  opzionale <argname>skip_na</argname> sia diverso da zero,
+	  nel qual caso il risultato è il massimo fra i valori validi.
 	</para>
+	<seelist>
+	  <fncref targ="imaxc"/>
+	  <fncref targ="maxr"/>
+	  <fncref targ="minc"/>
+	</seelist>
       </description>
     </function>
 
     <function name="maxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce i massimi per riga di <argname>X</argname>.
-	  <seelist>
-	    <fncref targ="imaxr"/>
-	    <fncref targ="maxc"/>
-	    <fncref targ="minr"/>
-	  </seelist>
+	  Restituisce i massimi per riga di <argname>X</argname>. Per
+	  righe contenenti <lit>NA</lit> il risultato è <lit>NA</lit>
+	  a meno che il parametro opzionale <argname>skip_na</argname>
+	  sia diverso da zero, nel qual caso il risultato è il massimo
+	  fra i valori validi.
 	</para>
+	<seelist>
+	  <fncref targ="imaxr"/>
+	  <fncref targ="maxc"/>
+	  <fncref targ="minr"/>
+	</seelist>
       </description>
     </function>
 
@@ -8328,32 +8358,42 @@
     <function name="minc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcola i minimi delle colonne di <argname>X</argname>.
+	  Calcola i minimi delle colonne di <argname>X</argname>. Per
+	  colonne contenenti <lit>NA</lit> il risultato è <lit>NA</lit>
+	  a meno che il parametro opzionale <argname>skip_na</argname>
+	  sia diverso da zero, nel qual caso il risultato è il minimo
+	  fra i valori validi.
+	</para>
 	  <seelist>
 	    <fncref targ="iminc"/>
 	    <fncref targ="maxc"/>
 	    <fncref targ="minr"/>
 	  </seelist>
-	</para>
       </description>
     </function>
 
     <function name="minr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg optional="true" type="scalar">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcola i minimi delle righe di <argname>X</argname>.
+	  Calcola i minimi delle righe di <argname>X</argname>. Per
+	  righe contenenti <lit>NA</lit> il risultato è <lit>NA</lit>
+	  a meno che il parametro opzionale <argname>skip_na</argname>
+	  sia diverso da zero, nel qual caso il risultato è il minimo
+	  fra i valori validi.
+	</para>
 	  <seelist>
 	    <fncref targ="iminr"/>
 	    <fncref targ="maxr"/>
 	    <fncref targ="minc"/>
 	  </seelist>
-	</para>
       </description>
     </function>
 
