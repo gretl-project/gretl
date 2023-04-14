@@ -4464,7 +4464,7 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
                                          int tmpmat,
                                          int *err)
 {
-    gretl_matrix *R = NULL;
+    gretl_matrix *R = m;
 
     if (f == F_CHOL && !gretl_is_null_matrix(m) &&
         !gretl_matrix_is_symmetric(m)) {
@@ -4473,31 +4473,16 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
         return NULL;
     }
 
-    if (tmpmat) {
-        /* it's OK to overwrite @m */
-        R = m;
-    } else {
-        /* @m should not be over-written! */
-        R = gretl_matrix_copy(m);
-        if (R == NULL) {
-            *err = E_ALLOC;
-        }
+    if (!tmpmat) {
+	/* shouldn't overwrite @m */
+	R = gretl_matrix_copy(m);
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
     if (R != NULL) {
-        if (f == F_CDEMEAN) {
-            if (parm) {
-                *err = gretl_matrix_standardize(R, 1);
-            } else {
-                *err = gretl_matrix_center(R);
-            }
-        } else if (f == F_STDIZE) {
-            if (parm < 0) {
-                *err = gretl_matrix_center(R);
-            } else {
-                *err = gretl_matrix_standardize(R, parm);
-            }
-        } else if (f == F_CHOL) {
+        if (f == F_CHOL) {
             *err = gretl_matrix_cholesky_decomp(R);
         } else if (f == F_PSDROOT) {
             *err = gretl_matrix_psd_root(R, parm);
@@ -4553,10 +4538,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
         /* Note: @parm is an integer parameter, required
            for some functions, optional for others. In the
-           cases of mcov() and stdize() the default @parm
-           value is 1, otherwise it's 0.
+           case of mcov() the default @parm value is 1,
+	   otherwise it's 0.
         */
-        if (f == F_MCOV || f == F_STDIZE) {
+        if (f == F_MCOV) {
             parm = 1;
         }
 
@@ -4575,7 +4560,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         }
 
         if (f == F_MREV || f == F_MCOV ||
-            f == F_CDEMEAN || f == F_STDIZE ||
             f == F_PSDROOT || f == F_VECH) {
             /* if present, the @r node should hold an integer */
             if (!null_or_scalar(r)) {
@@ -4670,8 +4654,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
                 ret->v.m = apply_ovwrite_func(m, f, parm, xparm, tmpmat, &p->err);
             }
             break;
-        case F_CDEMEAN:
-        case F_STDIZE:
         case F_PSDROOT:
         case F_UPPER:
         case F_LOWER:
@@ -13322,24 +13304,39 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = R_from_omega(l->v.m, mode == 2, J, &p->err);
             }
         }
-    } else if (f == F_SDC) {
+    } else if (f == F_SDC || f == F_CDEMEAN || f == F_STDIZE) {
 	gretl_matrix *X = NULL;
+	int param = f == F_STDIZE ? 1 : 0;
 	int skip_na = 0;
-	int df = 0;
 
 	if (l->t != MAT) {
 	    p->err = E_TYPES;
-	} else {
+	} else if (f == F_SDC) {
 	    X = l->v.m;
+	} else {
+	    A = gretl_matrix_copy(l->v.m);
+	    if (A == NULL) {
+		p->err = E_ALLOC;
+	    }
 	}
 	if (!p->err && !null_node(m)) {
-	    df = node_get_int(m, p);
+	    param = node_get_int(m, p);
 	}
 	if (!p->err && !null_node(r)) {
 	    skip_na = node_get_bool(r, p, 0);
 	}
 	if (!p->err) {
-	    A = gretl_matrix_column_sd(X, df, skip_na, &p->err);
+	    if (f == F_SDC) {
+		A = gretl_matrix_column_sd(X, param, skip_na, &p->err);
+	    } else if (f == F_CDEMEAN && param == 0) {
+		p->err = gretl_matrix_center(A, skip_na);
+	    } else if (f == F_CDEMEAN) {
+		p->err = gretl_matrix_standardize(A, 1, skip_na);
+	    } else if (f == F_STDIZE && param == -1) {
+		p->err = gretl_matrix_center(A, skip_na);
+	    } else {
+		p->err = gretl_matrix_standardize(A, param, skip_na);
+	    }
 	}
     }
 
@@ -17462,14 +17459,14 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_STDIZE:
-        if (!null_or_scalar(r)) {
-            p->err = e_types(r);
+        if (!null_or_scalar(m)) {
+            p->err = e_types(m);
         } else if (l->t == SERIES) {
-            ret = series_stdize(l, r, p);
+            ret = series_stdize(l, m, p);
         } else if (l->t == LIST) {
-            ret = list_stdize(l, r, p);
+            ret = list_stdize(l, m, p);
         } else if (l->t == MAT) {
-            ret = matrix_to_matrix_func(l, r, t->t, p);
+            ret = eval_3args_func(l, m, r, t->t, p);
         } else {
             p->err = E_TYPES;
         }
@@ -18077,7 +18074,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MEANR:
     case F_MCOV:
     case F_MCORR:
-    case F_CDEMEAN:
     case F_CHOL:
     case F_PSDROOT:
     case F_INV:
@@ -18322,6 +18318,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BCHECK:
     case F_SPHCORR:
     case F_SDC:
+    case F_CDEMEAN:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {

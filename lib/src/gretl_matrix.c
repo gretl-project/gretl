@@ -7721,43 +7721,35 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
  * Subtracts the column mean from each column of @m.
  */
 
-int gretl_matrix_center (gretl_matrix *m)
+int gretl_matrix_center (gretl_matrix *m, int skip_na)
 {
-    double x, xbar;
-    int i, j;
-
-#if defined(_OPENMP)
-    if (m->cols == 1 || m->rows * m->cols < 4096) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i, j, x, xbar)
-    for (j=0; j<m->cols; j++) {
-        xbar = 0;
-        for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
-        }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
-        }
-    }
-    return 0;
-
- st_mode:
-#endif
+    double mij, xbar;
+    int i, j, nrows;
 
     for (j=0; j<m->cols; j++) {
+	nrows = m->rows;
         xbar = 0;
         for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
+	    mij = gretl_matrix_get(m, i, j);
+	    if (na(mij) && skip_na) {
+		nrows--;
+	    } else {
+		xbar += mij;
+	    }
         }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
+	if (nrows > 0) {
+	    xbar /= nrows;
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    gretl_matrix_set(m, i, j, mij - xbar);
+		}
+	    }
         }
     }
+
     return 0;
 }
 
@@ -7765,65 +7757,67 @@ int gretl_matrix_center (gretl_matrix *m)
  * gretl_matrix_standardize:
  * @m: matrix on which to operate.
  * @dfcorr: degrees of freedom correction.
+ * @skip_na: ignore missing values.
  *
  * Subtracts the column mean from each column of @m and
  * divides by the column standard deviation, using @dfcorr
  * as degrees of freedom correction (0 for MLE).
  */
 
-int gretl_matrix_standardize (gretl_matrix *m, int dfcorr)
+int gretl_matrix_standardize (gretl_matrix *m, int dfcorr, int skip_na)
 {
-    double x, xbar, sdc;
-    int i, j;
+    double mij, x, xbar, sdc, den;
+    int center = (dfcorr < 0);
+    int i, j, nrows;
 
     if (m->rows < 2) {
         return E_TOOFEW;
     }
 
-#if defined(_OPENMP)
-    if (m->cols == 1 || m->rows * m->cols < 4096) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i, j, x, xbar, sdc)
     for (j=0; j<m->cols; j++) {
+	nrows = m->rows;
         xbar = sdc = 0;
         for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
+	    mij = gretl_matrix_get(m, i, j);
+	    if (na(mij) && skip_na) {
+		nrows--;
+	    } else {
+		xbar += mij;
+	    }
         }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
-            sdc += x * x;
+	if (nrows == 0) {
+	    xbar = NADBL;
+	} else {
+	    xbar /= nrows;
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    x = mij - xbar;
+		    gretl_matrix_set(m, i, j, x);
+		    sdc += x * x;
+		}
+	    }
         }
-        sdc = sqrt(sdc / (m->rows - dfcorr));
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) / sdc;
-            gretl_matrix_set(m, i, j, x);
+	den = nrows - dfcorr;
+	if (nrows < 2 || den <= 0 || na(xbar)) {
+	    for (i=0; i<m->rows; i++) {
+		gretl_matrix_set(m, i, j, NADBL);
+	    }
+	} else {
+	    sdc = sqrt(sdc / den);
+	    for (i=0; i<m->rows; i++) {
+		mij = gretl_matrix_get(m, i, j);
+		if (na(mij) && skip_na) {
+		    ; /* skip */
+		} else {
+		    gretl_matrix_set(m, i, j, mij / sdc);
+		}
+	    }
         }
     }
-    return 0;
 
- st_mode:
-#endif
-
-    for (j=0; j<m->cols; j++) {
-        xbar = sdc = 0;
-        for (i=0; i<m->rows; i++) {
-            xbar += gretl_matrix_get(m, i, j);
-        }
-        xbar /= m->rows;
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) - xbar;
-            gretl_matrix_set(m, i, j, x);
-            sdc += x * x;
-        }
-        sdc = sqrt(sdc / (m->rows - dfcorr));
-        for (i=0; i<m->rows; i++) {
-            x = gretl_matrix_get(m, i, j) / sdc;
-            gretl_matrix_set(m, i, j, x);
-        }
-    }
     return 0;
 }
 
@@ -14056,9 +14050,9 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
     }
 
     if (corr) {
-        gretl_matrix_standardize(D, dfc);
+        gretl_matrix_standardize(D, dfc, 0);
     } else {
-        gretl_matrix_center(D);
+        gretl_matrix_center(D, 0);
     }
 
     V = gretl_matrix_XTX_new(D);
@@ -14601,10 +14595,10 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 
     if (opt & OPT_V) {
         /* use covariance matrix */
-        gretl_matrix_center(D);
+        gretl_matrix_center(D, 0);
     } else {
         /* use correlation matrix */
-        gretl_matrix_standardize(D, 1);
+        gretl_matrix_standardize(D, 1, 0);
     }
 
     V = gretl_matrix_XTX_new(D);
