@@ -1480,7 +1480,7 @@ int check_for_effective_const (MODEL *pmod, const DATASET *dset)
 	ret = ubar / ybar < 2.0e-15;
     }
 
-#if 0
+#if 1
     fprintf(stderr, "check_for_effective_const:\n"
 	    "ubar = %g, ybar = %g, ret = %d\n",
 	    ubar, ybar, ret);

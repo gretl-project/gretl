@@ -9654,45 +9654,64 @@ int is_auto_fit_string (const char *s)
 }
 
 /**
- * gnuplot_process_file:
+ * gnuplot_process_input:
+ * @opt: should be OPT_I (file) or OPT_b (buffer)
  * @prn: gretl printing struct.
  *
  * Respond to the "gnuplot" command with %OPT_I, to specify
  * that input should be taken from a user-created gnuplot
- * command file.
+ * command file, or %OPT_b, to take input from a named
+ * string variable.
  *
- * Returns: 0 on success, or if ignored; otherwise error code.
+ * Returns: 0 on success, error code on error.
  */
 
-int gnuplot_process_file (PRN *prn)
+int gnuplot_process_input (gretlopt opt, PRN *prn)
 {
-    const char *inname = get_optval_string(plot_ci, OPT_I);
-    FILE *fp, *fq;
+    const char *iname = NULL;
+    const char *buf = NULL;
+    FILE *fq, *fp = NULL;
     int err = 0;
 
-    if (inname == NULL || *inname == '\0') {
-	return E_DATA;
+    if (opt & OPT_I) {
+        iname = get_optval_string(plot_ci, OPT_I);
+    } else if (opt & OPT_i) {
+        iname = get_optval_string(plot_ci, OPT_i);
     }
 
-    /* open the user-generated file for reading */
-    fp = gretl_fopen(inname, "r");
-    if (fp == NULL) {
-	return E_FOPEN;
+    if (iname != NULL && *iname != '\0') {
+        if (opt & OPT_I) {
+            /* open the input file for reading */
+            fp = gretl_fopen(iname, "r");
+        } else {
+            /* find the input buffer */
+            buf = get_string_by_name(iname);
+        }
+    }
+
+    if (fp == NULL && buf == NULL) {
+        gretl_errmsg_set("Couldn't find the specified input");
+        return E_INVARG;
     }
 
     /* open our own file for writing */
     fq = open_plot_input_file(PLOT_USER, 0, &err);
 
-    if (err) {
-	fclose(fp);
-    } else {
-	char line[1024];
+    if (!err) {
+        if (fp != NULL) {
+            char line[1024];
 
-	while (fgets(line, sizeof line, fp)) {
-	    fputs(line, fq);
-	}
-	fclose(fp);
+            while (fgets(line, sizeof line, fp)) {
+                fputs(line, fq);
+            }
+        } else {
+            fputs(buf, fq);
+        }
 	err = finalize_plot_input_file(fq);
+    }
+
+    if (fp != NULL) {
+        fclose(fp);
     }
 
     return err;

@@ -317,7 +317,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_Z, "dummy", 0 },
     { GNUPLOT,  OPT_C, "control", 0 },
     { GNUPLOT,  OPT_U, "output", 2 },
-    { GNUPLOT,  OPT_b, "buffer", 2 },
+    { GNUPLOT,  OPT_b, "buffer", 2 }, /* FIXME change to "outbuf"? */
+    { GNUPLOT,  OPT_i, "inbuf", 2 },
     { GNUPLOT,  OPT_Y, "single-yaxis", 0 },
     { GNUPLOT,  OPT_X, "matrix", 2 },
     { GNUPLOT,  OPT_N, "band", 2 },

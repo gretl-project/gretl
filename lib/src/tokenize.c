@@ -2185,10 +2185,10 @@ static char *tokstring (char *s, cmd_token *toks, int i)
 
 static void print_option_flags (gretlopt opt)
 {
-    const char *flags = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const char *flags = "ABCDEFGHIJKLMNOPQRSTUVWXYZbi";
     gretlopt i, n = 0;
 
-    for (i=OPT_A; i<=OPT_Y; i*=2) {
+    for (i=OPT_A; i<=OPT_i; i*=2) {
 	if (opt & i) {
 	    if (n > 0) {
 		fputc('|', stderr);
@@ -3809,8 +3809,8 @@ static void handle_option_inflections (CMD *cmd)
 	    cmd->ciflags = 0;
 	}
     } else if (cmd->ci == GNUPLOT) {
-	if (cmd->opt & OPT_I) {
-	    /* we got the input=... option, so no args wanted */
+	if (cmd->opt & (OPT_I | OPT_i)) {
+	    /* we got --input or --inbuf, so no args wanted */
 	    cmd->ciflags = 0;
 	} else if (cmd->opt & OPT_X) {
 	    /* with --matrix, default to all columns */
