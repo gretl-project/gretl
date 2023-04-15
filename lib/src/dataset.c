@@ -326,7 +326,7 @@ static int labels_differ (const char *s1, const char *s2)
  * @targ: target to which to copy.
  * @src: source to copy from.
  *
- * Copies all relevant information from @src to @targ.
+ * Copies relevant information from @src to @targ.
  */
 
 void copy_varinfo (VARINFO *targ, const VARINFO *src)
@@ -349,6 +349,31 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
 	targ->st = series_table_copy(src->st);
     }
 }
+
+#if 0 /* not hooked up to "join" yet -- is it worthwhile? */
+
+/* A more limited version of copy_varinfo() for use when
+   @src refers to the "outer" dataset in a "join" operation,
+   disregarding possibly non-transferable elements.
+*/
+
+void join_transcribe_varinfo (VARINFO *targ, const VARINFO *src)
+{
+    VarFlags vf[] = {VAR_DISCRETE, VAR_CODED};
+    int i;
+
+    if (targ != NULL && src != NULL) {
+        copy_label(targ, src->label);
+        strcpy(targ->display_name, src->display_name);
+        for (i=0; i<2; i++) {
+            if (src->flags & vf[i]) {
+                targ->flags |= vf[i];
+            }
+        }
+    }
+}
+
+#endif
 
 /* For use in the context of returning from a sub-sampled
    dataset to the full one: trim off series names and
