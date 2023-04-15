@@ -1472,7 +1472,7 @@ int check_for_effective_const (MODEL *pmod, const DATASET *dset)
     /* the calibration below is debatable: watch out for
        "wrong" results */
 
-    if (ubar < 1.0e-7) {
+    if (ubar < 5.0e-7) {
 	/* absolute value of mean residual small enough? */
 	ret = 1;
     } else if (ubar < 0.01 && ybar > 1.0e-20) {
@@ -1480,7 +1480,7 @@ int check_for_effective_const (MODEL *pmod, const DATASET *dset)
 	ret = ubar / ybar < 2.0e-15;
     }
 
-#if 1
+#if 0
     fprintf(stderr, "check_for_effective_const:\n"
 	    "ubar = %g, ybar = %g, ret = %d\n",
 	    ubar, ybar, ret);
