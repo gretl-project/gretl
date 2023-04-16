@@ -1821,9 +1821,10 @@ static void maybe_print_col_heads (const gretl_matrix *m,
 
     if (heads != NULL) {
 	int numeric = 1;
+	const char *s;
 	char wtest[32];
 	double x;
-	int j, n;
+	int j, n, d;
 
 	x = gretl_matrix_get(m, 0, 0);
 
@@ -1853,8 +1854,10 @@ static void maybe_print_col_heads (const gretl_matrix *m,
 
 	n = strlen(wtest);
 	for (j=0; j<m->cols; j++) {
-	    pprintf(prn, "%*s", n, heads[j]);
-	    if (!numeric_string(heads[j])) {
+	    s = heads[j];
+	    d = strlen(s) - g_utf8_strlen(s, -1);
+	    pprintf(prn, "%*s", n + d, s);
+	    if (!numeric_string(s)) {
 		numeric = 0;
 	    }
 	}
