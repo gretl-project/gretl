@@ -1697,21 +1697,24 @@ static int write_data_for_octave (const DATASET *dset,
 
 static int put_dynare_script (const char *buf, FILE *fp)
 {
-    gchar *dpath = gretl_make_dotpath("gretltmp.mod");
+    const char *wdir = gretl_workdir();
+    gchar *modpath;
     FILE *fd;
     int err = 0;
 
-    fd = gretl_fopen(dpath, "w");
+    modpath = g_build_filename(wdir, "gretltmp.mod", NULL);
+    fd = gretl_fopen(modpath, "w");
 
     if (fd == NULL) {
         err = E_FOPEN;
     } else {
         fputs(buf, fd);
         fclose(fd);
+	fprintf(fp, "cd \"%s\"\n", wdir);
         fputs("dynare gretltmp.mod noclearall\n", fp);
     }
 
-    g_free(dpath);
+    g_free(modpath);
 
     return err;
 }
