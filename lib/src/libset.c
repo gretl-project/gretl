@@ -2076,8 +2076,8 @@ static int check_R_setting (gint8 *var, SetKey key, int val)
 
 #ifdef USE_RLIB
     if (key == R_FUNCTIONS && val != 0) {
-	/* This depends on having R_lib on, so in case
-	   it's off we should turn it on too.
+	/* R_functions depends on having R_lib on, so in case
+	   the latter is off we should turn it on too.
 	*/
 	libset_set_bool(R_LIB, val);
     }
