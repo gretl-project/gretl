@@ -6117,6 +6117,8 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
     bounds->xleft = bounds->xright = 0;
     bounds->ybot = bounds->ytop = 0;
 
+    gretl_push_c_numeric_locale();
+
     if (sscanf(str, "pixel_bounds: %lf %lf %lf %lf",
 	       &bb[0], &bb[1], &bb[2], &bb[3]) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
@@ -6127,6 +6129,8 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
         bounds->ybot   = nearbyint(bb[2]);
         bounds->ytop   = nearbyint(bb[3]);
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (ret == GRETL_PNG_OK && bounds->xleft == 0 &&
 	bounds->xright == 0 && bounds->ybot == 0 &&
