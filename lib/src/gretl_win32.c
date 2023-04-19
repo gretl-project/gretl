@@ -1106,6 +1106,12 @@ int win32_remove (const char *path)
     GError *gerr = NULL;
     int ok, err = 0;
 
+    /* does the file actually exist? */
+    if (gretl_stat(path, NULL) != 0) {
+        /* looks like it doesn't */
+        return 0;
+    }
+
     wpath = g_utf8_to_utf16(path, -1, NULL, NULL, &gerr);
 
     if (gerr != NULL) {
