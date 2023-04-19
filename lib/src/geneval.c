@@ -13220,8 +13220,18 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             regfunc = get_plugin_function("gretl_regls");
             if (regfunc == NULL) {
                 p->err = E_FOPEN;
-            } else {
-                p->err = regfunc(l->v.m, m->v.m, r->v.b, p->prn);
+            } else if (l->t != MAT || m->t != MAT) {
+		p->err = E_TYPES;
+	    } else {
+		if (r->t == U_ADDR) {
+		    r = ptr_node_get_referent_node(r, p);
+		}
+		if (r->t != BUNDLE) {
+		    p->err = E_TYPES;
+		}
+	    }
+	    if (!p->err) {
+		p->err = regfunc(l->v.m, m->v.m, r->v.b, p->prn);
             }
         }
         if (!p->err) {
