@@ -2588,7 +2588,9 @@ static void maybe_set_gui_interface (call_info *cinfo,
 	gchar *name = NULL, *label = NULL;
 
 	cinfo->iface = fid;
-	cinfo->flags |= SHOW_GUI_MAIN;
+        if (fid == gmid || gmid < 0) {
+            cinfo->flags |= SHOW_GUI_MAIN;
+        }
 	function_package_get_properties(cinfo->pkg,
 					"name", &name,
 					"label", &label,
