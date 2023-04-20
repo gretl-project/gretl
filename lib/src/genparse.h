@@ -373,7 +373,6 @@ enum {
     F_PSDROOT,
     F_INSTRINGS,
     F_STRVALS,
-    F_FUNCERR, /* legacy */
     F_ERRORIF,
     F_BINCOEFF,
     F_ASSERT,

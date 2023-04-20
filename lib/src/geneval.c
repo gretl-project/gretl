@@ -8060,31 +8060,6 @@ static NODE *do_getenv (NODE *l, int f, parser *p)
     return ret;
 }
 
-/* do_funcerr() is a legacy thing: remove it when possible */
-
-static NODE *do_funcerr (NODE *n, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (gretl_function_depth() == 0) {
-        gretl_errmsg_set("funcerr: no function is executing");
-        p->err = E_DATA;
-    } else {
-        const char *funcname = NULL;
-
-        current_function_info(&funcname, NULL);
-        gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
-                             funcname, n->v.str);
-        p->err = E_FUNCERR;
-    }
-
-    if (ret != NULL) {
-        ret->v.xval = 1;
-    }
-
-    return ret;
-}
-
 static void write_mpi_errmsg (const char *funcname, const char *s)
 {
 #ifdef HAVE_MPI
@@ -18595,9 +18570,6 @@ static NODE *eval (NODE *t, parser *p)
         } else {
             node_type_error(t->t, 0, STR, l, p);
         }
-        break;
-    case F_FUNCERR:
-        ret = do_funcerr(l, p);
         break;
     case F_ERRORIF:
         if (r->t != STR) {
